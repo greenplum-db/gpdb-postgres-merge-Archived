@@ -73,16 +73,10 @@ typedef struct
 	struct AOCSInsertDescData *aocs_insertDes;      /* descriptor for aocs */
 } DR_intorel;
 
-<<<<<<< HEAD
 static void intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo);
-=======
 /* utility functions for CTAS definition creation */
 static Oid	create_ctas_internal(List *attrList, IntoClause *into);
 static Oid	create_ctas_nodata(List *tlist, IntoClause *into);
-
-/* DestReceiver routines for collecting data */
-static void intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 static void intorel_receive(TupleTableSlot *slot, DestReceiver *self);
 static void intorel_shutdown(DestReceiver *self);
 static void intorel_destroy(DestReceiver *self);
@@ -248,14 +242,11 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	List	   *rewritten;
 	PlannedStmt *plan;
 	QueryDesc  *queryDesc;
-<<<<<<< HEAD
 	ScanDirection dir;
 	Oid         relationOid = InvalidOid;   /* relation that is modified */
 	AutoStatsCmdType cmdType = AUTOSTATS_CMDTYPE_SENTINEL;  /* command type */
 
 	Assert(Gp_role != GP_ROLE_EXECUTE);
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * Create the tuple receiver object and insert info it will need
@@ -294,7 +285,6 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		save_nestlevel = NewGUCNestLevel();
 	}
 
-<<<<<<< HEAD
 	/*
 	 * Parse analysis was done already, but we still have to run the rule
 	 * rewriter.  We do not do AcquireRewriteLocks: we assume the query either
@@ -352,8 +342,6 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	 * Normally, we run the plan to completion; but if skipData is specified,
 	 * just do tuple receiver startup and shutdown.
 	 */
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	if (into->skipData)
 	{
 		/*
@@ -388,12 +376,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		query = (Query *) linitial(rewritten);
 		Assert(query->commandType == CMD_SELECT);
 
-<<<<<<< HEAD
-	dest->rDestroy(dest);
-=======
-		/* plan the query */
-		plan = pg_plan_query(query, 0, params);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+		dest->rDestroy(dest);
 
 		/*
 		 * Use a snapshot with an updated command ID to ensure this query sees
@@ -405,27 +388,20 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		PushCopiedSnapshot(GetActiveSnapshot());
 		UpdateActiveSnapshotCommandId();
 
-<<<<<<< HEAD
-	if (into->distributedBy &&
-		((DistributedBy *)(into->distributedBy))->ptype == POLICYTYPE_REPLICATED)
-		queryDesc->es_processed /= ((DistributedBy *)(into->distributedBy))->numsegments;
+		if (into->distributedBy &&
+			((DistributedBy *)(into->distributedBy))->ptype == POLICYTYPE_REPLICATED)
+			queryDesc->es_processed /= ((DistributedBy *)(into->distributedBy))->numsegments;
 
-	/* MPP-14001: Running auto_stats */
-	if (Gp_role == GP_ROLE_DISPATCH)
-		auto_stats(cmdType, relationOid, queryDesc->es_processed, false /* inFunction */);
+		/* MPP-14001: Running auto_stats */
+		if (Gp_role == GP_ROLE_DISPATCH)
+			auto_stats(cmdType, relationOid, queryDesc->es_processed, false /* inFunction */);
 
-	/* save the rowcount if we're given a completionTag to fill */
-	if (completionTag)
-		snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-				 "SELECT " UINT64_FORMAT, queryDesc->es_processed);
+		/* save the rowcount if we're given a completionTag to fill */
+		if (completionTag)
+			snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
+					 "SELECT " UINT64_FORMAT, queryDesc->es_processed);
 
-	FreeQueryDesc(queryDesc);
-=======
-		/* Create a QueryDesc, redirecting output to our tuple receiver */
-		queryDesc = CreateQueryDesc(plan, queryString,
-									GetActiveSnapshot(), InvalidSnapshot,
-									dest, params, 0);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+		FreeQueryDesc(queryDesc);
 
 		/* call ExecutorStart to prepare the plan for execution */
 		ExecutorStart(queryDesc, GetIntoRelEFlags(into));
@@ -548,14 +524,11 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	RangeTblEntry *rte;
 	ListCell   *lc;
 	int			attnum;
-<<<<<<< HEAD
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 	StdRdOptions *stdRdOptions;
 	Datum       reloptions;
 	int         relstorage;
 	TupleDesc   typeinfo = queryDesc->tupDesc;
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/* If EXPLAIN/QE, skip creating the "into" relation. */
 	if ((eflags & EXEC_FLAG_EXPLAIN_ONLY) ||
@@ -567,7 +540,6 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	relkind = is_matview ? RELKIND_MATVIEW : RELKIND_RELATION;
 
 	/*
-<<<<<<< HEAD
 	 * Create the target relation by faking up a CREATE TABLE parsetree and
 	 * passing it to DefineRelation.
 	 */
@@ -603,8 +575,6 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	create->if_not_exists = false;
 
 	/*
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	 * Build column definitions using "pre-cooked" type and collation info. If
 	 * a column name list was specified in CREATE TABLE AS, override the
 	 * column names derived from the query.  (Too few column names are OK, too
@@ -694,48 +664,8 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	 *
 	 * Pass the policy that was computed by the planner.
 	 */
-<<<<<<< HEAD
-	intoRelationId = DefineRelation(create,
-									relkind,
-									InvalidOid,
-									relstorage,
-									false,
-									queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true,
-									queryDesc->plannedstmt->intoPolicy);
 
-	/*
-	 * If necessary, create a TOAST table for the target table.  Note that
-	 * NewRelationCreateToastTable ends with CommandCounterIncrement(), so
-	 * that the TOAST table will be visible for insertion.
-	 */
-	CommandCounterIncrement();
-
-	/* parse and validate reloptions for the toast table */
-	toast_options = transformRelOptions((Datum) 0,
-										create->options,
-										"toast",
-										validnsps,
-										true, false);
-
-	(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options, true);
-
-	NewRelationCreateToastTable(intoRelationId, toast_options, false, false);
-	AlterTableCreateAoSegTable(intoRelationId, false, false);
-	/* don't create AO block directory here, it'll be created when needed. */
-	AlterTableCreateAoVisimapTable(intoRelationId, false, false);
-
-	/* Create the "view" part of a materialized view. */
-	if (is_matview)
-	{
-		/* StoreViewQuery scribbles on tree, so make a copy */
-		Query	   *query = (Query *) copyObject(into->viewQuery);
-
-		StoreViewQuery(intoRelationId, query, false);
-		CommandCounterIncrement();
-	}
-=======
 	intoRelationId = create_ctas_internal(attrList, into);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * Finally we can open the target table

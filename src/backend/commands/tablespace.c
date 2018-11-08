@@ -440,7 +440,6 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	/* We keep the lock on pg_tablespace until commit */
 	heap_close(rel, NoLock);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -457,9 +456,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 						   "CREATE", "TABLESPACE");
 	}
 
-=======
 	return tablespaceoid;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #else							/* !HAVE_SYMLINK */
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1119,7 +1116,6 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 }
 
 /*
-<<<<<<< HEAD
  * Alter table space move
  *
  * Allows a user to move all of their objects in a given tablespace in the
@@ -1311,8 +1307,6 @@ AlterTableSpaceMove(AlterTableSpaceMoveStmt *stmt)
 }
 
 /*
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
  * Routines for handling the GUC variable 'default_tablespace'.
  */
 

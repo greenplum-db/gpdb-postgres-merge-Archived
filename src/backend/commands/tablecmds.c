@@ -290,12 +290,8 @@ static bool MergeCheckConstraint(List *constraints, char *name, Node *expr);
 static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 static void StoreCatalogInheritance1(Oid relationId, Oid parentOid,
-<<<<<<< HEAD
 						 int16 seqNumber, Relation inhRelation,
 						 bool is_partition);
-=======
-						 int32 seqNumber, Relation inhRelation);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 static int	findAttrByName(const char *attributeName, List *schema);
 static void AlterIndexNamespaces(Relation classRel, Relation rel,
 				   Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved);
@@ -733,7 +729,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
 	descriptor = BuildDescForRelation(schema);
 
 	localHasOids = interpretOidsOption(stmt->options,
-<<<<<<< HEAD
 									   (relkind == RELKIND_RELATION ||
 										relkind == RELKIND_FOREIGN_TABLE));
 	descriptor->tdhasoid = (localHasOids || stmt->parentOidCount > 0);
@@ -750,10 +745,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
 	}
 	else
 		policy = getPolicyForDistributedBy(stmt->distributedBy, descriptor);
-=======
-									   (relkind == RELKIND_RELATION));
-	descriptor->tdhasoid = (localHasOids || parentOidCount > 0);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * Find columns with default values and prepare for insertion of the
@@ -2690,12 +2681,8 @@ StoreCatalogInheritance(Oid relationId, List *supers)
  */
 static void
 StoreCatalogInheritance1(Oid relationId, Oid parentOid,
-<<<<<<< HEAD
 						 int16 seqNumber, Relation inhRelation,
 						 bool is_partition)
-=======
-						 int32 seqNumber, Relation inhRelation)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	TupleDesc	desc = RelationGetDescr(inhRelation);
 	Datum		values[Natts_pg_inherits];
@@ -9135,14 +9122,11 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	children = find_inheritance_children(RelationGetRelid(rel), lockmode);
 
 	/*
-<<<<<<< HEAD
 	 * If we are told not to recurse, there had better not be any child tables;
 	 * else the addition would put them out of step.
-=======
 	 * Check if ONLY was specified with ALTER TABLE.  If so, allow the
 	 * constraint creation only if there are no children currently.  Error out
 	 * otherwise.
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH && children && !recurse)
 		ereport(ERROR,
@@ -12225,41 +12209,35 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 			ATExecChangeOwner(tuple_class->reltoastrelid, newOwnerId,
 							  true, lockmode);
 
-<<<<<<< HEAD
-			if (RelationIsAppendOptimized(target_rel))
+		if (RelationIsAppendOptimized(target_rel))
+		{
+			Oid segrelid, blkdirrelid;
+			Oid visimap_relid;
+			GetAppendOnlyEntryAuxOids(relationOid, NULL,
+									  &segrelid,
+									  &blkdirrelid, NULL,
+									  &visimap_relid, NULL);
+
+			/* If it has an AO segment table, recurse to change its
+			 * ownership */
+			if (segrelid != InvalidOid)
+				ATExecChangeOwner(segrelid, newOwnerId, true, lockmode);
+
+			/* If it has an AO block directory table, recurse to change its
+			 * ownership */
+			if (blkdirrelid != InvalidOid)
+				ATExecChangeOwner(blkdirrelid, newOwnerId, true, lockmode);
+
+			/* If it has an AO visimap table, recurse to change its
+			 * ownership */
+			if (visimap_relid != InvalidOid)
 			{
-				Oid segrelid, blkdirrelid;
-				Oid visimap_relid;
-				GetAppendOnlyEntryAuxOids(relationOid, NULL,
-										  &segrelid,
-										  &blkdirrelid, NULL,
-										  &visimap_relid, NULL);
-				
-				/* If it has an AO segment table, recurse to change its
-				 * ownership */
-				if (segrelid != InvalidOid)
-					ATExecChangeOwner(segrelid, newOwnerId, true, lockmode);
-
-				/* If it has an AO block directory table, recurse to change its
-				 * ownership */
-				if (blkdirrelid != InvalidOid)
-					ATExecChangeOwner(blkdirrelid, newOwnerId, true, lockmode);
-
-				/* If it has an AO visimap table, recurse to change its 
-				 * ownership */
-				if (visimap_relid != InvalidOid)
-				{
-					ATExecChangeOwner(visimap_relid, newOwnerId, true, lockmode);
-				}
+				ATExecChangeOwner(visimap_relid, newOwnerId, true, lockmode);
 			}
-			
-			/* If it has dependent sequences, recurse to change them too */
-			change_owner_recurse_to_sequences(relationOid, newOwnerId, lockmode);
 		}
-=======
+
 		/* If it has dependent sequences, recurse to change them too */
 		change_owner_recurse_to_sequences(relationOid, newOwnerId, lockmode);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	}
 
 	InvokeObjectPostAlterHook(RelationRelationId, relationOid, 0);
@@ -12993,7 +12971,6 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 		/* copy those extra forks that exist */
 		for (forkNum = MAIN_FORKNUM + 1; forkNum <= MAX_FORKNUM; forkNum++)
 		{
-<<<<<<< HEAD
 			if (smgrexists(rel->rd_smgr, forkNum))
 			{
 				smgrcreate(dstrel, forkNum, false);
@@ -13009,20 +12986,6 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 				copy_relation_data(rel->rd_smgr, dstrel, forkNum,
 								   rel->rd_rel->relpersistence);
 			}
-=======
-			smgrcreate(dstrel, forkNum, false);
-
-			/*
-			 * WAL log creation if the relation is persistent, or this is the
-			 * init fork of an unlogged relation.
-			 */
-			if (rel->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT ||
-				(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
-				 forkNum == INIT_FORKNUM))
-				log_smgrcreate(&newrnode, forkNum);
-			copy_relation_data(rel->rd_smgr, dstrel, forkNum,
-							   rel->rd_rel->relpersistence);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		}
 	}
 

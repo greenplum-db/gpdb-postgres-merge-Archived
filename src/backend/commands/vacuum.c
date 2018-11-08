@@ -118,18 +118,12 @@ static MemoryContext vac_context = NULL;
 static BufferAccessStrategy vac_strategy;
 
 /* non-export function prototypes */
-<<<<<<< HEAD
 static List *get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype);
-static void vac_truncate_clog(TransactionId frozenXID, MultiXactId minMulti);
-static bool vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
-=======
-static List *get_rel_oids(Oid relid, const RangeVar *vacrel);
 static void vac_truncate_clog(TransactionId frozenXID,
-				  MultiXactId minMulti,
-				  TransactionId lastSaneFrozenXid,
-				  MultiXactId lastSaneMinMulti);
-static bool vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast,
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+							  MultiXactId minMulti,
+							  TransactionId lastSaneFrozenXid,
+							  MultiXactId lastSaneMinMulti);
+static bool vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 		   bool for_wraparound);
 static void scan_index(Relation indrel, double num_tuples,
 					   bool check_stats, int elevel);
@@ -184,7 +178,6 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	const char *stmttype;
 	volatile bool in_outer_xact,
 				use_own_xacts;
-<<<<<<< HEAD
 	List	   *vacuum_relations = NIL;
 	List	   *analyze_relations = NIL;
 
@@ -193,10 +186,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("ROOTPARTITION option cannot be used together with VACUUM, try ANALYZE ROOTPARTITION")));
-=======
-	List	   *relations;
 	static bool in_vacuum = false;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/* sanity checks on options */
 	Assert(vacstmt->options & (VACOPT_VACUUM | VACOPT_ANALYZE));
@@ -1548,33 +1538,18 @@ vac_update_relstats_from_list(List *updated_stats)
  *
  *		We violate transaction semantics here by overwriting the rel's
  *		existing pg_class tuple with the new values.  This is reasonably
-<<<<<<< HEAD
- *		safe since the new values are correct whether or not this transaction
- *		commits.  The reason for this is that if we updated these tuples in
- *		the usual way, vacuuming pg_class itself wouldn't work very well ---
- *		by the time we got done with a vacuum cycle, most of the tuples in
- *		pg_class would've been obsoleted.  Of course, this only works for
- *		fixed-size never-null columns, but these are.
-=======
  *		safe as long as we're sure that the new values are correct whether or
  *		not this transaction commits.  The reason for doing this is that if
  *		we updated these tuples in the usual way, vacuuming pg_class itself
  *		wouldn't work very well --- by the time we got done with a vacuum
  *		cycle, most of the tuples in pg_class would've been obsoleted.  Of
  *		course, this only works for fixed-size not-null columns, but these are.
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
  *
  *		Another reason for doing it this way is that when we are in a lazy
  *		VACUUM and have PROC_IN_VACUUM set, we mustn't do any regular updates.
  *		Somebody vacuuming pg_class might think they could delete a tuple
  *		marked with xmin = our xid.
  *
-<<<<<<< HEAD
- *		Note another assumption: that two VACUUMs/ANALYZEs on a table can't
- *		run in parallel, nor can VACUUM/ANALYZE run in parallel with a
- *		schema alteration such as adding an index, rule, or trigger.  Otherwise
- *		our updates of relhasindex etc might overwrite uncommitted updates.
-=======
  *		In addition to fundamentally nontransactional statistics such as
  *		relpages and relallvisible, we try to maintain certain lazily-updated
  *		DDL flags such as relhasindex, by clearing them if no longer correct.
@@ -1587,7 +1562,6 @@ vac_update_relstats_from_list(List *updated_stats)
  *		So we refrain from updating the DDL flags if we're inside an outer
  *		transaction.  This is OK since postponing the flag maintenance is
  *		always allowable.
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
  *
  *		This routine is shared by VACUUM and ANALYZE.
  */
@@ -1596,12 +1570,9 @@ vac_update_relstats(Relation relation,
 					BlockNumber num_pages, double num_tuples,
 					BlockNumber num_all_visible_pages,
 					bool hasindex, TransactionId frozenxid,
-<<<<<<< HEAD
-					MultiXactId minmulti, bool isvacuum)
-=======
 					MultiXactId minmulti,
-					bool in_outer_xact)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+					bool in_outer_xact,
+					bool isvacuum)
 {
 	Oid			relid = RelationGetRelid(relation);
 	Relation	rd;
@@ -1696,7 +1667,6 @@ vac_update_relstats(Relation relation,
 		dirty = true;
 	}
 
-<<<<<<< HEAD
 	elog(DEBUG2, "Vacuum oid=%u pages=%d tuples=%f",
 		 relid, pgcform->relpages, pgcform->reltuples);
 	/*
@@ -1708,9 +1678,6 @@ vac_update_relstats(Relation relation,
 		pgcform->relhaspkey = false;
 		dirty = true;
 	}
-=======
-	/* Apply DDL updates, but not inside an outer transaction (see above) */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	if (!in_outer_xact)
 	{
@@ -1760,15 +1727,10 @@ vac_update_relstats(Relation relation,
 	 * to be "in the future".
 	 */
 	if (TransactionIdIsNormal(frozenxid) &&
-<<<<<<< HEAD
-		TransactionIdIsValid(pgcform->relfrozenxid) &&
-		TransactionIdPrecedes(pgcform->relfrozenxid, frozenxid))
-=======
-		pgcform->relfrozenxid != frozenxid &&
-		(TransactionIdPrecedes(pgcform->relfrozenxid, frozenxid) ||
-		 TransactionIdPrecedes(ReadNewTransactionId(),
-							   pgcform->relfrozenxid)))
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+		MultiXactIdIsValid(minmulti) &&
+		pgcform->relminmxid != minmulti &&
+		(MultiXactIdPrecedes(pgcform->relminmxid, minmulti) ||
+		 MultiXactIdPrecedes(ReadNextMultiXactId(), pgcform->relminmxid)))
 	{
 		pgcform->relfrozenxid = frozenxid;
 		dirty = true;
