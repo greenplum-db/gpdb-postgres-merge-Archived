@@ -154,15 +154,8 @@ static pthread_mutex_t send_mutex = PTHREAD_MUTEX_INITIALIZER;
  * Message status
  */
 static bool PqCommBusy;			/* busy sending data to the client */
-<<<<<<< HEAD
-/* XXX This flag is used by frontend protocal 1 and 2 only.  That is 
- * VERY OLD (We should be on Protocol 3).
- */
-static bool DoingCopyOut;
-=======
 static bool PqCommReadingMsg;	/* in the middle of reading a message */
 static bool DoingCopyOut;		/* in old-protocol COPY OUT processing */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 /* Internal functions */
 static void pq_close(int code, Datum arg);
@@ -231,14 +224,10 @@ pq_close(int code, Datum arg)
 		 * BackendInitialize(), because pg_GSS_recvauth() makes first use of
 		 * "ctx" and "cred".
 		 */
-<<<<<<< HEAD
-		if (MyProcPort->gss && (MyProcPort->gss->ctx != GSS_C_NO_CONTEXT))
-=======
 		if (MyProcPort->gss->ctx != GSS_C_NO_CONTEXT)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			gss_delete_sec_context(&min_s, &MyProcPort->gss->ctx, NULL);
 
-		if (MyProcPort->gss && (MyProcPort->gss->cred != GSS_C_NO_CREDENTIAL))
+		if (MyProcPort->gss->cred != GSS_C_NO_CREDENTIAL)
 			gss_release_cred(&min_s, &MyProcPort->gss->cred);
 #endif   /* ENABLE_GSS */
 

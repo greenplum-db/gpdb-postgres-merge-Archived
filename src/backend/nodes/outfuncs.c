@@ -892,7 +892,6 @@ _outAgg(StringInfo str, const Agg *node)
 		appendStringInfo(str, " %u", node->grpOperators[i]);
 
 	WRITE_LONG_FIELD(numGroups);
-<<<<<<< HEAD
 	WRITE_INT_FIELD(transSpace);
 	WRITE_INT_FIELD(numNullCols);
 	WRITE_UINT64_FIELD(inputGrouping);
@@ -901,9 +900,7 @@ _outAgg(StringInfo str, const Agg *node)
 	WRITE_INT_FIELD(rollupGSTimes);
 	WRITE_BOOL_FIELD(lastAgg);
 	WRITE_BOOL_FIELD(streaming);
-=======
 	WRITE_BITMAPSET_FIELD(aggParams);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 }
 #endif /* COMPILING_BINARY_FUNCS */
 

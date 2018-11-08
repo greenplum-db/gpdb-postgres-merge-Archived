@@ -1077,7 +1077,6 @@ _copyAgg(const Agg *from)
 		COPY_POINTER_FIELD(grpOperators, from->numCols * sizeof(Oid));
 	}
 	COPY_SCALAR_FIELD(numGroups);
-<<<<<<< HEAD
 	COPY_SCALAR_FIELD(transSpace);
 	COPY_SCALAR_FIELD(numNullCols);
 	COPY_SCALAR_FIELD(inputGrouping);
@@ -1086,9 +1085,7 @@ _copyAgg(const Agg *from)
 	COPY_SCALAR_FIELD(rollupGSTimes);
 	COPY_SCALAR_FIELD(lastAgg);
 	COPY_SCALAR_FIELD(streaming);
-=======
 	COPY_BITMAPSET_FIELD(aggParams);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	return newnode;
 }

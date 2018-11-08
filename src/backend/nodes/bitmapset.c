@@ -890,7 +890,6 @@ bms_join(Bitmapset *a, Bitmapset *b)
 	return result;
 }
 
-<<<<<<< HEAD
 /*----------
  * bms_first_from - find first member of a set, starting at given index
  *
@@ -936,10 +935,7 @@ bms_first_from(const Bitmapset *a, int x)
 	return -1;
 }
 
-/*----------
-=======
 /*
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
  * bms_first_member - find and remove first member of a set
  *
  * Returns -1 if set is empty.  NB: set is destructively modified!
