@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* Convert a broken-down timestamp to a string. */
-=======
 /* Convert a broken-down timestamp to a string.  */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 /*
  * Copyright 1989 The Regents of the University of California.
@@ -119,11 +115,7 @@ static char *_add(const char *, char *, const char *);
 static char *_conv(int, const char *, char *, const char *);
 static char *_fmt(const char *, const struct pg_tm *, char *, const char *,
 	 enum warn *);
-<<<<<<< HEAD
-static char *_yconv(int, int, bool, bool, char *, const char *);
-=======
 static char *_yconv(int, int, bool, bool, char *, char const *);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 
 size_t
@@ -449,12 +441,8 @@ _fmt(const char *format, const struct pg_tm *t, char *pt,
 
 					/*
 					 * C99 and later say that %Z must be replaced by the empty
-<<<<<<< HEAD
-					 * string if the time zone is not determinable.
-=======
 					 * string if the time zone abbreviation is not
 					 * determinable.
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 					 */
 					continue;
 				case 'z':
@@ -540,11 +528,7 @@ _yconv(int a, int b, bool convert_top, bool convert_yy,
 	int			lead;
 	int			trail;
 
-<<<<<<< HEAD
-#define DIVISOR 100
-=======
 #define DIVISOR	100
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	trail = a % DIVISOR + b % DIVISOR;
 	lead = a / DIVISOR + b / DIVISOR + trail / DIVISOR;
 	trail %= DIVISOR;
