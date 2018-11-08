@@ -1031,7 +1031,6 @@ typedef struct Agg
 	bool		finalizeAggs;	/* should we call the finalfn on agg states? */
 	Oid		   *grpOperators;	/* equality operators to compare with */
 	long		numGroups;		/* estimated number of groups in input */
-<<<<<<< HEAD
 	int			transSpace;		/* est storage per group for byRef transition values */
 
 	/*
@@ -1089,10 +1088,8 @@ typedef struct Agg
 
 	/* Stream entries when out of memory instead of spilling to disk */
 	bool 		streaming;
-=======
 	Bitmapset  *aggParams;		/* IDs of Params used in Aggref inputs */
 	/* Note: planner provides numGroups & aggParams only in AGG_HASHED case */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 } Agg;
 
 /* ----------------

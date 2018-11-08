@@ -191,17 +191,14 @@ typedef struct PortalData
 	TimestampTz creation_time;	/* time at which this portal was defined */
 	bool		visible;		/* include this portal in pg_cursors? */
 
-<<<<<<< HEAD
 	/* MPP: is this portal a CURSOR, or protocol level portal? */
 	bool		is_extended_query; /* simple or extended query protocol? */
-=======
 	/*
 	 * This field belongs with createSubid, but in pre-9.5 branches, add it
 	 * at the end to avoid creating an ABI break for extensions that examine
 	 * Portal structs.
 	 */
 	SubTransactionId activeSubid;		/* the last subxact with activity */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 }	PortalData;
 
 /*

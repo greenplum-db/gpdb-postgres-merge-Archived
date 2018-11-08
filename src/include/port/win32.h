@@ -296,11 +296,8 @@ typedef int pid_t;
 #define EAGAIN WSAEWOULDBLOCK
 #undef EINTR
 #define EINTR WSAEINTR
-<<<<<<< HEAD
 #undef EAGAIN
 #define EAGAIN WSAEWOULDBLOCK
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #undef EMSGSIZE
 #define EMSGSIZE WSAEMSGSIZE
 #undef EAFNOSUPPORT

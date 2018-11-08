@@ -2094,13 +2094,10 @@ typedef struct SubqueryScanState
  *		nfuncs				number of functions being executed
  *		funcstates			per-function execution states (private in
  *							nodeFunctionscan.c)
-<<<<<<< HEAD
  *		cdb_want_ctid		true => ctid is referenced in targetlist
  *		cdb_fake_ctid
  *		cdb_mark_ctid
-=======
  *		argcontext			memory context to evaluate function arguments in
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
  * ----------------
  */
 struct FunctionScanPerFuncState;
@@ -2115,13 +2112,10 @@ typedef struct FunctionScanState
 	int			nfuncs;
 	struct FunctionScanPerFuncState *funcstates;		/* array of length
 														 * nfuncs */
-<<<<<<< HEAD
 	bool		cdb_want_ctid;
 	ItemPointerData cdb_fake_ctid;
 	ItemPointerData cdb_mark_ctid;
-=======
 	MemoryContext argcontext;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 } FunctionScanState;
 
 

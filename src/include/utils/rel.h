@@ -227,7 +227,6 @@ typedef struct StdRdOptions
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int			fillfactor;		/* page fill factor in percent (0..100) */
 	AutoVacOpts autovacuum;		/* autovacuum-related options */
-<<<<<<< HEAD
 
 	bool		appendonly;		/* is this an appendonly relation? */
 	int			blocksize;		/* max varblock size (AO rels only) */
@@ -238,8 +237,6 @@ typedef struct StdRdOptions
 	char		orientation[NAMEDATALEN]; /* orientation (AO only) */
 	bool		security_barrier;		/* for views */
 	int			check_option_offset;	/* for views */
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	bool		user_catalog_table;		/* use as an additional catalog
 										 * relation */
 } StdRdOptions;

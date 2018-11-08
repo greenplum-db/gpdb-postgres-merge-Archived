@@ -99,14 +99,10 @@ enum SysCacheIdentifier
 	TYPENAMENSP,
 	TYPEOID,
 	USERMAPPINGOID,
-<<<<<<< HEAD
 	USERMAPPINGUSERSERVER,
 	WINFNOID
-=======
-	USERMAPPINGUSERSERVER
 
 #define SysCacheSize (USERMAPPINGUSERSERVER + 1)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 };
 
 extern void InitCatalogCache(void);
