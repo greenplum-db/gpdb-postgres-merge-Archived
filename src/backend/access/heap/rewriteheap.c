@@ -666,15 +666,9 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 			options |= HEAP_INSERT_NO_LOGICAL;
 
 		heaptup = toast_insert_or_update(state->rs_new_rel, tup, NULL,
-<<<<<<< HEAD
 										 TOAST_TUPLE_TARGET, false,
-										 HEAP_INSERT_SKIP_FSM |
-										 (state->rs_use_wal ?
-										  0 : HEAP_INSERT_SKIP_WAL));
-=======
 										 options);
 	}
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	else
 		heaptup = tup;
 

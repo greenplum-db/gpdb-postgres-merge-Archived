@@ -1776,13 +1776,9 @@ Datum
 gingetbitmap(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-<<<<<<< HEAD
 	Node 	   *n = (Node *) PG_GETARG_POINTER(1);
 	TIDBitmap  *tbm;
-=======
-	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	int64		ntids;
 	ItemPointerData iptr;
 	bool		recheck;

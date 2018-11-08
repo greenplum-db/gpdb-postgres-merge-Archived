@@ -558,12 +558,8 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 		}
 
 		stack->page = (Page) BufferGetPage(stack->buffer);
-<<<<<<< HEAD
-		stack->lsn = BufferGetLSNAtomic(stack->buffer);
-=======
 		stack->lsn = xlocked ?
 			PageGetLSN(stack->page) : BufferGetLSNAtomic(stack->buffer);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		Assert(!RelationNeedsWAL(state.r) || !XLogRecPtrIsInvalid(stack->lsn));
 
 		/*

@@ -30,11 +30,7 @@ CATALOG_JSON:= $(addprefix $(top_srcdir)/gpMgmt/bin/gppylib/data/, $(addsuffix .
 
 include $(top_srcdir)/src/backend/common.mk
 
-<<<<<<< HEAD
-all: $(BKIFILES) schemapg.h $(CATALOG_JSON)
-=======
-all: $(BKIFILES) schemapg.h postgres.description postgres.shdescription
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+all: $(BKIFILES) schemapg.h $(CATALOG_JSON) postgres.description postgres.shdescription
 
 # Note: there are some undocumented dependencies on the ordering in which
 # the catalog header files are assembled into postgres.bki.  In particular,

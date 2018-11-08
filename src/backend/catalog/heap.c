@@ -1350,11 +1350,10 @@ AddNewRelationType(const char *typeName,
  *	use_user_acl: TRUE if should look for user-defined default permissions;
  *		if FALSE, relacl is always set NULL
  *	allow_system_table_mods: TRUE to allow creation in system namespaces
-<<<<<<< HEAD
- *  is_part_child: TRUE if relation is a child partition
-=======
  *	is_internal: is this a system-generated catalog?
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+ *  valid_opts: Validate the reloptions or not?
+ *  is_part_child: TRUE if relation is a child partition
+ *  is_part_parent: TRUE if relation is a parent partition
  *
  * Returns the OID of the new relation
  * --------------------------------

@@ -2222,7 +2222,6 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	int			num_indexes;
 	int			validIndex;
 
-<<<<<<< HEAD
 	/*
 	 * GPDB: start with the assumption that chunks max out at
 	 * TOAST_MAX_CHUNK_SIZE. This may later prove false (e.g. if we've upgraded
@@ -2230,11 +2229,8 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	 */
 	int32		actual_max_chunk_size = TOAST_MAX_CHUNK_SIZE;
 
-	Assert(VARATT_IS_EXTERNAL_ONDISK(attr));
-=======
 	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
 		elog(ERROR, "toast_fetch_datum_slice shouldn't be called for non-ondisk datums");
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/* Must copy to access aligned fields */
 	VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);

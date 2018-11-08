@@ -1703,27 +1703,30 @@ ForgetDatabaseFsyncRequests(Oid dbid)
  * DropRelationFiles -- drop files of all given relations
  */
 void
-DropRelationFiles(RelFileNode *delrels, int ndelrels, bool isRedo)
+DropRelationFiles(RelFileNodeWithStorageType *delrels, int ndelrels, bool isRedo)
 {
 	SMgrRelation *srels;
+	char         *srelstorages;
 	int			i;
 
 	srels = palloc(sizeof(SMgrRelation) * ndelrels);
+	srelstorages = palloc(sizeof(char) * ndelrels);
 	for (i = 0; i < ndelrels; i++)
 	{
-		SMgrRelation srel = smgropen(delrels[i], InvalidBackendId);
+		SMgrRelation srel = smgropen(delrels[i].node, InvalidBackendId);
 
 		if (isRedo)
 		{
 			ForkNumber	fork;
 
 			for (fork = 0; fork <= MAX_FORKNUM; fork++)
-				XLogDropRelation(delrels[i], fork);
+				XLogDropRelation(delrels[i].node, fork);
 		}
 		srels[i] = srel;
+		srelstorages[i] = delrels[i].relstorage;
 	}
 
-	smgrdounlinkall(srels, ndelrels, isRedo);
+	smgrdounlinkall(srels, ndelrels, isRedo, srelstorages);
 
 	/*
 	 * Call smgrclose() in reverse order as when smgropen() is called.
@@ -1733,6 +1736,7 @@ DropRelationFiles(RelFileNode *delrels, int ndelrels, bool isRedo)
 	 */
 	for (i = ndelrels - 1; i >= 0; i--)
 		smgrclose(srels[i]);
+	pfree(srelstorages);
 	pfree(srels);
 }
 

@@ -261,10 +261,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	/*
 	 * Check to see whether the table actually needs a TOAST table.
 	 */
-<<<<<<< HEAD
-	if (!needs_toast_table(rel) && !IsBinaryUpgrade)
-		return false;
-=======
 	if (!IsBinaryUpgrade)
 	{
 		/* Normal mode, normal check */
@@ -295,7 +291,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 			!OidIsValid(binary_upgrade_next_toast_pg_type_oid))
 			return false;
 	}
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * If requested check lockmode is sufficient. This is a cross check in

@@ -4093,11 +4093,7 @@ l2:
 
 		/*
 		 * To prevent concurrent sessions from updating the tuple, we have to
-<<<<<<< HEAD
-		 * temporarily mark it locked, while we release the lock.
-=======
 		 * temporarily mark it locked, while we release the page-level lock.
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		 *
 		 * To satisfy the rule that any xid potentially appearing in a buffer
 		 * written out to disk, we unfortunately have to WAL log this
@@ -4144,11 +4140,7 @@ l2:
 		{
 			xl_heap_lock xlrec;
 			XLogRecPtr	recptr;
-<<<<<<< HEAD
-			XLogRecData	rdata[2];
-=======
 			XLogRecData rdata[2];
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 			xlrec.target.node = relation->rd_node;
 			xlrec.target.tid = oldtup.t_self;
@@ -4167,11 +4159,7 @@ l2:
 			rdata[1].next = NULL;
 
 			recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_LOCK, rdata);
-<<<<<<< HEAD
-			PageSetLSN(BufferGetPage(buffer), recptr);
-=======
 			PageSetLSN(page, recptr);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		}
 
 		END_CRIT_SECTION();
@@ -4333,12 +4321,8 @@ l2:
 
 	RelationPutHeapTuple(relation, newbuf, heaptup);	/* insert new tuple */
 
-<<<<<<< HEAD
-	/* Clear obsolete visibility flags ... */
-=======
 
 	/* Clear obsolete visibility flags, possibly set by ourselves above... */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	oldtup.t_data->t_infomask &= ~(HEAP_XMAX_BITS | HEAP_MOVED);
 	oldtup.t_data->t_infomask2 &= ~HEAP_KEYS_UPDATED;
 	/* ... and store info about transaction updating this tuple */
@@ -5035,7 +5019,6 @@ l3:
 					if (!ConditionalMultiXactIdWait((MultiXactId) xwait,
 												  status, infomask, relation,
 													NULL))
-<<<<<<< HEAD
 						return HeapTupleBeingUpdated; /* return without a lock */
 				}
 				else if (waittype == LockTupleNoWait)
@@ -5043,8 +5026,6 @@ l3:
 					if (!ConditionalMultiXactIdWait((MultiXactId) xwait,
 												  status, infomask, relation,
 													NULL))
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 						ereport(ERROR,
 								(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 								 errmsg("could not obtain lock on row in relation \"%s\"",

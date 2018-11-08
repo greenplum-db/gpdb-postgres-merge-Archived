@@ -2785,13 +2785,7 @@ CommitTransaction(void)
 	 */
 	smgrDoPendingDeletes(true);
 
-<<<<<<< HEAD
-	/* Check we've released all catcache entries */
-	AtEOXact_CatCache(true);
-
 	AtEOXact_AppendOnly();
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	AtCommit_Notify();
 	AtEOXact_GUC(true, 1);
 	AtEOXact_SPI(true);
@@ -6048,21 +6042,8 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 		 */
 		XLogFlush(lsn);
 
-<<<<<<< HEAD
-		for (i = 0; i < nrels; i++)
-		{
-			SMgrRelation srel = smgropen(xnodes[i].node, InvalidBackendId);
-			ForkNumber	fork;
-
-			for (fork = 0; fork <= MAX_FORKNUM; fork++)
-				XLogDropRelation(xnodes[i].node, fork);
-			smgrdounlink(srel, true, xnodes[i].relstorage);
-			smgrclose(srel);
-		}
-=======
 		/* Make sure files supposed to be dropped are dropped */
 		DropRelationFiles(xnodes, nrels, true);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	}
 
 	/*
@@ -6295,20 +6276,7 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	}
 
 	/* Make sure files supposed to be dropped are dropped */
-<<<<<<< HEAD
-	for (i = 0; i < xlrec->nrels; i++)
-	{
-		SMgrRelation srel = smgropen(xlrec->xnodes[i].node, InvalidBackendId);
-		ForkNumber	fork;
-
-		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-			XLogDropRelation(xlrec->xnodes[i].node, fork);
-		smgrdounlink(srel, true, xlrec->xnodes[i].relstorage);
-		smgrclose(srel);
-	}
-=======
 	DropRelationFiles(xlrec->xnodes, xlrec->nrels, true);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 }
 
 static void

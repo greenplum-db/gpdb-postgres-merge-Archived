@@ -5480,18 +5480,12 @@ readRecoveryCommandFile(void)
 	}
 	else
 	{
-<<<<<<< HEAD
-		/* Currently, standby mode request is a must if recovery.conf file exists */
+		/* Currently, standby mode request is a must if recovery.conf file exists. */
+		/* Thus PG upstream code `if (recoveryRestoreCommand == NULL)` ... was removed. */
 		ereport(FATAL,
-				(errmsg("recovery command file \"%s\" request for standby mode not specified",
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("recovery command file \"%s\" request for standby mode not specified",
 						RECOVERY_COMMAND_FILE)));
-=======
-		if (recoveryRestoreCommand == NULL)
-			ereport(FATAL,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("recovery command file \"%s\" must specify restore_command when standby mode is not enabled",
-							RECOVERY_COMMAND_FILE)));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	}
 
 	/*
@@ -5506,8 +5500,6 @@ readRecoveryCommandFile(void)
 	/* Enable fetching from archive recovery area */
 	ArchiveRecoveryRequested = true;
 
-<<<<<<< HEAD
-=======
 	/*
 	 * If user specified recovery_target_timeline, validate it or compute the
 	 * "latest" value.  We can't do this until after we've gotten the restore
@@ -5535,7 +5527,6 @@ readRecoveryCommandFile(void)
 		}
 	}
 
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	FreeConfigVariables(head);
 }
 
@@ -5547,11 +5538,7 @@ renameRecoveryFile()
 	 * re-enter archive recovery mode in a subsequent crash.
 	 */
 	unlink(RECOVERY_COMMAND_DONE);
-	if (rename(RECOVERY_COMMAND_FILE, RECOVERY_COMMAND_DONE) != 0)
-		ereport(FATAL,
-				(errcode_for_file_access(),
-				 errmsg("could not rename file \"%s\" to \"%s\": %m",
-						RECOVERY_COMMAND_FILE, RECOVERY_COMMAND_DONE)));
+	durable_rename(RECOVERY_COMMAND_FILE, RECOVERY_COMMAND_DONE, FATAL);
 	/*
 	 * Response to FTS probes after this point will not indicate that we are a
 	 * mirror because the am_mirror flag is set based on existence of
@@ -5630,20 +5617,7 @@ exitArchiveRecovery(TimeLineID endTLI, XLogSegNo endLogSegNo)
 	/* Get rid of any remaining recovered timeline-history file, too */
 	snprintf(recoveryPath, MAXPGPATH, XLOGDIR "/RECOVERYHISTORY");
 	unlink(recoveryPath);		/* ignore any error */
-<<<<<<< HEAD
 	renameRecoveryFile();
-=======
-
-	/*
-	 * Rename the config file out of the way, so that we don't accidentally
-	 * re-enter archive recovery mode in a subsequent crash.
-	 */
-	unlink(RECOVERY_COMMAND_DONE);
-	durable_rename(RECOVERY_COMMAND_FILE, RECOVERY_COMMAND_DONE, FATAL);
-
-	ereport(LOG,
-			(errmsg("archive recovery complete")));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 }
 
 /*

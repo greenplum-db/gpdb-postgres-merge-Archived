@@ -169,14 +169,10 @@ char *
 BuildIndexValueDescription(Relation indexRelation,
 						   Datum *values, bool *isnull)
 {
-<<<<<<< HEAD
-=======
 	StringInfoData buf;
 	Form_pg_index idxrec;
 	HeapTuple	ht_idx;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	int			natts = indexRelation->rd_rel->relnatts;
-	StringInfoData buf;
 	int			i;
 	int			keyno;
 	Oid			indexrelid = RelationGetRelid(indexRelation);
