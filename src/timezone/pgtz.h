@@ -49,12 +49,6 @@ struct state
 	pg_time_t	ats[TZ_MAX_TIMES];
 	unsigned char types[TZ_MAX_TIMES];
 	struct ttinfo ttis[TZ_MAX_TYPES];
-<<<<<<< HEAD
-	char		chars[BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, 3 /* sizeof gmt */ ),
-							  (2 * (TZ_STRLEN_MAX + 1)))];
-	struct lsinfo lsis[TZ_MAX_LEAPS];
-	int			defaulttype;	/* for early times or if no transitions */
-=======
 	char		chars[BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, 4 /* sizeof gmt */ ),
 							  (2 * (TZ_STRLEN_MAX + 1)))];
 	struct lsinfo lsis[TZ_MAX_LEAPS];
@@ -65,7 +59,6 @@ struct state
 	 * 2018e or earlier.
 	 */
 	int			defaulttype;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 };
 
 
