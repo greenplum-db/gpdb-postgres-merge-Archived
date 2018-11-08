@@ -2513,14 +2513,14 @@ AlterTableStmt:
 					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
 		|	ALTER EXTERNAL TABLE relation_expr alter_table_cmds
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = $4;
 					n->cmds = $5;
 					n->relkind = OBJECT_EXTTABLE;
-=======
+					$$ = (Node *)n;
+				}
 		|	ALTER TABLE ALL IN_P TABLESPACE name SET TABLESPACE name opt_nowait
 				{
 					AlterTableMoveAllStmt *n =
@@ -2541,7 +2541,6 @@ AlterTableStmt:
 					n->roles = $9;
 					n->new_tablespacename = $12;
 					n->nowait = $13;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 					$$ = (Node *)n;
 				}
 		|	ALTER INDEX qualified_name alter_table_cmds
