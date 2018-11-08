@@ -20,11 +20,8 @@
 #include "cdb/cdbvars.h"
 #include "commands/async.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
-=======
 #include "replication/walsender.h"
 #include "storage/latch.h"
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/proc.h"

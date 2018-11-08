@@ -1358,8 +1358,6 @@ LWLockRelease(LWLock *l)
 		proc = head;
 		head = proc->lwWaitLink;
 		proc->lwWaitLink = NULL;
-<<<<<<< HEAD
-=======
 		/*
 		 * Guarantee that lwWaiting being unset only becomes visible once the
 		 * unlink from the link has completed. Otherwise the target backend
@@ -1370,7 +1368,6 @@ LWLockRelease(LWLock *l)
 		 * The barrier pairs with the SpinLockAcquire() when enqueing for
 		 * another lock.
 		 */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		pg_write_barrier();
 		proc->lwWaiting = false;
 		PGSemaphoreUnlock(&proc->sem);

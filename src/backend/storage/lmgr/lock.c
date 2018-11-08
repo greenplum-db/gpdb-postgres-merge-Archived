@@ -1434,10 +1434,7 @@ RemoveLocalLock(LOCALLOCK *locallock)
 		if (locallock->lockOwners[i].owner != NULL)
 			ResourceOwnerForgetLock(locallock->lockOwners[i].owner, locallock);
 	}
-<<<<<<< HEAD
-=======
 	locallock->numLockOwners = 0;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	if (locallock->lockOwners != NULL)
 		pfree(locallock->lockOwners);
 	locallock->lockOwners = NULL;
