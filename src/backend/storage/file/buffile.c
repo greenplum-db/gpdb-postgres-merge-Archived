@@ -72,13 +72,10 @@ struct BufFile
 	ResourceOwner resowner;
 
 	int			nbytes;			/* total # of valid bytes in buffer */
-<<<<<<< HEAD
 	int64		maxoffset;		/* maximum offset that this file has reached, for disk usage */
 
 	char	   *buffer;			/* CDB: -> buffer */
-=======
 	PGAlignedBlock buffer;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 };
 
 static BufFile *makeBufFile(File firstfile);

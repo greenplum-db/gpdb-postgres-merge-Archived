@@ -160,9 +160,6 @@ int			max_safe_fds = 32;	/* default if not changed */
 
 #define FileIsNotOpen(file) (VfdCache[file].fd == VFD_CLOSED)
 
-<<<<<<< HEAD
-#define FileUnknownPos INT64CONST(-1)
-=======
 /*
  * Note: a VFD's seekPos is normally always valid, but if for some reason
  * an lseek() fails, it might become set to FileUnknownPos.  We can struggle
@@ -171,7 +168,6 @@ int			max_safe_fds = 32;	/* default if not changed */
  */
 #define FileUnknownPos ((off_t) -1)
 #define FilePosIsUnknown(pos) ((pos) < 0)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 /* these are the assigned bits in fdstate below: */
 #define FD_TEMPORARY		(1 << 0)	/* T = delete when closed */
@@ -878,18 +874,10 @@ LruDelete(File file)
 				 vfdP->fileName);
 	}
 
-<<<<<<< HEAD
-	/* save the seek position */
-	vfdP->seekPos = pg_lseek64(vfdP->fd, INT64CONST(0), SEEK_CUR);
-	Assert(vfdP->seekPos != INT64CONST(-1));
-
-	/* close the file */
-=======
 	/*
 	 * Close the file.  We aren't expecting this to fail; if it does, better
 	 * to leak the FD than to mess up our internal state.
 	 */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	if (close(vfdP->fd))
 		elog(LOG, "could not close file \"%s\": %m", vfdP->fileName);
 	vfdP->fd = VFD_CLOSED;
@@ -955,10 +943,6 @@ LruInsert(File file)
 			++nfile;
 		}
 
-<<<<<<< HEAD
-		/* seek to the right position */
-		if (vfdP->seekPos != INT64CONST(0))
-=======
 		/*
 		 * Seek to the right position.  We need no special case for seekPos
 		 * equal to FileUnknownPos, as lseek() will certainly reject that
@@ -967,7 +951,6 @@ LruInsert(File file)
 		 * closing).
 		 */
 		if (vfdP->seekPos != (off_t) 0)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		{
 			if (lseek(vfdP->fd, vfdP->seekPos, SEEK_SET) < 0)
 			{
@@ -977,10 +960,6 @@ LruInsert(File file)
 				 */
 				int			save_errno = errno;
 
-<<<<<<< HEAD
-			returnValue = pg_lseek64(vfdP->fd, vfdP->seekPos, SEEK_SET);
-			Assert(returnValue != INT64CONST(-1));
-=======
 				elog(LOG, "could not seek file \"%s\" after re-opening: %m",
 					 vfdP->fileName);
 				(void) close(vfdP->fd);
@@ -989,7 +968,6 @@ LruInsert(File file)
 				errno = save_errno;
 				return -1;
 			}
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		}
 	}
 
@@ -1542,13 +1520,8 @@ FileClose(File file)
 	if (!FileIsNotOpen(file))
 	{
 		/* close the file */
-<<<<<<< HEAD
 		if (gp_retry_close(vfdP->fd))
-			elog(ERROR, "could not close file \"%s\": %m", vfdP->fileName);
-=======
-		if (close(vfdP->fd))
 			elog(LOG, "could not close file \"%s\": %m", vfdP->fileName);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		--nfile;
 		vfdP->fd = VFD_CLOSED;
@@ -1890,17 +1863,9 @@ FileSeek(File file, int64 offset, int whence)
 				vfdP->seekPos += offset;
 				break;
 			case SEEK_END:
-<<<<<<< HEAD
-				returnCode = FileAccess(file);
-				if (returnCode < 0)
-					return returnCode;
-				VfdCache[file].seekPos = pg_lseek64(VfdCache[file].fd,
-											   offset, whence);
-=======
 				if (FileAccess(file) < 0)
 					return (off_t) -1;
 				vfdP->seekPos = lseek(vfdP->fd, offset, whence);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 				break;
 			default:
 				elog(ERROR, "invalid whence: %d", whence);
@@ -1913,21 +1878,6 @@ FileSeek(File file, int64 offset, int whence)
 		{
 			case SEEK_SET:
 				if (offset < 0)
-<<<<<<< HEAD
-					elog(ERROR, "invalid seek offset: " INT64_FORMAT, offset);
-				if (VfdCache[file].seekPos != offset)
-					VfdCache[file].seekPos = pg_lseek64(VfdCache[file].fd,
-												   offset, whence);
-				break;
-			case SEEK_CUR:
-				if (offset != 0 || VfdCache[file].seekPos == FileUnknownPos)
-					VfdCache[file].seekPos = pg_lseek64(VfdCache[file].fd,
-												   offset, whence);
-				break;
-			case SEEK_END:
-				VfdCache[file].seekPos = pg_lseek64(VfdCache[file].fd,
-											   offset, whence);
-=======
 				{
 					errno = EINVAL;
 					return (off_t) -1;
@@ -1941,7 +1891,6 @@ FileSeek(File file, int64 offset, int whence)
 				break;
 			case SEEK_END:
 				vfdP->seekPos = lseek(vfdP->fd, offset, whence);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 				break;
 			default:
 				elog(ERROR, "invalid whence: %d", whence);
