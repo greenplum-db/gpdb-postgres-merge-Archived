@@ -39,18 +39,12 @@ BLD_ARCH = @BLD_ARCH@
 .SECONDARY:
 
 # PostgreSQL version number
-<<<<<<< HEAD
 PG_VERSION = @PG_PACKAGE_VERSION@
 PG_MAJORVERSION = @PG_MAJORVERSION@
 
 # GPDB version number
 GP_VERSION = @GP_VERSION_SHORT@
 GP_MAJORVERSION = @GP_MAJORVERSION@
-=======
-VERSION = @PACKAGE_VERSION@
-MAJORVERSION = @PG_MAJORVERSION@
-VERSION_NUM = @PG_VERSION_NUM@
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 # Set top_srcdir, srcdir, and VPATH.
 ifdef PGXS
@@ -390,8 +384,6 @@ PROVE = @PROVE@
 PG_PROVE_FLAGS = -I $(top_srcdir)/src/test/perl/ -I $(srcdir)
 # User-supplied prove flags such as --verbose can be provided in PROVE_FLAGS.
 PROVE_FLAGS =
-<<<<<<< HEAD
-=======
 
 # prepend to path if already set, else just set it
 define add_to_path
@@ -404,27 +396,14 @@ $(if $(filter $(PORTNAME),darwin),DYLD_LIBRARY_PATH,$(if $(filter $(PORTNAME),ai
 endef
 
 ifeq ($(enable_tap_tests),yes)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
-
-ifeq ($(enable_tap_tests),yes)
 define prove_installcheck
 rm -rf $(CURDIR)/tmp_check/log
-<<<<<<< HEAD
 cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" top_builddir='$(CURDIR)/$(top_builddir)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
-=======
-cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' top_builddir='$(CURDIR)/$(top_builddir)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 endef
 
 define prove_check
 rm -rf $(CURDIR)/tmp_check/log
-<<<<<<< HEAD
 cd $(srcdir) && TESTDIR='$(CURDIR)' $(with_temp_install) top_builddir='$(CURDIR)/$(top_builddir)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
-=======
-$(MKDIR_P) tmp_check/log
-$(MAKE) -C $(top_builddir) DESTDIR='$(CURDIR)'/tmp_check/install install >'$(CURDIR)'/tmp_check/log/install.log 2>&1
-cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(CURDIR)/tmp_check/install$(bindir):$$PATH" $(call add_to_path,$(ld_library_path_var),$(CURDIR)/tmp_check/install$(libdir)) top_builddir='$(CURDIR)/$(top_builddir)' PGPORT='6$(DEF_PGPORT)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 endef
 
 else
@@ -662,13 +641,9 @@ LIBS := -lpgcommon -lpgport $(LIBS)
 
 # to make ws2_32.lib the last library
 ifeq ($(PORTNAME),win32)
-<<<<<<< HEAD
 LIBS += -lws2_32 -lshfolder
 override LDFLAGS := -L$(top_builddir)/gpAux/ext/win32/kfw-3-2-2/lib $(LDFLAGS)
 override AR := /usr/bin/i686-pc-mingw32-ar
-=======
-LIBS += -lws2_32
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 endif
 
 # Not really standard libc functions, used by the backend.
