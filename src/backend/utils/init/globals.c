@@ -33,19 +33,14 @@ volatile bool QueryFinishPending = false;
 volatile bool ProcDiePending = false;
 volatile bool ClientConnectionLost = false;
 volatile bool ImmediateInterruptOK = false;
-<<<<<<< HEAD
 volatile bool ImmediateDieOK = false;
 volatile bool TermSignalReceived = false;
 
 // Make these signed integers (instead of uint32) to detect garbage negative values.
-volatile int32 InterruptHoldoffCount = 0;
-volatile int32 CritSectionCount = 0;
-=======
 volatile sig_atomic_t ConfigReloadPending = false;
-volatile uint32 InterruptHoldoffCount = 0;
-volatile uint32 QueryCancelHoldoffCount = 0;
-volatile uint32 CritSectionCount = 0;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+volatile int32 InterruptHoldoffCount = 0;
+volatile int32 QueryCancelHoldoffCount = 0;
+volatile int32 CritSectionCount = 0;
 
 int			MyProcPid;
 pg_time_t	MyStartTime;
