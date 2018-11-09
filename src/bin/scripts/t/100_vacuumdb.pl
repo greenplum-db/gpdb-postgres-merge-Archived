@@ -1,11 +1,7 @@
 use strict;
 use warnings;
 use TestLib;
-<<<<<<< HEAD
-use Test::More tests => 18;
-=======
 use Test::More tests => 23;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 program_help_ok('vacuumdb');
 program_version_ok('vacuumdb');

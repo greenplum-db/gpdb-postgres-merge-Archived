@@ -393,14 +393,10 @@ initializeInput(int flags)
  * max_lines: if >= 0, limit history file to that many entries.
  */
 #ifdef USE_READLINE
-<<<<<<< HEAD
-	int			errnum = 0;
-=======
 static bool
 saveHistory(char *fname, int max_lines)
 {
 	int			errnum;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * Suppressing the write attempt when HISTFILE is set to /dev/null may

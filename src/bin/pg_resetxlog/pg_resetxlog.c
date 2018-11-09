@@ -86,15 +86,12 @@ static void KillExistingXLOG(void);
 static void KillExistingArchiveStatus(void);
 static void WriteEmptyXLOG(void);
 static void usage(void);
-<<<<<<< HEAD
 static bool AcceptWarning(void);
-=======
 static void	get_restricted_token(const char *progname);
 
 #ifdef WIN32
 static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, const char *progname);
 #endif
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 #ifndef BUFFER_LEN
 #define BUFFER_LEN (2 * (MAXPGPATH))

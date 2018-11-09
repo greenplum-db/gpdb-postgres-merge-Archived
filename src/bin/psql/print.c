@@ -214,16 +214,6 @@ format_numeric_locale(const char *my_str)
 		}
 		new_str[new_str_pos++] = my_str[i];
 	}
-<<<<<<< HEAD
-
-	/* handle decimal point if any */
-	if (my_str[i] == '.')
-	{
-		strcpy(&new_str[new_str_pos], decimal_point);
-		new_str_pos += strlen(decimal_point);
-		i++;
-	}
-=======
 
 	/* handle decimal point if any */
 	if (my_str[i] == '.')
@@ -238,7 +228,6 @@ format_numeric_locale(const char *my_str)
 
 	/* assert we didn't underestimate new_len (an overestimate is OK) */
 	Assert(strlen(new_str) <= new_len);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/* copy the rest (fractional digits and/or exponent, and \0 terminator) */
 	strcpy(&new_str[new_str_pos], &my_str[i]);
