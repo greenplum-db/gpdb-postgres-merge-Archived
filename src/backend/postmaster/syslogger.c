@@ -166,10 +166,7 @@ NON_EXEC_STATIC void SysLoggerMain(int argc, char *argv[]) __attribute__((noretu
 #if 0
 static void process_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 static void flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 static FILE *logfile_open(const char *filename, const char *mode,
 			 bool allow_errors);
 
@@ -185,7 +182,12 @@ static void sigHupHandler(SIGNAL_ARGS);
 static void sigUsr1Handler(SIGNAL_ARGS);
 
 /*
- * GPDB_92_MERGE_FIXME_AFTER_RUNNING: This is a ugly hack.
+ * GPDB_94_MERGE_FIXME: We might need to refactor the code to make future
+ * merge easier.
+ */
+
+/*
+ * GPDB_92_MERGE_FIXME: This is a ugly hack.
  * PG 9.2 changes to use dynamic lists for chunk use. It uses the pid of as
  * index. pid is extracted from the data after pipe read, however our current code
  * is differnt than upstream pg. PG has a temp buffer. It analyzes the buffer
@@ -398,13 +400,9 @@ SysLoggerMain(int argc, char *argv[])
 	 * time because passing down just the pg_time_t is a lot cheaper than
 	 * passing a whole file path in the EXEC_BACKEND case.
 	 */
-<<<<<<< HEAD
 	last_file_name = logfile_getname(first_syslogger_file_time, NULL, Log_directory, Log_filename);
-=======
-	last_file_name = logfile_getname(first_syslogger_file_time, NULL);
 	if (csvlogFile != NULL)
-		last_csv_file_name = logfile_getname(first_syslogger_file_time, ".csv");
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+		last_csv_file_name = logfile_getname(first_syslogger_file_time, ".csv", Log_directory, Log_filename);
 
     /* remember active logfile parameters */
     currentLogDir = pstrdup(Log_directory);
@@ -413,12 +411,6 @@ SysLoggerMain(int argc, char *argv[])
     /* set next planned rotation time */
     set_next_rotation_time();
 
-<<<<<<< HEAD
-    /* main worker loop */
-    for (;;)
-    {
-        bool		time_based_rotation = false;
-=======
 	/*
 	 * Reset whereToSendOutput, as the postmaster will do (but hasn't yet, at
 	 * the point where we forked).  This prevents duplicate output of messages
@@ -430,7 +422,6 @@ SysLoggerMain(int argc, char *argv[])
 	for (;;)
 	{
 		bool		time_based_rotation = false;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		int			size_rotation_for = 0;
 		bool		size_rotation_for_alert = false;
 		long		cur_timeout;
@@ -908,12 +899,8 @@ SysLogger_Start(void)
 	 * a time-based rotation.
 	 */
 	first_syslogger_file_time = time(NULL);
-<<<<<<< HEAD
-    filename = logfile_getname(first_syslogger_file_time, NULL, Log_directory, Log_filename);
-=======
 
-	filename = logfile_getname(first_syslogger_file_time, NULL);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+	filename = logfile_getname(first_syslogger_file_time, NULL, Log_directory, Log_filename);
 
 	syslogFile = logfile_open(filename, "a", false);
 
@@ -1025,29 +1012,21 @@ SysLogger_Start(void)
                     redirection_done = true;
                 }
 
-<<<<<<< HEAD
-                /* postmaster will never write the file; close it */
+				/* postmaster will never write the file(s); close 'em */
                 fclose(syslogFile);
                 syslogFile = NULL;
-                if (alertLogFile)
+				if (alertLogFile != NULL)
                 {
                     fclose(alertLogFile);
                     alertLogFile = NULL;
                 }
+				if (csvlogFile != NULL)
+				{
+					fclose(csvlogFile);
+					csvlogFile = NULL;
+				}
                 return (int) sysloggerPid;
         }
-=======
-			/* postmaster will never write the file(s); close 'em */
-			fclose(syslogFile);
-			syslogFile = NULL;
-			if (csvlogFile != NULL)
-			{
-				fclose(csvlogFile);
-				csvlogFile = NULL;
-			}
-			return (int) sysloggerPid;
-	}
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
     /* we should never reach here */
     return 0;
@@ -1064,17 +1043,11 @@ SysLogger_Start(void)
 static pid_t
 syslogger_forkexec(void)
 {
-<<<<<<< HEAD
     char	   *av[10];
     int			ac = 0;
     char		filenobuf[32];
-    char        alertFileNobuf[32];
-=======
-	char	   *av[10];
-	int			ac = 0;
-	char		filenobuf[32];
+	char        alertFilenobuf[32];
 	char		csvfilenobuf[32];
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
     av[ac++] = "postgres";
     av[ac++] = "--forklog";
@@ -1096,25 +1069,24 @@ syslogger_forkexec(void)
 #endif   /* WIN32 */
 	av[ac++] = filenobuf;
 
-<<<<<<< HEAD
 	if (alert_log_level_opened)
 	{
 #ifndef WIN32
 		if (alertLogFile != NULL)
-			snprintf(alertFileNoBuf, sizeof(alertFileNoBuf), "%d",
+			snprintf(alertFilenobuf, sizeof(alertFilenobuf), "%d",
 					 fileno(alertLogFile));
 		else
-			strcpy(alertFileNoBuf, "-1");
+			strcpy(alertFilenobuf, "-1");
 #else							/* WIN32 */
 		if (alertLogFile != NULL)
-			snprintf(alertFileNoBuf, sizeof(alertFileNoBuf), "%ld",
+			snprintf(alertFilenobuf, sizeof(alertFilenobuf), "%ld",
 					 _get_osfhandle(_fileno(alertLogFile)));
 		else
-			strcpy(alertFileNoBuf, "0");
+			strcpy(alertFilenobuf, "0");
 #endif
-		av[ac++] = alertFileNoBuf;
+		av[ac++] = alertFilenobuf;
 	}
-=======
+
 #ifndef WIN32
 	if (csvlogFile != NULL)
 		snprintf(csvfilenobuf, sizeof(csvfilenobuf), "%d",
@@ -1130,7 +1102,6 @@ syslogger_forkexec(void)
 #endif							/* WIN32 */
 	av[ac++] = csvfilenobuf;
 
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	av[ac] = NULL;
 	Assert(ac < lengthof(av));
 
@@ -1148,13 +1119,8 @@ syslogger_parseArgs(int argc, char *argv[])
     int			fd;
     int         alertFd;
 
-<<<<<<< HEAD
-    Assert(argc == alert_log_level_opened ? 4 : 3);
+    Assert(argc == alert_log_level_opened ? 5 : 4);
     argv += 3;
-=======
-	Assert(argc == 5);
-	argv += 3;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * Re-open the error output files that were opened by SysLogger_Start().
@@ -2111,7 +2077,12 @@ static void write_binary_to_file(const char *buffer, int count, FILE *fh)
     LeaveCriticalSection(&fileSection);
 #endif
 
-    /* can't use ereport here because of possible recursion */
+	/*
+	 * Try to report any failure.  We mustn't use ereport because it would
+	 * just recurse right back here, but write_stderr is OK: it will write
+	 * either to the postmaster's original stderr, or to /dev/null, but never
+	 * to our input pipe which would result in a different sort of looping.
+	 */
     if (rc != count)
         write_stderr("could not write to log file: %s\n", strerror(errno));
 }
@@ -2129,10 +2100,23 @@ static void write_binary_to_file(const char *buffer, int count, FILE *fh)
  */
 void write_syslogger_file_binary(const char *buffer, int count, int destination)
 {
+	/*
+	 * If we're told to write to csvlogFile, but it's not open, dump the data
+	 * to syslogFile (which is always open) instead.  This can happen if CSV
+	 * output is enabled after postmaster start and we've been unable to open
+	 * csvlogFile.  There are also race conditions during a parameter change
+	 * whereby backends might send us CSV output before we open csvlogFile or
+	 * after we close it.  Writing CSV-formatted output to the regular log
+	 * file isn't great, but it beats dropping log output on the floor.
+	 *
+	 * Think not to improve this by trying to open csvlogFile on-the-fly.  Any
+	 * failure in that would lead to recursion.
+	 */
 	if (destination == LOG_DESTINATION_STDERR)
 		write_binary_to_file(buffer, count, syslogFile);
 	else if (destination &= LOG_DESTINATION_CSVLOG)
-		write_binary_to_file(buffer, count, csvlogFile);
+		write_binary_to_file(buffer, count,
+							 csvlogFile != NULL ? csvlogFile : syslogFile);
 
 	/* also write to the alert log if requested */
 	if (write_to_alert_log)
@@ -2147,38 +2131,7 @@ void write_syslogger_file_binary(const char *buffer, int count, int destination)
  */
 void write_syslogger_file(const char *buffer, int count, int destination)
 {
-<<<<<<< HEAD
     write_syslogger_file_binary(buffer,count, destination);
-=======
-	int			rc;
-	FILE	   *logfile;
-
-	/*
-	 * If we're told to write to csvlogFile, but it's not open, dump the data
-	 * to syslogFile (which is always open) instead.  This can happen if CSV
-	 * output is enabled after postmaster start and we've been unable to open
-	 * csvlogFile.  There are also race conditions during a parameter change
-	 * whereby backends might send us CSV output before we open csvlogFile or
-	 * after we close it.  Writing CSV-formatted output to the regular log
-	 * file isn't great, but it beats dropping log output on the floor.
-	 *
-	 * Think not to improve this by trying to open csvlogFile on-the-fly.  Any
-	 * failure in that would lead to recursion.
-	 */
-	logfile = (destination == LOG_DESTINATION_CSVLOG &&
-			   csvlogFile != NULL) ? csvlogFile : syslogFile;
-
-	rc = fwrite(buffer, 1, count, logfile);
-
-	/*
-	 * Try to report any failure.  We mustn't use ereport because it would
-	 * just recurse right back here, but write_stderr is OK: it will write
-	 * either to the postmaster's original stderr, or to /dev/null, but never
-	 * to our input pipe which would result in a different sort of looping.
-	 */
-	if (rc != count)
-		write_stderr("could not write to log file: %s\n", strerror(errno));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 }
 #ifdef WIN32
 
@@ -2339,13 +2292,9 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 		fntime = next_rotation_time;
     else
 		fntime = time(NULL);
-<<<<<<< HEAD
 	filename = logfile_getname(fntime, suffix, log_directory, log_filename);
-=======
-	filename = logfile_getname(fntime, NULL);
 	if (Log_destination & LOG_DESTINATION_CSVLOG)
 		csvfilename = logfile_getname(fntime, ".csv");
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * Decide whether to overwrite or append.  We can overwrite if (a)
@@ -2395,8 +2344,6 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 		filename = NULL;
 	}
 
-<<<<<<< HEAD
-=======
 	/*
 	 * Same as above, but for csv file.  Note that if LOG_DESTINATION_CSVLOG
 	 * was just turned on, we might have to open csvlogFile here though it was
@@ -2458,7 +2405,6 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 		last_csv_file_name = NULL;
 	}
 
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	if (filename)
 		pfree(filename);
 
