@@ -903,11 +903,7 @@ AllocSetContextCreate(MemoryContext parent,
                                (unsigned long)blksize);
 		block->aset = context;
 		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
-<<<<<<< HEAD
-=======
-		block->endptr = ((char *) block) + blksize;
 		block->prev = NULL;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		block->next = context->blocks;
 		if (block->next)
 			block->next->prev = block;
@@ -1524,24 +1520,8 @@ AllocSetFreeImpl(MemoryContext context, void *pointer, bool isHeader)
 		 */
 		AllocBlock	block = (AllocBlock) (((char *) chunk) - ALLOC_BLOCKHDRSZ);
 
-<<<<<<< HEAD
 		size_t freesz;
 
-		while (block != NULL)
-		{
-			if (chunk == (AllocChunk) (((char *) block) + ALLOC_BLOCKHDRSZ))
-				break;
-			prevblock = block;
-			block = block->next;
-		}
-		if (block == NULL)
-            MemoryContextError(ERRCODE_INTERNAL_ERROR,
-                               &set->header, CDB_MCXT_WHERE(&set->header),
-                               "could not find block containing chunk %p", chunk);
-		/* let's just make sure chunk is the only one in the block */
-		Assert(block->freeptr == ((char *) block) +
-			   (chunk->size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ));
-=======
 		/*
 		 * Try to verify that we have a sane block pointer: it should
 		 * reference the correct aset, and freeptr and endptr should point
@@ -1552,22 +1532,16 @@ AllocSetFreeImpl(MemoryContext context, void *pointer, bool isHeader)
 			block->freeptr != ((char *) block) +
 			(chunk->size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ))
 			elog(ERROR, "could not find block containing chunk %p", chunk);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		/* OK, remove block from aset's list and free it */
 		if (block->prev)
 			block->prev->next = block->next;
 		else
 			set->blocks = block->next;
-<<<<<<< HEAD
-		else
-			prevblock->next = block->next;
-
-		freesz = UserPtr_GetUserPtrSize(block);
-=======
 		if (block->next)
 			block->next->prev = block->prev;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+		freesz = UserPtr_GetUserPtrSize(block);
+
 #ifdef CLOBBER_FREED_MEMORY
 		wipe_mem(block, block->freeptr - ((char *) block));
 #endif
@@ -1722,22 +1696,6 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		Size		blksize;
         Size        oldblksize;
 
-<<<<<<< HEAD
-		while (block != NULL)
-		{
-			if (chunk == (AllocChunk) (((char *) block) + ALLOC_BLOCKHDRSZ))
-				break;
-			prevblock = block;
-			block = block->next;
-		}
-		if (block == NULL)
-            MemoryContextError(ERRCODE_INTERNAL_ERROR,
-                               &set->header, CDB_MCXT_WHERE(&set->header),
-                               "could not find block containing chunk %p", chunk);
-		/* let's just make sure chunk is the only one in the block */
-		Assert(block->freeptr == ((char *) block) +
-			   (chunk->size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ));
-=======
 		/*
 		 * Try to verify that we have a sane block pointer: it should
 		 * reference the correct aset, and freeptr and endptr should point
@@ -1748,7 +1706,6 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 			block->freeptr != ((char *) block) +
 			(chunk->size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ))
 			elog(ERROR, "could not find block containing chunk %p", chunk);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		/* isHeader is set to false as we should never require realloc for shared header */
 		AllocFreeInfo(set, chunk, false);
@@ -1815,14 +1772,10 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		/* Make any trailing alignment padding NOACCESS. */
 		VALGRIND_MAKE_MEM_NOACCESS((char *) pointer + size, chksize - size);
 
-<<<<<<< HEAD
 		AllocAllocInfo(set, chunk, false /* We should never require realloc for shared header */);
 
 		MemoryContextNoteAlloc(&set->header, blksize - oldblksize); /*CDB*/
-		return AllocChunkGetPointer(chunk);
-=======
 		return pointer;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	}
 	else
 	{

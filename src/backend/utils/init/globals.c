@@ -33,6 +33,7 @@ volatile bool QueryFinishPending = false;
 volatile bool ProcDiePending = false;
 volatile bool ClientConnectionLost = false;
 volatile bool ImmediateInterruptOK = false;
+volatile sig_atomic_t ConfigReloadPending = false;
 volatile bool ImmediateDieOK = false;
 volatile bool TermSignalReceived = false;
 

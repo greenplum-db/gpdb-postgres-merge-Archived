@@ -206,22 +206,9 @@ static void assign_application_name(const char *newval, void *extra);
 static const char *show_unix_socket_permissions(void);
 static const char *show_log_file_mode(void);
 
-<<<<<<< HEAD
 static int	defunct_int = 0;
 static bool	defunct_bool = false;
 static double defunct_double = 0;
-
-static char *config_enum_get_options(struct config_enum * record,
-						const char *prefix, const char *suffix,
-						const char *separator);
-
-static bool validate_conf_option(struct config_generic * record,
-					 const char *name, const char *value, GucSource source,
-					 int elevel, bool freemem, void *newval, void **newextra);
-
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
-
 /*
  * Options for enum values defined in this module.
  *
@@ -2545,8 +2532,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-<<<<<<< HEAD
-=======
 		{"ssl_renegotiation_limit", PGC_USERSET, CONN_AUTH_SECURITY,
 			gettext_noop("Set the amount of traffic to send and receive before renegotiating the encryption keys."),
 			NULL,
@@ -2558,7 +2543,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		{"tcp_keepalives_count", PGC_USERSET, CLIENT_CONN_OTHER,
 			gettext_noop("Maximum number of TCP keepalive retransmits."),
 			gettext_noop("This controls the number of consecutive keepalive retransmits that can be "
@@ -3186,11 +3170,7 @@ static struct config_string ConfigureNamesString[] =
 		{"data_directory", PGC_POSTMASTER, FILE_LOCATIONS,
 			gettext_noop("Sets the server's data directory."),
 			NULL,
-<<<<<<< HEAD
-			GUC_SUPERUSER_ONLY | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-=======
-			GUC_SUPERUSER_ONLY | GUC_DISALLOW_IN_AUTO_FILE
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+			GUC_SUPERUSER_ONLY | GUC_DISALLOW_IN_AUTO_FILE | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&data_directory,
 		NULL,

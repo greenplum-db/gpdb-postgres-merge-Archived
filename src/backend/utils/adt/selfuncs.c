@@ -168,19 +168,8 @@ static double eqjoinsel_semi(Oid operator,
 			   RelOptInfo *inner_rel);
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
-<<<<<<< HEAD
 				  double *scaledlobound, double *scaledhibound, bool isgt);
-static double convert_numeric_to_scalar(Datum value, Oid typid);
-=======
-				  double *scaledlobound, double *scaledhibound);
 static double convert_numeric_to_scalar(Datum value, Oid typid, bool *failure);
-static void convert_string_to_scalar(char *value,
-						 double *scaledvalue,
-						 char *lobound,
-						 double *scaledlobound,
-						 char *hibound,
-						 double *scaledhibound);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 static void convert_bytea_to_scalar(Datum value,
 						double *scaledvalue,
 						Datum lobound,
@@ -189,12 +178,6 @@ static void convert_bytea_to_scalar(Datum value,
 						double *scaledhibound);
 static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 							int rangelo, int rangehi);
-<<<<<<< HEAD
-=======
-static char *convert_string_datum(Datum value, Oid typid, bool *failure);
-static double convert_timevalue_to_scalar(Datum value, Oid typid,
-							bool *failure);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 static void examine_simple_variable(PlannerInfo *root, Var *var,
 						VariableStatData *vardata);
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
@@ -622,15 +605,9 @@ mcv_selectivity(VariableStatData   *vardata,
 	mcv_selec = 0.0;
 	sumcommon = 0.0;
 
-<<<<<<< HEAD
 	if (HeapTupleIsValid(tp) &&
-		get_attstatsslot(&sslot, tp,
-=======
-	if (HeapTupleIsValid(vardata->statsTuple) &&
 		statistic_proc_security_check(vardata, opproc->fn_oid) &&
-		get_attstatsslot(vardata->statsTuple,
-						 vardata->atttype, vardata->atttypmod,
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+		get_attstatsslot(&sslot, tp,
 						 STATISTIC_KIND_MCV, InvalidOid,
 						 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS))
 	{
@@ -701,15 +678,9 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 	Assert(n_skip >= 0);
 	Assert(min_hist_size > 2 * n_skip);
 
-<<<<<<< HEAD
 	if (HeapTupleIsValid(tp) &&
-		get_attstatsslot(&sslot, tp,
-=======
-	if (HeapTupleIsValid(vardata->statsTuple) &&
 		statistic_proc_security_check(vardata, opproc->fn_oid) &&
-		get_attstatsslot(vardata->statsTuple,
-						 vardata->atttype, vardata->atttypmod,
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+		get_attstatsslot(&sslot, tp,
 						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
 						 ATTSTATSSLOT_VALUES))
 	{
@@ -781,15 +752,9 @@ ineq_histogram_selectivity(PlannerInfo *root,
 	 * appears in pg_statistic is sorted the same way our operator sorts, or
 	 * the reverse way if isgt is TRUE.
 	 */
-<<<<<<< HEAD
 	if (HeapTupleIsValid(tp) &&
-		get_attstatsslot(&sslot, tp,
-=======
-	if (HeapTupleIsValid(vardata->statsTuple) &&
 		statistic_proc_security_check(vardata, opproc->fn_oid) &&
-		get_attstatsslot(vardata->statsTuple,
-						 vardata->atttype, vardata->atttypmod,
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+		get_attstatsslot(&sslot, tp,
 						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
 						 ATTSTATSSLOT_VALUES))
 	{
@@ -2255,58 +2220,31 @@ eqjoinsel_inner(Oid operator,
 	nd1 = get_variable_numdistinct(vardata1, &isdefault1);
 	nd2 = get_variable_numdistinct(vardata2, &isdefault2);
 
-<<<<<<< HEAD
 	memset(&sslot1, 0, sizeof(sslot1));
 	memset(&sslot2, 0, sizeof(sslot2));
 
+	opfuncoid = get_opcode(operator);
 	if (HeapTupleIsValid(getStatsTuple(vardata1)))
 	{
 		HeapTuple tp = getStatsTuple(vardata1);
 		stats1 = (Form_pg_statistic) GETSTRUCT(tp);
-		have_mcvs1 = get_attstatsslot(&sslot1, tp,
-									  STATISTIC_KIND_MCV, InvalidOid,
-							 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
-
-=======
-	opfuncoid = get_opcode(operator);
-
-	if (HeapTupleIsValid(vardata1->statsTuple))
-	{
-		/* note we allow use of nullfrac regardless of security check */
-		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1->statsTuple);
 		if (statistic_proc_security_check(vardata1, opfuncoid))
-			have_mcvs1 = get_attstatsslot(vardata1->statsTuple,
-										  vardata1->atttype,
-										  vardata1->atttypmod,
-										  STATISTIC_KIND_MCV,
-										  InvalidOid,
-										  NULL,
-										  &values1, &nvalues1,
-										  &numbers1, &nnumbers1);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+			have_mcvs1 = get_attstatsslot(&sslot1, tp,
+										  STATISTIC_KIND_MCV, InvalidOid,
+										  ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
+
+
+
 	}
 
 	if (HeapTupleIsValid(getStatsTuple(vardata2)))
 	{
-<<<<<<< HEAD
 		HeapTuple tp = getStatsTuple(vardata2);
 		stats2 = (Form_pg_statistic) GETSTRUCT(tp);
-		have_mcvs2 = get_attstatsslot(&sslot2, tp,
-									  STATISTIC_KIND_MCV, InvalidOid,
-							 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
-=======
-		/* note we allow use of nullfrac regardless of security check */
-		stats2 = (Form_pg_statistic) GETSTRUCT(vardata2->statsTuple);
 		if (statistic_proc_security_check(vardata2, opfuncoid))
-			have_mcvs2 = get_attstatsslot(vardata2->statsTuple,
-										  vardata2->atttype,
-										  vardata2->atttypmod,
-										  STATISTIC_KIND_MCV,
-										  InvalidOid,
-										  NULL,
-										  &values2, &nvalues2,
-										  &numbers2, &nnumbers2);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+			have_mcvs2 = get_attstatsslot(&sslot2, tp,
+										  STATISTIC_KIND_MCV, InvalidOid,
+										  ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
 	}
 
 	if (have_mcvs1 && have_mcvs2)
@@ -2340,15 +2278,9 @@ eqjoinsel_inner(Oid operator,
 		int			i,
 					nmatches;
 
-<<<<<<< HEAD
 		fmgr_info(get_opcode(operator), &eqproc);
 		hasmatch1 = (bool *) palloc0(sslot1.nvalues * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(sslot2.nvalues * sizeof(bool));
-=======
-		fmgr_info(opfuncoid, &eqproc);
-		hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
-		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		/*
 		 * Note we assume that each MCV will match at most one member of the
@@ -2535,21 +2467,10 @@ eqjoinsel_semi(Oid operator,
 	{
 		/* note we allow use of nullfrac regardless of security check */
 		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1->statsTuple);
-<<<<<<< HEAD
-		have_mcvs1 = get_attstatsslot(&sslot1, vardata1->statsTuple,
-									  STATISTIC_KIND_MCV, InvalidOid,
-							 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
-=======
 		if (statistic_proc_security_check(vardata1, opfuncoid))
-			have_mcvs1 = get_attstatsslot(vardata1->statsTuple,
-										  vardata1->atttype,
-										  vardata1->atttypmod,
-										  STATISTIC_KIND_MCV,
-										  InvalidOid,
-										  NULL,
-										  &values1, &nvalues1,
-										  &numbers1, &nnumbers1);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+			have_mcvs1 = get_attstatsslot(&sslot1, vardata1->statsTuple,
+										  STATISTIC_KIND_MCV, InvalidOid,
+										  ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
 	}
 
 	if (HeapTupleIsValid(vardata2->statsTuple) &&
@@ -2591,15 +2512,9 @@ eqjoinsel_semi(Oid operator,
 		 */
 		clamped_nvalues2 = Min(sslot2.nvalues, nd2);
 
-<<<<<<< HEAD
 		fmgr_info(get_opcode(operator), &eqproc);
 		hasmatch1 = (bool *) palloc0(sslot1.nvalues * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(sslot2.nvalues * sizeof(bool));
-=======
-		fmgr_info(opfuncoid, &eqproc);
-		hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
-		hasmatch2 = (bool *) palloc0(clamped_nvalues2 * sizeof(bool));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		/*
 		 * Note we assume that each MCV will match at most one member of the
@@ -3718,33 +3633,9 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case TEXTOID:
 		case NAMEOID:
 			{
-<<<<<<< HEAD
 			    *scaledlobound = 1;
 			    *scaledhibound = 2;
 			    *scaledvalue = isgt ? 1 : 2;
-=======
-				char	   *valstr = convert_string_datum(value, valuetypid,
-														  &failure);
-				char	   *lostr = convert_string_datum(lobound, boundstypid,
-														 &failure);
-				char	   *histr = convert_string_datum(hibound, boundstypid,
-														 &failure);
-
-				/*
-				 * Bail out if any of the values is not of string type.  We
-				 * might leak converted strings for the other value(s), but
-				 * that's not worth troubling over.
-				 */
-				if (failure)
-					return false;
-
-				convert_string_to_scalar(valstr, scaledvalue,
-										 lostr, scaledlobound,
-										 histr, scaledhibound);
-				pfree(valstr);
-				pfree(lostr);
-				pfree(histr);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 				return true;
 			}
 
@@ -4185,13 +4076,8 @@ convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
  * On failure (e.g., unsupported typid), set *failure to true;
  * otherwise, that variable is not changed.
  */
-<<<<<<< HEAD
-double
-convert_timevalue_to_scalar(Datum value, Oid typid)
-=======
 static double
 convert_timevalue_to_scalar(Datum value, Oid typid, bool *failure)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	switch (typid)
 	{
@@ -5123,13 +5009,8 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 	bool		have_data = false;
 	int16		typLen;
 	bool		typByVal;
-<<<<<<< HEAD
 	AttStatsSlot sslot;
-=======
 	Oid			opfuncoid;
-	Datum	   *values;
-	int			nvalues;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	int			i;
 	HeapTuple	tp = getStatsTuple(vardata);
 

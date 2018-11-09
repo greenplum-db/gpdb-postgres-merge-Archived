@@ -2679,31 +2679,7 @@ set_deparse_context_planstate(List *dpcontext,
 	/* Set our attention on the specific plan node passed in */
 	set_deparse_planstate(dpns, (PlanState *) planstate);
 	dpns->ancestors = ancestors;
-
-<<<<<<< HEAD
-	/*
-	 * Previously, this function was called from explain_partition_selector with
-	 * the Parent node for both Node arguments. A change to the function
-	 * signature requires us to first set the innerplan and detect that it is
-	 * indeed a PartitionSelector in order to then set both outer_plan and
-	 * inner_plan to the parent. A simple check of the parent->lefttree is not
-	 * sufficient since a Sequence operator will have the child nodes in its
-	 * subplans list. Thus, we allow push_plans to assign inner and outer plan
-	 * as usual and then add a check here
-	 */
-	if (dpns->inner_planstate && IsA(dpns->inner_planstate, PartitionSelectorState))
-	{
-		dpns->inner_planstate = (PlanState *) planstate;
-		dpns->outer_planstate = (PlanState *) planstate;
-		dpns->outer_tlist = ((PlanState *) planstate)->plan->targetlist;
-		dpns->inner_tlist = ((PlanState *) planstate)->plan->targetlist;
-	}
-
-	/* Return a one-deep namespace stack */
-	return list_make1(dpns);
-=======
 	return dpcontext;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 }
 
 /*
@@ -10100,9 +10076,6 @@ flatten_reloptions(Oid relid)
 	reloptions = SysCacheGetAttr(RELOID, tuple,
 								 Anum_pg_class_reloptions, &isnull);
 	if (!isnull)
-<<<<<<< HEAD
-		result = reloptions_to_string(reloptions);
-=======
 	{
 		StringInfoData buf;
 		Datum	   *options;
@@ -10158,7 +10131,6 @@ flatten_reloptions(Oid relid)
 
 		result = buf.data;
 	}
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	ReleaseSysCache(tuple);
 

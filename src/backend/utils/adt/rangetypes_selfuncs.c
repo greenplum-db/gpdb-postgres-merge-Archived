@@ -245,7 +245,6 @@ calc_rangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 		null_frac = stats->stanullfrac;
 
 		/* Try to get fraction of empty ranges */
-<<<<<<< HEAD
 		if (get_attstatsslot(&sslot, vardata->statsTuple,
 							 STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM,
 							 InvalidOid,
@@ -255,20 +254,6 @@ calc_rangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 				elog(ERROR, "invalid empty fraction statistic");	/* shouldn't happen */
 			empty_frac = sslot.numbers[0];
 			free_attstatsslot(&sslot);
-=======
-		if (get_attstatsslot(vardata->statsTuple,
-							 FLOAT8OID, -1,
-							 STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM,
-							 InvalidOid,
-							 NULL,
-							 NULL, NULL,
-							 &numbers, &nnumbers))
-		{
-			if (nnumbers != 1)
-				elog(ERROR, "invalid empty fraction statistic");		/* shouldn't happen */
-			empty_frac = numbers[0];
-			free_attstatsslot(FLOAT8OID, NULL, 0, numbers, nnumbers);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		}
 		else
 		{
@@ -388,11 +373,6 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 	AttStatsSlot hslot;
 	AttStatsSlot lslot;
 	int			nhist;
-<<<<<<< HEAD
-=======
-	Datum	   *length_hist_values = NULL;
-	int			length_nhist = 0;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	RangeBound *hist_lower;
 	RangeBound *hist_upper;
 	int			i;
@@ -438,40 +418,20 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 		operator == OID_RANGE_CONTAINED_OP)
 	{
 		if (!(HeapTupleIsValid(vardata->statsTuple) &&
-<<<<<<< HEAD
 			  get_attstatsslot(&lslot, vardata->statsTuple,
 							   STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM,
 							   InvalidOid,
 							   ATTSTATSSLOT_VALUES)))
 		{
 			free_attstatsslot(&hslot);
-=======
-			  get_attstatsslot(vardata->statsTuple,
-							   FLOAT8OID, -1,
-							   STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM,
-							   InvalidOid,
-							   NULL,
-							   &length_hist_values, &length_nhist,
-							   NULL, NULL)))
-		{
-			free_attstatsslot(vardata->atttype, hist_values, nhist, NULL, 0);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			return -1.0;
 		}
 
 		/* check that it's a histogram, not just a dummy entry */
-<<<<<<< HEAD
 		if (lslot.nvalues < 2)
 		{
 			free_attstatsslot(&lslot);
 			free_attstatsslot(&hslot);
-=======
-		if (length_nhist < 2)
-		{
-			free_attstatsslot(FLOAT8OID,
-							  length_hist_values, length_nhist, NULL, 0);
-			free_attstatsslot(vardata->atttype, hist_values, nhist, NULL, 0);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			return -1.0;
 		}
 	}
@@ -611,14 +571,8 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 			break;
 	}
 
-<<<<<<< HEAD
 	free_attstatsslot(&lslot);
 	free_attstatsslot(&hslot);
-=======
-	free_attstatsslot(FLOAT8OID,
-					  length_hist_values, length_nhist, NULL, 0);
-	free_attstatsslot(vardata->atttype, hist_values, nhist, NULL, 0);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	return hist_selec;
 }
