@@ -60,7 +60,6 @@
 					# comma-separated list of addresses;
 					# defaults to '*', '*' = all
 					# (change requires restart)
-<<<<<<< HEAD
 
 #port = 5432				# sets the database listener port for 
       					# a Greenplum instance. The master and 
@@ -75,10 +74,6 @@
 #max_connections = 200			# (change requires restart)
 # Note:  Increasing max_connections costs ~400 bytes of shared memory per
 # connection slot, plus lock space (see max_locks_per_transaction).
-=======
-#port = 5432				# (change requires restart)
-#max_connections = 100			# (change requires restart)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #superuser_reserved_connections = 3	# (change requires restart)
 #unix_socket_directories = '/tmp'	# comma-separated list of directories
 					# (change requires restart)
@@ -98,10 +93,7 @@
 					# (change requires restart)
 #ssl_prefer_server_ciphers = on		# (change requires restart)
 #ssl_ecdh_curve = 'prime256v1'		# (change requires restart)
-<<<<<<< HEAD
-=======
 #ssl_renegotiation_limit = 0		# amount of data between renegotiations
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #ssl_cert_file = 'server.crt'		# (change requires restart)
 #ssl_key_file = 'server.key'		# (change requires restart)
 #ssl_ca_file = ''			# (change requires restart)
@@ -137,17 +129,11 @@
 #temp_buffers = 8MB			# min 800kB
 max_prepared_transactions = 250		# can be 0 or more
 					# (change requires restart)
-<<<<<<< HEAD
 # Note:  Increasing max_prepared_transactions costs ~600 bytes of shared memory
 # per transaction slot, plus lock space (see max_locks_per_transaction).
 # It is not advisable to set max_prepared_transactions nonzero unless you
 # actively intend to use prepared transactions.
 #work_mem = 32MB			# min 64kB
-=======
-# Caution: it is not advisable to set max_prepared_transactions nonzero unless
-# you actively intend to use prepared transactions.
-#work_mem = 4MB				# min 64kB
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #maintenance_work_mem = 64MB		# min 1MB
 #autovacuum_work_mem = -1		# min 1MB, or -1 to use maintenance_work_mem
 #max_stack_depth = 2MB			# min 100kB
@@ -359,17 +345,6 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 					# happen after that much log output.
 					# 0 disables.
 
-<<<<<<< HEAD
-=======
-# These are relevant when logging to syslog:
-#syslog_facility = 'LOCAL0'
-#syslog_ident = 'postgres'
-
-# This is only relevant when logging to eventlog (win32):
-# (change requires restart)
-#event_source = 'PostgreSQL'
-
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 # - When to Log -
 
 #client_min_messages = notice		# values in order of decreasing detail:

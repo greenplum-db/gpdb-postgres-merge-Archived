@@ -315,7 +315,6 @@ GetComboCommandId(TransactionId xmin, CommandId cmin, CommandId cmax)
 		return entry->combocid;
 	}
 
-<<<<<<< HEAD
 	/*
 	 * We have to create a new combo cid. Check that there's room for it in
 	 * the array, and grow it if there isn't.
@@ -332,9 +331,6 @@ GetComboCommandId(TransactionId xmin, CommandId cmin, CommandId cmax)
 
 	/* We are about to create a new combocid */
 
-=======
-	/* We have to create a new combo cid; we already made room in the array */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	combocid = usedComboCids;
 
 	comboCids[combocid].cmin = cmin;

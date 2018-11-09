@@ -78,7 +78,6 @@ SnapshotData SnapshotSelfData = {HeapTupleSatisfiesSelf};
 SnapshotData SnapshotAnyData = {HeapTupleSatisfiesAny};
 SnapshotData SnapshotToastData = {HeapTupleSatisfiesToast};
 
-<<<<<<< HEAD
 /* local functions */
 static bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
                               bool distributedSnapshotIgnore, bool *setDistributedSnapshotIgnore);
@@ -139,8 +138,6 @@ markDirty(Buffer buffer, Relation relation, HeapTupleHeader tuple, bool isXmin)
 		return;
 	}
 }
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 /*
  * SetHintBits()
@@ -1371,12 +1368,7 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTuple htup, TransactionId Oldest
 				if (!HEAP_LOCKED_UPGRADED(tuple->t_infomask) &&
 					MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple)))
 					return HEAPTUPLE_LIVE;
-<<<<<<< HEAD
 				SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
-
-=======
-				SetHintBits(tuple, buffer, HEAP_XMAX_INVALID, InvalidTransactionId);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			}
 			else
 			{
@@ -1432,14 +1424,11 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTuple htup, TransactionId Oldest
 			SetHintBits(tuple, buffer, HEAP_XMAX_INVALID, InvalidTransactionId);
 		}
 
-<<<<<<< HEAD
 		/*
 		 * Not in Progress, Not Committed, so either Aborted or crashed.
 		 * Remove the Xmax.
 		 */
 		SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		return HEAPTUPLE_LIVE;
 	}
 
@@ -1609,13 +1598,8 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
  * TransactionIdIsCurrentTransactionId first, except when it's known the
  * XID could not be ours anyway.
  */
-<<<<<<< HEAD
 static bool
 XidInMVCCSnapshot_Local(TransactionId xid, Snapshot snapshot)
-=======
-bool
-XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	uint32		i;
 
