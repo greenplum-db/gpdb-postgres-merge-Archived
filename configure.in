@@ -17,8 +17,6 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-GPDB_90_MERGE_FIXME: the upstream is AC_INIT([PostgreSQL], [9.4.19], [pgsql-bugs@postgresql.org])
-Do we need to modify these three line?
 dnl The PACKAGE_VERSION from upstream PostgreSQL is maintained in the
 dnl PG_PACKAGE_VERSION variable, when merging make sure to update this
 dnl variable with the merge conflict from the AC_INIT() statement.

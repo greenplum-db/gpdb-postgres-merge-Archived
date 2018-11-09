@@ -627,11 +627,11 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 vpath_build
+PG_SYSROOT
+PG_VERSION_NUM
 GP_MAJORVERSION
 GP_VERSION_SHORT
 BLD_ARCH
-PG_SYSROOT
-PG_VERSION_NUM
 PROVE
 OSX
 XSLTPROC
@@ -6240,7 +6240,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 ac_cxx_werror_flag=$ac_save_cxx_werror_flag
 
 done
-
 
 # Defend against clang being used on x86-32 without SSE2 enabled.  As current
 # versions of clang do not understand -fexcess-precision=standard, the use of
@@ -19768,6 +19767,7 @@ else
 $as_echo "$as_me: WARNING: could not find perl" >&2;}
 fi
 fi
+
 # Thread testing
 
 # We have to run the thread test near the end so we have all our symbols
@@ -20120,16 +20120,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-#
-GP_VERSION_NUM="`echo "$PACKAGE_VERSION" | sed 's/[A-Za-z].*$//' |
-tr '.' '	' |
-$AWK '{printf "%d%02d%02d", $1, $2, (NF >= 3) ? $3 : 0}'`"
-
-cat >>confdefs.h <<_ACEOF
-#define GP_VERSION_NUM $GP_VERSION_NUM
-_ACEOF
-
-
 
 # If we are inserting PG_SYSROOT into CPPFLAGS, do so symbolically not
 # literally, so that it's possible to override it at build time using
@@ -20138,6 +20128,16 @@ _ACEOF
 if test x"$PG_SYSROOT" != x; then
   CPPFLAGS=`echo "$CPPFLAGS" | sed -e "s| $PG_SYSROOT | \\\$(PG_SYSROOT) |"`
 fi
+
+
+#
+GP_VERSION_NUM="`echo "$PACKAGE_VERSION" | sed 's/[A-Za-z].*$//' |
+tr '.' '	' |
+$AWK '{printf "%d%02d%02d", $1, $2, (NF >= 3) ? $3 : 0}'`"
+
+cat >>confdefs.h <<_ACEOF
+#define GP_VERSION_NUM $GP_VERSION_NUM
+_ACEOF
 
 
 
