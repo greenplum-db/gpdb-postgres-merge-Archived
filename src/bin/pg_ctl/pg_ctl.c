@@ -460,24 +460,6 @@ start_postmaster(void)
 	char		cmd[MAXPGPATH];
 
 #ifndef WIN32
-<<<<<<< HEAD
-	char		formatstr[MAXPGPATH];
-
-	cmd[0] = '\0';
-	formatstr[0] = '\0';
-
-	if (wrapper != NULL)
-	{
-		snprintf(formatstr, MAXPGPATH, "%s ", wrapper);
-		strncat(cmd, formatstr, MAXPGPATH - strlen(cmd) - 1);
-
-		if (wrapper_args != NULL)
-		{
-			snprintf(formatstr, MAXPGPATH, "%s ", wrapper_args);
-			strncat(cmd, formatstr, MAXPGPATH - strlen(cmd) - 1);
-		}
-	}
-=======
 	pgpid_t		pm_pid;
 
 	/* Flush stdio channels just before fork, to avoid double-output problems */
@@ -499,7 +481,6 @@ start_postmaster(void)
 	}
 
 	/* fork succeeded, in child */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * Since there might be quotes to handle here, it is easier simply to pass
@@ -507,26 +488,12 @@ start_postmaster(void)
 	 * has the same PID as the current child process.
 	 */
 	if (log_file != NULL)
-<<<<<<< HEAD
-	{
-		snprintf(formatstr, MAXPGPATH, "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &",
-=======
 		snprintf(cmd, MAXPGPATH, "exec \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1",
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 				 exec_path, pgdata_opt, post_opts,
 				 DEVNULL, log_file);
-	}
 	else
-<<<<<<< HEAD
-	{
-		snprintf(formatstr, MAXPGPATH, "\"%s\" %s%s < \"%s\" 2>&1 &",
-=======
 		snprintf(cmd, MAXPGPATH, "exec \"%s\" %s%s < \"%s\" 2>&1",
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 				 exec_path, pgdata_opt, post_opts, DEVNULL);
-	}
-
-	strncat(cmd, formatstr, MAXPGPATH - strlen(cmd) - 1);
 
 	(void) execl("/bin/sh", "/bin/sh", "-c", cmd, (char *) NULL);
 
@@ -756,11 +723,7 @@ test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
 		 * On Windows, we may be checking the postmaster's parent shell, but
 		 * that's fine for this purpose.
 		 */
-<<<<<<< HEAD
-		if (i >= 5 * WAITS_PER_SEC)
-=======
 #ifndef WIN32
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		{
 			int			exitstatus;
 
