@@ -73,11 +73,7 @@ else
 SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi32 -lssl -lsocket -lnsl -lresolv -lintl $(PTHREAD_LIBS), $(LIBS)) $(LDAP_LIBS_FE)
 endif
 ifeq ($(PORTNAME), win32)
-<<<<<<< HEAD
-SHLIB_LINK += -L../../../../gpAux/ext/win32/kfw-3-2-2/lib -L../../../src/bin/gpfdist/ext/lib -lgssapi32 -lshfolder -lwsock32 -lws2_32 -lsecur32 $(filter -leay32 -lssleay32 -lcomerr32 -lkrb5_32, $(LIBS))
-=======
-SHLIB_LINK += -lshell32 -lwsock32 -lws2_32 -lsecur32 $(filter -leay32 -lssleay32 -lcomerr32 -lkrb5_32, $(LIBS))
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+SHLIB_LINK += -L../../../../gpAux/ext/win32/kfw-3-2-2/lib -L../../../src/bin/gpfdist/ext/lib -lgssapi32 -lshell32 -lwsock32 -lws2_32 -lsecur32 $(filter -leay32 -lssleay32 -lcomerr32 -lkrb5_32, $(LIBS))
 endif
 
 SHLIB_EXPORTS = exports.txt

@@ -1160,10 +1160,8 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	 */
 	if (isError)
 	{
-<<<<<<< HEAD
-		res->errMsg = pqResultStrdup(res, workBuf.data);
-		if (!res->errMsg)
-			goto fail;
+		if (res)
+			res->errMsg = pqResultStrdup(res, workBuf.data);
 
         /* CDB: Transfer statistical messages on to the new result. */
         if (conn->result &&
@@ -1187,12 +1185,7 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
             res->cdbstats = prev;
         }
 
-		pqClearAsyncResult(conn);
-=======
-		if (res)
-			res->errMsg = pqResultStrdup(res, workBuf.data);
-		pqClearAsyncResult(conn);	/* redundant, but be safe */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+        pqClearAsyncResult(conn);	/* redundant, but be safe */
 		conn->result = res;
 		if (PQExpBufferDataBroken(workBuf))
 			printfPQExpBuffer(&conn->errorMessage,

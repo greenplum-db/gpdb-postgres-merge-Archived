@@ -757,10 +757,7 @@ PQconnectStartParams(const char *const * keywords,
 	 */
 	if (!fillPGconn(conn, connOptions))
 	{
-<<<<<<< HEAD
 		conn->status = CONNECTION_BAD;
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		PQconninfoFree(connOptions);
 		return conn;
 	}
@@ -869,17 +866,10 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 				if (*connmember)
 					free(*connmember);
 				*connmember = strdup(tmp);
-<<<<<<< HEAD
-				if  (*connmember == NULL)
-				{
-					printfPQExpBuffer(&conn->errorMessage,
-							libpq_gettext("out of memory\n"));
-=======
 				if (*connmember == NULL)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("out of memory\n"));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 					return false;
 				}
 			}
@@ -1051,20 +1041,6 @@ connectOptions2(PGconn *conn)
 		if (!conn->sslmode)
 			goto oom_error;
 	}
-<<<<<<< HEAD
-
-	/*
-	 * Resolve special "auto" client_encoding from the locale
-	 */
-	/* TODO */
-//	if (conn->client_encoding_initial &&
-//		strcmp(conn->client_encoding_initial, "auto") == 0)
-//	{
-//		free(conn->client_encoding_initial);
-//		conn->client_encoding_initial = strdup(pg_encoding_to_char(pg_get_encoding_from_locale(NULL, true)));
-//	}
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * Resolve special "auto" client_encoding from the locale
@@ -1090,11 +1066,7 @@ connectOptions2(PGconn *conn)
 oom_error:
 	conn->status = CONNECTION_BAD;
 	printfPQExpBuffer(&conn->errorMessage,
-<<<<<<< HEAD
-			libpq_gettext("out of memory\n"));
-=======
 					  libpq_gettext("out of memory\n"));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	return false;
 }
 
@@ -1192,10 +1164,6 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 			conn->dbName = strdup(dbName);
 			if (!conn->dbName)
 				goto oom_error;
-<<<<<<< HEAD
-
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		}
 	}
 
@@ -1270,18 +1238,11 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		(void) connectDBComplete(conn);
 
 	return conn;
-<<<<<<< HEAD
-oom_error:
-	conn->status = CONNECTION_BAD;
-	printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("out of memory\n"));
-=======
 
 oom_error:
 	conn->status = CONNECTION_BAD;
 	printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("out of memory\n"));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	return conn;
 }
 
@@ -1686,18 +1647,14 @@ connectDBStart(PGconn *conn)
 	conn->addrlist = addrs;
 	conn->addr_cur = addrs;
 	conn->addrlist_family = hint.ai_family;
-<<<<<<< HEAD
 #ifndef FRONTEND
 	// GPDB uses the high bits of the major version to indicate special internal communications
 	conn->pversion = PG_PROTOCOL(3 + 0x7000, 0);
 #else
 	conn->pversion = PG_PROTOCOL(3, 0);
 #endif
-	conn->send_appname = true;
-=======
 	conn->try_next_addr = false;
 	conn->is_new_addr = true;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	conn->status = CONNECTION_NEEDED;
 
 	/*
@@ -4134,14 +4091,6 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 					if (options[i].val == NULL)
 					{
 						options[i].val = strdup(optval);
-<<<<<<< HEAD
-					if (!options[i].val)
-					{
-						printfPQExpBuffer(errorMessage,
-								libpq_gettext("out of memory\n"));
-						free(result);
-						return 3;
-=======
 						if (!options[i].val)
 						{
 							printfPQExpBuffer(errorMessage,
@@ -4149,7 +4098,6 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 							free(result);
 							return 3;
 						}
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 					}
 					found_keyword = true;
 					break;
@@ -4386,11 +4334,7 @@ parseServiceFile(const char *serviceFile,
 						if (!options[i].val)
 						{
 							printfPQExpBuffer(errorMessage,
-<<<<<<< HEAD
-									libpq_gettext("out of memory\n"));
-=======
 											libpq_gettext("out of memory\n"));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 							fclose(f);
 							return 3;
 						}
@@ -4821,11 +4765,7 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 								if (!options[k].val)
 								{
 									printfPQExpBuffer(errorMessage,
-<<<<<<< HEAD
-										libpq_gettext("out of memory\n"));
-=======
 													  libpq_gettext("out of memory\n"));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 									PQconninfoFree(options);
 									PQconninfoFree(dbname_options);
 									return NULL;

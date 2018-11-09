@@ -979,29 +979,6 @@ init_ssl_system(PGconn *conn)
 #endif
 			SSL_library_init();
 			SSL_load_error_strings();
-<<<<<<< HEAD
-#endif
-		}
-
-		/*
-		 * We use SSLv23_method() because it can negotiate use of the highest
-		 * mutually supported protocol version, while alternatives like
-		 * TLSv1_2_method() permit only one specific version.  Note that we
-		 * don't actually allow SSL v2 or v3, only TLS protocols (see below).
-		 */
-		SSL_context = SSL_CTX_new(SSLv23_method());
-		if (!SSL_context)
-		{
-			char	   *err = SSLerrmessage();
-
-			printfPQExpBuffer(&conn->errorMessage,
-						 libpq_gettext("could not create SSL context: %s\n"),
-							  err);
-			SSLerrfree(err);
-#ifdef ENABLE_THREAD_SAFETY
-			pthread_mutex_unlock(&ssl_config_mutex);
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #endif
 		}
 		ssl_lib_initialized = true;
@@ -1445,82 +1422,7 @@ initialize_SSL(PGconn *conn)
 	/*
 	 * If a root cert was loaded, also set our certificate verification callback.
 	 */
-<<<<<<< HEAD
-	if (conn->sslrootcert && strlen(conn->sslrootcert) > 0)
-		strlcpy(fnbuf, conn->sslrootcert, sizeof(fnbuf));
-	else if (have_homedir)
-		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CERT_FILE);
-	else
-		fnbuf[0] = '\0';
-
-	if (fnbuf[0] != '\0' &&
-		stat(fnbuf, &buf) == 0)
-	{
-		X509_STORE *cvstore;
-
-#ifdef ENABLE_THREAD_SAFETY
-		int			rc;
-
-		if ((rc = pthread_mutex_lock(&ssl_config_mutex)))
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-			   libpq_gettext("could not acquire mutex: %s\n"), strerror(rc));
-			return -1;
-		}
-#endif
-		if (SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL) != 1)
-		{
-			char	   *err = SSLerrmessage();
-
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not read root certificate file \"%s\": %s\n"),
-							  fnbuf, err);
-			SSLerrfree(err);
-#ifdef ENABLE_THREAD_SAFETY
-			pthread_mutex_unlock(&ssl_config_mutex);
-#endif
-			return -1;
-		}
-
-		if ((cvstore = SSL_CTX_get_cert_store(SSL_context)) != NULL)
-		{
-			if (conn->sslcrl && strlen(conn->sslcrl) > 0)
-				strlcpy(fnbuf, conn->sslcrl, sizeof(fnbuf));
-			else if (have_homedir)
-				snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CRL_FILE);
-			else
-				fnbuf[0] = '\0';
-
-			/* Set the flags to check against the complete CRL chain */
-			if (fnbuf[0] != '\0' &&
-				X509_STORE_load_locations(cvstore, fnbuf, NULL) == 1)
-			{
-				/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
-#ifdef X509_V_FLAG_CRL_CHECK
-				X509_STORE_set_flags(cvstore,
-						  X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
-#else
-				char	   *err = SSLerrmessage();
-
-				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("SSL library does not support CRL certificates (file \"%s\")\n"),
-								  fnbuf);
-				SSLerrfree(err);
-#ifdef ENABLE_THREAD_SAFETY
-				pthread_mutex_unlock(&ssl_config_mutex);
-#endif
-				return -1;
-#endif
-			}
-			/* if not found, silently ignore;  we do not require CRL */
-		}
-#ifdef ENABLE_THREAD_SAFETY
-		pthread_mutex_unlock(&ssl_config_mutex);
-#endif
-
-=======
 	if (have_rootcert)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		SSL_set_verify(conn->ssl, SSL_VERIFY_PEER, verify_cb);
 
 	/*

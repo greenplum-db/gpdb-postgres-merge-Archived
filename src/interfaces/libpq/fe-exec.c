@@ -61,13 +61,8 @@ static bool static_std_strings = false;
 
 
 static PGEvent *dupEvents(PGEvent *events, int count);
-<<<<<<< HEAD
-static bool pqAddTuple(PGresult *res, PGresAttValue *tup);
-=======
 static bool pqAddTuple(PGresult *res, PGresAttValue *tup,
 		   const char **errmsgp);
-static bool PQsendQueryStart(PGconn *conn);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 static int PQsendQueryGuts(PGconn *conn,
 				const char *command,
 				const char *stmtName,
