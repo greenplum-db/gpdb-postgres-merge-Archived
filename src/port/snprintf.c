@@ -34,12 +34,9 @@
 #include "c.h"
 
 #include <ctype.h>
-<<<<<<< HEAD
-=======
 #ifdef _MSC_VER
 #include <float.h>				/* for _isnan */
 #endif
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #include <limits.h>
 #include <math.h>
 #ifndef WIN32
@@ -1006,20 +1003,12 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 
 	if (pointflag)
 	{
-<<<<<<< HEAD
-		sprintf(fmt, "%%.%d%c", prec, type);
-		zeropadlen = precision - prec;
-	}
-	else
-		sprintf(fmt, "%%%c", type);
-=======
 		if (sprintf(fmt, "%%.%d%c", prec, type) < 0)
 			goto fail;
 		zeropadlen = precision - prec;
 	}
 	else if (sprintf(fmt, "%%%c", type) < 0)
 		goto fail;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	if (!isnan(value) && adjust_sign((value < 0), forcesign, &signvalue))
 		value = -value;
