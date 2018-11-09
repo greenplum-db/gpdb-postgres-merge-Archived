@@ -345,73 +345,16 @@ secure_write(Port *port, void *ptr, size_t len)
 		int			err;
 		unsigned long ecode;
 
-<<<<<<< HEAD
-=======
-		/*
-		 * If SSL renegotiations are enabled and we're getting close to the
-		 * limit, start one now; but avoid it if there's one already in
-		 * progress.  Request the renegotiation 1kB before the limit has
-		 * actually expired.
-		 */
-		if (ssl_renegotiation_limit && !in_ssl_renegotiation &&
-			port->count > (ssl_renegotiation_limit - 1) * 1024L)
-		{
-			in_ssl_renegotiation = true;
-
-			/*
-			 * The way we determine that a renegotiation has completed is by
-			 * observing OpenSSL's internal renegotiation counter.  Make sure
-			 * we start out at zero, and assume that the renegotiation is
-			 * complete when the counter advances.
-			 *
-			 * OpenSSL provides SSL_renegotiation_pending(), but this doesn't
-			 * seem to work in testing.
-			 */
-			SSL_clear_num_renegotiations(port->ssl);
-
-			SSL_set_session_id_context(port->ssl, (void *) &SSL_context,
-									   sizeof(SSL_context));
-			if (SSL_renegotiate(port->ssl) <= 0)
-				ereport(COMMERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("SSL failure during renegotiation start")));
-			else
-			{
-				int			retries;
-
-				/*
-				 * A handshake can fail, so be prepared to retry it, but only
-				 * a few times.
-				 */
-				for (retries = 0;; retries++)
-				{
-					if (SSL_do_handshake(port->ssl) > 0)
-						break;	/* done */
-					ereport(COMMERROR,
-							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-							 errmsg("SSL handshake failure on renegotiation, retrying")));
-					if (retries >= 20)
-						ereport(FATAL,
-								(errcode(ERRCODE_PROTOCOL_VIOLATION),
-								 errmsg("could not complete SSL handshake on renegotiation, too many failures")));
-				}
-			}
-		}
-
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 wloop:
 		errno = 0;
 		ERR_clear_error();
 		n = SSL_write(port->ssl, ptr, len);
 		err = SSL_get_error(port->ssl, n);
-<<<<<<< HEAD
 
 		const int ERR_MSG_LEN = ERROR_BUF_SIZE + 20;
 		char err_msg[ERR_MSG_LEN];
 
-=======
 		ecode = (err != SSL_ERROR_NONE || n < 0) ? ERR_get_error() : 0;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		switch (err)
 		{
 			case SSL_ERROR_NONE:
@@ -435,18 +378,12 @@ wloop:
 				}
 				break;
 			case SSL_ERROR_SSL:
-<<<<<<< HEAD
 				snprintf((char *)&err_msg, ERR_MSG_LEN, "SSL error: %s", SSLerrmessage());
 				report_commerror(err_msg);
 				/* fall through */
-=======
-				ereport(COMMERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("SSL error: %s", SSLerrmessage(ecode))));
 				errno = ECONNRESET;
 				n = -1;
 				break;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			case SSL_ERROR_ZERO_RETURN:
 				/*
 				 * the SSL connnection was closed, leave it to the caller
@@ -527,11 +464,8 @@ my_sock_write(BIO *h, const char *buf, int size)
 {
 	int			res = 0;
 
-<<<<<<< HEAD
 	prepare_for_client_write();
 
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	res = send(BIO_get_fd(h, NULL), buf, size, 0);
 	BIO_clear_retry_flags(h);
 	if (res <= 0)
@@ -1083,11 +1017,7 @@ open_server_SSL(Port *port)
 		ereport(COMMERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("could not initialize SSL connection: %s",
-<<<<<<< HEAD
-						SSLerrmessage())));
-=======
 						SSLerrmessage(ERR_get_error()))));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		return -1;
 	}
 	if (!my_SSL_set_fd(port->ssl, port->sock))
@@ -1095,11 +1025,7 @@ open_server_SSL(Port *port)
 		ereport(COMMERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("could not set SSL socket: %s",
-<<<<<<< HEAD
-						SSLerrmessage())));
-=======
 						SSLerrmessage(ERR_get_error()))));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		return -1;
 	}
 
@@ -1271,11 +1197,7 @@ SSLerrmessage(unsigned long ecode)
 	errreason = ERR_reason_error_string(ecode);
 	if (errreason != NULL)
 		return errreason;
-<<<<<<< HEAD
 	snprintf(errbuf, ERROR_BUF_SIZE, _("SSL error code %lu"), errcode);
-=======
-	snprintf(errbuf, sizeof(errbuf), _("SSL error code %lu"), ecode);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	return errbuf;
 }
 
