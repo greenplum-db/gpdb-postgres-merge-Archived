@@ -597,11 +597,9 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		}
 	}
 
-<<<<<<< HEAD
 #ifdef MPROTECT_BUFFERS
     BufferMProtect( bufHdr, PROT_READ );
 #endif
-=======
 	/*
 	 * In RBM_ZERO_AND_LOCK mode, grab the buffer content lock before marking
 	 * the page as valid, to make sure that no other backend sees the zeroed
@@ -615,7 +613,6 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	if ((mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK) &&
 		!isLocalBuf)
 		LWLockAcquire(bufHdr->content_lock, LW_EXCLUSIVE);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	if (isLocalBuf)
 	{
@@ -974,11 +971,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	 * just like permanent relations.
 	 */
 	buf->tag = newTag;
-<<<<<<< HEAD
 	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_CHECKPOINT_NEEDED | BM_IO_ERROR | BM_PERMANENT | BM_TEMP);
-=======
-	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_CHECKPOINT_NEEDED | BM_IO_ERROR | BM_PERMANENT);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	if (relpersistence == RELPERSISTENCE_PERMANENT || forkNum == INIT_FORKNUM)
 		buf->flags |= BM_TAG_VALID | BM_PERMANENT;
 	else if (relpersistence == RELPERSISTENCE_TEMP)
