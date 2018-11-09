@@ -1735,9 +1735,8 @@ BaseBackup(void)
 	if (maxrate > 0)
 		maxrate_clause = psprintf("MAX_RATE %u", maxrate);
 
-<<<<<<< HEAD
 	exclude_list = build_exclude_list(excludes, num_exclude);
-=======
+
 	if (verbose)
 		fprintf(stderr,
 				_("%s: initiating base backup, waiting for checkpoint to complete\n"),
@@ -1746,7 +1745,6 @@ BaseBackup(void)
 	if (showprogress && !verbose)
 		fprintf(stderr, "waiting for checkpoint\r");
 
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	basebkp =
 		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s",
 				 escaped_label,
