@@ -10227,18 +10227,7 @@ xlog_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 								  checkPoint.nextXid))
 			ShmemVariableCache->nextXid = checkPoint.nextXid;
 		LWLockRelease(XidGenLock);
-<<<<<<< HEAD
-		/* ... but still treat OID counter as exact */
-		LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
-		ShmemVariableCache->nextOid = checkPoint.nextOid;
-		ShmemVariableCache->oidCount = 0;
-		LWLockRelease(OidGenLock);
-		LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
-		ShmemVariableCache->nextRelfilenode = checkPoint.nextRelfilenode;
-		ShmemVariableCache->relfilenodeCount = 0;
-		LWLockRelease(OidGenLock);
-=======
-
+		
 		/*
 		 * We ignore the nextOid counter in an ONLINE checkpoint, preferring
 		 * to track OID assignment through XLOG_NEXTOID records.  The nextOid
@@ -10250,9 +10239,12 @@ xlog_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 		 * users of the nextOid counter are required to avoid assignment of
 		 * duplicates, so that a somewhat out-of-date value should be safe.
 		 */
+		LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
+		ShmemVariableCache->nextRelfilenode = checkPoint.nextRelfilenode;
+		ShmemVariableCache->relfilenodeCount = 0;
+		LWLockRelease(OidGenLock);
 
 		/* Handle multixact */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		MultiXactAdvanceNextMXact(checkPoint.nextMulti,
 								  checkPoint.nextMultiOffset);
 		if (TransactionIdPrecedes(ShmemVariableCache->oldestXid,

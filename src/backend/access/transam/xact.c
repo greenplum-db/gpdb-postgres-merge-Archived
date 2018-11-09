@@ -1492,27 +1492,9 @@ RecordTransactionCommit(void)
 
 #ifdef IMPLEMENT_ASYNC_COMMIT
 	/*
-<<<<<<< HEAD
 	 * In PostgreSQL, we can defer flushing XLOG, if the user has set
 	 * synchronous_commit = off, and we're not doing cleanup of any non-temp
 	 * rels nor committing any command that wanted to force sync commit.
-=======
-	 * Check if we want to commit asynchronously.  We can allow the XLOG flush
-	 * to happen asynchronously if synchronous_commit=off, or if the current
-	 * transaction has not performed any WAL-logged operation or didn't assign
-	 * a xid.  The transaction can end up not writing any WAL, even if it has
-	 * a xid, if it only wrote to temporary and/or unlogged tables.  It can
-	 * end up having written WAL without an xid if it did HOT pruning.  In
-	 * case of a crash, the loss of such a transaction will be irrelevant;
-	 * temp tables will be lost anyway, unlogged tables will be truncated and
-	 * HOT pruning will be done again later. (Given the foregoing, you might
-	 * think that it would be unnecessary to emit the XLOG record at all in
-	 * this case, but we don't currently try to do that.  It would certainly
-	 * cause problems at least in Hot Standby mode, where the
-	 * KnownAssignedXids machinery requires tracking every XID assignment.  It
-	 * might be OK to skip it only when wal_level < hot_standby, but for now
-	 * we don't.)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	 *
 	 * In GPDB, however, all user transactions need to be committed synchronously,
 	 * because we use two-phase commit across the nodes. In order to make GPDB support
@@ -1612,7 +1594,6 @@ RecordTransactionCommit(void)
 	 * Note that at this stage we have marked clog, but still show as running
 	 * in the procarray and continue to hold locks.
 	 */
-<<<<<<< HEAD
 	if (markXidCommitted || isDtxPrepared)
 	{
 		Assert(recptr != 0);
@@ -1621,10 +1602,6 @@ RecordTransactionCommit(void)
 
 	/* Compute latestXid while we have the child XIDs handy */
 	latestXid = TransactionIdLatest(xid, nchildren, children);
-=======
-	if (wrote_xlog && markXidCommitted)
-		SyncRepWaitForLSN(XactLastRecEnd);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/* Reset XactLastRecEnd until the next transaction writes something */
 	XactLastRecEnd = 0;
