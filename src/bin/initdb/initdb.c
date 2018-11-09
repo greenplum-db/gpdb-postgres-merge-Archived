@@ -60,11 +60,7 @@
 #include "sys/mman.h"
 #endif
 
-<<<<<<< HEAD
-#include "common/relpath.h"
-=======
 #include "catalog/catalog.h"
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #include "common/username.h"
 #include "mb/pg_wchar.h"
 #include "getaddrinfo.h"
@@ -223,19 +219,13 @@ static const char *subdirs[] = {
 	"pg_tblspc",
 	"pg_stat",
 	"pg_stat_tmp",
-<<<<<<< HEAD
-	"pg_llog",
-	"pg_llog/snapshots",
-	"pg_llog/mappings",
+	"pg_logical",
+	"pg_logical/snapshots",
+	"pg_logical/mappings"
 /* GPDB needs these directories */
 	"pg_distributedlog",
 	"pg_utilitymodedtmredo",
 	"pg_log"
-=======
-	"pg_logical",
-	"pg_logical/snapshots",
-	"pg_logical/mappings"
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 };
 
 
@@ -687,11 +677,7 @@ walkdir(const char *path,
 
 	while (errno = 0, (de = readdir(dir)) != NULL)
 	{
-<<<<<<< HEAD
-		char		subpath[MAXPGPATH];
-=======
 		char		subpath[MAXPGPATH * 2];
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		struct stat fst;
 		int			sret;
 
@@ -699,11 +685,7 @@ walkdir(const char *path,
 			strcmp(de->d_name, "..") == 0)
 			continue;
 
-<<<<<<< HEAD
-		snprintf(subpath, MAXPGPATH, "%s/%s", path, de->d_name);
-=======
 		snprintf(subpath, sizeof(subpath), "%s/%s", path, de->d_name);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		if (process_symlinks)
 			sret = stat(subpath, &fst);
@@ -757,15 +739,6 @@ pre_sync_fname(const char *fname, bool isdir)
 	{
 		if (errno == EACCES || (isdir && errno == EISDIR))
 			return;
-<<<<<<< HEAD
-
-#ifdef ETXTBSY
-		if (errno == ETXTBSY)
-			return;
-#endif
-
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
 				progname, fname, strerror(errno));
 		return;
@@ -825,15 +798,6 @@ fsync_fname_ext(const char *fname, bool isdir)
 	{
 		if (errno == EACCES || (isdir && errno == EISDIR))
 			return;
-<<<<<<< HEAD
-
-#ifdef ETXTBSY
-		if (errno == ETXTBSY)
-			return;
-#endif
-
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
 				progname, fname, strerror(errno));
 		return;
