@@ -1305,7 +1305,7 @@ PG_END_TRY();
  * longer-lived one.
  */
 void
-ExecSetParamPlanMulti(const Bitmapset *params, ExprContext *econtext)
+ExecSetParamPlanMulti(const Bitmapset *params, ExprContext *econtext, QueryDesc *queryDesc)
 {
 	int			paramid;
 
@@ -1317,7 +1317,7 @@ ExecSetParamPlanMulti(const Bitmapset *params, ExprContext *econtext)
 		if (prm->execPlan != NULL)
 		{
 			/* Parameter not evaluated yet, so go do it */
-			ExecSetParamPlan(prm->execPlan, econtext);
+			ExecSetParamPlan(prm->execPlan, econtext, queryDesc);
 			/* ExecSetParamPlan should have processed this param... */
 			Assert(prm->execPlan == NULL);
 		}

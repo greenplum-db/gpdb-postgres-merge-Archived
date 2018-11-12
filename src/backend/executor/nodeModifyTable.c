@@ -408,13 +408,13 @@ ExecInsert(TupleTableSlot *parentslot,
 #if 0
 		/* FDW might have changed tuple */
 		tuple = ExecMaterializeSlot(slot); //GPDB_94_STABLE_MERGE_FIXME: Why GPDB removes this?
-#endif
 
 		/*
 		 * AFTER ROW Triggers or RETURNING expressions might reference the
 		 * tableoid column, so initialize t_tableOid before evaluating them.
 		 */
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
+#endif
 
 		newId = InvalidOid;
 	}
@@ -662,8 +662,6 @@ ExecDelete(ItemPointer tupleid,
 	}
 	else if (resultRelInfo->ri_FdwRoutine)
 	{
-		HeapTuple	tuple;
-
 		/*
 		 * delete from foreign table: let the FDW do it
 		 *
@@ -687,10 +685,17 @@ ExecDelete(ItemPointer tupleid,
 		 * RETURNING expressions might reference the tableoid column, so
 		 * initialize t_tableOid before evaluating them.
 		 */
-		if (slot->tts_isempty)
+		if (slot->PRIVATE_tts_flags & TTS_ISEMPTY)
 			ExecStoreAllNullTuple(slot);
+
+		/*
+		 * GPDB_94_MERGE_FIXME: gpdb does not use tableoid. Do we need to bring
+		 * the related code back?
+		 */
+#if 0
 		tuple = ExecMaterializeSlot(slot);
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
+#endif
 	}
 	else
 	{
@@ -1278,13 +1283,13 @@ ExecUpdate(ItemPointer tupleid,
 #if 0
 		/* FDW might have changed tuple */
 		tuple = ExecMaterializeSlot(slot); //GPDB_94_STABLE_MERGE_FIXME: Why GPDB removes this?
-#endif
 
 		/*
 		 * AFTER ROW Triggers or RETURNING expressions might reference the
 		 * tableoid column, so initialize t_tableOid before evaluating them.
 		 */
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
+#endif
 	}
 	else
 	{

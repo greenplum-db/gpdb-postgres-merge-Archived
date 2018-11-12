@@ -3850,9 +3850,11 @@ EvalPlanQualFetchRowMarks(EPQState *epqstate)
 			/* build a temporary HeapTuple control structure */
 			tuple.t_len = HeapTupleHeaderGetDatumLength(td);
 			ItemPointerSetInvalid(&(tuple.t_self));
+#if 0
 			/* relation might be a foreign table, if so provide tableoid */
 			tuple.t_tableOid = getrelid(erm->rti,
 										epqstate->estate->es_range_table);
+#endif
 			tuple.t_data = td;
 
 			/* copy and store tuple */
@@ -3914,7 +3916,8 @@ EvalPlanQualBegin(EPQState *epqstate, EState *parentestate)
 			 * EvalPlanQualStart (see comments therein).
 			 */
 			ExecSetParamPlanMulti(planstate->plan->extParam,
-								  GetPerTupleExprContext(parentestate));
+								  GetPerTupleExprContext(parentestate),
+								  NULL);
 
 			i = parentestate->es_plannedstmt->nParamExec;
 
@@ -4027,7 +4030,8 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 		 * doing EvalPlanQual again.
 		 */
 		ExecSetParamPlanMulti(planTree->extParam,
-							  GetPerTupleExprContext(parentestate));
+							  GetPerTupleExprContext(parentestate),
+							  NULL);
 
 		/* now make the internal param workspace ... */
 		i = parentestate->es_plannedstmt->nParamExec;
