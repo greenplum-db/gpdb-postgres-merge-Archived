@@ -185,8 +185,6 @@ do { \
     QueryCancelHoldoffCount--; \
 } while(0)
 
-#define START_CRIT_SECTION()  (CritSectionCount++)
-
 #define START_CRIT_SECTION() \
 do { \
 	if (CritSectionCount < 0) \
