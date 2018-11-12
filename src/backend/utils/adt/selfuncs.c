@@ -4076,7 +4076,7 @@ convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
  * On failure (e.g., unsupported typid), set *failure to true;
  * otherwise, that variable is not changed.
  */
-static double
+double
 convert_timevalue_to_scalar(Datum value, Oid typid, bool *failure)
 {
 	switch (typid)

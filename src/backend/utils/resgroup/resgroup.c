@@ -36,6 +36,7 @@
 
 #include "postgres.h"
 
+#include "nodes/nodes.h"
 #include "tcop/tcopprot.h"
 #include "access/genam.h"
 #include "catalog/pg_authid.h"

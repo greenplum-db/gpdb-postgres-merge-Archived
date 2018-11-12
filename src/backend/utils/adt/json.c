@@ -2029,26 +2029,6 @@ catenate_stringinfo_string(StringInfo buffer, const char *addon)
 }
 
 /*
- * Helper function for aggregates: return given StringInfo's contents plus
- * specified trailing string, as a text datum.  We need this because aggregate
- * final functions are not allowed to modify the aggregate state.
- */
-static text *
-catenate_stringinfo_string(StringInfo buffer, const char *addon)
-{
-	/* custom version of cstring_to_text_with_len */
-	int			buflen = buffer->len;
-	int			addlen = strlen(addon);
-	text	   *result = (text *) palloc(buflen + addlen + VARHDRSZ);
-
-	SET_VARSIZE(result, buflen + addlen + VARHDRSZ);
-	memcpy(VARDATA(result), buffer->data, buflen);
-	memcpy(VARDATA(result) + buflen, addon, addlen);
-
-	return result;
-}
-
-/*
  * SQL function json_build_object(variadic "any")
  */
 Datum

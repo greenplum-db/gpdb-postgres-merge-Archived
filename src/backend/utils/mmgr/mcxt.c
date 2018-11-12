@@ -26,6 +26,7 @@
 
 #include "postgres.h"
 
+#include "miscadmin.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
 #include "utils/memaccounting.h"
