@@ -1433,12 +1433,6 @@ leaps_thru_end_of_nonneg(int y)
 }
 
 static int
-leaps_thru_end_of_nonneg(int y)
-{
-	return y / 4 - y / 100 + y / 400;
-}
-
-static int
 leaps_thru_end_of(const int y)
 {
 	return (y < 0
