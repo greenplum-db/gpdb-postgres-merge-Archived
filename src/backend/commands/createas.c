@@ -75,8 +75,8 @@ typedef struct
 
 static void intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo);
 /* utility functions for CTAS definition creation */
-static Oid	create_ctas_internal(List *attrList, IntoClause *into);
-static Oid	create_ctas_nodata(List *tlist, IntoClause *into);
+static Oid	create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc);
+static Oid	create_ctas_nodata(List *tlist, IntoClause *into, QueryDesc *queryDesc);
 static void intorel_receive(TupleTableSlot *slot, DestReceiver *self);
 static void intorel_shutdown(DestReceiver *self);
 static void intorel_destroy(DestReceiver *self);
@@ -89,7 +89,7 @@ static void intorel_destroy(DestReceiver *self);
  * provide a list of attributes (ColumnDef nodes).
  */
 static Oid
-create_ctas_internal(List *attrList, IntoClause *into)
+create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc)
 {
 	CreateStmt *create = makeNode(CreateStmt);
 	bool		is_matview;
@@ -97,6 +97,10 @@ create_ctas_internal(List *attrList, IntoClause *into)
 	Datum		toast_options;
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 	Oid			intoRelationId;
+
+	Datum       reloptions;
+	int         relstorage;
+	StdRdOptions *stdRdOptions;
 
 	/* This code supports both CREATE TABLE AS and CREATE MATERIALIZED VIEW */
 	is_matview = (into->viewQuery != NULL);
@@ -113,14 +117,71 @@ create_ctas_internal(List *attrList, IntoClause *into)
 	create->constraints = NIL;
 	create->options = into->options;
 	create->oncommit = into->onCommit;
-	create->tablespacename = into->tableSpaceName;
+	/*
+	 * Select tablespace to use.  If not specified, use default tablespace
+	 * (which may in turn default to database's default).
+	 *
+	 * In PostgreSQL, we resolve default tablespace here. In GPDB, that's
+	 * done earlier, because we need to dispatch the final tablespace name,
+	 * after resolving any defaults, to the segments. (Otherwise, we would
+	 * rely on the assumption that default_tablespace GUC is kept in sync
+	 * in all segment connections. That actually seems to be the case, as of
+	 * this writing, but better to not rely on it.) So usually, we already
+	 * have the fully-resolved tablespace name stashed in queryDesc->ddesc->
+	 * intoTableSpaceName. In the dispatcher, we filled it in earlier, and
+	 * in executor nodes, we received it from the dispatcher along with the
+	 * query. In utility mode, however, queryDesc->ddesc is not set at all,
+	 * and we follow the PostgreSQL codepath, resolving the defaults here.
+	 */
+	if (queryDesc->ddesc)
+		create->tablespacename = queryDesc->ddesc->intoTableSpaceName;
+	else
+		create->tablespacename = into->tableSpaceName;
 	create->if_not_exists = false;
+	
+	/* Parse and validate any reloptions */
+	reloptions = transformRelOptions((Datum) 0,
+									 into->options,
+									 NULL,
+									 validnsps,
+									 true,
+									 false);
 
+	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION,
+												   reloptions,
+												   queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true);
+	if(stdRdOptions->appendonly)
+		relstorage = stdRdOptions->columnstore ? RELSTORAGE_AOCOLS : RELSTORAGE_AOROWS;
+	else
+		relstorage = RELSTORAGE_HEAP;
+
+	create->distributedBy = NULL; /* We will pass a pre-made intoPolicy instead */
+	create->partitionBy = NULL; /* CTAS does not not support partition. */
+
+	create->postCreate = NULL;
+	create->deferredStmts = NULL;
+	create->is_part_child = false;
+	create->is_part_parent = false;
+	create->is_add_part = false;
+	create->is_split_part = false;
+	create->buildAoBlkdir = false;
+	create->attr_encodings = NULL; /* Handle by AddDefaultRelationAttributeOptions() */
+
+	/* Save them in CreateStmt for dispatching. */
+	create->relKind = RELKIND_RELATION;
+	create->relStorage = relstorage;
+	create->ownerid = GetUserId();
 	/*
 	 * Create the relation.  (This will error out if there's an existing view,
 	 * so we don't need more code to complain if "replace" is false.)
 	 */
-	intoRelationId = DefineRelation(create, relkind, InvalidOid);
+	intoRelationId = DefineRelation(create,
+									relkind,
+									InvalidOid,
+									create->relStorage,
+									false,
+									queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true,
+									queryDesc->plannedstmt->intoPolicy);
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that
@@ -138,7 +199,7 @@ create_ctas_internal(List *attrList, IntoClause *into)
 
 	(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options, true);
 
-	NewRelationCreateToastTable(intoRelationId, toast_options);
+	NewRelationCreateToastTable(intoRelationId, toast_options, false, false);
 
 	/* Create the "view" part of a materialized view. */
 	if (is_matview)
@@ -161,7 +222,7 @@ create_ctas_internal(List *attrList, IntoClause *into)
  * the targetlist of the SELECT or view definition.
  */
 static Oid
-create_ctas_nodata(List *tlist, IntoClause *into)
+create_ctas_nodata(List *tlist, IntoClause *into, QueryDesc *queryDesc)
 {
 	List	   *attrList;
 	ListCell   *t,
@@ -221,7 +282,7 @@ create_ctas_nodata(List *tlist, IntoClause *into)
 				 errmsg("too many column names were specified")));
 
 	/* Create the relation definition using the ColumnDef list */
-	return create_ctas_internal(attrList, into);
+	return create_ctas_internal(attrList, into, queryDesc);
 }
 
 
@@ -350,7 +411,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		 * similar to CREATE VIEW.  This avoids dump/restore problems stemming
 		 * from running the planner before all dependencies are set up.
 		 */
-		(void) create_ctas_nodata(query->targetList, into);
+		(void) create_ctas_nodata(query->targetList, into, queryDesc);
 	}
 	else
 	{
@@ -525,9 +586,6 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	ListCell   *lc;
 	int			attnum;
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
-	StdRdOptions *stdRdOptions;
-	Datum       reloptions;
-	int         relstorage;
 	TupleDesc   typeinfo = queryDesc->tupDesc;
 
 	/* If EXPLAIN/QE, skip creating the "into" relation. */
@@ -538,41 +596,6 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	/* This code supports both CREATE TABLE AS and CREATE MATERIALIZED VIEW */
 	is_matview = (into->viewQuery != NULL);
 	relkind = is_matview ? RELKIND_MATVIEW : RELKIND_RELATION;
-
-	/*
-	 * Create the target relation by faking up a CREATE TABLE parsetree and
-	 * passing it to DefineRelation.
-	 */
-	create = makeNode(CreateStmt);
-	create->relation = into->rel;
-	create->tableElts = NIL;	/* will fill below */
-	create->inhRelations = NIL;
-	create->ofTypename = NULL;
-	create->constraints = NIL;
-	create->options = into->options;
-	create->oncommit = into->onCommit;
-	/*
-	 * Select tablespace to use.  If not specified, use default tablespace
-	 * (which may in turn default to database's default).
-	 *
-	 * In PostgreSQL, we resolve default tablespace here. In GPDB, that's
-	 * done earlier, because we need to dispatch the final tablespace name,
-	 * after resolving any defaults, to the segments. (Otherwise, we would
-	 * rely on the assumption that default_tablespace GUC is kept in sync
-	 * in all segment connections. That actually seems to be the case, as of
-	 * this writing, but better to not rely on it.) So usually, we already
-	 * have the fully-resolved tablespace name stashed in queryDesc->ddesc->
-	 * intoTableSpaceName. In the dispatcher, we filled it in earlier, and
-	 * in executor nodes, we received it from the dispatcher along with the
-	 * query. In utility mode, however, queryDesc->ddesc is not set at all,
-	 * and we follow the PostgreSQL codepath, resolving the defaults here.
-	 */
-
-	if (queryDesc->ddesc)
-		create->tablespacename = queryDesc->ddesc->intoTableSpaceName;
-	else
-		create->tablespacename = into->tableSpaceName;
-	create->if_not_exists = false;
 
 	/*
 	 * Build column definitions using "pre-cooked" type and collation info. If
@@ -623,40 +646,7 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("too many column names were specified")));
-
-	/* Parse and validate any reloptions */
-	reloptions = transformRelOptions((Datum) 0,
-									 into->options,
-									 NULL,
-									 validnsps,
-									 true,
-									 false);
-
-	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION,
-												   reloptions,
-												   queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true);
-	if(stdRdOptions->appendonly)
-		relstorage = stdRdOptions->columnstore ? RELSTORAGE_AOCOLS : RELSTORAGE_AOROWS;
-	else
-		relstorage = RELSTORAGE_HEAP;
-
-	create->distributedBy = NULL; /* We will pass a pre-made intoPolicy instead */
-	create->partitionBy = NULL; /* CTAS does not not support partition. */
-
-	create->postCreate = NULL;
-	create->deferredStmts = NULL;
-	create->is_part_child = false;
-	create->is_part_parent = false;
-	create->is_add_part = false;
-	create->is_split_part = false;
-	create->buildAoBlkdir = false;
-	create->attr_encodings = NULL; /* Handle by AddDefaultRelationAttributeOptions() */
-
-	/* Save them in CreateStmt for dispatching. */
-	create->relKind = RELKIND_RELATION;
-	create->relStorage = relstorage;
-	create->ownerid = GetUserId();
-
+	
 	/*
 	 * Actually create the target table.
 	 * Don't dispatch it yet, as we haven't created the toast and other
@@ -665,7 +655,7 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	 * Pass the policy that was computed by the planner.
 	 */
 
-	intoRelationId = create_ctas_internal(attrList, into);
+	intoRelationId = create_ctas_internal(attrList, into, queryDesc);
 
 	/*
 	 * Finally we can open the target table
