@@ -1260,6 +1260,7 @@ _slot_getsomeattrs(TupleTableSlot *slot, int attnum)
 	TupSetVirtualTuple(slot);
 }
 
+#if 0
 /*
  * slot_getsysattr
  *		This function fetches a system attribute of the slot's current tuple.
@@ -1285,6 +1286,7 @@ slot_getsysattr(TupleTableSlot *slot, int attnum,
 	*value = heap_getsysattr(tuple, attnum, slot->tts_tupleDescriptor, isnull);
 	return true;
 }
+#endif
 
 /*
  * heap_freetuple
