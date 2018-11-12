@@ -79,8 +79,6 @@ SnapshotData SnapshotAnyData = {HeapTupleSatisfiesAny};
 SnapshotData SnapshotToastData = {HeapTupleSatisfiesToast};
 
 /* local functions */
-static bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
-                              bool distributedSnapshotIgnore, bool *setDistributedSnapshotIgnore);
 static bool XidInMVCCSnapshot_Local(TransactionId xid, Snapshot snapshot);
 
 /*
@@ -1421,7 +1419,7 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTuple htup, TransactionId Oldest
 			 * Not in Progress, Not Committed, so either Aborted or crashed.
 			 * Mark the Xmax as invalid.
 			 */
-			SetHintBits(tuple, buffer, HEAP_XMAX_INVALID, InvalidTransactionId);
+			SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
 		}
 
 		/*
@@ -1531,7 +1529,7 @@ HeapTupleIsSurelyDead(HeapTuple htup, TransactionId OldestXmin)
  *		Is the given XID still-in-progress according to the distributed
  *      and local snapshots?
  */
-static bool
+bool
 XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
 				  bool distributedSnapshotIgnore, bool *setDistributedSnapshotIgnore)
 {
