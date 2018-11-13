@@ -286,7 +286,6 @@ allow_star_schema_join(PlannerInfo *root,
 	 */
 	return (bms_overlap(innerparams, outerrelids) &&
 			bms_nonempty_difference(innerparams, outerrelids));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 }
 
 /*
