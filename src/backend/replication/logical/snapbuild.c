@@ -1561,7 +1561,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	COMP_CRC32C(ondisk->checksum, ondisk_c, sz);
 	ondisk_c += sz;
 
-	FIN_CRC32(ondisk->checksum);
+	FIN_CRC32C(ondisk->checksum);
 
 	/* we have valid data now, open tempfile and write it there */
 	fd = OpenTransientFile(tmppath,
@@ -1757,7 +1757,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 
 	CloseTransientFile(fd);
 
-	FIN_CRC32(checksum);
+	FIN_CRC32C(checksum);
 
 	/* verify checksum of what we've read */
 	if (!EQ_CRC32C(checksum, ondisk.checksum))
