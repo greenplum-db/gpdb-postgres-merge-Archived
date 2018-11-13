@@ -1015,13 +1015,11 @@ bms_next_member(const Bitmapset *a, int prevbit)
 		{
 			int			result;
 
-			result = wordnum * BITS_PER_BITMAPWORD;
-			while ((w & 255) == 0)
-			{
-				w >>= 8;
-				result += 8;
-			}
-			result += rightmost_one_pos[w & 255];
+			/* GPDB_94_MERGE_FIXME: upstream uses rightmost_one_pos[], but gp 
+			 * use num_low_order_zero_bits(). Might want to profile to see
+			 * which one is faster.
+			 */
+			result = num_low_order_zero_bits(w) + wordnum * BITS_PER_BITMAPWORD;
 			return result;
 		}
 
