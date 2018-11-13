@@ -2034,7 +2034,7 @@ asyncQueueProcessPageEntries(volatile QueuePosition *current,
 		/* Ignore messages destined for other databases */
 		if (qe->dboid == MyDatabaseId)
 		{
-			if (XidInMVCCSnapshot(qe->xid, snapshot))
+			if (XidInMVCCSnapshot_Local(qe->xid, snapshot))
 			{
 				/*
 				 * The source transaction is still in progress, so we can't

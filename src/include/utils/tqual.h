@@ -91,6 +91,7 @@ extern bool HeapTupleIsSurelyDead(HeapTuple htup,
 					  TransactionId OldestXmin);
 extern bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
 							  bool distributedSnapshotIgnore, bool *setDistributedSnapshotIgnore);
+extern bool XidInMVCCSnapshot_Local(TransactionId xid, Snapshot snapshot);
 
 extern void HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer, Relation rel,
 					 uint16 infomask, TransactionId xid);

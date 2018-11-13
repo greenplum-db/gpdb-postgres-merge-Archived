@@ -1596,7 +1596,7 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
  * TransactionIdIsCurrentTransactionId first, except when it's known the
  * XID could not be ours anyway.
  */
-static bool
+bool
 XidInMVCCSnapshot_Local(TransactionId xid, Snapshot snapshot)
 {
 	uint32		i;
