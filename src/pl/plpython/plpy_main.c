@@ -132,15 +132,15 @@ _PG_init(void)
 							   **version_ptr, plpython_python_version),
 					 errhint("Start a new session to use a different Python major version.")));
 	}
-}
 
-<<<<<<< HEAD
 	/* Register SIGINT/SIGTERM handler for python */
 	prev_cancel_pending_hook = cancel_pending_hook;
 	cancel_pending_hook = PLy_handle_cancel_interrupt;
 
 	pg_bindtextdomain(TEXTDOMAIN);
-=======
+}
+
+
 /*
  * Perform one-time setup of PL/Python, after checking for a conflict
  * with other versions of Python.
@@ -166,7 +166,6 @@ PLy_initialize(void)
 	/* The rest should only be done once per session */
 	if (inited)
 		return;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 #if PY_MAJOR_VERSION >= 3
 	PyImport_AppendInittab("plpy", PyInit_plpy);
@@ -195,7 +194,6 @@ PLy_initialize(void)
 }
 
 /*
-<<<<<<< HEAD
  * For GPDB Use:
  * Raise a KeyboardInterrupt exception, to simulate a SIGINT.
  */
@@ -232,10 +230,7 @@ PLy_handle_cancel_interrupt(void)
 }
 
 /*
- * This should only be called once from _PG_init. Initialize the Python
-=======
  * This should be called only once, from PLy_initialize. Initialize the Python
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
  * interpreter and global data.
  */
 static void

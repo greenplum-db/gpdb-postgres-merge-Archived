@@ -136,11 +136,8 @@ cstr2sv(const char *str)
 static inline void
 croak_cstr(const char *str)
 {
-<<<<<<< HEAD
-=======
 	dTHX;
 
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #ifdef croak_sv
 	/* Use sv_2mortal() to be sure the transient SV gets freed */
 	croak_sv(sv_2mortal(cstr2sv(str)));

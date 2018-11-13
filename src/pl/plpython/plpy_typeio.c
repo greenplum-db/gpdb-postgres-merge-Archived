@@ -1093,10 +1093,6 @@ PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
 static Datum
 PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string, bool inarray)
 {
-<<<<<<< HEAD
-
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	Datum		result;
 	HeapTuple	typeTup;
 	PLyTypeInfo locinfo;
@@ -1114,11 +1110,7 @@ PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string, bool 
 	ReleaseSysCache(typeTup);
 	ReleaseTupleDesc(desc);
 
-<<<<<<< HEAD
 	result = PLyObject_ToDatum(&locinfo.out.d, desc->tdtypmod, string, inarray);
-=======
-	result = PLyObject_ToDatum(&locinfo.out.d, desc->tdtypmod, string);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	PLy_typeinfo_dealloc(&locinfo);
 
