@@ -817,7 +817,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * appendrel dummy.  We must do this in this phase so that the rel's
 		 * dummy-ness is visible when we generate paths for other rels.
 		 */
-		set_dummy_rel_pathlist(rel);
+		set_dummy_rel_pathlist(root, rel);
 	}
 
 	pfree(parent_attrsizes);
@@ -2327,7 +2327,7 @@ check_output_expressions(Query *subquery, pushdown_safety_info *safetyInfo)
 		/* Refuse subplans */
 		if (contain_subplans((Node *) tle->expr))
 		{
-			unsafeColumns[tle->resno] = true;
+			safetyInfo->unsafeColumns[tle->resno] = true;
 			break;
 		}
 
@@ -2350,7 +2350,7 @@ check_output_expressions(Query *subquery, pushdown_safety_info *safetyInfo)
 					 * qual's columns are not included in Partition-By clause,
 					 * so fail
 					 */
-					unsafeColumns[tle->resno] = true;
+					safetyInfo->unsafeColumns[tle->resno] = true;
 					break;
 				}
 			}
