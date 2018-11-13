@@ -1523,6 +1523,7 @@ vac_update_relstats_from_list(List *updated_stats)
 							rel->rd_rel->relhasindex,
 							InvalidTransactionId,
 							InvalidMultiXactId,
+							false,
 							false /* isvacuum */);
 		relation_close(rel, AccessShareLock);
 	}
@@ -2774,6 +2775,7 @@ scan_index(Relation indrel, double num_tuples, bool check_stats, int elevel)
 							false,
 							InvalidTransactionId,
 							InvalidMultiXactId,
+							false,
 							true /* isvacuum */);
 
 	ereport(elevel,
@@ -2857,6 +2859,7 @@ vacuum_appendonly_index(Relation indexRelation,
 							false,
 							InvalidTransactionId,
 							InvalidMultiXactId,
+							false,
 							true /* isvacuum */);
 
 	ereport(elevel,

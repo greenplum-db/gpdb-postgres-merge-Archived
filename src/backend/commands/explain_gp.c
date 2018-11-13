@@ -2374,7 +2374,7 @@ show_motion_keys(PlanState *planstate, List *hashExpr, int nkeys, AttrNumber *ke
 
 	/* Set up deparse context */
 	context = set_deparse_context_planstate(es->deparse_cxt,
-											planstate,
+											(Node *) planstate,
 											ancestors);
 
     /* Merge Receive ordering key */
@@ -2426,7 +2426,7 @@ explain_partition_selector(PartitionSelector *ps, PlanState *parentstate,
 
 		/* Set up deparsing context */
 		context = set_deparse_context_planstate(es->deparse_cxt,
-												parentstate,
+												(Node *) parentstate,
 												ancestors);
 		useprefix = list_length(es->rtable) > 1;
 

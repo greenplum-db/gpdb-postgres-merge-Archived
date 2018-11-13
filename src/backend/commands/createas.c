@@ -303,7 +303,6 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	List	   *rewritten;
 	PlannedStmt *plan;
 	QueryDesc  *queryDesc;
-	ScanDirection dir;
 	Oid         relationOid = InvalidOid;   /* relation that is modified */
 	AutoStatsCmdType cmdType = AUTOSTATS_CMDTYPE_SENTINEL;  /* command type */
 
@@ -473,7 +472,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		/* save the rowcount if we're given a completionTag to fill */
 		if (completionTag)
 			snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-					 "SELECT %u", queryDesc->estate->es_processed);
+					 "SELECT %lu", queryDesc->estate->es_processed);
 
 		/* and clean up */
 		ExecutorFinish(queryDesc);
@@ -585,7 +584,6 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	RangeTblEntry *rte;
 	ListCell   *lc;
 	int			attnum;
-	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 	TupleDesc   typeinfo = queryDesc->tupDesc;
 
 	/* If EXPLAIN/QE, skip creating the "into" relation. */
