@@ -378,7 +378,7 @@ wloop:
 				}
 				break;
 			case SSL_ERROR_SSL:
-				snprintf((char *)&err_msg, ERR_MSG_LEN, "SSL error: %s", SSLerrmessage());
+				snprintf((char *)&err_msg, ERR_MSG_LEN, "SSL error: %s", SSLerrmessage(ecode));
 				report_commerror(err_msg);
 				/* fall through */
 				errno = ECONNRESET;
