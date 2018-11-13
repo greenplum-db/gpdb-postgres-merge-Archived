@@ -915,7 +915,7 @@ SysLogger_Start(void)
 	 */
 	if (Log_destination & LOG_DESTINATION_CSVLOG)
 	{
-		filename = logfile_getname(first_syslogger_file_time, ".csv");
+		filename = logfile_getname(first_syslogger_file_time, ".csv", Log_directory, Log_filename);
 
 		csvlogFile = logfile_open(filename, "a", false);
 
@@ -2279,6 +2279,7 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
                char **last_log_file_name)
 {
 	char	   *filename;
+	char       *csvfilename = NULL;
 
 	pg_time_t	fntime;
 	FILE	   *fh = *fh_p;
@@ -2294,7 +2295,7 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 		fntime = time(NULL);
 	filename = logfile_getname(fntime, suffix, log_directory, log_filename);
 	if (Log_destination & LOG_DESTINATION_CSVLOG)
-		csvfilename = logfile_getname(fntime, ".csv");
+		csvfilename = logfile_getname(fntime, ".csv", log_directory, log_filename);
 
 	/*
 	 * Decide whether to overwrite or append.  We can overwrite if (a)
@@ -2344,6 +2345,12 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 		filename = NULL;
 	}
 
+/* GPDB_94_MERGE_FIXME: We earlier removed the code below. Why not keep them
+ * even we might not call them (I'm not sure though)? Note the API for this
+ * function is different. pg upstream has size_rotation_for however gpdb does
+ * not have.
+ */
+#if 0
 	/*
 	 * Same as above, but for csv file.  Note that if LOG_DESTINATION_CSVLOG
 	 * was just turned on, we might have to open csvlogFile here though it was
@@ -2404,7 +2411,7 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 			pfree(last_csv_file_name);
 		last_csv_file_name = NULL;
 	}
-
+#endif
 	if (filename)
 		pfree(filename);
 
