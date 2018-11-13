@@ -5002,7 +5002,7 @@ l3:
 			 * this arranges that we stay at the head of the line while rechecking
 			 * tuple state.
 			 */
-			heap_acquire_tuplock(relation, tid, mode, nowait,
+			heap_acquire_tuplock(relation, tid, mode, (waittype != LockTupleWait),
 								 &have_tuple_lock);
 
 			if (infomask & HEAP_XMAX_IS_MULTI)
