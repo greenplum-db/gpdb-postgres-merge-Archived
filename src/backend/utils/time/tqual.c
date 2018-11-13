@@ -78,9 +78,6 @@ SnapshotData SnapshotSelfData = {HeapTupleSatisfiesSelf};
 SnapshotData SnapshotAnyData = {HeapTupleSatisfiesAny};
 SnapshotData SnapshotToastData = {HeapTupleSatisfiesToast};
 
-/* local functions */
-static bool XidInMVCCSnapshot_Local(TransactionId xid, Snapshot snapshot);
-
 /*
  * Set the buffer dirty after setting t_infomask
  */
