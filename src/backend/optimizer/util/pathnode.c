@@ -3470,7 +3470,7 @@ reparameterize_path(PlannerInfo *root, Path *path,
 					childpaths = lappend(childpaths, spath);
 				}
 				return (Path *)
-					create_append_path(rel, childpaths,
+					create_append_path(root, rel, childpaths,
 									   required_outer);
 			}
 		default:
