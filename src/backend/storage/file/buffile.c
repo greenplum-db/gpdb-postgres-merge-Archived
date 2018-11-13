@@ -74,8 +74,7 @@ struct BufFile
 	int			nbytes;			/* total # of valid bytes in buffer */
 	int64		maxoffset;		/* maximum offset that this file has reached, for disk usage */
 
-	char	   *buffer;			/* CDB: -> buffer */
-	PGAlignedBlock buffer;
+	char        *buffer;        /* GPDB: PG upstream uses PGAlignedBlock */
 };
 
 static BufFile *makeBufFile(File firstfile);
@@ -380,7 +379,7 @@ BufFileRead(BufFile *file, void *ptr, size_t size)
 
 		Assert(nthistime > 0);
 
-		memcpy(ptr, file->buffer.data + file->pos, nthistime);
+		memcpy(ptr, file->buffer + file->pos, nthistime);
 
 		file->pos += nthistime;
 		ptr = (void *) ((char *) ptr + nthistime);
@@ -450,7 +449,7 @@ BufFileWrite(BufFile *file, const void *ptr, size_t size)
 			nthistime = size;
 		Assert(nthistime > 0);
 
-		memcpy(file->buffer.data + file->pos, ptr, nthistime);
+		memcpy(file->buffer + file->pos, ptr, nthistime);
 
 		file->dirty = true;
 		file->pos += (int) nthistime;
