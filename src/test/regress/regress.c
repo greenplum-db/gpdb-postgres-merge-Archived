@@ -17,11 +17,7 @@
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "executor/spi.h"
-<<<<<<< HEAD
 #include "port/atomics.h"
-=======
-#include "miscadmin.h"
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
 #include "utils/rel.h"
@@ -853,7 +849,6 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(newtup->t_data);
 }
 
-<<<<<<< HEAD
 #ifndef PG_HAVE_ATOMIC_FLAG_SIMULATION
 static void
 test_atomic_flag(void)
@@ -1090,7 +1085,8 @@ test_atomic_ops(PG_FUNCTION_ARGS)
 #endif
 
 	PG_RETURN_BOOL(true);
-=======
+}
+
 PG_FUNCTION_INFO_V1(regress_putenv);
 
 Datum
@@ -1130,5 +1126,4 @@ wait_pid(PG_FUNCTION_ARGS)
 		elog(ERROR, "could not check PID %d liveness: %m", pid);
 
 	PG_RETURN_VOID();
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 }

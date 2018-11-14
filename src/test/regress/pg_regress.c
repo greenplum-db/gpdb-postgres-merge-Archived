@@ -116,13 +116,10 @@ static char *dlpath = PKGLIBDIR;
 static char *user = NULL;
 static _stringlist *extraroles = NULL;
 static _stringlist *extra_install = NULL;
-<<<<<<< HEAD
 static char *initfile = NULL;
 static char *aodir = NULL;
 static char *resgroupdir = NULL;
-=======
 static char *config_auth_datadir = NULL;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 /* internal variables */
 static const char *progname;
@@ -2756,14 +2753,11 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"launcher", required_argument, NULL, 21},
 		{"load-extension", required_argument, NULL, 22},
 		{"extra-install", required_argument, NULL, 23},
-<<<<<<< HEAD
+		{"config-auth", required_argument, NULL, 24},
         {"init-file", required_argument, NULL, 25},
         {"ao-dir", required_argument, NULL, 26},
         {"resgroup-dir", required_argument, NULL, 27},
         {"exclude-tests", required_argument, NULL, 28},
-=======
-		{"config-auth", required_argument, NULL, 24},
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2878,7 +2872,9 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			case 23:
 				add_stringlist_item(&extra_install, optarg);
 				break;
-<<<<<<< HEAD
+			case 24:
+				config_auth_datadir = pstrdup(optarg);
+				break;
             case 25:
                 initfile = strdup(optarg);
                 break;
@@ -2891,11 +2887,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
             case 28:
                 split_to_stringlist(strdup(optarg), ", ", &exclude_tests);
                 break;
-=======
-			case 24:
-				config_auth_datadir = pstrdup(optarg);
-				break;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			default:
 				/* getopt_long already emitted a complaint */
 				fprintf(stderr, _("\nTry \"%s -h\" for more information.\n"),
