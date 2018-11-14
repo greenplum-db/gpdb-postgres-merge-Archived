@@ -52,11 +52,8 @@ static void setup(char *argv0, bool *live_check);
 static void cleanup(void);
 static void	get_restricted_token(const char *progname);
 
-<<<<<<< HEAD
 static void copy_subdir_files(char *subdir);
 
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #ifdef WIN32
 static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, const char *progname);
 #endif
@@ -79,7 +76,6 @@ char	   *output_files[] = {
 #ifdef WIN32
 static char *restrict_env;
 #endif
-<<<<<<< HEAD
 
 /* This is the database used by pg_dumpall to restore global tables */
 #define GLOBAL_DUMP_DB	"postgres"
@@ -87,8 +83,6 @@ static char *restrict_env;
 ClusterInfo old_cluster,
 			new_cluster;
 OSInfo		os_info;
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 int
 main(int argc, char **argv)
@@ -569,10 +563,7 @@ create_new_objects(void)
 		 */
 		parallel_exec_prog(log_file_name,
 						   NULL,
-<<<<<<< HEAD
 		 "PGOPTIONS='-c gp_session_role=utility' "
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		 "\"%s/pg_restore\" %s --exit-on-error --verbose --dbname %s \"%s\"",
 						   new_cluster.bindir,
 						   cluster_conn_opts(&new_cluster),
@@ -636,26 +627,6 @@ remove_new_subdir(char *subdir, bool rmtopdir)
 }
 
 /*
-<<<<<<< HEAD
-=======
- * Delete the given subdirectory contents from the new cluster
- */
-static void
-remove_new_subdir(char *subdir, bool rmtopdir)
-{
-	char		new_path[MAXPGPATH];
-
-	prep_status("Deleting files from new %s", subdir);
-
-	snprintf(new_path, sizeof(new_path), "%s/%s", new_cluster.pgdata, subdir);
-	if (!rmtree(new_path, rmtopdir))
-		pg_fatal("could not delete directory \"%s\"\n", new_path);
-
-	check_ok();
-}
-
-/*
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
  * Copy the files from the old cluster into it
  */
 static void
@@ -696,11 +667,7 @@ copy_clog_xlog_xid(void)
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtxid,
 			  new_cluster.pgdata);
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-<<<<<<< HEAD
 			  "\"%s/pg_resetxlog\" -y -f -e %u \"%s\"",
-=======
-			  "\"%s/pg_resetxlog\" -f -e %u \"%s\"",
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtepoch,
 			  new_cluster.pgdata);
 	check_ok();
@@ -764,11 +731,7 @@ copy_clog_xlog_xid(void)
 	prep_status("Resetting WAL archives");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
 			  /* use timeline 1 to match controldata and no WAL history file */
-<<<<<<< HEAD
 			  "\"%s/pg_resetxlog\" -y -l 00000001%s \"%s\"", new_cluster.bindir,
-=======
-			  "\"%s/pg_resetxlog\" -l 00000001%s \"%s\"", new_cluster.bindir,
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			  old_cluster.controldata.nextxlogfile + 8,
 			  new_cluster.pgdata);
 	check_ok();
@@ -814,7 +777,6 @@ set_frozenxids(bool minmxid_only)
 
 	conn_template1 = connectToServer(&new_cluster, "template1");
 
-<<<<<<< HEAD
 	/*
 	 * GPDB doesn't allow hacking the catalogs without setting
 	 * allow_system_table_mods first.
@@ -822,8 +784,6 @@ set_frozenxids(bool minmxid_only)
 	PQclear(executeQueryOrDie(conn_template1,
 							  "set allow_system_table_mods=true"));
 
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	if (!minmxid_only)
 		/* set pg_database.datfrozenxid */
 		PQclear(executeQueryOrDie(conn_template1,
@@ -866,7 +826,6 @@ set_frozenxids(bool minmxid_only)
 
 		conn = connectToServer(&new_cluster, datname);
 
-<<<<<<< HEAD
 		/*
 		 * GPDB doesn't allow hacking the catalogs without setting
 		 * allow_system_table_mods first.
@@ -874,14 +833,11 @@ set_frozenxids(bool minmxid_only)
 		PQclear(executeQueryOrDie(conn, "set allow_system_table_mods=true"));
 
 
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		if (!minmxid_only)
 			/* set pg_class.relfrozenxid */
 			PQclear(executeQueryOrDie(conn,
 									  "UPDATE	pg_catalog.pg_class "
 									  "SET	relfrozenxid = '%u' "
-<<<<<<< HEAD
 			/*
 			 * only heap, materialized view, and TOAST are vacuumed
 			 * exclude relations with external storage as well as AO and CO tables
@@ -892,10 +848,6 @@ set_frozenxids(bool minmxid_only)
 									  "WHERE	(relkind IN ('r', 'm', 't') "
 									  "AND NOT relfrozenxid = 0) "
 									  "OR (relkind IN ('t', 'o', 'b', 'm'))",
-=======
-			/* only heap, materialized view, and TOAST are vacuumed */
-									  "WHERE	relkind IN ('r', 'm', 't')",
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 									  old_cluster.controldata.chkpnt_nxtxid));
 
 		/* set pg_class.relminmxid */
@@ -905,10 +857,6 @@ set_frozenxids(bool minmxid_only)
 		/* only heap, materialized view, and TOAST are vacuumed */
 								  "WHERE	relkind IN ('r', 'm', 't')",
 								  old_cluster.controldata.chkpnt_nxtmulti));
-<<<<<<< HEAD
-
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		PQfinish(conn);
 
 		/* Reset datallowconn flag */

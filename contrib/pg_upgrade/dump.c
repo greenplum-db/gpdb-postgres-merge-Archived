@@ -23,14 +23,9 @@ generate_old_dump(void)
 
 	/* run new pg_dumpall binary for globals */
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-<<<<<<< HEAD
 			  "PGOPTIONS='-c gp_session_role=utility' "
 			  "\"%s/pg_dumpall\" %s --schema-only --globals-only "
 			  "--quote-all-identifiers --binary-upgrade %s -f %s",
-=======
-			  "\"%s/pg_dumpall\" %s --globals-only --quote-all-identifiers "
-			  "--binary-upgrade %s -f %s",
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			  new_cluster.bindir, cluster_conn_opts(&old_cluster),
 			  log_opts.verbose ? "--verbose" : "",
 			  GLOBALS_DUMP_FILE);

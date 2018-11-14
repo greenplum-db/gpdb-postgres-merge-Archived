@@ -51,11 +51,7 @@ new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster, bool check_mode)
 				PQExpBufferData connectbuf;
 
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-<<<<<<< HEAD
-					pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText(errno));
-=======
 					pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText());
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 				initPQExpBuffer(&connectbuf);
 				appendPsqlMetaConnect(&connectbuf, active_db->db_name);

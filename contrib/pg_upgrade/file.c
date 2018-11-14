@@ -41,11 +41,7 @@ copyAndUpdateFile(pageCnvCtx *pageConverter,
 #else
 		if (CopyFile(src, dst, !force) == 0)
 #endif
-<<<<<<< HEAD
-			return getErrorText(errno);
-=======
 			return getErrorText();
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		else
 			return NULL;
 	}

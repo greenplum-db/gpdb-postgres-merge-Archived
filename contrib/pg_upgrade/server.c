@@ -9,7 +9,6 @@
 
 #include "postgres_fe.h"
 
-<<<<<<< HEAD
 /*
  * GPDB_94_MERGE_FIXME: include introduced in 928bca1a30d7e05cc3857a99e27a
  * which shipped as 9.4.17.  Remove the local define and use the definition
@@ -20,9 +19,6 @@
 #if 0
 #include "fe_utils/connect.h"
 #endif
-=======
-#include "fe_utils/connect.h"
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #include "pg_upgrade.h"
 
 
@@ -83,12 +79,9 @@ get_db_conn(ClusterInfo *cluster, const char *db_name)
 		appendConnStrVal(&conn_opts, cluster->sockdir);
 	}
 
-<<<<<<< HEAD
 	appendPQExpBuffer(&conn_opts, " options=");
 	appendConnStrVal(&conn_opts, "-c gp_session_role=utility");
 
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	conn = PQconnectdb(conn_opts.data);
 	termPQExpBuffer(&conn_opts);
 	return conn;

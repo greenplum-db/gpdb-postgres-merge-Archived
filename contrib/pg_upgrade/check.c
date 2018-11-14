@@ -103,7 +103,6 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 	check_for_reg_data_type_usage(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
 
-<<<<<<< HEAD
 	/*
 	 * Check for various Greenplum failure cases
 	 */
@@ -122,11 +121,9 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 		old_GPDB4_check_no_free_aoseg();
 		check_hash_partition_usage();
 	}
-=======
 	if (GET_MAJOR_VERSION(old_cluster.major_version) == 904 &&
 		old_cluster.controldata.cat_ver < JSONB_FORMAT_CHANGE_CAT_VER)
 		check_for_jsonb_9_4_usage(&old_cluster);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/* old = PG 8.3 checks? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 803)
@@ -251,13 +248,10 @@ issue_warnings_and_set_wal_level(char *sequence_script_file_name)
 	 */
 	start_postmaster(&new_cluster, true);
 
-<<<<<<< HEAD
 	/* old = PG 8.2/GPDB 4.3 warnings */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) == 802)
 		new_gpdb5_0_invalidate_indexes();
 
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	/* old = PG 8.3 warnings? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 803)
 	{
@@ -526,7 +520,6 @@ equivalent_locale(int category, const char *loca, const char *locb)
 	lenb = charb ? (charb - canonb) : strlen(canonb);
 
 	if (lena == lenb && pg_strncasecmp(canona, canonb, lena) == 0)
-<<<<<<< HEAD
 	{
 		pg_free(canona);
 		pg_free(canonb);
@@ -535,10 +528,6 @@ equivalent_locale(int category, const char *loca, const char *locb)
 
 	pg_free(canona);
 	pg_free(canonb);
-=======
-		return true;
-
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	return false;
 }
 
@@ -735,59 +724,6 @@ check_proper_datallowconn(ClusterInfo *cluster)
 
 	check_ok();
 }
-
-
-static void
-check_proper_datallowconn(ClusterInfo *cluster)
-{
-	int			dbnum;
-	PGconn	   *conn_template1;
-	PGresult   *dbres;
-	int			ntups;
-	int			i_datname;
-	int			i_datallowconn;
-
-	prep_status("Checking database connection settings");
-
-	conn_template1 = connectToServer(cluster, "template1");
-
-	/* get database names */
-	dbres = executeQueryOrDie(conn_template1,
-							  "SELECT	datname, datallowconn "
-							  "FROM	pg_catalog.pg_database");
-
-	i_datname = PQfnumber(dbres, "datname");
-	i_datallowconn = PQfnumber(dbres, "datallowconn");
-
-	ntups = PQntuples(dbres);
-	for (dbnum = 0; dbnum < ntups; dbnum++)
-	{
-		char	   *datname = PQgetvalue(dbres, dbnum, i_datname);
-		char	   *datallowconn = PQgetvalue(dbres, dbnum, i_datallowconn);
-
-		if (strcmp(datname, "template0") == 0)
-		{
-			/* avoid restore failure when pg_dumpall tries to create template0 */
-			if (strcmp(datallowconn, "t") == 0)
-				pg_log(PG_FATAL, "template0 must not allow connections, "
-						 "i.e. its pg_database.datallowconn must be false\n");
-		}
-		else
-		{
-			/* avoid datallowconn == false databases from being skipped on restore */
-			if (strcmp(datallowconn, "f") == 0)
-				pg_log(PG_FATAL, "All non-template0 databases must allow connections, "
-						 "i.e. their pg_database.datallowconn must be true\n");
-		}
-	}
-
-	PQclear(dbres);
-
-	PQfinish(conn_template1);
-
-	check_ok();
-}
-
 
 /*
  * create_script_for_old_cluster_deletion()

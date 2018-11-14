@@ -332,19 +332,11 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-<<<<<<< HEAD
 				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
 			cluster->controldata.chkpnt_nxtepoch = str2uint(p);
 
-=======
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
-
-			p++;				/* removing ':' char */
-			cluster->controldata.chkpnt_nxtepoch = str2uint(p);
-
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			p = strchr(p, '/');
 			if (p == NULL || strlen(p) <= 1)
 				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
