@@ -1801,7 +1801,7 @@ selectDumpableCast(CastInfo *cast)
 	if (checkExtensionMembership(&cast->dobj))
 		return;					/* extension membership overrides all else */
 
-	if (cast->dobj.catId.oid <= (Oid) g_last_builtin_oid)
+	if (cast->dobj.catId.oid <= (Oid) FirstNormalObjectId)
 		cast->dobj.dump = false;
 	else
 		cast->dobj.dump = include_everything;
@@ -1821,7 +1821,7 @@ selectDumpableProcLang(ProcLangInfo *plang)
 	if (checkExtensionMembership(&plang->dobj))
 		return;					/* extension membership overrides all else */
 
-	if (plang->dobj.catId.oid <= (Oid) g_last_builtin_oid)
+	if (plang->dobj.catId.oid <= (Oid) FirstNormalObjectId)
 		plang->dobj.dump = false;
 	else
 		plang->dobj.dump = include_everything;
@@ -1840,7 +1840,7 @@ selectDumpableProcLang(ProcLangInfo *plang)
 static void
 selectDumpableExtension(ExtensionInfo *extinfo)
 {
-	if (binary_upgrade && extinfo->dobj.catId.oid <= (Oid) g_last_builtin_oid)
+	if (binary_upgrade && extinfo->dobj.catId.oid <= (Oid) FirstNormalObjectId)
 		extinfo->dobj.dump = false;
 	else
 		extinfo->dobj.dump = include_everything;
@@ -4931,7 +4931,7 @@ getFuncs(Archive *fout, int *numFuncs)
 							 "\n  OR EXISTS (SELECT 1 FROM pg_cast"
 							 "\n  WHERE pg_cast.oid > '%u'::oid"
 							 "\n  AND p.oid = pg_cast.castfunc)",
-							 g_last_builtin_oid);
+							 FirstNormalObjectId);
 		if (binary_upgrade && fout->remoteVersion >= 90100)
 			appendPQExpBufferStr(query,
 							   "\n  OR EXISTS(SELECT 1 FROM pg_depend WHERE "
@@ -8799,7 +8799,9 @@ dumpUndefinedType(Archive *fout, TypeInfo *tyinfo)
 
 	if (binary_upgrade)
 		binary_upgrade_set_type_oids_by_type_oid(fout,
-												 q, tyinfo->dobj.catId.oid);
+												 q, tyinfo->dobj.catId.oid,
+												 tyinfo->dobj.namespace->dobj.catId.oid,
+												 tyinfo->dobj.name);
 
 	appendPQExpBuffer(q, "CREATE TYPE %s;\n",
 					  qualtypname);
@@ -10960,6 +10962,8 @@ convertRegProcReference(Archive *fout, const char *proc)
 static char *
 getFormattedOperatorName(Archive *fout, const char *oproid)
 {
+	OprInfo    *oprInfo;
+
 	/* In all cases "0" means a null reference */
 	if (strcmp(oproid, "0") == 0)
 		return NULL;
@@ -12407,7 +12411,7 @@ dumpExtProtocol(Archive *fout, ExtProtInfo *ptcinfo)
 	namecopy = pg_strdup(fmtId(ptcinfo->dobj.name));
 	dumpACL(fout, ptcinfo->dobj.catId, ptcinfo->dobj.dumpId,
 			"PROTOCOL",
-			namecopy, NULL, ptcinfo->dobj.name,
+			namecopy, NULL,
 			NULL, ptcinfo->ptcowner,
 			ptcinfo->ptcacl);
 	free(namecopy);
@@ -12474,12 +12478,6 @@ dumpTSParser(Archive *fout, TSParserInfo *prsinfo)
 				 q->data, delq->data, NULL,
 				 NULL, 0,
 				 NULL, NULL);
-
-	appendPQExpBuffer(labelq, "TEXT SEARCH PARSER %s",
-					  fmtId(prsinfo->dobj.name));
-
-	if (binary_upgrade)
-		binary_upgrade_extension_member(q, &prsinfo->dobj, labelq->data);
 
 	/* Dump Parser Comments */
 	dumpComment(fout, "TEXT SEARCH PARSER", qprsname,
@@ -13964,9 +13962,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	{
 		reltypename = "EXTERNAL TABLE";
 		dumpExternal(fout, tbinfo, q, delq);
-
-		appendPQExpBuffer(labelq, "EXTERNAL TABLE %s",
-						  fmtId(tbinfo->dobj.name));
 	}
 	/* END MPP ADDITION */
 	else

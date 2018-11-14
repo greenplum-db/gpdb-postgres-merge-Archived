@@ -4588,18 +4588,15 @@ CloneArchive(ArchiveHandle *AH)
 		/* this also sets clone->connection */
 		ConnectDatabase((Archive *) clone, ropt->dbname,
 						ropt->pghost, ropt->pgport, ropt->username,
-<<<<<<< HEAD
 						ropt->promptPassword, false);
-=======
-						ropt->promptPassword);
 
 		/* re-establish fixed state */
 		_doSetFixedOutputState(clone);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	}
 	else
 	{
 		PQExpBufferData connstr;
+		char	   *dbname;
 		char	   *pghost;
 		char	   *pgport;
 		char	   *username;
@@ -4615,17 +4612,13 @@ CloneArchive(ArchiveHandle *AH)
 		initPQExpBuffer(&connstr);
 		appendPQExpBuffer(&connstr, "dbname=");
 		appendConnStrVal(&connstr, PQdb(AH->connection));
+		dbname = PQdb(AH->connection);
 		pghost = PQhost(AH->connection);
 		pgport = PQport(AH->connection);
 		username = PQuser(AH->connection);
 
 		/* this also sets clone->connection */
-<<<<<<< HEAD
 		ConnectDatabase((Archive *) clone, dbname, pghost, pgport, username, TRI_NO, false);
-=======
-		ConnectDatabase((Archive *) clone, connstr.data,
-						pghost, pgport, username, TRI_NO);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		termPQExpBuffer(&connstr);
 		/* setupDumpWorker will fix up connection state */

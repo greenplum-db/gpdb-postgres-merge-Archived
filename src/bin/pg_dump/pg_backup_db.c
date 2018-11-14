@@ -152,14 +152,8 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 	do
 	{
-<<<<<<< HEAD
-#define PARAMS_ARRAY_SIZE	8
-		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
-=======
-		const char *keywords[7];
-		const char *values[7];
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+		const char *keywords[8];
+		const char *values[8];
 
 		keywords[0] = "host";
 		values[0] = PQhost(AH->connection);
@@ -274,14 +268,8 @@ ConnectDatabase(Archive *AHX,
 	 */
 	do
 	{
-<<<<<<< HEAD
-#define PARAMS_ARRAY_SIZE	8
-		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
-=======
-		const char *keywords[7];
-		const char *values[7];
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+		const char *keywords[8];
+		const char *values[8];
 
 		keywords[0] = "host";
 		values[0] = pghost;

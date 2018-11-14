@@ -1137,41 +1137,7 @@ dumpRoles(PGconn *conn)
 						  "ORDER BY 2",
 						  resq_col, resgroup_col, extauth_col, hdfs_col);
 	else
-<<<<<<< HEAD
 		error_unsupported_server_version(conn);
-=======
-		printfPQExpBuffer(buf,
-						  "SELECT 0 as oid, usename as rolname, "
-						  "usesuper as rolsuper, "
-						  "true as rolinherit, "
-						  "usesuper as rolcreaterole, "
-						  "usecreatedb as rolcreatedb, "
-						  "true as rolcanlogin, "
-						  "-1 as rolconnlimit, "
-						  "passwd as rolpassword, "
-						  "valuntil as rolvaliduntil, "
-						  "false as rolreplication, "
-						  "null as rolcomment, "
-						  "usename = current_user AS is_current_user "
-						  "FROM pg_shadow "
-						  "UNION ALL "
-						  "SELECT 0 as oid, groname as rolname, "
-						  "false as rolsuper, "
-						  "true as rolinherit, "
-						  "false as rolcreaterole, "
-						  "false as rolcreatedb, "
-						  "false as rolcanlogin, "
-						  "-1 as rolconnlimit, "
-						  "null::text as rolpassword, "
-						  "null::abstime as rolvaliduntil, "
-						  "false as rolreplication, "
-						  "null as rolcomment, "
-						  "false AS is_current_user "
-						  "FROM pg_group "
-						  "WHERE NOT EXISTS (SELECT 1 FROM pg_shadow "
-						  " WHERE usename = groname) "
-						  "ORDER BY 2");
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	res = executeQuery(conn, buf->data);
 
@@ -1751,60 +1717,8 @@ dumpCreateDB(PGconn *conn)
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
 						   "WHERE datallowconn ORDER BY 1");
-<<<<<<< HEAD
 	else
 		error_unsupported_server_version(conn);
-=======
-	else if (server_version >= 80000)
-		res = executeQuery(conn,
-						   "SELECT datname, "
-						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
-						   "pg_encoding_to_char(d.encoding), "
-		   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
-						   "datistemplate, datacl, -1 as datconnlimit, "
-						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
-		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
-						   "WHERE datallowconn ORDER BY 1");
-	else if (server_version >= 70300)
-		res = executeQuery(conn,
-						   "SELECT datname, "
-						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
-						   "pg_encoding_to_char(d.encoding), "
-		   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
-						   "datistemplate, datacl, -1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
-						   "WHERE datallowconn ORDER BY 1");
-	else if (server_version >= 70100)
-		res = executeQuery(conn,
-						   "SELECT datname, "
-						   "coalesce("
-					"(select usename from pg_shadow where usesysid=datdba), "
-						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid, 0 AS datminmxid, "
-						   "datistemplate, '' as datacl, -1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-						   "FROM pg_database d "
-						   "WHERE datallowconn ORDER BY 1");
-	else
-	{
-		/*
-		 * Note: 7.0 fails to cope with sub-select in COALESCE, so just deal
-		 * with getting a NULL by not printing any OWNER clause.
-		 */
-		res = executeQuery(conn,
-						   "SELECT datname, "
-					"(select usename from pg_shadow where usesysid=datdba), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid, 0 AS datminmxid, "
-						   "'f' as datistemplate, "
-						   "'' as datacl, -1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-						   "FROM pg_database d "
-						   "ORDER BY 1");
-	}
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -1897,20 +1811,6 @@ dumpCreateDB(PGconn *conn)
 			else
 				appendPQExpBuffer(buf, "\\connect postgres\n");
 
-<<<<<<< HEAD
-			if (binary_upgrade)
-			{
-				appendPQExpBufferStr(buf, "-- For binary upgrade, set datfrozenxid.\n");
-				appendPQExpBuffer(buf, "UPDATE pg_catalog.pg_database "
-								  "SET datfrozenxid = '%u' "
-								  "WHERE datname = ",
-								  dbfrozenxid);
-				appendStringLiteralConn(buf, dbname, conn);
-				appendPQExpBufferStr(buf, ";\n");
-			}
-
-			appendPQExpBuffer(buf, "RESET allow_system_table_mods;\n");
-=======
 			appendPQExpBuffer(buf, "ALTER DATABASE %s SET TABLESPACE %s;\n",
 							  fdbname, fmtId(dbtablespace));
 
@@ -1927,8 +1827,8 @@ dumpCreateDB(PGconn *conn)
 							  dbfrozenxid, dbminmxid);
 			appendStringLiteralConn(buf, dbname, conn);
 			appendPQExpBufferStr(buf, ";\n");
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		}
+		appendPQExpBuffer(buf, "RESET allow_system_table_mods;\n");
 
 		if (!skip_acls &&
 			!buildACLCommands(fdbname, NULL, NULL, "DATABASE", dbacl, dbowner,
@@ -2499,16 +2399,11 @@ connectDatabase(const char *dbname, const char *connection_string,
 		exit_nicely(1);
 	}
 
-<<<<<<< HEAD
 	/*
 	 * On 7.3 and later, make sure we are not fooled by non-system schemas in
 	 * the search path.
 	 */
-	executeCommand(conn, "SET search_path = pg_catalog");
-=======
-	if (server_version >= 70300)
-		PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL));
 
 	return conn;
 }
@@ -2628,86 +2523,6 @@ dumpTimestamp(char *msg)
 				 localtime(&now)) != 0)
 		fprintf(OPF, "-- %s %s\n\n", msg, buf);
 }
-<<<<<<< HEAD
-
-
-/*
- * Append the given string to the buffer, with suitable quoting for passing
- * the string as a value, in a keyword/pair value in a libpq connection
- * string
- */
-static void
-doConnStrQuoting(PQExpBuffer buf, const char *str)
-{
-	const char *s;
-	bool		needquotes;
-
-	/*
-	 * If the string consists entirely of plain ASCII characters, no need to
-	 * quote it. This is quite conservative, but better safe than sorry.
-	 */
-	needquotes = false;
-	for (s = str; *s; s++)
-	{
-		if (!((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z') ||
-			  (*s >= '0' && *s <= '9') || *s == '_' || *s == '.'))
-		{
-			needquotes = true;
-			break;
-		}
-	}
-
-	if (needquotes)
-	{
-		appendPQExpBufferChar(buf, '\'');
-		while (*str)
-		{
-			/* ' and \ must be escaped by to \' and \\ */
-			if (*str == '\'' || *str == '\\')
-				appendPQExpBufferChar(buf, '\\');
-
-			appendPQExpBufferChar(buf, *str);
-			str++;
-		}
-		appendPQExpBufferChar(buf, '\'');
-	}
-	else
-		appendPQExpBufferStr(buf, str);
-}
-
-/*
- * Append the given string to the shell command being built in the buffer,
- * with suitable shell-style quoting.
- */
-static void
-doShellQuoting(PQExpBuffer buf, const char *str)
-{
-	const char *p;
-
-#ifndef WIN32
-	appendPQExpBufferChar(buf, '\'');
-	for (p = str; *p; p++)
-	{
-		if (*p == '\'')
-			appendPQExpBufferStr(buf, "'\"'\"'");
-		else
-			appendPQExpBufferChar(buf, *p);
-	}
-	appendPQExpBufferChar(buf, '\'');
-#else							/* WIN32 */
-
-	appendPQExpBufferChar(buf, '"');
-	for (p = str; *p; p++)
-	{
-		if (*p == '"')
-			appendPQExpBufferStr(buf, "\\\"");
-		else
-			appendPQExpBufferChar(buf, *p);
-	}
-	appendPQExpBufferChar(buf, '"');
-#endif   /* WIN32 */
-}
-
 
 /*
  * This GPDB-specific function is copied (in spirit) from pg_dump.c.
@@ -2732,5 +2547,3 @@ error_unsupported_server_version(PGconn *conn)
 	PQfinish(conn);
 	exit(1);
 }
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d

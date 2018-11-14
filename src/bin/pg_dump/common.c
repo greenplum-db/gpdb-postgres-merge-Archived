@@ -57,10 +57,7 @@ static int	numOperators;
 static int	numCollations;
 static int	numNamespaces;
 static int	numExtensions;
-<<<<<<< HEAD
 static int  numTypeStorageOptions;
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 /* This is an array of object identities, not actual DumpableObjects */
 static ExtensionMemberId *extmembers;
@@ -110,12 +107,9 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	int			numDefaultACLs;
 	int			numEventTriggers;
 
-<<<<<<< HEAD
 	/* GPDB specific variables */
 	int			numExtProtocols;
 
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	/*
 	 * We must read extensions and extension membership info first, because
 	 * extension membership needs to be consultable during decisions about

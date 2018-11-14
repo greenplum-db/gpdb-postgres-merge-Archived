@@ -463,13 +463,9 @@ usage(const char *progname)
 			 "                               selecting/ordering output\n"));
 	printf(_("  -n, --schema=NAME            restore only objects in this schema\n"));
 	printf(_("  -O, --no-owner               skip restoration of object ownership\n"));
-<<<<<<< HEAD
 	printf(_("  -P, --function='NAME(args)'\n"
 			 "                               restore named function. name must be exactly\n"
 			 "                               as appears in the TOC, and inside single quotes\n"));
-=======
-	printf(_("  -P, --function=NAME(args)    restore named function\n"));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	printf(_("  -s, --schema-only            restore only the schema, no data\n"));
 	printf(_("  -S, --superuser=NAME         superuser user name to use for disabling triggers\n"));
 	printf(_("  -t, --table=NAME             restore named table\n"));

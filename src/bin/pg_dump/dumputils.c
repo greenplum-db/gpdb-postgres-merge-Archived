@@ -817,14 +817,8 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 		if (!parseAclItem(aclitems[i], type, name, subname, remoteVersion,
 						  grantee, grantor, privs, privswgo))
 		{
-<<<<<<< HEAD
-			if (aclitems)
-				free(aclitems);
-			return false;
-=======
 			ok = false;
 			break;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		}
 
 		if (grantor->len == 0 && owner)
