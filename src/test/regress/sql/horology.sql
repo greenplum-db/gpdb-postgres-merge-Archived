@@ -699,8 +699,6 @@ SELECT to_char('2012-12-12 12:00'::timestamptz, 'YYYY-MM-DD HH:MI:SS TZ');
 
 RESET TIME ZONE;
 
-<<<<<<< HEAD
-
 -- Clean up
 DROP TABLE abstime_horology_tbl;
 DROP TABLE interval_horology_tbl;
@@ -709,7 +707,7 @@ DROP TABLE time_horology_tbl;
 DROP TABLE timestamp_horology_tbl;
 DROP TABLE timestamptz_horology_tbl;
 DROP TABLE timetz_horology_tbl;
-=======
+
 --
 -- Drop tables that we don't want to keep because they interfere with
 -- testing pg_upgrade to v12 and up
@@ -718,4 +716,3 @@ DROP TABLE timetz_horology_tbl;
 DROP TABLE abstime_tbl;
 DROP TABLE reltime_tbl;
 DROP TABLE tinterval_tbl;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d

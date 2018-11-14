@@ -452,12 +452,8 @@ insert into ddtest2 values(row(-1));
 alter domain posint add constraint c1 check(value >= 0);
 drop table ddtest2;
 
-<<<<<<< HEAD
-create table ddtest2(f1 ddtest1[], distkey int) distributed by (distkey);
-=======
 -- Likewise for domains within arrays of composite
-create table ddtest2(f1 ddtest1[]);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+create table ddtest2(f1 ddtest1[], distkey int) distributed by (distkey);
 insert into ddtest2 values('{(-1)}');
 alter domain posint add constraint c1 check(value >= 0);
 drop table ddtest2;
