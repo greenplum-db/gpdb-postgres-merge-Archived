@@ -1528,7 +1528,7 @@ AllocSetFreeImpl(MemoryContext context, void *pointer, bool isHeader)
 		 * just past the chunk.
 		 */
 		if (block->aset != set ||
-			block->freeptr != block->endptr ||
+			block->freeptr != UserPtr_GetEndPtr(block) ||
 			block->freeptr != ((char *) block) +
 			(chunk->size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ))
 			elog(ERROR, "could not find block containing chunk %p", chunk);
@@ -1702,7 +1702,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		 * just past the chunk.
 		 */
 		if (block->aset != set ||
-			block->freeptr != block->endptr ||
+			block->freeptr != UserPtr_GetEndPtr(block) ||
 			block->freeptr != ((char *) block) +
 			(chunk->size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ))
 			elog(ERROR, "could not find block containing chunk %p", chunk);
@@ -1965,7 +1965,7 @@ AllocSetCheck(MemoryContext context)
 		if (block->aset != set ||
 			block->prev != prevblock ||
 			block->freeptr < bpoz ||
-			block->freeptr > block->endptr)
+			block->freeptr > (char *) UserPtr_GetEndPtr(block))
 			elog(WARNING, "problem in alloc set %s: corrupt header in block %p",
 				 name, block);
 
