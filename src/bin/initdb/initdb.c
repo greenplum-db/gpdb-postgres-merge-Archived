@@ -221,7 +221,7 @@ static const char *subdirs[] = {
 	"pg_stat_tmp",
 	"pg_logical",
 	"pg_logical/snapshots",
-	"pg_logical/mappings"
+	"pg_logical/mappings",
 /* GPDB needs these directories */
 	"pg_distributedlog",
 	"pg_utilitymodedtmredo",
