@@ -543,12 +543,30 @@ lo_import_internal(text *filename, Oid lobjOid)
 	return oid;
 }
 
+Datum
+lo_export(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		 errmsg("large objects are not supported")));
+
+	PG_RETURN_INT32(1);
+}
+
+/*
+ * This is the upstream version of lo_export, intentionally kept intact (except
+ * for the name), and intentionally unused (we register the dummy version above
+ * in the catalog to disallow the use of large objects). Why not just throw an
+ * error at the entry of the function, you ask? The mix of ereport(ERROR) and
+ * PG_TRY seems to trigger an unwarranted warning-turned-error from GCC
+ * -Werror=maybe-uninitialized
+ */
 /*
  * lo_export -
  *	  exports an (inversion) large object.
  */
-Datum
-lo_export(PG_FUNCTION_ARGS)
+static pg_attribute_unused() Datum
+lo_export_pg(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId = PG_GETARG_OID(0);
 	text	   *filename = PG_GETARG_TEXT_PP(1);
@@ -559,10 +577,6 @@ lo_export(PG_FUNCTION_ARGS)
 	char		fnamebuf[MAXPGPATH];
 	LargeObjectDesc *lobj;
 	mode_t		oumask;
-
-	ereport(ERROR,
-		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		 errmsg("large objects are not supported")));
 
 #ifndef ALLOW_DANGEROUS_LO_FUNCTIONS
 	if (!superuser())
