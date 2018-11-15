@@ -1728,10 +1728,11 @@ vac_update_relstats(Relation relation,
 	 * to be "in the future".
 	 */
 	if (TransactionIdIsNormal(frozenxid) &&
-		MultiXactIdIsValid(minmulti) &&
-		pgcform->relminmxid != minmulti &&
-		(MultiXactIdPrecedes(pgcform->relminmxid, minmulti) ||
-		 MultiXactIdPrecedes(ReadNextMultiXactId(), pgcform->relminmxid)))
+		TransactionIdIsValid(pgcform->relfrozenxid) &&
+		pgcform->relfrozenxid != frozenxid &&
+		(TransactionIdPrecedes(pgcform->relfrozenxid, frozenxid) ||
+		 TransactionIdPrecedes(ReadNewTransactionId(),
+							   pgcform->relfrozenxid)))
 	{
 		pgcform->relfrozenxid = frozenxid;
 		dirty = true;
