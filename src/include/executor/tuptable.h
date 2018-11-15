@@ -333,7 +333,7 @@ static inline Datum slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull)
 	/* System attribute */
 	if(attnum <= 0)
 	{
-		if (slot_getsysattr(slot, attnum, &value, isnull) < 0)
+		if (slot_getsysattr(slot, attnum, &value, isnull) == false)
 			elog(ERROR, "Fail to get system attribute with attnum: %d", attnum);
 		return value;
 	}
