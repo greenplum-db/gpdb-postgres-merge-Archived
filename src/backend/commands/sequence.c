@@ -1856,9 +1856,13 @@ cdb_sequence_nextval_qe(Relation	seqrel,
 	 */
 	do
 	{
+		pq_startmsgread();
 		retval = pq_getbyte_if_available(&qtype);
 		if (retval == 0)
+		{
+			pq_endmsgread();
 			CHECK_FOR_INTERRUPTS();
+		}
 
 		if (retval == EOF)
 			ereport(ERROR,
