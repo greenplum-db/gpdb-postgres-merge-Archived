@@ -1999,6 +1999,7 @@ swaptypes(int i, int j)
 	}
 }
 
+static void
 writezone(const char *const name, const char *const string, char version,
 		  int defaulttype)
 {

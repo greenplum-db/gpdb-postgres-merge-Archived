@@ -5858,7 +5858,7 @@ static bool
 recoveryStopsAfter(XLogRecord *record)
 {
 	uint8		record_info;
-	TimestampTz recordXtime;
+	TimestampTz recordXtime = 0;
 
 	record_info = record->xl_info & ~XLR_INFO_MASK;
 

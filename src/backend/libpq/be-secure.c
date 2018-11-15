@@ -1197,7 +1197,7 @@ SSLerrmessage(unsigned long ecode)
 	errreason = ERR_reason_error_string(ecode);
 	if (errreason != NULL)
 		return errreason;
-	snprintf(errbuf, ERROR_BUF_SIZE, _("SSL error code %lu"), errcode);
+	snprintf(errbuf, ERROR_BUF_SIZE, _("SSL error code %d"), errcode);
 	return errbuf;
 }
 
