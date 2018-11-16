@@ -1425,7 +1425,7 @@ static bool
 CheckExclusiveAccess(Relation rel)
 {
 	if (LockRelationNoWait(rel, AccessExclusiveLock) !=
-		LOCKACQUIRE_ALREADY_HELD)
+		LOCKACQUIRE_ALREADY_CLEAR)
 	{
 		UnlockRelation(rel, AccessExclusiveLock);
 		return false;
