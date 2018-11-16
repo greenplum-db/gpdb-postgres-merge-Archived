@@ -302,7 +302,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	int			save_nestlevel = 0;
 	List	   *rewritten;
 	PlannedStmt *plan;
-	QueryDesc  *queryDesc;
+	QueryDesc  *queryDesc = NULL;
 	Oid         relationOid = InvalidOid;   /* relation that is modified */
 	AutoStatsCmdType cmdType = AUTOSTATS_CMDTYPE_SENTINEL;  /* command type */
 
@@ -345,63 +345,6 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		save_nestlevel = NewGUCNestLevel();
 	}
 
-	/*
-	 * Parse analysis was done already, but we still have to run the rule
-	 * rewriter.  We do not do AcquireRewriteLocks: we assume the query either
-	 * came straight from the parser, or suitable locks were acquired by
-	 * plancache.c.
-	 *
-	 * Because the rewriter and planner tend to scribble on the input, we make
-	 * a preliminary copy of the source querytree.  This prevents problems in
-	 * the case that CTAS is in a portal or plpgsql function and is executed
-	 * repeatedly.  (See also the same hack in EXPLAIN and PREPARE.)
-	 */
-	rewritten = QueryRewrite((Query *) copyObject(query));
-
-	/* SELECT should never rewrite to more or less than one SELECT query */
-	if (list_length(rewritten) != 1)
-		elog(ERROR, "unexpected rewrite result for CREATE TABLE AS SELECT");
-	query = (Query *) linitial(rewritten);
-	Assert(query->commandType == CMD_SELECT);
-
-	/* plan the query */
-	plan = pg_plan_query(query, 0, params);
-
-	/*GPDB: Save the target information in PlannedStmt */
-
-	/*
-	 * GPDB_92_MERGE_FIXME: it really should be an optimizer's responsibility
-	 * to correctly set the into-clause and into-policy of the PlannedStmt.
-	 */
-	plan->intoClause = copyObject(stmt->into);
-
-	/*
-	 * Use a snapshot with an updated command ID to ensure this query sees
-	 * results of any previously executed queries.  (This could only matter if
-	 * the planner executed an allegedly-stable function that changed the
-	 * database contents, but let's do it anyway to be parallel to the EXPLAIN
-	 * code path.)
-	 */
-	PushCopiedSnapshot(GetActiveSnapshot());
-	UpdateActiveSnapshotCommandId();
-
-	/* Create a QueryDesc, redirecting output to our tuple receiver */
-	queryDesc = CreateQueryDesc(plan, queryString,
-								GetActiveSnapshot(), InvalidSnapshot,
-								dest, params, 0);
-
-	queryDesc->plannedstmt->query_mem = ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
-
-	/* call ExecutorStart to prepare the plan for execution */
-	ExecutorStart(queryDesc, GetIntoRelEFlags(into));
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-		autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
-
-	/*
-	 * Normally, we run the plan to completion; but if skipData is specified,
-	 * just do tuple receiver startup and shutdown.
-	 */
 	if (into->skipData)
 	{
 		/*
@@ -436,17 +379,48 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		query = (Query *) linitial(rewritten);
 		Assert(query->commandType == CMD_SELECT);
 
-		dest->rDestroy(dest);
+		/* plan the query */
+		plan = pg_plan_query(query, 0, params);
+
+		/*GPDB: Save the target information in PlannedStmt */
+
+		/*
+		 * GPDB_92_MERGE_FIXME: it really should be an optimizer's responsibility
+		 * to correctly set the into-clause and into-policy of the PlannedStmt.
+		 */
+		plan->intoClause = copyObject(stmt->into);
 
 		/*
 		 * Use a snapshot with an updated command ID to ensure this query sees
-		 * results of any previously executed queries.  (This could only
-		 * matter if the planner executed an allegedly-stable function that
-		 * changed the database contents, but let's do it anyway to be
-		 * parallel to the EXPLAIN code path.)
+		 * results of any previously executed queries.  (This could only matter if
+		 * the planner executed an allegedly-stable function that changed the
+		 * database contents, but let's do it anyway to be parallel to the EXPLAIN
+		 * code path.)
 		 */
 		PushCopiedSnapshot(GetActiveSnapshot());
 		UpdateActiveSnapshotCommandId();
+
+		/* Create a QueryDesc, redirecting output to our tuple receiver */
+		queryDesc = CreateQueryDesc(plan, queryString,
+									GetActiveSnapshot(), InvalidSnapshot,
+									dest, params, 0);
+
+		queryDesc->plannedstmt->query_mem = ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
+
+		/* call ExecutorStart to prepare the plan for execution */
+		ExecutorStart(queryDesc, GetIntoRelEFlags(into));
+
+		if (Gp_role == GP_ROLE_DISPATCH)
+			autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
+
+		/* run the plan to completion */
+		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
+
+		dest->rDestroy(dest);
+
+		/* and clean up */
+		ExecutorFinish(queryDesc);
+		ExecutorEnd(queryDesc);
 
 		if (into->distributedBy &&
 			((DistributedBy *)(into->distributedBy))->ptype == POLICYTYPE_REPLICATED)
@@ -460,23 +434,6 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		if (completionTag)
 			snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
 					 "SELECT " UINT64_FORMAT, queryDesc->es_processed);
-
-		FreeQueryDesc(queryDesc);
-
-		/* call ExecutorStart to prepare the plan for execution */
-		ExecutorStart(queryDesc, GetIntoRelEFlags(into));
-
-		/* run the plan to completion */
-		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
-
-		/* save the rowcount if we're given a completionTag to fill */
-		if (completionTag)
-			snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-					 "SELECT %lu", queryDesc->estate->es_processed);
-
-		/* and clean up */
-		ExecutorFinish(queryDesc);
-		ExecutorEnd(queryDesc);
 
 		FreeQueryDesc(queryDesc);
 
