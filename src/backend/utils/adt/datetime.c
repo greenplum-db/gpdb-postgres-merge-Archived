@@ -267,59 +267,17 @@ static const datetkn *abbrevcache[MAXDATEFIELDS] = {NULL};
 /*
  * strtoint --- just like strtol, but returns int not long
  */
-static inline int strtoint(const char *nptr, char **endptr, __attribute__((unused)) int base)
+static int
+strtoint(const char *nptr, char **endptr, int base)
 {
-	/* Assume base = 10 */
-	/* Assume number will not be larger than int32 */
-	/* Assume number isn't hex with 0x prefix */
-	/* Assume leading whitespace can only be an ASCII space */
-	/* Ignores `locale' stuff.  Assumes that the upper and lower case alphabets and digits are each contiguous. */
-	const char *s = nptr;
-	unsigned long acc;
-	unsigned char c;
+	long		val;
 
-	int			neg = 0,
-				any;
-
-	if (*s != ' ' && isspace(*s))
-		Assert("bug ");
-	/*
-	 * Skip white space and pick up leading +/- sign if any.
-	 * Do we need this for DATE?
-	 */
-	do
-	{
-		c = *s++;
-	} while (c == ' ');
-	if (c == '-')
-	{
-		neg = 1;
-		c = *s++;
-	}
-	else if (c == '+')
-		c = *s++;
-
-	for (acc = 0, any = 0;; c = *s++)
-	{
-		if (c >= '0' && c <= '9')
-			c -= '0';
-		else
-			break;
-		any = 1;
-		acc *= 10;
-		acc += c;
-	}
-
-	if (acc > 2147483647)
+	val = strtol(nptr, endptr, base);
+#ifdef HAVE_LONG_INT_64
+	if (val != (long) ((int32) val))
 		errno = ERANGE;
-
-	if (neg)
-		acc = -acc;
-
-	if (endptr != 0)
-		*endptr = any ? (char *)(s - 1) : (char *) nptr;
-		
-	return acc;
+#endif
+	return (int) val;
 }
 
 /*
