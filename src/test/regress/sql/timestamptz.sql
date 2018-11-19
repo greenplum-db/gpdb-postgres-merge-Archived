@@ -311,7 +311,6 @@ SELECT make_timestamptz(2014, 12, 10, 10, 10, 10, 'PST8PDT');
 
 RESET TimeZone;
 
-<<<<<<< HEAD
 -- TO_TIMESTAMP()
 SELECT '' AS to_timestamp_1, to_timestamp('0097/Feb/16 --> 08:14:30', 'YYYY/Mon/DD --> HH:MI:SS');
 	
@@ -371,8 +370,6 @@ insert into dttm_com values
      (3, now(), current_timestamp, now(), current_date);
 select id from dttm_com where d1 <> current_date;
 
-SET DateStyle TO DEFAULT;
-=======
 --
 -- Test behavior with a dynamic (time-varying) timezone abbreviation.
 -- These tests rely on the knowledge that MSK (Europe/Moscow standard time)
@@ -509,4 +506,3 @@ set timezone_abbreviations = 'Australia';
 select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;
 set timezone_abbreviations = 'India';
 select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
