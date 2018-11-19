@@ -486,6 +486,7 @@ HasLockForSegmentFileDrop(Relation aorel)
 	switch (acquireResult)
 	{
 		case LOCKACQUIRE_ALREADY_HELD:
+		case LOCKACQUIRE_ALREADY_CLEAR:
 			return true;
 		case LOCKACQUIRE_NOT_AVAIL:
 			return false;
