@@ -344,7 +344,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 		save_nestlevel = NewGUCNestLevel();
 	}
-	
+
 	/*
 	 * Parse analysis was done already, but we still have to run the rule
 	 * rewriter.  We do not do AcquireRewriteLocks: we assume the query either
