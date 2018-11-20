@@ -2278,25 +2278,8 @@ begin;
 set statement_timeout to 2000;
 select trap_timeout();
 NOTICE:  nyeah nyeah, can't stop me
-<<<<<<< HEAD
- blockme 
----------
-      20
-(1 row)
-
-reset statement_timeout;
-select * from foo;
- f1 
-----
- 20
-  1
-(2 rows)
-
-drop table foo;
-=======
 ERROR:  end of function
 rollback;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 -- Test for pass-by-ref values being stored in proper context
 create function test_variable_storage() returns text as $$
 declare x text;
