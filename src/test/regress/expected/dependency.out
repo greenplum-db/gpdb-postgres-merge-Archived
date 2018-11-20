@@ -86,18 +86,14 @@ DROP OWNED BY regression_user1;
 GRANT ALL ON deptest1 TO regression_user1;
 GRANT CREATE ON DATABASE regression TO regression_user1;
 SET SESSION AUTHORIZATION regression_user1;
-<<<<<<< HEAD
-CREATE TABLE deptest (a serial primary key, b text) DISTRIBUTED BY (a);
-=======
 CREATE SCHEMA deptest;
-CREATE TABLE deptest (a serial primary key, b text);
+CREATE TABLE deptest (a serial primary key, b text) DISTRIBUTED BY (a);
 ALTER DEFAULT PRIVILEGES FOR ROLE regression_user1 IN SCHEMA deptest
   GRANT ALL ON TABLES TO regression_user2;
 CREATE FUNCTION deptest_func() RETURNS void LANGUAGE plpgsql
   AS $$ BEGIN END; $$;
 CREATE TYPE deptest_enum AS ENUM ('red');
 CREATE TYPE deptest_range AS RANGE (SUBTYPE = int4);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 CREATE TABLE deptest2 (f1 int);
 -- make a serial column the hard way
 CREATE SEQUENCE ss1;
