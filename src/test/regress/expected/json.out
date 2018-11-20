@@ -1664,7 +1664,6 @@ select * from json_to_recordset('[{"a":1,"b":"foo","d":false},{"a":2,"b":"bar","
  2 | bar | t
 (2 rows)
 
-<<<<<<< HEAD
 -- checking proisstrict settings
 select '[{"a":1}]'::json->0->'b';
  ?column? 
@@ -1682,7 +1681,8 @@ select '[{"a":1}]'::json->1->'a';
  ?column? 
 ----------
  
-=======
+(1 row)
+
 select * from json_to_recordset('[{"a":1,"b":{"d":"foo"},"c":true},{"a":2,"c":false,"b":{"d":"bar"}}]')
     as x(a int, b json, c boolean);
  a |      b      | c 
@@ -1705,6 +1705,5 @@ from json_to_recordset('[{"a":1, "b":{"c":16, "d":2}, "x":8}]'::json)
  a |        b        | c | x | c_is_null 
 ---+-----------------+---+---+-----------
  1 | {"c":16, "d":2} |   | 8 | t
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 (1 row)
 
