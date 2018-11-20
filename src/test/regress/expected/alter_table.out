@@ -427,12 +427,8 @@ NOTICE:  boo: 18
 ALTER TABLE tmp3 ADD CONSTRAINT IDENTITY check (b = boo(b)) NOT VALID;
 NOTICE:  merging constraint "identity" with inherited definition
 ALTER TABLE tmp3 VALIDATE CONSTRAINT identity;
-<<<<<<< HEAD
-NOTICE:  boo: 16  (seg1 172.17.0.2:25433 pid=452490)
-NOTICE:  boo: 20  (seg0 172.17.0.2:25432 pid=452488)
-=======
-NOTICE:  boo: 16
-NOTICE:  boo: 20
+NOTICE:  boo: 16  (seg2 127.0.0.1:25434 pid=5104)
+NOTICE:  boo: 20  (seg2 127.0.0.1:25434 pid=5104)
 -- A NO INHERIT constraint should not be looked for in children during VALIDATE CONSTRAINT
 create table parent_noinh_convalid (a int);
 create table child_noinh_convalid () inherits (parent_noinh_convalid);
@@ -453,7 +449,6 @@ select convalidated from pg_constraint where conrelid = 'parent_noinh_convalid':
 
 -- cleanup
 drop table parent_noinh_convalid, child_noinh_convalid;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 -- Try (and fail) to create constraint from tmp5(a) to tmp4(a) - unique constraint on
 -- tmp4 is a,b
 ALTER TABLE tmp5 add constraint tmpconstr foreign key(a) references tmp4(a) match full;
@@ -544,6 +539,7 @@ Check constraints:
     "nv_child_2009_d_check" CHECK (d >= '01-01-2009'::date AND d <= '12-31-2009'::date)
     "nv_parent_d_check" CHECK (d >= '01-01-2001'::date AND d <= '12-31-2099'::date) NOT VALID
 Inherits: nv_parent
+Distributed by: (d)
 
 -- we leave nv_parent and children around to help test pg_dump logic
 -- Foreign key adding test with mixed types
@@ -2024,6 +2020,7 @@ CREATE TABLE test_inh_check_child() INHERITS(test_inh_check);
 Check constraints:
     "test_inh_check_a_check" CHECK (a > 10.2::double precision)
 Number of child tables: 1 (Use \d+ to list them.)
+Distributed by: (a)
 
 \d test_inh_check_child
   Table "public.test_inh_check_child"
@@ -2034,6 +2031,7 @@ Number of child tables: 1 (Use \d+ to list them.)
 Check constraints:
     "test_inh_check_a_check" CHECK (a > 10.2::double precision)
 Inherits: test_inh_check
+Distributed by: (a)
 
 select relname, conname, coninhcount, conislocal, connoinherit
   from pg_constraint c, pg_class r
@@ -2055,6 +2053,7 @@ ALTER TABLE test_inh_check ALTER COLUMN a TYPE numeric;
 Check constraints:
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Number of child tables: 1 (Use \d+ to list them.)
+Distributed by: (a)
 
 \d test_inh_check_child
   Table "public.test_inh_check_child"
@@ -2065,6 +2064,7 @@ Number of child tables: 1 (Use \d+ to list them.)
 Check constraints:
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Inherits: test_inh_check
+Distributed by: (a)
 
 select relname, conname, coninhcount, conislocal, connoinherit
   from pg_constraint c, pg_class r
@@ -2093,6 +2093,7 @@ Check constraints:
     "bnoinherit" CHECK (b > 100::double precision) NO INHERIT
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Number of child tables: 1 (Use \d+ to list them.)
+Distributed by: (a)
 
 \d test_inh_check_child
   Table "public.test_inh_check_child"
@@ -2105,6 +2106,7 @@ Check constraints:
     "bmerged" CHECK (b > 1::double precision)
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Inherits: test_inh_check
+Distributed by: (a)
 
 select relname, conname, coninhcount, conislocal, connoinherit
   from pg_constraint c, pg_class r
@@ -2177,6 +2179,7 @@ Table "public.check_fk_presence_2"
  t      | text    | 
 Foreign-key constraints:
     "check_fk_presence_2_id_fkey" FOREIGN KEY (id) REFERENCES check_fk_presence_1(id)
+Distributed by: (id)
 
 DROP TABLE check_fk_presence_1, check_fk_presence_2;
 -- check column addition within a view (bug #14876)
@@ -2209,11 +2212,15 @@ View definition:
    FROM at_view_1 v1;
 
 explain (verbose, costs off) select * from at_view_2;
-                        QUERY PLAN                        
-----------------------------------------------------------
- Seq Scan on public.at_base_table bt
-   Output: bt.id, bt.stuff, to_json(ROW(bt.id, bt.stuff))
-(2 rows)
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Output: bt.id, bt.stuff, (to_json(ROW(bt.id, bt.stuff)))
+   ->  Seq Scan on public.at_base_table bt
+         Output: bt.id, bt.stuff, to_json(ROW(bt.id, bt.stuff))
+ Optimizer: legacy query optimizer
+ Settings: constraint_exclusion=partition
+(6 rows)
 
 select * from at_view_2;
  id | stuff  |             j              
@@ -2249,11 +2256,15 @@ View definition:
    FROM at_view_1 v1;
 
 explain (verbose, costs off) select * from at_view_2;
-                           QUERY PLAN                           
-----------------------------------------------------------------
- Seq Scan on public.at_base_table bt
-   Output: bt.id, bt.stuff, to_json(ROW(bt.id, bt.stuff, NULL))
-(2 rows)
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Output: bt.id, bt.stuff, (to_json(ROW(bt.id, bt.stuff, NULL)))
+   ->  Seq Scan on public.at_base_table bt
+         Output: bt.id, bt.stuff, to_json(ROW(bt.id, bt.stuff, NULL))
+ Optimizer: legacy query optimizer
+ Settings: constraint_exclusion=partition
+(6 rows)
 
 select * from at_view_2;
  id | stuff  |                   j                    
@@ -2756,6 +2767,7 @@ NOTICE:  drop cascades to constraint test_tblx_y_check on table test_tblx
 --------+------------+-----------
  x      | integer    | 
  y      | test_typex | 
+Distributed by: (x)
 
 DROP TABLE test_tblx;
 DROP TYPE test_typex;
