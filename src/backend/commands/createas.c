@@ -200,6 +200,9 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc)
 	(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options, true);
 
 	NewRelationCreateToastTable(intoRelationId, toast_options, false, false);
+	AlterTableCreateAoSegTable(intoRelationId, false, false);
+	/* don't create AO block directory here, it'll be created when needed. */
+	AlterTableCreateAoVisimapTable(intoRelationId, false, false);
 
 	/* Create the "view" part of a materialized view. */
 	if (is_matview)
