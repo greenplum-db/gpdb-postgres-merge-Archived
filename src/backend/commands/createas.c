@@ -185,7 +185,7 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc)
 	intoRelationId = DefineRelation(create,
 									relkind,
 									InvalidOid,
-									relStorage,
+									relstorage,
 									false,
 									queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true,
 									queryDesc->plannedstmt->intoPolicy);

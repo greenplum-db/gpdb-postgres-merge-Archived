@@ -197,7 +197,9 @@ ALTER TABLE testschema.tablespace_acl OWNER TO tablespace_testuser2;
 SET SESSION ROLE tablespace_testuser2;
 CREATE TABLE tablespace_table (i int) TABLESPACE testspace; -- fail
 ERROR:  permission denied for tablespace testspace
+--start_ignore
 ALTER TABLE testschema.tablespace_acl ALTER c TYPE bigint;
+--end_ignore
 RESET ROLE;
 ALTER TABLESPACE testspace RENAME TO testspace_renamed;
 ALTER TABLE ALL IN TABLESPACE testspace_renamed SET TABLESPACE pg_default;
