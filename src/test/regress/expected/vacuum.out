@@ -60,10 +60,6 @@ VACUUM (FULL, FREEZE) vactst;
 VACUUM (ANALYZE, FULL) vactst;
 CREATE TABLE vaccluster (i INT PRIMARY KEY);
 ALTER TABLE vaccluster CLUSTER ON vaccluster_pkey;
-<<<<<<< HEAD
-INSERT INTO vaccluster SELECT i FROM vactst;
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 CLUSTER vaccluster;
 CREATE FUNCTION do_analyze() RETURNS VOID VOLATILE LANGUAGE SQL
 	AS 'ANALYZE pg_am';
