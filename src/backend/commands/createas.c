@@ -117,6 +117,7 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc)
 	create->constraints = NIL;
 	create->options = into->options;
 	create->oncommit = into->onCommit;
+
 	/*
 	 * Select tablespace to use.  If not specified, use default tablespace
 	 * (which may in turn default to database's default).
@@ -171,14 +172,20 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc)
 	create->relKind = RELKIND_RELATION;
 	create->relStorage = relstorage;
 	create->ownerid = GetUserId();
+
 	/*
 	 * Create the relation.  (This will error out if there's an existing view,
 	 * so we don't need more code to complain if "replace" is false.)
+	 *
+	 * Don't dispatch it yet, as we haven't created the toast and other
+	 * auxiliary tables yet.
+	 *
+	 * Pass the policy that was computed by the planner.
 	 */
 	intoRelationId = DefineRelation(create,
 									relkind,
 									InvalidOid,
-									create->relStorage,
+									relStorage,
 									false,
 									queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true,
 									queryDesc->plannedstmt->intoPolicy);
@@ -602,12 +609,7 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	
 	/*
 	 * Actually create the target table.
-	 * Don't dispatch it yet, as we haven't created the toast and other
-	 * auxiliary tables yet.
-	 *
-	 * Pass the policy that was computed by the planner.
 	 */
-
 	intoRelationId = create_ctas_internal(attrList, into, queryDesc);
 
 	/*
