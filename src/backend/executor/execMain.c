@@ -3575,7 +3575,8 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode, bool noWait,
 			 */
 			test = heap_lock_tuple(relation, &tuple,
 								   estate->es_output_cid,
-								   lockmode, noWait,
+								   lockmode,
+								   (noWait ? LockTupleNoWait : LockTupleWait),
 								   false, &buffer, &hufd);
 			/* We now have two pins on the buffer, get rid of one */
 			ReleaseBuffer(buffer);
