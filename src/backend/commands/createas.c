@@ -75,7 +75,8 @@ typedef struct
 
 static void intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo);
 /* utility functions for CTAS definition creation */
-static Oid	create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc);
+static Oid	create_ctas_internal(List *attrList, IntoClause *into,
+							     QueryDesc *queryDesc, bool dispatch);
 static Oid	create_ctas_nodata(List *tlist, IntoClause *into, QueryDesc *queryDesc);
 static void intorel_receive(TupleTableSlot *slot, DestReceiver *self);
 static void intorel_shutdown(DestReceiver *self);
@@ -89,7 +90,7 @@ static void intorel_destroy(DestReceiver *self);
  * provide a list of attributes (ColumnDef nodes).
  */
 static Oid
-create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc)
+create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, bool dispatch)
 {
 	CreateStmt *create = makeNode(CreateStmt);
 	bool		is_matview;
@@ -186,7 +187,7 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc)
 									relkind,
 									InvalidOid,
 									relstorage,
-									false,
+									dispatch,
 									queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true,
 									queryDesc->plannedstmt->intoPolicy);
 
@@ -292,7 +293,7 @@ create_ctas_nodata(List *tlist, IntoClause *into, QueryDesc *queryDesc)
 				 errmsg("too many column names were specified")));
 
 	/* Create the relation definition using the ColumnDef list */
-	return create_ctas_internal(attrList, into, queryDesc);
+	return create_ctas_internal(attrList, into, queryDesc, true);
 }
 
 
@@ -610,7 +611,7 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	/*
 	 * Actually create the target table.
 	 */
-	intoRelationId = create_ctas_internal(attrList, into, queryDesc);
+	intoRelationId = create_ctas_internal(attrList, into, queryDesc, false);
 
 	/*
 	 * Finally we can open the target table
