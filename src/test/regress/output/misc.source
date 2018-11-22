@@ -511,7 +511,6 @@ CONTEXT:  SQL function "hobbies" during startup
 SELECT name(equipment(p.hobbies)), name(p.hobbies), p.name FROM person* p;
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.hobbies_r"
 CONTEXT:  SQL function "hobbies" during startup
-
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 
 ------
