@@ -3366,17 +3366,6 @@ create_nestloop_plan(PlannerInfo *root,
 			prefetch = true;
 	}
 
-
-/*
- * GPDB_94_MERGE_FIXME:
-	Temporarily work around panic in rangefuncs test.
-
-	This is due to prefetch for implicit lateral join. I've known the root
-	cause, but I need a bit more time to find out the real fix. Currently
-	panic always causes cascading failures, so I'd check in the workaround
-	at first and then fix later.
-*/
-prefetch = false;
 	if (prefetch)
 		join_plan->join.prefetch_inner = true;
 

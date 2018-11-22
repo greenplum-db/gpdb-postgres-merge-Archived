@@ -2499,6 +2499,22 @@ distinct_col_search(int colno, List *colnos, List *opids)
 	return InvalidOid;
 }
 
+static bool
+subquery_motionHazard_walker(Plan *node, void *context)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, Motion))
+		return true;
+
+	if (subquery_motionHazard_walker(node->lefttree, NULL) ||
+		subquery_motionHazard_walker(node->righttree, NULL))
+		return true;
+
+	return false;
+}
+
 /*
  * create_subqueryscan_path
  *	  Creates a path corresponding to a sequential scan of a subquery,
@@ -2517,7 +2533,7 @@ create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->pathkeys = pathkeys;
 
 	pathnode->locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
-	pathnode->motionHazard = true;          /* better safe than sorry */
+	pathnode->motionHazard = subquery_motionHazard_walker(rel->subplan, NULL);
 	pathnode->rescannable = false;
 	pathnode->sameslice_relids = NULL;
 
