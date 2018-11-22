@@ -388,26 +388,6 @@ select * from outer_7597 where (f1, f2) not in (select * from inner_7597);
 select '1'::text in (select '1'::name union all select '1'::name);
 
 --
--- Check for incorrect optimization when IN subquery contains a SRF
---
-set enable_hashjoin to 0;
-explain select * from int4_tbl o where (f1, f1) in
-  (select f1, generate_series(1,2) / 10 g from int4_tbl i group by f1);
-select * from int4_tbl o where (f1, f1) in
-  (select f1, generate_series(1,2) / 10 g from int4_tbl i group by f1);
-reset enable_hashjoin;
-
---
--- check for over-optimization of whole-row Var referencing an Append plan
---
-select (select q from
-         (select 1,2,3 where f1 > 0
-          union all
-          select 4,5,6.0 where f1 <= 0
-         ) q )
-from int4_tbl;
-
---
 -- Test case for planner bug with nested EXISTS handling
 --
 select a.thousand from tenk1 a, tenk1 b
@@ -500,7 +480,7 @@ select nextval('ts1');
 -- Ensure that backward scan direction isn't propagated into
 -- expression subqueries (bug #15336)
 --
-
+--start_ignore
 begin;
 
 declare c1 scroll cursor for
@@ -511,3 +491,4 @@ move forward all in c1;
 fetch backward all in c1;
 
 commit;
+--end_ignore

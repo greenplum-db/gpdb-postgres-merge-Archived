@@ -624,52 +624,6 @@ select '1'::text in (select '1'::name union all select '1'::name);
 (1 row)
 
 --
--- Check for incorrect optimization when IN subquery contains a SRF
---
-set enable_hashjoin to 0;
-explain select * from int4_tbl o where (f1, f1) in
-  (select f1, generate_series(1,2) / 10 g from int4_tbl i group by f1);
-                                            QUERY PLAN                                             
----------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice2; segments: 3)  (cost=1.02..2.03 rows=1 width=4)
-   ->  Seq Scan on int4_tbl o  (cost=1.02..2.03 rows=1 width=4)
-         Filter: (hashed SubPlan 1)
-         SubPlan 1
-           ->  Materialize  (cost=1.02..1.03 rows=1 width=4)
-                 ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=0.00..1.01 rows=1 width=4)
-                       ->  Result  (cost=0.00..1.01 rows=1 width=4)
-                             ->  Seq Scan on int4_tbl i  (cost=0.00..1.01 rows=1 width=4)
- Settings:  enable_hashjoin=off; optimizer=off
- Optimizer status: legacy query optimizer
-(10 rows)
-
-select * from int4_tbl o where (f1, f1) in
-  (select f1, generate_series(1,2) / 10 g from int4_tbl i group by f1);
- f1 
-----
-  0
-(1 row)
-
-reset enable_hashjoin;
---
--- check for over-optimization of whole-row Var referencing an Append plan
---
-select (select q from
-         (select 1,2,3 where f1 > 0
-          union all
-          select 4,5,6.0 where f1 <= 0
-         ) q )
-from int4_tbl;
-     q     
------------
- (4,5,6.0)
- (1,2,3)
- (4,5,6.0)
- (1,2,3)
- (4,5,6.0)
-(5 rows)
-
---
 -- Test case for planner bug with nested EXISTS handling
 --
 select a.thousand from tenk1 a, tenk1 b
@@ -848,25 +802,24 @@ select * from int4_tbl o where (f1, f1) in
   (select f1, generate_series(1,2) / 10 g from int4_tbl i group by f1);
                               QUERY PLAN                              
 ----------------------------------------------------------------------
- Hash Join
+ Gather Motion 3:1  (slice1; segments: 3)
    Output: o.f1
-   Hash Cond: (o.f1 = "ANY_subquery".f1)
-   ->  Seq Scan on public.int4_tbl o
+   ->  Hash Semi Join
          Output: o.f1
-   ->  Hash
-         Output: "ANY_subquery".f1, "ANY_subquery".g
-         ->  HashAggregate
+         Hash Cond: (o.f1 = "ANY_subquery".f1)
+         ->  Seq Scan on public.int4_tbl o
+               Output: o.f1
+         ->  Hash
                Output: "ANY_subquery".f1, "ANY_subquery".g
-               Group Key: "ANY_subquery".f1, "ANY_subquery".g
                ->  Subquery Scan on "ANY_subquery"
                      Output: "ANY_subquery".f1, "ANY_subquery".g
                      Filter: ("ANY_subquery".f1 = "ANY_subquery".g)
-                     ->  HashAggregate
+                     ->  Result
                            Output: i.f1, (generate_series(1, 2) / 10)
-                           Group Key: i.f1
                            ->  Seq Scan on public.int4_tbl i
                                  Output: i.f1
-(18 rows)
+ Optimizer: legacy query optimizer
+(17 rows)
 
 select * from int4_tbl o where (f1, f1) in
   (select f1, generate_series(1,2) / 10 g from int4_tbl i group by f1);
@@ -926,6 +879,7 @@ select nextval('ts1');
 -- Ensure that backward scan direction isn't propagated into
 -- expression subqueries (bug #15336)
 --
+--start_ignore
 begin;
 declare c1 scroll cursor for
  select * from generate_series(1,4) i
@@ -939,3 +893,4 @@ fetch backward all in c1;
 (2 rows)
 
 commit;
+--end_ignore
