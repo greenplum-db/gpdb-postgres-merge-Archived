@@ -1972,16 +1972,19 @@ create function extractq2(t int8_tbl) returns int8 as $$
 $$ language sql immutable;
 explain (verbose, costs off)
 select x from int8_tbl, extractq2(int8_tbl) f(x);
-                QUERY PLAN                
-------------------------------------------
- Nested Loop
+                   QUERY PLAN                   
+------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    Output: f.x
-   ->  Seq Scan on public.int8_tbl
-         Output: int8_tbl.q1, int8_tbl.q2
-   ->  Function Scan on f
+   ->  Nested Loop
          Output: f.x
-         Function Call: int8_tbl.q2
-(7 rows)
+         ->  Seq Scan on public.int8_tbl
+               Output: int8_tbl.q1, int8_tbl.q2
+         ->  Function Scan on f
+               Output: f.x
+               Function Call: int8_tbl.q2
+ Optimizer: legacy query optimizer
+(10 rows)
 
 select x from int8_tbl, extractq2(int8_tbl) f(x);
          x         
@@ -1998,15 +2001,20 @@ create function extractq2_2(t int8_tbl) returns table(ret1 int8) as $$
 $$ language sql immutable;
 explain (verbose, costs off)
 select x from int8_tbl, extractq2_2(int8_tbl) f(x);
-            QUERY PLAN             
------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Nested Loop
    Output: ((int8_tbl.*).q2)
-   ->  Seq Scan on public.int8_tbl
+   ->  Gather Motion 3:1  (slice1; segments: 3)
          Output: int8_tbl.*
-   ->  Result
-         Output: (int8_tbl.*).q2
-(6 rows)
+         ->  Seq Scan on public.int8_tbl
+               Output: int8_tbl.*
+   ->  Materialize
+         Output: ((int8_tbl.*).q2)
+         ->  Result
+               Output: (int8_tbl.*).q2
+ Optimizer: legacy query optimizer
+(11 rows)
 
 select x from int8_tbl, extractq2_2(int8_tbl) f(x);
          x         
