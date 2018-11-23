@@ -783,10 +783,16 @@ select count(*) from temp_tenk_aocs5;
  10000
 (1 row)
 
-select tablename, indexname, indexdef from pg_indexes where tablename = 'temp_tenk_aocs5';
-    tablename    |    indexname    |                                    indexdef                                    
------------------+-----------------+--------------------------------------------------------------------------------
- temp_tenk_aocs5 | temp_even_index | CREATE INDEX temp_even_index ON pg_temp_450.temp_tenk_aocs5 USING btree (even)
+SELECT c.relname AS tablename,
+   i.relname AS indexname,
+   pg_get_indexdef(i.oid, 0, TRUE) AS indexdef
+  FROM pg_index x
+    JOIN pg_class c ON c.oid = x.indrelid
+    JOIN pg_class i ON i.oid = x.indexrelid
+ WHERE (c.relkind = ANY (ARRAY['r'::"char", 'm'::"char"])) AND i.relkind = 'i'::"char" AND c.relname = 'temp_tenk_aocs5';
+    tablename    |    indexname    |                              indexdef                              
+-----------------+-----------------+--------------------------------------------------------------------
+ temp_tenk_aocs5 | temp_even_index | CREATE INDEX temp_even_index ON temp_tenk_aocs5 USING btree (even)
 (1 row)
 
 insert into temp_tenk_aocs5(unique1, unique2) values (99998888, 99998888);
