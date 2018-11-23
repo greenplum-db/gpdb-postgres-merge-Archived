@@ -576,16 +576,18 @@ select event_id
        union all
        select event_id from other_events) ss
  order by event_id;
-                        QUERY PLAN                        
-----------------------------------------------------------
- Merge Append
-   Sort Key: events.event_id
-   ->  Index Scan using events_pkey on events
+                 QUERY PLAN                 
+--------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: events.event_id
    ->  Sort
-         Sort Key: events_child.event_id
-         ->  Seq Scan on events_child
-   ->  Index Scan using other_events_pkey on other_events
-(7 rows)
+         Sort Key: events.event_id
+         ->  Append
+               ->  Seq Scan on events
+               ->  Seq Scan on events_child
+               ->  Seq Scan on other_events
+ Optimizer: legacy query optimizer
+(9 rows)
 
 drop table events_child, events, other_events;
 reset enable_indexonlyscan;
