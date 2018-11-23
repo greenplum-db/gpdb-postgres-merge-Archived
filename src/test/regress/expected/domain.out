@@ -284,13 +284,19 @@ select * from dcomptable;
 explain (verbose, costs off)
   update dcomptable set d1[1].r = d1[1].r - 1, d1[1].i = d1[1].i + 1
     where d1[1].i > 0;
-                                                 QUERY PLAN                                                 
-------------------------------------------------------------------------------------------------------------
+                                                                           QUERY PLAN                                                                           
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
  Update on public.dcomptable
-   ->  Seq Scan on public.dcomptable
-         Output: (d1[1].r := (d1[1].r - 1::double precision))[1].i := (d1[1].i + 1::double precision), ctid
-         Filter: (dcomptable.d1[1].i > 0::double precision)
-(4 rows)
+   ->  Redistribute Motion 3:3  (slice1; segments: 3)
+         Output: (((d1[1].r := (d1[1].r - 1::double precision))[1].i := (d1[1].i + 1::double precision))::dcomptypea), d1, ctid, gp_segment_id, (DMLAction)
+         Hash Key: (((d1[1].r := (d1[1].r - 1::double precision))[1].i := (d1[1].i + 1::double precision))::dcomptypea)
+         ->  Split
+               Output: (((d1[1].r := (d1[1].r - 1::double precision))[1].i := (d1[1].i + 1::double precision))::dcomptypea), d1, ctid, gp_segment_id, DMLAction
+               ->  Seq Scan on public.dcomptable
+                     Output: (d1[1].r := (d1[1].r - 1::double precision))[1].i := (d1[1].i + 1::double precision), d1, ctid, gp_segment_id
+                     Filter: (dcomptable.d1[1].i > 0::double precision)
+ Optimizer: legacy query optimizer
+(10 rows)
 
 create rule silly as on delete to dcomptable do instead
   update dcomptable set d1[1].r = d1[1].r - 1, d1[1].i = d1[1].i + 1
@@ -306,6 +312,7 @@ Rules:
     silly AS
     ON DELETE TO dcomptable DO INSTEAD  UPDATE dcomptable SET d1[1].r = dcomptable.d1[1].r - 1::double precision, d1[1].i = dcomptable.d1[1].i + 1::double precision
   WHERE dcomptable.d1[1].i > 0::double precision
+Distributed by: (d1)
 
 drop table dcomptable;
 drop type comptype cascade;
@@ -665,7 +672,7 @@ alter domain posint add constraint c1 check(value >= 0);
 ERROR:  cannot alter type "posint" because column "ddtest2.f1" uses it
 drop table ddtest2;
 -- Likewise for domains within arrays of composite
-create table ddtest2(f1 ddtest1[]);
+create table ddtest2(f1 ddtest1[], distkey int) distributed by (distkey);
 insert into ddtest2 values('{(-1)}');
 alter domain posint add constraint c1 check(value >= 0);
 ERROR:  cannot alter type "posint" because column "ddtest2.f1" uses it
