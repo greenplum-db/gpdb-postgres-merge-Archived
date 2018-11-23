@@ -618,7 +618,9 @@ select * from d;
 
 -- check that oid column is handled properly during alter table inherit
 create table oid_parent (a int) with oids;
+NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
 create table oid_child () inherits (oid_parent);
+NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
 select attinhcount, attislocal from pg_attribute
   where attrelid = 'oid_child'::regclass and attname = 'oid';
  attinhcount | attislocal 
@@ -631,6 +633,7 @@ create table oid_child (a int) without oids;
 alter table oid_child inherit oid_parent;  -- fail
 ERROR:  table "oid_child" without OIDs cannot inherit from table "oid_parent" with OIDs
 alter table oid_child set with oids;
+NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
 select attinhcount, attislocal from pg_attribute
   where attrelid = 'oid_child'::regclass and attname = 'oid';
  attinhcount | attislocal 
@@ -1489,23 +1492,28 @@ explain (costs off)
 select t1.* from matest0 t1, matest0 t2
 where t1.b = t2.b and t2.c = t2.d
 order by t1.b limit 10;
-                            QUERY PLAN                             
--------------------------------------------------------------------
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
  Limit
-   ->  Merge Join
-         Merge Cond: (t1.b = t2.b)
-         ->  Merge Append
-               Sort Key: t1.b
-               ->  Index Scan using matest0i on matest0 t1
-               ->  Index Scan using matest1i on matest1 t1_1
-         ->  Materialize
-               ->  Merge Append
-                     Sort Key: t2.b
-                     ->  Index Scan using matest0i on matest0 t2
-                           Filter: (c = d)
-                     ->  Index Scan using matest1i on matest1 t2_1
-                           Filter: (c = d)
-(14 rows)
+   ->  Gather Motion 3:1  (slice2; segments: 3)
+         Merge Key: t1.b
+         ->  Limit
+               ->  Sort
+                     Sort Key: t1.b
+                     ->  Hash Join
+                           Hash Cond: (t1.b = t2.b)
+                           ->  Append
+                                 ->  Seq Scan on matest0 t1
+                                 ->  Seq Scan on matest1 t1_1
+                           ->  Hash
+                                 ->  Broadcast Motion 3:3  (slice1; segments: 3)
+                                       ->  Append
+                                             ->  Seq Scan on matest0 t2
+                                                   Filter: (c = d)
+                                             ->  Seq Scan on matest1 t2_1
+                                                   Filter: (c = d)
+ Optimizer: legacy query optimizer
+(19 rows)
 
 reset enable_nestloop;
 drop table matest0 cascade;
