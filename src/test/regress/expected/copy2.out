@@ -366,10 +366,13 @@ alter table check_con_tbl add check (check_con_function(check_con_tbl.*));
  f1     | integer |           | plain   |              | 
 Check constraints:
     "check_con_tbl_check" CHECK (check_con_function(check_con_tbl.*))
+Distributed by: (f1)
 
+-- GPDB: Change from 1 (PG) to 2 to make test deterministic.
+-- 1 and null on seg1 in a 3-node test environment.
 copy check_con_tbl from stdin;
-NOTICE:  input = {"f1":1}
-CONTEXT:  COPY check_con_tbl, line 1: "1"
+NOTICE:  input = {"f1":2}
+CONTEXT:  COPY check_con_tbl, line 1: "2"
 NOTICE:  input = {"f1":null}
 CONTEXT:  COPY check_con_tbl, line 2: "\N"
 copy check_con_tbl from stdin;
@@ -381,7 +384,7 @@ CONTEXT:  COPY check_con_tbl, line 1: "0"
 select * from check_con_tbl;
  f1 
 ----
-  1
+  2
    
 (2 rows)
 

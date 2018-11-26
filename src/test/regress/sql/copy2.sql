@@ -318,8 +318,10 @@ begin
 end $$ language plpgsql immutable;
 alter table check_con_tbl add check (check_con_function(check_con_tbl.*));
 \d+ check_con_tbl
+-- GPDB: Change from 1 (PG) to 2 to make test deterministic.
+-- 1 and null on seg1 in a 3-node test environment.
 copy check_con_tbl from stdin;
-1
+2
 \N
 \.
 copy check_con_tbl from stdin;
