@@ -17,13 +17,9 @@ DROP ROLE IF EXISTS regressuser4;
 DROP ROLE IF EXISTS regressuser5;
 DROP ROLE IF EXISTS regressuser6;
 
-<<<<<<< HEAD
 -- start_ignore
-SELECT lo_unlink(oid) FROM pg_largeobject_metadata;
--- end_ignore
-=======
 SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+-- end_ignore
 
 RESET client_min_messages;
 
@@ -805,12 +801,8 @@ SELECT lo_unlink(2002);
 \c -
 -- start_ignore
 -- confirm ACL setting
-<<<<<<< HEAD
-SELECT oid, pg_get_userbyid(lomowner) ownername, lomacl FROM pg_largeobject_metadata;
--- end_ignore
-=======
 SELECT oid, pg_get_userbyid(lomowner) ownername, lomacl FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+-- end_ignore
 
 SET SESSION AUTHORIZATION regressuser3;
 
@@ -1048,13 +1040,9 @@ DROP TABLE atestc;
 DROP TABLE atestp1;
 DROP TABLE atestp2;
 
-<<<<<<< HEAD
 -- start_ignore
-SELECT lo_unlink(oid) FROM pg_largeobject_metadata;
--- end_ignore
-=======
 SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+-- end_ignore
 
 DROP GROUP regressgroup1;
 DROP GROUP regressgroup2;

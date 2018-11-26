@@ -13,12 +13,8 @@ DROP ROLE IF EXISTS regressuser3;
 DROP ROLE IF EXISTS regressuser4;
 DROP ROLE IF EXISTS regressuser5;
 DROP ROLE IF EXISTS regressuser6;
-<<<<<<< HEAD
 -- start_ignore
-SELECT lo_unlink(oid) FROM pg_largeobject_metadata;
-=======
 SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
  lo_unlink 
 -----------
 (0 rows)
@@ -211,27 +207,37 @@ CREATE VIEW atest12v AS
 GRANT SELECT ON atest12v TO PUBLIC;
 -- This plan should use nestloop, knowing that few rows will be selected.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
-                   QUERY PLAN                    
--------------------------------------------------
- Nested Loop
-   ->  Seq Scan on atest12 atest12_1
-         Filter: (b <<< 5)
-   ->  Index Scan using atest12_a_idx on atest12
-         Index Cond: (a = atest12_1.b)
-         Filter: (b <<< 5)
-(6 rows)
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)
+   ->  Hash Join
+         Hash Cond: (atest12_1.b = atest12.a)
+         ->  Redistribute Motion 3:3  (slice1; segments: 3)
+               Hash Key: atest12_1.b
+               ->  Seq Scan on atest12 atest12_1
+                     Filter: (b <<< 5)
+         ->  Hash
+               ->  Seq Scan on atest12
+                     Filter: (b <<< 5)
+ Optimizer: legacy query optimizer
+(11 rows)
 
 -- And this one.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
   WHERE x.a = y.b and abs(y.a) <<< 5;
-                    QUERY PLAN                     
----------------------------------------------------
- Nested Loop
-   ->  Seq Scan on atest12 y
-         Filter: (abs(a) <<< 5)
-   ->  Index Scan using atest12_a_idx on atest12 x
-         Index Cond: (a = y.b)
-(5 rows)
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)
+   ->  Hash Join
+         Hash Cond: (x.a = y.b)
+         ->  Seq Scan on atest12 x
+         ->  Hash
+               ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                     Hash Key: y.b
+                     ->  Seq Scan on atest12 y
+                           Filter: (abs(a) <<< 5)
+ Optimizer: legacy query optimizer
+(10 rows)
 
 -- Check if regressuser2 can break security.
 SET SESSION AUTHORIZATION regressuser2;
@@ -245,16 +251,20 @@ EXPLAIN (COSTS OFF) SELECT * FROM atest12 WHERE a >>> 0;
 ERROR:  permission denied for relation atest12
 -- This plan should use hashjoin, as it will expect many rows to be selected.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
-                QUERY PLAN                 
--------------------------------------------
- Hash Join
-   Hash Cond: (atest12.a = atest12_1.b)
-   ->  Seq Scan on atest12
-         Filter: (b <<< 5)
-   ->  Hash
-         ->  Seq Scan on atest12 atest12_1
-               Filter: (b <<< 5)
-(7 rows)
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)
+   ->  Hash Join
+         Hash Cond: (atest12_1.b = atest12.a)
+         ->  Redistribute Motion 3:3  (slice1; segments: 3)
+               Hash Key: atest12_1.b
+               ->  Seq Scan on atest12 atest12_1
+                     Filter: (b <<< 5)
+         ->  Hash
+               ->  Seq Scan on atest12
+                     Filter: (b <<< 5)
+ Optimizer: legacy query optimizer
+(11 rows)
 
 -- Now regressuser1 grants sufficient access to regressuser2.
 SET SESSION AUTHORIZATION regressuser1;
@@ -262,29 +272,38 @@ GRANT SELECT (a, b) ON atest12 TO PUBLIC;
 SET SESSION AUTHORIZATION regressuser2;
 -- Now regressuser2 will also get a good row estimate.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
-                   QUERY PLAN                    
--------------------------------------------------
- Nested Loop
-   ->  Seq Scan on atest12 atest12_1
-         Filter: (b <<< 5)
-   ->  Index Scan using atest12_a_idx on atest12
-         Index Cond: (a = atest12_1.b)
-         Filter: (b <<< 5)
-(6 rows)
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)
+   ->  Hash Join
+         Hash Cond: (atest12_1.b = atest12.a)
+         ->  Redistribute Motion 3:3  (slice1; segments: 3)
+               Hash Key: atest12_1.b
+               ->  Seq Scan on atest12 atest12_1
+                     Filter: (b <<< 5)
+         ->  Hash
+               ->  Seq Scan on atest12
+                     Filter: (b <<< 5)
+ Optimizer: legacy query optimizer
+(11 rows)
 
 -- But not for this, due to lack of table-wide permissions needed
 -- to make use of the expression index's statistics.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
   WHERE x.a = y.b and abs(y.a) <<< 5;
-              QUERY PLAN              
---------------------------------------
- Hash Join
-   Hash Cond: (x.a = y.b)
-   ->  Seq Scan on atest12 x
-   ->  Hash
-         ->  Seq Scan on atest12 y
-               Filter: (abs(a) <<< 5)
-(6 rows)
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)
+   ->  Hash Join
+         Hash Cond: (x.a = y.b)
+         ->  Seq Scan on atest12 x
+         ->  Hash
+               ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                     Hash Key: y.b
+                     ->  Seq Scan on atest12 y
+                           Filter: (abs(a) <<< 5)
+ Optimizer: legacy query optimizer
+(10 rows)
 
 -- clean up (regressuser1's objects are all dropped later)
 DROP FUNCTION leak2(integer, integer) CASCADE;
@@ -1707,12 +1726,8 @@ DROP TABLE atest6;
 DROP TABLE atestc;
 DROP TABLE atestp1;
 DROP TABLE atestp2;
-<<<<<<< HEAD
 -- start_ignore
-SELECT lo_unlink(oid) FROM pg_largeobject_metadata;
-=======
 SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
  lo_unlink 
 -----------
          1
