@@ -94,16 +94,12 @@ RESET enable_bitmapscan;
 
 DROP INDEX wowidx;
 
---CREATE INDEX wowidx ON test_tsvector USING gin (a);
+CREATE INDEX wowidx ON test_tsvector USING gin (a);
 
-<<<<<<< HEAD
---SET enable_seqscan=OFF;
-=======
 SET enable_seqscan=OFF;
 -- GIN only supports bitmapscan, so no need to test plain indexscan
 
 explain (costs off) SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr&qh';
