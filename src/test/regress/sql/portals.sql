@@ -419,13 +419,11 @@ FETCH FROM c1;
 DELETE FROM ucview WHERE CURRENT OF c1; -- fail, views not supported
 ROLLBACK;
 
-<<<<<<< HEAD
 -- Check cursors for functions.
 BEGIN;
 DECLARE c1 CURSOR FOR SELECT * FROM LOWER('TEST');
 FETCH ALL FROM c1;
 COMMIT;
-=======
 -- Check WHERE CURRENT OF with an index-only scan
 BEGIN;
 EXPLAIN (costs off)
@@ -436,6 +434,8 @@ DELETE FROM onek WHERE CURRENT OF c1;
 SELECT stringu1 FROM onek WHERE stringu1 = 'DZAAAA';
 ROLLBACK;
 
+-- start_ignore
+-- ignore the block, because cursor can only scan forward
 -- Check behavior with rewinding to a previous child scan node,
 -- as per bug #15395
 BEGIN;
@@ -459,7 +459,7 @@ DELETE FROM current_check WHERE CURRENT OF c1 RETURNING *;
 
 SELECT * FROM current_check;
 ROLLBACK;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+-- end_ignore
 
 -- Make sure snapshot management works okay, per bug report in
 -- 235395b90909301035v7228ce63q392931f15aa74b31@mail.gmail.com
