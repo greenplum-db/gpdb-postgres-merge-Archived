@@ -400,6 +400,8 @@ where b.f1 = t.thousand and a.f1 = b.f1 and (a.f1+b.f1+999) = t.tenthous;
 -- check a case where we formerly got confused by conflicting sort orders
 -- in redundant merge join path keys
 --
+set enable_mergejoin = true;
+set enable_hashjoin = false;
 explain (costs off)
 select * from
   j1_tbl full join
@@ -410,10 +412,13 @@ select * from
   j1_tbl full join
   (select * from j2_tbl order by j2_tbl.i desc, j2_tbl.k asc) j2_tbl
   on j1_tbl.i = j2_tbl.i and j1_tbl.i = j2_tbl.k;
+reset enable_mergejoin;
+reset enable_hashjoin;
 
 --
 -- a different check for handling of redundant sort keys in merge joins
 --
+set enable_mergejoin = true;
 explain (costs off)
 select count(*) from
   (select * from tenk1 x order by x.thousand, x.twothousand, x.fivethous) x
@@ -426,6 +431,7 @@ select count(*) from
   left join
   (select * from tenk1 y order by y.unique2) y
   on x.thousand = y.unique2 and x.twothousand = y.hundred and x.fivethous = y.unique2;
+reset enable_mergejoin;
 
 
 --
