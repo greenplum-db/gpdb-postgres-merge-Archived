@@ -3299,6 +3299,22 @@ is_dummy_plan_walker(Node *node, bool *context)
 
 	switch (nodeTag(node))
 	{
+		case T_LockRows:
+
+			/*
+			 * GPDB_94_MERGE_FIXME
+			 * If the LockRow node is a dummy plan, then we should think of it
+			 * as a dummy plan. Is this assumption correct?
+			 */
+			{
+				if (is_dummy_plan(outerPlan(node)))
+				{
+					*context = true;
+					return true;
+				}
+			}
+			return false;
+
 		case T_Result:
 
 			/*
