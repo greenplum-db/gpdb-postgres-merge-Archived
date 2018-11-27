@@ -368,8 +368,8 @@ Check constraints:
     "check_con_tbl_check" CHECK (check_con_function(check_con_tbl.*))
 Distributed by: (f1)
 
--- GPDB: Change from 1 (PG) to 2 to make test deterministic.
--- 1 and null on seg1 in a 3-node test environment.
+-- GPDB: Change from 1 (value in PG) to 2 for copy to make test deterministic.
+-- 2 and null are on seg1 in a 3-node test environment.
 copy check_con_tbl from stdin;
 NOTICE:  input = {"f1":2}
 CONTEXT:  COPY check_con_tbl, line 1: "2"
