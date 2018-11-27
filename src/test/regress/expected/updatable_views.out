@@ -1863,9 +1863,9 @@ EXPLAIN (costs off) UPDATE rw_view1 SET person=person WHERE snoop(person);
  Update on base_tbl base_tbl_1
    ->  Subquery Scan on base_tbl
          Filter: snoop(base_tbl.person)
-         ->  LockRows
-               ->  Seq Scan on base_tbl base_tbl_2
-                     Filter: (visibility = 'public'::text)
+         ->  Seq Scan on base_tbl base_tbl_2
+               Filter: (visibility = 'public'::text)
+ Optimizer: legacy query optimizer
 (6 rows)
 
 EXPLAIN (costs off) DELETE FROM rw_view1 WHERE NOT snoop(person);
@@ -1874,9 +1874,9 @@ EXPLAIN (costs off) DELETE FROM rw_view1 WHERE NOT snoop(person);
  Delete on base_tbl base_tbl_1
    ->  Subquery Scan on base_tbl
          Filter: (NOT snoop(base_tbl.person))
-         ->  LockRows
-               ->  Seq Scan on base_tbl base_tbl_2
-                     Filter: (visibility = 'public'::text)
+         ->  Seq Scan on base_tbl base_tbl_2
+               Filter: (visibility = 'public'::text)
+ Optimizer: legacy query optimizer
 (6 rows)
 
 -- security barrier view on top of security barrier view
@@ -1949,9 +1949,9 @@ EXPLAIN (costs off) UPDATE rw_view2 SET person=person WHERE snoop(person);
          Filter: snoop(base_tbl.person)
          ->  Subquery Scan on base_tbl_2
                Filter: snoop(base_tbl_2.person)
-               ->  LockRows
-                     ->  Seq Scan on base_tbl base_tbl_3
-                           Filter: (visibility = 'public'::text)
+               ->  Seq Scan on base_tbl base_tbl_3
+                     Filter: (visibility = 'public'::text)
+ Optimizer: legacy query optimizer
 (8 rows)
 
 EXPLAIN (costs off) DELETE FROM rw_view2 WHERE NOT snoop(person);
@@ -1962,9 +1962,9 @@ EXPLAIN (costs off) DELETE FROM rw_view2 WHERE NOT snoop(person);
          Filter: (NOT snoop(base_tbl.person))
          ->  Subquery Scan on base_tbl_2
                Filter: snoop(base_tbl_2.person)
-               ->  LockRows
-                     ->  Seq Scan on base_tbl base_tbl_3
-                           Filter: (visibility = 'public'::text)
+               ->  Seq Scan on base_tbl base_tbl_3
+                     Filter: (visibility = 'public'::text)
+ Optimizer: legacy query optimizer
 (8 rows)
 
 DROP TABLE base_tbl CASCADE;
@@ -2646,15 +2646,15 @@ DETAIL:  Failing row contains (3, three, 30).
 UPDATE v2 SET b = 'ONE' WHERE a = 1; -- ok
 UPDATE v2 SET a = -1 WHERE a = 1; -- not allowed
 ERROR:  new row violates WITH CHECK OPTION for view "v1"
-DETAIL:  Failing row contains (-1, ONE, 10).
+DETAIL:  Failing row contains (-1, one, 10).
 UPDATE v2 SET c = 30 WHERE a = 1; -- not allowed
 ERROR:  new row violates WITH CHECK OPTION for view "v2"
-DETAIL:  Failing row contains (1, ONE, 30).
+DETAIL:  Failing row contains (1, one, 30).
 DELETE FROM v2 WHERE a = 2; -- ok
 SELECT * FROM v2;
  a |  b  | c  
 ---+-----+----
- 1 | ONE | 10
+ 1 | one | 10
 (1 row)
 
 DROP VIEW v2;
