@@ -7252,28 +7252,31 @@ cdbpathtoplan_create_motion_plan(PlannerInfo *root,
 															  path->path.parent->relids,
 															  subplan->targetlist);
 		if (!hashExpr)
-			elog(ERROR, "could not find hash distribution key expressions in target list");
-
-		/**
-         * If there are subplans in the hashExpr, push it down to lower level.
-         */
-		if (contain_subplans((Node *) hashExpr))
 		{
-			/* make a Result node to do the projection if necessary */
-			if (!is_projection_capable_plan(subplan))
-			{
-				List	   *tlist = copyObject(subplan->targetlist);
+			elog(INFO, "could not find hash distribution key expressions in target list");
+			motion = make_broadcast_motion(subplan,
+											false	/* useExecutorVarFormat */,
+											numsegments);
+		}
+		else {
 
-				subplan = (Plan *) make_result(root, tlist, NULL, subplan);
+			/**
+			 * If there are subplans in the hashExpr, push it down to lower level.
+			 */
+			if (contain_subplans((Node *) hashExpr)) {
+				/* make a Result node to do the projection if necessary */
+				if (!is_projection_capable_plan(subplan)) {
+					List *tlist = copyObject(subplan->targetlist);
+
+					subplan = (Plan *) make_result(root, tlist, NULL, subplan);
+				}
+				subplan->targetlist = add_to_flat_tlist_junk(
+						subplan->targetlist, hashExpr,
+						true /* resjunk */);
 			}
-			subplan->targetlist = add_to_flat_tlist_junk(subplan->targetlist,
-														 hashExpr,
-														 true /* resjunk */);
-        }
-        motion = make_hashed_motion(subplan,
-                                    hashExpr,
-                                    false /* useExecutorVarFormat */,
-									numsegments);
+			motion = make_hashed_motion(subplan, hashExpr,
+			false /* useExecutorVarFormat */, numsegments);
+		}
     }
     else
         Insist(0);

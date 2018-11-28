@@ -28,6 +28,7 @@
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbpathlocus.h"	/* me */
+#include "cdb/cdbhash.h"
 
 static List *cdb_build_distribution_pathkeys(PlannerInfo *root,
 								RelOptInfo *rel,
@@ -456,6 +457,8 @@ cdbpathlocus_get_partkey_exprs(CdbPathLocus locus,
 			 */
 			if (!item)
 				return NIL;
+			if (!isGreenplumDbHashable(exprType((Node *) item)))
+				continue;
 
 			result = lappend(result, item);
 		}
