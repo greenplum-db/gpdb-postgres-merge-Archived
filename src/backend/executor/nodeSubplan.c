@@ -43,10 +43,6 @@ static Datum ExecSubPlan(SubPlanState *node,
 			ExprContext *econtext,
 			bool *isNull,
 			ExprDoneCond *isDone);
-static Datum ExecAlternativeSubPlan(AlternativeSubPlanState *node,
-					   ExprContext *econtext,
-					   bool *isNull,
-					   ExprDoneCond *isDone);
 static Datum ExecHashSubPlan(SubPlanState *node,
 				ExprContext *econtext,
 				bool *isNull);
@@ -1429,7 +1425,7 @@ ExecInitAlternativeSubPlan(AlternativeSubPlan *asplan, PlanState *parent)
  * Note: in future we might consider changing to different subplans on the
  * fly, in case the original rowcount estimate turns out to be way off.
  */
-static Datum
+Datum
 ExecAlternativeSubPlan(AlternativeSubPlanState *node,
 					   ExprContext *econtext,
 					   bool *isNull,

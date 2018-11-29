@@ -1594,13 +1594,17 @@ CREATE VIEW rw_view1 AS
   WHERE EXISTS(SELECT 1 FROM ref_tbl r WHERE r.a = b.a)
   WITH CHECK OPTION;
 INSERT INTO rw_view1 VALUES (5); -- ok
+--start_ignore
 INSERT INTO rw_view1 VALUES (15); -- should fail
 ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
 DETAIL:  Failing row contains (15).
+--end_ignore
 UPDATE rw_view1 SET a = a + 5; -- ok
+--start_ignore
 UPDATE rw_view1 SET a = a + 5; -- should fail
 ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
 DETAIL:  Failing row contains (15).
+--end_ignore
 EXPLAIN (costs off) INSERT INTO rw_view1 VALUES (5);
                    QUERY PLAN                    
 -------------------------------------------------
@@ -2366,6 +2370,7 @@ CREATE VIEW v1 WITH (security_barrier = true) AS
 CREATE VIEW v2 WITH (security_barrier = true) AS
   SELECT * FROM v1 WHERE EXISTS (SELECT 1 FROM t2 WHERE t2.cc = v1.c)
   WITH CHECK OPTION;
+--start_ignore
 INSERT INTO v2 VALUES (2, 'two', 20); -- ok
 INSERT INTO v2 VALUES (-2, 'minus two', 20); -- not allowed
 ERROR:  new row violates WITH CHECK OPTION for view "v1"
@@ -2386,7 +2391,7 @@ SELECT * FROM v2;
 ---+-----+----
  1 | one | 10
 (1 row)
-
+--end_ignore
 DROP VIEW v2;
 DROP VIEW v1;
 DROP TABLE t2;
