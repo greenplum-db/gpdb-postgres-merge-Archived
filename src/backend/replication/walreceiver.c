@@ -255,8 +255,8 @@ WalReceiverMain(void)
 	/* Fetch information required to start streaming */
 	strlcpy(conninfo, (char *) walrcv->conninfo, MAXCONNINFO);
 	strlcpy(slotname, (char *) walrcv->slotname, NAMEDATALEN);
-	startpoint = walrcv->receiveStart;
-	startpointTLI = walrcv->receiveStartTLI;
+	startpoint = walrcv->receivedUpto;
+	startpointTLI = walrcv->receivedUptoTLI;
 
 	/* Initialise to a sanish value */
 	walrcv->lastMsgSendTime =
@@ -604,7 +604,7 @@ WalReceiverMain(void)
 }
 
 /*
- * Wait for startup process to set receiveStart and receiveStartTLI.
+ * Wait for startup process to set receivedUpto and receivedUptoTLI.
  */
 static void
 WalRcvWaitForStartPosition(XLogRecPtr *startpoint, TimeLineID *startpointTLI)
@@ -624,8 +624,8 @@ WalRcvWaitForStartPosition(XLogRecPtr *startpoint, TimeLineID *startpointTLI)
 			elog(FATAL, "unexpected walreceiver state");
 	}
 	walrcv->walRcvState = WALRCV_WAITING;
-	walrcv->receiveStart = InvalidXLogRecPtr;
-	walrcv->receiveStartTLI = 0;
+	walrcv->receivedUpto = InvalidXLogRecPtr;
+	walrcv->receivedUptoTLI = 0;
 	SpinLockRelease(&walrcv->mutex);
 
 	if (update_process_title)
@@ -656,8 +656,8 @@ WalRcvWaitForStartPosition(XLogRecPtr *startpoint, TimeLineID *startpointTLI)
 		if (walrcv->walRcvState == WALRCV_RESTARTING)
 		{
 			/* we don't expect primary_conninfo to change */
-			*startpoint = walrcv->receiveStart;
-			*startpointTLI = walrcv->receiveStartTLI;
+			*startpoint = walrcv->receivedUpto;
+			*startpointTLI = walrcv->receivedUptoTLI;
 			walrcv->walRcvState = WALRCV_STREAMING;
 			SpinLockRelease(&walrcv->mutex);
 			break;
@@ -1043,7 +1043,13 @@ XLogWalRcvFlush(bool dying)
 		{
 			walrcv->latestChunkStart = walrcv->receivedUpto;
 			walrcv->receivedUpto = LogstreamResult.Flush;
-			walrcv->receivedTLI = ThisTimeLineID;
+			walrcv->receivedUptoTLI = ThisTimeLineID;
+		}
+
+		if (walrcv->receivedUptoForwardOnly < LogstreamResult.Flush)
+		{
+			walrcv->receivedUptoForwardOnly = LogstreamResult.Flush;
+			walrcv->receivedUptoForwardOnlyTLI = ThisTimeLineID;
 		}
 		SpinLockRelease(&walrcv->mutex);
 
