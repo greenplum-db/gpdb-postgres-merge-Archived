@@ -459,8 +459,9 @@ SyncRepGetSynchronousStandby(void)
 		if (walsnd->pid == 0)
 			continue;
 
-		/* Must be streaming */
-		if (walsnd->state != WALSNDSTATE_STREAMING)
+		/* Must be streaming or stopping */
+		if (walsnd->state != WALSNDSTATE_STREAMING &&
+			walsnd->state != WALSNDSTATE_STOPPING)
 			continue;
 
 		/* Must be synchronous */
