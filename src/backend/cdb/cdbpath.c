@@ -410,6 +410,29 @@ makePathKeyForEC(EquivalenceClass *eclass)
 	return pk;
 }
 
+/*
+ * cdb_pathkey_isGreenplumDbHashable
+ *
+ * Iterates through a list of equivalence class members and determines if all
+ * of them are GreenplumDbHashable.
+ */
+static bool
+cdbpath_eclass_isGreenplumDbHashable(EquivalenceClass *ec)
+{
+	ListCell   *j;
+
+	foreach(j, ec->ec_members)
+	{
+		EquivalenceMember *em = (EquivalenceMember *) lfirst(j);
+
+		/* Fail on non-hashable expression types */
+		if (!isGreenplumDbHashable(exprType((Node *) em->em_expr)))
+			return false;
+	}
+
+	return true;
+}
+
 static bool
 cdbpath_match_preds_to_partkey_tail(CdbpathMatchPredsContext *ctx,
 									ListCell *partkeycell)
@@ -435,7 +458,8 @@ cdbpath_match_preds_to_partkey_tail(CdbpathMatchPredsContext *ctx,
 	{
 		PathKey    *pathkey = (PathKey *) lfirst(partkeycell);
 
-		if (CdbPathkeyEqualsConstant(pathkey))
+		if (CdbPathkeyEqualsConstant(pathkey) &&
+				cdbpath_eclass_isGreenplumDbHashable(pathkey->pk_eclass))
 			copathkey = pathkey;
 	}
 	else if (ctx->locus.locustype == CdbLocusType_HashedOJ)
@@ -712,31 +736,6 @@ cdbpath_match_preds_to_both_partkeys(PlannerInfo *root,
 	}
 	return true;
 }								/* cdbpath_match_preds_to_both_partkeys */
-
-
-
-/*
- * cdb_pathkey_isGreenplumDbHashable
- *
- * Iterates through a list of equivalence class members and determines if all
- * of them are GreenplumDbHashable.
- */
-static bool
-cdbpath_eclass_isGreenplumDbHashable(EquivalenceClass *ec)
-{
-	ListCell   *j;
-
-	foreach(j, ec->ec_members)
-	{
-		EquivalenceMember *em = (EquivalenceMember *) lfirst(j);
-
-		/* Fail on non-hashable expression types */
-		if (!isGreenplumDbHashable(exprType((Node *) em->em_expr)))
-			return false;
-	}
-
-	return true;
-}
 
 
 /*
