@@ -3140,12 +3140,15 @@ ExecWithCheckOptions(ResultRelInfo *resultRelInfo,
 		 * disable the check first.
 		 */
 		ListCell *l;
-		bool is_subplan;
+		bool is_subplan = false;
 		foreach(l, (List*)wcoExpr)
 		{
 			ExprState  *clause = (ExprState *) lfirst(l);
 			if (*(clause->evalfunc) == (ExprStateEvalFunc)ExecAlternativeSubPlan)
+			{
 				is_subplan = true;
+				break;
+			}
 		}
 		if (is_subplan)
 			continue;
