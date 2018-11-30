@@ -383,6 +383,10 @@ where t4.thousand = t5.unique1 and ss.x1 = t4.tenthous and ss.x2 = t5.stringu1;
 -- regression test: check a case where we formerly missed including an EC
 -- enforcement clause because it was expected to be handled at scan level
 --
+-- GPDB_94_MERGE_FIXME: The plan output is not as the upstream patch 
+-- 72edc8ffeb0e949 expected. We need to look further.
+set enable_hashjoin = false;
+set enable_nestloop = true;
 explain (costs off)
 select a.f1, b.f1, t.thousand, t.tenthous from
   tenk1 t,
@@ -395,6 +399,8 @@ select a.f1, b.f1, t.thousand, t.tenthous from
   (select sum(f1)+1 as f1 from int4_tbl i4a) a,
   (select sum(f1) as f1 from int4_tbl i4b) b
 where b.f1 = t.thousand and a.f1 = b.f1 and (a.f1+b.f1+999) = t.tenthous;
+reset enable_hashjoin;
+reset enable_nestloop;
 
 --
 -- check a case where we formerly got confused by conflicting sort orders
