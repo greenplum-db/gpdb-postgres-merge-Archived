@@ -5152,7 +5152,6 @@ select * from
 ---------------------------------------------------------------------------
  Gather Motion 3:1  (slice3; segments: 3)
    Output: a.q1, a.q2, b.q1, c.q1, (LEAST(a.q1, b.q1, c.q1))
-<<<<<<< HEAD
    ->  Nested Loop Left Join
          Output: a.q1, a.q2, b.q1, c.q1, (LEAST(a.q1, b.q1, c.q1))
          ->  Redistribute Motion 3:3  (slice1; segments: 3)
@@ -5164,9 +5163,9 @@ select * from
                Output: b.q1, c.q1, (LEAST(a.q1, b.q1, c.q1))
                ->  Nested Loop
                      Output: b.q1, c.q1, LEAST(a.q1, b.q1, c.q1)
-                     Join Filter: (a.q2 = b.q1)
                      ->  Seq Scan on public.int8_tbl b
                            Output: b.q1, b.q2
+                           Filter: (a.q2 = b.q1)
                      ->  Materialize
                            Output: c.q1
                            ->  Broadcast Motion 3:3  (slice2; segments: 3)
@@ -5174,20 +5173,7 @@ select * from
                                  ->  Seq Scan on public.int8_tbl c
                                        Output: c.q1
  Optimizer: legacy query optimizer
- Settings: optimizer=off
-(24 rows)
-=======
-   ->  Seq Scan on public.int8_tbl a
-         Output: a.q1, a.q2
-   ->  Nested Loop
-         Output: b.q1, c.q1, LEAST(a.q1, b.q1, c.q1)
-         ->  Seq Scan on public.int8_tbl b
-               Output: b.q1, b.q2
-               Filter: (a.q2 = b.q1)
-         ->  Seq Scan on public.int8_tbl c
-               Output: c.q1, c.q2
-(11 rows)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+(23 rows)
 
 select * from
   int8_tbl a left join lateral
