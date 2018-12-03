@@ -2618,14 +2618,19 @@ create temp table tidv (idv mycomptype);
 create index on tidv (idv);
 explain (costs off)
 select a.idv, b.idv from tidv a, tidv b where a.idv = b.idv;
-                        QUERY PLAN                        
-----------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Merge Join
    Merge Cond: (a.idv = b.idv)
-   ->  Index Only Scan using tidv_idv_idx on tidv a
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: a.idv
+         ->  Index Only Scan using tidv_idv_idx on tidv a
    ->  Materialize
-         ->  Index Only Scan using tidv_idv_idx on tidv b
-(5 rows)
+         ->  Gather Motion 3:1  (slice2; segments: 3)
+               Merge Key: b.idv
+               ->  Index Only Scan using tidv_idv_idx on tidv b
+ Optimizer: legacy query optimizer
+(10 rows)
 
 set enable_mergejoin = 0;
 explain (costs off)
