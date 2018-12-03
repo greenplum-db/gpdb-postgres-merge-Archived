@@ -3260,8 +3260,5 @@ DROP TABLE timetz_horology_tbl;
 -- testing pg_upgrade to v12 and up
 --
 DROP TABLE abstime_tbl;
-ERROR:  table "abstime_tbl" does not exist
 DROP TABLE reltime_tbl;
-ERROR:  table "reltime_tbl" does not exist
 DROP TABLE tinterval_tbl;
-ERROR:  table "tinterval_tbl" does not exist
