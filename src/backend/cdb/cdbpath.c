@@ -50,9 +50,11 @@ cdbpath_cost_motion(PlannerInfo *root, CdbMotionPath *motionpath)
 	double		recvrows;
 	double		sendrows;
 
+	/* GPDB_94_MERGE_FIXME: It seems that we should really
+	 * remove BitmapHeapPath, BitmapAppendOnlyPath and UniquePath?
+	 */
 	if (! IsA(subpath, BitmapHeapPath) &&
 		! IsA(subpath, BitmapAppendOnlyPath) && 
-		! IsA(subpath, IndexPath) && 
 		! IsA(subpath, UniquePath) &&
 		CdbPathLocus_IsReplicated(motionpath->path.locus))
 		/* FIXME: should use other.numsegments instead of cdbpath_segments */

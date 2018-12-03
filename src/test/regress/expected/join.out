@@ -2633,15 +2633,19 @@ select a.idv, b.idv from tidv a, tidv b where a.idv = b.idv;
 (10 rows)
 
 set enable_mergejoin = 0;
+set enable_nestloop = 1;
 explain (costs off)
 select a.idv, b.idv from tidv a, tidv b where a.idv = b.idv;
-                     QUERY PLAN                     
-----------------------------------------------------
- Nested Loop
-   ->  Seq Scan on tidv a
-   ->  Index Only Scan using tidv_idv_idx on tidv b
-         Index Cond: (idv = a.idv)
-(4 rows)
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)
+   ->  Nested Loop
+         ->  Broadcast Motion 3:3  (slice1; segments: 3)
+               ->  Seq Scan on tidv a
+         ->  Index Only Scan using tidv_idv_idx on tidv b
+               Index Cond: (idv = a.idv)
+ Optimizer: legacy query optimizer
+(7 rows)
 
 rollback;
 --
