@@ -4341,18 +4341,23 @@ from
      left join uniquetbl u1 ON u1.f1 = t1.string4) ss
   on t0.f1 = ss.case1
 where ss.stringu2 !~* ss.case1;
-                                         QUERY PLAN                                         
---------------------------------------------------------------------------------------------
- Nested Loop
-   Join Filter: (CASE t1.ten WHEN 0 THEN 'doh!'::text ELSE NULL::text END = t0.f1)
-   ->  Nested Loop
-         ->  Seq Scan on int4_tbl i4
-         ->  Index Scan using tenk1_unique2 on tenk1 t1
-               Index Cond: (unique2 = i4.f1)
-               Filter: (stringu2 !~* CASE ten WHEN 0 THEN 'doh!'::text ELSE NULL::text END)
-   ->  Materialize
-         ->  Seq Scan on text_tbl t0
-(9 rows)
+                                            QUERY PLAN                                            
+--------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice3; segments: 3)
+   ->  Hash Join
+         Hash Cond: (CASE t1.ten WHEN 0 THEN 'doh!'::text ELSE NULL::text END = t0.f1)
+         ->  Hash Join
+               Hash Cond: (t1.unique2 = i4.f1)
+               ->  Seq Scan on tenk1 t1
+                     Filter: (stringu2 !~* CASE ten WHEN 0 THEN 'doh!'::text ELSE NULL::text END)
+               ->  Hash
+                     ->  Broadcast Motion 3:3  (slice1; segments: 3)
+                           ->  Seq Scan on int4_tbl i4
+         ->  Hash
+               ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                     ->  Seq Scan on text_tbl t0
+ Optimizer: legacy query optimizer
+(14 rows)
 
 select t0.*
 from
