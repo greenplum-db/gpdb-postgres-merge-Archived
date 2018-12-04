@@ -3627,39 +3627,52 @@ select t1.* from
   on (t1.f1 = b1.d1)
   left join int4_tbl i4
   on (i8.q2 = i4.f1);
-                              QUERY PLAN                              
-----------------------------------------------------------------------
- Hash Left Join
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice5; segments: 3)
    Output: t1.f1
-   Hash Cond: (i8.q2 = i4.f1)
-   ->  Nested Loop Left Join
-         Output: t1.f1, i8.q2
-         Join Filter: (t1.f1 = '***'::text)
-         ->  Seq Scan on public.text_tbl t1
-               Output: t1.f1
-         ->  Materialize
-               Output: i8.q2
-               ->  Hash Right Join
-                     Output: i8.q2
-                     Hash Cond: ((NULL::integer) = i8b1.q2)
-                     ->  Hash Left Join
+   ->  Hash Left Join
+         Output: t1.f1
+         Hash Cond: (i8.q2 = i4.f1)
+         ->  Nested Loop Left Join
+               Output: t1.f1, i8.q2
+               Join Filter: (t1.f1 = '***'::text)
+               ->  Seq Scan on public.text_tbl t1
+                     Output: t1.f1
+               ->  Materialize
+                     Output: i8.q2, (NULL::integer)
+                     ->  Broadcast Motion 3:3  (slice3; segments: 3)
                            Output: i8.q2, (NULL::integer)
-                           Hash Cond: (i8.q1 = i8b2.q1)
-                           ->  Seq Scan on public.int8_tbl i8
-                                 Output: i8.q1, i8.q2
-                           ->  Hash
-                                 Output: i8b2.q1, (NULL::integer)
-                                 ->  Seq Scan on public.int8_tbl i8b2
-                                       Output: i8b2.q1, NULL::integer
-                     ->  Hash
-                           Output: i8b1.q2
-                           ->  Seq Scan on public.int8_tbl i8b1
-                                 Output: i8b1.q2
-   ->  Hash
-         Output: i4.f1
-         ->  Seq Scan on public.int4_tbl i4
+                           ->  Hash Right Join
+                                 Output: i8.q2, (NULL::integer)
+                                 Hash Cond: ((NULL::integer) = i8b1.q2)
+                                 ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                                       Output: i8.q2, (NULL::integer)
+                                       Hash Key: (NULL::integer)
+                                       ->  Hash Left Join
+                                             Output: i8.q2, (NULL::integer)
+                                             Hash Cond: (i8.q1 = i8b2.q1)
+                                             ->  Seq Scan on public.int8_tbl i8
+                                                   Output: i8.q1, i8.q2
+                                             ->  Hash
+                                                   Output: i8b2.q1, (NULL::integer)
+                                                   ->  Seq Scan on public.int8_tbl i8b2
+                                                         Output: i8b2.q1, NULL::integer
+                                 ->  Hash
+                                       Output: i8b1.q2, i8b1.q1
+                                       ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                                             Output: i8b1.q2, i8b1.q1
+                                             Hash Key: i8b1.q2
+                                             ->  Seq Scan on public.int8_tbl i8b1
+                                                   Output: i8b1.q2, i8b1.q1
+         ->  Hash
                Output: i4.f1
-(30 rows)
+               ->  Broadcast Motion 3:3  (slice4; segments: 3)
+                     Output: i4.f1
+                     ->  Seq Scan on public.int4_tbl i4
+                           Output: i4.f1
+ Optimizer: legacy query optimizer
+(43 rows)
 
 select t1.* from
   text_tbl t1
@@ -3688,43 +3701,60 @@ select t1.* from
   on (t1.f1 = b1.d1)
   left join int4_tbl i4
   on (i8.q2 = i4.f1);
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
- Hash Left Join
+                                               QUERY PLAN                                                
+---------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice6; segments: 3)
    Output: t1.f1
-   Hash Cond: (i8.q2 = i4.f1)
-   ->  Nested Loop Left Join
-         Output: t1.f1, i8.q2
-         Join Filter: (t1.f1 = '***'::text)
-         ->  Seq Scan on public.text_tbl t1
-               Output: t1.f1
-         ->  Materialize
-               Output: i8.q2
-               ->  Hash Right Join
-                     Output: i8.q2
-                     Hash Cond: ((NULL::integer) = i8b1.q2)
-                     ->  Hash Right Join
+   ->  Hash Left Join
+         Output: t1.f1
+         Hash Cond: (i8.q2 = i4.f1)
+         ->  Nested Loop Left Join
+               Output: t1.f1, i8.q2
+               Join Filter: (t1.f1 = '***'::text)
+               ->  Seq Scan on public.text_tbl t1
+                     Output: t1.f1
+               ->  Materialize
+                     Output: i8.q2, (NULL::integer)
+                     ->  Broadcast Motion 3:3  (slice4; segments: 3)
                            Output: i8.q2, (NULL::integer)
-                           Hash Cond: (i8b2.q1 = i8.q1)
-                           ->  Nested Loop
-                                 Output: i8b2.q1, NULL::integer
-                                 ->  Seq Scan on public.int8_tbl i8b2
-                                       Output: i8b2.q1, i8b2.q2
-                                 ->  Materialize
-                                       ->  Seq Scan on public.int4_tbl i4b2
-                           ->  Hash
-                                 Output: i8.q1, i8.q2
-                                 ->  Seq Scan on public.int8_tbl i8
-                                       Output: i8.q1, i8.q2
-                     ->  Hash
-                           Output: i8b1.q2
-                           ->  Seq Scan on public.int8_tbl i8b1
-                                 Output: i8b1.q2
-   ->  Hash
-         Output: i4.f1
-         ->  Seq Scan on public.int4_tbl i4
+                           ->  Hash Right Join
+                                 Output: i8.q2, (NULL::integer)
+                                 Hash Cond: ((NULL::integer) = i8b1.q2)
+                                 ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                                       Output: i8.q2, (NULL::integer)
+                                       Hash Key: (NULL::integer)
+                                       ->  Hash Right Join
+                                             Output: i8.q2, (NULL::integer)
+                                             Hash Cond: (i8b2.q1 = i8.q1)
+                                             ->  Nested Loop
+                                                   Output: i8b2.q1, NULL::integer
+                                                   ->  Seq Scan on public.int8_tbl i8b2
+                                                         Output: i8b2.q1, i8b2.q2
+                                                   ->  Materialize
+                                                         Output: i4b2.f1
+                                                         ->  Broadcast Motion 3:3  (slice1; segments: 3)
+                                                               Output: i4b2.f1
+                                                               ->  Seq Scan on public.int4_tbl i4b2
+                                                                     Output: i4b2.f1
+                                             ->  Hash
+                                                   Output: i8.q1, i8.q2
+                                                   ->  Seq Scan on public.int8_tbl i8
+                                                         Output: i8.q1, i8.q2
+                                 ->  Hash
+                                       Output: i8b1.q2, i8b1.q1
+                                       ->  Redistribute Motion 3:3  (slice3; segments: 3)
+                                             Output: i8b1.q2, i8b1.q1
+                                             Hash Key: i8b1.q2
+                                             ->  Seq Scan on public.int8_tbl i8b1
+                                                   Output: i8b1.q2, i8b1.q1
+         ->  Hash
                Output: i4.f1
-(34 rows)
+               ->  Broadcast Motion 3:3  (slice5; segments: 3)
+                     Output: i4.f1
+                     ->  Seq Scan on public.int4_tbl i4
+                           Output: i4.f1
+ Optimizer: legacy query optimizer
+(51 rows)
 
 select t1.* from
   text_tbl t1
@@ -3754,46 +3784,59 @@ select t1.* from
   on (t1.f1 = b1.d1)
   left join int4_tbl i4
   on (i8.q2 = i4.f1);
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
- Hash Left Join
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice5; segments: 3)
    Output: t1.f1
-   Hash Cond: (i8.q2 = i4.f1)
-   ->  Nested Loop Left Join
-         Output: t1.f1, i8.q2
-         Join Filter: (t1.f1 = '***'::text)
-         ->  Seq Scan on public.text_tbl t1
-               Output: t1.f1
-         ->  Materialize
-               Output: i8.q2
-               ->  Hash Right Join
-                     Output: i8.q2
-                     Hash Cond: ((NULL::integer) = i8b1.q2)
-                     ->  Hash Right Join
+   ->  Hash Left Join
+         Output: t1.f1
+         Hash Cond: (i8.q2 = i4.f1)
+         ->  Nested Loop Left Join
+               Output: t1.f1, i8.q2
+               Join Filter: (t1.f1 = '***'::text)
+               ->  Seq Scan on public.text_tbl t1
+                     Output: t1.f1
+               ->  Materialize
+                     Output: i8.q2, (NULL::integer)
+                     ->  Broadcast Motion 3:3  (slice3; segments: 3)
                            Output: i8.q2, (NULL::integer)
-                           Hash Cond: (i8b2.q1 = i8.q1)
-                           ->  Hash Join
-                                 Output: i8b2.q1, NULL::integer
-                                 Hash Cond: (i8b2.q1 = i4b2.f1)
-                                 ->  Seq Scan on public.int8_tbl i8b2
-                                       Output: i8b2.q1, i8b2.q2
+                           ->  Hash Right Join
+                                 Output: i8.q2, (NULL::integer)
+                                 Hash Cond: ((NULL::integer) = i8b1.q2)
+                                 ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                                       Output: i8.q2, (NULL::integer)
+                                       Hash Key: (NULL::integer)
+                                       ->  Hash Right Join
+                                             Output: i8.q2, (NULL::integer)
+                                             Hash Cond: (i8b2.q1 = i8.q1)
+                                             ->  Hash Join
+                                                   Output: i8b2.q1, NULL::integer
+                                                   Hash Cond: (i8b2.q1 = i4b2.f1)
+                                                   ->  Seq Scan on public.int8_tbl i8b2
+                                                         Output: i8b2.q1
+                                                   ->  Hash
+                                                         Output: i4b2.f1
+                                                         ->  Seq Scan on public.int4_tbl i4b2
+                                                               Output: i4b2.f1
+                                             ->  Hash
+                                                   Output: i8.q1, i8.q2
+                                                   ->  Seq Scan on public.int8_tbl i8
+                                                         Output: i8.q1, i8.q2
                                  ->  Hash
-                                       Output: i4b2.f1
-                                       ->  Seq Scan on public.int4_tbl i4b2
-                                             Output: i4b2.f1
-                           ->  Hash
-                                 Output: i8.q1, i8.q2
-                                 ->  Seq Scan on public.int8_tbl i8
-                                       Output: i8.q1, i8.q2
-                     ->  Hash
-                           Output: i8b1.q2
-                           ->  Seq Scan on public.int8_tbl i8b1
-                                 Output: i8b1.q2
-   ->  Hash
-         Output: i4.f1
-         ->  Seq Scan on public.int4_tbl i4
+                                       Output: i8b1.q2, i8b1.q1
+                                       ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                                             Output: i8b1.q2, i8b1.q1
+                                             Hash Key: i8b1.q2
+                                             ->  Seq Scan on public.int8_tbl i8b1
+                                                   Output: i8b1.q2, i8b1.q1
+         ->  Hash
                Output: i4.f1
-(37 rows)
+               ->  Broadcast Motion 3:3  (slice4; segments: 3)
+                     Output: i4.f1
+                     ->  Seq Scan on public.int4_tbl i4
+                           Output: i4.f1
+ Optimizer: legacy query optimizer
+(50 rows)
 
 select t1.* from
   text_tbl t1
@@ -3821,28 +3864,39 @@ select * from
   on t1.f1 = 'doh!'
   left join int4_tbl i4
   on i8.q1 = i4.f1;
-                       QUERY PLAN                       
---------------------------------------------------------
- Nested Loop Left Join
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice3; segments: 3)
    Output: t1.f1, i8.q1, i8.q2, t2.f1, i4.f1
-   ->  Seq Scan on public.text_tbl t2
-         Output: t2.f1
-   ->  Materialize
-         Output: i8.q1, i8.q2, i4.f1, t1.f1
-         ->  Nested Loop
+   ->  Nested Loop Left Join
+         Output: t1.f1, i8.q1, i8.q2, t2.f1, i4.f1
+         ->  Seq Scan on public.text_tbl t2
+               Output: t2.f1
+         ->  Materialize
                Output: i8.q1, i8.q2, i4.f1, t1.f1
-               ->  Nested Loop Left Join
-                     Output: i8.q1, i8.q2, i4.f1
-                     Join Filter: (i8.q1 = i4.f1)
-                     ->  Seq Scan on public.int8_tbl i8
-                           Output: i8.q1, i8.q2
-                           Filter: (i8.q2 = 456)
-                     ->  Seq Scan on public.int4_tbl i4
-                           Output: i4.f1
-               ->  Seq Scan on public.text_tbl t1
-                     Output: t1.f1
-                     Filter: (t1.f1 = 'doh!'::text)
-(19 rows)
+               ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                     Output: i8.q1, i8.q2, i4.f1, t1.f1
+                     ->  Nested Loop
+                           Output: i8.q1, i8.q2, i4.f1, t1.f1
+                           ->  Hash Left Join
+                                 Output: i8.q1, i8.q2, i4.f1
+                                 Hash Cond: (i8.q1 = i4.f1)
+                                 ->  Seq Scan on public.int8_tbl i8
+                                       Output: i8.q1, i8.q2
+                                       Filter: (i8.q2 = 456)
+                                 ->  Hash
+                                       Output: i4.f1
+                                       ->  Seq Scan on public.int4_tbl i4
+                                             Output: i4.f1
+                           ->  Materialize
+                                 Output: t1.f1
+                                 ->  Broadcast Motion 3:3  (slice1; segments: 3)
+                                       Output: t1.f1
+                                       ->  Seq Scan on public.text_tbl t1
+                                             Output: t1.f1
+                                             Filter: (t1.f1 = 'doh!'::text)
+ Optimizer: legacy query optimizer
+(30 rows)
 
 select * from
   text_tbl t1
@@ -3861,6 +3915,7 @@ select * from
 --
 -- test for appropriate join order in the presence of lateral references
 --
+-- start_ignore
 explain (verbose, costs off)
 select * from
   text_tbl t1
@@ -3996,6 +4051,7 @@ where tt1.f1 = ss1.c0;
  ?column? 
 ----------
 (0 rows)
+--end_ignore
 
 --
 -- check a case in which a PlaceHolderVar forces join order
