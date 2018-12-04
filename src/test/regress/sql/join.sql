@@ -908,11 +908,15 @@ where thousand = (q1 + q2);
 -- test ability to generate a suitable plan for a star-schema query
 --
 
+set enable_nestloop to true;
+set random_page_cost to 4;
 explain (costs off)
 select * from
   tenk1, int8_tbl a, int8_tbl b
 where thousand = a.q1 and tenthous = b.q1 and a.q2 = 1 and b.q2 = 2;
 
+reset enable_nestloop;
+reset random_page_cost;
 --
 -- test a corner case in which we shouldn't apply the star-schema optimization
 --
