@@ -1330,6 +1330,7 @@ explain (costs off)
 
 set enable_hashjoin to off;
 set enable_nestloop to off;
+set enable_mergejoin to on;
 
 explain (verbose, costs off)
   select a.q2, b.q1
@@ -1341,6 +1342,7 @@ select a.q2, b.q1
 
 reset enable_hashjoin;
 reset enable_nestloop;
+reset enable_mergejoin;
 
 --
 -- test join removal
