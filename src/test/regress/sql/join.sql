@@ -425,6 +425,7 @@ reset enable_hashjoin;
 -- a different check for handling of redundant sort keys in merge joins
 --
 set enable_mergejoin = true;
+set random_page_cost = 4;
 explain (costs off)
 select count(*) from
   (select * from tenk1 x order by x.thousand, x.twothousand, x.fivethous) x
@@ -438,6 +439,7 @@ select count(*) from
   (select * from tenk1 y order by y.unique2) y
   on x.thousand = y.unique2 and x.twothousand = y.hundred and x.fivethous = y.unique2;
 reset enable_mergejoin;
+reset random_page_cost;
 
 
 --

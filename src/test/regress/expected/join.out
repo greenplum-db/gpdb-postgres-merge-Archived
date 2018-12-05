@@ -2308,6 +2308,8 @@ reset enable_hashjoin;
 --
 -- a different check for handling of redundant sort keys in merge joins
 --
+set enable_mergejoin = true;
+set random_page_cost = 4;
 explain (costs off)
 select count(*) from
   (select * from tenk1 x order by x.thousand, x.twothousand, x.fivethous) x
@@ -2320,12 +2322,19 @@ select count(*) from
    ->  Merge Left Join
          Merge Cond: (x.thousand = y.unique2)
          Join Filter: ((x.twothousand = y.hundred) AND (x.fivethous = y.unique2))
-         ->  Sort
-               Sort Key: x.thousand, x.twothousand, x.fivethous
-               ->  Seq Scan on tenk1 x
+         ->  Gather Motion 3:1  (slice1; segments: 3)
+               Merge Key: x.thousand, x.twothousand, x.fivethous
+               ->  Subquery Scan on x
+                     ->  Sort
+                           Sort Key: x_1.thousand, x_1.twothousand, x_1.fivethous
+                           ->  Seq Scan on tenk1 x_1
          ->  Materialize
-               ->  Index Scan using tenk1_unique2 on tenk1 y
-(9 rows)
+               ->  Gather Motion 3:1  (slice2; segments: 3)
+                     Merge Key: y.unique2
+                     ->  Subquery Scan on y
+                           ->  Index Scan using tenk1_unique2 on tenk1 y_1
+ Optimizer: legacy query optimizer
+(16 rows)
 
 select count(*) from
   (select * from tenk1 x order by x.thousand, x.twothousand, x.fivethous) x
@@ -2337,6 +2346,8 @@ select count(*) from
  10000
 (1 row)
 
+reset enable_mergejoin;
+reset random_page_cost;
 --
 -- Clean up
 --
