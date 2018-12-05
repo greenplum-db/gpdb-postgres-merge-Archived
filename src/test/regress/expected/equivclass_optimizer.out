@@ -168,10 +168,11 @@ explain (costs off)
          ->  Broadcast Motion 3:3  (slice1; segments: 3)
                ->  Index Scan using ec1_pkey on ec1
                      Index Cond: (ff = '42'::int8alias1)
-         ->  Seq Scan on ec2
-               Filter: (x1 = '42'::int8alias1)
+         ->  Materialize
+               ->  Seq Scan on ec2
+                     Filter: (x1 = '42'::int8alias1)
  Optimizer: legacy query optimizer
-(8 rows)
+(9 rows)
 
 explain (costs off)
   select * from ec1, ec2 where ff = x1 and '42'::int8 = x1;
