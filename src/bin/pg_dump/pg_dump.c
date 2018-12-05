@@ -13515,16 +13515,17 @@ dumpExternal(Archive *fout, TableInfo *tbinfo, PQExpBuffer q, PQExpBuffer delq)
 		bool		gpdb6OrLater = isGPDB6000OrLater(fout);
 		char	   *logerrors = NULL;
 		char	   *on_clause;
+		char	   *qualrelname;
 		PQExpBuffer query = createPQExpBuffer();
+
+		qualrelname = pg_strdup(fmtQualifiedDumpable(tbinfo));
 
 		/*
 		 * DROP must be fully qualified in case same name appears in
 		 * pg_catalog
 		 */
 		appendPQExpBuffer(delq, "DROP EXTERNAL TABLE %s.",
-						  fmtId(tbinfo->dobj.namespace->dobj.name));
-		appendPQExpBuffer(delq, "%s;\n",
-						  fmtId(tbinfo->dobj.name));
+						  qualrelname);
 
 		/* Now get required information from pg_exttable */
 		if (gpdb6OrLater)
@@ -13662,7 +13663,7 @@ dumpExternal(Archive *fout, TableInfo *tbinfo, PQExpBuffer q, PQExpBuffer delq)
 		appendPQExpBuffer(q, "CREATE %sEXTERNAL %sTABLE %s (",
 						  (iswritable ? "WRITABLE " : ""),
 						  (isweb ? "WEB " : ""),
-						  fmtId(tbinfo->dobj.name));
+						  qualrelname);
 
 		int actual_atts = 0;
 		int j;
