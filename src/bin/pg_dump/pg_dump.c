@@ -6530,7 +6530,7 @@ getProcLangs(Archive *fout, int *numProcLangs)
 						  "ORDER BY oid",
 						  username_subquery);
 	}
-	if (fout->remoteVersion >= 80300)
+	else if (fout->remoteVersion >= 80300)
 	{
 		/* pg_language has a laninline column */
 		/* pg_language has a lanowner column */
