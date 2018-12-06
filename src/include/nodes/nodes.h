@@ -232,6 +232,7 @@ typedef enum NodeTag
 	T_JoinExpr,
 	T_FromExpr,
 	T_IntoClause,
+	T_CopyIntoClause,
 	T_Flow,
 	T_Grouping,
 	T_GroupId,
@@ -339,6 +340,7 @@ typedef enum NodeTag
     T_CdbMotionPath = 580,
 	T_PartitionSelectorPath,
     T_CdbRelColumnInfo,
+	T_DistributionKey,
 
 	/*
 	 * TAGS FOR MEMORY NODES (memnodes.h)
@@ -493,6 +495,7 @@ typedef enum NodeTag
 	T_DenyLoginPoint,
 	T_AlterTypeStmt,
 	T_SetDistributionCmd,
+	T_ExpandStmtSpec,
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)

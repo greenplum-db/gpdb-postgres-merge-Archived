@@ -839,7 +839,6 @@ static bool WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 							bool fetching_ckpt, XLogRecPtr tliRecPtr);
 static int	emode_for_corrupt_record(int emode, XLogRecPtr RecPtr);
 static void XLogFileClose(void);
-
 static void PreallocXlogFiles(XLogRecPtr endptr);
 static void RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr endptr);
 static void RemoveXlogFile(const char *segname, XLogRecPtr endptr);
@@ -874,46 +873,6 @@ static int	get_sync_bit(int method);
 static void XLogProcessCheckpointRecord(XLogRecord *rec);
 
 static void GetXLogCleanUpTo(XLogRecPtr recptr, XLogSegNo *_logSegNo);
-
-#ifdef WAL_DEBUG
-static char *XLogContiguousCopy(
-	XLogRecord 		*record,
-
-	XLogRecData 	*rdata)
-{
-	XLogRecData *rdt;
-	int32 len;
-	char *buffer;
-
-	rdt = rdata;
-	len = SizeOfXLogRecord;
-	while (rdt != NULL)
-	{
-		if (rdt->data != NULL)
-		{
-			len += rdt->len;
-		}
-		rdt = rdt->next;
-	}
-
-	buffer = (char*)palloc(len);
-
-	memcpy(buffer, record, SizeOfXLogRecord);
-	rdt = rdata;
-	len = SizeOfXLogRecord;
-	while (rdt != NULL)
-	{
-		if (rdt->data != NULL)
-		{
-			memcpy(&buffer[len], rdt->data, rdt->len);
-			len += rdt->len;
-		}
-		rdt = rdt->next;
-	}
-
-	return buffer;
-}
-#endif
 
 static void CopyXLogRecordToWAL(int write_len, bool isLogSwitch,
 					XLogRecData *rdata,
@@ -1389,7 +1348,8 @@ begin:;
 		StringInfoData buf;
 
 		initStringInfo(&buf);
-		appendStringInfo(&buf, "INSERT @ %X/%X: ",
+		appendStringInfo(&buf, "INSERT @ %X/%X, LSN %X/%X: ",
+						 (uint32) (StartPos >> 32), (uint32) StartPos,
 						 (uint32) (EndPos >> 32), (uint32) EndPos);
 		xlog_outrec(&buf, rechdr);
 		if (rdata->data != NULL)
@@ -1405,11 +1365,12 @@ begin:;
 			rdt_lastnormal->next = NULL;
 
 			initStringInfo(&recordbuf);
+			appendBinaryStringInfo(&recordbuf, rechdr, SizeOfXLogRecord);
 			for (; rdata != NULL; rdata = rdata->next)
 				appendBinaryStringInfo(&recordbuf, rdata->data, rdata->len);
 
 			appendStringInfoString(&buf, " - ");
-			RmgrTable[rechdr->xl_rmid].rm_desc(&buf, rechdr->xl_info, recordbuf.data);
+			RmgrTable[rechdr->xl_rmid].rm_desc(&buf, (XLogRecord *)recordbuf.data);
 			pfree(recordbuf.data);
 		}
 		elog(LOG, "%s", buf.data);
@@ -3637,6 +3598,7 @@ XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 			if (!restoredFromArchive)
 				return -1;
 			break;
+
 		case XLOG_FROM_PG_XLOG:
 		case XLOG_FROM_STREAM:
 			XLogFilePath(path, tli, segno);
@@ -4988,7 +4950,8 @@ XLOGShmemSize(void)
 void
 XLOGShmemInit(void)
 {
-	bool		foundCFile, foundXLog;
+	bool		foundCFile,
+				foundXLog;
 	char	   *allocptr;
 	int			i;
 
@@ -6939,12 +6902,6 @@ StartupXLOG(void)
 	}
 	else if (ControlFile->state != DB_SHUTDOWNED)
 		InRecovery = true;
-
-	if (InRecovery && !IsUnderPostmaster)
-	{
-		ereport(FATAL,
-				(errmsg("Database must be shutdown cleanly when using single backend start")));
-	}
 
 	/* Recovery from xlog */
 	if (InRecovery)

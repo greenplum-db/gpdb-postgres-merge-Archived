@@ -485,7 +485,8 @@ extern Datum pg_indexes_size(PG_FUNCTION_ARGS);
 extern Datum pg_relation_filenode(PG_FUNCTION_ARGS);
 extern Datum pg_filenode_relation(PG_FUNCTION_ARGS);
 extern Datum pg_relation_filepath(PG_FUNCTION_ARGS);
-extern Datum gp_statistics_estimate_reltuples_relpages_oid(PG_FUNCTION_ARGS);
+
+extern int64 get_size_from_segDBs(const char *cmd);
 
 /* genfile.c */
 extern Datum pg_stat_file(PG_FUNCTION_ARGS);
@@ -767,23 +768,9 @@ extern Datum tidge(PG_FUNCTION_ARGS);
 extern Datum bttidcmp(PG_FUNCTION_ARGS);
 extern Datum tidlarger(PG_FUNCTION_ARGS);
 extern Datum tidsmaller(PG_FUNCTION_ARGS);
+extern Datum hashtid(PG_FUNCTION_ARGS);
 extern Datum currtid_byreloid(PG_FUNCTION_ARGS);
 extern Datum currtid_byrelname(PG_FUNCTION_ARGS);
-
-/* xlog.c */
-extern Datum gpxloglocin(PG_FUNCTION_ARGS);
-extern Datum gpxloglocout(PG_FUNCTION_ARGS);
-extern Datum gpxloglocrecv(PG_FUNCTION_ARGS);
-extern Datum gpxloglocsend(PG_FUNCTION_ARGS);
-extern Datum gpxlogloclarger(PG_FUNCTION_ARGS);
-extern Datum gpxloglocsmaller(PG_FUNCTION_ARGS);
-extern Datum gpxlogloceq(PG_FUNCTION_ARGS);
-extern Datum gpxloglocne(PG_FUNCTION_ARGS);
-extern Datum gpxlogloclt(PG_FUNCTION_ARGS);
-extern Datum gpxloglocle(PG_FUNCTION_ARGS);
-extern Datum gpxloglocgt(PG_FUNCTION_ARGS);
-extern Datum gpxloglocge(PG_FUNCTION_ARGS);
-extern Datum btgpxlogloccmp(PG_FUNCTION_ARGS);
 
 /* varchar.c */
 extern Datum bpcharin(PG_FUNCTION_ARGS);

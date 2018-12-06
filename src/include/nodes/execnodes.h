@@ -1356,10 +1356,10 @@ typedef struct CoerceToDomainState
  */
 typedef struct ReshuffleExprState
 {
-	ExprState xprstate;
+	ExprState	xprstate;
 	ExprState  *arg;
-	List *hashKeys;
-	List *hashTypes;
+	List	   *hashKeys;
+	struct CdbHash *cdbhash;	/* hash api object */
 } ReshuffleExprState;
 
 /*
@@ -1528,6 +1528,8 @@ typedef struct ResultState
 								 * functions in targetlist */
 	ExprDoneCond lastSRFCond;	/* Applicable only if isSRF is true.
 								 * Represents the last done flag */
+
+	struct CdbHash *hashFilter;
 } ResultState;
 
 /* ----------------
@@ -2999,8 +3001,8 @@ typedef struct PartitionSelectorState
 	PartitionAccessMethods *accessMethods;              /* Access method for partition */
 	struct PartitionRule **levelPartRules; 				/* accepted partitions for all levels */
 	List *levelEqExprStates;                            /* ExprState for equality expressions for all levels */
-	List *levelExprStates;                              /* ExprState for general expressions for all levels */
-	ExprState *residualPredicateExprState;              /* ExprState for evaluating residual predicate */
+	List *levelExprStateLists;                          /* ExprState list for general expressions for all levels */
+	List *residualPredicateExprStateList;               /* ExprState list for evaluating residual predicate */
 	ExprState *propagationExprState;                    /* ExprState for evaluating propagation expression */
 
 	TupleDesc	partTabDesc;
@@ -3017,8 +3019,12 @@ typedef struct PartitionSelectorState
 typedef struct ReshuffleState
 {
 	PlanState ps;
-	List* destList;
-	int newTargetIdx;
+	List	   *destList;
+	int			newTargetIdx;
+
+	struct CdbHash *cdbhash;	/* hash api object for computing new segment */
+	struct CdbHash *oldcdbhash;	/* hash api object for computing old segment */
+
 	TupleTableSlot *savedSlot;
 } ReshuffleState;
 

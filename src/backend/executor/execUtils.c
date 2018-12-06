@@ -1727,7 +1727,6 @@ InitSliceTable(EState *estate, int nMotions, int nSubplans)
 		slice->gangType = GANGTYPE_UNALLOCATED;
 		slice->gangSize = 0;
 		slice->segments = NIL;
-		slice->numGangMembersToBeActive = 0;
 		slice->directDispatch.isDirectDispatch = false;
 		slice->directDispatch.contentIds = NIL;
 		slice->primaryGang = NULL;

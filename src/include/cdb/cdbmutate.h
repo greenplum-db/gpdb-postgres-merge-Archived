@@ -23,16 +23,9 @@
 
 extern Plan *apply_motion(struct PlannerInfo *root, Plan *plan, Query *query);
 
-extern Motion *make_union_motion(Plan *lefttree,
-								 int destSegIndex, bool useExecutorVarFormat,
-								 int numsegments);
-extern Motion *make_sorted_union_motion(PlannerInfo *root,
-										Plan *lefttree,
-										int numSortCols, AttrNumber *sortColIdx,
-										Oid *sortOperators, Oid *collations, bool *nullsFirst,
-										int destSegIndex,
-										bool useExecutorVarFormat,
-										int numsegments);
+extern Motion *make_union_motion(Plan *lefttree, bool useExecutorVarFormat, int numsegments);
+extern Motion *make_sorted_union_motion(PlannerInfo *root, Plan *lefttree, int numSortCols, AttrNumber *sortColIdx, Oid *sortOperators,
+										Oid *collations, bool *nullsFirst, bool useExecutorVarFormat, int numsegments);
 extern Motion *make_hashed_motion(Plan *lefttree,
 								  List *hashExpr,
 								  bool useExecutorVarFormat,
@@ -58,8 +51,8 @@ extern List *getExprListFromTargetList(List *tlist, int numCols, AttrNumber *col
 extern void remove_unused_initplans(Plan *plan, PlannerInfo *root);
 extern void remove_unused_subplans(PlannerInfo *root, SubPlanWalkerContext *context);
 
-extern int32 cdbhash_const(Const *pconst, int iSegments);
 extern int32 cdbhash_const_list(List *plConsts, int iSegments);
+extern Node *makeSegmentFilterExpr(int segid);
 
 extern Node *exec_make_plan_constant(struct PlannedStmt *stmt, EState *estate,
 						bool is_SRI, List **cursorPositions);

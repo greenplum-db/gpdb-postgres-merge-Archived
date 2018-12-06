@@ -6,8 +6,6 @@
 import os
 import sys
 import signal
-import shutil
-import socket
 
 # import GPDB modules
 try:
@@ -16,7 +14,6 @@ try:
     from gppylib.commands import unix, gp, base, pg
     from gppylib import gparray
     from gppylib.db import dbconn
-    from gppylib.db import catalog
     from gppylib.userinput import *
     from gppylib.gp_dbid import GpDbidFile
     from gppylib.operations.initstandby import cleanup_pg_hba_backup_on_segment, update_pg_hba_conf_on_segments, restore_pg_hba_on_segment
@@ -226,7 +223,7 @@ def print_summary(options, array, standby_datadir):
         if standby_datadir:
             logger.info('Greenplum standby master data directory = %s' % standby_datadir)
         else:
-            GpInitStandbyException('No data directory specified for standby master')
+            raise GpInitStandbyException('No data directory specified for standby master')
 
     if not options.remove and options.no_update:
         logger.info('Greenplum update system catalog         = Off')
@@ -414,7 +411,7 @@ def create_standby(options):
                                    standby.dbid,
                                    array.getNumSegmentContents())
         except Exception, ex:
-            raise('failed to start standby')
+            raise GpInitStandbyException('failed to start standby')
 
     except Exception, ex:
         # Something went wrong.  Based on the current state, we can rollback
@@ -700,7 +697,9 @@ def copy_master_datadir_to_standby(options, array, standby_datadir):
                        host=array.master.getSegmentHostName(),
                        port=str(array.master.getSegmentPort()),
                        ctxt=base.REMOTE,
-                       remoteHost=options.standby_host)
+                       remoteHost=options.standby_host,
+                       forceoverwrite=True,
+                       target_gp_dbid=array.standbyMaster.dbid)
     try:
         cmd.run(validateAfter=True)
     except Exception, ex:

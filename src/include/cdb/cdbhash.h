@@ -44,7 +44,6 @@ typedef struct CdbHash
 	int			numsegs;		/* number of segments in Greenplum Database used for
 								 * partitioning  */
 	CdbHashReduce reducealg;	/* the algorithm used for reducing to buckets		*/
-	uint32		rrindex;		/* round robin index for empty policy tables		*/
 
 	int			natts;
 	Oid			typeoids[FLEXIBLE_ARRAY_MEMBER];
@@ -67,14 +66,14 @@ extern void cdbhashinit(CdbHash *h);
 extern void cdbhash(CdbHash *h, int attno, Datum datum, bool isnull);
 
 /*
- * Hash a tuple for a relation with an empty (no hash keys) partitioning policy.
- */
-extern void cdbhashnokey(CdbHash *h);
-
-/*
  * Reduce the hash to a segment number.
  */
 extern unsigned int cdbhashreduce(CdbHash *h);
+
+/*
+ * Return a random segment number, for a randomly distributed policy.
+ */
+extern unsigned int cdbhashrandomseg(int numsegs);
 
 /*
  * Return true if Oid is hashable internally in Greenplum Database.

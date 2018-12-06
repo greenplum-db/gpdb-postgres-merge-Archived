@@ -5264,7 +5264,7 @@ ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
 	return BoolGetDatum(result);
 }
  
-/*
+/* ----------------------------------------------------------------
  *		ExecEvalReshuffleExpr
  *
  *		Evaluate an Reshuffle expression node.
@@ -5277,33 +5277,21 @@ ExecEvalReshuffleExpr(ReshuffleExprState *astate,
 					  ExprDoneCond *isDone)
 {
 	ReshuffleExpr *sr = (ReshuffleExpr *) astate->xprstate.expr;
-	ListCell   *k;
-	ListCell   *t;
-	CdbHash	   *hnew;
 	uint32		newSeg;
 	bool		result;
-	int			i;
 
 	Assert(!IS_QUERY_DISPATCHER());
+	Assert(sr->ptype != POLICYTYPE_REPLICATED);
 
 	if(sr->ptype == POLICYTYPE_PARTITIONED)
 	{
 		if (NULL != sr->hashKeys)
 		{
 			/* For hash distributed tables */
-			Oid		   *typeoids;
+			ListCell   *k;
+			int			i;
 
-			typeoids = (Oid *) palloc(list_length(astate->hashTypes) * sizeof(Oid));
-
-			i = 0;
-			foreach(t, astate->hashTypes)
-			{
-				typeoids[i++] = lfirst_oid(t);
-			}
-
-			hnew = makeCdbHash(sr->newSegs, list_length(astate->hashTypes), typeoids);
-
-			cdbhashinit(hnew);
+			cdbhashinit(astate->cdbhash);
 			i = 0;
 			foreach(k, astate->hashKeys)
 			{
@@ -5313,11 +5301,11 @@ ExecEvalReshuffleExpr(ReshuffleExprState *astate,
 
 				val = ExecEvalExpr(vstate, econtext, &valnull, isDone);
 
-				cdbhash(hnew, i + 1, val, valnull);
+				cdbhash(astate->cdbhash, i + 1, val, valnull);
 				i++;
 			}
 
-			newSeg = cdbhashreduce(hnew);
+			newSeg = cdbhashreduce(astate->cdbhash);
 			result = (GpIdentity.segindex != newSeg);
 		}
 		else
@@ -5325,33 +5313,14 @@ ExecEvalReshuffleExpr(ReshuffleExprState *astate,
 			/*
 			 * For random distributed tables
 			 *
-			 * We generate an random values [0, newSegs), when this
-			 * value is greater than oldSegs, it indicate that the
-			 * tuple need to reshuffle.
+			 * We generate a random value between[0, newSegs). When this
+			 * value is greater than oldSegs, it indicates that the tuple
+			 * needs to be reshuffled.
 			 */
-			int newSegs = getgpsegmentCount();
-			result = (cdb_randint((newSegs - 1), 0) >= sr->oldSegs);
+			int			newSegs = getgpsegmentCount();
+
+			result = (cdbhashrandomseg(newSegs) >= sr->oldSegs);
 		}
-	}
-	else if(sr->ptype == POLICYTYPE_REPLICATED)
-	{
-		/*
-		 * For replicated tables:
-		 * if we have 3 old segments: 0 1 2
-		 * and we add 4 new segments: 3 4 5 6
-		 * The seg#0 is responsible for reshuffling data into seg#3 and seg#6
-		 * The seg#1 is responsible for reshuffling data into seg#4
-		 * The seg#2 is responsible for reshuffling data into seg#5
-		 *
-		 * 1. New segments need not reshuffle data
-		 * 2. if we have 3 old segments and only add 1 new segments,
-		 * 	  then the seg#1 and seg#2 need not reshuffle data
-		 */
-		if (GpIdentity.segindex >= sr->oldSegs ||
-			GpIdentity.segindex + sr->oldSegs >= sr->newSegs)
-			result = false;
-		else
-			result = true;
 	}
 	else
 		result = false;
@@ -6227,10 +6196,24 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			{
 				ReshuffleExpr *sr = (ReshuffleExpr *) node;
 				ReshuffleExprState *exprstate = makeNode(ReshuffleExprState);
-				exprstate->hashKeys = (List*) ExecInitExpr((Expr *) sr->hashKeys, parent);
-				exprstate->hashTypes = sr->hashTypes;
+				Oid		   *typeoids;
+				int			i;
+				ListCell   *lc;
+
+				exprstate->hashKeys = (List *) ExecInitExpr((Expr *) sr->hashKeys, parent);
 				exprstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalReshuffleExpr;
-				state = (ExprState*)exprstate;
+
+				typeoids = (Oid *) palloc(list_length(sr->hashKeys) * sizeof(Oid));
+
+				i = 0;
+				foreach(lc, sr->hashTypes)
+				{
+					typeoids[i++] = lfirst_oid(lc);
+				}
+
+				exprstate->cdbhash = makeCdbHash(sr->newSegs, list_length(sr->hashTypes), typeoids);
+
+				state = (ExprState *) exprstate;
 			}
 		    break;
 

@@ -10,18 +10,15 @@ TESTNAME=basictest
 
 . sql/config_test.sh
 
-# Nothing to do here
-function before_master
-{
-:
-}
-
 # Do an insert in master.
 function before_standby
 {
 PGOPTIONS=${PGOPTIONS_UTILITY} $MASTER_PSQL <<EOF
 CREATE TABLE tbl1 (d text);
 INSERT INTO tbl1 VALUES ('in master');
+
+CREATE TABLE tbl2 (d text);
+CREATE INDEX idx2 ON tbl2(d);
 CHECKPOINT;
 EOF
 }
@@ -44,6 +41,8 @@ function after_promotion
 # master directory - you need to rewind.
 PGOPTIONS=${PGOPTIONS_UTILITY} $MASTER_PSQL -c "INSERT INTO tbl1 VALUES ('in master, after promotion');"
 
+PGOPTIONS=${PGOPTIONS_UTILITY} $MASTER_PSQL -c "INSERT INTO tbl2 VALUES ('in master, after promotion');"
+
 # Also insert a new row in the standby, which won't be present in the old
 # master.
 PGOPTIONS=${PGOPTIONS_UTILITY} $STANDBY_PSQL -c "INSERT INTO tbl1 VALUES ('in standby, after promotion');"
@@ -53,6 +52,7 @@ PGOPTIONS=${PGOPTIONS_UTILITY} $STANDBY_PSQL -c "INSERT INTO tbl1 VALUES ('in st
 function after_rewind
 {
 PGOPTIONS=${PGOPTIONS_UTILITY} $STANDBY_PSQL -c "SELECT * from tbl1"
+PGOPTIONS=${PGOPTIONS_UTILITY} $STANDBY_PSQL -c "SET enable_seqscan=off; SET optimizer_enable_tablescan=off; SELECT * from tbl2 WHERE d LIKE '%something'"
 }
 
 # Run the test

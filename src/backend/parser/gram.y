@@ -67,6 +67,7 @@
 #include "utils/xml.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
+#include "cdb/cdbpartition.h"
 
 #include "utils/guc.h"
 
@@ -707,7 +708,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	DECODE DENY DISTRIBUTED DXL
 
-	ERRORS EVERY EXCHANGE
+	ERRORS EVERY EXCHANGE EXPAND
 
 	FIELDS FILL FORMAT
 
@@ -1789,7 +1790,6 @@ AlterRoleSetStmt:
 					$$ = (Node *)n;
 				}
 		;
-
 
 
 /*****************************************************************************
@@ -3011,6 +3011,13 @@ alter_table_cmd:
 			| alter_table_partition_cmd
 				{
 					$$ = $1;
+				}
+			/* ALTER TABLE <name> EXPAND TABLE*/
+			| EXPAND TABLE
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_ExpandTable;
+					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> OF <type_name> */
 			| OF any_name
@@ -13978,6 +13985,7 @@ func_application: func_name '(' ')'
 				}
 		;
 
+
 /*
  * func_expr and its cousin func_expr_windowless are split out from c_expr just
  * so that we have classifications for "everything that is a function call or
@@ -15494,6 +15502,7 @@ ColLabel:	IDENT									{ $$ = $1; }
 			| reserved_keyword						{ $$ = pstrdup($1); }
 		;
 
+
 /*
  * Keyword category lists.  Generally, every keyword present in
  * the Postgres grammar should appear in exactly one of these lists.
@@ -15595,6 +15604,7 @@ unreserved_keyword:
 			| EXCLUDING
 			| EXCLUSIVE
 			| EXECUTE
+			| EXPAND
 			| EXPLAIN
 			| EXTENSION
 			| EXTERNAL

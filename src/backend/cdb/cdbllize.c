@@ -180,7 +180,7 @@ cdbparallelize(PlannerInfo *root,
 	{
 		case CMD_SELECT:
 			/* SELECT INTO / CREATE TABLE AS always created partitioned tables. */
-			if (query->isCTAS)
+			if (query->parentStmtType != PARENTSTMTTYPE_NONE)
 				context->resultSegments = true;
 			break;
 
@@ -1123,16 +1123,9 @@ repartitionPlan(Plan *plan, bool stable, bool rescannable,
 		   plan->flow->flotype == FLOW_SINGLETON);
 
 	/* Already partitioned on the given hashExpr?  Do nothing. */
-	if (hashExpr && plan->flow->numsegments == numsegments)
+	if (hashExpr && plan->flow->numsegments == numsegments &&
+		plan->flow->locustype == CdbLocusType_Hashed)
 	{
-		if (equal(hashExpr, plan->flow->hashExpr))
-			return true;
-
-		/*
-		 * MPP-4922: The earlier check is very conservative and may result in
-		 * unnecessary motion nodes. Adding another check to avoid motion
-		 * nodes, if possible.
-		 */
 		if (loci_compatible(hashExpr, plan->flow->hashExpr))
 			return true;
 	}

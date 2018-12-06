@@ -155,11 +155,13 @@ class Segment:
         """
         Construct a printable string representation of a Segment
         """
-        return "%s:%s:content=%s:dbid=%s:mode=%s:status=%s" % (
+        return "%s:%s:content=%s:dbid=%s:role=%s:preferred_role=%s:mode=%s:status=%s" % (
             self.hostname,
             self.datadir,
             self.content,
             self.dbid,
+            self.role,
+            self.preferred_role,
             self.mode,
             self.status
             )
@@ -1539,7 +1541,7 @@ class GpArray:
             extendByNum = expseg_index - expseglen + 1
             logger.debug('Extending expansion array by %d' % (extendByNum))
             self.expansionSegmentPairs.extend([None] * (extendByNum))
-        if self.expansionSegmentPairs[expseg_index] == None:
+        if self.expansionSegmentPairs[expseg_index] is None:
             self.expansionSegmentPairs[expseg_index] = SegmentPair()
 
         seg = self.expansionSegmentPairs[expseg_index]

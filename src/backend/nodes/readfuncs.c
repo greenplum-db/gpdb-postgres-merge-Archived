@@ -402,7 +402,7 @@ _readQuery(void)
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(setOperations);
 	READ_NODE_FIELD(constraintDeps);
-	READ_BOOL_FIELD(isCTAS);
+	READ_BOOL_FIELD(parentStmtType);
 	READ_BOOL_FIELD(needReshuffle);
 
 	local_node->intoPolicy = NULL;
@@ -686,6 +686,20 @@ _readIntoClause(void)
 	READ_NODE_FIELD(viewQuery);
 	READ_BOOL_FIELD(skipData);
 	READ_NODE_FIELD(distributedBy);
+
+	READ_DONE();
+}
+
+static CopyIntoClause *
+_readCopyIntoClause(void)
+{
+	READ_LOCALS(CopyIntoClause);
+
+	READ_NODE_FIELD(attlist);
+	READ_BOOL_FIELD(is_program);
+	READ_STRING_FIELD(filename);
+	READ_NODE_FIELD(options);
+	READ_NODE_FIELD(ao_segnos);
 
 	READ_DONE();
 }
@@ -1019,7 +1033,6 @@ _readSetDistributionCmd(void)
 
 	READ_INT_FIELD(backendId);
 	READ_NODE_FIELD(relids);
-	READ_NODE_FIELD(indexOidMap);
 	READ_NODE_FIELD(hiddenTypes);
 
 	READ_DONE();
@@ -2825,7 +2838,6 @@ _readSlice(void)
 	READ_NODE_FIELD(children); /* List of int index */
 	READ_ENUM_FIELD(gangType, GangType);
 	READ_INT_FIELD(gangSize);
-	READ_INT_FIELD(numGangMembersToBeActive);
 	READ_BOOL_FIELD(directDispatch.isDirectDispatch);
 	READ_NODE_FIELD(directDispatch.contentIds); /* List of int index */
 	READ_DUMMY_FIELD(primaryGang, NULL);
@@ -2964,6 +2976,8 @@ parseNodeString(void)
 		return_value = _readRangeVar();
 	else if (MATCH("INTOCLAUSE", 10))
 		return_value = _readIntoClause();
+	else if (MATCH("COPYINTOCLAUSE", 10))
+		return_value = _readCopyIntoClause();
 	else if (MATCH("VAR", 3))
 		return_value = _readVar();
 	else if (MATCH("CONST", 5))

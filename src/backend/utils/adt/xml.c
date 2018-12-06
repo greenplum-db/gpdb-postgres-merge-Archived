@@ -92,8 +92,8 @@
 
 
 /* GUC variables */
-int xmlbinary;
-int xmloption;
+int			xmlbinary;
+int			xmloption;
 
 #ifdef USE_LIBXML
 
@@ -702,6 +702,7 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 #endif
 }
 
+
 xmltype *
 xmlparse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace)
 {
@@ -886,7 +887,6 @@ xml_is_document(xmltype *arg)
 
 #ifdef USE_LIBXML
 
-
 /*
  * pg_xml_init_library --- set up for use of libxml
  *
@@ -914,8 +914,8 @@ pg_xml_init_library(void)
 		if (sizeof(char) != sizeof(xmlChar))
 			ereport(ERROR,
 					(errmsg("could not initialize XML library"),
-							errdetail("libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u.",
-									  (int) sizeof(char), (int) sizeof(xmlChar))));
+					 errdetail("libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u.",
+							   (int) sizeof(char), (int) sizeof(xmlChar))));
 
 #ifdef USE_LIBXMLCONTEXT
 		/* Set up libxml's memory allocation our way */
@@ -1003,10 +1003,10 @@ pg_xml_init(PgXmlStrictness strictness)
 	if (new_errcxt != (void *) errcxt)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("could not set up XML error handler"),
-						errhint("This probably indicates that the version of libxml2"
-								" being used is not compatible with the libxml2"
-								" header files that PostgreSQL was built with.")));
+				 errmsg("could not set up XML error handler"),
+				 errhint("This probably indicates that the version of libxml2"
+						 " being used is not compatible with the libxml2"
+						 " header files that PostgreSQL was built with.")));
 
 	/*
 	 * Also, install an entity loader to prevent unwanted fetches of external
@@ -1024,6 +1024,7 @@ pg_xml_init(PgXmlStrictness strictness)
 
 	return errcxt;
 }
+
 
 /*
  * pg_xml_done --- restore previous libxml error handling

@@ -7,8 +7,6 @@
 {% set CLI_2_suites = ['analyzedb',
                       'gpperfmon',
                       'gpinitsystem'] %}
-{% set CLI_gpexpand_suites = ['gpexpand_1',
-                             'gpexpand_2'] %}
 ## ======================================================================
 ##   __ _ _ __ ___  _   _ _ __  ___
 ##  / _` | '__/ _ \| | | | '_ \/ __|
@@ -94,9 +92,7 @@ groups:
 {% if "CLI" in test_sections %}
   ## --------------------------------------------------------------------
   - gate_cli_start
-{% for test_name in CLI_1_suites +
-                    CLI_2_suites +
-                    CLI_gpexpand_suites %}
+{% for test_name in CLI_1_suites + CLI_2_suites %}
   - [[ test_name ]]
 {% endfor %}
   - gpaddmirrors
@@ -275,9 +271,7 @@ groups:
 - name: CLI
   jobs:
   - gate_cli_start
-{% for test_name in CLI_1_suites +
-                    CLI_2_suites +
-                    CLI_gpexpand_suites %}
+{% for test_name in CLI_1_suites + CLI_2_suites %}
   - [[ test_name ]]
 {% endfor %}
   - gpaddmirrors
@@ -407,15 +401,6 @@ resources:
       region_name: {{aws-region}}
       bucket: gpdb5-pipeline-dynamic-terraform
       bucket_path: clusters-google/
-
-- name: snowflake-simple-database-dump # remove this resource in favor of icw_gporca_centos6_dump once gpexpand works with a dump of ICW
-  type: s3
-  source:
-    access_key_id: {{bucket-access-key-id}}
-    bucket: {{test-data-bucket-name}}
-    secret_access_key: {{bucket-secret-access-key}}
-    region_name: {{aws-region}}
-    versioned_file: snowflake-simple-database/dump.sql.xz
 {% endif %}
 {% if "aix7" in os_types %}
 - name: aix_environments
@@ -1924,7 +1909,6 @@ jobs:
     - get: centos-gpdb-dev-6
     - get: icw_gporca_centos6_dump
       passed: [gate_icw_end]
-    - get: snowflake-simple-database-dump # remove once icw_gporca_centos6_dump works with gpexpand
   - put: terraform
     params:
       <<: *ccp_default_params
@@ -1938,7 +1922,7 @@ jobs:
   - task: pre_run_test_setup
     file: gpdb_src/concourse/tasks/setup_for_gpexpand_to_make_new_gpdb.yml
     image: centos-gpdb-dev-6
-    input_mapping: {sqldump: snowflake-simple-database-dump} # use icw_gporca_centos6_dump when it works with gpexpand
+    input_mapping: {sqldump: icw_gporca_centos6_dump}
   - task: run_tests
     file: gpdb_src/concourse/tasks/run_behave.yml
     params:
@@ -1948,50 +1932,6 @@ jobs:
       <<: *ccp_destroy
   ensure:
     <<: *set_failed
-
-{% for test_name in CLI_gpexpand_suites %}
-- name: [[ test_name ]]
-  plan:
-  - aggregate:
-    - get: gpdb_src
-      params:
-        submodules:
-        - gpMgmt/bin/pythonSrc/ext
-      passed: [gate_cli_start]
-    - get: gpdb_binary
-      resource: bin_gpdb_centos6
-      passed: [gate_cli_start]
-      trigger: [[ test_trigger ]]
-    - get: ccp_src
-    - get: centos-gpdb-dev-6
-    - get: snowflake-simple-database-dump # remove once icw_gporca_centos6_dump works with gpexpand
-  - put: terraform
-    params:
-      <<: *ccp_default_params
-      vars:
-        <<: *ccp_default_vars
-        number_of_nodes: 5
-  - task: gen_cluster
-    file: ccp_src/ci/tasks/gen_cluster.yml
-    params:
-      <<: *ccp_gen_cluster_default_params
-  - task: gpinitsystem
-    file: ccp_src/ci/tasks/gpinitsystem.yml
-  - task: pre_run_test_setup
-    image: centos-gpdb-dev-6
-    file: gpdb_src/concourse/tasks/setup_for_gpexpand_to_make_new_gpdb.yml
-    input_mapping: {sqldump: snowflake-simple-database-dump} # use icw_gporca_centos6_dump when it works with gpexpand
-  - task: run_tests
-    file: gpdb_src/concourse/tasks/run_tinc.yml
-    image: centos-gpdb-dev-6
-    params:
-      TINC_TARGET: [[ test_name ]]
-      CUSTOM_ENV: HOST1=mdw HOST2=sdw1 HOST3=sdw2 HOST4=sdw3 HOST5=sdw4
-    on_success:
-      <<: *ccp_destroy
-  ensure:
-    <<: *set_failed
-{% endfor %}
 
 - name: gptransfer
   plan:
@@ -2406,12 +2346,10 @@ jobs:
       - resource_group_centos7
       - resource_group_sles12
       - segwalrep_mirrorless_centos6
-      - walrep_2
       - regression_tests_gphdfs_hadoop_centos
       - regression_tests_gphdfs_mapr_centos
 {% for test_name in CLI_1_suites +
-                    CLI_2_suites +
-                    CLI_gpexpand_suites %}
+                    CLI_2_suites %}
       - [[ test_name ]]
 {% endfor %}
       - madlib_build_gppkg
@@ -2438,12 +2376,10 @@ jobs:
       - client_loader_remote_test_aix
       - resource_group_centos6
       - segwalrep_mirrorless_centos6
-      - walrep_2
       - regression_tests_gphdfs_hadoop_centos
       - regression_tests_gphdfs_mapr_centos
 {% for test_name in CLI_1_suites +
-                    CLI_2_suites +
-                    CLI_gpexpand_suites %}
+                    CLI_2_suites %}
       - [[ test_name ]]
 {% endfor %}
       - MADlib_Test_orca_centos6

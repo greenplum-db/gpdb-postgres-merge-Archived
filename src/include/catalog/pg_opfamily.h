@@ -164,8 +164,7 @@ DATA(insert OID = 4037 (	2742	jsonb_path_ops	PGNSP PGUID ));
 
 /* Complex Number type */
 DATA(insert OID = 6221 (	403		complex_ops		PGNSP PGUID ));
-
-DATA(insert OID = 7080 (	403		xlogloc_ops		PGNSP PGUID ));
+DATA(insert OID = 6224 (	405		complex_ops		PGNSP PGUID ));
 
 /*
  * on-disk bitmap index opfamilies.
@@ -201,5 +200,12 @@ DATA(insert OID = 7044 (	7013	bpchar_pattern_ops	PGNSP PGUID ));
 DATA(insert OID = 7046 (	7013	money_ops		PGNSP PGUID ));
 DATA(insert OID = 7047 (	7013	reltime_ops		PGNSP PGUID ));
 DATA(insert OID = 7048 (	7013	tinterval_ops	PGNSP PGUID ));
+
+/*
+ * hash support for a few built-in datatypes that are missing it in upstream.
+ */
+DATA(insert OID = 7077 (	405		tid_ops		PGNSP PGUID ));
+DATA(insert OID = 7078 (	405		bit_ops		PGNSP PGUID ));
+DATA(insert OID = 7079 (	405		varbit_ops	PGNSP PGUID ));
 
 #endif   /* PG_OPFAMILY_H */

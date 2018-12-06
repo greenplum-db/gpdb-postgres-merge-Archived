@@ -322,6 +322,7 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 
 	WRITE_UINT64_FIELD(query_mem);
 	WRITE_NODE_FIELD(intoClause);
+	WRITE_NODE_FIELD(copyIntoClause);
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -420,18 +421,24 @@ _outPlan(StringInfo str, const Plan *node)
 	_outPlanInfo(str, (const Plan *) node);
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outResult(StringInfo str, const Result *node)
 {
+	int			i;
+
 	WRITE_NODE_TYPE("RESULT");
 
 	_outPlanInfo(str, (const Plan *) node);
 
 	WRITE_NODE_FIELD(resconstantqual);
 
-	WRITE_BOOL_FIELD(hashFilter);
-	WRITE_NODE_FIELD(hashList);
+	WRITE_INT_FIELD(numHashFilterCols);
+	appendStringInfoString(str, " :hashFilterColIdx");
+	for (i = 0; i < node->numHashFilterCols; i++)
+		appendStringInfo(str, " %d", node->hashFilterColIdx[i]);
 }
+#endif
 
 static void
 _outRepeat(StringInfo str, const Repeat *node)
@@ -464,7 +471,6 @@ _outModifyTable(StringInfo str, const ModifyTable *node)
 	WRITE_NODE_FIELD(action_col_idxes);
 	WRITE_NODE_FIELD(ctid_col_idxes);
 	WRITE_NODE_FIELD(oid_col_idxes);
-	WRITE_BOOL_FIELD(isReshuffle);
 }
 
 static void
@@ -1159,10 +1165,7 @@ _outMotion(StringInfo str, const Motion *node)
 	WRITE_NODE_FIELD(hashExpr);
 	WRITE_NODE_FIELD(hashDataTypes);
 
-	WRITE_INT_FIELD(numOutputSegs);
-	appendStringInfoLiteral(str, " :outputSegIdx");
-	for (i = 0; i < node->numOutputSegs; i++)
-		appendStringInfo(str, " %d", node->outputSegIdx[i]);
+	WRITE_INT_FIELD(isBroadcast);
 
 	WRITE_INT_FIELD(numSortCols);
 	appendStringInfoLiteral(str, " :sortColIdx");
@@ -1332,6 +1335,19 @@ _outIntoClause(StringInfo str, const IntoClause *node)
 	WRITE_NODE_FIELD(viewQuery);
 	WRITE_BOOL_FIELD(skipData);
 	WRITE_NODE_FIELD(distributedBy);
+}
+
+static void
+_outCopyIntoClause(StringInfo str, const CopyIntoClause *node)
+{
+	WRITE_NODE_TYPE("COPYINTOCLAUSE");
+
+	WRITE_NODE_FIELD(attlist);
+	WRITE_BOOL_FIELD(is_program);
+	WRITE_STRING_FIELD(filename);
+	WRITE_NODE_FIELD(options);
+	WRITE_NODE_FIELD(ao_segnos);
+
 }
 
 static void
@@ -1942,9 +1958,9 @@ _outFlow(StringInfo str, const Flow *node)
 static void
 _outCdbPathLocus(StringInfo str, const CdbPathLocus *node)
 {
-    WRITE_ENUM_FIELD(locustype, CdbLocusType);
-    WRITE_NODE_FIELD(partkey_h);
-    WRITE_NODE_FIELD(partkey_oj);
+	WRITE_ENUM_FIELD(locustype, CdbLocusType);
+	WRITE_NODE_FIELD(distkey);
+	WRITE_INT_FIELD(numsegments);
 }                               /* _outCdbPathLocus */
 
 
@@ -2394,6 +2410,16 @@ _outPathKey(StringInfo str, const PathKey *node)
 	WRITE_BOOL_FIELD(pk_nulls_first);
 }
 
+#ifndef COMPILING_BINARY_FUNCS
+static void
+_outDistributionKey(StringInfo str, const DistributionKey *node)
+{
+	WRITE_NODE_TYPE("DISTRIBUTIONKEY");
+
+	WRITE_NODE_FIELD(dk_eclasses);
+}
+#endif /* COMPILING_BINARY_FUNCS */
+
 static void
 _outParamPathInfo(StringInfo str, const ParamPathInfo *node)
 {
@@ -2774,13 +2800,12 @@ _outAlterTableCmd(StringInfo str, const AlterTableCmd *node)
 }
 
 static void
-_outSetDistributionCmd(StringInfo str, const SetDistributionCmd*node)
+_outSetDistributionCmd(StringInfo str, const SetDistributionCmd *node)
 {
 	WRITE_NODE_TYPE("SETDISTRIBUTIONCMD");
 
 	WRITE_INT_FIELD(backendId);
 	WRITE_NODE_FIELD(relids);
-	WRITE_NODE_FIELD(indexOidMap);
 	WRITE_NODE_FIELD(hiddenTypes);
 }
 
@@ -3082,6 +3107,19 @@ _outPartitionValuesSpec(StringInfo str, const PartitionValuesSpec *node)
 	WRITE_NODE_FIELD(partValues);
 	WRITE_LOCATION_FIELD(location);
 }
+
+static void
+_outExpandStmtSpec(StringInfo str, const ExpandStmtSpec *node)
+{
+	WRITE_NODE_TYPE("EXPANDSTMTSPEC");
+	WRITE_ENUM_FIELD(method, ExpandMethod);
+	WRITE_BITMAPSET_FIELD(ps_none);
+	WRITE_BITMAPSET_FIELD(ps_root);
+	WRITE_BITMAPSET_FIELD(ps_interior);
+	WRITE_BITMAPSET_FIELD(ps_leaf);
+	WRITE_OID_FIELD(backendId);
+}
+
 
 #ifndef COMPILING_BINARY_FUNCS
 static void
@@ -3783,7 +3821,7 @@ _outQuery(StringInfo str, const Query *node)
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(setOperations);
 	WRITE_NODE_FIELD(constraintDeps);
-	WRITE_BOOL_FIELD(isCTAS);
+	WRITE_BOOL_FIELD(parentStmtType);
 	WRITE_BOOL_FIELD(needReshuffle);
 
 	/* Don't serialize policy */
@@ -4405,7 +4443,6 @@ _outSlice(StringInfo str, const Slice *node)
 	WRITE_NODE_FIELD(children); /* List of int index */
 	WRITE_ENUM_FIELD(gangType,GangType);
 	WRITE_INT_FIELD(gangSize);
-	WRITE_INT_FIELD(numGangMembersToBeActive);
 	WRITE_BOOL_FIELD(directDispatch.isDirectDispatch);
 	WRITE_NODE_FIELD(directDispatch.contentIds); /* List of int */
 	WRITE_DUMMY_FIELD(primaryGang);
@@ -4853,6 +4890,9 @@ _outNode(StringInfo str, const void *obj)
 			case T_IntoClause:
 				_outIntoClause(str, obj);
 				break;
+			case T_CopyIntoClause:
+				_outCopyIntoClause(str, obj);
+				break;
 			case T_Var:
 				_outVar(str, obj);
 				break;
@@ -5064,6 +5104,9 @@ _outNode(StringInfo str, const void *obj)
 			case T_PathKey:
 				_outPathKey(str, obj);
 				break;
+			case T_DistributionKey:
+				_outDistributionKey(str, obj);
+				break;
 			case T_ParamPathInfo:
 				_outParamPathInfo(str, obj);
 				break;
@@ -5144,6 +5187,9 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_PartitionValuesSpec:
 				_outPartitionValuesSpec(str, obj);
+				break;
+			case T_ExpandStmtSpec:
+				_outExpandStmtSpec(str, obj);
 				break;
 			case T_SegfileMapNode:
 				_outSegfileMapNode(str, obj);

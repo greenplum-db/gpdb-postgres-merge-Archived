@@ -129,23 +129,23 @@ class PgCtlBackendOptions(CmdArgs):
     --------
 
     >>> str(PgCtlBackendOptions(5432, 1, 2))
-    '-p 5432 --gp_dbid=1 --gp_num_contents_in_cluster=2 --silent-mode=true'
+    '-p 5432 --gp_dbid=1 --silent-mode=true'
     >>> str(PgCtlBackendOptions(5432, 1, 2).set_master(True))
-    '-p 5432 --gp_dbid=1 --gp_num_contents_in_cluster=2 --silent-mode=true -i --gp_contentid=-1'
+    '-p 5432 --gp_dbid=1 --silent-mode=true -i --gp_contentid=-1'
     >>> str(PgCtlBackendOptions(5432, 1, 2).set_master(False))
-    '-p 5432 --gp_dbid=1 --gp_num_contents_in_cluster=2 --silent-mode=true -i --gp_contentid=-1 -E'
+    '-p 5432 --gp_dbid=1 --silent-mode=true -i --gp_contentid=-1 -E'
     >>> str(PgCtlBackendOptions(5432, 1, 2).set_segment(1))
-    '-p 5432 --gp_dbid=1 --gp_num_contents_in_cluster=2 --silent-mode=true -i --gp_contentid=1'
+    '-p 5432 --gp_dbid=1 --silent-mode=true -i --gp_contentid=1'
     >>> str(PgCtlBackendOptions(5432, 1, 2).set_special('upgrade'))
-    '-p 5432 --gp_dbid=1 --gp_num_contents_in_cluster=2 --silent-mode=true -U'
+    '-p 5432 --gp_dbid=1 --silent-mode=true -U'
     >>> str(PgCtlBackendOptions(5432, 1, 2).set_special('maintenance'))
-    '-p 5432 --gp_dbid=1 --gp_num_contents_in_cluster=2 --silent-mode=true -m'
+    '-p 5432 --gp_dbid=1 --silent-mode=true -m'
     >>> str(PgCtlBackendOptions(5432, 1, 2).set_utility(True))
-    '-p 5432 --gp_dbid=1 --gp_num_contents_in_cluster=2 --silent-mode=true -c gp_role=utility'
+    '-p 5432 --gp_dbid=1 --silent-mode=true -c gp_role=utility'
     >>> str(PgCtlBackendOptions(5432, 1, 2).set_utility(False))
-    '-p 5432 --gp_dbid=1 --gp_num_contents_in_cluster=2 --silent-mode=true'
+    '-p 5432 --gp_dbid=1 --silent-mode=true'
     >>> str(PgCtlBackendOptions(5432, 1, 2).set_restricted(True,1))
-    '-p 5432 --gp_dbid=1 --gp_num_contents_in_cluster=2 --silent-mode=true -c superuser_reserved_connections=1'
+    '-p 5432 --gp_dbid=1 --silent-mode=true -c superuser_reserved_connections=1'
     >>>
 
     """
@@ -159,7 +159,6 @@ class PgCtlBackendOptions(CmdArgs):
         CmdArgs.__init__(self, [
             "-p", str(port),
             "--gp_dbid="+ str(dbid),
-            "--gp_num_contents_in_cluster="+ str(numcids),
         ])
 
     #
@@ -187,9 +186,9 @@ class PgCtlBackendOptions(CmdArgs):
 
     def set_special(self, special):
         """
-        @param special: special mode (none, 'upgrade' or 'maintenance')
+        @param special: special mode (none, 'upgrade', 'maintenance', 'convertMasterDataDirToSegment')
         """
-        opt = {None:None, 'upgrade':'-U', 'maintenance':'-m'}[special]
+        opt = {None:None, 'upgrade':'-U', 'maintenance':'-m', 'convertMasterDataDirToSegment':'-M'}[special]
         if opt: self.append(opt)
         return self
 
@@ -221,7 +220,7 @@ class PgCtlStartArgs(CmdArgs):
     >>> str(a).split(' ') #doctest: +NORMALIZE_WHITESPACE
     ['env', GPERA=123', '$GPHOME/bin/pg_ctl', '-D', '/data1/master/gpseg-1', '-l',
      '/data1/master/gpseg-1/pg_log/startup.log', '-w', '-t', '600',
-     '-o', '"', '-p', '5432', '--gp_dbid=1', '--gp_num_contents_in_cluster=2', '--silent-mode=true', '"', 'start']
+     '-o', '"', '-p', '5432', '--gp_dbid=1', '--silent-mode=true', '"', 'start']
     """
 
     def __init__(self, datadir, backend, era, wrapper, args, wait, timeout=None):
@@ -408,6 +407,30 @@ class SegmentIsShutDown(Command):
         cmd=SegmentIsShutDown(name,directory)
         cmd.run(validateAfter=True)
 
+#-----------------------------------------------
+class SegmentRewind(Command):
+    """
+    SegmentRewind is used to run pg_rewind using source server.
+    """
+
+    def __init__(self, name, target_host, target_datadir,
+                 source_host, source_port,
+                 verbose=False, ctxt=REMOTE):
+
+        # Construct the source server libpq connection string
+        source_server = "host=%s port=%s dbname=template1" % (source_host, source_port)
+
+        # Build the pg_rewind command. Do not run pg_rewind if recovery.conf
+        # file exists in target data directory because the target instance can
+        # be started up normally as a mirror for WAL replication catch up.
+        rewind_cmd = '[ -f %s/recovery.conf ] || PGOPTIONS="-c gp_session_role=utility" $GPHOME/bin/pg_rewind --write-recovery-conf --source-server="%s" --target-pgdata=%s' % (target_datadir, source_server, target_datadir)
+
+        if verbose:
+            rewind_cmd = rewind_cmd + ' --progress'
+
+        self.cmdStr = rewind_cmd + ' 2>&1'
+
+        Command.__init__(self, name, self.cmdStr, ctxt, target_host)
 
 #
 # list of valid segment statuses that can be requested

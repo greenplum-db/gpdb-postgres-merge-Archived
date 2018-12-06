@@ -131,6 +131,7 @@ _copyPlannedStmt(const PlannedStmt *from)
 	COPY_SCALAR_FIELD(query_mem);
 
 	COPY_NODE_FIELD(intoClause);
+	COPY_NODE_FIELD(copyIntoClause);
 
 	return newnode;
 }
@@ -259,8 +260,9 @@ _copyResult(const Result *from)
 	 */
 	COPY_NODE_FIELD(resconstantqual);
 
-	COPY_SCALAR_FIELD(hashFilter);
-	COPY_NODE_FIELD(hashList);
+	COPY_SCALAR_FIELD(numHashFilterCols);
+	if (from->numHashFilterCols > 0)
+		COPY_POINTER_FIELD(hashFilterColIdx, from->numHashFilterCols * sizeof(AttrNumber));
 
 	return newnode;
 }
@@ -316,7 +318,6 @@ _copyModifyTable(const ModifyTable *from)
 	COPY_NODE_FIELD(action_col_idxes);
 	COPY_NODE_FIELD(ctid_col_idxes);
 	COPY_NODE_FIELD(oid_col_idxes);
-	COPY_SCALAR_FIELD(isReshuffle);
 
 	return newnode;
 }
@@ -1310,8 +1311,7 @@ _copyMotion(const Motion *from)
 	COPY_NODE_FIELD(hashExpr);
 	COPY_NODE_FIELD(hashDataTypes);
 
-	COPY_SCALAR_FIELD(numOutputSegs);
-	COPY_POINTER_FIELD(outputSegIdx, from->numOutputSegs * sizeof(int));
+	COPY_SCALAR_FIELD(isBroadcast);
 
 	COPY_SCALAR_FIELD(numSortCols);
 	COPY_POINTER_FIELD(sortColIdx, from->numSortCols * sizeof(AttrNumber));
@@ -1512,6 +1512,23 @@ _copyIntoClause(const IntoClause *from)
 	COPY_NODE_FIELD(viewQuery);
 	COPY_SCALAR_FIELD(skipData);
 	COPY_NODE_FIELD(distributedBy);
+
+	return newnode;
+}
+
+/*
+ * _copyIntoClause
+ */
+static CopyIntoClause *
+_copyCopyIntoClause(const CopyIntoClause *from)
+{
+	CopyIntoClause *newnode = makeNode(CopyIntoClause);
+
+	COPY_NODE_FIELD(attlist);
+	COPY_SCALAR_FIELD(is_program);
+	COPY_STRING_FIELD(filename);
+	COPY_NODE_FIELD(options);
+	COPY_NODE_FIELD(ao_segnos);
 
 	return newnode;
 }
@@ -2363,6 +2380,20 @@ _copyPathKey(const PathKey *from)
 }
 
 /*
+ * _copyDistributionKey
+ */
+static DistributionKey *
+_copyDistributionKey(const DistributionKey *from)
+{
+	DistributionKey    *newnode = makeNode(DistributionKey);
+
+	/* EquivalenceClasses are never moved, so just shallow-copy the pointer */
+	newnode->dk_eclasses = list_copy(from->dk_eclasses);
+
+	return newnode;
+}
+
+/*
  * _copyRestrictInfo
  */
 static RestrictInfo *
@@ -3170,7 +3201,7 @@ _copyQuery(const Query *from)
 	COPY_NODE_FIELD(setOperations);
 	COPY_NODE_FIELD(constraintDeps);
 	COPY_NODE_FIELD(intoPolicy);
-	COPY_SCALAR_FIELD(isCTAS);
+	COPY_SCALAR_FIELD(parentStmtType);
 	COPY_SCALAR_FIELD(needReshuffle);
 
 	return newnode;
@@ -3303,7 +3334,6 @@ _copySetDistributionCmd(const SetDistributionCmd *from)
 
 	COPY_SCALAR_FIELD(backendId);
 	COPY_NODE_FIELD(relids);
-	COPY_NODE_FIELD(indexOidMap);
 	COPY_NODE_FIELD(hiddenTypes);
 
 	return newnode;
@@ -3593,6 +3623,21 @@ _copyPartitionValuesSpec(const PartitionValuesSpec *from)
 
 	COPY_NODE_FIELD(partValues);
 	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static ExpandStmtSpec *
+_copyExpandStmtSpec(const ExpandStmtSpec *from)
+{
+	ExpandStmtSpec *newnode = makeNode(ExpandStmtSpec);
+
+	COPY_SCALAR_FIELD(method);
+	COPY_BITMAPSET_FIELD(ps_none);
+	COPY_BITMAPSET_FIELD(ps_root);
+	COPY_BITMAPSET_FIELD(ps_interior);
+	COPY_BITMAPSET_FIELD(ps_leaf);
+	COPY_SCALAR_FIELD(backendId);
 
 	return newnode;
 }
@@ -4835,7 +4880,6 @@ _copySlice(const Slice *from)
 	COPY_SCALAR_FIELD(rootIndex);
 	COPY_SCALAR_FIELD(gangType);
 	COPY_SCALAR_FIELD(gangSize);
-	COPY_SCALAR_FIELD(numGangMembersToBeActive);
 	COPY_SCALAR_FIELD(directDispatch.isDirectDispatch);
 	COPY_NODE_FIELD(directDispatch.contentIds);
 
@@ -5297,6 +5341,9 @@ copyObject(const void *from)
 		case T_IntoClause:
 			retval = _copyIntoClause(from);
 			break;
+		case T_CopyIntoClause:
+			retval = _copyCopyIntoClause(from);
+			break;
 		case T_Var:
 			retval = _copyVar(from);
 			break;
@@ -5436,6 +5483,9 @@ copyObject(const void *from)
 		case T_PathKey:
 			retval = _copyPathKey(from);
 			break;
+		case T_DistributionKey:
+			retval = _copyDistributionKey(from);
+			break;
 		case T_RestrictInfo:
 			retval = _copyRestrictInfo(from);
 			break;
@@ -5559,6 +5609,9 @@ copyObject(const void *from)
 			break;
 		case T_PartitionValuesSpec:
 			retval = _copyPartitionValuesSpec(from);
+			break;
+		case T_ExpandStmtSpec:
+			retval = _copyExpandStmtSpec(from);
 			break;
 		case T_PartitionElem:
 			retval = _copyPartitionElem(from);

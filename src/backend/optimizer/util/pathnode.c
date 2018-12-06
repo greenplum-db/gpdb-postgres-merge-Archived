@@ -18,11 +18,6 @@
 
 #include <math.h>
 
-#include "catalog/pg_operator.h"
-#include "catalog/pg_proc.h"
-#include "executor/executor.h"
-#include "executor/nodeHash.h"
-#include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -32,13 +27,13 @@
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
-#include "utils/memutils.h"
-#include "utils/selfuncs.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
 
+#include "catalog/pg_proc.h"
 #include "cdb/cdbpath.h"        /* cdb_create_motion_path() etc */
 #include "cdb/cdbutil.h"		/* getgpsegmentCount() */
+#include "executor/nodeHash.h"
 
 typedef enum
 {
@@ -1241,8 +1236,8 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals,
 AppendPath *
 create_append_path(PlannerInfo *root, RelOptInfo *rel, List *subpaths, Relids required_outer)
 {
-	ListCell *l;
 	AppendPath *pathnode = makeNode(AppendPath);
+	ListCell   *l;
 
 	pathnode->path.pathtype = T_Append;
 	pathnode->path.parent = rel;
@@ -1271,11 +1266,11 @@ create_append_path(PlannerInfo *root, RelOptInfo *rel, List *subpaths, Relids re
 
 	foreach(l, subpaths)
 	{
-		Path       *subpath = (Path *) lfirst(l);
+		Path	   *subpath = (Path *) lfirst(l);
 
 		pathnode->path.rows += subpath->rows;
 
-		if (l == list_head(subpaths))   /* first node? */
+		if (l == list_head(subpaths))	/* first node? */
 			pathnode->path.startup_cost = subpath->startup_cost;
 		pathnode->path.total_cost += subpath->total_cost;
 
@@ -1390,6 +1385,7 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 	ListCell   *l;
 	bool		fIsNotPartitioned = false;
 	bool		fIsPartitionInEntry = false;
+	int			numsegments;
 	List	   *subpaths;
 	List	  **subpaths_out;
 	List	   *new_subpaths;
@@ -1410,6 +1406,21 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 		CdbPathLocus_MakeGeneral(&pathnode->locus,
 								 GP_POLICY_ALL_NUMSEGMENTS);
 		return;
+	}
+
+	/* By default put Append node on all the segments */
+	numsegments = GP_POLICY_ALL_NUMSEGMENTS;
+	foreach(l, subpaths)
+	{
+		Path	   *subpath = (Path *) lfirst(l);
+
+		/* If any subplan is SingleQE, align Append numsegments with it */
+		if (CdbPathLocus_IsSingleQE(subpath->locus))
+		{
+			/* When there are multiple SingleQE, use the common segments */
+			numsegments = Min(numsegments,
+							  CdbPathLocus_NumSegments(subpath->locus));
+		}
 	}
 
 	/*
@@ -1467,27 +1478,16 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 				if (!CdbPathLocus_IsSingleQE(subpath->locus))
 				{
 					CdbPathLocus    singleQE;
-					/*
-					 * It's important to ensure that all the subpaths can be
-					 * gathered to the SAME segment, we must set the same
-					 * numsegments for all the SingleQE, there are many
-					 * options:
-					 *
-					 * 1. a constant 1;
-					 * 2. Min(numsegments of all subpaths);
-					 * 3. Max(numsegments of all subpaths);
-					 * 4. ALL;
-					 *
-					 * Options 2 & 3 need to decide the value with an extra
-					 * scan, option 1 puts all the SingleQE on segment 0
-					 * which makes segment 0 a bottle neck.  So we choose
-					 * option 4, ALL helps to balance the load on all the
-					 * segments and no extra scan is needed.
-					 */
-					int			numsegments = GP_POLICY_ALL_NUMSEGMENTS;
+
+					/* Gather to SingleQE */
 					CdbPathLocus_MakeSingleQE(&singleQE, numsegments);
 
 					subpath = cdbpath_create_motion_path(root, subpath, subpath->pathkeys, false, singleQE);
+				}
+				else
+				{
+					/* Align all SingleQE to the common segments */
+					subpath->locus.numsegments = numsegments;
 				}
 			}
 		}
@@ -1518,8 +1518,7 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 		 */
 		if (l == list_head(subpaths))
 			pathnode->locus = projectedlocus;
-		else if (cdbpathlocus_compare(CdbPathLocus_Comparison_Equal,
-									  pathnode->locus, projectedlocus))
+		else if (cdbpathlocus_equal(pathnode->locus, projectedlocus))
 		{
 			/* compatible */
 		}
@@ -1534,8 +1533,16 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 		}
 		else if (CdbPathLocus_IsPartitioned(pathnode->locus) &&
 				 CdbPathLocus_IsPartitioned(projectedlocus))
+		{
+			/*
+			 * subpaths have different distributed policy, mark it as random
+			 * distributed and set the numsegments to the maximum of all
+			 * subpaths to not missing any tuples.
+			 */
 			CdbPathLocus_MakeStrewn(&pathnode->locus,
-									CdbPathLocus_NumSegments(projectedlocus));
+									Max(CdbPathLocus_NumSegments(pathnode->locus),
+										CdbPathLocus_NumSegments(projectedlocus)));
+		}
 		else
 			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							errmsg_internal("cannot append paths with incompatible distribution")));
@@ -1816,7 +1823,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 
 	/* Repartition first if duplicates might be on different QEs. */
 	if (!CdbPathLocus_IsBottleneck(subpath->locus) &&
-		!cdbpathlocus_is_hashed_on_exprs(subpath->locus, uniq_exprs))
+		!cdbpathlocus_is_hashed_on_exprs(subpath->locus, uniq_exprs, false))
 	{
 		/*
 		 * We want to use numsegments from rel->cdbpolicy, however it might
@@ -2900,7 +2907,21 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.startup_cost = startup_cost;
 	pathnode->path.total_cost = total_cost;
 	pathnode->path.pathkeys = pathkeys;
-	pathnode->path.locus = cdbpathlocus_from_baserel(root, rel);
+
+	switch (rel->ftEntry->exec_location)
+	{
+		case FTEXECLOCATION_ANY:
+			CdbPathLocus_MakeGeneral(&(pathnode->path.locus), GP_POLICY_ALL_NUMSEGMENTS);
+			break;
+		case FTEXECLOCATION_ALL_SEGMENTS:
+			CdbPathLocus_MakeStrewn(&(pathnode->path.locus), GP_POLICY_ALL_NUMSEGMENTS);
+			break;
+		case FTEXECLOCATION_MASTER:
+			CdbPathLocus_MakeEntry(&(pathnode->path.locus));
+			break;
+		default:
+			elog(ERROR, "unrecognized exec_location '%c'", rel->ftEntry->exec_location);
+	}
 
 	pathnode->fdw_private = fdw_private;
 

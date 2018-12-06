@@ -308,6 +308,19 @@ _outPlanInfo(StringInfo str, const Plan *node)
 }
 
 static void
+_outResult(StringInfo str, const Result *node)
+{
+	WRITE_NODE_TYPE("RESULT");
+
+	_outPlanInfo(str, (const Plan *) node);
+
+	WRITE_NODE_FIELD(resconstantqual);
+
+	WRITE_INT_FIELD(numHashFilterCols);
+	WRITE_INT_ARRAY(hashFilterColIdx, node->numHashFilterCols, AttrNumber);
+}
+
+static void
 _outRecursiveUnion(StringInfo str, RecursiveUnion *node)
 {
 	WRITE_NODE_TYPE("RECURSIVEUNION");
@@ -360,6 +373,7 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	WRITE_NODE_FIELD(intoPolicy);
 	WRITE_UINT64_FIELD(query_mem);
 	WRITE_NODE_FIELD(intoClause);
+	WRITE_NODE_FIELD(copyIntoClause);
 }
 
 static void
@@ -560,8 +574,7 @@ _outMotion(StringInfo str, Motion *node)
 	WRITE_NODE_FIELD(hashExpr);
 	WRITE_NODE_FIELD(hashDataTypes);
 
-	WRITE_INT_FIELD(numOutputSegs);
-	WRITE_INT_ARRAY(outputSegIdx, node->numOutputSegs, int);
+	WRITE_INT_FIELD(isBroadcast);
 
 	WRITE_INT_FIELD(numSortCols);
 	WRITE_INT_ARRAY(sortColIdx, node->numSortCols, AttrNumber);
@@ -870,7 +883,7 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(setOperations);
 	WRITE_NODE_FIELD(constraintDeps);
-	WRITE_BOOL_FIELD(isCTAS);
+	WRITE_BOOL_FIELD(parentStmtType);
 	WRITE_BOOL_FIELD(needReshuffle);
 
 	/* Don't serialize policy */
@@ -1479,6 +1492,9 @@ _outNode(StringInfo str, void *obj)
 			case T_IntoClause:
 				_outIntoClause(str, obj);
 				break;
+			case T_CopyIntoClause:
+				_outCopyIntoClause(str, obj);
+				break;
 			case T_Var:
 				_outVar(str, obj);
 				break;
@@ -1749,6 +1765,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_PartitionValuesSpec:
 				_outPartitionValuesSpec(str, obj);
+				break;
+			case T_ExpandStmtSpec:
+				_outExpandStmtSpec(str, obj);
 				break;
 			case T_Partition:
 				_outPartition(str, obj);

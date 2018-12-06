@@ -930,7 +930,7 @@ _equalQuery(const Query *a, const Query *b)
 	if (!GpPolicyEqual(a->intoPolicy, b->intoPolicy))
 		return false;
 
-	COMPARE_SCALAR_FIELD(isCTAS);
+	COMPARE_SCALAR_FIELD(parentStmtType);
 	COMPARE_SCALAR_FIELD(needReshuffle);
 
 	return true;
@@ -1048,7 +1048,6 @@ _equalSetDistributionCmd(const SetDistributionCmd *a, const SetDistributionCmd *
 {
 	COMPARE_SCALAR_FIELD(backendId);
 	COMPARE_NODE_FIELD(relids);
-	COMPARE_NODE_FIELD(indexOidMap);
 	COMPARE_NODE_FIELD(hiddenTypes);
 
 	return true;

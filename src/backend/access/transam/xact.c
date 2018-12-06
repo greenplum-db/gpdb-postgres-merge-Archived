@@ -2183,6 +2183,7 @@ StartTransaction(void)
 	if (s->state != TRANS_DEFAULT)
 		elog(WARNING, "StartTransaction while in %s state",
 			 TransStateAsString(s->state));
+
 	/*
 	 * set the current transaction state information appropriately during
 	 * start processing

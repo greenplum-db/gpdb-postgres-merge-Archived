@@ -254,7 +254,7 @@ _readQuery(void)
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(setOperations);
 	READ_NODE_FIELD(constraintDeps);
-	READ_BOOL_FIELD(isCTAS);
+	READ_BOOL_FIELD(parentStmtType);
 	READ_BOOL_FIELD(needReshuffle);
 
 	/* policy not serialized */
@@ -591,7 +591,6 @@ _readSetDistributionCmd(void)
 
 	READ_INT_FIELD(backendId);
 	READ_NODE_FIELD(relids);
-	READ_NODE_FIELD(indexOidMap);
 	READ_NODE_FIELD(hiddenTypes);
 
 	READ_DONE();
@@ -1223,6 +1222,21 @@ _readPartitionValuesSpec(void)
 	READ_DONE();
 }
 
+static ExpandStmtSpec *
+_readExpandStmtSpec(void)
+{
+	READ_LOCALS(ExpandStmtSpec);
+
+	READ_ENUM_FIELD(method, ExpandMethod);
+	READ_BITMAPSET_FIELD(ps_none);
+	READ_BITMAPSET_FIELD(ps_root);
+	READ_BITMAPSET_FIELD(ps_interior);
+	READ_BITMAPSET_FIELD(ps_leaf);
+	READ_OID_FIELD(backendId);
+
+	READ_DONE();
+}
+
 static Partition *
 _readPartition(void)
 {
@@ -1421,6 +1435,7 @@ _readPlannedStmt(void)
 
 	READ_UINT64_FIELD(query_mem);
 	READ_NODE_FIELD(intoClause);
+	READ_NODE_FIELD(copyIntoClause);
 	READ_DONE();
 }
 
@@ -1476,8 +1491,8 @@ _readResult(void)
 
 	READ_NODE_FIELD(resconstantqual);
 
-	READ_BOOL_FIELD(hashFilter);
-	READ_NODE_FIELD(hashList);
+	READ_INT_FIELD(numHashFilterCols);
+	READ_INT_ARRAY(hashFilterColIdx, local_node->numHashFilterCols, AttrNumber);
 
 	READ_DONE();
 }
@@ -2235,8 +2250,7 @@ _readMotion(void)
 	READ_NODE_FIELD(hashExpr);
 	READ_NODE_FIELD(hashDataTypes);
 
-	READ_INT_FIELD(numOutputSegs);
-	READ_INT_ARRAY(outputSegIdx, local_node->numOutputSegs, int);
+	READ_INT_FIELD(isBroadcast);
 
 	READ_INT_FIELD(numSortCols);
 	READ_INT_ARRAY(sortColIdx, local_node->numSortCols, AttrNumber);
@@ -2378,7 +2392,6 @@ _readSlice(void)
 	READ_ENUM_FIELD(gangType, GangType);
 	Assert(local_node->gangType <= GANGTYPE_PRIMARY_WRITER);
 	READ_INT_FIELD(gangSize);
-	READ_INT_FIELD(numGangMembersToBeActive);
 	READ_BOOL_FIELD(directDispatch.isDirectDispatch);
 	READ_NODE_FIELD(directDispatch.contentIds); /* List of int index */
 	READ_DUMMY_FIELD(primaryGang, NULL);
@@ -2902,7 +2915,6 @@ _readModifyTable(void)
 	READ_NODE_FIELD(action_col_idxes);
 	READ_NODE_FIELD(ctid_col_idxes);
 	READ_NODE_FIELD(oid_col_idxes);
-	READ_BOOL_FIELD(isReshuffle);
 
 	READ_DONE();
 }
@@ -3241,6 +3253,9 @@ readNodeBinary(void)
 			case T_IntoClause:
 				return_value = _readIntoClause();
 				break;
+			case T_CopyIntoClause:
+				return_value = _readCopyIntoClause();
+				break;
 			case T_Var:
 				return_value = _readVar();
 				break;
@@ -3421,6 +3436,9 @@ readNodeBinary(void)
 				break;
 			case T_PartitionValuesSpec:
 				return_value = _readPartitionValuesSpec();
+				break;
+			case T_ExpandStmtSpec:
+				return_value = _readExpandStmtSpec();
 				break;
 			case T_Partition:
 				return_value = _readPartition();

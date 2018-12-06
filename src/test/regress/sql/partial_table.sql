@@ -5,73 +5,184 @@
 
 \set explain 'explain analyze'
 
-set allow_system_table_mods to true;
+create extension if not exists gp_debug_numsegments;
+
+drop schema if exists test_partial_table;
+create schema test_partial_table;
+set search_path=test_partial_table,public;
 
 --
 -- prepare kinds of tables
 --
 
-create temp table t1 (c1 int, c2 int, c3 int, c4 int) distributed by (c1, c2);
-create temp table d1 (c1 int, c2 int, c3 int, c4 int) distributed replicated;
-create temp table r1 (c1 int, c2 int, c3 int, c4 int) distributed randomly;
+select gp_debug_set_create_table_default_numsegments(1);
+create table t1 (c1 int, c2 int, c3 int, c4 int) distributed by (c1, c2);
+create table d1 (c1 int, c2 int, c3 int, c4 int) distributed replicated;
+create table r1 (c1 int, c2 int, c3 int, c4 int) distributed randomly;
 
-create temp table t2 (c1 int, c2 int, c3 int, c4 int) distributed by (c1, c2);
-create temp table d2 (c1 int, c2 int, c3 int, c4 int) distributed replicated;
-create temp table r2 (c1 int, c2 int, c3 int, c4 int) distributed randomly;
+select gp_debug_set_create_table_default_numsegments(2);
+create table t2 (c1 int, c2 int, c3 int, c4 int) distributed by (c1, c2);
+create table d2 (c1 int, c2 int, c3 int, c4 int) distributed replicated;
+create table r2 (c1 int, c2 int, c3 int, c4 int) distributed randomly;
 
-update gp_distribution_policy set numsegments=1
-	where localoid in ('t1'::regclass, 'd1'::regclass, 'r1'::regclass);
-
-update gp_distribution_policy set numsegments=2
-	where localoid in ('t2'::regclass, 'd2'::regclass, 'r2'::regclass);
+select gp_debug_reset_create_table_default_numsegments();
 
 select localoid::regclass, attrnums, policytype, numsegments
 	from gp_distribution_policy where localoid in (
 		't1'::regclass, 'd1'::regclass, 'r1'::regclass,
 		't2'::regclass, 'd2'::regclass, 'r2'::regclass);
 
+analyze t1;
+analyze d1;
+analyze r1;
+analyze t2;
+analyze d2;
+analyze r2;
+
 --
--- create table
+-- regression tests
 --
 
-create temp table t (like t1);
+-- a temp table is created during reorganization, its numsegments should be
+-- the same with original table, otherwise some data will be lost after the
+-- reorganization.
+begin;
+	insert into t1 select i, i from generate_series(1,10) i;
+	select gp_segment_id, * from t1;
+	alter table t1 set with (reorganize=true) distributed by (c1);
+	select gp_segment_id, * from t1;
+abort;
+-- restore the analyze information
+analyze t1;
+
+-- append SingleQE of different sizes
+select max(c1) as v, 1 as r from t2 union all select 1 as v, 2 as r;
+
+-- append node should use the max numsegments of all the subpaths
+begin;
+	-- insert enough data to ensure executors got reached on segments
+	insert into t1 select i from generate_series(1,100) i;
+	insert into t2 select i from generate_series(1,100) i;
+
+	:explain  select * from t2 a join t2 b using(c2)
+	union all select * from t1 c join t1 d using(c2) ;
+
+	:explain  select * from t1 a join t1 b using(c2)
+	union all select * from t2 c join t2 d using(c2) ;
+abort;
+
+--
+-- create table: LIKE, INHERITS and DISTRIBUTED BY
+--
+-- tables are always created with DEFAULT as numsegments,
+-- no matter there is LIKE, INHERITS or DISTRIBUTED BY.
+
+select gp_debug_set_create_table_default_numsegments(2);
+
+-- none of the clauses
+create table t ();
 select localoid::regclass, attrnums, policytype, numsegments
 	from gp_distribution_policy where localoid in ('t'::regclass);
 drop table t;
 
-create temp table t as table t1;
+-- DISTRIBUTED BY only
+create table t () distributed randomly;
 select localoid::regclass, attrnums, policytype, numsegments
 	from gp_distribution_policy where localoid in ('t'::regclass);
 drop table t;
 
-create temp table t as select * from t1;
+-- INHERITS only
+create table t () inherits (t2);
 select localoid::regclass, attrnums, policytype, numsegments
 	from gp_distribution_policy where localoid in ('t'::regclass);
 drop table t;
 
-create temp table t as select * from t1 distributed by (c1, c2);
+-- LIKE only
+create table t (like d1);
 select localoid::regclass, attrnums, policytype, numsegments
 	from gp_distribution_policy where localoid in ('t'::regclass);
 drop table t;
 
-create temp table t as select * from t1 distributed replicated;
+-- DISTRIBUTED BY + INHERITS
+create table t () inherits (t2) distributed randomly;
 select localoid::regclass, attrnums, policytype, numsegments
 	from gp_distribution_policy where localoid in ('t'::regclass);
 drop table t;
 
-create temp table t as select * from t1 distributed randomly;
+-- DISTRIBUTED BY + LIKE
+create table t (like d1) distributed randomly;
 select localoid::regclass, attrnums, policytype, numsegments
 	from gp_distribution_policy where localoid in ('t'::regclass);
 drop table t;
 
-select * into temp table t from t1;
+-- INHERITS + LIKE
+create table t (like d1) inherits (t2);
 select localoid::regclass, attrnums, policytype, numsegments
 	from gp_distribution_policy where localoid in ('t'::regclass);
 drop table t;
+
+-- DISTRIBUTED BY + INHERITS + LIKE
+create table t (like d1) inherits (t2) distributed randomly;
+select localoid::regclass, attrnums, policytype, numsegments
+	from gp_distribution_policy where localoid in ('t'::regclass);
+drop table t;
+
+-- INHERITS from multiple parents
+create table t () inherits (r1, t2);
+select localoid::regclass, attrnums, policytype, numsegments
+	from gp_distribution_policy where localoid in ('t'::regclass);
+drop table t;
+
+-- DISTRIBUTED BY + INHERITS from multiple parents
+create table t () inherits (r1, t2) distributed by (c1);
+select localoid::regclass, attrnums, policytype, numsegments
+	from gp_distribution_policy where localoid in ('t'::regclass);
+drop table t;
+
+select gp_debug_reset_create_table_default_numsegments();
+
+-- CTAS set numsegments with DEFAULT,
+-- let it be a fixed value to get stable output
+select gp_debug_set_create_table_default_numsegments('full');
+
+create table t as table t1;
+select localoid::regclass, attrnums, policytype, numsegments
+	from gp_distribution_policy where localoid in ('t'::regclass);
+drop table t;
+
+create table t as select * from t1;
+select localoid::regclass, attrnums, policytype, numsegments
+	from gp_distribution_policy where localoid in ('t'::regclass);
+drop table t;
+
+create table t as select * from t1 distributed by (c1, c2);
+select localoid::regclass, attrnums, policytype, numsegments
+	from gp_distribution_policy where localoid in ('t'::regclass);
+drop table t;
+
+create table t as select * from t1 distributed replicated;
+select localoid::regclass, attrnums, policytype, numsegments
+	from gp_distribution_policy where localoid in ('t'::regclass);
+drop table t;
+
+create table t as select * from t1 distributed randomly;
+select localoid::regclass, attrnums, policytype, numsegments
+	from gp_distribution_policy where localoid in ('t'::regclass);
+drop table t;
+
+select * into table t from t1;
+select localoid::regclass, attrnums, policytype, numsegments
+	from gp_distribution_policy where localoid in ('t'::regclass);
+drop table t;
+
+select gp_debug_reset_create_table_default_numsegments();
 
 --
 -- alter table
 --
+-- numsegments should not be changed
+
+select gp_debug_set_create_table_default_numsegments(1);
 
 create table t (like t1);
 select localoid::regclass, attrnums, policytype, numsegments
@@ -98,6 +209,8 @@ select localoid::regclass, attrnums, policytype, numsegments
 	from gp_distribution_policy where localoid in ('t'::regclass);
 
 drop table t;
+
+select gp_debug_reset_create_table_default_numsegments();
 
 -- below join cases cover all the combinations of
 --
@@ -277,6 +390,7 @@ drop table t;
 :explain select * from r2 a left join r2 b using (c1);
 :explain select * from r2 a left join r2 b using (c1, c2);
 :explain select * from t1, t2 where t1.c1 > any (select max(t2.c1) from t2 where t2.c2 = t1.c2) and t2.c1 > any(select max(c1) from t1 where t1.c2 = t2.c2);
+
 --
 -- insert
 --
@@ -379,3 +493,12 @@ insert into r2 (c1, c2) select c1, c2 from d2 returning c1, c2;
 insert into r2 (c1, c2) select c1, c2 from r1 returning c1, c2;
 insert into r2 (c1, c2) select c1, c2 from r2 returning c1, c2;
 rollback;
+
+--
+-- pg_relation_size() dispatches an internal query, to fetch the relation's
+-- size on each segment. The internal query doesn't need to be part of the
+-- distributed transactin. Test that we correctly issue two-phase commit in
+-- those segments that are affected by the INSERT, and that we don't try
+-- to perform distributed commit on the other segments.
+--
+insert into r1 (c4) values (pg_relation_size('r2'));

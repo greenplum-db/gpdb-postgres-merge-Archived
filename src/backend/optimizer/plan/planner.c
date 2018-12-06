@@ -582,13 +582,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	Assert(config);
 	root->config = config;
 
-	if (Gp_role == GP_ROLE_DISPATCH && gp_session_id > -1)
-	{
-		/* Choose a segdb to which our singleton gangs should be dispatched. */
-		/* FIXME: do not hard code to 0 */
-		gp_singleton_segindex = 0;
-	}
-
 	root->hasRecursion = hasRecursion;
 	if (hasRecursion)
 		root->wt_param_id = SS_assign_special_param(root);
@@ -1391,6 +1384,7 @@ inheritance_planner(PlannerInfo *root)
 					case CdbLocusType_Hashed:
 					case CdbLocusType_HashedOJ:
 					case CdbLocusType_Strewn:
+						/* FIXME: is HashedOJ really OK here? */
 						/* MPP-2023: Among subplans, these loci are okay. */
 						break;
 					case CdbLocusType_SegmentGeneral:
@@ -1682,7 +1676,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	bool		tested_hashed_distinct = false;
 	double		numDistinct = 1;
 	List	   *distinctExprs = NIL;
-	List	   *distinct_dist_keys = NIL;
+	List	   *distinct_dist_pathkeys = NIL;
 	List	   *distinct_dist_exprs = NIL;
 	bool		must_gather;
 
@@ -2112,10 +2106,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			best_path = sorted_path;
 
 		/*
-		 * Check to see if it's possible to optimize MIN/MAX aggregates.
-		 * If so, we will forget all the work we did so far to choose a
-		 * "regular" path ... but we had to do it anyway to be able to
-		 * tell which way is cheaper.
+		 * Check to see if it's possible to optimize MIN/MAX aggregates. If
+		 * so, we will forget all the work we did so far to choose a "regular"
+		 * path ... but we had to do it anyway to be able to tell which way is
+		 * cheaper.
 		 */
 		result_plan = optimize_minmax_aggregates(root,
 												 tlist,
@@ -2573,15 +2567,15 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 					need_gather_for_partitioning = false;
 				else
 				{
-					List	   *partition_dist_keys;
+					List	   *partition_dist_pathkeys;
 					List	   *partition_dist_exprs;
 
-					make_distribution_keys_for_groupclause(root,
-														   wc->partitionClause,
-														   tlist,
-														   &partition_dist_keys,
-														   &partition_dist_exprs);
-					if (!partition_dist_keys)
+					make_distribution_pathkeys_for_groupclause(root,
+															   wc->partitionClause,
+															   tlist,
+															   &partition_dist_pathkeys,
+															   &partition_dist_exprs);
+					if (!partition_dist_exprs)
 					{
 						/*
 						 * There is no PARTITION BY, or none of the PARTITION BY
@@ -2590,7 +2584,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 						 */
 						need_gather_for_partitioning = true;
 					}
-					else if (cdbpathlocus_collocates(root, current_locus, partition_dist_keys, false))
+					else if (cdbpathlocus_collocates_pathkeys(root, current_locus, partition_dist_pathkeys, false))
 					{
 						need_gather_for_partitioning = false;
 					}
@@ -2606,8 +2600,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 						 * Change current_locus based on the new distribution
 						 * pathkeys.
 						 */
-						CdbPathLocus_MakeHashed(&current_locus, partition_dist_keys,
-												CdbPathLocus_NumSegments(current_locus));
+						CdbPathLocus_MakeHashed(&current_locus,
+												cdbpathlocus_get_distkeys_for_pathkeys(partition_dist_pathkeys),
+												result_plan->flow->numsegments);
+
 						need_gather_for_partitioning = false;
 					}
 				}
@@ -2770,7 +2766,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	 */
 	if ((parse->distinctClause || parse->sortClause) &&
 		(root->config->honor_order_by || !root->parent_root) &&
-		!parse->isCTAS &&
+		parse->parentStmtType == PARENTSTMTTYPE_NONE &&
 		/*
 		 * GPDB_84_MERGE_FIXME: Does this do the right thing, if you have a
 		 * SELECT DISTINCT query as argument to a table function?
@@ -2839,11 +2835,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * the cost of an extra Redistribute-Sort-Unique on the pre-uniqued
 		 * (reduced) input.
 		 */
-		make_distribution_keys_for_groupclause(root,
-											   parse->distinctClause,
-											   result_plan->targetlist,
-											   &distinct_dist_keys,
-											   &distinct_dist_exprs);
+		make_distribution_pathkeys_for_groupclause(root,
+												   parse->distinctClause,
+												   result_plan->targetlist,
+												   &distinct_dist_pathkeys,
+												   &distinct_dist_exprs);
 
 		distinctExprs = get_sortgrouplist_exprs(parse->distinctClause,
 												result_plan->targetlist);
@@ -2854,8 +2850,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		{
 			bool		needMotion;
 
-			needMotion = !cdbpathlocus_collocates(root, current_locus,
-												  distinct_dist_keys, false /* exact_match */ );
+			needMotion = !cdbpathlocus_collocates_pathkeys(root, current_locus,
+														   distinct_dist_pathkeys, false /* exact_match */ );
 
 			/* Apply the preunique optimization, if enabled and worthwhile. */
 			/* GPDB_84_MERGE_FIXME: pre-unique for hash distinct not implemented. */
@@ -2929,7 +2925,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				}
 				else
 				{
-					result_plan = (Plan *) make_motion_gather(root, result_plan, -1, current_pathkeys);
+					result_plan = (Plan *) make_motion_gather(root, result_plan, current_pathkeys);
 				}
 				result_plan->total_cost += motion_cost_per_row * result_plan->plan_rows;
 			}
@@ -2945,7 +2941,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		if (use_hashed_distinct)
 		{
 			/* Hashed aggregate plan --- no sort needed */
-
 			result_plan = (Plan *) make_agg(root,
 											result_plan->targetlist,
 											NIL,
@@ -3019,8 +3014,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				result_plan = (Plan *) make_unique(result_plan, parse->distinctClause);
 				result_plan->flow = pull_up_Flow(result_plan, result_plan->lefttree);
 
-				result_plan = (Plan *) make_motion_gather(root, result_plan, -1,
-														  current_pathkeys);
+				result_plan = (Plan *) make_motion_gather(root, result_plan, current_pathkeys);
 			}
 
 			result_plan = (Plan *) make_unique(result_plan,
@@ -3059,8 +3053,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * handling below.
 			 */
 			current_pathkeys = root->sort_pathkeys;
-			result_plan = (Plan *) make_motion_gather(root, result_plan, -1,
-													  current_pathkeys);
+			result_plan = (Plan *) make_motion_gather(root, result_plan, current_pathkeys);
 		}
 	}
 
@@ -5171,6 +5164,7 @@ expression_planner(Expr *expr)
 
 	return (Expr *) result;
 }
+
 
 /*
  * plan_cluster_use_sort

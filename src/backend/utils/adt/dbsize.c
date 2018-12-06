@@ -56,7 +56,7 @@ static int64 calculate_total_relation_size(Relation rel);
  * Dispatches the given SQL query to segments, and sums up the results.
  * The query is expected to return one int8 value.
  */
-static int64
+int64
 get_size_from_segDBs(const char *cmd)
 {
 	int64		result;
@@ -440,6 +440,7 @@ pg_relation_size(PG_FUNCTION_ARGS)
 {
 	Oid			relOid = PG_GETARG_OID(0);
 	text	   *forkName = PG_GETARG_TEXT_P(1);
+	ForkNumber	forkNumber;
 	Relation	rel;
 	int64		size = 0;
 
@@ -463,25 +464,19 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	if (rel == NULL)
 		PG_RETURN_NULL();
 
-	/*
-	 * While we scan pg_class with an MVCC snapshot,
- 	 * someone else might drop the table. It's better to return NULL for
-	 * already-dropped tables than throw an error and abort the whole query.
-	 */
-	if (!RelationIsValid(rel))
-  		PG_RETURN_NULL();
+	forkNumber = forkname_to_number(text_to_cstring(forkName));
 
 	if (relOid == 0 || rel->rd_node.relNode == 0)
 		size = 0;
 	else
-		size = calculate_relation_size(rel,
-									   forkname_to_number(text_to_cstring(forkName)));
+		size = calculate_relation_size(rel, forkNumber);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		char	   *sql;
 
-		sql = psprintf("select pg_catalog.pg_relation_size(%u)", relOid);
+		sql = psprintf("select pg_catalog.pg_relation_size(%u, '%s')", relOid,
+					   forkNames[forkNumber]);
 
 		size += get_size_from_segDBs(sql);
 	}

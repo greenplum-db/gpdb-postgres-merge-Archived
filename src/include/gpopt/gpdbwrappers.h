@@ -181,10 +181,6 @@ namespace gpdb {
 	// array type oid
 	Oid GetArrayType(Oid typid);
 
-	// deconstruct array
-	void DeconstructArray(struct ArrayType *array, Oid elmtype, int elmlen, bool elmbyval,
-			char elmalign, Datum **elemsp, bool **nullsp, int *nelemsp);
-
 	// attribute stats slot
 	bool GetAttrStatsSlot(AttStatsSlot *sslot, HeapTuple statstuple, int reqkind,
 			Oid reqop, int flags);
@@ -250,7 +246,7 @@ namespace gpdb {
 	bool GetCastFunc(Oid src_oid, Oid dest_oid, bool *is_binary_coercible, Oid *cast_fn_oid, CoercionPathType *pathtype);
 	
 	// get type of operator
-	unsigned int GetComparisonType(Oid op_oid, Oid left_oid, Oid right_oid);
+	unsigned int GetComparisonType(Oid op_oid);
 	
 	// get scalar comparison between given types
 	Oid GetComparisonOperator(Oid left_oid, Oid right_oid, unsigned int cmpt);
@@ -407,7 +403,10 @@ namespace gpdb {
 
 	// make a NULL constant of the given type
 	Node *MakeNULLConst(Oid type_oid);
-	
+
+	// make a NULL constant of the given type
+	Node *MakeSegmentFilterExpr(int segid);
+
 	// create a new target entry
 	TargetEntry *MakeTargetEntry(Expr *expr, AttrNumber resno, char *resname, bool resjunk);
 
@@ -462,9 +461,6 @@ namespace gpdb {
 	// does an operator exist with the given oid
 	bool OperatorExists(Oid oid);
 
-	// fetch detoasted copies of toastable datatypes
-	struct varlena *DetoastDatum(struct varlena * datum);
-
 	// expression tree walker
 	bool WalkExpressionTree(Node *node, bool(*walker)(), void *context);
 
@@ -514,8 +510,8 @@ namespace gpdb {
 	bool RelationExists(Oid oid);
 
 	// estimate the relation size using the real number of blocks and tuple density
-	void EstimateRelationSize(Relation rel,	int32 *attr_widths,	BlockNumber *pages,	double *tuples, double *allvisfrac);
 	void CdbEstimateRelationSize (RelOptInfo *relOptInfo, Relation rel, int32 *attr_widths, BlockNumber *pages, double *tuples, double *allvisfrac);
+	double CdbEstimatePartitionedNumTuples (Relation rel, bool *stats_missing);
 
 	// close the given relation
 	void CloseRelation(Relation rel);
@@ -591,16 +587,13 @@ namespace gpdb {
 
 	// replace any polymorphic type with correct data type deduced from input arguments
 	bool ResolvePolymorphicArgType(int numargs, Oid *argtypes, char *argmodes, FuncExpr *call_expr);
-	
-	// hash a const value with GPDB's hash function
-	int32 CdbHashConst(Const *constant, int num_segments);
-
-	// pick a random segment from a pool of segments using GPDB's hash function
-	int32 CdbHashRandom(int num_segments);
 
 	// hash a list of const values with GPDB's hash function
 	int32 CdbHashConstList(List *constants, int num_segments);
-	
+
+	// get a random segment number
+	unsigned int CdbHashRandomSeg(int num_segments);
+
 	// check permissions on range table 
 	void CheckRTPermissions(List *rtable);
 	

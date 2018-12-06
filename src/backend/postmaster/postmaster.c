@@ -601,6 +601,7 @@ typedef struct
 	pg_time_t	first_syslogger_file_time;
 	bool		redirection_done;
 	bool		IsBinaryUpgrade;
+	bool		ConvertMasterDataDirToSegment;
 	int			max_safe_fds;
 	int			MaxBackends;
 #ifdef WIN32
@@ -747,7 +748,7 @@ PostmasterMain(int argc, char *argv[])
 	 * tcop/postgres.c (the option sets should not conflict) and with the
 	 * common help() function in main/main.c.
 	 */
-	while ((opt = getopt(argc, argv, "A:B:bc:C:D:d:EeFf:h:ijk:lN:mM:nOo:Pp:r:S:sTt:UW:-:")) != -1)
+	while ((opt = getopt(argc, argv, "A:B:bc:C:D:d:EeFf:h:ijk:lMmN:nOo:Pp:r:S:sTt:UW:-:")) != -1)
 	{
 		switch (opt)
 		{
@@ -826,6 +827,16 @@ PostmasterMain(int argc, char *argv[])
 
 			case 'l':
 				SetConfigOption("ssl", "true", PGC_POSTMASTER, PGC_S_ARGV);
+				break;
+
+			case 'M':
+				/* Undocumented flag used for mutating a directory that was a copy of a
+				 * master data directory and needs to now be a segment directory. Only
+				 * use on the first time the segment is started, and only use in
+				 * utility mode, as changes will be destructive, and will assume that
+				 * the segment has never participated in a distributed
+				 * transaction.*/
+				ConvertMasterDataDirToSegment = true;
 				break;
 
 			case 'm':
@@ -5336,7 +5347,7 @@ retry:
 /* This should really be in a header file */
 NON_EXEC_STATIC void
 PerfmonMain(int argc, char *argv[]);
-#endif 
+#endif
 
 /*
  * SubPostmasterMain -- Get the fork/exec'd process into a state equivalent
@@ -5772,9 +5783,6 @@ sigusr1_handler(SIGNAL_ARGS)
 		/* Start immediately if possible, else remember request for later. */
 		WalReceiverRequested = true;
 		MaybeStartWalReceiver();
-
-		/* wal receiver has been launched */
-		pm_launch_walreceiver = true;
 	}
 
 	Assert(FTSSubProc->procType == FtsProbeProc);
@@ -6189,6 +6197,9 @@ MaybeStartWalReceiver(void)
 	{
 		WalReceiverPID = StartWalReceiver();
 		WalReceiverRequested = false;
+		/* GPDB_94_MERGE_FIXME: pg94 stable does not have pm_launch_walreceiver. Do we need that? */
+		/* wal receiver has been launched */
+		pm_launch_walreceiver = true;
 	}
 }
 
@@ -6698,6 +6709,7 @@ save_backend_variables(BackendParameters *param, Port *port,
 
 	param->redirection_done = redirection_done;
 	param->IsBinaryUpgrade = IsBinaryUpgrade;
+	param->ConvertMasterDataDirToSegment = ConvertMasterDataDirToSegment;
 	param->max_safe_fds = max_safe_fds;
 
 	param->MaxBackends = MaxBackends;
@@ -6928,6 +6940,7 @@ restore_backend_variables(BackendParameters *param, Port *port)
 
 	redirection_done = param->redirection_done;
 	IsBinaryUpgrade = param->IsBinaryUpgrade;
+	ConvertMasterDataDirToSegment = param->ConvertMasterDataDirToSegment;
 	max_safe_fds = param->max_safe_fds;
 
 	MaxBackends = param->MaxBackends;

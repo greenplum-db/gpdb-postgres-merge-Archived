@@ -117,15 +117,13 @@ static const int newObjectTypePriority[] =
 	31,							/* DO_DEFAULT_ACL */
 	21,							/* DO_BLOB */
 	24,							/* DO_BLOB_DATA */
+	8,							/* DO_EXTPROTOCOL */
+	21,							/* DO_TYPE_STORAGE_OPTIONS */
 	22,							/* DO_PRE_DATA_BOUNDARY */
 	25,							/* DO_POST_DATA_BOUNDARY */
 	32,							/* DO_EVENT_TRIGGER */
-	33							/* DO_REFRESH_MATVIEW */
-
-	,
-	/* GPDB_84_MERGE_FIXME: Are these priorities sensible? */
-	8,							/* DO_EXTPROTOCOL */
-	22							/* DO_TYPE_STORAGE_OPTIONS */
+	33,							/* DO_REFRESH_MATVIEW */
+	1							/* DO_BINARY_UPGRADE */
 };
 
 static DumpId preDataBoundId;
@@ -1491,6 +1489,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_POST_DATA_BOUNDARY:
 			snprintf(buf, bufsize,
 					 "POST-DATA BOUNDARY  (ID %d)",
+					 obj->dumpId);
+			return;
+		case DO_BINARY_UPGRADE:
+			snprintf(buf, bufsize,
+					 "BINARY UPGRADE  (ID %d)",
 					 obj->dumpId);
 			return;
 	}

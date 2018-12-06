@@ -72,7 +72,6 @@ CREATE TABLE foo (
     c53_uuidzarray uuid[],
     c54_tsqueryarray tsquery[],
     c55_jsonarray json[],
-    c56_xmlarray xml[],
     c57_pointarray point[],
     c58_linesegarray lseg[],
     c59_patharray path[],
@@ -109,7 +108,6 @@ CREATE TYPE input_fields AS
     uuidzarray uuid[],
     tsqueryarray tsquery[],
     jsonarray json[],
-    xmlarray xml[],
     pointarray point[],
     linesegarray lseg[],
     patharray path[],
@@ -150,7 +148,6 @@ BEGIN
         ARRAY['11111111-1111-1111-1111-1111111111' || (i % 6) || (i % 6), '11111111-1111-1111-1111-1111111111' || ((i + 1) % 6) || ((i + 1) % 6)]::uuid[],
         ARRAY['foo' || (i % 6) || ' & rat', 'rat' || (i % 6) || ' & foo']::tsquery[],
         ARRAY['{"a": "b"}', '{"c": "d"}']::json[],
-        ARRAY['<a></a>', '<b></b>']::xml[],
         ARRAY[point(i, i + 1), point(i + 2, i + 3)],
         ARRAY[lseg(point(i, i + 1), point(i + 2, i + 3)), lseg(point(i + 4, i + 5), point(i + 6, i + 7))],
         ARRAY[path(polygon(box(point(i + 1, i + 2), point(i + 3, i + 4)))), path(polygon(box(point(i + 1, i + 2), point(i + 3, i + 4))))],
@@ -783,9 +780,9 @@ WITH (appendonly=true, compresslevel=5, orientation=row, compresstype=zlib) DIST
           (
           START ('2018-01-01'::date) END ('2018-01-02'::date) EVERY ('1 day'::interval) WITH (tablename='incr_analyze_test_1_prt_1', appendonly=true, compresslevel=3, orientation=column, compresstype=ZLIB ),
           START ('2018-01-02'::date) END ('2018-01-03'::date) EVERY ('1 day'::interval) WITH (tablename='incr_analyze_test_1_prt_2', appendonly=true, compresslevel=1, orientation=column, compresstype=RLE_TYPE ),
-          START ('2018-01-03'::date) END ('2018-01-04'::date) EVERY ('1 day'::interval) WITH (tablename='incr_analyze_test_1_prt_3', appendonly=true, compresslevel=1, orientation=column, compresstype=QUICKLZ ),
+          START ('2018-01-03'::date) END ('2018-01-04'::date) EVERY ('1 day'::interval) WITH (tablename='incr_analyze_test_1_prt_3', appendonly=true, compresslevel=1, orientation=column, compresstype=ZLIB ),
           START ('2018-01-04'::date) END ('2018-01-05'::date) EVERY ('1 day'::interval) WITH (tablename='incr_analyze_test_1_prt_4', appendonly=true, compresslevel=1, orientation=row, compresstype=ZLIB ),
-          START ('2018-01-05'::date) END ('2018-01-06'::date) EVERY ('1 day'::interval) WITH (tablename='incr_analyze_test_1_prt_5', appendonly=true, compresslevel=1, orientation=row, compresstype=QUICKLZ ),
+          START ('2018-01-05'::date) END ('2018-01-06'::date) EVERY ('1 day'::interval) WITH (tablename='incr_analyze_test_1_prt_5', appendonly=true, compresslevel=1, orientation=row, compresstype=ZLIB ),
           START ('2018-01-06'::date) END ('2018-01-07'::date) EVERY ('1 day'::interval) WITH (tablename='incr_analyze_test_1_prt_6', appendonly=false)
           );
 

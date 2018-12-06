@@ -72,15 +72,35 @@ PORT_STANDBY=`expr $PORT_MASTER + 1`
 PGOPTIONS_UTILITY='-c gp_session_role=utility'
 MASTER_PSQL="psql -a --no-psqlrc -p $PORT_MASTER"
 STANDBY_PSQL="psql -a --no-psqlrc -p $PORT_STANDBY"
+STANDBY_PSQL_TUPLES_ONLY="psql -t --no-psqlrc -p $PORT_STANDBY"
 PG_CTL_COMMON_OPTIONS="--gp_dbid=2 --gp_contentid=0"
 MASTER_PG_CTL_OPTIONS="-p ${PORT_MASTER} $PG_CTL_COMMON_OPTIONS"
 STANDBY_PG_CTL_OPTIONS="-p ${PORT_STANDBY} $PG_CTL_COMMON_OPTIONS"
+MASTER_PG_CTL_STOP_MODE="fast"
 
-function wait_until_standby_is_promoted {
+function wait_for_promotion {
    retry=50
    until [ $retry -le 0 ]
    do
-      PGOPTIONS=${PGOPTIONS_UTILITY} $STANDBY_PSQL -c "select 1;" && break
+      PGOPTIONS=${PGOPTIONS_UTILITY} ${1} -c "select 1;" && break
+      retry=$[$retry-1]
+      sleep 0.2
+   done
+}
+
+function wait_until_standby_is_promoted {
+    wait_for_promotion "${STANDBY_PSQL}"
+}
+
+function wait_until_master_is_promoted {
+    wait_for_promotion "${MASTER_PSQL}"
+}
+
+function wait_until_standby_streaming_state {
+   retry=150
+   until [ $retry -le 0 ]
+   do
+      PGOPTIONS=${PGOPTIONS_UTILITY} $STANDBY_PSQL -c "SELECT state FROM pg_stat_replication;" | grep 'streaming' > /dev/null && break
       retry=$[$retry-1]
       sleep 0.2
    done

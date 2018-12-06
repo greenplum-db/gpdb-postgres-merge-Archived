@@ -49,13 +49,13 @@ EOF
 
 #### Now run the test-specific parts to initialize the master before setting
 echo "Master initialized."
-before_master
+declare -F before_master > /dev/null && before_master
 
 pg_ctl -w -D $TEST_MASTER start -o "$MASTER_PG_CTL_OPTIONS" >>$log_path 2>&1
 
 # up standby
 echo "Master running."
-before_standby
+declare -F before_standby > /dev/null && before_standby
 
 # Set up standby with necessary parameter
 rm -rf $TEST_STANDBY
@@ -76,10 +76,15 @@ pg_ctl -w -D $TEST_STANDBY start -o "$STANDBY_PG_CTL_OPTIONS" >>$log_path 2>&1
 #### Now run the test-specific parts to run after standby has been started
 # up standby
 echo "Standby initialized and running."
-standby_following_master
+declare -F standby_following_master > /dev/null && standby_following_master
 
 # sleep a bit to make sure the standby has caught up.
 sleep 1
+
+# For some tests, we want to stop the master before standby promotion
+if [ "$STOP_MASTER_BEFORE_PROMOTE" == "true" ]; then
+    pg_ctl -w -D $TEST_MASTER stop -m $MASTER_PG_CTL_STOP_MODE >>$log_path 2>&1
+fi
 
 # Now promote slave and insert some new data on master, this will put
 # the master out-of-sync with the standby.
@@ -90,10 +95,12 @@ wait_until_standby_is_promoted >>$log_path 2>&1
 
 #### Now run the test-specific parts to run after promotion
 echo "Standby promoted."
-after_promotion
+declare -F after_promotion > /dev/null && after_promotion
 
-# Stop the master and be ready to perform the rewind
-pg_ctl -w -D $TEST_MASTER stop -m fast >>$log_path 2>&1
+# For some tests, we want to stop the master after standby promotion
+if [ "$STOP_MASTER_BEFORE_PROMOTE" != "true" ]; then
+    pg_ctl -w -D $TEST_MASTER stop -m $MASTER_PG_CTL_STOP_MODE >>$log_path 2>&1
+fi
 
 # For a local test, source node need to be stopped as well.
 if [ $TEST_SUITE == "local" ]; then
@@ -152,7 +159,16 @@ pg_ctl -w -D $TEST_MASTER start -o "$MASTER_PG_CTL_OPTIONS" >>$log_path 2>&1
 
 #### Now run the test-specific parts to check the result
 echo "Old master restarted after rewind."
-after_rewind
+# Make sure master is able to connect to standby and reach streaming state.
+wait_until_standby_streaming_state
+PGOPTIONS=${PGOPTIONS_UTILITY} $STANDBY_PSQL -c "SELECT state FROM pg_stat_replication;"
+
+# Now promote master and run validation queries
+pg_ctl -w -D $TEST_MASTER promote >>$log_path 2>&1
+wait_until_master_is_promoted >>$log_path 2>&1
+echo "Master promoted."
+
+declare -F after_rewind > /dev/null && after_rewind
 
 # Stop remaining servers
 pg_ctl stop -D $TEST_MASTER -m fast -w >>$log_path 2>&1

@@ -20,6 +20,7 @@
 #include "access/sdir.h"
 #include "nodes/bitmapset.h"
 #include "nodes/primnodes.h"
+#include "parsenodes.h"
 
 typedef struct DirectDispatchInfo
 {
@@ -143,6 +144,7 @@ typedef struct PlannedStmt
 	 * to be dispatched to QEs.
 	 */
 	IntoClause *intoClause;
+	CopyIntoClause *copyIntoClause;
 } PlannedStmt;
 
 /*
@@ -297,14 +299,20 @@ typedef struct Plan
  * If resconstantqual isn't NULL, it represents a one-time qualification
  * test (i.e., one that doesn't depend on any variables from the outer plan,
  * so needs to be evaluated only once).
+ *
+ * If numHashFilterCols is non-zero, we compute a cdbhash value based
+ * on the columns listed in hashFilterColIdx for each input row. If the
+ * target segment based on the hash doesn't match the current execution
+ * segment, the row is discarded.
  * ----------------
  */
 typedef struct Result
 {
 	Plan		plan;
 	Node	   *resconstantqual;
-	bool		hashFilter;
-	List	   *hashList;
+
+	int			numHashFilterCols;
+	AttrNumber *hashFilterColIdx;
 } Result;
 
 /* ----------------
@@ -362,7 +370,6 @@ typedef struct ModifyTable
 	List	   *action_col_idxes;
 	List	   *ctid_col_idxes;
 	List	   *oid_col_idxes;
-	bool		isReshuffle;
 } ModifyTable;
 
 /* ----------------
@@ -1272,9 +1279,17 @@ typedef struct Motion
 	List		*hashExpr;			/* list of hash expressions */
 	List		*hashDataTypes;	    /* list of hash expr data type oids */
 
-	/* Output segments */
-	int 	  	numOutputSegs;		/* number of seg indexes in outputSegIdx array, 0 for broadcast */
-	int 	 	*outputSegIdx; 	 	/* array of output segindexes */
+	/*
+	 * The isBroadcast field is only used for motionType=MOTIONTYPE_FIXED,
+	 * if it is other kind of motion, please do not access this field.
+	 * The field is set true for Broadcast motion, and set false for
+	 * Gather motion.
+	 *
+	 * TODO: Historically, broadcast motion and gather motion's motiontype
+	 * are both MOTIONTYPE_FIXED. It is not a good idea. They should belong
+	 * to different motiontypes. We should refactor the motion types in future.
+	 */
+	bool 	  	isBroadcast;
 
 	/* For Explicit */
 	AttrNumber segidColIdx;			/* index of the segid column in the target list */

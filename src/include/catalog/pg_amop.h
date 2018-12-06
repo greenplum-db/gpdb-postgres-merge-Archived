@@ -612,6 +612,9 @@ DATA(insert (	1998   1700 1700 1 s 1752 405 0 ));
 /* array_ops */
 DATA(insert (	627    2277 2277 1 s 1070 405 0 ));
 
+/* complex_ops */
+DATA(insert (	6224   7198 7198 1 s 6469 405 0 ));
+
 
 /*
  *	gist box_ops
@@ -1268,12 +1271,10 @@ DATA(insert (	7048	704 704 4 s 816 7013 0 ));
 DATA(insert (	7048	704 704 5 s 814 7013 0 ));
 
 /*
- * gpxlogloc
+ * hash support for a few built-in datatypes that are missing it in upstream.
  */
-DATA(insert (	7080	3310 3310 1 s 3327 403 0 ));
-DATA(insert (	7080	3310 3310 2 s 3329 403 0 ));
-DATA(insert (	7080	3310 3310 3 s 6325 403 0 ));
-DATA(insert (	7080	3310 3310 4 s 3330 403 0 ));
-DATA(insert (	7080	3310 3310 5 s 3328 403 0 ));
+DATA(insert (	7077   27 27 1 s 387 405 0 ));
+DATA(insert (	7078   1560 1560 1 s 1784 405 0 ));
+DATA(insert (	7079   1562 1562 1 s 1804 405 0 ));
 
 #endif   /* PG_AMOP_H */

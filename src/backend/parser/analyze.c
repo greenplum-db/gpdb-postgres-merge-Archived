@@ -3188,6 +3188,7 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 	return result;
 }
 
+
 /*
  * transformExplainStmt -
  *	transform an EXPLAIN Statement
@@ -3291,8 +3292,8 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
 
-	/* GPDB: Set isCTAS to be true as we know this query is for CTAS */
-	((Query*)stmt->query)->isCTAS = true;
+	/* GPDB: Set parentStmtType to PARENTSTMTTYPE_CTAS as we know this query is for CTAS */
+	((Query*)stmt->query)->parentStmtType = PARENTSTMTTYPE_CTAS;
 
 	if (stmt->into->distributedBy && Gp_role == GP_ROLE_DISPATCH)
 		setQryDistributionPolicy(stmt->into, (Query *)stmt->query);
@@ -3666,7 +3667,8 @@ setQryDistributionPolicy(IntoClause *into, Query *qry)
 
 	dist = (DistributedBy *)into->distributedBy;
 
-	dist->numsegments = GP_POLICY_ALL_NUMSEGMENTS;
+	if (dist->numsegments < 0)
+		dist->numsegments = GP_POLICY_DEFAULT_NUMSEGMENTS;
 
 	/*
 	 * We have a DISTRIBUTED BY column list specified by the user

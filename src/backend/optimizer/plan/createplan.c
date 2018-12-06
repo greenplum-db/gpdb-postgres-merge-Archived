@@ -5837,9 +5837,6 @@ make_motion(PlannerInfo *root, Plan *lefttree,
 
 	plan->flow = NULL;
 
-	node->outputSegIdx = NULL;
-	node->numOutputSegs = 0;
-
 	return node;
 }
 
@@ -6396,8 +6393,8 @@ make_result(PlannerInfo *root,
 	plan->righttree = NULL;
 	node->resconstantqual = resconstantqual;
 
-	node->hashFilter = false;
-	node->hashList = NIL;
+	node->numHashFilterCols = 0;
+	node->hashFilterColIdx = NULL;
 
 	return node;
 }
@@ -6480,7 +6477,6 @@ make_modifytable(PlannerInfo *root,
 	node->action_col_idxes = NIL;
 	node->ctid_col_idxes = NIL;
 	node->oid_col_idxes = NIL;
-	node->isReshuffle = false;
 
 	adjust_modifytable_flow(root, node, is_split_updates);
 
@@ -6575,6 +6571,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 	bool		all_subplans_entry = true,
 				all_subplans_replicated = true;
 	int			numsegments = -1;
+	Query		*qry = root->parse;
 
 	if (node->operation == CMD_INSERT)
 	{
@@ -6592,16 +6589,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 			targetPolicy = GpPolicyFetch(rte->relid);
 			targetPolicyType = targetPolicy->ptype;
 
-			if (numsegments >= 0)
-			{
-				/*
-				 * We require a table T's sub tables all have the same
-				 * numsegments with T
-				 */
-				Assert(numsegments == targetPolicy->numsegments);
-			}
-
-			numsegments = targetPolicy->numsegments;
+			numsegments = Max(targetPolicy->numsegments, numsegments);
 
 			if (targetPolicyType == POLICYTYPE_PARTITIONED)
 			{
@@ -6617,7 +6605,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 				/* FIXME: also do this for all the subplans */
 				if (subplan->flow->locustype == CdbLocusType_General)
 				{
-					subplan->flow->numsegments = numsegments;
+					subplan->flow->numsegments = targetPolicy->numsegments;
 				}
 
 				if (gp_enable_fast_sri && IsA(subplan, Result))
@@ -6629,7 +6617,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 														 targetPolicy->attrs,
 														 false);
 
-				if (!repartitionPlan(subplan, false, false, hashExpr, numsegments))
+				if (!repartitionPlan(subplan, false, false, hashExpr, targetPolicy->numsegments))
 					ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
 									errmsg("Cannot parallelize that INSERT yet")));
 			}
@@ -6675,7 +6663,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 					subplan->flow->locustype == CdbLocusType_SegmentGeneral &&
 					!contain_volatile_functions((Node *)subplan->targetlist))
 				{
-					if (subplan->flow->numsegments >= numsegments)
+					if (subplan->flow->numsegments >= targetPolicy->numsegments)
 					{
 						/*
 						 * A query to reach here:
@@ -6684,7 +6672,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 						 * could simply put General on the same segments with
 						 * target table.
 						 */
-						subplan->flow->numsegments = numsegments;
+						subplan->flow->numsegments = targetPolicy->numsegments;
 						continue;
 					}
 
@@ -6704,7 +6692,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 					!contain_volatile_functions((Node *)subplan->targetlist))
 				{
 					subplan->dispatch = DISPATCH_PARALLEL;
-					if (subplan->flow->numsegments >= numsegments)
+					if (subplan->flow->numsegments >= targetPolicy->numsegments)
 					{
 						/*
 						 * A query to reach here: INSERT INTO d1 VALUES(1).
@@ -6712,7 +6700,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 						 * could simply put General on the same segments with
 						 * target table.
 						 */
-						subplan->flow->numsegments = numsegments;
+						subplan->flow->numsegments = targetPolicy->numsegments;
 					}
 					else
 					{
@@ -6721,7 +6709,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 					continue;
 				}
 
-				if (!broadcastPlan(subplan, false, false, numsegments))
+				if (!broadcastPlan(subplan, false, false, targetPolicy->numsegments))
 					ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
 								errmsg("Cannot parallelize that INSERT yet")));
 
@@ -6740,7 +6728,6 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 			RangeTblEntry *rte = rt_fetch(rti, root->parse->rtable);
 			GpPolicy   *targetPolicy;
 			GpPolicyType targetPolicyType;
-			Query *qry = root->parse;
 
 			Assert(rti > 0);
 			Assert(rte->rtekind == RTE_RELATION);
@@ -6748,16 +6735,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 			targetPolicy = GpPolicyFetch(rte->relid);
 			targetPolicyType = targetPolicy->ptype;
 
-			if (numsegments >= 0)
-			{
-				/*
-				 * We require a table T's sub tables all have the same
-				 * numsegments with T
-				 */
-				Assert(numsegments == targetPolicy->numsegments);
-			}
-
-			numsegments = targetPolicy->numsegments;
+			numsegments = Max(targetPolicy->numsegments, numsegments);
 
 			if (targetPolicyType == POLICYTYPE_PARTITIONED)
 			{
@@ -6799,7 +6777,6 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 					{
 						new_subplan = (Plan *) make_reshuffle(root, new_subplan, rte, rti);
 						request_explicit_motion(new_subplan, rti, root->glob->finalrtable);
-						((ModifyTable *)node)->isReshuffle = true;
 					}
 					else
 					{
@@ -6872,9 +6849,10 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 					new_subplan = (Plan *) make_splitupdate(root, (ModifyTable *) node, subplan, rte, !qry->needReshuffle);
 					new_subplan = (Plan *) make_reshuffle(root, new_subplan, rte, rti);
 					request_explicit_motion(new_subplan, rti, root->glob->finalrtable);
-					((ModifyTable *)node)->isReshuffle = true;
 
 					lcp->data.ptr_value = new_subplan;
+
+					all_subplans_replicated = false;
 
 					continue;
 				}
@@ -6904,6 +6882,10 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 	if (all_subplans_entry)
 	{
 		mark_plan_entry((Plan *) node);
+		if(!qry->needReshuffle)
+		{
+			((Plan *) node)->flow->numsegments = numsegments;
+		}
 	}
 	else if (all_subplans_replicated)
 	{
@@ -6911,7 +6893,10 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 	}
 	else
 	{
-		mark_plan_strewn((Plan *) node, numsegments);
+		if(!qry->needReshuffle)
+			mark_plan_strewn((Plan *) node, numsegments);
+		else
+			mark_plan_strewn((Plan *) node, getgpsegmentCount());
 
 		if (list_length(node->plans) == 1)
 		{
@@ -7158,11 +7143,6 @@ cdbpathtoplan_create_motion_plan(PlannerInfo *root,
 	/* Send all tuples to a single process? */
 	if (CdbPathLocus_IsBottleneck(path->path.locus))
 	{
-		int			destSegIndex = -1;	/* to dispatcher */
-
-		if (CdbPathLocus_IsSingleQE(path->path.locus))
-			destSegIndex = gp_singleton_segindex;	/* to singleton qExec */
-
 		if (path->path.pathkeys)
 		{
 			Plan	   *prep;
@@ -7203,34 +7183,19 @@ cdbpathtoplan_create_motion_plan(PlannerInfo *root,
 				 * for the key columns. But better safe than sorry.)
 				 */
 				subplan = prep;
-				motion = make_sorted_union_motion(root,
-												  subplan,
-												  numSortCols,
-												  sortColIdx,
-												  sortOperators,
-												  collations,
-												  nullsFirst,
-												  destSegIndex,
-												  false /* useExecutorVarFormat */,
-												  numsegments);
+				motion = make_sorted_union_motion(root, subplan, numSortCols, sortColIdx, sortOperators, collations,
+												  nullsFirst, false, numsegments);
 			}
 			else
 			{
 				/* Degenerate ordering... build unordered Union Receive */
-				motion = make_union_motion(subplan,
-										   destSegIndex,
-										   false	/* useExecutorVarFormat */,
-										   numsegments);
+				motion = make_union_motion(subplan, false, numsegments);
 			}
 		}
 
 		/* Unordered Union Receive */
 		else
-			motion = make_union_motion(subplan,
-									   destSegIndex,
-									   false	/* useExecutorVarFormat */,
-									   numsegments
-				);
+			motion = make_union_motion(subplan, false, numsegments);
 	}
 
 	/* Send all of the tuples to all of the QEs in gang above... */
@@ -7244,7 +7209,7 @@ cdbpathtoplan_create_motion_plan(PlannerInfo *root,
 	else if (CdbPathLocus_IsHashed(path->path.locus) ||
 			 CdbPathLocus_IsHashedOJ(path->path.locus))
 	{
-		List	   *hashExpr = cdbpathlocus_get_partkey_exprs(path->path.locus,
+		List	   *hashExpr = cdbpathlocus_get_distkey_exprs(path->path.locus,
 															  path->path.parent->relids,
 															  subplan->targetlist);
 		if (!hashExpr)

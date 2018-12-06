@@ -303,7 +303,7 @@ verbatim or your contribution being upstreamed as part of the larger changeset).
 If the contribution you're submitting is NOT original work you have to indicate the name
 of the license and also make sure that it is similar in terms to the Apache License 2.0.
 Apache Software Foundation maintains a list of these licenses under [Category A](https://www.apache.org/legal/resolved.html#category-a). In addition to that, you may be required to make proper attribution in the
-[NOTICE file](https://github.com/greenplum-db/gpdb/blob/master/NOTICE) file similar to [these examples](https://github.com/greenplum-db/gpdb/blob/master/NOTICE#L278).
+[NOTICE file](https://github.com/greenplum-db/gpdb/blob/master/NOTICE) similar to [these examples](https://github.com/greenplum-db/gpdb/blob/master/NOTICE#L278).
 
 Finally, keep in mind that it is NEVER a good idea to remove licensing headers from
 the work that is not your original one. Even if you are using parts of the file that
@@ -322,7 +322,7 @@ doing the actual work as a series of small, self-contained commits. This makes
 the reviewer's job much easier and increases the timeliness of feedback.
 
 When it comes to C and C++ parts of Greenplum, we try to follow
-[PostgreSQL Coding Conventions](https://www.postgresql.org/docs/devel/static/source.html).
+[PostgreSQL Coding Conventions](https://www.postgresql.org/docs/devel/source.html).
 In addition to that we require that:
    * All Python code passes [Pylint](https://www.pylint.org/)
    * All Go code is formatted according to [gofmt](https://golang.org/cmd/gofmt/)

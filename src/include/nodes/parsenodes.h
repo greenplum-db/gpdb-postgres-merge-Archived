@@ -89,6 +89,30 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
  *****************************************************************************/
 
 /*
+ * ParentStmtType represents whether the query is included in
+ * a utility stmt. And it indicates the type of this utility stmt.
+ * PARENTSTMTTYPE_NONE		query is not included in a utility stmt.
+ * PARENTSTMTTYPE_CTAS		query is included in a CreateTableAsStmt.
+ * PARENTSTMTTYPE_COPY		query is included in a CopyStmt.
+ *
+ * Previously we added the isCtas field to Query to indicate that
+ * the query is included in CreateTableAsStmt. For this type of
+ * query, you need to make a different MPP plan. The copy statement
+ * also contains the query, which also requires a different query
+ * plan.
+ * In postgres, we don't need to make a different query plan for the
+ * query in the utility stament. But in greenplum, we need to. So we
+ * use a field to indicate whether the query is contained in utitily
+ * statemnt, and the type of utitily statemnt.
+ */
+
+typedef uint8 ParentStmtType;
+
+#define PARENTSTMTTYPE_NONE	0
+#define PARENTSTMTTYPE_CTAS	1
+#define PARENTSTMTTYPE_COPY	2
+
+/*
  * Query -
  *	  Parse analysis turns all statements into a Query tree
  *	  for further processing by the rewriter and planner.
@@ -184,10 +208,10 @@ typedef struct Query
 	struct GpPolicy *intoPolicy;
 
 	/*
-	 * GPDB: Used to indicate this query is part of CTAS so that its plan would
-	 * always be dispatched in parallel.
+	 * GPDB: Used to indicate this query is part of CTAS or COPY so that its plan
+	 * would always be dispatched in parallel.
 	 */
-	bool		isCTAS;
+	ParentStmtType	parentStmtType;
 
 	/*
 	 *  Do we need to reshuffle data, we use an UpdateStmt
@@ -197,7 +221,6 @@ typedef struct Query
 	bool	   needReshuffle;
 
 } Query;
-
 
 /****************************************************************************
  *	Supporting data structures for Parse Trees
@@ -1483,6 +1506,7 @@ typedef enum AlterTableType
 	AT_ReplicaIdentity,			/* REPLICA IDENTITY */
 	AT_GenericOptions,			/* OPTIONS (...) */
 	AT_SetDistributedBy,		/* SET DISTRIBUTED BY */
+	AT_ExpandTable,          /* EXPAND DISTRIBUTED */
 	/* CDB: Partitioned Tables */
 	AT_PartAdd,					/* Add */
 	AT_PartAddForSplit,			/* Add, as subcommand of a split */
@@ -1516,6 +1540,11 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	bool		part_expanded;	/* expands from another command, for partitioning */
 	List	   *partoids;		/* If applicable, OIDs of partition part tables */
 	bool		missing_ok;		/* skip error if missing? */
+	/* addition info for partition table */
+	Bitmapset	*ps_none;
+	Bitmapset	*ps_root;
+	Bitmapset	*ps_interior;
+	Bitmapset	*ps_leaf;
 } AlterTableCmd;
 
 
@@ -1524,7 +1553,6 @@ typedef struct SetDistributionCmd
 	NodeTag		type;
 	int	        backendId;     /* backend ID on QD */
 	List	   *relids;            /* oid of relations(partitions) which have related temporary table */
-	List	   *indexOidMap;       /* the map between relation oid and index oid */
 	List	   *hiddenTypes;       /* the types need to build for dropped column */
 } SetDistributionCmd;
 
@@ -2083,6 +2111,31 @@ typedef struct PartitionSpec			/* a Partition Specification */
 	bool				istemplate;
 	int					location;		/* token location, or -1 if unknown */
 } PartitionSpec;
+
+typedef enum ExpandMethod
+{
+	EXPANDMETHOD_NONE = 0,
+	EXPANDMETHOD_CTAS,
+	EXPANDMETHOD_RESHUFFLE
+} ExpandMethod;
+
+typedef struct ExpandStmtSpec
+{
+	NodeTag				type;
+	/* method to move data internal */
+	ExpandMethod		method;
+	/*
+	 * QEs has empty pg_partition and pg_partitions
+	 * so we need to pass necessary partition related
+	 * info to QEs.
+	 */
+	Bitmapset			*ps_none;
+	Bitmapset			*ps_root;
+	Bitmapset			*ps_interior;
+	Bitmapset			*ps_leaf;
+	/* for ctas method */
+	Oid					backendId;
+} ExpandStmtSpec;
 
 /* ----------------------
  *		Create/Drop TableSpace Statements

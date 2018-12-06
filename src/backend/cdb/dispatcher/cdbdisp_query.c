@@ -108,7 +108,8 @@ static DispatchCommandQueryParms *cdbdisp_buildUtilityQueryParms(struct Node *st
 static DispatchCommandQueryParms *cdbdisp_buildCommandQueryParms(const char *strCommand, int flags);
 
 static void cdbdisp_dispatchCommandInternal(DispatchCommandQueryParms *pQueryParms,
-											int flags, CdbPgResults *cdb_pgresults);
+											int flags, List *segments,
+											CdbPgResults *cdb_pgresults);
 
 static void
 cdbdisp_dispatchX(QueryDesc *queryDesc,
@@ -282,6 +283,11 @@ CdbDispatchSetCommand(const char *strCommand, bool cancelOnError)
 		cdbdisp_dispatchToGang(ds, rg, -1);
 	}
 
+	/*
+	 * No need for two-phase commit, so no need to call
+	 * addToGxactTwophaseSegments.
+	 */
+
 	cdbdisp_waitDispatchFinish(ds);
 
 	cdbdisp_checkDispatchResult(ds, DISPATCH_WAIT_NONE);
@@ -311,12 +317,27 @@ CdbDispatchSetCommand(const char *strCommand, bool cancelOnError)
  *
  * -flags:
  *  Is the combination of DF_NEED_TWO_PHASE, DF_WITH_SNAPSHOT,DF_CANCEL_ON_ERROR
- *
  */
 void
 CdbDispatchCommand(const char *strCommand,
 				   int flags,
 				   CdbPgResults *cdb_pgresults)
+{
+	return CdbDispatchCommandToSegments(strCommand,
+										flags,
+										cdbcomponent_getCdbComponentsList(),
+										cdb_pgresults);
+}
+
+/*
+ * Like CdbDispatchCommand, but sends the command only to the
+ * specified segments.
+ */
+void
+CdbDispatchCommandToSegments(const char *strCommand,
+							 int flags,
+							 List *segments,
+							 CdbPgResults *cdb_pgresults)
 {
 	DispatchCommandQueryParms *pQueryParms;
 	bool needTwoPhase = flags & DF_NEED_TWO_PHASE;
@@ -332,7 +353,10 @@ CdbDispatchCommand(const char *strCommand,
 
 	pQueryParms = cdbdisp_buildCommandQueryParms(strCommand, flags);
 
-	return cdbdisp_dispatchCommandInternal(pQueryParms, flags, cdb_pgresults);
+	return cdbdisp_dispatchCommandInternal(pQueryParms,
+										   flags,
+										   segments,
+										   cdb_pgresults);
 }
 
 /*
@@ -369,12 +393,16 @@ CdbDispatchUtilityStatement(struct Node *stmt,
 
 	pQueryParms = cdbdisp_buildUtilityQueryParms(stmt, flags, oid_assignments);
 
-	return cdbdisp_dispatchCommandInternal(pQueryParms, flags, cdb_pgresults);
+	return cdbdisp_dispatchCommandInternal(pQueryParms,
+										   flags,
+										   cdbcomponent_getCdbComponentsList(),
+										   cdb_pgresults);
 }
 
 static void
 cdbdisp_dispatchCommandInternal(DispatchCommandQueryParms *pQueryParms,
                                 int flags,
+								List *segments,
                                 CdbPgResults *cdb_pgresults)
 {
 	CdbDispatcherState *ds;
@@ -394,14 +422,16 @@ cdbdisp_dispatchCommandInternal(DispatchCommandQueryParms *pQueryParms,
 	/*
 	 * Allocate a primary QE for every available segDB in the system.
 	 */
-	primaryGang = AllocateGang(ds, GANGTYPE_PRIMARY_WRITER,
-										cdbcomponent_getCdbComponentsList());
+	primaryGang = AllocateGang(ds, GANGTYPE_PRIMARY_WRITER, segments);
 	Assert(primaryGang);
 
 	cdbdisp_makeDispatchResults(ds, 1, flags & DF_CANCEL_ON_ERROR);
 	cdbdisp_makeDispatchParams (ds, 1, queryText, queryTextLength);
 
 	cdbdisp_dispatchToGang(ds, primaryGang, -1);
+
+	if ((flags & DF_NEED_TWO_PHASE) != 0)
+		addToGxactTwophaseSegments(primaryGang);
 
 	cdbdisp_waitDispatchFinish(ds);
 
@@ -1046,9 +1076,6 @@ cdbdisp_dispatchX(QueryDesc* queryDesc,
 	 * Since we intend to execute the plan, inventory the slice tree,
 	 * allocate gangs, and associate them with slices.
 	 *
-	 * For now, always use segment 'gp_singleton_segindex' for
-	 * singleton gangs.
-	 *
 	 * On return, gangs have been allocated and CDBProcess lists have
 	 * been filled in in the slice table.)
 	 * 
@@ -1122,9 +1149,9 @@ cdbdisp_dispatchX(QueryDesc* queryDesc,
 		Assert(primaryGang != NULL);
 
 		if (Test_print_direct_dispatch_info)
-			elog(INFO, "Dispatch command to %s",
+			elog(INFO, "(slice %d) Dispatch command to %s", slice->sliceIndex,
 				 		segmentsToContentStr(slice->directDispatch.isDirectDispatch ?
-											slice->directDispatch.contentIds : NULL));
+											slice->directDispatch.contentIds : slice->segments));
 
 		/*
 		 * Bail out if already got an error or cancellation request.
@@ -1139,6 +1166,8 @@ cdbdisp_dispatchX(QueryDesc* queryDesc,
 		SIMPLE_FAULT_INJECTOR(BeforeOneSliceDispatched);
 
 		cdbdisp_dispatchToGang(ds, primaryGang, si);
+		if (planRequiresTxn)
+			addToGxactTwophaseSegments(primaryGang);
 
 		SIMPLE_FAULT_INJECTOR(AfterOneSliceDispatched);
 	}
@@ -1424,6 +1453,8 @@ CdbDispatchCopyStart(struct CdbCopy *cdbCopy, Node *stmt, int flags)
 	cdbdisp_makeDispatchParams (ds, 1, queryText, queryTextLength);
 
 	cdbdisp_dispatchToGang(ds, primaryGang, -1);
+	if ((flags & DF_NEED_TWO_PHASE) != 0)
+		addToGxactTwophaseSegments(primaryGang);
 
 	cdbdisp_waitDispatchFinish(ds);
 

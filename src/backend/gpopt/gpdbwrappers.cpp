@@ -462,27 +462,6 @@ gpdb::DatumSize
 	return 0;
 }
 
-void
-gpdb::DeconstructArray
-	(
-	struct ArrayType *array,
-	Oid elmtype,
-	int elmlen,
-	bool elmbyval,
-	char elmalign,
-	Datum **elemsp,
-	bool **nullsp,
-	int *nelemsp
-	)
-{
-	GP_WRAP_START;
-	{
-		deconstruct_array(array, elmtype, elmlen, elmbyval, elmalign, elemsp, nullsp, nelemsp);
-		return;
-	}
-	GP_WRAP_END;
-}
-
 Node *
 gpdb::MutateExpressionTree
 	(
@@ -1108,15 +1087,13 @@ gpdb::GetCastFunc
 unsigned int
 gpdb::GetComparisonType
 	(
-	Oid op_oid,
-	Oid left_oid,
-	Oid right_oid
+	Oid op_oid
 	)
 {
 	GP_WRAP_START;
 	{
 		/* catalog tables: pg_amop */
-		return get_comparison_type(op_oid, left_oid, right_oid);
+		return get_comparison_type(op_oid);
 	}
 	GP_WRAP_END;
 	return CmptOther;
@@ -1843,6 +1820,16 @@ gpdb::MakeNULLConst
 	return NULL;
 }
 
+Node *
+gpdb::MakeSegmentFilterExpr(int segid)
+{
+	GP_WRAP_START;
+	{
+	  return (Node *) makeSegmentFilterExpr(segid);
+	}
+	GP_WRAP_END;
+}
+
 TargetEntry *
 gpdb::MakeTargetEntry
 	(
@@ -2166,20 +2153,6 @@ gpdb::GPDBFree
 	GP_WRAP_END;
 }
 
-struct varlena *
-gpdb::DetoastDatum
-	(
-	struct varlena * datum
-	)
-{
-	GP_WRAP_START;
-	{
-		return pg_detoast_datum(datum);
-	}
-	GP_WRAP_END;
-	return NULL;
-}
-
 bool
 gpdb::WalkQueryOrExpressionTree
 	(
@@ -2383,24 +2356,6 @@ gpdb::RelationExists
 }
 
 void
-gpdb::EstimateRelationSize
-	(
-	Relation rel,
-	int32 *attr_widths,
-	BlockNumber *pages,
-	double *tuples,
-	double *allvisfrac
-	)
-{
-	GP_WRAP_START;
-	{
-		estimate_rel_size(rel, attr_widths, pages, tuples, allvisfrac);
-		return;
-	}
-	GP_WRAP_END;
-}
-
-void
 gpdb::CdbEstimateRelationSize
 	(
 	RelOptInfo   *relOptInfo,
@@ -2415,6 +2370,20 @@ gpdb::CdbEstimateRelationSize
 	{
 		cdb_estimate_rel_size(relOptInfo, rel, attr_widths, pages, tuples, allvisfrac);
 		return;
+	}
+	GP_WRAP_END;
+}
+
+double
+gpdb::CdbEstimatePartitionedNumTuples
+	(
+	Relation rel,
+	bool *stats_missing_p
+	)
+{
+	GP_WRAP_START;
+	{
+		return cdb_estimate_partitioned_numtuples(rel, stats_missing_p);
 	}
 	GP_WRAP_END;
 }
@@ -2783,43 +2752,6 @@ gpdb::ResolvePolymorphicArgType
 	return false;
 }
 
-// hash a const value with GPDB's hash function
-int32 
-gpdb::CdbHashConst
-	(
-	Const *constant,
-	int num_segments
-	)
-{
-	GP_WRAP_START;
-	{
-		return cdbhash_const(constant, num_segments);
-	}
-	GP_WRAP_END;
-	return 0;
-}
-
-// pick a segment randomly from a pool of segments using GPDB's hash function
-int32
-gpdb::CdbHashRandom
-	(
-	int num_segments
-	)
-{
-	GP_WRAP_START;
-	{
-		CdbHash    *pcdbhash = makeCdbHash(num_segments, 0, NULL);
-
-		cdbhashinit(pcdbhash);
-
-		cdbhashnokey(pcdbhash);
-
-		return cdbhashreduce(pcdbhash);
-	}
-	GP_WRAP_END;
-	return 0;
-}
-
 // hash a list of const values with GPDB's hash function
 int32 
 gpdb::CdbHashConstList
@@ -2831,6 +2763,20 @@ gpdb::CdbHashConstList
 	GP_WRAP_START;
 	{
 		return cdbhash_const_list(constants, num_segments);
+	}
+	GP_WRAP_END;
+	return 0;
+}
+
+unsigned int
+gpdb::CdbHashRandomSeg
+	(
+	int num_segments
+	)
+{
+	GP_WRAP_START;
+	{
+		return cdbhashrandomseg(num_segments);
 	}
 	GP_WRAP_END;
 	return 0;

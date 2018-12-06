@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE map PUBLIC "-//OASIS//DTD DITA Map//EN" "map.dtd">
 <map>
-	<topicref href="../../homenav.html" scope="external" navtitle="Greenplum Database Docs Home"
-		format="html"/>
+	<topicref href="../../600/homenav.html" scope="external" navtitle="Greenplum Database® 6.0 Documentation"
+		format="html" otherprops="oss-only"/>
+	<topicref href="../../600/homenav.html" scope="external" navtitle="Pivotal Greenplum® 6.0 Documentation"
+		format="html" otherprops="pivotal"/>
 	<topicref href="ref_guide.xml" navtitle="Reference Guide">
 		<topicref href="sql_commands/sql_ref.xml">
 			<topicref href="GPReferenceSQLSummaryLOP.xml"/>
@@ -33,8 +35,8 @@
 			<topicref href="sql_commands/ALTER_TABLESPACE.xml"/>
 			<topicref href="sql_commands/ALTER_TEXT_SEARCH_CONFIGURATION.xml"/>
 			<topicref href="sql_commands/ALTER_TEXT_SEARCH_DICTIONARY.xml"/>
-      <topicref href="sql_commands/ALTER_TEXT_SEARCH_PARSER.xml"/>
-      <topicref href="sql_commands/ALTER_TEXT_SEARCH_TEMPLATE.xml"/>
+			<topicref href="sql_commands/ALTER_TEXT_SEARCH_PARSER.xml"/>
+			<topicref href="sql_commands/ALTER_TEXT_SEARCH_TEMPLATE.xml"/>
 			<topicref href="sql_commands/ALTER_TRIGGER.xml" otherprops="op-hidden"/>
 			<topicref href="sql_commands/ALTER_TYPE.xml"/>
 			<topicref href="sql_commands/ALTER_USER.xml"/>
@@ -78,8 +80,8 @@
 			<topicref href="sql_commands/CREATE_TRIGGER.xml" otherprops="op-hidden"/>
 			<topicref href="sql_commands/CREATE_TEXT_SEARCH_CONFIGURATION.xml"/>
 			<topicref href="sql_commands/CREATE_TEXT_SEARCH_DICTIONARY.xml"/>
-      <topicref href="sql_commands/CREATE_TEXT_SEARCH_PARSER.xml"/>
-      <topicref href="sql_commands/CREATE_TEXT_SEARCH_TEMPLATE.xml"/>
+			<topicref href="sql_commands/CREATE_TEXT_SEARCH_PARSER.xml"/>
+			<topicref href="sql_commands/CREATE_TEXT_SEARCH_TEMPLATE.xml"/>
 			<topicref href="sql_commands/CREATE_TYPE.xml"/>
 			<topicref href="sql_commands/CREATE_USER.xml"/>
 			<topicref href="sql_commands/CREATE_USER_MAPPING.xml"/>
@@ -118,8 +120,8 @@
 			<topicref href="sql_commands/DROP_TABLESPACE.xml"/>
 			<topicref href="sql_commands/DROP_TEXT_SEARCH_CONFIGURATION.xml"/>
 			<topicref href="sql_commands/DROP_TEXT_SEARCH_DICTIONARY.xml"/>
-      <topicref href="sql_commands/DROP_TEXT_SEARCH_PARSER.xml"/>
-      <topicref href="sql_commands/DROP_TEXT_SEARCH_TEMPLATE.xml"/>
+			<topicref href="sql_commands/DROP_TEXT_SEARCH_PARSER.xml"/>
+			<topicref href="sql_commands/DROP_TEXT_SEARCH_TEMPLATE.xml"/>
 			<topicref href="sql_commands/DROP_TRIGGER.xml" otherprops="op-hidden"/>
 			<topicref href="sql_commands/DROP_TYPE.xml"/>
 			<topicref href="sql_commands/DROP_USER.xml"/>
@@ -203,6 +205,7 @@
 				<topicref href="system_catalogs/pg_constraint.xml"/>
 				<topicref href="system_catalogs/pg_conversion.xml"/>
 				<topicref href="system_catalogs/pg_database.xml"/>
+				<topicref href="system_catalogs/pg_db_role_setting.xml"/>
 				<topicref href="system_catalogs/pg_depend.xml"/>
 				<topicref href="system_catalogs/pg_description.xml"/>
 				<topicref href="system_catalogs/pg_enum.xml"/>
@@ -221,6 +224,7 @@
 				<topicref href="system_catalogs/pg_namespace.xml"/>
 				<topicref href="system_catalogs/pg_opclass.xml"/>
 				<topicref href="system_catalogs/pg_operator.xml"/>
+				<topicref href="system_catalogs/pg_opfamily.xml"/>
 				<topicref href="system_catalogs/pg_partition.xml"/>
 				<topicref href="system_catalogs/pg_partition_columns.xml"/>
 				<topicref href="system_catalogs/pg_partition_encoding.xml"/>
@@ -260,6 +264,7 @@
 		<topicref href="gp_toolkit.ditamap" format="ditamap"/>
 		<topicref href="gpperfmon/gpperfmon.ditamap" format="ditamap"/>
 		<topicref href="data_types.xml" navtitle="Greenplum Database Data Types" id="data_types">
+			<topicref href="datatype-datetime.xml"/>
 			<topicref href="datatype-pseudo.xml"/>
 			<topicref href="datatype-textsearch.xml"/>
 		</topicref>

@@ -325,9 +325,6 @@ int			currentSliceId = UNSET_SLICE_ID;	/* used by elog to show the
 												 * current slice the process
 												 * is executing. */
 
-/* Segment id where singleton gangs are to be dispatched. */
-int			gp_singleton_segindex;
-
 bool		gp_cost_hashjoin_chainwalk = false;
 
 /* ----------------
@@ -496,7 +493,7 @@ assign_gp_role(const char *newval, void *extra)
 	bool		do_disconnect = false;
 	bool		do_connect = false;
 
-	if (Gp_role != newrole && IsUnderPostmaster)
+	if (Gp_role != newrole && IsUnderPostmaster && !IsInitProcessingMode())
 	{
 		if (Gp_role != GP_ROLE_UTILITY)
 			do_disconnect = true;

@@ -259,13 +259,17 @@
             conflict, then the duplicate columns are merged to form a single column in the new
             table. If the column name list of the new table contains a column name that is also
             inherited, the data type must likewise match the inherited column(s), and the column
-            definitions are merged into one. However, inherited and new column declarations of the
-            same name need not specify identical constraints: all constraints provided from any
-            declaration are merged together and all are applied to the new table. If the new table
-            explicitly specifies a default value for the column, this default overrides any defaults
-            from inherited declarations of the column. Otherwise, any parents that specify default
-            values for the column must all specify the same default, or an error will be reported.
-          </pd>
+            definitions are merged into one. If the new table explicitly specifies a default value
+            for the column, this default overrides any defaults from inherited declarations of the
+            column. Otherwise, any parents that specify default values for the column must all
+            specify the same default, or an error will be reported. </pd>
+          <pd><codeph>CHECK</codeph> constraints are merged in essentially the same way as columns:
+            if multiple parent tables or the new table defintion contain identically-named
+              <codeph>constraints</codeph>, these constraints must all have the same check
+            expression, or an error will be reported. Constraints having the same name and
+            expression will be merged into one copy. Notice that an unnamed <codeph>CHECK</codeph>
+            constraint in the new table will never be merged, since a unique name will always be
+            chosen for it.</pd>
         </plentry>
         <plentry>
           <pt>LIKE <varname>other_table</varname> [{INCLUDING | EXCLUDING} {DEFAULTS |
@@ -473,19 +477,20 @@
               <codeph>gp_create_table_random_default_distribution</codeph> controls the default
             table distribution policy if the <cmdname>DISTRIBUTED BY</cmdname> clause is not
             specified when you create a table. Greenplum Database follows these rules to create a
-            table if a distribution policy is not specified.
-	    <p>If the value of the parameter is
+            table if a distribution policy is not specified. <p>If the value of the parameter is
                 <codeph>off</codeph> (the default), Greenplum Database chooses the table
-		distribution key based on the command. If the <cmdname>LIKE</cmdname> or
-                <cmdname>INHERITS</cmdname> clause is specified, the distribution key
-		is copied from the source or parent table. If the PRIMARY KEY or UNIQUE
-		constraints were specified, the largest subset of all the key columns is used
-		as the distribution key. Finally, if there are no constraints nor
-		<cmdname>LIKE</cmdname>/<cmdname>INHERITS</cmdname>, the first column is chosen.
-	    </p>
-	    <p>If
-              the value of the parameter is set to <codeph>on</codeph>, Greenplum Database follows
-              these rules:<ul id="ul_tbr_5kq_kq">
+              distribution key based on the command:<ul id="ul_rjb_gty_qfb">
+                <li>If a <codeph>LIKE</codeph> or <codeph>INHERITS</codeph> clause is specified,
+                  then Greenplum copies the distribution key from the source or parent table.</li>
+                <li>If a <codeph>PRIMARY KEY</codeph> or <codeph>UNIQUE</codeph> constraints are
+                  specified, then Greenplum chooses the largest subset of all the key columns as the
+                  distribution key.</li>
+                <li>If neither constraints nor a <codeph>LIKE</codeph> or <codeph>INHERITS</codeph>
+                  clause is specified, then Greenplum chooses the first suitable column as the
+                  distribution key. (Columns with geometric or user-defined data types are not
+                  eligible as Greenplum distribution key columns.)</li>
+              </ul></p><p>If the value of the parameter is set to <codeph>on</codeph>, Greenplum
+              Database follows these rules:<ul id="ul_tbr_5kq_kq">
                 <li>If <cmdname>PRIMARY KEY</cmdname> or <cmdname>UNIQUE</cmdname> columns are not
                   specified, the distribution of the table is random (<cmdname>DISTRIBUTED
                     RANDOMLY</cmdname>). Table distribution is random even if the table creation

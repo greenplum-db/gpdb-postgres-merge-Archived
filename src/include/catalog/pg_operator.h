@@ -174,7 +174,7 @@ DESCR("equal");
 DATA(insert OID = 386 (  "="	   PGNSP PGUID b f t	22	22	16 386	 0 int2vectoreq eqsel eqjoinsel ));
 DESCR("equal");
 
-DATA(insert OID = 387 (  "="	   PGNSP PGUID b t f	27	27	16 387 402 tideq eqsel eqjoinsel ));
+DATA(insert OID = 387 (  "="	   PGNSP PGUID b t t	27	27	16 387 402 tideq eqsel eqjoinsel ));
 DESCR("equal");
 #define TIDEqualOperator   387
 DATA(insert OID = 402 (  "<>"	   PGNSP PGUID b f f	27	27	16 402 387 tidne neqsel neqjoinsel ));
@@ -1258,7 +1258,7 @@ DESCR("exponentiation");
 DATA(insert OID = 1763 (  "@"	   PGNSP PGUID l f f	0 1700 1700    0	0 numeric_abs - - ));
 DESCR("absolute value");
 
-DATA(insert OID = 1784 (  "="	  PGNSP PGUID b t f 1560 1560 16 1784 1785 biteq eqsel eqjoinsel ));
+DATA(insert OID = 1784 (  "="	  PGNSP PGUID b t t 1560 1560 16 1784 1785 biteq eqsel eqjoinsel ));
 DESCR("equal");
 #define BitEqualOperator 1784
 DATA(insert OID = 1785 (  "<>"	  PGNSP PGUID b f f 1560 1560 16 1785 1784 bitne neqsel neqjoinsel ));
@@ -1295,7 +1295,7 @@ DESCR("add");
 DATA(insert OID = 1803 (  "-"	   PGNSP PGUID b f f 1266 1186 1266  0	0 timetz_mi_interval - - ));
 DESCR("subtract");
 
-DATA(insert OID = 1804 (  "="	  PGNSP PGUID b t f 1562 1562 16 1804 1805 varbiteq eqsel eqjoinsel ));
+DATA(insert OID = 1804 (  "="	  PGNSP PGUID b t t 1562 1562 16 1804 1805 varbiteq eqsel eqjoinsel ));
 DESCR("equal");
 #define VarbitEqualOperator 1804
 DATA(insert OID = 1805 (  "<>"	  PGNSP PGUID b f f 1562 1562 16 1805 1804 varbitne neqsel neqjoinsel ));
@@ -1854,23 +1854,8 @@ DESCR("exists all");
 DATA(insert OID = 3250 (  "<@"	   PGNSP PGUID b f f 3802 3802 16 3246 0 jsonb_contained contsel contjoinsel ));
 DESCR("is contained by");
 
-
-/* gpxlogloc operators */
-DATA(insert OID = 6325 (  "="     PGNSP PGUID b t f 3310 3310	16 6325 3326 gpxlogloceq eqsel eqjoinsel ));
-DESCR("equal");
-DATA(insert OID = 3326 (  "<>"    PGNSP PGUID b f f 3310 3310	16 3326 6325 gpxloglocne neqsel neqjoinsel ));
-DESCR("not equal");
-DATA(insert OID = 3327 (  "<"     PGNSP PGUID b f f 3310 3310	16 3328 3330 gpxlogloclt scalarltsel scalarltjoinsel ));
-DESCR("less than");
-DATA(insert OID = 3328 (  ">"     PGNSP PGUID b f f 3310 3310	16 3327 3329 gpxloglocgt scalargtsel scalargtjoinsel ));
-DESCR("greater than");
-DATA(insert OID = 3329 (  "<="    PGNSP PGUID b f f 3310 3310	16 3330 3328 gpxloglocle scalarltsel scalarltjoinsel ));
-DESCR("less than or equal");
-DATA(insert OID = 3330 (  ">="    PGNSP PGUID b f f 3310 3310	16 3329 3327 gpxloglocge scalargtsel scalargtjoinsel ));
-DESCR("greater than or equal");
-
 /* operators for complex data type */
-DATA(insert OID = 6469 (  "="	   PGNSP PGUID b t f 7198 7198 16 6469 6470 complex_eq eqsel eqjoinsel)); 
+DATA(insert OID = 6469 (  "="	   PGNSP PGUID b t t 7198 7198 16 6469 6470 complex_eq eqsel eqjoinsel));
 DESCR("equal");
 #define ComplexEqualOperator 6469
 DATA(insert OID = 6470 (  "<>"	   PGNSP PGUID b f f 7198 7198 16 6470 6469 complex_ne  neqsel neqjoinsel)); 

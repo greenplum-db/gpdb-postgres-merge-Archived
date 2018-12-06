@@ -65,6 +65,7 @@ int			extra_float_digits = 0;		/* Added to DBL_DIG or FLT_DIG */
 static double cbrt(double x);
 #endif   /* HAVE_CBRT */
 
+
 /*
  * Routines to provide reasonably platform-independent handling of
  * infinity and NaN.  We assume that isinf() and isnan() are available

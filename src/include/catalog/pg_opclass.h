@@ -143,6 +143,7 @@ DATA(insert OID = 3125 ( 403	numeric_ops PGNSP PGUID 1988 1700 t 0 ));
 #define NUMERIC_BTREE_OPS_OID 3125
 DATA(insert (	405		numeric_ops			PGNSP PGUID 1998 1700 t 0 ));
 DATA(insert (	403		complex_ops			PGNSP PGUID 6221 7198 t 0 ));
+DATA(insert (	405		complex_ops			PGNSP PGUID 6224 7198 t 0 ));
 DATA(insert OID = 1981 ( 403	oid_ops		PGNSP PGUID 1989   26 t 0 ));
 #define OID_BTREE_OPS_OID 1981
 DATA(insert (	405		oid_ops				PGNSP PGUID 1990   26 t 0 ));
@@ -242,8 +243,6 @@ DATA(insert (	405		jsonb_ops			PGNSP PGUID 4034  3802 t 0 ));
 DATA(insert (	2742	jsonb_ops			PGNSP PGUID 4036  3802 t 25 ));
 DATA(insert (	2742	jsonb_path_ops		PGNSP PGUID 4037  3802 f 23 ));
 
-DATA(insert (	403		xlogloc_ops			PGNSP PGUID 7080  3310 t 0 ));
-
 /*
  * the operators for the on-disk bitmap index.
  */
@@ -281,5 +280,12 @@ DATA(insert (	7013	bpchar_pattern_ops	PGNSP PGUID 7044 1042 f 0 ));
 DATA(insert (	7013	money_ops			PGNSP PGUID 7046 790 t 0 ));
 DATA(insert (	7013	reltime_ops			PGNSP PGUID 7047 703 t 0 ));
 DATA(insert (	7013	tinterval_ops		PGNSP PGUID 7048 704 t 0 ));
+
+/*
+ * hash support for a few built-in datatypes that are missing it in upstream.
+ */
+DATA(insert (	405		tid_ops	PGNSP PGUID 7077 27 t 0 ));
+DATA(insert (	405		bit_ops	PGNSP PGUID 7078 1560 t 0 ));
+DATA(insert (	405		varbit_ops	PGNSP PGUID 7079 1562 t 0 ));
 
 #endif   /* PG_OPCLASS_H */

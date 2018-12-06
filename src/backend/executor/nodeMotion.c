@@ -24,6 +24,7 @@
 #include "cdb/cdbhash.h"
 #include "executor/executor.h"
 #include "executor/execdebug.h"
+#include "executor/execUtils.h"
 #include "executor/nodeMotion.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_oper.h"
@@ -87,6 +88,7 @@ typedef struct CdbTupleHeapInfo
 typedef struct CdbMergeComparatorContext
 {
 	FmgrInfo           *sortFunctions;
+	Oid		   *collations;
 	int                *cmpFlags;
 	int			        numSortCols;
 	AttrNumber         *sortColIdx;
@@ -99,6 +101,7 @@ CdbMergeComparator_CreateContext(TupleDesc      tupDesc,
                                  int            numSortCols,
                                  AttrNumber    *sortColIdx,
                                  Oid           *sortOperators,
+								 Oid *collations,
 								 bool *nullsFirstFlags);
 
 static void
@@ -160,7 +163,7 @@ formatTuple(StringInfo buf, HeapTuple tup, TupleDesc tupdesc, Oid *outputFunArra
 bool isMotionGather(const Motion *m)
 {
 	return (m->motionType == MOTIONTYPE_FIXED
-			&& m->numOutputSegs == 1);
+			&& !m->isBroadcast);
 }
 
 /* ----------------------------------------------------------------
@@ -262,6 +265,14 @@ execMotionSender(MotionState * node)
 	PlanState  *outerNode;
 	Motion	   *motion = (Motion *) node->ps.plan;
 	bool		done = false;
+	int			numsegments = 0;
+
+	/* need refactor */
+	if (node->isExplictGatherMotion)
+	{
+		numsegments = motion->plan.flow->numsegments;
+	}
+
 
 
 #ifdef MEASURE_MOTION_TIME
@@ -273,7 +284,7 @@ execMotionSender(MotionState * node)
 
 	AssertState(motion->motionType == MOTIONTYPE_HASH || 
 			(motion->motionType == MOTIONTYPE_EXPLICIT && motion->segidColIdx > 0) || 
-			(motion->motionType == MOTIONTYPE_FIXED && motion->numOutputSegs <= 1));
+			(motion->motionType == MOTIONTYPE_FIXED));
 	Assert(node->ps.state->interconnect_context);
 
 	while (!done)
@@ -307,7 +318,7 @@ execMotionSender(MotionState * node)
 			done = true;
 		}
 		else if (node->isExplictGatherMotion &&
-				 GpIdentity.segindex != gp_singleton_segindex)
+				 GpIdentity.segindex != (gp_session_id % numsegments))
 		{
 			/*
 			 * For explicit gather motion, receiver
@@ -365,7 +376,7 @@ execMotionUnsortedReceiver(MotionState * node)
 
 	AssertState(motion->motionType == MOTIONTYPE_HASH ||
 			(motion->motionType == MOTIONTYPE_EXPLICIT && motion->segidColIdx > 0) || 
-			(motion->motionType == MOTIONTYPE_FIXED && motion->numOutputSegs <= 1));
+			(motion->motionType == MOTIONTYPE_FIXED));
 
 	Assert(node->ps.state->motionlayer_context);
 	Assert(node->ps.state->interconnect_context);
@@ -591,7 +602,6 @@ execMotionSortedReceiver_mk(MotionState * node)
     MotionMKHeapContext *ctxt = (MotionMKHeapContext *) node->tupleheap;
 
     Assert(motion->motionType == MOTIONTYPE_FIXED &&
-            motion->numOutputSegs <= 1 &&
             motion->sendSorted &&
             ctxt
           );
@@ -635,7 +645,6 @@ execMotionSortedReceiver(MotionState * node)
 	CdbTupleHeapInfo *tupHeapInfo;
 
 	AssertState(motion->motionType == MOTIONTYPE_FIXED &&
-			motion->numOutputSegs <= 1 &&
 			motion->sendSorted &&
 			hp != NULL);
 
@@ -892,7 +901,7 @@ ExecInitMotion(Motion * node, EState *estate, int eflags)
 		/* Look up the receiving (parent) gang's slice table entry. */
 		recvSlice = (Slice *)list_nth(sliceTable->slices, sendSlice->parentIndex);
 
-		if (node->motionType == MOTIONTYPE_FIXED && node->numOutputSegs == 1)
+		if (node->motionType == MOTIONTYPE_FIXED && !node->isBroadcast)
 		{
 			/* Sending to a single receiving process on the entry db? */
 			/* Is receiving slice a root slice that runs here in the qDisp? */
@@ -907,11 +916,6 @@ ExecInitMotion(Motion * node, EState *estate, int eflags)
 				/* sanity checks */
 				if (recvSlice->gangSize != 1)
 					elog(ERROR, "unexpected gang size: %d", recvSlice->gangSize);
-				Assert(node->outputSegIdx[0] >= 0
-					   ? (recvSlice->gangType == GANGTYPE_SINGLETON_READER ||
-						  recvSlice->gangType == GANGTYPE_ENTRYDB_READER ||
-						  (recvSlice->gangType == GANGTYPE_PRIMARY_READER && 1 == getgpsegmentCount()))
-					   : recvSlice->gangType == GANGTYPE_ENTRYDB_READER);
 			}
 		}
 
@@ -945,7 +949,7 @@ ExecInitMotion(Motion * node, EState *estate, int eflags)
 	 */
 	if (motionstate->mstype == MOTIONSTATE_SEND &&
 		node->motionType == MOTIONTYPE_FIXED &&
-		node->numOutputSegs == 1 &&
+		!node->isBroadcast &&
 		outerPlan(node) &&
 		outerPlan(node)->flow &&
 		outerPlan(node)->flow->locustype == CdbLocusType_Replicated)
@@ -967,7 +971,7 @@ ExecInitMotion(Motion * node, EState *estate, int eflags)
 	motionstate->numTuplesToParent = 0;
 
 	motionstate->stopRequested = false;
-	motionstate->numInputSegs = sendSlice->numGangMembersToBeActive;
+	motionstate->numInputSegs = sendSlice->gangSize;
 
 	/*
 	 * Miscellaneous initialization
@@ -1007,8 +1011,6 @@ ExecInitMotion(Motion * node, EState *estate, int eflags)
 		int			numsegments;
 		ListCell   *ht;
 
-		Assert(node->numOutputSegs > 0);
-
 		nkeys = list_length(node->hashDataTypes);
 		
 		if (nkeys > 0)
@@ -1042,7 +1044,7 @@ ExecInitMotion(Motion * node, EState *estate, int eflags)
 			 * For ORCA generated plan we could distribute to ALL as partially
 			 * distributed tables are not supported by ORCA yet.
 			 */
-			numsegments = node->numOutputSegs;
+			numsegments = getgpsegmentCount();
 		}
 
 		motionstate->cdbhash = makeCdbHash(numsegments, nkeys, typeoids);
@@ -1059,10 +1061,11 @@ ExecInitMotion(Motion * node, EState *estate, int eflags)
 
             /* Allocate context object for the key comparator. */
             mcContext = CdbMergeComparator_CreateContext(tupDesc,
-                    node->numSortCols,
-                    node->sortColIdx,
+														 node->numSortCols,
+														 node->sortColIdx,
 														 node->sortOperators,
-				node->nullsFirst);
+														 node->collations,
+														 node->nullsFirst);
 
             /* Create the priority queue structure. */
             motionstate->tupleheap = CdbHeap_Create(CdbMergeComparator,
@@ -1237,6 +1240,7 @@ CdbMergeComparator(void *lhs, void *rhs, void *context)
     GenericTuple ltup = linfo->tuple;
     GenericTuple rtup = rinfo->tuple;
     FmgrInfo           *sortFunctions;
+	Oid			*collations;
 	int				   *cmpFlags;
     int                 numSortCols;
     AttrNumber         *sortColIdx;
@@ -1246,6 +1250,7 @@ CdbMergeComparator(void *lhs, void *rhs, void *context)
     Assert(ltup && rtup);
 
     sortFunctions   = ctx->sortFunctions;
+	collations		= ctx->collations;
     cmpFlags        = ctx->cmpFlags;
     numSortCols     = ctx->numSortCols;
     sortColIdx      = ctx->sortColIdx;
@@ -1272,7 +1277,7 @@ CdbMergeComparator(void *lhs, void *rhs, void *context)
 
         compare = ApplySortFunction(&sortFunctions[nkey],
                                     cmpFlags[nkey],
-                                    InvalidOid, /* GPDB_91_MERGE_FIXME: collation */
+                                    collations[nkey],
                                     datum1, isnull1,
                                     datum2, isnull2);
         if (compare != 0)
@@ -1290,6 +1295,7 @@ CdbMergeComparator_CreateContext(TupleDesc      tupDesc,
                                  int            numSortCols,
                                  AttrNumber    *sortColIdx,
                                  Oid           *sortOperators,
+								 Oid *collations,
 								 bool *nullsFirstFlags)
 {
     CdbMergeComparatorContext  *ctx;
@@ -1311,6 +1317,7 @@ CdbMergeComparator_CreateContext(TupleDesc      tupDesc,
 
     /* Allocate the sort function arrays. */
     ctx->sortFunctions = (FmgrInfo *)palloc0(numSortCols * sizeof(FmgrInfo));
+    ctx->collations = (Oid *) palloc(numSortCols * sizeof(Oid));
     ctx->cmpFlags = (int *) palloc0(numSortCols * sizeof(int));
 
     /* Load the sort functions. */
@@ -1325,6 +1332,7 @@ CdbMergeComparator_CreateContext(TupleDesc      tupDesc,
 						   nullsFirstFlags[i],
                            &sortFunction,
                            &ctx->cmpFlags[i]);
+		ctx->collations[i] = collations[i];
 
         fmgr_info(sortFunction, &ctx->sortFunctions[i]);
     }
@@ -1353,23 +1361,24 @@ evalHashKey(ExprContext *econtext, List *hashkeys, List *hashtypes, CdbHash * h)
 {
 	ListCell   *hk;
 	MemoryContext oldContext;
+	unsigned int target_seg;
 
 	ResetExprContext(econtext);
 
 	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
-	cdbhashinit(h);
-
 	/*
 	 * If we have 1 or more distribution keys for this relation, hash
 	 * them. However, If this happens to be a relation with an empty
-	 * policy (partitioning policy with a NULL distribution key list)
-	 * then we have no hash key value to feed in, so use cdbhashnokey()
-	 * to assign a hash value for us.
+	 * policy (partitioning policy with a NULL distribution key list) then
+	 * we have no hash key value to feed in, so use cdbhashrandomseg() to
+	 * pick a segment at random.
 	 */
 	if (list_length(hashkeys) > 0)
 	{
 		int			i;
+
+		cdbhashinit(h);
 
 		i = 0;
 		foreach(hk, hashkeys)
@@ -1389,15 +1398,16 @@ evalHashKey(ExprContext *econtext, List *hashkeys, List *hashtypes, CdbHash * h)
 			cdbhash(h, i + 1, keyval, isNull);
 			i++;
 		}
+		target_seg = cdbhashreduce(h);
 	}
 	else
 	{
-		cdbhashnokey(h);
+		target_seg = cdbhashrandomseg(h->numsegs);
 	}
 
 	MemoryContextSwitchTo(oldContext);
 
-	return cdbhashreduce(h);
+	return target_seg;
 }
 
 
@@ -1453,13 +1463,12 @@ doSendTuple(Motion * motion, MotionState * node, TupleTableSlot *outerTupleSlot)
 
 	if (motion->motionType == MOTIONTYPE_FIXED)
 	{
-		if (motion->numOutputSegs == 0) /* Broadcast */
+		if (motion->isBroadcast) /* Broadcast */
 		{
 			targetRoute = BROADCAST_SEGIDX;
 		}
 		else /* Fixed Motion. */
 		{
-			Assert(motion->numOutputSegs == 1);
 			/*
 			 * Actually, since we can only send to a single output segment
 			 * here, we are guaranteed that we only have a single
@@ -1474,19 +1483,27 @@ doSendTuple(Motion * motion, MotionState * node, TupleTableSlot *outerTupleSlot)
 	{
 		uint32		hval = 0;
 
-		Assert(motion->numOutputSegs > 0);
-		Assert(motion->outputSegIdx != NULL);
-
 		econtext->ecxt_outertuple = outerTupleSlot;
 
 		hval = evalHashKey(econtext, node->hashExpr,
 				motion->hashDataTypes, node->cdbhash);
 
-		Assert(hval < getgpsegmentCount() && "redistribute destination outside segment array");
+#ifdef USE_ASSERT_CHECKING
+		if (node->ps.state->es_plannedstmt->planGen == PLANGEN_PLANNER)
+		{
+			Assert(hval < node->ps.plan->flow->numsegments &&
+				   "redistribute destination outside segment array");
+		}
+		else
+		{
+			Assert(hval < getgpsegmentCount() &&
+				   "redistribute destination outside segment array");
+		}
+#endif /* USE_ASSERT_CHECKING */
 		
 		/* hashSegIdx takes our uint32 and maps it to an int, and here
 		 * we assign it to an int16. See below. */
-		targetRoute = motion->outputSegIdx[hval];
+		targetRoute = hval;
 
 		/* see MPP-2099, let's not run into this one again! NOTE: the
 		 * definition of BROADCAST_SEGIDX is key here, it *cannot* be

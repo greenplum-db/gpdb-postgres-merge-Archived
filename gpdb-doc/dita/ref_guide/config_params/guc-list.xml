@@ -354,9 +354,6 @@
             <li>
               <xref href="#gp_motion_cost_per_row"/>
             </li>
-            <li>
-              <xref href="#gp_num_contents_in_cluster"/>
-            </li>
             <li><xref href="#gp_recursive_cte_prototype"/></li>
             <li>
               <xref href="#gp_reject_percent_threshold"/>
@@ -1098,7 +1095,7 @@
     <body>
       <p>Sets the client-side encoding (character set). The default is to use the same as the
         database encoding. See <xref
-          href="https://www.postgresql.org/docs/8.3/static/multibyte.html#MULTIBYTE-CHARSET-SUPPORTED"
+          href="https://www.postgresql.org/docs/8.3/multibyte.html#MULTIBYTE-CHARSET-SUPPORTED"
           scope="external" format="html">Supported Character Sets</xref> in the PostgreSQL
         documentation.</p>
       <table id="client_encoding_table">
@@ -2603,9 +2600,17 @@
       <p>For <cmdname>CREATE TABLE</cmdname>, if the value of the parameter is <codeph>off</codeph>
         (the default), and the table creation command does not contain a <cmdname>DISTRIBUTED
           BY</cmdname> clause, Greenplum Database chooses the table distribution key based on the
-        command. If the <cmdname>LIKE</cmdname> or <cmdname>INHERITS</cmdname> clause is specified
-        in table creation command, the created table uses the same distribution key as the source or
-        parent table. </p>
+          command:<ul id="ul_rjb_gty_qfb">
+          <li>If a <codeph>LIKE</codeph> or <codeph>INHERITS</codeph> clause is specified, then
+            Greenplum copies the distribution key from the source or parent table.</li>
+          <li>If a <codeph>PRIMARY KEY</codeph> or <codeph>UNIQUE</codeph> constraints are
+            specified, then Greenplum chooses the largest subset of all the key columns as the
+            distribution key.</li>
+          <li>If neither constraints nor a <codeph>LIKE</codeph> or <codeph>INHERITS</codeph> clause
+            is specified, then Greenplum chooses the first suitable column as the distribution key.
+            (Columns with geometric or user-defined data types are not eligible as Greenplum
+            distribution key columns.)</li>
+        </ul></p>
       <p>If the value of the parameter is set to <codeph>on</codeph>, Greenplum Database follows
         these rules to create a table when the <cmdname>DISTRIBUTED BY</cmdname> clause is not
           specified:<ul id="ul_tbr_5kq_kq">
@@ -3430,21 +3435,11 @@
     <title>gp_enable_segment_copy_checking</title>
     <body>
       <p>Controls whether the distribution policy for a table (from the table
-          <codeph>DISTRIBUTED</codeph> clause) is checked when data is copied into the table with
-        the <codeph>COPY FROM...ON SEGMENT</codeph> command. The default is <codeph>true</codeph>,
-        check the policy when copying data into the table. An error is returned in these
-          situations.<ul id="ul_nmf_sqm_z1b">
-          <li>For a table that is not a partitioned table, an error is returned if the row of data
-            violates the distribution policy for a segment instance.</li>
-          <li>For a partitioned table, an error is returned if either of the following is true.<ul
-              id="ul_yqz_dsm_z1b">
-              <li>If the distribution policy of the child leaf partitioned table is the same as the
-                root table and the row of data violates the distribution policy for a segment
-                instance.</li>
-              <li>If the distribution policy of the child leaf partitioned table is not the same as
-                the root table. </li>
-            </ul></li>
-        </ul></p>
+      <codeph>DISTRIBUTED</codeph> clause) is checked when data is copied into the table with
+      the <codeph>COPY FROM...ON SEGMENT</codeph> command. If true, an error is returned if
+      a row of data violates the distribution policy for a segment instance.
+      The default is <codeph>true</codeph>.
+      </p>
       <p>If the value is <codeph>false</codeph>, the distribution policy is not checked. The data
         added to the table might violate the table distribution policy for the segment instance.
         Manual redistribution of table data might be required. See the <codeph>ALTER TABLE</codeph>
@@ -4488,33 +4483,6 @@
               <entry colname="col1">floating point</entry>
               <entry colname="col2">0</entry>
               <entry colname="col3">master<p>session</p><p>reload</p></entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </table>
-    </body>
-  </topic>
-  <topic id="gp_num_contents_in_cluster">
-    <title>gp_num_contents_in_cluster</title>
-    <body>
-      <p>The number of primary segments in the Greenplum Database system.</p>
-      <table id="gp_num_contents_in_cluster_table">
-        <tgroup cols="3">
-          <colspec colnum="1" colname="col1" colwidth="1*"/>
-          <colspec colnum="2" colname="col2" colwidth="1*"/>
-          <colspec colnum="3" colname="col3" colwidth="1*"/>
-          <thead>
-            <row>
-              <entry colname="col1">Value Range</entry>
-              <entry colname="col2">Default</entry>
-              <entry colname="col3">Set Classifications</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry colname="col1">-</entry>
-              <entry colname="col2">-</entry>
-              <entry colname="col3">read only</entry>
             </row>
           </tbody>
         </tgroup>
@@ -5726,7 +5694,7 @@
         when the <xref href="#DateStyle" format="dita"/> parameter was set to non-ISO output. </p>
       <p>The value <i>iso_8601</i> will produce output matching the time interval <i>format with
           designators</i> defined in section 4.4.3.2 of ISO 8601. See the <xref
-          href="https://www.postgresql.org/docs/8.4/static/datatype-datetime.html" scope="external"
+          href="https://www.postgresql.org/docs/8.4/datatype-datetime.html" scope="external"
           format="html"><ph>PostgreSQL 8.4 documentation</ph></xref> for more information. </p>
       <table id="IntervalStyle_table">
         <tgroup cols="3">
@@ -9017,7 +8985,7 @@
     <body>
       <p>Sets the time zone for displaying and interpreting time stamps. The default is to use
         whatever the system environment specifies as the time zone. See <xref
-          href="https://www.postgresql.org/docs/8.3/static/datetime-keywords.html" scope="external"
+          href="https://www.postgresql.org/docs/8.3/datetime-keywords.html" scope="external"
           format="html"><ph>Date/Time Keywords</ph></xref> in the PostgreSQL documentation.</p>
       <table id="TimeZone_table">
         <tgroup cols="3">
@@ -9524,7 +9492,7 @@
         decide whether to replace transaction IDs with <i>FrozenXID</i> while scanning a table.</p>
       <p>For information about <codeph>VACUUM</codeph> and transaction ID management, see "Managing
         Data" in the <cite>Greenplum Database Administrator Guide</cite> and the <xref
-          href="https://www.postgresql.org/docs/8.3/static/routine-vacuuming.html#VACUUM-FOR-WRAPAROUND"
+          href="https://www.postgresql.org/docs/8.3/routine-vacuuming.html#VACUUM-FOR-WRAPAROUND"
           scope="external" format="html">PostgreSQL documentation</xref>.</p>
       <table id="vacuum_freeze_min_age_table">
         <tgroup cols="3">

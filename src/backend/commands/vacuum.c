@@ -1119,7 +1119,8 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 						oid_list = list_concat(oid_list, all_interior_partition_relids(pn)); /* interior partitions */
 					}
 				}
-				oid_list = lappend_oid(oid_list, relationOid); /* root partition */
+				if (optimizer_analyze_root_partition || (vacstmt->options & VACOPT_ROOTONLY))
+					oid_list = lappend_oid(oid_list, relationOid); /* root partition */
 			}
 			else if (ps == PART_STATUS_LEAF)
 			{
@@ -1157,8 +1158,11 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 					}
 					RelationClose(onerel);
 				}
-				if(leaf_parts_analyzed(root_rel_oid, relationOid, va_root_attnums))
-					oid_list = lappend_oid(oid_list, root_rel_oid);
+				if (optimizer_analyze_root_partition || (vacstmt->options & VACOPT_ROOTONLY))
+				{
+					if (leaf_parts_analyzed(root_rel_oid, relationOid, va_root_attnums))
+						oid_list = lappend_oid(oid_list, root_rel_oid);
+				}
 			}
 			else if (ps == PART_STATUS_INTERIOR) /* analyze an interior partition directly */
 			{
@@ -1191,6 +1195,7 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 		HeapScanDesc scan;
 		HeapTuple	tuple;
 		Oid candidateOid;
+		List	   *rootParts = NIL;
 
 		pgclass = heap_open(RelationRelationId, AccessShareLock);
 
@@ -1230,10 +1235,30 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 				continue;
 			}
 
+			// Likewise, skip root partition, if disabled.
+			if (!optimizer_analyze_root_partition && (vacstmt->options & VACOPT_ROOTONLY) == 0 && ps == PART_STATUS_ROOT)
+			{
+				continue;
+			}
+
 			oldcontext = MemoryContextSwitchTo(vac_context);
-			oid_list = lappend_oid(oid_list, candidateOid);
+			if (ps == PART_STATUS_ROOT)
+				rootParts = lappend_oid(rootParts, candidateOid);
+			else
+				oid_list = lappend_oid(oid_list, candidateOid);
 			MemoryContextSwitchTo(oldcontext);
 		}
+
+		/*
+		 * Schedule the root partitions to be analyzed after all the leaves.
+		 * A root partition can often be analyzed by combining the HLL
+		 * counters from all the leaves, which is much cheaper than scanning
+		 * the whole partitioned table, but that only works if the leaves
+		 * have already been analyzed.
+		 */
+		oldcontext = MemoryContextSwitchTo(vac_context);
+		oid_list = list_concat(oid_list, rootParts);
+		MemoryContextSwitchTo(oldcontext);
 
 		heap_endscan(scan);
 		heap_close(pgclass, AccessShareLock);
@@ -1499,6 +1524,12 @@ vac_update_relstats_from_list(List *updated_stats)
 {
 	ListCell *lc;
 
+	/*
+	 * This function is only called in the context of the QD, so let's be
+	 * explicit about that given the assumptions taken.
+	 */
+	Assert(Gp_role == GP_ROLE_DISPATCH);
+
 	foreach (lc, updated_stats)
 	{
 		VPgClassStats *stats = (VPgClassStats *) lfirst(lc);
@@ -1633,6 +1664,27 @@ vac_update_relstats(Relation relation,
 	 */
 	if (num_pages < 1.0)
 	{
+		/*
+		 * When running in utility mode in the QD node, we get the number of
+		 * tuples of an AO table from the pg_aoseg table, but we don't know
+		 * the file size, so that's always 0. Ignore the tuple count we got,
+		 * and set reltuples to 0 instead, to avoid storing a confusing
+		 * combination, and to avoid hitting the Assert below (which we
+		 * inherited from upstream).
+		 *
+		 * It's perhaps not such a great idea to overwrite perfectly good
+		 * relpages/reltuples estimates in utility mode, but that's what we
+		 * do for heap tables, too, because we don't have even a tuple count
+		 * for them. At least this is consistent.
+		 */
+		if (num_tuples >= 1.0)
+		{
+			Assert(Gp_role == GP_ROLE_UTILITY);
+			Assert(!IsSystemRelation(relation));
+			Assert(RelationIsAppendOptimized(relation));
+			num_tuples = 0;
+		}
+
 		Assert(num_tuples < 1.0);
 		num_pages = 1.0;
 	}
@@ -2477,8 +2529,13 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	 * still hold the session lock on the master table.  We do this in
 	 * cleanup phase when it's AO table or in prepare phase if it's an
 	 * empty AO table.
+	 *
+	 * A VacuumStmt object for secondary toast relation is constructed and
+	 * dispatched separately by the QD, when vacuuming the master relation.  A
+	 * backend executing dispatched VacuumStmt (GP_ROLE_EXECUTE), therefore,
+	 * should not execute this block of code.
 	 */
-	if (Gp_role == GP_ROLE_DISPATCH && (is_heap ||
+	if (Gp_role != GP_ROLE_EXECUTE && (is_heap ||
 		(!is_heap && (vacstmt->appendonly_phase == AOVAC_CLEANUP ||
 					  vacstmt->appendonly_relation_empty))))
 	{
@@ -2507,8 +2564,13 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	 *
 	 * We alter the vacuum statement here since the AO auxiliary tables
 	 * vacuuming will be dispatched to the primaries.
+	 *
+	 * Similar to toast, a VacuumStmt object for each AO auxiliary relation is
+	 * constructed and dispatched separately by the QD, when vacuuming the
+	 * base AO relation.  A backend executing dispatched VacuumStmt
+	 * (GP_ROLE_EXECUTE), therefore, should not execute this block of code.
 	 */
-	if (Gp_role == GP_ROLE_DISPATCH &&
+	if (Gp_role != GP_ROLE_EXECUTE &&
 		(vacstmt->appendonly_phase == AOVAC_CLEANUP ||
 		 (vacstmt->appendonly_relation_empty &&
 		  vacstmt->appendonly_phase == AOVAC_PREPARE)))
@@ -3116,7 +3178,7 @@ vacuum_combine_stats(VacuumStatsContext *stats_context, CdbPgResults* cdb_pgresu
 		Assert(pgresult->extraslen > sizeof(int));
 
 		/*
-		 * Process the stats for pg_class. We simple compute the maximum
+		 * Process the stats for pg_class. We simply compute the maximum
 		 * number of rel_tuples and rel_pages.
 		 */
 		pgclass_stats = (VPgClassStats *) pgresult->extras;
