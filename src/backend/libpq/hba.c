@@ -526,8 +526,15 @@ check_db(const char *dbname, const char *role, Oid roleid, List *tokens)
 			if (is_member(roleid, dbname))
 				return true;
 		}
-		else if (token_is_keyword(tok, "replication"))
-			continue;			/* never match this if not walsender */
+		/* GPDB_94_MERGE_FIXME: replace the commented els if block with next else if block.
+		 * Temporarily commented the block to silence the gpMgmt/test/behave/mgmt_utils/gpaddmirrors.feature Scenario: gpaddmirrors puts mirrors on different host, it produced following error message
+		 * pg_basebackup: could not connect to server: FATAL:  no pg_hba.conf entry for replication connection from host "10.0.98.29", user "gpadmin", SSL off
+		 */
+		//else if (token_is_keyword(tok, "replication"))
+			//continue;			/* never match this if not walsender */
+		else if (strcmp(tok, "replication\n") == 0 &&
+				am_walsender)
+			return true;
 		else if (token_matches(tok, dbname))
 			return true;
 	}
