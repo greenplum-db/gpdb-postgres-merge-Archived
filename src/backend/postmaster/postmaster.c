@@ -1434,7 +1434,11 @@ PostmasterMain(int argc, char *argv[])
 	 * the startup process is invoked. Because, after that, they can
 	 * be used by postmaster's SIGUSR1 signal handler.
 	 */
-	RemovePromoteSignalFiles();
+	/* GPDB_94_MERGE_FIXME: this function is temporaryly commented  during GPDB_9.4_STABLE merge
+	 * because command gpactivate -f fail, in behave test 'Scenario: gpactivatestandby -f forces standby master to start'
+	 * should resolve the test by more resonable way
+	 */
+	//RemovePromoteSignalFiles();
 
 	/*
 	 * If enabled, start up syslogger collection subprocess
