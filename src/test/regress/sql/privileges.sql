@@ -157,11 +157,13 @@ CREATE VIEW atest12v AS
 GRANT SELECT ON atest12v TO PUBLIC;
 
 -- This plan should use nestloop, knowing that few rows will be selected.
+set enable_nestloop = 1;
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
 
 -- And this one.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
   WHERE x.a = y.b and abs(y.a) <<< 5;
+reset enable_nestloop;
 
 -- Check if regressuser2 can break security.
 SET SESSION AUTHORIZATION regressuser2;
@@ -184,7 +186,9 @@ GRANT SELECT (a, b) ON atest12 TO PUBLIC;
 SET SESSION AUTHORIZATION regressuser2;
 
 -- Now regressuser2 will also get a good row estimate.
+set enable_nestloop = 1;
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
+reset enable_nestloop;
 
 -- But not for this, due to lack of table-wide permissions needed
 -- to make use of the expression index's statistics.
