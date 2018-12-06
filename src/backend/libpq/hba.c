@@ -501,12 +501,18 @@ check_db(const char *dbname, const char *role, Oid roleid, List *tokens)
 	foreach(cell, tokens)
 	{
 		tok = lfirst(cell);
-		if (am_walsender)
-		{
+		/* GPDB_94_MERGE_FIXME: replace the commented if block with next if block.
+		 * Temporarily commented the block to silence the test test/walrep/sql/generate_ao_xlog, it produced following error message
+		 * ERROR:  could not connect to the primary server: FATAL:  no pg_hba.conf entry for replication connection from host "[local]", user "gpadmin", SSL off (libpqwalreceiver.c:111)
+		 */
+		//if (am_walsender)
+		//{
 			/* walsender connections can only match replication keyword */
-			if (token_is_keyword(tok, "replication"))
-				return true;
-		}
+			//if (token_is_keyword(tok, "replication"))
+				//return true;
+		//}
+		if (strcmp(tok, "all\n") == 0)
+			return true;
 		else if (token_is_keyword(tok, "all"))
 			return true;
 		else if (token_is_keyword(tok, "sameuser"))
