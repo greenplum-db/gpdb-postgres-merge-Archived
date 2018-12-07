@@ -954,6 +954,7 @@ RESET enable_indexscan;
 RESET enable_bitmapscan;
 
 SET enable_indexonlyscan = OFF;
+SET random_page_cost = 4; -- prefer index san.
 
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
@@ -964,6 +965,7 @@ SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
 
+RESET random_page_cost;
 RESET enable_indexonlyscan;
 
 --
