@@ -8050,6 +8050,14 @@ round_var(NumericVar *var, int rscale)
 	int			ndigits;
 	int			carry;
 
+	/*
+	 * sanity check that the 'digits' are dynamically allocated, and point
+	 * to somewhere in the 'buf'. (This only catches the case that the
+	 * 'digits' happens to be allocated at an address below 'buf', but it's
+	 * better than nothing.)
+	 */
+	Assert(var->digits >= var->buf);
+
 	var->dscale = rscale;
 
 	/* decimal digits wanted */
