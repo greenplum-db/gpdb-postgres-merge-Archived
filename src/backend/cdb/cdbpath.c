@@ -459,7 +459,8 @@ cdbpath_match_preds_to_distkey_tail(CdbpathMatchPredsContext *ctx,
 	{
 		EquivalenceClass *ec = (EquivalenceClass *) lfirst(cell);
 
-		if (CdbEquivClassIsConstant(ec))
+		if (CdbEquivClassIsConstant(ec) &&
+			cdbpath_eclass_constant_isGreenplumDbHashable(ec))
 		{
 			codistkey = distkey;
 			break;
