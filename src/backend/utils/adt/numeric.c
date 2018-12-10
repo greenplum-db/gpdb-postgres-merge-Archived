@@ -8051,12 +8051,12 @@ round_var(NumericVar *var, int rscale)
 	int			carry;
 
 	/*
-	 * sanity check that the 'digits' are dynamically allocated, and point
-	 * to somewhere in the 'buf'. (This only catches the case that the
-	 * 'digits' happens to be allocated at an address below 'buf', but it's
-	 * better than nothing.)
+	 * sanity check that if the 'var' is not zero, the 'digits' are dynamically
+	 * allocated, and point to somewhere in the 'buf'.  (This only catches the
+	 * case that the 'digits' happens to be allocated at an address below 'buf',
+	 * but it's better than nothing.)
 	 */
-	Assert(var->digits >= var->buf);
+	Assert(var->ndigits == 0 || var->digits >= var->buf);
 
 	var->dscale = rscale;
 
