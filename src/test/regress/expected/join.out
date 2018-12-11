@@ -3654,11 +3654,11 @@ select t1.* from
                ->  Seq Scan on public.text_tbl t1
                      Output: t1.f1
                ->  Materialize
-                     Output: i8.q2, (NULL::integer)
+                     Output: i8.q2
                      ->  Broadcast Motion 3:3  (slice3; segments: 3)
-                           Output: i8.q2, (NULL::integer)
+                           Output: i8.q2
                            ->  Hash Right Join
-                                 Output: i8.q2, (NULL::integer)
+                                 Output: i8.q2
                                  Hash Cond: ((NULL::integer) = i8b1.q2)
                                  ->  Redistribute Motion 3:3  (slice1; segments: 3)
                                        Output: i8.q2, (NULL::integer)
@@ -3728,11 +3728,11 @@ select t1.* from
                ->  Seq Scan on public.text_tbl t1
                      Output: t1.f1
                ->  Materialize
-                     Output: i8.q2, (NULL::integer)
+                     Output: i8.q2
                      ->  Broadcast Motion 3:3  (slice4; segments: 3)
-                           Output: i8.q2, (NULL::integer)
+                           Output: i8.q2
                            ->  Hash Right Join
-                                 Output: i8.q2, (NULL::integer)
+                                 Output: i8.q2
                                  Hash Cond: ((NULL::integer) = i8b1.q2)
                                  ->  Redistribute Motion 3:3  (slice2; segments: 3)
                                        Output: i8.q2, (NULL::integer)
@@ -3811,11 +3811,11 @@ select t1.* from
                ->  Seq Scan on public.text_tbl t1
                      Output: t1.f1
                ->  Materialize
-                     Output: i8.q2, (NULL::integer)
+                     Output: i8.q2
                      ->  Broadcast Motion 3:3  (slice3; segments: 3)
-                           Output: i8.q2, (NULL::integer)
+                           Output: i8.q2
                            ->  Hash Right Join
-                                 Output: i8.q2, (NULL::integer)
+                                 Output: i8.q2
                                  Hash Cond: ((NULL::integer) = i8b1.q2)
                                  ->  Redistribute Motion 3:3  (slice1; segments: 3)
                                        Output: i8.q2, (NULL::integer)
