@@ -108,12 +108,11 @@ select role, preferred_role, mode from gp_segment_configuration where content = 
 -- loop while segments come in sync
 do $$
 begin
-  for i in 1..30 loop
+  for i in 1..120 loop
     if (select count(*) = 0 from gp_segment_configuration where content = 0 and mode != 's') then
       return;
     end if;
     perform gp_request_fts_probe_scan();
-    perform pg_sleep(1);
   end loop;
 end;
 $$;
