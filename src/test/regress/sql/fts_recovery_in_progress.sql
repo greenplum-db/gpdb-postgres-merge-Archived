@@ -45,7 +45,7 @@ select role, preferred_role, mode from gp_segment_configuration where content = 
 
 -- The remaining steps are to bring back the cluster to original state.
 -- start_ignore
-\! gprecoverseg -a
+\! gprecoverseg -a -v
 -- end_ignore
 
 -- loop while segments come in sync
@@ -62,7 +62,7 @@ $$;
 select role, preferred_role, mode from gp_segment_configuration where content = 0;
 
 -- start_ignore
-\! gprecoverseg -ar
+\! gprecoverseg -ar -v
 -- end_ignore
 
 -- loop while segments come in sync
