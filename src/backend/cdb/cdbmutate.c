@@ -2753,6 +2753,8 @@ cdbhash_const_list(List *plConsts, int iSegments)
 
 	pcdbhash = makeCdbHash(iSegments, list_length(plConsts), typeoids);
 
+	cdbhashinit(pcdbhash);
+
 	Assert(0 < list_length(plConsts));
 
 	i = 0;
