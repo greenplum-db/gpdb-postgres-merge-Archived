@@ -55,7 +55,6 @@ cdbpath_cost_motion(PlannerInfo *root, CdbMotionPath *motionpath)
 	 * BitmapAppendOnlyPath and UniquePath also?
 	 */
 	if (! IsA(subpath, BitmapHeapPath) &&
-		! IsA(subpath, BitmapAppendOnlyPath) &&
 		! IsA(subpath, UniquePath) &&
 		CdbPathLocus_IsReplicated(motionpath->path.locus))
 		/* FIXME: should use other.numsegments instead of cdbpath_segments */

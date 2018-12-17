@@ -3272,17 +3272,20 @@ void
 CopyFromErrorCallback(void *arg)
 {
 	CopyState	cstate = (CopyState) arg;
+	char		buffer[20];
 
 	if (cstate->binary)
 	{
 		/* can't usefully display the data */
 		if (cstate->cur_attname)
 			errcontext("COPY %s, line %s, column %s",
-					   cstate->cur_relname, curlineno_str,
+					   cstate->cur_relname,
+					   linenumber_atoi(buffer, cstate->cur_lineno),
 					   cstate->cur_attname);
 		else
 			errcontext("COPY %s, line %s",
-					   cstate->cur_relname, curlineno_str);
+					   cstate->cur_relname,
+					   linenumber_atoi(buffer, cstate->cur_lineno));
 	}
 	else
 	{
@@ -3293,7 +3296,8 @@ CopyFromErrorCallback(void *arg)
 
 			attval = limit_printout_length(cstate->cur_attval);
 			errcontext("COPY %s, line %s, column %s: \"%s\"",
-					   cstate->cur_relname, curlineno_str,
+					   cstate->cur_relname,
+					   linenumber_atoi(buffer, cstate->cur_lineno),
 					   cstate->cur_attname, attval);
 			pfree(attval);
 		}
@@ -3301,7 +3305,8 @@ CopyFromErrorCallback(void *arg)
 		{
 			/* error is relevant to a particular column, value is NULL */
 			errcontext("COPY %s, line %s, column %s: null input",
-					   cstate->cur_relname, curlineno_str,
+					   cstate->cur_relname,
+					   linenumber_atoi(buffer, cstate->cur_lineno),
 					   cstate->cur_attname);
 		}
 		else
@@ -3323,7 +3328,9 @@ CopyFromErrorCallback(void *arg)
 
 				lineval = limit_printout_length(cstate->line_buf.data);
 				errcontext("COPY %s, line %s: \"%s\"",
-						   cstate->cur_relname, curlineno_str, lineval);
+						   cstate->cur_relname,
+						   linenumber_atoi(buffer, cstate->cur_lineno),
+						   lineval);
 				pfree(lineval);
 			}
 			else
@@ -3337,7 +3344,8 @@ CopyFromErrorCallback(void *arg)
 				 * and just report the line number.
 				 */
 				errcontext("COPY %s, line %s",
-						   cstate->cur_relname, curlineno_str);
+						   cstate->cur_relname,
+						   linenumber_atoi(buffer, cstate->cur_lineno));
 			}
 		}
 	}
