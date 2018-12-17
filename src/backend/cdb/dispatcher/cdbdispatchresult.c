@@ -19,7 +19,6 @@
 #include "libpq-fe.h"		/* prerequisite for libpq-int.h */
 #include "libpq-int.h"		/* PQExpBufferData */
 
-#include "lib/stringinfo.h"		/* StringInfoData */
 #include "utils/guc.h"			/* log_min_messages */
 
 #include "cdb/cdbconn.h"		/* SegmentDatabaseDescriptor */
@@ -27,7 +26,6 @@
 #include "cdb/cdbvars.h"
 #include "cdb/cdbsreh.h"
 #include "cdb/cdbdispatchresult.h"
-#include "commands/tablecmds.h"
 
 static int cdbdisp_snatchPGresults(CdbDispatchResult *dispatchResult,
 						struct pg_result **pgresultptrs, int maxresults);
@@ -175,7 +173,6 @@ cdbdisp_resetResult(CdbDispatchResult *dispatchResult)
 	 * Reset summary indicators.
 	 */
 	dispatchResult->errcode = 0;
-	dispatchResult->errindex = -1;
 	dispatchResult->okindex = -1;
 
 	/*
@@ -225,8 +222,6 @@ cdbdisp_seterrcode(int errcode, /* ERRCODE_xxx or 0 */
 	if (!dispatchResult->errcode)
 	{
 		dispatchResult->errcode = errcode;
-		if (resultIndex >= 0)
-			dispatchResult->errindex = resultIndex;
 	}
 
 	if (!meleeResults)
@@ -589,7 +584,6 @@ cdbdisp_get_PQerror(PGresult *pgresult)
 
 /*
  * Format a CdbDispatchResults object.
- * Appends error messages to caller's StringInfo buffer.
  * Returns an ErrorData object in *qeError if some error was found, or NIL if no errors.
  * Before calling this function, you must call CdbCheckDispatchResult().
  */
@@ -689,13 +683,10 @@ cdbdisp_sumRejectedRows(CdbDispatchResults *results)
  * sum tuple counts that were added into a partitioned AO table
  */
 HTAB *
-cdbdisp_sumAoPartTupCount(PartitionNode *parts, CdbDispatchResults *results)
+cdbdisp_sumAoPartTupCount(CdbDispatchResults *results)
 {
 	int			i;
 	HTAB	   *ht = NULL;
-
-	if (!parts)
-		return NULL;
 
 	for (i = 0; i < results->resultCount; ++i)
 	{
@@ -707,7 +698,7 @@ cdbdisp_sumAoPartTupCount(PartitionNode *parts, CdbDispatchResults *results)
 		{
 			PGresult   *pgresult = cdbdisp_getPGresult(dispatchResult, ires);
 
-			ht = PQprocessAoTupCounts(parts, ht, (void *) pgresult->aotupcounts,
+			ht = PQprocessAoTupCounts(ht, (void *) pgresult->aotupcounts,
 									  pgresult->naotupcounts);
 		}
 	}
@@ -942,15 +933,13 @@ cdbdisp_snatchPGresults(CdbDispatchResult *dispatchResult,
 	 * Empty our PGresult array.
 	 */
 	resetPQExpBuffer(buf);
-	dispatchResult->errindex = -1;
 	dispatchResult->okindex = -1;
 
 	return nresults;
 }
 
 struct HTAB *
-PQprocessAoTupCounts(struct PartitionNode *parts, struct HTAB *ht,
-					 void *aotupcounts, int naotupcounts)
+PQprocessAoTupCounts(struct HTAB *ht, void *aotupcounts, int naotupcounts)
 {
 	PQaoRelTupCount *ao = (PQaoRelTupCount *) aotupcounts;
 
@@ -969,15 +958,9 @@ PQprocessAoTupCounts(struct PartitionNode *parts, struct HTAB *ht,
 				{
 					HASHCTL	ctl;
 
-					/*
-					 * reasonable assumption?
-					 */
-					long num_buckets = list_length(all_partition_relids(parts));
-					num_buckets /= num_partition_levels(parts);
-
 					ctl.keysize = sizeof(Oid);
 					ctl.entrysize = sizeof(*entry);
-					ht = hash_create("AO hash map", num_buckets, &ctl, HASH_ELEM);
+					ht = hash_create("AO hash map", 10, &ctl, HASH_ELEM);
 				}
 
 				entry = hash_search(ht, &(ao->aorelid), HASH_ENTER, &found);

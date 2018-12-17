@@ -16,8 +16,6 @@
 #ifndef CDBDISP_H
 #define CDBDISP_H
 
-#include "lib/stringinfo.h" /* StringInfo */
-
 #include "cdb/cdbtm.h"
 
 #define CDB_MOTION_LOST_CONTACT_STRING "Interconnect error master lost contact with segment."
@@ -37,13 +35,6 @@ typedef enum DispatchWaitMode
 	DISPATCH_WAIT_FINISH,			/* send query finish */
 	DISPATCH_WAIT_CANCEL			/* send query cancel */
 } DispatchWaitMode;
-
-typedef struct CdbDispatchDirectDesc
-{
-	bool directed_dispatch;
-	uint16 count;
-	uint16 content[1];
-} CdbDispatchDirectDesc;
 
 typedef struct CdbDispatcherState
 {

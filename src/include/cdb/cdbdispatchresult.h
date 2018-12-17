@@ -72,13 +72,6 @@ typedef struct CdbDispatchResult
 	int errcode;
 
 	/*
-	 * index of first entry in resultbuf
-	 * that represents an error; or -1.
-	 * Pass to cdbconn_getResult().
-	 */
-	int errindex;
-
-	/*
 	 * index of last entry in resultbuf
 	 * with resultStatus == PGRES_TUPLES_OK
 	 * or PGRES_COMMAND_OK (command ended
@@ -279,7 +272,7 @@ void
 cdbdisp_sumRejectedRows(CdbDispatchResults *results);
 
 HTAB *
-cdbdisp_sumAoPartTupCount(PartitionNode *parts, CdbDispatchResults *results);
+cdbdisp_sumAoPartTupCount(CdbDispatchResults *results);
 
 /*
  * max of the lastOid values returned from the QEs
@@ -322,7 +315,6 @@ void
 cdbdisp_clearCdbPgResults(CdbPgResults* cdb_pgresults);
 
 extern struct HTAB *
-PQprocessAoTupCounts(struct PartitionNode *parts, struct HTAB *ht,
-					 void *aotupcounts, int naotupcounts);
+PQprocessAoTupCounts(struct HTAB *ht, void *aotupcounts, int naotupcounts);
 
 #endif   /* CDBDISPATCHRESULT_H */

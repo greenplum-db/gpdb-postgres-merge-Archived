@@ -148,9 +148,7 @@ GetContentIdsFromPlanForSingleRelation(List *rtable, Plan *plan, int rangeTableI
 
 	InitDirectDispatchCalculationInfo(&result);
 
-	if (nodeTag((Node *) plan) == T_BitmapHeapScan ||
-		nodeTag((Node *) plan) == T_BitmapAppendOnlyScan ||
-		nodeTag((Node *) plan) == T_BitmapTableScan)
+	if (nodeTag((Node *) plan) == T_BitmapHeapScan)
 	{
 		/*
 		 * do not assert for bitmap heap scan --> it can have a child which is
@@ -472,8 +470,6 @@ AssignContentIdsToPlanData_Walker(Node *node, void *context)
 				/* no change to dispatchInfo --> just iterate children */
 				break;
 			case T_BitmapHeapScan:
-			case T_BitmapAppendOnlyScan:
-			case T_BitmapTableScan:
 				/* no change to dispatchInfo --> just iterate children */
 				break;
 			case T_SeqScan:
@@ -677,23 +673,33 @@ AssignContentIdsToPlanData_Walker(Node *node, void *context)
 	return result;
 }
 
-/**
- * Update the plan and its descendants with markings telling which subsets of content the node can run on.
- *
+/*
+ * Update the plan and its descendants with markings telling which subsets of
+ * content the node can run on.
  */
 void
 AssignContentIdsToPlanData(Query *query, Plan *plan, PlannerInfo *root)
 {
 	ContentIdAssignmentData data;
+	DirectDispatchCalculationInfo *ddcr;
+	MemoryContext		old_context;
+	MemoryContext		new_context;
+
+	new_context = AllocSetContextCreate(CurrentMemoryContext,
+										"AssignContentIdsToPlanData",
+										ALLOCSET_DEFAULT_MINSIZE,
+										ALLOCSET_DEFAULT_INITSIZE,
+										ALLOCSET_DEFAULT_MAXSIZE);
+
+	old_context = MemoryContextSwitchTo(new_context);
 
 	/* setup */
-	SwitchedMemoryContext mem = AllocSetCreateDefaultContextInCurrentAndSwitchTo("AssignContentIdsToPlanData");
-	DirectDispatchCalculationInfo *ddcr = palloc(sizeof(DirectDispatchCalculationInfo));
+	ddcr = palloc(sizeof(DirectDispatchCalculationInfo));
 
 	InitDirectDispatchCalculationInfo(ddcr);
 
 	planner_init_plan_tree_base(&data.base, root);
-	data.memoryContextForOutput = mem.oldContext;
+	data.memoryContextForOutput = old_context;
 	data.sliceStack = list_make1(ddcr);
 	data.rtable = root->glob->finalrtable;
 	data.allSlices = NULL;
@@ -729,5 +735,6 @@ AssignContentIdsToPlanData(Query *query, Plan *plan, PlannerInfo *root)
 		}
 	}
 
-	DeleteAndRestoreSwitchedMemoryContext(mem);
+	MemoryContextSwitchTo(old_context);
+	MemoryContextDelete(new_context);
 }

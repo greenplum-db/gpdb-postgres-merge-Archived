@@ -404,7 +404,6 @@ _outCopyStmt(StringInfo str, CopyStmt *node)
 	WRITE_NODE_FIELD(sreh);
 	WRITE_NODE_FIELD(partitions);
 	WRITE_NODE_FIELD(ao_segnos);
-	WRITE_NODE_FIELD(policy);
 }
 
 static void
@@ -1360,8 +1359,8 @@ _outNode(StringInfo str, void *obj)
 			case T_SeqScan:
 				_outSeqScan(str, obj);
 				break;
-			case T_DynamicTableScan:
-				_outDynamicTableScan(str, obj);
+			case T_DynamicSeqScan:
+				_outDynamicSeqScan(str, obj);
 				break;
 			case T_CteScan:
 				_outCteScan(str, obj);
@@ -1393,11 +1392,8 @@ _outNode(StringInfo str, void *obj)
 			case T_BitmapHeapScan:
 				_outBitmapHeapScan(str, obj);
 				break;
-			case T_BitmapAppendOnlyScan:
-				_outBitmapAppendOnlyScan(str, obj);
-				break;
-			case T_BitmapTableScan:
-				_outBitmapTableScan(str, obj);
+			case T_DynamicBitmapHeapScan:
+				_outDynamicBitmapHeapScan(str, obj);
 				break;
 			case T_TidScan:
 				_outTidScan(str, obj);
@@ -1636,9 +1632,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_BitmapHeapPath:
 				_outBitmapHeapPath(str, obj);
-				break;
-			case T_BitmapAppendOnlyPath:
-				_outBitmapAppendOnlyPath(str, obj);
 				break;
 			case T_BitmapAndPath:
 				_outBitmapAndPath(str, obj);

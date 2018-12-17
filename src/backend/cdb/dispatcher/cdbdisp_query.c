@@ -91,8 +91,6 @@ typedef struct DispatchCommandQueryParms
 	 */
 	char	   *serializedDtxContextInfo;
 	int			serializedDtxContextInfolen;
-
-	int			rootIdx;
 } DispatchCommandQueryParms;
 
 static int fillSliceVector(SliceTable *sliceTable,
@@ -383,7 +381,8 @@ CdbDispatchUtilityStatement(struct Node *stmt,
 	bool needTwoPhase = flags & DF_NEED_TWO_PHASE;
 	bool withSnapshot = flags & DF_WITH_SNAPSHOT;
 
-	dtmPreCommand("CdbDispatchUtilityStatement", debug_query_string,
+	dtmPreCommand("CdbDispatchUtilityStatement",
+				  debug_query_string ? debug_query_string : "(none)",
 				  NULL, needTwoPhase, withSnapshot,
 				  false /* inCursor */ );
 
@@ -618,7 +617,6 @@ cdbdisp_buildPlanQueryParms(struct QueryDesc *queryDesc,
 	pQueryParms->serializedParamslen = sparams_len;
 	pQueryParms->serializedQueryDispatchDesc = sddesc;
 	pQueryParms->serializedQueryDispatchDesclen = sddesc_len;
-	pQueryParms->rootIdx = rootIdx;
 
 	/*
 	 * Serialize a version of our snapshot, and generate our transction
@@ -832,8 +830,6 @@ buildGpQueryString(DispatchCommandQueryParms *pQueryParms,
 	int			sddesc_len = pQueryParms->serializedQueryDispatchDesclen;
 	const char *dtxContextInfo = pQueryParms->serializedDtxContextInfo;
 	int			dtxContextInfo_len = pQueryParms->serializedDtxContextInfolen;
-	int			flags = 0;		/* unused flags */
-	int			rootIdx = pQueryParms->rootIdx;
 	int64		currentStatementStartTimestamp = GetCurrentStatementStartTimestamp();
 	Oid			sessionUserId = GetSessionUserId();
 	Oid			outerUserId = GetOuterUserId();
@@ -877,7 +873,6 @@ buildGpQueryString(DispatchCommandQueryParms *pQueryParms,
 		sizeof(sessionUserId) /* sessionUserIsSuper */ +
 		sizeof(outerUserId) /* outerUserIsSuper */ +
 		sizeof(currentUserId) +
-		sizeof(rootIdx) +
 		sizeof(n32) * 2 /* currentStatementStartTimestamp */ +
 		sizeof(command_len) +
 		sizeof(querytree_len) +
@@ -886,7 +881,6 @@ buildGpQueryString(DispatchCommandQueryParms *pQueryParms,
 		sizeof(sddesc_len) +
 		sizeof(dtxContextInfo_len) +
 		dtxContextInfo_len +
-		sizeof(flags) +
 		command_len +
 		querytree_len +
 		plantree_len +
@@ -919,10 +913,6 @@ buildGpQueryString(DispatchCommandQueryParms *pQueryParms,
 	tmp = htonl(currentUserId);
 	memcpy(pos, &tmp, sizeof(currentUserId));
 	pos += sizeof(currentUserId);
-
-	tmp = htonl(rootIdx);
-	memcpy(pos, &tmp, sizeof(rootIdx));
-	pos += sizeof(rootIdx);
 
 	/*
 	 * High order half first, since we're doing MSB-first
@@ -969,10 +959,6 @@ buildGpQueryString(DispatchCommandQueryParms *pQueryParms,
 		memcpy(pos, dtxContextInfo, dtxContextInfo_len);
 		pos += dtxContextInfo_len;
 	}
-
-	tmp = htonl(flags);
-	memcpy(pos, &tmp, sizeof(tmp));
-	pos += sizeof(tmp);
 
 	memcpy(pos, command, command_len);
 	/* If command is truncated we need to set the terminating '\0' manually */
@@ -1209,8 +1195,9 @@ cdbdisp_dispatchX(QueryDesc* queryDesc,
 		/*
 		 * Strange! Not an interrupt either.
 		 */
-		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-						errmsg_internal("Unable to dispatch plan.")));
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg_internal("unable to dispatch plan")));
 	}
 
 	if (DEBUG1 >= log_min_messages)
@@ -1425,7 +1412,8 @@ CdbDispatchCopyStart(struct CdbCopy *cdbCopy, Node *stmt, int flags)
 	bool needTwoPhase = flags & DF_NEED_TWO_PHASE;
 	bool withSnapshot = flags & DF_WITH_SNAPSHOT;
 
-	dtmPreCommand("CdbDispatchCopyStart", debug_query_string,
+	dtmPreCommand("CdbDispatchCopyStart",
+				  debug_query_string ? debug_query_string : "(none)",
 				  NULL, needTwoPhase, withSnapshot,
 				  false /* inCursor */ );
 
@@ -1468,7 +1456,7 @@ CdbDispatchCopyStart(struct CdbCopy *cdbCopy, Node *stmt, int flags)
 	}
 
 	/*
-	 * Notice: Do not call cdbdisp_finishCommand to destory dispatcher state,
+	 * Notice: Do not call cdbdisp_finishCommand to destroy dispatcher state,
 	 * following PQputCopyData/PQgetCopyData will be called on those connections
 	 */
 	cdbCopy->dispatcherState = ds;

@@ -39,6 +39,7 @@
 #include "utils/xml.h"
 
 #include "cdb/cdbgang.h"
+#include "executor/execDynamicScan.h"
 
 #ifdef USE_ORCA
 extern char *SerializeDXLPlan(Query *parse);
@@ -988,13 +989,14 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 	switch (nodeTag(plan))
 	{
 		case T_SeqScan:
+		case T_DynamicSeqScan:
 		case T_ExternalScan:
-		case T_DynamicTableScan:
 		case T_DynamicIndexScan:
 		case T_ShareInputScan:
 		case T_IndexScan:
 		case T_IndexOnlyScan:
 		case T_BitmapHeapScan:
+		case T_DynamicBitmapHeapScan:
 		case T_TidScan:
 		case T_SubqueryScan:
 		case T_FunctionScan:
@@ -1290,7 +1292,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 					pname = sname = "Seq Scan";
 			}
 			break;
-		case T_DynamicTableScan:
+		case T_DynamicSeqScan:
 			pname = sname = "Dynamic Table Scan";
 			break;
 		case T_ExternalScan:
@@ -1312,16 +1314,33 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			pname = sname = "Dynamic Bitmap Index Scan";
 			break;
 		case T_BitmapHeapScan:
-			pname = sname = "Bitmap Heap Scan";
+			{
+				RangeTblEntry *rte;
+				char		relstorage;
+
+				rte = rt_fetch(((BitmapHeapScan *) plan)->scan.scanrelid, es->rtable);
+
+				relstorage = get_rel_relstorage(rte->relid);
+
+				/*
+				 * For historical reasons, plans generated with ORCA use
+				 * "Table Scan" regardless of what kind of a table it is.
+				 * With the Postgres planner, the text depends on the kind
+				 * of table, even though it's really the same node type that
+				 * handles all of them.
+				 */
+				if (es->pstmt->planGen == PLANGEN_OPTIMIZER)
+					pname = sname = "Bitmap Table Scan";
+				else if (relstorage == RELSTORAGE_AOROWS)
+					pname = sname = "Bitmap Append-Only Row-Oriented Scan";
+				else if (relstorage == RELSTORAGE_AOCOLS)
+					pname = sname = "Bitmap Append-Only Column-Oriented Scan";
+				else
+					pname = sname = "Bitmap Heap Scan";
+			}
 			break;
-		case T_BitmapAppendOnlyScan:
-			if (((BitmapAppendOnlyScan *)plan)->isAORow)
-				pname = sname = "Bitmap Append-Only Row-Oriented Scan";
-			else
-				pname = sname = "Bitmap Append-Only Column-Oriented Scan";
-			break;
-		case T_BitmapTableScan:
-			pname = sname = "Bitmap Table Scan";
+		case T_DynamicBitmapHeapScan:
+			pname = sname = "Dynamic Bitmap Table Scan";
 			break;
 		case T_TidScan:
 			pname = sname = "Tid Scan";
@@ -1596,12 +1615,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	switch (nodeTag(plan))
 	{
 		case T_SeqScan:
+		case T_DynamicSeqScan:
 		case T_ExternalScan:
-		case T_DynamicTableScan:
 		case T_DynamicIndexScan:
 		case T_BitmapHeapScan:
-		case T_BitmapAppendOnlyScan:
-		case T_BitmapTableScan:
+		case T_DynamicBitmapHeapScan:
 		case T_TidScan:
 		case T_SubqueryScan:
 		case T_FunctionScan:
@@ -1899,20 +1917,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 						   "Index Cond", planstate, ancestors, es);
 			break;
 		case T_BitmapHeapScan:
-		case T_BitmapAppendOnlyScan:
-		case T_BitmapTableScan:
+		case T_DynamicBitmapHeapScan:
 		{
 			List		*bitmapqualorig;
 
-			if (nodeTag(plan) == T_BitmapHeapScan)
-				bitmapqualorig = ((BitmapHeapScan *) plan)->bitmapqualorig;
-			else if (nodeTag(plan) == T_BitmapAppendOnlyScan)
-				bitmapqualorig = ((BitmapAppendOnlyScan *) plan)->bitmapqualorig;
-			else
-			{
-				Assert(nodeTag(plan) == T_BitmapTableScan);
-				bitmapqualorig = ((BitmapTableScan *) plan)->bitmapqualorig;
-			}
+			bitmapqualorig = ((BitmapHeapScan *) plan)->bitmapqualorig;
 
 			show_scan_qual(bitmapqualorig,
 						   "Recheck Cond", planstate, ancestors, es);
@@ -1929,8 +1938,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			break;
 		}
 		case T_SeqScan:
+		case T_DynamicSeqScan:
 		case T_ExternalScan:
-		case T_DynamicTableScan:
 		case T_ValuesScan:
 		case T_CteScan:
 		case T_WorkTableScan:
@@ -2893,17 +2902,16 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 	switch (nodeTag(plan))
 	{
 		case T_SeqScan:
+		case T_DynamicSeqScan:
 		case T_IndexScan:
+		case T_DynamicIndexScan:
 		case T_IndexOnlyScan:
 		case T_BitmapHeapScan:
+		case T_DynamicBitmapHeapScan:
 		case T_TidScan:
 		case T_ForeignScan:
 		case T_ModifyTable:
 		case T_ExternalScan:
-		case T_DynamicTableScan:
-		case T_DynamicIndexScan:
-		case T_BitmapAppendOnlyScan:
-		case T_BitmapTableScan:
 			/* Assert it's on a real relation */
 			Assert(rte->rtekind == RTE_RELATION);
 			objectname = get_rel_name(rte->relid);
@@ -2911,10 +2919,10 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 				namespace = get_namespace_name(get_rel_namespace(rte->relid));
 			objecttag = "Relation Name";
 
-			/* Print dynamic scan id for dytnamic scan operators */
+			/* Print dynamic scan id for dynamic scan operators */
 			if (isDynamicScan(plan))
 			{
-				dynamicScanId = ((Scan *) plan)->partIndexPrintable;
+				dynamicScanId = DynamicScan_GetDynamicScanIdPrintable(plan);
 			}
 
 			break;

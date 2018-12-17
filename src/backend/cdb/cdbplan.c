@@ -335,16 +335,14 @@ plan_tree_mutator(Node *node,
 			}
 			break;
 
-		case T_DynamicTableScan:
+		case T_DynamicSeqScan:
 			{
-				DynamicTableScan *tableScan = (DynamicTableScan *) node;
-				DynamicTableScan *newTableScan = NULL;
+				DynamicSeqScan *dynamicSeqScan = (DynamicSeqScan *) node;
+				DynamicSeqScan *newDynamicSeqScan = NULL;
 
-				FLATCOPY(newTableScan, tableScan, DynamicTableScan);
-				SCANMUTATE(newTableScan, tableScan);
-				newTableScan->partIndex = tableScan->partIndex;
-				newTableScan->partIndexPrintable = tableScan->partIndexPrintable;
-				return (Node *) newTableScan;
+				FLATCOPY(newDynamicSeqScan, dynamicSeqScan, DynamicSeqScan);
+				SCANMUTATE(newDynamicSeqScan, dynamicSeqScan);
+				return (Node *) newDynamicSeqScan;
 			}
 			break;
 
@@ -438,45 +436,26 @@ plan_tree_mutator(Node *node,
 			break;
 
 		case T_BitmapHeapScan:
+		case T_DynamicBitmapHeapScan:
 			{
 				BitmapHeapScan *bmheapscan = (BitmapHeapScan *) node;
 				BitmapHeapScan *newbmheapscan;
 
-				FLATCOPY(newbmheapscan, bmheapscan, BitmapHeapScan);
+				if (IsA(node, DynamicBitmapHeapScan))
+				{
+					/* see comment above on DynamicIndexScan */
+					DynamicBitmapHeapScan *newdbhscan;
+
+					FLATCOPY(newdbhscan, bmheapscan, DynamicBitmapHeapScan);
+					newbmheapscan = (BitmapHeapScan *) newdbhscan;
+				}
+				else
+					FLATCOPY(newbmheapscan, bmheapscan, BitmapHeapScan);
 				SCANMUTATE(newbmheapscan, bmheapscan);
 
 				MUTATE(newbmheapscan->bitmapqualorig, bmheapscan->bitmapqualorig, List *);
 
 				return (Node *) newbmheapscan;
-			}
-			break;
-
-
-		case T_BitmapAppendOnlyScan:
-			{
-				BitmapAppendOnlyScan *bmappendonlyscan = (BitmapAppendOnlyScan *) node;
-				BitmapAppendOnlyScan *newbmappendonlyscan;
-
-				FLATCOPY(newbmappendonlyscan, bmappendonlyscan, BitmapAppendOnlyScan);
-				SCANMUTATE(newbmappendonlyscan, bmappendonlyscan);
-
-				MUTATE(newbmappendonlyscan->bitmapqualorig, bmappendonlyscan->bitmapqualorig, List *);
-
-				return (Node *) newbmappendonlyscan;
-			}
-			break;
-
-		case T_BitmapTableScan:
-			{
-				BitmapTableScan *bmtablescan = (BitmapTableScan *) node;
-				BitmapTableScan *newbmtablescan = NULL;
-
-				FLATCOPY(newbmtablescan, bmtablescan, BitmapTableScan);
-				SCANMUTATE(newbmtablescan, bmtablescan);
-
-				MUTATE(newbmtablescan->bitmapqualorig, bmtablescan->bitmapqualorig, List *);
-
-				return (Node *) newbmtablescan;
 			}
 			break;
 

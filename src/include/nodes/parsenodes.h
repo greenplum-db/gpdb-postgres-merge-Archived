@@ -1553,7 +1553,6 @@ typedef struct SetDistributionCmd
 	NodeTag		type;
 	int	        backendId;     /* backend ID on QD */
 	List	   *relids;            /* oid of relations(partitions) which have related temporary table */
-	List	   *hiddenTypes;       /* the types need to build for dropped column */
 } SetDistributionCmd;
 
 
@@ -1761,7 +1760,6 @@ typedef struct CopyStmt
 	/* Convenient location for dispatch of misc meta data */
 	PartitionNode *partitions;
 	List		*ao_segnos;		/* AO segno map */
-	GpPolicy	*policy;
 } CopyStmt;
 
 /* ----------------------

@@ -48,7 +48,6 @@
 
 #include "catalog/oid_dispatch.h"
 #include "cdb/cdbdisp_query.h"
-#include "cdb/cdbdoublylinked.h"
 #include "cdb/cdbsrlz.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbmotion.h"

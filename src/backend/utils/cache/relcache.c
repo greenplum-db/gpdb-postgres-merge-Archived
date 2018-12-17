@@ -3124,6 +3124,8 @@ RelationBuildLocalRelation(const char *relname,
 	 */
 	if (relid < FirstNormalObjectId) /* bootstrap only */
 		rel->rd_rel->relfilenode = relid;
+	else if (OidIsValid(relfilenode))
+		rel->rd_rel->relfilenode = relfilenode;
 	else
 	{
 		rel->rd_rel->relfilenode = GetNewRelFileNode(reltablespace, NULL, relpersistence);

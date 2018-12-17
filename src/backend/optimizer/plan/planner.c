@@ -54,7 +54,6 @@
 #include "cdb/cdbmutate.h"		/* apply_shareinput */
 #include "cdb/cdbpartition.h"
 #include "cdb/cdbpath.h"		/* cdbpath_segments */
-#include "cdb/cdbpathtoplan.h"	/* cdbpathtoplan_create_flow() */
 #include "cdb/cdbpullup.h"
 #include "cdb/cdbgroup.h"		/* grouping_planner extensions */
 #include "cdb/cdbsetop.h"		/* motion utilities */
@@ -2417,7 +2416,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				result_plan = plan_grouping_extension(root, best_path, tuple_fraction,
 													  use_hashed_grouping,
 													  &new_tlist, result_plan->targetlist,
-													  true, false,
+													  false,
 													  (List *) parse->havingQual,
 													  &numGroupCols,
 													  &groupColIdx,

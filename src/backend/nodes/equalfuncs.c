@@ -1048,7 +1048,6 @@ _equalSetDistributionCmd(const SetDistributionCmd *a, const SetDistributionCmd *
 {
 	COMPARE_SCALAR_FIELD(backendId);
 	COMPARE_NODE_FIELD(relids);
-	COMPARE_NODE_FIELD(hiddenTypes);
 
 	return true;
 }
@@ -1206,7 +1205,7 @@ _equalCopyStmt(const CopyStmt *a, const CopyStmt *b)
 	COMPARE_STRING_FIELD(filename);
 	COMPARE_NODE_FIELD(options);
 	COMPARE_NODE_FIELD(sreh);
-	COMPARE_NODE_FIELD(policy);
+
 	return true;
 }
 

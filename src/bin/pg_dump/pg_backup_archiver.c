@@ -387,11 +387,21 @@ RestoreArchive(Archive *AHX)
 	/*
 	 * Drop the items at the start, in reverse order
 	 */
-	if (ropt->dropSchema)
+	if (ropt->dropSchema || ropt->binary_upgrade)
 	{
 		for (te = AH->toc->prev; te != AH->toc; te = te->prev)
 		{
 			AH->currentTE = te;
+
+			/*
+			 * GPDB: In order to maintain the OID of the public schema during
+			 * binary upgrade, we have to drop (and recreate) it even if the
+			 * user doesn't specify --clean.
+			 */
+			if (ropt->binary_upgrade && !ropt->dropSchema &&
+				!(strcmp(te->desc, "SCHEMA") == 0 &&
+				  strcmp(te->tag, "public") == 0))
+				continue;
 
 			/*
 			 * In createDB mode, issue a DROP *only* for the database as a
@@ -3297,18 +3307,13 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 {
 	/*
 	 * Avoid dumping the public schema, as it will already be created ...
-	 * unless we are using --clean mode (and *not* --create mode), in which
-	 * case we've previously issued a DROP for it so we'd better recreate it.
+	 * unless we are using --clean mode, in which case it's been deleted and
+	 * we'd better recreate it.  Likewise for its comment, if any.
 	 *
-	 * Likewise for its comment, if any.  (We could try issuing the COMMENT
-	 * command anyway; but it'd fail if the restore is done as non-super-user,
-	 * so let's not.)
-	 *
-	 * XXX it looks pretty ugly to hard-wire the public schema like this, but
-	 * it sits in a sort of no-mans-land between being a system object and a
-	 * user object, so it really is special in a way.
+	 * GPDB: we have to recreate the public schema during binary upgrade so
+	 * that we can maintain its OID from the old cluster
 	 */
-	if (!(ropt->dropSchema && !ropt->createDB))
+	if (!ropt->dropSchema && !ropt->binary_upgrade)
 	{
 		if (strcmp(te->desc, "SCHEMA") == 0 &&
 			strcmp(te->tag, "public") == 0)

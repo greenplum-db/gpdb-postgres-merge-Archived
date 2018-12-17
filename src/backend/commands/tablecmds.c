@@ -907,7 +907,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
 	if (descriptor->tdhasoid && IsNormalProcessingMode() && Gp_role == GP_ROLE_DISPATCH)
 	{
 		ereport(NOTICE,
-				(errmsg("OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter")));
+				(errmsg("OIDS=TRUE is not recommended for user-created tables"),
+				 errhint("Use OIDS=FALSE to prevent wrap-around of the OID counter.")));
 	}
 
 	/* Store inheritance information for new rel. */
@@ -1332,7 +1333,7 @@ RemoveRelations(DropStmt *drop)
 			if ( pstat == PART_STATUS_ROOT || pstat == PART_STATUS_INTERIOR )
 			{
 				ereport(WARNING,
-						(errmsg("Only dropped the index \"%s\"", rel->relname),
+						(errmsg("only dropped the index \"%s\"", rel->relname),
 						 errhint("To drop other indexes on child partitions, drop each one explicitly.")));
 			}
 		}
@@ -3656,8 +3657,7 @@ ATVerifyObject(AlterTableStmt *stmt, Relation rel)
 				case AT_PartAddInternal:
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
-							 errmsg("Unsupported ALTER command for table type %s",
-									"external")));
+							 errmsg("unsupported ALTER command for external table")));
 					break;
 
 				case AT_AddColumn: /* check no constraint is added too */
@@ -3666,8 +3666,8 @@ ATVerifyObject(AlterTableStmt *stmt, Relation rel)
 						((ColumnDef *) cmd->def)->raw_default)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
-								 errmsg("Unsupported ALTER command for table type %s. No constraints allowed.",
-										 "external")));
+								 errmsg("unsupported ALTER command for external table"),
+								 errdetail("No constraints allowed.")));
 					break;
 
 				default:
@@ -4093,10 +4093,12 @@ ATController(Relation rel, List *cmds, bool recurse, LOCKMODE lockmode)
 			if (RelationIsAoCols(rel))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("OIDS=TRUE is not allowed on tables that use column-oriented storage. Use OIDS=FALSE")));
+						 errmsg("OIDS=TRUE is not allowed on tables that use column-oriented storage"),
+						 errhint("Use OIDS=FALSE.")));
 			else
 				ereport(NOTICE,
-						(errmsg("OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter")));
+						(errmsg("OIDS=TRUE is not recommended for user-created tables"),
+						 errhint("Use OIDS=FALSE to prevent wrap-around of the OID counter.")));
 		}
 
 		ATPrepCmd(&wqueue, rel, cmd, recurse, false, lockmode);
@@ -5047,9 +5049,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 							if (!found)
 								ereport(ERROR,
 										(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-										errmsg("AT clause parameter is not "
-											   "a member of the target "
-											   "partition specification")));
+										 errmsg("AT clause parameter is not a member of the target partition specification")));
 
 
 						}
@@ -5057,8 +5057,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 						if (nmatches >= list_length(lv))
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("AT clause cannot contain all "
-											"values in partition%s",
+									 errmsg("AT clause cannot contain all values in partition%s",
 											prule1->partIdStr)));
 
 					}
@@ -5151,9 +5150,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 						{
 							ereport(ERROR,
 									(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-									errmsg("AT clause parameter is not "
-										   "a member of the target "
-										   "partition specification")));
+									 errmsg("AT clause parameter is not a member of the target partition specification")));
 						}
 					}
 				}
@@ -5295,7 +5292,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			{
 				ereport(ERROR,
 					   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Cannot modify subpartition template for partitioned table")));
+						errmsg("cannot modify subpartition template for partitioned table")));
 			}
 		case AT_PartAdd:				/* Add */
 		case AT_PartAddForSplit:		/* Add, as part of a split */
@@ -6594,8 +6591,10 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 			 */
 			oldCxt = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 
-			while ((mtuple = appendonly_getnext(aoscan, ForwardScanDirection, oldslot)) != NULL)
+			while (appendonly_getnext(aoscan, ForwardScanDirection, oldslot))
 			{
+				mtuple = TupGetMemTuple(oldslot);
+
 				if (newrel)
 				{
 					Oid			tupOid = InvalidOid;
@@ -6724,9 +6723,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 			sdesc = aocs_beginscan(oldrel, snapshot, snapshot, oldTupDesc, proj);
 
-			aocs_getnext(sdesc, ForwardScanDirection, oldslot);
-
-			while(!TupIsNull(oldslot))
+			while (aocs_getnext(sdesc, ForwardScanDirection, oldslot))
 			{
 				oldCxt = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 				econtext->ecxt_scantuple = oldslot;
@@ -6815,7 +6812,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 				CHECK_FOR_INTERRUPTS();
 
 				MemoryContextSwitchTo(oldCxt);
-				aocs_getnext(sdesc, ForwardScanDirection, oldslot);
 			}
 
 			aocs_endscan(sdesc);
@@ -6955,7 +6951,7 @@ ATExternalPartitionCheck(AlterTableType subtype, Relation rel, bool recursing)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("Cannot %s \"%s\"; it has external partition(s)",
+				 errmsg("cannot %s \"%s\"; it has external partition(s)",
 						alterTableCmdString(subtype),
 						RelationGetRelationName(rel))));
 	}
@@ -7396,8 +7392,7 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 	if (def->encoding && !RelationIsAoCols(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("ENCODING clause supplied for table that is "
-						"not column oriented")));
+				 errmsg("ENCODING clause not supported on non column orientated table")));
 
 	if (def->encoding)
 		def->encoding = transformStorageEncodingClause(def->encoding);
@@ -8127,7 +8122,7 @@ ATPrepColumnDefault(Relation rel, bool recurse, AlterTableCmd *cmd)
 
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("Column default of relation \"%s\" must be added to its child relation(s)",
+				 errmsg("column default of relation \"%s\" must be added to its child relation(s)",
 						 RelationGetRelationName(rel))));
 	}
 	/*
@@ -8636,10 +8631,8 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 				rel->rd_cdbpolicy = policy;
 				if (Gp_role != GP_ROLE_EXECUTE)
 				    ereport(NOTICE,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Dropping a column that is part of the "
-								"distribution policy forces a "
-								"NULL distribution policy")));
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("dropping a column that is part of the distribution policy forces a NULL distribution policy")));
 			}
 		}
 	}
@@ -10400,9 +10393,7 @@ validateForeignKeyConstraint(char *conname,
 	if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_UTILITY)
 		ereport(WARNING,
 				(errcode(ERRCODE_GP_FEATURE_NOT_YET),
-				 errmsg("Referential integrity (FOREIGN KEY) constraints are "
-						"not supported in Greenplum Database, "
-						"will not be enforced.")));
+				 errmsg("referential integrity (FOREIGN KEY) constraints are not supported in Greenplum Database, will not be enforced")));
 
 	/*
 	 * Build a trigger call structure; we'll need it either way.
@@ -10543,9 +10534,7 @@ createForeignKeyTriggers(Relation rel, Oid refRelOid, Constraint *fkconstraint,
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("Referential integrity (FOREIGN KEY) constraints are "
-						"not supported in Greenplum Database, "
-						"will not be enforced.")));
+				 errmsg("referential integrity (FOREIGN KEY) constraints are not supported in Greenplum Database, will not be enforced")));
 	}
 
 	myRelOid = RelationGetRelid(rel);
@@ -11342,9 +11331,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 									{
 										ereport(ERROR,
 												(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-												 errmsg("Changing the type of a column that is part of the "
-														"distribution policy and used in a unique index is "
-														"not allowed")));
+												 errmsg("changing the type of a column that is part of the distribution policy and used in a unique index is not allowed")));
 									}
 								}
 							}
@@ -11388,8 +11375,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 							{
 								ereport(ERROR,
 										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("Changing the type of a column that is used in a "
-												"UNIQUE or PRIMARY KEY constraint is not allowed")));
+										 errmsg("changing the type of a column that is used in a UNIQUE or PRIMARY KEY constraint is not allowed")));
 							}
 						}
 					}
@@ -11812,15 +11798,13 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 	forboth(oid_item, tab->changedIndexOids,
 			def_item, tab->changedIndexDefs)
 	{
-		/*
-		 * Temporary workaround for MPP-1318. INDEX CREATE is dispatched
-		 * immediately, which unfortunately breaks the ALTER work queue.
-		 */
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("cannot alter indexed column"),
-						errhint("DROP the index first, and recreate it after the ALTER")));
-		/*ATPostAlterTypeParse((char *) lfirst(l), wqueue, lockmode);*/
+		Oid			oldId = lfirst_oid(oid_item);
+		Oid			relid;
+
+		relid = IndexGetRelation(oldId, false);
+		ATPostAlterTypeParse(oldId, relid, InvalidOid,
+							 (char *) lfirst(def_item),
+							 wqueue, lockmode, tab->rewrite);
 	}
 
 	/*
@@ -12606,7 +12590,7 @@ ATPartsPrepSetTableSpace(List **wqueue, Relation rel, AlterTableCmd *cmd, List *
 		parttab->subcmds[pass] = lappend(parttab->subcmds[pass], partcmd);
 		
 		ereport(DEBUG1,
-				(errmsg("Will SET TABLESPACE on \"%s\"", 
+				(errmsg("will SET TABLESPACE on \"%s\"",
 						RelationGetRelationName(partrel))));
 		
 		relation_close(partrel, NoLock);
@@ -14769,7 +14753,7 @@ static void checkUniqueIndexCompatible(Relation rel, GpPolicy *pol)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("UNIQUE INDEX and DISTRIBUTED BY definitions incompatible"),
-						 errhint("the DISTRIBUTED BY columns must be a subset of the UNIQUE INDEX columns.")));
+						 errhint("The DISTRIBUTED BY columns must be a subset of the UNIQUE INDEX columns.")));
 			}
 
 			bms_free(indbm);
@@ -15385,7 +15369,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("Invalid REORGANIZE option"),
+							 errmsg("invalid REORGANIZE option"),
 							 errhint("Valid REORGANIZE options are \"true\" or \"false\".")));
 				}
 			}
@@ -16222,8 +16206,7 @@ ATPExecPartAdd(AlteredTableInfo *tab,
 			!is_split && !bSetTemplate) /* MPP-6093: ok to reset template */
 			ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("cannot add %s partition%s to "
-						"%s with DEFAULT partition \"%s\"",
+				 errmsg("cannot add %s partition%s to %s with DEFAULT partition \"%s\"",
 						parTypName,
 						namBuf,
 						lrelname,
@@ -16237,8 +16220,7 @@ ATPExecPartAdd(AlteredTableInfo *tab,
 			if (pNode->default_part && !bSetTemplate)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("DEFAULT partition \"%s\" for "
-								"%s already exists",
+						 errmsg("DEFAULT partition \"%s\" for %s already exists",
 								pNode->default_part->parname,
 								lrelname)));
 
@@ -16246,8 +16228,7 @@ ATPExecPartAdd(AlteredTableInfo *tab,
 			if (pelem->boundSpec)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						 errmsg("invalid use of boundary specification "
-								"for DEFAULT partition%s of %s",
+						 errmsg("invalid use of boundary specification for DEFAULT partition%s of %s",
 								namBuf,
 								lrelname)));
 		}
@@ -16355,7 +16336,7 @@ ATPExecPartAlter(List **wqueue, AlteredTableInfo *tab, Relation *rel,
 				{
 					ereport(ERROR,
 						   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("Cannot modify multi-level partitioned table to have non-uniform partitioning hierarchy.")));
+							errmsg("cannot modify multi-level partitioned table to have non-uniform partitioning hierarchy")));
 				}
 				break;
 				/* XXX XXX: treat set subpartition template special:
@@ -16573,12 +16554,9 @@ ATPExecPartDrop(Relation rel,
 		(prule->topRule == prule->pNode->default_part))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("FOR expression matches "
-							"DEFAULT partition%s of %s",
-							prule->partIdStr,
-							prule->relname),
-					 errhint("FOR expression may only specify "
-							 "a non-default partition in this context.")));
+					 errmsg("FOR expression matches DEFAULT partition%s of %s",
+							prule->partIdStr, prule->relname),
+					 errhint("FOR expression may only specify a non-default partition in this context.")));
 
 	if (!prule)
 	{
@@ -16591,47 +16569,36 @@ ATPExecPartDrop(Relation rel,
 				break;
 			case AT_AP_IDName:				/* IDentify by Name */
 				ereport(NOTICE,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("partition \"%s\" of %s does not "
-							"exist, skipping",
-							strVal(locPid->partiddef),
-							lrelname
-							)));
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("partition \"%s\" of %s does not exist, skipping",
+								strVal(locPid->partiddef), lrelname)));
 
 				break;
 			case AT_AP_IDValue:				/* IDentifier FOR Value */
 				ereport(NOTICE,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("partition for specified value of "
-							"%s does not exist, skipping",
-							lrelname
-							 )));
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("partition for specified value of %s does not exist, skipping",
+								lrelname)));
 
 				break;
 			case AT_AP_IDRank:				/* IDentifier FOR Rank */
 				ereport(NOTICE,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("partition for specified rank of "
-							"%s does not exist, skipping",
-							lrelname
-							 )));
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("partition for specified rank of %s does not exist, skipping",
+								lrelname)));
 
 				break;
 			case AT_AP_ID_oid:				/* IDentifier by oid */
 				ereport(NOTICE,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("partition for specified oid of "
-							"%s does not exist, skipping",
-							lrelname
-							 )));
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("partition for specified oid of %s does not exist, skipping",
+								lrelname)));
 				break;
 			case AT_AP_IDDefault:			/* IDentify DEFAULT partition */
 				ereport(NOTICE,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("DEFAULT partition for "
-							"%s does not exist, skipping",
-							lrelname
-							 )));
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("DEFAULT partition for %s does not exist, skipping",
+								lrelname)));
 				break;
 			default: /* XXX XXX */
 				Assert(false);
@@ -17558,10 +17525,8 @@ split_rows(Relation intoa, Relation intob, Relation temprel)
 		}
 		else if (RelationIsAoRows(temprel))
 		{
-			MemTuple mtuple;
-
-			mtuple = appendonly_getnext(aoscan, ForwardScanDirection, slotT);
-			if (!PointerIsValid(mtuple))
+			appendonly_getnext(aoscan, ForwardScanDirection, slotT);
+			if (TupIsNull(slotT))
 				break;
 
 			TupClearShouldFree(slotT);

@@ -71,11 +71,9 @@ static int32 set_data_checksum_version = -1;
 static uint32 minXlogTli = 0;
 static XLogSegNo minXlogSegNo = 0;
 
-#ifdef WIN32
-static char *restrict_env;
-#endif
-
 static void CheckDataVersion(void);
+static uint64 system_identifier = 0;
+
 static bool ReadControlFile(void);
 static void GuessControlValues(void);
 static void PrintControlValues(bool guessed);
@@ -100,6 +98,17 @@ static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, 
 int
 main(int argc, char *argv[])
 {
+	/*
+	 * GPDB_MERGE_110_FIXME: The option numbers below start at 1000 to avoid
+	 * conflicts with upstream. When e22b27f0cb3e arrives, you should be able to
+	 * merge this cleanly into the upstream long_options structure.
+	 */
+	static struct option long_options[] = {
+		{"binary-upgrade", no_argument, NULL, 1000},
+		{"system-identifier", required_argument, NULL, 1001},
+		{NULL, 0, NULL, 0}
+	};
+
 	int			c;
 	bool		force = false;
 	bool		binary_upgrade = false;
@@ -134,14 +143,10 @@ main(int argc, char *argv[])
 	}
 
 
-	while ((c = getopt(argc, argv, "yfl:m:no:r:O:x:e:k:")) != -1)
+	while ((c = getopt_long(argc, argv, "fl:m:no:r:O:x:e:k:", long_options, NULL)) != -1)
 	{
 		switch (c)
 		{
-			case 'y':
-				binary_upgrade = true;
-				break;
-
 			case 'f':
 				force = true;
 				break;
@@ -285,6 +290,32 @@ main(int argc, char *argv[])
 				}
 				break;
 
+			/* GPDB-specific long options */
+			case 1000: /* --binary-upgrade */
+				binary_upgrade = true;
+				break;
+
+			case 1001: /* --system-identifier */
+#if SIZEOF_LONG >= 8
+				system_identifier = strtoul(optarg, &endptr, 0);
+#elif defined(HAVE_STRTOULL)
+				system_identifier = strtoull(optarg, &endptr, 0);
+#else
+#	error "The --system-identifier option requires 64-bit support."
+#endif
+				if (endptr == optarg || *endptr != '\0')
+				{
+					fprintf(stderr, _("%s: invalid argument for --system-identifier\n"), progname);
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+					exit(1);
+				}
+				if (system_identifier == 0)
+				{
+					fprintf(stderr, _("%s: argument of --system-identifier must not be 0\n"), progname);
+					exit(1);
+				}
+				break;
+
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -315,7 +346,14 @@ main(int argc, char *argv[])
 	}
 #endif
 
-	get_restricted_token(progname);
+	/* GPDB: only allow setting --system-identifier during upgrade. */
+	if (!binary_upgrade && system_identifier)
+	{
+		fprintf(stderr, _("%s: setting --system-identifier is allowed only during binary upgrade\n"),
+				progname);
+		exit(1);
+	}
+
 	DataDir = argv[optind];
 
 	if (chdir(DataDir) < 0)
@@ -418,6 +456,9 @@ main(int argc, char *argv[])
 
 	if (minXlogSegNo > newXlogSegNo)
 		newXlogSegNo = minXlogSegNo;
+
+	if (system_identifier != 0)
+		ControlFile.system_identifier = system_identifier;
 
 	if (set_data_checksum_version != -1)
 		ControlFile.data_checksum_version = (uint32) set_data_checksum_version;
@@ -877,6 +918,21 @@ PrintNewControlValues()
 	{
 		printf(_("Data page checksum version:           %u\n"),
 			   ControlFile.data_checksum_version);
+	}
+
+	if (system_identifier != 0)
+	{
+		char		sysident_str[32];
+
+		/*
+		 * Format system_identifier separately to keep platform-dependent
+		 * format code out of the translatable message string.
+		 */
+		snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
+				 ControlFile.system_identifier);
+
+		printf(_("Database system identifier:           %s\n"),
+			   sysident_str);
 	}
 }
 
@@ -1434,6 +1490,8 @@ usage(void)
 	printf(_("  -O OFFSET        set next multitransaction offset\n"));
 	printf(_("  -V, --version    output version information, then exit\n"));
 	printf(_("  -x XID           set next transaction ID\n"));
+	printf(_("  --system-identifier=ID\n"
+			 "                   set database system identifier\n"));
 	printf(_("  -?, --help       show this help, then exit\n"));
 	printf(_("  --gp-version    output Greenplum version information, then exit\n"));
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));

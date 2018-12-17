@@ -39,7 +39,6 @@
 
 #include <pthread.h>
 
-#include "access/distributedlog.h"
 #include "access/printtup.h"
 #include "access/xact.h"
 #include "catalog/oid_dispatch.h"
@@ -79,7 +78,6 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
-#include "utils/datum.h"
 #include "utils/snapmgr.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
@@ -97,8 +95,6 @@
 #include "access/twophase.h"
 #include "postmaster/backoff.h"
 #include "utils/resource_manager.h"
-#include "pgstat.h"
-#include "executor/nodeFunctionscan.h"
 
 #include "utils/session_state.h"
 #include "utils/vmem_tracker.h"
@@ -203,7 +199,6 @@ static bool EchoQuery = false;	/* -E switch */
 
 static bool DoingPqReading = false; /* in the middle of recv call of secure_read */
 
-extern pthread_t main_tid;
 #ifndef _WIN32
 pthread_t main_tid = (pthread_t)0;
 #else
@@ -230,11 +225,6 @@ static ProcSignalReason RecoveryConflictReason;
 
 static DtxContextInfo TempDtxContextInfo = DtxContextInfo_StaticInit;
 
-extern void CheckForQDMirroringWork(void);
-
-extern void CheckForResetSession(void);
-
-extern bool ResourceScheduler;
 
 /* ----------------------------------------------------------------
  *		decls for routines only used in this file
@@ -501,7 +491,7 @@ SocketBackend(StringInfo inBuf)
 			if( PG_PROTOCOL_MAJOR(FrontendProtocol) < 3 )
 					ereport(COMMERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-							 errmsg("Greenplum Database dispatch unsupported for old FrontendProtocols.")));
+							 errmsg("dispatch unsupported for old FrontendProtocols")));
 
 
 			break;
@@ -514,12 +504,9 @@ SocketBackend(StringInfo inBuf)
 			if( PG_PROTOCOL_MAJOR(FrontendProtocol) < 3 )
 					ereport(COMMERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-							 errmsg("Greenplum Database dispatch unsupported for old FrontendProtocols.")));
+							 errmsg("dispatch unsupported for old FrontendProtocols")));
 
 
-			break;
-		case 'G':				/* Greenplum Gang Management */
-			doing_extended_query_message = false;
 			break;
 
 		case 'F':				/* fastpath function call */
@@ -589,10 +576,6 @@ SocketBackend(StringInfo inBuf)
 				ereport(FATAL,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("invalid frontend message type %d", qtype)));
-			break;
-
-		case 'W':   /* Greenplum Database command for transmitting listener port. */
-
 			break;
 
 		default:
@@ -3729,8 +3712,7 @@ ProcessInterrupts(const char* filename, int lineno)
 		if (IsAutoVacuumWorkerProcess())
 			ereport(FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
-					 errmsg("terminating autovacuum process due to administrator command"),
-					 errSendAlert(false)));
+					 errmsg("terminating autovacuum process due to administrator command")));
 		else if (RecoveryConflictPending && RecoveryConflictRetryable)
 		{
 			pgstat_report_recovery_conflict(RecoveryConflictReason);
@@ -3971,41 +3953,6 @@ gp_set_thread_sigmasks(void)
 
 	return;
 }
-
-/*
- * IA64-specific code to fetch the AR.BSP register for stack depth checks.
- *
- * We currently support gcc, icc, and HP-UX inline assembly here.
- */
-#if defined(__ia64__) || defined(__ia64)
-
-#if defined(__hpux) && !defined(__GNUC__) && !defined __INTEL_COMPILER
-#include <ia64/sys/inline.h>
-#define ia64_get_bsp() ((char *) (_Asm_mov_from_ar(_AREG_BSP, _NO_FENCE)))
-#else
-
-#ifdef __INTEL_COMPILER
-#include <asm/ia64regs.h>
-#endif
-
-static __inline__ char *
-ia64_get_bsp(void)
-{
-	char	   *ret;
-
-#ifndef __INTEL_COMPILER
-	/* the ;; is a "stop", seems to be required before fetching BSP */
-	__asm__ __volatile__(
-		";;\n"
-		"	mov	%0=ar.bsp	\n"
-:		"=r"(ret));
-#else
-  ret = (char *) __getReg(_IA64_REG_AR_BSP);
-#endif
-  return ret;
-}
-#endif
-#endif /* IA64 */
 
 /*
  * IA64-specific code to fetch the AR.BSP register for stack depth checks.
@@ -5338,13 +5285,10 @@ PostgresMain(int argc, char *argv[],
 					int serializedParamslen = 0;
 					int serializedQueryDispatchDesclen = 0;
 					int resgroupInfoLen = 0;
-					int rootIdx;
 					TimestampTz statementStart;
 					Oid suid;
 					Oid ouid;
 					Oid cuid;
-
-					int unusedFlags;
 
 					if (Gp_role != GP_ROLE_EXECUTE)
 						ereport(ERROR,
@@ -5364,8 +5308,6 @@ PostgresMain(int argc, char *argv[],
 					ouid = pq_getmsgint(&input_message, 4);
 					cuid = pq_getmsgint(&input_message, 4);
 
-					rootIdx = pq_getmsgint(&input_message, 4);
-
 					statementStart = pq_getmsgint64(&input_message);
 					query_string_len = pq_getmsgint(&input_message, 4);
 					serializedQuerytreelen = pq_getmsgint(&input_message, 4);
@@ -5381,9 +5323,6 @@ PostgresMain(int argc, char *argv[],
 						serializedDtxContextInfo = pq_getmsgbytes(&input_message,serializedDtxContextInfolen);
 
 					DtxContextInfo_Deserialize(serializedDtxContextInfo, serializedDtxContextInfolen, &TempDtxContextInfo);
-
-					/* get the transaction options */
-					unusedFlags = pq_getmsgint(&input_message, 4);
 
 					/* get the query string and kick off processing. */
 					if (query_string_len > 0)
@@ -5586,8 +5525,6 @@ PostgresMain(int argc, char *argv[],
 				{
 					const char *portal_name;
 					int64		max_rows;
-
-					forbidden_in_wal_sender(firstchar);
 
 					forbidden_in_wal_sender(firstchar);
 
@@ -5797,6 +5734,7 @@ forbidden_in_wal_sender(char firstchar)
 					 errmsg("extended query protocol not supported in a replication connection")));
 	}
 }
+
 
 /*
  * Obtain platform stack depth limit (in bytes)

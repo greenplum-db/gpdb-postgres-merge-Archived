@@ -103,9 +103,6 @@ static WorkTableScan *create_worktablescan_plan(PlannerInfo *root, Path *best_pa
 						  List *tlist, List *scan_clauses);
 static ForeignScan *create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 						List *tlist, List *scan_clauses);
-static BitmapAppendOnlyScan *create_bitmap_appendonly_scan_plan(PlannerInfo *root,
-								   BitmapAppendOnlyPath *best_path,
-								   List *tlist, List *scan_clauses);
 static NestLoop *create_nestloop_plan(PlannerInfo *root, NestPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
 static MergeJoin *create_mergejoin_plan(PlannerInfo *root, MergePath *best_path,
@@ -153,12 +150,6 @@ static BitmapHeapScan *make_bitmap_heapscan(List *qptlist,
 					 Plan *lefttree,
 					 List *bitmapqualorig,
 					 Index scanrelid);
-static BitmapAppendOnlyScan *make_bitmap_appendonlyscan(List *qptlist,
-						   List *qpqual,
-						   Plan *lefttree,
-						   List *bitmapqualorig,
-						   Index scanrelid,
-						   bool isAORow);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tidquals);
 static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
@@ -289,8 +280,6 @@ create_plan_recurse(PlannerInfo *root, Path *best_path)
 		case T_ExternalScan:
 		case T_IndexOnlyScan:
 		case T_BitmapHeapScan:
-		case T_BitmapAppendOnlyScan:
-		case T_BitmapTableScan:
 		case T_TidScan:
 		case T_SubqueryScan:
 		case T_FunctionScan:
@@ -442,13 +431,6 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 												(BitmapHeapPath *) best_path,
 													tlist,
 													scan_clauses);
-			break;
-
-		case T_BitmapAppendOnlyScan:
-			plan = (Plan *) create_bitmap_appendonly_scan_plan(root,
-										  (BitmapAppendOnlyPath *) best_path,
-															   tlist,
-															   scan_clauses);
 			break;
 
 		case T_TidScan:
@@ -660,8 +642,6 @@ disuse_physical_tlist(PlannerInfo *root, Plan *plan, Path *path)
 		case T_IndexScan:
 		case T_IndexOnlyScan:
 		case T_BitmapHeapScan:
-		case T_BitmapAppendOnlyScan:
-		case T_BitmapTableScan:
 		case T_TidScan:
 		case T_SubqueryScan:
 		case T_FunctionScan:
@@ -1507,9 +1487,8 @@ create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_GP_FEATURE_NOT_CONFIGURED),	/* any better errcode? */
-				 errmsg("Using external tables with OS level commands "
-						"(EXECUTE clause) is disabled"),
-				 errhint("To enable set gp_external_enable_exec=on")));
+				 errmsg("using external tables with OS level commands (EXECUTE clause) is disabled"),
+				 errhint("To enable set gp_external_enable_exec=on.")));
 	}
 
 	/* various validations */
@@ -1538,7 +1517,7 @@ create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 	if ((strcmp(on_clause, "MASTER_ONLY") == 0)
 		&& using_location && (uri->protocol != URI_CUSTOM)) {
 		ereport(ERROR, (errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				errmsg("\'ON MASTER\' is not supported by this protocol yet.")));
+				errmsg("\'ON MASTER\' is not supported by this protocol yet")));
 	}
 
 	/* get the total valid primary segdb count */
@@ -1675,26 +1654,28 @@ create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-								 errmsg("Could not assign a segment database for \"%s\". "
-						"There are more external files than primary segment "
-						"databases on host \"%s\"", uri_str, uri->hostname)));
+								 errmsg("could not assign a segment database for \"%s\"",
+										uri_str),
+								 errdetail("There are more external files than primary segment databases on host \"%s\"",
+										   uri->hostname)));
 					}
 					else
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-								 errmsg("Could not assign a segment database for \"%s\". "
-							  "There isn't a valid primary segment database "
-								 "on host \"%s\"", uri_str, uri->hostname)));
+								 errmsg("could not assign a segment database for \"%s\"",
+										uri_str),
+								 errdetail("There isn't a valid primary segment database on host \"%s\"",
+										   uri->hostname)));
 					}
 				}
 				else	/* HTTP */
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					errmsg("Could not assign a segment database for \"%s\". "
-						   "There are more URIs than total primary segment "
-						   "databases", uri_str)));
+							 errmsg("could not assign a segment database for \"%s\"",
+									uri_str),
+							 errdetail("There are more URIs than total primary segment databases")));
 				}
 			}
 		}
@@ -1780,11 +1761,10 @@ create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 			if (list_length(ext->urilocations) > num_segs_participating)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						 errmsg("There are more external files (URLs) than primary "
-								"segments that can read them. Found %d URLs and "
-								"%d primary segments.",
-								list_length(ext->urilocations),
-								num_segs_participating)));
+						 errmsg("there are more external files (URLs) than primary segments that can read them"),
+						 errdetail("Found %d URLs and %d primary segments.",
+								   list_length(ext->urilocations),
+								   num_segs_participating)));
 
 			/*
 			 * restart location list and fill in new list until number of
@@ -1878,16 +1858,15 @@ create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 				if (!found_match)
 				{
 					/* should never happen */
-					elog(LOG, "external tables gpfdist(s) allocation error. "
+					elog(LOG,
+						 "external tables gpfdist(s) allocation error. "
 						 "total_primaries: %d, num_segs_participating %d "
 						 "max_participants_allowed %d, total_to_skip %d",
 						 total_primaries, num_segs_participating,
 						 max_participants_allowed, total_to_skip);
 
-					ereport(ERROR,
-							(errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("Internal error in createplan for external tables"
-									" when trying to assign segments for gpfdist(s)")));
+					elog(ERROR,
+						 "internal error in createplan for external tables when trying to assign segments for gpfdist(s)");
 				}
 			}
 		}
@@ -1996,10 +1975,10 @@ create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 			if (!match_found)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						 errmsg("Could not assign a segment database for "
-							  "command \"%s\". No valid primary segment was "
-								"found in the requested host name \"%s\" ",
-								command, hostname)));
+						 errmsg("could not assign a segment database for command \"%s\")",
+								command),
+						 errdetail("No valid primary segment was found in the requested host name \"%s\".",
+								hostname)));
 		}
 		else if (strncmp(on_clause, "SEGMENT_ID:", strlen("SEGMENT_ID:")) == 0)
 		{
@@ -2022,10 +2001,10 @@ create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 			if (!match_found)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						 errmsg("Could not assign a segment database for "
-								"command \"%s\". The requested segment id "
-								"%d is not a valid primary segment or doesn't "
-								"exist in the database", command, target_segid)));
+						 errmsg("could not assign a segment database for command \"%s\"",
+								command),
+						 errdetail("The requested segment id %d is not a valid primary segment or doesn't exist in the database",
+								   target_segid)));
 		}
 		else if (strncmp(on_clause, "TOTAL_SEGS:", strlen("TOTAL_SEGS:")) == 0)
 		{
@@ -2036,9 +2015,8 @@ create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 			if (num_segs_to_use > total_primaries)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						 errmsg("Table defined with EXECUTE ON %d but there "
-								"are only %d valid primary segments in the "
-							"database.", num_segs_to_use, total_primaries)));
+						 errmsg("table defined with EXECUTE ON %d but there are only %d valid primary segments in the database",
+								num_segs_to_use, total_primaries)));
 
 			total_to_skip = total_primaries - num_segs_to_use;
 			skip_map = makeRandomSegMap(total_primaries, total_to_skip);
@@ -2069,10 +2047,8 @@ create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 		}
 		else
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("Internal error in createplan for external tables: "
-							"got invalid ON clause code %s", on_clause)));
+			elog(ERROR, "Internal error in createplan for external tables: got invalid ON clause code %s",
+				 on_clause);
 		}
 	}
 	/* (4) */
@@ -2091,9 +2067,7 @@ create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 	else
 	{
 		/* should never get here */
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Internal error in createplan for external tables")));
+		elog(ERROR, "Internal error in createplan for external tables");
 	}
 
 	/*
@@ -2389,120 +2363,6 @@ create_bitmap_scan_plan(PlannerInfo *root,
 									 bitmapqualplan,
 									 bitmapqualorig,
 									 baserelid);
-
-	copy_path_costsize(root, &scan_plan->scan.plan, &best_path->path);
-
-	return scan_plan;
-}
-
-/*
- * create_bitmap_appendonly_scan_plan
- *
- * NOTE: Copy of create_bitmap_scan_plan routine.
- */
-static BitmapAppendOnlyScan *
-create_bitmap_appendonly_scan_plan(PlannerInfo *root,
-								   BitmapAppendOnlyPath *best_path,
-								   List *tlist,
-								   List *scan_clauses)
-{
-	Index		baserelid = best_path->path.parent->relid;
-	Plan	   *bitmapqualplan;
-	List	   *bitmapqualorig = NULL;
-	List	   *indexquals = NULL;
-	List       *indexECs;
-	List	   *qpqual;
-	ListCell   *l;
-	BitmapAppendOnlyScan *scan_plan;
-
-	/* it should be a base rel... */
-	Assert(baserelid > 0);
-	Assert(best_path->path.parent->rtekind == RTE_RELATION);
-
-	/* Process the bitmapqual tree into a Plan tree and qual lists */
-	bitmapqualplan = create_bitmap_subplan(root, best_path->bitmapqual,
-										   &bitmapqualorig, &indexquals,
-										   &indexECs);
-
-	/*
-	 * The qpqual list must contain all restrictions not automatically handled
-	 * by the index.  All the predicates in the indexquals will be checked
-	 * (either by the index itself, or by nodeBitmapHeapscan.c), but if there
-	 * are any "special" or lossy operators involved then they must be added
-	 * to qpqual.  The upshot is that qpqual must contain scan_clauses minus
-	 * whatever appears in indexquals.
-	 *
-	 * In normal cases simple equal() checks will be enough to spot duplicate
-	 * clauses, so we try that first.  In some situations (particularly with
-	 * OR'd index conditions) we may have scan_clauses that are not equal to,
-	 * but are logically implied by, the index quals; so we also try a
-	 * predicate_implied_by() check to see if we can discard quals that way.
-	 * (predicate_implied_by assumes its first input contains only immutable
-	 * functions, so we have to check that.)
-	 *
-	 * Unlike create_indexscan_plan(), we need take no special thought here
-	 * for partial index predicates; this is because the predicate conditions
-	 * are already listed in bitmapqualorig and indexquals.  Bitmap scans have
-	 * to do it that way because predicate conditions need to be rechecked if
-	 * the scan becomes lossy.
-	 */
-	qpqual = NIL;
-	foreach(l, scan_clauses)
-	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-		Node       *clause = (Node *) rinfo->clause;
-
-		Assert(IsA(rinfo, RestrictInfo));
-		if (rinfo->pseudoconstant)
-			continue;           /* we may drop pseudoconstants here */
-		if (list_member(indexquals, clause))
-			continue;			/* simple duplicate */
-		if (rinfo->parent_ec && list_member_ptr(indexECs, rinfo->parent_ec))
-			continue;           /* derived from same EquivalenceClass */
-		if (!contain_mutable_functions(clause))
-		{
-			List	   *clausel = list_make1(clause);
-
-			if (predicate_implied_by(clausel, indexquals))
-				continue;		/* provably implied by indexquals */
-		}
-		qpqual = lappend(qpqual, rinfo);
-	}
-
-	/* Sort clauses into best execution order */
-	qpqual = order_qual_clauses(root, qpqual);
-
-	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
-	qpqual = extract_actual_clauses(qpqual, false);
-
-	/*
-	 * When dealing with special or lossy operators, we will at this point
-	 * have duplicate clauses in qpqual and bitmapqualorig.  We may as well
-	 * drop 'em from bitmapqualorig, since there's no point in making the
-	 * tests twice.
-	 */
-	bitmapqualorig = list_difference_ptr(bitmapqualorig, qpqual);
-
-	/*
-	 * We have to replace any outer-relation variables with nestloop params in
-	 * the qpqual and bitmapqualorig expressions.  (This was already done for
-	 * expressions attached to plan nodes in the bitmapqualplan tree.)
-	 */
-	if (best_path->path.param_info)
-	{
-		qpqual = (List *)
-			replace_nestloop_params(root, (Node *) qpqual);
-		bitmapqualorig = (List *)
-			replace_nestloop_params(root, (Node *) bitmapqualorig);
-	}
-
-	/* Finally ready to build the plan node */
-	scan_plan = make_bitmap_appendonlyscan(tlist,
-										   qpqual,
-										   bitmapqualplan,
-										   bitmapqualorig,
-										   baserelid,
-										   best_path->isAORow);
 
 	copy_path_costsize(root, &scan_plan->scan.plan, &best_path->path);
 
@@ -4712,30 +4572,6 @@ make_bitmap_heapscan(List *qptlist,
 	return node;
 }
 
-static BitmapAppendOnlyScan *
-make_bitmap_appendonlyscan(List *qptlist,
-						   List *qpqual,
-						   Plan *lefttree,
-						   List *bitmapqualorig,
-						   Index scanrelid,
-						   bool isAORow)
-{
-	BitmapAppendOnlyScan *node = makeNode(BitmapAppendOnlyScan);
-	Plan	   *plan = &node->scan.plan;
-
-	/* cost should be inserted by caller */
-	plan->targetlist = qptlist;
-	plan->qual = qpqual;
-	plan->lefttree = lefttree;
-	plan->righttree = NULL;
-	node->scan.scanrelid = scanrelid;
-
-	node->bitmapqualorig = bitmapqualorig;
-	node->isAORow = isAORow;
-
-	return node;
-}
-
 static TidScan *
 make_tidscan(List *qptlist,
 			 List *qpqual,
@@ -6618,8 +6454,9 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 														 false);
 
 				if (!repartitionPlan(subplan, false, false, hashExpr, targetPolicy->numsegments))
-					ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
-									errmsg("Cannot parallelize that INSERT yet")));
+					ereport(ERROR,
+							(errcode(ERRCODE_GP_FEATURE_NOT_YET),
+							 errmsg("cannot parallelize that INSERT yet")));
 			}
 			else if (targetPolicyType == POLICYTYPE_ENTRY)
 			{
@@ -6637,8 +6474,9 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 					 * will override that to bring it to the QD instead.
 					 */
 					if (!focusPlan(subplan, false, false))
-						ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
-										errmsg("Cannot parallelize that INSERT yet")));
+						ereport(ERROR,
+								(errcode(ERRCODE_GP_FEATURE_NOT_YET),
+								 errmsg("cannot parallelize that INSERT yet")));
 				}
 			}
 			else if (targetPolicyType == POLICYTYPE_REPLICATED)
@@ -6710,8 +6548,9 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 				}
 
 				if (!broadcastPlan(subplan, false, false, targetPolicy->numsegments))
-					ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
-								errmsg("Cannot parallelize that INSERT yet")));
+					ereport(ERROR,
+							(errcode(ERRCODE_GP_FEATURE_NOT_YET),
+							 errmsg("cannot parallelize that INSERT yet")));
 
 			}
 			else
@@ -6764,7 +6603,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("Cannot update distribution key columns in utility mode")));
+								 errmsg("cannot update distribution key columns in utility mode")));
 					}
 
 					new_subplan = (Plan *) make_splitupdate(root, (ModifyTable *) node, subplan, rte, !qry->needReshuffle);

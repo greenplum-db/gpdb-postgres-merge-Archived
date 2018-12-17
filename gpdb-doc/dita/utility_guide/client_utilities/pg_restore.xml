@@ -94,6 +94,31 @@
             <pd>Restore definition of named index only. </pd>
           </plentry>
           <plentry>
+            <pt>-j | --number-of-jobs |
+              --jobs=<varname>number-of-jobs</varname></pt>
+            <pd>Run the most time-consuming parts of <codeph>pg_restore</codeph>
+              — those which load data, create indexes, or create constraints —
+              using multiple concurrent jobs. This option can dramatically
+              reduce the time to restore a large database to a server running on
+              a multi-processor machine.</pd>
+            <pd>Each job is one process or one thread, depending on the
+              operating system, and uses a separate connection to the
+              server.</pd>
+            <pd>The optimal value for this option depends on the hardware setup
+              of the server, of the client, and of the network. Factors include
+              the number of CPU cores and the disk setup. A good place to start
+              is the number of CPU cores on the server, but values larger than
+              that can also lead to faster restore times in many cases. Of
+              course, values that are too high will lead to decreasing
+              performance because of thrashing. </pd>
+            <pd>Only the custom archive format is supported with this option.
+              The input file must be a regular file (not, for example, a pipe).
+              This option is ignored when emitting a script rather than
+              connecting directly to a database server. Also, multiple jobs
+              cannot be used together with the option
+                <codeph>--single-transaction</codeph>.</pd>
+          </plentry>
+          <plentry>
             <pt>-l | --list</pt>
             <pd>List the contents of the archive. The output of this operation can be used with the
                 <codeph>-L</codeph> option to restrict and reorder the items that are restored.</pd>
@@ -182,6 +207,12 @@
               loaded. This option is effective only when restoring directly into a database, not
               when producing SQL script output.</pd>
           </plentry>
+          <plentry>
+            <pt>-1 | --single-transaction</pt>
+            <pd>Execute the restore as a single transaction. This ensures that
+              either all the commands complete successfully, or no changes are
+              applied.</pd>
+          </plentry>
         </parml>
       </sectiondiv>
       <sectiondiv id="section5">
@@ -205,13 +236,28 @@
               variable <codeph>PGUSER</codeph> or defaults to the current system role name.</pd>
           </plentry>
           <plentry>
+            <pt>-w | --no-password</pt>
+            <pd>Never issue a password prompt. If the server requires password
+              authentication and a password is not available by other means such
+              as a <codeph>.pgpass</codeph> file the connection attempt will
+              fail. This option can be useful in batch jobs and scripts where no
+              user is present to enter a password.</pd>
+          </plentry>
+          <plentry>
             <pt>-W | --password</pt>
             <pd>Force a password prompt.</pd>
           </plentry>
           <plentry>
-            <pt>-1 | --single-transaction</pt>
-            <pd>Execute the restore as a single transaction. This ensures that either all the
-              commands complete successfully, or no changes are applied.</pd>
+            <pt>--role=<varname>rolename</varname></pt>
+            <pd>Specifies a role name to be used to perform the restore. This
+              option causes <codeph>pg_restore</codeph> to issue a <codeph>SET
+                ROLE <varname>rolename</varname></codeph> command after
+              connecting to the database. It is useful when the authenticated
+              user (specified by <codeph>-U</codeph>) lacks privileges needed by
+                <codeph>pg_restore</codeph>, but can switch to a role with the
+              required rights. Some installations have a policy against logging
+              in directly as a superuser, and use of this option allows restores
+              to be performed without violating the policy.</pd>
           </plentry>
         </parml>
       </sectiondiv>
@@ -229,8 +275,11 @@
         disable triggers on user tables before inserting the data then emits commands to re-enable
         them after the data has been inserted. If the restore is stopped in the middle, the system
         catalogs may be left in the wrong state.</p>
-      <p><codeph>pg_restore</codeph> will not restore large objects for a single table. If an
-        archive contains large objects, then all large objects will be restored.</p>
+      <p><codeph>pg_restore</codeph> cannot restore large objects selectively,
+        for instance only those for a single table. If an archive contains large
+        objects, then all large objects will be restored, or none will be
+        restored if they are excluded by the <codeph>-L</codeph>,
+          <codeph>-t</codeph>, or another option.</p>
       <p>See also the <codeph>pg_dump</codeph> documentation for details on limitations of
           <codeph>pg_dump</codeph>. </p>
       <p>Once restored, it is wise to run <codeph>ANALYZE</codeph> on each restored table so the

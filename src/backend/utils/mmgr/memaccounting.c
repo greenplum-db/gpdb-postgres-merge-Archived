@@ -1142,16 +1142,10 @@ MemoryAccounting_GetOwnerName(MemoryOwnerType ownerType)
 		return "X_BitmapOr";
 	case MEMORY_OWNER_TYPE_Exec_SeqScan:
 		return "X_SeqScan";
+	case MEMORY_OWNER_TYPE_Exec_DynamicSeqScan:
+		return "X_DynamicSeqScan";
 	case MEMORY_OWNER_TYPE_Exec_ExternalScan:
 		return "X_ExternalScan";
-	case MEMORY_OWNER_TYPE_Exec_AppendOnlyScan:
-		return "X_AppendOnlyScan";
-	case MEMORY_OWNER_TYPE_Exec_AOCSScan:
-		return "X_AOCSCAN";
-	case MEMORY_OWNER_TYPE_Exec_TableScan:
-		return "X_TableScan";
-	case MEMORY_OWNER_TYPE_Exec_DynamicTableScan:
-		return "X_DynamicTableScan";
 	case MEMORY_OWNER_TYPE_Exec_IndexScan:
 		return "X_IndexScan";
 	case MEMORY_OWNER_TYPE_Exec_IndexOnlyScan:
@@ -1164,8 +1158,8 @@ MemoryAccounting_GetOwnerName(MemoryOwnerType ownerType)
 		return "X_DynamicBitmapIndexScan";
 	case MEMORY_OWNER_TYPE_Exec_BitmapHeapScan:
 		return "X_BitmapHeapScan";
-	case MEMORY_OWNER_TYPE_Exec_BitmapAppendOnlyScan:
-		return "X_BitmapAppendOnlyScan";
+	case MEMORY_OWNER_TYPE_Exec_DynamicBitmapHeapScan:
+		return "X_DynamicBitmapHeapScan";
 	case MEMORY_OWNER_TYPE_Exec_TidScan:
 		return "X_TidScan";
 	case MEMORY_OWNER_TYPE_Exec_SubqueryScan:
@@ -1216,8 +1210,6 @@ MemoryAccounting_GetOwnerName(MemoryOwnerType ownerType)
 		return "X_RowTrigger";
 	case MEMORY_OWNER_TYPE_Exec_AssertOp:
 		return "X_AssertOp";
-	case MEMORY_OWNER_TYPE_Exec_BitmapTableScan:
-		return "X_BitmapTableScan";
 	case MEMORY_OWNER_TYPE_Exec_PartitionSelector:
 		return "X_PartitionSelector";
 	case MEMORY_OWNER_TYPE_Exec_RecursiveUnion:

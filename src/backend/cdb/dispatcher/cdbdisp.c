@@ -1,4 +1,3 @@
-
 /*-------------------------------------------------------------------------
  *
  * cdbdisp.c
@@ -51,11 +50,6 @@ static dispatcher_handle_t *allocate_dispatcher_handle(void);
 static void destroy_dispatcher_handle(dispatcher_handle_t *h);
 static char * segmentsListToString(const char *prefix, List *segments);
 
-/*
- * default directed-dispatch parameters: don't direct anything.
- */
-CdbDispatchDirectDesc default_dispatch_direct_desc = {false, 0, {0}};
-
 static DispatcherInternalFuncs *pDispatchFuncs = &DispatcherAsyncFuncs;
 
 /*
@@ -90,11 +84,9 @@ cdbdisp_dispatchToGang(struct CdbDispatcherState *ds,
 					   struct Gang *gp,
 					   int sliceIndex)
 {
-	struct CdbDispatchResults *dispatchResults = ds->primaryResults;
-
 	Assert(Gp_role == GP_ROLE_DISPATCH);
 	Assert(gp && gp->size > 0);
-	Assert(dispatchResults && dispatchResults->resultArray);
+	Assert(ds->primaryResults && ds->primaryResults->resultArray);
 
 	(pDispatchFuncs->dispatchToGang) (ds, gp, sliceIndex);
 }

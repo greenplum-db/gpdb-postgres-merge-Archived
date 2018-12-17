@@ -19,17 +19,10 @@ function prep_env_for_centos() {
   case "${TARGET_OS_VERSION}" in
     6)
       BLD_ARCH=rhel6_x86_64
-      export JAVA_HOME=/usr/lib/jvm/java-1.7.0-openjdk.x86_64
       ;;
 
     7)
       BLD_ARCH=rhel7_x86_64
-      echo "Detecting java7 path ..."
-      java7_packages=$(rpm -qa | grep -F java-1.7)
-      java7_bin="$(rpm -ql ${java7_packages} | grep /jre/bin/java$)"
-      alternatives --set java "$java7_bin"
-      export JAVA_HOME="${java7_bin/jre\/bin\/java/}"
-      ln -sf /usr/bin/xsubpp /usr/share/perl5/ExtUtils/xsubpp
       ;;
 
     *)
@@ -38,9 +31,7 @@ function prep_env_for_centos() {
     ;;
   esac
 
-  source /opt/gcc_env.sh
   ln -sf $(pwd)/${GPDB_SRC_PATH}/gpAux/ext/${BLD_ARCH}/python-2.7.12 /opt/python-2.7.12
-  export PATH=${JAVA_HOME}/bin:${PATH}
 }
 
 function prep_env_for_sles() {
