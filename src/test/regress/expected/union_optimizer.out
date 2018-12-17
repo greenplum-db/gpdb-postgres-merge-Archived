@@ -580,7 +580,7 @@ reset enable_bitmapscan;
 create table events (event_id int primary key);
 create table other_events (event_id int primary key);
 create table events_child () inherits (events);
-NOTICE:  Table has parent, setting distribution columns to match parent table
+NOTICE:  table has parent, setting distribution columns to match parent table
 explain (costs off)
 select event_id
  from (select event_id from events

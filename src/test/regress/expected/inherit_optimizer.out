@@ -618,9 +618,11 @@ select * from d;
 
 -- check that oid column is handled properly during alter table inherit
 create table oid_parent (a int) with oids;
-NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
+NOTICE:  OIDS=TRUE is not recommended for user-created tables
+HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
 create table oid_child () inherits (oid_parent);
-NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
+NOTICE:  OIDS=TRUE is not recommended for user-created tables
+HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
 select attinhcount, attislocal from pg_attribute
   where attrelid = 'oid_child'::regclass and attname = 'oid';
  attinhcount | attislocal 
@@ -633,7 +635,8 @@ create table oid_child (a int) without oids;
 alter table oid_child inherit oid_parent;  -- fail
 ERROR:  table "oid_child" without OIDs cannot inherit from table "oid_parent" with OIDs
 alter table oid_child set with oids;
-NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
+NOTICE:  OIDS=TRUE is not recommended for user-created tables
+HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
 select attinhcount, attislocal from pg_attribute
   where attrelid = 'oid_child'::regclass and attname = 'oid';
  attinhcount | attislocal 
@@ -1174,7 +1177,7 @@ create table p1(f1 int);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'f1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 create table p1_c1() inherits(p1);
-NOTICE:  Table has parent, setting distribution columns to match parent table
+NOTICE:  table has parent, setting distribution columns to match parent table
 alter table p1 add constraint inh_check_constraint1 check (f1 > 0);
 alter table p1_c1 add constraint inh_check_constraint1 check (f1 > 0);
 NOTICE:  merging constraint "inh_check_constraint1" with inherited definition
@@ -1205,7 +1208,7 @@ create table invalid_check_con(f1 int);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'f1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 create table invalid_check_con_child() inherits(invalid_check_con);
-NOTICE:  Table has parent, setting distribution columns to match parent table
+NOTICE:  table has parent, setting distribution columns to match parent table
 alter table invalid_check_con_child add constraint inh_check_constraint check(f1 > 0) not valid;
 alter table invalid_check_con add constraint inh_check_constraint check(f1 > 0); -- fail
 ERROR:  constraint "inh_check_constraint" conflicts with NOT VALID constraint on relation "invalid_check_con_child"
