@@ -1744,6 +1744,8 @@ dumpCreateDB(PGconn *conn)
 		 * since they are presumably already there in the destination cluster.
 		 * We do want to emit their ACLs and config options if any, however.
 		 */
+		appendPQExpBuffer(buf, "SET allow_system_table_mods = true;\n");
+
 		if (strcmp(dbname, "template1") != 0 &&
 			strcmp(dbname, "postgres") != 0)
 		{
@@ -1789,8 +1791,6 @@ dumpCreateDB(PGconn *conn)
 								  dbconnlimit);
 
 			appendPQExpBufferStr(buf, ";\n");
-
-			appendPQExpBuffer(buf, "SET allow_system_table_mods = true;\n");
 
 			if (strcmp(dbistemplate, "t") == 0)
 			{
