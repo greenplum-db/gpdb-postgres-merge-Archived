@@ -45,6 +45,7 @@ select role, preferred_role, mode, status from gp_segment_configuration where co
 -- The remaining steps are to bring back the cluster to original state.
 -- start_ignore
 \! gprecoverseg -av
+select pg_sleep(30); -- debug, remove it. GPDB_94_STABLE_MERGE_FIXME
 -- end_ignore
 
 -- loop while segments come in sync
@@ -62,6 +63,7 @@ select role, preferred_role, mode, status from gp_segment_configuration where co
 
 -- start_ignore
 \! gprecoverseg -arv
+select pg_sleep(30); -- debug, remove it. GPDB_94_STABLE_MERGE_FIXME
 -- end_ignore
 
 -- loop while segments come in sync
