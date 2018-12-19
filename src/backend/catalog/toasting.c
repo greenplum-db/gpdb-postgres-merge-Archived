@@ -190,6 +190,21 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 				toastobject;
 
 	/*
+	 * Toast table is shared if and only if its parent is.
+	 *
+	 * We cannot allow toasting a shared relation after initdb (because
+	 * there's no way to mark it toasted in other databases' pg_class).
+	 */
+	shared_relation = rel->rd_rel->relisshared;
+	if (shared_relation && !IsBootstrapProcessingMode())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("shared tables cannot be toasted after initdb")));
+
+	/* It's mapped if and only if its parent is, too */
+	mapped_relation = RelationIsMapped(rel);
+
+	/*
 	 * Is it already toasted?
 	 */
 	if (rel->rd_rel->reltoastrelid != InvalidOid)
@@ -235,61 +250,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		 *	!OidIsValid(binary_upgrade_next_toast_pg_type_oid))
 		 *	return false;
 		 */
-	}
-
-	/*
-	 * Toast table is shared if and only if its parent is.
-	 *
-	 * We cannot allow toasting a shared relation after initdb (because
-	 * there's no way to mark it toasted in other databases' pg_class).
-	 */
-	shared_relation = rel->rd_rel->relisshared;
-	if (shared_relation && !IsBootstrapProcessingMode())
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("shared tables cannot be toasted after initdb")));
-
-	/* It's mapped if and only if its parent is, too */
-	mapped_relation = RelationIsMapped(rel);
-
-	/*
-	 * Is it already toasted?
-	 */
-	if (rel->rd_rel->reltoastrelid != InvalidOid)
-		return false;
-
-	/*
-	 * Check to see whether the table actually needs a TOAST table.
-	 */
-	if (!IsBinaryUpgrade)
-	{
-		/* Normal mode, normal check */
-		if (!needs_toast_table(rel))
-			return false;
-	}
-	else
-	{
-		/*
-		 * In binary-upgrade mode, create a TOAST table if and only if
-		 * pg_upgrade told us to (ie, a TOAST table OID has been provided).
-		 *
-		 * This indicates that the old cluster had a TOAST table for the
-		 * current table.  We must create a TOAST table to receive the old
-		 * TOAST file, even if the table seems not to need one.
-		 *
-		 * Contrariwise, if the old cluster did not have a TOAST table, we
-		 * should be able to get along without one even if the new version's
-		 * needs_toast_table rules suggest we should have one.  There is a lot
-		 * of daylight between where we will create a TOAST table and where
-		 * one is really necessary to avoid failures, so small cross-version
-		 * differences in the when-to-create heuristic shouldn't be a problem.
-		 * If we tried to create a TOAST table anyway, we would have the
-		 * problem that it might take up an OID that will conflict with some
-		 * old-cluster table we haven't seen yet.
-		 */
-		if (!OidIsValid(binary_upgrade_next_toast_pg_class_oid) ||
-			!OidIsValid(binary_upgrade_next_toast_pg_type_oid))
-			return false;
 	}
 
 	/*
