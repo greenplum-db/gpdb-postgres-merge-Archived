@@ -55,6 +55,7 @@ begin
       return;
     end if;
     perform gp_request_fts_probe_scan();
+    perform pg_sleep(1);
   end loop;
 end;
 $$;
@@ -72,6 +73,7 @@ begin
       return;
     end if;
     perform gp_request_fts_probe_scan();
+    perform pg_sleep(1);
   end loop;
 end;
 $$;
