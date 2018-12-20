@@ -60,29 +60,23 @@ typedef struct
 	pg_time_t	startTime;
 
 	/*
-	 * receivedUpto-1 is the last byte position that has already
-	 * been received, and recceivedUptoTLI is the timeline it came
-	 * from.  At the first startup of walreceiver, these are set
-	 * to receivedUpto and receivedUptoTLI. After that,
-	 * walreceiver updates these whenever it flushes the received
-	 * WAL to disk.
+	 * receiveStart and receiveStartTLI indicate the first byte position and
+	 * timeline that will be received. When startup process starts the
+	 * walreceiver, it sets these to the point where it wants the streaming to
+	 * begin.
 	 */
-	XLogRecPtr	receivedUpto;
-	TimeLineID	receivedUptoTLI;
+	XLogRecPtr	receiveStart;
+	TimeLineID	receiveStartTLI;
 
 	/*
-	 * receivedUptoForwardOnly-1 is the last byte position that
-	 * has already been received, and receivedUptoForwardOnlyTLI
-	 * is the timeline it came from.  At the first startup of
-	 * walreceiver, these are set to receivedUpto and
-	 * receivedUptoTLI. After that, walreceiver updates these
-	 * whenever it flushes the received WAL to disk. The main
-	 * difference to highlight is value for this only moves
-	 * forward whereas receivedUpto can move backwards on
-	 * disconnection.
+	 * receivedUpto-1 is the last byte position that has already been
+	 * received, and receivedTLI is the timeline it came from.  At the first
+	 * startup of walreceiver, these are set to receiveStart and
+	 * receiveStartTLI. After that, walreceiver updates these whenever it
+	 * flushes the received WAL to disk.
 	 */
-	XLogRecPtr	receivedUptoForwardOnly;
-	TimeLineID	receivedUptoForwardOnlyTLI;
+	XLogRecPtr	receivedUpto;
+	TimeLineID	receivedTLI;
 
 	/*
 	 * latestChunkStart is the starting byte position of the current "batch"
@@ -119,8 +113,8 @@ typedef struct
 
 	/*
 	 * Latch used by startup process to wake up walreceiver after telling it
-	 * where to start streaming (after setting receivedUpto and
-	 * receivedUptoTLI).
+	 * where to start streaming (after setting receiveStart and
+	 * receiveStartTLI).
 	 */
 	Latch		latch;
 } WalRcvData;
@@ -166,7 +160,6 @@ extern bool WalRcvRunning(void);
 extern void RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr,
 					 const char *conninfo, const char *slotname);
 extern XLogRecPtr GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart, TimeLineID *receiveTLI);
-extern XLogRecPtr GetWalRcvWriteRecPtrForwardOnly(void);
 extern int	GetReplicationApplyDelay(void);
 extern int	GetReplicationTransferLatency(void);
 extern const char *WalRcvGetStateString(WalRcvState state);
