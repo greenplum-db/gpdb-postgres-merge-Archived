@@ -14612,20 +14612,20 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 						 * No hurt if this is not a table with partitions.
 						 */
 						appendPQExpBufferStr(q, "\n  AND attrelid IN (SELECT ");
-						appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
+						appendStringLiteralAH(q, qualrelname, fout);
 						appendPQExpBufferStr(q, "::pg_catalog.regclass ");
 						appendPQExpBufferStr(q, "UNION SELECT pr.parchildrelid FROM "
 										  "pg_catalog.pg_partition_rule pr, "
 										  "pg_catalog.pg_partition p WHERE "
 										  "pr.parchildrelid != 0 AND "
 										  "pr.paroid = p.oid AND p.parrelid = ");
-						appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
+						appendStringLiteralAH(q, qualrelname, fout);
 						appendPQExpBufferStr(q, "::pg_catalog.regclass);\n");
 					}
 					else
 					{
 						appendPQExpBufferStr(q, "\n  AND attrelid = ");
-						appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
+						appendStringLiteralAH(q, qualrelname, fout);
 						appendPQExpBufferStr(q, "::pg_catalog.regclass;\n");
 					}
 
