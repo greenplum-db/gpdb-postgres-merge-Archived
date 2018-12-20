@@ -37,6 +37,7 @@
 #include "access/transam.h"
 #include "access/reloptions.h"
 #include "access/xact.h"
+#include "catalog/aocatalog.h"
 #include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -97,6 +98,7 @@
 #include "cdb/cdbvars.h"
 
 #include "utils/guc.h"
+
 
 static void MetaTrackAddUpdInternal(Oid			classid,
 									Oid			objoid,
@@ -1862,7 +1864,7 @@ heap_create_with_catalog(const char *relname,
 	if (relpersistence == RELPERSISTENCE_UNLOGGED)
 	{
 		Assert(relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW ||
-			   relkind == RELKIND_TOASTVALUE);
+			   relkind == RELKIND_TOASTVALUE || IsAppendonlyMetadataRelkind(relkind));
 		heap_create_init_fork(new_rel_desc);
 	}
 

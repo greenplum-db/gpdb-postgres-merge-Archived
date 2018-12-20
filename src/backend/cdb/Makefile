@@ -20,11 +20,10 @@ OBJS = cdbappendonlystorageformat.o \
 	   cdbcat.o cdbcopy.o \
 	   cdbdistributedsnapshot.o \
 	   cdbdistributedxid.o cdbdistributedxacts.o \
-	   cdbdoublylinked.o \
 	   cdbdtxcontextinfo.o \
 	   cdbfts.o \
 	   cdbgroup.o \
-	   cdbhash.o cdbheap.o \
+	   cdbhash.o \
 	   cdbllize.o cdblocaldistribxact.o \
 	   cdbappendonlyxlog.o \
 	   cdbmutate.o \

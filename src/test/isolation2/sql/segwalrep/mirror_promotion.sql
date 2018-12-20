@@ -11,23 +11,9 @@
 -- between primary and mirror is still alive and hence walreceiver
 -- also exist during promotion.
 
--- start_ignore
-create language plpythonu;
--- end_ignore
-
 create extension if not exists gp_inject_fault;
-create or replace function pg_ctl(datadir text, command text)
-returns text as $$
-    import subprocess
 
-    cmd = 'pg_ctl -D %s ' % datadir
-    if command in ('stop'):
-        cmd = cmd + '-w -m immediate %s' % command
-    else:
-        return 'Invalid command input'
-
-    return subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True).replace('.', '')
-$$ language plpythonu;
+include: helpers/server_helpers.sql;
 
 SELECT role, preferred_role, content, mode, status FROM gp_segment_configuration;
 -- stop a primary in order to trigger a mirror promotion

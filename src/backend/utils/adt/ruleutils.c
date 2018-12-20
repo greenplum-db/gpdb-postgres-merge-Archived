@@ -11031,9 +11031,9 @@ pg_get_partition_template_def_worker(Oid relid, int prettyFlags,
 		PartitionRule	*prule = NULL;
 		const char		*partIdStr = "";
 
-		truncateStringInfo(&head, 0);
-		truncateStringInfo(&body, 0);
-		truncateStringInfo(&sid2, 0);
+		resetStringInfo(&head);
+		resetStringInfo(&body);
+		resetStringInfo(&sid2);
 
 		pnt = get_parts(relid,
 						templatelevel, 0, true, true /*includesubparts*/);
@@ -11074,8 +11074,7 @@ pg_get_partition_template_def_worker(Oid relid, int prettyFlags,
 					int16		 nkeys  = pn->part->parnatts;
 					int16		 parcol = 0;
 
-					truncateStringInfo(&partidsid, 0);
-
+					resetStringInfo(&partidsid);
 					appendStringInfoString(&partidsid, "FOR (");
 
 					l1 = (List *)prule->parlistvalues;
@@ -11115,7 +11114,7 @@ pg_get_partition_template_def_worker(Oid relid, int prettyFlags,
 		{
 			/* move the prior statements to sid2 */
 			appendStringInfoString(&sid2, sid1.data);
-			truncateStringInfo(&sid1, 0);
+			resetStringInfo(&sid1);
 
 			/*
 			 * Build the new statement in sid1 and append the previous

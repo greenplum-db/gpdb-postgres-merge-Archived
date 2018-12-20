@@ -66,9 +66,9 @@ AppendOnlyStorageWrite_Init(AppendOnlyStorageWrite *storageWrite,
 							int32 maxBufferLen,
 							char *relationName,
 							char *title,
-							AppendOnlyStorageAttributes *storageAttributes)
+							AppendOnlyStorageAttributes *storageAttributes,
+							bool needsWAL)
 {
-	int			relationNameLen;
 	uint8	   *memory;
 	int32		memoryLen;
 	MemoryContext oldMemoryContext;
@@ -105,10 +105,7 @@ AppendOnlyStorageWrite_Init(AppendOnlyStorageWrite *storageWrite,
 	if (storageWrite->storageAttributes.checksum)
 		storageWrite->regularHeaderLen += 2 * sizeof(pg_crc32);
 
-	relationNameLen = strlen(relationName);
-	storageWrite->relationName = (char *) palloc(relationNameLen + 1);
-	memcpy(storageWrite->relationName, relationName, relationNameLen + 1);
-
+	storageWrite->relationName = pstrdup(relationName);
 	storageWrite->title = title;
 
 	/*
@@ -172,6 +169,7 @@ AppendOnlyStorageWrite_Init(AppendOnlyStorageWrite *storageWrite,
 
 	storageWrite->file = -1;
 	storageWrite->formatVersion = -1;
+	storageWrite->needsWAL = needsWAL;
 
 	MemoryContextSwitchTo(oldMemoryContext);
 
@@ -276,7 +274,7 @@ AppendOnlyStorageWrite_TransactionCreateFile(AppendOnlyStorageWrite *storageWrit
 	 * gp_replica_check tool, to compare primary and mirror, will complain if
 	 * a file exists in master but not in mirror, even if it's empty.
 	 */
-	if (!RelFileNodeBackendIsTemp(*relFileNode))
+	if (storageWrite->needsWAL)
 		xlog_ao_insert(relFileNode->node, segmentFileNum, 0, NULL, 0);
 }
 
@@ -303,7 +301,6 @@ AppendOnlyStorageWrite_OpenFile(AppendOnlyStorageWrite *storageWrite,
 	File		file;
 	int64		seekResult;
 	MemoryContext oldMemoryContext;
-	int			segmentFileNameLen;
 
 	Assert(storageWrite != NULL);
 	Assert(storageWrite->isActive);
@@ -368,9 +365,7 @@ AppendOnlyStorageWrite_OpenFile(AppendOnlyStorageWrite *storageWrite,
 	if (storageWrite->segmentFileName != NULL)
 		pfree(storageWrite->segmentFileName);
 
-	segmentFileNameLen = strlen(filePathName);
-	storageWrite->segmentFileName = (char *) palloc(segmentFileNameLen + 1);
-	memcpy(storageWrite->segmentFileName, filePathName, segmentFileNameLen + 1);
+	storageWrite->segmentFileName = pstrdup(filePathName);
 
 	/* Allocation is done.  Go back to caller memory-context. */
 	MemoryContextSwitchTo(oldMemoryContext);
@@ -447,7 +442,8 @@ AppendOnlyStorageWrite_DoPadOutRemainder(AppendOnlyStorageWrite *storageWrite,
 		memset(buffer, 0, safeWriteRemainder);
 		BufferedAppendFinishBuffer(&storageWrite->bufferedAppend,
 								   safeWriteRemainder,
-								   safeWriteRemainder);
+								   safeWriteRemainder,
+								   storageWrite->needsWAL);
 
 		elogif(Debug_appendonly_print_insert, LOG,
 			   "Append-only insert zero padded safeWriteRemainder for table '%s' (nextWritePosition = " INT64_FORMAT ", safeWriteRemainder = %d)",
@@ -493,7 +489,8 @@ AppendOnlyStorageWrite_FlushAndCloseFile(
 	 */
 	BufferedAppendCompleteFile(&storageWrite->bufferedAppend,
 							   newLogicalEof,
-							   fileLen_uncompressed);
+							   fileLen_uncompressed,
+							   storageWrite->needsWAL);
 
 	/*
 	 * We must take care of fsynching to disk ourselves since the fd API won't
@@ -628,19 +625,12 @@ char *
 AppendOnlyStorageWrite_ContextStr(AppendOnlyStorageWrite *storageWrite)
 {
 	int64		headerOffsetInFile =
-	BufferedAppendCurrentBufferPosition(&storageWrite->bufferedAppend);
+		BufferedAppendCurrentBufferPosition(&storageWrite->bufferedAppend);
 
-	StringInfoData buf;
-
-	initStringInfo(&buf);
-	appendStringInfo(
-					 &buf,
-					 "%s. Append-Only segment file '%s', header offset in file " INT64_FORMAT,
-					 storageWrite->title,
-					 storageWrite->segmentFileName,
-					 headerOffsetInFile);
-
-	return buf.data;
+	return psprintf("%s. Append-Only segment file '%s', header offset in file " INT64_FORMAT,
+					storageWrite->title,
+					storageWrite->segmentFileName,
+					headerOffsetInFile);
 }
 
 static char *
@@ -1416,7 +1406,8 @@ AppendOnlyStorageWrite_FinishBuffer(AppendOnlyStorageWrite *storageWrite,
 
 		BufferedAppendFinishBuffer(&storageWrite->bufferedAppend,
 								   bufferLen,
-								   uncompressedlen);
+								   uncompressedlen,
+								   storageWrite->needsWAL);
 
 		/* Declare it finished. */
 		storageWrite->currentCompleteHeaderLen = 0;
@@ -1462,8 +1453,9 @@ AppendOnlyStorageWrite_FinishBuffer(AppendOnlyStorageWrite *storageWrite,
 		 */
 		BufferedAppendFinishBuffer(&storageWrite->bufferedAppend,
 								   bufferLen,
-								   storageWrite->currentCompleteHeaderLen +
-								   AOStorage_RoundUp(contentLen, storageWrite->formatVersion) /* non-compressed size */ );
+								   (storageWrite->currentCompleteHeaderLen +
+								       AOStorage_RoundUp(contentLen, storageWrite->formatVersion) /* non-compressed size */ ),
+								   storageWrite->needsWAL);
 		/* Declare it finished. */
 		storageWrite->currentCompleteHeaderLen = 0;
 	}
@@ -1611,8 +1603,9 @@ AppendOnlyStorageWrite_Content(AppendOnlyStorageWrite *storageWrite,
 			 */
 			BufferedAppendFinishBuffer(&storageWrite->bufferedAppend,
 									   bufferLen,
-									   storageWrite->currentCompleteHeaderLen +
-									   AOStorage_RoundUp(contentLen, storageWrite->formatVersion) /* non-compressed size */ );
+									   (storageWrite->currentCompleteHeaderLen +
+									       AOStorage_RoundUp(contentLen, storageWrite->formatVersion) /* non-compressed size */ ),
+									   storageWrite->needsWAL);
 
 			/* Declare it finished. */
 			storageWrite->currentCompleteHeaderLen = 0;
@@ -1656,7 +1649,8 @@ AppendOnlyStorageWrite_Content(AppendOnlyStorageWrite *storageWrite,
 
 		BufferedAppendFinishBuffer(&storageWrite->bufferedAppend,
 								   largeContentHeaderLen,
-								   largeContentHeaderLen);
+								   largeContentHeaderLen,
+								   storageWrite->needsWAL);
 
 		/* Declare it finished. */
 		storageWrite->currentCompleteHeaderLen = 0;
@@ -1728,8 +1722,9 @@ AppendOnlyStorageWrite_Content(AppendOnlyStorageWrite *storageWrite,
 				 */
 				BufferedAppendFinishBuffer(&storageWrite->bufferedAppend,
 										   bufferLen,
-										   smallContentHeaderLen +
-										   AOStorage_RoundUp(smallContentLen, storageWrite->formatVersion) /* non-compressed size */ );
+										   (smallContentHeaderLen +
+										   AOStorage_RoundUp(smallContentLen, storageWrite->formatVersion) /* non-compressed size */ ),
+										   storageWrite->needsWAL);
 
 				/* Declare it finished. */
 				storageWrite->currentCompleteHeaderLen = 0;

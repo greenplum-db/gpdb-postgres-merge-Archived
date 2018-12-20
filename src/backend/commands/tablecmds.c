@@ -29,6 +29,7 @@
 #include "access/relscan.h"
 #include "access/sysattr.h"
 #include "access/xact.h"
+#include "catalog/aocatalog.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
@@ -1952,9 +1953,7 @@ truncate_check_rel(Relation rel)
 	 * tables so that they can be wiped and recreated by the upgrade machinery.
 	 */
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		!(IsBinaryUpgrade && (rel->rd_rel->relkind == RELKIND_AOSEGMENTS ||
-							  rel->rd_rel->relkind == RELKIND_AOBLOCKDIR ||
-							  rel->rd_rel->relkind == RELKIND_AOVISIMAP)))
+		!(IsBinaryUpgrade && IsAppendonlyMetadataRelkind(rel->rd_rel->relkind)))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table",
@@ -12225,9 +12224,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 		if (tuple_class->relkind == RELKIND_RELATION ||
 			tuple_class->relkind == RELKIND_MATVIEW ||
 			tuple_class->relkind == RELKIND_TOASTVALUE ||
-			tuple_class->relkind == RELKIND_AOSEGMENTS ||
-			tuple_class->relkind == RELKIND_AOBLOCKDIR ||
-			tuple_class->relkind == RELKIND_AOVISIMAP)
+			IsAppendonlyMetadataRelkind(tuple_class->relkind))
 		{
 			List	   *index_oid_list;
 			ListCell   *i;
@@ -13005,25 +13002,30 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 		/* copy main fork */
 		copy_relation_data(rel->rd_smgr, dstrel, MAIN_FORKNUM,
 						   rel->rd_rel->relpersistence);
+	}
 
-		/* copy those extra forks that exist */
-		for (forkNum = MAIN_FORKNUM + 1; forkNum <= MAX_FORKNUM; forkNum++)
+	/*
+	 * Append-only tables now include init forks for unlogged tables, so we copy
+	 * over all forks. AO tables, so far, do not have visimap or fsm forks.
+	 */
+	
+	/* copy those extra forks that exist */
+	for (forkNum = MAIN_FORKNUM + 1; forkNum <= MAX_FORKNUM; forkNum++)
+	{
+		if (smgrexists(rel->rd_smgr, forkNum))
 		{
-			if (smgrexists(rel->rd_smgr, forkNum))
-			{
-				smgrcreate(dstrel, forkNum, false);
+			smgrcreate(dstrel, forkNum, false);
 
-				/*
-				 * WAL log creation if the relation is persistent, or this is the
-				 * init fork of an unlogged relation.
-				 */
-				if (rel->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT ||
-					(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
-					 forkNum == INIT_FORKNUM))
-					log_smgrcreate(&newrnode, forkNum);
-				copy_relation_data(rel->rd_smgr, dstrel, forkNum,
-								   rel->rd_rel->relpersistence);
-			}
+			/*
+			 * WAL log creation if the relation is persistent, or this is the
+			 * init fork of an unlogged relation.
+			 */
+			if (rel->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT ||
+				(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
+				 forkNum == INIT_FORKNUM))
+				log_smgrcreate(&newrnode, forkNum);
+			copy_relation_data(rel->rd_smgr, dstrel, forkNum,
+							   rel->rd_rel->relpersistence);
 		}
 	}
 
@@ -15943,9 +15945,7 @@ rel_get_table_oid(Relation rel)
 
 		return toid;
 	}
-	else if (rel->rd_rel->relkind == RELKIND_AOSEGMENTS ||
-			 rel->rd_rel->relkind == RELKIND_AOBLOCKDIR ||
-			 rel->rd_rel->relkind == RELKIND_AOVISIMAP ||
+	else if (IsAppendonlyMetadataRelkind(rel->rd_rel->relkind) ||
 			 rel->rd_rel->relkind == RELKIND_TOASTVALUE)
 	{
 		/* use pg_depend to find parent */
