@@ -10396,23 +10396,18 @@ partition_rule_def_worker(PartitionRule *rule, Node *start,
 			 */
 			if (!part->paristemplate)
 			{
-				/*
-				 * GPDB_FIXME_94_STABLE: We quoted the string manually here to
-				 * perform the comparison, if there is better way
-				 * programmatically to perform would be good.
-				 */
 				if (!reloptions)
 				{
-					appendStringInfoString(&sid1, ", \"appendonly\"='false' ");
+					appendStringInfoString(&sid1, ", appendonly=false ");
 				}
 				else
 				{
-					if (!strstr(reloptions, "\"appendonly\"="))
-						appendStringInfoString(&sid1, ", \"appendonly\"='false' ");
+					if (!strstr(reloptions, "appendonly="))
+						appendStringInfoString(&sid1, ", appendonly=false ");
 
-					if ((!strstr(reloptions, "\"orientation\"=")) &&
-						strstr(reloptions, "\"appendonly\"='true'"))
-						appendStringInfoString(&sid1, ", \"orientation\"='row' ");
+					if ((!strstr(reloptions, "orientation=")) &&
+						strstr(reloptions, "appendonly=true"))
+						appendStringInfoString(&sid1, ", orientation=row ");
 				}
 			}
 
