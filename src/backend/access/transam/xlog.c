@@ -12221,26 +12221,6 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						lastSourceFailed = true;
 						break;
 					}
-
-					elogif(debug_xlog_record_read, LOG,
-						   "WaitForWALToBecomeAvailable -- RecPtr %X/%X, tliRecPtr %X/%X, ReceivedUpto %X/%X, ReceivedUptoForwardOnly %X/%X",
-						   (uint32) (RecPtr >> 32), (uint32) RecPtr,
-						   (uint32) (tliRecPtr >> 32), (uint32) tliRecPtr,
-						   (uint32) (receivedUpto >> 32), (uint32) receivedUpto,
-						   (uint32) (WalRcv->receivedUptoForwardOnly >> 32), (uint32) WalRcv->receivedUptoForwardOnly);
-
-					if ((receivedUpto > tliRecPtr) && !IsRecievedUptoEqualsReceivedUptoForwardOnly())
-					{
-						elogif(debug_xlog_record_read, LOG,
-							   "WaitForWALToBecomeAvailable -- RecPtr %X/%X, tliRecPtr %X/%X, ReceivedUpto %X/%X, ReceivedUptoForwardOnly %X/%X -- returning false",
-							   (uint32) (RecPtr >> 32), (uint32) RecPtr,
-							   (uint32) (tliRecPtr >> 32), (uint32) tliRecPtr,
-							   (uint32) (receivedUpto >> 32), (uint32) receivedUpto,
-							   (uint32) (WalRcv->receivedUptoForwardOnly >> 32), (uint32) WalRcv->receivedUptoForwardOnly);
-
-						return false;
-					}
-
 					elogif(debug_xlog_record_read, LOG,
 						   "xlog page read -- No xlog data to read as of now. "
 						   "Will Wait on latch till some event occurs");
