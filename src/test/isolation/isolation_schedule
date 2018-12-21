@@ -33,9 +33,7 @@ test: multixact-no-deadlock
 #test: multixact-no-forget
 #test: propagate-lock-delete
 test: drop-index-concurrently-1
-test: multiple-cic
 test: alter-table-1
-test: alter-table-4
 test: timeouts
 
 #test: prepared-transactions
