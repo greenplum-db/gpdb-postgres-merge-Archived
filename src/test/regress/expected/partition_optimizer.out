@@ -5261,7 +5261,7 @@ select pg_get_partition_def('mpp5992'::regclass,true, true);
                                    )                                                                                                                                           +
                            )                                                                                                                                                   +
                    ),                                                                                                                                                          +
-           PARTITION foo1 START ('01-01-2011'::date) END ('01-01-2012'::date) WITH (tablename='mpp5992_1_prt_foo1', appendonly=false )                                         +
+           PARTITION foo1 START ('01-01-2011'::date) END ('01-01-2012'::date) WITH (tablename='mpp5992_1_prt_foo1', appendonly='false')                                        +
                    (                                                                                                                                                           +
                    SUBPARTITION l1 VALUES(1, 2, 3) WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1', appendonly='false')                                                          +
                            (                                                                                                                                                   +
