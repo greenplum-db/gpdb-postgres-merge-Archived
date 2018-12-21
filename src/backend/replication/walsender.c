@@ -189,7 +189,6 @@ static bool WalSndCaughtUpWithinRange = false;
 
 
 /* Flags set by signal handlers for later service in main loop */
-static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t got_SIGUSR2 = false;
 static volatile sig_atomic_t got_STOPPING = false;
 

@@ -354,6 +354,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	get_restricted_token(progname);
 	DataDir = argv[optind];
 
 	if (chdir(DataDir) < 0)
