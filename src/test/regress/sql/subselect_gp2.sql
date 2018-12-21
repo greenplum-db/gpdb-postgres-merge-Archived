@@ -22,7 +22,7 @@ select * from test_ext_foo as o
 where (select count(*) from echotable as i where i.c2 = o.c2) >= 2;
 
 -- Planner test to make sure the initplan is not removed for function scan
-explain (costs off)
+explain
 select sess_id from pg_stat_activity
 where query = (select current_query())
 and usename='xxx' and datname='xxx';
