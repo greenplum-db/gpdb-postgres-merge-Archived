@@ -10396,18 +10396,33 @@ partition_rule_def_worker(PartitionRule *rule, Node *start,
 			 */
 			if (!part->paristemplate)
 			{
+				StringInfoData appendonlytrue;
+				const char *appendonlyString = quote_identifier("appendonly");
+
+				initStringInfo(&appendonlytrue);
+				appendStringInfo(&appendonlytrue, ", %s=", appendonlyString);
+				simple_quote_literal(&appendonlytrue, "true");
+
 				if (!reloptions)
 				{
-					appendStringInfoString(&sid1, ", appendonly=false ");
+					appendStringInfo(&sid1, ", %s=", appendonlyString);
+					simple_quote_literal(&sid1, "false");
 				}
 				else
 				{
-					if (!strstr(reloptions, "appendonly="))
-						appendStringInfoString(&sid1, ", appendonly=false ");
+					const char *orientationString = quote_identifier("orientation");
+					if (!strstr(reloptions, appendonlyString))
+					{
+						appendStringInfo(&sid1, ", %s=", appendonlyString);
+						simple_quote_literal(&sid1, "false");
+					}
 
-					if ((!strstr(reloptions, "orientation=")) &&
-						strstr(reloptions, "appendonly=true"))
-						appendStringInfoString(&sid1, ", orientation=row ");
+					if ((!strstr(reloptions, orientationString)) &&
+						strstr(reloptions, appendonlytrue.data))
+					{
+						appendStringInfo(&sid1, ", %s=", orientationString);
+						simple_quote_literal(&sid1, "row");
+					}
 				}
 			}
 

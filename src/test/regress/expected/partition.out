@@ -5258,45 +5258,45 @@ select pg_get_partition_def('mpp5992'::regclass,true, true);
                                    )                                                                                                                                           +
                            )                                                                                                                                                   +
                    ),                                                                                                                                                          +
-           PARTITION foo1 START ('01-01-2011'::date) END ('01-01-2012'::date) WITH (tablename='mpp5992_1_prt_foo1', appendonly=false )                                         +
+           PARTITION foo1 START ('01-01-2011'::date) END ('01-01-2012'::date) WITH (tablename='mpp5992_1_prt_foo1', appendonly='false')                                        +
                    (                                                                                                                                                           +
-                   SUBPARTITION l1 VALUES(1, 2, 3) WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1', appendonly=false )                                                           +
+                   SUBPARTITION l1 VALUES(1, 2, 3) WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1', appendonly='false')                                                          +
                            (                                                                                                                                                   +
-                           SUBPARTITION ll1 VALUES('Engineering') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1_3_prt_ll1', appendonly=false )                                  +
+                           SUBPARTITION ll1 VALUES('Engineering') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1_3_prt_ll1', appendonly='false')                                 +
                                    (                                                                                                                                           +
-                                   SUBPARTITION lll1 VALUES('M') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1_3_prt_ll1_4_prt_lll1', appendonly=false ),                       +
-                                   SUBPARTITION lll2 VALUES('F') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1_3_prt_ll1_4_prt_lll2', appendonly=false )                        +
+                                   SUBPARTITION lll1 VALUES('M') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1_3_prt_ll1_4_prt_lll1', appendonly='false'),                      +
+                                   SUBPARTITION lll2 VALUES('F') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1_3_prt_ll1_4_prt_lll2', appendonly='false')                       +
                                    ),                                                                                                                                          +
-                           SUBPARTITION ll2 VALUES('QA') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1_3_prt_ll2', appendonly=false )                                           +
+                           SUBPARTITION ll2 VALUES('QA') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1_3_prt_ll2', appendonly='false')                                          +
                                    (                                                                                                                                           +
-                                   SUBPARTITION lll1 VALUES('M') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1_3_prt_ll2_4_prt_lll1', appendonly=false ),                       +
-                                   SUBPARTITION lll2 VALUES('F') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1_3_prt_ll2_4_prt_lll2', appendonly=false )                        +
+                                   SUBPARTITION lll1 VALUES('M') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1_3_prt_ll2_4_prt_lll1', appendonly='false'),                      +
+                                   SUBPARTITION lll2 VALUES('F') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l1_3_prt_ll2_4_prt_lll2', appendonly='false')                       +
                                    )                                                                                                                                           +
                            ),                                                                                                                                                  +
-                   SUBPARTITION l2 VALUES(4, 5, 6) WITH (tablename='mpp5992_1_prt_foo1_2_prt_l2', appendonly=false )                                                           +
+                   SUBPARTITION l2 VALUES(4, 5, 6) WITH (tablename='mpp5992_1_prt_foo1_2_prt_l2', appendonly='false')                                                          +
                            (                                                                                                                                                   +
-                           SUBPARTITION ll1 VALUES('Engineering') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l2_3_prt_ll1', appendonly=false )                                  +
+                           SUBPARTITION ll1 VALUES('Engineering') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l2_3_prt_ll1', appendonly='false')                                 +
                                    (                                                                                                                                           +
-                                   SUBPARTITION lll1 VALUES('M') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l2_3_prt_ll1_4_prt_lll1', appendonly=false ),                       +
-                                   SUBPARTITION lll2 VALUES('F') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l2_3_prt_ll1_4_prt_lll2', appendonly=false )                        +
+                                   SUBPARTITION lll1 VALUES('M') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l2_3_prt_ll1_4_prt_lll1', appendonly='false'),                      +
+                                   SUBPARTITION lll2 VALUES('F') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l2_3_prt_ll1_4_prt_lll2', appendonly='false')                       +
                                    ),                                                                                                                                          +
-                           SUBPARTITION ll2 VALUES('QA') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l2_3_prt_ll2', appendonly=false )                                           +
+                           SUBPARTITION ll2 VALUES('QA') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l2_3_prt_ll2', appendonly='false')                                          +
                                    (                                                                                                                                           +
-                                   SUBPARTITION lll1 VALUES('M') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l2_3_prt_ll2_4_prt_lll1', appendonly=false ),                       +
-                                   SUBPARTITION lll2 VALUES('F') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l2_3_prt_ll2_4_prt_lll2', appendonly=false )                        +
+                                   SUBPARTITION lll1 VALUES('M') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l2_3_prt_ll2_4_prt_lll1', appendonly='false'),                      +
+                                   SUBPARTITION lll2 VALUES('F') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l2_3_prt_ll2_4_prt_lll2', appendonly='false')                       +
                                    )                                                                                                                                           +
                            ),                                                                                                                                                  +
-                   SUBPARTITION l3 VALUES(7, 8, 9, 10) WITH (tablename='mpp5992_1_prt_foo1_2_prt_l3', appendonly=false )                                                       +
+                   SUBPARTITION l3 VALUES(7, 8, 9, 10) WITH (tablename='mpp5992_1_prt_foo1_2_prt_l3', appendonly='false')                                                      +
                            (                                                                                                                                                   +
-                           SUBPARTITION ll1 VALUES('Engineering') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l3_3_prt_ll1', appendonly=false )                                  +
+                           SUBPARTITION ll1 VALUES('Engineering') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l3_3_prt_ll1', appendonly='false')                                 +
                                    (                                                                                                                                           +
-                                   SUBPARTITION lll1 VALUES('M') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l3_3_prt_ll1_4_prt_lll1', appendonly=false ),                       +
-                                   SUBPARTITION lll2 VALUES('F') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l3_3_prt_ll1_4_prt_lll2', appendonly=false )                        +
+                                   SUBPARTITION lll1 VALUES('M') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l3_3_prt_ll1_4_prt_lll1', appendonly='false'),                      +
+                                   SUBPARTITION lll2 VALUES('F') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l3_3_prt_ll1_4_prt_lll2', appendonly='false')                       +
                                    ),                                                                                                                                          +
-                           SUBPARTITION ll2 VALUES('QA') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l3_3_prt_ll2', appendonly=false )                                           +
+                           SUBPARTITION ll2 VALUES('QA') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l3_3_prt_ll2', appendonly='false')                                          +
                                    (                                                                                                                                           +
-                                   SUBPARTITION lll1 VALUES('M') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l3_3_prt_ll2_4_prt_lll1', appendonly=false ),                       +
-                                   SUBPARTITION lll2 VALUES('F') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l3_3_prt_ll2_4_prt_lll2', appendonly=false )                        +
+                                   SUBPARTITION lll1 VALUES('M') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l3_3_prt_ll2_4_prt_lll1', appendonly='false'),                      +
+                                   SUBPARTITION lll2 VALUES('F') WITH (tablename='mpp5992_1_prt_foo1_2_prt_l3_3_prt_ll2_4_prt_lll2', appendonly='false')                       +
                                    )                                                                                                                                           +
                            )                                                                                                                                                   +
                    ),                                                                                                                                                          +
