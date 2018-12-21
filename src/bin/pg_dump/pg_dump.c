@@ -9341,8 +9341,15 @@ dumpTypeStorageOptions(Archive *fout, TypeStorageOptions *tstorageoptions)
 	q = createPQExpBuffer();
 	delq = createPQExpBuffer();
 
-	appendPQExpBuffer(q, "ALTER TYPE %s ", tstorageoptions->dobj.name);
-	appendPQExpBuffer(q, " SET DEFAULT ENCODING (%s);\n", tstorageoptions->typoptions);
+	/*
+	 * Type name is already quoted by caller using quote_ident, hence used
+	 * directly here.
+	 */
+	appendPQExpBuffer(q, "ALTER TYPE %s.",
+					  fmtId(tstorageoptions->dobj.namespace->dobj.name));
+	appendPQExpBuffer(q, "%s SET DEFAULT ENCODING (%s);\n",
+					  tstorageoptions->dobj.name,
+					  tstorageoptions->typoptions);
 
 	ArchiveEntry(	fout
 	            , tstorageoptions->dobj.catId                 /* catalog ID  */
