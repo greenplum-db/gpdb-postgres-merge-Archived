@@ -7512,8 +7512,8 @@ StartupXLOG(void)
 	EndOfLog = EndRecPtr;
 	XLByteToPrevSeg(EndOfLog, endLogSegNo);
 
-	elog(LOG,"end of transaction log location is %s",
-		 XLogLocationToString(EndOfLog));
+	elog(LOG,"end of transaction log location is %X/%X",
+		 (uint32) (EndOfLog >> 32), (uint32) EndOfLog);
 
 	/*
 	 * Complain if we did not roll forward far enough to render the backup
@@ -8208,18 +8208,18 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 		{
 			case 1:
 				ereport(LOG,
-						(errmsg("invalid primary checkpoint record at location %s",
-						        XLogLocationToString_Long(RecPtr))));
+						(errmsg("invalid primary checkpoint record at location %X/%X",
+								(uint32) (RecPtr >> 32), (uint32) RecPtr)));
 				break;
 			case 2:
 				ereport(LOG,
-						(errmsg("invalid secondary checkpoint record at location %s",
-						        XLogLocationToString_Long(RecPtr))));
+						(errmsg("invalid secondary checkpoint record at location %X/%X",
+								(uint32) (RecPtr >> 32), (uint32) RecPtr)));
 				break;
 			default:
 				ereport(LOG,
-						(errmsg("invalid checkpoint record at location %s",
-						        XLogLocationToString_Long(RecPtr))));
+						(errmsg("invalid checkpoint record at location %X/%X",
+								(uint32) (RecPtr >> 32), (uint32) RecPtr)));
 				break;
 		}
 		return NULL;
@@ -8230,18 +8230,18 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 		{
 			case 1:
 				ereport(LOG,
-						(errmsg("invalid resource manager ID in primary checkpoint record at location %s",
-						        XLogLocationToString_Long(RecPtr))));
+						(errmsg("invalid resource manager ID in primary checkpoint record at location %X/%X",
+								(uint32) (RecPtr >> 32), (uint32) RecPtr)));
 				break;
 			case 2:
 				ereport(LOG,
-						(errmsg("invalid resource manager ID in secondary checkpoint record at location %s",
-						        XLogLocationToString_Long(RecPtr))));
+						(errmsg("invalid resource manager ID in secondary checkpoint record at location %X/%X",
+								(uint32) (RecPtr >> 32), (uint32) RecPtr)));
 				break;
 			default:
 				ereport(LOG,
-				(errmsg("invalid resource manager ID in checkpoint record at location %s",
-				        XLogLocationToString_Long(RecPtr))));
+				(errmsg("invalid resource manager ID in checkpoint record at location %X/%X",
+						(uint32) (RecPtr >> 32), (uint32) RecPtr)));
 				break;
 		}
 		return NULL;
@@ -8253,18 +8253,18 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 		{
 			case 1:
 				ereport(LOG,
-				   (errmsg("invalid xl_info in primary checkpoint record at location %s",
-				           XLogLocationToString_Long(RecPtr))));
+				   (errmsg("invalid xl_info in primary checkpoint record at location %X/%X",
+						   (uint32) (RecPtr >> 32), (uint32) RecPtr)));
 				break;
 			case 2:
 				ereport(LOG,
-				 (errmsg("invalid xl_info in secondary checkpoint record at location %s",
-				         XLogLocationToString_Long(RecPtr))));
+				 (errmsg("invalid xl_info in secondary checkpoint record at location %X/%X",
+						 (uint32) (RecPtr >> 32), (uint32) RecPtr)));
 				break;
 			default:
 				ereport(LOG,
-						(errmsg("invalid xl_info in checkpoint record at location %s",
-						        XLogLocationToString_Long(RecPtr))));
+						(errmsg("invalid xl_info in checkpoint record at location %X/%X",
+								(uint32) (RecPtr >> 32), (uint32) RecPtr)));
 				break;
 		}
 		return NULL;
@@ -8294,18 +8294,18 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 		{
 			case 1:
 				ereport(LOG,
-					(errmsg("invalid length of primary checkpoint at location %s",
-					        XLogLocationToString_Long(RecPtr))));
+					(errmsg("invalid length of primary checkpoint at location %X/%X",
+							(uint32) (RecPtr >> 32), (uint32) RecPtr)));
 				break;
 			case 2:
 				ereport(LOG,
-				  (errmsg("invalid length of secondary checkpoint record at location %s",
-				          XLogLocationToString_Long(RecPtr))));
+				  (errmsg("invalid length of secondary checkpoint record at location %X/%X",
+						  (uint32) (RecPtr >> 32), (uint32) RecPtr)));
 				break;
 			default:
 				ereport(LOG,
-						(errmsg("invalid length of checkpoint record at location %s",
-						        XLogLocationToString_Long(RecPtr))));
+						(errmsg("invalid length of checkpoint record at location %X/%X",
+								(uint32) (RecPtr >> 32), (uint32) RecPtr)));
 				break;
 		}
 		return NULL;
@@ -9497,10 +9497,6 @@ CreateRestartPoint(int flags)
 		UpdateControlFile();
 	}
 	LWLockRelease(ControlFileLock);
-
-	elog((Debug_print_qd_mirroring ? LOG : DEBUG1), "RecoveryRestartPoint: checkpoint copy redo location %s, previous checkpoint location %s",
-		 XLogLocationToString(ControlFile->checkPointCopy.redo),
-		 XLogLocationToString(ControlFile->prevCheckPoint));
 
 	/*
 	 * Delete old log files (those no longer needed even for previous
@@ -11569,93 +11565,6 @@ CancelBackup(void)
 				 errdetail("Could not rename \"%s\" to \"%s\": %m.",
 						   BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
 	}
-}
-
-static char *
-XLogLocationToBuffer(char *buffer, XLogRecPtr loc, bool longFormat)
-{
-
-	if (longFormat)
-	{
-		uint64 seg = loc / XLogSegSize;
-		uint32 offset = loc % XLogSegSize;
-		sprintf(buffer,
-			    "%X/%X (==> seg " UINT64_FORMAT ", offset 0x%X)",
-			    (uint32) (loc >> 32), (uint32) loc,
-			    seg, offset);
-	}
-	else
-		sprintf(buffer,
-			    "%X/%X",
-			    (uint32) (loc >> 32), (uint32) loc);
-
-	return buffer;
-}
-
-static char xlogLocationBuffer[50];
-static char xlogLocationBuffer2[50];
-static char xlogLocationBuffer3[50];
-static char xlogLocationBuffer4[50];
-static char xlogLocationBuffer5[50];
-
-char *
-XLogLocationToString(XLogRecPtr loc)
-{
-	return XLogLocationToBuffer(xlogLocationBuffer, loc, Debug_print_qd_mirroring);
-}
-
-char *
-XLogLocationToString2(XLogRecPtr loc)
-{
-	return XLogLocationToBuffer(xlogLocationBuffer2, loc, Debug_print_qd_mirroring);
-}
-
-char *
-XLogLocationToString3(XLogRecPtr loc)
-{
-	return XLogLocationToBuffer(xlogLocationBuffer3, loc, Debug_print_qd_mirroring);
-}
-
-char *
-XLogLocationToString4(XLogRecPtr loc)
-{
-	return XLogLocationToBuffer(xlogLocationBuffer4, loc, Debug_print_qd_mirroring);
-}
-
-char *
-XLogLocationToString5(XLogRecPtr loc)
-{
-	return XLogLocationToBuffer(xlogLocationBuffer5, loc, Debug_print_qd_mirroring);
-}
-
-char *
-XLogLocationToString_Long(XLogRecPtr loc)
-{
-	return XLogLocationToBuffer(xlogLocationBuffer, loc, true);
-}
-
-char *
-XLogLocationToString2_Long(XLogRecPtr loc)
-{
-	return XLogLocationToBuffer(xlogLocationBuffer2, loc, true);
-}
-
-char *
-XLogLocationToString3_Long(XLogRecPtr loc)
-{
-	return XLogLocationToBuffer(xlogLocationBuffer3, loc, true);
-}
-
-char *
-XLogLocationToString4_Long(XLogRecPtr loc)
-{
-	return XLogLocationToBuffer(xlogLocationBuffer4, loc, true);
-}
-
-char *
-XLogLocationToString5_Long(XLogRecPtr loc)
-{
-	return XLogLocationToBuffer(xlogLocationBuffer5, loc, true);
 }
 
 /*

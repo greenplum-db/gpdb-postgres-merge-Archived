@@ -105,7 +105,6 @@ char	   *Debug_dtm_action_sql_command_tag;
 
 bool		Debug_print_full_dtm = false;
 bool		Debug_print_snapshot_dtm = false;
-bool		Debug_print_qd_mirroring = false;
 bool		Debug_disable_distributed_snapshot = false;
 bool		Debug_abort_after_distributed_prepared = false;
 bool		Debug_abort_after_segment_prepared = false;
@@ -578,6 +577,16 @@ static const struct config_enum_entry gp_gpperfmon_log_alert_level[] = {
 	{"error", GPPERFMON_LOG_ALERT_LEVEL_ERROR},
 	{"fatal", GPPERFMON_LOG_ALERT_LEVEL_FATAL},
 	{"panic", GPPERFMON_LOG_ALERT_LEVEL_PANIC},
+	{NULL, 0}
+};
+
+static const struct config_enum_entry test_time_slice_report_level_options[] = {
+	{"notice", NOTICE},
+	{"warning", WARNING},
+	{"error", ERROR},
+	{"log", LOG},
+	{"fatal", FATAL},
+	{"panic", PANIC},
 	{NULL, 0}
 };
 
@@ -1266,17 +1275,6 @@ struct config_bool ConfigureNamesBool_gp[] =
 			GUC_SUPERUSER_ONLY | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&Debug_print_snapshot_dtm,
-		false,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"debug_print_qd_mirroring", PGC_SUSET, LOGGING_WHAT,
-			gettext_noop("Prints QD mirroring information to server log."),
-			NULL,
-			GUC_SUPERUSER_ONLY | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&Debug_print_qd_mirroring,
 		false,
 		NULL, NULL, NULL
 	},
@@ -4701,7 +4699,7 @@ struct config_enum ConfigureNamesEnum_gp[] =
 			GUC_GPDB_ADDOPT | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&gp_test_time_slice_report_level,
-		ERROR, server_message_level_options,
+		ERROR, test_time_slice_report_level_options,
 		NULL, NULL, NULL
 	},
 
