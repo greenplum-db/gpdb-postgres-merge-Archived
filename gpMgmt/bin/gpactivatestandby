@@ -19,6 +19,7 @@ import signal
 import glob
 import time
 import shutil
+import tempfile
 from datetime import datetime, timedelta
 
 # import GPDB modules
@@ -289,14 +290,17 @@ def check_or_start_standby(options):
         # promoting the standby.  This is nothing but a bailout and
         # this could lose some of the latest changes from the primary.
         recovery_conf_file_location = os.path.join(options.master_data_dir, GP_RECOVERY_CONF_FILE)
-        with open(recovery_conf_file_location, "w") as f:
+        fd, trigger_file = tempfile.mkstemp(dir=options.master_data_dir)
+        trigger_entry = "trigger_file = '" + trigger_file + "'"
+
+        with open(recovery_conf_file_location, 'w') as f:
             f.write("standby_mode = 'on'\n")
             f.write("primary_conninfo = 'dummy'\n")
-            f.write("trigger_file = '/tmp/trigger'")
+            f.write(trigger_entry)
         f.close()
 
-        with open("/tmp/trigger", "w") as f:
-            f.write(" ");
+        with open(trigger_file, 'w') as f:
+            f.write('');
         f.close();
 
         start_master(options)
