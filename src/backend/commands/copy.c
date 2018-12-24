@@ -3642,6 +3642,10 @@ CopyFrom(CopyState cstate)
 	{
 		useHeapMultiInsert = false;
 	}
+	else
+	{
+		useHeapMultiInsert = true;
+	}
 
 	/* Prepare to catch AFTER triggers. */
 	AfterTriggerBeginQuery();
@@ -4021,11 +4025,9 @@ CopyFrom(CopyState cstate)
 			if (useHeapMultiInsert)
 			{
 				char relstorage = RelinfoGetStorage(resultRelInfo);
-				if (relstorage != RELSTORAGE_AOROWS &&
-					relstorage != RELSTORAGE_AOCOLS &&
-					relstorage != RELSTORAGE_EXTERNAL)
-					useHeapMultiInsert = true;
-				else
+				if (relstorage == RELSTORAGE_AOROWS ||
+					relstorage == RELSTORAGE_AOCOLS ||
+					relstorage == RELSTORAGE_EXTERNAL)
 					useHeapMultiInsert = false;
 			}
 

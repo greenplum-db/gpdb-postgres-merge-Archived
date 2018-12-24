@@ -61,6 +61,7 @@
 #include "utils/memutils.h"
 #include "utils/relmapper.h"
 
+#include "utils/builtins.h"
 #include "utils/resource_manager.h"
 #include "utils/sharedsnapshot.h"
 #include "access/clog.h"
@@ -4574,7 +4575,7 @@ DefineDispatchSavepoint(char *name)
 	{
 		char	   *cmd;
 
-		cmd = psprintf("SAVEPOINT %s", name);
+		cmd = psprintf("SAVEPOINT %s", quote_identifier(name));
 
 		/*
 		 * dispatch a DTX command, in the event of an error, this call
@@ -4707,7 +4708,7 @@ ReleaseSavepoint(List *options)
 	{
 		char	   *cmd;
 
-		cmd = psprintf("RELEASE SAVEPOINT %s", name);
+		cmd = psprintf("RELEASE SAVEPOINT %s", quote_identifier(name));
 
 		/*
 		 * dispatch a DTX command, in the event of an error, this call will
@@ -4874,7 +4875,7 @@ DispatchRollbackToSavepoint(char *name)
 	if (!name)
 		elog(ERROR, "could not find savepoint name for ROLLBACK TO SAVEPOINT");
 
-	cmd = psprintf("ROLLBACK TO SAVEPOINT %s", name);
+	cmd = psprintf("ROLLBACK TO SAVEPOINT %s", quote_identifier(name));
 
 	/*
 	 * dispatch a DTX command, in the event of an error, this call will
