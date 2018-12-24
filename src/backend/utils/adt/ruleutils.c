@@ -10428,7 +10428,7 @@ partition_rule_def_worker(PartitionRule *rule, Node *start,
 
 			if (reloptions)
 			{
-				appendStringInfo(&sid1, ", %s", reloptions);
+				appendStringInfo(&sid1, ", %s ", reloptions);
 
 				pfree(reloptions);
 			}
