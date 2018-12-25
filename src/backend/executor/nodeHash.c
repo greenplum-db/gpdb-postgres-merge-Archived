@@ -891,7 +891,7 @@ ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
 					TupleTableSlot *slot,
 					uint32 hashvalue)
 {
-	MemTuple tuple = ExecFetchSlotMemTuple(slot, false);
+	MemTuple tuple = ExecFetchSlotMemTuple(slot);
 	int			bucketno;
 	int			batchno;
 	int			hashTupleSize;
@@ -1946,7 +1946,7 @@ ExecHashSkewTableInsert(HashState *hashState,
 						uint32 hashvalue,
 						int bucketNumber)
 {
-	MemTuple tuple = ExecFetchSlotMemTuple(slot, false);
+	MemTuple tuple = ExecFetchSlotMemTuple(slot);
 	HashJoinTuple hashTuple;
 	int			hashTupleSize;
 
