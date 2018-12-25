@@ -2458,6 +2458,46 @@ subquery_motionHazard_walker(Plan *node, void *context)
 
 	if (IsA(node, Motion))
 		return true;
+	else if (IsA(node, Append))
+	{
+		ListCell   *l;
+
+		foreach(l, ((Append *) node)->appendplans)
+		{
+			if (subquery_motionHazard_walker((Plan *) lfirst(l), NULL))
+				return true;
+		}
+	}
+	else if (IsA(node, MergeAppend))
+	{
+		ListCell   *l;
+
+		foreach(l, ((MergeAppend *) node)->mergeplans)
+		{
+			if (subquery_motionHazard_walker((Plan *) lfirst(l), NULL))
+				return true;
+		}
+	}
+	else if (IsA(node, BitmapAnd))
+	{
+		ListCell   *l;
+
+		foreach(l, ((BitmapAnd *) node)->bitmapplans)
+		{
+			if (subquery_motionHazard_walker((Plan *) lfirst(l), NULL))
+				return true;
+		}
+	}
+	else if (IsA(node, BitmapOr))
+	{
+		ListCell   *l;
+
+		foreach(l, ((BitmapOr *) node)->bitmapplans)
+		{
+			if (subquery_motionHazard_walker((Plan *) lfirst(l), NULL))
+				return true;
+		}
+	}
 
 	if (subquery_motionHazard_walker(node->lefttree, NULL) ||
 		subquery_motionHazard_walker(node->righttree, NULL))
