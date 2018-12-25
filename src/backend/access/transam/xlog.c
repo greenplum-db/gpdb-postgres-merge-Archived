@@ -7543,7 +7543,7 @@ StartupXLOG(void)
 		 * that as an error, or the database will refuse to start up.
 		 */
 		// WALREP_FIXME: But we should probably do this check in standby mode, too
-		if (ArchiveRecoveryRequested || ControlFile->backupEndRequired)
+		if (StandbyModeRequested || ControlFile->backupEndRequired)
 		{
 			if (ControlFile->backupEndRequired)
 				ereport(FATAL,
