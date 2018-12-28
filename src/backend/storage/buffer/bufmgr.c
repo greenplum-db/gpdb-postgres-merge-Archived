@@ -2618,8 +2618,6 @@ FlushRelationBuffers(Relation rel)
 
 				PageSetChecksumInplace(localpage, bufHdr->tag.blockNum);
 
-				PageSetChecksumInplace(localpage, bufHdr->tag.blockNum);
-				
 				smgrwrite(rel->rd_smgr,
 						  bufHdr->tag.forkNum,
 						  bufHdr->tag.blockNum,

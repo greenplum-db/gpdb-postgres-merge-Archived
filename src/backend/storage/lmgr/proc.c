@@ -83,7 +83,7 @@ PGXACT	   *MyPgXact = NULL;
 TMGXACT	   *MyTmGxact = NULL;
 
 /* Special for MPP reader gangs */
-PGPROC	   *lockHolderProcPtr = NULL;
+PGPROC	   *lockHolderProcPtr;
 
 /*
  * This spinlock protects the freelist of recycled PGPROC structures.
@@ -987,6 +987,7 @@ ProcKill(int code, Datum arg)
 	 */
 	proc = MyProc;
 	MyProc = NULL;
+	lockHolderProcPtr = NULL;
 	DisownLatch(&proc->procLatch);
 
 	SpinLockAcquire(ProcStructLock);
@@ -1055,6 +1056,7 @@ AuxiliaryProcKill(int code, Datum arg)
 	 */
 	proc = MyProc;
 	MyProc = NULL;
+	lockHolderProcPtr = NULL;
 	DisownLatch(&proc->procLatch);
 
 	SpinLockAcquire(ProcStructLock);
@@ -1066,22 +1068,6 @@ AuxiliaryProcKill(int code, Datum arg)
 	update_spins_per_delay();
 
 	SpinLockRelease(ProcStructLock);
-
-	/*
-	 * If the parent process of this auxiliary process does not exist, we
-	 * have trouble. Besides the obvious case that the postmaster is gone,
-	 * this could happen to filerep subprocesses when the filerep main
-	 * process dies unexpectedly. The postmaster will receive the SIGCHLD
-	 * signal when we exit in that case. Make sure we exit with non-zero (and
-	 * not 1 either) exit status, to force the postmaster to reset the system
-	 * if that happens.
-	 */
-	if (!ParentProcIsAlive())
-		proc_exit(10);
-
-	/* PGPROC struct isn't mine anymore */
-	MyProc = NULL;
-	lockHolderProcPtr = NULL;
 }
 
 

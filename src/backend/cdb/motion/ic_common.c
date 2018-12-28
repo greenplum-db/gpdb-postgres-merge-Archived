@@ -26,23 +26,10 @@
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp.h"
 
-#include <limits.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
 #include <netinet/in.h>
-
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0600
-#endif
-#include <winsock2.h>
-#define SHUT_RDWR SD_BOTH
-#define SHUT_RD SD_RECEIVE
-#define SHUT_WR SD_SEND
-
-#endif
 
 /*
   #define AMS_VERBOSE_LOGGING
@@ -612,7 +599,7 @@ TeardownInterconnect(ChunkTransportState *transportStates,
  *
  *	 motNodeID - motion node ID for this ChunkTransportState.
  *
- *	 numPrimaryConns  - number of primary connections for this motion node.
+ *	 numConns  - number of primary connections for this motion node.
  *               All are incoming if this is a receiving motion node.
  *               All are outgoing if this is a sending motion node.
  *
@@ -625,7 +612,7 @@ ChunkTransportStateEntry *
 createChunkTransportState(ChunkTransportState *transportStates,
 						  Slice *sendSlice,
 						  Slice *recvSlice,
-						  int numPrimaryConns)
+						  int numConns)
 {
 	ChunkTransportStateEntry *pEntry;
 	int			motNodeID;
@@ -667,8 +654,7 @@ createChunkTransportState(ChunkTransportState *transportStates,
 	pEntry->valid = true;
 
 	pEntry->motNodeId = motNodeID;
-	pEntry->numConns = numPrimaryConns;
-	pEntry->numPrimaryConns = numPrimaryConns;
+	pEntry->numConns = numConns;
 	pEntry->scanStart = 0;
 	pEntry->sendSlice = sendSlice;
 	pEntry->recvSlice = recvSlice;
