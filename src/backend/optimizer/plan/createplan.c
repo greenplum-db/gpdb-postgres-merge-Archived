@@ -3244,7 +3244,7 @@ create_mergejoin_plan(PlannerInfo *root,
 	List	   *mergeclauses;
 	Sort	   *sort;
 	bool		prefetch = false;
-	bool		set_mat_db_strict = false;
+	bool		set_mat_cdb_strict = false;
 	List	   *outerpathkeys;
 	List	   *innerpathkeys;
 	int			nClauses;
@@ -3359,7 +3359,7 @@ create_mergejoin_plan(PlannerInfo *root,
 		{
 			if (!IsA(inner_plan, Material))
 				best_path->materialize_inner = true;
-			set_mat_db_strict = true;
+			set_mat_cdb_strict = true;
 		}
 	}
 
@@ -3384,7 +3384,7 @@ create_mergejoin_plan(PlannerInfo *root,
 		inner_plan = matplan;
 	}
 
-	if (set_mat_db_strict)
+	if (set_mat_cdb_strict)
 		((Material *) inner_plan)->cdb_strict = true;
 
 	/*
