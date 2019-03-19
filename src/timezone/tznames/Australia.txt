@@ -7,11 +7,7 @@
 # src/timezone/tznames/Australia.txt
 #
 
-<<<<<<< HEAD
 ACSST   37800 D  # Central Australia (not in IANA database)
-=======
-ACSST   37800 D  # Central Australia (not in zic)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 ACDT    37800 D  # Australian Central Daylight Time
                  #     (Australia/Adelaide)
                  #     (Australia/Broken_Hill)
@@ -20,14 +16,8 @@ ACST    34200    # Australian Central Standard Time
                  #     (Australia/Adelaide)
                  #     (Australia/Broken_Hill)
                  #     (Australia/Darwin)
-<<<<<<< HEAD
 ACWST   31500    # Australian Central Western Standard Time (obsolete)
 AESST   39600 D  # Australia Eastern Summer Standard Time (not in IANA database)
-=======
-ACWST   31500    # Australian Central Western Standard Time
-                 #     (Australia/Eucla)
-AESST   39600 D  # Australia Eastern Summer Standard Time (not in zic)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 AEDT    39600 D  # Australian Eastern Daylight Time
                  #     (Australia/Brisbane)
                  #     (Australia/Currie)
@@ -42,31 +32,18 @@ AEST    36000    # Australian Eastern Standard Time
                  #     (Australia/Lindeman)
                  #     (Australia/Melbourne)
                  #     (Australia/Sydney)
-<<<<<<< HEAD
 AWSST   32400 D  # Australia Western Summer Standard Time (not in IANA database)
 AWST    28800    # Australian Western Standard Time
                  #     (Australia/Perth)
 CADT    37800 D  # Central Australia Daylight-Saving Time (not in IANA database)
 CAST    34200    # Central Australia Standard Time (not in IANA database)
-=======
-AWSST   32400 D  # Australia Western Summer Standard Time (not in zic)
-AWST    28800    # Australian Western Standard Time
-                 #     (Australia/Perth)
-CADT    37800 D  # Central Australia Daylight-Saving Time (not in zic)
-CAST    34200    # Central Australia Standard Time (not in zic)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 # CONFLICT! CST is not unique
 # Other timezones:
 #  - CST: Central Standard Time (America)
 #  - CST: China Standard Time (Asia)
 #  - CST: Cuba Central Standard Time (America)
-<<<<<<< HEAD
 CST     34200    # Central Standard Time (not in IANA database)
 CWST    31500    # Central Western Standard Time (not in IANA database)
-=======
-CST     34200    # Central Standard Time (not in zic)
-CWST    31500    # Central Western Standard Time (not in zic)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 # CONFLICT! EAST is not unique
 # Other timezones:
 #  - EAST: Easter Island Time (Chile) (Pacific)
@@ -74,7 +51,6 @@ EAST    36000    # East Australian Standard Time (not in IANA database)
 # CONFLICT! EST is not unique
 # Other timezones:
 #  - EST: Eastern Standard Time (America)
-<<<<<<< HEAD
 EST     36000    # Eastern Standard Time (not in IANA database)
 LHDT    Australia/Lord_Howe  # Lord Howe Daylight Time (obsolete)
 LHST    37800    # Lord Howe Standard Time (obsolete)
@@ -93,25 +69,3 @@ WDT     32400 D  # West Australian Daylight-Saving Time (not in IANA database)
 # Other timezones:
 #  - WST: West Samoa Time
 WST     28800    # Western Standard Time (not in IANA database)
-=======
-EST     36000    # Eastern Standard Time (not in zic)
-LHDT    Australia/Lord_Howe  # Lord Howe Daylight Time
-                 #     (Australia/Lord_Howe)
-LHST    37800    # Lord Howe Standard Time
-                 #     (Australia/Lord_Howe)
-LIGT    36000    # Melbourne, Australia (not in zic)
-NZT     43200    # New Zealand Time (not in zic)
-SADT    37800 D  # South Australian Daylight-Saving Time (not in zic)
-# CONFLICT! SAST is not unique
-# Other timezones:
-#  - SAST South Africa Standard Time
-SAST    34200    # South Australian Standard Time (not in zic)
-SAT     34200    # South Australian Standard Time (not in zic)
-WADT    28800 D  # West Australian Daylight-Saving Time (not in zic)
-WAST    25200    # West Australian Standard Time (not in zic)
-WDT     32400 D  # West Australian Daylight-Saving Time (not in zic)
-# CONFLICT! WST is not unique
-# Other timezones:
-#  - WST: West Samoa Time
-WST     28800    # Western Standard Time (not in zic)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

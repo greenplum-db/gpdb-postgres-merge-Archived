@@ -44,21 +44,10 @@ AST    -14400    # Atlantic Standard Time
                  #     (America/Thule)
                  #     (America/Tortola)
                  #     (Atlantic/Bermuda)
-<<<<<<< HEAD
 AZOST       0 D  # Azores Summer Time (obsolete)
 AZOT    -3600    # Azores Time (obsolete)
 CVT     Atlantic/Cape_Verde  # Cape Verde Time (obsolete)
 FKST    Atlantic/Stanley  # Falkland Islands Summer/Standard Time (obsolete)
-=======
-AZOST       0 D  # Azores Summer Time
-                 #     (Atlantic/Azores)
-AZOT    -3600    # Azores Time
-                 #     (Atlantic/Azores)
-CVT     Atlantic/Cape_Verde  # Cape Verde Time
-                 #     (Atlantic/Cape_Verde)
-FKST    Atlantic/Stanley  # Falkland Islands Summer/Standard Time
-                 #     (Atlantic/Stanley)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 FKT     Atlantic/Stanley  # Falkland Islands Time (obsolete)
 GMT         0    # Greenwich Mean Time
                  #     (Africa/Abidjan)
