@@ -375,16 +375,10 @@ sub GenerateTimezoneFiles
 	my $target = shift;
 	my $conf   = shift;
 	my $mf     = read_file("src/timezone/Makefile");
-<<<<<<< HEAD
-	$mf =~ s{\\\s*[\r\n]+}{}mg;
+	$mf =~ s{\\\r?\n}{}g;
 
 	$mf =~ /^TZDATAFILES\s*:?=\s*(.*)$/m
 	  || die "Could not find TZDATAFILES line in timezone makefile\n";
-=======
-	$mf =~ s{\\\r?\n}{}g;
-	$mf =~ /^TZDATA\s*:?=\s*(.*)$/m
-	  || die "Could not find TZDATA row in timezone makefile\n";
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	my @tzfiles = split /\s+/, $1;
 
 	$mf =~ /^POSIXRULES\s*:?=\s*(.*)$/m

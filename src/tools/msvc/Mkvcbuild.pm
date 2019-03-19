@@ -87,11 +87,7 @@ sub mkvcbuild
 	  chklocale.c crypt.c fls.c fseeko.c getrusage.c inet_aton.c random.c
 	  srandom.c getaddrinfo.c gettimeofday.c inet_net_ntop.c kill.c open.c
 	  erand48.c snprintf.c strlcat.c strlcpy.c dirmod.c noblock.c path.c
-<<<<<<< HEAD
-	  pgcheckdir.c pg_crc.c pgmkdirp.c pgsleep.c pgstrcasecmp.c pqsignal.c
-=======
 	  pgcheckdir.c pgmkdirp.c pgsleep.c pgstrcasecmp.c pqsignal.c
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	  mkdtemp.c qsort.c qsort_arg.c quotes.c system.c
 	  sprompt.c tar.c thread.c getopt.c getopt_long.c dirent.c
 	  win32env.c win32error.c win32setlocale.c);
@@ -110,12 +106,8 @@ sub mkvcbuild
 	}
 
 	our @pgcommonallfiles = qw(
-<<<<<<< HEAD
-	  exec.c pgfnames.c psprintf.c relpath.c rmtree.c string.c username.c wait_error.c);
-=======
 	  exec.c pg_lzcompress.c pgfnames.c psprintf.c relpath.c rmtree.c
 	  string.c username.c wait_error.c);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	our @pgcommonfrontendfiles = (
 		@pgcommonallfiles, qw(fe_memutils.c
@@ -187,7 +179,332 @@ sub mkvcbuild
 	$plpgsql->AddFiles('src/pl/plpgsql/src', 'pl_gram.y');
 	$plpgsql->AddReference($postgres);
 
-<<<<<<< HEAD
+	if ($solution->{options}->{tcl})
+	{
+		my $found = 0;
+		my $pltcl =
+		  $solution->AddProject('pltcl', 'dll', 'PLs', 'src/pl/tcl');
+		$pltcl->AddIncludeDir($solution->{options}->{tcl} . '/include');
+		$pltcl->AddReference($postgres);
+
+		for my $tclver (qw(86t 86 85 84))
+		{
+			my $tcllib = $solution->{options}->{tcl} . "\\lib\\tcl$tclver.lib";
+			if (-e $tcllib)
+			{
+				$pltcl->AddLibrary($tcllib);
+				$found = 1;
+				last;
+			}
+		}
+		die "Unable to find $solution->{options}->{tcl}\\lib\\tcl<version>.lib"
+			unless $found;
+	}
+
+	$libpq = $solution->AddProject('libpq', 'dll', 'interfaces',
+		'src/interfaces/libpq');
+	$libpq->AddDefine('FRONTEND');
+	$libpq->AddDefine('UNSAFE_STAT_OK');
+	$libpq->AddIncludeDir('src/port');
+	$libpq->AddLibrary('secur32.lib');
+	$libpq->AddLibrary('ws2_32.lib');
+	$libpq->AddLibrary('wldap32.lib') if ($solution->{options}->{ldap});
+	$libpq->UseDef('src/interfaces/libpq/libpqdll.def');
+	$libpq->ReplaceFile('src/interfaces/libpq/libpqrc.c',
+		'src/interfaces/libpq/libpq.rc');
+	$libpq->AddReference($libpgport);
+
+   # The OBJS scraper doesn't know about ifdefs, so remove fe-secure-openssl.c
+   # if building without OpenSSL
+	if (!$solution->{options}->{openssl})
+	{
+		$libpq->RemoveFile('src/interfaces/libpq/fe-secure-openssl.c');
+	}
+
+	my $libpqwalreceiver =
+	  $solution->AddProject('libpqwalreceiver', 'dll', '',
+		'src/backend/replication/libpqwalreceiver');
+	$libpqwalreceiver->AddIncludeDir('src/interfaces/libpq');
+	$libpqwalreceiver->AddReference($postgres, $libpq);
+
+	my $pgtypes = $solution->AddProject(
+		'libpgtypes', 'dll',
+		'interfaces', 'src/interfaces/ecpg/pgtypeslib');
+	$pgtypes->AddDefine('FRONTEND');
+	$pgtypes->AddReference($libpgport);
+	$pgtypes->UseDef('src/interfaces/ecpg/pgtypeslib/pgtypeslib.def');
+	$pgtypes->AddIncludeDir('src/interfaces/ecpg/include');
+
+	my $libecpg = $solution->AddProject('libecpg', 'dll', 'interfaces',
+		'src/interfaces/ecpg/ecpglib');
+	$libecpg->AddDefine('FRONTEND');
+	$libecpg->AddIncludeDir('src/interfaces/ecpg/include');
+	$libecpg->AddIncludeDir('src/interfaces/libpq');
+	$libecpg->AddIncludeDir('src/port');
+	$libecpg->UseDef('src/interfaces/ecpg/ecpglib/ecpglib.def');
+	$libecpg->AddLibrary('ws2_32.lib');
+	$libecpg->AddReference($libpq, $pgtypes, $libpgport);
+
+	my $libecpgcompat = $solution->AddProject(
+		'libecpg_compat', 'dll',
+		'interfaces',     'src/interfaces/ecpg/compatlib');
+	$libecpgcompat->AddDefine('FRONTEND');
+	$libecpgcompat->AddIncludeDir('src/interfaces/ecpg/include');
+	$libecpgcompat->AddIncludeDir('src/interfaces/libpq');
+	$libecpgcompat->UseDef('src/interfaces/ecpg/compatlib/compatlib.def');
+	$libecpgcompat->AddReference($pgtypes, $libecpg, $libpgport);
+
+	my $ecpg = $solution->AddProject('ecpg', 'exe', 'interfaces',
+		'src/interfaces/ecpg/preproc');
+	$ecpg->AddIncludeDir('src/interfaces/ecpg/include');
+	$ecpg->AddIncludeDir('src/interfaces/libpq');
+	$ecpg->AddPrefixInclude('src/interfaces/ecpg/preproc');
+	$ecpg->AddFiles('src/interfaces/ecpg/preproc', 'pgc.l', 'preproc.y');
+	$ecpg->AddDefine('MAJOR_VERSION=4');
+	$ecpg->AddDefine('MINOR_VERSION=11');
+	$ecpg->AddDefine('PATCHLEVEL=0');
+	$ecpg->AddDefine('ECPG_COMPILE');
+	$ecpg->AddReference($libpgcommon, $libpgport);
+
+	my $pgregress_ecpg =
+	  $solution->AddProject('pg_regress_ecpg', 'exe', 'misc');
+	$pgregress_ecpg->AddFile('src/interfaces/ecpg/test/pg_regress_ecpg.c');
+	$pgregress_ecpg->AddFile('src/test/regress/pg_regress.c');
+	$pgregress_ecpg->AddIncludeDir('src/port');
+	$pgregress_ecpg->AddIncludeDir('src/test/regress');
+	$pgregress_ecpg->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
+	$pgregress_ecpg->AddDefine('FRONTEND');
+	$pgregress_ecpg->AddLibrary('ws2_32.lib');
+	$pgregress_ecpg->AddDirResourceFile('src/interfaces/ecpg/test');
+	$pgregress_ecpg->AddReference($libpgcommon, $libpgport);
+
+	my $isolation_tester =
+	  $solution->AddProject('isolationtester', 'exe', 'misc');
+	$isolation_tester->AddFile('src/test/isolation/isolationtester.c');
+	$isolation_tester->AddFile('src/test/isolation/specparse.y');
+	$isolation_tester->AddFile('src/test/isolation/specscanner.l');
+	$isolation_tester->AddFile('src/test/isolation/specparse.c');
+	$isolation_tester->AddIncludeDir('src/test/isolation');
+	$isolation_tester->AddIncludeDir('src/port');
+	$isolation_tester->AddIncludeDir('src/test/regress');
+	$isolation_tester->AddIncludeDir('src/interfaces/libpq');
+	$isolation_tester->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
+	$isolation_tester->AddLibrary('ws2_32.lib');
+	$isolation_tester->AddDirResourceFile('src/test/isolation');
+	$isolation_tester->AddReference($libpq, $libpgcommon, $libpgport);
+
+	my $pgregress_isolation =
+	  $solution->AddProject('pg_isolation_regress', 'exe', 'misc');
+	$pgregress_isolation->AddFile('src/test/isolation/isolation_main.c');
+	$pgregress_isolation->AddFile('src/test/regress/pg_regress.c');
+	$pgregress_isolation->AddIncludeDir('src/port');
+	$pgregress_isolation->AddIncludeDir('src/test/regress');
+	$pgregress_isolation->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
+	$pgregress_isolation->AddDefine('FRONTEND');
+	$pgregress_isolation->AddLibrary('ws2_32.lib');
+	$pgregress_isolation->AddDirResourceFile('src/test/isolation');
+	$pgregress_isolation->AddReference($libpgcommon, $libpgport);
+
+	# src/bin
+	my $D;
+	opendir($D, 'src/bin') || croak "Could not opendir on src/bin!\n";
+	while (my $d = readdir($D))
+	{
+		next if ($d =~ /^\./);
+		next unless (-f "src/bin/$d/Makefile");
+		next if (grep { /^$d$/ } @frontend_excludes);
+		AddSimpleFrontend($d);
+	}
+
+	my $pgbasebackup = AddSimpleFrontend('pg_basebackup', 1);
+	$pgbasebackup->AddFile('src/bin/pg_basebackup/pg_basebackup.c');
+	$pgbasebackup->AddLibrary('ws2_32.lib');
+
+	my $pgreceivexlog = AddSimpleFrontend('pg_basebackup', 1);
+	$pgreceivexlog->{name} = 'pg_receivexlog';
+	$pgreceivexlog->AddFile('src/bin/pg_basebackup/pg_receivexlog.c');
+	$pgreceivexlog->AddLibrary('ws2_32.lib');
+
+	my $pgrecvlogical = AddSimpleFrontend('pg_basebackup', 1);
+	$pgrecvlogical->{name} = 'pg_recvlogical';
+	$pgrecvlogical->AddFile('src/bin/pg_basebackup/pg_recvlogical.c');
+	$pgrecvlogical->AddLibrary('ws2_32.lib');
+
+	my $pgrewind = AddSimpleFrontend('pg_rewind', 1);
+	$pgrewind->{name} = 'pg_rewind';
+	$pgrewind->AddFile('src/backend/access/transam/xlogreader.c');
+	$pgrewind->AddLibrary('ws2_32.lib');
+	$pgrewind->AddDefine('FRONTEND');
+
+	my $pgevent = $solution->AddProject('pgevent', 'dll', 'bin');
+	$pgevent->AddFiles('src/bin/pgevent', 'pgevent.c', 'pgmsgevent.rc');
+	$pgevent->AddResourceFile('src/bin/pgevent', 'Eventlog message formatter',
+		'win32');
+	$pgevent->RemoveFile('src/bin/pgevent/win32ver.rc');
+	$pgevent->UseDef('src/bin/pgevent/pgevent.def');
+	$pgevent->DisableLinkerWarnings('4104');
+
+	my $pgdump = AddSimpleFrontend('pg_dump', 1);
+	$pgdump->AddIncludeDir('src/backend');
+	$pgdump->AddFile('src/bin/pg_dump/pg_dump.c');
+	$pgdump->AddFile('src/bin/pg_dump/common.c');
+	$pgdump->AddFile('src/bin/pg_dump/pg_dump_sort.c');
+	$pgdump->AddFile('src/bin/pg_dump/keywords.c');
+	$pgdump->AddFile('src/backend/parser/kwlookup.c');
+	$pgdump->AddLibrary('ws2_32.lib');
+
+	my $pgdumpall = AddSimpleFrontend('pg_dump', 1);
+
+	# pg_dumpall doesn't use the files in the Makefile's $(OBJS), unlike
+	# pg_dump and pg_restore.
+	# So remove their sources from the object, keeping the other setup that
+	# AddSimpleFrontend() has done.
+	my @nodumpall = grep { m!src/bin/pg_dump/.*\.c$! }
+	  keys %{ $pgdumpall->{files} };
+	delete @{ $pgdumpall->{files} }{@nodumpall};
+	$pgdumpall->{name} = 'pg_dumpall';
+	$pgdumpall->AddIncludeDir('src/backend');
+	$pgdumpall->AddFile('src/bin/pg_dump/pg_dumpall.c');
+	$pgdumpall->AddFile('src/bin/pg_dump/dumputils.c');
+	$pgdumpall->AddFile('src/bin/pg_dump/keywords.c');
+	$pgdumpall->AddFile('src/backend/parser/kwlookup.c');
+	$pgdumpall->AddLibrary('ws2_32.lib');
+
+	my $pgrestore = AddSimpleFrontend('pg_dump', 1);
+	$pgrestore->{name} = 'pg_restore';
+	$pgrestore->AddIncludeDir('src/backend');
+	$pgrestore->AddFile('src/bin/pg_dump/pg_restore.c');
+	$pgrestore->AddFile('src/bin/pg_dump/keywords.c');
+	$pgrestore->AddFile('src/backend/parser/kwlookup.c');
+	$pgrestore->AddLibrary('ws2_32.lib');
+
+	my $zic = $solution->AddProject('zic', 'exe', 'utils');
+	$zic->AddFiles('src/timezone', 'zic.c');
+	$zic->AddDirResourceFile('src/timezone');
+	$zic->AddReference($libpgcommon, $libpgport);
+
+	if ($solution->{options}->{xml})
+	{
+		$contrib_extraincludes->{'pgxml'} = [
+			$solution->{options}->{xml} . '/include',
+			$solution->{options}->{xslt} . '/include',
+			$solution->{options}->{iconv} . '/include' ];
+
+		$contrib_extralibs->{'pgxml'} = [
+			$solution->{options}->{xml} . '/lib/libxml2.lib',
+			$solution->{options}->{xslt} . '/lib/libxslt.lib' ];
+	}
+	else
+	{
+		push @contrib_excludes, 'xml2';
+	}
+
+	if (!$solution->{options}->{openssl})
+	{
+		push @contrib_excludes, 'sslinfo';
+	}
+
+	if ($solution->{options}->{uuid})
+	{
+		$contrib_extraincludes->{'uuid-ossp'} =
+		  [ $solution->{options}->{uuid} . '/include' ];
+		$contrib_extralibs->{'uuid-ossp'} =
+		  [ $solution->{options}->{uuid} . '/lib/uuid.lib' ];
+	}
+	else
+	{
+		push @contrib_excludes, 'uuid-ossp';
+	}
+
+	# AddProject() does not recognize the constructs used to populate OBJS in
+	# the pgcrypto Makefile, so it will discover no files.
+	my $pgcrypto =
+	  $solution->AddProject('pgcrypto', 'dll', 'crypto', 'contrib/pgcrypto');
+	$pgcrypto->AddFiles(
+		'contrib/pgcrypto', 'pgcrypto.c',
+		'px.c',             'px-hmac.c',
+		'px-crypt.c',       'crypt-gensalt.c',
+		'crypt-blowfish.c', 'crypt-des.c',
+		'crypt-md5.c',      'mbuf.c',
+		'pgp.c',            'pgp-armor.c',
+		'pgp-cfb.c',        'pgp-compress.c',
+		'pgp-decrypt.c',    'pgp-encrypt.c',
+		'pgp-info.c',       'pgp-mpi.c',
+		'pgp-pubdec.c',     'pgp-pubenc.c',
+		'pgp-pubkey.c',     'pgp-s2k.c',
+		'pgp-pgsql.c');
+	if ($solution->{options}->{openssl})
+	{
+		$pgcrypto->AddFiles('contrib/pgcrypto', 'openssl.c',
+			'pgp-mpi-openssl.c');
+	}
+	else
+	{
+		$pgcrypto->AddFiles(
+			'contrib/pgcrypto',   'md5.c',
+			'sha1.c',             'sha2.c',
+			'internal.c',         'internal-sha2.c',
+			'blf.c',              'rijndael.c',
+			'fortuna.c',          'random.c',
+			'pgp-mpi-internal.c', 'imath.c');
+	}
+	$pgcrypto->AddReference($postgres);
+	$pgcrypto->AddLibrary('ws2_32.lib');
+	my $mf = Project::read_file('contrib/pgcrypto/Makefile');
+	GenerateContribSqlFiles('pgcrypto', $mf);
+
+	foreach my $subdir ('contrib', 'src/test/modules')
+	{
+		opendir($D, $subdir) || croak "Could not opendir on $subdir!\n";
+		while (my $d = readdir($D))
+		{
+			next if ($d =~ /^\./);
+			next unless (-f "$subdir/$d/Makefile");
+			next if (grep { /^$d$/ } @contrib_excludes);
+			AddContrib($subdir, $d);
+		}
+		closedir($D);
+	}
+
+	# Build Perl and Python modules after contrib/ modules to satisfy some
+	# dependencies with transform contrib modules, like hstore_plpython
+	# ltree_plpython and hstore_plperl.
+	if ($solution->{options}->{python})
+	{
+
+		# Attempt to get python version and location.
+		# Assume python.exe in specified dir.
+		my $pythonprog = "import sys;print(sys.prefix);"
+		  . "print(str(sys.version_info[0])+str(sys.version_info[1]))";
+		my $prefixcmd =
+		  $solution->{options}->{python} . "\\python -c \"$pythonprog\"";
+		my $pyout = `$prefixcmd`;
+		die "Could not query for python version!\n" if $?;
+		my ($pyprefix, $pyver) = split(/\r?\n/, $pyout);
+
+		# Sometimes (always?) if python is not present, the execution
+		# appears to work, but gives no data...
+		die "Failed to query python for version information\n"
+		  if (!(defined($pyprefix) && defined($pyver)));
+
+		my $pymajorver = substr($pyver, 0, 1);
+		my $plpython = $solution->AddProject('plpython' . $pymajorver,
+			'dll', 'PLs', 'src/pl/plpython');
+		$plpython->AddIncludeDir($pyprefix . '/include');
+		$plpython->AddLibrary($pyprefix . "/Libs/python$pyver.lib");
+		$plpython->AddReference($postgres);
+
+		# Add transform modules dependent on plpython
+		AddTransformModule(
+			'hstore_plpython' . $pymajorver, 'contrib/hstore_plpython',
+			'plpython' . $pymajorver,        'src/pl/plpython',
+			'hstore',                        'contrib/hstore');
+		AddTransformModule(
+			'ltree_plpython' . $pymajorver, 'contrib/ltree_plpython',
+			'plpython' . $pymajorver,       'src/pl/plpython',
+			'ltree',                        'contrib/ltree');
+	}
+
 	if ($solution->{options}->{perl})
 	{
 		my $plperlsrc = "src\\pl\\plperl\\";
@@ -413,487 +730,6 @@ sub mkvcbuild
 		}
 	}
 
-	if ($solution->{options}->{python})
-	{
-
-		# Attempt to get python version and location.
-		# Assume python.exe in specified dir.
-		open(P,
-			$solution->{options}->{python}
-			  . "\\python -c \"import sys;print(sys.prefix);print(str(sys.version_info[0])+str(sys.version_info[1]))\" |"
-		) || die "Could not query for python version!\n";
-		my $pyprefix = <P>;
-		chomp($pyprefix);
-		my $pyver = <P>;
-		chomp($pyver);
-		close(P);
-
-		# Sometimes (always?) if python is not present, the execution
-		# appears to work, but gives no data...
-		die "Failed to query python for version information\n"
-		  if (!(defined($pyprefix) && defined($pyver)));
-
-		my $pymajorver = substr($pyver, 0, 1);
-		my $plpython = $solution->AddProject('plpython' . $pymajorver,
-			'dll', 'PLs', 'src\pl\plpython');
-		$plpython->AddIncludeDir($pyprefix . '\include');
-		$plpython->AddLibrary($pyprefix . "\\Libs\\python$pyver.lib");
-		$plpython->AddReference($postgres);
-	}
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-	if ($solution->{options}->{tcl})
-	{
-		my $found = 0;
-		my $pltcl =
-		  $solution->AddProject('pltcl', 'dll', 'PLs', 'src/pl/tcl');
-		$pltcl->AddIncludeDir($solution->{options}->{tcl} . '/include');
-		$pltcl->AddReference($postgres);
-<<<<<<< HEAD
-
-		for my $tclver (qw(86t 86 85 84))
-		{
-			my $tcllib = $solution->{options}->{tcl} . "\\lib\\tcl$tclver.lib";
-			if (-e $tcllib)
-			{
-				$pltcl->AddLibrary($tcllib);
-				$found = 1;
-				last;
-			}
-=======
-		if (-e $solution->{options}->{tcl} . '/lib/tcl85.lib')
-		{
-			$pltcl->AddLibrary(
-				$solution->{options}->{tcl} . '/lib/tcl85.lib');
-		}
-		else
-		{
-			$pltcl->AddLibrary(
-				$solution->{options}->{tcl} . '/lib/tcl84.lib');
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-		}
-		die "Unable to find $solution->{options}->{tcl}\\lib\\tcl<version>.lib"
-			unless $found;
-	}
-
-	$libpq = $solution->AddProject('libpq', 'dll', 'interfaces',
-		'src/interfaces/libpq');
-	$libpq->AddDefine('FRONTEND');
-	$libpq->AddDefine('UNSAFE_STAT_OK');
-	$libpq->AddIncludeDir('src/port');
-	$libpq->AddLibrary('secur32.lib');
-	$libpq->AddLibrary('ws2_32.lib');
-	$libpq->AddLibrary('wldap32.lib') if ($solution->{options}->{ldap});
-	$libpq->UseDef('src/interfaces/libpq/libpqdll.def');
-	$libpq->ReplaceFile('src/interfaces/libpq/libpqrc.c',
-		'src/interfaces/libpq/libpq.rc');
-	$libpq->AddReference($libpgport);
-
-   # The OBJS scraper doesn't know about ifdefs, so remove fe-secure-openssl.c
-   # if building without OpenSSL
-	if (!$solution->{options}->{openssl})
-	{
-		$libpq->RemoveFile('src/interfaces/libpq/fe-secure-openssl.c');
-	}
-
-	my $libpqwalreceiver =
-	  $solution->AddProject('libpqwalreceiver', 'dll', '',
-		'src/backend/replication/libpqwalreceiver');
-	$libpqwalreceiver->AddIncludeDir('src/interfaces/libpq');
-	$libpqwalreceiver->AddReference($postgres, $libpq);
-
-	my $pgtypes = $solution->AddProject(
-		'libpgtypes', 'dll',
-		'interfaces', 'src/interfaces/ecpg/pgtypeslib');
-	$pgtypes->AddDefine('FRONTEND');
-	$pgtypes->AddReference($libpgport);
-	$pgtypes->UseDef('src/interfaces/ecpg/pgtypeslib/pgtypeslib.def');
-	$pgtypes->AddIncludeDir('src/interfaces/ecpg/include');
-
-	my $libecpg = $solution->AddProject('libecpg', 'dll', 'interfaces',
-		'src/interfaces/ecpg/ecpglib');
-	$libecpg->AddDefine('FRONTEND');
-	$libecpg->AddIncludeDir('src/interfaces/ecpg/include');
-	$libecpg->AddIncludeDir('src/interfaces/libpq');
-	$libecpg->AddIncludeDir('src/port');
-	$libecpg->UseDef('src/interfaces/ecpg/ecpglib/ecpglib.def');
-	$libecpg->AddLibrary('ws2_32.lib');
-	$libecpg->AddReference($libpq, $pgtypes, $libpgport);
-
-	my $libecpgcompat = $solution->AddProject(
-		'libecpg_compat', 'dll',
-<<<<<<< HEAD
-		'interfaces',     'src\interfaces\ecpg\compatlib');
-	$libecpgcompat->AddDefine('FRONTEND');
-	$libecpgcompat->AddIncludeDir('src\interfaces\ecpg\include');
-	$libecpgcompat->AddIncludeDir('src\interfaces\libpq');
-	$libecpgcompat->UseDef('src\interfaces\ecpg\compatlib\compatlib.def');
-=======
-		'interfaces',     'src/interfaces/ecpg/compatlib');
-	$libecpgcompat->AddDefine('FRONTEND');
-	$libecpgcompat->AddIncludeDir('src/interfaces/ecpg/include');
-	$libecpgcompat->AddIncludeDir('src/interfaces/libpq');
-	$libecpgcompat->UseDef('src/interfaces/ecpg/compatlib/compatlib.def');
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-	$libecpgcompat->AddReference($pgtypes, $libecpg, $libpgport);
-
-	my $ecpg = $solution->AddProject('ecpg', 'exe', 'interfaces',
-		'src/interfaces/ecpg/preproc');
-	$ecpg->AddIncludeDir('src/interfaces/ecpg/include');
-	$ecpg->AddIncludeDir('src/interfaces/libpq');
-	$ecpg->AddPrefixInclude('src/interfaces/ecpg/preproc');
-	$ecpg->AddFiles('src/interfaces/ecpg/preproc', 'pgc.l', 'preproc.y');
-	$ecpg->AddDefine('MAJOR_VERSION=4');
-	$ecpg->AddDefine('MINOR_VERSION=11');
-	$ecpg->AddDefine('PATCHLEVEL=0');
-	$ecpg->AddDefine('ECPG_COMPILE');
-	$ecpg->AddReference($libpgcommon, $libpgport);
-
-	my $pgregress_ecpg =
-	  $solution->AddProject('pg_regress_ecpg', 'exe', 'misc');
-	$pgregress_ecpg->AddFile('src/interfaces/ecpg/test/pg_regress_ecpg.c');
-	$pgregress_ecpg->AddFile('src/test/regress/pg_regress.c');
-	$pgregress_ecpg->AddIncludeDir('src/port');
-	$pgregress_ecpg->AddIncludeDir('src/test/regress');
-	$pgregress_ecpg->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
-<<<<<<< HEAD
-	$pgregress_ecpg->AddDefine('FRONTEND');
-	$pgregress_ecpg->AddLibrary('ws2_32.lib');
-=======
-	$pgregress_ecpg->AddLibrary('ws2_32.lib');
-	$pgregress_ecpg->AddDirResourceFile('src/interfaces/ecpg/test');
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-	$pgregress_ecpg->AddReference($libpgcommon, $libpgport);
-
-	my $isolation_tester =
-	  $solution->AddProject('isolationtester', 'exe', 'misc');
-	$isolation_tester->AddFile('src/test/isolation/isolationtester.c');
-	$isolation_tester->AddFile('src/test/isolation/specparse.y');
-	$isolation_tester->AddFile('src/test/isolation/specscanner.l');
-	$isolation_tester->AddFile('src/test/isolation/specparse.c');
-	$isolation_tester->AddIncludeDir('src/test/isolation');
-	$isolation_tester->AddIncludeDir('src/port');
-	$isolation_tester->AddIncludeDir('src/test/regress');
-	$isolation_tester->AddIncludeDir('src/interfaces/libpq');
-	$isolation_tester->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
-	$isolation_tester->AddLibrary('ws2_32.lib');
-	$isolation_tester->AddDirResourceFile('src/test/isolation');
-	$isolation_tester->AddReference($libpq, $libpgcommon, $libpgport);
-
-	my $pgregress_isolation =
-	  $solution->AddProject('pg_isolation_regress', 'exe', 'misc');
-	$pgregress_isolation->AddFile('src/test/isolation/isolation_main.c');
-	$pgregress_isolation->AddFile('src/test/regress/pg_regress.c');
-	$pgregress_isolation->AddIncludeDir('src/port');
-	$pgregress_isolation->AddIncludeDir('src/test/regress');
-	$pgregress_isolation->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
-<<<<<<< HEAD
-	$pgregress_isolation->AddDefine('FRONTEND');
-	$pgregress_isolation->AddLibrary('ws2_32.lib');
-=======
-	$pgregress_isolation->AddLibrary('ws2_32.lib');
-	$pgregress_isolation->AddDirResourceFile('src/test/isolation');
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-	$pgregress_isolation->AddReference($libpgcommon, $libpgport);
-
-	# src/bin
-	my $D;
-	opendir($D, 'src/bin') || croak "Could not opendir on src/bin!\n";
-	while (my $d = readdir($D))
-	{
-		next if ($d =~ /^\./);
-		next unless (-f "src/bin/$d/Makefile");
-		next if (grep { /^$d$/ } @frontend_excludes);
-		AddSimpleFrontend($d);
-	}
-
-	my $pgbasebackup = AddSimpleFrontend('pg_basebackup', 1);
-	$pgbasebackup->AddFile('src/bin/pg_basebackup/pg_basebackup.c');
-	$pgbasebackup->AddLibrary('ws2_32.lib');
-
-	my $pgreceivexlog = AddSimpleFrontend('pg_basebackup', 1);
-	$pgreceivexlog->{name} = 'pg_receivexlog';
-	$pgreceivexlog->AddFile('src/bin/pg_basebackup/pg_receivexlog.c');
-	$pgreceivexlog->AddLibrary('ws2_32.lib');
-
-	my $pgrecvlogical = AddSimpleFrontend('pg_basebackup', 1);
-	$pgrecvlogical->{name} = 'pg_recvlogical';
-	$pgrecvlogical->AddFile('src/bin/pg_basebackup/pg_recvlogical.c');
-	$pgrecvlogical->AddLibrary('ws2_32.lib');
-
-	my $pgrewind = AddSimpleFrontend('pg_rewind', 1);
-	$pgrewind->{name} = 'pg_rewind';
-	$pgrewind->AddFile('src/backend/access/transam/xlogreader.c');
-	$pgrewind->AddLibrary('ws2_32.lib');
-	$pgrewind->AddDefine('FRONTEND');
-
-	my $pgevent = $solution->AddProject('pgevent', 'dll', 'bin');
-	$pgevent->AddFiles('src/bin/pgevent', 'pgevent.c', 'pgmsgevent.rc');
-	$pgevent->AddResourceFile('src/bin/pgevent', 'Eventlog message formatter',
-		'win32');
-	$pgevent->RemoveFile('src/bin/pgevent/win32ver.rc');
-	$pgevent->UseDef('src/bin/pgevent/pgevent.def');
-	$pgevent->DisableLinkerWarnings('4104');
-
-	my $pgdump = AddSimpleFrontend('pg_dump', 1);
-	$pgdump->AddIncludeDir('src/backend');
-	$pgdump->AddFile('src/bin/pg_dump/pg_dump.c');
-	$pgdump->AddFile('src/bin/pg_dump/common.c');
-	$pgdump->AddFile('src/bin/pg_dump/pg_dump_sort.c');
-	$pgdump->AddFile('src/bin/pg_dump/keywords.c');
-	$pgdump->AddFile('src/backend/parser/kwlookup.c');
-	$pgdump->AddLibrary('ws2_32.lib');
-
-	my $pgdumpall = AddSimpleFrontend('pg_dump', 1);
-
-	# pg_dumpall doesn't use the files in the Makefile's $(OBJS), unlike
-	# pg_dump and pg_restore.
-	# So remove their sources from the object, keeping the other setup that
-	# AddSimpleFrontend() has done.
-	my @nodumpall = grep { m!src/bin/pg_dump/.*\.c$! }
-	  keys %{ $pgdumpall->{files} };
-	delete @{ $pgdumpall->{files} }{@nodumpall};
-	$pgdumpall->{name} = 'pg_dumpall';
-	$pgdumpall->AddIncludeDir('src/backend');
-	$pgdumpall->AddFile('src/bin/pg_dump/pg_dumpall.c');
-	$pgdumpall->AddFile('src/bin/pg_dump/dumputils.c');
-	$pgdumpall->AddFile('src/bin/pg_dump/keywords.c');
-	$pgdumpall->AddFile('src/backend/parser/kwlookup.c');
-	$pgdumpall->AddLibrary('ws2_32.lib');
-
-	my $pgrestore = AddSimpleFrontend('pg_dump', 1);
-	$pgrestore->{name} = 'pg_restore';
-	$pgrestore->AddIncludeDir('src/backend');
-	$pgrestore->AddFile('src/bin/pg_dump/pg_restore.c');
-	$pgrestore->AddFile('src/bin/pg_dump/keywords.c');
-	$pgrestore->AddFile('src/backend/parser/kwlookup.c');
-	$pgrestore->AddLibrary('ws2_32.lib');
-
-	my $zic = $solution->AddProject('zic', 'exe', 'utils');
-<<<<<<< HEAD
-	$zic->AddFiles('src\timezone', 'zic.c');
-=======
-	$zic->AddFiles('src/timezone', 'zic.c', 'ialloc.c', 'scheck.c',
-		'localtime.c');
-	$zic->AddDirResourceFile('src/timezone');
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-	$zic->AddReference($libpgcommon, $libpgport);
-
-	if ($solution->{options}->{xml})
-	{
-		$contrib_extraincludes->{'pgxml'} = [
-			$solution->{options}->{xml} . '/include',
-			$solution->{options}->{xslt} . '/include',
-			$solution->{options}->{iconv} . '/include' ];
-
-		$contrib_extralibs->{'pgxml'} = [
-			$solution->{options}->{xml} . '/lib/libxml2.lib',
-			$solution->{options}->{xslt} . '/lib/libxslt.lib' ];
-	}
-	else
-	{
-		push @contrib_excludes, 'xml2';
-	}
-
-	if (!$solution->{options}->{openssl})
-	{
-		push @contrib_excludes, 'sslinfo';
-	}
-
-	if ($solution->{options}->{uuid})
-	{
-		$contrib_extraincludes->{'uuid-ossp'} =
-		  [ $solution->{options}->{uuid} . '/include' ];
-		$contrib_extralibs->{'uuid-ossp'} =
-		  [ $solution->{options}->{uuid} . '/lib/uuid.lib' ];
-	}
-	else
-	{
-		push @contrib_excludes, 'uuid-ossp';
-	}
-
-	# AddProject() does not recognize the constructs used to populate OBJS in
-	# the pgcrypto Makefile, so it will discover no files.
-	my $pgcrypto =
-	  $solution->AddProject('pgcrypto', 'dll', 'crypto', 'contrib/pgcrypto');
-	$pgcrypto->AddFiles(
-		'contrib/pgcrypto', 'pgcrypto.c',
-		'px.c',             'px-hmac.c',
-		'px-crypt.c',       'crypt-gensalt.c',
-		'crypt-blowfish.c', 'crypt-des.c',
-		'crypt-md5.c',      'mbuf.c',
-		'pgp.c',            'pgp-armor.c',
-		'pgp-cfb.c',        'pgp-compress.c',
-		'pgp-decrypt.c',    'pgp-encrypt.c',
-		'pgp-info.c',       'pgp-mpi.c',
-		'pgp-pubdec.c',     'pgp-pubenc.c',
-		'pgp-pubkey.c',     'pgp-s2k.c',
-		'pgp-pgsql.c');
-	if ($solution->{options}->{openssl})
-	{
-		$pgcrypto->AddFiles('contrib/pgcrypto', 'openssl.c',
-			'pgp-mpi-openssl.c');
-	}
-	else
-	{
-		$pgcrypto->AddFiles(
-			'contrib/pgcrypto',   'md5.c',
-			'sha1.c',             'sha2.c',
-			'internal.c',         'internal-sha2.c',
-			'blf.c',              'rijndael.c',
-			'fortuna.c',          'random.c',
-			'pgp-mpi-internal.c', 'imath.c');
-	}
-	$pgcrypto->AddReference($postgres);
-	$pgcrypto->AddLibrary('ws2_32.lib');
-	my $mf = Project::read_file('contrib/pgcrypto/Makefile');
-	GenerateContribSqlFiles('pgcrypto', $mf);
-
-	foreach my $subdir ('contrib', 'src/test/modules')
-	{
-		opendir($D, $subdir) || croak "Could not opendir on $subdir!\n";
-		while (my $d = readdir($D))
-		{
-			next if ($d =~ /^\./);
-			next unless (-f "$subdir/$d/Makefile");
-			next if (grep { /^$d$/ } @contrib_excludes);
-			AddContrib($subdir, $d);
-		}
-		closedir($D);
-	}
-
-	# Build Perl and Python modules after contrib/ modules to satisfy some
-	# dependencies with transform contrib modules, like hstore_plpython
-	# ltree_plpython and hstore_plperl.
-	if ($solution->{options}->{python})
-	{
-
-		# Attempt to get python version and location.
-		# Assume python.exe in specified dir.
-		my $pythonprog = "import sys;print(sys.prefix);"
-		  . "print(str(sys.version_info[0])+str(sys.version_info[1]))";
-		my $prefixcmd =
-		  $solution->{options}->{python} . "\\python -c \"$pythonprog\"";
-		my $pyout = `$prefixcmd`;
-		die "Could not query for python version!\n" if $?;
-		my ($pyprefix, $pyver) = split(/\r?\n/, $pyout);
-
-		# Sometimes (always?) if python is not present, the execution
-		# appears to work, but gives no data...
-		die "Failed to query python for version information\n"
-		  if (!(defined($pyprefix) && defined($pyver)));
-
-		my $pymajorver = substr($pyver, 0, 1);
-		my $plpython = $solution->AddProject('plpython' . $pymajorver,
-			'dll', 'PLs', 'src/pl/plpython');
-		$plpython->AddIncludeDir($pyprefix . '/include');
-		$plpython->AddLibrary($pyprefix . "/Libs/python$pyver.lib");
-		$plpython->AddReference($postgres);
-
-		# Add transform modules dependent on plpython
-		AddTransformModule(
-			'hstore_plpython' . $pymajorver, 'contrib/hstore_plpython',
-			'plpython' . $pymajorver,        'src/pl/plpython',
-			'hstore',                        'contrib/hstore');
-		AddTransformModule(
-			'ltree_plpython' . $pymajorver, 'contrib/ltree_plpython',
-			'plpython' . $pymajorver,       'src/pl/plpython',
-			'ltree',                        'contrib/ltree');
-	}
-
-	if ($solution->{options}->{perl})
-	{
-		my $plperlsrc = "src/pl/plperl/";
-		my $plperl =
-		  $solution->AddProject('plperl', 'dll', 'PLs', 'src/pl/plperl');
-		$plperl->AddIncludeDir($solution->{options}->{perl} . '/lib/CORE');
-		$plperl->AddDefine('PLPERL_HAVE_UID_GID');
-		foreach my $xs ('SPI.xs', 'Util.xs')
-		{
-			(my $xsc = $xs) =~ s/\.xs/.c/;
-			if (Solution::IsNewer("$plperlsrc$xsc", "$plperlsrc$xs"))
-			{
-				my $xsubppdir = first { -e "$_/ExtUtils/xsubpp" } @INC;
-				print "Building $plperlsrc$xsc...\n";
-				system( $solution->{options}->{perl}
-					  . '/bin/perl '
-					  . "$xsubppdir/ExtUtils/xsubpp -typemap "
-					  . $solution->{options}->{perl}
-					  . '/lib/ExtUtils/typemap '
-					  . "$plperlsrc$xs "
-					  . ">$plperlsrc$xsc");
-				if ((!(-f "$plperlsrc$xsc")) || -z "$plperlsrc$xsc")
-				{
-					unlink("$plperlsrc$xsc");    # if zero size
-					die "Failed to create $xsc.\n";
-				}
-			}
-		}
-		if (Solution::IsNewer(
-				'src/pl/plperl/perlchunks.h',
-				'src/pl/plperl/plc_perlboot.pl')
-			|| Solution::IsNewer(
-				'src/pl/plperl/perlchunks.h',
-				'src/pl/plperl/plc_trusted.pl'))
-		{
-			print 'Building src/pl/plperl/perlchunks.h ...' . "\n";
-			my $basedir = getcwd;
-			chdir 'src/pl/plperl';
-			system( $solution->{options}->{perl}
-				  . '/bin/perl '
-				  . 'text2macro.pl '
-				  . '--strip="^(\#.*|\s*)$$" '
-				  . 'plc_perlboot.pl plc_trusted.pl '
-				  . '>perlchunks.h');
-			chdir $basedir;
-			if ((!(-f 'src/pl/plperl/perlchunks.h'))
-				|| -z 'src/pl/plperl/perlchunks.h')
-			{
-				unlink('src/pl/plperl/perlchunks.h');    # if zero size
-				die 'Failed to create perlchunks.h' . "\n";
-			}
-		}
-		if (Solution::IsNewer(
-				'src/pl/plperl/plperl_opmask.h',
-				'src/pl/plperl/plperl_opmask.pl'))
-		{
-			print 'Building src/pl/plperl/plperl_opmask.h ...' . "\n";
-			my $basedir = getcwd;
-			chdir 'src/pl/plperl';
-			system( $solution->{options}->{perl}
-				  . '/bin/perl '
-				  . 'plperl_opmask.pl '
-				  . 'plperl_opmask.h');
-			chdir $basedir;
-			if ((!(-f 'src/pl/plperl/plperl_opmask.h'))
-				|| -z 'src/pl/plperl/plperl_opmask.h')
-			{
-				unlink('src/pl/plperl/plperl_opmask.h');    # if zero size
-				die 'Failed to create plperl_opmask.h' . "\n";
-			}
-		}
-		$plperl->AddReference($postgres);
-		my @perl_libs =
-		  grep { /perl\d+.lib$/ }
-		  glob($solution->{options}->{perl} . '\lib\CORE\perl*.lib');
-		if (@perl_libs == 1)
-		{
-			$plperl->AddLibrary($perl_libs[0]);
-		}
-		else
-		{
-			die "could not identify perl library version";
-		}
-
-		# Add transform module dependent on plperl
-		my $hstore_plperl = AddTransformModule(
-			'hstore_plperl', 'contrib/hstore_plperl',
-			'plperl',        'src/pl/plperl',
-			'hstore',        'contrib/hstore');
-		$hstore_plperl->AddDefine('PLPERL_HAVE_UID_GID');
-	}
-
 	$mf =
 	  Project::read_file('src/backend/utils/mb/conversion_procs/Makefile');
 	$mf =~ s{\\\r?\n}{}g;
@@ -960,13 +796,9 @@ sub mkvcbuild
 	$pgregress->AddFile('src/test/regress/pg_regress_main.c');
 	$pgregress->AddIncludeDir('src/port');
 	$pgregress->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
-<<<<<<< HEAD
 	$pgregress->AddDefine('FRONTEND');
 	$pgregress->AddLibrary('ws2_32.lib');
-=======
-	$pgregress->AddLibrary('ws2_32.lib');
 	$pgregress->AddDirResourceFile('src/test/regress');
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	$pgregress->AddReference($libpgcommon, $libpgport);
 
 	# fix up pg_xlogdump once it's been set up

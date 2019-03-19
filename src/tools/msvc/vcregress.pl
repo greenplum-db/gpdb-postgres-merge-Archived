@@ -36,11 +36,7 @@ if (-e "src/tools/msvc/buildenv.pl")
 
 my $what = shift || "";
 if ($what =~
-<<<<<<< HEAD
-/^(check|installcheck|plcheck|contribcheck|ecpgcheck|isolationcheck|upgradecheck|bincheck|taptest)$/i
-=======
-/^(check|installcheck|plcheck|contribcheck|modulescheck|ecpgcheck|isolationcheck|upgradecheck)$/i
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+/^(check|installcheck|plcheck|contribcheck|modulescheck|ecpgcheck|isolationcheck|upgradecheck|bincheck|taptest)$/i
   )
 {
 	$what = uc $what;
@@ -119,15 +115,10 @@ sub installcheck
 
 sub check
 {
-<<<<<<< HEAD
 	my $schedule = shift || 'parallel';
-=======
 	chdir $startdir;
-
 	InstallTemp();
 	chdir "${topdir}/src/test/regress";
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	my @args = (
 		"${tmp_installdir}/bin/pg_regress",
 		"--dlpath=.",
@@ -151,19 +142,10 @@ sub ecpgcheck
 	exit $status if $status;
 	InstallTemp();
 	chdir "$topdir/src/interfaces/ecpg/test";
-<<<<<<< HEAD
 	my $schedule = "ecpg";
 	my @args     = (
 		"../../../../$Config/pg_regress_ecpg/pg_regress_ecpg",
 		"--psqldir=../../../$Config/psql",
-=======
-
-	$ENV{PATH} = "${tmp_installdir}/bin;${tmp_installdir}/lib;$ENV{PATH}";
-	$schedule = "ecpg";
-	my @args = (
-		"${tmp_installdir}/bin/pg_regress_ecpg",
-		"--bindir=",
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		"--dbname=regress1,connectdb",
 		"--create-role=connectuser,connectdb",
 		"--schedule=${schedule}_schedule",
@@ -611,14 +593,9 @@ sub fetchRegressOpts
 	my @opts;
 
 	$m =~ s{\\\r?\n}{}g;
-<<<<<<< HEAD
-	if ($m =~ /^\s*REGRESS_OPTS\s*=(.*)/m)
-	{
-=======
 	if ($m =~ /^\s*REGRESS_OPTS\s*\+?=(.*)/m)
 	{
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		# Substitute known Makefile variables, then ignore options that retain
 		# an unhandled variable reference.  Ignore anything that isn't an
 		# option starting with "--".
@@ -691,23 +668,17 @@ sub GetTests
 
 sub InstallTemp
 {
-<<<<<<< HEAD
 	unless ($ENV{NO_TEMP_INSTALL})
 	{
 		print "Setting up temp install\n\n";
 		Install("$tmp_installdir", "all", $config);
 	}
 	$ENV{PATH} = "$tmp_installdir/bin;$ENV{PATH}";
-=======
-	print "Setting up temp install\n\n";
-	Install("$tmp_installdir", "all", $config);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 sub usage
 {
 	print STDERR
-<<<<<<< HEAD
 	  "Usage: vcregress.pl <mode> [ <arg>]\n\n",
 	  "Options for <mode>:\n",
 	  "  bincheck       run tests of utilities in src/bin/\n",
@@ -724,9 +695,5 @@ sub usage
 	  "  parallel       parallel mode\n",
 	  "\nOption for <arg>: for taptest\n",
 	  "  TEST_DIR       (required) directory where tests reside\n";
-=======
-	  "Usage: vcregress.pl ",
-"<check|installcheck|plcheck|contribcheck|isolationcheck|ecpgcheck|upgradecheck> [schedule]\n";
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	exit(1);
 }

@@ -89,7 +89,7 @@
 {
 	padding_twophase_CRC
 	Memcheck:Value8
-<<<<<<< HEAD
+	fun:pg_comp_crc32c
 	fun:EndPrepare
 }
 
@@ -135,13 +135,6 @@
 	fun:RelationMapFinishBootstrap
 }
 
-=======
-	fun:pg_comp_crc32c
-	fun:EndPrepare
-}
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-
 # gcc on ppc64 can generate a four-byte read to fetch the final "char" fields
 # of a FormData_pg_cast.  This is valid compiler behavior, because a proper
 # FormData_pg_cast has trailing padding.  Tuples we treat as structures omit
@@ -154,8 +147,6 @@
 
 	fun:IsBinaryCoercible
 }
-
-<<<<<<< HEAD
 
 # Python's allocator does some low-level tricks for efficiency. Those
 # can be disabled for better instrumentation; but few people testing
@@ -220,7 +211,8 @@
    python_clever_allocator
    Memcheck:Cond
    fun:PyObject_Realloc
-=======
+}
+
 # Atomic writes to 64bit atomic vars uses compare/exchange to
 # guarantee atomic writes of 64bit variables. pg_atomic_write is used
 # during initialization of the atomic variable, hat leads to an
@@ -232,5 +224,4 @@
 	fun:pg_atomic_exchange_u64_impl
 	fun:pg_atomic_write_u64_impl
 	fun:pg_atomic_init_u64_impl
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }

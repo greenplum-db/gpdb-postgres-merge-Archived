@@ -87,14 +87,9 @@ sub DeterminePlatform
 sub IsNewer
 {
 	my ($newfile, $oldfile) = @_;
-<<<<<<< HEAD
 	-e $oldfile or warn "source file \"$oldfile\" does not exist";
-	if (   $oldfile ne 'src\tools\msvc\config.pl'
-		&& $oldfile ne 'src\tools\msvc\config_default.pl')
-=======
 	if (   $oldfile ne 'src/tools/msvc/config.pl'
 		&& $oldfile ne 'src/tools/msvc/config_default.pl')
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{
 		return 1
 		  if (-f 'src/tools/msvc/config.pl')
@@ -291,7 +286,6 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 			'src/include/utils/fmgroids.h');
 	}
 
-<<<<<<< HEAD
 	if (IsNewer(
 			'src/include/dynloader.h',
 			'src/backend/port/dynloader/win32.h'))
@@ -300,30 +294,18 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 			'src/include/dynloader.h');
 	}
 
-	if (IsNewer('src\include\utils\probes.h', 'src\backend\utils\probes.d'))
-	{
-		print "Generating probes.h...\n";
-		system(
-'perl src/backend/utils/Gen_dummy_probes.pl src/backend/utils/probes.d > src/include/utils/probes.h'
-=======
 	if (IsNewer('src/include/utils/probes.h', 'src/backend/utils/probes.d'))
 	{
 		print "Generating probes.h...\n";
 		system(
 'psed -f src/backend/utils/Gen_dummy_probes.sed src/backend/utils/probes.d > src/include/utils/probes.h'
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		);
 	}
 
 	if ($self->{options}->{python}
 		&& IsNewer(
-<<<<<<< HEAD
-			'src\pl\plpython\spiexceptions.h',
-			'src\backend\utils\errcodes.txt'))
-=======
 			'src/pl/plpython/spiexceptions.h',
-			'src/include/backend/errcodes.txt'))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+			'src/backend/utils/errcodes.txt'))
 	{
 		print "Generating spiexceptions.h...\n";
 		system(
