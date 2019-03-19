@@ -19,11 +19,7 @@ my $startdir = getcwd();
 
 chdir "../../.." if (-d "../../../src/tools/msvc");
 
-<<<<<<< HEAD
-my $topdir = getcwd();
-=======
 my $topdir         = getcwd();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 my $tmp_installdir = "$topdir/tmp_install";
 
 require 'src/tools/msvc/config_default.pl';

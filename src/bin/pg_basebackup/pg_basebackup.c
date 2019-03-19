@@ -243,11 +243,7 @@ usage(void)
 	printf(_("  -D, --pgdata=DIRECTORY receive base backup into directory\n"));
 	printf(_("  -F, --format=p|t       output format (plain (default), tar)\n"));
 	printf(_("  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
-<<<<<<< HEAD
-			 "                         (in kB/s, or use suffix \"k\" or \"M\")\n"));
-=======
 	  "                         (in kB/s, or use suffix \"k\" or \"M\")\n"));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	printf(_("  -R, --write-recovery-conf\n"
 			 "                         write recovery.conf after backup\n"));
 	printf(_("  -S, --slot=SLOTNAME    replication slot to use\n"));
@@ -1355,11 +1351,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 						 * failures on related directories.
 						 */
 						if (!((pg_str_endswith(filename, "/pg_xlog") ||
-<<<<<<< HEAD
-							   pg_str_endswith(filename, "/archive_status")) &&
-=======
 							 pg_str_endswith(filename, "/archive_status")) &&
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 							  errno == EEXIST))
 						{
 							fprintf(stderr,

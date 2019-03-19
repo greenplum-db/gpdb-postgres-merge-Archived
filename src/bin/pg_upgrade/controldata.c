@@ -240,8 +240,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		}
 #endif
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/controldata.c
 		if ((p = strstr(bufin, "pg_control version number:")) != NULL)
 		{
 			p = strchr(p, ':');

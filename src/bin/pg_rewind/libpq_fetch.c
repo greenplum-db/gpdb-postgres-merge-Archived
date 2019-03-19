@@ -93,11 +93,7 @@ libpqConnect(const char *connstr)
 	pg_free(str);
 
 	/*
-<<<<<<< HEAD
-	 * Also check that full_page_writes is enabled.  We can get torn pages if
-=======
 	 * Also check that full_page_writes is enabled. We can get torn pages if
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 * a page is modified while we read it with pg_read_binary_file(), and we
 	 * rely on full page images to fix them.
 	 */

@@ -3221,11 +3221,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 					(errcode(ERRCODE_CHECK_VIOLATION),
 					 errmsg("new row for relation \"%s\" violates check constraint \"%s\"",
 							RelationGetRelationName(rel), failed),
-<<<<<<< HEAD
-					 val_desc ? errdetail("Failing row contains %s.", val_desc) : 0,
-=======
 			  val_desc ? errdetail("Failing row contains %s.", val_desc) : 0,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					 errtableconstraint(rel, failed)));
 		}
 	}

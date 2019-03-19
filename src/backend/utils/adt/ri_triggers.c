@@ -3316,19 +3316,11 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 						RelationGetRelationName(fk_rel),
 						NameStr(riinfo->conname)),
 				 has_perm ?
-<<<<<<< HEAD
-					 errdetail("Key (%s)=(%s) is not present in table \"%s\".",
-							   key_names.data, key_values.data,
-							   RelationGetRelationName(pk_rel)) :
-					 errdetail("Key is not present in table \"%s\".",
-							   RelationGetRelationName(pk_rel)),
-=======
 				 errdetail("Key (%s)=(%s) is not present in table \"%s\".",
 						   key_names.data, key_values.data,
 						   RelationGetRelationName(pk_rel)) :
 				 errdetail("Key is not present in table \"%s\".",
 						   RelationGetRelationName(pk_rel)),
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				 errtableconstraint(fk_rel, NameStr(riinfo->conname))));
 	else
 		ereport(ERROR,
@@ -3341,13 +3333,8 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 			errdetail("Key (%s)=(%s) is still referenced from table \"%s\".",
 					  key_names.data, key_values.data,
 					  RelationGetRelationName(fk_rel)) :
-<<<<<<< HEAD
-					errdetail("Key is still referenced from table \"%s\".",
-					  RelationGetRelationName(fk_rel)),
-=======
 				 errdetail("Key is still referenced from table \"%s\".",
 						   RelationGetRelationName(fk_rel)),
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				 errtableconstraint(fk_rel, NameStr(riinfo->conname))));
 }
 

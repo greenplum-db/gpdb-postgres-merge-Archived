@@ -304,13 +304,8 @@ tsq_mcontains(PG_FUNCTION_ARGS)
 		result = false;
 	else
 	{
-<<<<<<< HEAD
-		int i;
-		int j = 0;
-=======
 		int			i;
 		int			j = 0;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		for (i = 0; i < ex_nvalues; i++)
 		{

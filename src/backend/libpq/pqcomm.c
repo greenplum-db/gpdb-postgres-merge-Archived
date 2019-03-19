@@ -1243,11 +1243,7 @@ pq_getstring(StringInfo s)
 
 
 /* --------------------------------
-<<<<<<< HEAD
- *		pq_startmsgread	- begin reading a message from the client.
-=======
  *		pq_startmsgread - begin reading a message from the client.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  *
  *		This must be called before any of the pq_get* functions.
  * --------------------------------
@@ -1262,11 +1258,7 @@ pq_startmsgread(void)
 	if (PqCommReadingMsg)
 		ereport(FATAL,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
-<<<<<<< HEAD
-				 errmsg("terminating connection because protocol sync was lost")));
-=======
 		   errmsg("terminating connection because protocol sync was lost")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	PqCommReadingMsg = true;
 }

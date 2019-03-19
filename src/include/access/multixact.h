@@ -126,11 +126,7 @@ extern void MultiXactAdvanceNextMXact(MultiXactId minMulti,
 						  MultiXactOffset minMultiOffset);
 extern void MultiXactAdvanceOldest(MultiXactId oldestMulti, Oid oldestMultiDB);
 extern void MultiXactSetSafeTruncate(MultiXactId safeTruncateMulti);
-<<<<<<< HEAD
-extern int MultiXactMemberFreezeThreshold(void);
-=======
 extern int	MultiXactMemberFreezeThreshold(void);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 extern void multixact_twophase_recover(TransactionId xid, uint16 info,
 						   void *recdata, uint32 len);

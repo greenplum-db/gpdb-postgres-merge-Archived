@@ -57,8 +57,6 @@ static void set_frozenxids(bool minmxid_only);
 <<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
 static void freeze_master_data(void);
 static void reset_system_identifier(void);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 static void setup(char *argv0, bool *live_check);
 static void cleanup(void);
 static void	get_restricted_token(const char *progname);
@@ -777,8 +775,6 @@ remove_new_subdir(char *subdir, bool rmtopdir)
 	if (!rmtree(new_path, rmtopdir))
 		pg_fatal("could not delete directory \"%s\"\n", new_path);
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 	check_ok();
 }
 
@@ -970,8 +966,6 @@ set_frozenxids(bool minmxid_only)
 	PQclear(executeQueryOrDie(conn_template1,
 							  "set allow_system_table_mods=true"));
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 	if (!minmxid_only)
 		/* set pg_database.datfrozenxid */
 		PQclear(executeQueryOrDie(conn_template1,

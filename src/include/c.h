@@ -419,20 +419,6 @@ typedef unsigned PG_INT128_TYPE uint128;
  * stdint.h limits aren't guaranteed to be present and aren't guaranteed to
  * have compatible types with our fixed width types. So just define our own.
  */
-<<<<<<< HEAD
-#define PG_INT8_MIN     (-0x7F-1)
-#define PG_INT8_MAX     (0x7F)
-#define PG_UINT8_MAX    (0xFF)
-#define PG_INT16_MIN    (-0x7FFF-1)
-#define PG_INT16_MAX    (0x7FFF)
-#define PG_UINT16_MAX   (0xFFFF)
-#define PG_INT32_MIN    (-0x7FFFFFFF-1)
-#define PG_INT32_MAX    (0x7FFFFFFF)
-#define PG_UINT32_MAX   (0xFFFFFFFF)
-#define PG_INT64_MIN    (-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
-#define PG_INT64_MAX    INT64CONST(0x7FFFFFFFFFFFFFFF)
-#define PG_UINT64_MAX   UINT64CONST(0xFFFFFFFFFFFFFFFF)
-=======
 #define PG_INT8_MIN		(-0x7F-1)
 #define PG_INT8_MAX		(0x7F)
 #define PG_UINT8_MAX	(0xFF)
@@ -445,7 +431,6 @@ typedef unsigned PG_INT128_TYPE uint128;
 #define PG_INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
 #define PG_INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
 #define PG_UINT64_MAX	UINT64CONST(0xFFFFFFFFFFFFFFFF)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* Select timestamp representation (float8 or int64) */
 #ifdef USE_INTEGER_DATETIMES

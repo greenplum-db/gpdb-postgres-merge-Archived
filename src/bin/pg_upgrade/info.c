@@ -596,8 +596,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	}
 
 	/*
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/info.c
 	 * pg_largeobject contains user data that does not appear in pg_dump
 	 * --schema-only output, so we have to copy that system table heap and
 	 * index.  We could grab the pg_largeobject oids from template1, but it is

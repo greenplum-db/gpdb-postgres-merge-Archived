@@ -864,11 +864,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						mallocedval = ecpg_strdup("", lineno);
 
 					if (!mallocedval)
-<<<<<<< HEAD
-							return false;
-=======
 						return false;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 					for (element = 0; element < asize; element++)
 					{
@@ -931,11 +927,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						mallocedval = ecpg_strdup("", lineno);
 
 					if (!mallocedval)
-<<<<<<< HEAD
-							return false;
-=======
 						return false;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 					for (element = 0; element < asize; element++)
 					{
@@ -982,11 +974,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						mallocedval = ecpg_strdup("", lineno);
 
 					if (!mallocedval)
-<<<<<<< HEAD
-							return false;
-=======
 						return false;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 					for (element = 0; element < asize; element++)
 					{
@@ -1033,11 +1021,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						mallocedval = ecpg_strdup("", lineno);
 
 					if (!mallocedval)
-<<<<<<< HEAD
-							return false;
-=======
 						return false;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 					for (element = 0; element < asize; element++)
 					{

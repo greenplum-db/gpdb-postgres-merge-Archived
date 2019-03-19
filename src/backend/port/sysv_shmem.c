@@ -505,11 +505,7 @@ CreateAnonymousSegment(Size *size)
 				 (mmap_errno == ENOMEM) ?
 				 errhint("This error usually means that PostgreSQL's request "
 					"for a shared memory segment exceeded available memory, "
-<<<<<<< HEAD
-					  "swap space, or huge pages. To reduce the request size "
-=======
 					 "swap space, or huge pages. To reduce the request size "
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						 "(currently %zu bytes), reduce PostgreSQL's shared "
 					   "memory usage, perhaps by reducing shared_buffers or "
 						 "max_connections.",

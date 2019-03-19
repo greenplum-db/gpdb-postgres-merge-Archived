@@ -4013,11 +4013,7 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 				 errmsg("could not create unique index \"%s\"",
 						RelationGetRelationName(state->indexRel)),
 				 key_desc ? errdetail("Key %s is duplicated.", key_desc) :
-<<<<<<< HEAD
-							errdetail("Duplicate keys exist."),
-=======
 				 errdetail("Duplicate keys exist."),
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				 errtableconstraint(state->heapRel,
 								 RelationGetRelationName(state->indexRel))));
 	}

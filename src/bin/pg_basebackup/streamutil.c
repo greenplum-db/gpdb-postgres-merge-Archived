@@ -336,11 +336,7 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 	}
 
 	/* Get database name, only available in 9.4 and newer versions */
-<<<<<<< HEAD
-	if  (db_name != NULL)
-=======
 	if (db_name != NULL)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{
 		if (PQnfields(res) < 4)
 			fprintf(stderr,
@@ -348,11 +344,7 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 					progname, PQntuples(res), PQnfields(res), 1, 4);
 
 		if (PQgetisnull(res, 0, 3))
-<<<<<<< HEAD
-			*db_name =  NULL;
-=======
 			*db_name = NULL;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		else
 			*db_name = pg_strdup(PQgetvalue(res, 0, 3));
 	}

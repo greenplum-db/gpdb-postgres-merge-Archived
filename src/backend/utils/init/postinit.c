@@ -476,11 +476,7 @@ pg_split_opts(char **argv, int *argcp, const char *optstr)
 
 	while (*optstr)
 	{
-<<<<<<< HEAD
-		bool last_was_escape = false;
-=======
 		bool		last_was_escape = false;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		resetStringInfo(&s);
 

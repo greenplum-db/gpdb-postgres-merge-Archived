@@ -32,15 +32,6 @@ extern PGconn *GetConnection(void);
 
 /* Replication commands */
 extern bool CreateReplicationSlot(PGconn *conn, const char *slot_name,
-<<<<<<< HEAD
-								  const char *plugin, XLogRecPtr *startpos,
-								  bool is_physical);
-extern bool DropReplicationSlot(PGconn *conn, const char *slot_name);
-extern bool RunIdentifySystem(PGconn *conn, char **sysid,
-							  TimeLineID *starttli,
-							  XLogRecPtr *startpos,
-							  char **db_name);
-=======
 					  const char *plugin, XLogRecPtr *startpos,
 					  bool is_physical);
 extern bool DropReplicationSlot(PGconn *conn, const char *slot_name);
@@ -48,7 +39,6 @@ extern bool RunIdentifySystem(PGconn *conn, char **sysid,
 				  TimeLineID *starttli,
 				  XLogRecPtr *startpos,
 				  char **db_name);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern int64 feGetCurrentTimestamp(void);
 extern void feTimestampDifference(int64 start_time, int64 stop_time,
 					  long *secs, int *microsecs);

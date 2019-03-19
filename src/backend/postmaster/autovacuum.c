@@ -313,13 +313,8 @@ static void do_autovacuum(void);
 static void FreeWorkerInfo(int code, Datum arg);
 
 static autovac_table *table_recheck_autovac(Oid relid, HTAB *table_toast_map,
-<<<<<<< HEAD
-											TupleDesc pg_class_desc,
-									int effective_multixact_freeze_max_age);
-=======
 					  TupleDesc pg_class_desc,
 					  int effective_multixact_freeze_max_age);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void relation_needs_vacanalyze(Oid relid, AutoVacOpts *relopts,
 						  Form_pg_class classForm,
 						  PgStat_StatTabEntry *tabentry,

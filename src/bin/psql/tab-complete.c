@@ -1443,11 +1443,7 @@ psql_completion(const char *text, int start, int end)
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "SYSTEM") == 0 &&
 			 (pg_strcasecmp(prev_wd, "SET") == 0 ||
-<<<<<<< HEAD
-			 pg_strcasecmp(prev_wd, "RESET") == 0))
-=======
 			  pg_strcasecmp(prev_wd, "RESET") == 0))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		COMPLETE_WITH_QUERY(Query_for_list_of_alter_system_set_vars);
 	/* ALTER VIEW <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
@@ -4621,11 +4617,7 @@ pg_strdup_keyword_case(const char *s, const char *ref)
 
 	if (pset.comp_case == PSQL_COMP_CASE_LOWER ||
 		((pset.comp_case == PSQL_COMP_CASE_PRESERVE_LOWER ||
-<<<<<<< HEAD
-		  pset.comp_case == PSQL_COMP_CASE_PRESERVE_UPPER) && islower(first)) ||
-=======
 	   pset.comp_case == PSQL_COMP_CASE_PRESERVE_UPPER) && islower(first)) ||
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		(pset.comp_case == PSQL_COMP_CASE_PRESERVE_LOWER && !isalpha(first)))
 	{
 		for (p = ret; *p; p++)

@@ -13820,15 +13820,9 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 			!ConditionalLockRelationOid(relOid, AccessExclusiveLock))
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
-<<<<<<< HEAD
-			   errmsg("aborting because lock on relation \"%s\".\"%s\" is not available",
-					  get_namespace_name(relForm->relnamespace),
-					  NameStr(relForm->relname))));
-=======
 					 errmsg("aborting because lock on relation \"%s\".\"%s\" is not available",
 							get_namespace_name(relForm->relnamespace),
 							NameStr(relForm->relname))));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		else
 			LockRelationOid(relOid, AccessExclusiveLock);
 

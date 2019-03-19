@@ -768,11 +768,7 @@ cache_single_time(char **dst, const char *format, const struct tm * tm)
 	/*
 	 * MAX_L10N_DATA is sufficient buffer space for every known locale, and
 	 * POSIX defines no strftime() errors.  (Buffer space exhaustion is not an
-<<<<<<< HEAD
-	 * error.)  An implementation might report errors (e.g. ENOMEM) by
-=======
 	 * error.)	An implementation might report errors (e.g. ENOMEM) by
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 * returning 0 (or, less plausibly, a negative value) and setting errno.
 	 * Report errno just in case the implementation did that, but clear it in
 	 * advance of the call so we don't emit a stale, unrelated errno.

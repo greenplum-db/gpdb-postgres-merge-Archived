@@ -920,11 +920,7 @@ typedef struct NUMProc
 				num_count,		/* number of write digits	*/
 				num_in,			/* is inside number		*/
 				num_curr,		/* current position in number	*/
-<<<<<<< HEAD
-				out_pre_spaces,	/* spaces before first digit	*/
-=======
 				out_pre_spaces, /* spaces before first digit	*/
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 				read_dec,		/* to_number - was read dec. point	*/
 				read_post,		/* to_number - number of dec. digit */
@@ -985,11 +981,7 @@ static char *get_last_relevant_decnum(char *num);
 static void NUM_numpart_from_char(NUMProc *Np, int id, int input_len);
 static void NUM_numpart_to_char(NUMProc *Np, int id);
 static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
-<<<<<<< HEAD
-			  char *number, int from_char_input_len, int to_char_out_pre_spaces,
-=======
 		   char *number, int from_char_input_len, int to_char_out_pre_spaces,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			  int sign, bool is_to_char, Oid collid);
 static DCHCacheEntry *DCH_cache_search(char *str);
 static DCHCacheEntry *DCH_cache_getnew(char *str);
@@ -2568,11 +2560,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-<<<<<<< HEAD
-								 errmsg("localized string format value too long")));
-=======
 						  errmsg("localized string format value too long")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2598,11 +2586,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-<<<<<<< HEAD
-								 errmsg("localized string format value too long")));
-=======
 						  errmsg("localized string format value too long")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2628,11 +2612,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-<<<<<<< HEAD
-								 errmsg("localized string format value too long")));
-=======
 						  errmsg("localized string format value too long")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2658,11 +2638,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-<<<<<<< HEAD
-								 errmsg("localized string format value too long")));
-=======
 						  errmsg("localized string format value too long")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					strcpy(s, asc_toupper_z(months[tm->tm_mon - 1]));
@@ -2687,11 +2663,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-<<<<<<< HEAD
-								 errmsg("localized string format value too long")));
-=======
 						  errmsg("localized string format value too long")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					strcpy(s, months[tm->tm_mon - 1]);
@@ -2716,11 +2688,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-<<<<<<< HEAD
-								 errmsg("localized string format value too long")));
-=======
 						  errmsg("localized string format value too long")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					strcpy(s, asc_tolower_z(months[tm->tm_mon - 1]));
@@ -2749,11 +2717,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-<<<<<<< HEAD
-								 errmsg("localized string format value too long")));
-=======
 						  errmsg("localized string format value too long")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2777,11 +2741,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-<<<<<<< HEAD
-								 errmsg("localized string format value too long")));
-=======
 						  errmsg("localized string format value too long")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2805,11 +2765,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-<<<<<<< HEAD
-								 errmsg("localized string format value too long")));
-=======
 						  errmsg("localized string format value too long")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2833,11 +2789,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-<<<<<<< HEAD
-								 errmsg("localized string format value too long")));
-=======
 						  errmsg("localized string format value too long")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					strcpy(s, asc_toupper_z(days_short[tm->tm_wday]));
@@ -2860,11 +2812,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-<<<<<<< HEAD
-								 errmsg("localized string format value too long")));
-=======
 						  errmsg("localized string format value too long")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					strcpy(s, days_short[tm->tm_wday]);
@@ -2887,11 +2835,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-<<<<<<< HEAD
-								 errmsg("localized string format value too long")));
-=======
 						  errmsg("localized string format value too long")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					strcpy(s, asc_tolower_z(days_short[tm->tm_wday]));
@@ -4736,11 +4680,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 
 static char *
 NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
-<<<<<<< HEAD
-			  char *number, int from_char_input_len, int to_char_out_pre_spaces,
-=======
 		   char *number, int from_char_input_len, int to_char_out_pre_spaces,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			  int sign, bool is_to_char, Oid collid)
 {
 	FormatNode *n;

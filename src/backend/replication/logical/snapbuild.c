@@ -646,11 +646,7 @@ SnapBuildExportSnapshot(SnapBuild *builder)
 
 	ereport(LOG,
 			(errmsg_plural("exported logical decoding snapshot: \"%s\" with %u transaction ID",
-<<<<<<< HEAD
-						   "exported logical decoding snapshot: \"%s\" with %u transaction IDs",
-=======
 		"exported logical decoding snapshot: \"%s\" with %u transaction IDs",
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						   snap->xcnt,
 						   snapname, snap->xcnt)));
 	return snapname;
@@ -1274,13 +1270,8 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	{
 		ereport(DEBUG1,
 				(errmsg_internal("skipping snapshot at %X/%X while building logical decoding snapshot, xmin horizon too low",
-<<<<<<< HEAD
-						(uint32) (lsn >> 32), (uint32) lsn),
-				 errdetail_internal("initial xmin horizon of %u vs the snapshot's %u",
-=======
 								 (uint32) (lsn >> 32), (uint32) lsn),
 		errdetail_internal("initial xmin horizon of %u vs the snapshot's %u",
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				 builder->initial_xmin_horizon, running->oldestRunningXid)));
 
 
@@ -1306,13 +1297,8 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 			builder->start_decoding_at = lsn + 1;
 
 		/* As no transactions were running xmin/xmax can be trivially set. */
-<<<<<<< HEAD
-		builder->xmin = running->nextXid; /* < are finished */
-		builder->xmax = running->nextXid; /* >= are running */
-=======
 		builder->xmin = running->nextXid;		/* < are finished */
 		builder->xmax = running->nextXid;		/* >= are running */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/* so we can safely use the faster comparisons */
 		Assert(TransactionIdIsNormal(builder->xmin));
@@ -1647,11 +1633,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	ondisk->length = needed_length;
 	INIT_CRC32C(ondisk->checksum);
 	COMP_CRC32C(ondisk->checksum,
-<<<<<<< HEAD
-			   ((char *) ondisk) + SnapBuildOnDiskNotChecksummedSize,
-=======
 				((char *) ondisk) + SnapBuildOnDiskNotChecksummedSize,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			SnapBuildOnDiskConstantSize - SnapBuildOnDiskNotChecksummedSize);
 	ondisk_c += sizeof(SnapBuildOnDisk);
 

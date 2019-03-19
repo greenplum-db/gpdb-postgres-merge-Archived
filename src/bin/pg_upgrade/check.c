@@ -485,8 +485,6 @@ set_locale_and_encoding(ClusterInfo *cluster)
 
 
 /*
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/check.c
  * check_locale_and_encoding()
  *
  * Check that locale and encoding of a database in the old and new clusters

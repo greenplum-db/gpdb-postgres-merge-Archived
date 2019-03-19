@@ -4618,11 +4618,7 @@ identify_locking_dependencies(ArchiveHandle *AH, TocEntry *te)
 
 		if (depid <= AH->maxDumpId && AH->tocsByDumpId[depid] != NULL &&
 			((strcmp(AH->tocsByDumpId[depid]->desc, "TABLE DATA") == 0) ||
-<<<<<<< HEAD
-			  strcmp(AH->tocsByDumpId[depid]->desc, "TABLE") == 0))
-=======
 			 strcmp(AH->tocsByDumpId[depid]->desc, "TABLE") == 0))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			lockids[nlockids++] = depid;
 	}
 

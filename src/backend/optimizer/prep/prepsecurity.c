@@ -73,13 +73,8 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 	rt_index = 0;
 	foreach(cell, parse->rtable)
 	{
-<<<<<<< HEAD
-		bool			targetRelation = false;
-		RangeTblEntry  *rte = (RangeTblEntry *) lfirst(cell);
-=======
 		bool		targetRelation = false;
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(cell);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		rt_index++;
 

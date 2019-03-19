@@ -56,15 +56,9 @@ static void pg_decode_shutdown(LogicalDecodingContext *ctx);
 static void pg_decode_begin_txn(LogicalDecodingContext *ctx,
 					ReorderBufferTXN *txn);
 static void pg_output_begin(LogicalDecodingContext *ctx,
-<<<<<<< HEAD
-							TestDecodingData *data,
-							ReorderBufferTXN *txn,
-							bool last_write);
-=======
 				TestDecodingData *data,
 				ReorderBufferTXN *txn,
 				bool last_write);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void pg_decode_commit_txn(LogicalDecodingContext *ctx,
 					 ReorderBufferTXN *txn, XLogRecPtr commit_lsn);
 static void pg_decode_change(LogicalDecodingContext *ctx,

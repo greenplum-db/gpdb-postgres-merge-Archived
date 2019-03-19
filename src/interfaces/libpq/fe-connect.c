@@ -2242,11 +2242,7 @@ keep_going:						/* We will come back to here until there is
 							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("could not look up local user ID %d: %s\n"),
 											  (int) uid,
-<<<<<<< HEAD
-											  pqStrerror(passerr, sebuf, sizeof(sebuf)));
-=======
 								  pqStrerror(passerr, sebuf, sizeof(sebuf)));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						else
 							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("local user with ID %d does not exist\n"),
@@ -4113,11 +4109,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 						if (!options[i].val)
 						{
 							printfPQExpBuffer(errorMessage,
-<<<<<<< HEAD
-											libpq_gettext("out of memory\n"));
-=======
 										   libpq_gettext("out of memory\n"));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 							free(result);
 							return 3;
 						}
@@ -4367,11 +4359,7 @@ parseServiceFile(const char *serviceFile,
 						if (!options[i].val)
 						{
 							printfPQExpBuffer(errorMessage,
-<<<<<<< HEAD
-											libpq_gettext("out of memory\n"));
-=======
 										   libpq_gettext("out of memory\n"));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 							fclose(f);
 							return 3;
 						}
@@ -4810,11 +4798,7 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 								if (!options[k].val)
 								{
 									printfPQExpBuffer(errorMessage,
-<<<<<<< HEAD
-													  libpq_gettext("out of memory\n"));
-=======
 										   libpq_gettext("out of memory\n"));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 									PQconninfoFree(options);
 									PQconninfoFree(dbname_options);
 									return NULL;

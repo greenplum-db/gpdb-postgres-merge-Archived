@@ -1781,11 +1781,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-<<<<<<< HEAD
-						   "datcollate, datctype, datfrozenxid, 0 AS datminmxid, "
-=======
 					  "datcollate, datctype, datfrozenxid, 0 AS datminmxid, "
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						   "datistemplate, datacl, datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
@@ -1795,11 +1791,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-<<<<<<< HEAD
-		   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
-=======
 						   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						   "datistemplate, datacl, datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "

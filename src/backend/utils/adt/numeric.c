@@ -6530,17 +6530,10 @@ numericvar_to_int128(NumericVar *var, int128 *result)
 static void
 int128_to_numericvar(int128 val, NumericVar *var)
 {
-<<<<<<< HEAD
-	uint128			uval,
-					newuval;
-	NumericDigit   *ptr;
-	int				ndigits;
-=======
 	uint128		uval,
 				newuval;
 	NumericDigit *ptr;
 	int			ndigits;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* int128 can require at most 39 decimal digits; add one for safety */
 	alloc_var(var, 40 / DEC_DIGITS);

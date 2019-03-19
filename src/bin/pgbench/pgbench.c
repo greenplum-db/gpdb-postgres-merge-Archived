@@ -228,8 +228,6 @@ typedef struct
 	int64		txn_scheduled;	/* scheduled start time of transaction (usec) */
 <<<<<<< HEAD:contrib/pgbench/pgbench.c
 	int64		sleep_until;	/* scheduled start time of next cmd (usec) */
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 	instr_time	txn_begin;		/* used for measuring schedule lag times */
 	instr_time	stmt_begin;		/* used for measuring statement latencies */
 	int64		txn_latencies;	/* cumulated latencies */
@@ -1237,8 +1235,6 @@ top:
 <<<<<<< HEAD:contrib/pgbench/pgbench.c
 		st->txn_scheduled = thread->throttle_trigger;
 		st->sleep_until = st->txn_scheduled;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 		st->sleeping = 1;
 		st->throttling = true;
 		st->is_throttled = true;

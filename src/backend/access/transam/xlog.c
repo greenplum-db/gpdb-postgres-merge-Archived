@@ -4315,13 +4315,8 @@ RemoveXlogFile(const char *segname, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr)
 		{
 			ereport(LOG,
 					(errcode_for_file_access(),
-<<<<<<< HEAD
-					 errmsg("could not rename old transaction log file \"%s\": %m",
-							path)));
-=======
 			   errmsg("could not rename old transaction log file \"%s\": %m",
 					  path)));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			return;
 		}
 		rc = unlink(newpath);
@@ -4332,13 +4327,8 @@ RemoveXlogFile(const char *segname, XLogRecPtr PriorRedoPtr, XLogRecPtr endptr)
 		{
 			ereport(LOG,
 					(errcode_for_file_access(),
-<<<<<<< HEAD
-					 errmsg("could not remove old transaction log file \"%s\": %m",
-							path)));
-=======
 			   errmsg("could not remove old transaction log file \"%s\": %m",
 					  path)));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			return;
 		}
 		CheckpointStats.ckpt_segs_removed++;
@@ -4833,13 +4823,8 @@ WriteControlFile(void)
 	/* Contents are protected with a CRC */
 	INIT_CRC32C(ControlFile->crc);
 	COMP_CRC32C(ControlFile->crc,
-<<<<<<< HEAD
-			   (char *) ControlFile,
-			   offsetof(ControlFileData, crc));
-=======
 				(char *) ControlFile,
 				offsetof(ControlFileData, crc));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	FIN_CRC32C(ControlFile->crc);
 
 	/*
@@ -4946,13 +4931,8 @@ ReadControlFile(void)
 	/* Now check the CRC. */
 	INIT_CRC32C(crc);
 	COMP_CRC32C(crc,
-<<<<<<< HEAD
-			   (char *) ControlFile,
-			   offsetof(ControlFileData, crc));
-=======
 				(char *) ControlFile,
 				offsetof(ControlFileData, crc));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	FIN_CRC32C(crc);
 
 	if (!EQ_CRC32C(crc, ControlFile->crc))
@@ -5100,13 +5080,8 @@ UpdateControlFile(void)
 
 	INIT_CRC32C(ControlFile->crc);
 	COMP_CRC32C(ControlFile->crc,
-<<<<<<< HEAD
-			   (char *) ControlFile,
-			   offsetof(ControlFileData, crc));
-=======
 				(char *) ControlFile,
 				offsetof(ControlFileData, crc));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	FIN_CRC32C(ControlFile->crc);
 
 	fd = BasicOpenFile(XLOG_CONTROL_FILE,
@@ -5743,11 +5718,7 @@ readRecoveryCommandFile(void)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid value for recovery parameter \"recovery_target\""),
-<<<<<<< HEAD
-						 errhint("The only allowed value is \"immediate\".")));
-=======
 					   errhint("The only allowed value is \"immediate\".")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			ereport(DEBUG2,
 					(errmsg_internal("recovery_target = '%s'",
 									 item->value)));

@@ -102,11 +102,7 @@ typedef struct ReorderBufferChange
 			RelFileNode relnode;
 
 			/* no previously reassembled toast chunks are necessary anymore */
-<<<<<<< HEAD
-			bool clear_toast_afterwards;
-=======
 			bool		clear_toast_afterwards;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			/* valid for DELETE || UPDATE */
 			ReorderBufferTupleBuf *oldtuple;

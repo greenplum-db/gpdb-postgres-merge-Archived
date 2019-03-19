@@ -70,11 +70,7 @@ static bool ReadEndOfStreamingResult(PGresult *res, XLogRecPtr *startpos,
 static bool
 mark_file_as_archived(const char *basedir, const char *fname)
 {
-<<<<<<< HEAD
-	int fd;
-=======
 	int			fd;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	static char tmppath[MAXPGPATH];
 
 	snprintf(tmppath, sizeof(tmppath), "%s/archive_status/%s.done",

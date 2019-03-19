@@ -58,13 +58,8 @@ static int	lengthCompareJsonbStringValue(const void *a, const void *b);
 static int	lengthCompareJsonbPair(const void *a, const void *b, void *arg);
 static void uniqueifyJsonbObject(JsonbValue *object);
 static JsonbValue *pushJsonbValueScalar(JsonbParseState **pstate,
-<<<<<<< HEAD
-										JsonbIteratorToken seq,
-										JsonbValue *scalarVal);
-=======
 					 JsonbIteratorToken seq,
 					 JsonbValue *scalarVal);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * Turn an in-memory JsonbValue into a Jsonb for on-disk storage.
@@ -523,11 +518,7 @@ pushJsonbValue(JsonbParseState **pstate, JsonbIteratorToken seq,
 {
 	JsonbIterator *it;
 	JsonbValue *res = NULL;
-<<<<<<< HEAD
-	JsonbValue v;
-=======
 	JsonbValue	v;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	JsonbIteratorToken tok;
 
 	if (!jbval || (seq != WJB_ELEM && seq != WJB_VALUE) ||
@@ -552,11 +543,7 @@ pushJsonbValue(JsonbParseState **pstate, JsonbIteratorToken seq,
  */
 static JsonbValue *
 pushJsonbValueScalar(JsonbParseState **pstate, JsonbIteratorToken seq,
-<<<<<<< HEAD
-			   JsonbValue *scalarVal)
-=======
 					 JsonbValue *scalarVal)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	JsonbValue *result = NULL;
 

@@ -133,8 +133,6 @@ uninstall_support_functions_from_new_cluster(void)
 	check_ok();
 }
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/function.c
 
 /*
  * get_loadable_libraries()

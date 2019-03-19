@@ -2944,11 +2944,7 @@ dumpDatabase(Archive *fout, DumpOptions *dopt)
 		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
 						  "(%s datdba) AS dba, "
 						  "pg_encoding_to_char(encoding) AS encoding, "
-<<<<<<< HEAD
-						  "datcollate, datctype, datfrozenxid, 0 AS datminmxid, "
-=======
 					  "datcollate, datctype, datfrozenxid, 0 AS datminmxid, "
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace, "
 					  "shobj_description(oid, 'pg_database') AS description "
 
@@ -2962,11 +2958,7 @@ dumpDatabase(Archive *fout, DumpOptions *dopt)
 		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
 						  "(%s datdba) AS dba, "
 						  "pg_encoding_to_char(encoding) AS encoding, "
-<<<<<<< HEAD
-					   "NULL AS datcollate, NULL AS datctype, datfrozenxid, 0 AS datminmxid, "
-=======
 						  "NULL AS datcollate, NULL AS datctype, datfrozenxid, 0 AS datminmxid, "
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace, "
 					  "shobj_description(oid, 'pg_database') AS description "
 

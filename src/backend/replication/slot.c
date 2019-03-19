@@ -92,11 +92,7 @@ typedef struct ReplicationSlotOnDisk
 	sizeof(ReplicationSlotOnDisk) - ReplicationSlotOnDiskConstantSize
 
 #define SLOT_MAGIC		0x1051CA1		/* format identifier */
-<<<<<<< HEAD
-#define SLOT_VERSION	2				/* version for new files */
-=======
 #define SLOT_VERSION	2		/* version for new files */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* Control array for replication slot management */
 ReplicationSlotCtlData *ReplicationSlotCtl = NULL;
@@ -1321,13 +1317,8 @@ RestoreSlotFromDisk(const char *name)
 	/* now verify the CRC */
 	INIT_CRC32C(checksum);
 	COMP_CRC32C(checksum,
-<<<<<<< HEAD
-			   (char *) &cp + SnapBuildOnDiskNotChecksummedSize,
-			   SnapBuildOnDiskChecksummedSize);
-=======
 				(char *) &cp + SnapBuildOnDiskNotChecksummedSize,
 				SnapBuildOnDiskChecksummedSize);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	FIN_CRC32C(checksum);
 
 	if (!EQ_CRC32C(checksum, cp.checksum))
