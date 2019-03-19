@@ -42,18 +42,6 @@ my %replace_token = (
 
 # or in the block
 my %replace_string = (
-<<<<<<< HEAD
-	'WITH_CASCADED'    => 'with cascaded',
-	'WITH_LOCAL'    => 'with local',
-	'WITH_CHECK'    => 'with check',
-	'WITH_TIME'    => 'with time',
-	'WITH_ORDINALITY' => 'with ordinality',
-	'NULLS_FIRST'  => 'nulls first',
-	'NULLS_LAST'   => 'nulls last',
-	'TYPECAST'     => '::',
-	'DOT_DOT'      => '..',
-	'COLON_EQUALS' => ':=',);
-=======
 	'NOT_LA'         => 'not',
 	'NULLS_LA'       => 'nulls',
 	'WITH_LA'        => 'with',
@@ -64,7 +52,6 @@ my %replace_string = (
 	'LESS_EQUALS'    => '<=',
 	'GREATER_EQUALS' => '>=',
 	'NOT_EQUALS'     => '<>',);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 # specific replace_types for specific non-terminals - never include the ':'
 # ECPG-only replace_types are defined in ecpg-replace_types

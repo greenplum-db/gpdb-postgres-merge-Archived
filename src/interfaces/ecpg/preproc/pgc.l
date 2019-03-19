@@ -731,15 +731,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 								return yytext[0];
 						}
 
-<<<<<<< HEAD
-						/* Convert "!=" operator to "<>" for compatibility */
-						if (strcmp(yytext, "!=") == 0)
-							base_yylval.str = mm_strdup("<>");
-						else
-							base_yylval.str = mm_strdup(yytext);
-=======
-						yylval.str = mm_strdup(yytext);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+						base_yylval.str = mm_strdup(yytext);
 						return Op;
 					}
 <SQL>{param}		{

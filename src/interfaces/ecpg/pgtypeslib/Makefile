@@ -24,11 +24,7 @@ LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
 LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl -lcrypto -lz, $(LIBS))
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
-<<<<<<< HEAD
-	-I$(top_srcdir)/src/include/utils -I$(libpq_srcdir) -DFRONTEND $(CPPFLAGS)
-=======
 	-DFRONTEND $(CPPFLAGS)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 override CFLAGS += $(PTHREAD_CFLAGS)
 
 # Need to recompile any libpgport object files

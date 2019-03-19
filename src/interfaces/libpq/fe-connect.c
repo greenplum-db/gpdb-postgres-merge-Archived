@@ -757,10 +757,6 @@ PQconnectStartParams(const char *const * keywords,
 	 */
 	if (!fillPGconn(conn, connOptions))
 	{
-<<<<<<< HEAD
-		conn->status = CONNECTION_BAD;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		PQconninfoFree(connOptions);
 		return conn;
 	}
@@ -3009,14 +3005,6 @@ makeEmptyPGconn(void)
 	conn->verbosity = PQERRORS_DEFAULT;
 	conn->sock = PGINVALID_SOCKET;
 	conn->dot_pgpass_used = false;
-<<<<<<< HEAD
-=======
-#ifdef USE_SSL
-	conn->allow_ssl_try = true;
-	conn->wait_ssl_try = false;
-	conn->ssl_in_use = false;
-#endif
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * We try to send at least 8K at a time, which is the usual size of pipe
@@ -4686,15 +4674,11 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
  * of "dbname" keyword is a connection string (as indicated by
  * recognized_connection_string) then parse and process it, overriding any
  * previously processed conflicting keywords. Subsequent keywords will take
-<<<<<<< HEAD
  * precedence, however. In-tree programs generally specify expand_dbname=true,
  * so command-line arguments naming a database can use a connection string.
  * Some code acquires arbitrary database names from known-literal sources like
  * PQdb(), PQconninfoParse() and pg_database.datname.  When connecting to such
  * a database, in-tree code first wraps the name in a connection string.
-=======
- * precedence, however.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 static PQconninfoOption *
 conninfo_array_parse(const char *const * keywords, const char *const * values,
@@ -4804,10 +4788,7 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 						}
 					}
 				}
-<<<<<<< HEAD
-=======
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				/*
 				 * Forget the parsed connection string, so that any subsequent
 				 * dbname parameters will not be expanded.

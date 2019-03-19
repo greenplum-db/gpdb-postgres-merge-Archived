@@ -45,12 +45,6 @@
 /* All "broken" PQExpBuffers point to this string. */
 static const char oom_buffer[1] = "";
 
-<<<<<<< HEAD
-=======
-static bool appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args) pg_attribute_printf(2, 0);
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-
 /*
  * markPQExpBufferBroken
  *

@@ -123,13 +123,8 @@ static datetkn datetktbl[] = {
 	{"dec", MONTH, 12},
 	{"december", MONTH, 12},
 	{"dnt", TZ, 3600},			/* Dansk Normal Tid */
-<<<<<<< HEAD
 	{"dow", UNITS, DTK_DOW},	/* day of week */
 	{"doy", UNITS, DTK_DOY},	/* day of year */
-=======
-	{"dow", RESERV, DTK_DOW},	/* day of week */
-	{"doy", RESERV, DTK_DOY},	/* day of year */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{"dst", DTZMOD, SECS_PER_HOUR},
 #if 0
 	{"dusst", DTZ, 21600},		/* Dushanbe Summer Time */
@@ -211,11 +206,7 @@ static datetkn datetktbl[] = {
 	{"irkst", DTZ, 32400},		/* Irkutsk Summer Time */
 	{"irkt", TZ, 28800},		/* Irkutsk Time */
 	{"irt", TZ, 12600},			/* Iran Time */
-<<<<<<< HEAD
 	{"isodow", UNITS, DTK_ISODOW},		/* ISO day of week, Sunday == 7 */
-=======
-	{"isodow", RESERV, DTK_ISODOW},		/* ISO day of week, Sunday == 7 */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #if 0
 	isst
 #endif

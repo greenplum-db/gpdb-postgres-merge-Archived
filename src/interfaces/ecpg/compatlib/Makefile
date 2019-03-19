@@ -13,25 +13,18 @@ subdir = src/interfaces/ecpg/compatlib
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-<<<<<<< HEAD
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
 # This program isn't interactive, so doesn't need these
 LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl -lcrypto -lz, $(LIBS))
 
-=======
 PGFILEDESC = "ECPG compat - compatibility library for ECPG"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 NAME= ecpg_compat
 SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 7
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
-<<<<<<< HEAD
 	-I$(libpq_srcdir) -I$(top_srcdir)/src/include/utils -DFRONTEND $(CPPFLAGS)
-=======
-	-I$(libpq_srcdir) -DFRONTEND $(CPPFLAGS)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 override CFLAGS += $(PTHREAD_CFLAGS)
 
 SHLIB_LINK_INTERNAL = -L../ecpglib -lecpg -L../pgtypeslib -lpgtypes $(libpq)
