@@ -3,13 +3,9 @@
  * allpaths.c
  *	  Routines to find possible search paths for processing a query
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -52,13 +48,10 @@
 #include "cdb/cdbmutate.h"		/* cdbmutate_warn_ctid_without_segid */
 #include "cdb/cdbpath.h"		/* cdbpath_rows() */
 
-<<<<<<< HEAD
 // TODO: these planner gucs need to be refactored into PlannerConfig.
 bool		gp_enable_sort_limit = FALSE;
 bool		gp_enable_sort_distinct = FALSE;
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /* results of subquery_is_pushdown_safe */
 typedef struct pushdown_safety_info
 {
@@ -66,13 +59,6 @@ typedef struct pushdown_safety_info
 	bool		unsafeVolatile; /* don't push down volatile quals */
 	bool		unsafeLeaky;	/* don't push down leaky quals */
 } pushdown_safety_info;
-<<<<<<< HEAD
-=======
-
-/* These parameters are set by GUC */
-bool		enable_geqo = false;	/* just in case GUC doesn't set it */
-int			geqo_threshold;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* Hook for plugins to get control in set_rel_pathlist() */
 set_rel_pathlist_hook_type set_rel_pathlist_hook = NULL;
@@ -231,19 +217,11 @@ set_base_rel_consider_startup(PlannerInfo *root)
 	foreach(lc, root->join_info_list)
 	{
 		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
-<<<<<<< HEAD
-
-		if ((sjinfo->jointype == JOIN_SEMI || sjinfo->jointype == JOIN_ANTI) &&
-			bms_membership(sjinfo->syn_righthand) == BMS_SINGLETON)
-		{
-			int			varno = bms_singleton_member(sjinfo->syn_righthand);
-=======
 		int			varno;
 
 		if ((sjinfo->jointype == JOIN_SEMI || sjinfo->jointype == JOIN_ANTI) &&
 			bms_get_singleton_member(sjinfo->syn_righthand, &varno))
 		{
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			RelOptInfo *rel = find_base_rel(root, varno);
 
 			rel->consider_param_startup = true;
@@ -526,7 +504,6 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 * least one dimension of cost or sortedness.
 	 */
 
-<<<<<<< HEAD
 	/* Consider sequential scan */
 	switch (rel->relstorage)
 	{
@@ -570,11 +547,7 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	}
 	/* we can add the seqscan path now */
 	add_path(rel, seqpath);
-=======
-	/* Consider TID scans */
-	create_tidscan_paths(root, rel);
 }
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * set_tablesample_rel_size
@@ -1381,10 +1354,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 {
 	Query	   *subquery = rte->subquery;
 	Relids		required_outer;
-<<<<<<< HEAD
-=======
-	pushdown_safety_info safetyInfo;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	double		tuple_fraction;
 	PlannerInfo *subroot;
 	List	   *pathkeys;
@@ -1406,56 +1375,11 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 */
 	required_outer = rel->lateral_relids;
 
-<<<<<<< HEAD
 
 	forceDistRand = rte->forceDistRandom;
 
 	/* CDB: Could be a preplanned subquery from window_planner. */
 	if (rte->subquery_plan == NULL)
-=======
-	/*
-	 * Zero out result area for subquery_is_pushdown_safe, so that it can set
-	 * flags as needed while recursing.  In particular, we need a workspace
-	 * for keeping track of unsafe-to-reference columns.  unsafeColumns[i]
-	 * will be set TRUE if we find that output column i of the subquery is
-	 * unsafe to use in a pushed-down qual.
-	 */
-	memset(&safetyInfo, 0, sizeof(safetyInfo));
-	safetyInfo.unsafeColumns = (bool *)
-		palloc0((list_length(subquery->targetList) + 1) * sizeof(bool));
-
-	/*
-	 * If the subquery has the "security_barrier" flag, it means the subquery
-	 * originated from a view that must enforce row level security.  Then we
-	 * must not push down quals that contain leaky functions.  (Ideally this
-	 * would be checked inside subquery_is_pushdown_safe, but since we don't
-	 * currently pass the RTE to that function, we must do it here.)
-	 */
-	safetyInfo.unsafeLeaky = rte->security_barrier;
-
-	/*
-	 * If there are any restriction clauses that have been attached to the
-	 * subquery relation, consider pushing them down to become WHERE or HAVING
-	 * quals of the subquery itself.  This transformation is useful because it
-	 * may allow us to generate a better plan for the subquery than evaluating
-	 * all the subquery output rows and then filtering them.
-	 *
-	 * There are several cases where we cannot push down clauses. Restrictions
-	 * involving the subquery are checked by subquery_is_pushdown_safe().
-	 * Restrictions on individual clauses are checked by
-	 * qual_is_pushdown_safe().  Also, we don't want to push down
-	 * pseudoconstant clauses; better to have the gating node above the
-	 * subquery.
-	 *
-	 * Non-pushed-down clauses will get evaluated as qpquals of the
-	 * SubqueryScan node.
-	 *
-	 * XXX Are there any cases where we want to make a policy decision not to
-	 * push down a pushable qual, because it'd result in a worse plan?
-	 */
-	if (rel->baserestrictinfo != NIL &&
-		subquery_is_pushdown_safe(subquery, subquery, &safetyInfo))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{
 		/*
 		 * push down quals if possible. Note subquery might be
@@ -1484,26 +1408,11 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		{
 			Const	   *cnst = (Const *) subquery->limitCount;
 
-<<<<<<< HEAD
 			if (cnst->consttype == INT8OID &&
 				DatumGetInt64(cnst->constvalue) <= 1)
 				rel->onerow = true;
-=======
-			if (!rinfo->pseudoconstant &&
-				qual_is_pushdown_safe(subquery, rti, clause, &safetyInfo))
-			{
-				/* Push it down */
-				subquery_push_qual(subquery, rte, rti, clause);
-			}
-			else
-			{
-				/* Keep it in the upper query */
-				upperrestrictlist = lappend(upperrestrictlist, rinfo);
-			}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 
-<<<<<<< HEAD
 		/*
 		 * We can safely pass the outer tuple_fraction down to the subquery if the
 		 * outer level has no joining, aggregation, or sorting to do. Otherwise
@@ -1512,6 +1421,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		 */
 		if (subquery->hasAggs ||
 			subquery->groupClause ||
+			subquery->groupingSets ||
 			subquery->havingQual ||
 			subquery->distinctClause ||
 			subquery->sortClause ||
@@ -1523,32 +1433,9 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		/* Generate the plan for the subquery */
 		config = CopyPlannerConfig(root->config);
 		config->honor_order_by = false;		/* partial order is enough */
-=======
-	pfree(safetyInfo.unsafeColumns);
 
-	/*
-	 * The upper query might not use all the subquery's output columns; if
-	 * not, we can simplify.
-	 */
-	remove_unused_subquery_outputs(subquery, rel);
-
-	/*
-	 * We can safely pass the outer tuple_fraction down to the subquery if the
-	 * outer level has no joining, aggregation, or sorting to do. Otherwise
-	 * we'd better tell the subquery to plan for full retrieval. (XXX This
-	 * could probably be made more intelligent ...)
-	 */
-	if (parse->hasAggs ||
-		parse->groupClause ||
-		parse->groupingSets ||
-		parse->havingQual ||
-		parse->distinctClause ||
-		parse->sortClause ||
-		has_multiple_baserels(root))
-		tuple_fraction = 0.0;	/* default case */
-	else
-		tuple_fraction = root->tuple_fraction;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+		/* plan_params should not be in use in current query level */
+		Assert(root->plan_params == NIL);
 
 		rel->subplan = subquery_planner(root->glob, subquery,
 									root,
@@ -1588,7 +1475,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	pathkeys = convert_subquery_pathkeys(root, rel, subroot->query_pathkeys);
 
 	/* Generate appropriate path */
-<<<<<<< HEAD
 	subquery_path = create_subqueryscan_path(root, rel, pathkeys, required_outer);
 
 	if (forceDistRand)
@@ -1599,9 +1485,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(rel);
-=======
-	add_path(rel, create_subqueryscan_path(root, rel, pathkeys, required_outer));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1762,14 +1645,7 @@ set_values_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 				   !expression_returns_set((Node *) rte->values_lists));
 
 	/* Generate appropriate path */
-<<<<<<< HEAD
 	add_path(rel, create_valuesscan_path(root, rel, rte, required_outer));
-
-	/* Select cheapest path (pretty easy in this case...) */
-	set_cheapest(rel);
-=======
-	add_path(rel, create_valuesscan_path(root, rel, required_outer));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1979,14 +1855,7 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	required_outer = rel->lateral_relids;
 
 	/* Generate appropriate path */
-<<<<<<< HEAD
 	add_path(rel, create_ctescan_path(root, rel, pathkeys,required_outer));
-
-	/* Select cheapest path (pretty easy in this case...) */
-	set_cheapest(rel);
-=======
-	add_path(rel, create_ctescan_path(root, rel, required_outer));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -2039,14 +1908,7 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	ctelocus = cteplan->flow->locustype;
 
 	/* Generate appropriate path */
-<<<<<<< HEAD
 	add_path(rel, create_worktablescan_path(root, rel, ctelocus, required_outer));
-
-	/* Select cheapest path (pretty easy in this case...) */
-	set_cheapest(rel);
-=======
-	add_path(rel, create_worktablescan_path(root, rel, required_outer));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -2344,12 +2206,9 @@ push_down_restrict(PlannerInfo *root, RelOptInfo *rel,
  * thereby changing the partition contents and thus the window functions'
  * results for rows that remain.
  *
-<<<<<<< HEAD
  * 5. Do not push down quals if the subquery is a grouping extension
  * query, since this may change the meaning of the query.
  *
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * In addition, we make several checks on the subquery's output columns to see
  * if it is safe to reference them in pushed-down quals.  If output column k
  * is found to be unsafe to reference, we set safetyInfo->unsafeColumns[k]
@@ -2397,14 +2256,6 @@ subquery_is_pushdown_safe(Query *subquery, Query *topquery,
 	/* Check points 3 and 4 */
 	if (subquery->distinctClause || subquery->hasWindowFuncs)
 		safetyInfo->unsafeVolatile = true;
-<<<<<<< HEAD
-
-	/* Check point 5 */
-	if (subquery->groupClause != NULL &&
-		contain_extended_grouping(subquery->groupClause))
-		return false;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * If we're at a leaf query, check for unsafe expressions in its target
@@ -2554,7 +2405,6 @@ check_output_expressions(Query *subquery, pushdown_safety_info *safetyInfo)
 		{
 			/* not present in all PARTITION BY clauses, so mark it unsafe */
 			safetyInfo->unsafeColumns[tle->resno] = true;
-<<<<<<< HEAD
 			continue;
 		}
 
@@ -2562,8 +2412,6 @@ check_output_expressions(Query *subquery, pushdown_safety_info *safetyInfo)
 		if (contain_subplans((Node *) tle->expr))
 		{
 			safetyInfo->unsafeColumns[tle->resno] = true;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			continue;
 		}
 	}
@@ -2649,13 +2497,9 @@ targetIsInAllPartitionLists(TargetEntry *tle, Query *query)
  * 2. If unsafeVolatile is set, the qual must not contain any volatile
  * functions.
  *
-<<<<<<< HEAD
- * 3. If unsafeLeaky is set, the qual must not contain any leaky functions.
-=======
  * 3. If unsafeLeaky is set, the qual must not contain any leaky functions
  * that are passed Var nodes, and therefore might reveal values from the
  * subquery as side effects.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  *
  * 4. The qual must not refer to the whole-row output of the subquery
  * (since there is no easy way to name that within the subquery itself).
@@ -2682,11 +2526,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 
 	/* Refuse leaky quals if told to (point 3) */
 	if (safetyInfo->unsafeLeaky &&
-<<<<<<< HEAD
-		contain_leaky_functions(qual))
-=======
 		contain_leaked_vars(qual))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		return false;
 
 	/*
