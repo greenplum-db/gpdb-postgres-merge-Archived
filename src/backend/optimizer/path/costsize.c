@@ -57,13 +57,9 @@
  * values.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -213,7 +209,6 @@ cost_seqscan(Path *path, PlannerInfo *root,
 }
 
 /*
-<<<<<<< HEAD
  * cost_externalscan
  *	  Determines and returns the cost of scanning an external relation.
  *
@@ -227,9 +222,32 @@ cost_externalscan(ExternalPath *path, PlannerInfo *root,
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
-	
+
 	/* Should only be applied to external relations */
-=======
+	Assert(baserel->relid > 0);
+	Assert(baserel->rtekind == RTE_RELATION);
+
+	/* Mark the path with the correct row estimate */
+	if (param_info)
+		path->path.rows = param_info->ppi_rows;
+	else
+		path->path.rows = baserel->rows;
+
+	/*
+	 * disk costs
+	 */
+	run_cost += seq_page_cost * baserel->pages;
+
+	/* CPU costs */
+	startup_cost += baserel->baserestrictcost.startup;
+	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
+	run_cost += cpu_per_tuple * baserel->tuples;
+
+	path->path.startup_cost = startup_cost;
+	path->path.total_cost = startup_cost + run_cost;
+}
+
+/*
  * cost_samplescan
  *	  Determines and returns the cost of scanning a relation using sampling.
  *
@@ -256,30 +274,10 @@ cost_samplescan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
 	TableSampleClause *tablesample = rte->tablesample;
 
 	/* Should only be applied to base relations */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
 
 	/* Mark the path with the correct row estimate */
-<<<<<<< HEAD
-	if (param_info)
-		path->path.rows = param_info->ppi_rows;
-	else
-		path->path.rows = baserel->rows;
-	
-	/*
-	 * disk costs
-	 */
-	run_cost += seq_page_cost * baserel->pages;
-
-	/* CPU costs */
-	startup_cost += baserel->baserestrictcost.startup;
-	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
-	run_cost += cpu_per_tuple * baserel->tuples;
-
-	path->path.startup_cost = startup_cost;
-	path->path.total_cost = startup_cost + run_cost;
-=======
 	if (path->param_info)
 		path->rows = path->param_info->ppi_rows;
 	else
@@ -314,7 +312,6 @@ cost_samplescan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -560,7 +557,6 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	 * Estimate CPU costs per tuple.
 	 *
 	 * What we want here is cpu_tuple_cost plus the evaluation costs of any
-<<<<<<< HEAD
 	 * qual clauses that we have to evaluate as qpquals.  We approximate that
 	 * list as allclauses minus any clauses appearing in indexquals.  (We
 	 * assume that pointer equality is enough to recognize duplicate
@@ -578,9 +574,6 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	 * using this shortcut.  But that's too invasive a change to consider
 	 * back-patching, so for the moment we just mask the worst aspects of the
 	 * problem by clamping the subtracted amount.
-=======
-	 * qual clauses that we have to evaluate as qpquals.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
 	cost_qual_eval(&qpqual_cost, qpquals, root);
 
