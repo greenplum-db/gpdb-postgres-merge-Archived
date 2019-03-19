@@ -4,7 +4,7 @@
  *	  fetch tuples from a GIN scan.
  *
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -500,7 +500,7 @@ startScanKey(GinState *ginstate, GinScanOpaque so, GinScanKey key)
 		}
 		/* i is now the last required entry. */
 
-		MemoryContextSwitchTo(oldCtx);
+		MemoryContextSwitchTo(so->keyCtx);
 
 		key->nrequired = i + 1;
 		key->nadditional = key->nentries - key->nrequired;
@@ -518,11 +518,14 @@ startScanKey(GinState *ginstate, GinScanOpaque so, GinScanKey key)
 	}
 	else
 	{
+		MemoryContextSwitchTo(so->keyCtx);
+
 		key->nrequired = 1;
 		key->nadditional = 0;
 		key->requiredEntries = palloc(1 * sizeof(GinScanEntry));
 		key->requiredEntries[0] = key->scanEntry[0];
 	}
+	MemoryContextSwitchTo(oldCtx);
 }
 
 static void
@@ -1776,8 +1779,12 @@ Datum
 gingetbitmap(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+<<<<<<< HEAD
 	Node 	   *n = (Node *) PG_GETARG_POINTER(1);
 	TIDBitmap  *tbm;
+=======
+	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 	int64		ntids;
 	ItemPointerData iptr;
@@ -1794,7 +1801,12 @@ gingetbitmap(PG_FUNCTION_ARGS)
 	/*
 	 * Set up the scan keys, and check for unsatisfiable query.
 	 */
+<<<<<<< HEAD
 	ginFreeScanKeys(so); /* there should be no keys yet, but just to be sure */
+=======
+	ginFreeScanKeys(so);		/* there should be no keys yet, but just to be
+								 * sure */
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	ginNewScanKey(scan);
 
 	if (GinIsVoidRes(scan))

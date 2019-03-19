@@ -1,20 +1,30 @@
 # contrib/dblink/Makefile
 
 MODULE_big = dblink
-OBJS	= dblink.o
+OBJS	= dblink.o $(WIN32RES)
 PG_CPPFLAGS = -I$(libpq_srcdir)
+<<<<<<< HEAD
 SHLIB_LINK_INTERNAL = $(libpq)
+=======
+SHLIB_LINK = $(libpq)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 EXTENSION = dblink
 DATA = dblink--1.1.sql dblink--1.0--1.1.sql dblink--unpackaged--1.0.sql
+PGFILEDESC = "dblink - connect to other PostgreSQL databases"
 
 REGRESS = paths dblink
+<<<<<<< HEAD
 REGRESS_OPTS = --dlpath=$(top_builddir)/src/test/regress \
 	--create-role=dblink_regression_test
 EXTRA_CLEAN = sql/paths.sql expected/paths.out
 
 # the db name is hard-coded in the tests
 override USE_MODULE_DB =
+=======
+REGRESS_OPTS = --dlpath=$(top_builddir)/src/test/regress
+EXTRA_CLEAN = sql/paths.sql expected/paths.out
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

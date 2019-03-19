@@ -1,6 +1,7 @@
 <!-- doc/src/sgml/release-9.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<<<<<<< HEAD
  <sect1 id="release-9-2-24">
   <title>Release 9.2.24</title>
 
@@ -3786,6 +3787,15 @@ Branch: REL9_2_STABLE [e90a629e1] 2015-09-22 14:58:38 -0700
   <title>Release date:</title>
   <para>2015-06-12</para>
   </formalpara>
+=======
+ <sect1 id="release-9-2-13">
+  <title>Release 9.2.13</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-06-12</simpara>
+  </note>
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
   <para>
    This release contains a small number of fixes from 9.2.12.
@@ -3850,10 +3860,17 @@ Branch: REL9_2_STABLE [e90a629e1] 2015-09-22 14:58:38 -0700
  <sect1 id="release-9-2-12">
   <title>Release 9.2.12</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2015-06-04</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-06-04</simpara>
+  </note>
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
   <para>
    This release contains a small number of fixes from 9.2.11.
@@ -3945,10 +3962,17 @@ Branch: REL9_2_STABLE [e90a629e1] 2015-09-22 14:58:38 -0700
  <sect1 id="release-9-2-11">
   <title>Release 9.2.11</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2015-05-22</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-05-22</simpara>
+  </note>
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
   <para>
    This release contains a variety of fixes from 9.2.10.
@@ -4527,10 +4551,17 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
  <sect1 id="release-9-2-10">
   <title>Release 9.2.10</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2015-02-05</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-02-05</simpara>
+  </note>
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
   <para>
    This release contains a variety of fixes from 9.2.9.
@@ -5032,8 +5063,13 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
      <para>
       The most notable oversight was
+<<<<<<< HEAD
       that <varname>recovery_target_xid</> could not be used to stop at
       a two-phase commit.
+=======
+      that <varname>recovery_min_apply_delay</> failed to delay application
+      of a two-phase commit.
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
      </para>
     </listitem>
 
@@ -5084,7 +5120,11 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
     <listitem>
      <para>
+<<<<<<< HEAD
       Warn if macOS's <function>setlocale()</> starts an unwanted extra
+=======
+      Warn if OS X's <function>setlocale()</> starts an unwanted extra
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
       thread inside the postmaster (Noah Misch)
      </para>
     </listitem>
@@ -5444,10 +5484,17 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
  <sect1 id="release-9-2-9">
   <title>Release 9.2.9</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2014-07-24</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2014-07-24</simpara>
+  </note>
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
   <para>
    This release contains a variety of fixes from 9.2.8.
@@ -5793,7 +5840,11 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
     <listitem>
      <para>
+<<<<<<< HEAD
       Fix linking of <application>libpython</> on macOS (Tom Lane)
+=======
+      Fix linking of <application>libpython</> on OS X (Tom Lane)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
      </para>
 
      <para>

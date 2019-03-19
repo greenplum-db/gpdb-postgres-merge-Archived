@@ -418,34 +418,43 @@ select to_json(date 'Infinity');
  "infinity"
 (1 row)
 
+<<<<<<< HEAD
 select to_json(date '-Infinity');
    to_json   
 -------------
  "-infinity"
 (1 row)
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 select to_json(timestamp 'Infinity');
   to_json   
 ------------
  "infinity"
 (1 row)
 
+<<<<<<< HEAD
 select to_json(timestamp '-Infinity');
    to_json   
 -------------
  "-infinity"
 (1 row)
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 select to_json(timestamptz 'Infinity');
   to_json   
 ------------
  "infinity"
+<<<<<<< HEAD
 (1 row)
 
 select to_json(timestamptz '-Infinity');
    to_json   
 -------------
  "-infinity"
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 (1 row)
 
 --json_agg
@@ -1361,6 +1370,16 @@ select * from json_populate_recordset(null::jpop2, '[{"a":2,"c":3,"b":{"z":4},"d
  a |    b    | c | d 
 ---+---------+---+---
  2 | {"z":4} | 3 | 6
+<<<<<<< HEAD
+(1 row)
+
+select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
+   a    | b |            c             
+--------+---+--------------------------
+ blurfl |   | 
+        | 3 | Fri Jan 20 10:42:53 2012
+(2 rows)
+=======
 (1 row)
 
 select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
@@ -1383,6 +1402,99 @@ select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,3
  [100,200,300] | 99 | 
  {"z":true}    |  3 | Fri Jan 20 10:42:53 2012
 (2 rows)
+
+-- handling of unicode surrogate pairs
+select json '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a' as correct_in_utf8;
+      correct_in_utf8       
+----------------------------
+ "\ud83d\ude04\ud83d\udc36"
+(1 row)
+
+select json '{ "a":  "\ud83d\ud83d" }' -> 'a'; -- 2 high surrogates in a row
+ERROR:  invalid input syntax for type json
+DETAIL:  Unicode high surrogate must not follow a high surrogate.
+CONTEXT:  JSON data, line 1: { "a":...
+select json '{ "a":  "\ude04\ud83d" }' -> 'a'; -- surrogates in wrong order
+ERROR:  invalid input syntax for type json
+DETAIL:  Unicode low surrogate must follow a high surrogate.
+CONTEXT:  JSON data, line 1: { "a":...
+select json '{ "a":  "\ud83dX" }' -> 'a'; -- orphan high surrogate
+ERROR:  invalid input syntax for type json
+DETAIL:  Unicode low surrogate must follow a high surrogate.
+CONTEXT:  JSON data, line 1: { "a":...
+select json '{ "a":  "\ude04X" }' -> 'a'; -- orphan low surrogate
+ERROR:  invalid input syntax for type json
+DETAIL:  Unicode low surrogate must follow a high surrogate.
+CONTEXT:  JSON data, line 1: { "a":...
+--handling of simple unicode escapes
+select json '{ "a":  "the Copyright \u00a9 sign" }' as correct_in_utf8;
+            correct_in_utf8            
+---------------------------------------
+ { "a":  "the Copyright \u00a9 sign" }
+(1 row)
+
+select json '{ "a":  "dollar \u0024 character" }' as correct_everywhere;
+         correct_everywhere          
+-------------------------------------
+ { "a":  "dollar \u0024 character" }
+(1 row)
+
+select json '{ "a":  "dollar \\u0024 character" }' as not_an_escape;
+            not_an_escape             
+--------------------------------------
+ { "a":  "dollar \\u0024 character" }
+(1 row)
+
+select json '{ "a":  "null \u0000 escape" }' as not_unescaped;
+         not_unescaped          
+--------------------------------
+ { "a":  "null \u0000 escape" }
+(1 row)
+
+select json '{ "a":  "null \\u0000 escape" }' as not_an_escape;
+          not_an_escape          
+---------------------------------
+ { "a":  "null \\u0000 escape" }
+(1 row)
+
+select json '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
+   correct_in_utf8    
+----------------------
+ the Copyright © sign
+(1 row)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
+   a    | b  |            c             
+--------+----+--------------------------
+ blurfl | 99 | 
+ def    |  3 | Fri Jan 20 10:42:53 2012
+(2 rows)
+
+<<<<<<< HEAD
+select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
+       a       | b  |            c             
+---------------+----+--------------------------
+ [100,200,300] | 99 | 
+ {"z":true}    |  3 | Fri Jan 20 10:42:53 2012
+(2 rows)
+=======
+select json '{ "a":  "dollar \\u0024 character" }' ->> 'a' as not_an_escape;
+      not_an_escape      
+-------------------------
+ dollar \u0024 character
+(1 row)
+
+select json '{ "a":  "null \u0000 escape" }' ->> 'a' as fails;
+ERROR:  unsupported Unicode escape sequence
+DETAIL:  \u0000 cannot be converted to text.
+CONTEXT:  JSON data, line 1: { "a":...
+select json '{ "a":  "null \\u0000 escape" }' ->> 'a' as not_an_escape;
+   not_an_escape    
+--------------------
+ null \u0000 escape
+(1 row)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 -- negative cases where the wrong record type is supplied
 select * from json_populate_recordset(row(0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
@@ -1664,6 +1776,7 @@ select * from json_to_recordset('[{"a":1,"b":"foo","d":false},{"a":2,"b":"bar","
  2 | bar | t
 (2 rows)
 
+<<<<<<< HEAD
 -- checking proisstrict settings
 select '[{"a":1}]'::json->0->'b';
  ?column? 
@@ -1683,6 +1796,8 @@ select '[{"a":1}]'::json->1->'a';
  
 (1 row)
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 select * from json_to_recordset('[{"a":1,"b":{"d":"foo"},"c":true},{"a":2,"c":false,"b":{"d":"bar"}}]')
     as x(a int, b json, c boolean);
  a |      b      | c 
@@ -1691,6 +1806,7 @@ select * from json_to_recordset('[{"a":1,"b":{"d":"foo"},"c":true},{"a":2,"c":fa
  2 | {"d":"bar"} | f
 (2 rows)
 
+<<<<<<< HEAD
 select *, c is null as c_is_null
 from json_to_record('{"a":1, "b":{"c":16, "d":2}, "x":8}'::json)
     as t(a int, b json, c text, x int);
@@ -1705,5 +1821,55 @@ from json_to_recordset('[{"a":1, "b":{"c":16, "d":2}, "x":8}]'::json)
  a |        b        | c | x | c_is_null 
 ---+-----------------+---+---+-----------
  1 | {"c":16, "d":2} |   | 8 | t
+=======
+-- json_strip_nulls
+select json_strip_nulls(null);
+ json_strip_nulls 
+------------------
+ 
+(1 row)
+
+select json_strip_nulls('1');
+ json_strip_nulls 
+------------------
+ 1
+(1 row)
+
+select json_strip_nulls('"a string"');
+ json_strip_nulls 
+------------------
+ "a string"
+(1 row)
+
+select json_strip_nulls('null');
+ json_strip_nulls 
+------------------
+ null
+(1 row)
+
+select json_strip_nulls('[1,2,null,3,4]');
+ json_strip_nulls 
+------------------
+ [1,2,null,3,4]
+(1 row)
+
+select json_strip_nulls('{"a":1,"b":null,"c":[2,null,3],"d":{"e":4,"f":null}}');
+          json_strip_nulls          
+------------------------------------
+ {"a":1,"c":[2,null,3],"d":{"e":4}}
+(1 row)
+
+select json_strip_nulls('[1,{"a":1,"b":null,"c":2},3]');
+  json_strip_nulls   
+---------------------
+ [1,{"a":1,"c":2},3]
+(1 row)
+
+-- an empty object is not null and should not be stripped
+select json_strip_nulls('{"a": {"b": null, "c": null}, "d": {} }');
+ json_strip_nulls 
+------------------
+ {"a":{},"d":{}}
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 (1 row)
 

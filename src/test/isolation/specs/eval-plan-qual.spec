@@ -16,18 +16,24 @@ setup
  INSERT INTO c1 SELECT 0, a / 3, a % 3 FROM generate_series(0, 9) a;
  INSERT INTO c2 SELECT 1, a / 3, a % 3 FROM generate_series(0, 9) a;
  INSERT INTO c3 SELECT 2, a / 3, a % 3 FROM generate_series(0, 9) a;
+<<<<<<< HEAD
 
  CREATE TABLE table_a (id integer, value text);
  CREATE TABLE table_b (id integer, value text);
  INSERT INTO table_a VALUES (1, 'tableAValue');
  INSERT INTO table_b VALUES (1, 'tableBValue');
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 teardown
 {
  DROP TABLE accounts;
  DROP TABLE p CASCADE;
+<<<<<<< HEAD
  DROP TABLE table_a, table_b;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 session "s1"
@@ -103,6 +109,7 @@ step "returningp1" {
 	WITH u AS ( UPDATE p SET b = b WHERE a > 0 RETURNING * )
 	  SELECT * FROM u;
 }
+<<<<<<< HEAD
 step "readforss"	{
 	SELECT ta.id AS ta_id, ta.value AS ta_value,
 		(SELECT ROW(tb.id, tb.value)
@@ -118,6 +125,8 @@ step "updateforcip3"	{
 	UPDATE table_a SET value = COALESCE(value, (SELECT val FROM d)) WHERE id = 1;
 }
 step "wrtwcte"	{ UPDATE table_a SET value = 'tableAValue2' WHERE id = 1; }
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 step "c2"	{ COMMIT; }
 
 session "s3"
@@ -154,6 +163,7 @@ permutation "wy1" "wy2" "c1" "c2" "read"
 permutation "upsert1" "upsert2" "c1" "c2" "read"
 permutation "readp1" "writep1" "readp2" "c1" "c2"
 permutation "writep2" "returningp1" "c1" "c2"
+<<<<<<< HEAD
 permutation "wx2" "partiallock" "c2" "c1" "read"
 permutation "wx2" "lockwithvalues" "c2" "c1" "read"
 permutation "updateforss" "readforss" "c1" "c2"
@@ -161,3 +171,5 @@ permutation "updateforcip" "updateforcip2" "c1" "c2" "read_a"
 permutation "updateforcip" "updateforcip3" "c1" "c2" "read_a"
 permutation "wrtwcte" "readwcte" "c1" "c2"
 permutation "wrtwcte" "multireadwcte" "c1" "c2"
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

@@ -17,9 +17,13 @@
  * scan all the rows anyway.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -101,7 +105,7 @@ preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
 	 * performs assorted processing related to these features between calling
 	 * preprocess_minmax_aggregates and optimize_minmax_aggregates.)
 	 */
-	if (parse->groupClause || parse->hasWindowFuncs)
+	if (parse->groupClause || list_length(parse->groupingSets) > 1 || parse->hasWindowFuncs)
 		return;
 
 	/*
@@ -460,6 +464,7 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	ntest->arg = copyObject(mminfo->target);
 	/* we checked it wasn't a rowtype in find_minmax_aggs_walker */
 	ntest->argisrow = false;
+	ntest->location = -1;
 
 	/* User might have had that in WHERE already */
 	if (!list_member((List *) parse->jointree->quals, ntest))

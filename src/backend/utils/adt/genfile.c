@@ -4,7 +4,7 @@
  *		Functions for direct access to files
  *
  *
- * Copyright (c) 2004-2014, PostgreSQL Global Development Group
+ * Copyright (c) 2004-2015, PostgreSQL Global Development Group
  *
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
@@ -497,6 +497,7 @@ pg_ls_dir_1arg(PG_FUNCTION_ARGS)
 {
 	return pg_ls_dir(fcinfo);
 }
+<<<<<<< HEAD
 
 /* ------------------------------------
  * generic file handling functions
@@ -827,3 +828,5 @@ pg_file_length(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT64((int64) fst.st_size);
 }
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

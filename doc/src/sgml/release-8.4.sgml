@@ -4,10 +4,17 @@
  <sect1 id="release-8-4-22">
   <title>Release 8.4.22</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2014-07-24</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2014-07-24</simpara>
+  </note>
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
   <para>
    This release contains a variety of fixes from 8.4.21.

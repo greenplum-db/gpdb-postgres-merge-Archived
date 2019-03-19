@@ -38,7 +38,6 @@
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
-
 PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(pgrowlocks);
@@ -137,14 +136,9 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		infomask = tuple->t_data->t_infomask;
 
 		/*
-		 * a tuple is locked if HTSU returns BeingUpdated, and if it returns
-		 * MayBeUpdated but the Xmax is valid and pointing at us.
+		 * A tuple is locked if HTSU returns BeingUpdated.
 		 */
-		if (htsu == HeapTupleBeingUpdated ||
-			(htsu == HeapTupleMayBeUpdated &&
-			 !(infomask & HEAP_XMAX_INVALID) &&
-			 !(infomask & HEAP_XMAX_IS_MULTI) &&
-			 (xmax == GetCurrentTransactionIdIfAny())))
+		if (htsu == HeapTupleBeingUpdated)
 		{
 			char	  **values;
 
@@ -164,8 +158,15 @@ pgrowlocks(PG_FUNCTION_ARGS)
 
 				values[Atnum_ismulti] = pstrdup("true");
 
+<<<<<<< HEAD
 				allow_old = HEAP_LOCKED_UPGRADED(infomask);
 				nmembers = GetMultiXactIdMembers(xmax, &members, allow_old);
+=======
+				allow_old = !(infomask & HEAP_LOCK_MASK) &&
+					(infomask & HEAP_XMAX_LOCK_ONLY);
+				nmembers = GetMultiXactIdMembers(xmax, &members, allow_old,
+												 false);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				if (nmembers == -1)
 				{
 					values[Atnum_xids] = "{0}";

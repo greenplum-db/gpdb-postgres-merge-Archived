@@ -25,6 +25,11 @@ UPDATE xpto SET toasted_col1 = (SELECT string_agg(g.i::text, '') FROM generate_s
 
 UPDATE xpto SET rand1 = 123.456 WHERE id = 1;
 
+-- updating external via INSERT ... ON CONFLICT DO UPDATE
+INSERT INTO xpto(id, toasted_col2) VALUES (2, 'toasted2-upsert')
+ON CONFLICT (id)
+DO UPDATE SET toasted_col2 = EXCLUDED.toasted_col2 || xpto.toasted_col2;
+
 DELETE FROM xpto WHERE id = 1;
 
 DROP TABLE IF EXISTS toasted_key;
@@ -260,6 +265,7 @@ ALTER TABLE toasted_copy ALTER COLUMN data SET STORAGE EXTERNAL;
 203	untoasted200
 \.
 SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+<<<<<<< HEAD
 
 -- test we can decode "old" tuples bigger than the max heap tuple size correctly
 DROP TABLE IF EXISTS toasted_several;
@@ -298,4 +304,6 @@ DROP TABLE toasted_several;
 
 SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
 WHERE data NOT LIKE '%INSERT: %';
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 SELECT pg_drop_replication_slot('regression_slot');

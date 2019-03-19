@@ -163,28 +163,41 @@ msgid ""
 "and\n"
 "the PostgreSQL installation would be incompatible with this data directory.\n"
 msgstr ""
+<<<<<<< HEAD
 "ATTENTION : possible incohérence dans l'ordre des octets\n"
 "L'ordre des octets utilisé pour enregistrer le fichier pg_control peut ne\n"
 "pas correspondre à celui utilisé par ce programme. Dans ce cas, les\n"
 "résultats ci-dessous sont incorrects, et l'installation PostgreSQL\n"
 "incompatible avec ce répertoire des données.\n"
+=======
+"ATTENTION : possible incoh�rence dans l'ordre des octets\n"
+"L'ordre des octets utilis� pour enregistrer le fichier pg_control peut ne\n"
+"pas correspondre � celui utilis� par ce programme. Dans ce cas, les\n"
+"r�sultats ci-dessous sont incorrects, et l'installation PostgreSQL\n"
+"incompatible avec ce r�pertoire des donn�es.\n"
 
 #: pg_controldata.c:199
 #, c-format
 msgid "Catalog version number:               %u\n"
-msgstr "Numéro de version du catalogue :                        %u\n"
+msgstr "Num�ro de version du catalogue :                        %u\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: pg_controldata.c:201
+#, c-format
+msgid "Catalog version number:               %u\n"
+msgstr "Numéro de version du catalogue :                        %u\n"
+
+#: pg_controldata.c:203
 #, c-format
 msgid "Database system identifier:           %s\n"
 msgstr "Identifiant du système de base de données :             %s\n"
 
-#: pg_controldata.c:203
+#: pg_controldata.c:205
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "État du cluster de base de données :                    %s\n"
 
-#: pg_controldata.c:205
+#: pg_controldata.c:207
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "Dernière modification de pg_control :                   %s\n"
@@ -210,12 +223,21 @@ msgid "Latest checkpoint's REDO WAL file:    %s\n"
 msgstr "Dernier fichier WAL du rejeu du point de restauration : %s\n"
 
 #: pg_controldata.c:218
+<<<<<<< HEAD
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "Dernier TimeLineID du point de contrôle :               %u\n"
 
 #: pg_controldata.c:220
 #, c-format
+=======
+#, c-format
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "Dernier TimeLineID du point de contr�le :               %u\n"
+
+#: pg_controldata.c:220
+#, c-format
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
 msgstr "Dernier PrevTimeLineID du point de restauration :       %u\n"
 
@@ -235,40 +257,52 @@ msgstr "activé"
 #: pg_controldata.c:224
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
+<<<<<<< HEAD
 msgstr "Dernier NextXID du point de contrôle :                  %u/%u\n"
+=======
+msgstr "Dernier NextXID du point de contr�le :                  %u/%u\n"
 
 #: pg_controldata.c:227
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "Dernier NextOID du point de contrôle :                  %u\n"
+msgstr "Dernier NextOID du point de contr�le :                  %u\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: pg_controldata.c:229
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "Dernier NextOID du point de contrôle :                  %u\n"
+
+#: pg_controldata.c:231
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "Dernier NextMultiXactId du point de contrôle :          %u\n"
 
-#: pg_controldata.c:231
+#: pg_controldata.c:233
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "Dernier NextMultiOffset du point de contrôle :          %u\n"
 
-#: pg_controldata.c:233
+#: pg_controldata.c:235
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "Dernier oldestXID du point de contrôle :                %u\n"
 
-#: pg_controldata.c:235
+#: pg_controldata.c:237
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "Dernier oldestXID du point de contrôle de la base :     %u\n"
 
-#: pg_controldata.c:237
+#: pg_controldata.c:239
 #, c-format
+<<<<<<< HEAD
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "Dernier oldestActiveXID du point de contrôle :          %u\n"
 
 #: pg_controldata.c:239
 #, c-format
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "Dernier oldestMultiXid du point de restauration :       %u\n"
 
@@ -278,6 +312,14 @@ msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "Dernier oldestMulti du point de restauration de base :  %u\n"
 
 #: pg_controldata.c:243
+<<<<<<< HEAD
+=======
+#, c-format
+msgid "Time of latest checkpoint:            %s\n"
+msgstr "Heure du dernier point de contr�le :                    %s\n"
+
+#: pg_controldata.c:245
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "Heure du dernier point de contrôle :                    %s\n"
@@ -321,21 +363,39 @@ msgid "yes"
 msgstr "oui"
 
 #: pg_controldata.c:261
+<<<<<<< HEAD
+=======
 #, c-format
 msgid "Current wal_level setting:            %s\n"
-msgstr "Paramètrage actuel de wal_level :                       %s\n"
+msgstr "Param�trage actuel de wal_level :                       %s\n"
 
 #: pg_controldata.c:263
 #, c-format
 msgid "Current wal_log_hints setting:        %s\n"
-msgstr "Paramétrage actuel de wal_log_hints :                   %s\n"
+msgstr "Param�trage actuel de wal_log_hints :                   %s\n"
 
 #: pg_controldata.c:265
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+#, c-format
+msgid "Current wal_level setting:            %s\n"
+msgstr "Paramètrage actuel de wal_level :                       %s\n"
+
+#: pg_controldata.c:267
+#, c-format
+msgid "Current max_worker_processes setting: %d\n"
+msgstr "Param�trage actuel de max_worker_processes :            %d\n"
+
+#: pg_controldata.c:269
+#, c-format
+msgid "Current wal_log_hints setting:        %s\n"
+msgstr "Paramétrage actuel de wal_log_hints :                   %s\n"
+
+#: pg_controldata.c:271
 #, c-format
 msgid "Current max_connections setting:      %d\n"
 msgstr "Paramètrage actuel de max_connections :                 %d\n"
 
-#: pg_controldata.c:267
+#: pg_controldata.c:273
 #, c-format
 msgid "Current max_worker_processes setting: %d\n"
 msgstr "Paramétrage actuel de max_worker_processes :            %d\n"

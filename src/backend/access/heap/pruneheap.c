@@ -3,7 +3,7 @@
  * pruneheap.c
  *	  heap page pruning and HOT-chain management code
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -18,6 +18,7 @@
 #include "access/heapam_xlog.h"
 #include "access/transam.h"
 #include "access/htup_details.h"
+#include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -373,9 +374,12 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 
 		tup.t_data = htup;
 		tup.t_len = ItemIdGetLength(rootlp);
+<<<<<<< HEAD
 #if 0
 		tup.t_tableOid = RelationGetRelid(relation);
 #endif
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		ItemPointerSet(&(tup.t_self), BufferGetBlockNumber(buffer), rootoffnum);
 
 		if (HeapTupleHeaderIsHeapOnly(htup))

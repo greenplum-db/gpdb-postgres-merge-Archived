@@ -3,7 +3,7 @@
  * collationcmds.c
  *	  collation-related commands support code
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -51,8 +51,13 @@ Datum pg_import_system_collations(PG_FUNCTION_ARGS);
 /*
  * CREATE COLLATION
  */
+<<<<<<< HEAD
 Oid
 DefineCollation(List *names, List *parameters, bool if_not_exists)
+=======
+ObjectAddress
+DefineCollation(List *names, List *parameters)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	char	   *collName;
 	Oid			collNamespace;
@@ -65,6 +70,7 @@ DefineCollation(List *names, List *parameters, bool if_not_exists)
 	char	   *collcollate = NULL;
 	char	   *collctype = NULL;
 	Oid			newoid;
+	ObjectAddress address;
 
 	collNamespace = QualifiedNameGetCreationNamespace(names, &collName);
 
@@ -156,10 +162,13 @@ DefineCollation(List *names, List *parameters, bool if_not_exists)
 	if (!OidIsValid(newoid))
 		return InvalidOid;
 
+	ObjectAddressSet(address, CollationRelationId, newoid);
+
 	/* check that the locales can be loaded */
 	CommandCounterIncrement();
 	(void) pg_newlocale_from_collation(newoid);
 
+<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		DefineStmt * stmt = makeNode(DefineStmt);
@@ -178,6 +187,9 @@ DefineCollation(List *names, List *parameters, bool if_not_exists)
 	}
 
 	return newoid;
+=======
+	return address;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*

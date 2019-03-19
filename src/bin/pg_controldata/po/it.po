@@ -19,7 +19,11 @@ msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL) 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2014-07-30 04:13+0000\n"
+<<<<<<< HEAD
 "PO-Revision-Date: 2017-04-23 03:02+0100\n"
+=======
+"PO-Revision-Date: 2014-07-30 22:41+0100\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"

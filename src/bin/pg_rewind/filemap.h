@@ -35,7 +35,10 @@ typedef enum
 typedef enum
 {
 	FILE_TYPE_REGULAR,
+<<<<<<< HEAD
 	FILE_TYPE_FIFO,
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	FILE_TYPE_DIRECTORY,
 	FILE_TYPE_SYMLINK
 } file_type_t;
@@ -101,7 +104,10 @@ extern void process_target_file(const char *path, file_type_t type,
 					size_t newsize, const char *link_target);
 extern void process_block_change(ForkNumber forknum, RelFileNode rnode,
 					 BlockNumber blkno);
+<<<<<<< HEAD
 extern void process_aofile_change(RelFileNode rnode, int segno, int64 offset);
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern void filemap_finalize(void);
 
 #endif   /* FILEMAP_H */

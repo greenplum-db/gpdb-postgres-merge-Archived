@@ -4,7 +4,7 @@
  *	  routines for handling GIN posting tree pages.
  *
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -15,7 +15,7 @@
 #include "postgres.h"
 
 #include "access/gin_private.h"
-#include "access/heapam_xlog.h"
+#include "access/xloginsert.h"
 #include "lib/ilist.h"
 #include "miscadmin.h"
 #include "utils/rel.h"
@@ -104,18 +104,30 @@ static ItemPointer dataLeafPageGetUncompressed(Page page, int *nitems);
 static void dataSplitPageInternal(GinBtree btree, Buffer origbuf,
 					  GinBtreeStack *stack,
 					  void *insertdata, BlockNumber updateblkno,
+<<<<<<< HEAD
 					  Page *newlpage, Page *newrpage, XLogRecData *rdata);
+=======
+					  Page *newlpage, Page *newrpage);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 static disassembledLeaf *disassembleLeaf(Page page);
 static bool leafRepackItems(disassembledLeaf *leaf, ItemPointer remaining);
 static bool addItemsToLeaf(disassembledLeaf *leaf, ItemPointer newItems,
 			   int nNewItems);
 
+<<<<<<< HEAD
 static void computeLeafRecompressWALData(disassembledLeaf *leaf);
+=======
+static void registerLeafRecompressWALData(Buffer buf, disassembledLeaf *leaf);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void dataPlaceToPageLeafRecompress(Buffer buf, disassembledLeaf *leaf);
 static void dataPlaceToPageLeafSplit(disassembledLeaf *leaf,
 						 ItemPointerData lbound, ItemPointerData rbound,
+<<<<<<< HEAD
 						 Page lpage, Page rpage, XLogRecData *rdata);
+=======
+						 Page lpage, Page rpage);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * Read TIDs from leaf data page to single uncompressed array. The TIDs are
@@ -442,11 +454,16 @@ GinPageDeletePostingItem(Page page, OffsetNumber offset)
  * In neither case should the given page buffer be modified here.
  */
 static GinPlaceToPageRC
+<<<<<<< HEAD
 dataBeginPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 						 void *insertdata,
 						 void **ptp_workspace,
 						 Page *newlpage, Page *newrpage,
 						 XLogRecData *rdata)
+=======
+dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
+					void *insertdata, Page *newlpage, Page *newrpage)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	GinBtreeDataLeafInsertData *items = insertdata;
 	ItemPointer newItems = &items->items[items->curitem];
@@ -595,6 +612,7 @@ dataBeginPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		 * for a WAL record describing the changes we'll make.
 		 */
 		if (RelationNeedsWAL(btree->index))
+<<<<<<< HEAD
 			computeLeafRecompressWALData(leaf);
 
 		/*
@@ -602,6 +620,14 @@ dataBeginPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		 * dataExecPlaceToPageLeaf will need access to the "leaf" data.
 		 */
 		*ptp_workspace = leaf;
+=======
+		{
+			XLogBeginInsert();
+			registerLeafRecompressWALData(buf, leaf);
+		}
+		START_CRIT_SECTION();
+		dataPlaceToPageLeafRecompress(buf, leaf);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		if (append)
 			elog(DEBUG2, "appended %d new items to block %u; %d bytes (%d to go)",
@@ -627,7 +653,11 @@ dataBeginPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		 * until they're balanced.
 		 *
 		 * As a further heuristic, when appending items to the end of the
+<<<<<<< HEAD
 		 * page, try to make the left page 75% full, on the assumption that
+=======
+		 * page, try make the left page 75% full, one the assumption that
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		 * subsequent insertions will probably also go to the end. This packs
 		 * the index somewhat tighter when appending to a table, which is very
 		 * common.
@@ -682,8 +712,13 @@ dataBeginPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		*newlpage = palloc(BLCKSZ);
 		*newrpage = palloc(BLCKSZ);
 
+<<<<<<< HEAD
 		dataPlaceToPageLeafSplit(leaf, lbound, rbound,
 								 *newlpage, *newrpage, rdata);
+=======
+		dataPlaceToPageLeafSplit(buf, leaf, lbound, rbound,
+								 *newlpage, *newrpage);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		Assert(GinPageRightMost(page) ||
 			   ginCompareItemPointers(GinDataPageGetRightBound(*newlpage),
@@ -840,9 +875,16 @@ ginVacuumPostingTreeLeaf(Relation indexrel, Buffer buffer, GinVacuumState *gvs)
 		}
 
 		if (RelationNeedsWAL(indexrel))
+<<<<<<< HEAD
 			computeLeafRecompressWALData(leaf);
 
 		/* Apply changes to page */
+=======
+		{
+			XLogBeginInsert();
+			registerLeafRecompressWALData(buffer, leaf);
+		}
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		START_CRIT_SECTION();
 
 		dataPlaceToPageLeafRecompress(buffer, leaf);
@@ -852,6 +894,7 @@ ginVacuumPostingTreeLeaf(Relation indexrel, Buffer buffer, GinVacuumState *gvs)
 		if (RelationNeedsWAL(indexrel))
 		{
 			XLogRecPtr	recptr;
+<<<<<<< HEAD
 			XLogRecData rdata[2];
 			ginxlogVacuumDataLeafPage xlrec;
 
@@ -870,6 +913,10 @@ ginVacuumPostingTreeLeaf(Relation indexrel, Buffer buffer, GinVacuumState *gvs)
 			rdata[1].next = NULL;
 
 			recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_VACUUM_DATA_LEAF_PAGE, rdata);
+=======
+
+			recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_VACUUM_DATA_LEAF_PAGE);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			PageSetLSN(page, recptr);
 		}
 
@@ -883,7 +930,11 @@ ginVacuumPostingTreeLeaf(Relation indexrel, Buffer buffer, GinVacuumState *gvs)
  * we enter the critical section that actually updates the page.)
  */
 static void
+<<<<<<< HEAD
 computeLeafRecompressWALData(disassembledLeaf *leaf)
+=======
+registerLeafRecompressWALData(Buffer buf, disassembledLeaf *leaf)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	int			nmodified = 0;
 	char	   *walbufbegin;
@@ -974,9 +1025,16 @@ computeLeafRecompressWALData(disassembledLeaf *leaf)
 			segno++;
 	}
 
+<<<<<<< HEAD
 	/* Pass back the constructed info via *leaf */
 	leaf->walinfo = walbufbegin;
 	leaf->walinfolen = walbufend - walbufbegin;
+=======
+
+	XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
+	XLogRegisterBufData(0, walbufbegin, walbufend - walbufbegin);
+
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1048,7 +1106,11 @@ dataPlaceToPageLeafRecompress(Buffer buf, disassembledLeaf *leaf)
 static void
 dataPlaceToPageLeafSplit(disassembledLeaf *leaf,
 						 ItemPointerData lbound, ItemPointerData rbound,
+<<<<<<< HEAD
 						 Page lpage, Page rpage, XLogRecData *rdata)
+=======
+						 Page lpage, Page rpage)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	char	   *ptr;
 	int			segsize;
@@ -1058,9 +1120,12 @@ dataPlaceToPageLeafSplit(disassembledLeaf *leaf,
 	dlist_node *firstright;
 	leafSegmentInfo *seginfo;
 
+<<<<<<< HEAD
 	/* this must be static so it can be returned to caller */
 	static ginxlogSplitDataLeaf split_xlog;
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* Initialize temporary pages to hold the new left and right pages */
 	GinInitPage(lpage, GIN_DATA | GIN_LEAF | GIN_COMPRESSED, BLCKSZ);
 	GinInitPage(rpage, GIN_DATA | GIN_LEAF | GIN_COMPRESSED, BLCKSZ);
@@ -1115,6 +1180,7 @@ dataPlaceToPageLeafSplit(disassembledLeaf *leaf,
 	Assert(rsize == leaf->rsize);
 	GinDataPageSetDataSize(rpage, rsize);
 	*GinDataPageGetRightBound(rpage) = rbound;
+<<<<<<< HEAD
 
 	/* Create WAL record */
 	split_xlog.lsize = lsize;
@@ -1136,6 +1202,8 @@ dataPlaceToPageLeafSplit(disassembledLeaf *leaf,
 	rdata[2].data = (char *) GinDataLeafPageGetPostingList(rpage);
 	rdata[2].len = rsize;
 	rdata[2].next = NULL;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1145,6 +1213,7 @@ dataPlaceToPageLeafSplit(disassembledLeaf *leaf,
  * before we enter the insertion critical section.  *ptp_workspace can be
  * set to pass information along to the execPlaceToPage function.
  *
+<<<<<<< HEAD
  * If it won't fit, perform a page split and return two temporary page
  * images into *newlpage and *newrpage, with result GPTP_SPLIT.  Also,
  * if WAL logging is needed, fill one or more entries of rdata[] with
@@ -1162,9 +1231,22 @@ dataBeginPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 							 void **ptp_workspace,
 							 Page *newlpage, Page *newrpage,
 							 XLogRecData *rdata)
+=======
+ * In addition to inserting the given item, the downlink of the existing item
+ * at 'off' is updated to point to 'updateblkno'.
+ *
+ * On INSERTED, registers the buffer as buffer ID 0, with data.
+ * On SPLIT, returns rdata that represents the split pages in *prdata.
+ */
+static GinPlaceToPageRC
+dataPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
+						void *insertdata, BlockNumber updateblkno,
+						Page *newlpage, Page *newrpage)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	Page		page = BufferGetPage(buf);
 
+<<<<<<< HEAD
 	/* If it doesn't fit, deal with split case */
 	if (GinNonLeafDataPageGetFreeSpace(page) < sizeof(PostingItem))
 	{
@@ -1176,6 +1258,20 @@ dataBeginPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 	/* Else, we're ready to proceed with insertion */
 	return GPTP_INSERT;
 }
+=======
+	/* this must be static so it can be returned to caller */
+	static ginxlogInsertDataInternal data;
+
+	/* split if we have to */
+	if (GinNonLeafDataPageGetFreeSpace(page) < sizeof(PostingItem))
+	{
+		dataSplitPageInternal(btree, buf, stack, insertdata, updateblkno,
+							  newlpage, newrpage);
+		return SPLIT;
+	}
+
+	Assert(GinPageIsData(page));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * Perform data insertion after beginPlaceToPage has decided it will fit.
@@ -1204,6 +1300,7 @@ dataExecPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 
 	if (RelationNeedsWAL(btree->index))
 	{
+<<<<<<< HEAD
 		/*
 		 * This must be static, because it has to survive until XLogInsert,
 		 * and we can't palloc here.  Ugly, but the XLogInsert infrastructure
@@ -1213,6 +1310,16 @@ dataExecPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 
 		data.offset = off;
 		data.newitem = *pitem;
+=======
+		data.offset = off;
+		data.newitem = *pitem;
+
+		XLogBeginInsert();
+		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
+		XLogRegisterBufData(0, (char *) &data,
+							sizeof(ginxlogInsertDataInternal));
+	}
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		rdata[0].buffer = buf;
 		rdata[0].buffer_std = true;
@@ -1244,17 +1351,24 @@ dataExecPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
  * very differently.
  */
 static GinPlaceToPageRC
+<<<<<<< HEAD
 dataBeginPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 					 void *insertdata, BlockNumber updateblkno,
 					 void **ptp_workspace,
 					 Page *newlpage, Page *newrpage,
 					 XLogRecData *rdata)
+=======
+dataPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
+				void *insertdata, BlockNumber updateblkno,
+				Page *newlpage, Page *newrpage)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	Page		page = BufferGetPage(buf);
 
 	Assert(GinPageIsData(page));
 
 	if (GinPageIsLeaf(page))
+<<<<<<< HEAD
 		return dataBeginPlaceToPageLeaf(btree, buf, stack, insertdata,
 										ptp_workspace,
 										newlpage, newrpage, rdata);
@@ -1263,6 +1377,14 @@ dataBeginPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 											insertdata, updateblkno,
 											ptp_workspace,
 											newlpage, newrpage, rdata);
+=======
+		return dataPlaceToPageLeaf(btree, buf, stack, insertdata,
+								   newlpage, newrpage);
+	else
+		return dataPlaceToPageInternal(btree, buf, stack,
+									   insertdata, updateblkno,
+									   newlpage, newrpage);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1301,7 +1423,11 @@ static void
 dataSplitPageInternal(GinBtree btree, Buffer origbuf,
 					  GinBtreeStack *stack,
 					  void *insertdata, BlockNumber updateblkno,
+<<<<<<< HEAD
 					  Page *newlpage, Page *newrpage, XLogRecData *rdata)
+=======
+					  Page *newlpage, Page *newrpage)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	Page		oldpage = BufferGetPage(origbuf);
 	OffsetNumber off = stack->off;
@@ -1314,10 +1440,14 @@ dataSplitPageInternal(GinBtree btree, Buffer origbuf,
 	Page		lpage;
 	Page		rpage;
 	OffsetNumber separator;
+<<<<<<< HEAD
 
 	/* these must be static so they can be returned to caller */
 	static ginxlogSplitDataInternal data;
 	static PostingItem allitems[(BLCKSZ / sizeof(PostingItem)) + 1];
+=======
+	PostingItem allitems[(BLCKSZ / sizeof(PostingItem)) + 1];
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	lpage = PageGetTempPage(oldpage);
 	rpage = PageGetTempPage(oldpage);
@@ -1373,6 +1503,7 @@ dataSplitPageInternal(GinBtree btree, Buffer origbuf,
 	/* set up right bound for right page */
 	*GinDataPageGetRightBound(rpage) = oldbound;
 
+<<<<<<< HEAD
 	/* Set up WAL data */
 	data.separator = separator;
 	data.nitem = nitems;
@@ -1389,6 +1520,8 @@ dataSplitPageInternal(GinBtree btree, Buffer origbuf,
 	rdata[1].next = NULL;
 
 	/* return temp pages to caller */
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	*newlpage = lpage;
 	*newrpage = rpage;
 }
@@ -1899,24 +2032,18 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 	if (RelationNeedsWAL(index))
 	{
 		XLogRecPtr	recptr;
-		XLogRecData rdata[2];
 		ginxlogCreatePostingTree data;
 
-		data.node = index->rd_node;
-		data.blkno = blkno;
 		data.size = rootsize;
 
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].data = (char *) &data;
-		rdata[0].len = sizeof(ginxlogCreatePostingTree);
-		rdata[0].next = &rdata[1];
+		XLogBeginInsert();
+		XLogRegisterData((char *) &data, sizeof(ginxlogCreatePostingTree));
 
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].data = (char *) GinDataLeafPageGetPostingList(page);
-		rdata[1].len = rootsize;
-		rdata[1].next = NULL;
+		XLogRegisterData((char *) GinDataLeafPageGetPostingList(page),
+						 rootsize);
+		XLogRegisterBuffer(0, buffer, REGBUF_WILL_INIT);
 
-		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_CREATE_PTREE, rdata);
+		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_CREATE_PTREE);
 		PageSetLSN(page, recptr);
 	}
 

@@ -8,7 +8,7 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/test/regress/pg_regress_main.c
@@ -104,6 +104,7 @@ psql_start_test(const char *testname,
 		}
 	}
 
+<<<<<<< HEAD
 	/*
 	 * We need to pass multiple input files (prehook and infile) to psql,
 	 * to do this a simple way is to execute it like this:
@@ -139,6 +140,15 @@ psql_start_test(const char *testname,
 		fprintf(stderr, _("command too long\n"));
 		exit(2);
 	}
+=======
+	snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
+			 "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1",
+			 bindir ? bindir : "",
+			 bindir ? "/" : "",
+			 dblist->str,
+			 infile,
+			 outfile);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	pid = spawn_process(psql_cmd);
 

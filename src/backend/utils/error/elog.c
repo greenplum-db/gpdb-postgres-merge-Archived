@@ -43,9 +43,13 @@
  * overflow.)
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -128,11 +132,7 @@ __attribute__((format_arg(1)));
 #undef _
 #define _(x) err_gettext(x)
 
-static const char *
-err_gettext(const char *str)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-__attribute__((format_arg(1)));
+static const char *err_gettext(const char *str) pg_attribute_format_arg(1);
 static void set_errdata_field(MemoryContextData *cxt, char **ptr, const char *str);
 
 /* Global variables */
@@ -539,7 +539,10 @@ errstart(int elevel, const char *filename, int lineno,
 	edata->domain = domain ? domain : PG_TEXTDOMAIN("postgres");
 	/* initialize context_domain the same way (see set_errcontext_domain()) */
 	edata->context_domain = edata->domain;
+<<<<<<< HEAD
 	edata->omit_location = true;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* Select default errcode based on elevel */
 	if (elevel >= ERROR)
 	{
@@ -581,7 +584,6 @@ errfinish(int dummy __attribute__((unused)),...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	int			elevel;
-	bool		save_ImmediateInterruptOK;
 	MemoryContext oldcontext;
 	ErrorContextCallback *econtext;
 	int			saved_errno;            /*CDB*/
@@ -590,18 +592,6 @@ errfinish(int dummy __attribute__((unused)),...)
 	CHECK_STACK_DEPTH();
 	saved_errno = edata->saved_errno;   /*CDB*/
 	elevel = edata->elevel;
-
-	/*
-	 * Ensure we can't get interrupted while performing error reporting.  This
-	 * is needed to prevent recursive entry to functions like syslog(), which
-	 * may not be re-entrant.
-	 *
-	 * Note: other places that save-and-clear ImmediateInterruptOK also do
-	 * HOLD_INTERRUPTS(), but that should not be necessary here since we don't
-	 * call anything that could turn on ImmediateInterruptOK.
-	 */
-	save_ImmediateInterruptOK = ImmediateInterruptOK;
-	ImmediateInterruptOK = false;
 
 	/*
 	 * Do processing in ErrorContext, which we hope has enough reserved space
@@ -638,10 +628,6 @@ errfinish(int dummy __attribute__((unused)),...)
 		 * itself be inside a holdoff section.  If necessary, such a handler
 		 * could save and restore InterruptHoldoffCount for itself, but this
 		 * should make life easier for most.)
-		 *
-		 * Note that we intentionally don't restore ImmediateInterruptOK here,
-		 * even if it was set at entry.  We definitely don't want that on
-		 * while doing error cleanup.
 		 */
 		InterruptHoldoffCount = 0;
 		QueryCancelHoldoffCount = 0;
@@ -770,15 +756,9 @@ errfinish(int dummy __attribute__((unused)),...)
 	}
 
 	/*
-	 * We reach here if elevel <= WARNING.  OK to return to caller, so restore
-	 * caller's setting of ImmediateInterruptOK.
-	 */
-	ImmediateInterruptOK = save_ImmediateInterruptOK;
-
-	/*
-	 * But check for cancel/die interrupt first --- this is so that the user
-	 * can stop a query emitting tons of notice or warning messages, even if
-	 * it's in a loop that otherwise fails to check for interrupts.
+	 * Check for cancel/die interrupt first --- this is so that the user can
+	 * stop a query emitting tons of notice or warning messages, even if it's
+	 * in a loop that otherwise fails to check for interrupts.
 	 */
 	CHECK_FOR_INTERRUPTS();
 
@@ -1409,6 +1389,25 @@ errhidestmt(bool hide_stmt)
 	return 0;					/* return value does not matter */
 }
 
+/*
+ * errhidecontext --- optionally suppress CONTEXT: field of log entry
+ *
+ * This should only be used for verbose debugging messages where the repeated
+ * inclusion of CONTEXT: bloats the log volume too much.
+ */
+int
+errhidecontext(bool hide_ctx)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* we don't bother incrementing recursion_depth */
+	CHECK_STACK_DEPTH();
+
+	edata->hide_ctx = hide_ctx;
+
+	return 0;					/* return value does not matter */
+}
+
 
 /*
  * errfunction --- add reporting function name to the current error
@@ -1957,6 +1956,57 @@ FlushErrorState(void)
 	recursion_depth = 0;
 	/* Delete all data in ErrorContext */
 	MemoryContextResetAndDeleteChildren(ErrorContext);
+}
+
+/*
+ * ThrowErrorData --- report an error described by an ErrorData structure
+ *
+ * This is intended to be used to re-report errors originally thrown by
+ * background worker processes and then propagated (with or without
+ * modification) to the backend responsible for them.
+ */
+void
+ThrowErrorData(ErrorData *edata)
+{
+	ErrorData  *newedata;
+	MemoryContext oldcontext;
+
+	if (!errstart(edata->elevel, edata->filename, edata->lineno,
+				  edata->funcname, NULL))
+		return;
+
+	newedata = &errordata[errordata_stack_depth];
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+
+	/* Copy the supplied fields to the error stack. */
+	if (edata->sqlerrcode > 0)
+		newedata->sqlerrcode = edata->sqlerrcode;
+	if (edata->message)
+		newedata->message = pstrdup(edata->message);
+	if (edata->detail)
+		newedata->detail = pstrdup(edata->detail);
+	if (edata->detail_log)
+		newedata->detail_log = pstrdup(edata->detail_log);
+	if (edata->hint)
+		newedata->hint = pstrdup(edata->hint);
+	if (edata->context)
+		newedata->context = pstrdup(edata->context);
+	if (edata->schema_name)
+		newedata->schema_name = pstrdup(edata->schema_name);
+	if (edata->table_name)
+		newedata->table_name = pstrdup(edata->table_name);
+	if (edata->column_name)
+		newedata->column_name = pstrdup(edata->column_name);
+	if (edata->datatype_name)
+		newedata->datatype_name = pstrdup(edata->datatype_name);
+	if (edata->constraint_name)
+		newedata->constraint_name = pstrdup(edata->constraint_name);
+	if (edata->internalquery)
+		newedata->internalquery = pstrdup(edata->internalquery);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	errfinish(0);
 }
 
 /*
@@ -2532,7 +2582,8 @@ write_eventlog(int level, const char *line, int len)
 
 	if (evtHandle == INVALID_HANDLE_VALUE)
 	{
-		evtHandle = RegisterEventSource(NULL, event_source ? event_source : "PostgreSQL");
+		evtHandle = RegisterEventSource(NULL,
+						 event_source ? event_source : DEFAULT_EVENT_SOURCE);
 		if (evtHandle == NULL)
 		{
 			evtHandle = INVALID_HANDLE_VALUE;
@@ -2832,9 +2883,15 @@ setup_formatted_log_time(void)
 				"%Y-%m-%d %H:%M:%S     %Z",
 				pg_localtime(&stamp_time, log_timezone));
 
+<<<<<<< HEAD
 	/* 'paste' microseconds into place... */
 	sprintf(msbuf, ".%06d", (int) (tv.tv_usec));
 	strncpy(formatted_log_time + 19, msbuf, 4);
+=======
+	/* 'paste' milliseconds into place... */
+	sprintf(msbuf, ".%03d", (int) (tv.tv_usec / 1000));
+	memcpy(formatted_log_time + 19, msbuf, 4);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -3441,7 +3498,8 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* errcontext */
-	appendCSVLiteral(&buf, edata->context);
+	if (!edata->hide_ctx)
+		appendCSVLiteral(&buf, edata->context);
 	appendStringInfoChar(&buf, ',');
 
 	/* user query --- only reported if not disabled by the caller */
@@ -4303,7 +4361,7 @@ send_message_to_server_log(ErrorData *edata)
 			append_with_tabs(&buf, edata->internalquery);
 			appendStringInfoChar(&buf, '\n');
 		}
-		if (edata->context)
+		if (edata->context && !edata->hide_ctx)
 		{
 			log_line_prefix(&buf, edata);
 			appendStringInfoString(&buf, _("CONTEXT:  "));

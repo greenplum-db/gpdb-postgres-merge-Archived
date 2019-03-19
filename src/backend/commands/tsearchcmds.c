@@ -4,7 +4,7 @@
  *
  *	  Routines for tsearch manipulation commands
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -35,6 +35,7 @@
 #include "catalog/pg_type.h"
 #include "commands/alter.h"
 #include "commands/defrem.h"
+#include "commands/event_trigger.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
@@ -123,8 +124,10 @@ get_ts_parser_func(DefElem *defel, int attnum)
 
 /*
  * make pg_depend entries for a new pg_ts_parser entry
+ *
+ * Return value is the address of said new entry.
  */
-static void
+static ObjectAddress
 makeParserDependencies(HeapTuple tuple)
 {
 	Form_pg_ts_parser prs = (Form_pg_ts_parser) GETSTRUCT(tuple);
@@ -165,12 +168,14 @@ makeParserDependencies(HeapTuple tuple)
 		referenced.objectId = prs->prsheadline;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
+
+	return myself;
 }
 
 /*
  * CREATE TEXT SEARCH PARSER
  */
-Oid
+ObjectAddress
 DefineTSParser(List *names, List *parameters)
 {
 	char	   *prsname;
@@ -182,6 +187,7 @@ DefineTSParser(List *names, List *parameters)
 	NameData	pname;
 	Oid			prsOid;
 	Oid			namespaceoid;
+	ObjectAddress address;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -272,7 +278,7 @@ DefineTSParser(List *names, List *parameters)
 
 	CatalogUpdateIndexes(prsRel, tup);
 
-	makeParserDependencies(tup);
+	address = makeParserDependencies(tup);
 
 	/* Post creation hook for new text search parser */
 	InvokeObjectPostCreateHook(TSParserRelationId, prsOid, 0);
@@ -281,6 +287,7 @@ DefineTSParser(List *names, List *parameters)
 
 	heap_close(prsRel, RowExclusiveLock);
 
+<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		DefineStmt *stmt = makeNode(DefineStmt);
@@ -300,6 +307,9 @@ DefineTSParser(List *names, List *parameters)
 	}
 
 	return prsOid;
+=======
+	return address;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -329,8 +339,10 @@ RemoveTSParserById(Oid prsId)
 
 /*
  * make pg_depend entries for a new pg_ts_dict entry
+ *
+ * Return value is address of the new entry
  */
-static void
+static ObjectAddress
 makeDictionaryDependencies(HeapTuple tuple)
 {
 	Form_pg_ts_dict dict = (Form_pg_ts_dict) GETSTRUCT(tuple);
@@ -358,6 +370,8 @@ makeDictionaryDependencies(HeapTuple tuple)
 	referenced.objectId = dict->dicttemplate;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+	return myself;
 }
 
 /*
@@ -418,7 +432,7 @@ verify_dictoptions(Oid tmplId, List *dictoptions)
 /*
  * CREATE TEXT SEARCH DICTIONARY
  */
-Oid
+ObjectAddress
 DefineTSDictionary(List *names, List *parameters)
 {
 	ListCell   *pl;
@@ -433,6 +447,7 @@ DefineTSDictionary(List *names, List *parameters)
 	Oid			namespaceoid;
 	AclResult	aclresult;
 	char	   *dictname;
+	ObjectAddress address;
 
 	/* Convert list of names to a name and namespace */
 	namespaceoid = QualifiedNameGetCreationNamespace(names, &dictname);
@@ -496,7 +511,7 @@ DefineTSDictionary(List *names, List *parameters)
 
 	CatalogUpdateIndexes(dictRel, tup);
 
-	makeDictionaryDependencies(tup);
+	address = makeDictionaryDependencies(tup);
 
 	/* Post creation hook for new text search dictionary */
 	InvokeObjectPostCreateHook(TSDictionaryRelationId, dictOid, 0);
@@ -505,6 +520,7 @@ DefineTSDictionary(List *names, List *parameters)
 
 	heap_close(dictRel, RowExclusiveLock);
 
+<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		DefineStmt *stmt = makeNode(DefineStmt);
@@ -522,6 +538,9 @@ DefineTSDictionary(List *names, List *parameters)
 	}
 
 	return dictOid;
+=======
+	return address;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -551,7 +570,7 @@ RemoveTSDictionaryById(Oid dictId)
 /*
  * ALTER TEXT SEARCH DICTIONARY
  */
-Oid
+ObjectAddress
 AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 {
 	HeapTuple	tup,
@@ -565,6 +584,7 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 	Datum		repl_val[Natts_pg_ts_dict];
 	bool		repl_null[Natts_pg_ts_dict];
 	bool		repl_repl[Natts_pg_ts_dict];
+	ObjectAddress address;
 
 	dictId = get_ts_dict_oid(stmt->dictname, false);
 
@@ -651,6 +671,8 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 
 	InvokeObjectPostAlterHook(TSDictionaryRelationId, dictId, 0);
 
+	ObjectAddressSet(address, TSDictionaryRelationId, dictId);
+
 	/*
 	 * NOTE: because we only support altering the options, not the template,
 	 * there is no need to update dependencies.  This might have to change if
@@ -662,6 +684,7 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 
 	heap_close(rel, RowExclusiveLock);
 
+<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR |
@@ -671,6 +694,9 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 									NULL);
 
 	return dictId;
+=======
+	return address;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /* ---------------------- TS Template commands -----------------------*/
@@ -723,7 +749,7 @@ get_ts_template_func(DefElem *defel, int attnum)
 /*
  * make pg_depend entries for a new pg_ts_template entry
  */
-static void
+static ObjectAddress
 makeTSTemplateDependencies(HeapTuple tuple)
 {
 	Form_pg_ts_template tmpl = (Form_pg_ts_template) GETSTRUCT(tuple);
@@ -755,12 +781,14 @@ makeTSTemplateDependencies(HeapTuple tuple)
 		referenced.objectId = tmpl->tmplinit;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
+
+	return myself;
 }
 
 /*
  * CREATE TEXT SEARCH TEMPLATE
  */
-Oid
+ObjectAddress
 DefineTSTemplate(List *names, List *parameters)
 {
 	ListCell   *pl;
@@ -773,6 +801,7 @@ DefineTSTemplate(List *names, List *parameters)
 	Oid			tmplOid;
 	Oid			namespaceoid;
 	char	   *tmplname;
+	ObjectAddress address;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -838,7 +867,7 @@ DefineTSTemplate(List *names, List *parameters)
 
 	CatalogUpdateIndexes(tmplRel, tup);
 
-	makeTSTemplateDependencies(tup);
+	address = makeTSTemplateDependencies(tup);
 
 	/* Post creation hook for new text search template */
 	InvokeObjectPostCreateHook(TSTemplateRelationId, tmplOid, 0);
@@ -847,6 +876,7 @@ DefineTSTemplate(List *names, List *parameters)
 
 	heap_close(tmplRel, RowExclusiveLock);
 
+<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		DefineStmt *stmt = makeNode(DefineStmt);
@@ -864,6 +894,9 @@ DefineTSTemplate(List *names, List *parameters)
 	}
 
 	return tmplOid;
+=======
+	return address;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -921,7 +954,7 @@ GetTSConfigTuple(List *names)
  * Pass opened pg_ts_config_map relation if there might be any config map
  * entries for the config.
  */
-static void
+static ObjectAddress
 makeConfigurationDependencies(HeapTuple tuple, bool removeOld,
 							  Relation mapRel)
 {
@@ -1001,13 +1034,15 @@ makeConfigurationDependencies(HeapTuple tuple, bool removeOld,
 	record_object_address_dependencies(&myself, addrs, DEPENDENCY_NORMAL);
 
 	free_object_addresses(addrs);
+
+	return myself;
 }
 
 /*
  * CREATE TEXT SEARCH CONFIGURATION
  */
-Oid
-DefineTSConfiguration(List *names, List *parameters)
+ObjectAddress
+DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 {
 	Relation	cfgRel;
 	Relation	mapRel = NULL;
@@ -1022,6 +1057,7 @@ DefineTSConfiguration(List *names, List *parameters)
 	Oid			prsOid = InvalidOid;
 	Oid			cfgOid;
 	ListCell   *pl;
+	ObjectAddress address;
 
 	/* Convert list of names to a name and namespace */
 	namespaceoid = QualifiedNameGetCreationNamespace(names, &cfgname);
@@ -1054,6 +1090,14 @@ DefineTSConfiguration(List *names, List *parameters)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot specify both PARSER and COPY options")));
+
+	/* make copied tsconfig available to callers */
+	if (copied && OidIsValid(sourceOid))
+	{
+		ObjectAddressSet(*copied,
+						 TSConfigRelationId,
+						 sourceOid);
+	}
 
 	/*
 	 * Look up source config if given.
@@ -1149,7 +1193,7 @@ DefineTSConfiguration(List *names, List *parameters)
 		systable_endscan(scan);
 	}
 
-	makeConfigurationDependencies(tup, false, mapRel);
+	address = makeConfigurationDependencies(tup, false, mapRel);
 
 	/* Post creation hook for new text search configuration */
 	InvokeObjectPostCreateHook(TSConfigRelationId, cfgOid, 0);
@@ -1160,6 +1204,7 @@ DefineTSConfiguration(List *names, List *parameters)
 		heap_close(mapRel, RowExclusiveLock);
 	heap_close(cfgRel, RowExclusiveLock);
 
+<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		DefineStmt *stmt = makeNode(DefineStmt);
@@ -1177,6 +1222,9 @@ DefineTSConfiguration(List *names, List *parameters)
 	}
 
 	return cfgOid;
+=======
+	return address;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1230,12 +1278,13 @@ RemoveTSConfigurationById(Oid cfgId)
 /*
  * ALTER TEXT SEARCH CONFIGURATION - main entry point
  */
-Oid
+ObjectAddress
 AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 {
 	HeapTuple	tup;
 	Oid			cfgId;
 	Relation	relMap;
+	ObjectAddress address;
 
 	/* Find the configuration */
 	tup = GetTSConfigTuple(stmt->cfgname);
@@ -1266,10 +1315,13 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 	InvokeObjectPostAlterHook(TSConfigRelationId,
 							  HeapTupleGetOid(tup), 0);
 
+	ObjectAddressSet(address, TSConfigMapRelationId, cfgId);
+
 	heap_close(relMap, RowExclusiveLock);
 
 	ReleaseSysCache(tup);
 
+<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR |
@@ -1279,6 +1331,9 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 									NULL);
 
 	return cfgId;
+=======
+	return address;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1497,6 +1552,8 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 			}
 		}
 	}
+
+	EventTriggerCollectAlterTSConfig(stmt, cfgId, dictIds, ndict);
 }
 
 /*
@@ -1564,6 +1621,8 @@ DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
 
 		i++;
 	}
+
+	EventTriggerCollectAlterTSConfig(stmt, cfgId, NULL, 0);
 }
 
 

@@ -5,22 +5,38 @@
 CREATE FUNCTION widget_in(cstring)
    RETURNS widget
    AS '@libdir@/regress@DLSUFFIX@'
+<<<<<<< HEAD
    LANGUAGE C IMMUTABLE STRICT NO SQL;
+=======
+   LANGUAGE C STRICT IMMUTABLE;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 CREATE FUNCTION widget_out(widget)
    RETURNS cstring
    AS '@libdir@/regress@DLSUFFIX@'
+<<<<<<< HEAD
    LANGUAGE C IMMUTABLE STRICT NO SQL;
+=======
+   LANGUAGE C STRICT IMMUTABLE;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 CREATE FUNCTION int44in(cstring)
    RETURNS city_budget
    AS '@libdir@/regress@DLSUFFIX@'
+<<<<<<< HEAD
    LANGUAGE C IMMUTABLE STRICT NO SQL;
+=======
+   LANGUAGE C STRICT IMMUTABLE;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 CREATE FUNCTION int44out(city_budget)
    RETURNS cstring
    AS '@libdir@/regress@DLSUFFIX@'
+<<<<<<< HEAD
    LANGUAGE C IMMUTABLE STRICT NO SQL;
+=======
+   LANGUAGE C STRICT IMMUTABLE;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 CREATE FUNCTION check_primary_key ()
 	RETURNS trigger

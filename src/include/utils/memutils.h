@@ -7,9 +7,13 @@
  *	  of the API of the memory management subsystem.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/memutils.h
@@ -191,21 +195,29 @@ extern PGDLLIMPORT MemoryContext InterconnectContext;
 /* This is a transient link to the active portal's memory context: */
 extern PGDLLIMPORT MemoryContext PortalContext;
 
+/* Backwards compatibility macro */
+#define MemoryContextResetAndDeleteChildren(ctx) MemoryContextReset(ctx)
+
 
 /*
  * Memory-context-type-independent functions in mcxt.c
  */
 extern void MemoryContextInit(void);
 extern void MemoryContextReset(MemoryContext context);
+<<<<<<< HEAD
+=======
+extern void MemoryContextDelete(MemoryContext context);
+extern void MemoryContextResetOnly(MemoryContext context);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern void MemoryContextResetChildren(MemoryContext context);
 extern void MemoryContextDeleteChildren(MemoryContext context);
-extern void MemoryContextResetAndDeleteChildren(MemoryContext context);
 extern void MemoryContextSetParent(MemoryContext context,
 					   MemoryContext new_parent);
 extern Size GetMemoryChunkSpace(void *pointer);
 extern MemoryContext GetMemoryChunkContext(void *pointer);
 extern MemoryContext MemoryContextGetParent(MemoryContext context);
 extern bool MemoryContextIsEmpty(MemoryContext context);
+<<<<<<< HEAD
 
 /* Statistics */
 extern Size MemoryContextGetCurrentSpace(MemoryContext context);
@@ -221,6 +233,11 @@ extern void MemoryContextDeleteImpl(MemoryContext context, const char* sfile, co
 extern void dump_memory_allocation(const char* fname);
 extern void dump_memory_allocation_ctxt(FILE * ofile, void *ctxt);
 #endif
+=======
+extern void MemoryContextStats(MemoryContext context);
+extern void MemoryContextAllowInCriticalSection(MemoryContext context,
+									bool allow);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #ifdef MEMORY_CONTEXT_CHECKING
 extern void MemoryContextCheck(MemoryContext context);

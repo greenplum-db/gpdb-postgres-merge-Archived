@@ -303,7 +303,12 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					date		ddres;
 					timestamp	tres;
 					interval   *ires;
+<<<<<<< HEAD
 					char *endptr, endchar;
+=======
+					char	   *endptr,
+								endchar;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 				case ECPGt_short:
 				case ECPGt_int:
@@ -573,7 +578,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if (nres == NULL)
 					{
 						ecpg_log("ecpg_get_data on line %d: RESULT %s; errno %d\n",
-								 lineno, pval ? pval : "", errno);
+								 lineno, pval, errno);
 
 						if (INFORMIX_MODE(compat))
 						{
@@ -600,7 +605,11 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					}
 					else
 					{
+<<<<<<< HEAD
 						if (!isarray && garbage_left(isarray, &scan_length, compat))
+=======
+						if (!isarray && garbage_left(isarray, scan_length, compat))
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						{
 							free(nres);
 							ecpg_raise(lineno, ECPG_NUMERIC_FORMAT,
@@ -632,7 +641,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if (ires == NULL)
 					{
 						ecpg_log("ecpg_get_data on line %d: RESULT %s; errno %d\n",
-								 lineno, pval ? pval : "", errno);
+								 lineno, pval, errno);
 
 						if (INFORMIX_MODE(compat))
 						{
@@ -658,7 +667,11 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						if (*scan_length == '"')
 							scan_length++;
 
+<<<<<<< HEAD
 						if (!isarray && garbage_left(isarray, &scan_length, compat))
+=======
+						if (!isarray && garbage_left(isarray, scan_length, compat))
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						{
 							free(ires);
 							ecpg_raise(lineno, ECPG_INTERVAL_FORMAT,
@@ -686,7 +699,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if (errno != 0)
 					{
 						ecpg_log("ecpg_get_data on line %d: RESULT %s; errno %d\n",
-								 lineno, pval ? pval : "", errno);
+								 lineno, pval, errno);
 
 						if (INFORMIX_MODE(compat))
 						{
@@ -708,7 +721,11 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						if (*scan_length == '"')
 							scan_length++;
 
+<<<<<<< HEAD
 						if (!isarray && garbage_left(isarray, &scan_length, compat))
+=======
+						if (!isarray && garbage_left(isarray, scan_length, compat))
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						{
 							ecpg_raise(lineno, ECPG_DATE_FORMAT,
 									   ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
@@ -734,7 +751,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if (errno != 0)
 					{
 						ecpg_log("ecpg_get_data on line %d: RESULT %s; errno %d\n",
-								 lineno, pval ? pval : "", errno);
+								 lineno, pval, errno);
 
 						if (INFORMIX_MODE(compat))
 						{
@@ -756,7 +773,11 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						if (*scan_length == '"')
 							scan_length++;
 
+<<<<<<< HEAD
 						if (!isarray && garbage_left(isarray, &scan_length, compat))
+=======
+						if (!isarray && garbage_left(isarray, scan_length, compat))
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						{
 							ecpg_raise(lineno, ECPG_TIMESTAMP_FORMAT,
 									   ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);

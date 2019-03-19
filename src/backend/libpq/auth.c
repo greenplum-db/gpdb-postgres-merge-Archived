@@ -3,7 +3,7 @@
  * auth.c
  *	  Routines to handle network authentication
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -185,7 +185,7 @@ static int	pg_SSPI_recvauth(Port *port);
  * RADIUS Authentication
  *----------------------------------------------------------------
  */
-#ifdef USE_SSL
+#ifdef USE_OPENSSL
 #include <openssl/rand.h>
 #endif
 static int	CheckRADIUSAuth(Port *port);
@@ -451,13 +451,6 @@ ClientAuthentication(Port *port)
 	 */
 	hba_getauthmethod(port);
 
-	/*
-	 * Enable immediate response to SIGTERM/SIGINT/timeout interrupts. (We
-	 * don't want this during hba_getauthmethod() because it might have to do
-	 * database access, eg for role membership checks.)
-	 */
-	ImmediateInterruptOK = true;
-	/* And don't forget to detect one that already arrived */
 	CHECK_FOR_INTERRUPTS();
 
 	/*
@@ -475,7 +468,7 @@ ClientAuthentication(Port *port)
 		 * already if it didn't verify ok.
 		 */
 #ifdef USE_SSL
-		if (!port->peer)
+		if (!port->peer_cert_valid)
 		{
 			ereport(FATAL,
 					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
@@ -523,7 +516,7 @@ ClientAuthentication(Port *port)
 					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 						errmsg("pg_hba.conf rejects replication connection for host \"%s\", user \"%s\", %s",
 							   hostinfo, port->user_name,
-							   port->ssl ? _("SSL on") : _("SSL off"))));
+							port->ssl_in_use ? _("SSL on") : _("SSL off"))));
 #else
 					ereport(FATAL,
 					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
@@ -539,7 +532,7 @@ ClientAuthentication(Port *port)
 						errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\", %s",
 							   hostinfo, port->user_name,
 							   port->database_name,
-							   port->ssl ? _("SSL on") : _("SSL off"))));
+							port->ssl_in_use ? _("SSL on") : _("SSL off"))));
 #else
 					ereport(FATAL,
 					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
@@ -597,7 +590,7 @@ ClientAuthentication(Port *port)
 					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 						errmsg("no pg_hba.conf entry for replication connection from host \"%s\", user \"%s\", %s",
 							   hostinfo, port->user_name,
-							   port->ssl ? _("SSL on") : _("SSL off")),
+							   port->ssl_in_use ? _("SSL on") : _("SSL off")),
 						HOSTNAME_LOOKUP_DETAIL(port)));
 #else
 					ereport(FATAL,
@@ -615,7 +608,7 @@ ClientAuthentication(Port *port)
 						errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
 							   hostinfo, port->user_name,
 							   port->database_name,
-							   port->ssl ? _("SSL on") : _("SSL off")),
+							   port->ssl_in_use ? _("SSL on") : _("SSL off")),
 						HOSTNAME_LOOKUP_DETAIL(port)));
 #else
 					ereport(FATAL,
@@ -728,9 +721,6 @@ ClientAuthentication(Port *port)
 		sendAuthRequest(port, AUTH_REQ_OK);
 	else
 		auth_failed(port, status, logdetail);
-
-	/* Done with authentication, so we should turn off immediate interrupts */
-	ImmediateInterruptOK = false;
 }
 
 void
@@ -746,6 +736,8 @@ static void
 sendAuthRequest(Port *port, AuthRequest areq)
 {
 	StringInfoData buf;
+
+	CHECK_FOR_INTERRUPTS();
 
 	pq_beginmessage(&buf, 'R');
 	pq_sendint(&buf, (int32) areq, sizeof(int32));
@@ -780,6 +772,8 @@ sendAuthRequest(Port *port, AuthRequest areq)
 	 */
 	if (areq != AUTH_REQ_OK)
 		pq_flush();
+
+	CHECK_FOR_INTERRUPTS();
 }
 
 /*
@@ -1090,6 +1084,12 @@ pg_GSS_recvauth(Port *port)
 	do
 	{
 		pq_startmsgread();
+<<<<<<< HEAD
+=======
+
+		CHECK_FOR_INTERRUPTS();
+
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		mtype = pq_getbyte();
 		if (mtype != 'p')
 		{
@@ -1138,6 +1138,8 @@ pg_GSS_recvauth(Port *port)
 			 "minor: %d, outlen: %u, outflags: %x",
 			 maj_stat, min_stat,
 			 (unsigned int) port->gss->outbuf.length, gflags);
+
+		CHECK_FOR_INTERRUPTS();
 
 		if (port->gss->outbuf.length != 0)
 		{
@@ -1644,6 +1646,9 @@ interpret_ident_response(const char *ident_response,
  *	IP addresses and port numbers are in network byte order.
  *
  *	But iff we're unable to get the information from ident, return false.
+ *
+ *	XXX: Using WaitLatchOrSocket() and doing a CHECK_FOR_INTERRUPTS() if the
+ *	latch was set would improve the responsiveness to timeouts/cancellations.
  */
 static int
 ident_inet(hbaPort *port)
@@ -1757,6 +1762,8 @@ ident_inet(hbaPort *port)
 	/* loop in case send is interrupted */
 	do
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		rc = send(sock_fd, ident_query, strlen(ident_query), 0);
 	} while (rc < 0 && errno == EINTR);
 
@@ -1772,6 +1779,8 @@ ident_inet(hbaPort *port)
 
 	do
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		rc = recv(sock_fd, ident_response, sizeof(ident_response) - 1, 0);
 	} while (rc < 0 && errno == EINTR);
 
@@ -1846,7 +1855,11 @@ auth_peer(hbaPort *port)
 		ereport(LOG,
 				(errmsg("could not look up local user ID %ld: %s",
 						(long) uid,
+<<<<<<< HEAD
 						save_errno ? strerror(save_errno) : _("user does not exist"))));
+=======
+						errno ? strerror(errno) : _("user does not exist"))));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		return STATUS_ERROR;
 	}
 
@@ -2437,7 +2450,7 @@ typedef struct
 {
 	uint8		attribute;
 	uint8		length;
-	uint8		data[1];
+	uint8		data[FLEXIBLE_ARRAY_MEMBER];
 } radius_attribute;
 
 typedef struct
@@ -2484,7 +2497,6 @@ radius_add_attribute(radius_packet *packet, uint8 type, const unsigned char *dat
 			 "Adding attribute code %d with length %d to radius packet would create oversize packet, ignoring",
 			 type, len);
 		return;
-
 	}
 
 	attr = (radius_attribute *) ((unsigned char *) packet + packet->length);
@@ -2585,7 +2597,7 @@ CheckRADIUSAuth(Port *port)
 	/* Construct RADIUS packet */
 	packet->code = RADIUS_ACCESS_REQUEST;
 	packet->length = RADIUS_HEADER_LENGTH;
-#ifdef USE_SSL
+#ifdef USE_OPENSSL
 	if (RAND_bytes(packet->vector, RADIUS_VECTOR_LENGTH) != 1)
 	{
 		ereport(LOG,
@@ -2679,6 +2691,10 @@ CheckRADIUSAuth(Port *port)
 	 * call to select() with a timeout, since somebody can be sending invalid
 	 * packets to our port thus causing us to retry in a loop and never time
 	 * out.
+	 *
+	 * XXX: Using WaitLatchOrSocket() and doing a CHECK_FOR_INTERRUPTS() if
+	 * the latch was set would improve the responsiveness to
+	 * timeouts/cancellations.
 	 */
 	gettimeofday(&endtime, NULL);
 	endtime.tv_sec += RADIUS_TIMEOUT;

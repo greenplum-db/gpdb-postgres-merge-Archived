@@ -3,9 +3,13 @@
  * execUtils.c
  *	  miscellaneous executor utility routines
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -30,10 +34,6 @@
  *		ExecOpenScanRelation	Common code for scan node init routines.
  *		ExecCloseScanRelation
  *
- *		ExecOpenIndices			\
- *		ExecCloseIndices		 | referenced by InitPlan, EndPlan,
- *		ExecInsertIndexTuples	/  ExecInsert, ExecUpdate
- *
  *		RegisterExprContextCallback    Register function shutdown callback
  *		UnregisterExprContextCallback  Deregister function shutdown callback
  *
@@ -49,14 +49,17 @@
 #include "access/appendonlywriter.h"
 #include "access/relscan.h"
 #include "access/transam.h"
+<<<<<<< HEAD
 #include "catalog/index.h"
 #include "executor/execdebug.h"
 #include "executor/execUtils.h"
+=======
+#include "executor/executor.h"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
-#include "storage/lmgr.h"
 #include "utils/memutils.h"
-#include "utils/tqual.h"
+#include "utils/rel.h"
 
 #include "nodes/primnodes.h"
 #include "nodes/execnodes.h"
@@ -83,9 +86,6 @@
 #include "cdb/memquota.h"
 
 static bool get_last_attnums(Node *node, ProjectionInfo *projInfo);
-static bool index_recheck_constraint(Relation index, Oid *constr_procs,
-						 Datum *existing_values, bool *existing_isnull,
-						 Datum *new_values);
 static void ShutdownExprContext(ExprContext *econtext, bool isCommit);
 
 
@@ -708,11 +708,14 @@ get_last_attnums(Node *node, ProjectionInfo *projInfo)
 	/*
 	 * Don't examine the arguments or filters of Aggrefs or WindowFuncs,
 	 * because those do not represent expressions to be evaluated within the
-	 * overall targetlist's econtext.
+	 * overall targetlist's econtext.  GroupingFunc arguments are never
+	 * evaluated at all.
 	 */
 	if (IsA(node, Aggref))
 		return false;
 	if (IsA(node, WindowFunc))
+		return false;
+	if (IsA(node, GroupingFunc))
 		return false;
 	return expression_tree_walker(node, get_last_attnums,
 								  (void *) projInfo);
@@ -889,8 +892,10 @@ ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags)
 		lockmode = NoLock;
 	else
 	{
-		ListCell   *l;
+		/* Keep this check in sync with InitPlan! */
+		ExecRowMark *erm = ExecFindRowMark(estate, scanrelid, true);
 
+<<<<<<< HEAD
 		foreach(l, estate->es_rowMarks)
 		{
 			ExecRowMark *erm = lfirst(l);
@@ -903,6 +908,10 @@ ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags)
 				break;
 			}
 		}
+=======
+		if (erm != NULL && erm->relation != NULL)
+			lockmode = NoLock;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/* Open the relation and acquire lock as needed */
@@ -963,6 +972,7 @@ ExecCloseScanRelation(Relation scanrel)
 	heap_close(scanrel, NoLock);
 }
 
+<<<<<<< HEAD
 
 /* ----------------------------------------------------------------
  *				  ExecInsertIndexTuples support
@@ -1484,6 +1494,8 @@ index_recheck_constraint(Relation index, Oid *constr_procs,
 	return true;
 }
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * ExecUpdateAOtupCount
  *		Update the tuple count on the master for an append only relation segfile.

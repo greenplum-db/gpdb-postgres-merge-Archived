@@ -30,6 +30,7 @@
 #include "catalog/catalog.h"
 #include "catalog/pg_type.h"
 
+<<<<<<< HEAD
 #include "pqexpbuffer.h"
 
 static PGconn *conn = NULL;
@@ -37,6 +38,10 @@ static PGconn *conn = NULL;
 /* Contents of recovery.conf to be generated */
 static PQExpBuffer recoveryconfcontents = NULL;
 
+=======
+static PGconn *conn = NULL;
+
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * Files are fetched max CHUNKSIZE bytes at a time.
  *
@@ -54,7 +59,10 @@ void
 libpqConnect(const char *connstr)
 {
 	char	   *str;
+<<<<<<< HEAD
 	PGresult   *res;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	conn = PQconnectdb(connstr);
 	if (PQstatus(conn) == CONNECTION_BAD)
@@ -63,6 +71,7 @@ libpqConnect(const char *connstr)
 
 	pg_log(PG_PROGRESS, "connected to server\n");
 
+<<<<<<< HEAD
 	/* Secure connection by enforcing search_path */
 	res = PQexec(conn, "SELECT pg_catalog.set_config('search_path', '', false)");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -70,6 +79,8 @@ libpqConnect(const char *connstr)
 				 PQresultErrorMessage(res));
 	PQclear(res);
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/*
 	 * Check that the server is not in hot standby mode. There is no
 	 * fundamental reason that couldn't be made to work, but it doesn't
@@ -82,7 +93,11 @@ libpqConnect(const char *connstr)
 	pg_free(str);
 
 	/*
+<<<<<<< HEAD
 	 * Also check that full_page_writes is enabled.  We can get torn pages if
+=======
+	 * Also check that full_page_writes is enabled. We can get torn pages if
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 * a page is modified while we read it with pg_read_binary_file(), and we
 	 * rely on full page images to fix them.
 	 */
@@ -90,6 +105,7 @@ libpqConnect(const char *connstr)
 	if (strcmp(str, "on") != 0)
 		pg_fatal("full_page_writes must be enabled in the source server\n");
 	pg_free(str);
+<<<<<<< HEAD
 
 	/*
 	 * Although we don't do any "real" updates, we do work with a temporary
@@ -103,11 +119,16 @@ libpqConnect(const char *connstr)
 		pg_fatal("could not set up connection context: %s",
 				 PQresultErrorMessage(res));
 	PQclear(res);
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
  * Runs a query that returns a single value.
+<<<<<<< HEAD
  * The result should be pg_free'd after use.
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 static char *
 run_simple_query(const char *sql)
@@ -146,12 +167,19 @@ libpqGetCurrentXlogInsertLocation(void)
 	val = run_simple_query("SELECT pg_current_xlog_insert_location()");
 
 	if (sscanf(val, "%X/%X", &hi, &lo) != 2)
+<<<<<<< HEAD
 		pg_fatal("unrecognized result \"%s\" for current WAL insert location\n", val);
 
 	result = ((uint64) hi) << 32 | lo;
 
 	pg_free(val);
 
+=======
+		pg_fatal("unrecognized result \"%s\" for current XLOG insert location\n", val);
+
+	result = ((uint64) hi) << 32 | lo;
+
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	return result;
 }
 
@@ -176,7 +204,10 @@ libpqProcessFileList(void)
 	 * directory, they won't be copied correctly.
 	 */
 	sql =
+<<<<<<< HEAD
 		"SET gp_recursive_cte TO ON;\n"
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		"WITH RECURSIVE files (path, filename, size, isdir) AS (\n"
 		"  SELECT '' AS path, filename, size, isdir FROM\n"
 		"  (SELECT pg_ls_dir('.', true, false) AS filename) AS fn,\n"
@@ -208,7 +239,11 @@ libpqProcessFileList(void)
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		char	   *path = PQgetvalue(res, i, 0);
+<<<<<<< HEAD
 		int64		filesize = atol(PQgetvalue(res, i, 1));
+=======
+		int			filesize = atoi(PQgetvalue(res, i, 1));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		bool		isdir = (strcmp(PQgetvalue(res, i, 2), "t") == 0);
 		char	   *link_target = PQgetvalue(res, i, 3);
 		file_type_t type;
@@ -231,6 +266,7 @@ libpqProcessFileList(void)
 
 		process_source_file(path, type, filesize, link_target);
 	}
+<<<<<<< HEAD
 	PQclear(res);
 }
 
@@ -254,6 +290,8 @@ pg_recvint64(int64 value)
 	result |= (uint32) ntohl(swap.i32[1]);
 
 	return result;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*----
@@ -262,7 +300,11 @@ pg_recvint64(int64 value)
  * the received parts. The result set is expected to be of format:
  *
  * path		text	-- path in the data directory, e.g "base/1/123"
+<<<<<<< HEAD
  * begin	int8	-- offset within the file
+=======
+ * begin	int4	-- offset within the file
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * chunk	bytea	-- file content
  *----
  */
@@ -283,8 +325,12 @@ receiveFileChunks(const char *sql)
 	{
 		char	   *filename;
 		int			filenamelen;
+<<<<<<< HEAD
 		int64		chunkoff;
 		char		chunkoff_str[32];
+=======
+		int			chunkoff;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		int			chunksize;
 		char	   *chunk;
 
@@ -298,7 +344,11 @@ receiveFileChunks(const char *sql)
 				continue;		/* final zero-row result */
 
 			default:
+<<<<<<< HEAD
 				pg_fatal("unexpected result while fetching remote files: %s",
+=======
+				pg_fatal("unexpected result while fetching remote files: %s\n",
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						 PQresultErrorMessage(res));
 		}
 
@@ -306,8 +356,13 @@ receiveFileChunks(const char *sql)
 		if (PQnfields(res) != 3 || PQntuples(res) != 1)
 			pg_fatal("unexpected result set size while fetching remote files\n");
 
+<<<<<<< HEAD
 		if (PQftype(res, 0) != TEXTOID ||
 			PQftype(res, 1) != INT8OID ||
+=======
+		if (PQftype(res, 0) != TEXTOID &&
+			PQftype(res, 1) != INT4OID &&
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			PQftype(res, 2) != BYTEAOID)
 		{
 			pg_fatal("unexpected data types in result set while fetching remote files: %u %u %u\n",
@@ -327,12 +382,21 @@ receiveFileChunks(const char *sql)
 			pg_fatal("unexpected null values in result while fetching remote files\n");
 		}
 
+<<<<<<< HEAD
 		if (PQgetlength(res, 0, 1) != sizeof(int64))
 			pg_fatal("unexpected result length while fetching remote files\n");
 
 		/* Read result set to local variables */
 		memcpy(&chunkoff, PQgetvalue(res, 0, 1), sizeof(int64));
 		chunkoff = pg_recvint64(chunkoff);
+=======
+		if (PQgetlength(res, 0, 1) != sizeof(int32))
+			pg_fatal("unexpected result length while fetching remote files\n");
+
+		/* Read result set to local variables */
+		memcpy(&chunkoff, PQgetvalue(res, 0, 1), sizeof(int32));
+		chunkoff = ntohl(chunkoff);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		chunksize = PQgetlength(res, 0, 2);
 
 		filenamelen = PQgetlength(res, 0, 0);
@@ -343,24 +407,36 @@ receiveFileChunks(const char *sql)
 		chunk = PQgetvalue(res, 0, 2);
 
 		/*
+<<<<<<< HEAD
 		 * If a file has been deleted on the source, remove it on the target
 		 * as well.  Note that multiple unlink() calls may happen on the same
 		 * file if multiple data chunks are associated with it, hence ignore
 		 * unconditionally anything missing.  If this file is not a relation
 		 * data file, then it has been already truncated when creating the
 		 * file chunk list at the previous execution of the filemap.
+=======
+		 * It's possible that the file was deleted on remote side after we
+		 * created the file map. In this case simply ignore it, as if it was
+		 * not there in the first place, and move on.
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		 */
 		if (PQgetisnull(res, 0, 2))
 		{
 			pg_log(PG_DEBUG,
+<<<<<<< HEAD
 			  "received null value for chunk for file \"%s\", file has been deleted\n",
 				   filename);
 			remove_target_file(filename, true);
+=======
+				   "received NULL chunk for file \"%s\", file has been deleted\n",
+				   filename);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			pg_free(filename);
 			PQclear(res);
 			continue;
 		}
 
+<<<<<<< HEAD
 		/*
 		 * Separate step to keep platform-dependent format code out of
 		 * translatable strings.
@@ -368,6 +444,10 @@ receiveFileChunks(const char *sql)
 		snprintf(chunkoff_str, sizeof(chunkoff_str), INT64_FORMAT, chunkoff);
 		pg_log(PG_DEBUG, "received chunk for file \"%s\", offset %s, size %d\n",
 			   filename, chunkoff_str, chunksize);
+=======
+		pg_log(PG_DEBUG, "received chunk for file \"%s\", offset %d, size %d\n",
+			   filename, chunkoff, chunksize);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		open_target_file(filename, false);
 
@@ -409,8 +489,11 @@ libpqGetFile(const char *filename, size_t *filesize)
 	memcpy(result, PQgetvalue(res, 0, 0), len);
 	result[len] = '\0';
 
+<<<<<<< HEAD
 	PQclear(res);
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	pg_log(PG_DEBUG, "fetched file \"%s\", length %d\n", filename, len);
 
 	if (filesize)
@@ -426,7 +509,11 @@ libpqGetFile(const char *filename, size_t *filesize)
  * function to actually fetch the data.
  */
 static void
+<<<<<<< HEAD
 fetch_file_range(const char *path, uint64 begin, uint64 end)
+=======
+fetch_file_range(const char *path, unsigned int begin, unsigned int end)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	char		linebuf[MAXPGPATH + 23];
 
@@ -435,6 +522,7 @@ fetch_file_range(const char *path, uint64 begin, uint64 end)
 	{
 		unsigned int len;
 
+<<<<<<< HEAD
 		/* Fine as long as CHUNKSIZE is not bigger than UINT32_MAX */
 		if (end - begin > CHUNKSIZE)
 			len = CHUNKSIZE;
@@ -442,6 +530,14 @@ fetch_file_range(const char *path, uint64 begin, uint64 end)
 			len = (unsigned int) (end - begin);
 
 		snprintf(linebuf, sizeof(linebuf), "%s\t" UINT64_FORMAT "\t%u\n", path, begin, len);
+=======
+		if (end - begin > CHUNKSIZE)
+			len = CHUNKSIZE;
+		else
+			len = end - begin;
+
+		snprintf(linebuf, sizeof(linebuf), "%s\t%u\t%u\n", path, begin, len);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		if (PQputCopyData(conn, linebuf, strlen(linebuf)) != 1)
 			pg_fatal("could not send COPY data: %s",
@@ -466,13 +562,20 @@ libpq_executeFileMap(filemap_t *map)
 	 * First create a temporary table, and load it with the blocks that we
 	 * need to fetch.
 	 */
+<<<<<<< HEAD
 	sql = "CREATE TEMPORARY TABLE fetchchunks(path text, begin int8, len int4);";
+=======
+	sql = "CREATE TEMPORARY TABLE fetchchunks(path text, begin int4, len int4);";
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	res = PQexec(conn, sql);
 
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pg_fatal("could not create temporary table: %s",
 				 PQresultErrorMessage(res));
+<<<<<<< HEAD
 	PQclear(res);
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	sql = "COPY fetchchunks FROM STDIN";
 	res = PQexec(conn, sql);
@@ -480,7 +583,10 @@ libpq_executeFileMap(filemap_t *map)
 	if (PQresultStatus(res) != PGRES_COPY_IN)
 		pg_fatal("could not send file list: %s",
 				 PQresultErrorMessage(res));
+<<<<<<< HEAD
 	PQclear(res);
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	for (i = 0; i < map->narray; i++)
 	{
@@ -528,7 +634,10 @@ libpq_executeFileMap(filemap_t *map)
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 			pg_fatal("unexpected result while sending file list: %s",
 					 PQresultErrorMessage(res));
+<<<<<<< HEAD
 		PQclear(res);
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/*
@@ -559,6 +668,7 @@ execute_pagemap(datapagemap_t *pagemap, const char *path)
 	}
 	pg_free(iter);
 }
+<<<<<<< HEAD
 
 /*
  * TODO: Most of the below code is copied directly from pg_basebackup.c. There
@@ -779,3 +889,5 @@ WriteRecoveryConf(void)
 
 	fclose(cf);
 }
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

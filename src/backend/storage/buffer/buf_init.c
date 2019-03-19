@@ -3,7 +3,7 @@
  * buf_init.c
  *	  buffer manager initialization routines
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -25,9 +25,8 @@
 #include "storage/buf_internals.h"
 
 
-BufferDesc *BufferDescriptors;
+BufferDescPadded *BufferDescriptors;
 char	   *BufferBlocks;
-int32	   *PrivateRefCount;
 
 #ifdef MPROTECT_BUFFERS
 /*
@@ -79,16 +78,9 @@ ProtectMemoryPoolBuffers()
  *
  * refcount --	Counts the number of processes holding pins on a buffer.
  *		A buffer is pinned during IO and immediately after a BufferAlloc().
- *		Pins must be released before end of transaction.
- *
- * PrivateRefCount -- Each buffer also has a private refcount that keeps
- *		track of the number of times the buffer is pinned in the current
- *		process.    This is used for two purposes: first, if we pin a
- *		a buffer more than once, we only need to change the shared refcount
- *		once, thus only lock the shared state once; second, when a transaction
- *		aborts, it should only unpin the buffers exactly the number of times it
- *		has pinned them, so that it will not blow away buffers of another
- *		backend.
+ *		Pins must be released before end of transaction.  For efficiency the
+ *		shared refcount isn't increased if an individual backend pins a buffer
+ *		multiple times. Check the PrivateRefCount infrastructure in bufmgr.c.
  */
 
 
@@ -105,9 +97,11 @@ InitBufferPool(void)
 	bool		foundBufs,
 				foundDescs;
 
-	BufferDescriptors = (BufferDesc *)
-		ShmemInitStruct("Buffer Descriptors",
-						NBuffers * sizeof(BufferDesc), &foundDescs);
+	/* Align descriptors to a cacheline boundary. */
+	BufferDescriptors = (BufferDescPadded *) CACHELINEALIGN(
+										ShmemInitStruct("Buffer Descriptors",
+					NBuffers * sizeof(BufferDescPadded) + PG_CACHE_LINE_SIZE,
+														&foundDescs));
 
 	BufferBlocks = (char *)
 		ShmemInitStruct("Buffer Blocks",
@@ -124,16 +118,15 @@ InitBufferPool(void)
 	}
 	else
 	{
-		BufferDesc *buf;
 		int			i;
-
-		buf = BufferDescriptors;
 
 		/*
 		 * Initialize all the buffer headers.
 		 */
-		for (i = 0; i < NBuffers; buf++, i++)
+		for (i = 0; i < NBuffers; i++)
 		{
+			BufferDesc *buf = GetBufferDescriptor(i);
+
 			CLEAR_BUFFERTAG(buf->tag);
 			buf->flags = 0;
 			buf->usage_count = 0;
@@ -155,7 +148,7 @@ InitBufferPool(void)
 		}
 
 		/* Correct last entry of linked list */
-		BufferDescriptors[NBuffers - 1].freeNext = FREENEXT_END_OF_LIST;
+		GetBufferDescriptor(NBuffers - 1)->freeNext = FREENEXT_END_OF_LIST;
 	}
 
 #ifdef MPROTECT_BUFFERS
@@ -167,6 +160,7 @@ InitBufferPool(void)
 }
 
 /*
+<<<<<<< HEAD
  * Initialize access to shared buffer pool
  *
  * This is called during backend startup (whether standalone or under the
@@ -195,6 +189,8 @@ InitBufferPoolAccess(void)
 }
 
 /*
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * BufferShmemSize
  *
  * compute the size of shared memory for the buffer pool including
@@ -206,7 +202,9 @@ BufferShmemSize(void)
 	Size		size = 0;
 
 	/* size of buffer descriptors */
-	size = add_size(size, mul_size(NBuffers, sizeof(BufferDesc)));
+	size = add_size(size, mul_size(NBuffers, sizeof(BufferDescPadded)));
+	/* to allow aligning buffer descriptors */
+	size = add_size(size, PG_CACHE_LINE_SIZE);
 
 	/* size of data pages */
 	size = add_size(size, mul_size(NBuffers, BLCKSZ));

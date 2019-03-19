@@ -4,7 +4,7 @@
  * src/backend/utils/adt/formatting.c
  *
  *
- *	 Portions Copyright (c) 1999-2014, PostgreSQL Global Development Group
+ *	 Portions Copyright (c) 1999-2015, PostgreSQL Global Development Group
  *
  *
  *	 TO_CHAR(); TO_TIMESTAMP(); TO_DATE(); TO_NUMBER();
@@ -920,7 +920,11 @@ typedef struct NUMProc
 				num_count,		/* number of write digits	*/
 				num_in,			/* is inside number		*/
 				num_curr,		/* current position in number	*/
+<<<<<<< HEAD
 				out_pre_spaces,	/* spaces before first digit	*/
+=======
+				out_pre_spaces, /* spaces before first digit	*/
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 				read_dec,		/* to_number - was read dec. point	*/
 				read_post,		/* to_number - number of dec. digit */
@@ -981,7 +985,11 @@ static char *get_last_relevant_decnum(char *num);
 static void NUM_numpart_from_char(NUMProc *Np, int id, int input_len);
 static void NUM_numpart_to_char(NUMProc *Np, int id);
 static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
+<<<<<<< HEAD
 			  char *number, int from_char_input_len, int to_char_out_pre_spaces,
+=======
+		   char *number, int from_char_input_len, int to_char_out_pre_spaces,
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			  int sign, bool is_to_char, Oid collid);
 static DCHCacheEntry *DCH_cache_search(char *str);
 static DCHCacheEntry *DCH_cache_getnew(char *str);
@@ -2497,6 +2505,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				break;
 			case DCH_OF:
 				INVALID_FOR_INTERVAL;
+<<<<<<< HEAD
 				sprintf(s, "%c%0*d",
 						(tm->tm_gmtoff >= 0) ? '+' : '-',
 						S_FM(n->suffix) ? 0 : 2,
@@ -2506,6 +2515,13 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				{
 					sprintf(s, ":%02d",
 							(abs((int) tm->tm_gmtoff) % SECS_PER_HOUR) / SECS_PER_MINUTE);
+=======
+				sprintf(s, "%+0*d", S_FM(n->suffix) ? 0 : 3, (int) tm->tm_gmtoff / SECS_PER_HOUR);
+				s += strlen(s);
+				if ((int) tm->tm_gmtoff % SECS_PER_HOUR != 0)
+				{
+					sprintf(s, ":%02d", abs((int) tm->tm_gmtoff % SECS_PER_HOUR) / SECS_PER_MINUTE);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					s += strlen(s);
 				}
 				break;
@@ -2539,14 +2555,24 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					break;
 				if (S_TM(n->suffix))
 				{
+<<<<<<< HEAD
 					char *str = str_toupper_z(localized_full_months[tm->tm_mon - 1], collid);
 
 					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+=======
+					char	   *str = str_toupper_z(localized_full_months[tm->tm_mon - 1], collid);
+
+					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+<<<<<<< HEAD
 								 errmsg("localized string format value too long")));
+=======
+						  errmsg("localized string format value too long")));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2559,14 +2585,24 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					break;
 				if (S_TM(n->suffix))
 				{
+<<<<<<< HEAD
 					char *str = str_initcap_z(localized_full_months[tm->tm_mon - 1], collid);
 
 					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+=======
+					char	   *str = str_initcap_z(localized_full_months[tm->tm_mon - 1], collid);
+
+					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+<<<<<<< HEAD
 								 errmsg("localized string format value too long")));
+=======
+						  errmsg("localized string format value too long")));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2579,14 +2615,24 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					break;
 				if (S_TM(n->suffix))
 				{
+<<<<<<< HEAD
 					char *str = str_tolower_z(localized_full_months[tm->tm_mon - 1], collid);
 
 					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+=======
+					char	   *str = str_tolower_z(localized_full_months[tm->tm_mon - 1], collid);
+
+					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+<<<<<<< HEAD
 								 errmsg("localized string format value too long")));
+=======
+						  errmsg("localized string format value too long")));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2599,14 +2645,24 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					break;
 				if (S_TM(n->suffix))
 				{
+<<<<<<< HEAD
 					char *str = str_toupper_z(localized_abbrev_months[tm->tm_mon - 1], collid);
 
 					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+=======
+					char	   *str = str_toupper_z(localized_abbrev_months[tm->tm_mon - 1], collid);
+
+					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+<<<<<<< HEAD
 								 errmsg("localized string format value too long")));
+=======
+						  errmsg("localized string format value too long")));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					strcpy(s, asc_toupper_z(months[tm->tm_mon - 1]));
@@ -2618,14 +2674,24 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					break;
 				if (S_TM(n->suffix))
 				{
+<<<<<<< HEAD
 					char *str = str_initcap_z(localized_abbrev_months[tm->tm_mon - 1], collid);
 
 					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+=======
+					char	   *str = str_initcap_z(localized_abbrev_months[tm->tm_mon - 1], collid);
+
+					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+<<<<<<< HEAD
 								 errmsg("localized string format value too long")));
+=======
+						  errmsg("localized string format value too long")));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					strcpy(s, months[tm->tm_mon - 1]);
@@ -2637,14 +2703,24 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					break;
 				if (S_TM(n->suffix))
 				{
+<<<<<<< HEAD
 					char *str = str_tolower_z(localized_abbrev_months[tm->tm_mon - 1], collid);
 
 					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+=======
+					char	   *str = str_tolower_z(localized_abbrev_months[tm->tm_mon - 1], collid);
+
+					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+<<<<<<< HEAD
 								 errmsg("localized string format value too long")));
+=======
+						  errmsg("localized string format value too long")));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					strcpy(s, asc_tolower_z(months[tm->tm_mon - 1]));
@@ -2660,14 +2736,24 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
+<<<<<<< HEAD
 					char *str = str_toupper_z(localized_full_days[tm->tm_wday], collid);
 
 					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+=======
+					char	   *str = str_toupper_z(localized_full_days[tm->tm_wday], collid);
+
+					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+<<<<<<< HEAD
 								 errmsg("localized string format value too long")));
+=======
+						  errmsg("localized string format value too long")));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2678,14 +2764,24 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
+<<<<<<< HEAD
 					char *str = str_initcap_z(localized_full_days[tm->tm_wday], collid);
 
 					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+=======
+					char	   *str = str_initcap_z(localized_full_days[tm->tm_wday], collid);
+
+					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+<<<<<<< HEAD
 								 errmsg("localized string format value too long")));
+=======
+						  errmsg("localized string format value too long")));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2696,14 +2792,24 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
+<<<<<<< HEAD
 					char *str = str_tolower_z(localized_full_days[tm->tm_wday], collid);
 
 					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+=======
+					char	   *str = str_tolower_z(localized_full_days[tm->tm_wday], collid);
+
+					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+<<<<<<< HEAD
 								 errmsg("localized string format value too long")));
+=======
+						  errmsg("localized string format value too long")));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
@@ -2714,14 +2820,24 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
+<<<<<<< HEAD
 					char *str = str_toupper_z(localized_abbrev_days[tm->tm_wday], collid);
 
 					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+=======
+					char	   *str = str_toupper_z(localized_abbrev_days[tm->tm_wday], collid);
+
+					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+<<<<<<< HEAD
 								 errmsg("localized string format value too long")));
+=======
+						  errmsg("localized string format value too long")));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					strcpy(s, asc_toupper_z(days_short[tm->tm_wday]));
@@ -2731,14 +2847,24 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
+<<<<<<< HEAD
 					char *str = str_initcap_z(localized_abbrev_days[tm->tm_wday], collid);
 
 					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+=======
+					char	   *str = str_initcap_z(localized_abbrev_days[tm->tm_wday], collid);
+
+					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+<<<<<<< HEAD
 								 errmsg("localized string format value too long")));
+=======
+						  errmsg("localized string format value too long")));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					strcpy(s, days_short[tm->tm_wday]);
@@ -2748,14 +2874,24 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
+<<<<<<< HEAD
 					char *str = str_tolower_z(localized_abbrev_days[tm->tm_wday], collid);
 
 					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+=======
+					char	   *str = str_tolower_z(localized_abbrev_days[tm->tm_wday], collid);
+
+					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+<<<<<<< HEAD
 								 errmsg("localized string format value too long")));
+=======
+						  errmsg("localized string format value too long")));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 					strcpy(s, asc_tolower_z(days_short[tm->tm_wday]));
@@ -4197,8 +4333,13 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 #define OVERLOAD_TEST	(Np->inout_p >= Np->inout + input_len)
 #define AMOUNT_TEST(_s) (input_len-(Np->inout_p-Np->inout) >= _s)
 
+<<<<<<< HEAD
 	if (OVERLOAD_TEST)
 		return;
+=======
+#define OVERLOAD_TEST	(Np->inout_p >= Np->inout + input_len)
+#define AMOUNT_TEST(_s) (input_len-(Np->inout_p-Np->inout) >= _s)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (*Np->inout_p == ' ')
 		Np->inout_p++;
@@ -4337,7 +4478,11 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 		 * next char is not digit
 		 */
 		if (IS_LSIGN(Np->Num) && isread &&
+<<<<<<< HEAD
 			(Np->inout_p + 1) < Np->inout + input_len &&
+=======
+			(Np->inout_p + 1) <= Np->inout + input_len &&
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			!isdigit((unsigned char) *(Np->inout_p + 1)))
 		{
 			int			x;
@@ -4591,7 +4736,11 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 
 static char *
 NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
+<<<<<<< HEAD
 			  char *number, int from_char_input_len, int to_char_out_pre_spaces,
+=======
+		   char *number, int from_char_input_len, int to_char_out_pre_spaces,
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			  int sign, bool is_to_char, Oid collid)
 {
 	FormatNode *n;

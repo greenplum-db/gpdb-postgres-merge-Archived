@@ -3,7 +3,7 @@
  * prepsecurity.c
  *	  Routines for preprocessing security barrier quals.
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -73,8 +73,13 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 	rt_index = 0;
 	foreach(cell, parse->rtable)
 	{
+<<<<<<< HEAD
 		bool			targetRelation = false;
 		RangeTblEntry  *rte = (RangeTblEntry *) lfirst(cell);
+=======
+		bool		targetRelation = false;
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(cell);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		rt_index++;
 
@@ -125,7 +130,8 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 			rte->requiredPerms = 0;
 			rte->checkAsUser = InvalidOid;
 			rte->selectedCols = NULL;
-			rte->modifiedCols = NULL;
+			rte->insertedCols = NULL;
+			rte->updatedCols = NULL;
 
 			/*
 			 * For the most part, Vars referencing the original relation
@@ -224,7 +230,8 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			rte->requiredPerms = 0;
 			rte->checkAsUser = InvalidOid;
 			rte->selectedCols = NULL;
-			rte->modifiedCols = NULL;
+			rte->insertedCols = NULL;
+			rte->updatedCols = NULL;
 
 			/*
 			 * Now deal with any PlanRowMark on this RTE by requesting a lock
@@ -241,6 +248,7 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			rc = get_plan_rowmark(root->rowMarks, rt_index);
 			if (rc != NULL)
 			{
+<<<<<<< HEAD
 				switch (rc->markType)
 				{
 					case ROW_MARK_EXCLUSIVE:
@@ -274,6 +282,12 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 						elog(ERROR, "unexpected ROW_MARK_TABLE_EXCLUSIVE locking mode encountered while expanding security barrier view");
 				}
 				root->rowMarks = list_delete(root->rowMarks, rc);
+=======
+				if (rc->strength != LCS_NONE)
+					applyLockingClause(subquery, 1, rc->strength,
+									   rc->waitPolicy, false);
+				root->rowMarks = list_delete_ptr(root->rowMarks, rc);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			}
 
 			/*
@@ -284,7 +298,12 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			 */
 			if (targetRelation)
 				applyLockingClause(subquery, 1, LCS_FORUPDATE,
+<<<<<<< HEAD
 								   false, false);
+=======
+								   LockWaitBlock, false);
+
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			/*
 			 * Replace any variables in the outer query that refer to the
 			 * original relation RTE with references to columns that we will
@@ -463,7 +482,10 @@ security_barrier_replace_vars_walker(Node *node,
 			/* New variable for subquery targetlist */
 			newvar = copyObject(var);
 			newvar->varno = newvar->varnoold = 1;
+<<<<<<< HEAD
 			newvar->varlevelsup = 0;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			attno = list_length(context->targetlist) + 1;
 			tle = makeTargetEntry((Expr *) newvar,

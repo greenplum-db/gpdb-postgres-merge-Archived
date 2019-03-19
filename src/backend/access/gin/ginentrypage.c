@@ -4,7 +4,7 @@
  *	  routines for handling GIN entry tree pages.
  *
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -15,15 +15,22 @@
 #include "postgres.h"
 
 #include "access/gin_private.h"
+#include "access/xloginsert.h"
 #include "miscadmin.h"
 #include "utils/rel.h"
 
 static void entrySplitPage(GinBtree btree, Buffer origbuf,
 			   GinBtreeStack *stack,
+<<<<<<< HEAD
 			   GinBtreeEntryInsertData *insertData,
 			   BlockNumber updateblkno,
 			   Page *newlpage, Page *newrpage,
 			   XLogRecData *rdata);
+=======
+			   void *insertPayload,
+			   BlockNumber updateblkno,
+			   Page *newlpage, Page *newrpage);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * Form a tuple for entry tree.
@@ -514,6 +521,7 @@ entryPreparePage(GinBtree btree, Page page, OffsetNumber off,
  * before we enter the insertion critical section.  *ptp_workspace can be
  * set to pass information along to the execPlaceToPage function.
  *
+<<<<<<< HEAD
  * If it won't fit, perform a page split and return two temporary page
  * images into *newlpage and *newrpage, with result GPTP_SPLIT.  Also,
  * if WAL logging is needed, fill one or more entries of rdata[] with
@@ -531,9 +539,23 @@ entryBeginPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 					  void **ptp_workspace,
 					  Page *newlpage, Page *newrpage,
 					  XLogRecData *rdata)
+=======
+ * On insertion to an internal node, in addition to inserting the given item,
+ * the downlink of the existing item at 'off' is updated to point to
+ * 'updateblkno'.
+ *
+ * On INSERTED, registers the buffer as buffer ID 0, with data.
+ * On SPLIT, returns rdata that represents the split pages in *prdata.
+ */
+static GinPlaceToPageRC
+entryPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
+				 void *insertPayload, BlockNumber updateblkno,
+				 Page *newlpage, Page *newrpage)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	GinBtreeEntryInsertData *insertData = insertPayload;
 	OffsetNumber off = stack->off;
+<<<<<<< HEAD
 
 	/* If it doesn't fit, deal with split case */
 	if (!entryIsEnoughSpace(btree, buf, off, insertData))
@@ -541,6 +563,19 @@ entryBeginPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		entrySplitPage(btree, buf, stack, insertData, updateblkno,
 					   newlpage, newrpage, rdata);
 		return GPTP_SPLIT;
+=======
+	OffsetNumber placed;
+
+	/* this must be static so it can be returned to caller. */
+	static ginxlogInsertEntry data;
+
+	/* quick exit if it doesn't fit */
+	if (!entryIsEnoughSpace(btree, buf, off, insertData))
+	{
+		entrySplitPage(btree, buf, stack, insertPayload, updateblkno,
+					   newlpage, newrpage);
+		return SPLIT;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/* Else, we're ready to proceed with insertion */
@@ -577,6 +612,7 @@ entryExecPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 
 	if (RelationNeedsWAL(btree->index))
 	{
+<<<<<<< HEAD
 		/*
 		 * This must be static, because it has to survive until XLogInsert,
 		 * and we can't palloc here.  Ugly, but the XLogInsert infrastructure
@@ -592,6 +628,18 @@ entryExecPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		rdata[0].data = (char *) &data;
 		rdata[0].len = offsetof(ginxlogInsertEntry, tuple);
 		rdata[0].next = &rdata[1];
+=======
+		data.isDelete = insertData->isDelete;
+		data.offset = off;
+
+		XLogBeginInsert();
+		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
+		XLogRegisterBufData(0, (char *) &data,
+							offsetof(ginxlogInsertEntry, tuple));
+		XLogRegisterBufData(0, (char *) insertData->entry,
+							IndexTupleSize(insertData->entry));
+	}
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		rdata[1].buffer = buf;
 		rdata[1].buffer_std = true;
@@ -611,17 +659,22 @@ entryExecPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 static void
 entrySplitPage(GinBtree btree, Buffer origbuf,
 			   GinBtreeStack *stack,
+<<<<<<< HEAD
 			   GinBtreeEntryInsertData *insertData,
 			   BlockNumber updateblkno,
 			   Page *newlpage, Page *newrpage,
 			   XLogRecData *rdata)
+=======
+			   void *insertPayload,
+			   BlockNumber updateblkno,
+			   Page *newlpage, Page *newrpage)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	OffsetNumber off = stack->off;
 	OffsetNumber i,
 				maxoff,
 				separator = InvalidOffsetNumber;
 	Size		totalsize = 0;
-	Size		tupstoresize;
 	Size		lsize = 0,
 				size;
 	char	   *ptr;
@@ -630,11 +683,15 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 	Page		lpage = PageGetTempPageCopy(BufferGetPage(origbuf));
 	Page		rpage = PageGetTempPageCopy(BufferGetPage(origbuf));
 	Size		pageSize = PageGetPageSize(lpage);
+	char		tupstore[2 * BLCKSZ];
 
+<<<<<<< HEAD
 	/* these must be static so they can be returned to caller */
 	static ginxlogSplitEntry data;
 	static PGAlignedBlock tupstore[2];
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	entryPreparePage(btree, lpage, off, insertData, updateblkno);
 
 	/*
@@ -667,7 +724,10 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 		ptr += size;
 		totalsize += size + sizeof(ItemIdData);
 	}
+<<<<<<< HEAD
 	tupstoresize = ptr - tupstore[0].data;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Initialize the left and right pages, and copy all the tuples back to
@@ -706,6 +766,7 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 		ptr += MAXALIGN(IndexTupleSize(itup));
 	}
 
+<<<<<<< HEAD
 	data.separator = separator;
 	data.nitem = maxoff;
 
@@ -720,6 +781,8 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 	rdata[1].next = NULL;
 
 	/* return temp pages to caller */
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	*newlpage = lpage;
 	*newrpage = rpage;
 }

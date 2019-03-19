@@ -499,9 +499,15 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 	char	   *newcopy = NULL;
 
 	/*
+<<<<<<< HEAD
 	 * arrays are not possible unless the column is an array, too
 	 * FIXME: we do not know if the column is an array here
 	 * array input to singleton column will result in a runtime error
+=======
+	 * arrays are not possible unless the column is an array, too FIXME: we do
+	 * not know if the column is an array here array input to singleton column
+	 * will result in a runtime error
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
 
 	/*
@@ -752,9 +758,25 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 				{
 					strcpy(mallocedval, "{");
 
+<<<<<<< HEAD
 					for (element = 0; element < asize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%c,", (((bool *) var->value)[element]) ? 't' : 'f');
 
+=======
+					if (var->offset == sizeof(char))
+						for (element = 0; element < asize; element++)
+							sprintf(mallocedval + strlen(mallocedval), "%c,", (((char *) var->value)[element]) ? 't' : 'f');
+
+					/*
+					 * this is necessary since sizeof(C++'s bool)==sizeof(int)
+					 */
+					else if (var->offset == sizeof(int))
+						for (element = 0; element < asize; element++)
+							sprintf(mallocedval + strlen(mallocedval), "%c,", (((int *) var->value)[element]) ? 't' : 'f');
+					else
+						ecpg_raise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, NULL);
+
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					strcpy(mallocedval + strlen(mallocedval) - 1, "}");
 				}
 				else
@@ -785,7 +807,10 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 
 					mallocedval = quote_postgres(newcopy, quote, lineno);
 					if (!mallocedval)
+					{
+						ecpg_free(newcopy);
 						return false;
+					}
 
 					*tobeinserted_p = mallocedval;
 				}
@@ -817,7 +842,10 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 
 					mallocedval = quote_postgres(newcopy, quote, lineno);
 					if (!mallocedval)
+					{
+						ecpg_free(newcopy);
 						return false;
+					}
 
 					*tobeinserted_p = mallocedval;
 				}
@@ -836,7 +864,11 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						mallocedval = ecpg_strdup("", lineno);
 
 					if (!mallocedval)
+<<<<<<< HEAD
 							return false;
+=======
+						return false;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 					for (element = 0; element < asize; element++)
 					{
@@ -899,7 +931,11 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						mallocedval = ecpg_strdup("", lineno);
 
 					if (!mallocedval)
+<<<<<<< HEAD
 							return false;
+=======
+						return false;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 					for (element = 0; element < asize; element++)
 					{
@@ -946,7 +982,11 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						mallocedval = ecpg_strdup("", lineno);
 
 					if (!mallocedval)
+<<<<<<< HEAD
 							return false;
+=======
+						return false;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 					for (element = 0; element < asize; element++)
 					{
@@ -993,7 +1033,11 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						mallocedval = ecpg_strdup("", lineno);
 
 					if (!mallocedval)
+<<<<<<< HEAD
 							return false;
+=======
+						return false;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 					for (element = 0; element < asize; element++)
 					{

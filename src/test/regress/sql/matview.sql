@@ -206,12 +206,18 @@ SET ROLE user_dw;
 CREATE TABLE foo_data AS SELECT i, md5(random()::text)
   FROM generate_series(1, 10) i;
 CREATE MATERIALIZED VIEW mv_foo AS SELECT * FROM foo_data;
+<<<<<<< HEAD
+=======
+CREATE MATERIALIZED VIEW mv_foo AS SELECT * FROM foo_data;
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_foo AS SELECT * FROM foo_data;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 CREATE UNIQUE INDEX ON mv_foo (i);
 RESET ROLE;
 REFRESH MATERIALIZED VIEW mv_foo;
 REFRESH MATERIALIZED VIEW CONCURRENTLY mv_foo;
 DROP OWNED BY user_dw CASCADE;
 DROP ROLE user_dw;
+<<<<<<< HEAD
 
 -- make sure that create WITH NO DATA works via SPI
 BEGIN;
@@ -226,3 +232,5 @@ SELECT mvtest_func();
 SELECT * FROM mvtest1;
 SELECT * FROM mvtest2;
 ROLLBACK;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

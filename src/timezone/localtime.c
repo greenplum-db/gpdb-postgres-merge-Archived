@@ -1762,8 +1762,13 @@ pg_next_dst_boundary(const pg_time_t *timep,
  * the meaning in use at or most recently before that time, or the meaning
  * in first use after that time if the abbrev was never used before that.
  *
+<<<<<<< HEAD
  * On success, returns true and sets *gmtoff and *isdst.  If the abbreviation
  * was never used at all in this zone, returns false.
+=======
+ * On success, returns TRUE and sets *gmtoff and *isdst.  If the abbreviation
+ * was never used at all in this zone, returns FALSE.
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  *
  * Note: abbrev is matched case-sensitively; it should be all-upper-case.
  */
@@ -1799,7 +1804,11 @@ pg_interpret_timezone_abbrev(const char *abbrev,
 		abbrind++;
 	}
 	if (abbrind >= sp->charcnt)
+<<<<<<< HEAD
 		return false;			/* not there! */
+=======
+		return FALSE;			/* not there! */
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Unlike pg_next_dst_boundary, we needn't sweat about extrapolation
@@ -1836,7 +1845,11 @@ pg_interpret_timezone_abbrev(const char *abbrev,
 		{
 			*gmtoff = ttisp->tt_gmtoff;
 			*isdst = ttisp->tt_isdst;
+<<<<<<< HEAD
 			return true;
+=======
+			return TRUE;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 	}
 
@@ -1850,11 +1863,19 @@ pg_interpret_timezone_abbrev(const char *abbrev,
 		{
 			*gmtoff = ttisp->tt_gmtoff;
 			*isdst = ttisp->tt_isdst;
+<<<<<<< HEAD
 			return true;
 		}
 	}
 
 	return false;				/* hm, not actually used in any interval? */
+=======
+			return TRUE;
+		}
+	}
+
+	return FALSE;				/* hm, not actually used in any interval? */
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*

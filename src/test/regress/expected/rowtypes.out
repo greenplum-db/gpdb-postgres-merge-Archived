@@ -313,6 +313,7 @@ ERROR:  cannot compare dissimilar column types bigint and integer at record colu
 explain (costs off)
 select * from int8_tbl i8
 where i8 in (row(123,456)::int8_tbl, '(4567890123456789,123)');
+<<<<<<< HEAD
                                                     QUERY PLAN                                                     
 -------------------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -320,6 +321,13 @@ where i8 in (row(123,456)::int8_tbl, '(4567890123456789,123)');
          Filter: (i8.* = ANY (ARRAY[ROW(123::bigint, 456::bigint)::int8_tbl, '(4567890123456789,123)'::int8_tbl]))
  Optimizer: Postgres query optimizer
 (4 rows)
+=======
+                                                   QUERY PLAN                                                    
+-----------------------------------------------------------------------------------------------------------------
+ Seq Scan on int8_tbl i8
+   Filter: (i8.* = ANY (ARRAY[ROW('123'::bigint, '456'::bigint)::int8_tbl, '(4567890123456789,123)'::int8_tbl]))
+(2 rows)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 select * from int8_tbl i8
 where i8 in (row(123,456)::int8_tbl, '(4567890123456789,123)');
@@ -616,6 +624,7 @@ select row_to_json(ss) from
  {"x":4567890123456789,"y":-4567890123456789}
 (5 rows)
 
+<<<<<<< HEAD
 -- GPDB: Make the plan same as PG's to make further merge and testing easy.
 -- PG plan is index only scan, while GP plan is seq scan without the guc
 -- settings below. That is because:
@@ -624,10 +633,13 @@ select row_to_json(ss) from
 --    index only scan cost so bitmap index scan outperforms index only scan.
 set random_page_cost = 4;
 set enable_bitmapscan = off;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 explain (costs off)
 select row_to_json(q) from
   (select thousand, tenthous from tenk1
    where thousand = 42 and tenthous < 2000 offset 0) q;
+<<<<<<< HEAD
                             QUERY PLAN                             
 -------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -636,6 +648,14 @@ select row_to_json(q) from
                Index Cond: ((thousand = 42) AND (tenthous < 2000))
  Optimizer: Postgres query optimizer
 (5 rows)
+=======
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Subquery Scan on q
+   ->  Index Only Scan using tenk1_thous_tenthous on tenk1
+         Index Cond: ((thousand = 42) AND (tenthous < 2000))
+(3 rows)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 select row_to_json(q) from
   (select thousand, tenthous from tenk1
@@ -664,10 +684,14 @@ select row_to_json(q) from
  {"a":42,"b":1042}
 (2 rows)
 
+<<<<<<< HEAD
 -- GPDB: restore to the default or previously set values.
 reset random_page_cost;
 reset enable_bitmapscan;
 create temp table tt1 as select * from int8_tbl order by 1 limit 2;
+=======
+create temp table tt1 as select * from int8_tbl limit 2;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 create temp table tt2 () inherits(tt1);
 insert into tt2 values(0,0);
 select row_to_json(r) from (select q2,q1 from tt1 offset 0) r;
@@ -678,6 +702,7 @@ select row_to_json(r) from (select q2,q1 from tt1 offset 0) r;
  {"q2":0,"q1":0}
 (3 rows)
 
+<<<<<<< HEAD
 --
 -- IS [NOT] NULL should not recurse into nested composites (bug #14235)
 --
@@ -732,3 +757,5 @@ select r, r is null as isnull, r is not null as isnotnull from r;
  (,)         | t      | f
 (6 rows)
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

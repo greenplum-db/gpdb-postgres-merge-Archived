@@ -36,7 +36,21 @@ python_configdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filte
 AC_MSG_RESULT([$python_configdir])
 
 AC_MSG_CHECKING([Python include directories])
+<<<<<<< HEAD
 python_includespec=`${PYTHON} -c "import distutils.sysconfig; print('-I'+distutils.sysconfig.get_python_inc())"`
+=======
+python_includespec=`${PYTHON} -c "
+import distutils.sysconfig
+a = '-I' + distutils.sysconfig.get_python_inc(False)
+b = '-I' + distutils.sysconfig.get_python_inc(True)
+if a == b:
+    print(a)
+else:
+    print(a + ' ' + b)"`
+if test "$PORTNAME" = win32 ; then
+    python_includespec=`echo $python_includespec | sed 's,[[\]],/,g'`
+fi
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 AC_MSG_RESULT([$python_includespec])
 
 AC_SUBST(python_majorversion)[]dnl
@@ -90,6 +104,9 @@ AC_MSG_RESULT([${python_libspec} ${python_additional_libs}])
 AC_SUBST(python_libdir)[]dnl
 AC_SUBST(python_libspec)[]dnl
 AC_SUBST(python_additional_libs)[]dnl
+<<<<<<< HEAD
 AC_SUBST(python_enable_shared)[]dnl
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 ])# PGAC_CHECK_PYTHON_EMBED_SETUP

@@ -93,6 +93,19 @@ select q1, float8(count(*)) / (select count(*) from int8_tbl)
 from int8_tbl group by q1 order by q1;
 
 --
+-- Check EXISTS simplification with LIMIT
+--
+explain (costs off)
+select * from int4_tbl o where exists
+  (select 1 from int4_tbl i where i.f1=o.f1 limit null);
+explain (costs off)
+select * from int4_tbl o where not exists
+  (select 1 from int4_tbl i where i.f1=o.f1 limit 1);
+explain (costs off)
+select * from int4_tbl o where exists
+  (select 1 from int4_tbl i where i.f1=o.f1 limit 0);
+
+--
 -- Test cases to catch unpleasant interactions between IN-join processing
 -- and subquery pullup.
 --
@@ -367,6 +380,20 @@ from
   int4_tbl i4 on dummy = i4.f1;
 
 --
+-- Test case for subselect within UPDATE of INSERT...ON CONFLICT DO UPDATE
+--
+create temp table upsert(key int4 primary key, val text);
+insert into upsert values(1, 'val') on conflict (key) do update set val = 'not seen';
+insert into upsert values(1, 'val') on conflict (key) do update set val = 'seen with subselect ' || (select f1 from int4_tbl where f1 != 0 limit 1)::text;
+
+select * from upsert;
+
+with aa as (select 'int4_tbl' u from int4_tbl limit 1)
+insert into upsert values (1, 'x'), (999, 'y')
+on conflict (key) do update set val = (select u from aa)
+returning *;
+
+--
 -- Test case for cross-type partial matching in hashed subplan (bug #7597)
 --
 
@@ -475,6 +502,7 @@ select * from
   order by 1;
 
 select nextval('ts1');
+<<<<<<< HEAD
 
 --
 -- Ensure that backward scan direction isn't propagated into
@@ -492,3 +520,5 @@ fetch backward all in c1;
 
 commit;
 --end_ignore
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

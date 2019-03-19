@@ -489,6 +489,7 @@ alter table tt14t drop column f3;
 select pg_get_viewdef('tt14v', true);
 select * from tt14v;
 
+<<<<<<< HEAD
 -- check display of whole-row variables in some corner cases
 
 create type nestedcomposite as (x int8_tbl);
@@ -559,6 +560,8 @@ select pg_get_viewdef('tt23v', true);
 select pg_get_ruledef(oid, true) from pg_rewrite
   where ev_class = 'tt23v'::regclass and ev_type = '1';
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 -- clean up all the random objects we made above
 set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;

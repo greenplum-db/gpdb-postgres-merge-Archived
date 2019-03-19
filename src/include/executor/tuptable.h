@@ -4,7 +4,7 @@
  *	  tuple table support stuff
  *
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/tuptable.h
@@ -435,7 +435,13 @@ ExecCopyGenericTuple(TupleTableSlot *slot)
 }
 
 extern HeapTuple ExecMaterializeSlot(TupleTableSlot *slot);
+<<<<<<< HEAD
 extern TupleTableSlot *ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot);
+=======
+extern TupleTableSlot *ExecCopySlot(TupleTableSlot *dstslot,
+			 TupleTableSlot *srcslot);
+extern TupleTableSlot *ExecMakeSlotContentsReadOnly(TupleTableSlot *slot);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 extern void ExecModifyMemTuple(TupleTableSlot *slot, Datum *values, bool *isnull, bool *doRepl);
 

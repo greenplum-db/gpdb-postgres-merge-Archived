@@ -2285,13 +2285,41 @@ writezone(const char *const name, const char *const string, char version,
 		DO(tzh_typecnt);
 		DO(tzh_charcnt);
 #undef DO
+<<<<<<< HEAD
 
 		/* PG: print current timezone abbreviations if requested */
 		if (print_abbrevs && pass == 2)
+=======
+		for (i = thistimei; i < thistimelim; ++i)
+			if (pass == 1)
+				puttzcode((long) ats[i], fp);
+			else
+			{
+				puttzcode64(ats[i], fp);
+
+				/* Print current timezone abbreviations if requested */
+				if (print_abbrevs &&
+					(i == thistimelim - 1 || ats[i + 1] > print_cutoff))
+				{
+					unsigned char tm = typemap[types[i]];
+					char	   *thisabbrev = &thischars[indmap[abbrinds[tm]]];
+
+					/* filter out assorted junk entries */
+					if (strcmp(thisabbrev, GRANDPARENTED) != 0 &&
+						strcmp(thisabbrev, "zzz") != 0)
+						fprintf(stdout, "%s\t%ld%s\n",
+								thisabbrev,
+								gmtoffs[tm],
+								isdsts[tm] ? "\tD" : "");
+				}
+			}
+		for (i = thistimei; i < thistimelim; ++i)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		{
 			/* Print "type" data for periods ending after print_cutoff */
 			for (i = thistimei; i < thistimelim; ++i)
 			{
+<<<<<<< HEAD
 				if (i == thistimelim - 1 || ats[i + 1] > print_cutoff)
 				{
 					unsigned char tm = types[i];
@@ -2305,6 +2333,11 @@ writezone(const char *const name, const char *const string, char version,
 								gmtoffs[tm],
 								isdsts[tm] ? "\tD" : "");
 				}
+=======
+				puttzcode(gmtoffs[i], fp);
+				(void) putc(isdsts[i], fp);
+				(void) putc((unsigned char) indmap[abbrinds[i]], fp);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			}
 			/* Print the default type if we have no transitions at all */
 			if (thistimei >= thistimelim)

@@ -105,7 +105,10 @@ ALTER TABLE testschema.tablespace_acl OWNER TO tablespace_testuser2;
 
 SET SESSION ROLE tablespace_testuser2;
 CREATE TABLE tablespace_table (i int) TABLESPACE testspace; -- fail
+<<<<<<< HEAD
 ALTER TABLE testschema.tablespace_acl ALTER c TYPE bigint;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 RESET ROLE;
 
 ALTER TABLESPACE testspace RENAME TO testspace_renamed;

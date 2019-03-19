@@ -50,7 +50,7 @@
  * there is a window (caused by pgstat delay) on which a worker may choose a
  * table that was already vacuumed; this is a bug in the current design.
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -64,7 +64,6 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "access/heapam.h"
@@ -191,17 +190,16 @@ typedef struct av_relation
 typedef struct autovac_table
 {
 	Oid			at_relid;
-	bool		at_dovacuum;
-	bool		at_doanalyze;
-	int			at_freeze_min_age;
-	int			at_freeze_table_age;
-	int			at_multixact_freeze_min_age;
-	int			at_multixact_freeze_table_age;
+	int			at_vacoptions;	/* bitmask of VacuumOption */
+	VacuumParams at_params;
 	int			at_vacuum_cost_delay;
 	int			at_vacuum_cost_limit;
 	bool		at_dobalance;
+<<<<<<< HEAD
 	bool		at_wraparound;
 	bool		at_sharedrel;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	char	   *at_relname;
 	char	   *at_nspname;
 	char	   *at_datname;
@@ -233,7 +231,10 @@ typedef struct WorkerInfoData
 	PGPROC	   *wi_proc;
 	TimestampTz wi_launchtime;
 	bool		wi_dobalance;
+<<<<<<< HEAD
 	bool		wi_sharedrel;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	int			wi_cost_delay;
 	int			wi_cost_limit;
 	int			wi_cost_limit_base;
@@ -296,8 +297,8 @@ int			AutovacuumLauncherPid = 0;
 static pid_t avlauncher_forkexec(void);
 static pid_t avworker_forkexec(void);
 #endif
-NON_EXEC_STATIC void AutoVacWorkerMain(int argc, char *argv[]) __attribute__((noreturn));
-NON_EXEC_STATIC void AutoVacLauncherMain(int argc, char *argv[]) __attribute__((noreturn));
+NON_EXEC_STATIC void AutoVacWorkerMain(int argc, char *argv[]) pg_attribute_noreturn();
+NON_EXEC_STATIC void AutoVacLauncherMain(int argc, char *argv[]) pg_attribute_noreturn();
 
 static Oid	do_start_worker(void);
 static void launcher_determine_sleep(bool canlaunch, bool recursing,
@@ -312,8 +313,13 @@ static void do_autovacuum(void);
 static void FreeWorkerInfo(int code, Datum arg);
 
 static autovac_table *table_recheck_autovac(Oid relid, HTAB *table_toast_map,
+<<<<<<< HEAD
 											TupleDesc pg_class_desc,
 									int effective_multixact_freeze_max_age);
+=======
+					  TupleDesc pg_class_desc,
+					  int effective_multixact_freeze_max_age);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void relation_needs_vacanalyze(Oid relid, AutoVacOpts *relopts,
 						  Form_pg_class classForm,
 						  PgStat_StatTabEntry *tabentry,
@@ -328,7 +334,7 @@ static PgStat_StatTabEntry *get_pgstat_tabentry_relid(Oid relid, bool isshared,
 						  PgStat_StatDBEntry *shared,
 						  PgStat_StatDBEntry *dbentry);
 static void autovac_report_activity(autovac_table *tab);
-static void avl_sighup_handler(SIGNAL_ARGS);
+static void av_sighup_handler(SIGNAL_ARGS);
 static void avl_sigusr2_handler(SIGNAL_ARGS);
 static void avl_sigterm_handler(SIGNAL_ARGS);
 static void autovac_refresh_stats(void);
@@ -394,11 +400,10 @@ StartAutoVacLauncher(void)
 #ifndef EXEC_BACKEND
 		case 0:
 			/* in postmaster child ... */
+			InitPostmasterChild();
+
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
-
-			/* Lose the postmaster's on-exit routines */
-			on_exit_reset();
 
 			AutoVacLauncherMain(0, NULL);
 			break;
@@ -419,15 +424,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 {
 	sigjmp_buf	local_sigjmp_buf;
 
-	/* we are a postmaster subprocess now */
-	IsUnderPostmaster = true;
 	am_autovacuum_launcher = true;
-
-	/* reset MyProcPid */
-	MyProcPid = getpid();
-
-	/* record Start Time for logging */
-	MyStartTime = time(NULL);
 
 	/* Identify myself via ps */
 	init_ps_display("autovacuum launcher process", "", "", "");
@@ -441,22 +438,11 @@ AutoVacLauncherMain(int argc, char *argv[])
 	SetProcessingMode(InitProcessing);
 
 	/*
-	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.  (autovacuum probably never has any
-	 * child processes, but for consistency we make all postmaster child
-	 * processes do this.)
-	 */
-#ifdef HAVE_SETSID
-	if (setsid() < 0)
-		elog(FATAL, "setsid() failed: %m");
-#endif
-
-	/*
 	 * Set up signal handlers.  We operate on databases much like a regular
 	 * backend, so we use the same signal handling.  See equivalent code in
 	 * tcop/postgres.c.
 	 */
-	pqsignal(SIGHUP, avl_sighup_handler);
+	pqsignal(SIGHUP, av_sighup_handler);
 	pqsignal(SIGINT, StatementCancelHandler);
 	pqsignal(SIGTERM, avl_sigterm_handler);
 
@@ -482,7 +468,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	InitProcess();
 #endif
 
-	InitPostgres(NULL, InvalidOid, NULL, NULL);
+	InitPostgres(NULL, InvalidOid, NULL, InvalidOid, NULL);
 
 	SetProcessingMode(NormalProcessing);
 
@@ -589,6 +575,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	SetConfigOption("default_transaction_isolation", "read committed",
 					PGC_SUSET, PGC_S_OVERRIDE);
 
+<<<<<<< HEAD
 
 /*
  * In GPDB, we only want an autovacuum worker to start once we know
@@ -602,6 +589,8 @@ AutoVacLauncherMain(int argc, char *argv[])
  * worker will continue to signal for a new launcher.
  */
 #if 0
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/*
 	 * In emergency mode, just start a worker (unless shutdown was requested)
 	 * and go away.
@@ -643,20 +632,18 @@ AutoVacLauncherMain(int argc, char *argv[])
 		launcher_determine_sleep(!dlist_is_empty(&AutoVacuumShmem->av_freeWorkers),
 								 false, &nap);
 
-		/* Allow sinval catchup interrupts while sleeping */
-		EnableCatchupInterrupt();
-
 		/*
 		 * Wait until naptime expires or we get some type of signal (all the
 		 * signal handlers will wake us by calling SetLatch).
 		 */
-		rc = WaitLatch(&MyProc->procLatch,
+		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 					   (nap.tv_sec * 1000L) + (nap.tv_usec / 1000L));
 
-		ResetLatch(&MyProc->procLatch);
+		ResetLatch(MyLatch);
 
-		DisableCatchupInterrupt();
+		/* Process sinval catchup interrupts that happened while sleeping */
+		ProcessCatchupInterrupt();
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -973,10 +960,9 @@ rebuild_database_list(Oid newdb)
 	 */
 	hctl.keysize = sizeof(Oid);
 	hctl.entrysize = sizeof(avl_dbase);
-	hctl.hash = oid_hash;
 	hctl.hcxt = tmpcxt;
 	dbhash = hash_create("db hash", 20, &hctl,	/* magic number here FIXME */
-						 HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+						 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/* start by inserting the new database */
 	score = 0;
@@ -1409,13 +1395,12 @@ AutoVacWorkerFailed(void)
 
 /* SIGHUP: set flag to re-read config file at next convenient time */
 static void
-avl_sighup_handler(SIGNAL_ARGS)
+av_sighup_handler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
 	got_SIGHUP = true;
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -1427,8 +1412,7 @@ avl_sigusr2_handler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	got_SIGUSR2 = true;
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -1440,8 +1424,7 @@ avl_sigterm_handler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	got_SIGTERM = true;
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
+	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -1507,11 +1490,10 @@ StartAutoVacWorker(void)
 #ifndef EXEC_BACKEND
 		case 0:
 			/* in postmaster child ... */
+			InitPostmasterChild();
+
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
-
-			/* Lose the postmaster's on-exit routines */
-			on_exit_reset();
 
 			AutoVacWorkerMain(0, NULL);
 			break;
@@ -1533,10 +1515,9 @@ AutoVacWorkerMain(int argc, char *argv[])
 	sigjmp_buf	local_sigjmp_buf;
 	Oid			dbid;
 
-	/* we are a postmaster subprocess now */
-	IsUnderPostmaster = true;
 	am_autovacuum_worker = true;
 
+<<<<<<< HEAD
 	/* MPP-4990: Autovacuum always runs as utility-mode */
 	Gp_role = GP_ROLE_UTILITY;
 
@@ -1546,31 +1527,19 @@ AutoVacWorkerMain(int argc, char *argv[])
 	/* record Start Time for logging */
 	MyStartTime = time(NULL);
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* Identify myself via ps */
 	init_ps_display("autovacuum worker process", "", "", "");
 
 	SetProcessingMode(InitProcessing);
 
 	/*
-	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.  (autovacuum probably never has any
-	 * child processes, but for consistency we make all postmaster child
-	 * processes do this.)
-	 */
-#ifdef HAVE_SETSID
-	if (setsid() < 0)
-		elog(FATAL, "setsid() failed: %m");
-#endif
-
-	/*
 	 * Set up signal handlers.  We operate on databases much like a regular
 	 * backend, so we use the same signal handling.  See equivalent code in
 	 * tcop/postgres.c.
-	 *
-	 * Currently, we don't pay attention to postgresql.conf changes that
-	 * happen during a single daemon iteration, so we can ignore SIGHUP.
 	 */
-	pqsignal(SIGHUP, SIG_IGN);
+	pqsignal(SIGHUP, av_sighup_handler);
 
 	/*
 	 * SIGINT is used to signal canceling the current table's vacuum; SIGTERM
@@ -1727,7 +1696,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 		 * Note: if we have selected a just-deleted database (due to using
 		 * stale stats info), we'll fail and exit here.
 		 */
-		InitPostgres(NULL, dbid, NULL, dbname);
+		InitPostgres(NULL, dbid, NULL, InvalidOid, dbname);
 		SetProcessingMode(NormalProcessing);
 		set_ps_display(dbname, false);
 		ereport(LOG,
@@ -2002,8 +1971,11 @@ do_autovacuum(void)
 	ScanKeyData key;
 	TupleDesc	pg_class_desc;
 	int			effective_multixact_freeze_max_age;
+<<<<<<< HEAD
 	bool		did_vacuum = false;
 	bool		found_concurrent_worker = false;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * StartTransactionCommand and CommitTransactionCommand will automatically
@@ -2035,8 +2007,13 @@ do_autovacuum(void)
 
 	/*
 	 * Compute the multixact age for which freezing is urgent.  This is
+<<<<<<< HEAD
 	 * normally autovacuum_multixact_freeze_max_age, but may be less if we
 	 * are short of multixact member space.
+=======
+	 * normally autovacuum_multixact_freeze_max_age, but may be less if we are
+	 * short of multixact member space.
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
 	effective_multixact_freeze_max_age = MultiXactMemberFreezeThreshold();
 
@@ -2082,12 +2059,11 @@ do_autovacuum(void)
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(av_relation);
-	ctl.hash = oid_hash;
 
 	table_toast_map = hash_create("TOAST to main relid map",
 								  100,
 								  &ctl,
-								  HASH_ELEM | HASH_FUNCTION);
+								  HASH_ELEM | HASH_BLOBS);
 
 	/*
 	 * Scan pg_class to determine which tables to vacuum.
@@ -2315,6 +2291,7 @@ do_autovacuum(void)
 		CHECK_FOR_INTERRUPTS();
 
 		/*
+<<<<<<< HEAD
 		 * Find out whether the table is shared or not.  (It's slightly
 		 * annoying to fetch the syscache entry just for this, but in typical
 		 * cases it adds little cost because table_recheck_autovac would
@@ -2332,6 +2309,27 @@ do_autovacuum(void)
 		 * Hold schedule lock from here until we've claimed the table.  We
 		 * also need the AutovacuumLock to walk the worker array, but that one
 		 * can just be a shared lock.
+=======
+		 * Check for config changes before processing each collected table.
+		 */
+		if (got_SIGHUP)
+		{
+			got_SIGHUP = false;
+			ProcessConfigFile(PGC_SIGHUP);
+
+			/*
+			 * You might be tempted to bail out if we see autovacuum is now
+			 * disabled.  Must resist that temptation -- this might be a
+			 * for-wraparound emergency worker, in which case that would be
+			 * entirely inappropriate.
+			 */
+		}
+
+		/*
+		 * hold schedule lock from here until we're sure that this table still
+		 * needs vacuuming.  We also need the AutovacuumLock to walk the
+		 * worker array, but we'll let go of that one quickly.
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		 */
 		LWLockAcquire(AutovacuumScheduleLock, LW_EXCLUSIVE);
 		LWLockAcquire(AutovacuumLock, LW_SHARED);
@@ -2469,7 +2467,7 @@ do_autovacuum(void)
 			 * next table in our list.
 			 */
 			HOLD_INTERRUPTS();
-			if (tab->at_dovacuum)
+			if (tab->at_vacoptions & VACOPT_VACUUM)
 				errcontext("automatic vacuum of table \"%s.%s.%s\"",
 						   tab->at_datname, tab->at_nspname, tab->at_relname);
 			else
@@ -2675,6 +2673,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		int			multixact_freeze_table_age;
 		int			vac_cost_limit;
 		int			vac_cost_delay;
+		int			log_min_duration;
 
 		/*
 		 * Calculate the vacuum cost parameters and the freeze ages.  If there
@@ -2697,6 +2696,11 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 			? autovacuum_vac_cost_limit
 			: VacuumCostLimit;
 
+		/* -1 in autovac setting means use log_autovacuum_min_duration */
+		log_min_duration = (avopts && avopts->log_min_duration >= 0)
+			? avopts->log_min_duration
+			: Log_autovacuum_min_duration;
+
 		/* these do not have autovacuum-specific settings */
 		freeze_min_age = (avopts && avopts->freeze_min_age >= 0)
 			? avopts->freeze_min_age
@@ -2718,6 +2722,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 
 		tab = palloc(sizeof(autovac_table));
 		tab->at_relid = relid;
+<<<<<<< HEAD
 		tab->at_sharedrel = classForm->relisshared;
 		tab->at_dovacuum = dovacuum;
 		tab->at_doanalyze = doanalyze;
@@ -2725,9 +2730,20 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		tab->at_freeze_table_age = freeze_table_age;
 		tab->at_multixact_freeze_min_age = multixact_freeze_min_age;
 		tab->at_multixact_freeze_table_age = multixact_freeze_table_age;
+=======
+		tab->at_vacoptions = VACOPT_SKIPTOAST |
+			(dovacuum ? VACOPT_VACUUM : 0) |
+			(doanalyze ? VACOPT_ANALYZE : 0) |
+			(!wraparound ? VACOPT_NOWAIT : 0);
+		tab->at_params.freeze_min_age = freeze_min_age;
+		tab->at_params.freeze_table_age = freeze_table_age;
+		tab->at_params.multixact_freeze_min_age = multixact_freeze_min_age;
+		tab->at_params.multixact_freeze_table_age = multixact_freeze_table_age;
+		tab->at_params.is_wraparound = wraparound;
+		tab->at_params.log_min_duration = log_min_duration;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		tab->at_vacuum_cost_limit = vac_cost_limit;
 		tab->at_vacuum_cost_delay = vac_cost_delay;
-		tab->at_wraparound = wraparound;
 		tab->at_relname = NULL;
 		tab->at_nspname = NULL;
 		tab->at_datname = NULL;
@@ -2929,14 +2945,11 @@ relation_needs_vacanalyze(Oid relid,
  *		Vacuum and/or analyze the specified table
  */
 static void
-autovacuum_do_vac_analyze(autovac_table *tab,
-						  BufferAccessStrategy bstrategy)
+autovacuum_do_vac_analyze(autovac_table *tab, BufferAccessStrategy bstrategy)
 {
-	VacuumStmt	vacstmt;
 	RangeVar	rangevar;
 
 	/* Set up command parameters --- use local variables instead of palloc */
-	MemSet(&vacstmt, 0, sizeof(vacstmt));
 	MemSet(&rangevar, 0, sizeof(rangevar));
 
 	/*
@@ -2950,25 +2963,11 @@ autovacuum_do_vac_analyze(autovac_table *tab,
 	rangevar.relname = tab->at_relname;
 	rangevar.location = -1;
 
-	vacstmt.type = T_VacuumStmt;
-	if (!tab->at_wraparound)
-		vacstmt.options = VACOPT_NOWAIT;
-	if (tab->at_dovacuum)
-		vacstmt.options |= VACOPT_VACUUM;
-	if (tab->at_doanalyze)
-		vacstmt.options |= VACOPT_ANALYZE;
-	vacstmt.freeze_min_age = tab->at_freeze_min_age;
-	vacstmt.freeze_table_age = tab->at_freeze_table_age;
-	vacstmt.multixact_freeze_min_age = tab->at_multixact_freeze_min_age;
-	vacstmt.multixact_freeze_table_age = tab->at_multixact_freeze_table_age;
-	/* we pass the OID, but might need this anyway for an error message */
-	vacstmt.relation = &rangevar;
-	vacstmt.va_cols = NIL;
-
 	/* Let pgstat know what we're doing */
 	autovac_report_activity(tab);
 
-	vacuum(&vacstmt, tab->at_relid, false, bstrategy, tab->at_wraparound, true);
+	vacuum(tab->at_vacoptions, &rangevar, tab->at_relid, &tab->at_params, NIL,
+		   bstrategy, true);
 }
 
 /*
@@ -2990,10 +2989,10 @@ autovac_report_activity(autovac_table *tab)
 	int			len;
 
 	/* Report the command and possible options */
-	if (tab->at_dovacuum)
+	if (tab->at_vacoptions & VACOPT_VACUUM)
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
 				 "autovacuum: VACUUM%s",
-				 tab->at_doanalyze ? " ANALYZE" : "");
+				 tab->at_vacoptions & VACOPT_ANALYZE ? " ANALYZE" : "");
 	else
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
 				 "autovacuum: ANALYZE");
@@ -3005,7 +3004,7 @@ autovac_report_activity(autovac_table *tab)
 
 	snprintf(activity + len, MAX_AUTOVAC_ACTIV_LEN - len,
 			 " %s.%s%s", tab->at_nspname, tab->at_relname,
-			 tab->at_wraparound ? " (to prevent wraparound)" : "");
+			 tab->at_params.is_wraparound ? " (to prevent wraparound)" : "");
 
 	/* Set statement_timestamp() to current time for pg_stat_activity */
 	SetCurrentStatementStartTimestamp();

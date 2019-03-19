@@ -47,6 +47,7 @@ CREATE TYPE text_w_default;
 CREATE FUNCTION int42_in(cstring)
    RETURNS int42
    AS 'int4in'
+<<<<<<< HEAD
    LANGUAGE internal IMMUTABLE STRICT;
 CREATE FUNCTION int42_out(int42)
    RETURNS cstring
@@ -60,6 +61,21 @@ CREATE FUNCTION text_w_default_out(text_w_default)
    RETURNS cstring
    AS 'textout'
    LANGUAGE internal IMMUTABLE STRICT;
+=======
+   LANGUAGE internal STRICT IMMUTABLE;
+CREATE FUNCTION int42_out(int42)
+   RETURNS cstring
+   AS 'int4out'
+   LANGUAGE internal STRICT IMMUTABLE;
+CREATE FUNCTION text_w_default_in(cstring)
+   RETURNS text_w_default
+   AS 'textin'
+   LANGUAGE internal STRICT IMMUTABLE;
+CREATE FUNCTION text_w_default_out(text_w_default)
+   RETURNS cstring
+   AS 'textout'
+   LANGUAGE internal STRICT IMMUTABLE;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 CREATE TYPE int42 (
    internallength = 4,
@@ -115,6 +131,7 @@ CREATE TYPE not_existing_type (INPUT = array_in,
     ELEMENT = int,
     INTERNALLENGTH = 32);
 
+<<<<<<< HEAD
 -- Check dependency transfer of opaque functions when creating a new type
 CREATE FUNCTION base_fn_in(cstring) RETURNS opaque AS 'boolin'
     LANGUAGE internal IMMUTABLE STRICT;
@@ -126,6 +143,8 @@ DROP FUNCTION base_fn_out(opaque); -- error
 DROP TYPE base_type; -- error
 DROP TYPE base_type CASCADE;
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 -- Check usage of typmod with a user-defined type
 -- (we have borrowed numeric's typmod functions)
 

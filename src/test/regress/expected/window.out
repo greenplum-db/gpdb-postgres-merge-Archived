@@ -1070,6 +1070,7 @@ FROM empsalary GROUP BY depname;
  25100 |          1 |        22600 | develop
 (3 rows)
 
+<<<<<<< HEAD
 -- Test Sort node collapsing
 EXPLAIN (COSTS OFF)
 SELECT * FROM
@@ -1115,6 +1116,8 @@ FROM empsalary;
  Optimizer: Postgres query optimizer
 (11 rows)
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 -- Test pushdown of quals into a subquery containing window functions
 -- pushdown is safe because all PARTITION BY clauses include depname:
 EXPLAIN (COSTS OFF)
@@ -1124,6 +1127,7 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname || 'A', depname) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales';
+<<<<<<< HEAD
                                    QUERY PLAN                                   
 --------------------------------------------------------------------------------
  Gather Motion 1:1  (slice1; segments: 1)
@@ -1137,6 +1141,18 @@ WHERE depname = 'sales';
                                  Filter: ((depname)::text = 'sales'::text)
  Optimizer: Postgres query optimizer
 (10 rows)
+=======
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Subquery Scan on emp
+   ->  WindowAgg
+         ->  Sort
+               Sort Key: (((empsalary.depname)::text || 'A'::text))
+               ->  WindowAgg
+                     ->  Seq Scan on empsalary
+                           Filter: ((depname)::text = 'sales'::text)
+(7 rows)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 -- pushdown is unsafe because there's a PARTITION BY clause without depname:
 EXPLAIN (COSTS OFF)
@@ -1146,6 +1162,7 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales';
+<<<<<<< HEAD
                                QUERY PLAN                               
 ------------------------------------------------------------------------
  Gather Motion 3:1  (slice2; segments: 3)
@@ -1189,6 +1206,20 @@ WHERE depname = 'sales' OR RANDOM() > 0.5;
                                  ->  Seq Scan on empsalary
  Optimizer: Postgres query optimizer
 (13 rows)
+=======
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Subquery Scan on emp
+   Filter: ((emp.depname)::text = 'sales'::text)
+   ->  WindowAgg
+         ->  Sort
+               Sort Key: empsalary.depname
+               ->  WindowAgg
+                     ->  Sort
+                           Sort Key: empsalary.enroll_date
+                           ->  Seq Scan on empsalary
+(9 rows)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 -- cleanup
 DROP TABLE empsalary;

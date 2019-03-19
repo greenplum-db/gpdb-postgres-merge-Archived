@@ -562,6 +562,14 @@ msgid "FOR over EXECUTE statement"
 msgstr "FOR sur une instruction EXECUTE"
 
 #: pl_gram.y:469
+<<<<<<< HEAD
+=======
+#, c-format
+msgid "block label must be placed before DECLARE, not after"
+msgstr "le label du bloc doit Ítre placÈ avant DECLARE, et non pas aprËs"
+
+#: pl_gram.y:489
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "block label must be placed before DECLARE, not after"
 msgstr "le label du bloc doit √™tre plac√© avant DECLARE, et non pas apr√®s"
@@ -598,7 +606,11 @@ msgstr "d√©claration dupliqu√©e"
 #: pl_gram.y:740 pl_gram.y:768
 #, c-format
 msgid "variable \"%s\" shadows a previously defined variable"
+<<<<<<< HEAD
 msgstr "la variable ¬´ %s ¬ª cache une variable d√©finie pr√©c√©demment"
+=======
+msgstr "la variable ´ %s ª cache une variable dÈfinie prÈcÈdemment"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: pl_gram.y:955
 #, c-format
@@ -852,8 +864,13 @@ msgid ""
 "Print information about parameters in the DETAIL part of the error messages "
 "generated on INTO ... STRICT failures."
 msgstr ""
+<<<<<<< HEAD
 "Affiche des informations sur les param√®tres dans la partie DETAIL des "
 "messages d'erreur g√©n√©r√©s pour des √©checs INTO .. STRICT."
+=======
+"Affiche des informations sur les paramËtres dans la partie DETAIL des "
+"messages d'erreur gÈnÈrÈs pour des Èchecs INTO .. STRICT."
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: pl_handler.c:164
 #| msgid "List of programming constructs which should produce a warning."

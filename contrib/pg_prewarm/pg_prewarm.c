@@ -3,7 +3,7 @@
  * pg_prewarm.c
  *		  prewarming utilities
  *
- * Copyright (c) 2010-2014, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2015, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  contrib/pg_prewarm/pg_prewarm.c
@@ -179,7 +179,11 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		for (block = first_block; block <= last_block; ++block)
 		{
 			CHECK_FOR_INTERRUPTS();
+<<<<<<< HEAD
 			smgrread(rel->rd_smgr, forkNumber, block, blockbuffer.data);
+=======
+			smgrread(rel->rd_smgr, forkNumber, block, blockbuffer);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			++blocks_done;
 		}
 	}

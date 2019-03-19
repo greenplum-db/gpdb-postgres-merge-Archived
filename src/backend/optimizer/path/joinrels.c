@@ -3,9 +3,13 @@
  * joinrels.c
  *	  Routines to determine which relations should be joined
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -735,7 +739,10 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		/* we don't bother trying to make the remaining fields valid */
 		sjinfo->lhs_strict = false;
 		sjinfo->delay_upper_joins = false;
-		sjinfo->join_quals = NIL;
+		sjinfo->semi_can_btree = false;
+		sjinfo->semi_can_hash = false;
+		sjinfo->semi_operators = NIL;
+		sjinfo->semi_rhs_exprs = NIL;
 	}
 
 	/*

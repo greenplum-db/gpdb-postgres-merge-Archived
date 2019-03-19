@@ -1426,6 +1426,7 @@ select * from tt14v;
  foo |    | quux
 (1 row)
 
+<<<<<<< HEAD
 -- check display of whole-row variables in some corner cases
 create type nestedcomposite as (x int8_tbl);
 create view tt15v as select row(i)::nestedcomposite from int8_tbl i;
@@ -1655,6 +1656,8 @@ select pg_get_ruledef(oid, true) from pg_rewrite
      43 AS col_b;
 (1 row)
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 -- clean up all the random objects we made above
 set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;

@@ -1,7 +1,11 @@
 use strict;
 use warnings;
 use TestLib;
+<<<<<<< HEAD
 use Test::More tests => 9;
+=======
+use Test::More tests => 10;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 program_help_ok('pg_isready');
 program_version_ok('pg_isready');

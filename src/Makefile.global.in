@@ -42,6 +42,7 @@ BLD_ARCH = @BLD_ARCH@
 PG_VERSION = @PG_PACKAGE_VERSION@
 PG_MAJORVERSION = @PG_MAJORVERSION@
 
+<<<<<<< HEAD
 # GPDB version number
 GP_VERSION = @GP_VERSION_SHORT@
 GP_MAJORVERSION = @GP_MAJORVERSION@
@@ -64,7 +65,13 @@ VPATH = $(srcdir)
 endif
 endif
 else # not PGXS
+=======
+# Support for VPATH builds
+# (PGXS VPATH support is handled separately in pgxs.mk)
+ifndef PGXS
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 vpath_build = @vpath_build@
+abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 
 ifneq ($(vpath_build),yes)
@@ -220,7 +227,6 @@ enable_gpperfmon    = @enable_gpperfmon@
 
 enable_tap_tests = @enable_tap_tests@
 
-python_enable_shared	= @python_enable_shared@
 python_includespec	= @python_includespec@
 python_libdir		= @python_libdir@
 python_libspec		= @python_libspec@
@@ -231,7 +237,6 @@ python_version		= @python_version@
 krb_srvtab = @krb_srvtab@
 
 TCLSH			= @TCLSH@
-TCL_LIB_FILE		= @TCL_LIB_FILE@
 TCL_LIBS		= @TCL_LIBS@
 TCL_LIB_SPEC		= @TCL_LIB_SPEC@
 TCL_INCLUDE_SPEC	= @TCL_INCLUDE_SPEC@
@@ -271,9 +276,12 @@ SUN_STUDIO_CC = @SUN_STUDIO_CC@
 CFLAGS = @CFLAGS@
 CFLAGS_VECTOR = @CFLAGS_VECTOR@
 CFLAGS_SSE42 = @CFLAGS_SSE42@
+<<<<<<< HEAD
 
 CXX = @CXX@
 CXXFLAGS = @CXXFLAGS@
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 # Kind-of compilers
 
@@ -339,9 +347,12 @@ else
 endif
 perl_archlibexp		= @perl_archlibexp@
 perl_privlibexp		= @perl_privlibexp@
+<<<<<<< HEAD
 perl_includespec	= @perl_includespec@
 perl_useshrplib		= @perl_useshrplib@
 perl_embed_ccflags	= @perl_embed_ccflags@
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 perl_embed_ldflags	= @perl_embed_ldflags@
 
 # apr-1-config
@@ -373,6 +384,7 @@ BZIP2	= bzip2
 
 # Testing
 
+<<<<<<< HEAD
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 
@@ -384,6 +396,23 @@ PROVE = @PROVE@
 PG_PROVE_FLAGS = -I $(top_srcdir)/src/test/perl/ -I $(srcdir)
 # User-supplied prove flags such as --verbose can be provided in PROVE_FLAGS.
 PROVE_FLAGS =
+=======
+check: temp-install
+
+.PHONY: temp-install
+temp-install:
+ifndef NO_TEMP_INSTALL
+ifeq ($(MAKELEVEL),0)
+	rm -rf '$(abs_top_builddir)'/tmp_install
+	$(MAKE) -C '$(top_builddir)' DESTDIR='$(abs_top_builddir)'/tmp_install install
+endif
+	$(if $(EXTRA_INSTALL),for extra in $(EXTRA_INSTALL); do $(MAKE) -C '$(top_builddir)'/$$extra DESTDIR='$(abs_top_builddir)'/tmp_install install || exit; done)
+endif
+
+PROVE = @PROVE@
+PG_PROVE_FLAGS = -I $(top_srcdir)/src/test/perl/
+PROVE_FLAGS = --verbose
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 # prepend to path if already set, else just set it
 define add_to_path
@@ -395,6 +424,7 @@ define ld_library_path_var
 $(if $(filter $(PORTNAME),darwin),DYLD_LIBRARY_PATH,$(if $(filter $(PORTNAME),aix),LIBPATH,LD_LIBRARY_PATH))
 endef
 
+<<<<<<< HEAD
 ifeq ($(enable_tap_tests),yes)
 define prove_installcheck
 rm -rf $(CURDIR)/tmp_check/log
@@ -404,6 +434,20 @@ endef
 define prove_check
 rm -rf $(CURDIR)/tmp_check/log
 cd $(srcdir) && TESTDIR='$(CURDIR)' $(with_temp_install) top_builddir='$(CURDIR)/$(top_builddir)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
+=======
+define with_temp_install
+PATH="$(abs_top_builddir)/tmp_install$(bindir):$$PATH" $(call add_to_path,$(ld_library_path_var),$(abs_top_builddir)/tmp_install$(libdir))
+endef
+
+ifeq ($(enable_tap_tests),yes)
+
+define prove_installcheck
+cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' top_builddir='$(CURDIR)/$(top_builddir)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
+endef
+
+define prove_check
+cd $(srcdir) && TESTDIR='$(CURDIR)' $(with_temp_install) PGPORT='6$(DEF_PGPORT)' top_builddir='$(CURDIR)/$(top_builddir)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 endef
 
 else
@@ -439,10 +483,12 @@ STRIP_SHARED_LIB = @STRIP_SHARED_LIB@
 
 have_docbook	= @have_docbook@
 COLLATEINDEX	= @COLLATEINDEX@
+DBTOEPUB	= @DBTOEPUB@
 DOCBOOKSTYLE	= @DOCBOOKSTYLE@
 JADE			= @JADE@
 NSGMLS			= @NSGMLS@
 OSX				= @OSX@
+XMLLINT			= @XMLLINT@
 XSLTPROC		= @XSLTPROC@
 
 # Code coverage
@@ -575,13 +621,13 @@ endif
 
 pg_regress_locale_flags = $(if $(ENCODING),--encoding=$(ENCODING)) $(NOLOCALE)
 
-pg_regress_check = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --temp-install=./tmp_check --top-builddir=$(top_builddir) $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
-pg_regress_installcheck = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir='$(PSQLDIR)' $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+pg_regress_check = $(with_temp_install) $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --temp-instance=./tmp_check --bindir= $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+pg_regress_installcheck = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --bindir='$(bindir)' $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 
 pg_regress_clean_files = results/ regression.diffs regression.out tmp_check/ log/
 
-pg_isolation_regress_check = $(top_builddir)/src/test/isolation/pg_isolation_regress --inputdir=$(srcdir) --temp-install=./tmp_check --top-builddir=$(top_builddir) $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
-pg_isolation_regress_installcheck = $(top_builddir)/src/test/isolation/pg_isolation_regress --inputdir=$(srcdir) --top-builddir=$(top_builddir) $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+pg_isolation_regress_check = $(with_temp_install) $(top_builddir)/src/test/isolation/pg_isolation_regress --inputdir=$(srcdir) --temp-instance=./tmp_check --bindir= $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+pg_isolation_regress_installcheck = $(top_builddir)/src/test/isolation/pg_isolation_regress --inputdir=$(srcdir) $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 
 ##########################################################################
 #
@@ -641,9 +687,13 @@ LIBS := -lpgcommon -lpgport $(LIBS)
 
 # to make ws2_32.lib the last library
 ifeq ($(PORTNAME),win32)
+<<<<<<< HEAD
 LIBS += -lws2_32 -lshfolder
 override LDFLAGS := -L$(top_builddir)/gpAux/ext/win32/kfw-3-2-2/lib $(LDFLAGS)
 override AR := /usr/bin/i686-pc-mingw32-ar
+=======
+LIBS += -lws2_32
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 endif
 
 # Not really standard libc functions, used by the backend.
@@ -770,7 +820,7 @@ endif
 define _create_recursive_target
 .PHONY: $(1)-$(2)-recurse
 $(1): $(1)-$(2)-recurse
-$(1)-$(2)-recurse:
+$(1)-$(2)-recurse: $(if $(filter check, $(3)), temp-install)
 	$$(MAKE) -C $(2) $(3)
 endef
 # Note that the use of $$ on the last line above is important; we want

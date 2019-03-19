@@ -3,7 +3,7 @@
  * pgstatfuncs.c
  *	  Functions for accessing the statistics collector data
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -22,6 +22,7 @@
 #include "libpq/ip.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
@@ -123,6 +124,7 @@ extern Datum pg_stat_get_xact_function_calls(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_xact_function_total_time(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_xact_function_self_time(PG_FUNCTION_ARGS);
 
+<<<<<<< HEAD
 extern Datum pg_stat_get_queue_num_exec(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_queue_num_wait(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_queue_elapsed_exec(PG_FUNCTION_ARGS);
@@ -130,6 +132,9 @@ extern Datum pg_stat_get_queue_elapsed_wait(PG_FUNCTION_ARGS);
 
 extern Datum pg_renice_session(PG_FUNCTION_ARGS);
 
+=======
+extern Datum pg_stat_get_snapshot_timestamp(PG_FUNCTION_ARGS);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern Datum pg_stat_clear_snapshot(PG_FUNCTION_ARGS);
 extern Datum pg_stat_reset(PG_FUNCTION_ARGS);
 extern Datum pg_stat_reset_shared(PG_FUNCTION_ARGS);
@@ -553,9 +558,13 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 	}
 }
 
+/*
+ * Returns activity of PG backends.
+ */
 Datum
 pg_stat_get_activity(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	FuncCallContext *funcctx;
 
 	if (SRF_IS_FIRSTCALL())
@@ -668,14 +677,58 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		Datum		values[21];
 		bool		nulls[21];
 		HeapTuple	tuple;
+=======
+#define PG_STAT_GET_ACTIVITY_COLS	22
+	int			num_backends = pgstat_fetch_stat_numbackends();
+	int			curr_backend;
+	int			pid = PG_ARGISNULL(0) ? -1 : PG_GETARG_INT32(0);
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
+
+	/* Build a tuple descriptor for our result type */
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	/* 1-based index */
+	for (curr_backend = 1; curr_backend <= num_backends; curr_backend++)
+	{
+		/* for each row */
+		Datum		values[PG_STAT_GET_ACTIVITY_COLS];
+		bool		nulls[PG_STAT_GET_ACTIVITY_COLS];
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		LocalPgBackendStatus *local_beentry;
 		PgBackendStatus *beentry;
 
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, 0, sizeof(nulls));
 
-		if (*(int *) (funcctx->user_fctx) > 0)
+		if (pid != -1)
 		{
+<<<<<<< HEAD
 			/* Get specific pid slot */
 			local_beentry = pgstat_fetch_stat_local_beentry(*(int *) (funcctx->user_fctx));
 		}
@@ -685,6 +738,23 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			local_beentry = pgstat_fetch_stat_local_beentry(funcctx->call_cntr + 1);	/* 1-based index */
 		}
 		if (!local_beentry)
+=======
+			/* Skip any which are not the one we're looking for. */
+			PgBackendStatus *be = pgstat_fetch_stat_beentry(curr_backend);
+
+			if (!be || be->st_procpid != pid)
+				continue;
+
+		}
+
+		/* Get the next one in the list */
+		local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
+		if (!local_beentry)
+			continue;
+
+		beentry = &local_beentry->backendStatus;
+		if (!beentry)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		{
 			int			i;
 
@@ -694,8 +764,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[5] = false;
 			values[5] = CStringGetTextDatum("<backend information not available>");
 
-			tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
-			SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
+			tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+			continue;
 		}
 
 		beentry = &local_beentry->backendStatus;
@@ -719,8 +789,23 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		else
 			nulls[15] = true;
 
-		/* Values only available to same user or superuser */
-		if (superuser() || beentry->st_userid == GetUserId())
+		if (beentry->st_ssl)
+		{
+			values[16] = BoolGetDatum(true);	/* ssl */
+			values[17] = CStringGetTextDatum(beentry->st_sslstatus->ssl_version);
+			values[18] = CStringGetTextDatum(beentry->st_sslstatus->ssl_cipher);
+			values[19] = Int32GetDatum(beentry->st_sslstatus->ssl_bits);
+			values[20] = BoolGetDatum(beentry->st_sslstatus->ssl_compression);
+			values[21] = CStringGetTextDatum(beentry->st_sslstatus->ssl_clientdn);
+		}
+		else
+		{
+			values[16] = BoolGetDatum(false);	/* ssl */
+			nulls[17] = nulls[18] = nulls[19] = nulls[20] = nulls[21] = true;
+		}
+
+		/* Values only available to role member */
+		if (has_privs_of_role(GetUserId(), beentry->st_userid))
 		{
 			SockAddr	zero_clientaddr;
 
@@ -901,15 +986,17 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			}
 		}
 
-		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 
-		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
+		/* If only a single backend was requested, and we found it, break. */
+		if (pid != -1)
+			break;
 	}
-	else
-	{
-		/* nothing left */
-		SRF_RETURN_DONE(funcctx);
-	}
+
+	/* clean up and return the tuplestore */
+	tuplestore_donestoring(tupstore);
+
+	return (Datum) 0;
 }
 
 
@@ -981,7 +1068,7 @@ pg_stat_get_backend_activity(PG_FUNCTION_ARGS)
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		activity = "<backend information not available>";
-	else if (!superuser() && beentry->st_userid != GetUserId())
+	else if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		activity = "<insufficient privilege>";
 	else if (*(beentry->st_activity) == '\0')
 		activity = "<command string not enabled>";
@@ -1002,7 +1089,7 @@ pg_stat_get_backend_waiting(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
-	if (!superuser() && beentry->st_userid != GetUserId())
+	if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		PG_RETURN_NULL();
 
 	result = beentry->st_waiting != PGBE_WAITING_NONE;
@@ -1021,7 +1108,7 @@ pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
-	if (!superuser() && beentry->st_userid != GetUserId())
+	if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		PG_RETURN_NULL();
 
 	result = beentry->st_activity_start_timestamp;
@@ -1047,7 +1134,7 @@ pg_stat_get_backend_xact_start(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
-	if (!superuser() && beentry->st_userid != GetUserId())
+	if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		PG_RETURN_NULL();
 
 	result = beentry->st_xact_start_timestamp;
@@ -1069,7 +1156,7 @@ pg_stat_get_backend_start(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
-	if (!superuser() && beentry->st_userid != GetUserId())
+	if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		PG_RETURN_NULL();
 
 	result = beentry->st_proc_start_timestamp;
@@ -1093,7 +1180,7 @@ pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
-	if (!superuser() && beentry->st_userid != GetUserId())
+	if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		PG_RETURN_NULL();
 
 	/* A zeroed client addr means we don't know */
@@ -1139,7 +1226,7 @@ pg_stat_get_backend_client_port(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
-	if (!superuser() && beentry->st_userid != GetUserId())
+	if (!has_privs_of_role(GetUserId(), beentry->st_userid))
 		PG_RETURN_NULL();
 
 	/* A zeroed client addr means we don't know */
@@ -1806,6 +1893,13 @@ pg_stat_get_xact_function_self_time(PG_FUNCTION_ARGS)
 }
 
 
+/* Get the timestamp of the current statistics snapshot */
+Datum
+pg_stat_get_snapshot_timestamp(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TIMESTAMPTZ(pgstat_fetch_global()->stats_timestamp);
+}
+
 /* Discard the active statistics snapshot */
 Datum
 pg_stat_clear_snapshot(PG_FUNCTION_ARGS)
@@ -1924,7 +2018,7 @@ pg_stat_reset_shared(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-/* Reset a a single counter in the current database */
+/* Reset a single counter in the current database */
 Datum
 pg_stat_reset_single_table_counters(PG_FUNCTION_ARGS)
 {

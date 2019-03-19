@@ -28,7 +28,7 @@
  * all these files commit in a single map file update rather than being tied
  * to transaction commit.
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -44,6 +44,8 @@
 #include <unistd.h>
 
 #include "access/xact.h"
+#include "access/xlog.h"
+#include "access/xloginsert.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/storage.h"
@@ -84,7 +86,7 @@ typedef struct RelMapFile
 	int32		magic;			/* always RELMAPPER_FILEMAGIC */
 	int32		num_mappings;	/* number of valid RelMapping entries */
 	RelMapping	mappings[MAX_MAPPINGS];
-	int32		crc;			/* CRC of all above */
+	pg_crc32c	crc;			/* CRC of all above */
 	int32		pad;			/* to make the struct size be 512 exactly */
 } RelMapFile;
 
@@ -624,7 +626,7 @@ load_relmap_file(bool shared)
 {
 	RelMapFile *map;
 	char		mapfilename[MAXPGPATH];
-	pg_crc32	crc;
+	pg_crc32c	crc;
 	int			fd;
 
 	if (shared)
@@ -752,7 +754,6 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 	if (write_wal)
 	{
 		xl_relmap_update xlrec;
-		XLogRecData rdata[2];
 		XLogRecPtr	lsn;
 
 		/* now errors are fatal ... */
@@ -762,16 +763,11 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 		xlrec.tsid = tsid;
 		xlrec.nbytes = sizeof(RelMapFile);
 
-		rdata[0].data = (char *) (&xlrec);
-		rdata[0].len = MinSizeOfRelmapUpdate;
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = &(rdata[1]);
-		rdata[1].data = (char *) newmap;
-		rdata[1].len = sizeof(RelMapFile);
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = NULL;
+		XLogBeginInsert();
+		XLogRegisterData((char *) (&xlrec), MinSizeOfRelmapUpdate);
+		XLogRegisterData((char *) newmap, sizeof(RelMapFile));
 
-		lsn = XLogInsert(RM_RELMAP_ID, XLOG_RELMAP_UPDATE, rdata);
+		lsn = XLogInsert(RM_RELMAP_ID, XLOG_RELMAP_UPDATE);
 
 		/* As always, WAL must hit the disk before the data update does */
 		XLogFlush(lsn);
@@ -905,12 +901,16 @@ perform_relmap_update(bool shared, const RelMapFile *updates)
  * RELMAP resource manager's routines
  */
 void
+<<<<<<< HEAD
 relmap_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
+=======
+relmap_redo(XLogReaderState *record)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	/* Backup blocks are not used in relmap records */
-	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
+	Assert(!XLogRecHasAnyBlockRefs(record));
 
 	if (info == XLOG_RELMAP_UPDATE)
 	{

@@ -4,9 +4,13 @@
  *	  Support routines for scanning Values lists
  *	  ("VALUES (...), (...), ..." in rangetable).
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -28,8 +32,11 @@
 #include "cdb/cdbvars.h"
 #include "executor/executor.h"
 #include "executor/nodeValuesscan.h"
+<<<<<<< HEAD
 #include "optimizer/var.h"              /* CDB: contain_var_reference() */
 #include "parser/parsetree.h"
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 
 static TupleTableSlot *ValuesNext(ValuesScanState *node);
@@ -275,7 +282,6 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	/*
 	 * Other node-specific setup
 	 */
-	scanstate->marked_idx = -1;
 	scanstate->curr_idx = -1;
 	scanstate->array_len = list_length(node->values_lists);
 
@@ -320,30 +326,6 @@ ExecEndValuesScan(ValuesScanState *node)
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	EndPlanStateGpmonPkt(&node->ss.ps);
-}
-
-/* ----------------------------------------------------------------
- *		ExecValuesMarkPos
- *
- *		Marks scan position.
- * ----------------------------------------------------------------
- */
-void
-ExecValuesMarkPos(ValuesScanState *node)
-{
-	node->marked_idx = node->curr_idx;
-}
-
-/* ----------------------------------------------------------------
- *		ExecValuesRestrPos
- *
- *		Restores scan position.
- * ----------------------------------------------------------------
- */
-void
-ExecValuesRestrPos(ValuesScanState *node)
-{
-	node->curr_idx = node->marked_idx;
 }
 
 /* ----------------------------------------------------------------

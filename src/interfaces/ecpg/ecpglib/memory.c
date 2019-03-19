@@ -107,7 +107,11 @@ static struct auto_mem *auto_allocs = NULL;
 char *
 ecpg_auto_alloc(long size, int lineno)
 {
+<<<<<<< HEAD
 	void	*ptr = (void *) ecpg_alloc(size, lineno);
+=======
+	void	   *ptr = (void *) ecpg_alloc(size, lineno);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (!ptr)
 		return NULL;

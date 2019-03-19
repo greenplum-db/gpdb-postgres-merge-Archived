@@ -57,9 +57,13 @@
  * values.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -129,6 +133,7 @@ typedef struct
 	QualCost	total;
 } cost_qual_eval_context;
 
+static List *extract_nonindex_conditions(List *qual_clauses, List *indexquals);
 static MergeScanSelCache *cached_scansel(PlannerInfo *root,
 			   RestrictInfo *rinfo,
 			   PathKey *pathkey);
@@ -208,6 +213,7 @@ cost_seqscan(Path *path, PlannerInfo *root,
 }
 
 /*
+<<<<<<< HEAD
  * cost_externalscan
  *	  Determines and returns the cost of scanning an external relation.
  *
@@ -223,10 +229,39 @@ cost_externalscan(ExternalPath *path, PlannerInfo *root,
 	Cost		cpu_per_tuple;
 	
 	/* Should only be applied to external relations */
+=======
+ * cost_samplescan
+ *	  Determines and returns the cost of scanning a relation using sampling.
+ *
+ * From planner/optimizer perspective, we don't care all that much about cost
+ * itself since there is always only one scan path to consider when sampling
+ * scan is present, but number of rows estimation is still important.
+ *
+ * 'baserel' is the relation to be scanned
+ * 'param_info' is the ParamPathInfo if this is a parameterized path, else NULL
+ */
+void
+cost_samplescan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
+{
+	Cost		startup_cost = 0;
+	Cost		run_cost = 0;
+	double		spc_seq_page_cost,
+				spc_random_page_cost,
+				spc_page_cost;
+	QualCost	qpqual_cost;
+	Cost		cpu_per_tuple;
+	BlockNumber pages;
+	double		tuples;
+	RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
+	TableSampleClause *tablesample = rte->tablesample;
+
+	/* Should only be applied to base relations */
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
 
 	/* Mark the path with the correct row estimate */
+<<<<<<< HEAD
 	if (param_info)
 		path->path.rows = param_info->ppi_rows;
 	else
@@ -244,6 +279,42 @@ cost_externalscan(ExternalPath *path, PlannerInfo *root,
 
 	path->path.startup_cost = startup_cost;
 	path->path.total_cost = startup_cost + run_cost;
+=======
+	if (path->param_info)
+		path->rows = path->param_info->ppi_rows;
+	else
+		path->rows = baserel->rows;
+
+	/* Call the sampling method's costing function. */
+	OidFunctionCall6(tablesample->tsmcost, PointerGetDatum(root),
+					 PointerGetDatum(path), PointerGetDatum(baserel),
+					 PointerGetDatum(tablesample->args),
+					 PointerGetDatum(&pages), PointerGetDatum(&tuples));
+
+	/* fetch estimated page cost for tablespace containing table */
+	get_tablespace_page_costs(baserel->reltablespace,
+							  &spc_random_page_cost,
+							  &spc_seq_page_cost);
+
+
+	spc_page_cost = tablesample->tsmseqscan ? spc_seq_page_cost :
+		spc_random_page_cost;
+
+	/*
+	 * disk costs
+	 */
+	run_cost += spc_page_cost * pages;
+
+	/* CPU costs */
+	get_restriction_qual_cost(root, baserel, path->param_info, &qpqual_cost);
+
+	startup_cost += qpqual_cost.startup;
+	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
+	run_cost += cpu_per_tuple * tuples;
+
+	path->startup_cost = startup_cost;
+	path->total_cost = startup_cost + run_cost;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -270,7 +341,7 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	IndexOptInfo *index = path->indexinfo;
 	RelOptInfo *baserel = index->rel;
 	bool		indexonly = (path->path.pathtype == T_IndexOnlyScan);
-	List	   *allclauses;
+	List	   *qpquals;
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		indexStartupCost = 0.0;
@@ -293,19 +364,26 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
 
-	/* Mark the path with the correct row estimate */
+	/*
+	 * Mark the path with the correct row estimate, and identify which quals
+	 * will need to be enforced as qpquals.
+	 */
 	if (path->path.param_info)
 	{
 		path->path.rows = path->path.param_info->ppi_rows;
-		/* also get the set of clauses that should be enforced by the scan */
-		allclauses = list_concat(list_copy(path->path.param_info->ppi_clauses),
-								 baserel->baserestrictinfo);
+		/* qpquals come from the rel's restriction clauses and ppi_clauses */
+		qpquals = list_concat(
+					   extract_nonindex_conditions(baserel->baserestrictinfo,
+												   path->indexquals),
+			  extract_nonindex_conditions(path->path.param_info->ppi_clauses,
+										  path->indexquals));
 	}
 	else
 	{
 		path->path.rows = baserel->rows;
-		/* allclauses should just be the rel's restriction clauses */
-		allclauses = baserel->baserestrictinfo;
+		/* qpquals come from just the rel's restriction clauses */
+		qpquals = extract_nonindex_conditions(baserel->baserestrictinfo,
+											  path->indexquals);
 	}
 
 	if (!enable_indexscan)
@@ -482,6 +560,7 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	 * Estimate CPU costs per tuple.
 	 *
 	 * What we want here is cpu_tuple_cost plus the evaluation costs of any
+<<<<<<< HEAD
 	 * qual clauses that we have to evaluate as qpquals.  We approximate that
 	 * list as allclauses minus any clauses appearing in indexquals.  (We
 	 * assume that pointer equality is enough to recognize duplicate
@@ -499,10 +578,11 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	 * using this shortcut.  But that's too invasive a change to consider
 	 * back-patching, so for the moment we just mask the worst aspects of the
 	 * problem by clamping the subtracted amount.
+=======
+	 * qual clauses that we have to evaluate as qpquals.
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
-	cost_qual_eval(&qpqual_cost,
-				   list_difference_ptr(allclauses, path->indexquals),
-				   root);
+	cost_qual_eval(&qpqual_cost, qpquals, root);
 
 	startup_cost += qpqual_cost.startup;
 	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
@@ -511,6 +591,46 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 
 	path->path.startup_cost = startup_cost;
 	path->path.total_cost = startup_cost + run_cost;
+}
+
+/*
+ * extract_nonindex_conditions
+ *
+ * Given a list of quals to be enforced in an indexscan, extract the ones that
+ * will have to be applied as qpquals (ie, the index machinery won't handle
+ * them).  The actual rules for this appear in create_indexscan_plan() in
+ * createplan.c, but the full rules are fairly expensive and we don't want to
+ * go to that much effort for index paths that don't get selected for the
+ * final plan.  So we approximate it as quals that don't appear directly in
+ * indexquals and also are not redundant children of the same EquivalenceClass
+ * as some indexqual.  This method neglects some infrequently-relevant
+ * considerations such as clauses that needn't be checked because they are
+ * implied by a partial index's predicate.  It does not seem worth the cycles
+ * to try to factor those things in at this stage, even though createplan.c
+ * will take pains to remove such unnecessary clauses from the qpquals list if
+ * this path is selected for use.
+ */
+static List *
+extract_nonindex_conditions(List *qual_clauses, List *indexquals)
+{
+	List	   *result = NIL;
+	ListCell   *lc;
+
+	foreach(lc, qual_clauses)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		Assert(IsA(rinfo, RestrictInfo));
+		if (rinfo->pseudoconstant)
+			continue;			/* we may drop pseudoconstants here */
+		if (list_member_ptr(indexquals, rinfo))
+			continue;			/* simple duplicate */
+		if (is_redundant_derived_clause(rinfo, indexquals))
+			continue;			/* derived from same EquivalenceClass */
+		/* ... skip the predicate proof attempts createplan.c will try ... */
+		result = lappend(result, rinfo);
+	}
+	return result;
 }
 
 /*
@@ -2603,7 +2723,7 @@ final_cost_mergejoin(PlannerInfo *root, MergePath *path,
 	 * it off does not entitle us to deliver an invalid plan.
 	 */
 	else if (innersortkeys == NIL &&
-			 !ExecSupportsMarkRestore(inner_path->pathtype))
+			 !ExecSupportsMarkRestore(inner_path))
 		path->materialize_inner = true;
 
 	/*
@@ -3609,7 +3729,10 @@ compute_semi_anti_join_factors(PlannerInfo *root,
 	/* we don't bother trying to make the remaining fields valid */
 	norm_sjinfo.lhs_strict = false;
 	norm_sjinfo.delay_upper_joins = false;
-	norm_sjinfo.join_quals = NIL;
+	norm_sjinfo.semi_can_btree = false;
+	norm_sjinfo.semi_can_hash = false;
+	norm_sjinfo.semi_operators = NIL;
+	norm_sjinfo.semi_rhs_exprs = NIL;
 
 	nselec = clauselist_selectivity(root,
 									joinquals,
@@ -3775,7 +3898,10 @@ approx_tuple_count(PlannerInfo *root, JoinPath *path, List *quals)
 	/* we don't bother trying to make the remaining fields valid */
 	sjinfo.lhs_strict = false;
 	sjinfo.delay_upper_joins = false;
-	sjinfo.join_quals = NIL;
+	sjinfo.semi_can_btree = false;
+	sjinfo.semi_can_hash = false;
+	sjinfo.semi_operators = NIL;
+	sjinfo.semi_rhs_exprs = NIL;
 
 	/* Get the approximate selectivity */
 	foreach(l, quals)
@@ -4561,11 +4687,11 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 
 	/*
 	 * If we have a whole-row reference, estimate its width as the sum of
-	 * per-column widths plus sizeof(HeapTupleHeaderData).
+	 * per-column widths plus heap tuple header overhead.
 	 */
 	if (have_wholerow_var)
 	{
-		int32		wholerow_width = sizeof(HeapTupleHeaderData);
+		int32		wholerow_width = MAXALIGN(SizeofHeapTupleHeader);
 
 		if (reloid != InvalidOid)
 		{
@@ -4603,7 +4729,7 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 static double
 relation_byte_size(double tuples, int width)
 {
-	return tuples * (MAXALIGN(width) + MAXALIGN(sizeof(HeapTupleHeaderData)));
+	return tuples * (MAXALIGN(width) + MAXALIGN(SizeofHeapTupleHeader));
 }
 
 /*

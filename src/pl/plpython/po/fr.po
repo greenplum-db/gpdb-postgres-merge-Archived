@@ -8,8 +8,13 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+<<<<<<< HEAD
 "POT-Creation-Date: 2017-02-06 16:22+0000\n"
 "PO-Revision-Date: 2017-02-06 18:38+0100\n"
+=======
+"POT-Creation-Date: 2015-02-08 09:07+0000\n"
+"PO-Revision-Date: 2015-02-08 11:08+0100\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -17,7 +22,11 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+<<<<<<< HEAD
 "X-Generator: Poedit 1.8.11\n"
+=======
+"X-Generator: Poedit 1.7.3\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: plpy_cursorobject.c:98
 #, c-format
@@ -61,7 +70,11 @@ msgstr "récupérer à partir d'un curseur fermé"
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "fermeture d'un curseur dans une sous-transaction annulée"
 
+<<<<<<< HEAD
 #: plpy_elog.c:108 plpy_elog.c:109 plpy_plpymodule.c:441
+=======
+#: plpy_elog.c:103 plpy_elog.c:104 plpy_plpymodule.c:420
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -183,25 +196,38 @@ msgstr "lors de la modification de la ligne du trigger"
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "annulation forcée d'une sous-transaction qui n'a jamais été quittée"
 
+<<<<<<< HEAD
 #: plpy_main.c:124
+=======
+#: plpy_main.c:93
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "Python major version mismatch in session"
 msgstr "Différence de version majeure de Python dans la session"
 
+<<<<<<< HEAD
 #: plpy_main.c:125
+=======
+#: plpy_main.c:94
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
 msgstr ""
 "Cette session a auparavant utilisé la version majeure %d de Python et elle\n"
 "essaie maintenant d'utiliser la version majeure %d."
 
+<<<<<<< HEAD
 #: plpy_main.c:127
+=======
+#: plpy_main.c:96
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "Start a new session to use a different Python major version."
 msgstr ""
 "Lancez une nouvelle session pour utiliser une version majeure différente de\n"
 "Python."
 
+<<<<<<< HEAD
 #: plpy_main.c:150
 #, c-format
 msgid "multiple Python libraries are present in session"
@@ -213,21 +239,36 @@ msgid "Only one Python major version can be used in one session."
 msgstr "Seule une version majeure de Python peut être utilisée dans une session."
 
 #: plpy_main.c:167
+=======
+#: plpy_main.c:111
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "erreur non récupérée dans l'initialisation"
 
+<<<<<<< HEAD
 #: plpy_main.c:190
+=======
+#: plpy_main.c:134
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "n'a pas pu importer le module « __main__ »"
 
+<<<<<<< HEAD
 #: plpy_main.c:195
+=======
+#: plpy_main.c:139
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not create globals"
 msgstr "n'a pas pu créer les globales"
 
+<<<<<<< HEAD
 #: plpy_main.c:199
+=======
+#: plpy_main.c:143
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not initialize globals"
 msgstr "n'a pas pu initialiser les variables globales"
@@ -247,7 +288,11 @@ msgstr "bloc de code PL/Python anonyme"
 msgid "plan.status takes no arguments"
 msgstr "plan.status ne prends pas d'arguments"
 
+<<<<<<< HEAD
 #: plpy_plpymodule.c:181 plpy_plpymodule.c:184
+=======
+#: plpy_plpymodule.c:178 plpy_plpymodule.c:181
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "n'a pas pu importer le module « plpy »"
@@ -267,7 +312,11 @@ msgstr "n'a pas pu ajouter le module « spiexceptions »"
 msgid "could not create exception \"%s\""
 msgstr "n'a pas pu créer l'exception « %s »"
 
+<<<<<<< HEAD
 #: plpy_plpymodule.c:272 plpy_plpymodule.c:276
+=======
+#: plpy_plpymodule.c:253 plpy_plpymodule.c:257
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "n'a pas pu générer les exceptions SPI"
@@ -281,27 +330,47 @@ msgstr "n'a pas pu déballer les arguments dans plpy.elog"
 msgid "could not parse error message in plpy.elog"
 msgstr "n'a pas pu analyser le message d'erreur dans plpy.elog"
 
+<<<<<<< HEAD
 #: plpy_procedure.c:210
+=======
+#: plpy_procedure.c:200
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "les fonctions trigger peuvent seulement être appelées par des triggers"
 
+<<<<<<< HEAD
 #: plpy_procedure.c:215 plpy_typeio.c:409
+=======
+#: plpy_procedure.c:205 plpy_typeio.c:409
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "les fonctions PL/python ne peuvent pas renvoyer le type %s"
 
+<<<<<<< HEAD
 #: plpy_procedure.c:297
+=======
+#: plpy_procedure.c:287
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "les fonctions PL/python ne peuvent pas accepter le type %s"
 
+<<<<<<< HEAD
 #: plpy_procedure.c:393
+=======
+#: plpy_procedure.c:383
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "n'a pas pu compiler la fonction PL/python « %s »"
 
+<<<<<<< HEAD
 #: plpy_procedure.c:396
+=======
+#: plpy_procedure.c:386
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "n'a pas pu compiler le bloc de code anonyme PL/python"
@@ -426,31 +495,51 @@ msgstr "n'a pas pu convertir l'objet Python en csting : la représentation de la 
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "la valeur de retour de la fonction de type tableau n'est pas une séquence Python"
 
+<<<<<<< HEAD
 #: plpy_typeio.c:940
+=======
+#: plpy_typeio.c:930
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "la clé « %s » introuvable dans la correspondance"
 
+<<<<<<< HEAD
 #: plpy_typeio.c:941
+=======
+#: plpy_typeio.c:931
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr ""
 "Pour renvoyer NULL dans une colonne, ajoutez la valeur None à la\n"
 "correspondance de la clé nommée d'après la colonne."
 
+<<<<<<< HEAD
 #: plpy_typeio.c:989
+=======
+#: plpy_typeio.c:979
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr ""
 "la longueur de la séquence renvoyée ne correspondait pas au nombre de\n"
 "colonnes dans la ligne"
 
+<<<<<<< HEAD
 #: plpy_typeio.c:1097
+=======
+#: plpy_typeio.c:1087
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "l'attribut « %s » n'existe pas dans l'objet Python"
 
+<<<<<<< HEAD
 #: plpy_typeio.c:1098
+=======
+#: plpy_typeio.c:1088
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr ""

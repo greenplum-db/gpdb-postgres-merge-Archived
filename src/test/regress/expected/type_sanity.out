@@ -155,6 +155,7 @@ ORDER BY 1;
   30 | oidvector  |  54 | oidvectorin
 (2 rows)
 
+<<<<<<< HEAD
 -- Make sure typarray points to a varlena array type of our own base
 SELECT p1.oid, p1.typname as basetype, p2.typname as arraytype,
        p2.typelem, p2.typlen
@@ -163,6 +164,14 @@ WHERE  p1.typarray <> 0 AND
        (p2.oid IS NULL OR p2.typelem <> p1.oid OR p2.typlen <> -1);
  oid | basetype | arraytype | typelem | typlen 
 -----+----------+-----------+---------+--------
+=======
+-- typinput routines should not be volatile
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typinput = p2.oid AND p2.provolatile NOT IN ('i', 's');
+ oid | typname | oid | proname 
+-----+---------+-----+---------
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 (0 rows)
 
 -- Composites, domains, enums, ranges should all use the same input routines
@@ -198,6 +207,14 @@ SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typoutput = p2.oid AND NOT
     (p2.prorettype = 'cstring'::regtype AND NOT p2.proretset);
+ oid | typname | oid | proname 
+-----+---------+-----+---------
+(0 rows)
+
+-- typoutput routines should not be volatile
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typoutput = p2.oid AND p2.provolatile NOT IN ('i', 's');
  oid | typname | oid | proname 
 -----+---------+-----+---------
 (0 rows)
@@ -281,6 +298,14 @@ WHERE p1.typinput = p2.oid AND p1.typreceive = p3.oid AND
 -----+---------+-----+---------+-----+---------
 (0 rows)
 
+-- typreceive routines should not be volatile
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typreceive = p2.oid AND p2.provolatile NOT IN ('i', 's');
+ oid | typname | oid | proname 
+-----+---------+-----+---------
+(0 rows)
+
 -- Composites, domains, enums, ranges should all use the same receive routines
 SELECT DISTINCT typtype, typreceive
 FROM pg_type AS p1
@@ -318,6 +343,14 @@ WHERE p1.typsend = p2.oid AND NOT
 -----+---------+-----+---------
 (0 rows)
 
+-- typsend routines should not be volatile
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typsend = p2.oid AND p2.provolatile NOT IN ('i', 's');
+ oid | typname | oid | proname 
+-----+---------+-----+---------
+(0 rows)
+
 -- Composites, enums, ranges should all use the same send routines
 SELECT DISTINCT typtype, typsend
 FROM pg_type AS p1
@@ -349,6 +382,14 @@ WHERE p1.typmodin = p2.oid AND NOT
 -----+---------+-----+---------
 (0 rows)
 
+-- typmodin routines should not be volatile
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typmodin = p2.oid AND p2.provolatile NOT IN ('i', 's');
+ oid | typname | oid | proname 
+-----+---------+-----+---------
+(0 rows)
+
 -- Check for bogus typmodout routines
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
@@ -356,6 +397,14 @@ WHERE p1.typmodout = p2.oid AND NOT
     (p2.pronargs = 1 AND
      p2.proargtypes[0] = 'int4'::regtype AND
      p2.prorettype = 'cstring'::regtype AND NOT p2.proretset);
+ oid | typname | oid | proname 
+-----+---------+-----+---------
+(0 rows)
+
+-- typmodout routines should not be volatile
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typmodout = p2.oid AND p2.provolatile NOT IN ('i', 's');
  oid | typname | oid | proname 
 -----+---------+-----+---------
 (0 rows)
@@ -398,6 +447,7 @@ WHERE p1.typanalyze = p2.oid AND NOT
 -----+---------+-----+---------
 (0 rows)
 
+-- there does not seem to be a reason to care about volatility of typanalyze
 -- domains inherit their base type's typanalyze
 SELECT d.oid, d.typname, d.typanalyze, t.oid, t.typname, t.typanalyze
 FROM pg_type d JOIN pg_type t ON d.typbasetype = t.oid

@@ -37,7 +37,11 @@ create or replace function uses_global() returns text language plperl as $$
 
 $$;
 ERROR:  Global symbol "$global" requires explicit package name (did you forget to declare "my $global"?) at line 3.
+<<<<<<< HEAD
 DETAIL:  Global symbol "$other_global" requires explicit package name (did you forget to declare "my $other_global"?) at line 4.
+=======
+Global symbol "$other_global" requires explicit package name (did you forget to declare "my $other_global"?) at line 4.
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 CONTEXT:  compilation of PL/Perl function "uses_global"
 select uses_global();
 ERROR:  function uses_global() does not exist
@@ -104,6 +108,7 @@ PL/Perl function "indirect_die_caller"
                    2
 (1 row)
 
+<<<<<<< HEAD
 -- Test non-ASCII error messages
 --
 -- Note: this test case is known to fail if the database encoding is
@@ -117,3 +122,5 @@ $$;
 select error_with_nbsp();
 ERROR:  this message contains a no-break space at line 2.
 CONTEXT:  PL/Perl function "error_with_nbsp"
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

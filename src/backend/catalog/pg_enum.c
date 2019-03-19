@@ -3,7 +3,7 @@
  * pg_enum.c
  *	  routines to support manipulation of the pg_enum relation
  *
- * Copyright (c) 2006-2014, PostgreSQL Global Development Group
+ * Copyright (c) 2006-2015, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -32,6 +32,12 @@
 #include "utils/tqual.h"
 
 
+<<<<<<< HEAD
+=======
+/* Potentially set by pg_upgrade_support functions */
+Oid			binary_upgrade_next_pg_enum_oid = InvalidOid;
+
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void RenumberEnumType(Relation pg_enum, HeapTuple *existing, int nelems);
 static int	oid_cmp(const void *p1, const void *p2);
 static int	sort_order_cmp(const void *p1, const void *p2);
@@ -347,8 +353,18 @@ restart:
 		}
 	}
 
+<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
+=======
+	/* Get a new OID for the new label */
+	if (IsBinaryUpgrade)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{
+		if (!OidIsValid(binary_upgrade_next_pg_enum_oid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("pg_enum OID value not set when in binary upgrade mode")));
+
 		/*
 		 * In QE, the dispatcher has alrady allocated the OID for us. Like in
 		 * EnumValuesCreate(), it is delivered out-of-band, and set on the tuple by

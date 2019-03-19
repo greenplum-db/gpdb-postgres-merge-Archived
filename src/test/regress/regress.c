@@ -1,5 +1,17 @@
-/*
+/*------------------------------------------------------------------------
+ *
+ * regress.c
+ *	 Code for various C-language functions defined as part of the
+ *	 regression tests.
+ *
+ * This code is released under the terms of the PostgreSQL License.
+ *
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
  * src/test/regress/regress.c
+ *
+ *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
@@ -17,6 +29,10 @@
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "executor/spi.h"
+<<<<<<< HEAD
+=======
+#include "miscadmin.h"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "port/atomics.h"
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
@@ -199,7 +215,6 @@ regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2)
 	lseg->p[0].y = pt1->y;
 	lseg->p[1].x = pt2->x;
 	lseg->p[1].y = pt2->y;
-	lseg->m = point_sl(pt1, pt2);
 }
 
 PG_FUNCTION_INFO_V1(overpaid);
@@ -849,6 +864,53 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(newtup->t_data);
 }
 
+<<<<<<< HEAD
+=======
+PG_FUNCTION_INFO_V1(regress_putenv);
+
+Datum
+regress_putenv(PG_FUNCTION_ARGS)
+{
+	MemoryContext oldcontext;
+	char	   *envbuf;
+
+	if (!superuser())
+		elog(ERROR, "must be superuser to change environment variables");
+
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	envbuf = text_to_cstring((text *) PG_GETARG_POINTER(0));
+	MemoryContextSwitchTo(oldcontext);
+
+	if (putenv(envbuf) != 0)
+		elog(ERROR, "could not set environment variable: %m");
+
+	PG_RETURN_VOID();
+}
+
+/* Sleep until no process has a given PID. */
+PG_FUNCTION_INFO_V1(wait_pid);
+
+Datum
+wait_pid(PG_FUNCTION_ARGS)
+{
+	int			pid = PG_GETARG_INT32(0);
+
+	if (!superuser())
+		elog(ERROR, "must be superuser to check PID liveness");
+
+	while (kill(pid, 0) == 0)
+	{
+		CHECK_FOR_INTERRUPTS();
+		pg_usleep(50000);
+	}
+
+	if (errno != ESRCH)
+		elog(ERROR, "could not check PID %d liveness: %m", pid);
+
+	PG_RETURN_VOID();
+}
+
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #ifndef PG_HAVE_ATOMIC_FLAG_SIMULATION
 static void
 test_atomic_flag(void)
@@ -1086,6 +1148,7 @@ test_atomic_ops(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(true);
 }
+<<<<<<< HEAD
 
 PG_FUNCTION_INFO_V1(regress_putenv);
 
@@ -1127,3 +1190,5 @@ wait_pid(PG_FUNCTION_ARGS)
 
 	PG_RETURN_VOID();
 }
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

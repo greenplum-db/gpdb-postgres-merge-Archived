@@ -8,6 +8,10 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres_fe.h"
+<<<<<<< HEAD
+=======
+
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <time.h>
@@ -23,8 +27,13 @@
 #include "access/xlog_internal.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
+<<<<<<< HEAD
 #include "getopt_long.h"
 #include "utils/palloc.h"
+=======
+#include "common/restricted_token.h"
+#include "getopt_long.h"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "storage/bufpage.h"
 
 static void usage(const char *progname);
@@ -35,17 +44,25 @@ static void createBackupLabel(XLogRecPtr startpoint, TimeLineID starttli,
 static void digestControlFile(ControlFileData *ControlFile, char *source,
 				  size_t size);
 static void updateControlFile(ControlFileData *ControlFile);
+<<<<<<< HEAD
 static void syncTargetDirectory(const char *argv0);
 static void sanityChecks(void);
 static void findCommonAncestorTimeline(XLogRecPtr *recptr, TimeLineID *tli);
 static void ensureCleanShutdown(const char *argv0);
+=======
+static void sanityChecks(void);
+static void findCommonAncestorTimeline(XLogRecPtr *recptr, TimeLineID *tli);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 static ControlFileData ControlFile_target;
 static ControlFileData ControlFile_source;
 
+<<<<<<< HEAD
 static bool writerecoveryconf = false;
 static char *replication_slot = NULL;
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 const char *progname;
 
 /* Configuration options */
@@ -64,10 +81,15 @@ usage(const char *progname)
 	printf(_("Usage:\n  %s [OPTION]...\n\n"), progname);
 	printf(_("Options:\n"));
 	printf(_("  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"));
+<<<<<<< HEAD
 	printf(_("      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"));
 	printf(_("      --source-server=CONNSTR    source server to synchronize with\n"));
 	printf(_("  -R, --write-recovery-conf      write recovery.conf after backup\n"));
 	printf(_("  -S, --slot=SLOTNAME            replication slot to use\n"));
+=======
+	printf(_("      --source-pgdata=DIRECTORY  source data directory to sync with\n"));
+	printf(_("      --source-server=CONNSTR    source server to sync with\n"));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	printf(_("  -n, --dry-run                  stop before modifying anything\n"));
 	printf(_("  -P, --progress                 write progress messages\n"));
 	printf(_("      --debug                    write a lot of debug messages\n"));
@@ -83,8 +105,11 @@ main(int argc, char **argv)
 	static struct option long_options[] = {
 		{"help", no_argument, NULL, '?'},
 		{"target-pgdata", required_argument, NULL, 'D'},
+<<<<<<< HEAD
 		{"write-recovery-conf", no_argument, NULL, 'R'},
 		{"slot", required_argument, NULL, 'S'},
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		{"source-pgdata", required_argument, NULL, 1},
 		{"source-server", required_argument, NULL, 2},
 		{"version", no_argument, NULL, 'V'},
@@ -120,12 +145,20 @@ main(int argc, char **argv)
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
+<<<<<<< HEAD
 			puts("pg_rewind (Greenplum Database) " PG_VERSION);
+=======
+			puts("pg_rewind (PostgreSQL) " PG_VERSION);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			exit(0);
 		}
 	}
 
+<<<<<<< HEAD
 	while ((c = getopt_long(argc, argv, "D:nPRS:", long_options, &option_index)) != -1)
+=======
+	while ((c = getopt_long(argc, argv, "D:nP", long_options, &option_index)) != -1)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{
 		switch (c)
 		{
@@ -141,6 +174,7 @@ main(int argc, char **argv)
 				dry_run = true;
 				break;
 
+<<<<<<< HEAD
 			case 'R':
 				writerecoveryconf = true;
 				break;
@@ -149,6 +183,8 @@ main(int argc, char **argv)
 				replication_slot = pg_strdup(optarg);
 				break;
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			case 3:
 				debug = true;
 				break;
@@ -173,6 +209,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+<<<<<<< HEAD
 	if (datadir_source != NULL && connstr_source != NULL)
 	{
 		fprintf(stderr, _("%s: only one of --source-pgdata or --source-server can be specified\n"), progname);
@@ -180,6 +217,8 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	if (datadir_target == NULL)
 	{
 		fprintf(stderr, _("%s: no target data directory specified (--target-pgdata)\n"), progname);
@@ -195,6 +234,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+<<<<<<< HEAD
 	if (!writerecoveryconf && replication_slot != NULL)
 	{
 		fprintf(stderr, _("%s: --slot can be specified only if --write-recovery-conf is specified\n"), progname);
@@ -202,6 +242,8 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/*
 	 * Don't allow pg_rewind to be run as root, to avoid overwriting the
 	 * ownership of files in the data directory. We need only check for root
@@ -217,6 +259,11 @@ main(int argc, char **argv)
 	}
 #endif
 
+<<<<<<< HEAD
+=======
+	get_restricted_token(progname);
+
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* Connect to remote server */
 	if (connstr_source)
 		libpqConnect(connstr_source);
@@ -229,6 +276,7 @@ main(int argc, char **argv)
 	digestControlFile(&ControlFile_target, buffer, size);
 	pg_free(buffer);
 
+<<<<<<< HEAD
 	/*
 	 * If the target instance was not cleanly shut down, run a single-user
 	 * postgres session really quickly and reload the control file to get the
@@ -244,6 +292,8 @@ main(int argc, char **argv)
 		pg_free(buffer);
 	}
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	buffer = fetchFile("global/pg_control", &size);
 	digestControlFile(&ControlFile_source, buffer, size);
 	pg_free(buffer);
@@ -255,6 +305,7 @@ main(int argc, char **argv)
 	 * do.
 	 */
 	if (ControlFile_target.checkPointCopy.ThisTimeLineID == ControlFile_source.checkPointCopy.ThisTimeLineID)
+<<<<<<< HEAD
 	{
 		printf(_("source and target cluster are on the same timeline: %u\n"),
 			   ControlFile_source.checkPointCopy.ThisTimeLineID);
@@ -295,10 +346,47 @@ main(int argc, char **argv)
 			else
 				rewind_needed = true;
 		}
+=======
+		pg_fatal("source and target cluster are on the same timeline\n");
+
+	findCommonAncestorTimeline(&divergerec, &lastcommontli);
+	printf(_("The servers diverged at WAL position %X/%X on timeline %u.\n"),
+		   (uint32) (divergerec >> 32), (uint32) divergerec, lastcommontli);
+
+	/*
+	 * Check for the possibility that the target is in fact a direct ancestor
+	 * of the source. In that case, there is no divergent history in the
+	 * target that needs rewinding.
+	 */
+	if (ControlFile_target.checkPoint >= divergerec)
+	{
+		rewind_needed = true;
+	}
+	else
+	{
+		XLogRecPtr	chkptendrec;
+
+		/* Read the checkpoint record on the target to see where it ends. */
+		chkptendrec = readOneRecord(datadir_target,
+									ControlFile_target.checkPoint,
+						   ControlFile_target.checkPointCopy.ThisTimeLineID);
+
+		/*
+		 * If the histories diverged exactly at the end of the shutdown
+		 * checkpoint record on the target, there are no WAL records in the
+		 * target that don't belong in the source's history, and no rewind is
+		 * needed.
+		 */
+		if (chkptendrec == divergerec)
+			rewind_needed = false;
+		else
+			rewind_needed = true;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	if (!rewind_needed)
 	{
+<<<<<<< HEAD
 		printf(_("no rewind required\n"));
 
 		if (writerecoveryconf && connstr_source)
@@ -307,12 +395,19 @@ main(int argc, char **argv)
 			WriteRecoveryConf();
 		}
 
+=======
+		printf(_("No rewind required.\n"));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		exit(0);
 	}
 
 	findLastCheckpoint(datadir_target, divergerec, lastcommontli,
 					   &chkptrec, &chkpttli, &chkptredo);
+<<<<<<< HEAD
 	printf(_("rewinding from last common checkpoint at %X/%X on timeline %u\n"),
+=======
+	printf(_("Rewinding from last common checkpoint at %X/%X on timeline %u\n"),
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		   (uint32) (chkptrec >> 32), (uint32) chkptrec,
 		   chkpttli);
 
@@ -394,6 +489,7 @@ main(int argc, char **argv)
 	ControlFile_new.state = DB_IN_ARCHIVE_RECOVERY;
 	updateControlFile(&ControlFile_new);
 
+<<<<<<< HEAD
 	pg_log(PG_PROGRESS, "syncing target data directory\n");
 	syncTargetDirectory(argv[0]);
 
@@ -403,6 +499,8 @@ main(int argc, char **argv)
 		WriteRecoveryConf();
 	}
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	printf(_("Done!\n"));
 
 	return 0;
@@ -439,11 +537,18 @@ sanityChecks(void)
 	/*
 	 * Target cluster better not be running. This doesn't guard against
 	 * someone starting the cluster concurrently. Also, this is probably more
+<<<<<<< HEAD
 	 * strict than necessary; it's OK if the target node was not shut down
 	 * cleanly, as long as it isn't running at the moment.
 	 */
 	if (ControlFile_target.state != DB_SHUTDOWNED &&
 		ControlFile_target.state != DB_SHUTDOWNED_IN_RECOVERY)
+=======
+	 * strict than necessary; it's OK if the master was not shut down cleanly,
+	 * as long as it isn't running at the moment.
+	 */
+	if (ControlFile_target.state != DB_SHUTDOWNED)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		pg_fatal("target server must be shut down cleanly\n");
 
 	/*
@@ -451,9 +556,13 @@ sanityChecks(void)
 	 * server is shut down. There isn't any very strong reason for this
 	 * limitation, but better safe than sorry.
 	 */
+<<<<<<< HEAD
 	if (datadir_source &&
 		ControlFile_source.state != DB_SHUTDOWNED &&
 		ControlFile_source.state != DB_SHUTDOWNED_IN_RECOVERY)
+=======
+	if (datadir_source && ControlFile_source.state != DB_SHUTDOWNED)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		pg_fatal("source data directory must be shut down cleanly\n");
 }
 
@@ -566,7 +675,10 @@ createBackupLabel(XLogRecPtr startpoint, TimeLineID starttli, XLogRecPtr checkpo
 	/* TODO: move old file out of the way, if any. */
 	open_target_file("backup_label", true);		/* BACKUP_LABEL_FILE */
 	write_target_range(buf, 0, len);
+<<<<<<< HEAD
 	close_target_file();
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -632,6 +744,7 @@ updateControlFile(ControlFileData *ControlFile)
 
 	close_target_file();
 }
+<<<<<<< HEAD
 
 /*
  * Sync target data directory to ensure that modifications are safely on disk.
@@ -729,3 +842,5 @@ ensureCleanShutdown(const char *argv0)
 	if (system(cmd) != 0)
 		pg_fatal("postgres single-user mode of target instance failed for command: %s\n", cmd);
 }
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

@@ -3,9 +3,13 @@
  * readfuncs.c
  *	  Reader functions for Postgres tree nodes.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -384,13 +388,16 @@ _readQuery(void)
 	READ_BOOL_FIELD(hasRecursive);
 	READ_BOOL_FIELD(hasModifyingCTE);
 	READ_BOOL_FIELD(hasForUpdate);
+	READ_BOOL_FIELD(hasRowSecurity);
 	READ_NODE_FIELD(cteList);
 	READ_NODE_FIELD(rtable);
 	READ_NODE_FIELD(jointree);
 	READ_NODE_FIELD(targetList);
 	READ_NODE_FIELD(withCheckOptions);
+	READ_NODE_FIELD(onConflict);
 	READ_NODE_FIELD(returningList);
 	READ_NODE_FIELD(groupClause);
+	READ_NODE_FIELD(groupingSets);
 	READ_NODE_FIELD(havingQual);
 	READ_NODE_FIELD(windowClause);
 	READ_NODE_FIELD(distinctClause);
@@ -482,7 +489,8 @@ _readWithCheckOption(void)
 {
 	READ_LOCALS(WithCheckOption);
 
-	READ_STRING_FIELD(viewname);
+	READ_ENUM_FIELD(kind, WCOKind);
+	READ_STRING_FIELD(relname);
 	READ_NODE_FIELD(qual);
 	READ_BOOL_FIELD(cascaded);
 
@@ -507,6 +515,7 @@ _readSortGroupClause(void)
 }
 
 /*
+<<<<<<< HEAD
  * _readGroupingClause
  */
 static GroupingClause *
@@ -543,6 +552,18 @@ static GroupId *
 _readGroupId(void)
 {
 	READ_LOCALS_NO_FIELDS(GroupId);
+=======
+ * _readGroupingSet
+ */
+static GroupingSet *
+_readGroupingSet(void)
+{
+	READ_LOCALS(GroupingSet);
+
+	READ_ENUM_FIELD(kind, GroupingSetKind);
+	READ_NODE_FIELD(content);
+	READ_LOCATION_FIELD(location);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	READ_DONE();
 }
@@ -578,7 +599,7 @@ _readRowMarkClause(void)
 
 	READ_UINT_FIELD(rti);
 	READ_ENUM_FIELD(strength, LockClauseStrength);
-	READ_BOOL_FIELD(noWait);
+	READ_ENUM_FIELD(waitPolicy, LockWaitPolicy);
 	READ_BOOL_FIELD(pushedDown);
 
 	READ_DONE();
@@ -614,6 +635,46 @@ _readWithClause(void)
 	READ_NODE_FIELD(ctes);
 	READ_BOOL_FIELD(recursive);
 	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+/*
+ * _readRangeTableSample
+ */
+static RangeTableSample *
+_readRangeTableSample(void)
+{
+	READ_LOCALS(RangeTableSample);
+
+	READ_NODE_FIELD(relation);
+	READ_STRING_FIELD(method);
+	READ_NODE_FIELD(repeatable);
+	READ_NODE_FIELD(args);
+
+	READ_DONE();
+}
+
+/*
+ * _readTableSampleClause
+ */
+static TableSampleClause *
+_readTableSampleClause(void)
+{
+	READ_LOCALS(TableSampleClause);
+
+	READ_OID_FIELD(tsmid);
+	READ_BOOL_FIELD(tsmseqscan);
+	READ_BOOL_FIELD(tsmpagemode);
+	READ_OID_FIELD(tsminit);
+	READ_OID_FIELD(tsmnextblock);
+	READ_OID_FIELD(tsmnexttuple);
+	READ_OID_FIELD(tsmexaminetuple);
+	READ_OID_FIELD(tsmend);
+	READ_OID_FIELD(tsmreset);
+	READ_OID_FIELD(tsmcost);
+	READ_NODE_FIELD(repeatable);
+	READ_NODE_FIELD(args);
 
 	READ_DONE();
 }
@@ -1416,6 +1477,23 @@ _readAggref(void)
 }
 
 /*
+ * _readGroupingFunc
+ */
+static GroupingFunc *
+_readGroupingFunc(void)
+{
+	READ_LOCALS(GroupingFunc);
+
+	READ_NODE_FIELD(args);
+	READ_NODE_FIELD(refs);
+	READ_NODE_FIELD(cols);
+	READ_INT_FIELD(agglevelsup);
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+/*
  * _readWindowFunc
  */
 static WindowFunc *
@@ -1661,6 +1739,7 @@ _readSubLink(void)
 	READ_LOCALS(SubLink);
 
 	READ_ENUM_FIELD(subLinkType, SubLinkType);
+	READ_INT_FIELD(subLinkId);
 	READ_NODE_FIELD(testexpr);
 	READ_NODE_FIELD(operName);
 	READ_NODE_FIELD(subselect);
@@ -1969,6 +2048,7 @@ _readNullTest(void)
 	READ_NODE_FIELD(arg);
 	READ_ENUM_FIELD(nulltesttype, NullTestType);
 	READ_BOOL_FIELD(argisrow);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -1983,6 +2063,7 @@ _readBooleanTest(void)
 
 	READ_NODE_FIELD(arg);
 	READ_ENUM_FIELD(booltesttype, BoolTestType);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -2038,6 +2119,39 @@ _readSetToDefault(void)
 }
 
 /*
+<<<<<<< HEAD
+=======
+ * _readCurrentOfExpr
+ */
+static CurrentOfExpr *
+_readCurrentOfExpr(void)
+{
+	READ_LOCALS(CurrentOfExpr);
+
+	READ_UINT_FIELD(cvarno);
+	READ_STRING_FIELD(cursor_name);
+	READ_INT_FIELD(cursor_param);
+
+	READ_DONE();
+}
+
+/*
+ * _readInferenceElem
+ */
+static InferenceElem *
+_readInferenceElem(void)
+{
+	READ_LOCALS(InferenceElem);
+
+	READ_NODE_FIELD(expr);
+	READ_OID_FIELD(infercollid);
+	READ_OID_FIELD(inferopclass);
+
+	READ_DONE();
+}
+
+/*
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * _readTargetEntry
  */
 static TargetEntry *
@@ -2105,6 +2219,25 @@ _readFromExpr(void)
 	READ_DONE();
 }
 
+/*
+ * _readOnConflictExpr
+ */
+static OnConflictExpr *
+_readOnConflictExpr(void)
+{
+	READ_LOCALS(OnConflictExpr);
+
+	READ_ENUM_FIELD(action, OnConflictAction);
+	READ_NODE_FIELD(arbiterElems);
+	READ_NODE_FIELD(arbiterWhere);
+	READ_NODE_FIELD(onConflictSet);
+	READ_NODE_FIELD(onConflictWhere);
+	READ_OID_FIELD(constraint);
+	READ_INT_FIELD(exclRelIndex);
+	READ_NODE_FIELD(exclRelTlist);
+
+	READ_DONE();
+}
 
 /*
  *	Stuff from parsenodes.h.
@@ -2207,6 +2340,7 @@ _readRangeTblEntry(void)
 		case RTE_RELATION:
 			READ_OID_FIELD(relid);
 			READ_CHAR_FIELD(relkind);
+			READ_NODE_FIELD(tablesample);
 			break;
 		case RTE_SUBQUERY:
 			READ_NODE_FIELD(subquery);
@@ -2251,11 +2385,16 @@ _readRangeTblEntry(void)
 	READ_UINT_FIELD(requiredPerms);
 	READ_OID_FIELD(checkAsUser);
 	READ_BITMAPSET_FIELD(selectedCols);
+<<<<<<< HEAD
 	READ_BITMAPSET_FIELD(modifiedCols);
 
 	READ_BOOL_FIELD(forceDistRandom);
 	/* 'pseudocols' is intentionally missing, see out function */
 
+=======
+	READ_BITMAPSET_FIELD(insertedCols);
+	READ_BITMAPSET_FIELD(updatedCols);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	READ_NODE_FIELD(securityQuals);
 
 	READ_DONE();
@@ -2949,12 +3088,18 @@ parseNodeString(void)
 		return_value = _readWithCheckOption();
 	else if (MATCH("SORTGROUPCLAUSE", 15))
 		return_value = _readSortGroupClause();
+	else if (MATCH("GROUPINGSET", 11))
+		return_value = _readGroupingSet();
 	else if (MATCH("WINDOWCLAUSE", 12))
 		return_value = _readWindowClause();
 	else if (MATCH("ROWMARKCLAUSE", 13))
 		return_value = _readRowMarkClause();
 	else if (MATCH("COMMONTABLEEXPR", 15))
 		return_value = _readCommonTableExpr();
+	else if (MATCH("RANGETABLESAMPLE", 16))
+		return_value = _readRangeTableSample();
+	else if (MATCH("TABLESAMPLECLAUSE", 17))
+		return_value = _readTableSampleClause();
 	else if (MATCH("SETOPERATIONSTMT", 16))
 		return_value = _readSetOperationStmt();
 	else if (MATCH("ALIAS", 5))
@@ -2973,6 +3118,8 @@ parseNodeString(void)
 		return_value = _readParam();
 	else if (MATCH("AGGREF", 6))
 		return_value = _readAggref();
+	else if (MATCH("GROUPINGFUNC", 12))
+		return_value = _readGroupingFunc();
 	else if (MATCH("WINDOWFUNC", 10))
 		return_value = _readWindowFunc();
 	else if (MATCH("ARRAYREF", 8))
@@ -3037,6 +3184,8 @@ parseNodeString(void)
 		return_value = _readSetToDefault();
 	else if (MATCH("CURRENTOFEXPR", 13))
 		return_value = _readCurrentOfExpr();
+	else if (MATCH("INFERENCEELEM", 13))
+		return_value = _readInferenceElem();
 	else if (MATCH("TARGETENTRY", 11))
 		return_value = _readTargetEntry();
 	else if (MATCH("RANGETBLREF", 11))
@@ -3045,6 +3194,8 @@ parseNodeString(void)
 		return_value = _readJoinExpr();
 	else if (MATCH("FROMEXPR", 8))
 		return_value = _readFromExpr();
+	else if (MATCH("ONCONFLICTEXPR", 14))
+		return_value = _readOnConflictExpr();
 	else if (MATCH("RTE", 3))
 		return_value = _readRangeTblEntry();
 	else if (MATCH("RANGETBLFUNCTION", 16))

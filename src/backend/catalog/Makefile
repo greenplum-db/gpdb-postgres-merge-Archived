@@ -48,6 +48,7 @@ POSTGRES_BKI_SRCS = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_ts_config.h pg_ts_config_map.h pg_ts_dict.h \
 	pg_ts_parser.h pg_ts_template.h pg_extension.h \
 	pg_foreign_data_wrapper.h pg_foreign_server.h pg_user_mapping.h \
+<<<<<<< HEAD
 	pg_foreign_table.h \
 	pg_default_acl.h pg_seclabel.h pg_shseclabel.h pg_collation.h pg_range.h \
 	pg_resqueue.h pg_resqueuecapability.h pg_resourcetype.h \
@@ -65,6 +66,11 @@ POSTGRES_BKI_SRCS = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_type_encoding.h \
 	pg_stat_last_operation.h pg_stat_last_shoperation.h \
 	toasting.h indexing.h \
+=======
+	pg_foreign_table.h pg_policy.h pg_replication_origin.h \
+	pg_tablesample_method.h pg_default_acl.h pg_seclabel.h pg_shseclabel.h \
+	pg_collation.h pg_range.h pg_transform.h toasting.h indexing.h \
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
     )
 
 POSTGRES_BKI_SRCS := pg_proc_combined.h $(POSTGRES_BKI_SRCS)

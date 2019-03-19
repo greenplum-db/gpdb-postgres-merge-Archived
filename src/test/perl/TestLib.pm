@@ -25,7 +25,10 @@ our @EXPORT = qw(
   tempdir
   tempdir_short
   standard_initdb
+<<<<<<< HEAD
   configure_hba_for_replication
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
   start_test_server
   restart_test_server
   psql
@@ -54,12 +57,23 @@ use File::Basename;
 use File::Spec;
 use File::Temp ();
 use IPC::Run qw(run start);
+<<<<<<< HEAD
 
 use SimpleTee;
 
 use Test::More;
 
 our $windows_os = $Config{osname} eq 'MSWin32' || $Config{osname} eq 'msys';
+=======
+use Test::More;
+
+
+# Set to untranslated messages, to be able to compare program output
+# with expected strings.
+delete $ENV{LANGUAGE};
+delete $ENV{LC_ALL};
+$ENV{LC_MESSAGES} = 'C';
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 # Open log file. For each test, the log file name uses the name of the
 # file launching this module, without the .pl suffix.
@@ -109,7 +123,11 @@ sub tempdir
 {
 	return File::Temp::tempdir(
 		'tmp_testXXXX',
+<<<<<<< HEAD
 		DIR => $tmp_check,
+=======
+		DIR => $ENV{TESTDIR} || cwd(),
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		CLEANUP => 1);
 }
 
@@ -121,6 +139,7 @@ sub tempdir_short
 	return File::Temp::tempdir(CLEANUP => 1);
 }
 
+<<<<<<< HEAD
 # Initialize a new cluster for testing.
 #
 # The PGHOST environment variable is set to connect to the new cluster.
@@ -172,6 +191,14 @@ sub configure_hba_for_replication
 		print HBA "host replication all 127.0.0.1/32 sspi include_realm=1 map=regress\n";
 	}
 	close HBA;
+=======
+sub standard_initdb
+{
+	my $pgdata = shift;
+	system_or_bail("initdb -D '$pgdata' -A trust -N >/dev/null");
+	system_or_bail("$ENV{top_builddir}/src/test/regress/pg_regress",
+		'--config-auth', $pgdata);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 my ($test_server_datadir, $test_server_logfile);
@@ -183,6 +210,7 @@ sub start_test_server
 	my ($tempdir) = @_;
 	my $ret;
 
+<<<<<<< HEAD
 	print("### Starting test server in $tempdir\n");
 	standard_initdb "$tempdir/pgdata";
 
@@ -190,6 +218,15 @@ sub start_test_server
 	  "$log_path/postmaster.log", '-o',
 	  "--log-statement=all -c gp_role=utility --gp_dbid=-1 --gp_contentid=-1 --logging-collector=off",
 	  'start');
+=======
+	my $tempdir_short = tempdir_short;
+
+	standard_initdb "$tempdir/pgdata";
+	$ret = system 'pg_ctl', '-D', "$tempdir/pgdata", '-s', '-w', '-l',
+	  "$tempdir/logfile", '-o',
+"--fsync=off -k $tempdir_short --listen-addresses='' --log-statement=all",
+	  'start';
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if ($ret != 0)
 	{
@@ -198,7 +235,11 @@ sub start_test_server
 		BAIL_OUT("pg_ctl failed");
 	}
 
+<<<<<<< HEAD
 	$ENV{PGOPTIONS}      = '-c gp_session_role=utility';
+=======
+	$ENV{PGHOST}         = $tempdir_short;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	$test_server_datadir = "$tempdir/pgdata";
 	$test_server_logfile = "$log_path/postmaster.log";
 }
@@ -347,7 +388,10 @@ sub program_help_ok
 {
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
+<<<<<<< HEAD
 	print("# Running: $cmd --help\n");
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	my $result = run [ $cmd, '--help' ], '>', \$stdout, '2>', \$stderr;
 	ok($result, "$cmd --help exit code 0");
 	isnt($stdout, '', "$cmd --help goes to stdout");
@@ -358,7 +402,10 @@ sub program_version_ok
 {
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
+<<<<<<< HEAD
 	print("# Running: $cmd --version\n");
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	my $result = run [ $cmd, '--version' ], '>', \$stdout, '2>', \$stderr;
 	ok($result, "$cmd --version exit code 0");
 	isnt($stdout, '', "$cmd --version goes to stdout");
@@ -369,7 +416,10 @@ sub program_options_handling_ok
 {
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
+<<<<<<< HEAD
 	print("# Running: $cmd --not-a-valid-option\n");
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	my $result = run [ $cmd, '--not-a-valid-option' ], '>', \$stdout, '2>',
 	  \$stderr;
 	ok(!$result, "$cmd with invalid option nonzero exit code");
@@ -380,7 +430,10 @@ sub command_like
 {
 	my ($cmd, $expected_stdout, $test_name) = @_;
 	my ($stdout, $stderr);
+<<<<<<< HEAD
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
 	ok($result, "@$cmd exit code 0");
 	is($stderr, '', "@$cmd no stderr");
@@ -390,10 +443,18 @@ sub command_like
 sub command_fails_like
 {
 	my ($cmd, $expected_sql, $test_name) = @_;
+<<<<<<< HEAD
 	truncate $test_server_logfile, 0;
 	my $result = run_log($cmd);
 	ok($result, "@$cmd exit code 0");
 	my $log = slurp_file($test_server_logfile);
+=======
+	my ($stdout, $stderr);
+	truncate $test_server_logfile, 0;
+	my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
+	ok($result, "@$cmd exit code 0");
+	my $log = `cat '$test_server_logfile'`;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	like($log, $expected_sql, "$test_name: SQL found in server log");
 }
 

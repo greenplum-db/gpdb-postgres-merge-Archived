@@ -1,9 +1,16 @@
 <!-- doc/src/sgml/legal.sgml -->
 
+<<<<<<< HEAD
 <date>2018</date>
 
 <copyright>
  <year>1996-2018</year>
+=======
+<date>2015</date>
+
+<copyright>
+ <year>1996-2015</year>
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  <holder>The PostgreSQL Global Development Group</holder>
 </copyright>
 
@@ -11,7 +18,11 @@
  <title>Legal Notice</title>
 
  <para>
+<<<<<<< HEAD
   <productname>PostgreSQL</productname> is Copyright &copy; 1996-2018
+=======
+  <productname>PostgreSQL</productname> is Copyright &copy; 1996-2015
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
   by the PostgreSQL Global Development Group.
  </para>
 

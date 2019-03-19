@@ -438,8 +438,10 @@ tar -cf backup.tar /usr/local/pgsql/data
    Another option is to use <application>rsync</> to perform a file
    system backup.  This is done by first running <application>rsync</>
    while the database server is running, then shutting down the database
-   server just long enough to do a second <application>rsync</>.  The
-   second <application>rsync</> will be much quicker than the first,
+   server long enough to do an <command>rsync --checksum</>.
+   (<option>--checksum</> is necessary because <command>rsync</> only
+   has file modification-time granularity of one second.)  The
+   second <application>rsync</> will be quicker than the first,
    because it has relatively little data to transfer, and the end result
    will be consistent because the server was down.  This method
    allows a file system backup to be performed with minimal downtime.
@@ -834,8 +836,11 @@ SELECT pg_start_backup('label');
      <function>pg_start_backup</> creates a <firstterm>backup label</> file,
      called <filename>backup_label</>, in the cluster directory with
      information about your backup, including the start time and label
-     string.  The file is critical to the integrity of the backup, should
-     you need to restore from it.
+     string.  The function also creates a <firstterm>tablespace map</> file,
+     called <filename>tablespace_map</>, in the cluster directory with
+     information about tablespace symbolic links in <filename>pg_tblspc/</>
+     if one or more such link is present.  Both files are critical to the
+     integrity of the backup, should you need to restore from it.
     </para>
 
     <para>
@@ -962,6 +967,7 @@ SELECT pg_stop_backup();
    </para>
 
    <para>
+<<<<<<< HEAD
     The contents of the directories <filename>pg_dynshmem/</>,
     <filename>pg_notify/</>, <filename>pg_serial/</>,
     <filename>pg_snapshots/</>, <filename>pg_stat_tmp/</>,
@@ -983,6 +989,17 @@ SELECT pg_stop_backup();
     as well as the time at which <function>pg_start_backup</> was run, and
     the name of the starting WAL file.  In case of confusion it is therefore
     possible to look inside a backup file and determine exactly which
+=======
+    It's also worth noting that the <function>pg_start_backup</> function
+    makes files named <filename>backup_label</> and
+    <filename>tablespace_map</> in the database cluster directory,
+    which are removed by <function>pg_stop_backup</>.  These files will of
+    course be archived as a part of your backup dump file.  The backup label
+    file includes the label string you gave to <function>pg_start_backup</>,
+    as well as the time at which <function>pg_start_backup</> was run, and
+    the name of the starting WAL file.  In case of confusion it is therefore
+    possible to look inside a backup dump file and determine exactly which
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
     backup session the dump file came from.  The tablespace map file includes
     the symbolic link names as they exist in the directory
     <filename>pg_tblspc/</> and the full path of each symbolic link.

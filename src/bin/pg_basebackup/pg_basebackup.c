@@ -4,7 +4,7 @@
  *
  * Author: Magnus Hagander <magnus@hagander.net>
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/bin/pg_basebackup/pg_basebackup.c
@@ -206,6 +206,9 @@ tablespace_list_append(const char *arg)
 		exit(1);
 	}
 
+	canonicalize_path(cell->old_dir);
+	canonicalize_path(cell->new_dir);
+
 	if (tablespace_dirs.tail)
 		tablespace_dirs.tail->next = cell;
 	else
@@ -240,7 +243,11 @@ usage(void)
 	printf(_("  -D, --pgdata=DIRECTORY receive base backup into directory\n"));
 	printf(_("  -F, --format=p|t       output format (plain (default), tar)\n"));
 	printf(_("  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
+<<<<<<< HEAD
 			 "                         (in kB/s, or use suffix \"k\" or \"M\")\n"));
+=======
+	  "                         (in kB/s, or use suffix \"k\" or \"M\")\n"));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	printf(_("  -R, --write-recovery-conf\n"
 			 "                         write recovery.conf after backup\n"));
 	printf(_("  -S, --slot=SLOTNAME    replication slot to use\n"));
@@ -381,7 +388,11 @@ LogStreamerMain(logstreamer_param *param)
 	if (!ReceiveXlogStream(param->bgconn, param->startptr, param->timeline,
 						   param->sysidentifier, param->xlogdir,
 						   reached_end_position, standby_message_timeout,
+<<<<<<< HEAD
 						   NULL, true))
+=======
+						   NULL, false, true))
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/*
 		 * Any errors will already have been reported in the function process,
@@ -1156,9 +1167,14 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 {
 	char		current_path[MAXPGPATH];
 	char		filename[MAXPGPATH];
+<<<<<<< HEAD
 	char		gp_tablespace_filename[MAXPGPATH] = {0};
 	const char *mapped_tblspc_path;
 	pgoff_t		current_len_left = 0;
+=======
+	const char *mapped_tblspc_path;
+	int			current_len_left;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	int			current_padding = 0;
 	bool		basetablespace;
 	char	   *copybuf = NULL;
@@ -1168,6 +1184,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	if (basetablespace)
 		strlcpy(current_path, basedir, sizeof(current_path));
 	else
+<<<<<<< HEAD
 	{
 		strlcpy(current_path, get_tablespace_mapping(PQgetvalue(res, rownum, 1)), sizeof(current_path));
 		
@@ -1186,6 +1203,11 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 				 GP_TABLESPACE_VERSION_DIRECTORY,
 				 target_gp_dbid);
 	}
+=======
+		strlcpy(current_path,
+				get_tablespace_mapping(PQgetvalue(res, rownum, 1)),
+				sizeof(current_path));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Get the COPY data
@@ -1333,7 +1355,11 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 						 * failures on related directories.
 						 */
 						if (!((pg_str_endswith(filename, "/pg_xlog") ||
+<<<<<<< HEAD
 							   pg_str_endswith(filename, "/archive_status")) &&
+=======
+							 pg_str_endswith(filename, "/archive_status")) &&
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 							  errno == EEXIST))
 						{
 							fprintf(stderr,
@@ -1356,12 +1382,21 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					 *
 					 * It's most likely a link in pg_tblspc directory, to the
 					 * location of a tablespace. Apply any tablespace mapping
+<<<<<<< HEAD
 					 * given on the command line (--tablespace-mapping).
 					 * (We blindly apply the mapping without checking that
 					 * the link really is inside pg_tblspc. We don't expect
 					 * there to be other symlinks in a data directory, but
 					 * if there are, you can call it an undocumented feature
 					 * that you can map them too.)
+=======
+					 * given on the command line (--tablespace-mapping). (We
+					 * blindly apply the mapping without checking that the
+					 * link really is inside pg_tblspc. We don't expect there
+					 * to be other symlinks in a data directory, but if there
+					 * are, you can call it an undocumented feature that you
+					 * can map them too.)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					 */
 					filename[strlen(filename) - 1] = '\0';		/* Remove trailing slash */
 
@@ -1777,6 +1812,7 @@ BaseBackup(void)
 	 */
 	if (!RunIdentifySystem(conn, &sysidentifier, &latesttli, NULL, NULL))
 		disconnect_and_exit(1);
+<<<<<<< HEAD
 
 	/*
 	 * Greenplum only: create replication slot.  This replication slot is used
@@ -1786,6 +1822,8 @@ BaseBackup(void)
 	{
 		CreateReplicationSlot(conn, replication_slot, NULL, NULL, true);
 	}
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Start the actual backup
@@ -1813,10 +1851,14 @@ BaseBackup(void)
 				 fastcheckpoint ? "FAST" : "",
 				 includewal ? "NOWAIT" : "",
 				 maxrate_clause ? maxrate_clause : "",
+<<<<<<< HEAD
 				 exclude_list);
 
 	if (num_exclude != 0)
 		free(exclude_list);
+=======
+				 format == 't' ? "TABLESPACE_MAP" : "");
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (PQsendQuery(conn, basebkp) == 0)
 	{

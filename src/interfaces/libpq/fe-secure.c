@@ -6,7 +6,7 @@
  *	  message integrity and endpoint authentication.
  *
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -62,6 +62,7 @@
 #endif
 #endif
 
+<<<<<<< HEAD
 #ifdef USE_SSL
 
 #include <openssl/ssl.h>
@@ -115,6 +116,8 @@ static long win32_ssl_create_mutex = 0;
 #endif   /* SSL */
 
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * Macros to handle disabling and then restoring the state of SIGPIPE handling.
  * On Windows, these are all no-ops since there's no SIGPIPEs.
@@ -196,7 +199,9 @@ struct sigpipe_info
 void
 PQinitSSL(int do_init)
 {
-	PQinitOpenSSL(do_init, do_init);
+#ifdef USE_SSL
+	pgtls_init_library(do_init, do_init);
+#endif
 }
 
 /*
@@ -207,18 +212,7 @@ void
 PQinitOpenSSL(int do_ssl, int do_crypto)
 {
 #ifdef USE_SSL
-#ifdef ENABLE_THREAD_SAFETY
-
-	/*
-	 * Disallow changing the flags while we have open connections, else we'd
-	 * get completely confused.
-	 */
-	if (ssl_open_connections != 0)
-		return;
-#endif
-
-	pq_init_ssl_lib = do_ssl;
-	pq_init_crypto_lib = do_crypto;
+	pgtls_init_library(do_ssl, do_crypto);
 #endif
 }
 
@@ -231,21 +225,10 @@ pqsecure_initialize(PGconn *conn)
 	int			r = 0;
 
 #ifdef USE_SSL
-	r = init_ssl_system(conn);
+	r = pgtls_init(conn);
 #endif
 
 	return r;
-}
-
-/*
- *	Destroy global context
- */
-void
-pqsecure_destroy(void)
-{
-#ifdef USE_SSL
-	destroySSL();
-#endif
 }
 
 /*
@@ -255,6 +238,7 @@ PostgresPollingStatusType
 pqsecure_open_client(PGconn *conn)
 {
 #ifdef USE_SSL
+<<<<<<< HEAD
 	/* First time through? */
 	if (conn->ssl == NULL)
 	{
@@ -275,6 +259,9 @@ pqsecure_open_client(PGconn *conn)
 
 	/* Begin or continue the actual handshake */
 	return open_client_SSL(conn);
+=======
+	return pgtls_open_client(conn);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #else
 	/* shouldn't get here */
 	return PGRES_POLLING_FAILED;
@@ -288,8 +275,8 @@ void
 pqsecure_close(PGconn *conn)
 {
 #ifdef USE_SSL
-	if (conn->ssl)
-		close_SSL(conn);
+	if (conn->ssl_in_use)
+		pgtls_close(conn);
 #endif
 }
 
@@ -304,12 +291,11 @@ ssize_t
 pqsecure_read(PGconn *conn, void *ptr, size_t len)
 {
 	ssize_t		n;
-	int			result_errno = 0;
-	char		sebuf[256];
 
 #ifdef USE_SSL
-	if (conn->ssl)
+	if (conn->ssl_in_use)
 	{
+<<<<<<< HEAD
 		int			err;
 		unsigned long ecode;
 
@@ -429,46 +415,61 @@ rloop:
 		}
 
 		RESTORE_SIGPIPE(conn, spinfo);
+=======
+		n = pgtls_read(conn, ptr, len);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	else
-#endif   /* USE_SSL */
+#endif
 	{
-		n = recv(conn->sock, ptr, len, 0);
+		n = pqsecure_raw_read(conn, ptr, len);
+	}
 
-		if (n < 0)
+	return n;
+}
+
+ssize_t
+pqsecure_raw_read(PGconn *conn, void *ptr, size_t len)
+{
+	ssize_t		n;
+	int			result_errno = 0;
+	char		sebuf[256];
+
+	n = recv(conn->sock, ptr, len, 0);
+
+	if (n < 0)
+	{
+		result_errno = SOCK_ERRNO;
+
+		/* Set error message if appropriate */
+		switch (result_errno)
 		{
-			result_errno = SOCK_ERRNO;
-
-			/* Set error message if appropriate */
-			switch (result_errno)
-			{
 #ifdef EAGAIN
-				case EAGAIN:
+			case EAGAIN:
 #endif
 #if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
-				case EWOULDBLOCK:
+			case EWOULDBLOCK:
 #endif
-				case EINTR:
-					/* no error message, caller is expected to retry */
-					break;
+			case EINTR:
+				/* no error message, caller is expected to retry */
+				break;
 
 #ifdef ECONNRESET
-				case ECONNRESET:
-					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext(
+			case ECONNRESET:
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext(
 								"server closed the connection unexpectedly\n"
-					"\tThis probably means the server terminated abnormally\n"
+				   "\tThis probably means the server terminated abnormally\n"
 							 "\tbefore or while processing the request.\n"));
-					break;
+				break;
 #endif
 
-				default:
-					printfPQExpBuffer(&conn->errorMessage,
-					libpq_gettext("could not receive data from server: %s\n"),
-									  SOCK_STRERROR(result_errno,
-													sebuf, sizeof(sebuf)));
-					break;
-			}
+			default:
+				printfPQExpBuffer(&conn->errorMessage,
+				   libpq_gettext("could not receive data from server: %s\n"),
+								  SOCK_STRERROR(result_errno,
+												sebuf, sizeof(sebuf)));
+				break;
 		}
 		else if (n == 0)
 		{
@@ -501,11 +502,32 @@ ssize_t
 pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 {
 	ssize_t		n;
+
+#ifdef USE_SSL
+	if (conn->ssl_in_use)
+	{
+		n = pgtls_write(conn, ptr, len);
+	}
+	else
+#endif
+	{
+		n = pqsecure_raw_write(conn, ptr, len);
+	}
+
+	return n;
+}
+
+ssize_t
+pqsecure_raw_write(PGconn *conn, const void *ptr, size_t len)
+{
+	ssize_t		n;
+	int			flags = 0;
 	int			result_errno = 0;
 	char		sebuf[256];
 
 	DECLARE_SIGPIPE_INFO(spinfo);
 
+<<<<<<< HEAD
 #ifdef USE_SSL
 	if (conn->ssl)
 	{
@@ -609,70 +631,71 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 	{
 		int			flags = 0;
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #ifdef MSG_NOSIGNAL
-		if (conn->sigpipe_flag)
-			flags |= MSG_NOSIGNAL;
+	if (conn->sigpipe_flag)
+		flags |= MSG_NOSIGNAL;
 
 retry_masked:
 #endif   /* MSG_NOSIGNAL */
 
-		DISABLE_SIGPIPE(conn, spinfo, return -1);
+	DISABLE_SIGPIPE(conn, spinfo, return -1);
 
-		n = send(conn->sock, ptr, len, flags);
+	n = send(conn->sock, ptr, len, flags);
 
-		if (n < 0)
-		{
-			result_errno = SOCK_ERRNO;
+	if (n < 0)
+	{
+		result_errno = SOCK_ERRNO;
 
-			/*
-			 * If we see an EINVAL, it may be because MSG_NOSIGNAL isn't
-			 * available on this machine.  So, clear sigpipe_flag so we don't
-			 * try the flag again, and retry the send().
-			 */
+		/*
+		 * If we see an EINVAL, it may be because MSG_NOSIGNAL isn't available
+		 * on this machine.  So, clear sigpipe_flag so we don't try the flag
+		 * again, and retry the send().
+		 */
 #ifdef MSG_NOSIGNAL
-			if (flags != 0 && result_errno == EINVAL)
-			{
-				conn->sigpipe_flag = false;
-				flags = 0;
-				goto retry_masked;
-			}
+		if (flags != 0 && result_errno == EINVAL)
+		{
+			conn->sigpipe_flag = false;
+			flags = 0;
+			goto retry_masked;
+		}
 #endif   /* MSG_NOSIGNAL */
 
-			/* Set error message if appropriate */
-			switch (result_errno)
-			{
+		/* Set error message if appropriate */
+		switch (result_errno)
+		{
 #ifdef EAGAIN
-				case EAGAIN:
+			case EAGAIN:
 #endif
 #if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
-				case EWOULDBLOCK:
+			case EWOULDBLOCK:
 #endif
-				case EINTR:
-					/* no error message, caller is expected to retry */
-					break;
+			case EINTR:
+				/* no error message, caller is expected to retry */
+				break;
 
-				case EPIPE:
-					/* Set flag for EPIPE */
-					REMEMBER_EPIPE(spinfo, true);
-					/* FALL THRU */
+			case EPIPE:
+				/* Set flag for EPIPE */
+				REMEMBER_EPIPE(spinfo, true);
+				/* FALL THRU */
 
 #ifdef ECONNRESET
-				case ECONNRESET:
+			case ECONNRESET:
 #endif
-					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext(
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext(
 								"server closed the connection unexpectedly\n"
-					"\tThis probably means the server terminated abnormally\n"
+				   "\tThis probably means the server terminated abnormally\n"
 							 "\tbefore or while processing the request.\n"));
-					break;
+				break;
 
-				default:
-					printfPQExpBuffer(&conn->errorMessage,
+			default:
+				printfPQExpBuffer(&conn->errorMessage,
 						libpq_gettext("could not send data to server: %s\n"),
-									  SOCK_STRERROR(result_errno,
-													sebuf, sizeof(sebuf)));
-					break;
-			}
+								  SOCK_STRERROR(result_errno,
+												sebuf, sizeof(sebuf)));
+				break;
 		}
 	}
 
@@ -684,175 +707,41 @@ retry_masked:
 	return n;
 }
 
-/* ------------------------------------------------------------ */
-/*						  SSL specific code						*/
-/* ------------------------------------------------------------ */
-#ifdef USE_SSL
+/* Dummy versions of SSL info functions, when built without SSL support */
+#ifndef USE_SSL
 
-/*
- *	Certificate verification callback
- *
- *	This callback allows us to log intermediate problems during
- *	verification, but there doesn't seem to be a clean way to get
- *	our PGconn * structure.  So we can't log anything!
- *
- *	This callback also allows us to override the default acceptance
- *	criteria (e.g., accepting self-signed or expired certs), but
- *	for now we accept the default checks.
- */
-static int
-verify_cb(int ok, X509_STORE_CTX *ctx)
+int
+PQsslInUse(PGconn *conn)
 {
-	return ok;
+	return 0;
 }
 
-
-/*
- * Check if a wildcard certificate matches the server hostname.
- *
- * The rule for this is:
- *	1. We only match the '*' character as wildcard
- *	2. We match only wildcards at the start of the string
- *	3. The '*' character does *not* match '.', meaning that we match only
- *	   a single pathname component.
- *	4. We don't support more than one '*' in a single pattern.
- *
- * This is roughly in line with RFC2818, but contrary to what most browsers
- * appear to be implementing (point 3 being the difference)
- *
- * Matching is always case-insensitive, since DNS is case insensitive.
- */
-static int
-wildcard_certificate_match(const char *pattern, const char *string)
+void *
+PQgetssl(PGconn *conn)
 {
-	int			lenpat = strlen(pattern);
-	int			lenstr = strlen(string);
-
-	/* If we don't start with a wildcard, it's not a match (rule 1 & 2) */
-	if (lenpat < 3 ||
-		pattern[0] != '*' ||
-		pattern[1] != '.')
-		return 0;
-
-	if (lenpat > lenstr)
-		/* If pattern is longer than the string, we can never match */
-		return 0;
-
-	if (pg_strcasecmp(pattern + 1, string + lenstr - lenpat + 1) != 0)
-
-		/*
-		 * If string does not end in pattern (minus the wildcard), we don't
-		 * match
-		 */
-		return 0;
-
-	if (strchr(string, '.') < string + lenstr - lenpat)
-
-		/*
-		 * If there is a dot left of where the pattern started to match, we
-		 * don't match (rule 3)
-		 */
-		return 0;
-
-	/* String ended with pattern, and didn't have a dot before, so we match */
-	return 1;
+	return NULL;
 }
 
-
-/*
- *	Verify that common name resolves to peer.
- */
-static bool
-verify_peer_name_matches_certificate(PGconn *conn)
+void *
+PQsslStruct(PGconn *conn, const char *struct_name)
 {
-	char	   *peer_cn;
-	int			r;
-	int			len;
-	bool		result;
+	return NULL;
+}
 
-	/*
-	 * If told not to verify the peer name, don't do it. Return true
-	 * indicating that the verification was successful.
-	 */
-	if (strcmp(conn->sslmode, "verify-full") != 0)
-		return true;
+const char *
+PQsslAttribute(PGconn *conn, const char *attribute_name)
+{
+	return NULL;
+}
 
-	/*
-	 * Extract the common name from the certificate.
-	 *
-	 * XXX: Should support alternate names here
-	 */
-	/* First find out the name's length and allocate a buffer for it. */
-	len = X509_NAME_get_text_by_NID(X509_get_subject_name(conn->peer),
-									NID_commonName, NULL, 0);
-	if (len == -1)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not get server common name from server certificate\n"));
-		return false;
-	}
-	peer_cn = malloc(len + 1);
-	if (peer_cn == NULL)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("out of memory\n"));
-		return false;
-	}
+const char **
+PQsslAttributes(PGconn *conn)
+{
+	static const char *result[] = {NULL};
 
-	r = X509_NAME_get_text_by_NID(X509_get_subject_name(conn->peer),
-								  NID_commonName, peer_cn, len + 1);
-	if (r != len)
-	{
-		/* Got different length than on the first call. Shouldn't happen. */
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not get server common name from server certificate\n"));
-		free(peer_cn);
-		return false;
-	}
-	peer_cn[len] = '\0';
-
-	/*
-	 * Reject embedded NULLs in certificate common name to prevent attacks
-	 * like CVE-2009-4034.
-	 */
-	if (len != strlen(peer_cn))
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("SSL certificate's common name contains embedded null\n"));
-		free(peer_cn);
-		return false;
-	}
-
-	/*
-	 * We got the peer's common name. Now compare it against the originally
-	 * given hostname.
-	 */
-	if (!(conn->pghost && conn->pghost[0] != '\0'))
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("host name must be specified for a verified SSL connection\n"));
-		result = false;
-	}
-	else
-	{
-		if (pg_strcasecmp(peer_cn, conn->pghost) == 0)
-			/* Exact name match */
-			result = true;
-		else if (wildcard_certificate_match(peer_cn, conn->pghost))
-			/* Matched wildcard certificate */
-			result = true;
-		else
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("server common name \"%s\" does not match host name \"%s\"\n"),
-							  peer_cn, conn->pghost);
-			result = false;
-		}
-	}
-
-	free(peer_cn);
 	return result;
 }
+<<<<<<< HEAD
 
 #if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_CRYPTO_LOCK)
 /*
@@ -1651,6 +1540,8 @@ PQgetssl(PGconn *conn)
 {
 	return NULL;
 }
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #endif   /* USE_SSL */
 
 

@@ -44,7 +44,7 @@
  *	 HeapTupleSatisfiesAny()
  *		  all tuples are visible
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -60,6 +60,7 @@
 #include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "access/xlog.h"
 #include "storage/bufmgr.h"
 #include "storage/procarray.h"
 #include "utils/builtins.h"
@@ -483,6 +484,14 @@ HeapTupleSatisfiesToast(Relation relation, HeapTuple htup, Snapshot snapshot,
 				}
 			}
 		}
+
+		/*
+		 * An invalid Xmin can be left behind by a speculative insertion that
+		 * is cancelled by super-deleting the tuple.  We shouldn't see any of
+		 * those in TOAST tables, but better safe than sorry.
+		 */
+		else if (!TransactionIdIsValid(HeapTupleHeaderGetXmin(tuple)))
+			return false;
 	}
 
 	/* otherwise assume the tuple is valid for TOAST. */
@@ -594,22 +603,26 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTuple htup, CommandId curcid,
 
 				if (tuple->t_infomask & HEAP_XMAX_IS_MULTI)
 				{
+<<<<<<< HEAD
 					if (HEAP_LOCKED_UPGRADED(tuple->t_infomask))
 						return HeapTupleMayBeUpdated;
 					else if (MultiXactHasRunningRemoteMembers(xmax))
+=======
+					if (MultiXactIdIsRunning(xmax, true))
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						return HeapTupleBeingUpdated;
 					else
 						return HeapTupleMayBeUpdated;
 				}
 
-				/* if locker is gone, all's well */
+				/*
+				 * If the locker is gone, then there is nothing of interest
+				 * left in this Xmax; otherwise, report the tuple as
+				 * locked/updated.
+				 */
 				if (!TransactionIdIsInProgress(xmax))
 					return HeapTupleMayBeUpdated;
-
-				if (!TransactionIdIsCurrentTransactionId(xmax))
-					return HeapTupleBeingUpdated;
-				else
-					return HeapTupleMayBeUpdated;
+				return HeapTupleBeingUpdated;
 			}
 
 			if (tuple->t_infomask & HEAP_XMAX_IS_MULTI)
@@ -622,10 +635,11 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTuple htup, CommandId curcid,
 				Assert(TransactionIdIsValid(xmax));
 				Assert(!HEAP_LOCKED_UPGRADED(tuple->t_infomask));
 
-				/* updating subtransaction must have aborted */
+				/* deleting subtransaction must have aborted */
 				if (!TransactionIdIsCurrentTransactionId(xmax))
 				{
-					if (MultiXactHasRunningRemoteMembers(HeapTupleHeaderGetRawXmax(tuple)))
+					if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple),
+											 false))
 						return HeapTupleBeingUpdated;
 					return HeapTupleMayBeUpdated;
 				}
@@ -688,7 +702,17 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTuple htup, CommandId curcid,
 
 		if (HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask))
 		{
+<<<<<<< HEAD
 			if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple)))
+=======
+			/*
+			 * If it's only locked but neither EXCL_LOCK nor KEYSHR_LOCK is
+			 * set, it cannot possibly be running.  Otherwise need to check.
+			 */
+			if ((tuple->t_infomask & (HEAP_XMAX_EXCL_LOCK |
+									  HEAP_XMAX_KEYSHR_LOCK)) &&
+				MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple), true))
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				return HeapTupleBeingUpdated;
 
 			SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
@@ -696,6 +720,11 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTuple htup, CommandId curcid,
 		}
 
 		xmax = HeapTupleGetUpdateXid(tuple);
+		if (!TransactionIdIsValid(xmax))
+		{
+			if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple), false))
+				return HeapTupleBeingUpdated;
+		}
 
 		/* not LOCKED_ONLY, so it has to have an xmax */
 		Assert(TransactionIdIsValid(xmax));
@@ -708,7 +737,7 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTuple htup, CommandId curcid,
 				return HeapTupleInvisible;		/* updated before scan started */
 		}
 
-		if (TransactionIdIsInProgress(xmax))
+		if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple), false))
 			return HeapTupleBeingUpdated;
 
 		if (TransactionIdDidCommit(xmax))
@@ -719,7 +748,7 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTuple htup, CommandId curcid,
 		 * what about the other members?
 		 */
 
-		if (!MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple)))
+		if (!MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple), false))
 		{
 			/*
 			 * There's no member, even just a locker, alive anymore, so we can
@@ -739,7 +768,7 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTuple htup, CommandId curcid,
 	if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmax(tuple)))
 	{
 		if (HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask))
-			return HeapTupleMayBeUpdated;
+			return HeapTupleBeingUpdated;
 		if (HeapTupleHeaderGetCmax(tuple) >= curcid)
 			return HeapTupleSelfUpdated;		/* updated after scan started */
 		else
@@ -788,8 +817,11 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTuple htup, CommandId curcid,
  * output argument to return the xids of concurrent xacts that affected the
  * tuple.  snapshot->xmin is set to the tuple's xmin if that is another
  * transaction that's still in progress; or to InvalidTransactionId if the
- * tuple's xmin is committed good, committed dead, or my own xact.  Similarly
- * for snapshot->xmax and the tuple's xmax.
+ * tuple's xmin is committed good, committed dead, or my own xact.
+ * Similarly for snapshot->xmax and the tuple's xmax.  If the tuple was
+ * inserted speculatively, meaning that the inserter might still back down
+ * on the insertion without aborting the whole transaction, the associated
+ * token is also returned in snapshot->speculativeToken.
  */
 bool
 HeapTupleSatisfiesDirty(Relation relation, HeapTuple htup, Snapshot snapshot,
@@ -803,6 +835,7 @@ HeapTupleSatisfiesDirty(Relation relation, HeapTuple htup, Snapshot snapshot,
 #endif
 
 	snapshot->xmin = snapshot->xmax = InvalidTransactionId;
+	snapshot->speculativeToken = 0;
 
 	if (!HeapTupleHeaderXminCommitted(tuple))
 	{
@@ -884,6 +917,20 @@ HeapTupleSatisfiesDirty(Relation relation, HeapTuple htup, Snapshot snapshot,
 		}
 		else if (TransactionIdIsInProgress(HeapTupleHeaderGetRawXmin(tuple)))
 		{
+			/*
+			 * Return the speculative token to caller.  Caller can worry about
+			 * xmax, since it requires a conclusively locked row version, and
+			 * a concurrent update to this tuple is a conflict of its
+			 * purposes.
+			 */
+			if (HeapTupleHeaderIsSpeculative(tuple))
+			{
+				snapshot->speculativeToken =
+					HeapTupleHeaderGetSpeculativeToken(tuple);
+
+				Assert(snapshot->speculativeToken != 0);
+			}
+
 			snapshot->xmin = HeapTupleHeaderGetRawXmin(tuple);
 			/* XXX shouldn't we fall through to look at xmax? */
 			return true;		/* in insertion by other */
@@ -1360,8 +1407,15 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTuple htup, TransactionId Oldest
 				 * If it's a pre-pg_upgrade tuple, the multixact cannot
 				 * possibly be running; otherwise have to check.
 				 */
+<<<<<<< HEAD
 				if (!HEAP_LOCKED_UPGRADED(tuple->t_infomask) &&
 					MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple)))
+=======
+				if ((tuple->t_infomask & (HEAP_XMAX_EXCL_LOCK |
+										  HEAP_XMAX_KEYSHR_LOCK)) &&
+					MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple),
+										 true))
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					return HEAPTUPLE_LIVE;
 				SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
 			}
@@ -1387,8 +1441,33 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTuple htup, TransactionId Oldest
 	{
 		TransactionId xmax = HeapTupleGetUpdateXid(tuple);
 
+<<<<<<< HEAD
 		/* already checked above */
 		Assert(!HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask));
+=======
+		if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple), false))
+		{
+			/* already checked above */
+			Assert(!HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask));
+
+			xmax = HeapTupleGetUpdateXid(tuple);
+
+			/* not LOCKED_ONLY, so it has to have an xmax */
+			Assert(TransactionIdIsValid(xmax));
+
+			if (TransactionIdIsInProgress(xmax))
+				return HEAPTUPLE_DELETE_IN_PROGRESS;
+			else if (TransactionIdDidCommit(xmax))
+				/* there are still lockers around -- can't return DEAD here */
+				return HEAPTUPLE_RECENTLY_DEAD;
+			/* updating transaction aborted */
+			return HEAPTUPLE_LIVE;
+		}
+
+		Assert(!(tuple->t_infomask & HEAP_XMAX_COMMITTED));
+
+		xmax = HeapTupleGetUpdateXid(tuple);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/* not LOCKED_ONLY, so it has to have an xmax */
 		Assert(TransactionIdIsValid(xmax));

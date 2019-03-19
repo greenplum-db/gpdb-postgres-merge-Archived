@@ -34,17 +34,26 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 {
 	char		message[QUERY_ALLOC];
 
+<<<<<<< HEAD
 	vsnprintf(message, sizeof(message), _(fmt), ap);
+=======
+	vsnprintf(message, sizeof(message), fmt, ap);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	switch (type)
 	{
 		case PG_DEBUG:
 			if (debug)
+<<<<<<< HEAD
 				printf("%s", message);
+=======
+				printf("%s", _(message));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			break;
 
 		case PG_PROGRESS:
 			if (showprogress)
+<<<<<<< HEAD
 				printf("%s", message);
 			break;
 
@@ -54,6 +63,17 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 
 		case PG_FATAL:
 			printf("\n%s", message);
+=======
+				printf("%s", _(message));
+			break;
+
+		case PG_WARNING:
+			printf("%s", _(message));
+			break;
+
+		case PG_FATAL:
+			printf("\n%s", _(message));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			printf("%s", _("Failure, exiting\n"));
 			exit(1);
 			break;

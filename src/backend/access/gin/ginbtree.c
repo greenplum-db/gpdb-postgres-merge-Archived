@@ -4,7 +4,7 @@
  *	  page utilities routines for the postgres inverted index access method.
  *
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/gin_private.h"
+#include "access/xloginsert.h"
 #include "miscadmin.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
@@ -327,7 +328,10 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 			   Buffer childbuf, GinStatsData *buildStats)
 {
 	Page		page = BufferGetPage(stack->buffer);
+<<<<<<< HEAD
 	bool		result;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	GinPlaceToPageRC rc;
 	uint16		xlflags = 0;
 	Page		childpage = NULL;
@@ -367,6 +371,7 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 	}
 
 	/*
+<<<<<<< HEAD
 	 * See if the incoming tuple will fit on the page.  beginPlaceToPage will
 	 * decide if the page needs to be split, and will compute the split
 	 * contents if so.  See comments for beginPlaceToPage and execPlaceToPage
@@ -379,6 +384,36 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 								 payloadrdata);
 
 	if (rc == GPTP_NO_WORK)
+=======
+	 * Try to put the incoming tuple on the page. placeToPage will decide if
+	 * the page needs to be split.
+	 *
+	 * WAL-logging this operation is a bit funny:
+	 *
+	 * We're responsible for calling XLogBeginInsert() and XLogInsert().
+	 * XLogBeginInsert() must be called before placeToPage, because
+	 * placeToPage can register some data to the WAL record.
+	 *
+	 * If placeToPage returns INSERTED, placeToPage has already called
+	 * START_CRIT_SECTION() and XLogBeginInsert(), and registered any data
+	 * required to replay the operation, in block index 0. We're responsible
+	 * for filling in the main data portion of the WAL record, calling
+	 * XLogInsert(), and END_CRIT_SECTION.
+	 *
+	 * If placeToPage returns SPLIT, we're wholly responsible for WAL logging.
+	 * Splits happen infrequently, so we just make a full-page image of all
+	 * the pages involved.
+	 */
+	rc = btree->placeToPage(btree, stack->buffer, stack,
+							insertdata, updateblkno,
+							&newlpage, &newrpage);
+	if (rc == UNMODIFIED)
+	{
+		XLogResetInsertion();
+		return true;
+	}
+	else if (rc == INSERTED)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{
 		/* Nothing to do */
 		result = true;
@@ -405,17 +440,18 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 		if (RelationNeedsWAL(btree->index))
 		{
 			XLogRecPtr	recptr;
-			XLogRecData rdata[3];
 			ginxlogInsert xlrec;
 			BlockIdData childblknos[2];
 
-			xlrec.node = btree->index->rd_node;
-			xlrec.blkno = BufferGetBlockNumber(stack->buffer);
+			/*
+			 * placetopage already registered stack->buffer as block 0.
+			 */
 			xlrec.flags = xlflags;
 
-			rdata[0].buffer = InvalidBuffer;
-			rdata[0].data = (char *) &xlrec;
-			rdata[0].len = sizeof(ginxlogInsert);
+			if (childbuf != InvalidBuffer)
+				XLogRegisterBuffer(1, childbuf, REGBUF_STANDARD);
+
+			XLogRegisterData((char *) &xlrec, sizeof(ginxlogInsert));
 
 			/*
 			 * Log information about child if this was an insertion of a
@@ -423,10 +459,9 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 			 */
 			if (BufferIsValid(childbuf))
 			{
-				rdata[0].next = &rdata[1];
-
 				BlockIdSet(&childblknos[0], BufferGetBlockNumber(childbuf));
 				BlockIdSet(&childblknos[1], GinPageGetOpaque(childpage)->rightlink);
+<<<<<<< HEAD
 
 				rdata[1].buffer = InvalidBuffer;
 				rdata[1].data = (char *) childblknos;
@@ -438,12 +473,18 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 				rdata[2].data = NULL;
 				rdata[2].len = 0;
 				rdata[2].next = payloadrdata;
+=======
+				XLogRegisterData((char *) childblknos,
+								 sizeof(BlockIdData) * 2);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			}
-			else
-				rdata[0].next = payloadrdata;
 
+<<<<<<< HEAD
 			recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_INSERT, rdata);
 
+=======
+			recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_INSERT);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			PageSetLSN(page, recptr);
 			if (BufferIsValid(childbuf))
 				PageSetLSN(childpage, recptr);
@@ -456,11 +497,15 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 	}
 	else if (rc == GPTP_SPLIT)
 	{
+<<<<<<< HEAD
 		/*
 		 * Didn't fit, need to split.  The split has been computed in newlpage
 		 * and newrpage, which are pointers to palloc'd pages, not associated
 		 * with buffers.  stack->buffer is not touched yet.
 		 */
+=======
+		/* Didn't fit, had to split */
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		Buffer		rbuffer;
 		BlockNumber savedRightLink;
 		ginxlogSplit data;
@@ -483,7 +528,6 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 
 		/* Begin setting up WAL record (which we might not use) */
 		data.node = btree->index->rd_node;
-		data.rblkno = BufferGetBlockNumber(rbuffer);
 		data.flags = xlflags;
 		if (BufferIsValid(childbuf))
 		{
@@ -510,12 +554,7 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 					buildStats->nEntryPages++;
 			}
 
-			/*
-			 * root never has a right-link, so we borrow the rrlink field to
-			 * store the root block number.
-			 */
-			data.rrlink = BufferGetBlockNumber(stack->buffer);
-			data.lblkno = BufferGetBlockNumber(lbuffer);
+			data.rrlink = InvalidBlockNumber;
 			data.flags |= GIN_SPLIT_ROOT;
 
 			GinPageGetOpaque(newrpage)->rightlink = InvalidBlockNumber;
@@ -538,7 +577,6 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 		{
 			/* splitting a non-root page */
 			data.rrlink = savedRightLink;
-			data.lblkno = BufferGetBlockNumber(stack->buffer);
 
 			GinPageGetOpaque(newrpage)->rightlink = savedRightLink;
 			GinPageGetOpaque(newlpage)->flags |= GIN_INCOMPLETE_SPLIT;
@@ -590,6 +628,7 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 			XLogRecData rdata[2];
 			XLogRecPtr	recptr;
 
+<<<<<<< HEAD
 			rdata[0].buffer = InvalidBuffer;
 			rdata[0].data = (char *) &data;
 			rdata[0].len = sizeof(ginxlogSplit);
@@ -610,6 +649,33 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 			recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_SPLIT, rdata);
 
 			PageSetLSN(page, recptr);
+=======
+			XLogBeginInsert();
+
+			/*
+			 * We just take full page images of all the split pages. Splits
+			 * are uncommon enough that it's not worth complicating the code
+			 * to be more efficient.
+			 */
+			if (stack->parent == NULL)
+			{
+				XLogRegisterBuffer(0, lbuffer, REGBUF_FORCE_IMAGE | REGBUF_STANDARD);
+				XLogRegisterBuffer(1, rbuffer, REGBUF_FORCE_IMAGE | REGBUF_STANDARD);
+				XLogRegisterBuffer(2, stack->buffer, REGBUF_FORCE_IMAGE | REGBUF_STANDARD);
+			}
+			else
+			{
+				XLogRegisterBuffer(0, stack->buffer, REGBUF_FORCE_IMAGE | REGBUF_STANDARD);
+				XLogRegisterBuffer(1, rbuffer, REGBUF_FORCE_IMAGE | REGBUF_STANDARD);
+			}
+			if (BufferIsValid(childbuf))
+				XLogRegisterBuffer(3, childbuf, 0);
+
+			XLogRegisterData((char *) &data, sizeof(ginxlogSplit));
+
+			recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_SPLIT);
+			PageSetLSN(BufferGetPage(stack->buffer), recptr);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			PageSetLSN(BufferGetPage(rbuffer), recptr);
 			if (stack->parent == NULL)
 				PageSetLSN(BufferGetPage(lbuffer), recptr);

@@ -130,6 +130,7 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'inc
  table public.replication_example: INSERT: id[integer]:8 somedata[integer]:7 text[character varying]:null testcolumn1[integer]:5 testcolumn2[integer]:null testcolumn3[integer]:1
  COMMIT
 (15 rows)
+<<<<<<< HEAD
 
 -- trigger repeated rewrites of a system catalog with a toast table,
 -- that previously was buggy: 20180914021046.oi7dm4ra3ot2g2kt@alap3.anarazel.de
@@ -147,6 +148,8 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'inc
  table public.replication_example: INSERT: id[integer]:10 somedata[integer]:9 text[character varying]:null testcolumn1[integer]:7 testcolumn2[integer]:null testcolumn3[integer]:1
  COMMIT
 (6 rows)
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 SELECT pg_drop_replication_slot('regression_slot');
  pg_drop_replication_slot 

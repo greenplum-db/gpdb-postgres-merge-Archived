@@ -86,6 +86,7 @@ COMMIT;
 CHECKPOINT;
 
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+<<<<<<< HEAD
 
 -- trigger repeated rewrites of a system catalog with a toast table,
 -- that previously was buggy: 20180914021046.oi7dm4ra3ot2g2kt@alap3.anarazel.de
@@ -95,6 +96,8 @@ VACUUM FULL pg_proc; VACUUM FULL pg_description; VACUUM FULL pg_shdescription; V
 INSERT INTO replication_example(somedata, testcolumn1, testcolumn3) VALUES (9, 7, 1);
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 SELECT pg_drop_replication_slot('regression_slot');
 DROP TABLE IF EXISTS replication_example;
 DROP FUNCTION iamalongfunction();

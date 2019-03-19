@@ -205,9 +205,12 @@ ALTER TABLE testschema.tablespace_acl OWNER TO tablespace_testuser2;
 SET SESSION ROLE tablespace_testuser2;
 CREATE TABLE tablespace_table (i int) TABLESPACE testspace; -- fail
 ERROR:  permission denied for tablespace testspace
+<<<<<<< HEAD
 ALTER TABLE testschema.tablespace_acl ALTER c TYPE bigint;
 ERROR:  cannot alter indexed column
 HINT:  DROP the index first, and recreate it after the ALTER
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 RESET ROLE;
 ALTER TABLESPACE testspace RENAME TO testspace_renamed;
 ALTER TABLE ALL IN TABLESPACE testspace_renamed SET TABLESPACE pg_default;

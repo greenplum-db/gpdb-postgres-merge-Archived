@@ -11,7 +11,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+<<<<<<< HEAD
 "POT-Creation-Date: 2017-08-27 22:07+0000\n"
+=======
+"POT-Creation-Date: 2014-12-15 05:42+0000\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 "PO-Revision-Date: 2014-12-16 12:11-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"

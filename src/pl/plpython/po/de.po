@@ -1,7 +1,13 @@
 # German message translation file for plpython
+<<<<<<< HEAD
 # Copyright (C) 2009 - 2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # Peter Eisentraut <peter_e@gmx.net>, 2009 - 2016.
+=======
+# Copyright (C) 2009 - 2015 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Peter Eisentraut <peter_e@gmx.net>, 2009 - 2015.
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +15,13 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+<<<<<<< HEAD
 "POT-Creation-Date: 2017-02-06 15:22+0000\n"
 "PO-Revision-Date: 2016-02-08 12:31-0500\n"
+=======
+"POT-Creation-Date: 2015-01-09 16:07+0000\n"
+"PO-Revision-Date: 2015-01-09 23:06-0500\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -171,21 +182,34 @@ msgstr "beim Ändern der Triggerzeile"
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "Abbruch einer Subtransaktion, die nicht beendet wurde, wird erzwungen"
 
+<<<<<<< HEAD
 #: plpy_main.c:124
+=======
+#: plpy_main.c:93
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "Python major version mismatch in session"
 msgstr "unpassende Python-Hauptversion für diese Sitzung"
 
+<<<<<<< HEAD
 #: plpy_main.c:125
+=======
+#: plpy_main.c:94
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
 msgstr "Diese Sitzung hat zuvor Python-Hauptversion %d verwendet und versucht nun Python-Hauptversion %d zu verwenden."
 
+<<<<<<< HEAD
 #: plpy_main.c:127
+=======
+#: plpy_main.c:96
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "Start a new session to use a different Python major version."
 msgstr "Starten Sie eine neue Sitzung, um eine andere Python-Hauptversion zu verwenden."
 
+<<<<<<< HEAD
 #: plpy_main.c:150
 #, c-format
 msgid "multiple Python libraries are present in session"
@@ -197,21 +221,36 @@ msgid "Only one Python major version can be used in one session."
 msgstr "Nur eine Python-Hauptversion kann in einer Sitzung verwendet werden."
 
 #: plpy_main.c:167
+=======
+#: plpy_main.c:111
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "nicht abgefangener Fehler bei der Initialisierung"
 
+<<<<<<< HEAD
 #: plpy_main.c:190
+=======
+#: plpy_main.c:134
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "konnte Modul »__main__« nicht importieren"
 
+<<<<<<< HEAD
 #: plpy_main.c:195
+=======
+#: plpy_main.c:139
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not create globals"
 msgstr "konnte globale Objekte nicht erzeugen"
 
+<<<<<<< HEAD
 #: plpy_main.c:199
+=======
+#: plpy_main.c:143
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not initialize globals"
 msgstr "konnte globale Objekte nicht initialisieren"
@@ -265,27 +304,47 @@ msgstr "konnte Argumente in plpy.elog nicht entpacken"
 msgid "could not parse error message in plpy.elog"
 msgstr "konnte Fehlermeldung in plpy.elog nicht parsen"
 
+<<<<<<< HEAD
 #: plpy_procedure.c:210
+=======
+#: plpy_procedure.c:200
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "Triggerfunktionen können nur als Trigger aufgerufen werden"
 
+<<<<<<< HEAD
 #: plpy_procedure.c:215 plpy_typeio.c:409
+=======
+#: plpy_procedure.c:205 plpy_typeio.c:409
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "PL/Python-Funktionen können keinen Rückgabetyp %s haben"
 
+<<<<<<< HEAD
 #: plpy_procedure.c:297
+=======
+#: plpy_procedure.c:287
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "PL/Python-Funktionen können Typ %s nicht annehmen"
 
+<<<<<<< HEAD
 #: plpy_procedure.c:393
+=======
+#: plpy_procedure.c:383
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "konnte PL/Python-Funktion »%s« nicht kompilieren"
 
+<<<<<<< HEAD
 #: plpy_procedure.c:396
+=======
+#: plpy_procedure.c:386
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "konnte anonymen PL/Python-Codeblock nicht kompilieren"
@@ -363,12 +422,20 @@ msgstr "PL/Python unterstützt die Umwandlung in Arrays von Zeilentypen nicht."
 #: plpy_typeio.c:540
 #, c-format
 msgid "could not import a module for Decimal constructor"
+<<<<<<< HEAD
 msgstr "konnte kein Modul für den »Decimal«-Konstruktor importieren"
+=======
+msgstr "konnte kein Modul für den „Decimal“-Konstruktor importieren"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: plpy_typeio.c:544
 #, c-format
 msgid "no Decimal attribute in module"
+<<<<<<< HEAD
 msgstr "kein Attribut »Decimal« im Modul"
+=======
+msgstr "kein Attribut „Decimal“ im Modul"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: plpy_typeio.c:550
 #, c-format
@@ -410,27 +477,47 @@ msgstr "konnte Python-Objekt nicht in cstring umwandeln: Python-Zeichenkettendar
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "Rückgabewert von Funktion mit Array-Rückgabetyp ist keine Python-Sequenz"
 
+<<<<<<< HEAD
 #: plpy_typeio.c:940
+=======
+#: plpy_typeio.c:930
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "Schlüssel »%s« nicht in Mapping gefunden"
 
+<<<<<<< HEAD
 #: plpy_typeio.c:941
+=======
+#: plpy_typeio.c:931
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "Um einen NULL-Wert in einer Spalte zurückzugeben, muss der Wert None mit einem nach der Spalte benannten Schlüssel in das Mapping eingefügt werden."
 
+<<<<<<< HEAD
 #: plpy_typeio.c:989
+=======
+#: plpy_typeio.c:979
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "Länge der zurückgegebenen Sequenz hat nicht mit der Anzahl der Spalten in der Zeile übereingestimmt"
 
+<<<<<<< HEAD
 #: plpy_typeio.c:1097
+=======
+#: plpy_typeio.c:1087
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "Attribut »%s« existiert nicht in Python-Objekt"
 
+<<<<<<< HEAD
 #: plpy_typeio.c:1098
+=======
+#: plpy_typeio.c:1088
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Um einen NULL-Wert in einer Spalte zurückzugeben, muss das zurückzugebende Objekt ein nach der Spalte benanntes Attribut mit dem Wert None haben."

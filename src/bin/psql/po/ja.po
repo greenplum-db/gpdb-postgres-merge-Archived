@@ -5,9 +5,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+<<<<<<< HEAD
 "POT-Creation-Date: 2015-05-23 22:59+0900\n"
 "PO-Revision-Date: 2015-05-27 18:55+0900\n"
 "Last-Translator: KOIZUMI Satoru  <koizumistr@minos.ocn.ne.jp>\n"
+=======
+"POT-Creation-Date: 2013-08-18 12:11+0900\n"
+"PO-Revision-Date: 2014-05-20 02:38+0900\n"
+"Last-Translator: SAWADA Masahiko <sawada.mshk@gmail.com>\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1874,7 +1880,11 @@ msgid ""
 "                           set field separator for unaligned output to zero byte\n"
 msgstr ""
 "  -z, --field-separator-zero\n"
+<<<<<<< HEAD
 "                           桁揃えなしの出力でのフィールド区切り文字をゼロバイトに設定\n"
+=======
+"                           区切り文字をゼロバイトに設定\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: help.c:113
 #, c-format
@@ -1883,7 +1893,11 @@ msgid ""
 "                           set record separator for unaligned output to zero byte\n"
 msgstr ""
 "  -0, --record-separator-zero\n"
+<<<<<<< HEAD
 "                           桁揃えなしの出力でのレコード区切り文字をゼロバイトに設定\n"
+=======
+"                           レコード区切り文字をゼロバイトに設定\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: help.c:116
 #, c-format

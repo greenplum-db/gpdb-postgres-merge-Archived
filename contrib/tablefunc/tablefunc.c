@@ -10,7 +10,7 @@
  * And contributors:
  * Nabil Sayegh <postgresql@e-trolley.de>
  *
- * Copyright (c) 2002-2014, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2015, PostgreSQL Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose, without fee, and without a written agreement
@@ -1486,10 +1486,19 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 static void
 compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 {
+<<<<<<< HEAD
+=======
+	Oid			ret_atttypid;
+	Oid			sql_atttypid;
+	int32		ret_atttypmod;
+	int32		sql_atttypmod;
+
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/*
 	 * Result must have at least 2 columns.
 	 */
 	if (sql_tupdesc->natts < 2)
+<<<<<<< HEAD
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid return type"),
@@ -1500,6 +1509,44 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	 * here.  The call will work as long as the datatypes are I/O
 	 * representation compatible.
 	 */
+=======
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid return type"),
+				 errdetail("Query must return at least two columns.")));
+
+	/*
+	 * These columns must match the result type indicated by the calling
+	 * query.
+	 */
+	ret_atttypid = ret_tupdesc->attrs[0]->atttypid;
+	sql_atttypid = sql_tupdesc->attrs[0]->atttypid;
+	ret_atttypmod = ret_tupdesc->attrs[0]->atttypmod;
+	sql_atttypmod = sql_tupdesc->attrs[0]->atttypmod;
+	if (ret_atttypid != sql_atttypid ||
+		(ret_atttypmod >= 0 && ret_atttypmod != sql_atttypmod))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid return type"),
+				 errdetail("SQL key field type %s does " \
+						   "not match return key field type %s.",
+					   format_type_with_typemod(ret_atttypid, ret_atttypmod),
+					format_type_with_typemod(sql_atttypid, sql_atttypmod))));
+
+	ret_atttypid = ret_tupdesc->attrs[1]->atttypid;
+	sql_atttypid = sql_tupdesc->attrs[1]->atttypid;
+	ret_atttypmod = ret_tupdesc->attrs[1]->atttypmod;
+	sql_atttypmod = sql_tupdesc->attrs[1]->atttypmod;
+	if (ret_atttypid != sql_atttypid ||
+		(ret_atttypmod >= 0 && ret_atttypmod != sql_atttypmod))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid return type"),
+				 errdetail("SQL parent key field type %s does " \
+						   "not match return parent key field type %s.",
+					   format_type_with_typemod(ret_atttypid, ret_atttypmod),
+					format_type_with_typemod(sql_atttypid, sql_atttypmod))));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* OK, the two tupdescs are compatible for our purposes */
 }

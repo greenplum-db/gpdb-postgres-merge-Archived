@@ -3,7 +3,7 @@
  * clogdesc.c
  *	  rmgr descriptor routines for access/transam/clog.c
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -18,25 +18,41 @@
 
 
 void
+<<<<<<< HEAD
 clog_desc(StringInfo buf, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 	char		*rec = XLogRecGetData(record);
+=======
+clog_desc(StringInfo buf, XLogReaderState *record)
+{
+	char	   *rec = XLogRecGetData(record);
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
-	if (info == CLOG_ZEROPAGE)
+	if (info == CLOG_ZEROPAGE || info == CLOG_TRUNCATE)
 	{
 		int			pageno;
 
 		memcpy(&pageno, rec, sizeof(int));
-		appendStringInfo(buf, "zeropage: %d", pageno);
+		appendStringInfo(buf, "%d", pageno);
 	}
-	else if (info == CLOG_TRUNCATE)
-	{
-		int			pageno;
+}
 
-		memcpy(&pageno, rec, sizeof(int));
-		appendStringInfo(buf, "truncate before: %d", pageno);
+const char *
+clog_identify(uint8 info)
+{
+	const char *id = NULL;
+
+	switch (info & ~XLR_INFO_MASK)
+	{
+		case CLOG_ZEROPAGE:
+			id = "ZEROPAGE";
+			break;
+		case CLOG_TRUNCATE:
+			id = "TRUNCATE";
+			break;
 	}
-	else
-		appendStringInfoString(buf, "UNKNOWN");
+
+	return id;
 }

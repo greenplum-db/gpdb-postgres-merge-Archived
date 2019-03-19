@@ -4,9 +4,13 @@
  *	  Definitions for tagged nodes.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/nodes.h
@@ -85,7 +89,13 @@ typedef enum NodeTag
 	T_ValuesScan,
 	T_CteScan,
 	T_WorkTableScan,
+	T_SampleScan,
 	T_ForeignScan,
+<<<<<<< HEAD
+=======
+	T_CustomScan,
+	T_Join,
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	T_NestLoop,
 	T_MergeJoin,
 	T_HashJoin,
@@ -133,8 +143,12 @@ typedef enum NodeTag
 	T_BitmapAndState,
 	T_BitmapOrState,
 	T_SeqScanState,
+<<<<<<< HEAD
 	T_DynamicSeqScanState,
 	T_ExternalScanState,
+=======
+	T_SampleScanState,
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	T_IndexScanState,
 	T_DynamicIndexScanState,
 	T_IndexOnlyScanState,
@@ -150,6 +164,11 @@ typedef enum NodeTag
 	T_CteScanState,
 	T_WorkTableScanState,
 	T_ForeignScanState,
+<<<<<<< HEAD
+=======
+	T_CustomScanState,
+	T_JoinState,
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	T_NestLoopState,
 	T_MergeJoinState,
 	T_HashJoinState,
@@ -188,6 +207,7 @@ typedef enum NodeTag
 	T_Const,
 	T_Param,
 	T_Aggref,
+	T_GroupingFunc,
 	T_WindowFunc,
 	T_ArrayRef,
 	T_FuncExpr,
@@ -222,10 +242,12 @@ typedef enum NodeTag
 	T_CoerceToDomainValue,
 	T_SetToDefault,
 	T_CurrentOfExpr,
+	T_InferenceElem,
 	T_TargetEntry,
 	T_RangeTblRef,
 	T_JoinExpr,
 	T_FromExpr,
+	T_OnConflictExpr,
 	T_IntoClause,
 	T_CopyIntoClause,
 	T_Flow,
@@ -252,6 +274,7 @@ typedef enum NodeTag
 	T_GenericExprState,
 	T_WholeRowVarExprState,
 	T_AggrefExprState,
+	T_GroupingFuncExprState,
 	T_WindowFuncExprState,
 	T_ArrayRefExprState,
 	T_FuncExprState,
@@ -305,6 +328,7 @@ typedef enum NodeTag
 	T_HashPath,
 	T_TidPath,
 	T_ForeignPath,
+	T_CustomPath,
 	T_AppendPath,
 	T_MergeAppendPath,
 	T_ResultPath,
@@ -459,6 +483,7 @@ typedef enum NodeTag
 	T_AlterTableMoveAllStmt,
 	T_SecLabelStmt,
 	T_CreateForeignTableStmt,
+	T_ImportForeignSchemaStmt,
 	T_CreateExtensionStmt,
 	T_AlterExtensionStmt,
 	T_AlterExtensionContentsStmt,
@@ -467,6 +492,9 @@ typedef enum NodeTag
 	T_RefreshMatViewStmt,
 	T_ReplicaIdentityStmt,
 	T_AlterSystemStmt,
+	T_CreatePolicyStmt,
+	T_AlterPolicyStmt,
+	T_CreateTransformStmt,
 
 	/* GPDB additions */
 	T_PartitionBy,
@@ -501,6 +529,7 @@ typedef enum NodeTag
 	T_A_Indirection,
 	T_A_ArrayExpr,
 	T_ResTarget,
+	T_MultiAssignRef,
 	T_TypeCast,
 	T_CollateClause,
 	T_SortBy,
@@ -518,6 +547,7 @@ typedef enum NodeTag
 	T_GroupingClause,
 	T_GroupingFunc,
 	T_SortGroupClause,
+	T_GroupingSet,
 	T_WindowClause,
 	T_PrivGrantee,
 	T_FuncWithArgs,
@@ -529,8 +559,16 @@ typedef enum NodeTag
 	T_RowMarkClause,
 	T_XmlSerialize,
 	T_WithClause,
+	T_InferClause,
+	T_OnConflictClause,
 	T_CommonTableExpr,
+<<<<<<< HEAD
 	T_ColumnReferenceStorageDirective,
+=======
+	T_RoleSpec,
+	T_RangeTableSample,
+	T_TableSampleClause,
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * TAGS FOR REPLICATION GRAMMAR PARSE NODES (replnodes.h)
@@ -825,5 +863,18 @@ typedef enum DispatchMethod
 	DISPATCH_PARALLEL			/* Dispatch on query executor and entry processes. */
 
 } DispatchMethod;
+
+/*
+ * OnConflictAction -
+ *	  "ON CONFLICT" clause type of query
+ *
+ * This is needed in both parsenodes.h and plannodes.h, so put it here...
+ */
+typedef enum OnConflictAction
+{
+	ONCONFLICT_NONE,			/* No "ON CONFLICT" clause */
+	ONCONFLICT_NOTHING,			/* ON CONFLICT ... DO NOTHING */
+	ONCONFLICT_UPDATE			/* ON CONFLICT ... DO UPDATE */
+} OnConflictAction;
 
 #endif   /* NODES_H */

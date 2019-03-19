@@ -16,7 +16,7 @@
  *		contents of records in here except turning them into a more usable
  *		format.
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -31,13 +31,16 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
+#include "access/xlogutils.h"
 #include "access/xlogreader.h"
+#include "access/xlogrecord.h"
 
 #include "catalog/pg_control.h"
 
 #include "replication/decode.h"
 #include "replication/logical.h"
 #include "replication/reorderbuffer.h"
+#include "replication/origin.h"
 #include "replication/snapbuild.h"
 
 #include "storage/standby.h"
@@ -46,8 +49,7 @@ typedef struct XLogRecordBuffer
 {
 	XLogRecPtr	origptr;
 	XLogRecPtr	endptr;
-	XLogRecord	record;
-	char	   *record_data;
+	XLogReaderState *record;
 } XLogRecordBuffer;
 
 /* RMGR Handlers */
@@ -62,13 +64,12 @@ static void DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf);
 static void DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf);
 static void DecodeDelete(LogicalDecodingContext *ctx, XLogRecordBuffer *buf);
 static void DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf);
+static void DecodeSpecConfirm(LogicalDecodingContext *ctx, XLogRecordBuffer *buf);
+
 static void DecodeCommit(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
-			 TransactionId xid, Oid dboid,
-			 TimestampTz commit_time,
-			 int nsubxacts, TransactionId *sub_xids,
-			 int ninval_msgs, SharedInvalidationMessage *msg);
-static void DecodeAbort(LogicalDecodingContext *ctx, XLogRecPtr lsn,
-			TransactionId xid, TransactionId *sub_xids, int nsubxacts);
+			 xl_xact_parsed_commit *parsed, TransactionId xid);
+static void DecodeAbort(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
+			xl_xact_parsed_abort *parsed, TransactionId xid);
 
 /* common function to decode tuples */
 static void DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tup);
@@ -87,17 +88,16 @@ static void DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tup);
  * state for them.
  */
 void
-LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogRecord *record)
+LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogReaderState *record)
 {
 	XLogRecordBuffer buf;
 
 	buf.origptr = ctx->reader->ReadRecPtr;
 	buf.endptr = ctx->reader->EndRecPtr;
-	buf.record = *record;
-	buf.record_data = XLogRecGetData(record);
+	buf.record = record;
 
 	/* cast so we get a warning when new rmgrs are added */
-	switch ((RmgrIds) buf.record.xl_rmid)
+	switch ((RmgrIds) XLogRecGetRmid(record))
 	{
 			/*
 			 * Rmgrs we care about for logical decoding. Add new rmgrs in
@@ -140,11 +140,17 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogRecord *record)
 		case RM_GIST_ID:
 		case RM_SEQ_ID:
 		case RM_SPGIST_ID:
+<<<<<<< HEAD
 		case RM_BITMAP_ID:
 		case RM_DISTRIBUTEDLOG_ID:
 			/* just deal with xid, and done */
 			ReorderBufferProcessXid(ctx->reorder, record->xl_xid,
 									buf.origptr);
+=======
+		case RM_BRIN_ID:
+		case RM_COMMIT_TS_ID:
+		case RM_REPLORIGIN_ID:
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			break;
 
 		case RM_APPEND_ONLY_ID:
@@ -155,7 +161,7 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogRecord *record)
 			break;
 
 		case RM_NEXT_ID:
-			elog(ERROR, "unexpected RM_NEXT_ID rmgr_id: %u", (RmgrIds) buf.record.xl_rmid);
+			elog(ERROR, "unexpected RM_NEXT_ID rmgr_id: %u", (RmgrIds) XLogRecGetRmid(buf.record));
 	}
 }
 
@@ -166,7 +172,7 @@ static void
 DecodeXLogOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 {
 	SnapBuild  *builder = ctx->snapshot_builder;
-	uint8		info = buf->record.xl_info & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(buf->record) & ~XLR_INFO_MASK;
 
 	ReorderBufferProcessXid(ctx->reorder, buf->record.xl_xid,
 							buf->origptr);
@@ -193,6 +199,7 @@ DecodeXLogOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		case XLOG_PARAMETER_CHANGE:
 		case XLOG_RESTORE_POINT:
 		case XLOG_FPW_CHANGE:
+		case XLOG_FPI_FOR_HINT:
 		case XLOG_FPI:
 			break;
 		default:
@@ -208,8 +215,8 @@ DecodeXactOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 {
 	SnapBuild  *builder = ctx->snapshot_builder;
 	ReorderBuffer *reorder = ctx->reorder;
-	XLogRecord *r = &buf->record;
-	uint8		info = r->xl_info & ~XLR_INFO_MASK;
+	XLogReaderState *r = buf->record;
+	uint8		info = XLogRecGetInfo(r) & XLOG_XACT_OPMASK;
 
 	/*
 	 * No point in doing anything yet, data could not be decoded anyway. It's
@@ -223,94 +230,48 @@ DecodeXactOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	switch (info)
 	{
 		case XLOG_XACT_COMMIT:
-			{
-				xl_xact_commit *xlrec;
-				TransactionId *subxacts = NULL;
-				SharedInvalidationMessage *invals = NULL;
-
-				xlrec = (xl_xact_commit *) buf->record_data;
-
-				subxacts = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
-				invals = (SharedInvalidationMessage *) &(subxacts[xlrec->nsubxacts]);
-
-				DecodeCommit(ctx, buf, r->xl_xid, xlrec->dbId,
-							 xlrec->xact_time,
-							 xlrec->nsubxacts, subxacts,
-							 xlrec->nmsgs, invals);
-
-				break;
-			}
 		case XLOG_XACT_COMMIT_PREPARED:
 			{
-				xl_xact_commit_prepared *prec;
 				xl_xact_commit *xlrec;
-				TransactionId *subxacts;
-				SharedInvalidationMessage *invals = NULL;
+				xl_xact_parsed_commit parsed;
+				TransactionId xid;
 
-				/* Prepared commits contain a normal commit record... */
-				prec = (xl_xact_commit_prepared *) buf->record_data;
-				xlrec = &prec->crec;
+				xlrec = (xl_xact_commit *) XLogRecGetData(r);
+				ParseCommitRecord(XLogRecGetInfo(buf->record), xlrec, &parsed);
 
-				subxacts = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
-				invals = (SharedInvalidationMessage *) &(subxacts[xlrec->nsubxacts]);
+				if (!TransactionIdIsValid(parsed.twophase_xid))
+					xid = XLogRecGetXid(r);
+				else
+					xid = parsed.twophase_xid;
 
-				DecodeCommit(ctx, buf, prec->xid, xlrec->dbId,
-							 xlrec->xact_time,
-							 xlrec->nsubxacts, subxacts,
-							 xlrec->nmsgs, invals);
-
-				break;
-			}
-		case XLOG_XACT_COMMIT_COMPACT:
-			{
-				xl_xact_commit_compact *xlrec;
-
-				xlrec = (xl_xact_commit_compact *) buf->record_data;
-
-				DecodeCommit(ctx, buf, r->xl_xid, InvalidOid,
-							 xlrec->xact_time,
-							 xlrec->nsubxacts, xlrec->subxacts,
-							 0, NULL);
+				DecodeCommit(ctx, buf, &parsed, xid);
 				break;
 			}
 		case XLOG_XACT_ABORT:
-			{
-				xl_xact_abort *xlrec;
-				TransactionId *sub_xids;
-
-				xlrec = (xl_xact_abort *) buf->record_data;
-
-				sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
-
-				DecodeAbort(ctx, buf->origptr, r->xl_xid,
-							sub_xids, xlrec->nsubxacts);
-				break;
-			}
 		case XLOG_XACT_ABORT_PREPARED:
 			{
-				xl_xact_abort_prepared *prec;
 				xl_xact_abort *xlrec;
-				TransactionId *sub_xids;
+				xl_xact_parsed_abort parsed;
+				TransactionId xid;
 
-				/* prepared abort contain a normal commit abort... */
-				prec = (xl_xact_abort_prepared *) buf->record_data;
-				xlrec = &prec->arec;
+				xlrec = (xl_xact_abort *) XLogRecGetData(r);
+				ParseAbortRecord(XLogRecGetInfo(buf->record), xlrec, &parsed);
 
-				sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
+				if (!TransactionIdIsValid(parsed.twophase_xid))
+					xid = XLogRecGetXid(r);
+				else
+					xid = parsed.twophase_xid;
 
-				/* r->xl_xid is committed in a separate record */
-				DecodeAbort(ctx, buf->origptr, prec->xid,
-							sub_xids, xlrec->nsubxacts);
+				DecodeAbort(ctx, buf, &parsed, xid);
 				break;
 			}
-
 		case XLOG_XACT_ASSIGNMENT:
 			{
 				xl_xact_assignment *xlrec;
 				int			i;
 				TransactionId *sub_xid;
 
-				xlrec = (xl_xact_assignment *) buf->record_data;
+				xlrec = (xl_xact_assignment *) XLogRecGetData(r);
 
 				sub_xid = &xlrec->xsub[0];
 
@@ -345,8 +306,8 @@ static void
 DecodeStandbyOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 {
 	SnapBuild  *builder = ctx->snapshot_builder;
-	XLogRecord *r = &buf->record;
-	uint8		info = r->xl_info & ~XLR_INFO_MASK;
+	XLogReaderState *r = buf->record;
+	uint8		info = XLogRecGetInfo(r) & ~XLR_INFO_MASK;
 
 	ReorderBufferProcessXid(ctx->reorder, r->xl_xid, buf->origptr);
 
@@ -354,7 +315,7 @@ DecodeStandbyOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	{
 		case XLOG_RUNNING_XACTS:
 			{
-				xl_running_xacts *running = (xl_running_xacts *) buf->record_data;
+				xl_running_xacts *running = (xl_running_xacts *) XLogRecGetData(r);
 
 				SnapBuildProcessRunningXacts(builder, buf->origptr, running);
 
@@ -383,8 +344,8 @@ DecodeStandbyOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 static void
 DecodeHeap2Op(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 {
-	uint8		info = buf->record.xl_info & XLOG_HEAP_OPMASK;
-	TransactionId xid = buf->record.xl_xid;
+	uint8		info = XLogRecGetInfo(buf->record) & XLOG_HEAP_OPMASK;
+	TransactionId xid = XLogRecGetXid(buf->record);
 	SnapBuild  *builder = ctx->snapshot_builder;
 
 	ReorderBufferProcessXid(ctx->reorder, xid, buf->origptr);
@@ -403,7 +364,7 @@ DecodeHeap2Op(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			{
 				xl_heap_new_cid *xlrec;
 
-				xlrec = (xl_heap_new_cid *) buf->record_data;
+				xlrec = (xl_heap_new_cid *) XLogRecGetData(buf->record);
 				SnapBuildProcessNewCid(builder, xid, buf->origptr, xlrec);
 
 				break;
@@ -438,8 +399,8 @@ DecodeHeap2Op(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 static void
 DecodeHeapOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 {
-	uint8		info = buf->record.xl_info & XLOG_HEAP_OPMASK;
-	TransactionId xid = buf->record.xl_xid;
+	uint8		info = XLogRecGetInfo(buf->record) & XLOG_HEAP_OPMASK;
+	TransactionId xid = XLogRecGetXid(buf->record);
 	SnapBuild  *builder = ctx->snapshot_builder;
 
 	ReorderBufferProcessXid(ctx->reorder, xid, buf->origptr);
@@ -471,14 +432,6 @@ DecodeHeapOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 				DecodeDelete(ctx, buf);
 			break;
 
-		case XLOG_HEAP_NEWPAGE:
-
-			/*
-			 * This is only used in places like indexams and CLUSTER which
-			 * don't contain changes relevant for logical replication.
-			 */
-			break;
-
 		case XLOG_HEAP_INPLACE:
 
 			/*
@@ -502,6 +455,11 @@ DecodeHeapOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			ReorderBufferXidSetCatalogChanges(ctx->reorder, xid, buf->origptr);
 			break;
 
+		case XLOG_HEAP_CONFIRM:
+			if (SnapBuildProcessChange(builder, xid, buf->origptr))
+				DecodeSpecConfirm(ctx, buf);
+			break;
+
 		case XLOG_HEAP_LOCK:
 			/* we don't care about row level locks for now */
 			break;
@@ -512,45 +470,61 @@ DecodeHeapOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	}
 }
 
+static inline bool
+FilterByOrigin(LogicalDecodingContext *ctx, RepOriginId origin_id)
+{
+	if (ctx->callbacks.filter_by_origin_cb == NULL)
+		return false;
+
+	return filter_by_origin_cb_wrapper(ctx, origin_id);
+}
+
 /*
  * Consolidated commit record handling between the different form of commit
  * records.
  */
 static void
 DecodeCommit(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
-			 TransactionId xid, Oid dboid,
-			 TimestampTz commit_time,
-			 int nsubxacts, TransactionId *sub_xids,
-			 int ninval_msgs, SharedInvalidationMessage *msgs)
+			 xl_xact_parsed_commit *parsed, TransactionId xid)
 {
+	XLogRecPtr	origin_lsn = InvalidXLogRecPtr;
+	XLogRecPtr	commit_time = InvalidXLogRecPtr;
+	XLogRecPtr	origin_id = InvalidRepOriginId;
 	int			i;
+
+	if (parsed->xinfo & XACT_XINFO_HAS_ORIGIN)
+	{
+		origin_lsn = parsed->origin_lsn;
+		commit_time = parsed->origin_timestamp;
+	}
 
 	/*
 	 * Process invalidation messages, even if we're not interested in the
 	 * transaction's contents, since the various caches need to always be
 	 * consistent.
 	 */
-	if (ninval_msgs > 0)
+	if (parsed->nmsgs > 0)
 	{
 		ReorderBufferAddInvalidations(ctx->reorder, xid, buf->origptr,
-									  ninval_msgs, msgs);
+									  parsed->nmsgs, parsed->msgs);
 		ReorderBufferXidSetCatalogChanges(ctx->reorder, xid, buf->origptr);
 	}
 
 	SnapBuildCommitTxn(ctx->snapshot_builder, buf->origptr, xid,
-					   nsubxacts, sub_xids);
+					   parsed->nsubxacts, parsed->subxacts);
 
 	/* ----
 	 * Check whether we are interested in this specific transaction, and tell
 	 * the reorderbuffer to forget the content of the (sub-)transactions
 	 * if not.
 	 *
-	 * There basically two reasons we might not be interested in this
+	 * There can be several reasons we might not be interested in this
 	 * transaction:
 	 * 1) We might not be interested in decoding transactions up to this
 	 *	  LSN. This can happen because we previously decoded it and now just
 	 *	  are restarting or if we haven't assembled a consistent snapshot yet.
 	 * 2) The transaction happened in another database.
+	 * 3) The output plugin is not interested in the origin.
 	 *
 	 * We can't just use ReorderBufferAbort() here, because we need to execute
 	 * the transaction's invalidations.  This currently won't be needed if
@@ -565,12 +539,12 @@ DecodeCommit(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 	 * ---
 	 */
 	if (SnapBuildXactNeedsSkip(ctx->snapshot_builder, buf->origptr) ||
-		(dboid != InvalidOid && dboid != ctx->slot->data.database))
+		(parsed->dbId != InvalidOid && parsed->dbId != ctx->slot->data.database) ||
+		FilterByOrigin(ctx, origin_id))
 	{
-		for (i = 0; i < nsubxacts; i++)
+		for (i = 0; i < parsed->nsubxacts; i++)
 		{
-			ReorderBufferForget(ctx->reorder, *sub_xids, buf->origptr);
-			sub_xids++;
+			ReorderBufferForget(ctx->reorder, parsed->subxacts[i], buf->origptr);
 		}
 		ReorderBufferForget(ctx->reorder, xid, buf->origptr);
 
@@ -578,16 +552,15 @@ DecodeCommit(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 	}
 
 	/* tell the reorderbuffer about the surviving subtransactions */
-	for (i = 0; i < nsubxacts; i++)
+	for (i = 0; i < parsed->nsubxacts; i++)
 	{
-		ReorderBufferCommitChild(ctx->reorder, xid, *sub_xids,
+		ReorderBufferCommitChild(ctx->reorder, xid, parsed->subxacts[i],
 								 buf->origptr, buf->endptr);
-		sub_xids++;
 	}
 
 	/* replay actions of all transaction + subtransactions in order */
 	ReorderBufferCommit(ctx->reorder, xid, buf->origptr, buf->endptr,
-						commit_time);
+						commit_time, origin_id, origin_lsn);
 }
 
 /*
@@ -595,18 +568,25 @@ DecodeCommit(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
  * snapbuild.c and reorderbuffer.c
  */
 static void
-DecodeAbort(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
-			TransactionId *sub_xids, int nsubxacts)
+DecodeAbort(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
+			xl_xact_parsed_abort *parsed, TransactionId xid)
 {
 	int			i;
 
+<<<<<<< HEAD
 	for (i = 0; i < nsubxacts; i++)
+=======
+	SnapBuildAbortTxn(ctx->snapshot_builder, buf->record->EndRecPtr, xid,
+					  parsed->nsubxacts, parsed->subxacts);
+
+	for (i = 0; i < parsed->nsubxacts; i++)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{
-		ReorderBufferAbort(ctx->reorder, *sub_xids, lsn);
-		sub_xids++;
+		ReorderBufferAbort(ctx->reorder, parsed->subxacts[i],
+						   buf->record->EndRecPtr);
 	}
 
-	ReorderBufferAbort(ctx->reorder, xid, lsn);
+	ReorderBufferAbort(ctx->reorder, xid, buf->record->EndRecPtr);
 }
 
 /*
@@ -617,37 +597,61 @@ DecodeAbort(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 static void
 DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 {
-	XLogRecord *r = &buf->record;
+	XLogReaderState *r = buf->record;
 	xl_heap_insert *xlrec;
 	ReorderBufferChange *change;
+	RelFileNode target_node;
 
-	xlrec = (xl_heap_insert *) buf->record_data;
+	xlrec = (xl_heap_insert *) XLogRecGetData(r);
 
 	/* only interested in our database */
-	if (xlrec->target.node.dbNode != ctx->slot->data.database)
+	XLogRecGetBlockTag(r, 0, &target_node, NULL, NULL);
+	if (target_node.dbNode != ctx->slot->data.database)
+		return;
+
+	/* output plugin doesn't look for this origin, no need to queue */
+	if (FilterByOrigin(ctx, XLogRecGetOrigin(r)))
 		return;
 
 	change = ReorderBufferGetChange(ctx->reorder);
-	change->action = REORDER_BUFFER_CHANGE_INSERT;
-	memcpy(&change->data.tp.relnode, &xlrec->target.node, sizeof(RelFileNode));
+	if (!(xlrec->flags & XLH_INSERT_IS_SPECULATIVE))
+		change->action = REORDER_BUFFER_CHANGE_INSERT;
+	else
+		change->action = REORDER_BUFFER_CHANGE_INTERNAL_SPEC_INSERT;
+	change->origin_id = XLogRecGetOrigin(r);
 
-	if (xlrec->flags & XLOG_HEAP_CONTAINS_NEW_TUPLE)
+	memcpy(&change->data.tp.relnode, &target_node, sizeof(RelFileNode));
+
+	if (xlrec->flags & XLH_INSERT_CONTAINS_NEW_TUPLE)
 	{
+<<<<<<< HEAD
 		Size		datalen = r->xl_len - SizeOfHeapInsert;
 		Size		tuplelen = datalen - SizeOfHeapHeader;
 
 		Assert(r->xl_len > (SizeOfHeapInsert + SizeOfHeapHeader));
+=======
+		Size		tuplelen;
+		char	   *tupledata = XLogRecGetBlockData(r, 0, &tuplelen);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		change->data.tp.newtuple =
 			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
+<<<<<<< HEAD
 		DecodeXLogTuple((char *) xlrec + SizeOfHeapInsert,
 						datalen, change->data.tp.newtuple);
+=======
+		DecodeXLogTuple(tupledata, tuplelen, change->data.tp.newtuple);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	change->data.tp.clear_toast_afterwards = true;
 
+<<<<<<< HEAD
 	ReorderBufferQueueChange(ctx->reorder, r->xl_xid, buf->origptr, change);
+=======
+	ReorderBufferQueueChange(ctx->reorder, XLogRecGetXid(r), buf->origptr, change);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -659,22 +663,34 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 static void
 DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 {
-	XLogRecord *r = &buf->record;
+	XLogReaderState *r = buf->record;
 	xl_heap_update *xlrec;
 	ReorderBufferChange *change;
 	char	   *data;
+<<<<<<< HEAD
 	size_t		remlen = r->xl_len;
+=======
+	Size		datalen;
+	RelFileNode target_node;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
-	xlrec = (xl_heap_update *) buf->record_data;
+	xlrec = (xl_heap_update *) XLogRecGetData(r);
 
 	/* only interested in our database */
-	if (xlrec->target.node.dbNode != ctx->slot->data.database)
+	XLogRecGetBlockTag(r, 0, &target_node, NULL, NULL);
+	if (target_node.dbNode != ctx->slot->data.database)
+		return;
+
+	/* output plugin doesn't look for this origin, no need to queue */
+	if (FilterByOrigin(ctx, XLogRecGetOrigin(r)))
 		return;
 
 	change = ReorderBufferGetChange(ctx->reorder);
 	change->action = REORDER_BUFFER_CHANGE_UPDATE;
-	memcpy(&change->data.tp.relnode, &xlrec->target.node, sizeof(RelFileNode));
+	change->origin_id = XLogRecGetOrigin(r);
+	memcpy(&change->data.tp.relnode, &target_node, sizeof(RelFileNode));
 
+<<<<<<< HEAD
 	/* caution, remaining data in record is not aligned */
 	data = buf->record_data + SizeOfHeapUpdate;
 	remlen -= SizeOfHeapUpdate;
@@ -690,10 +706,16 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		memcpy(&xlhdr, data, sizeof(xlhdr));
 		data += offsetof(xl_heap_header_len, header);
 		remlen -= offsetof(xl_heap_header_len, header);
+=======
+	if (xlrec->flags & XLH_UPDATE_CONTAINS_NEW_TUPLE)
+	{
+		data = XLogRecGetBlockData(r, 0, &datalen);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		datalen = xlhdr.t_len + SizeOfHeapHeader;
 		tuplelen = xlhdr.t_len;
 
+<<<<<<< HEAD
 		change->data.tp.newtuple =
 			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
@@ -704,10 +726,14 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		/* skip over the tuple data */
 		data += xlhdr.t_len;
 		remlen -= xlhdr.t_len;
+=======
+		DecodeXLogTuple(data, datalen, change->data.tp.newtuple);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
-	if (xlrec->flags & XLOG_HEAP_CONTAINS_OLD)
+	if (xlrec->flags & XLH_UPDATE_CONTAINS_OLD)
 	{
+<<<<<<< HEAD
 		Size		datalen;
 		Size		tuplelen;
 		xl_heap_header_len xlhdr;
@@ -715,6 +741,11 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		memcpy(&xlhdr, data, sizeof(xlhdr));
 		data += offsetof(xl_heap_header_len, header);
 		remlen -= offsetof(xl_heap_header_len, header);
+=======
+		/* caution, remaining data in record is not aligned */
+		data = XLogRecGetData(r) + SizeOfHeapUpdate;
+		datalen = XLogRecGetDataLen(r) - SizeOfHeapUpdate;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/*
 		 * NB: Even though xl_heap_header_len contains the tuple's length,
@@ -726,6 +757,7 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		datalen = remlen;
 		tuplelen = datalen - SizeOfHeapHeader;
 
+<<<<<<< HEAD
 		change->data.tp.oldtuple =
 			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
@@ -734,11 +766,18 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		data += datalen;
 		remlen -= datalen;
 #endif
+=======
+		DecodeXLogTuple(data, datalen, change->data.tp.oldtuple);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	change->data.tp.clear_toast_afterwards = true;
 
+<<<<<<< HEAD
 	ReorderBufferQueueChange(ctx->reorder, r->xl_xid, buf->origptr, change);
+=======
+	ReorderBufferQueueChange(ctx->reorder, XLogRecGetXid(r), buf->origptr, change);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -749,39 +788,66 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 static void
 DecodeDelete(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 {
-	XLogRecord *r = &buf->record;
+	XLogReaderState *r = buf->record;
 	xl_heap_delete *xlrec;
 	ReorderBufferChange *change;
+	RelFileNode target_node;
 
-	xlrec = (xl_heap_delete *) buf->record_data;
+	xlrec = (xl_heap_delete *) XLogRecGetData(r);
 
 	/* only interested in our database */
-	if (xlrec->target.node.dbNode != ctx->slot->data.database)
+	XLogRecGetBlockTag(r, 0, &target_node, NULL, NULL);
+	if (target_node.dbNode != ctx->slot->data.database)
+		return;
+
+	/*
+	 * Super deletions are irrelevant for logical decoding, it's driven by the
+	 * confirmation records.
+	 */
+	if (xlrec->flags & XLH_DELETE_IS_SUPER)
+		return;
+
+	/* output plugin doesn't look for this origin, no need to queue */
+	if (FilterByOrigin(ctx, XLogRecGetOrigin(r)))
 		return;
 
 	change = ReorderBufferGetChange(ctx->reorder);
 	change->action = REORDER_BUFFER_CHANGE_DELETE;
+	change->origin_id = XLogRecGetOrigin(r);
 
-	memcpy(&change->data.tp.relnode, &xlrec->target.node, sizeof(RelFileNode));
+	memcpy(&change->data.tp.relnode, &target_node, sizeof(RelFileNode));
 
 	/* old primary key stored */
-	if (xlrec->flags & XLOG_HEAP_CONTAINS_OLD)
+	if (xlrec->flags & XLH_DELETE_CONTAINS_OLD)
 	{
+<<<<<<< HEAD
 		Size		datalen = r->xl_len - SizeOfHeapDelete;
 		Size		tuplelen = datalen - SizeOfHeapHeader;
 
 		Assert(r->xl_len > (SizeOfHeapDelete + SizeOfHeapHeader));
+=======
+		Assert(XLogRecGetDataLen(r) > (SizeOfHeapDelete + SizeOfHeapHeader));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		change->data.tp.oldtuple =
 			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
 		DecodeXLogTuple((char *) xlrec + SizeOfHeapDelete,
+<<<<<<< HEAD
 						datalen, change->data.tp.oldtuple);
+=======
+						XLogRecGetDataLen(r) - SizeOfHeapDelete,
+						change->data.tp.oldtuple);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	change->data.tp.clear_toast_afterwards = true;
 
+<<<<<<< HEAD
 	ReorderBufferQueueChange(ctx->reorder, r->xl_xid, buf->origptr, change);
+=======
+	ReorderBufferQueueChange(ctx->reorder, XLogRecGetXid(r), buf->origptr, change);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -792,27 +858,28 @@ DecodeDelete(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 static void
 DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 {
-	XLogRecord *r = &buf->record;
+	XLogReaderState *r = buf->record;
 	xl_heap_multi_insert *xlrec;
 	int			i;
 	char	   *data;
-	bool		isinit = (r->xl_info & XLOG_HEAP_INIT_PAGE) != 0;
+	char	   *tupledata;
+	Size		tuplelen;
+	RelFileNode rnode;
 
-	xlrec = (xl_heap_multi_insert *) buf->record_data;
+	xlrec = (xl_heap_multi_insert *) XLogRecGetData(r);
 
 	/* only interested in our database */
-	if (xlrec->node.dbNode != ctx->slot->data.database)
+	XLogRecGetBlockTag(r, 0, &rnode, NULL, NULL);
+	if (rnode.dbNode != ctx->slot->data.database)
 		return;
 
-	data = buf->record_data + SizeOfHeapMultiInsert;
+	/* output plugin doesn't look for this origin, no need to queue */
+	if (FilterByOrigin(ctx, XLogRecGetOrigin(r)))
+		return;
 
-	/*
-	 * OffsetNumbers (which are not of interest to us) are stored when
-	 * XLOG_HEAP_INIT_PAGE is not set -- skip over them.
-	 */
-	if (!isinit)
-		data += sizeof(OffsetNumber) * xlrec->ntuples;
+	tupledata = XLogRecGetBlockData(r, 0, &tuplelen);
 
+	data = tupledata;
 	for (i = 0; i < xlrec->ntuples; i++)
 	{
 		ReorderBufferChange *change;
@@ -822,7 +889,9 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 		change = ReorderBufferGetChange(ctx->reorder);
 		change->action = REORDER_BUFFER_CHANGE_INSERT;
-		memcpy(&change->data.tp.relnode, &xlrec->node, sizeof(RelFileNode));
+		change->origin_id = XLogRecGetOrigin(r);
+
+		memcpy(&change->data.tp.relnode, &rnode, sizeof(RelFileNode));
 
 		/*
 		 * CONTAINS_NEW_TUPLE will always be set currently as multi_insert
@@ -831,7 +900,7 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		 * We decode the tuple in pretty much the same way as DecodeXLogTuple,
 		 * but since the layout is slightly different, we can't use it here.
 		 */
-		if (xlrec->flags & XLOG_HEAP_CONTAINS_NEW_TUPLE)
+		if (xlrec->flags & XLH_INSERT_CONTAINS_NEW_TUPLE)
 		{
 			HeapTupleHeader header;
 
@@ -854,6 +923,7 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			 */
 #if 0
 			tuple->tuple.t_tableOid = InvalidOid;
+<<<<<<< HEAD
 #endif
 
 			tuple->tuple.t_len = datalen
@@ -862,13 +932,27 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			memset(header, 0, offsetof(HeapTupleHeaderData, t_bits));
 
 			memcpy((char *) tuple->tuple.t_data + offsetof(HeapTupleHeaderData, t_bits),
+=======
+			tuple->tuple.t_data = &tuple->t_data.header;
+			tuple->tuple.t_len = datalen + SizeofHeapTupleHeader;
+
+			memset(&tuple->t_data.header, 0, SizeofHeapTupleHeader);
+
+			memcpy((char *) &tuple->t_data.header + SizeofHeapTupleHeader,
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				   (char *) data,
 				   datalen);
 			data += datalen;
 
+<<<<<<< HEAD
 			header->t_infomask = xlhdr->t_infomask;
 			header->t_infomask2 = xlhdr->t_infomask2;
 			header->t_hoff = xlhdr->t_hoff;
+=======
+			tuple->t_data.header.t_infomask = xlhdr->t_infomask;
+			tuple->t_data.header.t_infomask2 = xlhdr->t_infomask2;
+			tuple->t_data.header.t_hoff = xlhdr->t_hoff;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 
 		/*
@@ -876,16 +960,59 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		 * xl_multi_insert_tuple record emitted by one heap_multi_insert()
 		 * call.
 		 */
+<<<<<<< HEAD
 		if (xlrec->flags & XLOG_HEAP_LAST_MULTI_INSERT &&
+=======
+		if (xlrec->flags & XLH_INSERT_LAST_IN_MULTI &&
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			(i + 1) == xlrec->ntuples)
 			change->data.tp.clear_toast_afterwards = true;
 		else
 			change->data.tp.clear_toast_afterwards = false;
 
+<<<<<<< HEAD
 		ReorderBufferQueueChange(ctx->reorder, r->xl_xid,
+=======
+		ReorderBufferQueueChange(ctx->reorder, XLogRecGetXid(r),
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 								 buf->origptr, change);
 	}
+	Assert(data == tupledata + tuplelen);
 }
+
+/*
+ * Parse XLOG_HEAP_CONFIRM from wal into a confirmation change.
+ *
+ * This is pretty trivial, all the state essentially already setup by the
+ * speculative insertion.
+ */
+static void
+DecodeSpecConfirm(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
+{
+	XLogReaderState *r = buf->record;
+	ReorderBufferChange *change;
+	RelFileNode target_node;
+
+	/* only interested in our database */
+	XLogRecGetBlockTag(r, 0, &target_node, NULL, NULL);
+	if (target_node.dbNode != ctx->slot->data.database)
+		return;
+
+	/* output plugin doesn't look for this origin, no need to queue */
+	if (FilterByOrigin(ctx, XLogRecGetOrigin(r)))
+		return;
+
+	change = ReorderBufferGetChange(ctx->reorder);
+	change->action = REORDER_BUFFER_CHANGE_INTERNAL_SPEC_CONFIRM;
+	change->origin_id = XLogRecGetOrigin(r);
+
+	memcpy(&change->data.tp.relnode, &target_node, sizeof(RelFileNode));
+
+	change->data.tp.clear_toast_afterwards = true;
+
+	ReorderBufferQueueChange(ctx->reorder, XLogRecGetXid(r), buf->origptr, change);
+}
+
 
 /*
  * Read a HeapTuple as WAL logged by heap_insert, heap_update and heap_delete
@@ -903,8 +1030,12 @@ DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tuple)
 
 	Assert(datalen >= 0);
 
+<<<<<<< HEAD
 	tuple->tuple.t_len = datalen + offsetof(HeapTupleHeaderData, t_bits);
 	header = tuple->tuple.t_data;
+=======
+	tuple->tuple.t_len = datalen + SizeofHeapTupleHeader;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* not a disk based tuple */
 	ItemPointerSetInvalid(&tuple->tuple.t_self);
@@ -912,13 +1043,18 @@ DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tuple)
 	/* we can only figure this out after reassembling the transactions */
 #if 0
 	tuple->tuple.t_tableOid = InvalidOid;
+<<<<<<< HEAD
 #endif
+=======
+	tuple->tuple.t_data = &tuple->t_data.header;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* data is not stored aligned, copy to aligned storage */
 	memcpy((char *) &xlhdr,
 		   data,
 		   SizeOfHeapHeader);
 
+<<<<<<< HEAD
 	memset(header, 0, offsetof(HeapTupleHeaderData, t_bits));
 
 	memcpy(((char *) tuple->tuple.t_data) + offsetof(HeapTupleHeaderData, t_bits),
@@ -928,4 +1064,15 @@ DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tuple)
 	header->t_infomask = xlhdr.t_infomask;
 	header->t_infomask2 = xlhdr.t_infomask2;
 	header->t_hoff = xlhdr.t_hoff;
+=======
+	memset(&tuple->t_data.header, 0, SizeofHeapTupleHeader);
+
+	memcpy((char *) &tuple->t_data.header + SizeofHeapTupleHeader,
+		   data + SizeOfHeapHeader,
+		   datalen);
+
+	tuple->t_data.header.t_infomask = xlhdr.t_infomask;
+	tuple->t_data.header.t_infomask2 = xlhdr.t_infomask2;
+	tuple->t_data.header.t_hoff = xlhdr.t_hoff;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }

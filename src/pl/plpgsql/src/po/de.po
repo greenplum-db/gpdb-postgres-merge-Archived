@@ -551,7 +551,11 @@ msgstr "doppelte Deklaration"
 #: pl_gram.y:740 pl_gram.y:768
 #, c-format
 msgid "variable \"%s\" shadows a previously defined variable"
+<<<<<<< HEAD
 msgstr "Variable »%s« verdeckt eine zuvor definierte Variable"
+=======
+msgstr "Variable „%s“ verdeckt eine zuvor definierte Variable"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: pl_gram.y:955
 #, c-format

@@ -4,12 +4,16 @@
  *	  Functions for reading Write-Ahead-Log
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+<<<<<<< HEAD
  * Portions Copyright (c) 2013-2014 VMware, Inc. All Rights Reserved.
  * Portions Copyright (c) 1996-2008, Nippon Telegraph and Telephone Corporation
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *-------------------------------------------------------------------------
  */
+<<<<<<< HEAD
 /*
  * GPDB_95_MERGE_FIXME: This hack was borrowed from 9.4 version of
  * pg_rewind. Since for 9.4 this file needs to include heapam_xlog.h
@@ -20,6 +24,10 @@
 #include "c.h"
 #undef FRONTEND
 #include "postgres.h"
+=======
+
+#include "postgres_fe.h"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #include <unistd.h>
 
@@ -27,6 +35,7 @@
 #include "filemap.h"
 #include "logging.h"
 
+<<<<<<< HEAD
 #include <unistd.h>
 
 #include "access/bitmap.h"
@@ -35,16 +44,37 @@
 #include "access/gist_private.h"
 #include "access/spgist_private.h"
 #include "access/nbtree.h"
+=======
+#include "access/rmgr.h"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "access/xlog_internal.h"
 #include "access/xlogreader.h"
 #include "catalog/pg_control.h"
 #include "catalog/storage_xlog.h"
+<<<<<<< HEAD
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
 #include "commands/sequence.h"
 #include "cdb/cdbappendonlyxlog.h"
 
 static void extractPageInfo(XLogRecord *record);
+=======
+#include "commands/dbcommands_xlog.h"
+
+
+/*
+ * RmgrNames is an array of resource manager names, to make error messages
+ * a bit nicer.
+ */
+#define PG_RMGR(symname,name,redo,desc,identify,startup,cleanup) \
+  name,
+
+static const char *RmgrNames[RM_MAX_ID + 1] = {
+#include "access/rmgrlist.h"
+};
+
+static void extractPageInfo(XLogReaderState *record);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 static int	xlogreadfd = -1;
 static XLogSegNo xlogreadsegno = -1;
@@ -101,7 +131,11 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, TimeLineID tli,
 						 (uint32) (startpoint));
 		}
 
+<<<<<<< HEAD
 		extractPageInfo(record);
+=======
+		extractPageInfo(xlogreader);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		startpoint = InvalidXLogRecPtr; /* continue reading at next record */
 
@@ -205,6 +239,7 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, TimeLineID tli,
 		}
 
 		/*
+<<<<<<< HEAD
 		 * Check if it is a checkpoint record. This checkpoint record
 		 * needs to be the latest checkpoint before WAL forked and not
 		 * the checkpoint where the master has been stopped to be
@@ -218,6 +253,21 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, TimeLineID tli,
 			CheckPoint	checkPoint;
 
 			memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
+=======
+		 * Check if it is a checkpoint record. This checkpoint record needs to
+		 * be the latest checkpoint before WAL forked and not the checkpoint
+		 * where the master has been stopped to be rewinded.
+		 */
+		info = XLogRecGetInfo(xlogreader) & ~XLR_INFO_MASK;
+		if (searchptr < forkptr &&
+			XLogRecGetRmid(xlogreader) == RM_XLOG_ID &&
+			(info == XLOG_CHECKPOINT_SHUTDOWN ||
+			 info == XLOG_CHECKPOINT_ONLINE))
+		{
+			CheckPoint	checkPoint;
+
+			memcpy(&checkPoint, XLogRecGetData(xlogreader), sizeof(CheckPoint));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			*lastchkptrec = searchptr;
 			*lastchkpttli = checkPoint.ThisTimeLineID;
 			*lastchkptredo = checkPoint.redo;
@@ -307,6 +357,7 @@ SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 
 /*
  * Extract information on which blocks the current record modifies.
+<<<<<<< HEAD
  *
  * GPDB_95_MERGE_FIXME: This functions was modified to work with 9.4 wal
  * record format. Once WAL format code from 9.5 is merged should replace the
@@ -1053,5 +1104,82 @@ extractPageInfo(XLogRecord *record)
 			 */
 			fprintf(stderr, "unrecognized resource manager id %d\n", record->xl_rmid);
 			exit(1);
+=======
+ */
+static void
+extractPageInfo(XLogReaderState *record)
+{
+	int			block_id;
+	RmgrId		rmid = XLogRecGetRmid(record);
+	uint8		info = XLogRecGetInfo(record);
+	uint8		rminfo = info & ~XLR_INFO_MASK;
+
+	/* Is this a special record type that I recognize? */
+
+	if (rmid == RM_DBASE_ID && rminfo == XLOG_DBASE_CREATE)
+	{
+		/*
+		 * New databases can be safely ignored. It won't be present in the
+		 * source system, so it will be deleted. There's one corner-case,
+		 * though: if a new, different, database is also created in the source
+		 * system, we'll see that the files already exist and not copy them.
+		 * That's OK, though; WAL replay of creating the new database, from
+		 * the source systems's WAL, will re-copy the new database,
+		 * overwriting the database created in the target system.
+		 */
+	}
+	else if (rmid == RM_DBASE_ID && rminfo == XLOG_DBASE_DROP)
+	{
+		/*
+		 * An existing database was dropped. We'll see that the files don't
+		 * exist in the target data dir, and copy them in toto from the source
+		 * system. No need to do anything special here.
+		 */
+	}
+	else if (rmid == RM_SMGR_ID && rminfo == XLOG_SMGR_CREATE)
+	{
+		/*
+		 * We can safely ignore these. The file will be removed from the
+		 * target, if it doesn't exist in source system. If a file with same
+		 * name is created in source system, too, there will be WAL records
+		 * for all the blocks in it.
+		 */
+	}
+	else if (rmid == RM_SMGR_ID && rminfo == XLOG_SMGR_TRUNCATE)
+	{
+		/*
+		 * We can safely ignore these. When we compare the sizes later on,
+		 * we'll notice that they differ, and copy the missing tail from
+		 * source system.
+		 */
+	}
+	else if (info & XLR_SPECIAL_REL_UPDATE)
+	{
+		/*
+		 * This record type modifies a relation file in some special way, but
+		 * we don't recognize the type. That's bad - we don't know how to
+		 * track that change.
+		 */
+		pg_fatal("WAL record modifies a relation, but record type is not recognized\n"
+				 "lsn: %X/%X, rmgr: %s, info: %02X\n",
+		  (uint32) (record->ReadRecPtr >> 32), (uint32) (record->ReadRecPtr),
+				 RmgrNames[rmid], info);
+	}
+
+	for (block_id = 0; block_id <= record->max_block_id; block_id++)
+	{
+		RelFileNode rnode;
+		ForkNumber	forknum;
+		BlockNumber blkno;
+
+		if (!XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blkno))
+			continue;
+
+		/* We only care about the main fork; others are copied in toto */
+		if (forknum != MAIN_FORKNUM)
+			continue;
+
+		process_block_change(forknum, rnode, blkno);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 }

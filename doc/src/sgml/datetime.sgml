@@ -384,12 +384,26 @@
 
    <para>
     A <replaceable>zone_abbreviation</replaceable> is just the abbreviation
+<<<<<<< HEAD
     being defined.  An <replaceable>offset</replaceable> is an integer giving
     the equivalent offset in seconds from UTC, positive being east from
     Greenwich and negative being west.  For example, -18000 would be five
     hours west of Greenwich, or North American east coast standard time.
     <literal>D</> indicates that the zone name represents local
     daylight-savings time rather than standard time.
+=======
+    being defined.  The <replaceable>offset</replaceable> is the equivalent
+    offset in seconds from UTC, positive being east from Greenwich and
+    negative being west.  For example, -18000 would be five hours west
+    of Greenwich, or North American east coast standard time.  <literal>D</>
+    indicates that the zone name represents local daylight-savings time rather
+    than standard time.  Alternatively, a <replaceable>time_zone_name</> can
+    be given, in which case that time zone definition is consulted, and the
+    abbreviation's meaning in that zone is used.  This alternative is
+    recommended only for abbreviations whose meaning has historically varied,
+    as looking up the meaning is noticeably more expensive than just using
+    a fixed integer value.
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
    </para>
 
    <para>

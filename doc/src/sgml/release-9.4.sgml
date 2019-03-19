@@ -1,6 +1,7 @@
 <!-- doc/src/sgml/release-9.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<<<<<<< HEAD
  <sect1 id="release-9-4-20">
   <title>Release 9.4.20</title>
 
@@ -8175,6 +8176,15 @@ Branch: REL9_0_STABLE [47ac95f37] 2015-10-02 19:16:37 -0400
   <title>Release date:</title>
   <para>2015-06-12</para>
   </formalpara>
+=======
+ <sect1 id="release-9-4-4">
+  <title>Release 9.4.4</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-06-12</simpara>
+  </note>
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
   <para>
    This release contains a small number of fixes from 9.4.3.
@@ -8352,10 +8362,17 @@ Branch: REL9_3_STABLE [d3fdec6ae] 2015-06-03 11:58:47 -0400
  <sect1 id="release-9-4-3">
   <title>Release 9.4.3</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2015-06-04</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-06-04</simpara>
+  </note>
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
   <para>
    This release contains a small number of fixes from 9.4.2.
@@ -8495,10 +8512,17 @@ Branch: REL9_0_STABLE [b06649b7f] 2015-05-26 22:15:00 -0400
  <sect1 id="release-9-4-2">
   <title>Release 9.4.2</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2015-05-22</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-05-22</simpara>
+  </note>
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
   <para>
    This release contains a variety of fixes from 9.4.1.
@@ -9745,7 +9769,11 @@ Branch: REL9_3_STABLE [6347bdb31] 2015-04-05 13:01:55 -0400
 
     <listitem>
      <para>
+<<<<<<< HEAD
       Silence some build warnings on macOS (Tom Lane)
+=======
+      Silence some build warnings on OS X (Tom Lane)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
      </para>
     </listitem>
 
@@ -9776,10 +9804,17 @@ Branch: REL9_0_STABLE [3c3749a3b] 2015-05-15 19:36:20 -0400
  <sect1 id="release-9-4-1">
   <title>Release 9.4.1</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2015-02-05</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-02-05</simpara>
+  </note>
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
   <para>
    This release contains a variety of fixes from 9.4.0.
@@ -10304,7 +10339,11 @@ Branch: REL9_0_STABLE [2e4946169] 2015-01-07 22:46:20 -0500
 
     <listitem>
      <para>
+<<<<<<< HEAD
       Warn if macOS's <function>setlocale()</> starts an unwanted extra
+=======
+      Warn if OS X's <function>setlocale()</> starts an unwanted extra
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
       thread inside the postmaster (Noah Misch)
      </para>
     </listitem>
@@ -10589,10 +10628,17 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
  <sect1 id="release-9-4">
   <title>Release 9.4</title>
 
+<<<<<<< HEAD
   <formalpara>
    <title>Release date:</title>
    <para>2014-12-18</para>
   </formalpara>
+=======
+  <note>
+   <title>Release Date</title>
+   <simpara>2014-12-18</simpara>
+  </note>
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
   <sect2>
    <title>Overview</title>
@@ -12320,8 +12366,13 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
+<<<<<<< HEAD
         Add ability to retrieve the current PL/pgSQL call stack
         using <link linkend="plpgsql-call-stack"><command>GET
+=======
+        Add ability to retrieve the current PL/PgSQL call stack
+        using <link linkend="plpgsql-get-diagnostics-context"><command>GET
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
         DIAGNOSTICS</></link>
         (Pavel Stehule, Stephen Frost)
        </para>
@@ -12391,7 +12442,11 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
       <listitem>
        <para>
         Add <xref linkend="APP-CREATEUSER"> option <option>-g</>
+<<<<<<< HEAD
         to specify role membership (Christopher Browne)
+=======
+        to specify role membership (Chistopher Browne)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
        </para>
       </listitem>
 

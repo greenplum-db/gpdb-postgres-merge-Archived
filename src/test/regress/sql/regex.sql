@@ -92,6 +92,7 @@ select regexp_matches('Programmer', '(\w)(.*?\1)', 'g');
 -- Test for proper matching of non-greedy iteration (bug #11478)
 select regexp_matches('foo/bar/baz',
                       '^([^/]+?)(?:/([^/]+?))(?:/([^/]+?))?$', '');
+<<<<<<< HEAD
 
 -- Test for infinite loop in cfindloop with zero-length possible match
 -- but no actual match (can only happen in the presence of backrefs)
@@ -104,3 +105,5 @@ select 'a' ~ '()+\1';
 select 'xyz' ~ 'x(\w)(?=\1)';  -- no backrefs in LACONs
 select 'xyz' ~ 'x(\w)(?=(\1))';
 select 'a' ~ '\x7fffffff';  -- invalid chr code
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

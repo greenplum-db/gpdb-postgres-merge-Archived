@@ -17,9 +17,13 @@
  * append relations, and thenceforth share code with the UNION ALL case.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -283,13 +287,15 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		 */
 		if (pNumGroups)
 		{
-			if (subquery->groupClause || subquery->distinctClause ||
+			if (subquery->groupClause || subquery->groupingSets ||
+				subquery->distinctClause ||
 				subroot->hasHavingQual || subquery->hasAggs)
 				*pNumGroups = subplan->plan_rows;
 			else
 				*pNumGroups = estimate_num_groups(subroot,
 								get_tlist_exprs(subquery->targetList, false),
-												  subplan->plan_rows);
+												  subplan->plan_rows,
+												  NULL);
 		}
 
 		/*
@@ -859,6 +865,7 @@ make_union_unique(SetOperationStmt *op, Plan *plan,
 								 extract_grouping_cols(groupList,
 													   plan->targetlist),
 								 extract_grouping_ops(groupList),
+								 NIL,
 								 numGroups,
 								 0, /* num_nullcols */
 								 0, /* input_grouping */
@@ -926,6 +933,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	 * Don't do it if it doesn't look like the hashtable will fit into
 	 * work_mem.
 	 */
+<<<<<<< HEAD
 
 	/*
 	 * Note that SetOp uses a TupleHashTable and not GPDB's HHashTable for
@@ -933,6 +941,9 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	 * upstream.
 	 */
 	hashentrysize = MAXALIGN(input_plan->plan_width) + MAXALIGN(sizeof(MinimalTupleData));
+=======
+	hashentrysize = MAXALIGN(input_plan->plan_width) + MAXALIGN(SizeofMinimalTupleHeader);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (hashentrysize * dNumGroups > work_mem * 1024L)
 		return false;
@@ -1456,12 +1467,13 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 		/*
 		 * Build an RTE for the child, and attach to query's rangetable list.
-		 * We copy most fields of the parent's RTE, but replace relation OID,
-		 * and set inh = false.  Also, set requiredPerms to zero since all
-		 * required permissions checks are done on the original RTE.
+		 * We copy most fields of the parent's RTE, but replace relation OID
+		 * and relkind, and set inh = false.  Also, set requiredPerms to zero
+		 * since all required permissions checks are done on the original RTE.
 		 */
 		childrte = copyObject(rte);
 		childrte->relid = childOID;
+		childrte->relkind = newrelation->rd_rel->relkind;
 		childrte->inh = false;
 		childrte->requiredPerms = 0;
 		parse->rtable = lappend(parse->rtable, childrte);
@@ -1488,14 +1500,16 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		 * if this is the parent table, leave copyObject's result alone.
 		 *
 		 * Note: we need to do this even though the executor won't run any
-		 * permissions checks on the child RTE.  The modifiedCols bitmap may
-		 * be examined for trigger-firing purposes.
+		 * permissions checks on the child RTE.  The insertedCols/updatedCols
+		 * bitmaps may be examined for trigger-firing purposes.
 		 */
 		if (childOID != parentOID)
 		{
 			childrte->selectedCols = translate_col_privs(rte->selectedCols,
 												   appinfo->translated_vars);
-			childrte->modifiedCols = translate_col_privs(rte->modifiedCols,
+			childrte->insertedCols = translate_col_privs(rte->insertedCols,
+												   appinfo->translated_vars);
+			childrte->updatedCols = translate_col_privs(rte->updatedCols,
 												   appinfo->translated_vars);
 		}
 
@@ -1509,9 +1523,15 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 			newrc->rti = childRTindex;
 			newrc->prti = rti;
 			newrc->rowmarkId = oldrc->rowmarkId;
-			newrc->markType = oldrc->markType;
-			newrc->noWait = oldrc->noWait;
+			/* Reselect rowmark type, because relkind might not match parent */
+			newrc->markType = select_rowmark_type(childrte, oldrc->strength);
+			newrc->allMarkTypes = (1 << newrc->markType);
+			newrc->strength = oldrc->strength;
+			newrc->waitPolicy = oldrc->waitPolicy;
 			newrc->isParent = false;
+
+			/* Include child's rowmark type in parent's allMarkTypes */
+			oldrc->allMarkTypes |= newrc->allMarkTypes;
 
 			root->rowMarks = lappend(root->rowMarks, newrc);
 		}

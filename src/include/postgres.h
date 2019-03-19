@@ -7,7 +7,7 @@
  * Client-side code should include postgres_fe.h instead.
  *
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
  * src/include/postgres.h
@@ -94,25 +94,62 @@ typedef struct varatt_indirect
 	struct varlena *pointer;	/* Pointer to in-memory varlena */
 }	varatt_indirect;
 
+<<<<<<< HEAD
+=======
+/*
+ * struct varatt_expanded is a "TOAST pointer" representing an out-of-line
+ * Datum that is stored in memory, in some type-specific, not necessarily
+ * physically contiguous format that is convenient for computation not
+ * storage.  APIs for this, in particular the definition of struct
+ * ExpandedObjectHeader, are in src/include/utils/expandeddatum.h.
+ *
+ * Note that just as for struct varatt_external, this struct is stored
+ * unaligned within any containing tuple.
+ */
+typedef struct ExpandedObjectHeader ExpandedObjectHeader;
+
+typedef struct varatt_expanded
+{
+	ExpandedObjectHeader *eohptr;
+} varatt_expanded;
+
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * Type tag for the various sorts of "TOAST pointer" datums.  The peculiar
  * value for VARTAG_ONDISK comes from a requirement for on-disk compatibility
  * with a previous notion that the tag field was the pointer datum's length.
+<<<<<<< HEAD
  *
  * GPDB: In PostgreSQL VARTAG_ONDISK is set to 18 in order to match the
  * historic (VARHDRSZ_EXTERNAL + sizeof(struct varatt_external)) value of the
  * pointer datum's length. In Greenplum VARHDRSZ_EXTERNAL is two bytes longer
  * than PostgreSQL due to extra padding in varattrib_1b_e, so VARTAG_ONDISK has
  * to be set to 20.
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 typedef enum vartag_external
 {
 	VARTAG_INDIRECT = 1,
+<<<<<<< HEAD
 	VARTAG_ONDISK = 20
+=======
+	VARTAG_EXPANDED_RO = 2,
+	VARTAG_EXPANDED_RW = 3,
+	VARTAG_ONDISK = 18
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } vartag_external;
+
+/* this test relies on the specific tag values above */
+#define VARTAG_IS_EXPANDED(tag) \
+	(((tag) & ~1) == VARTAG_EXPANDED_RO)
 
 #define VARTAG_SIZE(tag) \
 	((tag) == VARTAG_INDIRECT ? sizeof(varatt_indirect) : \
+<<<<<<< HEAD
+=======
+	 VARTAG_IS_EXPANDED(tag) ? sizeof(varatt_expanded) : \
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 (tag) == VARTAG_ONDISK ? sizeof(varatt_external) : \
 	 TrapMacro(true, "unrecognized TOAST vartag"))
 
@@ -130,29 +167,37 @@ typedef union
 	struct						/* Normal varlena (4-byte length) */
 	{
 		uint32		va_header;
-		char		va_data[1];
+		char		va_data[FLEXIBLE_ARRAY_MEMBER];
 	}			va_4byte;
 	struct						/* Compressed-in-line format */
 	{
 		uint32		va_header;
 		uint32		va_rawsize; /* Original data size (excludes header) */
-		char		va_data[1]; /* Compressed data */
+		char		va_data[FLEXIBLE_ARRAY_MEMBER];		/* Compressed data */
 	}			va_compressed;
 } varattrib_4b;
 
 typedef struct
 {
 	uint8		va_header;
-	char		va_data[1];		/* Data begins here */
+	char		va_data[FLEXIBLE_ARRAY_MEMBER]; /* Data begins here */
 } varattrib_1b;
 
+<<<<<<< HEAD
 /* NOT Like Postgres! ...In GPDB, We waste a few bytes of padding */
+=======
+/* TOAST pointers are a subset of varattrib_1b with an identifying tag byte */
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 typedef struct
 {
 	uint8		va_header;		/* Always 0x80  */
 	uint8		va_tag;			/* Type of datum */
+<<<<<<< HEAD
 	uint8		va_padding[2];	/*** GPDB only:  Alignment padding ***/
 	char		va_data[1];		/* Data (of the type indicated by va_tag) */
+=======
+	char		va_data[FLEXIBLE_ARRAY_MEMBER]; /* Type-specific data */
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } varattrib_1b_e;
 
 /*
@@ -276,6 +321,12 @@ typedef struct
 	(VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_ONDISK)
 #define VARATT_IS_EXTERNAL_INDIRECT(PTR) \
 	(VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_INDIRECT)
+#define VARATT_IS_EXTERNAL_EXPANDED_RO(PTR) \
+	(VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_EXPANDED_RO)
+#define VARATT_IS_EXTERNAL_EXPANDED_RW(PTR) \
+	(VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_EXPANDED_RW)
+#define VARATT_IS_EXTERNAL_EXPANDED(PTR) \
+	(VARATT_IS_EXTERNAL(PTR) && VARTAG_IS_EXPANDED(VARTAG_EXTERNAL(PTR)))
 #define VARATT_IS_SHORT(PTR)				VARATT_IS_1B(PTR)
 #define VARATT_IS_EXTENDED(PTR)				(!VARATT_IS_4B_U(PTR))
 
@@ -488,16 +539,13 @@ static inline bool IsAligned(void *p, int align)
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
 /*
- * These declarations supports the assertion-related macros in c.h.
- * assert_enabled is here because that file doesn't have PGDLLIMPORT in the
- * right place, and ExceptionalCondition must be present, for the backend only,
- * even when assertions are not enabled.
+ * Backend only infrastructure for the assertion-related macros in c.h.
+ *
+ * ExceptionalCondition must be present even when assertions are not enabled.
  */
-extern PGDLLIMPORT bool assert_enabled;
-
 extern void ExceptionalCondition(const char *conditionName,
 					 const char *errorType,
-			 const char *fileName, int lineNumber) __attribute__((noreturn));
+			   const char *fileName, int lineNumber) pg_attribute_noreturn();
 
 
 #ifdef __cplusplus

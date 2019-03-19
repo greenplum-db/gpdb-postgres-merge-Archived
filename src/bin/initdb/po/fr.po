@@ -22,37 +22,65 @@ msgstr ""
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
 msgid "could not identify current directory: %s"
+<<<<<<< HEAD
 msgstr "n'a pas pu identifier le rÃ©pertoire courant : %s"
+=======
+msgstr "n'a pas pu identifier le répertoire courant : %s"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: ../../common/exec.c:146
 #, c-format
 msgid "invalid binary \"%s\""
+<<<<<<< HEAD
 msgstr "binaire Â« %s Â» invalide"
+=======
+msgstr "binaire « %s » invalide"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: ../../common/exec.c:195
 #, c-format
 msgid "could not read binary \"%s\""
+<<<<<<< HEAD
 msgstr "n'a pas pu lire le binaire Â« %s Â»"
+=======
+msgstr "n'a pas pu lire le binaire « %s »"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: ../../common/exec.c:202
 #, c-format
 msgid "could not find a \"%s\" to execute"
+<<<<<<< HEAD
 msgstr "n'a pas pu trouver un Â« %s Â» Ã  exÃ©cuter"
+=======
+msgstr "n'a pas pu trouver un « %s » à exécuter"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: ../../common/exec.c:257 ../../common/exec.c:293
 #, c-format
 msgid "could not change directory to \"%s\": %s"
+<<<<<<< HEAD
 msgstr "n'a pas pu modifier le rÃ©pertoire par Â« %s Â» : %s"
+=======
+msgstr "n'a pas pu modifier le répertoire par « %s » : %s"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: ../../common/exec.c:272
 #, c-format
 msgid "could not read symbolic link \"%s\""
+<<<<<<< HEAD
 msgstr "n'a pas pu lire le lien symbolique Â« %s Â»"
+=======
+msgstr "n'a pas pu lire le lien symbolique « %s »"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: ../../common/exec.c:523
 #, c-format
 msgid "pclose failed: %s"
+<<<<<<< HEAD
 msgstr "Ã©chec de pclose : %s"
+=======
+msgstr "échec de pclose : %s"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
 #: ../../common/fe_memutils.c:83
@@ -78,7 +106,11 @@ msgstr "n'a pas pu lire le rÃ©pertoire Â« %s Â» : %s\n"
 #: ../../common/pgfnames.c:84
 #, c-format
 msgid "could not close directory \"%s\": %s\n"
+<<<<<<< HEAD
 msgstr "n'a pas pu fermer le rÃ©pertoire Â« %s Â» : %s\n"
+=======
+msgstr "n'a pas pu fermer le répertoire « %s » : %s\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: ../../common/rmtree.c:77
 #, c-format
@@ -95,7 +127,11 @@ msgstr "n'a pas pu supprimer le fichier ou rÃ©pertoire Â« %s Â» : %s\n"
 #: ../../common/username.c:45
 #, c-format
 msgid "could not look up effective user ID %ld: %s"
+<<<<<<< HEAD
 msgstr "n'a pas pu trouver l'identifiant rÃ©el %ld de l'utilisateur : %s"
+=======
+msgstr "n'a pas pu trouver l'identifiant réel %ld de l'utilisateur : %s"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: ../../common/username.c:47
 msgid "user does not exist"
@@ -104,7 +140,11 @@ msgstr "l'utilisateur n'existe pas"
 #: ../../common/username.c:62
 #, c-format
 msgid "user name lookup failure: error code %lu"
+<<<<<<< HEAD
 msgstr "Ã©chec de la recherche du nom d'utilisateur : code erreur %lu"
+=======
+msgstr "échec de la recherche du nom d'utilisateur : code erreur %lu"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: ../../common/wait_error.c:47
 #, c-format
@@ -144,12 +184,20 @@ msgstr "le processus fils a quittÃ© avec un statut %d non reconnu"
 #: ../../port/dirmod.c:219
 #, c-format
 msgid "could not set junction for \"%s\": %s\n"
+<<<<<<< HEAD
 msgstr "n'a pas pu configurer la jonction pour Â« %s Â» : %s\n"
+=======
+msgstr "n'a pas pu configurer la jonction pour « %s » : %s\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: ../../port/dirmod.c:294
 #, c-format
 msgid "could not get junction for \"%s\": %s\n"
+<<<<<<< HEAD
 msgstr "n'a pas pu obtenir la jonction pour Â« %s Â» : %s\n"
+=======
+msgstr "n'a pas pu obtenir la jonction pour « %s » : %s\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:337
 #, c-format
@@ -179,7 +227,11 @@ msgstr "%s : n'a pas pu ouvrir le rÃ©pertoire Â« %s Â» : %s\n"
 #: initdb.c:558
 #, c-format
 msgid "%s: could not stat file \"%s\": %s\n"
+<<<<<<< HEAD
 msgstr "%s : n'a pas pu rÃ©cupÃ©rer les informations sur le fichier Â« %s Â» : %s\n"
+=======
+msgstr "%s : n'a pas pu récupérer les informations sur le fichier « %s » : %s\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:571 initdb.c:628
 #, c-format
@@ -189,7 +241,11 @@ msgstr "%s : n'a pas pu lire le rÃ©pertoire Â« %s Â» : %s\n"
 #: initdb.c:578 initdb.c:635
 #, c-format
 msgid "%s: could not close directory \"%s\": %s\n"
+<<<<<<< HEAD
 msgstr "%s : n'a pas pu fermer le rÃ©pertoire Â« %s Â» : %s\n"
+=======
+msgstr "%s : n'a pas pu fermer le répertoire « %s » : %s\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:662 initdb.c:714
 #, c-format
@@ -234,28 +290,48 @@ msgstr "%s : suppression du rÃ©pertoire des journaux de transaction Â« %s Â»\n"
 #: initdb.c:788
 #, c-format
 msgid "%s: failed to remove transaction log directory\n"
+<<<<<<< HEAD
 msgstr "%s : Ã©chec de la suppression du rÃ©pertoire des journaux de transaction\n"
+=======
+msgstr "%s : échec de la suppression du répertoire des journaux de transaction\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:794
 #, c-format
 msgid "%s: removing contents of transaction log directory \"%s\"\n"
+<<<<<<< HEAD
 msgstr "%s : suppression du contenu du rÃ©pertoire des journaux de transaction Â« %s Â»\n"
+=======
+msgstr "%s : suppression du contenu du répertoire des journaux de transaction « %s »\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:797
 #, c-format
 msgid "%s: failed to remove contents of transaction log directory\n"
+<<<<<<< HEAD
 msgstr "%s : Ã©chec de la suppression du contenu du rÃ©pertoire des journaux de transaction\n"
+=======
+msgstr "%s : échec de la suppression du contenu du répertoire des journaux de transaction\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:806
 #, c-format
 msgid "%s: data directory \"%s\" not removed at user's request\n"
+<<<<<<< HEAD
 msgstr "%s : rÃ©pertoire des donnÃ©es Â« %s Â» non supprimÃ© Ã  la demande de l'utilisateur\n"
+=======
+msgstr "%s : répertoire des données « %s » non supprimé à la demande de l'utilisateur\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:811
 #, c-format
 msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
 msgstr ""
+<<<<<<< HEAD
 "%s : rÃ©pertoire des journaux de transaction Â« %s Â» non supprimÃ© Ã  la demande\n"
+=======
+"%s : répertoire des journaux de transaction « %s » non supprimé à la demande\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 "de l'utilisateur\n"
 
 #: initdb.c:832
@@ -316,7 +392,11 @@ msgstr "sÃ©lection de la valeur par dÃ©faut pour shared_buffers... "
 #: initdb.c:1238
 #, c-format
 msgid "selecting dynamic shared memory implementation ... "
+<<<<<<< HEAD
 msgstr "sÃ©lection de l'implÃ©mentation de la mÃ©moire partagÃ©e dynamique..."
+=======
+msgstr "sélection de l'implémentation de la mémoire partagée dynamique..."
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:1256
 msgid "creating configuration files ... "
@@ -325,7 +405,11 @@ msgstr "crÃ©ation des fichiers de configuration... "
 #: initdb.c:1347 initdb.c:1367 initdb.c:1451 initdb.c:1467
 #, c-format
 msgid "%s: could not change permissions of \"%s\": %s\n"
+<<<<<<< HEAD
 msgstr "%s : n'a pas pu modifier les droits de Â« %s Â» : %s\n"
+=======
+msgstr "%s : n'a pas pu modifier les droits de « %s » : %s\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:1491
 #, c-format
@@ -366,7 +450,11 @@ msgstr "%s : n'a pas pu lire le mot de passe Ã  partir du fichier Â« %s Â» : %s\
 #: initdb.c:1663
 #, c-format
 msgid "%s: password file \"%s\" is empty\n"
+<<<<<<< HEAD
 msgstr "%s : le fichier de mots de passe Â« %s Â» est vide\n"
+=======
+msgstr "%s : le fichier de mots de passe « %s » est vide\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:1676
 #, c-format
@@ -397,7 +485,11 @@ msgstr "%s : nom de locale trop long, ignorÃ© : Â« %s Â»\n"
 #: initdb.c:2004
 #, c-format
 msgid "%s: locale name has non-ASCII characters, skipped: \"%s\"\n"
+<<<<<<< HEAD
 msgstr "%s : le nom de la locale contient des caractÃ¨res non ASCII, ignorÃ© : Â« %s Â»\n"
+=======
+msgstr "%s : le nom de la locale contient des caractères non ASCII, ignoré : « %s »\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:2073
 #, c-format
@@ -468,7 +560,11 @@ msgstr "ok\n"
 #: initdb.c:2618
 #, c-format
 msgid "%s: setlocale() failed\n"
+<<<<<<< HEAD
 msgstr "%s : Ã©chec de setlocale\n"
+=======
+msgstr "%s : échec de setlocale\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:2636
 #, c-format
@@ -483,7 +579,11 @@ msgstr "%s : nom de locale invalide (Â« %s Â»)\n"
 #: initdb.c:2658
 #, c-format
 msgid "%s: invalid locale settings; check LANG and LC_* environment variables\n"
+<<<<<<< HEAD
 msgstr "%s : configuration invalide de la locale ; vÃ©rifiez les variables d'environnement LANG et LC_*\n"
+=======
+msgstr "%s : configuration invalide de la locale ; vérifiez les variables d'environnement LANG et LC_*\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:2686
 #, c-format
@@ -508,7 +608,11 @@ msgstr ""
 #: initdb.c:2793
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
+<<<<<<< HEAD
 msgstr "%s : ATTENTION : ne peut pas crÃ©er les jetons restreints sur cette plateforme\n"
+=======
+msgstr "%s : ATTENTION : ne peut pas crér les jetons restreints sur cette plateforme\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:2802
 #, c-format
@@ -528,7 +632,11 @@ msgstr "%s : n'a pas pu crÃ©er le jeton restreint : code d'erreur %lu\n"
 #: initdb.c:2856
 #, c-format
 msgid "%s: could not start process for command \"%s\": error code %lu\n"
+<<<<<<< HEAD
 msgstr "%s : n'a pas pu dÃ©marrer le processus pour la commande Â« %s Â» : code d'erreur %lu\n"
+=======
+msgstr "%s : n'a pas pu démarrer le processus pour la commande « %s » : code d'erreur %lu\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:2870
 #, c-format
@@ -638,7 +746,11 @@ msgstr ""
 #: initdb.c:2888
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
+<<<<<<< HEAD
 msgstr "  -U, --username=NOM         nom du super-utilisateur de la base de donnÃ©es\n"
+=======
+msgstr "  -U, --username=NOM         nom du super-utilisateur de la base de données\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:2889
 #, c-format
@@ -650,7 +762,11 @@ msgstr ""
 #: initdb.c:2890
 #, c-format
 msgid "  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
+<<<<<<< HEAD
 msgstr "  -X, --xlogdir=RÃ‰P_XLOG     emplacement du rÃ©pertoire des transactions\n"
+=======
+msgstr "  -X, --xlogdir=RÉP_XLOG     emplacement du répertoire des transactions\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:2891
 #, c-format
@@ -664,12 +780,20 @@ msgstr ""
 #: initdb.c:2892
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
+<<<<<<< HEAD
 msgstr "  -d, --debug                engendre un grand nombre de traces de dÃ©bogage\n"
+=======
+msgstr "  -d, --debug                engendre un grand nombre de traces de débogage\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:2893
 #, c-format
 msgid "  -k, --data-checksums      use data page checksums\n"
+<<<<<<< HEAD
 msgstr "  -k, --data-checksums       utilise les sommes de contrÃ´le pour les pages de donnÃ©es\n"
+=======
+msgstr "      -k, --data-checksums utilise les sommes de contrôles pour les pages de données\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:2894
 #, c-format
@@ -686,7 +810,11 @@ msgstr "  -n, --noclean              ne nettoie pas en cas d'erreur\n"
 #: initdb.c:2896
 #, c-format
 msgid "  -N, --nosync              do not wait for changes to be written safely to disk\n"
+<<<<<<< HEAD
 msgstr "      -N, --nosync        n'attend pas que les modifications sont proprement Ã©crites sur disque\n"
+=======
+msgstr "      -N, --nosync        n'attend pas que les modifications sont proprement écrites sur disque\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:2897
 #, c-format
@@ -696,7 +824,11 @@ msgstr "  -s, --show                 affiche la configuration interne\n"
 #: initdb.c:2898
 #, c-format
 msgid "  -S, --sync-only           only sync data directory\n"
+<<<<<<< HEAD
 msgstr "  -S, --sync-only            synchronise uniquement le rÃ©pertoire des donnÃ©es\n"
+=======
+msgstr "      -S, --sync-only     synchronise uniquement le répertoire des données\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:2899
 #, c-format
@@ -771,7 +903,11 @@ msgstr "%s : n'a pas pu rÃ©-exÃ©cuter le jeton restreint : code d'erreur %lu\n"
 #: initdb.c:2996
 #, c-format
 msgid "%s: could not get exit code from subprocess: error code %lu\n"
+<<<<<<< HEAD
 msgstr "%s : n'a pas pu rÃ©cupÃ©rer le code de statut du sous-processus : code d'erreur %lu\n"
+=======
+msgstr "%s : n'a pas pu récupérer le code de statut du sous-processus : code d'erreur %lu\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:3022
 #, c-format
@@ -860,8 +996,13 @@ msgid ""
 "Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
 "The default database encoding will be set to \"%s\" instead.\n"
 msgstr ""
+<<<<<<< HEAD
 "L'encodage Â« %s Â» a Ã©tÃ© dÃ©duit de la locale mais n'est pas autorisÃ© en tant qu'encodage serveur.\n"
 "L'encodage par dÃ©faut des bases de donnÃ©es sera configurÃ© Ã  Â« %s Â».\n"
+=======
+"L'encodage « %s » déduit de la locale n'est pas autorisé en tant qu'encodage serveur.\n"
+"L'encodage par défaut des bases de données sera configuré à « %s ».\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:3155
 #, c-format
@@ -908,7 +1049,11 @@ msgstr ""
 #: initdb.c:3259
 #, c-format
 msgid "The default text search configuration will be set to \"%s\".\n"
+<<<<<<< HEAD
 msgstr "La configuration de la recherche plein texte a Ã©tÃ© initialisÃ©e Ã  Â« %s Â».\n"
+=======
+msgstr "La configuration de la recherche plein texte a été initialisée à « %s ».\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:3303 initdb.c:3381
 #, c-format
@@ -975,12 +1120,20 @@ msgstr "%s : les liens symboliques ne sont pas supportÃ©s sur cette plateforme"
 #: initdb.c:3462
 #, c-format
 msgid "It contains a dot-prefixed/invisible file, perhaps due to it being a mount point.\n"
+<<<<<<< HEAD
 msgstr "Il contient un fichier invisible, peut-Ãªtre parce qu'il s'agit d'un point de montage.\n"
+=======
+msgstr "Il contient un fichier invisible, peut-être parce qu'il s'agit d'un point de montage.\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:3465
 #, c-format
 msgid "It contains a lost+found directory, perhaps due to it being a mount point.\n"
+<<<<<<< HEAD
 msgstr "Il contient un rÃ©pertoire lost+found, peut-Ãªtre parce qu'il s'agit d'un point de montage.\n"
+=======
+msgstr "Il contient un répertoire lost+found, peut-être parce qu'il s'agit d'un point de montage.\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:3468
 #, c-format
@@ -988,8 +1141,13 @@ msgid ""
 "Using a mount point directly as the data directory is not recommended.\n"
 "Create a subdirectory under the mount point.\n"
 msgstr ""
+<<<<<<< HEAD
 "Utiliser un point de montage comme rÃ©pertoire des donnÃ©es n'est pas recommandÃ©.\n"
 "CrÃ©ez un sous-rÃ©pertoire sous le point de montage.\n"
+=======
+"Utiliser un point de montage comme répertoire de données n'est pas recommandé.\n"
+"Créez un sous-répertoire sous le point de montage.\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:3487
 #, c-format
@@ -1004,7 +1162,11 @@ msgstr "LancÃ© en mode dÃ©bogage.\n"
 #: initdb.c:3659
 #, c-format
 msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
+<<<<<<< HEAD
 msgstr "LancÃ© en mode Â« sans nettoyage Â». Les erreurs ne seront pas supprimÃ©es.\n"
+=======
+msgstr "Lancé en mode « sans nettoyage ». Les erreurs ne seront pas supprimées.\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:3730
 #, c-format
@@ -1047,8 +1209,13 @@ msgid ""
 "The data directory might become corrupt if the operating system crashes.\n"
 msgstr ""
 "\n"
+<<<<<<< HEAD
 "Synchronisation sur disque ignorÃ©e.\n"
 "Le rÃ©pertoire des donnÃ©es pourrait Ãªtre corrompu si le systÃ¨me d'exploitation s'arrÃªtait brutalement.\n"
+=======
+"Synchronisation sur disque ignorée.\n"
+"Le répertoire des données pourrait être corrompu si le système d'exploitation s'arrêtait brutalement.\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: initdb.c:3805
 #, c-format
@@ -1087,7 +1254,11 @@ msgstr ""
 #~ "Merci de rapporter ce problÃ¨me.\n"
 
 #~ msgid "could not change directory to \"%s\""
+<<<<<<< HEAD
 #~ msgstr "n'a pas pu accÃ©der au rÃ©pertoire Â« %s Â»"
+=======
+#~ msgstr "n'a pas pu accéder au répertoire « %s »"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #~ msgid "%s: could not to allocate SIDs: error code %lu\n"
 #~ msgstr "%s : n'a pas pu allouer les SID : code d'erreur %lu\n"

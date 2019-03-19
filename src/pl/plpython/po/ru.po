@@ -3,12 +3,25 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Alexander Lakhin <exclusion@gmail.com>, 2012-2016, 2017.
 #
+<<<<<<< HEAD
+=======
+# ChangeLog:
+#   - August 6, 2012: Alexander Lakhin <exclusion@gmail.com>.
+#   - June 27, 2012: Updates for 9.2. Alexander Lakhin <exclusion@gmail.com>.
+#   - April 3, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
+#   - February 18, 2012: Complete translation for 9.1. Alexander Lakhin <exclusion@gmail.com>.
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+<<<<<<< HEAD
 "POT-Creation-Date: 2018-04-27 15:41+0300\n"
 "PO-Revision-Date: 2017-02-02 15:13+0300\n"
+=======
+"POT-Creation-Date: 2015-01-09 16:07+0000\n"
+"PO-Revision-Date: 2015-01-11 16:49+0300\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -17,6 +30,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+<<<<<<< HEAD
+=======
+"X-Generator: Lokalize 1.5\n"
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #: plpy_cursorobject.c:98
 #, c-format
@@ -185,12 +202,20 @@ msgstr "при изменении строки в триггере"
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "принудительное прерывание незавершённой подтранзакции"
 
+<<<<<<< HEAD
 #: plpy_main.c:124
+=======
+#: plpy_main.c:93
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "Python major version mismatch in session"
 msgstr "несовпадение базовой версии Python в сеансе"
 
+<<<<<<< HEAD
 #: plpy_main.c:125
+=======
+#: plpy_main.c:94
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid ""
 "This session has previously used Python major version %d, and it is now "
@@ -199,12 +224,17 @@ msgstr ""
 "В данном сеансе до этого использовался Python базовой версии %d, а сейчас "
 "планируется использовать Python версии %d."
 
+<<<<<<< HEAD
 #: plpy_main.c:127
+=======
+#: plpy_main.c:96
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "Start a new session to use a different Python major version."
 msgstr ""
 "Чтобы переключиться на другую базовую версию Python, начните новый сеанс."
 
+<<<<<<< HEAD
 #: plpy_main.c:150
 #, c-format
 msgid "multiple Python libraries are present in session"
@@ -216,21 +246,36 @@ msgid "Only one Python major version can be used in one session."
 msgstr "В одном сеансе нельзя использовать Python разных старших версий."
 
 #: plpy_main.c:167
+=======
+#: plpy_main.c:111
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "необработанная ошибка при инициализации"
 
+<<<<<<< HEAD
 #: plpy_main.c:190
+=======
+#: plpy_main.c:134
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "не удалось импортировать модуль \"__main__\""
 
+<<<<<<< HEAD
 #: plpy_main.c:195
+=======
+#: plpy_main.c:139
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not create globals"
 msgstr "не удалось создать глобальные данные"
 
+<<<<<<< HEAD
 #: plpy_main.c:199
+=======
+#: plpy_main.c:143
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not initialize globals"
 msgstr "не удалось инициализировать глобальные данные"
@@ -284,27 +329,47 @@ msgstr "не удалось распаковать аргументы в plpy.el
 msgid "could not parse error message in plpy.elog"
 msgstr "не удалось разобрать сообщение об ошибке в plpy.elog"
 
+<<<<<<< HEAD
 #: plpy_procedure.c:208
+=======
+#: plpy_procedure.c:200
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "триггерные функции могут вызываться только в триггерах"
 
+<<<<<<< HEAD
 #: plpy_procedure.c:213 plpy_typeio.c:409
+=======
+#: plpy_procedure.c:205 plpy_typeio.c:409
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "функции PL/Python не могут возвращать тип %s"
 
+<<<<<<< HEAD
 #: plpy_procedure.c:295
+=======
+#: plpy_procedure.c:287
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "функции PL/Python не могут принимать тип %s"
 
+<<<<<<< HEAD
 #: plpy_procedure.c:391
+=======
+#: plpy_procedure.c:383
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "не удалось скомпилировать функцию PL/Python \"%s\""
 
+<<<<<<< HEAD
 #: plpy_procedure.c:394
+=======
+#: plpy_procedure.c:386
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "не удалось скомпилировать анонимный блок кода PL/Python"
@@ -436,12 +501,20 @@ msgstr ""
 "возвращаемое значение функции с результатом-массивом не является "
 "последовательностью"
 
+<<<<<<< HEAD
 #: plpy_typeio.c:940
+=======
+#: plpy_typeio.c:930
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "ключ \"%s\" не найден в сопоставлении"
 
+<<<<<<< HEAD
 #: plpy_typeio.c:941
+=======
+#: plpy_typeio.c:931
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid ""
 "To return null in a column, add the value None to the mapping with the key "
@@ -450,17 +523,29 @@ msgstr ""
 "Чтобы присвоить колонке NULL, добавьте в сопоставление значение None с "
 "ключом-именем колонки."
 
+<<<<<<< HEAD
 #: plpy_typeio.c:989
+=======
+#: plpy_typeio.c:979
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "длина возвращённой последовательности не равна числу колонок в строке"
 
+<<<<<<< HEAD
 #: plpy_typeio.c:1097
+=======
+#: plpy_typeio.c:1087
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "в объекте Python не существует атрибут \"%s\""
 
+<<<<<<< HEAD
 #: plpy_typeio.c:1098
+=======
+#: plpy_typeio.c:1088
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #, c-format
 msgid ""
 "To return null in a column, let the returned object have an attribute named "

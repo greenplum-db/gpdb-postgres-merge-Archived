@@ -13,7 +13,11 @@ ACT    -18000    # Acre Time (obsolete)
 # CONFLICT! ACST is not unique
 # Other timezones:
 #  - ACST: Australian Central Standard Time
+<<<<<<< HEAD
 ACST   -14400 D  # Acre Summer Time (obsolete, not in IANA database)
+=======
+ACST   -14400 D  # Acre Summer Time (obsolete, not in zic)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 ADT    -10800 D  # Atlantic Daylight Time
                  #     (America/Glace_Bay)
                  #     (America/Goose_Bay)
@@ -37,9 +41,30 @@ AMST   -10800 D  # Amazon Summer Time (obsolete)
 # CONFLICT! AMT is not unique
 # Other timezones:
 #  - AMT: Armenia Time (Asia)
+<<<<<<< HEAD
 AMT    -14400    # Amazon Time (obsolete)
 ART    America/Argentina/Buenos_Aires  # Argentina Time (obsolete)
 ARST    America/Argentina/Buenos_Aires  # Argentina Summer Time (obsolete)
+=======
+AMT    -14400    # Amazon Time
+                 #     (America/Boa_Vista)
+                 #     (America/Campo_Grande)
+                 #     (America/Cuiaba)
+                 #     (America/Manaus)
+                 #     (America/Porto_Velho)
+ART    America/Argentina/Buenos_Aires  # Argentina Time
+                 #     (America/Argentina/Buenos_Aires)
+                 #     (America/Argentina/Cordoba)
+                 #     (America/Argentina/Tucuman)
+                 #     (America/Argentina/La_Rioja)
+                 #     (America/Argentina/San_Juan)
+                 #     (America/Argentina/Jujuy)
+                 #     (America/Argentina/Catamarca)
+                 #     (America/Argentina/Mendoza)
+                 #     (America/Argentina/Rio_Gallegos)
+                 #     (America/Argentina/Ushuaia)
+ARST    America/Argentina/Buenos_Aires  # Argentina Summer Time
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 # CONFLICT! AST is not unique
 # Other timezones:
 #  - AST: Arabic Standard Time (Asia)
@@ -98,8 +123,17 @@ CDT    -18000 D  # Central Daylight Time
                  #     (America/Rankin_Inlet)
                  #     (America/Winnipeg)
 CLST   -10800 D  # Chile Summer Time (obsolete)
+<<<<<<< HEAD
 CLT    America/Santiago  # Chile Time (obsolete)
 COT    -18000    # Columbia Time (obsolete)
+=======
+                 #     (America/Santiago)
+                 #     (Antarctica/Palmer)
+CLT    America/Santiago  # Chile Time
+                 #     (America/Santiago)
+                 #     (Antarctica/Palmer)
+COT    -18000    # Columbia Time (not in zic)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 # CONFLICT! CST is not unique
 # Other timezones:
 #  - CST: Central Standard Time (Australia)
@@ -190,7 +224,12 @@ GMT         0    # Greenwich Mean Time
                  #     (Etc/GMT)
                  #     (Europe/Dublin)
                  #     (Europe/London)
+<<<<<<< HEAD
 GYT    America/Guyana  # Guyana Time (obsolete)
+=======
+GYT    America/Guyana  # Guyana Time
+                 #     (America/Guyana)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 HADT   -32400 D  # Hawaii-Aleutian Daylight Time (obsolete abbreviation)
                  #     (America/Adak)
 HAST   -36000    # Hawaii-Aleutian Standard Time (obsolete abbreviation)
@@ -247,6 +286,7 @@ PST    -28800    # Pacific Standard Time
                  #     (America/Vancouver)
                  #     (America/Whitehorse)
                  #     (Pacific/Pitcairn)
+<<<<<<< HEAD
 PYST   -10800 D  # Paraguay Summer Time (obsolete)
 PYT    America/Asuncion  # Paraguay Time (obsolete)
 SRT    America/Paramaribo  # Suriname Time (obsolete)
@@ -255,3 +295,21 @@ UYT    -10800    # Uruguay Time (obsolete)
 VET    America/Caracas  # Venezuela Time (obsolete)
 WGST    -7200 D  # Western Greenland Summer Time (obsolete)
 WGT    -10800    # West Greenland Time (obsolete)
+=======
+PYST   -10800 D  # Paraguay Summer Time
+                 #     (America/Asuncion)
+PYT    America/Asuncion  # Paraguay Time
+                 #     (America/Asuncion)
+SRT    America/Paramaribo  # Suriname Time
+                 #     (America/Paramaribo)
+UYST    -7200 D  # Uruguay Summer Time
+                 #     (America/Montevideo)
+UYT    -10800    # Uruguay Time
+                 #     (America/Montevideo)
+VET    America/Caracas  # Venezuela Time
+                 #     (America/Caracas)
+WGST    -7200 D  # Western Greenland Summer Time
+                 #     (America/Godthab)
+WGT    -10800    # West Greenland Time
+                 #     (America/Godthab)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

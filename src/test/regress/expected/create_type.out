@@ -43,22 +43,38 @@ CREATE TYPE text_w_default;
 CREATE FUNCTION int42_in(cstring)
    RETURNS int42
    AS 'int4in'
+<<<<<<< HEAD
    LANGUAGE internal IMMUTABLE STRICT;
+=======
+   LANGUAGE internal STRICT IMMUTABLE;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 NOTICE:  return type int42 is only a shell
 CREATE FUNCTION int42_out(int42)
    RETURNS cstring
    AS 'int4out'
+<<<<<<< HEAD
    LANGUAGE internal IMMUTABLE STRICT;
+=======
+   LANGUAGE internal STRICT IMMUTABLE;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 NOTICE:  argument type int42 is only a shell
 CREATE FUNCTION text_w_default_in(cstring)
    RETURNS text_w_default
    AS 'textin'
+<<<<<<< HEAD
    LANGUAGE internal IMMUTABLE STRICT;
+=======
+   LANGUAGE internal STRICT IMMUTABLE;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 NOTICE:  return type text_w_default is only a shell
 CREATE FUNCTION text_w_default_out(text_w_default)
    RETURNS cstring
    AS 'textout'
+<<<<<<< HEAD
    LANGUAGE internal IMMUTABLE STRICT;
+=======
+   LANGUAGE internal STRICT IMMUTABLE;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 NOTICE:  argument type text_w_default is only a shell
 CREATE TYPE int42 (
    internallength = 4,
@@ -116,6 +132,7 @@ CREATE TYPE not_existing_type (INPUT = array_in,
     ELEMENT = int,
     INTERNALLENGTH = 32);
 ERROR:  function array_out(not_existing_type) does not exist
+<<<<<<< HEAD
 -- Check dependency transfer of opaque functions when creating a new type
 CREATE FUNCTION base_fn_in(cstring) RETURNS opaque AS 'boolin'
     LANGUAGE internal IMMUTABLE STRICT;
@@ -141,6 +158,8 @@ DROP TYPE base_type CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to function base_fn_out(base_type)
 drop cascades to function base_fn_in(cstring)
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 -- Check usage of typmod with a user-defined type
 -- (we have borrowed numeric's typmod functions)
 CREATE TEMP TABLE mytab (foo widget(42,13,7));     -- should fail

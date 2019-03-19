@@ -4,9 +4,13 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2000-2014, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2000-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * src/include/utils/guc.h
@@ -35,6 +39,21 @@
  */
 #define PG_AUTOCONF_FILENAME		"postgresql.auto.conf"
 
+/* upper limit for GUC variables measured in kilobytes of memory */
+/* note that various places assume the byte size fits in a "long" variable */
+#if SIZEOF_SIZE_T > 4 && SIZEOF_LONG > 4
+#define MAX_KILOBYTES	INT_MAX
+#else
+#define MAX_KILOBYTES	(INT_MAX / 1024)
+#endif
+
+/*
+ * Automatic configuration file name for ALTER SYSTEM.
+ * This file will be used to store values of configuration parameters
+ * set by ALTER SYSTEM command.
+ */
+#define PG_AUTOCONF_FILENAME		"postgresql.auto.conf"
+
 /*
  * Certain options can only be set at certain times. The rules are
  * like this:
@@ -53,15 +72,17 @@
  * certain point in their main loop. It's safer to wait than to read a
  * file asynchronously.)
  *
- * BACKEND options can only be set at postmaster startup, from the
- * configuration file, or by client request in the connection startup
- * packet (e.g., from libpq's PGOPTIONS variable).  Furthermore, an
- * already-started backend will ignore changes to such an option in the
- * configuration file.  The idea is that these options are fixed for a
- * given backend once it's started, but they can vary across backends.
+ * BACKEND and SU_BACKEND options can only be set at postmaster startup,
+ * from the configuration file, or by client request in the connection
+ * startup packet (e.g., from libpq's PGOPTIONS variable).  SU_BACKEND
+ * options can be set from the startup packet only when the user is a
+ * superuser.  Furthermore, an already-started backend will ignore changes
+ * to such an option in the configuration file.  The idea is that these
+ * options are fixed for a given backend once it's started, but they can
+ * vary across backends.
  *
  * SUSET options can be set at postmaster startup, with the SIGHUP
- * mechanism, or from SQL if you're a superuser.
+ * mechanism, or from the startup packet or SQL if you're a superuser.
  *
  * USERSET options can be set by anyone any time.
  */
@@ -70,6 +91,7 @@ typedef enum
 	PGC_INTERNAL,
 	PGC_POSTMASTER,
 	PGC_SIGHUP,
+	PGC_SU_BACKEND,
 	PGC_BACKEND,
 	PGC_SUSET,
 	PGC_USERSET
@@ -122,29 +144,43 @@ typedef enum
 
 /*
  * Parsing the configuration file(s) will return a list of name-value pairs
+<<<<<<< HEAD
  * with source location info.
  *
  * If "ignore" is true, don't attempt to apply the item (it might be an item
  * we determined to be duplicate, for instance).
+=======
+ * with source location info.  We also abuse this data structure to carry
+ * error reports about the config files.  An entry reporting an error will
+ * have errmsg != NULL, and might have NULLs for name, value, and/or filename.
+ *
+ * If "ignore" is true, don't attempt to apply the item (it might be an error
+ * report, or an item we determined to be duplicate).  "applied" is set true
+ * if we successfully applied, or could have applied, the setting.
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 typedef struct ConfigVariable
 {
 	char	   *name;
 	char	   *value;
+	char	   *errmsg;
 	char	   *filename;
 	int			sourceline;
+	bool		ignore;
+	bool		applied;
 	struct ConfigVariable *next;
 	bool		ignore;
 } ConfigVariable;
 
-extern bool ParseConfigFile(const char *config_file, const char *calling_file,
-				bool strict, int depth, int elevel,
+extern bool ParseConfigFile(const char *config_file, bool strict,
+				const char *calling_file, int calling_lineno,
+				int depth, int elevel,
 				ConfigVariable **head_p, ConfigVariable **tail_p);
 extern bool ParseConfigFp(FILE *fp, const char *config_file,
 			  int depth, int elevel,
 			  ConfigVariable **head_p, ConfigVariable **tail_p);
 extern bool ParseConfigDirectory(const char *includedir,
-					 const char *calling_file,
+					 const char *calling_file, int calling_lineno,
 					 int depth, int elevel,
 					 ConfigVariable **head_p,
 					 ConfigVariable **tail_p);
@@ -205,17 +241,24 @@ typedef enum
 #define GUC_CUSTOM_PLACEHOLDER	0x0080	/* placeholder for custom variable */
 #define GUC_SUPERUSER_ONLY		0x0100	/* show only to superusers */
 #define GUC_IS_NAME				0x0200	/* limit string to NAMEDATALEN-1 */
+#define GUC_NOT_WHILE_SEC_REST	0x0400	/* can't set if security restricted */
+#define GUC_DISALLOW_IN_AUTO_FILE 0x0800		/* can't set in
+												 * PG_AUTOCONF_FILENAME */
 
-#define GUC_UNIT_KB				0x0400	/* value is in kilobytes */
-#define GUC_UNIT_BLOCKS			0x0800	/* value is in blocks */
-#define GUC_UNIT_XBLOCKS		0x0C00	/* value is in xlog blocks */
-#define GUC_UNIT_MEMORY			0x0C00	/* mask for KB, BLOCKS, XBLOCKS */
+#define GUC_UNIT_KB				0x1000	/* value is in kilobytes */
+#define GUC_UNIT_BLOCKS			0x2000	/* value is in blocks */
+#define GUC_UNIT_XBLOCKS		0x3000	/* value is in xlog blocks */
+#define GUC_UNIT_XSEGS			0x4000	/* value is in xlog segments */
+#define GUC_UNIT_MEMORY			0xF000	/* mask for KB, BLOCKS, XBLOCKS */
 
-#define GUC_UNIT_MS				0x1000	/* value is in milliseconds */
-#define GUC_UNIT_S				0x2000	/* value is in seconds */
-#define GUC_UNIT_MIN			0x4000	/* value is in minutes */
-#define GUC_UNIT_TIME			0x7000	/* mask for MS, S, MIN */
+#define GUC_UNIT_MS			   0x10000	/* value is in milliseconds */
+#define GUC_UNIT_S			   0x20000	/* value is in seconds */
+#define GUC_UNIT_MIN		   0x30000	/* value is in minutes */
+#define GUC_UNIT_TIME		   0xF0000	/* mask for MS, S, MIN */
 
+#define GUC_UNIT				(GUC_UNIT_MEMORY | GUC_UNIT_TIME)
+
+<<<<<<< HEAD
 #define GUC_NOT_WHILE_SEC_REST	0x8000	/* can't set if security restricted */
 #define GUC_DISALLOW_IN_AUTO_FILE	0x00010000	/* can't set in PG_AUTOCONF_FILENAME */
 
@@ -226,6 +269,8 @@ typedef enum
 /* GUC lists for gp_guc_list_show().  (List of struct config_generic) */
 extern List    *gp_guc_list_for_explain;
 extern List    *gp_guc_list_for_no_plan;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
 extern bool log_duration;
@@ -330,6 +375,7 @@ extern int	temp_file_limit;
 
 extern int	num_temp_buffers;
 
+<<<<<<< HEAD
 extern bool vmem_process_interrupt;
 extern bool execute_pruned_plan;
 
@@ -370,6 +416,10 @@ extern int Debug_dtm_action_nestinglevel;
 
 extern char *data_directory;
 extern PGDLLIMPORT char *ConfigFileName;
+=======
+extern char *cluster_name;
+extern char *ConfigFileName;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern char *HbaFileName;
 extern char *IdentFileName;
 extern char *external_pid_file;
@@ -387,6 +437,7 @@ extern int	tcp_keepalives_idle;
 extern int	tcp_keepalives_interval;
 extern int	tcp_keepalives_count;
 
+<<<<<<< HEAD
 extern int	gp_connection_send_timeout;
 
 extern bool create_restartpoint_on_ckpt_record_replay;
@@ -577,6 +628,11 @@ extern IndexCheckType gp_indexcheck_vacuum;
 #define SOPT_ALIAS_APPENDOPTIMIZED "appendoptimized"
 /* Max number of chars needed to hold value of a storage option. */
 #define MAX_SOPT_VALUE_LEN 15
+=======
+#ifdef TRACE_SORT
+extern bool trace_sort;
+#endif
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * Functions exported by guc.c
@@ -669,7 +725,8 @@ extern bool parse_int(const char *value, int *result, int flags,
 extern bool parse_real(const char *value, double *result);
 extern int set_config_option(const char *name, const char *value,
 				  GucContext context, GucSource source,
-				  GucAction action, bool changeVal, int elevel);
+				  GucAction action, bool changeVal, int elevel,
+				  bool is_reload);
 extern void AlterSystemSetConfigFile(AlterSystemStmt *setstmt);
 extern char *GetConfigOptionByName(const char *name, const char **varname);
 extern void GetConfigOptionByNum(int varnum, const char **values, bool *noshow);
@@ -706,6 +763,11 @@ extern bool parse_real(const char *value, double *result);
 extern void write_nondefault_variables(GucContext context);
 extern void read_nondefault_variables(void);
 #endif
+
+/* GUC serialization */
+extern Size EstimateGUCStateSpace(void);
+extern void SerializeGUCState(Size maxsize, char *start_address);
+extern void RestoreGUCState(void *gucstate);
 
 /* Support for messages reported from GUC check hooks */
 

@@ -3,6 +3,7 @@
  * analyze.c
  *	  the Postgres statistics generator
  *
+<<<<<<< HEAD
  *
  * There are a few things in Greenplum that make this more complicated
  * than in upstream:
@@ -65,6 +66,9 @@
  * TODO: explain how this works.
  *
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -111,6 +115,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/pg_rusage.h"
+#include "utils/sampling.h"
 #include "utils/sortsupport.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
@@ -141,17 +146,6 @@
  */
 #define GP_HLL_ERROR_MARGIN  0.003
 
-/* Data structure for Algorithm S from Knuth 3.4.2 */
-typedef struct
-{
-	BlockNumber N;				/* number of blocks, known in advance */
-	int			n;				/* desired sample size */
-	BlockNumber t;				/* current block number */
-	int			m;				/* blocks selected so far */
-} BlockSamplerData;
-
-typedef BlockSamplerData *BlockSampler;
-
 /* Per-index data for ANALYZE */
 typedef struct AnlIndexData
 {
@@ -172,13 +166,17 @@ static BufferAccessStrategy vac_strategy;
 Bitmapset	**acquire_func_colLargeRowIndexes;
 
 
-static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
+static void do_analyze_rel(Relation onerel, int options,
+			   VacuumParams *params, List *va_cols,
 			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
 			   bool inh, bool in_outer_xact, int elevel);
+<<<<<<< HEAD
 static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
 				  int samplesize);
 static bool BlockSampler_HasMore(BlockSampler bs);
 static BlockNumber BlockSampler_Next(BlockSampler bs);
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void compute_index_stats(Relation onerel, double totalrows,
 					AnlIndexData *indexdata, int nindexes,
 					HeapTuple *rows, int numrows,
@@ -205,6 +203,7 @@ static void acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **att
  *	analyze_rel() -- analyze one relation
  */
 void
+<<<<<<< HEAD
 analyze_rel(Oid relid, VacuumStmt *vacstmt,
 			bool in_outer_xact, BufferAccessStrategy bstrategy)
 {
@@ -238,6 +237,11 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 static void
 analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 			bool in_outer_xact, BufferAccessStrategy bstrategy)
+=======
+analyze_rel(Oid relid, RangeVar *relation, int options,
+			VacuumParams *params, List *va_cols, bool in_outer_xact,
+			BufferAccessStrategy bstrategy)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	Relation	onerel;
 	int			elevel;
@@ -245,7 +249,7 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	BlockNumber relpages = 0;
 
 	/* Select logging level */
-	if (vacstmt->options & VACOPT_VERBOSE)
+	if (options & VACOPT_VERBOSE)
 		elevel = INFO;
 	else
 		elevel = DEBUG2;
@@ -265,18 +269,23 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	 * matter if we ever try to accumulate stats on dead tuples.) If the rel
 	 * has been dropped since we last saw it, we don't need to process it.
 	 */
+<<<<<<< HEAD
 	if (!(vacstmt->options & VACOPT_NOWAIT))
 		onerel = try_relation_open(relid, ShareUpdateExclusiveLock, false);
+=======
+	if (!(options & VACOPT_NOWAIT))
+		onerel = try_relation_open(relid, ShareUpdateExclusiveLock);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	else if (ConditionalLockRelationOid(relid, ShareUpdateExclusiveLock))
 		onerel = try_relation_open(relid, NoLock, false);
 	else
 	{
 		onerel = NULL;
-		if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
+		if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 			ereport(LOG,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 				  errmsg("skipping analyze of \"%s\" --- lock not available",
-						 vacstmt->relation->relname)));
+						 relation->relname)));
 	}
 	if (!onerel)
 		return;
@@ -288,7 +297,7 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 		  (pg_database_ownercheck(MyDatabaseId, GetUserId()) && !onerel->rd_rel->relisshared)))
 	{
 		/* No need for a WARNING if we already complained during VACUUM */
-		if (!(vacstmt->options & VACOPT_VACUUM))
+		if (!(options & VACOPT_VACUUM))
 		{
 			if (onerel->rd_rel->relisshared)
 				ereport(WARNING,
@@ -372,7 +381,7 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	else
 	{
 		/* No need for a WARNING if we already complained during VACUUM */
-		if (!(vacstmt->options & VACOPT_VACUUM))
+		if (!(options & VACOPT_VACUUM))
 			ereport(WARNING,
 					(errmsg("skipping \"%s\" --- cannot analyze non-tables or special system tables",
 							RelationGetRelationName(onerel))));
@@ -393,15 +402,21 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	 * Skip this for partitioned tables. A partitioned table, i.e. the
 	 * "root partition", doesn't contain any rows.
 	 */
+<<<<<<< HEAD
 	PartStatus ps = rel_part_status(relid);
 	if (!(ps == PART_STATUS_ROOT || ps == PART_STATUS_INTERIOR))
 		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages,
 					   false, in_outer_xact, elevel);
+=======
+	do_analyze_rel(onerel, options, params, va_cols, acquirefunc, relpages,
+				   false, in_outer_xact, elevel);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
 	 */
 	if (onerel->rd_rel->relhassubclass)
+<<<<<<< HEAD
 		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages,
 					   true, in_outer_xact, elevel);
 
@@ -420,6 +435,10 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 						   asubtype
 			);
 	}
+=======
+		do_analyze_rel(onerel, options, params, va_cols, acquirefunc, relpages,
+					   true, in_outer_xact, elevel);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Close source relation now, but keep lock so that no one deletes it
@@ -442,14 +461,20 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
  *	do_analyze_rel() -- analyze one relation, recursively or not
  *
  * Note that "acquirefunc" is only relevant for the non-inherited case.
- * If we supported foreign tables in inheritance trees,
- * acquire_inherited_sample_rows would need to determine the appropriate
- * acquirefunc for each child table.
+ * For the inherited case, acquire_inherited_sample_rows() determines the
+ * appropriate acquirefunc for each child table.
  */
 static void
+<<<<<<< HEAD
 do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
 			   bool inh, bool in_outer_xact, int elevel)
+=======
+do_analyze_rel(Relation onerel, int options, VacuumParams *params,
+			   List *va_cols, AcquireSampleRowsFunc acquirefunc,
+			   BlockNumber relpages, bool inh, bool in_outer_xact,
+			   int elevel)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	int			attr_cnt,
 				tcnt,
@@ -507,10 +532,10 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	save_nestlevel = NewGUCNestLevel();
 
 	/* measure elapsed time iff autovacuum logging requires it */
-	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
+	if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 	{
 		pg_rusage_init(&ru0);
-		if (Log_autovacuum_min_duration > 0)
+		if (params->log_min_duration > 0)
 			starttime = GetCurrentTimestamp();
 	}
 
@@ -522,15 +547,15 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	 * could alternatively ignore duplicates, but analyzing a column twice
 	 * won't work; we'd end up making a conflicting update in pg_statistic.)
 	 */
-	if (vacstmt->va_cols != NIL)
+	if (va_cols != NIL)
 	{
 		Bitmapset  *unique_cols = NULL;
 		ListCell   *le;
 
-		vacattrstats = (VacAttrStats **) palloc(list_length(vacstmt->va_cols) *
+		vacattrstats = (VacAttrStats **) palloc(list_length(va_cols) *
 												sizeof(VacAttrStats *));
 		tcnt = 0;
-		foreach(le, vacstmt->va_cols)
+		foreach(le, va_cols)
 		{
 			char	   *col = strVal(lfirst(le));
 
@@ -594,7 +619,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 
 			thisdata->indexInfo = indexInfo = BuildIndexInfo(Irel[ind]);
 			thisdata->tupleFract = 1.0; /* fix later if partial */
-			if (indexInfo->ii_Expressions != NIL && vacstmt->va_cols == NIL)
+			if (indexInfo->ii_Expressions != NIL && va_cols == NIL)
 			{
 				ListCell   *indexpr_item = list_head(indexInfo->ii_Expressions);
 
@@ -888,15 +913,19 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 							hasindex,
 							InvalidTransactionId,
 							InvalidMultiXactId,
+<<<<<<< HEAD
 							in_outer_xact,
 							false /* isvacuum */);
+=======
+							in_outer_xact);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
 	 * VACUUM ANALYZE, don't overwrite the accurate count already inserted by
 	 * VACUUM.
 	 */
-	if (!inh && !(vacstmt->options & VACOPT_VACUUM))
+	if (!inh && !(options & VACOPT_VACUUM))
 	{
 		for (ind = 0; ind < nindexes; ind++)
 		{
@@ -935,8 +964,12 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 								false,
 								InvalidTransactionId,
 								InvalidMultiXactId,
+<<<<<<< HEAD
 								in_outer_xact,
 								false /* isvacuum */);
+=======
+								in_outer_xact);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 	}
 
@@ -952,7 +985,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 							  (vacstmt->va_cols == NIL));
 
 	/* If this isn't part of VACUUM ANALYZE, let index AMs do cleanup */
-	if (!(vacstmt->options & VACOPT_VACUUM))
+	if (!(options & VACOPT_VACUUM))
 	{
 		for (ind = 0; ind < nindexes; ind++)
 		{
@@ -977,11 +1010,11 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	vac_close_indexes(nindexes, Irel, NoLock);
 
 	/* Log the action if appropriate */
-	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
+	if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 	{
-		if (Log_autovacuum_min_duration == 0 ||
+		if (params->log_min_duration == 0 ||
 			TimestampDifferenceExceeds(starttime, GetCurrentTimestamp(),
-									   Log_autovacuum_min_duration))
+									   params->log_min_duration))
 			ereport(LOG,
 					(errmsg("automatic analyze of table \"%s.%s.%s\" system usage: %s",
 							get_database_name(MyDatabaseId),
@@ -1290,94 +1323,6 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr, int elevel)
 }
 
 /*
- * BlockSampler_Init -- prepare for random sampling of blocknumbers
- *
- * BlockSampler is used for stage one of our new two-stage tuple
- * sampling mechanism as discussed on pgsql-hackers 2004-04-02 (subject
- * "Large DB").  It selects a random sample of samplesize blocks out of
- * the nblocks blocks in the table.  If the table has less than
- * samplesize blocks, all blocks are selected.
- *
- * Since we know the total number of blocks in advance, we can use the
- * straightforward Algorithm S from Knuth 3.4.2, rather than Vitter's
- * algorithm.
- */
-static void
-BlockSampler_Init(BlockSampler bs, BlockNumber nblocks, int samplesize)
-{
-	bs->N = nblocks;			/* measured table size */
-
-	/*
-	 * If we decide to reduce samplesize for tables that have less or not much
-	 * more than samplesize blocks, here is the place to do it.
-	 */
-	bs->n = samplesize;
-	bs->t = 0;					/* blocks scanned so far */
-	bs->m = 0;					/* blocks selected so far */
-}
-
-static bool
-BlockSampler_HasMore(BlockSampler bs)
-{
-	return (bs->t < bs->N) && (bs->m < bs->n);
-}
-
-static BlockNumber
-BlockSampler_Next(BlockSampler bs)
-{
-	BlockNumber K = bs->N - bs->t;		/* remaining blocks */
-	int			k = bs->n - bs->m;		/* blocks still to sample */
-	double		p;				/* probability to skip block */
-	double		V;				/* random */
-
-	Assert(BlockSampler_HasMore(bs));	/* hence K > 0 and k > 0 */
-
-	if ((BlockNumber) k >= K)
-	{
-		/* need all the rest */
-		bs->m++;
-		return bs->t++;
-	}
-
-	/*----------
-	 * It is not obvious that this code matches Knuth's Algorithm S.
-	 * Knuth says to skip the current block with probability 1 - k/K.
-	 * If we are to skip, we should advance t (hence decrease K), and
-	 * repeat the same probabilistic test for the next block.  The naive
-	 * implementation thus requires an anl_random_fract() call for each block
-	 * number.  But we can reduce this to one anl_random_fract() call per
-	 * selected block, by noting that each time the while-test succeeds,
-	 * we can reinterpret V as a uniform random number in the range 0 to p.
-	 * Therefore, instead of choosing a new V, we just adjust p to be
-	 * the appropriate fraction of its former value, and our next loop
-	 * makes the appropriate probabilistic test.
-	 *
-	 * We have initially K > k > 0.  If the loop reduces K to equal k,
-	 * the next while-test must fail since p will become exactly zero
-	 * (we assume there will not be roundoff error in the division).
-	 * (Note: Knuth suggests a "<=" loop condition, but we use "<" just
-	 * to be doubly sure about roundoff error.)  Therefore K cannot become
-	 * less than k, which means that we cannot fail to select enough blocks.
-	 *----------
-	 */
-	V = anl_random_fract();
-	p = 1.0 - (double) k / (double) K;
-	while (V < p)
-	{
-		/* skip */
-		bs->t++;
-		K--;					/* keep K == N - t */
-
-		/* adjust p to be new cutoff point in reduced range */
-		p *= 1.0 - (double) k / (double) K;
-	}
-
-	/* select */
-	bs->m++;
-	return bs->t++;
-}
-
-/*
  * acquire_sample_rows -- acquire a random sample of rows from the table
  *
  * Selected rows are returned in the caller-allocated array rows[], which
@@ -1426,7 +1371,7 @@ acquire_sample_rows_heap(Relation onerel, int elevel,
 	BlockNumber totalblocks;
 	TransactionId OldestXmin;
 	BlockSamplerData bs;
-	double		rstate;
+	ReservoirStateData rstate;
 
 	Assert(targrows > 0);
 
@@ -1436,9 +1381,9 @@ acquire_sample_rows_heap(Relation onerel, int elevel,
 	OldestXmin = GetOldestXmin(onerel, true);
 
 	/* Prepare for sampling block numbers */
-	BlockSampler_Init(&bs, totalblocks, targrows);
+	BlockSampler_Init(&bs, totalblocks, targrows, random());
 	/* Prepare for sampling rows */
-	rstate = anl_init_selection_state(targrows);
+	reservoir_init_selection_state(&rstate, targrows);
 
 	/* Outer loop over blocks to sample */
 	while (BlockSampler_HasMore(&bs))
@@ -1588,8 +1533,7 @@ acquire_sample_rows_heap(Relation onerel, int elevel,
 					 * t.
 					 */
 					if (rowstoskip < 0)
-						rowstoskip = anl_get_next_S(samplerows, targrows,
-													&rstate);
+						rowstoskip = reservoir_get_next_S(&rstate, samplerows, targrows);
 
 					if (rowstoskip <= 0)
 					{
@@ -1597,7 +1541,7 @@ acquire_sample_rows_heap(Relation onerel, int elevel,
 						 * Found a suitable tuple, so save it, replacing one
 						 * old tuple at random
 						 */
-						int			k = (int) (targrows * anl_random_fract());
+						int			k = (int) (targrows * sampler_random_fract(rstate.randstate));
 
 						Assert(k >= 0 && k < targrows);
 						heap_freetuple(rows[k]);
@@ -1659,6 +1603,7 @@ acquire_sample_rows_heap(Relation onerel, int elevel,
 	return numrows;
 }
 
+<<<<<<< HEAD
 /*
  * Collect a sample of rows from an AO or AOCS table.
  *
@@ -1944,6 +1889,8 @@ anl_get_next_S(double t, int n, double *stateptr)
 	return S;
 }
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * qsort comparator for sorting rows[] array
  */
@@ -1974,7 +1921,8 @@ compare_rows(const void *a, const void *b)
  *
  * This has the same API as acquire_sample_rows, except that rows are
  * collected from all inheritance children as well as the specified table.
- * We fail and return zero if there are no inheritance children.
+ * We fail and return zero if there are no inheritance children, or if all
+ * children are foreign tables that don't support ANALYZE.
  */
 int
 acquire_inherited_sample_rows(Relation onerel, int elevel,
@@ -1983,6 +1931,7 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 {
 	List	   *tableOIDs;
 	Relation   *rels;
+	AcquireSampleRowsFunc *acquirefuncs;
 	double	   *relblocks;
 	double		totalblocks;
 	int			numrows,
@@ -2021,16 +1970,25 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 		/* CCI because we already updated the pg_class row in this command */
 		CommandCounterIncrement();
 		SetRelationHasSubclass(RelationGetRelid(onerel), false);
+<<<<<<< HEAD
 		*totalrows = 0;
 		*totaldeadrows = 0;
+=======
+		ereport(elevel,
+				(errmsg("skipping analyze of \"%s.%s\" inheritance tree --- this inheritance tree contains no child tables",
+						get_namespace_name(RelationGetNamespace(onerel)),
+						RelationGetRelationName(onerel))));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		return 0;
 	}
 
 	/*
-	 * Count the blocks in all the relations.  The result could overflow
-	 * BlockNumber, so we use double arithmetic.
+	 * Identify acquirefuncs to use, and count blocks in all the relations.
+	 * The result could overflow BlockNumber, so we use double arithmetic.
 	 */
 	rels = (Relation *) palloc(list_length(tableOIDs) * sizeof(Relation));
+	acquirefuncs = (AcquireSampleRowsFunc *)
+		palloc(list_length(tableOIDs) * sizeof(AcquireSampleRowsFunc));
 	relblocks = (double *) palloc(list_length(tableOIDs) * sizeof(double));
 	totalblocks = 0;
 	nrels = 0;
@@ -2038,6 +1996,8 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 	{
 		Oid			childOID = lfirst_oid(lc);
 		Relation	childrel;
+		AcquireSampleRowsFunc acquirefunc = NULL;
+		BlockNumber relpages = 0;
 
 		/* We already got the needed lock */
 		childrel = heap_open(childOID, NoLock);
@@ -2051,10 +2011,69 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 			continue;
 		}
 
+		/* Check table type (MATVIEW can't happen, but might as well allow) */
+		if (childrel->rd_rel->relkind == RELKIND_RELATION ||
+			childrel->rd_rel->relkind == RELKIND_MATVIEW)
+		{
+			/* Regular table, so use the regular row acquisition function */
+			acquirefunc = acquire_sample_rows;
+			relpages = RelationGetNumberOfBlocks(childrel);
+		}
+		else if (childrel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+		{
+			/*
+			 * For a foreign table, call the FDW's hook function to see
+			 * whether it supports analysis.
+			 */
+			FdwRoutine *fdwroutine;
+			bool		ok = false;
+
+			fdwroutine = GetFdwRoutineForRelation(childrel, false);
+
+			if (fdwroutine->AnalyzeForeignTable != NULL)
+				ok = fdwroutine->AnalyzeForeignTable(childrel,
+													 &acquirefunc,
+													 &relpages);
+
+			if (!ok)
+			{
+				/* ignore, but release the lock on it */
+				Assert(childrel != onerel);
+				heap_close(childrel, AccessShareLock);
+				continue;
+			}
+		}
+		else
+		{
+			/* ignore, but release the lock on it */
+			Assert(childrel != onerel);
+			heap_close(childrel, AccessShareLock);
+			continue;
+		}
+
+		/* OK, we'll process this child */
 		rels[nrels] = childrel;
+<<<<<<< HEAD
 		relblocks[nrels] = acquire_number_of_blocks(childrel);
 		totalblocks += relblocks[nrels];
+=======
+		acquirefuncs[nrels] = acquirefunc;
+		relblocks[nrels] = (double) relpages;
+		totalblocks += (double) relpages;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		nrels++;
+	}
+
+	/*
+	 * If we don't have at least two tables to consider, fail.
+	 */
+	if (nrels < 2)
+	{
+		ereport(elevel,
+				(errmsg("skipping analyze of \"%s.%s\" inheritance tree --- this inheritance tree contains no analyzable child tables",
+						get_namespace_name(RelationGetNamespace(onerel)),
+						RelationGetRelationName(onerel))));
+		return 0;
 	}
 
 	/*
@@ -2069,6 +2088,7 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 	for (i = 0; i < nrels; i++)
 	{
 		Relation	childrel = rels[i];
+		AcquireSampleRowsFunc acquirefunc = acquirefuncs[i];
 		double		childblocks = relblocks[i];
 
 		if (childblocks > 0)
@@ -2085,12 +2105,9 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 							tdrows;
 
 				/* Fetch a random sample of the child's rows */
-				childrows = acquire_sample_rows(childrel,
-												elevel,
-												rows + numrows,
-												childtargrows,
-												&trows,
-												&tdrows);
+				childrows = (*acquirefunc) (childrel, elevel,
+											rows + numrows, childtargrows,
+											&trows, &tdrows);
 
 				/* We may need to convert from child's rowtype to parent's */
 				if (childrows > 0 &&
@@ -3395,6 +3412,13 @@ compute_scalar_stats(VacAttrStatsP stats,
 	/* We always use the default collation for statistics */
 	ssup.ssup_collation = DEFAULT_COLLATION_OID;
 	ssup.ssup_nulls_first = false;
+
+	/*
+	 * For now, don't perform abbreviated key conversion, because full values
+	 * are required for MCV slot generation.  Supporting that optimization
+	 * would necessitate teaching compare_scalars() to call a tie-breaker.
+	 */
+	ssup.abbreviate = false;
 
 	PrepareSortSupportFromOrderingOp(mystats->ltopr, &ssup);
 

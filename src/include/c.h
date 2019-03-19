@@ -9,9 +9,13 @@
  *	  polluting the namespace with lots of stuff...
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2011, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/c.h
@@ -252,11 +256,14 @@ extern "C" {
 #define dummyret	char
 #endif
 
+<<<<<<< HEAD
 #ifndef __GNUC__
 #define __attribute__(_arg_)
 #endif
 
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /* ----------------------------------------------------------------
  *				Section 2:	bool, true, false, TRUE, FALSE, NULL
  * ----------------------------------------------------------------
@@ -390,10 +397,29 @@ typedef unsigned long long int uint64;
 #endif
 #endif
 
+<<<<<<< HEAD
+=======
+/* snprintf format strings to use for 64-bit integers */
+#define INT64_FORMAT "%" INT64_MODIFIER "d"
+#define UINT64_FORMAT "%" INT64_MODIFIER "u"
+
+/*
+ * 128-bit signed and unsigned integers
+ *		There currently is only a limited support for the type. E.g. 128bit
+ *		literals and snprintf are not supported; but math is.
+ */
+#if defined(PG_INT128_TYPE)
+#define HAVE_INT128
+typedef PG_INT128_TYPE int128;
+typedef unsigned PG_INT128_TYPE uint128;
+#endif
+
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * stdint.h limits aren't guaranteed to be present and aren't guaranteed to
  * have compatible types with our fixed width types. So just define our own.
  */
+<<<<<<< HEAD
 #define PG_INT8_MIN     (-0x7F-1)
 #define PG_INT8_MAX     (0x7F)
 #define PG_UINT8_MAX    (0xFF)
@@ -406,6 +432,20 @@ typedef unsigned long long int uint64;
 #define PG_INT64_MIN    (-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
 #define PG_INT64_MAX    INT64CONST(0x7FFFFFFFFFFFFFFF)
 #define PG_UINT64_MAX   UINT64CONST(0xFFFFFFFFFFFFFFFF)
+=======
+#define PG_INT8_MIN		(-0x7F-1)
+#define PG_INT8_MAX		(0x7F)
+#define PG_UINT8_MAX	(0xFF)
+#define PG_INT16_MIN	(-0x7FFF-1)
+#define PG_INT16_MAX	(0x7FFF)
+#define PG_UINT16_MAX	(0xFFFF)
+#define PG_INT32_MIN	(-0x7FFFFFFF-1)
+#define PG_INT32_MAX	(0x7FFFFFFF)
+#define PG_UINT32_MAX	(0xFFFFFFFF)
+#define PG_INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
+#define PG_INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
+#define PG_UINT64_MAX	UINT64CONST(0xFFFFFFFFFFFFFFFF)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* Select timestamp representation (float8 or int64) */
 #ifdef USE_INTEGER_DATETIMES
@@ -555,7 +595,7 @@ typedef struct
 struct varlena
 {
 	char		vl_len_[4];		/* Do not touch this field directly! */
-	char		vl_dat[1];
+	char		vl_dat[FLEXIBLE_ARRAY_MEMBER];	/* Data content is here */
 };
 
 #define VARHDRSZ		((int32) sizeof(int32))
@@ -588,8 +628,8 @@ typedef struct
 	Oid			elemtype;
 	int			dim1;
 	int			lbound1;
-	int16		values[1];		/* VARIABLE LENGTH ARRAY */
-} int2vector;					/* VARIABLE LENGTH STRUCT */
+	int16		values[FLEXIBLE_ARRAY_MEMBER];
+} int2vector;
 
 typedef struct
 {
@@ -599,8 +639,8 @@ typedef struct
 	Oid			elemtype;
 	int			dim1;
 	int			lbound1;
-	Oid			values[1];		/* VARIABLE LENGTH ARRAY */
-} oidvector;					/* VARIABLE LENGTH STRUCT */
+	Oid			values[FLEXIBLE_ARRAY_MEMBER];
+} oidvector;
 
 /*
  * Representation of a Name: effectively just a C string, but null-padded to
@@ -694,6 +734,7 @@ typedef NameData *Name;
 #define MAXALIGN(LEN)			TYPEALIGN(MAXIMUM_ALIGNOF, (LEN))
 /* MAXALIGN covers only built-in types, not buffers */
 #define BUFFERALIGN(LEN)		TYPEALIGN(ALIGNOF_BUFFER, (LEN))
+#define CACHELINEALIGN(LEN)		TYPEALIGN(PG_CACHE_LINE_SIZE, (LEN))
 
 #define TYPEALIGN_DOWN(ALIGNVAL,LEN)  \
 	(((uintptr_t) (LEN)) & ~((uintptr_t) ((ALIGNVAL) - 1)))
@@ -716,6 +757,50 @@ typedef NameData *Name;
 /* we don't currently need wider versions of the other ALIGN macros */
 #define MAXALIGN64(LEN)			TYPEALIGN64(MAXIMUM_ALIGNOF, (LEN))
 
+<<<<<<< HEAD
+=======
+/* ----------------
+ * Attribute macros
+ *
+ * GCC: https://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
+ * GCC: https://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html
+ * Sunpro: https://docs.oracle.com/cd/E18659_01/html/821-1384/gjzke.html
+ * XLC: http://www-01.ibm.com/support/knowledgecenter/SSGH2K_11.1.0/com.ibm.xlc111.aix.doc/language_ref/function_attributes.html
+ * XLC: http://www-01.ibm.com/support/knowledgecenter/SSGH2K_11.1.0/com.ibm.xlc111.aix.doc/language_ref/type_attrib.html
+ * ----------------
+ */
+
+/* only GCC supports the unused attribute */
+#ifdef __GNUC__
+#define pg_attribute_unused() __attribute__((unused))
+#else
+#define pg_attribute_unused()
+#endif
+
+/* GCC and XLC support format attributes */
+#if defined(__GNUC__) || defined(__IBMC__)
+#define pg_attribute_format_arg(a) __attribute__((format_arg(a)))
+#define pg_attribute_printf(f,a) __attribute__((format(PG_PRINTF_ATTRIBUTE, f, a)))
+#else
+#define pg_attribute_format_arg(a)
+#define pg_attribute_printf(f,a)
+#endif
+
+/* GCC, Sunpro and XLC support aligned, packed and noreturn */
+#if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__IBMC__)
+#define pg_attribute_aligned(a) __attribute__((aligned(a)))
+#define pg_attribute_noreturn() __attribute__((noreturn))
+#define pg_attribute_packed() __attribute__((packed))
+#define HAVE_PG_ATTRIBUTE_NORETURN 1
+#else
+/*
+ * NB: aligned and packed are not given default definitions because they
+ * affect code functionality; they *must* be implemented by the compiler
+ * if they are to be used.
+ */
+#define pg_attribute_noreturn()
+#endif
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* ----------------------------------------------------------------
  *				Section 6:	assertions
@@ -741,8 +826,11 @@ typedef NameData *Name;
 #define AssertArg(condition)	((void)true)
 #define AssertState(condition)	((void)true)
 #define AssertPointerAlignment(ptr, bndr)	((void)true)
+<<<<<<< HEAD
 #define AssertImply(condition1, condition2)	((void)true)
 #define AssertEquivalent(cond1, cond2)	((void)true)
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #define Trap(condition, errorType)	((void)true)
 #define TrapMacro(condition, errorType) (true)
 
@@ -754,7 +842,10 @@ typedef NameData *Name;
 #define AssertArg(condition) assert(condition)
 #define AssertState(condition) assert(condition)
 #define AssertPointerAlignment(ptr, bndr)	((void)true)
+<<<<<<< HEAD
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #else							/* USE_ASSERT_CHECKING && !FRONTEND */
 
 /*
@@ -763,7 +854,7 @@ typedef NameData *Name;
  */
 #define Trap(condition, errorType) \
 	do { \
-		if ((assert_enabled) && (condition)) \
+		if (condition) \
 			ExceptionalCondition(CppAsString(condition), (errorType), \
 								 __FILE__, __LINE__); \
 	} while (0)
@@ -776,7 +867,7 @@ typedef NameData *Name;
  *	Isn't CPP fun?
  */
 #define TrapMacro(condition, errorType) \
-	((bool) ((! assert_enabled) || ! (condition) || \
+	((bool) (! (condition) || \
 			 (ExceptionalCondition(CppAsString(condition), (errorType), \
 								   __FILE__, __LINE__), 0)))
 
@@ -792,12 +883,15 @@ typedef NameData *Name;
 #define AssertState(condition) \
 		Trap(!(condition), "BadState")
 
+<<<<<<< HEAD
 #define AssertImply(cond1, cond2) \
 		Trap(!(!(cond1) || (cond2)), "AssertImply failed")
 
 #define AssertEquivalent(cond1, cond2) \
 		Trap(!((bool)(cond1) == (bool)(cond2)), "AssertEquivalent failed")
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * Check that `ptr' is `bndr' aligned.
  */
@@ -806,7 +900,6 @@ typedef NameData *Name;
 		 "UnalignedPointer")
 
 #endif   /* USE_ASSERT_CHECKING && !FRONTEND */
-
 
 /*
  * Macros to support compile-time assertion checks.
@@ -1033,7 +1126,10 @@ typedef NameData *Name;
  * !PG_USE_INLINE.
  */
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /* declarations which are only visible when not inlining and in the .c file */
 #ifdef PG_USE_INLINE
 #define STATIC_IF_INLINE static inline
@@ -1113,6 +1209,7 @@ typedef union PGAlignedXLogBlock
 /*
  * gettext support
  */
+<<<<<<< HEAD
 
 #ifndef ENABLE_NLS
 /* stuff we'd otherwise get from <libintl.h> */
@@ -1120,6 +1217,12 @@ typedef union PGAlignedXLogBlock
 #define dgettext(d,x) (x)
 #define ngettext(s,p,n) ((n) == 1 ? (s) : (p))
 #define dngettext(d,s,p,n) ((n) == 1 ? (s) : (p))
+=======
+#ifdef USE_ASSERT_CHECKING
+#define PG_USED_FOR_ASSERTS_ONLY
+#else
+#define PG_USED_FOR_ASSERTS_ONLY pg_attribute_unused()
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #endif
 
 #define _(x) gettext(x)
@@ -1138,7 +1241,7 @@ typedef union PGAlignedXLogBlock
  * To better support parallel installations of major PostgreSQL
  * versions as well as parallel installations of major library soname
  * versions, we mangle the gettext domain name by appending those
- * version numbers.  The coding rule ought to be that whereever the
+ * version numbers.  The coding rule ought to be that wherever the
  * domain name is mentioned as a literal, it must be wrapped into
  * PG_TEXTDOMAIN().  The macros below do not work on non-literals; but
  * that is somewhat intentional because it avoids having to worry
@@ -1192,10 +1295,14 @@ typedef union PGAlignedXLogBlock
  */
 
 #if !HAVE_DECL_SNPRINTF
+<<<<<<< HEAD
 extern int
 snprintf(char *str, size_t count, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 3, 4)));
+=======
+extern int	snprintf(char *str, size_t count, const char *fmt,...) pg_attribute_printf(3, 4);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #endif
 
 #if !HAVE_DECL_VSNPRINTF

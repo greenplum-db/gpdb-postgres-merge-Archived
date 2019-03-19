@@ -71,7 +71,7 @@
  * care that all calls for a single LogicalTapeSet are made in the same
  * palloc context.
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -145,12 +145,9 @@ struct LogicalTapeSet
 	long		nFreeBlocks;	/* # of currently free blocks */
 	long		freeBlocksLen;	/* current allocated length of freeBlocks[] */
 
-	/*
-	 * tapes[] is declared size 1 since C wants a fixed size, but actually it
-	 * is of length nTapes.
-	 */
+	/* The array of logical tapes. */
 	int			nTapes;			/* # of logical tapes in set */
-	LogicalTape tapes[1];		/* must be last in struct! */
+	LogicalTape tapes[FLEXIBLE_ARRAY_MEMBER];	/* has nTapes nentries */
 };
 
 static void ltsWriteBlock(LogicalTapeSet *lts, int64 blocknum, void *buffer);
@@ -247,9 +244,14 @@ ltsWriteBlock(LogicalTapeSet *lts, int64 blocknum, void *buffer)
 	{
 		ereport(ERROR,
 				(errcode_for_file_access(),
+<<<<<<< HEAD
 				 errmsg("could not write block " INT64_FORMAT  " of temporary file: %m",
 						blocknum)));
 	}
+=======
+				 errmsg("could not write block %ld of temporary file: %m",
+						blocknum)));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -382,13 +384,18 @@ LogicalTapeSetCreate_Internal(int ntapes)
 	int			i;
 
 	/*
-	 * Create top-level struct including per-tape LogicalTape structs. First
-	 * LogicalTape struct is already counted in sizeof(LogicalTapeSet).
+	 * Create top-level struct including per-tape LogicalTape structs.
 	 */
 	Assert(ntapes > 0);
+<<<<<<< HEAD
 	lts = (LogicalTapeSet *) palloc(sizeof(LogicalTapeSet) +
 									(ntapes - 1) *sizeof(LogicalTape));
 	lts->pfile = NULL; 
+=======
+	lts = (LogicalTapeSet *) palloc(offsetof(LogicalTapeSet, tapes) +
+									ntapes * sizeof(LogicalTape));
+	lts->pfile = BufFileCreateTemp(false);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	lts->nFileBlocks = 0L;
 	lts->forgetFreeSpace = false;
 	lts->blocksSorted = true;	/* a zero-length array is sorted ... */

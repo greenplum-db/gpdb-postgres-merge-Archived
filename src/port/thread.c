@@ -5,7 +5,7 @@
  *		  Prototypes and macros around system calls, used to help make
  *		  threaded libraries reentrant and safe to use from threaded applications.
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  *
  * src/port/thread.c
  *
@@ -82,13 +82,18 @@ pqStrerror(int errnum, char *strerrbuf, size_t buflen)
 
 /*
  * Wrapper around getpwuid() or getpwuid_r() to mimic POSIX getpwuid_r()
+<<<<<<< HEAD
  * behaviour, if it is not available or required.
+=======
+ * behaviour, if that function is not available or required.
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  *
  * Per POSIX, the possible cases are:
  * success: returns zero, *result is non-NULL
  * uid not found: returns zero, *result is NULL
  * error during lookup: returns an errno code, *result is NULL
  * (caller should *not* assume that the errno variable is set)
+<<<<<<< HEAD
  */
 #ifndef WIN32
 
@@ -136,12 +141,15 @@ struct passwd *get_gp_passwdptr()
 /*
  * Wrapper around getpwuid() or getpwuid_r() to mimic POSIX getpwuid_r()
  * behaviour, if it is not available or required.
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 #ifndef WIN32
 int
 pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
 		   size_t buflen, struct passwd ** result)
 {
+<<<<<<< HEAD
 #if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_GETPWUID_R)
 
 #ifdef GETPWUID_R_5ARG
@@ -159,6 +167,11 @@ pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
 	return (*result == NULL) ? errno : 0;
 #endif
 #else
+=======
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(HAVE_GETPWUID_R)
+	return getpwuid_r(uid, resultbuf, buffer, buflen, result);
+#else
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* no getpwuid_r() available, just use getpwuid() */
 	errno = 0;
 	*result = getpwuid(uid);

@@ -116,11 +116,16 @@ COMMIT;
 select to_json(date '2014-05-28');
 
 select to_json(date 'Infinity');
+<<<<<<< HEAD
 select to_json(date '-Infinity');
 select to_json(timestamp 'Infinity');
 select to_json(timestamp '-Infinity');
 select to_json(timestamptz 'Infinity');
 select to_json(timestamptz '-Infinity');
+=======
+select to_json(timestamp 'Infinity');
+select to_json(timestamptz 'Infinity');
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 --json_agg
 
@@ -389,16 +394,41 @@ select * from json_populate_recordset(row('def',99,null)::jpop,'[{"c":[100,200,3
 
 create type jpop2 as (a int, b json, c int, d int);
 select * from json_populate_recordset(null::jpop2, '[{"a":2,"c":3,"b":{"z":4},"d":6}]') q;
+<<<<<<< HEAD
+=======
 
 select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
 
+-- handling of unicode surrogate pairs
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
+select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
+select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
+
+<<<<<<< HEAD
 -- negative cases where the wrong record type is supplied
 select * from json_populate_recordset(row(0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
 select * from json_populate_recordset(row(0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
 select * from json_populate_recordset(row(0::int,0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
 select * from json_populate_recordset(row(1000000000::int,50::int),'[{"b":"2"},{"a":"3"}]') q (a text, b text);
+=======
+--handling of simple unicode escapes
+
+select json '{ "a":  "the Copyright \u00a9 sign" }' as correct_in_utf8;
+select json '{ "a":  "dollar \u0024 character" }' as correct_everywhere;
+select json '{ "a":  "dollar \\u0024 character" }' as not_an_escape;
+select json '{ "a":  "null \u0000 escape" }' as not_unescaped;
+select json '{ "a":  "null \\u0000 escape" }' as not_an_escape;
+
+select json '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
+select json '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
+select json '{ "a":  "dollar \\u0024 character" }' ->> 'a' as not_an_escape;
+select json '{ "a":  "null \u0000 escape" }' ->> 'a' as fails;
+select json '{ "a":  "null \\u0000 escape" }' ->> 'a' as not_an_escape;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 --json_typeof() function
 select value, json_typeof(value)
@@ -522,6 +552,7 @@ select * from json_to_record('{"a":1,"b":"foo","c":"bar"}')
 select * from json_to_recordset('[{"a":1,"b":"foo","d":false},{"a":2,"b":"bar","c":true}]')
     as x(a int, b text, c boolean);
 
+<<<<<<< HEAD
 -- checking proisstrict settings
 
 select '[{"a":1}]'::json->0->'b';
@@ -538,3 +569,27 @@ from json_to_record('{"a":1, "b":{"c":16, "d":2}, "x":8}'::json)
 select *, c is null as c_is_null
 from json_to_recordset('[{"a":1, "b":{"c":16, "d":2}, "x":8}]'::json)
     as t(a int, b json, c text, x int);
+=======
+select * from json_to_recordset('[{"a":1,"b":{"d":"foo"},"c":true},{"a":2,"c":false,"b":{"d":"bar"}}]')
+    as x(a int, b json, c boolean);
+
+
+-- json_strip_nulls
+
+select json_strip_nulls(null);
+
+select json_strip_nulls('1');
+
+select json_strip_nulls('"a string"');
+
+select json_strip_nulls('null');
+
+select json_strip_nulls('[1,2,null,3,4]');
+
+select json_strip_nulls('{"a":1,"b":null,"c":[2,null,3],"d":{"e":4,"f":null}}');
+
+select json_strip_nulls('[1,{"a":1,"b":null,"c":2},3]');
+
+-- an empty object is not null and should not be stripped
+select json_strip_nulls('{"a": {"b": null, "c": null}, "d": {} }');
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

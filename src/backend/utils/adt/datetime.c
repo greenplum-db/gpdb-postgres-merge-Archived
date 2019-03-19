@@ -3,7 +3,7 @@
  * datetime.c
  *	  Support functions for date/time types.
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -64,9 +64,14 @@ static void AdjustFractDays(double frac, struct pg_tm * tm, fsec_t *fsec,
 				int scale);
 static int DetermineTimeZoneOffsetInternal(struct pg_tm * tm, pg_tz *tzp,
 								pg_time_t *tp);
+<<<<<<< HEAD
 static bool DetermineTimeZoneAbbrevOffsetInternal(pg_time_t t,
 									  const char *abbr, pg_tz *tzp,
 									  int *offset, int *isdst);
+=======
+static int DetermineTimeZoneAbbrevOffsetInternal(pg_time_t t, const char *abbr,
+									  pg_tz *tzp, int *isdst);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static pg_tz *FetchDynamicTimeZone(TimeZoneAbbrevTable *tbl, const datetkn *tp);
 
 
@@ -116,8 +121,13 @@ static const datetkn datetktbl[] = {
 	{"d", UNITS, DTK_DAY},		/* "day of month" for ISO input */
 	{"dec", MONTH, 12},
 	{"december", MONTH, 12},
+<<<<<<< HEAD
 	{"dow", UNITS, DTK_DOW},	/* day of week */
 	{"doy", UNITS, DTK_DOY},	/* day of year */
+=======
+	{"dow", RESERV, DTK_DOW},	/* day of week */
+	{"doy", RESERV, DTK_DOY},	/* day of year */
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{"dst", DTZMOD, SECS_PER_HOUR},
 	{EPOCH, RESERV, DTK_EPOCH}, /* "epoch" reserved for system epoch time */
 	{"feb", MONTH, 2},
@@ -1616,10 +1626,14 @@ DetermineTimeZoneOffsetInternal(struct pg_tm * tm, pg_tz *tzp, pg_time_t *tp)
 	 * fall-back transition, prefer "after".  (We used to define and implement
 	 * this test as "prefer the standard-time interpretation", but that rule
 	 * does not help to resolve the behavior when both times are reported as
+<<<<<<< HEAD
 	 * standard time; which does happen, eg Europe/Moscow in Oct 2014.  Also,
 	 * in some zones such as Europe/Dublin, there is widespread confusion
 	 * about which time offset is "standard" time, so it's fortunate that our
 	 * behavior doesn't depend on that.)
+=======
+	 * standard time; which does happen, eg Europe/Moscow in Oct 2014.)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
 	if (beforetime > aftertime)
 	{
@@ -1649,22 +1663,29 @@ overflow:
  * This differs from the behavior of DetermineTimeZoneOffset() in that a
  * standard-time or daylight-time abbreviation forces use of the corresponding
  * GMT offset even when the zone was then in DS or standard time respectively.
+<<<<<<< HEAD
  * (However, that happens only if we can match the given abbreviation to some
  * abbreviation that appears in the IANA timezone data.  Otherwise, we fall
  * back to doing DetermineTimeZoneOffset().)
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 int
 DetermineTimeZoneAbbrevOffset(struct pg_tm * tm, const char *abbr, pg_tz *tzp)
 {
 	pg_time_t	t;
+<<<<<<< HEAD
 	int			zone_offset;
 	int			abbr_offset;
 	int			abbr_isdst;
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Compute the UTC time we want to probe at.  (In event of overflow, we'll
 	 * probe at the epoch, which is a bit random but probably doesn't matter.)
 	 */
+<<<<<<< HEAD
 	zone_offset = DetermineTimeZoneOffsetInternal(tm, tzp, &t);
 
 	/*
@@ -1683,6 +1704,11 @@ DetermineTimeZoneAbbrevOffset(struct pg_tm * tm, const char *abbr, pg_tz *tzp)
 	 * DetermineTimeZoneOffsetInternal.
 	 */
 	return zone_offset;
+=======
+	(void) DetermineTimeZoneOffsetInternal(tm, tzp, &t);
+
+	return DetermineTimeZoneAbbrevOffsetInternal(t, abbr, tzp, &tm->tm_isdst);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 
@@ -1696,6 +1722,7 @@ DetermineTimeZoneAbbrevOffsetTS(TimestampTz ts, const char *abbr,
 								pg_tz *tzp, int *isdst)
 {
 	pg_time_t	t = timestamptz_to_time_t(ts);
+<<<<<<< HEAD
 	int			zone_offset;
 	int			abbr_offset;
 	int			tz;
@@ -1720,17 +1747,29 @@ DetermineTimeZoneAbbrevOffsetTS(TimestampTz ts, const char *abbr,
 	zone_offset = DetermineTimeZoneOffset(&tm, tzp);
 	*isdst = tm.tm_isdst;
 	return zone_offset;
+=======
+
+	return DetermineTimeZoneAbbrevOffsetInternal(t, abbr, tzp, isdst);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 
 /* DetermineTimeZoneAbbrevOffsetInternal()
  *
  * Workhorse for above two functions: work from a pg_time_t probe instant.
+<<<<<<< HEAD
  * On success, return GMT offset and DST status into *offset and *isdst.
  */
 static bool
 DetermineTimeZoneAbbrevOffsetInternal(pg_time_t t, const char *abbr, pg_tz *tzp,
 									  int *offset, int *isdst)
+=======
+ * DST status is returned into *isdst.
+ */
+static int
+DetermineTimeZoneAbbrevOffsetInternal(pg_time_t t, const char *abbr,
+									  pg_tz *tzp, int *isdst)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	char		upabbr[TZ_STRLEN_MAX + 1];
 	unsigned char *p;
@@ -1742,6 +1781,7 @@ DetermineTimeZoneAbbrevOffsetInternal(pg_time_t t, const char *abbr, pg_tz *tzp,
 		*p = pg_toupper(*p);
 
 	/* Look up the abbrev's meaning at this time in this zone */
+<<<<<<< HEAD
 	if (pg_interpret_timezone_abbrev(upabbr,
 									 &t,
 									 &gmtoff,
@@ -1753,6 +1793,20 @@ DetermineTimeZoneAbbrevOffsetInternal(pg_time_t t, const char *abbr, pg_tz *tzp,
 		return true;
 	}
 	return false;
+=======
+	if (!pg_interpret_timezone_abbrev(upabbr,
+									  &t,
+									  &gmtoff,
+									  isdst,
+									  tzp))
+		ereport(ERROR,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("time zone abbreviation \"%s\" is not used in time zone \"%s\"",
+						abbr, pg_get_timezone_name(tzp))));
+
+	/* Change sign to agree with DetermineTimeZoneOffset() */
+	return (int) -gmtoff;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 
@@ -4188,7 +4242,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, bool print_tz, int tz, const char
 			day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 			tm->tm_wday = j2day(day);
 
-			strncpy(str, days[tm->tm_wday], 3);
+			memcpy(str, days[tm->tm_wday], 3);
 			strcpy(str + 3, " ");
 
 			if (DateOrder == DATEORDER_DMY)

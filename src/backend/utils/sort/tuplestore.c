@@ -43,9 +43,13 @@
  * before switching to the other state or activating a different read pointer.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2010, Greenplum Inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -55,6 +59,8 @@
  */
 
 #include "postgres.h"
+
+#include <limits.h>
 
 #include "access/htup_details.h"
 #include "commands/tablespace.h"
@@ -1571,8 +1577,24 @@ writetup_heap(Tuplestorestate *state, void *tup)
 		tuplen = heaptuple_get_size((HeapTuple) tup);
 	}
 
+<<<<<<< HEAD
 	if (BufFileWrite(state->myfile, (void *) tup, tuplen) != (size_t) tuplen)
 		elog(ERROR, "write failed");
+=======
+	/* total on-disk footprint: */
+	unsigned int tuplen = tupbodylen + sizeof(int);
+
+	if (BufFileWrite(state->myfile, (void *) &tuplen,
+					 sizeof(tuplen)) != sizeof(tuplen))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not write to tuplestore temporary file: %m")));
+	if (BufFileWrite(state->myfile, (void *) tupbody,
+					 tupbodylen) != (size_t) tupbodylen)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not write to tuplestore temporary file: %m")));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	if (state->backward)		/* need trailing length word? */
 		if (BufFileWrite(state->myfile, (void *) &tuplen,
 						 sizeof(tuplen)) != sizeof(tuplen))
@@ -1591,6 +1613,7 @@ writetup_heap(Tuplestorestate *state, void *tup)
 static void *
 readtup_heap(Tuplestorestate *state, unsigned int len)
 {
+<<<<<<< HEAD
 	void	   *tup = NULL;
 	uint32		tuplen = 0;
 
@@ -1640,6 +1663,28 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 	}
 
 	return (void *) tup;
+=======
+	unsigned int tupbodylen = len - sizeof(int);
+	unsigned int tuplen = tupbodylen + MINIMAL_TUPLE_DATA_OFFSET;
+	MinimalTuple tuple = (MinimalTuple) palloc(tuplen);
+	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
+
+	USEMEM(state, GetMemoryChunkSpace(tuple));
+	/* read in the tuple proper */
+	tuple->t_len = tuplen;
+	if (BufFileRead(state->myfile, (void *) tupbody,
+					tupbodylen) != (size_t) tupbodylen)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+			   errmsg("could not read from tuplestore temporary file: %m")));
+	if (state->backward)		/* need trailing length word? */
+		if (BufFileRead(state->myfile, (void *) &tuplen,
+						sizeof(tuplen)) != sizeof(tuplen))
+			ereport(ERROR,
+					(errcode_for_file_access(),
+			   errmsg("could not read from tuplestore temporary file: %m")));
+	return (void *) tuple;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*

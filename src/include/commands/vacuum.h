@@ -4,7 +4,7 @@
  *	  header file for postgres vacuum cleaner and statistics analyzer
  *
  *
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/vacuum.h
@@ -136,6 +136,7 @@ typedef struct VacAttrStats
 } VacAttrStats;
 
 /*
+<<<<<<< HEAD
  * To avoid consuming too much memory during analysis and/or too much space
  * in the resulting pg_statistic rows, ANALYZE ignores varlena datums that are wider
  * than WIDTH_THRESHOLD (after detoasting!).  This is legitimate for MCV
@@ -161,6 +162,23 @@ typedef struct VPgClassStats
 	double		rel_tuples;
 	BlockNumber relallvisible;
 } VPgClassStats;
+=======
+ * Parameters customizing behavior of VACUUM and ANALYZE.
+ */
+typedef struct VacuumParams
+{
+	int			freeze_min_age; /* min freeze age, -1 to use default */
+	int			freeze_table_age;		/* age at which to scan whole table */
+	int			multixact_freeze_min_age;		/* min multixact freeze age,
+												 * -1 to use default */
+	int			multixact_freeze_table_age;		/* multixact age at which to
+												 * scan whole table */
+	bool		is_wraparound;	/* force a for-wraparound vacuum */
+	int			log_min_duration;		/* minimum execution threshold in ms
+										 * at which  verbose logs are
+										 * activated, -1 to use default */
+} VacuumParams;
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* GUC parameters */
 extern PGDLLIMPORT int default_statistics_target;		/* PGDLLIMPORT for
@@ -172,8 +190,10 @@ extern int	vacuum_multixact_freeze_table_age;
 
 
 /* in commands/vacuum.c */
-extern void vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
-	   BufferAccessStrategy bstrategy, bool for_wraparound, bool isTopLevel);
+extern void ExecVacuum(VacuumStmt *vacstmt, bool isTopLevel);
+extern void vacuum(int options, RangeVar *relation, Oid relid,
+	   VacuumParams *params, List *va_cols,
+	   BufferAccessStrategy bstrategy, bool isTopLevel);
 extern void vac_open_indexes(Relation relation, LOCKMODE lockmode,
 				 int *nindexes, Relation **Irel);
 extern void vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode);
@@ -188,8 +208,12 @@ extern void vac_update_relstats(Relation relation,
 					bool hasindex,
 					TransactionId frozenxid,
 					MultiXactId minmulti,
+<<<<<<< HEAD
 					bool in_outer_xact,
 					bool isvacuum);
+=======
+					bool in_outer_xact);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern void vacuum_set_xid_limits(Relation rel,
 					  int freeze_min_age, int freeze_table_age,
 					  int multixact_freeze_min_age,
@@ -205,6 +229,7 @@ extern void vacuum_delay_point(void);
 extern bool vacuumStatement_IsTemporary(Relation onerel);
 
 /* in commands/vacuumlazy.c */
+<<<<<<< HEAD
 extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 				BufferAccessStrategy bstrategy);
 extern void vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt);
@@ -219,7 +244,18 @@ extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
 			bool in_outer_xact, BufferAccessStrategy bstrategy);
 
 extern void analyzeStatement(VacuumStmt *vacstmt, List *relids, BufferAccessStrategy start, bool isTopLevel);
+=======
+extern void lazy_vacuum_rel(Relation onerel, int options,
+				VacuumParams *params, BufferAccessStrategy bstrategy);
+
+/* in commands/analyze.c */
+extern void analyze_rel(Oid relid, RangeVar *relation, int options,
+			VacuumParams *params, List *va_cols, bool in_outer_xact,
+			BufferAccessStrategy bstrategy);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern bool std_typanalyze(VacAttrStats *stats);
+
+/* in utils/misc/sampling.c --- duplicate of declarations in utils/sampling.h */
 extern double anl_random_fract(void);
 extern double anl_init_selection_state(int n);
 extern double anl_get_next_S(double t, int n, double *stateptr);

@@ -82,6 +82,7 @@ $(call recurse,distprep,doc src config contrib gpcontrib)
 # it's not built by default
 $(call recurse,clean,doc contrib gpcontrib src config)
 clean:
+	rm -rf tmp_install/
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
 # leap over gpAux/Makefile into subdirectories to avoid circular dependency.
@@ -104,7 +105,11 @@ distclean maintainer-clean:
 	$(MAKE) -C config $@
 	$(MAKE) -C gpMgmt $@
 	$(MAKE) -C src $@
+	rm -rf tmp_install/
+# Garbage from autoconf:
+	@rm -rf autom4te.cache/
 	rm -f config.cache config.log config.status GNUmakefile
+<<<<<<< HEAD
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
 
@@ -119,6 +124,8 @@ destroy-demo-cluster:
 	$(MAKE) -C gpAux/gpdemo destroy-demo-cluster
 
 check check-tests: all
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 check check-tests installcheck installcheck-parallel installcheck-tests:
 	$(MAKE) -C src/test/regress $@

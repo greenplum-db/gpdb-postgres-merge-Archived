@@ -51,9 +51,12 @@ CREATE FUNCTION do_analyze() RETURNS VOID VOLATILE LANGUAGE SQL
 CREATE FUNCTION wrap_do_analyze(c INT) RETURNS INT IMMUTABLE LANGUAGE SQL
 	AS 'SELECT $1 FROM do_analyze()';
 CREATE INDEX ON vaccluster(wrap_do_analyze(i));
+<<<<<<< HEAD
 -- GPDB_94_MERGE_FIXME: GPDB does not support this but I do not think we will
 -- support that in short time. Note this causes "ANALYZE/VACUUM FULL vaccluster"
 -- succeed (On PG it fails: "ERROR:  ANALYZE cannot be executed from VACUUM or ANALYZE")
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 INSERT INTO vaccluster VALUES (1), (2);
 ANALYZE vaccluster;
 

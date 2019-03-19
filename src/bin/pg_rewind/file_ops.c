@@ -30,6 +30,10 @@
 static int	dstfd = -1;
 static char dstpath[MAXPGPATH] = "";
 
+<<<<<<< HEAD
+=======
+static void remove_target_file(const char *path);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void create_target_dir(const char *path);
 static void remove_target_dir(const char *path);
 static void create_target_symlink(const char *path, const char *link);
@@ -78,6 +82,10 @@ close_target_file(void)
 				 dstpath, strerror(errno));
 
 	dstfd = -1;
+<<<<<<< HEAD
+=======
+	/* fsync? */
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 void
@@ -134,8 +142,12 @@ remove_target(file_entry_t *entry)
 			break;
 
 		case FILE_TYPE_REGULAR:
+<<<<<<< HEAD
 		case FILE_TYPE_FIFO:
 			remove_target_file(entry->path, false);
+=======
+			remove_target_file(entry->path);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			break;
 
 		case FILE_TYPE_SYMLINK:
@@ -163,6 +175,7 @@ create_target(file_entry_t *entry)
 			/* can't happen. Regular files are created with open_target_file. */
 			pg_fatal("invalid action (CREATE) for regular file\n");
 			break;
+<<<<<<< HEAD
 
 		case FILE_TYPE_FIFO:
 			/* Only pgsql_tmp files are FIFO and they are ignored from source target. */
@@ -177,6 +190,13 @@ create_target(file_entry_t *entry)
  */
 void
 remove_target_file(const char *path, bool missing_ok)
+=======
+	}
+}
+
+static void
+remove_target_file(const char *path)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	char		dstpath[MAXPGPATH];
 
@@ -185,6 +205,7 @@ remove_target_file(const char *path, bool missing_ok)
 
 	snprintf(dstpath, sizeof(dstpath), "%s/%s", datadir_target, path);
 	if (unlink(dstpath) != 0)
+<<<<<<< HEAD
 	{
 		if (errno == ENOENT && missing_ok)
 			return;
@@ -192,6 +213,10 @@ remove_target_file(const char *path, bool missing_ok)
 		pg_fatal("could not remove file \"%s\": %s\n",
 				 dstpath, strerror(errno));
 	}
+=======
+		pg_fatal("could not remove file \"%s\": %s\n",
+				 dstpath, strerror(errno));
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 void
@@ -211,7 +236,11 @@ truncate_target_file(const char *path, off_t newsize)
 				 dstpath, strerror(errno));
 
 	if (ftruncate(fd, newsize) != 0)
+<<<<<<< HEAD
 		pg_fatal("could not truncate file \"%s\" to %u: %s\n",
+=======
+		pg_fatal("could not truncate file \"%s\" to %u bytes: %s\n",
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				 dstpath, (unsigned int) newsize, strerror(errno));
 
 	close(fd);

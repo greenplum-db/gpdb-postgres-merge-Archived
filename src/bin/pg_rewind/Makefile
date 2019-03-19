@@ -21,6 +21,7 @@ PG_LIBS = $(libpq_pgport)
 override CPPFLAGS := -I$(libpq_srcdir) -DFRONTEND $(CPPFLAGS)
 
 OBJS	= pg_rewind.o parsexlog.o xlogreader.o datapagemap.o timeline.o \
+<<<<<<< HEAD
 	fetch.o file_ops.o copy_fetch.o libpq_fetch.o filemap.o logging.o compat.o \
 	$(WIN32RES)
 
@@ -28,6 +29,12 @@ EXTRA_CLEAN = xlogreader.c compat.c
 
 REGRESS = basictest extrafiles databases pg_xlog_symlink unclean_shutdown simple_no_rewind_required ao_rewind bitmaptest
 REGRESS_OPTS=--use-existing --launcher=./launcher
+=======
+	fetch.o file_ops.o copy_fetch.o libpq_fetch.o filemap.o logging.o \
+	$(WIN32RES)
+
+EXTRA_CLEAN = xlogreader.c
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 all: pg_rewind
 
@@ -37,10 +44,13 @@ pg_rewind: $(OBJS) | submake-libpq submake-libpgport
 xlogreader.c: % : $(top_srcdir)/src/backend/access/transam/%
 	rm -f $@ && $(LN_S) $< .
 
+<<<<<<< HEAD
 # compat.c is symlinked from the PostgreSQL sources.
 compat.c: % : $(top_srcdir)/contrib/pg_xlogdump/%
 	rm -f $@ && $(LN_S) $< .
 
+=======
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_rewind$(X) '$(DESTDIR)$(bindir)/pg_rewind$(X)'
 
@@ -52,6 +62,7 @@ uninstall:
 
 clean distclean maintainer-clean:
 	rm -f pg_rewind$(X) $(OBJS) xlogreader.c
+<<<<<<< HEAD
 	rm -rf tmp_check_local tmp_check_remote
 
 # GPDB_95_MERGE_FIXME: 9.4 version of tests were used instead of 9.5 since 9.5
@@ -74,3 +85,12 @@ pg_regress_installcheck:
 	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
 
 installcheck: check-both
+=======
+	rm -rf tmp_check regress_log
+
+check:
+	$(prove_check)
+
+installcheck:
+	$(prove_installcheck)
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

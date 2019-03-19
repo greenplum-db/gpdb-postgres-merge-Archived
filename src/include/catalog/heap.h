@@ -4,9 +4,13 @@
  *	  prototypes for functions in backend/catalog/heap.c
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/heap.h
@@ -16,8 +20,9 @@
 #ifndef HEAP_H
 #define HEAP_H
 
-#include "parser/parse_node.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaddress.h"
+#include "parser/parse_node.h"
 
 
 typedef struct RawColumnDefault
@@ -37,6 +42,7 @@ typedef struct CookedConstraint
 	 */
 	NodeTag		type;
 	ConstrType	contype;		/* CONSTR_DEFAULT or CONSTR_CHECK */
+	Oid			conoid;			/* constr OID if created, otherwise Invalid */
 	char	   *name;			/* name, or NULL if none */
 	AttrNumber	attnum;			/* which attr (only for DEFAULT) */
 	Node	   *expr;			/* transformed default or check expr */
@@ -66,6 +72,7 @@ extern Relation heap_create(const char *relname,
 			bool allow_system_table_mods);
 
 extern Oid heap_create_with_catalog(const char *relname,
+<<<<<<< HEAD
 									Oid relnamespace,
 									Oid reltablespace,
 									Oid relid,
@@ -91,6 +98,28 @@ extern Oid heap_create_with_catalog(const char *relname,
 									bool valid_opts,
 									bool is_part_child,
 									bool is_part_parent);
+=======
+						 Oid relnamespace,
+						 Oid reltablespace,
+						 Oid relid,
+						 Oid reltypeid,
+						 Oid reloftypeid,
+						 Oid ownerid,
+						 TupleDesc tupdesc,
+						 List *cooked_constraints,
+						 char relkind,
+						 char relpersistence,
+						 bool shared_relation,
+						 bool mapped_relation,
+						 bool oidislocal,
+						 int oidinhcount,
+						 OnCommitAction oncommit,
+						 Datum reloptions,
+						 bool use_user_acl,
+						 bool allow_system_table_mods,
+						 bool is_internal,
+						 ObjectAddress *typaddress);
+>>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 extern void heap_create_init_fork(Relation rel);
 
@@ -124,7 +153,7 @@ extern List *AddRelationConstraints(Relation rel,
 						  List *rawColDefaults,
 						  List *constraints);
 
-extern void StoreAttrDefault(Relation rel, AttrNumber attnum,
+extern Oid StoreAttrDefault(Relation rel, AttrNumber attnum,
 				 Node *expr, bool is_internal);
 
 extern Node *cookDefault(ParseState *pstate,
