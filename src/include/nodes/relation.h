@@ -4,13 +4,9 @@
  *	  Definitions for planner's internal data structures.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/relation.h
@@ -142,16 +138,12 @@ typedef struct PlannerGlobal
 	Index		lastRowMarkId;	/* highest PlanRowMark ID assigned */
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
-<<<<<<< HEAD
 	bool		oneoffPlan;		/* redo plan on every execution? */
 	bool		simplyUpdatable; /* can be used with CURRENT OF? */
 
 	ApplyShareInputContext share;	/* workspace for GPDB plan sharing */
 
-=======
-
 	bool		hasRowSecurity; /* row security applied? */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } PlannerGlobal;
 
 /*----------
@@ -320,15 +312,12 @@ typedef struct PlannerInfo
 	/* optional private data for join_search_hook, e.g., GEQO */
 	void	   *join_search_private;
 
-<<<<<<< HEAD
 	int			upd_del_replicated_table;
 	bool		is_split_update;	/* true if UPDATE that modifies
 									 * distribution key columns */
 	bool		is_correlated_subplan; /* true for correlated subqueries nested within subplans */
-=======
 	/* for GroupingFunc fixup in setrefs */
 	AttrNumber *grouping_map;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } PlannerInfo;
 
 /*
@@ -2122,6 +2111,7 @@ typedef struct JoinPathExtraData
 	SemiAntiJoinFactors semifactors;
 	Relids		param_source_rels;
 	Relids		extra_lateral_rels;
+	List	   *redistribution_clauses
 } JoinPathExtraData;
 
 /*
