@@ -79,33 +79,6 @@ AH_VERBATIM(GETTIMEOFDAY_1ARG_,
 ])# PGAC_FUNC_GETTIMEOFDAY_1ARG
 
 
-<<<<<<< HEAD
-# PGAC_FUNC_GETPWUID_R_5ARG
-# ---------------------------
-# Check if getpwuid_r() takes a fifth argument (later POSIX standard, not draft version)
-# If so, define GETPWUID_R_5ARG
-AC_DEFUN([PGAC_FUNC_GETPWUID_R_5ARG],
-[AC_CACHE_CHECK(whether getpwuid_r takes a fifth argument,
-pgac_cv_func_getpwuid_r_5arg,
-[AC_TRY_COMPILE([#include <sys/types.h>
-#include <pwd.h>],
-[uid_t uid = 0;
-struct passwd *space = 0;
-char *buf = 0;
-size_t bufsize = 0;
-struct passwd **result = 0;
-getpwuid_r(uid, space, buf, bufsize, result);],
-[pgac_cv_func_getpwuid_r_5arg=yes],
-[pgac_cv_func_getpwuid_r_5arg=no])])
-if test x"$pgac_cv_func_getpwuid_r_5arg" = xyes ; then
-  AC_DEFINE(GETPWUID_R_5ARG, 1,
-            [Define to 1 if getpwuid_r() takes a 5th argument.])
-fi
-])# PGAC_FUNC_GETPWUID_R_5ARG
-
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 # PGAC_FUNC_STRERROR_R_INT
 # ---------------------------
 # Check if strerror_r() returns int (POSIX) rather than char * (GNU libc).

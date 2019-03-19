@@ -17,7 +17,6 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-<<<<<<< HEAD
 dnl The PACKAGE_VERSION from upstream PostgreSQL is maintained in the
 dnl PG_PACKAGE_VERSION variable, when merging make sure to update this
 dnl variable with the merge conflict from the AC_INIT() statement.
@@ -29,16 +28,7 @@ dnl m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version
 dnl Untested combinations of 'autoconf' and PostgreSQL versions are not
 dnl recommended.  You can remove the check from 'configure.in' but it is then
 dnl your responsibility whether the result works or not.])])
-AC_COPYRIGHT([Copyright (c) 1996-2014, PostgreSQL Global Development Group])
-=======
-AC_INIT([PostgreSQL], [9.5alpha1], [pgsql-bugs@postgresql.org])
-
-m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.69 is required.
-Untested combinations of 'autoconf' and PostgreSQL versions are not
-recommended.  You can remove the check from 'configure.in' but it is then
-your responsibility whether the result works or not.])])
 AC_COPYRIGHT([Copyright (c) 1996-2015, PostgreSQL Global Development Group])
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 AC_CONFIG_SRCDIR([src/backend/access/common/heaptuple.c])
 AC_CONFIG_AUX_DIR(config)
 AC_PREFIX_DEFAULT(/usr/local/gpdb)
@@ -207,7 +197,6 @@ PGAC_ARG_BOOL(enable, atomics, yes,
               [do not use atomic operations])
 
 #
-<<<<<<< HEAD
 # gpfdist
 #
 PGAC_ARG_BOOL(enable, gpfdist, yes,
@@ -243,8 +232,6 @@ PGAC_ARG_BOOL(enable, gpperfmon, no,
 AC_SUBST(enable_gpperfmon)
 
 #
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 # --enable-debug adds -g to compiler flags
 #
 PGAC_ARG_BOOL(enable, debug, no,
@@ -487,7 +474,6 @@ else
   fi
 fi
 
-<<<<<<< HEAD
 # For GPDB, Use C99, rather than C89, compile rules
 #
 #
@@ -588,8 +574,6 @@ else
 fi
 AC_SUBST(PG_CRC32C_OBJS)
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 # CFLAGS we determined above will be added back at the end
 user_CFLAGS=$CFLAGS
 CFLAGS=""
@@ -638,15 +622,11 @@ if test "$GCC" = yes -a "$ICC" = no; then
   # We want to suppress clang's unhelpful unused-command-line-argument warnings
   # but gcc won't complain about unrecognized -Wno-foo switches, so we have to
   # test for the positive form and if that works, add the negative form
-<<<<<<< HEAD
   NOT_THE_CFLAGS=""
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
   PGAC_PROG_CC_VAR_OPT(NOT_THE_CFLAGS, [-Wunused-command-line-argument])
   if test -n "$NOT_THE_CFLAGS"; then
     CFLAGS="$CFLAGS -Wno-unused-command-line-argument"
   fi
-<<<<<<< HEAD
   # Similarly disable useless truncation warnings from gcc 8+
   NOT_THE_CFLAGS=""
   PGAC_PROG_CC_VAR_OPT(NOT_THE_CFLAGS, [-Wformat-truncation])
@@ -658,8 +638,6 @@ if test "$GCC" = yes -a "$ICC" = no; then
   if test -n "$NOT_THE_CFLAGS"; then
     CFLAGS="$CFLAGS -Wno-stringop-truncation"
   fi
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 elif test "$ICC" = yes; then
   # Intel's compiler has a bug/misoptimization in checking for
   # division by NAN (NaN == 0), -mp1 fixes it, so add it to the CFLAGS.
@@ -1251,7 +1229,6 @@ if test "$with_perl" = yes; then
     AC_MSG_ERROR([Perl not found])
   fi
   PGAC_CHECK_PERL_CONFIGS([archlibexp,privlibexp,useshrplib])
-<<<<<<< HEAD
   # On most platforms, archlibexp is also where the Perl include files live ...
   perl_includespec="-I$perl_archlibexp/CORE"
   # ... but on newer macOS versions, we must use -iwithsysroot to look
@@ -1263,14 +1240,12 @@ if test "$with_perl" = yes; then
   fi
   AC_SUBST(perl_includespec)dnl
   PGAC_CHECK_PERL_EMBED_CCFLAGS
-=======
   if test "$perl_useshrplib" != yes && test "$perl_useshrplib" != true; then
     AC_MSG_ERROR([cannot build PL/Perl because libperl is not a shared library
 You might have to rebuild your Perl installation.  Refer to the
 documentation for details.  Use --without-perl to disable building
 PL/Perl.])
   fi
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
   PGAC_CHECK_PERL_EMBED_LDFLAGS
 fi
 
@@ -1397,11 +1372,7 @@ else
 fi
 
 if test "$enable_atomics" = yes; then
-<<<<<<< HEAD
-  AC_DEFINE(HAVE_ATOMICS, 1, [Define to 1 if you want to use atomics.])
-=======
   AC_DEFINE(HAVE_ATOMICS, 1, [Define to 1 if you want to use atomics if available.])
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 else
   AC_MSG_WARN([
 *** Not using atomic operations will cause poor performance.])
@@ -1464,7 +1435,6 @@ if test "$with_openssl" = yes ; then
      AC_SEARCH_LIBS(SSL_new, [ssleay32 ssl], [], [AC_MSG_ERROR([library 'ssleay32' or 'ssl' is required for OpenSSL])])
   fi
   AC_CHECK_FUNCS([SSL_get_current_compression])
-<<<<<<< HEAD
   # Functions introduced in OpenSSL 1.1.0. We used to check for
   # OPENSSL_VERSION_NUMBER, but that didn't work with 1.1.0, because LibreSSL
   # defines OPENSSL_VERSION_NUMBER to claim version 2.0.0, even though it
@@ -1480,8 +1450,6 @@ fi
 if test "$with_rt" = yes ; then
   AC_CHECK_LIB(rt, clock_gettime, [],
                 [AC_MSG_WARN([Realtime library not found])])
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 fi
 
 if test "$with_pam" = yes ; then
@@ -1556,11 +1524,7 @@ fi
 ##
 
 dnl sys/socket.h is required by AC_FUNC_ACCEPT_ARGTYPES
-<<<<<<< HEAD
-AC_CHECK_HEADERS([atomic.h crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h ])
-=======
 AC_CHECK_HEADERS([atomic.h crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h])
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 # On BSD, test for net/if.h will fail unless sys/socket.h
 # is included first.
@@ -1907,14 +1871,10 @@ PGAC_FUNC_WCSTOMBS_L
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-<<<<<<< HEAD
 # net-snmp has the same problem..
 LIBS=`echo "$LIBS" | sed -e 's/-lnetsnmp//g'`
 
 AC_CHECK_FUNCS([cbrt dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll posix_fallocate pstat pthread_is_threaded_np readlink setproctitle setsid shm_open sigprocmask symlink sync_file_range towlower utime utimes wcstombs wcstombs_l])
-=======
-AC_CHECK_FUNCS([cbrt dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll pstat pthread_is_threaded_np readlink setproctitle setsid shm_open sigprocmask symlink sync_file_range towlower utime utimes wcstombs wcstombs_l])
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 AC_REPLACE_FUNCS(fseeko)
 case $host_os in
@@ -2402,23 +2362,8 @@ AC_CHECK_TYPES([int8, uint8, int64, uint64], [], [],
 # C, but is missing on some old platforms.
 AC_CHECK_TYPES(sig_atomic_t, [], [], [#include <signal.h>])
 
-<<<<<<< HEAD
 # Some compilers offer a 128-bit integer scalar type.
 PGAC_TYPE_128BIT_INT
-
-# Check for various atomic operations now that we have checked how to declare
-# 64bit integers.
-PGAC_HAVE_GCC__SYNC_CHAR_TAS
-PGAC_HAVE_GCC__SYNC_INT32_TAS
-PGAC_HAVE_GCC__SYNC_INT32_CAS
-PGAC_HAVE_GCC__SYNC_INT64_CAS
-PGAC_HAVE_GCC__ATOMIC_INT32_CAS
-PGAC_HAVE_GCC__ATOMIC_INT64_CAS
-
-=======
-# Check for extensions offering the integer scalar type __int128.
-PGAC_TYPE_128BIT_INT
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 # Check for various atomic operations now that we have checked how to declare
 # 64bit integers.
@@ -2668,12 +2613,9 @@ if test "$enable_tap_tests" = yes; then
   if test -z "$PERL"; then
     AC_MSG_ERROR([Perl not found])
   fi
-<<<<<<< HEAD
   # Check for necessary modules
   AX_PROG_PERL_MODULES([IPC::Run Test::More=0.82], ,
     AC_MSG_ERROR([Perl modules IPC::Run and Test::More 0.82 are required to run TAP tests]))
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 fi
 
 # Thread testing
