@@ -50,23 +50,15 @@ static PyObject *PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndi
 						  char **dataptr_p, bits8 **bitmap_p, int *bitmask_p);
 
 /* conversion from Python objects to Datums */
-<<<<<<< HEAD
 static Datum PLyObject_ToBool(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
 static Datum PLyObject_ToBytea(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
 static Datum PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
 static Datum PLyObject_ToDatum(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
+static Datum PLyObject_ToTransform(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
 static Datum PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
 static void PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
 							int *dims, int ndim, int dim,
 							Datum *elems, bool *nulls, int *currelem);
-=======
-static Datum PLyObject_ToBool(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
-static Datum PLyObject_ToBytea(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
-static Datum PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
-static Datum PLyObject_ToDatum(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
-static Datum PLyObject_ToTransform(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
-static Datum PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* conversion from Python objects to composite Datums (used by triggers and SRFs) */
 static Datum PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string, bool inarray);
@@ -913,7 +905,6 @@ PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inar
 /*
  * Convert Python object to C string in server encoding.
  */
-<<<<<<< HEAD
 static Datum
 PLyObject_ToDatum(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 {
@@ -963,47 +954,6 @@ PLyObject_ToDatum(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 					 errdetail("Missing left parenthesis."),
 					 errhint("To return a composite type in an array, return the composite type as a Python tuple, e.g. \"[('foo')]\"")));
 	}
-=======
-char *
-PLyObject_AsString(PyObject *plrv)
-{
-	PyObject   *plrv_bo;
-	char	   *plrv_sc;
-	size_t		plen;
-	size_t		slen;
-
-	if (PyUnicode_Check(plrv))
-		plrv_bo = PLyUnicode_Bytes(plrv);
-	else if (PyFloat_Check(plrv))
-	{
-		/* use repr() for floats, str() is lossy */
-#if PY_MAJOR_VERSION >= 3
-		PyObject   *s = PyObject_Repr(plrv);
-
-		plrv_bo = PLyUnicode_Bytes(s);
-		Py_XDECREF(s);
-#else
-		plrv_bo = PyObject_Repr(plrv);
-#endif
-	}
-	else
-	{
-#if PY_MAJOR_VERSION >= 3
-		PyObject   *s = PyObject_Str(plrv);
-
-		plrv_bo = PLyUnicode_Bytes(s);
-		Py_XDECREF(s);
-#else
-		plrv_bo = PyObject_Str(plrv);
-#endif
-	}
-	if (!plrv_bo)
-		PLy_elog(ERROR, "could not create string representation of Python object");
-
-	plrv_sc = pstrdup(PyBytes_AsString(plrv_bo));
-	plen = PyBytes_Size(plrv_bo);
-	slen = strlen(plrv_sc);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	rv = InputFunctionCall(&arg->typfunc,
 							 str,
@@ -1012,36 +962,11 @@ PLyObject_AsString(PyObject *plrv)
 
 	pfree(str);
 
-	if (slen < plen)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("could not convert Python object into cstring: Python string representation appears to contain null bytes")));
-	else if (slen > plen)
-		elog(ERROR, "could not convert Python object into cstring: Python string longer than reported length");
-	pg_verifymbstr(plrv_sc, slen, false);
-
-	return plrv_sc;
+	return rv;
 }
 
-
-/*
- * Generic conversion function: Convert PyObject to cstring and
- * cstring into PostgreSQL type.
- */
 static Datum
-PLyObject_ToDatum(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
-{
-	Assert(plrv != Py_None);
-
-	return InputFunctionCall(&arg->typfunc,
-							 PLyObject_AsString(plrv),
-							 arg->typioparam,
-							 typmod);
-}
-
-
-static Datum
-PLyObject_ToTransform(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
+PLyObject_ToTransform(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 {
 	return FunctionCall1(&arg->typtransform, PointerGetDatum(plrv));
 }
@@ -1094,13 +1019,8 @@ PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarra
 
 		if (dims[ndim] == 0)
 		{
-<<<<<<< HEAD
 			/* empty sequence */
 			break;
-=======
-			nulls[i] = false;
-			elems[i] = arg->elm->func(arg->elm, -1, obj);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 
 		ndim++;
@@ -1217,27 +1137,21 @@ PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string, bool 
 {
 	Datum		result;
 	HeapTuple	typeTup;
-<<<<<<< HEAD
 	PLyTypeInfo locinfo;
+
+	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 
 	/* Create a dummy PLyTypeInfo */
 	MemSet(&locinfo, 0, sizeof(PLyTypeInfo));
 	PLy_typeinfo_init(&locinfo);
-=======
-	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	typeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(desc->tdtypeid));
 	if (!HeapTupleIsValid(typeTup))
 		elog(ERROR, "cache lookup failed for type %u", desc->tdtypeid);
 
-<<<<<<< HEAD
-	PLy_output_datum_func2(&locinfo.out.d, typeTup);
-=======
-	PLy_output_datum_func2(&info->out.d, typeTup,
+	PLy_output_datum_func2(&locinfo->out.d, typeTup,
 						   exec_ctx->curr_proc->langid,
 						   exec_ctx->curr_proc->trftypes);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	ReleaseSysCache(typeTup);
 

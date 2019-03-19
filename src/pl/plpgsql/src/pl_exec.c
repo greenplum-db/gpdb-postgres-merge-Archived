@@ -1622,13 +1622,8 @@ exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 		{
 			case PLPGSQL_GETDIAG_ROW_COUNT:
 				exec_assign_value(estate, var,
-<<<<<<< HEAD
 								  UInt64GetDatum(estate->eval_processed),
-								  INT8OID, &isnull);
-=======
-								  UInt32GetDatum(estate->eval_processed),
-								  false, INT4OID, -1);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+								  false, INT8OID, -1);
 				break;
 
 			case PLPGSQL_GETDIAG_RESULT_OID:

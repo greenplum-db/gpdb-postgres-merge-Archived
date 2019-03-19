@@ -65,13 +65,11 @@ ifeq ($(shell $(PERL) -V:usemultiplicity), usemultiplicity='define';)
 	REGRESS += plperl_plperlu
 endif
 endif
-<<<<<<< HEAD
+
 # Add Greenplum specific tests
 REGRESS += plperl_gp
 # where to find psql for running the tests
 PSQLDIR = $(bindir)
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 # where to find xsubpp for building XS.
 XSUBPPDIR = $(shell $(PERL) -e 'use List::Util qw(first); print first { -r "$$_/ExtUtils/xsubpp" } @INC')

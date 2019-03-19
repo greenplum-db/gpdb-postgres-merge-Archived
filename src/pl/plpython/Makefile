@@ -11,7 +11,6 @@ ifeq ($(PORTNAME), win32)
 override python_libspec =
 endif
 
-<<<<<<< HEAD
 override python_libspec := -L${python_configdir}/../.. ${python_libspec}
 
 # If we don't have a shared library, we have to skip it.
@@ -20,9 +19,6 @@ ifeq ($(shared_libpython),yes)
 # do not fail build due to warnings in this code
 #override CPPFLAGS := -Wno-error -I. -I$(srcdir) $(python_includespec) $(CPPFLAGS) -DPLPYTHON_SHOW_DEBUG_INFO
 override CPPFLAGS := -Wno-error -I. -I$(srcdir) $(python_includespec) $(CPPFLAGS)
-=======
-override CPPFLAGS := -I. -I$(srcdir) $(python_includespec) $(CPPFLAGS)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 rpathdir = $(python_libdir):$(INSTLOC)/ext/python/lib
 
