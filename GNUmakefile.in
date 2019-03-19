@@ -109,9 +109,6 @@ distclean maintainer-clean:
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
 	rm -f config.cache config.log config.status GNUmakefile
-<<<<<<< HEAD
-# Garbage from autoconf:
-	@rm -rf autom4te.cache/
 
 installcheck-resgroup:
 	$(MAKE) -C src/test/isolation2 $@
@@ -124,8 +121,6 @@ destroy-demo-cluster:
 	$(MAKE) -C gpAux/gpdemo destroy-demo-cluster
 
 check check-tests: all
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 check check-tests installcheck installcheck-parallel installcheck-tests:
 	$(MAKE) -C src/test/regress $@
