@@ -112,21 +112,12 @@ enum tarError
 tarCreateHeader(char *h, const char *filename, const char *linktarget,
 				pgoff_t size, mode_t mode, uid_t uid, gid_t gid, time_t mtime)
 {
-<<<<<<< HEAD
-=======
 	if (strlen(filename) > 99)
 		return TAR_NAME_TOO_LONG;
 
 	if (linktarget && strlen(linktarget) > 99)
 		return TAR_SYMLINK_TOO_LONG;
 
-	/*
-	 * Note: most of the fields in a tar header are not supposed to be
-	 * null-terminated.  We use sprintf, which will write a null after the
-	 * required bytes; that null goes into the first byte of the next field.
-	 * This is okay as long as we fill the fields in order.
-	 */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	memset(h, 0, 512);			/* assume tar header size */
 
 	/* Name 100 */
@@ -146,11 +137,7 @@ tarCreateHeader(char *h, const char *filename, const char *linktarget,
 	}
 
 	/* Mode 8 - this doesn't include the file type bits (S_IFMT)  */
-<<<<<<< HEAD
 	print_tar_number(&h[100], 8, (mode & 07777));
-=======
-	sprintf(&h[100], "%07o ", (int) (mode & 07777));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* User ID 8 */
 	print_tar_number(&h[108], 8, uid);
@@ -210,17 +197,8 @@ tarCreateHeader(char *h, const char *filename, const char *linktarget,
 
 	/* Prefix 155 - not used, leave as nulls */
 
-<<<<<<< HEAD
 	/* Finally, compute and insert the checksum */
 	print_tar_number(&h[148], 8, tarChecksum(h));
-=======
-	/*
-	 * We mustn't overwrite the next field while inserting the checksum.
-	 * Fortunately, the checksum can't exceed 6 octal digits, so we just write
-	 * 6 digits, a space, and a null, which is legal per POSIX.
-	 */
-	sprintf(&h[148], "%06o ", tarChecksum(h));
 
 	return TAR_OK;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }

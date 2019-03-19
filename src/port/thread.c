@@ -82,96 +82,22 @@ pqStrerror(int errnum, char *strerrbuf, size_t buflen)
 
 /*
  * Wrapper around getpwuid() or getpwuid_r() to mimic POSIX getpwuid_r()
-<<<<<<< HEAD
- * behaviour, if it is not available or required.
-=======
  * behaviour, if that function is not available or required.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  *
  * Per POSIX, the possible cases are:
  * success: returns zero, *result is non-NULL
  * uid not found: returns zero, *result is NULL
  * error during lookup: returns an errno code, *result is NULL
  * (caller should *not* assume that the errno variable is set)
-<<<<<<< HEAD
- */
-#ifndef WIN32
-
-/* header for geteuid */
-#include <sys/types.h>
-#include <unistd.h>
-
-struct passwd *get_gp_passwdptr()
-{
-	static struct passwd *gp_passwd_ptr = NULL;
-
-#if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_GETPWUID_R)
-	static char gp_passwd_buf[BUFSIZ];
-	static struct passwd gp_passwd;
-
-	/* First check if we have an singleton */
-	if(gp_passwd_ptr!=NULL)
-		return gp_passwd_ptr;
-#ifdef GETPWUID_R_5ARG
-	/* POSIX version */
-	getpwuid_r(geteuid(), &gp_passwd, 
-			gp_passwd_buf, sizeof(gp_passwd_buf),
-			&gp_passwd_ptr
-		  ); 
-#else
-	/*
-	 * Early POSIX draft of getpwuid_r() returns 'struct passwd *'.
-	 * getpwuid_r(uid, resultbuf, buffer, buflen)
-	 */
-	gp_passwd_ptr = getpwuid_r(geteuid(), &gp_passwd, gp_passwd_buf, sizeof(gp_passwd_buf)); 
-#endif
-#else
-	/* First check if we have an singleton */
-	if(gp_passwd_ptr!=NULL)
-		return gp_passwd_ptr;
-
-	/* no getpwuid_r() available, just use getpwuid() */
-	gp_passwd_ptr = getpwuid(geteuid());
-#endif
-	return gp_passwd_ptr;
-}
-#endif
-
-
-/*
- * Wrapper around getpwuid() or getpwuid_r() to mimic POSIX getpwuid_r()
- * behaviour, if it is not available or required.
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 #ifndef WIN32
 int
 pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
 		   size_t buflen, struct passwd ** result)
 {
-<<<<<<< HEAD
 #if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_GETPWUID_R)
-
-#ifdef GETPWUID_R_5ARG
-	/* POSIX version */
 	return getpwuid_r(uid, resultbuf, buffer, buflen, result);
 #else
-
-	/*
-	 * Early POSIX draft of getpwuid_r() returns 'struct passwd *'.
-	 * getpwuid_r(uid, resultbuf, buffer, buflen)
-	 */
-	errno = 0;
-	*result = getpwuid_r(uid, resultbuf, buffer, buflen);
-	/* paranoia: ensure we return zero on success */
-	return (*result == NULL) ? errno : 0;
-#endif
-#else
-=======
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(HAVE_GETPWUID_R)
-	return getpwuid_r(uid, resultbuf, buffer, buflen, result);
-#else
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* no getpwuid_r() available, just use getpwuid() */
 	errno = 0;
 	*result = getpwuid(uid);

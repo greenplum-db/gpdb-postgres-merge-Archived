@@ -128,11 +128,7 @@ typedef struct
 	char	   *bufend;			/* last+1 buffer element, or NULL */
 	/* bufend == NULL is for sprintf, where we assume buf is big enough */
 	FILE	   *stream;			/* eventual output destination, or NULL */
-<<<<<<< HEAD
 	int			nchars;			/* # chars sent to stream, or dropped */
-=======
-	int			nchars;			/* # chars already sent to stream */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	bool		failed;			/* call is a failure; errno is set */
 } PrintfTarget;
 
@@ -186,20 +182,12 @@ pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 	target.bufstart = target.bufptr = str;
 	target.bufend = str + count - 1;
 	target.stream = NULL;
-<<<<<<< HEAD
 	target.nchars = 0;
 	target.failed = false;
 	dopr(&target, fmt, args);
 	*(target.bufptr) = '\0';
 	return target.failed ? -1 : (target.bufptr - target.bufstart
 								 + target.nchars);
-=======
-	/* target.nchars is unused in this case */
-	target.failed = false;
-	dopr(&target, fmt, args);
-	*(target.bufptr) = '\0';
-	return target.failed ? -1 : (target.bufptr - target.bufstart);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 int
@@ -222,20 +210,12 @@ pg_vsprintf(char *str, const char *fmt, va_list args)
 	target.bufstart = target.bufptr = str;
 	target.bufend = NULL;
 	target.stream = NULL;
-<<<<<<< HEAD
 	target.nchars = 0;			/* not really used in this case */
 	target.failed = false;
 	dopr(&target, fmt, args);
 	*(target.bufptr) = '\0';
 	return target.failed ? -1 : (target.bufptr - target.bufstart
 								 + target.nchars);
-=======
-	/* target.nchars is unused in this case */
-	target.failed = false;
-	dopr(&target, fmt, args);
-	*(target.bufptr) = '\0';
-	return target.failed ? -1 : (target.bufptr - target.bufstart);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 int
@@ -305,13 +285,10 @@ flushbuffer(PrintfTarget *target)
 {
 	size_t		nc = target->bufptr - target->bufstart;
 
-<<<<<<< HEAD
 	/*
 	 * Don't write anything if we already failed; this is to ensure we
 	 * preserve the original failure's errno.
 	 */
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	if (!target->failed && nc > 0)
 	{
 		size_t		written;
@@ -423,11 +400,7 @@ nextch1:
 				goto nextch1;
 			case '$':
 				have_dollar = true;
-<<<<<<< HEAD
 				if (accum <= 0 || accum > PG_NL_ARGMAX)
-=======
-				if (accum <= 0 || accum > NL_ARGMAX)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					goto bad_format;
 				if (afterstar)
 				{
