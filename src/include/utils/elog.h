@@ -213,19 +213,11 @@ extern int	errcode(int sqlerrcode);
 extern int	errcode_for_file_access(void);
 extern int	errcode_for_socket_access(void);
 
-<<<<<<< HEAD
 extern int sqlstate_to_errcode(const char *sqlstate);
 extern char *errcode_to_sqlstate(int errcode, char outbuf[6]);
 
-extern int
-errmsg(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
-=======
 extern int	errmsg(const char *fmt,...) pg_attribute_printf(1, 2);
 extern int	errmsg_internal(const char *fmt,...) pg_attribute_printf(1, 2);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 extern int errmsg_plural(const char *fmt_singular, const char *fmt_plural,
 	unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
@@ -473,14 +465,9 @@ extern void EmitErrorReport(void);
 extern ErrorData *CopyErrorData(void);
 extern void FreeErrorData(ErrorData *edata);
 extern void FlushErrorState(void);
-<<<<<<< HEAD
-extern void ReThrowError(ErrorData *edata)  __attribute__((__noreturn__));
-extern void pg_re_throw(void) __attribute__((noreturn));
-=======
 extern void ReThrowError(ErrorData *edata) pg_attribute_noreturn();
 extern void ThrowErrorData(ErrorData *edata);
 extern void pg_re_throw(void) pg_attribute_noreturn();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 extern char *GetErrorContextStack(void);
 
