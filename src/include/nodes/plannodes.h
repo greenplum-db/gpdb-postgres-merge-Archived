@@ -125,8 +125,8 @@ typedef struct PlannedStmt
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
 
 	int			nParamExec;		/* number of PARAM_EXEC Params used */
+	bool		hasRowSecurity; /* row security applied? */
 
-<<<<<<< HEAD
 	int			nMotionNodes;	/* number of Motion nodes in plan */
 
 	int			nInitPlans;		/* number of initPlans in plan */
@@ -147,9 +147,6 @@ typedef struct PlannedStmt
 	 */
 	IntoClause *intoClause;
 	CopyIntoClause *copyIntoClause;
-=======
-	bool		hasRowSecurity; /* row security applied? */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } PlannedStmt;
 
 /*
@@ -374,18 +371,15 @@ typedef struct ModifyTable
 	List	   *fdwPrivLists;	/* per-target-table FDW private data lists */
 	List	   *rowMarks;		/* PlanRowMarks (non-locking only) */
 	int			epqParam;		/* ID of Param for EvalPlanQual re-eval */
-<<<<<<< HEAD
-	List	   *action_col_idxes;
-	List	   *ctid_col_idxes;
-	List	   *oid_col_idxes;
-=======
 	OnConflictAction onConflictAction;	/* ON CONFLICT action */
 	List	   *arbiterIndexes; /* List of ON CONFLICT arbiter index OIDs  */
 	List	   *onConflictSet;	/* SET for INSERT ON CONFLICT DO UPDATE */
 	Node	   *onConflictWhere;	/* WHERE for ON CONFLICT UPDATE */
 	Index		exclRelRTI;		/* RTI of the EXCLUDED pseudo relation */
 	List	   *exclRelTlist;	/* tlist of the EXCLUDED pseudo relation */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	List	   *action_col_idxes;
+	List	   *ctid_col_idxes;
+	List	   *oid_col_idxes;
 } ModifyTable;
 
 /* ----------------
@@ -493,7 +487,12 @@ typedef struct Scan
 typedef Scan SeqScan;
 
 /* ----------------
-<<<<<<< HEAD
+ *		table sample scan node
+ * ----------------
+ */
+typedef Scan SampleScan;
+
+/* ----------------
  *		index type information
  */
 typedef enum LogicalIndexType
@@ -516,12 +515,6 @@ typedef struct LogicalIndexInfo
 					 * of each partition on which this index is defined */
 	List	*defaultLevels;		/* Used to identify a default partition */
 } LogicalIndexInfo;
-=======
- *		table sample scan node
- * ----------------
- */
-typedef Scan SampleScan;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* ----------------
  *		index scan node
@@ -1126,11 +1119,12 @@ typedef struct Agg
 	bool		finalizeAggs;	/* should we call the finalfn on agg states? */
 	Oid		   *grpOperators;	/* equality operators to compare with */
 	long		numGroups;		/* estimated number of groups in input */
-<<<<<<< HEAD
 	int			transSpace;		/* est storage per group for byRef transition values */
 
 	/*
-	 * The following is used by ROLLUP.
+	 * The following is used by MPP ROLLUP.
+	 *
+	 * FIXME: this is now used by MPP ROLLUP, clean up later?
 	 */
 
 	/*
@@ -1186,10 +1180,9 @@ typedef struct Agg
 	bool 		streaming;
 	Bitmapset  *aggParams;		/* IDs of Params used in Aggref inputs */
 	/* Note: planner provides numGroups & aggParams only in AGG_HASHED case */
-=======
+
 	List	   *groupingSets;	/* grouping sets to use */
 	List	   *chain;			/* chained Agg/Sort nodes */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } Agg;
 
 /* ----------------
@@ -1484,17 +1477,12 @@ typedef enum RowMarkType
 	ROW_MARK_NOKEYEXCLUSIVE,	/* obtain no-key exclusive tuple lock */
 	ROW_MARK_SHARE,				/* obtain shared tuple lock */
 	ROW_MARK_KEYSHARE,			/* obtain keyshare tuple lock */
-<<<<<<< HEAD
-	ROW_MARK_REFERENCE,			/* just fetch the TID */
+	ROW_MARK_REFERENCE,			/* just fetch the TID, don't lock it */
 	ROW_MARK_COPY,				/* physically copy the row value */
 	ROW_MARK_TABLE_SHARE,		/* (GPDB) Acquire RowShareLock on table,
 								 * but no tuple locks */
 	ROW_MARK_TABLE_EXCLUSIVE	/* (GPDB) Acquire ExclusiveLock on table,
 								 * blocking all other updates */
-=======
-	ROW_MARK_REFERENCE,			/* just fetch the TID, don't lock it */
-	ROW_MARK_COPY				/* physically copy the row value */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } RowMarkType;
 
 #define RowMarkRequiresRowShareLock(marktype)  ((marktype) <= ROW_MARK_KEYSHARE)

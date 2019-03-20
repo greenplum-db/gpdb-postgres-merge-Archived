@@ -27,11 +27,8 @@ extern volatile sig_atomic_t walsender_ready_to_stop;
 /* user-settable parameters */
 extern int	max_wal_senders;
 extern int	wal_sender_timeout;
-<<<<<<< HEAD
-extern int	repl_catchup_within_range;
-=======
 extern bool log_replication_commands;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+extern int	repl_catchup_within_range;
 
 extern void InitWalSender(void);
 extern void exec_replication_command(const char *query_string);

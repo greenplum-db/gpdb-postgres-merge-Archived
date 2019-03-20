@@ -124,17 +124,12 @@ extern int	pg_fsync_no_writethrough(int fd);
 extern int	pg_fsync_writethrough(int fd);
 extern int	pg_fdatasync(int fd);
 extern int	pg_flush_data(int fd, off_t offset, off_t amount);
-<<<<<<< HEAD
 extern void fsync_fname(const char *fname, bool isdir);
+extern void SyncDataDirectory(void);
 extern int	durable_rename(const char *oldfile, const char *newfile, int loglevel);
 extern int	durable_link_or_rename(const char *oldfile, const char *newfile, int loglevel);
-extern void SyncDataDirectory(void);
 
 extern int gp_retry_close(int fd);
-=======
-extern void fsync_fname(char *fname, bool isdir);
-extern void SyncDataDirectory(void);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* Filename components for OpenTemporaryFile */
 #define PG_TEMP_FILES_DIR "pgsql_tmp"

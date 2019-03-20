@@ -231,13 +231,9 @@ typedef enum ParamKind
 {
 	PARAM_EXTERN,
 	PARAM_EXEC,
-<<<<<<< HEAD
 	PARAM_EXEC_REMOTE, /* MPP ???? */
-	PARAM_SUBLINK
-=======
 	PARAM_SUBLINK,
 	PARAM_MULTIEXPR
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } ParamKind;
 
 typedef struct Param
@@ -310,9 +306,7 @@ typedef struct Aggref
 	int			location;		/* token location, or -1 if unknown */
 } Aggref;
 
-
 /*
-<<<<<<< HEAD
  * Grouping: describe the hidden GROUPING column for grouping extensions.
  *
  * Defined for making it easily to distinguish this column with others.
@@ -367,13 +361,6 @@ typedef struct GroupId
 } GroupId;
 
 /*
- * WindowFunc: describes a window function call
- *
- * In a query tree, a WindowFunc corresponds to a SQL window function
- * call.  In a plan tree, a WindowRef is an expression the corresponds
- * to some or all of the calculation of the window function result.
- *
-=======
  * GroupingFunc
  *
  * A GroupingFunc is a GROUPING(...) expression, which behaves in many ways
@@ -410,7 +397,10 @@ typedef struct GroupingFunc
 
 /*
  * WindowFunc
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+ *
+ * In a query tree, a WindowFunc corresponds to a SQL window function
+ * call.  In a plan tree, a WindowRef is an expression the corresponds
+ * to some or all of the calculation of the window function result.
  */
 typedef struct WindowFunc
 {
@@ -1225,12 +1215,8 @@ typedef struct NullTest
 	Expr		xpr;
 	Expr	   *arg;			/* input expression */
 	NullTestType nulltesttype;	/* IS NULL, IS NOT NULL */
-<<<<<<< HEAD
 	bool		argisrow;		/* T to perform field-by-field null checks */
-=======
-	bool		argisrow;		/* T if input is of a composite type */
 	int			location;		/* token location, or -1 if unknown */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } NullTest;
 
 /*
@@ -1515,7 +1501,32 @@ typedef struct FromExpr
 	Node	   *quals;			/* qualifiers on join, if any */
 } FromExpr;
 
-<<<<<<< HEAD
+/*----------
+ * OnConflictExpr - represents an ON CONFLICT DO ... expression
+ *
+ * The optimizer requires a list of inference elements, and optionally a WHERE
+ * clause to infer a unique index.  The unique index (or, occasionally,
+ * indexes) inferred are used to arbitrate whether or not the alternative ON
+ * CONFLICT path is taken.
+ *----------
+ */
+typedef struct OnConflictExpr
+{
+	NodeTag		type;
+	OnConflictAction action;	/* DO NOTHING or UPDATE? */
+
+	/* Arbiter */
+	List	   *arbiterElems;	/* unique index arbiter list (of
+								 * InferenceElem's) */
+	Node	   *arbiterWhere;	/* unique index arbiter WHERE clause */
+	Oid			constraint;		/* pg_constraint OID for arbiter */
+
+	/* ON CONFLICT UPDATE */
+	List	   *onConflictSet;	/* List of ON CONFLICT SET TargetEntrys */
+	Node	   *onConflictWhere;	/* qualifiers to restrict UPDATE to */
+	int			exclRelIndex;	/* RT index of 'excluded' relation */
+	List	   *exclRelTlist;	/* tlist of the EXCLUDED pseudo relation */
+} OnConflictExpr;
 
 typedef enum Movement
 {
@@ -1677,33 +1688,5 @@ typedef struct PartListNullTestExpr
 	int			level;			/* partitioning level */
 	NullTestType nulltesttype;	/* IS NULL, IS NOT NULL */
 } PartListNullTestExpr;
-=======
-/*----------
- * OnConflictExpr - represents an ON CONFLICT DO ... expression
- *
- * The optimizer requires a list of inference elements, and optionally a WHERE
- * clause to infer a unique index.  The unique index (or, occasionally,
- * indexes) inferred are used to arbitrate whether or not the alternative ON
- * CONFLICT path is taken.
- *----------
- */
-typedef struct OnConflictExpr
-{
-	NodeTag		type;
-	OnConflictAction action;	/* DO NOTHING or UPDATE? */
-
-	/* Arbiter */
-	List	   *arbiterElems;	/* unique index arbiter list (of
-								 * InferenceElem's) */
-	Node	   *arbiterWhere;	/* unique index arbiter WHERE clause */
-	Oid			constraint;		/* pg_constraint OID for arbiter */
-
-	/* ON CONFLICT UPDATE */
-	List	   *onConflictSet;	/* List of ON CONFLICT SET TargetEntrys */
-	Node	   *onConflictWhere;	/* qualifiers to restrict UPDATE to */
-	int			exclRelIndex;	/* RT index of 'excluded' relation */
-	List	   *exclRelTlist;	/* tlist of the EXCLUDED pseudo relation */
-} OnConflictExpr;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #endif   /* PRIMNODES_H */

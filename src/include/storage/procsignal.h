@@ -31,13 +31,7 @@ typedef enum
 {
 	PROCSIG_CATCHUP_INTERRUPT,	/* sinval catchup interrupt */
 	PROCSIG_NOTIFY_INTERRUPT,	/* listen/notify interrupt */
-<<<<<<< HEAD
-	PROCSIG_WALSND_INIT_STOPPING,	/* ask walsenders to prepare for shutdown  */
-
-	PROCSIG_QUERY_FINISH,		/* query finish */
-=======
 	PROCSIG_PARALLEL_MESSAGE,	/* message from cooperating parallel backend */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Recovery conflict reasons */
 	PROCSIG_RECOVERY_CONFLICT_DATABASE,
@@ -46,6 +40,9 @@ typedef enum
 	PROCSIG_RECOVERY_CONFLICT_SNAPSHOT,
 	PROCSIG_RECOVERY_CONFLICT_BUFFERPIN,
 	PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK,
+
+	PROCSIG_WALSND_INIT_STOPPING,	/* ask walsenders to prepare for shutdown  */
+	PROCSIG_QUERY_FINISH,		/* query finish */
 
 	NUM_PROCSIGNALS				/* Must be last! */
 } ProcSignalReason;

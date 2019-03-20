@@ -28,20 +28,11 @@ typedef struct ReorderBufferTupleBuf
 
 	/* tuple header, the interesting bit for users of logical decoding */
 	HeapTupleData tuple;
-<<<<<<< HEAD
 
 	/* pre-allocated size of tuple buffer, different from tuple size */
 	Size	alloc_tuple_size;
 
 	/* actual tuple data follows */
-=======
-	union
-	{
-		HeapTupleHeaderData header;
-		char		data[MaxHeapTupleSize];
-		double		align_it;	/* ensure t_data is MAXALIGN'd */
-	}			t_data;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } ReorderBufferTupleBuf;
 
 /* pointer to the data stored in a TupleBuf */
@@ -270,13 +261,8 @@ typedef struct ReorderBufferTXN
 	/* ---
 	 * Position in one of three lists:
 	 * * list of subtransactions if we are *known* to be subxact
-<<<<<<< HEAD
-	 * * list of toplevel xacts (can be an as-yet unknown subxact)
-	 * * list of preallocated ReorderBufferTXNs (if unused)
-=======
 	 * * list of toplevel xacts (can be am as-yet unknown subxact)
 	 * * list of preallocated ReorderBufferTXNs
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 * ---
 	 */
 	dlist_node	node;

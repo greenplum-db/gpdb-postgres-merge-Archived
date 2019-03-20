@@ -132,8 +132,11 @@ extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 #define AutoFileLock				(&MainLWLockArray[35].lock)
 #define ReplicationSlotAllocationLock	(&MainLWLockArray[36].lock)
 #define ReplicationSlotControlLock		(&MainLWLockArray[37].lock)
-<<<<<<< HEAD
-#define PG_NUM_INDIVIDUAL_LWLOCKS		38
+#define CommitTsControlLock			(&MainLWLockArray[38].lock)
+#define CommitTsLock				(&MainLWLockArray[39].lock)
+#define ReplicationOriginLock		(&MainLWLockArray[40].lock)
+
+#define PG_NUM_INDIVIDUAL_LWLOCKS		41
 
 /* Additional individual locks in GPDB */
 #define SharedSnapshotLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 1].lock)
@@ -165,13 +168,6 @@ extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 								GP_NUM_INDIVIDUAL_LWLOCKS + \
 								NUM_WORKFILEMGR_PARTITIONS + \
 								NUM_WORKFILE_QUERYSPACE_PARTITIONS)
-=======
-#define CommitTsControlLock			(&MainLWLockArray[38].lock)
-#define CommitTsLock				(&MainLWLockArray[39].lock)
-#define ReplicationOriginLock		(&MainLWLockArray[40].lock)
-
-#define NUM_INDIVIDUAL_LWLOCKS		41
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * It's a bit odd to declare NUM_BUFFER_PARTITIONS and NUM_LOCK_PARTITIONS

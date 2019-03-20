@@ -90,18 +90,9 @@ extern PGDLLIMPORT volatile sig_atomic_t ConfigReloadPending;
 extern volatile bool ClientConnectionLost;
 
 /* these are marked volatile because they are examined by signal handlers: */
-<<<<<<< HEAD
-extern PGDLLIMPORT volatile bool ImmediateInterruptOK;
-extern PGDLLIMPORT volatile bool ImmediateDieOK;
-extern PGDLLIMPORT volatile bool TermSignalReceived;
 extern PGDLLIMPORT volatile int32 InterruptHoldoffCount;
 extern PGDLLIMPORT volatile int32 QueryCancelHoldoffCount;
 extern PGDLLIMPORT volatile int32 CritSectionCount;
-=======
-extern PGDLLIMPORT volatile uint32 InterruptHoldoffCount;
-extern PGDLLIMPORT volatile uint32 QueryCancelHoldoffCount;
-extern PGDLLIMPORT volatile uint32 CritSectionCount;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* in tcop/postgres.c */
 extern void ProcessInterrupts(const char* filename, int lineno);
@@ -192,7 +183,6 @@ do { \
 	InterruptHoldoffCount--; \
 } while(0)
 
-<<<<<<< HEAD
 #define HOLD_CANCEL_INTERRUPTS() \
 do{ \
     if (QueryCancelHoldoffCount < 0) \
@@ -213,17 +203,6 @@ do { \
 		elog(PANIC, "Start critical section count is bad (%d)", CritSectionCount); \
 	CritSectionCount++; \
 } while(0)
-=======
-#define HOLD_CANCEL_INTERRUPTS()  (QueryCancelHoldoffCount++)
-
-#define RESUME_CANCEL_INTERRUPTS() \
-do { \
-	Assert(QueryCancelHoldoffCount > 0); \
-	QueryCancelHoldoffCount--; \
-} while(0)
-
-#define START_CRIT_SECTION()  (CritSectionCount++)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #define END_CRIT_SECTION() \
 do { \
@@ -249,12 +228,9 @@ extern pid_t PostmasterPid;
 extern bool IsPostmasterEnvironment;
 extern PGDLLIMPORT bool IsUnderPostmaster;
 extern bool IsBackgroundWorker;
-<<<<<<< HEAD
 extern bool IsBinaryUpgrade;
-extern bool ConvertMasterDataDirToSegment;
-=======
 extern PGDLLIMPORT bool IsBinaryUpgrade;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+extern bool ConvertMasterDataDirToSegment;
 
 extern PGDLLIMPORT bool ExitOnAnyError;
 
@@ -440,13 +416,8 @@ extern char *GetUserNameFromId(Oid roleid, bool noerr);
 extern Oid	GetUserId(void);
 extern Oid	GetOuterUserId(void);
 extern Oid	GetSessionUserId(void);
-<<<<<<< HEAD
-extern void 	SetSessionUserId(Oid, bool);
 extern Oid	GetAuthenticatedUserId(void);
 extern bool IsAuthenticatedUserSuperUser(void);
-=======
-extern Oid	GetAuthenticatedUserId(void);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern void GetUserIdAndSecContext(Oid *userid, int *sec_context);
 extern void SetUserIdAndSecContext(Oid userid, int sec_context);
 extern bool InLocalUserIdChange(void);
@@ -555,12 +526,8 @@ extern AuxProcType MyAuxProcType;
  *****************************************************************************/
 
 /* in utils/init/postinit.c */
-<<<<<<< HEAD
 extern bool FindMyDatabase(const char *dbname, Oid *db_id, Oid *db_tablespace);
-extern void pg_split_opts(char **argv, int *argcp, char *optstr);
-=======
 extern void pg_split_opts(char **argv, int *argcp, const char *optstr);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern void InitializeMaxBackends(void);
 extern void InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 			 Oid useroid, char *out_dbname);

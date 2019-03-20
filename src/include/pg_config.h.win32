@@ -40,18 +40,10 @@
 /* This file is generated from MingW ./configure, and with the following
  * changes to be valid for Visual C++ (and compatible):
  *
-<<<<<<< HEAD
- * HAVE_CBRT, HAVE_FUNCNAME_FUNC, HAVE_FUNCNAME_FUNCTION, HAVE_GETOPT,
- * HAVE_GETOPT_H, HAVE_GETOPT_LONG, HAVE_LOCALE_T, HAVE_RINT, HAVE_STRINGS_H,
- * HAVE_STRTOLL, HAVE_STRTOULL, HAVE_STRUCT_OPTION, ENABLE_THREAD_SAFETY,
- * PG_USE_INLINE, inline, USE_SSE42_CRC32C_WITH_RUNTIME_CHECK
- *
-=======
  * HAVE_CBRT, HAVE_FUNCNAME_FUNC, HAVE_GETOPT, HAVE_GETOPT_H, HAVE_INTTYPES_H,
  * HAVE_GETOPT_LONG, HAVE_LOCALE_T, HAVE_RINT, HAVE_STRINGS_H, HAVE_STRTOLL,
  * HAVE_STRTOULL, HAVE_STRUCT_OPTION, ENABLE_THREAD_SAFETY, PG_USE_INLINE,
  * inline, USE_SSE42_CRC32C_WITH_RUNTIME_CHECK
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 
 /* Define to the type of arg 1 of 'accept' */
@@ -583,16 +575,8 @@
 /* Define to 1 if you have the <winldap.h> header file. */
 /* #undef HAVE_WINLDAP_H */
 
-<<<<<<< HEAD
-/* Define to 1 if you have __cpuid. */
-#define HAVE__CPUID 1
-
-/* Define to 1 if you have __get_cpuid. */
-#undef HAVE__GET_CPUID
-=======
 /* Define to 1 if your compiler understands __builtin_bswap32. */
 /* #undef HAVE__BUILTIN_BSWAP32 */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* Define to 1 if your compiler understands __builtin_constant_p. */
 /* #undef HAVE__BUILTIN_CONSTANT_P */
@@ -637,39 +621,22 @@
 #define PACKAGE_NAME "Greenplum Database"
 
 /* Define to the full name and version of this package. */
-<<<<<<< HEAD
-#define PACKAGE_STRING "Greenplum Database 6.0.0-alpha"
-
-/* Define to the version of this package. */
-#define PACKAGE_VERSION "9.4.20"
-=======
-#define PACKAGE_STRING "PostgreSQL 9.5alpha1"
+#define PACKAGE_STRING "Greenplum Database 7.0.0-devel"
 
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "9.5alpha1"
 
 /* Define to the name of a signed 128-bit integer type. */
 #undef PG_INT128_TYPE
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* Define to the name of a signed 64-bit integer type. */
 #define PG_INT64_TYPE long long int
 
-/* Define to the name of a signed 128-bit integer type. */
-#undef PG_INT128_TYPE
-
 /* PostgreSQL version as a string */
-<<<<<<< HEAD
-#define PG_VERSION "9.4.20"
-
-/* PostgreSQL version as a number */
-#define PG_VERSION_NUM 90420
-=======
 #define PG_VERSION "9.5alpha1"
 
 /* PostgreSQL version as a number */
 #define PG_VERSION_NUM 90500
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "greenplum"
@@ -739,11 +706,7 @@
 /* Define to 1 to use Intel SSE 4.2 CRC instructions with a runtime check. */
 #if (_MSC_VER < 1500)
 #define USE_SLICING_BY_8_CRC32C 1
-<<<<<<< HEAD
-#end
-=======
 #endif
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* Define to 1 use Intel SSE 4.2 CRC instructions. */
 /* #undef USE_SSE42_CRC32C */
@@ -752,12 +715,6 @@
 #if (_MSC_VER >= 1500)
 #define USE_SSE42_CRC32C_WITH_RUNTIME_CHECK
 #endif
-<<<<<<< HEAD
-
-/* Define to build with (Open)SSL support. (--with-openssl) */
-/* #undef USE_SSL */
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* Define to select SysV-style semaphores. */
 /* #undef USE_SYSV_SEMAPHORES */

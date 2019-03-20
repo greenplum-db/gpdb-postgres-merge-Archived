@@ -129,7 +129,6 @@ typedef struct
 	 */
 	bool		sync_standbys_defined;
 
-<<<<<<< HEAD
 	/*
 	 * xlog location upto which xlog seg file cleanup is allowed.
 	 * Checkpoint creation cleans old non-required xlog files. We have to
@@ -157,10 +156,7 @@ typedef struct
 	 */
 	WalSndError error;
 
-	WalSnd		walsnds[1];		/* VARIABLE LENGTH ARRAY */
-=======
 	WalSnd		walsnds[FLEXIBLE_ARRAY_MEMBER];
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } WalSndCtlData;
 
 extern WalSndCtlData *WalSndCtl;

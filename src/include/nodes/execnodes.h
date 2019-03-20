@@ -25,11 +25,7 @@
 #include "utils/reltrigger.h"
 #include "utils/sortsupport.h"
 #include "utils/tuplestore.h"
-<<<<<<< HEAD
 #include "nodes/parsenodes.h"
-=======
-#include "utils/tuplesort.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #include "gpmon/gpmon.h"                /* gpmon_packet_t */
 
@@ -346,7 +342,8 @@ typedef void *RelationDeleteDesc;
  *		ConstraintExprs			array of constraint-checking expr states
  *		junkFilter				for removing junk attributes from tuples
  *		projectReturning		for computing a RETURNING list
-<<<<<<< HEAD
+ *		onConflictSetProj		for computing ON CONFLICT DO UPDATE SET
+ *		onConflictSetWhere		list of ON CONFLICT DO UPDATE exprs (qual)
  *		tupdesc_match			???
  *		mt_bind					???
  *		aoInsertDesc			context for appendonly relation buffered INSERT.
@@ -358,10 +355,6 @@ typedef void *RelationDeleteDesc;
  *		partInsertMap			map input attrno to target attrno
  *		partSlot				TupleTableSlot for the target part relation
  *		resultSlot          	TupleTableSlot for the target relation
-=======
- *		onConflictSetProj		for computing ON CONFLICT DO UPDATE SET
- *		onConflictSetWhere		list of ON CONFLICT DO UPDATE exprs (qual)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * ----------------
  */
 typedef struct ResultRelInfo
@@ -383,7 +376,8 @@ typedef struct ResultRelInfo
 	List	  **ri_ConstraintExprs;
 	JunkFilter *ri_junkFilter;
 	ProjectionInfo *ri_projectReturning;
-<<<<<<< HEAD
+	ProjectionInfo *ri_onConflictSetProj;
+	List	   *ri_onConflictSetWhere;
 	int			tupdesc_match;
 	struct MemTupleBinding *mt_bind;
 
@@ -421,10 +415,6 @@ typedef struct ResultRelInfo
 	int			nBufferedTuples;
 	HeapTuple	*bufferedTuples;
 	Size		bufferedTuplesSize;
-=======
-	ProjectionInfo *ri_onConflictSetProj;
-	List	   *ri_onConflictSetWhere;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } ResultRelInfo;
 
 typedef struct ShareNodeEntry
@@ -1565,11 +1555,6 @@ typedef struct ModifyTableState
 	List	  **mt_arowmarks;	/* per-subplan ExecAuxRowMark lists */
 	EPQState	mt_epqstate;	/* for evaluating EvalPlanQual rechecks */
 	bool		fireBSTriggers; /* do we need to fire stmt triggers? */
-<<<<<<< HEAD
-	AttrNumber		*mt_action_col_idxes;
-	AttrNumber		*mt_ctid_col_idxes;
-	AttrNumber		*mt_oid_col_idxes;
-=======
 	OnConflictAction mt_onconflict;		/* ON CONFLICT type */
 	List	   *mt_arbiterindexes;		/* unique index OIDs to arbitrate
 										 * taking alt path */
@@ -1578,7 +1563,9 @@ typedef struct ModifyTableState
 										 * tlist  */
 	TupleTableSlot *mt_conflproj;		/* CONFLICT ... SET ... projection
 										 * target */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	AttrNumber		*mt_action_col_idxes;
+	AttrNumber		*mt_ctid_col_idxes;
+	AttrNumber		*mt_oid_col_idxes;
 } ModifyTableState;
 
 /* ----------------
@@ -1818,13 +1805,6 @@ typedef struct IndexScanState
 	Relation	iss_RelationDesc;
 	IndexScanDesc iss_ScanDesc;
 
-<<<<<<< HEAD
-	/*
-	 * tableOid is the oid of the partition or relation on which our current
-	 * index relation is defined.
-	 */
-	Oid			tableOid;
-=======
 	/* These are needed for re-checking ORDER BY expr ordering */
 	pairingheap *iss_ReorderQueue;
 	bool		iss_ReachedEnd;
@@ -1833,7 +1813,13 @@ typedef struct IndexScanState
 	SortSupport iss_SortSupport;
 	bool	   *iss_OrderByTypByVals;
 	int16	   *iss_OrderByTypLens;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+	/*
+	 * tableOid is the oid of the partition or relation on which our current
+	 * index relation is defined.
+	 */
+	Oid			tableOid;
+
 } IndexScanState;
 
 /*
@@ -2113,12 +2099,9 @@ typedef struct SubqueryScanState
  *		nfuncs				number of functions being executed
  *		funcstates			per-function execution states (private in
  *							nodeFunctionscan.c)
-<<<<<<< HEAD
  *		cdb_want_ctid		true => ctid is referenced in targetlist
  *		cdb_fake_ctid
  *		cdb_mark_ctid
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  *		argcontext			memory context to evaluate function arguments in
  * ----------------
  */
@@ -2134,17 +2117,14 @@ typedef struct FunctionScanState
 	int			nfuncs;
 	struct FunctionScanPerFuncState *funcstates;		/* array of length
 														 * nfuncs */
-<<<<<<< HEAD
+	MemoryContext argcontext;
+
 	bool		cdb_want_ctid;
 	ItemPointerData cdb_fake_ctid;
 	ItemPointerData cdb_mark_ctid;
-	MemoryContext argcontext;
 
 	bool		delayEagerFree;		/* is is safe to free memory used by this node,
 									 * when this node has outputted its last row? */
-=======
-	MemoryContext argcontext;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } FunctionScanState;
 
 
@@ -2194,11 +2174,7 @@ typedef struct ValuesScanState
 	List	  **exprlists;
 	int			array_len;
 	int			curr_idx;
-<<<<<<< HEAD
-	int			marked_idx;
 	bool		cdb_want_ctid;	/* true => ctid is referenced in targetlist */
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } ValuesScanState;
 
 /* ----------------
@@ -2253,7 +2229,6 @@ typedef struct ForeignScanState
 } ForeignScanState;
 
 /* ----------------
-<<<<<<< HEAD
  *         ExternalScanState information
  *
  *	 ExternalScan nodes are used to scan external tables
@@ -2328,7 +2303,8 @@ typedef struct DynamicSeqScanState
 
 
 } DynamicSeqScanState;
-=======
+
+/* ----------------
  *	 CustomScanState information
  *
  *		CustomScan nodes are used to execute custom code within executor.
@@ -2371,7 +2347,6 @@ typedef struct CustomScanState
 	List	   *custom_ps;		/* list of child PlanState nodes, if any */
 	const CustomExecMethods *methods;
 } CustomScanState;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* ----------------------------------------------------------------
  *				 Join State Information
@@ -2661,12 +2636,9 @@ typedef struct AggState
 	AggStatePerAgg curperagg;	/* identifies currently active aggregate */
 	bool		input_done;		/* indicates end of input */
 	bool		agg_done;		/* indicates completion of Agg scan */
-<<<<<<< HEAD
 	bool        has_partial_agg;/* indicate if a partial aggregate result
 								 * has been calculated in the previous call.
 								 */
-
-=======
 	int			projected_set;	/* The last projected grouping set */
 	int			current_set;	/* The current grouping set being evaluated */
 	Bitmapset  *grouped_cols;	/* grouped cols in current projection */
@@ -2678,7 +2650,6 @@ typedef struct AggState
 	Tuplesortstate *sort_in;	/* sorted input to phases > 0 */
 	Tuplesortstate *sort_out;	/* input is copied here for next phase */
 	TupleTableSlot *sort_slot;	/* slot for sort results */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* these fields are used in AGG_PLAIN and AGG_SORTED modes: */
 	AggStatePerGroup pergroup;	/* per-Aggref-per-group working state */
 	struct MemTupleData *grp_firstTuple; /* copy of first tuple of current group */

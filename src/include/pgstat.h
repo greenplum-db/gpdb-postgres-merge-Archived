@@ -842,17 +842,12 @@ typedef struct PgBackendStatus
 	SockAddr	st_clientaddr;
 	char	   *st_clienthostname;		/* MUST be null-terminated */
 
-<<<<<<< HEAD
-	/* Is backend currently waiting on something (and what)? */
-	char		st_waiting;
-=======
 	/* Information about SSL connection */
 	bool		st_ssl;
 	PgBackendSSLStatus *st_sslstatus;
 
-	/* Is backend currently waiting on an lmgr lock? */
-	bool		st_waiting;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	/* Is backend currently waiting on something (and what)? */
+	char		st_waiting;
 
 	/* current state */
 	BackendState st_state;

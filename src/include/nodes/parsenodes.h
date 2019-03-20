@@ -963,13 +963,8 @@ typedef struct RangeTblEntry
 	AclMode		requiredPerms;	/* bitmask of required access permissions */
 	Oid			checkAsUser;	/* if valid, check access as this role */
 	Bitmapset  *selectedCols;	/* columns needing SELECT permission */
-<<<<<<< HEAD
-	Bitmapset  *modifiedCols;	/* columns needing INSERT/UPDATE permission */
-
-=======
 	Bitmapset  *insertedCols;	/* columns needing INSERT permission */
 	Bitmapset  *updatedCols;	/* columns needing UPDATE permission */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	List	   *securityQuals;	/* any security barrier quals to apply */
 
     List       *pseudocols;     /* CDB: List of CdbRelColumnInfo nodes defining
@@ -1106,7 +1101,6 @@ typedef struct SortGroupClause
 } SortGroupClause;
 
 /*
-<<<<<<< HEAD
  * GroupingClause -
  *     representation of grouping extension clauses,
  *     such as ROLLUP, CUBE, and GROUPING SETS.
@@ -1150,7 +1144,7 @@ typedef struct GroupingFunc
 	int       ngrpcols; /* the number of grouping attributes */
 } GroupingFunc;
 
-=======
+/*
  * GroupingSet -
  *		representation of CUBE, ROLLUP and GROUPING SETS clauses
  *
@@ -1216,7 +1210,6 @@ typedef struct GroupingSet
 	List	   *content;
 	int			location;
 } GroupingSet;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * WindowClause -
@@ -1583,14 +1576,10 @@ typedef enum ObjectType
 	OBJECT_TSPARSER,
 	OBJECT_TSTEMPLATE,
 	OBJECT_TYPE,
-<<<<<<< HEAD
+	OBJECT_USER_MAPPING,
 	OBJECT_VIEW,
 	OBJECT_RESQUEUE,
 	OBJECT_RESGROUP
-=======
-	OBJECT_USER_MAPPING,
-	OBJECT_VIEW
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } ObjectType;
 
 /* ----------------------
@@ -1699,7 +1688,8 @@ typedef enum AlterTableType
 	AT_AddOf,					/* OF <type_name> */
 	AT_DropOf,					/* NOT OF */
 	AT_ReplicaIdentity,			/* REPLICA IDENTITY */
-<<<<<<< HEAD
+	AT_EnableRowSecurity,		/* ENABLE ROW SECURITY */
+	AT_DisableRowSecurity,		/* DISABLE ROW SECURITY */
 	AT_GenericOptions,			/* OPTIONS (...) */
 	AT_SetDistributedBy,		/* SET DISTRIBUTED BY */
 	AT_ExpandTable,          /* EXPAND DISTRIBUTED */
@@ -1715,11 +1705,6 @@ typedef enum AlterTableType
 	AT_PartTruncate,			/* Truncate */
 	AT_PartAddInternal,			/* CREATE TABLE time partition addition */
 	AT_PartAttachIndex			/* ALTER INDEX ATTACH PARTITION (not exposed to user) */
-=======
-	AT_EnableRowSecurity,		/* ENABLE ROW SECURITY */
-	AT_DisableRowSecurity,		/* DISABLE ROW SECURITY */
-	AT_GenericOptions			/* OPTIONS (...) */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } AlterTableType;
 
 typedef struct ReplicaIdentityStmt
@@ -1734,17 +1719,11 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	NodeTag		type;
 	AlterTableType subtype;		/* Type of table alteration to apply */
 	char	   *name;			/* column, constraint, or trigger to act on,
-<<<<<<< HEAD
 								 * or new owner or tablespace */
-	Node	   *def;			/* definition of new column, column type,
-								 * index, constraint, or parent table */
-	Node	   *transform;		/* transformation expr for ALTER TYPE */
-=======
-								 * or tablespace */
 	Node	   *newowner;		/* RoleSpec */
 	Node	   *def;			/* definition of new column, index,
 								 * constraint, or parent table */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	Node	   *transform;		/* transformation expr for ALTER TYPE */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
 	bool		part_expanded;	/* expands from another command, for partitioning */
 	List	   *partoids;		/* If applicable, OIDs of partition part tables */
@@ -2981,13 +2960,10 @@ typedef struct IndexStmt
 	bool		initdeferred;	/* is the constraint INITIALLY DEFERRED? */
 	bool		transformed;	/* true when transformIndexStmt is finished */
 	bool		concurrent;		/* should this be a concurrent index build? */
-<<<<<<< HEAD
+	bool		if_not_exists;	/* just do nothing if index already exists? */
 	bool		is_split_part;	/* Is this for SPLIT PARTITION command? */
 	Oid			parentIndexId;	/* attach to a parent index if set */
 	Oid			parentConstraintId;		/* attach to a parent constraint if set */
-=======
-	bool		if_not_exists;	/* just do nothing if index already exists? */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } IndexStmt;
 
 /* ----------------------
@@ -3343,12 +3319,9 @@ typedef enum VacuumOption
 	VACOPT_FREEZE = 1 << 3,		/* FREEZE option */
 	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
 	VACOPT_NOWAIT = 1 << 5,		/* don't wait to get lock (autovacuum only) */
-<<<<<<< HEAD
-	VACOPT_ROOTONLY = 1 << 6,	/* only ANALYZE root partition tables */
-	VACOPT_FULLSCAN = 1 << 7	/* ANALYZE using full table scan */
-=======
 	VACOPT_SKIPTOAST = 1 << 6	/* don't process the TOAST table, if any */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	VACOPT_ROOTONLY = 1 << 7,	/* only ANALYZE root partition tables */
+	VACOPT_FULLSCAN = 1 << 8	/* ANALYZE using full table scan */
 } VacuumOption;
 
 typedef enum AOVacuumPhase
@@ -3522,13 +3495,8 @@ typedef struct ReindexStmt
 								 * etc. */
 	RangeVar   *relation;		/* Table or index to reindex */
 	const char *name;			/* name of database to reindex */
-<<<<<<< HEAD
-	bool		do_system;		/* include system tables in database case */
-	bool		do_user;		/* include user tables in database case */
-	Oid			relid;			/* oid of TABLE, used by QE */
-=======
 	int			options;		/* Reindex options flags */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	Oid			relid;			/* oid of TABLE, used by QE */
 } ReindexStmt;
 
 /* ----------------------

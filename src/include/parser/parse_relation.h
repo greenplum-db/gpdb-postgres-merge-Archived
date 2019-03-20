@@ -16,11 +16,9 @@
 
 #include "parser/parse_node.h"
 
-<<<<<<< HEAD
 #define ERRMSG_GP_WITH_COLUMNS_MISMATCH \
 	"specified number of columns in WITH query \"%s\" must not " \
 	"exceed the number of available columns"
-=======
 
 /*
  * Support for fuzzily matching column.
@@ -37,8 +35,6 @@ typedef struct
 	RangeTblEntry *rsecond;		/* RTE of second */
 	AttrNumber	second;			/* Second closest attribute so far */
 } FuzzyAttrMatchState;
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 extern RangeTblEntry *refnameRangeTblEntry(ParseState *pstate,
 					 const char *schemaname,

@@ -191,13 +191,10 @@ typedef enum LockTagType
 	/* ID info for a transaction is its TransactionId */
 	LOCKTAG_VIRTUALTRANSACTION, /* virtual transaction (ditto) */
 	/* ID info for a virtual transaction is its VirtualTransactionId */
-<<<<<<< HEAD
 	LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE,	/* Segment file within an Append-Only relation */
 	/* ID info for a relation is DB OID + REL OID + (LOGICAL) SEGMENT FILE # */
-=======
 	LOCKTAG_SPECULATIVE_TOKEN,	/* speculative insertion Xid and token */
 	/* ID info for a transaction is its TransactionId */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	LOCKTAG_OBJECT,				/* non-relation database object */
 	/* ID info for an object is DB OID + CLASS OID + OBJECT OID + SUBID */
 
@@ -284,21 +281,20 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_VIRTUALTRANSACTION, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
-<<<<<<< HEAD
 #define SET_LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE(locktag,dboid,reloid,segno) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (reloid), \
 	 (locktag).locktag_field3 = (segno), \
 	 (locktag).locktag_field4 = 0, \
 	 (locktag).locktag_type = LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE, \
-=======
+	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
+
 #define SET_LOCKTAG_SPECULATIVE_INSERTION(locktag,xid,token) \
 	((locktag).locktag_field1 = (xid), \
 	 (locktag).locktag_field2 = (token),		\
 	 (locktag).locktag_field3 = 0, \
 	 (locktag).locktag_field4 = 0, \
 	 (locktag).locktag_type = LOCKTAG_SPECULATIVE_TOKEN, \
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 #define SET_LOCKTAG_OBJECT(locktag,dboid,classoid,objoid,objsubid) \

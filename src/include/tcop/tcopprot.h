@@ -62,26 +62,14 @@ extern bool check_max_stack_depth(int *newval, void **extra, GucSource source);
 extern void assign_max_stack_depth(int newval, void *extra);
 
 extern void die(SIGNAL_ARGS);
-<<<<<<< HEAD
-extern void quickdie(SIGNAL_ARGS) __attribute__((noreturn));
-extern void quickdie_impl(void) __attribute__((noreturn));
-=======
 extern void quickdie(SIGNAL_ARGS) pg_attribute_noreturn();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+extern void quickdie_impl(void) pg_attribute_noreturn();
 extern void StatementCancelHandler(SIGNAL_ARGS);
 extern void FloatExceptionHandler(SIGNAL_ARGS) pg_attribute_noreturn();
 extern void RecoveryConflictInterrupt(ProcSignalReason reason); /* called from SIGUSR1
 																 * handler */
-<<<<<<< HEAD
-extern void prepare_for_client_read(void);
-extern void client_read_ended(void);
-extern void prepare_for_client_write(void);
-extern void client_write_ended(void);
-=======
 extern void ProcessClientReadInterrupt(bool blocked);
 extern void ProcessClientWriteInterrupt(bool blocked);
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern void process_postgres_switches(int argc, char *argv[],
 						  GucContext ctx, const char **dbname);
 extern void PostgresMain(int argc, char *argv[],

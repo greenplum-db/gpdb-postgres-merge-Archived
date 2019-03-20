@@ -57,21 +57,14 @@ typedef struct MemoryContextMethods
 typedef struct MemoryContextData
 {
 	NodeTag		type;			/* identifies exact kind of context */
-<<<<<<< HEAD
-	MemoryContextMethods methods;		/* virtual function table */
-=======
 	/* these two fields are placed here to minimize alignment wastage: */
 	bool		isReset;		/* T = no space alloced since last reset */
 	bool		allowInCritSection;		/* allow palloc in critical section */
-	MemoryContextMethods *methods;		/* virtual function table */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	MemoryContextMethods methods;		/* virtual function table */
 	MemoryContext parent;		/* NULL if no parent (toplevel context) */
 	MemoryContext firstchild;	/* head of linked list of children */
 	MemoryContext nextchild;	/* next child of same parent */
 	char	   *name;			/* context name (just for debugging) */
-<<<<<<< HEAD
-	bool		isReset;		/* T = no space alloced since last reset */
-
     /* CDB: Lifetime cumulative stats for this context and all descendants */
     uint64      allBytesAlloc;  /* bytes allocated from lower level mem mgr */
     uint64      allBytesFreed;  /* bytes returned to lower level mem mgr */
@@ -81,9 +74,7 @@ typedef struct MemoryContextData
     const char *callerFile;     /* __FILE__ of most recent caller */
     int         callerLine;     /* __LINE__ of most recent caller */
 #endif
-=======
 	MemoryContextCallback *reset_cbs;	/* list of reset/delete callbacks */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } MemoryContextData;
 
 /* utils/palloc.h contains typedef struct MemoryContextData *MemoryContext */

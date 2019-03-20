@@ -64,7 +64,6 @@ typedef struct
 	int32		zero;			/* leading zero */
 	int32		len;			/* len, not including hdr */
 	int32		pid;			/* writer's pid */
-<<<<<<< HEAD
 	int32       thid;			/* thread id */
 	int32		main_thid;		/* main thread id */
 	int32		chunk_no;		/* chunk number */
@@ -73,11 +72,6 @@ typedef struct
 	char		is_segv_msg;	/* indicate whether this is a message sent in SEGV/BUS/ILL handler */
 	int64		log_line_number;	/* indicate the order of the message */
 	int64		next;			/* next chained chunk.  also force an 8 bytes align */
-=======
-	char		is_last;		/* last chunk of message? 't' or 'f' ('T' or
-								 * 'F' for CSV case) */
-	char		data[FLEXIBLE_ARRAY_MEMBER];	/* data payload starts here */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } PipeProtoHeader;
 
 #define PIPE_HEADER_UNALIGNED_SIZE  sizeof(PipeProtoHeader)

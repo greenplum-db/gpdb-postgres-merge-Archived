@@ -82,14 +82,9 @@ typedef struct xl_running_xacts
 
 
 /* Recovery handlers for the Standby Rmgr (RM_STANDBY_ID) */
-<<<<<<< HEAD
-extern void standby_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
-extern void standby_desc(StringInfo buf, XLogRecord *record);
-=======
 extern void standby_redo(XLogReaderState *record);
 extern void standby_desc(StringInfo buf, XLogReaderState *record);
 extern const char *standby_identify(uint8 info);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * Declarations for GetRunningTransactionData(). Similar to Snapshots, but
