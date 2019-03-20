@@ -94,28 +94,21 @@
 /* Define to 1 if you have the `append_history' function. */
 #undef HAVE_APPEND_HISTORY
 
-<<<<<<< HEAD
 /* Define to 1 if you have the <apr_getopt.h> header file. */
 #undef HAVE_APR_GETOPT_H
 
 /* Define to 1 if you have the `ASN1_STRING_get0_data' function. */
 #undef HAVE_ASN1_STRING_GET0_DATA
 
-/* Define to 1 if you want to use atomics. */
-=======
 /* Define to 1 if you want to use atomics if available. */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #undef HAVE_ATOMICS
 
 /* Define to 1 if you have the <atomic.h> header file. */
 #undef HAVE_ATOMIC_H
 
-<<<<<<< HEAD
 /* Define to 1 if you have the `BIO_meth_new' function. */
 #undef HAVE_BIO_METH_NEW
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /* Define to 1 if you have the `cbrt' function. */
 #undef HAVE_CBRT
 
@@ -226,24 +219,8 @@
 /* Define to 1 if your compiler understands __FUNCTION__. */
 #undef HAVE_FUNCNAME__FUNCTION
 
-/* Define to 1 if you have __atomic_compare_exchange_n(int *, int *, int). */
-#undef HAVE_GCC__ATOMIC_INT32_CAS
-
-/* Define to 1 if you have __atomic_compare_exchange_n(int64 *, int *, int64).
-   */
-#undef HAVE_GCC__ATOMIC_INT64_CAS
-
-/* Define to 1 if you have __sync_lock_test_and_set(char *) and friends. */
-#undef HAVE_GCC__SYNC_CHAR_TAS
-
-/* Define to 1 if you have __sync_compare_and_swap(int *, int, int). */
-#undef HAVE_GCC__SYNC_INT32_CAS
-
 /* Define to 1 if you have __sync_lock_test_and_set(int *) and friends. */
-#undef HAVE_GCC__SYNC_INT32_TAS
-
-/* Define to 1 if you have __sync_compare_and_swap(int64 *, int64, int64). */
-#undef HAVE_GCC__SYNC_INT64_CAS
+#undef HAVE_GCC_INT_ATOMICS
 
 /* Define to 1 if you have __atomic_compare_exchange_n(int *, int *, int). */
 #undef HAVE_GCC__ATOMIC_INT32_CAS
@@ -462,12 +439,9 @@
 /* Define to 1 if you have the `mkdtemp' function. */
 #undef HAVE_MKDTEMP
 
-<<<<<<< HEAD
 /* Define to 1 if you have the <naucrates/init.h> header file. */
 #undef HAVE_NAUCRATES_INIT_H
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
 
@@ -512,9 +486,6 @@
 
 /* Define to 1 if the PS_STRINGS thing exists. */
 #undef HAVE_PS_STRINGS
-
-/* Define to 1 if you have the `pthread_is_threaded_np' function. */
-#undef HAVE_PTHREAD_IS_THREADED_NP
 
 /* Define to 1 if you have the `pthread_is_threaded_np' function. */
 #undef HAVE_PTHREAD_IS_THREADED_NP
@@ -797,16 +768,14 @@
 /* Define to 1 if you have the <winldap.h> header file. */
 #undef HAVE_WINLDAP_H
 
-<<<<<<< HEAD
 /* Define to 1 if you have the <winsock2.h> header file. */
 #undef HAVE_WINSOCK2_H
 
 /* Define to 1 if you have the <yaml.h> header file. */
 #undef HAVE_YAML_H
-=======
+
 /* Define to 1 if your compiler understands __builtin_bswap32. */
 #undef HAVE__BUILTIN_BSWAP32
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* Define to 1 if your compiler understands __builtin_constant_p. */
 #undef HAVE__BUILTIN_CONSTANT_P
@@ -829,19 +798,14 @@
 /* Define to 1 if your compiler understands __VA_ARGS__ in macros. */
 #undef HAVE__VA_ARGS
 
-<<<<<<< HEAD
 /* Define to 1 if you have the `__strtoll' function. */
 #undef HAVE___STRTOLL
 
 /* Define to 1 if you have the `__strtoull' function. */
 #undef HAVE___STRTOULL
 
-/* Define to the appropriate snprintf format for 64-bit ints. */
-#undef INT64_FORMAT
-=======
 /* Define to the appropriate snprintf length modifier for 64-bit ints. */
 #undef INT64_MODIFIER
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* Define to 1 if `locale_t' requires <xlocale.h>. */
 #undef LOCALE_T_IN_XLOCALE
@@ -980,13 +944,11 @@
 /* Define to select named POSIX semaphores. */
 #undef USE_NAMED_POSIX_SEMAPHORES
 
-<<<<<<< HEAD
-/* Define to 1 to build with Greenplum ORCA optimizer. (--enable-orca) */
-#undef USE_ORCA
-=======
 /* Define to build with OpenSSL support. (--with-openssl) */
 #undef USE_OPENSSL
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+/* Define to 1 to build with Greenplum ORCA optimizer. (--enable-orca) */
+#undef USE_ORCA
 
 /* Define to 1 to build with PAM support. (--with-pam) */
 #undef USE_PAM
@@ -1002,12 +964,6 @@
 
 /* Define to 1 to use Intel SSSE 4.2 CRC instructions with a runtime check. */
 #undef USE_SSE42_CRC32C_WITH_RUNTIME_CHECK
-<<<<<<< HEAD
-
-/* Define to build with (Open)SSL support. (--with-openssl) */
-#undef USE_SSL
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* Define to select SysV-style semaphores. */
 #undef USE_SYSV_SEMAPHORES
