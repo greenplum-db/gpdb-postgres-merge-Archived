@@ -61,10 +61,7 @@
 #endif
 
 #include "catalog/catalog.h"
-<<<<<<< HEAD
-=======
 #include "common/restricted_token.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "common/username.h"
 #include "mb/pg_wchar.h"
 #include "getaddrinfo.h"
@@ -223,15 +220,11 @@ static const char *subdirs[] = {
 	"pg_stat_tmp",
 	"pg_logical",
 	"pg_logical/snapshots",
-<<<<<<< HEAD
 	"pg_logical/mappings",
 /* GPDB needs these directories */
 	"pg_distributedlog",
 	"pg_utilitymodedtmredo",
 	"pg_log"
-=======
-	"pg_logical/mappings"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 };
 
 
@@ -676,11 +669,7 @@ walkdir(const char *path,
 
 	while (errno = 0, (de = readdir(dir)) != NULL)
 	{
-<<<<<<< HEAD
 		char		subpath[MAXPGPATH * 2];
-=======
-		char		subpath[MAXPGPATH];
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		struct stat fst;
 		int			sret;
 
@@ -688,11 +677,7 @@ walkdir(const char *path,
 			strcmp(de->d_name, "..") == 0)
 			continue;
 
-<<<<<<< HEAD
 		snprintf(subpath, sizeof(subpath), "%s/%s", path, de->d_name);
-=======
-		snprintf(subpath, MAXPGPATH, "%s/%s", path, de->d_name);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		if (process_symlinks)
 			sret = stat(subpath, &fst);
@@ -1419,16 +1404,14 @@ setup_config(void)
 	conflines = replace_token(conflines, "#dynamic_shared_memory_type = posix",
 							  repltok);
 
-<<<<<<< HEAD
-	conflines = add_assignment(conflines, "include", "'%s'",
-							   GP_INTERNAL_AUTO_CONF_FILE_NAME);
-=======
 #ifndef USE_PREFETCH
 	conflines = replace_token(conflines,
 							  "#effective_io_concurrency = 1",
 							  "#effective_io_concurrency = 0");
 #endif
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+	conflines = add_assignment(conflines, "include", "'%s'",
+							   GP_INTERNAL_AUTO_CONF_FILE_NAME);
 
 	snprintf(path, sizeof(path), "%s/postgresql.conf", pg_data);
 
@@ -2847,7 +2830,6 @@ setlocales(void)
 #endif
 }
 
-<<<<<<< HEAD
 /*
  * Try to parse value as an integer.  The accepted formats are the
  * usual decimal, octal, or hexadecimal formats.
@@ -2915,119 +2897,6 @@ err:
     return 0;                   /* not reached */
 }                               /* parse_long */
 
-
-#ifdef WIN32
-typedef BOOL (WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
-
-/* Windows API define missing from some versions of MingW headers */
-#ifndef  DISABLE_MAX_PRIVILEGE
-#define DISABLE_MAX_PRIVILEGE	0x1
-#endif
-
-/*
- * Create a restricted token and execute the specified process with it.
- *
- * Returns 0 on failure, non-zero on success, same as CreateProcess().
- *
- * On NT4, or any other system not containing the required functions, will
- * NOT execute anything.
- */
-static int
-CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
-{
-	BOOL		b;
-	STARTUPINFO si;
-	HANDLE		origToken;
-	HANDLE		restrictedToken;
-	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
-	SID_AND_ATTRIBUTES dropSids[2];
-	__CreateRestrictedToken _CreateRestrictedToken = NULL;
-	HANDLE		Advapi32Handle;
-
-	ZeroMemory(&si, sizeof(si));
-	si.cb = sizeof(si);
-
-	Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
-	if (Advapi32Handle != NULL)
-	{
-		_CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
-	}
-
-	if (_CreateRestrictedToken == NULL)
-	{
-		fprintf(stderr, _("%s: WARNING: cannot create restricted tokens on this platform\n"), progname);
-		if (Advapi32Handle != NULL)
-			FreeLibrary(Advapi32Handle);
-		return 0;
-	}
-
-	/* Open the current token to use as a base for the restricted one */
-	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
-	{
-		fprintf(stderr, _("%s: could not open process token: error code %lu\n"), progname, GetLastError());
-		return 0;
-	}
-
-	/* Allocate list of SIDs to remove */
-	ZeroMemory(&dropSids, sizeof(dropSids));
-	if (!AllocateAndInitializeSid(&NtAuthority, 2,
-		 SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0,
-								  0, &dropSids[0].Sid) ||
-		!AllocateAndInitializeSid(&NtAuthority, 2,
-	SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
-								  0, &dropSids[1].Sid))
-	{
-		fprintf(stderr, _("%s: could not allocate SIDs: error code %lu\n"),
-				progname, GetLastError());
-		return 0;
-	}
-
-	b = _CreateRestrictedToken(origToken,
-							   DISABLE_MAX_PRIVILEGE,
-							   sizeof(dropSids) / sizeof(dropSids[0]),
-							   dropSids,
-							   0, NULL,
-							   0, NULL,
-							   &restrictedToken);
-
-	FreeSid(dropSids[1].Sid);
-	FreeSid(dropSids[0].Sid);
-	CloseHandle(origToken);
-	FreeLibrary(Advapi32Handle);
-
-	if (!b)
-	{
-		fprintf(stderr, _("%s: could not create restricted token: error code %lu\n"), progname, GetLastError());
-		return 0;
-	}
-
-#ifndef __CYGWIN__
-	AddUserToTokenDacl(restrictedToken);
-#endif
-
-	if (!CreateProcessAsUser(restrictedToken,
-							 NULL,
-							 cmd,
-							 NULL,
-							 NULL,
-							 TRUE,
-							 CREATE_SUSPENDED,
-							 NULL,
-							 NULL,
-							 &si,
-							 processInfo))
-
-	{
-		fprintf(stderr, _("%s: could not start process for command \"%s\": error code %lu\n"), progname, cmd, GetLastError());
-		return 0;
-	}
-
-	return ResumeThread(processInfo->hThread);
-}
-#endif
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * print help text
  */
