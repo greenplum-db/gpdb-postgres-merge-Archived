@@ -47,7 +47,6 @@
 #define DESCR(x)  extern int no_such_variable
 #define SHDESCR(x) extern int no_such_variable
 
-<<<<<<< HEAD
 /* for process_col_defaults.pl */
 #define GPDB_COLUMN_DEFAULT(col, default) extern int no_such_variable
 #define GPDB_EXTRA_COL(x) extern int no_such_variable
@@ -55,10 +54,4 @@
 /* for process_foreign_keys.pl */
 #define FOREIGN_KEY(x) extern int no_such_variable
 
-/* PHONY type definitions for use in catalog structure definitions only */
-typedef int aclitem;
-typedef int pg_node_tree;
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #endif   /* GENBKI_H */
