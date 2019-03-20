@@ -87,13 +87,8 @@ extern Oid get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
 					int16 strategy);
 extern bool get_ordering_op_properties(Oid opno,
 						   Oid *opfamily, Oid *opcintype, int16 *strategy);
-<<<<<<< HEAD
 extern bool get_compare_function_for_ordering_op(Oid opno,
 												 Oid *cmpfunc, bool *reverse);
-extern bool get_sort_function_for_ordering_op(Oid opno, Oid *sortfunc,
-								  bool *issupport, bool *reverse);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern Oid	get_equality_op_for_ordering_op(Oid opno, bool *reverse);
 extern Oid	get_ordering_op_for_equality_op(Oid opno, bool use_lhs_type);
 extern List *get_mergejoin_opfamilies(Oid opno);
@@ -165,12 +160,8 @@ extern Oid	get_rel_type_id(Oid relid);
 extern char get_rel_relkind(Oid relid);
 extern char get_rel_relstorage(Oid relid);
 extern Oid	get_rel_tablespace(Oid relid);
-<<<<<<< HEAD
-extern char *get_type_name(Oid typid);
-=======
 extern Oid	get_transform_fromsql(Oid typid, Oid langid, List *trftypes);
 extern Oid	get_transform_tosql(Oid typid, Oid langid, List *trftypes);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern bool get_typisdefined(Oid typid);
 extern int16 get_typlen(Oid typid);
 extern bool get_typbyval(Oid typid);

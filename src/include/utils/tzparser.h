@@ -22,20 +22,12 @@
  */
 typedef struct tzEntry
 {
-<<<<<<< HEAD
-	/* the actual data: TZ abbrev (downcased), offset, DST flag */
-	char	   *abbrev;
-	char	   *zone;
-	int			offset;			/* in seconds from UTC */
-	bool		is_dst;
-=======
 	/* the actual data */
 	char	   *abbrev;			/* TZ abbreviation (downcased) */
 	char	   *zone;			/* zone name if dynamic abbrev, else NULL */
 	/* for a dynamic abbreviation, offset/is_dst are not used */
 	int			offset;			/* offset in seconds from UTC */
 	bool		is_dst;			/* true if a DST abbreviation */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* source information (for error messages) */
 	int			lineno;
 	const char *filename;

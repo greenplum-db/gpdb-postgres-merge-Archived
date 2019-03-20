@@ -219,11 +219,7 @@ typedef struct TimeZoneAbbrevTable
 {
 	Size		tblsize;		/* size in bytes of TimeZoneAbbrevTable */
 	int			numabbrevs;		/* number of entries in abbrevs[] array */
-<<<<<<< HEAD
-	datetkn		abbrevs[1];		/* VARIABLE LENGTH ARRAY */
-=======
 	datetkn		abbrevs[FLEXIBLE_ARRAY_MEMBER];
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* DynamicZoneAbbrev(s) may follow the abbrevs[] array */
 } TimeZoneAbbrevTable;
 
@@ -231,11 +227,7 @@ typedef struct TimeZoneAbbrevTable
 typedef struct DynamicZoneAbbrev
 {
 	pg_tz	   *tz;				/* NULL if not yet looked up */
-<<<<<<< HEAD
-	char		zone[1];		/* zone name (var length, NUL-terminated) */
-=======
 	char		zone[FLEXIBLE_ARRAY_MEMBER];	/* NUL-terminated zone name */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } DynamicZoneAbbrev;
 
 

@@ -498,15 +498,12 @@ extern Datum pg_read_binary_file(PG_FUNCTION_ARGS);
 extern Datum pg_read_binary_file_off_len(PG_FUNCTION_ARGS);
 extern Datum pg_read_binary_file_all(PG_FUNCTION_ARGS);
 extern Datum pg_ls_dir(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
+extern Datum pg_ls_dir_1arg(PG_FUNCTION_ARGS);
 extern Datum pg_file_write(PG_FUNCTION_ARGS);
 extern Datum pg_file_rename(PG_FUNCTION_ARGS);
 extern Datum pg_file_unlink(PG_FUNCTION_ARGS);
 extern Datum pg_logdir_ls(PG_FUNCTION_ARGS);
 extern Datum pg_file_length(PG_FUNCTION_ARGS);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-extern Datum pg_ls_dir_1arg(PG_FUNCTION_ARGS);
 
 /* misc.c */
 extern Datum current_database(PG_FUNCTION_ARGS);
@@ -612,15 +609,12 @@ extern Datum pg_node_tree_in(PG_FUNCTION_ARGS);
 extern Datum pg_node_tree_out(PG_FUNCTION_ARGS);
 extern Datum pg_node_tree_recv(PG_FUNCTION_ARGS);
 extern Datum pg_node_tree_send(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
-extern Datum anytable_in(PG_FUNCTION_ARGS);
-extern Datum anytable_out(PG_FUNCTION_ARGS);
-=======
 extern Datum pg_ddl_command_in(PG_FUNCTION_ARGS);
 extern Datum pg_ddl_command_out(PG_FUNCTION_ARGS);
 extern Datum pg_ddl_command_recv(PG_FUNCTION_ARGS);
 extern Datum pg_ddl_command_send(PG_FUNCTION_ARGS);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+extern Datum anytable_in(PG_FUNCTION_ARGS);
+extern Datum anytable_out(PG_FUNCTION_ARGS);
 
 /* regexp.c */
 extern Datum nameregexeq(PG_FUNCTION_ARGS);
@@ -739,11 +733,7 @@ extern Datum pg_get_triggerdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_triggerdef_ext(PG_FUNCTION_ARGS);
 extern Datum pg_get_constraintdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_constraintdef_ext(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
-extern char *pg_get_constraintdef_string(Oid constraintId);
 extern char *pg_get_constraintexpr_string(Oid constraintId);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern Datum pg_get_expr(PG_FUNCTION_ARGS);
 extern Datum pg_get_expr_ext(PG_FUNCTION_ARGS);
 extern Datum pg_get_userbyid(PG_FUNCTION_ARGS);
@@ -753,15 +743,6 @@ extern Datum pg_get_function_arguments(PG_FUNCTION_ARGS);
 extern Datum pg_get_function_identity_arguments(PG_FUNCTION_ARGS);
 extern Datum pg_get_function_result(PG_FUNCTION_ARGS);
 extern Datum pg_get_function_arg_default(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
-extern char *deparse_expression(Node *expr, List *dpcontext,
-				   bool forceprefix, bool showimplicit);
-extern List *deparse_context_for(const char *aliasname, Oid relid);
-extern List *deparse_context_for_plan_rtable(List *rtable, List *rtable_names);
-extern List *set_deparse_context_planstate(List *dpcontext,
-							  Node *planstate, List *ancestors);
-extern List *select_rtable_names_for_explain(List *rtable,
-								Bitmapset *rels_used);
 extern const char *quote_identifier(const char *ident);
 extern char *quote_qualified_identifier(const char *qualifier,
 						   const char *ident);
@@ -769,12 +750,8 @@ extern void generate_operator_clause(fmStringInfo buf,
 						 const char *leftop, Oid leftoptype,
 						 Oid opoid,
 						 const char *rightop, Oid rightoptype);
-extern char *generate_collation_name(Oid collid);
-=======
-extern const char *quote_identifier(const char *ident);
-extern char *quote_qualified_identifier(const char *qualifier,
-						   const char *ident);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+extern List *set_deparse_context_planstate(List *dpcontext,
+							  Node *planstate, List *ancestors);
 
 extern Datum pg_get_partition_def(PG_FUNCTION_ARGS);
 extern Datum pg_get_partition_def_ext(PG_FUNCTION_ARGS);
@@ -1161,11 +1138,8 @@ extern Datum int4_avg_combine(PG_FUNCTION_ARGS);
 extern Datum int2_avg_accum_inv(PG_FUNCTION_ARGS);
 extern Datum int4_avg_accum_inv(PG_FUNCTION_ARGS);
 extern Datum int8_avg_accum_inv(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum float4_avg_accum(PG_FUNCTION_ARGS);
 extern Datum float8_avg_accum(PG_FUNCTION_ARGS);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern Datum int8_avg(PG_FUNCTION_ARGS);
 extern Datum float8_avg(PG_FUNCTION_ARGS);
 extern Datum int2int4_sum(PG_FUNCTION_ARGS);

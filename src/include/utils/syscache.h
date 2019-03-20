@@ -82,13 +82,10 @@ enum SysCacheIdentifier
 	RANGETYPE,
 	RELNAMENSP,
 	RELOID,
-<<<<<<< HEAD
 	RESGROUPOID,
 	RESGROUPNAME,
-=======
 	REPLORIGIDENT,
 	REPLORIGNAME,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	RULERELNAME,
 	STATRELATTINH,
 	TABLESAMPLEMETHODNAME,
@@ -144,11 +141,7 @@ struct catclist;
 extern struct catclist *SearchSysCacheList(int cacheId, int nkeys,
 				   Datum key1, Datum key2, Datum key3, Datum key4);
 
-<<<<<<< HEAD
 extern void SysCacheInvalidate(int cacheId, uint32 hashValue);
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern bool RelationInvalidatesSnapshotsOnly(Oid relid);
 extern bool RelationHasSysCache(Oid relid);
 extern bool RelationSupportsSysCache(Oid relid);

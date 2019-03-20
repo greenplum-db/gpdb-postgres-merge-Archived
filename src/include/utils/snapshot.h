@@ -107,19 +107,14 @@ typedef struct SnapshotData
 	 * Book-keeping information, used by the snapshot manager
 	 */
 	uint32		active_count;	/* refcount on ActiveSnapshot stack */
-<<<<<<< HEAD
-	uint32		regd_count;		/* refcount on RegisteredSnapshotList */
+	uint32		regd_count;		/* refcount on RegisteredSnapshots */
+	pairingheap_node ph_node;	/* link in the RegisteredSnapshots heap */
 
 	/*
 	 * GP: Global information about which transactions are visible for a
 	 * distributed transaction, with cached local xids
 	 */
 	DistributedSnapshotWithLocalMapping	distribSnapshotWithLocalMapping;
-
-=======
-	uint32		regd_count;		/* refcount on RegisteredSnapshots */
-	pairingheap_node ph_node;	/* link in the RegisteredSnapshots heap */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } SnapshotData;
 
 /*

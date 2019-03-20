@@ -276,7 +276,6 @@ get_ordering_op_properties(Oid opno,
 }
 
 /*
-<<<<<<< HEAD
  * get_compare_function_for_ordering_op
  *		Get the OID of the datatype-specific btree comparison function
  *		associated with an ordering operator (a "<" or ">" operator).
@@ -319,65 +318,8 @@ get_compare_function_for_ordering_op(Oid opno, Oid *cmpfunc, bool *reverse)
 	return false;
 }
 
-/*
- * get_sort_function_for_ordering_op
- *		Get the OID of the datatype-specific btree sort support function,
- *		or if there is none, the btree comparison function,
- *		associated with an ordering operator (a "<" or ">" operator).
- *
- * *sortfunc receives the support or comparison function OID.
- * *issupport is set TRUE if it's a support func, FALSE if a comparison func.
- * *reverse is set FALSE if the operator is "<", TRUE if it's ">"
- * (indicating that comparison results must be negated before use).
- *
- * Returns TRUE if successful, FALSE if no btree function can be found.
- * (This indicates that the operator is not a valid ordering operator.)
- */
-bool
-get_sort_function_for_ordering_op(Oid opno, Oid *sortfunc,
-								  bool *issupport, bool *reverse)
-{
-	Oid			opfamily;
-	Oid			opcintype;
-	int16		strategy;
-
-	/* Find the operator in pg_amop */
-	if (get_ordering_op_properties(opno,
-								   &opfamily, &opcintype, &strategy))
-	{
-		/* Found a suitable opfamily, get matching support function */
-		*sortfunc = get_opfamily_proc(opfamily,
-									  opcintype,
-									  opcintype,
-									  BTSORTSUPPORT_PROC);
-		if (OidIsValid(*sortfunc))
-			*issupport = true;
-		else
-		{
-			/* opfamily doesn't provide sort support, get comparison func */
-			*sortfunc = get_opfamily_proc(opfamily,
-										  opcintype,
-										  opcintype,
-										  BTORDER_PROC);
-			if (!OidIsValid(*sortfunc)) /* should not happen */
-				elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
-					 BTORDER_PROC, opcintype, opcintype, opfamily);
-			*issupport = false;
-		}
-		*reverse = (strategy == BTGreaterStrategyNumber);
-		return true;
-	}
-
-	/* ensure outputs are set on failure */
-	*sortfunc = InvalidOid;
-	*issupport = false;
-	*reverse = false;
-	return false;
-}
 
 /*
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * get_equality_op_for_ordering_op
  *		Get the OID of the datatype-specific btree equality operator
  *		associated with an ordering operator (a "<" or ">" operator).
@@ -1733,33 +1675,6 @@ get_func_name(Oid funcid)
 }
 
 /*
- * get_type_name
- *	  returns the name of the type with the given oid
- *
- * Note: returns a palloc'd copy of the string, or NULL if no such type.
- */
-char *
-get_type_name(Oid oid)
-{
-	HeapTuple	tp;
-
-	tp = SearchSysCache(TYPEOID,
-						ObjectIdGetDatum(oid),
-						0, 0, 0);
-	if (HeapTupleIsValid(tp))
-	{
-		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
-		char	   *result;
-
-		result = pstrdup(NameStr(typtup->typname));
-		ReleaseSysCache(tp);
-		return result;
-	}
-	else
-		return NULL;
-}
-
-/*
  * get_func_namespace
  *
  *		Returns the pg_namespace OID associated with a given function.
@@ -2464,9 +2379,6 @@ get_rel_relstorage(Oid relid)
 		return '\0';
 }
 
-<<<<<<< HEAD
-=======
-
 /*				---------- TRANSFORM CACHE ----------						 */
 
 Oid
@@ -2511,8 +2423,6 @@ get_transform_tosql(Oid typid, Oid langid, List *trftypes)
 		return InvalidOid;
 }
 
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*				---------- TYPE CACHE ----------						 */
 
 /*

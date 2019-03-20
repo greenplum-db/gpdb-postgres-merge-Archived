@@ -96,9 +96,6 @@ typedef struct SortSupportData
 	 * Comparator function has the same API as the traditional btree
 	 * comparison function, ie, return <0, 0, or >0 according as x is less
 	 * than, equal to, or greater than y.  Note that x and y are guaranteed
-<<<<<<< HEAD
-	 * not null, and there is no way to return null either.
-=======
 	 * not null, and there is no way to return null either.  Do not return
 	 * INT_MIN, as callers are allowed to negate the result before using it.
 	 *
@@ -106,7 +103,6 @@ typedef struct SortSupportData
 	 * comparator.  Core code may switch this over the initial preference of
 	 * an opclass support function despite originally indicating abbreviation
 	 * was applicable, by assigning the authoritative comparator back.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
 	int			(*comparator) (Datum x, Datum y, SortSupport ssup);
 

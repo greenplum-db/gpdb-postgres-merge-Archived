@@ -140,12 +140,6 @@ typedef enum
 
 /*
  * Parsing the configuration file(s) will return a list of name-value pairs
-<<<<<<< HEAD
- * with source location info.
- *
- * If "ignore" is true, don't attempt to apply the item (it might be an item
- * we determined to be duplicate, for instance).
-=======
  * with source location info.  We also abuse this data structure to carry
  * error reports about the config files.  An entry reporting an error will
  * have errmsg != NULL, and might have NULLs for name, value, and/or filename.
@@ -153,7 +147,6 @@ typedef enum
  * If "ignore" is true, don't attempt to apply the item (it might be an error
  * report, or an item we determined to be duplicate).  "applied" is set true
  * if we successfully applied, or could have applied, the setting.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 typedef struct ConfigVariable
 {
@@ -368,7 +361,22 @@ extern int	temp_file_limit;
 
 extern int	num_temp_buffers;
 
-<<<<<<< HEAD
+extern char *cluster_name;
+extern PGDLLIMPORT char *ConfigFileName;
+extern char *HbaFileName;
+extern char *IdentFileName;
+extern char *external_pid_file;
+
+extern char *application_name;
+
+extern int	tcp_keepalives_idle;
+extern int	tcp_keepalives_interval;
+extern int	tcp_keepalives_count;
+
+#ifdef TRACE_SORT
+extern bool trace_sort;
+#endif
+
 extern bool vmem_process_interrupt;
 extern bool execute_pruned_plan;
 
@@ -401,36 +409,20 @@ typedef enum
 	DEBUG_DTM_ACTION_TARGET_LAST = 2
 }	DebugDtmActionTarget;
 
+extern char *Debug_dtm_action_sql_command_tag;
+extern char *Debug_dtm_action_str;
+extern char *Debug_dtm_action_target_str;
 extern int Debug_dtm_action;
 extern int Debug_dtm_action_target;
 extern int Debug_dtm_action_protocol;
 extern int Debug_dtm_action_segment;
 extern int Debug_dtm_action_nestinglevel;
 
-extern char *data_directory;
-extern PGDLLIMPORT char *ConfigFileName;
-=======
-extern char *cluster_name;
-extern char *ConfigFileName;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-extern char *HbaFileName;
-extern char *IdentFileName;
-extern char *external_pid_file;
-
-extern char *application_name;
-
-extern char *Debug_dtm_action_sql_command_tag;
-extern char *Debug_dtm_action_str;
-extern char *Debug_dtm_action_target_str;
 
 /* Enable check for compatibility of encoding and locale in createdb */
 extern bool gp_encoding_check_locale_compatibility;
 
-extern int	tcp_keepalives_idle;
-extern int	tcp_keepalives_interval;
-extern int	tcp_keepalives_count;
 
-<<<<<<< HEAD
 extern int	gp_connection_send_timeout;
 
 extern bool create_restartpoint_on_ckpt_record_replay;
@@ -621,11 +613,6 @@ extern IndexCheckType gp_indexcheck_vacuum;
 #define SOPT_ALIAS_APPENDOPTIMIZED "appendoptimized"
 /* Max number of chars needed to hold value of a storage option. */
 #define MAX_SOPT_VALUE_LEN 15
-=======
-#ifdef TRACE_SORT
-extern bool trace_sort;
-#endif
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * Functions exported by guc.c

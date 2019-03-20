@@ -107,13 +107,10 @@ typedef struct RelationData
 	RuleLock   *rd_rules;		/* rewrite rules */
 	MemoryContext rd_rulescxt;	/* private memory cxt for rd_rules, if any */
 	TriggerDesc *trigdesc;		/* Trigger info, or NULL if rel has none */
-<<<<<<< HEAD
     struct GpPolicy *rd_cdbpolicy; /* Partitioning info if distributed rel */
     bool        rd_cdbDefaultStatsWarningIssued;
-=======
 	/* use "struct" here to avoid needing to include rowsecurity.h: */
 	struct RowSecurityDesc *rd_rsdesc;	/* row security policies, or NULL */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* data managed by RelationGetIndexList: */
 	List	   *rd_indexlist;	/* list of OIDs of indexes on relation */
@@ -232,7 +229,6 @@ typedef struct StdRdOptions
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int			fillfactor;		/* page fill factor in percent (0..100) */
 	AutoVacOpts autovacuum;		/* autovacuum-related options */
-<<<<<<< HEAD
 
 	bool		appendonly;		/* is this an appendonly relation? */
 	int			blocksize;		/* max varblock size (AO rels only) */
@@ -241,10 +237,6 @@ typedef struct StdRdOptions
 	bool		checksum;		/* checksum (AO rels only) */
 	bool 		columnstore;	/* columnstore (AO only) */
 	char		orientation[NAMEDATALEN]; /* orientation (AO only) */
-	bool		security_barrier;		/* for views */
-	int			check_option_offset;	/* for views */
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	bool		user_catalog_table;		/* use as an additional catalog
 										 * relation */
 } StdRdOptions;

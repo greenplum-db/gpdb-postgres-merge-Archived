@@ -59,13 +59,8 @@ extern void RelationMapInitialize(void);
 extern void RelationMapInitializePhase2(void);
 extern void RelationMapInitializePhase3(void);
 
-<<<<<<< HEAD
-extern void relmap_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
-extern void relmap_desc(StringInfo buf, XLogRecord *record);
-=======
 extern void relmap_redo(XLogReaderState *record);
 extern void relmap_desc(StringInfo buf, XLogReaderState *record);
 extern const char *relmap_identify(uint8 info);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #endif   /* RELMAPPER_H */
