@@ -200,9 +200,8 @@ extern char *pstrdup(const char *in);
 extern char *pnstrdup(const char *in, Size len);
 
 /* sprintf into a palloc'd buffer --- these are in psprintf.c */
-<<<<<<< HEAD
-extern char *psprintf(const char *fmt,...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
-extern size_t pvsnprintf(char *buf, size_t len, const char *fmt, va_list args)  __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 0)));
+extern char *psprintf(const char *fmt,...) pg_attribute_printf(1, 2);
+extern size_t pvsnprintf(char *buf, size_t len, const char *fmt, va_list args) pg_attribute_printf(3, 0);
 
 #if defined(WIN32) || defined(__CYGWIN__)
 extern void *pgport_palloc(Size sz);
@@ -247,9 +246,5 @@ extern void MemoryContextStats(MemoryContext context);
 		MemoryContextStats(TopMemoryContext);\
 	}\
 }
-=======
-extern char *psprintf(const char *fmt,...) pg_attribute_printf(1, 2);
-extern size_t pvsnprintf(char *buf, size_t len, const char *fmt, va_list args) pg_attribute_printf(3, 0);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #endif   /* PALLOC_H */
