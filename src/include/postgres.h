@@ -94,8 +94,6 @@ typedef struct varatt_indirect
 	struct varlena *pointer;	/* Pointer to in-memory varlena */
 }	varatt_indirect;
 
-<<<<<<< HEAD
-=======
 /*
  * struct varatt_expanded is a "TOAST pointer" representing an out-of-line
  * Datum that is stored in memory, in some type-specific, not necessarily
@@ -113,31 +111,23 @@ typedef struct varatt_expanded
 	ExpandedObjectHeader *eohptr;
 } varatt_expanded;
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * Type tag for the various sorts of "TOAST pointer" datums.  The peculiar
  * value for VARTAG_ONDISK comes from a requirement for on-disk compatibility
  * with a previous notion that the tag field was the pointer datum's length.
-<<<<<<< HEAD
  *
  * GPDB: In PostgreSQL VARTAG_ONDISK is set to 18 in order to match the
  * historic (VARHDRSZ_EXTERNAL + sizeof(struct varatt_external)) value of the
  * pointer datum's length. In Greenplum VARHDRSZ_EXTERNAL is two bytes longer
  * than PostgreSQL due to extra padding in varattrib_1b_e, so VARTAG_ONDISK has
  * to be set to 20.
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 typedef enum vartag_external
 {
 	VARTAG_INDIRECT = 1,
-<<<<<<< HEAD
-	VARTAG_ONDISK = 20
-=======
 	VARTAG_EXPANDED_RO = 2,
 	VARTAG_EXPANDED_RW = 3,
-	VARTAG_ONDISK = 18
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	VARTAG_ONDISK = 20
 } vartag_external;
 
 /* this test relies on the specific tag values above */
@@ -146,10 +136,7 @@ typedef enum vartag_external
 
 #define VARTAG_SIZE(tag) \
 	((tag) == VARTAG_INDIRECT ? sizeof(varatt_indirect) : \
-<<<<<<< HEAD
-=======
 	 VARTAG_IS_EXPANDED(tag) ? sizeof(varatt_expanded) : \
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 (tag) == VARTAG_ONDISK ? sizeof(varatt_external) : \
 	 TrapMacro(true, "unrecognized TOAST vartag"))
 
@@ -183,21 +170,14 @@ typedef struct
 	char		va_data[FLEXIBLE_ARRAY_MEMBER]; /* Data begins here */
 } varattrib_1b;
 
-<<<<<<< HEAD
 /* NOT Like Postgres! ...In GPDB, We waste a few bytes of padding */
-=======
 /* TOAST pointers are a subset of varattrib_1b with an identifying tag byte */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 typedef struct
 {
 	uint8		va_header;		/* Always 0x80  */
 	uint8		va_tag;			/* Type of datum */
-<<<<<<< HEAD
 	uint8		va_padding[2];	/*** GPDB only:  Alignment padding ***/
-	char		va_data[1];		/* Data (of the type indicated by va_tag) */
-=======
 	char		va_data[FLEXIBLE_ARRAY_MEMBER]; /* Type-specific data */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } varattrib_1b_e;
 
 /*
