@@ -21,12 +21,8 @@
 #include <limits.h>
 #include <math.h>
 
-<<<<<<< HEAD
 #include "catalog/pg_exttable.h"
-#include "access/skey.h"
-=======
 #include "access/stratnum.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "access/sysattr.h"
 #include "catalog/pg_class.h"
 #include "foreign/fdwapi.h"
@@ -80,13 +76,10 @@ static Plan *create_unique_plan(PlannerInfo *root, UniquePath *best_path);
 static Plan *create_motion_plan(PlannerInfo *root, CdbMotionPath *path);
 static SeqScan *create_seqscan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses);
-<<<<<<< HEAD
 static ExternalScan *create_externalscan_plan(PlannerInfo *root, Path *best_path,
 						 List *tlist, List *scan_clauses);
-=======
 static SampleScan *create_samplescan_plan(PlannerInfo *root, Path *best_path,
 					   List *tlist, List *scan_clauses);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static Scan *create_indexscan_plan(PlannerInfo *root, IndexPath *best_path,
 					  List *tlist, List *scan_clauses, bool indexonly);
 static BitmapHeapScan *create_bitmap_scan_plan(PlannerInfo *root,
@@ -133,7 +126,6 @@ static List *order_qual_clauses(PlannerInfo *root, List *clauses);
 static void copy_path_costsize(PlannerInfo *root, Plan *dest, Path *src);
 static void copy_plan_costsize(Plan *dest, Plan *src);
 static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
-<<<<<<< HEAD
 static ExternalScan *make_externalscan(List *qptlist,
 				  List *qpqual,
 				  Index scanrelid,
@@ -145,9 +137,7 @@ static ExternalScan *make_externalscan(List *qptlist,
 				  bool rejectlimitinrows,
 				  bool logerrors,
 				  int encoding);
-=======
 static SampleScan *make_samplescan(List *qptlist, List *qpqual, Index scanrelid);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   Oid indexid, List *indexqual, List *indexqualorig,
 			   List *indexorderby, List *indexorderbyorig,
@@ -422,19 +412,16 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 												scan_clauses);
 			break;
 
-<<<<<<< HEAD
 		case T_ExternalScan:
 			plan = (Plan *) create_externalscan_plan(root,
 													 best_path,
 													 tlist,
 													 scan_clauses);
-=======
 		case T_SampleScan:
 			plan = (Plan *) create_samplescan_plan(root,
 												   best_path,
 												   tlist,
 												   scan_clauses);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			break;
 
 		case T_IndexScan:
@@ -672,11 +659,8 @@ disuse_physical_tlist(PlannerInfo *root, Plan *plan, Path *path)
 	switch (path->pathtype)
 	{
 		case T_SeqScan:
-<<<<<<< HEAD
 		case T_ExternalScan:
-=======
 		case T_SampleScan:
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		case T_IndexScan:
 		case T_IndexOnlyScan:
 		case T_BitmapHeapScan:
@@ -1363,7 +1347,6 @@ create_seqscan_plan(PlannerInfo *root, Path *best_path,
 }
 
 /*
-<<<<<<< HEAD
  * create_externalscan_plan
  *	 Returns an externalscan plan for the base relation scanned by 'best_path'
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
@@ -1407,23 +1390,6 @@ create_externalscan_plan(PlannerInfo *root, Path *best_path,
 	/* it should be an external rel... */
 	Assert(scan_relid > 0);
 	Assert(rel->rtekind == RTE_RELATION);
-=======
- * create_samplescan_plan
- *	 Returns a samplecan plan for the base relation scanned by 'best_path'
- *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
- */
-static SampleScan *
-create_samplescan_plan(PlannerInfo *root, Path *best_path,
-					   List *tlist, List *scan_clauses)
-{
-	SampleScan *scan_plan;
-	Index		scan_relid = best_path->parent->relid;
-
-	/* it should be a base rel with tablesample clause... */
-	Assert(scan_relid > 0);
-	Assert(best_path->parent->rtekind == RTE_RELATION);
-	Assert(best_path->pathtype == T_SampleScan);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
@@ -1431,7 +1397,6 @@ create_samplescan_plan(PlannerInfo *root, Path *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
-<<<<<<< HEAD
 	Assert(ext->execlocations != NIL);
 
 	if (ext->rejectlimit != -1)
@@ -1473,7 +1438,33 @@ create_samplescan_plan(PlannerInfo *root, Path *best_path,
 								  ext->encoding);
 
 	copy_path_costsize(root, &scan_plan->scan.plan, best_path);
-=======
+
+	return scan_plan;
+}
+
+/*
+ * create_samplescan_plan
+ *	 Returns a samplecan plan for the base relation scanned by 'best_path'
+ *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
+ */
+static SampleScan *
+create_samplescan_plan(PlannerInfo *root, Path *best_path,
+					   List *tlist, List *scan_clauses)
+{
+	SampleScan *scan_plan;
+	Index		scan_relid = best_path->parent->relid;
+
+	/* it should be a base rel with tablesample clause... */
+	Assert(scan_relid > 0);
+	Assert(best_path->parent->rtekind == RTE_RELATION);
+	Assert(best_path->pathtype == T_SampleScan);
+
+	/* Sort clauses into best execution order */
+	scan_clauses = order_qual_clauses(root, scan_clauses);
+
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	scan_clauses = extract_actual_clauses(scan_clauses, false);
+
 	/* Replace any outer-relation variables with nestloop params */
 	if (best_path->param_info)
 	{
@@ -1486,12 +1477,10 @@ create_samplescan_plan(PlannerInfo *root, Path *best_path,
 								scan_relid);
 
 	copy_path_costsize(&scan_plan->plan, best_path);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	return scan_plan;
 }
 
-<<<<<<< HEAD
 List *
 create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 {
@@ -2126,8 +2115,6 @@ create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 }
 
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * create_indexscan_plan
  *	  Returns an indexscan plan for the base relation scanned by 'best_path'
@@ -2986,11 +2973,7 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	ForeignScan *scan_plan;
 	RelOptInfo *rel = best_path->path.parent;
 	Index		scan_relid = rel->relid;
-<<<<<<< HEAD
-	RangeTblEntry *rte;
-=======
 	Oid			rel_oid = InvalidOid;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	Bitmapset  *attrs_used = NULL;
 	ListCell   *lc;
 	int			i;
@@ -3087,7 +3070,6 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	return scan_plan;
 }
 
-<<<<<<< HEAD
 static Expr *
 remove_isnotfalse_expr(Expr *expr)
 {
@@ -3139,7 +3121,6 @@ remove_isnotfalse(List *clauses)
 		}
 	}
 	return t_list;
-=======
 /*
  * create_custom_plan
  *
@@ -3206,7 +3187,6 @@ create_customscan_plan(PlannerInfo *root, CustomPath *best_path,
 	}
 
 	return cplan;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 
@@ -4594,7 +4574,6 @@ make_seqscan(List *qptlist,
 	return node;
 }
 
-<<<<<<< HEAD
 static ExternalScan *
 make_externalscan(List *qptlist,
 				  List *qpqual,
@@ -4611,22 +4590,12 @@ make_externalscan(List *qptlist,
 	ExternalScan *node = makeNode(ExternalScan);
 	Plan	   *plan = &node->scan.plan;
 	static uint32 scancounter = 0;
-=======
-static SampleScan *
-make_samplescan(List *qptlist,
-				List *qpqual,
-				Index scanrelid)
-{
-	SampleScan *node = makeNode(SampleScan);
-	Plan	   *plan = &node->plan;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* cost should be inserted by caller */
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
-<<<<<<< HEAD
 	node->scan.scanrelid = scanrelid;
 
 	/* external specifictions */
@@ -4639,9 +4608,24 @@ make_samplescan(List *qptlist,
 	node->logErrors = logerrors;
 	node->encoding = encoding;
 	node->scancounter = scancounter++;
-=======
+
+	return node;
+}
+
+static SampleScan *
+make_samplescan(List *qptlist,
+				List *qpqual,
+				Index scanrelid)
+{
+	SampleScan *node = makeNode(SampleScan);
+	Plan	   *plan = &node->plan;
+
+	/* cost should be inserted by caller */
+	plan->targetlist = qptlist;
+	plan->qual = qpqual;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
 	node->scanrelid = scanrelid;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	return node;
 }
@@ -5929,14 +5913,9 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 		 bool streaming,
 		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-<<<<<<< HEAD
 		 long numGroups, int num_nullcols,
 		 uint64 input_grouping, uint64 grouping,
 		 int rollupGSTimes,
-=======
-		 List *groupingSets,
-		 long numGroups,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		 Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
@@ -6083,17 +6062,7 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 	}
 	add_tlist_costs_to_plan(root, plan, tlist);
 
-<<<<<<< HEAD
 	return plan;
-=======
-	plan->qual = qual;
-	plan->targetlist = tlist;
-
-	plan->lefttree = lefttree;
-	plan->righttree = NULL;
-
-	return node;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 WindowAgg *
@@ -6482,12 +6451,8 @@ make_modifytable(PlannerInfo *root,
 				 Index nominalRelation,
 				 List *resultRelations, List *subplans,
 				 List *withCheckOptionLists, List *returningLists,
-<<<<<<< HEAD
 				 List *is_split_updates,
-				 List *rowMarks, int epqParam)
-=======
 				 List *rowMarks, OnConflictExpr *onconflict, int epqParam)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	ModifyTable *node = makeNode(ModifyTable);
 	Plan       *plan = &node->plan;

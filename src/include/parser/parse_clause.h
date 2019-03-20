@@ -44,7 +44,6 @@ extern List *transformDistinctClause(ParseState *pstate,
 						List **targetlist, List *sortClause, bool is_agg);
 extern List *transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 						  List **targetlist, List *sortClause);
-<<<<<<< HEAD
 extern List *transformScatterClause(ParseState *pstate, List *scatterlist,
 									List **targetlist);
 extern void processExtendedGrouping(ParseState *pstate, Node *havingQual,
@@ -52,12 +51,10 @@ extern void processExtendedGrouping(ParseState *pstate, Node *havingQual,
 extern List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 					List *sortlist, List *targetlist, SortBy *sortby,
 					bool resolveUnknown);
-=======
 extern void transformOnConflictArbiter(ParseState *pstate,
 						   OnConflictClause *onConflictClause,
 						   List **arbiterExpr, Node **arbiterWhere,
 						   Oid *constraint);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 extern List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 					List *sortlist, List *targetlist, SortBy *sortby,

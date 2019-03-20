@@ -157,14 +157,9 @@ extern Agg *make_agg(PlannerInfo *root, List *tlist, List *qual,
 		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 		 bool streaming,
 		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-<<<<<<< HEAD
 		 long numGroups, int numNullCols,
 		 uint64 inputGrouping, uint64 grouping,
 		 int rollupGSTimes,
-=======
-		 List *groupingSets,
-		 long numGroups,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		 Plan *lefttree);
 extern HashJoin *make_hashjoin(List *tlist,
 			  List *joinclauses, List *otherclauses,
@@ -218,12 +213,8 @@ extern ModifyTable *make_modifytable(PlannerInfo *root,
 				 Index nominalRelation,
 				 List *resultRelations, List *subplans,
 				 List *withCheckOptionLists, List *returningLists,
-<<<<<<< HEAD
 				 List *is_split_updates,
-				 List *rowMarks, int epqParam);
-=======
 				 List *rowMarks, OnConflictExpr *onconflict, int epqParam);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern bool is_projection_capable_plan(Plan *plan);
 extern Plan *add_sort_cost(PlannerInfo *root, Plan *input, 
 						   double limit_tuples);
@@ -290,16 +281,12 @@ extern void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 extern void record_plan_function_dependency(PlannerInfo *root, Oid funcid);
 extern void extract_query_dependencies(Node *query,
 						   List **relationOids,
-<<<<<<< HEAD
-						   List **invalItems);
+						   List **invalItems,
+						   bool *hasRowSecurity);
 extern void cdb_extract_plan_dependencies(PlannerInfo *root, Plan *plan);
 
 extern int num_distcols_in_grouplist(List *gc);
 
 extern void add_proc_oids_for_dump(Oid funcid);
-=======
-						   List **invalItems,
-						   bool *hasRowSecurity);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #endif   /* PLANMAIN_H */

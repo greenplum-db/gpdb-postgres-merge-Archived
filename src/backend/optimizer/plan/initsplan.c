@@ -1305,21 +1305,9 @@ make_outerjoininfo(PlannerInfo *root,
 		 * For a lower OJ in our RHS, if our join condition does not use the
 		 * lower join's RHS and the lower OJ's join condition is strict, we
 		 * can interchange the ordering of the two OJs; otherwise we must add
-<<<<<<< HEAD
-		 * the lower OJ's full syntactic relset to min_righthand.
-		 *
-		 * Also, if our join condition does not use the lower join's LHS
-		 * either, force the ordering to be preserved.  Otherwise we can end
-		 * up with SpecialJoinInfos with identical min_righthands, which can
-		 * confuse join_is_legal (see discussion in backend/optimizer/README).
-		 *
-		 * Also, we must preserve ordering anyway if either the current join
-		 * or the lower OJ is a semijoin, antijoin or lasj.
-=======
 		 * the lower OJ's full syntactic relset to min_righthand.  Also, we
 		 * must preserve ordering anyway if either the current join or the
 		 * lower OJ is either a semijoin or an antijoin.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		 *
 		 * Here, we have to consider that "our join condition" includes any
 		 * clauses that syntactically appeared above the lower OJ and below
@@ -1338,10 +1326,7 @@ make_outerjoininfo(PlannerInfo *root,
 				!bms_overlap(clause_relids, otherinfo->min_lefthand) ||
 				jointype == JOIN_SEMI ||
 				jointype == JOIN_ANTI ||
-<<<<<<< HEAD
 				jointype == JOIN_LASJ_NOTIN ||
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				otherinfo->jointype == JOIN_SEMI ||
 				otherinfo->jointype == JOIN_ANTI ||
 				otherinfo->jointype == JOIN_LASJ_NOTIN ||

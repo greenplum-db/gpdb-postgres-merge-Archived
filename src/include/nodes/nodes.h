@@ -87,11 +87,7 @@ typedef enum NodeTag
 	T_WorkTableScan,
 	T_SampleScan,
 	T_ForeignScan,
-<<<<<<< HEAD
-=======
 	T_CustomScan,
-	T_Join,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	T_NestLoop,
 	T_MergeJoin,
 	T_HashJoin,
@@ -139,12 +135,9 @@ typedef enum NodeTag
 	T_BitmapAndState,
 	T_BitmapOrState,
 	T_SeqScanState,
-<<<<<<< HEAD
 	T_DynamicSeqScanState,
 	T_ExternalScanState,
-=======
 	T_SampleScanState,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	T_IndexScanState,
 	T_DynamicIndexScanState,
 	T_IndexOnlyScanState,
@@ -160,11 +153,7 @@ typedef enum NodeTag
 	T_CteScanState,
 	T_WorkTableScanState,
 	T_ForeignScanState,
-<<<<<<< HEAD
-=======
 	T_CustomScanState,
-	T_JoinState,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	T_NestLoopState,
 	T_MergeJoinState,
 	T_HashJoinState,
@@ -558,13 +547,10 @@ typedef enum NodeTag
 	T_InferClause,
 	T_OnConflictClause,
 	T_CommonTableExpr,
-<<<<<<< HEAD
 	T_ColumnReferenceStorageDirective,
-=======
 	T_RoleSpec,
 	T_RangeTableSample,
 	T_TableSampleClause,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * TAGS FOR REPLICATION GRAMMAR PARSE NODES (replnodes.h)

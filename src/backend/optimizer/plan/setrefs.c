@@ -174,7 +174,6 @@ static bool extract_query_dependencies_walker(Node *node,
 static bool cdb_extract_plan_dependencies_walker(Node *node,
 									 cdb_extract_plan_dependencies_context *context);
 
-<<<<<<< HEAD
 #ifdef USE_ASSERT_CHECKING
 #include "cdb/cdbplan.h"
 
@@ -277,8 +276,6 @@ static void set_plan_references_output_asserts(PlannerGlobal *glob, Plan *plan)
 /* End of debug code */
 #endif
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*****************************************************************************
  *
  *		SUBPLAN REFERENCES
@@ -528,17 +525,10 @@ flatten_rtes_walker(Node *node, PlannerGlobal *glob)
  *
  * In the flat rangetable, we zero out substructure pointers that are not
  * needed by the executor; this reduces the storage space and copying cost
-<<<<<<< HEAD
- * for cached plans.  We keep only the ctename, alias and eref Alias fields,
- * which are needed by EXPLAIN, and the selectedCols and modifiedCols bitmaps,
- * which are needed for executor-startup permissions checking and for trigger
- * event checking.
-=======
  * for cached plans.  We keep only the alias and eref Alias fields, which are
  * needed by EXPLAIN, and the selectedCols, insertedCols and updatedCols
  * bitmaps, which are needed for executor-startup permissions checking and for
  * trigger event checking.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 static void
 add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte)
@@ -988,12 +978,9 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			}
 			break;
 		case T_Agg:
-<<<<<<< HEAD
-=======
 			set_upper_references(root, plan, rtoffset);
 			break;
 		case T_Group:
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			set_upper_references(root, plan, rtoffset);
 			break;
 		case T_WindowAgg:
@@ -1635,12 +1622,8 @@ copyVar(Var *var)
  * This is code that is common to all variants of expression-fixing.
  * We must look up operator opcode info for OpExpr and related nodes,
  * add OIDs from regclass Const nodes into root->glob->relationOids, and
-<<<<<<< HEAD
- * add PlanInvalItems for user-defined functions into root->glob->invalItems.
-=======
  * add catalog TIDs for user-defined functions into root->glob->invalItems.
  * We also fill in column index lists for GROUPING() expressions.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  *
  * We assume it's okay to update opcode info in-place.  So this could possibly
  * scribble on the planner's input data structures, but it's OK.
@@ -1704,7 +1687,6 @@ fix_expr_common(PlannerInfo *root, Node *node)
 				lappend_oid(root->glob->relationOids,
 							DatumGetObjectId(con->constvalue));
 	}
-<<<<<<< HEAD
     else if (IsA(node, Var))
     {
         Var    *var = (Var *)node;
@@ -1724,7 +1706,6 @@ fix_expr_common(PlannerInfo *root, Node *node)
                    var->varno <= list_length(root->glob->finalrtable));
         }
     }
-=======
 	else if (IsA(node, GroupingFunc))
 	{
 		GroupingFunc *g = (GroupingFunc *) node;
@@ -1778,7 +1759,6 @@ fix_param_node(PlannerInfo *root, Param *p)
 		return copyObject(list_nth(params, colno - 1));
 	}
 	return copyObject(p);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1798,7 +1778,6 @@ fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset)
 	context.root = root;
 	context.rtoffset = rtoffset;
 
-<<<<<<< HEAD
 	/*
 	 * Postgres has an optimization to mutate the expression tree only if
 	 * rtoffset is non-zero. However, this optimization does not work for
@@ -1809,28 +1788,6 @@ fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset)
 	 * using mutation. Therefore, in GPDB we need to unconditionally mutate the tree.
 	 */
 	return fix_scan_expr_mutator(node, &context);
-=======
-	if (rtoffset != 0 ||
-		root->multiexpr_params != NIL ||
-		root->glob->lastPHId != 0)
-	{
-		return fix_scan_expr_mutator(node, &context);
-	}
-	else
-	{
-		/*
-		 * If rtoffset == 0, we don't need to change any Vars, and if there
-		 * are no MULTIEXPR subqueries then we don't need to replace
-		 * PARAM_MULTIEXPR Params, and if there are no placeholders anywhere
-		 * we won't need to remove them.  Then it's OK to just scribble on the
-		 * input node tree instead of copying (since the only change, filling
-		 * in any unset opfuncid fields, is harmless).  This saves just enough
-		 * cycles to be noticeable on trivial queries.
-		 */
-		(void) fix_scan_expr_walker(node, &context);
-		return node;
-	}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 static Node *
@@ -2079,40 +2036,27 @@ set_upper_references(PlannerInfo *root, Plan *plan, int rtoffset)
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		Node	   *newexpr;
 
-		if (IsA(plan, Repeat) &&
-			(IsA(tle->expr, Grouping) || IsA(tle->expr, GroupId)))
+		/* If it's a non-Var sort/group item, first try to match by sortref */
+		if (tle->ressortgroupref != 0 && !IsA(tle->expr, Var))
 		{
-			/*
-			 * CDB: group_id() & grouping() rely on Repeat to generate non-zero
-			 * values for repeated grouping columns. So, always compute them, rather
-			 * than using OUTER refs from subplan.
-			 */
-			newexpr = copyObject(tle->expr);
-		}
-		else
-		{
-			/* If it's a non-Var sort/group item, first try to match by sortref */
-			if (tle->ressortgroupref != 0 && !IsA(tle->expr, Var))
-			{
-				newexpr = (Node *)
+			newexpr = (Node *)
 					search_indexed_tlist_for_sortgroupref((Node *) tle->expr,
 														  tle->ressortgroupref,
 														  subplan_itlist,
 														  OUTER_VAR);
-				if (!newexpr)
-					newexpr = fix_upper_expr(root,
-											 (Node *) tle->expr,
-											 subplan_itlist,
-											 OUTER_VAR,
-											 rtoffset);
-			}
-			else
+			if (!newexpr)
 				newexpr = fix_upper_expr(root,
 										 (Node *) tle->expr,
 										 subplan_itlist,
 										 OUTER_VAR,
 										 rtoffset);
 		}
+		else
+			newexpr = fix_upper_expr(root,
+									 (Node *) tle->expr,
+									 subplan_itlist,
+									 OUTER_VAR,
+									 rtoffset);
 		tle = flatCopyTargetEntry(tle);
 		tle->expr = (Expr *) newexpr;
 		output_targetlist = lappend(output_targetlist, tle);
@@ -2638,17 +2582,11 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 		/* If not supplied by input plans, evaluate the contained expr */
 		return fix_join_expr_mutator((Node *) phv->phexpr, context);
 	}
-<<<<<<< HEAD
-
-	/* Try matching more complex expressions too, if tlists have any */
-	if (context->outer_itlist && context->outer_itlist->has_non_vars &&
-	        context->use_outer_tlist_for_matching_nonvars)
-=======
 	if (IsA(node, Param))
 		return fix_param_node(context->root, (Param *) node);
 	/* Try matching more complex expressions too, if tlists have any */
-	if (context->outer_itlist && context->outer_itlist->has_non_vars)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	if (context->outer_itlist && context->outer_itlist->has_non_vars &&
+	        context->use_outer_tlist_for_matching_nonvars)
 	{
 		newvar = search_indexed_tlist_for_non_var(node,
 												  context->outer_itlist,
@@ -2859,10 +2797,6 @@ static bool
 fix_opfuncids_walker(Node *node, void *context)
 {
 	if (node == NULL)
-		return false;
-	if (IsA(node, Grouping))
-		return false;
-	if (IsA(node, GroupId))
 		return false;
 	if (IsA(node, OpExpr))
 		set_opfuncid((OpExpr *) node);

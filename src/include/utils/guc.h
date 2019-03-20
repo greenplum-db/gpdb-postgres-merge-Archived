@@ -254,7 +254,6 @@ typedef enum
 
 #define GUC_UNIT				(GUC_UNIT_MEMORY | GUC_UNIT_TIME)
 
-<<<<<<< HEAD
 #define GUC_NOT_WHILE_SEC_REST	0x8000	/* can't set if security restricted */
 #define GUC_DISALLOW_IN_AUTO_FILE	0x00010000	/* can't set in PG_AUTOCONF_FILENAME */
 
@@ -265,8 +264,6 @@ typedef enum
 /* GUC lists for gp_guc_list_show().  (List of struct config_generic) */
 extern List    *gp_guc_list_for_explain;
 extern List    *gp_guc_list_for_no_plan;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
 extern bool log_duration;

@@ -385,6 +385,48 @@ replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp)
 }
 
 /*
+ * Generate a Param node to replace the given GroupId expression which is
+ * expected to have agglevelsup > 0 (ie, it is not local).
+ */
+static Param *
+replace_outer_group_id(PlannerInfo *root, GroupId *grp)
+{
+	Param	   *retval;
+	PlannerParamItem *pitem;
+	Index		levelsup;
+
+	Assert(grp->agglevelsup > 0 && grp->agglevelsup < root->query_level);
+
+	/* Find the query level the GroupingFunc belongs to */
+	for (levelsup = grp->agglevelsup; levelsup > 0; levelsup--)
+		root = root->parent_root;
+
+	/*
+	 * It does not seem worthwhile to try to match duplicate outer aggs. Just
+	 * make a new slot every time.
+	 */
+	grp = (GroupId *) copyObject(grp);
+	IncrementVarSublevelsUp((Node *) grp, -((int) grp->agglevelsup), 0);
+	Assert(grp->agglevelsup == 0);
+
+	pitem = makeNode(PlannerParamItem);
+	pitem->item = (Node *) grp;
+	pitem->paramId = root->glob->nParamExec++;
+
+	root->plan_params = lappend(root->plan_params, pitem);
+
+	retval = makeNode(Param);
+	retval->paramkind = PARAM_EXEC;
+	retval->paramid = pitem->paramId;
+	retval->paramtype = exprType((Node *) grp);
+	retval->paramtypmod = -1;
+	retval->paramcollid = InvalidOid;
+	retval->location = grp->location;
+
+	return retval;
+}
+
+/*
  * Generate a new Param node that will not conflict with any other.
  *
  * This is used to create Params representing subplan outputs.
@@ -752,6 +794,7 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 {
 	Node	   *result;
 	SubPlan    *splan;
+	bool		isInitPlan;
 	ListCell   *lc;
 
 	/*
@@ -998,44 +1041,27 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 												   splan->plan_id);
 
 	/* Label the subplan for EXPLAIN purposes */
-<<<<<<< HEAD
-	if (splan->is_initplan)
+	StringInfo buf = makeStringInfo();
+
+	appendStringInfo(splan->plan_name, "%s %d",
+					 isInitPlan ? "InitPlan" : "SubPlan",
+					 splan->plan_id);
+	if (splan->setParam)
 	{
-		ListCell   *lc;
 
-		StringInfo buf = makeStringInfo();
-
-		appendStringInfo(buf, "InitPlan %d (returns ", splan->plan_id);
-
+		appendStringInfo(buf, " (returns ");
 		foreach(lc, splan->setParam)
 		{
 			appendStringInfo(buf, "$%d%s",
-							lfirst_int(lc),
-							lnext(lc) ? "," : "");
+							 lfirst_int(lc),
+							 lnext(lc) ? "," : ")");
 		}
-		appendStringInfoString(buf, ")");
 		splan->plan_name = pstrdup(buf->data);
 		pfree(buf->data);
 		pfree(buf);
 		buf = NULL;
-=======
-	splan->plan_name = palloc(32 + 12 * list_length(splan->setParam));
-	sprintf(splan->plan_name, "%s %d",
-			isInitPlan ? "InitPlan" : "SubPlan",
-			splan->plan_id);
-	if (splan->setParam)
-	{
-		char	   *ptr = splan->plan_name + strlen(splan->plan_name);
-
-		ptr += sprintf(ptr, " (returns ");
-		foreach(lc, splan->setParam)
-		{
-			ptr += sprintf(ptr, "$%d%s",
-						   lfirst_int(lc),
-						   lnext(lc) ? "," : ")");
-		}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
+
 
 	/* Lastly, fill in the cost estimates for use later */
 	cost_subplan(root, splan, plan);
@@ -1190,13 +1216,8 @@ subplan_is_hashable(PlannerInfo *root, Plan *plan)
 	 * overhead.)
 	 */
 	subquery_size = plan->plan_rows *
-<<<<<<< HEAD
-		(MAXALIGN(plan->plan_width) + MAXALIGN(sizeof(HeapTupleHeaderData)));
-	if (subquery_size > global_work_mem(root))
-=======
 		(MAXALIGN(plan->plan_width) + MAXALIGN(SizeofHeapTupleHeader));
-	if (subquery_size > work_mem * 1024L)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	if (subquery_size > global_work_mem(root))
 		return false;
 
 	return true;
@@ -1458,11 +1479,8 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	RangeTblRef *rtr;
 	List	   *subquery_vars;
 	Node	   *quals;
-<<<<<<< HEAD
 	bool		correlated;
-=======
 	ParseState *pstate;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	Assert(sublink->subLinkType == ANY_SUBLINK);
 	Assert(IsA(subselect, Query));
@@ -1848,39 +1866,33 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 	 * PostgreSQL:
 	 *
 	 * We don't try to simplify at all if the query uses set operations,
-<<<<<<< HEAD
-	 * aggregates, HAVING, LIMIT/OFFSET, or FOR UPDATE/SHARE; none of these
-	 * seem likely in normal usage and their possible effects are complex.
+	 * aggregates, grouping sets, modifying CTEs, HAVING, OFFSET, or FOR
+	 * UPDATE/SHARE; none of these seem likely in normal usage and their
+	 * possible effects are complex.  (Note: we could ignore an "OFFSET 0"
+	 * clause, but that traditionally is used as an optimization fence, so we
+	 * don't.)
 	 *
 	 * In GPDB, we try a bit harder: Try to demote HAVING to WHERE, in case
 	 * there are no aggregates or volatile functions. If that fails, only
 	 * then give up. Also, just discard any window functions; they
 	 * shouldn't affect the number of rows returned. If subquery contains
 	 * LIMIT, it is already handled in convert_EXISTS_sublink_to_join()
-	 * before we reach here.
-=======
-	 * aggregates, grouping sets, modifying CTEs, HAVING, OFFSET, or FOR
-	 * UPDATE/SHARE; none of these seem likely in normal usage and their
-	 * possible effects are complex.  (Note: we could ignore an "OFFSET 0"
-	 * clause, but that traditionally is used as an optimization fence, so we
-	 * don't.)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	 * before we reach here.8
 	 */
 	if (query->commandType != CMD_SELECT ||
 		query->setOperations ||
 #if 0
 		query->hasAggs ||
+#endif
 		query->groupingSets ||
+#if 0
 		query->hasWindowFuncs ||
 		query->havingQual ||
 #endif
 		query->limitOffset ||
-<<<<<<< HEAD
 #if 0
 		query->limitCount ||
 #endif
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		query->rowMarks)
 		return false;
 
@@ -2262,6 +2274,11 @@ replace_correlation_vars_mutator(Node *node, PlannerInfo *root)
 	{
 		if (((GroupingFunc *) node)->agglevelsup > 0)
 			return (Node *) replace_outer_grouping(root, (GroupingFunc *) node);
+	}
+	if (IsA(node, GroupId))
+	{
+		if (((GroupId *) node)->agglevelsup > 0)
+			return (Node *) replace_outer_group_id(root, (GroupId *) node);
 	}
 	return expression_tree_mutator(node,
 								   replace_correlation_vars_mutator,

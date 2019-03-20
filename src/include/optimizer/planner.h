@@ -43,7 +43,6 @@ extern bool choose_hashed_grouping(PlannerInfo *root,
 								   double path_rows, int path_width,
 								   Path *cheapest_path,
 								   Path *sorted_path,
-								   int numGroupOps,
 								   double dNumGroups,
 								   AggClauseCosts *agg_costs);
 
