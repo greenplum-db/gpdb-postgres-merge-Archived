@@ -193,11 +193,7 @@
  * the older rand() function, which is often different from --- and
  * considerably inferior to --- random().
  */
-<<<<<<< HEAD
-#define MAX_RANDOM_VALUE  (0x7FFFFFFF)
-=======
 #define MAX_RANDOM_VALUE  PG_INT32_MAX
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * On PPC machines, decide whether to use the mutex hint bit in LWARX
@@ -323,7 +319,3 @@
  */
 /* #define HEAPDEBUGALL */
 /* #define ACLDEBUG */
-<<<<<<< HEAD
-/* #define RTDEBUG */
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
