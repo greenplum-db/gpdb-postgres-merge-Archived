@@ -3,14 +3,9 @@
  *
  *	main source file
  *
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
- *	Copyright (c) 2010-2014, PostgreSQL Global Development Group
  *	Portions Copyright (c) 2016-Present, Pivotal Software Inc
- *	contrib/pg_upgrade/pg_upgrade.c
-=======
  *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/pg_upgrade.c
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
  */
 
 /*

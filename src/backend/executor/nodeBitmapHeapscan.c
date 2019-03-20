@@ -18,13 +18,9 @@
  * In GPDB, this also deals with AppendOnly and AOCS tables. The prefetching
  * hasn't been implemented for them, though.
  *
-<<<<<<< HEAD
  * This can also be used in "Dynamic" mode.
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions Copyright (c) 2008-2009, Greenplum Inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.

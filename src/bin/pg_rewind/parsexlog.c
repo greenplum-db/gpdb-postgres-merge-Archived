@@ -4,11 +4,8 @@
  *	  Functions for reading Write-Ahead-Log
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-<<<<<<< HEAD
  * Portions Copyright (c) 2013-2014 VMware, Inc. All Rights Reserved.
  * Portions Copyright (c) 1996-2008, Nippon Telegraph and Telephone Corporation
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *-------------------------------------------------------------------------

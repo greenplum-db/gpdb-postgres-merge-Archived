@@ -1,13 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2000-2014, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2000-2015, PostgreSQL Global Development Group
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  *
  * src/bin/psql/tab-complete.c
  */
