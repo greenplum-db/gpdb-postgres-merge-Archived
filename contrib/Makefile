@@ -12,11 +12,7 @@ SUBDIRS = \
 		dblink		\
 		dict_int	\
 		dict_xsyn	\
-<<<<<<< HEAD
-		dummy_seclabel	\
-=======
 		earthdistance	\
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		file_fdw	\
 		fuzzystrmatch	\
 		hstore		\
@@ -40,7 +36,6 @@ SUBDIRS = \
 		tsm_system_rows \
 		tsm_system_time \
 		tsearch2	\
-<<<<<<< HEAD
 		unaccent
 # GPDB_92_MERGE_FIXME: Why some files (especially Makefile) are missing under
 # these directories?
@@ -55,10 +50,7 @@ SUBDIRS += \
 		formatter_fixedwidth \
 		extprotocol \
 		indexscan \
-=======
-		unaccent	\
 		vacuumlo
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 ifeq ($(with_openssl),yes)
 SUBDIRS += sslinfo
