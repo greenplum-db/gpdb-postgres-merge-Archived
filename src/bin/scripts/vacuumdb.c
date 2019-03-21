@@ -15,16 +15,6 @@
 #include "common.h"
 #include "dumputils.h"
 
-
-<<<<<<< HEAD
-static void vacuum_one_database(const char *dbname, bool full, bool verbose,
-	bool and_analyze, bool analyze_only, bool analyze_in_stages, int stage, bool freeze,
-					const char *table, const char *host, const char *port,
-					const char *username, enum trivalue prompt_password,
-					const char *progname, bool echo, bool quiet);
-static void vacuum_all_databases(bool full, bool verbose, bool and_analyze,
-					 bool analyze_only, bool analyze_in_stages, bool freeze,
-=======
 #define ERRCODE_UNDEFINED_TABLE  "42P01"
 
 /* Parallel vacuuming stuff */
@@ -56,7 +46,6 @@ static void vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 
 static void vacuum_all_databases(vacuumingOptions *vacopts,
 					 bool analyze_in_stages,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					 const char *maintenance_db,
 					 const char *host, const char *port,
 					 const char *username, enum trivalue prompt_password,
@@ -301,34 +290,20 @@ main(int argc, char *argv[])
 
 			for (stage = 0; stage < ANALYZE_NUM_STAGES; stage++)
 			{
-<<<<<<< HEAD
-				vacuum_one_database(dbname, full, verbose, and_analyze,
-									analyze_only, analyze_in_stages, -1,
-									freeze, cell->val,
-									host, port, username, prompt_password,
-=======
 				vacuum_one_database(dbname, &vacopts,
 									stage,
 									&tables,
 									host, port, username, prompt_password,
 									concurrentCons,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 									progname, echo, quiet);
 			}
 		}
 		else
-<<<<<<< HEAD
-			vacuum_one_database(dbname, full, verbose, and_analyze,
-								analyze_only, analyze_in_stages, -1,
-								freeze, NULL,
-								host, port, username, prompt_password,
-=======
 			vacuum_one_database(dbname, &vacopts,
 								ANALYZE_NO_STAGE,
 								&tables,
 								host, port, username, prompt_password,
 								concurrentCons,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 								progname, echo, quiet);
 	}
 
@@ -349,36 +324,12 @@ main(int argc, char *argv[])
  * a list of tables from the database.
  */
 static void
-<<<<<<< HEAD
-run_vacuum_command(PGconn *conn, const char *sql, bool echo, const char *table, const char *progname)
-{
-	if (!executeMaintenanceCommand(conn, sql, echo))
-	{
-		if (table)
-			fprintf(stderr, _("%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"),
-					progname, table, PQdb(conn), PQerrorMessage(conn));
-		else
-			fprintf(stderr, _("%s: vacuuming of database \"%s\" failed: %s"),
-					progname, PQdb(conn), PQerrorMessage(conn));
-		PQfinish(conn);
-		exit(1);
-	}
-}
-
-
-static void
-vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyze,
-	bool analyze_only, bool analyze_in_stages, int stage, bool freeze, const char *table,
-					const char *host, const char *port,
-					const char *username, enum trivalue prompt_password,
-=======
 vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 					int stage,
 					SimpleStringList *tables,
 					const char *host, const char *port,
 					const char *username, enum trivalue prompt_password,
 					int concurrentCons,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					const char *progname, bool echo, bool quiet)
 {
 	PQExpBufferData sql;
@@ -416,66 +367,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
 						   progname, echo, false);
 
-<<<<<<< HEAD
-	if (analyze_only)
-	{
-		appendPQExpBufferStr(&sql, "ANALYZE");
-		if (verbose)
-			appendPQExpBufferStr(&sql, " VERBOSE");
-	}
-	else
-	{
-		appendPQExpBufferStr(&sql, "VACUUM");
-		if (PQserverVersion(conn) >= 90000)
-		{
-			const char *paren = " (";
-			const char *comma = ", ";
-			const char *sep = paren;
-
-			if (full)
-			{
-				appendPQExpBuffer(&sql, "%sFULL", sep);
-				sep = comma;
-			}
-			if (freeze)
-			{
-				appendPQExpBuffer(&sql, "%sFREEZE", sep);
-				sep = comma;
-			}
-			if (verbose)
-			{
-				appendPQExpBuffer(&sql, "%sVERBOSE", sep);
-				sep = comma;
-			}
-			if (and_analyze)
-			{
-				appendPQExpBuffer(&sql, "%sANALYZE", sep);
-				sep = comma;
-			}
-			if (sep != paren)
-				appendPQExpBufferStr(&sql, ")");
-		}
-		else
-		{
-			if (full)
-				appendPQExpBufferStr(&sql, " FULL");
-			if (freeze)
-				appendPQExpBufferStr(&sql, " FREEZE");
-			if (verbose)
-				appendPQExpBufferStr(&sql, " VERBOSE");
-			if (and_analyze)
-				appendPQExpBufferStr(&sql, " ANALYZE");
-		}
-	}
-	if (table)
-	{
-		appendPQExpBufferChar(&sql, ' ');
-		appendQualifiedRelation(&sql, table, conn, progname, echo);
-	}
-	appendPQExpBufferStr(&sql, ";");
-=======
 	initPQExpBuffer(&sql);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * If a table list is not provided and we're using multiple connections,
@@ -483,46 +375,6 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	 */
 	if (parallel && (!tables || !tables->head))
 	{
-<<<<<<< HEAD
-		const char *stage_commands[] = {
-			"SET default_statistics_target=1; SET vacuum_cost_delay=0;",
-			"SET default_statistics_target=10; RESET vacuum_cost_delay;",
-			"RESET default_statistics_target;"
-		};
-		const char *stage_messages[] = {
-			gettext_noop("Generating minimal optimizer statistics (1 target)"),
-			gettext_noop("Generating medium optimizer statistics (10 targets)"),
-			gettext_noop("Generating default (full) optimizer statistics")
-		};
-
-		if (stage == -1)
-		{
-			int		i;
-
-			/* Run all stages. */
-			for (i = 0; i < 3; i++)
-			{
-				if (!quiet)
-				{
-					puts(gettext(stage_messages[i]));
-					fflush(stdout);
-				}
-				executeCommand(conn, stage_commands[i], progname, echo);
-				run_vacuum_command(conn, sql.data, echo, table, progname);
-			}
-		}
-		else
-		{
-			/* Otherwise, we got a stage from vacuum_all_databases(), so run
-			 * only that one. */
-			if (!quiet)
-			{
-				puts(gettext(stage_messages[stage]));
-				fflush(stdout);
-			}
-			executeCommand(conn, stage_commands[stage], progname, echo);
-			run_vacuum_command(conn, sql.data, echo, table, progname);
-=======
 		PQExpBufferData buf;
 		PGresult   *res;
 		int			ntups;
@@ -575,15 +427,9 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 			conn = connectDatabase(dbname, host, port, username, prompt_password,
 								   progname, false);
 			init_slot(slots + i, conn);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 
 	}
-<<<<<<< HEAD
-	else
-		run_vacuum_command(conn, sql.data, echo, NULL, progname);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Prepare all the connections to run the appropriate analyze stage, if
@@ -693,45 +539,6 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 {
 	PGconn	   *conn;
 	PGresult   *result;
-<<<<<<< HEAD
-	PQExpBufferData connstr;
-	int			stage;
-
-	conn = connectMaintenanceDatabase(maintenance_db, host, port,
-									  username, prompt_password, progname, echo);
-	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
-	PQfinish(conn);
-
-	initPQExpBuffer(&connstr);
-
-	/* If analyzing in stages, then run through all stages.  Otherwise just
-	 * run once, passing -1 as the stage. */
-	for (stage = (analyze_in_stages ? 0 : -1);
-		 stage < (analyze_in_stages ? 3 : 0);
-		 stage++)
-	{
-		int			i;
-
-		for (i = 0; i < PQntuples(result); i++)
-		{
-			char	   *dbname = PQgetvalue(result, i, 0);
-
-			if (!quiet)
-			{
-				printf(_("%s: vacuuming database \"%s\"\n"), progname, dbname);
-				fflush(stdout);
-			}
-
-			resetPQExpBuffer(&connstr);
-			appendPQExpBuffer(&connstr, "dbname=");
-			appendConnStrVal(&connstr, PQgetvalue(result, i, 0));
-
-			vacuum_one_database(connstr.data, full, verbose, and_analyze,
-								analyze_only, analyze_in_stages, stage,
-							freeze, NULL, host, port, username, prompt_password,
-								progname, echo, quiet);
-		}
-=======
 	int			stage;
 	int			i;
 
@@ -782,7 +589,6 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 								concurrentCons,
 								progname, echo, quiet);
 		}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	termPQExpBuffer(&connstr);
 

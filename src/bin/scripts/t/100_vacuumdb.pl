@@ -1,11 +1,7 @@
 use strict;
 use warnings;
 use TestLib;
-<<<<<<< HEAD
 use Test::More tests => 23;
-=======
-use Test::More tests => 18;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 program_help_ok('vacuumdb');
 program_version_ok('vacuumdb');
@@ -34,7 +30,6 @@ issues_sql_like(
 	[ 'vacuumdb', '-Z', 'postgres' ],
 	qr/statement: ANALYZE;/,
 	'vacuumdb -Z');
-<<<<<<< HEAD
 command_ok([qw(vacuumdb -Z --table=pg_am dbname=template1)],
 	'vacuumdb with connection string');
 
@@ -57,5 +52,3 @@ command_ok([qw|vacuumdb -Z --table="need""q(uot"(")x") postgres|],
 	'column list');
 command_fails([qw|vacuumdb -Zt funcidx postgres|],
 	'unqualifed name via functional index');
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
