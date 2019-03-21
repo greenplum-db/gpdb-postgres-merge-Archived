@@ -243,46 +243,10 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			rc = get_plan_rowmark(root->rowMarks, rt_index);
 			if (rc != NULL)
 			{
-<<<<<<< HEAD
-				switch (rc->markType)
-				{
-					case ROW_MARK_EXCLUSIVE:
-						applyLockingClause(subquery, 1, LCS_FORUPDATE,
-										   rc->noWait, false);
-						break;
-					case ROW_MARK_NOKEYEXCLUSIVE:
-						applyLockingClause(subquery, 1, LCS_FORNOKEYUPDATE,
-										   rc->noWait, false);
-						break;
-					case ROW_MARK_SHARE:
-						applyLockingClause(subquery, 1, LCS_FORSHARE,
-										   rc->noWait, false);
-						break;
-					case ROW_MARK_KEYSHARE:
-						applyLockingClause(subquery, 1, LCS_FORKEYSHARE,
-										   rc->noWait, false);
-						break;
-					case ROW_MARK_REFERENCE:
-					case ROW_MARK_COPY:
-						/* No locking needed */
-						break;
-
-					/*
-					 * Additional modes in GPDB. These are only created
-					 * later in the planning, so we should not see these.
-					 */
-					case ROW_MARK_TABLE_SHARE:
-						elog(ERROR, "unexpected ROW_MARK_TABLE_SHARE locking mode encountered while expanding security barrier view");
-					case ROW_MARK_TABLE_EXCLUSIVE:
-						elog(ERROR, "unexpected ROW_MARK_TABLE_EXCLUSIVE locking mode encountered while expanding security barrier view");
-				}
-				root->rowMarks = list_delete(root->rowMarks, rc);
-=======
 				if (rc->strength != LCS_NONE)
 					applyLockingClause(subquery, 1, rc->strength,
 									   rc->waitPolicy, false);
 				root->rowMarks = list_delete_ptr(root->rowMarks, rc);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			}
 
 			/*
@@ -293,12 +257,8 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			 */
 			if (targetRelation)
 				applyLockingClause(subquery, 1, LCS_FORUPDATE,
-<<<<<<< HEAD
-								   false, false);
-=======
 								   LockWaitBlock, false);
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			/*
 			 * Replace any variables in the outer query that refer to the
 			 * original relation RTE with references to columns that we will
@@ -477,10 +437,7 @@ security_barrier_replace_vars_walker(Node *node,
 			/* New variable for subquery targetlist */
 			newvar = copyObject(var);
 			newvar->varno = newvar->varnoold = 1;
-<<<<<<< HEAD
 			newvar->varlevelsup = 0;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			attno = list_length(context->targetlist) + 1;
 			tle = makeTargetEntry((Expr *) newvar,

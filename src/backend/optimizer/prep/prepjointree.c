@@ -82,34 +82,16 @@ static Node *pull_up_simple_subquery(PlannerInfo *root, Node *jtnode,
 						RangeTblEntry *rte,
 						JoinExpr *lowest_outer_join,
 						JoinExpr *lowest_nulling_outer_join,
-<<<<<<< HEAD
-						AppendRelInfo *containing_appendrel);
-=======
 						AppendRelInfo *containing_appendrel,
 						bool deletion_ok);
-static Node *pull_up_simple_union_all(PlannerInfo *root, Node *jtnode,
-						 RangeTblEntry *rte);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root,
 						   int parentRTindex, Query *setOpQuery,
 						   int childRToffset);
 static void make_setop_translation_list(Query *query, Index newvarno,
 							List **translated_vars);
-<<<<<<< HEAD
-bool is_simple_subquery(PlannerInfo *root, Query *subquery, RangeTblEntry *rte,
-				   JoinExpr *lowest_outer_join);
-=======
-static bool is_simple_subquery(Query *subquery, RangeTblEntry *rte,
+bool is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 				   JoinExpr *lowest_outer_join,
 				   bool deletion_ok);
-static Node *pull_up_simple_values(PlannerInfo *root, Node *jtnode,
-					  RangeTblEntry *rte);
-static bool is_simple_values(PlannerInfo *root, RangeTblEntry *rte,
-				 bool deletion_ok);
-static bool is_simple_union_all(Query *subquery);
-static bool is_simple_union_all_recurse(Node *setOp, Query *setOpQuery,
-							List *colTypes);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static bool is_safe_append_member(Query *subquery);
 static bool jointree_contains_lateral_outer_refs(Node *jtnode, bool restricted,
 									 Relids safe_upper_varnos);
@@ -870,13 +852,8 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 		 * unless is_safe_append_member says so.
 		 */
 		if (rte->rtekind == RTE_SUBQUERY &&
-<<<<<<< HEAD
 			!rte->forceDistRandom &&
-			is_simple_subquery(root, rte->subquery, rte, lowest_outer_join) &&
-=======
-			is_simple_subquery(rte->subquery, rte,
-							   lowest_outer_join, deletion_ok) &&
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+			is_simple_subquery(root, rte->subquery, rte, lowest_outer_join, deletion_ok) &&
 			(containing_appendrel == NULL ||
 			 is_safe_append_member(rte->subquery)))
 			return pull_up_simple_subquery(root, jtnode, rte,
@@ -977,16 +954,7 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 		switch (j->jointype)
 		{
 			case JOIN_INNER:
-<<<<<<< HEAD
 			case JOIN_SEMI:
-=======
-
-				/*
-				 * INNER JOIN can allow deletion of either child node, but not
-				 * both.  So right child gets permission to delete only if
-				 * left child didn't get removed.
-				 */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				j->larg = pull_up_subqueries_recurse(root, j->larg,
 													 lowest_outer_join,
 												   lowest_nulling_outer_join,
@@ -1155,12 +1123,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * easier just to keep this "if" looking the same as the one in
 	 * pull_up_subqueries_recurse.
 	 */
-<<<<<<< HEAD
-	if (is_simple_subquery(root, subquery, rte, lowest_outer_join) &&
-=======
-	if (is_simple_subquery(subquery, rte,
-						   lowest_outer_join, deletion_ok) &&
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	if (is_simple_subquery(root, subquery, rte, lowest_outer_join, deletion_ok) &&
 		(containing_appendrel == NULL || is_safe_append_member(subquery)))
 	{
 		/* good to go */
@@ -1639,22 +1602,14 @@ make_setop_translation_list(Query *query, Index newvarno,
  * (Note subquery is not necessarily equal to rte->subquery; it could be a
  * processed copy of that.)
  * lowest_outer_join is the lowest outer join above the subquery, or NULL.
-<<<<<<< HEAD
  *
  * In GPDB, 'rte' can be passed as NULL, if this is a sublink, rather
  * than a subselect in the FROM list, that we are trying to pull up.
+ * deletion_ok is TRUE if it'd be okay to delete the subquery entirely.
  */
 bool
 is_simple_subquery(PlannerInfo *root, Query *subquery, RangeTblEntry *rte,
-				   JoinExpr *lowest_outer_join)
-=======
- * deletion_ok is TRUE if it'd be okay to delete the subquery entirely.
- */
-static bool
-is_simple_subquery(Query *subquery, RangeTblEntry *rte,
-				   JoinExpr *lowest_outer_join,
-				   bool deletion_ok)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+				   JoinExpr *lowest_outer_join, bool deletion_ok)
 {
 	/*
 	 * Let's just make sure it's a valid subselect ...

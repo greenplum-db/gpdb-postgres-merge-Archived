@@ -929,17 +929,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	 * Don't do it if it doesn't look like the hashtable will fit into
 	 * work_mem.
 	 */
-<<<<<<< HEAD
-
-	/*
-	 * Note that SetOp uses a TupleHashTable and not GPDB's HHashTable for
-	 * performing set operations. So, use the hash entry size calculations from
-	 * upstream.
-	 */
-	hashentrysize = MAXALIGN(input_plan->plan_width) + MAXALIGN(sizeof(MinimalTupleData));
-=======
 	hashentrysize = MAXALIGN(input_plan->plan_width) + MAXALIGN(SizeofMinimalTupleHeader);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (hashentrysize * dNumGroups > work_mem * 1024L)
 		return false;
