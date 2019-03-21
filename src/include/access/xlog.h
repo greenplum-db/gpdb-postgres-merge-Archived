@@ -13,8 +13,8 @@
 
 #include "access/rmgr.h"
 #include "access/xlogdefs.h"
-<<<<<<< HEAD
 #include "access/xlogreader.h"
+#include "access/xloginsert.h"
 #include "catalog/gp_segment_config.h"
 #include "catalog/pg_control.h"
 #include "lib/stringinfo.h"
@@ -24,14 +24,7 @@
 #include "utils/relcache.h"
 #include "cdb/cdbpublic.h"
 #include "datatype/timestamp.h"
-=======
-#include "access/xloginsert.h"
-#include "access/xlogreader.h"
-#include "datatype/timestamp.h"
-#include "lib/stringinfo.h"
 #include "nodes/pg_list.h"
-#include "storage/fd.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 
 /* Sync methods */
@@ -119,8 +112,6 @@ extern bool fullPageWrites;
 extern bool wal_log_hints;
 extern bool wal_compression;
 extern bool log_checkpoints;
-<<<<<<< HEAD
-=======
 
 extern int	CheckPointSegments;
 
@@ -132,7 +123,6 @@ typedef enum ArchiveMode
 	ARCHIVE_MODE_ALWAYS			/* enabled always (even during recovery) */
 } ArchiveMode;
 extern int	XLogArchiveMode;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* WAL levels */
 typedef enum WalLevel
@@ -197,15 +187,8 @@ extern bool XLOG_DEBUG;
 /* These are important to RequestCheckpoint */
 #define CHECKPOINT_WAIT			0x0020	/* Wait for completion */
 /* These indicate the cause of a checkpoint request */
-<<<<<<< HEAD
-#define CHECKPOINT_CAUSE_XLOG	0x0020	/* XLOG consumption */
-#define CHECKPOINT_CAUSE_TIME	0x0040	/* Elapsed time */
-#define CHECKPOINT_FLUSH_ALL	0x0080	/* Flush all pages, including those
-										 * belonging to unlogged tables */
-=======
 #define CHECKPOINT_CAUSE_XLOG	0x0040	/* XLOG consumption */
 #define CHECKPOINT_CAUSE_TIME	0x0080	/* Elapsed time */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* Checkpoint statistics */
 typedef struct CheckpointStatsData
@@ -232,16 +215,9 @@ typedef struct CheckpointStatsData
 
 extern CheckpointStatsData CheckpointStats;
 
-<<<<<<< HEAD
-extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
-extern XLogRecPtr XLogInsert_OverrideXid(RmgrId rmid, uint8 info, XLogRecData *rdata, TransactionId overrideXid);
-extern XLogRecPtr XLogLastInsertBeginLoc(void);
-extern bool XLogCheckBufferNeedsBackup(Buffer buffer);
-=======
 struct XLogRecData;
 
 extern XLogRecPtr XLogInsertRecord(struct XLogRecData *rdata, XLogRecPtr fpw_lsn);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern void XLogFlush(XLogRecPtr RecPtr);
 extern bool XLogBackgroundFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
@@ -253,20 +229,10 @@ extern XLogSegNo XLogGetLastRemovedSegno(void);
 extern void XLogSetAsyncXactLSN(XLogRecPtr record);
 extern void XLogSetReplicationSlotMinimumLSN(XLogRecPtr lsn);
 
-<<<<<<< HEAD
-extern Buffer RestoreBackupBlock(XLogRecPtr lsn, XLogRecord *record,
-				   int block_index,
-				   bool get_cleanup_lock, bool keep_buffer);
-
-extern void xlog_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribute__((unused)), XLogRecord *record);
-extern void xlog_desc(StringInfo buf, XLogRecord *record);
-
-extern void UnpackCheckPointRecord(struct XLogRecord *record, CheckpointExtendedRecord *ckptExtended);
-=======
 extern void xlog_redo(XLogReaderState *record);
 extern void xlog_desc(StringInfo buf, XLogReaderState *record);
 extern const char *xlog_identify(uint8 info);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+extern void UnpackCheckPointRecord(struct XLogRecord *record, CheckpointExtendedRecord *ckptExtended);
 
 extern void issue_xlog_fsync(int fd, XLogSegNo segno);
 
@@ -333,7 +299,9 @@ extern void do_pg_abort_backup(void);
 #define BACKUP_LABEL_FILE		"backup_label"
 #define BACKUP_LABEL_OLD		"backup_label.old"
 
-<<<<<<< HEAD
+#define TABLESPACE_MAP			"tablespace_map"
+#define TABLESPACE_MAP_OLD		"tablespace_map.old"
+
 /* Greenplum additions */
 extern List *XLogReadTimeLineHistory(TimeLineID targetTLI);
 extern bool IsStandbyMode(void);
@@ -342,10 +310,5 @@ extern XLogRecPtr last_xlog_replay_location(void);
 extern void wait_for_mirror(void);
 extern bool IsRoleMirror(void);
 extern void SignalPromote(void);
-
-=======
-#define TABLESPACE_MAP			"tablespace_map"
-#define TABLESPACE_MAP_OLD		"tablespace_map.old"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #endif   /* XLOG_H */

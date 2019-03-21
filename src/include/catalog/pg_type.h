@@ -375,18 +375,16 @@ DATA(insert OID = 194 ( pg_node_tree	PGNSP PGUID -1 f b S f t \054 0 0 0 pg_node
 DESCR("string representing an internal node tree");
 #define PGNODETREEOID	194
 
-<<<<<<< HEAD
+DATA(insert OID = 32 ( pg_ddl_command	PGNSP PGUID SIZEOF_POINTER t p P f t \054 0 0 0 pg_ddl_command_in pg_ddl_command_out pg_ddl_command_recv pg_ddl_command_send - - - ALIGNOF_POINTER p f 0 -1 0 0 _null_ _null_ _null_ ));
+DESCR("internal type for passing CollectedCommand");
+#define PGDDLCOMMANDOID 32
+
 DATA(insert OID = 199 ( _json	   PGNSP PGUID -1 f b A f t \054 0 114 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 
 DATA(insert OID = 7198 (	complex	   PGNSP PGUID 16 f b N f t \054 0 0	7199 complex_in complex_out complex_recv complex_send - - - d p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("double-precision floating point complex number, 16-byte storage");
 #define COMPLEXOID 7198
 DATA(insert OID = 7199 (	_complex	   PGNSP PGUID -1 f b A f t \054 0 7198 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
-=======
-DATA(insert OID = 32 ( pg_ddl_command	PGNSP PGUID SIZEOF_POINTER t p P f t \054 0 0 0 pg_ddl_command_in pg_ddl_command_out pg_ddl_command_recv pg_ddl_command_send - - - ALIGNOF_POINTER p f 0 -1 0 0 _null_ _null_ _null_ ));
-DESCR("internal type for passing CollectedCommand");
-#define PGDDLCOMMANDOID 32
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* OIDS 200 - 299 */
 

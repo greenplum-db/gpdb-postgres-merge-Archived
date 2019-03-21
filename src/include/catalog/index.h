@@ -14,13 +14,9 @@
 #ifndef INDEX_H
 #define INDEX_H
 
-<<<<<<< HEAD
 #include "access/relscan.h"     /* Relation, Snapshot */
 #include "catalog/objectaddress.h"
 #include "executor/tuptable.h"  /* TupTableSlot */
-=======
-#include "catalog/objectaddress.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "nodes/execnodes.h"
 
 struct EState;                  /* #include "nodes/execnodes.h" */
@@ -95,14 +91,11 @@ extern void index_drop(Oid indexId, bool concurrent);
 
 extern IndexInfo *BuildIndexInfo(Relation index);
 
-<<<<<<< HEAD
 extern bool CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 				 Oid *collations1, Oid *collations2,
 				 Oid *opfamilies1, Oid *opfamilies2,
 				 AttrNumber *attmap, int maplen);
-=======
 extern void BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 extern void FormIndexDatum(IndexInfo *indexInfo,
 			   TupleTableSlot *slot,
@@ -119,20 +112,12 @@ extern void index_build(Relation heapRelation,
 			bool isprimary,
 			bool isreindex);
 
-<<<<<<< HEAD
 extern double IndexBuildScan(Relation parentRelation,
 					Relation indexRelation,
 					IndexInfo *indexInfo,
 					bool allow_sync,
 					IndexBuildCallback callback,
 					void *callback_state);
-=======
-extern double IndexBuildHeapScan(Relation heapRelation,
-				   Relation indexRelation,
-				   IndexInfo *indexInfo,
-				   bool allow_sync,
-				   IndexBuildCallback callback,
-				   void *callback_state);
 extern double IndexBuildHeapRangeScan(Relation heapRelation,
 						Relation indexRelation,
 						IndexInfo *indexInfo,
@@ -141,7 +126,6 @@ extern double IndexBuildHeapRangeScan(Relation heapRelation,
 						BlockNumber end_blockno,
 						IndexBuildCallback callback,
 						void *callback_state);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 extern void validate_index(Oid heapId, Oid indexId, Snapshot snapshot);
 

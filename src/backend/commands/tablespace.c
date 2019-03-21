@@ -1657,11 +1657,7 @@ get_tablespace_name(Oid spc_oid)
  * TABLESPACE resource manager's routines
  */
 void
-<<<<<<< HEAD
-tblspc_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
-=======
 tblspc_redo(XLogReaderState *record)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 

@@ -87,13 +87,8 @@ extern void ResetSequence(Oid seq_relid);
 extern void ResetSequenceCaches(void);
 
 extern void seq_redo(XLogReaderState *rptr);
-<<<<<<< HEAD
-extern void seq_desc(StringInfo buf, XLogRecord *record);
-
-extern void seq_mask(char *pagedata, BlockNumber blkno);
-=======
 extern void seq_desc(StringInfo buf, XLogReaderState *rptr);
 extern const char *seq_identify(uint8 info);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+extern void seq_mask(char *pagedata, BlockNumber blkno);
 
 #endif   /* SEQUENCE_H */

@@ -60,14 +60,9 @@ extern char *get_tablespace_name(Oid spc_oid);
 extern bool directory_is_empty(const char *path);
 extern void remove_tablespace_symlink(const char *linkloc);
 
-<<<<<<< HEAD
-extern void tblspc_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
-extern void tblspc_desc(StringInfo buf, XLogRecord *record);
-extern void set_short_version(const char *path);
-=======
 extern void tblspc_redo(XLogReaderState *rptr);
 extern void tblspc_desc(StringInfo buf, XLogReaderState *rptr);
 extern const char *tblspc_identify(uint8 info);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+extern void set_short_version(const char *path);
 
 #endif   /* TABLESPACE_H */

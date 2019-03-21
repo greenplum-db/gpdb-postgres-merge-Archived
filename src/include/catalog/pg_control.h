@@ -79,13 +79,9 @@ typedef struct CheckPoint
 #define XLOG_RESTORE_POINT				0x70
 #define XLOG_FPW_CHANGE					0x80
 #define XLOG_END_OF_RECOVERY			0x90
-<<<<<<< HEAD
-#define XLOG_FPI						0xA0
-#define XLOG_NEXTRELFILENODE			0xB0
-=======
 #define XLOG_FPI_FOR_HINT				0xA0
 #define XLOG_FPI						0xB0
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+#define XLOG_NEXTRELFILENODE			0xC0
 
 
 /*

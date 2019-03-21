@@ -271,14 +271,9 @@ typedef enum
 typedef struct RmgrData
 {
 	const char *rm_name;
-<<<<<<< HEAD
-	void		(*rm_redo) (XLogRecPtr beginLoc, XLogRecPtr lsn, struct XLogRecord *rptr);
-	void		(*rm_desc) (StringInfo buf, struct XLogRecord *record);
-=======
 	void		(*rm_redo) (XLogReaderState *record);
 	void		(*rm_desc) (StringInfo buf, XLogReaderState *record);
 	const char *(*rm_identify) (uint8 info);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	void		(*rm_startup) (void);
 	void		(*rm_cleanup) (void);
 
@@ -323,10 +318,7 @@ extern void XLogArchiveForceDone(const char *xlog);
 extern bool XLogArchiveCheckDone(const char *xlog);
 extern bool XLogArchiveIsBusy(const char *xlog);
 extern bool XLogArchiveIsReady(const char *xlog);
-<<<<<<< HEAD
-=======
 extern bool XLogArchiveIsReadyOrDone(const char *xlog);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern void XLogArchiveCleanup(const char *xlog);
 
 #endif   /* XLOG_INTERNAL_H */

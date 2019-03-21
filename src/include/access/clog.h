@@ -52,13 +52,8 @@ extern bool CLOGTransactionIsOld(TransactionId xid);
 #define CLOG_ZEROPAGE		0x00
 #define CLOG_TRUNCATE		0x10
 
-<<<<<<< HEAD
-extern void clog_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
-extern void clog_desc(StringInfo buf, XLogRecord *record);
-=======
 extern void clog_redo(XLogReaderState *record);
 extern void clog_desc(StringInfo buf, XLogReaderState *record);
 extern const char *clog_identify(uint8 info);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #endif   /* CLOG_H */

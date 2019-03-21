@@ -39,10 +39,7 @@ typedef struct ExplainState
 	bool		analyze;		/* print actual times */
 	bool		costs;			/* print estimated costs */
 	bool		buffers;		/* print buffer usage */
-<<<<<<< HEAD
 	bool		dxl;			/* CDB: print DXL */
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	bool		timing;			/* print detailed node timing */
 	bool		summary;		/* print total planning and execution timing */
 	ExplainFormat format;		/* output format */
@@ -51,7 +48,6 @@ typedef struct ExplainState
 	List	   *rtable;			/* range table */
 	List	   *rtable_names;	/* alias names for RTEs */
 	int			indent;			/* current indentation level */
-<<<<<<< HEAD
 	ExplainStateExtra *extra;	/* pointer to additional data */
 
     /* CDB */
@@ -59,10 +55,6 @@ typedef struct ExplainState
     Slice          *currentSlice;   /* slice whose nodes we are visiting */
 
 	PlanState  *parentPlanState;
-=======
-	List	   *grouping_stack; /* format-specific grouping state */
-	List	   *deparse_cxt;	/* context list for deparsing expressions */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } ExplainState;
 
 /* Hook for plugins to get control in ExplainOneQuery() */

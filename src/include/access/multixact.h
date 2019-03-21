@@ -135,15 +135,9 @@ extern void multixact_twophase_postcommit(TransactionId xid, uint16 info,
 extern void multixact_twophase_postabort(TransactionId xid, uint16 info,
 							 void *recdata, uint32 len);
 
-<<<<<<< HEAD
-extern void multixact_redo(XLogRecPtr beginLoc __attribute__((unused)),
-						   XLogRecPtr lsn __attribute__((unused)), XLogRecord *record);
-extern void multixact_desc(StringInfo buf, XLogRecord *record);
-=======
 extern void multixact_redo(XLogReaderState *record);
 extern void multixact_desc(StringInfo buf, XLogReaderState *record);
 extern const char *multixact_identify(uint8 info);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern char *mxid_to_string(MultiXactId multi, int nmembers,
 			   MultiXactMember *members);
 

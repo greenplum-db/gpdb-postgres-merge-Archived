@@ -75,12 +75,8 @@ extern void AlterTableInternal(Oid relid, List *cmds, bool recurse);
 
 extern Oid	AlterTableMoveAll(AlterTableMoveAllStmt *stmt);
 
-<<<<<<< HEAD
-extern Oid	AlterTableNamespace(AlterObjectSchemaStmt *stmt);
-=======
 extern ObjectAddress AlterTableNamespace(AlterObjectSchemaStmt *stmt,
 					Oid *oldschema);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 extern void AlterTableNamespaceInternal(Relation rel, Oid oldNspOid,
 							Oid nspOid, ObjectAddresses *objsMoved);

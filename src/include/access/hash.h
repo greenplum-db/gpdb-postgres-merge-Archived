@@ -356,13 +356,8 @@ extern OffsetNumber _hash_binsearch(Page page, uint32 hash_value);
 extern OffsetNumber _hash_binsearch_last(Page page, uint32 hash_value);
 
 /* hash.c */
-<<<<<<< HEAD
-extern void hash_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
-extern void hash_desc(StringInfo buf, XLogRecord *record);
-=======
 extern void hash_redo(XLogReaderState *record);
 extern void hash_desc(StringInfo buf, XLogReaderState *record);
 extern const char *hash_identify(uint8 info);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #endif   /* HASH_H */

@@ -265,12 +265,8 @@ extern TupleTableSlot *EvalPlanQual(EState *estate, EPQState *epqstate,
 			 Relation relation, Index rti, int lockmode,
 			 ItemPointer tid, TransactionId priorXmax);
 extern HeapTuple EvalPlanQualFetch(EState *estate, Relation relation,
-<<<<<<< HEAD
-				  int lockmode, bool noWait, ItemPointer tid, TransactionId priorXmax);
-=======
 				  int lockmode, LockWaitPolicy wait_policy, ItemPointer tid,
 				  TransactionId priorXmax);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern void EvalPlanQualInit(EPQState *epqstate, EState *estate,
 				 Plan *subplan, List *auxrowmarks, int epqParam);
 extern void EvalPlanQualSetPlan(EPQState *epqstate,
@@ -465,7 +461,23 @@ extern void UnregisterExprContextCallback(ExprContext *econtext,
 							  ExprContextCallbackFunction function,
 							  Datum arg);
 
-<<<<<<< HEAD
+/*
+ * prototypes from functions in execIndexing.c
+ */
+extern void ExecOpenIndices(ResultRelInfo *resultRelInfo, bool speculative);
+extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
+extern List *ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
+					  EState *estate, bool noDupErr, bool *specConflict,
+					  List *arbiterIndexes);
+extern bool ExecCheckIndexConstraints(TupleTableSlot *slot, EState *estate,
+						  ItemPointer conflictTid, List *arbiterIndexes);
+extern void check_exclusion_constraint(Relation heap, Relation index,
+						   IndexInfo *indexInfo,
+						   ItemPointer tupleid,
+						   Datum *values, bool *isnull,
+						   EState *estate, bool newIndex);
+
+
 /* Share input utilities defined in execUtils.c */
 extern ShareNodeEntry * ExecGetShareNodeEntry(EState *estate, int shareid, bool fCreate);
 
@@ -493,23 +505,5 @@ extern ResultRelInfo *values_get_partition(Datum *values, bool *nulls,
 					 TupleDesc desc, EState *estate, bool openIndices);
 
 extern void SendAOTupCounts(EState *estate);
-=======
-/*
- * prototypes from functions in execIndexing.c
- */
-extern void ExecOpenIndices(ResultRelInfo *resultRelInfo, bool speculative);
-extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
-extern List *ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
-					  EState *estate, bool noDupErr, bool *specConflict,
-					  List *arbiterIndexes);
-extern bool ExecCheckIndexConstraints(TupleTableSlot *slot, EState *estate,
-						  ItemPointer conflictTid, List *arbiterIndexes);
-extern void check_exclusion_constraint(Relation heap, Relation index,
-						   IndexInfo *indexInfo,
-						   ItemPointer tupleid,
-						   Datum *values, bool *isnull,
-						   EState *estate, bool newIndex);
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #endif   /* EXECUTOR_H  */

@@ -197,14 +197,9 @@ extern Datum spgbulkdelete(PG_FUNCTION_ARGS);
 extern Datum spgvacuumcleanup(PG_FUNCTION_ARGS);
 
 /* spgxlog.c */
-<<<<<<< HEAD
-extern void spg_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
-extern void spg_desc(StringInfo buf, XLogRecord *record);
-=======
 extern void spg_redo(XLogReaderState *record);
 extern void spg_desc(StringInfo buf, XLogReaderState *record);
 extern const char *spg_identify(uint8 info);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern void spg_xlog_startup(void);
 extern void spg_xlog_cleanup(void);
 

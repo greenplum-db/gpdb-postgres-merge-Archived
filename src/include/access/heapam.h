@@ -28,12 +28,9 @@
 #define HEAP_INSERT_SKIP_WAL	0x0001
 #define HEAP_INSERT_SKIP_FSM	0x0002
 #define HEAP_INSERT_FROZEN		0x0004
-<<<<<<< HEAD
+#define HEAP_INSERT_SPECULATIVE 0x0008
 /* gap, to keep NO_LOGICAL in sync w/ newer branches */
 #define HEAP_INSERT_NO_LOGICAL	0x0010
-=======
-#define HEAP_INSERT_SPECULATIVE 0x0008
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 typedef struct BulkInsertStateData *BulkInsertState;
 
@@ -177,11 +174,7 @@ extern HTSU_Result heap_update(Relation relation, ItemPointer otid,
 			CommandId cid, Snapshot crosscheck, bool wait,
 			HeapUpdateFailureData *hufd, LockTupleMode *lockmode);
 extern HTSU_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
-<<<<<<< HEAD
-				CommandId cid, LockTupleMode mode, LockTupleWaitType waittype,
-=======
 				CommandId cid, LockTupleMode mode, LockWaitPolicy wait_policy,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				bool follow_update,
 				Buffer *buffer, HeapUpdateFailureData *hufd);
 extern void heap_inplace_update(Relation relation, HeapTuple tuple);

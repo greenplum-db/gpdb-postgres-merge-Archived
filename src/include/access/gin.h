@@ -10,7 +10,6 @@
 #ifndef GIN_H
 #define GIN_H
 
-<<<<<<< HEAD
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "access/xlogdefs.h"
@@ -20,10 +19,8 @@
 #include "access/genam.h"
 #include "access/itup.h"
 #include "access/xlog.h"
-=======
 #include "access/xlogreader.h"
 #include "lib/stringinfo.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "storage/block.h"
 #include "utils/relcache.h"
 
@@ -86,14 +83,9 @@ extern void ginGetStats(Relation index, GinStatsData *stats);
 extern void ginUpdateStats(Relation index, const GinStatsData *stats);
 
 /* ginxlog.c */
-<<<<<<< HEAD
-extern void gin_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
-extern void gin_desc(StringInfo buf, XLogRecord *record);
-=======
 extern void gin_redo(XLogReaderState *record);
 extern void gin_desc(StringInfo buf, XLogReaderState *record);
 extern const char *gin_identify(uint8 info);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern void gin_xlog_startup(void);
 extern void gin_xlog_cleanup(void);
 

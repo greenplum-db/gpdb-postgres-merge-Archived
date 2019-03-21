@@ -31,16 +31,10 @@ extern ObjectAddress DefineIndex(Oid relationId,
 			bool check_rights,
 			bool skip_build,
 			bool quiet);
-<<<<<<< HEAD
-extern Oid	ReindexIndex(ReindexStmt *stmt);
-extern Oid	ReindexTable(ReindexStmt *stmt);
-extern Oid	ReindexDatabase(ReindexStmt *stmt);
-=======
 extern Oid	ReindexIndex(RangeVar *indexRelation, int options);
 extern Oid	ReindexTable(RangeVar *relation, int options);
 extern void ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 					  int options);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern char *makeObjectName(const char *name1, const char *name2,
 			   const char *label);
 extern char *ChooseRelationName(const char *name1, const char *name2,
@@ -68,23 +62,8 @@ extern void SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType);
 extern ObjectAddress AlterFunction(AlterFunctionStmt *stmt);
 extern ObjectAddress CreateCast(CreateCastStmt *stmt);
 extern void DropCastById(Oid castOid);
-<<<<<<< HEAD
-extern Oid  get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
-extern void interpret_function_parameter_list(List *parameters,
-								  Oid languageOid,
-								  bool is_aggregate,
-								  const char *queryString,
-								  oidvector **parameterTypes,
-								  ArrayType **allParameterTypes,
-								  ArrayType **parameterModes,
-								  ArrayType **parameterNames,
-								  List **parameterDefaults,
-								  Oid *variadicArgType,
-								  Oid *requiredResultType);
-=======
 extern ObjectAddress CreateTransform(CreateTransformStmt *stmt);
 extern void DropTransformById(Oid transformOid);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern void IsThereFunctionInNamespace(const char *proname, int pronargs,
 						   oidvector *proargtypes, Oid nspOid);
 extern void ExecuteDoStmt(DoStmt *stmt);
@@ -107,13 +86,8 @@ extern ObjectAddress DefineOperator(List *names, List *parameters);
 extern void RemoveOperatorById(Oid operOid);
 
 /* commands/aggregatecmds.c */
-<<<<<<< HEAD
-extern Oid DefineAggregate(List *name, List *args, bool oldstyle,
-						   List *parameters, const char *queryString);
-=======
 extern ObjectAddress DefineAggregate(List *name, List *args, bool oldstyle,
 				List *parameters, const char *queryString);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* commands/opclasscmds.c */
 extern ObjectAddress DefineOpClass(CreateOpClassStmt *stmt);

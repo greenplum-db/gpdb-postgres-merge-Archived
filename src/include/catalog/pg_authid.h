@@ -60,16 +60,14 @@ CATALOG(pg_authid,1260) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2842) BKI_SCHEMA_MAC
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		rolpassword;	/* password, if any */
 	timestamptz rolvaliduntil;	/* password expiration time, if any */
-<<<<<<< HEAD
+#endif
+
 	/* GP added fields */
 	Oid			rolresqueue;	/* ID of resource queue for this role */
 	bool		rolcreaterextgpfd;	/* allowed to create readable gpfdist tbl?  */
 	bool		rolcreaterexthttp;	/* allowed to create readable http tbl?  */
 	bool		rolcreatewextgpfd;	/* allowed to create writable gpfdist tbl?  */
 	Oid			rolresgroup;		/* ID of resource group for this role  */
-=======
-#endif
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } FormData_pg_authid;
 
 /* GPDB added foreign key definitions for gpcheckcat. */
@@ -91,16 +89,15 @@ typedef FormData_pg_authid *Form_pg_authid;
  *		compiler constants for pg_authid
  * ----------------
  */
-<<<<<<< HEAD
 #define Natts_pg_authid						16
 #define Anum_pg_authid_rolname				1
 #define Anum_pg_authid_rolsuper				2
 #define Anum_pg_authid_rolinherit			3
 #define Anum_pg_authid_rolcreaterole		4
 #define Anum_pg_authid_rolcreatedb			5
-#define Anum_pg_authid_rolcatupdate			6
-#define Anum_pg_authid_rolcanlogin			7
-#define Anum_pg_authid_rolreplication		8
+#define Anum_pg_authid_rolcanlogin			6
+#define Anum_pg_authid_rolreplication		7
+#define Anum_pg_authid_rolbypassrls			8
 #define Anum_pg_authid_rolconnlimit			9
 #define Anum_pg_authid_rolpassword			10
 #define Anum_pg_authid_rolvaliduntil		11
@@ -109,20 +106,6 @@ typedef FormData_pg_authid *Form_pg_authid;
 #define Anum_pg_authid_rolcreaterexthttp	14
 #define Anum_pg_authid_rolcreatewextgpfd	15
 #define Anum_pg_authid_rolresgroup			16
-=======
-#define Natts_pg_authid					11
-#define Anum_pg_authid_rolname			1
-#define Anum_pg_authid_rolsuper			2
-#define Anum_pg_authid_rolinherit		3
-#define Anum_pg_authid_rolcreaterole	4
-#define Anum_pg_authid_rolcreatedb		5
-#define Anum_pg_authid_rolcanlogin		6
-#define Anum_pg_authid_rolreplication	7
-#define Anum_pg_authid_rolbypassrls		8
-#define Anum_pg_authid_rolconnlimit		9
-#define Anum_pg_authid_rolpassword		10
-#define Anum_pg_authid_rolvaliduntil	11
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* ----------------
  *		initial contents of pg_authid
@@ -134,11 +117,7 @@ typedef FormData_pg_authid *Form_pg_authid;
  * add default group ADMINRESGROUP_OID 6438
  * ----------------
  */
-<<<<<<< HEAD
 DATA(insert OID = 10 ( "POSTGRES" t t t t t t t -1 _null_ _null_ 6055 t t t 6438 ));
-=======
-DATA(insert OID = 10 ( "POSTGRES" t t t t t t t -1 _null_ _null_));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #define BOOTSTRAP_SUPERUSERID 10
 

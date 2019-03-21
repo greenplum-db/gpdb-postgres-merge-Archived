@@ -192,12 +192,8 @@ typedef struct HashJoinTableData
 
 	bool		growEnabled;	/* flag to shut off nbatch increases */
 
-<<<<<<< HEAD
 	uint64		totalTuples;	/* # tuples obtained from inner plan */
-=======
-	double		totalTuples;	/* # tuples obtained from inner plan */
-	double		skewTuples;		/* # tuples inserted into skew tuples */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	uint64		skewTuples;		/* # tuples inserted into skew tuples */
 
 	/*
 	 * These arrays are allocated for the life of the hash join, but only if
@@ -231,7 +227,6 @@ typedef struct HashJoinTableData
 
 	MemoryContext hashCxt;		/* context for whole-hash-join storage */
 	MemoryContext batchCxt;		/* context for this-batch-only storage */
-<<<<<<< HEAD
 	MemoryContext bfCxt;		/* CDB */ /* context for temp buf file */
 
     HashJoinTableStats *stats;  /* statistics workarea for EXPLAIN ANALYZE */
@@ -239,11 +234,9 @@ typedef struct HashJoinTableData
 
     HashJoinState * hjstate; /* reference to the enclosing HashJoinState */
     bool first_pass; /* Is this the first pass (pre-rescan) */
-=======
 
 	/* used for dense allocation of tuples (into linked chunks) */
 	HashMemoryChunk chunks;		/* one list for the whole batch */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }	HashJoinTableData;
 
 #endif   /* HASHJOIN_H */

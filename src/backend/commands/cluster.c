@@ -682,14 +682,9 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
  * data, then call finish_heap_swap to complete the operation.
  */
 Oid
-<<<<<<< HEAD
-make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, bool forcetemp,
+make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 			  LOCKMODE lockmode,
 			  bool createAoBlockDirectory)
-=======
-make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
-			  LOCKMODE lockmode)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	TupleDesc	OldHeapDesc;
 	char		NewHeapName[NAMEDATALEN];

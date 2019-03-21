@@ -45,12 +45,8 @@ typedef enum InstrumentOption
 	INSTRUMENT_TIMER = 1 << 0,	/* needs timer (and row counts) */
 	INSTRUMENT_BUFFERS = 1 << 1,	/* needs buffer usage (not implemented yet) */
 	INSTRUMENT_ROWS = 1 << 2,	/* needs row count */
-<<<<<<< HEAD
 	INSTRUMENT_CDB = 0x40000000,	/* needs cdb statistics */
-	INSTRUMENT_ALL = 0x7FFFFFFF
-=======
 	INSTRUMENT_ALL = PG_INT32_MAX
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } InstrumentOption;
 
 typedef struct Instrumentation
