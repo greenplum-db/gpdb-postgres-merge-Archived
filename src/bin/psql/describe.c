@@ -1573,13 +1573,8 @@ describeOneTableDetails(const char *schemaname,
 	{
 		printfPQExpBuffer(&buf,
 			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
-<<<<<<< HEAD
-						  "c.relhastriggers, c.relhasoids, "
-						  "%s, c.reltablespace, %s as relstorage\n"
-=======
 						  "c.relhastriggers, false, c.relhasoids, "
-						  "%s, c.reltablespace\n"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+						  "%s, c.reltablespace, %s as relstorage\n"
 						  "FROM pg_catalog.pg_class c\n "
 		   "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
 						  "WHERE c.oid = '%s';",
@@ -1595,15 +1590,9 @@ describeOneTableDetails(const char *schemaname,
 	{
 		printfPQExpBuffer(&buf,
 					  "SELECT relchecks, relkind, relhasindex, relhasrules, "
-<<<<<<< HEAD
-						  "reltriggers <> 0, relhasoids, "
+						  "reltriggers <> 0, false, relhasoids, "
 						  "%s, reltablespace, %s as relstorage\n"
 						  "FROM pg_catalog.pg_class WHERE oid = '%s'",
-=======
-						  "reltriggers <> 0, false, relhasoids, "
-						  "%s, reltablespace\n"
-						  "FROM pg_catalog.pg_class WHERE oid = '%s';",
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						  (verbose ?
 					 "pg_catalog.array_to_string(reloptions, E', ')" : "''"),
 						  /* GPDB Only:  relstorage  */
@@ -1658,15 +1647,11 @@ describeOneTableDetails(const char *schemaname,
 	tableinfo.relpersistence = (pset.sversion >= 90100) ?
 		*(PQgetvalue(res, 0, 10)) : 0;
 	tableinfo.relreplident = (pset.sversion >= 90400) ?
-<<<<<<< HEAD
-		*(PQgetvalue(res, 0, 10)) : 'd';
+		*(PQgetvalue(res, 0, 11)) : 'd';
 
 	/* GPDB Only:  relstorage  */
 	tableinfo.relstorage = (isGPDB()) ? *(PQgetvalue(res, 0, PQfnumber(res, "relstorage"))) : 'h';
 
-=======
-		*(PQgetvalue(res, 0, 11)) : 'd';
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	PQclear(res);
 	res = NULL;
 
@@ -2698,9 +2683,6 @@ describeOneTableDetails(const char *schemaname,
 			PQclear(result);
 		}
 
-<<<<<<< HEAD
-
-=======
 		/* print any row-level policies */
 		if (pset.sversion >= 90500)
 		{
@@ -2769,7 +2751,6 @@ describeOneTableDetails(const char *schemaname,
 			}
 			PQclear(result);
 		}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/* print rules */
 		if (tableinfo.hasrules && tableinfo.relkind != 'm')

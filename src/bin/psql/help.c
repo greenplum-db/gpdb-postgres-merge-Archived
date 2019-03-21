@@ -65,15 +65,9 @@ usage(unsigned short int pager)
 		}
 	}
 
-<<<<<<< HEAD
-	printf(_("psql is the PostgreSQL interactive terminal (Greenplum version).\n\n"));
-	printf(_("Usage:\n"));
-	printf(_("  psql [OPTION]... [DBNAME [USERNAME]]\n\n"));
-=======
 	output = PageOutput(59, pager ? &(pset.popt.topt) : NULL);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
-	fprintf(output, _("psql is the PostgreSQL interactive terminal.\n\n"));
+	fprintf(output, _("psql is the PostgreSQL interactive terminal (Greenplum version).\n\n"));
 	fprintf(output, _("Usage:\n"));
 	fprintf(output, _("  psql [OPTION]... [DBNAME [USERNAME]]\n\n"));
 
@@ -142,19 +136,12 @@ usage(unsigned short int pager)
 	fprintf(output, _("  -w, --no-password        never prompt for password\n"));
 	fprintf(output, _("  -W, --password           force password prompt (should happen automatically)\n"));
 
-<<<<<<< HEAD
-	printf(_("\nFor more information, type \"\\?\" (for internal commands) or \"\\help\" (for SQL\n"
-			 "commands) from within psql, or consult the psql section in the PostgreSQL\n"
-			 "documentation.\n\n"));
-	printf(_("Report bugs to <bugs@greenplum.org>.\n"));
-=======
 	fprintf(output, _("\nFor more information, type \"\\?\" (for internal commands) or \"\\help\" (for SQL\n"
 					  "commands) from within psql, or consult the psql section in the PostgreSQL\n"
 					  "documentation.\n\n"));
-	fprintf(output, _("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
+	fprintf(output, _("Report bugs to <bugs@greenplum.org>.\n"));
 
 	ClosePager(output);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 
@@ -264,15 +251,9 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\H                     toggle HTML output mode (currently %s)\n"),
 			ON(pset.popt.topt.format == PRINT_HTML));
 	fprintf(output, _("  \\pset [NAME [VALUE]]   set table output option\n"
-<<<<<<< HEAD
-					  "                         (NAME := {border|columns|expanded|fieldsep|fieldsep_zero|\n"
-					  "                         footer|format|linestyle|null|numericlocale|pager|\n"
-					  "                         recordsep|recordsep_zero|tableattr|title|tuples_only})\n"));
-=======
 					  "                         (NAME := {format|border|expanded|fieldsep|fieldsep_zero|footer|null|\n"
 					  "                         numericlocale|recordsep|recordsep_zero|tuples_only|title|tableattr|pager|\n"
 					  "                         unicode_border_linestyle|unicode_column_linestyle|unicode_header_linestyle})\n"));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	fprintf(output, _("  \\t [on|off]            show only rows (currently %s)\n"),
 			ON(pset.popt.topt.tuples_only));
 	fprintf(output, _("  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"));
@@ -571,18 +552,12 @@ void
 print_copyright(void)
 {
 	puts(
-<<<<<<< HEAD
 		 "Greenplum Database version of PostgreSQL Database Management System\n"
 		 "Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group\n\n"
 		 "Portions Copyright (c) 2014-Present Pivotal Software, Inc.\n\n"
 		 "Portions Copyright (c) 2011-2014 EMC\n\n"
 		 "This software is based on Postgres95, formerly known as Postgres, which\n"
 		 "contains the following notice:\n\n"
-=======
-		 "PostgreSQL Database Management System\n"
-		 "(formerly known as Postgres, then as Postgres95)\n\n"
-		 "Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group\n\n"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		 "Portions Copyright (c) 1994, The Regents of the University of California\n\n"
 	"Permission to use, copy, modify, and distribute this software and its\n"
 		 "documentation for any purpose, without fee, and without a written agreement\n"

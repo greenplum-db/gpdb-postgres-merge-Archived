@@ -794,11 +794,8 @@ static const pgsql_thing_t words_after_create[] = {
 								 * good idea. */
 	{"OWNED", NULL, NULL, THING_NO_CREATE},		/* for DROP OWNED BY ... */
 	{"PARSER", Query_for_list_of_ts_parsers, NULL, THING_NO_SHOW},
-<<<<<<< HEAD
 	{"RESOURCE", NULL},
-=======
 	{"POLICY", NULL, NULL},
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{"ROLE", Query_for_list_of_roles},
 	{"RULE", "SELECT pg_catalog.quote_ident(rulename) FROM pg_catalog.pg_rules WHERE substring(pg_catalog.quote_ident(rulename),1,%d)='%s'"},
 	{"SCHEMA", Query_for_list_of_schemas},
@@ -977,10 +974,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
 								   "UNION SELECT 'ALL IN TABLESPACE'");
 	}
-<<<<<<< HEAD
-=======
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/*
 	 * complete with what you can alter (TABLE, GROUP, USER, ...) unless we're
 	 * in ALTER TABLE sth ALTER
@@ -992,44 +986,24 @@ psql_completion(const char *text, int start, int end)
 		{"AGGREGATE", "COLLATION", "CONVERSION", "DATABASE", "DEFAULT PRIVILEGES", "DOMAIN",
 			"EVENT TRIGGER", "EXTENSION", "FOREIGN DATA WRAPPER", "FOREIGN TABLE", "FUNCTION",
 			"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "MATERIALIZED VIEW", "OPERATOR",
-<<<<<<< HEAD
-			"ROLE", "RULE", "SCHEMA", "SERVER", "SEQUENCE", "SYSTEM", "TABLE",
-=======
 			"POLICY", "ROLE", "RULE", "SCHEMA", "SERVER", "SEQUENCE", "SYSTEM", "TABLE",
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			"TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE",
 		"USER", "USER MAPPING FOR", "VIEW", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER);
 	}
-<<<<<<< HEAD
 	/* ALTER TABLE,INDEX,MATERIALIZED VIEW ALL IN TABLESPACE xxx */
-=======
-	/* ALTER TABLE,INDEX,MATERIALIZED VIEW xxx ALL IN TABLESPACE xxx */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	else if (pg_strcasecmp(prev4_wd, "ALL") == 0 &&
 			 pg_strcasecmp(prev3_wd, "IN") == 0 &&
 			 pg_strcasecmp(prev2_wd, "TABLESPACE") == 0)
 	{
 		static const char *const list_ALTERALLINTSPC[] =
-<<<<<<< HEAD
-			{"SET TABLESPACE", "OWNED BY", NULL};
-
-		COMPLETE_WITH_LIST(list_ALTERALLINTSPC);
 	}
 	/* ALTER TABLE,INDEX,MATERIALIZED VIEW ALL IN TABLESPACE xxx OWNED BY */
-=======
-		{"SET TABLESPACE", "OWNED BY", NULL};
-
-		COMPLETE_WITH_LIST(list_ALTERALLINTSPC);
-	}
-	/* ALTER TABLE,INDEX,MATERIALIZED VIEW xxx ALL IN TABLESPACE xxx OWNED BY */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	else if (pg_strcasecmp(prev6_wd, "ALL") == 0 &&
 			 pg_strcasecmp(prev5_wd, "IN") == 0 &&
 			 pg_strcasecmp(prev4_wd, "TABLESPACE") == 0 &&
 			 pg_strcasecmp(prev2_wd, "OWNED") == 0 &&
-<<<<<<< HEAD
 			 pg_strcasecmp(prev_wd, "BY") == 0)
 	{
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
@@ -1042,12 +1016,6 @@ psql_completion(const char *text, int start, int end)
 	{
 		COMPLETE_WITH_CONST("SET TABLESPACE");
 	}
-=======
-			 pg_strcasecmp(prev4_wd, "BY") == 0)
-	{
-		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
-	}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* ALTER AGGREGATE,FUNCTION <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 (pg_strcasecmp(prev2_wd, "AGGREGATE") == 0 ||
@@ -1860,10 +1828,7 @@ psql_completion(const char *text, int start, int end)
 			"toast.autovacuum_vacuum_cost_limit",
 			"toast.autovacuum_vacuum_scale_factor",
 			"toast.autovacuum_vacuum_threshold",
-<<<<<<< HEAD
-=======
 			"toast.log_autovacuum_min_duration",
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			"user_catalog_table",
 			NULL
 		};
@@ -2265,14 +2230,9 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "DATABASE") == 0)
 	{
 		static const char *const list_DATABASE[] =
-<<<<<<< HEAD
-		{"OWNER", "TEMPLATE", "ENCODING", "TABLESPACE", "CONNECTION LIMIT",
-		"LC_COLLATE", "LC_CTYPE", NULL};
-=======
-		{"OWNER", "TEMPLATE", "ENCODING", "TABLESPACE", "IS_TEMPLATE",
+		{"OWNER", "TEMPLATE", "ENCODING", "TABLESPACE",
 			"ALLOW_CONNECTIONS", "CONNECTION LIMIT", "LC_COLLATE", "LC_CTYPE",
 		NULL};
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		COMPLETE_WITH_LIST(list_DATABASE);
 	}
@@ -2656,51 +2616,6 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_CREATEROLE);
 	}
 
-/* CREATE/DROP RESOURCE GROUP/QUEUE */
-	else if ((pg_strcasecmp(prev2_wd, "CREATE") == 0 || pg_strcasecmp(prev2_wd, "DROP") == 0) &&
-			 pg_strcasecmp(prev_wd, "RESOURCE") == 0)
-	 {
-		static const char *const list_CREATERESOURCEGROUP[] =
-		{"GROUP", "QUEUE", NULL};
-
-		COMPLETE_WITH_LIST(list_CREATERESOURCEGROUP);
-	 }
-
-/* CREATE/DROP RESOURCE GROUP */
-	else if ((pg_strcasecmp(prev3_wd, "CREATE") == 0 ||
-			  pg_strcasecmp(prev3_wd, "DROP") == 0) &&
-			 pg_strcasecmp(prev2_wd, "RESOURCE") == 0 &&
-			 pg_strcasecmp(prev_wd, "GROUP") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_resgroups);
-
-/* CREATE RESOURCE GROUP <name> */
-	else if (pg_strcasecmp(prev4_wd, "CREATE") == 0 &&
-			 pg_strcasecmp(prev3_wd, "RESOURCE") == 0 &&
-			 pg_strcasecmp(prev2_wd, "GROUP") == 0)
-		COMPLETE_WITH_CONST("WITH (");
-
-	else if (pg_strcasecmp(prev5_wd, "RESOURCE") == 0 &&
-			 pg_strcasecmp(prev4_wd, "GROUP") == 0 &&
-			 pg_strcasecmp(prev2_wd, "WITH") == 0 &&
-			 pg_strcasecmp(prev_wd, "(") == 0)
-	{
-<<<<<<< HEAD
-		static const char *const list_CREATERESOURCEGROUP[] =
-		{"CONCURRENCY", "CPU_RATE_LIMIT", "MEMORY_LIMIT", "MEMORY_REDZONE_LIMIT", NULL};
-=======
-		/* Similar to the above, but don't complete "WITH" again. */
-		static const char *const list_CREATEROLE_WITH[] =
-		{"ADMIN", "BYPASSRLS", "CONNECTION LIMIT", "CREATEDB", "CREATEROLE",
-			"CREATEUSER", "ENCRYPTED", "IN", "INHERIT", "LOGIN", "NOBYPASSRLS",
-			"NOCREATEDB", "NOCREATEROLE", "NOCREATEUSER", "NOINHERIT",
-			"NOLOGIN", "NOREPLICATION", "NOSUPERUSER", "PASSWORD",
-			"REPLICATION", "ROLE", "SUPERUSER", "SYSID", "UNENCRYPTED",
-			"VALID UNTIL", NULL};
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-
-		COMPLETE_WITH_LIST(list_CREATERESOURCEGROUP);
-	}
-
 	/*
 	 * complete CREATE ROLE,USER,GROUP <name> ENCRYPTED,UNENCRYPTED with
 	 * PASSWORD
@@ -2723,6 +2638,38 @@ psql_completion(const char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_CREATEROLE3);
 	}
+
+/* CREATE/DROP RESOURCE GROUP/QUEUE */
+	else if ((pg_strcasecmp(prev2_wd, "CREATE") == 0 || pg_strcasecmp(prev2_wd, "DROP") == 0) &&
+			 pg_strcasecmp(prev_wd, "RESOURCE") == 0)
+	 {
+		static const char *const list_CREATERESOURCEGROUP[] =
+		{"GROUP", "QUEUE", NULL};
+
+		COMPLETE_WITH_LIST(list_CREATERESOURCEGROUP);
+	 }
+	/* CREATE/DROP RESOURCE GROUP */
+	else if ((pg_strcasecmp(prev3_wd, "CREATE") == 0 ||
+			  pg_strcasecmp(prev3_wd, "DROP") == 0) &&
+			 pg_strcasecmp(prev2_wd, "RESOURCE") == 0 &&
+			 pg_strcasecmp(prev_wd, "GROUP") == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_resgroups);
+	/* CREATE RESOURCE GROUP <name> */
+	else if (pg_strcasecmp(prev4_wd, "CREATE") == 0 &&
+			 pg_strcasecmp(prev3_wd, "RESOURCE") == 0 &&
+			 pg_strcasecmp(prev2_wd, "GROUP") == 0)
+		COMPLETE_WITH_CONST("WITH (");
+	else if (pg_strcasecmp(prev5_wd, "RESOURCE") == 0 &&
+			 pg_strcasecmp(prev4_wd, "GROUP") == 0 &&
+			 pg_strcasecmp(prev2_wd, "WITH") == 0 &&
+			 pg_strcasecmp(prev_wd, "(") == 0)
+	{
+		static const char *const list_CREATERESOURCEGROUP[] =
+		{"CONCURRENCY", "CPU_RATE_LIMIT", "MEMORY_LIMIT", "MEMORY_REDZONE_LIMIT", NULL};
+
+		COMPLETE_WITH_LIST(list_CREATERESOURCEGROUP);
+	}
+
 
 /* CREATE VIEW */
 	/* Complete CREATE VIEW <name> with AS */
@@ -3830,15 +3777,11 @@ psql_completion(const char *text, int start, int end)
 		if (!recognized_connection_string(text))
 			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
 	}
-<<<<<<< HEAD
-
-=======
 	else if (strcmp(prev2_wd, "\\connect") == 0 || strcmp(prev2_wd, "\\c") == 0)
 	{
 		if (!recognized_connection_string(prev_wd))
 			COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 	}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	else if (strncmp(prev_wd, "\\da", strlen("\\da")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_aggregates, NULL);
 	else if (strncmp(prev_wd, "\\db", strlen("\\db")) == 0)
@@ -3946,9 +3889,6 @@ psql_completion(const char *text, int start, int end)
 		matches = complete_from_variables(text, "", "", true);
 	}
 	else if (strcmp(prev_wd, "\\set") == 0)
-<<<<<<< HEAD
-		matches = complete_from_variables(text, "", "");
-=======
 	{
 		matches = complete_from_variables(text, "", "", false);
 	}
@@ -4010,7 +3950,6 @@ psql_completion(const char *text, int start, int end)
 			COMPLETE_WITH_LIST_CS(my_list);
 		}
 	}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	else if (strcmp(prev_wd, "\\sf") == 0 || strcmp(prev_wd, "\\sf+") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
 	else if (strcmp(prev_wd, "\\cd") == 0 ||
@@ -4524,14 +4463,8 @@ complete_from_variables(const char *text, const char *prefix, const char *suffix
 			continue;
 		for (i = 0; known_varnames[i]; i++)		/* remove duplicate entry */
 		{
-<<<<<<< HEAD
-			maxvars *= 2;
-			varnames = (char **) pg_realloc(varnames,
-											(maxvars + 1) * sizeof(char *));
-=======
 			if (strcmp(ptr->name, known_varnames[i]) == 0)
 				continue;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 		append_variable_names(&varnames, &nvars, &maxvars, ptr->name,
 							  prefix, suffix);

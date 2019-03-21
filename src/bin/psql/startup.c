@@ -746,11 +746,8 @@ echo_hook(const char *newval)
 		pset.echo = PSQL_ECHO_NONE;
 	else if (pg_strcasecmp(newval, "queries") == 0)
 		pset.echo = PSQL_ECHO_QUERIES;
-<<<<<<< HEAD
-=======
 	else if (pg_strcasecmp(newval, "errors") == 0)
 		pset.echo = PSQL_ECHO_ERRORS;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	else if (pg_strcasecmp(newval, "all") == 0)
 		pset.echo = PSQL_ECHO_ALL;
 	else if (pg_strcasecmp(newval, "none") == 0)

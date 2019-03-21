@@ -1236,14 +1236,10 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				dformatsize = 0;
 	struct lineptr *hlineptr,
 			   *dlineptr;
-<<<<<<< HEAD
-	bool		is_pager = false;
-=======
 	bool		is_pager = false,
 				hmultiline = false,
 				dmultiline = false;
 	int			output_columns = 0;		/* Width of interactive console */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (cancel_pressed)
 		return;
@@ -1333,8 +1329,6 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			fprintf(fout, "%s\n", cont->title);
 	}
 
-<<<<<<< HEAD
-=======
 	/*
 	 * Choose target output width: \pset columns, or $COLUMNS, or ioctl
 	 */
@@ -1439,7 +1433,6 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		dwidth = width;
 	}
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* print records */
 	for (i = 0, ptr = cont->cells; *ptr; i++, ptr++)
 	{
@@ -1469,15 +1462,9 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 
 			if (!opt_tuples_only)
 				print_aligned_vertical_line(format, opt_border, record++,
-<<<<<<< HEAD
-											hwidth, dwidth, pos, fout);
-			else if (i != 0 || !cont->opt->start_table || opt_border == 2)
-				print_aligned_vertical_line(format, opt_border, 0, hwidth,
-=======
 											lhwidth, dwidth, pos, fout);
 			else if (i != 0 || !cont->opt->start_table || opt_border == 2)
 				print_aligned_vertical_line(format, opt_border, 0, lhwidth,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 											dwidth, pos, fout);
 		}
 
@@ -1497,12 +1484,6 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				fprintf(fout, "%s ", dformat->leftvrule);
 			if (!hcomplete)
 			{
-<<<<<<< HEAD
-				fprintf(fout, "%-s%*s", hlineptr[line_count].ptr,
-						hwidth - hlineptr[line_count].width, "");
-
-				if (!hlineptr[line_count + 1].ptr)
-=======
 				int			swidth = hwidth,
 							target_width = hwidth;
 
@@ -1544,13 +1525,9 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 					if ((opt_border > 0) ||
 						(hmultiline && (format != &pg_asciiformat_old)))
 						fputs(" ", fout);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					hcomplete = 1;
 			}
 			else
-<<<<<<< HEAD
-				fprintf(fout, "%*s", hwidth, "");
-=======
 			{
 				unsigned int swidth = hwidth + opt_border;
 
@@ -1566,7 +1543,6 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 
 				fprintf(fout, "%*s", swidth, " ");
 			}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			if (opt_border > 0)
 				fprintf(fout, " %s ", dformat->midvrule);
@@ -1575,17 +1551,6 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 
 			if (!dcomplete)
 			{
-<<<<<<< HEAD
-				if (opt_border < 2)
-					fprintf(fout, "%s\n", dlineptr[line_count].ptr);
-				else
-					fprintf(fout, "%-s%*s %s\n", dlineptr[line_count].ptr,
-							dwidth - dlineptr[line_count].width, "",
-							dformat->rightvrule);
-
-				if (!dlineptr[line_count + 1].ptr)
-					dcomplete = 1;
-=======
 				int			target_width = dwidth,
 							bytes_to_output,
 							swidth = dwidth;
@@ -1651,7 +1616,6 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 					fputs(dformat->rightvrule, fout);
 
 				fputs("\n", fout);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			}
 			else
 			{

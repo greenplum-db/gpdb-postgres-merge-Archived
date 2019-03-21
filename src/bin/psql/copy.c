@@ -598,12 +598,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 		showprompt = true;
 		if (!pset.quiet)
 			puts(_("Enter data to be copied followed by a newline.\n"
-<<<<<<< HEAD
 				   "End with a backslash and a period on a line by itself, or an EOF signal."));
-		prompt = get_prompt(PROMPT_COPY);
-=======
-				   "End with a backslash and a period on a line by itself."));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	else
 		showprompt = false;
