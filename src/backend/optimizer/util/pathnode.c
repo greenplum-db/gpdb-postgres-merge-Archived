@@ -324,15 +324,10 @@ compare_fractional_path_costs(Path *path1, Path *path2,
  *
  * This function also enforces a policy rule that paths for which the relevant
  * one of parent->consider_startup and parent->consider_param_startup is false
-<<<<<<< HEAD
- * cannot win comparisons on the grounds of good startup cost, so we never
- * return COSTS_DIFFERENT when that is true for the total-cost loser.
-=======
  * cannot survive comparisons solely on the grounds of good startup cost, so
  * we never return COSTS_DIFFERENT when that is true for the total-cost loser.
  * (But if total costs are fuzzily equal, we compare startup costs anyway,
  * in hopes of eliminating one path or the other.)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 static PathCostComparison
 compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
@@ -368,20 +363,8 @@ compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
 		/* else path1 dominates */
 		return COSTS_BETTER1;
 	}
-<<<<<<< HEAD
-
-	/*
-	 * Fuzzily the same on total cost (so we might as well compare startup
-	 * cost, even when that would otherwise be uninteresting; but
-	 * parameterized paths aren't allowed to win this way, we'd rather move on
-	 * to other comparison heuristics)
-	 */
-	if (path1->startup_cost > path2->startup_cost * fuzz_factor &&
-		path2->param_info == NULL)
-=======
 	/* fuzzily the same on total cost ... */
 	if (path1->startup_cost > path2->startup_cost * fuzz_factor)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{
 		/* ... but path1 fuzzily worse on startup, so path2 wins */
 		return COSTS_BETTER2;
@@ -642,12 +625,8 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		/*
 		 * Do a fuzzy cost comparison with standard fuzziness limit.
 		 */
-<<<<<<< HEAD
-		costcmp = compare_path_costs_fuzzily(new_path, old_path, 1.01);
-=======
 		costcmp = compare_path_costs_fuzzily(new_path, old_path,
 											 STD_FUZZ_FACTOR);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/*
 		 * If the two paths compare differently for startup and total cost,
@@ -983,7 +962,6 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 }
 
 /*
-<<<<<<< HEAD
 * Create a path for scanning an external table
  */
 ExternalPath *
@@ -1009,7 +987,11 @@ create_external_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 	pathnode->path.sameslice_relids = rel->relids;
 
 	cost_externalscan(pathnode, root, rel, pathnode->path.param_info);
-=======
+
+	return pathnode;
+}
+
+/*
  * create_samplescan_path
  *	  Like seqscan but uses sampling function while scanning.
  */
@@ -1025,15 +1007,10 @@ create_samplescan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer
 	pathnode->pathkeys = NIL;	/* samplescan has unordered result */
 
 	cost_samplescan(pathnode, root, rel);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	return pathnode;
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * create_index_path
  *	  Creates a path node for an index scan.
@@ -1650,13 +1627,14 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	Path		sort_path;		/* dummy for result of cost_sort */
 	Path		agg_path;		/* dummy for result of cost_agg */
 	MemoryContext oldcontext;
+	List	   *in_operators;
+	List	   *uniq_exprs;
+	bool		all_btree;
+	bool		all_hash;
 	int			numCols;
-<<<<<<< HEAD
 	ListCell   *lc;
 	CdbPathLocus locus;
 	bool		add_motion = false;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Caller made a mistake if subpath isn't cheapest_total ... */
 	Assert(subpath == rel->cheapest_total_path);
@@ -1679,7 +1657,6 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	 */
 	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
-<<<<<<< HEAD
 	/*----------
 	 * Look to see whether the semijoin's join quals consist of AND'ed
 	 * equality operators, with (only) RHS variables on only one side of
@@ -1855,8 +1832,6 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	 * If we get here, we can unique-ify using at least one of sorting and
 	 * hashing.  Start building the result Path object.
 	 */
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	pathnode = makeNode(UniquePath);
 
 	pathnode->path.pathtype = T_Unique;
@@ -1921,7 +1896,6 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 
 		if (query_supports_distinctness(rte->subquery))
 		{
-<<<<<<< HEAD
 			/* Subpath node could be a motion. See previous comment for details. */
 			if (add_motion)
 				goto no_unique_path;
@@ -1930,9 +1904,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 			pathnode->path.startup_cost = subpath->startup_cost;
 			pathnode->path.total_cost = subpath->total_cost;
 			pathnode->path.pathkeys = subpath->pathkeys;
-=======
 			List	   *sub_tlist_colnos;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			sub_tlist_colnos = translate_sub_tlist(sjinfo->semi_rhs_exprs,
 												   rel->relid);
@@ -1964,14 +1936,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 											  NULL);
 	numCols = list_length(sjinfo->semi_rhs_exprs);
 
-<<<<<<< HEAD
-	// FIXME?
-    //subpath_rows = cdbpath_rows(root, subpath);
-
-	if (all_btree)
-=======
 	if (sjinfo->semi_can_btree)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{
 		/*
 		 * Estimate cost for sort+unique implementation
@@ -2372,7 +2337,6 @@ translate_sub_tlist(List *tlist, int relid)
 }
 
 /*
-<<<<<<< HEAD
  * query_is_distinct_for - does query never return duplicates of the
  *		specified columns?
  *
@@ -2575,8 +2539,6 @@ subquery_motionHazard_walker(Plan *node)
 }
 
 /*
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * create_subqueryscan_path
  *	  Creates a path corresponding to a sequential scan of a subquery,
  *	  returning the pathnode.
@@ -3548,7 +3510,6 @@ reparameterize_path(PlannerInfo *root, Path *path,
 		case T_SubqueryScan:
 			return create_subqueryscan_path(root, rel, path->pathkeys,
 											required_outer);
-<<<<<<< HEAD
 		case T_Append:
 			{
 				AppendPath *apath = (AppendPath *) path;
@@ -3571,10 +3532,8 @@ reparameterize_path(PlannerInfo *root, Path *path,
 					create_append_path(root, rel, childpaths,
 									   required_outer);
 			}
-=======
 		case T_SampleScan:
 			return (Path *) create_samplescan_path(root, rel, required_outer);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		default:
 			break;
 	}

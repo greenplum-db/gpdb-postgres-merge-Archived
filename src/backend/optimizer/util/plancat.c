@@ -439,7 +439,6 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 }
 
 /*
-<<<<<<< HEAD
  * Update RelOptInfo to include the external specifications (file URI list
  * and data format) from the pg_exttable catalog.
  */
@@ -659,7 +658,7 @@ cdb_estimate_partitioned_numtuples(Relation rel, bool *stats_missing)
 	return totaltuples;
 }
 
-=======
+/*
  * infer_arbiter_indexes -
  *	  Determine the unique indexes used to arbitrate speculative insertion.
  *
@@ -1016,7 +1015,6 @@ infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
 
 	return false;
 }
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * estimate_rel_size - estimate # pages and # tuples in a table or index
@@ -1369,7 +1367,6 @@ get_relation_constraints(PlannerInfo *root,
 												  att->attcollation,
 												  0);
 					ntest->nulltesttype = IS_NOT_NULL;
-<<<<<<< HEAD
 
 					/*
 					 * argisrow=false is correct even for a composite column,
@@ -1377,10 +1374,8 @@ get_relation_constraints(PlannerInfo *root,
 					 * NULL test in such a case, just IS DISTINCT FROM NULL.
 					 */
 					ntest->argisrow = false;
-=======
-					ntest->argisrow = type_is_rowtype(att->atttypid);
 					ntest->location = -1;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
 					result = lappend(result, ntest);
 				}
 			}

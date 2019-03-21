@@ -103,13 +103,9 @@ static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_not_nextval_walker(Node *node, void *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
-<<<<<<< HEAD
 static bool contain_context_dependent_node(Node *clause);
 static bool contain_context_dependent_node_walker(Node *node, int *flags);
-static bool contain_leaky_functions_walker(Node *node, void *context);
-=======
 static bool contain_leaked_vars_walker(Node *node, void *context);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static Relids find_nonnullable_rels_walker(Node *node, bool top_level);
 static List *find_nonnullable_vars_walker(Node *node, bool top_level);
 static bool is_strict_saop(ScalarArrayOpExpr *expr, bool falseOK);
@@ -155,7 +151,6 @@ static Query *substitute_actual_srf_parameters(Query *expr,
 static Node *substitute_actual_srf_parameters_mutator(Node *node,
 						  substitute_actual_srf_parameters_context *context);
 static bool tlist_matches_coltypelist(List *tlist, List *coltypelist);
-static bool contain_grouping_clause_walker(Node *node, void *context);
 
 /*
  * Greenplum specific functions
@@ -444,7 +439,7 @@ make_ands_implicit(Expr *clause)
 
 /*
  * contain_agg_clause
- *	  Recursively search for Aggref nodes, GroupId, GroupingFunc within a clause.
+ *	  Recursively search for Aggref/GroupingFunc nodes within a clause.
  *
  *	  Returns true if any aggregate found.
  *
@@ -472,8 +467,16 @@ contain_agg_clause_walker(Node *node, void *context)
 		return true;			/* abort the tree traversal and return true */
 	}
 
-	if (IsA(node, GroupId) || IsA(node, GroupingFunc))
-		return true;
+	if (IsA(node, GroupingFunc))
+	{
+		Assert(((GroupingFunc *) node)->agglevelsup == 0);
+		return true;			/* abort the tree traversal and return true */
+	}
+	if (IsA(node, GroupId))
+	{
+		Assert(((GroupId *) node)->agglevelsup == 0);
+		return true;			/* abort the tree traversal and return true */
+	}
 
 	Assert(!IsA(node, SubLink));
 	return expression_tree_walker(node, contain_agg_clause_walker, context);
@@ -1445,7 +1448,6 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 }
 
 /*****************************************************************************
-<<<<<<< HEAD
  *		Check clauses for context-dependent nodes
  *****************************************************************************/
 
@@ -1516,10 +1518,7 @@ contain_context_dependent_node_walker(Node *node, int *flags)
 }
 
 /*****************************************************************************
- *		  Check clauses for non-leakproof functions
-=======
  *		  Check clauses for Vars passed to non-leakproof functions
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  *****************************************************************************/
 
 /*
@@ -3751,12 +3750,8 @@ eval_const_expressions_mutator(Node *node,
 						newntest = makeNode(NullTest);
 						newntest->arg = (Expr *) relem;
 						newntest->nulltesttype = ntest->nulltesttype;
-<<<<<<< HEAD
 						newntest->argisrow = false;
-=======
-						newntest->argisrow = type_is_rowtype(exprType(relem));
 						newntest->location = ntest->location;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						newargs = lappend(newargs, newntest);
 					}
 					/* If all the inputs were constants, result is TRUE */
@@ -5639,49 +5634,6 @@ flatten_join_alias_var_optimizer(Query *query, int queryLevel)
 	}
 
     return queryNew;
-}
-
-/* 
- * Does grp contain GroupingClause or not? Useful for indentifying use of
- * ROLLUP, CUBE and grouping sets.
- */
-bool
-contain_extended_grouping(List *grp)
-{
-	return contain_grouping_clause_walker((Node *)grp, NULL);
-}
-
-static bool
-contain_grouping_clause_walker(Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-	else if (IsA(node, GroupingClause))
-		return true;			/* abort the tree traversal and return true */
-	
-	Assert(!IsA(node, SubLink));
-	return expression_tree_walker(node, contain_grouping_clause_walker, 
-								  context);
-}
-
-/*
- * is_grouping_extension -
- *     Return true if a given grpsets contain multiple grouping sets.
- *
- * This function also returns false when a query has a single unique
- * groupig set appearing multiple times.
- */
-bool
-is_grouping_extension(CanonicalGroupingSets *grpsets)
-{
-	if (grpsets == NULL ||
-		grpsets->ngrpsets == 0)
-		return false;
-
-	if (grpsets->ngrpsets == 1)
-		return false;
-
-	return true;
 }
 
 /**
