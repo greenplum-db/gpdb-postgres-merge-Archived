@@ -197,30 +197,8 @@ AuxiliaryProcessMain(int argc, char *argv[])
 	 * Initialize process environment (already done if under postmaster, but
 	 * not if standalone).
 	 */
-<<<<<<< HEAD
-	MyProcPid = getpid();
-
-	MyStartTime = time(NULL);
-
-	/*
-	 * Initialize random() for the first time, like PostmasterMain() would.
-	 * In a regular IsUnderPostmaster backend, BackendRun() computes a
-	 * high-entropy seed before any user query.  Fewer distinct initial seeds
-	 * can occur here.
-	 */
-	srandom((unsigned int) (MyProcPid ^ MyStartTime));
-
-	/* Compute paths, if we didn't inherit them from postmaster */
-	if (my_exec_path[0] == '\0')
-	{
-		if (find_my_exec(progname, my_exec_path) < 0)
-			elog(FATAL, "%s: could not locate my own executable path",
-				 progname);
-	}
-=======
 	if (!IsUnderPostmaster)
 		InitStandaloneProcess(argv[0]);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * process command arguments
@@ -423,10 +401,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			proc_exit(1);		/* should never return */
 
 		case BootstrapProcess:
-<<<<<<< HEAD
-=======
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			/*
 			 * There was a brief instant during which mode was Normal; this is
 			 * okay.  We need to be in bootstrap mode during BootStrapXLOG for
