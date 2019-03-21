@@ -572,24 +572,17 @@ static inline void SetSchema(TupleDesc tuple_desc, List **schema, AttrNumber **a
  * "on behalf of" someone else, so we still want to see that the current user
  * has permissions to do it.
  *
-<<<<<<< HEAD
- * If successful, returns the OID of the new relation.
+ * If successful, returns the address of the new relation.
  *
- * If 'dispatch' is true (and we are running in QD), the statement is
+ * GPDB: If 'dispatch' is true (and we are running in QD), the statement is
  * also dispatched to the QE nodes. Otherwise it is the caller's
  * responsibility to dispatch.
  * ----------------------------------------------------------------
  */
-Oid
-DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, bool dispatch, bool useChangedOpts, GpPolicy *intoPolicy)
-=======
- * If successful, returns the address of the new relation.
- * ----------------------------------------------------------------
- */
 ObjectAddress
 DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
-			   ObjectAddress *typaddress)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+			   ObjectAddress *typaddress, char relstorage, bool dispatch,
+			   bool useChangedOpts, GpPolicy *intoPolicy)
 {
 	char		relname[NAMEDATALEN];
 	Oid			namespaceId;

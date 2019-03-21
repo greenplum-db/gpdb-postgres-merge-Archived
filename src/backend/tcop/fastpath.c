@@ -272,14 +272,8 @@ HandleFunctionRequest(StringInfo msgBuf)
 	char		msec_str[32];
 
 	/*
-<<<<<<< HEAD
 	 * We only accept COMMIT/ABORT if we are in an aborted transaction, and
 	 * COMMIT/ABORT cannot be executed through the fastpath interface.
-=======
-	 * Now that we've eaten the input message, check to see if we actually
-	 * want to do the function call or not.  It's now safe to ereport(); we
-	 * won't lose sync with the frontend.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
 	if (IsAbortedTransactionBlockState())
 		ereport(ERROR,

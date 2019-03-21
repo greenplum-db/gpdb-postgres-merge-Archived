@@ -966,20 +966,11 @@ standard_ProcessUtility(Node *parsetree,
 				/* forbidden in parallel mode due to CommandIsReadOnly */
 				switch (stmt->kind)
 				{
-<<<<<<< HEAD
-					case OBJECT_INDEX:
-						ReindexIndex(stmt);
-						break;
-					case OBJECT_TABLE:
-					case OBJECT_MATVIEW:
-						ReindexTable(stmt);
-=======
 					case REINDEX_OBJECT_INDEX:
 						ReindexIndex(stmt->relation, stmt->options);
 						break;
 					case REINDEX_OBJECT_TABLE:
 						ReindexTable(stmt->relation, stmt->options);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						break;
 					case REINDEX_OBJECT_SCHEMA:
 					case REINDEX_OBJECT_SYSTEM:
@@ -991,18 +982,12 @@ standard_ProcessUtility(Node *parsetree,
 						 * start-transaction-command calls would not have the
 						 * intended effect!
 						 */
-<<<<<<< HEAD
-							if (Gp_role == GP_ROLE_DISPATCH)
-								PreventTransactionChain(isTopLevel,
-														"REINDEX DATABASE");
-						ReindexDatabase(stmt);
-=======
-						PreventTransactionChain(isTopLevel,
-												(stmt->kind == REINDEX_OBJECT_SCHEMA) ? "REINDEX SCHEMA" :
-												(stmt->kind == REINDEX_OBJECT_SYSTEM) ? "REINDEX SYSTEM" :
-												"REINDEX DATABASE");
+						if (Gp_role == GP_ROLE_DISPATCH)
+							PreventTransactionChain(isTopLevel,
+													(stmt->kind == REINDEX_OBJECT_SCHEMA) ? "REINDEX SCHEMA" :
+													(stmt->kind == REINDEX_OBJECT_SYSTEM) ? "REINDEX SYSTEM" :
+													"REINDEX DATABASE");
 						ReindexMultipleTables(stmt->name, stmt->kind, stmt->options);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						break;
 					default:
 						elog(ERROR, "unrecognized object type: %d",
@@ -1199,7 +1184,6 @@ ProcessUtilitySlow(Node *parsetree,
 							Datum		toast_options;
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
-<<<<<<< HEAD
 							/*
 							 * If this T_CreateStmt was dispatched and we're a QE
 							 * receiving it, extract the relkind and relstorage from
@@ -1230,22 +1214,18 @@ ProcessUtilitySlow(Node *parsetree,
 							}
 
 							/*
-							 * Create the table itself. Don't dispatch it yet, as we haven't
-							 * created the toast and other auxiliary tables yet.
+							 * GPDB: Don't dispatch it yet, as we haven't
+							 * created the toast and other auxiliary tables
+							 * yet.
 							 */
-							relOid = DefineRelation((CreateStmt *) stmt,
-													relKind,
-													((CreateStmt *) stmt)->ownerid,
-													relStorage, false, true, NULL);
-=======
 							/* Create the table itself */
 							address = DefineRelation((CreateStmt *) stmt,
 													 RELKIND_RELATION,
-													 InvalidOid, NULL);
+													 InvalidOid, NULL,
+													 relStorage, false, true, NULL);
 							EventTriggerCollectSimpleCommand(address,
 															 secondaryObject,
 															 stmt);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 							/*
 							 * Let NewRelationCreateToastTable decide if this
@@ -1312,39 +1292,18 @@ ProcessUtilitySlow(Node *parsetree,
 							 * segment information yet and operations like create_index
 							 * in the deferred statements cannot see the relfile.
 							 */
-<<<<<<< HEAD
 							EvaluateDeferredStatements(cstmt->deferredStmts);
-=======
-							toast_options = transformRelOptions((Datum) 0,
-											  ((CreateStmt *) stmt)->options,
-																"toast",
-																validnsps,
-																true,
-																false);
-							(void) heap_reloptions(RELKIND_TOASTVALUE,
-												   toast_options,
-												   true);
-
-							NewRelationCreateToastTable(address.objectId,
-														toast_options);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						}
 						else if (IsA(stmt, CreateForeignTableStmt))
 						{
 							/* Create the table itself */
-<<<<<<< HEAD
-							relOid = DefineRelation((CreateStmt *) stmt,
-													RELKIND_FOREIGN_TABLE,
-													((CreateStmt *) stmt)->ownerid,
-													RELSTORAGE_FOREIGN,
-													true,
-													true,
-													NULL);
-=======
 							address = DefineRelation((CreateStmt *) stmt,
 													 RELKIND_FOREIGN_TABLE,
-													 InvalidOid, NULL);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+													 InvalidOid, NULL,
+													 RELSTORAGE_FOREIGN,
+													 true,
+													 true,
+													 NULL);
 							CreateForeignTable((CreateForeignTableStmt *) stmt,
 											   address.objectId);
 							EventTriggerCollectSimpleCommand(address,
@@ -1577,12 +1536,9 @@ ProcessUtilitySlow(Node *parsetree,
 							break;
 						case OBJECT_COLLATION:
 							Assert(stmt->args == NIL);
-<<<<<<< HEAD
-							DefineCollation(stmt->defnames, stmt->definition, false);
-=======
 							address = DefineCollation(stmt->defnames,
-													  stmt->definition);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+													  stmt->definition,
+													  false);
 							break;
 						case OBJECT_EXTPROTOCOL:
 							Assert(stmt->args == NIL);
@@ -1675,15 +1631,6 @@ ProcessUtilitySlow(Node *parsetree,
 					stmt = transformIndexStmt(relid, stmt, queryString);
 
 					/* ... and do it */
-<<<<<<< HEAD
-					DefineIndex(relid,	/* OID of heap relation */
-							stmt,
-							InvalidOid,		/* no predefined OID */
-							false,	/* is_alter_table */
-							true,	/* check_rights */
-							false,	/* skip_build */
-							stmt->is_split_part); /* quiet */
-=======
 					EventTriggerAlterTableStart(parsetree);
 					address =
 						DefineIndex(relid,		/* OID of heap relation */
@@ -1692,7 +1639,7 @@ ProcessUtilitySlow(Node *parsetree,
 									false,		/* is_alter_table */
 									true,		/* check_rights */
 									false,		/* skip_build */
-									false);		/* quiet */
+									stmt->is_split_part);		/* quiet */
 
 					/*
 					 * Add the CREATE INDEX node itself to stash right away;
@@ -1703,7 +1650,6 @@ ProcessUtilitySlow(Node *parsetree,
 													 parsetree);
 					commandCollected = true;
 					EventTriggerAlterTableEnd();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				break;
 
@@ -1796,8 +1742,7 @@ ProcessUtilitySlow(Node *parsetree,
 				break;
 
 			case T_RuleStmt:	/* CREATE RULE */
-<<<<<<< HEAD
-				DefineRule((RuleStmt *) parsetree, queryString);
+				address = DefineRule((RuleStmt *) parsetree, queryString);
 				if (Gp_role == GP_ROLE_DISPATCH)
 				{
 					CdbDispatchUtilityStatement((Node *) parsetree,
@@ -1807,9 +1752,6 @@ ProcessUtilitySlow(Node *parsetree,
 												GetAssignedOidsForDispatch(),
 												NULL);
 				}
-=======
-				address = DefineRule((RuleStmt *) parsetree, queryString);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				break;
 
 			case T_CreateSeqStmt:
@@ -1849,16 +1791,13 @@ ProcessUtilitySlow(Node *parsetree,
 				break;
 
 			case T_CreateTrigStmt:
-<<<<<<< HEAD
 				{
-					Oid			trigOid;
-
-					trigOid = CreateTrigger((CreateTrigStmt *) parsetree, queryString,
+					address = CreateTrigger((CreateTrigStmt *) parsetree, queryString,
 											InvalidOid, InvalidOid, InvalidOid,
 											InvalidOid, false);
 					if (Gp_role == GP_ROLE_DISPATCH)
 					{
-						((CreateTrigStmt *) parsetree)->trigOid = trigOid;
+						((CreateTrigStmt *) parsetree)->trigOid = address.objectId;
 						CdbDispatchUtilityStatement((Node *) parsetree,
 													DF_CANCEL_ON_ERROR|
 													DF_WITH_SNAPSHOT|
@@ -1867,11 +1806,6 @@ ProcessUtilitySlow(Node *parsetree,
 													NULL);
 					}
 				}
-=======
-				address = CreateTrigger((CreateTrigStmt *) parsetree,
-										queryString, InvalidOid, InvalidOid,
-										InvalidOid, InvalidOid, false);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				break;
 
 			case T_CreatePLangStmt:
@@ -3293,15 +3227,12 @@ GetCommandLogLevel(Node *parsetree)
 			lev = LOGSTMT_DDL;
 			break;
 
-<<<<<<< HEAD
 		case T_CreateTableSpaceStmt:
 		case T_DropTableSpaceStmt:
 		case T_AlterTableSpaceOptionsStmt:
 			lev = LOGSTMT_DDL;
 			break;
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		case T_CreateExtensionStmt:
 		case T_AlterExtensionStmt:
 		case T_AlterExtensionContentsStmt:

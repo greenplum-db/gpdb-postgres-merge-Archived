@@ -51,13 +51,8 @@ Datum pg_import_system_collations(PG_FUNCTION_ARGS);
 /*
  * CREATE COLLATION
  */
-<<<<<<< HEAD
-Oid
-DefineCollation(List *names, List *parameters, bool if_not_exists)
-=======
 ObjectAddress
-DefineCollation(List *names, List *parameters)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+DefineCollation(List *names, List *parameters, bool if_not_exists)
 {
 	char	   *collName;
 	Oid			collNamespace;
