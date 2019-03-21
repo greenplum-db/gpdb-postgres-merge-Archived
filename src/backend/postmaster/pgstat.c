@@ -2754,9 +2754,6 @@ pgstat_bestart(void)
 				NAMEDATALEN);
 	else
 		beentry->st_clienthostname[0] = '\0';
-<<<<<<< HEAD
-	beentry->st_waiting = PGBE_WAITING_NONE;
-=======
 #ifdef USE_SSL
 	if (MyProcPort && MyProcPort->ssl != NULL)
 	{
@@ -2775,7 +2772,6 @@ pgstat_bestart(void)
 	beentry->st_ssl = false;
 #endif
 	beentry->st_waiting = false;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	beentry->st_state = STATE_UNDEFINED;
 	beentry->st_appname[0] = '\0';
 	beentry->st_activity[0] = '\0';
@@ -3098,21 +3094,18 @@ pgstat_read_current_status(void)
 	localappname = (char *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   NAMEDATALEN * MaxBackends);
-<<<<<<< HEAD
 	localclienthostname = (char *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   NAMEDATALEN * MaxBackends);
-=======
+	localactivity = (char *)
+		MemoryContextAlloc(pgStatLocalContext,
+						   pgstat_track_activity_query_size * MaxBackends);
 #ifdef USE_SSL
 	localsslstatus = (PgBackendSSLStatus *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   sizeof(PgBackendSSLStatus) * MaxBackends);
 #endif
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-	localactivity = (char *)
-		MemoryContextAlloc(pgStatLocalContext,
-						   pgstat_track_activity_query_size * MaxBackends);
 	localNumBackends = 0;
 
 	beentry = BackendStatusArray;

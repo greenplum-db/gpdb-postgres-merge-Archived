@@ -195,11 +195,7 @@ typedef struct autovac_table
 	int			at_vacuum_cost_delay;
 	int			at_vacuum_cost_limit;
 	bool		at_dobalance;
-<<<<<<< HEAD
-	bool		at_wraparound;
 	bool		at_sharedrel;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	char	   *at_relname;
 	char	   *at_nspname;
 	char	   *at_datname;
@@ -231,10 +227,7 @@ typedef struct WorkerInfoData
 	PGPROC	   *wi_proc;
 	TimestampTz wi_launchtime;
 	bool		wi_dobalance;
-<<<<<<< HEAD
 	bool		wi_sharedrel;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	int			wi_cost_delay;
 	int			wi_cost_limit;
 	int			wi_cost_limit_base;
@@ -570,8 +563,6 @@ AutoVacLauncherMain(int argc, char *argv[])
 	SetConfigOption("default_transaction_isolation", "read committed",
 					PGC_SUSET, PGC_S_OVERRIDE);
 
-<<<<<<< HEAD
-
 /*
  * In GPDB, we only want an autovacuum worker to start once we know
  * there is a database to vacuum. Therefore, we never want emergency mode
@@ -584,8 +575,6 @@ AutoVacLauncherMain(int argc, char *argv[])
  * worker will continue to signal for a new launcher.
  */
 #if 0
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/*
 	 * In emergency mode, just start a worker (unless shutdown was requested)
 	 * and go away.
@@ -1512,18 +1501,9 @@ AutoVacWorkerMain(int argc, char *argv[])
 
 	am_autovacuum_worker = true;
 
-<<<<<<< HEAD
 	/* MPP-4990: Autovacuum always runs as utility-mode */
 	Gp_role = GP_ROLE_UTILITY;
 
-	/* reset MyProcPid */
-	MyProcPid = getpid();
-
-	/* record Start Time for logging */
-	MyStartTime = time(NULL);
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* Identify myself via ps */
 	init_ps_display("autovacuum worker process", "", "", "");
 
@@ -1966,11 +1946,8 @@ do_autovacuum(void)
 	ScanKeyData key;
 	TupleDesc	pg_class_desc;
 	int			effective_multixact_freeze_max_age;
-<<<<<<< HEAD
 	bool		did_vacuum = false;
 	bool		found_concurrent_worker = false;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * StartTransactionCommand and CommitTransactionCommand will automatically
@@ -2002,13 +1979,8 @@ do_autovacuum(void)
 
 	/*
 	 * Compute the multixact age for which freezing is urgent.  This is
-<<<<<<< HEAD
-	 * normally autovacuum_multixact_freeze_max_age, but may be less if we
-	 * are short of multixact member space.
-=======
 	 * normally autovacuum_multixact_freeze_max_age, but may be less if we are
 	 * short of multixact member space.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
 	effective_multixact_freeze_max_age = MultiXactMemberFreezeThreshold();
 
@@ -2286,7 +2258,22 @@ do_autovacuum(void)
 		CHECK_FOR_INTERRUPTS();
 
 		/*
-<<<<<<< HEAD
+		 * Check for config changes before processing each collected table.
+		 */
+		if (got_SIGHUP)
+		{
+			got_SIGHUP = false;
+			ProcessConfigFile(PGC_SIGHUP);
+
+			/*
+			 * You might be tempted to bail out if we see autovacuum is now
+			 * disabled.  Must resist that temptation -- this might be a
+			 * for-wraparound emergency worker, in which case that would be
+			 * entirely inappropriate.
+			 */
+		}
+
+		/*
 		 * Find out whether the table is shared or not.  (It's slightly
 		 * annoying to fetch the syscache entry just for this, but in typical
 		 * cases it adds little cost because table_recheck_autovac would
@@ -2304,27 +2291,6 @@ do_autovacuum(void)
 		 * Hold schedule lock from here until we've claimed the table.  We
 		 * also need the AutovacuumLock to walk the worker array, but that one
 		 * can just be a shared lock.
-=======
-		 * Check for config changes before processing each collected table.
-		 */
-		if (got_SIGHUP)
-		{
-			got_SIGHUP = false;
-			ProcessConfigFile(PGC_SIGHUP);
-
-			/*
-			 * You might be tempted to bail out if we see autovacuum is now
-			 * disabled.  Must resist that temptation -- this might be a
-			 * for-wraparound emergency worker, in which case that would be
-			 * entirely inappropriate.
-			 */
-		}
-
-		/*
-		 * hold schedule lock from here until we're sure that this table still
-		 * needs vacuuming.  We also need the AutovacuumLock to walk the
-		 * worker array, but we'll let go of that one quickly.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		 */
 		LWLockAcquire(AutovacuumScheduleLock, LW_EXCLUSIVE);
 		LWLockAcquire(AutovacuumLock, LW_SHARED);
@@ -2717,15 +2683,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 
 		tab = palloc(sizeof(autovac_table));
 		tab->at_relid = relid;
-<<<<<<< HEAD
 		tab->at_sharedrel = classForm->relisshared;
-		tab->at_dovacuum = dovacuum;
-		tab->at_doanalyze = doanalyze;
-		tab->at_freeze_min_age = freeze_min_age;
-		tab->at_freeze_table_age = freeze_table_age;
-		tab->at_multixact_freeze_min_age = multixact_freeze_min_age;
-		tab->at_multixact_freeze_table_age = multixact_freeze_table_age;
-=======
 		tab->at_vacoptions = VACOPT_SKIPTOAST |
 			(dovacuum ? VACOPT_VACUUM : 0) |
 			(doanalyze ? VACOPT_ANALYZE : 0) |
@@ -2736,7 +2694,6 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		tab->at_params.multixact_freeze_table_age = multixact_freeze_table_age;
 		tab->at_params.is_wraparound = wraparound;
 		tab->at_params.log_min_duration = log_min_duration;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		tab->at_vacuum_cost_limit = vac_cost_limit;
 		tab->at_vacuum_cost_delay = vac_cost_delay;
 		tab->at_relname = NULL;

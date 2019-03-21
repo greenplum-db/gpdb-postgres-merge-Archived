@@ -97,7 +97,6 @@ static FILE *csvlogFile = NULL;
 NON_EXEC_STATIC pg_time_t first_syslogger_file_time = 0;
 static char *last_file_name = NULL;
 static char *last_csv_file_name = NULL;
-<<<<<<< HEAD
 // Store only those logs the severe of that are at least WARNING level to
 // speed up the access for it when log files become very huge.
 static FILE *alertLogFile = NULL;
@@ -107,9 +106,6 @@ static const char *alert_file_pattern = "gpdb-alert-%Y-%m-%d_%H%M%S.csv";
 static char *alert_last_file_name = NULL;
 static bool alert_log_level_opened = false;
 static bool write_to_alert_log = false;
-static Latch sysLoggerLatch;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * Buffers for saving partial messages from different backends.
@@ -164,12 +160,8 @@ static volatile sig_atomic_t alert_rotation_requested = false;
 static pid_t syslogger_forkexec(void);
 static void syslogger_parseArgs(int argc, char *argv[]);
 #endif
-<<<<<<< HEAD
-NON_EXEC_STATIC void SysLoggerMain(int argc, char *argv[]) __attribute__((noreturn));
-#if 0
-=======
 NON_EXEC_STATIC void SysLoggerMain(int argc, char *argv[]) pg_attribute_noreturn();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+#if 0
 static void process_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 static void flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 #endif
@@ -2080,13 +2072,8 @@ process_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 		int			chunklen;
 
 		/* Do we have a valid header? */
-<<<<<<< HEAD
-		memcpy(&p, cursor, sizeof(PipeProtoHeader));
-		if (p.zero == 0 && 
-=======
 		memcpy(&p, cursor, offsetof(PipeProtoHeader, data));
 		if (p.nuls[0] == '\0' && p.nuls[1] == '\0' &&
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			p.len > 0 && p.len <= PIPE_MAX_PAYLOAD &&
 			p.pid != 0 &&
 			p.thid != 0 &&

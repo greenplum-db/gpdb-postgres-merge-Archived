@@ -500,14 +500,9 @@ static void LogChildExit(int lev, const char *procname,
 			 int pid, int exitstatus);
 static void PostmasterStateMachine(void);
 static void BackendInitialize(Port *port);
-<<<<<<< HEAD
-static void BackendRun(Port *port) __attribute__((noreturn));
-static void ExitPostmaster(int status) __attribute__((noreturn));
-static bool ServiceStartable(PMSubProc *subProc);
-=======
 static void BackendRun(Port *port) pg_attribute_noreturn();
 static void ExitPostmaster(int status) pg_attribute_noreturn();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+static bool ServiceStartable(PMSubProc *subProc);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
@@ -535,9 +530,8 @@ static void StartAutovacuumWorker(void);
 static void MaybeStartWalReceiver(void);
 static void InitPostmasterDeathWatchHandle(void);
 
-<<<<<<< HEAD
 static void setProcAffinity(int id);
-=======
+
 /*
  * Archiver is allowed to start up at the current postmaster state?
  *
@@ -548,7 +542,6 @@ static void setProcAffinity(int id);
 	((XLogArchivingActive() && pmState == PM_RUN) ||	\
 	 (XLogArchivingAlways() &&	\
 	  (pmState == PM_RECOVERY || pmState == PM_HOT_STANDBY)))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #ifdef EXEC_BACKEND
 
@@ -767,11 +760,7 @@ PostmasterMain(int argc, char *argv[])
 	 * tcop/postgres.c (the option sets should not conflict) and with the
 	 * common help() function in main/main.c.
 	 */
-<<<<<<< HEAD
-	while ((opt = getopt(argc, argv, "A:B:bc:C:D:d:EeFf:h:ijk:lMmN:nOo:Pp:r:S:sTt:W:-:")) != -1)
-=======
-	while ((opt = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:-:")) != -1)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	while ((opt = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lMmN:nOo:Pp:r:S:sTt:W:-:")) != -1)
 	{
 		switch (opt)
 		{
@@ -1066,8 +1055,7 @@ PostmasterMain(int argc, char *argv[])
 	}
 	if (XLogArchiveMode > ARCHIVE_MODE_OFF && wal_level == WAL_LEVEL_MINIMAL)
 		ereport(ERROR,
-<<<<<<< HEAD
-				(errmsg("WAL archival (archive_mode=on) requires wal_level \"archive\", \"hot_standby\", or \"logical\"")));
+				(errmsg("WAL archival cannot be enabled when wal_level is \"minimal\"")));
 	if (max_wal_senders > 0 && wal_level == WAL_LEVEL_MINIMAL)
 		ereport(ERROR,
 				(errmsg("WAL streaming (max_wal_senders > 0) requires wal_level \"archive\", \"hot_standby\", or \"logical\"")));
@@ -1095,12 +1083,6 @@ PostmasterMain(int argc, char *argv[])
              "The contentid value to pass can be determined this server's entry in the segment configuration; it may be -1 for a master, or in utility mode."
              )));
 	}
-=======
-				(errmsg("WAL archival cannot be enabled when wal_level is \"minimal\"")));
-	if (max_wal_senders > 0 && wal_level == WAL_LEVEL_MINIMAL)
-		ereport(ERROR,
-				(errmsg("WAL streaming (max_wal_senders > 0) requires wal_level \"archive\", \"hot_standby\", or \"logical\"")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Other one-time internal sanity checks can go here, if they are fast.
@@ -1436,7 +1418,6 @@ PostmasterMain(int argc, char *argv[])
 	RemovePgTempFiles();
 
 	/*
-<<<<<<< HEAD
 	 * Forcibly remove the files signaling a standby promotion
 	 * request. Otherwise, the existence of those files triggers
 	 * a promotion too early, whether a user wants that or not.
@@ -1458,8 +1439,6 @@ PostmasterMain(int argc, char *argv[])
 	RemovePromoteSignalFiles();
 
 	/*
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 * If enabled, start up syslogger collection subprocess
 	 */
 	SysLoggerPID = SysLogger_Start();
@@ -1529,11 +1508,7 @@ PostmasterMain(int argc, char *argv[])
 	 * normal case on Windows, which offers neither fork() nor sigprocmask().
 	 */
 	if (pthread_is_threaded_np() != 0)
-<<<<<<< HEAD
-		ereport(LOG,
-=======
 		ereport(FATAL,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("postmaster became multithreaded during startup"),
 		 errhint("Set the LC_ALL environment variable to a valid locale.")));
@@ -2077,7 +2052,6 @@ ServerLoop(void)
 			(pmState == PM_RUN || pmState == PM_HOT_STANDBY))
 			PgStatPID = pgstat_start();
 
-<<<<<<< HEAD
 		/* MPP: If we have lost one of our servers, try to start a new one */
 		for (s=0; s < MaxPMSubType; s++)
 		{
@@ -2094,11 +2068,10 @@ ServerLoop(void)
 					(subProc->serverStart)();
 			}
 		}
-=======
+
 		/* If we have lost the archiver, try to start a new one. */
 		if (PgArchPID == 0 && PgArchStartupAllowed())
 				PgArchPID = pgarch_start();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/* If we need to signal the autovacuum launcher, do so now */
 		if (avlauncher_needs_signal)
@@ -2160,7 +2133,6 @@ ServerLoop(void)
 			TerminateChildren(SIGKILL);
 			/* reset flag so we don't SIGKILL again */
 			AbortStartTime = 0;
-<<<<<<< HEAD
 		}
 
 		/*
@@ -2194,8 +2166,6 @@ ServerLoop(void)
 			TouchSocketFiles();
 			TouchSocketLockFiles();
 			last_touch_time = now;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 	}
 }
@@ -5545,14 +5515,6 @@ SubPostmasterMain(int argc, char *argv[])
 
 		/* do this as early as possible; in particular, before InitProcess() */
 		IsBackgroundWorker = true;
-<<<<<<< HEAD
-=======
-
-		InitPostmasterChild();
-
-		/* Close the postmaster's sockets */
-		ClosePostmasterPorts(false);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/* Restore basic shared memory pointers */
 		InitShmemAccess(UsedShmemSegAddr);
@@ -5648,13 +5610,6 @@ ExitPostmaster(int status)
 	/*
 	 * There is no known cause for a postmaster to become multithreaded after
 	 * startup.  Recheck to account for the possibility of unknown causes.
-<<<<<<< HEAD
-	 */
-	if (pthread_is_threaded_np() != 0)
-		ereport(LOG,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("postmaster became multithreaded")));
-=======
 	 * This message uses LOG level, because an unclean shutdown at this point
 	 * would usually not look much different from a clean shutdown.
 	 */
@@ -5663,7 +5618,6 @@ ExitPostmaster(int status)
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg_internal("postmaster became multithreaded"),
 		   errdetail("Please report this to <pgsql-bugs@postgresql.org>.")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #endif
 
 	/* should cleanup shared memory and kill all backends */
@@ -6342,36 +6296,24 @@ do_start_bgworker(RegisteredBgWorker *rw)
 {
 	pid_t		worker_pid;
 
-<<<<<<< HEAD
 	Assert(rw->rw_pid == 0);
 
 	/*
-	 * If necessary, allocate and assign the Backend element.  Note we must do
-	 * this before forking, so that we can handle out of memory properly.
+	 * Allocate and assign the Backend element.  Note we must do this before
+	 * forking, so that we can handle out of memory properly.
 	 *
 	 * Treat failure as though the worker had crashed.  That way, the
 	 * postmaster will wait a bit before attempting to start it again; if it
 	 * tried again right away, most likely it'd find itself repeating the
 	 * out-of-memory or fork failure condition.
-	 *
-	 * If not connected, we don't need a Backend element, but we still need a
-	 * PMChildSlot.
 	 */
-	if (rw->rw_worker.bgw_flags & BGWORKER_BACKEND_DATABASE_CONNECTION)
+	if (!assign_backendlist_entry(rw))
 	{
-		if (!assign_backendlist_entry(rw))
-		{
-			rw->rw_crashed_at = GetCurrentTimestamp();
-			return false;
-		}
+		rw->rw_crashed_at = GetCurrentTimestamp();
+		return false;
 	}
-	else
-		rw->rw_child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
 
-	ereport(LOG,
-=======
 	ereport(DEBUG1,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			(errmsg("starting background worker process \"%s\"",
 					rw->rw_worker.bgw_name)));
 
@@ -6388,8 +6330,7 @@ do_start_bgworker(RegisteredBgWorker *rw)
 			/* undo what assign_backendlist_entry did */
 			ReleasePostmasterChildSlot(rw->rw_child_slot);
 			rw->rw_child_slot = 0;
-			if (rw->rw_backend)
-				free(rw->rw_backend);
+			free(rw->rw_backend);
 			rw->rw_backend = NULL;
 			/* mark entry as crashed, so we'll try again later */
 			rw->rw_crashed_at = GetCurrentTimestamp();
@@ -6414,17 +6355,13 @@ do_start_bgworker(RegisteredBgWorker *rw)
 		default:
 			/* in postmaster, fork successful ... */
 			rw->rw_pid = worker_pid;
-			if (rw->rw_backend)
-				rw->rw_backend->pid = rw->rw_pid;
+			rw->rw_backend->pid = rw->rw_pid;
 			ReportBackgroundWorkerPID(rw);
-			if (rw->rw_backend)
-			{
-				/* add new worker to lists of backends */
-				dlist_push_head(&BackendList, &rw->rw_backend->elem);
+			/* add new worker to lists of backends */
+			dlist_push_head(&BackendList, &rw->rw_backend->elem);
 #ifdef EXEC_BACKEND
-				ShmemBackendArrayAdd(rw->rw_backend);
+			ShmemBackendArrayAdd(rw->rw_backend);
 #endif
-			}
 			return true;
 	}
 
