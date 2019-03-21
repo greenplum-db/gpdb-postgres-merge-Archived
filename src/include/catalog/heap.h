@@ -59,7 +59,6 @@ extern Relation heap_create(const char *relname,
 			Oid relid,
 			Oid relfilenode,
 			TupleDesc tupDesc,
-			Oid relam,
 			char relkind,
 			char relpersistence,
 			char relstorage,
@@ -68,33 +67,6 @@ extern Relation heap_create(const char *relname,
 			bool allow_system_table_mods);
 
 extern Oid heap_create_with_catalog(const char *relname,
-<<<<<<< HEAD
-									Oid relnamespace,
-									Oid reltablespace,
-									Oid relid,
-									Oid reltypeid,
-									Oid reloftypeid,
-									Oid ownerid,
-									TupleDesc tupdesc,
-									List *cooked_constraints,
-									Oid relam,
-									char relkind,
-									char relpersistence,
-									char relstorage,
-									bool shared_relation,
-									bool mapped_relation,
-									bool oidislocal,
-									int oidinhcount,
-									OnCommitAction oncommit,
-									const struct GpPolicy *policy,    /* MPP */
-									Datum reloptions,
-									bool use_user_acl,
-									bool allow_system_table_mods,
-									bool is_internal,
-									bool valid_opts,
-									bool is_part_child,
-									bool is_part_parent);
-=======
 						 Oid relnamespace,
 						 Oid reltablespace,
 						 Oid relid,
@@ -110,12 +82,15 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 bool oidislocal,
 						 int oidinhcount,
 						 OnCommitAction oncommit,
+						 const struct GpPolicy *policy,    /* MPP */
 						 Datum reloptions,
 						 bool use_user_acl,
 						 bool allow_system_table_mods,
 						 bool is_internal,
-						 ObjectAddress *typaddress);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+						 ObjectAddress *typaddress,
+						 bool valid_opts,
+						 bool is_part_child,
+						 bool is_part_parent);
 
 extern void heap_create_init_fork(Relation rel);
 

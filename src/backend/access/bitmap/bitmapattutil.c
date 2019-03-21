@@ -174,7 +174,6 @@ _bitmap_create_lov_heapandindex(Relation rel,
 								 InvalidOid,
 								 rel->rd_rel->relowner,
 								 tupDesc, NIL,
-								 /* relam */ InvalidOid,
 								 RELKIND_RELATION,
 								 rel->rd_rel->relpersistence,
 								 RELSTORAGE_HEAP,
@@ -184,6 +183,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 								 ONCOMMIT_NOOP, NULL /* GP Policy */,
 								 (Datum)0, false, true,
 								 true, /* is_internal */
+								 NULL, /* typeaddress */
 								 /* valid_opts */ true,
 								 /* is_part_child */ false,
 								 /* is_part_parent */ false);

@@ -136,7 +136,6 @@ CreateAOAuxiliaryTable(
 											     rel->rd_rel->relowner,
 											     tupledesc,
 												 NIL,
-											     /* relam */ InvalidOid,
 											     relkind,
 												 rel->rd_rel->relpersistence,
 											     RELSTORAGE_HEAP,
@@ -150,6 +149,7 @@ CreateAOAuxiliaryTable(
 												 /* use_user_acl */ false,
 											     true,
 												 true,
+												 NULL, /* typeaddress */
 												 /* valid_opts */ false,
 												 /* is_part_child */ false,
 												 is_part_parent);

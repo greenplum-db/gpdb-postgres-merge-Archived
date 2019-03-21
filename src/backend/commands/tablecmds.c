@@ -954,7 +954,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 										  ownerId,
 										  descriptor,
 										  cooked_constraints,
-										  /* relam */ InvalidOid,
 										  relkind,
 										  stmt->relation->relpersistence,
 										  relstorage,
@@ -968,7 +967,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 										  true,
 										  allowSystemTableMods,
 										  false,
-<<<<<<< HEAD
+										  typaddress,
 										  valid_opts,
 										  stmt->is_part_child,
 										  stmt->is_part_parent);
@@ -985,9 +984,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 				(errmsg("OIDS=TRUE is not recommended for user-created tables"),
 				 errhint("Use OIDS=FALSE to prevent wrap-around of the OID counter.")));
 	}
-=======
-										  typaddress);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Store inheritance information for new rel. */
 	StoreCatalogInheritance(relationId, stmt->inhOids);

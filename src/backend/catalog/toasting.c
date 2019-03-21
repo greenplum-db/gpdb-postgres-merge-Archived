@@ -369,7 +369,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   rel->rd_rel->relowner,
 										   tupdesc,
 										   NIL,
-										   /* relam */ InvalidOid,
 										   RELKIND_TOASTVALUE,
 										   rel->rd_rel->relpersistence,
 										   RELSTORAGE_HEAP,
@@ -383,13 +382,10 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   false,
 										   true,
 										   true,
-<<<<<<< HEAD
+										   NULL,
 										   /* valid_opts */ false,
 										   /* is_part_child */ false,
 										   is_part_parent);
-=======
-										   NULL);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	Assert(toast_relid != InvalidOid);
 
 	/* make the toast relation visible, else heap_open will fail */

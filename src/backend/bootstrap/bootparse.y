@@ -234,7 +234,6 @@ Boot_CreateStmt:
 												   $3,
 												   InvalidOid,
 												   tupdesc,
-												   /* relam */ InvalidOid,
 												   RELKIND_RELATION,
 												   RELPERSISTENCE_PERMANENT,
 												   RELSTORAGE_HEAP,
@@ -256,7 +255,6 @@ Boot_CreateStmt:
 													  BOOTSTRAP_SUPERUSERID,
 													  tupdesc,
 													  NIL,
-													  /* relam */ InvalidOid,
 													  RELKIND_RELATION,
 													  RELPERSISTENCE_PERMANENT,
 													  RELSTORAGE_HEAP,
@@ -270,15 +268,11 @@ Boot_CreateStmt:
 													  false,
 													  true,
 													  false,
-<<<<<<< HEAD
+													  NULL,
 													  /* valid_opts */ false,
 													  /* is_part_child */ false,
 													  /* is_part_parent */ false);
-						elog(DEBUG4, "relation created with oid %u", id);
-=======
-													  NULL);
 						elog(DEBUG4, "relation created with OID %u", id);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					}
 					do_end();
 				}

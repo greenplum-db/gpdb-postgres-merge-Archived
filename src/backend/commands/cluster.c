@@ -770,7 +770,6 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 										  OldHeap->rd_rel->relowner,
 										  OldHeapDesc,
 										  NIL,
-										  OldHeap->rd_rel->relam,
 										  RELKIND_RELATION,
 										  relpersistence,
 										  OldHeap->rd_rel->relstorage,
@@ -784,13 +783,10 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 										  false,
 										  true,
 										  true,
-<<<<<<< HEAD
+										  NULL,
 										  /* valid_opts */ true,
 										  is_part_child,
 										  is_part_parent);
-=======
-										  NULL);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	Assert(OIDNewHeap != InvalidOid);
 
 	ReleaseSysCache(tuple);

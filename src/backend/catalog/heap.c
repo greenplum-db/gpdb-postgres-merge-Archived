@@ -299,7 +299,6 @@ heap_create(const char *relname,
 			Oid relid,
 			Oid relfilenode,
 			TupleDesc tupDesc,
-			Oid relam,
 			char relkind,
 			char relpersistence,
 			char relstorage,
@@ -1365,15 +1364,12 @@ AddNewRelationType(const char *typeName,
  *		if FALSE, relacl is always set NULL
  *	allow_system_table_mods: TRUE to allow creation in system namespaces
  *	is_internal: is this a system-generated catalog?
-<<<<<<< HEAD
  *  valid_opts: Validate the reloptions or not?
  *  is_part_child: TRUE if relation is a child partition
  *  is_part_parent: TRUE if relation is a parent partition
-=======
  *
  * Output parameters:
  *	typaddress: if not null, gets the object address of the new pg_type entry
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  *
  * Returns the OID of the new relation
  * --------------------------------
@@ -1388,7 +1384,6 @@ heap_create_with_catalog(const char *relname,
 						 Oid ownerid,
 						 TupleDesc tupdesc,
 						 List *cooked_constraints,
-						 Oid relam,
 						 char relkind,
 						 char relpersistence,
 						 char relstorage,
@@ -1402,13 +1397,10 @@ heap_create_with_catalog(const char *relname,
 						 bool use_user_acl,
 						 bool allow_system_table_mods,
 						 bool is_internal,
-<<<<<<< HEAD
+						 ObjectAddress *typaddress,
 						 bool valid_opts,
 						 bool is_part_child,
 						 bool is_part_parent)
-=======
-						 ObjectAddress *typaddress)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
@@ -1588,7 +1580,6 @@ heap_create_with_catalog(const char *relname,
 							   relid,
 							   InvalidOid,
 							   tupdesc,
-							   relam,
 							   relkind,
 							   relpersistence,
 							   relstorage,
