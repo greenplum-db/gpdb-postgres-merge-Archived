@@ -44,11 +44,8 @@
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
 #include "commands/extension.h"
-<<<<<<< HEAD
 #include "commands/extprotocolcmds.h"
-=======
 #include "commands/policy.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/tablecmds.h"
@@ -313,13 +310,8 @@ AlterObjectRename_internal(Relation rel, Oid objectId, const char *new_name)
  *
  * Return value is the address of the renamed object.
  */
-<<<<<<< HEAD
-static Oid
+static ObjectAddress
 ExecRenameStmt_internal(RenameStmt *stmt)
-=======
-ObjectAddress
-ExecRenameStmt(RenameStmt *stmt)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	switch (stmt->renameType)
 	{
@@ -407,10 +399,10 @@ ExecRenameStmt(RenameStmt *stmt)
 	}
 }
 
-Oid
+ObjectAddress
 ExecRenameStmt(RenameStmt *stmt)
 {
-	Oid			result;
+	ObjectAddress	result;
 
 	result = ExecRenameStmt_internal(stmt);
 
@@ -440,14 +432,9 @@ ExecRenameStmt(RenameStmt *stmt)
  * oldSchemaAddr is an output argument which, if not NULL, is set to the object
  * address of the original schema.
  */
-<<<<<<< HEAD
-static Oid
-ExecAlterObjectSchemaStmt_internal(AlterObjectSchemaStmt *stmt)
-=======
-ObjectAddress
-ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt,
+static ObjectAddress
+ExecAlterObjectSchemaStmt_internal(AlterObjectSchemaStmt *stmt,
 						  ObjectAddress *oldSchemaAddr)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	ObjectAddress address;
 	Oid			oldNspOid;
@@ -521,12 +508,14 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt,
 
 	return address;
 }
-Oid
-ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
-{
-	Oid			result;
 
-	result = ExecAlterObjectSchemaStmt_internal(stmt);
+ObjectAddress
+ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt,
+						  ObjectAddress *oldSchemaAddr)
+{
+	ObjectAddress	result;
+
+	result = ExecAlterObjectSchemaStmt_internal(stmt, oldSchemaAddr);
 
 	/*
 	 * Dispatch to the segments. Except for event triggers, they're only stored
@@ -765,13 +754,8 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
  * Executes an ALTER OBJECT / OWNER TO statement.  Based on the object
  * type, the function appropriate to that type is executed.
  */
-<<<<<<< HEAD
-static Oid
+static ObjectAddress
 ExecAlterOwnerStmt_internal(AlterOwnerStmt *stmt)
-=======
-ObjectAddress
-ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	Oid			newowner = get_rolespec_oid(stmt->newowner, false);
 
@@ -853,10 +837,10 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 	}
 }
 
-Oid
+ObjectAddress
 ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 {
-	Oid			result;
+	ObjectAddress	result;
 
 	result = ExecAlterOwnerStmt_internal(stmt);
 
