@@ -263,9 +263,8 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		 * view, so we don't need more code to complain if "replace" is
 		 * false).
 		 */
-<<<<<<< HEAD
-		relid = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid, RELSTORAGE_VIRTUAL, false, true, NULL);
-		Assert(relid != InvalidOid);
+		address = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid, NULL, RELSTORAGE_VIRTUAL, false, true, NULL);
+		Assert(address.objectId != InvalidOid);
 
 		/* Make the new view relation visible */
 		CommandCounterIncrement();
@@ -273,12 +272,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		/* Store the query for the view */
 		StoreViewQuery(relid, viewParse, replace);
 
-		return relid;
-=======
-		address = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid, NULL);
-		Assert(address.objectId != InvalidOid);
 		return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 }
 
@@ -534,11 +528,8 @@ DefineView(ViewStmt *stmt, const char *queryString)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("WITH CHECK OPTION is supported only on automatically updatable views"),
-<<<<<<< HEAD
 					 errhint("%s", _(view_updatable_error))));
-=======
 					 errhint("%s", view_updatable_error)));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/*
@@ -600,8 +591,7 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 * NOTE: if it already exists and replace is false, the xact will be
 	 * aborted.
 	 */
-<<<<<<< HEAD
-	viewOid = DefineVirtualRelation(view, viewParse->targetList,
+	address = DefineVirtualRelation(view, viewParse->targetList,
 									stmt->replace, stmt->options, viewParse);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -615,9 +605,6 @@ DefineView(ViewStmt *stmt, const char *queryString)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
-	address = DefineVirtualRelation(view, viewParse->targetList,
-									stmt->replace, stmt->options);
 
 	/*
 	 * The relation we have just created is not visible to any other commands
@@ -627,7 +614,6 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	CommandCounterIncrement();
 
 	StoreViewQuery(address.objectId, viewParse, stmt->replace);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	return address;
 }
