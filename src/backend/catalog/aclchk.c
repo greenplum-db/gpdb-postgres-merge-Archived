@@ -4140,12 +4140,7 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 
 	/*
 	 * Deny anyone permission to update a system catalog unless
-<<<<<<< HEAD
-	 * pg_authid.rolcatupdate is set.  (This is to let superusers protect
-	 * themselves from themselves.)  Also allow it if allowSystemTableMods.
-=======
 	 * pg_authid.rolsuper is set.  Also allow it if allowSystemTableMods.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 *
 	 * As of 7.4 we have some updatable system views; those shouldn't be
 	 * protected in this way.  Assume the view rules can take care of
