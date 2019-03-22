@@ -91,7 +91,6 @@ DefineOperator(List *names, List *parameters)
 	/* Convert list of names to a name and namespace */
 	oprNamespace = QualifiedNameGetCreationNamespace(names, &oprName);
 
-<<<<<<< HEAD
 	/*
 	 * The SQL standard committee has decided that => should be used for named
 	 * parameters; therefore, a future release of PostgreSQL may disallow it
@@ -104,8 +103,6 @@ DefineOperator(List *names, List *parameters)
 				(errmsg("=> is deprecated as an operator name"),
 				 errdetail("This name may be disallowed altogether in future versions of PostgreSQL.")));
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(oprNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
