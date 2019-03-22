@@ -45,11 +45,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
-<<<<<<< HEAD
-#include "catalog/pg_partition_encoding.h"
-=======
 #include "catalog/pg_policy.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_tablespace.h"
@@ -89,6 +85,7 @@
 
 #include "catalog/pg_compression.h"
 #include "catalog/pg_extprotocol.h"
+#include "catalog/pg_partition_encoding.h"
 #include "cdb/cdbvars.h"
 #include "commands/extprotocolcmds.h"
 #include "commands/tablecmds.h"
@@ -176,12 +173,9 @@ static const Oid object_classes[MAX_OCLASS] = {
 	DefaultAclRelationId,		/* OCLASS_DEFACL */
 	ExtensionRelationId,		/* OCLASS_EXTENSION */
 	EventTriggerRelationId,		/* OCLASS_EVENT_TRIGGER */
-<<<<<<< HEAD
 	ExtprotocolRelationId,		/* OCLASS_EXTPROTOCOL */
 	CompressionRelationId		/* OCLASS_COMPRESSION */
-=======
 	PolicyRelationId			/* OCLASS_POLICY */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 };
 
 
@@ -1321,7 +1315,6 @@ doDeletion(const ObjectAddress *object, int flags)
 			RemoveEventTriggerById(object->objectId);
 			break;
 
-<<<<<<< HEAD
 		case OCLASS_EXTPROTOCOL:
 			RemoveExtProtocolById(object->objectId);
 			break;
@@ -1330,12 +1323,6 @@ doDeletion(const ObjectAddress *object, int flags)
 			elog(NOTICE, "dependency: not yet implemented!");
 			break;
 
-			/*
-			 * OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE intentionally
-			 * not handled here
-			 */
-
-=======
 		case OCLASS_POLICY:
 			RemovePolicyById(object->objectId);
 			break;
@@ -1344,7 +1331,6 @@ doDeletion(const ObjectAddress *object, int flags)
 			DropTransformById(object->objectId);
 			break;
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		default:
 			elog(ERROR, "unrecognized object class: %u",
 				 object->classId);
@@ -2540,7 +2526,6 @@ getObjectClass(const ObjectAddress *object)
 		case EventTriggerRelationId:
 			return OCLASS_EVENT_TRIGGER;
 
-<<<<<<< HEAD
 		case ExtprotocolRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_EXTPROTOCOL;
@@ -2548,13 +2533,12 @@ getObjectClass(const ObjectAddress *object)
 		case CompressionRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_COMPRESSION;
-=======
+
 		case PolicyRelationId:
 			return OCLASS_POLICY;
 
 		case TransformRelationId:
 			return OCLASS_TRANSFORM;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/* shouldn't get here */
