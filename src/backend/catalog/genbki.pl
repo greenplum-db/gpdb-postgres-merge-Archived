@@ -241,24 +241,14 @@ foreach my $catname (@{ $catalogs->{names} })
 			{
 				$attnum = 0;
 				my @SYS_ATTRS = (
-<<<<<<< HEAD
-					{ ctid     => 'tid' },
-					{ oid      => 'oid' },
-					{ xmin     => 'xid' },
-					{ cmin     => 'cid' },
-					{ xmax     => 'xid' },
-					{ cmax     => 'cid' },
-					{ tableoid => 'oid' },
-					{ gp_segment_id => 'int4' });
-=======
 					{ name => 'ctid',     type => 'tid' },
 					{ name => 'oid',      type => 'oid' },
 					{ name => 'xmin',     type => 'xid' },
 					{ name => 'cmin',     type => 'cid' },
 					{ name => 'xmax',     type => 'xid' },
 					{ name => 'cmax',     type => 'cid' },
-					{ name => 'tableoid', type => 'oid' });
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+					{ name => 'tableoid', type => 'oid' },
+					{ name => 'gp_segment_id', type => 'int4' });
 				foreach my $attr (@SYS_ATTRS)
 				{
 					$attnum--;
