@@ -37,11 +37,7 @@
 #include "access/transam.h"
 #include "access/reloptions.h"
 #include "access/xact.h"
-<<<<<<< HEAD
-#include "catalog/aocatalog.h"
-=======
 #include "access/xlog.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -98,6 +94,7 @@
 #include "utils/tqual.h"
 #include "utils/timestamp.h"
 
+#include "catalog/aocatalog.h"
 #include "cdb/cdbpartition.h"
 #include "cdb/cdbsreh.h"
 #include "cdb/cdbvars.h"
@@ -128,14 +125,9 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 					char relkind,
 					char relstorage,
 					Datum relacl,
-<<<<<<< HEAD
 					Datum reloptions,
 					bool is_part_parent);
-static Oid AddNewRelationType(const char *typeName,
-=======
-					Datum reloptions);
 static ObjectAddress AddNewRelationType(const char *typeName,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
 				   char new_rel_kind,
