@@ -28,11 +28,8 @@ typedef struct ObjectAddress
 	int32		objectSubId;	/* Subitem within object (eg column), or 0 */
 } ObjectAddress;
 
-<<<<<<< HEAD
-=======
 extern const ObjectAddress InvalidObjectAddress;
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #define ObjectAddressSubSet(addr, class_id, object_id, object_sub_id) \
 	do { \
 		(addr).classId = (class_id); \
