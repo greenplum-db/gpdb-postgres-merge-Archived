@@ -1393,11 +1393,7 @@ path_in(PG_FUNCTION_ARGS)
 	}
 
 	base_size = sizeof(path->p[0]) * npts;
-<<<<<<< HEAD
-	size = offsetof(PATH, p[0]) + base_size;
-=======
 	size = offsetof(PATH, p) +base_size;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(path->p[0]) || size <= base_size)
@@ -3503,11 +3499,7 @@ poly_in(PG_FUNCTION_ARGS)
 			  errmsg("invalid input syntax for type polygon: \"%s\"", str)));
 
 	base_size = sizeof(poly->p[0]) * npts;
-<<<<<<< HEAD
-	size = offsetof(POLYGON, p[0]) + base_size;
-=======
 	size = offsetof(POLYGON, p) +base_size;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)
