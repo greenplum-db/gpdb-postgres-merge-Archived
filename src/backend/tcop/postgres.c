@@ -36,12 +36,9 @@
 #include "rusagestub.h"
 #endif
 
-<<<<<<< HEAD
 #include <pthread.h>
 
-=======
 #include "access/parallel.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "access/printtup.h"
 #include "access/xact.h"
 #include "catalog/oid_dispatch.h"
@@ -643,32 +640,10 @@ ReadCommand(StringInfo inBuf)
 /*
  * ProcessClientReadInterrupt() - Process interrupts specific to client reads
  *
-<<<<<<< HEAD
- * This must be called immediately before any low-level read from the
- * client connection.  It is necessary to do it at a sufficiently low level
- * that there won't be any other operations except the read kernel call
- * itself between this call and the subsequent client_read_ended() call.
- * In particular there mustn't be use of malloc() or other potentially
- * non-reentrant libc functions.  This restriction makes it safe for us
- * to allow interrupt service routines to execute nontrivial code while
- * we are waiting for input.
- *
- * When waiting in the main loop, we can process any interrupt immediately
- * in the signal handler. In any other read from the client, like in a COPY
- * FROM STDIN, we can't safely process a query cancel signal, because we might
- * be in the middle of sending a message to the client, and jumping out would
- * violate the protocol. Or rather, pqcomm.c would detect it and refuse to
- * send any more messages to the client. But handling a SIGTERM is OK, because
- * we're terminating the backend and don't need to send any more messages
- * anyway. That means that we might not be able to send an error message to
- * the client, but that seems better than waiting indefinitely, in case the
- * client is not responding.
-=======
  * This is called just after low-level reads. That might be after the read
  * finished successfully, or it was interrupted via interrupt.
  *
  * Must preserve errno!
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 void
 ProcessClientReadInterrupt(bool blocked)
@@ -677,22 +652,12 @@ ProcessClientReadInterrupt(bool blocked)
 
 	if (DoingCommandRead)
 	{
-<<<<<<< HEAD
-		/* Enable immediate processing of asynchronous signals */
-		EnableNotifyInterrupt();
-		EnableCatchupInterrupt();
-		EnableClientWaitTimeoutInterrupt();
-
-		/* Allow die interrupts to be processed while waiting */
-		ImmediateInterruptOK = true;
-=======
 		/* Check for general interrupts that arrived while reading */
 		CHECK_FOR_INTERRUPTS();
 
 		/* Process sinval catchup interrupts that happened while reading */
 		if (catchupInterruptPending)
 			ProcessCatchupInterrupt();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/* Process sinval catchup interrupts that happened while reading */
 		if (notifyInterruptPending)
@@ -705,23 +670,8 @@ ProcessClientReadInterrupt(bool blocked)
 		 */
 		CHECK_FOR_INTERRUPTS();
 	}
-<<<<<<< HEAD
-	else
-	{
-		DoingPqReading = true;
-		/* Allow die interrupts to be processed while waiting */
-		ImmediateDieOK = true;
-
-		/* Process the ones that already arrived */
-		if (ProcDiePending)
-		{
-			CHECK_FOR_INTERRUPTS();
-		}
-	}
-=======
 
 	errno = save_errno;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -756,66 +706,12 @@ ProcessClientWriteInterrupt(bool blocked)
 		if (whereToSendOutput == DestRemote)
 			whereToSendOutput = DestNone;
 
-<<<<<<< HEAD
-		ImmediateInterruptOK = false;
-
-		DisableNotifyInterrupt();
-		DisableCatchupInterrupt();
-		DisableClientWaitTimeoutInterrupt();
-
-		errno = save_errno;
-	}
-	else
-	{
-		ImmediateDieOK = false;
-		DoingPqReading = false;
-	}
-}
-
-/*
- * prepare_for_client_write -- set up to possibly block on client output
- *
- * Like prepare_for_client_read, but for writing.
- *
- * NOTE: this routine may be called in dispatch thread;
- */
-void
-prepare_for_client_write(void)
-{
-	/* Only enable this on main thread */
-	if (pthread_equal(main_tid, pthread_self()))
-	{
-		/* Allow die interrupts to be processed while waiting */
-		ImmediateDieOK = true;
-
-		/* And don't forget to detect one that already arrived */
-		if (ProcDiePending)
-			CHECK_FOR_INTERRUPTS();
-	}
-}
-
-/*
- * client_read_ended -- get out of the client-output state
- *
- * This is called just after low-level writes.
- */
-void
-client_write_ended(void)
-{
-	if (pthread_equal(main_tid, pthread_self()))
-	{
-		ImmediateDieOK = false;
-	}
-}
-
-=======
 		CHECK_FOR_INTERRUPTS();
 	}
 
 	errno = save_errno;
 }
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * Do raw parsing (only).
  *
@@ -3459,43 +3355,6 @@ die(SIGNAL_ARGS)
 	{
 		InterruptPending = true;
 		ProcDiePending = true;
-<<<<<<< HEAD
-		TermSignalReceived = true;
-
-		/* although we don't strictly need to set this to true since the
-		 * ProcDiePending will occur first.  We set this anyway since the
-		 * MPP dispatch code is triggered only off of QueryCancelPending
-		 * and not any of the others.
-		 */
-		QueryCancelPending = true;
-
-		if (cancel_pending_hook)
-			(*cancel_pending_hook)();
-
-		/*
-		 * If we're waiting for input or a lock so that it's safe to
-		 * interrupt, service the interrupt immediately
-		 */
-		if (ImmediateInterruptOK || ImmediateDieOK)
-		{
-			if (ImmediateDieOK && !DoingPqReading)
-			{
-				/*
-				 * Getting here indicates that we have been interrupted during a
-				 * data message is under sending to client, so close the connection
-				 * immediately, since sending any more bytes may cause self dead
-				 * lock(though we can handle this using pq_send_mutex_lock() now, it
-				 * is better to avoid the unnecessary cost).
-				 */
-				if (MyProcPort)
-					close(MyProcPort->sock);
-				whereToSendOutput = DestNone;
-			}
-
-			ProcessInterrupts(__FILE__, __LINE__);
-		}
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
@@ -3529,20 +3388,10 @@ StatementCancelHandler(SIGNAL_ARGS)
 	{
 		InterruptPending = true;
 		QueryCancelPending = true;
-<<<<<<< HEAD
 		QueryCancelCleanup = true;
 
 		if (cancel_pending_hook)
 			(*cancel_pending_hook)();
-
-		/*
-		 * If we're waiting for input or a lock so that it's safe to
-		 * interrupt, service the interrupt immediately
-		 */
-		if (ImmediateInterruptOK)
-			ProcessInterrupts(__FILE__, __LINE__);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
@@ -3626,14 +3475,8 @@ PostgresSigHupHandler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
-<<<<<<< HEAD
 	ConfigReloadPending = true;
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
-=======
-	got_SIGHUP = true;
 	SetLatch(MyLatch);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	errno = save_errno;
 }
@@ -3745,16 +3588,6 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 		 */
 		if (reason == PROCSIG_RECOVERY_CONFLICT_DATABASE)
 			RecoveryConflictRetryable = false;
-<<<<<<< HEAD
-
-		/*
-		 * If we're waiting for input or a lock so that it's safe to
-		 * interrupt, service the interrupt immediately.
-		 */
-		if (ImmediateInterruptOK)
-			ProcessInterrupts(__FILE__, __LINE__);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/*
@@ -3791,16 +3624,7 @@ ProcessInterrupts(const char* filename, int lineno)
 	{
 		ProcDiePending = false;
 		QueryCancelPending = false;		/* ProcDie trumps QueryCancel */
-<<<<<<< HEAD
-		ImmediateInterruptOK = false;	/* not idle anymore */
-		ImmediateDieOK = false;		/* prevent re-entry */
 		LockErrorCleanup();
-		DisableNotifyInterrupt();
-		DisableCatchupInterrupt();
-		DisableClientWaitTimeoutInterrupt();
-=======
-		LockErrorCleanup();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		/* As in quickdie, don't risk sending to client during auth */
 		if (ClientAuthInProgress && whereToSendOutput == DestRemote)
 			whereToSendOutput = DestNone;
@@ -3851,15 +3675,7 @@ ProcessInterrupts(const char* filename, int lineno)
 	if (ClientConnectionLost)
 	{
 		QueryCancelPending = false;		/* lost connection trumps QueryCancel */
-<<<<<<< HEAD
-		ImmediateInterruptOK = false;	/* not idle anymore */
 		LockErrorCleanup();
-		DisableNotifyInterrupt();
-		DisableCatchupInterrupt();
-		DisableClientWaitTimeoutInterrupt();
-=======
-		LockErrorCleanup();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		/* don't send to client, we already know the connection to be dead. */
 		whereToSendOutput = DestNone;
 		ereport(FATAL,
@@ -3875,18 +3691,6 @@ ProcessInterrupts(const char* filename, int lineno)
 	 */
 	if (RecoveryConflictPending && DoingCommandRead)
 	{
-<<<<<<< HEAD
-		QueryCancelPending = false;			/* this trumps QueryCancel */
-		ImmediateInterruptOK = false;		/* not idle anymore */
-		RecoveryConflictPending = false;
-		LockErrorCleanup();
-		DisableNotifyInterrupt();
-		DisableCatchupInterrupt();
-		pgstat_report_recovery_conflict(RecoveryConflictReason);
-		ereport(FATAL,
-				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-				 errmsg("terminating connection due to conflict with recovery"),
-=======
 		QueryCancelPending = false;		/* this trumps QueryCancel */
 		RecoveryConflictPending = false;
 		LockErrorCleanup();
@@ -3894,7 +3698,6 @@ ProcessInterrupts(const char* filename, int lineno)
 		ereport(FATAL,
 				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 			  errmsg("terminating connection due to conflict with recovery"),
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				 errdetail_recovery_conflict(),
 				 errhint("In a moment you should be able to reconnect to the"
 						 " database and repeat your command.")));
@@ -3902,14 +3705,11 @@ ProcessInterrupts(const char* filename, int lineno)
 
 	if (QueryCancelPending)
 	{
-<<<<<<< HEAD
 		bool		lock_timeout_occurred;
 		bool		stmt_timeout_occurred;
 
 		elog(LOG,"Process interrupt for 'query cancel pending' (%s:%d)", filename, lineno);
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		/*
 		 * Don't allow query cancel interrupts while reading input from the
 		 * client, because we might lose sync in the FE/BE protocol.  (Die
@@ -3927,22 +3727,6 @@ ProcessInterrupts(const char* filename, int lineno)
 		}
 
 		QueryCancelPending = false;
-<<<<<<< HEAD
-		if (ClientAuthInProgress)
-		{
-			ImmediateInterruptOK = false;		/* not idle anymore */
-			LockErrorCleanup();
-			DisableNotifyInterrupt();
-			DisableCatchupInterrupt();
-			/* As in quickdie, don't risk sending to client during auth */
-			if (whereToSendOutput == DestRemote)
-				whereToSendOutput = DestNone;
-			ereport(ERROR,
-					(errcode(ERRCODE_QUERY_CANCELED),
-					 errmsg("canceling authentication due to timeout")));
-		}
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/*
 		 * If LOCK_TIMEOUT and STATEMENT_TIMEOUT indicators are both set, we
@@ -3963,43 +3747,21 @@ ProcessInterrupts(const char* filename, int lineno)
 
 		if (lock_timeout_occurred)
 		{
-<<<<<<< HEAD
-			ImmediateInterruptOK = false;		/* not idle anymore */
 			LockErrorCleanup();
-			DisableNotifyInterrupt();
-			DisableCatchupInterrupt();
-=======
-			(void) get_timeout_indicator(STATEMENT_TIMEOUT, true);
-			LockErrorCleanup();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			ereport(ERROR,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 					 errmsg("canceling statement due to lock timeout")));
 		}
 		if (stmt_timeout_occurred)
 		{
-<<<<<<< HEAD
-			ImmediateInterruptOK = false;		/* not idle anymore */
 			LockErrorCleanup();
-			DisableNotifyInterrupt();
-			DisableCatchupInterrupt();
-=======
-			LockErrorCleanup();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			ereport(ERROR,
 					(errcode(ERRCODE_QUERY_CANCELED),
 					 errmsg("canceling statement due to statement timeout")));
 		}
 		if (IsAutoVacuumWorkerProcess())
 		{
-<<<<<<< HEAD
-			ImmediateInterruptOK = false;		/* not idle anymore */
 			LockErrorCleanup();
-			DisableNotifyInterrupt();
-			DisableCatchupInterrupt();
-=======
-			LockErrorCleanup();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			ereport(ERROR,
 					(errcode(ERRCODE_QUERY_CANCELED),
 					 errmsg("canceling autovacuum task")));
@@ -4008,11 +3770,6 @@ ProcessInterrupts(const char* filename, int lineno)
 		{
 			RecoveryConflictPending = false;
 			LockErrorCleanup();
-<<<<<<< HEAD
-			DisableNotifyInterrupt();
-			DisableCatchupInterrupt();
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			pgstat_report_recovery_conflict(RecoveryConflictReason);
 			ereport(ERROR,
 					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
@@ -4027,11 +3784,7 @@ ProcessInterrupts(const char* filename, int lineno)
 		 */
 		if (!DoingCommandRead)
 		{
-<<<<<<< HEAD
-			ImmediateInterruptOK = false;		/* not idle anymore */
 			LockErrorCleanup();
-			DisableNotifyInterrupt();
-			DisableCatchupInterrupt();
 
 			if (Gp_role == GP_ROLE_EXECUTE)
 				ereport(ERROR,
@@ -4051,12 +3804,6 @@ ProcessInterrupts(const char* filename, int lineno)
 				ereport(ERROR,
 						(errcode(ERRCODE_QUERY_CANCELED),
 						 errmsg("canceling statement due to user request")));
-=======
-			LockErrorCleanup();
-			ereport(ERROR,
-					(errcode(ERRCODE_QUERY_CANCELED),
-					 errmsg("canceling statement due to user request")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 	}
 
@@ -4436,11 +4183,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 	 * postmaster/postmaster.c (the option sets should not conflict) and with
 	 * the common help() function in main/main.c.
 	 */
-<<<<<<< HEAD
-	while ((flag = getopt(argc, argv, "A:B:bc:C:D:d:EeFf:h:ijk:lMm:N:nOo:Pp:r:S:sTt:v:W:y:-:")) != -1)
-=======
-	while ((flag = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:v:W:-:")) != -1)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	while ((flag = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lMm:N:nOo:Pp:r:S:sTt:v:W:y:-:")) != -1)
 	{
 		switch (flag)
 		{
@@ -4602,6 +4345,10 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 			case 'y':
 
 				/*
+				 * GPDB_95_MERGE_FIXME: This was deleted in postgres 9.0.
+				 * (commit e710b65c1c) Do we still need it?
+				 */
+				/*
 				 * y - special flag passed if backend was forked by a
 				 * postmaster.
 				 */
@@ -4735,7 +4482,6 @@ PostgresMain(int argc, char *argv[],
 	sigjmp_buf	local_sigjmp_buf;
 	volatile bool send_ready_for_query = true;
 
-<<<<<<< HEAD
 	MemoryAccountIdType postgresMainMemoryAccountId = MEMORY_OWNER_TYPE_Undefined;
 
 	/*
@@ -4745,29 +4491,9 @@ PostgresMain(int argc, char *argv[],
 	 */
 	main_tid = pthread_self();
 
-	/*
-	 * Initialize globals (already done if under postmaster, but not if
-	 * standalone).
-	 */
-	if (!IsUnderPostmaster)
-	{
-		MyProcPid = getpid();
-
-		MyStartTime = time(NULL);
-
-		/*
-		 * Initialize random() for the first time, like PostmasterMain()
-		 * would.  In a regular IsUnderPostmaster backend, BackendRun()
-		 * computes a high-entropy seed before any user query.  Fewer distinct
-		 * initial seeds can occur here.
-		 */
-		srandom((unsigned int) (MyProcPid ^ MyStartTime));
-	}
-=======
 	/* Initialize startup process environment if necessary. */
 	if (!IsUnderPostmaster)
 		InitStandaloneProcess(argv[0]);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #ifndef WIN32
 	PostmasterPriority = getpriority(PRIO_PROCESS, 0);
@@ -4950,13 +4676,7 @@ PostgresMain(int argc, char *argv[],
 	 * it inside InitPostgres() instead.  In particular, anything that
 	 * involves database access should be there, not here.
 	 */
-<<<<<<< HEAD
-	ereport(DEBUG3,
-			(errmsg_internal("InitPostgres")));
-	InitPostgres(dbname, InvalidOid, username, NULL);
-=======
 	InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * If the PostmasterContext is still around, recycle the space; we don't
@@ -5096,12 +4816,6 @@ PostgresMain(int argc, char *argv[],
 
 		/* Not reading from the client anymore. */
 		DoingCommandRead = false;
-<<<<<<< HEAD
-		DisableNotifyInterrupt();
-		DisableCatchupInterrupt();
-		DisableClientWaitTimeoutInterrupt();
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/* Make sure libpq is in a good state */
 		pq_comm_reset();
@@ -5155,7 +4869,6 @@ PostgresMain(int argc, char *argv[],
 		/* We don't have a transaction command open anymore */
 		xact_started = false;
 
-<<<<<<< HEAD
 		/* When QE error in creating extension, we must reset CurrentExtensionObject */
 		creating_extension = false;
 		CurrentExtensionObject = InvalidOid;
@@ -5163,8 +4876,6 @@ PostgresMain(int argc, char *argv[],
 		/* Inform Vmem tracker that the current process has finished cleanup */
 		RunawayCleaner_RunawayCleanupDoneForProcess(false /* ignoredCleanup */);
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		/*
 		 * If an error occurred while we were reading a message from the
 		 * client, we have potentially lost track of where the previous
