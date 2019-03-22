@@ -155,7 +155,7 @@ DefineCollation(List *names, List *parameters, bool if_not_exists)
 							 false);	/* not quiet */
 
 	if (!OidIsValid(newoid))
-		return InvalidOid;
+		return InvalidObjectAddress;
 
 	ObjectAddressSet(address, CollationRelationId, newoid);
 
@@ -163,7 +163,6 @@ DefineCollation(List *names, List *parameters, bool if_not_exists)
 	CommandCounterIncrement();
 	(void) pg_newlocale_from_collation(newoid);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		DefineStmt * stmt = makeNode(DefineStmt);
@@ -181,10 +180,7 @@ DefineCollation(List *names, List *parameters, bool if_not_exists)
 		                            NULL);
 	}
 
-	return newoid;
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
