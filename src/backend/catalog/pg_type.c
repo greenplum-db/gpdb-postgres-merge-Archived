@@ -38,7 +38,6 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 
 /*
@@ -73,10 +72,6 @@ add_type_encoding(Oid typid, Datum typoptions)
 
 	heap_close(pg_type_encoding_desc, RowExclusiveLock);
 }
-=======
-/* Potentially set by pg_upgrade_support functions */
-Oid			binary_upgrade_next_pg_type_oid = InvalidOid;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* ----------------------------------------------------------------
  *		TypeShellMake
@@ -166,21 +161,6 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	 */
 	tup = heap_form_tuple(tupDesc, values, nulls);
 
-<<<<<<< HEAD
-=======
-	/* Use binary-upgrade override for pg_type.oid? */
-	if (IsBinaryUpgrade)
-	{
-		if (!OidIsValid(binary_upgrade_next_pg_type_oid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("pg_type OID value not set when in binary upgrade mode")));
-
-		HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
-		binary_upgrade_next_pg_type_oid = InvalidOid;
-	}
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/*
 	 * insert the tuple in the relation and get the tuple's oid.
 	 */
@@ -494,20 +474,6 @@ TypeCreate(Oid newTypeOid,
 		/* Force the OID if requested by caller */
 		if (OidIsValid(newTypeOid))
 			HeapTupleSetOid(tup, newTypeOid);
-<<<<<<< HEAD
-=======
-		/* Use binary-upgrade override for pg_type.oid, if supplied. */
-		else if (IsBinaryUpgrade)
-		{
-			if (!OidIsValid(binary_upgrade_next_pg_type_oid))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("pg_type OID value not set when in binary upgrade mode")));
-
-			HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
-			binary_upgrade_next_pg_type_oid = InvalidOid;
-		}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		/* else allow system to assign oid */
 
 		typeObjectId = simple_heap_insert(pg_type_desc, tup);

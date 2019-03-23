@@ -605,22 +605,6 @@ AggregateCreate(const char *aggName,
 	 * aggregate.  (This could fail if there's already a conflicting entry.)
 	 */
 
-<<<<<<< HEAD
-	procOid = ProcedureCreate(aggName,
-							  aggNamespace,
-							  false,	/* no replacement */
-							  false,	/* doesn't return a set */
-							  finaltype,		/* returnType */
-							  GetUserId(),		/* proowner */
-							  INTERNALlanguageId,		/* languageObjectId */
-							  InvalidOid,		/* no validator */
-							  InvalidOid,		/* no describe function */
-							  "aggregate_dummy",		/* placeholder proc */
-							  NULL,		/* probin */
-							  true,		/* isAgg */
-							  false,	/* isWindowFunc */
-							  false,	/* security invoker (currently not
-=======
 	myself = ProcedureCreate(aggName,
 							 aggNamespace,
 							 false,		/* no replacement */
@@ -629,29 +613,17 @@ AggregateCreate(const char *aggName,
 							 GetUserId(),		/* proowner */
 							 INTERNALlanguageId,		/* languageObjectId */
 							 InvalidOid,		/* no validator */
+							 InvalidOid,		/* no describe function */
 							 "aggregate_dummy", /* placeholder proc */
 							 NULL,		/* probin */
 							 true,		/* isAgg */
 							 false,		/* isWindowFunc */
 							 false,		/* security invoker (currently not
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 										 * definable for agg) */
 							 false,		/* isLeakProof */
 							 false,		/* isStrict (not needed for agg) */
 							 PROVOLATILE_IMMUTABLE,		/* volatility (not
 														 * needed for agg) */
-<<<<<<< HEAD
-							  parameterTypes,	/* paramTypes */
-							  allParameterTypes,		/* allParamTypes */
-							  parameterModes,	/* parameterModes */
-							  parameterNames,	/* parameterNames */
-							  parameterDefaults,		/* parameterDefaults */
-							  PointerGetDatum(NULL),	/* proconfig */
-							  1,				/* procost */
-							  0,				/* prorows */
-							  PRODATAACCESS_NONE,		/* prodataaccess */
-							  PROEXECLOCATION_ANY);		/* proexeclocation */
-=======
 							 parameterTypes,	/* paramTypes */
 							 allParameterTypes, /* allParamTypes */
 							 parameterModes,	/* parameterModes */
@@ -660,9 +632,10 @@ AggregateCreate(const char *aggName,
 							 PointerGetDatum(NULL),		/* trftypes */
 							 PointerGetDatum(NULL),		/* proconfig */
 							 1, /* procost */
-							 0);	/* prorows */
+							 0, /* prorows */
+							 PRODATAACCESS_NONE,		/* prodataaccess */
+							 PROEXECLOCATION_ANY);		/* proexeclocation */
 	procOid = myself.objectId;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Okay to create the pg_aggregate entry.

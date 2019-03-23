@@ -3770,17 +3770,13 @@ InitTempTableNamespace(void)
 				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
 				 errmsg("cannot create temporary tables during recovery")));
 
-<<<<<<< HEAD
-	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", session_suffix);
-=======
 	/* Parallel workers can't create temporary tables, either. */
 	if (IsParallelWorker())
 		ereport(ERROR,
 				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
 				 errmsg("cannot create temporary tables in parallel mode")));
 
-	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", MyBackendId);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", session_suffix);
 
 	namespaceId = get_namespace_oid(namespaceName, true);
 

@@ -30,11 +30,8 @@
 #include "catalog/pg_proc_fn.h"
 #include "catalog/pg_transform.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "catalog/pg_rewrite.h"
-=======
 #include "commands/defrem.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "executor/functions.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
@@ -701,7 +698,6 @@ ProcedureCreate(const char *procedureName,
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
-<<<<<<< HEAD
 	/* dependency on describe function */
 	if (OidIsValid(describeFuncOid))
 	{
@@ -710,7 +706,8 @@ ProcedureCreate(const char *procedureName,
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 		addProcCallback(retval, describeFuncOid, PROMETHOD_DESCRIBE);
-=======
+	}
+
 	/* dependency on transform used by return type, if any */
 	if ((trfid = get_transform_oid(returnType, languageObjectId, true)))
 	{
@@ -718,7 +715,6 @@ ProcedureCreate(const char *procedureName,
 		referenced.objectId = trfid;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/* dependency on parameter types */

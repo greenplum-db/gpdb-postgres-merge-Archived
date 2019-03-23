@@ -928,7 +928,14 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 				address.objectId = get_ts_config_oid(objname, missing_ok);
 				address.objectSubId = 0;
 				break;
-<<<<<<< HEAD
+			case OBJECT_USER_MAPPING:
+				address = get_object_address_usermapping(objname, objargs,
+														 missing_ok);
+				break;
+			case OBJECT_DEFACL:
+				address = get_object_address_defacl(objname, objargs,
+													missing_ok);
+				break;
 		   case OBJECT_RESQUEUE:
 				address.classId = ResQueueRelationId;
 				address.objectId = get_resqueue_oid(NameListToString(objname), false);
@@ -938,16 +945,6 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 				address.classId = ResGroupRelationId;
 				address.objectId = GetResGroupIdForName(NameListToString(objname));
 				address.objectSubId = 0;
-=======
-			case OBJECT_USER_MAPPING:
-				address = get_object_address_usermapping(objname, objargs,
-														 missing_ok);
-				break;
-			case OBJECT_DEFACL:
-				address = get_object_address_defacl(objname, objargs,
-													missing_ok);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-				break;
 			default:
 				elog(ERROR, "unrecognized objtype: %d", (int) objtype);
 				/* placate compiler, in case it thinks elog might return */
@@ -3218,17 +3215,6 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
-<<<<<<< HEAD
-		case OCLASS_EXTPROTOCOL:
-			{
-				appendStringInfo(&buffer, _("protocol %s"),
-								 ExtProtocolGetNameByOid(object->objectId));
-				break;
-			}
-		case OCLASS_COMPRESSION:
-			{
-				elog(NOTICE, "NOT YET IMPLEMENTED");
-=======
 		case OCLASS_POLICY:
 			{
 				Relation	policy_rel;
@@ -3261,7 +3247,19 @@ getObjectDescription(const ObjectAddress *object)
 
 				systable_endscan(sscan);
 				heap_close(policy_rel, AccessShareLock);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+				break;
+			}
+
+		case OCLASS_EXTPROTOCOL:
+			{
+				appendStringInfo(&buffer, _("protocol %s"),
+								 ExtProtocolGetNameByOid(object->objectId));
+				break;
+			}
+
+		case OCLASS_COMPRESSION:
+			{
+				elog(NOTICE, "NOT YET IMPLEMENTED");
 				break;
 			}
 
@@ -4056,13 +4054,6 @@ getObjectIdentityParts(const ObjectAddress *object,
 					elog(ERROR, "cache lookup failed for conversion %u",
 						 object->objectId);
 				conForm = (Form_pg_conversion) GETSTRUCT(conTup);
-<<<<<<< HEAD
-				schema = get_namespace_name(conForm->connamespace);
-				appendStringInfoString(&buffer,
-								quote_qualified_identifier(schema,
-														   NameStr(conForm->conname)));
-				pfree(schema);
-=======
 				schema = get_namespace_name_or_temp(conForm->connamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
@@ -4070,7 +4061,6 @@ getObjectIdentityParts(const ObjectAddress *object,
 				if (objname)
 					*objname = list_make2(schema,
 										  pstrdup(NameStr(conForm->conname)));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				ReleaseSysCache(conTup);
 				break;
 			}
@@ -4571,9 +4561,6 @@ getObjectIdentityParts(const ObjectAddress *object,
 				else
 					usename = "public";
 
-<<<<<<< HEAD
-				appendStringInfo(&buffer, "%s on server %s", usename,
-=======
 				if (objname)
 				{
 					*objname = list_make1(pstrdup(usename));
@@ -4582,7 +4569,6 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 				appendStringInfo(&buffer, "%s on server %s",
 								 quote_identifier(usename),
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 								 srv->servername);
 				break;
 			}

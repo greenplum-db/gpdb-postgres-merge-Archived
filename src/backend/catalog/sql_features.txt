@@ -570,14 +570,8 @@ X056	Advanced table mapping: data mapping			YES
 X057	Advanced table mapping: metadata mapping			YES	
 X058	Advanced table mapping: base64 encoding of binary strings			YES	
 X059	Advanced table mapping: hex encoding of binary strings			YES	
-<<<<<<< HEAD
-X060	XMLParse: Character string input and CONTENT option			YES	
-X061	XMLParse: Character string input and DOCUMENT option			YES	
-X062	XMLParse: explicit WHITESPACE option			YES	
-=======
 X060	XMLParse: character string input and CONTENT option			YES	
 X061	XMLParse: character string input and DOCUMENT option			YES	
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 X065	XMLParse: BLOB input and CONTENT option			NO	
 X066	XMLParse: BLOB input and DOCUMENT option			NO	
 X068	XMLSerialize: BOM			NO	

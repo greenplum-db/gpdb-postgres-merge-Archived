@@ -74,11 +74,8 @@ extern Oid index_create(Relation heapRelation,
 			 bool skip_build,
 			 bool concurrent,
 			 bool is_internal,
-<<<<<<< HEAD
+			 bool if_not_exists,
 			 Oid *constraintId);
-=======
-			 bool if_not_exists);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 extern ObjectAddress index_constraint_create(Relation heapRelation,
 						Oid indexRelationId,

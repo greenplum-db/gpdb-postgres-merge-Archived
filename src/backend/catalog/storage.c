@@ -541,11 +541,7 @@ AtSubAbort_smgr(void)
 }
 
 void
-<<<<<<< HEAD
-smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
-=======
 smgr_redo(XLogReaderState *record)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;

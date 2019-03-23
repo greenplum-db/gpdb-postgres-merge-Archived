@@ -665,7 +665,6 @@ CREATE VIEW pg_stat_replication AS
     WHERE S.usesysid = U.oid AND
             S.pid = W.pid;
 
-<<<<<<< HEAD
 CREATE FUNCTION gp_stat_get_master_replication() RETURNS SETOF RECORD AS
 $$
     SELECT pg_catalog.gp_execution_segment() AS gp_segment_id, *
@@ -718,7 +717,7 @@ CREATE VIEW gp_stat_replication AS
          replay_location pg_lsn, sync_priority integer, sync_state text)
          ON G.gp_segment_id = R.gp_segment_id
     );
-=======
+
 CREATE VIEW pg_stat_ssl AS
     SELECT
             S.pid,
@@ -729,7 +728,6 @@ CREATE VIEW pg_stat_ssl AS
             S.sslcompression AS compression,
             S.sslclientdn AS clientdn
     FROM pg_stat_get_activity(NULL) AS S;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 CREATE VIEW pg_replication_slots AS
     SELECT
@@ -1428,7 +1426,14 @@ LANGUAGE INTERNAL
 STRICT IMMUTABLE
 AS 'make_interval';
 
-<<<<<<< HEAD
+CREATE OR REPLACE FUNCTION
+  jsonb_set(jsonb_in jsonb, path text[] , replacement jsonb,
+            create_if_missing boolean DEFAULT true)
+RETURNS jsonb
+LANGUAGE INTERNAL
+STRICT IMMUTABLE
+AS 'jsonb_set';
+
 -- pg_tablespace_location wrapper functions to see Greenplum cluster-wide tablespace locations
 CREATE FUNCTION gp_tablespace_segment_location (IN tblspc_oid oid, OUT gp_segment_id int, OUT tblspc_loc text)
 AS 'SELECT pg_catalog.gp_execution_segment() as gp_segment_id, * FROM pg_catalog.pg_tablespace_location($1)'
@@ -1441,12 +1446,3 @@ AS
    UNION ALL
    SELECT pg_catalog.gp_execution_segment() as gp_segment_id, * FROM pg_catalog.pg_tablespace_location($1)'
 LANGUAGE SQL EXECUTE ON MASTER;
-=======
-CREATE OR REPLACE FUNCTION
-  jsonb_set(jsonb_in jsonb, path text[] , replacement jsonb,
-            create_if_missing boolean DEFAULT true)
-RETURNS jsonb
-LANGUAGE INTERNAL
-STRICT IMMUTABLE
-AS 'jsonb_set';
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

@@ -779,11 +779,8 @@ index_create(Relation heapRelation,
 			 bool skip_build,
 			 bool concurrent,
 			 bool is_internal,
-<<<<<<< HEAD
+			 bool if_not_exists,
 			 Oid *constraintId)
-=======
-			 bool if_not_exists)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	Oid			heapRelationId = RelationGetRelid(heapRelation);
 	Relation	pg_class;
@@ -897,30 +894,11 @@ index_create(Relation heapRelation,
 	 */
 	if (!OidIsValid(indexRelationId))
 	{
-<<<<<<< HEAD
 		if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
 			indexRelationId = GetPreassignedOidForRelation(namespaceId, indexRelationName);
 
 		if (!OidIsValid(indexRelationId))
 			indexRelationId = GetNewOid(pg_class);
-=======
-		/* Use binary-upgrade override for pg_class.oid/relfilenode? */
-		if (IsBinaryUpgrade)
-		{
-			if (!OidIsValid(binary_upgrade_next_index_pg_class_oid))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("pg_class index OID value not set when in binary upgrade mode")));
-
-			indexRelationId = binary_upgrade_next_index_pg_class_oid;
-			binary_upgrade_next_index_pg_class_oid = InvalidOid;
-		}
-		else
-		{
-			indexRelationId =
-				GetNewRelFileNode(tableSpaceId, pg_class, relpersistence);
-		}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/*
@@ -4026,7 +4004,6 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 		heap_close(pg_index, RowExclusiveLock);
 	}
 
-<<<<<<< HEAD
 	{
 		bool	 doIt	= true;
 		char	*subtyp = "REINDEX";
@@ -4064,7 +4041,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 							   "VACUUM", subtyp
 					);
 	}
-=======
+
 	/* Log what we did */
 	if (options & REINDEXOPT_VERBOSE)
 		ereport(INFO,
@@ -4072,7 +4049,6 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 						get_rel_name(indexId)),
 				 errdetail("%s.",
 						   pg_rusage_show(&ru0))));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Close rels, but keep locks */
 	index_close(iRel, NoLock);
