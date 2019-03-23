@@ -21,11 +21,8 @@
 #include "access/multixact.h"
 #include "access/transam.h"
 #include "access/xact.h"
-<<<<<<< HEAD
-=======
 #include "access/xlog.h"
 #include "access/xloginsert.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "access/xlogutils.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
@@ -260,18 +257,12 @@ DefineSequence(CreateSeqStmt *seq)
 	stmt->options = NIL;
 	stmt->oncommit = ONCOMMIT_NOOP;
 	stmt->tablespacename = NULL;
-<<<<<<< HEAD
-	stmt->if_not_exists = false;
+	stmt->if_not_exists = seq->if_not_exists;
 	stmt->relKind = RELKIND_SEQUENCE;
 	stmt->ownerid = GetUserId();
 
-	seqoid = DefineRelation(stmt, RELKIND_SEQUENCE, seq->ownerId, RELSTORAGE_HEAP, false, true, NULL);
-=======
-	stmt->if_not_exists = seq->if_not_exists;
-
-	address = DefineRelation(stmt, RELKIND_SEQUENCE, seq->ownerId, NULL);
+	address = DefineRelation(stmt, RELKIND_SEQUENCE, seq->ownerId, NULL, RELSTORAGE_HEAP, false, true, NULL);
 	seqoid = address.objectId;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	Assert(seqoid != InvalidOid);
 
 	/*
@@ -469,14 +460,11 @@ AlterSequence(AlterSeqStmt *stmt)
 	Form_pg_sequence seq;
 	FormData_pg_sequence new;
 	List	   *owned_by;
-<<<<<<< HEAD
+	ObjectAddress address;
 	bool        bSeqIsTemp = false;
 	int			numopts;
 	char	   *alter_subtype = "";		/* metadata tracking: kind of
 										   redundant to say "role" */
-=======
-	ObjectAddress address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Open and lock sequence. */
 	relid = RangeVarGetRelid(stmt->sequence, AccessShareLock, stmt->missing_ok);
@@ -669,12 +657,8 @@ nextval_internal(Oid relid, bool called_from_dispatcher)
 	/* open and AccessShareLock sequence */
 	init_sequence(relid, &elm, &seqrel);
 
-<<<<<<< HEAD
-	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
-=======
 	if (pg_class_aclcheck(elm->relid, GetUserId(),
 						  ACL_USAGE | ACL_UPDATE) != ACLCHECK_OK)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied for sequence %s",
@@ -684,10 +668,6 @@ nextval_internal(Oid relid, bool called_from_dispatcher)
 	if (!seqrel->rd_islocaltemp)
 		PreventCommandIfReadOnly("nextval()");
 
-<<<<<<< HEAD
-	if (elm->last != elm->cached 		/* some numbers were cached */
-		&& !called_from_dispatcher)
-=======
 	/*
 	 * Forbid this during parallel operation because, to make it work, the
 	 * cooperating backends would need to share the backend-local cached
@@ -695,8 +675,8 @@ nextval_internal(Oid relid, bool called_from_dispatcher)
 	 */
 	PreventCommandIfParallelMode("nextval()");
 
-	if (elm->last != elm->cached)		/* some numbers were cached */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	if (elm->last != elm->cached 		/* some numbers were cached */
+		&& !called_from_dispatcher)
 	{
 		Assert(elm->last_valid);
 		Assert(elm->increment != 0);
@@ -842,17 +822,10 @@ nextval_internal(Oid relid, bool called_from_dispatcher)
 
 	/*
 	 * If something needs to be WAL logged, acquire an xid, so this
-<<<<<<< HEAD
-	 * transaction's commit will trigger a WAL flush and wait for
-	 * syncrep. It's sufficient to ensure the toplevel transaction has a xid,
-	 * no need to assign xids subxacts, that'll already trigger a appropriate
-	 * wait.  (Have to do that here, so we're outside the critical section)
-=======
 	 * transaction's commit will trigger a WAL flush and wait for syncrep.
 	 * It's sufficient to ensure the toplevel transaction has an xid, no need
 	 * to assign xids subxacts, that'll already trigger an appropriate wait.
 	 * (Have to do that here, so we're outside the critical section)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
 	if (logit && RelationNeedsWAL(seqrel))
 		GetTopTransactionId();
@@ -1745,11 +1718,7 @@ pg_sequence_parameters(PG_FUNCTION_ARGS)
 
 
 void
-<<<<<<< HEAD
-seq_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
-=======
 seq_redo(XLogReaderState *record)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
