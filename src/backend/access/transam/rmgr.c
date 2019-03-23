@@ -8,11 +8,7 @@
 #include "postgres.h"
 
 #include "access/clog.h"
-<<<<<<< HEAD
-#include "access/distributedlog.h"
-=======
 #include "access/commit_ts.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "access/gin.h"
 #include "access/gist_private.h"
 #include "access/hash.h"
@@ -32,6 +28,7 @@
 #include "utils/relmapper.h"
 
 #include "access/bitmap.h"
+#include "access/distributedlog.h"
 #include "cdb/cdbappendonlyxlog.h"
 
 
