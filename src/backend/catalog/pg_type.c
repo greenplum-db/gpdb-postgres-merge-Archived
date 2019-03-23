@@ -215,13 +215,8 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
  *		otherwise we use exactly that OID.
  * ----------------------------------------------------------------
  */
-<<<<<<< HEAD
-Oid
-TypeCreateWithOptions(Oid newTypeOid,
-=======
 ObjectAddress
 TypeCreate(Oid newTypeOid,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		   const char *typeName,
 		   Oid typeNamespace,
 		   Oid relationOid,		/* only for relation rowtypes */
@@ -517,82 +512,7 @@ TypeCreate(Oid newTypeOid,
 	 */
 	heap_close(pg_type_desc, RowExclusiveLock);
 
-<<<<<<< HEAD
-	/* now pg_type_encoding */
-	if (DatumGetPointer(typoptions) != NULL)
-		add_type_encoding(typeObjectId, typoptions);
-
-	return typeObjectId;
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-}
-
-Oid
-TypeCreate(Oid newTypeOid,
-		   const char *typeName,
-		   Oid typeNamespace,
-		   Oid relationOid,
-		   char relationKind,
-		   Oid ownerId,
-		   int16 internalSize,
-		   char typeType,
-		   char typeCategory,
-		   bool typePreferred,
-		   char typDelim,
-		   Oid inputProcedure,
-		   Oid outputProcedure,
-		   Oid receiveProcedure,
-		   Oid sendProcedure,
-		   Oid typmodinProcedure,
-		   Oid typmodoutProcedure,
-		   Oid analyzeProcedure,
-		   Oid elementType,
-		   bool isImplicitArray,
-		   Oid arrayType,
-		   Oid baseType,
-		   const char *defaultTypeValue,
-		   char *defaultTypeBin,
-		   bool passedByValue,
-		   char alignment,
-		   char storage,
-		   int32 typeMod,
-		   int32 typNDims,
-		   bool typeNotNull,
-		   Oid typeCollation)
-{
-	return TypeCreateWithOptions(newTypeOid,
-		   typeName,
-		   typeNamespace,
-		   relationOid,
-		   relationKind,
-		   ownerId,
-		   internalSize,
-		   typeType,
-		   typeCategory,
-		   typePreferred,
-		   typDelim,
-		   inputProcedure,
-		   outputProcedure,
-		   receiveProcedure,
-		   sendProcedure,
-		   typmodinProcedure,
-		   typmodoutProcedure,
-		   analyzeProcedure,
-		   elementType,
-		   isImplicitArray,
-		   arrayType,
-		   baseType,
-		   defaultTypeValue,
-		   defaultTypeBin,
-		   passedByValue,
-		   alignment,
-		   storage,
-		   typeMod,
-		   typNDims,
-		   typeNotNull,
-		   typeCollation,
-		   (Datum) 0);
 }
 
 /*

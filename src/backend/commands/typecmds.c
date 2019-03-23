@@ -677,13 +677,8 @@ DefineType(List *names, List *parameters)
 	 * types) in ArrayType and in composite types in DatumTupleFields.  This
 	 * oid must be preserved by binary upgrades.
 	 */
-<<<<<<< HEAD
-	typoid =
-		TypeCreateWithOptions(InvalidOid,	/* no predetermined type OID */
-=======
 	address =
 		TypeCreate(InvalidOid,	/* no predetermined type OID */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				   typeName,	/* type name */
 				   typeNamespace,		/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
@@ -713,13 +708,12 @@ DefineType(List *names, List *parameters)
 				   -1,			/* typMod (Domains only) */
 				   0,			/* Array Dimensions of typbasetype */
 				   false,		/* Type NOT NULL */
-<<<<<<< HEAD
-				   collation,	/* type's collation */
-				   typoptions);
-=======
 				   collation);	/* type's collation */
 	Assert(typoid == address.objectId);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+	/* now pg_type_encoding */
+	if (DatumGetPointer(typoptions) != NULL)
+		add_type_encoding(address.objectId, typoptions);
 
 	/*
 	 * Create the array type that goes with it.
