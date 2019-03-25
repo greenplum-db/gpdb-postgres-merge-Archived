@@ -686,32 +686,15 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		128
 	},
-<<<<<<< HEAD
-	{ResGroupRelationId,		/* RESGROUPOID */
-		ResGroupOidIndexId,
-		1,
-		{
-			ObjectIdAttributeNumber,
-=======
 	{ReplicationOriginRelationId,		/* REPLORIGIDENT */
 		ReplicationOriginIdentIndex,
 		1,
 		{
 			Anum_pg_replication_origin_roident,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			0,
 			0,
 			0
 		},
-<<<<<<< HEAD
-		128
-	},
-	{ResGroupRelationId,		/* RESGROUPNAME */
-		ResGroupRsgnameIndexId,
-		1,
-		{
-			Anum_pg_resgroup_rsgname,
-=======
 		16
 	},
 	{ReplicationOriginRelationId,		/* REPLORIGNAME */
@@ -719,16 +702,33 @@ static const struct cachedesc cacheinfo[] = {
 		1,
 		{
 			Anum_pg_replication_origin_roname,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			0,
 			0,
 			0
 		},
-<<<<<<< HEAD
-		128
-=======
 		16
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	},
+	{ResGroupRelationId,		/* RESGROUPOID */
+		ResGroupOidIndexId,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		128
+	},
+	{ResGroupRelationId,		/* RESGROUPNAME */
+		ResGroupRsgnameIndexId,
+		1,
+		{
+			Anum_pg_resgroup_rsgname,
+			0,
+			0,
+			0
+		},
+		128
 	},
 	{RewriteRelationId,			/* RULERELNAME */
 		RewriteRelRulenameIndexId,
@@ -952,11 +952,6 @@ static const struct cachedesc cacheinfo[] = {
 	}
 };
 
-<<<<<<< HEAD
-=======
-#define SysCacheSize	((int) lengthof(cacheinfo))
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static CatCache *SysCache[SysCacheSize];
 
 static bool CacheInitialized = false;
@@ -986,12 +981,9 @@ InitCatalogCache(void)
 	int			cacheId;
 	int			i,
 				j;
-<<<<<<< HEAD
 
 	StaticAssertStmt(SysCacheSize == (int) lengthof(cacheinfo),
 					 "SysCacheSize does not match syscache.c's array");
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	Assert(!CacheInitialized);
 

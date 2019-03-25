@@ -477,18 +477,16 @@ lookup_type_cache(Oid type_id, int flags)
 			!array_element_has_hashing(typentry))
 			hash_proc = InvalidOid;
 
-<<<<<<< HEAD
 		/*
 		 * Likewise for hash_range.
 		 */
 		if (hash_proc == F_HASH_RANGE &&
 			!range_element_has_hashing(typentry))
 			hash_proc = InvalidOid;
-=======
+
 		/* Force update of hash_proc_finfo only if we're changing state */
 		if (typentry->hash_proc != hash_proc)
 			typentry->hash_proc_finfo.fn_oid = InvalidOid;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		typentry->hash_proc = hash_proc;
 		typentry->flags |= TCFLAGS_CHECKED_HASH_PROC;

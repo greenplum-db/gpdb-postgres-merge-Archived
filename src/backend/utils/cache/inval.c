@@ -518,15 +518,10 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 	(void) GetCurrentCommandId(true);
 
 	/*
-<<<<<<< HEAD
 	 * If the relation being invalidated is one of those cached in a relcache
 	 * init file, mark that we need to zap that file at commit. For simplicity
 	 * invalidations for a specific database always invalidate the shared file
 	 * as well.
-=======
-	 * If the relation being invalidated is one of those cached in the local
-	 * relcache init file, mark that we need to zap that file at commit.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
 	if (OidIsValid(dbId) && RelationIdIsInInitFile(relId))
 		transInvalInfo->RelcacheInitFileInval = true;

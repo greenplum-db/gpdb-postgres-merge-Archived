@@ -22,34 +22,20 @@
 #include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "bootstrap/bootstrap.h"
-<<<<<<< HEAD
-#include "catalog/heap.h"                   /* SystemAttributeDefinition() */
-#include "catalog/pg_aggregate.h"
-=======
 #include "catalog/namespace.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
-<<<<<<< HEAD
-#include "catalog/pg_inherits.h"
-#include "catalog/pg_inherits_fn.h"
-=======
 #include "catalog/pg_language.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_range.h"
 #include "catalog/pg_statistic.h"
-<<<<<<< HEAD
-#include "catalog/pg_trigger.h"
-=======
 #include "catalog/pg_transform.h"
 #include "catalog/pg_tablesample_method.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "catalog/pg_type.h"
 #include "cdb/cdbpartition.h"
 #include "commands/tablecmds.h"
@@ -71,6 +57,12 @@
 #include "utils/fmgroids.h"
 #include "utils/tqual.h"
 #include "funcapi.h"
+
+#include "catalog/heap.h"                   /* SystemAttributeDefinition() */
+#include "catalog/pg_aggregate.h"
+#include "catalog/pg_inherits.h"
+#include "catalog/pg_inherits_fn.h"
+#include "catalog/pg_trigger.h"
 
 /* Hook for plugins to get control in get_attavgwidth() */
 get_attavgwidth_hook_type get_attavgwidth_hook = NULL;
@@ -3677,7 +3669,32 @@ get_range_subtype(Oid rangeOid)
 		return InvalidOid;
 }
 
-<<<<<<< HEAD
+/*				---------- PG_TABLESAMPLE_METHOD CACHE ----------			 */
+
+/*
+ * get_tablesample_method_name - given a tablesample method OID,
+ * look up the name or NULL if not found
+ */
+char *
+get_tablesample_method_name(Oid tsmid)
+{
+	HeapTuple	tuple;
+
+	tuple = SearchSysCache1(TABLESAMPLEMETHODOID, ObjectIdGetDatum(tsmid));
+	if (HeapTupleIsValid(tuple))
+	{
+		Form_pg_tablesample_method tup =
+		(Form_pg_tablesample_method) GETSTRUCT(tuple);
+		char	   *result;
+
+		result = pstrdup(NameStr(tup->tsmname));
+		ReleaseSysCache(tuple);
+		return result;
+	}
+	else
+		return NULL;
+}
+
 /*
  * relation_exists
  *	  Is there a relation with the given oid
@@ -4376,30 +4393,4 @@ child_triggers(Oid relationId, int32 triggerType)
 	
 	/* no child triggers matching the given type */
 	return found;
-=======
-/*				---------- PG_TABLESAMPLE_METHOD CACHE ----------			 */
-
-/*
- * get_tablesample_method_name - given a tablesample method OID,
- * look up the name or NULL if not found
- */
-char *
-get_tablesample_method_name(Oid tsmid)
-{
-	HeapTuple	tuple;
-
-	tuple = SearchSysCache1(TABLESAMPLEMETHODOID, ObjectIdGetDatum(tsmid));
-	if (HeapTupleIsValid(tuple))
-	{
-		Form_pg_tablesample_method tup =
-		(Form_pg_tablesample_method) GETSTRUCT(tuple);
-		char	   *result;
-
-		result = pstrdup(NameStr(tup->tsmname));
-		ReleaseSysCache(tuple);
-		return result;
-	}
-	else
-		return NULL;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
