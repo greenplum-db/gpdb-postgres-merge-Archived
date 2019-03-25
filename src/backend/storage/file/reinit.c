@@ -342,19 +342,11 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		FreeDir(dbspace_dir);
 
 		/*
-<<<<<<< HEAD
-		 * copy_file() above has already called pg_flush_data() on the
-		 * files it created. Now we need to fsync those files, because
-		 * a checkpoint won't do it for us while we're in recovery. We
-		 * do this in a separate pass to allow the kernel to perform
-		 * all the flushes (especially the metadata ones) at once.
-=======
 		 * copy_file() above has already called pg_flush_data() on the files
 		 * it created. Now we need to fsync those files, because a checkpoint
 		 * won't do it for us while we're in recovery. We do this in a
 		 * separate pass to allow the kernel to perform all the flushes
 		 * (especially the metadata ones) at once.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		 */
 		dbspace_dir = AllocateDir(dbspacedirname);
 		if (dbspace_dir == NULL)
@@ -394,11 +386,7 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 
 		FreeDir(dbspace_dir);
 
-<<<<<<< HEAD
 		fsync_fname(dbspacedirname, true);
-=======
-		fsync_fname((char *) dbspacedirname, true);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 }
 

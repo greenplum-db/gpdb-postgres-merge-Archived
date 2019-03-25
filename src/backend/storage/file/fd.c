@@ -318,10 +318,6 @@ static File OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError,
 										  const char *filename, bool makenameunique, bool create);
 static bool reserveAllocatedDesc(void);
 static int	FreeDesc(AllocateDesc *desc);
-<<<<<<< HEAD
-=======
-static struct dirent *ReadDirExtended(DIR *dir, const char *dirname, int elevel);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 static void AtProcExit_Files(int code, Datum arg);
 static void CleanupTempFiles(bool isProcExit);
@@ -338,14 +334,10 @@ static void walkdir(const char *path,
 #ifdef PG_FLUSH_DATA_WORKS
 static void pre_sync_fname(const char *fname, bool isdir, int elevel);
 #endif
-<<<<<<< HEAD
 static void datadir_fsync_fname(const char *fname, bool isdir, int elevel);
 
 static int	fsync_fname_ext(const char *fname, bool isdir, bool ignore_perm, int elevel);
 static int	fsync_parent_path(const char *fname, int elevel);
-=======
-static void fsync_fname_ext(const char *fname, bool isdir, int elevel);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 
 /*
@@ -2455,7 +2447,6 @@ ReadDir(DIR *dir, const char *dirname)
 }
 
 /*
-<<<<<<< HEAD
  * Alternate version of ReadDir that allows caller to specify the elevel
  * for any error report (whether it's reporting an initial failure of
  * AllocateDir or a subsequent directory read failure).
@@ -2465,12 +2456,6 @@ ReadDir(DIR *dir, const char *dirname)
  * though the directory contained no (more) entries.
  */
 struct dirent *
-=======
- * Alternate version that allows caller to specify the elevel for any
- * error report.  If elevel < ERROR, returns NULL on any error.
- */
-static struct dirent *
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 ReadDirExtended(DIR *dir, const char *dirname, int elevel)
 {
 	struct dirent *dent;
@@ -3103,17 +3088,10 @@ SyncDataDirectory(void)
 	 * in pg_tblspc, they'll get fsync'd twice.  That's not an expected case
 	 * so we don't worry about optimizing it.
 	 */
-<<<<<<< HEAD
 	walkdir(".", datadir_fsync_fname, false, LOG);
 	if (xlog_is_symlink)
 		walkdir("pg_xlog", datadir_fsync_fname, false, LOG);
 	walkdir("pg_tblspc", datadir_fsync_fname, true, LOG);
-=======
-	walkdir(".", fsync_fname_ext, false, LOG);
-	if (xlog_is_symlink)
-		walkdir("pg_xlog", fsync_fname_ext, false, LOG);
-	walkdir("pg_tblspc", fsync_fname_ext, true, LOG);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -3150,11 +3128,7 @@ walkdir(const char *path,
 
 	while ((de = ReadDirExtended(dir, path, elevel)) != NULL)
 	{
-<<<<<<< HEAD
 		char		subpath[MAXPGPATH * 2];
-=======
-		char		subpath[MAXPGPATH];
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		struct stat fst;
 		int			sret;
 
@@ -3164,11 +3138,7 @@ walkdir(const char *path,
 			strcmp(de->d_name, "..") == 0)
 			continue;
 
-<<<<<<< HEAD
 		snprintf(subpath, sizeof(subpath), "%s/%s", path, de->d_name);
-=======
-		snprintf(subpath, MAXPGPATH, "%s/%s", path, de->d_name);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		if (process_symlinks)
 			sret = stat(subpath, &fst);
@@ -3235,7 +3205,6 @@ pre_sync_fname(const char *fname, bool isdir, int elevel)
 
 #endif   /* PG_FLUSH_DATA_WORKS */
 
-<<<<<<< HEAD
 static void
 datadir_fsync_fname(const char *fname, bool isdir, int elevel)
 {
@@ -3256,17 +3225,6 @@ datadir_fsync_fname(const char *fname, bool isdir, int elevel)
  */
 static int
 fsync_fname_ext(const char *fname, bool isdir, bool ignore_perm, int elevel)
-=======
-/*
- * fsync_fname_ext -- Try to fsync a file or directory
- *
- * Ignores errors trying to open unreadable files, or trying to fsync
- * directories on systems where that isn't allowed/required, and logs other
- * errors at a caller-specified level.
- */
-static void
-fsync_fname_ext(const char *fname, bool isdir, int elevel)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	int			fd;
 	int			flags;
@@ -3284,7 +3242,6 @@ fsync_fname_ext(const char *fname, bool isdir, int elevel)
 	else
 		flags |= O_RDONLY;
 
-<<<<<<< HEAD
 	fd = OpenTransientFile((char *) fname, flags, 0);
 
 	/*
@@ -3302,22 +3259,6 @@ fsync_fname_ext(const char *fname, bool isdir, int elevel)
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m", fname)));
 		return -1;
-=======
-	/*
-	 * Open the file, silently ignoring errors about unreadable files (or
-	 * unsupported operations, e.g. opening a directory under Windows), and
-	 * logging others.
-	 */
-	fd = OpenTransientFile((char *) fname, flags, 0);
-	if (fd < 0)
-	{
-		if (errno == EACCES || (isdir && errno == EISDIR))
-			return;
-		ereport(elevel,
-				(errcode_for_file_access(),
-				 errmsg("could not open file \"%s\": %m", fname)));
-		return;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	returncode = pg_fsync(fd);
@@ -3327,7 +3268,6 @@ fsync_fname_ext(const char *fname, bool isdir, int elevel)
 	 * those errors. Anything else needs to be logged.
 	 */
 	if (returncode != 0 && !(isdir && errno == EBADF))
-<<<<<<< HEAD
 	{
 		int			save_errno;
 
@@ -3396,11 +3336,4 @@ void
 FileSetIsWorkfile(File file)
 {
 	VfdCache[file].fdstate |= FD_WORKFILE;
-=======
-		ereport(elevel,
-				(errcode_for_file_access(),
-				 errmsg("could not fsync file \"%s\": %m", fname)));
-
-	(void) CloseTransientFile(fd);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
