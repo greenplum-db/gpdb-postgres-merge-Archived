@@ -204,17 +204,13 @@ GetTransactionSnapshot(void)
 	/* First call in transaction? */
 	if (!FirstSnapshotSet)
 	{
-<<<<<<< HEAD
 		/*
 		 * Don't allow catalog snapshot to be older than xact snapshot.  Must
 		 * do this first to allow the following Assert to succeed.
 		 */
 		InvalidateCatalogSnapshot();
 
-		Assert(RegisteredSnapshots == 0);
-=======
 		Assert(pairingheap_is_empty(&RegisteredSnapshots));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		Assert(FirstXactSnapshot == NULL);
 
 		if (IsInParallelMode())
@@ -459,14 +455,10 @@ SetTransactionSnapshot(Snapshot sourcesnap, TransactionId sourcexid,
 	/* Caller should have checked this already */
 	Assert(!FirstSnapshotSet);
 
-<<<<<<< HEAD
 	/* Better do this to ensure following Assert succeeds. */
 	InvalidateCatalogSnapshot();
 
-	Assert(RegisteredSnapshots == 0);
-=======
 	Assert(pairingheap_is_empty(&RegisteredSnapshots));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	Assert(FirstXactSnapshot == NULL);
 	Assert(!HistoricSnapshotActive());
 
@@ -1607,20 +1599,6 @@ HistoricSnapshotGetTupleCids(void)
 	return tuplecid_data;
 }
 
-<<<<<<< HEAD
-
-DistributedSnapshotWithLocalMapping *
-GetCurrentDistributedSnapshotWithLocalMapping()
-{
-	if (!FirstSnapshotSet)
-		return NULL;
-
-	Assert(CurrentSnapshot);
-	if (CurrentSnapshot->haveDistribSnapshot)
-		return &CurrentSnapshot->distribSnapshotWithLocalMapping;
-
-	return NULL;
-=======
 /*
  * EstimateSnapshotSpace
  *		Returns the size need to store the given snapshot.
@@ -1770,5 +1748,17 @@ void
 RestoreTransactionSnapshot(Snapshot snapshot, void *master_pgproc)
 {
 	SetTransactionSnapshot(snapshot, InvalidTransactionId, master_pgproc);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+}
+
+DistributedSnapshotWithLocalMapping *
+GetCurrentDistributedSnapshotWithLocalMapping()
+{
+	if (!FirstSnapshotSet)
+		return NULL;
+
+	Assert(CurrentSnapshot);
+	if (CurrentSnapshot->haveDistribSnapshot)
+		return &CurrentSnapshot->distribSnapshotWithLocalMapping;
+
+	return NULL;
 }
