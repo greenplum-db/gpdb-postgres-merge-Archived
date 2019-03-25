@@ -2375,11 +2375,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 		Oid			save_relid = RelationGetRelid(relation);
 		bool		keep_tupdesc;
 		bool		keep_rules;
-<<<<<<< HEAD
-		bool		keep_policy;
-=======
+		bool		keep_gp_policy;
 		bool		keep_policies;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/* Build temporary entry, but don't link it into hashtable */
 		newrel = RelationBuildDesc(save_relid, false);
@@ -2409,11 +2406,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 
 		keep_tupdesc = equalTupleDescs(relation->rd_att, newrel->rd_att, true);
 		keep_rules = equalRuleLocks(relation->rd_rules, newrel->rd_rules);
-<<<<<<< HEAD
-		keep_policy = GpPolicyEqual(relation->rd_cdbpolicy, newrel->rd_cdbpolicy);
-=======
+		keep_gp_policy = GpPolicyEqual(relation->rd_cdbpolicy, newrel->rd_cdbpolicy);
 		keep_policies = equalRSDesc(relation->rd_rsdesc, newrel->rd_rsdesc);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/*
 		 * Perform swapping of the relcache entry contents.  Within this
@@ -2462,16 +2456,13 @@ RelationClearRelation(Relation relation, bool rebuild)
 			SWAPFIELD(RuleLock *, rd_rules);
 			SWAPFIELD(MemoryContext, rd_rulescxt);
 		}
-<<<<<<< HEAD
-		/* also preserve old policy if no logical change */
-		if (keep_policy)
+		/* also preserve old gp policy if no logical change */
+		if (keep_gp_policy)
 			SWAPFIELD(GpPolicy *, rd_cdbpolicy);
-=======
 		if (keep_policies)
 			SWAPFIELD(RowSecurityDesc *, rd_rsdesc);
 		/* toast OID override must be preserved */
 		SWAPFIELD(Oid, rd_toastoid);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		/* pgstat_info must be preserved */
 		SWAPFIELD(struct PgStat_TableStatus *, pgstat_info);
 
@@ -3177,13 +3168,8 @@ RelationBuildLocalRelation(const char *relname,
 			rel->rd_islocaltemp = false;
 			break;
 		case RELPERSISTENCE_TEMP:
-<<<<<<< HEAD
-			Assert(isTempOrToastNamespace(relnamespace));
-			rel->rd_backend = TempRelBackendId;
-=======
 			Assert(isTempOrTempToastNamespace(relnamespace));
-			rel->rd_backend = MyBackendId;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+			rel->rd_backend = TempRelBackendId;
 			rel->rd_islocaltemp = true;
 			break;
 		default:
@@ -3354,12 +3340,8 @@ RelationSetNewRelfilenode(Relation relation, char persistence,
 	newrnode.node = relation->rd_node;
 	newrnode.node.relNode = newrelfilenode;
 	newrnode.backend = relation->rd_backend;
-<<<<<<< HEAD
-	RelationCreateStorage(newrnode.node, relation->rd_rel->relpersistence,
+	RelationCreateStorage(newrnode.node, persistence,
 						  relation->rd_rel->relstorage);
-=======
-	RelationCreateStorage(newrnode.node, persistence);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	smgrclosenode(newrnode);
 
 	/*
@@ -4046,11 +4028,6 @@ CheckConstraintFetch(Relation relation)
 	heap_close(conrel, AccessShareLock);
 
 	if (found != ncheck)
-<<<<<<< HEAD
-		elog(ERROR,
-		     "found %d in pg_constraint, but pg_class reports %d constraint record(s) for rel %s",
-		     found, ncheck, RelationGetRelationName(relation));
-=======
 		elog(ERROR, "%d constraint record(s) missing for rel %s",
 			 ncheck - found, RelationGetRelationName(relation));
 
@@ -4069,7 +4046,6 @@ CheckConstraintCmp(const void *a, const void *b)
 	const ConstrCheck *cb = (const ConstrCheck *) b;
 
 	return strcmp(ca->ccname, cb->ccname);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 
@@ -5527,7 +5503,6 @@ write_item(const void *data, Size len, FILE *fp)
 
 /*
  * Determine whether a given relation (identified by OID) is one of the ones
-<<<<<<< HEAD
  * we should store in a relcache init file.
  *
  * We must cache all nailed rels, and for efficiency we should cache every rel
@@ -5535,24 +5510,10 @@ write_item(const void *data, Size len, FILE *fp)
  * of the latter. The special cases are relations where
  * RelationCacheInitializePhase2/3 chooses to nail for efficiency reasons, but
  * which do not support any syscache.
-=======
- * we should store in the local relcache init file.
- *
- * We must cache all nailed rels, and for efficiency we should cache every rel
- * that supports a syscache.  The former set is almost but not quite a subset
- * of the latter.  Currently, we must special-case TriggerRelidNameIndexId,
- * which RelationCacheInitializePhase3 chooses to nail for efficiency reasons,
- * but which does not support any syscache.
- *
- * Note: this function is currently never called for shared rels.  If it were,
- * we'd probably also need a special case for DatabaseNameIndexId, which is
- * critical but does not support a syscache.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 bool
 RelationIdIsInInitFile(Oid relationId)
 {
-<<<<<<< HEAD
 	if (relationId == TriggerRelidNameIndexId ||
 		relationId == DatabaseNameIndexId)
 	{
@@ -5560,11 +5521,6 @@ RelationIdIsInInitFile(Oid relationId)
 		 * If this Assert fails, we don't need the applicable special case
 		 * anymore.
 		 */
-=======
-	if (relationId == TriggerRelidNameIndexId)
-	{
-		/* If this Assert fails, we don't need this special case anymore. */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		Assert(!RelationSupportsSysCache(relationId));
 		return true;
 	}
