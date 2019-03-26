@@ -265,11 +265,6 @@ XLogCheckInvalidPages(void)
  *
  * Returns one of the following:
  *
-<<<<<<< HEAD
- * For historical reasons, instead of a ReadBufferMode argument, this only
- * supports RBM_ZERO_AND_LOCK (init == true) and RBM_NORMAL (init == false)
- * modes.
-=======
  *	BLK_NEEDS_REDO	- changes from the WAL record need to be applied
  *	BLK_DONE		- block doesn't need replaying
  *	BLK_RESTORED	- block was restored from a full-page image included in
@@ -304,23 +299,14 @@ XLogReadBufferForRedo(XLogReaderState *record, uint8 block_id,
 /*
  * Pin and lock a buffer referenced by a WAL record, for the purpose of
  * re-initializing it.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 Buffer
 XLogInitBufferForRedo(XLogReaderState *record, uint8 block_id)
 {
 	Buffer		buf;
 
-<<<<<<< HEAD
-	buf = XLogReadBufferExtended(rnode, MAIN_FORKNUM, blkno,
-								 init ? RBM_ZERO_AND_LOCK : RBM_NORMAL);
-	if (BufferIsValid(buf) && !init)
-		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-
-=======
 	XLogReadBufferForRedoExtended(record, block_id, RBM_ZERO_AND_LOCK, false,
 								  &buf);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	return buf;
 }
 
@@ -521,7 +507,6 @@ XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
 	return buffer;
 }
 
-<<<<<<< HEAD
 /*
  * If the AO segment file does not exist, log the relfilenode into the
  * invalid_page_table hash table using the segment file number as the block
@@ -537,8 +522,6 @@ XLogAOSegmentFile(RelFileNode rnode, uint32 segmentFileNum)
 	log_invalid_page(rnode, MAIN_FORKNUM, segmentFileNum, false);
 }
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * Struct actually returned by XLogFakeRelcacheEntry, though the declared
  * return type is Relation.

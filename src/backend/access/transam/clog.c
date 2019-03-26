@@ -841,11 +841,7 @@ WriteTruncateXlogRec(int pageno)
  * CLOG resource manager's routines
  */
 void
-<<<<<<< HEAD
-clog_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
-=======
 clog_redo(XLogReaderState *record)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 

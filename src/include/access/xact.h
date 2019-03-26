@@ -144,6 +144,7 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 #define XACT_XINFO_HAS_INVALS			(1U << 3)
 #define XACT_XINFO_HAS_TWOPHASE			(1U << 4)
 #define XACT_XINFO_HAS_ORIGIN			(1U << 5)
+#define XACT_XINFO_HAS_DISTRIB			(1U << 6)
 
 /*
  * Also stored in xinfo, these indicating a variety of additional actions that
@@ -198,6 +199,12 @@ typedef struct xl_xact_xinfo
 	 */
 	uint32		xinfo;
 } xl_xact_xinfo;
+
+typedef struct xl_xact_distrib
+{
+	TransactionId distrib_xid;
+	TimestampTz distrib_timestamp;
+} xl_xact_distrib;
 
 typedef struct xl_xact_dbinfo
 {

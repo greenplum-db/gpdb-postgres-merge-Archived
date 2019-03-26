@@ -664,72 +664,6 @@ ValidXLogRecord(XLogReaderState *state, XLogRecord *record, XLogRecPtr recptr)
 {
 	pg_crc32c	crc;
 
-<<<<<<< HEAD
-	/* First the rmgr data */
-	if (remaining < SizeOfXLogRecord + len)
-	{
-		/* ValidXLogRecordHeader() should've caught this already... */
-		report_invalid_record(state, "invalid record length at %X/%X",
-							  (uint32) (recptr >> 32), (uint32) recptr);
-		return false;
-	}
-	remaining -= SizeOfXLogRecord + len;
-	INIT_CRC32C(crc);
-	COMP_CRC32C(crc, XLogRecGetData(record), len);
-
-	/* Add in the backup blocks, if any */
-	blk = (char *) XLogRecGetData(record) + len;
-	for (i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
-	{
-		uint32		blen;
-
-		if (!(record->xl_info & XLR_BKP_BLOCK(i)))
-			continue;
-
-		if (remaining < sizeof(BkpBlock))
-		{
-			report_invalid_record(state,
-							  "invalid backup block size in record at %X/%X",
-								  (uint32) (recptr >> 32), (uint32) recptr);
-			return false;
-		}
-		memcpy(&bkpb, blk, sizeof(BkpBlock));
-
-		if (bkpb.hole_offset + bkpb.hole_length > BLCKSZ)
-		{
-			report_invalid_record(state,
-								  "incorrect hole size in record at %X/%X",
-								  (uint32) (recptr >> 32), (uint32) recptr);
-			return false;
-		}
-		blen = sizeof(BkpBlock) + BLCKSZ - bkpb.hole_length;
-
-		if (remaining < blen)
-		{
-			report_invalid_record(state,
-							  "invalid backup block size in record at %X/%X",
-								  (uint32) (recptr >> 32), (uint32) recptr);
-			return false;
-		}
-		remaining -= blen;
-		COMP_CRC32C(crc, blk, blen);
-		blk += blen;
-	}
-
-	/* Check that xl_tot_len agrees with our calculation */
-	if (remaining != 0)
-	{
-		report_invalid_record(state,
-							  "incorrect total length in record at %X/%X",
-							  (uint32) (recptr >> 32), (uint32) recptr);
-		return false;
-	}
-
-	/* Finally include the record header */
-	COMP_CRC32C(crc, (char *) record, offsetof(XLogRecord, xl_crc));
-	FIN_CRC32C(crc);
-
-=======
 	/* Calculate the CRC */
 	INIT_CRC32C(crc);
 	COMP_CRC32C(crc, ((char *) record) + SizeOfXLogRecord, record->xl_tot_len - SizeOfXLogRecord);
@@ -737,7 +671,6 @@ ValidXLogRecord(XLogReaderState *state, XLogRecord *record, XLogRecPtr recptr)
 	COMP_CRC32C(crc, (char *) record, offsetof(XLogRecord, xl_crc));
 	FIN_CRC32C(crc);
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	if (!EQ_CRC32C(record->xl_crc, crc))
 	{
 		report_invalid_record(state,
@@ -922,11 +855,6 @@ XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr)
 	XLogRecPtr	tmpRecPtr;
 	XLogRecPtr	found = InvalidXLogRecPtr;
 	XLogPageHeader header;
-<<<<<<< HEAD
-	XLogRecord *record;
-=======
-	int			readLen;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	char	   *errormsg;
 
 	Assert(!XLogRecPtrIsInvalid(RecPtr));

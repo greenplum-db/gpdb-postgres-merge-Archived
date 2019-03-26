@@ -6479,7 +6479,9 @@ XactLogCommitRecord(TimestampTz commit_time,
 					int nrels, RelFileNode *rels,
 					int nmsgs, SharedInvalidationMessage *msgs,
 					bool relcacheInval, bool forceSync,
-					TransactionId twophase_xid)
+					TransactionId twophase_xid,
+					TransactionId distrib_xid,
+					TimestampTz distrib_timestamp)
 {
 	xl_xact_commit xlrec;
 	xl_xact_xinfo xl_xinfo;
@@ -6489,6 +6491,7 @@ XactLogCommitRecord(TimestampTz commit_time,
 	xl_xact_invals xl_invals;
 	xl_xact_twophase xl_twophase;
 	xl_xact_origin xl_origin;
+	xl_xact_distrib xl_distrib;
 
 	uint8		info;
 
@@ -6555,6 +6558,19 @@ XactLogCommitRecord(TimestampTz commit_time,
 		xl_origin.origin_timestamp = replorigin_sesssion_origin_timestamp;
 	}
 
+	if (TransactionIdIsValid(distrib_xid))
+	{
+		/*
+		 * We assume that if we have a distributed xid, we should also have a
+		 * distributed timestamp.
+		 */
+		Assert(distrib_timestamp != NULL);
+
+		xl_xinfo.xinfo |= XACT_XINFO_HAS_DISTRIB;
+		xl_distrib.distrib_xid = distrib_xid;
+		xl_distrib.distrib_timestamp = distrib_timestamp;
+	}
+
 	if (xl_xinfo.xinfo != 0)
 		info |= XLOG_XACT_HAS_INFO;
 
@@ -6598,6 +6614,9 @@ XactLogCommitRecord(TimestampTz commit_time,
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_ORIGIN)
 		XLogRegisterData((char *) (&xl_origin), sizeof(xl_xact_origin));
+
+	if (xl_xinfo.xinfo & XACT_XINFO_HAS_DISTRIB)
+		XLogRegisterData((char *) (&xl_distrib), sizeof(xl_xact_distrib));
 
 	/* we allow filtering by xacts */
 	XLogIncludeOrigin();

@@ -52,13 +52,10 @@
  * memory.  At checkpoint time, after the value is known flushed in WAL, any
  * files that correspond to multixacts older than that value are removed.
  * (These files are also removed when a restartpoint is executed.)
-<<<<<<< HEAD
  *
  * When new multixactid values are to be created, care is taken that the
  * counter does not fall within the wraparound horizon considering the global
  * minimum value.
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  *
  * When new multixactid values are to be created, care is taken that the
  * counter does not fall within the wraparound horizon considering the global
@@ -179,11 +176,8 @@
 #define MULTIXACT_MEMBER_DANGER_THRESHOLD	\
 	(MaxMultiXactOffset - MaxMultiXactOffset / 4)
 
-<<<<<<< HEAD
 #define PreviousMultiXactId(xid) \
 	((xid) == FirstMultiXactId ? MaxMultiXactId : (xid) - 1)
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * Links to shared-memory data structures for MultiXact control
@@ -1199,7 +1193,6 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
  * and *members is set to a newly palloc'ed array of members.  It's the
  * caller's responsibility to free it when done with it.
  *
-<<<<<<< HEAD
  * from_pgupgrade must be passed as true if and only if only the multixact
  * corresponds to a value from a tuple that was locked in a 9.2-or-older
  * installation and later pg_upgrade'd (that is, the infomask is
@@ -1213,15 +1206,6 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
  * In all other cases, the passed multixact must be within the known valid
  * range, that is, greater to or equal than oldestMultiXactId, and less than
  * nextMXact.  Otherwise, an error is raised.
- */
-int
-GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
-					  bool from_pgupgrade)
-=======
- * Other border conditions, such as trying to read a value that's larger than
- * the value currently known as the next to assign, raise an error.  Previously
- * these also returned -1, but since this can lead to the wrong visibility
- * results, it is dangerous to do that.
  *
  * onlyLock must be set to true if caller is certain that the given multi
  * is used only to lock tuples; can be false without loss of correctness,
@@ -1230,8 +1214,7 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
  */
 int
 GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
-					  bool allow_old, bool onlyLock)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+					  bool from_pgupgrade, bool onlyLock)
 {
 	int			pageno;
 	int			prev_pageno;
@@ -1283,18 +1266,7 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	 *
 	 * An ID older than MultiXactState->oldestMultiXactId cannot possibly be
 	 * useful; it has already been removed, or will be removed shortly, by
-<<<<<<< HEAD
 	 * truncation.  If one is passed, an error is raised.
-=======
-	 * truncation.  Returning the wrong values could lead to an incorrect
-	 * visibility result.  However, to support pg_upgrade we need to allow an
-	 * empty set to be returned regardless, if the caller is willing to accept
-	 * it; the caller is expected to check that it's an allowed condition
-	 * (such as ensuring that the infomask bits set on the tuple are
-	 * consistent with the pg_upgrade scenario).  If the caller is expecting
-	 * this to be called only on recently created multis, then we raise an
-	 * error.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 *
 	 * Also, an ID >= nextMXact shouldn't ever be seen here; if it is seen, it
 	 * implies undetected ID wraparound has occurred.  This raises a hard
@@ -1475,42 +1447,6 @@ retry:
 }
 
 /*
-<<<<<<< HEAD
- * MultiXactHasRunningRemoteMembers
- *		Does the given multixact have still-live members from
- *		transactions other than our own?
- */
-bool
-MultiXactHasRunningRemoteMembers(MultiXactId multi)
-{
-	MultiXactMember *members;
-	int			nmembers;
-	int			i;
-
-	nmembers = GetMultiXactIdMembers(multi, &members, false);
-	if (nmembers <= 0)
-		return false;
-
-	for (i = 0; i < nmembers; i++)
-	{
-		/* not interested in our own members */
-		if (TransactionIdIsCurrentTransactionId(members[i].xid))
-			continue;
-
-		if (TransactionIdIsInProgress(members[i].xid))
-		{
-			pfree(members);
-			return true;
-		}
-	}
-
-	pfree(members);
-	return false;
-}
-
-/*
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * mxactMemberComparator
  *		qsort comparison function for MultiXactMember
  *
@@ -3126,7 +3062,6 @@ TruncateMultiXact(void)
 
 	SlruScanDirectory(MultiXactMemberCtl, SlruScanDirCbRemoveMembers, &range);
 
-<<<<<<< HEAD
 	/*
 	 * Now we can truncate MultiXactOffset.  We step back one multixact to
 	 * avoid passing a cutoff page that hasn't been created yet in the rare
@@ -3136,12 +3071,6 @@ TruncateMultiXact(void)
 	 */
 	SimpleLruTruncate(MultiXactOffsetCtl,
 				  MultiXactIdToOffsetPage(PreviousMultiXactId(oldestMXact)));
-=======
-	/* Now we can truncate MultiXactOffset */
-	SimpleLruTruncate(MultiXactOffsetCtl,
-					  MultiXactIdToOffsetPage(oldestMXact));
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Now, and only now, we can advance the stop point for multixact members.
@@ -3248,11 +3177,7 @@ WriteMZeroPageXlogRec(int pageno, uint8 info)
  * MULTIXACT resource manager's routines
  */
 void
-<<<<<<< HEAD
-multixact_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribute__((unused)), XLogRecord *record)
-=======
 multixact_redo(XLogReaderState *record)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 

@@ -689,8 +689,6 @@ XLogArchiveIsBusy(const char *xlog)
 }
 
 /*
-<<<<<<< HEAD
-=======
  * XLogArchiveIsReadyOrDone
  *
  * Check to see if an XLOG segment file has a .ready or .done file.
@@ -726,7 +724,6 @@ XLogArchiveIsReadyOrDone(const char *xlog)
 }
 
 /*
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * XLogArchiveIsReady
  *
  * Check to see if an XLOG segment file has an archive notification (.ready)
