@@ -603,13 +603,7 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTuple htup, CommandId curcid,
 
 				if (tuple->t_infomask & HEAP_XMAX_IS_MULTI)
 				{
-<<<<<<< HEAD
-					if (HEAP_LOCKED_UPGRADED(tuple->t_infomask))
-						return HeapTupleMayBeUpdated;
-					else if (MultiXactHasRunningRemoteMembers(xmax))
-=======
 					if (MultiXactIdIsRunning(xmax, true))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						return HeapTupleBeingUpdated;
 					else
 						return HeapTupleMayBeUpdated;
@@ -702,17 +696,7 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTuple htup, CommandId curcid,
 
 		if (HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask))
 		{
-<<<<<<< HEAD
-			if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple)))
-=======
-			/*
-			 * If it's only locked but neither EXCL_LOCK nor KEYSHR_LOCK is
-			 * set, it cannot possibly be running.  Otherwise need to check.
-			 */
-			if ((tuple->t_infomask & (HEAP_XMAX_EXCL_LOCK |
-									  HEAP_XMAX_KEYSHR_LOCK)) &&
-				MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple), true))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+			if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple), true))
 				return HeapTupleBeingUpdated;
 
 			SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
@@ -1407,15 +1391,8 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTuple htup, TransactionId Oldest
 				 * If it's a pre-pg_upgrade tuple, the multixact cannot
 				 * possibly be running; otherwise have to check.
 				 */
-<<<<<<< HEAD
 				if (!HEAP_LOCKED_UPGRADED(tuple->t_infomask) &&
 					MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple)))
-=======
-				if ((tuple->t_infomask & (HEAP_XMAX_EXCL_LOCK |
-										  HEAP_XMAX_KEYSHR_LOCK)) &&
-					MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple),
-										 true))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					return HEAPTUPLE_LIVE;
 				SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
 			}
@@ -1441,33 +1418,8 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTuple htup, TransactionId Oldest
 	{
 		TransactionId xmax = HeapTupleGetUpdateXid(tuple);
 
-<<<<<<< HEAD
 		/* already checked above */
 		Assert(!HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask));
-=======
-		if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple), false))
-		{
-			/* already checked above */
-			Assert(!HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask));
-
-			xmax = HeapTupleGetUpdateXid(tuple);
-
-			/* not LOCKED_ONLY, so it has to have an xmax */
-			Assert(TransactionIdIsValid(xmax));
-
-			if (TransactionIdIsInProgress(xmax))
-				return HEAPTUPLE_DELETE_IN_PROGRESS;
-			else if (TransactionIdDidCommit(xmax))
-				/* there are still lockers around -- can't return DEAD here */
-				return HEAPTUPLE_RECENTLY_DEAD;
-			/* updating transaction aborted */
-			return HEAPTUPLE_LIVE;
-		}
-
-		Assert(!(tuple->t_infomask & HEAP_XMAX_COMMITTED));
-
-		xmax = HeapTupleGetUpdateXid(tuple);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/* not LOCKED_ONLY, so it has to have an xmax */
 		Assert(TransactionIdIsValid(xmax));
