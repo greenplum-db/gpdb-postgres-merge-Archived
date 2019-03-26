@@ -140,17 +140,14 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogReaderState *recor
 		case RM_GIST_ID:
 		case RM_SEQ_ID:
 		case RM_SPGIST_ID:
-<<<<<<< HEAD
+		case RM_BRIN_ID:
+		case RM_COMMIT_TS_ID:
+		case RM_REPLORIGIN_ID:
 		case RM_BITMAP_ID:
 		case RM_DISTRIBUTEDLOG_ID:
 			/* just deal with xid, and done */
 			ReorderBufferProcessXid(ctx->reorder, record->xl_xid,
 									buf.origptr);
-=======
-		case RM_BRIN_ID:
-		case RM_COMMIT_TS_ID:
-		case RM_REPLORIGIN_ID:
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			break;
 
 		case RM_APPEND_ONLY_ID:

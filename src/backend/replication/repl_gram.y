@@ -174,17 +174,15 @@ base_backup_opt:
 				  $$ = makeDefElem("max_rate",
 								   (Node *)makeInteger($2));
 				}
-<<<<<<< HEAD
-			| K_EXCLUDE SCONST
-				{
-				  $$ = makeDefElem("exclude",
-						  (Node *) makeString($2));
-=======
 			| K_TABLESPACE_MAP
 				{
 				  $$ = makeDefElem("tablespace_map",
 								   (Node *)makeInteger(TRUE));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+				}
+			| K_EXCLUDE SCONST
+				{
+				  $$ = makeDefElem("exclude",
+						  (Node *) makeString($2));
 				}
 			;
 

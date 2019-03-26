@@ -152,11 +152,7 @@ StartupDecodingContext(List *output_plugin_options,
 	 * replication slots.
 	 *
 	 * We can only do so if we're outside of a transaction (i.e. the case when
-<<<<<<< HEAD
-	 * streaming changes via walsender), otherwise a already setup
-=======
 	 * streaming changes via walsender), otherwise an already setup
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 * snapshot/xid would end up being ignored. That's not a particularly
 	 * bothersome restriction since the SQL interface can't be used for
 	 * streaming anyway.
