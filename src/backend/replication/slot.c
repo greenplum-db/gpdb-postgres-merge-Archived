@@ -40,10 +40,7 @@
 #include <sys/stat.h>
 
 #include "access/transam.h"
-<<<<<<< HEAD
 #include "access/xlog_internal.h"
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "common/string.h"
 #include "miscadmin.h"
 #include "replication/slot.h"
@@ -83,11 +80,7 @@ typedef struct ReplicationSlotOnDisk
 /* size of the part covered by the checksum */
 #define SnapBuildOnDiskChecksummedSize \
 	sizeof(ReplicationSlotOnDisk) - SnapBuildOnDiskNotChecksummedSize
-<<<<<<< HEAD
-/* size of the slot data that is version dependant */
-=======
 /* size of the slot data that is version dependent */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #define ReplicationSlotOnDiskV2Size \
 	sizeof(ReplicationSlotOnDisk) - ReplicationSlotOnDiskConstantSize
 
@@ -203,11 +196,7 @@ ReplicationSlotValidateName(const char *name, int elevel)
 					(errcode(ERRCODE_INVALID_NAME),
 			errmsg("replication slot name \"%s\" contains invalid character",
 				   name),
-<<<<<<< HEAD
 					 errhint("Replication slot names may only contain lower case letters, numbers, and the underscore character.")));
-=======
-					 errhint("Replication slot names may only contain letters, numbers, and the underscore character.")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			return false;
 		}
 	}
@@ -274,33 +263,23 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	 * be doing that.  So it's safe to initialize the slot.
 	 */
 	Assert(!slot->in_use);
-<<<<<<< HEAD
-	Assert(!slot->active);
+	Assert(slot->active_pid == 0);
 
 	/* first initialize persistent data */
 	memset(&slot->data, 0, sizeof(ReplicationSlotPersistentData));
 	StrNCpy(NameStr(slot->data.name), name, NAMEDATALEN);
 	slot->data.database = db_specific ? MyDatabaseId : InvalidOid;
-=======
-	Assert(slot->active_pid == 0);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	slot->data.persistency = persistency;
 
 	/* and then data only present in shared memory */
 	slot->just_dirtied = false;
 	slot->dirty = false;
 	slot->effective_xmin = InvalidTransactionId;
-<<<<<<< HEAD
 	slot->effective_catalog_xmin = InvalidTransactionId;
 	slot->candidate_catalog_xmin = InvalidTransactionId;
 	slot->candidate_xmin_lsn = InvalidXLogRecPtr;
 	slot->candidate_restart_valid = InvalidXLogRecPtr;
 	slot->candidate_restart_lsn = InvalidXLogRecPtr;
-=======
-	StrNCpy(NameStr(slot->data.name), name, NAMEDATALEN);
-	slot->data.database = db_specific ? MyDatabaseId : InvalidOid;
-	slot->data.restart_lsn = InvalidXLogRecPtr;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Create the slot on disk.  We haven't actually marked the slot allocated
@@ -594,11 +573,7 @@ ReplicationSlotMarkDirty(void)
 
 /*
  * Convert a slot that's marked as RS_EPHEMERAL to a RS_PERSISTENT slot,
-<<<<<<< HEAD
- * guaranteeing it will be there after a eventual crash.
-=======
  * guaranteeing it will be there after an eventual crash.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 void
 ReplicationSlotPersist(void)
@@ -840,7 +815,6 @@ CheckSlotRequirements(void)
 }
 
 /*
-<<<<<<< HEAD
  * Reserve WAL for the currently active slot.
  *
  * Compute and set restart_lsn in a manner that's appropriate for the type of
@@ -911,8 +885,6 @@ ReplicationSlotReserveWal(void)
 }
 
 /*
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Flush all replication slots to disk.
  *
  * This needn't actually be part of a checkpoint, but it's a convenient
@@ -1332,27 +1304,16 @@ RestoreSlotFromDisk(const char *name)
 	 */
 	if (cp.slotdata.persistency != RS_PERSISTENT)
 	{
-<<<<<<< HEAD
 		if (!rmtree(slotdir, true))
 		{
 			ereport(WARNING,
 					(errcode_for_file_access(),
 					 errmsg("could not remove directory \"%s\"", slotdir)));
-=======
-		sprintf(path, "pg_replslot/%s", name);
-
-		if (!rmtree(path, true))
-		{
-			ereport(WARNING,
-					(errcode_for_file_access(),
-					 errmsg("could not remove directory \"%s\"", path)));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 		fsync_fname("pg_replslot", true);
 		return;
 	}
 
-<<<<<<< HEAD
 	/*
 	 * Verify that requirements for the specific slot type are met. That's
 	 * important because if these aren't met we're not guaranteed to retain
@@ -1378,8 +1339,6 @@ RestoreSlotFromDisk(const char *name)
 						NameStr(cp.slotdata.name)),
 				 errhint("Change wal_level to be archive or higher.")));
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* nothing can be active yet, don't lock anything */
 	for (i = 0; i < max_replication_slots; i++)
 	{
