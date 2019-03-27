@@ -11,12 +11,9 @@
  */
 #include "postgres_fe.h"
 
-<<<<<<< HEAD
 #include "fe_utils/connect.h"
-=======
 #include "dumputils.h"
 #include "pg_backup_archiver.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "pg_backup_db.h"
 #include "pg_backup_utils.h"
 
@@ -246,12 +243,8 @@ ConnectDatabase(Archive *AHX,
 				const char *pghost,
 				const char *pgport,
 				const char *username,
-<<<<<<< HEAD
-				enum trivalue prompt_password,
+				trivalue prompt_password,
 				bool binary_upgrade)
-=======
-				trivalue prompt_password)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	char	   *password;

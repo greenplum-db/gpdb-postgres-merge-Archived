@@ -59,14 +59,11 @@
 
 #include "postgres_fe.h"
 
-<<<<<<< HEAD
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
 
 #include "pg_backup_utils.h"
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "parallel.h"
 #include "pg_backup_utils.h"
 
@@ -93,13 +90,6 @@ typedef struct
 	ArchiveHandle *AH;
 	ParallelSlot *slot;
 	RestoreOptions *ropt;
-<<<<<<< HEAD
-=======
-	DumpOptions *dopt;
-	int			worker;
-	int			pipeRead;
-	int			pipeWrite;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } WorkerInfo;
 
 /* Windows implementation of pipe access */
@@ -179,7 +169,6 @@ static const char *modulename = gettext_noop("parallel archiver");
 
 /* Local function prototypes */
 static ParallelSlot *GetMyPSlot(ParallelState *pstate);
-<<<<<<< HEAD
 static void archive_close_connection(int code, void *arg);
 static void ShutdownWorkersHard(ParallelState *pstate);
 static void WaitForTerminatingWorkers(ParallelState *pstate);
@@ -190,24 +179,6 @@ static void RunWorker(ArchiveHandle *AH, ParallelSlot *slot, RestoreOptions *rop
 static bool HasEveryWorkerTerminated(ParallelState *pstate);
 static void lockTableForWorker(ArchiveHandle *AH, TocEntry *te);
 static void WaitForCommands(ArchiveHandle *AH, int pipefd[2]);
-=======
-static void parallel_msg_master(ParallelSlot *slot, const char *modulename,
-					const char *fmt, va_list ap) pg_attribute_printf(3, 0);
-static void archive_close_connection(int code, void *arg);
-static void ShutdownWorkersHard(ParallelState *pstate);
-static void WaitForTerminatingWorkers(ParallelState *pstate);
-
-#ifndef WIN32
-static void sigTermHandler(int signum);
-#endif
-static void SetupWorker(ArchiveHandle *AH, int pipefd[2], int worker,
-			DumpOptions *dopt,
-			RestoreOptions *ropt);
-static bool HasEveryWorkerTerminated(ParallelState *pstate);
-
-static void lockTableNoWait(ArchiveHandle *AH, TocEntry *te);
-static void WaitForCommands(ArchiveHandle *AH, DumpOptions *dopt, int pipefd[2]);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static char *getMessageFromMaster(int pipefd[2]);
 static void sendMessageToMaster(int pipefd[2], const char *str);
 static int	select_loop(int maxFd, fd_set *workerset);
@@ -813,13 +784,7 @@ set_cancel_pstate(ParallelState *pstate)
  * We need this mainly to have an interlock against Windows signal thread.
  */
 static void
-<<<<<<< HEAD
 set_cancel_slot_archive(ParallelSlot *slot, ArchiveHandle *AH)
-=======
-SetupWorker(ArchiveHandle *AH, int pipefd[2], int worker,
-			DumpOptions *dopt,
-			RestoreOptions *ropt)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 #ifdef WIN32
 	EnterCriticalSection(&signal_info_lock);
@@ -866,16 +831,10 @@ RunWorker(ArchiveHandle *AH, ParallelSlot *slot, RestoreOptions *ropt)
 	 */
 	(AH->SetupWorkerPtr) ((Archive *) AH, dopt, ropt);
 
-<<<<<<< HEAD
 	/*
 	 * Execute commands until done.
 	 */
 	WaitForCommands(AH, pipefd);
-=======
-	Assert(AH->connection != NULL);
-
-	WaitForCommands(AH, dopt, pipefd);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Disconnect from database and clean up.
@@ -892,23 +851,12 @@ RunWorker(ArchiveHandle *AH, ParallelSlot *slot, RestoreOptions *ropt)
 static unsigned __stdcall
 init_spawned_worker_win32(WorkerInfo *wi)
 {
-<<<<<<< HEAD
 	ArchiveHandle *AH = wi->AH;
 	ParallelSlot *slot = wi->slot;
-=======
-	ArchiveHandle *AH;
-	int			pipefd[2] = {wi->pipeRead, wi->pipeWrite};
-	int			worker = wi->worker;
-	DumpOptions *dopt = wi->dopt;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	RestoreOptions *ropt = wi->ropt;
 
 	/* Don't need WorkerInfo anymore */
 	free(wi);
-<<<<<<< HEAD
-=======
-	SetupWorker(AH, pipefd, worker, dopt, ropt);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Run the worker ... */
 	RunWorker(AH, slot, ropt);
@@ -1004,12 +952,6 @@ ParallelBackupStart(ArchiveHandle *AH, DumpOptions *dopt, RestoreOptions *ropt)
 		/* Create transient structure to pass args to worker function */
 		wi = (WorkerInfo *) pg_malloc(sizeof(WorkerInfo));
 
-<<<<<<< HEAD
-=======
-		wi->ropt = ropt;
-		wi->dopt = dopt;
-		wi->worker = i;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		wi->AH = AH;
 		wi->slot = slot;
 		wi->ropt = ropt;
@@ -1045,12 +987,8 @@ ParallelBackupStart(ArchiveHandle *AH, DumpOptions *dopt, RestoreOptions *ropt)
 				closesocket(pstate->parallelSlot[j].pipeWrite);
 			}
 
-<<<<<<< HEAD
 			/* Run the worker ... */
 			RunWorker(AH, slot, ropt);
-=======
-			SetupWorker(pstate->parallelSlot[i].args->AH, pipefd, i, dopt, ropt);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			/* We can just exit(0) when done */
 			exit(0);
@@ -1243,16 +1181,7 @@ lockTableForWorker(ArchiveHandle *AH, TocEntry *te)
 	if (strcmp(te->desc, "BLOBS") == 0)
 		return;
 
-<<<<<<< HEAD
 	query = createPQExpBuffer();
-=======
-	appendPQExpBuffer(query,
-					  "SELECT pg_namespace.nspname,"
-					  "       pg_class.relname "
-					  "  FROM pg_class "
-					"  JOIN pg_namespace on pg_namespace.oid = relnamespace "
-					  " WHERE pg_class.oid = %u", te->catalogId.oid);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	qualId = fmtQualifiedId(AH->public.remoteVersion, te->namespace, te->tag);
 
@@ -1305,19 +1234,10 @@ WaitForCommands(ArchiveHandle *AH, DumpOptions *dopt, int pipefd[2])
 			/* Acquire lock on this table within the worker's session */
 			lockTableForWorker(AH, te);
 
-<<<<<<< HEAD
 			/* Perform the dump command */
 			str = (AH->WorkerJobDumpPtr) (AH, te);
 
 			/* Return status to master */
-=======
-			/*
-			 * The message we return here has been pg_malloc()ed and we are
-			 * responsible for free()ing it.
-			 */
-			str = (AH->WorkerJobDumpPtr) (AH, dopt, te);
-			Assert(AH->connection != NULL);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			sendMessageToMaster(pipefd, str);
 
 			/* we are responsible for freeing the status string */
@@ -1568,20 +1488,7 @@ select_loop(int maxFd, fd_set *workerset)
 		*workerset = saveSet;
 		i = select(maxFd + 1, workerset, NULL, NULL, NULL);
 
-<<<<<<< HEAD
 #ifndef WIN32
-=======
-		/*
-		 * If we Ctrl-C the master process, it's likely that we interrupt
-		 * select() here. The signal handler will set wantAbort == true and
-		 * the shutdown journey starts from here. Note that we'll come back
-		 * here later when we tell all workers to terminate and read their
-		 * responses. But then we have aborting set to true.
-		 */
-		if (wantAbort && !aborting)
-			exit_horribly(modulename, "terminated by user\n");
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		if (i < 0 && errno == EINTR)
 			continue;
 #else
@@ -1727,34 +1634,19 @@ readMessageFromPipe(int fd)
 		msgsize++;
 		if (msgsize == bufsize) /* enlarge buffer if needed */
 		{
-<<<<<<< HEAD
 			bufsize += 16;		/* could be any number */
-=======
-			/* could be any number */
-			bufsize += 16;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			msg = (char *) pg_realloc(msg, bufsize);
 		}
 	}
 
-<<<<<<< HEAD
 	/* Other end has closed the connection */
 	pg_free(msg);
-=======
-	/*
-	 * Worker has closed the connection, make sure to clean up before return
-	 * since we are not returning msg (but did allocate it).
-	 */
-	pg_free(msg);
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	return NULL;
 }
 
 #ifdef WIN32
 
 /*
-<<<<<<< HEAD
  * This is a replacement version of pipe(2) for Windows which allows the pipe
  * handles to be used in select().
  *
@@ -1763,12 +1655,6 @@ readMessageFromPipe(int fd)
  * For consistency with Unix we declare the returned handles as "int".
  * This is okay even on WIN64 because system handles are not more than
  * 32 bits wide, but we do have to do some casting.
-=======
- * This is a replacement version of pipe for Win32 which allows returned
- * handles to be used in select(). Note that read/write calls must be replaced
- * with recv/send.  "handles" have to be integers so we check for errors then
- * cast to integers.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 static int
 pgpipe(int handles[2])

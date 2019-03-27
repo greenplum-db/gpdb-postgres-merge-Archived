@@ -151,11 +151,7 @@ main(int argc, char **argv)
 		}
 	}
 
-<<<<<<< HEAD
-	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:j:lL:n:Op:P:RsS:t:T:uU:vwWx:1",
-=======
-	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:I:j:lL:n:Op:P:RsS:t:T:U:vwWx1",
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:I:j:lL:n:Op:P:RsS:t:T:uU:vwWx:1",
 							cmdopts, NULL)) != -1)
 	{
 		switch (c)
@@ -474,13 +470,9 @@ usage(const char *progname)
 			 "                               selecting/ordering output\n"));
 	printf(_("  -n, --schema=NAME            restore only objects in this schema\n"));
 	printf(_("  -O, --no-owner               skip restoration of object ownership\n"));
-<<<<<<< HEAD
 	printf(_("  -P, --function='NAME(args)'\n"
 			 "                               restore named function. name must be exactly\n"
 			 "                               as appears in the TOC, and inside single quotes\n"));
-=======
-	printf(_("  -P, --function=NAME(args)    restore named function\n"));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	printf(_("  -s, --schema-only            restore only the schema, no data\n"));
 	printf(_("  -S, --superuser=NAME         superuser user name to use for disabling triggers\n"));
 	printf(_("  -t, --table=NAME             restore named table\n"));

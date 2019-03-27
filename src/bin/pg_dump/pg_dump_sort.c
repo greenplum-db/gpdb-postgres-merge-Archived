@@ -128,11 +128,8 @@ static const int newObjectTypePriority[] =
 	25,							/* DO_POST_DATA_BOUNDARY */
 	32,							/* DO_EVENT_TRIGGER */
 	33,							/* DO_REFRESH_MATVIEW */
-<<<<<<< HEAD
-	1							/* DO_BINARY_UPGRADE */
-=======
+	1,							/* DO_BINARY_UPGRADE */
 	34							/* DO_POLICY */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 };
 
 static DumpId preDataBoundId;

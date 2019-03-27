@@ -16,13 +16,10 @@
 #ifndef PG_DUMP_H
 #define PG_DUMP_H
 
-<<<<<<< HEAD
 #include "postgres_fe.h"
 #include "pqexpbuffer.h"
 #include "libpq-fe.h"
-=======
 #include "pg_backup.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 
 #define oidcmp(x,y) ( ((x) < (y) ? -1 : ((x) > (y)) ?  1 : 0) )
@@ -87,12 +84,8 @@ typedef enum
 	DO_POST_DATA_BOUNDARY,
 	DO_EVENT_TRIGGER,
 	DO_REFRESH_MATVIEW,
-<<<<<<< HEAD
-
-	DO_BINARY_UPGRADE
-=======
+	DO_BINARY_UPGRADE,
 	DO_POLICY
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } DumpableObjectType;
 
 typedef struct _dumpableObject
@@ -272,19 +265,11 @@ typedef struct _tableInfo
 	bool		hastriggers;	/* does it have any triggers? */
 	bool		rowsec;			/* is row security enabled? */
 	bool		hasoids;		/* does it have OIDs? */
-<<<<<<< HEAD
-	uint32		frozenxid;		/* table's relfrozenxid */
-	uint32		minmxid;		/* table's relminmxid */
-	Oid			toast_oid;		/* toast table's OID, or 0 if none */
-	uint32		toast_frozenxid;	/* toast table's relfrozenxid, if any */
-	uint32		toast_minmxid;	/* toast table's relminmxid */
-=======
 	uint32		frozenxid;		/* for restore frozen xid */
 	uint32		minmxid;		/* for restore min multi xid */
 	Oid			toast_oid;		/* for restore toast frozen xid */
 	uint32		toast_frozenxid;	/* for restore toast frozen xid */
 	uint32		toast_minmxid;	/* for restore toast min multi xid */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	int			ncheck;			/* # of CHECK expressions */
 	char	   *reloftype;		/* underlying type for typed table */
 	/* these two are set only if table is a sequence owned by a column: */
@@ -535,7 +520,6 @@ typedef struct _blobInfo
 } BlobInfo;
 
 /*
-<<<<<<< HEAD
  * We build an array of these with an entry for each object that is an
  * extension member according to pg_depend.
  */
@@ -544,7 +528,8 @@ typedef struct _extensionMemberId
 	CatalogId	catId;			/* tableoid+oid of some member object */
 	ExtensionInfo *ext;			/* owning extension */
 } ExtensionMemberId;
-=======
+
+/*
  * The PolicyInfo struct is used to represent policies on a table and
  * to indicate if a table has RLS enabled (ENABLE ROW SECURITY).  If
  * polname is NULL, then the record indicates ENABLE ROW SECURITY, while if
@@ -560,7 +545,6 @@ typedef struct _policyInfo
 	char	   *polqual;
 	char	   *polwithcheck;
 } PolicyInfo;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* global decls */
 extern bool force_quotes;		/* double-quotes for identifiers flag */
@@ -576,23 +560,7 @@ extern const char *EXT_PARTITION_NAME_POSTFIX;
 /*
  *	common utility functions
  */
-
-<<<<<<< HEAD
-struct Archive;
-typedef struct Archive Archive;
-
-extern TableInfo *getSchemaData(Archive *, int *numTablesPtr, int binary_upgrade);
-
-typedef enum _OidOptions
-{
-	zeroAsOpaque = 1,
-	zeroAsAny = 2,
-	zeroAsStar = 4,
-	zeroAsNone = 8
-} OidOptions;
-=======
-extern TableInfo *getSchemaData(Archive *, DumpOptions *dopt, int *numTablesPtr);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+extern TableInfo *getSchemaData(Archive *, int *numTablesPtr);
 
 extern void DetectChildConstraintDropped(TableInfo *tbinfo, PQExpBuffer q); /* GPDB only */
 extern void AssignDumpId(DumpableObject *dobj);
@@ -670,7 +638,7 @@ extern void getExtensionMembership(Archive *fout, DumpOptions *dopt, ExtensionIn
 extern void processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
 					   int numExtensions);
 extern EventTriggerInfo *getEventTriggers(Archive *fout, int *numEventTriggers);
-<<<<<<< HEAD
+extern void getPolicies(Archive *fout, TableInfo tblinfo[], int numTables);
 /* START MPP ADDITION */
 extern TypeStorageOptions *getTypeStorageOptions(Archive *fout, int *numTypes);
 extern ExtProtInfo *getExtProtocols(Archive *fout, int *numExtProtocols);
@@ -678,9 +646,5 @@ extern BinaryUpgradeInfo *getBinaryUpgradeObjects(void);
 
 extern bool	testExtProtocolSupport(Archive *fout);
 /* END MPP ADDITION */
-
-=======
-extern void getPolicies(Archive *fout, TableInfo tblinfo[], int numTables);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #endif   /* PG_DUMP_H */

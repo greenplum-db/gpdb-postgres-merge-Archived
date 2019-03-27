@@ -54,13 +54,7 @@ static void makeAlterConfigCommand(PGconn *conn, const char *arrayitem,
 					   const char *type, const char *name, const char *type2,
 					   const char *name2);
 static void dumpDatabases(PGconn *conn);
-<<<<<<< HEAD
-static void dumpTimestamp(char *msg);
-=======
 static void dumpTimestamp(const char *msg);
-static void doShellQuoting(PQExpBuffer buf, const char *str);
-static void doConnStrQuoting(PQExpBuffer buf, const char *str);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 static int	runPgDump(const char *dbname);
 static void buildShSecLabels(PGconn *conn,
@@ -1149,59 +1143,10 @@ dumpRoles(PGconn *conn)
 						  "rolname = current_user AS is_current_user "
 						  " %s %s %s %s"
 						  "FROM pg_authid "
-<<<<<<< HEAD
 						  "ORDER BY 2",
 						  resq_col, resgroup_col, extauth_col, hdfs_col);
 	else
 		error_unsupported_server_version(conn);
-=======
-						  "ORDER BY 2");
-	else if (server_version >= 80100)
-		printfPQExpBuffer(buf,
-						  "SELECT oid, rolname, rolsuper, rolinherit, "
-						  "rolcreaterole, rolcreatedb, "
-						  "rolcanlogin, rolconnlimit, rolpassword, "
-						  "rolvaliduntil, false as rolreplication, "
-						  "false as rolbypassrls, "
-						  "null as rolcomment, "
-						  "rolname = current_user AS is_current_user "
-						  "FROM pg_authid "
-						  "ORDER BY 2");
-	else
-		printfPQExpBuffer(buf,
-						  "SELECT 0 as oid, usename as rolname, "
-						  "usesuper as rolsuper, "
-						  "true as rolinherit, "
-						  "usesuper as rolcreaterole, "
-						  "usecreatedb as rolcreatedb, "
-						  "true as rolcanlogin, "
-						  "-1 as rolconnlimit, "
-						  "passwd as rolpassword, "
-						  "valuntil as rolvaliduntil, "
-						  "false as rolreplication, "
-						  "false as rolbypassrls, "
-						  "null as rolcomment, "
-						  "usename = current_user AS is_current_user "
-						  "FROM pg_shadow "
-						  "UNION ALL "
-						  "SELECT 0 as oid, groname as rolname, "
-						  "false as rolsuper, "
-						  "true as rolinherit, "
-						  "false as rolcreaterole, "
-						  "false as rolcreatedb, "
-						  "false as rolcanlogin, "
-						  "-1 as rolconnlimit, "
-						  "null::text as rolpassword, "
-						  "null::abstime as rolvaliduntil, "
-						  "false as rolreplication, "
-						  "false as rolbypassrls, "
-						  "null as rolcomment, "
-						  "false AS is_current_user "
-						  "FROM pg_group "
-						  "WHERE NOT EXISTS (SELECT 1 FROM pg_shadow "
-						  " WHERE usename = groname) "
-						  "ORDER BY 2");
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	res = executeQuery(conn, buf->data);
 
@@ -1255,13 +1200,8 @@ dumpRoles(PGconn *conn)
 		{
 			appendPQExpBufferStr(buf, "\n-- For binary upgrade, must preserve pg_authid.oid\n");
 			appendPQExpBuffer(buf,
-<<<<<<< HEAD
-							  "SELECT binary_upgrade.set_next_pg_authid_oid('%u'::pg_catalog.oid, '%s'::text);\n\n",
+							  "SELECT pg_catalog.binary_upgrade_set_next_pg_authid_oid('%u'::pg_catalog.oid, '%s'::text);\n\n",
 							  auth_oid, rolename);
-=======
-							  "SELECT pg_catalog.binary_upgrade_set_next_pg_authid_oid('%u'::pg_catalog.oid);\n\n",
-							  auth_oid);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 
 		/*
@@ -1792,60 +1732,8 @@ dumpCreateDB(PGconn *conn)
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
 						   "WHERE datallowconn ORDER BY 1");
-<<<<<<< HEAD
 	else
 		error_unsupported_server_version(conn);
-=======
-	else if (server_version >= 80000)
-		res = executeQuery(conn,
-						   "SELECT datname, "
-						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
-						   "datistemplate, datacl, -1 as datconnlimit, "
-						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
-		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
-						   "WHERE datallowconn ORDER BY 1");
-	else if (server_version >= 70300)
-		res = executeQuery(conn,
-						   "SELECT datname, "
-						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
-						   "datistemplate, datacl, -1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
-						   "WHERE datallowconn ORDER BY 1");
-	else if (server_version >= 70100)
-		res = executeQuery(conn,
-						   "SELECT datname, "
-						   "coalesce("
-					"(select usename from pg_shadow where usesysid=datdba), "
-						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid, 0 AS datminmxid, "
-						   "datistemplate, '' as datacl, -1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-						   "FROM pg_database d "
-						   "WHERE datallowconn ORDER BY 1");
-	else
-	{
-		/*
-		 * Note: 7.0 fails to cope with sub-select in COALESCE, so just deal
-		 * with getting a NULL by not printing any OWNER clause.
-		 */
-		res = executeQuery(conn,
-						   "SELECT datname, "
-					"(select usename from pg_shadow where usesysid=datdba), "
-						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid, 0 AS datminmxid, "
-						   "'f' as datistemplate, "
-						   "'' as datacl, -1 as datconnlimit, "
-						   "'pg_default' AS dattablespace "
-						   "FROM pg_database d "
-						   "ORDER BY 1");
-	}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -1921,9 +1809,7 @@ dumpCreateDB(PGconn *conn)
 								  dbconnlimit);
 
 			appendPQExpBufferStr(buf, ";\n");
-		}
 
-<<<<<<< HEAD
 			if (strcmp(dbistemplate, "t") == 0)
 			{
 				appendPQExpBufferStr(buf, "UPDATE pg_catalog.pg_database SET datistemplate = 't' WHERE datname = ");
@@ -1950,8 +1836,6 @@ dumpCreateDB(PGconn *conn)
 			appendPsqlMetaConnect(buf, dbname);
 		}
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		if (binary_upgrade)
 		{
 			appendPQExpBufferStr(buf, "-- For binary upgrade, set datfrozenxid and datminmxid.\n");

@@ -511,10 +511,7 @@ RestoreArchive(Archive *AHX)
 						 * knows how to do it, without depending on
 						 * te->dropStmt; use that.  For other objects we need
 						 * to parse the command.
-<<<<<<< HEAD
-=======
 						 *
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						 */
 						if (strncmp(te->desc, "BLOB", 4) == 0)
 						{
@@ -522,15 +519,8 @@ RestoreArchive(Archive *AHX)
 						}
 						else
 						{
-<<<<<<< HEAD
 							char	   *dropStmt = pg_strdup(te->dropStmt);
 							char	   *dropStmtOrig = dropStmt;
-=======
-							char		buffer[40];
-							char	   *mark;
-							char	   *dropStmt = pg_strdup(te->dropStmt);
-							char	   *dropStmtPtr = dropStmt;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 							PQExpBuffer ftStmt = createPQExpBuffer();
 
 							/*
@@ -547,7 +537,6 @@ RestoreArchive(Archive *AHX)
 							/*
 							 * ALTER TABLE..ALTER COLUMN..DROP DEFAULT does
 							 * not support the IF EXISTS clause, and therefore
-<<<<<<< HEAD
 							 * we simply emit the original command for DEFAULT
 							 * objects (modulo the adjustment made above).
 							 *
@@ -558,17 +547,10 @@ RestoreArchive(Archive *AHX)
 							 * For other object types, we need to extract the
 							 * first part of the DROP which includes the
 							 * object type.  Most of the time this matches
-=======
-							 * we simply emit the original command for such
-							 * objects. For other objects, we need to extract
-							 * the first part of the DROP which includes the
-							 * object type. Most of the time this matches
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 							 * te->desc, so search for that; however for the
 							 * different kinds of CONSTRAINTs, we know to
 							 * search for hardcoded "DROP CONSTRAINT" instead.
 							 */
-<<<<<<< HEAD
 							if (strcmp(te->desc, "DEFAULT") == 0 ||
 								strncmp(dropStmt, "CREATE OR REPLACE VIEW", 22) == 0)
 								appendPQExpBufferStr(ftStmt, dropStmt);
@@ -602,38 +584,12 @@ RestoreArchive(Archive *AHX)
 											  dropStmtOrig);
 									appendPQExpBufferStr(ftStmt, dropStmt);
 								}
-=======
-							if (strcmp(te->desc, "DEFAULT") == 0)
-								appendPQExpBuffer(ftStmt, "%s", dropStmt);
-							else
-							{
-								if (strcmp(te->desc, "CONSTRAINT") == 0 ||
-								 strcmp(te->desc, "CHECK CONSTRAINT") == 0 ||
-									strcmp(te->desc, "FK CONSTRAINT") == 0)
-									strcpy(buffer, "DROP CONSTRAINT");
-								else
-									snprintf(buffer, sizeof(buffer), "DROP %s",
-											 te->desc);
-
-								mark = strstr(dropStmt, buffer);
-								Assert(mark != NULL);
-
-								*mark = '\0';
-								appendPQExpBuffer(ftStmt, "%s%s IF EXISTS%s",
-												  dropStmt, buffer,
-												  mark + strlen(buffer));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 							}
 
 							ahprintf(AH, "%s", ftStmt->data);
 
 							destroyPQExpBuffer(ftStmt);
-<<<<<<< HEAD
 							pg_free(dropStmtOrig);
-=======
-
-							pg_free(dropStmtPtr);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						}
 					}
 				}
@@ -721,23 +677,12 @@ RestoreArchive(Archive *AHX)
 
 		if (haveRefresh)
 		{
-<<<<<<< HEAD
 			for (te = AH->toc->next; te != AH->toc; te = te->next)
 			{
 				if ((te->reqs & (REQ_SCHEMA | REQ_DATA)) != 0 &&
 					_tocEntryRestorePass(te) == RESTORE_PASS_REFRESH)
 					(void) restore_toc_entry(AH, te, ropt, false);
 			}
-=======
-			/* Show namespace if available */
-			if (te->namespace)
-				ahlog(AH, 1, "setting owner and privileges for %s \"%s\".\"%s\"\n",
-					  te->desc, te->namespace, te->tag);
-			else
-				ahlog(AH, 1, "setting owner and privileges for %s \"%s\"\n",
-					  te->desc, te->tag);
-			_printTocEntry(AH, te, ropt, false, true);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 	}
 
@@ -3647,14 +3592,10 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 				 strcmp(te->desc, "INDEX") == 0 ||
 				 strcmp(te->desc, "RULE") == 0 ||
 				 strcmp(te->desc, "TRIGGER") == 0 ||
-<<<<<<< HEAD
-				 strcmp(te->desc, "USER MAPPING") == 0 ||
-				 strcmp(te->desc, "BINARY UPGRADE"))
-=======
 				 strcmp(te->desc, "ROW SECURITY") == 0 ||
 				 strcmp(te->desc, "POLICY") == 0 ||
-				 strcmp(te->desc, "USER MAPPING") == 0)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+				 strcmp(te->desc, "USER MAPPING") == 0 ||
+				 strcmp(te->desc, "BINARY UPGRADE"))
 		{
 			/* these object types don't have separate owners */
 		}

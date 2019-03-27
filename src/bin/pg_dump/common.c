@@ -84,11 +84,7 @@ static int	strInArray(const char *pattern, char **arr, int arr_size);
  *	  Collect information about all potentially dumpable objects
  */
 TableInfo *
-<<<<<<< HEAD
-getSchemaData(Archive *fout, int *numTablesPtr, int binary_upgrade)
-=======
-getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+getSchemaData(Archive *fout, int *numTablesPtr)
 {
 	TableInfo  *tblinfo;
 	TypeInfo   *typinfo;
@@ -119,7 +115,7 @@ getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 	/* GPDB specific variables */
 	int			numExtProtocols;
 
-	if (binary_upgrade)
+	if (fout->dopt->binary_upgrade)
 	{
 		BinaryUpgradeInfo *binfo;
 
@@ -164,13 +160,6 @@ getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 	getOwnedSeqs(fout, tblinfo, numTables);
 
 	if (g_verbose)
-<<<<<<< HEAD
-=======
-		write_msg(NULL, "reading extensions\n");
-	extinfo = getExtensions(fout, dopt, &numExtensions);
-
-	if (g_verbose)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		write_msg(NULL, "reading user-defined functions\n");
 	funinfo = getFuncs(fout, dopt, &numFuncs);
 	funinfoindex = buildIndexArray(funinfo, numFuncs, sizeof(FuncInfo));
@@ -270,13 +259,8 @@ getSchemaData(Archive *fout, DumpOptions *dopt, int *numTablesPtr)
 
 	/* Identify extension configuration tables that should be dumped */
 	if (g_verbose)
-<<<<<<< HEAD
 		write_msg(NULL, "finding extension tables\n");
 	processExtensionTables(fout, extinfo, numExtensions);
-=======
-		write_msg(NULL, "finding extension members\n");
-	getExtensionMembership(fout, dopt, extinfo, numExtensions);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Link tables to parents, mark parents of target tables interesting */
 	if (g_verbose)

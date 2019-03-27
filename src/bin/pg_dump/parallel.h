@@ -84,14 +84,11 @@ extern void DispatchJobForTocEntry(ArchiveHandle *AH,
 					   TocEntry *te, T_Action act);
 extern void ParallelBackupEnd(ArchiveHandle *AH, ParallelState *pstate);
 
-<<<<<<< HEAD
 extern void set_archive_cancel_info(struct _archiveHandle * AH, PGconn *conn);
 
 extern void
 exit_horribly(const char *modulename, const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3), noreturn));
-=======
 extern void checkAborting(ArchiveHandle *AH);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #endif   /* PG_DUMP_PARALLEL_H */

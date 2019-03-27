@@ -148,12 +148,9 @@ typedef struct _restoreOptions
 	bool		single_txn;
 
 	bool	   *idWanted;		/* array showing which dump IDs to emit */
-<<<<<<< HEAD
 
 	int			binary_upgrade;	/* GPDB: restoring for a binary upgrade */
-=======
 	int			enable_row_security;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } RestoreOptions;
 
 typedef struct _dumpOptions
@@ -236,12 +233,8 @@ extern void ConnectDatabase(Archive *AH,
 				const char *pghost,
 				const char *pgport,
 				const char *username,
-<<<<<<< HEAD
-				enum trivalue prompt_password,
+				trivalue prompt_password,
 				bool binary_upgrade);
-=======
-				trivalue prompt_password);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern void DisconnectDatabase(Archive *AHX);
 extern PGconn *GetConnection(Archive *AHX);
 

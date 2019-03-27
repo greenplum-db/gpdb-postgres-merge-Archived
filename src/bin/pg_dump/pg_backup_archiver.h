@@ -366,13 +366,9 @@ struct _archiveHandle
 	RestorePass restorePass;	/* used only during parallel restore */
 	struct _tocEntry *currentTE;
 	struct _tocEntry *lastErrorTE;
-<<<<<<< HEAD
 
 	DieFuncPtr dieFuncPtr;      /* Called upon die to report the status */
 } ArchiveHandle;
-=======
-};
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 struct _tocEntry
 {
