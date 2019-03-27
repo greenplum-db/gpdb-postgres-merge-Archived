@@ -382,7 +382,7 @@ PageGetLSN(Page page)
 	if (BufferBlocks <= pagePtr &&
 		pagePtr < (BufferBlocks + NBuffers * BLCKSZ))
 	{
-		BufferDesc *hdr = &BufferDescriptors[(pagePtr - BufferBlocks) / BLCKSZ];
+		BufferDesc *hdr = GetBufferDescriptor((pagePtr - BufferBlocks) / BLCKSZ);
 		Assert(LWLockHeldByMe(hdr->content_lock));
 	}
 #endif
