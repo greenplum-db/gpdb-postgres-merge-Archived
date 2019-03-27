@@ -27,11 +27,8 @@ extern bool debug;
 extern bool showprogress;
 extern bool dry_run;
 
-<<<<<<< HEAD
 extern const char *progname;
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /* in parsexlog.c */
 extern void extractPageMap(const char *datadir, XLogRecPtr startpoint,
 			   TimeLineID tli, XLogRecPtr endpoint);

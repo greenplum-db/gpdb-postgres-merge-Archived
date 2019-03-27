@@ -67,23 +67,14 @@ recurse_dir(const char *datadir, const char *parentpath,
 	while (errno = 0, (xlde = readdir(xldir)) != NULL)
 	{
 		struct stat fst;
-<<<<<<< HEAD
 		char		fullpath[MAXPGPATH * 2];
 		char		path[MAXPGPATH * 2];
-=======
-		char		fullpath[MAXPGPATH];
-		char		path[MAXPGPATH];
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		if (strcmp(xlde->d_name, ".") == 0 ||
 			strcmp(xlde->d_name, "..") == 0)
 			continue;
 
-<<<<<<< HEAD
 		snprintf(fullpath, sizeof(fullpath), "%s/%s", fullparentpath, xlde->d_name);
-=======
-		snprintf(fullpath, MAXPGPATH, "%s/%s", fullparentpath, xlde->d_name);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		if (lstat(fullpath, &fst) < 0)
 		{
@@ -104,7 +95,6 @@ recurse_dir(const char *datadir, const char *parentpath,
 		}
 
 		if (parentpath)
-<<<<<<< HEAD
 			snprintf(path, sizeof(path), "%s/%s", parentpath, xlde->d_name);
 		else
 			snprintf(path, sizeof(path), "%s", xlde->d_name);
@@ -116,14 +106,6 @@ recurse_dir(const char *datadir, const char *parentpath,
 			/* Greenplum uses FIFO for pgsql_tmp files. */
 			callback(path, FILE_TYPE_FIFO, fst.st_size, NULL);
 		}
-=======
-			snprintf(path, MAXPGPATH, "%s/%s", parentpath, xlde->d_name);
-		else
-			snprintf(path, MAXPGPATH, "%s", xlde->d_name);
-
-		if (S_ISREG(fst.st_mode))
-			callback(path, FILE_TYPE_REGULAR, fst.st_size, NULL);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		else if (S_ISDIR(fst.st_mode))
 		{
 			callback(path, FILE_TYPE_DIRECTORY, 0, NULL);
@@ -181,11 +163,7 @@ recurse_dir(const char *datadir, const char *parentpath,
  * If 'trunc' is true, any existing file with the same name is truncated.
  */
 static void
-<<<<<<< HEAD
 rewind_copy_file_range(const char *path, off_t begin, off_t end, bool trunc)
-=======
-copy_file_range(const char *path, off_t begin, off_t end, bool trunc)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	char		buf[BLCKSZ];
 	char		srcpath[MAXPGPATH];
@@ -251,11 +229,7 @@ copy_executeFileMap(filemap_t *map)
 				break;
 
 			case FILE_ACTION_COPY:
-<<<<<<< HEAD
 				rewind_copy_file_range(entry->path, 0, entry->newsize, true);
-=======
-				copy_file_range(entry->path, 0, entry->newsize, true);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				break;
 
 			case FILE_ACTION_TRUNCATE:
@@ -263,12 +237,8 @@ copy_executeFileMap(filemap_t *map)
 				break;
 
 			case FILE_ACTION_COPY_TAIL:
-<<<<<<< HEAD
 				rewind_copy_file_range(entry->path, entry->oldsize,
 									   entry->newsize, false);
-=======
-				copy_file_range(entry->path, entry->oldsize, entry->newsize, false);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				break;
 
 			case FILE_ACTION_CREATE:
@@ -295,11 +265,7 @@ execute_pagemap(datapagemap_t *pagemap, const char *path)
 	while (datapagemap_next(iter, &blkno))
 	{
 		offset = blkno * BLCKSZ;
-<<<<<<< HEAD
 		rewind_copy_file_range(path, offset, offset + BLCKSZ, false);
-=======
-		copy_file_range(path, offset, offset + BLCKSZ, false);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		/* Ok, this block has now been copied from new data dir to old */
 	}
 	pg_free(iter);

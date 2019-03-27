@@ -19,11 +19,8 @@
 #include "logging.h"
 #include "pg_rewind.h"
 
-<<<<<<< HEAD
 #include "catalog/catalog.h"
-=======
 #include "common/string.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "catalog/pg_tablespace.h"
 #include "storage/fd.h"
 
@@ -35,7 +32,6 @@ static char *datasegpath(RelFileNode rnode, ForkNumber forknum,
 static int	path_cmp(const void *a, const void *b);
 static int	final_filemap_cmp(const void *a, const void *b);
 static void filemap_list_to_array(filemap_t *map);
-<<<<<<< HEAD
 static bool check_file_excluded(const char *path, const char *type);
 
 /*
@@ -118,8 +114,6 @@ static const char *excludeFiles[] =
 	/* end of list */
 	NULL
 };
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * Create a new file map (stored in the global pointer "filemap").
@@ -139,7 +133,6 @@ filemap_create(void)
 	filemap = map;
 }
 
-<<<<<<< HEAD
 static bool
 endswith(const char *haystack, const char *needle)
 {
@@ -152,8 +145,6 @@ endswith(const char *haystack, const char *needle)
 	return strcmp(&haystack[haystacklen - needlelen], needle) == 0;
 }
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * Callback for processing source file list.
  *
@@ -175,7 +166,6 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 
 	Assert(map->array == NULL);
 
-<<<<<<< HEAD
 	/* ignore any path matching the exclusion filters */
 	if (check_file_excluded(path, "source"))
 		return;
@@ -187,14 +177,6 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 	 */
 	if (strcmp(path, "pg_xlog") == 0 && type == FILE_TYPE_SYMLINK)
 		type = FILE_TYPE_DIRECTORY;
-=======
-	/*
-	 * Completely ignore some special files in source and destination.
-	 */
-	if (strcmp(path, "postmaster.pid") == 0 ||
-		strcmp(path, "postmaster.opts") == 0)
-		return;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Skip temporary files, .../pgsql_tmp/... and .../pgsql_tmp.* in source.
@@ -230,11 +212,7 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 	switch (type)
 	{
 		case FILE_TYPE_DIRECTORY:
-<<<<<<< HEAD
 			if (exists && !S_ISDIR(statbuf.st_mode) && strcmp(path, "pg_xlog") != 0)
-=======
-			if (exists && !S_ISDIR(statbuf.st_mode))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			{
 				/* it's a directory in source, but not in target. Strange.. */
 				pg_fatal("\"%s\" is not a directory\n", localpath);
@@ -284,11 +262,7 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 				 * An exception: PG_VERSIONs should be identical, but avoid
 				 * overwriting it for paranoia.
 				 */
-<<<<<<< HEAD
 				if (endswith(path, "PG_VERSION"))
-=======
-				if (pg_str_endswith(path, "PG_VERSION"))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				{
 					action = FILE_ACTION_NONE;
 					oldsize = statbuf.st_size;
@@ -334,12 +308,9 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 					action = FILE_ACTION_NONE;
 			}
 			break;
-<<<<<<< HEAD
 
 		case FILE_TYPE_FIFO:
 			break;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/* Create a new entry for this file */
@@ -384,7 +355,6 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 	filemap_t  *map = filemap;
 	file_entry_t *entry;
 
-<<<<<<< HEAD
 	/*
 	 * Ignore any path matching the exclusion filters.  This is not actually
 	 * mandatory for target files, but this does not hurt and let's be
@@ -393,8 +363,6 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 	if (check_file_excluded(path, "target"))
 		return;
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	snprintf(localpath, sizeof(localpath), "%s/%s", datadir_target, path);
 	if (lstat(localpath, &statbuf) < 0)
 	{
@@ -422,18 +390,10 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 	}
 
 	/*
-<<<<<<< HEAD
 	 * Like in process_source_file, pretend that xlog is always a  directory.
 	 */
 	if (strcmp(path, "pg_xlog") == 0 && type == FILE_TYPE_SYMLINK)
 		type = FILE_TYPE_DIRECTORY;
-=======
-	 * Completely ignore some special files
-	 */
-	if (strcmp(path, "postmaster.pid") == 0 ||
-		strcmp(path, "postmaster.opts") == 0)
-		return;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	key.path = (char *) path;
 	key_ptr = &key;
@@ -548,7 +508,6 @@ process_block_change(ForkNumber forknum, RelFileNode rnode, BlockNumber blkno)
 	}
 }
 
-<<<<<<< HEAD
 void
 process_aofile_change(RelFileNode rnode, int segno, int64 offset)
 {
@@ -669,8 +628,6 @@ check_file_excluded(const char *path, const char *type)
 	return false;
 }
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * Convert the linked list of entries in map->first/last to the array,
  * map->array.
@@ -810,10 +767,6 @@ print_filemap(void)
 static bool
 isRelDataFile(const char *path)
 {
-<<<<<<< HEAD
-=======
-	char		buf[20 + 1];
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	RelFileNode rnode;
 	unsigned int segNo;
 	int			nmatch;
@@ -828,11 +781,7 @@ isRelDataFile(const char *path)
 	 * base/<db oid>/
 	 *		regular relations, default tablespace
 	 *
-<<<<<<< HEAD
 	 * pg_tblspc/<tblspc oid>/<tblspc version>/
-=======
-	 * pg_tblspc/<tblspc oid>/PG_9.4_201403261/
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 *		within a non-default tablespace (the name of the directory
 	 *		depends on version)
 	 *
@@ -866,34 +815,19 @@ isRelDataFile(const char *path)
 		}
 		else
 		{
-<<<<<<< HEAD
 			nmatch = sscanf(path, "pg_tblspc/%u/" GP_TABLESPACE_VERSION_DIRECTORY "/%u/%u.%u",
 							&rnode.spcNode, &rnode.dbNode, &rnode.relNode,
 							&segNo);
 			if (nmatch == 3 || nmatch == 4)
-=======
-			nmatch = sscanf(path, "pg_tblspc/%u/PG_%20s/%u/%u.%u",
-						  &rnode.spcNode, buf, &rnode.dbNode, &rnode.relNode,
-							&segNo);
-			if (nmatch == 4 || nmatch == 5)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				matched = true;
 		}
 	}
 
 	/*
 	 * The sscanf tests above can match files that have extra characters at
-<<<<<<< HEAD
 	 * the end. To eliminate such cases, cross-check that GetRelationPath
 	 * creates the exact same filename, when passed the RelFileNode information
 	 * we extracted from the filename.
-=======
-	 * the end, and the last check can also match a path belonging to a
-	 * different version (different TABLESPACE_VERSION_DIRECTORY). To make
-	 * eliminate such cases, cross-check that GetRelationPath creates the
-	 * exact same filename, when passed the RelFileNode information we
-	 * extracted from the filename.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
 	if (matched)
 	{
@@ -961,11 +895,7 @@ final_filemap_cmp(const void *a, const void *b)
 		return -1;
 
 	if (fa->action == FILE_ACTION_REMOVE)
-<<<<<<< HEAD
 		return strcmp(fb->path, fa->path);
-=======
-		return -strcmp(fa->path, fb->path);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	else
 		return strcmp(fa->path, fb->path);
 }

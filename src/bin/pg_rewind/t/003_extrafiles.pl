@@ -14,13 +14,8 @@ sub run_test
 {
 	my $test_mode = shift;
 
-<<<<<<< HEAD
 	RewindTest::setup_cluster();
 	RewindTest::start_master();
-=======
-	RewindTest::init_rewind_test('extrafiles', $test_mode);
-	RewindTest::setup_cluster();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	my $test_master_datadir = $RewindTest::test_master_datadir;
 

@@ -80,11 +80,7 @@ rewind_parseTimeLineHistory(char *buffer, TimeLineID targetTLI, int *nentries)
 		if (nfields != 3)
 		{
 			fprintf(stderr, _("syntax error in history file: %s\n"), fline);
-<<<<<<< HEAD
-			fprintf(stderr, _("Expected a transaction log switchpoint location.\n"));
-=======
 			fprintf(stderr, _("Expected an XLOG switchpoint location.\n"));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			exit(1);
 		}
 		if (entries && tli <= lasttli)
