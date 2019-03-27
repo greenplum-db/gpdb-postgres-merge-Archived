@@ -1492,10 +1492,7 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 	PG_TRY();
 	{
 		ReorderBufferChange *change;
-<<<<<<< HEAD
-=======
 		ReorderBufferChange *specinsert = NULL;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		if (using_subtxn)
 			BeginInternalSubTransaction("replay");

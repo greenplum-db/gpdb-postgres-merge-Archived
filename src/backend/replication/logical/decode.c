@@ -644,11 +644,7 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	change->data.tp.clear_toast_afterwards = true;
 
-<<<<<<< HEAD
-	ReorderBufferQueueChange(ctx->reorder, r->xl_xid, buf->origptr, change);
-=======
 	ReorderBufferQueueChange(ctx->reorder, XLogRecGetXid(r), buf->origptr, change);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -770,11 +766,7 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	change->data.tp.clear_toast_afterwards = true;
 
-<<<<<<< HEAD
-	ReorderBufferQueueChange(ctx->reorder, r->xl_xid, buf->origptr, change);
-=======
 	ReorderBufferQueueChange(ctx->reorder, XLogRecGetXid(r), buf->origptr, change);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -840,11 +832,7 @@ DecodeDelete(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	change->data.tp.clear_toast_afterwards = true;
 
-<<<<<<< HEAD
-	ReorderBufferQueueChange(ctx->reorder, r->xl_xid, buf->origptr, change);
-=======
 	ReorderBufferQueueChange(ctx->reorder, XLogRecGetXid(r), buf->origptr, change);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -967,11 +955,7 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		else
 			change->data.tp.clear_toast_afterwards = false;
 
-<<<<<<< HEAD
-		ReorderBufferQueueChange(ctx->reorder, r->xl_xid,
-=======
 		ReorderBufferQueueChange(ctx->reorder, XLogRecGetXid(r),
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 								 buf->origptr, change);
 	}
 	Assert(data == tupledata + tuplelen);
@@ -1027,12 +1011,8 @@ DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tuple)
 
 	Assert(datalen >= 0);
 
-<<<<<<< HEAD
-	tuple->tuple.t_len = datalen + offsetof(HeapTupleHeaderData, t_bits);
-	header = tuple->tuple.t_data;
-=======
 	tuple->tuple.t_len = datalen + SizeofHeapTupleHeader;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	header = tuple->tuple.t_data;
 
 	/* not a disk based tuple */
 	ItemPointerSetInvalid(&tuple->tuple.t_self);
@@ -1040,11 +1020,8 @@ DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tuple)
 	/* we can only figure this out after reassembling the transactions */
 #if 0
 	tuple->tuple.t_tableOid = InvalidOid;
-<<<<<<< HEAD
 #endif
-=======
 	tuple->tuple.t_data = &tuple->t_data.header;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* data is not stored aligned, copy to aligned storage */
 	memcpy((char *) &xlhdr,

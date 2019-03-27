@@ -1339,19 +1339,8 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		 * currently running transactions have finished. We'll update both
 		 * while waiting for the pending transactions to finish.
 		 */
-<<<<<<< HEAD
-		builder->xmin = running->nextXid; /* < are finished */
-		builder->xmax = running->nextXid;  /* >= are running */
-=======
-
-		/*
-		 * Start with an xmin/xmax that's correct for future, when all the
-		 * currently running transactions have finished. We'll update both
-		 * while waiting for the pending transactions to finish.
-		 */
 		builder->xmin = running->nextXid;		/* < are finished */
 		builder->xmax = running->nextXid;		/* >= are running */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/* so we can safely use the faster comparisons */
 		Assert(TransactionIdIsNormal(builder->xmin));
@@ -1973,11 +1962,7 @@ CheckPointSnapBuild(void)
 			strcmp(snap_de->d_name, "..") == 0)
 			continue;
 
-<<<<<<< HEAD
 		snprintf(path, sizeof(path), "pg_logical/snapshots/%s", snap_de->d_name);
-=======
-		snprintf(path, MAXPGPATH, "pg_logical/snapshots/%s", snap_de->d_name);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		if (lstat(path, &statbuf) == 0 && !S_ISREG(statbuf.st_mode))
 		{

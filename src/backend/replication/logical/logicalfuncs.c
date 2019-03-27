@@ -22,10 +22,6 @@
 #include "miscadmin.h"
 
 #include "access/xlog_internal.h"
-<<<<<<< HEAD
-#include "access/xlogutils.h"
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #include "catalog/pg_type.h"
 
