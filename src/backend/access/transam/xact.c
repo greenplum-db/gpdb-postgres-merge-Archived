@@ -20,11 +20,8 @@
 #include <time.h>
 #include <unistd.h>
 
-<<<<<<< HEAD
 #include "access/appendonlywriter.h"
-=======
 #include "access/commit_ts.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "access/multixact.h"
 #include "access/parallel.h"
 #include "access/subtrans.h"
@@ -50,11 +47,7 @@
 #include "replication/logical.h"
 #include "replication/walsender.h"
 #include "replication/syncrep.h"
-<<<<<<< HEAD
-#include "storage/bufmgr.h"
-=======
 #include "replication/origin.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "storage/fd.h"
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
@@ -221,11 +214,8 @@ typedef struct TransactionStateData
 	bool		prevXactReadOnly;		/* entry-time xact r/o state */
 	bool		startedInRecovery;		/* did we start in recovery? */
 	bool		didLogXid;		/* has xid been included in WAL record? */
-<<<<<<< HEAD
-	bool		executorSaysXactDoesWrites;	/* GP executor says xact does writes */
-=======
 	int			parallelModeLevel;		/* Enter/ExitParallelMode counter */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	bool		executorSaysXactDoesWrites;	/* GP executor says xact does writes */
 	struct TransactionStateData *parent;		/* back link to parent */
 
 	struct TransactionStateData *fastLink;        /* back link to jump to parent for efficient search */
@@ -262,11 +252,8 @@ static TransactionStateData TopTransactionStateData = {
 	false,						/* entry-time xact r/o state */
 	false,						/* startedInRecovery */
 	false,						/* didLogXid */
-<<<<<<< HEAD
-	false,						/* executorSaysXactDoesWrites */
-=======
 	0,							/* parallelMode */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	false,						/* executorSaysXactDoesWrites */
 	NULL						/* link to parent state block */
 };
 
@@ -664,14 +651,13 @@ AssignTransactionId(TransactionState s)
 	 * the Xid as "running".  See GetNewTransactionId.
 	 */
 	s->transactionId = GetNewTransactionId(isSubXact);
-<<<<<<< HEAD
+
 	ereportif(Debug_print_full_dtm, LOG,
 			  (errmsg("AssignTransactionId(): assigned xid %u",
 					  s->transactionId)));
-=======
+
 	if (!isSubXact)
 		XactTopTransactionId = s->transactionId;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (isSubXact)
 	{
@@ -1078,10 +1064,6 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 	if (!TransactionIdIsNormal(xid))
 		return false;
 
-<<<<<<< HEAD
-    if (DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
-		DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON)
-=======
 	/*
 	 * In parallel workers, the XIDs we must consider as current are stored in
 	 * ParallelCurrentXids rather than the transaction-state stack.  Note that
@@ -1112,15 +1094,8 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 		return false;
 	}
 
-	/*
-	 * We will return true for the Xid of the current subtransaction, any of
-	 * its subcommitted children, any of its parents, or any of their
-	 * previously subcommitted children.  However, a transaction being aborted
-	 * is no longer "current", even though it may still have an entry on the
-	 * state stack.
-	 */
-	for (s = CurrentTransactionState; s != NULL; s = s->parent)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+    if (DistributedTransactionContext == DTX_CONTEXT_QE_READER ||
+		DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON)
 	{
 		isCurrentTransactionId = IsCurrentTransactionIdForReader(xid);
 
