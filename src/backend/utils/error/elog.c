@@ -535,10 +535,7 @@ errstart(int elevel, const char *filename, int lineno,
 	edata->domain = domain ? domain : PG_TEXTDOMAIN("postgres");
 	/* initialize context_domain the same way (see set_errcontext_domain()) */
 	edata->context_domain = edata->domain;
-<<<<<<< HEAD
 	edata->omit_location = true;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* Select default errcode based on elevel */
 	if (elevel >= ERROR)
 	{
@@ -2875,19 +2872,13 @@ setup_formatted_log_time(void)
 	 * nonempty or CSV mode can be selected.
 	 */
 	pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
-	/* leave room for milliseconds... */
-				"%Y-%m-%d %H:%M:%S     %Z",
+	/* leave room for microseconds... */
+				"%Y-%m-%d %H:%M:%S        %Z",
 				pg_localtime(&stamp_time, log_timezone));
 
-<<<<<<< HEAD
 	/* 'paste' microseconds into place... */
 	sprintf(msbuf, ".%06d", (int) (tv.tv_usec));
-	strncpy(formatted_log_time + 19, msbuf, 4);
-=======
-	/* 'paste' milliseconds into place... */
-	sprintf(msbuf, ".%03d", (int) (tv.tv_usec / 1000));
 	memcpy(formatted_log_time + 19, msbuf, 4);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
