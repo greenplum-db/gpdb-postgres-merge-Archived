@@ -886,66 +886,6 @@ SnapBuildPurgeCommittedTxn(SnapBuild *builder)
 }
 
 /*
-<<<<<<< HEAD
-=======
- * Common logic for SnapBuildAbortTxn and SnapBuildCommitTxn dealing with
- * keeping track of the amount of running transactions.
- */
-static void
-SnapBuildEndTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid)
-{
-	if (builder->state == SNAPBUILD_CONSISTENT)
-		return;
-
-	/*
-	 * NB: This handles subtransactions correctly even if we started from
-	 * suboverflowed xl_running_xacts because we only keep track of toplevel
-	 * transactions. Since the latter are always are allocated before their
-	 * subxids and since they end at the same time it's sufficient to deal
-	 * with them here.
-	 */
-	if (SnapBuildTxnIsRunning(builder, xid))
-	{
-		Assert(builder->running.xcnt > 0);
-
-		if (!--builder->running.xcnt)
-		{
-			/*
-			 * None of the originally running transaction is running anymore,
-			 * so our incrementaly built snapshot now is consistent.
-			 */
-			ereport(LOG,
-				  (errmsg("logical decoding found consistent point at %X/%X",
-						  (uint32) (lsn >> 32), (uint32) lsn),
-				   errdetail("Transaction ID %u finished; no more running transactions.",
-							 xid)));
-			builder->state = SNAPBUILD_CONSISTENT;
-		}
-	}
-}
-
-/*
- * Abort a transaction, throw away all state we kept.
- */
-void
-SnapBuildAbortTxn(SnapBuild *builder, XLogRecPtr lsn,
-				  TransactionId xid,
-				  int nsubxacts, TransactionId *subxacts)
-{
-	int			i;
-
-	for (i = 0; i < nsubxacts; i++)
-	{
-		TransactionId subxid = subxacts[i];
-
-		SnapBuildEndTxn(builder, lsn, subxid);
-	}
-
-	SnapBuildEndTxn(builder, lsn, xid);
-}
-
-/*
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Handle everything that needs to be done when a transaction commits
  */
 void
@@ -1227,25 +1167,11 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	 *	  was inserted, jump to CONSISTENT immediately. We might find such a
 	 *	  state while waiting on c)'s sub-states.
 	 *
-<<<<<<< HEAD
 	 * b) This (in a previous run) or another decoding slot serialized a
 	 *	  snapshot to disk that we can use.  Can't use this method for the
 	 *	  initial snapshot when slot is being created and needs full snapshot
 	 *	  for export or direct use, as that snapshot will only contain catalog
 	 *	  modifying transactions.
-=======
-	 * b) Wait for all toplevel transactions that were running to end. We
-	 *	  simply track the number of in-progress toplevel transactions and
-	 *	  lower it whenever one commits or aborts. When that number
-	 *	  (builder->running.xcnt) reaches zero, we can go from FULL_SNAPSHOT
-	 *	  to CONSISTENT.
-	 *	  NB: We need to search running.xip when seeing a transaction's end to
-	 *	  make sure it's a toplevel transaction and it's been one of the
-	 *	  initially running ones.
-	 *	  Interestingly, in contrast to HS, this allows us not to care about
-	 *	  subtransactions - and by extension suboverflowed xl_running_xacts -
-	 *	  at all.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 *
 	 * c) First incrementally build a snapshot for catalog tuples
 	 *    (BUILDING_SNAPSHOT), that requires all, already in-progress,
@@ -1349,15 +1275,8 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		ereport(LOG,
 			(errmsg("logical decoding found initial starting point at %X/%X",
 					(uint32) (lsn >> 32), (uint32) lsn),
-<<<<<<< HEAD
 			 errdetail("Waiting for transactions (approximately %d) older than %u to end.",
 					   running->xcnt, running->nextXid)));
-=======
-			 errdetail_plural("%u transaction needs to finish.",
-							  "%u transactions need to finish.",
-							  builder->running.xcnt,
-							  (uint32) builder->running.xcnt)));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		SnapBuildWaitSnapshot(running, running->nextXid);
 	}
@@ -1633,16 +1552,8 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 				&ondisk->builder,
 				sizeof(SnapBuild));
 
-<<<<<<< HEAD
 	/* there shouldn't be any running xacts */
 	Assert(builder->was_running.was_xcnt == 0);
-=======
-	/* copy running xacts */
-	sz = sizeof(TransactionId) * builder->running.xcnt_space;
-	memcpy(ondisk_c, builder->running.xip, sz);
-	COMP_CRC32C(ondisk->checksum, ondisk_c, sz);
-	ondisk_c += sz;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* copy committed xacts */
 	sz = sizeof(TransactionId) * builder->committed.xcnt;
@@ -1825,11 +1736,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 				 errmsg("could not read file \"%s\", read %d of %d: %m",
 						path, readBytes, (int) sz)));
 	}
-<<<<<<< HEAD
 	COMP_CRC32C(checksum, ondisk.builder.was_running.was_xip, sz);
-=======
-	COMP_CRC32C(checksum, ondisk.builder.running.xip, sz);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* restore committed xacts information */
 	sz = sizeof(TransactionId) * ondisk.builder.committed.xcnt;

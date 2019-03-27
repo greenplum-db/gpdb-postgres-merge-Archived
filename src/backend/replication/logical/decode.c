@@ -570,14 +570,7 @@ DecodeAbort(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 {
 	int			i;
 
-<<<<<<< HEAD
-	for (i = 0; i < nsubxacts; i++)
-=======
-	SnapBuildAbortTxn(ctx->snapshot_builder, buf->record->EndRecPtr, xid,
-					  parsed->nsubxacts, parsed->subxacts);
-
 	for (i = 0; i < parsed->nsubxacts; i++)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{
 		ReorderBufferAbort(ctx->reorder, parsed->subxacts[i],
 						   buf->record->EndRecPtr);
