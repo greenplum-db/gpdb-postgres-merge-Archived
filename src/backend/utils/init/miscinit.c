@@ -334,7 +334,6 @@ SetSessionUserId(Oid userid, bool is_superuser)
 	CurrentUserId = userid;
 }
 
-<<<<<<< HEAD
 bool
 IsAuthenticatedUserSuperUser()
 {
@@ -343,11 +342,7 @@ IsAuthenticatedUserSuperUser()
 }
 
 /*
- * GetAuthenticatedUserId
-=======
-/*
  * GetAuthenticatedUserId - get the authenticated user ID
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 Oid
 GetAuthenticatedUserId(void)
@@ -355,10 +350,7 @@ GetAuthenticatedUserId(void)
 	AssertState(OidIsValid(AuthenticatedUserId));
 	return AuthenticatedUserId;
 }
-<<<<<<< HEAD
-=======
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * GetUserIdAndSecContext/SetUserIdAndSecContext - get/set the current user ID
