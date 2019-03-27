@@ -119,15 +119,12 @@ bool		am_db_walsender = false;	/* Connected to a database? */
 int			max_wal_senders = 0;	/* the maximum number of concurrent walsenders */
 int			wal_sender_timeout = 60 * 1000;		/* maximum time to send one
 												 * WAL data message */
-<<<<<<< HEAD
 // GPDB_93_MERGE_FIXME: This was XLogSegsPerFile. But I don't understand why.
 // What was so special about crossing the xlogid boundary? I kept the old
 // value, and maybe it's a suitable one, but it should probably be just a
 // constant like '64' or something.
 int			repl_catchup_within_range = ((uint32) 0xffffffff) / XLogSegSize;
-=======
 bool		log_replication_commands = false;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * State for WalSndWakeupRequest
@@ -2077,14 +2074,11 @@ InitWalSenderSlot(void)
 			walsnd->flush = InvalidXLogRecPtr;
 			walsnd->apply = InvalidXLogRecPtr;
 			walsnd->state = WALSNDSTATE_STARTUP;
-<<<<<<< HEAD
 			/* Will be decided in hand-shake */
 			walsnd->synchronous = false;
 			walsnd->xlogCleanUpTo = InvalidXLogRecPtr;
 			walsnd->caughtup_within_range = false;
-=======
 			walsnd->latch = &MyProc->procLatch;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			SpinLockRelease(&walsnd->mutex);
 			/* don't need the lock anymore */
 			MyWalSnd = (WalSnd *) walsnd;
@@ -2113,7 +2107,6 @@ WalSndKill(int code, Datum arg)
 
 	Assert(walsnd != NULL);
 
-<<<<<<< HEAD
 	if (IS_QUERY_DISPATCHER())
 	{
 		/*
@@ -2139,10 +2132,9 @@ WalSndKill(int code, Datum arg)
 			/* Mark WalSnd struct no longer in use. */
 			MyWalSnd->replica_disconnected_at = (pg_time_t) time(NULL);
 			MyWalSnd->pid = 0;
+			walsnd->latch = NULL;
 
 			SpinLockRelease(&MyWalSnd->mutex);
-
-			DisownLatch(&MyWalSnd->latch);
 		}
 		LWLockRelease(SyncRepLock);
 		/* WalSnd struct isn't mine anymore */
@@ -2150,25 +2142,12 @@ WalSndKill(int code, Datum arg)
 		return;
 	}
 
-	/*
-	 * Clear MyWalSnd first; then disown the latch.  This is so that signal
-	 * handlers won't try to touch the latch after it's no longer ours.
-	 */
-	MyWalSnd = NULL;
-
-	DisownLatch(&walsnd->latch);
-
-	SpinLockAcquire(&walsnd->mutex);
-	/* Mark WalSnd struct as no longer being in use. */
-	walsnd->replica_disconnected_at = (pg_time_t) time(NULL);
-=======
 	MyWalSnd = NULL;
 
 	SpinLockAcquire(&walsnd->mutex);
 	/* clear latch while holding the spinlock, so it can safely be read */
 	walsnd->latch = NULL;
 	/* Mark WalSnd struct as no longer being in use. */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	walsnd->pid = 0;
 	SpinLockRelease(&walsnd->mutex);
 }
@@ -2634,14 +2613,10 @@ XLogSendLogical(void)
 
 	if (record != NULL)
 	{
-<<<<<<< HEAD
 		/* XXX: Note that logical decoding cannot be used while in recovery */
 		XLogRecPtr	flushPtr = GetFlushRecPtr();
 
-		LogicalDecodingProcessRecord(logical_decoding_ctx, record);
-=======
 		LogicalDecodingProcessRecord(logical_decoding_ctx, logical_decoding_ctx->reader);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		sentPtr = logical_decoding_ctx->reader->EndRecPtr;
 
@@ -2787,35 +2762,7 @@ WalSndRqstFileReload(void)
 void
 HandleWalSndInitStopping(void)
 {
-<<<<<<< HEAD
 	Assert(am_walsender);
-=======
-	int			save_errno = errno;
-
-	got_SIGHUP = true;
-
-	SetLatch(MyLatch);
-
-	errno = save_errno;
-}
-
-/* SIGUSR1: set flag to send WAL records */
-static void
-WalSndXLogSendHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	latch_sigusr1_handler();
-
-	errno = save_errno;
-}
-
-/* SIGUSR2: set flag to do a last cycle and shut down afterwards */
-static void
-WalSndLastCycleHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * If replication has not yet started, die like with SIGTERM. If
@@ -2828,12 +2775,10 @@ WalSndLastCycleHandler(SIGNAL_ARGS)
 	else
 	{
 		got_STOPPING = true;
-		if (MyWalSnd)
-			SetLatch(&MyWalSnd->latch);
+		SetLatch(MyLatch);
 	}
 }
 
-<<<<<<< HEAD
 /*
  * SIGUSR2: set flag to do a last cycle and shut down afterwards. The WAL
  * sender should already have been switched to WALSNDSTATE_STOPPING at
