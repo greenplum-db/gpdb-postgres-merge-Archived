@@ -118,12 +118,9 @@ extern char *temp_tablespaces;
 extern bool ignore_checksum_failure;
 extern bool synchronize_seqscans;
 
-<<<<<<< HEAD
 #ifdef USE_SSL
 extern char *SSLCipherSuites;
 #endif
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #ifdef TRACE_SYNCSCAN
 extern bool trace_syncscan;
 #endif
@@ -193,15 +190,13 @@ static bool check_cluster_name(char **newval, void **extra, GucSource source);
 static const char *show_unix_socket_permissions(void);
 static const char *show_log_file_mode(void);
 
-<<<<<<< HEAD
 static int	defunct_int = 0;
 static bool	defunct_bool = false;
 static double defunct_double = 0;
-=======
+
 /* Private functions in guc-file.l that need to be called from guc.c */
 static ConfigVariable *ProcessConfigFileInternal(GucContext context,
 						  bool applySettings, int elevel);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 
 /*
@@ -1399,20 +1394,6 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-<<<<<<< HEAD
-		/* only here for backwards compatibility */
-		{"autocommit", PGC_USERSET, COMPAT_OPTIONS_IGNORED,
-			gettext_noop("This parameter doesn't do anything."),
-			gettext_noop("It's just here so that we won't choke on SET AUTOCOMMIT TO ON from 7.3-vintage clients."),
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&phony_autocommit,
-		true,
-		check_phony_autocommit, NULL, NULL
-	},
-	{
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		{"default_transaction_read_only", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the default read-only status of new transactions."),
 			NULL
@@ -2243,15 +2224,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-<<<<<<< HEAD
-		{"checkpoint_segments", PGC_SIGHUP, WAL_CHECKPOINTS,
-			gettext_noop("Sets the maximum distance in log segments between automatic WAL checkpoints."),
-			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
-		},
-		&CheckPointSegments,
-		8, 1, INT_MAX,
-=======
 		{"min_wal_size", PGC_SIGHUP, WAL_CHECKPOINTS,
 			gettext_noop("Sets the minimum size to shrink the WAL to."),
 			NULL,
@@ -2259,7 +2231,6 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&min_wal_size,
 		5, 2, INT_MAX,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		NULL, NULL, NULL
 	},
 
@@ -3331,11 +3302,7 @@ static struct config_string ConfigureNamesString[] =
 		{"data_directory", PGC_POSTMASTER, FILE_LOCATIONS,
 			gettext_noop("Sets the server's data directory."),
 			NULL,
-<<<<<<< HEAD
 			GUC_SUPERUSER_ONLY | GUC_DISALLOW_IN_AUTO_FILE | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-=======
-			GUC_SUPERUSER_ONLY | GUC_DISALLOW_IN_AUTO_FILE
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		},
 		&data_directory,
 		NULL,
@@ -3379,7 +3346,7 @@ static struct config_string ConfigureNamesString[] =
 		{"external_pid_file", PGC_POSTMASTER, FILE_LOCATIONS,
 			gettext_noop("Writes the postmaster PID to the specified file."),
 			NULL,
-			GUC_SUPERUSER_ONLY
+			GUC_SUPERUSER_ONLY | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&external_pid_file,
 		NULL,
@@ -3500,16 +3467,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-<<<<<<< HEAD
-		{"external_pid_file", PGC_POSTMASTER, FILE_LOCATIONS,
-			gettext_noop("Writes the postmaster PID to the specified file."),
-			NULL,
-			GUC_SUPERUSER_ONLY | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&external_pid_file,
-		NULL,
-		check_canonical_path, NULL, NULL
-=======
 		{"cluster_name", PGC_POSTMASTER, LOGGING_WHAT,
 			gettext_noop("Sets the name of the cluster which is included in the process title."),
 			NULL,
@@ -3518,7 +3475,6 @@ static struct config_string ConfigureNamesString[] =
 		&cluster_name,
 		"",
 		check_cluster_name, NULL, NULL
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	},
 
 	/* End-of-list marker */
@@ -7142,17 +7098,11 @@ replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
 	item = palloc(sizeof *item);
 	item->name = pstrdup(name);
 	item->value = pstrdup(value);
-<<<<<<< HEAD
-	item->filename = pstrdup("");		/* new item has no location */
-	item->sourceline = 0;
-	item->ignore = false;
-=======
 	item->errmsg = NULL;
 	item->filename = pstrdup("");		/* new item has no location */
 	item->sourceline = 0;
 	item->ignore = false;
 	item->applied = false;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	item->next = NULL;
 
 	if (*head_p == NULL)
@@ -7225,7 +7175,6 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 	if (!resetall)
 	{
 		struct config_generic *record;
-<<<<<<< HEAD
 
 		record = find_option(name, false, ERROR);
 		if (record == NULL)
@@ -7262,45 +7211,10 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 						 errmsg("invalid value for parameter \"%s\": \"%s\"",
 								name, value)));
 
-=======
-
-		record = find_option(name, false, ERROR);
-		if (record == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("unrecognized configuration parameter \"%s\"",
-							name)));
-
-		/*
-		 * Don't allow parameters that can't be set in configuration files to
-		 * be set in PG_AUTOCONF_FILENAME file.
-		 */
-		if ((record->context == PGC_INTERNAL) ||
-			(record->flags & GUC_DISALLOW_IN_FILE) ||
-			(record->flags & GUC_DISALLOW_IN_AUTO_FILE))
-			ereport(ERROR,
-					(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-					 errmsg("parameter \"%s\" cannot be changed",
-							name)));
-
-		if (value)
-		{
-			union config_var_val newval;
-			void	   *newextra = NULL;
-
-			if (!parse_and_validate_value(record, name, value,
-										  PGC_S_FILE, ERROR,
-										  &newval, &newextra))
-				ereport(ERROR,
-						(errmsg("invalid value for parameter \"%s\": \"%s\"",
-								name, value)));
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			if (record->vartype == PGC_STRING && newval.stringval != NULL)
 				free(newval.stringval);
 			if (newextra)
 				free(newextra);
-<<<<<<< HEAD
 
 			/*
 			 * We must also reject values containing newlines, because the
@@ -7311,8 +7225,6 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("parameter value for ALTER SYSTEM must not contain a newline")));
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 	}
 
@@ -7349,23 +7261,15 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 			infile = AllocateFile(AutoConfFileName, "r");
 			if (infile == NULL)
 				ereport(ERROR,
-<<<<<<< HEAD
 						(errcode_for_file_access(),
 						 errmsg("could not open file \"%s\": %m",
-=======
-						(errmsg("could not open file \"%s\": %m",
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 								AutoConfFileName)));
 
 			/* parse it */
 			if (!ParseConfigFp(infile, AutoConfFileName, 0, LOG, &head, &tail))
 				ereport(ERROR,
-<<<<<<< HEAD
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("could not parse contents of file \"%s\"",
-=======
-						(errmsg("could not parse contents of file \"%s\"",
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 								AutoConfFileName)));
 
 			FreeFile(infile);
@@ -7412,15 +7316,7 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 		 * at worst it can lose the parameters set by last ALTER SYSTEM
 		 * command.
 		 */
-<<<<<<< HEAD
 		durable_rename(AutoConfTmpFileName, AutoConfFileName, ERROR);
-=======
-		if (rename(AutoConfTmpFileName, AutoConfFileName) < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not rename file \"%s\" to \"%s\": %m",
-							AutoConfTmpFileName, AutoConfFileName)));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	PG_CATCH();
 	{
@@ -7470,14 +7366,8 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 									 ExtractSetVariableArgs(stmt),
 									 (superuser() ? PGC_SUSET : PGC_USERSET),
 									 PGC_S_SESSION,
-<<<<<<< HEAD
-									 action,
-									 true,
-									 0);
-			DispatchSetPGVariable(stmt->name, stmt->args, stmt->is_local);
-=======
 									 action, true, 0, false);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+			DispatchSetPGVariable(stmt->name, stmt->args, stmt->is_local);
 			break;
 		case VAR_SET_MULTI:
 
@@ -7639,9 +7529,7 @@ SetPGVariableOptDispatch(const char *name, List *args, bool is_local, bool gp_di
 							 (superuser() ? PGC_SUSET : PGC_USERSET),
 							 PGC_S_SESSION,
 							 is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET,
-<<<<<<< HEAD
-							 true,
-							 0);
+							 true, 0, false);
 
 	if (gp_dispatch)
 		DispatchSetPGVariable(name, args, is_local);
@@ -7720,9 +7608,6 @@ DispatchSetPGVariable(const char *name, List *args, bool is_local)
 	}
 
 	CdbDispatchSetCommand(buffer.data, false);
-=======
-							 true, 0, false);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*

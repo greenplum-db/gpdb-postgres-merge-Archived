@@ -36,7 +36,7 @@
 #include "cdb/cdbvars.h"        /* Gp_role, GpIdentity.segindex, currentSliceId */
 
 extern char **environ;
-extern int PostPortNumber;
+extern int PostPortNumber; /* GPDB: Helps identify child processes */
 bool		update_process_title = true;
 
 
@@ -313,24 +313,18 @@ init_ps_display(const char *username, const char *dbname,
 #define PROGRAM_NAME_PREFIX "postgres: "
 #endif
 
-<<<<<<< HEAD
-	snprintf(ps_buffer, ps_buffer_size,
-			 PROGRAM_NAME_PREFIX "%5d, %s %s %s ",
-			 PostPortNumber, username, dbname, host_info);
-=======
 	if (*cluster_name == '\0')
 	{
 		snprintf(ps_buffer, ps_buffer_size,
-				 PROGRAM_NAME_PREFIX "%s %s %s ",
-				 username, dbname, host_info);
+				 PROGRAM_NAME_PREFIX "%5d, %s %s %s ",
+				 PostPortNumber, username, dbname, host_info);
 	}
 	else
 	{
 		snprintf(ps_buffer, ps_buffer_size,
-				 PROGRAM_NAME_PREFIX "%s: %s %s %s ",
-				 cluster_name, username, dbname, host_info);
+				 PROGRAM_NAME_PREFIX "%5d, %s: %s %s %s ",
+				 PostPortNumber, cluster_name, username, dbname, host_info);
 	}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	ps_buffer_cur_len = ps_buffer_fixed_size = strlen(ps_buffer);
 	real_act_prefix_size = ps_buffer_fixed_size;

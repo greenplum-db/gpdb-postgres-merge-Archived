@@ -407,15 +407,6 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 #log_duration = off
 #log_error_verbosity = default		# terse, default, or verbose messages
 #log_hostname = off
-<<<<<<< HEAD
-
-#log_statement = 'none'			# none, mod, ddl, all
-#log_temp_files = -1			# Log temporary files equal or larger
-					# than the specified number of kilobytes.
-					# -1 disables;  0 logs all temp files
-#log_timezone = 'GMT'			# actually, defaults to TZ environment
-					# setting
-=======
 #log_line_prefix = ''			# special values:
 					#   %a = application name
 					#   %u = user name
@@ -442,10 +433,10 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 #log_temp_files = -1			# log temporary files equal or larger
 					# than the specified size in kilobytes;
 					# -1 disables, 0 logs all temp files
-#log_timezone = 'GMT'
+#log_timezone = 'GMT'			# actually, defaults to TZ environment
+					# setting
 #cluster_name = ''			# added to process titles if nonempty
 					# (change requires restart)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #------------------------------------------------------------------------------
 # PL/JAVA
@@ -552,11 +543,8 @@ log_autostats=off	# print additional autostats information
 #bytea_output = 'hex'			# hex, escape
 #xmlbinary = 'base64'
 #xmloption = 'content'
-<<<<<<< HEAD
 #gin_fuzzy_search_limit = 0
-=======
 #gin_pending_list_limit = 4MB
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 # - Locale and Formatting -
 
