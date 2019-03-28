@@ -493,13 +493,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <list>	ExclusionConstraintList ExclusionConstraintElem
 %type <list>	func_arg_list
 %type <node>	func_arg_expr
-<<<<<<< HEAD
-%type <list>	row type_list array_expr_list
-%type <node>	case_expr case_arg when_clause when_operand case_default
-=======
 %type <list>	row explicit_row implicit_row type_list array_expr_list
-%type <node>	case_expr case_arg when_clause case_default
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+%type <node>	case_expr case_arg when_clause when_operand case_default
 %type <list>	when_clause_list
 %type <node>	decode_expr search_result decode_default
 %type <list>	search_result_list
@@ -548,12 +543,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 %type <ival>	Iconst SignedIconst
 %type <str>		Sconst comment_text notify_payload
-<<<<<<< HEAD
-%type <str>		RoleId opt_granted_by opt_boolean_or_string
-%type <str>		QueueId
-=======
 %type <str>		RoleId opt_boolean_or_string
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+%type <str>		QueueId
 %type <list>	var_list
 %type <str>		ColId ColLabel ColLabelNoAs var_name type_function_name param_name
 %type <keyword> PartitionIdentKeyword	
@@ -577,17 +568,13 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 %type <list>	constraints_set_list
 %type <boolean> constraints_set_mode
-<<<<<<< HEAD
-%type <str>		OptTableSpace OptConsTableSpace OptTableSpaceOwner
+%type <str>		OptTableSpace OptConsTableSpace
+%type <node>	OptTableSpaceOwner
 %type <node>    DistributedBy OptDistributedBy 
 %type <ival>	TabPartitionByType OptTabPartitionRangeInclusive
 %type <node>	OptTabPartitionBy TabSubPartitionBy TabSubPartition
 				tab_part_val tab_part_val_no_paran
 %type <node>	opt_list_subparts
-=======
-%type <str>		OptTableSpace OptConsTableSpace
-%type <node>	OptTableSpaceOwner
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 %type <ival>	opt_check_option
 %type <node>	OptTabPartitionSpec OptTabSubPartitionSpec TabSubPartitionTemplate      /* PartitionSpec */
 %type <list>	TabPartitionElemList TabSubPartitionElemList /* list of PartitionElem */
@@ -670,15 +657,10 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 	CACHE CALLED CASCADE CASCADED CASE CAST CATALOG_P CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLLATION COLUMN COMMENT COMMENTS COMMIT
-<<<<<<< HEAD
-	COMMITTED CONCURRENCY CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS
-	CONTENT_P CONTINUE_P CONVERSION_P COPY COST CREATE
-	CROSS CSV CURRENT_P
-=======
 	COMMITTED CONCURRENTLY CONFIGURATION CONFLICT CONNECTION CONSTRAINT
+	CONCURRENCY
 	CONSTRAINTS CONTENT_P CONTINUE_P CONVERSION_P COPY COST CREATE
 	CROSS CSV CUBE CURRENT_P
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	CURRENT_CATALOG CURRENT_DATE CURRENT_ROLE CURRENT_SCHEMA
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
@@ -1237,14 +1219,11 @@ stmt :
 			| AlterGroupStmt
 			| AlterObjectSchemaStmt
 			| AlterOwnerStmt
-<<<<<<< HEAD
+			| AlterPolicyStmt
 			| AlterQueueStmt
 			| AlterResourceGroupStmt
 			| AlterRoleSetStmt
 			| AlterRoleStmt
-=======
-			| AlterPolicyStmt
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			| AlterSeqStmt
 			| AlterSystemStmt
 			| AlterTblSpcStmt
@@ -1893,11 +1872,7 @@ AlterUserStmt:
 
 
 AlterUserSetStmt:
-<<<<<<< HEAD
-			ALTER USER RoleId opt_in_database SetResetClause
-=======
-			ALTER USER RoleSpec SetResetClause
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+			ALTER USER RoleSpec opt_in_database SetResetClause
 				{
 					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
 					n->role = $3;
@@ -2577,7 +2552,6 @@ AlterTableStmt:
 					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
 		|	ALTER EXTERNAL TABLE relation_expr alter_table_cmds
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
@@ -2586,8 +2560,6 @@ AlterTableStmt:
 					n->relkind = OBJECT_EXTTABLE;
 					$$ = (Node *)n;
 				}
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		|	ALTER TABLE ALL IN_P TABLESPACE name SET TABLESPACE name opt_nowait
 				{
 					AlterTableMoveAllStmt *n =
@@ -9022,19 +8994,14 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->isconstraint = false;
 					n->deferrable = false;
 					n->initdeferred = false;
-<<<<<<< HEAD
+					n->transformed = false;
+					n->if_not_exists = false;
 
-                    if (n->concurrent)
-					{
+					if (n->concurrent)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("CREATE INDEX CONCURRENTLY is not supported")));
 
-					}
-
-=======
-					n->transformed = false;
-					n->if_not_exists = false;
 					$$ = (Node *)n;
 				}
 			| CREATE opt_unique INDEX opt_concurrently IF_P NOT EXISTS index_name
@@ -9061,7 +9028,12 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->initdeferred = false;
 					n->transformed = false;
 					n->if_not_exists = true;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+					if (n->concurrent)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("CREATE INDEX CONCURRENTLY is not supported")));
+
 					$$ = (Node *)n;
 				}
 		;
@@ -9930,7 +9902,6 @@ reindex_option_elem:
 			VERBOSE	{ $$ = REINDEXOPT_VERBOSE; }
 		;
 
-<<<<<<< HEAD
 /*
  * ALTER TYPE ... SET DEFAULT ENCODING
  *
@@ -9946,8 +9917,6 @@ AlterTypeStmt: ALTER TYPE_P any_name SET DEFAULT ENCODING definition
 				}
 		;
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*****************************************************************************
  *
  * ALTER TABLESPACE
@@ -10814,8 +10783,7 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleSpec
 					n->newowner = $6;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
-			| ALTER PROTOCOL name OWNER TO RoleId
+			| ALTER PROTOCOL name OWNER TO RoleSpec
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_EXTPROTOCOL;
@@ -10823,10 +10791,7 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleSpec
 					n->newowner = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER TEXT_P SEARCH DICTIONARY any_name OWNER TO RoleId
-=======
 			| ALTER TEXT_P SEARCH DICTIONARY any_name OWNER TO RoleSpec
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_TSDICTIONARY;
@@ -11752,15 +11717,8 @@ AnalyzeStmt:
 					n->options = VACOPT_ANALYZE;
 					if ($2)
 						n->options |= VACOPT_VERBOSE;
-<<<<<<< HEAD
 					if ($3)
 						n->options |= VACOPT_ROOTONLY;
-					n->freeze_min_age = -1;
-					n->freeze_table_age = -1;
-					n->multixact_freeze_min_age = -1;
-					n->multixact_freeze_table_age = -1;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					n->relation = NULL;
 					n->va_cols = NIL;
 					$$ = (Node *)n;
