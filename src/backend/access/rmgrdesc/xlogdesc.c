@@ -40,13 +40,12 @@ const struct config_enum_entry wal_level_options[] = {
  * can also be used in xlog_desc.
  */
 void
-<<<<<<< HEAD
-UnpackCheckPointRecord(XLogRecord *record, CheckpointExtendedRecord *ckptExtended)
+UnpackCheckPointRecord(XLogReaderState record, CheckpointExtendedRecord *ckptExtended)
 {
 	char *current_record_ptr;
 	int remainderLen;
 
-	if (record->xl_len == sizeof(CheckPoint))
+	if (XLogRecGetDataLen(record) == sizeof(CheckPoint))
 	{
 		/* Special (for bootstrap, xlog switch, maybe others) */
 		ckptExtended->dtxCheckpoint = NULL;
@@ -56,10 +55,10 @@ UnpackCheckPointRecord(XLogRecord *record, CheckpointExtendedRecord *ckptExtende
 	}
 
 	/* Normal checkpoint Record */
-	Assert(record->xl_len > sizeof(CheckPoint));
+	Assert(XLogRecGetDataLen(record) > sizeof(CheckPoint));
 
 	current_record_ptr = ((char*)XLogRecGetData(record)) + sizeof(CheckPoint);
-	remainderLen = record->xl_len - sizeof(CheckPoint);
+	remainderLen = XLogRecGetDataLen(record) - sizeof(CheckPoint);
 
 	/* Start of distributed transaction information */
 	ckptExtended->dtxCheckpoint = (TMGXACT_CHECKPOINT *)current_record_ptr;
@@ -86,21 +85,14 @@ UnpackCheckPointRecord(XLogRecord *record, CheckpointExtendedRecord *ckptExtende
 	}
 }
 
-void
-xlog_desc(StringInfo buf, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-	char		*rec = XLogRecGetData(record);
-=======
 xlog_desc(StringInfo buf, XLogReaderState *record)
 {
 	char	   *rec = XLogRecGetData(record);
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (info == XLOG_CHECKPOINT_SHUTDOWN ||
 		info == XLOG_CHECKPOINT_ONLINE)
-	{
+	{0
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
 <<<<<<< HEAD
