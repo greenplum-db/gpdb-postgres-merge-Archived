@@ -757,13 +757,8 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 											  found);
 
 			/*
-<<<<<<< HEAD
-			 * In RBM_ZERO_AND_LOCK mode, the caller expects the buffer to
-			 * be already locked on return.
-=======
 			 * In RBM_ZERO_AND_LOCK mode the caller expects the page to be
 			 * locked on return.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			 */
 			if (!isLocalBuf)
 			{
@@ -858,15 +853,8 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		 * Read in the page, unless the caller intends to overwrite it and
 		 * just wants us to allocate a buffer.
 		 */
-<<<<<<< HEAD
-		if (mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK ||
-			mode == RBM_DO_NOT_USE)
-		{
-=======
 		if (mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			MemSet((char *) bufBlock, 0, BLCKSZ);
-		}
 		else
 		{
 			instr_time	io_start,
@@ -907,27 +895,15 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		}
 	}
 
-<<<<<<< HEAD
 #ifdef MPROTECT_BUFFERS
     BufferMProtect( bufHdr, PROT_READ );
 #endif
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/*
 	 * In RBM_ZERO_AND_LOCK mode, grab the buffer content lock before marking
 	 * the page as valid, to make sure that no other backend sees the zeroed
 	 * page before the caller has had a chance to initialize it.
 	 *
 	 * Since no-one else can be looking at the page contents yet, there is no
-<<<<<<< HEAD
-	 * difference between an exclusive lock and a cleanup-strength lock.
-	 * (Note that we cannot use LockBuffer() of LockBufferForCleanup() here,
-	 * because they assert that the buffer is already valid.)
-	 */
-	if ((mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK) &&
-		!isLocalBuf)
-		LWLockAcquire(bufHdr->content_lock, LW_EXCLUSIVE);
-=======
 	 * difference between an exclusive lock and a cleanup-strength lock. (Note
 	 * that we cannot use LockBuffer() of LockBufferForCleanup() here, because
 	 * they assert that the buffer is already valid.)
@@ -937,7 +913,6 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	{
 		LWLockAcquire(bufHdr->content_lock, LW_EXCLUSIVE);
 	}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (isLocalBuf)
 	{
@@ -3187,10 +3162,6 @@ IncrBufferRefCount(Buffer buffer)
 	if (BufferIsLocal(buffer))
 		LocalRefCount[-buffer - 1]++;
 	else
-<<<<<<< HEAD
-		PrivateRefCount[buffer - 1]++;
-	ResourceOwnerRememberBuffer(CurrentResourceOwner, buffer);
-=======
 	{
 		PrivateRefCountEntry *ref;
 
@@ -3198,7 +3169,7 @@ IncrBufferRefCount(Buffer buffer)
 		Assert(ref != NULL);
 		ref->refcount++;
 	}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	ResourceOwnerRememberBuffer(CurrentResourceOwner, buffer);
 }
 
 /*
