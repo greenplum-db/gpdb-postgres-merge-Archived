@@ -614,16 +614,13 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	if (xlrec->flags & XLH_INSERT_CONTAINS_NEW_TUPLE)
 	{
-		Size		datalen = r->xl_len - SizeOfHeapInsert;
-		Size		tuplelen = datalen - SizeOfHeapHeader;
-
-		Assert(r->xl_len > (SizeOfHeapInsert + SizeOfHeapHeader));
+		Size		tuplelen;
+		char	   *tupledata = XLogRecGetBlockData(r, 0, &tuplelen);
 
 		change->data.tp.newtuple =
 			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
 
-		DecodeXLogTuple((char *) xlrec + SizeOfHeapInsert,
-						datalen, change->data.tp.newtuple);
+		DecodeXLogTuple(tupledata, tuplelen, change->data.tp.newtuple);
 	}
 
 	change->data.tp.clear_toast_afterwards = true;
@@ -921,7 +918,6 @@ DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tuple)
 #if 0
 	tuple->tuple.t_tableOid = InvalidOid;
 #endif
-	tuple->tuple.t_data = &tuple->t_data.header;
 
 	/* data is not stored aligned, copy to aligned storage */
 	memcpy((char *) &xlhdr,

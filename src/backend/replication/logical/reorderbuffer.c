@@ -463,12 +463,8 @@ ReorderBufferReturnChange(ReorderBuffer *rb, ReorderBufferChange *change)
 
 
 /*
-<<<<<<< HEAD
  * Get an unused, possibly preallocated, ReorderBufferTupleBuf fitting at
  * least a tuple of size tuple_len (excluding header overhead).
-=======
- * Get an unused, possibly preallocated, ReorderBufferTupleBuf
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 ReorderBufferTupleBuf *
 ReorderBufferGetTupleBuf(ReorderBuffer *rb, Size tuple_len)
@@ -476,7 +472,7 @@ ReorderBufferGetTupleBuf(ReorderBuffer *rb, Size tuple_len)
 	ReorderBufferTupleBuf *tuple;
 	Size		alloc_len;
 
-	alloc_len = tuple_len + offsetof(HeapTupleHeaderData, t_bits);
+	alloc_len = tuple_len + SizeofHeapTupleHeader;
 
 	/*
 	 * Most tuples are below MaxHeapTupleSize, so we use a slab allocator for
@@ -1581,47 +1577,6 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 						 * they're not required anymore. The creator of the
 						 * tuple tells us.
 						 */
-<<<<<<< HEAD
-						if (relation->rd_rel->relkind == RELKIND_SEQUENCE)
-						{
-						}
-						/* user-triggered change */
-						else if (!IsToastRelation(relation))
-						{
-							ReorderBufferToastReplace(rb, txn, relation, change);
-							rb->apply_change(rb, txn, relation, change);
-
-							/*
-							 * Only clear reassembled toast chunks if we're
-							 * sure they're not required anymore. The creator
-							 * of the tuple tells us.
-							 */
-							if (change->data.tp.clear_toast_afterwards)
-								ReorderBufferToastReset(rb, txn);
-						}
-						/* we're not interested in toast deletions */
-						else if (change->action == REORDER_BUFFER_CHANGE_INSERT)
-						{
-							/*
-							 * Need to reassemble the full toasted Datum in
-							 * memory, to ensure the chunks don't get reused
-							 * till we're done remove it from the list of this
-							 * transaction's changes. Otherwise it will get
-							 * freed/reused while restoring spooled data from
-							 * disk.
-							 *
-							 * But skip doing so if there's no
-							 * tuple-data. That happens if a non-mapped system
-							 * catalog with a toast table is rewritten.
-							 */
-							if (change->data.tp.newtuple != NULL)
-							{
-								dlist_delete(&change->node);
-								ReorderBufferToastAppendChunk(rb, txn, relation,
-															  change);
-							}
-						}
-=======
 						if (change->data.tp.clear_toast_afterwards)
 							ReorderBufferToastReset(rb, txn);
 					}
@@ -1661,7 +1616,6 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 					break;
 
 				case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_INSERT:
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 					/*
 					 * Speculative insertions are dealt with by delaying the
@@ -1756,8 +1710,6 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 			}
 		}
 
-<<<<<<< HEAD
-=======
 		/*
 		 * There's a speculative insertion remaining, just clean in up, it
 		 * can't have been successful, otherwise we'd gotten a confirmation
@@ -1769,7 +1721,6 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 			specinsert = NULL;
 		}
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		/* clean up the iterator */
 		ReorderBufferIterTXNFinish(rb, iterstate);
 		iterstate = NULL;
@@ -2340,7 +2291,6 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 				newtup = change->data.tp.newtuple;
 
 				if (oldtup)
-<<<<<<< HEAD
 				{
 					sz += sizeof(HeapTupleData);
 					oldlen = oldtup->tuple.t_len;
@@ -2353,17 +2303,6 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 					newlen = newtup->tuple.t_len;
 					sz += newlen;
 				}
-=======
-					oldlen = offsetof(ReorderBufferTupleBuf, t_data) +
-						oldtup->tuple.t_len;
-
-				if (newtup)
-					newlen = offsetof(ReorderBufferTupleBuf, t_data) +
-						newtup->tuple.t_len;
-
-				sz += oldlen;
-				sz += newlen;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 				/* make sure we have enough space */
 				ReorderBufferSerializeReserve(rb, sz);
@@ -2608,32 +2547,13 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		case REORDER_BUFFER_CHANGE_INSERT:
 		case REORDER_BUFFER_CHANGE_UPDATE:
 		case REORDER_BUFFER_CHANGE_DELETE:
-<<<<<<< HEAD
+		case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_INSERT:
 			if (change->data.tp.oldtuple)
 			{
 				uint32		tuplelen = ((HeapTuple) data)->t_len;
-=======
-		case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_INSERT:
-			if (change->data.tp.newtuple)
-			{
-				Size		len = offsetof(ReorderBufferTupleBuf, t_data) +
-				((ReorderBufferTupleBuf *) data)->tuple.t_len;
-
-				change->data.tp.newtuple = ReorderBufferGetTupleBuf(rb);
-				memcpy(change->data.tp.newtuple, data, len);
-				change->data.tp.newtuple->tuple.t_data =
-					&change->data.tp.newtuple->t_data.header;
-				data += len;
-			}
-
-			if (change->data.tp.oldtuple)
-			{
-				Size		len = offsetof(ReorderBufferTupleBuf, t_data) +
-				((ReorderBufferTupleBuf *) data)->tuple.t_len;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 				change->data.tp.oldtuple =
-					ReorderBufferGetTupleBuf(rb, tuplelen - offsetof(HeapTupleHeaderData, t_bits));
+					ReorderBufferGetTupleBuf(rb, tuplelen - SizeofHeapTupleHeader);
 
 				/* restore ->tuple */
 				memcpy(&change->data.tp.oldtuple->tuple, data,
@@ -2642,16 +2562,11 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 				/* reset t_data pointer into the new tuplebuf */
 				change->data.tp.oldtuple->tuple.t_data =
-<<<<<<< HEAD
 					ReorderBufferTupleBufData(change->data.tp.oldtuple);
 
 				/* restore tuple data itself */
 				memcpy(change->data.tp.oldtuple->tuple.t_data, data, tuplelen);
 				data += tuplelen;
-=======
-					&change->data.tp.oldtuple->t_data.header;
-				data += len;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			}
 
 			if (change->data.tp.newtuple)
@@ -2663,7 +2578,7 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 					   sizeof(uint32));
 
 				change->data.tp.newtuple =
-					ReorderBufferGetTupleBuf(rb, tuplelen - offsetof(HeapTupleHeaderData, t_bits));
+					ReorderBufferGetTupleBuf(rb, tuplelen - SizeofHeapTupleHeader);
 
 				/* restore ->tuple */
 				memcpy(&change->data.tp.newtuple->tuple, data,
@@ -2825,37 +2740,7 @@ StartupReorderBuffer(void)
 		 * ok, has to be a surviving logical slot, iterate and delete
 		 * everything starting with xid-*
 		 */
-<<<<<<< HEAD
 		ReorderBufferCleanupSerializedTXNs(logical_de->d_name);
-=======
-		sprintf(path, "pg_replslot/%s", logical_de->d_name);
-
-		/* we're only creating directories here, skip if it's not our's */
-		if (lstat(path, &statbuf) == 0 && !S_ISDIR(statbuf.st_mode))
-			continue;
-
-		spill_dir = AllocateDir(path);
-		while ((spill_de = ReadDir(spill_dir, path)) != NULL)
-		{
-			if (strcmp(spill_de->d_name, ".") == 0 ||
-				strcmp(spill_de->d_name, "..") == 0)
-				continue;
-
-			/* only look at names that can be ours */
-			if (strncmp(spill_de->d_name, "xid", 3) == 0)
-			{
-				sprintf(path, "pg_replslot/%s/%s", logical_de->d_name,
-						spill_de->d_name);
-
-				if (unlink(path) != 0)
-					ereport(PANIC,
-							(errcode_for_file_access(),
-							 errmsg("could not remove file \"%s\": %m",
-									path)));
-			}
-		}
-		FreeDir(spill_dir);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	FreeDir(logical_dir);
 }
@@ -3105,11 +2990,7 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	 */
 	tmphtup = heap_form_tuple(desc, attrs, isnull);
 	Assert(newtup->tuple.t_len <= MaxHeapTupleSize);
-<<<<<<< HEAD
 	Assert(ReorderBufferTupleBufData(newtup) == newtup->tuple.t_data);
-=======
-	Assert(&newtup->t_data.header == newtup->tuple.t_data);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	memcpy(newtup->tuple.t_data, tmphtup->t_data, tmphtup->t_len);
 	newtup->tuple.t_len = tmphtup->t_len;
