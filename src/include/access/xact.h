@@ -120,11 +120,6 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 #define XLOG_XACT_COMMIT_PREPARED	0x30
 #define XLOG_XACT_ABORT_PREPARED	0x40
 #define XLOG_XACT_ASSIGNMENT		0x50
-<<<<<<< HEAD
-#define XLOG_XACT_COMMIT_COMPACT	0x60
-#define XLOG_XACT_DISTRIBUTED_COMMIT 0x70
-#define XLOG_XACT_DISTRIBUTED_FORGET 0x80
-=======
 /* free opcode 0x60 */
 /* free opcode 0x70 */
 
@@ -133,6 +128,9 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 
 /* does this record have a 'xinfo' field or not */
 #define XLOG_XACT_HAS_INFO			0x80
+
+#define XLOG_XACT_DISTRIBUTED_COMMIT 0x90
+#define XLOG_XACT_DISTRIBUTED_FORGET 0xA0
 
 /*
  * The following flags, stored in xinfo, determine which information is
@@ -162,7 +160,6 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 	(!!(xinfo & XACT_COMPLETION_UPDATE_RELCACHE_FILE))
 #define XactCompletionForceSyncCommit(xinfo) \
 	(!!(xinfo & XACT_COMPLETION_FORCE_SYNC_COMMIT))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 typedef struct xl_xact_assignment
 {
@@ -214,13 +211,6 @@ typedef struct xl_xact_dbinfo
 
 typedef struct xl_xact_subxacts
 {
-<<<<<<< HEAD
-	TimestampTz xact_time;		/* time of commit */
-	time_t		xtime;
-	uint32		xinfo;			/* info flags */
-	int			nrels;			/* number of RelFileNodes */
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	int			nsubxacts;		/* number of subtransaction XIDs */
 	TransactionId subxacts[FLEXIBLE_ARRAY_MEMBER];
 } xl_xact_subxacts;
@@ -236,15 +226,6 @@ typedef struct xl_xact_relfilenodes
 typedef struct xl_xact_invals
 {
 	int			nmsgs;			/* number of shared inval msgs */
-<<<<<<< HEAD
-	Oid			dbId;			/* MyDatabaseId */
-	Oid			tsId;			/* MyDatabaseTableSpace */
-	/* Array of RelFileNode(s) to drop at commit */
-	RelFileNodeWithStorageType xnodes[1];		/* VARIABLE LENGTH ARRAY */
-	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
-	/* ARRAY OF SHARED INVALIDATION MESSAGES FOLLOWS */
-	/* DISTRIBUTED XACT STUFF FOLLOWS */
-=======
 	SharedInvalidationMessage msgs[FLEXIBLE_ARRAY_MEMBER];
 } xl_xact_invals;
 #define MinSizeOfXactInvals offsetof(xl_xact_invals, msgs)
@@ -253,7 +234,6 @@ typedef struct xl_xact_twophase
 {
 	TransactionId xid;
 } xl_xact_twophase;
-#define MinSizeOfXactInvals offsetof(xl_xact_invals, msgs)
 
 typedef struct xl_xact_origin
 {
@@ -272,21 +252,12 @@ typedef struct xl_xact_commit
 	/* xl_xact_invals follows if XINFO_HAS_INVALS */
 	/* xl_xact_twophase follows if XINFO_HAS_TWOPHASE */
 	/* xl_xact_origin follows if XINFO_HAS_ORIGIN, stored unaligned! */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } xl_xact_commit;
 #define MinSizeOfXactCommit (offsetof(xl_xact_commit, xact_time) + sizeof(TimestampTz))
 
 typedef struct xl_xact_abort
 {
 	TimestampTz xact_time;		/* time of abort */
-<<<<<<< HEAD
-	time_t		xtime;
-	int			nrels;			/* number of RelFileNodes */
-	int			nsubxacts;		/* number of subtransaction XIDs */
-	/* Array of RelFileNode(s) to drop at abort */
-	RelFileNodeWithStorageType xnodes[1];		/* VARIABLE LENGTH ARRAY */
-	/* ARRAY OF ABORTED SUBTRANSACTION XIDs FOLLOWS */
-=======
 
 	/* xl_xact_xinfo follows if XLOG_XACT_HAS_INFO */
 	/* No db_info required */
@@ -294,7 +265,6 @@ typedef struct xl_xact_abort
 	/* xl_xact_relfilenodes follows if HAS_RELFILENODES */
 	/* No invalidation messages needed. */
 	/* xl_xact_twophase follows if XINFO_HAS_TWOPHASE */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } xl_xact_abort;
 #define MinSizeOfXactAbort sizeof(xl_xact_abort)
 
@@ -428,11 +398,6 @@ extern void RecordDistributedForgetCommitted(struct TMGXACT_LOG *gxact_log);
 
 extern int	xactGetCommittedChildren(TransactionId **ptr);
 
-<<<<<<< HEAD
-extern void xact_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
-extern void xact_desc(StringInfo buf, XLogRecord *record);
-extern const char *IsoLevelAsUpperString(int IsoLevel);
-=======
 extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
 					int nsubxacts, TransactionId *subxacts,
 					int nrels, RelFileNode *rels,
@@ -457,6 +422,8 @@ extern void ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_ab
 extern void EnterParallelMode(void);
 extern void ExitParallelMode(void);
 extern bool IsInParallelMode(void);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+/* GPDB: Used for logging */
+extern const char *IsoLevelAsUpperString(int IsoLevel);
 
 #endif   /* XACT_H */
