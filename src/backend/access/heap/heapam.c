@@ -103,14 +103,9 @@ static void HeapSatisfiesHOTandKeyUpdate(Relation relation,
 							 bool *satisfies_hot, bool *satisfies_key,
 							 bool *satisfies_id,
 							 HeapTuple oldtup, HeapTuple newtup);
-<<<<<<< HEAD
-static void heap_acquire_tuplock(Relation relation, ItemPointer tid,
-					 LockTupleMode mode, bool nowait, bool *have_tuple_lock);
-=======
 static bool heap_acquire_tuplock(Relation relation, ItemPointer tid,
 					 LockTupleMode mode, LockWaitPolicy wait_policy,
 					 bool *have_tuple_lock);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void compute_new_xmax_infomask(TransactionId xmax, uint16 old_infomask,
 						  uint16 old_infomask2, TransactionId add_to_xmax,
 						  LockTupleMode mode, bool is_update,
@@ -311,12 +306,8 @@ initscan(HeapScanDesc scan, ScanKey key, bool is_rescan)
 	 * underlying bitmap index scans will be counted) or sample scans (we only
 	 * update stats for tuple fetches there)
 	 */
-<<<<<<< HEAD
-	pgstat_count_heap_scan(scan->rs_rd);
-=======
 	if (!scan->rs_bitmapscan && !scan->rs_samplescan)
 		pgstat_count_heap_scan(scan->rs_rd);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 void
@@ -1133,11 +1124,8 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 					(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
 					 errmsg("cannot access temporary tables during a parallel operation")));
 		MyXactAccessedTempRel = true;
-<<<<<<< HEAD
-#endif
-=======
 	}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+#endif
 
 	pgstat_initstats(r);
 
@@ -1211,11 +1199,8 @@ try_relation_open(Oid relationId, LOCKMODE lockmode, bool noWait)
 					(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
 					 errmsg("cannot access temporary tables during a parallel operation")));
 		MyXactAccessedTempRel = true;
-<<<<<<< HEAD
-#endif
-=======
 	}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+#endif
 
 	pgstat_initstats(r);
 
@@ -2396,31 +2381,22 @@ FreeBulkInsertState(BulkInsertState bistate)
  * This causes rows to be frozen, which is an MVCC violation and
  * requires explicit options chosen by user.
  *
-<<<<<<< HEAD
- * HEAP_INSERT_SPECULATIVE is used on so-called "speculative insertions",
-=======
  * HEAP_INSERT_IS_SPECULATIVE is used on so-called "speculative insertions",
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * which can be backed out afterwards without aborting the whole transaction.
  * Other sessions can wait for the speculative insertion to be confirmed,
  * turning it into a regular tuple, or aborted, as if it never existed.
  * Speculatively inserted tuples behave as "value locks" of short duration,
  * used to implement INSERT .. ON CONFLICT.
  *
-<<<<<<< HEAD
  * HEAP_INSERT_NO_LOGICAL force-disables the emitting of logical decoding
  * information for the tuple. This should solely be used during table rewrites
  * where RelationIsLogicallyLogged(relation) is not yet accurate for the new
  * relation.
  *
- * Note that these options will be applied when inserting into the heap's
- * TOAST table, too, if the tuple requires any out-of-line data.
-=======
  * Note that most of these options will be applied when inserting into the
  * heap's TOAST table, too, if the tuple requires any out-of-line data.  Only
  * HEAP_INSERT_IS_SPECULATIVE is explicitly ignored, as the toast data does
  * not partake in speculative insertion.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  *
  * The BulkInsertState object (if any; bistate can be NULL for default
  * behavior) is also just passed through to RelationGetBufferForTuple.
@@ -2519,11 +2495,6 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		 * If this is a catalog, we need to transmit combocids to properly
 		 * decode, so log that as well.
 		 */
-<<<<<<< HEAD
-		need_tuple_data = RelationIsLogicallyLogged(relation) &&
-			!(options & HEAP_INSERT_NO_LOGICAL);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		if (RelationIsAccessibleInLogicalDecoding(relation))
 			log_heap_new_cid(relation, heaptup);
 
@@ -2539,12 +2510,6 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 			bufflags |= REGBUF_WILL_INIT;
 		}
 
-<<<<<<< HEAD
-		if (!isFrozen)
-			recptr = XLogInsert(RM_HEAP_ID, info, rdata);
-		else
-			recptr = XLogInsert_OverrideXid(RM_HEAP_ID, info, rdata, FrozenTransactionId);
-=======
 		xlrec.offnum = ItemPointerGetOffsetNumber(&heaptup->t_self);
 		xlrec.flags = 0;
 		if (all_visible_cleared)
@@ -2558,7 +2523,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		 * page write, so make sure it's included even if we take a full-page
 		 * image. (XXX We could alternatively store a pointer into the FPW).
 		 */
-		if (RelationIsLogicallyLogged(relation))
+		if (RelationIsLogicallyLogged(relation) &&
+			!(options & HEAP_INSERT_NO_LOGICAL))
 		{
 			xlrec.flags |= XLH_INSERT_CONTAINS_NEW_TUPLE;
 			bufflags |= REGBUF_KEEP_DATA;
@@ -2587,7 +2553,6 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		XLogIncludeOrigin();
 
 		recptr = XLogInsert(RM_HEAP_ID, info);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		PageSetLSN(page, recptr);
 	}
@@ -2643,9 +2608,8 @@ static HeapTuple
 heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
 					CommandId cid, int options, bool isFrozen)
 {
-<<<<<<< HEAD
 	Insist(RelationIsHeap(relation));
-=======
+
 	/*
 	 * For now, parallel operations are required to be strictly read-only.
 	 * Unlike heap_update() and heap_delete(), an insert should never create a
@@ -2656,7 +2620,6 @@ heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
 				 errmsg("cannot insert tuples during a parallel operation")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (relation->rd_rel->relhasoids)
 	{
@@ -2922,25 +2885,6 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 			totaldatalen = scratchptr - tupledata;
 			Assert((scratchptr - scratch.data) < BLCKSZ);
 
-<<<<<<< HEAD
-			rdata[0].data = (char *) xlrec;
-			rdata[0].len = tupledata - scratch.data;
-			rdata[0].buffer = InvalidBuffer;
-			rdata[0].next = &rdata[1];
-
-			rdata[1].data = tupledata;
-			rdata[1].len = totaldatalen;
-			rdata[1].buffer = need_tuple_data ? InvalidBuffer : buffer;
-			rdata[1].buffer_std = true;
-			rdata[1].next = NULL;
-
-			/*
-			 * Make a separate rdata entry for the tuple's buffer if we're
-			 * doing logical decoding, so that an eventual FPW doesn't remove
-			 * the tuple's data.
-			 */
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			if (need_tuple_data)
 				xlrec->flags |= XLH_INSERT_CONTAINS_NEW_TUPLE;
 
@@ -2959,16 +2903,6 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 			}
 
 			/*
-<<<<<<< HEAD
-			 * Signal that this is the last xl_heap_multi_insert record
-			 * emitted by this call to heap_multi_insert(). Needed for logical
-			 * decoding so it knows when to cleanup temporary data.
-			 */
-			if (ndone + nthispage == ntuples)
-				xlrec->flags |= XLOG_HEAP_LAST_MULTI_INSERT;
-
-			recptr = XLogInsert(RM_HEAP2_ID, info, rdata);
-=======
 			 * If we're doing logical decoding, include the new tuple data
 			 * even if we take a full-page image of the page.
 			 */
@@ -2976,7 +2910,7 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 				bufflags |= REGBUF_KEEP_DATA;
 
 			XLogBeginInsert();
-			XLogRegisterData((char *) xlrec, tupledata - scratch);
+			XLogRegisterData((char *) xlrec, tupledata - scratch.data);
 			XLogRegisterBuffer(0, buffer, REGBUF_STANDARD | bufflags);
 
 			XLogRegisterBufData(0, tupledata, totaldatalen);
@@ -2985,7 +2919,6 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 			XLogIncludeOrigin();
 
 			recptr = XLogInsert(RM_HEAP2_ID, info);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			PageSetLSN(page, recptr);
 		}
@@ -3258,24 +3191,8 @@ l1:
 		infomask = tp.t_data->t_infomask;
 
 		/*
-<<<<<<< HEAD
-		 * Acquire tuple lock to establish our priority for the tuple (see
-		 * heap_lock_tuple).  LockTuple will release us when we are
-		 * next-in-line for the tuple.
-		 *
-		 * If we are forced to "start over" below, we keep the tuple lock;
-		 * this arranges that we stay at the head of the line while rechecking
-		 * tuple state.
-		 */
-		heap_acquire_tuplock(relation, &(tp.t_self), LockTupleExclusive,
-							 false, &have_tuple_lock);
-
-		/*
-		 * Sleep until concurrent transaction ends.  Note that we don't care
-=======
 		 * Sleep until concurrent transaction ends -- except when there's a
 		 * single locker and it's our own transaction.  Note we don't care
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		 * which lock mode the locker has, because we need the strongest one.
 		 *
 		 * Before sleeping, we need to acquire tuple lock to establish our
@@ -3289,17 +3206,10 @@ l1:
 		if (infomask & HEAP_XMAX_IS_MULTI)
 		{
 			/* wait for multixact */
-<<<<<<< HEAD
-			MultiXactIdWait((MultiXactId) xwait, MultiXactStatusUpdate, infomask,
-							relation, &(tp.t_self), XLTW_Delete,
-							NULL);
-			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-=======
 			if (DoesMultiXactIdConflict((MultiXactId) xwait, infomask,
 										LockTupleExclusive))
 			{
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 				/* acquire tuple lock, if necessary */
 				heap_acquire_tuplock(relation, &(tp.t_self), LockTupleExclusive,
@@ -3334,9 +3244,6 @@ l1:
 		}
 		else if (!TransactionIdIsCurrentTransactionId(xwait))
 		{
-<<<<<<< HEAD
-			/* wait for regular transaction to end */
-=======
 			/*
 			 * Wait for regular transaction to end; but first, acquire tuple
 			 * lock.
@@ -3344,7 +3251,6 @@ l1:
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			heap_acquire_tuplock(relation, &(tp.t_self), LockTupleExclusive,
 								 LockWaitBlock, &have_tuple_lock);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			XactLockTableWait(xwait, relation, &(tp.t_self), XLTW_Delete);
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
@@ -3520,14 +3426,10 @@ l1:
 							 - SizeofHeapTupleHeader);
 		}
 
-<<<<<<< HEAD
-		recptr = XLogInsert_OverrideXid(RM_HEAP_ID, XLOG_HEAP_DELETE, rdata, xid);
-=======
 		/* filtering by origin on a row level is much more efficient */
 		XLogIncludeOrigin();
 
 		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_DELETE);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		PageSetLSN(page, recptr);
 	}
@@ -3850,11 +3752,6 @@ l2:
 		xwait = HeapTupleHeaderGetRawXmax(oldtup.t_data);
 		infomask = oldtup.t_data->t_infomask;
 
-<<<<<<< HEAD
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		/*
 		 * Now we have to do something about the existing locker.  If it's a
 		 * multi, sleep on it; we might be awakened before it is completely
@@ -3868,13 +3765,8 @@ l2:
 		 *
 		 * Before sleeping, we need to acquire tuple lock to establish our
 		 * priority for the tuple (see heap_lock_tuple).  LockTuple will
-<<<<<<< HEAD
-		 * release us when we are next-in-line for the tuple.  Note we must not
-		 * acquire the tuple lock until we're sure we're going to sleep;
-=======
 		 * release us when we are next-in-line for the tuple.  Note we must
 		 * not acquire the tuple lock until we're sure we're going to sleep;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		 * otherwise we're open for race conditions with other transactions
 		 * holding the tuple lock which sleep on us.
 		 *
@@ -3887,25 +3779,10 @@ l2:
 			TransactionId update_xact;
 			int			remain;
 
-<<<<<<< HEAD
-			/* acquire tuple lock, if necessary */
-			if (DoesMultiXactIdConflict((MultiXactId) xwait, infomask, *lockmode))
-			{
-				heap_acquire_tuplock(relation, &(oldtup.t_self), *lockmode,
-									 false, &have_tuple_lock);
-			}
-
-			/* wait for multixact */
-			MultiXactIdWait((MultiXactId) xwait, mxact_status, infomask,
-							relation, &oldtup.t_self, XLTW_Update,
-							&remain);
-			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-=======
 			if (DoesMultiXactIdConflict((MultiXactId) xwait, infomask,
 										*lockmode))
 			{
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 				/* acquire tuple lock, if necessary */
 				heap_acquire_tuplock(relation, &(oldtup.t_self), *lockmode,
@@ -4013,39 +3890,6 @@ l2:
 			UpdateXmaxHintBits(oldtup.t_data, buffer, xwait);
 			if (oldtup.t_data->t_infomask & HEAP_XMAX_INVALID)
 				can_continue = true;
-<<<<<<< HEAD
-				locker_remains = true;
-			}
-			else
-			{
-				/*
-				 * Wait for regular transaction to end; but first, acquire
-				 * tuple lock.
-				 */
-				heap_acquire_tuplock(relation, &(oldtup.t_self), *lockmode,
-									 false, &have_tuple_lock);
-				XactLockTableWait(xwait, relation, &oldtup.t_self,
-								  XLTW_Update);
-				LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-
-				/*
-				 * xwait is done, but if xwait had just locked the tuple then
-				 * some other xact could update this tuple before we get to
-				 * this point. Check for xmax change, and start over if so.
-				 */
-				if (xmax_infomask_changed(oldtup.t_data->t_infomask, infomask) ||
-					!TransactionIdEquals(
-									HeapTupleHeaderGetRawXmax(oldtup.t_data),
-										 xwait))
-					goto l2;
-
-				/* Otherwise check if it committed or aborted */
-				UpdateXmaxHintBits(oldtup.t_data, buffer, xwait, relation);
-				if (oldtup.t_data->t_infomask & HEAP_XMAX_INVALID)
-					can_continue = true;
-			}
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 
 		result = can_continue ? HeapTupleMayBeUpdated : HeapTupleUpdated;
@@ -4069,17 +3913,14 @@ l2:
 		if (result == HeapTupleSelfUpdated)
 			hufd->cmax = HeapTupleHeaderGetCmax(oldtup.t_data);
 		else
-<<<<<<< HEAD
-			hufd->cmax = 0;		/* for lack of an InvalidCommandId value */
+			hufd->cmax = InvalidCommandId;
 
 		if (simple)
 		{
-			/* Trace current tuple information before we unlock the buffer */
+			/* GPDB: Trace current tuple information before we unlock the buffer */
 			heap_trace_current_tuple("heap_update", &oldtup);
 		}
-=======
-			hufd->cmax = InvalidCommandId;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
 		UnlockReleaseBuffer(buffer);
 		if (have_tuple_lock)
 			UnlockTupleTuplock(relation, &(oldtup.t_self), *lockmode);
@@ -4977,10 +4818,6 @@ l3:
 				if (members)
 					pfree(members);
 			}
-<<<<<<< HEAD
-
-			pfree(members);
-=======
 			else if (TransactionIdIsCurrentTransactionId(xwait))
 			{
 				switch (mode)
@@ -5007,7 +4844,6 @@ l3:
 						break;
 				}
 			}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 
 		/*
@@ -5154,14 +4990,6 @@ l3:
 		}
 
 		/*
-<<<<<<< HEAD
-		 * Time to sleep on the other transaction/multixact, if necessary.
-		 *
-		 * If the other transaction is an update that's already committed,
-		 * then sleeping cannot possibly do any good: if we're required to
-		 * sleep, get out to raise an error instead.
-		 *
-=======
 		 * As a check independent from those above, we can also avoid sleeping
 		 * if the current transaction is the sole locker of the tuple.  Note
 		 * that the strength of the lock already held is irrelevant; this is
@@ -5187,7 +5015,12 @@ l3:
 		}
 
 		/*
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+		 * Time to sleep on the other transaction/multixact, if necessary.
+		 *
+		 * If the other transaction is an update that's already committed,
+		 * then sleeping cannot possibly do any good: if we're required to
+		 * sleep, get out to raise an error instead.
+		 *
 		 * By here, we either have already acquired the buffer exclusive lock,
 		 * or we must wait for the locking transaction or multixact; so below
 		 * we ensure that we grab buffer lock after the sleep.
@@ -5198,22 +5031,6 @@ l3:
 			goto failed;
 		}
 		else if (require_sleep)
-		{
-			/*
-			 * Acquire tuple lock to establish our priority for the tuple.
-			 * LockTuple will release us when we are next-in-line for the tuple.
-			 * We must do this even if we are share-locking.
-			 *
-			 * If we are forced to "start over" below, we keep the tuple lock;
-			 * this arranges that we stay at the head of the line while rechecking
-			 * tuple state.
-			 */
-			heap_acquire_tuplock(relation, tid, mode, (waittype != LockTupleWait),
-								 &have_tuple_lock);
-
-<<<<<<< HEAD
-=======
-		if (require_sleep)
 		{
 			/*
 			 * Acquire tuple lock to establish our priority for the tuple, or
@@ -5237,7 +5054,6 @@ l3:
 				goto failed;
 			}
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			if (infomask & HEAP_XMAX_IS_MULTI)
 			{
 				MultiXactStatus status = get_mxact_status_for_lock(mode, false);
@@ -5246,13 +5062,8 @@ l3:
 				if (status >= MultiXactStatusNoKeyUpdate)
 					elog(ERROR, "invalid lock mode in heap_lock_tuple");
 
-<<<<<<< HEAD
-				/* wait for multixact to end */
-				if (waittype == LockTupleIfNotLocked)
-=======
 				/* wait for multixact to end, or die trying  */
 				switch (wait_policy)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				{
 					case LockWaitBlock:
 						MultiXactIdWait((MultiXactId) xwait, status, infomask,
@@ -5552,25 +5363,6 @@ failed:
  * whether the lock has previously been acquired (and this function does
  * nothing in that case).  If this function returns success, have_tuple_lock
  * has been flipped to true.
-<<<<<<< HEAD
- */
-static void
-heap_acquire_tuplock(Relation relation, ItemPointer tid, LockTupleMode mode,
-					 bool nowait, bool *have_tuple_lock)
-{
-	if (*have_tuple_lock)
-		return;
-
-	if (!nowait)
-		LockTupleTuplock(relation, tid, mode);
-	else if (!ConditionalLockTupleTuplock(relation, tid, mode))
-		ereport(ERROR,
-				(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-				 errmsg("could not obtain lock on row in relation \"%s\"",
-						RelationGetRelationName(relation))));
-
-	*have_tuple_lock = true;
-=======
  *
  * Returns false if it was unable to obtain the lock; this can only happen if
  * wait_policy is Skip.
@@ -5604,7 +5396,6 @@ heap_acquire_tuplock(Relation relation, ItemPointer tid, LockTupleMode mode,
 	*have_tuple_lock = true;
 
 	return true;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -6076,7 +5867,6 @@ l4:
 				int			i;
 				MultiXactMember *members;
 
-<<<<<<< HEAD
 				/*
 				 * We don't need a test for pg_upgrade'd tuples: this is only
 				 * applied to tuples after the first in an update chain.  Said
@@ -6087,11 +5877,9 @@ l4:
 				 * the pg_upgrade itself.
 				 */
 				Assert(!HEAP_LOCKED_UPGRADED(mytup.t_data->t_infomask));
-				nmembers = GetMultiXactIdMembers(rawxmax, &members, false);
-=======
+
 				nmembers = GetMultiXactIdMembers(rawxmax, &members, false,
 									 HEAP_XMAX_IS_LOCKED_ONLY(old_infomask));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				for (i = 0; i < nmembers; i++)
 				{
 					HTSU_Result res;
@@ -6700,33 +6488,18 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 	else if (MultiXactIdPrecedes(multi, cutoff_multi))
 	{
 		/*
-<<<<<<< HEAD
 		 * This old multi cannot possibly have members still running, but
 		 * verify just in case.  If it was a locker only, it can be removed
 		 * without any further consideration; but if it contained an update, we
 		 * might need to preserve it.
 		 */
-		if (MultiXactIdIsRunning(multi))
+		if (MultiXactIdIsRunning(multi,
+								 HEAP_XMAX_IS_LOCKED_ONLY(t_infomask)))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
 					 errmsg_internal("multixact %u from before cutoff %u found to be still running",
 									 multi, cutoff_multi)));
 
-=======
-		 * This old multi cannot possibly have members still running.  If it
-		 * was a locker only, it can be removed without any further
-		 * consideration; but if it contained an update, we might need to
-		 * preserve it.
-		 *
-		 * Don't assert MultiXactIdIsRunning if the multi came from a
-		 * pg_upgrade'd share-locked tuple, though, as doing that causes an
-		 * error to be raised unnecessarily.
-		 */
-		Assert((!(t_infomask & HEAP_LOCK_MASK) &&
-				HEAP_XMAX_IS_LOCKED_ONLY(t_infomask)) ||
-			   !MultiXactIdIsRunning(multi,
-									 HEAP_XMAX_IS_LOCKED_ONLY(t_infomask)));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		if (HEAP_XMAX_IS_LOCKED_ONLY(t_infomask))
 		{
 			*flags |= FRM_INVALIDATE_XMAX;
@@ -6776,16 +6549,9 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 	 * anything.
 	 */
 
-<<<<<<< HEAD
 	nmembers =
-		GetMultiXactIdMembers(multi, &members, false);
-=======
-	allow_old = !(t_infomask & HEAP_LOCK_MASK) &&
-		HEAP_XMAX_IS_LOCKED_ONLY(t_infomask);
-	nmembers =
-		GetMultiXactIdMembers(multi, &members, allow_old,
+		GetMultiXactIdMembers(multi, &members, false,
 							  HEAP_XMAX_IS_LOCKED_ONLY(t_infomask));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	if (nmembers <= 0)
 	{
 		/* Nothing worth keeping */
@@ -7392,7 +7158,6 @@ static bool
 DoesMultiXactIdConflict(MultiXactId multi, uint16 infomask,
 						LockTupleMode lockmode)
 {
-<<<<<<< HEAD
 	int		nmembers;
 	MultiXactMember *members;
 	bool	result = false;
@@ -7401,24 +7166,7 @@ DoesMultiXactIdConflict(MultiXactId multi, uint16 infomask,
 	if (HEAP_LOCKED_UPGRADED(infomask))
 		return false;
 
-	nmembers = GetMultiXactIdMembers(multi, &members, false);
-	if (nmembers >= 0)
-	{
-		int		i;
-
-		for (i = 0; i < nmembers; i++)
-		{
-			TransactionId		memxid;
-			LOCKMODE			memlockmode;
-=======
-	bool		allow_old;
-	int			nmembers;
-	MultiXactMember *members;
-	bool		result = false;
-	LOCKMODE	wanted = tupleLockExtraInfo[lockmode].hwlock;
-
-	allow_old = !(infomask & HEAP_LOCK_MASK) && HEAP_XMAX_IS_LOCKED_ONLY(infomask);
-	nmembers = GetMultiXactIdMembers(multi, &members, allow_old,
+	nmembers = GetMultiXactIdMembers(multi, &members, false,
 									 HEAP_XMAX_IS_LOCKED_ONLY(infomask));
 	if (nmembers >= 0)
 	{
@@ -7428,7 +7176,6 @@ DoesMultiXactIdConflict(MultiXactId multi, uint16 infomask,
 		{
 			TransactionId memxid;
 			LOCKMODE	memlockmode;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			memlockmode = LOCKMODE_from_mxstatus(members[i].status);
 
@@ -7507,15 +7254,10 @@ Do_MultiXactIdWait(MultiXactId multi, MultiXactStatus status,
 	int			nmembers;
 	int			remain = 0;
 
-<<<<<<< HEAD
 	/* for pre-pg_upgrade tuples, no need to sleep at all */
 	nmembers = HEAP_LOCKED_UPGRADED(infomask) ? -1 :
-		GetMultiXactIdMembers(multi, &members, false);
-=======
-	allow_old = !(infomask & HEAP_LOCK_MASK) && HEAP_XMAX_IS_LOCKED_ONLY(infomask);
-	nmembers = GetMultiXactIdMembers(multi, &members, allow_old,
-									 HEAP_XMAX_IS_LOCKED_ONLY(infomask));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+		GetMultiXactIdMembers(multi, &members, false,
+							  HEAP_XMAX_IS_LOCKED_ONLY(infomask));
 
 	if (nmembers >= 0)
 	{
@@ -7658,15 +7400,9 @@ heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
 			int			i;
 
 			/* need to check whether any member of the mxact is too old */
-<<<<<<< HEAD
-			nmembers = GetMultiXactIdMembers(multi, &members, false);
-=======
 
-			allow_old = !(tuple->t_infomask & HEAP_LOCK_MASK) &&
-				HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask);
-			nmembers = GetMultiXactIdMembers(multi, &members, allow_old,
+			nmembers = GetMultiXactIdMembers(multi, &members, false,
 								HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			for (i = 0; i < nmembers; i++)
 			{
@@ -8100,114 +7836,6 @@ log_heap_update(Relation reln, Buffer oldbuf,
 
 		XLogRegisterData((char *) &xlhdr_idx, SizeOfHeapHeader);
 
-<<<<<<< HEAD
-		xlrec.flags |= XLOG_HEAP_CONTAINS_NEW_TUPLE;
-
-		/* We need to log a tuple identity */
-		if (old_key_tuple)
-		{
-			/*
-			 * This isn't needed, and can't actually capture the contents of
-			 * the tuple accurately (because t_len isn't guaranteed to be big
-			 * enough to contain old tuples which can be up to 1 GB long). But
-			 * previous versions of 9.4 used this, so we can't change the WAL
-			 * format.
-			 */
-			xlhdr_idx.header.t_infomask2 = old_key_tuple->t_data->t_infomask2;
-			xlhdr_idx.header.t_infomask = old_key_tuple->t_data->t_infomask;
-			xlhdr_idx.header.t_hoff = old_key_tuple->t_data->t_hoff;
-			xlhdr_idx.t_len = old_key_tuple->t_len;
-
-			rdata[nr - 1].next = &(rdata[nr]);
-			rdata[nr].data = (char *) &xlhdr_idx;
-			rdata[nr].len = SizeOfHeapHeaderLen;
-			rdata[nr].buffer = InvalidBuffer;
-			rdata[nr].next = &(rdata[nr + 1]);
-			nr++;
-
-			/* PG73FORMAT: write bitmap [+ padding] [+ oid] + data */
-			rdata[nr].data = (char *) old_key_tuple->t_data
-				+ offsetof(HeapTupleHeaderData, t_bits);
-			rdata[nr].len = old_key_tuple->t_len
-				- offsetof(HeapTupleHeaderData, t_bits);
-			rdata[nr].buffer = InvalidBuffer;
-			rdata[nr].next = NULL;
-			nr++;
-
-			if (reln->rd_rel->relreplident == REPLICA_IDENTITY_FULL)
-				xlrec.flags |= XLOG_HEAP_CONTAINS_OLD_TUPLE;
-			else
-				xlrec.flags |= XLOG_HEAP_CONTAINS_OLD_KEY;
-		}
-	}
-
-	recptr = XLogInsert(RM_HEAP_ID, info, rdata);
-
-	return recptr;
-}
-
-/*
- * Perform XLogInsert of a HEAP_NEWPAGE record to WAL. Caller is responsible
- * for writing the page to disk after calling this routine.
- *
- * Note: If you're using this function, you should be building pages in private
- * memory and writing them directly to smgr.  If you're using buffers, call
- * log_newpage_buffer instead.
- *
- * If the page follows the standard page layout, with a PageHeader and unused
- * space between pd_lower and pd_upper, set 'page_std' to TRUE. That allows
- * the unused space to be left out from the WAL record, making it smaller.
- */
-XLogRecPtr
-log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
-			Page page, bool page_std)
-{
-	xl_heap_newpage xlrec;
-	XLogRecPtr	recptr;
-	XLogRecData rdata[3];
-
-	/*
-	 * Note: the NEWPAGE log record is used for both heaps and indexes, so do
-	 * not do anything that assumes we are touching a heap.
-	 */
-
-	Assert(!RelFileNode_IsEmpty(rnode));
-	Assert(BlockNumberIsValid(blkno));
-
-	/* NO ELOG(ERROR) from here till newpage op is logged */
-	START_CRIT_SECTION();
-
-	xlrec.node = *rnode;
-	xlrec.forknum = forkNum;
-	xlrec.blkno = blkno;
-
-	if (page_std)
-	{
-		/* Assume we can omit data between pd_lower and pd_upper */
-		uint16		lower = ((PageHeader) page)->pd_lower;
-		uint16		upper = ((PageHeader) page)->pd_upper;
-
-		if (lower >= SizeOfPageHeaderData &&
-			upper > lower &&
-			upper <= BLCKSZ)
-		{
-			xlrec.hole_offset = lower;
-			xlrec.hole_length = upper - lower;
-		}
-		else
-		{
-			/* No "hole" to compress out */
-			xlrec.hole_offset = 0;
-			xlrec.hole_length = 0;
-		}
-	}
-	else
-	{
-		/* Not a standard page header, don't try to eliminate "hole" */
-		xlrec.hole_offset = 0;
-		xlrec.hole_length = 0;
-	}
-=======
 		/* PG73FORMAT: write bitmap [+ padding] [+ oid] + data */
 		XLogRegisterData((char *) old_key_tuple->t_data + SizeofHeapTupleHeader,
 						 old_key_tuple->t_len - SizeofHeapTupleHeader);
@@ -8215,7 +7843,6 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
 
 	/* filtering by origin on a row level is much more efficient */
 	XLogIncludeOrigin();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	recptr = XLogInsert(RM_HEAP_ID, info);
 
@@ -8556,21 +8183,13 @@ heap_xlog_visible(XLogReaderState *record)
 		ResolveRecoveryConflictWithSnapshot(xlrec->cutoff_xid, rnode);
 
 	/*
-<<<<<<< HEAD
-	 * If heap block was backed up, restore it. (This can only happen with
-	 * checksums or wal_log_hints enabled).
-=======
 	 * Read the heap page, if it still exists. If the heap file has dropped or
 	 * truncated later in recovery, we don't need to update the page, but we'd
 	 * better still update the visibility map.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
 	action = XLogReadBufferForRedo(record, 1, &buffer);
 	if (action == BLK_NEEDS_REDO)
 	{
-<<<<<<< HEAD
-		(void) RestoreBackupBlock(lsn, record, 1, false, false);
-=======
 		/*
 		 * We don't bump the LSN of the heap page when setting the visibility
 		 * map bit (unless checksums or wal_hint_bits is enabled, in which
@@ -8588,7 +8207,6 @@ heap_xlog_visible(XLogReaderState *record)
 		page = BufferGetPage(buffer);
 		PageSetAllVisible(page);
 		MarkBufferDirty(buffer);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	else if (action == BLK_RESTORED)
 	{
@@ -8597,41 +8215,6 @@ heap_xlog_visible(XLogReaderState *record)
 		 * nothing more to do. (This can only happen with checksums or
 		 * wal_log_hints enabled.)
 		 */
-<<<<<<< HEAD
-		buffer = XLogReadBufferExtended(xlrec->node, MAIN_FORKNUM,
-										xlrec->block, RBM_NORMAL);
-		if (BufferIsValid(buffer))
-		{
-			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-
-			page = (Page) BufferGetPage(buffer);
-
-			/*
-			 * We don't bump the LSN of the heap page when setting the
-			 * visibility map bit (unless checksums or wal_log_hints is
-			 * enabled, in which case we must), because that would generate an
-			 * unworkable volume of full-page writes.  This exposes us to torn
-			 * page hazards, but since we're not inspecting the existing page
-			 * contents in any way, we don't care.
-			 *
-			 * However, all operations that clear the visibility map bit *do*
-			 * bump the LSN, and those operations will only be replayed if the
-			 * XLOG LSN follows the page LSN.  Thus, if the page LSN has
-			 * advanced past our XLOG record's LSN, we mustn't mark the page
-			 * all-visible, because the subsequent update won't be replayed to
-			 * clear the flag.
-			 */
-			if (lsn > PageGetLSN(page))
-			{
-				PageSetAllVisible(page);
-				MarkBufferDirty(buffer);
-			}
-
-			/* Done with heap page. */
-			UnlockReleaseBuffer(buffer);
-		}
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	if (BufferIsValid(buffer))
 		UnlockReleaseBuffer(buffer);
@@ -8647,12 +8230,6 @@ heap_xlog_visible(XLogReaderState *record)
 	{
 		Page		vmpage = BufferGetPage(vmbuffer);
 		Relation	reln;
-<<<<<<< HEAD
-		Buffer		vmbuffer = InvalidBuffer;
-		Page		vmpage;
-		XLogRecPtr  vmlsn;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/* initialize the page if it was read as zeros */
 		if (PageIsNew(vmpage))
@@ -8678,20 +8255,8 @@ heap_xlog_visible(XLogReaderState *record)
 		 * we did for the heap page.  If this results in a dropped bit, no
 		 * real harm is done; and the next VACUUM will fix it.
 		 */
-<<<<<<< HEAD
-
-		/*
-		 * GPDB PageGetLSN checks the buffer is locked. But here vmbuffer is locked
-		 * in function visibilitymap_set().
-		 */
-		vmpage = BufferGetPage(vmbuffer);
-		vmlsn = PageXLogRecPtrGet(((PageHeader) vmpage)->pd_lsn);
-		if (lsn > vmlsn)
-			visibilitymap_set(reln, xlrec->block, InvalidBuffer, lsn, vmbuffer,
-=======
 		if (lsn > PageGetLSN(vmpage))
 			visibilitymap_set(reln, blkno, InvalidBuffer, lsn, vmbuffer,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 							  xlrec->cutoff_xid);
 
 		ReleaseBuffer(vmbuffer);
@@ -8718,19 +8283,6 @@ heap_xlog_freeze_page(XLogReaderState *record)
 	 * consider the frozen xids as running.
 	 */
 	if (InHotStandby)
-<<<<<<< HEAD
-	{
-		TransactionId latestRemovedXid = cutoff_xid;
-
-		TransactionIdRetreat(latestRemovedXid);
-
-		ResolveRecoveryConflictWithSnapshot(latestRemovedXid, xlrec->node);
-	}
-
-	/* If we have a full-page image, restore it and we're done */
-	if (record->xl_info & XLR_BKP_BLOCK(0))
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{
 		RelFileNode rnode;
 		TransactionId latestRemovedXid = cutoff_xid;
@@ -8762,59 +8314,11 @@ heap_xlog_freeze_page(XLogReaderState *record)
 			heap_execute_freeze_tuple(tuple, xlrec_tp);
 		}
 
-<<<<<<< HEAD
-	/*
-	 * Note: the NEWPAGE log record is used for both heaps and indexes, so do
-	 * not do anything that assumes we are touching a heap.
-	 */
-	buffer = XLogReadBufferExtended(xlrec->node, xlrec->forknum, xlrec->blkno,
-									RBM_ZERO_AND_LOCK);
-	Assert(BufferIsValid(buffer));
-	page = (Page) BufferGetPage(buffer);
-
-	if (xlrec->hole_length == 0)
-	{
-		memcpy((char *) page, blk, BLCKSZ);
-	}
-	else
-	{
-		memcpy((char *) page, blk, xlrec->hole_offset);
-		/* must zero-fill the hole */
-		MemSet((char *) page + xlrec->hole_offset, 0, xlrec->hole_length);
-		memcpy((char *) page + (xlrec->hole_offset + xlrec->hole_length),
-			   blk + xlrec->hole_offset,
-			   BLCKSZ - (xlrec->hole_offset + xlrec->hole_length));
-	}
-
-	/*
-	 * The page may be uninitialized. If so, we can't set the LSN because that
-	 * would corrupt the page.
-	 */
-	if (!PageIsNew(page))
-	{
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		PageSetLSN(page, lsn);
 		MarkBufferDirty(buffer);
 	}
-<<<<<<< HEAD
-
-	MarkBufferDirty(buffer);
-
-	/*
-	 * At the end of crash recovery the init forks of unlogged relations are
-	 * copied, without going through shared buffers. So we need to force the
-	 * on-disk state of init forks to always be in sync with the state in
-	 * shared buffers.
-	 */
-	if (xlrec->forknum == INIT_FORKNUM)
-		FlushOneBuffer(buffer);
-
-	UnlockReleaseBuffer(buffer);
-=======
 	if (BufferIsValid(buffer))
 		UnlockReleaseBuffer(buffer);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -9011,48 +8515,8 @@ heap_xlog_insert(XLogReaderState *record)
 
 		MarkBufferDirty(buffer);
 	}
-<<<<<<< HEAD
-
-	offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
-	if (PageGetMaxOffsetNumber(page) + 1 < offnum)
-		elog(PANIC, "heap_insert_redo: invalid max offset number: "
-			 "%u, expected %u", offnum, (OffsetNumber)PageGetMaxOffsetNumber(page) + 1);
-	newlen = record->xl_len - SizeOfHeapInsert - SizeOfHeapHeader;
-	Assert(newlen <= MaxHeapTupleSize);
-	memcpy((char *) &xlhdr,
-		   (char *) xlrec + SizeOfHeapInsert,
-		   SizeOfHeapHeader);
-	htup = &tbuf.hdr;
-	MemSet((char *) htup, 0, sizeof(HeapTupleHeaderData));
-	/* PG73FORMAT: get bitmap [+ padding] [+ oid] + data */
-	memcpy((char *) htup + offsetof(HeapTupleHeaderData, t_bits),
-		   (char *) xlrec + SizeOfHeapInsert + SizeOfHeapHeader,
-		   newlen);
-	newlen += offsetof(HeapTupleHeaderData, t_bits);
-	htup->t_infomask2 = xlhdr.t_infomask2;
-	htup->t_infomask = xlhdr.t_infomask;
-	htup->t_hoff = xlhdr.t_hoff;
-	HeapTupleHeaderSetXmin(htup, record->xl_xid);
-	HeapTupleHeaderSetCmin(htup, FirstCommandId);
-	htup->t_ctid = xlrec->target.tid;
-
-	offnum = PageAddItem(page, (Item) htup, newlen, offnum, true, true);
-	if (offnum == InvalidOffsetNumber)
-		elog(PANIC, "heap_insert_redo: failed to add tuple");
-
-	freespace = PageGetHeapFreeSpace(page);		/* needed to update FSM below */
-
-	PageSetLSN(page, lsn);
-
-	if (xlrec->flags & XLOG_HEAP_ALL_VISIBLE_CLEARED)
-		PageClearAllVisible(page);
-
-	MarkBufferDirty(buffer);
-	UnlockReleaseBuffer(buffer);
-=======
 	if (BufferIsValid(buffer))
 		UnlockReleaseBuffer(buffer);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * If the page is running low on free space, update the FSM as well.
@@ -9537,10 +9001,12 @@ heap_xlog_lock(XLogReaderState *record)
 			lp = PageGetItemId(page, offnum);
 
 		if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsNormal(lp))
-			elog(PANIC, "heap_lock_redo: invalid lp");
+			elog(PANIC, "heap_xlog_lock: invalid lp");
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
 
+		htup->t_infomask &= ~(HEAP_XMAX_BITS | HEAP_MOVED);
+		htup->t_infomask2 &= ~HEAP_KEYS_UPDATED;
 		fix_infomask_from_infobits(xlrec->infobits_set, &htup->t_infomask,
 								   &htup->t_infomask2);
 
@@ -9563,41 +9029,6 @@ heap_xlog_lock(XLogReaderState *record)
 	}
 	if (BufferIsValid(buffer))
 		UnlockReleaseBuffer(buffer);
-<<<<<<< HEAD
-		return;
-	}
-
-	offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
-	if (PageGetMaxOffsetNumber(page) >= offnum)
-		lp = PageGetItemId(page, offnum);
-
-	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsNormal(lp))
-		elog(PANIC, "heap_lock_redo: invalid lp");
-
-	htup = (HeapTupleHeader) PageGetItem(page, lp);
-
-	htup->t_infomask &= ~(HEAP_XMAX_BITS | HEAP_MOVED);
-	htup->t_infomask2 &= ~HEAP_KEYS_UPDATED;
-	fix_infomask_from_infobits(xlrec->infobits_set, &htup->t_infomask,
-							   &htup->t_infomask2);
-
-	/*
-	 * Clear relevant update flags, but only if the modified infomask says
-	 * there's no update.
-	 */
-	if (HEAP_XMAX_IS_LOCKED_ONLY(htup->t_infomask))
-	{
-		HeapTupleHeaderClearHotUpdated(htup);
-		/* Make sure there is no forward chain link in t_ctid */
-		htup->t_ctid = xlrec->target.tid;
-	}
-	HeapTupleHeaderSetXmax(htup, xlrec->locking_xid);
-	HeapTupleHeaderSetCmax(htup, FirstCommandId, false);
-	PageSetLSN(page, lsn);
-	MarkBufferDirty(buffer);
-	UnlockReleaseBuffer(buffer);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 static void
@@ -9626,6 +9057,8 @@ heap_xlog_lock_updated(XLogReaderState *record)
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
 
+		htup->t_infomask &= ~(HEAP_XMAX_BITS | HEAP_MOVED);
+		htup->t_infomask2 &= ~HEAP_KEYS_UPDATED;
 		fix_infomask_from_infobits(xlrec->infobits_set, &htup->t_infomask,
 								   &htup->t_infomask2);
 		HeapTupleHeaderSetXmax(htup, xlrec->xmax);
@@ -9635,30 +9068,6 @@ heap_xlog_lock_updated(XLogReaderState *record)
 	}
 	if (BufferIsValid(buffer))
 		UnlockReleaseBuffer(buffer);
-<<<<<<< HEAD
-		return;
-	}
-
-	offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
-	if (PageGetMaxOffsetNumber(page) >= offnum)
-		lp = PageGetItemId(page, offnum);
-
-	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsNormal(lp))
-		elog(PANIC, "heap_xlog_lock_updated: invalid lp");
-
-	htup = (HeapTupleHeader) PageGetItem(page, lp);
-
-	htup->t_infomask &= ~(HEAP_XMAX_BITS | HEAP_MOVED);
-	htup->t_infomask2 &= ~HEAP_KEYS_UPDATED;
-	fix_infomask_from_infobits(xlrec->infobits_set, &htup->t_infomask,
-							   &htup->t_infomask2);
-	HeapTupleHeaderSetXmax(htup, xlrec->xmax);
-
-	PageSetLSN(page, lsn);
-	MarkBufferDirty(buffer);
-	UnlockReleaseBuffer(buffer);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 static void
@@ -9703,11 +9112,7 @@ heap_xlog_inplace(XLogReaderState *record)
 }
 
 void
-<<<<<<< HEAD
-heap_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
-=======
 heap_redo(XLogReaderState *record)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
@@ -9745,11 +9150,7 @@ heap_redo(XLogReaderState *record)
 }
 
 void
-<<<<<<< HEAD
-heap2_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
-=======
 heap2_redo(XLogReaderState *record)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
