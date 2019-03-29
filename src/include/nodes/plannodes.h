@@ -1124,7 +1124,7 @@ typedef struct Agg
 	/*
 	 * The following is used by MPP ROLLUP.
 	 *
-	 * FIXME: this is now used by MPP ROLLUP, clean up later?
+	 * GPDB_95_MERGE_FIXME: this is used by MPP ROLLUP, clean up later?
 	 */
 
 	/*

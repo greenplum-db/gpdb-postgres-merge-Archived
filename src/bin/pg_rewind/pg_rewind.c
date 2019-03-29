@@ -218,7 +218,6 @@ main(int argc, char **argv)
 	}
 #endif
 
-	/* FIXME: verify if get_restricted_token is needed here */
 	get_restricted_token(progname);
 
 	/* Connect to remote server */

@@ -97,7 +97,7 @@ typedef enum OidOptions
 bool		g_verbose;			/* User wants verbose narration of our
 								 * activities. */
 
-/* FIXME: put those flags to DumpOptions to avoid using global variables  */
+/* GPDB_95_MERGE_FIXME: put those flags to DumpOptions to avoid using global variables  */
 /* START MPP ADDITION */
 bool		dumpPolicy;
 bool		isGPbackend;
@@ -10788,7 +10788,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	delqry = createPQExpBuffer();
 	asPart = createPQExpBuffer();
 
-	/* FIXME: use isGE70 instead? */
+	/* GPDB_95_MERGE_FIXME: use isGE70 instead? */
 	/* Fetch function-specific details */
 	if (fout->remoteVersion >= 90500)
 	{
@@ -13391,11 +13391,10 @@ dumpTSTemplate(Archive *fout, TSTemplateInfo *tmplinfo)
 	appendPQExpBuffer(delq, "DROP TEXT SEARCH TEMPLATE %s;\n",
 					  fmtQualifiedDumpable(tmplinfo));
 
-#if 0
-	/* FIXME: do we need this? */
 	if (dopt->binary_upgrade)
-		binary_upgrade_extension_member(q, &tmplinfo->dobj, labelq->data);
-#endif
+		binary_upgrade_extension_member(q, &tmplinfo->dobj,
+										"TEXT SEARCH TEMPLATE", qtmplname,
+										tmplinfo->dobj.namespace->dobj.name);
 
 	ArchiveEntry(fout, tmplinfo->dobj.catId, tmplinfo->dobj.dumpId,
 				 tmplinfo->dobj.name,
@@ -13510,11 +13509,10 @@ dumpTSConfig(Archive *fout, TSConfigInfo *cfginfo)
 	appendPQExpBuffer(delq, "DROP TEXT SEARCH CONFIGURATION %s;\n",
 					  fmtQualifiedDumpable(cfginfo));
 
-#if 0
-	/* FIXME: do we need this? */
 	if (dopt->binary_upgrade)
-		binary_upgrade_extension_member(q, &cfginfo->dobj, labelq->data);
-#endif
+        binary_upgrade_extension_member(q, &cfginfo->dobj,
+                                        "TEXT SEARCH CONFIGURATION", qcfgname,
+                                        cfginfo->dobj.namespace->dobj.name);
 
 	ArchiveEntry(fout, cfginfo->dobj.catId, cfginfo->dobj.dumpId,
 				 cfginfo->dobj.name,
