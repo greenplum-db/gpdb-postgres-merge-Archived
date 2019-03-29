@@ -609,12 +609,9 @@ ResetLatch(volatile Latch *latch)
 	 * falsely conclude that it needn't signal us, even though we have missed
 	 * seeing some flag updates that SetLatch was supposed to inform us of.
 	 */
-<<<<<<< HEAD
+	pg_memory_barrier();
 
 	elogif(debug_latch, LOG, "latch reset -- Latch is now reset for process (pid %u).", latch->owner_pid);
-=======
-	pg_memory_barrier();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
