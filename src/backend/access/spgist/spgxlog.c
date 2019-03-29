@@ -965,16 +965,8 @@ spgRedoVacuumRedirect(XLogReaderState *record)
 		UnlockReleaseBuffer(buffer);
 }
 
-/*
- * GPDB: rm_redo and rm_desc of RmgrTable have different signature from upstream
- * because xact_redo need different parameter
- */
 void
-<<<<<<< HEAD
-spg_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
-=======
 spg_redo(XLogReaderState *record)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 	MemoryContext oldCxt;

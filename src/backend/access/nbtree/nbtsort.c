@@ -753,15 +753,9 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 					attrDatum1 = index_getattr(itup, i, tupdes, &isNull1);
 					attrDatum2 = index_getattr(itup2, i, tupdes, &isNull2);
 
-<<<<<<< HEAD
-						if (entry->sk_flags & SK_BT_DESC)
-							INVERT_COMPARE_RESULT(compare);
-					}
-=======
 					compare = ApplySortComparator(attrDatum1, isNull1,
 												  attrDatum2, isNull2,
 												  entry);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					if (compare > 0)
 					{
 						load1 = false;

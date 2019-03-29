@@ -114,15 +114,8 @@ writeListPage(Relation index, Buffer buffer,
 		XLogBeginInsert();
 		XLogRegisterData((char *) &data, sizeof(ginxlogInsertListPage));
 
-<<<<<<< HEAD
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].data = workspace.data;
-		rdata[1].len = size;
-		rdata[1].next = NULL;
-=======
 		XLogRegisterBuffer(0, buffer, REGBUF_WILL_INIT);
-		XLogRegisterBufData(0, workspace, size);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+		XLogRegisterBufData(0, workspace.data, size);
 
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_INSERT_LISTPAGE);
 		PageSetLSN(page, recptr);

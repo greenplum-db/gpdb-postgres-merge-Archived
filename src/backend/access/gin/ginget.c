@@ -1779,12 +1779,8 @@ Datum
 gingetbitmap(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-<<<<<<< HEAD
 	Node 	   *n = (Node *) PG_GETARG_POINTER(1);
 	TIDBitmap  *tbm;
-=======
-	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 	int64		ntids;
 	ItemPointerData iptr;
@@ -1801,12 +1797,8 @@ gingetbitmap(PG_FUNCTION_ARGS)
 	/*
 	 * Set up the scan keys, and check for unsatisfiable query.
 	 */
-<<<<<<< HEAD
-	ginFreeScanKeys(so); /* there should be no keys yet, but just to be sure */
-=======
 	ginFreeScanKeys(so);		/* there should be no keys yet, but just to be
 								 * sure */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	ginNewScanKey(scan);
 
 	if (GinIsVoidRes(scan))

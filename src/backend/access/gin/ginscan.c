@@ -232,12 +232,9 @@ ginFillScanKey(GinScanOpaque so, OffsetNumber attnum,
 	}
 }
 
-<<<<<<< HEAD
-=======
 /*
  * Release current scan keys, if any.
  */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 void
 ginFreeScanKeys(GinScanOpaque so)
 {
@@ -246,25 +243,6 @@ ginFreeScanKeys(GinScanOpaque so)
 	if (so->keys == NULL)
 		return;
 
-<<<<<<< HEAD
-	for (i = 0; i < so->nkeys; i++)
-	{
-		GinScanKey	key = so->keys + i;
-
-		pfree(key->scanEntry);
-		pfree(key->entryRes);
-		if (key->requiredEntries)
-			pfree(key->requiredEntries);
-		if (key->additionalEntries)
-			pfree(key->additionalEntries);
-	}
-
-	pfree(so->keys);
-	so->keys = NULL;
-	so->nkeys = 0;
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	for (i = 0; i < so->totalentries; i++)
 	{
 		GinScanEntry entry = so->entries[i];

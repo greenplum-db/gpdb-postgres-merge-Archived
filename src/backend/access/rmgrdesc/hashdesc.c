@@ -17,11 +17,7 @@
 #include "access/hash.h"
 
 void
-<<<<<<< HEAD
-hash_desc(StringInfo buf __attribute__((unused)), XLogRecord *record __attribute__((unused)))
-=======
 hash_desc(StringInfo buf, XLogReaderState *record)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 }
 

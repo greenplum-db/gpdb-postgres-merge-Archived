@@ -18,16 +18,14 @@
 #include "access/heapam.h"
 #include "access/nbtree.h"
 #include "access/transam.h"
-<<<<<<< HEAD
-#include "cdb/cdbappendonlyam.h"
-#include "cdb/cdbaocsam.h"
-=======
 #include "access/xloginsert.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
 #include "utils/tqual.h"
+
+#include "cdb/cdbappendonlyam.h"
+#include "cdb/cdbaocsam.h"
 
 
 typedef struct
@@ -400,81 +398,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 						_bt_ao_check_unique(rel, heapRel, &curitup->t_tid);
 
 					if (TransactionIdIsValid(xwait))
-<<<<<<< HEAD
 						return xwait;
-=======
-					{
-						if (nbuf != InvalidBuffer)
-							_bt_relbuf(rel, nbuf);
-						/* Tell _bt_doinsert to wait... */
-						*speculativeToken = SnapshotDirty.speculativeToken;
-						return xwait;
-					}
-
-					/*
-					 * Otherwise we have a definite conflict.  But before
-					 * complaining, look to see if the tuple we want to insert
-					 * is itself now committed dead --- if so, don't complain.
-					 * This is a waste of time in normal scenarios but we must
-					 * do it to support CREATE INDEX CONCURRENTLY.
-					 *
-					 * We must follow HOT-chains here because during
-					 * concurrent index build, we insert the root TID though
-					 * the actual tuple may be somewhere in the HOT-chain.
-					 * While following the chain we might not stop at the
-					 * exact tuple which triggered the insert, but that's OK
-					 * because if we find a live tuple anywhere in this chain,
-					 * we have a unique key conflict.  The other live tuple is
-					 * not part of this chain because it had a different index
-					 * entry.
-					 */
-					htid = itup->t_tid;
-					if (heap_hot_search(&htid, heapRel, SnapshotSelf, NULL))
-					{
-						/* Normal case --- it's still live */
-					}
-					else
-					{
-						/*
-						 * It's been deleted, so no error, and no need to
-						 * continue searching
-						 */
-						break;
-					}
-
-					/*
-					 * This is a definite conflict.  Break the tuple down into
-					 * datums and report the error.  But first, make sure we
-					 * release the buffer locks we're holding ---
-					 * BuildIndexValueDescription could make catalog accesses,
-					 * which in the worst case might touch this same index and
-					 * cause deadlocks.
-					 */
-					if (nbuf != InvalidBuffer)
-						_bt_relbuf(rel, nbuf);
-					_bt_relbuf(rel, buf);
-
-					{
-						Datum		values[INDEX_MAX_KEYS];
-						bool		isnull[INDEX_MAX_KEYS];
-						char	   *key_desc;
-
-						index_deform_tuple(itup, RelationGetDescr(rel),
-										   values, isnull);
-
-						key_desc = BuildIndexValueDescription(rel, values,
-															  isnull);
-
-						ereport(ERROR,
-								(errcode(ERRCODE_UNIQUE_VIOLATION),
-								 errmsg("duplicate key value violates unique constraint \"%s\"",
-										RelationGetRelationName(rel)),
-							   key_desc ? errdetail("Key %s already exists.",
-													key_desc) : 0,
-								 errtableconstraint(heapRel,
-											 RelationGetRelationName(rel))));
-					}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				}
 				else
 				{
@@ -527,6 +451,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 							if (nbuf != InvalidBuffer)
 								_bt_relbuf(rel, nbuf);
 							/* Tell _bt_doinsert to wait... */
+							*speculativeToken = SnapshotDirty.speculativeToken;
 							return xwait;
 						}
 						
@@ -2223,18 +2148,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 							((PageHeader) rootpage)->pd_special -
 							((PageHeader) rootpage)->pd_upper);
 
-<<<<<<< HEAD
-		/* Make a full-page image of the left child if needed */
-		rdata[2].data = NULL;
-		rdata[2].len = 0;
-		rdata[2].buffer = lbuf;
-		rdata[2].buffer_std = true;
-		rdata[2].next = NULL;
-
-		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT, rdata);
-=======
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		PageSetLSN(lpage, recptr);
 		PageSetLSN(rootpage, recptr);

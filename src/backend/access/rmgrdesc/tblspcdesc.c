@@ -18,17 +18,10 @@
 
 
 void
-<<<<<<< HEAD
-tblspc_desc(StringInfo buf, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-	char		*rec = XLogRecGetData(record);
-=======
 tblspc_desc(StringInfo buf, XLogReaderState *record)
 {
 	char	   *rec = XLogRecGetData(record);
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (info == XLOG_TBLSPC_CREATE)
 	{

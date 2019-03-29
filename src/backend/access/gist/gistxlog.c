@@ -279,11 +279,7 @@ gistRedoCreateIndex(XLogReaderState *record)
 }
 
 void
-<<<<<<< HEAD
-gist_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
-=======
 gist_redo(XLogReaderState *record)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 	MemoryContext oldCxt;

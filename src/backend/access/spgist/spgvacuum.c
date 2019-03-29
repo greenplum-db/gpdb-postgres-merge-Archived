@@ -446,18 +446,6 @@ vacuumLeafRoot(spgBulkDeleteState *bds, Relation index, Buffer buffer)
 	if (xlrec.nDelete == 0)
 		return;					/* nothing more to do */
 
-<<<<<<< HEAD
-	/* Prepare WAL record */
-	xlrec.node = index->rd_node;
-	STORE_STATE(&bds->spgstate, xlrec.stateSrc);
-
-	ACCEPT_RDATA_DATA(&xlrec, SizeOfSpgxlogVacuumRoot, 0);
-	/* sizeof(xlrec) should be a multiple of sizeof(OffsetNumber) */
-	ACCEPT_RDATA_DATA(toDelete, sizeof(OffsetNumber) * xlrec.nDelete, 1);
-	ACCEPT_RDATA_BUFFER(buffer, 2);
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* Do the update */
 	START_CRIT_SECTION();
 
@@ -595,13 +583,7 @@ vacuumRedirectAndPlaceholder(Relation index, Buffer buffer)
 	{
 		XLogRecPtr	recptr;
 
-<<<<<<< HEAD
-		ACCEPT_RDATA_DATA(&xlrec, SizeOfSpgxlogVacuumRedirect, 0);
-		ACCEPT_RDATA_DATA(itemToPlaceholder, sizeof(OffsetNumber) * xlrec.nToPlaceholder, 1);
-		ACCEPT_RDATA_BUFFER(buffer, 2);
-=======
 		XLogBeginInsert();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		XLogRegisterData((char *) &xlrec, SizeOfSpgxlogVacuumRedirect);
 		XLogRegisterData((char *) itemToPlaceholder,

@@ -628,12 +628,8 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 					 * must check that because an all-zero page has no special
 					 * space.)
 					 */
-<<<<<<< HEAD
 					if (XLogStandbyInfoActive() && RelationNeedsWAL(rel) &&
 						!PageIsNew(page))
-=======
-					if (XLogStandbyInfoActive() && RelationNeedsWAL(rel))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					{
 						BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
@@ -1579,10 +1575,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	if (ItemPointerIsValid(leafhikey))
 	{
 		target = ItemPointerGetBlockNumber(leafhikey);
-<<<<<<< HEAD
 		Assert(target != leafblkno);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/* fetch the block number of the topmost parent's left sibling */
 		buf = _bt_getbuf(rel, target, BT_READ);

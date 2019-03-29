@@ -174,14 +174,6 @@ btbuildCallback(Relation index,
 				void *state)
 {
 	BTBuildState *buildstate = (BTBuildState *) state;
-<<<<<<< HEAD
-	IndexTuple	itup;
-
-	/* form an index tuple and point it at the heap tuple */
-	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
-	itup->t_tid = *tupleId;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * insert the index tuple into the appropriate spool file for subsequent

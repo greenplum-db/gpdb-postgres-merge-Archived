@@ -170,13 +170,8 @@ ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed)
 	}
 }
 
-<<<<<<< HEAD
 static char*
-xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
-=======
-static void
 xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId origin_id)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	xl_xact_parsed_commit parsed;
 	int			i;
@@ -202,11 +197,7 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 		appendStringInfoString(buf, "; rels:");
 		for (i = 0; i < parsed.nrels; i++)
 		{
-<<<<<<< HEAD
-			char	   *path = relpathperm(xlrec->xnodes[i].node, MAIN_FORKNUM);
-=======
-			char	   *path = relpathperm(parsed.xnodes[i], MAIN_FORKNUM);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+			char	   *path = relpathperm(parsed.xnodes[i].node, MAIN_FORKNUM);
 
 			appendStringInfo(buf, " %s", path);
 			pfree(path);
@@ -220,11 +211,7 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 	}
 	if (parsed.nmsgs > 0)
 	{
-<<<<<<< HEAD
-		if (XactCompletionRelcacheInitFileInval(xlrec->xinfo))
-=======
 		if (XactCompletionRelcacheInitFileInval(parsed.xinfo))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			appendStringInfo(buf, "; relcache init file inval dbid %u tsid %u",
 							 parsed.dbId, parsed.tsId);
 
@@ -320,11 +307,7 @@ xact_desc_abort(StringInfo buf, uint8 info, xl_xact_abort *xlrec)
 		appendStringInfoString(buf, "; rels:");
 		for (i = 0; i < parsed.nrels; i++)
 		{
-<<<<<<< HEAD
-			char	   *path = relpathperm(xlrec->xnodes[i].node, MAIN_FORKNUM);
-=======
-			char	   *path = relpathperm(parsed.xnodes[i], MAIN_FORKNUM);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+			char	   *path = relpathperm(parsed.xnodes[i].node, MAIN_FORKNUM);
 
 			appendStringInfo(buf, " %s", path);
 			pfree(path);
@@ -351,17 +334,10 @@ xact_desc_assignment(StringInfo buf, xl_xact_assignment *xlrec)
 }
 
 void
-<<<<<<< HEAD
-xact_desc(StringInfo buf, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-	char		*rec = XLogRecGetData(record);
-=======
 xact_desc(StringInfo buf, XLogReaderState *record)
 {
 	char	   *rec = XLogRecGetData(record);
 	uint8		info = XLogRecGetInfo(record) & XLOG_XACT_OPMASK;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (info == XLOG_XACT_COMMIT || info == XLOG_XACT_COMMIT_PREPARED)
 	{
@@ -388,7 +364,6 @@ xact_desc(StringInfo buf, XLogReaderState *record)
 		appendStringInfo(buf, "xtop %u: ", xlrec->xtop);
 		xact_desc_assignment(buf, xlrec);
 	}
-<<<<<<< HEAD
 	else if (info == XLOG_XACT_DISTRIBUTED_COMMIT)
 	{
 		xl_xact_commit *xlrec = (xl_xact_commit *) rec;
@@ -403,9 +378,6 @@ xact_desc(StringInfo buf, XLogReaderState *record)
 		appendStringInfo(buf, "distributed forget ");
 		xact_desc_distributed_forget(buf, xlrec);
 	}
-	else
-		appendStringInfoString(buf, "UNKNOWN");
-=======
 }
 
 const char *

@@ -1250,11 +1250,7 @@ CheckPointLogicalRewriteHeap(void)
 			strcmp(mapping_de->d_name, "..") == 0)
 			continue;
 
-<<<<<<< HEAD
 		snprintf(path, sizeof(path), "pg_logical/mappings/%s", mapping_de->d_name);
-=======
-		snprintf(path, MAXPGPATH, "pg_logical/mappings/%s", mapping_de->d_name);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		if (lstat(path, &statbuf) == 0 && !S_ISREG(statbuf.st_mode))
 			continue;
 

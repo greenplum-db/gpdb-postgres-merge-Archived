@@ -16,14 +16,8 @@
 
 #include "access/gist_private.h"
 #include "access/relscan.h"
-<<<<<<< HEAD
-#include "executor/execdebug.h"
-#include "miscadmin.h"    /* work_mem */
-#include "nodes/tidbitmap.h"
-=======
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "pgstat.h"
 #include "lib/pairingheap.h"
 #include "utils/builtins.h"

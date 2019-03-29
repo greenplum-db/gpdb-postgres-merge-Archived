@@ -32,18 +32,10 @@ out_infobits(StringInfo buf, uint8 infobits)
 }
 
 void
-<<<<<<< HEAD
-heap_desc(StringInfo buf, XLogRecord *record)
-{
-	char	   *rec = XLogRecGetData(record);
-	uint8		xl_info = record->xl_info;
-	uint8		info = xl_info & ~XLR_INFO_MASK;
-=======
 heap_desc(StringInfo buf, XLogReaderState *record)
 {
 	char	   *rec = XLogRecGetData(record);
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	info &= XLOG_HEAP_OPMASK;
 	if (info == XLOG_HEAP_INSERT)
@@ -105,18 +97,10 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 }
 
 void
-<<<<<<< HEAD
-heap2_desc(StringInfo buf, XLogRecord *record)
-{
-	char	   *rec = XLogRecGetData(record);
-	uint8		xl_info = record->xl_info;
-	uint8		info = xl_info & ~XLR_INFO_MASK;
-=======
 heap2_desc(StringInfo buf, XLogReaderState *record)
 {
 	char	   *rec = XLogRecGetData(record);
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	info &= XLOG_HEAP_OPMASK;
 	if (info == XLOG_HEAP2_CLEAN)

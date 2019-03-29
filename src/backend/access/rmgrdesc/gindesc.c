@@ -71,19 +71,12 @@ desc_recompress_leaf(StringInfo buf, ginxlogRecompressDataLeaf *insertData)
 }
 
 void
-<<<<<<< HEAD
-gin_desc(StringInfo buf, XLogRecord *record)
-{
-	uint8		xl_info = record->xl_info & ~XLR_INFO_MASK;
-	char		*rec = XLogRecGetData(record);
-=======
 gin_desc(StringInfo buf, XLogReaderState *record)
 {
 	char	   *rec = XLogRecGetData(record);
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
-	switch (xl_info)
+	switch (info)
 	{
 		case XLOG_GIN_CREATE_INDEX:
 			/* no further information */
@@ -172,10 +165,6 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 			appendStringInfo(buf, "ndeleted: %d",
 							 ((ginxlogDeleteListPages *) rec)->ndeleted);
 			break;
-<<<<<<< HEAD
-		default:
-			appendStringInfo(buf, "unknown gin op code %u", xl_info);
-=======
 	}
 }
 
@@ -215,7 +204,6 @@ gin_identify(uint8 info)
 			break;
 		case XLOG_GIN_DELETE_LISTPAGE:
 			id = "DELETE_LISTPAGE";
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			break;
 	}
 

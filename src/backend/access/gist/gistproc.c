@@ -20,12 +20,8 @@
 #include <math.h>
 
 #include "access/gist.h"
-<<<<<<< HEAD
-#include "access/skey.h"
-#include "utils/builtins.h"
-=======
 #include "access/stratnum.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+#include "utils/builtins.h"
 #include "utils/geo_decls.h"
 
 

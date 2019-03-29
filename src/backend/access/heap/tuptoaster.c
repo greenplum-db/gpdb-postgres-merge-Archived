@@ -322,8 +322,6 @@ heap_tuple_untoast_attr(struct varlena * attr)
 			memcpy(result, attr, VARSIZE_ANY(attr));
 			attr = result;
 		}
-<<<<<<< HEAD
-=======
 	}
 	else if (VARATT_IS_EXTERNAL_EXPANDED(attr))
 	{
@@ -333,7 +331,6 @@ heap_tuple_untoast_attr(struct varlena * attr)
 		attr = heap_tuple_fetch_attr(attr);
 		/* flatteners are not allowed to produce compressed/short output */
 		Assert(!VARATT_IS_EXTENDED(attr));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	else if (VARATT_IS_COMPRESSED(attr))
 	{
@@ -880,11 +877,10 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 	 * ----------
 	 */
 
-<<<<<<< HEAD
 	if (!ismemtuple)
 	{
 		/* compute header overhead --- this should match heap_form_tuple() */
-		hoff = offsetof(HeapTupleHeaderData, t_bits);
+		hoff = SizeofHeapTupleHeader;
 		if (has_nulls)
 			hoff += BITMAPLEN(numAttrs);
 		if (((HeapTuple) newtup)->t_data->t_infomask & HEAP_HASOID)
@@ -898,17 +894,6 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 		maxDataLen = toast_tuple_target;
 		hoff = -1; /* keep compiler quiet about using 'hoff' uninitialized */
 	}
-=======
-	/* compute header overhead --- this should match heap_form_tuple() */
-	hoff = SizeofHeapTupleHeader;
-	if (has_nulls)
-		hoff += BITMAPLEN(numAttrs);
-	if (newtup->t_data->t_infomask & HEAP_HASOID)
-		hoff += sizeof(Oid);
-	hoff = MAXALIGN(hoff);
-	/* now convert to a limit on the tuple data size */
-	maxDataLen = TOAST_TUPLE_TARGET - hoff;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Look for attributes with attstorage 'x' to compress.  Also find large
@@ -1192,7 +1177,6 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 			{
 				Oid			oid;
 
-<<<<<<< HEAD
 				oid = MemTupleGetOid((MemTuple) newtup, pbind);
 				MemTupleSetOid((MemTuple) result_gtuple, pbind, oid);
 			}
@@ -1205,27 +1189,6 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 			int32		new_data_len;
 			int32		new_tuple_len;
 			HeapTuple	result_tuple;
-=======
-		/*
-		 * Calculate the new size of the tuple.
-		 *
-		 * Note: we used to assume here that the old tuple's t_hoff must equal
-		 * the new_header_len value, but that was incorrect.  The old tuple
-		 * might have a smaller-than-current natts, if there's been an ALTER
-		 * TABLE ADD COLUMN since it was stored; and that would lead to a
-		 * different conclusion about the size of the null bitmap, or even
-		 * whether there needs to be one at all.
-		 */
-		new_header_len = SizeofHeapTupleHeader;
-		if (has_nulls)
-			new_header_len += BITMAPLEN(numAttrs);
-		if (olddata->t_infomask & HEAP_HASOID)
-			new_header_len += sizeof(Oid);
-		new_header_len = MAXALIGN(new_header_len);
-		new_data_len = heap_compute_data_size(tupleDesc,
-											  toast_values, toast_isnull);
-		new_tuple_len = new_header_len + new_data_len;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			/*
 			 * Calculate the new size of the tuple.
@@ -1237,7 +1200,7 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 			 * different conclusion about the size of the null bitmap, or even
 			 * whether there needs to be one at all.
 			 */
-			new_header_len = offsetof(HeapTupleHeaderData, t_bits);
+			new_header_len = SizeofHeapTupleHeader;
 			if (has_nulls)
 				new_header_len += BITMAPLEN(numAttrs);
 			if (olddata->t_infomask & HEAP_HASOID)
@@ -1247,7 +1210,6 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 												  toast_values, toast_isnull);
 			new_tuple_len = new_header_len + new_data_len;
 
-<<<<<<< HEAD
 			/*
 			 * Allocate and zero the space needed, and fill HeapTupleData fields.
 			 */
@@ -1256,21 +1218,11 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 			result_tuple->t_self = ((HeapTuple) newtup)->t_self;
 			new_data = (HeapTupleHeader) ((char *) result_tuple + HEAPTUPLESIZE);
 			result_tuple->t_data = new_data;
-=======
-		/*
-		 * Copy the existing tuple header, but adjust natts and t_hoff.
-		 */
-		memcpy(new_data, olddata, SizeofHeapTupleHeader);
-		HeapTupleHeaderSetNatts(new_data, numAttrs);
-		new_data->t_hoff = new_header_len;
-		if (olddata->t_infomask & HEAP_HASOID)
-			HeapTupleHeaderSetOid(new_data, HeapTupleHeaderGetOid(olddata));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			/*
 			 * Copy the existing tuple header, but adjust natts and t_hoff.
 			 */
-			memcpy(new_data, olddata, offsetof(HeapTupleHeaderData, t_bits));
+			memcpy(new_data, olddata, SizeofHeapTupleHeader);
 			HeapTupleHeaderSetNatts(new_data, numAttrs);
 			new_data->t_hoff = new_header_len;
 			if (olddata->t_infomask & HEAP_HASOID)
@@ -2135,7 +2087,6 @@ toast_fetch_datum(struct varlena * attr)
 
 	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
 		elog(ERROR, "toast_fetch_datum shouldn't be called for non-ondisk datums");
-<<<<<<< HEAD
 
 	/*
 	 * GPDB: start with the assumption that chunks max out at
@@ -2143,8 +2094,6 @@ toast_fetch_datum(struct varlena * attr)
 	 * from GPDB 4.3), in which case we'll readjust numchunks later.
 	 */
 	int32		actual_max_chunk_size = TOAST_MAX_CHUNK_SIZE;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Must copy to access aligned fields */
 	VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
@@ -2341,7 +2290,6 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	int			num_indexes;
 	int			validIndex;
 
-<<<<<<< HEAD
 	/*
 	 * GPDB: start with the assumption that chunks max out at
 	 * TOAST_MAX_CHUNK_SIZE. This may later prove false (e.g. if we've upgraded
@@ -2349,8 +2297,6 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	 */
 	int32		actual_max_chunk_size = TOAST_MAX_CHUNK_SIZE;
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
 		elog(ERROR, "toast_fetch_datum_slice shouldn't be called for non-ondisk datums");
 

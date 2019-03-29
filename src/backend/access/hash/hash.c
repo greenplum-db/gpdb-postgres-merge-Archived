@@ -142,13 +142,6 @@ hashbuildCallback(Relation index,
 	HashBuildState *buildstate = (HashBuildState *) state;
 	IndexTuple	itup;
 
-<<<<<<< HEAD
-	/* form an index tuple and point it at the heap tuple */
-	itup = _hash_form_tuple(index, values, isnull);
-	itup->t_tid = *tupleId;
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* Hash indexes don't index nulls, see notes in hashinsert */
 	if (isnull[0])
 		return;
@@ -716,11 +709,7 @@ hashvacuumcleanup(PG_FUNCTION_ARGS)
 
 
 void
-<<<<<<< HEAD
-hash_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribute__((unused)), XLogRecord *record __attribute__((unused)))
-=======
 hash_redo(XLogReaderState *record)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	elog(PANIC, "hash_redo: unimplemented");
 }
