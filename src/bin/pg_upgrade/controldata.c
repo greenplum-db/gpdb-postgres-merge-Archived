@@ -189,7 +189,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		pg_fatal("Could not get control data using %s: %s\n",
 				 cmd, getErrorText());
 
-<<<<<<< HEAD:contrib/pg_upgrade/controldata.c
 	/* Only pre-8.4 has these so if they are not set below we will check later */
 	cluster->controldata.lc_collate = NULL;
 	cluster->controldata.lc_ctype = NULL;
@@ -208,10 +207,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	 * against 8.2 instead.
 	 */
 	if (GET_MAJOR_VERSION(cluster->major_version) == 802)
-=======
-	/* Only in <= 9.2 */
-	if (GET_MAJOR_VERSION(cluster->major_version) <= 902)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/controldata.c
 	{
 		cluster->controldata.data_checksum_version = 0;
 		got_data_checksum_version = true;
@@ -222,7 +217,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	{
 		pg_log(PG_VERBOSE, "%s", bufin);
 
-<<<<<<< HEAD:contrib/pg_upgrade/controldata.c
 #ifdef WIN32
 
 		/*
@@ -313,11 +307,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			if (p == NULL || strlen(p) <= 1)
 				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
 
-<<<<<<< HEAD:contrib/pg_upgrade/controldata.c
 			p++;				/* removing ':' char */
-=======
-			p++;				/* remove ':' char */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/controldata.c
 			tli = str2uint(p);
 			got_tli = true;
 		}
@@ -326,28 +316,16 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-<<<<<<< HEAD:contrib/pg_upgrade/controldata.c
-				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
-
-			p++;				/* removing ':' char */
-			cluster->controldata.chkpnt_nxtepoch = str2uint(p);
-
-=======
 				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.chkpnt_nxtepoch = str2uint(p);
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/controldata.c
 			p = strchr(p, '/');
 			if (p == NULL || strlen(p) <= 1)
 				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
 
-<<<<<<< HEAD:contrib/pg_upgrade/controldata.c
-			p++;				/* removing '/' char */
-=======
 			p++;				/* remove '/' char */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/controldata.c
 			cluster->controldata.chkpnt_nxtxid = str2uint(p);
 			got_xid = true;
 		}
@@ -594,17 +572,11 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		!got_multi ||
 		(!got_oldestmulti &&
 		 cluster->controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER) ||
-<<<<<<< HEAD:contrib/pg_upgrade/controldata.c
-		(!live_check && !got_nextxlogfile) ||
-		!got_align || !got_blocksz || !got_largesz || !got_walsz ||
-		!got_walseg || !got_ident || !got_index || /* !got_toast || */
-=======
 		!got_mxoff || (!live_check && !got_nextxlogfile) ||
 		!got_align || !got_blocksz || !got_largesz || !got_walsz ||
-		!got_walseg || !got_ident || !got_index || !got_toast ||
+		!got_walseg || !got_ident || !got_index || /* !got_toast || */
 		(!got_large_object &&
 		 cluster->controldata.ctrl_ver >= LARGE_OBJECT_SIZE_PG_CONTROL_VER) ||
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/controldata.c
 		!got_date_is_int || !got_float8_pass_by_value || !got_data_checksum_version)
 	{
 		pg_log(PG_REPORT,
@@ -735,7 +707,6 @@ check_control_data(ControlData *oldctrl,
 	 * set or remove checksums during the upgrade.
 	 */
 	if (oldctrl->data_checksum_version == 0 &&
-<<<<<<< HEAD:contrib/pg_upgrade/controldata.c
 		newctrl->data_checksum_version != 0 &&
 		user_opts.checksum_mode != CHECKSUM_ADD)
 		pg_fatal("old cluster does not use data checksums but the new one does\n");
@@ -751,14 +722,6 @@ check_control_data(ControlData *oldctrl,
 		pg_fatal("--add-checksum option not supported for old cluster which uses data checksums\n");
 	else if (oldctrl->data_checksum_version != newctrl->data_checksum_version
 			 && user_opts.checksum_mode == CHECKSUM_NONE)
-=======
-		newctrl->data_checksum_version != 0)
-		pg_fatal("old cluster does not use data checksums but the new one does\n");
-	else if (oldctrl->data_checksum_version != 0 &&
-			 newctrl->data_checksum_version == 0)
-		pg_fatal("old cluster uses data checksums but the new one does not\n");
-	else if (oldctrl->data_checksum_version != newctrl->data_checksum_version)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/controldata.c
 		pg_fatal("old and new cluster pg_controldata checksum versions do not match\n");
 }
 

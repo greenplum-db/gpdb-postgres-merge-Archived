@@ -49,7 +49,6 @@ static void prepare_new_databases(void);
 static void create_new_objects(void);
 static void copy_clog_xlog_xid(void);
 static void set_frozenxids(bool minmxid_only);
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
 static void freeze_master_data(void);
 static void reset_system_identifier(void);
 static void setup(char *argv0, bool *live_check);
@@ -213,11 +212,7 @@ main(int argc, char **argv)
 	create_script_for_cluster_analyze(&analyze_script_file_name);
 	create_script_for_old_cluster_deletion(&deletion_script_file_name);
 
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
 	issue_warnings_and_set_wal_level(sequence_script_file_name);
-=======
-	issue_warnings();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 
 	pg_log(PG_REPORT, "\nUpgrade Complete\n");
 	pg_log(PG_REPORT, "----------------\n");
@@ -415,12 +410,8 @@ setup(char *argv0, bool *live_check)
 		 * start, assume the server is running.  If the pid file is left over
 		 * from a server crash, this also allows any committed transactions
 		 * stored in the WAL to be replayed so they are not lost, because WAL
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
 		 * files are not transfered from old to new servers.  We later check
 		 * for a clean shutdown.
-=======
-		 * files are not transferred from old to new servers.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 		 */
 		if (start_postmaster(&old_cluster, false))
 			stop_postmaster(false);
@@ -503,14 +494,9 @@ prepare_new_databases(void)
 	 */
 	set_frozenxids(false);
 
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
 	/*
 	 * Now restore global objects (roles and tablespaces).
 	 */
-=======
-	set_frozenxids(false);
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 	prep_status("Restoring global objects in the new cluster");
 
 	/*
@@ -581,41 +567,15 @@ create_new_objects(void)
 	check_ok();
 
 	/*
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
 	 * We don't have minmxids for databases or relations in pre-9.3
 	 * clusters, so set those after we have restored the schema.
-=======
-	 * We don't have minmxids for databases or relations in pre-9.3 clusters,
-	 * so set those after we have restores the schemas.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) < 903)
 		set_frozenxids(true);
 
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
-=======
-	optionally_create_toast_tables();
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 	/* regenerate now that we have objects in the databases */
 	get_db_and_rel_infos(&new_cluster);
-}
 
-/*
- * Delete the given subdirectory contents from the new cluster
- */
-static void
-remove_new_subdir(char *subdir, bool rmtopdir)
-{
-	char		new_path[MAXPGPATH];
-
-	prep_status("Deleting files from new %s", subdir);
-
-	snprintf(new_path, sizeof(new_path), "%s/%s", new_cluster.pgdata, subdir);
-	if (!rmtree(new_path, rmtopdir))
-		pg_fatal("could not delete directory \"%s\"\n", new_path);
-
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
 	uninstall_support_functions_from_new_cluster();
 
 	/*
@@ -634,7 +594,6 @@ remove_new_subdir(char *subdir, bool rmtopdir)
 		new_gpdb_invalidate_bitmap_indexes();
 	}
 }
-
 
 /*
  * Greenplum upgrade involves copying the MASTER_DATA_DIRECTORY to
@@ -814,22 +773,16 @@ copy_clog_xlog_xid(void)
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtxid,
 			  new_cluster.pgdata);
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
 			  "\"%s/pg_resetxlog\" --binary-upgrade -f -e %u \"%s\"",
-			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtepoch,
-			  new_cluster.pgdata);
-=======
-			  "\"%s/pg_resetxlog\" -f -e %u \"%s\"",
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtepoch,
 			  new_cluster.pgdata);
 	/* must reset commit timestamp limits also */
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-			  "\"%s/pg_resetxlog\" -f -c %u,%u \"%s\"",
+			  "\"%s/pg_resetxlog\" --binary-upgrade -f -c %u,%u \"%s\"",
 			  new_cluster.bindir,
 			  old_cluster.controldata.chkpnt_nxtxid,
 			  old_cluster.controldata.chkpnt_nxtxid,
 			  new_cluster.pgdata);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 	check_ok();
 
 	/*
@@ -890,13 +843,8 @@ copy_clog_xlog_xid(void)
 	/* now reset the wal archives in the new cluster */
 	prep_status("Resetting WAL archives");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
 			  /* use timeline 1 to match controldata and no WAL history file */
 			  "\"%s/pg_resetxlog\" --binary-upgrade -l 00000001%s \"%s\"", new_cluster.bindir,
-=======
-	/* use timeline 1 to match controldata and no WAL history file */
-			  "\"%s/pg_resetxlog\" -l 00000001%s \"%s\"", new_cluster.bindir,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 			  old_cluster.controldata.nextxlogfile + 8,
 			  new_cluster.pgdata);
 	check_ok();
@@ -906,7 +854,6 @@ copy_clog_xlog_xid(void)
 /*
  *	set_frozenxids()
  *
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
  * This is called on the new cluster before we restore anything, with
  * minmxid_only = false.  Its purpose is to ensure that all initdb-created
  * vacuumable tables have relfrozenxid/relminmxid matching the old cluster's
@@ -926,16 +873,6 @@ copy_clog_xlog_xid(void)
  * objects, with the desired minmxid value.  frozenxid values are left alone.
  */
 static void
-=======
- *	We have frozen all xids, so set datfrozenxid, relfrozenxid, and
- *	relminmxid to be the old cluster's xid counter, which we just set
- *	in the new cluster.  User-table frozenxid and minmxid values will
- *	be set by pg_dump --binary-upgrade, but objects not set by the pg_dump
- *	must have proper frozen counters.
- */
-static
-void
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 set_frozenxids(bool minmxid_only)
 {
 	int			dbnum;
@@ -953,7 +890,6 @@ set_frozenxids(bool minmxid_only)
 
 	conn_template1 = connectToServer(&new_cluster, "template1");
 
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
 	/*
 	 * GPDB doesn't allow hacking the catalogs without setting
 	 * allow_system_table_mods first.
@@ -994,13 +930,8 @@ set_frozenxids(bool minmxid_only)
 		/*
 		 * We must update databases where datallowconn = false, e.g.
 		 * template0, because autovacuum increments their datfrozenxids,
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
 		 * relfrozenxids, and relminmxid  even if autovacuum is turned off,
 		 * and even though all the data rows are already frozen  To enable
-=======
-		 * relfrozenxids, and relminmxid even if autovacuum is turned off,
-		 * and even though all the data rows are already frozen.  To enable
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 		 * this, we temporarily change datallowconn.
 		 */
 		if (strcmp(datallowconn, "f") == 0)
@@ -1008,10 +939,7 @@ set_frozenxids(bool minmxid_only)
 			escaped_datname = pg_malloc(strlen(datname) * 2 + 1);
 			PQescapeStringConn(conn_template1, escaped_datname, datname, strlen(datname), NULL);
 			PQclear(executeQueryOrDie(conn_template1,
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
-									  "UPDATE pg_catalog.pg_database "
-									  "SET	datallowconn = true "
-									  "WHERE datname = '%s'", escaped_datname));
+								"ALTER DATABASE %s ALLOW_CONNECTIONS = true", escaped_datname));
 		}
 
 		conn = connectToServer(&new_cluster, datname);
@@ -1034,19 +962,11 @@ set_frozenxids(bool minmxid_only)
 			PQclear(executeQueryOrDie(conn, "VACUUM FREEZE"));
 		}
 
-=======
-								"ALTER DATABASE %s ALLOW_CONNECTIONS = true",
-									  quote_identifier(datname)));
-
-		conn = connectToServer(&new_cluster, datname);
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 		if (!minmxid_only)
 			/* set pg_class.relfrozenxid */
 			PQclear(executeQueryOrDie(conn,
 									  "UPDATE	pg_catalog.pg_class "
 									  "SET	relfrozenxid = '%u' "
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
 			/*
 			 * only heap, materialized view, and TOAST are vacuumed
 			 * exclude relations with external storage as well as AO and CO tables
@@ -1061,10 +981,6 @@ set_frozenxids(bool minmxid_only)
 									  "WHERE	(relkind IN ('r', 'm', 't') "
 									  "AND NOT relfrozenxid = 0) "
 									  "OR (relkind IN ('t', 'o', 'b', 'M'))",
-=======
-			/* only heap, materialized view, and TOAST are vacuumed */
-									  "WHERE	relkind IN ('r', 'm', 't')",
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 									  old_cluster.controldata.chkpnt_nxtxid));
 
 		/* set pg_class.relminmxid */
@@ -1080,16 +996,9 @@ set_frozenxids(bool minmxid_only)
 		if (strcmp(datallowconn, "f") == 0)
 		{
 			PQclear(executeQueryOrDie(conn_template1,
-<<<<<<< HEAD:contrib/pg_upgrade/pg_upgrade.c
-									  "UPDATE pg_catalog.pg_database "
-									  "SET	datallowconn = false "
-									  "WHERE datname = '%s'", escaped_datname));
+							   "ALTER DATABASE %s ALLOW_CONNECTIONS = false", escaped_datname));
 			pg_free(escaped_datname);
 		}
-=======
-							   "ALTER DATABASE %s ALLOW_CONNECTIONS = false",
-									  quote_identifier(datname)));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/pg_upgrade.c
 	}
 
 	PQclear(dbres);

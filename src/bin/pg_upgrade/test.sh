@@ -21,26 +21,18 @@ unset MAKELEVEL
 # authentication configuration.
 standard_initdb() {
 	"$1" -N
-<<<<<<< HEAD:contrib/pg_upgrade/test.sh
 	if [ -n "$TEMP_CONFIG" -a -r "$TEMP_CONFIG" ]
 	then
 		cat "$TEMP_CONFIG" >> "$PGDATA/postgresql.conf"
 	fi
-	../../src/test/regress/pg_regress --config-auth "$PGDATA"
-=======
 	../../test/regress/pg_regress --config-auth "$PGDATA"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/test.sh
 }
 
 # Establish how the server will listen for connections
 testhost=`uname -s`
 
 case $testhost in
-<<<<<<< HEAD:contrib/pg_upgrade/test.sh
 	MINGW*|MSYS*)
-=======
-	MINGW*)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/test.sh
 		LISTEN_ADDRESSES="localhost"
 		PGHOST=localhost
 		;;
@@ -161,7 +153,6 @@ export EXTRA_REGRESS_OPTS
 set -x
 
 standard_initdb "$oldbindir"/initdb
-<<<<<<< HEAD:contrib/pg_upgrade/test.sh
 $oldbindir/pg_ctl start -l "$logdir/postmaster1.log" -o "$POSTMASTER_OPTS" -w
 
 # Create databases with names covering the ASCII bytes other than NUL, BEL,
@@ -177,9 +168,6 @@ createdb "$dbname1" || createdb_status=$?
 createdb "$dbname2" || createdb_status=$?
 createdb "$dbname3" || createdb_status=$?
 
-=======
-"$oldbindir"/pg_ctl start -l "$logdir/postmaster1.log" -o "$POSTMASTER_OPTS" -w
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/test.sh
 if "$MAKE" -C "$oldsrc" installcheck; then
 	pg_dumpall -f "$temp_root"/dump1.sql || pg_dumpall1_status=$?
 	if [ "$newsrc" != "$oldsrc" ]; then
@@ -204,14 +192,10 @@ if "$MAKE" -C "$oldsrc" installcheck; then
 else
 	make_installcheck_status=$?
 fi
-<<<<<<< HEAD:contrib/pg_upgrade/test.sh
 $oldbindir/pg_ctl -m fast stop
 if [ -n "$createdb_status" ]; then
 	exit 1
 fi
-=======
-"$oldbindir"/pg_ctl -m fast stop
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/test.sh
 if [ -n "$make_installcheck_status" ]; then
 	exit 1
 fi

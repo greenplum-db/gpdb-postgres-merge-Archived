@@ -11,6 +11,10 @@ OBJS = check.o controldata.o dump.o exec.o file.o function.o info.o \
        option.o page.o parallel.o pg_upgrade.o relfilenode.o server.o \
        tablespace.o util.o version.o $(WIN32RES)
 
+# Source files specific to Greenplum
+OBJS += aotable.o gpdb4_heap_convert.o version_gp.o \
+		check_gp.o file_gp.o reporting.o aomd_filehandler.o
+
 override CPPFLAGS := -DDLSUFFIX=\"$(DLSUFFIX)\" -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 
 
@@ -32,11 +36,18 @@ clean distclean maintainer-clean:
 	rm -f pg_upgrade$(X) $(OBJS)
 	rm -rf analyze_new_cluster.sh delete_old_cluster.sh log/ tmp_check/ \
 	       pg_upgrade_dump_globals.sql \
-	       pg_upgrade_dump_*.custom pg_upgrade_*.log
+	       pg_upgrade_dump_*.custom pg_upgrade_*.log \
+		   clusterConfigPostgresAddonsFile clusterConfigFile gpdemo-env.sh \
+		   hostfile regression.diffs aomd_filehandler.c
 
-check: test.sh all
-	MAKE=$(MAKE) bindir=$(bindir) libdir=$(libdir) EXTRA_REGRESS_OPTS="$(EXTRA_REGRESS_OPTS)" $(SHELL) $< --install
+aomd_filehandler.c: % : $(top_srcdir)/src/backend/access/appendonly/%
+	rm -f $@ && $(LN_S) $< .
 
-# disabled because it upsets the build farm
-#installcheck: test.sh
-#	MAKE=$(MAKE) bindir=$(bindir) libdir=$(libdir) $(SHELL) $<
+check: test_gpdb.sh all
+	bash $< -C -r -s -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
+
+installcheck: test_gpdb.sh all
+	bash $< -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
+
+perfcheck: test_gpdb.sh all
+	bash $< -p -r -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)

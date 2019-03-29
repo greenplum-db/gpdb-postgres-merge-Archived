@@ -13,7 +13,6 @@
 
 #include "access/transam.h"
 
-<<<<<<< HEAD:contrib/pg_upgrade/function.c
 #define PG_UPGRADE_SUPPORT	"$libdir/pg_upgrade_support"
 
 /*

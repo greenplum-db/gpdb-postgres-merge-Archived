@@ -282,7 +282,6 @@ parseCommandLine(int argc, char *argv[])
 		pg_putenv("PGOPTIONS", FIX_DEFAULT_READ_ONLY);
 
 	/* Get values from env if not already set */
-<<<<<<< HEAD:contrib/pg_upgrade/option.c
 	check_required_directory(&old_cluster.bindir, "PGBINOLD", false,
 							 "-b", "old cluster binaries reside");
 	check_required_directory(&new_cluster.bindir, "PGBINNEW", false,
@@ -298,18 +297,8 @@ parseCommandLine(int argc, char *argv[])
 	if (user_opts.transfer_mode != TRANSFER_MODE_COPY &&
 		user_opts.checksum_mode != CHECKSUM_NONE)
 		pg_log(PG_FATAL, "Adding and removing checksums only supported in copy mode.\n");
-=======
-	check_required_directory(&old_cluster.bindir, NULL, "PGBINOLD", "-b",
-							 "old cluster binaries reside");
-	check_required_directory(&new_cluster.bindir, NULL, "PGBINNEW", "-B",
-							 "new cluster binaries reside");
-	check_required_directory(&old_cluster.pgdata, &old_cluster.pgconfig,
-							 "PGDATAOLD", "-d", "old cluster data resides");
-	check_required_directory(&new_cluster.pgdata, &new_cluster.pgconfig,
-							 "PGDATANEW", "-D", "new cluster data resides");
 
 #ifdef WIN32
-
 	/*
 	 * On Windows, initdb --sync-only will fail with a "Permission denied"
 	 * error on file pg_upgrade_utility.log if pg_upgrade is run inside the
@@ -329,7 +318,6 @@ parseCommandLine(int argc, char *argv[])
 			pg_fatal("cannot run pg_upgrade from inside the new cluster data directory on Windows\n");
 	}
 #endif
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pg_upgrade/option.c
 }
 
 
