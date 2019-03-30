@@ -83,14 +83,6 @@ typedef struct HeapUpdateFailureData
  * ----------------
  */
 
-
-typedef enum
-{
-	LockTupleWait,		/* wait for lock until it's acquired */
-	LockTupleNoWait,	/* if can't get lock right away, report error */
-	LockTupleIfNotLocked/* if can't get lock right away, give up. no error */
-} LockTupleWaitType;
-
 /* in heap/heapam.c */
 extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
 extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode, 

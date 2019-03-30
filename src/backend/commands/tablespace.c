@@ -1573,7 +1573,7 @@ get_tablespace_oid(const char *tablespacename, bool missing_ok)
 		 */
 		lockTest = heap_lock_tuple(rel, tuple,
 								   GetCurrentCommandId(true),
-								   LockTupleKeyShare, LockTupleWait,
+								   LockTupleKeyShare, LockWaitBlock,
 								   false,  &buffer, &hufd);
 		ReleaseBuffer(buffer);
 		switch (lockTest)
@@ -1586,7 +1586,7 @@ get_tablespace_oid(const char *tablespacename, bool missing_ok)
 				/* fallthrough */
 
 			case HeapTupleBeingUpdated:
-				Assert(false);  /* Not possible with LockTupleWait */
+				Assert(false);  /* Not possible with LockWaitBlock */
 				/* fallthrough */
 
 			case HeapTupleUpdated:
