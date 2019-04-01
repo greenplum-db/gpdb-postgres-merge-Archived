@@ -116,11 +116,7 @@ transformTargetEntry(ParseState *pstate,
  *
  * This code acts mostly the same for SELECT, UPDATE, or RETURNING lists;
  * the main thing is to transform the given expressions (the "val" fields).
-<<<<<<< HEAD
  * The exprKind parameter distinguishes these cases when necessary.
-=======
- * The exprKind parameter distinguishes these cases when necesssary.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 List *
 transformTargetList(ParseState *pstate, List *targetlist,
@@ -130,13 +126,11 @@ transformTargetList(ParseState *pstate, List *targetlist,
 	bool		expand_star;
 	ListCell   *o_target;
 
-<<<<<<< HEAD
-	/* Expand "something.*" in SELECT and RETURNING, but not UPDATE */
-	expand_star = (exprKind != EXPR_KIND_UPDATE_SOURCE);
-=======
 	/* Shouldn't have any leftover multiassign items at start */
 	Assert(pstate->p_multiassign_exprs == NIL);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+	/* Expand "something.*" in SELECT and RETURNING, but not UPDATE */
+	expand_star = (exprKind != EXPR_KIND_UPDATE_SOURCE);
 
 	foreach(o_target, targetlist)
 	{
