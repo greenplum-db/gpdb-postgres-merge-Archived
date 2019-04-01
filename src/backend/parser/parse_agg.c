@@ -71,11 +71,7 @@ static void check_ungrouped_columns(Node *node, ParseState *pstate, Query *qry,
 						List **func_grouped_rels);
 static bool check_ungrouped_columns_walker(Node *node,
 							   check_ungrouped_columns_context *context);
-<<<<<<< HEAD
-static List* get_groupclause_exprs(Node *grpcl, List *targetList);
-static Node *make_agg_arg(Oid argtype, Oid argcollation);
 
-=======
 static void finalize_grouping_exprs(Node *node, ParseState *pstate, Query *qry,
 						List *groupClauses, PlannerInfo *root,
 						bool have_non_var_grouping);
@@ -83,7 +79,7 @@ static bool finalize_grouping_exprs_walker(Node *node,
 							   check_ungrouped_columns_context *context);
 static void check_agglevels_and_constraints(ParseState *pstate, Node *expr);
 static List *expand_groupingset_node(GroupingSet *gs);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+static Node *make_agg_arg(Oid argtype, Oid argcollation);
 
 /*
  * transformAggregateCall -
@@ -1071,30 +1067,6 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 */
 	foreach(l, qry->groupClause)
 	{
-<<<<<<< HEAD
-		Node	   *grpcl = lfirst(l);
-		List	   *exprs;
-		ListCell   *l2;
-
-		if (grpcl == NULL)
-			continue;
-
-		Assert(IsA(grpcl, SortGroupClause) || IsA(grpcl, GroupingClause));
-
-		exprs = get_groupclause_exprs(grpcl, qry->targetList);
-
-		foreach(l2, exprs)
-		{
-			Node	   *expr = (Node *) lfirst(l2);
-
-			// FIXME: Should this go into check_agg_arguments now?
-			if (checkExprHasGroupExtFuncs(expr))
-				ereport(ERROR,
-						(errcode(ERRCODE_GROUPING_ERROR),
-						 errmsg("grouping() or group_id() not allowed in GROUP BY clause")));
-			groupClauses = lcons(expr, groupClauses);
-		}
-=======
 		SortGroupClause *grpcl = (SortGroupClause *) lfirst(l);
 		TargetEntry *expr;
 
@@ -1103,7 +1075,6 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 			continue;			/* probably cannot happen */
 
 		groupClauses = lcons(expr, groupClauses);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/*
