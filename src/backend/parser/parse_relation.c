@@ -1221,12 +1221,8 @@ addRangeTableEntry(ParseState *pstate,
 	Relation	rel;
 	ParseCallbackState pcbstate;
 
-<<<<<<< HEAD
-=======
 	Assert(pstate != NULL);
 
-	rte->rtekind = RTE_RELATION;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	rte->alias = alias;
 	rte->rtekind = RTE_RELATION;
 
