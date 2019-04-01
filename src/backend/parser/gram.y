@@ -401,7 +401,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 				target_list opt_target_list insert_column_list set_target_list
 				set_clause_list set_clause multiple_set_clause
 				ctext_expr_list ctext_row def_list indirection opt_indirection
-				reloption_list group_clause group_elem_list group_elem TriggerFuncArgs select_limit
+				reloption_list group_clause TriggerFuncArgs select_limit
 				opt_select_limit opclass_item_list opclass_drop_list
 				opclass_purpose opt_opfamily transaction_mode_list_or_empty
 				OptTableFuncElementList TableFuncElementList opt_type_modifiers
@@ -745,7 +745,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	CONTAINS CPUSET CPU_RATE_LIMIT
 
-	CREATEEXTTABLE CUBE
+	CREATEEXTTABLE
 
 	DECODE DENY DISTRIBUTED DXL
 
@@ -755,7 +755,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	FULLSCAN
 
-	GROUP_ID GROUPING
+	GROUP_ID
 
 	HASH HOST
 
@@ -774,9 +774,9 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 	QUEUE
 
 	RANDOMLY READABLE READS REJECT_P REPLICATED RESOURCE
-	ROLLUP ROOTPARTITION
+	ROOTPARTITION
 
-	SCATTER SEGMENT SEGMENTS SETS SPLIT SQL SUBPARTITION
+	SCATTER SEGMENT SEGMENTS SPLIT SQL SUBPARTITION
 
 	THRESHOLD TIES
 
@@ -836,15 +836,12 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
  * blame any funny behavior of UNBOUNDED on the SQL standard, though.
  */
 %nonassoc	UNBOUNDED		/* ideally should have same precedence as IDENT */
-<<<<<<< HEAD
-%nonassoc	IDENT NULL_P PARTITION RANGE ROWS PRECEDING FOLLOWING
-
+%nonassoc	IDENT NULL_P PARTITION RANGE ROWS PRECEDING FOLLOWING CUBE ROLLUP
 /*
  * This is a bit ugly... To allow these to be column aliases without
  * the "AS" keyword, and not conflict with PostgreSQL's non-standard
  * suffix operators, we need to give these a precidence.
  */
-
 %nonassoc   ABORT_P
 			%nonassoc ABSOLUTE_P
 			%nonassoc ACCESS
@@ -1101,7 +1098,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 			%nonassoc CHAR_P
 			%nonassoc CHARACTER
 			%nonassoc COALESCE
-			%nonassoc CUBE
 			%nonassoc DEC
 			%nonassoc DECIMAL_P
 			%nonassoc EXISTS
@@ -1126,7 +1122,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 			%nonassoc POSITION
 			%nonassoc PRECISION
 			%nonassoc REAL
-			%nonassoc ROLLUP
 			%nonassoc ROW
 			%nonassoc SETOF
 			%nonassoc SETS
@@ -1146,12 +1141,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 			%nonassoc VERBOSE
 			%nonassoc UNKNOWN
 			%nonassoc ZONE
-			
 
-
-=======
-%nonassoc	IDENT NULL_P PARTITION RANGE ROWS PRECEDING FOLLOWING CUBE ROLLUP
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
 %left		'+' '-'
 %left		'*' '/' '%'
@@ -12893,43 +12883,6 @@ first_or_next: FIRST_P								{ $$ = 0; }
  * GroupingSet node of some type.
  */
 group_clause:
-<<<<<<< HEAD
-			GROUP_P BY group_elem_list				{ $$ = $3; }
-			| /*EMPTY*/								{ $$ = NIL; }
-		;
-
-group_elem_list:
-            group_elem                                { $$ = $1; }
-            | group_elem_list ',' group_elem            { $$ = list_concat($1, $3); }
-        ;
-
-group_elem:
-			a_expr                                  { $$ = list_make1($1); }
-			| ROLLUP '(' expr_list ')'
-                {
-					GroupingClause *n = makeNode(GroupingClause);
-					n->groupType = GROUPINGTYPE_ROLLUP;
-					n->groupsets = $3;
-					$$ = list_make1 ((Node*)n);
-				}
-            | CUBE '(' expr_list ')'
-                {
-					GroupingClause *n = makeNode(GroupingClause);
-					n->groupType = GROUPINGTYPE_CUBE;
-					n->groupsets = $3;
-					$$ = list_make1 ((Node*)n);
-				}
-            | GROUPING SETS '(' group_elem_list ')'
-                {
-					GroupingClause *n = makeNode(GroupingClause);
-					n->groupType = GROUPINGTYPE_GROUPING_SETS;
-					n->groupsets = $4;
-					$$ = list_make1 ((Node*)n);
-				}
-            | '(' ')'
-                { $$ = list_make1(NIL); }
-        ;
-=======
 			GROUP_P BY group_by_list				{ $$ = $3; }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
@@ -12980,7 +12933,6 @@ grouping_sets_clause:
 					$$ = (Node *) makeGroupingSet(GROUPING_SET_SETS, $4, @1);
 				}
 		;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 having_clause:
 			HAVING a_expr							{ $$ = $2; }
@@ -14636,7 +14588,6 @@ c_expr:		columnref								{ $$ = $1; }
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
             | TABLE '(' table_value_select_clause ')'
 				{
 					TableValueExpr *n = makeNode(TableValueExpr);
@@ -14644,10 +14595,7 @@ c_expr:		columnref								{ $$ = $1; }
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| row
-=======
 			| explicit_row
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				{
 					RowExpr *r = makeNode(RowExpr);
 					r->args = $1;
@@ -14671,6 +14619,12 @@ c_expr:		columnref								{ $$ = $1; }
 			  {
 				  GroupingFunc *g = makeNode(GroupingFunc);
 				  g->args = $3;
+				  g->location = @1;
+				  $$ = (Node *)g;
+			  }
+			| GROUP_ID '(' ')'
+			  {
+				  GroupingFunc *g = makeNode(GroupId);
 				  g->location = @1;
 				  $$ = (Node *)g;
 			  }
@@ -15051,18 +15005,6 @@ func_expr_common_subexpr:
 					v->location = @1;
 					$$ = (Node *)v;
 				}
-            | GROUPING '(' expr_list ')'
-                {
-					GroupingFunc *f = makeNode(GroupingFunc);
-					f->args = $3;
-					$$ = (Node*)f;
-				}
-
-			| GROUP_ID '(' ')'
-				{
-					GroupId *gid = makeNode(GroupId);
-					$$ = (Node *)gid;
-				}
 			| MEDIAN '(' a_expr ')'
 				{
 					/*
@@ -15349,8 +15291,13 @@ window_specification: '(' opt_existing_window_name opt_partition_clause
 opt_existing_window_name: ColId						{ $$ = $1; }
 			| /*EMPTY*/				%prec Op		{ $$ = NULL; }
 		;
-
-opt_partition_clause: PARTITION BY sortby_list { $$ = $3; }
+/*
+ * GPDB_95_MERGE_FIXME: The change from sortby_list to expr_list
+ * is based on the now closed greenplum PR
+ * https://github.com/greenplum-db/gpdb/pull/5440/
+ * commit <7b554570>. Verify.
+ */
+opt_partition_clause: PARTITION BY expr_list { $$ = $3; }
 			| /*EMPTY*/ { $$ = NIL; }
 		;
 
@@ -16222,22 +16169,13 @@ AexprConst: Iconst
 
 Iconst:		ICONST									{ $$ = $1; };
 Sconst:		SCONST									{ $$ = $1; };
-<<<<<<< HEAD
-RoleId:		NonReservedWord							{ $$ = $1; };
-QueueId:	NonReservedWord							{ $$ = $1; };
-
-role_list:	RoleId
-					{ $$ = list_make1(makeString($1)); }
-			| role_list ',' RoleId
-					{ $$ = lappend($1, makeString($3)); }
-		;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 SignedIconst: Iconst								{ $$ = $1; }
 			| '+' Iconst							{ $$ = + $2; }
 			| '-' Iconst							{ $$ = - $2; }
 		;
+
+QueueId:	NonReservedWord							{ $$ = $1; };
 
 /* Role specifications */
 RoleId:		RoleSpec
@@ -16566,11 +16504,7 @@ unreserved_keyword:
 			| PASSWORD
 			| PERCENT
 			| PLANS
-<<<<<<< HEAD
-=======
 			| POLICY
-			| PRECEDING
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			| PREPARE
 			| PREPARED
 			| PRESERVE
@@ -16609,11 +16543,8 @@ unreserved_keyword:
 			| REVOKE
 			| ROLE
 			| ROLLBACK
-<<<<<<< HEAD
-			| ROOTPARTITION
-=======
 			| ROLLUP
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+			| ROOTPARTITION
 			| ROWS
 			| RULE
 			| SAVEPOINT
@@ -16636,12 +16567,8 @@ unreserved_keyword:
 			| SIMPLE
 			| SKIP
 			| SNAPSHOT
-<<<<<<< HEAD
 			| SPLIT
-			| SQL
-=======
 			| SQL_P
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			| STABLE
 			| STANDALONE_P
 			| START
@@ -16767,6 +16694,7 @@ PartitionIdentKeyword: ABORT_P
 			| CPU_RATE_LIMIT
 			| CREATEEXTTABLE
 			| CSV
+			| CUBE
 			| CURSOR
 			| CYCLE
 			| DATABASE
@@ -16901,6 +16829,7 @@ PartitionIdentKeyword: ABORT_P
 			| REVOKE
 			| ROLE
 			| ROLLBACK
+			| ROLLUP
 			| ROWS
 			| RULE
 			| SAVEPOINT
@@ -16960,15 +16889,12 @@ PartitionIdentKeyword: ABORT_P
 			| BIT
 			| BOOLEAN_P
 			| COALESCE
-			| CUBE
 			| DEC
 			| DECIMAL_P
 			| EXISTS
 			| EXTRACT
 			| FLOAT_P
 			| GREATEST
-			| GROUP_ID
-			| GROUPING
 			| INOUT
 			| INT_P
 			| INTEGER
@@ -16984,7 +16910,6 @@ PartitionIdentKeyword: ABORT_P
 			| POSITION
 			| PRECISION
 			| REAL
-			| ROLLUP
 			| ROW
 			| SETOF
 			| SETS
@@ -17022,7 +16947,6 @@ col_name_keyword:
 			| CHAR_P
 			| CHARACTER
 			| COALESCE
-			| CUBE
 			| DEC
 			| DECIMAL_P
 			| EXISTS
@@ -17030,10 +16954,7 @@ col_name_keyword:
 			| FLOAT_P
 			| GREATEST
 			| GROUPING
-<<<<<<< HEAD
 			| GROUP_ID
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			| INOUT
 			| INT_P
 			| INTEGER
@@ -17050,10 +16971,8 @@ col_name_keyword:
 			| POSITION
 			| PRECISION
 			| REAL
-			| ROLLUP
 			| ROW
 			| SETOF
-			| SETS
 			| SMALLINT
 			| SUBSTRING
 			| TIME
