@@ -1573,24 +1573,11 @@ writetup_heap(Tuplestorestate *state, void *tup)
 		tuplen = heaptuple_get_size((HeapTuple) tup);
 	}
 
-<<<<<<< HEAD
 	if (BufFileWrite(state->myfile, (void *) tup, tuplen) != (size_t) tuplen)
-		elog(ERROR, "write failed");
-=======
-	/* total on-disk footprint: */
-	unsigned int tuplen = tupbodylen + sizeof(int);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not write to tuplestore temporary file: %m")));
 
-	if (BufFileWrite(state->myfile, (void *) &tuplen,
-					 sizeof(tuplen)) != sizeof(tuplen))
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write to tuplestore temporary file: %m")));
-	if (BufFileWrite(state->myfile, (void *) tupbody,
-					 tupbodylen) != (size_t) tupbodylen)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write to tuplestore temporary file: %m")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	if (state->backward)		/* need trailing length word? */
 		if (BufFileWrite(state->myfile, (void *) &tuplen,
 						 sizeof(tuplen)) != sizeof(tuplen))
@@ -1609,7 +1596,6 @@ writetup_heap(Tuplestorestate *state, void *tup)
 static void *
 readtup_heap(Tuplestorestate *state, unsigned int len)
 {
-<<<<<<< HEAD
 	void	   *tup = NULL;
 	uint32		tuplen = 0;
 
@@ -1631,21 +1617,22 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 		/* read in the tuple proper */
 		memtuple_set_mtlen((MemTuple) tup, len);
 
-		if (BufFileRead(state->myfile, (void *) ((char *) tup + sizeof(uint32)),
-					tuplen - sizeof(uint32))
-				!= (size_t) (tuplen - sizeof(uint32)))
-			elog(ERROR, "unexpected end of data");
+		if (BufFileRead(state->myfile, (void *) ((char *) tup + sizeof(uint32)), tuplen - sizeof(uint32))
+			!= (size_t) (tuplen - sizeof(uint32)))
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read from tuplestore temporary file: %m")));
 	}
 	else
 	{
 		HeapTuple htup = (HeapTuple) tup;
 		htup->t_len = tuplen - HEAPTUPLESIZE;
 
-		if (BufFileRead(state->myfile, (void *) ((char *) tup + sizeof(uint32)),
-					tuplen - sizeof(uint32))
-				!= (size_t) (tuplen - sizeof(uint32)))
-			elog(ERROR, "unexpected end of data");
-
+		if (BufFileRead(state->myfile, (void *) ((char *) tup + sizeof(uint32)), tuplen - sizeof(uint32))
+			!= (size_t) (tuplen - sizeof(uint32)))
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read from tuplestore temporary file: %m")));
 		htup->t_data = (HeapTupleHeader ) ((char *) tup + HEAPTUPLESIZE);
 	}
 
@@ -1654,33 +1641,13 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 		if (BufFileRead(state->myfile, (void *) &tuplen,
 						sizeof(tuplen)) != sizeof(tuplen))
 		{
-			elog(ERROR, "unexpected end of data");
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read from tuplestore temporary file: %m")));
 		}
 	}
 
 	return (void *) tup;
-=======
-	unsigned int tupbodylen = len - sizeof(int);
-	unsigned int tuplen = tupbodylen + MINIMAL_TUPLE_DATA_OFFSET;
-	MinimalTuple tuple = (MinimalTuple) palloc(tuplen);
-	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
-
-	USEMEM(state, GetMemoryChunkSpace(tuple));
-	/* read in the tuple proper */
-	tuple->t_len = tuplen;
-	if (BufFileRead(state->myfile, (void *) tupbody,
-					tupbodylen) != (size_t) tupbodylen)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-			   errmsg("could not read from tuplestore temporary file: %m")));
-	if (state->backward)		/* need trailing length word? */
-		if (BufFileRead(state->myfile, (void *) &tuplen,
-						sizeof(tuplen)) != sizeof(tuplen))
-			ereport(ERROR,
-					(errcode_for_file_access(),
-			   errmsg("could not read from tuplestore temporary file: %m")));
-	return (void *) tuple;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*

@@ -464,12 +464,7 @@ struct Tuplesortstate
 #define COMPARETUP(state,a,b)	((*(state)->comparetup) (a, b, state))
 #define COPYTUP(state,stup,tup) ((*(state)->copytup) (state, stup, tup))
 #define WRITETUP(state,tape,stup)	((*(state)->writetup) (state, tape, stup))
-<<<<<<< HEAD
 #define READTUP(state,pos,stup,tape,len) ((*(state)->readtup) (state, pos, stup, tape, len))
-#define REVERSEDIRECTION(state) ((*(state)->reversedirection) (state))
-=======
-#define READTUP(state,stup,tape,len) ((*(state)->readtup) (state, stup, tape, len))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #define LACKMEM(state)		((state)->availMem < 0)
 
 static inline void USEMEM(Tuplesortstate *state, int amt)
@@ -535,12 +530,8 @@ static inline void FREEMEM(Tuplesortstate *state, int amt)
 
 static Tuplesortstate *tuplesort_begin_common(int workMem, bool randomAccess, bool allocmemtuple);
 static void puttuple_common(Tuplesortstate *state, SortTuple *tuple);
-<<<<<<< HEAD
-static void inittapes(Tuplesortstate *state, const char* rwfile_prefix);
-=======
 static bool consider_abort_common(Tuplesortstate *state);
-static void inittapes(Tuplesortstate *state);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+static void inittapes(Tuplesortstate *state, const char* rwfile_prefix);
 static void selectnewtape(Tuplesortstate *state);
 static void mergeruns(Tuplesortstate *state);
 static void mergeonerun(Tuplesortstate *state);
@@ -553,27 +544,15 @@ static void sort_bounded_heap(Tuplesortstate *state);
 static void tuplesort_heap_insert(Tuplesortstate *state, SortTuple *tuple,
 					  int tupleindex, bool checkIndex);
 static void tuplesort_heap_siftup(Tuplesortstate *state, bool checkIndex);
-<<<<<<< HEAD
-static unsigned int getlen(Tuplesortstate *state, TuplesortPos *pos, LogicalTape *lt, bool eofOK);
-=======
 static void reversedirection(Tuplesortstate *state);
-static unsigned int getlen(Tuplesortstate *state, int tapenum, bool eofOK);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+static unsigned int getlen(Tuplesortstate *state, TuplesortPos *pos, LogicalTape *lt, bool eofOK);
 static void markrunend(Tuplesortstate *state, int tapenum);
 static int comparetup_heap(const SortTuple *a, const SortTuple *b,
 				Tuplesortstate *state);
 static void copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup);
-<<<<<<< HEAD
 static void writetup_heap(Tuplesortstate *state, LogicalTape *lt, SortTuple *stup);
 static void readtup_heap(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 			 LogicalTape *lt, unsigned int len);
-static void reversedirection_heap(Tuplesortstate *state);
-=======
-static void writetup_heap(Tuplesortstate *state, int tapenum,
-			  SortTuple *stup);
-static void readtup_heap(Tuplesortstate *state, SortTuple *stup,
-			 int tapenum, unsigned int len);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static int comparetup_cluster(const SortTuple *a, const SortTuple *b,
 				   Tuplesortstate *state);
 static void copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup);
@@ -586,32 +565,15 @@ static int comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 static int comparetup_index_hash(const SortTuple *a, const SortTuple *b,
 					  Tuplesortstate *state);
 static void copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup);
-<<<<<<< HEAD
 static void writetup_index(Tuplesortstate *state, LogicalTape *lt, SortTuple *stup);
 static void readtup_index(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 			  LogicalTape *lt, unsigned int len);
-static void reversedirection_index_btree(Tuplesortstate *state);
-static void reversedirection_index_hash(Tuplesortstate *state);
 static int comparetup_datum(const SortTuple *a, const SortTuple *b,
 				 Tuplesortstate *state);
 static void copytup_datum(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_datum(Tuplesortstate *state, LogicalTape *lt, SortTuple *stup);
 static void readtup_datum(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 			  LogicalTape *lt, unsigned int len);
-static void reversedirection_datum(Tuplesortstate *state);
-=======
-static void writetup_index(Tuplesortstate *state, int tapenum,
-			   SortTuple *stup);
-static void readtup_index(Tuplesortstate *state, SortTuple *stup,
-			  int tapenum, unsigned int len);
-static int comparetup_datum(const SortTuple *a, const SortTuple *b,
-				 Tuplesortstate *state);
-static void copytup_datum(Tuplesortstate *state, SortTuple *stup, void *tup);
-static void writetup_datum(Tuplesortstate *state, int tapenum,
-			   SortTuple *stup);
-static void readtup_datum(Tuplesortstate *state, SortTuple *stup,
-			  int tapenum, unsigned int len);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void free_sort_tuple(Tuplesortstate *state, SortTuple *stup);
 
 static void tuplesort_sorted_insert(Tuplesortstate *state, SortTuple *tuple,
@@ -771,11 +733,8 @@ tuplesort_begin_heap(ScanState *ss, TupleDesc tupDesc,
 	state->readtup = readtup_heap;
 
 	state->tupDesc = tupDesc;	/* assume we need not copy tupDesc */
-<<<<<<< HEAD
 	state->mt_bind = create_memtuple_binding(tupDesc);
-=======
 	state->abbrevNext = 10;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Prepare SortSupport data for each column */
 	state->sortKeys = (SortSupport) palloc0(nkeys * sizeof(SortSupportData));
@@ -816,12 +775,8 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 						Relation indexRel,
 						int workMem, bool randomAccess)
 {
-<<<<<<< HEAD
 	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess, true);
-=======
-	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
 	ScanKey		indexScanKey;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	MemoryContext oldcontext;
 	int			i;
 
@@ -913,12 +868,8 @@ tuplesort_begin_index_btree(Relation heapRel,
 							bool enforceUnique,
 							int workMem, bool randomAccess)
 {
-<<<<<<< HEAD
 	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess, true);
-=======
-	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
 	ScanKey		indexScanKey;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	MemoryContext oldcontext;
 	int			i;
 
@@ -1484,11 +1435,7 @@ tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
 		Datum		original = datumCopy(val, false, state->datumTypeLen);
 
 		stup.isnull1 = false;
-<<<<<<< HEAD
-		stup.tuple = (MemTuple) DatumGetPointer(stup.datum1);
-		USEMEM(state, GetMemoryChunkSpace(DatumGetPointer(stup.datum1))); 
-=======
-		stup.tuple = DatumGetPointer(original);
+		stup.tuple = (MemTuple) DatumGetPointer(original);
 		USEMEM(state, GetMemoryChunkSpace(stup.tuple));
 
 		if (!state->sortKeys->abbrev_converter)
@@ -1523,7 +1470,6 @@ tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
 				mtup->datum1 = PointerGetDatum(mtup->tuple);
 			}
 		}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	puttuple_common(state, &stup);
@@ -3393,76 +3339,6 @@ markrunend(Tuplesortstate *state, int tapenum)
 }
 
 /*
-<<<<<<< HEAD
- * Inline-able copy of FunctionCall2Coll() to save some cycles in sorting.
- */
-static inline Datum
-myFunctionCall2Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2)
-{
-	FunctionCallInfoData fcinfo;
-	Datum		result;
-
-	InitFunctionCallInfoData(fcinfo, flinfo, 2, collation, NULL, NULL);
-
-	fcinfo.arg[0] = arg1;
-	fcinfo.arg[1] = arg2;
-	fcinfo.argnull[0] = false;
-	fcinfo.argnull[1] = false;
-
-	result = FunctionCallInvoke(&fcinfo);
-
-	/* Check for null result, since caller is clearly not expecting one */
-	if (fcinfo.isnull)
-		elog(ERROR, "function %u returned NULL", fcinfo.flinfo->fn_oid);
-
-	return result;
-}
-
-/*
- * Apply a sort function (by now converted to fmgr lookup form)
- * and return a 3-way comparison result.  This takes care of handling
- * reverse-sort and NULLs-ordering properly.  We assume that DESC and
- * NULLS_FIRST options are encoded in sk_flags the same way btree does it.
- */
-static inline int32
-inlineApplySortFunction(FmgrInfo *sortFunction, int sk_flags, Oid collation,
-						Datum datum1, bool isNull1,
-						Datum datum2, bool isNull2)
-{
-	int32		compare;
-
-	if (isNull1)
-	{
-		if (isNull2)
-			compare = 0;		/* NULL "=" NULL */
-		else if (sk_flags & SK_BT_NULLS_FIRST)
-			compare = -1;		/* NULL "<" NOT_NULL */
-		else
-			compare = 1;		/* NULL ">" NOT_NULL */
-	}
-	else if (isNull2)
-	{
-		if (sk_flags & SK_BT_NULLS_FIRST)
-			compare = 1;		/* NOT_NULL ">" NULL */
-		else
-			compare = -1;		/* NOT_NULL "<" NULL */
-	}
-	else
-	{
-		compare = DatumGetInt32(myFunctionCall2Coll(sortFunction, collation,
-													datum1, datum2));
-
-		if (sk_flags & SK_BT_DESC)
-			INVERT_COMPARE_RESULT(compare);
-	}
-
-	return compare;
-}
-
-
-/*
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Routines specialized for HeapTuple (actually MinimalTuple) case
  */
 
@@ -3490,21 +3366,12 @@ comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 	if (compare != 0)
 		return compare;
 
-<<<<<<< HEAD
-=======
-	/* Compare additional sort keys */
-	ltup.t_len = ((MinimalTuple) a->tuple)->t_len + MINIMAL_TUPLE_OFFSET;
-	ltup.t_data = (HeapTupleHeader) ((char *) a->tuple - MINIMAL_TUPLE_OFFSET);
-	rtup.t_len = ((MinimalTuple) b->tuple)->t_len + MINIMAL_TUPLE_OFFSET;
-	rtup.t_data = (HeapTupleHeader) ((char *) b->tuple - MINIMAL_TUPLE_OFFSET);
-	tupDesc = state->tupDesc;
-
 	if (sortKey->abbrev_converter)
 	{
 		attno = sortKey->ssup_attno;
 
-		datum1 = heap_getattr(&ltup, attno, tupDesc, &isnull1);
-		datum2 = heap_getattr(&rtup, attno, tupDesc, &isnull2);
+		datum1 = memtuple_getattr(a->tuple, state->mt_bind, attno, &isnull1); 
+		datum2 = memtuple_getattr(b->tuple, state->mt_bind, attno, &isnull2);
 
 		compare = ApplySortAbbrevFullComparator(datum1, isnull1,
 												datum2, isnull2,
@@ -3513,7 +3380,6 @@ comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 			return compare;
 	}
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	sortKey++;
 	for (nkey = 1; nkey < state->nKeys; nkey++, sortKey++)
 	{
@@ -3542,7 +3408,7 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 	 * MinimalTuple using the exported interface for that.
 	 */
 	TupleTableSlot *slot = (TupleTableSlot *) tup;
-<<<<<<< HEAD
+	Datum		original;
 
 	slot_getallattrs(slot);
 	stup->tuple = memtuple_form_to(state->mt_bind, 
@@ -3553,23 +3419,7 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 	USEMEM(state, GetMemoryChunkSpace(stup->tuple));
 
 	Assert(state->mt_bind);
-	stup->datum1 = memtuple_getattr(stup->tuple, state->mt_bind, state->sortKeys[0].ssup_attno, &stup->isnull1);
-=======
-	Datum		original;
-	MinimalTuple tuple;
-	HeapTupleData htup;
-
-	/* copy the tuple into sort storage */
-	tuple = ExecCopySlotMinimalTuple(slot);
-	stup->tuple = (void *) tuple;
-	USEMEM(state, GetMemoryChunkSpace(tuple));
-	/* set up first-column key value */
-	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
-	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
-	original = heap_getattr(&htup,
-							state->sortKeys[0].ssup_attno,
-							state->tupDesc,
-							&stup->isnull1);
+	original = memtuple_getattr(stup->tuple, state->mt_bind, state->sortKeys[0].ssup_attno, &stup->isnull1);
 
 	if (!state->sortKeys->abbrev_converter || stup->isnull1)
 	{
@@ -3607,18 +3457,11 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 		{
 			SortTuple  *mtup = &state->memtuples[i];
 
-			htup.t_len = ((MinimalTuple) mtup->tuple)->t_len +
-				MINIMAL_TUPLE_OFFSET;
-			htup.t_data = (HeapTupleHeader) ((char *) mtup->tuple -
-											 MINIMAL_TUPLE_OFFSET);
-
-			mtup->datum1 = heap_getattr(&htup,
-										state->sortKeys[0].ssup_attno,
-										state->tupDesc,
-										&mtup->isnull1);
+			mtup->datum1 = memtuple_getattr(stup->tuple, state->mt_bind,
+											state->sortKeys[0].ssup_attno,
+											&mtup->isnull1);
 		}
 	}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 static void

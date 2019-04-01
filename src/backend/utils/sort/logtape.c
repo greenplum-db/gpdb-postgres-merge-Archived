@@ -244,14 +244,9 @@ ltsWriteBlock(LogicalTapeSet *lts, int64 blocknum, void *buffer)
 	{
 		ereport(ERROR,
 				(errcode_for_file_access(),
-<<<<<<< HEAD
 				 errmsg("could not write block " INT64_FORMAT  " of temporary file: %m",
 						blocknum)));
 	}
-=======
-				 errmsg("could not write block %ld of temporary file: %m",
-						blocknum)));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -387,15 +382,9 @@ LogicalTapeSetCreate_Internal(int ntapes)
 	 * Create top-level struct including per-tape LogicalTape structs.
 	 */
 	Assert(ntapes > 0);
-<<<<<<< HEAD
-	lts = (LogicalTapeSet *) palloc(sizeof(LogicalTapeSet) +
-									(ntapes - 1) *sizeof(LogicalTape));
-	lts->pfile = NULL; 
-=======
 	lts = (LogicalTapeSet *) palloc(offsetof(LogicalTapeSet, tapes) +
 									ntapes * sizeof(LogicalTape));
-	lts->pfile = BufFileCreateTemp(false);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	lts->pfile = NULL; 
 	lts->nFileBlocks = 0L;
 	lts->forgetFreeSpace = false;
 	lts->blocksSorted = true;	/* a zero-length array is sorted ... */
