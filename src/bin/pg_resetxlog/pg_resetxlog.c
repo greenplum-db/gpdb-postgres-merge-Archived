@@ -149,11 +149,7 @@ main(int argc, char *argv[])
 	}
 
 
-<<<<<<< HEAD
-	while ((c = getopt_long(argc, argv, "fl:m:no:r:O:x:e:k:", long_options, NULL)) != -1)
-=======
-	while ((c = getopt(argc, argv, "c:D:e:fl:m:no:O:x:")) != -1)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	while ((c = getopt_long(argc, argv, "c:D:e:fl:m:no:r:O:x:k:", long_options, NULL)) != -1)
 	{
 		switch (c)
 		{
@@ -406,7 +402,6 @@ main(int argc, char *argv[])
 	}
 #endif
 
-<<<<<<< HEAD
 	/* GPDB: only allow setting --system-identifier during upgrade. */
 	if (!binary_upgrade && system_identifier)
 	{
@@ -416,10 +411,6 @@ main(int argc, char *argv[])
 	}
 
 	get_restricted_token(progname);
-	DataDir = argv[optind];
-=======
-	get_restricted_token(progname);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (chdir(DataDir) < 0)
 	{
@@ -731,13 +722,9 @@ ReadControlFile(void)
 	{
 		/* Check the CRC. */
 		INIT_CRC32C(crc);
-<<<<<<< HEAD
-		COMP_CRC32C(crc, buffer, offsetof(ControlFileData, crc));
-=======
 		COMP_CRC32C(crc,
 					buffer,
 					offsetof(ControlFileData, crc));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		FIN_CRC32C(crc);
 
 		if (EQ_CRC32C(crc, ((ControlFileData *) buffer)->crc))
@@ -995,7 +982,6 @@ PrintNewControlValues()
 			   ControlFile.checkPointCopy.nextXidEpoch);
 	}
 
-<<<<<<< HEAD
 	if (set_data_checksum_version != -1)
 	{
 		printf(_("Data page checksum version:           %u\n"),
@@ -1015,7 +1001,8 @@ PrintNewControlValues()
 
 		printf(_("Database system identifier:           %s\n"),
 			   sysident_str);
-=======
+	}
+
 	if (set_oldest_commit_ts != 0)
 	{
 		printf(_("oldestCommitTs:                       %u\n"),
@@ -1025,7 +1012,6 @@ PrintNewControlValues()
 	{
 		printf(_("newestCommitTs:                       %u\n"),
 			   ControlFile.checkPointCopy.newestCommitTs);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 }
 
@@ -1075,13 +1061,9 @@ RewriteControlFile(void)
 
 	/* Contents are protected with a CRC */
 	INIT_CRC32C(ControlFile.crc);
-<<<<<<< HEAD
-	COMP_CRC32C(ControlFile.crc, &ControlFile, offsetof(ControlFileData, crc));
-=======
 	COMP_CRC32C(ControlFile.crc,
 				(char *) &ControlFile,
 				offsetof(ControlFileData, crc));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	FIN_CRC32C(ControlFile.crc);
 
 	/*
@@ -1371,11 +1353,7 @@ WriteEmptyXLOG(void)
 		   sizeof(CheckPoint));
 
 	INIT_CRC32C(crc);
-<<<<<<< HEAD
-	COMP_CRC32C(crc, &ControlFile.checkPointCopy, sizeof(CheckPoint));
-=======
 	COMP_CRC32C(crc, ((char *) record) + SizeOfXLogRecord, record->xl_tot_len - SizeOfXLogRecord);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	COMP_CRC32C(crc, (char *) record, offsetof(XLogRecord, xl_crc));
 	FIN_CRC32C(crc);
 	record->xl_crc = crc;

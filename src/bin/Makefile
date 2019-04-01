@@ -13,13 +13,9 @@ subdir = src/bin
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-<<<<<<< HEAD
 unittest-check:
 	$(MAKE) -C pg_dump/test check
 
-SUBDIRS = initdb pg_ctl pg_dump \
-	psql scripts pg_config pg_controldata pg_resetxlog pg_basebackup pg_rewind
-=======
 SUBDIRS = \
 	initdb \
 	pg_archivecleanup \
@@ -37,7 +33,6 @@ SUBDIRS = \
 	pgbench \
 	psql \
 	scripts
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 ifeq ($(PORTNAME), win32)
 SUBDIRS += pgevent

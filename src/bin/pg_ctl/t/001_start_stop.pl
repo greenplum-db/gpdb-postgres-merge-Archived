@@ -2,15 +2,9 @@ use strict;
 use warnings;
 use Config;
 use TestLib;
-<<<<<<< HEAD
-use Test::More tests => 16;
-
-my $tempdir = TestLib::tempdir;
-=======
 use Test::More tests => 17;
 
-my $tempdir       = TestLib::tempdir;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+my $tempdir = TestLib::tempdir;
 my $tempdir_short = TestLib::tempdir_short;
 
 program_help_ok('pg_ctl');
@@ -22,7 +16,6 @@ command_exit_is([ 'pg_ctl', 'start', '-D', "$tempdir/nonexistent" ],
 
 command_ok([ 'pg_ctl', 'initdb', '-D', "$tempdir/data" ], 'pg_ctl initdb');
 command_ok(
-<<<<<<< HEAD
 	[ $ENV{PG_REGRESS}, '--config-auth',
 		"$tempdir/data" ],
 	'configure authentication');
@@ -37,14 +30,6 @@ else
 {
 	print CONF "listen_addresses = '127.0.0.1'\n";
 }
-=======
-	[   "$ENV{top_builddir}/src/test/regress/pg_regress", '--config-auth',
-		"$tempdir/data" ],
-	'configure authentication');
-open CONF, ">>$tempdir/data/postgresql.conf";
-print CONF "listen_addresses = ''\n";
-print CONF "unix_socket_directories = '$tempdir_short'\n";
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 close CONF;
 command_ok([ 'pg_ctl', 'start', '-D', "$tempdir/data", '-w', '-o', '-c gp_role=utility --gp_dbid=-1 --gp_contentid=-1'],
 	'pg_ctl start -w');

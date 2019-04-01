@@ -226,7 +226,6 @@ typedef struct
 	Variable   *variables;		/* array of variable definitions */
 	int			nvariables;
 	int64		txn_scheduled;	/* scheduled start time of transaction (usec) */
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
 	int64		sleep_until;	/* scheduled start time of next cmd (usec) */
 	instr_time	txn_begin;		/* used for measuring schedule lag times */
 	instr_time	stmt_begin;		/* used for measuring statement latencies */
@@ -306,11 +305,8 @@ typedef struct
 
 	long		start_time;		/* when does the interval start */
 	int			cnt;			/* number of transactions */
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
-=======
 	int			skipped;		/* number of transactions skipped under --rate
 								 * and --latency-limit */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 
 	double		min_latency;	/* min/max latencies */
 	double		max_latency;
@@ -519,8 +515,6 @@ getrand(TState *thread, int64 min, int64 max)
 }
 
 /*
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
-=======
  * random number generator: exponential distribution from min to max inclusive.
  * the threshold is so that the density of probability for the last cut-off max
  * value is exp(-threshold).
@@ -597,7 +591,6 @@ getGaussianRand(TState *thread, int64 min, int64 max, double threshold)
 }
 
 /*
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
  * random number generator: generate a value, such that the series of values
  * will approximate a Poisson distribution centered on the given value.
  */
@@ -608,11 +601,7 @@ getPoissonRand(TState *thread, int64 center)
 	 * Use inverse transform sampling to generate a value > 0, such that the
 	 * expected (i.e. average) value is the given argument.
 	 */
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
-	double uniform;
-=======
 	double		uniform;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 
 	/* erand in [0, 1), uniform in (0, 1] */
 	uniform = 1.0 - pg_erand48(thread->random_state);
@@ -1140,17 +1129,11 @@ static void
 agg_vals_init(AggVals *aggs, instr_time start)
 {
 	/* basic counters */
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
-	aggs->cnt = 0;				/* number of transactions */
-	aggs->sum_latency = 0;		/* SUM(latency) */
-	aggs->sum2_latency = 0;				/* SUM(latency*latency) */
-=======
 	aggs->cnt = 0;				/* number of transactions (includes skipped) */
 	aggs->skipped = 0;			/* xacts skipped under --rate --latency-limit */
 
 	aggs->sum_latency = 0;		/* SUM(latency) */
 	aggs->sum2_latency = 0;		/* SUM(latency*latency) */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 
 	/* min and max transaction duration */
 	aggs->min_latency = 0;
@@ -1232,7 +1215,6 @@ top:
 			}
 		}
 
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
 		st->txn_scheduled = thread->throttle_trigger;
 		st->sleep_until = st->txn_scheduled;
 		st->sleeping = 1;
@@ -1250,11 +1232,7 @@ top:
 		if (INSTR_TIME_IS_ZERO(now))
 			INSTR_TIME_SET_CURRENT(now);
 		now_us = INSTR_TIME_GET_MICROSEC(now);
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
 		if (st->sleep_until <= now_us)
-=======
-		if (st->txn_scheduled <= now_us)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 		{
 			st->sleeping = 0;	/* Done sleeping, go ahead with next command */
 			if (st->throttling)
@@ -1274,11 +1252,6 @@ top:
 
 	if (st->listen)
 	{							/* are we receiver? */
-		instr_time	now;
-		bool		now_valid = false;
-
-		INSTR_TIME_SET_ZERO(now); /* initialize to keep compiler quiet */
-
 		if (commands[st->state]->type == SQL_COMMAND)
 		{
 			if (debug)
@@ -1300,16 +1273,8 @@ top:
 		{
 			int			cnum = commands[st->state]->command_num;
 
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
-			if (!now_valid)
-			{
-				INSTR_TIME_SET_CURRENT(now);
-				now_valid = true;
-			}
-=======
 			if (INSTR_TIME_IS_ZERO(now))
 				INSTR_TIME_SET_CURRENT(now);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 			INSTR_TIME_ACCUM_DIFF(thread->exec_elapsed[cnum],
 								  now, st->stmt_begin);
 			thread->exec_count[cnum]++;
@@ -1318,113 +1283,6 @@ top:
 		/* transaction finished: calculate latency and log the transaction */
 		if (commands[st->state + 1] == NULL)
 		{
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
-			int64		latency;
-
-			if (!now_valid)
-			{
-				INSTR_TIME_SET_CURRENT(now);
-				now_valid = true;
-			}
-
-			latency = INSTR_TIME_GET_MICROSEC(now) - st->txn_scheduled;
-
-			st->txn_latencies += latency;
-
-			/*
-			 * XXX In a long benchmark run of high-latency transactions, this
-			 * int64 addition eventually overflows.  For example, 100 threads
-			 * running 10s transactions will overflow it in 2.56 hours.  With
-			 * a more-typical OLTP workload of .1s transactions, overflow
-			 * would take 256 hours.
-			 */
-			st->txn_sqlats += latency * latency;
-		}
-
-		/*
-		 * if transaction finished, record the time it took in the log
-		 */
-		if (logfile && commands[st->state + 1] == NULL)
-		{
-			double		lag;
-			double		latency;
-
-			/*
-			 * write the log entry if this row belongs to the random sample,
-			 * or no sampling rate was given which means log everything.
-			 */
-			if (sample_rate == 0.0 ||
-				pg_erand48(thread->random_state) <= sample_rate)
-			{
-				if (!now_valid)
-				{
-					INSTR_TIME_SET_CURRENT(now);
-					now_valid = true;
-				}
-				latency = (double) (INSTR_TIME_GET_MICROSEC(now) - st->txn_scheduled);
-				lag = (double) (INSTR_TIME_GET_MICROSEC(st->txn_begin) - st->txn_scheduled);
-
-				/* should we aggregate the results or not? */
-				if (agg_interval > 0)
-				{
-					/*
-					 * are we still in the same interval? if yes, accumulate
-					 * the values (print them otherwise)
-					 */
-					if (agg->start_time + agg_interval >= INSTR_TIME_GET_DOUBLE(now))
-					{
-						agg->cnt += 1;
-						agg->sum_latency += latency;
-						agg->sum2_latency += latency * latency;
-
-						/* first in this aggregation interval */
-						if ((agg->cnt == 1) || (latency < agg->min_latency))
-							agg->min_latency = latency;
-
-						if ((agg->cnt == 1) || (latency > agg->max_latency))
-							agg->max_latency = latency;
-
-						/* and the same for schedule lag */
-						if (throttle_delay)
-						{
-							agg->sum_lag += lag;
-							agg->sum2_lag += lag * lag;
-
-							if ((agg->cnt == 1) || (lag < agg->min_lag))
-								agg->min_lag = lag;
-							if ((agg->cnt == 1) || (lag > agg->max_lag))
-								agg->max_lag = lag;
-						}
-					}
-					else
-					{
-						/*
-						 * Loop until we reach the interval of the current
-						 * transaction (and print all the empty intervals in
-						 * between).
-						 */
-						while (agg->start_time + agg_interval < INSTR_TIME_GET_DOUBLE(now))
-						{
-							/*
-							 * This is a non-Windows branch (thanks to the
-							 * ifdef in usage), so we don't need to handle
-							 * this in a special way (see below).
-							 */
-							fprintf(logfile, "%ld %d %.0f %.0f %.0f %.0f",
-									agg->start_time,
-									agg->cnt,
-									agg->sum_latency,
-									agg->sum2_latency,
-									agg->min_latency,
-									agg->max_latency);
-							if (throttle_delay)
-								fprintf(logfile, " %.0f %.0f %.0f %.0f",
-										agg->sum_lag,
-										agg->sum2_lag,
-										agg->min_lag,
-										agg->max_lag);
-							fputc('\n', logfile);
-=======
 			/* only calculate latency if an option is used that needs it */
 			if (progress || throttle_delay || latency_limit)
 			{
@@ -1436,7 +1294,6 @@ top:
 				latency = INSTR_TIME_GET_MICROSEC(now) - st->txn_scheduled;
 
 				st->txn_latencies += latency;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 
 				/*
 				 * XXX In a long benchmark run of high-latency transactions,
@@ -1447,64 +1304,9 @@ top:
 				 */
 				st->txn_sqlats += latency * latency;
 
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
-							/* reset for "no transaction" intervals */
-							agg->cnt = 0;
-							agg->min_latency = 0;
-							agg->max_latency = 0;
-							agg->sum_latency = 0;
-							agg->sum2_latency = 0;
-							agg->min_lag = 0;
-							agg->max_lag = 0;
-							agg->sum_lag = 0;
-							agg->sum2_lag = 0;
-						}
-
-						/*
-						 * and now update the reset values (include the
-						 * current)
-						 */
-						agg->cnt = 1;
-						agg->min_latency = latency;
-						agg->max_latency = latency;
-						agg->sum_latency = latency;
-						agg->sum2_latency = latency * latency;
-						agg->min_lag = lag;
-						agg->max_lag = lag;
-						agg->sum_lag = lag;
-						agg->sum2_lag = lag * lag;
-					}
-				}
-				else
-				{
-					/* no, print raw transactions */
-#ifndef WIN32
-
-					/*
-					 * This is more than we really ought to know about
-					 * instr_time
-					 */
-					fprintf(logfile, "%d %d %.0f %d %ld %ld",
-							st->id, st->cnt, latency, st->use_file,
-							(long) now.tv_sec, (long) now.tv_usec);
-#else
-
-					/*
-					 * On Windows, instr_time doesn't provide a timestamp
-					 * anyway
-					 */
-					fprintf(logfile, "%d %d %.0f %d 0 0",
-							st->id, st->cnt, latency, st->use_file);
-#endif
-					if (throttle_delay)
-						fprintf(logfile, " %.0f", lag);
-					fputc('\n', logfile);
-				}
-=======
 				/* record over the limit transactions if needed. */
 				if (latency_limit && latency > latency_limit)
 					thread->latency_late++;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 			}
 
 			/* record the time it took in the log */
@@ -1602,11 +1404,7 @@ top:
 	}
 
 	/* Record transaction start time under logging, progress or throttling */
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
-	if ((logfile || progress || throttle_delay) && st->state == 0)
-=======
 	if ((logfile || progress || throttle_delay || latency_limit) && st->state == 0)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 	{
 		INSTR_TIME_SET_CURRENT(st->txn_begin);
 
@@ -1851,85 +1649,8 @@ top:
 
 			if (!evaluateExpr(st, expr, &result))
 			{
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
-				if ((var = getVariable(st, argv[2] + 1)) == NULL)
-				{
-					fprintf(stderr, "%s: undefined variable %s\n", argv[0], argv[2]);
-					st->ecnt++;
-					return true;
-				}
-				ope1 = strtoint64(var);
-			}
-			else
-				ope1 = strtoint64(argv[2]);
-
-			if (argc < 5)
-				snprintf(res, sizeof(res), INT64_FORMAT, ope1);
-			else
-			{
-				if (*argv[4] == ':')
-				{
-					if ((var = getVariable(st, argv[4] + 1)) == NULL)
-					{
-						fprintf(stderr, "%s: undefined variable %s\n", argv[0], argv[4]);
-						st->ecnt++;
-						return true;
-					}
-					ope2 = strtoint64(var);
-				}
-				else
-					ope2 = strtoint64(argv[4]);
-
-				if (strcmp(argv[3], "+") == 0)
-					snprintf(res, sizeof(res), INT64_FORMAT, ope1 + ope2);
-				else if (strcmp(argv[3], "-") == 0)
-					snprintf(res, sizeof(res), INT64_FORMAT, ope1 - ope2);
-				else if (strcmp(argv[3], "*") == 0)
-					snprintf(res, sizeof(res), INT64_FORMAT, ope1 * ope2);
-				else if (strcmp(argv[3], "/") == 0)
-				{
-					int64	operes;
-
-					if (ope2 == 0)
-					{
-						fprintf(stderr, "%s: division by zero\n", argv[0]);
-						st->ecnt++;
-						return true;
-					}
-					/*
-					 * INT64_MIN / -1 is problematic, since the result can't
-					 * be represented on a two's-complement machine. Some
-					 * machines produce INT64_MIN, some produce zero, some
-					 * throw an exception. We can dodge the problem by
-					 * recognizing that division by -1 is the same as
-					 * negation.
-					 */
-					if (ope2 == -1)
-					{
-						operes = -ope1;
-
-						/* overflow check (needed for INT64_MIN) */
-						if (ope1 == INT64_MIN)
-						{
-							fprintf(stderr, "bigint out of range\n");
-							st->ecnt++;
-							return true;
-						}
-					}
-					else
-						operes = ope1 / ope2;
-					snprintf(res, sizeof(res), INT64_FORMAT, operes);
-				}
-				else
-				{
-					fprintf(stderr, "%s: unsupported operator %s\n", argv[0], argv[3]);
-					st->ecnt++;
-					return true;
-				}
-=======
 				st->ecnt++;
 				return true;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 			}
 			sprintf(res, INT64_FORMAT, result);
 
@@ -1971,11 +1692,7 @@ top:
 				usec *= 1000000;
 
 			INSTR_TIME_SET_CURRENT(now);
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
 			st->sleep_until = INSTR_TIME_GET_MICROSEC(now) + usec;
-=======
-			st->txn_scheduled = INSTR_TIME_GET_MICROSEC(now) + usec;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 			st->sleeping = 1;
 
 			st->listen = 1;
@@ -2986,9 +2703,6 @@ printResults(int ttype, int64 normal_xacts, int nclients,
 	if (normal_xacts <= 0)
 		return;
 
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
-	if (throttle_delay || progress)
-=======
 	if (throttle_delay && latency_limit)
 		printf("number of transactions skipped: " INT64_FORMAT " (%.3f %%)\n",
 			   throttle_latency_skipped,
@@ -3000,7 +2714,6 @@ printResults(int ttype, int64 normal_xacts, int nclients,
 		   100.0 * latency_late / (throttle_latency_skipped + normal_xacts));
 
 	if (throttle_delay || progress || latency_limit)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 	{
 		/* compute and show latency average and standard deviation */
 		double		latency = 0.001 * total_latencies / normal_xacts;
@@ -3192,11 +2905,7 @@ main(int argc, char **argv)
 	state = (CState *) pg_malloc(sizeof(CState));
 	memset(state, 0, sizeof(CState));
 
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
-	while ((c = getopt_long(argc, argv, "ih:nvp:dqSNc:j:Crs:t:T:U:lf:D:F:M:P:R:x:", long_options, &optindex)) != -1)
-=======
-	while ((c = getopt_long(argc, argv, "ih:nvp:dqSNc:j:Crs:t:T:U:lf:D:F:M:P:R:L:", long_options, &optindex)) != -1)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
+	while ((c = getopt_long(argc, argv, "ih:nvp:dqSNc:j:Crs:t:T:U:lf:D:F:M:P:R:L:x:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -4117,7 +3826,7 @@ threadRun(void *arg)
 				last_sqlats = sqlats;
 				last_lags = lags;
 				last_report = now;
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
+				last_skipped = thread->throttle_latency_skipped;
 
 				/*
 				 * Ensure that the next report is in the future, in case
@@ -4127,10 +3836,6 @@ threadRun(void *arg)
 				{
 					next_report += (int64) progress *1000000;
 				} while (now >= next_report);
-=======
-				last_skipped = thread->throttle_latency_skipped;
-				next_report += (int64) progress *1000000;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 			}
 		}
 #else
@@ -4193,7 +3898,7 @@ threadRun(void *arg)
 				last_sqlats = sqlats;
 				last_lags = lags;
 				last_report = now;
-<<<<<<< HEAD:contrib/pgbench/pgbench.c
+				last_skipped = thread->throttle_latency_skipped;
 
 				/*
 				 * Ensure that the next report is in the future, in case
@@ -4203,10 +3908,6 @@ threadRun(void *arg)
 				{
 					next_report += (int64) progress *1000000;
 				} while (now >= next_report);
-=======
-				last_skipped = thread->throttle_latency_skipped;
-				next_report += (int64) progress *1000000;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:src/bin/pgbench/pgbench.c
 			}
 		}
 #endif   /* PTHREAD_FORK_EMULATION */

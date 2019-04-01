@@ -257,12 +257,6 @@ main(int argc, char *argv[])
 						 username, prompt_password, progname, echo, verbose);
 			}
 		}
-<<<<<<< HEAD
-		/* reindex database only if neither index nor table is specified */
-		if (indexes.head == NULL && tables.head == NULL)
-			reindex_one_database(NULL, dbname, "DATABASE", host, port,
-								 username, prompt_password, progname, echo);
-=======
 
 		/*
 		 * reindex database only if neither index nor table nor schema is
@@ -271,7 +265,6 @@ main(int argc, char *argv[])
 		if (indexes.head == NULL && tables.head == NULL && schemas.head == NULL)
 			reindex_one_database(dbname, dbname, "DATABASE", host, port,
 						 username, prompt_password, progname, echo, verbose);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	exit(0);
@@ -292,26 +285,18 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 
 	initPQExpBuffer(&sql);
 
-<<<<<<< HEAD
 	appendPQExpBufferStr(&sql, "REINDEX ");
+
+	if (verbose)
+		appendPQExpBufferStr(&sql, " (VERBOSE)");
+
 	appendPQExpBufferStr(&sql, type);
 	appendPQExpBufferChar(&sql, ' ');
 	if (strcmp(type, "TABLE") == 0 ||
 		strcmp(type, "INDEX") == 0)
 		appendQualifiedRelation(&sql, name, conn, progname, echo);
-=======
-	appendPQExpBufferStr(&sql, "REINDEX");
-
-	if (verbose)
-		appendPQExpBufferStr(&sql, " (VERBOSE)");
-
-	if (strcmp(type, "TABLE") == 0)
-		appendPQExpBuffer(&sql, " TABLE %s", name);
-	else if (strcmp(type, "INDEX") == 0)
-		appendPQExpBuffer(&sql, " INDEX %s", name);
 	else if (strcmp(type, "SCHEMA") == 0)
-		appendPQExpBuffer(&sql, " SCHEMA %s", name);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+		appendPQExpBufferStr(&sql, name);
 	else if (strcmp(type, "DATABASE") == 0)
 		appendPQExpBufferStr(&sql, fmtId(PQdb(conn)));
 	appendPQExpBufferChar(&sql, ';');
@@ -323,14 +308,10 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 					progname, name, PQdb(conn), PQerrorMessage(conn));
 		if (strcmp(type, "INDEX") == 0)
 			fprintf(stderr, _("%s: reindexing of index \"%s\" in database \"%s\" failed: %s"),
-<<<<<<< HEAD
 					progname, name, PQdb(conn), PQerrorMessage(conn));
-=======
-					progname, name, dbname, PQerrorMessage(conn));
 		if (strcmp(type, "SCHEMA") == 0)
 			fprintf(stderr, _("%s: reindexing of schema \"%s\" in database \"%s\" failed: %s"),
-					progname, name, dbname, PQerrorMessage(conn));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+					progname, name, PQdb(conn), PQerrorMessage(conn));
 		else
 			fprintf(stderr, _("%s: reindexing of database \"%s\" failed: %s"),
 					progname, PQdb(conn), PQerrorMessage(conn));
@@ -369,7 +350,6 @@ reindex_all_databases(const char *maintenance_db,
 			fflush(stdout);
 		}
 
-<<<<<<< HEAD
 		resetPQExpBuffer(&connstr);
 		appendPQExpBuffer(&connstr, "dbname=");
 		appendConnStrVal(&connstr, dbname);
@@ -377,10 +357,6 @@ reindex_all_databases(const char *maintenance_db,
 		reindex_one_database(NULL, connstr.data, "DATABASE", host,
 							 port, username, prompt_password,
 							 progname, echo);
-=======
-		reindex_one_database(dbname, dbname, "DATABASE", host, port, username,
-							 prompt_password, progname, echo, verbose);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	termPQExpBuffer(&connstr);
 
@@ -393,9 +369,10 @@ reindex_system_catalogs(const char *dbname, const char *host, const char *port,
 						const char *progname, bool echo, bool verbose)
 {
 	PGconn	   *conn;
-<<<<<<< HEAD
 	PQExpBufferData sql;
-=======
+
+	conn = connectDatabase(dbname, host, port, username, prompt_password,
+						   progname, echo, false);
 
 	initPQExpBuffer(&sql);
 
@@ -404,15 +381,7 @@ reindex_system_catalogs(const char *dbname, const char *host, const char *port,
 	if (verbose)
 		appendPQExpBuffer(&sql, " (VERBOSE)");
 
-	appendPQExpBuffer(&sql, " SYSTEM %s;", dbname);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-
-	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, echo, false);
-
-	initPQExpBuffer(&sql);
-
-	appendPQExpBuffer(&sql, "REINDEX SYSTEM %s;", fmtId(PQdb(conn)));
+	appendPQExpBuffer(&sql, " SYSTEM %s;", fmtId(PQdb(conn)));
 
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{

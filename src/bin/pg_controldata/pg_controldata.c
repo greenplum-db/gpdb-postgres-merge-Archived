@@ -92,11 +92,7 @@ main(int argc, char *argv[])
 	ControlFileData ControlFile;
 	int			fd;
 	char		ControlFilePath[MAXPGPATH];
-<<<<<<< HEAD
-	char	   *DataDir;
-=======
 	char	   *DataDir = NULL;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	pg_crc32c	crc;
 	time_t		time_tmp;
 	char		pgctime_str[128];
@@ -190,13 +186,9 @@ main(int argc, char *argv[])
 
 	/* Check the CRC. */
 	INIT_CRC32C(crc);
-<<<<<<< HEAD
-	COMP_CRC32C(crc, &ControlFile, offsetof(ControlFileData, crc));
-=======
 	COMP_CRC32C(crc,
 				(char *) &ControlFile,
 				offsetof(ControlFileData, crc));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	FIN_CRC32C(crc);
 
 	if (!EQ_CRC32C(crc, ControlFile.crc))

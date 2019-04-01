@@ -99,12 +99,9 @@ static char *post_opts = NULL;
 static const char *progname;
 static char *log_file = NULL;
 static char *exec_path = NULL;
-<<<<<<< HEAD
+static char *event_source = NULL;
 static char *wrapper = NULL;
 static char *wrapper_args = NULL;
-=======
-static char *event_source = NULL;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static char *register_servicename = "PostgreSQL";		/* FIXME: + version ID? */
 static char *register_username = NULL;
 static char *register_password = NULL;
@@ -1732,16 +1729,10 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 			{
 				/*
 				 * status.dwCheckPoint can be incremented by
-<<<<<<< HEAD
-				 * test_postmaster_connection(), so it might not start from 0.
-				 */
-				int			maxShutdownCheckPoint = status.dwCheckPoint + 12;
-=======
 				 * test_postmaster_connection(true), so it might not start
 				 * from 0.
 				 */
 				int			maxShutdownCheckPoint = status.dwCheckPoint + 12;;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 				kill(postmasterPID, SIGINT);
 
