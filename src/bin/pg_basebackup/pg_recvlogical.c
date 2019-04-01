@@ -66,11 +66,7 @@ static void disconnect_and_exit(int code);
 static void
 usage(void)
 {
-<<<<<<< HEAD
-	printf(_("%s receives PostgreSQL logical change streams.\n\n"),
-=======
 	printf(_("%s controls PostgreSQL logical decoding streams.\n\n"),
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		   progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]...\n"), progname);
@@ -872,11 +868,7 @@ main(int argc, char **argv)
 	if (db_name == NULL)
 	{
 		fprintf(stderr,
-<<<<<<< HEAD
-				_("%s: failed to establish database specific replication connection\n"),
-=======
 				_("%s: could not establish database-specific replication connection\n"),
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				progname);
 		disconnect_and_exit(1);
 	}

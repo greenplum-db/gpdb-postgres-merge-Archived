@@ -272,12 +272,8 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 				  XLogRecPtr *startpos, char **db_name)
 {
 	PGresult   *res;
-<<<<<<< HEAD
-	uint32		hi, lo;
-=======
 	uint32		hi,
 				lo;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Check connection existence */
 	Assert(conn != NULL);
@@ -287,11 +283,8 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 	{
 		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
 				progname, "IDENTIFY_SYSTEM", PQerrorMessage(conn));
-<<<<<<< HEAD
-=======
 
 		PQclear(res);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		return false;
 	}
 	if (PQntuples(res) != 1 || PQnfields(res) < 3)
@@ -299,11 +292,8 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 		fprintf(stderr,
 				_("%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"),
 				progname, PQntuples(res), PQnfields(res), 1, 3);
-<<<<<<< HEAD
-=======
 
 		PQclear(res);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		return false;
 	}
 
@@ -321,15 +311,10 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 		if (sscanf(PQgetvalue(res, 0, 2), "%X/%X", &hi, &lo) != 2)
 		{
 			fprintf(stderr,
-<<<<<<< HEAD
-					_("%s: could not parse transaction log location \"%s\"\n"),
-					progname, PQgetvalue(res, 0, 2));
-=======
 				  _("%s: could not parse transaction log location \"%s\"\n"),
 					progname, PQgetvalue(res, 0, 2));
 
 			PQclear(res);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			return false;
 		}
 		*startpos = ((uint64) hi) << 32 | lo;
@@ -354,7 +339,6 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 }
 
 /*
-<<<<<<< HEAD
  * Redefine error code from backend
  */
 #define ERRCODE_DUPLICATE_OBJECT "42710"
@@ -371,8 +355,6 @@ replication_slot_already_exists_error(PGresult *result)
 }
 
 /*
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Create a replication slot for the given connection. This function
  * returns true in case of success as well as the start position
  * obtained after the slot creation.
@@ -399,7 +381,6 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 						  slot_name, plugin);
 
 	res = PQexec(conn, query->data);
-<<<<<<< HEAD
 
 	if (replication_slot_already_exists_error(res))
 	{
@@ -407,18 +388,13 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 		return true;
 	}
 	
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
 				progname, query->data, PQerrorMessage(conn));
-<<<<<<< HEAD
-=======
 
 		destroyPQExpBuffer(query);
 		PQclear(res);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		return false;
 	}
 
@@ -428,47 +404,32 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 				_("%s: could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"),
 				progname, slot_name,
 				PQntuples(res), PQnfields(res), 1, 4);
-<<<<<<< HEAD
-=======
 
 		destroyPQExpBuffer(query);
 		PQclear(res);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		return false;
 	}
 
 	/* Get LSN start position if necessary */
 	if (startpos != NULL)
 	{
-<<<<<<< HEAD
-		uint32		hi, lo;
-=======
 		uint32		hi,
 					lo;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		if (sscanf(PQgetvalue(res, 0, 1), "%X/%X", &hi, &lo) != 2)
 		{
 			fprintf(stderr,
-<<<<<<< HEAD
-					_("%s: could not parse transaction log location \"%s\"\n"),
-					progname, PQgetvalue(res, 0, 1));
-=======
 				  _("%s: could not parse transaction log location \"%s\"\n"),
 					progname, PQgetvalue(res, 0, 1));
 
 			destroyPQExpBuffer(query);
 			PQclear(res);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			return false;
 		}
 		*startpos = ((uint64) hi) << 32 | lo;
 	}
 
-<<<<<<< HEAD
-=======
 	destroyPQExpBuffer(query);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	PQclear(res);
 	return true;
 }
@@ -495,12 +456,9 @@ DropReplicationSlot(PGconn *conn, const char *slot_name)
 	{
 		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
 				progname, query->data, PQerrorMessage(conn));
-<<<<<<< HEAD
-=======
 
 		destroyPQExpBuffer(query);
 		PQclear(res);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		return false;
 	}
 
@@ -510,12 +468,9 @@ DropReplicationSlot(PGconn *conn, const char *slot_name)
 				_("%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"),
 				progname, slot_name,
 				PQntuples(res), PQnfields(res), 0, 0);
-<<<<<<< HEAD
-=======
 
 		destroyPQExpBuffer(query);
 		PQclear(res);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		return false;
 	}
 

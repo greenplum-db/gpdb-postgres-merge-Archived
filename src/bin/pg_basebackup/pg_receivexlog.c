@@ -70,10 +70,7 @@ usage(void)
 	printf(_("  -s, --status-interval=SECS\n"
 			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));
 	printf(_("  -S, --slot=SLOTNAME    replication slot to use\n"));
-<<<<<<< HEAD
-=======
 	printf(_("      --synchronous      flush transaction log immediately after writing\n"));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
@@ -84,14 +81,10 @@ usage(void)
 	printf(_("  -U, --username=NAME    connect as specified database user\n"));
 	printf(_("  -w, --no-password      never prompt for password\n"));
 	printf(_("  -W, --password         force password prompt (should happen automatically)\n"));
-<<<<<<< HEAD
-	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
 	printf(_("\nOptional actions:\n"));
 	printf(_("      --create-slot      create a new replication slot (for the slot's name see --slot)\n"));
 	printf(_("      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"));
-	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
 }
 
 static bool
@@ -281,15 +274,10 @@ FindStreamingStart(uint32 *tli)
 static void
 StreamLog(void)
 {
-<<<<<<< HEAD
-	XLogRecPtr	startpos, serverpos;
-	TimeLineID	starttli, servertli;
-=======
 	XLogRecPtr	startpos,
 				serverpos;
 	TimeLineID	starttli,
 				servertli;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Connect in replication mode to the server
@@ -344,11 +332,7 @@ StreamLog(void)
 
 	ReceiveXlogStream(conn, startpos, starttli, NULL, basedir,
 					  stop_streaming, standby_message_timeout, ".partial",
-<<<<<<< HEAD
-					  false);
-=======
 					  synchronous, false);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	PQfinish(conn);
 	conn = NULL;

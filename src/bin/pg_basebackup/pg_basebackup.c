@@ -384,11 +384,7 @@ LogStreamerMain(logstreamer_param *param)
 	if (!ReceiveXlogStream(param->bgconn, param->startptr, param->timeline,
 						   param->sysidentifier, param->xlogdir,
 						   reached_end_position, standby_message_timeout,
-<<<<<<< HEAD
-						   NULL, true))
-=======
 						   NULL, false, true))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/*
 		 * Any errors will already have been reported in the function process,
@@ -1163,14 +1159,9 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 {
 	char		current_path[MAXPGPATH];
 	char		filename[MAXPGPATH];
-<<<<<<< HEAD
 	char		gp_tablespace_filename[MAXPGPATH] = {0};
 	const char *mapped_tblspc_path;
 	pgoff_t		current_len_left = 0;
-=======
-	const char *mapped_tblspc_path;
-	int			current_len_left;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	int			current_padding = 0;
 	bool		basetablespace;
 	char	   *copybuf = NULL;
@@ -1180,10 +1171,11 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	if (basetablespace)
 		strlcpy(current_path, basedir, sizeof(current_path));
 	else
-<<<<<<< HEAD
 	{
-		strlcpy(current_path, get_tablespace_mapping(PQgetvalue(res, rownum, 1)), sizeof(current_path));
-		
+		strlcpy(current_path,
+				get_tablespace_mapping(PQgetvalue(res, rownum, 1)),
+				sizeof(current_path));
+
 		if (target_gp_dbid < 1)
 		{
 			fprintf(stderr, _("%s: cannot restore user-defined tablespaces without the --target-gp-dbid option\n"),
@@ -1199,11 +1191,6 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 				 GP_TABLESPACE_VERSION_DIRECTORY,
 				 target_gp_dbid);
 	}
-=======
-		strlcpy(current_path,
-				get_tablespace_mapping(PQgetvalue(res, rownum, 1)),
-				sizeof(current_path));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Get the COPY data
@@ -1374,21 +1361,12 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					 *
 					 * It's most likely a link in pg_tblspc directory, to the
 					 * location of a tablespace. Apply any tablespace mapping
-<<<<<<< HEAD
-					 * given on the command line (--tablespace-mapping).
-					 * (We blindly apply the mapping without checking that
-					 * the link really is inside pg_tblspc. We don't expect
-					 * there to be other symlinks in a data directory, but
-					 * if there are, you can call it an undocumented feature
-					 * that you can map them too.)
-=======
 					 * given on the command line (--tablespace-mapping). (We
 					 * blindly apply the mapping without checking that the
 					 * link really is inside pg_tblspc. We don't expect there
 					 * to be other symlinks in a data directory, but if there
 					 * are, you can call it an undocumented feature that you
 					 * can map them too.)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					 */
 					filename[strlen(filename) - 1] = '\0';		/* Remove trailing slash */
 
@@ -1804,7 +1782,6 @@ BaseBackup(void)
 	 */
 	if (!RunIdentifySystem(conn, &sysidentifier, &latesttli, NULL, NULL))
 		disconnect_and_exit(1);
-<<<<<<< HEAD
 
 	/*
 	 * Greenplum only: create replication slot.  This replication slot is used
@@ -1814,8 +1791,6 @@ BaseBackup(void)
 	{
 		CreateReplicationSlot(conn, replication_slot, NULL, NULL, true);
 	}
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Start the actual backup
@@ -1843,14 +1818,11 @@ BaseBackup(void)
 				 fastcheckpoint ? "FAST" : "",
 				 includewal ? "NOWAIT" : "",
 				 maxrate_clause ? maxrate_clause : "",
-<<<<<<< HEAD
+				 format == 't' ? "TABLESPACE_MAP" : "",
 				 exclude_list);
 
 	if (num_exclude != 0)
 		free(exclude_list);
-=======
-				 format == 't' ? "TABLESPACE_MAP" : "");
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (PQsendQuery(conn, basebkp) == 0)
 	{
