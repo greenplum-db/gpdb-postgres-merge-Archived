@@ -155,7 +155,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	ListCell   *elements;
 	Oid			namespaceid;
 	Oid			existing_relid;
-<<<<<<< HEAD
+	ParseCallbackState pcbstate;
 	DistributedBy *likeDistributedBy = NULL;
 	bool		bQuiet = false;		/* shut up transformDistributedBy messages */
 	List	   *stenc = NIL;		/* column reference storage encoding clauses */
@@ -176,9 +176,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 							  ALLOCSET_DEFAULT_MINSIZE,
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
-=======
-	ParseCallbackState pcbstate;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * We must not scribble on the passed-in CreateStmt, so copy it.  (This is
@@ -826,21 +823,6 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 static void
 transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
 {
-<<<<<<< HEAD
-	if (cxt->isforeign)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("constraints are not supported on foreign tables"),
-				 parser_errposition(cxt->pstate,
-									constraint->location)));
-
-	if (constraint->contype == CONSTR_EXCLUSION)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("GPDB does not support exclusion constraints.")));
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	switch (constraint->contype)
 	{
 		case CONSTR_PRIMARY:
@@ -870,10 +852,29 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
 						 errmsg("exclusion constraints are not supported on foreign tables"),
 						 parser_errposition(cxt->pstate,
 											constraint->location)));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("GPDB does not support exclusion constraints")));
 			cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
 			break;
 
 		case CONSTR_CHECK:
+			/*
+			 * GPDB_95_MERGE_FIXME: GPDB did not support constraints on foreign tables.
+			 * However upstream commit allowed CHECK constraints to be placed on
+			 * foreign tables which are merely reports that are being enforced by the
+			 * remote server. Upstream commit <fc2ac1fb41c>.
+			 * Verify that GPDB can support CHECK constraints on foreign tables and
+			 * if true, remove this check.
+			 */
+			if (cxt->isforeign)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("constraints are not supported on foreign tables"),
+						 parser_errposition(cxt->pstate,
+											constraint->location)));
+
 			cxt->ckconstraints = lappend(cxt->ckconstraints, constraint);
 			break;
 
@@ -1324,11 +1325,8 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	index->primary = idxrec->indisprimary;
 	index->transformed = true;	/* don't need transformIndexStmt */
 	index->concurrent = false;
-<<<<<<< HEAD
 	index->is_split_part = cxt->issplitpart;
-=======
 	index->if_not_exists = false;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * We don't try to preserve the name of the source index; instead, just
@@ -3648,14 +3646,9 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 
 	/*
 	 * The only subtypes that currently require parse transformation handling
-<<<<<<< HEAD
-	 * are ADD COLUMN and ADD CONSTRAINT.  These largely re-use code from
-	 * CREATE TABLE.
-	 * And ALTER TABLE ... <operator> PARTITION ...
-=======
 	 * are ADD COLUMN, ADD CONSTRAINT and SET DATA TYPE.  These largely re-use
 	 * code from CREATE TABLE.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	 * And ALTER TABLE ... <operator> PARTITION ...
 	 */
 	foreach(lcmd, stmt->cmds)
 	{
@@ -3738,7 +3731,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				newcmds = lappend(newcmds, cmd);
 				break;
 
-<<<<<<< HEAD
 				/* CDB: Partitioned Tables */
             case AT_PartAlter:			/* Alter */
             case AT_PartAdd:			/* Add */
@@ -3761,7 +3753,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				cxt.iscreatepart = true;
 				newcmds = lappend(newcmds, cmd);
 				break;
-=======
+
 			case AT_AlterColumnType:
 				{
 					ColumnDef  *def = (ColumnDef *) cmd->def;
@@ -3786,7 +3778,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 					newcmds = lappend(newcmds, cmd);
 					break;
 				}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			default:
 				newcmds = lappend(newcmds, cmd);
