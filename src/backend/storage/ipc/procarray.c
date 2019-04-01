@@ -3115,13 +3115,9 @@ GetOldestSafeDecodingTransactionId(bool catalogOnly)
 	/*
 	 * If there's already a slot pegging the xmin horizon, we can start with
 	 * that value, it's guaranteed to be safe since it's computed by this
-<<<<<<< HEAD
 	 * routine initially and has been enforced since.  We can always use the
 	 * slot's general xmin horizon, but the catalog horizon is only usable
 	 * when we only catalog data is going to be looked at.
-=======
-	 * routine initially and has been enforced since.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
 	if (TransactionIdIsValid(procArray->replication_slot_xmin) &&
 		TransactionIdPrecedes(procArray->replication_slot_xmin,

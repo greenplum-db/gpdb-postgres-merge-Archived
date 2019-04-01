@@ -35,11 +35,7 @@
 #include "access/transam.h"
 #include "access/twophase.h"
 #include "access/twophase_rmgr.h"
-<<<<<<< HEAD
-#include "cdb/cdbvars.h"
-=======
 #include "access/xlog.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
@@ -54,6 +50,8 @@
 #include "utils/resscheduler.h"
 #include "utils/resource_manager.h"
 #include "utils/resowner_private.h"
+
+#include "cdb/cdbvars.h"
 
 
 /* This configuration variable is used to set the lock table size */

@@ -104,12 +104,9 @@ static LOCALLOCK *lockAwaited = NULL;
 
 static DeadLockState deadlock_state = DS_NOT_YET_CHECKED;
 
-<<<<<<< HEAD
-=======
 /* Is a deadlock check pending? */
 static volatile sig_atomic_t got_deadlock_timeout;
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void RemoveProcFromArray(int code, Datum arg);
 static void ProcKill(int code, Datum arg);
 static void AuxiliaryProcKill(int code, Datum arg);
@@ -779,17 +776,13 @@ LockErrorCleanup(void)
 	if (lockAwaited == NULL)
 	{
 		RESUME_INTERRUPTS();
-<<<<<<< HEAD
 		return;
 	}
 
 	/* Don't try to cancel resource locks.*/
 	if (Gp_role == GP_ROLE_DISPATCH && IsResQueueEnabled() &&
 		LOCALLOCK_LOCKMETHOD(*lockAwaited) == RESOURCE_LOCKMETHOD)
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		return;
-	}
 
 	/*
 	 * Turn off the deadlock and lock timeout timers, if they are still
@@ -830,19 +823,6 @@ LockErrorCleanup(void)
 
 	LWLockRelease(partitionLock);
 
-<<<<<<< HEAD
-	/*
-	 * We used to do PGSemaphoreReset() here to ensure that our proc's wait
-	 * semaphore is reset to zero.  This prevented a leftover wakeup signal
-	 * from remaining in the semaphore if someone else had granted us the lock
-	 * we wanted before we were able to remove ourselves from the wait-list.
-	 * However, now that ProcSleep loops until waitStatus changes, a leftover
-	 * wakeup signal isn't harmful, and it seems not worth expending cycles to
-	 * get rid of a signal that most likely isn't there.
-	 */
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	RESUME_INTERRUPTS();
 }
 

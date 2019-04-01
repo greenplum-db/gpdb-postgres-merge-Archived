@@ -17,11 +17,7 @@
 #include <signal.h>
 #include <unistd.h>
 
-<<<<<<< HEAD
-#include "cdb/cdbvars.h"
-=======
 #include "access/parallel.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "replication/walsender.h"
@@ -33,6 +29,7 @@
 #include "storage/sinval.h"
 #include "tcop/tcopprot.h"
 
+#include "cdb/cdbvars.h"
 
 /*
  * The SIGUSR1 signal is multiplexed to support signalling multiple event

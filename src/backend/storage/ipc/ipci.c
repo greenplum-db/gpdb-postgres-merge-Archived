@@ -262,11 +262,8 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 */
 	XLOGShmemInit();
 	CLOGShmemInit();
-<<<<<<< HEAD
 	DistributedLog_ShmemInit();
-=======
 	CommitTsShmemInit();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	SUBTRANSShmemInit();
 	MultiXactShmemInit();
     FtsShmemInit();
