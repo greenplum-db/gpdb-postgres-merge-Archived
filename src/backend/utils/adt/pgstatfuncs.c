@@ -124,7 +124,6 @@ extern Datum pg_stat_get_xact_function_calls(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_xact_function_total_time(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_xact_function_self_time(PG_FUNCTION_ARGS);
 
-<<<<<<< HEAD
 extern Datum pg_stat_get_queue_num_exec(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_queue_num_wait(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_queue_elapsed_exec(PG_FUNCTION_ARGS);
@@ -132,9 +131,7 @@ extern Datum pg_stat_get_queue_elapsed_wait(PG_FUNCTION_ARGS);
 
 extern Datum pg_renice_session(PG_FUNCTION_ARGS);
 
-=======
 extern Datum pg_stat_get_snapshot_timestamp(PG_FUNCTION_ARGS);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 extern Datum pg_stat_clear_snapshot(PG_FUNCTION_ARGS);
 extern Datum pg_stat_reset(PG_FUNCTION_ARGS);
 extern Datum pg_stat_reset_shared(PG_FUNCTION_ARGS);
@@ -564,121 +561,7 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_activity(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	FuncCallContext *funcctx;
-
-	if (SRF_IS_FIRSTCALL())
-	{
-		MemoryContext oldcontext;
-		TupleDesc	tupdesc;
-		int			nattr = 21;
-
-		funcctx = SRF_FIRSTCALL_INIT();
-
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-
-		tupdesc = CreateTemplateTupleDesc(nattr, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "datid",
-						   OIDOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "pid",
-						   INT4OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "usesysid",
-						   OIDOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "application_name",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "state",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "query",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "waiting",
-						   BOOLOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 8, "act_start",
-						   TIMESTAMPTZOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 9, "query_start",
-						   TIMESTAMPTZOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "backend_start",
-						   TIMESTAMPTZOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 11, "state_change",
-						   TIMESTAMPTZOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 12, "client_addr",
-						   INETOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 13, "client_hostname",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 14, "client_port",
-						   INT4OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 15, "backend_xid",
-						   XIDOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 16, "backend_xmin",
-						   XIDOID, -1, 0);
-
-		TupleDescInitEntry(tupdesc, (AttrNumber) 17, "sess_id",
-						   INT4OID, -1, 0);  /* GPDB */
-
-		TupleDescInitEntry(tupdesc, (AttrNumber) 18, "waiting_reason",
-						   TEXTOID, -1, 0);
-
-		TupleDescInitEntry(tupdesc, (AttrNumber) 19, "rsgid",
-						   OIDOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 20, "rsgname",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 21, "rsgqueueduration",
-						   INTERVALOID, -1, 0);
-
-		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
-
-		funcctx->user_fctx = palloc0(sizeof(int));
-		if (PG_ARGISNULL(0))
-		{
-			/* Get all backends */
-			funcctx->max_calls = pgstat_fetch_stat_numbackends();
-		}
-		else
-		{
-			/*
-			 * Get one backend - locate by pid.
-			 *
-			 * We lookup the backend early, so we can return zero rows if it
-			 * doesn't exist, instead of returning a single row full of NULLs.
-			 */
-			int			pid = PG_GETARG_INT32(0);
-			int			i;
-			int			n = pgstat_fetch_stat_numbackends();
-
-			for (i = 1; i <= n; i++)
-			{
-				PgBackendStatus *be = pgstat_fetch_stat_beentry(i);
-
-				if (be)
-				{
-					if (be->st_procpid == pid)
-					{
-						*(int *) (funcctx->user_fctx) = i;
-						break;
-					}
-				}
-			}
-
-			if (*(int *) (funcctx->user_fctx) == 0)
-				/* Pid not found, return zero rows */
-				funcctx->max_calls = 0;
-			else
-				funcctx->max_calls = 1;
-		}
-
-		MemoryContextSwitchTo(oldcontext);
-	}
-
-	/* stuff done on every call of the function */
-	funcctx = SRF_PERCALL_SETUP();
-
-	if (funcctx->call_cntr < funcctx->max_calls)
-	{
-		/* for each row */
-		Datum		values[21];
-		bool		nulls[21];
-		HeapTuple	tuple;
-=======
-#define PG_STAT_GET_ACTIVITY_COLS	22
+#define PG_STAT_GET_ACTIVITY_COLS	27
 	int			num_backends = pgstat_fetch_stat_numbackends();
 	int			curr_backend;
 	int			pid = PG_ARGISNULL(0) ? -1 : PG_GETARG_INT32(0);
@@ -719,7 +602,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		/* for each row */
 		Datum		values[PG_STAT_GET_ACTIVITY_COLS];
 		bool		nulls[PG_STAT_GET_ACTIVITY_COLS];
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		LocalPgBackendStatus *local_beentry;
 		PgBackendStatus *beentry;
 
@@ -728,17 +610,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 		if (pid != -1)
 		{
-<<<<<<< HEAD
-			/* Get specific pid slot */
-			local_beentry = pgstat_fetch_stat_local_beentry(*(int *) (funcctx->user_fctx));
-		}
-		else
-		{
-			/* Get the next one in the list */
-			local_beentry = pgstat_fetch_stat_local_beentry(funcctx->call_cntr + 1);	/* 1-based index */
-		}
-		if (!local_beentry)
-=======
 			/* Skip any which are not the one we're looking for. */
 			PgBackendStatus *be = pgstat_fetch_stat_beentry(curr_backend);
 
@@ -754,7 +625,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 		beentry = &local_beentry->backendStatus;
 		if (!beentry)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		{
 			int			i;
 
@@ -925,9 +795,9 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				}
 			}
 
-			values[16] = Int32GetDatum(beentry->st_session_id);  /* GPDB */
+			values[22] = Int32GetDatum(beentry->st_session_id);  /* GPDB */
 
-			if (funcctx->tuple_desc->natts > 17)
+			if (funcctx->tuple_desc->natts > 23)
 			{
 				char	st_waiting = beentry->st_waiting;
 				char   *reason;
@@ -935,28 +805,28 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				reason = pgstat_waiting_string(st_waiting);
 
 				if (reason != NULL)
-					values[17] = CStringGetTextDatum(reason);
+					values[23] = CStringGetTextDatum(reason);
 				else
-					nulls[17] = true;
+					nulls[23] = true;
 			}
 
-			if (funcctx->tuple_desc->natts > 18)
+			if (funcctx->tuple_desc->natts > 24)
 			{
 				Datum now = TimestampTzGetDatum(GetCurrentTimestamp());
 				char *groupName = GetResGroupNameForId(beentry->st_rsgid);
 
-				values[18] = ObjectIdGetDatum(beentry->st_rsgid);
+				values[24] = ObjectIdGetDatum(beentry->st_rsgid);
 
 				if (groupName != NULL)
-					values[19] = CStringGetTextDatum(groupName);
+					values[25] = CStringGetTextDatum(groupName);
 				else
-					nulls[19] = true;
+					nulls[25] = true;
 
 				if (beentry->st_waiting == PGBE_WAITING_RESGROUP)
-					values[20] = DirectFunctionCall2(timestamptz_age, now,
+					values[26] = DirectFunctionCall2(timestamptz_age, now,
 													 TimestampTzGetDatum(beentry->st_resgroup_queue_start_timestamp));
 				else
-					nulls[20] = true;
+					nulls[26] = true;
 			}
 		}
 		else
@@ -975,14 +845,14 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[14] = true;
 			nulls[15] = true;
 
-			values[16] = Int32GetDatum(beentry->st_session_id);
-			if (funcctx->tuple_desc->natts > 17)
-				nulls[17] = true;
-			if (funcctx->tuple_desc->natts > 18)
+			values[22] = Int32GetDatum(beentry->st_session_id);
+			if (funcctx->tuple_desc->natts > 23)
+				nulls[23] = true;
+			if (funcctx->tuple_desc->natts > 24)
 			{
-				nulls[18] = true;
-				nulls[19] = true;
-				nulls[20] = true;
+				nulls[24] = true;
+				nulls[25] = true;
+				nulls[26] = true;
 			}
 		}
 
