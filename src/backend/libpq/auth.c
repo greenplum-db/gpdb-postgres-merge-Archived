@@ -1084,12 +1084,9 @@ pg_GSS_recvauth(Port *port)
 	do
 	{
 		pq_startmsgread();
-<<<<<<< HEAD
-=======
 
 		CHECK_FOR_INTERRUPTS();
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		mtype = pq_getbyte();
 		if (mtype != 'p')
 		{
@@ -1855,11 +1852,7 @@ auth_peer(hbaPort *port)
 		ereport(LOG,
 				(errmsg("could not look up local user ID %ld: %s",
 						(long) uid,
-<<<<<<< HEAD
 						save_errno ? strerror(save_errno) : _("user does not exist"))));
-=======
-						errno ? strerror(errno) : _("user does not exist"))));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		return STATUS_ERROR;
 	}
 
