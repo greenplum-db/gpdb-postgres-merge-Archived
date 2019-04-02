@@ -169,12 +169,8 @@ static void socket_startcopyout(void);
 static void socket_endcopyout(bool errorAbort);
 static int	internal_putbytes(const char *s, size_t len);
 static int	internal_flush(void);
-<<<<<<< HEAD
-static void pq_set_nonblocking(bool nonblocking);
-static bool pq_send_mutex_lock();
-=======
 static void socket_set_nonblocking(bool nonblocking);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+static bool pq_send_mutex_lock();
 
 #ifdef HAVE_UNIX_SOCKETS
 static int	Lock_AF_UNIX(char *unixSocketDir, char *unixSocketPath);
