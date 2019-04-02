@@ -940,7 +940,6 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 }
 
 /*
-<<<<<<< HEAD
  * If an input query (Q) mixes window functions with aggregate
  * functions or grouping, then (per SQL:2003) we need to divide
  * it into an outer query, Q', that contains no aggregate calls
@@ -1560,7 +1559,8 @@ generate_alternate_vars(Var *invar, grouped_window_ctx *ctx)
 	}
 	return alternates;
 }
-=======
+
+/*
  * transformSelectStmt -
  *	  transforms an OnConflictClause in an INSERT
  */
@@ -1638,7 +1638,6 @@ transformOnConflictClause(ParseState *pstate,
 	return result;
 }
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * count_rowexpr_columns -
@@ -3103,7 +3102,6 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 
 	qry->returningList = transformReturningList(pstate, stmt->returningList);
 
-<<<<<<< HEAD
     /*
      * CDB: Untyped Const or Param nodes in a subquery in the FROM clause
      * could have been assigned proper types when we transformed the WHERE
@@ -3115,14 +3113,6 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
         fixup_unknown_vars_in_targetlist(pstate, qry->returningList);
     }
 
-	qry->rtable = pstate->p_rtable;
-	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
-
-	qry->hasSubLinks = pstate->p_hasSubLinks;
-	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/*
 	 * Now we are done with SELECT-like processing, and can get on with
 	 * transforming the target list to match the UPDATE target columns.
@@ -3133,6 +3123,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
+	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
 
 	assign_query_collations(pstate, qry);
 
@@ -3584,18 +3575,13 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 			switch (rte->rtekind)
 			{
 				case RTE_RELATION:
-<<<<<<< HEAD
 					if (get_rel_relstorage(rte->relid) == RELSTORAGE_EXTERNAL)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to external tables")));
 
-					applyLockingClause(qry, i,
-									   lc->strength, lc->noWait, pushedDown);
-=======
 					applyLockingClause(qry, i, lc->strength, lc->waitPolicy,
 									   pushedDown);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 					break;
 				case RTE_SUBQUERY:
@@ -3646,18 +3632,12 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 					switch (rte->rtekind)
 					{
 						case RTE_RELATION:
-<<<<<<< HEAD
 							if (get_rel_relstorage(rte->relid) == RELSTORAGE_EXTERNAL)
 								ereport(ERROR,
 										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 										 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to external tables")));
-							applyLockingClause(qry, i,
-											   lc->strength, lc->noWait,
-											   pushedDown);
-=======
 							applyLockingClause(qry, i, lc->strength,
 											   lc->waitPolicy, pushedDown);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 							rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 							break;
 						case RTE_SUBQUERY:
