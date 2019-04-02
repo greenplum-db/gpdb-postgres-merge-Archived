@@ -873,14 +873,10 @@ shm_mq_send_bytes(shm_mq_handle *mqh, Size nbytes, const void *data,
 			WaitLatch(MyLatch, WL_LATCH_SET, 0);
 
 			/* Reset the latch so we don't spin. */
-<<<<<<< HEAD
-			ResetLatch(&MyProc->procLatch);
+			ResetLatch(MyLatch);
 
 			/* An interrupt may have occurred while we were waiting. */
 			CHECK_FOR_INTERRUPTS();
-=======
-			ResetLatch(MyLatch);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 		else
 		{
@@ -974,14 +970,10 @@ shm_mq_receive_bytes(shm_mq *mq, Size bytes_needed, bool nowait,
 		WaitLatch(MyLatch, WL_LATCH_SET, 0);
 
 		/* Reset the latch so we don't spin. */
-<<<<<<< HEAD
-		ResetLatch(&MyProc->procLatch);
+		ResetLatch(MyLatch);
 
 		/* An interrupt may have occurred while we were waiting. */
 		CHECK_FOR_INTERRUPTS();
-=======
-		ResetLatch(MyLatch);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 }
 
@@ -1084,14 +1076,10 @@ shm_mq_wait_internal(volatile shm_mq *mq, PGPROC *volatile * ptr,
 			WaitLatch(MyLatch, WL_LATCH_SET, 0);
 
 			/* Reset the latch so we don't spin. */
-<<<<<<< HEAD
-			ResetLatch(&MyProc->procLatch);
+			ResetLatch(MyLatch);
 
 			/* An interrupt may have occurred while we were waiting. */
 			CHECK_FOR_INTERRUPTS();
-=======
-			ResetLatch(MyLatch);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 	}
 	PG_CATCH();
