@@ -145,11 +145,7 @@ static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg,
 		  bool preserve_whitespace, int encoding);
 static text *xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt);
 static int xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
-<<<<<<< HEAD
-					   ArrayBuildState **astate,
-=======
 					   ArrayBuildState *astate,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					   PgXmlErrorContext *xmlerrcxt);
 #endif   /* USE_LIBXML */
 
@@ -3705,11 +3701,7 @@ xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt)
  */
 static int
 xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
-<<<<<<< HEAD
-					   ArrayBuildState **astate,
-=======
 					   ArrayBuildState *astate,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					   PgXmlErrorContext *xmlerrcxt)
 {
 	int			result = 0;
@@ -3730,16 +3722,9 @@ xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
 					for (i = 0; i < result; i++)
 					{
 						datum = PointerGetDatum(xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i],
-<<<<<<< HEAD
-																	 xmlerrcxt));
-						*astate = accumArrayResult(*astate, datum,
-												   false, XMLOID,
-												   CurrentMemoryContext);
-=======
 																 xmlerrcxt));
 						(void) accumArrayResult(astate, datum, false,
 												XMLOID, CurrentMemoryContext);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					}
 				}
 			}
@@ -4002,17 +3987,8 @@ xpath(PG_FUNCTION_ARGS)
 
 	astate = initArrayResult(XMLOID, CurrentMemoryContext, true);
 	xpath_internal(xpath_expr_text, data, namespaces,
-<<<<<<< HEAD
-				   &res_nitems, &astate);
-
-	if (res_nitems == 0)
-		PG_RETURN_ARRAYTYPE_P(construct_empty_array(XMLOID));
-	else
-		PG_RETURN_ARRAYTYPE_P(DatumGetArrayTypeP(makeArrayResult(astate, CurrentMemoryContext)));
-=======
 				   NULL, astate);
 	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #else
 	NO_XML_SUPPORT();
 	return 0;
