@@ -562,7 +562,6 @@ pg_node_tree_send(PG_FUNCTION_ARGS)
 }
 
 /*
-<<<<<<< HEAD
  * anytable_in		- input routine for multiset pseudotype
  */
 Datum
@@ -571,7 +570,24 @@ anytable_in(PG_FUNCTION_ARGS)
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("cannot accept a value of type anytable")));
-=======
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * anytable_out		- output routine for multiset pseudotype.
+ */
+Datum
+anytable_out(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type anytable")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
  * pg_ddl_command_in	- input routine for type PG_DDL_COMMAND.
  *
  * Like pg_node_tree, pg_ddl_command isn't really a pseudotype; it's here for
@@ -586,24 +602,11 @@ pg_ddl_command_in(PG_FUNCTION_ARGS)
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("cannot accept a value of type %s", "pg_ddl_command")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
 
 /*
-<<<<<<< HEAD
- * anytable_out		- output routine for multiset pseudotype.
- */
-Datum
-anytable_out(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot display a value of type anytable")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-=======
  * pg_ddl_command_out		- output routine for type PG_DDL_COMMAND.
  *
  * We don't have any good way to output this type directly, so punt.
