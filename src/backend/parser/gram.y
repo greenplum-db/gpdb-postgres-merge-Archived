@@ -11730,7 +11730,6 @@ AnalyzeStmt:
 					if ($2)
 						n->options |= VACOPT_VERBOSE;
 					n->options |= VACOPT_FULLSCAN;
-					n->freeze_min_age = -1;
 					n->relation = $4;
 					n->va_cols = $5;
 					$$ = (Node *)n;
@@ -11742,7 +11741,6 @@ AnalyzeStmt:
 					if ($2)
 						n->options |= VACOPT_VERBOSE;
 					n->options |= VACOPT_ROOTONLY;
-					n->freeze_min_age = -1;
 					n->relation = $4;
 					n->va_cols = $5;
 					$$ = (Node *)n;
