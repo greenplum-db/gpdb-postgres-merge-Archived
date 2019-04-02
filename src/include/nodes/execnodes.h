@@ -889,18 +889,6 @@ typedef struct AggrefExprState
 	int			aggno;			/* ID number for agg within its plan node */
 } AggrefExprState;
 
-/*
- * ----------------
- *		GroupingFuncExprState node
- * ----------------
- */
-typedef struct GroupingFuncExprState
-{
-	ExprState  xprstate;
-	List          *args;
-	int        ngrpcols;   /* number of unique grouping attributes */
-} GroupingFuncExprState;
-
 /* ----------------
  *		GroupingFuncExprState node
  *
@@ -2647,8 +2635,8 @@ typedef struct AggState
 	/* These fields are for grouping set phase data */
 	int			maxsets;		/* The max number of sets in any phase */
 	AggStatePerPhase phases;	/* array of all phases */
-	Tuplesortstate *sort_in;	/* sorted input to phases > 0 */
-	Tuplesortstate *sort_out;	/* input is copied here for next phase */
+	struct switcheroo_Tuplesortstate *sort_in;	/* sorted input to phases > 0 */
+	struct switcheroo_Tuplesortstate *sort_out;	/* input is copied here for next phase */
 	TupleTableSlot *sort_slot;	/* slot for sort results */
 	/* these fields are used in AGG_PLAIN and AGG_SORTED modes: */
 	AggStatePerGroup pergroup;	/* per-Aggref-per-group working state */

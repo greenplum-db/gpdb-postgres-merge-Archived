@@ -2111,7 +2111,7 @@ typedef struct JoinPathExtraData
 	SemiAntiJoinFactors semifactors;
 	Relids		param_source_rels;
 	Relids		extra_lateral_rels;
-	List	   *redistribution_clauses
+	List	   *redistribution_clauses;
 } JoinPathExtraData;
 
 /*

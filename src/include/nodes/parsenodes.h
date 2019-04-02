@@ -1113,38 +1113,6 @@ typedef struct GroupingClause
 } GroupingClause;
 
 /*
- * GroupingFunc -
- *     representation of a grouping function for grouping extension
- *     clauses.
- *
- * This is used to determine whether a null value for a column in
- * the output tuple is the result of grouping. For example, a table
- *
- *    test (a integer, b integer)
- *
- * has two rows:
- *
- *    (1,1), (null,1)
- *
- * The query "select a,sum(b),grouping(a) from test group by rollup(a)"
- * returns
- *
- *    1   ,    1,    0
- *    null,    1,    0
- *    null,    2,    1
- *
- * The output row "null,1,0" indicates that the 'null' value for 'a' is not
- * from grouping, while the row "null,2,1" indicates that the 'null' value for
- * 'a' is from grouping.
- */
-typedef struct GroupingFunc
-{
-	NodeTag   type;
-	List     *args;  /* arguments provided in the query. */
-	int       ngrpcols; /* the number of grouping attributes */
-} GroupingFunc;
-
-/*
  * GroupingSet -
  *		representation of CUBE, ROLLUP and GROUPING SETS clauses
  *
