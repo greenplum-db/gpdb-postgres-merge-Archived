@@ -14624,7 +14624,7 @@ c_expr:		columnref								{ $$ = $1; }
 			  }
 			| GROUP_ID '(' ')'
 			  {
-				  GroupingFunc *g = makeNode(GroupId);
+				  GroupId *g = makeNode(GroupId);
 				  g->location = @1;
 				  $$ = (Node *)g;
 			  }
