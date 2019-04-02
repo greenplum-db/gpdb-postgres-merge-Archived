@@ -90,15 +90,6 @@ hashed_passwd_verify(const Port *port, const char *role, char *client_pass,
 
 	ReleaseSysCache(roleTup);
 
-<<<<<<< HEAD
-	/* Re-enable immediate response to SIGTERM/SIGINT/timeout interrupts */
-	ImmediateInterruptOK = true;
-	/* And don't forget to detect one that already arrived */
-=======
-	if (*shadow_pass == '\0')
-		return STATUS_ERROR;	/* empty password */
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	CHECK_FOR_INTERRUPTS();
 
 	/*
