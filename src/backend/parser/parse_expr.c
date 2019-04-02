@@ -21,11 +21,8 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
 #include "optimizer/clauses.h"
-=======
 #include "optimizer/tlist.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_agg.h"
@@ -38,11 +35,8 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
-<<<<<<< HEAD
-#include "rewrite/rewriteManip.h"
-=======
 #include "parser/parse_agg.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+#include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/xml.h"
@@ -138,15 +132,12 @@ static Node *make_row_distinct_op(ParseState *pstate, List *opname,
 					 RowExpr *lrow, RowExpr *rrow, int location);
 static Expr *make_distinct_op(ParseState *pstate, List *opname,
 				 Node *ltree, Node *rtree, int location);
-<<<<<<< HEAD
-static bool isWhenIsNotDistinctFromExpr(Node *warg);
-=======
 static int	operator_precedence_group(Node *node, const char **nodename);
 static void emit_precedence_warnings(ParseState *pstate,
 						 int opgroup, const char *opname,
 						 Node *lchild, Node *rchild,
 						 int location);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+static bool isWhenIsNotDistinctFromExpr(Node *warg);
 
 
 /*
@@ -292,6 +283,20 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			result = transformGroupingFunc(pstate, (GroupingFunc *) expr);
 			break;
 
+		/*
+		 * GPDB_95_MERGE_FIXME: transformGroupId() is not implemented yet.
+		 * It is taken from commit <8b8329c3ae> in the now closed PR 5440
+		 * (https://github.com/greenplum-db/gpdb/pull/5440)
+		 * It is added here as a placeholder during merge conflict resolution.
+		 */
+		case T_GroupId:
+#if 0
+			result = transformGroupId(pstate, (GroupId *) expr);
+#else
+			elog(ERROR, "Consult GPDB_95_MERGE_FIXME comment above line %d in file '%s'", __LINE__, __FILE__);
+#endif
+			break;
+
 		case T_NamedArgExpr:
 			{
 				NamedArgExpr *na = (NamedArgExpr *) expr;
@@ -356,14 +361,6 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 		case T_CurrentOfExpr:
 			result = transformCurrentOfExpr(pstate, (CurrentOfExpr *) expr);
 			break;
-
-<<<<<<< HEAD
-		case T_GroupingFunc:
-			{
-				GroupingFunc *gf = (GroupingFunc *)expr;
-				result = transformGroupingFunc(pstate, gf);
-				break;
-			}
 
 		case T_PartitionBoundSpec:
 			{
@@ -430,33 +427,6 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			}
 			break;
 
-			/*********************************************
-			 * Quietly accept node types that may be presented when we are
-			 * called on an already-transformed tree.
-			 *
-			 * Do any other node types need to be accepted?  For now we are
-			 * taking a conservative approach, and only accepting node
-			 * types that are demonstrably necessary to accept.
-			 *********************************************/
-		case T_Var:
-		case T_Const:
-		case T_Param:
-		case T_Aggref:
-		case T_ArrayRef:
-		case T_FuncExpr:
-		case T_OpExpr:
-		case T_DistinctExpr:
-		case T_NullIfExpr:
-		case T_ScalarArrayOpExpr:
-		case T_BoolExpr:
-		case T_FieldSelect:
-		case T_FieldStore:
-		case T_RelabelType:
-		case T_CoerceViaIO:
-		case T_ArrayCoerceExpr:
-		case T_ConvertRowtypeExpr:
-		case T_CollateExpr:
-=======
 			/*
 			 * CaseTestExpr and SetToDefault don't require any processing;
 			 * they are only injected into parse trees in fully-formed state.
@@ -467,15 +437,13 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			 * alternative would be to deconstruct and reconstruct column
 			 * references, which seems expensively pointless.  So allow it.
 			 */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		case T_CaseTestExpr:
 		case T_SetToDefault:
-<<<<<<< HEAD
-		case T_GroupId:
+		/* GPDB_95_MERGE_FIXME: T_Integer seems to be superficial. Remove if
+		 * possible to match closer with upstream.
+		 */
 		case T_Integer:
-=======
 		case T_Var:
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			{
 				result = (Node *) expr;
 				break;
