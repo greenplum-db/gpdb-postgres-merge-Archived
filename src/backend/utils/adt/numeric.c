@@ -425,7 +425,6 @@ static void dump_var(const char *str, NumericVar *var);
 #define free_var(v)	\
 				digitbuf_free((v));
 
-<<<<<<< HEAD
 /*
  * init_alloc_var() -
  *
@@ -443,8 +442,6 @@ static void dump_var(const char *str, NumericVar *var);
 		(v)->digits = (v)->buf + 1;	\
 	} while (0)
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #define NUMERIC_DIGITS(num) (NUMERIC_HEADER_IS_SHORT(num) ? \
 	(num)->choice.n_short.n_data : (num)->choice.n_long.n_data)
 #define NUMERIC_NDIGITS(num) \
@@ -480,16 +477,9 @@ static int32 numericvar_to_int32(NumericVar *var);
 static bool numericvar_to_int64(NumericVar *var, int64 *result);
 static void int64_to_numericvar(int64 val, NumericVar *var);
 #ifdef HAVE_INT128
-<<<<<<< HEAD
 static bool numericvar_to_int128(NumericVar *var, int128 *result);
 static void int128_to_numericvar(int128 val, NumericVar *var);
 #endif
-static double numericvar_to_double_no_overflow(NumericVar *var);
-
-=======
-static void int128_to_numericvar(int128 val, NumericVar *var);
-#endif
-static double numeric_to_double_no_overflow(Numeric num);
 static double numericvar_to_double_no_overflow(NumericVar *var);
 
 static Datum numeric_abbrev_convert(Datum original_datum, SortSupport ssup);
@@ -499,8 +489,6 @@ static int	numeric_cmp_abbrev(Datum x, Datum y, SortSupport ssup);
 
 static Datum numeric_abbrev_convert_var(NumericVar *var, NumericSortSupport *nss);
 
-static int	cmp_numerics(Numeric num1, Numeric num2);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static int	cmp_var(NumericVar *var1, NumericVar *var2);
 static int	cmp_var_common(const NumericDigit *var1digits, int var1ndigits,
 			   int var1weight, int var1sign,
@@ -2638,12 +2626,9 @@ numeric_fac(PG_FUNCTION_ARGS)
 			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 			 errmsg("value overflows numeric format")));
 
-<<<<<<< HEAD
 	quick_init_var(&fact);
 	quick_init_var(&result);
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	int64_to_numericvar(num, &result);
 
 	for (num = num - 1; num > 1; num--)
@@ -4164,17 +4149,11 @@ do_int128_discard(Int128AggState *state, int128 newval)
 
 typedef Int128AggState PolyNumAggState;
 #define makePolyNumAggState makeInt128AggState
-<<<<<<< HEAD
 #define makePolyNumAggStateCurrentContext makeInt128AggStateCurrentContext
 #else
 typedef NumericAggState PolyNumAggState;
 #define makePolyNumAggState makeNumericAggState
 #define makePolyNumAggStateCurrentContext makeNumericAggStateCurrentContext
-=======
-#else
-typedef NumericAggState PolyNumAggState;
-#define makePolyNumAggState makeNumericAggState
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #endif
 
 Datum
@@ -6449,7 +6428,6 @@ int64_to_numericvar(int64 val, NumericVar *var)
 
 #ifdef HAVE_INT128
 /*
-<<<<<<< HEAD
  * Convert numeric to int128, rounding if needed.
  *
  * If overflow, return FALSE (no error is raised).  Return TRUE if okay.
@@ -6523,8 +6501,6 @@ numericvar_to_int128(NumericVar *var, int128 *result)
 }
 
 /*
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * Convert 128 bit integer to numeric.
  */
 static void
