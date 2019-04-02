@@ -166,13 +166,6 @@ static void do_analyze_rel(Relation onerel, int options,
 			   VacuumParams *params, List *va_cols,
 			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
 			   bool inh, bool in_outer_xact, int elevel);
-<<<<<<< HEAD
-static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
-				  int samplesize);
-static bool BlockSampler_HasMore(BlockSampler bs);
-static BlockNumber BlockSampler_Next(BlockSampler bs);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void compute_index_stats(Relation onerel, double totalrows,
 					AnlIndexData *indexdata, int nindexes,
 					HeapTuple *rows, int numrows,
@@ -199,9 +192,9 @@ static void acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **att
  *	analyze_rel() -- analyze one relation
  */
 void
-<<<<<<< HEAD
-analyze_rel(Oid relid, VacuumStmt *vacstmt,
-			bool in_outer_xact, BufferAccessStrategy bstrategy)
+analyze_rel(Oid relid, RangeVar *relation, int options,
+			VacuumParams *params, List *va_cols, bool in_outer_xact,
+			BufferAccessStrategy bstrategy)
 {
 	bool		optimizerBackup;
 
@@ -215,7 +208,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 
 	PG_TRY();
 	{
-		analyze_rel_internal(relid, vacstmt, in_outer_xact, bstrategy);
+		analyze_rel_internal(relid, relation, options, params, va_cols,
+				in_outer_xact, bstrategy);
 	}
 	/* Clean up in case of error. */
 	PG_CATCH();
@@ -231,13 +225,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 }
 
 static void
-analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
-			bool in_outer_xact, BufferAccessStrategy bstrategy)
-=======
-analyze_rel(Oid relid, RangeVar *relation, int options,
+analyze_rel_internal(Oid relid, RangeVar *relation, int options,
 			VacuumParams *params, List *va_cols, bool in_outer_xact,
 			BufferAccessStrategy bstrategy)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	Relation	onerel;
 	int			elevel;
@@ -265,13 +255,8 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	 * matter if we ever try to accumulate stats on dead tuples.) If the rel
 	 * has been dropped since we last saw it, we don't need to process it.
 	 */
-<<<<<<< HEAD
-	if (!(vacstmt->options & VACOPT_NOWAIT))
-		onerel = try_relation_open(relid, ShareUpdateExclusiveLock, false);
-=======
 	if (!(options & VACOPT_NOWAIT))
-		onerel = try_relation_open(relid, ShareUpdateExclusiveLock);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+		onerel = try_relation_open(relid, ShareUpdateExclusiveLock, false);
 	else if (ConditionalLockRelationOid(relid, ShareUpdateExclusiveLock))
 		onerel = try_relation_open(relid, NoLock, false);
 	else
@@ -398,22 +383,16 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	 * Skip this for partitioned tables. A partitioned table, i.e. the
 	 * "root partition", doesn't contain any rows.
 	 */
-<<<<<<< HEAD
 	PartStatus ps = rel_part_status(relid);
 	if (!(ps == PART_STATUS_ROOT || ps == PART_STATUS_INTERIOR))
-		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages,
+		do_analyze_rel(onerel, options, params, va_cols, acquirefunc, relpages,
 					   false, in_outer_xact, elevel);
-=======
-	do_analyze_rel(onerel, options, params, va_cols, acquirefunc, relpages,
-				   false, in_outer_xact, elevel);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
 	 */
 	if (onerel->rd_rel->relhassubclass)
-<<<<<<< HEAD
-		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages,
+		do_analyze_rel(onerel, options, params, va_cols, acquirefunc, relpages,
 					   true, in_outer_xact, elevel);
 
 	/* MPP-6929: metadata tracking */
@@ -431,10 +410,6 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 						   asubtype
 			);
 	}
-=======
-		do_analyze_rel(onerel, options, params, va_cols, acquirefunc, relpages,
-					   true, in_outer_xact, elevel);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Close source relation now, but keep lock so that no one deletes it
@@ -461,16 +436,10 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
  * appropriate acquirefunc for each child table.
  */
 static void
-<<<<<<< HEAD
-do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
-			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
-			   bool inh, bool in_outer_xact, int elevel)
-=======
 do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 			   List *va_cols, AcquireSampleRowsFunc acquirefunc,
 			   BlockNumber relpages, bool inh, bool in_outer_xact,
 			   int elevel)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	int			attr_cnt,
 				tcnt,
@@ -674,7 +643,7 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 	 */
 	colLargeRowIndexes = (Bitmapset **) palloc0(sizeof(Bitmapset *) * onerel->rd_att->natts);
 
-	if ((vacstmt->options & VACOPT_FULLSCAN) != 0)
+	if ((options & VACOPT_FULLSCAN) != 0)
 	{
 		if(rel_part_status(RelationGetRelid(onerel)) != PART_STATUS_ROOT)
 		{
@@ -909,12 +878,8 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 							hasindex,
 							InvalidTransactionId,
 							InvalidMultiXactId,
-<<<<<<< HEAD
 							in_outer_xact,
 							false /* isvacuum */);
-=======
-							in_outer_xact);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
@@ -960,12 +925,8 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 								false,
 								InvalidTransactionId,
 								InvalidMultiXactId,
-<<<<<<< HEAD
 								in_outer_xact,
 								false /* isvacuum */);
-=======
-								in_outer_xact);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 	}
 
@@ -1599,7 +1560,6 @@ acquire_sample_rows_heap(Relation onerel, int elevel,
 	return numrows;
 }
 
-<<<<<<< HEAD
 /*
  * Collect a sample of rows from an AO or AOCS table.
  *
@@ -1775,118 +1735,6 @@ acquire_sample_rows(Relation onerel, int elevel,
 		elog(ERROR, "unsupported table type");
 }
 
-/* Select a random value R uniformly distributed in (0 - 1) */
-double
-anl_random_fract(void)
-{
-	return ((double) random() + 1) / ((double) MAX_RANDOM_VALUE + 2);
-}
-
-/*
- * These two routines embody Algorithm Z from "Random sampling with a
- * reservoir" by Jeffrey S. Vitter, in ACM Trans. Math. Softw. 11, 1
- * (Mar. 1985), Pages 37-57.  Vitter describes his algorithm in terms
- * of the count S of records to skip before processing another record.
- * It is computed primarily based on t, the number of records already read.
- * The only extra state needed between calls is W, a random state variable.
- *
- * anl_init_selection_state computes the initial W value.
- *
- * Given that we've already read t records (t >= n), anl_get_next_S
- * determines the number of records to skip before the next record is
- * processed.
- */
-double
-anl_init_selection_state(int n)
-{
-	/* Initial value of W (for use when Algorithm Z is first applied) */
-	return exp(-log(anl_random_fract()) / n);
-}
-
-double
-anl_get_next_S(double t, int n, double *stateptr)
-{
-	double		S;
-
-	/* The magic constant here is T from Vitter's paper */
-	if (t <= (22.0 * n))
-	{
-		/* Process records using Algorithm X until t is large enough */
-		double		V,
-					quot;
-
-		V = anl_random_fract(); /* Generate V */
-		S = 0;
-		t += 1;
-		/* Note: "num" in Vitter's code is always equal to t - n */
-		quot = (t - (double) n) / t;
-		/* Find min S satisfying (4.1) */
-		while (quot > V)
-		{
-			S += 1;
-			t += 1;
-			quot *= (t - (double) n) / t;
-		}
-	}
-	else
-	{
-		/* Now apply Algorithm Z */
-		double		W = *stateptr;
-		double		term = t - (double) n + 1;
-
-		for (;;)
-		{
-			double		numer,
-						numer_lim,
-						denom;
-			double		U,
-						X,
-						lhs,
-						rhs,
-						y,
-						tmp;
-
-			/* Generate U and X */
-			U = anl_random_fract();
-			X = t * (W - 1.0);
-			S = floor(X);		/* S is tentatively set to floor(X) */
-			/* Test if U <= h(S)/cg(X) in the manner of (6.3) */
-			tmp = (t + 1) / term;
-			lhs = exp(log(((U * tmp * tmp) * (term + S)) / (t + X)) / n);
-			rhs = (((t + X) / (term + S)) * term) / t;
-			if (lhs <= rhs)
-			{
-				W = rhs / lhs;
-				break;
-			}
-			/* Test if U <= f(S)/cg(X) */
-			y = (((U * (t + 1)) / term) * (t + S + 1)) / (t + X);
-			if ((double) n < S)
-			{
-				denom = t;
-				numer_lim = term + S;
-			}
-			else
-			{
-				denom = t - (double) n + S;
-				numer_lim = t + 1;
-			}
-			for (numer = t + S; numer >= numer_lim; numer -= 1)
-			{
-				y *= numer / denom;
-				denom -= 1;
-			}
-			W = exp(-log(anl_random_fract()) / n);		/* Generate W in advance */
-			if (exp(log(y) / n) <= (t + X) / t)
-				break;
-		}
-		*stateptr = W;
-	}
-	return S;
-}
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * qsort comparator for sorting rows[] array
  */
@@ -1966,15 +1814,12 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 		/* CCI because we already updated the pg_class row in this command */
 		CommandCounterIncrement();
 		SetRelationHasSubclass(RelationGetRelid(onerel), false);
-<<<<<<< HEAD
 		*totalrows = 0;
 		*totaldeadrows = 0;
-=======
 		ereport(elevel,
 				(errmsg("skipping analyze of \"%s.%s\" inheritance tree --- this inheritance tree contains no child tables",
 						get_namespace_name(RelationGetNamespace(onerel)),
 						RelationGetRelationName(onerel))));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		return 0;
 	}
 
@@ -2049,14 +1894,9 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 
 		/* OK, we'll process this child */
 		rels[nrels] = childrel;
-<<<<<<< HEAD
+		acquirefuncs[nrels] = acquirefunc;
 		relblocks[nrels] = acquire_number_of_blocks(childrel);
 		totalblocks += relblocks[nrels];
-=======
-		acquirefuncs[nrels] = acquirefunc;
-		relblocks[nrels] = (double) relpages;
-		totalblocks += (double) relpages;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		nrels++;
 	}
 

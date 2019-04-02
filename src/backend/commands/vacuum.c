@@ -462,12 +462,8 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 					PushActiveSnapshot(GetTransactionSnapshot());
 				}
 
-<<<<<<< HEAD
-				analyze_rel(relid, vacstmt, in_outer_xact, vac_strategy);
-=======
 				analyze_rel(relid, relation, options, params,
 							va_cols, in_outer_xact, vac_strategy);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 				if (use_own_xacts)
 				{
