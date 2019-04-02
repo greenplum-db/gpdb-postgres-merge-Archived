@@ -974,13 +974,6 @@ check_valid_until_for_gssapi(Port *port)
 	Datum		datum;
 	bool		isnull;
 
-	/*
-	 * Disable immediate interrupts while doing database access.  (Note
-	 * we don't bother to turn this back on if we hit one of the failure
-	 * conditions, since we can expect we'll just exit right away anyway.)
-	 */
-	ImmediateInterruptOK = false;
-
 	/* Get role info from pg_authid */
 	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(port->user_name));
 	if (!HeapTupleIsValid(roleTup))
@@ -993,9 +986,6 @@ check_valid_until_for_gssapi(Port *port)
 
 	ReleaseSysCache(roleTup);
 
-	/* Re-enable immediate response to SIGTERM/SIGINT/timeout interrupts */
-	ImmediateInterruptOK = true;
-	/* And don't forget to detect one that already arrived */
 	CHECK_FOR_INTERRUPTS();
 
 	/*
@@ -2951,13 +2941,6 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 
 	timestamptz_to_point(timestamp, &now);
 
-	/*
-	 * Disable immediate interrupts while doing database access.  (Note
-	 * we don't bother to turn this back on if we hit one of the failure
-	 * conditions, since we can expect we'll just exit right away anyway.)
-	 */
-	ImmediateInterruptOK = false;
-
 	/* Look up this user in pg_authid. */
 	roleTup = SearchSysCache(AUTHNAME, CStringGetDatum(rolname), 0, 0, 0);
 	if (!HeapTupleIsValid(roleTup))
@@ -3035,9 +3018,6 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 	systable_endscan(scan);
 	heap_close(reltimeconstr, AccessShareLock);
 
-	/* Re-enable immediate response to SIGTERM/SIGINT/timeout interrupts */
-	ImmediateInterruptOK = true;
-	/* And don't forget to detect one that already arrived */
 	CHECK_FOR_INTERRUPTS();
 	
 	return status;
