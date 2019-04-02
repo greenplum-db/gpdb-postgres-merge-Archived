@@ -3621,7 +3621,8 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case REGTYPEOID:
 		case REGCONFIGOID:
 		case REGDICTIONARYOID:
-<<<<<<< HEAD
+		case REGROLEOID:
+		case REGNAMESPACEOID:
 			*scaledvalue = convert_numeric_to_scalar(value, valuetypid,
 													 &failure);
 			*scaledlobound = convert_numeric_to_scalar(lobound, boundstypid,
@@ -3629,14 +3630,6 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 			*scaledhibound = convert_numeric_to_scalar(hibound, boundstypid,
 													   &failure);
 			return !failure;
-=======
-		case REGROLEOID:
-		case REGNAMESPACEOID:
-			*scaledvalue = convert_numeric_to_scalar(value, valuetypid);
-			*scaledlobound = convert_numeric_to_scalar(lobound, boundstypid);
-			*scaledhibound = convert_numeric_to_scalar(hibound, boundstypid);
-			return true;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			/*
 			 * Built-in string types
@@ -6793,6 +6786,8 @@ btcostestimate(PG_FUNCTION_ARGS)
 				found_is_null_op = true;
 				/* IS NULL is like = for selectivity determination purposes */
 				eqQualHere = true;
+				/* CDB: Count leading indexcols having '=' quals. */
+				index->num_leading_eq = indexcol + 1;
 			}
 		}
 
@@ -6818,23 +6813,6 @@ btcostestimate(PG_FUNCTION_ARGS)
 					index->num_leading_eq = indexcol + 1;
 			}
 		}
-<<<<<<< HEAD
-		else if (is_null_op)
-		{
-			/* IS NULL is like = for purposes of selectivity determination */
-			eqQualHere = true;
-
-            /* CDB: Count leading indexcols having '=' quals. */
-            if (!IsA(clause, ScalarArrayOpExpr))
-                index->num_leading_eq = indexcol + 1;
-		}
-		/* count up number of SA scans induced by indexBoundQuals only */
-		if (IsA(clause, ScalarArrayOpExpr))
-		{
-			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
-			int			alength = estimate_array_length(lsecond(saop->args));
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		indexBoundQuals = lappend(indexBoundQuals, rinfo);
 	}
@@ -7831,16 +7809,8 @@ gincostestimate(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-<<<<<<< HEAD
 Datum
 bmcostestimate(PG_FUNCTION_ARGS)
-=======
-/*
- * BRIN has search behavior completely different from other index types
- */
-Datum
-brincostestimate(PG_FUNCTION_ARGS)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
@@ -7849,7 +7819,6 @@ brincostestimate(PG_FUNCTION_ARGS)
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
-<<<<<<< HEAD
 	GenericCosts costs;
 
 	List *selectivityQuals;
@@ -7923,7 +7892,23 @@ brincostestimate(PG_FUNCTION_ARGS)
 	*indexTotalCost = costs.indexTotalCost;
 	*indexSelectivity = costs.indexSelectivity;
 	*indexCorrelation = costs.indexCorrelation;
-=======
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * BRIN has search behavior completely different from other index types
+ */
+Datum
+brincostestimate(PG_FUNCTION_ARGS)
+{
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
+	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
+	double		loop_count = PG_GETARG_FLOAT8(2);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 	IndexOptInfo *index = path->indexinfo;
 	List	   *indexQuals = path->indexquals;
 	List	   *indexOrderBys = path->indexorderbys;
@@ -7976,7 +7961,6 @@ brincostestimate(PG_FUNCTION_ARGS)
 	*indexTotalCost += (numTuples * *indexSelectivity) * (cpu_index_tuple_cost + qual_op_cost);
 
 	/* XXX what about pages_per_range? */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	PG_RETURN_VOID();
 }
