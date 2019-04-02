@@ -82,12 +82,8 @@ MemoryContext InterconnectContext = NULL;
 /* This is a transient link to the active portal's memory context: */
 MemoryContext PortalContext = NULL;
 
-<<<<<<< HEAD
-=======
 static void MemoryContextCallResetCallbacks(MemoryContext context);
-static void MemoryContextStatsInternal(MemoryContext context, int level);
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * You should not do memory allocations within a critical section, because
  * an out-of-memory error will be escalated to a PANIC. To enforce that
@@ -99,15 +95,10 @@ static void MemoryContextStatsInternal(MemoryContext context, int level);
  */
 #if 0
 #define AssertNotInCriticalSection(context) \
-<<<<<<< HEAD
-	Assert(CritSectionCount == 0 || (context) == ErrorContext || \
-		   AmCheckpointerProcess())
+	Assert(CritSectionCount == 0 || (context)->allowInCritSection)
 #else
 #define AssertNotInCriticalSection(context) 
 #endif
-=======
-	Assert(CritSectionCount == 0 || (context)->allowInCritSection)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*****************************************************************************
  *	  EXPORTED ROUTINES														 *
@@ -173,12 +164,9 @@ MemoryContextInit(void)
 										 8 * 1024,
 										 8 * 1024,
 										 8 * 1024);
-<<<<<<< HEAD
-
 	MemoryAccounting_Reset();
-=======
+
 	MemoryContextAllowInCriticalSection(ErrorContext, true);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -213,12 +201,8 @@ MemoryContextResetOnly(MemoryContext context)
 	/* Nothing to do if no pallocs since startup or last reset */
 	if (!context->isReset)
 	{
-<<<<<<< HEAD
-		(*context->methods.reset) (context);
-=======
 		MemoryContextCallResetCallbacks(context);
-		(*context->methods->reset) (context);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+		(*context->methods.reset) (context);
 		context->isReset = true;
 		VALGRIND_DESTROY_MEMPOOL(context);
 		VALGRIND_CREATE_MEMPOOL(context, 0, false);
@@ -1171,12 +1155,9 @@ MemoryContextCreate(NodeTag tag, Size size,
 	MemoryContext node;
 	Size		needed = size + strlen(name) + 1;
 
-<<<<<<< HEAD
 	// GPDB_94_MERGE_FIXME: same as AssertNotInCriticalSection
 #if 0
-=======
 	/* creating new memory contexts is not allowed in a critical section */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	Assert(CritSectionCount == 0);
 #endif
 
@@ -1257,20 +1238,15 @@ MemoryContextAlloc(MemoryContext context, Size size)
 
 	context->isReset = false;
 
-<<<<<<< HEAD
 	ret = (*context->methods.alloc) (context, size);
-=======
-	ret = (*context->methods->alloc) (context, size);
 	if (ret == NULL)
 	{
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu.", size)));
+		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
+						   context, CDB_MCXT_WHERE(context),
+						   "Out of memory.  Failed on request of size %zu bytes.",
+						   size);
 	}
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
 #ifdef PGTRACE_ENABLED
@@ -1312,20 +1288,15 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 
 	context->isReset = false;
 
-<<<<<<< HEAD
 	ret = (*context->methods.alloc) (context, size);
-=======
-	ret = (*context->methods->alloc) (context, size);
 	if (ret == NULL)
 	{
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu.", size)));
+		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
+						   context, CDB_MCXT_WHERE(context),
+						   "Out of memory.  Failed on request of size %zu bytes.",
+						   size);
 	}
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
 	MemSetAligned(ret, 0, size);
@@ -1370,20 +1341,15 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 
 	context->isReset = false;
 
-<<<<<<< HEAD
 	ret = (*context->methods.alloc) (context, size);
-=======
-	ret = (*context->methods->alloc) (context, size);
 	if (ret == NULL)
 	{
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu.", size)));
+		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
+						   context, CDB_MCXT_WHERE(context),
+						   "Out of memory.  Failed on request of size %zu bytes.",
+						   size);
 	}
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
 	MemSetLoop(ret, 0, size);
@@ -1420,11 +1386,10 @@ MemoryContextAllocExtended(MemoryContext context, Size size, int flags)
 	{
 		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
 		{
-			MemoryContextStats(TopMemoryContext);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory"),
-					 errdetail("Failed on request of size %zu.", size)));
+			MemoryContextError(ERRCODE_OUT_OF_MEMORY,
+							   context, CDB_MCXT_WHERE(context),
+							   "Out of memory.  Failed on request of size %zu bytes.",
+							   size);
 		}
 		return NULL;
 	}
@@ -1450,20 +1415,15 @@ palloc(Size size)
 
 	CurrentMemoryContext->isReset = false;
 
-<<<<<<< HEAD
 	ret = (*CurrentMemoryContext->methods.alloc) (CurrentMemoryContext, size);
-=======
-	ret = (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
 	if (ret == NULL)
 	{
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu.", size)));
+		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
+						   context, CDB_MCXT_WHERE(context),
+						   "Out of memory.  Failed on request of size %zu bytes.",
+						   size);
 	}
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	VALGRIND_MEMPOOL_ALLOC(CurrentMemoryContext, ret, size);
 
 	return ret;
@@ -1482,20 +1442,15 @@ palloc0(Size size)
 
 	CurrentMemoryContext->isReset = false;
 
-<<<<<<< HEAD
 	ret = (*CurrentMemoryContext->methods.alloc) (CurrentMemoryContext, size);
-=======
-	ret = (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
 	if (ret == NULL)
 	{
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu.", size)));
+		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
+						   context, CDB_MCXT_WHERE(context),
+						   "Out of memory.  Failed on request of size %zu bytes.",
+						   size);
 	}
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	VALGRIND_MEMPOOL_ALLOC(CurrentMemoryContext, ret, size);
 
 	MemSetAligned(ret, 0, size);
@@ -1523,11 +1478,10 @@ palloc_extended(Size size, int flags)
 	{
 		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
 		{
-			MemoryContextStats(TopMemoryContext);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory"),
-					 errdetail("Failed on request of size %zu.", size)));
+			MemoryContextError(ERRCODE_OUT_OF_MEMORY,
+							   context, CDB_MCXT_WHERE(context),
+							   "Out of memory.  Failed on request of size %zu bytes.",
+							   size);
 		}
 		return NULL;
 	}
@@ -1622,7 +1576,6 @@ repalloc(void *pointer, Size size)
 	/* isReset must be false already */
 	Assert(!context->isReset);
 
-<<<<<<< HEAD
 #ifdef PGTRACE_ENABLED
 	{
 		long old_reqsize;
@@ -1642,15 +1595,12 @@ repalloc(void *pointer, Size size)
 #endif
 
 	ret = (*context->methods.realloc) (context, pointer, size);
-=======
-	ret = (*context->methods->realloc) (context, pointer, size);
 	if (ret == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu.", size)));
+		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
+						   context, CDB_MCXT_WHERE(context),
+						   "Out of memory.  Failed on request of size %zu bytes.",
+						   size);
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
 
 #ifdef PGTRACE_ENABLED
@@ -1680,20 +1630,15 @@ MemoryContextAllocHuge(MemoryContext context, Size size)
 
 	context->isReset = false;
 
-<<<<<<< HEAD
 	ret = (*context->methods.alloc) (context, size);
-=======
-	ret = (*context->methods->alloc) (context, size);
 	if (ret == NULL)
 	{
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu.", size)));
+		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
+						   context, CDB_MCXT_WHERE(context),
+						   "Out of memory.  Failed on request of size %zu bytes.",
+						   size);
 	}
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
 	return ret;
@@ -1734,17 +1679,13 @@ repalloc_huge(void *pointer, Size size)
 	/* isReset must be false already */
 	Assert(!context->isReset);
 
-<<<<<<< HEAD
 	ret = (*context->methods.realloc) (context, pointer, size);
-=======
-	ret = (*context->methods->realloc) (context, pointer, size);
 	if (ret == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu.", size)));
+		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
+						   context, CDB_MCXT_WHERE(context),
+						   "Out of memory.  Failed on request of size %zu bytes.",
+						   size);
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
 
 	return ret;

@@ -851,10 +851,10 @@ AllocSetContextCreate(MemoryContext parent,
 	set->maxBlockSize = maxBlockSize;
 	set->nextBlockSize = initBlockSize;
 
-	context->sharedHeaderList = NULL;
+	set->sharedHeaderList = NULL;
 
 #ifdef CDB_PALLOC_TAGS
-	context->allocList = NULL;
+	set->allocList = NULL;
 #endif
 
 	/*
@@ -873,16 +873,11 @@ AllocSetContextCreate(MemoryContext parent,
 	 *
 	 * Also, allocChunkLimit must not exceed ALLOCSET_SEPARATE_THRESHOLD.
 	 */
-<<<<<<< HEAD
 	StaticAssertStmt(ALLOC_CHUNK_LIMIT == ALLOCSET_SEPARATE_THRESHOLD,
 					 "ALLOC_CHUNK_LIMIT != ALLOCSET_SEPARATE_THRESHOLD");
 
-	context->allocChunkLimit = ALLOC_CHUNK_LIMIT;
-	while ((Size) (context->allocChunkLimit + ALLOC_CHUNKHDRSZ) >
-=======
 	set->allocChunkLimit = ALLOC_CHUNK_LIMIT;
 	while ((Size) (set->allocChunkLimit + ALLOC_CHUNKHDRSZ) >
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		   (Size) ((maxBlockSize - ALLOC_BLOCKHDRSZ) / ALLOC_CHUNK_FRACTION))
 		set->allocChunkLimit >>= 1;
 
@@ -896,37 +891,21 @@ AllocSetContextCreate(MemoryContext parent,
 
 		block = (AllocBlock) gp_malloc(blksize);
 		if (block == NULL)
-<<<<<<< HEAD
-            MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-                               &context->header, CDB_MCXT_WHERE(&context->header),
-                               "Out of memory.  Unable to allocate %lu bytes.",
-                               (unsigned long)blksize);
-		block->aset = context;
-		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
-		block->prev = NULL;
-		block->next = context->blocks;
-		if (block->next)
-			block->next->prev = block;
-		context->blocks = block;
-=======
-		{
-			MemoryContextStats(TopMemoryContext);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory"),
-					 errdetail("Failed while creating memory context \"%s\".",
-							   name)));
-		}
+			MemoryContextError(ERRCODE_OUT_OF_MEMORY,
+						 &context->header, CDB_MCXT_WHERE(&context->header),
+						 "Out of memory.  Unable to allocate %lu bytes.",
+						 (unsigned long)blksize);
 		block->aset = set;
 		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
-		block->endptr = ((char *) block) + blksize;
+		block->prev = NULL;
 		block->next = set->blocks;
+		if (block->next)
+			block->next->prev = block;
 		set->blocks = block;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		/* Mark block as not to be released at reset time */
 		set->keeper = block;
 
-        MemoryContextNoteAlloc(&context->header, blksize);              /*CDB*/
+        MemoryContextNoteAlloc(&set->header, blksize);              /*CDB*/
         /*
          * We are allocating new memory in this block, but we are not accounting
          * for this. The concept of memory accounting is to track the actual
@@ -940,13 +919,9 @@ AllocSetContextCreate(MemoryContext parent,
 								   blksize - ALLOC_BLOCKHDRSZ);
 	}
 
-<<<<<<< HEAD
-	context->nullAccountHeader = NULL;
+	set->nullAccountHeader = NULL;
 
-	return (MemoryContext) context;
-=======
 	return (MemoryContext) set;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1147,15 +1122,9 @@ AllocSetDelete(MemoryContext context)
 }
 
 /*
-<<<<<<< HEAD
  * AllocSetAllocImpl
  *		Returns pointer to allocated memory of given size; memory is added
  *		to the set.
-=======
- * AllocSetAlloc
- *		Returns pointer to allocated memory of given size or NULL if
- *		request could not be completed; memory is added to the set.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  *
  * Parameters:
  *		context: the context under which the memory was allocated
@@ -1200,13 +1169,7 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 		blksize = chunk_size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
 		block = (AllocBlock) gp_malloc(blksize);
 		if (block == NULL)
-<<<<<<< HEAD
-			MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-							   &set->header, CDB_MCXT_WHERE(&set->header),
-							   "Out of memory.  Failed on request of size %zu bytes.", size);
-=======
 			return NULL;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		block->aset = set;
 		block->freeptr = UserPtr_GetEndPtr(block);
 
@@ -1407,14 +1370,7 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 		}
 
 		if (block == NULL)
-<<<<<<< HEAD
-			MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-							   &set->header, CDB_MCXT_WHERE(&set->header),
-							   "Out of memory.  Failed on request of size %zu bytes.",
-							   size);
-=======
 			return NULL;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		block->aset = set;
 		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
@@ -1750,20 +1706,12 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		blksize = chksize + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
 		block = (AllocBlock) gp_realloc(block, blksize);
 		if (block == NULL)
-<<<<<<< HEAD
 		{
 			/* we need to set chunk info back*/
 			AllocAllocInfo(set, chunk, false);
-			MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-							   &set->header, CDB_MCXT_WHERE(&set->header),
-							   "Out of memory.  Failed on request of size %zu bytes.",
-							   size);
+			return NULL;
 		}
 		block->freeptr = UserPtr_GetEndPtr(block);
-=======
-			return NULL;
-		block->freeptr = block->endptr = ((char *) block) + blksize;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/* Update pointers since block has likely been moved */
 		chunk = (AllocChunk) (((char *) block) + ALLOC_BLOCKHDRSZ);
