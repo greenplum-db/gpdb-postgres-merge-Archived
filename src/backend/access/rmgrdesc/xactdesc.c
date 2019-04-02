@@ -175,20 +175,12 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 {
 	xl_xact_parsed_commit parsed;
 	int			i;
-<<<<<<< HEAD
-	TransactionId *subxacts;
-	SharedInvalidationMessage *msgs;
-
-	subxacts = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
-	msgs = (SharedInvalidationMessage *) &subxacts[xlrec->nsubxacts];
-=======
 
 	ParseCommitRecord(info, xlrec, &parsed);
 
 	/* If this is a prepared xact, show the xid of the original xact */
 	if (TransactionIdIsValid(parsed.twophase_xid))
 		appendStringInfo(buf, "%u: ", parsed.twophase_xid);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	appendStringInfoString(buf, timestamptz_to_str(xlrec->xact_time));
 
@@ -238,12 +230,23 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 				appendStringInfo(buf, " unknown id %d", msg->id);
 		}
 	}
-<<<<<<< HEAD
+
+	if (XactCompletionForceSyncCommit(parsed.xinfo))
+		appendStringInfo(buf, "; sync");
+
+	if (parsed.xinfo & XACT_XINFO_HAS_ORIGIN)
+	{
+		appendStringInfo(buf, "; origin: node %u, lsn %X/%X, at %s",
+						 origin_id,
+						 (uint32) (parsed.origin_lsn >> 32),
+						 (uint32) parsed.origin_lsn,
+						 timestamptz_to_str(parsed.origin_timestamp));
+	}
 
 	/*
--	 * MPP: Return end of regular commit information.
+	 * MPP: Return end of regular commit information.
 	 */
-	return (char *) &msgs[xlrec->nmsgs];
+	return (char *) &parsed.msgs[parsed.nmsgs];
 }
 
 static void
@@ -266,27 +269,6 @@ xact_desc_distributed_forget(StringInfo buf, xl_xact_distributed_forget *xlrec)
 {
 	appendStringInfo(buf, " gid = %s, gxid = %u",
 					 xlrec->gxact_log.gid, xlrec->gxact_log.gxid);
-}
-
-
-static void
-xact_desc_commit_compact(StringInfo buf, xl_xact_commit_compact *xlrec)
-{
-	int			i;
-=======
-
-	if (XactCompletionForceSyncCommit(parsed.xinfo))
-		appendStringInfo(buf, "; sync");
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-
-	if (parsed.xinfo & XACT_XINFO_HAS_ORIGIN)
-	{
-		appendStringInfo(buf, "; origin: node %u, lsn %X/%X, at %s",
-						 origin_id,
-						 (uint32) (parsed.origin_lsn >> 32),
-						 (uint32) parsed.origin_lsn,
-						 timestamptz_to_str(parsed.origin_timestamp));
-	}
 }
 
 static void

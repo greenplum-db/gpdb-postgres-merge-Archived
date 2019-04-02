@@ -92,18 +92,13 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 
 	if (info == XLOG_CHECKPOINT_SHUTDOWN ||
 		info == XLOG_CHECKPOINT_ONLINE)
-	{0
+	{
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
-<<<<<<< HEAD
 		CheckpointExtendedRecord ckptExtended;
 
-		appendStringInfo(buf, "checkpoint: redo %X/%X; "
-						 "tli %u; prev tli %u; fpw %s; xid %u/%u; oid %u; relfilenode %u; multi %u; offset %u; "
-=======
 		appendStringInfo(buf, "redo %X/%X; "
-						 "tli %u; prev tli %u; fpw %s; xid %u/%u; oid %u; multi %u; offset %u; "
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+						 "tli %u; prev tli %u; fpw %s; xid %u/%u; oid %u; relfilenode %u; multi %u; offset %u; "
 						 "oldest xid %u in DB %u; oldest multi %u in DB %u; "
 						 "oldest/newest commit timestamp xid: %u/%u; "
 						 "oldest running xid %u; %s",
@@ -145,22 +140,14 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 		Oid			nextOid;
 
 		memcpy(&nextOid, rec, sizeof(Oid));
-<<<<<<< HEAD
-		appendStringInfo(buf, "nextOid: %u", nextOid);
+		appendStringInfo(buf, "%u", nextOid);
 	}
 	else if (info == XLOG_NEXTRELFILENODE)
 	{
 		Oid			nextRelfilenode;
 
 		memcpy(&nextRelfilenode, rec, sizeof(Oid));
-		appendStringInfo(buf, "nextRelfilenode: %u", nextRelfilenode);
-	}
-	else if (info == XLOG_SWITCH)
-	{
-		appendStringInfoString(buf, "xlog switch");
-=======
-		appendStringInfo(buf, "%u", nextOid);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+		appendStringInfo(buf, "%u", nextRelfilenode);
 	}
 	else if (info == XLOG_RESTORE_POINT)
 	{
@@ -199,27 +186,17 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 			}
 		}
 
-<<<<<<< HEAD
-		appendStringInfo(buf, "parameter change: max_connections=%d max_worker_processes=%d "
-						 "max_prepared_xacts=%d max_locks_per_xact=%d "
-						 "wal_level=%s wal_log_hints=%s",
-=======
 		appendStringInfo(buf, "max_connections=%d max_worker_processes=%d "
 						 "max_prepared_xacts=%d max_locks_per_xact=%d "
 						 "wal_level=%s wal_log_hints=%s "
 						 "track_commit_timestamps=%s",
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						 xlrec.MaxConnections,
 						 xlrec.max_worker_processes,
 						 xlrec.max_prepared_xacts,
 						 xlrec.max_locks_per_xact,
 						 wal_level_str,
-<<<<<<< HEAD
-						 xlrec.wal_log_hints ? "on" : "off");
-=======
 						 xlrec.wal_log_hints ? "on" : "off",
 						 xlrec.track_commit_timestamp ? "on" : "off");
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	else if (info == XLOG_FPW_CHANGE)
 	{
@@ -257,6 +234,9 @@ xlog_identify(uint8 info)
 			break;
 		case XLOG_NEXTOID:
 			id = "NEXTOID";
+			break;
+		case XLOG_NEXTRELFILENODE:
+			id = "NEXTRELFILENODE";
 			break;
 		case XLOG_SWITCH:
 			id = "SWITCH";
