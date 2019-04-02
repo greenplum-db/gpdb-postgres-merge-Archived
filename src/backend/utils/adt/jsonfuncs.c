@@ -123,8 +123,6 @@ static JsonbValue *findJsonbValueFromContainerLen(JsonbContainer *container,
 							   uint32 flags,
 							   char *key,
 							   uint32 keylen);
-<<<<<<< HEAD
-=======
 
 /* functions supporting jsonb_delete, jsonb_set and jsonb_concat */
 static JsonbValue *IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
@@ -141,7 +139,6 @@ static void setPathArray(JsonbIterator **it, Datum *path_elems,
 			 bool *path_nulls, int path_len, JsonbParseState **st,
 			 int level, Jsonb *newval, uint32 nelems, bool create);
 static void addJsonbToParseState(JsonbParseState **jbps, Jsonb *jb);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* state for json_object_keys */
 typedef struct OkeysState
@@ -2385,11 +2382,7 @@ hash_object_field_end(void *state, char *fname, bool isnull)
 	/*
 	 * Ignore nested fields.
 	 */
-<<<<<<< HEAD
 	if (_state->lex->lex_level > 1)
-=======
-	if (_state->lex->lex_level > 2)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		return;
 
 	/*
@@ -2722,12 +2715,9 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 											   false, work_mem);
 	MemoryContextSwitchTo(old_cxt);
 
-<<<<<<< HEAD
 	/* unnecessary, but harmless, if tupdesc came from get_call_result_type: */
 	ReleaseTupleDesc(tupdesc);
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	state->function_name = funcname;
 	state->my_extra = my_extra;
 	state->rec = rec;
