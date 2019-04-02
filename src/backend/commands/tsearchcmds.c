@@ -287,7 +287,6 @@ DefineTSParser(List *names, List *parameters)
 
 	heap_close(prsRel, RowExclusiveLock);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		DefineStmt *stmt = makeNode(DefineStmt);
@@ -306,10 +305,7 @@ DefineTSParser(List *names, List *parameters)
 									NULL);
 	}
 
-	return prsOid;
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -520,7 +516,6 @@ DefineTSDictionary(List *names, List *parameters)
 
 	heap_close(dictRel, RowExclusiveLock);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		DefineStmt *stmt = makeNode(DefineStmt);
@@ -537,10 +532,7 @@ DefineTSDictionary(List *names, List *parameters)
 									NULL);
 	}
 
-	return dictOid;
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -684,7 +676,6 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 
 	heap_close(rel, RowExclusiveLock);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR |
@@ -693,10 +684,7 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 									NIL,
 									NULL);
 
-	return dictId;
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /* ---------------------- TS Template commands -----------------------*/
@@ -876,7 +864,6 @@ DefineTSTemplate(List *names, List *parameters)
 
 	heap_close(tmplRel, RowExclusiveLock);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		DefineStmt *stmt = makeNode(DefineStmt);
@@ -893,10 +880,7 @@ DefineTSTemplate(List *names, List *parameters)
 									NULL);
 	}
 
-	return tmplOid;
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1204,7 +1188,6 @@ DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 		heap_close(mapRel, RowExclusiveLock);
 	heap_close(cfgRel, RowExclusiveLock);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		DefineStmt *stmt = makeNode(DefineStmt);
@@ -1221,10 +1204,7 @@ DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 									NULL);
 	}
 
-	return cfgOid;
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1321,7 +1301,6 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 
 	ReleaseSysCache(tup);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR |
@@ -1330,10 +1309,7 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 									NIL,
 									NULL);
 
-	return cfgId;
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*

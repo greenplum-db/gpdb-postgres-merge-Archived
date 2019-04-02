@@ -25,13 +25,7 @@
 #include "access/transam.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
-<<<<<<< HEAD
-#include "catalog/aoseg.h"
-#include "catalog/aoblkdir.h"
-#include "catalog/aovisimap.h"
-=======
 #include "access/xlog.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
@@ -65,6 +59,9 @@
 #include "utils/tqual.h"
 #include "utils/tuplesort.h"
 
+#include "catalog/aoseg.h"
+#include "catalog/aoblkdir.h"
+#include "catalog/aovisimap.h"
 #include "catalog/oid_dispatch.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
@@ -638,15 +635,10 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	heap_close(OldHeap, NoLock);
 
 	/* Create the transient table that will receive the re-ordered data */
-<<<<<<< HEAD
-	OIDNewHeap = make_new_heap(tableOid, tableSpace,false,
-							   AccessExclusiveLock,
-							   true /* createAoBlockDirectory */);
-=======
 	OIDNewHeap = make_new_heap(tableOid, tableSpace,
 							   OldHeap->rd_rel->relpersistence,
-							   AccessExclusiveLock);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+							   AccessExclusiveLock,
+							   true /* createAoBlockDirectory */);
 
 	/* Copy the heap data into the new table in the desired order */
 	copy_heap_data(OIDNewHeap, tableOid, indexOid, verbose,
@@ -657,17 +649,11 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	 * rebuild the target's indexes and throw away the transient table.
 	 */
 	finish_heap_swap(tableOid, OIDNewHeap, is_system_catalog,
-<<<<<<< HEAD
 					 swap_toast_by_content,
 					 true /* swap_stats */,
-					 false,
-					 true,
-					 frozenXid, cutoffMulti);
-=======
-					 swap_toast_by_content, false, true,
+					 false, true,
 					 frozenXid, cutoffMulti,
 					 OldHeap->rd_rel->relpersistence);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 
@@ -695,12 +681,8 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 	Datum		reloptions;
 	bool		isNull;
 	Oid			namespaceid;
-<<<<<<< HEAD
-	char		relpersistence;
 	bool		is_part_child;
 	bool		is_part_parent;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	OldHeap = heap_open(OIDOldHeap, lockmode);
 	OldHeapDesc = RelationGetDescr(OldHeap);
@@ -1352,11 +1334,8 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	Oid			relfilenode1,
 				relfilenode2;
 	Oid			swaptemp;
-<<<<<<< HEAD
 	char		swapchar;
-=======
 	char		swptmpchr;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	CatalogIndexState indstate;
 	bool		isAO1, isAO2;
 

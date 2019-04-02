@@ -1652,12 +1652,8 @@ vac_update_relstats(Relation relation,
 					BlockNumber num_all_visible_pages,
 					bool hasindex, TransactionId frozenxid,
 					MultiXactId minmulti,
-<<<<<<< HEAD
 					bool in_outer_xact,
 					bool isvacuum)
-=======
-					bool in_outer_xact)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	Oid			relid = RelationGetRelid(relation);
 	Relation	rd;
@@ -1755,15 +1751,12 @@ vac_update_relstats(Relation relation,
 	pgcform = (Form_pg_class) GETSTRUCT(ctup);
 
 	/* Apply statistical updates, if any, to copied tuple */
-<<<<<<< HEAD
 
 	/* GPDB-specific not allow change relpages and reltuples when vacuum in utility mode on QD
 	 * Because there's a chance that we overwrite perfectly good stats with zeros
 	 */
 
 	bool ifUpdate = ! (IS_QUERY_DISPATCHER() && Gp_role == GP_ROLE_UTILITY);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	dirty = false;
 	if (pgcform->relpages != (int32) num_pages && ifUpdate)

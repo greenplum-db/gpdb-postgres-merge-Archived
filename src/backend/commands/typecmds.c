@@ -36,11 +36,6 @@
 #include "access/xact.h"
 #include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
-<<<<<<< HEAD
-#include "catalog/catalog.h"
-#include "catalog/dependency.h"
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "catalog/heap.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_authid.h"
@@ -114,12 +109,8 @@ static void checkEnumOwner(HeapTuple tup);
 static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
 					Oid baseTypeOid,
 					int typMod, Constraint *constr,
-<<<<<<< HEAD
-					char *domainName);
-static void remove_type_encoding(Oid typid);
-=======
 					char *domainName, ObjectAddress *constrAddr);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+static void remove_type_encoding(Oid typid);
 
 
 /*
@@ -244,7 +235,6 @@ DefineType(List *names, List *parameters)
 		 * creating the shell type was all we're supposed to do.
 		 */
 		if (parameters == NIL)
-<<<<<<< HEAD
 		{
 			/* Must dispatch shell type creation */
 			if (Gp_role == GP_ROLE_DISPATCH)
@@ -262,11 +252,8 @@ DefineType(List *names, List *parameters)
 											GetAssignedOidsForDispatch(),
 											NULL);
 			}
-			return InvalidOid;
-		}
-=======
 			return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+		}
 	}
 	else
 	{
@@ -601,26 +588,6 @@ DefineType(List *names, List *parameters)
 					   NameListToString(analyzeName));
 #endif
 
-<<<<<<< HEAD
-	array_type = makeArrayTypeName(typeName, typeNamespace);
-
-	/* Preassign array type OID so we can insert it in pg_type.typarray */
-	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
-	{
-		array_oid = GetPreassignedOidForType(typeNamespace, array_type, true);
-
-		/*
-		 * If we are expected to get a preassigned Oid but receive InvalidOid,
-		 * get a new Oid. This can happen during upgrades from GPDB4 to 5 where
-		 * array types over relation rowtypes were introduced so there are no
-		 * pre-existing array types to dump from the old cluster
-		 */
-		if (array_oid == InvalidOid && IsBinaryUpgrade)
-			array_oid = AssignTypeArrayOid();
-	}
-	else
-		array_oid = AssignTypeArrayOid();
-=======
 	/*
 	 * Print warnings if any of the type's I/O functions are marked volatile.
 	 * There is a general assumption that I/O functions are stable or
@@ -667,8 +634,25 @@ DefineType(List *names, List *parameters)
 	 * array type OID ahead of calling TypeCreate, since the base type and
 	 * array type each refer to the other.
 	 */
-	array_oid = AssignTypeArrayOid();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+	array_type = makeArrayTypeName(typeName, typeNamespace);
+
+	/* Preassign array type OID so we can insert it in pg_type.typarray */
+	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
+	{
+		array_oid = GetPreassignedOidForType(typeNamespace, array_type, true);
+
+		/*
+		 * If we are expected to get a preassigned Oid but receive InvalidOid,
+		 * get a new Oid. This can happen during upgrades from GPDB4 to 5 where
+		 * array types over relation rowtypes were introduced so there are no
+		 * pre-existing array types to dump from the old cluster
+		 */
+		if (array_oid == InvalidOid && IsBinaryUpgrade)
+			array_oid = AssignTypeArrayOid();
+	}
+	else
+		array_oid = AssignTypeArrayOid();
 
 	/*
 	 * now have TypeCreate do all the real work.
@@ -756,7 +740,6 @@ DefineType(List *names, List *parameters)
 
 	pfree(array_type);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		DefineStmt * stmt = makeNode(DefineStmt);
@@ -774,10 +757,7 @@ DefineType(List *names, List *parameters)
 									NULL);
 	}
 
-	return typoid;
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1272,13 +1252,8 @@ DefineEnum(CreateEnumStmt *stmt)
 	}
 
 	/* Create the pg_type entry */
-<<<<<<< HEAD
-	enumTypeOid =
-		TypeCreate(enumTypeOid,
-=======
 	enumTypeAddr =
-		TypeCreate(InvalidOid,	/* no predetermined type OID */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+		TypeCreate(enumTypeOid,
 				   enumName,	/* type name */
 				   enumNamespace,		/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
@@ -1350,7 +1325,6 @@ DefineEnum(CreateEnumStmt *stmt)
 
 	pfree(enumArrayName);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR|
@@ -1359,10 +1333,7 @@ DefineEnum(CreateEnumStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 
-	return enumTypeOid;
-=======
 	return enumTypeAddr;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1426,7 +1397,6 @@ AlterEnum(AlterEnumStmt *stmt, bool isTopLevel)
 
 	ReleaseSysCache(tup);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR|
@@ -1435,10 +1405,7 @@ AlterEnum(AlterEnumStmt *stmt, bool isTopLevel)
 									GetAssignedOidsForDispatch(),
 									NULL);
 
-	return enum_type_oid;
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 
@@ -1736,7 +1703,6 @@ DefineRange(CreateRangeStmt *stmt)
 	/* And create the constructor functions for this range type */
 	makeRangeConstructors(typeName, typeNamespace, typoid, rangeSubtype);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR|
@@ -1745,10 +1711,7 @@ DefineRange(CreateRangeStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 
-	return typoid;
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1788,35 +1751,6 @@ makeRangeConstructors(const char *name, Oid namespace,
 		constructorArgTypesVector = buildoidvector(constructorArgTypes,
 												   pronargs[i]);
 
-<<<<<<< HEAD
-		procOid = ProcedureCreate(name, /* name: same as range type */
-								  namespace,	/* namespace */
-								  false,		/* replace */
-								  false,		/* returns set */
-								  rangeOid,		/* return type */
-								  BOOTSTRAP_SUPERUSERID,		/* proowner */
-								  INTERNALlanguageId,	/* language */
-								  F_FMGR_INTERNAL_VALIDATOR,	/* language validator */
-								  InvalidOid,
-								  prosrc[i],	/* prosrc */
-								  NULL, /* probin */
-								  false,		/* isAgg */
-								  false,		/* isWindowFunc */
-								  false,		/* security_definer */
-								  false,		/* leakproof */
-								  false,		/* isStrict */
-								  PROVOLATILE_IMMUTABLE,		/* volatility */
-								  constructorArgTypesVector,	/* parameterTypes */
-								  PointerGetDatum(NULL),		/* allParameterTypes */
-								  PointerGetDatum(NULL),		/* parameterModes */
-								  PointerGetDatum(NULL),		/* parameterNames */
-								  NIL,	/* parameterDefaults */
-								  PointerGetDatum(NULL),		/* proconfig */
-								  1.0,	/* procost */
-								  0.0,
-								  PRODATAACCESS_NONE,
-								  PROEXECLOCATION_ANY); /* prorows */
-=======
 		myself = ProcedureCreate(name,	/* name: same as range type */
 								 namespace,		/* namespace */
 								 false, /* replace */
@@ -1825,6 +1759,7 @@ makeRangeConstructors(const char *name, Oid namespace,
 								 BOOTSTRAP_SUPERUSERID, /* proowner */
 								 INTERNALlanguageId,	/* language */
 								 F_FMGR_INTERNAL_VALIDATOR,		/* language validator */
+								 InvalidOid,
 								 prosrc[i],		/* prosrc */
 								 NULL,	/* probin */
 								 false, /* isAgg */
@@ -1841,8 +1776,9 @@ makeRangeConstructors(const char *name, Oid namespace,
 								 PointerGetDatum(NULL), /* trftypes */
 								 PointerGetDatum(NULL), /* proconfig */
 								 1.0,	/* procost */
-								 0.0);	/* prorows */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+								 0.0,	/* prorows */
+								 PRODATAACCESS_NONE,
+								 PROEXECLOCATION_ANY);
 
 		/*
 		 * Make the constructors internally-dependent on the range type so
@@ -2337,16 +2273,10 @@ DefineCompositeType(RangeVar *typevar, List *coldeflist)
 	/*
 	 * Finally create the relation.  This also creates the type.
 	 */
-<<<<<<< HEAD
-	relid = DefineRelation(createStmt, RELKIND_COMPOSITE_TYPE, InvalidOid,
-						   RELSTORAGE_VIRTUAL, true, true, NULL);
-	Assert(relid != InvalidOid);
-	return relid;
-=======
-	DefineRelation(createStmt, RELKIND_COMPOSITE_TYPE, InvalidOid, &address);
+	DefineRelation(createStmt, RELKIND_COMPOSITE_TYPE, InvalidOid, &address,
+				   RELSTORAGE_VIRTUAL, true, true, NULL);
 
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -3521,61 +3451,7 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
 							   get_namespace_name(typTup->typnamespace));
 		}
 
-<<<<<<< HEAD
 		AlterTypeOwner_oid(typeOid, newOwnerId, true);
-=======
-		/*
-		 * If it's a composite type, invoke ATExecChangeOwner so that we fix
-		 * up the pg_class entry properly.  That will call back to
-		 * AlterTypeOwnerInternal to take care of the pg_type entry(s).
-		 */
-		if (typTup->typtype == TYPTYPE_COMPOSITE)
-			ATExecChangeOwner(typTup->typrelid, newOwnerId, true, AccessExclusiveLock);
-		else
-		{
-			Datum		repl_val[Natts_pg_type];
-			bool		repl_null[Natts_pg_type];
-			bool		repl_repl[Natts_pg_type];
-			Acl		   *newAcl;
-			Datum		aclDatum;
-			bool		isNull;
-
-			memset(repl_null, false, sizeof(repl_null));
-			memset(repl_repl, false, sizeof(repl_repl));
-
-			repl_repl[Anum_pg_type_typowner - 1] = true;
-			repl_val[Anum_pg_type_typowner - 1] = ObjectIdGetDatum(newOwnerId);
-
-			aclDatum = heap_getattr(tup,
-									Anum_pg_type_typacl,
-									RelationGetDescr(rel),
-									&isNull);
-			/* Null ACLs do not require changes */
-			if (!isNull)
-			{
-				newAcl = aclnewowner(DatumGetAclP(aclDatum),
-									 typTup->typowner, newOwnerId);
-				repl_repl[Anum_pg_type_typacl - 1] = true;
-				repl_val[Anum_pg_type_typacl - 1] = PointerGetDatum(newAcl);
-			}
-
-			tup = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val, repl_null,
-									repl_repl);
-
-			simple_heap_update(rel, &tup->t_self, tup);
-
-			CatalogUpdateIndexes(rel, tup);
-
-			/* Update owner dependency reference */
-			changeDependencyOnOwner(TypeRelationId, typeOid, newOwnerId);
-
-			InvokeObjectPostAlterHook(TypeRelationId, typeOid, 0);
-
-			/* If it has an array type, update that too */
-			if (OidIsValid(typTup->typarray))
-				AlterTypeOwnerInternal(typTup->typarray, newOwnerId, false);
-		}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	ObjectAddressSet(address, TypeRelationId, typeOid);
@@ -3603,12 +3479,6 @@ AlterTypeOwner_oid(Oid typeOid, Oid newOwnerId, bool hasDependEntry)
 	Relation	rel;
 	HeapTuple	tup;
 	Form_pg_type typTup;
-	Datum		repl_val[Natts_pg_type];
-	bool		repl_null[Natts_pg_type];
-	bool		repl_repl[Natts_pg_type];
-	Acl		   *newAcl;
-	Datum		aclDatum;
-	bool		isNull;
 
 	rel = heap_open(TypeRelationId, RowExclusiveLock);
 
@@ -3617,7 +3487,6 @@ AlterTypeOwner_oid(Oid typeOid, Oid newOwnerId, bool hasDependEntry)
 		elog(ERROR, "cache lookup failed for type %u", typeOid);
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
-<<<<<<< HEAD
 	/*
 	 * If it's a composite type, invoke ATExecChangeOwner so that we fix up the
 	 * pg_class entry properly.  That will call back to AlterTypeOwnerInternal
@@ -3627,29 +3496,6 @@ AlterTypeOwner_oid(Oid typeOid, Oid newOwnerId, bool hasDependEntry)
 		ATExecChangeOwner(typTup->typrelid, newOwnerId, true, AccessExclusiveLock);
 	else
 		AlterTypeOwnerInternal(typeOid, newOwnerId);
-=======
-	memset(repl_null, false, sizeof(repl_null));
-	memset(repl_repl, false, sizeof(repl_repl));
-
-	repl_repl[Anum_pg_type_typowner - 1] = true;
-	repl_val[Anum_pg_type_typowner - 1] = ObjectIdGetDatum(newOwnerId);
-
-	aclDatum = heap_getattr(tup,
-							Anum_pg_type_typacl,
-							RelationGetDescr(rel),
-							&isNull);
-	/* Null ACLs do not require changes */
-	if (!isNull)
-	{
-		newAcl = aclnewowner(DatumGetAclP(aclDatum),
-							 typTup->typowner, newOwnerId);
-		repl_repl[Anum_pg_type_typacl - 1] = true;
-		repl_val[Anum_pg_type_typacl - 1] = PointerGetDatum(newAcl);
-	}
-
-	tup = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val, repl_null,
-							repl_repl);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Update owner dependency reference */
 	if (hasDependEntry)

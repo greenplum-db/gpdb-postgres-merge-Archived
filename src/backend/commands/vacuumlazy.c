@@ -118,13 +118,9 @@ typedef struct LVRelStats
 	BlockNumber old_rel_pages;	/* previous value of pg_class.relpages */
 	BlockNumber rel_pages;		/* total number of pages */
 	BlockNumber scanned_pages;	/* number of pages we examined */
-<<<<<<< HEAD
+	BlockNumber pinskipped_pages;		/* # of pages we skipped due to a pin */
 	BlockNumber	tupcount_pages;	/* pages whose tuples we counted */
 	double		scanned_tuples; /* counts only tuples on tupcount_pages */
-=======
-	BlockNumber pinskipped_pages;		/* # of pages we skipped due to a pin */
-	double		scanned_tuples; /* counts only tuples on scanned pages */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	double		old_rel_tuples; /* previous value of pg_class.reltuples */
 	double		new_rel_tuples; /* new estimated total # of tuples */
 	double		new_dead_tuples;	/* new estimated total # of dead tuples */
@@ -377,12 +373,8 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 						vacrelstats->hasindex,
 						new_frozen_xid,
 						new_min_multi,
-<<<<<<< HEAD
 						false,
 						true /* isvacuum */);
-=======
-						false);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* report results to the stats collector, too */
 	new_live_tuples = new_rel_tuples - vacrelstats->new_dead_tuples;
@@ -1613,12 +1605,8 @@ lazy_cleanup_index(Relation indrel,
 							false,
 							InvalidTransactionId,
 							InvalidMultiXactId,
-<<<<<<< HEAD
 							false,
 							true /* isvacuum */);
-=======
-							false);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",

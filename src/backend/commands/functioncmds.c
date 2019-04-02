@@ -1023,7 +1023,6 @@ interpret_AS_clause(Oid languageOid, const char *languageName,
 }
 
 
-<<<<<<< HEAD
 /*
  * Handle functions that try to define a "DESCRIBE" callback.
  */
@@ -1147,8 +1146,6 @@ validate_describe_callback(List *describeQualName,
 }
 
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * CreateFunction
  *	 Execute a CREATE FUNCTION utility statement.
@@ -1266,20 +1263,15 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	ReleaseSysCache(languageTuple);
 
 	/*
-<<<<<<< HEAD
 	 * Check consistency for data access.  Note this comes after the language
 	 * tuple lookup, as we need language oid.
 	 */
 	validate_sql_data_access(dataAccess, volatility, languageOid);
+
 	/*
-	 * Only superuser is allowed to create leakproof functions because it
-	 * possibly allows unprivileged users to reference invisible tuples to be
-	 * filtered out using views for row-level security.
-=======
 	 * Only superuser is allowed to create leakproof functions because
 	 * leakproof functions can see tuples which have not yet been filtered out
 	 * by security barrier views or row level security policies.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
 	if (isLeakProof && !superuser())
 		ereport(ERROR,
@@ -1347,10 +1339,6 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 		returnsSet = false;
 	}
 
-<<<<<<< HEAD
-	compute_attributes_with_style(stmt->withClause, &isStrict, &volatility,
-								  &describeQualName);
-=======
 	if (list_length(trftypes_list) > 0)
 	{
 		ListCell   *lc;
@@ -1370,8 +1358,8 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 		trftypes = NULL;
 	}
 
-	compute_attributes_with_style(stmt->withClause, &isStrict, &volatility);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	compute_attributes_with_style(stmt->withClause, &isStrict, &volatility,
+								  &describeQualName);
 
 	interpret_AS_clause(languageOid, language, funcname, as_clause,
 						&prosrc_str, &probin_str);
@@ -1530,15 +1518,12 @@ AlterFunction(AlterFunctionStmt *stmt)
 	List	   *set_items = NIL;
 	DefElem    *cost_item = NULL;
 	DefElem    *rows_item = NULL;
-<<<<<<< HEAD
+	ObjectAddress address;
 	DefElem    *data_access_item = NULL;
 	DefElem    *exec_location_item = NULL;
 	bool		isnull;
 	char		data_access;
 	char		exec_location;
-=======
-	ObjectAddress address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
@@ -2143,7 +2128,6 @@ CreateCast(CreateCastStmt *stmt)
 
 	heap_close(relation, RowExclusiveLock);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -2154,10 +2138,7 @@ CreateCast(CreateCastStmt *stmt)
 									NULL);
 	}
 
-	return castid;
-=======
 	return myself;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*

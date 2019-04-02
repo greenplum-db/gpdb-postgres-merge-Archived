@@ -67,8 +67,6 @@ int			SessionReplicationRole = SESSION_REPLICATION_ROLE_ORIGIN;
 
 /* How many levels deep into trigger execution are we? */
 static int	MyTriggerDepth = 0;
-<<<<<<< HEAD
-=======
 
 /*
  * Note that similar macros also exist in executor/execMain.c.  There does not
@@ -79,7 +77,6 @@ static int	MyTriggerDepth = 0;
 #define GetUpdatedColumns(relinfo, estate) \
 	(rt_fetch((relinfo)->ri_RangeTableIndex, (estate)->es_range_table)->updatedCols)
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /* Local function prototypes */
 static void ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid);
 static void SetTriggerFlags(TriggerDesc *trigdesc, Trigger *trigger);
@@ -4108,17 +4105,10 @@ AfterTriggerEndQuery(EState *estate)
 
 	for (;;)
 	{
-<<<<<<< HEAD
 		if (afterTriggerMarkEvents(events, &afterTriggers->events, true))
 		{
 			CommandId	firing_id = afterTriggers->firing_counter++;
 			AfterTriggerEventChunk *oldtail = events->tail;
-=======
-		events = &afterTriggers.query_stack[afterTriggers.query_depth];
-		if (afterTriggerMarkEvents(events, &afterTriggers.events, true))
-		{
-			CommandId	firing_id = afterTriggers.firing_counter++;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			if (afterTriggerInvokeEvents(events, firing_id, estate, false))
 				break;			/* all fired */
@@ -4982,15 +4972,13 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 	if (afterTriggers.query_depth < 0)
 		elog(ERROR, "AfterTriggerSaveEvent() called outside of query");
 
-<<<<<<< HEAD
 	/* Don't fire statement-triggers in executor nodes. */
 	if (!row_trigger && Gp_role == GP_ROLE_EXECUTE)
 		return;
-=======
+
 	/* Be sure we have enough space to record events at this query depth. */
 	if (afterTriggers.query_depth >= afterTriggers.maxquerydepth)
 		AfterTriggerEnlargeQueryState();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Validate the event code and collect the associated tuple CTIDs.

@@ -29,11 +29,7 @@
 #include "access/sysattr.h"
 #include "access/tupconvert.h"
 #include "access/xact.h"
-<<<<<<< HEAD
-#include "catalog/aocatalog.h"
-=======
 #include "access/xlog.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
@@ -102,11 +98,7 @@
 #include "parser/parse_type.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/parser.h"
-<<<<<<< HEAD
-#include "postmaster/autostats.h"
-=======
 #include "pgstat.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
@@ -132,12 +124,14 @@
 #include "utils/tqual.h"
 #include "utils/typcache.h"
 
+#include "catalog/aocatalog.h"
 #include "catalog/oid_dispatch.h"
 #include "cdb/cdbdisp.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbrelsize.h"
 #include "cdb/cdboidsync.h"
+#include "postmaster/autostats.h"
 
 /*
  * ON COMMIT action list

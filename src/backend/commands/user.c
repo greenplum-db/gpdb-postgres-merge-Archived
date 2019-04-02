@@ -45,7 +45,6 @@
 #include "utils/timestamp.h"
 #include "utils/tqual.h"
 
-<<<<<<< HEAD
 #include "catalog/oid_dispatch.h"
 #include "catalog/pg_auth_time_constraint.h"
 #include "catalog/pg_resgroup.h"
@@ -53,10 +52,6 @@
 #include "commands/resgroupcmds.h"
 #include "executor/execdesc.h"
 #include "utils/resource_manager.h"
-=======
-/* Potentially set by pg_upgrade_support functions */
-Oid			binary_upgrade_next_pg_authid_oid = InvalidOid;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
@@ -127,14 +122,11 @@ CreateRole(CreateRoleStmt *stmt)
 	bool		createdb = false;		/* Can the user create databases? */
 	bool		canlogin = false;		/* Can this user login? */
 	bool		isreplication = false;	/* Is this a replication role? */
-<<<<<<< HEAD
 	bool		createrextgpfd = false; /* Can create readable gpfdist exttab? */
 	bool		createrexthttp = false; /* Can create readable http exttab? */
 	bool		createwextgpfd = false; /* Can create writable gpfdist exttab? */
-=======
 	bool		bypassrls = false;		/* Is this a row security enabled
 										 * role? */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	int			connlimit = -1; /* maximum connections allowed */
 	List	   *addroleto = NIL;	/* roles to make this a member of */
 	List	   *rolemembers = NIL;		/* roles to be members of this role */
@@ -289,7 +281,6 @@ CreateRole(CreateRoleStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			dvalidUntil = defel;
 		}
-<<<<<<< HEAD
 		else if (strcmp(defel->defname, "resourceQueue") == 0)
 		{
 			if (dresqueue)
@@ -331,7 +322,6 @@ CreateRole(CreateRoleStmt *stmt)
 			ExtractAuthIntervalClause(defel, interval);
 
 			addintervals = lappend(addintervals, interval);
-=======
 		else if (strcmp(defel->defname, "bypassrls") == 0)
 		{
 			if (dbypassRLS)
@@ -339,7 +329,6 @@ CreateRole(CreateRoleStmt *stmt)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			dbypassRLS = defel;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 		else
 			elog(ERROR, "option \"%s\" not recognized",
@@ -376,15 +365,12 @@ CreateRole(CreateRoleStmt *stmt)
 		adminmembers = (List *) dadminmembers->arg;
 	if (dvalidUntil)
 		validUntil = strVal(dvalidUntil->arg);
-<<<<<<< HEAD
 	if (dresqueue)
 		resqueue = strVal(linitial((List *) dresqueue->arg));
 	if (dresgroup)
 		resgroup = strVal(linitial((List *) dresgroup->arg));
-=======
 	if (dbypassRLS)
 		bypassrls = intVal(dbypassRLS->arg) != 0;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Check some permissions first */
 	if (issuper)
@@ -510,7 +496,6 @@ CreateRole(CreateRoleStmt *stmt)
 	new_record[Anum_pg_authid_rolvaliduntil - 1] = validUntil_datum;
 	new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = validUntil_null;
 
-<<<<<<< HEAD
 	if (resqueue)
 	{
 		Oid		queueid;
@@ -600,31 +585,12 @@ CreateRole(CreateRoleStmt *stmt)
 	}
 
 	new_record_nulls[Anum_pg_authid_rolresgroup - 1] = false;
-=======
+
 	new_record[Anum_pg_authid_rolbypassrls - 1] = BoolGetDatum(bypassrls);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	tuple = heap_form_tuple(pg_authid_dsc, new_record, new_record_nulls);
 
 	/*
-<<<<<<< HEAD
-=======
-	 * pg_largeobject_metadata contains pg_authid.oid's, so we use the
-	 * binary-upgrade override.
-	 */
-	if (IsBinaryUpgrade)
-	{
-		if (!OidIsValid(binary_upgrade_next_pg_authid_oid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("pg_authid OID value not set when in binary upgrade mode")));
-
-		HeapTupleSetOid(tuple, binary_upgrade_next_pg_authid_oid);
-		binary_upgrade_next_pg_authid_oid = InvalidOid;
-	}
-
-	/*
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 * Insert new record in the pg_authid table
 	 */
 	roleid = simple_heap_insert(pg_authid_rel, tuple);
@@ -986,15 +952,12 @@ AlterRole(AlterRoleStmt *stmt)
 		rolemembers = (List *) drolemembers->arg;
 	if (dvalidUntil)
 		validUntil = strVal(dvalidUntil->arg);
-<<<<<<< HEAD
 	if (dresqueue)
 		resqueue = strVal(linitial((List *) dresqueue->arg));
 	if (dresgroup)
 		resgroup = strVal(linitial((List *) dresgroup->arg));
-=======
 	if (dbypassRLS)
 		bypassrls = intVal(dbypassRLS->arg);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Scan the pg_authid relation to be certain the user exists.
@@ -1011,14 +974,10 @@ AlterRole(AlterRoleStmt *stmt)
 	 * To mess with a superuser you gotta be superuser; else you need
 	 * createrole, or just want to change your own password
 	 */
-<<<<<<< HEAD
 
 	bWas_super = ((Form_pg_authid) GETSTRUCT(tuple))->rolsuper;
 
-	if (((Form_pg_authid) GETSTRUCT(tuple))->rolsuper || issuper >= 0)
-=======
 	if (authform->rolsuper || issuper >= 0)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{
 		if (!superuser())
 			ereport(ERROR,
@@ -1099,15 +1058,9 @@ AlterRole(AlterRoleStmt *stmt)
 	{
 		new_record[Anum_pg_authid_rolsuper - 1] = BoolGetDatum(issuper > 0);
 		new_record_repl[Anum_pg_authid_rolsuper - 1] = true;
-<<<<<<< HEAD
-
-		new_record[Anum_pg_authid_rolcatupdate - 1] = BoolGetDatum(issuper > 0);
-		new_record_repl[Anum_pg_authid_rolcatupdate - 1] = true;
 
 		/* get current superuser status */
 		bWas_super = (issuper > 0);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	if (inherit >= 0)
@@ -1154,16 +1107,14 @@ AlterRole(AlterRoleStmt *stmt)
 				CStringGetTextDatum(password);
 		else
 		{
-<<<<<<< HEAD
-
-			if (!hash_password(password, stmt->role, strlen(stmt->role),
+			/*
+			 * GPDB: hash_password() includes pg_md5_encrypt() along with a
+			 * SHA-256 and SHA-256-FIPS implementation which is controlled by
+			 * password_hash_algorithm Greenplum GUC.
+			 */
+			if (!hash_password(password, rolename, strlen(rolename),
 							   encrypted_password))
-=======
-			if (!pg_md5_encrypt(password, rolename, strlen(rolename),
-								encrypted_password))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				elog(ERROR, "password encryption failed");
-
 			new_record[Anum_pg_authid_rolpassword - 1] =
 				CStringGetTextDatum(encrypted_password);
 		}
@@ -1182,7 +1133,6 @@ AlterRole(AlterRoleStmt *stmt)
 	new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = validUntil_null;
 	new_record_repl[Anum_pg_authid_rolvaliduntil - 1] = true;
 
-<<<<<<< HEAD
 	/* Set the CREATE EXTERNAL TABLE permissions for this role, if specified in ALTER */
 	if (exttabcreate || exttabnocreate)
 	{
@@ -1296,12 +1246,12 @@ AlterRole(AlterRoleStmt *stmt)
 					(errmsg("resource group is disabled"),
 					 errhint("To enable set gp_resource_manager=group")));
 		}
-=======
+	}
+
 	if (bypassrls >= 0)
 	{
 		new_record[Anum_pg_authid_rolbypassrls - 1] = BoolGetDatum(bypassrls > 0);
 		new_record_repl[Anum_pg_authid_rolbypassrls - 1] = true;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	new_tuple = heap_modify_tuple(tuple, pg_authid_dsc, new_record,
@@ -1324,29 +1274,21 @@ AlterRole(AlterRoleStmt *stmt)
 		CommandCounterIncrement();
 
 	if (stmt->action == +1)		/* add members to role */
-<<<<<<< HEAD
 	{
 		if (rolemembers)
 			alter_subtype = "ADD USER";
-		AddRoleMems(stmt->role, roleid,
-					rolemembers, roleNamesToIds(rolemembers),
-=======
+
 		AddRoleMems(rolename, roleid,
 					rolemembers, roleSpecsToIds(rolemembers),
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					GetUserId(), false);
 	}
 	else if (stmt->action == -1)	/* drop members from role */
-<<<<<<< HEAD
 	{
 		if (rolemembers)
 			alter_subtype = "DROP USER";
-		DelRoleMems(stmt->role, roleid,
-					rolemembers, roleNamesToIds(rolemembers),
-=======
+
 		DelRoleMems(rolename, roleid,
 					rolemembers, roleSpecsToIds(rolemembers),
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					false);
 	}
 
@@ -1807,7 +1749,6 @@ RenameRole(const char *oldname, const char *newname)
 	 */
 	heap_close(rel, NoLock);
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		MetaTrackUpdObject(AuthIdRelationId,
@@ -1816,10 +1757,7 @@ RenameRole(const char *oldname, const char *newname)
 						   "ALTER", "RENAME"
 				);
 
-	return roleid;
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*

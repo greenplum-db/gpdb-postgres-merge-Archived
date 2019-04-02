@@ -278,10 +278,6 @@ createdb(const CreatedbStmt *stmt)
 						 errmsg("%s is not a valid encoding name",
 								encoding_name)));
 		}
-<<<<<<< HEAD
-		else
-			elog(ERROR, "unrecognized node type: %d",
-				 nodeTag(dencoding->arg));
 
 		if (encoding == PG_SQL_ASCII && shouldDispatch)
 		{
@@ -289,8 +285,6 @@ createdb(const CreatedbStmt *stmt)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("server encoding 'SQL_ASCII' is not supported")));
 		}
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	if (dcollate && dcollate->arg)
 		dbcollate = defGetString(dcollate);
@@ -615,13 +609,8 @@ createdb(const CreatedbStmt *stmt)
 	 * Force a checkpoint before starting the copy. This will force all dirty
 	 * buffers, including those of unlogged tables, out to disk, to ensure
 	 * source database is up-to-date on disk for the copy.
-<<<<<<< HEAD
-	 * FlushDatabaseBuffers() would suffice for that, but we also want
-	 * to process any pending unlink requests. Otherwise, if a checkpoint
-=======
 	 * FlushDatabaseBuffers() would suffice for that, but we also want to
 	 * process any pending unlink requests. Otherwise, if a checkpoint
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 * happened while we're copying files, a file might be deleted just when
 	 * we're about to copy it, causing the lstat() call in copydir() to fail
 	 * with ENOENT.
@@ -1591,9 +1580,17 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 
 	if (dtablespace)
 	{
-<<<<<<< HEAD
-		/* currently, can't be specified along with any other options */
-		Assert(!dconnlimit);
+		/*
+		 * While the SET TABLESPACE syntax doesn't allow any other options,
+		 * somebody could write "WITH TABLESPACE ...".  Forbid any other
+		 * options from being specified in that case.
+		 */
+		if (list_length(stmt->options) != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			   errmsg("option \"%s\" cannot be specified with other options",
+					  dtablespace->defname)));
+
 		if (Gp_role != GP_ROLE_EXECUTE)
 		{
 			/*
@@ -1604,7 +1601,8 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 			/* this case isn't allowed within a transaction block */
 			PreventTransactionChain(isTopLevel, "ALTER DATABASE SET TABLESPACE");
 		}
-		movedb(stmt->dbname, strVal(dtablespace->arg));
+		movedb(stmt->dbname, defGetString(dtablespace));
+
 		if (Gp_role == GP_ROLE_DISPATCH)
 		{
 			char	*cmd;
@@ -1621,21 +1619,6 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 			pfree(cmd);
 		}
 
-=======
-		/*
-		 * While the SET TABLESPACE syntax doesn't allow any other options,
-		 * somebody could write "WITH TABLESPACE ...".  Forbid any other
-		 * options from being specified in that case.
-		 */
-		if (list_length(stmt->options) != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("option \"%s\" cannot be specified with other options",
-					  dtablespace->defname)));
-		/* this case isn't allowed within a transaction block */
-		PreventTransactionChain(isTopLevel, "ALTER DATABASE SET TABLESPACE");
-		movedb(stmt->dbname, defGetString(dtablespace));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		return InvalidOid;
 	}
 
@@ -1787,11 +1770,7 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 	ScanKeyData scankey;
 	SysScanDesc scan;
 	Form_pg_database datForm;
-<<<<<<< HEAD
-	Oid			dboid = InvalidOid;
-=======
 	ObjectAddress address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Get the old tuple.  We don't need a lock on the database per se,
@@ -1814,8 +1793,6 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 	db_id = HeapTupleGetOid(tuple);
 	datForm = (Form_pg_database) GETSTRUCT(tuple);
 
-	dboid = HeapTupleGetOid(tuple);
-
 	/*
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is to be consistent with other
@@ -1832,7 +1809,7 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 		HeapTuple	newtuple;
 
 		/* Otherwise, must be owner of the existing object */
-		if (!pg_database_ownercheck(dboid, GetUserId()))
+		if (!pg_database_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 						   dbname);
 
@@ -1888,7 +1865,7 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 		/* MPP-6929: metadata tracking */
 		if (Gp_role == GP_ROLE_DISPATCH)
 			MetaTrackUpdObject(DatabaseRelationId,
-							   dboid,
+							   HeapTupleGetOid(tuple),
 							   GetUserId(),
 							   "ALTER", "OWNER"
 					);
@@ -2273,11 +2250,7 @@ get_database_name(Oid dbid)
  * DATABASE resource manager's routines
  */
 void
-<<<<<<< HEAD
-dbase_redo(XLogRecPtr beginLoc  __attribute__((unused)), XLogRecPtr lsn  __attribute__((unused)), XLogRecord *record)
-=======
 dbase_redo(XLogReaderState *record)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 

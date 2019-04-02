@@ -62,22 +62,11 @@ static void transientrel_shutdown(DestReceiver *self);
 static void transientrel_destroy(DestReceiver *self);
 static void refresh_matview_datafill(DestReceiver *dest, Query *query,
 						 const char *queryString);
-<<<<<<< HEAD
 static char *make_temptable_name_n(char *tempname, int n);
 static void refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 						 int save_sec_context);
-static void refresh_by_heap_swap(Oid matviewOid, Oid OIDNewHeap);
-static bool is_usable_unique_index(Relation indexRel);
-=======
-
-static char *make_temptable_name_n(char *tempname, int n);
-static void mv_GenerateOper(StringInfo buf, Oid opoid);
-
-static void refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
-					   int save_sec_context);
 static void refresh_by_heap_swap(Oid matviewOid, Oid OIDNewHeap, char relpersistence);
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+static bool is_usable_unique_index(Relation indexRel);
 static void OpenMatViewIncrementalMaintenance(void);
 static void CloseMatViewIncrementalMaintenance(void);
 
@@ -158,19 +147,13 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	DestReceiver *dest;
 	bool		concurrent;
 	LOCKMODE	lockmode;
-<<<<<<< HEAD
-	Oid			save_userid;
-	int			save_sec_context;
-	int			save_nestlevel;
-
-	/* MATERIALIZED_VIEW_FIXME: Refresh MatView is not MPP-fied. */
-=======
 	char		relpersistence;
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
 	ObjectAddress address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+	/* MATERIALIZED_VIEW_FIXME: Refresh MatView is not MPP-fied. */
 
 	/* Determine strength of lock needed. */
 	concurrent = stmt->concurrent;
@@ -277,24 +260,16 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	else
 	{
 		tableSpace = matviewRel->rd_rel->reltablespace;
-<<<<<<< HEAD
-=======
 		relpersistence = matviewRel->rd_rel->relpersistence;
 	}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Create the transient table that will receive the regenerated data. Lock
 	 * it against access by any other process until commit (by which time it
 	 * will be gone).
 	 */
-<<<<<<< HEAD
-	OIDNewHeap = make_new_heap(matviewOid, tableSpace, concurrent,
-							   ExclusiveLock, false);
-=======
 	OIDNewHeap = make_new_heap(matviewOid, tableSpace, relpersistence,
-							   ExclusiveLock);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+							   ExclusiveLock, false);
 	LockRelationOid(OIDNewHeap, AccessExclusiveLock);
 	dest = CreateTransientRelDestReceiver(OIDNewHeap);
 
@@ -329,24 +304,17 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 		Assert(matview_maintenance_depth == old_depth);
 	}
 	else
-<<<<<<< HEAD
-		refresh_by_heap_swap(matviewOid, OIDNewHeap);
-=======
 		refresh_by_heap_swap(matviewOid, OIDNewHeap, relpersistence);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Roll back any GUC changes */
 	AtEOXact_GUC(false, save_nestlevel);
 
 	/* Restore userid and security context */
 	SetUserIdAndSecContext(save_userid, save_sec_context);
-<<<<<<< HEAD
-=======
 
 	ObjectAddressSet(address, RelationRelationId, matviewOid);
 
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -570,11 +538,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	List	   *indexoidlist;
 	ListCell   *indexoidscan;
 	int16		relnatts;
-<<<<<<< HEAD
 	Oid		   *opUsedForQual;
-=======
-	bool	   *usedForQual;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	initStringInfo(&querybuf);
 	matviewRel = heap_open(matviewOid, NoLock);
@@ -828,18 +792,14 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 static void
 refresh_by_heap_swap(Oid matviewOid, Oid OIDNewHeap, char relpersistence)
 {
-<<<<<<< HEAD
 	finish_heap_swap(matviewOid, OIDNewHeap,
 					 false, /* is_system_catalog */
 					 false, /* swap_toast_by_content */
 					 false, /* swap_stats */
 					 true, /* check_constraints */
 					 true, /* is_internal */
-					 RecentXmin, ReadNextMultiXactId());
-=======
-	finish_heap_swap(matviewOid, OIDNewHeap, false, false, true, true,
-					 RecentXmin, ReadNextMultiXactId(), relpersistence);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+					 RecentXmin, ReadNextMultiXactId(),
+					 relpersistence);
 }
 
 /*
