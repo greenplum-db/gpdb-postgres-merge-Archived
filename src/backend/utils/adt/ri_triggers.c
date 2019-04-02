@@ -44,10 +44,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_relation.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
 #include "storage/bufmgr.h"
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -3213,46 +3210,6 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 	 * Check permissions- if the user does not have access to view the data in
 	 * any of the key columns then we don't include the errdetail() below.
 	 *
-<<<<<<< HEAD
-	 * Check table-level permissions first and, failing that, column-level
-	 * privileges.
-	 */
-	aclresult = pg_class_aclcheck(rel_oid, GetUserId(), ACL_SELECT);
-	if (aclresult != ACLCHECK_OK)
-	{
-		/* Try for column-level permissions */
-		for (idx = 0; idx < riinfo->nkeys; idx++)
-		{
-			aclresult = pg_attribute_aclcheck(rel_oid, attnums[idx],
-											  GetUserId(),
-											  ACL_SELECT);
-
-			/* No access to the key */
-			if (aclresult != ACLCHECK_OK)
-			{
-				has_perm = false;
-				break;
-			}
-		}
-	}
-
-	if (has_perm)
-	{
-		/* Get printable versions of the keys involved */
-		initStringInfo(&key_names);
-		initStringInfo(&key_values);
-		for (idx = 0; idx < riinfo->nkeys; idx++)
-		{
-			int			fnum = attnums[idx];
-			char	   *name,
-				   *val;
-
-			name = SPI_fname(tupdesc, fnum);
-			val = SPI_getvalue(violator, tupdesc, fnum);
-			if (!val)
-				val = "null";
-
-=======
 	 * Check if RLS is enabled on the relation first.  If so, we don't return
 	 * any specifics to avoid leaking data.
 	 *
@@ -3290,15 +3247,14 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 		for (idx = 0; idx < riinfo->nkeys; idx++)
 		{
 			int			fnum = attnums[idx];
-			char	   *name,
-					   *val;
+			char		*name,
+						*val;
 
 			name = SPI_fname(tupdesc, fnum);
 			val = SPI_getvalue(violator, tupdesc, fnum);
 			if (!val)
 				val = "null";
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			if (idx > 0)
 			{
 				appendStringInfoString(&key_names, ", ");
