@@ -594,21 +594,12 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					/*
 					 * Also search for ranges's adjacent to argument's upper
 					 * bound. They will be found along the line adjacent to
-<<<<<<< HEAD
-					 * (and just right of) X=upper, which falls in quadrants
-					 * 3 and 4, or 1 and 2.
-					 */
-					cmp = adjacent_inner_consistent(typcache, &upper,
-													&centroidLower,
-											prevCentroid ? &prevLower : NULL);
-=======
 					 * (and just right of) X=upper, which falls in quadrants 3
 					 * and 4, or 1 and 2.
 					 */
 					cmp = adjacent_inner_consistent(typcache, &upper,
 													&centroidLower,
 										   prevCentroid ? &prevLower : NULL);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					if (cmp > 0)
 						which2 = (1 << 1) | (1 << 2);
 					else if (cmp < 0)
