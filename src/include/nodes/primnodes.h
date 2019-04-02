@@ -357,7 +357,9 @@ typedef struct Grouping
  */
 typedef struct GroupId
 {
-	Expr      xpr;
+	Expr		xpr;
+	Index		agglevelsup;	/* same as Aggref.agglevelsup */
+	int			location;		/* token location */
 } GroupId;
 
 /*
