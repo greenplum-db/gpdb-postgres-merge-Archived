@@ -17747,9 +17747,9 @@ checkWindowExclude(void)
 static Node*
 makeIsNotDistinctFromNode(Node *expr, int position)
 {
-	Node *n = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL,
-								(Node *) makeSimpleA_Expr(AEXPR_DISTINCT, 
-	 													"=", NULL, expr, position), position);
+	Node *n = makeNotExpr((Node *) makeSimpleA_Expr(AEXPR_DISTINCT,
+													"=", NULL, expr, position),
+													position);
 	return n;
 }
 
