@@ -3596,11 +3596,8 @@ interval_justify_days(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(result);
 }
 
-<<<<<<< HEAD
-/*
+/* 
  * timestamp_pl_interval()
-=======
-/* timestamp_pl_interval()
  * Add an interval to a timestamp data type.
  * Note that interval has provisions for qualitative year/month and day
  *	units, so try to do the right thing with them.
@@ -3609,7 +3606,6 @@ interval_justify_days(PG_FUNCTION_ARGS)
  *	to the last day of month.
  * To add a day, increment the mday, and use the same time of day.
  * Lastly, add in the "quantitative time".
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 Datum
 timestamp_pl_interval(PG_FUNCTION_ARGS)
@@ -3641,11 +3637,8 @@ timestamp_mi_interval(PG_FUNCTION_ARGS)
 }
 
 
-<<<<<<< HEAD
 /*
  * timestamptz_pl_interval()
-=======
-/* timestamptz_pl_interval()
  * Add an interval to a timestamp with time zone data type.
  * Note that interval has provisions for qualitative year/month
  *	units, so try to do the right thing with them.
@@ -3653,7 +3646,6 @@ timestamp_mi_interval(PG_FUNCTION_ARGS)
  * Then, if the next month has fewer days, set the day of month
  *	to the last day of month.
  * Lastly, add in the "quantitative time".
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 Datum
 timestamptz_pl_interval(PG_FUNCTION_ARGS)

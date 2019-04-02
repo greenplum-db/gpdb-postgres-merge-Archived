@@ -249,10 +249,7 @@ cmp_string(const void *a, const void *b)
 {
 	const char *sa = *((const char **) a);
 	const char *sb = *((const char **) b);
-<<<<<<< HEAD
-=======
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	return strcmp(sa, sb);
 }
 
