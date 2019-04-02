@@ -1434,11 +1434,8 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 	char	   *outputstr;
 	text	   *jsontext;
 
-<<<<<<< HEAD
 	check_stack_depth();
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* callers are expected to ensure that null keys are not passed in */
 	Assert(!(key_scalar && is_null));
 
@@ -1492,30 +1489,16 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 				char		buf[MAXDATELEN + 1];
 
 				date = DatumGetDateADT(val);
-<<<<<<< HEAD
 				/* Same as date_out(), but forcing DateStyle */
 				if (DATE_NOT_FINITE(date))
 					EncodeSpecialDate(date, buf);
-=======
-
-				if (DATE_NOT_FINITE(date))
-				{
-					/* we have to format infinity ourselves */
-					appendStringInfoString(result, DT_INFINITY);
-				}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				else
 				{
 					j2date(date + POSTGRES_EPOCH_JDATE,
 						   &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
 					EncodeDateOnly(&tm, USE_XSD_DATES, buf);
-<<<<<<< HEAD
 				}
 				appendStringInfo(result, "\"%s\"", buf);
-=======
-					appendStringInfo(result, "\"%s\"", buf);
-				}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			}
 			break;
 		case JSONTYPE_TIMESTAMP:
@@ -1526,18 +1509,9 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 				char		buf[MAXDATELEN + 1];
 
 				timestamp = DatumGetTimestamp(val);
-<<<<<<< HEAD
 				/* Same as timestamp_out(), but forcing DateStyle */
 				if (TIMESTAMP_NOT_FINITE(timestamp))
 					EncodeSpecialTimestamp(timestamp, buf);
-=======
-
-				if (TIMESTAMP_NOT_FINITE(timestamp))
-				{
-					/* we have to format infinity ourselves */
-					appendStringInfoString(result, DT_INFINITY);
-				}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				else if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) == 0)
 				{
 					EncodeDateTime(&tm, fsec, false, 0, NULL, USE_XSD_DATES, buf);
@@ -1547,10 +1521,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
-<<<<<<< HEAD
 				appendStringInfo(result, "\"%s\"", buf);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			}
 			break;
 		case JSONTYPE_TIMESTAMPTZ:
@@ -1562,20 +1533,10 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 				const char *tzn = NULL;
 				char		buf[MAXDATELEN + 1];
 
-<<<<<<< HEAD
 				timestamp = DatumGetTimestampTz(val);
 				/* Same as timestamptz_out(), but forcing DateStyle */
 				if (TIMESTAMP_NOT_FINITE(timestamp))
 					EncodeSpecialTimestamp(timestamp, buf);
-=======
-				timestamp = DatumGetTimestamp(val);
-
-				if (TIMESTAMP_NOT_FINITE(timestamp))
-				{
-					/* we have to format infinity ourselves */
-					appendStringInfoString(result, DT_INFINITY);
-				}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				else if (timestamp2tm(timestamp, &tz, &tm, &fsec, &tzn, NULL) == 0)
 				{
 					EncodeDateTime(&tm, fsec, true, tz, tzn, USE_XSD_DATES, buf);
@@ -1585,10 +1546,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
-<<<<<<< HEAD
 				appendStringInfo(result, "\"%s\"", buf);
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			}
 			break;
 		case JSONTYPE_JSON:
@@ -2126,25 +2084,18 @@ json_build_object(PG_FUNCTION_ARGS)
 {
 	int			nargs = PG_NARGS();
 	int			i;
-<<<<<<< HEAD
-=======
-	Datum		arg;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	const char *sep = "";
 	StringInfo	result;
 	Datum	   *args;
 	bool	   *nulls;
 	Oid		   *types;
 
-<<<<<<< HEAD
 	/* fetch argument values to build the object */
 	nargs = extract_variadic_args(fcinfo, 0, false, &args, &types, &nulls);
 
 	if (nargs < 0)
 		PG_RETURN_NULL();
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	if (nargs % 2 != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2157,21 +2108,10 @@ json_build_object(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < nargs; i += 2)
 	{
-<<<<<<< HEAD
-=======
-		/*
-		 * Note: since json_build_object() is declared as taking type "any",
-		 * the parser will not do any type conversion on unknown-type literals
-		 * (that is, undecorated strings or NULLs).  Such values will arrive
-		 * here as type UNKNOWN, which fortunately does not matter to us,
-		 * since unknownout() works fine.
-		 */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		appendStringInfoString(result, sep);
 		sep = ", ";
 
 		/* process key */
-<<<<<<< HEAD
 		if (nulls[i])
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2179,47 +2119,11 @@ json_build_object(PG_FUNCTION_ARGS)
 					 errhint("Object keys should be text.")));
 
 		add_json(args[i], false, result, types[i], true);
-=======
-		val_type = get_fn_expr_argtype(fcinfo->flinfo, i);
-
-		if (val_type == InvalidOid)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("could not determine data type for argument %d",
-							i + 1)));
-
-		if (PG_ARGISNULL(i))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("argument %d cannot be null", i + 1),
-					 errhint("Object keys should be text.")));
-
-		arg = PG_GETARG_DATUM(i);
-
-		add_json(arg, false, result, val_type, true);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		appendStringInfoString(result, " : ");
 
 		/* process value */
-<<<<<<< HEAD
 		add_json(args[i + 1], nulls[i + 1], result, types[i + 1], false);
-=======
-		val_type = get_fn_expr_argtype(fcinfo->flinfo, i + 1);
-
-		if (val_type == InvalidOid)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("could not determine data type for argument %d",
-							i + 2)));
-
-		if (PG_ARGISNULL(i + 1))
-			arg = (Datum) 0;
-		else
-			arg = PG_GETARG_DATUM(i + 1);
-
-		add_json(arg, PG_ARGISNULL(i + 1), result, val_type, false);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	appendStringInfoChar(result, '}');
@@ -2244,61 +2148,27 @@ json_build_array(PG_FUNCTION_ARGS)
 {
 	int			nargs;
 	int			i;
-<<<<<<< HEAD
-=======
-	Datum		arg;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	const char *sep = "";
 	StringInfo	result;
 	Datum	   *args;
 	bool	   *nulls;
 	Oid		   *types;
 
-<<<<<<< HEAD
 	/* fetch argument values to build the array */
 	nargs = extract_variadic_args(fcinfo, 0, false, &args, &types, &nulls);
 
 	if (nargs < 0)
 		PG_RETURN_NULL();
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	result = makeStringInfo();
 
 	appendStringInfoChar(result, '[');
 
 	for (i = 0; i < nargs; i++)
 	{
-<<<<<<< HEAD
 		appendStringInfoString(result, sep);
 		sep = ", ";
 		add_json(args[i], nulls[i], result, types[i], false);
-=======
-		/*
-		 * Note: since json_build_array() is declared as taking type "any",
-		 * the parser will not do any type conversion on unknown-type literals
-		 * (that is, undecorated strings or NULLs).  Such values will arrive
-		 * here as type UNKNOWN, which fortunately does not matter to us,
-		 * since unknownout() works fine.
-		 */
-		appendStringInfoString(result, sep);
-		sep = ", ";
-
-		val_type = get_fn_expr_argtype(fcinfo->flinfo, i);
-
-		if (val_type == InvalidOid)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("could not determine data type for argument %d",
-							i + 1)));
-
-		if (PG_ARGISNULL(i))
-			arg = (Datum) 0;
-		else
-			arg = PG_GETARG_DATUM(i);
-
-		add_json(arg, PG_ARGISNULL(i), result, val_type, false);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	appendStringInfoChar(result, ']');
