@@ -16,10 +16,16 @@ override CPPFLAGS += -I$(libpq_srcdir) -I$(top_srcdir)/src/port
 # be-fsstubs is here for historical reasons, probably belongs elsewhere
 
 OBJS = be-fsstubs.o be-secure.o auth.o crypt.o hba.o ip.o md5.o pqcomm.o \
-<<<<<<< HEAD
-       pqformat.o pqsignal.o sha2.o pg_sha2.o fe-protocol3.o fe-connect.o \
-       fe-exec.o pqexpbuffer.o fe-auth.o fe-misc.o fe-protocol2.o fe-secure.o \
-       $(filter getpeereid.o, $(LIBOBJS))
+       pqformat.o pqsignal.o
+
+ifeq ($(with_openssl),yes)
+OBJS += be-secure-openssl.o
+endif
+
+# Greenplum objects follow
+OBJS += sha2.o pg_sha2.o fe-protocol3.o fe-connect.o \
+        fe-exec.o pqexpbuffer.o fe-auth.o fe-misc.o fe-protocol2.o fe-secure.o \
+        $(filter getpeereid.o, $(LIBOBJS))
 
 fe-protocol3.c fe-connect.c fe-exec.c pqexpbuffer.c fe-auth.c fe-misc.c fe-protocol2.c fe-secure.c: % : $(top_srcdir)/src/interfaces/libpq/%
 	rm -f $@ && $(LN_S) $< .
@@ -36,12 +42,5 @@ clean distclean: clean-symlinks
 
 clean-symlinks:
 	rm -f fe-protocol3.c fe-connect.c fe-exec.c pqexpbuffer.c fe-auth.c fe-misc.c fe-protocol2.c fe-secure.c getpeereid.c
-=======
-       pqformat.o pqmq.o pqsignal.o
-
-ifeq ($(with_openssl),yes)
-OBJS += be-secure-openssl.o
-endif
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 include $(top_srcdir)/src/backend/common.mk
