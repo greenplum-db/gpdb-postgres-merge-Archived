@@ -33,11 +33,8 @@ static const char *const LockTagTypeNames[] = {
 	"tuple",
 	"transactionid",
 	"virtualxid",
-<<<<<<< HEAD
 	"append-only segment file",
-=======
 	"speculative token",
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	"object",
 	"resource queue",
 	"userlock",
