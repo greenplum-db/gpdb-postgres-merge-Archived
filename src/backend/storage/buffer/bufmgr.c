@@ -1595,15 +1595,6 @@ PinBuffer_Locked(volatile BufferDesc *buf)
 	int			b = buf->buf_id;
 	PrivateRefCountEntry *ref;
 
-<<<<<<< HEAD
-	if (PrivateRefCount[b] == 0)
-    {
-		buf->refcount++;
-#ifdef MPROTECT_BUFFERS
-		BufferMProtect(buf, PROT_READ);
-#endif
-    }
-=======
 	/*
 	 * As explained, We don't expect any preexisting pins. That allows us to
 	 * manipulate the PrivateRefCount after releasing the spinlock
@@ -1611,7 +1602,11 @@ PinBuffer_Locked(volatile BufferDesc *buf)
 	Assert(GetPrivateRefCountEntry(b + 1, false) == NULL);
 
 	buf->refcount++;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+#ifdef MPROTECT_BUFFERS
+	BufferMProtect(buf, PROT_READ);
+#endif
+
 	UnlockBufHdr(buf);
 
 	ref = NewPrivateRefCountEntry(b + 1);
