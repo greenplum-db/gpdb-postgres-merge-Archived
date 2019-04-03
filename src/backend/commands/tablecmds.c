@@ -8603,7 +8603,6 @@ ATExecSetStatistics(Relation rel, const char *colName, Node *newValue, LOCKMODE 
 
 	heap_close(attrelation, RowExclusiveLock);
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if ((Gp_role == GP_ROLE_DISPATCH)
 		&& MetaTrackValidKindNsp(rel->rd_rel))
@@ -8612,9 +8611,7 @@ ATExecSetStatistics(Relation rel, const char *colName, Node *newValue, LOCKMODE 
 						   GetUserId(),
 						   "ALTER", "ALTER COLUMN SET STATISTICS"
 				);
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -8774,7 +8771,6 @@ ATExecSetStorage(Relation rel, const char *colName, Node *newValue, LOCKMODE loc
 
 	heap_close(attrelation, RowExclusiveLock);
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if ((Gp_role == GP_ROLE_DISPATCH)
 		&& MetaTrackValidKindNsp(rel->rd_rel))
@@ -8783,11 +8779,10 @@ ATExecSetStorage(Relation rel, const char *colName, Node *newValue, LOCKMODE loc
 						   GetUserId(),
 						   "ALTER", "ALTER COLUMN SET STORAGE"
 				);
-=======
+
 	ObjectAddressSubSet(address, RelationRelationId,
 						RelationGetRelid(rel), attnum);
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 
@@ -9062,16 +9057,13 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 		tab->rewrite |= AT_REWRITE_ALTER_OID;
 	}
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if ((Gp_role == GP_ROLE_DISPATCH) && MetaTrackValidKindNsp(rel->rd_rel))
 		MetaTrackUpdObject(RelationRelationId,
 						   RelationGetRelid(rel),
 						   GetUserId(),
 						   "ALTER", "DROP COLUMN");
-=======
 	return object;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -9095,14 +9087,12 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	Assert(IsA(stmt, IndexStmt));
 	Assert(!stmt->concurrent);
 
-<<<<<<< HEAD
+	/* The IndexStmt has already been through transformIndexStmt */
+	Assert(stmt->transformed);
+
 	/* The index should already be built if we are a QE */
 	if (Gp_role == GP_ROLE_EXECUTE)
 		return;
-=======
-	/* The IndexStmt has already been through transformIndexStmt */
-	Assert(stmt->transformed);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* suppress schema rights check when rebuilding existing index */
 	check_rights = !is_rebuild;
@@ -9133,7 +9123,6 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 		index_close(irel, NoLock);
 	}
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if ((Gp_role == GP_ROLE_DISPATCH)
 		&& MetaTrackValidKindNsp(rel->rd_rel))
@@ -9141,9 +9130,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 						   RelationGetRelid(rel),
 						   GetUserId(),
 						   "ALTER", "ADD INDEX");
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -9207,23 +9194,9 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 		constraintType = CONSTRAINT_UNIQUE;
 
 	/* Create the catalog entries for the constraint */
-<<<<<<< HEAD
-	index_constraint_create(rel,
-							index_oid,
-							InvalidOid,
-							indexInfo,
-							constraintName,
-							constraintType,
-							stmt->deferrable,
-							stmt->initdeferred,
-							stmt->primary,
-							true,		/* update pg_index */
-							true,		/* remove old dependencies */
-							allowSystemTableMods,
-							false);		/* is_internal */
-=======
 	address = index_constraint_create(rel,
 									  index_oid,
+									  InvalidOid,
 									  indexInfo,
 									  constraintName,
 									  constraintType,
@@ -9234,7 +9207,6 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 									  true,		/* remove old dependencies */
 									  allowSystemTableMods,
 									  false);	/* is_internal */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	index_close(indexRel, NoLock);
 
@@ -9307,7 +9279,6 @@ ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				 (int) newConstraint->contype);
 	}
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if ((Gp_role == GP_ROLE_DISPATCH)
 		&& MetaTrackValidKindNsp(rel->rd_rel))
@@ -9317,9 +9288,7 @@ ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 						   "ALTER", "ADD CONSTRAINT"
 				);
 
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -9414,13 +9383,8 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	/*
 	 * If adding a NO INHERIT constraint, no need to find our children.
 	 */
-<<<<<<< HEAD
 	if (constr->is_no_inherit)
-		return;
-=======
-	if (constr->is_no_inherit || is_readd)
 		return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Propagate to children as appropriate.  Unlike most other ALTER
@@ -9999,7 +9963,6 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 
 		while (HeapTupleIsValid(tgtuple = systable_getnext(tgscan)))
 		{
-<<<<<<< HEAD
 			Form_pg_trigger tgform = (Form_pg_trigger) GETSTRUCT(tgtuple);
 			Form_pg_trigger copy_tg;
 
@@ -10028,18 +9991,6 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 			copyTuple = heap_copytuple(tgtuple);
 			copy_tg = (Form_pg_trigger) GETSTRUCT(copyTuple);
 
-=======
-			Form_pg_trigger copy_tg;
-
-			copyTuple = heap_copytuple(tgtuple);
-			copy_tg = (Form_pg_trigger) GETSTRUCT(copyTuple);
-
-			/* Remember OIDs of other relation(s) involved in FK constraint */
-			if (copy_tg->tgrelid != RelationGetRelid(rel))
-				otherrelids = list_append_unique_oid(otherrelids,
-													 copy_tg->tgrelid);
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			copy_tg->tgdeferrable = cmdcon->deferrable;
 			copy_tg->tginitdeferred = cmdcon->initdeferred;
 			simple_heap_update(tgrel, &copyTuple->t_self, copyTuple);
@@ -10066,12 +10017,9 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 		{
 			CacheInvalidateRelcacheByRelid(lfirst_oid(lc));
 		}
-<<<<<<< HEAD
-=======
 
 		ObjectAddressSet(address, ConstraintRelationId,
 						 HeapTupleGetOid(contuple));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	else
 		address = InvalidObjectAddress;
@@ -11323,7 +11271,6 @@ ATPrepAlterColumnType(List **wqueue,
 		 * we need the expression to be parsed against the original table row
 		 * type.
 		 */
-<<<<<<< HEAD
 		/*
 		 * GPDB: we always need the RTE. The main reason being to support
 		 * unknown to text implicit conversion for queries like
@@ -11349,21 +11296,7 @@ ATPrepAlterColumnType(List **wqueue,
 			addRTEtoQuery(pstate, rte, false, true, true);
 		}
 
-		if (transform)
-		{
-			transform = transformExpr(pstate, transform,
-									  EXPR_KIND_ALTER_COL_TRANSFORM);
-
-			/* It can't return a set */
-			if (expression_returns_set(transform))
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-					  errmsg("transform expression must not return a set")));
-		}
-		else
-=======
 		if (!transform)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		{
 			transform = (Node *) makeVar(1, attnum,
 										 attTup->atttypid, attTup->atttypmod,
@@ -11380,11 +11313,7 @@ ATPrepAlterColumnType(List **wqueue,
 		if (transform == NULL)
 		{
 			/* error text depends on whether USING was specified or not */
-<<<<<<< HEAD
-			if (def->raw_default != NULL)
-=======
 			if (def->cooked_default != NULL)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("result of USING clause for column \"%s\""
@@ -11540,11 +11469,8 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	ScanKeyData key[3];
 	SysScanDesc scan;
 	HeapTuple	depTup;
-<<<<<<< HEAD
-	bool		relContainsTuples = false;
-=======
 	ObjectAddress address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	bool		relContainsTuples = false;
 
 	attrelation = heap_open(AttributeRelationId, RowExclusiveLock);
 
@@ -12049,16 +11975,13 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	/* Cleanup */
 	heap_freetuple(heapTup);
 
-<<<<<<< HEAD
 	/* metadata tracking */
 	if ((Gp_role == GP_ROLE_DISPATCH) && MetaTrackValidKindNsp(rel->rd_rel))
 		MetaTrackUpdObject(RelationRelationId,
 						   RelationGetRelid(rel),
 						   GetUserId(),
 						   "ALTER", "ALTER COLUMN TYPE");
-=======
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -12911,7 +12834,6 @@ ATExecClusterOn(Relation rel, const char *indexName, LOCKMODE lockmode)
 	/* And do the work */
 	mark_index_clustered(rel, indexOid, false);
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if ((Gp_role == GP_ROLE_DISPATCH)
 		&& MetaTrackValidKindNsp(rel->rd_rel))
@@ -12920,12 +12842,11 @@ ATExecClusterOn(Relation rel, const char *indexName, LOCKMODE lockmode)
 						   GetUserId(),
 						   "ALTER", "CLUSTER ON"
 				);
-=======
+
 	ObjectAddressSet(address,
 					 RelationRelationId, indexOid);
 
 	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -13210,11 +13131,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("WITH CHECK OPTION is supported only on automatically updatable views"),
-<<<<<<< HEAD
 						 errhint("%s", _(view_updatable_error))));
-=======
-						 errhint("%s", view_updatable_error)));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 	}
 
@@ -13576,11 +13493,7 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 	HeapTuple	tuple;
 	Oid			orig_tablespaceoid;
 	Oid			new_tablespaceoid;
-<<<<<<< HEAD
-	List	   *role_oids = roleNamesToIds(stmt->roles);
-=======
 	List	   *role_oids = roleSpecsToIds(stmt->roles);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* Ensure we were not asked to move something we can't */
 	if (stmt->objtype != OBJECT_TABLE && stmt->objtype != OBJECT_INDEX &&
@@ -13721,8 +13634,10 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 
 		cmds = lappend(cmds, cmd);
 
-<<<<<<< HEAD
+		EventTriggerAlterTableStart((Node *) stmt);
+		/* OID is set by AlterTableInternal */
 		AlterTableInternal(lfirst_oid(l), cmds, false);
+		EventTriggerAlterTableEnd();
 	}
 
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -13733,12 +13648,6 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 									DF_NEED_TWO_PHASE,
 									NIL,
 									NULL);
-=======
-		EventTriggerAlterTableStart((Node *) stmt);
-		/* OID is set by AlterTableInternal */
-		AlterTableInternal(lfirst_oid(l), cmds, false);
-		EventTriggerAlterTableEnd();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	return new_tablespaceoid;
