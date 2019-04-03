@@ -2497,7 +2497,6 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				break;
 			case DCH_OF:
 				INVALID_FOR_INTERVAL;
-<<<<<<< HEAD
 				sprintf(s, "%c%0*d",
 						(tm->tm_gmtoff >= 0) ? '+' : '-',
 						S_FM(n->suffix) ? 0 : 2,
@@ -2507,13 +2506,6 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				{
 					sprintf(s, ":%02d",
 							(abs((int) tm->tm_gmtoff) % SECS_PER_HOUR) / SECS_PER_MINUTE);
-=======
-				sprintf(s, "%+0*d", S_FM(n->suffix) ? 0 : 3, (int) tm->tm_gmtoff / SECS_PER_HOUR);
-				s += strlen(s);
-				if ((int) tm->tm_gmtoff % SECS_PER_HOUR != 0)
-				{
-					sprintf(s, ":%02d", abs((int) tm->tm_gmtoff % SECS_PER_HOUR) / SECS_PER_MINUTE);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					s += strlen(s);
 				}
 				break;
@@ -2547,15 +2539,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					break;
 				if (S_TM(n->suffix))
 				{
-<<<<<<< HEAD
-					char *str = str_toupper_z(localized_full_months[tm->tm_mon - 1], collid);
-
-					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-=======
 					char	   *str = str_toupper_z(localized_full_months[tm->tm_mon - 1], collid);
 
 					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
@@ -2573,15 +2559,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					break;
 				if (S_TM(n->suffix))
 				{
-<<<<<<< HEAD
-					char *str = str_initcap_z(localized_full_months[tm->tm_mon - 1], collid);
-
-					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-=======
 					char	   *str = str_initcap_z(localized_full_months[tm->tm_mon - 1], collid);
 
 					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
@@ -2599,15 +2579,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					break;
 				if (S_TM(n->suffix))
 				{
-<<<<<<< HEAD
-					char *str = str_tolower_z(localized_full_months[tm->tm_mon - 1], collid);
-
-					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-=======
 					char	   *str = str_tolower_z(localized_full_months[tm->tm_mon - 1], collid);
 
 					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
@@ -2625,15 +2599,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					break;
 				if (S_TM(n->suffix))
 				{
-<<<<<<< HEAD
-					char *str = str_toupper_z(localized_abbrev_months[tm->tm_mon - 1], collid);
-
-					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-=======
 					char	   *str = str_toupper_z(localized_abbrev_months[tm->tm_mon - 1], collid);
 
 					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
@@ -2650,15 +2618,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					break;
 				if (S_TM(n->suffix))
 				{
-<<<<<<< HEAD
-					char *str = str_initcap_z(localized_abbrev_months[tm->tm_mon - 1], collid);
-
-					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-=======
 					char	   *str = str_initcap_z(localized_abbrev_months[tm->tm_mon - 1], collid);
 
 					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
@@ -2675,15 +2637,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					break;
 				if (S_TM(n->suffix))
 				{
-<<<<<<< HEAD
-					char *str = str_tolower_z(localized_abbrev_months[tm->tm_mon - 1], collid);
-
-					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-=======
 					char	   *str = str_tolower_z(localized_abbrev_months[tm->tm_mon - 1], collid);
 
 					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
@@ -2704,15 +2660,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
-<<<<<<< HEAD
-					char *str = str_toupper_z(localized_full_days[tm->tm_wday], collid);
-
-					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-=======
 					char	   *str = str_toupper_z(localized_full_days[tm->tm_wday], collid);
 
 					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
@@ -2728,15 +2678,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
-<<<<<<< HEAD
-					char *str = str_initcap_z(localized_full_days[tm->tm_wday], collid);
-
-					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-=======
 					char	   *str = str_initcap_z(localized_full_days[tm->tm_wday], collid);
 
 					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
@@ -2752,15 +2696,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
-<<<<<<< HEAD
-					char *str = str_tolower_z(localized_full_days[tm->tm_wday], collid);
-
-					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-=======
 					char	   *str = str_tolower_z(localized_full_days[tm->tm_wday], collid);
 
 					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
@@ -2776,15 +2714,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
-<<<<<<< HEAD
-					char *str = str_toupper_z(localized_abbrev_days[tm->tm_wday], collid);
-
-					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-=======
 					char	   *str = str_toupper_z(localized_abbrev_days[tm->tm_wday], collid);
 
 					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
@@ -2799,15 +2731,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
-<<<<<<< HEAD
-					char *str = str_initcap_z(localized_abbrev_days[tm->tm_wday], collid);
-
-					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-=======
 					char	   *str = str_initcap_z(localized_abbrev_days[tm->tm_wday], collid);
 
 					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
@@ -2822,15 +2748,9 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
 				{
-<<<<<<< HEAD
-					char *str = str_tolower_z(localized_abbrev_days[tm->tm_wday], collid);
-
-					if (strlen(str) < (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-=======
 					char	   *str = str_tolower_z(localized_abbrev_days[tm->tm_wday], collid);
 
 					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						strcpy(s, str);
 					else
 						ereport(ERROR,
@@ -4277,14 +4197,6 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 #define OVERLOAD_TEST	(Np->inout_p >= Np->inout + input_len)
 #define AMOUNT_TEST(_s) (input_len-(Np->inout_p-Np->inout) >= _s)
 
-<<<<<<< HEAD
-	if (OVERLOAD_TEST)
-		return;
-=======
-#define OVERLOAD_TEST	(Np->inout_p >= Np->inout + input_len)
-#define AMOUNT_TEST(_s) (input_len-(Np->inout_p-Np->inout) >= _s)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-
 	if (*Np->inout_p == ' ')
 		Np->inout_p++;
 
@@ -4422,11 +4334,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 		 * next char is not digit
 		 */
 		if (IS_LSIGN(Np->Num) && isread &&
-<<<<<<< HEAD
-			(Np->inout_p + 1) < Np->inout + input_len &&
-=======
 			(Np->inout_p + 1) <= Np->inout + input_len &&
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			!isdigit((unsigned char) *(Np->inout_p + 1)))
 		{
 			int			x;
