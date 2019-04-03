@@ -497,7 +497,6 @@ pg_ls_dir_1arg(PG_FUNCTION_ARGS)
 {
 	return pg_ls_dir(fcinfo);
 }
-<<<<<<< HEAD
 
 /* ------------------------------------
  * generic file handling functions
@@ -828,5 +827,3 @@ pg_file_length(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT64((int64) fst.st_size);
 }
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
