@@ -41,13 +41,11 @@ OBJS = acl.o arrayfuncs.o array_expanded.o array_selfuncs.o \
 
 like.o: like.c like_match.c
 
-<<<<<<< HEAD
+varlena.o: varlena.c levenshtein.c
+
 # GPDB additions
 OBJS +=	complex_type.o gp_dump_oids.o gp_optimizer_functions.o \
 	gp_partition_functions.o interpolate.o matrix.o \
 	pivot.o
-=======
-varlena.o: varlena.c levenshtein.c
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 include $(top_srcdir)/src/backend/common.mk
