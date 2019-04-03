@@ -565,10 +565,8 @@ ExecSupportsBackwardScan(Plan *node)
 			return ExecSupportsBackwardScan(((SubqueryScan *) node)->subplan) &&
 				TargetListSupportsBackwardScan(node->targetlist);
 
-<<<<<<< HEAD
 		case T_ShareInputScan:
 			return true;
-=======
 		case T_CustomScan:
 			{
 				uint32		flags = ((CustomScan *) node)->flags;
@@ -581,7 +579,6 @@ ExecSupportsBackwardScan(Plan *node)
 
 		case T_SampleScan:
 			return false;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		case T_Material:
 		case T_Sort:

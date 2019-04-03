@@ -30,14 +30,11 @@
 #include "nodes/nodeFuncs.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
 
 #include "cdb/cdbvars.h"
 #include "cdb/memquota.h"
 #include "executor/spi.h"
 #include "optimizer/var.h"              /* CDB: contain_ctid_var_reference() */
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 
 /*

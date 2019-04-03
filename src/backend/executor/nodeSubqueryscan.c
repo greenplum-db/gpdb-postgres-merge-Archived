@@ -57,6 +57,7 @@ SubqueryNext(SubqueryScanState *node)
 	 */
 	slot = ExecProcNode(node->subplan);
 
+
 	/*
 	 * We just return the subplan's result slot, rather than expending extra
 	 * cycles for ExecCopySlot().  (Our own ScanTupleSlot is used only for
@@ -67,7 +68,8 @@ SubqueryNext(SubqueryScanState *node)
 	 * a bit hokey to do this to the subplan's slot, but should be safe
 	 * enough.
 	 */
-<<<<<<< HEAD
+	if (!TupIsNull(slot))
+		slot = ExecMakeSlotContentsReadOnly(slot);
 
     /*
      * CDB: Label each row with a synthetic ctid if needed for subquery dedup.
@@ -77,10 +79,6 @@ SubqueryNext(SubqueryScanState *node)
     {
     	slot_set_ctid_from_fake(slot, &node->cdb_fake_ctid);
     }
-=======
-	if (!TupIsNull(slot))
-		slot = ExecMakeSlotContentsReadOnly(slot);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	return slot;
 }

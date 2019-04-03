@@ -587,17 +587,9 @@ ExecReScanMaterial(MaterialState *node)
 		if (outerPlan->chgParam != NULL ||
 			(node->eflags & EXEC_FLAG_REWIND) == 0)
 		{
-<<<<<<< HEAD
 			DestroyTupleStore(node);
-			if (node->ss.ps.lefttree->chgParam == NULL)
-				ExecReScan(node->ss.ps.lefttree);
-=======
-			tuplestore_end(node->tuplestorestate);
-			node->tuplestorestate = NULL;
 			if (outerPlan->chgParam == NULL)
 				ExecReScan(outerPlan);
-			node->eof_underlying = false;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 		else
 		{
@@ -655,7 +647,6 @@ ExecEagerFreeMaterial(MaterialState *node)
 	}
 }
 
-<<<<<<< HEAD
 void
 ExecSquelchMaterial(MaterialState *node)
 {
@@ -672,14 +663,5 @@ ExecSquelchMaterial(MaterialState *node)
 	{
 		ExecEagerFreeMaterial(node);
 		ExecSquelchNode(outerPlanState(node));
-=======
-		/*
-		 * if chgParam of subnode is not null then plan will be re-scanned by
-		 * first ExecProcNode.
-		 */
-		if (outerPlan->chgParam == NULL)
-			ExecReScan(outerPlan);
-		node->eof_underlying = false;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 }

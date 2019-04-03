@@ -42,15 +42,12 @@
 #include "access/tupconvert.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "cdb/cdbpartition.h"
 #include "cdb/cdbhash.h"
 #include "cdb/cdbvars.h"
 #include "cdb/partitionselection.h"
 #include "cdb/cdbutil.h"
 #include "commands/typecmds.h"
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "executor/execdebug.h"
 #include "executor/nodeAgg.h"
 #include "executor/nodeSubplan.h"
@@ -5445,34 +5442,11 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			break;
 		case T_GroupingFunc:
 			{
-<<<<<<< HEAD
-				GroupingFunc *gf = (GroupingFunc *)node;
-				GroupingFuncExprState *gstate = makeNode(GroupingFuncExprState);
-
-				gstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalGroupingFunc;
-				gstate->args = gf->args;
-				gstate->ngrpcols = gf->ngrpcols;
-				state = (ExprState *) gstate;
-			}
-			break;
-		case T_Grouping:
-			{
-				ExprState *gstate = makeNode(ExprState);
-				gstate->evalfunc = (ExprStateEvalFunc) ExecEvalGrouping;
-				state = (ExprState *) gstate;
-			}
-			break;
-		case T_GroupId:
-			{
-				ExprState *gstate = makeNode(ExprState);
-				gstate->evalfunc = (ExprStateEvalFunc) ExecEvalGroupId;
-				state = (ExprState *) gstate;
-=======
 				GroupingFunc *grp_node = (GroupingFunc *) node;
 				GroupingFuncExprState *grp_state = makeNode(GroupingFuncExprState);
 				Agg		   *agg = NULL;
 
-				if (!parent || !IsA(parent, AggState) ||!IsA(parent->plan, Agg))
+				if (!parent || !IsA(parent, AggState) || !IsA(parent->plan, Agg))
 					elog(ERROR, "parent of GROUPING is not Agg node");
 
 				grp_state->aggstate = (AggState *) parent;
@@ -5486,7 +5460,19 @@ ExecInitExpr(Expr *node, PlanState *parent)
 
 				state = (ExprState *) grp_state;
 				state->evalfunc = (ExprStateEvalFunc) ExecEvalGroupingFuncExpr;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+			}
+			break;
+		case T_GroupId:
+			{
+				GroupIdExprState *grp_state = makeNode(GroupIdExprState);
+
+				if (!parent || !IsA(parent, AggState) || !IsA(parent->plan, Agg))
+					elog(ERROR, "parent of GROUP_ID is not Agg node");
+
+				grp_state->aggstate = (AggState *) parent;
+
+				state = (ExprState *) grp_state;
+				state->evalfunc = (ExprStateEvalFunc) ExecEvalGroupIdExpr;
 			}
 			break;
 		case T_WindowFunc:

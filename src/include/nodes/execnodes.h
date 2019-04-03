@@ -906,6 +906,17 @@ typedef struct GroupingFuncExprState
 } GroupingFuncExprState;
 
 /* ----------------
+ *		GroupIdExprState node
+ *
+ * ----------------
+ */
+typedef struct GroupIdExprState
+{
+	ExprState	xprstate;
+	struct AggState *aggstate;
+} GroupIdExprState;
+
+/* ----------------
  *		WindowFuncExprState node
  * ----------------
  */

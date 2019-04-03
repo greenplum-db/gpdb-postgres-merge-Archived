@@ -1364,13 +1364,10 @@ ExecEndNode(PlanState *node)
 			ExecEndSeqScan((SeqScanState *) node);
 			break;
 
-<<<<<<< HEAD
 		case T_DynamicSeqScanState:
 			ExecEndDynamicSeqScan((DynamicSeqScanState *) node);
-=======
 		case T_SampleScanState:
 			ExecEndSampleScan((SampleScanState *) node);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			break;
 
 		case T_IndexScanState:

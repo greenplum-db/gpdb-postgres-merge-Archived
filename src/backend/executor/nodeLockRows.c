@@ -226,12 +226,8 @@ lnext:
 				}
 
 				/* updated, so fetch and lock the updated version */
-<<<<<<< HEAD
-				copyTuple = EvalPlanQualFetch(estate, erm->relation, lockmode, erm->noWait,
-=======
 				copyTuple = EvalPlanQualFetch(estate, erm->relation,
 											  lockmode, erm->waitPolicy,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 											  &hufd.ctid, hufd.xmax);
 
 				if (copyTuple == NULL)
@@ -245,42 +241,8 @@ lnext:
 				/* remember the actually locked tuple's TID */
 				tuple.t_self = copyTuple->t_self;
 
-<<<<<<< HEAD
-				/*
-				 * Need to run a recheck subquery.  Initialize EPQ state if we
-				 * didn't do so already.
-				 */
-				if (!epq_started)
-				{
-					ListCell   *lc2;
-
-					EvalPlanQualBegin(&node->lr_epqstate, estate);
-
-					/*
-					 * Ensure that rels with already-visited rowmarks are told
-					 * not to return tuples during the first EPQ test.  We can
-					 * exit this loop once it reaches the current rowmark;
-					 * rels appearing later in the list will be set up
-					 * correctly by the EvalPlanQualSetTuple call at the top
-					 * of the loop.
-					 */
-					foreach(lc2, node->lr_arowMarks)
-					{
-						ExecAuxRowMark *aerm2 = (ExecAuxRowMark *) lfirst(lc2);
-
-						if (lc2 == lc)
-							break;
-						EvalPlanQualSetTuple(&node->lr_epqstate,
-											 aerm2->rowmark->rti,
-											 NULL);
-					}
-
-					epq_started = true;
-				}
-=======
 				/* Save locked tuple for EvalPlanQual testing below */
 				*testTuple = copyTuple;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 				/* Remember we need to do EPQ testing */
 				epq_needed = true;

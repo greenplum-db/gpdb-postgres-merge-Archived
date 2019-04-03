@@ -364,7 +364,6 @@ ExecReScanSeqScan(SeqScanState *node)
 		elog(ERROR, "rescan called without scandesc");
 	ExecScanReScan((ScanState *) node);
 }
-<<<<<<< HEAD
 
 static void
 InitAOCSScanOpaque(SeqScanState *scanstate, Relation currentRelation)
@@ -397,5 +396,3 @@ InitAOCSScanOpaque(SeqScanState *scanstate, Relation currentRelation)
 	scanstate->ss_aocs_ncol = ncol;
 	scanstate->ss_aocs_proj = proj;
 }
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

@@ -1011,7 +1011,6 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext, QueryDesc *queryDesc
 	ListCell   *pvar;
 	ListCell   *l;
 	bool		found = false;
-<<<<<<< HEAD
 	ArrayBuildState *astate = NULL;
 	Size		savepeakspace = MemoryContextGetPeakSpace(planstate->state->es_query_cxt);
 
@@ -1077,9 +1076,7 @@ PG_TRY();
 			DtxContextInfo_RewindSegmateSync();
 		}
 	}
-=======
 	ArrayBuildStateAny *astate = NULL;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (subLinkType == ANY_SUBLINK ||
 		subLinkType == ALL_SUBLINK)
@@ -1303,7 +1300,6 @@ PG_CATCH();
 			shouldDispatch &&
 			queryDesc->estate->dispatcherState)
 		{
-<<<<<<< HEAD
 			/* Wait for all gangs to finish.  Cancel slowpokes. */
 			cdbdisp_cancelDispatch(queryDesc->estate->dispatcherState);
 
@@ -1311,18 +1307,6 @@ PG_CATCH();
 									 queryDesc->estate->dispatcherState->primaryResults,
 									 LocallyExecutingSliceIndex(queryDesc->estate),
 									 econtext->ecxt_estate->showstatctx);
-=======
-			/* For other sublink types, set all the output params to NULL */
-			foreach(l, subplan->setParam)
-			{
-				int			paramid = lfirst_int(l);
-				ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
-
-				prm->execPlan = NULL;
-				prm->value = (Datum) 0;
-				prm->isnull = true;
-			}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 	}
 

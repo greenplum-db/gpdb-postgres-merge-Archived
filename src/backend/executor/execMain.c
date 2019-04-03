@@ -3719,11 +3719,7 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
 	/*
 	 * Get and lock the updated version of the row; if fail, return NULL.
 	 */
-<<<<<<< HEAD
-	copyTuple = EvalPlanQualFetch(estate, relation, lockmode, false /* wait */,
-=======
 	copyTuple = EvalPlanQualFetch(estate, relation, lockmode, LockWaitBlock,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 								  tid, priorXmax);
 
 	if (copyTuple == NULL)
@@ -3782,11 +3778,7 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
  *	estate - executor state data
  *	relation - table containing tuple
  *	lockmode - requested tuple lock mode
-<<<<<<< HEAD
- *	noWait - wait mode to pass to heap_lock_tuple
-=======
  *	wait_policy - requested lock wait policy
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  *	*tid - t_ctid from the outdated tuple (ie, next updated version)
  *	priorXmax - t_xmax from the outdated tuple
  *
@@ -3802,12 +3794,8 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
  * but we use "int" to avoid having to include heapam.h in executor.h.
  */
 HeapTuple
-<<<<<<< HEAD
-EvalPlanQualFetch(EState *estate, Relation relation, int lockmode, bool noWait,
-=======
 EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 				  LockWaitPolicy wait_policy,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				  ItemPointer tid, TransactionId priorXmax)
 {
 	HeapTuple	copyTuple = NULL;

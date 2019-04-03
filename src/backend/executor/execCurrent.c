@@ -529,11 +529,8 @@ search_plan_tree(PlanState *node, Oid table_oid,
 			 * Relation scan nodes can all be treated alike
 			 */
 		case T_SeqScanState:
-<<<<<<< HEAD
 		case T_DynamicSeqScanState:
-=======
 		case T_SampleScanState:
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		case T_IndexScanState:
 		case T_DynamicIndexScanState:
 		case T_IndexOnlyScanState:
