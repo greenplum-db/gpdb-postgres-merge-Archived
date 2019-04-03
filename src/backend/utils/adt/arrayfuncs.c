@@ -1164,20 +1164,6 @@ array_out(PG_FUNCTION_ARGS)
 			overall_length += 2;
 		/* and the comma (or other typdelim delimiter) */
 		overall_length += 1;
-<<<<<<< HEAD
-
-		/* advance bitmap pointer if any */
-		if (bitmap)
-		{
-			bitmask <<= 1;
-			if (bitmask == 0x100 /* (1<<8) */)
-			{
-				bitmap++;
-				bitmask = 1;
-			}
-		}
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/*
@@ -1655,23 +1641,6 @@ array_send(PG_FUNCTION_ARGS)
 			pq_sendbytes(&buf, VARDATA(outputbytes),
 						 VARSIZE(outputbytes) - VARHDRSZ);
 			pfree(outputbytes);
-<<<<<<< HEAD
-
-			p = att_addlength_pointer(p, typlen, p);
-			p = (char *) att_align_nominal(p, typalign);
-		}
-
-		/* advance bitmap pointer if any */
-		if (bitmap)
-		{
-			bitmask <<= 1;
-			if (bitmask == 0x100 /* (1<<8) */)
-			{
-				bitmap++;
-				bitmask = 1;
-			}
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 	}
 
@@ -3270,20 +3239,6 @@ array_map(FunctionCallInfo fcinfo, Oid retType, ArrayMapState *amstate)
 						 errmsg("array size exceeds the maximum allowed (%d)",
 								(int) MaxAllocSize)));
 		}
-<<<<<<< HEAD
-
-		/* advance bitmap pointer if any */
-		if (bitmap)
-		{
-			bitmask <<= 1;
-			if (bitmask == 0x100 /* (1<<8) */)
-			{
-				bitmap++;
-				bitmask = 1;
-			}
-		}
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/* Allocate and initialize the result array */
@@ -3746,49 +3701,10 @@ array_eq(PG_FUNCTION_ARGS)
 			bool		oprresult;
 
 			/* Get elements, checking for NULL */
-<<<<<<< HEAD
-			if (bitmap1 && (*bitmap1 & bitmask) == 0)
-			{
-				isnull1 = true;
-				elt1 = (Datum) 0;
-			}
-			else
-			{
-				isnull1 = false;
-				elt1 = fetch_att(ptr1, typbyval, typlen);
-				ptr1 = att_addlength_pointer(ptr1, typlen, ptr1);
-				ptr1 = (char *) att_align_nominal(ptr1, typalign);
-			}
-
-			if (bitmap2 && (*bitmap2 & bitmask) == 0)
-			{
-				isnull2 = true;
-				elt2 = (Datum) 0;
-			}
-			else
-			{
-				isnull2 = false;
-				elt2 = fetch_att(ptr2, typbyval, typlen);
-				ptr2 = att_addlength_pointer(ptr2, typlen, ptr2);
-				ptr2 = (char *) att_align_nominal(ptr2, typalign);
-			}
-
-			/* advance bitmap pointers if any */
-			bitmask <<= 1;
-			if (bitmask == 0x100 /* (1<<8) */)
-			{
-				if (bitmap1)
-					bitmap1++;
-				if (bitmap2)
-					bitmap2++;
-				bitmask = 1;
-			}
-=======
 			elt1 = array_iter_next(&it1, &isnull1, i,
 								   typlen, typbyval, typalign);
 			elt2 = array_iter_next(&it2, &isnull2, i,
 								   typlen, typbyval, typalign);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			/*
 			 * We consider two NULLs equal; NULL and not-NULL are unequal.
@@ -3949,47 +3865,8 @@ array_cmp(FunctionCallInfo fcinfo)
 		int32		cmpresult;
 
 		/* Get elements, checking for NULL */
-<<<<<<< HEAD
-		if (bitmap1 && (*bitmap1 & bitmask) == 0)
-		{
-			isnull1 = true;
-			elt1 = (Datum) 0;
-		}
-		else
-		{
-			isnull1 = false;
-			elt1 = fetch_att(ptr1, typbyval, typlen);
-			ptr1 = att_addlength_pointer(ptr1, typlen, ptr1);
-			ptr1 = (char *) att_align_nominal(ptr1, typalign);
-		}
-
-		if (bitmap2 && (*bitmap2 & bitmask) == 0)
-		{
-			isnull2 = true;
-			elt2 = (Datum) 0;
-		}
-		else
-		{
-			isnull2 = false;
-			elt2 = fetch_att(ptr2, typbyval, typlen);
-			ptr2 = att_addlength_pointer(ptr2, typlen, ptr2);
-			ptr2 = (char *) att_align_nominal(ptr2, typalign);
-		}
-
-		/* advance bitmap pointers if any */
-		bitmask <<= 1;
-		if (bitmask == 0x100 /* (1<<8) */)
-		{
-			if (bitmap1)
-				bitmap1++;
-			if (bitmap2)
-				bitmap2++;
-			bitmask = 1;
-		}
-=======
 		elt1 = array_iter_next(&it1, &isnull1, i, typlen, typbyval, typalign);
 		elt2 = array_iter_next(&it2, &isnull2, i, typlen, typbyval, typalign);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/*
 		 * We consider two NULLs equal; NULL > not-NULL.
@@ -4276,31 +4153,7 @@ array_contain_compare(AnyArrayType *array1, AnyArrayType *array2, Oid collation,
 		bool		isnull1;
 
 		/* Get element, checking for NULL */
-<<<<<<< HEAD
-		if (bitmap1 && (*bitmap1 & bitmask) == 0)
-		{
-			isnull1 = true;
-			elt1 = (Datum) 0;
-		}
-		else
-		{
-			isnull1 = false;
-			elt1 = fetch_att(ptr1, typbyval, typlen);
-			ptr1 = att_addlength_pointer(ptr1, typlen, ptr1);
-			ptr1 = (char *) att_align_nominal(ptr1, typalign);
-		}
-
-		/* advance bitmap pointer if any */
-		bitmask <<= 1;
-		if (bitmask == 0x100 /* (1<<8) */)
-		{
-			if (bitmap1)
-				bitmap1++;
-			bitmask = 1;
-		}
-=======
 		elt1 = array_iter_next(&it1, &isnull1, i, typlen, typbyval, typalign);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/*
 		 * We assume that the comparison operator is strict, so a NULL can't
