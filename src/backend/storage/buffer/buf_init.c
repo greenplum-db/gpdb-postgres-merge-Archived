@@ -160,37 +160,6 @@ InitBufferPool(void)
 }
 
 /*
-<<<<<<< HEAD
- * Initialize access to shared buffer pool
- *
- * This is called during backend startup (whether standalone or under the
- * postmaster).  It sets up for this backend's access to the already-existing
- * buffer pool.
- *
- * NB: this is called before InitProcess(), so we do not have a PGPROC and
- * cannot do LWLockAcquire; hence we can't actually access stuff in
- * shared memory yet.  We are only initializing local data here.
- * (See also InitBufferPoolBackend, over in bufmgr.c.)
- */
-void
-InitBufferPoolAccess(void)
-{
-#ifdef MPROTECT_BUFFERS
-	ProtectMemoryPoolBuffers();
-#endif
-	/*
-	 * Allocate and zero local arrays of per-buffer info.
-	 */
-	PrivateRefCount = (int32 *) calloc(NBuffers, sizeof(int32));
-	if (!PrivateRefCount)
-		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-}
-
-/*
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * BufferShmemSize
  *
  * compute the size of shared memory for the buffer pool including
