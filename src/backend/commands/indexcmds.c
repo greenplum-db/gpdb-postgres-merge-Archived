@@ -649,17 +649,14 @@ DefineIndex(Oid relationId,
 	accessMethodId = HeapTupleGetOid(tuple);
 	accessMethodForm = (Form_pg_am) GETSTRUCT(tuple);
 
-<<<<<<< HEAD
 	if (accessMethodId == HASH_AM_OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("hash indexes are not supported")));
-=======
 	if (strcmp(accessMethodName, "hash") == 0 &&
 		RelationNeedsWAL(rel))
 		ereport(WARNING,
 				(errmsg("hash indexes are not WAL-logged and their use is discouraged")));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (stmt->unique && !accessMethodForm->amcanunique)
 		ereport(ERROR,
@@ -826,7 +823,7 @@ DefineIndex(Oid relationId,
 					 allowSystemTableMods,
 					 skip_build || stmt->concurrent,
 					 stmt->concurrent, !check_rights,
-<<<<<<< HEAD
+					 stmt->if_not_exists,
 					 &createdConstraintId);
 
 	if (shouldDispatch)
@@ -844,8 +841,7 @@ DefineIndex(Oid relationId,
 		/* Set indcheckxmin in the master, if it was set on any segment */
 		if (!indexInfo->ii_BrokenHotChain)
 			cdb_sync_indcheckxmin_with_segments(indexRelationId);
-=======
-					 stmt->if_not_exists);
+	}
 
 	ObjectAddressSet(address, RelationRelationId, indexRelationId);
 
@@ -853,7 +849,6 @@ DefineIndex(Oid relationId,
 	{
 		heap_close(rel, NoLock);
 		return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/* Add any requested comment */
@@ -1089,16 +1084,11 @@ DefineIndex(Oid relationId,
 	if (!stmt->concurrent)
 	{
 		/* Close the heap and we're done, in the non-concurrent case */
-<<<<<<< HEAD
 		if (need_longlock)
 			heap_close(rel, NoLock);
 		else
 			heap_close(rel, lockmode);
-		return indexRelationId;
-=======
-		heap_close(rel, NoLock);
 		return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/*
@@ -2214,28 +2204,20 @@ ChooseIndexColumnNames(List *indexElems)
  *		Recreate a specific index.
  */
 Oid
-<<<<<<< HEAD
 ReindexIndex(ReindexStmt *stmt)
-=======
-ReindexIndex(RangeVar *indexRelation, int options)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	Oid			indOid;
 	Oid			heapOid = InvalidOid;
 	Relation	irel;
 	char		persistence;
+	int 		options = stmt->options;
 
-<<<<<<< HEAD
-	/* lock level used here should match index lock reindex_index() */
-	indOid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
-=======
 	/*
 	 * Find and lock index, and check permissions on table; use callback to
 	 * obtain lock on table first, to avoid deadlock hazard.  The lock level
 	 * used here must match the index lock obtained in reindex_index().
 	 */
-	indOid = RangeVarGetRelidExtended(indexRelation, AccessExclusiveLock,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	indOid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
 									  false, false,
 									  RangeVarCallbackForReindexIndex,
 									  (void *) &heapOid);
@@ -2268,7 +2250,7 @@ ReindexIndex(RangeVar *indexRelation, int options)
  * QD/utility, and is not useful for QE.
  */
 static void
-ReindexRelationList(List *relids)
+ReindexRelationList(List *relids, int options)
 {
 	ListCell   *lc;
 
@@ -2312,7 +2294,7 @@ ReindexRelationList(List *relids)
 			/* perform reindex locally */
 			if (!reindex_relation(relid,
 								  REINDEX_REL_PROCESS_TOAST |
-								  REINDEX_REL_CHECK_CONSTRAINTS))
+								  REINDEX_REL_CHECK_CONSTRAINTS, options))
 				ereport(NOTICE,
 					(errmsg("table \"%s\" has no indexes",
 							RelationGetRelationName(rel))));
@@ -2403,15 +2385,12 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
  *		Recreate all indexes of a table (and of its toast table, if any)
  */
 Oid
-<<<<<<< HEAD
 ReindexTable(ReindexStmt *stmt)
-=======
-ReindexTable(RangeVar *relation, int options)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	MemoryContext	private_context, oldcontext;
 	List	   *prels = NIL, *relids = NIL;
 	ListCell   *lc;
+	int options = stmt->options;
 
 	Oid			heapOid;
 
@@ -2427,7 +2406,6 @@ ReindexTable(RangeVar *relation, int options)
 	heapOid = RangeVarGetRelidExtended(stmt->relation, ShareLock, false, false,
 									   RangeVarCallbackOwnsTable, NULL);
 
-<<<<<<< HEAD
 	/*
 	 * Gather child partition relations.
 	 */
@@ -2487,18 +2465,9 @@ ReindexTable(RangeVar *relation, int options)
 		ReleaseSysCache(tuple);
 	}
 
-	ReindexRelationList(relids);
+	ReindexRelationList(relids, options);
 
 	MemoryContextDelete(private_context);
-=======
-	if (!reindex_relation(heapOid,
-						  REINDEX_REL_PROCESS_TOAST |
-						  REINDEX_REL_CHECK_CONSTRAINTS,
-						  options))
-		ereport(NOTICE,
-				(errmsg("table \"%s\" has no indexes",
-						relation->relname)));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	return heapOid;
 }
@@ -2511,14 +2480,9 @@ ReindexTable(RangeVar *relation, int options)
  * separate transaction, so we can release the lock on it right away.
  * That means this must not be called within a user transaction block!
  */
-<<<<<<< HEAD
-Oid
-ReindexDatabase(ReindexStmt *stmt)
-=======
 void
 ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 					  int options)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 {
 	Oid			objectOid;
 	Relation	relationRelation;
@@ -2528,22 +2492,14 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	MemoryContext private_context;
 	MemoryContext old;
 	List	   *relids = NIL;
-<<<<<<< HEAD
-	bool do_system = stmt->do_system;
-	bool do_user = stmt->do_user;
-	const char *databaseName = stmt->name;
-
-	AssertArg(databaseName);
-	Assert(Gp_role != GP_ROLE_EXECUTE);
-=======
 	ListCell   *l;
 	int			num_keys;
 
+	Assert(Gp_role != GP_ROLE_EXECUTE);
 	AssertArg(objectName);
 	Assert(objectKind == REINDEX_OBJECT_SCHEMA ||
 		   objectKind == REINDEX_OBJECT_SYSTEM ||
 		   objectKind == REINDEX_OBJECT_DATABASE);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Get OID of object to reindex, being the database currently being used
@@ -2651,34 +2607,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	heap_endscan(scan);
 	heap_close(relationRelation, AccessShareLock);
 
-<<<<<<< HEAD
-	ReindexRelationList(relids);
-=======
-	/* Now reindex each rel in a separate transaction */
-	PopActiveSnapshot();
-	CommitTransactionCommand();
-	foreach(l, relids)
-	{
-		Oid			relid = lfirst_oid(l);
-
-		StartTransactionCommand();
-		/* functions in indexes may want a snapshot set */
-		PushActiveSnapshot(GetTransactionSnapshot());
-		if (reindex_relation(relid,
-							 REINDEX_REL_PROCESS_TOAST |
-							 REINDEX_REL_CHECK_CONSTRAINTS,
-							 options))
-
-			if (options & REINDEXOPT_VERBOSE)
-				ereport(INFO,
-						(errmsg("table \"%s.%s\" was reindexed",
-								get_namespace_name(get_rel_namespace(relid)),
-								get_rel_name(relid))));
-		PopActiveSnapshot();
-		CommitTransactionCommand();
-	}
-	StartTransactionCommand();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	ReindexRelationList(relids, options);
 
 	MemoryContextDelete(private_context);
 }
