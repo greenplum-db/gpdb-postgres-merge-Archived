@@ -16,11 +16,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
-<<<<<<< HEAD
-#include "catalog/pg_type.h"
-=======
 #include "utils/typcache.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 
 static Datum array_position_common(FunctionCallInfo fcinfo);
@@ -597,8 +593,6 @@ array_agg_finalfn(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(result);
 }
 
-<<<<<<< HEAD
-
 /* Greenplum Database Additions: */
 
 
@@ -825,7 +819,8 @@ void accumToArray(int rank, int *rshape, int *rdata, int *ashape, int *adata)
 			j = j * rshape[k] + m[k];
 	}
 	while ( d >= 0 );
-=======
+}
+
 /*
  * ARRAY_AGG(anyarray) aggregate function
  */
@@ -1194,5 +1189,4 @@ array_positions(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(array, 0);
 
 	PG_RETURN_DATUM(makeArrayResult(astate, CurrentMemoryContext));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
