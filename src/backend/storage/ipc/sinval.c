@@ -43,18 +43,10 @@ uint64		SharedInvalidMessageCounter;
  * interrupted while doing so, ProcessClientReadInterrupt() will call
  * ProcessCatchupEvent().
  */
-<<<<<<< HEAD
-static volatile int catchupInterruptEnabled = 0;
-static volatile int catchupInterruptOccurred = 0;
+volatile sig_atomic_t catchupInterruptPending = false;
 
 /* Are we currently processing a catchup event? */
 volatile int in_process_catchup_event = 0;
-
-static void ProcessCatchupEvent(void);
-=======
-volatile sig_atomic_t catchupInterruptPending = false;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-
 
 /*
  * SendSharedInvalidMessages
@@ -194,6 +186,15 @@ ProcessCatchupInterrupt(void)
 	while (catchupInterruptPending)
 	{
 		/*
+		 * Funny indentation to keep the code inside identical to upstream
+		 * while at the same time supporting CMockery which has problems with
+		 * multiple bracing on column 1.
+		 */
+		PG_TRY();
+		{
+		in_process_catchup_event = 1;
+
+		/*
 		 * What we need to do here is cause ReceiveSharedInvalidMessages() to
 		 * run, which will do the necessary work and also reset the
 		 * catchupInterruptPending flag.  If we are inside a transaction we
@@ -217,109 +218,14 @@ ProcessCatchupInterrupt(void)
 			StartTransactionCommand();
 			CommitTransactionCommand();
 		}
-	}
-}
-<<<<<<< HEAD
 
-/*
- * DisableCatchupInterrupt
- *
- * This is called by the PostgresMain main loop just after receiving
- * a frontend command.  Signal handler execution of catchup events
- * is disabled until the next EnableCatchupInterrupt call.
- *
- * The PROCSIG_NOTIFY_INTERRUPT signal handler also needs to call this,
- * so as to prevent conflicts if one signal interrupts the other.  So we
- * must return the previous state of the flag.
- */
-bool
-DisableCatchupInterrupt(void)
-{
-	bool		result = (catchupInterruptEnabled != 0);
-
-	catchupInterruptEnabled = 0;
-
-	return result;
-}
-
-/*
- * ProcessCatchupEvent
- *
- * Respond to a catchup event (PROCSIG_CATCHUP_INTERRUPT) from another
- * backend.
- *
- * This is called either directly from the PROCSIG_CATCHUP_INTERRUPT
- * signal handler, or the next time control reaches the outer idle loop
- * (assuming there's still anything to do by then).
- */
-static void
-ProcessCatchupEvent(void)
-{
-	bool		notify_enabled;
-	bool		client_wait_timeout_enabled;
-	DtxContext  saveDistributedTransactionContext;
-
-	/*
-	 * Funny indentation to keep the code inside identical to upstream
-	 * while at the same time supporting CMockery which has problems with
-	 * multiple bracing on column 1.
-	 */
-	PG_TRY();
-	{
-	in_process_catchup_event = 1;
-
-	/* Must prevent notify and SIGALRM(for IdleSessionGangTimeout) interrupt while I am running */
-	notify_enabled = DisableNotifyInterrupt();
-	client_wait_timeout_enabled = DisableClientWaitTimeoutInterrupt();
-
-	/*
-	 * What we need to do here is cause ReceiveSharedInvalidMessages() to run,
-	 * which will do the necessary work and also reset the
-	 * catchupInterruptOccurred flag.  If we are inside a transaction we can
-	 * just call AcceptInvalidationMessages() to do this.  If we aren't, we
-	 * start and immediately end a transaction; the call to
-	 * AcceptInvalidationMessages() happens down inside transaction start.
-	 *
-	 * It is awfully tempting to just call AcceptInvalidationMessages()
-	 * without the rest of the xact start/stop overhead, and I think that
-	 * would actually work in the normal case; but I am not sure that things
-	 * would clean up nicely if we got an error partway through.
-	 */
-	if (IsTransactionOrTransactionBlock())
-	{
-		elog(DEBUG1, "ProcessCatchupEvent inside transaction");
-		AcceptInvalidationMessages();
-	}
-	else
-	{
-		elog(DEBUG1, "ProcessCatchupEvent outside transaction");
-
-		/*
-		 * Save distributed transaction context first.
-		 */
-		saveDistributedTransactionContext = DistributedTransactionContext;
-		DistributedTransactionContext = DTX_CONTEXT_LOCAL_ONLY;
-
-		StartTransactionCommand();
-		CommitTransactionCommand();
-
-		DistributedTransactionContext = saveDistributedTransactionContext;
-	}
-
-	if (notify_enabled)
-		EnableNotifyInterrupt();
-
-	if (client_wait_timeout_enabled)
-		EnableClientWaitTimeoutInterrupt();
-
-	in_process_catchup_event = 0;
-	}
-	PG_CATCH();
-	{
 		in_process_catchup_event = 0;
-		PG_RE_THROW();
+		}
+		PG_CATCH();
+		{
+			in_process_catchup_event = 0;
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
 	}
-	PG_END_TRY();
 }
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
