@@ -2668,7 +2668,7 @@ dumpPreassignedOidArchiveEntry(Archive *fout, BinaryUpgradeInfo *binfo)
 	setoidquery = createPQExpBuffer();
 
 	appendPQExpBufferStr(setoidquery,
-						 "-- Placeholder for binary_upgrade.set_preassigned_oids()\n\n");
+						 "-- Placeholder for binary_upgrade_set_preassigned_oids()\n\n");
 
 	maxoidid.oid = 0;
 	maxoidid.tableoid = 0;
@@ -2706,7 +2706,7 @@ dumpPreassignedOidDefinition(Archive *fout, BinaryUpgradeInfo *binfo)
 	setoidquery = createPQExpBuffer();
 
 	appendPQExpBufferStr(setoidquery,
-						 "SELECT binary_upgrade.set_preassigned_oids(ARRAY[");
+						 "SELECT binary_upgrade_set_preassigned_oids(ARRAY[");
 	for (cell = preassigned_oids.head; cell; cell = cell->next)
 	{
 		appendPQExpBuffer(setoidquery, "%u%s",
@@ -3654,7 +3654,7 @@ binary_upgrade_set_namespace_oid(Archive *fout, PQExpBuffer upgrade_buffer,
 	simple_oid_list_append(&preassigned_oids, pg_namespace_oid);
 	appendPQExpBuffer(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_namespace oid\n");
 	appendPQExpBuffer(upgrade_buffer,
-	 "SELECT binary_upgrade.set_next_pg_namespace_oid('%u'::pg_catalog.oid, "
+	 "SELECT binary_upgrade_set_next_pg_namespace_oid('%u'::pg_catalog.oid, "
 													 "$$%s$$::text);\n\n",
 					  pg_namespace_oid, pg_nspname);
 	PQclear(upgrade_res);
