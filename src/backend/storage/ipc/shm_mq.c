@@ -808,19 +808,6 @@ shm_mq_send_bytes(shm_mq_handle *mqh, Size nbytes, const void *data,
 			{
 				if (shm_mq_counterparty_gone(mq, mqh->mqh_handle))
 				{
-<<<<<<< HEAD
-=======
-					if (shm_mq_get_receiver(mq) == NULL)
-					{
-						*bytes_written = sent;
-						return SHM_MQ_WOULD_BLOCK;
-					}
-				}
-				else if (!shm_mq_wait_internal(mq, &mq->mq_receiver,
-											   mqh->mqh_handle))
-				{
-					mq->mq_detached = true;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 					*bytes_written = sent;
 					return SHM_MQ_DETACHED;
 				}
