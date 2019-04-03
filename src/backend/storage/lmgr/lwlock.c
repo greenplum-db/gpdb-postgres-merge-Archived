@@ -140,20 +140,8 @@ static LWLockTranche MainLWLockTranche;
  * occasionally the number can be much higher; for example, the pg_buffercache
  * extension locks all buffer partitions simultaneously.
  */
-<<<<<<< HEAD
-#define MAX_SIMUL_LWLOCKS	100
-#define MAX_FRAME_DEPTH  	64
-
-static int	num_held_lwlocks = 0;
-static LWLock *held_lwlocks[MAX_SIMUL_LWLOCKS];
-static bool held_lwlocks_exclusive[MAX_SIMUL_LWLOCKS];
-
-#ifdef USE_TEST_UTILS_X86
-static void *held_lwlocks_addresses[MAX_SIMUL_LWLOCKS][MAX_FRAME_DEPTH];
-static int32 held_lwlocks_depth[MAX_SIMUL_LWLOCKS];
-#endif /* USE_TEST_UTILS_X86 */
-=======
 #define MAX_SIMUL_LWLOCKS	200
+#define MAX_FRAME_DEPTH  	64
 
 /* struct representing the LWLocks we're holding */
 typedef struct LWLockHandle
@@ -164,7 +152,11 @@ typedef struct LWLockHandle
 
 static int	num_held_lwlocks = 0;
 static LWLockHandle held_lwlocks[MAX_SIMUL_LWLOCKS];
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+#ifdef USE_TEST_UTILS_X86
+static void *held_lwlocks_addresses[MAX_SIMUL_LWLOCKS][MAX_FRAME_DEPTH];
+static int32 held_lwlocks_depth[MAX_SIMUL_LWLOCKS];
+#endif /* USE_TEST_UTILS_X86 */
 
 static int	lock_addin_request = 0;
 static bool lock_addin_request_allowed = true;
@@ -592,7 +584,7 @@ LWLockTryLockWaiting(
 				
 				count += sprintf(&buffer[count],
 							    "lockid %d",
-							    held_lwlocks[l]);
+							    held_lwlocks[l].lock);
 			}
 			if (num_held_lwlocks > 0)
 				count += sprintf(&buffer[count],")");
@@ -1012,15 +1004,8 @@ LWLockAcquireWithVar(LWLock *l, uint64 *valptr, uint64 val)
 
 /* internal function to implement LWLockAcquire and LWLockAcquireWithVar */
 static inline bool
-<<<<<<< HEAD
-LWLockAcquireCommon(LWLock *l, LWLockMode mode, uint64 *valptr, uint64 val)
-{
-	volatile LWLock *lock = l;
-	volatile uint64 *valp = valptr;
-=======
 LWLockAcquireCommon(LWLock *lock, LWLockMode mode, uint64 *valptr, uint64 val)
 {
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	PGPROC	   *proc = MyProc;
 	bool		result = true;
 	int			extraWaits = 0;
@@ -1137,14 +1122,14 @@ LWLockAcquireCommon(LWLock *lock, LWLockMode mode, uint64 *valptr, uint64 val)
 		lwstats->block_count++;
 #endif
 
-<<<<<<< HEAD
 		for (c = 0; c < num_held_lwlocks; c++)
 		{
-			if (held_lwlocks[c] == lock  )
+			if (held_lwlocks[c].lock == lock  )
 				elog(PANIC, "Waiting on lock already held!");
 		}
 
-		TRACE_POSTGRESQL_LWLOCK_WAIT_START(T_NAME(l), T_ID(l), mode);
+
+		TRACE_POSTGRESQL_LWLOCK_WAIT_START(T_NAME(lock), T_ID(lock), mode);
 
 		for (;;)
 		{
@@ -1154,13 +1139,6 @@ LWLockAcquireCommon(LWLock *lock, LWLockMode mode, uint64 *valptr, uint64 val)
 #else
 			LWLockTryLockWaiting(proc, lockid, mode);
 #endif
-=======
-		TRACE_POSTGRESQL_LWLOCK_WAIT_START(T_NAME(lock), T_ID(lock), mode);
-
-		for (;;)
-		{
-			PGSemaphoreLock(&proc->sem);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			if (!proc->lwWaiting)
 				break;
 			extraWaits++;
@@ -1187,8 +1165,8 @@ LWLockAcquireCommon(LWLock *lock, LWLockMode mode, uint64 *valptr, uint64 val)
 	}
 
 	/* If there's a variable associated with this lock, initialize it */
-	if (valp)
-		*valp = val;
+	if (valptr)
+		*valptr = val;
 
 	TRACE_POSTGRESQL_LWLOCK_ACQUIRE(T_NAME(lock), T_ID(lock), mode);
 
@@ -1199,13 +1177,8 @@ LWLockAcquireCommon(LWLock *lock, LWLockMode mode, uint64 *valptr, uint64 val)
 #endif /* USE_TEST_UTILS_X86 */
 
 	/* Add lock to list of locks held by this backend */
-<<<<<<< HEAD
-	held_lwlocks_exclusive[num_held_lwlocks] = (mode == LW_EXCLUSIVE);
-	held_lwlocks[num_held_lwlocks++] = l;
-=======
 	held_lwlocks[num_held_lwlocks].lock = lock;
 	held_lwlocks[num_held_lwlocks++].mode = mode;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Fix the process wait semaphore's count for any absorbed wakeups.
@@ -1263,15 +1236,9 @@ LWLockConditionalAcquire(LWLock *lock, LWLockMode mode)
 #endif /* USE_TEST_UTILS_X86 */
 
 		/* Add lock to list of locks held by this backend */
-<<<<<<< HEAD
-		held_lwlocks_exclusive[num_held_lwlocks] = (mode == LW_EXCLUSIVE);
-		held_lwlocks[num_held_lwlocks++] = l;
-		TRACE_POSTGRESQL_LWLOCK_CONDACQUIRE(T_NAME(l), T_ID(l), mode);
-=======
 		held_lwlocks[num_held_lwlocks].lock = lock;
 		held_lwlocks[num_held_lwlocks++].mode = mode;
 		TRACE_POSTGRESQL_LWLOCK_CONDACQUIRE(T_NAME(lock), T_ID(lock), mode);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	return !mustwait;
 }
@@ -1501,24 +1468,6 @@ LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval)
 		 * the same twice-in-a-row lock acquisition protocol as
 		 * LWLockAcquire(). Check its comments for details.
 		 */
-<<<<<<< HEAD
-		proc->lwWaiting = true;
-		proc->lwWaitMode = LW_WAIT_UNTIL_FREE;
-		/* waiters are added to the front of the queue */
-		proc->lwWaitLink = lock->head;
-		if (lock->head == NULL)
-			lock->tail = proc;
-		lock->head = proc;
-
-		/*
-		 * Set releaseOK, to make sure we get woken up as soon as the lock is
-		 * released.
-		 */
-		lock->releaseOK = true;
-
-		/* Can release the mutex now */
-		SpinLockRelease(&lock->mutex);
-=======
 		LWLockQueueSelf(lock, LW_WAIT_UNTIL_FREE);
 
 		/*
@@ -1541,7 +1490,6 @@ LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval)
 			LWLockDequeueSelf(lock);
 			break;
 		}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/*
 		 * Wait until awakened.
@@ -1666,15 +1614,6 @@ LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 val)
 	 */
 	dlist_foreach_modify(iter, &wakeup)
 	{
-<<<<<<< HEAD
-		proc = head;
-		head = proc->lwWaitLink;
-		proc->lwWaitLink = NULL;
-		/* check comment in LWLockRelease() about this barrier */
-		pg_write_barrier();
-		proc->lwWaiting = false;
-		PGSemaphoreUnlock(&proc->sem);
-=======
 		PGPROC	   *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
 
 		dlist_delete(&waiter->lwWaitLink);
@@ -1682,7 +1621,6 @@ LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 val)
 		pg_write_barrier();
 		waiter->lwWaiting = false;
 		PGSemaphoreUnlock(&waiter->sem);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 }
 
@@ -1715,7 +1653,6 @@ LWLockRelease(LWLock *lock)
 	num_held_lwlocks--;
 	for (; i < num_held_lwlocks; i++)
 	{
-		held_lwlocks_exclusive[i] = held_lwlocks_exclusive[i + 1];
 		held_lwlocks[i] = held_lwlocks[i + 1];
 #ifdef USE_TEST_UTILS_X86
 		/* shift stack traces */
@@ -1731,8 +1668,7 @@ LWLockRelease(LWLock *lock)
 	}
 
 	// Clear out old last entry.
-	held_lwlocks_exclusive[num_held_lwlocks] = false;
-	held_lwlocks[num_held_lwlocks] = 0;
+	held_lwlocks[num_held_lwlocks].lock = 0;
 #ifdef USE_TEST_UTILS_X86
 	held_lwlocks_depth[num_held_lwlocks] = 0;
 #endif /* USE_TEST_UTILS_X86 */
@@ -1769,29 +1705,9 @@ LWLockRelease(LWLock *lock)
 	 */
 	if (check_waiters)
 	{
-<<<<<<< HEAD
-		LOG_LWDEBUG("LWLockRelease", T_NAME(l), T_ID(l), "release waiter");
-		proc = head;
-		head = proc->lwWaitLink;
-		proc->lwWaitLink = NULL;
-		/*
-		 * Guarantee that lwWaiting being unset only becomes visible once the
-		 * unlink from the link has completed. Otherwise the target backend
-		 * could be woken up for other reason and enqueue for a new lock - if
-		 * that happens before the list unlink happens, the list would end up
-		 * being corrupted.
-		 *
-		 * The barrier pairs with the SpinLockAcquire() when enqueing for
-		 * another lock.
-		 */
-		pg_write_barrier();
-		proc->lwWaiting = false;
-		PGSemaphoreUnlock(&proc->sem);
-=======
 		/* XXX: remove before commit? */
 		LOG_LWDEBUG("LWLockRelease", lock, "releasing waiters");
 		LWLockWakeup(lock);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	TRACE_POSTGRESQL_LWLOCK_RELEASE(T_NAME(lock), T_ID(lock));
@@ -1856,8 +1772,8 @@ LWLockHeldExclusiveByMe(LWLockId lockid)
 
 	for (i = 0; i < num_held_lwlocks; i++)
 	{
-		if (held_lwlocks[i] == lockid &&
-			held_lwlocks_exclusive[i])
+		if (held_lwlocks[i].lock == lockid &&
+			held_lwlocks[i].mode == LW_EXCLUSIVE)
 			return true;
 	}
 	return false;
@@ -1877,7 +1793,7 @@ LWLocksHeld()
 
 	for (i = 0; i < num_held_lwlocks; i++)
 	{
-		if (LWLOCK_IS_PREDEFINED(held_lwlocks[i]))
+		if (LWLOCK_IS_PREDEFINED(held_lwlocks[i].lock))
 		{
 			locks++;
 		}
@@ -1901,7 +1817,7 @@ LWLockHeldLatestId()
 	{
 		if (LWLOCK_IS_PREDEFINED(held_lwlocks[i - 1]))
 		{
-			return held_lwlocks[i - 1];
+			return held_lwlocks[i - 1].lock;
 		}
 	}
 
@@ -1922,7 +1838,7 @@ LWLockHeldLatestCaller()
 
 	for (i = num_held_lwlocks; i > 0; i--)
 	{
-		if (LWLOCK_IS_PREDEFINED(held_lwlocks[i - 1]))
+		if (LWLOCK_IS_PREDEFINED(held_lwlocks[i - 1].lock))
 		{
 			return held_lwlocks_addresses[i - 1][1];
 		}
@@ -1950,12 +1866,12 @@ LWLocksHeldStackTraces()
 	/* append stack trace for each held lock */
 	for (i = 0; i < num_held_lwlocks; i++)
 	{
-		if (!LWLOCK_IS_PREDEFINED(held_lwlocks[i]))
+		if (!LWLOCK_IS_PREDEFINED(held_lwlocks[i].lock))
 		{
 			continue;
 		}
 
-		appendStringInfo(append, "%d: LWLock %d:\n", cnt++, held_lwlocks[i] );
+		appendStringInfo(append, "%d: LWLock %d:\n", cnt++, held_lwlocks[i].lock );
 
 		char *stackTrace =
 				gp_stacktrace(held_lwlocks_addresses[i], held_lwlocks_depth[i]);
