@@ -8904,13 +8904,9 @@ get_windowfunc_expr(WindowFunc *wfunc, deparse_context *context)
 	appendStringInfo(buf, "%s(%s",
 					 generate_function_name(wfunc->winfnoid, nargs,
 											argnames, argtypes,
-<<<<<<< HEAD
-											false, NULL),
-					 wfunc->windistinct ? "DISTINCT " : "");
-=======
 											false, NULL,
-											context->special_exprkind));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+											context->special_exprkind),
+					 wfunc->windistinct ? "DISTINCT " : "");
 	/* winstar can be set only in zero-argument aggregates */
 	if (wfunc->winstar)
 		appendStringInfoChar(buf, '*');
