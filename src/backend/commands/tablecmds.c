@@ -5861,13 +5861,10 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 		}
 
 		/*
-<<<<<<< HEAD
 		 * 'OldHeap' can be an AO or external table, but kept the upstream variable name
 		 * to minimize the diff.
 		 */
 		Relation	OldHeap;
-		Oid			newTableSpace;
-		Oid 		oldTableSpace;
 		bool		hasIndexes;
 
 		/* We will lock the table iff we decide to actually rewrite it */
@@ -5878,31 +5875,9 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 			continue;
 		}
 
-		oldTableSpace = OldHeap->rd_rel->reltablespace;
-		newTableSpace = tab->newTableSpace ? tab->newTableSpace : oldTableSpace;
 		relstorage    = OldHeap->rd_rel->relstorage;
 		{
 			List	   *indexIds;
-=======
-		 * We only need to rewrite the table if at least one column needs to
-		 * be recomputed, we are adding/removing the OID column, or we are
-		 * changing its persistence.
-		 *
-		 * There are two reasons for requiring a rewrite when changing
-		 * persistence: on one hand, we need to ensure that the buffers
-		 * belonging to each of the two relations are marked with or without
-		 * BM_PERMANENT properly.  On the other hand, since rewriting creates
-		 * and assigns a new relfilenode, we automatically create or drop an
-		 * init fork for the relation as appropriate.
-		 */
-		if (tab->rewrite > 0)
-		{
-			/* Build a temporary relation and copy data */
-			Relation	OldHeap;
-			Oid			OIDNewHeap;
-			Oid			NewTableSpace;
-			char		persistence;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 			indexIds = RelationGetIndexList(OldHeap);
 			hasIndexes = (indexIds != NIL);
@@ -5949,7 +5924,6 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 			 * ADD COLUMN for CO can be optimized only if it is the
 			 * only subcommand being performed.
 			 */
-<<<<<<< HEAD
 			bool canOptimize = true;
 			for (int i=0; i < AT_NUM_PASSES && canOptimize; ++i)
 			{
@@ -5961,17 +5935,26 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 		}
 		/*
 		 * We only need to rewrite the table if at least one column needs to
-		 * be recomputed, or we are removing the OID column.
+		 * be recomputed, we are adding/removing the OID column, or we are
+		 * changing its persistence.
+		 *
+		 * There are two reasons for requiring a rewrite when changing
+		 * persistence: on one hand, we need to ensure that the buffers
+		 * belonging to each of the two relations are marked with or without
+		 * BM_PERMANENT properly.  On the other hand, since rewriting creates
+		 * and assigns a new relfilenode, we automatically create or drop an
+		 * init fork for the relation as appropriate.
 		 */
-		if (tab->rewrite)
+		if (tab->rewrite > 0)
 		{
 			/* Build a temporary relation and copy data */
-			Oid         OIDNewHeap;
+			Oid			OIDNewHeap;
+			Oid			NewTableSpace;
 
-			/* Create transient table that will receive the modified data */
-			OIDNewHeap = make_new_heap(tab->relid, newTableSpace, false,
-									   lockmode, hasIndexes);
-=======
+			/*
+			 * Select destination tablespace (same as original unless user
+			 * requested a change)
+			 */
 			if (tab->newTableSpace)
 				NewTableSpace = tab->newTableSpace;
 			else
@@ -6017,8 +6000,7 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 			 * unlogged anyway.
 			 */
 			OIDNewHeap = make_new_heap(tab->relid, NewTableSpace, persistence,
-									   lockmode);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+									   lockmode, hasIndexes);
 
 			/*
 			 * Copy the heap data into the new table with the desired
@@ -6653,7 +6635,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		snapshot = RegisterSnapshot(GetLatestSnapshot());
 		if (relstorage == RELSTORAGE_HEAP)
 		{
-<<<<<<< HEAD
 			heapscan = heap_beginscan(oldrel, snapshot, 0, NULL);
 
 			/*
@@ -6663,11 +6644,8 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 			oldCxt = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 
 			while ((htuple = heap_getnext(heapscan, ForwardScanDirection)) != NULL)
-=======
-			if (tab->rewrite > 0)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			{
-				if (tab->rewrite)
+				if (tab->rewrite > 0)
 				{
 					Oid			tupOid = InvalidOid;
 
@@ -7618,8 +7596,7 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 	if (rel->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
 		ATTypedTableRecursion(wqueue, rel, cmd, lockmode);
 
-<<<<<<< HEAD
-	if (recurse)
+	if (recurse && !is_view)
 	{
 		if (cmd->subtype == AT_AddColumn || cmd->subtype == AT_AddColumnRecurse)
 			cmd->subtype = AT_AddColumnRecurse;
@@ -7631,10 +7608,6 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 			elog(ERROR, "unexpected ALTER TABLE subtype %d in ADD COLUMN command",
 				 cmd->subtype);
 	}
-=======
-	if (recurse && !is_view)
-		cmd->subtype = AT_AddColumnRecurse;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -8346,7 +8319,6 @@ ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 /*
  * ALTER TABLE ALTER COLUMN SET/DROP DEFAULT
  *
-<<<<<<< HEAD
  * ATPrepColumnDefault: Find child relations
  * 	and create synthetic Alter Table Alter Column Set Default query
  * 	to add default to them.
@@ -8434,12 +8406,12 @@ ATPrepColumnDefault(Relation rel, bool recurse, AlterTableCmd *cmd)
 	}
 }
 
-static void
-=======
+/*
+ * ALTER TABLE ALTER COLUMN SET/DROP DEFAULT
+ *
  * Return the address of the affected column.
  */
 static ObjectAddress
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 ATExecColumnDefault(Relation rel, const char *colName,
 					ColumnDef *colDef, LOCKMODE lockmode)
 {
@@ -11348,8 +11320,7 @@ ATPrepAlterColumnType(List **wqueue,
 
 		tab->newvals = lappend(tab->newvals, newval);
 		if (ATColumnChangeRequiresRewrite(transform, attnum))
-<<<<<<< HEAD
-			tab->rewrite = true;
+			tab->rewrite |= AT_REWRITE_COLUMN_REWRITE;
 
 		/*
 		 * If the column is part of the distribution key, and the new opclass is not
@@ -11359,7 +11330,7 @@ ATPrepAlterColumnType(List **wqueue,
 		 * the table randomly distributed.)
 		 */
 		if (old_opfamily != new_opfamily && new_opfamily != InvalidOid)
-			tab->rewrite = true;
+			tab->rewrite |= AT_REWRITE_COLUMN_REWRITE;
 	}
 	else if (transform &&
 			 rel->rd_rel->relstorage == RELSTORAGE_EXTERNAL)
@@ -11368,9 +11339,6 @@ ATPrepAlterColumnType(List **wqueue,
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("cannot specify a USING expression when altering an external table")));
-=======
-			tab->rewrite |= AT_REWRITE_COLUMN_REWRITE;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	else if (transform)
 		ereport(ERROR,
@@ -13810,14 +13778,17 @@ ATPrepAddInherit(Relation child_rel)
 				 errmsg("cannot change inheritance of typed table")));
 }
 
-<<<<<<< HEAD
-static void
+/*
+ * Return the address of the new parent relation.
+ */
+static ObjectAddress
 ATExecAddInherit(Relation child_rel, Node *node, LOCKMODE lockmode)
 {
 	Relation	parent_rel;
 	bool		is_partition;
 	RangeVar   *parent;
 	List	   *inhAttrNameList = NIL;
+	ObjectAddress address;
 
 	Assert(PointerIsValid(node));
 
@@ -13831,22 +13802,6 @@ ATExecAddInherit(Relation child_rel, Node *node, LOCKMODE lockmode)
 		parent = (RangeVar *) node;
 		is_partition = false;
 	}
-=======
-/*
- * Return the address of the new parent relation.
- */
-static ObjectAddress
-ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
-{
-	Relation	parent_rel,
-				catalogRelation;
-	SysScanDesc scan;
-	ScanKeyData key;
-	HeapTuple	inheritsTuple;
-	int32		inhseqno;
-	List	   *children;
-	ObjectAddress address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * A self-exclusive lock is needed here.  See the similar case in
@@ -13923,6 +13878,14 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
 						   RelationGetRelid(child_rel),
 						   GetUserId(),
 						   "ALTER", "INHERIT");
+
+	ObjectAddressSet(address, RelationRelationId,
+					 RelationGetRelid(parent_rel));
+
+	/* keep our lock on the parent relation until commit */
+	heap_close(parent_rel, NoLock);
+
+	return address;
 }
 
 
@@ -14015,19 +13978,8 @@ inherit_parent(Relation parent_rel, Relation child_rel, bool is_partition, List 
 							 inhseqno + 1,
 							 catalogRelation, is_partition);
 
-	ObjectAddressSet(address, RelationRelationId,
-					 RelationGetRelid(parent_rel));
-
 	/* Now we're done with pg_inherits */
 	heap_close(catalogRelation, RowExclusiveLock);
-<<<<<<< HEAD
-=======
-
-	/* keep our lock on the parent relation until commit */
-	heap_close(parent_rel, NoLock);
-
-	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -14386,7 +14338,7 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
  *
  * Return value is the address of the relation that is no longer parent.
  */
-static void
+static ObjectAddress
 ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 {
 	Relation	parent_rel;
@@ -14406,6 +14358,9 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 	/* Off to RemoveInheritance() where most of the work happens */
 	RemoveInheritance(rel, parent_rel, false);
 
+	ObjectAddressSet(address, RelationRelationId,
+								 RelationGetRelid(parent_rel));
+
 	/* keep our lock on the parent relation until commit */
 	heap_close(parent_rel, NoLock);
 
@@ -14417,6 +14372,8 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 						   GetUserId(),
 						   "ALTER", "NO INHERIT"
 		);
+
+	return address;
 }
 
 /*
@@ -14435,33 +14392,18 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
  * coninhcount and conislocal for inherited constraints are adjusted in
  * exactly the same way.
  *
-<<<<<<< HEAD
  * Common to ATExecDropInherit() and ATExecDetachPartition().
  */
 static void
 RemoveInheritance(Relation child_rel, Relation parent_rel, bool is_partition)
 {
-=======
- * Return value is the OID of the relation that is no longer parent.
- */
-static ObjectAddress
-ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
-{
-	Relation	parent_rel;
-	Oid			parent_oid;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	Relation	catalogRelation;
 	SysScanDesc scan;
 	ScanKeyData key[3];
 	HeapTuple	attributeTuple,
 				constraintTuple;
 	List	   *connames;
-<<<<<<< HEAD
 	bool		found;
-=======
-	bool		found = false;
-	ObjectAddress address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 
 	found = DeleteInheritsTuple(RelationGetRelid(child_rel),
@@ -14594,8 +14536,6 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 		}
 	}
 
-	parent_oid = RelationGetRelid(parent_rel);
-
 	systable_endscan(scan);
 	heap_close(catalogRelation, RowExclusiveLock);
 
@@ -14613,15 +14553,6 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 								 RelationGetRelid(child_rel), 0,
 								 RelationGetRelid(parent_rel), false);
 
-<<<<<<< HEAD
-=======
-	/* keep our lock on the parent relation until commit */
-	heap_close(parent_rel, NoLock);
-
-	ObjectAddressSet(address, RelationRelationId, parent_oid);
-
-	return address;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
