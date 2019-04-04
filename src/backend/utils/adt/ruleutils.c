@@ -392,15 +392,7 @@ static void get_target_list(List *targetList, deparse_context *context,
 static void get_setop_query(Node *setOp, Query *query,
 				deparse_context *context,
 				TupleDesc resultDesc);
-<<<<<<< HEAD
-static void get_rule_grouplist(List *grplist, List *tlist,
-							   bool in_grpsets, deparse_context *context);
-static void get_rule_groupingclause(GroupingClause *grp, List *tlist,
-									deparse_context *context);
-static Node *get_rule_sortgroupclause(SortGroupClause *srt, List *tlist,
-=======
 static Node *get_rule_sortgroupclause(Index ref, List *tlist,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 						 bool force_colno,
 						 deparse_context *context);
 static void get_rule_groupingset(GroupingSet *gset, List *targetlist,
@@ -4040,7 +4032,6 @@ set_deparse_planstate(deparse_namespace *dpns, PlanState *ps)
 		dpns->inner_planstate = ((SubqueryScanState *) ps)->subplan;
 	else if (IsA(ps, CteScanState))
 		dpns->inner_planstate = ((CteScanState *) ps)->cteplanstate;
-<<<<<<< HEAD
 	else if (IsA(ps, SequenceState))
 		/*
 		 * Set the inner_plan to a sequences first child only if it is a
@@ -4048,10 +4039,8 @@ set_deparse_planstate(deparse_namespace *dpns, PlanState *ps)
 		 * query plans that have a Partition Selector
 		 */
 		dpns->inner_planstate = ((SequenceState *) ps)->subplans[0];
-=======
 	else if (IsA(ps, ModifyTableState))
 		dpns->inner_planstate = ps;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	else
 		dpns->inner_planstate = innerPlanState(ps);
 
@@ -4958,9 +4947,6 @@ get_basic_select_query(Query *query, deparse_context *context,
 
 		appendContextKeyword(context, " GROUP BY ",
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
-<<<<<<< HEAD
-		get_rule_grouplist(query->groupClause, query->targetList, false, context);
-=======
 
 		save_exprkind = context->special_exprkind;
 		context->special_exprkind = EXPR_KIND_GROUP_BY;
@@ -4992,7 +4978,6 @@ get_basic_select_query(Query *query, deparse_context *context,
 		}
 
 		context->special_exprkind = save_exprkind;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	/* Add the HAVING clause if given */
@@ -5293,98 +5278,6 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(setOp));
 	}
-}
-
-/*
- * Display a list of grouping or (grouping extension) clauses.
- *
- * The param 'in_grpsets' indicates if the given grplist is
- * immediatelly inside a GROUPING SETS clause. This is used
- * to determine how to use parantheses.
- */
-static void
-get_rule_grouplist(List *grplist, List *tlist,
-				   bool in_grpsets, deparse_context *context)
-{
-	StringInfo buf = context->buf;
-	char *sep;
-	ListCell *lc;
-
-	sep = "";
-	foreach (lc, grplist)
-	{
-		Node *node = (Node *)lfirst(lc);
-		Assert (node == NULL ||
-				IsA(node, List) ||
-				IsA(node, SortGroupClause) ||
-				IsA(node, GroupingClause));
-
-		appendStringInfoString(buf, sep);
-
-		if (node == NULL)
-		{
-			if (!in_grpsets)
-				appendStringInfoString(buf, "()");
-			else
-				continue; /* do nothing */
-		}
-
-		else if (IsA(node, List))
-		{
-			appendStringInfoString(buf, "(");
-			get_rule_grouplist((List *)node, tlist, in_grpsets, context);
-			appendStringInfoString(buf, ")");
-		}
-
-		else if (IsA(node, SortGroupClause))
-		{
-			if (in_grpsets)
-				appendStringInfoString(buf, "(");
-			get_rule_sortgroupclause((SortGroupClause *) node, tlist,
-									  false,context);
-			if (in_grpsets)
-				appendStringInfoString(buf, ")");
-		}
-
-		else
-		{
-			get_rule_groupingclause((GroupingClause *)node, tlist,
-									context);
-		}
-
-		sep = ", ";
-	}
-}
-
-/*
- * Display a grouping extension clause.
- */
-static void
-get_rule_groupingclause(GroupingClause *grp, List *tlist,
-						deparse_context *context)
-{
-	StringInfo buf = context->buf;
-	bool in_grpsets = false;
-
-	switch(grp->groupType)
-	{
-		case GROUPINGTYPE_ROLLUP:
-			appendStringInfoString(buf, "ROLLUP (");
-			break;
-		case GROUPINGTYPE_CUBE:
-			appendStringInfoString(buf, "CUBE (");
-			break;
-		case GROUPINGTYPE_GROUPING_SETS:
-			in_grpsets = true;
-			appendStringInfoString(buf, "GROUPING SETS (");
-			break;
-		default:
-			elog(ERROR, "unrecognized grouping type: %d",
-				 grp->groupType);
-	}
-
-	get_rule_grouplist(grp->groupsets, tlist, in_grpsets, context);
-	appendStringInfoString(buf, ")");
 }
 
 /*
