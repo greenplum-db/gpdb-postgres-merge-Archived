@@ -511,7 +511,6 @@ _readSortGroupClause(void)
 }
 
 /*
-<<<<<<< HEAD
  * _readGroupingClause
  */
 static GroupingClause *
@@ -521,17 +520,6 @@ _readGroupingClause(void)
 
 	READ_ENUM_FIELD(groupType, GroupingType);
 	READ_NODE_FIELD(groupsets);
-
-	READ_DONE();
-}
-
-static GroupingFunc *
-_readGroupingFunc(void)
-{
-	READ_LOCALS(GroupingFunc);
-
-	READ_NODE_FIELD(args);
-	READ_INT_FIELD(ngrpcols);
 
 	READ_DONE();
 }
@@ -548,7 +536,11 @@ static GroupId *
 _readGroupId(void)
 {
 	READ_LOCALS_NO_FIELDS(GroupId);
-=======
+
+	READ_DONE();
+}
+
+/*
  * _readGroupingSet
  */
 static GroupingSet *
@@ -559,7 +551,6 @@ _readGroupingSet(void)
 	READ_ENUM_FIELD(kind, GroupingSetKind);
 	READ_NODE_FIELD(content);
 	READ_LOCATION_FIELD(location);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	READ_DONE();
 }
@@ -941,7 +932,9 @@ _readIndexStmt(void)
 	READ_BOOL_FIELD(isconstraint);
 	READ_BOOL_FIELD(deferrable);
 	READ_BOOL_FIELD(initdeferred);
+	READ_BOOL_FIELD(transformed);
 	READ_BOOL_FIELD(concurrent);
+	READ_BOOL_FIELD(if_not_exists);
 	READ_BOOL_FIELD(is_split_part);
 	READ_OID_FIELD(parentIndexId);
 	READ_OID_FIELD(parentConstraintId);
@@ -1372,18 +1365,6 @@ _readAExpr(void)
 		local_node->kind = AEXPR_OP;
 		READ_NODE_FIELD(name);
 	}
-	else if (strncmp(token,"AND",length)==0)
-	{
-		local_node->kind = AEXPR_AND;
-	}
-	else if (strncmp(token,"OR",length)==0)
-	{
-		local_node->kind = AEXPR_OR;
-	}
-	else if (strncmp(token,"NOT",length)==0)
-	{
-		local_node->kind = AEXPR_NOT;
-	}
 	else if (strncmp(token,"ANY",length)==0)
 	{
 		local_node->kind = AEXPR_OP_ANY;
@@ -1412,6 +1393,46 @@ _readAExpr(void)
 	else if (strncmp(token,"IN",length)==0)
 	{
 		local_node->kind = AEXPR_IN;
+		READ_NODE_FIELD(name);
+	}
+	else if (strncmp(token,"LIKE",length)==0)
+	{
+		local_node->kind = AEXPR_LIKE;
+		READ_NODE_FIELD(name);
+	}
+	else if (strncmp(token,"ILIKE",length)==0)
+	{
+		local_node->kind = AEXPR_ILIKE;
+		READ_NODE_FIELD(name);
+	}
+	else if (strncmp(token,"SIMILAR",length)==0)
+	{
+		local_node->kind = AEXPR_SIMILAR;
+		READ_NODE_FIELD(name);
+	}
+	else if (strncmp(token,"BETWEEN",length)==0)
+	{
+		local_node->kind = AEXPR_BETWEEN;
+		READ_NODE_FIELD(name);
+	}
+	else if (strncmp(token,"NOT_BETWEEN",length)==0)
+	{
+		local_node->kind = AEXPR_NOT_BETWEEN;
+		READ_NODE_FIELD(name);
+	}
+	else if (strncmp(token,"BETWEEN_SYM",length)==0)
+	{
+		local_node->kind = AEXPR_BETWEEN_SYM;
+		READ_NODE_FIELD(name);
+	}
+	else if (strncmp(token,"NOT_BETWEEN_SYM",length)==0)
+	{
+		local_node->kind = AEXPR_NOT_BETWEEN_SYM;
+		READ_NODE_FIELD(name);
+	}
+	else if (strncmp(token,"PAREN",length)==0)
+	{
+		local_node->kind = AEXPR_PAREM;
 		READ_NODE_FIELD(name);
 	}
 	else
@@ -2115,23 +2136,6 @@ _readSetToDefault(void)
 }
 
 /*
-<<<<<<< HEAD
-=======
- * _readCurrentOfExpr
- */
-static CurrentOfExpr *
-_readCurrentOfExpr(void)
-{
-	READ_LOCALS(CurrentOfExpr);
-
-	READ_UINT_FIELD(cvarno);
-	READ_STRING_FIELD(cursor_name);
-	READ_INT_FIELD(cursor_param);
-
-	READ_DONE();
-}
-
-/*
  * _readInferenceElem
  */
 static InferenceElem *
@@ -2147,7 +2151,6 @@ _readInferenceElem(void)
 }
 
 /*
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  * _readTargetEntry
  */
 static TargetEntry *
@@ -2381,17 +2384,12 @@ _readRangeTblEntry(void)
 	READ_UINT_FIELD(requiredPerms);
 	READ_OID_FIELD(checkAsUser);
 	READ_BITMAPSET_FIELD(selectedCols);
-<<<<<<< HEAD
-	READ_BITMAPSET_FIELD(modifiedCols);
+	READ_BITMAPSET_FIELD(insertedCols);
+	READ_BITMAPSET_FIELD(updatedCols);
+	READ_NODE_FIELD(securityQuals);
 
 	READ_BOOL_FIELD(forceDistRandom);
 	/* 'pseudocols' is intentionally missing, see out function */
-
-=======
-	READ_BITMAPSET_FIELD(insertedCols);
-	READ_BITMAPSET_FIELD(updatedCols);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-	READ_NODE_FIELD(securityQuals);
 
 	READ_DONE();
 }
@@ -3309,8 +3307,6 @@ parseNodeString(void)
 		return_value = _readGrouping();
 	else if (MATCHX("GROUPINGCLAUSE"))
 		return_value = _readGroupingClause();
-	else if (MATCHX("GROUPINGFUNC"))
-		return_value = _readGroupingFunc();
 	else if (MATCHX("INDEXELEM"))
 		return_value = _readIndexElem();
 	else if (MATCHX("INDEXSTMT"))

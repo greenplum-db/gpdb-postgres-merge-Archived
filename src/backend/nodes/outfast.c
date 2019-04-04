@@ -369,6 +369,7 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	 * make sense in segments.
 	 */
 	WRITE_INT_FIELD(nParamExec);
+	WRITE_BOOL_FIELD(hasRowSecurity);
 	WRITE_INT_FIELD(nMotionNodes);
 	WRITE_INT_FIELD(nInitPlans);
 	WRITE_NODE_FIELD(intoPolicy);
@@ -441,7 +442,6 @@ _outMergeJoin(StringInfo str, MergeJoin *node)
 static void
 _outAgg(StringInfo str, Agg *node)
 {
-
 	WRITE_NODE_TYPE("AGG");
 
 	_outPlanInfo(str, (Plan *) node);
@@ -453,14 +453,8 @@ _outAgg(StringInfo str, Agg *node)
 	WRITE_OID_ARRAY(grpOperators, node->numCols);
 
 	WRITE_LONG_FIELD(numGroups);
-	WRITE_INT_FIELD(transSpace);
-
-	WRITE_INT_FIELD(numNullCols);
-	WRITE_UINT64_FIELD(inputGrouping);
-	WRITE_UINT64_FIELD(grouping);
-	WRITE_BOOL_FIELD(inputHasGrouping);
-	WRITE_INT_FIELD(rollupGSTimes);
-	WRITE_BOOL_FIELD(lastAgg);
+	WRITE_NODE_FIELD(groupingSets);
+	WRITE_NODE_FIELD(chain);
 	WRITE_BOOL_FIELD(streaming);
 }
 
@@ -868,8 +862,11 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(jointree);
 	WRITE_NODE_FIELD(targetList);
+	WRITE_NODE_FIELD(withCheckOptions);
+	WRITE_NODE_FIELD(onConflict);
 	WRITE_NODE_FIELD(returningList);
 	WRITE_NODE_FIELD(groupClause);
+	WRITE_NODE_FIELD(groupingSets);
 	WRITE_NODE_FIELD(havingQual);
 	WRITE_NODE_FIELD(windowClause);
 	WRITE_NODE_FIELD(distinctClause);
@@ -898,15 +895,6 @@ _outAExpr(StringInfo str, A_Expr *node)
 
 			WRITE_NODE_FIELD(name);
 			break;
-		case AEXPR_AND:
-
-			break;
-		case AEXPR_OR:
-
-			break;
-		case AEXPR_NOT:
-
-			break;
 		case AEXPR_OP_ANY:
 
 			WRITE_NODE_FIELD(name);
@@ -933,6 +921,38 @@ _outAExpr(StringInfo str, A_Expr *node)
 
 			WRITE_NODE_FIELD(name);
 			break;
+		case AEXPR_LIKE:
+
+			WRITE_NODE_FIELD(name);
+			break;
+		case AEXPR_ILIKE:
+
+			WRITE_NODE_FIELD(name);
+			break;
+		case AEXPR_SIMILAR:
+
+			WRITE_NODE_FIELD(name);
+			break;
+		case AEXPR_BETWEEN:
+
+			WRITE_NODE_FIELD(name);
+			break;
+		case AEXPR_NOT_BETWEEN:
+
+			WRITE_NODE_FIELD(name);
+			break;
+		case AEXPR_BETWEEN_SYM:
+
+			WRITE_NODE_FIELD(name);
+			break;
+		case AEXPR_NOT_BETWEEN_SYM:
+
+			WRITE_NODE_FIELD(name);
+			break;
+		case AEXPR_PAREN:
+
+			break;
+
 		default:
 
 			break;

@@ -242,8 +242,11 @@ _readQuery(void)
 	READ_NODE_FIELD(rtable);
 	READ_NODE_FIELD(jointree);
 	READ_NODE_FIELD(targetList);
+	READ_NODE_FIELD(withCheckOptions);
+	READ_NODE_FIELD(onConflict);
 	READ_NODE_FIELD(returningList);
 	READ_NODE_FIELD(groupClause);
+	READ_NODE_FIELD(groupingSets);
 	READ_NODE_FIELD(havingQual);
 	READ_NODE_FIELD(windowClause);
 	READ_NODE_FIELD(distinctClause);
@@ -779,15 +782,6 @@ _readAExpr(void)
 
 			READ_NODE_FIELD(name);
 			break;
-		case AEXPR_AND:
-
-			break;
-		case AEXPR_OR:
-
-			break;
-		case AEXPR_NOT:
-
-			break;
 		case AEXPR_OP_ANY:
 
 			READ_NODE_FIELD(name);
@@ -811,6 +805,38 @@ _readAExpr(void)
 			READ_NODE_FIELD(name);
 			break;
 		case AEXPR_IN:
+
+			READ_NODE_FIELD(name);
+			break;
+		case AEXPR_LIKE;
+
+			READ_NODE_FIELD(name);
+			break;
+		case AEXPR_ILIKE;
+
+			READ_NODE_FIELD(name);
+			break;
+		case AEXPR_SIMILAR;
+
+			READ_NODE_FIELD(name);
+			break;
+		case AEXPR_BETWEEN;
+
+			READ_NODE_FIELD(name);
+			break;
+		case AEXPR_NOT_BETWEEN;
+
+			READ_NODE_FIELD(name);
+			break;
+		case AEXPR_BETWEEN_SYM;
+
+			READ_NODE_FIELD(name);
+			break;
+		case AEXPR_NOT_BETWEEN_SYM;
+
+			READ_NODE_FIELD(name);
+			break;
+		case AEXPR_PAREM;
 
 			READ_NODE_FIELD(name);
 			break;
@@ -1419,6 +1445,7 @@ _readPlannedStmt(void)
 	READ_NODE_FIELD(relationOids);
 	/* invalItems not serialized in outfast.c */
 	READ_INT_FIELD(nParamExec);
+	READ_BOOL_FIELD(hasRowSecurity);
 	READ_INT_FIELD(nMotionNodes);
 	READ_INT_FIELD(nInitPlans);
 
@@ -1698,6 +1725,7 @@ readIndexScanFields(IndexScan *local_node)
 	READ_NODE_FIELD(indexqualorig);
 	READ_NODE_FIELD(indexorderby);
 	READ_NODE_FIELD(indexorderbyorig);
+	READ_NODE_FIELD(indexorderbyops);
 	READ_ENUM_FIELD(indexorderdir, ScanDirection);
 }
 
@@ -1987,13 +2015,8 @@ _readAgg(void)
 	READ_INT_ARRAY(grpColIdx, local_node->numCols, AttrNumber);
 	READ_OID_ARRAY(grpOperators, local_node->numCols);
 	READ_LONG_FIELD(numGroups);
-	READ_INT_FIELD(transSpace);
-	READ_INT_FIELD(numNullCols);
-	READ_UINT64_FIELD(inputGrouping);
-	READ_UINT64_FIELD(grouping);
-	READ_BOOL_FIELD(inputHasGrouping);
-	READ_INT_FIELD(rollupGSTimes);
-	READ_BOOL_FIELD(lastAgg);
+	READ_NODE_FIELD(groupingSets);
+	READ_NODE_FIELD(chain);
 	READ_BOOL_FIELD(streaming);
 
 	READ_DONE();
@@ -2178,7 +2201,9 @@ _readPlanRowMark(void)
 	READ_UINT_FIELD(prti);
 	READ_UINT_FIELD(rowmarkId);
 	READ_ENUM_FIELD(markType, RowMarkType);
-	READ_BOOL_FIELD(noWait);
+	READ_INT_FIELD(allMarkTypes);
+	READ_ENUM_FIELD(strength, LockClauseStrength);
+	READ_ENUM_FIELD(waitPolicy, LockWaitPolicy);
 	READ_BOOL_FIELD(isParent);
 
 	READ_DONE();
@@ -2878,6 +2903,7 @@ _readModifyTable(void)
 	readPlanInfo((Plan *)local_node);
 	READ_ENUM_FIELD(operation, CmdType);
 	READ_BOOL_FIELD(canSetTag);
+	READ_UINT_FIELD(nominalRelation);
 	READ_NODE_FIELD(resultRelations);
 	READ_INT_FIELD(resultRelIndex);
 	READ_NODE_FIELD(plans);
@@ -2886,6 +2912,12 @@ _readModifyTable(void)
 	READ_NODE_FIELD(fdwPrivLists);
 	READ_NODE_FIELD(rowMarks);
 	READ_INT_FIELD(epqParam);
+	READ_ENUM_FIELD(onConflictAction, OnConflictAction);
+	READ_NODE_FIELD(arbiterIndexes);
+	READ_NODE_FIELD(onConflictSet);
+	READ_NODE_FIELD(onConflictWhere);
+	READ_INT_FIELD(exclRelRTI);
+	READ_NODE_FIELD(exclRelTlist);
 	READ_NODE_FIELD(action_col_idxes);
 	READ_NODE_FIELD(ctid_col_idxes);
 	READ_NODE_FIELD(oid_col_idxes);

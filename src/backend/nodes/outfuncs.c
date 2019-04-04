@@ -313,7 +313,7 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_NODE_FIELD(relationOids);
 	WRITE_NODE_FIELD(invalItems);
 	WRITE_INT_FIELD(nParamExec);
-<<<<<<< HEAD
+	WRITE_BOOL_FIELD(hasRowSecurity);
 	WRITE_INT_FIELD(nMotionNodes);
 	WRITE_INT_FIELD(nInitPlans);
 
@@ -348,9 +348,6 @@ _outOidAssignment(StringInfo str, const OidAssignment *node)
 	WRITE_OID_FIELD(keyOid1);
 	WRITE_OID_FIELD(keyOid2);
 	WRITE_OID_FIELD(oid);
-=======
-	WRITE_BOOL_FIELD(hasRowSecurity);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 #ifndef COMPILING_BINARY_FUNCS
@@ -471,18 +468,15 @@ _outModifyTable(StringInfo str, const ModifyTable *node)
 	WRITE_NODE_FIELD(fdwPrivLists);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_INT_FIELD(epqParam);
-<<<<<<< HEAD
-	WRITE_NODE_FIELD(action_col_idxes);
-	WRITE_NODE_FIELD(ctid_col_idxes);
-	WRITE_NODE_FIELD(oid_col_idxes);
-=======
 	WRITE_ENUM_FIELD(onConflictAction, OnConflictAction);
 	WRITE_NODE_FIELD(arbiterIndexes);
 	WRITE_NODE_FIELD(onConflictSet);
 	WRITE_NODE_FIELD(onConflictWhere);
 	WRITE_INT_FIELD(exclRelRTI);
 	WRITE_NODE_FIELD(exclRelTlist);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	WRITE_NODE_FIELD(action_col_idxes);
+	WRITE_NODE_FIELD(ctid_col_idxes);
+	WRITE_NODE_FIELD(oid_col_idxes);
 }
 
 static void
@@ -654,6 +648,7 @@ outIndexScanFields(StringInfo str, const IndexScan *node)
 	WRITE_NODE_FIELD(indexqualorig);
 	WRITE_NODE_FIELD(indexorderby);
 	WRITE_NODE_FIELD(indexorderbyorig);
+	WRITE_NODE_FIELD(indexorderbyops);
 	WRITE_ENUM_FIELD(indexorderdir, ScanDirection);
 }
 
@@ -662,19 +657,7 @@ _outIndexScan(StringInfo str, const IndexScan *node)
 {
 	WRITE_NODE_TYPE("INDEXSCAN");
 
-<<<<<<< HEAD
 	outIndexScanFields(str, node);
-=======
-	_outScanInfo(str, (const Scan *) node);
-
-	WRITE_OID_FIELD(indexid);
-	WRITE_NODE_FIELD(indexqual);
-	WRITE_NODE_FIELD(indexqualorig);
-	WRITE_NODE_FIELD(indexorderby);
-	WRITE_NODE_FIELD(indexorderbyorig);
-	WRITE_NODE_FIELD(indexorderbyops);
-	WRITE_ENUM_FIELD(indexorderdir, ScanDirection);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 static void
@@ -933,7 +916,7 @@ _outHashJoin(StringInfo str, const HashJoin *node)
 static void
 _outAgg(StringInfo str, const Agg *node)
 {
-	int			i;
+	int         i;
 
 	WRITE_NODE_TYPE("AGG");
 
@@ -951,21 +934,9 @@ _outAgg(StringInfo str, const Agg *node)
 		appendStringInfo(str, " %u", node->grpOperators[i]);
 
 	WRITE_LONG_FIELD(numGroups);
-<<<<<<< HEAD
-	WRITE_INT_FIELD(transSpace);
-	WRITE_INT_FIELD(numNullCols);
-	WRITE_UINT64_FIELD(inputGrouping);
-	WRITE_UINT64_FIELD(grouping);
-	WRITE_BOOL_FIELD(inputHasGrouping);
-	WRITE_INT_FIELD(rollupGSTimes);
-	WRITE_BOOL_FIELD(lastAgg);
-	WRITE_BOOL_FIELD(streaming);
-	WRITE_BITMAPSET_FIELD(aggParams);
-=======
-
 	WRITE_NODE_FIELD(groupingSets);
 	WRITE_NODE_FIELD(chain);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	WRITE_BOOL_FIELD(streaming);
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -2005,7 +1976,6 @@ _outFromExpr(StringInfo str, const FromExpr *node)
 }
 
 static void
-<<<<<<< HEAD
 _outFlow(StringInfo str, const Flow *node)
 {
 	WRITE_NODE_TYPE("FLOW");
@@ -2039,8 +2009,7 @@ _outCdbPathLocus(StringInfo str, const CdbPathLocus *node)
 	WRITE_INT_FIELD(numsegments);
 }                               /* _outCdbPathLocus */
 
-
-=======
+static void
 _outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
 {
 	WRITE_NODE_TYPE("ONCONFLICTEXPR");
@@ -2055,7 +2024,6 @@ _outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
 	WRITE_NODE_FIELD(exclRelTlist);
 }
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*****************************************************************************
  *
  *	Stuff from relation.h.
@@ -2336,15 +2304,12 @@ _outPlannerGlobal(StringInfo str, const PlannerGlobal *node)
 	WRITE_UINT_FIELD(lastPHId);
 	WRITE_UINT_FIELD(lastRowMarkId);
 	WRITE_BOOL_FIELD(transientPlan);
-<<<<<<< HEAD
 	WRITE_BOOL_FIELD(oneoffPlan);
 	WRITE_NODE_FIELD(share.motStack);
 	WRITE_NODE_FIELD(share.qdShares);
 	WRITE_NODE_FIELD(share.qdSlices);
 	WRITE_INT_FIELD(share.nextPlanId);
-=======
 	WRITE_BOOL_FIELD(hasRowSecurity);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -2803,7 +2768,7 @@ _outIndexStmt(StringInfo str, const IndexStmt *node)
 	WRITE_BOOL_FIELD(initdeferred);
 	WRITE_BOOL_FIELD(transformed);
 	WRITE_BOOL_FIELD(concurrent);
-<<<<<<< HEAD
+	WRITE_BOOL_FIELD(if_not_exists);
 	WRITE_BOOL_FIELD(is_split_part);
 	WRITE_OID_FIELD(parentIndexId);
 	WRITE_OID_FIELD(parentConstraintId);
@@ -3431,9 +3396,6 @@ _outTransactionStmt(StringInfo str, const TransactionStmt *node)
 
 	WRITE_ENUM_FIELD(kind, TransactionStmtKind);
 	WRITE_NODE_FIELD(options);
-=======
-	WRITE_BOOL_FIELD(if_not_exists);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 static void
@@ -3973,35 +3935,6 @@ _outSortGroupClause(StringInfo str, const SortGroupClause *node)
 }
 
 static void
-<<<<<<< HEAD
-_outGroupingClause(StringInfo str, const GroupingClause *node)
-{
-	WRITE_NODE_TYPE("GROUPINGCLAUSE");
-
-	WRITE_ENUM_FIELD(groupType, GroupingType);
-	WRITE_NODE_FIELD(groupsets);
-}
-
-static void
-_outGroupingFunc(StringInfo str, const GroupingFunc *node)
-{
-	WRITE_NODE_TYPE("GROUPINGFUNC");
-
-	WRITE_NODE_FIELD(args);
-	WRITE_INT_FIELD(ngrpcols);
-}
-
-static void
-_outGrouping(StringInfo str, const Grouping *node __attribute__((unused)))
-{
-	WRITE_NODE_TYPE("GROUPING");
-}
-
-static void
-_outGroupId(StringInfo str, const GroupId *node __attribute__((unused)))
-{
-	WRITE_NODE_TYPE("GROUPID");
-=======
 _outGroupingSet(StringInfo str, const GroupingSet *node)
 {
 	WRITE_NODE_TYPE("GROUPINGSET");
@@ -4009,7 +3942,6 @@ _outGroupingSet(StringInfo str, const GroupingSet *node)
 	WRITE_ENUM_FIELD(kind, GroupingSetKind);
 	WRITE_NODE_FIELD(content);
 	WRITE_LOCATION_FIELD(location);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 static void
@@ -4170,19 +4102,15 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 	WRITE_UINT_FIELD(requiredPerms);
 	WRITE_OID_FIELD(checkAsUser);
 	WRITE_BITMAPSET_FIELD(selectedCols);
-<<<<<<< HEAD
-	WRITE_BITMAPSET_FIELD(modifiedCols);
+	WRITE_BITMAPSET_FIELD(insertedCols);
+	WRITE_BITMAPSET_FIELD(updatedCols);
+	WRITE_NODE_FIELD(securityQuals);
 
 	WRITE_BOOL_FIELD(forceDistRandom);
 	/*
 	 * pseudocols is intentionally not serialized. It's only used in the planning
 	 * stage, so no need to transfer it to the QEs.
 	 */
-=======
-	WRITE_BITMAPSET_FIELD(insertedCols);
-	WRITE_BITMAPSET_FIELD(updatedCols);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-	WRITE_NODE_FIELD(securityQuals);
 }
 
 static void
@@ -5210,16 +5138,12 @@ _outNode(StringInfo str, const void *obj)
 			case T_FromExpr:
 				_outFromExpr(str, obj);
 				break;
-<<<<<<< HEAD
 			case T_Flow:
 				_outFlow(str, obj);
 				break;
-
-=======
 			case T_OnConflictExpr:
 				_outOnConflictExpr(str, obj);
 				break;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			case T_Path:
 				_outPath(str, obj);
 				break;
@@ -5352,7 +5276,6 @@ _outNode(StringInfo str, const void *obj)
 			case T_CreateForeignTableStmt:
 				_outCreateForeignTableStmt(str, obj);
 				break;
-<<<<<<< HEAD
 			case T_ColumnReferenceStorageDirective:
 				_outColumnReferenceStorageDirective(str, obj);
 				break;
@@ -5400,10 +5323,8 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_DistributedBy:
 				_outDistributedBy(str, obj);
-=======
 			case T_ImportForeignSchemaStmt:
 				_outImportForeignSchemaStmt(str, obj);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				break;
 			case T_IndexStmt:
 				_outIndexStmt(str, obj);
@@ -5584,12 +5505,6 @@ _outNode(StringInfo str, const void *obj)
 			case T_TypeName:
 				_outTypeName(str, obj);
 				break;
-			case T_SortBy:
-				_outSortBy(str, obj);
-				break;
-			case T_WindowDef:
-				_outWindowDef(str, obj);
-				break;
 			case T_TypeCast:
 				_outTypeCast(str, obj);
 				break;
@@ -5608,22 +5523,8 @@ _outNode(StringInfo str, const void *obj)
 			case T_SortGroupClause:
 				_outSortGroupClause(str, obj);
 				break;
-<<<<<<< HEAD
-			case T_GroupingClause:
-				_outGroupingClause(str, obj);
-				break;
-			case T_GroupingFunc:
-				_outGroupingFunc(str, obj);
-				break;
-			case T_Grouping:
-				_outGrouping(str, obj);
-				break;
-			case T_GroupId:
-				_outGroupId(str, obj);
-=======
 			case T_GroupingSet:
 				_outGroupingSet(str, obj);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				break;
 			case T_WindowClause:
 				_outWindowClause(str, obj);
@@ -5676,8 +5577,6 @@ _outNode(StringInfo str, const void *obj)
 			case T_ResTarget:
 				_outResTarget(str, obj);
 				break;
-<<<<<<< HEAD
-=======
 			case T_MultiAssignRef:
 				_outMultiAssignRef(str, obj);
 				break;
@@ -5687,7 +5586,6 @@ _outNode(StringInfo str, const void *obj)
 			case T_WindowDef:
 				_outWindowDef(str, obj);
 				break;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			case T_RangeSubselect:
 				_outRangeSubselect(str, obj);
 				break;
