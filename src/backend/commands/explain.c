@@ -142,13 +142,9 @@ static void show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 static void ExplainMemberNodes(List *plans, PlanState **planstates,
 				   List *ancestors, ExplainState *es);
 static void ExplainSubPlans(List *plans, List *ancestors,
-<<<<<<< HEAD
 				const char *relationship, ExplainState *es, SliceTable *sliceTable);
-=======
-				const char *relationship, ExplainState *es);
 static void ExplainCustomChildren(CustomScanState *css,
 								  List *ancestors, ExplainState *es);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void ExplainProperty(const char *qlabel, const char *value,
 				bool numeric, ExplainState *es);
 static void ExplainPropertyStringInfo(const char *qlabel, ExplainState *es,
@@ -239,11 +235,7 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 				 errmsg("EXPLAIN option TIMING requires ANALYZE")));
 
 	/* currently, summary option is not exposed to users; just set it */
-<<<<<<< HEAD
-	es.summary = es.analyze;
-=======
 	es->summary = es->analyze;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Parse analysis was done already, but we still have to run the rule
@@ -315,13 +307,8 @@ NewExplainState(void)
 	es->costs = true;
 	/* Prepare output buffer. */
 	es->str = makeStringInfo();
-<<<<<<< HEAD
-	/* Kluge to avoid changing sizeof(ExplainState) in released branches. */
-	es->extra = (ExplainStateExtra *) palloc0(sizeof(ExplainStateExtra));
-=======
 
 	return es;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
@@ -1643,13 +1630,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			ExplainPropertyText("Parent Relationship", relationship, es);
 		if (plan_name)
 			ExplainPropertyText("Subplan Name", plan_name, es);
-<<<<<<< HEAD
-
-		show_dispatch_info(es->currentSlice, es, plan);
-=======
 		if (custom_name)
 			ExplainPropertyText("Custom Plan Provider", custom_name, es);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+		show_dispatch_info(es->currentSlice, es, plan);
 	}
 
 	switch (nodeTag(plan))
