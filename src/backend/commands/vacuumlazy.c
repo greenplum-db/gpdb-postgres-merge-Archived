@@ -149,7 +149,7 @@ static BufferAccessStrategy vac_strategy;
 
 
 /* non-export function prototypes */
-static void lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt);
+static void lazy_vacuum_aorel(Relation onerel, int options, AOVacuumPhaseConfig *ao_vacuum_phase_config);
 static void lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			   Relation *Irel, int nindexes, bool scan_all);
 static void lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats);
@@ -185,7 +185,8 @@ static bool heap_page_is_all_visible(Relation rel, Buffer buf,
  */
 void
 lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
-				BufferAccessStrategy bstrategy)
+				BufferAccessStrategy bstrategy,
+				AOVacuumPhaseConfig *ao_vacuum_phase_config)
 {
 	LVRelStats *vacrelstats;
 	Relation   *Irel;
@@ -226,7 +227,7 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 		elevel = DEBUG2; /* vacuum and analyze messages aren't interesting from the QD */
 
 #ifdef FAULT_INJECTOR
-	if (vacstmt->appendonly_phase == AOVAC_DROP)
+	if (ao_vacuum_phase_config->appendonly_phase == AOVAC_DROP)
 	{
 			FaultInjector_InjectFaultIfSet(
 				CompactionBeforeSegmentFileDropPhase,
@@ -234,7 +235,7 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 				"",	// databaseName
 				RelationGetRelationName(onerel)); // tableName
 	}
-	if (vacstmt->appendonly_phase == AOVAC_CLEANUP)
+	if (ao_vacuum_phase_config->appendonly_phase == AOVAC_CLEANUP)
 	{
 			FaultInjector_InjectFaultIfSet(
 				CompactionBeforeCleanupPhase,
@@ -276,7 +277,7 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 	 */
 	if (RelationIsAppendOptimized(onerel))
 	{
-		lazy_vacuum_aorel(onerel, vacstmt);
+		lazy_vacuum_aorel(onerel, options, ao_vacuum_phase_config);
 		return;
 	}
 
@@ -461,20 +462,20 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
  * lazy_vacuum_aorel -- perform LAZY VACUUM for one Append-only relation.
  */
 static void
-lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt)
+lazy_vacuum_aorel(Relation onerel, int options, AOVacuumPhaseConfig *ao_vacuum_phase_config)
 {
 	LVRelStats *vacrelstats;
 	bool		update_relstats = true;
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 
-	switch (vacstmt->appendonly_phase)
+	switch (ao_vacuum_phase_config->appendonly_phase)
 	{
 		case AOVAC_PREPARE:
 			elogif(Debug_appendonly_print_compaction, LOG,
 				   "Vacuum prepare phase %s", RelationGetRelationName(onerel));
 
-			vacuum_appendonly_indexes(onerel, vacstmt);
+			vacuum_appendonly_indexes(onerel, options);
 			if (RelationIsAoRows(onerel))
 				AppendOnlyTruncateToEOF(onerel);
 			else
@@ -488,7 +489,7 @@ lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt)
 			 * the cleanup phase, when we would have computed the
 			 * correct values for stats.
 			 */
-			if (vacstmt->appendonly_relation_empty)
+			if (ao_vacuum_phase_config->appendonly_relation_empty)
 			{
 				update_relstats = true;
 				/*
@@ -513,7 +514,7 @@ lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt)
 
 		case AOVAC_COMPACT:
 		case AOVAC_DROP:
-			vacuum_appendonly_rel(onerel, vacstmt);
+			vacuum_appendonly_rel(onerel, options, ao_vacuum_phase_config);
 			update_relstats = false;
 			break;
 
@@ -534,7 +535,7 @@ lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt)
 			break;
 
 		default:
-			elog(ERROR, "invalid AO vacuum phase %d", vacstmt->appendonly_phase);
+			elog(ERROR, "invalid AO vacuum phase %d", ao_vacuum_phase_config->appendonly_phase);
 	}
 
 	if (update_relstats)
@@ -1840,7 +1841,7 @@ vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
  *
  */
 void
-vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt)
+vacuum_appendonly_rel(Relation aorel, int options, AOVacuumPhaseConfig *ao_vacuum_phase_config)
 {
 	char	   *relname;
 
@@ -1857,29 +1858,29 @@ vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt)
 		return;
 	}
 
-	if (vacstmt->appendonly_phase == AOVAC_DROP)
+	if (ao_vacuum_phase_config->appendonly_phase == AOVAC_DROP)
 	{
-		Assert(!vacstmt->appendonly_compaction_insert_segno);
+		Assert(!ao_vacuum_phase_config->appendonly_compaction_insert_segno);
 
 		elogif(Debug_appendonly_print_compaction, LOG,
 			"Vacuum drop phase %s", RelationGetRelationName(aorel));
 
 		if (RelationIsAoRows(aorel))
 		{
-			AppendOnlyDrop(aorel, vacstmt->appendonly_compaction_segno);
+			AppendOnlyDrop(aorel, ao_vacuum_phase_config->appendonly_compaction_segno);
 		}
 		else
 		{
 			Assert(RelationIsAoCols(aorel));
-			AOCSDrop(aorel, vacstmt->appendonly_compaction_segno);
+			AOCSDrop(aorel, ao_vacuum_phase_config->appendonly_compaction_segno);
 		}
 	}
 	else
 	{
-		Assert(vacstmt->appendonly_phase == AOVAC_COMPACT);
-		Assert(list_length(vacstmt->appendonly_compaction_insert_segno) == 1);
+		Assert(ao_vacuum_phase_config->appendonly_phase == AOVAC_COMPACT);
+		Assert(list_length(ao_vacuum_phase_config->appendonly_compaction_insert_segno) == 1);
 
-		int insert_segno = linitial_int(vacstmt->appendonly_compaction_insert_segno);
+		int insert_segno = linitial_int(ao_vacuum_phase_config->appendonly_compaction_insert_segno);
 
 		if (insert_segno == APPENDONLY_COMPACTION_SEGNO_INVALID)
 		{
@@ -1893,15 +1894,15 @@ vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt)
 			if (RelationIsAoRows(aorel))
 			{
 				AppendOnlyCompact(aorel,
-								  vacstmt->appendonly_compaction_segno,
-								  insert_segno, (vacstmt->options & VACOPT_FULL));
+								  ao_vacuum_phase_config->appendonly_compaction_segno,
+								  insert_segno, (options & VACOPT_FULL));
 			}
 			else
 			{
 				Assert(RelationIsAoCols(aorel));
 				AOCSCompact(aorel,
-							vacstmt->appendonly_compaction_segno,
-							insert_segno, (vacstmt->options & VACOPT_FULL));
+							ao_vacuum_phase_config->appendonly_compaction_segno,
+							insert_segno, (options & VACOPT_FULL));
 			}
 		}
 	}

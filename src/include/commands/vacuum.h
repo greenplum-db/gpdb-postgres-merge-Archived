@@ -179,6 +179,38 @@ typedef struct VacuumParams
 										 * activated, -1 to use default */
 } VacuumParams;
 
+/*
+ * AOVacuumPhaseConfig is passed around in VacuumStmt to orchestrate vacuuming
+ * an AO table through each AO vacuum phase.
+ */
+typedef struct AOVacuumPhaseConfig
+{
+	/*
+	 * AO segment file num to compact (integer).
+	 */
+	List *appendonly_compaction_segno;
+
+	/*
+	 * AO table meta data from the dispatcher.
+	 * Used during compaction.
+	 *
+	 * Unless appendonly_compaction_vacuum_cleanup is specified, it should
+	 * only contain a single entry. If the entry is
+	 * APPENDONLY_COMPACTION_SEGNO_INVALID, it is a pseudo compaction
+	 * transaction. If the list has no entries, it is a drop transaction.
+	 */
+	List *appendonly_compaction_insert_segno;
+
+	/*
+	 * MPP-24168: If the appendonly table is empty, we should vacuum
+	 * auxiliary tables in prepare phase itself.  Othewise, age of
+	 * auxiliary heap relations never gets updated.
+	 */
+	bool appendonly_relation_empty;
+
+	AOVacuumPhase appendonly_phase;
+} AOVacuumPhaseConfig;
+
 /* GUC parameters */
 extern PGDLLIMPORT int default_statistics_target;		/* PGDLLIMPORT for
 														 * PostGIS */
@@ -233,14 +265,13 @@ extern void analyze_rel(Oid relid, RangeVar *relation, int options,
 			BufferAccessStrategy bstrategy);
 
 /* GPDB only */
-extern void vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt);
+extern void vacuum_appendonly_rel(Relation aorel, int options,
+								  AOVacuumPhaseConfig *ao_vacuum_phase_config);
 extern void vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
 										 BlockNumber *rel_pages, double *rel_tuples,
 										 bool *relhasindex);
-extern int vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt);
+extern int vacuum_appendonly_indexes(Relation aoRelation, int options);
 extern void vacuum_aocs_rel(Relation aorel, void *vacrelstats, bool isVacFull);
-
-extern void analyzeStatement(VacuumStmt *vacstmt, List *relids, BufferAccessStrategy start, bool isTopLevel);
 
 extern bool std_typanalyze(VacAttrStats *stats);
 

@@ -119,26 +119,30 @@ static MemoryContext vac_context = NULL;
 static BufferAccessStrategy vac_strategy;
 
 /* non-export function prototypes */
-<<<<<<< HEAD
-static List *get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype);
+static List *get_rel_oids(Oid relid, const RangeVar *vacrel,
+						  int options, List *va_cols, int stmttype);
 static void vac_truncate_clog(TransactionId frozenXID,
-							  MultiXactId minMulti,
-							  TransactionId lastSaneFrozenXid,
-							  MultiXactId lastSaneMinMulti);
-static bool vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
-		   bool for_wraparound);
+				  MultiXactId minMulti,
+				  TransactionId lastSaneFrozenXid,
+				  MultiXactId lastSaneMinMulti);
+static bool vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params,
+					   AOVacuumPhaseConfig *ao_vacuum_phase_config, Relation onerel, LOCKMODE lmode);
+
 static void scan_index(Relation indrel, double num_tuples,
 					   bool check_stats, int elevel);
 static bool appendonly_tid_reaped(ItemPointer itemptr, void *state);
-static void dispatchVacuum(VacuumStmt *vacstmt, VacuumStatsContext *ctx);
-static void vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
-						 List *relations, BufferAccessStrategy bstrategy,
-						 bool do_toast,
-						 bool for_wraparound, bool isTopLevel);
+static void dispatchVacuum(int options, RangeVar *relation, bool skip_twophase,
+						   AOVacuumPhaseConfig *ao_vacuum_phase_config, VacuumStatsContext *ctx);
+static void vacuumStatement_Relation(Oid relid, List *relations,
+									 BufferAccessStrategy bstrategy,
+									 bool isTopLevel, VacuumParams *params,
+									 int options, RangeVar *relation,
+									 bool skip_twophase,
+									 AOVacuumPhaseConfig *ao_vacuum_phase_config);
 
 static void
-vacuum_rel_ao_phase(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
-					bool for_wraparound,
+vacuum_rel_ao_phase(Oid relid, RangeVar *relation, int options, VacuumParams *params,
+					AOVacuumPhaseConfig *ao_vacuum_phase_config, Relation onerel, LOCKMODE lmode,
 					List *compaction_insert_segno,
 					List *compaction_segno,
 					AOVacuumPhase phase);
@@ -150,14 +154,6 @@ vacuum_combine_stats(VacuumStatsContext *stats_context,
 static void vacuum_appendonly_index(Relation indexRelation,
 						AppendOnlyIndexVacuumState *vacuumIndexState,
 						double rel_tuple_count, int elevel);
-=======
-static List *get_rel_oids(Oid relid, const RangeVar *vacrel);
-static void vac_truncate_clog(TransactionId frozenXID,
-				  MultiXactId minMulti,
-				  TransactionId lastSaneFrozenXid,
-				  MultiXactId lastSaneMinMulti);
-static bool vacuum_rel(Oid relid, RangeVar *relation, int options,
-		   VacuumParams *params);
 
 /*
  * Primary entry point for manual VACUUM and ANALYZE commands
@@ -204,9 +200,9 @@ ExecVacuum(VacuumStmt *vacstmt, bool isTopLevel)
 
 	/* Now go through the common routine */
 	vacuum(vacstmt->options, vacstmt->relation, InvalidOid, &params,
-		   vacstmt->va_cols, NULL, isTopLevel);
+		   vacstmt->va_cols, NULL, isTopLevel,
+		   vacstmt->skip_twophase, vacstmt->ao_vacuum_phase_config);
 }
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * Primary entry point for VACUUM and ANALYZE commands.
@@ -232,24 +228,21 @@ ExecVacuum(VacuumStmt *vacstmt, bool isTopLevel)
  */
 void
 vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
-	   List *va_cols, BufferAccessStrategy bstrategy, bool isTopLevel)
+	   List *va_cols, BufferAccessStrategy bstrategy, bool isTopLevel,
+	   bool skip_twophase, AOVacuumPhaseConfig *ao_vacuum_phase_config)
 {
 	const char *stmttype;
 	volatile bool in_outer_xact,
 				use_own_xacts;
-<<<<<<< HEAD
 	List	   *vacuum_relations = NIL;
 	List	   *analyze_relations = NIL;
+	static bool in_vacuum = false;
 
-	if ((vacstmt->options & VACOPT_VACUUM) &&
-		(vacstmt->options & VACOPT_ROOTONLY))
+	if ((options & VACOPT_VACUUM) &&
+		(options & VACOPT_ROOTONLY))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("ROOTPARTITION option cannot be used together with VACUUM, try ANALYZE ROOTPARTITION")));
-=======
-	List	   *relations;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-	static bool in_vacuum = false;
 
 	Assert(params != NULL);
 
@@ -316,7 +309,6 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 	 * Build list of relations to process, unless caller gave us one. (If we
 	 * build one, we put it in vac_context for safekeeping.)
 	 */
-<<<<<<< HEAD
 
 	/*
 	 * Analyze on midlevel partition is not allowed directly so
@@ -326,15 +318,14 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 	 * contain all the OIDs of partition of a partitioned table except midlevel
 	 * partition unless GUC optimizer_analyze_midlevel_partition is set to on.
 	 */
-	if (vacstmt->options & VACOPT_VACUUM)
+	if (options & VACOPT_VACUUM)
 	{
-		vacuum_relations = get_rel_oids(relid, vacstmt, VACOPT_VACUUM);
+		vacuum_relations = get_rel_oids(relid, relation,
+										options, va_col, VACOPT_VACUUM);
 	}
-	if (vacstmt->options & VACOPT_ANALYZE)
-		analyze_relations = get_rel_oids(relid, vacstmt, VACOPT_ANALYZE);
-=======
-	relations = get_rel_oids(relid, relation);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	if (options & VACOPT_ANALYZE)
+		analyze_relations = get_rel_oids(relid, relation,
+										 options, va_col, VACOPT_ANALYZE);
 
 	/*
 	 * Decide whether we need to start/commit our own transactions.
@@ -351,16 +342,11 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 	 * transaction block, and also in an autovacuum worker, use own
 	 * transactions so we can release locks sooner.
 	 */
-<<<<<<< HEAD
-	if (vacstmt->options & VACOPT_VACUUM)
-		if (Gp_role == GP_ROLE_EXECUTE && vacstmt->skip_twophase)
+	if (options & VACOPT_VACUUM)
+		if (Gp_role == GP_ROLE_EXECUTE && skip_twophase)
 			use_own_xacts = false;
 		else
 			use_own_xacts = true;
-=======
-	if (options & VACOPT_VACUUM)
-		use_own_xacts = true;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	else
 	{
 		Assert(options & VACOPT_ANALYZE);
@@ -407,7 +393,7 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 		VacuumPageMiss = 0;
 		VacuumPageDirty = 0;
 
-		if (vacstmt->options & VACOPT_VACUUM)
+		if (options & VACOPT_VACUUM)
 		{
 			/*
 			 * Loop to process each selected relation which needs to be
@@ -417,19 +403,20 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 			{
 				Oid			relid = lfirst_oid(cur);
 
-				vacuumStatement_Relation(vacstmt, relid, vacuum_relations, bstrategy, do_toast, for_wraparound, isTopLevel);
+				vacuumStatement_Relation(relid, vacuum_relations, bstrategy,
+										 isTopLevel, params, options, relation,
+										 skip_twophase, ao_vacuum_phase_config);
 			}
 		}
 
-<<<<<<< HEAD
-		if (vacstmt->options & VACOPT_ANALYZE)
+		if (options & VACOPT_ANALYZE)
 		{
 			/*
 			 * If there are no partition tables in the database and ANALYZE
 			 * ROOTPARTITION ALL is executed, report a WARNING as no root
 			 * partitions are there to be analyzed
 			 */
-			if ((vacstmt->options & VACOPT_ROOTONLY) && NIL == analyze_relations && !vacstmt->relation)
+			if ((options & VACOPT_ROOTONLY) && NIL == analyze_relations && !relation)
 			{
 				ereport(NOTICE,
 						(errmsg("there are no partitioned tables in database to ANALYZE ROOTPARTITION")));
@@ -439,15 +426,6 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 			 * Loop to process each selected relation which needs to be analyzed.
 			 */
 			foreach(cur, analyze_relations)
-=======
-			if (options & VACOPT_VACUUM)
-			{
-				if (!vacuum_rel(relid, relation, options, params))
-					continue;
-			}
-
-			if (options & VACOPT_ANALYZE)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			{
 				Oid			relid = lfirst_oid(cur);
 
@@ -624,9 +602,9 @@ vacuumStatement_IsTemporary(Relation onerel)
  * command.
  */
 static void
-vacuumStatement_AssignRelation(VacuumStmt *vacstmt, Oid relid, List *relations)
+vacuumStatement_AssignRelation(RangeVar *relation, Oid relid, List *relations)
 {
-	if (list_length(relations) > 1 || vacstmt->relation == NULL)
+	if (list_length(relations) > 1 || relation == NULL)
 	{
 		char	*relname		= get_rel_name(relid);
 		char	*namespace_name =
@@ -645,7 +623,7 @@ vacuumStatement_AssignRelation(VacuumStmt *vacstmt, Oid relid, List *relations)
 		}
 
 		/* XXX: dispatch OID than name */
-		vacstmt->relation = makeRangeVar(namespace_name, relname, -1);
+		*relation = makeRangeVar(namespace_name, relname, -1);
 	}
 }
 
@@ -708,9 +686,9 @@ vacuumStatement_AssignRelation(VacuumStmt *vacstmt, Oid relid, List *relations)
  * QE still needs to deal with concurrent work well.
  */
 static void
-vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
-						 List *relations, BufferAccessStrategy bstrategy,
-						 bool do_toast, bool for_wraparound, bool isTopLevel)
+vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrategy,
+						 bool isTopLevel, VacuumParams *params, int options, RangeVar *relation,
+						 bool skip_twophase, AOVacuumPhaseConfig *ao_vacuum_phase_config)
 {
 	LOCKMODE			lmode = NoLock;
 	Relation			onerel;
@@ -719,11 +697,9 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 
 	oldcontext = MemoryContextSwitchTo(vac_context);
 
-	vacstmt = copyObject(vacstmt);
 	/* VACUUM, without ANALYZE */
-	vacstmt->options &= ~VACOPT_ANALYZE;
-	vacstmt->options |= VACOPT_VACUUM;
-	vacstmt->va_cols = NIL;		/* A plain VACUUM cannot list columns */
+	options &= ~VACOPT_ANALYZE;
+	options |= VACOPT_VACUUM;
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -735,7 +711,7 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 	 * a two phase commit, the expectation is that we will vacuum one relation
 	 * per dispatch, so we can use the outer transaction for this instead.
 	 */
-	if (Gp_role != GP_ROLE_EXECUTE || !vacstmt->skip_twophase)
+	if (Gp_role != GP_ROLE_EXECUTE || !skip_twophase)
 		StartTransactionCommand();
 
 	/*
@@ -750,16 +726,16 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 	 * way, we can be sure that no other backend is vacuuming the same table.
 	 * For analyze, we use ShareUpdateExclusiveLock.
 	 */
-	if (vacstmt->appendonly_phase == AOVAC_DROP)
+	if (ao_vacuum_phase_config->appendonly_phase == AOVAC_DROP)
 	{
 		Assert(Gp_role == GP_ROLE_EXECUTE);
 		lmode = AccessExclusiveLock;
 
 	}
-	else if (!(vacstmt->options & VACOPT_VACUUM))
+	else if (!(options & VACOPT_VACUUM))
 		lmode = ShareUpdateExclusiveLock;
 	else
-		lmode = (vacstmt->options & VACOPT_FULL) ? AccessExclusiveLock : ShareUpdateExclusiveLock;
+		lmode = (options & VACOPT_FULL) ? AccessExclusiveLock : ShareUpdateExclusiveLock;
 
 	/*
 	 * Open the relation and get the appropriate lock on it.
@@ -823,21 +799,21 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 	LockRelationIdForSession(&onerelid, lmode);
 
 	oldcontext = MemoryContextSwitchTo(vac_context);
-	vacuumStatement_AssignRelation(vacstmt, relid, relations);
+	vacuumStatement_AssignRelation(relation, relid, relations);
 	MemoryContextSwitchTo(oldcontext);
 
 	if (RelationIsHeap(onerel) || Gp_role == GP_ROLE_EXECUTE)
 	{
 		/* skip two-phase commit on heap table VACUUM */
 		if (Gp_role == GP_ROLE_DISPATCH)
-			vacstmt->skip_twophase = true;
+			skip_twophase = true;
 
-		if (vacstmt->appendonly_phase == AOVAC_DROP)
+		if (ao_vacuum_phase_config->appendonly_phase == AOVAC_DROP)
 		{
 			SIMPLE_FAULT_INJECTOR(VacuumRelationOpenRelationDuringDropPhase);
 		}
 
-		vacuum_rel(onerel, relid, vacstmt, lmode, for_wraparound);
+		vacuum_rel(relid, relation, options, params, ao_vacuum_phase_config, onerel, lmode);
 		onerel = NULL;
 	}
 	else
@@ -845,18 +821,17 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 		List	   *compactedSegmentFileList = NIL;
 		List	   *insertedSegmentFileList = NIL;
 
-		vacstmt->appendonly_compaction_segno = NIL;
-		vacstmt->appendonly_compaction_insert_segno = NIL;
-		vacstmt->appendonly_relation_empty = false;
-		vacstmt->skip_twophase = false;
+		ao_vacuum_phase_config->appendonly_compaction_segno = NIL;
+		ao_vacuum_phase_config->appendonly_compaction_insert_segno = NIL;
+		ao_vacuum_phase_config->appendonly_relation_empty = false;
+		ao_vacuum_phase_config->skip_twophase = false;
 
 		/*
 		 * 1. Prepare phase
 		 */
-		vacuum_rel_ao_phase(onerel, relid, vacstmt, lmode, for_wraparound,
-							NIL,
-							NIL,
-							AOVAC_PREPARE);
+		vacuum_rel_ao_phase(relid, relation, options, params,
+							ao_vacuum_phase_config, onerel, lmode,
+							NIL, NIL, AOVAC_PREPARE);
 		onerel = NULL;
 
 		/*
@@ -902,7 +877,8 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 
 				MemoryContextSwitchTo(oldcontext);
 
-				vacuum_rel_ao_phase(onerel, relid, vacstmt, lmode, for_wraparound,
+				vacuum_rel_ao_phase(relid, relation, options, params,
+									ao_vacuum_phase_config, onerel, lmode,
 									list_make1_int(insertSegNo),
 									compactNowList,
 									AOVAC_COMPACT);
@@ -979,7 +955,8 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 			/* Perform the DROP phase */
 			RegisterSegnoForCompactionDrop(relid, compactNowList);
 
-			vacuum_rel_ao_phase(onerel, relid, vacstmt, lmode, for_wraparound,
+			vacuum_rel_ao_phase(relid, relation, options, params,
+								ao_vacuum_phase_config, onerel, lmode,
 								NIL,	/* insert segno */
 								compactNowList,
 								AOVAC_DROP);
@@ -1000,7 +977,8 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 		if (list_length(compactedSegmentFileList) > 0)
 		{
 			/* Provide the list of all compacted segment numbers with it */
-			vacuum_rel_ao_phase(onerel, relid, vacstmt, lmode, for_wraparound,
+			vacuum_rel_ao_phase(relid, relation, options, params,
+								ao_vacuum_phase_config, onerel, lmode,
 								insertedSegmentFileList,
 								compactedSegmentFileList,
 								AOVAC_CLEANUP);
@@ -1035,12 +1013,12 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 				vsubtype = "AUTO";
 			else
 			{
-				if ((vacstmt->options & VACOPT_FULL) &&
-					(0 == vacstmt->freeze_min_age))
+				if ((options & VACOPT_FULL) &&
+					(0 == params->freeze_min_age))
 					vsubtype = "FULL FREEZE";
-				else if ((vacstmt->options & VACOPT_FULL))
+				else if ((options & VACOPT_FULL))
 					vsubtype = "FULL";
-				else if (0 == vacstmt->freeze_min_age)
+				else if (0 == params->freeze_min_age)
 					vsubtype = "FREEZE";
 			}
 			MetaTrackUpdObject(RelationRelationId,
@@ -1073,7 +1051,8 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
  * separate lists for a combined "VACUUM ANALYZE".
  */
 static List *
-get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
+get_rel_oids(Oid relid, const RangeVar *vacrel,
+			 int options, List *va_cols, int stmttype)
 {
 	List	   *oid_list = NIL;
 	MemoryContext oldcontext;
@@ -1087,7 +1066,7 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 		oid_list = lappend_oid(oid_list, relid);
 		MemoryContextSwitchTo(oldcontext);
 	}
-	else if (vacstmt->relation)
+	else if (vacrel)
 	{
 		if (stmttype == VACOPT_VACUUM)
 		{
@@ -1104,7 +1083,7 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 			 * going to commit this transaction and begin a new one between now
 			 * and then.
 			 */
-			relid = RangeVarGetRelid(vacstmt->relation, NoLock, false);
+			relid = RangeVarGetRelid(vacrel, NoLock, false);
 
 			if (rel_is_partitioned(relid))
 			{
@@ -1134,10 +1113,10 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 			 */
 			Oid relationOid = InvalidOid;
 
-			relationOid = RangeVarGetRelid(vacstmt->relation, NoLock, false);
+			relationOid = RangeVarGetRelid(vacrel, NoLock, false);
 			PartStatus ps = rel_part_status(relationOid);
 
-			if (ps != PART_STATUS_ROOT && (vacstmt->options & VACOPT_ROOTONLY))
+			if (ps != PART_STATUS_ROOT && (options & VACOPT_ROOTONLY))
 			{
 				ereport(WARNING,
 						(errmsg("skipping \"%s\" --- cannot analyze a non-root partition using ANALYZE ROOTPARTITION",
@@ -1148,7 +1127,7 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 				PartitionNode *pn = get_parts(relationOid, 0 /*level*/ ,
 											  0 /*parent*/, false /* inctemplate */, true /*includesubparts*/);
 				Assert(pn);
-				if (!(vacstmt->options & VACOPT_ROOTONLY))
+				if (!(options & VACOPT_ROOTONLY))
 				{
 					oid_list = all_leaf_partition_relids(pn); /* all leaves */
 
@@ -1157,7 +1136,7 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 						oid_list = list_concat(oid_list, all_interior_partition_relids(pn)); /* interior partitions */
 					}
 				}
-				if (optimizer_analyze_root_partition || (vacstmt->options & VACOPT_ROOTONLY))
+				if (optimizer_analyze_root_partition || (options & VACOPT_ROOTONLY))
 					oid_list = lappend_oid(oid_list, relationOid); /* root partition */
 			}
 			else if (ps == PART_STATUS_LEAF)
@@ -1166,11 +1145,11 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 				oid_list = list_make1_oid(relationOid);
 
 				List *va_root_attnums = NIL;
-				if (vacstmt->va_cols != NIL)
+				if (va_cols != NIL)
 				{
 					ListCell *lc;
 					int i;
-					foreach(lc, vacstmt->va_cols)
+					foreach(lc, va_cols)
 					{
 						char	   *col = strVal(lfirst(lc));
 
@@ -1196,9 +1175,9 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 					}
 					RelationClose(onerel);
 				}
-				if (optimizer_analyze_root_partition || (vacstmt->options & VACOPT_ROOTONLY))
+				if (optimizer_analyze_root_partition || (options & VACOPT_ROOTONLY))
 				{
-					int		elevel = ((vacstmt->options & VACOPT_VERBOSE) ? LOG : DEBUG2);
+					int		elevel = ((options & VACOPT_VERBOSE) ? LOG : DEBUG2);
 
 					if (leaf_parts_analyzed(root_rel_oid, relationOid, va_root_attnums, elevel))
 						oid_list = lappend_oid(oid_list, root_rel_oid);
@@ -1263,7 +1242,7 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 			candidateOid = HeapTupleGetOid(tuple);
 
 			/* Skip non root partition tables if ANALYZE ROOTPARTITION ALL is executed */
-			if ((vacstmt->options & VACOPT_ROOTONLY) && !rel_is_partitioned(candidateOid))
+			if ((options & VACOPT_ROOTONLY) && !rel_is_partitioned(candidateOid))
 			{
 				continue;
 			}
@@ -1276,7 +1255,7 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 			}
 
 			// Likewise, skip root partition, if disabled.
-			if (!optimizer_analyze_root_partition && (vacstmt->options & VACOPT_ROOTONLY) == 0 && ps == PART_STATUS_ROOT)
+			if (!optimizer_analyze_root_partition && (options & VACOPT_ROOTONLY) == 0 && ps == PART_STATUS_ROOT)
 			{
 				continue;
 			}
@@ -1401,13 +1380,8 @@ vacuum_set_xid_limits(Relation rel,
 
 	/*
 	 * Compute the multixact age for which freezing is urgent.  This is
-<<<<<<< HEAD
-	 * normally autovacuum_multixact_freeze_max_age, but may be less if we
-	 * are short of multixact member space.
-=======
 	 * normally autovacuum_multixact_freeze_max_age, but may be less if we are
 	 * short of multixact member space.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 */
 	effective_multixact_freeze_max_age = MultiXactMemberFreezeThreshold();
 
@@ -1771,21 +1745,10 @@ vac_update_relstats(Relation relation,
 		dirty = true;
 	}
 
-<<<<<<< HEAD
 	elog(DEBUG2, "Vacuum oid=%u pages=%d tuples=%f",
 		 relid, pgcform->relpages, pgcform->reltuples);
-	/*
-	 * If we have discovered that there are no indexes, then there's no
-	 * primary key either.  This could be done more thoroughly...
-	 */
-	if (pgcform->relhaspkey && !hasindex)
-	{
-		pgcform->relhaspkey = false;
-		dirty = true;
-	}
-=======
+
 	/* Apply DDL updates, but not inside an outer transaction (see above) */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (!in_outer_xact)
 	{
@@ -1833,12 +1796,12 @@ vac_update_relstats(Relation relation,
 	 * and it seems best to overwrite it with the cutoff we used this time.
 	 * This should match vac_update_datfrozenxid() concerning what we consider
 	 * to be "in the future".
+	 *
+	 * GPDB: We check if pgcform->relfrozenxid is valid because AO and CO
+	 * tables should have relfrozenxid as InvalidTransactionId.
 	 */
 	if (TransactionIdIsNormal(frozenxid) &&
-<<<<<<< HEAD
 		TransactionIdIsValid(pgcform->relfrozenxid) &&
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		pgcform->relfrozenxid != frozenxid &&
 		(TransactionIdPrecedes(pgcform->relfrozenxid, frozenxid) ||
 		 TransactionIdPrecedes(ReadNewTransactionId(),
@@ -2108,15 +2071,12 @@ vac_truncate_clog(TransactionId frozenXID,
 
 	/*
 	 * Scan pg_database to compute the minimum datfrozenxid/datminmxid
-<<<<<<< HEAD
 	 *
 	 * Since vac_update_datfrozenxid updates datfrozenxid/datminmxid in-place,
 	 * the values could change while we look at them.  Fetch each one just
 	 * once to ensure sane behavior of the comparison logic.  (Here, as in
 	 * many other places, we assume that fetching or updating an XID in shared
 	 * storage is atomic.)
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	 *
 	 * Note: we need not worry about a race condition with new entries being
 	 * inserted by CREATE DATABASE.  Any such entry will have a copy of some
@@ -2199,18 +2159,11 @@ vac_truncate_clog(TransactionId frozenXID,
 		return;
 
 	/*
-<<<<<<< HEAD
-	 * Truncate CLOG to the oldest computed value.  Note we don't truncate
-	 * multixacts; that will be done by the next checkpoint.
-	 */
-	TruncateCLOG(frozenXID);
-=======
 	 * Truncate CLOG and CommitTs to the oldest computed value. Note we don't
 	 * truncate multixacts; that will be done by the next checkpoint.
 	 */
 	TruncateCLOG(frozenXID);
 	TruncateCommitTs(frozenXID, true);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Update the wrap limit for GetNewTransactionId and creation of new
@@ -2220,24 +2173,21 @@ vac_truncate_clog(TransactionId frozenXID,
 	 */
 	SetTransactionIdLimit(frozenXID, oldestxid_datoid);
 	SetMultiXactIdLimit(minMulti, minmulti_datoid);
-<<<<<<< HEAD
+	AdvanceOldestCommitTs(frozenXID);
 }
 
 static void
-vacuum_rel_ao_phase(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
-					bool for_wraparound,
+vacuum_rel_ao_phase(Oid relid, RangeVar *relation, int options, VacuumParams *params,
+					AOVacuumPhaseConfig *ao_vacuum_phase_config, Relation onerel, LOCKMODE lmode,
 					List *compaction_insert_segno,
 					List *compaction_segno,
 					AOVacuumPhase phase)
 {
-	vacstmt->appendonly_compaction_insert_segno = compaction_insert_segno;
-	vacstmt->appendonly_compaction_segno = compaction_segno;
-	vacstmt->appendonly_phase = phase;
+	ao_vacuum_phase_config->appendonly_compaction_insert_segno = compaction_insert_segno;
+	ao_vacuum_phase_config->appendonly_compaction_segno = compaction_segno;
+	ao_vacuum_phase_config->appendonly_phase = phase;
 
-	vacuum_rel(onerel, relid, vacstmt, lmode, for_wraparound);
-=======
-	AdvanceOldestCommitTs(frozenXID);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	vacuum_rel(relid, relation, options, params, ao_vacuum_phase_config, onerel, lmode);
 }
 
 
@@ -2256,12 +2206,8 @@ vacuum_rel_ao_phase(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lm
  * On exit, the 'onere' will be closed, and the transaction is closed.
  */
 static bool
-<<<<<<< HEAD
-vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
-		   bool for_wraparound)
-=======
-vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params,
+		   AOVacuumPhaseConfig *ao_vacuum_phase_config, Relation onerel, LOCKMODE lmode)
 {
 	Oid			toast_relid;
 	Oid			aoseg_relid = InvalidOid;
@@ -2275,86 +2221,9 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
-<<<<<<< HEAD
 	MemoryContext oldcontext;
-=======
 
 	Assert(params != NULL);
-
-	/* Begin a transaction for vacuuming this relation */
-	StartTransactionCommand();
-
-	/*
-	 * Functions in indexes may want a snapshot set.  Also, setting a snapshot
-	 * ensures that RecentGlobalXmin is kept truly recent.
-	 */
-	PushActiveSnapshot(GetTransactionSnapshot());
-
-	if (!(options & VACOPT_FULL))
-	{
-		/*
-		 * In lazy vacuum, we can set the PROC_IN_VACUUM flag, which lets
-		 * other concurrent VACUUMs know that they can ignore this one while
-		 * determining their OldestXmin.  (The reason we don't set it during a
-		 * full VACUUM is exactly that we may have to run user-defined
-		 * functions for functional indexes, and we want to make sure that if
-		 * they use the snapshot set above, any tuples it requires can't get
-		 * removed from other tables.  An index function that depends on the
-		 * contents of other tables is arguably broken, but we won't break it
-		 * here by violating transaction semantics.)
-		 *
-		 * We also set the VACUUM_FOR_WRAPAROUND flag, which is passed down by
-		 * autovacuum; it's used to avoid canceling a vacuum that was invoked
-		 * in an emergency.
-		 *
-		 * Note: these flags remain set until CommitTransaction or
-		 * AbortTransaction.  We don't want to clear them until we reset
-		 * MyPgXact->xid/xmin, else OldestXmin might appear to go backwards,
-		 * which is probably Not Good.
-		 */
-		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-		MyPgXact->vacuumFlags |= PROC_IN_VACUUM;
-		if (params->is_wraparound)
-			MyPgXact->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
-		LWLockRelease(ProcArrayLock);
-	}
-
-	/*
-	 * Check for user-requested abort.  Note we want this to be inside a
-	 * transaction, so xact.c doesn't issue useless WARNING.
-	 */
-	CHECK_FOR_INTERRUPTS();
-
-	/*
-	 * Determine the type of lock we want --- hard exclusive lock for a FULL
-	 * vacuum, but just ShareUpdateExclusiveLock for concurrent vacuum. Either
-	 * way, we can be sure that no other backend is vacuuming the same table.
-	 */
-	lmode = (options & VACOPT_FULL) ? AccessExclusiveLock : ShareUpdateExclusiveLock;
-
-	/*
-	 * Open the relation and get the appropriate lock on it.
-	 *
-	 * There's a race condition here: the rel may have gone away since the
-	 * last time we saw it.  If so, we don't need to vacuum it.
-	 *
-	 * If we've been asked not to wait for the relation lock, acquire it first
-	 * in non-blocking mode, before calling try_relation_open().
-	 */
-	if (!(options & VACOPT_NOWAIT))
-		onerel = try_relation_open(relid, lmode);
-	else if (ConditionalLockRelationOid(relid, lmode))
-		onerel = try_relation_open(relid, NoLock);
-	else
-	{
-		onerel = NULL;
-		if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
-			ereport(LOG,
-					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-				   errmsg("skipping vacuum of \"%s\" --- lock not available",
-						  relation->relname)));
-	}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	if (!onerel)
 	{
@@ -2372,14 +2241,14 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 		 */
 		PushActiveSnapshot(GetTransactionSnapshot());
 
-		if (!(vacstmt->options & VACOPT_FULL))
+		if (!(options & VACOPT_FULL))
 		{
 			/*
 			 * PostgreSQL does this:
-			 * During a lazy VACUUM we can set the PROC_IN_VACUUM flag, which lets other
-			 * concurrent VACUUMs know that they can ignore this one while
+			 * In lazy vacuum, we can set the PROC_IN_VACUUM flag, which lets
+			 * other concurrent VACUUMs know that they can ignore this one while
 			 * determining their OldestXmin.  (The reason we don't set it during a
-			 * full VACUUM is exactly that we may have to run user- defined
+			 * full VACUUM is exactly that we may have to run user-defined
 			 * functions for functional indexes, and we want to make sure that if
 			 * they use the snapshot set above, any tuples it requires can't get
 			 * removed from other tables.  An index function that depends on the
@@ -2390,20 +2259,20 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 			 * indexed tables performs reindex causing updates to pg_class
 			 * tuples for index entries.
 			 *
-			 * We also set the VACUUM_FOR_WRAPAROUND flag, which is passed down
-			 * by autovacuum; it's used to avoid cancelling a vacuum that was
-			 * invoked in an emergency.
+			 * We also set the VACUUM_FOR_WRAPAROUND flag, which is passed down by
+			 * autovacuum; it's used to avoid canceling a vacuum that was invoked
+			 * in an emergency.
 			 *
 			 * Note: this flag remains set until CommitTransaction or
 			 * AbortTransaction.  We don't want to clear it until we reset
-			 * MyProc->xid/xmin, else OldestXmin might appear to go backwards,
+			 * MyPgXact->xid/xmin, else OldestXmin might appear to go backwards,
 			 * which is probably Not Good.
 			 */
 			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 #if 0 /* Upstream code not applicable to GPDB */
-			MyProc->vacuumFlags |= PROC_IN_VACUUM;
+			MyPgXact->vacuumFlags |= PROC_IN_VACUUM;
 #endif
-			if (for_wraparound)
+			if (params->is_wraparound)
 				MyPgXact->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
 			LWLockRelease(ProcArrayLock);
 		}
@@ -2423,18 +2292,18 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 		 * If we've been asked not to wait for the relation lock, acquire it first
 		 * in non-blocking mode, before calling try_relation_open().
 		 */
-		if (!(vacstmt->options & VACOPT_NOWAIT))
+		if (!(options & VACOPT_NOWAIT))
 			onerel = try_relation_open(relid, lmode, false /* nowait */);
 		else if (ConditionalLockRelationOid(relid, lmode))
 			onerel = try_relation_open(relid, NoLock, false /* nowait */);
 		else
 		{
 			onerel = NULL;
-			if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
+			if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 				ereport(LOG,
 						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 						 errmsg("skipping vacuum of \"%s\" --- lock not available",
-								vacstmt->relation->relname)));
+								relation->relname)));
 		}
 
 		if (!onerel)
@@ -2508,7 +2377,7 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	 * warning here; it would just lead to chatter during a database-wide
 	 * VACUUM.)
 	 */
-	if (isOtherTempNamespace(RelationGetNamespace(onerel)))
+	if (RELATION_IS_OTHER_TEMP(onerel))
 	{
 		relation_close(onerel, lmode);
 		PopActiveSnapshot();
@@ -2517,18 +2386,23 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	}
 
 	/*
-	 * Remember the relation's TOAST and AO segments relations for later
+	 * Remember the relation's TOAST relation for later, if the caller asked
+	 * us to process it.  In VACUUM FULL, though, the toast table is
+	 * automatically rebuilt by cluster_rel so we shouldn't recurse to it.
+	 *
+	 * GPDB: Also remember the AO segment relations for later.
 	 */
-	toast_relid = onerel->rd_rel->reltoastrelid;
-	is_heap = RelationIsHeap(onerel);
+	if (!(options & VACOPT_SKIPTOAST) && !(options & VACOPT_FULL))
+		toast_relid = onerel->rd_rel->reltoastrelid;
+	else
+		toast_relid = InvalidOid;
 	oldcontext = MemoryContextSwitchTo(vac_context);
 	toast_rangevar = makeRangeVar(get_namespace_name(get_rel_namespace(toast_relid)),
 								  get_rel_name(toast_relid),
 								  -1);
 	MemoryContextSwitchTo(oldcontext);
 
-<<<<<<< HEAD
-
+	is_heap = RelationIsHeap(onerel);
 	if (!is_heap)
 	{
 		Assert(RelationIsAppendOptimized(onerel));
@@ -2547,20 +2421,9 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 										  get_rel_name(aovisimap_relid),
 										  -1);
 		MemoryContextSwitchTo(oldcontext);
-		vacstmt->appendonly_relation_empty =
-				AppendOnlyCompaction_IsRelationEmpty(onerel);
+		ao_vacuum_phase_config->appendonly_relation_empty =
+			AppendOnlyCompaction_IsRelationEmpty(onerel);
 	}
-=======
-	/*
-	 * Remember the relation's TOAST relation for later, if the caller asked
-	 * us to process it.  In VACUUM FULL, though, the toast table is
-	 * automatically rebuilt by cluster_rel so we shouldn't recurse to it.
-	 */
-	if (!(options & VACOPT_SKIPTOAST) && !(options & VACOPT_FULL))
-		toast_relid = onerel->rd_rel->reltoastrelid;
-	else
-		toast_relid = InvalidOid;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
@@ -2615,11 +2478,7 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	 * AccessExclusiveLock. Therefore, FULL isn't exactly the same as non-FULL
 	 * on AO tables.
 	 */
-<<<<<<< HEAD
-	if (is_heap && (vacstmt->options & VACOPT_FULL))
-=======
-	if (options & VACOPT_FULL)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	if (is_heap && (options & VACOPT_FULL))
 	{
 		Oid			relid = RelationGetRelid(onerel);
 
@@ -2629,8 +2488,7 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 
 		/* VACUUM FULL is now a variant of CLUSTER; see cluster.c */
 		cluster_rel(relid, InvalidOid, false,
-<<<<<<< HEAD
-					(vacstmt->options & VACOPT_VERBOSE) != 0,
+					(options & VACOPT_VERBOSE) != 0,
 					true /* printError */);
 
 		if (Gp_role == GP_ROLE_DISPATCH)
@@ -2651,20 +2509,14 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 			SetUserIdAndSecContext(
 								   save_userid,
 								   save_sec_context | SECURITY_RESTRICTED_OPERATION);
-			dispatchVacuum(vacstmt, &stats_context);
+			dispatchVacuum(options, relation, skip_twophase, NULL, &stats_context);
 
 			vac_update_relstats_from_list(stats_context.updated_stats);
 		}
 	}
 	else
 	{
-		lazy_vacuum_rel(onerel, vacstmt, vac_strategy);
-=======
-					(options & VACOPT_VERBOSE) != 0);
-	}
-	else
-		lazy_vacuum_rel(onerel, options, params, vac_strategy);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+		lazy_vacuum_rel(onerel, options, params, vac_strategy, ao_vacuum_phase_config);
 
 		if (Gp_role == GP_ROLE_DISPATCH)
 		{
@@ -2674,7 +2526,7 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 			SetUserIdAndSecContext(
 								   save_userid,
 								   save_sec_context | SECURITY_RESTRICTED_OPERATION);
-			dispatchVacuum(vacstmt, &stats_context);
+			dispatchVacuum(options, relation, skip_twophase, ao_vacuum_phase_config, &stats_context);
 			vac_update_relstats_from_list(stats_context.updated_stats);
 		}
 	}
@@ -2689,26 +2541,26 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	 * Update ao master tupcount the hard way after the compaction and
 	 * after the drop.
 	 */
-	if (Gp_role == GP_ROLE_DISPATCH && vacstmt->appendonly_compaction_segno &&
+	if (Gp_role == GP_ROLE_DISPATCH && ao_vacuum_phase_config->appendonly_compaction_segno &&
 		RelationIsAppendOptimized(onerel))
 	{
 		Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 
-		if (vacstmt->appendonly_phase == AOVAC_COMPACT)
+		if (ao_vacuum_phase_config->appendonly_phase == AOVAC_COMPACT)
 		{
 			/* In the compact phase, we need to update the information of the segment file we inserted into */
-			if (list_length(vacstmt->appendonly_compaction_insert_segno) == 1 &&
-				linitial_int(vacstmt->appendonly_compaction_insert_segno) == APPENDONLY_COMPACTION_SEGNO_INVALID)
+			if (list_length(ao_vacuum_phase_config->appendonly_compaction_insert_segno) == 1 &&
+				linitial_int(ao_vacuum_phase_config->appendonly_compaction_insert_segno) == APPENDONLY_COMPACTION_SEGNO_INVALID)
 			{
 				/* this was a "pseudo" compaction phase. */
 			}
 			else
-				UpdateMasterAosegTotalsFromSegments(onerel, appendOnlyMetaDataSnapshot, vacstmt->appendonly_compaction_insert_segno, 0);
+				UpdateMasterAosegTotalsFromSegments(onerel, appendOnlyMetaDataSnapshot, ao_vacuum_phase_config->appendonly_compaction_insert_segno, 0);
 		}
-		else if (vacstmt->appendonly_phase == AOVAC_DROP)
+		else if (ao_vacuum_phase_config->appendonly_phase == AOVAC_DROP)
 		{
 			/* In the drop phase, we need to update the information of the compacted segment file(s) */
-			UpdateMasterAosegTotalsFromSegments(onerel, appendOnlyMetaDataSnapshot, vacstmt->appendonly_compaction_segno, 0);
+			UpdateMasterAosegTotalsFromSegments(onerel, appendOnlyMetaDataSnapshot, ao_vacuum_phase_config->appendonly_compaction_segno, 0);
 		}
 
 		UnregisterSnapshot(appendOnlyMetaDataSnapshot);
@@ -2739,32 +2591,18 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	 * backend executing dispatched VacuumStmt (GP_ROLE_EXECUTE), therefore,
 	 * should not execute this block of code.
 	 */
-<<<<<<< HEAD
 	if (Gp_role != GP_ROLE_EXECUTE && (is_heap ||
-		(!is_heap && (vacstmt->appendonly_phase == AOVAC_CLEANUP ||
-					  vacstmt->appendonly_relation_empty))))
+		(!is_heap && (ao_vacuum_phase_config->appendonly_phase == AOVAC_CLEANUP ||
+					  ao_vacuum_phase_config->appendonly_relation_empty))))
 	{
 		if (toast_relid != InvalidOid && toast_rangevar != NULL)
-		{
-			VacuumStmt *vacstmt_toast = makeNode(VacuumStmt);
-			vacstmt_toast->options = vacstmt->options;
-			vacstmt_toast->freeze_min_age = vacstmt->freeze_min_age;
-			vacstmt_toast->freeze_table_age = vacstmt->freeze_table_age;
-			vacstmt_toast->skip_twophase = vacstmt->skip_twophase;
-
-			vacstmt_toast->relation = toast_rangevar;
-			vacuum_rel(NULL, toast_relid, vacstmt_toast, lmode, for_wraparound);
-		}
+			vacuum_rel(toast_relid, toast_rangevar, options, params, NULL, lmode);
 	}
-=======
-	if (toast_relid != InvalidOid)
-		vacuum_rel(toast_relid, relation, options, params);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * If an AO/CO table is empty on a segment,
-	 * vacstmt->appendonly_relation_empty will get set to true even in the
-	 * compaction phase. In such a case, we end up updating the auxiliary
+	 * ao_vacuum_phase_config->appendonly_relation_empty will get set to true even in
+	 * the compaction phase. In such a case, we end up updating the auxiliary
 	 * tables and try to vacuum them all in the same transaction. This causes
 	 * the auxiliary relation to not get vacuumed and it generates a notice to
 	 * the user saying that transaction is already in progress. Hence we want
@@ -2780,35 +2618,21 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	 * (GP_ROLE_EXECUTE), therefore, should not execute this block of code.
 	 */
 	if (Gp_role != GP_ROLE_EXECUTE &&
-		(vacstmt->appendonly_phase == AOVAC_CLEANUP ||
-		 (vacstmt->appendonly_relation_empty &&
-		  vacstmt->appendonly_phase == AOVAC_PREPARE)))
+		(ao_vacuum_phase_config->appendonly_phase == AOVAC_CLEANUP ||
+		 (ao_vacuum_phase_config->appendonly_relation_empty &&
+		  ao_vacuum_phase_config->appendonly_phase == AOVAC_PREPARE)))
 	{
-		VacuumStmt *vacstmt_ao_aux = makeNode(VacuumStmt);
-		vacstmt_ao_aux->options = vacstmt->options;
-		vacstmt_ao_aux->freeze_min_age = vacstmt->freeze_min_age;
-		vacstmt_ao_aux->freeze_table_age = vacstmt->freeze_table_age;
-
 		/* do the same for an AO segments table, if any */
 		if (aoseg_relid != InvalidOid && aoseg_rangevar != NULL)
-		{
-			vacstmt_ao_aux->relation = aoseg_rangevar;
-			vacuum_rel(NULL, aoseg_relid, vacstmt_ao_aux, lmode, for_wraparound);
-		}
+			vacuum_rel(aoseg_relid, aoseg_rangevar, options, params, NULL, lmode);
 
 		/* do the same for an AO block directory table, if any */
 		if (aoblkdir_relid != InvalidOid && aoblkdir_rangevar != NULL)
-		{
-			vacstmt_ao_aux->relation = aoblkdir_rangevar;
-			vacuum_rel(NULL, aoblkdir_relid, vacstmt_ao_aux, lmode, for_wraparound);
-		}
+			vacuum_rel(aoblkdir_relid, aoblkdir_rangevar, options, params, NULL, lmode);
 
 		/* do the same for an AO visimap, if any */
 		if (aovisimap_relid != InvalidOid && aovisimap_rangevar != NULL)
-		{
-			vacstmt_ao_aux->relation = aovisimap_rangevar;
-			vacuum_rel(NULL, aovisimap_relid, vacstmt_ao_aux, lmode, for_wraparound);
-		}
+			vacuum_rel(aovisimap_relid, aovisimap_rangevar, options, params, NULL, lmode);
 	}
 
 	/* Report that we really did it. */
@@ -2823,9 +2647,10 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
  ****************************************************************************
  */
 
-static bool vacuum_appendonly_index_should_vacuum(Relation aoRelation,
-		VacuumStmt *vacstmt,
-		AppendOnlyIndexVacuumState *vacuumIndexState, double *rel_tuple_count)
+static bool
+vacuum_appendonly_index_should_vacuum(Relation aoRelation, int options,
+									  AppendOnlyIndexVacuumState *vacuumIndexState,
+									  double *rel_tuple_count)
 {
 	int64 hidden_tupcount;
 	FileSegTotals *totals;
@@ -2860,7 +2685,7 @@ static bool vacuum_appendonly_index_should_vacuum(Relation aoRelation,
 
 	pfree(totals);
 
-	if(hidden_tupcount > 0 || (vacstmt->options & VACOPT_FULL))
+	if(hidden_tupcount > 0 || (options & VACOPT_FULL))
 	{
 		return true;
 	}
@@ -2878,7 +2703,7 @@ static bool vacuum_appendonly_index_should_vacuum(Relation aoRelation,
  * It returns the number of indexes on the relation.
  */
 int
-vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt)
+vacuum_appendonly_indexes(Relation aoRelation, int options)
 {
 	int reindex_count = 1;
 	int i;
@@ -2889,7 +2714,6 @@ vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt)
 	int totalSegfiles;
 
 	Assert(RelationIsAppendOptimized(aoRelation));
-	Assert(vacstmt);
 
 	memset(&vacuumIndexState, 0, sizeof(vacuumIndexState));
 
@@ -2898,7 +2722,7 @@ vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt)
 			RelationGetRelationName(aoRelation));
 
 	/* Now open all indexes of the relation */
-	if ((vacstmt->options & VACOPT_FULL))
+	if ((options & VACOPT_FULL))
 		vac_open_indexes(aoRelation, AccessExclusiveLock, &nindexes, &Irel);
 	else
 		vac_open_indexes(aoRelation, RowExclusiveLock, &nindexes, &Irel);
@@ -2942,12 +2766,12 @@ vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt)
 		int			elevel;
 
 		/* just scan indexes to update statistic */
-		if (vacstmt->options & VACOPT_VERBOSE)
+		if (options & VACOPT_VERBOSE)
 			elevel = INFO;
 		else
 			elevel = DEBUG2;
 
-		if (vacuum_appendonly_index_should_vacuum(aoRelation, vacstmt,
+		if (vacuum_appendonly_index_should_vacuum(aoRelation, options,
 					&vacuumIndexState, &rel_tuple_count))
 		{
 			Assert(rel_tuple_count > -1.0);
@@ -3320,20 +3144,26 @@ vacuum_delay_point(void)
  * Dispatch a Vacuum command.
  */
 static void
-dispatchVacuum(VacuumStmt *vacstmt, VacuumStatsContext *ctx)
+dispatchVacuum(int options, RangeVar *relation, bool skip_twophase,
+			   AOVacuumPhaseConfig *ao_vacuum_phase_config, VacuumStatsContext *ctx)
 {
 	CdbPgResults cdb_pgresults;
-
+	VacuumStmt *vacstmt = makeNode(VacuumStmt);
 	int flags = DF_CANCEL_ON_ERROR | DF_WITH_SNAPSHOT;
 
 	/* should these be marked volatile ? */
 
 	Assert(Gp_role == GP_ROLE_DISPATCH);
-	Assert(vacstmt);
-	Assert(vacstmt->options & VACOPT_VACUUM);
-	Assert(!(vacstmt->options & VACOPT_ANALYZE));
+	Assert(options & VACOPT_VACUUM);
+	Assert(!(options & VACOPT_ANALYZE));
 
-	if (!vacstmt->skip_twophase)
+	vacstmt->options = options;
+	vacstmt->relation = relation;
+	vacstmt->va_cols = NIL;
+	vacstmt->skip_twophase = skip_twophase;
+	vacstmt->ao_vacuum_phase_config = ao_vacuum_phase_config;
+
+	if (!skip_twophase)
 		flags |= DF_NEED_TWO_PHASE;
 
 	/* XXX: Some kinds of VACUUM assign a new relfilenode. bitmap indexes maybe? */

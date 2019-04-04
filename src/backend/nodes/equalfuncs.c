@@ -1736,7 +1736,6 @@ _equalVacuumStmt(const VacuumStmt *a, const VacuumStmt *b)
 	COMPARE_SCALAR_FIELD(options);
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(va_cols);
-	COMPARE_NODE_FIELD(expanded_relids);
 
 	return true;
 }

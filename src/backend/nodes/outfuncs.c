@@ -4611,16 +4611,11 @@ _outVacuumStmt(StringInfo str, const VacuumStmt *node)
 	WRITE_NODE_TYPE("VACUUMSTMT");
 
 	WRITE_INT_FIELD(options);
-	WRITE_INT_FIELD(freeze_min_age);
-	WRITE_INT_FIELD(freeze_table_age);
 	WRITE_NODE_FIELD(relation);
 	WRITE_NODE_FIELD(va_cols);
 
 	WRITE_BOOL_FIELD(skip_twophase);
-	WRITE_NODE_FIELD(expanded_relids);
-	WRITE_NODE_FIELD(appendonly_compaction_segno);
-	WRITE_NODE_FIELD(appendonly_compaction_insert_segno);
-	WRITE_ENUM_FIELD(appendonly_phase, AOVacuumPhase);
+	WRITE_NODE_FIELD(ao_vacuum_phase_config);
 }
 
 static void

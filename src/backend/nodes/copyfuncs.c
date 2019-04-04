@@ -4451,11 +4451,7 @@ _copyVacuumStmt(const VacuumStmt *from)
 	COPY_NODE_FIELD(va_cols);
 
 	COPY_SCALAR_FIELD(skip_twophase);
-	COPY_NODE_FIELD(expanded_relids);
-	COPY_NODE_FIELD(appendonly_compaction_segno);
-	COPY_NODE_FIELD(appendonly_compaction_insert_segno);
-	COPY_SCALAR_FIELD(appendonly_phase);
-	COPY_SCALAR_FIELD(appendonly_relation_empty);
+	COPY_NODE_FIELD(ao_vacuum_phase_config);
 
 	return newnode;
 }

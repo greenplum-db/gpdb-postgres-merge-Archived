@@ -185,8 +185,8 @@ static Datum std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 
 static void analyze_rel_internal(Oid relid, RangeVar *relation, int options,
-			VacuumParams *params, List *va_cols, bool in_outer_xact,
-			BufferAccessStrategy bstrategy);
+								 VacuumParams *params, List *va_cols,
+								 bool in_outer_xact, BufferAccessStrategy bstrategy);
 static void acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, int elevel);
 
 /*

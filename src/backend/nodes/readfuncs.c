@@ -2934,16 +2934,11 @@ _readVacuumStmt(void)
 	READ_LOCALS(VacuumStmt);
 
 	READ_INT_FIELD(options);
-	READ_INT_FIELD(freeze_min_age);
-	READ_INT_FIELD(freeze_table_age);
 	READ_NODE_FIELD(relation);
 	READ_NODE_FIELD(va_cols);
 
 	READ_BOOL_FIELD(skip_twophase);
-	READ_NODE_FIELD(expanded_relids);
-	READ_NODE_FIELD(appendonly_compaction_segno);
-	READ_NODE_FIELD(appendonly_compaction_insert_segno);
-	READ_ENUM_FIELD(appendonly_phase, AOVacuumPhase);
+	READ_NODE_FIELD(ao_vacuum_phase_config);
 
 	READ_DONE();
 }
