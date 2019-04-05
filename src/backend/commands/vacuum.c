@@ -2109,19 +2109,11 @@ vac_truncate_clog(TransactionId frozenXID,
 		 * databases have been scanned and cleaned up.  (We will issue the
 		 * "already wrapped" warning if appropriate, though.)
 		 */
-<<<<<<< HEAD
 		if (TransactionIdPrecedes(lastSaneFrozenXid, datfrozenxid) ||
 			MultiXactIdPrecedes(lastSaneMinMulti, datminmxid))
 			bogus = true;
 
 		if (TransactionIdPrecedes(nextXID, datfrozenxid))
-=======
-		if (TransactionIdPrecedes(lastSaneFrozenXid, dbform->datfrozenxid) ||
-			MultiXactIdPrecedes(lastSaneMinMulti, dbform->datminmxid))
-			bogus = true;
-
-		if (TransactionIdPrecedes(myXID, dbform->datfrozenxid))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			frozenAlreadyWrapped = true;
 		else if (TransactionIdPrecedes(datfrozenxid, frozenXID))
 		{
