@@ -2260,9 +2260,6 @@ range_table_walker(List *rtable,
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
-<<<<<<< HEAD
-			case RTE_VOID:
-=======
 				if (rte->tablesample)
 				{
 					if (walker(rte->tablesample->args, context))
@@ -2271,7 +2268,7 @@ range_table_walker(List *rtable,
 						return true;
 				}
 				break;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+			case RTE_VOID:
 			case RTE_CTE:
 				/* nothing to do */
 				break;
@@ -3159,9 +3156,6 @@ range_table_mutator(List *rtable,
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
-<<<<<<< HEAD
-			case RTE_VOID:
-=======
 				if (rte->tablesample)
 				{
 					CHECKFLATCOPY(newrte->tablesample, rte->tablesample,
@@ -3174,7 +3168,7 @@ range_table_mutator(List *rtable,
 						   Node *);
 				}
 				break;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+			case RTE_VOID:
 			case RTE_CTE:
 				/* we don't bother to copy eref, aliases, etc; OK? */
 				break;
