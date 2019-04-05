@@ -137,13 +137,10 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 			long numberTuples,
 			ScanDirection direction,
 			DestReceiver *dest);
-<<<<<<< HEAD
-=======
 static bool ExecCheckRTEPerms(RangeTblEntry *rte);
 static bool ExecCheckRTEPermsModified(Oid relOid, Oid userid,
 						  Bitmapset *modifiedCols,
 						  AclMode requiredPerms);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void ExecCheckXactReadOnly(PlannedStmt *plannedstmt);
 static char *ExecBuildSlotValueDescription(Oid reloid,
 							  TupleTableSlot *slot,
@@ -153,14 +150,12 @@ static char *ExecBuildSlotValueDescription(Oid reloid,
 static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 				  Plan *planTree);
 
-<<<<<<< HEAD
 static void FillSliceGangInfo(Slice *slice, int numsegments);
 static void FillSliceTable(EState *estate, PlannedStmt *stmt);
-
 static PartitionNode *BuildPartitionNodeFromRoot(Oid relid);
 static void InitializeQueryPartsMetadata(PlannedStmt *plannedstmt, EState *estate);
 static void AdjustReplicatedTableCounts(EState *estate);
-=======
+
 /*
  * Note that GetUpdatedColumns() also exists in commands/trigger.c.  There does
  * not appear to be any good header to put it into, given the structures that
@@ -171,7 +166,6 @@ static void AdjustReplicatedTableCounts(EState *estate);
 	(rt_fetch((relinfo)->ri_RangeTableIndex, (estate)->es_range_table)->insertedCols)
 #define GetUpdatedColumns(relinfo, estate) \
 	(rt_fetch((relinfo)->ri_RangeTableIndex, (estate)->es_range_table)->updatedCols)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* end of local decls */
 
@@ -359,13 +353,6 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 * If the transaction is read-only, we need to check if any writes are
 	 * planned to non-temporary tables.  EXPLAIN is considered read-only.
 	 *
-<<<<<<< HEAD
-	 * In GPDB, we must call ExecCheckXactReadOnly() in the QD even if the
-	 * transaction is not read-only, because ExecCheckXactReadOnly() also
-	 * determines if two-phase commit is needed.
-	 */
-	if ((XactReadOnly || Gp_role == GP_ROLE_DISPATCH) && !(eflags & EXEC_FLAG_EXPLAIN_ONLY))
-=======
 	 * Don't allow writes in parallel mode.  Supporting UPDATE and DELETE
 	 * would require (a) storing the combocid hash in shared memory, rather
 	 * than synchronizing it just once at the start of parallelism, and (b) an
@@ -376,10 +363,13 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 * We have lower-level defenses in CommandCounterIncrement and elsewhere
 	 * against performing unsafe operations in parallel mode, but this gives a
 	 * more user-friendly error message.
+	 *
+	 * In GPDB, we must call ExecCheckXactReadOnly() in the QD even if the
+	 * transaction is not read-only, because ExecCheckXactReadOnly() also
+	 * determines if two-phase commit is needed.
 	 */
-	if ((XactReadOnly || IsInParallelMode()) &&
+	if ((XactReadOnly || IsInParallelMode() || Gp_role == GP_ROLE_DISPATCH) &&
 		!(eflags & EXEC_FLAG_EXPLAIN_ONLY))
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		ExecCheckXactReadOnly(queryDesc->plannedstmt);
 
 	/*
@@ -1581,17 +1571,12 @@ ExecCheckRTEPermsModified(Oid relOid, Oid userid, Bitmapset *modifiedCols,
  *      "dirty" and will require 2pc.
  *
  * Note: in a Hot Standby slave this would need to reject writes to temp
-<<<<<<< HEAD
- * tables as well; but an HS slave can't have created any temp tables
- * in the first place, so no need to check that.
+ * tables just as we do in parallel mode; but an HS slave can't have created
+ * any temp tables in the first place, so no need to check that.
  *
  * In GPDB, an important side-effect of this is to call
  * ExecutorMarkTransactionDoesWrites(), if the query is not read-only. That
  * ensures that we use two-phase commit for this transaction.
-=======
- * tables just as we do in parallel mode; but an HS slave can't have created
- * any temp tables in the first place, so no need to check that.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  */
 static void
 ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
@@ -1614,15 +1599,11 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 			PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
 	}
 
-<<<<<<< HEAD
-	/* Fail if write permissions are requested on any non-temp table */
     rti = 0;
-=======
 	/*
 	 * Fail if write permissions are requested in parallel mode for table
 	 * (temp or non-temp), otherwise fail for any non-temp table.
 	 */
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	foreach(l, plannedstmt->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
@@ -1917,12 +1898,9 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		if (rc->isParent)
 			continue;
 
-<<<<<<< HEAD
-=======
 		/* get relation's OID (will produce InvalidOid if subquery) */
 		relid = getrelid(rc->rti, rangeTable);
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		/*
 		 * If you change the conditions under which rel locks are acquired
 		 * here, be sure to adjust ExecOpenScanRelation to match.
@@ -1930,11 +1908,9 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		switch (rc->markType)
 		{
 			case ROW_MARK_TABLE_EXCLUSIVE:
-				relid = getrelid(rc->rti, rangeTable);
 				relation = heap_open(relid, ExclusiveLock);
 				break;
 			case ROW_MARK_TABLE_SHARE:
-				relid = getrelid(rc->rti, rangeTable);
 				relation = heap_open(relid, RowShareLock);
 				break;
 			case ROW_MARK_EXCLUSIVE:
@@ -3165,16 +3141,9 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				slot_attisnull(slot, attrChk))
 			{
 				char	   *val_desc;
-<<<<<<< HEAD
-				Bitmapset  *modifiedCols;
-
-				modifiedCols = GetModifiedColumns(resultRelInfo, estate);
-=======
-
 				insertedCols = GetInsertedColumns(resultRelInfo, estate);
 				updatedCols = GetUpdatedColumns(resultRelInfo, estate);
 				modifiedCols = bms_union(insertedCols, updatedCols);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				val_desc = ExecBuildSlotValueDescription(RelationGetRelid(rel),
 														 slot,
 														 tupdesc,
@@ -3198,16 +3167,9 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 		if ((failed = ExecRelCheck(resultRelInfo, slot, estate)) != NULL)
 		{
 			char	   *val_desc;
-<<<<<<< HEAD
-			Bitmapset  *modifiedCols;
-
-			modifiedCols = GetModifiedColumns(resultRelInfo, estate);
-=======
-
 			insertedCols = GetInsertedColumns(resultRelInfo, estate);
 			updatedCols = GetUpdatedColumns(resultRelInfo, estate);
 			modifiedCols = bms_union(insertedCols, updatedCols);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			val_desc = ExecBuildSlotValueDescription(RelationGetRelid(rel),
 													 slot,
 													 tupdesc,
@@ -3259,7 +3221,13 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 		ExprState  *wcoExpr = (ExprState *) lfirst(l2);
 
 		/*
-<<<<<<< HEAD
+		 * Skip any WCOs which are not the kind we are looking for at this
+		 * time.
+		 */
+		if (wco->kind != kind)
+			continue;
+
+		/*
 		 * GPDB_94_MERGE_FIXME
 		 * When we update the view, we need to check if the updated tuple belongs
 		 * to the view. Sometimes we need to execute a subplan to help check.
@@ -3279,12 +3247,6 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 			}
 		}
 		if (is_subplan)
-=======
-		 * Skip any WCOs which are not the kind we are looking for at this
-		 * time.
-		 */
-		if (wco->kind != kind)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			continue;
 
 		/*
@@ -3300,22 +3262,6 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 		{
 			char	   *val_desc;
 			Bitmapset  *modifiedCols;
-<<<<<<< HEAD
-
-			modifiedCols = GetModifiedColumns(resultRelInfo, estate);
-			val_desc = ExecBuildSlotValueDescription(RelationGetRelid(rel),
-													 slot,
-													 tupdesc,
-													 modifiedCols,
-													 64);
-
-			ereport(ERROR,
-					(errcode(ERRCODE_WITH_CHECK_OPTION_VIOLATION),
-				 errmsg("new row violates WITH CHECK OPTION for view \"%s\"",
-						wco->viewname),
-					val_desc ? errdetail("Failing row contains %s.", val_desc) :
-							   0));
-=======
 			Bitmapset  *insertedCols;
 			Bitmapset  *updatedCols;
 
@@ -3364,7 +3310,6 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 					elog(ERROR, "unrecognized WCO kind: %u", wco->kind);
 					break;
 			}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 	}
 }
@@ -3403,30 +3348,6 @@ ExecBuildSlotValueDescription(Oid reloid,
 	AclResult	aclresult;
 	bool		table_perm = false;
 	bool		any_perm = false;
-<<<<<<< HEAD
-
-	initStringInfo(&buf);
-
-	appendStringInfoChar(&buf, '(');
-
-	/*
-	 * Check if the user has permissions to see the row.  Table-level SELECT
-	 * allows access to all columns.  If the user does not have table-level
-	 * SELECT then we check each column and include those the user has SELECT
-	 * rights on.  Additionally, we always include columns the user provided
-	 * data for.
-	 */
-	aclresult = pg_class_aclcheck(reloid, GetUserId(), ACL_SELECT);
-	if (aclresult != ACLCHECK_OK)
-	{
-		/* Set up the buffer for the column list */
-		initStringInfo(&collist);
-		appendStringInfoChar(&collist, '(');
-	}
-	else
-		table_perm = any_perm = true;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/*
 	 * Check if RLS is enabled and should be active for the relation; if so,
@@ -3436,8 +3357,6 @@ ExecBuildSlotValueDescription(Oid reloid,
 	if (check_enable_rls(reloid, GetUserId(), true) == RLS_ENABLED)
 		return NULL;
 
-<<<<<<< HEAD
-=======
 	initStringInfo(&buf);
 
 	appendStringInfoChar(&buf, '(');
@@ -3462,7 +3381,6 @@ ExecBuildSlotValueDescription(Oid reloid,
 	/* Make sure the tuple is fully deconstructed */
 	slot_getallattrs(slot);
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	for (i = 0; i < tupdesc->natts; i++)
 	{
 		bool		column_perm = false;
@@ -3477,13 +3395,8 @@ ExecBuildSlotValueDescription(Oid reloid,
 		{
 			/*
 			 * No table-level SELECT, so need to make sure they either have
-<<<<<<< HEAD
-			 * SELECT rights on the column or that they have provided the
-			 * data for the column.  If not, omit this column from the error
-=======
 			 * SELECT rights on the column or that they have provided the data
 			 * for the column.  If not, omit this column from the error
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			 * message.
 			 */
 			aclresult = pg_attribute_aclcheck(reloid, tupdesc->attrs[i]->attnum,
@@ -3504,11 +3417,7 @@ ExecBuildSlotValueDescription(Oid reloid,
 
 		if (table_perm || column_perm)
 		{
-<<<<<<< HEAD
 			if (slot->PRIVATE_tts_isnull[i])
-=======
-			if (slot->tts_isnull[i])
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				val = "null";
 			else
 			{
@@ -3517,11 +3426,7 @@ ExecBuildSlotValueDescription(Oid reloid,
 
 				getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
 								  &foutoid, &typisvarlena);
-<<<<<<< HEAD
 				val = OidOutputFunctionCall(foutoid, slot->PRIVATE_tts_values[i]);
-=======
-				val = OidOutputFunctionCall(foutoid, slot->tts_values[i]);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			}
 
 			if (write_comma)
@@ -3845,20 +3750,6 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 			if (TransactionIdIsValid(SnapshotDirty.xmax))
 			{
 				ReleaseBuffer(buffer);
-<<<<<<< HEAD
-				if (noWait)
-				{
-					if (!ConditionalXactLockTableWait(SnapshotDirty.xmax))
-						ereport(ERROR,
-								(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-								 errmsg("could not obtain lock on row in relation \"%s\"",
-										RelationGetRelationName(relation))));
-				}
-				else
-					XactLockTableWait(SnapshotDirty.xmax,
-									  relation, &tuple.t_self,
-									  XLTW_FetchUpdated);
-=======
 				switch (wait_policy)
 				{
 					case LockWaitBlock:
@@ -3878,7 +3769,6 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 										RelationGetRelationName(relation))));
 						break;
 				}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				continue;		/* loop back to repeat heap_fetch */
 			}
 
@@ -4224,15 +4114,6 @@ EvalPlanQualFetchRowMarks(EPQState *epqstate)
 
 			/* build a temporary HeapTuple control structure */
 			tuple.t_len = HeapTupleHeaderGetDatumLength(td);
-<<<<<<< HEAD
-			ItemPointerSetInvalid(&(tuple.t_self));
-#if 0
-			/* relation might be a foreign table, if so provide tableoid */
-			tuple.t_tableOid = getrelid(erm->rti,
-										epqstate->estate->es_range_table);
-#endif
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			tuple.t_data = td;
 			/* relation might be a foreign table, if so provide tableoid */
 			tuple.t_tableOid = erm->relid;
