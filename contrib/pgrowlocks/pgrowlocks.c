@@ -158,15 +158,9 @@ pgrowlocks(PG_FUNCTION_ARGS)
 
 				values[Atnum_ismulti] = pstrdup("true");
 
-<<<<<<< HEAD
 				allow_old = HEAP_LOCKED_UPGRADED(infomask);
-				nmembers = GetMultiXactIdMembers(xmax, &members, allow_old);
-=======
-				allow_old = !(infomask & HEAP_LOCK_MASK) &&
-					(infomask & HEAP_XMAX_LOCK_ONLY);
 				nmembers = GetMultiXactIdMembers(xmax, &members, allow_old,
 												 false);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				if (nmembers == -1)
 				{
 					values[Atnum_xids] = "{0}";

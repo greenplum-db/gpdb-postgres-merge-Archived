@@ -259,10 +259,7 @@ set_arg(PGP_Context *ctx, char *key, char *val,
 		res = pgp_set_convert_crlf(ctx, atoi(val));
 	else if (strcmp(key, "unicode-mode") == 0)
 		res = pgp_set_unicode_mode(ctx, atoi(val));
-<<<<<<< HEAD
-=======
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/*
 	 * The remaining options are for debugging/testing and are therefore not
 	 * documented in the user-facing docs.

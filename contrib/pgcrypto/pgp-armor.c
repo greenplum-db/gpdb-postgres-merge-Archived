@@ -214,20 +214,15 @@ pgp_armor_encode(const uint8 *src, unsigned len, StringInfo dst,
 
 	appendStringInfoString(dst, armor_header);
 
-<<<<<<< HEAD
-	n = pg_base64_encode(src, len, pos);
-	pos += n;
-=======
 	for (n = 0; n < num_headers; n++)
 		appendStringInfo(dst, "%s: %s\n", keys[n], values[n]);
 	appendStringInfoChar(dst, '\n');
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
-	/* make sure we have enough room to b64_encode() */
-	b64len = b64_enc_len(len);
+	/* make sure we have enough room to pg_base64_encode() */
+	b64len = pg_base64_enc_len(len);
 	enlargeStringInfo(dst, (int) b64len);
 
-	res = b64_encode(src, len, (uint8 *) dst->data + dst->len);
+	res = pg_base64_encode(src, len, (uint8 *) dst->data + dst->len);
 	if (res > b64len)
 		elog(FATAL, "overflow - encode estimate too small");
 	dst->len += res;
@@ -368,16 +363,9 @@ pgp_armor_decode(const uint8 *src, int len, StringInfo dst)
 	crc = (((long) buf[0]) << 16) + (((long) buf[1]) << 8) + (long) buf[2];
 
 	/* decode data */
-<<<<<<< HEAD
-	res = pg_base64_decode(base64_start, base64_end - base64_start, dst);
-
-	/* check crc */
-	if (res >= 0 && crc24(dst, res) != crc)
-		res = PXE_PGP_CORRUPT_ARMOR;
-=======
-	blen = (int) b64_dec_len(len);
+	blen = (int) pg_base64_dec_len(len);
 	enlargeStringInfo(dst, blen);
-	res = b64_decode(base64_start, base64_end - base64_start, (uint8 *) dst->data);
+	res = pg_base64_decode(base64_start, base64_end - base64_start, (uint8 *) dst->data);
 	if (res > blen)
 		elog(FATAL, "overflow - decode estimate too small");
 	if (res >= 0)
@@ -387,7 +375,6 @@ pgp_armor_decode(const uint8 *src, int len, StringInfo dst)
 		else
 			res = PXE_PGP_CORRUPT_ARMOR;
 	}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 out:
 	return res;
 }
@@ -403,15 +390,6 @@ int
 pgp_extract_armor_headers(const uint8 *src, unsigned len,
 						  int *nheaders, char ***keys, char ***values)
 {
-<<<<<<< HEAD
-	return pg_base64_enc_len(len) + strlen(armor_header) + strlen(armor_footer) + 16;
-}
-
-unsigned
-pgp_armor_dec_len(unsigned len)
-{
-	return pg_base64_dec_len(len);
-=======
 	const uint8 *data_end = src + len;
 	const uint8 *p;
 	const uint8 *base64_start;
@@ -507,5 +485,4 @@ pgp_armor_dec_len(unsigned len)
 
 	*nheaders = n;
 	return 0;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }

@@ -179,11 +179,7 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		for (block = first_block; block <= last_block; ++block)
 		{
 			CHECK_FOR_INTERRUPTS();
-<<<<<<< HEAD
 			smgrread(rel->rd_smgr, forkNumber, block, blockbuffer.data);
-=======
-			smgrread(rel->rd_smgr, forkNumber, block, blockbuffer);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			++blocks_done;
 		}
 	}

@@ -925,12 +925,8 @@ transformGraph(TrgmNFA *trgmNFA)
 	trgmNFA->states = hash_create("Trigram NFA",
 								  1024,
 								  &hashCtl,
-<<<<<<< HEAD
-								  HASH_ELEM | HASH_CONTEXT | HASH_FUNCTION);
-	trgmNFA->nstates = 0;
-=======
 								  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	trgmNFA->nstates = 0;
 
 	/* Create initial state: ambiguous prefix, NFA's initial state */
 	MemSet(&initkey, 0, sizeof(initkey));

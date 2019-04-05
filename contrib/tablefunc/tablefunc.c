@@ -1486,30 +1486,15 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 static void
 compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 {
-<<<<<<< HEAD
-=======
 	Oid			ret_atttypid;
 	Oid			sql_atttypid;
 	int32		ret_atttypmod;
 	int32		sql_atttypmod;
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/*
 	 * Result must have at least 2 columns.
 	 */
 	if (sql_tupdesc->natts < 2)
-<<<<<<< HEAD
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("invalid return type"),
-				 errdetail("Query must return at least two columns.")));
-
-	/*
-	 * We have failed to check datatype match since 2003, so we don't do that
-	 * here.  The call will work as long as the datatypes are I/O
-	 * representation compatible.
-	 */
-=======
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid return type"),
@@ -1546,7 +1531,6 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 						   "not match return parent key field type %s.",
 					   format_type_with_typemod(ret_atttypid, ret_atttypmod),
 					format_type_with_typemod(sql_atttypid, sql_atttypmod))));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	/* OK, the two tupdescs are compatible for our purposes */
 }
