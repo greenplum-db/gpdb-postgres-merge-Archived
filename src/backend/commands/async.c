@@ -2028,12 +2028,6 @@ asyncQueueAdvanceTail(void)
 static void
 ProcessIncomingNotify(void)
 {
-<<<<<<< HEAD
-	bool		catchup_enabled;
-	bool		client_wait_timeout_enabled;
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* We *must* reset the flag */
 	notifyInterruptPending = false;
 
@@ -2041,13 +2035,6 @@ ProcessIncomingNotify(void)
 	if (listenChannels == NIL)
 		return;
 
-<<<<<<< HEAD
-	/* Must prevent catchup interrupt while I am running */
-	catchup_enabled = DisableCatchupInterrupt();
-	client_wait_timeout_enabled = DisableClientWaitTimeoutInterrupt();
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessIncomingNotify");
 
@@ -2072,15 +2059,6 @@ ProcessIncomingNotify(void)
 
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessIncomingNotify: done");
-<<<<<<< HEAD
-
-	if (catchup_enabled)
-		EnableCatchupInterrupt();
-
-	if (client_wait_timeout_enabled)
-		EnableClientWaitTimeoutInterrupt();
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }
 
 /*
