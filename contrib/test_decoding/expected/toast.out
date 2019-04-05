@@ -290,8 +290,7 @@ SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', 
  table public.toasted_copy: INSERT: id[integer]:202 data[text]:'untoasted199'
  table public.toasted_copy: INSERT: id[integer]:203 data[text]:'untoasted200'
  COMMIT
-<<<<<<< HEAD
-(232 rows)
+(235 rows)
 
 -- test we can decode "old" tuples bigger than the max heap tuple size correctly
 DROP TABLE IF EXISTS toasted_several;
@@ -356,9 +355,6 @@ WHERE data NOT LIKE '%INSERT: %';
  table public.toasted_several: DELETE: id[integer]:1 toasted_key[text]:'98765432109876543210987654321..876543210987654321098765432109876543210987654321098765432109876543210987654321098765432109876543210'
  COMMIT
 (4 rows)
-=======
-(235 rows)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 SELECT pg_drop_replication_slot('regression_slot');
  pg_drop_replication_slot 

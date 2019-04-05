@@ -37,13 +37,8 @@ submake-isolation:
 submake-test_decoding:
 	$(MAKE) -C $(top_builddir)/contrib/test_decoding
 
-<<<<<<< HEAD
 REGRESSCHECKS=ddl xact rewrite toast permissions decoding_in_xact \
-	decoding_into_rel binary prepared spill
-=======
-REGRESSCHECKS=ddl rewrite toast permissions decoding_in_xact decoding_into_rel \
-	binary prepared replorigin
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	decoding_into_rel binary prepared replorigin spill
 
 regresscheck: | submake-regress submake-test_decoding temp-install
 	$(MKDIR_P) regression_output
@@ -57,12 +52,8 @@ regresscheck-install-force: | submake-regress submake-test_decoding temp-install
 	$(pg_regress_installcheck) \
 	    $(REGRESSCHECKS)
 
-<<<<<<< HEAD
 ISOLATIONCHECKS=mxact delayed_startup ondisk_startup concurrent_ddl_dml \
 	oldest_xmin snapshot_transfer
-=======
-ISOLATIONCHECKS=mxact delayed_startup ondisk_startup concurrent_ddl_dml
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 isolationcheck: | submake-isolation submake-test_decoding temp-install
 	$(MKDIR_P) isolation_output

@@ -119,15 +119,9 @@ DECLARE
 	detail text;
 BEGIN
 	PERFORM wait_pid(crash_pid)
-<<<<<<< HEAD
-	FROM dblink('dbname=contrib_regression', $$
-		SELECT pg_backend_pid() FROM dblink(
-			'service=test_ldap dbname=contrib_regression',
-=======
 	FROM dblink(connection_parameters(), $$
 		SELECT pg_backend_pid() FROM dblink(
 			'service=test_ldap '||connection_parameters(),
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			-- This string concatenation is a hack to shoehorn a
 			-- set_pgservicefile call into the SQL statement.
 			'SELECT 1' || set_pgservicefile('pg_service.conf')
@@ -683,9 +677,7 @@ SELECT dblink_disconnect('myconn');
 -- should get 'connection "myconn" not available' error
 SELECT dblink_disconnect('myconn');
 ERROR:  connection "myconn" not available
-<<<<<<< HEAD
 -- test nested query for GPDB
-=======
 -- test asynchronous queries
 SELECT dblink_connect('dtest1', connection_parameters());
  dblink_connect 
@@ -726,7 +718,6 @@ SELECT * from
   1
 (1 row)
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 CREATE TEMPORARY TABLE result AS
 (SELECT * from dblink('dbname=contrib_regression','select * from foo where f1 > 2 and f1 < 7') as t1(f1 int, f2 text, f3 text[]))
 UNION
@@ -765,7 +756,6 @@ SELECT * FROM result;
  10 | k  | {a10,b10,c10}
 (11 rows)
 
-<<<<<<< HEAD
 SELECT * FROM (SELECT * FROM dblink('dbname=contrib_regression','select * from foo') AS t(f1 int, f2 text, f3 text[])) AS t1;
  f1 | f2 |      f3       
 ----+----+---------------
@@ -785,7 +775,6 @@ SELECT * FROM (SELECT * FROM dblink('dbname=contrib_regression','select * from f
 -- test foreign data wrapper functionality
 CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
   OPTIONS (dbname 'contrib_regression', host 'localhost');
-=======
 SELECT dblink_connect('dtest1', connection_parameters());
  dblink_connect 
 ----------------
@@ -827,7 +816,6 @@ DO $d$
             )$$;
     END;
 $d$;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 CREATE USER MAPPING FOR public SERVER fdtest
   OPTIONS (server 'localhost');  -- fail, can't specify server here
 ERROR:  invalid option "server"

@@ -315,7 +315,6 @@ unaccent_lexize(PG_FUNCTION_ARGS)
 	char	   *srcstart = srcchar;
 	TSLexeme   *res;
 	StringInfoData buf;
-<<<<<<< HEAD
 
 	/* we allocate storage for the buffer only if needed */
 	buf.data = NULL;
@@ -326,16 +325,6 @@ unaccent_lexize(PG_FUNCTION_ARGS)
 		int			charlen;
 
 		charlen = pg_mblen(srcchar);
-=======
-
-	/* we allocate storage for the buffer only if needed */
-	buf.data = NULL;
-
-	while (len > 0)
-	{
-		TrieChar   *node;
-		int			matchlen;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		node = findReplaceTo(rootTrie, (unsigned char *) srcchar, len,
 							 &matchlen);
@@ -350,15 +339,6 @@ unaccent_lexize(PG_FUNCTION_ARGS)
 					appendBinaryStringInfo(&buf, srcstart, srcchar - srcstart);
 			}
 			appendBinaryStringInfo(&buf, node->replaceTo, node->replacelen);
-<<<<<<< HEAD
-=======
-		}
-		else
-		{
-			matchlen = pg_mblen(srcchar);
-			if (buf.data != NULL)
-				appendBinaryStringInfo(&buf, srcchar, matchlen);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		}
 		else if (buf.data != NULL)
 			appendBinaryStringInfo(&buf, srcchar, charlen);

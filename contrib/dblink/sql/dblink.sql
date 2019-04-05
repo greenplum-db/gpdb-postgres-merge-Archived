@@ -82,15 +82,9 @@ DECLARE
 	detail text;
 BEGIN
 	PERFORM wait_pid(crash_pid)
-<<<<<<< HEAD
-	FROM dblink('dbname=contrib_regression', $$
-		SELECT pg_backend_pid() FROM dblink(
-			'service=test_ldap dbname=contrib_regression',
-=======
 	FROM dblink(connection_parameters(), $$
 		SELECT pg_backend_pid() FROM dblink(
 			'service=test_ldap '||connection_parameters(),
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			-- This string concatenation is a hack to shoehorn a
 			-- set_pgservicefile call into the SQL statement.
 			'SELECT 1' || set_pgservicefile('pg_service.conf')
@@ -350,9 +344,7 @@ SELECT dblink_disconnect('myconn');
 -- should get 'connection "myconn" not available' error
 SELECT dblink_disconnect('myconn');
 
-<<<<<<< HEAD
 -- test nested query for GPDB
-=======
 -- test asynchronous queries
 SELECT dblink_connect('dtest1', connection_parameters());
 SELECT * from
@@ -366,7 +358,6 @@ SELECT dblink_connect('dtest3', connection_parameters());
 SELECT * from
  dblink_send_query('dtest3', 'select * from foo where f1 > 6') as t1;
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 CREATE TEMPORARY TABLE result AS
 (SELECT * from dblink('dbname=contrib_regression','select * from foo where f1 > 2 and f1 < 7') as t1(f1 int, f2 text, f3 text[]))
 UNION
@@ -374,7 +365,6 @@ UNION
 UNION
 (SELECT * from dblink('dbname=contrib_regression','select * from foo where f1 > 2 and f1 < 7') as t3(f1 int, f2 text, f3 text[]))
 ORDER by f1;
-<<<<<<< HEAD
 SELECT * FROM result;
 DROP TABLE result;
 CREATE TEMPORARY TABLE result (f1 int, f2 text, f3 text[]);
@@ -385,7 +375,6 @@ SELECT * FROM (SELECT * FROM dblink('dbname=contrib_regression','select * from f
 -- test foreign data wrapper functionality
 CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
   OPTIONS (dbname 'contrib_regression', host 'localhost');
-=======
 
 -- dblink_get_connections returns an array with elements in a machine-dependent
 -- ordering, so we must resort to unnesting and sorting for a stable result
@@ -423,7 +412,6 @@ DO $d$
     END;
 $d$;
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 CREATE USER MAPPING FOR public SERVER fdtest
   OPTIONS (server 'localhost');  -- fail, can't specify server here
 CREATE USER MAPPING FOR public SERVER fdtest OPTIONS (user :'USER');

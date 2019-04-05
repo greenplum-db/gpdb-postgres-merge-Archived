@@ -83,8 +83,6 @@ COMMIT;
 
 -- show changes
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
-<<<<<<< HEAD
-=======
 
 -- ON CONFLICT DO UPDATE support
 BEGIN;
@@ -94,7 +92,6 @@ COMMIT;
 
 /* display results */
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 -- hide changes bc of oid visible in full table rewrites
 CREATE TABLE tr_unique(id2 serial unique NOT NULL, data int);
@@ -128,7 +125,6 @@ FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', 
 GROUP BY substring(data, 1, 24)
 ORDER BY 1,2;
 
-<<<<<<< HEAD
 -- check updates of primary keys work correctly
 BEGIN;
 CREATE TABLE spoolme AS SELECT g.i FROM generate_series(1, 5000) g(i);
@@ -142,7 +138,7 @@ COMMIT;
 SELECT data
 FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
 WHERE data ~ 'UPDATE';
-=======
+
 -- check that a large, spooled, upsert works
 INSERT INTO tr_etoomuch (id, data)
 SELECT g.i, -g.i FROM generate_series(8000, 12000) g(i)
@@ -152,7 +148,6 @@ SELECT substring(data, 1, 29), count(*)
 FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
 GROUP BY 1
 ORDER BY min(location - '0/0');
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * check whether we decode subtransactions correctly in relation with each

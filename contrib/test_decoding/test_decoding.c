@@ -44,10 +44,7 @@ typedef struct
 	bool		include_timestamp;
 	bool		skip_empty_xacts;
 	bool		xact_wrote_changes;
-<<<<<<< HEAD
-=======
 	bool		only_local;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 } TestDecodingData;
 
 static void pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
@@ -105,10 +102,7 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 	data->include_xids = true;
 	data->include_timestamp = false;
 	data->skip_empty_xacts = false;
-<<<<<<< HEAD
-=======
 	data->only_local = false;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	ctx->output_plugin_private = data;
 
@@ -167,8 +161,6 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 				  errmsg("could not parse value \"%s\" for parameter \"%s\"",
 						 strVal(elem->arg), elem->defname)));
 		}
-<<<<<<< HEAD
-=======
 		else if (strcmp(elem->defname, "only-local") == 0)
 		{
 
@@ -180,7 +172,6 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 				  errmsg("could not parse value \"%s\" for parameter \"%s\"",
 						 strVal(elem->arg), elem->defname)));
 		}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		else
 		{
 			ereport(ERROR,
