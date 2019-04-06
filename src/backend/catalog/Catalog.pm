@@ -180,8 +180,7 @@ sub Catalogs
 
 				foreach my $column ( @{ $catalog{columns} } )
 				{
-					my ($attname, $atttype) = %$column;
-
+					my $attname = $column->{name};
 					if ($attname eq $colname)
 					{
 						$found = 1;
@@ -284,7 +283,7 @@ sub ProcessDataLine
 	my $i = 1;
 	foreach my $column ( @{ $catalog->{columns} } )
 	{
-		my ($attname, $atttype) = %$column;
+		my $attname = $column->{name};
 		$colnums{$attname} = $i;
 
 		$i = $i + 1;
