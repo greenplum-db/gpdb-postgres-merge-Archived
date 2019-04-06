@@ -35,7 +35,7 @@
 
 /* MPP -- array_add -- special for prospective customer  */
 /* array_add(_int4, _int4) => _int4 */
-DATA(insert OID = 6012 ( array_add  PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1007 "1007 1007" _null_ _null_ _null_ _null_ array_int4_add _null_ _null_ _null_ n a ));
+DATA(insert OID = 5066 ( array_add  PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1007 "1007 1007" _null_ _null_ _null_ _null_ array_int4_add _null_ _null_ _null_ n a ));
 DESCR("itemwise add two integer arrays");
 
 /* interval_interval_div("interval", "interval") => float8 */
@@ -203,7 +203,7 @@ DESCR("Get the length of a file (via stat)");
 
 /* MPP Aggregate -- array_sum -- special for prospective customer.  */
 /* array_sum(_int4) => _int4 */
-DATA(insert OID = 6013 ( array_sum  PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 1007 "1007" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ n a ));
+DATA(insert OID = 5067 ( array_sum  PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 1007 "1007" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ n a ));
 DESCR("array sum aggregate");
 
 
@@ -271,7 +271,7 @@ DESCR("pivot sum aggregate");
 
 /* Greenplum MPP exposed internally-defined functions.  */
 /* gp_pgdatabase() => SETOF record */
-DATA(insert OID = 6007 ( gp_pgdatabase  PGNSP PGUID 12 1 1000 0 0 f f f f f t v 0 0 2249 "" _null_ _null_ _null_ _null_ gp_pgdatabase__ _null_ _null_ _null_ n a ));
+DATA(insert OID = 5065 ( gp_pgdatabase  PGNSP PGUID 12 1 1000 0 0 f f f f f t v 0 0 2249 "" _null_ _null_ _null_ _null_ gp_pgdatabase__ _null_ _null_ _null_ n a ));
 DESCR("view mpp pgdatabase state");
 
 /* gp_execution_segment() => SETOF int4 */
@@ -714,19 +714,19 @@ DATA(insert OID = 6572 ( exp  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "719
 DESCR("natural exponential (e^x)");
 
 /* ln(complex) => complex */
-DATA(insert OID = 3573 ( ln  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_ln _null_ _null_ _null_ n a ));
+DATA(insert OID = 5031 ( ln  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_ln _null_ _null_ _null_ n a ));
 DESCR("natural logarithm");
 
 /* log(complex) => complex */
-DATA(insert OID = 3574 ( log  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_log10 _null_ _null_ _null_ n a ));
+DATA(insert OID = 5032 ( log  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_log10 _null_ _null_ _null_ n a ));
 DESCR("base 10 logarithm");
 
 /* log(complex, complex) => complex */
-DATA(insert OID = 3575 ( log  PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 7198 "7198 7198" _null_ _null_ _null_ _null_ complex_log _null_ _null_ _null_ n a ));
+DATA(insert OID = 5033 ( log  PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 7198 "7198 7198" _null_ _null_ _null_ _null_ complex_log _null_ _null_ _null_ n a ));
 DESCR("logarithm base arg1 of arg2");
 
 /* acos(complex) => complex */
-DATA(insert OID = 3576 ( acos  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_acos _null_ _null_ _null_ n a ));
+DATA(insert OID = 5053 ( acos  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_acos _null_ _null_ _null_ n a ));
 DESCR("acos");
 
 /* asin(complex) => complex */
@@ -742,51 +742,51 @@ DATA(insert OID = 3579 ( cos  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "719
 DESCR("cos");
 
 /* cot(complex) => complex */
-DATA(insert OID = 3580 ( cot  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_cot _null_ _null_ _null_ n a ));
+DATA(insert OID = 5052 ( cot  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_cot _null_ _null_ _null_ n a ));
 DESCR("cot");
 
 /* sin(complex) => complex */
-DATA(insert OID = 3581 ( sin  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_sin _null_ _null_ _null_ n a ));
+DATA(insert OID = 5054 ( sin  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_sin _null_ _null_ _null_ n a ));
 DESCR("sin");
 
 /* tan(complex) => complex */
-DATA(insert OID = 3582 ( tan  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_tan _null_ _null_ _null_ n a ));
+DATA(insert OID = 5055 ( tan  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_tan _null_ _null_ _null_ n a ));
 DESCR("tan");
 
 /* dotproduct(_complex, _complex) => complex */
-DATA(insert OID = 3583 ( dotproduct  PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 7198 "7199 7199" _null_ _null_ _null_ _null_ complex_dot_product _null_ _null_ _null_ n a ));
+DATA(insert OID = 5056 ( dotproduct  PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 7198 "7199 7199" _null_ _null_ _null_ _null_ complex_dot_product _null_ _null_ _null_ n a ));
 DESCR("dot product");
 
 /* float82complex(float8) => complex */
-DATA(insert OID = 3584 ( float82complex  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "701" _null_ _null_ _null_ _null_ float82complex _null_ _null_ _null_ n a ));
+DATA(insert OID = 5057 ( float82complex  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "701" _null_ _null_ _null_ _null_ float82complex _null_ _null_ _null_ n a ));
 DESCR("(internal) type cast from float8 to complex");
 
 /* float42complex(float4) => complex */
-DATA(insert OID = 3585 ( float42complex  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "700" _null_ _null_ _null_ _null_ float42complex _null_ _null_ _null_ n a ));
+DATA(insert OID = 5058 ( float42complex  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "700" _null_ _null_ _null_ _null_ float42complex _null_ _null_ _null_ n a ));
 DESCR("(internal) type cast from float4 to complex");
 
 /* int82complex(int8) => complex */
-DATA(insert OID = 3586 ( int82complex  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "20" _null_ _null_ _null_ _null_ int82complex _null_ _null_ _null_ n a ));
+DATA(insert OID = 5059 ( int82complex  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "20" _null_ _null_ _null_ _null_ int82complex _null_ _null_ _null_ n a ));
 DESCR("(internal) type cast from int8 to complex");
 
 /* int42complex(int4) => complex */
-DATA(insert OID = 3587 ( int42complex  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "23" _null_ _null_ _null_ _null_ int42complex _null_ _null_ _null_ n a ));
+DATA(insert OID = 5060 ( int42complex  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "23" _null_ _null_ _null_ _null_ int42complex _null_ _null_ _null_ n a ));
 DESCR("(internal) type cast from int4 to complex");
 
 /* int22complex(int2) => complex */
-DATA(insert OID = 3588 ( int22complex  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "21" _null_ _null_ _null_ _null_ int22complex _null_ _null_ _null_ n a ));
+DATA(insert OID = 5061 ( int22complex  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "21" _null_ _null_ _null_ _null_ int22complex _null_ _null_ _null_ n a ));
 DESCR("(internal) type cast from int2 to complex");
 
 /* power(complex, complex) => complex */
-DATA(insert OID = 3589 ( power  PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 7198 "7198 7198" _null_ _null_ _null_ _null_ complex_pow _null_ _null_ _null_ n a ));
+DATA(insert OID = 5062 ( power  PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 7198 "7198 7198" _null_ _null_ _null_ _null_ complex_pow _null_ _null_ _null_ n a ));
 DESCR("exponentiation (x^y)");
 
 /* sqrt(complex) => complex */
-DATA(insert OID = 3590 ( sqrt  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_sqrt _null_ _null_ _null_ n a ));
+DATA(insert OID = 5063 ( sqrt  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_sqrt _null_ _null_ _null_ n a ));
 DESCR("squre root");
 
 /* cbrt(complex) => complex */
-DATA(insert OID = 3591 ( cbrt  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_cbrt _null_ _null_ _null_ n a ));
+DATA(insert OID = 5064 ( cbrt  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "7198" _null_ _null_ _null_ _null_ complex_cbrt _null_ _null_ _null_ n a ));
 DESCR("cube root");
 
 /* numeric2point("numeric") => complex */
