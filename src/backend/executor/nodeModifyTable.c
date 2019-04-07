@@ -217,6 +217,95 @@ ExecCheckTIDVisible(EState *estate,
 	ReleaseBuffer(buffer);
 }
 
+static void
+InsertTuple(ResultRelInfo *resultRelInfo, EState *estate, TupleTableSlot *slot,
+			ItemPointerData *lastTid, Oid *newId, Oid tuple_oid)
+{
+	Relation	resultRelationDesc;
+
+	resultRelationDesc = resultRelInfo->ri_RelationDesc;
+	/*
+		 * insert the tuple
+		 *
+		 * Note: heap_insert returns the tid (location) of the new tuple in the
+		 * t_self field.
+		 *
+		 * NOTE: for append-only relations we use the append-only access methods.
+		 */
+	if (RelationIsAoRows(resultRelationDesc))
+	{
+		MemTuple	mtuple;
+
+		if (resultRelInfo->ri_aoInsertDesc == NULL)
+		{
+			/* Set the pre-assigned fileseg number to insert into */
+			ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
+
+			resultRelInfo->ri_aoInsertDesc =
+					appendonly_insert_init(resultRelationDesc,
+										   resultRelInfo->ri_aosegno,
+										   false);
+		}
+
+		mtuple = ExecFetchSlotMemTuple(slot);
+		*newId = appendonly_insert(resultRelInfo->ri_aoInsertDesc, mtuple, tuple_oid, (AOTupleId *) lastTid);
+		(resultRelInfo->ri_aoprocessed)++;
+	}
+	else if (RelationIsAoCols(resultRelationDesc))
+	{
+		if (resultRelInfo->ri_aocsInsertDesc == NULL)
+		{
+			ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
+			resultRelInfo->ri_aocsInsertDesc = aocs_insert_init(resultRelationDesc,
+																resultRelInfo->ri_aosegno, false);
+		}
+
+		*newId = aocs_insert(resultRelInfo->ri_aocsInsertDesc, slot);
+		*lastTid = *slot_get_ctid(slot);
+		(resultRelInfo->ri_aoprocessed)++;
+	}
+	else if (RelationIsExternal(resultRelationDesc))
+	{
+		/* Writable external table */
+		HeapTuple tuple;
+
+		if (resultRelInfo->ri_extInsertDesc == NULL)
+			resultRelInfo->ri_extInsertDesc = external_insert_init(resultRelationDesc);
+
+		/*
+		 * get the heap tuple out of the tuple table slot, making sure we have a
+		 * writable copy. (external_insert() can scribble on the tuple)
+		 */
+		tuple = ExecMaterializeSlot(slot);
+		if (resultRelationDesc->rd_rel->relhasoids)
+			HeapTupleSetOid(tuple, tuple_oid);
+
+		*newId = external_insert(resultRelInfo->ri_extInsertDesc, tuple);
+		ItemPointerSetInvalid(lastTid);
+	}
+	else
+	{
+		HeapTuple tuple;
+
+		Insist(RelationIsHeap(resultRelationDesc));
+
+		/*
+		 * get the heap tuple out of the tuple table slot, making sure we have a
+		 * writable copy. (heap_insert() will scribble on the tuple)
+		 */
+		tuple = ExecMaterializeSlot(slot);
+		if (resultRelationDesc->rd_rel->relhasoids)
+			HeapTupleSetOid(tuple, tuple_oid);
+
+		*newId = heap_insert(resultRelationDesc,
+							tuple,
+							estate->es_output_cid, 0, NULL,
+							GetCurrentTransactionId());
+		*lastTid = tuple->t_self;
+	}
+}
+
+
 /* ----------------------------------------------------------------
  *		ExecInsert
  *
@@ -234,14 +323,9 @@ ExecCheckTIDVisible(EState *estate,
  *
  * ----------------------------------------------------------------
  */
-<<<<<<< HEAD
 TupleTableSlot *
-ExecInsert(TupleTableSlot *parentslot,
-=======
-static TupleTableSlot *
 ExecInsert(ModifyTableState *mtstate,
-		   TupleTableSlot *slot,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+		   TupleTableSlot *parentslot,
 		   TupleTableSlot *planSlot,
 		   List *arbiterIndexes,
 		   OnConflictAction onconflict,
@@ -256,10 +340,6 @@ ExecInsert(ModifyTableState *mtstate,
 	Oid			newId;
 	List	   *recheckIndexes = NIL;
 
-	bool		rel_is_heap = false;
-	bool 		rel_is_aorows = false;
-	bool		rel_is_aocols = false;
-	bool		rel_is_external = false;
 	ItemPointerData lastTid;
 	Oid			tuple_oid = tupleOid;
 	ProjectionInfo *projectReturning;
@@ -331,15 +411,10 @@ ExecInsert(ModifyTableState *mtstate,
 
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
-	rel_is_heap = RelationIsHeap(resultRelationDesc);
-	rel_is_aocols = RelationIsAoCols(resultRelationDesc);
-	rel_is_aorows = RelationIsAoRows(resultRelationDesc);
-	rel_is_external = RelationIsExternal(resultRelationDesc);
-
 	/*
 	 * Prepare the right kind of "insert desc".
 	 */
-	if (rel_is_aorows)
+	if (RelationIsAoRows(resultRelationDesc))
 	{
 		if (resultRelInfo->ri_aoInsertDesc == NULL)
 		{
@@ -352,7 +427,7 @@ ExecInsert(ModifyTableState *mtstate,
 									   false);
 		}
 	}
-	else if (rel_is_aocols)
+	else if (RelationIsAoCols(resultRelationDesc))
 	{
 		if (resultRelInfo->ri_aocsInsertDesc == NULL)
 		{
@@ -361,7 +436,7 @@ ExecInsert(ModifyTableState *mtstate,
 																resultRelInfo->ri_aosegno, false);
 		}
 	}
-	else if (rel_is_external)
+	else if (RelationIsExternal(resultRelationDesc))
 	{
 		if (resultRelInfo->ri_extInsertDesc == NULL)
 			resultRelInfo->ri_extInsertDesc = external_insert_init(resultRelationDesc);
@@ -411,7 +486,7 @@ ExecInsert(ModifyTableState *mtstate,
 
 	slot = reconstructMatchingTupleSlot(parentslot, resultRelInfo);
 
-	if (rel_is_external &&
+	if (RelationIsExternal(resultRelationDesc) &&
 		estate->es_result_partitions &&
 		estate->es_result_partitions->part->parrelid != 0)
 	{
@@ -515,94 +590,6 @@ ExecInsert(ModifyTableState *mtstate,
 		if (resultRelationDesc->rd_att->constr)
 			ExecConstraints(resultRelInfo, slot, estate);
 
-<<<<<<< HEAD
-		/*
-		 * insert the tuple
-		 *
-		 * Note: heap_insert returns the tid (location) of the new tuple in the
-		 * t_self field.
-		 *
-		 * NOTE: for append-only relations we use the append-only access methods.
-		 */
-		if (rel_is_aorows)
-		{
-			MemTuple	mtuple;
-
-			if (resultRelInfo->ri_aoInsertDesc == NULL)
-			{
-				/* Set the pre-assigned fileseg number to insert into */
-				ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
-
-				resultRelInfo->ri_aoInsertDesc =
-					appendonly_insert_init(resultRelationDesc,
-										   resultRelInfo->ri_aosegno,
-										   false);
-			}
-
-			mtuple = ExecFetchSlotMemTuple(slot);
-			newId = appendonly_insert(resultRelInfo->ri_aoInsertDesc, mtuple, tuple_oid, (AOTupleId *) &lastTid);
-			(resultRelInfo->ri_aoprocessed)++;
-		}
-		else if (rel_is_aocols)
-		{
-			if (resultRelInfo->ri_aocsInsertDesc == NULL)
-			{
-				ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
-				resultRelInfo->ri_aocsInsertDesc = aocs_insert_init(resultRelationDesc, 
-																	resultRelInfo->ri_aosegno, false);
-			}
-
-			newId = aocs_insert(resultRelInfo->ri_aocsInsertDesc, slot);
-			lastTid = *slot_get_ctid(slot);
-			(resultRelInfo->ri_aoprocessed)++;
-		}
-		else if (rel_is_external)
-		{
-			/* Writable external table */
-			HeapTuple tuple;
-
-			if (resultRelInfo->ri_extInsertDesc == NULL)
-				resultRelInfo->ri_extInsertDesc = external_insert_init(resultRelationDesc);
-
-			/*
-			 * get the heap tuple out of the tuple table slot, making sure we have a
-			 * writable copy. (external_insert() can scribble on the tuple)
-			 */
-			tuple = ExecMaterializeSlot(slot);
-			if (resultRelationDesc->rd_rel->relhasoids)
-				HeapTupleSetOid(tuple, tuple_oid);
-
-			newId = external_insert(resultRelInfo->ri_extInsertDesc, tuple);
-			ItemPointerSetInvalid(&lastTid);
-		}
-		else
-		{
-			HeapTuple tuple;
-
-			Insist(rel_is_heap);
-
-			/*
-			 * get the heap tuple out of the tuple table slot, making sure we have a
-			 * writable copy. (heap_insert() will scribble on the tuple)
-			 */
-			tuple = ExecMaterializeSlot(slot);
-			if (resultRelationDesc->rd_rel->relhasoids)
-				HeapTupleSetOid(tuple, tuple_oid);
-
-			newId = heap_insert(resultRelationDesc,
-								tuple,
-								estate->es_output_cid, 0, NULL,
-								GetCurrentTransactionId());
-			lastTid = tuple->t_self;
-		}
-
-		/*
-		 * insert index entries for tuple
-		 */
-		if (resultRelInfo->ri_NumIndices > 0)
-			recheckIndexes = ExecInsertIndexTuples(slot, &lastTid,
-												   estate);
-=======
 		if (onconflict != ONCONFLICT_NONE && resultRelInfo->ri_NumIndices > 0)
 		{
 			/* Perform a speculative insertion. */
@@ -673,17 +660,15 @@ ExecInsert(ModifyTableState *mtstate,
 			HeapTupleHeaderSetSpeculativeToken(tuple->t_data, specToken);
 
 			/* insert the tuple, with the speculative token */
-			newId = heap_insert(resultRelationDesc, tuple,
-								estate->es_output_cid,
-								HEAP_INSERT_SPECULATIVE,
-								NULL);
+			InsertTuple(resultRelInfo, estate, slot, &lastTid, &newId, tuple_oid);
 
 			/* insert index entries for tuple */
-			recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
-												 estate, true, &specConflict,
+			recheckIndexes = ExecInsertIndexTuples(slot, &lastTid,
+												   estate, true, &specConflict,
 												   arbiterIndexes);
 
 			/* adjust the tuple's state accordingly */
+			HeapTuple tuple = ExecMaterializeSlot(slot);
 			if (!specConflict)
 				heap_finish_speculative(resultRelationDesc, tuple);
 			else
@@ -719,17 +704,13 @@ ExecInsert(ModifyTableState *mtstate,
 			 * Note: heap_insert returns the tid (location) of the new tuple
 			 * in the t_self field.
 			 */
-			newId = heap_insert(resultRelationDesc, tuple,
-								estate->es_output_cid,
-								0, NULL);
-
+			InsertTuple(resultRelInfo, estate, slot, &lastTid, &newId, tuple_oid);
 			/* insert index entries for tuple */
 			if (resultRelInfo->ri_NumIndices > 0)
-				recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
+				recheckIndexes = ExecInsertIndexTuples(slot, &lastTid,
 													   estate, false, NULL,
 													   arbiterIndexes);
 		}
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 	if (canSetTag)
 	{
@@ -1732,16 +1713,9 @@ lreplace:;
 		 *
 		 * If it's a HOT update, we mustn't insert new index entries.
 		 */
-<<<<<<< HEAD
 		if (resultRelInfo->ri_NumIndices > 0 && !wasHotUpdate)
 			recheckIndexes = ExecInsertIndexTuples(slot, &lastTid,
-												   estate);
-=======
-		if (resultRelInfo->ri_NumIndices > 0 && !HeapTupleIsHeapOnly(tuple))
-			recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
 												   estate, false, NULL, NIL);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-	}
 
 	if (canSetTag)
 		(estate->es_processed)++;
@@ -2205,15 +2179,10 @@ ExecModifyTable(ModifyTableState *node)
 		switch (operation)
 		{
 			case CMD_INSERT:
-<<<<<<< HEAD
-				slot = ExecInsert(slot, planSlot, estate, node->canSetTag,
-								  PLANGEN_PLANNER,
-								  false /* isUpdate */, InvalidOid /* tupleOid */);
-=======
 				slot = ExecInsert(node, slot, planSlot,
 								node->mt_arbiterindexes, node->mt_onconflict,
-								  estate, node->canSetTag);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+								  estate, node->canSetTag, PLANGEN_PLANNER,
+								  false /* isUpdate */, InvalidOid /* tupleOid */);
 				break;
 			case CMD_UPDATE:
 				{
@@ -2341,12 +2310,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	mtstate->resultRelInfo = estate->es_result_relations + node->resultRelIndex;
 	mtstate->mt_arowmarks = (List **) palloc0(sizeof(List *) * nplans);
 	mtstate->mt_nplans = nplans;
-<<<<<<< HEAD
-=======
 	mtstate->mt_onconflict = node->onConflictAction;
 	mtstate->mt_arbiterindexes = node->arbiterIndexes;
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	/* set up epqstate with dummy subplan data for the moment */
 	EvalPlanQualInit(&mtstate->mt_epqstate, estate, NULL, NIL, node->epqParam);
 
