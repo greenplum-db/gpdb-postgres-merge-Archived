@@ -139,7 +139,7 @@ extern Sort *make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
 extern Sort *make_sort_from_sortclauses(PlannerInfo *root, List *sortcls,
 						   Plan *lefttree);
 extern Sort *make_sort_from_groupcols(PlannerInfo *root, List *groupcls,
-									  AttrNumber *grpColIdx, bool appendGrouping,
+									  AttrNumber *grpColIdx,
 									  Plan *lefttree);
 extern List *reconstruct_group_clause(List *orig_groupClause, List *tlist,
 						 AttrNumber *grpColIdx, int numcols);
@@ -148,19 +148,14 @@ extern Motion *make_motion(PlannerInfo *root, Plan *lefttree,
 			int numSortCols, AttrNumber *sortColIdx,
 			Oid *sortOperators, Oid *collations, bool *nullsFirst,
 			bool useExecutorVarFormat);
-extern Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
-		  AttrNumber *sortColIdx, Oid *sortOperators,
-		  Oid *collations, bool *nullsFirst,
-		  double limit_tuples);
 
 extern Agg *make_agg(PlannerInfo *root, List *tlist, List *qual,
-		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
-		 bool streaming,
-		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		 long numGroups, int numNullCols,
-		 uint64 inputGrouping, uint64 grouping,
-		 int rollupGSTimes,
-		 Plan *lefttree);
+					 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
+					 bool streaming,
+					 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
+					 List *groupingSets,
+					 long numGroups,
+					 Plan *lefttree);
 extern HashJoin *make_hashjoin(List *tlist,
 			  List *joinclauses, List *otherclauses,
 			  List *hashclauses, List *hashqualclauses,
@@ -223,6 +218,7 @@ extern Plan *add_agg_cost(PlannerInfo *root, Plan *plan,
 		 AggStrategy aggstrategy, 
 		 bool streaming, 
 		 int numGroupCols,
+		 List *groupingSets,
 		 long numGroups,
 		 const AggClauseCosts *aggcosts);
 extern Plan *plan_pushdown_tlist(PlannerInfo *root, Plan *plan, List *tlist);      /*CDB*/
@@ -284,8 +280,6 @@ extern void extract_query_dependencies(Node *query,
 						   List **invalItems,
 						   bool *hasRowSecurity);
 extern void cdb_extract_plan_dependencies(PlannerInfo *root, Plan *plan);
-
-extern int num_distcols_in_grouplist(List *gc);
 
 extern void add_proc_oids_for_dump(Oid funcid);
 

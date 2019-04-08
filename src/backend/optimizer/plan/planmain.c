@@ -34,7 +34,6 @@
 #include "cdb/cdbvars.h"
 #include "optimizer/cost.h"
 
-static Bitmapset *distcols_in_groupclause(List *gc, Bitmapset *bms);
 
 /*
  * query_planner
@@ -271,68 +270,6 @@ query_planner(PlannerInfo *root, List *tlist,
 	Insist(final_rel->cheapest_startup_path);
 
 	return final_rel;
-}
-
-/*
- * distcols_in_groupclause -
- *     Return all distinct tleSortGroupRef values in a GROUP BY clause.
- *
- * If this is a GROUPING_SET, this function is called recursively to
- * find the tleSortGroupRef values for underlying grouping columns.
- */
-static Bitmapset *
-distcols_in_groupclause(List *gc, Bitmapset *bms)
-{
-	ListCell *l;
-
-	foreach(l, gc)
-	{
-		Node *node = lfirst(l);
-
-		if (node == NULL)
-			continue;
-
-		Assert(IsA(node, SortGroupClause) ||
-			   IsA(node, List) ||
-			   IsA(node, GroupingClause));
-
-		if (IsA(node, SortGroupClause))
-		{
-			bms = bms_add_member(bms, ((SortGroupClause *) node)->tleSortGroupRef);
-		}
-
-		else if (IsA(node, List))
-		{
-			bms = distcols_in_groupclause((List *)node, bms);
-		}
-
-		else if (IsA(node, GroupingClause))
-		{
-			List *groupsets = ((GroupingClause *)node)->groupsets;
-			bms = distcols_in_groupclause(groupsets, bms);
-		}
-	}
-
-	return bms;
-}
-
-/*
- * num_distcols_in_grouplist -
- *      Return number of distinct columns/expressions that appeared in
- *      a list of GroupClauses or GroupingClauses.
- */
-int
-num_distcols_in_grouplist(List *gc)
-{
-	Bitmapset *bms = NULL;
-	int num_cols;
-
-	bms = distcols_in_groupclause(gc, bms);
-
-	num_cols = bms_num_members(bms);
-	bms_free(bms);
-
-	return num_cols;
 }
 
 /**

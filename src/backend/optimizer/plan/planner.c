@@ -161,7 +161,9 @@ static Plan *build_grouping_chain(PlannerInfo *root,
 								  AttrNumber *groupColIdx,
 								  AggClauseCosts *agg_costs,
 								  long numGroups,
-								  Plan *result_plan);
+								  Plan *result_plan,
+								  CdbPathLocus *current_locus,
+								  List *current_pathkeys);
 
 static Plan *pushdown_preliminary_limit(Plan *plan, Node *limitCount, int64 count_est, Node *limitOffset, int64 offset_est);
 
@@ -3506,6 +3508,19 @@ build_grouping_chain(PlannerInfo *root,
 	if (need_sort_for_grouping)
 	{
 		Sort	   *sort;
+
+		List	   *hashOpfamilies;
+
+
+		hashOpfamilies = NIL;
+		foreach(lc, hash_exprs)
+		{
+			Node	   *expr = lfirst(lc);
+			Oid			opfamily;
+
+			opfamily = cdb_default_distribution_opfamily_for_type(exprType(expr));
+			hashOpfamilies = lappend_oid(hashOpfamilies, opfamily);
+		}
 
 		if (need_redistribute && hash_exprs)
 		{

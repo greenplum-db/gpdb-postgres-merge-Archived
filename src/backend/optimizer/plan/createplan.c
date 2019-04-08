@@ -173,6 +173,10 @@ static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
 static List *flatten_grouping_list(List *groupcls);
 static void adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_updates);
+static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
+					   AttrNumber *sortColIdx, Oid *sortOperators,
+					   Oid *collations, bool *nullsFirst,
+					   double limit_tuples);
 static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
 						   Plan *lefttree, List *pathkeys,
 						   Relids relids,
@@ -1191,10 +1195,6 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 								 groupOperators,
 								 NIL,
 								 numGroups,
-								 0, /* num_nullcols */
-								 0, /* input_grouping */
-								 0, /* grouping */
-								 0, /* rollup_gs_times */
 								 subplan);
 	}
 	else
@@ -1476,7 +1476,7 @@ create_samplescan_plan(PlannerInfo *root, Path *best_path,
 								scan_clauses,
 								scan_relid);
 
-	copy_path_costsize(&scan_plan->plan, best_path);
+	copy_path_costsize(root, &scan_plan->plan, best_path);
 
 	return scan_plan;
 }
@@ -3093,34 +3093,33 @@ remove_isnotfalse_expr(Expr *expr)
 static List *
 remove_isnotfalse(List *clauses)
 {
-	List	   *t_list = NIL;
-	ListCell   *l;
+	List *t_list = NIL;
+	ListCell *l;
 
 	foreach(l, clauses)
 	{
-		Node	   *node = (Node *) lfirst(l);
+		Node *node = (Node *) lfirst(l);
 
-		if (IsA(node, Expr) ||IsA(node, BooleanTest))
+		if (IsA(node, Expr) || IsA(node, BooleanTest))
 		{
-			Expr	   *expr = (Expr *) node;
+			Expr *expr = (Expr *) node;
 
 			expr = remove_isnotfalse_expr(expr);
 			t_list = lappend(t_list, expr);
-		}
-		else if (IsA(node, RestrictInfo))
+		} else if (IsA(node, RestrictInfo))
 		{
 			RestrictInfo *restrictinfo = (RestrictInfo *) node;
-			Expr	   *rclause = restrictinfo->clause;
+			Expr *rclause = restrictinfo->clause;
 
 			rclause = remove_isnotfalse_expr(rclause);
 			t_list = lappend(t_list, rclause);
-		}
-		else
+		} else
 		{
 			t_list = lappend(t_list, node);
 		}
 	}
 	return t_list;
+}
 /*
  * create_custom_plan
  *
@@ -3165,7 +3164,7 @@ create_customscan_plan(PlannerInfo *root, CustomPath *best_path,
 	 * Copy cost data from Path to Plan; no need to make custom-plan providers
 	 * do this
 	 */
-	copy_path_costsize(&cplan->scan.plan, &best_path->path);
+	copy_path_costsize(root, &cplan->scan.plan, &best_path->path);
 
 	/* Likewise, copy the relids that are represented by this custom scan */
 	cplan->custom_relids = best_path->path.parent->relids;
@@ -5675,7 +5674,6 @@ Sort *
 make_sort_from_groupcols(PlannerInfo *root,
 						 List *groupcls,
 						 AttrNumber *grpColIdx,
-						 bool appendGrouping,
 						 Plan *lefttree)
 {
 	List	   *sub_tlist = lefttree->targetlist;
@@ -5685,16 +5683,9 @@ make_sort_from_groupcols(PlannerInfo *root,
 	Oid		   *sortOperators;
 	Oid		   *collations;
 	bool	   *nullsFirst;
-	List	   *flat_groupcls;
 
-	/*
-	 * We will need at most list_length(groupcls) sort columns; possibly less
-	 */
-	numsortkeys = num_distcols_in_grouplist(groupcls);
-
-	if (appendGrouping)
-		numsortkeys++;
-
+	/* Convert list-ish representation to arrays wanted by executor */
+	numsortkeys = list_length(groupcls);
 	sortColIdx = (AttrNumber *) palloc(numsortkeys * sizeof(AttrNumber));
 	sortOperators = (Oid *) palloc(numsortkeys * sizeof(Oid));
 	collations = (Oid *) palloc(numsortkeys * sizeof(Oid));
@@ -5702,9 +5693,7 @@ make_sort_from_groupcols(PlannerInfo *root,
 
 	numsortkeys = 0;
 
-	flat_groupcls = flatten_grouping_list(groupcls);
-
-	foreach(l, flat_groupcls)
+	foreach(l, groupcls)
 	{
 		SortGroupClause *grpcl = (SortGroupClause *) lfirst(l);
 		TargetEntry *tle = get_tle_by_resno(sub_tlist, grpColIdx[numsortkeys]);
@@ -5718,27 +5707,6 @@ make_sort_from_groupcols(PlannerInfo *root,
 		nullsFirst[numsortkeys] = grpcl->nulls_first;
 		numsortkeys++;
 	}
-
-	if (appendGrouping)
-	{
-		Oid			lt_opr;
-
-		/* Grouping will be the last entry in grpColIdx */
-		TargetEntry *tle = get_tle_by_resno(sub_tlist, grpColIdx[numsortkeys]);
-
-		if (tle->resname == NULL)
-			tle->resname = "grouping";
-
-		get_sort_group_operators(exprType((Node *) tle->expr),
-								 true, false, false,
-								 &lt_opr, NULL, NULL, NULL);
-
-		numsortkeys = add_sort_column(tle->resno, lt_opr, InvalidOid, false,
-									  numsortkeys, sortColIdx, sortOperators, collations, nullsFirst);
-	}
-
-
-	Assert(numsortkeys > 0);
 
 	return make_sort(root, lefttree, numsortkeys,
 					 sortColIdx, sortOperators, collations,
@@ -5913,9 +5881,8 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 		 bool streaming,
 		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		 long numGroups, int num_nullcols,
-		 uint64 input_grouping, uint64 grouping,
-		 int rollupGSTimes,
+		 List *groupingSets,
+		 long numGroups,
 		 Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
@@ -5925,24 +5892,14 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 	node->numCols = numGroupCols;
 	node->grpColIdx = grpColIdx;
 	node->grpOperators = grpOperators;
+	node->groupingSets = groupingSets;
 	node->numGroups = numGroups;
-	if (aggcosts)
-		node->transSpace = aggcosts->transitionSpace;
-	else
-		node->transSpace = 0;
-	node->numNullCols = num_nullcols;
-	node->inputGrouping = input_grouping;
-	node->grouping = grouping;
-	node->inputHasGrouping = false;
-	node->rollupGSTimes = rollupGSTimes;
-	node->lastAgg = false;
 	node->streaming = streaming;
-	node->aggParams = NULL;		/* SS_finalize_plan() will fill this */
 
 	copy_plan_costsize(plan, lefttree); /* only care about copying size */
 
 	add_agg_cost(root, plan, tlist, qual, aggstrategy, streaming,
-				 numGroupCols, numGroups, aggcosts);
+				 numGroupCols, groupingSets, numGroups, aggcosts);
 
 	plan->qual = qual;
 	plan->targetlist = tlist;
@@ -5967,6 +5924,7 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 			 AggStrategy aggstrategy,
 			 bool streaming,
 			 int numGroupCols,
+			 List *groupingSets,
 			 long numGroups,
 			 const AggClauseCosts *aggcosts)
 {
@@ -6003,7 +5961,7 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 		/* The following estimate is very rough but good enough for planning. */
 		entrywidth = agg_hash_entrywidth(aggcosts->numAggs,
 								   sizeof(HeapTupleData) + sizeof(HeapTupleHeaderData) + plan->plan_width,
-								   aggcosts->transitionSpace);
+										 0 /* FIXME: was transspace */);
 		if (!calcHashAggTableSizes(global_work_mem(root),
 								   numGroups,
 								   entrywidth,
@@ -6041,8 +5999,6 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 		plan->plan_rows = groupingSets ? list_length(groupingSets) : 1;
 	else
 		plan->plan_rows = numGroups;
-
-	node->groupingSets = groupingSets;
 
 	/*
 	 * We also need to account for the cost of evaluation of the qual (ie, the
@@ -7004,150 +6960,6 @@ plan_pushdown_tlist(PlannerInfo *root, Plan *plan, List *tlist)
 	}
 	return plan;
 }	/* plan_pushdown_tlist */
-
-/*
- * Return true if there is the same tleSortGroupRef in an entry in glist
- * as the tleSortGroupRef in gc.
- */
-static bool
-groupcol_in_list(SortGroupClause *gc, List *glist)
-{
-	bool		found = false;
-	ListCell   *lc;
-
-	foreach(lc, glist)
-	{
-		SortGroupClause *entry = (SortGroupClause *) lfirst(lc);
-
-		Assert(IsA(entry, SortGroupClause));
-		if (gc->tleSortGroupRef == entry->tleSortGroupRef)
-		{
-			found = true;
-			break;
-		}
-	}
-	return found;
-}
-
-
-/*
- * Construct a list of GroupClauses from the transformed GROUP BY clause.
- * This list of GroupClauses has unique tleSortGroupRefs.
- */
-static List *
-flatten_grouping_list(List *groupcls)
-{
-	List	   *result = NIL;
-	ListCell   *gc;
-
-	foreach(gc, groupcls)
-	{
-		Node	   *node = (Node *) lfirst(gc);
-
-		if (node == NULL)
-			continue;
-
-		Assert(IsA(node, GroupingClause) ||
-			   IsA(node, SortGroupClause) ||
-			   IsA(node, List));
-
-		if (IsA(node, GroupingClause))
-		{
-			List	   *groupsets = ((GroupingClause *) node)->groupsets;
-			List	   *flatten_groupsets =
-			flatten_grouping_list(groupsets);
-			ListCell   *lc;
-
-			foreach(lc, flatten_groupsets)
-			{
-				SortGroupClause *flatten_gc = (SortGroupClause *) lfirst(lc);
-
-				Assert(IsA(flatten_gc, SortGroupClause));
-
-				if (!groupcol_in_list(flatten_gc, result))
-					result = lappend(result, flatten_gc);
-			}
-
-		}
-		else if (IsA(node, List))
-		{
-			List	   *flatten_groupsets =
-			flatten_grouping_list((List *) node);
-			ListCell   *lc;
-
-			foreach(lc, flatten_groupsets)
-			{
-				SortGroupClause *flatten_gc = (SortGroupClause *) lfirst(lc);
-
-				Assert(IsA(flatten_gc, SortGroupClause));
-
-				if (!groupcol_in_list(flatten_gc, result))
-					result = lappend(result, flatten_gc);
-			}
-		}
-		else
-		{
-			Assert(IsA(node, SortGroupClause));
-
-			if (!groupcol_in_list((SortGroupClause *) node, result))
-				result = lappend(result, node);
-		}
-	}
-
-	return result;
-}
-
-/*
- * add_sort_column --- utility subroutine for building sort info arrays
- *
- * We need this routine because the same column might be selected more than
- * once as a sort key column; if so, the extra mentions are redundant.
- *
- * Caller is assumed to have allocated the arrays large enough for the
- * max possible number of columns.	Return value is the new column count.
- */
-static int
-add_sort_column(AttrNumber colIdx, Oid sortOp, Oid coll, bool nulls_first,
-				int numCols, AttrNumber *sortColIdx,
-				Oid *sortOperators, Oid *collations, bool *nullsFirst)
-{
-	int			i;
-
-	Assert(OidIsValid(sortOp));
-
-	for (i = 0; i < numCols; i++)
-	{
-		/*
-		 * Note: we check sortOp because it's conceivable that "ORDER BY foo
-		 * USING <, foo USING <<<" is not redundant, if <<< distinguishes
-		 * values that < considers equal.  We need not check nulls_first
-		 * however because a lower-order column with the same sortop but
-		 * opposite nulls direction is redundant.
-		 *
-		 * We could probably consider sort keys with the same sortop and
-		 * different collations to be redundant too, but for the moment treat
-		 * them as not redundant.  This will be needed if we ever support
-		 * collations with different notions of equality.
-		 */
-		if (sortColIdx[i] == colIdx &&
-			sortOperators[numCols] == sortOp &&
-			collations[numCols] == coll)
-		{
-			/* Already sorting by this col, so extra sort key is useless */
-			return numCols;
-		}
-	}
-
-	/* Add the column */
-	sortColIdx[numCols] = colIdx;
-	sortOperators[numCols] = sortOp;
-	collations[numCols] = coll;
-	nullsFirst[numCols] = nulls_first;
-	return numCols + 1;
-}
-
-
-
 
 /*
  * cdbpathtoplan_create_motion_plan
