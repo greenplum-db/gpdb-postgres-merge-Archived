@@ -60,7 +60,7 @@
 #define tuplesort_set_bound tuplesort_set_bound_pg
 #define tuplesort_puttupleslot tuplesort_puttupleslot_pg
 #define tuplesort_putheaptuple tuplesort_putheaptuple_pg
-#define tuplesort_putindextuple tuplesort_putindextuple_pg
+#define tuplesort_putindextuplevalues tuplesort_putindextuplevalues_pg
 #define tuplesort_putdatum tuplesort_putdatum_pg
 #define tuplesort_performsort tuplesort_performsort_pg
 #define tuplesort_gettupleslot tuplesort_gettupleslot_pg
@@ -209,7 +209,7 @@ extern void tuplesort_restorepos(Tuplesortstate *state);
 #undef tuplesort_set_bound
 #undef tuplesort_puttupleslot
 #undef tuplesort_putheaptuple
-#undef tuplesort_putindextuple
+#undef tuplesort_putindextuplevalues
 #undef tuplesort_putdatum
 #undef tuplesort_performsort
 #undef tuplesort_gettupleslot
@@ -396,12 +396,16 @@ switcheroo_tuplesort_putheaptuple(switcheroo_Tuplesortstate *state, HeapTuple tu
 }
 
 static inline void
-switcheroo_tuplesort_putindextuple(switcheroo_Tuplesortstate *state, IndexTuple tuple)
+switcheroo_tuplesort_putindextuplevalues(switcheroo_Tuplesortstate *state,
+										 Relation rel, ItemPointer self,
+										 Datum *values, bool *isnull)
 {
 	if (state->is_mk_tuplesortstate)
-		tuplesort_putindextuple_mk((Tuplesortstate_mk *) state, tuple);
+		tuplesort_putindextuplevalues_mk((Tuplesortstate_mk *) state, rel,
+										 self, values, isnull);
 	else
-		tuplesort_putindextuple_pg((Tuplesortstate_pg *) state, tuple);
+		tuplesort_putindextuplevalues_pg((Tuplesortstate_pg *) state, rel,
+										 self, values, isnull);
 }
 
 static inline void
@@ -649,7 +653,7 @@ switcheroo_tuplesort_set_gpmon(switcheroo_Tuplesortstate *state,
 #define tuplesort_set_bound switcheroo_tuplesort_set_bound
 #define tuplesort_puttupleslot switcheroo_tuplesort_puttupleslot
 #define tuplesort_putheaptuple switcheroo_tuplesort_putheaptuple
-#define tuplesort_putindextuple switcheroo_tuplesort_putindextuple
+#define tuplesort_putindextuplevalues switcheroo_tuplesort_putindextuplevalues
 #define tuplesort_putdatum switcheroo_tuplesort_putdatum
 #define tuplesort_performsort switcheroo_tuplesort_performsort
 #define tuplesort_gettupleslot switcheroo_tuplesort_gettupleslot

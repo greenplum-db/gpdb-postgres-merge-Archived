@@ -148,12 +148,12 @@ hashbuildCallback(Relation index,
 
 	/* Either spool the tuple for sorting, or just put it into the index */
 	if (buildstate->spool)
-		_h_spool(buildstate->spool, &htup->t_self, values, isnull);
+		_h_spool(buildstate->spool, tupleId, values, isnull);
 	else
 	{
 		/* form an index tuple and point it at the heap tuple */
 		itup = _hash_form_tuple(index, values, isnull);
-		itup->t_tid = htup->t_self;
+		itup->t_tid = *tupleId;
 		_hash_doinsert(index, itup);
 		pfree(itup);
 	}

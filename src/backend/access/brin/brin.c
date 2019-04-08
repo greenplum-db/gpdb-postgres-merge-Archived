@@ -635,7 +635,7 @@ brinbuild(PG_FUNCTION_ARGS)
 	 * Now scan the relation.  No syncscan allowed here because we want the
 	 * heap blocks in physical order.
 	 */
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo, false,
+	reltuples = IndexBuildScan(heap, index, indexInfo, false,
 								   brinbuildCallback, (void *) state);
 
 	/* process the final batch */
