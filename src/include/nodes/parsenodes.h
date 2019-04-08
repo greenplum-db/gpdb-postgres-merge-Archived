@@ -21,7 +21,6 @@
  */
 #ifndef PARSENODES_H
 #define PARSENODES_H
-
 #include "nodes/bitmapset.h"
 #include "nodes/lockoptions.h"
 #include "nodes/primnodes.h"
@@ -29,6 +28,7 @@
 #include "catalog/gp_policy.h"
 
 typedef struct PartitionNode PartitionNode; /* see relation.h */
+typedef struct AOVacuumPhaseConfig AOVacuumPhaseConfig;
 
 /* Possible sources of a Query */
 typedef enum QuerySource
@@ -1099,18 +1099,6 @@ typedef struct SortGroupClause
 	bool		nulls_first;	/* do NULLs come before normal values? */
 	bool		hashable;		/* can eqop be implemented by hashing? */
 } SortGroupClause;
-
-/*
- * GroupingClause -
- *     representation of grouping extension clauses,
- *     such as ROLLUP, CUBE, and GROUPING SETS.
- */
-typedef struct GroupingClause
-{
-	NodeTag      type;
-	GroupingType groupType;
-	List         *groupsets;
-} GroupingClause;
 
 /*
  * GroupingSet -
