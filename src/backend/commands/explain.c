@@ -106,17 +106,12 @@ static void show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
 					   ExplainState *es);
 static void show_agg_keys(AggState *astate, List *ancestors,
 			  ExplainState *es);
-<<<<<<< HEAD
-=======
 static void show_grouping_sets(PlanState *planstate, Agg *agg,
 				   List *ancestors, ExplainState *es);
 static void show_grouping_set_keys(PlanState *planstate,
 					   Agg *aggnode, Sort *sortnode,
 					   List *context, bool useprefix,
 					   List *ancestors, ExplainState *es);
-static void show_group_keys(GroupState *gstate, List *ancestors,
-				ExplainState *es);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
 					 int nkeys, AttrNumber *keycols,
 					 Oid *sortOperators, Oid *collations, bool *nullsFirst,
