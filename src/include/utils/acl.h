@@ -342,6 +342,7 @@ extern bool pg_foreign_server_ownercheck(Oid srv_oid, Oid roleid);
 extern bool pg_event_trigger_ownercheck(Oid et_oid, Oid roleid);
 extern bool pg_extension_ownercheck(Oid ext_oid, Oid roleid);
 extern bool has_createrole_privilege(Oid roleid);
+extern bool pg_extprotocol_ownercheck(Oid ptc_oid, Oid roleid);
 extern bool has_bypassrls_privilege(Oid roleid);
 
 #endif   /* ACL_H */

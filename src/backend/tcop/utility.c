@@ -1233,7 +1233,7 @@ ProcessUtilitySlow(Node *parsetree,
 							 */
 							CommandCounterIncrement();
 
-							DefinePartitionedRelation((CreateStmt *) parsetree, relOid);
+							DefinePartitionedRelation((CreateStmt *) parsetree, address.objectId);
 
 							if (relKind != RELKIND_COMPOSITE_TYPE)
 							{
@@ -1251,7 +1251,7 @@ ProcessUtilitySlow(Node *parsetree,
 													   toast_options,
 													   true);
 
-								NewRelationCreateToastTable(relOid,
+								NewRelationCreateToastTable(address.objectId,
 														   toast_options,
 														   cstmt->is_part_child,
 														   cstmt->is_part_parent);
@@ -1265,16 +1265,16 @@ ProcessUtilitySlow(Node *parsetree,
 								 * database age calculation, by passing master
 								 * relation's is_part_parent flag.
 								 */
-								AlterTableCreateAoSegTable(relOid,
+								AlterTableCreateAoSegTable(address.objectId,
 															cstmt->is_part_child,
 															cstmt->is_part_parent);
 
 								if (cstmt->buildAoBlkdir)
-									AlterTableCreateAoBlkdirTable(relOid,
+									AlterTableCreateAoBlkdirTable(address.objectId,
 																   cstmt->is_part_child,
 																   cstmt->is_part_parent);
 
-								AlterTableCreateAoVisimapTable(relOid,
+								AlterTableCreateAoVisimapTable(address.objectId,
 																cstmt->is_part_child,
 																cstmt->is_part_parent);
 							}
@@ -1860,10 +1860,6 @@ ProcessUtilitySlow(Node *parsetree,
 
 			case T_AlterTypeStmt:
 				AlterType((AlterTypeStmt *) parsetree);
-				break;
-
-			case T_AlterTableMoveAllStmt:
-				AlterTableMoveAll((AlterTableMoveAllStmt *) parsetree);
 				break;
 
 			case T_DropStmt:

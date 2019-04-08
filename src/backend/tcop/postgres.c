@@ -197,8 +197,6 @@ static const char *userDoption = NULL;	/* -D switch */
 
 static bool EchoQuery = false;	/* -E switch */
 
-static bool DoingPqReading = false; /* in the middle of recv call of secure_read */
-
 #ifndef _WIN32
 pthread_t main_tid = (pthread_t)0;
 #else
@@ -3367,7 +3365,7 @@ die(SIGNAL_ARGS)
 	 * effort just for the benefit of single user mode.
 	 */
 	if (DoingCommandRead && whereToSendOutput != DestRemote)
-		ProcessInterrupts();
+		ProcessInterrupts(__FILE__, __LINE__);
 
 	errno = save_errno;
 }

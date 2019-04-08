@@ -350,7 +350,7 @@ CreateReplicationSlotOnPromote(const char *name)
 		/* Write this slot to disk */
 		ReplicationSlotMarkDirty();
 		ReplicationSlotSave();
-		if (MyReplicationSlot->active)
+		if (MyReplicationSlot->active_pid != 0)
 			ReplicationSlotRelease();
 	}
 
