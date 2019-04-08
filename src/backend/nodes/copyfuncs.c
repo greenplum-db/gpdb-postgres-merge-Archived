@@ -1685,6 +1685,20 @@ _copyGroupingFunc(const GroupingFunc *from)
 }
 
 /*
+ * _copyGroupId
+ */
+static GroupId *
+_copyGroupId(const GroupId *from)
+{
+	GroupId *newnode = makeNode(GroupId);
+
+	COPY_SCALAR_FIELD(agglevelsup);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
  * _copyWindowFunc
  */
 static WindowFunc *
@@ -2698,41 +2712,6 @@ _copySortGroupClause(const SortGroupClause *from)
 	return newnode;
 }
 
-<<<<<<< HEAD
-static GroupingClause *
-_copyGroupingClause(const GroupingClause *from)
-{
-	GroupingClause *newnode = makeNode(GroupingClause);
-	COPY_SCALAR_FIELD(groupType);
-	COPY_NODE_FIELD(groupsets);
-
-	return newnode;
-}
-
-static GroupingFunc *
-_copyGroupingFunc(const GroupingFunc *from)
-{
-	GroupingFunc *newnode = makeNode(GroupingFunc);
-
-	COPY_NODE_FIELD(args);
-	COPY_SCALAR_FIELD(ngrpcols);
-
-	return newnode;
-}
-
-static Grouping *
-_copyGrouping(const Grouping *from)
-{
-	Grouping *newnode = makeNode(Grouping);
-
-	return newnode;
-}
-
-static GroupId *
-_copyGroupId(const GroupId *from)
-{
-	GroupId *newnode = makeNode(GroupId);
-=======
 static GroupingSet *
 _copyGroupingSet(const GroupingSet *from)
 {
@@ -2741,7 +2720,6 @@ _copyGroupingSet(const GroupingSet *from)
 	COPY_SCALAR_FIELD(kind);
 	COPY_NODE_FIELD(content);
 	COPY_LOCATION_FIELD(location);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	return newnode;
 }
@@ -3252,7 +3230,6 @@ _copyXmlSerialize(const XmlSerialize *from)
 	return newnode;
 }
 
-<<<<<<< HEAD
 static DMLActionExpr *
 _copyDMLActionExpr(const DMLActionExpr *from)
 {
@@ -3328,7 +3305,10 @@ _copyPartListNullTestExpr(const PartListNullTestExpr *from)
 	PartListNullTestExpr *newnode = makeNode(PartListNullTestExpr);
 	COPY_SCALAR_FIELD(level);
 	COPY_SCALAR_FIELD(nulltesttype);
-=======
+
+	return newnode;
+}
+
 static RoleSpec *
 _copyRoleSpec(const RoleSpec *from)
 {
@@ -3337,7 +3317,6 @@ _copyRoleSpec(const RoleSpec *from)
 	COPY_SCALAR_FIELD(roletype);
 	COPY_STRING_FIELD(rolename);
 	COPY_LOCATION_FIELD(location);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	return newnode;
 }
@@ -5568,6 +5547,9 @@ copyObject(const void *from)
 		case T_GroupingFunc:
 			retval = _copyGroupingFunc(from);
 			break;
+		case T_GroupId:
+			retval = _copyGroupId(from);
+			break;
 		case T_WindowFunc:
 			retval = _copyWindowFunc(from);
 			break;
@@ -6247,22 +6229,8 @@ copyObject(const void *from)
 		case T_SortGroupClause:
 			retval = _copySortGroupClause(from);
 			break;
-<<<<<<< HEAD
-		case T_GroupingClause:
-			retval = _copyGroupingClause(from);
-			break;
-		case T_GroupingFunc:
-			retval = _copyGroupingFunc(from);
-			break;
-		case T_Grouping:
-			retval = _copyGrouping(from);
-			break;
-		case T_GroupId:
-			retval = _copyGroupId(from);
-=======
 		case T_GroupingSet:
 			retval = _copyGroupingSet(from);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			break;
 		case T_WindowClause:
 			retval = _copyWindowClause(from);
