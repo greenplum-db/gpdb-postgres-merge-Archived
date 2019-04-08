@@ -15,6 +15,7 @@
 #include "access/xlogdefs.h"
 #include "access/xlogreader.h"
 #include "access/xloginsert.h"
+#include "access/xlog_internal.h"
 #include "catalog/gp_segment_config.h"
 #include "catalog/pg_control.h"
 #include "lib/stringinfo.h"

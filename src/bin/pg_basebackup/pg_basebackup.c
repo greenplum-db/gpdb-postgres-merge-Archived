@@ -1811,7 +1811,7 @@ BaseBackup(void)
 		fprintf(stderr, "waiting for checkpoint\r");
 
 	basebkp =
-		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s",
+		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s %s",
 				 escaped_label,
 				 showprogress ? "PROGRESS" : "",
 				 includewal && !streamwal ? "WAL" : "",

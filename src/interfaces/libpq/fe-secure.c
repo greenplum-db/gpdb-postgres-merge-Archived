@@ -270,18 +270,6 @@ pqsecure_raw_read(PGconn *conn, void *ptr, size_t len)
 												sebuf, sizeof(sebuf)));
 				break;
 		}
-		else if (n == 0)
-		{
-			/*
-			 * According to man recv(2), this means the peer performed an
-			 * orderly shutdown.
-			 */
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext(
-						"server closed the connection unexpectedly\n"
-			"\tThis probably means the server terminated abnormally\n"
-					 "\tbefore or while processing the request.\n"));
-		}
 	}
 
 	/* ensure we return the intended errno to caller */

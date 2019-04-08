@@ -365,7 +365,7 @@ struct _archiveHandle
 	struct _tocEntry *lastErrorTE;
 
 	DieFuncPtr dieFuncPtr;      /* Called upon die to report the status */
-} ArchiveHandle;
+};
 
 struct _tocEntry
 {

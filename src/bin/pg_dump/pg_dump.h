@@ -520,16 +520,6 @@ typedef struct _blobInfo
 } BlobInfo;
 
 /*
- * We build an array of these with an entry for each object that is an
- * extension member according to pg_depend.
- */
-typedef struct _extensionMemberId
-{
-	CatalogId	catId;			/* tableoid+oid of some member object */
-	ExtensionInfo *ext;			/* owning extension */
-} ExtensionMemberId;
-
-/*
  * The PolicyInfo struct is used to represent policies on a table and
  * to indicate if a table has RLS enabled (ENABLE ROW SECURITY).  If
  * polname is NULL, then the record indicates ENABLE ROW SECURITY, while if
