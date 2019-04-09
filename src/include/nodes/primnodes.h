@@ -388,13 +388,9 @@ typedef struct GroupId
  */
 typedef struct GroupingFunc
 {
-	Expr		xpr;
-	List	   *args;			/* arguments, not evaluated but kept for
-								 * benefit of EXPLAIN etc. */
-	List	   *refs;			/* ressortgrouprefs of arguments */
-	List	   *cols;			/* actual column positions set by planner */
-	Index		agglevelsup;	/* same as Aggref.agglevelsup */
-	int			location;		/* token location */
+	NodeTag   type;
+	List     *args;  /* arguments provided in the query. */
+	int       ngrpcols; /* the number of grouping attributes */
 } GroupingFunc;
 
 /*

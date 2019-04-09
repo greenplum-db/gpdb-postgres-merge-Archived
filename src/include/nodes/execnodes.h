@@ -900,9 +900,9 @@ typedef struct AggrefExprState
  */
 typedef struct GroupingFuncExprState
 {
-	ExprState	xprstate;
-	struct AggState *aggstate;
-	List	   *clauses;		/* integer list of column numbers */
+	ExprState  xprstate;
+	List          *args;
+	int        ngrpcols;   /* number of unique grouping attributes */
 } GroupingFuncExprState;
 
 /* ----------------

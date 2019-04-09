@@ -236,6 +236,7 @@ typedef enum NodeTag
 	T_IntoClause,
 	T_CopyIntoClause,
 	T_Flow,
+	T_Grouping,
 	T_GroupId,
 	T_DistributedBy,
 	T_DMLActionExpr,

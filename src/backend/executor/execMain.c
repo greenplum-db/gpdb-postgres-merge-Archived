@@ -137,7 +137,6 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 			long numberTuples,
 			ScanDirection direction,
 			DestReceiver *dest);
-static bool ExecCheckRTEPerms(RangeTblEntry *rte);
 static bool ExecCheckRTEPermsModified(Oid relOid, Oid userid,
 						  Bitmapset *modifiedCols,
 						  AclMode requiredPerms);
@@ -4115,8 +4114,6 @@ EvalPlanQualFetchRowMarks(EPQState *epqstate)
 			/* build a temporary HeapTuple control structure */
 			tuple.t_len = HeapTupleHeaderGetDatumLength(td);
 			tuple.t_data = td;
-			/* relation might be a foreign table, if so provide tableoid */
-			tuple.t_tableOid = erm->relid;
 			/* also copy t_ctid in case there's valid data there */
 			tuple.t_self = td->t_ctid;
 
@@ -4502,7 +4499,7 @@ targetid_get_partition(Oid targetid, EState *estate, bool openIndices)
 						  estate->es_instrument);
 
 		if (openIndices)
-			ExecOpenIndices(childInfo);
+			ExecOpenIndices(childInfo, false);
 
 		map_part_attrs(parentInfo->ri_RelationDesc,
 					   childInfo->ri_RelationDesc,
