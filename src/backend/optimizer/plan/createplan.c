@@ -171,7 +171,6 @@ static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 				   Index scanrelid, int wtParam);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
-static List *flatten_grouping_list(List *groupcls);
 static void adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_updates);
 static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
 					   AttrNumber *sortColIdx, Oid *sortOperators,
@@ -194,15 +193,6 @@ static EquivalenceMember *find_ec_member_for_tle(EquivalenceClass *ec,
 static Motion *cdbpathtoplan_create_motion_plan(PlannerInfo *root,
 								 CdbMotionPath *path,
 								 Plan *subplan);
-
-/*
- * GPDB_92_MERGE_FIXME: The following functions have been removed in PG 9.2
- * But GPDB codes are still using them, so keep them here.
- */
-static int
-add_sort_column(AttrNumber colIdx, Oid sortOp, Oid coll, bool nulls_first,
-				int numCols, AttrNumber *sortColIdx,
-				Oid *sortOperators, Oid *collations, bool *nullsFirst);
 
 /*
  * create_plan
@@ -5711,43 +5701,6 @@ make_sort_from_groupcols(PlannerInfo *root,
 	return make_sort(root, lefttree, numsortkeys,
 					 sortColIdx, sortOperators, collations,
 					 nullsFirst, -1.0);
-}
-
-/*
- * Reconstruct a new list of GroupClause based on the given grpCols.
- *
- * The original grouping clauses may contain grouping extensions. This function
- * extract the raw grouping attributes and construct a list of GroupClauses
- * that contains only ordinary grouping.
- */
-List *
-reconstruct_group_clause(List *orig_groupClause, List *tlist, AttrNumber *grpColIdx, int numcols)
-{
-	List	   *flat_groupcls;
-	List	   *new_groupClause = NIL;
-	int			grpno;
-
-	flat_groupcls = flatten_grouping_list(orig_groupClause);
-	for (grpno = 0; grpno < numcols; grpno++)
-	{
-		ListCell   *lc = NULL;
-		TargetEntry *te;
-		SortGroupClause *gc = NULL;
-
-		te = get_tle_by_resno(tlist, grpColIdx[grpno]);
-
-		foreach(lc, flat_groupcls)
-		{
-			gc = (SortGroupClause *) lfirst(lc);
-
-			if (gc->tleSortGroupRef == te->ressortgroupref)
-				break;
-		}
-		if (lc != NULL)
-			new_groupClause = lappend(new_groupClause, gc);
-	}
-
-	return new_groupClause;
 }
 
 /* --------------------------------------------------------------------
