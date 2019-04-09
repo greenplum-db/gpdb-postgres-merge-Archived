@@ -1135,7 +1135,7 @@ LWLockAcquireCommon(LWLock *lock, LWLockMode mode, uint64 *valptr, uint64 val)
 		{
 			/* "false" means cannot accept cancel/die interrupt here. */
 #ifndef LOCK_DEBUG
-			PGSemaphoreLock(&proc->sem, false);
+			PGSemaphoreLock(&proc->sem);
 #else
 			LWLockTryLockWaiting(proc, lockid, mode);
 #endif

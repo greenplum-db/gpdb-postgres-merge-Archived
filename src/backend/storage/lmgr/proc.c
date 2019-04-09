@@ -1950,7 +1950,7 @@ ResProcSleep(LOCKMODE lockmode, LOCALLOCK *locallock, void *incrementSet)
 	/*
 	 * Sleep on the semaphore.
 	 */
-	PGSemaphoreLock(&MyProc->sem, true);
+	PGSemaphoreLock(&MyProc->sem);
 
 	if (LockTimeout > 0)
 	{

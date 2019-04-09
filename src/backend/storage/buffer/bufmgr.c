@@ -3101,7 +3101,7 @@ FlushOneBuffer(Buffer buffer)
 
 	Assert(BufferIsPinned(buffer));
 
-	bufHdr = &BufferDescriptors[buffer - 1];
+	bufHdr = GetBufferDescriptor(buffer - 1);
 
 	Assert(LWLockHeldByMe(bufHdr->content_lock));
 
