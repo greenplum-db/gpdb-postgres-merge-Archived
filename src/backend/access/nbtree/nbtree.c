@@ -180,12 +180,12 @@ btbuildCallback(Relation index,
 	 * processing
 	 */
 	if (tupleIsAlive || buildstate->spool2 == NULL)
-		_bt_spool(buildstate->spool, &htup->t_self, values, isnull);
+		_bt_spool(buildstate->spool, tupleId, values, isnull);
 	else
 	{
 		/* dead tuples are put into spool2 */
 		buildstate->haveDead = true;
-		_bt_spool(buildstate->spool2, &htup->t_self, values, isnull);
+		_bt_spool(buildstate->spool2, tupleId, values, isnull);
 	}
 
 	buildstate->indtuples += 1;

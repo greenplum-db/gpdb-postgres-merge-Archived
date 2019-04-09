@@ -189,8 +189,7 @@ varattrib_untoast_len(Datum d)
 
 		if (VARATT_IS_COMPRESSED(attr))
 		{
-			PGLZ_Header *tmp = (PGLZ_Header *) attr;
-			len = PGLZ_RAW_SIZE(tmp);
+			len = TOAST_COMPRESS_RAWSIZE(attr);
 		}
 		else if (VARATT_IS_SHORT(attr))
 		{
@@ -239,10 +238,8 @@ varattrib_untoast_ptr_len(Datum d, char **datastart, int *len, void **tofree)
 
 		if (VARATT_IS_COMPRESSED(attr))
 		{
-			PGLZ_Header *tmp = (PGLZ_Header *) attr;
-			attr = (struct varlena *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
-			SET_VARSIZE(attr, PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
-			pglz_decompress(tmp, VARDATA(attr));
+			struct varlena *tmp = attr;
+			attr = toast_decompress_datum(tmp);
 
 			/* If tofree is set, that is, we get it from toast_fetch_datum.  
 			 * We need to free it here 
