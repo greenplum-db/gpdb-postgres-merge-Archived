@@ -248,6 +248,19 @@ _equalGroupingFunc(const GroupingFunc *a, const GroupingFunc *b)
 }
 
 static bool
+_equalGroupId(const GroupId *a, const GroupId *b)
+{
+	/*
+	 * GPDB_95_MERGE_FIXME: GroupId in primnodes.h contains an Expr element
+	 * which it is not copied (copyfuncs.c) nor compared (here). Should it?
+	 */
+	COMPARE_SCALAR_FIELD(agglevelsup);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
 _equalWindowFunc(const WindowFunc *a, const WindowFunc *b)
 {
 	COMPARE_SCALAR_FIELD(winfnoid);
@@ -787,7 +800,6 @@ _equalFromExpr(const FromExpr *a, const FromExpr *b)
 }
 
 static bool
-<<<<<<< HEAD
 _equalFlow(const Flow *a, const Flow *b)
 {
 	COMPARE_SCALAR_FIELD(flotype);
@@ -801,7 +813,7 @@ _equalFlow(const Flow *a, const Flow *b)
 	return true;
 }
 
-=======
+static bool
 _equalOnConflictExpr(const OnConflictExpr *a, const OnConflictExpr *b)
 {
 	COMPARE_SCALAR_FIELD(action);
@@ -815,7 +827,6 @@ _equalOnConflictExpr(const OnConflictExpr *a, const OnConflictExpr *b)
 
 	return true;
 }
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /*
  * Stuff from relation.h
@@ -1433,13 +1444,10 @@ _equalIndexStmt(const IndexStmt *a, const IndexStmt *b)
 	COMPARE_SCALAR_FIELD(initdeferred);
 	COMPARE_SCALAR_FIELD(transformed);
 	COMPARE_SCALAR_FIELD(concurrent);
-<<<<<<< HEAD
+	COMPARE_SCALAR_FIELD(if_not_exists);
 	COMPARE_SCALAR_FIELD(is_split_part);
 	COMPARE_SCALAR_FIELD(parentIndexId);
 	COMPARE_SCALAR_FIELD(parentConstraintId);
-=======
-	COMPARE_SCALAR_FIELD(if_not_exists);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	return true;
 }
@@ -2158,13 +2166,8 @@ _equalReindexStmt(const ReindexStmt *a, const ReindexStmt *b)
 	COMPARE_SCALAR_FIELD(kind);
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_STRING_FIELD(name);
-<<<<<<< HEAD
-	COMPARE_SCALAR_FIELD(do_system);
-	COMPARE_SCALAR_FIELD(do_user);
-	COMPARE_SCALAR_FIELD(relid);
-=======
 	COMPARE_SCALAR_FIELD(options);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	COMPARE_SCALAR_FIELD(relid);
 
 	return true;
 }
@@ -2716,48 +2719,16 @@ _equalSortGroupClause(const SortGroupClause *a, const SortGroupClause *b)
 }
 
 static bool
-<<<<<<< HEAD
-_equalGroupingClause(const GroupingClause *a, const GroupingClause *b)
-{
-	COMPARE_SCALAR_FIELD(groupType);
-	COMPARE_NODE_FIELD(groupsets);
-=======
 _equalGroupingSet(const GroupingSet *a, const GroupingSet *b)
 {
 	COMPARE_SCALAR_FIELD(kind);
 	COMPARE_NODE_FIELD(content);
 	COMPARE_LOCATION_FIELD(location);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	return true;
 }
 
 static bool
-<<<<<<< HEAD
-_equalGroupingFunc(const GroupingFunc *a, const GroupingFunc *b)
-{
-	COMPARE_NODE_FIELD(args);
-	COMPARE_SCALAR_FIELD(ngrpcols);
-
-	return true;
-}
-
-static bool
-_equalGrouping(const Grouping *a __attribute__((unused)), const Grouping *b __attribute__((unused)))
-
-{
-	return true;
-}
-
-static bool
-_equalGroupId(const GroupId *a __attribute__((unused)), const GroupId *b __attribute__((unused)))
-{
-	return true;
-}
-
-static bool
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 _equalWindowClause(const WindowClause *a, const WindowClause *b)
 {
 	COMPARE_STRING_FIELD(name);
@@ -2835,24 +2806,25 @@ _equalCommonTableExpr(const CommonTableExpr *a, const CommonTableExpr *b)
 }
 
 static bool
-<<<<<<< HEAD
 _equalTableValueExpr(const TableValueExpr *a, const TableValueExpr *b)
 {
 	COMPARE_NODE_FIELD(subquery);
-=======
+
+	return true;
+}
+
+static bool
 _equalRangeTableSample(const RangeTableSample *a, const RangeTableSample *b)
 {
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_STRING_FIELD(method);
 	COMPARE_NODE_FIELD(repeatable);
 	COMPARE_NODE_FIELD(args);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	return true;
 }
 
 static bool
-<<<<<<< HEAD
 _equalAlterTypeStmt(const AlterTypeStmt *a, const AlterTypeStmt *b)
 {
 	COMPARE_NODE_FIELD(typeName);
@@ -2867,7 +2839,11 @@ _equalDistributedBy(const DistributedBy *a, const DistributedBy *b)
 	COMPARE_SCALAR_FIELD(ptype);
 	COMPARE_SCALAR_FIELD(numsegments);
 	COMPARE_NODE_FIELD(keyCols);
-=======
+
+	return true;
+}
+
+static bool
 _equalTableSampleClause(const TableSampleClause *a, const TableSampleClause *b)
 {
 	COMPARE_SCALAR_FIELD(tsmid);
@@ -2882,7 +2858,6 @@ _equalTableSampleClause(const TableSampleClause *a, const TableSampleClause *b)
 	COMPARE_SCALAR_FIELD(tsmcost);
 	COMPARE_NODE_FIELD(repeatable);
 	COMPARE_NODE_FIELD(args);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	return true;
 }
@@ -3050,6 +3025,9 @@ equal(const void *a, const void *b)
 		case T_GroupingFunc:
 			retval = _equalGroupingFunc(a, b);
 			break;
+		case T_GroupId:
+			retval = _equalGroupId(a, b);
+			break;
 		case T_WindowFunc:
 			retval = _equalWindowFunc(a, b);
 			break;
@@ -3164,13 +3142,10 @@ equal(const void *a, const void *b)
 		case T_FromExpr:
 			retval = _equalFromExpr(a, b);
 			break;
-<<<<<<< HEAD
 		case T_Flow:
 			retval = _equalFlow(a, b);
-=======
 		case T_OnConflictExpr:
 			retval = _equalOnConflictExpr(a, b);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			break;
 		case T_JoinExpr:
 			retval = _equalJoinExpr(a, b);
@@ -3551,7 +3526,6 @@ equal(const void *a, const void *b)
 		case T_AlterTSConfigurationStmt:
 			retval = _equalAlterTSConfigurationStmt(a, b);
 			break;
-<<<<<<< HEAD
 
 		case T_CreateQueueStmt:
 			retval = _equalCreateQueueStmt(a, b);
@@ -3573,14 +3547,12 @@ equal(const void *a, const void *b)
 			retval = _equalAlterResourceGroupStmt(a, b);
 			break;
 
-=======
 		case T_CreatePolicyStmt:
 			retval = _equalCreatePolicyStmt(a, b);
 			break;
 		case T_AlterPolicyStmt:
 			retval = _equalAlterPolicyStmt(a, b);
 			break;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		case T_A_Expr:
 			retval = _equalAExpr(a, b);
 			break;
@@ -3662,22 +3634,8 @@ equal(const void *a, const void *b)
 		case T_SortGroupClause:
 			retval = _equalSortGroupClause(a, b);
 			break;
-<<<<<<< HEAD
-		case T_GroupingClause:
-			retval = _equalGroupingClause(a, b);
-			break;
-		case T_GroupingFunc:
-			retval = _equalGroupingFunc(a, b);
-			break;
-		case T_Grouping:
-			retval = _equalGrouping(a, b);
-			break;
-		case T_GroupId:
-			retval = _equalGroupId(a, b);
-=======
 		case T_GroupingSet:
 			retval = _equalGroupingSet(a, b);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 			break;
 		case T_WindowClause:
 			retval = _equalWindowClause(a, b);
@@ -3712,7 +3670,6 @@ equal(const void *a, const void *b)
 		case T_XmlSerialize:
 			retval = _equalXmlSerialize(a, b);
 			break;
-<<<<<<< HEAD
 		case T_TableValueExpr:
 			retval = _equalTableValueExpr(a, b);
 			break;
@@ -3728,12 +3685,10 @@ equal(const void *a, const void *b)
 		case T_DistributedBy:
 			retval = _equalDistributedBy(a, b);
 			break;
-=======
 		case T_RoleSpec:
 			retval = _equalRoleSpec(a, b);
 			break;
 
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(a));
