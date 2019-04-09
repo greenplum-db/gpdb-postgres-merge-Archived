@@ -126,7 +126,8 @@ static void vac_truncate_clog(TransactionId frozenXID,
 				  TransactionId lastSaneFrozenXid,
 				  MultiXactId lastSaneMinMulti);
 static bool vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params,
-					   AOVacuumPhaseConfig *ao_vacuum_phase_config, Relation onerel, LOCKMODE lmode);
+					   bool skip_twophase, AOVacuumPhaseConfig *ao_vacuum_phase_config,
+					   Relation onerel, LOCKMODE lmode);
 
 static void scan_index(Relation indrel, double num_tuples,
 					   bool check_stats, int elevel);
@@ -142,7 +143,8 @@ static void vacuumStatement_Relation(Oid relid, List *relations,
 
 static void
 vacuum_rel_ao_phase(Oid relid, RangeVar *relation, int options, VacuumParams *params,
-					AOVacuumPhaseConfig *ao_vacuum_phase_config, Relation onerel, LOCKMODE lmode,
+					bool skip_twophase, AOVacuumPhaseConfig *ao_vacuum_phase_config,
+					Relation onerel, LOCKMODE lmode,
 					List *compaction_insert_segno,
 					List *compaction_segno,
 					AOVacuumPhase phase);
@@ -321,11 +323,11 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 	if (options & VACOPT_VACUUM)
 	{
 		vacuum_relations = get_rel_oids(relid, relation,
-										options, va_col, VACOPT_VACUUM);
+										options, va_cols, VACOPT_VACUUM);
 	}
 	if (options & VACOPT_ANALYZE)
 		analyze_relations = get_rel_oids(relid, relation,
-										 options, va_col, VACOPT_ANALYZE);
+										 options, va_cols, VACOPT_ANALYZE);
 
 	/*
 	 * Decide whether we need to start/commit our own transactions.
@@ -623,7 +625,7 @@ vacuumStatement_AssignRelation(RangeVar *relation, Oid relid, List *relations)
 		}
 
 		/* XXX: dispatch OID than name */
-		*relation = makeRangeVar(namespace_name, relname, -1);
+		relation = makeRangeVar(namespace_name, relname, -1);
 	}
 }
 
@@ -813,7 +815,8 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 			SIMPLE_FAULT_INJECTOR(VacuumRelationOpenRelationDuringDropPhase);
 		}
 
-		vacuum_rel(relid, relation, options, params, ao_vacuum_phase_config, onerel, lmode);
+		vacuum_rel(relid, relation, options, params, skip_twophase,
+				   ao_vacuum_phase_config, onerel, lmode);
 		onerel = NULL;
 	}
 	else
@@ -824,14 +827,14 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 		ao_vacuum_phase_config->appendonly_compaction_segno = NIL;
 		ao_vacuum_phase_config->appendonly_compaction_insert_segno = NIL;
 		ao_vacuum_phase_config->appendonly_relation_empty = false;
-		ao_vacuum_phase_config->skip_twophase = false;
+		skip_twophase = false;
 
 		/*
 		 * 1. Prepare phase
 		 */
 		vacuum_rel_ao_phase(relid, relation, options, params,
-							ao_vacuum_phase_config, onerel, lmode,
-							NIL, NIL, AOVAC_PREPARE);
+							skip_twophase, ao_vacuum_phase_config,
+							onerel, lmode, NIL, NIL, AOVAC_PREPARE);
 		onerel = NULL;
 
 		/*
@@ -878,7 +881,8 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 				MemoryContextSwitchTo(oldcontext);
 
 				vacuum_rel_ao_phase(relid, relation, options, params,
-									ao_vacuum_phase_config, onerel, lmode,
+									skip_twophase, ao_vacuum_phase_config,
+									onerel, lmode,
 									list_make1_int(insertSegNo),
 									compactNowList,
 									AOVAC_COMPACT);
@@ -956,7 +960,8 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 			RegisterSegnoForCompactionDrop(relid, compactNowList);
 
 			vacuum_rel_ao_phase(relid, relation, options, params,
-								ao_vacuum_phase_config, onerel, lmode,
+								skip_twophase, ao_vacuum_phase_config,
+								onerel, lmode,
 								NIL,	/* insert segno */
 								compactNowList,
 								AOVAC_DROP);
@@ -978,7 +983,8 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 		{
 			/* Provide the list of all compacted segment numbers with it */
 			vacuum_rel_ao_phase(relid, relation, options, params,
-								ao_vacuum_phase_config, onerel, lmode,
+								skip_twophase, ao_vacuum_phase_config,
+								onerel, lmode,
 								insertedSegmentFileList,
 								compactedSegmentFileList,
 								AOVAC_CLEANUP);
@@ -2170,7 +2176,8 @@ vac_truncate_clog(TransactionId frozenXID,
 
 static void
 vacuum_rel_ao_phase(Oid relid, RangeVar *relation, int options, VacuumParams *params,
-					AOVacuumPhaseConfig *ao_vacuum_phase_config, Relation onerel, LOCKMODE lmode,
+					bool skip_twophase, AOVacuumPhaseConfig *ao_vacuum_phase_config,
+					Relation onerel, LOCKMODE lmode,
 					List *compaction_insert_segno,
 					List *compaction_segno,
 					AOVacuumPhase phase)
@@ -2179,7 +2186,8 @@ vacuum_rel_ao_phase(Oid relid, RangeVar *relation, int options, VacuumParams *pa
 	ao_vacuum_phase_config->appendonly_compaction_segno = compaction_segno;
 	ao_vacuum_phase_config->appendonly_phase = phase;
 
-	vacuum_rel(relid, relation, options, params, ao_vacuum_phase_config, onerel, lmode);
+	vacuum_rel(relid, relation, options, params, skip_twophase,
+			   ao_vacuum_phase_config, onerel, lmode);
 }
 
 
@@ -2199,7 +2207,8 @@ vacuum_rel_ao_phase(Oid relid, RangeVar *relation, int options, VacuumParams *pa
  */
 static bool
 vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params,
-		   AOVacuumPhaseConfig *ao_vacuum_phase_config, Relation onerel, LOCKMODE lmode)
+		   bool skip_twophase, AOVacuumPhaseConfig *ao_vacuum_phase_config,
+		   Relation onerel, LOCKMODE lmode)
 {
 	Oid			toast_relid;
 	Oid			aoseg_relid = InvalidOid;
@@ -2588,7 +2597,8 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params,
 					  ao_vacuum_phase_config->appendonly_relation_empty))))
 	{
 		if (toast_relid != InvalidOid && toast_rangevar != NULL)
-			vacuum_rel(toast_relid, toast_rangevar, options, params, NULL, lmode);
+			vacuum_rel(toast_relid, toast_rangevar, options, params,
+					   skip_twophase, NULL, onerel, lmode);
 	}
 
 	/*
@@ -2616,15 +2626,18 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params,
 	{
 		/* do the same for an AO segments table, if any */
 		if (aoseg_relid != InvalidOid && aoseg_rangevar != NULL)
-			vacuum_rel(aoseg_relid, aoseg_rangevar, options, params, NULL, lmode);
+			vacuum_rel(aoseg_relid, aoseg_rangevar, options, params,
+					   skip_twophase, NULL, onerel, lmode);
 
 		/* do the same for an AO block directory table, if any */
 		if (aoblkdir_relid != InvalidOid && aoblkdir_rangevar != NULL)
-			vacuum_rel(aoblkdir_relid, aoblkdir_rangevar, options, params, NULL, lmode);
+			vacuum_rel(aoblkdir_relid, aoblkdir_rangevar, options, params,
+					   skip_twophase, NULL, onerel, lmode);
 
 		/* do the same for an AO visimap, if any */
 		if (aovisimap_relid != InvalidOid && aovisimap_rangevar != NULL)
-			vacuum_rel(aovisimap_relid, aovisimap_rangevar, options, params, NULL, lmode);
+			vacuum_rel(aovisimap_relid, aovisimap_rangevar, options, params,
+					   skip_twophase, NULL, onerel, lmode);
 	}
 
 	/* Report that we really did it. */
