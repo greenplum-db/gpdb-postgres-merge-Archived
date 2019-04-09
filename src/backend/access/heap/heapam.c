@@ -3887,7 +3887,7 @@ l2:
 				goto l2;
 
 			/* Otherwise check if it committed or aborted */
-			UpdateXmaxHintBits(oldtup.t_data, buffer, xwait);
+			UpdateXmaxHintBits(oldtup.t_data, buffer, xwait, relation);
 			if (oldtup.t_data->t_infomask & HEAP_XMAX_INVALID)
 				can_continue = true;
 		}
@@ -4102,25 +4102,16 @@ l2:
 		{
 			xl_heap_lock xlrec;
 			XLogRecPtr	recptr;
-			XLogRecData rdata[2];
 
-			xlrec.target.node = relation->rd_node;
-			xlrec.target.tid = oldtup.t_self;
+			XLogBeginInsert();
+			XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
+
+			xlrec.offnum = ItemPointerGetOffsetNumber(&oldtup.t_self);
 			xlrec.locking_xid = xmax_lock_old_tuple;
 			xlrec.infobits_set = compute_infobits(oldtup.t_data->t_infomask,
 												  oldtup.t_data->t_infomask2);
-			rdata[0].data = (char *) &xlrec;
-			rdata[0].len = SizeOfHeapLock;
-			rdata[0].buffer = InvalidBuffer;
-			rdata[0].next = &(rdata[1]);
-
-			rdata[1].data = NULL;
-			rdata[1].len = 0;
-			rdata[1].buffer = buffer;
-			rdata[1].buffer_std = true;
-			rdata[1].next = NULL;
-
-			recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_LOCK, rdata);
+			XLogRegisterData((char *) &xlrec, SizeOfHeapLock);
+			recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_LOCK);
 			PageSetLSN(page, recptr);
 		}
 
@@ -6197,7 +6188,9 @@ heap_abort_speculative(Relation relation, HeapTuple tuple)
 	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(tid));
 	Assert(ItemIdIsNormal(lp));
 
+#if 0
 	tp.t_tableOid = RelationGetRelid(relation);
+#endif
 	tp.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	tp.t_len = ItemIdGetLength(lp);
 	tp.t_self = *tid;
@@ -6278,7 +6271,7 @@ heap_abort_speculative(Relation relation, HeapTuple tuple)
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 	if (HeapTupleHasExternal(&tp))
-		toast_delete(relation, &tp);
+		toast_delete(relation, (GenericTuple) &tp, NULL);
 
 	/*
 	 * Never need to mark tuple for invalidation, since catalogs don't support
