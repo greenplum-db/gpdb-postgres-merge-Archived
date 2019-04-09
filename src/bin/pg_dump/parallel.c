@@ -175,7 +175,7 @@ static void WaitForTerminatingWorkers(ParallelState *pstate);
 static void setup_cancel_handler(void);
 static void set_cancel_pstate(ParallelState *pstate);
 static void set_cancel_slot_archive(ParallelSlot *slot, ArchiveHandle *AH);
-static void RunWorker(ArchiveHandle *AH, ParallelSlot *slot, RestoreOptions *ropt);
+static void RunWorker(ArchiveHandle *AH, ParallelSlot *slot);
 static bool HasEveryWorkerTerminated(ParallelState *pstate);
 static void lockTableForWorker(ArchiveHandle *AH, TocEntry *te);
 
@@ -859,7 +859,7 @@ init_spawned_worker_win32(WorkerInfo *wi)
 	free(wi);
 
 	/* Run the worker ... */
-	RunWorker(AH, slot, ropt);
+	RunWorker(AH, slot);
 
 	/* Exit the thread */
 	_endthreadex(0);

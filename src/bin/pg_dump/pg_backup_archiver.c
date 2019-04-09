@@ -664,7 +664,7 @@ RestoreArchive(Archive *AHX)
 			switch (_tocEntryRestorePass(te))
 			{
 				case RESTORE_PASS_MAIN:
-					(void) restore_toc_entry(AH, te, ropt, false);
+					(void) restore_toc_entry(AH, te, false);
 					break;
 				case RESTORE_PASS_ACL:
 					haveACL = true;

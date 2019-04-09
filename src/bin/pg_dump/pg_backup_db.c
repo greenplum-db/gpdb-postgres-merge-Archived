@@ -16,6 +16,7 @@
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
 #include "pg_backup_utils.h"
+#include "parallel.h"
 
 #include <unistd.h>
 #include <ctype.h>
@@ -660,7 +661,7 @@ EndDBCopyMode(Archive *AHX, const char *tocEntryTag)
 		/* Do this to ensure we've pumped libpq back to idle state */
 		if (PQgetResult(AH->connection) != NULL)
 			write_msg(NULL, "WARNING: unexpected extra results during COPY of table \"%s\"\n",
-					  te->tag);
+					  tocEntryTag);
 
 		AH->pgCopyIn = false;
 	}

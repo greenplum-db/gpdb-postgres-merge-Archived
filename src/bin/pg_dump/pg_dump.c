@@ -99,7 +99,7 @@ bool		g_verbose;			/* User wants verbose narration of our
 
 /* GPDB_95_MERGE_FIXME: put those flags to DumpOptions to avoid using global variables  */
 /* START MPP ADDITION */
-bool		dumpPolicy;
+bool		dumpGpPolicy;
 bool		isGPbackend;
 int			preDataSchemaOnly;	/* int because getopt_long() */
 int			postDataSchemaOnly;
@@ -311,7 +311,6 @@ static bool nonemptyReloptions(const char *reloptions);
 static void fmtReloptionsArray(Archive *fout, PQExpBuffer buffer,
 				   const char *reloptions, const char *prefix);
 static char *get_synchronized_snapshot(Archive *fout);
-static PGresult *ExecuteSqlQueryForSingleRow(Archive *fout, char *query);
 static void setupDumpWorker(Archive *AHX);
 
 
@@ -680,7 +679,7 @@ main(int argc, char **argv)
 
 			case 'u':
 				prompt_password = TRI_YES;
-				username = simple_prompt("User name: ", 100, true);
+				dopt.username = simple_prompt("User name: ", 100, true);
 				break;
 
 			case 'U':
@@ -756,12 +755,12 @@ main(int argc, char **argv)
 
 			case 1002:
 				simple_string_list_append(&funcid_string_list, optarg);
-				include_everything = false;
+				dopt.include_everything = false;
 				break;
 
 			case 1003:
 				simple_string_list_append(&relid_string_list, optarg);
-				include_everything = false;
+				dopt.include_everything = false;
 				break;
 
 			default:
@@ -902,13 +901,13 @@ main(int argc, char **argv)
 	switch (gp_syntax_option)
 	{
 		case GPS_NOT_SPECIFIED:
-			dumpPolicy = isGPbackend;
+			dumpGpPolicy = isGPbackend;
 			break;
 		case GPS_DISABLED:
-			dumpPolicy = false;
+			dumpGpPolicy = false;
 			break;
 		case GPS_ENABLED:
-			dumpPolicy = isGPbackend;
+			dumpGpPolicy = isGPbackend;
 			if (!isGPbackend)
 			{
 				write_msg(NULL, "Server is not a Greenplum Database instance; --gp-syntax option ignored.\n");
@@ -970,18 +969,6 @@ main(int argc, char **argv)
 	if (dumpsnapshot && fout->remoteVersion < 90200)
 		exit_horribly(NULL,
 		   "Exported snapshots are not supported by this server version.\n");
-
-	/* Find the last built-in OID, if needed */
-	if (fout->remoteVersion < 70300)
-	{
-		if (fout->remoteVersion >= 70100)
-			g_last_builtin_oid = findLastBuiltinOid_V71(fout,
-												  PQdb(GetConnection(fout)));
-		else
-			g_last_builtin_oid = findLastBuiltinOid_V70(fout);
-		if (g_verbose)
-			write_msg(NULL, "last built-in OID is %u\n", g_last_builtin_oid);
-	}
 
 	/* Expand schema selection patterns into OID lists */
 	if (schema_include_patterns.head != NULL)
@@ -1151,7 +1138,7 @@ main(int argc, char **argv)
 
 	ropt->suppressDumpWarnings = true;	/* We've already shown them */
 
-	ropt->binary_upgrade = binary_upgrade;
+	ropt->binary_upgrade = dopt.binary_upgrade;
 
 	SetArchiveOptions(fout, &dopt, ropt);
 
@@ -1377,7 +1364,7 @@ setup_connection(Archive *AH, const char *dumpencoding,
 		 * REPEATABLE READ transaction provides the appropriate integrity
 		 * guarantees.  This is a kluge, but safe for back-patching.
 		 */
-		if (dopt.serializable_deferrable && AH->sync_snapshot_id == NULL)
+		if (dopt->serializable_deferrable && AH->sync_snapshot_id == NULL)
 			ExecuteSqlStatement(AH,
 								"SET TRANSACTION ISOLATION LEVEL "
 								"SERIALIZABLE, READ ONLY, DEFERRABLE");
@@ -1884,7 +1871,7 @@ selectDumpableProcLang(ProcLangInfo *plang, DumpOptions *dopt)
  * such extensions by their having OIDs in the range reserved for initdb.
  */
 static void
-selectDumpableExtension(DumpOptions *dopt, ExtensionInfo *extinfo)
+selectDumpableExtension(ExtensionInfo *extinfo, DumpOptions *dopt)
 {
 	if (dopt->binary_upgrade && extinfo->dobj.catId.oid < (Oid) FirstNormalObjectId)
 		extinfo->dobj.dump = false;
@@ -3306,7 +3293,7 @@ dumpBlob(Archive *fout, BlobInfo *binfo)
 	 * copied over by pg_upgrade as it is part of the pg_largeobject_metadata
 	 * table.
 	 */
-	if (binfo->blobacl && !binary_upgrade)
+	if (binfo->blobacl && !fout->dopt->binary_upgrade)
 		dumpACL(fout, binfo->dobj.catId, binfo->dobj.dumpId, "LARGE OBJECT",
 				binfo->dobj.name, NULL,
 				NULL, binfo->rolname, binfo->blobacl);
@@ -3469,11 +3456,6 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 			write_msg(NULL, "reading policies for table \"%s\".\"%s\"\n",
 					  tbinfo->dobj.namespace->dobj.name,
 					  tbinfo->dobj.name);
-
-		/*
-		 * select table schema to ensure regproc name is qualified if needed
-		 */
-		selectSourceSchema(fout, tbinfo->dobj.namespace->dobj.name);
 
 		resetPQExpBuffer(query);
 
@@ -5152,6 +5134,7 @@ getAggregates(Archive *fout, int *numAggs)
 ExtProtInfo *
 getExtProtocols(Archive *fout, int *numExtProtocols)
 {
+	DumpOptions *dopt = fout->dopt;
 	PGresult   *res;
 	int			ntups;
 	int			i;
@@ -5230,7 +5213,7 @@ getExtProtocols(Archive *fout, int *numExtProtocols)
 		ptcinfo[i].ptctrusted = *(PQgetvalue(res, i, i_ptctrusted)) == 't';
 
 		/* Decide whether we want to dump it */
-		selectDumpableObject(&(ptcinfo[i].dobj));
+		selectDumpableObject(&(ptcinfo[i].dobj), dopt);
 	}
 
 	PQclear(res);
@@ -7213,9 +7196,6 @@ getTransforms(Archive *fout, int *numTransforms)
 
 	query = createPQExpBuffer();
 
-	/* Make sure we are in proper schema */
-	selectSourceSchema(fout, "pg_catalog");
-
 	appendPQExpBuffer(query, "SELECT tableoid, oid, "
 					  "trftype, trflang, trffromsql::oid, trftosql::oid "
 					  "FROM pg_transform "
@@ -8852,6 +8832,10 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 			if (!postDataSchemaOnly)
 			dumpCast(fout, (CastInfo *) dobj);
 			break;
+		case DO_TRANSFORM:
+			if (!postDataSchemaOnly)
+			dumpTransform(fout, (TransformInfo *) dobj);
+			break;
 		case DO_TABLE_DATA:
 			if (!postDataSchemaOnly)
 			{
@@ -10022,7 +10006,7 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 						  fmtId(domcheck->dobj.name));
 		appendPQExpBuffer(labelq, "ON DOMAIN %s",
 						  fmtId(qtypname));
-		dumpComment(fout, labelq->data,
+		dumpComment(fout, "DOMAIN", qtypname,
 					tyinfo->dobj.namespace->dobj.name,
 					tyinfo->rolname,
 					domcheck->dobj.catId, 0, tyinfo->dobj.dumpId);
@@ -11361,9 +11345,11 @@ dumpTransform(Archive *fout, TransformInfo *transform)
 	PQExpBuffer defqry;
 	PQExpBuffer delqry;
 	PQExpBuffer labelq;
+	PQExpBuffer transformargs;
 	FuncInfo   *fromsqlFuncInfo = NULL;
 	FuncInfo   *tosqlFuncInfo = NULL;
 	char	   *lanname;
+	char       *transformType;
 
 	/* Skip if not to be dumped */
 	if (!transform->dobj.dump || dopt->dataOnly)
@@ -11383,22 +11369,19 @@ dumpTransform(Archive *fout, TransformInfo *transform)
 			return;
 	}
 
-	/* Make sure we are in proper schema (needed for getFormattedTypeName) */
-	selectSourceSchema(fout, "pg_catalog");
-
 	defqry = createPQExpBuffer();
 	delqry = createPQExpBuffer();
 	labelq = createPQExpBuffer();
+	transformargs = createPQExpBuffer();
 
 	lanname = get_language_name(fout, transform->trflang);
+	transformType = getFormattedTypeName(fout, transform->trftype, zeroAsNone);
 
 	appendPQExpBuffer(delqry, "DROP TRANSFORM FOR %s LANGUAGE %s;\n",
-				  getFormattedTypeName(fout, transform->trftype, zeroAsNone),
-					  lanname);
+					  transformType, lanname);
 
 	appendPQExpBuffer(defqry, "CREATE TRANSFORM FOR %s LANGUAGE %s (",
-				  getFormattedTypeName(fout, transform->trftype, zeroAsNone),
-					  lanname);
+					  transformType, lanname);
 
 	if (!transform->trffromsql && !transform->trftosql)
 		write_msg(NULL, "WARNING: bogus transform definition, at least one of trffromsql and trftosql should be nonzero\n");
@@ -11445,26 +11428,30 @@ dumpTransform(Archive *fout, TransformInfo *transform)
 	appendPQExpBuffer(defqry, ");\n");
 
 	appendPQExpBuffer(labelq, "TRANSFORM FOR %s LANGUAGE %s",
-				  getFormattedTypeName(fout, transform->trftype, zeroAsNone),
-					  lanname);
+					  transformType, lanname);
+
+	appendPQExpBuffer(transformargs, "FOR %s LANGUAGE %s",
+					  transformType, lanname);
 
 	if (dopt->binary_upgrade)
-		binary_upgrade_extension_member(defqry, &transform->dobj, labelq->data);
+		binary_upgrade_extension_member(defqry, &transform->dobj,
+										"TRANSFORM", transformargs->data, NULL);
 
 	ArchiveEntry(fout, transform->dobj.catId, transform->dobj.dumpId,
 				 labelq->data,
-				 "pg_catalog", NULL, "",
+				 "NULL", NULL, "",
 				 false, "TRANSFORM", SECTION_PRE_DATA,
 				 defqry->data, delqry->data, NULL,
 				 transform->dobj.dependencies, transform->dobj.nDeps,
 				 NULL, NULL);
 
 	/* Dump Transform Comments */
-	dumpComment(fout, labelq->data,
+	dumpComment(fout, "TRANSFORM", transformargs->data,
 				NULL, "",
 				transform->dobj.catId, 0, transform->dobj.dumpId);
 
 	free(lanname);
+	free(transformType);
 	destroyPQExpBuffer(defqry);
 	destroyPQExpBuffer(delqry);
 	destroyPQExpBuffer(labelq);
@@ -13351,6 +13338,7 @@ dumpTSDictionary(Archive *fout, TSDictInfo *dictinfo)
 	/* Dump Dictionary Comments */
 	dumpComment(fout, "TEXT SEARCH DICTIONARY", qdictname,
 				dictinfo->dobj.namespace->dobj.name, dictinfo->rolname,
+				dictinfo->dobj.catId, 0, dictinfo->dobj.dumpId);
 
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
@@ -14311,6 +14299,7 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 static void
 dumpExternal(Archive *fout, TableInfo *tbinfo, PQExpBuffer q, PQExpBuffer delq)
 {
+		DumpOptions *dopt = fout->dopt;
 		PGresult   *res;
 		char	   *urilocations;
 		char	   *execlocations;
@@ -14487,7 +14476,7 @@ dumpExternal(Archive *fout, TableInfo *tbinfo, PQExpBuffer q, PQExpBuffer delq)
 		for (j = 0; j < tbinfo->numatts; j++)
 		{
 			/* Is the attribute not dropped? */
-			if (shouldPrintColumn(tbinfo, j))
+			if (shouldPrintColumn(dopt, tbinfo, j))
 			{
 				/* Format properly if not first attr */
 				if (actual_atts > 0)
@@ -15066,7 +15055,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		/*
 		 * Dump distributed by clause.
 		 */
-		if (dumpPolicy && tbinfo->relkind != RELKIND_FOREIGN_TABLE)
+		if (dumpGpPolicy && tbinfo->relkind != RELKIND_FOREIGN_TABLE)
 			addDistributedBy(fout, q, tbinfo, actual_atts);
 
 		/*
@@ -17563,6 +17552,7 @@ addDistributedBy(Archive *fout, PQExpBuffer q, TableInfo *tbinfo, int actual_att
 static void
 addDistributedByOld(Archive *fout, PQExpBuffer q, TableInfo *tbinfo, int actual_atts)
 {
+	DumpOptions *dopt = fout->dopt;
 	PQExpBuffer query = createPQExpBuffer();
 	PGresult   *res;
 	char	   *policydef;
@@ -17584,7 +17574,7 @@ addDistributedByOld(Archive *fout, PQExpBuffer q, TableInfo *tbinfo, int actual_
 		 * In binary_upgrade mode, we run directly against segments, and there
 		 * are no gp_distribution_policy rows in segments.
 		 */
-		if (PQntuples(res) < 1 && actual_atts > 0 && !binary_upgrade)
+		if (PQntuples(res) < 1 && actual_atts > 0 && !dopt->binary_upgrade)
 		{
 			/* if this is a catalog table we allow dumping it, skip the error */
 			if (strncmp(tbinfo->dobj.namespace->dobj.name, "pg_", 3) != 0)
