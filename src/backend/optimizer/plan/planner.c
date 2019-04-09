@@ -1978,7 +1978,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		onconfl = parse->onConflict;
 		if (onconfl)
 			onconfl->onConflictSet =
-				preprocess_onconflict_targetlist(onconfl->onConflictSet,
+				preprocess_onconflict_targetlist(root,
+												 onconfl->onConflictSet,
 												 parse->resultRelation,
 												 parse->rtable);
 
@@ -2493,6 +2494,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				}
 
 				root->grouping_map = grouping_map;
+				root->grouping_map_size = maxref + 1;
 			}
 
 			/*
@@ -2545,7 +2547,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												   groupColIdx,
 												   &agg_costs,
 												   numGroups,
-												   result_plan);
+												   result_plan,
+												   &current_locus,
+												   current_pathkeys);
+				current_pathkeys = NIL;
 
 				/*
 				 * these are destroyed by build_grouping_chain, so make sure
@@ -3510,21 +3515,21 @@ build_grouping_chain(PlannerInfo *root,
 		Sort	   *sort;
 
 		List	   *hashOpfamilies;
-
-
-		hashOpfamilies = NIL;
-		foreach(lc, hash_exprs)
-		{
-			Node	   *expr = lfirst(lc);
-			Oid			opfamily;
-
-			opfamily = cdb_default_distribution_opfamily_for_type(exprType(expr));
-			hashOpfamilies = lappend_oid(hashOpfamilies, opfamily);
-		}
+		ListCell   *lc;
 
 		if (need_redistribute && hash_exprs)
 		{
-			result_plan = (Plan *) make_motion_hash(root, result_plan, hash_exprs);
+			hashOpfamilies = NIL;
+			foreach(lc, hash_exprs)
+			{
+				Node	   *expr = lfirst(lc);
+				Oid			opfamily;
+
+				opfamily = cdb_default_distribution_opfamily_for_type(exprType(expr));
+				hashOpfamilies = lappend_oid(hashOpfamilies, opfamily);
+			}
+			result_plan = (Plan *) make_motion_hash(root, result_plan, hash_exprs,
+													hashOpfamilies);
 		}
 
 		sort = make_sort_from_groupcols(root,

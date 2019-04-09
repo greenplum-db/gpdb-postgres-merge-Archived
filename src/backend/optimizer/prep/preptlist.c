@@ -201,9 +201,9 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
  *	  Returns the new targetlist.
  */
 List *
-preprocess_onconflict_targetlist(List *tlist, int result_relation, List *range_table)
+preprocess_onconflict_targetlist(PlannerInfo *root, List *tlist, int result_relation, List *range_table)
 {
-	return expand_targetlist(tlist, CMD_UPDATE, result_relation, range_table);
+	return expand_targetlist(root, tlist, CMD_UPDATE, result_relation, range_table);
 }
 
 

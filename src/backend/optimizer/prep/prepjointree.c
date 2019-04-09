@@ -89,9 +89,14 @@ static void pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root,
 						   int childRToffset);
 static void make_setop_translation_list(Query *query, Index newvarno,
 							List **translated_vars);
-bool is_simple_subquery(Query *subquery, RangeTblEntry *rte,
-				   JoinExpr *lowest_outer_join,
-				   bool deletion_ok);
+bool is_simple_subquery(PlannerInfo *root, Query *subquery,
+						RangeTblEntry *rte,
+						JoinExpr *lowest_outer_join,
+						bool deletion_ok);
+static Node *pull_up_simple_values(PlannerInfo *root, Node *jtnode,
+								   RangeTblEntry *rte);
+static bool is_simple_values(PlannerInfo *root, RangeTblEntry *rte,
+							 bool deletion_ok);
 static bool is_safe_append_member(Query *subquery);
 static bool jointree_contains_lateral_outer_refs(Node *jtnode, bool restricted,
 									 Relids safe_upper_varnos);

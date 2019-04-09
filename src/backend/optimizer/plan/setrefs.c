@@ -980,9 +980,6 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 		case T_Agg:
 			set_upper_references(root, plan, rtoffset);
 			break;
-		case T_Group:
-			set_upper_references(root, plan, rtoffset);
-			break;
 		case T_WindowAgg:
 			{
 				WindowAgg  *wplan = (WindowAgg *) plan;
@@ -1722,6 +1719,10 @@ fix_expr_common(PlannerInfo *root, Node *node)
 
 			foreach(lc, g->refs)
 			{
+				int			x = lfirst_int(lc);
+
+				if (x >= root->grouping_map_size || x < 0)
+					elog(ERROR, "invalid refno %d, max %d", x, root->grouping_map_size);
 				cols = lappend_int(cols, grouping_map[lfirst_int(lc)]);
 			}
 

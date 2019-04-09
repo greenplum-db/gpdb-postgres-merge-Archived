@@ -318,6 +318,7 @@ typedef struct PlannerInfo
 	bool		is_correlated_subplan; /* true for correlated subqueries nested within subplans */
 	/* for GroupingFunc fixup in setrefs */
 	AttrNumber *grouping_map;
+	int			grouping_map_size;
 } PlannerInfo;
 
 /*
