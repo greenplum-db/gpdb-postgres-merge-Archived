@@ -9156,62 +9156,6 @@ heap2_redo(XLogReaderState *record)
 	}
 }
 
-bool heap_getrelfilenode(
-	XLogRecord 		*record,
-	RelFileNode		*relFileNode)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-	void*		data = XLogRecGetData(record);
-
-	info &= XLOG_HEAP_OPMASK;
-	if (info == XLOG_HEAP_INSERT)
-	{
-		xl_heap_insert *xlrec = (xl_heap_insert *) data;
-
-		*relFileNode = xlrec->target.node;
-	}
-	else if (info == XLOG_HEAP_DELETE)
-	{
-		xl_heap_delete *xlrec = (xl_heap_delete *) data;
-
-		*relFileNode = xlrec->target.node;
-	}
-	else if (info == XLOG_HEAP_UPDATE || info == XLOG_HEAP_HOT_UPDATE)
-	{
-		xl_heap_update *xlrec = (xl_heap_update *) data;
-
-		*relFileNode = xlrec->target.node;
-	}
-	else if (info == XLOG_HEAP2_CLEAN)
-	{
-		xl_heap_clean *xlrec = (xl_heap_clean *) data;
-
-		*relFileNode = xlrec->node;
-	}
-	else if (info == XLOG_HEAP_NEWPAGE)
-	{
-		xl_heap_newpage *xlrec = (xl_heap_newpage *) data;
-
-		*relFileNode = xlrec->node;
-	}
-	else if (info == XLOG_HEAP_LOCK)
-	{
-		xl_heap_lock *xlrec = (xl_heap_lock *) data;
-
-		*relFileNode = xlrec->target.node;
-	}
-	else if (info == XLOG_HEAP_INPLACE)
-	{
-		xl_heap_inplace *xlrec = (xl_heap_inplace *) data;
-
-		*relFileNode = xlrec->target.node;
-	}
-	else
-		elog(PANIC, "heap_getrelfilenode: unknown op code %u", info);
-
-	return true;
-}
-
 /*
  *	heap_sync		- sync a heap, for use when no WAL has been written
  *
