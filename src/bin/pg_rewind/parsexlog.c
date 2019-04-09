@@ -15,6 +15,7 @@
 #include "c.h"
 #undef FRONTEND
 
+#include "postgres.h"
 #include "postgres_fe.h"
 
 #include <unistd.h>

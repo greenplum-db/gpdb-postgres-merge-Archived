@@ -38,7 +38,7 @@ xlogreader.c: % : $(top_srcdir)/src/backend/access/transam/%
 	rm -f $@ && $(LN_S) $< .
 
 # compat.c is symlinked from the PostgreSQL sources.
-compat.c: % : $(top_srcdir)/contrib/pg_xlogdump/%
+compat.c: % : $(top_srcdir)/src/bin/pg_xlogdump/%
 	rm -f $@ && $(LN_S) $< .
 
 install: all installdirs
