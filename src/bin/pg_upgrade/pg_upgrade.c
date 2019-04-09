@@ -53,7 +53,6 @@ static void freeze_master_data(void);
 static void reset_system_identifier(void);
 static void setup(char *argv0, bool *live_check);
 static void cleanup(void);
-static void	get_restricted_token(const char *progname);
 
 static void copy_subdir_files(char *subdir);
 
@@ -90,6 +89,7 @@ OSInfo		os_info;
 int
 main(int argc, char **argv)
 {
+	char       *sequence_script_file_name = NULL;
 	char	   *analyze_script_file_name = NULL;
 	char	   *deletion_script_file_name = NULL;
 	bool		live_check = false;
@@ -116,7 +116,7 @@ main(int argc, char **argv)
 
 	check_cluster_compatibility(live_check);
 
-	check_and_dump_old_cluster(live_check);
+	check_and_dump_old_cluster(live_check, &sequence_script_file_name);
 
 
 	/* -- NEW -- */
@@ -341,54 +341,6 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, const char 
 #endif
 
 static void
-get_restricted_token(const char *progname)
-{
-#ifdef WIN32
-
-	/*
-	* Before we execute another program, make sure that we are running with a
-	* restricted token. If not, re-execute ourselves with one.
-	*/
-
-	if ((restrict_env = getenv("PG_RESTRICT_EXEC")) == NULL
-		|| strcmp(restrict_env, "1") != 0)
-	{
-		PROCESS_INFORMATION pi;
-		char	   *cmdline;
-
-		ZeroMemory(&pi, sizeof(pi));
-
-		cmdline = pg_strdup(GetCommandLine());
-
-		putenv("PG_RESTRICT_EXEC=1");
-
-		if (!CreateRestrictedProcess(cmdline, &pi, progname))
-		{
-			fprintf(stderr, _("%s: could not re-execute with restricted token: error code %lu\n"), progname, GetLastError());
-		}
-		else
-		{
-			/*
-			* Successfully re-execed. Now wait for child process to capture
-			* exitcode.
-			*/
-			DWORD		x;
-
-			CloseHandle(pi.hThread);
-			WaitForSingleObject(pi.hProcess, INFINITE);
-
-			if (!GetExitCodeProcess(pi.hProcess, &x))
-			{
-				fprintf(stderr, _("%s: could not get exit code from subprocess: error code %lu\n"), progname, GetLastError());
-				exit(1);
-			}
-			exit(x);
-		}
-	}
-#endif
-}
-
-static void
 setup(char *argv0, bool *live_check)
 {
 	char		exec_path[MAXPGPATH];	/* full path to my executable */
@@ -575,8 +527,6 @@ create_new_objects(void)
 
 	/* regenerate now that we have objects in the databases */
 	get_db_and_rel_infos(&new_cluster);
-
-	uninstall_support_functions_from_new_cluster();
 
 	/*
 	 * If we're upgrading from GPDB4, mark all indexes as invalid.

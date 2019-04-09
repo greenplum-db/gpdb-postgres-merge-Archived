@@ -73,7 +73,7 @@ output_check_banner(bool live_check)
 
 
 void
-check_and_dump_old_cluster(bool live_check)
+check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 {
 	/* -- OLD -- */
 
@@ -105,24 +105,28 @@ check_and_dump_old_cluster(bool live_check)
 	 */
 	check_greenplum();
 
-	/*
-	 * Upgrading from Greenplum 4.3.x which is based on PostgreSQL 8.2.
-	 * Upgrading from one version of 4.3.x to another 4.3.x version is not
-	 * supported.
-	 */
-	if (GET_MAJOR_VERSION(old_cluster.major_version) == 802)
-	{
-		old_8_3_check_for_name_data_type_usage(&old_cluster);
-	
-		old_GPDB4_check_for_money_data_type_usage();
-		old_GPDB4_check_no_free_aoseg();
-		check_hash_partition_usage();
-	}
 	if (GET_MAJOR_VERSION(old_cluster.major_version) == 904 &&
 		old_cluster.controldata.cat_ver < JSONB_FORMAT_CHANGE_CAT_VER)
 		check_for_jsonb_9_4_usage(&old_cluster);
 
+	/* Pre-PG 9.4 had a different 'line' data type internal format */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 903)
+		old_9_3_check_for_line_data_type_usage(&old_cluster);
+
+	/*
+	 * GPDB_90_MERGE_FIXME: does enabling this work, we don't really support
+	 * large objects but if this works it would be nice to minimize the diff
+	 * to upstream.
+	 */
+	/* Pre-PG 9.0 had no large object permissions */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
+		new_9_0_populate_pg_largeobject_metadata(&old_cluster, true);
+
 	/* old = PG 8.3 checks? */
+	/* 
+	 * GPDB: 9.5 removed the support for 8.3, we need to keep it to support upgrading
+	 * from GPDB 5
+	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 803)
 	{
 		old_8_3_check_for_name_data_type_usage(&old_cluster);
@@ -148,18 +152,20 @@ check_and_dump_old_cluster(bool live_check)
 
 		old_GPDB5_check_for_unsupported_distribution_key_data_types();
 	}
-	/* Pre-PG 9.4 had a different 'line' data type internal format */
-	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 903)
-		old_9_3_check_for_line_data_type_usage(&old_cluster);
 
 	/*
-	 * GPDB_90_MERGE_FIXME: does enabling this work, we don't really support
-	 * large objects but if this works it would be nice to minimize the diff
-	 * to upstream.
+	 * Upgrading from Greenplum 4.3.x which is based on PostgreSQL 8.2.
+	 * Upgrading from one version of 4.3.x to another 4.3.x version is not
+	 * supported.
 	 */
-	/* Pre-PG 9.0 had no large object permissions */
-	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
-		new_9_0_populate_pg_largeobject_metadata(&old_cluster, true);
+	if (GET_MAJOR_VERSION(old_cluster.major_version) == 802)
+	{
+		old_8_3_check_for_name_data_type_usage(&old_cluster);
+	
+		old_GPDB4_check_for_money_data_type_usage();
+		old_GPDB4_check_no_free_aoseg();
+		check_hash_partition_usage();
+	}
 
 	/*
 	 * While not a check option, we do this now because this is the only time
@@ -590,58 +596,6 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 #endif
 
 	termPQExpBuffer(&user_specification);
-
-	check_ok();
-}
-
-
-static void
-check_proper_datallowconn(ClusterInfo *cluster)
-{
-	int			dbnum;
-	PGconn	   *conn_template1;
-	PGresult   *dbres;
-	int			ntups;
-	int			i_datname;
-	int			i_datallowconn;
-
-	prep_status("Checking database connection settings");
-
-	conn_template1 = connectToServer(cluster, "template1");
-
-	/* get database names */
-	dbres = executeQueryOrDie(conn_template1,
-							  "SELECT	datname, datallowconn "
-							  "FROM	pg_catalog.pg_database");
-
-	i_datname = PQfnumber(dbres, "datname");
-	i_datallowconn = PQfnumber(dbres, "datallowconn");
-
-	ntups = PQntuples(dbres);
-	for (dbnum = 0; dbnum < ntups; dbnum++)
-	{
-		char	   *datname = PQgetvalue(dbres, dbnum, i_datname);
-		char	   *datallowconn = PQgetvalue(dbres, dbnum, i_datallowconn);
-
-		if (strcmp(datname, "template0") == 0)
-		{
-			/* avoid restore failure when pg_dumpall tries to create template0 */
-			if (strcmp(datallowconn, "t") == 0)
-				pg_fatal("template0 must not allow connections, "
-						 "i.e. its pg_database.datallowconn must be false\n");
-		}
-		else
-		{
-			/* avoid datallowconn == false databases from being skipped on restore */
-			if (strcmp(datallowconn, "f") == 0)
-				pg_fatal("All non-template0 databases must allow connections, "
-						 "i.e. their pg_database.datallowconn must be true\n");
-		}
-	}
-
-	PQclear(dbres);
-
-	PQfinish(conn_template1);
 
 	check_ok();
 }

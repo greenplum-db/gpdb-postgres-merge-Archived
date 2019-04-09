@@ -189,10 +189,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		pg_fatal("Could not get control data using %s: %s\n",
 				 cmd, getErrorText());
 
-	/* Only pre-8.4 has these so if they are not set below we will check later */
-	cluster->controldata.lc_collate = NULL;
-	cluster->controldata.lc_ctype = NULL;
-
 	/* Only in <= 8.3 */
 	if (GET_MAJOR_VERSION(cluster->major_version) <= 803)
 	{
@@ -635,6 +631,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		if (!got_date_is_int)
 			pg_log(PG_REPORT, "  dates/times are integers?\n");
 
+		/* value added in Postgres 8.4 */
 		if (!got_float8_pass_by_value)
 			pg_log(PG_REPORT, "  float8 argument passing method\n");
 
@@ -696,8 +693,22 @@ check_control_data(ControlData *oldctrl,
 		oldctrl->large_object != newctrl->large_object)
 		pg_fatal("old and new pg_controldata large-object chunk sizes are invalid or do not match\n");
 
+	/* 
+	 * GPDB, since 9.5, pg_upgrade removed the support for 8.3, however, GPDB
+	 * still keep it to support upgrading from GPDB 5
+	 */
 	if (oldctrl->date_is_int != newctrl->date_is_int)
-		pg_fatal("old and new pg_controldata date/time storage types do not match\n");
+	{
+		pg_log(PG_WARNING,
+			   "\nOld and new pg_controldata date/time storage types do not match.\n");
+
+		/*
+		 * This is a common 8.3 -> 8.4 upgrade problem, so we are more verbose
+		 */
+		pg_fatal("You will need to rebuild the new server with configure option\n"
+				 "--disable-integer-datetimes or get server binaries built with those\n"
+				 "options.\n");
+	}
 
 	/* float8_pass_by_value does not need to match */
 
