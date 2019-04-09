@@ -60,7 +60,7 @@
 
 #include "postgres.h"
 #include "fmgr.h"
-#include "utils/pg_lzcompress.h"
+#include "common/pg_lzcompress.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"
 #include "utils/lsyscache.h"

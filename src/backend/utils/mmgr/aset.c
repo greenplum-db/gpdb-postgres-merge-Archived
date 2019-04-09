@@ -892,7 +892,7 @@ AllocSetContextCreate(MemoryContext parent,
 		block = (AllocBlock) gp_malloc(blksize);
 		if (block == NULL)
 			MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-						 &context->header, CDB_MCXT_WHERE(&context->header),
+						 &set->header, CDB_MCXT_WHERE(&set->header),
 						 "Out of memory.  Unable to allocate %lu bytes.",
 						 (unsigned long)blksize);
 		block->aset = set;

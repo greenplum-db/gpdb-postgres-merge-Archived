@@ -8829,46 +8829,13 @@ _ShowOption(struct config_generic * record, bool use_units)
 					val = (*conf->show_hook) ();
 				else
 				{
-					char		unit[4];
-					double		result = *conf->variable;
-
-					if (use_units && result > 0 && (record->flags & GUC_UNIT_MEMORY))
-					{
-                        double result_gb;
-                        double result_mb;
-
-                        switch (record->flags & GUC_UNIT_MEMORY)
-						{
-							case GUC_UNIT_BLOCKS:
-								result *= BLCKSZ / 1024;
-								break;
-							case GUC_UNIT_XBLOCKS:
-								result *= XLOG_BLCKSZ / 1024;
-								break;
-						}
-
-                        result_gb = result / KB_PER_GB;
-                        result_mb = result / KB_PER_MB;
-
-						if (result_gb >= 1.0 &&
-                            result_gb * KB_PER_GB == result)
-						{
-							result = result_gb;
-							strcpy(unit, "GB");
-						}
-						else if (result_mb >= 1.0 &&
-                                 result_mb * KB_PER_MB == result)
-						{
-							result = result_mb;
-							strcpy(unit, "MB");
-						}
-						else
-							strcpy(unit, "kB");
-					}
-					else
-						strcpy(unit, "");
-
-					snprintf(buffer, sizeof(buffer), "%g%s", result, unit);
+					/*
+					 * GPDB_95_MERGE_FIXME: Why did _ShowOption of PGC_REAL
+					 * differ from upstream? If required then bring back and
+					 * adapt to commit 1b630264730.
+					 */
+					snprintf(buffer, sizeof(buffer), "%g",
+							 *conf->variable);
 					val = buffer;
 				}
 			}

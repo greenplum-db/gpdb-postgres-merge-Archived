@@ -423,8 +423,6 @@ extern int	gp_connection_send_timeout;
 
 extern bool create_restartpoint_on_ckpt_record_replay;
 
-extern char  *data_directory;
-
 /* ORCA related definitions */
 #define OPTIMIZER_XFORMS_COUNT 400 /* number of transformation rules */
 

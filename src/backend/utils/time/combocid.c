@@ -510,7 +510,7 @@ RestoreComboCIDState(char *comboCIDstate)
 	/* Use GetComboCommandId to restore each ComboCID. */
 	for (i = 0; i < num_elements; i++)
 	{
-		cid = GetComboCommandId(keydata[i].cmin, keydata[i].cmax);
+		cid = GetComboCommandId(keydata[i].xmin, keydata[i].cmin, keydata[i].cmax);
 
 		/* Verify that we got the expected answer. */
 		if (cid != i)

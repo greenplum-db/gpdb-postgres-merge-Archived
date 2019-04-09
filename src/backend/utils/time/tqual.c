@@ -1392,7 +1392,8 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTuple htup, TransactionId Oldest
 				 * possibly be running; otherwise have to check.
 				 */
 				if (!HEAP_LOCKED_UPGRADED(tuple->t_infomask) &&
-					MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple)))
+					MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple),
+										 true))
 					return HEAPTUPLE_LIVE;
 				SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
 			}
@@ -1441,7 +1442,7 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTuple htup, TransactionId Oldest
 
 			return HEAPTUPLE_DEAD;
 		}
-		else if (!MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple)))
+		else if (!MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple), false))
 		{
 			/*
 			 * Not in Progress, Not Committed, so either Aborted or crashed.

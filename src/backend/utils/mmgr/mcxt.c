@@ -1381,7 +1381,7 @@ MemoryContextAllocExtended(MemoryContext context, Size size, int flags)
 
 	context->isReset = false;
 
-	ret = (*context->methods->alloc) (context, size);
+	ret = (*context->methods.alloc) (context, size);
 	if (ret == NULL)
 	{
 		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
@@ -1418,10 +1418,11 @@ palloc(Size size)
 	ret = (*CurrentMemoryContext->methods.alloc) (CurrentMemoryContext, size);
 	if (ret == NULL)
 	{
-		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-						   context, CDB_MCXT_WHERE(context),
-						   "Out of memory.  Failed on request of size %zu bytes.",
-						   size);
+		MemoryContextStats(TopMemoryContext);
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed on request of size %zu.", size)));
 	}
 
 	VALGRIND_MEMPOOL_ALLOC(CurrentMemoryContext, ret, size);
@@ -1445,10 +1446,11 @@ palloc0(Size size)
 	ret = (*CurrentMemoryContext->methods.alloc) (CurrentMemoryContext, size);
 	if (ret == NULL)
 	{
-		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-						   context, CDB_MCXT_WHERE(context),
-						   "Out of memory.  Failed on request of size %zu bytes.",
-						   size);
+		MemoryContextStats(TopMemoryContext);
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed on request of size %zu.", size)));
 	}
 
 	VALGRIND_MEMPOOL_ALLOC(CurrentMemoryContext, ret, size);
@@ -1473,15 +1475,16 @@ palloc_extended(Size size, int flags)
 
 	CurrentMemoryContext->isReset = false;
 
-	ret = (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
+	ret = (*CurrentMemoryContext->methods.alloc) (CurrentMemoryContext, size);
 	if (ret == NULL)
 	{
 		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
 		{
-			MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-							   context, CDB_MCXT_WHERE(context),
-							   "Out of memory.  Failed on request of size %zu bytes.",
-							   size);
+			MemoryContextStats(TopMemoryContext);
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory"),
+					 errdetail("Failed on request of size %zu.", size)));
 		}
 		return NULL;
 	}

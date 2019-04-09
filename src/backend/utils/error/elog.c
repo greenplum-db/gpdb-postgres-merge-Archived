@@ -495,7 +495,6 @@ errstart(int elevel, const char *filename, int lineno,
 			 */
 			if (recursion_depth > 2 * ERRORDATA_STACK_SIZE)
 			{
-				ImmediateInterruptOK = false;
 				fflush(stdout);
 				fflush(stderr);
 				return false;

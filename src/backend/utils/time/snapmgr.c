@@ -17,7 +17,7 @@
  * module is entirely lower-level than ResourceOwners.
  *
  * Likewise, any snapshots that have been exported by pg_export_snapshot
- * have regd_count = 1 and are counted in RegisteredSnapshots, but are not
+ * have regd_count = 1 and are listed in RegisteredSnapshots, but are not
  * tracked by any resource owner.
  *
  * Likewise, the CatalogSnapshot is counted in RegisteredSnapshots when it
@@ -128,8 +128,7 @@ static ActiveSnapshotElt *ActiveSnapshot = NULL;
 
 /*
  * Currently registered Snapshots.  Ordered in a heap by xmin, so that we can
- * quickly find the one with lowest xmin, to advance our MyPgXat->xmin.
- * resowner.c also tracks these.
+ * quickly find the one with lowest xmin, to advance our MyPgXact->xmin.
  */
 static int xmin_cmp(const pairingheap_node *a, const pairingheap_node *b,
 		 void *arg);
@@ -373,10 +372,13 @@ GetNonHistoricCatalogSnapshot(Oid relid)
 		 * that would result in making a physical copy, which is overkill; and
 		 * it would also create a dependency on some resource owner, which we
 		 * do not want for reasons explained at the head of this file. Instead
-		 * just count it in RegisteredSnapshots. This has to be reversed in
-		 * InvalidateCatalogSnapshot, of course.
+		 * just shove the CatalogSnapshot into the pairing heap manually. This
+		 * has to be reversed in InvalidateCatalogSnapshot, of course.
+		 *
+		 * NB: it had better be impossible for this to throw error, since the
+		 * CatalogSnapshot pointer is already valid.
 		 */
-		RegisteredSnapshots++;
+		pairingheap_add(&RegisteredSnapshots, &CatalogSnapshot->ph_node);
 	}
 
 	return CatalogSnapshot;
@@ -397,8 +399,7 @@ InvalidateCatalogSnapshot(void)
 {
 	if (CatalogSnapshot)
 	{
-		Assert(RegisteredSnapshots > 0);
-		RegisteredSnapshots--;
+		pairingheap_remove(&RegisteredSnapshots, &CatalogSnapshot->ph_node);
 		CatalogSnapshot = NULL;
 		SnapshotResetXmin();
 	}
@@ -419,7 +420,7 @@ InvalidateCatalogSnapshotConditionally(void)
 {
 	if (CatalogSnapshot &&
 		ActiveSnapshot == NULL &&
-		RegisteredSnapshots == 1)
+		pairingheap_is_singular(&RegisteredSnapshots))
 		InvalidateCatalogSnapshot();
 }
 

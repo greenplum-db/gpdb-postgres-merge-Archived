@@ -645,5 +645,4 @@ pg_ddl_command_send(PG_FUNCTION_ARGS)
 			 errmsg("cannot output a value of type %s", "pg_ddl_command")));
 
 	PG_RETURN_VOID();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }

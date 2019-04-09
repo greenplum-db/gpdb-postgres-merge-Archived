@@ -7819,6 +7819,7 @@ bmcostestimate(PG_FUNCTION_ARGS)
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
+	List	   *qinfos;
 	GenericCosts costs;
 
 	List *selectivityQuals;
@@ -7873,12 +7874,16 @@ bmcostestimate(PG_FUNCTION_ARGS)
 		groupExprs = list_concat_unique(groupExprs, path->indexinfo->indexprs);
 
 	Assert(groupExprs != NULL);
-	numDistinctValues = estimate_num_groups(root, groupExprs, path->indexinfo->rel->rows);
+	numDistinctValues = estimate_num_groups(root, groupExprs, path->indexinfo->rel->rows,
+											&groupExprs);
 	if (numDistinctValues == 0)
 		numDistinctValues = 1;
 
 	numIndexTuples = *indexSelectivity * path->indexinfo->rel->tuples;
 	numIndexTuples = rint(numIndexTuples / numDistinctValues);
+
+	/* Do preliminary analysis of indexquals */
+	qinfos = deconstruct_indexquals(path);
 
 	/*
 	 * Now do generic index cost estimation.
@@ -7886,7 +7891,7 @@ bmcostestimate(PG_FUNCTION_ARGS)
 	MemSet(&costs, 0, sizeof(costs));
 	costs.numIndexTuples = numIndexTuples;
 
-	genericcostestimate(root, path, loop_count, &costs);
+	genericcostestimate(root, path, loop_count, qinfos, &costs);
 
 	*indexStartupCost = costs.indexStartupCost;
 	*indexTotalCost = costs.indexTotalCost;
@@ -7945,7 +7950,7 @@ brincostestimate(PG_FUNCTION_ARGS)
 	*indexSelectivity =
 		clauselist_selectivity(root, indexQuals,
 							   path->indexinfo->rel->relid,
-							   JOIN_INNER, NULL);
+							   JOIN_INNER, NULL, false);
 	*indexCorrelation = 1;
 
 	/*

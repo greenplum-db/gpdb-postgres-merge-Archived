@@ -178,36 +178,6 @@ lex_expect(JsonParseContext ctx, JsonLexContext *lex, JsonTokenType token)
 	 (c) == '_' || \
 	 IS_HIGHBIT_SET(c))
 
-/* utility function to check if a string is a valid JSON number */
-extern bool
-IsValidJsonNumber(const char *str, int len)
-{
-	bool		numeric_error;
-	JsonLexContext dummy_lex;
-
-
-	/*
-	 * json_lex_number expects a leading  '-' to have been eaten already.
-	 *
-	 * having to cast away the constness of str is ugly, but there's not much
-	 * easy alternative.
-	 */
-	if (*str == '-')
-	{
-		dummy_lex.input = (char *) str + 1;
-		dummy_lex.input_length = len - 1;
-	}
-	else
-	{
-		dummy_lex.input = (char *) str;
-		dummy_lex.input_length = len;
-	}
-
-	json_lex_number(&dummy_lex, dummy_lex.input, &numeric_error);
-
-	return !numeric_error;
-}
-
 /*
  * Utility function to check if a string is a valid JSON number.
  *

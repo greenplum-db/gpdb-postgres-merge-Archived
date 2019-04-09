@@ -797,7 +797,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 			values[22] = Int32GetDatum(beentry->st_session_id);  /* GPDB */
 
-			if (funcctx->tuple_desc->natts > 23)
+			if (tupdesc->natts > 23)
 			{
 				char	st_waiting = beentry->st_waiting;
 				char   *reason;
@@ -810,7 +810,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					nulls[23] = true;
 			}
 
-			if (funcctx->tuple_desc->natts > 24)
+			if (tupdesc->natts > 24)
 			{
 				Datum now = TimestampTzGetDatum(GetCurrentTimestamp());
 				char *groupName = GetResGroupNameForId(beentry->st_rsgid);
@@ -846,9 +846,9 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[15] = true;
 
 			values[22] = Int32GetDatum(beentry->st_session_id);
-			if (funcctx->tuple_desc->natts > 23)
+			if (tupdesc->natts > 23)
 				nulls[23] = true;
-			if (funcctx->tuple_desc->natts > 24)
+			if (tupdesc->natts > 24)
 			{
 				nulls[24] = true;
 				nulls[25] = true;
