@@ -1514,7 +1514,7 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 		/*
 		 * Under certain conditions, we cannot pull up the subquery as a join.
 		 */
-		if (!is_simple_subquery(root, subselect, NULL, NULL))
+		if (!is_simple_subquery(root, subselect, NULL, NULL, false/*GPDB_95_MERGE_FIXME: is false ok?*/))
 			return NULL;
 
 		/*
