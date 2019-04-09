@@ -191,12 +191,13 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	 * Pass the policy that was computed by the planner.
 	 */
 	intoRelationAddr = DefineRelation(create,
-									relkind,
-									InvalidOid,
-									relstorage,
-									dispatch,
-									queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true,
-									queryDesc->plannedstmt->intoPolicy);
+									  relkind,
+									  InvalidOid,
+									  NULL,
+									  relstorage,
+									  dispatch,
+									  queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true,
+									  queryDesc->plannedstmt->intoPolicy);
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that
@@ -215,9 +216,9 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options, true);
 
 	NewRelationCreateToastTable(intoRelationAddr.objectId, toast_options, false, false);
-	AlterTableCreateAoSegTable(intoRelationId, false, false);
+	AlterTableCreateAoSegTable(intoRelationAddr.objectId, false, false);
 	/* don't create AO block directory here, it'll be created when needed. */
-	AlterTableCreateAoVisimapTable(intoRelationId, false, false);
+	AlterTableCreateAoVisimapTable(intoRelationAddr.objectId, false, false);
 
 	/* Create the "view" part of a materialized view. */
 	if (is_matview)

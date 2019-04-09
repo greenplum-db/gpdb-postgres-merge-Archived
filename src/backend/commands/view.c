@@ -270,7 +270,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		CommandCounterIncrement();
 
 		/* Store the query for the view */
-		StoreViewQuery(relid, viewParse, replace);
+		StoreViewQuery(address.objectId, viewParse, replace);
 
 		return address;
 	}
@@ -529,7 +529,6 @@ DefineView(ViewStmt *stmt, const char *queryString)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("WITH CHECK OPTION is supported only on automatically updatable views"),
 					 errhint("%s", _(view_updatable_error))));
-					 errhint("%s", view_updatable_error)));
 	}
 
 	/*

@@ -1720,7 +1720,7 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 		char	   *cmd;
 
 		cmd = psprintf("ALTER DATABASE %s CONNECTION LIMIT %d",
-					   quote_identifier(stmt->dbname), connlimit);
+					   quote_identifier(stmt->dbname), dbconnlimit);
 
 		CdbDispatchCommand(cmd,
 						   DF_NEED_TWO_PHASE|

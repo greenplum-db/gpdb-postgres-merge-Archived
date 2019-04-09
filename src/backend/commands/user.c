@@ -322,6 +322,7 @@ CreateRole(CreateRoleStmt *stmt)
 			ExtractAuthIntervalClause(defel, interval);
 
 			addintervals = lappend(addintervals, interval);
+		}
 		else if (strcmp(defel->defname, "bypassrls") == 0)
 		{
 			if (dbypassRLS)
@@ -1299,7 +1300,7 @@ AlterRole(AlterRoleStmt *stmt)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot alter superuser with DENY rules")));
 		else
-			DelRoleDenials(stmt->role, roleid, NIL);	/* drop all preexisting constraints, if any. */
+			DelRoleDenials(rolename, roleid, NIL);	/* drop all preexisting constraints, if any. */
 	}
 
 	/*
@@ -1324,14 +1325,14 @@ AlterRole(AlterRoleStmt *stmt)
 	 * particular role should be denied access.
 	 */
 	if (addintervals)
-		AddRoleDenials(stmt->role, roleid, addintervals);
+		AddRoleDenials(rolename, roleid, addintervals);
 
 	/*
 	 * Remove pg_auth_time_constraint entries that overlap with the
 	 * intervals given by the user.
 	 */
 	if (dropintervals)
-		DelRoleDenials(stmt->role, roleid, dropintervals);
+		DelRoleDenials(rolename, roleid, dropintervals);
 
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
