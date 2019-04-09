@@ -66,7 +66,6 @@ typedef struct
 
 
 static bool match_exclude_list(char *path, List *exclude);
-static int64 sendTablespace(char *path, bool sizeonly);
 
 static int64 sendDir(char *path, int basepathlen, bool sizeonly,
 		List *tablespaces, bool sendtblspclinks, List *exclude);
@@ -700,6 +699,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 		{
 			/* EXCLUDE option can be specified multiple times */
 			opt->exclude = lappend(opt->exclude, defel->arg);
+		}
 		else if (strcmp(defel->defname, "tablespace_map") == 0)
 		{
 			if (o_tablespace_map)
