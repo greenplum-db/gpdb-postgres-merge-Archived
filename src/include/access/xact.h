@@ -219,7 +219,7 @@ typedef struct xl_xact_subxacts
 typedef struct xl_xact_relfilenodes
 {
 	int			nrels;			/* number of subtransaction XIDs */
-	RelFileNode xnodes[FLEXIBLE_ARRAY_MEMBER];
+	RelFileNodeWithStorageType xnodes[FLEXIBLE_ARRAY_MEMBER];
 } xl_xact_relfilenodes;
 #define MinSizeOfXactRelfilenodes offsetof(xl_xact_relfilenodes, xnodes)
 
@@ -286,7 +286,7 @@ typedef struct xl_xact_parsed_commit
 	TransactionId *subxacts;
 
 	int			nrels;
-	RelFileNode *xnodes;
+	RelFileNodeWithStorageType *xnodes;
 
 	int			nmsgs;
 	SharedInvalidationMessage *msgs;
@@ -309,7 +309,7 @@ typedef struct xl_xact_parsed_abort
 	TransactionId *subxacts;
 
 	int			nrels;
-	RelFileNode *xnodes;
+	RelFileNodeWithStorageType *xnodes;
 
 	TransactionId twophase_xid; /* only for 2PC */
 } xl_xact_parsed_abort;

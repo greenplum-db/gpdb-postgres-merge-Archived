@@ -250,7 +250,7 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 }
 
 static void
-xact_desc_distributed_commit(StringInfo buf, xl_xact_commit *xlrec)
+xact_desc_distributed_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId origin_id)
 {
 	TMGXACT_LOG *gxact_log;
 
@@ -258,7 +258,7 @@ xact_desc_distributed_commit(StringInfo buf, xl_xact_commit *xlrec)
 	 * We put the global transaction information last, so call the regular xact
 	 * commit routine.
 	 */
-	gxact_log = (TMGXACT_LOG *) xact_desc_commit(buf, xlrec);
+	gxact_log = (TMGXACT_LOG *) xact_desc_commit(buf, info, xlrec, origin_id);
 
 	appendStringInfo(buf, " gid = %s, gxid = %u",
 					 gxact_log->gid, gxact_log->gxid);
@@ -351,7 +351,8 @@ xact_desc(StringInfo buf, XLogReaderState *record)
 		xl_xact_commit *xlrec = (xl_xact_commit *) rec;
 
 		appendStringInfo(buf, "distributed commit ");
-		xact_desc_distributed_commit(buf, xlrec);
+		xact_desc_distributed_commit(buf, XLogRecGetInfo(record), xlrec,
+						 XLogRecGetOrigin(record));
 	}
 	else if (info == XLOG_XACT_DISTRIBUTED_FORGET)
 	{
@@ -390,5 +391,4 @@ xact_identify(uint8 info)
 	}
 
 	return id;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 }

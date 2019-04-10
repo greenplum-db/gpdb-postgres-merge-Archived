@@ -1023,9 +1023,9 @@ DistributedLog_WriteTruncateXlogRec(int page)
  * DistributedLog resource manager's routines
  */
 void
-DistributedLog_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
+DistributedLog_redo(XLogReaderState *record)
 {
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 	Assert(!IS_QUERY_DISPATCHER());
 
 	if (info == DISTRIBUTEDLOG_ZEROPAGE)

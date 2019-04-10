@@ -40,7 +40,7 @@ const struct config_enum_entry wal_level_options[] = {
  * can also be used in xlog_desc.
  */
 void
-UnpackCheckPointRecord(XLogReaderState record, CheckpointExtendedRecord *ckptExtended)
+UnpackCheckPointRecord(XLogReaderState *record, CheckpointExtendedRecord *ckptExtended)
 {
 	char *current_record_ptr;
 	int remainderLen;
@@ -85,6 +85,7 @@ UnpackCheckPointRecord(XLogReaderState record, CheckpointExtendedRecord *ckptExt
 	}
 }
 
+void
 xlog_desc(StringInfo buf, XLogReaderState *record)
 {
 	char	   *rec = XLogRecGetData(record);
@@ -126,7 +127,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 		{
 			appendStringInfo(buf,
 				 ", checkpoint record data length = %u, DTX committed count %d, DTX data length %u",
-							 record->xl_len,
+							 XLogRecGetDataLen(record),
 							 ckptExtended.dtxCheckpoint->committedCount,
 							 ckptExtended.dtxCheckpointLen);
 			if (ckptExtended.ptas != NULL)

@@ -20,7 +20,7 @@
  * GPDB: Print additional information about an INSERT record.
  */
 static void
-out_insert(StringInfo buf, uint8 info, XLogRecord *record)
+out_insert(StringInfo buf, uint8 info, XLogReaderState *record)
 {
 	char			*rec = XLogRecGetData(record);
 	xl_btree_insert *xlrec = (xl_btree_insert *) rec;

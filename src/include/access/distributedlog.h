@@ -80,7 +80,7 @@ extern bool DistributedLog_GetLowWaterXid(
 #define DISTRIBUTEDLOG_ZEROPAGE		0x00
 #define DISTRIBUTEDLOG_TRUNCATE		0x10
 
-extern void DistributedLog_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
-extern void DistributedLog_desc(StringInfo buf, XLogRecord *record);
+extern void DistributedLog_redo(XLogReaderState *record);
+extern void DistributedLog_desc(StringInfo buf, XLogReaderState *record);
 
 #endif							/* DISTRIBUTEDLOG_H */

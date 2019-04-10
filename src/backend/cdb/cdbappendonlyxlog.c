@@ -197,10 +197,9 @@ ao_truncate_replay(XLogRecord *record)
 }
 
 void
-appendonly_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
+appendonly_redo(XLogReaderState *record)
 {
-	uint8         xl_info = record->xl_info;
-	uint8         info = xl_info & ~XLR_INFO_MASK;
+	uint8         info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	/*
 	 * Perform redo of AO XLOG records only for standby mode. We do
