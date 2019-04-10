@@ -69,6 +69,11 @@
 
 #include "utils/hyperloglog/gp_hyperloglog.h"
 
+typedef struct PGLZ_Header
+{
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
+	int32		rawsize;
+} PGLZ_Header;
 
 /* ------------- function declarations for local functions --------------- */
 static double gp_hll_estimate_dense(GpHLLCounter hloglog);
@@ -169,7 +174,7 @@ gp_hll_decompress_dense_unpacked(GpHLLCounter hloglog)
 	memcpy(htemp, hloglog, sizeof(GpHLLData));
 
 	/* decompress the data */
-	pglz_decompress((PGLZ_Header *)hloglog->data,(char *) &htemp->data);
+	pglz_decompress((char *)hloglog->data, VARSIZE(hloglog->data), (char *)&htemp->data, ((PGLZ_Header *)hloglog)->rawsize);
 
 	hloglog = htemp;
 
@@ -587,7 +592,7 @@ gp_hll_compress_dense(GpHLLCounter hloglog)
 
     /* lz_compress the normalized array and copy that data into hloglog->data
      * if any compression was achieved */
-    pglz_compress(data,m,dest,PGLZ_strategy_always);
+    pglz_compress(data,m,(char *)dest,PGLZ_strategy_always);
     if (VARSIZE_ANY(dest) >= (m * hloglog->binbits /8) ){
 	/* free allocated memory and return unaltered array */
     	if (dest){
@@ -646,7 +651,7 @@ gp_hll_compress_dense_unpacked(GpHLLCounter hloglog)
 
 	/* lz_compress the normalized array and copy that data into hloglog->data
 	* if any compression was achieved */
-	pglz_compress(hloglog->data, m, dest, PGLZ_strategy_always);
+	pglz_compress(hloglog->data, m, (char *)dest, PGLZ_strategy_always);
 	if (VARSIZE_ANY(dest) >= (m * hloglog->binbits / 8)){
 		/* free allocated memory and return unaltered array */
 		if (dest){
@@ -713,7 +718,7 @@ gp_hll_decompress_dense(GpHLLCounter hloglog)
     memset(dest,0,m);
 
     /* decompress the data */
-    pglz_decompress((PGLZ_Header *)hloglog->data,dest);
+    pglz_decompress(hloglog->data, VARSIZE(hloglog->data) - sizeof(PGLZ_Header),dest, ((PGLZ_Header *)hloglog)->rawsize);
 
     /* copy the struct internals but not the data into a counter with enough 
      * space for the uncompressed data  */
