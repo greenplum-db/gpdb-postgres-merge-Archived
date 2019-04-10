@@ -1263,7 +1263,6 @@ CreateExtension(CreateExtensionStmt *stmt)
 		{
 			case CREATE_EXTENSION_INIT:
 				elog(ERROR, "invalid CREATE EXTENSION state");
-				return InvalidOid;
 
 			case CREATE_EXTENSION_BEGIN:	/* Mark creating_extension flag and add pg_extension catalog tuple */
 				creating_extension = true;
@@ -1271,7 +1270,10 @@ CreateExtension(CreateExtensionStmt *stmt)
 			case CREATE_EXTENSION_END:		/* Mark creating_extension flag = false */
 				creating_extension = false;
 				CurrentExtensionObject = InvalidOid;
-				return get_extension_oid(stmt->extname, true);
+				ObjectAddressSet(address,
+								 ExtensionRelationId,
+								 get_extension_oid(stmt->extname, true));
+				return address;
 
 			default:
 				elog(ERROR, "unrecognized create_ext_state: %d",
@@ -3095,52 +3097,6 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt,
 		relation_close(relation, NoLock);
 
 	return extension;
-}
-
-/*
- * Read the whole of file into memory.
- *
- * The file contents are returned as a single palloc'd chunk. For convenience
- * of the callers, an extra \0 byte is added to the end.
- */
-static char *
-read_whole_file(const char *filename, int *length)
-{
-	char	   *buf;
-	FILE	   *file;
-	size_t		bytes_to_read;
-	struct stat fst;
-
-	if (stat(filename, &fst) < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not stat file \"%s\": %m", filename)));
-
-	if (fst.st_size > (MaxAllocSize - 1))
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("file too large")));
-	bytes_to_read = (size_t) fst.st_size;
-
-	if ((file = AllocateFile(filename, PG_BINARY_R)) == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open file \"%s\" for reading: %m",
-						filename)));
-
-	buf = (char *) palloc(bytes_to_read + 1);
-
-	*length = fread(buf, 1, bytes_to_read, file);
-
-	if (ferror(file))
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\": %m", filename)));
-
-	FreeFile(file);
-
-	buf[*length] = '\0';
-	return buf;
 }
 
 /*

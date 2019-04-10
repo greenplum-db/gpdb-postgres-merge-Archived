@@ -76,7 +76,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 		Assert(Gp_role == GP_ROLE_EXECUTE);
 
 		Assert(stmt->schemaname == NULL);
-		Assert(stmt->authid == NULL);
+		Assert(stmt->authrole == NULL);
 		Assert(stmt->schemaElts == NIL);
 
 		InitTempTableNamespace();

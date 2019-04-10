@@ -301,7 +301,7 @@ DefineOperator(List *names, List *parameters)
 	/*
 	 * now have OperatorCreate do all the work..
 	 */
-	Oid oprOid =
+	ObjectAddress objAddr =
 		OperatorCreate(oprName, /* operator name */
 					   oprNamespace,	/* namespace */
 					   typeId1, /* left type id */
@@ -329,7 +329,7 @@ DefineOperator(List *names, List *parameters)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-	return oprOid;
+	return objAddr;
 }
 
 /*

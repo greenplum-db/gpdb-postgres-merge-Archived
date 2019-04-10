@@ -1078,7 +1078,7 @@ DefineIndex(Oid relationId,
 		 * Indexes on partitioned tables are not themselves built, so we're
 		 * done here.
 		 */
-		return indexRelationId;
+		return address;
 	}
 
 	if (!stmt->concurrent)
@@ -2289,7 +2289,7 @@ ReindexRelationList(List *relids, int options)
 			stmt = makeNode(ReindexStmt);
 
 			stmt->relid = relid;
-			stmt->kind = OBJECT_TABLE;
+			stmt->kind = REINDEX_OBJECT_TABLE;
 
 			/* perform reindex locally */
 			if (!reindex_relation(relid,
@@ -2398,7 +2398,8 @@ ReindexTable(ReindexStmt *stmt)
 	{
 		reindex_relation(stmt->relid,
 						 REINDEX_REL_PROCESS_TOAST |
-						 REINDEX_REL_CHECK_CONSTRAINTS);
+						 REINDEX_REL_CHECK_CONSTRAINTS,
+						 options);
 		return stmt->relid;
 	}
 
@@ -2492,7 +2493,6 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	MemoryContext private_context;
 	MemoryContext old;
 	List	   *relids = NIL;
-	ListCell   *l;
 	int			num_keys;
 
 	Assert(Gp_role != GP_ROLE_EXECUTE);

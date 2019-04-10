@@ -207,7 +207,7 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 					   opt->defname, p)));
 		}
 		else if (strcmp(opt->defname, "dxl") == 0)
-			es.dxl = defGetBoolean(opt);
+			es->dxl = defGetBoolean(opt);
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),

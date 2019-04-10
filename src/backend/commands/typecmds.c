@@ -1210,6 +1210,7 @@ DefineEnum(CreateEnumStmt *stmt)
 	Oid			old_type_oid;
 	Oid			enumArrayOid;
 	ObjectAddress enumTypeAddr;
+	Oid			enumTypeOid; /* GPDB: preassigned OID */
 
 	/* Convert list of names to a name and namespace */
 	enumNamespace = QualifiedNameGetCreationNamespace(stmt->typeName,

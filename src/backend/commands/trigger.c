@@ -4101,13 +4101,13 @@ AfterTriggerEndQuery(EState *estate)
 	 * If we find no firable events, we don't have to increment
 	 * firing_counter.
 	 */
-	events = &afterTriggers->query_stack[afterTriggers->query_depth];
+	events = &afterTriggers.query_stack[afterTriggers.query_depth];
 
 	for (;;)
 	{
-		if (afterTriggerMarkEvents(events, &afterTriggers->events, true))
+		if (afterTriggerMarkEvents(events, &afterTriggers.events, true))
 		{
-			CommandId	firing_id = afterTriggers->firing_counter++;
+			CommandId	firing_id = afterTriggers.firing_counter++;
 			AfterTriggerEventChunk *oldtail = events->tail;
 
 			if (afterTriggerInvokeEvents(events, firing_id, estate, false))
@@ -4120,7 +4120,7 @@ AfterTriggerEndQuery(EState *estate)
 			 * because that could cause afterTriggerInvokeEvents to try to
 			 * access *events after the stack has been repalloc'd.
 			 */
-			events = &afterTriggers->query_stack[afterTriggers->query_depth];
+			events = &afterTriggers.query_stack[afterTriggers.query_depth];
 
 			/*
 			 * We'll need to scan the events list again.  To reduce the cost

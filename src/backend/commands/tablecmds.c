@@ -198,6 +198,7 @@ typedef struct AlteredTableInfo
 	bool		dist_opfamily_changed; /* T if changing datatype of distribution key column and new opclass is in different opfamily than old one */
 	Oid			new_opclass;		/* new opclass, if changing a distribution key column */
 	Oid			newTableSpace;	/* new tablespace; 0 means no change */
+	Oid			exchange_relid;	/* for EXCHANGE, the exchanged in rel */
 	bool		chgPersistence; /* T if SET LOGGED/UNLOGGED is used */
 	char		newrelpersistence;		/* if above is true */
 	/* Objects to rebuild after completing ALTER TYPE operations */
@@ -769,7 +770,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 */
 	localHasOids = interpretOidsOption(stmt->options,
 									   (relkind == RELKIND_RELATION));
-	descriptor->tdhasoid = (localHasOids || parentOidCount > 0);
+	descriptor->tdhasoid = (localHasOids || stmt->parentOidCount > 0);
 
 	/*
 	 * now that we have the final list of attributes, interpret DISTRIBUTED BY
@@ -1473,7 +1474,8 @@ relid_set_new_relfilenode(Oid relid, TransactionId recentXmin)
 
 		minmulti = GetOldestMultiXactId();
 
-		RelationSetNewRelfilenode(rel, recentXmin, minmulti);
+		RelationSetNewRelfilenode(rel, rel->rd_rel->relpersistence,
+								  recentXmin, minmulti);
 		heap_close(rel, NoLock);
 	}
 }
@@ -5546,7 +5548,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation *rel_p,
 			break;
 		case AT_ColumnDefault:	/* ALTER COLUMN DEFAULT */
 		case AT_ColumnDefaultRecurse:
-			address = ATExecColumnDefault(rel, cmd->name, (ColumnDef *) cmd->def, lockmode);
+			address = ATExecColumnDefault(rel, cmd->name, cmd->def, lockmode);
 			break;
 		case AT_DropNotNull:	/* ALTER COLUMN DROP NOT NULL */
 			address = ATExecDropNotNull(rel, cmd->name, lockmode);
@@ -5950,6 +5952,7 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 			/* Build a temporary relation and copy data */
 			Oid			OIDNewHeap;
 			Oid			NewTableSpace;
+			char		persistence;
 
 			/*
 			 * Select destination tablespace (same as original unless user
@@ -8413,7 +8416,7 @@ ATPrepColumnDefault(Relation rel, bool recurse, AlterTableCmd *cmd)
  */
 static ObjectAddress
 ATExecColumnDefault(Relation rel, const char *colName,
-					ColumnDef *colDef, LOCKMODE lockmode)
+					Node *newDefault, LOCKMODE lockmode)
 {
 	AttrNumber	attnum;
 	ObjectAddress address;
@@ -8445,17 +8448,16 @@ ATExecColumnDefault(Relation rel, const char *colName,
 	 * operation when the user asked for a drop.
 	 */
 	RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, false,
-					  colDef->raw_default == NULL ? false : true);
+					  newDefault == NULL ? false : true);
 
-	Assert(!colDef->cooked_default);
-	if (colDef->raw_default)
+	if (newDefault)
 	{
 		/* SET DEFAULT */
 		RawColumnDefault *rawEnt;
 
 		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
 		rawEnt->attnum = attnum;
-		rawEnt->raw_default = colDef->raw_default;
+		rawEnt->raw_default = newDefault;
 
 		/*
 		 * This function is intended for CREATE TABLE, so it processes a
@@ -9064,7 +9066,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 
 	/* The index should already be built if we are a QE */
 	if (Gp_role == GP_ROLE_EXECUTE)
-		return;
+		return InvalidObjectAddress;
 
 	/* suppress schema rights check when rebuilding existing index */
 	check_rights = !is_rebuild;
@@ -10686,7 +10688,7 @@ CreateFKCheckTrigger(Oid myRelOid, Oid refRelOid, Constraint *fkconstraint,
 					 Oid constraintOid, Oid indexOid, bool on_insert)
 {
 	CreateTrigStmt *fk_trigger;
-	Oid trigobj;
+	ObjectAddress objAddr;
 
 	/*
 	 * Note: for a self-referential FK (referencing and referenced tables are
@@ -10725,13 +10727,13 @@ CreateFKCheckTrigger(Oid myRelOid, Oid refRelOid, Constraint *fkconstraint,
 	fk_trigger->constrrel = NULL;
 	fk_trigger->args = NIL;
 
-	trigobj = CreateTrigger(fk_trigger, NULL, myRelOid, refRelOid, constraintOid,
+	objAddr = CreateTrigger(fk_trigger, NULL, myRelOid, refRelOid, constraintOid,
 							indexOid, true);
 
 	if (on_insert)
-		fkconstraint->trig1Oid = trigobj;
+		fkconstraint->trig1Oid = objAddr.objectId;
 	else
-		fkconstraint->trig2Oid = trigobj;
+		fkconstraint->trig2Oid = objAddr.objectId;
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -10749,6 +10751,7 @@ createForeignKeyTriggers(Relation rel, Oid refRelOid, Constraint *fkconstraint,
 {
 	Oid			myRelOid;
 	CreateTrigStmt *fk_trigger;
+	ObjectAddress objAddr;
 
 	/*
 	 * Special for Greenplum Database: Ignore foreign keys for now, with warning
@@ -10814,8 +10817,9 @@ createForeignKeyTriggers(Relation rel, Oid refRelOid, Constraint *fkconstraint,
 	fk_trigger->args = NIL;
 	fk_trigger->trigOid = fkconstraint->trig3Oid;
 
-	fkconstraint->trig3Oid = CreateTrigger(fk_trigger, NULL, refRelOid, myRelOid, constraintOid,
-										   indexOid, true);
+	objAddr = CreateTrigger(fk_trigger, NULL, refRelOid, myRelOid, constraintOid,
+							indexOid, true);
+	fkconstraint->trig3Oid = objAddr.objectId;
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -10870,8 +10874,9 @@ createForeignKeyTriggers(Relation rel, Oid refRelOid, Constraint *fkconstraint,
 
 	fk_trigger->trigOid = fkconstraint->trig4Oid;
 
-	fkconstraint->trig4Oid = CreateTrigger(fk_trigger, NULL, refRelOid, myRelOid, constraintOid,
-										   indexOid, true);
+	objAddr = CreateTrigger(fk_trigger, NULL, refRelOid, myRelOid, constraintOid,
+							indexOid, true);
+	fkconstraint->trig4Oid = objAddr.objectId;
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -12785,7 +12790,6 @@ ATExecClusterOn(Relation rel, const char *indexName, LOCKMODE lockmode)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot cluster append-only table \"%s\": not supported",
 						RelationGetRelationName(rel))));
-		return;
 	}
 
 	indexOid = get_relname_relid(indexName, rel->rd_rel->relnamespace);
@@ -14342,6 +14346,7 @@ static ObjectAddress
 ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 {
 	Relation	parent_rel;
+	ObjectAddress address;
 
 	/*
 	 * AccessShareLock on the parent is probably enough, seeing that DROP
@@ -15361,7 +15366,7 @@ ATExecExpandTableCTAS(AlterTableCmd *rootCmd, Relation rel, AlterTableCmd *cmd)
 	CommandCounterIncrement();
 
 	/* now, reindex */
-	reindex_relation(relid, 0);
+	reindex_relation(relid, 0, 0);
 
 	/* Step (h) Drop the table */
 	{
@@ -16015,7 +16020,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	}
 
 	/* now, reindex */
-	reindex_relation(tarrelid, 0);
+	reindex_relation(tarrelid, 0, 0);
 
 	/* Step (g) */
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -17626,7 +17631,7 @@ make_split_resultrel(Relation rel)
 	rri->ri_RelationDesc = rel;
 	rri->ri_NumIndices = 0;
 
-	ExecOpenIndices(rri);
+	ExecOpenIndices(rri, false);
 	return rri;
 }
 
@@ -17872,7 +17877,8 @@ split_rows(Relation intoa, Relation intob, Relation temprel)
 		if (targetRelInfo->ri_NumIndices > 0)
 		{
 			estate->es_result_relation_info = targetRelInfo;
-			ExecInsertIndexTuples(targetSlot, tid, estate);
+			ExecInsertIndexTuples(targetSlot, tid, estate,
+								  false, NULL, NIL);
 			estate->es_result_relation_info = NULL;
 		}
 
