@@ -118,8 +118,11 @@ PerfmonMain(int argc, char *argv[])
 		proc_exit(0);
 	}
 
-	snprintf(gpmmon_cfg_file, MAXPGPATH, "%s/gpperfmon/conf/gpperfmon.conf",
-				data_directory);
+	/*
+	 * gpperfmon.conf is always in the data directory, so we can reference it
+	 * by simple relative paths.
+	 */
+	snprintf(gpmmon_cfg_file, MAXPGPATH, "./gpperfmon/conf/gpperfmon.conf");
 
 	snprintf(port, 6, "%d", PostPortNumber);
 
