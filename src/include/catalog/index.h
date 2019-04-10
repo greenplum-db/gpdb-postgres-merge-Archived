@@ -125,7 +125,10 @@ extern double IndexBuildHeapRangeScan(Relation heapRelation,
 						BlockNumber start_blockno,
 						BlockNumber end_blockno,
 						IndexBuildCallback callback,
-						void *callback_state);
+						void *callback_state,
+						EState *estate,
+						Snapshot snapshot,
+						TransactionId OldestXmin);
 
 extern void validate_index(Oid heapId, Oid indexId, Snapshot snapshot);
 

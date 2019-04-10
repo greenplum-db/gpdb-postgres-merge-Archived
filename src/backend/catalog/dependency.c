@@ -174,7 +174,7 @@ static const Oid object_classes[MAX_OCLASS] = {
 	ExtensionRelationId,		/* OCLASS_EXTENSION */
 	EventTriggerRelationId,		/* OCLASS_EVENT_TRIGGER */
 	ExtprotocolRelationId,		/* OCLASS_EXTPROTOCOL */
-	CompressionRelationId		/* OCLASS_COMPRESSION */
+	CompressionRelationId,		/* OCLASS_COMPRESSION */
 	PolicyRelationId			/* OCLASS_POLICY */
 };
 

@@ -2622,13 +2622,18 @@ IndexBuildHeapScan(Relation heapRelation,
 	return IndexBuildHeapRangeScan(heapRelation, indexRelation,
 								   indexInfo, allow_sync,
 								   0, InvalidBlockNumber,
-								   callback, callback_state);
+								   callback, callback_state,
+								   estate, snapshot, OldestXmin);
 }
 
 /*
  * As above, except that instead of scanning the complete heap, only the given
  * number of blocks are scanned.  Scan to end-of-rel can be signalled by
  * passing InvalidBlockNumber as numblocks.
+ *
+ * GPDB: In contrast to postgres which constructs its own estate, snapshot, and
+ * OldestXmin here in function IndexBuildHeapRangeScan, in GPDB we pass them
+ * from the generic function IndexBuildScan.
  */
 double
 IndexBuildHeapRangeScan(Relation heapRelation,
@@ -2638,7 +2643,10 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 						BlockNumber start_blockno,
 						BlockNumber numblocks,
 						IndexBuildCallback callback,
-						void *callback_state)
+						void *callback_state,
+						EState *estate,
+						Snapshot snapshot,
+						TransactionId OldestXmin)
 {
 	bool		is_system_catalog;
 	bool		checking_uniqueness;

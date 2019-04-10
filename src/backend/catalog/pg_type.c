@@ -246,8 +246,7 @@ TypeCreate(Oid newTypeOid,
 		   int32 typeMod,
 		   int32 typNDims,		/* Array dimensions for baseType */
 		   bool typeNotNull,
-		   Oid typeCollation,
-		   Datum typoptions)
+		   Oid typeCollation)
 {
 	Relation	pg_type_desc;
 	Oid			typeObjectId;
