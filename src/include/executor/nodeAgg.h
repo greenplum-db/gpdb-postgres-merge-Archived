@@ -18,6 +18,7 @@
 #include "executor/tuptable.h"
 #include "nodes/execnodes.h"
 #include "nodes/primnodes.h"
+#include "utils/tuplesort.h"
 
 extern AggState *ExecInitAgg(Agg *node, EState *estate, int eflags);
 extern struct TupleTableSlot *ExecAgg(AggState *node);
@@ -160,9 +161,11 @@ typedef struct AggStatePerAggData
 	 * then at completion of the input tuple group, we scan the sorted values,
 	 * eliminate duplicates if needed, and run the transition function on the
 	 * rest.
+	 *
+ 	 * We need a separate tuplesort for each grouping set.
 	 */
 
-	void *sortstate;	/* sort object, if DISTINCT or ORDER BY */
+	Tuplesortstate **sortstates;	/* sort objects, if DISTINCT or ORDER BY */
 
 	/*
 	 * This field is a pre-initialized FunctionCallInfo struct used for
@@ -208,7 +211,8 @@ typedef struct AggStatePerGroupData
 extern void 
 initialize_aggregates(AggState *aggstate,
 					  AggStatePerAgg peragg,
-					  AggStatePerGroup pergroup);
+					  AggStatePerGroup pergroup,
+					  int numReset);
 extern void 
 advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup);
 

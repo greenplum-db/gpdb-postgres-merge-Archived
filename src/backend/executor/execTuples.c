@@ -972,9 +972,8 @@ ExecMakeSlotContentsReadOnly(TupleTableSlot *slot)
 	/*
 	 * sanity checks
 	 */
-	Assert(slot != NULL);
+	Assert(!TupIsNull(slot));
 	Assert(slot->tts_tupleDescriptor != NULL);
-	Assert(!slot->tts_isempty);
 
 	/*
 	 * If the slot contains a physical tuple, it can't contain any expanded
@@ -982,16 +981,16 @@ ExecMakeSlotContentsReadOnly(TupleTableSlot *slot)
 	 * might change later; but for now, we need do nothing unless the slot is
 	 * virtual.
 	 */
-	if (slot->tts_tuple == NULL)
+	if (slot->PRIVATE_tts_heaptuple == NULL && slot->PRIVATE_tts_memtuple == NULL)
 	{
 		Form_pg_attribute *att = slot->tts_tupleDescriptor->attrs;
 		int			attnum;
 
-		for (attnum = 0; attnum < slot->tts_nvalid; attnum++)
+		for (attnum = 0; attnum < slot->PRIVATE_tts_nvalid; attnum++)
 		{
-			slot->tts_values[attnum] =
-				MakeExpandedObjectReadOnly(slot->tts_values[attnum],
-										   slot->tts_isnull[attnum],
+			slot->PRIVATE_tts_values[attnum] =
+				MakeExpandedObjectReadOnly(slot->PRIVATE_tts_values[attnum],
+										   slot->PRIVATE_tts_isnull[attnum],
 										   att[attnum]->attlen);
 		}
 	}

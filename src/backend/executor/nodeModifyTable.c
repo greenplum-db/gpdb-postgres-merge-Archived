@@ -181,14 +181,15 @@ ExecProcessReturning(ProjectionInfo *projectReturning,
  * Check for the need to raise a serialization failure, and do so as necessary.
  */
 static void
-ExecCheckHeapTupleVisible(EState *estate,
+ExecCheckHeapTupleVisible(Relation rel,
+						  EState *estate,
 						  HeapTuple tuple,
 						  Buffer buffer)
 {
 	if (!IsolationUsesXactSnapshot())
 		return;
 
-	if (!HeapTupleSatisfiesVisibility(tuple, estate->es_snapshot, buffer))
+	if (!HeapTupleSatisfiesVisibility(rel, tuple, estate->es_snapshot, buffer))
 		ereport(ERROR,
 				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 			 errmsg("could not serialize access due to concurrent update")));
@@ -213,7 +214,7 @@ ExecCheckTIDVisible(EState *estate,
 	tuple.t_self = *tid;
 	if (!heap_fetch(rel, SnapshotAny, &tuple, &buffer, false, NULL))
 		elog(ERROR, "failed to fetch conflicting tuple for ON CONFLICT");
-	ExecCheckHeapTupleVisible(estate, &tuple, buffer);
+	ExecCheckHeapTupleVisible(rel, estate, &tuple, buffer);
 	ReleaseBuffer(buffer);
 }
 
@@ -1879,7 +1880,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 	 * snapshot.  This is in line with the way UPDATE deals with newer tuple
 	 * versions.
 	 */
-	ExecCheckHeapTupleVisible(estate, &tuple, buffer);
+	ExecCheckHeapTupleVisible(resultRelInfo->ri_RelationDesc, estate, &tuple, buffer);
 
 	/* Store target's existing tuple in the state's dedicated slot */
 	ExecStoreTuple(&tuple, mtstate->mt_existing, buffer, false);

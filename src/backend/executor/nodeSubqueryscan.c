@@ -57,7 +57,6 @@ SubqueryNext(SubqueryScanState *node)
 	 */
 	slot = ExecProcNode(node->subplan);
 
-
 	/*
 	 * We just return the subplan's result slot, rather than expending extra
 	 * cycles for ExecCopySlot().  (Our own ScanTupleSlot is used only for

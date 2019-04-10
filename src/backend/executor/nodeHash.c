@@ -994,7 +994,7 @@ ExecHashIncreaseNumBuckets(HashJoinTable hashtable)
 
 			/* advance index past the tuple */
 			idx += MAXALIGN(HJTUPLE_OVERHEAD +
-							HJTUPLE_MINTUPLE(hashTuple)->t_len);
+							memtuple_get_size(HJTUPLE_MINTUPLE(hashTuple)));
 		}
 	}
 
@@ -1074,7 +1074,7 @@ ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
 		 */
 		if ((hashtable->nbatch == 1) &&
 			(hashtable->nbuckets_optimal <= INT_MAX / 2) &&		/* overflow protection */
-			(ntuples >= (hashtable->nbuckets_optimal * NTUP_PER_BUCKET)))
+			(ntuples >= (hashtable->nbuckets_optimal * gp_hashjoin_tuples_per_bucket)))
 		{
 			hashtable->nbuckets_optimal *= 2;
 			hashtable->log2_nbuckets_optimal += 1;
@@ -1087,6 +1087,7 @@ ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
 		if (hashtable->spaceUsed +
 			hashtable->nbuckets_optimal * sizeof(HashJoinTuple)
 			> hashtable->spaceAllowed)
+		{
 			ExecHashIncreaseNumBatches(hashtable);
 
 			if (ps && ps->instrument)
