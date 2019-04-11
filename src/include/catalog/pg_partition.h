@@ -32,8 +32,10 @@ CATALOG(pg_partition,5010)
 	int16		parlevel;
 	bool		paristemplate;	
 	int16		parnatts;
+#ifdef CATALOG_VARLEN
 	int2vector	paratts;		
 	oidvector	parclass;		
+#endif
 } FormData_pg_partition;
 
 /* GPDB added foreign key definitions for gpcheckcat. */
