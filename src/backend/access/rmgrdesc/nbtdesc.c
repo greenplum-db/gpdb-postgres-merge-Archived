@@ -22,62 +22,54 @@
 static void
 out_insert(StringInfo buf, uint8 info, XLogReaderState *record)
 {
-	char			*rec = XLogRecGetData(record);
-	xl_btree_insert *xlrec = (xl_btree_insert *) rec;
-	char	   *datapos = (char *) xlrec + SizeOfBtreeInsert;
-	int			datalen = XLogRecGetDataLen(record) - SizeOfBtreeInsert;
-	xl_btree_metadata md = { InvalidBlockNumber, 0, InvalidBlockNumber, 0 };
-
-	if (info != XLOG_BTREE_INSERT_LEAF)
-	{
-		datapos += sizeof(BlockNumber);
-		datalen -= sizeof(BlockNumber);
-	}
+	char		*rec = XLogRecGetData(record);
+	char		*ptr;
+	xl_btree_insert	*xlrec = (xl_btree_insert *) rec;
+	xl_btree_metadata *md;
+	BlockNumber	blkno;	
+	bool		fullpage;
+	Size		datalen;
 
 	if (info == XLOG_BTREE_INSERT_META)
 	{
-		memcpy(&md, datapos, sizeof(xl_btree_metadata));
-		datapos += sizeof(xl_btree_metadata);
-		datalen -= sizeof(xl_btree_metadata);
+		ptr = XLogRecGetBlockData(record, 2, NULL);
+		md = (xl_btree_metadata *)ptr;
 	}
 
-	if (XLogRecHasBlockImage(record, 0)
-		&& info == XLOG_BTREE_INSERT_LEAF)
+	fullpage = XLogRecHasBlockImage(record, 0);
+	XLogRecGetBlockTag(record, 0, NULL, NULL, &blkno);
+	XLogRecGetBlockData(record, 0, &datalen);
+
+	if (fullpage && info == XLOG_BTREE_INSERT_LEAF)
 	{
-		appendStringInfo(buf, "; page %u",
-						 ItemPointerGetBlockNumber(&(xlrec->target.tid)));
+		appendStringInfo(buf, "; page %u", blkno);
 		return;					/* nothing to do */
 	}
 
-	if (!XLogRecHasBlockImage(record, 0))
+	if (!fullpage)
 	{
 		appendStringInfo(buf, "; add length %d item at offset %d in page %u",
-						 datalen, 
-						 ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
-						 ItemPointerGetBlockNumber(&(xlrec->target.tid)));
+						 (int) datalen, xlrec->offnum, blkno);
 	}
 
 	if (info == XLOG_BTREE_INSERT_META)
 		appendStringInfo(buf, "; restore metadata page 0 (root page value %u, level %d, fastroot page value %u, fastlevel %d)",
-						 md.root, 
-						 md.level,
-						 md.fastroot, 
-						 md.fastlevel);
+						 md->root, 
+						 md->level,
+						 md->fastroot, 
+						 md->fastlevel);
 }
 
 /*
  * GPDB: Print additional information about a DELETE record.
  */
 static void
-out_delete(StringInfo buf, XLogRecord *record)
+out_delete(StringInfo buf, XLogReaderState *record)
 {
-	char			*rec = XLogRecGetData(record);
-	xl_btree_delete *xlrec = (xl_btree_delete *) rec;
+	xl_btree_delete *xlrec = (xl_btree_delete *) XLogRecGetData(record);
 
 	if (XLogRecHasBlockImage(record, 0))
 		return;
-
-	xlrec = (xl_btree_delete *) XLogRecGetData(record);
 
 	if (XLogRecGetDataLen(record) > SizeOfBtreeDelete)
 	{
