@@ -307,20 +307,6 @@ typedef struct Aggref
 } Aggref;
 
 /*
- * Grouping: describe the hidden GROUPING column for grouping extensions.
- *
- * Defined for making it easily to distinguish this column with others.
- *
- * Used with GroupingFunc to distinguish 'null' values that are created
- * through grouping with those that are in the raw data. See also GroupingFunc
- * for more details.
- */
-typedef struct Grouping
-{
-	Expr        xpr;
-} Grouping;
-
-/*
  * GroupId -
  *    representation of the hidden GROUP_ID column for grouping extensions.
  *
@@ -388,9 +374,13 @@ typedef struct GroupId
  */
 typedef struct GroupingFunc
 {
-	NodeTag   type;
-	List     *args;  /* arguments provided in the query. */
-	int       ngrpcols; /* the number of grouping attributes */
+	Expr		xpr;
+	List	   *args;			/* arguments, not evaluated but kept for
+								 * benefit of EXPLAIN etc. */
+	List	   *refs;			/* ressortgrouprefs of arguments */
+	List	   *cols;			/* actual column positions set by planner */
+	Index		agglevelsup;	/* same as Aggref.agglevelsup */
+	int			location;		/* token location */
 } GroupingFunc;
 
 /*
