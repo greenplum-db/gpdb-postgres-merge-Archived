@@ -3255,6 +3255,12 @@ readNodeBinary(void)
 			case T_Aggref:
 				return_value = _readAggref();
 				break;
+			case T_GroupingFunc:
+				return_value = _readGroupingFunc();
+				break;
+			case T_GroupId:
+				return_value = _readGroupId();
+				break;
 			case T_WindowFunc:
 				return_value = _readWindowFunc();
 				break;
@@ -3651,18 +3657,6 @@ readNodeBinary(void)
 			case T_SortGroupClause:
 				return_value = _readSortGroupClause();
 				break;
-			case T_GroupingClause:
-				return_value = _readGroupingClause();
-				break;
-			case T_GroupingFunc:
-				return_value = _readGroupingFunc();
-				break;
-			case T_Grouping:
-				return_value = _readGrouping();
-				break;
-			case T_GroupId:
-				return_value = _readGroupId();
-				break;
 			case T_DMLActionExpr:
 				return_value = _readDMLActionExpr();
 				break;
@@ -3686,6 +3680,9 @@ readNodeBinary(void)
 				break;
 			case T_PartListNullTestExpr:
 				return_value = _readPartListNullTestExpr();
+				break;
+			case T_GroupingSet:
+				return_value = _readGroupingSet();
 				break;
 			case T_WindowClause:
 				return_value = _readWindowClause();
