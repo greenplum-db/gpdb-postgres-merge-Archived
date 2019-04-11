@@ -1507,6 +1507,12 @@ _outNode(StringInfo str, void *obj)
 			case T_Aggref:
 				_outAggref(str, obj);
 				break;
+			case T_GroupingFunc:
+				_outGroupingFunc(str, obj);
+				break;
+			case T_GroupId:
+				_outGroupId(str, obj);
+				break;
 			case T_WindowFunc:
 				_outWindowFunc(str, obj);
 				break;
@@ -1994,17 +2000,8 @@ _outNode(StringInfo str, void *obj)
 			case T_SortGroupClause:
 				_outSortGroupClause(str, obj);
 				break;
-			case T_GroupingClause:
-				_outGroupingClause(str, obj);
-				break;
-			case T_GroupingFunc:
-				_outGroupingFunc(str, obj);
-				break;
-			case T_Grouping:
-				_outGrouping(str, obj);
-				break;
-			case T_GroupId:
-				_outGroupId(str, obj);
+			case T_GroupingSet:
+				_outGroupingSet(str, obj);
 				break;
 			case T_WindowClause:
 				_outWindowClause(str, obj);
