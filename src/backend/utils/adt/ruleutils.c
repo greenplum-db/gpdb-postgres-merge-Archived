@@ -421,8 +421,6 @@ static bool looks_like_function(Node *node);
 static void get_oper_expr(OpExpr *expr, deparse_context *context);
 static void get_func_expr(FuncExpr *expr, deparse_context *context,
 			  bool showimplicit);
-static void get_groupingfunc_expr(GroupingFunc *grpfunc,
-								  deparse_context *context);
 static void get_agg_expr(Aggref *aggref, deparse_context *context);
 static void get_windowfunc_expr(WindowFunc *wfunc, deparse_context *context);
 static void get_coercion_expr(Node *arg, deparse_context *context,
@@ -7286,19 +7284,6 @@ get_rule_expr(Node *node, deparse_context *context,
 			get_parameter((Param *) node, context);
 			break;
 
-
-		case T_Grouping:
-			appendStringInfo(buf, "Grouping");
-			break;
-
-		case T_GroupId:
-			appendStringInfo(buf, "group_id()");
-			break;
-
-		case T_GroupingFunc:
-			get_groupingfunc_expr((GroupingFunc *)node, context);
-			break;
-
 		case T_Aggref:
 			get_agg_expr((Aggref *) node, context);
 			break;
@@ -7311,6 +7296,9 @@ get_rule_expr(Node *node, deparse_context *context,
 				get_rule_expr((Node *) gexpr->args, context, true);
 				appendStringInfoChar(buf, ')');
 			}
+			break;
+		case T_GroupId:
+			appendStringInfo(buf, "GROUP_ID()");
 			break;
 
 		case T_WindowFunc:
@@ -8576,42 +8564,6 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 		get_rule_expr((Node *) lfirst(l), context, true);
 	}
 	appendStringInfoChar(buf, ')');
-}
-
-/*
- * get_groupingfunc_expr - Parse back a grouping function node.
- */
-static void
-get_groupingfunc_expr(GroupingFunc *grpfunc, deparse_context *context)
-{
-	StringInfo buf = context->buf;
-	ListCell *lc;
-	char *sep = "";
-	List *group_exprs;
-
-	if (!context->groupClause)
-	{
-		appendStringInfoString(buf, "grouping");
-		return;
-	}
-
-	group_exprs = get_grouplist_exprs(context->groupClause,
-									  context->windowTList);
-
-	appendStringInfoString(buf, "grouping(");
-	foreach (lc, grpfunc->args)
-	{
-		int entry_no = (int)intVal(lfirst(lc));
-		Node *expr;
-		Assert (entry_no < list_length(context->windowTList));
-
-		expr = (Node *)list_nth(group_exprs, entry_no);
-		appendStringInfoString(buf, sep);
-		get_rule_expr(expr, context, true);
-		sep = ", ";
-	}
-
-	appendStringInfoString(buf, ")");
 }
 
 /*
