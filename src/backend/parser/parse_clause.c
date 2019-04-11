@@ -2596,51 +2596,6 @@ transformGroupClause(ParseState *pstate, List *grouplist, List **groupingSets,
 }
 
 /*
- * GPDB_95_MERGE_FIXME: Although not a merge conflict in itself, this function
- * is using grouping_rewrite_walker which is removed. Also according to the now
- * closed PR `https://github.com/greenplum-db/gpdb/pull/5440` this function
- * should be removed as it should no longer be used in analyze.c.
- * Verify.
- */
-#if 0
-void
-processExtendedGrouping(ParseState *pstate,
-						Node *havingQual,
-						List *windowClause,
-						List *targetlist)
-{
-	grouping_rewrite_ctx ctx;
-
-	/*
-	 * For each GROUPING function, check if its argument(s) appear in the
-	 * GROUP BY clause. We also set ngrpcols, nargs and grpargs values for
-	 * each GROUPING function here. These values are used together with
-	 * GROUPING_ID to calculate the final value for each GROUPING function
-	 * in the executor.
-	 */
-	ctx.pstate = pstate;
-	ctx.grp_tles = pstate->p_grp_tles;
-	pstate->p_grp_tles = NIL;
-
-	expression_tree_walker((Node *) targetlist, grouping_rewrite_walker,
-						   (void *)&ctx);
-
-	/*
-	 * The expression might be present in a window clause as well
-	 * so process those.
-	 */
-	expression_tree_walker((Node *) windowClause,
-						   grouping_rewrite_walker, (void *)&ctx);
-
-	/*
-	 * The expression might be present in the having clause as well.
-	 */
-	expression_tree_walker(havingQual,
-						   grouping_rewrite_walker, (void *)&ctx);
-}
-#endif
-
-/*
  * transformSortClause -
  *	  transform an ORDER BY clause
  *
