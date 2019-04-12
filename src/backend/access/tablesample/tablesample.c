@@ -71,7 +71,7 @@ tablesample_init(SampleScanState *scanstate, TableSampleClause *tablesample)
 							 InvalidOid, NULL, NULL);
 
 	tsdesc->tupDesc = scanstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
-	tsdesc->heapScan = scanstate->ss.ss_currentScanDesc;
+	tsdesc->heapScan = scanstate->ss_currentScanDesc_heap;
 
 	/* First argument for init function is always TableSampleDesc */
 	fcinfo.arg[0] = PointerGetDatum(tsdesc);
@@ -355,7 +355,7 @@ SampleTupleVisible(HeapTuple tuple, OffsetNumber tupoffset, HeapScanDesc scan)
 		Snapshot	snapshot = scan->rs_snapshot;
 		Buffer		buffer = scan->rs_cbuf;
 
-		bool		visible = HeapTupleSatisfiesVisibility(tuple, snapshot, buffer);
+		bool		visible = HeapTupleSatisfiesVisibility(scan->rs_rd, tuple, snapshot, buffer);
 
 		CheckForSerializableConflictOut(visible, scan->rs_rd, tuple, buffer,
 										snapshot);
