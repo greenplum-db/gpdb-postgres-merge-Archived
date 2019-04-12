@@ -24,7 +24,7 @@
  * _bitmap_xlog_insert_lovitem() -- insert a new lov item.
  */
 static void
-_bitmap_xlog_insert_lovitem(XLogRecPtr lsn, XLogRecord *record)
+_bitmap_xlog_insert_lovitem(XLogRecPtr lsn, XLogReaderState *record)
 {
 	xl_bm_lovitem	*xlrec = (xl_bm_lovitem *) XLogRecGetData(record);
 
@@ -136,7 +136,7 @@ _bitmap_xlog_insert_lovitem(XLogRecPtr lsn, XLogRecord *record)
  * _bitmap_xlog_insert_meta() -- update a metapage.
  */
 static void
-_bitmap_xlog_insert_meta(XLogRecPtr lsn, XLogRecord *record)
+_bitmap_xlog_insert_meta(XLogRecPtr lsn, XLogReaderState *record)
 {
 	xl_bm_metapage	*xlrec = (xl_bm_metapage *) XLogRecGetData(record);
 	Buffer			metabuf;
@@ -173,7 +173,7 @@ _bitmap_xlog_insert_meta(XLogRecPtr lsn, XLogRecord *record)
  */
 static void
 _bitmap_xlog_insert_bitmap_lastwords(XLogRecPtr lsn, 
-									 XLogRecord *record)
+									 XLogReaderState *record)
 {
 	xl_bm_bitmap_lastwords *xlrec;
 
@@ -222,7 +222,7 @@ _bitmap_xlog_insert_bitmap_lastwords(XLogRecPtr lsn,
 }
 
 static void
-_bitmap_xlog_insert_bitmapwords(XLogRecPtr lsn, XLogRecord *record)
+_bitmap_xlog_insert_bitmapwords(XLogRecPtr lsn, XLogReaderState *record)
 {
 	xl_bm_bitmapwords *xlrec;
 	Buffer		lovBuffer;
@@ -394,7 +394,7 @@ _bitmap_xlog_insert_bitmapwords(XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-_bitmap_xlog_updateword(XLogRecPtr lsn, XLogRecord *record)
+_bitmap_xlog_updateword(XLogRecPtr lsn, XLogReaderState *record)
 {
 	xl_bm_updateword *xlrec;
 
@@ -440,7 +440,7 @@ _bitmap_xlog_updateword(XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-_bitmap_xlog_updatewords(XLogRecPtr lsn, XLogRecord *record)
+_bitmap_xlog_updatewords(XLogRecPtr lsn, XLogReaderState *record)
 {
 	xl_bm_updatewords *xlrec;
 
@@ -580,7 +580,8 @@ _bitmap_xlog_updatewords(XLogRecPtr lsn, XLogRecord *record)
 void
 bitmap_redo(XLogReaderState *record)
 {
-	uint8	info = record->xl_info & ~XLR_INFO_MASK;
+	uint8	info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
+	XLogRecPtr	lsn = record->EndRecPtr;
 
 	switch (info)
 	{
