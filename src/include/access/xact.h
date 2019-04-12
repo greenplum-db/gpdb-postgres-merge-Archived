@@ -400,14 +400,15 @@ extern int	xactGetCommittedChildren(TransactionId **ptr);
 
 extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
 					int nsubxacts, TransactionId *subxacts,
-					int nrels, RelFileNode *rels,
+					int nrels, RelFileNodeWithStorageType *rels,
 					int nmsgs, SharedInvalidationMessage *msgs,
 					bool relcacheInval, bool forceSync,
-					TransactionId twophase_xid);
+					TransactionId twophase_xid,
+					char *gid);
 
 extern XLogRecPtr XactLogAbortRecord(TimestampTz abort_time,
 				   int nsubxacts, TransactionId *subxacts,
-				   int nrels, RelFileNode *rels,
+				   int nrels, RelFileNodeWithStorageType *rels,
 				   TransactionId twophase_xid);
 extern void xact_redo(XLogReaderState *record);
 

@@ -1670,16 +1670,13 @@ void
 RecordDistributedForgetCommitted(TMGXACT_LOG *gxact_log)
 {
 	xl_xact_distributed_forget xlrec;
-	XLogRecData rdata[1];
 
 	memcpy(&xlrec.gxact_log, gxact_log, sizeof(TMGXACT_LOG));
 
-	rdata[0].data = (char *) &xlrec;
-	rdata[0].len = sizeof(xl_xact_distributed_forget);
-	rdata[0].buffer = InvalidBuffer;
-	rdata[0].next = NULL;
+	XLogBeginInsert();
+	XLogRegisterData((char *) &xlrec, sizeof(xl_xact_distributed_forget));
 
-	XLogInsert(RM_XACT_ID, XLOG_XACT_DISTRIBUTED_FORGET, rdata);
+	XLogInsert(RM_XACT_ID, XLOG_XACT_DISTRIBUTED_FORGET);
 }
 
 /*
@@ -6252,7 +6249,7 @@ xactGetCommittedChildren(TransactionId **ptr)
  *	XLOG support routines
  */
 static TMGXACT_LOG *
-xact_get_distributed_info_from_commit(xl_xact_commit *xlrec)
+xact_get_distributed_info_from_commit(xl_xact_parsed_commit *xlrec)
 {
 	TransactionId *xacts;
 	SharedInvalidationMessage *msgs;
@@ -6273,7 +6270,7 @@ xact_get_distributed_info_from_commit(xl_xact_commit *xlrec)
 XLogRecPtr
 XactLogCommitRecord(TimestampTz commit_time,
 					int nsubxacts, TransactionId *subxacts,
-					int nrels, RelFileNode *rels,
+					int nrels, RelFileNodeWithStorageType *rels,
 					int nmsgs, SharedInvalidationMessage *msgs,
 					bool relcacheInval, bool forceSync,
 					TransactionId twophase_xid,
@@ -6428,7 +6425,7 @@ XactLogCommitRecord(TimestampTz commit_time,
 XLogRecPtr
 XactLogAbortRecord(TimestampTz abort_time,
 				   int nsubxacts, TransactionId *subxacts,
-				   int nrels, RelFileNode *rels,
+				   int nrels, RelFileNodeWithStorageType *rels,
 				   TransactionId twophase_xid)
 {
 	xl_xact_abort xlrec;
@@ -6673,7 +6670,7 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
  * because subtransaction commit is never WAL logged.
  */
 static void
-xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
+xact_redo_distributed_commit(uint8 info, xl_xact_commit *xlrec, TransactionId xid)
 {
 	TMGXACT_LOG *gxact_log;
 	
@@ -6683,11 +6680,14 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 	TransactionId *sub_xids;
 	TransactionId max_xid;
 	int			i;
+	xl_xact_parsed_commit parsed;
+
+	ParseCommitRecord(info, xlrec, &parsed);
 
 	/* 
 	 * Get the global transaction information first.
 	 */
-	gxact_log = xact_get_distributed_info_from_commit(xlrec);
+	gxact_log = xact_get_distributed_info_from_commit(&parsed);
 
 	/*
 	 * Crack open the gid to get the timestamp.
@@ -6727,19 +6727,19 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 		 */
 
 		/* Mark the transaction committed in pg_clog */
-		sub_xids = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
+		sub_xids = (TransactionId *) &parsed.xnodes[parsed.nrels];
 
 		/* Add the committed subtransactions to the DistributedLog, too. */
-		DistributedLog_SetCommittedTree(xid, xlrec->nsubxacts, sub_xids,
+		DistributedLog_SetCommittedTree(xid, parsed.nsubxacts, sub_xids,
 										distribTimeStamp,
 										gxact_log->gxid,
 										/* isRedo */ true);
 
-		TransactionIdCommitTree(xid, xlrec->nsubxacts, sub_xids);
+		TransactionIdCommitTree(xid, parsed.nsubxacts, sub_xids);
 
 		/* Make sure nextXid is beyond any XID mentioned in the record */
 		max_xid = xid;
-		for (i = 0; i < xlrec->nsubxacts; i++)
+		for (i = 0; i < parsed.nsubxacts; i++)
 		{
 			if (TransactionIdPrecedes(max_xid, sub_xids[i]))
 				max_xid = sub_xids[i];
@@ -6751,14 +6751,14 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 			TransactionIdAdvance(ShmemVariableCache->nextXid);
 		}
 
-		for (i = 0; i < xlrec->nrels; i++)
+		for (i = 0; i < parsed.nrels; i++)
 		{
-			SMgrRelation srel = smgropen(xlrec->xnodes[i].node, InvalidBackendId);
+			SMgrRelation srel = smgropen(parsed.xnodes[i].node, InvalidBackendId);
 			ForkNumber	fork;
 
 			for (fork = 0; fork <= MAX_FORKNUM; fork++)
-				XLogDropRelation(xlrec->xnodes[i].node, fork);
-			smgrdounlink(srel, true, xlrec->xnodes[i].relstorage);
+				XLogDropRelation(parsed.xnodes[i].node, fork);
+			smgrdounlink(srel, true, parsed.xnodes[i].relstorage);
 			smgrclose(srel);
 		}
 	}
@@ -6772,7 +6772,6 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 static void
 xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 {
-	int			i;
 	TransactionId max_xid;
 
 	/*
@@ -6903,19 +6902,19 @@ xact_redo(XLogReaderState *record)
 		 * Need to figure out how to fix this now that we no longer have beginLoc.
 		 */
 		RecreateTwoPhaseFile(XLogRecGetXid(record),
-						  XLogRecGetData(record), XLogRecGetDataLen(record));
+						  XLogRecGetData(record), XLogRecGetDataLen(record), NULL);
 	}
 	else if (info == XLOG_XACT_DISTRIBUTED_COMMIT)
 	{
 		xl_xact_commit *xlrec = (xl_xact_commit *) XLogRecGetData(record);
 
-		xact_redo_distributed_commit(xlrec, record->xl_xid);
+		xact_redo_distributed_commit(XLogRecGetInfo(record), xlrec, XLogRecGetXid(record));
 	}
 	else if (info == XLOG_XACT_DISTRIBUTED_FORGET)
 	{
 		xl_xact_distributed_forget *xlrec = (xl_xact_distributed_forget *) XLogRecGetData(record);
 
-		xact_redo_distributed_forget(xlrec, record->xl_xid);
+		xact_redo_distributed_forget(xlrec, XLogRecGetXid(record));
 	}
 	else if (info == XLOG_XACT_ASSIGNMENT)
 	{
