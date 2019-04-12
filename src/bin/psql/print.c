@@ -1437,20 +1437,22 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	for (i = 0, ptr = cont->cells; *ptr; i++, ptr++)
 	{
 		printTextRule pos;
-		int			line_count,
+		int			dline,
+					hline,
 					dcomplete,
-					hcomplete;
+					hcomplete,
+					offset,
+					chars_to_output;
 
 		if (cancel_pressed)
 			break;
 
 		if (i == 0)
 			pos = PRINT_RULE_TOP;
-		else if (!(*(ptr + 1)))
-			pos = PRINT_RULE_BOTTOM;
 		else
 			pos = PRINT_RULE_MIDDLE;
 
+		/* Print record header (e.g. "[ RECORD N ]") above each record */
 		if (i % cont->ncolumns == 0)
 		{
 			unsigned int lhwidth = hwidth;
@@ -1476,12 +1478,21 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		pg_wcsformat((const unsigned char *) *ptr, strlen(*ptr), encoding,
 					 dlineptr, dheight);
 
-		line_count = 0;
+		/*
+		 * Loop through header and data in parallel dealing with newlines and
+		 * wrapped lines until they're both exhausted
+		 */
+		dline = hline = 0;
 		dcomplete = hcomplete = 0;
+		offset = 0;
+		chars_to_output = dlineptr[dline].width;
 		while (!dcomplete || !hcomplete)
 		{
+			/* Left border */
 			if (opt_border == 2)
-				fprintf(fout, "%s ", dformat->leftvrule);
+				fprintf(fout, "%s", dformat->leftvrule);
+
+			/* Header (never wrapped so just need to deal with newlines) */
 			if (!hcomplete)
 			{
 				int			swidth = hwidth,
@@ -1526,6 +1537,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 						(hmultiline && (format != &pg_asciiformat_old)))
 						fputs(" ", fout);
 					hcomplete = 1;
+				}
 			}
 			else
 			{
@@ -1544,11 +1556,20 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				fprintf(fout, "%*s", swidth, " ");
 			}
 
+			/* Separator */
 			if (opt_border > 0)
-				fprintf(fout, " %s ", dformat->midvrule);
-			else
-				fputc(' ', fout);
+			{
+				if (offset)
+					fputs(format->midvrule_wrap, fout);
+				else if (!dline)
+					fputs(dformat->midvrule, fout);
+				else if (dline)
+					fputs(format->midvrule_nl, fout);
+				else
+					fputs(format->midvrule_blank, fout);
+			}
 
+			/* Data */
 			if (!dcomplete)
 			{
 				int			target_width = dwidth,
@@ -1619,12 +1640,15 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			}
 			else
 			{
+				/*
+				 * data exhausted (this can occur if header is longer than the
+				 * data due to newlines in the header)
+				 */
 				if (opt_border < 2)
-					fputc('\n', fout);
+					fputs("\n", fout);
 				else
-					fprintf(fout, "%*s %s\n", dwidth, "", dformat->rightvrule);
+					fprintf(fout, "%*s  %s\n", dwidth, "", dformat->rightvrule);
 			}
-			line_count++;
 		}
 	}
 

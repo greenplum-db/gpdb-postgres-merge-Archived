@@ -998,6 +998,9 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "TABLESPACE") == 0)
 	{
 		static const char *const list_ALTERALLINTSPC[] =
+		{"SET TABLESPACE", "OWNED BY", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTERALLINTSPC);
 	}
 	/* ALTER TABLE,INDEX,MATERIALIZED VIEW ALL IN TABLESPACE xxx OWNED BY */
 	else if (pg_strcasecmp(prev6_wd, "ALL") == 0 &&

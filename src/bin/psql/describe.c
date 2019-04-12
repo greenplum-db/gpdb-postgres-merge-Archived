@@ -66,7 +66,7 @@ static bool isGPDB(void)
 	else if (talking_to_gpdb == gpdb_no)
 		return false;
 
-	res = PSQLexec("select pg_catalog.version()", false);
+	res = PSQLexec("select pg_catalog.version()");
 	if (!res)
 		return false;
 
@@ -102,7 +102,7 @@ static bool isGPDB4200OrLater(void)
 	{
 		PGresult  *result;
 
-		result = PSQLexec("select oid from pg_catalog.pg_class where relnamespace = 11 and relname  = 'pg_attribute_encoding'", false);
+		result = PSQLexec("select oid from pg_catalog.pg_class where relnamespace = 11 and relname  = 'pg_attribute_encoding'");
 		if (PQgetisnull(result, 0, 0))
 			 retValue = false;
 		else
@@ -126,7 +126,7 @@ isGPDB4300OrLater(void)
 		result = PSQLexec(
 				"select attnum from pg_catalog.pg_attribute "
 				"where attrelid = 'pg_catalog.pg_proc'::regclass and "
-				"attname = 'prodataaccess'", false);
+				"attname = 'prodataaccess'");
 		retValue = PQntuples(result) > 0;
 	}
 	return retValue;
@@ -146,7 +146,7 @@ static bool isGPDB5000OrLater(void)
 	{
 		PGresult   *res;
 
-		res = PSQLexec("select attnum from pg_catalog.pg_attribute where attrelid = 1255 and attname = 'provariadic'", false);
+		res = PSQLexec("select attnum from pg_catalog.pg_attribute where attrelid = 1255 and attname = 'provariadic'");
 		if (PQntuples(res) == 1)
 			retValue = true;
 	}
@@ -1690,7 +1690,7 @@ describeOneTableDetails(const char *schemaname,
 					"FROM pg_catalog.pg_appendonly a, pg_catalog.pg_class c\n"
 					"WHERE c.oid = a.relid AND c.oid = '%s'", oid);
 
-		result = PSQLexec(buf.data, false);
+		result = PSQLexec(buf.data);
 		if (!result)
 			goto error_return;
 
@@ -2185,7 +2185,7 @@ describeOneTableDetails(const char *schemaname,
 							  "WHERE x.reloid = c.oid AND c.oid = '%s'\n", execLocations, optionsName, oid);
 		}
 
-		result = PSQLexec(buf.data, false);
+		result = PSQLexec(buf.data);
 		if (!result)
 			goto error_return;
 		else if (PQntuples(result) != 1)
@@ -2395,7 +2395,7 @@ describeOneTableDetails(const char *schemaname,
 								  "FROM pg_catalog.pg_constraint r\n"
 					   "WHERE r.conrelid = '%s' AND r.contype = 'c'\nORDER BY 1",
 								  oid);
-				res = PSQLexec(buf.data, false);
+				res = PSQLexec(buf.data);
 				if (!res)
 					goto error_return;
 
@@ -3275,7 +3275,7 @@ add_distributed_by_footer(printTableContent *const cont, const char *oid)
 						  "SELECT pg_catalog.pg_get_table_distributedby('%s')",
 						  oid);
 
-		result1 = PSQLexec(tempbuf.data, false);
+		result1 = PSQLexec(tempbuf.data);
 		if (!result1)
 		{
 			/* Error:  Well, so what?  Best to continue */
@@ -3326,7 +3326,7 @@ add_distributed_by_footer(printTableContent *const cont, const char *oid)
 						  "WHERE localoid = '%s'",
 						  oid);
 
-		result1 = PSQLexec(tempbuf.data, false);
+		result1 = PSQLexec(tempbuf.data);
 		if (!result1)
 		{
 			/* Error:  Well, so what?  Best to continue */
@@ -3352,7 +3352,7 @@ add_distributed_by_footer(printTableContent *const cont, const char *oid)
 								  "AND attnum = '%d' ",
 								  oid,
 								  atoi(dist_columns));
-				result2 = PSQLexec(tempbuf.data, false);
+				result2 = PSQLexec(tempbuf.data);
 				if (!result2)
 					return;
 				dist_colname = PQgetvalue(result2, 0, 0);
@@ -3378,7 +3378,7 @@ add_distributed_by_footer(printTableContent *const cont, const char *oid)
 									  "AND attnum = '%d' ",
 									  oid,
 									  atoi(col));
-					result2 = PSQLexec(tempbuf.data, false);
+					result2 = PSQLexec(tempbuf.data);
 					if (!result2)
 						return;
 					dist_colname = PQgetvalue(result2, 0, 0);
@@ -3426,7 +3426,7 @@ add_partition_by_footer(printTableContent *const cont, const char *oid)
 
 	/* check if current relation is root partition, if it is root partition, at least 1 row returns */
 	printfPQExpBuffer(&buf, "SELECT parrelid FROM pg_catalog.pg_partition WHERE parrelid = '%s'", oid);
-	result = PSQLexec(buf.data, false);
+	result = PSQLexec(buf.data);
 
 	if (!result)
 		return;
@@ -3461,7 +3461,7 @@ add_partition_by_footer(printTableContent *const cont, const char *oid)
 			oid, oid);
 	}
 
-	result = PSQLexec(buf.data, false);
+	result = PSQLexec(buf.data);
 	if (!result)
 		return;
 
