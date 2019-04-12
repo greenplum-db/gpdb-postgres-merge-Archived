@@ -900,9 +900,9 @@ typedef struct AggrefExprState
  */
 typedef struct GroupingFuncExprState
 {
-	ExprState  xprstate;
-	List          *args;
-	int        ngrpcols;   /* number of unique grouping attributes */
+	ExprState	xprstate;
+	struct AggState *aggstate;
+	List	   *clauses;		/* integer list of column numbers */
 } GroupingFuncExprState;
 
 /* ----------------
@@ -1738,6 +1738,10 @@ typedef struct SeqScanState
 typedef struct SampleScanState
 {
 	ScanState	ss;
+	struct HeapScanDescData *ss_currentScanDesc_heap;
+	struct AppendOnlyScanDescData *ss_currentScanDesc_ao;
+	struct AOCSScanDescData *ss_currentScanDesc_aocs;
+
 	struct TableSampleDesc *tsdesc;
 } SampleScanState;
 
@@ -2606,6 +2610,31 @@ typedef struct SortState
  *	expressions and run the aggregate transition functions.
  * -------------------------
  */
+
+/*
+ * AggStatePerPhaseData - per-grouping-set-phase state
+ *
+ * Grouping sets are divided into "phases", where a single phase can be
+ * processed in one pass over the input. If there is more than one phase, then
+ * at the end of input from the current phase, state is reset and another pass
+ * taken over the data which has been re-sorted in the mean time.
+ *
+ * Accordingly, each phase specifies a list of grouping sets and group clause
+ * information, plus each phase after the first also has a sort order.
+ */
+typedef struct AggStatePerPhaseData
+{
+	int			numsets;		/* number of grouping sets (or 0) */
+	int		   *gset_lengths;	/* lengths of grouping sets */
+	Bitmapset **grouped_cols;	/* column groupings for rollup */
+	FmgrInfo   *eqfunctions;	/* per-grouping-field equality fns */
+	Agg		   *aggnode;		/* Agg node for phase data */
+	Sort	   *sortnode;		/* Sort node for input ordering for phase */
+
+	int		   *group_id;		/* on per gset */
+}	AggStatePerPhaseData;
+
+
 /* these structs are private in nodeAgg.c: */
 typedef struct AggStatePerAggData *AggStatePerAgg;
 typedef struct AggStatePerGroupData *AggStatePerGroup;
@@ -2635,14 +2664,11 @@ typedef struct AggState
 	AggStatePerAgg curperagg;	/* identifies currently active aggregate */
 	bool		input_done;		/* indicates end of input */
 	bool		agg_done;		/* indicates completion of Agg scan */
-	bool        has_partial_agg;/* indicate if a partial aggregate result
-								 * has been calculated in the previous call.
-								 */
 	int			projected_set;	/* The last projected grouping set */
 	int			current_set;	/* The current grouping set being evaluated */
 	Bitmapset  *grouped_cols;	/* grouped cols in current projection */
-	List	   *all_grouped_cols;		/* list of all grouped cols in DESC
-										 * order */
+	int			group_id;		/* GROUP_ID in current projection */
+	List	   *all_grouped_cols; /* list of all grouped cols in DESC order */
 	/* These fields are for grouping set phase data */
 	int			maxsets;		/* The max number of sets in any phase */
 	AggStatePerPhase phases;	/* array of all phases */

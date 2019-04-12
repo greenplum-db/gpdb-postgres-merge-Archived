@@ -58,7 +58,7 @@ SampleNext(SampleScanState *node)
 	tuple = tablesample_getnext(tsdesc);
 
 	if (tuple)
-		ExecStoreTuple(tuple,	/* tuple to store */
+		ExecStoreHeapTuple(tuple,	/* tuple to store */
 					   slot,	/* slot to store in */
 					   tsdesc->heapScan->rs_cbuf,		/* buffer associated
 														 * with this tuple */
@@ -122,7 +122,7 @@ InitScanRelation(SampleScanState *node, EState *estate, int eflags,
 	 * Even though we aren't going to do a conventional seqscan, it is useful
 	 * to create a HeapScanDesc --- many of the fields in it are usable.
 	 */
-	node->ss.ss_currentScanDesc =
+	node->ss_currentScanDesc_heap =
 		heap_beginscan_sampling(currentRelation, estate->es_snapshot, 0, NULL,
 								tablesample->tsmseqscan,
 								tablesample->tsmpagemode);
@@ -182,8 +182,6 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 	 */
 	InitScanRelation(scanstate, estate, eflags, rte->tablesample);
 
-	scanstate->ss.ps.ps_TupFromTlist = false;
-
 	/*
 	 * Initialize result tuple type and projection info.
 	 */
@@ -223,7 +221,7 @@ ExecEndSampleScan(SampleScanState *node)
 	/*
 	 * close heap scan
 	 */
-	heap_endscan(node->ss.ss_currentScanDesc);
+	heap_endscan(node->ss_currentScanDesc_heap);
 
 	/*
 	 * close the heap relation.
@@ -246,7 +244,7 @@ ExecEndSampleScan(SampleScanState *node)
 void
 ExecReScanSampleScan(SampleScanState *node)
 {
-	heap_rescan(node->ss.ss_currentScanDesc, NULL);
+	heap_rescan(node->ss_currentScanDesc_heap, NULL);
 
 	/*
 	 * Tell sampling function to reset its state for rescan.

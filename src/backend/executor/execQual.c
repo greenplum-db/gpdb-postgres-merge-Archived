@@ -75,9 +75,6 @@ static bool isAssignmentIndirectionExpr(ExprState *exprstate);
 static Datum ExecEvalAggref(AggrefExprState *aggref,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalGroupingFunc(GroupingFuncExprState *gstate,
-							  ExprContext *econtext,
-							  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalGrouping(ExprState *gstate,
 						  ExprContext *econtext,
 						  bool *isNull, ExprDoneCond *isDone);
@@ -568,43 +565,6 @@ ExecEvalAggref(AggrefExprState *aggref, ExprContext *econtext,
 
 	*isNull = econtext->ecxt_aggnulls[aggref->aggno];
 	return econtext->ecxt_aggvalues[aggref->aggno];
-}
-
-/*----------------------------------------------------------------
- *		ExecEvalGroupingFunc
- *
- *		Returns a Datum whose value is the value of a GROUPING_ID
- *		with respect to the given context.
- */
-static Datum
-ExecEvalGroupingFunc(GroupingFuncExprState *gstate,
-					 ExprContext *econtext,
-					 bool *isNull, ExprDoneCond *isDone)
-{
-	uint64 grpid = 0;
-	ListCell *tmp;
-	int num_args = list_length(gstate->args);
-	int argno = 0;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
-
-	foreach(tmp, gstate->args)
-	{
-		int arg = (int)intVal(lfirst(tmp));
-		int pos_in_grpcols = gstate->ngrpcols - arg - 1;
-		int pos_in_grpingfunc = num_args - argno - 1;
-
-		Assert(pos_in_grpcols >= 0 && pos_in_grpingfunc >= 0);
-
-		if (econtext->grouping & ( ((uint64)1) << pos_in_grpcols))
-			grpid |= ( ((uint64)1) << pos_in_grpingfunc);
-
-		argno++;
-	}
-
-	*isNull = false;
-	return Int64GetDatum(grpid);
 }
 
 /*----------------------------------------------------------------
@@ -3536,6 +3496,65 @@ ExecEvalCaseTestExpr(ExprState *exprstate,
 	*isNull = econtext->caseValue_isNull;
 	return econtext->caseValue_datum;
 }
+/*
+ * ExecEvalGroupingFuncExpr
+ *
+ * Return a bitmask with a bit for each (unevaluated) argument expression
+ * (rightmost arg is least significant bit).
+ *
+ * A bit is set if the corresponding expression is NOT part of the set of
+ * grouping expressions in the current grouping set.
+ */
+
+static Datum
+ExecEvalGroupingFuncExpr(GroupingFuncExprState *gstate,
+						 ExprContext *econtext,
+						 bool *isNull,
+						 ExprDoneCond *isDone)
+{
+	int result = 0;
+	int attnum = 0;
+	Bitmapset *grouped_cols = gstate->aggstate->grouped_cols;
+	ListCell *lc;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+
+	*isNull = false;
+
+	foreach(lc, (gstate->clauses))
+	{
+		attnum = lfirst_int(lc);
+
+		result = result << 1;
+
+		if (!bms_is_member(attnum, grouped_cols))
+			result = result | 1;
+	}
+
+	return (Datum) result;
+}
+
+/*
+ * ExecEvalGroupIdExpr
+ *
+ * Evaluate a GROUP_ID expression. It's been precalculated by ExecInitAgg.
+ */
+static Datum
+ExecEvalGroupIdExpr(GroupIdExprState *gstate,
+					ExprContext *econtext,
+					bool *isNull,
+					ExprDoneCond *isDone)
+{
+	int			group_id = gstate->aggstate->group_id;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+
+	*isNull = false;
+
+	return Int32GetDatum(group_id);
+}
 
 /* ----------------------------------------------------------------
  *		ExecEvalArray - ARRAY[] expressions
@@ -5401,19 +5420,24 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			break;
 		case T_GroupingFunc:
 			{
-				GroupingFunc *gf = (GroupingFunc *)node;
-				GroupingFuncExprState *gstate = makeNode(GroupingFuncExprState);
-				gstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalGroupingFunc;
-				gstate->args = gf->args;
-				gstate->ngrpcols = gf->ngrpcols;
-				state = (ExprState *) gstate;
-			}
-			break;
-		case T_Grouping:
-			{
-				ExprState *gstate = makeNode(ExprState);
-				gstate->evalfunc = (ExprStateEvalFunc) ExecEvalGrouping;
-				state = (ExprState *) gstate;
+				GroupingFunc *grp_node = (GroupingFunc *) node;
+				GroupingFuncExprState *grp_state = makeNode(GroupingFuncExprState);
+				Agg		   *agg = NULL;
+
+				if (!parent || !IsA(parent, AggState) || !IsA(parent->plan, Agg))
+					elog(ERROR, "parent of GROUPING is not Agg node");
+
+				grp_state->aggstate = (AggState *) parent;
+
+				agg = (Agg *) (parent->plan);
+
+				if (agg->groupingSets)
+					grp_state->clauses = grp_node->cols;
+				else
+					grp_state->clauses = NIL;
+
+				state = (ExprState *) grp_state;
+				state->evalfunc = (ExprStateEvalFunc) ExecEvalGroupingFuncExpr;
 			}
 			break;
 		case T_GroupId:

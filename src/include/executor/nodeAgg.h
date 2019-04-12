@@ -215,6 +215,7 @@ initialize_aggregates(AggState *aggstate,
 					  int numReset);
 extern void 
 advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup);
+TupleTableSlot *fetch_input_tuple(AggState *aggstate);
 
 extern Oid resolve_polymorphic_transtype(Oid aggtranstype, Oid aggfnoid,
 										 Oid *inputTypes);

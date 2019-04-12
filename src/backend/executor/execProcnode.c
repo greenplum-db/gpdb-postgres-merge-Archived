@@ -1005,6 +1005,7 @@ ExecProcNode(PlanState *node)
 			result = ExecSeqScan((SeqScanState *)node);
 			break;
 
+			/*GPDB_95_MERGE_FIXME: Do we need DynamicSampleScan here?*/
 		case T_DynamicSeqScanState:
 			result = ExecDynamicSeqScan((DynamicSeqScanState *) node);
 			break;
