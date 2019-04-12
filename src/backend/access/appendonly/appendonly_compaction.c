@@ -297,7 +297,8 @@ AppendOnlyMoveTuple(TupleTableSlot *slot,
 	/* insert index' tuples if needed */
 	if (resultRelInfo->ri_NumIndices > 0)
 	{
-		ExecInsertIndexTuples(slot, (ItemPointer) &newAoTupleId, estate);
+		ExecInsertIndexTuples(slot, (ItemPointer) &newAoTupleId, estate,
+							  false, NULL, NIL);
 		ResetPerTupleExprContext(estate);
 	}
 
