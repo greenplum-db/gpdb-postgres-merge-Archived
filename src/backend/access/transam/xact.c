@@ -6896,13 +6896,8 @@ xact_redo(XLogReaderState *record)
 	else if (info == XLOG_XACT_PREPARE)
 	{
 		/* the record contents are exactly the 2PC file */
-		/*
-		 * GPDB_95_MERGE_FIXME: RecreateTwoPhaseFile was modified by Greenplum to include
-		 * beginLoc to do some sort of tracking for distributed two-phase commit maybe.
-		 * Need to figure out how to fix this now that we no longer have beginLoc.
-		 */
 		RecreateTwoPhaseFile(XLogRecGetXid(record),
-						  XLogRecGetData(record), XLogRecGetDataLen(record), NULL);
+						  XLogRecGetData(record), XLogRecGetDataLen(record), &record->ReadRecPtr);
 	}
 	else if (info == XLOG_XACT_DISTRIBUTED_COMMIT)
 	{
