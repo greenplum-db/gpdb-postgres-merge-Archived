@@ -1358,7 +1358,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 				 errdetail("%s", errormsg)));
 	}
 
-	buf = XLogRecGetData(tfRecord);
+	buf = XLogRecGetData(xlogreader);
 
 	/*
 	 * Disassemble the header area
@@ -1614,7 +1614,7 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 		TransactionId xid;
 
 		tfRecord = XLogReadRecord(xlogreader, tfXLogRecPtr, &errormsg);
-		hdr = (TwoPhaseFileHeader *) XLogRecGetData(tfRecord);
+		hdr = (TwoPhaseFileHeader *) XLogRecGetData(xlogreader);
 		xid = hdr->xid;
 
 		if (tfRecord == NULL)
@@ -1806,7 +1806,7 @@ RecoverPreparedTransactions(void)
 					 errdetail("%s", errormsg)));
 		}
 
-		buf = XLogRecGetData(tfRecord);
+		buf = XLogRecGetData(xlogreader);
 
 		/* Deconstruct header */
 		hdr = (TwoPhaseFileHeader *) buf;

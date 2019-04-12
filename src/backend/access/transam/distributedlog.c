@@ -987,13 +987,9 @@ DistributedLog_PagePrecedes(int page1, int page2)
 static void
 DistributedLog_WriteZeroPageXlogRec(int page)
 {
-	XLogRecData rdata;
-
-	rdata.data = (char *) (&page);
-	rdata.len = sizeof(int);
-	rdata.buffer = InvalidBuffer;
-	rdata.next = NULL;
-	(void) XLogInsert(RM_DISTRIBUTEDLOG_ID, DISTRIBUTEDLOG_ZEROPAGE, &rdata);
+	XLogBeginInsert();
+	XLogRegisterData((char *) (&page), sizeof(int));
+	(void) XLogInsert(RM_DISTRIBUTEDLOG_ID, DISTRIBUTEDLOG_ZEROPAGE);
 }
 
 /*
@@ -1008,14 +1004,11 @@ DistributedLog_WriteZeroPageXlogRec(int page)
 static void
 DistributedLog_WriteTruncateXlogRec(int page)
 {
-	XLogRecData rdata;
 	XLogRecPtr	recptr;
 
-	rdata.data = (char *) (&page);
-	rdata.len = sizeof(int);
-	rdata.buffer = InvalidBuffer;
-	rdata.next = NULL;
-	recptr = XLogInsert(RM_DISTRIBUTEDLOG_ID, DISTRIBUTEDLOG_TRUNCATE, &rdata);
+	XLogBeginInsert();
+	XLogRegisterData((char *) (&page), sizeof(int));
+	recptr = XLogInsert(RM_DISTRIBUTEDLOG_ID, DISTRIBUTEDLOG_TRUNCATE);
 	XLogFlush(recptr);
 }
 
