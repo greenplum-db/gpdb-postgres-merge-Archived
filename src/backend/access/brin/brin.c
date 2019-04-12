@@ -33,6 +33,10 @@
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 
+/* GPDB includes */
+#include "executor/executor.h"
+#include "storage/procarray.h"
+#include "utils/tqual.h"
 
 /*
  * We use a BrinBuildState during initial construction of a BRIN index.
@@ -510,7 +514,7 @@ brinrestrpos(PG_FUNCTION_ARGS)
  */
 static void
 brinbuildCallback(Relation index,
-				  HeapTuple htup,
+				  ItemPointer tupleId,
 				  Datum *values,
 				  bool *isnull,
 				  bool tupleIsAlive,
@@ -520,7 +524,7 @@ brinbuildCallback(Relation index,
 	BlockNumber thisblock;
 	int			i;
 
-	thisblock = ItemPointerGetBlockNumber(&htup->t_self);
+	thisblock = ItemPointerGetBlockNumber(tupleId);
 
 	/*
 	 * If we're in a block that belongs to a future range, summarize what
@@ -931,6 +935,40 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 	OffsetNumber offset;
 
 	/*
+	 * GPDB: We need to create our own estate, snapshot, and OldestXmin here
+	 * to pass to modified function IndexBuildHeapRangeScan.
+	 */
+	TupleTableSlot *slot;
+	EState	   *estate;
+	ExprContext *econtext;
+	Snapshot	snapshot;
+	bool		registered_snapshot = false;
+	TransactionId OldestXmin;
+
+	/*
+	 * Need an EState for evaluation of index expressions and partial-index
+	 * predicates.	Also a slot to hold the current tuple.
+	 */
+	estate = CreateExecutorState();
+	econtext = GetPerTupleExprContext(estate);
+	slot = MakeSingleTupleTableSlot(RelationGetDescr(heapRel));
+
+	/* Arrange for econtext's scan tuple to be the tuple under test */
+	econtext->ecxt_scantuple = slot;
+
+	if (IsBootstrapProcessingMode() || indexInfo->ii_Concurrent)
+	{
+		snapshot = RegisterSnapshot(GetTransactionSnapshot());
+		registered_snapshot = true;
+		OldestXmin = InvalidTransactionId;		/* not used */
+	}
+	else
+	{
+		snapshot = SnapshotAny;
+		OldestXmin = GetOldestXmin(heapRel, true);
+	}
+
+	/*
 	 * Insert the placeholder tuple
 	 */
 	phbuf = InvalidBuffer;
@@ -947,7 +985,8 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 	state->bs_currRangeStart = heapBlk;
 	IndexBuildHeapRangeScan(heapRel, state->bs_irel, indexInfo, false,
 							heapBlk, state->bs_pagesPerRange,
-							brinbuildCallback, (void *) state);
+							brinbuildCallback, (void *) state,
+							estate, snapshot, OldestXmin);
 
 	/*
 	 * Now we update the values obtained by the scan with the placeholder
@@ -999,6 +1038,10 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 		/* merge it into the tuple from the heap scan */
 		union_tuples(state->bs_bdesc, state->bs_dtuple, phtup);
 	}
+
+	/* we can now forget our snapshot, if set */
+	if (registered_snapshot)
+		UnregisterSnapshot(snapshot);
 
 	ReleaseBuffer(phbuf);
 }
