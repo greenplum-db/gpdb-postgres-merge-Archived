@@ -1908,6 +1908,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 								bool initfileinval)
 {
 	XLogRecPtr	recptr;
+	TMGXACT_LOG gxact_log;
 
 	DistributedTransactionTimeStamp distribTimeStamp;
 	DistributedTransactionId distribXid;
@@ -1925,14 +1926,15 @@ RecordTransactionCommitPrepared(TransactionId xid,
 
 	SIMPLE_FAULT_INJECTOR(TwoPhaseTransactionCommitPrepared);
 
+	getDtxLogInfo(&gxact_log);
+
 	/* Emit the XLOG commit record */
 	recptr = XactLogCommitRecord(GetCurrentTimestamp(),
 								 nchildren, children, nrels, rels,
 								 ninvalmsgs, invalmsgs,
 								 initfileinval, false,
 								 xid,
-								 distribXid,
-								 distribTimeStamp);
+								 gxact_log.gid);
 
 	/*
 	 * We don't currently try to sleep before flush here ... nor is there any

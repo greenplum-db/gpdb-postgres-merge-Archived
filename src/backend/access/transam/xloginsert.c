@@ -727,13 +727,13 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	{
 		if (mainrdata_len > 255)
 		{
-			*(scratch++) = XLR_BLOCK_ID_DATA_LONG;
+			*(scratch++) = (char) XLR_BLOCK_ID_DATA_LONG;
 			memcpy(scratch, &mainrdata_len, sizeof(uint32));
 			scratch += sizeof(uint32);
 		}
 		else
 		{
-			*(scratch++) = XLR_BLOCK_ID_DATA_SHORT;
+			*(scratch++) = (char) XLR_BLOCK_ID_DATA_SHORT;
 			*(scratch++) = (uint8) mainrdata_len;
 		}
 		rdt_datas_last->next = mainrdata_head;
