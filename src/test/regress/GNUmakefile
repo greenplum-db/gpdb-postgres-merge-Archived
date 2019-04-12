@@ -23,15 +23,9 @@ ifdef TEMP_CONFIG
 TEMP_CONF += --temp-config=$(TEMP_CONFIG)
 endif
 
-<<<<<<< HEAD
 # Greenplum regression tests use $PGPORT
 PGPORT?=15432
 
-# where to find psql for testing an existing installation
-PSQLDIR = $(bindir)
-
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 # maximum simultaneous connections for parallel tests
 MAXCONNOPT =
 ifdef MAX_CONNECTIONS
@@ -136,11 +130,7 @@ installdirs-tests: installdirs
 
 # Get some extra C modules from contrib/spi
 
-<<<<<<< HEAD
-all: refint$(DLSUFFIX) autoinc$(DLSUFFIX) dummy_seclabel$(DLSUFFIX) tablespace-setup includecheck hooktest query_info_hook_test
-=======
-all: refint$(DLSUFFIX) autoinc$(DLSUFFIX)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+all: refint$(DLSUFFIX) autoinc$(DLSUFFIX) tablespace-setup includecheck hooktest query_info_hook_test
 
 refint$(DLSUFFIX): $(top_builddir)/contrib/spi/refint$(DLSUFFIX)
 	cp $< $@
@@ -237,19 +227,12 @@ bigcheck: all tablespace-setup
 
 clean distclean maintainer-clean: clean-lib
 # things built by `all' target
-<<<<<<< HEAD
+	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX)
+	rm -f pg_regress_main.o pg_regress.o pg_regress$(X)
+	rm -f twophase_pqexecparams
 	$(MAKE) -C $(top_builddir)/contrib/spi clean
 	$(MAKE) -C hooktest/ clean
 	$(MAKE) -C query_info_hook_test/ clean
-	rm -f twophase_pqexecparams
-# things created by dynamic configs
-	find sql -type l | xargs rm -f
-	find expected -type l | xargs rm -f
-	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX) dummy_seclabel$(DLSUFFIX)
-=======
-	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
-	rm -f pg_regress_main.o pg_regress.o pg_regress$(X)
 # things created by various check targets
 	rm -f $(output_files) $(input_files)
 	rm -rf testtablespace

@@ -12,7 +12,6 @@ SUBDIRS = \
 		dblink		\
 		dict_int	\
 		dict_xsyn	\
-		earthdistance	\
 		file_fdw	\
 		fuzzystrmatch	\
 		hstore		\
@@ -37,6 +36,8 @@ SUBDIRS = \
 		tsm_system_time \
 		tsearch2	\
 		unaccent
+# GPDB_95_MERGE_FIXME: Why some files (especially Makefile) are missing under
+#		earthdistance	\
 # GPDB_92_MERGE_FIXME: Why some files (especially Makefile) are missing under
 # these directories?
 #               seg         \

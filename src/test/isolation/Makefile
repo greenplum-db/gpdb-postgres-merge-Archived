@@ -58,17 +58,12 @@ clean distclean:
 maintainer-clean: distclean
 	rm -f specparse.c specscanner.c
 
-<<<<<<< HEAD
 # GPDB: pageinspect module is needed by some tests.
 install-tests:
 	$(MAKE) -C $(top_builddir)/contrib/pageinspect install
 
 installcheck: all gpdiff.pl gpstringsubs.pl install-tests
-	./pg_isolation_regress --psqldir='$(PSQLDIR)' $(EXTRA_REGRESS_OPTS) --inputdir=$(srcdir) --init-file=$(srcdir)/init_file --load-extension=pageinspect --schedule=$(srcdir)/isolation_schedule
-=======
-installcheck: all
-	./pg_isolation_regress --bindir='$(bindir)' $(EXTRA_REGRESS_OPTS) --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	./pg_isolation_regress --bindir='$(bindir)' $(EXTRA_REGRESS_OPTS) --inputdir=$(srcdir) --init-file=$(srcdir)/init_file --load-extension=pageinspect --schedule=$(srcdir)/isolation_schedule
 
 check: all
 	$(with_temp_install) ./pg_isolation_regress --temp-instance=./tmp_check --inputdir=$(srcdir) --bindir= $(EXTRA_REGRESS_OPTS) --schedule=$(srcdir)/isolation_schedule
