@@ -108,9 +108,11 @@ static MemoryContext xloginsert_cxt;
 
 static XLogRecData *XLogRecordAssemble(RmgrId rmid, uint8 info,
 				   XLogRecPtr RedoRecPtr, bool doPageWrites,
-				   XLogRecPtr *fpw_lsn);
+				   XLogRecPtr *fpw_lsn, TransactionId overrideXid);
 static bool XLogCompressBackupBlock(char *page, uint16 hole_offset,
 						uint16 hole_length, char *dest, uint16 *dlen);
+static XLogRecPtr XLogInsert_Internal(RmgrId rmid, uint8 info, TransactionId
+							headerXid);
 
 /*
  * Begin constructing a WAL record. This must be called before the
@@ -407,6 +409,18 @@ XLogIncludeOrigin(void)
 XLogRecPtr
 XLogInsert(RmgrId rmid, uint8 info)
 {
+	return XLogInsert_Internal(rmid, info, GetCurrentTransactionIdIfAny());
+}
+
+XLogRecPtr
+XLogInsert_OverrideXid(RmgrId rmid, uint8 info, TransactionId overrideXid)
+{
+	return XLogInsert_Internal(rmid, info, overrideXid);
+}
+
+static XLogRecPtr
+XLogInsert_Internal(RmgrId rmid, uint8 info, TransactionId headerXid)
+{
 	XLogRecPtr	EndPos;
 
 	/* XLogBeginInsert() must have been called. */
@@ -448,7 +462,7 @@ XLogInsert(RmgrId rmid, uint8 info)
 		GetFullPageWriteInfo(&RedoRecPtr, &doPageWrites);
 
 		rdt = XLogRecordAssemble(rmid, info, RedoRecPtr, doPageWrites,
-								 &fpw_lsn);
+								 &fpw_lsn, headerXid);
 
 		EndPos = XLogInsertRecord(rdt, fpw_lsn);
 	} while (EndPos == InvalidXLogRecPtr);
@@ -473,7 +487,7 @@ XLogInsert(RmgrId rmid, uint8 info)
 static XLogRecData *
 XLogRecordAssemble(RmgrId rmid, uint8 info,
 				   XLogRecPtr RedoRecPtr, bool doPageWrites,
-				   XLogRecPtr *fpw_lsn)
+				   XLogRecPtr *fpw_lsn, TransactionId headerXid)
 {
 	XLogRecData *rdt;
 	uint32		total_len = 0;
@@ -749,7 +763,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	 * once we know where in the WAL the record will be inserted. The CRC does
 	 * not include the record header yet.
 	 */
-	rechdr->xl_xid = GetCurrentTransactionIdIfAny();
+	rechdr->xl_xid = headerXid;
 	rechdr->xl_tot_len = total_len;
 	rechdr->xl_info = info;
 	rechdr->xl_rmid = rmid;

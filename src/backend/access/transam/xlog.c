@@ -885,7 +885,6 @@ static void CleanupBackupHistory(void);
 static void UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force);
 static XLogRecord *ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 		   int emode, bool fetching_ckpt);
-static XLogRecPtr XLogInsert_Internal(RmgrId rmid, uint8 info, XLogRecData *rdata, TransactionId headerXid);
 static void CheckRecoveryConsistency(void);
 static XLogRecord *ReadCheckpointRecord(XLogReaderState *xlogreader,
 					 XLogRecPtr RecPtr, int whichChkpti, bool report);
@@ -909,7 +908,7 @@ static void rm_redo_error_callback(void *arg);
 static int	get_sync_bit(int method);
 
 /* New functions added for WAL replication */
-static void XLogProcessCheckpointRecord(XLogRecord *rec);
+static void XLogProcessCheckpointRecord(XLogReaderState *rec);
 
 static void CopyXLogRecordToWAL(int write_len, bool isLogSwitch,
 					XLogRecData *rdata,
@@ -954,19 +953,6 @@ static void WALInsertLockUpdateInsertingAt(XLogRecPtr insertingAt);
  */
 XLogRecPtr
 XLogInsertRecord(XLogRecData *rdata, XLogRecPtr fpw_lsn)
-{
-	return XLogInsert_Internal(rmid, info, rdata, GetCurrentTransactionIdIfAny());
-}
-
-XLogRecPtr
-XLogInsert_OverrideXid(RmgrId rmid, uint8 info, XLogRecData *rdata, TransactionId overrideXid)
-{
-	return XLogInsert_Internal(rmid, info, rdata, overrideXid);
-}
-
-
-static XLogRecPtr
-XLogInsert_Internal(RmgrId rmid, uint8 info, XLogRecData *rdata, TransactionId headerXid)
 {
 
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
@@ -3217,14 +3203,14 @@ XLogFileCopy(char *srcfname, int upto, XLogSegNo segno)
 		 * zeros.
 		 */
 		if (nread < sizeof(buffer))
-			memset(buffer, 0, sizeof(buffer));
+			memset(buffer.data, 0, sizeof(buffer));
 
 		if (nread > 0)
 		{
 			if (nread > sizeof(buffer))
 				nread = sizeof(buffer);
 			errno = 0;
-			if (read(srcfd, buffer, nread) != nread)
+			if (read(srcfd, buffer.data, nread) != nread)
 			{
 				if (errno != 0)
 					ereport(ERROR,
@@ -4918,7 +4904,7 @@ BootStrapXLOG(void)
 	record->xl_rmid = RM_XLOG_ID;
 	recptr += SizeOfXLogRecord;
 	/* fill the XLogRecordDataHeaderShort struct */
-	*(recptr++) = XLR_BLOCK_ID_DATA_SHORT;
+	*(recptr++) = (char) XLR_BLOCK_ID_DATA_SHORT;
 	*(recptr++) = sizeof(checkPoint);
 	memcpy(recptr, &checkPoint, sizeof(checkPoint));
 	recptr += sizeof(checkPoint);
@@ -5424,76 +5410,6 @@ exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog)
 }
 
 /*
- * Remove WAL files that are not part of the given timeline's history.
- *
- * This is called during recovery, whenever we switch to follow a new
- * timeline, and at the end of recovery when we create a new timeline. We
- * wouldn't otherwise care about extra WAL files lying in pg_xlog, but they
- * can be pre-allocated or recycled WAL segments on the old timeline that we
- * haven't used yet, and contain garbage. If we just leave them in pg_xlog,
- * they will eventually be archived, and we can't let that happen. Files that
- * belong to our timeline history are valid, because we have successfully
- * replayed them, but from others we can't be sure.
- *
- * 'switchpoint' is the current point in WAL where we switch to new timeline,
- * and 'newTLI' is the new timeline we switch to.
- */
-static void
-RemoveNonParentXlogFiles(XLogRecPtr switchpoint, TimeLineID newTLI)
-{
-	DIR		   *xldir;
-	struct dirent *xlde;
-	char		switchseg[MAXFNAMELEN];
-	XLogSegNo	endLogSegNo;
-
-	XLByteToPrevSeg(switchpoint, endLogSegNo);
-
-	xldir = AllocateDir(XLOGDIR);
-	if (xldir == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open transaction log directory \"%s\": %m",
-						XLOGDIR)));
-
-	/*
-	 * Construct a filename of the last segment to be kept.
-	 */
-	XLogFileName(switchseg, newTLI, endLogSegNo);
-
-	elog(DEBUG2, "attempting to remove WAL segments newer than log file %s",
-		 switchseg);
-
-	while ((xlde = ReadDir(xldir, XLOGDIR)) != NULL)
-	{
-		/* Ignore files that are not XLOG segments */
-		if (strlen(xlde->d_name) != 24 ||
-			strspn(xlde->d_name, "0123456789ABCDEF") != 24)
-			continue;
-
-		/*
-		 * Remove files that are on a timeline older than the new one we're
-		 * switching to, but with a segment number >= the first segment on
-		 * the new timeline.
-		 */
-		if (strncmp(xlde->d_name, switchseg, 8) < 0 &&
-			strcmp(xlde->d_name + 8, switchseg + 8) > 0)
-		{
-			/*
-			 * If the file has already been marked as .ready, however, don't
-			 * remove it yet. It should be OK to remove it - files that are
-			 * not part of our timeline history are not required for recovery
-			 * - but seems safer to let them be archived and removed later.
-			 */
-			if (!XLogArchiveIsReady(xlde->d_name))
-				RemoveXlogFile(xlde->d_name, switchpoint);
-		}
-	}
-
-	FreeDir(xldir);
-}
-
-
-/*
  * Extract timestamp from WAL record.
  *
  * If the record contains a timestamp, returns true, and saves the timestamp
@@ -5523,11 +5439,6 @@ getRecordTimestamp(XLogReaderState *record, TimestampTz *recordXtime)
 							   xact_info == XLOG_XACT_ABORT_PREPARED))
 	{
 		*recordXtime = ((xl_xact_abort *) XLogRecGetData(record))->xact_time;
-		return true;
-	}
-	if (record->xl_rmid == RM_XACT_ID && record_info == XLOG_XACT_ABORT_PREPARED)
-	{
-		*recordXtime = ((xl_xact_abort_prepared *) XLogRecGetData(record))->arec.xact_time;
 		return true;
 	}
 	return false;
@@ -5983,7 +5894,7 @@ SetCurrentChunkStartTime(TimestampTz xtime)
  * record is processed as well.
  */
 static void
-XLogProcessCheckpointRecord(XLogRecord *rec)
+XLogProcessCheckpointRecord(XLogReaderState *rec)
 {
 	CheckpointExtendedRecord ckptExtended;
 
@@ -6623,7 +6534,7 @@ StartupXLOG(void)
 	LastRec = RecPtr = checkPointLoc;
 
 	CheckpointExtendedRecord ckptExtended;
-	UnpackCheckPointRecord(record, &ckptExtended);
+	UnpackCheckPointRecord(xlogreader, &ckptExtended);
 	if (ckptExtended.ptas)
 		SetupCheckpointPreparedTransactionList(ckptExtended.ptas);
 
@@ -6631,7 +6542,7 @@ StartupXLOG(void)
 	 * Find Xacts that are distributed committed from the checkpoint record and
 	 * store them such that they can utilized later during DTM recovery.
 	 */
-	XLogProcessCheckpointRecord(record);
+	XLogProcessCheckpointRecord(xlogreader);
 
 	ereport(DEBUG1,
 			(errmsg("redo record is at %X/%X; shutdown %s",
@@ -7171,8 +7082,8 @@ StartupXLOG(void)
 					(xlogRecInfo == XLOG_CHECKPOINT_SHUTDOWN
 					 || xlogRecInfo == XLOG_CHECKPOINT_ONLINE))
 				{
-					XLogProcessCheckpointRecord(record);
-					memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
+					XLogProcessCheckpointRecord(xlogreader);
+					memcpy(&checkPoint, XLogRecGetData(xlogreader), sizeof(CheckPoint));
 				}
 
 				/*
@@ -8120,9 +8031,6 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 					 int whichChkpt, bool report)
 {
 	XLogRecord *record;
-	bool sizeOk;
-	uint32 delta_xl_tot_len;		/* delta of total len of entire record */
-	uint32 delta_xl_len;			/* delta of total len of rmgr data */
 
 	if (!XRecOffIsValid(RecPtr))
 	{
@@ -8998,7 +8906,7 @@ CreateCheckPoint(int flags)
 
 	memset(&ptrd_oldest, 0, sizeof(ptrd_oldest));
 
-	ptrd_oldest_ptr = getTwoPhaseOldestPreparedTransactionXLogRecPtr(&rdata[5]);
+	ptrd_oldest_ptr = getTwoPhaseOldestPreparedTransactionXLogRecPtr(p);
 
 	if (ptrd_oldest_ptr != NULL)
 		memcpy(&ptrd_oldest, ptrd_oldest_ptr, sizeof(ptrd_oldest));
@@ -9300,15 +9208,6 @@ CreateRestartPoint(int flags)
 	lastCheckPointEndPtr = XLogCtl->lastCheckPointEndPtr;
 	lastCheckPoint = XLogCtl->lastCheckPoint;
 	SpinLockRelease(&XLogCtl->info_lck);
-
-	if (IsStandbyMode())
-	{
-		/*
-		 * Select point at which we can truncate the log, which we base on the
-		 * prior checkpoint's earliest info.
-		*/
-		XLByteToSeg(ControlFile->checkPointCopy.redo, _logSegNo);
-	}
 
 	/*
 	 * Check that we're still in recovery mode. It's ok if we exit recovery
@@ -9635,13 +9534,9 @@ XLogPutNextOid(Oid nextOid)
 void
 XLogPutNextRelfilenode(Oid nextRelfilenode)
 {
-	XLogRecData rdata;
-
-	rdata.data = (char *) (&nextRelfilenode);
-	rdata.len = sizeof(Oid);
-	rdata.buffer = InvalidBuffer;
-	rdata.next = NULL;
-	(void) XLogInsert(RM_XLOG_ID, XLOG_NEXTRELFILENODE, &rdata);
+	XLogBeginInsert();
+	XLogRegisterData((char *) (&nextRelfilenode), sizeof(Oid));
+	(void) XLogInsert(RM_XLOG_ID, XLOG_NEXTRELFILENODE);
 }
 
 /*
@@ -12496,6 +12391,7 @@ void SignalPromote(void)
 	}
 }
 
+/* GPDB: Used for twophase global transaction */
 XLogRecPtr
 XLogLastInsertBeginLoc(void)
 {
