@@ -120,8 +120,8 @@ _bitmap_create_lov_heapandindex(Relation rel,
 		lovHeap = heap_open(heapid, AccessExclusiveLock);
 		lovIndex = index_open(idxid, AccessExclusiveLock);
 
-		RelationSetNewRelfilenode(lovHeap, RecentXmin, GetOldestMultiXactId());
-		RelationSetNewRelfilenode(lovIndex, InvalidTransactionId, InvalidMultiXactId);
+		RelationSetNewRelfilenode(lovHeap, lovHeap->rd_rel->relpersistence, RecentXmin, GetOldestMultiXactId());
+		RelationSetNewRelfilenode(lovIndex, lovIndex->rd_rel->relpersistence, InvalidTransactionId, InvalidMultiXactId);
 
 		/*
 		 * After creating the new relfilenode for a btee index, this is not
@@ -255,6 +255,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 						 /* skip_build */ false,
 						 /* concurrent */ false,
 						 /* is_internal */ true,
+						 /* if_not_exists */ true,
 						 NULL);
 	*lovIndexOid = idxid;
 

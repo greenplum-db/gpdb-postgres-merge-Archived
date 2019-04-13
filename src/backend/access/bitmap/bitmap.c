@@ -487,7 +487,7 @@ bmbulkdelete(PG_FUNCTION_ARGS)
 		result = (IndexBulkDeleteResult *)
 			palloc0(sizeof(IndexBulkDeleteResult));	
 
-	reindex_index(RelationGetRelid(rel), true);
+	reindex_index(RelationGetRelid(rel), true, rel->rd_rel->relpersistence, 0);
 
 	CommandCounterIncrement();
 
