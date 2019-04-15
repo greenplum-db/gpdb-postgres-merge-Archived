@@ -1705,6 +1705,10 @@ FigureColnameInternal(Node *node, char **name)
 			/* make GROUPING() act like a regular function */
 			*name = "grouping";
 			return 2;
+		case T_GroupId:
+			/* make GROUP_ID() act like a regular function */
+			*name = "group_id";
+			return 2;
 		case T_SubLink:
 			switch (((SubLink *) node)->subLinkType)
 			{
@@ -1815,9 +1819,6 @@ FigureColnameInternal(Node *node, char **name)
 			break;
 		case T_XmlSerialize:
 			*name = "xmlserialize";
-			return 2;
-		case T_GroupingFunc:
-			*name = "grouping";
 			return 2;
 		default:
 			break;
