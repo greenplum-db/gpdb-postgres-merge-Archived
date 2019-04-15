@@ -525,7 +525,7 @@ ErrorLogWrite(CdbSreh *cdbsreh)
 	HeapTuple	tuple;
 	char		filename[MAXPGPATH];
 	FILE	   *fp;
-	pg_crc32	crc;
+	pg_crc32c	crc;
 	int			ret;
 
 	Assert(OidIsValid(cdbsreh->relid));
@@ -562,7 +562,7 @@ ErrorLogWrite(CdbSreh *cdbsreh)
 	 */
 	if (fwrite(&tuple->t_len, 1, sizeof(tuple->t_len), fp) != sizeof(tuple->t_len))
 		elog(ERROR, "could not write tuple length: %m");
-	if (fwrite(&crc, 1, sizeof(pg_crc32), fp) != sizeof(pg_crc32))
+	if (fwrite(&crc, 1, sizeof(pg_crc32c), fp) != sizeof(pg_crc32c))
 		elog(ERROR, "could not write checksum: %m");
 	if (fwrite(tuple->t_data, 1, tuple->t_len, fp) != tuple->t_len)
 		elog(ERROR, "could not write tuple data: %m");
@@ -578,7 +578,7 @@ ErrorLogWrite(CdbSreh *cdbsreh)
  * This returns NULL whenever we see unexpected read or EOF.
  */
 static HeapTuple
-ErrorLogRead(FILE *fp, pg_crc32 *crc)
+ErrorLogRead(FILE *fp, pg_crc32c *crc)
 {
 	uint32		t_len;
 	HeapTuple	tuple = NULL;
@@ -599,7 +599,7 @@ ErrorLogRead(FILE *fp, pg_crc32 *crc)
 		ItemPointerSetInvalid(&tuple->t_self);
 		tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
-		if (fread(crc, 1, sizeof(pg_crc32), fp) != sizeof(pg_crc32))
+		if (fread(crc, 1, sizeof(pg_crc32c), fp) != sizeof(pg_crc32c))
 		{
 			tuple = NULL;
 			break;
@@ -709,7 +709,7 @@ gp_read_error_log(PG_FUNCTION_ARGS)
 	 */
 	if (context->fp)
 	{
-		pg_crc32	crc,
+		pg_crc32c	crc,
 					written_crc;
 
 		tuple = ErrorLogRead(context->fp, &written_crc);

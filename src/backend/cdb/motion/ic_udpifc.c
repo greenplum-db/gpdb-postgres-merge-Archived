@@ -4390,7 +4390,7 @@ handleAcks(ChunkTransportState *transportStates, ChunkTransportStateEntry *pEntr
 static inline void
 addCRC(icpkthdr *pkt)
 {
-	pg_crc32	local_crc;
+	pg_crc32c	local_crc;
 
 	INIT_CRC32C(local_crc);
 	COMP_CRC32C(local_crc, pkt, pkt->len);
@@ -4406,7 +4406,7 @@ addCRC(icpkthdr *pkt)
 static inline bool
 checkCRC(icpkthdr *pkt)
 {
-	pg_crc32	rx_crc,
+	pg_crc32c	rx_crc,
 				local_crc;
 
 	rx_crc = pkt->crc;

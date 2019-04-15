@@ -36,34 +36,23 @@ xlog_ao_insert(RelFileNode relFileNode, int32 segmentFileNum,
 			   int64 offset, void *buffer, int32 bufferLen)
 {
 	xl_ao_insert	xlaoinsert;
-	XLogRecData		rdata[2];
 
 	xlaoinsert.target.node = relFileNode;
 	xlaoinsert.target.segment_filenum = segmentFileNum;
 	xlaoinsert.target.offset = offset;
 
-	rdata[0].data = (char*) &xlaoinsert;
-	rdata[0].len = SizeOfAOInsert;
-	rdata[0].buffer = InvalidBuffer;
+	XLogBeginInsert();
+	XLogRegisterData((char*) &xlaoinsert, SizeOfAOInsert);
 
-	if (bufferLen == 0)
-		rdata[0].next = NULL;
-	else
-	{
-		rdata[0].next = &(rdata[1]);
-
-		rdata[1].data = (char*) buffer;
-		rdata[1].len = bufferLen;
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = NULL;
-	}
+	if (bufferLen != 0)
+		XLogRegisterData((char*) buffer, bufferLen);
 
 	SIMPLE_FAULT_INJECTOR(XLogAoInsert);
-	XLogInsert(RM_APPEND_ONLY_ID, XLOG_APPENDONLY_INSERT, rdata);
+	XLogInsert(RM_APPEND_ONLY_ID, XLOG_APPENDONLY_INSERT);
 }
 
 static void
-ao_insert_replay(XLogRecord *record)
+ao_insert_replay(XLogReaderState *record)
 {
 	char	   *dbPath;
 	char		path[MAXPGPATH];
@@ -73,7 +62,7 @@ ao_insert_replay(XLogRecord *record)
 	int			fileFlags;
 	xl_ao_insert *xlrec = (xl_ao_insert *) XLogRecGetData(record);
 	char	   *buffer = (char *) xlrec + SizeOfAOInsert;
-	uint32		len = record->xl_len - SizeOfAOInsert;
+	uint32		len = XLogRecGetDataLen(record);
 
 	dbPath = GetDatabasePath(xlrec->target.node.dbNode,
 							 xlrec->target.node.spcNode);
@@ -134,22 +123,19 @@ ao_insert_replay(XLogRecord *record)
 void xlog_ao_truncate(RelFileNode relFileNode, int32 segmentFileNum, int64 offset)
 {
 	xl_ao_truncate	xlaotruncate;
-	XLogRecData		rdata[1];
 
 	xlaotruncate.target.node = relFileNode;
 	xlaotruncate.target.segment_filenum = segmentFileNum;
 	xlaotruncate.target.offset = offset;
 
-	rdata[0].data = (char*) &xlaotruncate;
-	rdata[0].len = sizeof(xl_ao_truncate);
-	rdata[0].buffer = InvalidBuffer;
-	rdata[0].next = NULL;
+	XLogBeginInsert();
+	XLogRegisterData((char*) &xlaotruncate, sizeof(xl_ao_truncate));
 
-	XLogInsert(RM_APPEND_ONLY_ID, XLOG_APPENDONLY_TRUNCATE, rdata);
+	XLogInsert(RM_APPEND_ONLY_ID, XLOG_APPENDONLY_TRUNCATE);
 }
 
 static void
-ao_truncate_replay(XLogRecord *record)
+ao_truncate_replay(XLogReaderState *record)
 {
 	char	   *dbPath;
 	char		path[MAXPGPATH];

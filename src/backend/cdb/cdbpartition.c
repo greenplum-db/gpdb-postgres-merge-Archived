@@ -57,6 +57,7 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/ruleutils.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
@@ -1313,7 +1314,7 @@ rename_constraint(Relation rel, char *old_name, char *new_name)
 {
 	RenameStmt renamestmt;
 
-	renamestmt.renameType = OBJECT_CONSTRAINT;
+	renamestmt.renameType = OBJECT_TABCONSTRAINT;
 	renamestmt.relationType = OBJECT_TABLE;
 	renamestmt.relation = makeRangeVar(get_namespace_name(rel->rd_rel->relnamespace),
 									   RelationGetRelationName(rel), -1);
