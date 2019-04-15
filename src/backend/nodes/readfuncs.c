@@ -937,8 +937,6 @@ _readReindexStmt(void)
 	READ_ENUM_FIELD(kind,ObjectType);
 	READ_NODE_FIELD(relation);
 	READ_STRING_FIELD(name);
-	READ_BOOL_FIELD(do_system);
-	READ_BOOL_FIELD(do_user);
 	READ_OID_FIELD(relid);
 
 	READ_DONE();

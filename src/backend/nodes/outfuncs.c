@@ -2782,8 +2782,6 @@ _outReindexStmt(StringInfo str, const ReindexStmt *node)
 	WRITE_ENUM_FIELD(kind,ObjectType);
 	WRITE_NODE_FIELD(relation);
 	WRITE_STRING_FIELD(name);
-	WRITE_BOOL_FIELD(do_system);
-	WRITE_BOOL_FIELD(do_user);
 	WRITE_OID_FIELD(relid);
 }
 
