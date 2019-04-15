@@ -3388,9 +3388,6 @@ readNodeBinary(void)
 			case T_AccessPriv:
 				return_value = _readAccessPriv();
 				break;
-			case T_PrivGrantee:
-				return_value = _readPrivGrantee();
-				break;
 			case T_FuncWithArgs:
 				return_value = _readFuncWithArgs();
 				break;
