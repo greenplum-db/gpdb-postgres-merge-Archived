@@ -1545,13 +1545,26 @@ isWhenIsNotDistinctFromExpr(Node *warg)
 {
 	if (IsA(warg, A_Expr))
 	{
+#if 0
 		A_Expr *top = (A_Expr *) warg;
+		/*
+		 * GPDB_95_MERGE_FIXME: AEXPR_NOT has been removed in the upstream commit
+		 * <2146f13408cdb8>. According to it and current grammar, the top
+		 * expression is removed and we should just evaluate that the node is
+		 * of kind AEXPR_DISTINCT. However, without proper compiling yet, the
+		 * original offending code is maintained in the if'ed block for ease of
+		 * re-writing.
+		 */
 		if (top->kind == AEXPR_NOT && IsA(top->rexpr, A_Expr))
 		{
 			A_Expr *expr = (A_Expr *) top->rexpr;
 			if (expr->kind == AEXPR_DISTINCT && expr->lexpr == NULL)
 				return true;
 		}
+#else
+		elog(ERROR, "consult GPDB_95_MERGE_FIXME comment at %s near line %d",
+						__FUNCTION__, __LINE__);
+#endif
 	}
 	return false;
 }
