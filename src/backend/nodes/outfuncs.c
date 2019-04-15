@@ -3458,13 +3458,6 @@ _outGrantStmt(StringInfo str, const GrantStmt *node)
 }
 
 static void
-_outPrivGrantee(StringInfo str, const PrivGrantee *node)
-{
-	WRITE_NODE_TYPE("PRIVGRANTEE");
-	WRITE_STRING_FIELD(rolname);
-}
-
-static void
 _outFuncWithArgs(StringInfo str, const FuncWithArgs *node)
 {
 	WRITE_NODE_TYPE("FUNCWITHARGS");
@@ -3480,7 +3473,7 @@ _outGrantRoleStmt(StringInfo str, const GrantRoleStmt *node)
 	WRITE_NODE_FIELD(grantee_roles);
 	WRITE_BOOL_FIELD(is_grant);
 	WRITE_BOOL_FIELD(admin_opt);
-	WRITE_STRING_FIELD(grantor);
+	WRITE_NODE_FIELD(grantor);
 	WRITE_ENUM_FIELD(behavior, DropBehavior);
 }
 
@@ -4514,7 +4507,7 @@ _outCreateSchemaStmt(StringInfo str, const CreateSchemaStmt *node)
 	WRITE_NODE_TYPE("CREATESCHEMASTMT");
 
 	WRITE_STRING_FIELD(schemaname);
-	WRITE_STRING_FIELD(authid);
+	WRITE_NODE_FIELD(authrole);
 	WRITE_BOOL_FIELD(istemp);
 }
 
@@ -4623,7 +4616,7 @@ _outCreateTableSpaceStmt(StringInfo str, const CreateTableSpaceStmt *node)
 	WRITE_NODE_TYPE("CREATETABLESPACESTMT");
 
 	WRITE_STRING_FIELD(tablespacename);
-	WRITE_STRING_FIELD(owner);
+	WRITE_NODE_FIELD(owner);
 	WRITE_STRING_FIELD(location);
 	WRITE_NODE_FIELD(options);
 }
@@ -5254,9 +5247,6 @@ _outNode(StringInfo str, const void *obj)
 
 			case T_GrantStmt:
 				_outGrantStmt(str, obj);
-				break;
-			case T_PrivGrantee:
-				_outPrivGrantee(str, obj);
 				break;
 			case T_FuncWithArgs:
 				_outFuncWithArgs(str, obj);
