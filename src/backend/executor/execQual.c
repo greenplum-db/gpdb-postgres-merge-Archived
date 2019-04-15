@@ -75,12 +75,6 @@ static bool isAssignmentIndirectionExpr(ExprState *exprstate);
 static Datum ExecEvalAggref(AggrefExprState *aggref,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalGrouping(ExprState *gstate,
-						  ExprContext *econtext,
-						  bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalGroupId(ExprState *gstate,
-						 ExprContext *econtext,
-						 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalWindowFunc(WindowFuncExprState *wfunc,
 				   ExprContext *econtext,
 				   bool *isNull, ExprDoneCond *isDone);
@@ -194,6 +188,12 @@ static Datum ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 						bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
 					  bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalGroupingFuncExpr(GroupingFuncExprState *gstate,
+						 ExprContext *econtext,
+						 bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalGroupIdExpr(GroupIdExprState *gstate,
+					ExprContext *econtext,
+					bool *isNull, ExprDoneCond *isDone);
 
 static Datum ExecEvalPartSelectedExpr(PartSelectedExprState *exprstate,
 						ExprContext *econtext,
@@ -565,40 +565,6 @@ ExecEvalAggref(AggrefExprState *aggref, ExprContext *econtext,
 
 	*isNull = econtext->ecxt_aggnulls[aggref->aggno];
 	return econtext->ecxt_aggvalues[aggref->aggno];
-}
-
-/*----------------------------------------------------------------
- *		ExecEvalGrouping
- *
- *		Returns a Datum whose value is the value of a GROUPING
- *		with respect to the given context.
- */
-static Datum
-ExecEvalGrouping(ExprState *gstate, ExprContext *econtext,
-				 bool *isNull, ExprDoneCond *isDone)
-{
-	if (isDone)
-		*isDone = ExprSingleResult;
-
-	*isNull = false;
-	return Int64GetDatum(econtext->grouping);
-}
-
-/*----------------------------------------------------------------
- *		ExecEvalGroupId
- *
- *		Returns a Datum whose value is the value of a GROUP_ID
- *		with respect to the given context.
- */
-static Datum
-ExecEvalGroupId(ExprState *gstate, ExprContext *econtext,
-				bool *isNull, ExprDoneCond *isDone)
-{
-	if (isDone)
-		*isDone = ExprSingleResult;
-
-	*isNull = false;
-	return UInt32GetDatum(econtext->group_id);
 }
 
 /* ----------------------------------------------------------------
@@ -5442,9 +5408,15 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			break;
 		case T_GroupId:
 			{
-				ExprState *gstate = makeNode(ExprState);
-				gstate->evalfunc = (ExprStateEvalFunc) ExecEvalGroupId;
-				state = (ExprState *) gstate;
+				GroupIdExprState *grp_state = makeNode(GroupIdExprState);
+
+				if (!parent || !IsA(parent, AggState) || !IsA(parent->plan, Agg))
+					elog(ERROR, "parent of GROUP_ID is not Agg node");
+
+				grp_state->aggstate = (AggState *) parent;
+
+				state = (ExprState *) grp_state;
+				state->evalfunc = (ExprStateEvalFunc) ExecEvalGroupIdExpr;
 			}
 			break;
 		case T_WindowFunc:
