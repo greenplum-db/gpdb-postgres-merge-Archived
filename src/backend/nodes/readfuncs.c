@@ -1144,7 +1144,7 @@ _readAlterRoleStmt(void)
 {
 	READ_LOCALS(AlterRoleStmt);
 
-	READ_STRING_FIELD(role);
+	READ_NODE_FIELD(role);
 	READ_NODE_FIELD(options);
 	READ_INT_FIELD(action);
 
@@ -1156,7 +1156,7 @@ _readAlterRoleSetStmt(void)
 {
 	READ_LOCALS(AlterRoleSetStmt);
 
-	READ_STRING_FIELD(role);
+	READ_NODE_FIELD(role);
 	READ_NODE_FIELD(setstmt);
 
 	READ_DONE();
@@ -1189,7 +1189,7 @@ _readAlterOwnerStmt(void)
 	READ_NODE_FIELD(relation);
 	READ_NODE_FIELD(object);
 	READ_NODE_FIELD(objarg);
-	READ_STRING_FIELD(newowner);
+	READ_NODE_FIELD(newowner);
 
 	READ_DONE();
 }
@@ -1472,6 +1472,20 @@ _readGroupingFunc(void)
 	READ_NODE_FIELD(args);
 	READ_NODE_FIELD(refs);
 	READ_NODE_FIELD(cols);
+	READ_INT_FIELD(agglevelsup);
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+/*
+ * _readGroupId
+ */
+static GroupId *
+_readGroupId(void)
+{
+	READ_LOCALS(GroupId);
+
 	READ_INT_FIELD(agglevelsup);
 	READ_LOCATION_FIELD(location);
 
@@ -2551,7 +2565,7 @@ _readCreateSchemaStmt(void)
 	READ_LOCALS(CreateSchemaStmt);
 
 	READ_STRING_FIELD(schemaname);
-	READ_STRING_FIELD(authid);
+	READ_NODE_FIELD(authrole);
 	local_node->schemaElts = 0;
 	READ_BOOL_FIELD(istemp);
 
@@ -2830,16 +2844,6 @@ _readGrantStmt(void)
 	READ_DONE();
 }
 
-static PrivGrantee *
-_readPrivGrantee(void)
-{
-	READ_LOCALS(PrivGrantee);
-
-	READ_STRING_FIELD(rolname);
-
-	READ_DONE();
-}
-
 static FuncWithArgs *
 _readFuncWithArgs(void)
 {
@@ -2861,7 +2865,7 @@ _readGrantRoleStmt(void)
 	READ_NODE_FIELD(grantee_roles);
 	READ_BOOL_FIELD(is_grant);
 	READ_BOOL_FIELD(admin_opt);
-	READ_STRING_FIELD(grantor);
+	READ_NODE_FIELD(grantor);
 	READ_ENUM_FIELD(behavior, DropBehavior);
 
 	READ_DONE();
@@ -3287,8 +3291,6 @@ parseNodeString(void)
 		return_value = _readPgPartRule();
 	else if (MATCHX("PARTITIONRULE"))
 		return_value = _readPartitionRule();
-	else if (MATCHX("PRIVGRANTEE"))
-		return_value = _readPrivGrantee();
 	else if (MATCHX("REINDEXSTMT"))
 		return_value = _readReindexStmt();
 	else if (MATCHX("RENAMESTMT"))
