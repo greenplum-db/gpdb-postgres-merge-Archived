@@ -1251,7 +1251,18 @@ addRangeTableEntry(ParseState *pstate,
 		{
 			lockmode = RowShareLock;
 		}
+		/*
+		 * GPDB_95_MERGE_FIXME: noWait has been removed from struct
+		 * LockingClause. That probably means that either
+		 * try_relation_open() is in need of re-writing or deprecation,
+		 * or that we need to add noWait back in LockingClause.
+		 */
+#if 0
 		nowait = locking->noWait;
+#else
+		elog(ERROR, "consult GPDB_95_MERGE_FIXME in %s near %d",
+				__FUNCTION__, __LINE__);
+#endif
 	}
 
 	/*
