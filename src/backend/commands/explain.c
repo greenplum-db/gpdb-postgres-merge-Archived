@@ -2534,11 +2534,13 @@ show_windowagg_keys(WindowAggState *waggstate, List *ancestors, ExplainState *es
 	{
 		show_sort_group_keys((PlanState *) outerPlanState(waggstate), "Partition By",
 							 window->partNumCols, window->partColIdx,
+							 NULL, NULL, NULL,
 							 ancestors, es);
 	}
 
 	show_sort_group_keys((PlanState *) outerPlanState(waggstate), "Order By",
 						 window->ordNumCols, window->ordColIdx,
+						 NULL, NULL, NULL,
 						 ancestors, es);
 	ancestors = list_delete_first(ancestors);
 
