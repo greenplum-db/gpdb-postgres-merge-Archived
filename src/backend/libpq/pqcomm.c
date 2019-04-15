@@ -146,8 +146,6 @@ static char PqRecvBuffer[PQ_RECV_BUFFER_SIZE];
 static int	PqRecvPointer;		/* Next index to read a byte from PqRecvBuffer */
 static int	PqRecvLength;		/* End of data available in PqRecvBuffer */
 
-static pthread_mutex_t send_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 /*
  * Message status
  */
@@ -170,7 +168,6 @@ static void socket_endcopyout(bool errorAbort);
 static int	internal_putbytes(const char *s, size_t len);
 static int	internal_flush(void);
 static void socket_set_nonblocking(bool nonblocking);
-static bool pq_send_mutex_lock();
 
 #ifdef HAVE_UNIX_SOCKETS
 static int	Lock_AF_UNIX(char *unixSocketDir, char *unixSocketPath);
@@ -1380,77 +1377,6 @@ pq_getmessage(StringInfo s, int maxlen)
 	return 0;
 }
 
-/*
- * Wrapper of simple pthread locking functionality, using pthread_mutex_trylock
- * and loop to make it interruptible when waiting the lock;
- *
- * return true if successfully acquires the lock, false if unable to get the lock
- * and interrupted by SIGTERM, otherwise, infinitely loop to acquire the mutex.
- *
- * If we are going to return false, we close the socket to client; this is crucial
- * for exiting dispatch thread if it is stuck on sending NOTICE to client, and hence
- * avoid mutex deadlock;
- *
- * NOTE: should not call CHECK_FOR_INTERRUPTS and ereport in this routine, since
- * it is in multi-thread context;
- */
-static bool
-pq_send_mutex_lock()
-{
-	int count = PQ_BUSY_TEST_COUNT_IN_EXITING;
-	int mutex_res;
-
-	do
-	{
-		mutex_res = pthread_mutex_trylock(&send_mutex);
-
-		if (mutex_res == 0)
-		{
-			return true;
-		}
-
-		if (mutex_res == EBUSY)
-		{
-			/* No need to acquire lock for TermSignalReceived, since we are in
- 			 * a loop here */
-			if (TermSignalReceived)
-			{
-				/*
- 				 * try PQ_BUSY_TEST_COUNT_IN_EXITING times before going to
- 				 * close the socket, in case real concurrent writing is in
- 				 * progress(compared to stuck send call in secure_write);
- 				 *
- 				 * It cannot help completely eliminate the false negative
- 				 * cases, but giving the process is exiting, it is acceptable
- 				 * to discard some messages, contrasted with the chance of
- 				 * infinite stuck;
- 				 */
-				if (count-- < 0)
-				{
-					/* On Redhat and Suse, simple closing the socket would not get
-					 * send() out of hanging state, shutdown() can do this(though not
-					 * explicitly mentioned in manual page); however, if send over a
-					 * socket which has been shutdown, process would be terminated by
-					 * SIGPIPE; to avoid this race condition, we set the socket to be
-					 * invalid before calling shutdown()
-					 *
-					 * On OSX, close() can get send() out of hanging state, while
-					 * shutdown() would lead to SIGPIPE */
-					int saved_fd = MyProcPort->sock;
-					MyProcPort->sock = -1;
-					whereToSendOutput = DestNone;
-#ifndef __darwin__
-					shutdown(saved_fd, SHUT_WR);
-#endif
-					closesocket(saved_fd);
-					return false;
-				}
-			}
-		}
-		pg_usleep(1000L);
-	} while (true);
-}
-
 
 /* --------------------------------
  *		pq_putbytes		- send bytes to connection (not flushed until pq_flush)
@@ -1465,14 +1391,12 @@ pq_putbytes(const char *s, size_t len)
 
 	/* Should only be called by old-style COPY OUT */
 	Assert(DoingCopyOut);
-	if (!pq_send_mutex_lock())
-	{
-		return EOF;
-	}
-
+	/* No-op if reentrant call */
+	if (PqCommBusy)
+		return 0;
+	PqCommBusy = true;
 	res = internal_putbytes(s, len);
-
-	pthread_mutex_unlock(&send_mutex);
+	PqCommBusy = false;
 	return res;
 }
 
@@ -1512,28 +1436,13 @@ socket_flush(void)
 {
 	int			res;
 
-	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
-	{
-		if (!pq_send_mutex_lock())
-		{
-			return EOF;
-		}
-	}
-
 	/* No-op if reentrant call */
 	if (PqCommBusy)
-	{
-		if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
-			pthread_mutex_unlock(&send_mutex);
 		return 0;
-	}
 	PqCommBusy = true;
 	socket_set_nonblocking(false);
 	res = internal_flush();
 	PqCommBusy = false;
-
-	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
-		pthread_mutex_unlock(&send_mutex);
 	return res;
 }
 
@@ -1631,21 +1540,9 @@ socket_flush_if_writable(void)
 	if (PqSendPointer == PqSendStart)
 		return 0;
 
-	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
-	{
-		if (!pq_send_mutex_lock())
-		{
-			return EOF;
-		}
-	}
-
 	/* No-op if reentrant call */
 	if (PqCommBusy)
-	{
-		if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
-			pthread_mutex_unlock(&send_mutex);
 		return 0;
-	}
 
 	/* Temporarily put the socket into non-blocking mode */
 	socket_set_nonblocking(true);
@@ -1653,8 +1550,6 @@ socket_flush_if_writable(void)
 	PqCommBusy = true;
 	res = internal_flush();
 	PqCommBusy = false;
-	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
-		pthread_mutex_unlock(&send_mutex);
 	return res;
 }
 
@@ -1702,18 +1597,11 @@ socket_is_send_pending(void)
 static int
 socket_putmessage(char msgtype, const char *s, size_t len)
 {
-	if (DoingCopyOut)
+	if (DoingCopyOut || PqCommBusy)
 	{
 		return EOF;
 	}
-
-	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
-	{
-		if (!pq_send_mutex_lock())
-		{
-			return EOF;
-		}
-	}
+	PqCommBusy = true;
 
 	if (msgtype)
 	{
@@ -1732,16 +1620,11 @@ socket_putmessage(char msgtype, const char *s, size_t len)
 
 	if (internal_putbytes(s, len))
 		goto fail;
-
-	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
-		pthread_mutex_unlock(&send_mutex);
-
+	PqCommBusy = false;
 	return 0;
 
 fail:
-	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
-		pthread_mutex_unlock(&send_mutex);
-
+	PqCommBusy = false;
 	return EOF;
 }
 
@@ -1781,13 +1664,7 @@ socket_putmessage_noblock(char msgtype, const char *s, size_t len)
 static void
 socket_startcopyout(void)
 {
-	if (!pq_send_mutex_lock())
-	{
-		/* no need to return a status, since socket has been closed in failed cases */
-		return;
-	}
 	DoingCopyOut = true;
-	pthread_mutex_unlock(&send_mutex);
 }
 
 /* --------------------------------
@@ -1808,12 +1685,7 @@ socket_endcopyout(bool errorAbort)
 	if (errorAbort)
 		pq_putbytes("\n\n\\.\n", 5);
 	/* in non-error case, copy.c will have emitted the terminator line */
-	if (!pq_send_mutex_lock())
-	{
-		return;
-	}
 	DoingCopyOut = false;
-	pthread_mutex_unlock(&send_mutex);
 }
 
 /*
