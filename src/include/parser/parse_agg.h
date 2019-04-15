@@ -58,6 +58,4 @@ extern void build_aggregate_serialfn_expr(Oid serialfn_oid,
 extern void build_aggregate_deserialfn_expr(Oid deserialfn_oid,
 								Expr **deserialfnexpr);
 
-extern bool checkExprHasGroupExtFuncs(Node *node);
-
 #endif   /* PARSE_AGG_H */
