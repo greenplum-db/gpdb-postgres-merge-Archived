@@ -1729,9 +1729,6 @@ _outNode(StringInfo str, void *obj)
 			case T_AccessPriv:
 				_outAccessPriv(str, obj);
 				break;
-			case T_PrivGrantee:
-				_outPrivGrantee(str, obj);
-				break;
 			case T_FuncWithArgs:
 				_outFuncWithArgs(str, obj);
 				break;
