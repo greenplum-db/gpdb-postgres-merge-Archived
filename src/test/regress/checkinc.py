@@ -86,7 +86,15 @@ fileset = {
     # a path. Don't be alarmed by that.
     'api.h':                 [],
     'valgrind/memcheck.h':   [],
-    'zstd.h':                []
+    'zstd.h':                [],
+    # perl devel libraries for plperl
+    'EXTERN.h':              [],
+    'perl.h':                [],
+    'XSUB.h':                [],
+    # Python devel libraries for plpython
+    'Python.h':              [],
+    'compile.h':             [],
+    'eval.h':                []
 }
 
 
