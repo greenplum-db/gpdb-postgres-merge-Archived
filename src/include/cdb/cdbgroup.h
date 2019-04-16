@@ -35,18 +35,6 @@ extern bool cdbpathlocus_collocates_expressions(PlannerInfo *root, CdbPathLocus 
 											   bool exact_match);
 
 extern CdbPathLocus cdbpathlocus_from_flow(Flow *flow);
-extern void generate_three_tlists(List *tlist,
-								  bool twostage,
-								  List *sub_tlist,
-								  Node *havingQual,
-								  int numGroupCols,
-								  AttrNumber *groupColIdx,
-								  Oid *groupOperators,
-								  PlannerInfo *root,
-								  List **p_tlist1,
-								  List **p_tlist2,
-								  List **p_tlist3,
-								  List **p_final_qual);
 extern Plan *add_second_stage_agg(PlannerInfo *root,
 								  List *prelim_tlist,
 								  List *final_tlist,
