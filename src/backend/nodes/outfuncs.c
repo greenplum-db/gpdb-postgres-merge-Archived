@@ -2840,7 +2840,7 @@ _outReassignOwnedStmt(StringInfo str, const ReassignOwnedStmt *node)
 	WRITE_NODE_TYPE("REASSIGNOWNEDSTMT");
 
 	WRITE_NODE_FIELD(roles);
-	WRITE_STRING_FIELD(newrole);
+	WRITE_NODE_FIELD(newrole);
 }
 
 static void
@@ -2966,7 +2966,7 @@ _outAlterRoleStmt(StringInfo str, const AlterRoleStmt *node)
 {
 	WRITE_NODE_TYPE("ALTERROLESTMT");
 
-	WRITE_STRING_FIELD(role);
+	WRITE_NODE_FIELD(role);
 	WRITE_NODE_FIELD(options);
 	WRITE_INT_FIELD(action);
 }
@@ -2976,7 +2976,7 @@ _outAlterRoleSetStmt(StringInfo str, const AlterRoleSetStmt *node)
 {
 	WRITE_NODE_TYPE("ALTERROLESETSTMT");
 
-	WRITE_STRING_FIELD(role);
+	WRITE_NODE_FIELD(role);
 	WRITE_NODE_FIELD(setstmt);
 }
 
@@ -2990,7 +2990,7 @@ _outAlterOwnerStmt(StringInfo str, const AlterOwnerStmt *node)
 	WRITE_NODE_FIELD(relation);
 	WRITE_NODE_FIELD(object);
 	WRITE_NODE_FIELD(objarg);
-	WRITE_STRING_FIELD(newowner);
+	WRITE_NODE_FIELD(newowner);
 }
 
 
