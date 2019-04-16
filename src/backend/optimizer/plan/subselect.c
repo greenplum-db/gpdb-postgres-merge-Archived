@@ -1041,27 +1041,22 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 												   splan->plan_id);
 
 	/* Label the subplan for EXPLAIN purposes */
-	StringInfo buf = makeStringInfo();
-
-	appendStringInfo(splan->plan_name, "%s %d",
-					 isInitPlan ? "InitPlan" : "SubPlan",
-					 splan->plan_id);
+	splan->plan_name = palloc(32 + 12 * list_length(splan->setParam));
+	sprintf(splan->plan_name, "%s %d",
+			isInitPlan ? "InitPlan" : "SubPlan",
+			splan->plan_id);
 	if (splan->setParam)
 	{
+		char	   *ptr = splan->plan_name + strlen(splan->plan_name);
 
-		appendStringInfo(buf, " (returns ");
+		ptr += sprintf(ptr, " (returns ");
 		foreach(lc, splan->setParam)
 		{
-			appendStringInfo(buf, "$%d%s",
-							 lfirst_int(lc),
-							 lnext(lc) ? "," : ")");
+			ptr += sprintf(ptr, "$%d%s",
+						   lfirst_int(lc),
+						   lnext(lc) ? "," : ")");
 		}
-		splan->plan_name = pstrdup(buf->data);
-		pfree(buf->data);
-		pfree(buf);
-		buf = NULL;
 	}
-
 
 	/* Lastly, fill in the cost estimates for use later */
 	cost_subplan(root, splan, plan);
