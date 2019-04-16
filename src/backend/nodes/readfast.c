@@ -427,6 +427,17 @@ _readResTarget(void)
 	READ_DONE();
 }
 
+static MultiAssignRef *
+_readMultiAssignRef(void)
+{
+	READ_LOCALS(MultiAssignRef);
+
+	READ_NODE_FIELD(source);
+	READ_INT_FIELD(colno);
+	READ_INT_FIELD(ncolumns);
+
+	READ_DONE();
+}
 /*
  * _readConstraint
  */
@@ -510,7 +521,7 @@ _readReindexStmt(void)
 {
 	READ_LOCALS(ReindexStmt);
 
-	READ_ENUM_FIELD(kind,ObjectType); Assert(local_node->kind <= OBJECT_VIEW);
+	READ_ENUM_FIELD(kind,ObjectType);
 	READ_NODE_FIELD(relation);
 	READ_STRING_FIELD(name);
 	READ_OID_FIELD(relid);
@@ -1853,6 +1864,33 @@ _readWorkTableScan(void)
 	READ_DONE();
 }
 
+static CustomScan *
+_readCustomScan(void)
+{
+	READ_LOCALS(CustomScan);
+
+	readScanInfo((Scan *)local_node);
+
+	READ_UINT_FIELD(flags);
+	READ_NODE_FIELD(custom_plans);
+	READ_NODE_FIELD(custom_exprs);
+	READ_NODE_FIELD(custom_private);
+	READ_NODE_FIELD(custom_scan_tlist);
+	READ_BITMAPSET_FIELD(custom_relids);
+
+	READ_DONE();
+}
+
+static SampleScan *
+_readSampleScan(void)
+{
+	READ_LOCALS(SampleScan);
+
+	readScanInfo((Scan *)local_node);
+
+	READ_DONE();
+}
+
 /*
  * _readTidScan
  */
@@ -2807,6 +2845,21 @@ _readDistributedBy(void)
 	READ_DONE();
 }
 
+static ImportForeignSchemaStmt*
+_readImportForeignSchemaStmt(void)
+{
+	READ_LOCALS(ImportForeignSchemaStmt);
+
+	READ_STRING_FIELD(server_name);
+	READ_STRING_FIELD(remote_schema);
+	READ_STRING_FIELD(local_schema);
+	READ_ENUM_FIELD(list_type, ImportForeignSchemaType);
+	READ_NODE_FIELD(table_list);
+	READ_NODE_FIELD(options);
+
+	READ_DONE();
+}
+
 static AlterFdwStmt *
 _readAlterFdwStmt(void)
 {
@@ -3163,6 +3216,12 @@ readNodeBinary(void)
 			case T_ForeignScan:
 				return_value = _readForeignScan();
 				break;
+			case T_CustomScan:
+				return_value = _readCustomScan();
+				break;
+			case T_SampleScan:
+				return_value = _readSampleScan();
+				break;
 			case T_Join:
 				return_value = _readJoin();
 				break;
@@ -3364,6 +3423,9 @@ readNodeBinary(void)
 			case T_CurrentOfExpr:
 				return_value = _readCurrentOfExpr();
 				break;
+			case T_InferenceElem:
+				return_value = _readInferenceElem();
+				break;
 			case T_TargetEntry:
 				return_value = _readTargetEntry();
 				break;
@@ -3378,6 +3440,9 @@ readNodeBinary(void)
 				break;
 			case T_FromExpr:
 				return_value = _readFromExpr();
+				break;
+			case T_OnConflictExpr:
+				return_value = _readOnConflictExpr();
 				break;
 			case T_Flow:
 				return_value = _readFlow();
@@ -3691,6 +3756,12 @@ readNodeBinary(void)
 			case T_CommonTableExpr:
 				return_value = _readCommonTableExpr();
 				break;
+			case T_RangeTableSample:
+				return_value = _readRangeTableSample();
+				break;
+			case T_TableSampleClause:
+				return_value = _readTableSampleClause();
+				break;
 			case T_SetOperationStmt:
 				return_value = _readSetOperationStmt();
 				break;
@@ -3717,6 +3788,9 @@ readNodeBinary(void)
 				break;
 			case T_ResTarget:
 				return_value = _readResTarget();
+				break;
+			case T_MultiAssignRef:
+				return_value = _readMultiAssignRef();
 				break;
 			case T_Constraint:
 				return_value = _readConstraint();
@@ -3865,6 +3939,9 @@ readNodeBinary(void)
 				break;
 			case T_DistributedBy:
 				return_value = _readDistributedBy();
+				break;
+			case T_ImportForeignSchemaStmt:
+				return_value = _readImportForeignSchemaStmt();
 				break;
 			case T_AlterTableMoveAllStmt:
 				return_value = _readAlterTableMoveAllStmt();

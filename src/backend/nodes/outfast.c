@@ -1243,6 +1243,23 @@ _outAlterUserMappingStmt(StringInfo str, AlterUserMappingStmt *node)
 }
 
 static void
+_outCustomScan(StringInfo str, const CustomScan *node)
+{
+	WRITE_NODE_TYPE("CUSTOMSCAN");
+
+	_outScanInfo(str, (const Scan *) node);
+
+	WRITE_UINT_FIELD(flags);
+	WRITE_NODE_FIELD(custom_plans);
+	WRITE_NODE_FIELD(custom_exprs);
+	WRITE_NODE_FIELD(custom_private);
+	WRITE_NODE_FIELD(custom_scan_tlist);
+	WRITE_BITMAPSET_FIELD(custom_relids);
+	
+	/* GPDB_95_MERGE_FIXME: is node->methods needed? */
+}
+
+static void
 _outDropUserMappingStmt(StringInfo str, DropUserMappingStmt *node)
 {
 	WRITE_NODE_TYPE("DROPUSERMAPPINGSTMT");
@@ -1377,6 +1394,12 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_ForeignScan:
 				_outForeignScan(str, obj);
+				break;
+			case T_CustomScan:
+				_outCustomScan(str, obj);
+				break;
+			case T_SampleScan:
+				_outSampleScan(str, obj);
 				break;
 			case T_ExternalScan:
 				_outExternalScan(str, obj);
@@ -1615,6 +1638,9 @@ _outNode(StringInfo str, void *obj)
 			case T_CurrentOfExpr:
 				_outCurrentOfExpr(str, obj);
 				break;
+			case T_InferenceElem:
+				_outInferenceElem(str, obj);
+				break;
 			case T_TargetEntry:
 				_outTargetEntry(str, obj);
 				break;
@@ -1633,7 +1659,9 @@ _outNode(StringInfo str, void *obj)
 			case T_Flow:
 				_outFlow(str, obj);
 				break;
-
+			case T_OnConflictExpr:
+				_outOnConflictExpr(str, obj);
+				break;
 			case T_Path:
 				_outPath(str, obj);
 				break;
@@ -2012,6 +2040,12 @@ _outNode(StringInfo str, void *obj)
 			case T_CommonTableExpr:
 				_outCommonTableExpr(str, obj);
 				break;
+			case T_RangeTableSample:
+				_outRangeTableSample(str, obj);
+				break;
+			case T_TableSampleClause:
+				_outTableSampleClause(str, obj);
+				break;
 			case T_SetOperationStmt:
 				_outSetOperationStmt(str, obj);
 				break;
@@ -2044,6 +2078,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_ResTarget:
 				_outResTarget(str, obj);
+				break;
+			case T_MultiAssignRef:
+				_outMultiAssignRef(str, obj);
 				break;
 			case T_Constraint:
 				_outConstraint(str, obj);
@@ -2229,6 +2266,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_DistributedBy:
 				_outDistributedBy(str, obj);
+				break;
+			case T_ImportForeignSchemaStmt:
+				_outImportForeignSchemaStmt(str, obj);
 				break;
 			case T_AlterTableMoveAllStmt:
 				_outAlterTableMoveAllStmt(str, obj);
