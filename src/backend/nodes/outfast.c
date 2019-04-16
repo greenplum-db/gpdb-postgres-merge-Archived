@@ -1227,7 +1227,7 @@ _outCreateUserMappingStmt(StringInfo str, CreateUserMappingStmt *node)
 {
 	WRITE_NODE_TYPE("CREATEUSERMAPPINGSTMT");
 
-	WRITE_STRING_FIELD(username);
+	WRITE_NODE_FIELD(user);
 	WRITE_STRING_FIELD(servername);
 	WRITE_NODE_FIELD(options);
 }
@@ -1237,7 +1237,7 @@ _outAlterUserMappingStmt(StringInfo str, AlterUserMappingStmt *node)
 {
 	WRITE_NODE_TYPE("ALTERUSERMAPPINGSTMT");
 
-	WRITE_STRING_FIELD(username);
+	WRITE_NODE_FIELD(user);
 	WRITE_STRING_FIELD(servername);
 	WRITE_NODE_FIELD(options);
 }
@@ -1247,7 +1247,7 @@ _outDropUserMappingStmt(StringInfo str, DropUserMappingStmt *node)
 {
 	WRITE_NODE_TYPE("DROPUSERMAPPINGSTMT");
 
-	WRITE_STRING_FIELD(username);
+	WRITE_NODE_FIELD(user);
 	WRITE_STRING_FIELD(servername);
 	WRITE_BOOL_FIELD(missing_ok);
 }
