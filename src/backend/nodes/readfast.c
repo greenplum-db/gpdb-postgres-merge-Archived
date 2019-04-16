@@ -551,7 +551,7 @@ _readReassignOwnedStmt(void)
 	READ_LOCALS(ReassignOwnedStmt);
 
 	READ_NODE_FIELD(roles);
-	READ_STRING_FIELD(newrole);
+	READ_NODE_FIELD(newrole);
 
 	READ_DONE();
 }
@@ -632,7 +632,7 @@ _readAlterOwnerStmt(void)
 	READ_NODE_FIELD(relation);
 	READ_NODE_FIELD(object);
 	READ_NODE_FIELD(objarg);
-	READ_STRING_FIELD(newowner);
+	READ_NODE_FIELD(newowner);
 
 	READ_DONE();
 }
@@ -1395,7 +1395,7 @@ _readGrantRoleStmt(void)
 	READ_NODE_FIELD(grantee_roles);
 	READ_BOOL_FIELD(is_grant);
 	READ_BOOL_FIELD(admin_opt);
-	READ_STRING_FIELD(grantor);
+	READ_NODE_FIELD(grantor);
 	READ_ENUM_FIELD(behavior, DropBehavior); Assert(local_node->behavior <= DROP_CASCADE);
 
 	READ_DONE();
@@ -2506,7 +2506,7 @@ _readCreateTableSpaceStmt(void)
 	READ_LOCALS(CreateTableSpaceStmt);
 
 	READ_STRING_FIELD(tablespacename);
-	READ_STRING_FIELD(owner);
+	READ_NODE_FIELD(owner);
 	READ_STRING_FIELD(location);
 	READ_NODE_FIELD(options);
 
@@ -2851,7 +2851,7 @@ _readCreateUserMappingStmt(void)
 {
 	READ_LOCALS(CreateUserMappingStmt);
 
-	READ_STRING_FIELD(username);
+	READ_NODE_FIELD(user);
 	READ_STRING_FIELD(servername);
 	READ_NODE_FIELD(options);
 
@@ -2863,7 +2863,7 @@ _readAlterUserMappingStmt(void)
 {
 	READ_LOCALS(AlterUserMappingStmt);
 
-	READ_STRING_FIELD(username);
+	READ_NODE_FIELD(user);
 	READ_STRING_FIELD(servername);
 	READ_NODE_FIELD(options);
 
@@ -2875,7 +2875,7 @@ _readDropUserMappingStmt(void)
 {
 	READ_LOCALS(DropUserMappingStmt);
 
-	READ_STRING_FIELD(username);
+	READ_NODE_FIELD(user);
 	READ_STRING_FIELD(servername);
 	READ_BOOL_FIELD(missing_ok);
 
