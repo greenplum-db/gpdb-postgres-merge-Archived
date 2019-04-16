@@ -3015,7 +3015,7 @@ DESCR("statistics: reset collected statistics for a single function in the curre
 
 DATA(insert OID = 3163 (  pg_trigger_depth				PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 23 "" _null_ _null_ _null_ _null_ _null_ pg_trigger_depth _null_ _null_ _null_ ));
 DESCR("current trigger depth");
-DATA(insert OID = 3778 ( pg_tablespace_location PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 25 "26" _null_ _null_ _null_ _null  _null_ pg_tablespace_location _null_ _null_ _null_ ));
+DATA(insert OID = 3778 ( pg_tablespace_location PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 25 "26" _null_ _null_ _null_ _null_ _null_ pg_tablespace_location _null_ _null_ _null_ ));
 DESCR("tablespace location");
 
 DATA(insert OID = 1946 (  encode						PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 25 "17 25" _null_ _null_ _null_ _null_ _null_ binary_encode _null_ _null_ _null_ ));
