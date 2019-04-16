@@ -179,7 +179,7 @@ bool		optimize_bounded_sort = true;
  */
 typedef struct
 {
-	MemTuple	tuple;			/* the tuple proper */
+	void		*tuple;			/* the tuple proper */
 	Datum		datum1;			/* value of first key column */
 	bool		isnull1;		/* is first key column NULL? */
 	int			tupindex;		/* see notes above */
