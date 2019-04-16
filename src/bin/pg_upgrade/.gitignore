@@ -6,3 +6,6 @@
 /delete_old_cluster.bat
 /log/
 /tmp_check/
+
+# GPDB files
+/aomd_filehandler.c

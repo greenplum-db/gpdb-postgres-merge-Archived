@@ -19,9 +19,6 @@ all:
 	$(MAKE) -C contrib/dblink all
 	$(MAKE) -C contrib/indexscan all
 	$(MAKE) -C contrib/pageinspect all  # needed by src/test/isolation
-	$(MAKE) -C contrib/pg_upgrade_support all
-	$(MAKE) -C contrib/pg_upgrade all
-	$(MAKE) -C contrib/pg_xlogdump all
 	$(MAKE) -C contrib/hstore all
 	$(MAKE) -C contrib/pgcrypto all
 	$(MAKE) -C gpAux/extensions all
@@ -52,9 +49,6 @@ install:
 	$(MAKE) -C contrib/dblink $@
 	$(MAKE) -C contrib/indexscan $@ 
 	$(MAKE) -C contrib/pageinspect $@  # needed by src/test/isolation
-	$(MAKE) -C contrib/pg_upgrade_support $@
-	$(MAKE) -C contrib/pg_upgrade $@
-	$(MAKE) -C contrib/pg_xlogdump $@
 	$(MAKE) -C contrib/hstore $@
 	$(MAKE) -C contrib/pgcrypto $@
 	$(MAKE) -C gpMgmt $@
@@ -163,7 +157,7 @@ installcheck-world: installcheck-gpcheckcat
 installcheck-gpcheckcat:
 	gpcheckcat -A
 $(call recurse,installcheck-world,gpcontrib/gp_replica_check,installcheck)
-$(call recurse,installcheck-world,contrib/pg_upgrade,check)
+$(call recurse,installcheck-world,src/bin/pg_upgrade,check)
 
 # Run mock tests, that don't require a running server. Arguably these should
 # be part of [install]check-world, but we treat them more like part of

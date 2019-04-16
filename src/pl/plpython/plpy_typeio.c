@@ -1149,7 +1149,7 @@ PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string, bool 
 	if (!HeapTupleIsValid(typeTup))
 		elog(ERROR, "cache lookup failed for type %u", desc->tdtypeid);
 
-	PLy_output_datum_func2(&locinfo->out.d, typeTup,
+	PLy_output_datum_func2(&locinfo.out.d, typeTup,
 						   exec_ctx->curr_proc->langid,
 						   exec_ctx->curr_proc->trftypes);
 

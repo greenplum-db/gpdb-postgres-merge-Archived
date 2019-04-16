@@ -2673,7 +2673,7 @@ dblink_connstr_check(const char *connstr)
 				{
 					if (option->val == NULL || option->val[0] == '\0')
 					{
-						char *username = GetUserNameFromId(GetUserId());
+						char *username = GetUserNameFromId(GetUserId(), false);
 
 						/* 7 is strlen("user= ") + length of '\0' */
 						connstr_modified = palloc0(7 + strlen(username) + strlen(connstr));
