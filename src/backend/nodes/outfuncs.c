@@ -819,6 +819,7 @@ _outForeignScan(StringInfo str, const ForeignScan *node)
 	WRITE_BOOL_FIELD(fsSystemCol);
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outCustomScan(StringInfo str, const CustomScan *node)
 {
@@ -836,6 +837,7 @@ _outCustomScan(StringInfo str, const CustomScan *node)
 	if (node->methods->TextOutCustomScan)
 		node->methods->TextOutCustomScan(str, node);
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outSampleScan(StringInfo str, const SampleScan *node)
@@ -2154,6 +2156,7 @@ _outForeignPath(StringInfo str, const ForeignPath *node)
 	WRITE_NODE_FIELD(fdw_private);
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outCustomPath(StringInfo str, const CustomPath *node)
 {
@@ -2168,6 +2171,7 @@ _outCustomPath(StringInfo str, const CustomPath *node)
 	if (node->methods->TextOutCustomPath)
 		node->methods->TextOutCustomPath(str, node);
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outAppendPath(StringInfo str, const AppendPath *node)
