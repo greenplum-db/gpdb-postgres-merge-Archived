@@ -379,6 +379,20 @@ static Expr *deconstruct_expr(Expr *expr, MppGroupContext *ctx);
 static Node *deconstruct_expr_mutator(Node *node, MppGroupContext *ctx);
 static Node *split_aggref(Aggref *aggref, MppGroupContext *ctx);
 static List *make_vars_tlist(List *tlist, Index varno, AttrNumber offset);
+static Plan *add_second_stage_agg(PlannerInfo *root,
+								  List *prelim_tlist,
+								  List *final_tlist,
+								  List *final_qual,
+								  AggStrategy aggstrategy,
+								  int numGroupCols,
+								  AttrNumber *prelimGroupColIdx,
+								  Oid *prelimGroupOperators,
+								  double numGroups,
+								  AggClauseCosts *agg_costs,
+								  const char *alias,
+								  List **p_current_pathkeys,
+								  Plan *result_plan,
+								  bool adjust_scatter);
 static Plan *add_subqueryscan(PlannerInfo *root, List **p_pathkeys,
 				 Index varno, Query *subquery, Plan *subplan);
 static List *seq_tlist_concat(List *tlist1, List *tlist2);
@@ -1516,10 +1530,6 @@ make_two_stage_agg_plan(PlannerInfo *root,
 									   numGroupCols,
 									   prelimGroupColIdx,
 									   prelimGroupOperators,
-									   0,	/* num_nullcols */
-									   0,	/* input_grouping */
-									   ctx->grouping,
-									   0,	/* rollup_gs_times */
 									   *ctx->p_dNumGroups,
 									   ctx->agg_costs,
 									   "partial_aggregation",
@@ -2150,10 +2160,6 @@ make_plan_for_one_dqa(PlannerInfo *root, MppGroupContext *ctx, int dqa_index,
 										   ctx->numGroupCols + 1,
 										   prelimGroupColIdx,
 										   prelimGroupOperators,
-										   0,	/* num_nullcols */
-										   0,	/* input_grouping */
-										   0,	/* grouping */
-										   0,	/* rollup_gs_times */
 										   dqaArg->num_rows,
 										   ctx->agg_costs,
 										   "partial_aggregation",
@@ -2226,10 +2232,6 @@ make_plan_for_one_dqa(PlannerInfo *root, MppGroupContext *ctx, int dqa_index,
 									   ctx->numGroupCols,
 									   prelimGroupColIdx,
 									   prelimGroupOperators,
-									   0,	/* num_nullcols */
-									   0,	/* input_grouping */
-									   ctx->grouping,
-									   0,	/* rollup_gs_times */
 									   *ctx->p_dNumGroups,
 									   ctx->agg_costs,
 									   "partial_aggregation",
@@ -4218,25 +4220,21 @@ UpdateScatterClause(Query *query, List *newtlist)
  *  prelim_tlist -- the targetlist for the existing Agg/Group node.
  *  final_tlist -- the targetlist for the new Agg/Group node.
  */
-Plan *
+static Plan *
 add_second_stage_agg(PlannerInfo *root,
-					 List *lower_tlist,
-					 List *upper_tlist,
-					 List *upper_qual,
-					 AggStrategy aggstrategy,
-					 int numGroupCols,
-					 AttrNumber *prelimGroupColIdx,
-					 Oid *prelimGroupOperators,
-					 int num_nullcols,
-					 uint64 input_grouping,
-					 uint64 grouping,
-					 int rollup_gs_times,
-					 double numGroups,
-					 AggClauseCosts *agg_costs,
-					 const char *alias,
-					 List **p_current_pathkeys,
-					 Plan *result_plan,
-					 bool adjust_scatter)
+					List *prelim_tlist,
+					List *final_tlist,
+					List *final_qual,
+					AggStrategy aggstrategy,
+					int numGroupCols,
+					AttrNumber *prelimGroupColIdx,
+					Oid *prelimGroupOperators,
+					double numGroups,
+					AggClauseCosts *agg_costs,
+					const char *alias,
+					List **p_current_pathkeys,
+					Plan *result_plan,
+					bool adjust_scatter)
 {
 	Query	   *parse = root->parse;
 	Query	   *subquery;
@@ -4255,7 +4253,7 @@ add_second_stage_agg(PlannerInfo *root,
 	/*
 	 * Add a SubqueryScan node to renumber the range of the query.
 	 *
-	 * The result of the preliminary aggregation (represented by lower_tlist)
+	 * The result of the preliminary aggregation (represented by prelim_tlist)
 	 * may contain targets with no representatives in the range of its outer
 	 * relation.  We resolve this by treating the preliminary aggregation as a
 	 * subquery.
@@ -4270,7 +4268,7 @@ add_second_stage_agg(PlannerInfo *root,
 	 *
 	 * Note that the Agg phase we add below will refer to the attributes of
 	 * the result of this new SubqueryScan plan node.  It is up to the caller
-	 * to set up upper_tlist and upper_qual accordingly.
+	 * to set up final_tlist and final_qual accordingly.
 	 */
 
 	/*
@@ -4280,7 +4278,7 @@ add_second_stage_agg(PlannerInfo *root,
 	 */
 	subquery = copyObject(parse);
 
-	subquery->targetList = copyObject(lower_tlist);
+	subquery->targetList = copyObject(prelim_tlist);
 	subquery->havingQual = NULL;
 
 	/*
@@ -4348,9 +4346,9 @@ add_second_stage_agg(PlannerInfo *root,
 	 */
 	if (adjust_scatter)
 	{
-		UpdateScatterClause(parse, upper_tlist);
+		UpdateScatterClause(parse, final_tlist);
 	}
-	parse->targetList = copyObject(upper_tlist);	/* Match range. */
+	parse->targetList = copyObject(final_tlist);	/* Match range. */
 
 	result_plan = add_subqueryscan(root, p_current_pathkeys,
 								   1, subquery, result_plan);
@@ -4360,8 +4358,8 @@ add_second_stage_agg(PlannerInfo *root,
 	long		lNumGroups = (long) Min(numGroups, (double) LONG_MAX);
 
 	agg_node = (Plan *) make_agg(root,
-								 upper_tlist,
-								 upper_qual,
+								 final_tlist,
+								 final_qual,
 								 aggstrategy,
 								 agg_costs,
 								 false,
