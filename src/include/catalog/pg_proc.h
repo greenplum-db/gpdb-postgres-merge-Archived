@@ -1028,6 +1028,8 @@ DATA(insert OID = 2561 (  gistvacuumcleanup   PGNSP PGUID 12 1 0 0 0 f f f f t f
 DESCR("gist(internal)");
 DATA(insert OID = 3280 (  gistcanreturn    PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 16 "2281 23" _null_ _null_ _null_ _null_ _null_ gistcanreturn _null_ _null_ _null_ ));
 DESCR("gist(internal)");
+DATA(insert OID = 772 (  gistcostestimate  PGNSP PGUID 12 1 0 0 0 f f f f t f v 7 0 2278 "2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_ _null_ gistcostestimate _null_ _null_ _null_ ));
+DESCR("gist(internal)");
 DATA(insert OID = 6787 (  gistoptions	   PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 17 "1009 16" _null_ _null_ _null_ _null_ _null_  gistoptions _null_ _null_ _null_ ));
 DESCR("gist(internal)");
 
