@@ -834,7 +834,7 @@ _readAExpr(void)
 
 			READ_NODE_FIELD(name);
 			break;
-		case AEXPR_PAREM;
+		case AEXPR_PAREN;
 
 			READ_NODE_FIELD(name);
 			break;

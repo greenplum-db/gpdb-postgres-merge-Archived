@@ -1400,7 +1400,7 @@ _readAExpr(void)
 	}
 	else if (strncmp(token,"PAREN",length)==0)
 	{
-		local_node->kind = AEXPR_PAREM;
+		local_node->kind = AEXPR_PAREN;
 		READ_NODE_FIELD(name);
 	}
 	else
