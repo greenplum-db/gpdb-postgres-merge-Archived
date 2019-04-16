@@ -876,8 +876,6 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 			}
 			else
 			{
-				Size    spaceTuple;
-
 				/* dump it out */
 				Assert(batchno > curbatch);
 				ExecHashJoinSaveTuple(NULL, HJTUPLE_MINTUPLE(tuple),

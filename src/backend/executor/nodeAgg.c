@@ -229,7 +229,6 @@ static void finalize_aggregates(AggState *aggstate,
 static TupleTableSlot *project_aggregates(AggState *aggstate);
 static Bitmapset *find_unaggregated_cols(AggState *aggstate);
 static bool find_unaggregated_cols_walker(Node *node, Bitmapset **colnos);
-static void clear_agg_object(AggState *aggstate);
 static TupleTableSlot *agg_retrieve_direct(AggState *aggstate);
 static void agg_fill_hash_table(AggState *aggstate);
 static TupleTableSlot *agg_retrieve_hash_table(AggState *aggstate);
@@ -1429,31 +1428,6 @@ ExecAgg(AggState *node)
 }
 
 /*
- * clear_agg_object
- * 		Clear necessary memory (pergroup & perpassthrough) when agg context memory get reset & deleted.
- * 		aggstate - pointer to aggstate
- */
-static void
-clear_agg_object(AggState *aggstate)
-{
-	int			aggno = 0;
-
-	for (aggno = 0; aggno < aggstate->numaggs; aggno++)
-	{
-		AggStatePerGroup pergroupstate = &aggstate->pergroup[aggno];
-
-		pergroupstate->transValue = 0;
-		pergroupstate->transValueIsNull = true;
-		if (NULL != aggstate->perpassthru)
-		{
-			pergroupstate = &aggstate->perpassthru[aggno];
-			pergroupstate->transValue = 0;
-			pergroupstate->transValueIsNull = true;
-		}
-	}
-}
-
-/*
  * ExecAgg for non-hashed case
  */
 static TupleTableSlot *
@@ -1803,7 +1777,9 @@ static TupleTableSlot *
 agg_retrieve_hash_table(AggState *aggstate)
 {
 	TupleTableSlot *tuple = NULL;
-	bool		streaming = ((Agg *) aggstate->ss.ps.plan)->streaming;
+	bool		streaming __attribute__((unused));
+
+	streaming	= ((Agg *) aggstate->ss.ps.plan)->streaming;
 
 	/*
 	 * On each call we either return a tuple corresponding to a hash entry
