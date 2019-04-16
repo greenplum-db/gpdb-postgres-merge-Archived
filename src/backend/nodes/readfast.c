@@ -806,35 +806,35 @@ _readAExpr(void)
 
 			READ_NODE_FIELD(name);
 			break;
-		case AEXPR_LIKE;
+		case AEXPR_LIKE:
 
 			READ_NODE_FIELD(name);
 			break;
-		case AEXPR_ILIKE;
+		case AEXPR_ILIKE:
 
 			READ_NODE_FIELD(name);
 			break;
-		case AEXPR_SIMILAR;
+		case AEXPR_SIMILAR:
 
 			READ_NODE_FIELD(name);
 			break;
-		case AEXPR_BETWEEN;
+		case AEXPR_BETWEEN:
 
 			READ_NODE_FIELD(name);
 			break;
-		case AEXPR_NOT_BETWEEN;
+		case AEXPR_NOT_BETWEEN:
 
 			READ_NODE_FIELD(name);
 			break;
-		case AEXPR_BETWEEN_SYM;
+		case AEXPR_BETWEEN_SYM:
 
 			READ_NODE_FIELD(name);
 			break;
-		case AEXPR_NOT_BETWEEN_SYM;
+		case AEXPR_NOT_BETWEEN_SYM:
 
 			READ_NODE_FIELD(name);
 			break;
-		case AEXPR_PAREN;
+		case AEXPR_PAREN:
 
 			READ_NODE_FIELD(name);
 			break;
