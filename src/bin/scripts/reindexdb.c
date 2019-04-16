@@ -356,7 +356,7 @@ reindex_all_databases(const char *maintenance_db,
 
 		reindex_one_database(NULL, connstr.data, "DATABASE", host,
 							 port, username, prompt_password,
-							 progname, echo);
+							 progname, echo, verbose);
 	}
 	termPQExpBuffer(&connstr);
 

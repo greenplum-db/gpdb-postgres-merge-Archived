@@ -425,7 +425,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		for (i = 1; i < concurrentCons; i++)
 		{
 			conn = connectDatabase(dbname, host, port, username, prompt_password,
-								   progname, false);
+								   progname, echo, false);
 			init_slot(slots + i, conn);
 		}
 
@@ -543,7 +543,7 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 	int			i;
 
 	conn = connectMaintenanceDatabase(maintenance_db, host, port,
-									  username, prompt_password, progname);
+									  username, prompt_password, progname, echo);
 	result = executeQuery(conn,
 			"SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;",
 						  progname, echo);
@@ -590,7 +590,6 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 								progname, echo, quiet);
 		}
 	}
-	termPQExpBuffer(&connstr);
 
 	PQclear(result);
 }
