@@ -20466,6 +20466,16 @@ char *alterTableCmdString(AlterTableType subtype)
 		case AT_DropConstraint: /* drop constraint */
 			cmdstring = pstrdup("drop a constraint from");
 			break;
+
+		case AT_SetLogged:
+		case AT_SetUnLogged:
+			cmdstring = pstrdup("alter the WAL logging status of");
+			break;
+
+		case AT_EnableRowSecurity:
+		case AT_DisableRowSecurity:
+			cmdstring = pstrdup("alter the row security of");
+			break;
 			
 		case AT_AlterColumnType: /* alter column type */
 			cmdstring = pstrdup("alter a column datatype of");
