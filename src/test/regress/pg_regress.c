@@ -33,10 +33,7 @@
 #include <sys/resource.h>
 #endif
 
-<<<<<<< HEAD
-=======
 #include "common/restricted_token.h"
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 #include "common/username.h"
 #include "getopt_long.h"
 #include "libpq/pqcomm.h"		/* needed for UNIXSOCK_PATH() */
@@ -82,12 +79,8 @@ _stringlist *dblist = NULL;
 bool		debug = false;
 char	   *inputdir = ".";
 char	   *outputdir = ".";
-<<<<<<< HEAD
 char	   *prehook = "";
-char	   *psqldir = PGBINDIR;
-=======
 char	   *bindir = PGBINDIR;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 char	   *launcher = NULL;
 bool 		optimizer_enabled = false;
 bool 		resgroup_enabled = false;
@@ -108,15 +101,10 @@ static bool port_specified_by_user = false;
 static char *dlpath = PKGLIBDIR;
 static char *user = NULL;
 static _stringlist *extraroles = NULL;
-<<<<<<< HEAD
-static _stringlist *extra_install = NULL;
+static char *config_auth_datadir = NULL;
 static char *initfile = NULL;
 static char *aodir = NULL;
-static char *config_auth_datadir = NULL;
 static bool  ignore_plans = false;
-=======
-static char *config_auth_datadir = NULL;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 /* internal variables */
 static const char *progname;
@@ -142,46 +130,13 @@ static int	fail_ignore_count = 0;
 static bool directory_exists(const char *dir);
 static void make_directory(const char *dir);
 
-<<<<<<< HEAD
-static void create_database(const char *dbname);
-static void drop_database_if_exists(const char *dbname);
-
-static int
-run_diff(const char *cmd, const char *filename);
-
-static bool should_exclude_test(char *test);
-
-static void
-header(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
-static void
-status(const char *fmt,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
-static void
-psql_command(const char *database, const char *query,...)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
-
-#ifdef WIN32
-typedef BOOL (WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
-
-/* Windows API define missing from some versions of MingW headers */
-#ifndef  DISABLE_MAX_PRIVILEGE
-#define DISABLE_MAX_PRIVILEGE	0x1
-#endif
-#endif
-=======
 static void header(const char *fmt,...) pg_attribute_printf(1, 2);
 static void status(const char *fmt,...) pg_attribute_printf(1, 2);
 static void psql_command(const char *database, const char *query,...) pg_attribute_printf(2, 3);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 static bool detectCgroupMountPoint(char *cgdir, int len);
+static bool should_exclude_test(char *test);
+static int run_diff(const char *cmd, const char *filename);
 
 /*
  * allow core files if possible.
@@ -421,7 +376,6 @@ make_temp_sockdir(void)
 }
 #endif   /* HAVE_UNIX_SOCKETS */
 
-<<<<<<< HEAD
 /*
  * Always exit through here, not through plain exit(), to ensure we make
  * an effort to shut down a temp postmaster
@@ -433,8 +387,6 @@ exit_nicely(int code)
 	exit(code);
 }
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 /*
  * Check whether string matches pattern
  *
@@ -1405,11 +1357,7 @@ config_sspi_auth(const char *pgdata)
 	} while (0)
 
 	res = snprintf(fname, sizeof(fname), "%s/pg_hba.conf", pgdata);
-<<<<<<< HEAD
 	if (res < 0 || res >= sizeof(fname))
-=======
-	if (res < 0 || res >= sizeof(fname) - 1)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	{
 		/*
 		 * Truncating this name is a fatal error, because we must not fail to
@@ -2514,8 +2462,8 @@ check_feature_status(const char *feature_name, const char *feature_value,
 
 	len = snprintf(psql_cmd, sizeof(psql_cmd),
 			"\"%s%spsql\" -X -t -c \"show %s;\" -o \"%s\" -d \"postgres\"",
-			psqldir ? psqldir : "",
-			psqldir ? "/" : "",
+			bindir ? bindir : "",
+			bindir ? "/" : "",
 			feature_name,
 			statusfilename);
 
@@ -2629,17 +2577,12 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"use-existing", no_argument, NULL, 20},
 		{"launcher", required_argument, NULL, 21},
 		{"load-extension", required_argument, NULL, 22},
-<<<<<<< HEAD
-		{"extra-install", required_argument, NULL, 23},
 		{"config-auth", required_argument, NULL, 24},
 		{"init-file", required_argument, NULL, 25},
 		{"ao-dir", required_argument, NULL, 26},
 		{"exclude-tests", required_argument, NULL, 27},
 		{"ignore-plans", no_argument, NULL, 28},
 		{"prehook", required_argument, NULL, 29},
-=======
-		{"config-auth", required_argument, NULL, 24},
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2753,9 +2696,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			case 24:
 				config_auth_datadir = pstrdup(optarg);
 				break;
-			case 24:
-				config_auth_datadir = pstrdup(optarg);
-				break;
             case 25:
                 initfile = strdup(optarg);
                 break;
@@ -2796,11 +2736,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		exit(0);
 	}
 
-<<<<<<< HEAD
-	if (temp_install && !port_specified_by_user)
-=======
 	if (temp_instance && !port_specified_by_user)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/*
 		 * To reduce chances of interference with parallel installations, use
@@ -2853,12 +2789,8 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 	if (temp_instance)
 	{
 		FILE	   *pg_conf;
-<<<<<<< HEAD
-		_stringlist *sl;
 		const char *env_wait;
 		int			wait_seconds;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 		/*
 		 * Prepare the temp instance
@@ -2869,13 +2801,8 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			header(_("removing existing temp instance"));
 			if (!rmtree(temp_instance, true))
 			{
-<<<<<<< HEAD
-				fprintf(stderr, _("\n%s: could not remove temp installation \"%s\"\n"),
-						progname, temp_install);
-=======
 				fprintf(stderr, _("\n%s: could not remove temp instance \"%s\"\n"),
 						progname, temp_instance);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 				exit(2);
 			}
 		}
@@ -2952,11 +2879,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		 * Since we successfully used the same buffer for the much-longer
 		 * "initdb" command, this can't truncate.
 		 */
-<<<<<<< HEAD
-		snprintf(buf, sizeof(buf), "%s/data", temp_install);
-=======
 		snprintf(buf, sizeof(buf), "%s/data", temp_instance);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		config_sspi_auth(buf);
 #elif !defined(HAVE_UNIX_SOCKETS)
 #error Platform has no means to secure the test installation.
@@ -3000,14 +2923,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		 */
 		header(_("starting postmaster"));
 		snprintf(buf, sizeof(buf),
-<<<<<<< HEAD
-				 "\"%s/postgres\" -D \"%s/data\" -F%s "
-				 "-c \"listen_addresses=%s\" -k \"%s\" "
-				 "> \"%s/log/postmaster.log\" 2>&1",
-				 bindir, temp_install, debug ? " -d 5" : "",
-				 hostname ? hostname : "", sockdir ? sockdir : "",
-				 outputdir);
-=======
 				 "\"%s%spostgres\" -D \"%s/data\" -F%s "
 				 "-c \"listen_addresses=%s\" -k \"%s\" "
 				 "> \"%s/log/postmaster.log\" 2>&1",
@@ -3016,7 +2931,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				 temp_instance, debug ? " -d 5" : "",
 				 hostname ? hostname : "", sockdir ? sockdir : "",
 				 temp_instance);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 		postmaster_pid = spawn_process(buf);
 		if (postmaster_pid == INVALID_PID)
 		{
@@ -3164,18 +3078,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 	}
 
 	/*
-<<<<<<< HEAD
-	 * If there were no errors, remove the temp installation immediately to
-	 * conserve disk space.  (If there were errors, we leave the installation
-	 * in place for possible manual investigation.)
-	 */
-	if (temp_install && fail_count == 0 && fail_ignore_count == 0)
-	{
-		header(_("removing temporary installation"));
-		if (!rmtree(temp_install, true))
-			fprintf(stderr, _("\n%s: could not remove temp installation \"%s\"\n"),
-					progname, temp_install);
-=======
 	 * If there were no errors, remove the temp instance immediately to
 	 * conserve disk space.  (If there were errors, we leave the instance in
 	 * place for possible manual investigation.)
@@ -3186,7 +3088,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		if (!rmtree(temp_instance, true))
 			fprintf(stderr, _("\n%s: could not remove temp instance \"%s\"\n"),
 					progname, temp_instance);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	}
 
 	fclose(logfile);

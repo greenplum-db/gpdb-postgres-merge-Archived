@@ -104,7 +104,6 @@ psql_start_test(const char *testname,
 		}
 	}
 
-<<<<<<< HEAD
 	/*
 	 * We need to pass multiple input files (prehook and infile) to psql,
 	 * to do this a simple way is to execute it like this:
@@ -129,8 +128,8 @@ psql_start_test(const char *testname,
 					   "$(cat \"%s\" \"%s\")\n"
 					   "EOF",
 					   use_utility_mode ? "env PGOPTIONS='-c gp_session_role=utility'" : "",
-					   psqldir ? psqldir : "",
-					   psqldir ? "/" : "",
+					   bindir ? bindir : "",
+					   bindir ? "/" : "",
 					   dblist->str,
 					   outfile,
 					   prehook[0] ? prehook : "/dev/null",
@@ -140,15 +139,6 @@ psql_start_test(const char *testname,
 		fprintf(stderr, _("command too long\n"));
 		exit(2);
 	}
-=======
-	snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
-			 "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1",
-			 bindir ? bindir : "",
-			 bindir ? "/" : "",
-			 dblist->str,
-			 infile,
-			 outfile);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 	pid = spawn_process(psql_cmd);
 
