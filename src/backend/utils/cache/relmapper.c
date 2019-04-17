@@ -73,7 +73,15 @@
 
 #define RELMAPPER_FILEMAGIC		0x592717		/* version ID value */
 
-#define MAX_MAPPINGS			62		/* 62 * 8 + 16 = 512 */
+/*
+ * GPDB_95_MERGE_FIXME: In Postgres this is 62, but Greenplum has exceeded this
+ * number due to all of the extra Greenplum specific shared relations. Is it
+ * safe to bump this up to 126 to occupy exactly 1 kilobyte? According to the
+ * internet, modern disks nowadays have 4 kilobytes fixed sector size.
+ *
+ * New math: 126 * 8 + 16 = 1024
+ */
+#define MAX_MAPPINGS			126		/* 62 * 8 + 16 = 512 */
 
 typedef struct RelMapping
 {
