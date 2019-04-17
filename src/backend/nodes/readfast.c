@@ -1699,8 +1699,9 @@ _readForeignScan(void)
 
 	READ_NODE_FIELD(fdw_exprs);
 	READ_NODE_FIELD(fdw_private);
-	READ_BOOL_FIELD(fsSystemCol);
-
+	READ_NODE_FIELD(fdw_private);
+	READ_NODE_FIELD(fdw_scan_tlist);
+	READ_BITMAPSET_FIELD(fs_relids);
 	READ_DONE();
 }
 
