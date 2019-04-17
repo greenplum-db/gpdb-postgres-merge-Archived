@@ -227,7 +227,8 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 		elevel = DEBUG2; /* vacuum and analyze messages aren't interesting from the QD */
 
 #ifdef FAULT_INJECTOR
-	if (ao_vacuum_phase_config->appendonly_phase == AOVAC_DROP)
+	if (ao_vacuum_phase_config != NULL &&
+		ao_vacuum_phase_config->appendonly_phase == AOVAC_DROP)
 	{
 			FaultInjector_InjectFaultIfSet(
 				CompactionBeforeSegmentFileDropPhase,
@@ -235,7 +236,8 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 				"",	// databaseName
 				RelationGetRelationName(onerel)); // tableName
 	}
-	if (ao_vacuum_phase_config->appendonly_phase == AOVAC_CLEANUP)
+	if (ao_vacuum_phase_config != NULL &&
+		ao_vacuum_phase_config->appendonly_phase == AOVAC_CLEANUP)
 	{
 			FaultInjector_InjectFaultIfSet(
 				CompactionBeforeCleanupPhase,

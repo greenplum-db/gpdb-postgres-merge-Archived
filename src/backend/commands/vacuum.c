@@ -728,7 +728,8 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 	 * way, we can be sure that no other backend is vacuuming the same table.
 	 * For analyze, we use ShareUpdateExclusiveLock.
 	 */
-	if (ao_vacuum_phase_config->appendonly_phase == AOVAC_DROP)
+	if (ao_vacuum_phase_config != NULL &&
+		ao_vacuum_phase_config->appendonly_phase == AOVAC_DROP)
 	{
 		Assert(Gp_role == GP_ROLE_EXECUTE);
 		lmode = AccessExclusiveLock;
@@ -810,7 +811,8 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 		if (Gp_role == GP_ROLE_DISPATCH)
 			skip_twophase = true;
 
-		if (ao_vacuum_phase_config->appendonly_phase == AOVAC_DROP)
+		if (ao_vacuum_phase_config != NULL &&
+			ao_vacuum_phase_config->appendonly_phase == AOVAC_DROP)
 		{
 			SIMPLE_FAULT_INJECTOR(VacuumRelationOpenRelationDuringDropPhase);
 		}
@@ -824,6 +826,13 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 		List	   *compactedSegmentFileList = NIL;
 		List	   *insertedSegmentFileList = NIL;
 
+		/*
+		 * On QD, initialize the ao_vacuum_phase_config to start passing
+		 * around through vacuum dispatches. For QE, the
+		 * ao_vacuum_phase_config will be initialized from the vacuum dispatch
+		 * statement.
+		 */
+		ao_vacuum_phase_config = palloc0(sizeof(AOVacuumPhaseConfig));
 		ao_vacuum_phase_config->appendonly_compaction_segno = NIL;
 		ao_vacuum_phase_config->appendonly_compaction_insert_segno = NIL;
 		ao_vacuum_phase_config->appendonly_relation_empty = false;
@@ -990,6 +999,8 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 								AOVAC_CLEANUP);
 			onerel = NULL;
 		}
+
+		pfree(ao_vacuum_phase_config);
 	}
 
 	if (lmode != NoLock)
@@ -2542,8 +2553,9 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params,
 	 * Update ao master tupcount the hard way after the compaction and
 	 * after the drop.
 	 */
-	if (Gp_role == GP_ROLE_DISPATCH && ao_vacuum_phase_config->appendonly_compaction_segno &&
-		RelationIsAppendOptimized(onerel))
+	if (Gp_role == GP_ROLE_DISPATCH &&
+		RelationIsAppendOptimized(onerel) &&
+		ao_vacuum_phase_config->appendonly_compaction_segno)
 	{
 		Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 
@@ -2620,6 +2632,7 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params,
 	 * (GP_ROLE_EXECUTE), therefore, should not execute this block of code.
 	 */
 	if (Gp_role != GP_ROLE_EXECUTE &&
+		ao_vacuum_phase_config != NULL &&
 		(ao_vacuum_phase_config->appendonly_phase == AOVAC_CLEANUP ||
 		 (ao_vacuum_phase_config->appendonly_relation_empty &&
 		  ao_vacuum_phase_config->appendonly_phase == AOVAC_PREPARE)))
