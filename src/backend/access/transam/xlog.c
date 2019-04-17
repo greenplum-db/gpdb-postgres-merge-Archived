@@ -8031,6 +8031,9 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 					 int whichChkpt, bool report)
 {
 	XLogRecord *record;
+	bool sizeOk;
+	uint32 chkpt_len;
+	uint32 chkpt_tot_len;
 
 	if (!XRecOffIsValid(RecPtr))
 	{
@@ -8133,13 +8136,23 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 		}
 		return NULL;
 	}
+
 	/*
-	 * GPDB_95_MERGE_FIXME: Greenplum checkpoint records are dynamically
-	 * sized. This portion of the code previously had checks based on xl_len
-	 * and xl_tot_len deltas but there is no xl_len anymore. Investigate if we
-	 * need to check more.
+	 * GPDB: Verify the Checkpoint record length. For an extended Checkpoint
+	 * record (when record total length is greater than regular checkpoint
+	 * record total length), compare the difference between the regular
+	 * checkpoint size and the extended variable size.
 	 */
-	if (record->xl_tot_len != SizeOfXLogRecord + SizeOfXLogRecordDataHeaderShort + sizeof(CheckPoint))
+	sizeOk = false;
+	chkpt_len = XLogRecGetDataLen(xlogreader);
+	chkpt_tot_len = SizeOfXLogRecord + SizeOfXLogRecordDataHeaderShort + sizeof(CheckPoint);
+	if ((chkpt_len == sizeof(CheckPoint) && record->xl_tot_len == chkpt_tot_len) ||
+		((chkpt_len > sizeof(CheckPoint) &&
+		  record->xl_tot_len > chkpt_tot_len &&
+		  ((chkpt_len - sizeof(CheckPoint)) == (record->xl_tot_len - chkpt_tot_len)))))
+		sizeOk = true;
+
+	if (!sizeOk)
 	{
 		switch (whichChkpt)
 		{
