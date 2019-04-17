@@ -1640,6 +1640,9 @@ RecordTransactionCommit(void)
 		END_CRIT_SECTION();
 	}
 
+	/* Compute latestXid while we have the child XIDs handy */
+	latestXid = TransactionIdLatest(xid, nchildren, children);
+
 	/*
 	 * Wait for synchronous replication, if required. Similar to the decision
 	 * above about using committing asynchronously we only want to wait if
