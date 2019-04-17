@@ -1103,80 +1103,48 @@ make_one_stage_agg_plan(PlannerInfo *root,
 	}
 	else if (parse->hasAggs || parse->groupClause)
 	{
-		/*
-		 * GPDB_95_MERGE_FIXME: the logic here has to be refactored
-		 * to match the current grouping sets implentation
-		 * For now ifdef it.
-		 */
-#ifdef GPDB_95_MERGE_FIXME
-		if (!ctx->is_grpext)
+		/* Plain aggregate plan --- sort if needed */
+		AggStrategy aggstrategy;
+
+		if (parse->groupClause)
 		{
-			/* Plain aggregate plan --- sort if needed */
-			AggStrategy aggstrategy;
-
-			if (parse->groupClause)
+			if (!pathkeys_contained_in(root->group_pathkeys,
+									   current_pathkeys))
 			{
-				if (!pathkeys_contained_in(root->group_pathkeys,
-										   current_pathkeys))
-				{
-					result_plan = (Plan *)
-						make_sort_from_groupcols(root,
-												 parse->groupClause,
-												 groupColIdx,
-												 false,
-												 result_plan);
-					current_pathkeys = root->group_pathkeys;
-					mark_sort_locus(result_plan);
-				}
-				aggstrategy = AGG_SORTED;
-
-				/*
-				 * The AGG node will not change the sort ordering of its
-				 * groups, so current_pathkeys describes the result too.
-				 */
+				result_plan = (Plan *)
+					make_sort_from_groupcols(root,
+											 parse->groupClause,
+											 groupColIdx,
+											 result_plan);
+				current_pathkeys = root->group_pathkeys;
+				mark_sort_locus(result_plan);
 			}
-			else
-			{
-				aggstrategy = AGG_PLAIN;
-				/* Result will be only one row anyway; no sort order */
-				current_pathkeys = NIL;
-			}
+			aggstrategy = AGG_SORTED;
 
-			result_plan = (Plan *) make_agg(root,
-											tlist,
-											(List *) parse->havingQual,
-											aggstrategy,
-											ctx->agg_costs,
-											false,
-											numGroupCols,
-											groupColIdx,
-											groupOperators,
-											numGroups,
-											0,	/* num_nullcols */
-											0,	/* input_grouping */
-											ctx->grouping,
-											0,	/* rollup_gs_times */
-											result_plan);
+			/*
+			 * The AGG node will not change the sort ordering of its
+			 * groups, so current_pathkeys describes the result too.
+			 */
 		}
-
 		else
 		{
-			result_plan = plan_grouping_extension(root, path, ctx->tuple_fraction,
-												  ctx->use_hashed_grouping,
-												  &tlist, sub_tlist,
-												  false,
-												  (List *) parse->havingQual,
-												  &numGroupCols,
-												  &groupColIdx,
-												  &groupOperators,
-												  ctx->agg_costs,
-												  ctx->canonical_grpsets,
-												  ctx->p_dNumGroups,
-												  &(ctx->querynode_changed),
-												  &current_pathkeys,
-												  result_plan);
+			aggstrategy = AGG_PLAIN;
+			/* Result will be only one row anyway; no sort order */
+			current_pathkeys = NIL;
 		}
-#endif /* GPDB_95_MERGE_FIXME */
+
+		result_plan = (Plan *) make_agg(root,
+										tlist,
+										(List *) parse->havingQual,
+										aggstrategy,
+										ctx->agg_costs,
+										false,
+										numGroupCols,
+										groupColIdx,
+										groupOperators,
+										NIL, /* groupingSets */
+										numGroups,
+										result_plan);
 	}
 	else if (root->hasHavingQual)
 	{
@@ -1397,78 +1365,22 @@ make_two_stage_agg_plan(PlannerInfo *root,
 		}
 	}
 
-	/*
-	 * GPDB_95_MERGE_FIXME: The logic needs to be updated to match the current
-	 * grouping sets implementation.
-	 * ifdef the block for now
-	 */
-#ifdef GPDB_95_MERGE_FIXME
-	if (!ctx->is_grpext)
-	{
-		result_plan = (Plan *) make_agg(root,
-										prelim_tlist,
-										NIL,	/* no havingQual */
-										aggstrategy,
-										ctx->agg_costs,
-										root->config->gp_hashagg_streambottom,
-										numGroupCols,
-										groupColIdx,
-										groupOperators,
-										numGroups,
-										0,	/* num_nullcols */
-										0,	/* input_grouping */
-										0,	/* grouping */
-										0,	/* rollup_gs_times */
-										result_plan);
-		/* May lose useful locus and sort. Unlikely, but could do better. */
-		mark_plan_strewn(result_plan, ctx->input_locus.numsegments);
-		current_pathkeys = NIL;
-	}
+	result_plan = (Plan *) make_agg(root,
+									prelim_tlist,
+									NIL,	/* no havingQual */
+									aggstrategy,
+									ctx->agg_costs,
+									root->config->gp_hashagg_streambottom,
+									numGroupCols,
+									groupColIdx,
+									groupOperators,
+									NIL, /* groupingSets */
+									numGroups,
+									result_plan);
 
-	else
-	{
-		result_plan = plan_grouping_extension(root, path, ctx->tuple_fraction,
-											  ctx->use_hashed_grouping,
-											  &prelim_tlist, ctx->sub_tlist,
-											  true,
-											  NIL,	/* no havingQual */
-											  &numGroupCols,
-											  &groupColIdx,
-											  &groupOperators,
-											  ctx->agg_costs,
-											  ctx->canonical_grpsets,
-											  ctx->p_dNumGroups,
-											  &(ctx->querynode_changed),
-											  &current_pathkeys,
-											  result_plan);
-
-		/*
-		 * Since we add Grouping as an additional grouping column, we need to
-		 * add it into prelimGroupColIdx.
-		 */
-		if (prelimGroupColIdx != NULL)
-		{
-			prelimGroupColIdx = (AttrNumber *)
-				repalloc(prelimGroupColIdx,
-						 numGroupCols * sizeof(AttrNumber));
-			prelimGroupOperators = (Oid *) repalloc(prelimGroupOperators,
-													numGroupCols * sizeof(Oid));
-		}
-		else
-		{
-			prelimGroupColIdx = (AttrNumber *)
-				palloc0(numGroupCols * sizeof(AttrNumber));
-			prelimGroupOperators = (Oid *)
-				palloc0(numGroupCols * sizeof(Oid));
-		}
-
-		Assert(numGroupCols >= 2);
-		prelimGroupColIdx[numGroupCols - 1] = groupColIdx[numGroupCols - 1];
-		prelimGroupOperators[numGroupCols - 1] = groupOperators[numGroupCols - 1];
-		prelimGroupColIdx[numGroupCols - 2] = groupColIdx[numGroupCols - 2];
-		prelimGroupOperators[numGroupCols - 2] = groupOperators[numGroupCols - 2];
-	}
-#endif /* GPDB_95_MERGE_FIXME */
+	/* May lose useful locus and sort. Unlikely, but could do better. */
+	mark_plan_strewn(result_plan, result_plan->flow->numsegments);
+	current_pathkeys = NIL;
 
 	/*
 	 * Add Intermediate Motion to Gather or Hash on Groups
@@ -5420,14 +5332,11 @@ Plan *
 add_motion_to_dqa_child(Plan *plan, PlannerInfo *root, bool *motion_added)
 {
 	Plan	   *result = plan;
+	List	   *pathkeys;
 
 	*motion_added = false;
 
-	/*
-	 * GPDB_95_MERGE_FIXME: this doesn't seem right
-	 * probably need a sortclause here
-	 */
-	List	   *pathkeys = make_pathkeys_for_groupclause(root, root->parse->groupClause, plan->targetlist);
+	pathkeys = make_pathkeys_for_sortclauses(root, root->parse->groupClause, plan->targetlist);
 	CdbPathLocus locus = cdbpathlocus_from_flow(plan->flow);
 
 	if (CdbPathLocus_IsPartitioned(locus) && NIL != plan->flow->hashExprs)
