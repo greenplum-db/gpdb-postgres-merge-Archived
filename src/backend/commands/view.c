@@ -605,15 +605,6 @@ DefineView(ViewStmt *stmt, const char *queryString)
 									NULL);
 	}
 
-	/*
-	 * The relation we have just created is not visible to any other commands
-	 * running with the same transaction & command id. So, increment the
-	 * command id counter (but do NOT pfree any memory!!!!)
-	 */
-	CommandCounterIncrement();
-
-	StoreViewQuery(address.objectId, viewParse, stmt->replace);
-
 	return address;
 }
 
