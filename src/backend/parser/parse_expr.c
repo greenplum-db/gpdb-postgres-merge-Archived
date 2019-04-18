@@ -1537,34 +1537,24 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 
 /*
  * Check if this is CASE x WHEN IS NOT DISTINCT FROM y:
- * From the raw grammar output, we produce AEXPR_NOT expression
- * 		which has the rhs = AEXPR_DISTINCT expression which has its lhs = NULL
+ *
+ * From the raw grammar output, we produce a boolean NOT expression
+ * which has one A_Expr list element of AEXPR_DISTINCT kind which has
+ * its lexpr = NULL
  */
 static bool
 isWhenIsNotDistinctFromExpr(Node *warg)
 {
-	if (IsA(warg, A_Expr))
+	if (IsA(warg, BoolExpr))
 	{
-#if 0
-		A_Expr *top = (A_Expr *) warg;
-		/*
-		 * GPDB_95_MERGE_FIXME: AEXPR_NOT has been removed in the upstream commit
-		 * <2146f13408cdb8>. According to it and current grammar, the top
-		 * expression is removed and we should just evaluate that the node is
-		 * of kind AEXPR_DISTINCT. However, without proper compiling yet, the
-		 * original offending code is maintained in the if'ed block for ease of
-		 * re-writing.
-		 */
-		if (top->kind == AEXPR_NOT && IsA(top->rexpr, A_Expr))
+		BoolExpr *bexpr = (BoolExpr *) warg;
+		Node *arg = linitial(bexpr->args);
+		if (bexpr->boolop == NOT_EXPR && IsA(arg, A_Expr))
 		{
-			A_Expr *expr = (A_Expr *) top->rexpr;
+			A_Expr *expr = (A_Expr *) arg;
 			if (expr->kind == AEXPR_DISTINCT && expr->lexpr == NULL)
 				return true;
 		}
-#else
-		elog(ERROR, "consult GPDB_95_MERGE_FIXME comment at %s near line %d",
-						__FUNCTION__, __LINE__);
-#endif
 	}
 	return false;
 }
@@ -1716,10 +1706,21 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 				 * In transformation we don't want to change source (CaseExpr* Node).
 				 * Always create new node and do the transformation
 				 */
+				/*
+				 * GPDB_95_MERGE_FIXME: in this case warg is of Bool Expression type
+				 * so the following implementation is obviously wrong. Now, warg holds
+				 * only one argument of type A_Expr. Add the placeholder in the BoolExpr
+				 * OR create a new equality expression. In both cases the two args
+				 * should be comparable.
+				 */
+#ifdef GPDB_95_MERGE_FIXME
 				warg = copyObject(warg);
 				A_Expr *top  = (A_Expr *) warg;
 				A_Expr *expr = (A_Expr *) top->rexpr;
 				expr->lexpr = (Node *) placeholder;
+#else
+				elog(ERROR, "check the GPDB_95_MERGE_FIXME message near this line");
+#endif
 			}
 			else
 				warg = (Node *) makeSimpleA_Expr(AEXPR_OP, "=",
