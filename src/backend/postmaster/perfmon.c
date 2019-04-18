@@ -52,6 +52,8 @@ perfmon_start(void)
 #ifndef EXEC_BACKEND
 		case 0:
 			/* in postmaster child ... */
+			InitPostmasterChild();
+
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
 
@@ -102,12 +104,6 @@ PerfmonMain(int argc, char *argv[])
 	char		port[6] = {'\0'};
 	int			ac = 0;
 	int			ret = 0;
-
-	/* reset MyProcPid */
-	MyProcPid = getpid();
-
-	/* Lose the postmaster's on-exit routines */
-	on_exit_reset();
 
 	/* Find gpmmon executable */
 	if ((ret = find_other_exec(my_exec_path, "gpmmon",

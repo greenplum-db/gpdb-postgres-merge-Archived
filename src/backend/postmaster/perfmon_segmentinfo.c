@@ -92,6 +92,8 @@ perfmon_segmentinfo_start(void)
 
 		case 0:
 			/* in postmaster child ... */
+			InitPostmasterChild();
+
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
 
@@ -115,17 +117,10 @@ NON_EXEC_STATIC void SegmentInfoSenderMain(int argc, char *argv[])
 {
 	sigjmp_buf	local_sigjmp_buf;
 
-	IsUnderPostmaster = true;
 	isSenderProcess = true;
 
 	/* Stay away from PMChildSlot */
 	MyPMChildSlot = -1;
-
-	/* reset MyProcPid */
-	MyProcPid = getpid();
-
-	/* Lose the postmaster's on-exit routines */
-	on_exit_reset();
 
 	/* Identify myself via ps */
 	init_ps_display("stats sender process", "", "", "");

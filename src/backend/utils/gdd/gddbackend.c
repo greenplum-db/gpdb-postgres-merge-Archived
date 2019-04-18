@@ -95,6 +95,8 @@ global_deadlock_detector_start(void)
 #ifndef EXEC_BACKEND
 		case 0:
 			/* in postmaster child ... */
+			InitPostmasterChild();
+
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
 
@@ -155,20 +157,13 @@ GlobalDeadLockDetectorMain(int argc, char *argv[])
 	sigjmp_buf	local_sigjmp_buf;
 	char	   *fullpath;
 
-	IsUnderPostmaster = true;
 	am_global_deadlock_detector = true;
 
 	/* Stay away from PMChildSlot */
 	MyPMChildSlot = -1;
 
-	/* reset MyProcPid */
-	MyProcPid = getpid();
-
 	/* record Start Time for logging */
 	MyStartTime = time(NULL);
-
-	/* Lose the postmaster's on-exit routines */
-	on_exit_reset();
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster

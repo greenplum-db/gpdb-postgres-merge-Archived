@@ -115,6 +115,8 @@ ftsprobe_start(void)
 #ifndef EXEC_BACKEND
 		case 0:
 			/* in postmaster child ... */
+			InitPostmasterChild();
+
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
 
@@ -188,17 +190,10 @@ ftsMain(int argc, char *argv[])
 	sigjmp_buf	local_sigjmp_buf;
 	char	   *fullpath;
 
-	IsUnderPostmaster = true;
 	am_ftsprobe = true;
 
 	/* Stay away from PMChildSlot */
 	MyPMChildSlot = -1;
-
-	/* reset MyProcPid */
-	MyProcPid = getpid();
-	
-	/* Lose the postmaster's on-exit routines */
-	on_exit_reset();
 
 	/* Identify myself via ps */
 	init_ps_display("ftsprobe process", "", "", "");
