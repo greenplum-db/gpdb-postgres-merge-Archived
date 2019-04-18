@@ -865,7 +865,6 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(targetList);
 	WRITE_NODE_FIELD(withCheckOptions);
 	WRITE_NODE_FIELD(onConflict);
-	WRITE_NODE_FIELD(onConflict);
 	WRITE_NODE_FIELD(returningList);
 	WRITE_NODE_FIELD(groupClause);
 	WRITE_NODE_FIELD(groupingSets);
