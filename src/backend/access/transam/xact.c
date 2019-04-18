@@ -6277,7 +6277,7 @@ XactLogCommitRecord(TimestampTz commit_time,
 					int nmsgs, SharedInvalidationMessage *msgs,
 					bool relcacheInval, bool forceSync,
 					TransactionId twophase_xid,
-					char *gid)
+					const char *gid)
 {
 	xl_xact_commit xlrec;
 	xl_xact_xinfo xl_xinfo;
