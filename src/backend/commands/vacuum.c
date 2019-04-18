@@ -2610,7 +2610,7 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params,
 	{
 		if (toast_relid != InvalidOid && toast_rangevar != NULL)
 			vacuum_rel(toast_relid, toast_rangevar, options, params,
-					   skip_twophase, NULL, onerel, lmode);
+					   skip_twophase, NULL, NULL, lmode);
 	}
 
 	/*
@@ -2640,17 +2640,17 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params,
 		/* do the same for an AO segments table, if any */
 		if (aoseg_relid != InvalidOid && aoseg_rangevar != NULL)
 			vacuum_rel(aoseg_relid, aoseg_rangevar, options, params,
-					   skip_twophase, NULL, onerel, lmode);
+					   skip_twophase, NULL, NULL, lmode);
 
 		/* do the same for an AO block directory table, if any */
 		if (aoblkdir_relid != InvalidOid && aoblkdir_rangevar != NULL)
 			vacuum_rel(aoblkdir_relid, aoblkdir_rangevar, options, params,
-					   skip_twophase, NULL, onerel, lmode);
+					   skip_twophase, NULL, NULL, lmode);
 
 		/* do the same for an AO visimap, if any */
 		if (aovisimap_relid != InvalidOid && aovisimap_rangevar != NULL)
 			vacuum_rel(aovisimap_relid, aovisimap_rangevar, options, params,
-					   skip_twophase, NULL, onerel, lmode);
+					   skip_twophase, NULL, NULL, lmode);
 	}
 
 	/* Report that we really did it. */
