@@ -776,7 +776,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 	RANDOMLY READABLE READS REJECT_P REPLICATED RESOURCE
 	ROOTPARTITION
 
-	SCATTER SEGMENT SEGMENTS SPLIT SQL SUBPARTITION
+	SCATTER SEGMENT SEGMENTS SPLIT SUBPARTITION
 
 	THRESHOLD TIES
 
@@ -1047,7 +1047,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 			%nonassoc SHOW
 			%nonassoc SIMPLE
 			%nonassoc SPLIT
-			%nonassoc SQL
 			%nonassoc STABLE
 			%nonassoc START
 			%nonassoc STATEMENT
@@ -9450,19 +9449,19 @@ common_func_opt_item:
 					/* we abuse the normal content of a DefElem here */
 					$$ = makeDefElem("set", (Node *)$1);
 				}
-			| NO SQL
+			| NO SQL_P
 				{
 					$$ = makeDefElem("data_access", (Node *)makeString("none"));
 				}
-			| CONTAINS SQL
+			| CONTAINS SQL_P
 				{
 					$$ = makeDefElem("data_access", (Node *)makeString("contains"));
 				}
-			| READS SQL DATA_P
+			| READS SQL_P DATA_P
 				{
 					$$ = makeDefElem("data_access", (Node *)makeString("reads"));
 				}
-			| MODIFIES SQL DATA_P
+			| MODIFIES SQL_P DATA_P
 				{
 					$$ = makeDefElem("data_access", (Node *)makeString("modifies"));
 				}
@@ -16845,7 +16844,6 @@ PartitionIdentKeyword: ABORT_P
 			| SHOW
 			| SIMPLE
 			| SPLIT
-			| SQL
 			| STABLE
 			| START
 			| STATEMENT
