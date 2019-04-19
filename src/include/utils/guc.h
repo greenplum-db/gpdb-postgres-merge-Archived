@@ -247,8 +247,8 @@ typedef enum
 #define GUC_DISALLOW_IN_AUTO_FILE	0x00010000	/* can't set in PG_AUTOCONF_FILENAME */
 
 /* GPDB speific */
-#define GUC_GPDB_ADDOPT        0x00020000  /* Send by cdbgang */
-#define GUC_DISALLOW_USER_SET  0x00040000 /* Do not allow this GUC to be set by the user */
+#define GUC_GPDB_ADDOPT        0x00200000  /* Send by cdbgang */
+#define GUC_DISALLOW_USER_SET  0x00400000 /* Do not allow this GUC to be set by the user */
 
 /* GUC lists for gp_guc_list_show().  (List of struct config_generic) */
 extern List    *gp_guc_list_for_explain;
