@@ -57,24 +57,24 @@ test: create_misc create_operator
 # These depend on the above two
 test: create_index create_view
 
+# GPDB_95_MERGE_FIXME: These two should be in the below parallel group
+# between `constraints` and `create_table_like`. Why were they
+# extracted out? It seems like they were pulled out because they
+# couldn't run. Now that they are running, should they be placed back
+# into the parallel group?
 test: inherit
-
 test: triggers
 
 # ----------
 # Another group of parallel tests
 # ----------
-<<<<<<< HEAD
-test: create_aggregate create_function_3 create_cast constraints create_table_like typed_table vacuum drop_if_exists  updatable_views
+test: create_aggregate create_function_3 create_cast constraints create_table_like typed_table vacuum drop_if_exists updatable_views rolenames
 
 # ----------
 # Because vacuum will detect concurrently running transactions, it is necessary to
 # run this test on its own, or it might not detect the pages are 'all visible'
 # ----------
 test: vacuum_stats
-=======
-test: create_aggregate create_function_3 create_cast constraints triggers inherit create_table_like typed_table vacuum drop_if_exists updatable_views rolenames
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 # ----------
 # sanity_check does a vacuum, affecting the sort order of SELECT *
@@ -113,14 +113,10 @@ test: namespace
 # ----------
 # Another group of parallel tests
 # ----------
-<<<<<<< HEAD
-test: privileges security_label collate lock replica_identity
+test: brin gin gist spgist privileges security_label collate lock replica_identity rowsecurity object_address tablesample groupingsets
 
 # MATERIALIZED_VIEW_FIXME : matview is not supported on greenplum. Enable the test when the feature is ready.
 #test: matview
-=======
-test: brin gin gist spgist privileges security_label collate matview lock replica_identity rowsecurity object_address tablesample groupingsets
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 # ----------
 # Another group of parallel tests
@@ -128,7 +124,6 @@ test: brin gin gist spgist privileges security_label collate matview lock replic
 test: alter_generic misc psql async
 
 # rules cannot run concurrently with any test that creates a view
-<<<<<<< HEAD
 #
 # 'rules' test is disabled in GPDB. Maintaining the list of views in it is
 # too painful, and there are also errors because of cross-segment UPDATEs
@@ -138,16 +133,10 @@ test: alter_generic misc psql async
 # merge, it was done a long time ago, it's time to revisit this so we can re-
 # enable it
 #test: rules
-# event triggers cannot run concurrently with any test that runs DDL
-test: event_trigger
-=======
-test: rules
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 # ----------
 # Another group of parallel tests
 # ----------
-<<<<<<< HEAD
 test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json jsonb json_encoding indirect_toast equivclass
 
 # Output of the 'combocid' test contains ctid and cmin values, which will
@@ -158,9 +147,6 @@ test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts f
 # multiple UNIQUE constraints, which is not supported in GPDB.
 #test: foreign_key
 
-=======
-test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json jsonb indirect_toast equivclass
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 # ----------
 # Another group of parallel tests
 # NB: temp.sql does a reconnect which transiently uses 2 connections,
