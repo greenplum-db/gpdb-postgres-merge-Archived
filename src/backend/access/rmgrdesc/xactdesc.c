@@ -115,6 +115,15 @@ ParseCommitRecord(uint8 info, xl_xact_commit *xlrec, xl_xact_parsed_commit *pars
 
 		data += sizeof(xl_xact_origin);
 	}
+
+	if (parsed->xinfo & XACT_XINFO_HAS_DISTRIB)
+	{
+		xl_xact_distrib *xl_distrib = (xl_xact_distrib *) data;
+
+		parsed->distribTimeStamp = xl_distrib->distrib_timestamp;
+		parsed->distribXid = xl_distrib->distrib_xid;
+		data += sizeof(xl_xact_distrib);
+	}
 }
 
 void

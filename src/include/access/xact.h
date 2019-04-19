@@ -120,17 +120,15 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 #define XLOG_XACT_COMMIT_PREPARED	0x30
 #define XLOG_XACT_ABORT_PREPARED	0x40
 #define XLOG_XACT_ASSIGNMENT		0x50
-/* free opcode 0x60 */
-/* free opcode 0x70 */
+/* GPDB takes the last available two opcodes */
+#define XLOG_XACT_DISTRIBUTED_COMMIT 0x60
+#define XLOG_XACT_DISTRIBUTED_FORGET 0x70
 
 /* mask for filtering opcodes out of xl_info */
 #define XLOG_XACT_OPMASK			0x70
 
 /* does this record have a 'xinfo' field or not */
 #define XLOG_XACT_HAS_INFO			0x80
-
-#define XLOG_XACT_DISTRIBUTED_COMMIT 0x90
-#define XLOG_XACT_DISTRIBUTED_FORGET 0xA0
 
 /*
  * The following flags, stored in xinfo, determine which information is
@@ -199,8 +197,8 @@ typedef struct xl_xact_xinfo
 
 typedef struct xl_xact_distrib
 {
-	TransactionId distrib_xid;
 	TimestampTz distrib_timestamp;
+	TransactionId distrib_xid;
 } xl_xact_distrib;
 
 typedef struct xl_xact_dbinfo
