@@ -53,3 +53,21 @@ appendonly_desc(StringInfo buf, XLogReaderState *record)
 			appendStringInfo(buf, "UNKNOWN");
 	}
 }
+
+const char *
+appendonly_identify(uint8 info)
+{
+	const char *id = NULL;
+
+	switch (info & ~XLR_INFO_MASK)
+	{
+		case XLOG_APPENDONLY_INSERT:
+			id = "APPENDONLY_INSERT";
+			break;
+		case XLOG_APPENDONLY_TRUNCATE:
+			id = "APPENDONLY_TRUNCATE";
+			break;
+	}
+
+	return id;
+}

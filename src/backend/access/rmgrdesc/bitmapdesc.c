@@ -87,3 +87,33 @@ bitmap_desc(StringInfo buf, XLogReaderState *record)
 			break;
 	}
 }
+
+const char *
+bitmap_identify(uint8 info)
+{
+	const char *id = NULL;
+
+	switch (info & ~XLR_INFO_MASK)
+	{
+		case XLOG_BITMAP_INSERT_LOVITEM:
+			id = "BITMAP_INSERT_LOVITEM";
+			break;
+		case XLOG_BITMAP_INSERT_META:
+			id = "BITMAP_INSERT_META";
+			break;
+		case XLOG_BITMAP_INSERT_BITMAP_LASTWORDS:
+			id = "BITMAP_INSERT_BITMAP_LASTWORDS";
+			break;
+		case XLOG_BITMAP_INSERT_WORDS:
+			id = "BITMAP_INSERT_WORDS";
+			break;
+		case XLOG_BITMAP_UPDATEWORD:
+			id = "BITMAP_UPDATEWORD";
+			break;
+		case XLOG_BITMAP_UPDATEWORDS:
+			id = "BITMAP_UPDATEWORDS";
+			break;
+	}
+
+	return id;
+}

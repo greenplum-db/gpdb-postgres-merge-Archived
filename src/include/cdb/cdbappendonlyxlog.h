@@ -58,5 +58,6 @@ extern void appendonly_redo(XLogReaderState *record);
 
 /* in appendonlydesc.c */
 extern void appendonly_desc(StringInfo buf, XLogReaderState *record);
+extern const char *appendonly_identify(uint8 info);
 
 #endif   /* CDBAPPENDONLYXLOG_H */

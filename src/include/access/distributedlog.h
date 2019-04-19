@@ -82,5 +82,6 @@ extern bool DistributedLog_GetLowWaterXid(
 
 extern void DistributedLog_redo(XLogReaderState *record);
 extern void DistributedLog_desc(StringInfo buf, XLogReaderState *record);
+extern const char *DistributedLog_identify(uint8 info);
 
 #endif							/* DISTRIBUTEDLOG_H */
