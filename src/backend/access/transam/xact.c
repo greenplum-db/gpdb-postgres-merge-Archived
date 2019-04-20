@@ -1391,7 +1391,6 @@ RecordTransactionCommit(void)
 	bool		wrote_xlog;
 	bool		isDtxPrepared = 0;
 	TMGXACT_LOG gxact_log;
-	XLogRecPtr	recptr = InvalidXLogRecPtr;
 
 	/* Like in CommitTransaction(), treat a QE reader as if there was no XID */
 	if (DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON ||
@@ -1560,7 +1559,7 @@ RecordTransactionCommit(void)
 		forceSyncCommit || nrels > 0)
 #endif
 	{
-		XLogFlush(recptr);
+		XLogFlush(XactLastRecEnd);
 
 #ifdef FAULT_INJECTOR
 		if (isDtxPrepared == 0 &&
@@ -6248,21 +6247,6 @@ xactGetCommittedChildren(TransactionId **ptr)
 	return s->nChildXids;
 }
 
-/*
- *	XLOG support routines
- */
-static TMGXACT_LOG *
-xact_get_distributed_info_from_commit(xl_xact_parsed_commit *xlrec)
-{
-	TransactionId *xacts;
-	SharedInvalidationMessage *msgs;
-
-	xacts = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
-	msgs = (SharedInvalidationMessage *) &xacts[xlrec->nsubxacts];
-
-	return (TMGXACT_LOG *) &msgs[xlrec->nmsgs];
-}
-
 
 /*
  * Log the commit record for a plain or twophase transaction commit.
@@ -6296,7 +6280,9 @@ XactLogCommitRecord(TimestampTz commit_time,
 	xl_xinfo.xinfo = 0;
 
 	/* decide between a plain and 2pc commit */
-	if (!TransactionIdIsValid(twophase_xid))
+	if (gid)
+		info = XLOG_XACT_DISTRIBUTED_COMMIT;
+	else if (!TransactionIdIsValid(twophase_xid))
 		info = XLOG_XACT_COMMIT;
 	else
 		info = XLOG_XACT_COMMIT_PREPARED;
@@ -6675,8 +6661,8 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 static void
 xact_redo_distributed_commit(uint8 info, xl_xact_commit *xlrec, TransactionId xid)
 {
-	TMGXACT_LOG *gxact_log;
-	
+	TMGXACT_LOG gxact_log;
+	char gid[TMGIDSIZE];
 	DistributedTransactionTimeStamp	distribTimeStamp;
 	DistributedTransactionId 		distribXid;
 
@@ -6687,23 +6673,13 @@ xact_redo_distributed_commit(uint8 info, xl_xact_commit *xlrec, TransactionId xi
 
 	ParseCommitRecord(info, xlrec, &parsed);
 
-	/* 
-	 * Get the global transaction information first.
-	 */
-	gxact_log = xact_get_distributed_info_from_commit(&parsed);
+	distribTimeStamp = parsed.distribTimeStamp;
+	distribXid = parsed.distribXid;
 
-	/*
-	 * Crack open the gid to get the timestamp.
-	 */
-	dtxCrackOpenGid(
-			gxact_log->gid,
-			&distribTimeStamp,
-			&distribXid);
-
-	if (gxact_log->gxid != distribXid)
-		elog(ERROR, 
-		     "Distributed xid %u does not match %u in distributed commit redo record",
-		     gxact_log->gxid, distribXid);
+	/* Construct the global transaction log */
+	snprintf(gid, TMGIDSIZE, "%u-%.10u", distribTimeStamp, distribXid);
+	memcpy(&gxact_log.gid, gid, TMGIDSIZE);
+	gxact_log.gxid = distribXid;
 
 	if (TransactionIdIsValid(xid))
 	{
@@ -6735,7 +6711,7 @@ xact_redo_distributed_commit(uint8 info, xl_xact_commit *xlrec, TransactionId xi
 		/* Add the committed subtransactions to the DistributedLog, too. */
 		DistributedLog_SetCommittedTree(xid, parsed.nsubxacts, sub_xids,
 										distribTimeStamp,
-										gxact_log->gxid,
+										gxact_log.gxid,
 										/* isRedo */ true);
 
 		TransactionIdCommitTree(xid, parsed.nsubxacts, sub_xids);
@@ -6769,7 +6745,7 @@ xact_redo_distributed_commit(uint8 info, xl_xact_commit *xlrec, TransactionId xi
 	/*
 	 * End copy of xact_redo_commit logic.
 	 */
-	redoDistributedCommitRecord(gxact_log);
+	redoDistributedCommitRecord(&gxact_log);
 }
 
 static void

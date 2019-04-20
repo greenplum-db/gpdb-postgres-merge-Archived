@@ -179,7 +179,7 @@ ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed)
 	}
 }
 
-static char*
+static void
 xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId origin_id)
 {
 	xl_xact_parsed_commit parsed;
@@ -251,26 +251,18 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 						 (uint32) parsed.origin_lsn,
 						 timestamptz_to_str(parsed.origin_timestamp));
 	}
-
-	/*
-	 * MPP: Return end of regular commit information.
-	 */
-	return (char *) &parsed.msgs[parsed.nmsgs];
 }
 
 static void
 xact_desc_distributed_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId origin_id)
 {
-	TMGXACT_LOG *gxact_log;
+	xl_xact_parsed_commit parsed;
 
-	/*
-	 * We put the global transaction information last, so call the regular xact
-	 * commit routine.
-	 */
-	gxact_log = (TMGXACT_LOG *) xact_desc_commit(buf, info, xlrec, origin_id);
+	ParseCommitRecord(info, xlrec, &parsed);
 
-	appendStringInfo(buf, " gid = %s, gxid = %u",
-					 gxact_log->gid, gxact_log->gxid);
+	appendStringInfoString(buf, timestamptz_to_str(xlrec->xact_time));
+	appendStringInfo(buf, " gid = %u-%.10u, gxid = %u",
+					 parsed.distribTimeStamp, parsed.distribXid, parsed.distribXid);
 }
 
 static void
@@ -396,6 +388,12 @@ xact_identify(uint8 info)
 			break;
 		case XLOG_XACT_ASSIGNMENT:
 			id = "ASSIGNMENT";
+			break;
+		case XLOG_XACT_DISTRIBUTED_COMMIT:
+			id = "DISTRIBUTED_COMMIT";
+			break;
+		case XLOG_XACT_DISTRIBUTED_FORGET:
+			id = "DISTRIBUTED_FORGET";
 			break;
 	}
 
