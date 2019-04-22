@@ -2901,6 +2901,7 @@ _outAlterTableCmd(StringInfo str, const AlterTableCmd *node)
 
 	WRITE_ENUM_FIELD(subtype, AlterTableType);
 	WRITE_STRING_FIELD(name);
+	WRITE_NODE_FIELD(newowner);
 	WRITE_NODE_FIELD(def);
 	WRITE_NODE_FIELD(transform);
 	WRITE_ENUM_FIELD(behavior, DropBehavior);

@@ -587,6 +587,7 @@ _readAlterTableCmd(void)
 
 	READ_ENUM_FIELD(subtype, AlterTableType);
 	READ_STRING_FIELD(name);
+	READ_NODE_FIELD(newowner);
 	READ_NODE_FIELD(def);
 	READ_NODE_FIELD(transform);
 	READ_ENUM_FIELD(behavior, DropBehavior); Assert(local_node->behavior <= DROP_CASCADE);
