@@ -80,7 +80,7 @@ ParseCommitRecord(uint8 info, xl_xact_commit *xlrec, xl_xact_parsed_commit *pars
 		parsed->xnodes = xl_relfilenodes->xnodes;
 
 		data += MinSizeOfXactRelfilenodes;
-		data += xl_relfilenodes->nrels * sizeof(RelFileNode);
+		data += xl_relfilenodes->nrels * sizeof(RelFileNodeWithStorageType);
 	}
 
 	if (parsed->xinfo & XACT_XINFO_HAS_INVALS)
@@ -166,7 +166,7 @@ ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed)
 		parsed->xnodes = xl_relfilenodes->xnodes;
 
 		data += MinSizeOfXactRelfilenodes;
-		data += xl_relfilenodes->nrels * sizeof(RelFileNode);
+		data += xl_relfilenodes->nrels * sizeof(RelFileNodeWithStorageType);
 	}
 
 	if (parsed->xinfo & XACT_XINFO_HAS_TWOPHASE)
