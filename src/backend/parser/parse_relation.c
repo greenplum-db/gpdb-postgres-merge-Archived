@@ -1391,8 +1391,6 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	int			varattno;
 	ListCell   *tlistitem;
 
-	Assert(pstate != NULL);
-
 	rte->rtekind = RTE_SUBQUERY;
 	rte->relid = InvalidOid;
 	rte->subquery = subquery;
@@ -1446,7 +1444,8 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	 * Add completed RTE to pstate's range table list, but not to join list
 	 * nor namespace --- caller must do that if appropriate.
 	 */
-	pstate->p_rtable = lappend(pstate->p_rtable, rte);
+	if (pstate != NULL)
+		pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
 	return rte;
 }

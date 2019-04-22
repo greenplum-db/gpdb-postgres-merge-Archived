@@ -1379,7 +1379,7 @@ make_two_stage_agg_plan(PlannerInfo *root,
 									result_plan);
 
 	/* May lose useful locus and sort. Unlikely, but could do better. */
-	mark_plan_strewn(result_plan, result_plan->flow->numsegments);
+	mark_plan_strewn(result_plan, ctx->input_locus.numsegments);
 	current_pathkeys = NIL;
 
 	/*
