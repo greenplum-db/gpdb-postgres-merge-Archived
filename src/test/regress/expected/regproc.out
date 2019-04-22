@@ -42,9 +42,6 @@ SELECT regtype('int4');
  integer
 (1 row)
 
-<<<<<<< HEAD
-SELECT to_regoper('<#>');
-=======
 SELECT regrole('regtestrole');
    regrole   
 -------------
@@ -57,8 +54,7 @@ SELECT regnamespace('pg_catalog');
  pg_catalog
 (1 row)
 
-SELECT to_regoper('||/');
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+SELECT to_regoper('<#>');
  to_regoper 
 ------------
  <#>
