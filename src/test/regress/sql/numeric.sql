@@ -857,8 +857,6 @@ select 10.0 ^ -2147483648 as rounds_to_zero;
 select 10.0 ^ -2147483647 as rounds_to_zero;
 select 10.0 ^ 2147483647 as overflows;
 select 117743296169.0 ^ 1000000000 as overflows;
-<<<<<<< HEAD
-=======
 
 --
 -- Tests for generate_series
@@ -880,4 +878,3 @@ select (i / (10::numeric ^ 131071))::numeric(1,0)
 select * from generate_series(1::numeric, 3::numeric) i, generate_series(i,3) j;
 select * from generate_series(1::numeric, 3::numeric) i, generate_series(1,i) j;
 select * from generate_series(1::numeric, 3::numeric) i, generate_series(1,5,i) j;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
