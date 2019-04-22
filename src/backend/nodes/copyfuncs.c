@@ -5669,6 +5669,7 @@ copyObject(const void *from)
 			break;
 		case T_Flow:
 			retval = _copyFlow(from);
+			break;
 		case T_OnConflictExpr:
 			retval = _copyOnConflictExpr(from);
 			break;
