@@ -2307,6 +2307,10 @@ GPDB_EXTRA_COL(prodataaccess = c);
 DATA(insert OID = 2631 (  int8pl_inet		PGNSP PGUID 14 1 0 0 0 f f f f t f i 2 0 869 "20 869" _null_ _null_ _null_ _null_ _null_ "select $2 + $1" _null_ _null_ _null_ ));
 DATA(insert OID = 2632 (  inetmi_int8		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 869 "869 20" _null_ _null_ _null_ _null_ _null_	inetmi_int8 _null_ _null_ _null_ ));
 DATA(insert OID = 2633 (  inetmi			PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 20 "869 869" _null_ _null_ _null_ _null_ _null_	inetmi _null_ _null_ _null_ ));
+DATA(insert OID = 4071 (  inet_same_family	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_ _null_	inet_same_family _null_ _null_ _null_ ));
+DESCR("are the addresses from the same family?");
+DATA(insert OID = 4063 (  inet_merge		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 650 "869 869" _null_ _null_ _null_ _null_ _null_	inet_merge _null_ _null_ _null_ ));
+DESCR("the smallest network which includes both of the given networks");
 
 /* GiST support for inet and cidr */
 DATA(insert OID = 3553 (  inet_gist_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i 5 0 16 "2281 869 23 26 2281" _null_ _null_ _null_ _null_ _null_ inet_gist_consistent _null_ _null_ _null_ ));
