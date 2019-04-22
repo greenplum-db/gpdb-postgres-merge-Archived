@@ -302,6 +302,8 @@ NewExplainState(void)
 	es->costs = true;
 	/* Prepare output buffer. */
 	es->str = makeStringInfo();
+	/* Kluge to avoid changing sizeof(ExplainState) in released branches. */
+	es->extra = (ExplainStateExtra *) palloc0(sizeof(ExplainStateExtra));
 
 	return es;
 }
