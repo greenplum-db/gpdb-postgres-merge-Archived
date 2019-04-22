@@ -114,7 +114,8 @@ class CFile(object):
             (modifier, rettype, funcname, args) = m.groups('')
             # 'else if(...){}' looks like a function.  Ignore it.
             if funcname in ['if', 'while', 'switch', 'for', 'foreach',
-                            'yysyntax_error', 'defined', 'dlist_foreach']:
+                            'yysyntax_error', 'defined', 'dlist_foreach',
+                            'dlist_foreach_modify']:
                 continue
             if rettype.strip() in ['define', 'select']:
                 continue

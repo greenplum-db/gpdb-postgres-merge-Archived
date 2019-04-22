@@ -84,6 +84,7 @@ class ByValStructs(object):
             'ItemPointerData',
             'NameData',
             'mpp_fd_set',
+            'ObjectAddress',
             'PGSemaphoreData',
             'PossibleValueSet',
             'PrimaryMirrorModeTransitionArguments',

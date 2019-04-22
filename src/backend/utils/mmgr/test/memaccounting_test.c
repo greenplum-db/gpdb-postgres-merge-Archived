@@ -936,16 +936,16 @@ test__MemoryAccounting_CombinedAccountArrayToExplain__Validate(void **state)
 			MemoryAccountMemoryAccount->peak, MemoryAccountMemoryAccount->allocated - MemoryAccountMemoryAccount->freed,
 			SharedChunkHeadersMemoryAccount->peak, SharedChunkHeadersMemoryAccount->allocated - SharedChunkHeadersMemoryAccount->freed);
 
-	ExplainState es;
-	ExplainInitState(&es);
-	es.str = &str;
+	ExplainState *es;
+	es = NewExplainState();
+	es->str = &str;
 
-	MemoryAccounting_CombinedAccountArrayToExplain(serializedBytes.data, totalSerialized, &es);
+	MemoryAccounting_CombinedAccountArrayToExplain(serializedBytes.data, totalSerialized, es);
 
 	size_t newTopBalance = topAccount->allocated - topAccount->freed;
 	size_t newTopPeak = topAccount->peak;
 
-    assert_true(strcmp(es.str->data, buf) == 0);
+	assert_true(strcmp(es->str->data, buf) == 0);
 
     pfree(serializedBytes.data);
 	pfree(str.data);
@@ -1095,10 +1095,10 @@ test__MemoryAccounting_ToExplain__Validate(void **state)
 	MemoryAccountTree *tree = ConvertMemoryAccountArrayToTree(&longLivingMemoryAccountArray[MEMORY_OWNER_TYPE_Undefined],
 			shortLivingMemoryAccountArray->allAccounts, shortLivingMemoryAccountArray->accountCount);
 
-	ExplainState es;
-	ExplainInitState(&es);
+	ExplainState *es;
+	es = NewExplainState();
 
-	MemoryAccounting_ToExplain(&tree[MEMORY_OWNER_TYPE_LogicalRoot], &es);
+	MemoryAccounting_ToExplain(&tree[MEMORY_OWNER_TYPE_LogicalRoot], es);
 
 	char		buf[MAX_OUTPUT_BUFFER_SIZE];
 	snprintf(buf, sizeof(buf), templateString,
@@ -1108,7 +1108,7 @@ test__MemoryAccounting_ToExplain__Validate(void **state)
 			rollover->peak, (rollover->allocated - rollover->freed), /* Rollover */
 			SharedChunkHeadersMemoryAccount->peak, (SharedChunkHeadersMemoryAccount->allocated - SharedChunkHeadersMemoryAccount->freed) /* SharedChunkHeadersMemoryAccount */);
 
-    assert_true(strcmp(es.str->data, buf) == 0);
+	assert_true(strcmp(es->str->data, buf) == 0);
 
     pfree(tree);
     pfree(newAccount1);
