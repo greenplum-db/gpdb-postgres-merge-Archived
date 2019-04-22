@@ -5868,6 +5868,8 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 		 */
 		Relation	OldHeap;
 		bool		hasIndexes;
+		Oid 		oldTableSpace;
+		char		oldRelPersistence;
 
 		/* We will lock the table iff we decide to actually rewrite it */
 		OldHeap = relation_open(tab->relid, NoLock);
@@ -5876,6 +5878,8 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 			heap_close(OldHeap, NoLock);
 			continue;
 		}
+		oldTableSpace = OldHeap->rd_rel->reltablespace;
+		oldRelPersistence = OldHeap->rd_rel->relpersistence;
 
 		relstorage    = OldHeap->rd_rel->relstorage;
 		{
@@ -5961,17 +5965,15 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 			if (tab->newTableSpace)
 				NewTableSpace = tab->newTableSpace;
 			else
-				NewTableSpace = OldHeap->rd_rel->reltablespace;
+				NewTableSpace = oldTableSpace;
 
 			/*
 			 * Select persistence of transient table (same as original unless
 			 * user requested a change)
 			 */
 			persistence = tab->chgPersistence ?
-				tab->newrelpersistence : OldHeap->rd_rel->relpersistence;
-
-			heap_close(OldHeap, NoLock);
-
+				tab->newrelpersistence : oldRelPersistence;
+			
 			/*
 			 * Fire off an Event Trigger now, before actually rewriting the
 			 * table.
