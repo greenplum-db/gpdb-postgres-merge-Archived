@@ -1499,7 +1499,7 @@ RecordTransactionCommit(void)
 								nmsgs, invalMessages,
 								RelcacheInitFileInval, forceSyncCommit,
 								InvalidTransactionId /* plain commit */,
-								gxact_log.gid);
+								gxact_log.gid /* distributed commit */);
 			insertedDistributedCommitted();
 		}
 		else
@@ -6278,6 +6278,9 @@ XactLogCommitRecord(TimestampTz commit_time,
 	Assert(CritSectionCount > 0);
 
 	xl_xinfo.xinfo = 0;
+
+	/* cannot log commit prepared and distributed commit record at the same time */
+	Assert(!(TransactionIdIsValid(twophase_xid) && gid != NULL));
 
 	/* decide between a plain and 2pc commit */
 	if (gid)
