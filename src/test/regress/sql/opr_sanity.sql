@@ -30,15 +30,10 @@ SELECT ($1 = $2) OR
  ($2 = 'pg_catalog.any'::pg_catalog.regtype) OR
  ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
   EXISTS(select 1 from pg_catalog.pg_type where
-<<<<<<< HEAD
-         oid = $1 and typelem != 0 and typlen = -1))
-$$ language sql strict stable READS SQL DATA;
-=======
          oid = $1 and typelem != 0 and typlen = -1)) OR
  ($2 = 'pg_catalog.anyrange'::pg_catalog.regtype AND
   (select typtype from pg_catalog.pg_type where oid = $1) = 'r')
-$$ language sql strict stable;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+$$ language sql strict stable READS SQL DATA;
 
 -- This one ignores castcontext, so it considers only physical equivalence
 -- and not whether the coercion can be invoked implicitly.
@@ -50,15 +45,10 @@ SELECT ($1 = $2) OR
  ($2 = 'pg_catalog.any'::pg_catalog.regtype) OR
  ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
   EXISTS(select 1 from pg_catalog.pg_type where
-<<<<<<< HEAD
-         oid = $1 and typelem != 0 and typlen = -1))
-$$ language sql strict stable READS SQL DATA;
-=======
          oid = $1 and typelem != 0 and typlen = -1)) OR
  ($2 = 'pg_catalog.anyrange'::pg_catalog.regtype AND
   (select typtype from pg_catalog.pg_type where oid = $1) = 'r')
-$$ language sql strict stable;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+$$ language sql strict stable READS SQL DATA;
 
 -- **************** pg_proc ****************
 
@@ -1442,7 +1432,6 @@ WHERE p1.amproc = p2.oid AND
     p1.amproclefttype != p1.amprocrighttype AND
     p2.provolatile = 'v';
 
-<<<<<<< HEAD
 -- Check for oid collisions between pg_proc/pg_type/pg_class
 SELECT *
 FROM
@@ -1454,7 +1443,7 @@ FROM
          select oid, 'pg_class' as catalgo, relname as name from pg_class) cats
   ) cat_counts
 WHERE oid_count > 1;
-=======
+
 -- **************** pg_index ****************
 
 -- Look for illegal values in pg_index fields.
@@ -1517,4 +1506,3 @@ WHERE icoll != 0 AND iclass !=
     (SELECT oid FROM pg_opclass
      WHERE opcname = 'text_pattern_ops' AND opcmethod =
            (SELECT oid FROM pg_am WHERE amname = 'btree'));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

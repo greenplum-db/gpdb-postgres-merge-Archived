@@ -27,15 +27,10 @@ SELECT ($1 = $2) OR
  ($2 = 'pg_catalog.any'::pg_catalog.regtype) OR
  ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
   EXISTS(select 1 from pg_catalog.pg_type where
-<<<<<<< HEAD
-         oid = $1 and typelem != 0 and typlen = -1))
-$$ language sql strict stable READS SQL DATA;
-=======
          oid = $1 and typelem != 0 and typlen = -1)) OR
  ($2 = 'pg_catalog.anyrange'::pg_catalog.regtype AND
   (select typtype from pg_catalog.pg_type where oid = $1) = 'r')
-$$ language sql strict stable;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+$$ language sql strict stable READS SQL DATA;
 -- This one ignores castcontext, so it considers only physical equivalence
 -- and not whether the coercion can be invoked implicitly.
 create function physically_coercible(oid, oid) returns bool as $$
@@ -46,15 +41,10 @@ SELECT ($1 = $2) OR
  ($2 = 'pg_catalog.any'::pg_catalog.regtype) OR
  ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
   EXISTS(select 1 from pg_catalog.pg_type where
-<<<<<<< HEAD
-         oid = $1 and typelem != 0 and typlen = -1))
-$$ language sql strict stable READS SQL DATA;
-=======
          oid = $1 and typelem != 0 and typlen = -1)) OR
  ($2 = 'pg_catalog.anyrange'::pg_catalog.regtype AND
   (select typtype from pg_catalog.pg_type where oid = $1) = 'r')
-$$ language sql strict stable;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+$$ language sql strict stable READS SQL DATA;
 -- **************** pg_proc ****************
 -- Look for illegal values in pg_proc fields.
 SELECT p1.oid, p1.proname
@@ -207,7 +197,6 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc NOT LIKE E'range\\_constructor_' AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
     (p1.proargtypes[0] < p2.proargtypes[0])
-<<<<<<< HEAD
 ORDER BY 1, 2; -- order none
          proargtypes         |       proargtypes        
 -----------------------------+--------------------------
@@ -216,18 +205,7 @@ ORDER BY 1, 2; -- order none
  bigint[]                    | double precision[]
  timestamp without time zone | timestamp with time zone
  bit                         | bit varying
- anyarray                    | anyelement
-(6 rows)
-=======
-ORDER BY 1, 2;
- proargtypes | proargtypes 
--------------+-------------
-          25 |        1042
-          25 |        1043
-        1114 |        1184
-        1560 |        1562
-(4 rows)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+(5 rows)
 
 SELECT DISTINCT p1.proargtypes[1]::regtype, p2.proargtypes[1]::regtype
 FROM pg_proc AS p1, pg_proc AS p2
@@ -240,7 +218,6 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc NOT LIKE E'range\\_constructor_' AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
     (p1.proargtypes[1] < p2.proargtypes[1])
-<<<<<<< HEAD
 ORDER BY 1, 2; -- order none
          proargtypes         |       proargtypes        
 -----------------------------+--------------------------
@@ -253,17 +230,7 @@ ORDER BY 1, 2; -- order none
  bigint[]                    | double precision[]
  timestamp without time zone | timestamp with time zone
  bit                         | bit varying
- anyarray                    | anyelement
-(10 rows)
-=======
-ORDER BY 1, 2;
- proargtypes | proargtypes 
--------------+-------------
-          23 |          28
-        1114 |        1184
-        1560 |        1562
-(3 rows)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+(9 rows)
 
 SELECT DISTINCT p1.proargtypes[2]::regtype, p2.proargtypes[2]::regtype
 FROM pg_proc AS p1, pg_proc AS p2
@@ -1894,7 +1861,6 @@ ORDER BY 1, 2, 3;
        4000 |           15 | >
        4000 |           16 | @>
        4000 |           18 | =
-<<<<<<< HEAD
        7013 |            1 | <
        7013 |            1 | ~<~
        7013 |            2 | <=
@@ -1905,9 +1871,6 @@ ORDER BY 1, 2, 3;
        7013 |            5 | >
        7013 |            5 | ~>~
 (93 rows)
-=======
-(108 rows)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 -- Check that all opclass search operators have selectivity estimators.
 -- This is not absolutely required, but it seems a reasonable thing
@@ -2217,7 +2180,6 @@ WHERE p1.amproc = p2.oid AND
 --------------+--------+--------
 (0 rows)
 
-<<<<<<< HEAD
 -- Check for oid collisions between pg_proc/pg_type/pg_class
 SELECT *
 FROM
@@ -2231,7 +2193,8 @@ FROM
 WHERE oid_count > 1;
  oid | catalog | name | oid_count 
 -----+---------+------+-----------
-=======
+(0 rows)
+
 -- **************** pg_index ****************
 -- Look for illegal values in pg_index fields.
 SELECT p1.indexrelid, p1.indrelid
@@ -2243,7 +2206,7 @@ WHERE p1.indexrelid = 0 OR p1.indrelid = 0 OR
 (0 rows)
 
 -- oidvector and int2vector fields should be of length indnatts.
-SELECT p1.indexrelid, p1.indrelid
+SELECT p2.indexrelid, p1.indrelid
 FROM pg_index as p1
 WHERE array_lower(indkey, 1) != 0 OR array_upper(indkey, 1) != indnatts-1 OR
     array_lower(indclass, 1) != 0 OR array_upper(indclass, 1) != indnatts-1 OR
@@ -2303,6 +2266,5 @@ WHERE icoll != 0 AND iclass !=
            (SELECT oid FROM pg_am WHERE amname = 'btree'));
  indexrelid | indrelid | iclass | icoll 
 ------------+----------+--------+-------
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 (0 rows)
 

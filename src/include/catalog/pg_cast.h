@@ -386,11 +386,11 @@ DATA(insert (  114 3802    0 a i ));
 DATA(insert ( 3802	114    0 a i ));
 
 /* complex type */
-DATA(insert (701  7198 3584 i f));
-DATA(insert (700  7198 3585 i f));
-DATA(insert (20   7198 3586 i f));
-DATA(insert (23   7198 3587 i f));
-DATA(insert (21   7198 3588 i f));
+DATA(insert (701  7198 5057 i f));
+DATA(insert (700  7198 5058 i f));
+DATA(insert (20   7198 5059 i f));
+DATA(insert (23   7198 5060 i f));
+DATA(insert (21   7198 5061 i f));
 DATA(insert (600  7198 0 e b));
 DATA(insert (7198  600 0 e b));
 DATA(insert (1700 7198 7597 i f));
