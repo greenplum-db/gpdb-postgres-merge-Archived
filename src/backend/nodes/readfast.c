@@ -3758,6 +3758,9 @@ readNodeBinary(void)
 			case T_CommonTableExpr:
 				return_value = _readCommonTableExpr();
 				break;
+			case T_RoleSpec:
+				return_value = _readRoleSpec();
+				break;
 			case T_RangeTableSample:
 				return_value = _readRangeTableSample();
 				break;

@@ -1777,6 +1777,9 @@ _outNode(StringInfo str, void *obj)
 			case T_ColumnReferenceStorageDirective:
 				_outColumnReferenceStorageDirective(str, obj);
 				break;
+			case T_RoleSpec:
+				_outRoleSpec(str, obj);
+				break;
 			case T_PartitionBy:
 				_outPartitionBy(str, obj);
 				break;

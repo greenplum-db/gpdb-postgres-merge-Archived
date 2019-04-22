@@ -2703,6 +2703,16 @@ _outColumnReferenceStorageDirective(StringInfo str, const ColumnReferenceStorage
 }
 
 static void
+_outRoleSpec(StringInfo str, const RoleSpec *node)
+{
+	WRITE_NODE_TYPE("ROLESPEC");
+
+	WRITE_ENUM_FIELD(roletype, RoleSpecType);
+	WRITE_STRING_FIELD(rolename);
+	WRITE_LOCATION_FIELD(location);
+}
+
+static void
 _outExtTableTypeDesc(StringInfo str, const ExtTableTypeDesc *node)
 {
 	WRITE_NODE_TYPE("EXTTABLETYPEDESC");
