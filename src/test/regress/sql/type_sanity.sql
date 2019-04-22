@@ -122,19 +122,17 @@ WHERE p1.typinput = p2.oid AND
     (p2.oid = 'array_in'::regproc)
 ORDER BY 1;
 
-<<<<<<< HEAD
 -- Make sure typarray points to a varlena array type of our own base
 SELECT p1.oid, p1.typname as basetype, p2.typname as arraytype,
        p2.typelem, p2.typlen
 FROM   pg_type p1 LEFT JOIN pg_type p2 ON (p1.typarray = p2.oid)
 WHERE  p1.typarray <> 0 AND
        (p2.oid IS NULL OR p2.typelem <> p1.oid OR p2.typlen <> -1);
-=======
+
 -- typinput routines should not be volatile
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typinput = p2.oid AND p2.provolatile NOT IN ('i', 's');
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 -- Composites, domains, enums, ranges should all use the same input routines
 SELECT DISTINCT typtype, typinput
