@@ -239,7 +239,16 @@ static TupleTableSlot *agg_retrieve_hash_table_internal(AggState *aggstate);
 static void *
 cxt_alloc(void *manager, Size len)
 {
-	return MemoryContextAlloc((MemoryContext)manager, len);
+	AggState   *aggstate = (AggState *) manager;
+	MemoryContext curaggcontext;
+
+	Assert(IsA(aggstate, AggState));
+
+	// GPDB_10_MERGE_FIXME: After commit b5635948, there is a 'curaggcontext' field
+	// directly in aggstate. Use that.
+	curaggcontext = aggstate->aggcontexts[aggstate->current_set]->ecxt_per_tuple_memory;
+
+	return MemoryContextAlloc(curaggcontext, len);
 }
 
 static void
