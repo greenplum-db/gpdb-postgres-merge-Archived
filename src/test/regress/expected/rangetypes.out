@@ -1101,7 +1101,7 @@ explain (costs off)
 select ir from test_range_spgist where ir -|- int4range(10,20) order by ir;
                                   QUERY PLAN                                  
 ------------------------------------------------------------------------------
- Gather Motion 1:1  (slice1; segments: 1)
+ Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: ir
    ->  Sort
          Sort Key: ir
