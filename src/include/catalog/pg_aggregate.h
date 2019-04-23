@@ -335,7 +335,7 @@ DATA(insert ( 3990	h 1 ordered_set_transition_multi	cume_dist_final							-	-	-	
 DATA(insert ( 3992	h 1 ordered_set_transition_multi	dense_rank_final						-	-	-	-		-		-		t f 0	2281	0	0		0	_null_ _null_ ));
 
 /* MPP Aggregate -- array_sum -- special for prospective customer. */
-DATA(insert ( 6013	n 0 array_add	-				array_add	-	-			-	-	-	f f 0	1007 0	0	0	"{}" _null_ ));
+DATA(insert ( 5067	n 0 array_add	-				array_add	-	-			-	-	-	f f 0	1007 0	0	0	"{}" _null_ ));
 
 /* sum(array[]) */
 DATA(insert ( 6216  n 0 int2_matrix_accum		-	int8_matrix_accum	-	-	-	-	-	f f 0	1016 0	0	0	_null_ _null_ ));
