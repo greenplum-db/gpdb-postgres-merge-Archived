@@ -826,6 +826,14 @@ DefineIndex(Oid relationId,
 					 stmt->if_not_exists,
 					 &createdConstraintId);
 
+	ObjectAddressSet(address, RelationRelationId, indexRelationId);
+
+	if (!OidIsValid(indexRelationId))
+	{
+		heap_close(rel, NoLock);
+		return address;
+	}
+
 	if (shouldDispatch)
 	{
 		/* make sure the QE uses the same index name that we chose */
@@ -841,14 +849,6 @@ DefineIndex(Oid relationId,
 		/* Set indcheckxmin in the master, if it was set on any segment */
 		if (!indexInfo->ii_BrokenHotChain)
 			cdb_sync_indcheckxmin_with_segments(indexRelationId);
-	}
-
-	ObjectAddressSet(address, RelationRelationId, indexRelationId);
-
-	if (!OidIsValid(indexRelationId))
-	{
-		heap_close(rel, NoLock);
-		return address;
 	}
 
 	/* Add any requested comment */
