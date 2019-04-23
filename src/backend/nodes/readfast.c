@@ -777,6 +777,17 @@ _readA_Indirection(void)
 	READ_DONE();
 }
 
+static RoleSpec *
+_readRoleSpec(void)
+{
+	READ_LOCALS(RoleSpec);
+
+	READ_ENUM_FIELD(roletype, RoleSpecType);
+	READ_STRING_FIELD(rolename);
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
 
 static A_Expr *
 _readAExpr(void)
