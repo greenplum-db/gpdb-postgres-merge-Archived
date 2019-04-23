@@ -744,21 +744,14 @@ create index hash_f8_index_3 on hash_f8_heap(random) where seqno > 1000;
 CREATE TABLE concur_heap (f1 text, f2 text, dk text) distributed by (dk);
 -- empty table
 CREATE INDEX CONCURRENTLY concur_index1 ON concur_heap(f2,f1);
-<<<<<<< HEAD
+CREATE INDEX CONCURRENTLY IF NOT EXISTS concur_index1 ON concur_heap(f2,f1);
 INSERT INTO concur_heap VALUES  ('a','b', '1');
 INSERT INTO concur_heap VALUES  ('b','b', '1');
 INSERT INTO concur_heap VALUES  ('c','c', '2');
 INSERT INTO concur_heap VALUES  ('d','d', '3');
 -- unique index
 CREATE UNIQUE INDEX CONCURRENTLY concur_index2 ON concur_heap(dk, f1);
-=======
-CREATE INDEX CONCURRENTLY IF NOT EXISTS concur_index1 ON concur_heap(f2,f1);
-INSERT INTO concur_heap VALUES  ('a','b');
-INSERT INTO concur_heap VALUES  ('b','b');
--- unique index
-CREATE UNIQUE INDEX CONCURRENTLY concur_index2 ON concur_heap(f1);
-CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS concur_index2 ON concur_heap(f1);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS concur_index2 ON concur_heap(dk, f1);
 -- check if constraint is set up properly to be enforced
 INSERT INTO concur_heap VALUES ('b','x', '1');
 -- check if constraint is enforced properly at build time
@@ -985,7 +978,6 @@ SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
 
-<<<<<<< HEAD
 RESET enable_seqscan;
 RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
@@ -993,9 +985,6 @@ RESET enable_bitmapscan;
 
 SET enable_indexonlyscan = OFF;
 SET random_page_cost = 4; -- prefer index san.
-=======
-SET enable_indexonlyscan = OFF;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
@@ -1006,12 +995,9 @@ SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
 
-<<<<<<< HEAD
 RESET random_page_cost;
 RESET enable_indexonlyscan;
-=======
 RESET enable_indexscan;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 --
 -- Check elimination of constant-NULL subexpressions
