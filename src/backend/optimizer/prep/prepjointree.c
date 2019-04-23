@@ -2477,7 +2477,16 @@ pull_up_subqueries_cleanup(Node *jtnode)
 		}
 		else if (j->rarg == NULL)
 		{
-			Assert(j->jointype == JOIN_INNER);
+			/*
+			 * GPDB_95_MERGE_FIXME: Should JOIN_SEMI be allowed here as well?
+			 *
+			 * GPDB commits that may be of interest in order to answer:
+			 *   330dd1b3802
+			 *   fe2eb2c9ed3
+			 *
+			 * Postgres commit f4abd0241de that may be of interest.
+			 */
+			Assert(j->jointype == JOIN_INNER || j->jointype == JOIN_SEMI);
 			return (Node *) makeFromExpr(list_make1(j->larg), j->quals);
 		}
 	}
