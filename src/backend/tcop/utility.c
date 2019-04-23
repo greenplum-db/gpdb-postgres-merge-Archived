@@ -1220,8 +1220,8 @@ ProcessUtilitySlow(Node *parsetree,
 							 */
 							/* Create the table itself */
 							address = DefineRelation((CreateStmt *) stmt,
-													 RELKIND_RELATION,
-													 InvalidOid, NULL,
+													 relKind,
+													 ((CreateStmt *) stmt)->ownerid, NULL,
 													 relStorage, false, true, NULL);
 							EventTriggerCollectSimpleCommand(address,
 															 secondaryObject,
