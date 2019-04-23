@@ -1697,30 +1697,18 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 		{
 			/* 
 			 * CASE placeholder WHEN IS NOT DISTINCT FROM warg:
-			 * 		set: warg->rhs->lhs = placeholder
+			 * 	set the first list element: expr->lexpr = placeholder
 			 */
 			if (isWhenIsNotDistinctFromExpr(warg))
 			{
 				/*
 				 * Make a copy before we change warg.
-				 * In transformation we don't want to change source (CaseExpr* Node).
+				 * In transformation we don't want to change source (BoolExpr* Node).
 				 * Always create new node and do the transformation
 				 */
-				/*
-				 * GPDB_95_MERGE_FIXME: in this case warg is of Bool Expression type
-				 * so the following implementation is obviously wrong. Now, warg holds
-				 * only one argument of type A_Expr. Add the placeholder in the BoolExpr
-				 * OR create a new equality expression. In both cases the two args
-				 * should be comparable.
-				 */
-#ifdef GPDB_95_MERGE_FIXME
 				warg = copyObject(warg);
-				A_Expr *top  = (A_Expr *) warg;
-				A_Expr *expr = (A_Expr *) top->rexpr;
+				A_Expr *expr = (A_Expr *) linitial(((BoolExpr *) warg)->args);
 				expr->lexpr = (Node *) placeholder;
-#else
-				elog(ERROR, "check the GPDB_95_MERGE_FIXME message near this line");
-#endif
 			}
 			else
 				warg = (Node *) makeSimpleA_Expr(AEXPR_OP, "=",
