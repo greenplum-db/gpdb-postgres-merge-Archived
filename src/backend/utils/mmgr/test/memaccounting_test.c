@@ -154,7 +154,7 @@ TeardownMemoryDataStructures(void **state)
 	MemoryAccounting_Reset();
 	MemoryAccounting_SwitchAccount(MEMORY_OWNER_TYPE_Rollover);
 
-	MemoryContextReset(TopMemoryContext); /* TopMemoryContext deletion is not supported */
+	MemoryContextResetOnly(TopMemoryContext); /* TopMemoryContext deletion is not supported */
 
 	/* These are needed to be NULL for calling MemoryContextInit() */
 	TopMemoryContext = NULL;
