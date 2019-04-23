@@ -2250,7 +2250,7 @@ ReindexIndex(ReindexStmt *stmt)
  * QD/utility, and is not useful for QE.
  */
 static void
-ReindexRelationList(List *relids, int options)
+ReindexRelationList(List *relids, int options, bool multiple)
 {
 	ListCell   *lc;
 
@@ -2295,9 +2295,17 @@ ReindexRelationList(List *relids, int options)
 			if (!reindex_relation(relid,
 								  REINDEX_REL_PROCESS_TOAST |
 								  REINDEX_REL_CHECK_CONSTRAINTS, options))
-				ereport(NOTICE,
-					(errmsg("table \"%s\" has no indexes",
-							RelationGetRelationName(rel))));
+			{
+				if (!multiple)
+					ereport(NOTICE,
+							(errmsg("table \"%s\" has no indexes",
+									RelationGetRelationName(rel))));
+				else if (options & REINDEXOPT_VERBOSE)
+					ereport(INFO,
+							(errmsg("table \"%s.%s\" was reindexed",
+									get_namespace_name(get_rel_namespace(relid)),
+									get_rel_name(relid))));
+			}
 			/* no need to dispatch if the relation has no indexes. */
 			else if (Gp_role == GP_ROLE_DISPATCH)
 				CdbDispatchUtilityStatement((Node *) stmt,
@@ -2466,7 +2474,7 @@ ReindexTable(ReindexStmt *stmt)
 		ReleaseSysCache(tuple);
 	}
 
-	ReindexRelationList(relids, options);
+	ReindexRelationList(relids, options, false);
 
 	MemoryContextDelete(private_context);
 
@@ -2607,7 +2615,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	heap_endscan(scan);
 	heap_close(relationRelation, AccessShareLock);
 
-	ReindexRelationList(relids, options);
+	ReindexRelationList(relids, options, true);
 
 	MemoryContextDelete(private_context);
 }
