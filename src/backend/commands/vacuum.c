@@ -2553,7 +2553,7 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params,
 	 * Update ao master tupcount the hard way after the compaction and
 	 * after the drop.
 	 */
-	if (Gp_role == GP_ROLE_DISPATCH &&
+	if (Gp_role == GP_ROLE_DISPATCH && !is_heap &&
 		RelationIsAppendOptimized(onerel) &&
 		ao_vacuum_phase_config->appendonly_compaction_segno)
 	{
