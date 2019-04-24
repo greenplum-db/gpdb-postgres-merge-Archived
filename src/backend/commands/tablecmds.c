@@ -13888,9 +13888,6 @@ ATExecAddInherit(Relation child_rel, Node *node, LOCKMODE lockmode)
 	ObjectAddressSet(address, RelationRelationId,
 					 RelationGetRelid(parent_rel));
 
-	/* keep our lock on the parent relation until commit */
-	heap_close(parent_rel, NoLock);
-
 	return address;
 }
 
