@@ -373,7 +373,7 @@ static ObjectAddress ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 				 const char *colName, LOCKMODE lockmode);
 static void ATPrepColumnDefault(Relation rel, bool recurse, AlterTableCmd *cmd);
 static ObjectAddress ATExecColumnDefault(Relation rel, const char *colName,
-					Node *newDefault, LOCKMODE lockmode);
+										 ColumnDef *colDef, LOCKMODE lockmode);
 static void ATPrepSetStatistics(Relation rel, const char *colName,
 					Node *newValue, LOCKMODE lockmode);
 static ObjectAddress ATExecSetStatistics(Relation rel, const char *colName,
@@ -5548,7 +5548,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation *rel_p,
 			break;
 		case AT_ColumnDefault:	/* ALTER COLUMN DEFAULT */
 		case AT_ColumnDefaultRecurse:
-			address = ATExecColumnDefault(rel, cmd->name, cmd->def, lockmode);
+			address = ATExecColumnDefault(rel, cmd->name, (ColumnDef *) cmd->def, lockmode);
 			break;
 		case AT_DropNotNull:	/* ALTER COLUMN DROP NOT NULL */
 			address = ATExecDropNotNull(rel, cmd->name, lockmode);
@@ -8418,7 +8418,7 @@ ATPrepColumnDefault(Relation rel, bool recurse, AlterTableCmd *cmd)
  */
 static ObjectAddress
 ATExecColumnDefault(Relation rel, const char *colName,
-					Node *newDefault, LOCKMODE lockmode)
+					ColumnDef *colDef, LOCKMODE lockmode)
 {
 	AttrNumber	attnum;
 	ObjectAddress address;
@@ -8450,16 +8450,16 @@ ATExecColumnDefault(Relation rel, const char *colName,
 	 * operation when the user asked for a drop.
 	 */
 	RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, false,
-					  newDefault == NULL ? false : true);
+					  colDef == NULL ? false : true);
 
-	if (newDefault)
+	if (colDef)
 	{
 		/* SET DEFAULT */
 		RawColumnDefault *rawEnt;
 
 		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
 		rawEnt->attnum = attnum;
-		rawEnt->raw_default = newDefault;
+		rawEnt->raw_default = colDef->raw_default;
 
 		/*
 		 * This function is intended for CREATE TABLE, so it processes a
