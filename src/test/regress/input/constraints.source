@@ -91,15 +91,9 @@ CREATE SEQUENCE INSERT_SEQ;
 
 CREATE TABLE INSERT_TBL (x INT DEFAULT nextval('insert_seq'),
 	y TEXT DEFAULT '-NULL-',
-<<<<<<< HEAD
 	z INT DEFAULT -1 * (nextval('insert_seq')-1),
-	CONSTRAINT INSERT_CON CHECK (x >= 3 AND y <> 'check failed' AND x < 8),
-	CHECK (x + z = 0)) DISTRIBUTED BY(y);
-=======
-	z INT DEFAULT -1 * currval('insert_seq'),
 	CONSTRAINT INSERT_TBL_CON CHECK (x >= 3 AND y <> 'check failed' AND x < 8),
-	CHECK (x + z = 0));
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+	CHECK (x + z = 0)) DISTRIBUTED BY(y);
 
 INSERT INTO INSERT_TBL(x,z) VALUES (2, -2);
 
@@ -541,7 +535,6 @@ UPDATE deferred_excl SET f1 = 3;
 ALTER TABLE deferred_excl ADD EXCLUDE (f1 WITH =);
 
 DROP TABLE deferred_excl;
-<<<<<<< HEAD
 -- end_ignore
 
 --
@@ -573,7 +566,6 @@ INSERT INTO fkc_foreign_table2 VALUES (2, 'bar');
 UPDATE fkc_foreign_table2 SET b = 'foo';
 DELETE FROM fkc_primary_table2 WHERE a = 1;
 COMMIT;
-=======
 
 -- Comments
 CREATE TABLE constraint_comments_tbl (a int CONSTRAINT the_constraint CHECK (a > 0));
@@ -595,4 +587,3 @@ COMMENT ON CONSTRAINT the_constraint ON DOMAIN constraint_comments_dom IS NULL;
 
 DROP TABLE constraint_comments_tbl;
 DROP DOMAIN constraint_comments_dom;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
