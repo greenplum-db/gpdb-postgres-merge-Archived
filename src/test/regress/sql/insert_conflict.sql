@@ -146,6 +146,7 @@ drop index expr_part_comp_key_index;
 --
 -- Expression index tests
 --
+-- start_ignore
 create unique index expr_key_index on insertconflicttest(lower(fruit));
 
 -- inference succeeds:
@@ -157,6 +158,7 @@ insert into insertconflicttest values (22, 'Apricot') on conflict (upper(fruit))
 insert into insertconflicttest values (23, 'Blackberry') on conflict (fruit) do update set fruit = excluded.fruit;
 
 drop index expr_key_index;
+-- end_ignore
 
 --
 -- Expression index tests (with regular column)
@@ -181,6 +183,7 @@ drop index tricky_expr_comp_key_index;
 --
 -- Non-spurious duplicate violation tests
 --
+-- start_ignore
 create unique index key_index on insertconflicttest(key);
 create unique index fruit_index on insertconflicttest(fruit);
 
@@ -195,6 +198,7 @@ insert into insertconflicttest values (25, 'Fig') on conflict (fruit) do update 
 
 drop index key_index;
 drop index fruit_index;
+-- end_ignore
 
 --
 -- Test partial unique index inference

@@ -470,6 +470,8 @@ plan_tree_walker(Node *node,
 				return true;
 			if (walker((Node *) ((ModifyTable *) node)->withCheckOptionLists, context))
 				return true;
+			if (walker((Node *) ((ModifyTable *) node)->onConflictWhere, context))
+				return true;
 			break;
 
 		case T_LockRows:

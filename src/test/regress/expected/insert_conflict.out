@@ -52,12 +52,16 @@ explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on con
    Conflict Arbiter Indexes: op_index_key, collation_index_key, both_index_key
    Conflict Filter: (alternatives: SubPlan 1 or hashed SubPlan 2)
    ->  Result
-   SubPlan 1
-     ->  Index Only Scan using both_index_expr_key on insertconflicttest ii
-           Index Cond: (key = excluded.key)
-   SubPlan 2
-     ->  Seq Scan on insertconflicttest ii_1
-(10 rows)
+   SubPlan 1  (slice0; segments: 1)
+     ->  Result
+           Filter: (ii.key = excluded.key)
+           ->  Materialize
+                 ->  Seq Scan on insertconflicttest ii
+   SubPlan 2  (slice0; segments: 1)
+     ->  Materialize
+           ->  Seq Scan on insertconflicttest ii_1
+ Optimizer: Postgres query optimizer
+(14 rows)
 
 -- Neither collation nor operator class specifications are required --
 -- supplying them merely *limits* matches to indexes with matching opclasses
@@ -180,26 +184,46 @@ explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on con
 
 -- Does the same, but JSON format shows "Conflict Arbiter Index" as JSON array:
 explain (costs off, format json) insert into insertconflicttest values (0, 'Bilberry') on conflict (key) do update set fruit = excluded.fruit where insertconflicttest.fruit != 'Lime' returning *;
-                               QUERY PLAN                               
-------------------------------------------------------------------------
- [                                                                     +
-   {                                                                   +
-     "Plan": {                                                         +
-       "Node Type": "ModifyTable",                                     +
-       "Operation": "Insert",                                          +
-       "Relation Name": "insertconflicttest",                          +
-       "Alias": "insertconflicttest",                                  +
-       "Conflict Resolution": "UPDATE",                                +
-       "Conflict Arbiter Indexes": ["key_index"],                      +
-       "Conflict Filter": "(insertconflicttest.fruit <> 'Lime'::text)",+
-       "Plans": [                                                      +
-         {                                                             +
-           "Node Type": "Result",                                      +
-           "Parent Relationship": "Member"                             +
-         }                                                             +
-       ]                                                               +
-     }                                                                 +
-   }                                                                   +
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ [                                                                         +
+   {                                                                       +
+     "Plan": {                                                             +
+       "Node Type": "Gather Motion",                                       +
+       "Senders": 3,                                                       +
+       "Receivers": 1,                                                     +
+       "Slice": 1,                                                         +
+       "Segments": 3,                                                      +
+       "Gang Type": "primary writer",                                      +
+       "Plans": [                                                          +
+         {                                                                 +
+           "Node Type": "ModifyTable",                                     +
+           "Operation": "Insert",                                          +
+           "Parent Relationship": "Outer",                                 +
+           "Slice": 1,                                                     +
+           "Segments": 3,                                                  +
+           "Gang Type": "primary writer",                                  +
+           "Relation Name": "insertconflicttest",                          +
+           "Alias": "insertconflicttest",                                  +
+           "Conflict Resolution": "UPDATE",                                +
+           "Conflict Arbiter Indexes": ["key_index"],                      +
+           "Conflict Filter": "(insertconflicttest.fruit <> 'Lime'::text)",+
+           "Plans": [                                                      +
+             {                                                             +
+               "Node Type": "Result",                                      +
+               "Parent Relationship": "Member",                            +
+               "Slice": 1,                                                 +
+               "Segments": 3,                                              +
+               "Gang Type": "primary writer"                               +
+             }                                                             +
+           ]                                                               +
+         }                                                                 +
+       ]                                                                   +
+     },                                                                    +
+     "Settings": {                                                         +
+       "Optimizer": "Postgres query optimizer"                             +
+     }                                                                     +
+   }                                                                       +
  ]
 (1 row)
 
@@ -294,6 +318,7 @@ drop index expr_part_comp_key_index;
 --
 -- Expression index tests
 --
+-- start_ignore
 create unique index expr_key_index on insertconflicttest(lower(fruit));
 -- inference succeeds:
 insert into insertconflicttest values (20, 'Quince') on conflict (lower(fruit)) do update set fruit = excluded.fruit;
@@ -304,6 +329,7 @@ ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT spec
 insert into insertconflicttest values (23, 'Blackberry') on conflict (fruit) do update set fruit = excluded.fruit;
 ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
 drop index expr_key_index;
+-- end_ignore
 --
 -- Expression index tests (with regular column)
 --
@@ -334,6 +360,7 @@ drop index tricky_expr_comp_key_index;
 --
 -- Non-spurious duplicate violation tests
 --
+-- start_ignore
 create unique index key_index on insertconflicttest(key);
 create unique index fruit_index on insertconflicttest(fruit);
 -- succeeds, since UPDATE happens to update "fruit" to existing value:
@@ -348,6 +375,7 @@ DETAIL:  Key (fruit)=(Peach) already exists.
 insert into insertconflicttest values (25, 'Fig') on conflict (fruit) do update set fruit = excluded.fruit;
 drop index key_index;
 drop index fruit_index;
+-- end_ignore
 --
 -- Test partial unique index inference
 --
