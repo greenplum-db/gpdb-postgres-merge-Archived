@@ -335,9 +335,6 @@ EXECUTE PROCEDURE trigger_func('after_upd_stmt');
 -- defined.
 INSERT INTO main_table (a, b) VALUES (5, 10) ON CONFLICT (a)
   DO UPDATE SET b = EXCLUDED.b;
-NOTICE:  trigger_func(before_ins_stmt) called: action = INSERT, when = BEFORE, level = STATEMENT
-NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
-NOTICE:  trigger_func(after_ins_stmt) called: action = INSERT, when = AFTER, level = STATEMENT
 CREATE TRIGGER after_upd_row_trig AFTER UPDATE ON main_table
 FOR EACH ROW EXECUTE PROCEDURE trigger_func('after_upd_row');
 INSERT INTO main_table DEFAULT VALUES;
@@ -345,13 +342,9 @@ UPDATE main_table SET a = a + 1 WHERE b < 30;
 ERROR:  UPDATE on distributed key column not allowed on relation with update triggers
 -- UPDATE that effects zero rows should still call per-statement trigger
 UPDATE main_table SET a = a + 2 WHERE b > 100;
-<<<<<<< HEAD
 ERROR:  UPDATE on distributed key column not allowed on relation with update triggers
-=======
-NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
 -- constraint now unneeded
 ALTER TABLE main_table DROP CONSTRAINT main_table_a_key;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 -- COPY should fire per-row and per-statement INSERT triggers
 COPY main_table (a, b) FROM stdin;
 NOTICE:  trigger_func(before_ins_stmt) called: action = INSERT, when = BEFORE, level = STATEMENT
@@ -1401,8 +1394,6 @@ drop table depth_a, depth_b, depth_c;
 drop function depth_a_tf();
 drop function depth_b_tf();
 drop function depth_c_tf();
-<<<<<<< HEAD
-=======
 --
 -- Test updates to rows during firing of BEFORE ROW triggers.
 -- As of 9.2, such cases should be rejected (see bug #6123).
@@ -1463,44 +1454,46 @@ create trigger child_del_trig after delete on child
   for each row execute procedure child_del_func();
 insert into parent values (1, 'a', 'a', 'a', 'a', 0);
 insert into child values (10, 1, 'b');
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg2 127.0.0.1:25434 pid=8568)
+CONTEXT:  SQL statement "update parent set bcnt = bcnt + 1 where aid = new.aid"
+PL/pgSQL function child_ins_func() line 3 at SQL statement
 select * from parent; select * from child;
  aid | val1 | val2 | val3 | val4 | bcnt 
 -----+------+------+------+------+------
-   1 | a    | a    | a    | a    |    1
+   1 | a    | a    | a    | a    |    0
 (1 row)
 
  bid | aid | val1 
 -----+-----+------
-  10 |   1 | b
-(1 row)
+(0 rows)
 
 update parent set val1 = 'b' where aid = 1; -- should fail
-ERROR:  tuple to be updated was already modified by an operation triggered by the current command
-HINT:  Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg1 127.0.0.1:25433 pid=8567)
+CONTEXT:  SQL statement "delete from child where child.aid = new.aid and child.val1 = new.val1"
+PL/pgSQL function parent_upd_func() line 5 at SQL statement
 select * from parent; select * from child;
  aid | val1 | val2 | val3 | val4 | bcnt 
 -----+------+------+------+------+------
-   1 | a    | a    | a    | a    |    1
+   1 | a    | a    | a    | a    |    0
 (1 row)
 
  bid | aid | val1 
 -----+-----+------
-  10 |   1 | b
-(1 row)
+(0 rows)
 
 delete from parent where aid = 1; -- should fail
-ERROR:  tuple to be updated was already modified by an operation triggered by the current command
-HINT:  Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg1 127.0.0.1:25433 pid=8567)
+CONTEXT:  SQL statement "delete from child where aid = old.aid"
+PL/pgSQL function parent_del_func() line 3 at SQL statement
 select * from parent; select * from child;
  aid | val1 | val2 | val3 | val4 | bcnt 
 -----+------+------+------+------+------
-   1 | a    | a    | a    | a    |    1
+   1 | a    | a    | a    | a    |    0
 (1 row)
 
  bid | aid | val1 
 -----+-----+------
-  10 |   1 | b
-(1 row)
+(0 rows)
 
 -- replace the trigger function with one that restarts the deletion after
 -- having modified a child
@@ -1517,10 +1510,14 @@ begin
 end;
 $$;
 delete from parent where aid = 1;
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg1 127.0.0.1:25433 pid=8567)
+CONTEXT:  SQL statement "delete from child where aid = old.aid"
+PL/pgSQL function parent_del_func() line 3 at SQL statement
 select * from parent; select * from child;
  aid | val1 | val2 | val3 | val4 | bcnt 
 -----+------+------+------+------+------
-(0 rows)
+   1 | a    | a    | a    | a    |    0
+(1 row)
 
  bid | aid | val1 
 -----+-----+------
@@ -1567,32 +1564,37 @@ create trigger self_ref_trigger_del_trig before delete on self_ref_trigger
   for each row execute procedure self_ref_trigger_del_func();
 insert into self_ref_trigger values (1, null, 'root');
 insert into self_ref_trigger values (2, 1, 'root child A');
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg0 127.0.0.1:25432 pid=8566)
+CONTEXT:  SQL statement "update self_ref_trigger set nchildren = nchildren + 1
+      where id = new.parent"
+PL/pgSQL function self_ref_trigger_ins_func() line 4 at SQL statement
 insert into self_ref_trigger values (3, 1, 'root child B');
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg0 127.0.0.1:25432 pid=8566)
+CONTEXT:  SQL statement "update self_ref_trigger set nchildren = nchildren + 1
+      where id = new.parent"
+PL/pgSQL function self_ref_trigger_ins_func() line 4 at SQL statement
 insert into self_ref_trigger values (4, 2, 'grandchild 1');
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg0 127.0.0.1:25432 pid=8566)
+CONTEXT:  SQL statement "update self_ref_trigger set nchildren = nchildren + 1
+      where id = new.parent"
+PL/pgSQL function self_ref_trigger_ins_func() line 4 at SQL statement
 insert into self_ref_trigger values (5, 3, 'grandchild 2');
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg2 127.0.0.1:25434 pid=8568)
+CONTEXT:  SQL statement "update self_ref_trigger set nchildren = nchildren + 1
+      where id = new.parent"
+PL/pgSQL function self_ref_trigger_ins_func() line 4 at SQL statement
 update self_ref_trigger set data = 'root!' where id = 1;
 select * from self_ref_trigger;
- id | parent |     data     | nchildren 
-----+--------+--------------+-----------
-  2 |      1 | root child A |         1
-  4 |      2 | grandchild 1 |         0
-  3 |      1 | root child B |         1
-  5 |      3 | grandchild 2 |         0
-  1 |        | root!        |         2
-(5 rows)
+ id | parent | data  | nchildren 
+----+--------+-------+-----------
+  1 |        | root! |         0
+(1 row)
 
 delete from self_ref_trigger;
-ERROR:  tuple to be updated was already modified by an operation triggered by the current command
-HINT:  Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.
 select * from self_ref_trigger;
- id | parent |     data     | nchildren 
-----+--------+--------------+-----------
-  2 |      1 | root child A |         1
-  4 |      2 | grandchild 1 |         0
-  3 |      1 | root child B |         1
-  5 |      3 | grandchild 2 |         0
-  1 |        | root!        |         2
-(5 rows)
+ id | parent | data | nchildren 
+----+--------+------+-----------
+(0 rows)
 
 drop table self_ref_trigger;
 drop function self_ref_trigger_ins_func();
@@ -1638,53 +1640,48 @@ $$;
 create trigger upsert_after_trig after insert or update on upsert
   for each row execute procedure upsert_after_func();
 insert into upsert values(1, 'black') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (1,black)
-WARNING:  after insert (new): (1,black)
+WARNING:  before insert (new): (1,black)  (seg1 127.0.0.1:25433 pid=8567)
+WARNING:  after insert (new): (1,black)  (seg1 127.0.0.1:25433 pid=8567)
 insert into upsert values(2, 'red') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (2,red)
-WARNING:  before insert (new, modified): (3,"red trig modified")
-WARNING:  after insert (new): (3,"red trig modified")
+WARNING:  before insert (new): (2,red)  (seg0 127.0.0.1:25432 pid=8566)
+WARNING:  before insert (new, modified): (3,"red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
+WARNING:  after insert (new): (3,"red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
 insert into upsert values(3, 'orange') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (3,orange)
-WARNING:  before update (old): (3,"red trig modified")
-WARNING:  before update (new): (3,"updated red trig modified")
-WARNING:  after update (old): (3,"updated red trig modified")
-WARNING:  after update (new): (3,"updated red trig modified")
+WARNING:  before insert (new): (3,orange)  (seg0 127.0.0.1:25432 pid=8566)
+WARNING:  before update (old): (3,"red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
+WARNING:  before update (new): (3,"updated red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
+WARNING:  after update (old): (3,"updated red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
+WARNING:  after update (new): (3,"updated red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
 insert into upsert values(4, 'green') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (4,green)
-WARNING:  before insert (new, modified): (5,"green trig modified")
-WARNING:  after insert (new): (5,"green trig modified")
+WARNING:  before insert (new): (4,green)  (seg0 127.0.0.1:25432 pid=8566)
+WARNING:  before insert (new, modified): (5,"green trig modified")  (seg0 127.0.0.1:25432 pid=8566)
+WARNING:  after insert (new): (5,"green trig modified")  (seg0 127.0.0.1:25432 pid=8566)
 insert into upsert values(5, 'purple') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (5,purple)
-WARNING:  before update (old): (5,"green trig modified")
-WARNING:  before update (new): (5,"updated green trig modified")
-WARNING:  after update (old): (5,"updated green trig modified")
-WARNING:  after update (new): (5,"updated green trig modified")
+WARNING:  before insert (new): (5,purple)  (seg2 127.0.0.1:25434 pid=8568)
+WARNING:  after insert (new): (5,purple)  (seg2 127.0.0.1:25434 pid=8568)
 insert into upsert values(6, 'white') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (6,white)
-WARNING:  before insert (new, modified): (7,"white trig modified")
-WARNING:  after insert (new): (7,"white trig modified")
+WARNING:  before insert (new): (6,white)  (seg2 127.0.0.1:25434 pid=8568)
+WARNING:  before insert (new, modified): (7,"white trig modified")  (seg2 127.0.0.1:25434 pid=8568)
+WARNING:  after insert (new): (7,"white trig modified")  (seg2 127.0.0.1:25434 pid=8568)
 insert into upsert values(7, 'pink') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (7,pink)
-WARNING:  before update (old): (7,"white trig modified")
-WARNING:  before update (new): (7,"updated white trig modified")
-WARNING:  after update (old): (7,"updated white trig modified")
-WARNING:  after update (new): (7,"updated white trig modified")
+WARNING:  before insert (new): (7,pink)  (seg0 127.0.0.1:25432 pid=8566)
+WARNING:  after insert (new): (7,pink)  (seg0 127.0.0.1:25432 pid=8566)
 insert into upsert values(8, 'yellow') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (8,yellow)
-WARNING:  before insert (new, modified): (9,"yellow trig modified")
-WARNING:  after insert (new): (9,"yellow trig modified")
+WARNING:  before insert (new): (8,yellow)  (seg0 127.0.0.1:25432 pid=8566)
+WARNING:  before insert (new, modified): (9,"yellow trig modified")  (seg0 127.0.0.1:25432 pid=8566)
+WARNING:  after insert (new): (9,"yellow trig modified")  (seg0 127.0.0.1:25432 pid=8566)
 select * from upsert;
- key |            color            
------+-----------------------------
-   1 | black
+ key |           color           
+-----+---------------------------
    3 | updated red trig modified
-   5 | updated green trig modified
-   7 | updated white trig modified
+   5 | green trig modified
+   7 | pink
    9 | yellow trig modified
-(5 rows)
+   1 | black
+   5 | purple
+   7 | white trig modified
+(7 rows)
 
 drop table upsert;
 drop function upsert_before_func();
 drop function upsert_after_func();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

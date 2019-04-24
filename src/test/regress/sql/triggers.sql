@@ -1046,8 +1046,6 @@ drop function depth_a_tf();
 drop function depth_b_tf();
 drop function depth_c_tf();
 
-<<<<<<< HEAD
-=======
 --
 -- Test updates to rows during firing of BEFORE ROW triggers.
 -- As of 9.2, such cases should be rejected (see bug #6123).
@@ -1260,4 +1258,3 @@ select * from upsert;
 drop table upsert;
 drop function upsert_before_func();
 drop function upsert_after_func();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
