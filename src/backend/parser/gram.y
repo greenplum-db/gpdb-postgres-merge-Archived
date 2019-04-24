@@ -2713,13 +2713,10 @@ alter_table_cmd:
 			/* ALTER TABLE <name> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
 			| ALTER opt_column ColId alter_column_default
 				{
-					ColumnDef *colDef = makeNode(ColumnDef);
-					colDef->raw_default = $4;
-					
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ColumnDefault;
 					n->name = $3;
-					n->def = (Node *) colDef;
+					n->def = $4;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> ALTER [COLUMN] <colname> DROP NOT NULL */
