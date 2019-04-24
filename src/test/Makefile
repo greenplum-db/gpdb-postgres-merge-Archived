@@ -12,9 +12,9 @@ subdir = src/test
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-SUBDIRS = perl regress isolation modules
+SUBDIRS = regress isolation modules
 
-SUBDIRS += fsync walrep heap_checksum isolation2 kerberos modules
+SUBDIRS += perl fsync walrep heap_checksum isolation2 kerberos
 
 # We don't build or execute examples/, locale/, or thread/ by default,
 # but we do want "make clean" etc to recurse into them.  Likewise for ssl/,
