@@ -796,7 +796,7 @@ _readAExpr(void)
 
 	READ_ENUM_FIELD(kind, A_Expr_Kind);
 
-	Assert(local_node->kind <= AEXPR_IN);
+	Assert(local_node->kind <= AEXPR_PAREN);
 
 	switch (local_node->kind)
 	{

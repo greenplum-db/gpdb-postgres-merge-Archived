@@ -1401,16 +1401,6 @@ drop view at_view_2;
 drop view at_view_1;
 drop table at_base_table;
 
--- check for rollback of ANALYZE corrupting table property flags (bug #11638)
-CREATE TABLE check_fk_presence_1 (id int PRIMARY KEY, t text);
-CREATE TABLE check_fk_presence_2 (id int REFERENCES check_fk_presence_1, t text);
-BEGIN;
-ALTER TABLE check_fk_presence_2 DROP CONSTRAINT check_fk_presence_2_id_fkey;
-ANALYZE check_fk_presence_2;
-ROLLBACK;
-\d check_fk_presence_2
-DROP TABLE check_fk_presence_1, check_fk_presence_2;
-
 --
 -- lock levels
 --
@@ -1791,43 +1781,6 @@ ALTER TABLE old_system_table DROP CONSTRAINT new_system_table_pkey;
 ALTER TABLE old_system_table DROP COLUMN othercol;
 DROP TABLE old_system_table;
 
-<<<<<<< HEAD
---
--- Test for splitting after dropping a column
---
-DROP TABLE IF EXISTS test_part;
-CREATE TABLE test_part (
-    field_part timestamp without time zone,
-    field1 int,
-    field2 text,
-    field3 int
-) PARTITION BY RANGE(field_part)
-          (
-          PARTITION p2017 START ('2017-01-01'::date) END ('2018-01-01'::date) WITH (appendonly=false ),
-          DEFAULT PARTITION p_overflow  WITH (appendonly=false )
-          );
-
-DROP TABLE IF EXISTS test_ref;
-CREATE TABLE test_ref (
-    field1 text,
-    field2 text
-) DISTRIBUTED BY (field1);
-
-INSERT INTO test_part select '2017-01-01'::date + interval '1 days' * mod (id,1000) , mod(id,50), 'test ' || mod(id,5) ,mod(id,2) from generate_series(1,10000) id;
-INSERT INTO test_ref select 'test ' || id , 'values' from generate_series(1,10) id;
-
-ALTER TABLE test_part DROP COLUMN field1;
-ALTER TABLE test_part   SPLIT DEFAULT PARTITION
-START('2018-01-01'::date)
-       END( '2018-02-01'::date);
-ANALYZE test_part;
-ANALYZE test_ref;
-
-SELECT * FROM test_part WHERE field2 IN (SELECT field1 FROM test_ref) ORDER BY 1 LIMIT 10;
-
-DROP TABLE test_ref;
-DROP TABLE test_part;
-=======
 -- set logged
 CREATE UNLOGGED TABLE unlogged1(f1 SERIAL PRIMARY KEY, f2 TEXT);
 -- check relpersistence of an unlogged table
@@ -1879,4 +1832,39 @@ ALTER TABLE logged1 SET UNLOGGED; -- silently do nothing
 DROP TABLE logged3;
 DROP TABLE logged2;
 DROP TABLE logged1;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+--
+-- Test for splitting after dropping a column
+--
+DROP TABLE IF EXISTS test_part;
+CREATE TABLE test_part (
+    field_part timestamp without time zone,
+    field1 int,
+    field2 text,
+    field3 int
+) PARTITION BY RANGE(field_part)
+          (
+          PARTITION p2017 START ('2017-01-01'::date) END ('2018-01-01'::date) WITH (appendonly=false ),
+          DEFAULT PARTITION p_overflow  WITH (appendonly=false )
+          );
+
+DROP TABLE IF EXISTS test_ref;
+CREATE TABLE test_ref (
+    field1 text,
+    field2 text
+) DISTRIBUTED BY (field1);
+
+INSERT INTO test_part select '2017-01-01'::date + interval '1 days' * mod (id,1000) , mod(id,50), 'test ' || mod(id,5) ,mod(id,2) from generate_series(1,10000) id;
+INSERT INTO test_ref select 'test ' || id , 'values' from generate_series(1,10) id;
+
+ALTER TABLE test_part DROP COLUMN field1;
+ALTER TABLE test_part   SPLIT DEFAULT PARTITION
+START('2018-01-01'::date)
+       END( '2018-02-01'::date);
+ANALYZE test_part;
+ANALYZE test_ref;
+
+SELECT * FROM test_part WHERE field2 IN (SELECT field1 FROM test_ref) ORDER BY 1 LIMIT 10;
+
+DROP TABLE test_ref;
+DROP TABLE test_part;
