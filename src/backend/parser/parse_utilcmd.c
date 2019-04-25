@@ -613,7 +613,6 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 		 */
 		seqstmt = makeNode(CreateSeqStmt);
 		seqstmt->sequence = makeRangeVar(snamespace, sname, -1);
-		seqstmt->sequence->relpersistence = cxt->relation->relpersistence;
 		seqstmt->options = NIL;
 
 		/*
