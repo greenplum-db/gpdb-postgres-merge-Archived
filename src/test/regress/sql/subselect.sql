@@ -502,7 +502,6 @@ select * from
   order by 1;
 
 select nextval('ts1');
-<<<<<<< HEAD
 
 --
 -- Ensure that backward scan direction isn't propagated into
@@ -520,5 +519,3 @@ fetch backward all in c1;
 
 commit;
 --end_ignore
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8

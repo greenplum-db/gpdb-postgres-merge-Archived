@@ -227,26 +227,30 @@ from int8_tbl group by q1 order by q1;
 explain (costs off)
 select * from int4_tbl o where exists
   (select 1 from int4_tbl i where i.f1=o.f1 limit null);
-             QUERY PLAN             
-------------------------------------
- Hash Semi Join
-   Hash Cond: (o.f1 = i.f1)
-   ->  Seq Scan on int4_tbl o
-   ->  Hash
-         ->  Seq Scan on int4_tbl i
-(5 rows)
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Hash Semi Join
+         Hash Cond: (o.f1 = i.f1)
+         ->  Seq Scan on int4_tbl o
+         ->  Hash
+               ->  Seq Scan on int4_tbl i
+ Optimizer: Postgres query optimizer
+(7 rows)
 
 explain (costs off)
 select * from int4_tbl o where not exists
   (select 1 from int4_tbl i where i.f1=o.f1 limit 1);
-             QUERY PLAN             
-------------------------------------
- Hash Anti Join
-   Hash Cond: (o.f1 = i.f1)
-   ->  Seq Scan on int4_tbl o
-   ->  Hash
-         ->  Seq Scan on int4_tbl i
-(5 rows)
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Hash Anti Join
+         Hash Cond: (o.f1 = i.f1)
+         ->  Seq Scan on int4_tbl o
+         ->  Hash
+               ->  Seq Scan on int4_tbl i
+ Optimizer: Postgres query optimizer
+(7 rows)
 
 explain (costs off)
 select * from int4_tbl o where exists
@@ -958,7 +962,6 @@ select nextval('ts1');
       11
 (1 row)
 
-<<<<<<< HEAD
 --
 -- Ensure that backward scan direction isn't propagated into
 -- expression subqueries (bug #15336)
@@ -978,5 +981,3 @@ fetch backward all in c1;
 
 commit;
 --end_ignore
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
