@@ -438,6 +438,14 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 		 * possible to match closer with upstream.
 		 */
 		case T_Integer:
+		/*
+		 * GPDB_95_MERGE_FIXME: T_Const was removed in upstream Postgres
+		 * 6a75562ed16b5fa5, but it seems it is still needed for ALTER TABLE
+		 * SPLIT PARTITION on range partition tables (even though this doesn't
+		 * actually do anything since the node seems to be already
+		 * transformed). Do we keep it as a Greenplum diff?
+		 */
+		case T_Const:
 		case T_Var:
 			{
 				result = (Node *) expr;
