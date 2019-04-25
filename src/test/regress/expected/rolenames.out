@@ -799,6 +799,7 @@ DROP USER MAPPING IF EXISTS FOR nonexistent SERVER sv9;  -- error
 NOTICE:  role "nonexistent" does not exist, skipping
 -- GRANT/REVOKE
 UPDATE pg_proc SET proacl = null WHERE proname LIKE 'testagg_';
+ERROR:  permission denied: "pg_proc" is a system catalog
 SELECT proname, proacl FROM pg_proc WHERE proname LIKE 'testagg_';
  proname  | proacl 
 ----------+--------
