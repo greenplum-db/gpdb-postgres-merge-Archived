@@ -380,9 +380,6 @@ ALTER USER SESSION_USER SET application_name to 'BAR';
 ALTER USER "current_user" SET application_name to 'FOOFOO';
 ALTER USER "Public" SET application_name to 'BARBAR';
 ALTER USER ALL SET application_name to 'SLAP';
-ERROR:  syntax error at or near "ALL"
-LINE 1: ALTER USER ALL SET application_name to 'SLAP';
-                   ^
 SELECT * FROM chksetconfig();
  db  |     role     |  rolkeyword  |         setconfig         
 -----+--------------+--------------+---------------------------
@@ -407,9 +404,6 @@ ALTER USER SESSION_USER RESET application_name;
 ALTER USER "current_user" RESET application_name;
 ALTER USER "Public" RESET application_name;
 ALTER USER ALL RESET application_name;
-ERROR:  syntax error at or near "ALL"
-LINE 1: ALTER USER ALL RESET application_name;
-                   ^
 SELECT * FROM chksetconfig();
  db | role | rolkeyword | setconfig 
 ----+------+------------+-----------
