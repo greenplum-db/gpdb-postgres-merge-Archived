@@ -1620,6 +1620,7 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	Node		*lnode;
 	Node		*rnode;
 	Node		*node;
+	Node		*savedLimitCount = NULL;
 
 	Assert(sublink->subLinkType == EXISTS_SUBLINK);
 
@@ -1659,6 +1660,7 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 */
 	if (subselect->limitCount)
 	{
+		savedLimitCount = subselect->limitCount;
 		rnode = copyObject(subselect->limitCount);
 		IncrementVarSublevelsUp(rnode, -1, 1);
 		lnode = (Node *) makeConst(INT8OID, -1, InvalidOid,
@@ -1721,6 +1723,16 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 			return (Node *) make_notclause((Expr *)node);
 		return node;
 	}
+
+	/* 
+	 * GPDB_95_MERGE_FIXME: limitCount is set to NULL by CDB specified codes above,
+	 * if subselect is correlated, we need to bring it back, otherwise, we might
+	 * pull up sublink incorrectly for LIMIT 0.
+	 *
+	 * This is a temp fix, these CDB specified codes are introduced by commit
+	 * d91f0efb2e6, we should revisit that commit and has a final fix.
+	 */
+	subselect->limitCount = savedLimitCount;
 
 	/*
 	 * See if the subquery can be simplified based on the knowledge that it's
