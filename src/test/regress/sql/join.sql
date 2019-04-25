@@ -914,17 +914,13 @@ where thousand = (q1 + q2);
 -- test ability to generate a suitable plan for a star-schema query
 --
 
-<<<<<<< HEAD
 set enable_nestloop to true;
 set random_page_cost to 4;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 explain (costs off)
 select * from
   tenk1, int8_tbl a, int8_tbl b
 where thousand = a.q1 and tenthous = b.q1 and a.q2 = 1 and b.q2 = 2;
 
-<<<<<<< HEAD
 reset enable_nestloop;
 reset random_page_cost;
 --
@@ -979,8 +975,6 @@ select ss1.d1 from
   on t1.tenthous = ss1.d1
 where t1.unique1 < i4.f1;
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 --
 -- test extraction of restriction OR clauses from join OR clause
 -- (we used to only do this for indexable clauses)
@@ -1351,10 +1345,7 @@ explain (costs off)
 
 set enable_hashjoin to off;
 set enable_nestloop to off;
-<<<<<<< HEAD
 set enable_mergejoin to on;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 explain (verbose, costs off)
   select a.q2, b.q1
@@ -1366,10 +1357,7 @@ select a.q2, b.q1
 
 reset enable_hashjoin;
 reset enable_nestloop;
-<<<<<<< HEAD
 reset enable_mergejoin;
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 --
 -- test join removal
