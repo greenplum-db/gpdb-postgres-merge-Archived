@@ -2928,11 +2928,6 @@ fixup_subplan_walker(Node *node, SubPlanWalkerContext *context)
 			return false;
 		}
 	}
-	else if (IsA(node, AlternativeSubPlan))
-	{
-		return plan_tree_walker((Node*)((AlternativeSubPlan*)node)->subplans,
-								fixup_subplan_walker, context);
-	}
 	return plan_tree_walker(node, fixup_subplan_walker, context);
 }
 
