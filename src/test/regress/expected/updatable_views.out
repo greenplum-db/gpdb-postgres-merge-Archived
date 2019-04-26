@@ -1762,8 +1762,6 @@ DETAIL:  Failing row contains (-5, null).
 INSERT INTO rw_view2 VALUES (5); -- ok
 INSERT INTO rw_view2 VALUES (50); -- ok, but not in view
 UPDATE rw_view2 SET a = a - 10; -- should fail
-ERROR:  new row violates WITH CHECK OPTION for "rw_view2"
-DETAIL:  Failing row contains (-5).
 SELECT * FROM base_tbl;
  a  | b 
 ----+---
@@ -2083,7 +2081,7 @@ EXPLAIN (costs off) INSERT INTO rw_view1 VALUES (2, 'New row 2');
                        QUERY PLAN                       
 --------------------------------------------------------
  Insert on base_tbl
-   SubPlan 1 (returns $0)  (slice2)
+   InitPlan 1 (returns $0)  (slice2)
      ->  Gather Motion 3:1  (slice1; segments: 3)
            ->  Seq Scan on base_tbl t
                  Filter: (id = 2)
@@ -2092,7 +2090,7 @@ EXPLAIN (costs off) INSERT INTO rw_view1 VALUES (2, 'New row 2');
  Optimizer: Postgres query optimizer
  
  Update on base_tbl
-   SubPlan 1 (returns $0)  (slice2)
+   InitPlan 1 (returns $0)  (slice2)
      ->  Gather Motion 1:1  (slice1; segments: 1)
            ->  Seq Scan on base_tbl t
                  Filter: (id = 2)
