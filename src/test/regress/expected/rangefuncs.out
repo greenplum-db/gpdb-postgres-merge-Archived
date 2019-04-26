@@ -1968,7 +1968,6 @@ create function extractq2(t int8_tbl) returns int8 as $$
 $$ language sql immutable;
 explain (verbose, costs off)
 select x from int8_tbl, extractq2(int8_tbl) f(x);
-<<<<<<< HEAD
                    QUERY PLAN                   
 ------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -1982,18 +1981,6 @@ select x from int8_tbl, extractq2(int8_tbl) f(x);
                Function Call: int8_tbl.q2
  Optimizer: Postgres query optimizer
 (10 rows)
-=======
-                QUERY PLAN                
-------------------------------------------
- Nested Loop
-   Output: f.x
-   ->  Seq Scan on public.int8_tbl
-         Output: int8_tbl.q1, int8_tbl.q2
-   ->  Function Scan on f
-         Output: f.x
-         Function Call: int8_tbl.q2
-(7 rows)
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 select x from int8_tbl, extractq2(int8_tbl) f(x);
          x         
@@ -2006,8 +1993,7 @@ select x from int8_tbl, extractq2(int8_tbl) f(x);
 (5 rows)
 
 create function extractq2_2(t int8_tbl) returns table(ret1 int8) as $$
-<<<<<<< HEAD
-  select extractq2(t)
+  select extractq2(t) offset 0
 $$ language sql immutable;
 explain (verbose, costs off)
 select x from int8_tbl, extractq2_2(int8_tbl) f(x);
@@ -2027,22 +2013,6 @@ select x from int8_tbl, extractq2_2(int8_tbl) f(x);
 (11 rows)
 
 select x from int8_tbl, extractq2_2(int8_tbl) f(x);
-=======
-  select extractq2(t) offset 0
-$$ language sql immutable;
-explain (verbose, costs off)
-select x from int8_tbl, extractq2_2(int8_tbl) f(x);
-            QUERY PLAN             
------------------------------------
- Nested Loop
-   Output: ((int8_tbl.*).q2)
-   ->  Seq Scan on public.int8_tbl
-         Output: int8_tbl.*
-   ->  Result
-         Output: (int8_tbl.*).q2
-(6 rows)
-
-select x from int8_tbl, extractq2_2(int8_tbl) f(x);
          x         
 -------------------
                456
@@ -2058,14 +2028,16 @@ create function extractq2_2_opt(t int8_tbl) returns table(ret1 int8) as $$
 $$ language sql immutable;
 explain (verbose, costs off)
 select x from int8_tbl, extractq2_2_opt(int8_tbl) f(x);
-         QUERY PLAN          
------------------------------
- Seq Scan on public.int8_tbl
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    Output: int8_tbl.q2
-(2 rows)
+   ->  Seq Scan on public.int8_tbl
+         Output: int8_tbl.q2
+ Optimizer: Postgres query optimizer
+(5 rows)
 
 select x from int8_tbl, extractq2_2_opt(int8_tbl) f(x);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
          x         
 -------------------
                456
@@ -2075,7 +2047,6 @@ select x from int8_tbl, extractq2_2_opt(int8_tbl) f(x);
  -4567890123456789
 (5 rows)
 
-<<<<<<< HEAD
 -- gpdb: test append node in subquery_motionHazard_walker(). Without that
 -- change the select query below will panic.
 create function extractq2_append(t int8_tbl) returns table(ret1 int8) as $$
@@ -2116,5 +2087,3 @@ select x from int8_tbl, extractq2_append(int8_tbl) f(x);
   4567890123456789
 (10 rows)
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
