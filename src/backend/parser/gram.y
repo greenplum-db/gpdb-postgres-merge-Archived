@@ -12274,36 +12274,6 @@ multiple_set_clause:
 
 					$$ = $2;
 				}
-			| '(' set_target_list ')' '=' select_with_parens
-				{
-					SubLink *sl = makeNode(SubLink);
-					int ncolumns = list_length($2);
-					int i = 1;
-					ListCell *col_cell;
-
-					/* First, convert bare SelectStmt into a SubLink */
-					sl->subLinkType = MULTIEXPR_SUBLINK;
-					sl->subLinkId = 0;		/* will be assigned later */
-					sl->testexpr = NULL;
-					sl->operName = NIL;
-					sl->subselect = $5;
-					sl->location = @5;
-
-					/* Create a MultiAssignRef source for each target */
-					foreach(col_cell, $2)
-					{
-						ResTarget *res_col = (ResTarget *) lfirst(col_cell);
-						MultiAssignRef *r = makeNode(MultiAssignRef);
-
-						r->source = (Node *) sl;
-						r->colno = i;
-						r->ncolumns = ncolumns;
-						res_col->val = (Node *) r;
-						i++;
-					}
-
-					$$ = $2;
-				}
 		;
 
 set_target:
