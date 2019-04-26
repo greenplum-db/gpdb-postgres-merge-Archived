@@ -794,7 +794,6 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 {
 	Node	   *result;
 	SubPlan    *splan;
-	bool		isInitPlan;
 	ListCell   *lc;
 
 	/*
@@ -946,12 +945,12 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 		/* It can be an initplan if there are no parParams. */
 		if (splan->parParam == NIL)
 		{
-			isInitPlan = true;
+			splan->is_initplan = true;
 			result = (Node *) makeNullConst(RECORDOID, -1, InvalidOid);
 		}
 		else
 		{
-			isInitPlan = false;
+			splan->is_initplan = false;
 			result = (Node *) splan;
 		}
 	}
@@ -1043,7 +1042,7 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 	/* Label the subplan for EXPLAIN purposes */
 	splan->plan_name = palloc(32 + 12 * list_length(splan->setParam));
 	sprintf(splan->plan_name, "%s %d",
-			isInitPlan ? "InitPlan" : "SubPlan",
+			splan->is_initplan ? "InitPlan" : "SubPlan",
 			splan->plan_id);
 	if (splan->setParam)
 	{

@@ -8,10 +8,6 @@ CREATE TABLE update_test (
     c   TEXT
 );
 
-<<<<<<< HEAD
-INSERT INTO update_test(a,b,c) VALUES (5, 10, 'foo');
-INSERT INTO update_test(b,a) VALUES (15, 10);
-=======
 CREATE TABLE upsert_test (
     a   INT PRIMARY KEY,
     b   TEXT
@@ -19,7 +15,6 @@ CREATE TABLE upsert_test (
 
 INSERT INTO update_test VALUES (5, 10, 'foo');
 INSERT INTO update_test(b, a) VALUES (15, 10);
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 
 SELECT a,b,c FROM update_test ORDER BY a,b,c;
 
@@ -104,7 +99,7 @@ INSERT INTO upsert_test VALUES (1, 'Bat') ON CONFLICT(a)
   RETURNING *;
 
 DROP TABLE update_test;
-<<<<<<< HEAD
+DROP TABLE upsert_test;
 
 --
 -- text types. We should support the following updates.
@@ -190,8 +185,3 @@ EXPLAIN (COSTS OFF ) UPDATE tab3 SET C1 = C1 + 1, C5 = C5+1;
 -- clean up
 drop table tab3;
 drop table tab5;
-
-
-=======
-DROP TABLE upsert_test;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
