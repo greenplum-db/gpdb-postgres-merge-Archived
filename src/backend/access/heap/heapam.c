@@ -8215,7 +8215,16 @@ heap_xlog_visible(XLogReaderState *record)
 		 * we did for the heap page.  If this results in a dropped bit, no
 		 * real harm is done; and the next VACUUM will fix it.
 		 */
-		if (lsn > PageGetLSN(vmpage))
+
+		/*
+		 * CDB: don't use PageGetLSN here, GPDB PageGetLSN checks the buffer
+		 * is locked. But here vmbuffer is in function visibilitymap_set().
+		 *
+		 * if (lsn > PageGetLSN(vmpage))
+		 * 		visibilitymap_set(reln, blkno, InvalidBuffer, lsn, vmbuffer,
+		 * 				xlrec->cutoff_xid);
+		 */
+		if (lsn > PageXLogRecPtrGet(((PageHeader) vmpage)->pd_lsn))
 			visibilitymap_set(reln, blkno, InvalidBuffer, lsn, vmbuffer,
 							  xlrec->cutoff_xid);
 
