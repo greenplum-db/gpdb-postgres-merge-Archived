@@ -216,6 +216,8 @@ coerce_type(ParseState *pstate, Node *node,
 		 * JIRA MPP-3786
 		 *
 		 * Special handling for ANYARRAY type.  
+		 *
+		 * GPDB_95_MERGE_FIXME: can this be removed?
 		 */
 		if(targetTypeId == ANYARRAYOID && IsA(node, Const) && inputTypeId != UNKNOWNOID)
 		{
