@@ -411,7 +411,10 @@ RemovePolicyById(Oid policy_id)
 		elog(ERROR, "could not find tuple for policy %u", policy_id);
 
 	/*
-	 * Open and exclusive-lock the relation the policy belong to.
+	 * Open and exclusive-lock the relation the policy belongs to.  (We need
+	 * exclusive lock to lock out queries that might otherwise depend on the
+	 * set of policies the rel has; furthermore we've got to hold the lock
+	 * till commit.)
 	 */
 	relid = ((Form_pg_policy) GETSTRUCT(tuple))->polrelid;
 
@@ -431,7 +434,6 @@ RemovePolicyById(Oid policy_id)
 	simple_heap_delete(pg_policy_rel, &tuple->t_self);
 
 	systable_endscan(sscan);
-	heap_close(rel, AccessExclusiveLock);
 
 	/*
 	 * Note that, unlike some of the other flags in pg_class, relrowsecurity
@@ -441,8 +443,9 @@ RemovePolicyById(Oid policy_id)
 	 * policy is created and all records are filtered (except for queries from
 	 * the owner).
 	 */
-
 	CacheInvalidateRelcache(rel);
+
+	heap_close(rel, NoLock);
 
 	/* Clean up */
 	heap_close(pg_policy_rel, RowExclusiveLock);
@@ -515,7 +518,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 										RangeVarCallbackForPolicy,
 										(void *) stmt);
 
-	/* Open target_table to build quals. No lock is necessary. */
+	/* Open target_table to build quals. No additional lock is necessary. */
 	target_table = relation_open(table_id, NoLock);
 
 	/* Add for the regular security quals */
