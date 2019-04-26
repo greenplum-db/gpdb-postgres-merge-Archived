@@ -1823,7 +1823,7 @@ static TupleTableSlot *
 agg_retrieve_hash_table(AggState *aggstate)
 {
 	TupleTableSlot *tuple = NULL;
-	bool		streaming __attribute__((unused)) = ((Agg *) aggstate->ss.ps.plan)->streaming;
+	bool		streaming PG_USED_FOR_ASSERTS_ONLY = ((Agg *) aggstate->ss.ps.plan)->streaming;
 
 	/*
 	 * On each call we either return a tuple corresponding to a hash entry
