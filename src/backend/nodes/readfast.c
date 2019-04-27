@@ -3963,6 +3963,14 @@ readNodeBinary(void)
 			case T_AlterTableMoveAllStmt:
 				return_value = _readAlterTableMoveAllStmt();
 				break;
+
+			case T_CreatePolicyStmt:
+				return_value = _readCreatePolicyStmt();
+				break;
+			case T_CreateTransformStmt:
+				return_value = _readCreateTransformStmt();
+				break;
+
 			default:
 				return_value = NULL; /* keep the compiler silent */
 				elog(ERROR, "could not deserialize unrecognized node type: %d",

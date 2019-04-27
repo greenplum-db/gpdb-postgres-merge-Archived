@@ -44,6 +44,11 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
+#include "catalog/heap.h"
+#include "catalog/oid_dispatch.h"
+#include "cdb/cdbdisp_query.h"
+#include "cdb/cdbvars.h"
+
 static void RangeVarCallbackForPolicy(const RangeVar *rv,
 						  Oid relid, Oid oldrelid, void *arg);
 static char parse_policy_command(const char *cmd_name);
@@ -622,6 +627,24 @@ CreatePolicy(CreatePolicyStmt *stmt)
 	systable_endscan(sscan);
 	relation_close(target_table, NoLock);
 	heap_close(pg_policy_rel, RowExclusiveLock);
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		Assert(stmt->type == T_CreatePolicyStmt);
+		Assert(stmt->type < 1000);
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+
+		/* MPP-6929: metadata tracking */
+		MetaTrackAddObject(PolicyRelationId,
+						   myself.objectId,
+						   GetUserId(),
+						   "CREATE", "POLICY");
+	}
 
 	return myself;
 }

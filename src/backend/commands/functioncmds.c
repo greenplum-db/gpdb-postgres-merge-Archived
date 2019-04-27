@@ -69,8 +69,10 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
-#include "cdb/cdbvars.h"
+#include "catalog/heap.h"
+#include "catalog/oid_dispatch.h"
 #include "cdb/cdbdisp_query.h"
+#include "cdb/cdbvars.h"
 
 
 static void CheckForModifySystemFunc(Oid funcOid, List *funcName);
@@ -2421,6 +2423,24 @@ CreateTransform(CreateTransformStmt *stmt)
 	heap_freetuple(newtuple);
 
 	heap_close(relation, RowExclusiveLock);
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		Assert(stmt->type == T_CreateTransformStmt);
+		Assert(stmt->type < 1000);
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+
+		/* MPP-6929: metadata tracking */
+		MetaTrackAddObject(TransformRelationId,
+						   myself.objectId,
+						   GetUserId(),
+						   "CREATE", "TRANSFORM");
+	}
 
 	return myself;
 }

@@ -2914,6 +2914,34 @@ _readVacuumStmt(void)
 	READ_DONE();
 }
 
+static CreatePolicyStmt *
+_readCreatePolicyStmt()
+{
+	READ_LOCALS(CreatePolicyStmt);
+
+	READ_STRING_FIELD(policy_name);
+	READ_NODE_FIELD(table);
+	READ_STRING_FIELD(cmd);
+	READ_NODE_FIELD(roles);
+	READ_NODE_FIELD(qual);
+	READ_NODE_FIELD(with_check);
+
+	READ_DONE();
+}
+
+static CreateTransformStmt *
+_readCreateTransformStmt()
+{
+	READ_LOCALS(CreateTransformStmt);
+
+	READ_BOOL_FIELD(replace);
+	READ_NODE_FIELD(type_name);
+	READ_STRING_FIELD(lang);
+	READ_NODE_FIELD(fromsql);
+	READ_NODE_FIELD(tosql);
+
+	READ_DONE();
+}
 
 static CdbProcess *
 _readCdbProcess(void)
@@ -3240,6 +3268,8 @@ parseNodeString(void)
 		return_value = _readCreateOpFamilyStmt();
 	else if (MATCHX("CREATEPLANGSTMT"))
 		return_value = _readCreatePLangStmt();
+	else if (MATCHX("CREATEPOLICYSTMT"))
+		return_value = _readCreatePolicyStmt();
 	else if (MATCHX("CREATEROLESTMT"))
 		return_value = _readCreateRoleStmt();
 	else if (MATCHX("CREATESCHEMASTMT"))
@@ -3248,6 +3278,8 @@ parseNodeString(void)
 		return_value = _readCreateSeqStmt();
 	else if (MATCHX("CREATESTMT"))
 		return_value = _readCreateStmt();
+	else if (MATCHX("CREATETRANSFORMSTMT"))
+		return_value = _readCreateTransformStmt();
 	else if (MATCHX("CURSORPOSINFO"))
 		return_value = _readCursorPosInfo();
 	else if (MATCHX("DEFELEM"))

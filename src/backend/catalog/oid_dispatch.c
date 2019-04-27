@@ -93,6 +93,7 @@
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_partition.h"
 #include "catalog/pg_partition_rule.h"
+#include "catalog/pg_policy.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_resqueue.h"
 #include "catalog/pg_resqueuecapability.h"
@@ -100,6 +101,7 @@
 #include "catalog/pg_resgroupcapability.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/pg_transform.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_dict.h"
@@ -331,6 +333,13 @@ CreateKeyFromCatalogTuple(Relation catalogrel, HeapTuple tuple,
 				key.objname = NameStr(opfForm->opfname);
 				break;
 			}
+		case PolicyRelationId:
+			{
+				Form_pg_policy polForm = (Form_pg_policy) GETSTRUCT(tuple);
+
+				key.objname = NameStr(polForm->polname);
+				break;
+			}
 		case ProcedureRelationId:
 			{
 				Form_pg_proc proForm = (Form_pg_proc) GETSTRUCT(tuple);
@@ -375,6 +384,10 @@ CreateKeyFromCatalogTuple(Relation catalogrel, HeapTuple tuple,
 				Form_pg_tablespace spcForm = (Form_pg_tablespace) GETSTRUCT(tuple);
 
 				key.objname = NameStr(spcForm->spcname);
+				break;
+			}
+		case TransformRelationId:
+			{
 				break;
 			}
 		case TSParserRelationId:

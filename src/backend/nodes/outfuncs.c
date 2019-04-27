@@ -3391,6 +3391,31 @@ _outAlterOpFamilyStmt(StringInfo str, const AlterOpFamilyStmt *node)
 }
 
 static void
+_outCreatePolicyStmt(StringInfo str, const CreatePolicyStmt *node)
+{
+	WRITE_NODE_TYPE("CREATEPOLICYSTMT");
+
+	WRITE_STRING_FIELD(policy_name);
+	WRITE_NODE_FIELD(table);
+	WRITE_STRING_FIELD(cmd);
+	WRITE_NODE_FIELD(roles);
+	WRITE_NODE_FIELD(qual);
+	WRITE_NODE_FIELD(with_check);
+}
+
+static void
+_outCreateTransformStmt(StringInfo str, const CreateTransformStmt *node)
+{
+	WRITE_NODE_TYPE("CREATETRANSFORMSTMT");
+
+	WRITE_BOOL_FIELD(replace);
+	WRITE_NODE_FIELD(type_name);
+	WRITE_STRING_FIELD(lang);
+	WRITE_NODE_FIELD(fromsql);
+	WRITE_NODE_FIELD(tosql);
+}
+
+static void
 _outCreateConversionStmt(StringInfo str, const CreateConversionStmt *node)
 {
 	WRITE_NODE_TYPE("CREATECONVERSION");
@@ -5738,6 +5763,14 @@ _outNode(StringInfo str, const void *obj)
 			case T_AlterTSDictionaryStmt:
 				_outAlterTSDictionaryStmt(str, obj);
 				break;
+
+			case T_CreatePolicyStmt:
+				_outCreatePolicyStmt(str, obj);
+				break;
+			case T_CreateTransformStmt:
+				_outCreateTransformStmt(str, obj);
+				break;
+
 			default:
 
 				/*
