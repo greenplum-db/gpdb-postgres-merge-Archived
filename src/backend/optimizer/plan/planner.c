@@ -3229,6 +3229,16 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			{
 				RelOptInfo *brel = root->simple_rel_array[rc->rti];
 
+				/* 
+				 * RTEs are not promised to be built to base rels.
+				 * eg: select * from inh_table for share/update, inh_table has
+				 * row level security policy, it is turned into a subquery in
+				 * expand_security_qual(), so children rels are only built in
+				 * down level. 
+				 */
+				if (!brel)
+					continue;
+
 				if (GpPolicyIsPartitioned(brel->cdbpolicy) ||
 					GpPolicyIsReplicated(brel->cdbpolicy))
 				{
