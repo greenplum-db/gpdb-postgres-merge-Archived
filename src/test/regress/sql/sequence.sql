@@ -247,12 +247,8 @@ SET LOCAL SESSION AUTHORIZATION seq_user;
 CREATE SEQUENCE seq3;
 SELECT nextval('seq3');
 REVOKE ALL ON seq3 FROM seq_user;
-<<<<<<< HEAD
---SELECT lastval();
-=======
 GRANT USAGE ON seq3 TO seq_user;
-SELECT lastval();
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+--SELECT lastval();
 ROLLBACK;
 
 -- Sequences should get wiped out as well:
