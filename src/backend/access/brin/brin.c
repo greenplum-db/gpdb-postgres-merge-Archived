@@ -274,7 +274,8 @@ Datum
 bringetbitmap(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
+	Node	   *n = (Node *) PG_GETARG_POINTER(1);
+	TIDBitmap  *tbm;
 	Relation	idxRel = scan->indexRelation;
 	Buffer		buf = InvalidBuffer;
 	BrinDesc   *bdesc;
@@ -291,6 +292,20 @@ bringetbitmap(PG_FUNCTION_ARGS)
 	opaque = (BrinOpaque *) scan->opaque;
 	bdesc = opaque->bo_bdesc;
 	pgstat_count_index_scan(idxRel);
+
+	if (n == NULL)
+	{
+		/* XXX should we use less than work_mem for this? */
+		tbm = tbm_create(work_mem * 1024L);
+	}
+	else if (!IsA(n, TIDBitmap))
+	{
+		elog(ERROR, "non hash bitmap");
+	}
+	else
+	{
+		tbm = (TIDBitmap *)n;
+	}
 
 	/*
 	 * We need to know the size of the table so that we know how long to
@@ -454,7 +469,7 @@ bringetbitmap(PG_FUNCTION_ARGS)
 	 * returns, but we don't have a precise idea of the number of heap tuples
 	 * involved.
 	 */
-	PG_RETURN_INT64(totalpages * 10);
+	PG_RETURN_POINTER(tbm);
 }
 
 /*
