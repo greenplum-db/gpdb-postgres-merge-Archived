@@ -1054,6 +1054,8 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 		union_tuples(state->bs_bdesc, state->bs_dtuple, phtup);
 	}
 
+	ExecDropSingleTupleTableSlot(slot);
+
 	/* we can now forget our snapshot, if set */
 	if (registered_snapshot)
 		UnregisterSnapshot(snapshot);
