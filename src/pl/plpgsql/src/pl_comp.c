@@ -32,8 +32,6 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-#include "cdb/cdbvars.h"
-#include "parser/parser.h"
 
 /* ----------
  * Our own local and global variables
@@ -755,33 +753,7 @@ do_compile(FunctionCallInfo fcinfo,
 	/*
 	 * Now parse the function's text
 	 */
-	/*
-	 * In GPDB, temporarily disable escape_string_warning, if we're in a QE
-	 * node. When we're parsing a PL/pgSQL function, e.g. in a CREATE FUNCTION
-	 * command, you should've gotten the same warning from the QD node already.
-	 * We could probably disable the warning in QE nodes altogether, not just
-	 * in PL/pgSQL, but it can be useful for catching escaping bugs, when
-	 * internal queries are dispatched from QD to QEs.
-	 */
-	bool            save_escape_string_warning = escape_string_warning;
-	PG_TRY();
-	{
-		if (Gp_role == GP_ROLE_EXECUTE)
-			escape_string_warning = false;
-
-		parse_rc = plpgsql_yyparse();
-
-		if (Gp_role == GP_ROLE_EXECUTE)
-			escape_string_warning = save_escape_string_warning;
-	}
-	PG_CATCH();
-	{
-		if (Gp_role == GP_ROLE_EXECUTE)
-			escape_string_warning = save_escape_string_warning;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
+	parse_rc = plpgsql_yyparse();
 	if (parse_rc != 0)
 		elog(ERROR, "plpgsql parser returned %d", parse_rc);
 	function->action = plpgsql_parse_result;

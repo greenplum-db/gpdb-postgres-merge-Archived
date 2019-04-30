@@ -20,6 +20,9 @@
 
 #include "pl_gram.h"			/* must be after parser/scanner.h */
 
+#include "cdb/cdbvars.h"
+#include "parser/parser.h"
+
 #define PG_KEYWORD(a,b,c) {a,b,c},
 
 
@@ -698,9 +701,34 @@ plpgsql_latest_lineno(void)
 void
 plpgsql_scanner_init(const char *str)
 {
-	/* Start up the core scanner */
-	yyscanner = scanner_init(str, &core_yy,
-							 reserved_keywords, num_reserved_keywords);
+	/*
+	 * In GPDB, temporarily disable escape_string_warning, if we're in a QE
+	 * node. When we're parsing a PL/pgSQL function, e.g. in a CREATE FUNCTION
+	 * command, you should've gotten the same warning from the QD node already.
+	 * We could probably disable the warning in QE nodes altogether, not just
+	 * in PL/pgSQL, but it can be useful for catching escaping bugs, when
+	 * internal queries are dispatched from QD to QEs.
+	 */
+	bool            save_escape_string_warning = escape_string_warning;
+	PG_TRY();
+	{
+		if (Gp_role == GP_ROLE_EXECUTE)
+			escape_string_warning = false;
+
+		/* Start up the core scanner */
+		yyscanner = scanner_init(str, &core_yy,
+								 reserved_keywords, num_reserved_keywords);
+
+		if (Gp_role == GP_ROLE_EXECUTE)
+			escape_string_warning = save_escape_string_warning;
+	}
+	PG_CATCH();
+	{
+		if (Gp_role == GP_ROLE_EXECUTE)
+			escape_string_warning = save_escape_string_warning;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	/*
 	 * scanorig points to the original string, which unlike the scanner's
