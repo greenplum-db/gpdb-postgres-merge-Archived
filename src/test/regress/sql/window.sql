@@ -284,7 +284,6 @@ SELECT sum(salary), row_number() OVER (ORDER BY depname), sum(
     depname
 FROM empsalary GROUP BY depname;
 
-<<<<<<< HEAD
 -- Test Sort node collapsing
 EXPLAIN (COSTS OFF)
 SELECT * FROM
@@ -301,8 +300,6 @@ SELECT
   lag(1) OVER (PARTITION BY depname ORDER BY salary,enroll_date,empno)
 FROM empsalary;
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 -- Test pushdown of quals into a subquery containing window functions
 
 -- pushdown is safe because all PARTITION BY clauses include depname:
@@ -323,7 +320,6 @@ SELECT * FROM
    FROM empsalary) emp
 WHERE depname = 'sales';
 
-<<<<<<< HEAD
 -- pushdown is unsafe because the subquery contains window functions and the qual is volatile:
 EXPLAIN (COSTS OFF)
 SELECT * FROM
@@ -334,8 +330,6 @@ SELECT * FROM
 WHERE depname = 'sales' OR RANDOM() > 0.5;
 
 
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 -- cleanup
 DROP TABLE empsalary;
 
