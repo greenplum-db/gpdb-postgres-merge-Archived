@@ -992,6 +992,7 @@ WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM (SELECT * from z UNIO
  1
 (1 row)
 
+DROP TABLE z;
 -- no non-recursive term
 WITH RECURSIVE x(n) AS (SELECT n FROM x)
 	SELECT * FROM x;
@@ -1898,8 +1899,7 @@ SELECT * FROM t JOIN y ON t.k = y.a ORDER BY a, k;
  k |   v    | a 
 ---+--------+---
  0 | insert | 0
- 0 | insert | 0
-(2 rows)
+(1 row)
 
 -- Test EXCLUDED.* reference within CTE
 WITH aa AS (
@@ -1965,7 +1965,9 @@ upsert_cte AS (
 INSERT INTO z VALUES(2, 'Red') ON CONFLICT (k) DO
 UPDATE SET (k, v) = (SELECT k, v FROM upsert_cte WHERE upsert_cte.k = z.k)
 RETURNING k, v;
-ERROR:  attempted to update invisible tuple
+ERROR:  writable CTE queries cannot be themselves writable
+DETAIL:  Greenplum Database currently only support CTEs with one writable clause, called in a non-writable context.
+HINT:  Rewrite the query to only include one writable clause.
 DROP TABLE z;
 -- check that run to completion happens in proper ordering
 TRUNCATE TABLE y;
@@ -2227,54 +2229,9 @@ SELECT * FROM parent;
 EXPLAIN (VERBOSE, COSTS OFF)
 WITH wcte AS ( INSERT INTO int8_tbl VALUES ( 42, 47 ) RETURNING q2 )
 DELETE FROM a USING wcte WHERE aa = q2;
-<<<<<<< HEAD
 ERROR:  writable CTE queries cannot be themselves writable
 DETAIL:  Greenplum Database currently only support CTEs with one writable clause, called in a non-writable context.
 HINT:  Rewrite the query to only include one writable clause.
-=======
-                     QUERY PLAN                     
-----------------------------------------------------
- Delete on public.a
-   Delete on public.a
-   Delete on public.b
-   Delete on public.c
-   Delete on public.d
-   CTE wcte
-     ->  Insert on public.int8_tbl
-           Output: int8_tbl.q2
-           ->  Result
-                 Output: '42'::bigint, '47'::bigint
-   ->  Nested Loop
-         Output: a.ctid, wcte.*
-         Join Filter: (a.aa = wcte.q2)
-         ->  Seq Scan on public.a
-               Output: a.ctid, a.aa
-         ->  CTE Scan on wcte
-               Output: wcte.*, wcte.q2
-   ->  Nested Loop
-         Output: b.ctid, wcte.*
-         Join Filter: (b.aa = wcte.q2)
-         ->  Seq Scan on public.b
-               Output: b.ctid, b.aa
-         ->  CTE Scan on wcte
-               Output: wcte.*, wcte.q2
-   ->  Nested Loop
-         Output: c.ctid, wcte.*
-         Join Filter: (c.aa = wcte.q2)
-         ->  Seq Scan on public.c
-               Output: c.ctid, c.aa
-         ->  CTE Scan on wcte
-               Output: wcte.*, wcte.q2
-   ->  Nested Loop
-         Output: d.ctid, wcte.*
-         Join Filter: (d.aa = wcte.q2)
-         ->  Seq Scan on public.d
-               Output: d.ctid, d.aa
-         ->  CTE Scan on wcte
-               Output: wcte.*, wcte.q2
-(38 rows)
-
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 -- error cases
 -- data-modifying WITH tries to use its own output
 WITH RECURSIVE t AS (
