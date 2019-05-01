@@ -9450,6 +9450,16 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		pkrel = heap_openrv(fkconstraint->pktable, ShareRowExclusiveLock);
 
 	/*
+	 * GPDB: Schema-qualify the primary key table for the statement dispatch
+	 * that will happen later. The QE nodes are not guaranteed to have the
+	 * same search_path as the QD (e.g. CREATE SCHEMA command with schema
+	 * elements creating relations).
+	 */
+	if (Gp_role == GP_ROLE_DISPATCH)
+		fkconstraint->pktable->schemaname =
+			get_namespace_name(pkrel->rd_rel->relnamespace);
+
+	/*
 	 * Validity checks (permission checks wait till we have the column
 	 * numbers)
 	 */
