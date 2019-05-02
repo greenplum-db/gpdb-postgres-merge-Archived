@@ -1299,11 +1299,17 @@ project_aggregates(AggState *aggstate)
 		 * Form and return or store a projection tuple using the aggregate
 		 * results and the representative input tuple.
 		 */
+		ExprDoneCond isDone;
 		TupleTableSlot *result;
 
-		result = ExecProject(aggstate->ss.ps.ps_ProjInfo, NULL);
+		result = ExecProject(aggstate->ss.ps.ps_ProjInfo, &isDone);
 
-		return result;
+		if (isDone != ExprEndResult)
+		{
+			aggstate->ps_TupFromTlist =
+			 (isDone == ExprMultipleResult);
+			return result;
+		}
 	}
 	else
 		InstrCountFiltered1(aggstate, 1);
