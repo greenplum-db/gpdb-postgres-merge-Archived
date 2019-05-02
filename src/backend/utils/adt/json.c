@@ -1483,10 +1483,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 				if (TIMESTAMP_NOT_FINITE(timestamp))
 					EncodeSpecialTimestamp(timestamp, buf);
 				else if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) == 0)
-				{
 					EncodeDateTime(&tm, fsec, false, 0, NULL, USE_XSD_DATES, buf);
-					appendStringInfo(result, "\"%s\"", buf);
-				}
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -1508,10 +1505,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 				if (TIMESTAMP_NOT_FINITE(timestamp))
 					EncodeSpecialTimestamp(timestamp, buf);
 				else if (timestamp2tm(timestamp, &tz, &tm, &fsec, &tzn, NULL) == 0)
-				{
 					EncodeDateTime(&tm, fsec, true, tz, tzn, USE_XSD_DATES, buf);
-					appendStringInfo(result, "\"%s\"", buf);
-				}
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
