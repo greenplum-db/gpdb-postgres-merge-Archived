@@ -3,6 +3,10 @@
 -- specific server features
 --
 
+-- GPDB: Use Postgres's tuplesort instead of our tuplesort_mk to avoid
+-- array sorting diffs.
+set gp_enable_mk_sort=false;
+
 -- \gset
 
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
@@ -40,8 +44,6 @@ select 10 as test01, 20 as test02 from generate_series(1,0) \gset
 
 -- show all pset options
 \pset
-<<<<<<< HEAD
-=======
 
 -- test multi-line headers, wrapping, and newline indicators
 prepare q as select array_to_string(array_agg(repeat('x',2*n)),E'\n') as "ab
@@ -303,4 +305,3 @@ execute q;
 execute q;
 
 deallocate q;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
