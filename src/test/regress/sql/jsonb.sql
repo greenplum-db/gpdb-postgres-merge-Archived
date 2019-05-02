@@ -92,7 +92,7 @@ SELECT jsonb_agg(q)
          FROM generate_series(1,2) x,
               generate_series(4,5) y) q;
 
-SELECT jsonb_agg(q)
+SELECT jsonb_agg(q ORDER BY x, y)
   FROM rows q;
 
 -- jsonb extraction functions
