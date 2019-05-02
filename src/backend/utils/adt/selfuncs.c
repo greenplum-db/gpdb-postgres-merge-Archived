@@ -7875,7 +7875,7 @@ bmcostestimate(PG_FUNCTION_ARGS)
 
 	Assert(groupExprs != NULL);
 	numDistinctValues = estimate_num_groups(root, groupExprs, path->indexinfo->rel->rows,
-											&groupExprs);
+											NULL);
 	if (numDistinctValues == 0)
 		numDistinctValues = 1;
 
