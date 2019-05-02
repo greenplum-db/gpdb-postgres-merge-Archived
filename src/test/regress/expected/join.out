@@ -2268,10 +2268,10 @@ select * from
    ->  Merge Full Join
          Merge Cond: ((j2_tbl.i = j1_tbl.i) AND (j2_tbl.k = j1_tbl.i))
          ->  Sort
-               Sort Key: j2_tbl.i, j2_tbl.k
+               Sort Key: j2_tbl.i DESC, j2_tbl.k
                ->  Seq Scan on j2_tbl
          ->  Sort
-               Sort Key: j1_tbl.i
+               Sort Key: j1_tbl.i DESC
                ->  Seq Scan on j1_tbl
  Optimizer: Postgres query optimizer
 (10 rows)
@@ -3262,33 +3262,6 @@ select * from tenk1 a join tenk1 b on
  Optimizer: Postgres query optimizer
 (10 rows)
 
-explain (costs off)
-select * from tenk1 a join tenk1 b on
-  (a.unique1 = 1 and b.unique1 = 2) or
-  ((a.unique2 = 3 or a.unique2 = 7) and b.hundred = 4);
-                                                      QUERY PLAN                                                      
-----------------------------------------------------------------------------------------------------------------------
- Nested Loop
-   Join Filter: (((a.unique1 = 1) AND (b.unique1 = 2)) OR (((a.unique2 = 3) OR (a.unique2 = 7)) AND (b.hundred = 4)))
-   ->  Bitmap Heap Scan on tenk1 b
-         Recheck Cond: ((unique1 = 2) OR (hundred = 4))
-         ->  BitmapOr
-               ->  Bitmap Index Scan on tenk1_unique1
-                     Index Cond: (unique1 = 2)
-               ->  Bitmap Index Scan on tenk1_hundred
-                     Index Cond: (hundred = 4)
-   ->  Materialize
-         ->  Bitmap Heap Scan on tenk1 a
-               Recheck Cond: ((unique1 = 1) OR (unique2 = 3) OR (unique2 = 7))
-               ->  BitmapOr
-                     ->  Bitmap Index Scan on tenk1_unique1
-                           Index Cond: (unique1 = 1)
-                     ->  Bitmap Index Scan on tenk1_unique2
-                           Index Cond: (unique2 = 3)
-                     ->  Bitmap Index Scan on tenk1_unique2
-                           Index Cond: (unique2 = 7)
-(19 rows)
-
 --
 -- test placement of movable quals in a parameterized join tree
 --
@@ -3571,7 +3544,7 @@ select f1, unique2, case when unique2 is null then f1 else 0 end
 explain (costs off)
 select a.unique1, b.unique1, c.unique1, coalesce(b.twothousand, a.twothousand)
   from tenk1 a left join tenk1 b on b.thousand = a.unique1                        left join tenk1 c on c.unique2 = coalesce(b.twothousand, a.twothousand)
-  where a.unique2 = 5530 and coalesce(b.twothousand, a.twothousand) = 44;
+  where a.unique2 < 10 and coalesce(b.twothousand, a.twothousand) = 44;
                                QUERY PLAN                                
 -------------------------------------------------------------------------
  Gather Motion 3:1  (slice3; segments: 3)
@@ -3584,8 +3557,8 @@ select a.unique1, b.unique1, c.unique1, coalesce(b.twothousand, a.twothousand)
                      Hash Key: b.thousand
                      ->  Seq Scan on tenk1 b
                ->  Hash
-                     ->  Index Scan using tenk1_unique2 on tenk1 a
-                           Index Cond: (unique2 = 5530)
+                     ->  Seq Scan on tenk1 a
+                           Filter: (unique2 < 10)
          ->  Hash
                ->  Broadcast Motion 3:3  (slice2; segments: 3)
                      ->  Index Scan using tenk1_unique2 on tenk1 c
@@ -4361,81 +4334,95 @@ select id from a where id in (
 explain (costs off)
 select d.* from d left join (select * from b group by b.id, b.c_id) s
   on d.a = s.id and d.b = s.c_id;
-  QUERY PLAN   
----------------
+                QUERY PLAN                
+------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on d
-GP_IGNORE:(3 rows)
+ Optimizer: Postgres query optimizer
+(3 rows)
 
 -- similarly, but keying off a DISTINCT clause
 explain (costs off)
 select d.* from d left join (select distinct * from b) s
   on d.a = s.id and d.b = s.c_id;
-  QUERY PLAN   
----------------
+                QUERY PLAN                
+------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on d
-GP_IGNORE:(3 rows)
+ Optimizer: Postgres query optimizer
+(3 rows)
 
 -- join removal is not possible when the GROUP BY contains a column that is
 -- not in the join condition
 explain (costs off)
 select d.* from d left join (select * from b group by b.id, b.c_id) s
   on d.a = s.id;
-                 QUERY PLAN                  
----------------------------------------------
- Merge Left Join
-   Merge Cond: (d.a = s.id)
-   ->  Sort
-         Sort Key: d.a
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice3; segments: 3)
+   ->  Hash Left Join
+         Hash Cond: (d.a = s.id)
          ->  Seq Scan on d
-   ->  Sort
-         Sort Key: s.id
-         ->  Subquery Scan on s
-               ->  HashAggregate
-                     Group Key: b.id, b.c_id
-                     ->  Seq Scan on b
-(11 rows)
+         ->  Hash
+               ->  Redistribute Motion 1:3  (slice2; segments: 1)
+                     Hash Key: s.id
+                     ->  Subquery Scan on s
+                           ->  GroupAggregate
+                                 Group Key: b.id, b.c_id
+                                 ->  Gather Motion 3:1  (slice1; segments: 3)
+                                       Merge Key: b.id, b.c_id
+                                       ->  Sort
+                                             Sort Key: b.id, b.c_id
+                                             ->  Seq Scan on b
+ Optimizer: Postgres query optimizer
+(16 rows)
 
 -- similarly, but keying off a DISTINCT clause
 explain (costs off)
 select d.* from d left join (select distinct * from b) s
   on d.a = s.id;
-                 QUERY PLAN                  
----------------------------------------------
- Merge Left Join
-   Merge Cond: (d.a = s.id)
-   ->  Sort
-         Sort Key: d.a
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice3; segments: 3)
+   ->  Hash Left Join
+         Hash Cond: (d.a = s.id)
          ->  Seq Scan on d
-   ->  Sort
-         Sort Key: s.id
-         ->  Subquery Scan on s
-               ->  HashAggregate
-                     Group Key: b.id, b.c_id
-                     ->  Seq Scan on b
-(11 rows)
+         ->  Hash
+               ->  Redistribute Motion 1:3  (slice2; segments: 1)
+                     Hash Key: s.id
+                     ->  Subquery Scan on s
+                           ->  GroupAggregate
+                                 Group Key: b.id, b.c_id
+                                 ->  Gather Motion 3:1  (slice1; segments: 3)
+                                       Merge Key: b.id, b.c_id
+                                       ->  Sort
+                                             Sort Key: b.id, b.c_id
+                                             ->  Seq Scan on b
+ Optimizer: Postgres query optimizer
+(16 rows)
 
 -- check join removal works when uniqueness of the join condition is enforced
 -- by a UNION
 explain (costs off)
 select d.* from d left join (select id from a union select id from b) s
   on d.a = s.id;
-  QUERY PLAN   
----------------
+                QUERY PLAN                
+------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on d
-GP_IGNORE:(3 rows)
+ Optimizer: Postgres query optimizer
+(3 rows)
 
 -- check join removal with a cross-type comparison operator
 explain (costs off)
 select i8.* from int8_tbl i8 left join (select f1 from int4_tbl group by f1) i4
   on i8.q1 = i4.f1;
-       QUERY PLAN        
--------------------------
+                QUERY PLAN                
+------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on int8_tbl i8
-GP_IGNORE:(3 rows)
+ Optimizer: Postgres query optimizer
+(3 rows)
 
 rollback;
 create temp table parent (k int primary key, pd int);
@@ -4862,14 +4849,20 @@ select * from generate_series(100,200) g,
 explain (costs off)
   select count(*) from tenk1 a,
     tenk1 b join lateral (values(a.unique1)) ss(x) on b.unique2 = ss.x;
-                         QUERY PLAN                         
-------------------------------------------------------------
+                               QUERY PLAN                               
+------------------------------------------------------------------------
  Aggregate
-   ->  Merge Join
-         Merge Cond: (a.unique1 = b.unique2)
-         ->  Index Only Scan using tenk1_unique1 on tenk1 a
-         ->  Index Only Scan using tenk1_unique2 on tenk1 b
-(5 rows)
+   ->  Gather Motion 3:1  (slice2; segments: 3)
+         ->  Aggregate
+               ->  Hash Join
+                     Hash Cond: (b.unique2 = a.unique1)
+                     ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                           Hash Key: b.unique2
+                           ->  Seq Scan on tenk1 b
+                     ->  Hash
+                           ->  Seq Scan on tenk1 a
+ Optimizer: Postgres query optimizer
+(11 rows)
 
 select count(*) from tenk1 a,
   tenk1 b join lateral (values(a.unique1)) ss(x) on b.unique2 = ss.x;
