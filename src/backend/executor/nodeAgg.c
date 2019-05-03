@@ -1454,6 +1454,22 @@ ExecAgg(AggState *node)
 	TupleTableSlot *result;
 
 	/*
+	 * Check to see if we're still projecting out tuples from a previous agg
+	 * tuple (because there is a function-returning-set in the projection
+	 * expressions).  If so, try to project another one.
+	 */
+	if (node->ps_TupFromTlist)
+	{
+		ExprDoneCond isDone;
+
+		result = ExecProject(node->ss.ps.ps_ProjInfo, &isDone);
+		if (isDone == ExprMultipleResult)
+			return result;
+		/* Done with that source tuple... */
+		node->ps_TupFromTlist = false;
+	}
+
+	/*
 	 * (We must do the ps_TupFromTlist check first, because in some cases
 	 * agg_done gets set before we emit the final aggregate tuple, and we have
 	 * to finish running SRFs for it.)
