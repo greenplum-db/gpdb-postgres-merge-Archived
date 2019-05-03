@@ -859,21 +859,6 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
 			break;
 
 		case CONSTR_CHECK:
-			/*
-			 * GPDB_95_MERGE_FIXME: GPDB did not support constraints on foreign tables.
-			 * However upstream commit allowed CHECK constraints to be placed on
-			 * foreign tables which are merely reports that are being enforced by the
-			 * remote server. Upstream commit <fc2ac1fb41c>.
-			 * Verify that GPDB can support CHECK constraints on foreign tables and
-			 * if true, remove this check.
-			 */
-			if (cxt->isforeign)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("constraints are not supported on foreign tables"),
-						 parser_errposition(cxt->pstate,
-											constraint->location)));
-
 			cxt->ckconstraints = lappend(cxt->ckconstraints, constraint);
 			break;
 
