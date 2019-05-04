@@ -577,6 +577,7 @@ CREATE FOREIGN TABLE ft2 (
 ALTER FOREIGN TABLE ft2 INHERIT pt1;
 \d+ pt1
 \d+ ft2
+-- GPDB: Cannot create distributed table from non-distributed foreign table.
 CREATE TABLE ct3() INHERITS(ft2);
 CREATE FOREIGN TABLE ft3 (
 	c1 integer NOT NULL,
@@ -585,7 +586,10 @@ CREATE FOREIGN TABLE ft3 (
 ) INHERITS(ft2)
   SERVER s0;
 \d+ ft2
+-- start_ignore
+-- GPDB: ct3 is not created.
 \d+ ct3
+-- end_ignore
 \d+ ft3
 
 -- add attributes recursively
@@ -596,7 +600,10 @@ ALTER TABLE pt1 ADD COLUMN c7 integer NOT NULL;
 ALTER TABLE pt1 ADD COLUMN c8 integer;
 \d+ pt1
 \d+ ft2
+-- start_ignore
+-- GPDB: ct3 is not created.
 \d+ ct3
+-- end_ignore
 \d+ ft3
 
 -- alter attributes recursively
@@ -654,6 +661,7 @@ ALTER TABLE pt1 DROP CONSTRAINT pt1chk1 CASCADE;
 ALTER TABLE pt1 DROP CONSTRAINT pt1chk2 CASCADE;
 
 -- NOT VALID case
+SET gp_autostats_mode=NONE; -- GPDB: don't analyze after insert
 INSERT INTO pt1 VALUES (1, 'pt1'::text, '1994-01-01'::date);
 ALTER TABLE pt1 ADD CONSTRAINT pt1chk3 CHECK (c2 <> '') NOT VALID;
 \d+ pt1

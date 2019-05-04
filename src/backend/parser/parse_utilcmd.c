@@ -1957,6 +1957,15 @@ transformDistributedBy(CreateStmtContext *cxt,
 			parentrel = heap_openrv(parent, AccessShareLock);
 			parentPolicy = parentrel->rd_cdbpolicy;
 
+			if (parentrel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot inherit from foreign table \"%s\" to create table \"%s\"",
+								parent->relname, cxt->relation->relname),
+						 errdetail("An inheritance hierarchy cannot contain a mixture of distributed and non-distributed tables.")));
+			}
+
 			/*
 			 * Partitioned child must have partitioned parents. During binary
 			 * upgrade we allow to skip this check since that runs against a
