@@ -33,9 +33,6 @@ _bitmap_xlog_insert_lovitem(XLogRecPtr lsn, XLogReaderState *record)
 	{
 		Page			lovPage;
 
-		if (xlrec->bm_is_new_lov_blkno)
-			lovBuffer = XLogInitBufferForRedo(record, xlrec->bm_lov_blkno);
-
 		lovPage = BufferGetPage(lovBuffer);
 
 		if (PageIsNew(lovPage))
@@ -58,7 +55,7 @@ _bitmap_xlog_insert_lovitem(XLogRecPtr lsn, XLogReaderState *record)
 		 */
 		if (newOffset < xlrec->bm_lov_offset)
 		{
-			_bitmap_relbuf(lovBuffer);
+			UnlockReleaseBuffer(lovBuffer);
 			return;
 		}
 
@@ -76,8 +73,10 @@ _bitmap_xlog_insert_lovitem(XLogRecPtr lsn, XLogReaderState *record)
 
 		PageSetLSN(lovPage, lsn);
 
-		_bitmap_wrtbuf(lovBuffer);
+		MarkBufferDirty(lovBuffer);
 	}
+	if (BufferIsValid(lovBuffer))
+		UnlockReleaseBuffer(lovBuffer);
 
 	/* Update the meta page when needed */
 	if (!xlrec->bm_is_new_lov_blkno)
@@ -88,8 +87,6 @@ _bitmap_xlog_insert_lovitem(XLogRecPtr lsn, XLogReaderState *record)
 	{
 		BMMetaPage	metapage;
 
-		metabuf = XLogReadBufferExtended(xlrec->bm_node, xlrec->bm_fork,
-												BM_METAPAGE, RBM_ZERO_AND_LOCK);
 		if (!BufferIsValid(metabuf))
  			return;
 		
@@ -98,8 +95,10 @@ _bitmap_xlog_insert_lovitem(XLogRecPtr lsn, XLogReaderState *record)
 
 		PageSetLSN(BufferGetPage(metabuf), lsn);
 
-		_bitmap_wrtbuf(metabuf);
+		MarkBufferDirty(metabuf);
 	}
+	if (BufferIsValid(metabuf))
+		UnlockReleaseBuffer(metabuf);
 }
 
 /*
@@ -374,8 +373,10 @@ _bitmap_xlog_updateword(XLogRecPtr lsn, XLogReaderState *record)
 		bitmap->hwords[xlrec->bm_word_no/BM_HRL_WORD_SIZE] = xlrec->bm_hword;
 
 		PageSetLSN(bitmapPage, lsn);
-		_bitmap_wrtbuf(bitmapBuffer);
+		MarkBufferDirty(bitmapBuffer);
 	}
+	if (BufferIsValid(bitmapBuffer))
+		UnlockReleaseBuffer(bitmapBuffer);
 }
 
 static void
@@ -417,7 +418,7 @@ _bitmap_xlog_updatewords(XLogRecPtr lsn, XLogReaderState *record)
 			firstOpaque->bm_bitmap_next = xlrec->bm_next_blkno;
 
 		PageSetLSN(firstPage, lsn);
-		_bitmap_wrtbuf(firstBuffer);
+		MarkBufferDirty(firstBuffer); 
 	}
 	if (BufferIsValid(firstBuffer))
 		UnlockReleaseBuffer(firstBuffer);
@@ -448,8 +449,10 @@ _bitmap_xlog_updatewords(XLogRecPtr lsn, XLogReaderState *record)
 			secondOpaque->bm_bitmap_next = xlrec->bm_next_blkno;
 
 			PageSetLSN(secondPage, lsn);
-			_bitmap_wrtbuf(secondBuffer);
+			MarkBufferDirty(secondBuffer);
 		}
+		if (BufferIsValid(secondBuffer))
+			UnlockReleaseBuffer(secondBuffer);
 	}
 
 	/* Update lovPage when needed */
@@ -472,21 +475,8 @@ _bitmap_xlog_updatewords(XLogRecPtr lsn, XLogReaderState *record)
 
 			PageSetLSN(lovPage, lsn);
 
-			_bitmap_wrtbuf(lovBuffer);
-
-			/*
-			 * The checksum value on this page is currently invalid. We don't need to
-			 * reset it here since it will be set before being written.
-			 */
-
-			PageSetLSN(lovPage, lsn);
 			MarkBufferDirty(lovBuffer);
 		}
-		else
-		{
-			_bitmap_relbuf(lovBuffer);
-		}
-
 		if (BufferIsValid(lovBuffer))
 			UnlockReleaseBuffer(lovBuffer);
 	}
