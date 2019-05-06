@@ -216,84 +216,72 @@ _bitmap_xlog_insert_bitmapwords(XLogRecPtr lsn, XLogReaderState *record)
 		Page		bitmapPage;
 		BMBitmap	bitmap;
 		BMBitmapOpaque	bitmapPageOpaque;
+		XLogRedoAction	action;
 
-		/*
-		 * If this is the first page, and it was an existing page, then
-		 * we might have a backup block for it.
-		 *
-		 * Note that there is no perpage struct for the first page, in that
-		 * case, so we must check this before trying to read the struct.
-		 */
-		if (bmpageno == 0 && !xlrec->bm_init_first_page &&
-			XLogReadBufferForRedo(record, 1, &bitmapBuffer) == BLK_RESTORED)
-		{
-			bitmapBuffers[bmpageno] = bitmapBuffer;
-			first_blkno = last_blkno = BufferGetBlockNumber(bitmapBuffer);
-			continue;
-		}
+		action = XLogReadBufferForRedo(record, bmpageno + 1, &bitmapBuffer);
 
-		/*
-		 * Decode the xl_bm_bitmapwords_perpage struct, and the hwords and cwords,
-		 * for this bitmap page.
-		 */
-		xlrec_perpage = (xl_bm_bitmapwords_perpage *) xlrecptr;
-		xlrecptr += sizeof(xl_bm_bitmapwords_perpage);
-		if (bmpageno == 0)
-			first_blkno = xlrec_perpage->bmp_blkno;
-		last_blkno = xlrec_perpage->bmp_blkno;
-		hwords = (BM_HRL_WORD *) xlrecptr;
-		xlrecptr += xlrec_perpage->bmp_num_hwords * sizeof(BM_HRL_WORD);
-		cwords = (BM_HRL_WORD *) xlrecptr;
-		xlrecptr += xlrec_perpage->bmp_num_cwords * sizeof(BM_HRL_WORD);
-
-		/* Replay changes on this page (unless already applied). */
-		if (bmpageno == 0 && !xlrec->bm_init_first_page)
-		{
-			bitmapBuffer = XLogInitBufferForRedo(record, xlrec_perpage->bmp_blkno);
-			if (!BufferIsValid(bitmapBuffer))
-				continue;
-		}
-		else
-		{
-			bitmapBuffer = XLogInitBufferForRedo(record, xlrec_perpage->bmp_blkno);
-			_bitmap_init_bitmappage(BufferGetPage(bitmapBuffer));
-		}
 		bitmapBuffers[bmpageno] = bitmapBuffer;
 
-		bitmapPage = BufferGetPage(bitmapBuffer);
-		if (PageGetLSN(bitmapPage) >= lsn)
-			continue;
+		if (bmpageno == 0)
+			first_blkno = last_blkno = BufferGetBlockNumber(bitmapBuffer);
 
-		bitmap = (BMBitmap) PageGetContentsMaxAligned(bitmapPage);
-
-		/*
-		 * Copy the header and content words. Note: we WAL-log whole words only.
-		 * If the insertion only set some bits of the last word, the whole
-		 * word is included in the WAL record, anyway.
-		 */
-		memcpy(bitmap->hwords + xlrec_perpage->bmp_start_hword_no,
-			   hwords,
-			   xlrec_perpage->bmp_num_hwords * sizeof(BM_HRL_WORD));
-		memcpy(bitmap->cwords + xlrec_perpage->bmp_start_cword_no,
-			   cwords,
-			   xlrec_perpage->bmp_num_cwords * sizeof(BM_HRL_WORD));
-
-		/* Update next pointer. Peek into the next struct to get its block number */
-		bitmapPageOpaque =
-			(BMBitmapOpaque) PageGetSpecialPointer(bitmapPage);
-		if (bmpageno + 1 < xlrec->bm_num_pages)
+		if (action == BLK_NEEDS_REDO)
 		{
-			xl_bm_bitmapwords_perpage *next_xlrec_perpage;
+			/*
+			 * Decode the xl_bm_bitmapwords_perpage struct, and the hwords and cwords,
+			 * for this bitmap page.
+			 */
+			xlrecptr = XLogRecGetBlockData(record, bmpageno + 1, NULL);
+			xlrec_perpage = (xl_bm_bitmapwords_perpage *) xlrecptr;
+			last_blkno = xlrec_perpage->bmp_blkno;
+			xlrecptr += sizeof(xl_bm_bitmapwords_perpage);
+			hwords = (BM_HRL_WORD *) xlrecptr;
+			xlrecptr += xlrec_perpage->bmp_num_hwords * sizeof(BM_HRL_WORD);
+			cwords = (BM_HRL_WORD *) xlrecptr;
+			xlrecptr += xlrec_perpage->bmp_num_cwords * sizeof(BM_HRL_WORD);
 
-			next_xlrec_perpage = (xl_bm_bitmapwords_perpage *) xlrecptr;
+			bitmapPage = BufferGetPage(bitmapBuffer);
+			if (PageGetLSN(bitmapPage) >= lsn)
+			{
+				UnlockReleaseBuffer(bitmapBuffer);
+				continue;
+			}
 
-			bitmapPageOpaque->bm_bitmap_next = next_xlrec_perpage->bmp_blkno;
+			bitmap = (BMBitmap) PageGetContentsMaxAligned(bitmapPage);
+
+			/*
+			 * Copy the header and content words. Note: we WAL-log whole words only.
+			 * If the insertion only set some bits of the last word, the whole
+			 * word is included in the WAL record, anyway.
+			 */
+			memcpy(bitmap->hwords + xlrec_perpage->bmp_start_hword_no,
+				   hwords,
+				   xlrec_perpage->bmp_num_hwords * sizeof(BM_HRL_WORD));
+			memcpy(bitmap->cwords + xlrec_perpage->bmp_start_cword_no,
+				   cwords,
+				   xlrec_perpage->bmp_num_cwords * sizeof(BM_HRL_WORD));
+
+			/* Update next pointer. Peek into the next struct to get its block number */
+			bitmapPageOpaque =
+				(BMBitmapOpaque) PageGetSpecialPointer(bitmapPage);
+			if (bmpageno + 1 < xlrec->bm_num_pages)
+			{
+				xl_bm_bitmapwords_perpage *next_xlrec_perpage;
+
+				next_xlrec_perpage = (xl_bm_bitmapwords_perpage *) xlrecptr;
+
+				bitmapPageOpaque->bm_bitmap_next = next_xlrec_perpage->bmp_blkno;
+			}
+			bitmapPageOpaque->bm_last_tid_location = xlrec_perpage->bmp_last_tid;
+			bitmapPageOpaque->bm_hrl_words_used = xlrec_perpage->bmp_start_cword_no + xlrec_perpage->bmp_num_cwords;
+
+			PageSetLSN(bitmapPage, lsn);
+			MarkBufferDirty(bitmapBuffer);
 		}
-		bitmapPageOpaque->bm_last_tid_location = xlrec_perpage->bmp_last_tid;
-		bitmapPageOpaque->bm_hrl_words_used = xlrec_perpage->bmp_start_cword_no + xlrec_perpage->bmp_num_cwords;
-
-		PageSetLSN(bitmapPage, lsn);
-		MarkBufferDirty(bitmapBuffer);
+		else if (action == BLK_RESTORED)
+		{
+			/* has been restored in XLogReadBufferForRedo */
+		}
 	}
 
 	/* The LOV page is in backup block # 0 */

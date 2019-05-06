@@ -953,35 +953,16 @@ _bitmap_log_bitmapwords(Relation rel,
 
 		bitmap = (BMBitmap) PageGetContentsMaxAligned(bitmapPage);
 
-		if (init_page)
-		{
-			XLogRegisterData((char *) xlBitmapwordsPage, sizeof(xl_bm_bitmapwords_perpage));
-			XLogRegisterData((char *) &bitmap->hwords[xlBitmapwordsPage->bmp_start_hword_no],
-					xlBitmapwordsPage->bmp_num_hwords * sizeof(BM_HRL_WORD));
-			XLogRegisterData((char *) &bitmap->cwords[xlBitmapwordsPage->bmp_start_cword_no],
-					xlBitmapwordsPage->bmp_num_cwords * sizeof(BM_HRL_WORD));
-		}
-		else
-		{
-			XLogRegisterBuffer(rdata_no, bitmapBuffer, 0);
-			XLogRegisterBufData(rdata_no, (char *) xlBitmapwordsPage, sizeof(xl_bm_bitmapwords_perpage));
+		Assert(BufferIsValid(bitmapBuffer));
 
-			rdata_no++;
+		XLogRegisterBuffer(rdata_no, bitmapBuffer, 0);
 
-			XLogRegisterBuffer(rdata_no, bitmapBuffer, 0);
-			XLogRegisterBufData(rdata_no, (char *) &bitmap->hwords[xlBitmapwordsPage->bmp_start_hword_no],
-					xlBitmapwordsPage->bmp_num_hwords * sizeof(BM_HRL_WORD));
-
-			rdata_no++;
-
-			XLogRegisterBuffer(rdata_no, bitmapBuffer, 0);
-			XLogRegisterBufData(rdata_no, (char *) &bitmap->cwords[xlBitmapwordsPage->bmp_start_cword_no],
-					xlBitmapwordsPage->bmp_num_cwords * sizeof(BM_HRL_WORD));
-
-			rdata_no++;
-		}
-
-		init_page = true;
+		XLogRegisterBufData(rdata_no, (char *) xlBitmapwordsPage, sizeof(xl_bm_bitmapwords_perpage));
+		XLogRegisterBufData(rdata_no, (char *) &bitmap->hwords[xlBitmapwordsPage->bmp_start_hword_no],
+							xlBitmapwordsPage->bmp_num_hwords * sizeof(BM_HRL_WORD));
+		XLogRegisterBufData(rdata_no, (char *) &bitmap->cwords[xlBitmapwordsPage->bmp_start_cword_no],
+							xlBitmapwordsPage->bmp_num_cwords * sizeof(BM_HRL_WORD));
+		rdata_no++;
 	}
 
 	recptr = XLogInsert(RM_BITMAP_ID, XLOG_BITMAP_INSERT_WORDS);
