@@ -885,6 +885,7 @@ ExecInitMotion(Motion *node, EState *estate, int eflags)
 	Slice	   *sendSlice = NULL;
 	Slice	   *recvSlice = NULL;
 	SliceTable *sliceTable = estate->es_sliceTable;
+	PlanState  *outerPlan;
 
 #ifdef CDB_MOTION_DEBUG
 	int			i;
@@ -1017,7 +1018,12 @@ ExecInitMotion(Motion *node, EState *estate, int eflags)
 	 * initialize tuple type.  no need to initialize projection info because
 	 * this node doesn't do projections.
 	 */
-	ExecAssignResultTypeFromTL(&motionstate->ps);
+	outerPlan = outerPlanState(motionstate);
+	if (outerPlan && ExecGetResultType(outerPlan))
+		ExecAssignResultType(&motionstate->ps, ExecGetResultType(outerPlan));
+	else
+		ExecAssignResultTypeFromTL(&motionstate->ps);
+
 	motionstate->ps.ps_ProjInfo = NULL;
 	tupDesc = ExecGetResultType(&motionstate->ps);
 
