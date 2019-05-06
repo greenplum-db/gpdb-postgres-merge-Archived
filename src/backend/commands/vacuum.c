@@ -832,11 +832,13 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 		 * ao_vacuum_phase_config will be initialized from the vacuum dispatch
 		 * statement.
 		 */
+		oldcontext = MemoryContextSwitchTo(vac_context);
 		ao_vacuum_phase_config = palloc0(sizeof(AOVacuumPhaseConfig));
 		ao_vacuum_phase_config->appendonly_compaction_segno = NIL;
 		ao_vacuum_phase_config->appendonly_compaction_insert_segno = NIL;
 		ao_vacuum_phase_config->appendonly_relation_empty = false;
 		skip_twophase = false;
+		MemoryContextSwitchTo(oldcontext);
 
 		/*
 		 * 1. Prepare phase
@@ -3179,7 +3181,19 @@ dispatchVacuum(int options, RangeVar *relation, bool skip_twophase,
 	vacstmt->relation = relation;
 	vacstmt->va_cols = NIL;
 	vacstmt->skip_twophase = skip_twophase;
-	vacstmt->ao_vacuum_phase_config = ao_vacuum_phase_config;
+
+	vacstmt->ao_vacuum_phase_config = makeNode(AOVacuumPhaseConfig);
+	if (ao_vacuum_phase_config != NULL)
+	{
+		vacstmt->ao_vacuum_phase_config->appendonly_compaction_segno =
+			ao_vacuum_phase_config->appendonly_compaction_segno;
+		vacstmt->ao_vacuum_phase_config->appendonly_compaction_insert_segno =
+			ao_vacuum_phase_config->appendonly_compaction_insert_segno;
+		vacstmt->ao_vacuum_phase_config->appendonly_relation_empty =
+			ao_vacuum_phase_config->appendonly_relation_empty;
+		vacstmt->ao_vacuum_phase_config->appendonly_phase =
+			ao_vacuum_phase_config->appendonly_phase;
+	}
 
 	if (!skip_twophase)
 		flags |= DF_NEED_TWO_PHASE;

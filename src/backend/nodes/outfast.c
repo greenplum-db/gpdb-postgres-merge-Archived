@@ -2124,6 +2124,9 @@ _outNode(StringInfo str, void *obj)
 			case T_VacuumStmt:
 				_outVacuumStmt(str, obj);
 				break;
+			case T_AOVacuumPhaseConfig:
+				_outAOVacuumPhaseConfig(str, obj);
+				break;
 			case T_CdbProcess:
 				_outCdbProcess(str, obj);
 				break;

@@ -499,6 +499,7 @@ typedef enum NodeTag
 	T_AlterTypeStmt,
 	T_SetDistributionCmd,
 	T_ExpandStmtSpec,
+	T_AOVacuumPhaseConfig,
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)

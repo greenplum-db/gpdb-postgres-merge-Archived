@@ -4564,6 +4564,17 @@ _outCreatePLangStmt(StringInfo str, const CreatePLangStmt *node)
 }
 
 static void
+_outAOVacuumPhaseConfig(StringInfo str, const AOVacuumPhaseConfig *node)
+{
+	WRITE_NODE_TYPE("AOVACUUMPHASECONFIG");
+
+	WRITE_NODE_FIELD(appendonly_compaction_segno);
+	WRITE_NODE_FIELD(appendonly_compaction_insert_segno);
+	WRITE_BOOL_FIELD(appendonly_relation_empty);
+	WRITE_ENUM_FIELD(appendonly_phase,AOVacuumPhase);
+}
+
+static void
 _outVacuumStmt(StringInfo str, const VacuumStmt *node)
 {
 	WRITE_NODE_TYPE("VACUUMSTMT");
@@ -5649,6 +5660,9 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_VacuumStmt:
 				_outVacuumStmt(str, obj);
+				break;
+			case T_AOVacuumPhaseConfig:
+				_outAOVacuumPhaseConfig(str, obj);
 				break;
 			case T_CdbProcess:
 				_outCdbProcess(str, obj);

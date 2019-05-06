@@ -2896,6 +2896,19 @@ _readConstraintsSetStmt(void)
 	READ_DONE();
 }
 
+static AOVacuumPhaseConfig *
+_readAOVacuumPhaseConfig()
+{
+	READ_LOCALS(AOVacuumPhaseConfig);
+
+	READ_NODE_FIELD(appendonly_compaction_segno);
+	READ_NODE_FIELD(appendonly_compaction_insert_segno);
+	READ_BOOL_FIELD(appendonly_relation_empty);
+	READ_ENUM_FIELD(appendonly_phase,AOVacuumPhase);
+
+	READ_DONE();
+}
+
 /*
  * _readVacuumStmt
  */
@@ -3354,6 +3367,8 @@ parseNodeString(void)
 		return_value = _readTypeName();
 	else if (MATCHX("VACUUMSTMT"))
 		return_value = _readVacuumStmt();
+	else if (MATCHX("AOVACUUMPHASECONFIG"))
+		return_value = _readAOVacuumPhaseConfig();
 	else if (MATCHX("VARIABLESETSTMT"))
 		return_value = _readVariableSetStmt();
 	else if (MATCHX("VIEWSTMT"))

@@ -3280,6 +3280,8 @@ typedef enum AOVacuumPhase
  */
 typedef struct AOVacuumPhaseConfig
 {
+	NodeTag		type;
+
 	/*
 	 * AO segment file num to compact (integer).
 	 */

@@ -3827,6 +3827,9 @@ readNodeBinary(void)
 			case T_VacuumStmt:
 				return_value = _readVacuumStmt();
 				break;
+			case T_AOVacuumPhaseConfig:
+				return_value = _readAOVacuumPhaseConfig();
+				break;
 			case T_CdbProcess:
 				return_value = _readCdbProcess();
 				break;
