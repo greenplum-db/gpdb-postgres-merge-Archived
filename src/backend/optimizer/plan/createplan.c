@@ -440,6 +440,8 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 													 best_path,
 													 tlist,
 													 scan_clauses);
+			break;
+
 		case T_SampleScan:
 			plan = (Plan *) create_samplescan_plan(root,
 												   best_path,
