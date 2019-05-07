@@ -562,16 +562,17 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	/* Also ensure we avoid integer overflow in nbatch and nbuckets */
 	/* (this step is redundant given the current value of MaxAllocSize) */
 	max_pointers = Min(max_pointers, INT_MAX / 2);
+
 	dbuckets = ceil(ntuples / gp_hashjoin_tuples_per_bucket);
 	dbuckets = Min(dbuckets, max_pointers);
 	nbuckets = Max((int) dbuckets, 1024);
 	nbuckets = 1 << my_log2(nbuckets);
-	bucket_bytes = sizeof(HashJoinTuple) * nbuckets;
 
 	/*
 	 * If there's not enough space to store the projected number of tuples and
 	 * the required bucket headers, we will need multiple batches.
 	 */
+	bucket_bytes = sizeof(HashJoinTuple) * nbuckets;
 	if (inner_rel_bytes + bucket_bytes > hash_table_bytes)
 	{
 		/* We'll need multiple batches */
@@ -587,10 +588,10 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		 * overhead for the hash code, pointer to the next tuple, etc.
 		 */
 		bucket_size = (tupsize * gp_hashjoin_tuples_per_bucket + sizeof(HashJoinTuple));
-		lbuckets = 1 << my_log2(hash_table_bytes / gp_hashjoin_tuples_per_bucket);
+		lbuckets = 1 << my_log2(hash_table_bytes / bucket_size);
 		lbuckets = Min(lbuckets, max_pointers);
-
 		nbuckets = (int) lbuckets;
+		nbuckets = 1 << my_log2(nbuckets);
 		bucket_bytes = nbuckets * sizeof(HashJoinTuple);
 
 		/*
@@ -609,9 +610,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		minbatch = (int) dbatch;
 		nbatch = 2;
 		while (nbatch < minbatch)
-		{
 			nbatch <<= 1;
-		}
 
 		/*
 		 * Check to see if we're capping the number of workfiles we allow per
@@ -878,7 +877,7 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 			{
 				/* dump it out */
 				Assert(batchno > curbatch);
-				ExecHashJoinSaveTuple(NULL, HJTUPLE_MINTUPLE(tuple),
+				ExecHashJoinSaveTuple(NULL, HJTUPLE_MINTUPLE(hashTuple),
 									  hashTuple->hashvalue,
 									  hashtable,
 									  &hashtable->innerBatchFile[batchno],
