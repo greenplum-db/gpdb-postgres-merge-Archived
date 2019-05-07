@@ -190,6 +190,18 @@ SELECT xmlelement(name foo, xmlattributes('<>&"''' as funny, xml 'b<a/>r' as fun
  <foo funny="&lt;&gt;&amp;&quot;'" funnier="b&lt;a/&gt;r"/>
 (1 row)
 
+SELECT xmlparse(content '');
+ xmlparse 
+----------
+ 
+(1 row)
+
+SELECT xmlparse(content '  ');
+ xmlparse 
+----------
+   
+(1 row)
+
 SELECT xmlparse(content 'abc');
  xmlparse 
 ----------
