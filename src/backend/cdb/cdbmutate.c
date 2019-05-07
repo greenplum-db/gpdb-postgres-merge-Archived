@@ -1341,6 +1341,22 @@ copy_junk_attributes(List *src, List **dest, AttrNumber startAttrIdx)
 			                                 ((TargetEntry *) lfirst(lct))->resname,
 			                                 true);
 		}
+		else
+		{
+			/*
+			 * GPDB_95_MERGE_FIXME: We added a check for expr type Const to
+			 * enable `UPDATE table SET (col1,col2,...) = (SELECT ...),
+			 * ...`. However, if the expr type is not Var or Const,
+			 * newTargetEntry could be used uninitialized or could be using
+			 * the same from previous loop iteration. Added an elog(ERROR)
+			 * here to fix compilation warning but is this the correct way of
+			 * handling this and should this message be changed?
+			 *
+			 * 9.5 Merge commit reference:
+			 * https://github.com/greenplum-db/gpdb-postgres-merge/commit/7b5b8509acddcfac.
+			 */
+			elog(ERROR, "invalid TargetEntry expr being copied");
+		}
 
 		*dest = lappend(*dest, newTargetEntry);
 		++startAttrIdx;
