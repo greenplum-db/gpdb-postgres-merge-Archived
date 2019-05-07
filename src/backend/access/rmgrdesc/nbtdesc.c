@@ -30,12 +30,6 @@ out_insert(StringInfo buf, uint8 info, XLogReaderState *record)
 	bool		fullpage;
 	Size		datalen;
 
-	if (info == XLOG_BTREE_INSERT_META)
-	{
-		ptr = XLogRecGetBlockData(record, 2, NULL);
-		md = (xl_btree_metadata *)ptr;
-	}
-
 	fullpage = XLogRecHasBlockImage(record, 0);
 	XLogRecGetBlockTag(record, 0, NULL, NULL, &blkno);
 	XLogRecGetBlockData(record, 0, &datalen);
@@ -53,11 +47,15 @@ out_insert(StringInfo buf, uint8 info, XLogReaderState *record)
 	}
 
 	if (info == XLOG_BTREE_INSERT_META)
+	{
+		ptr = XLogRecGetBlockData(record, 2, NULL);
+		md = (xl_btree_metadata *)ptr;
 		appendStringInfo(buf, "; restore metadata page 0 (root page value %u, level %d, fastroot page value %u, fastlevel %d)",
 						 md->root, 
 						 md->level,
 						 md->fastroot, 
 						 md->fastlevel);
+	}
 }
 
 /*
