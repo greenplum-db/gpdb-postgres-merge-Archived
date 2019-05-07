@@ -1859,7 +1859,7 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 		{
 			/* Regular table, so use the regular row acquisition function */
 			acquirefunc = acquire_sample_rows;
-			relpages = RelationGetNumberOfBlocks(childrel);
+			relpages = acquire_number_of_blocks(childrel);
 		}
 		else if (childrel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 		{
@@ -1896,8 +1896,8 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 		/* OK, we'll process this child */
 		rels[nrels] = childrel;
 		acquirefuncs[nrels] = acquirefunc;
-		relblocks[nrels] = acquire_number_of_blocks(childrel);
-		totalblocks += relblocks[nrels];
+		relblocks[nrels] = (double) relpages;
+		totalblocks += (double) relpages;
 		nrels++;
 	}
 
