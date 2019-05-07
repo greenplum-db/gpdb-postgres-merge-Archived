@@ -13,10 +13,6 @@ copy gstest2 from stdin;
 create temp table gstest3 (a integer, b integer, c integer, d integer);
 copy gstest3 from stdin;
 alter table gstest3 add primary key (a);
-<<<<<<< HEAD
-=======
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "gstest3_pkey" for table "gstest3"
->>>>>>> dc67f74... Remove old GROUPING SETS implementation.
 create temp table gstest_empty (a integer, b integer, v integer);
 create function gstest_data(v integer, out a integer, out b integer)
   returns setof record
@@ -261,16 +257,6 @@ LINE 3:        lateral (select a, b, sum(v.x) from gstest_data(v.x) ...
 -- min max optimisation should still work with GROUP BY ()
 explain (costs off)
   select min(unique1) from tenk1 GROUP BY ();
-<<<<<<< HEAD
-                         QUERY PLAN                         
-------------------------------------------------------------
- Result
-   InitPlan 1 (returns $0)
-     ->  Limit
-           ->  Index Only Scan using tenk1_unique1 on tenk1
-                 Index Cond: (unique1 IS NOT NULL)
-(5 rows)
-=======
                             QUERY PLAN                            
 ------------------------------------------------------------------
  Result
@@ -280,9 +266,8 @@ explain (costs off)
                  Merge Key: tenk1.unique1
                  ->  Index Only Scan using tenk1_unique1 on tenk1
                        Index Cond: (unique1 IS NOT NULL)
- Optimizer: legacy query optimizer
+ Optimizer: Postgres query optimizer
 (8 rows)
->>>>>>> dc67f74... Remove old GROUPING SETS implementation.
 
 -- Views with GROUPING SET queries
 CREATE VIEW gstest_view AS select a, b, grouping(a,b), sum(c), count(*), max(c)
@@ -605,8 +590,6 @@ select array(select row(v.a,s1.*) from (select two,four, count(*) from onek grou
  {"(2,0,0,250)","(2,0,2,250)","(2,0,,500)","(2,1,1,250)","(2,1,3,250)","(2,1,,500)","(2,,0,250)","(2,,1,250)","(2,,2,250)","(2,,3,250)","(2,,,1000)"}
 (2 rows)
 
-<<<<<<< HEAD
-=======
 -- Grouping on text columns
 select sum(ten) from onek group by two, rollup(four::text) order by 1;
  sum  
@@ -630,5 +613,4 @@ select sum(ten) from onek group by rollup(four::text), two order by 1;
  2500
 (6 rows)
 
->>>>>>> dc67f74... Remove old GROUPING SETS implementation.
 -- end
