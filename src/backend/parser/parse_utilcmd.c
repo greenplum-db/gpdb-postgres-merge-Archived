@@ -2550,7 +2550,7 @@ transformIndexConstraints(CreateStmtContext *cxt, bool mayDefer)
 		if(constraint->contype == CONSTR_EXCLUSION)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("GPDB does not support exclusion constraints.")));
+						errmsg("GPDB does not support exclusion constraints")));
 
 		Assert(constraint->contype == CONSTR_PRIMARY ||
 			   constraint->contype == CONSTR_UNIQUE);
