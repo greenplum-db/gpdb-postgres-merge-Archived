@@ -243,7 +243,16 @@ optimize_query(Query *parse, ParamListInfo boundParams)
 	 */
 	extract_query_dependencies((Node *) pqueryCopy,
 							   &relationOids,
-							   &invalItems);
+							   &invalItems,
+							   /*
+								* GPDB_95_MERGE_FIXME: Is this the correct
+								* hasRowSecurity pointer to pass in here?
+								* There are four structs that have it
+								* (PlannerGlobal, Query, PlannedStmt, and
+								* CachedPlanSource) and there are three of
+								* those in-use in this function.
+								*/
+							   &pqueryCopy->hasRowSecurity);
 	glob->relationOids = list_concat(glob->relationOids, relationOids);
 	glob->invalItems = list_concat(glob->invalItems, invalItems);
 
