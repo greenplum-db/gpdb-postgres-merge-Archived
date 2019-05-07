@@ -16,7 +16,9 @@ DROP ROLE IF EXISTS rls_regress_group2;
 
 DROP SCHEMA IF EXISTS rls_regress_schema CASCADE;
 
-RESET client_min_messages;
+-- RESET client_min_messages; RESET doesn't work well in GPDB, it doesn't reset
+-- GUCs in QEs.
+SET client_min_messages TO 'notice';
 
 -- initial setup
 CREATE USER rls_regress_user0;
@@ -337,7 +339,9 @@ SET SESSION AUTHORIZATION rls_regress_user1;
 SET client_min_messages TO 'warning';
 
 DROP VIEW rec1v, rec2v CASCADE;
-RESET client_min_messages;
+-- RESET client_min_messages; RESET doesn't work well in GPDB, it doesn't reset
+-- GUCs in QEs.
+SET client_min_messages TO 'notice';
 
 CREATE VIEW rec1v WITH (security_barrier) AS SELECT * FROM rec1;
 CREATE VIEW rec2v WITH (security_barrier) AS SELECT * FROM rec2;
@@ -823,7 +827,9 @@ RESET SESSION AUTHORIZATION;
 SET client_min_messages TO 'warning';
 
 DROP TABLE t1 CASCADE;
-RESET client_min_messages;
+-- RESET client_min_messages; RESET doesn't work well in GPDB, it doesn't reset
+-- GUCs in QEs.
+SET client_min_messages TO 'notice';
 
 CREATE TABLE t1 (a integer);
 
