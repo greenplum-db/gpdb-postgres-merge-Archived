@@ -108,6 +108,15 @@ InitScanRelation(SampleScanState *node, EState *estate, int eflags,
 {
 	Relation	currentRelation;
 
+	/* GPDB_95_MERGE_FIXME: Add support for AO tables */
+	Oid relid = getrelid(((SampleScan *) node->ss.ps.plan)->scanrelid,
+			estate->es_range_table);
+	if (!RelationIsHeap(RelationIdGetRelation(relid)))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("invalid relation type"),
+				 errhint("Sampling is only supported in heap tables.")));
+
 	/*
 	 * get the relation object id from the relid'th entry in the range table,
 	 * open that relation and acquire appropriate lock on it.
