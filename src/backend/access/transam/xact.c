@@ -6669,7 +6669,6 @@ xact_redo_distributed_commit(uint8 info, xl_xact_commit *xlrec, TransactionId xi
 	DistributedTransactionTimeStamp	distribTimeStamp;
 	DistributedTransactionId 		distribXid;
 
-	TransactionId *sub_xids;
 	TransactionId max_xid;
 	int			i;
 	xl_xact_parsed_commit parsed;
@@ -6709,22 +6708,21 @@ xact_redo_distributed_commit(uint8 info, xl_xact_commit *xlrec, TransactionId xi
 		 */
 
 		/* Mark the transaction committed in pg_clog */
-		sub_xids = (TransactionId *) &parsed.xnodes[parsed.nrels];
 
 		/* Add the committed subtransactions to the DistributedLog, too. */
-		DistributedLog_SetCommittedTree(xid, parsed.nsubxacts, sub_xids,
+		DistributedLog_SetCommittedTree(xid, parsed.nsubxacts, parsed.subxacts,
 										distribTimeStamp,
 										gxact_log.gxid,
 										/* isRedo */ true);
 
-		TransactionIdCommitTree(xid, parsed.nsubxacts, sub_xids);
+		TransactionIdCommitTree(xid, parsed.nsubxacts, parsed.subxacts);
 
 		/* Make sure nextXid is beyond any XID mentioned in the record */
 		max_xid = xid;
 		for (i = 0; i < parsed.nsubxacts; i++)
 		{
-			if (TransactionIdPrecedes(max_xid, sub_xids[i]))
-				max_xid = sub_xids[i];
+			if (TransactionIdPrecedes(max_xid, parsed.subxacts[i]))
+				max_xid = parsed.subxacts[i];
 		}
 		if (TransactionIdFollowsOrEquals(max_xid,
 										 ShmemVariableCache->nextXid))
