@@ -431,8 +431,14 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 			break;
 
 		case T_SampleScan:
+			curMemoryAccountId = CREATE_EXECUTOR_MEMORY_ACCOUNT(isAlienPlanNode, node, SampleScan);
+
+			START_MEMORY_ACCOUNT(curMemoryAccountId);
+			{
 			result = (PlanState *) ExecInitSampleScan((SampleScan *) node,
 													  estate, eflags);
+			}
+			END_MEMORY_ACCOUNT();
 			break;
 
 		case T_IndexScan:

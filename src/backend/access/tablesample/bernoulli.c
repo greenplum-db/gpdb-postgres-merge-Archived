@@ -50,6 +50,16 @@ tsm_bernoulli_init(PG_FUNCTION_ARGS)
 	HeapScanDesc scan = tsdesc->heapScan;
 	BernoulliSamplerData *sampler;
 
+	/*
+	 * GPDB_95_MERGE_FIXME: Add support for AO tables, external tables
+	 * should not be supported
+	 */
+	if (!RelationIsHeap(scan->rs_rd))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("invalid relation type"),
+				 errhint("Sampling is only supported in heap tables.")));
+
 	if (percent < 0 || percent > 100)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),

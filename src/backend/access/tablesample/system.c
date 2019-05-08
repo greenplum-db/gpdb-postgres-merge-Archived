@@ -50,6 +50,16 @@ tsm_system_init(PG_FUNCTION_ARGS)
 	HeapScanDesc scan = tsdesc->heapScan;
 	SystemSamplerData *sampler;
 
+	/*
+	 * GPDB_95_MERGE_FIXME: Add support for AO tables, external tables
+	 * should not be supported
+	 */
+	if (!RelationIsHeap(scan->rs_rd))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("invalid relation type"),
+				 errhint("Sampling is only supported in heap tables.")));
+
 	if (percent < 0 || percent > 100)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -167,6 +177,7 @@ tsm_system_cost(PG_FUNCTION_ARGS)
 	if (IsA(pctnode, RelabelType))
 		pctnode = (Node *) ((RelabelType *) pctnode)->arg;
 
+	/* GPDB_95_MERGE_FIXME: is it needed to have a better estimage for explain? */
 	if (IsA(pctnode, Const))
 	{
 		samplesize = DatumGetFloat4(((Const *) pctnode)->constvalue);

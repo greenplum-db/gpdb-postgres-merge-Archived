@@ -325,6 +325,17 @@ plan_tree_mutator(Node *node,
 			/* Abstract: Should see only subclasses. */
 			elog(ERROR, "abstract node type not allowed: T_Scan");
 
+		case T_SampleScan:
+			{
+				SampleScan    *samplescan = (SampleScan *) node;
+				SampleScan    *newsamplescan;
+
+				FLATCOPY(newsamplescan, samplescan, SampleScan);
+				SCANMUTATE(newsamplescan, samplescan);
+				return (Node *) newsamplescan;
+			}
+			break;
+
 		case T_SeqScan:
 			{
 				SeqScan    *seqscan = (SeqScan *) node;
