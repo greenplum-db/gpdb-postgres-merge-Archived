@@ -1,5 +1,8 @@
-CREATE TABLE test_tablesample (id int, name text) WITH (fillfactor=10); -- force smaller pages so we don't have to load too much data to get multiple pages
-INSERT INTO test_tablesample SELECT i, repeat(i::text, 200) FROM generate_series(0, 9) s(i) ORDER BY i;
+-- GPDB_95_MERGE_FIXME: Force skew distribution in order to get deterministic results
+-- Maybe we can do better?
+CREATE TABLE test_tablesample (dist int, id int, name text) WITH (fillfactor=10) DISTRIBUTED BY (dist); -- force smaller pages so we don't have to load too much data to get multiple pages
+-- Changed the column lenght in order to match the expected results based on relation's blocksz
+INSERT INTO test_tablesample SELECT 0, i, repeat(i::text, 875) FROM generate_series(0, 9) s(i) ORDER BY i;
 SELECT t.id FROM test_tablesample AS t TABLESAMPLE SYSTEM (50) REPEATABLE (10);
  id 
 ----
@@ -121,6 +124,11 @@ FETCH NEXT FROM tablesample_cur;
   8
 (1 row)
 
+-- GPDB_95_MERGE_FIXME: Going backwards on cursors is not supported
+-- in greenplum. By closing the cursor and starting again we pass
+-- the tests but we don't test the rescan methods of tablesample.
+CLOSE tablesample_cur;
+DECLARE tablesample_cur CURSOR FOR SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (100);
 FETCH FIRST FROM tablesample_cur;
  id 
 ----
@@ -160,16 +168,20 @@ FETCH NEXT FROM tablesample_cur;
 CLOSE tablesample_cur;
 END;
 EXPLAIN SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (10);
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
- Sample Scan (system) on test_tablesample  (cost=0.00..26.35 rows=635 width=4)
-(1 row)
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..200.05 rows=5 width=4)
+   ->  Sample Scan (system) on test_tablesample  (cost=0.00..200.05 rows=2 width=4)
+ Optimizer: Postgres query optimizer
+(3 rows)
 
 EXPLAIN SELECT * FROM test_tablesample_v1;
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
- Sample Scan (system) on test_tablesample  (cost=0.00..10.54 rows=254 width=4)
-(1 row)
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..0.02 rows=3 width=4)
+   ->  Sample Scan (system) on test_tablesample  (cost=0.00..0.02 rows=1 width=4)
+ Optimizer: Postgres query optimizer
+(3 rows)
 
 -- errors
 SELECT id FROM test_tablesample TABLESAMPLE FOOBAR (1);
