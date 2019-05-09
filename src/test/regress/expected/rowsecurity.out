@@ -1221,18 +1221,22 @@ NOTICE:  f_leak => yyyyyy  (seg2 slice1 127.0.0.1:25434 pid=26980)
 -- updates with from clause
 EXPLAIN (COSTS OFF) UPDATE t2 SET b=t2.b FROM t3
 WHERE t2.a = 3 and t3.a = 2 AND f_leak(t2.b) AND f_leak(t3.b);
-                          QUERY PLAN                           
----------------------------------------------------------------
+                               QUERY PLAN                               
+------------------------------------------------------------------------
  Update on t2 t2_1
-   ->  Nested Loop
-         ->  Subquery Scan on t2
-               Filter: f_leak(t2.b)
-               ->  LockRows
+   ->  Explicit Redistribute Motion 3:3  (slice2; segments: 3)
+         ->  Nested Loop
+               ->  Subquery Scan on t2
+                     Filter: f_leak(t2.b)
                      ->  Seq Scan on t2 t2_2
                            Filter: ((a = 3) AND ((a % 2) = 1))
-         ->  Seq Scan on t3
-               Filter: (f_leak(b) AND (a = 2))
-(9 rows)
+               ->  Materialize
+                     ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                           Hash Key: 3
+                           ->  Seq Scan on t3
+                                 Filter: (f_leak(b) AND (a = 2))
+ Optimizer: Postgres query optimizer
+(13 rows)
 
 UPDATE t2 SET b=t2.b FROM t3
 WHERE t2.a = 3 and t3.a = 2 AND f_leak(t2.b) AND f_leak(t3.b);
@@ -1242,68 +1246,81 @@ NOTICE:  f_leak => zzz
 NOTICE:  f_leak => yyyyyy
 EXPLAIN (COSTS OFF) UPDATE t1 SET b=t1.b FROM t2
 WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
-                          QUERY PLAN                           
----------------------------------------------------------------
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
  Update on t1 t1_3
    Update on t1 t1_3
    Update on t2 t1
    Update on t3 t1
-   ->  Nested Loop
-         ->  Subquery Scan on t1
-               Filter: f_leak(t1.b)
-               ->  LockRows
+   ->  Explicit Redistribute Motion 3:3  (slice2; segments: 3)
+         ->  Nested Loop
+               ->  Subquery Scan on t1
+                     Filter: f_leak(t1.b)
                      ->  Seq Scan on t1 t1_4
                            Filter: ((a = 3) AND ((a % 2) = 0))
-         ->  Subquery Scan on t2
-               Filter: f_leak(t2.b)
-               ->  Seq Scan on t2 t2_3
-                     Filter: ((a = 3) AND ((a % 2) = 1))
-   ->  Nested Loop
-         ->  Subquery Scan on t1_1
-               Filter: f_leak(t1_1.b)
-               ->  LockRows
+               ->  Materialize
+                     ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                           Hash Key: 3
+                           ->  Subquery Scan on t2
+                                 Filter: f_leak(t2.b)
+                                 ->  Seq Scan on t2 t2_3
+                                       Filter: ((a = 3) AND ((a % 2) = 1))
+   ->  Explicit Redistribute Motion 3:3  (slice4; segments: 3)
+         ->  Nested Loop
+               ->  Subquery Scan on t1_1
+                     Filter: f_leak(t1_1.b)
                      ->  Seq Scan on t2 t2_4
                            Filter: ((a = 3) AND ((a % 2) = 0))
-         ->  Subquery Scan on t2_1
-               Filter: f_leak(t2_1.b)
-               ->  Seq Scan on t2 t2_5
-                     Filter: ((a = 3) AND ((a % 2) = 1))
-   ->  Nested Loop
-         ->  Subquery Scan on t1_2
-               Filter: f_leak(t1_2.b)
-               ->  LockRows
-                     ->  Seq Scan on t3
-                           Filter: ((a = 3) AND ((a % 2) = 0))
-         ->  Subquery Scan on t2_2
-               Filter: f_leak(t2_2.b)
-               ->  Seq Scan on t2 t2_6
-                     Filter: ((a = 3) AND ((a % 2) = 1))
-(34 rows)
+               ->  Materialize
+                     ->  Redistribute Motion 3:3  (slice3; segments: 3)
+                           Hash Key: 3
+                           ->  Subquery Scan on t2_1
+                                 Filter: f_leak(t2_1.b)
+                                 ->  Seq Scan on t2 t2_5
+                                       Filter: ((a = 3) AND ((a % 2) = 1))
+   ->  Explicit Redistribute Motion 3:3  (slice6; segments: 3)
+         ->  Nested Loop
+               ->  Broadcast Motion 3:3  (slice5; segments: 3)
+                     ->  Subquery Scan on t1_2
+                           Filter: f_leak(t1_2.b)
+                           ->  Seq Scan on t3
+                                 Filter: ((a = 3) AND ((a % 2) = 0))
+               ->  Materialize
+                     ->  Subquery Scan on t2_2
+                           Filter: f_leak(t2_2.b)
+                           ->  Seq Scan on t2 t2_6
+                                 Filter: ((a = 3) AND ((a % 2) = 1))
+ Optimizer: Postgres query optimizer
+(43 rows)
 
 UPDATE t1 SET b=t1.b FROM t2
 WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
 EXPLAIN (COSTS OFF) UPDATE t2 SET b=t2.b FROM t1
 WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
-                             QUERY PLAN                              
----------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Update on t2 t2_1
-   ->  Nested Loop
-         ->  Subquery Scan on t2
-               Filter: f_leak(t2.b)
-               ->  LockRows
+   ->  Explicit Redistribute Motion 3:3  (slice2; segments: 3)
+         ->  Nested Loop
+               ->  Subquery Scan on t2
+                     Filter: f_leak(t2.b)
                      ->  Seq Scan on t2 t2_2
                            Filter: ((a = 3) AND ((a % 2) = 1))
-         ->  Subquery Scan on t1
-               Filter: f_leak(t1.b)
-               ->  Result
-                     ->  Append
-                           ->  Seq Scan on t1 t1_1
-                                 Filter: ((a = 3) AND ((a % 2) = 0))
-                           ->  Seq Scan on t2 t2_3
-                                 Filter: ((a = 3) AND ((a % 2) = 0))
-                           ->  Seq Scan on t3
-                                 Filter: ((a = 3) AND ((a % 2) = 0))
-(17 rows)
+               ->  Materialize
+                     ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                           Hash Key: 3
+                           ->  Subquery Scan on t1
+                                 Filter: f_leak(t1.b)
+                                 ->  Result
+                                       ->  Append
+                                             ->  Seq Scan on t1 t1_1
+                                                   Filter: ((a = 3) AND ((a % 2) = 0))
+                                             ->  Seq Scan on t2 t2_3
+                                                   Filter: ((a = 3) AND ((a % 2) = 0))
+                                             ->  Seq Scan on t3
+                                                   Filter: ((a = 3) AND ((a % 2) = 0))
+ Optimizer: Postgres query optimizer
+(21 rows)
 
 UPDATE t2 SET b=t2.b FROM t1
 WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
@@ -1343,61 +1360,71 @@ NOTICE:  f_leak => cde
 EXPLAIN (COSTS OFF) UPDATE t1 t1_1 SET b = t1_2.b FROM t1 t1_2
 WHERE t1_1.a = 4 AND t1_2.a = t1_1.a AND t1_2.b = t1_1.b
 AND f_leak(t1_1.b) AND f_leak(t1_2.b) RETURNING *, t1_1, t1_2;
-                          QUERY PLAN                           
----------------------------------------------------------------
- Update on t1 t1_1_3
-   Update on t1 t1_1_3
-   Update on t2 t1_1
-   Update on t3 t1_1
-   ->  Nested Loop
-         Join Filter: (t1_1.b = t1_2.b)
-         ->  Subquery Scan on t1_1
-               Filter: f_leak(t1_1.b)
-               ->  LockRows
-                     ->  Seq Scan on t1 t1_1_4
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-         ->  Subquery Scan on t1_2
-               Filter: f_leak(t1_2.b)
-               ->  Append
-                     ->  Seq Scan on t1 t1_2_3
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-                     ->  Seq Scan on t2 t1_2_4
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-                     ->  Seq Scan on t3 t1_2_5
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-   ->  Nested Loop
-         Join Filter: (t1_1_1.b = t1_2_1.b)
-         ->  Subquery Scan on t1_1_1
-               Filter: f_leak(t1_1_1.b)
-               ->  LockRows
-                     ->  Seq Scan on t2 t1_1_5
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-         ->  Subquery Scan on t1_2_1
-               Filter: f_leak(t1_2_1.b)
-               ->  Append
-                     ->  Seq Scan on t1 t1_2_6
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-                     ->  Seq Scan on t2 t1_2_7
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-                     ->  Seq Scan on t3 t1_2_8
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-   ->  Nested Loop
-         Join Filter: (t1_1_2.b = t1_2_2.b)
-         ->  Subquery Scan on t1_1_2
-               Filter: f_leak(t1_1_2.b)
-               ->  LockRows
-                     ->  Seq Scan on t3 t1_1_6
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-         ->  Subquery Scan on t1_2_2
-               Filter: f_leak(t1_2_2.b)
-               ->  Append
-                     ->  Seq Scan on t1 t1_2_9
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-                     ->  Seq Scan on t2 t1_2_10
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-                     ->  Seq Scan on t3 t1_2_11
-                           Filter: ((a = 4) AND ((a % 2) = 0))
-(52 rows)
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice7; segments: 3)
+   ->  Update on t1 t1_1_3
+         Update on t1 t1_1_3
+         Update on t2 t1_1
+         Update on t3 t1_1
+         ->  Explicit Redistribute Motion 3:3  (slice2; segments: 3)
+               ->  Hash Join
+                     Hash Cond: (t1_2.b = t1_1.b)
+                     ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                           Hash Key: 4
+                           ->  Subquery Scan on t1_2
+                                 Filter: f_leak(t1_2.b)
+                                 ->  Append
+                                       ->  Seq Scan on t1 t1_2_3
+                                             Filter: ((a = 4) AND ((a % 2) = 0))
+                                       ->  Seq Scan on t2 t1_2_4
+                                             Filter: ((a = 4) AND ((a % 2) = 0))
+                                       ->  Seq Scan on t3 t1_2_5
+                                             Filter: ((a = 4) AND ((a % 2) = 0))
+                     ->  Hash
+                           ->  Subquery Scan on t1_1
+                                 Filter: f_leak(t1_1.b)
+                                 ->  Seq Scan on t1 t1_1_4
+                                       Filter: ((a = 4) AND ((a % 2) = 0))
+         ->  Explicit Redistribute Motion 3:3  (slice4; segments: 3)
+               ->  Hash Join
+                     Hash Cond: (t1_2_1.b = t1_1_1.b)
+                     ->  Redistribute Motion 3:3  (slice3; segments: 3)
+                           Hash Key: 4
+                           ->  Subquery Scan on t1_2_1
+                                 Filter: f_leak(t1_2_1.b)
+                                 ->  Append
+                                       ->  Seq Scan on t1 t1_2_6
+                                             Filter: ((a = 4) AND ((a % 2) = 0))
+                                       ->  Seq Scan on t2 t1_2_7
+                                             Filter: ((a = 4) AND ((a % 2) = 0))
+                                       ->  Seq Scan on t3 t1_2_8
+                                             Filter: ((a = 4) AND ((a % 2) = 0))
+                     ->  Hash
+                           ->  Subquery Scan on t1_1_1
+                                 Filter: f_leak(t1_1_1.b)
+                                 ->  Seq Scan on t2 t1_1_5
+                                       Filter: ((a = 4) AND ((a % 2) = 0))
+         ->  Explicit Redistribute Motion 3:3  (slice6; segments: 3)
+               ->  Hash Join
+                     Hash Cond: (t1_2_2.b = t1_1_2.b)
+                     ->  Subquery Scan on t1_2_2
+                           Filter: f_leak(t1_2_2.b)
+                           ->  Append
+                                 ->  Seq Scan on t1 t1_2_9
+                                       Filter: ((a = 4) AND ((a % 2) = 0))
+                                 ->  Seq Scan on t2 t1_2_10
+                                       Filter: ((a = 4) AND ((a % 2) = 0))
+                                 ->  Seq Scan on t3 t1_2_11
+                                       Filter: ((a = 4) AND ((a % 2) = 0))
+                     ->  Hash
+                           ->  Broadcast Motion 3:3  (slice5; segments: 3)
+                                 ->  Subquery Scan on t1_1_2
+                                       Filter: f_leak(t1_1_2.b)
+                                       ->  Seq Scan on t3 t1_1_6
+                                             Filter: ((a = 4) AND ((a % 2) = 0))
+ Optimizer: Postgres query optimizer
+(62 rows)
 
 UPDATE t1 t1_1 SET b = t1_2.b FROM t1 t1_2
 WHERE t1_1.a = 4 AND t1_2.a = t1_1.a AND t1_2.b = t1_1.b
@@ -1435,14 +1462,14 @@ SELECT * FROM t1 ORDER BY a,b;
 SET SESSION AUTHORIZATION rls_regress_user1;
 SET row_security TO ON;
 EXPLAIN (COSTS OFF) DELETE FROM only t1 WHERE f_leak(b);
-                QUERY PLAN                 
--------------------------------------------
+             QUERY PLAN              
+-------------------------------------
  Delete on t1 t1_1
    ->  Subquery Scan on t1
          Filter: f_leak(t1.b)
-         ->  LockRows
-               ->  Seq Scan on t1 t1_2
-                     Filter: ((a % 2) = 0)
+         ->  Seq Scan on t1 t1_2
+               Filter: ((a % 2) = 0)
+ Optimizer: Postgres query optimizer
 (6 rows)
 
 EXPLAIN (COSTS OFF) DELETE FROM t1 WHERE f_leak(b);
