@@ -111,11 +111,13 @@ InitScanRelation(SampleScanState *node, EState *estate, int eflags,
 	/* GPDB_95_MERGE_FIXME: Add support for AO tables */
 	Oid relid = getrelid(((SampleScan *) node->ss.ps.plan)->scanrelid,
 			estate->es_range_table);
-	if (!RelationIsHeap(RelationIdGetRelation(relid)))
+	Relation performStorageTestRelation = RelationIdGetRelation(relid);
+	if (!RelationIsHeap(performStorageTestRelation))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("invalid relation type"),
 				 errhint("Sampling is only supported in heap tables.")));
+	RelationClose(performStorageTestRelation);
 
 	/*
 	 * get the relation object id from the relid'th entry in the range table,
