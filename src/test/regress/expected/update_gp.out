@@ -184,8 +184,8 @@ EXPLAIN (COSTS OFF) DELETE FROM keo5 WHERE x IN (SELECT x FROM keo5 WHERE EXISTS
  Delete on keo5
    InitPlan 1 (returns $0)  (slice2)
      ->  Gather Motion 3:1  (slice1; segments: 3)
-                 Filter: (x < 2)
            ->  Seq Scan on keo5 keo5_2
+                 Filter: (x < 2)
    ->  Result
          One-Time Filter: $0
          ->  Hash Join
