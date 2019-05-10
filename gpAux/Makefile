@@ -747,7 +747,7 @@ set_scripts_version :
 #---------------------------------------------------------------------
 
 mkpgbench:
-	@cd $(BUILDDIR)/contrib/pgbench && $(MAKE) install
+	@cd $(BUILDDIR)/src/bin/pgbench && $(MAKE) install
 
 mkpgbouncer:
 ifeq "$(shell uname -s)" "Darwin"
