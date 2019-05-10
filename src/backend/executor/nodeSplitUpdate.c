@@ -99,7 +99,6 @@ SplitTupleTableSlot(TupleTableSlot *slot,
 		}
 		else
 		{
-			Assert(IsA(tle->expr, Var) || IsA(tle->expr, Const));
 			if (IsA(tle->expr, Var))
 			{
 				delete_values[resno] = values[((Var *)tle->expr)->varattno-1];

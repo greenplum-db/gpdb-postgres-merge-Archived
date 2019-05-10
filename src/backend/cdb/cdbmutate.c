@@ -1329,37 +1329,33 @@ copy_junk_attributes(List *src, List **dest, AttrNumber startAttrIdx)
 			var->varno = OUTER_VAR;
 			var->varattno = ((TargetEntry *) lfirst(lct))->resno;
 
-			newTargetEntry = makeTargetEntry((Expr *) var, startAttrIdx + 1, ((TargetEntry *) lfirst(lct))->resname,
-			                                 true);
-		}
-		else if (IsA(((TargetEntry *) lfirst(lct))->expr, Const))
-		{
-			Const *con;
-			con            = copyObject(((TargetEntry *) lfirst(lct))->expr);
-			newTargetEntry = makeTargetEntry((Expr *) con,
-			                                 startAttrIdx + 1,
-			                                 ((TargetEntry *) lfirst(lct))->resname,
-			                                 true);
+			newTargetEntry = makeTargetEntry((Expr *) var,
+											 startAttrIdx + 1,
+											 ((TargetEntry *) lfirst(lct))->resname,
+											 true);
+			*dest = lappend(*dest, newTargetEntry);
+			++startAttrIdx;
 		}
 		else
 		{
+
 			/*
-			 * GPDB_95_MERGE_FIXME: We added a check for expr type Const to
-			 * enable `UPDATE table SET (col1,col2,...) = (SELECT ...),
-			 * ...`. However, if the expr type is not Var or Const,
-			 * newTargetEntry could be used uninitialized or could be using
-			 * the same from previous loop iteration. Added an elog(ERROR)
-			 * here to fix compilation warning but is this the correct way of
-			 * handling this and should this message be changed?
-			 *
-			 * 9.5 Merge commit reference:
-			 * https://github.com/greenplum-db/gpdb-postgres-merge/commit/7b5b8509acddcfac.
+			 * GPDB_95_MERGE_FIXME: The new feature
+			 * 'UPDATE table SET (col1,col2,...) = (SELECT ...)' add some
+			 * new junk attributes such as record or subplan. These junk
+			 * attributes are useless now on the split update, but I am not
+			 * sure whether we should keep them or not.
 			 */
-			elog(ERROR, "invalid TargetEntry expr being copied");
+			Expr *ex;
+			ex            = copyObject(((TargetEntry *) lfirst(lct))->expr);
+			newTargetEntry = makeTargetEntry((Expr *) ex,
+											 startAttrIdx + 1,
+											 ((TargetEntry *) lfirst(lct))->resname,
+											 true);
+			*dest = lappend(*dest, newTargetEntry);
+			++startAttrIdx;
 		}
 
-		*dest = lappend(*dest, newTargetEntry);
-		++startAttrIdx;
 	}
 }
 
