@@ -62,6 +62,75 @@
 #endif
 #include <openssl/x509v3.h>
 
+/*
+ * Macros to handle disabling and then restoring the state of SIGPIPE handling.
+ * On Windows, these are all no-ops since there's no SIGPIPEs.
+ */
+
+#ifndef WIN32
+
+#define SIGPIPE_MASKED(conn)	((conn)->sigpipe_so || (conn)->sigpipe_flag)
+
+#ifdef ENABLE_THREAD_SAFETY
+
+struct sigpipe_info
+{
+	sigset_t	oldsigmask;
+	bool		sigpipe_pending;
+	bool		got_epipe;
+};
+
+#define DECLARE_SIGPIPE_INFO(spinfo) struct sigpipe_info spinfo
+
+#define DISABLE_SIGPIPE(conn, spinfo, failaction) \
+	do { \
+		(spinfo).got_epipe = false; \
+		if (!SIGPIPE_MASKED(conn)) \
+		{ \
+			if (pq_block_sigpipe(&(spinfo).oldsigmask, \
+								 &(spinfo).sigpipe_pending) < 0) \
+				failaction; \
+		} \
+	} while (0)
+
+#define REMEMBER_EPIPE(spinfo, cond) \
+	do { \
+		if (cond) \
+			(spinfo).got_epipe = true; \
+	} while (0)
+
+#define RESTORE_SIGPIPE(conn, spinfo) \
+	do { \
+		if (!SIGPIPE_MASKED(conn)) \
+			pq_reset_sigpipe(&(spinfo).oldsigmask, (spinfo).sigpipe_pending, \
+							 (spinfo).got_epipe); \
+	} while (0)
+#else							/* !ENABLE_THREAD_SAFETY */
+
+#define DECLARE_SIGPIPE_INFO(spinfo) pqsigfunc spinfo = NULL
+
+#define DISABLE_SIGPIPE(conn, spinfo, failaction) \
+	do { \
+		if (!SIGPIPE_MASKED(conn)) \
+			spinfo = pqsignal(SIGPIPE, SIG_IGN); \
+	} while (0)
+
+#define REMEMBER_EPIPE(spinfo, cond)
+
+#define RESTORE_SIGPIPE(conn, spinfo) \
+	do { \
+		if (!SIGPIPE_MASKED(conn)) \
+			pqsignal(SIGPIPE, spinfo); \
+	} while (0)
+#endif   /* ENABLE_THREAD_SAFETY */
+#else							/* WIN32 */
+
+#define DECLARE_SIGPIPE_INFO(spinfo)
+#define DISABLE_SIGPIPE(conn, spinfo, failaction)
+#define REMEMBER_EPIPE(spinfo, cond)
+#define RESTORE_SIGPIPE(conn, spinfo)
+#endif   /* WIN32 */
+
 static bool verify_peer_name_matches_certificate(PGconn *);
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
 static int verify_peer_name_matches_certificate_name(PGconn *conn,
@@ -127,7 +196,7 @@ pgtls_init_library(bool do_ssl, int do_crypto)
 PostgresPollingStatusType
 pgtls_open_client(PGconn *conn)
 {
-	SSL_CTX    *SSL_context;
+	SSL_CTX    *SSL_context = NULL;
 
 	/* First time through? */
 	if (conn->ssl == NULL)
@@ -205,6 +274,8 @@ pgtls_read(PGconn *conn, void *ptr, size_t len)
 	ssize_t		n;
 	int			err;
 	unsigned long ecode;
+	int			result_errno = 0;
+	char		sebuf[256];
 
 	DECLARE_SIGPIPE_INFO(spinfo);
 
