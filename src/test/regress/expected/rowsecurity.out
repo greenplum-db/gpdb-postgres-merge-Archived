@@ -105,14 +105,12 @@ NOTICE:  f_leak => great manga
 
 SELECT * FROM document TABLESAMPLE BERNOULLI (50) REPEATABLE(1) WHERE f_leak(dtitle) ORDER BY did;
 NOTICE:  f_leak => my first novel
-NOTICE:  f_leak => my first manga
 NOTICE:  f_leak => great science fiction
  did | cid | dlevel |      dauthor      |        dtitle         
 -----+-----+--------+-------------------+-----------------------
    1 |  11 |      1 | rls_regress_user1 | my first novel
-   4 |  44 |      1 | rls_regress_user1 | my first manga
    6 |  22 |      1 | rls_regress_user2 | great science fiction
-(3 rows)
+(2 rows)
 
 -- viewpoint from rls_regress_user2
 SET SESSION AUTHORIZATION rls_regress_user2;
@@ -160,18 +158,20 @@ NOTICE:  f_leak => great manga
 
 SELECT * FROM document TABLESAMPLE BERNOULLI (50) REPEATABLE(1) WHERE f_leak(dtitle) ORDER BY did;
 NOTICE:  f_leak => my first novel
+NOTICE:  f_leak => my science fiction
 NOTICE:  f_leak => my second novel
-NOTICE:  f_leak => my first manga
 NOTICE:  f_leak => great science fiction
 NOTICE:  f_leak => great technology book
+NOTICE:  f_leak => my second manga
  did | cid | dlevel |      dauthor      |        dtitle         
 -----+-----+--------+-------------------+-----------------------
    1 |  11 |      1 | rls_regress_user1 | my first novel
    2 |  11 |      2 | rls_regress_user1 | my second novel
-   4 |  44 |      1 | rls_regress_user1 | my first manga
+   3 |  22 |      2 | rls_regress_user1 | my science fiction
+   5 |  44 |      2 | rls_regress_user1 | my second manga
    6 |  22 |      1 | rls_regress_user2 | great science fiction
    7 |  33 |      2 | rls_regress_user2 | great technology book
-(5 rows)
+(6 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
                                 QUERY PLAN                                
@@ -320,9 +320,12 @@ SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
    3 |  22 |      2 | rls_regress_user1 | my science fiction |     | 
 (6 rows)
 
+-- GPDB: referential integrity checks are not enforced
+-- start_ignore
 DELETE FROM category WHERE cid = 33;    -- fails with FK violation
 ERROR:  update or delete on table "category" violates foreign key constraint "document_cid_fkey" on table "document"
 DETAIL:  Key (cid)=(33) is still referenced from table "document".
+-- end_ignore
 -- can insert FK referencing invisible PK
 SET SESSION AUTHORIZATION rls_regress_user2;
 SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
@@ -346,8 +349,11 @@ SELECT * FROM document WHERE did = 8; -- and confirm we can't see it
 -- RLS policies are checked before constraints
 INSERT INTO document VALUES (8, 44, 1, 'rls_regress_user2', 'my third manga'); -- Should fail with RLS check violation, not duplicate key violation
 ERROR:  new row violates row level security policy for "document"
+-- GPDB: UPDATE on distributed key column not allowed on relation with update triggers
+-- start_ignore
 UPDATE document SET did = 8, dauthor = 'rls_regress_user2' WHERE did = 5; -- Should fail with RLS check violation, not duplicate key violation
 ERROR:  new row violates row level security policy for "document"
+-- end_ignore
 -- database superuser does bypass RLS policy when enabled
 RESET SESSION AUTHORIZATION;
 SET row_security TO ON;
@@ -641,19 +647,19 @@ SELECT * FROM t1 FOR SHARE;
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1 FOR SHARE;
-                      QUERY PLAN                       
--------------------------------------------------------
- LockRows
+                   QUERY PLAN                    
+-------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    ->  Subquery Scan on t1
-         ->  LockRows
-               ->  Result
-                     ->  Append
-                           ->  Seq Scan on t1 t1_1
-                                 Filter: ((a % 2) = 0)
-                           ->  Seq Scan on t2
-                                 Filter: ((a % 2) = 0)
-                           ->  Seq Scan on t3
-                                 Filter: ((a % 2) = 0)
+         ->  Result
+               ->  Append
+                     ->  Seq Scan on t1 t1_1
+                           Filter: ((a % 2) = 0)
+                     ->  Seq Scan on t2
+                           Filter: ((a % 2) = 0)
+                     ->  Seq Scan on t3
+                           Filter: ((a % 2) = 0)
+ Optimizer: Postgres query optimizer
 (11 rows)
 
 SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
@@ -672,20 +678,20 @@ NOTICE:  f_leak => yyy
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
-                      QUERY PLAN                       
--------------------------------------------------------
- LockRows
+                   QUERY PLAN                    
+-------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    ->  Subquery Scan on t1
          Filter: f_leak(t1.b)
-         ->  LockRows
-               ->  Result
-                     ->  Append
-                           ->  Seq Scan on t1 t1_1
-                                 Filter: ((a % 2) = 0)
-                           ->  Seq Scan on t2
-                                 Filter: ((a % 2) = 0)
-                           ->  Seq Scan on t3
-                                 Filter: ((a % 2) = 0)
+         ->  Result
+               ->  Append
+                     ->  Seq Scan on t1 t1_1
+                           Filter: ((a % 2) = 0)
+                     ->  Seq Scan on t2
+                           Filter: ((a % 2) = 0)
+                     ->  Seq Scan on t3
+                           Filter: ((a % 2) = 0)
+ Optimizer: Postgres query optimizer
 (12 rows)
 
 -- superuser is allowed to bypass RLS checks
@@ -886,18 +892,18 @@ NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
 EXPLAIN (COSTS OFF) SELECT * FROM only s1 WHERE f_leak(b);
                         QUERY PLAN                        
 ----------------------------------------------------------
- Subquery Scan on s1
-   Filter: f_leak(s1.b)
-   ->  Hash Join
-         Hash Cond: (s1_1.a = s2.x)
-         ->  Seq Scan on s1 s1_1
-         ->  Hash
-               ->  HashAggregate
-                     Group Key: s2.x
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Subquery Scan on s1
+         Filter: f_leak(s1.b)
+         ->  Hash Semi Join
+               Hash Cond: (s1_1.a = s2.x)
+               ->  Seq Scan on s1 s1_1
+               ->  Hash
                      ->  Subquery Scan on s2
                            Filter: (s2.y ~~ '%2f%'::text)
                            ->  Seq Scan on s2 s2_1
                                  Filter: ((x % 2) = 0)
+ Optimizer: Postgres query optimizer
 (12 rows)
 
 SET SESSION AUTHORIZATION rls_regress_user0;
@@ -915,18 +921,18 @@ NOTICE:  f_leak => 1679091c5a880faf6fb5e6087eb1b2dc
 EXPLAIN (COSTS OFF) SELECT * FROM s1 WHERE f_leak(b);
                         QUERY PLAN                        
 ----------------------------------------------------------
- Subquery Scan on s1
-   Filter: f_leak(s1.b)
-   ->  Hash Join
-         Hash Cond: (s1_1.a = s2.x)
-         ->  Seq Scan on s1 s1_1
-         ->  Hash
-               ->  HashAggregate
-                     Group Key: s2.x
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Subquery Scan on s1
+         Filter: f_leak(s1.b)
+         ->  Hash Semi Join
+               Hash Cond: (s1_1.a = s2.x)
+               ->  Seq Scan on s1 s1_1
+               ->  Hash
                      ->  Subquery Scan on s2
                            Filter: (s2.y ~~ '%af%'::text)
                            ->  Seq Scan on s2 s2_1
                                  Filter: ((x % 2) = 0)
+ Optimizer: Postgres query optimizer
 (12 rows)
 
 SELECT (SELECT x FROM s1 LIMIT 1) xx, * FROM s2 WHERE y like '%28%';
@@ -938,24 +944,33 @@ SELECT (SELECT x FROM s1 LIMIT 1) xx, * FROM s2 WHERE y like '%28%';
 (3 rows)
 
 EXPLAIN (COSTS OFF) SELECT (SELECT x FROM s1 LIMIT 1) xx, * FROM s2 WHERE y like '%28%';
-                             QUERY PLAN                             
---------------------------------------------------------------------
- Subquery Scan on s2
-   Filter: (s2.y ~~ '%28%'::text)
-   ->  Seq Scan on s2 s2_1
-         Filter: ((x % 2) = 0)
-   SubPlan 1
-     ->  Limit
-           ->  Subquery Scan on s1
-                 ->  Nested Loop Semi Join
-                       Join Filter: (s1_1.a = s2_2.x)
-                       ->  Seq Scan on s1 s1_1
-                       ->  Materialize
-                             ->  Subquery Scan on s2_2
-                                   Filter: (s2_2.y ~~ '%af%'::text)
-                                   ->  Seq Scan on s2 s2_3
-                                         Filter: ((x % 2) = 0)
-(15 rows)
+                                                QUERY PLAN                                                 
+-----------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice3; segments: 3)
+   ->  Subquery Scan on s2
+         Filter: (s2.y ~~ '%28%'::text)
+         ->  Seq Scan on s2 s2_1
+               Filter: ((x % 2) = 0)
+         SubPlan 1  (slice3; segments: 3)
+           ->  Limit
+                 ->  Limit
+                       ->  Subquery Scan on s1
+                             ->  Hash Semi Join
+                                   Hash Cond: (s1_1.a = s2_2.x)
+                                   ->  Result
+                                         ->  Materialize
+                                               ->  Broadcast Motion 3:3  (slice1; segments: 3)
+                                                     ->  Seq Scan on s1 s1_1
+                                   ->  Hash
+                                         ->  Subquery Scan on s2_2
+                                               Filter: (s2_2.y ~~ '%af%'::text)
+                                               ->  Result
+                                                     ->  Materialize
+                                                           ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                                                                 ->  Seq Scan on s2 s2_3
+                                                                       Filter: ((x % 2) = 0)
+ Optimizer: Postgres query optimizer
+(24 rows)
 
 SET SESSION AUTHORIZATION rls_regress_user0;
 ALTER POLICY p2 ON s2 USING (x in (select a from s1 where b like '%d2%'));
@@ -1109,28 +1124,26 @@ EXPLAIN (COSTS OFF) EXECUTE p2(2);
 --
 SET SESSION AUTHORIZATION rls_regress_user1;
 EXPLAIN (COSTS OFF) UPDATE t1 SET b = b || b WHERE f_leak(b);
-                QUERY PLAN                 
--------------------------------------------
+             QUERY PLAN              
+-------------------------------------
  Update on t1 t1_3
    Update on t1 t1_3
    Update on t2 t1
    Update on t3 t1
    ->  Subquery Scan on t1
          Filter: f_leak(t1.b)
-         ->  LockRows
-               ->  Seq Scan on t1 t1_4
-                     Filter: ((a % 2) = 0)
+         ->  Seq Scan on t1 t1_4
+               Filter: ((a % 2) = 0)
    ->  Subquery Scan on t1_1
          Filter: f_leak(t1_1.b)
-         ->  LockRows
-               ->  Seq Scan on t2
-                     Filter: ((a % 2) = 0)
+         ->  Seq Scan on t2
+               Filter: ((a % 2) = 0)
    ->  Subquery Scan on t1_2
          Filter: f_leak(t1_2.b)
-         ->  LockRows
-               ->  Seq Scan on t3
-                     Filter: ((a % 2) = 0)
-(19 rows)
+         ->  Seq Scan on t3
+               Filter: ((a % 2) = 0)
+ Optimizer: Postgres query optimizer
+(17 rows)
 
 UPDATE t1 SET b = b || b WHERE f_leak(b);
 NOTICE:  f_leak => bbb
@@ -1139,14 +1152,14 @@ NOTICE:  f_leak => bcd
 NOTICE:  f_leak => def
 NOTICE:  f_leak => yyy
 EXPLAIN (COSTS OFF) UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
-                QUERY PLAN                 
--------------------------------------------
+             QUERY PLAN              
+-------------------------------------
  Update on t1 t1_1
    ->  Subquery Scan on t1
          Filter: f_leak(t1.b)
-         ->  LockRows
-               ->  Seq Scan on t1 t1_2
-                     Filter: ((a % 2) = 0)
+         ->  Seq Scan on t1 t1_2
+               Filter: ((a % 2) = 0)
+ Optimizer: Postgres query optimizer
 (6 rows)
 
 UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
@@ -1286,21 +1299,23 @@ NOTICE:  f_leak => cde
 EXPLAIN (COSTS OFF) UPDATE t2 t2_1 SET b = t2_2.b FROM t2 t2_2
 WHERE t2_1.a = 3 AND t2_2.a = t2_1.a AND t2_2.b = t2_1.b
 AND f_leak(t2_1.b) AND f_leak(t2_2.b) RETURNING *, t2_1, t2_2;
-                          QUERY PLAN                           
----------------------------------------------------------------
- Update on t2 t2_1_1
-   ->  Nested Loop
-         Join Filter: (t2_1.b = t2_2.b)
-         ->  Subquery Scan on t2_1
-               Filter: f_leak(t2_1.b)
-               ->  LockRows
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Gather Motion 1:1  (slice1; segments: 1)
+   ->  Update on t2 t2_1_1
+         ->  Hash Join
+               Hash Cond: (t2_1.b = t2_2.b)
+               ->  Subquery Scan on t2_1
+                     Filter: f_leak(t2_1.b)
                      ->  Seq Scan on t2 t2_1_2
                            Filter: ((a = 3) AND ((a % 2) = 1))
-         ->  Subquery Scan on t2_2
-               Filter: f_leak(t2_2.b)
-               ->  Seq Scan on t2 t2_2_1
-                     Filter: ((a = 3) AND ((a % 2) = 1))
-(12 rows)
+               ->  Hash
+                     ->  Subquery Scan on t2_2
+                           Filter: f_leak(t2_2.b)
+                           ->  Seq Scan on t2 t2_2_1
+                                 Filter: ((a = 3) AND ((a % 2) = 1))
+ Optimizer: Postgres query optimizer
+(14 rows)
 
 UPDATE t2 t2_1 SET b = t2_2.b FROM t2 t2_2
 WHERE t2_1.a = 3 AND t2_2.a = t2_1.a AND t2_2.b = t2_1.b
@@ -1418,28 +1433,26 @@ EXPLAIN (COSTS OFF) DELETE FROM only t1 WHERE f_leak(b);
 (6 rows)
 
 EXPLAIN (COSTS OFF) DELETE FROM t1 WHERE f_leak(b);
-                QUERY PLAN                 
--------------------------------------------
+             QUERY PLAN              
+-------------------------------------
  Delete on t1 t1_3
    Delete on t1 t1_3
    Delete on t2 t1
    Delete on t3 t1
    ->  Subquery Scan on t1
          Filter: f_leak(t1.b)
-         ->  LockRows
-               ->  Seq Scan on t1 t1_4
-                     Filter: ((a % 2) = 0)
+         ->  Seq Scan on t1 t1_4
+               Filter: ((a % 2) = 0)
    ->  Subquery Scan on t1_1
          Filter: f_leak(t1_1.b)
-         ->  LockRows
-               ->  Seq Scan on t2
-                     Filter: ((a % 2) = 0)
+         ->  Seq Scan on t2
+               Filter: ((a % 2) = 0)
    ->  Subquery Scan on t1_2
          Filter: f_leak(t1_2.b)
-         ->  LockRows
-               ->  Seq Scan on t3
-                     Filter: ((a % 2) = 0)
-(19 rows)
+         ->  Seq Scan on t3
+               Filter: ((a % 2) = 0)
+ Optimizer: Postgres query optimizer
+(17 rows)
 
 DELETE FROM only t1 WHERE f_leak(b) RETURNING oid, *, t1;
 NOTICE:  f_leak => bbbbbb_updt
@@ -1506,29 +1519,29 @@ INSERT INTO bv1 VALUES (11, 'xxx'); -- should fail RLS check
 ERROR:  new row violates row level security policy for "b1"
 INSERT INTO bv1 VALUES (12, 'xxx'); -- ok
 EXPLAIN (COSTS OFF) UPDATE bv1 SET b = 'yyy' WHERE a = 4 AND f_leak(b);
-                                QUERY PLAN                                 
----------------------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Update on b1 b1_1
    ->  Subquery Scan on b1
          Filter: f_leak(b1.b)
          ->  Subquery Scan on b1_2
-               ->  LockRows
-                     ->  Seq Scan on b1 b1_3
-                           Filter: ((a > 0) AND (a = 4) AND ((a % 2) = 0))
+               ->  Seq Scan on b1 b1_3
+                     Filter: ((a > 0) AND (a = 4) AND ((a % 2) = 0))
+ Optimizer: Postgres query optimizer
 (7 rows)
 
 UPDATE bv1 SET b = 'yyy' WHERE a = 4 AND f_leak(b);
 NOTICE:  f_leak => a87ff679a2f3e71d9181a67b7542122c
 EXPLAIN (COSTS OFF) DELETE FROM bv1 WHERE a = 6 AND f_leak(b);
-                                QUERY PLAN                                 
----------------------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Delete on b1 b1_1
    ->  Subquery Scan on b1
          Filter: f_leak(b1.b)
          ->  Subquery Scan on b1_2
-               ->  LockRows
-                     ->  Seq Scan on b1 b1_3
-                           Filter: ((a > 0) AND (a = 6) AND ((a % 2) = 0))
+               ->  Seq Scan on b1 b1_3
+                     Filter: ((a > 0) AND (a = 6) AND ((a % 2) = 0))
+ Optimizer: Postgres query optimizer
 (7 rows)
 
 DELETE FROM bv1 WHERE a = 6 AND f_leak(b);
@@ -2328,14 +2341,14 @@ NOTICE:  f_leak => 98f13708210194c475687be6106a3b84
 (11 rows)
 
 EXPLAIN (COSTS OFF) WITH cte1 AS (SELECT * FROM t1 WHERE f_leak(b)) SELECT * FROM cte1;
-              QUERY PLAN               
----------------------------------------
- CTE Scan on cte1
-   CTE cte1
-     ->  Subquery Scan on t1
-           Filter: f_leak(t1.b)
-           ->  Seq Scan on t1 t1_1
-                 Filter: ((a % 2) = 0)
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Subquery Scan on t1
+         Filter: f_leak(t1.b)
+         ->  Seq Scan on t1 t1_1
+               Filter: ((a % 2) = 0)
+ Optimizer: Postgres query optimizer
 (6 rows)
 
 WITH cte1 AS (UPDATE t1 SET a = a + 1 RETURNING *) SELECT * FROM cte1; --fail

@@ -140,7 +140,10 @@ ALTER TABLE category ENABLE ROW LEVEL SECURITY;
 -- cannot delete PK referenced by invisible FK
 SET SESSION AUTHORIZATION rls_regress_user1;
 SELECT * FROM document d FULL OUTER JOIN category c on d.cid = c.cid;
-DELETE FROM category WHERE cid = 33;    -- fails with FK violation
+-- GPDB: referential integrity checks are not enforced
+-- start_ignore
+-- DELETE FROM category WHERE cid = 33;    -- fails with FK violation
+-- end_ignore
 
 -- can insert FK referencing invisible PK
 SET SESSION AUTHORIZATION rls_regress_user2;
@@ -154,7 +157,10 @@ SELECT * FROM document WHERE did = 8; -- and confirm we can't see it
 
 -- RLS policies are checked before constraints
 INSERT INTO document VALUES (8, 44, 1, 'rls_regress_user2', 'my third manga'); -- Should fail with RLS check violation, not duplicate key violation
+-- GPDB: UPDATE on distributed key column not allowed on relation with update triggers
+-- start_ignore
 UPDATE document SET did = 8, dauthor = 'rls_regress_user2' WHERE did = 5; -- Should fail with RLS check violation, not duplicate key violation
+-- end_ignore
 
 -- database superuser does bypass RLS policy when enabled
 RESET SESSION AUTHORIZATION;
