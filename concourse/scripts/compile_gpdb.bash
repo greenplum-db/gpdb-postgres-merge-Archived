@@ -81,7 +81,7 @@ function git_info() {
 
   "${CWDIR}/git_info.bash" | tee ${GREENPLUM_INSTALL_DIR}/etc/git-info.json
 
-  PREV_TAG=$(git describe --tags --abbrev=0 HEAD^)
+  PREV_TAG=$(git describe --tags --always --abbrev=0 HEAD^)
 
   cat > ${GREENPLUM_INSTALL_DIR}/etc/git-current-changelog.txt <<-EOF
 	======================================================================
