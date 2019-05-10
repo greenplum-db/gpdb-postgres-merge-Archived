@@ -1667,6 +1667,33 @@ get_func_name(Oid funcid)
 }
 
 /*
+ * get_type_name
+ *	  returns the name of the type with the given oid
+ *
+ * Note: returns a palloc'd copy of the string, or NULL if no such type.
+ */
+char *
+get_type_name(Oid oid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(oid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		char	   *result;
+
+		result = pstrdup(NameStr(typtup->typname));
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return NULL;
+}
+
+/*
  * get_func_namespace
  *
  *		Returns the pg_namespace OID associated with a given function.

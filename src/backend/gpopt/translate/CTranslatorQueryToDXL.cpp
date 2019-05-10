@@ -3926,33 +3926,8 @@ CTranslatorQueryToDXL::CreateDXLProjectNullsForGroupingSets
 		ULONG resno = target_entry->resno;
 
 		ULONG colid = 0;
-		
-<<<<<<< HEAD
-		if (IsA(target_entry->expr, GroupingFunc))
-		{
-			colid = m_context->m_colid_counter->next_id();
-			CDXLNode *grouping_func_dxlnode = TranslateGroupingFuncToDXL(target_entry->expr, bitset, grpcol_index_to_colid_mapping);
-			CMDName *mdname_alias = NULL;
 
-			if (NULL == target_entry->resname)
-			{
-				CWStringConst str_unnamed_col(GPOS_WSZ_LIT("grouping"));
-				mdname_alias = GPOS_NEW(m_mp) CMDName(m_mp, &str_unnamed_col);
-			}
-			else
-			{
-				CWStringDynamic *alias_str = CDXLUtils::CreateDynamicStringFromCharArray(m_mp, target_entry->resname);
-				mdname_alias = GPOS_NEW(m_mp) CMDName(m_mp, alias_str);
-				GPOS_DELETE(alias_str);
-			}
-			CDXLNode *project_elem_dxlnode = GPOS_NEW(m_mp) CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLScalarProjElem(m_mp, colid, mdname_alias), grouping_func_dxlnode);
-			project_list_dxlnode->AddChild(project_elem_dxlnode);
-			StoreAttnoColIdMapping(output_attno_to_colid_mapping, resno, colid);
-		}
-		else if (!is_grouping_col && !IsA(target_entry->expr, Aggref))
-=======
 		if (!is_grouping_col && !IsA(target_entry->expr, Aggref))
->>>>>>> dc67f74... Remove old GROUPING SETS implementation.
 		{
 			OID oid_type = gpdb::ExprType((Node *) target_entry->expr);
 
@@ -4011,41 +3986,6 @@ CTranslatorQueryToDXL::CreateDXLProjectGroupingFuncs
 
 	// construct a proj element node for those non-aggregate entries in the target list which
 	// are not included in the grouping set
-<<<<<<< HEAD
-	ListCell *lc = NULL;
-	ForEach (lc, target_list)
-	{
-		TargetEntry *target_entry = (TargetEntry *) lfirst(lc);
-		GPOS_ASSERT(IsA(target_entry, TargetEntry));
-
-		ULONG resno = target_entry->resno;
-
-		if (IsA(target_entry->expr, GroupingFunc))
-		{
-			ULONG colid = m_context->m_colid_counter->next_id();
-			CDXLNode *grouping_func_dxlnode = TranslateGroupingFuncToDXL(target_entry->expr, bitset, grpcol_index_to_colid_mapping);
-			CMDName *mdname_alias = NULL;
-
-			if (NULL == target_entry->resname)
-			{
-				CWStringConst str_unnamed_col(GPOS_WSZ_LIT("grouping"));
-				mdname_alias = GPOS_NEW(m_mp) CMDName(m_mp, &str_unnamed_col);
-			}
-			else
-			{
-				CWStringDynamic *alias_str = CDXLUtils::CreateDynamicStringFromCharArray(m_mp, target_entry->resname);
-				mdname_alias = GPOS_NEW(m_mp) CMDName(m_mp, alias_str);
-				GPOS_DELETE(alias_str);
-			}
-			CDXLNode *project_elem_dxlnode = GPOS_NEW(m_mp) CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLScalarProjElem(m_mp, colid, mdname_alias), grouping_func_dxlnode);
-			project_list_dxlnode->AddChild(project_elem_dxlnode);
-			StoreAttnoColIdMapping(output_attno_to_colid_mapping, resno, colid);
-			AddSortingGroupingColumn(target_entry, sort_grpref_to_colid_mapping, colid);
-		}
-	}
-
-=======
->>>>>>> dc67f74... Remove old GROUPING SETS implementation.
 	if (0 == project_list_dxlnode->Arity())
 	{
 		// no project necessary
