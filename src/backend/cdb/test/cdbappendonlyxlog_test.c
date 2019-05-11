@@ -28,6 +28,8 @@ ao_invalid_segment_file_test(uint8 xl_info)
 	XLogRecord record;
 	XLogReaderState *mockrecord;
 	xl_ao_target xlaotarget;
+	xl_ao_insert xlaoinsert;
+	xl_ao_truncate xlaotruncate;
 	char *buffer = NULL;
 
 	/* create mock transaction log */
@@ -46,15 +48,11 @@ ao_invalid_segment_file_test(uint8 xl_info)
 
 	if (xl_info == XLOG_APPENDONLY_INSERT)
 	{
-		xl_ao_insert xlaoinsert;
-
 		xlaoinsert.target = xlaotarget;
 		mockrecord->main_data = &xlaoinsert;
 	}
 	else if (xl_info == XLOG_APPENDONLY_TRUNCATE)
 	{
-		xl_ao_truncate xlaotruncate;
-
 		xlaotruncate.target = xlaotarget;
 		mockrecord->main_data = &xlaotruncate;
 	}
