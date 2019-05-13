@@ -3404,6 +3404,18 @@ _outCreatePolicyStmt(StringInfo str, const CreatePolicyStmt *node)
 }
 
 static void
+_outAlterPolicyStmt(StringInfo str, const AlterPolicyStmt *node)
+{
+	WRITE_NODE_TYPE("ALTERPOLICYSTMT");
+
+	WRITE_STRING_FIELD(policy_name);
+	WRITE_NODE_FIELD(table);
+	WRITE_NODE_FIELD(roles);
+	WRITE_NODE_FIELD(qual);
+	WRITE_NODE_FIELD(with_check);
+}
+
+static void
 _outCreateTransformStmt(StringInfo str, const CreateTransformStmt *node)
 {
 	WRITE_NODE_TYPE("CREATETRANSFORMSTMT");
@@ -5780,6 +5792,9 @@ _outNode(StringInfo str, const void *obj)
 
 			case T_CreatePolicyStmt:
 				_outCreatePolicyStmt(str, obj);
+				break;
+			case T_AlterPolicyStmt:
+				_outAlterPolicyStmt(str, obj);
 				break;
 			case T_CreateTransformStmt:
 				_outCreateTransformStmt(str, obj);

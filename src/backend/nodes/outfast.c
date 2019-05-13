@@ -2297,6 +2297,9 @@ _outNode(StringInfo str, void *obj)
 			case T_CreatePolicyStmt:
 				_outCreatePolicyStmt(str, obj);
 				break;
+			case T_AlterPolicyStmt:
+				_outAlterPolicyStmt(str, obj);
+				break;
 			case T_CreateTransformStmt:
 				_outCreateTransformStmt(str, obj);
 				break;

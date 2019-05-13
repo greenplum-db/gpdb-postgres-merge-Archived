@@ -640,13 +640,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 									NULL);
 
 		/* MPP-6929: metadata tracking */
-		MetaTrackAddObject(PolicyRelationId,
-						   myself.objectId,
-						   GetUserId(),
-						   "CREATE", "POLICY");
-	}
-
-	return myself;
+		MetaTrackAddObject(PolicyRelationId, myself.objectId, GetUserId(), "CREATE", "POLICY"); } return myself;
 }
 
 /*
@@ -849,6 +843,18 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	systable_endscan(sscan);
 	relation_close(target_table, NoLock);
 	heap_close(pg_policy_rel, RowExclusiveLock);
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		Assert(stmt->type == T_AlterPolicyStmt);
+		Assert(stmt->type < 1000);
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									NIL,
+									NULL);
+	}
 
 	return myself;
 }

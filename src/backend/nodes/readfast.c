@@ -3970,6 +3970,9 @@ readNodeBinary(void)
 			case T_CreatePolicyStmt:
 				return_value = _readCreatePolicyStmt();
 				break;
+			case T_AlterPolicyStmt:
+				return_value = _readAlterPolicyStmt();
+				break;
 			case T_CreateTransformStmt:
 				return_value = _readCreateTransformStmt();
 				break;

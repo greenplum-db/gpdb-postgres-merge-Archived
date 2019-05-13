@@ -2942,6 +2942,20 @@ _readCreatePolicyStmt()
 	READ_DONE();
 }
 
+static AlterPolicyStmt *
+_readAlterPolicyStmt()
+{
+	READ_LOCALS(AlterPolicyStmt);
+
+	READ_STRING_FIELD(policy_name);
+	READ_NODE_FIELD(table);
+	READ_NODE_FIELD(roles);
+	READ_NODE_FIELD(qual);
+	READ_NODE_FIELD(with_check);
+
+	READ_DONE();
+}
+
 static CreateTransformStmt *
 _readCreateTransformStmt()
 {
@@ -3231,6 +3245,8 @@ parseNodeString(void)
 		return_value = _readAlterPartitionCmd();
 	else if (MATCHX("ALTERPARTITIONID"))
 		return_value = _readAlterPartitionId();
+	else if (MATCHX("ALTERPOLICYSTMT"))
+		return_value = _readAlterPolicyStmt();
 	else if (MATCHX("ALTERROLESETSTMT"))
 		return_value = _readAlterRoleSetStmt();
 	else if (MATCHX("ALTERROLESTMT"))
