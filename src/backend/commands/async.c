@@ -2028,12 +2028,16 @@ asyncQueueAdvanceTail(void)
 static void
 ProcessIncomingNotify(void)
 {
+	bool		client_wait_timeout_enabled;
+
 	/* We *must* reset the flag */
 	notifyInterruptPending = false;
 
 	/* Do nothing else if we aren't actively listening */
 	if (listenChannels == NIL)
 		return;
+
+	client_wait_timeout_enabled = DisableClientWaitTimeoutInterrupt();
 
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessIncomingNotify");
@@ -2059,6 +2063,9 @@ ProcessIncomingNotify(void)
 
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessIncomingNotify: done");
+
+	if (client_wait_timeout_enabled)
+		EnableClientWaitTimeoutInterrupt();
 }
 
 /*

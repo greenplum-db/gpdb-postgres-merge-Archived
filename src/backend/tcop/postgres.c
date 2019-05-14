@@ -403,7 +403,11 @@ interactive_getc(void)
 	 */
 	CHECK_FOR_INTERRUPTS();
 
+	enable_client_wait_timeout_interrupt();
+
 	c = getc(stdin);
+
+	disable_client_wait_timeout_interrupt();
 
 	ProcessClientReadInterrupt(true);
 
@@ -4814,6 +4818,7 @@ PostgresMain(int argc, char *argv[],
 
 		/* Not reading from the client anymore. */
 		DoingCommandRead = false;
+		DisableClientWaitTimeoutInterrupt();
 
 		/* Make sure libpq is in a good state */
 		pq_comm_reset();
@@ -5742,4 +5747,26 @@ log_disconnections(int code, Datum arg __attribute__((unused)))
 					hours, minutes, seconds, msecs,
 					port->user_name, port->database_name, port->remote_host,
 				  port->remote_port[0] ? " port=" : "", port->remote_port)));
+}
+
+/*
+ * GPDB: Enable the IdleGangTimeoutHandler to disconnect and destroy idle
+ * cdbgang processes.
+ */
+void
+enable_client_wait_timeout_interrupt(void)
+{
+	if (DoingCommandRead)
+		EnableClientWaitTimeoutInterrupt();
+}
+
+/*
+ * GPDB: Disable the IdleGangTimeoutHandler to prevent disconnecting and
+ * destroying idle cdbgang processes.
+ */
+void
+disable_client_wait_timeout_interrupt(void)
+{
+	if (DoingCommandRead)
+		DisableClientWaitTimeoutInterrupt();
 }
