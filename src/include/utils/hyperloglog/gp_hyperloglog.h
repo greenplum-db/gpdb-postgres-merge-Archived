@@ -117,6 +117,8 @@ typedef struct GpHLLData {
     
     /* length of the structure (varlena) used heavily by postgres internally*/
     char vl_len_[4];
+
+    int32 rawsize;
     
     /* Number bits used to index the buckets - this is determined depending
      * on the requested error rate - see gp_hll_create() for details.

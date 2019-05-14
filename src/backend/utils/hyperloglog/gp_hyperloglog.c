@@ -69,12 +69,6 @@
 
 #include "utils/hyperloglog/gp_hyperloglog.h"
 
-typedef struct PGLZ_Header
-{
-	int32		vl_len_;		/* varlena header (do not touch directly!) */
-	int32		rawsize;
-} PGLZ_Header;
-
 /* ------------- function declarations for local functions --------------- */
 static double gp_hll_estimate_dense(GpHLLCounter hloglog);
 static double gp_error_estimate(double E,int b);
@@ -174,7 +168,7 @@ gp_hll_decompress_dense_unpacked(GpHLLCounter hloglog)
 	memcpy(htemp, hloglog, sizeof(GpHLLData));
 
 	/* decompress the data */
-	pglz_decompress((char *)hloglog->data, VARSIZE(hloglog->data), (char *)&htemp->data, ((PGLZ_Header *)hloglog)->rawsize);
+	pglz_decompress((char *)hloglog->data, VARSIZE(hloglog), (char *)&htemp->data, hloglog->rawsize);
 
 	hloglog = htemp;
 
@@ -559,7 +553,7 @@ gp_hll_compress(GpHLLCounter hloglog)
 static GpHLLCounter
 gp_hll_compress_dense(GpHLLCounter hloglog)
 {
-    PGLZ_Header * dest;
+    char * dest;
     char entry,*data;    
     int i, m;
 
@@ -567,13 +561,13 @@ gp_hll_compress_dense(GpHLLCounter hloglog)
      * compression and a 4 bytes of overflow since lz might not recognize its
      * over until then preventing segfaults */
     m = POW2(hloglog->b);
-    dest = malloc(m + sizeof(PGLZ_Header) + 4);
+    dest = malloc(m + 4);
     if (dest == NULL)
         ereport(ERROR,
                 (errcode(ERRCODE_OUT_OF_MEMORY),
                  errmsg("out of memory"),
-                 errdetail("Failed on request of size %zu.", m + sizeof(PGLZ_Header) + 4)));
-    memset(dest,0,m + sizeof(PGLZ_Header) + 4);
+                 errdetail("Failed on request of size %u.", m + 4)));
+    memset(dest,0,m + 4);
     data = malloc(m);
     if (data == NULL){
 	free(dest);
@@ -608,6 +602,7 @@ gp_hll_compress_dense(GpHLLCounter hloglog)
     /* resize the counter to only encompass the compressed data and the struct
      *  overhead*/
     SET_VARSIZE(hloglog,sizeof(GpHLLData) + VARSIZE_ANY(dest) );
+    hloglog->rawsize = m;
 
     /* invert the b value so it being < 0 can be used as a compression flag */
     hloglog->b = -1 * (hloglog->b);
@@ -628,14 +623,14 @@ gp_hll_compress_dense(GpHLLCounter hloglog)
 static GpHLLCounter
 gp_hll_compress_dense_unpacked(GpHLLCounter hloglog)
 {
-	PGLZ_Header * dest;
+	char * dest;
 	int m;
 
 	/* make sure the dest struct has enough space for an unsuccessful
 	* compression and a 4 bytes of overflow since lz might not recognize its
 	* over until then preventing segfaults */
 	m = POW2(hloglog->b);
-	dest = malloc(m + sizeof(PGLZ_Header) + 4);
+	dest = malloc(m + 4);
 	if (dest == NULL){
 		return 0;
 	}
@@ -643,10 +638,10 @@ gp_hll_compress_dense_unpacked(GpHLLCounter hloglog)
 		ereport(ERROR,
 			(errcode(ERRCODE_OUT_OF_MEMORY),
 			 errmsg("out of memory"),
-			 errdetail("Failed on request of size %zu.", m + sizeof(PGLZ_Header) + 4)));
+			 errdetail("Failed on request of size %u.", m + 4)));
 
 
-	memset(dest, 0, m + sizeof(PGLZ_Header) + 4);
+	memset(dest, 0, m + 4);
 
 
 	/* lz_compress the normalized array and copy that data into hloglog->data
@@ -664,6 +659,7 @@ gp_hll_compress_dense_unpacked(GpHLLCounter hloglog)
 	/* resize the counter to only encompass the compressed data and the struct
 	*  overhead*/
 	SET_VARSIZE(hloglog, sizeof(GpHLLData) + VARSIZE_ANY(dest));
+    hloglog->rawsize = m;
 
 	/* invert the b value so it being < 0 can be used as a compression flag */
 	hloglog->b = -1 * (hloglog->b);
@@ -718,7 +714,7 @@ gp_hll_decompress_dense(GpHLLCounter hloglog)
     memset(dest,0,m);
 
     /* decompress the data */
-    pglz_decompress(hloglog->data, VARSIZE(hloglog->data) - sizeof(PGLZ_Header),dest, ((PGLZ_Header *)hloglog)->rawsize);
+    pglz_decompress(hloglog->data, VARSIZE(hloglog),dest, hloglog->rawsize);
 
     /* copy the struct internals but not the data into a counter with enough 
      * space for the uncompressed data  */
