@@ -597,39 +597,6 @@ vacuumStatement_IsTemporary(Relation onerel)
 }
 
 /*
- * Modify the Vacuum statement to vacuum an individual
- * relation. This ensures that only one relation will be
- * locked for vacuum, when the user issues a "vacuum <db>"
- * command, or a "vacuum <parent_partition_table>"
- * command.
- */
-static void
-vacuumStatement_AssignRelation(RangeVar *relation, Oid relid, List *relations)
-{
-	if (list_length(relations) > 1 || relation == NULL)
-	{
-		char	*relname		= get_rel_name(relid);
-		char	*namespace_name =
-			get_namespace_name(get_rel_namespace(relid));
-
-		if (relname == NULL)
-		{
-			elog(ERROR, "Relation name does not exist for relation with oid %d", relid);
-			return;
-		}
-
-		if (namespace_name == NULL)
-		{
-			elog(ERROR, "Namespace does not exist for relation with oid %d", relid);
-			return;
-		}
-
-		/* XXX: dispatch OID than name */
-		relation = makeRangeVar(namespace_name, relname, -1);
-	}
-}
-
-/*
  * Processing of the vacuumStatement for given relid.
  *
  * The function is called by vacuumStatement once for each relation to vacuum.
@@ -801,8 +768,24 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 	onerelid = onerel->rd_lockInfo.lockRelId;
 	LockRelationIdForSession(&onerelid, lmode);
 
+	/*
+	 * Ensure that only one relation will be locked for vacuum, when the user
+	 * issues a "VACUUM <db>" command, or a "VACUUM <parent_partition_table>"
+	 * command.
+	 */
 	oldcontext = MemoryContextSwitchTo(vac_context);
-	vacuumStatement_AssignRelation(relation, relid, relations);
+	if (list_length(relations) > 1 || relation == NULL)
+	{
+		char *relname = get_rel_name(relid);
+		char *nspname = get_namespace_name(get_rel_namespace(relid));
+
+		if (relname == NULL)
+			elog(ERROR, "relation name does not exist for relation with oid %d", relid);
+		else if (nspname == NULL)
+			elog(ERROR, "namespace does not exist for relation with oid %d", relid);
+
+		relation = makeRangeVar(nspname, relname, -1);
+	}
 	MemoryContextSwitchTo(oldcontext);
 
 	if (RelationIsHeap(onerel) || Gp_role == GP_ROLE_EXECUTE)
