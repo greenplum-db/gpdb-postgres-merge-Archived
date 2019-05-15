@@ -4795,6 +4795,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_DropInherit:	/* NO INHERIT */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
+			ATPartitionCheck(cmd->subtype, rel, true, recursing);
 			/* This command never recurses */
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
