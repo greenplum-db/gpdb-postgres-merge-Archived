@@ -454,14 +454,6 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		/* run the plan to completion */
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 
-		/* save the rowcount if we're given a completionTag to fill */
-		if (completionTag)
-			snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-					 "SELECT " UINT64_FORMAT, queryDesc->es_processed);
-
-		/* get object address that intorel_startup saved for us */
-		address = ((DR_intorel *) dest)->reladdr;
-
 		/* and clean up */
 		ExecutorFinish(queryDesc);
 		ExecutorEnd(queryDesc);
@@ -473,6 +465,20 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		/* MPP-14001: Running auto_stats */
 		if (Gp_role == GP_ROLE_DISPATCH)
 			auto_stats(cmdType, relationOid, queryDesc->es_processed, false /* inFunction */);
+
+		/*
+		 * GPDB: Saving the rowcount happens after ExecutorEnd() because that
+		 * is where it gets the row count from dispatch. There's also some
+		 * special processing if the relation was a replicated table. In
+		 * upstream Postgres, the rowcount is saved before ExecutorFinish().
+		 */
+		/* save the rowcount if we're given a completionTag to fill */
+		if (completionTag)
+			snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
+					 "SELECT " UINT64_FORMAT, queryDesc->es_processed);
+
+		/* get object address that intorel_startup saved for us */
+		address = ((DR_intorel *) dest)->reladdr;
 	}
 
 	dest->rDestroy(dest);
