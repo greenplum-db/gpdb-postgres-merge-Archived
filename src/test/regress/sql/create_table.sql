@@ -265,3 +265,8 @@ CREATE TABLE as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 CREATE TABLE as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 CREATE TABLE IF NOT EXISTS as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 DROP TABLE as_select1;
+
+-- Test github issue #7340. truncating a toast unlogged table fails.
+CREATE UNLOGGED TABLE unlogged_toast (a text);
+TRUNCATE unlogged_toast;
+DROP TABLE unlogged_toast;

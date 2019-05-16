@@ -130,7 +130,7 @@
         work, so performance can be degraded until the balance is restored by recovering the
         original primary. </p>
       <p>Administrators perform the recovery while Greenplum Database is up and running by running
-        the <codeph>gprecoverseg</codeph> utility.This utility locates the failed segments, verifies
+        the <codeph>gprecoverseg</codeph> utility. This utility locates the failed segments, verifies
         they are valid, and compares the transactional state with the currently active segment to
         determine changes made while the segment was offline. <codeph>gprecoverseg</codeph>
         synchronizes the changed database files with the active segment and brings the segment back
@@ -250,8 +250,8 @@
         case, the failed component must be replaced or recovered to restore full redundancy. Until
         the failed component is recovered, the active component lacks a standby, and the system may
         not be executing optimally. For these reasons, it is important to perform recovery
-        operations promptly. Constant system monitoring and automated fault notifications through
-        SNMP and email ensure that administrators are aware of failures that demand their attention. </p>
+        operations promptly. Constant system monitoring ensures that administrators are aware of
+        failures that demand their attention. </p>
       <p>The Greenplum Database server <codeph>ftsprobe</codeph> subprocess handles fault detection.
           <codeph>ftsprobe</codeph> connects to and scans all segments and database processes at
         intervals that you can configure with the <codeph>gp_fts_probe_interval</codeph>

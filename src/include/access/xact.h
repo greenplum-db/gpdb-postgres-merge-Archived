@@ -22,6 +22,7 @@
 #include "utils/datetime.h"
 
 #include "cdb/cdbpublic.h"
+#include "cdb/cdbtm.h"
 
 /*
  * Xact isolation levels
@@ -326,8 +327,8 @@ typedef struct xl_xact_distributed_forget
  */
 
 /* Greenplum Database specific */ 
-extern void SetSharedTransactionId_writer(void);
-extern void SetSharedTransactionId_reader(TransactionId xid, CommandId cid);
+extern void SetSharedTransactionId_writer(DtxContext distributedTransactionContext);
+extern void SetSharedTransactionId_reader(TransactionId xid, CommandId cid, DtxContext distributedTransactionContext);
 extern bool IsTransactionState(void);
 extern bool IsAbortInProgress(void);
 extern bool IsCommitInProgress(void);
@@ -337,6 +338,8 @@ extern void GetAllTransactionXids(
 	DistributedTransactionId	*distribXid,
 	TransactionId				*localXid,
 	TransactionId				*subXid);
+extern DistributedTransactionId GetCurrentDistributedTransactionId(void);
+extern void SetCurrentDistributedTransactionId(DistributedTransactionId gxid);
 extern TransactionId GetTopTransactionId(void);
 extern TransactionId GetTopTransactionIdIfAny(void);
 extern TransactionId GetCurrentTransactionId(void);

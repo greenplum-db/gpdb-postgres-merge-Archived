@@ -224,15 +224,6 @@ int			gp_perfmon_segment_interval;
 /* Perfmon debug GUC */
 bool		gp_perfmon_print_packet_info;
 
-/* time slice enforcement */
-bool		gp_test_time_slice;
-int			gp_test_time_slice_interval;
-int			gp_test_time_slice_report_level = ERROR;
-
-/* database-lightweight lock hazard detection */
-bool		gp_test_deadlock_hazard;
-int			gp_test_deadlock_hazard_report_level = ERROR;
-
 bool		vmem_process_interrupt = false;
 bool		execute_pruned_plan = false;
 
@@ -284,7 +275,7 @@ bool		gp_dynamic_partition_pruning = true;
 bool		gp_log_dynamic_partition_pruning = false;
 bool		gp_cte_sharing = false;
 bool		gp_enable_relsize_collection = false;
-bool		gp_recursive_cte = false;
+bool		gp_recursive_cte = true;
 
 /* Optimizer related gucs */
 bool		optimizer;
@@ -341,6 +332,7 @@ bool		optimizer_enable_bitmapscan;
 bool		optimizer_enable_outerjoin_to_unionall_rewrite;
 bool		optimizer_enable_ctas;
 bool		optimizer_enable_partial_index;
+bool		optimizer_enable_dml;
 bool		optimizer_enable_dml_triggers;
 bool		optimizer_enable_dml_constraints;
 bool		optimizer_enable_master_only_queries;
@@ -348,6 +340,9 @@ bool		optimizer_enable_hashjoin;
 bool		optimizer_enable_dynamictablescan;
 bool		optimizer_enable_indexscan;
 bool		optimizer_enable_tablescan;
+bool		optimizer_enable_hashagg;
+bool		optimizer_enable_groupagg;
+bool		optimizer_enable_full_join;
 
 /* Optimizer plan enumeration related GUCs */
 bool		optimizer_enumerate_plans;
@@ -543,16 +538,6 @@ static const struct config_enum_entry gp_gpperfmon_log_alert_level[] = {
 	{"error", GPPERFMON_LOG_ALERT_LEVEL_ERROR},
 	{"fatal", GPPERFMON_LOG_ALERT_LEVEL_FATAL},
 	{"panic", GPPERFMON_LOG_ALERT_LEVEL_PANIC},
-	{NULL, 0}
-};
-
-static const struct config_enum_entry test_time_slice_report_level_options[] = {
-	{"notice", NOTICE},
-	{"warning", WARNING},
-	{"error", ERROR},
-	{"log", LOG},
-	{"fatal", FATAL},
-	{"panic", PANIC},
 	{NULL, 0}
 };
 
@@ -1763,28 +1748,6 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"gp_test_time_slice", PGC_USERSET, GP_ERROR_HANDLING,
-			gettext_noop("Check for time slice violation between checks for interrupts"),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_GPDB_ADDOPT
-		},
-		&gp_test_time_slice,
-		false,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"gp_test_deadlock_hazard", PGC_USERSET, GP_ERROR_HANDLING,
-			gettext_noop("Check if a lightweight lock is already held when requesting a database lock"),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_GPDB_ADDOPT
-		},
-		&gp_test_deadlock_hazard,
-		false,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"gp_partitioning_dynamic_selection_log", PGC_USERSET, DEVELOPER_OPTIONS,
 			gettext_noop("Print out debugging info for GPDB dynamic partition selection"),
 			NULL,
@@ -1958,7 +1921,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&gp_recursive_cte,
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 
 	{
@@ -1968,7 +1931,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&gp_recursive_cte,
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 
 	{
@@ -2397,6 +2360,28 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
+		{"optimizer_enable_hashagg", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Enables Pivotal Optimizer (GPORCA) to use hash aggregates."),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+		},
+		&optimizer_enable_hashagg,
+		true,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"optimizer_enable_groupagg", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Enables Pivotal Optimizer (GPORCA) to use group aggregates."),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+		},
+		&optimizer_enable_groupagg,
+		true,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"optimizer_force_agg_skew_avoidance", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Always pick a plan for aggregate distinct that minimizes skew."),
 			NULL,
@@ -2502,6 +2487,16 @@ struct config_bool ConfigureNamesBool_gp[] =
 		},
 		&optimizer_enable_broadcast_nestloop_outer_child,
 		true,
+		NULL, NULL, NULL
+	},
+	{
+		{"optimizer_enable_full_join", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Enables the optimizer's support of full outer joins."),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+		},
+		&optimizer_enable_full_join,
+		false,
 		NULL, NULL, NULL
 	},
 	{
@@ -2682,6 +2677,17 @@ struct config_bool ConfigureNamesBool_gp[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&optimizer_enable_partial_index,
+		true,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"optimizer_enable_dml", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Enable DML plans in Pivotal Optimizer (GPORCA)."),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+		},
+		&optimizer_enable_dml,
 		true,
 		NULL, NULL, NULL
 	},
@@ -3902,17 +3908,6 @@ struct config_int ConfigureNamesInt_gp[] =
 	},
 
 	{
-		{"gp_test_time_slice_interval", PGC_USERSET, GP_ERROR_HANDLING,
-			gettext_noop("Maximum interval in ms between successive checks for interrupts."),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_GPDB_ADDOPT
-		},
-		&gp_test_time_slice_interval,
-		1000, 1, 10000,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"gp_resqueue_memory_policy_auto_fixed_mem", PGC_USERSET, RESOURCES_MEM,
 			gettext_noop("Sets the fixed amount of memory reserved for non-memory intensive operators in the AUTO policy."),
 			NULL,
@@ -4474,28 +4469,6 @@ struct config_enum ConfigureNamesEnum_gp[] =
 		},
 		&gp_sessionstate_loglevel,
 		DEBUG1, server_message_level_options,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"gp_test_time_slice_report_level", PGC_USERSET, LOGGING_WHEN,
-			gettext_noop("Sets the message level for time slice violation reports."),
-			gettext_noop("Valid values are NOTICE, WARNING, ERROR, FATAL and PANIC."),
-			GUC_GPDB_ADDOPT | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&gp_test_time_slice_report_level,
-		ERROR, test_time_slice_report_level_options,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"gp_test_deadlock_hazard_report_level", PGC_USERSET, LOGGING_WHEN,
-			gettext_noop("Sets the message level for deadlock hazard reports."),
-			gettext_noop("Valid values are NOTICE, WARNING, ERROR, FATAL and PANIC."),
-			GUC_GPDB_ADDOPT | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&gp_test_deadlock_hazard_report_level,
-		ERROR, server_message_level_options,
 		NULL, NULL, NULL
 	},
 

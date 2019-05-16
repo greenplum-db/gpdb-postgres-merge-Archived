@@ -41,9 +41,16 @@
             <codeph>gpstart</codeph> options <codeph>-R</codeph> or <codeph>-m</codeph> cannot be
           specified to start Greenplum Database. </li>      
       </ul>
-      <note type="warning">Do not run the
-          <codeph>gpbackup</codeph> or <codeph>gprestore</codeph> utilities while system expansion is
-        in process.</note>
+      <note>These utilities cannot be run while <codeph>gpexpand</codeph> is performing segment
+        initialization.
+        <ul id="ul_c3w_wdp_lgb">
+          <li><codeph>gpbackup</codeph></li>
+          <li><codeph>gpcheck</codeph></li>
+          <li><codeph>gpcheckcat</codeph></li>
+          <li><codeph>gpconfig</codeph></li>
+          <li><codeph>gppkg</codeph></li>
+          <li><codeph>gprestore</codeph></li>
+        </ul></note>
       <p>For information about preparing a system for expansion, see <xref
           href="../../admin_guide/expand/expand-main.xml" scope="peer">Expanding a Greenplum
           System</xref><ph otherprops="op-print"> in the <cite>Greenplum Database Administrator
@@ -172,7 +179,7 @@
         </plentry>
         <plentry>
           <pt>[-t | --tardir] <varname>directory</varname></pt>
-          <pd>The fully qualified path to a <varname>directory</varname> on segment hosts were the
+          <pd>The fully qualified path to a <varname>directory</varname> on segment hosts where the
               <codeph>gpexpand</codeph> utility copies a temporary tar file. The file contains
             Greenplum Database files that are used to create segment instances. The default
             directory is the user home directory.</pd>

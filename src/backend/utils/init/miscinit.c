@@ -577,6 +577,7 @@ InitializeSessionUserIdStandalone(void)
 	 */
 	AssertState(!IsUnderPostmaster || IsAutoVacuumWorkerProcess() || IsBackgroundWorker
 				|| am_startup
+				|| am_dtx_recovery
 				|| (am_ftshandler && am_mirror)
 				|| am_global_deadlock_detector);
 

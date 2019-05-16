@@ -118,6 +118,8 @@ typedef bool (*AnalyzeForeignTable_function) (Relation relation,
 typedef List *(*ImportForeignSchema_function) (ImportForeignSchemaStmt *stmt,
 														   Oid serverOid);
 
+typedef bool (*ForeignTableSize_function) (Relation relation, int64 *tablesize);
+
 /*
  * FdwRoutine is the struct returned by a foreign-data wrapper's handler
  * function.  It provides pointers to the callback functions needed by the
@@ -172,6 +174,9 @@ typedef struct FdwRoutine
 
 	/* Support functions for IMPORT FOREIGN SCHEMA */
 	ImportForeignSchema_function ImportForeignSchema;
+
+	AcquireSampleRowsFunc AcquireSampleRows;
+	ForeignTableSize_function GetRelationSize;
 } FdwRoutine;
 
 

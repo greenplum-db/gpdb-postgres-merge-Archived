@@ -1,0 +1,200 @@
+---
+title: Configuring the JDBC Connector (Optional)
+---
+
+You can use PXF to access an external SQL database including MySQL, ORACLE, PostgreSQL, Hive, and Apache Ignite. This topic describes how to configure the PXF JDBC Connector to access these external data sources.
+
+*If you do not plan to use the PXF JDBC Connector, then you do not need to perform this procedure.*
+
+## <a id="about_cfg"></a>About JDBC Configuration
+
+To access data in an external SQL database with the PXF JDBC Connector, you must:
+
+- Register a compatible JDBC driver JAR file
+- Specify the JDBC driver class name, database URL, and client credentials
+
+In previous releases of Greenplum Database, you may have specified the JDBC driver class name, database URL, and client credentials via options in the `CREATE EXTERNAL TABLE` command. PXF now supports file-based server configuration for the JDBC Connector. This configuration, described below, allows you to specify these options and credentials in a file.
+
+**Note**: PXF external tables that you previously created that directly specified the JDBC connection options will continue to work. If you want to move these tables to use JDBC file-based server configuration, you must create a server configuration, drop the external tables, and then recreate the tables specifying an appropriate `SERVER=<server_name>` clause.
+
+### <a id="cfg_jar"></a>JDBC Driver JAR Registration
+
+The PXF JDBC Connector is installed with the `postgresql-8.4-702.jdbc4.jar` JAR file. If you require a different JDBC driver, ensure that you install the JDBC driver JAR file for the external SQL database in the `$PXF_CONF/lib` directory on each segment host. Be sure to install JDBC driver JAR files that are compatible with your JRE version. See [Registering PXF JAR Dependencies](reg_jar_depend.html) for additional information.
+
+### <a id="cfg_server"></a>JDBC Server Configuration
+
+When you configure the PXF JDBC Connector, you add at least one named PXF server configuration for the connector as described in [About PXF Server Configuration](cfg_server.html#cfgproc).
+
+PXF provides a template configuration file for the JDBC Connector. This server template configuration file, located in `$PXF_CONF/templates/jdbc-site.xml`, identifies properties that you can configure to establish a connection to the external SQL database. The template also includes optional properties that you can set before executing query or insert commands in the external database session.
+
+The required properties in the `jdbc-site.xml` server template file follow:
+
+| Property       | Description                                | Value |
+|----------------|--------------------------------------------|-------|
+| jdbc.driver | Class name of the JDBC driver. | The JDBC driver Java class name; for example `org.postgresql.Driver`. |
+| jdbc.url | The URL that the JDBC driver uses to connect to the database. | The database connection URL (database-specific); for example `jdbc:postgresql://phost:pport/pdatabase`. |
+| jdbc.user | The database user name. | The user name for connecting to the database. |
+| jdbc.password | The password for `jdbc.user`. | The password for connecting to the database. |
+
+<div class="note">When you configure a PXF JDBC server, you specify the external database user credentials to PXF in clear text in a configuration file.</div>
+
+#### <a id="connprop"></a>Connection-Level Properties
+
+To set additional JDBC connection-level properties, add `jdbc.connection.property.<CPROP_NAME>` properties to `jdbc-site.xml`. PXF passes these properties to the JDBC driver when it establishes the connection to the external SQL database (`DriverManager.getConnection()`).
+
+Replace `<CPROP_NAME>` with the connection property name and specify its value:
+
+| Property       | Description                                | Value |
+|----------------|--------------------------------------------|-------|
+| jdbc.connection.property.\<CPROP_NAME\> | The name of a property (\<CPROP_NAME\>) to pass to the JDBC driver when PXF establishes the connection to the external SQL database.  | The value of the \<CPROP_NAME\> property. |
+
+Example: To set the `createDatabaseIfNotExist` connection property on a JDBC connection to a MySQL database, include the following property block in `jdbc-site.xml`:
+
+``` xml
+<property>
+    <name>jdbc.connection.property.createDatabaseIfNotExist</name>
+    <value>true</value>
+ </property>
+```
+
+Ensure that the JDBC driver for the external SQL database supports any connection-level property that you specify.
+
+#### <a id="conntransiso"></a>Connection Transaction Isolation Property
+
+The SQL standard defines four transaction isolation levels. The level that you specify for a given connection to an external SQL database determines how and when the changes made by one transaction executed on the connection are visible to another.
+
+The PXF JDBC Connector exposes an optional server configuration property named `jdbc.connection.transactionIsolation` that enables you to specify the transaction isolation level. PXF sets the level (`setTransactionIsolation()`) just after establishing the connection to the external SQL database.
+
+The JDBC Connector supports the following `jdbc.connection.transactionIsolation` property values:
+
+
+| SQL Level      | PXF Property Value      |
+|----------------|-------------------------|
+| Read uncommitted | READ_UNCOMMITTED |
+| Read committed | READ_COMMITTED |
+| Repeatable Read | REPEATABLE_READ |
+| Serializable | SERIALIZABLE |
+
+For example, to set the transaction isolation level to *Read uncommitted*, add the following property block to the `jdbc-site.xml` file:
+
+``` xml
+<property>
+    <name>jdbc.connection.transactionIsolation</name>
+    <value>READ_UNCOMMITTED</value>
+</property>
+```
+
+Different SQL databases support different transaction isolation levels. Ensure that the external database supports the level that you specify.
+
+#### <a id="stateprop"></a>Statement-Level Properties
+
+The PXF JDBC Connector executes a query or insert command on an external SQL database table in a *statement*. The Connector exposes properties that enable you to configure certain aspects of the statement before the command is executed in the external database. The Connector supports the following statement-level properties:
+
+| Property       | Description                                | Value |
+|----------------|--------------------------------------------|-------|
+| jdbc.statement.batchSize | The number of rows to write to the external database table in a batch. | The number of rows. The default write batch size is 100. |
+| jdbc.statement.fetchSize | The number of rows to fetch/buffer when reading from the external database table. | The number of rows. The default read fetch size is 1000. |
+| jdbc.statement.queryTimeout | The amount of time (in seconds) the JDBC driver waits for a statement to execute. This timeout applies to statements created for both read and write operations. | The timeout duration in seconds. The default wait time is unlimited. |
+
+PXF uses the default value for any statement-level property that you do not explicitly configure.
+
+Example: To set the read fetch size to 5000, add the following property block to `jdbc-site.xml`:
+
+``` xml
+<property>
+    <name>jdbc.statement.fetchSize</name>
+    <value>5000</value>
+</property>
+```
+
+Ensure that the JDBC driver for the external SQL database supports any statement-level property that you specify.
+
+#### <a id="sessprop"></a>Session-Level Properties
+
+To set session-level properties, add the `jdbc.session.property.<SPROP_NAME>` property to `jdbc-site.xml`. PXF will `SET` these properties in the external database before executing a query.
+
+ Replace `<SPROP_NAME>` with the session property name and specify its value:
+
+| Property       | Description                                | Value |
+|----------------|--------------------------------------------|-------|
+| jdbc.session.property.\<SPROP_NAME\> | The name of a session property (\<SPROP_NAME\>) to set before query execution. | The value of the \<SPROP_NAME\> property. |
+
+**Note**: The PXF JDBC Connector passes both the session property name and property value to the external SQL database exactly as specified in the `jdbc-site.xml` server configuration file. To limit the potential threat of SQL injection, the Connector rejects any property name or value that contains the `;`, `\n`, `\b`, or `\0` characters.
+
+The PXF JDBC Connector handles the session property `SET` syntax for all supported external SQL databases.
+
+Example: To set the `search_path` parameter before running a query in a PostgreSQL database, add the following property block to `jdbc-site.xml`:
+
+``` xml
+<property>
+    <name>jdbc.session.property.search_path</name>
+    <value>public</value>
+</property>
+```
+
+Ensure that the JDBC driver for the external SQL database supports any property that you specify.
+
+### <a id="cfg_override"></a>Overriding the JDBC Server Configuration
+
+You can override the JDBC server configuration by directly specifying certain JDBC properties via custom options in the `CREATE EXTERNAL TABLE` command `LOCATION` clause. Refer to [Overriding the JDBC Server Configuration](jdbc_pxf.html#jdbc_override) for additional information.
+
+
+### <a id="cfg_proc" class="no-quick-link"></a>Example Configuration Procedure
+
+Ensure that you have initialized PXF before you configure a JDBC Connector server.
+
+In this procedure, you name and add a PXF JDBC server configuration for a PostgreSQL database and synchronize the server configuration(s) to the Greenplum Database cluster.
+
+1. Log in to your Greenplum Database master node:
+
+    ``` shell
+    $ ssh gpadmin@<gpmaster>
+    ```
+
+2. Choose a name for the JDBC server. You will provide the name to Greenplum users that you choose to allow to reference tables in the external SQL database as the configured user.
+
+    **Note**: The server name `default` is reserved.
+
+3. Create the `$PXF_HOME/servers/<server_name>` directory. For example, use the following command to create a JDBC server configuration named `pg_user1_testdb`:
+
+    ``` shell
+    gpadmin@gpmaster$ mkdir $PXF_CONF/servers/pg_user1_testdb
+    ````
+
+4. Copy the PXF JDBC server template file to the server configuration directory. For example:
+
+    ``` shell
+    gpadmin@gpmaster$ cp $PXF_CONF/templates/jdbc-site.xml $PXF_CONF/servers/pg_user1_testdb/
+    ```
+        
+5. Open the template server configuration file in the editor of your choice, and provide appropriate property values for your environment. For example, if you are configuring access to a PostgreSQL database named `testdb` on a PostgreSQL instance running on the host named `pgserverhost` for the user named `user1`:
+
+    ``` xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <configuration>
+        <property>
+            <name>jdbc.driver</name>
+            <value>org.postgresql.Driver</value>
+        </property>
+        <property>
+            <name>jdbc.url</name>
+            <value>jdbc:postgresql://pgserverhost:5432/testdb</value>
+        </property>
+        <property>
+            <name>jdbc.user</name>
+            <value>user1</value>
+        </property>
+        <property>
+            <name>jdbc.password</name>
+            <value>changeme</value>
+        </property>
+    </configuration>
+    ```
+6. Save your changes and exit the editor.
+
+7. Use the `pxf cluster sync` command to copy the new server configuration to the Greenplum Database cluster. For example:
+    
+    ``` shell
+    gpadmin@gpmaster$ $GPHOME/pxf/bin/pxf cluster sync
+    ```
+

@@ -1597,11 +1597,17 @@ ExecuteTruncate(TruncateStmt *stmt)
 	SubTransactionId mySubid;
 	ListCell   *cell;
 	List *partList = NIL;
+	List *relationsToTruncate = NIL;
+
+	/*
+	 * Copy list to ensure we do not modify a cached plan
+	 */
+	relationsToTruncate = list_copy(stmt->relations);
 
 	/*
 	 * Check if table has partitions and add them too
 	 */
-	foreach(cell, stmt->relations)
+	foreach(cell, relationsToTruncate)
 	{
 		RangeVar   *rv = lfirst(cell);
 		Relation	rel;
@@ -1619,12 +1625,12 @@ ExecuteTruncate(TruncateStmt *stmt)
 		heap_close(rel, NoLock);
 	}
 
-	stmt->relations = list_concat(partList, stmt->relations);
+	relationsToTruncate = list_concat(partList, relationsToTruncate);
 
 	/*
 	 * Open, exclusive-lock, and check all the explicitly-specified relations
 	 */
-	foreach(cell, stmt->relations)
+	foreach(cell, relationsToTruncate)
 	{
 		RangeVar   *rv = lfirst(cell);
 		Relation	rel;
@@ -15258,7 +15264,7 @@ ATExecExpandTableCTAS(AlterTableCmd *rootCmd, Relation rel, AlterTableCmd *cmd)
 
 		/* Step (a) */
 		/*
-		 * Force the use of Postgres query optimizer, since PQO will not
+		 * Force the use of Postgres query optimizer, since Pivotal Optimizer (GPORCA) will not
 		 * redistribute the tuples if the current and required distributions
 		 * are both RANDOM even when reorganize is set to "true"
 		 */
@@ -15772,7 +15778,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 			ldistro = make_distributedby_for_rel(rel);
 
 		/*
-		 * Force the use of Postgres query optimizer, since PQO will not
+		 * Force the use of Postgres query optimizer, since Pivotal Optimizer (GPORCA) will not
 		 * redistribute the tuples if the current and required distributions
 		 * are both RANDOM even when reorganize is set to "true"
 		 */
@@ -18006,7 +18012,7 @@ make_distributedby_for_rel(Relation rel)
  * Given a relation, get all column encodings for that relation as a list of
  * ColumnReferenceStorageDirective structures.
  */
-static List *
+List *
 rel_get_column_encodings(Relation rel)
 {
 	List **colencs = RelationGetUntransformedAttributeOptions(rel);
@@ -18092,7 +18098,6 @@ ATPExecPartSplit(Relation *rel,
 		int i;
 		AlterPartitionId *intopid1 = NULL;
 		AlterPartitionId *intopid2 = NULL;
-		int default_pos = 0;
 		Oid rel_to_drop = InvalidOid;
 		AlterPartitionId *aapid = NULL; /* just for alter partition pids */
 		Relation existrel;
@@ -18211,7 +18216,6 @@ ATPExecPartSplit(Relation *rel,
 
 			if (exists && isdef)
 			{
-				default_pos = 1;
 				intopid2 = (AlterPartitionId *)pc2->partid;
 				intopid1 = (AlterPartitionId *)pc2->arg1;
 				into_exists = 2;
@@ -18307,13 +18311,8 @@ ATPExecPartSplit(Relation *rel,
 				intopid1 = (AlterPartitionId *)pc2->partid;
 				intopid2 = (AlterPartitionId *)pc2->arg1;
 
-				if (isdef)
-				{
-					default_pos = 2;
-
-					if (intopid2->idtype == AT_AP_IDDefault)
+				if (isdef && intopid2->idtype == AT_AP_IDDefault)
 						 intopid2->partiddef = (Node *)makeString(parname);
-				}
 			}
 		}
 

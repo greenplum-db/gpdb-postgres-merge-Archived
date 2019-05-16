@@ -2075,7 +2075,6 @@ InitWalSenderSlot(void)
 			walsnd->apply = InvalidXLogRecPtr;
 			walsnd->state = WALSNDSTATE_STARTUP;
 			/* Will be decided in hand-shake */
-			walsnd->synchronous = false;
 			walsnd->xlogCleanUpTo = InvalidXLogRecPtr;
 			walsnd->caughtup_within_range = false;
 			walsnd->latch = &MyProc->procLatch;
@@ -2123,8 +2122,6 @@ WalSndKill(int code, Datum arg)
 			SyncRepWakeQueue(true, SYNC_REP_WAIT_FLUSH);
 
 			SpinLockAcquire(&MyWalSnd->mutex);
-
-			MyWalSnd->synchronous = false;
 
 			/* xlog can get freed without the WAL sender worry */
 			MyWalSnd->xlogCleanUpTo = InvalidXLogRecPtr;

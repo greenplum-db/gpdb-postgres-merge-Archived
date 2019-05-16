@@ -82,6 +82,7 @@ char	   *outputdir = ".";
 char	   *prehook = "";
 char	   *bindir = PGBINDIR;
 char	   *launcher = NULL;
+bool        print_failure_diffs_is_enabled = false;
 bool 		optimizer_enabled = false;
 bool 		resgroup_enabled = false;
 static _stringlist *loadlanguage = NULL;
@@ -1560,6 +1561,32 @@ file_line_count(const char *file)
 	return l;
 }
 
+static FILE *
+open_file_for_reading(const char *filename) {
+	FILE *file = fopen(filename, "r");
+
+	if (!file)
+	{
+		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
+				progname, filename, strerror(errno));
+		exit(1);
+	}
+
+	return file;
+}
+
+static void
+print_contents_of_file(const char* filename) {
+	FILE *file;
+	char string[1024];
+
+	file = open_file_for_reading(filename);
+	while (fgets(string, sizeof(string), file))
+		fprintf(stdout, "%s", string);
+
+	fclose(file);
+}
+
 bool
 file_exists(const char *file)
 {
@@ -2528,12 +2555,13 @@ help(void)
 	printf(_("                            (can be used multiple times to concatenate)\n"));
 	printf(_("  --temp-instance=DIR       create a temporary instance in DIR\n"));
 	printf(_("  --use-existing            use an existing installation\n"));
-	/* Please put GPDB speicifc options at the end. */
+	/* Please put GPDB specific options at the end */
 	printf(_("  --exclude-tests=TEST      command or space delimited tests to exclude from running\n"));
     printf(_(" --init-file=GPD_INIT_FILE  init file to be used for gpdiff\n"));
 	printf(_("  --ao-dir=DIR              directory name prefix containing generic\n"));
 	printf(_("                            UAO row and column tests\n"));
 	printf(_("  --ignore-plans            ignore any explain plan diffs\n"));
+	printf(_("  --print-failure-diffs     Print the diff file to standard out after a failure\n"));
 	printf(_("\n"));
 	printf(_("Options for \"temp-instance\" mode:\n"));
 	printf(_("  --no-locale               use C locale\n"));
@@ -2583,6 +2611,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"exclude-tests", required_argument, NULL, 27},
 		{"ignore-plans", no_argument, NULL, 28},
 		{"prehook", required_argument, NULL, 29},
+		{"print-failure-diffs", no_argument, NULL, 30},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2710,6 +2739,9 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				break;
 			case 29:
 				prehook = strdup(optarg);
+				break;
+			case 30:
+				print_failure_diffs_is_enabled = true;
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
@@ -3129,6 +3161,9 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 
 	if (file_size(difffilename) > 0)
 	{
+		if (print_failure_diffs_is_enabled)
+			print_contents_of_file(difffilename);
+
 		printf(_("The differences that caused some tests to fail can be viewed in the\n"
 				 "file \"%s\".  A copy of the test summary that you see\n"
 				 "above is saved in the file \"%s\".\n\n"),

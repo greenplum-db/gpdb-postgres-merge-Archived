@@ -130,7 +130,6 @@ $$ language plpgsql;
 -- checkpoint to ensure clean xlog replication before bring down mirror
 select checkpoint_and_wait_for_replication_replay(500);
 
-create extension if not exists gp_inject_fault;
 -- Prevent FTS from probing segments as we don't want a change in
 -- cluster configuration to be triggered after the mirror is stoped
 -- temporarily in the test.  Request a scan so that the skip fault is
@@ -174,5 +173,5 @@ select count(*) = 2 as mirror_up from gp_segment_configuration
 -- make sure leave the test only after mirror is in sync to avoid
 -- affecting other tests. Thumb rule: leave cluster in same state as
 -- test started.
-select wait_for_mirror_sync((select dbid::smallint from gp_segment_configuration c where c.role='p' and c.content=0));
+select wait_for_mirror_sync(0::smallint);
 select role, preferred_role, content, mode, status from gp_segment_configuration;

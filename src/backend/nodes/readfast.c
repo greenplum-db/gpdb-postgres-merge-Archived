@@ -65,6 +65,10 @@ static Bitmapset *bitmapsetRead(void);
 #define READ_INT_FIELD(fldname) \
 	memcpy(&local_node->fldname, read_str_ptr, sizeof(int));  read_str_ptr+=sizeof(int)
 
+/* Read an int8 field  */
+#define READ_INT8_FIELD(fldname) \
+	memcpy(&local_node->fldname, read_str_ptr, sizeof(int8));  read_str_ptr+=sizeof(int8)
+
 /* Read an int16 field  */
 #define READ_INT16_FIELD(fldname) \
 	memcpy(&local_node->fldname, read_str_ptr, sizeof(int16));  read_str_ptr+=sizeof(int16)
@@ -1476,6 +1480,7 @@ _readPlannedStmt(void)
 	READ_UINT64_FIELD(query_mem);
 	READ_NODE_FIELD(intoClause);
 	READ_NODE_FIELD(copyIntoClause);
+	READ_INT8_FIELD(metricsQueryType);
 	READ_DONE();
 }
 
@@ -2497,6 +2502,7 @@ void readJoinInfo(Join *local_node)
 	readPlanInfo((Plan *) local_node);
 
 	READ_BOOL_FIELD(prefetch_inner);
+	READ_BOOL_FIELD(prefetch_joinqual);
 
 	READ_ENUM_FIELD(jointype, JoinType);
 	READ_NODE_FIELD(joinqual);
@@ -2999,6 +3005,17 @@ _readLockRows(void)
 
 	READ_NODE_FIELD(rowMarks);
 	READ_INT_FIELD(epqParam);
+
+	READ_DONE();
+}
+
+static LockingClause *
+_readLockingClause(void)
+{
+	READ_LOCALS(LockingClause);
+
+	READ_NODE_FIELD(lockedRels);
+	READ_ENUM_FIELD(strength, LockClauseStrength);
 
 	READ_DONE();
 }
@@ -3975,6 +3992,10 @@ readNodeBinary(void)
 				break;
 			case T_CreateTransformStmt:
 				return_value = _readCreateTransformStmt();
+				break;
+
+			case T_LockingClause:
+				return_value = _readLockingClause();
 				break;
 
 			default:

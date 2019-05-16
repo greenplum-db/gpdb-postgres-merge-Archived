@@ -132,21 +132,6 @@ BackoffBackendTick(void)
 
 #ifndef WIN32
 
-#ifdef USE_TEST_UTILS
-#define CHECK_FOR_INTERRUPTS() \
-do { \
-	if (gp_test_time_slice) \
-	{ \
-		CHECK_TIME_SLICE(); \
-	} \
-\
-	if (InterruptPending) \
-		ProcessInterrupts(__FILE__, __LINE__); \
-	BackoffBackendTick(); \
-	ReportOOMConsumption(); \
-	RedZoneHandler_DetectRunawaySession();\
-} while(0)
-#else
 #define CHECK_FOR_INTERRUPTS() \
 do { \
 	if (InterruptPending) \
@@ -155,7 +140,6 @@ do { \
 	ReportOOMConsumption(); \
 	RedZoneHandler_DetectRunawaySession();\
 } while(0)
-#endif   /* USE_TEST_UTILS */
 
 #else							/* WIN32 */
 

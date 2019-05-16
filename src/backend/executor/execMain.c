@@ -678,8 +678,8 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			 * work for this query.
 			 */
 			needDtxTwoPhase = ExecutorSaysTransactionDoesWrites();
-			dtmPreCommand("ExecutorStart", "(none)", queryDesc->plannedstmt,
-						  needDtxTwoPhase, true /* wantSnapshot */, queryDesc->extended_query );
+			if (needDtxTwoPhase)
+				setupTwoPhaseTransaction();
 
 			if (queryDesc->ddesc != NULL)
 			{
@@ -1161,6 +1161,9 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 {
 	EState	   *estate;
 	MemoryContext oldcontext;
+	
+	/* GPDB: whether this is a inner query for extension usage */
+	bool		isInnerQuery;
 
 	/* sanity checks */
 	Assert(queryDesc != NULL);
@@ -1170,6 +1173,9 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 	Assert(estate != NULL);
 
 	Assert(NULL != queryDesc->plannedstmt && MEMORY_OWNER_TYPE_Undefined != queryDesc->memoryAccountId);
+
+	/* GPDB: Save SPI flag first in case the memory context of plannedstmt is cleaned up*/
+	isInnerQuery = estate->es_plannedstmt->metricsQueryType > TOP_LEVEL_QUERY;
 
 	START_MEMORY_ACCOUNT(queryDesc->memoryAccountId);
 
@@ -1288,7 +1294,7 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 
 	/* GPDB hook for collecting query info */
 	if (query_info_collect_hook)
-		(*query_info_collect_hook)(METRICS_QUERY_DONE, queryDesc);
+		(*query_info_collect_hook)(isInnerQuery ? METRICS_INNER_QUERY_DONE : METRICS_QUERY_DONE, queryDesc);
 
 	/* Reset queryDesc fields that no longer point to anything */
 	queryDesc->tupDesc = NULL;
@@ -1805,7 +1811,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 				containRoot = true;
 			}
 
-			/* FIXME: does relid here have to be the root's OID? */
 			estate->es_result_partitions = BuildPartitionNodeFromRoot(relid);
 
 			/*
@@ -1817,7 +1822,35 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			 *     get each element's relation oid.
 			 */
 			if (containRoot)
-				all_relids = find_all_inheritors(relid, NoLock, NULL);
+			{
+				/*
+				 * For partition table, INSERT plan only contains the root table
+				 * in the result relations, whereas DELETE and UPDATE contain
+				 * both root table and the partition tables.
+				 *
+				 * Without locking the partition relations on QD when INSERT
+				 * the following dead lock scenario may happen between INSERT and
+				 * AppendOnly VACUUM drop phase on the partition table:
+				 *
+				 * 1. AO VACUUM drop on QD: acquired AccessExclusiveLock
+				 * 2. INSERT on QE: acquired RowExclusiveLock
+				 * 3. AO VACUUM drop on QE: waiting for AccessExclusiveLock
+				 * 4. INSERT on QD: waiting for AccessShareLock at ExecutorEnd()
+				 *
+				 * 2 blocks 3, 1 blocks 4, 1 and 2 will not release their locks
+				 * until 3 and 4 proceed. Hence INSERT needs to Lock the partition
+				 * tables on QD here (before 2) to prevent this dead lock.
+				 *
+				 * FIXME: Ideally we may want to
+				 * 1) Lock the partition table during the parse stage just as when
+				 *    we lock the root oid
+				 * 2) Only lock the particular partition table that we are
+				 *    inserting into, right now we don't have that info here.
+				 */
+				lockmode = (operation == CMD_INSERT && rel_is_partitioned(relid)) ?
+					RowExclusiveLock : NoLock;
+				all_relids = find_all_inheritors(relid, lockmode, NULL);
+			}
 			else
 			{
 				ListCell *lc;

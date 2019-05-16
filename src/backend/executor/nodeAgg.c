@@ -15,7 +15,7 @@
  *
  *	  The transition function might actually be a "combine" function, if this
  *	  Aggregate node is part of a multi-stage aggregate. Note that although
- *	  we use the same "combine" functions and catalogs as PostgrSQL 9.4,
+ *	  we use the same "combine" functions and catalogs as PostgreSQL 9.4,
  *	  the implementation in this file is quite different. TODO: refactor
  *	  this to not be so different.
  *
@@ -2133,9 +2133,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	ExecAssignResultTypeFromTL(&aggstate->ss.ps);
 	ExecAssignProjectionInfo(&aggstate->ss.ps, NULL);
 
-#if 0
-	aggstate->ss.ps.ps_TupFromTlist = false;
-#endif
+	aggstate->ps_TupFromTlist = false;
 
 	/*
 	 * get the count of aggregates in targetlist and quals

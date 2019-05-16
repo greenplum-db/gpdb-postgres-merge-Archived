@@ -156,7 +156,7 @@ void FtsProbeMain(int argc, char *argv[]);
  */
 bool am_mirror = false;
 /* GPDB specific flag to handle deadlocks during parallel segment start. */
-bool pm_launch_walreceiver = false;
+volatile bool *pm_launch_walreceiver = NULL;
 
 /*
  * Possible types of a backend. Beyond being the possible bkend_type values in
@@ -215,6 +215,7 @@ typedef enum pmsub_type
 	BackoffProc,
 	PerfmonSegmentInfoProc,
 	GlobalDeadLockDetectorProc,
+	DtxRecoveryProc,
 	MaxPMSubType
 } PMSubType;
 
@@ -428,6 +429,9 @@ static PMSubProc PMSubProcList[MaxPMSubType] =
 	{0, GlobalDeadLockDetectorProc,
 	(PMSubStartCallback*)&global_deadlock_detector_start,
 	"global deadlock detector process", PMSUBPROC_FLAG_QD, true},
+	{0, DtxRecoveryProc,
+	(PMSubStartCallback*)&dtx_recovery_start,
+	"dtx recovery process", PMSUBPROC_FLAG_QD, true},
 };
 
 static PMSubProc *FTSSubProc = &PMSubProcList[FtsProbeProc];
@@ -1774,6 +1778,8 @@ ServiceStartable(PMSubProc *subProc)
 		result = 0;
 	else if (subProc->procType == GlobalDeadLockDetectorProc && !gp_enable_global_deadlock_detector)
 		result = 0;
+	else if (subProc->procType == DtxRecoveryProc && *shmDtmStarted)
+		result = 0;
 	else
 		result = ((subProc->flags & flagNeeded) != 0);
 
@@ -2204,12 +2210,23 @@ initMasks(fd_set *rmask)
  * This function is called right after removing RECOVERY_COMMAND_FILE upon
  * receiving a promotion request.
  */
-void
+void inline
 ResetMirrorReadyFlag(void)
 {
-	pm_launch_walreceiver = false;
+	*pm_launch_walreceiver = false;
 }
 
+static inline void
+SetMirrorReadyFlag(void)
+{
+	*pm_launch_walreceiver = true;
+}
+
+static inline bool
+GetMirrorReadyFlag(void)
+{
+	return *pm_launch_walreceiver;
+}
 
 /*
  * Read a client's startup packet and do something according to it.
@@ -2622,7 +2639,15 @@ retry1:
 		case CAC_MIRROR_READY:
 			if (am_ftshandler)
 			{
-				Assert(am_mirror);
+				/* Even if the connection state is MIRROR_READY, the role
+				 * may change to primary during promoting. Hence, we need
+				 * to decline this connection to avoid confusion. This needs
+				 * to wait until promotion is finished and pmState changed
+				 * to PM_RUN.
+				 */
+				if (!am_mirror)
+					ereport(FATAL,
+							(errmsg("mirror is being promoted.")));
 				break;
 			}
 
@@ -2785,7 +2810,7 @@ canAcceptConnections(void)
 		 * If the wal receiver has been launched at least once, return that
 		 * the mirror is ready.
 		 */
-		else if (pm_launch_walreceiver)
+		else if (GetMirrorReadyFlag())
 			return CAC_MIRROR_READY;
 		else if (!FatalError &&
 				 (pmState == PM_STARTUP ||
@@ -6145,7 +6170,7 @@ MaybeStartWalReceiver(void)
 		WalReceiverRequested = false;
 
 		/* wal receiver has been launched */
-		pm_launch_walreceiver = true;
+		SetMirrorReadyFlag();
 	}
 }
 
@@ -6409,6 +6434,31 @@ bgworker_should_start_now(BgWorkerStartTime start_time)
 }
 
 /*
+ * Does the current postmaster state require starting a worker with the
+ * specified start_time?
+ */
+static bool
+bgworker_should_start_mpp(BackgroundWorker *worker)
+{
+	BgWorkerStartTime start_time = worker->bgw_start_time;
+
+	/*
+	 * background worker is not scheduled until distributed transactions
+	 * are recovered if it needs to start at BgWorkerStart_RecoveryFinished
+	 * (read-write ready) or BgWorkerStart_ConsistentState (ready-only ready)
+	 */
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		if (!*shmDtmStarted &&
+			(start_time == BgWorkerStart_ConsistentState ||
+			 start_time == BgWorkerStart_RecoveryFinished))
+			return false;
+	}
+
+	return true;
+}
+
+/*
  * Allocate the Backend struct for a connected background worker, but don't
  * add it to the list of backends just yet.
  *
@@ -6538,6 +6588,13 @@ maybe_start_bgworker(void)
 
 		if (bgworker_should_start_now(rw->rw_worker.bgw_start_time))
 		{
+			if (!bgworker_should_start_mpp(&rw->rw_worker))
+			{
+				/* tell ServerLoop to try again */
+				StartWorkerNeeded = true;
+				continue;
+			}
+
 			/* reset crash time before trying to start worker */
 			rw->rw_crashed_at = 0;
 

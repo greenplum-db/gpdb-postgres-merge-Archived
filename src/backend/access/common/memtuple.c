@@ -557,11 +557,6 @@ static inline unsigned char *memtuple_get_nullp(MemTuple mtup, MemTupleBinding *
 {
 	return mtup->PRIVATE_mt_bits + (mtbind_has_oid(pbind) ? sizeof(Oid) : 0);
 }
-static inline int memtuple_get_nullp_len(MemTupleBinding *pbind)
-{
-	return (pbind->tupdesc->natts + 7) >> 3;
-}
-
 
 /* form a memtuple from values and isnull, to a prespecified buffer */
 MemTuple memtuple_form_to(
@@ -638,7 +633,7 @@ MemTuple memtuple_form_to(
 	if(!destlen)
 	{
 		Assert(!mtup);
-		mtup = (MemTuple) palloc(len);
+		mtup = (MemTuple) palloc0(len);
 	}
 	else if(*destlen < len)
 	{
@@ -669,6 +664,7 @@ MemTuple memtuple_form_to(
 	{
 		*destlen = len;
 		Assert(mtup);
+		memset(mtup, 0, len);
 	}
 
 	/* Set mtlen, this set the lead bit, len, and clears hasnull bit 
@@ -700,9 +696,6 @@ MemTuple memtuple_form_to(
 		/* if null bitmap is more than 4 bytes, add needed space */
 		start += pbind->null_bitmap_extra_size;
 		varlen_start += pbind->null_bitmap_extra_size;
-
-		/* clear null bitmap. */
-		memset(nullp, 0, memtuple_get_nullp_len(pbind));
 	}
 
 	/* It is very important to setup the null bitmap first before we 

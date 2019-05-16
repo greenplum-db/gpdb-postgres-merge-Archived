@@ -700,7 +700,7 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 	{
 		Assert(Gp_role == GP_ROLE_EXECUTE);
 		lmode = AccessExclusiveLock;
-
+		SIMPLE_FAULT_INJECTOR(VacuumRelationOpenRelationDuringDropPhase);
 	}
 	else if (!(options & VACOPT_VACUUM))
 		lmode = ShareUpdateExclusiveLock;

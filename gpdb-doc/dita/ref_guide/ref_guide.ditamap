@@ -33,7 +33,6 @@
 			<topicref href="sql_commands/ALTER_SCHEMA.xml"/>
 			<topicref href="sql_commands/ALTER_SEQUENCE.xml"/>
 			<topicref href="sql_commands/ALTER_SERVER.xml"/>
-      <topicref href="sql_commands/ALTER_SYSTEM.xml"/>
 			<topicref href="sql_commands/ALTER_TABLE.xml"/>
 			<topicref href="sql_commands/ALTER_TABLESPACE.xml"/>
 			<topicref href="sql_commands/ALTER_TEXT_SEARCH_CONFIGURATION.xml"/>
@@ -166,6 +165,7 @@
 		</topicref>
 		<topicref href="SQL2008_support.xml"/>
 		<topicref href="env_var_ref.xml" navtitle="Greenplum Environment Variables" id="env_var_ref"/>
+		<topicref href="sql-keywords.xml" navtitle="Reserved Identifiers and SQL Keywords" id="sql_keywords"/>
 		<topicref href="system_catalogs/catalog_ref.xml#topic1">
 			<topicref href="system_catalogs/catalog_ref-tables.xml#topic1"/>
 			<topicref href="system_catalogs/catalog_ref-views.xml#topic1"/>
@@ -296,9 +296,8 @@
 			id="pl_perl"/>
 		<topicref href="extensions/madlib.xml" navtitle="Greenplum MADlib Extension for Analytics"
 			id="madlib"/>
+		<topicref href="modules/modules.ditamap" format="ditamap"/>
 		<topicref href="extensions/gppc.xml" navtitle="Greenplum Partner Connector API" id="gppc"/>
-		<topicref href="extensions/fuzzystrmatch.xml"
-			navtitle="Greenplum Fuzzy String Match Extension" id="fuzzystrmatch"/>
 		<topicref href="extensions/bgworker.xml"/>
 		<topicref href="feature_summary.xml" navtitle="Summary of Greenplum Features"
 			id="feature_summary"/>

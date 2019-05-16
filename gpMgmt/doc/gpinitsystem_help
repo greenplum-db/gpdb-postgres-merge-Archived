@@ -13,13 +13,13 @@ gpinitsystem -c <gpinitsystem_config>
             [-B <parallel_processes>] 
             [-p <postgresql_conf_param_file>]
             [-s <standby_master_host>
-                [-P <standby_master_port>] [-F <standby_master_datadir>]]
+                [-P <standby_master_port>] [ {-S | --standby-datadir} <standby_master_datadir>]
             [--max_connections=<number>] [--shared_buffers=<size>]
             [--locale=<locale>] [--lc-collate=<locale>] 
             [--lc-ctype=<locale>] [--lc-messages=<locale>] 
             [--lc-monetary=<locale>] [--lc-numeric=<locale>] 
             [--lc-time=<locale>] [--su_password=<password>] 
-            [-S] [-a] [-q] [-l <logfile_directory>] [-D]
+            [--mirror-mode={group|spread}] [-a] [-q] [-l <logfile_directory>] [-D]
 
 gpinitsystem -v
 
@@ -203,7 +203,7 @@ OPTIONS
  is the same as the primary master.
 
 
--F <standby_master_datadir>
+--segment-datadir=<standby_master_datadir> | -S <standby_master_datadir>
 
  Optional and effective only when specified with -s.  Specifies the
  data directory of the standby.
@@ -221,14 +221,13 @@ OPTIONS
  change default passwords immediately after installation.
 
 
--S
+--mirror-mode={group|spread}
 
- If mirroring parameters are specified, spreads the mirror segments 
- across the available hosts. The default is to group the set of mirror 
- segments together on an alternate host from their primary segment set. 
- Mirror spreading will place each mirror on a different host within the 
- Greenplum Database array. Spreading is only allowed if there is a 
- sufficient number of hosts in the array (number of hosts is greater 
+ Uses the specified mirroring mode. The default is to group the set of mirror
+ segments together on an alternate host from their primary segment set.
+ Specifying spread will place each mirror on a different host within the
+ Greenplum Database array. Spreading is only allowed if there is a
+ sufficient number of hosts in the array (number of hosts is greater
  than the number of segment instances).
 
 
@@ -357,27 +356,6 @@ MIRROR_PORT_BASE
  calculated by PORT_BASE.
 
 
-REPLICATION_PORT_BASE
-
- Optional. This specifies the base number by which the port numbers 
- for the primary file replication process are calculated. The 
- first replication port on a host is set as REPLICATION_PORT_BASE, 
- and then incremented by one for each additional primary segment 
- on that host. Valid values range from 1 through 65535 and cannot 
- conflict with the ports calculated by PORT_BASE or MIRROR_PORT_BASE.
-
-
-MIRROR_REPLICATION_PORT_BASE
-
- Optional. This specifies the base number by which the port numbers 
- for the mirror file replication process are calculated. The first 
- mirror replication port on a host is set as MIRROR_REPLICATION_PORT_BASE, 
- and then incremented by one for each additional mirror segment on 
- that host. Valid values range from 1 through 65535 and cannot conflict 
- with the ports calculated by PORT_BASE, MIRROR_PORT_BASE, 
- or REPLICATION_PORT_BASE.
-
-
 MIRROR_DATA_DIRECTORY
 
  Optional. This specifies the data storage location(s) where the utility 
@@ -414,4 +392,4 @@ Initialize a Greenplum Database array with an optional standby master host:
 SEE ALSO
 *****************************************************
 
-gpseginstall, gpssh-exkeys
+gpssh-exkeys

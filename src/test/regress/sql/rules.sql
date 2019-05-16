@@ -1047,7 +1047,6 @@ create view rule_v1(x) as select * from (values(1,2)) v(q,w);
 \d+ rule_v1
 drop view rule_v1;
 
-<<<<<<< HEAD
 -- test for pg_get_functiondef properly regurgitating SET parameters
 -- Note that the function is kept around to stress pg_dump.
 CREATE FUNCTION func_with_set_params() RETURNS integer
@@ -1059,7 +1058,7 @@ CREATE FUNCTION func_with_set_params() RETURNS integer
     SET search_path TO PG_CATALOG, "Mixed/Case", 'c:/''a"/path', '', '0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789'
     IMMUTABLE STRICT;
 SELECT pg_get_functiondef('func_with_set_params()'::regprocedure);
-=======
+
 --
 -- Check DO INSTEAD rules with ON CONFLICT
 --
@@ -1157,4 +1156,8 @@ DROP RULE hat_upsert ON hats;
 
 drop table hats;
 drop table hat_data;
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+
+-- test rule for select-for-update
+create table t_test_rules_select_for_update (c int) distributed randomly;
+create rule myrule as on insert to t_test_rules_select_for_update
+do instead select * from t_test_rules_select_for_update for update;

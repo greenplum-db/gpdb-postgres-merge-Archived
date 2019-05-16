@@ -4,36 +4,6 @@ import socket
 import inspect
 from gppylib.commands.base import Command
 
-class GpSegInstall(Command):
-    """
-    This is a wrapper for gpseginstall
-    """
-    def __init__(self, gphome, hosts):
-        self.hostfile = '/tmp/gpseginstall_hosts'
-        self.gphome = gphome
-        self.hosts = hosts
-        cmd_str = "gpseginstall -f %s -u %s" %(self.hostfile, getpass.getuser())
-        Command.__init__(self, 'run gpseginstall', cmd_str)
-
-    def run(self, validate=True):
-        print "Running gpseginstall: %s" % self
-        with open(self.hostfile, 'w') as f:
-            for host in self.hosts[1:]:
-                f.write(host)
-                f.write('\n')
-
-        res = run_shell_command('gpssh-exkeys -f %s' %self.hostfile, 'gpssh-exkeys')
-        if res['rc'] > 0:
-            raise Exception("Failed to do gpssh-exkeys: %s" %res['stderr'])
-
-        res = run_shell_command("gpssh -f %s -e 'mkdir -p %s'" %(self.hostfile, self.gphome), 'gpssh-exkeys')
-        if res['rc'] > 0:
-            raise Exception("Failed to create gphome directories on segments: %s" %res[stderr])
-
-        Command.run(self, validateAfter=validate)
-        result = self.get_results()
-        return result
-
 class GpDeleteSystem(Command):
     """This is a wrapper for gpdeletesystem."""
     def __init__(self, mdd=None):
@@ -127,8 +97,11 @@ class TestCluster:
     def reset_cluster(self):
         reset_hosts(self.hosts, test_base_dir = self.base_dir)
 
-    def create_cluster(self, with_mirrors=False):
+    def create_cluster(self, with_mirrors=False, mirroring_configuration='group'):
         # Generate the config files to initialize the cluster
+        # todo: DATA_DIRECTORY and MIRROR_DATA_DIRECTORY should have only one directory, not 2 when specifying spread
+        if mirroring_configuration not in ['group', 'spread']:
+            raise Exception('Mirroring configuration must be group or spread')
         self.mirror_enabled = with_mirrors
         self._generate_gpinit_config_files()
         assert os.path.exists(self.init_file)
@@ -136,7 +109,8 @@ class TestCluster:
 
         # run gpinitsystem
         clean_env = 'unset MASTER_DATA_DIRECTORY; unset PGPORT;'
-        gpinitsystem_cmd = clean_env + 'gpinitsystem -a -c  %s ' % (self.init_file)
+        segment_mirroring_option = '--mirror-mode=spread' if mirroring_configuration == 'spread' else ''
+        gpinitsystem_cmd = clean_env + 'gpinitsystem -a -c  %s %s' % (self.init_file, segment_mirroring_option)
         res = run_shell_command(gpinitsystem_cmd, 'run gpinitsystem', verbose=True)
         # initsystem returns 1 for warnings and 2 for errors
         if res['rc'] > 1:

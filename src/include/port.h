@@ -60,7 +60,6 @@ extern void get_html_path(const char *my_exec_path, char *ret_path);
 extern void get_man_path(const char *my_exec_path, char *ret_path);
 extern bool get_home_path(char *ret_path);
 extern void get_parent_directory(char *path);
-extern char *gp_mkdtemp(char *template_path);
 
 /* common/pgfnames.c */
 extern char **pgfnames(const char *path);

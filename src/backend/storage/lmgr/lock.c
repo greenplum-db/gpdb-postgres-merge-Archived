@@ -822,14 +822,6 @@ LockAcquireExtended(const LOCKTAG *locktag,
 			return LOCKACQUIRE_ALREADY_HELD;
 	}
 	
-#ifdef USE_TEST_UTILS_X86
-	if (gp_test_deadlock_hazard && !dontWait)
-	{
-		/* blocking lock request, check if any lightweight lock is already held */
-		LWLockHeldDetect(locktag, lockmode);
-	}
-#endif /* USE_TEST_UTILS_X86 */
-
 	/*
 	 * lockHolder is the gang member that should hold and manage locks for this
 	 * transaction.  In Utility mode, or on the QD, it's allways myself.
@@ -4612,4 +4604,22 @@ setFPHoldTillEndXact(Oid relid)
 	LWLockRelease(proc->backendLock);
 
 	return result;
+}
+
+/*
+ * Check whether a waiter's request lockmode conflict with
+ * the holder's hold mask
+ */
+bool
+CheckWaitLockModeConflictHoldMask(LOCKTAG tag, LOCKMODE waitLockMode, LOCKMASK holderMask)
+{
+	int			waiterConflictMask;
+	LOCKMETHODID lockmethodid = (LOCKMETHODID) tag.locktag_lockmethodid;
+
+	Assert(0 < lockmethodid && lockmethodid < lengthof(LockMethods));
+
+	waiterConflictMask = LockMethods[lockmethodid]->conflictTab[waitLockMode];
+	if (holderMask & waiterConflictMask)
+		return true;
+	return false;
 }

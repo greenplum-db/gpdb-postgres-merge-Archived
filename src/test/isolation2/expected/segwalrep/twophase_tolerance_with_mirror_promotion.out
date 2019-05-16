@@ -22,8 +22,6 @@
 --
 -- end_matchsubs
 
-CREATE extension IF NOT EXISTS gp_inject_fault;
-CREATE
 1:set dtx_phase2_retry_count=10;
 SET
 !\retcode gpconfig -c gp_fts_probe_retries -v 2 --masteronly;
@@ -210,10 +208,11 @@ DROP
  p    | m              
 (2 rows)
 
-5:!\retcode gprecoverseg -aF;
+5:!\retcode gprecoverseg -aF \-\-no-progress;
 -- start_ignore
 -- end_ignore
 (exited with code 0)
+
 5:!\retcode gprecoverseg -ar;
 -- start_ignore
 -- end_ignore
