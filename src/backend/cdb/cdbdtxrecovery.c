@@ -644,6 +644,8 @@ dtx_recovery_start(void)
 
 		case 0:
 			/* in postmaster child ... */
+			InitPostmasterChild();
+
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
 			DtxRecoveryMain(0, NULL);
@@ -666,30 +668,10 @@ DtxRecoveryMain(int argc, char *argv[])
 	sigjmp_buf	local_sigjmp_buf;
 	char	   *fullpath;
 
-	IsUnderPostmaster = true;
-
 	am_dtx_recovery = true;
 
 	/* Stay away from PMChildSlot */
 	MyPMChildSlot = -1;
-
-	/* Reset MyProcPid */
-	MyProcPid = getpid();
-
-	/* Record Start Time for logging */
-	MyStartTime = time(NULL);
-
-	/* Lose the postmaster's on-exit routines */
-	on_exit_reset();
-
-	/*
-	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too
-	 */
-#ifdef HAVE_SETSID
-	if (setsid() < 0)
-		elog(FATAL, "setsid() failed: %m");
-#endif
 
 	/* Identify myself via ps */
 	init_ps_display("dtx recovery process", "", "", "");
