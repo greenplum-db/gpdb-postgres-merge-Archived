@@ -256,7 +256,6 @@ ERROR:  relation "as_select1" already exists
 CREATE TABLE IF NOT EXISTS as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 NOTICE:  relation "as_select1" already exists, skipping
 DROP TABLE as_select1;
-
 -- Test github issue #7340. truncating a toast unlogged table fails.
 CREATE UNLOGGED TABLE unlogged_toast (a text);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
