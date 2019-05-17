@@ -235,8 +235,23 @@ ProcessCatchupInterrupt(void)
 		else
 		{
 			elog(DEBUG4, "ProcessCatchupEvent outside transaction");
+
+			/*
+			 * GPDB_95_MERGE_FIXME: GPDB disallow a new transaction if
+			 * the distributed transaction is under certain state like
+			 * DTX_CONTEXT_QE_PREPARED, here temporarily set context to
+			 * DTX_CONTEXT_LOCAL_ONLY can workaround the restriction.
+			 *
+			 * Can we remove such restrictions?
+			 */
+			DtxContext  saveDistributedTransactionContext;
+			saveDistributedTransactionContext = DistributedTransactionContext;
+			DistributedTransactionContext = DTX_CONTEXT_LOCAL_ONLY;
+
 			StartTransactionCommand();
 			CommitTransactionCommand();
+
+			DistributedTransactionContext = saveDistributedTransactionContext;
 		}
 
 		in_process_catchup_event = 0;
