@@ -275,7 +275,13 @@ cxt_free(void *manager, void *pointer)
 		pfree(pointer);
 }
 
-
+/*
+ * GPDB version of datumCopy used to acceleration aggregation.
+ * In upstream, datumCopy palloc new memory to copy the new transValue to it and
+ * pfree the old transValue memory. In GPDB, if the memory of old transValue can
+ * hold the new transValue, the new transValue will be copied to the memory of
+ * old transValue.
+ */
 Datum
 datumCopyWithMemManager(Datum oldvalue, Datum value, bool typByVal, int typLen,
 						MemoryManagerContainer *mem_manager)
@@ -286,18 +292,26 @@ datumCopyWithMemManager(Datum oldvalue, Datum value, bool typByVal, int typLen,
 		res = value;
 	else
 	{
-		Size realSize;
-		Size old_realSize = 0;
-		char *s;
+		Size	realSize = 0;
+		Size	old_realSize = 0;
+		char	*resultptr;
 
-		if (DatumGetPointer(value) == NULL)
-			return PointerGetDatum(NULL);
-
+		/* get the old value size */
 		if (DatumGetPointer(oldvalue) != NULL)
-			old_realSize = MAXALIGN(datumGetSize(oldvalue, typByVal, typLen));
-		
-		realSize = datumGetSize(value, typByVal, typLen);
-
+		{
+			if (typLen == -1 && VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(oldvalue)))
+				old_realSize = MAXALIGN(EOH_get_flat_size(DatumGetEOHP(oldvalue)));
+			else
+				old_realSize = MAXALIGN(datumGetSize(oldvalue, typByVal, typLen));
+		}
+	
+		/* get real size of new value */
+		if (typLen == -1 && VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(value)))
+			realSize = MAXALIGN(EOH_get_flat_size(DatumGetEOHP(value)));
+		else
+			realSize = MAXALIGN(datumGetSize(value, typByVal, typLen));
+	
+		/* reuse the old value memory if the old size can hold the new value */
 		if (old_realSize == 0 || old_realSize < realSize)
 		{
 			int alloc_size = MAXALIGN(mem_manager->realloc_ratio * old_realSize);
@@ -309,15 +323,20 @@ datumCopyWithMemManager(Datum oldvalue, Datum value, bool typByVal, int typLen,
 				(*mem_manager->free)(mem_manager->manager, DatumGetPointer(oldvalue));
 			}
 			
-			s = (char *) (*mem_manager->alloc)(mem_manager->manager, alloc_size);
+			resultptr = (char *) (*mem_manager->alloc)(mem_manager->manager, alloc_size);
 		}
-			   
 		else
-			s = (char *) DatumGetPointer(oldvalue);
-		
-		memcpy(s, DatumGetPointer(value), realSize);
-		res = PointerGetDatum(s);
+			resultptr = (char *) DatumGetPointer(oldvalue);
+	
+		/* copy new datum */
+		if (typLen == -1 && VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(value)))
+			EOH_flatten_into(DatumGetEOHP(value), (void *) resultptr, realSize);
+		else
+			memcpy(resultptr, DatumGetPointer(value), realSize);
+
+		res = PointerGetDatum(resultptr);
 	}
+
 	return res;
 }
 
