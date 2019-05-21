@@ -1109,8 +1109,6 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 		MemoryContextSwitchTo(oldcontext);
 	}
 
-    relation->rd_cdbDefaultStatsWarningIssued = false;
-
 	/*
 	 * now we can free the memory allocated for pg_class_tuple
 	 */
@@ -5220,7 +5218,6 @@ load_relcache_init_file(bool shared)
 		rel->rd_amcache = NULL;
 		MemSet(&rel->pgstat_info, 0, sizeof(rel->pgstat_info));
         rel->rd_cdbpolicy = NULL;
-        rel->rd_cdbDefaultStatsWarningIssued = false;
 
 		/*
 		 * Recompute lock and physical addressing info.  This is needed in

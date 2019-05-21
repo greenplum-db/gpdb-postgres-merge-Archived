@@ -4,10 +4,19 @@ subdir = contrib
 top_builddir = ..
 include $(top_builddir)/src/Makefile.global
 
+# Greenplum specific changes to the targetlist:
+# tsearch2 and postgres_fdw are currently disabled due to test failures.
+# cube and the related earthdistance are disabled since GPDB define CUBE
+# as a keyword. lo is disabled since large objects aren't supported.
+# adminpack is disabled since the functionality has been imported into
+# GPDB.
+
 SUBDIRS = \
 		auth_delay	\
 		auto_explain	\
 		btree_gin	\
+		btree_gist	\
+		chkpass		\
 		citext		\
 		dblink		\
 		dict_int	\
@@ -15,7 +24,11 @@ SUBDIRS = \
 		file_fdw	\
 		fuzzystrmatch	\
 		hstore		\
+		intagg		\
 		intarray	\
+		isn		\
+		ltree		\
+		oid2name	\
 		pageinspect	\
 		passwordcheck	\
 		pg_buffercache	\
@@ -27,31 +40,22 @@ SUBDIRS = \
 		pgcrypto	\
 		pgrowlocks	\
 		pgstattuple	\
-		postgres_fdw	\
 		seg		\
 		spi		\
+		tablefunc	\
 		tcn		\
 		test_decoding	\
 		tsm_system_rows \
 		tsm_system_time \
-		tsearch2	\
-		unaccent
-# GPDB_95_MERGE_FIXME: Why some files (especially Makefile) are missing under
-#		earthdistance	\
-# GPDB_92_MERGE_FIXME: Why some files (especially Makefile) are missing under
-# these directories?
-#               seg         \
-#		tablefunc	\
-#		vacuumlo
-#		worker_spi 
+		unaccent	\
+		vacuumlo
 
 # Greenplum-specific additions (to ease merge pain).
 SUBDIRS += \
 		formatter \
 		formatter_fixedwidth \
 		extprotocol \
-		indexscan \
-		vacuumlo
+		indexscan
 
 ifeq ($(with_openssl),yes)
 SUBDIRS += sslinfo

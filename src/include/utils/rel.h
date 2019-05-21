@@ -108,7 +108,7 @@ typedef struct RelationData
 	MemoryContext rd_rulescxt;	/* private memory cxt for rd_rules, if any */
 	TriggerDesc *trigdesc;		/* Trigger info, or NULL if rel has none */
     struct GpPolicy *rd_cdbpolicy; /* Partitioning info if distributed rel */
-    bool        rd_cdbDefaultStatsWarningIssued;
+
 	/* use "struct" here to avoid needing to include rowsecurity.h: */
 	struct RowSecurityDesc *rd_rsdesc;	/* row security policies, or NULL */
 
