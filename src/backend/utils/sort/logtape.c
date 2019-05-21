@@ -194,7 +194,7 @@ LoadLogicalTapeSetState(BufFile *statefile, BufFile *tapefile)
 	LogicalTape *lt;
 	size_t readSize;
 
-	lts = (LogicalTapeSet *) palloc(sizeof(LogicalTapeSet));
+	lts = (LogicalTapeSet *) palloc(offsetof(LogicalTapeSet, tapes) + sizeof(LogicalTape));
 	lts->pfile = tapefile;
 	lts->nTapes = 1;
 	lt = &lts->tapes[0];
