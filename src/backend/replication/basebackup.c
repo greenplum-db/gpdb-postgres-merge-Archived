@@ -49,6 +49,7 @@
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "utils/snapmgr.h"
+#include "utils/tarrable.h"
 #include "utils/timestamp.h"
 
 

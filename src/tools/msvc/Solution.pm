@@ -133,6 +133,7 @@ sub GenerateFiles
 		if (/^AC_INIT\(\[Greenplum Database\], \[([^\]]+)\]/)
 		{
 			$self->{gpdbver} = $1;
+			$self->{gpdbmajorver} = substr $1, 0, 1;
 		}
 		if (/\[PG_PACKAGE_VERSION=([^\]]+)\]/)
 		{
@@ -172,6 +173,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 			print O;
 		}
 		print O "#define GP_VERSION \"$self->{gpdbver}\"\n";
+		print O "#define GP_MAJORVERSION \"$self->{gpdbmajorver}\"\n";
 		print O "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
 		print O "#define LOCALEDIR \"/share/locale\"\n"
 		  if ($self->{options}->{nls});

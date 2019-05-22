@@ -92,6 +92,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "utils/tarrable.h"
 #include "utils/tqual.h"
 
 #include "catalog/heap.h"
@@ -100,9 +101,6 @@
 #include "cdb/cdbvars.h"
 #include "cdb/cdbutil.h"
 #include "miscadmin.h"
-
-
-#define MAX_TARABLE_SYMLINK_PATH_LENGTH 100
 
 
 /* GUC variables */

@@ -27,6 +27,8 @@
 #endif
 #include "access/xact.h"
 #include "cdb/cdbutil.h"
+#include "libpq/libpq.h"
+#include "libpq/pqformat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/fts.h"
@@ -53,6 +55,8 @@ typedef struct FaultInjectorShmem_s {
 	
 	HTAB		*hash;
 } FaultInjectorShmem_s;
+
+bool am_faulthandler = false;
 
 static	FaultInjectorShmem_s *faultInjectorShmem = NULL;
 
@@ -104,18 +108,16 @@ FaultInjectorStateEnumToString[] = {
 #undef FI_STATE
 };
 
-/*
- *
- */
 FaultInjectorType_e
-FaultInjectorTypeStringToEnum(
-							  char*		faultTypeString)
+FaultInjectorTypeStringToEnum(char* faultTypeString)
 {
 	FaultInjectorType_e	faultTypeEnum = FaultInjectorTypeMax;
 	int	ii;
 	
-	for (ii=0; ii < FaultInjectorTypeMax; ii++) {
-		if (strcmp(FaultInjectorTypeEnumToString[ii], faultTypeString) == 0) {
+	for (ii=FaultInjectorTypeNotSpecified+1; ii < FaultInjectorTypeMax; ii++)
+	{
+		if (strcmp(FaultInjectorTypeEnumToString[ii], faultTypeString) == 0)
+		{
 			faultTypeEnum = ii;
 			break;
 		}
@@ -123,18 +125,16 @@ FaultInjectorTypeStringToEnum(
 	return faultTypeEnum;
 }
 
-/*
- *
- */
 FaultInjectorIdentifier_e
-FaultInjectorIdentifierStringToEnum(
-									char*	faultName)
+FaultInjectorIdentifierStringToEnum(char* faultName)
 {
 	FaultInjectorIdentifier_e	faultId = FaultInjectorIdMax;
 	int	ii;
 	
-	for (ii=0; ii < FaultInjectorIdMax; ii++) {
-		if (strcmp(FaultInjectorIdentifierEnumToString[ii], faultName) == 0) {
+	for (ii=FaultInjectorIdNotSpecified+1; ii < FaultInjectorIdMax; ii++)
+	{
+		if (strcmp(FaultInjectorIdentifierEnumToString[ii], faultName) == 0)
+		{
 			faultId = ii;
 			break;
 		}
@@ -142,18 +142,16 @@ FaultInjectorIdentifierStringToEnum(
 	return faultId;
 }
 
-/*
- *
- */
 DDLStatement_e
-FaultInjectorDDLStringToEnum(
-									char*	ddlString)
+FaultInjectorDDLStringToEnum(char* ddlString)
 {
 	DDLStatement_e	ddlEnum = DDLMax;
 	int	ii;
 	
-	for (ii=0; ii < DDLMax; ii++) {
-		if (strcmp(FaultInjectorDDLEnumToString[ii], ddlString) == 0) {
+	for (ii=DDLNotSpecified; ii < DDLMax; ii++)
+	{
+		if (strcmp(FaultInjectorDDLEnumToString[ii], ddlString) == 0)
+		{
 			ddlEnum = ii;
 			break;
 		}
@@ -416,7 +414,9 @@ FaultInjector_InjectFaultNameIfSet(
 							entryLocal->faultName,
 							FaultInjectorTypeEnumToString[entryLocal->faultInjectorType])));
 
-			for (ii=0; ii < cnt; ii++)
+			for (ii=0;
+				 ii < cnt && FaultInjector_LookupHashEntry(entryLocal->faultName);
+				 ii++)
 			{
 				pg_usleep(1000000L); // sleep for 1 sec (1 sec * 3600 = 1 hour)
 				CHECK_FOR_INTERRUPTS();
@@ -1013,5 +1013,131 @@ exit:
 						FaultInjectorTypeEnumToString[entry->faultInjectorType])));
 	}
 	return isCompleted;
+}
+
+void
+HandleFaultMessage(const char* msg)
+{
+	char name[NAMEDATALEN];
+	char type[NAMEDATALEN];
+	char ddl[NAMEDATALEN];
+	char db[NAMEDATALEN];
+	char table[NAMEDATALEN];
+	int start;
+	int end;
+	int extra;
+	char *result;
+	int len;
+
+	if (sscanf(msg, "faultname=%s type=%s ddl=%s db=%s table=%s "
+			   "start=%d end=%d extra=%d",
+			   name, type, ddl, db, table, &start, &end, &extra) != 8)
+		elog(ERROR, "invalid fault message: %s", msg);
+	/* The value '#' means not specified. */
+	if (ddl[0] == '#')
+		ddl[0] = '\0';
+	if (db[0] == '#')
+		db[0] = '\0';
+	if (table[0] == '#')
+		table[0] = '\0';
+
+	result = InjectFault(name, type, ddl, db, table, start, end, extra);
+	len = strlen(result);
+
+	StringInfoData buf;
+	pq_beginmessage(&buf, 'T');
+	pq_sendint(&buf, Natts_fault_message_response, 2);
+
+	pq_sendstring(&buf, "status");
+	pq_sendint(&buf, 0, 4);		/* table oid */
+	pq_sendint(&buf, Anum_fault_message_response_status, 2);		/* attnum */
+	pq_sendint(&buf, TEXTOID, 4);		/* type oid */
+	pq_sendint(&buf, -1, 2);	/* typlen */
+	pq_sendint(&buf, -1, 4);		/* typmod */
+	pq_sendint(&buf, 0, 2);		/* format code */
+	pq_endmessage(&buf);
+
+	/* Send a DataRow message */
+	pq_beginmessage(&buf, 'D');
+	pq_sendint(&buf, Natts_fault_message_response, 2);		/* # of columns */
+
+	pq_sendint(&buf, len, 4);
+	pq_sendbytes(&buf, result, len);
+	pq_endmessage(&buf);
+	EndCommand(GPCONN_TYPE_FAULT, DestRemote);
+	pq_flush();
+}
+
+char *
+InjectFault(char *faultName, char *type, char *ddlStatement, char *databaseName,
+			char *tableName, int startOccurrence, int endOccurrence, int extraArg)
+{
+	StringInfo buf = makeStringInfo();
+	FaultInjectorEntry_s faultEntry;
+
+	elog(DEBUG1, "injecting fault: name %s, type %s, DDL %s, db %s, table %s, startOccurrence %d, endOccurrence %d, extraArg %d",
+		 faultName, type, ddlStatement, databaseName, tableName,
+		 startOccurrence, endOccurrence, extraArg );
+
+	strlcpy(faultEntry.faultName, faultName, sizeof(faultEntry.faultName));
+	faultEntry.faultInjectorIdentifier = FaultInjectorIdentifierStringToEnum(faultName);
+	if (faultEntry.faultInjectorIdentifier == FaultInjectorIdMax)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("could not recognize fault name '%s'", faultName)));
+
+	faultEntry.faultInjectorType = FaultInjectorTypeStringToEnum(type);
+	if (faultEntry.faultInjectorType == FaultInjectorTypeMax)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("could not recognize fault type '%s'", type)));
+
+	faultEntry.extraArg = extraArg;
+	if (faultEntry.faultInjectorType == FaultInjectorTypeSleep)
+	{
+		if (extraArg < 0 || extraArg > 7200)
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("invalid sleep time, allowed range [0, 7200 sec]")));
+	}
+
+	faultEntry.ddlStatement = FaultInjectorDDLStringToEnum(ddlStatement);
+	if (faultEntry.ddlStatement == DDLMax)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("could not recognize DDL statement")));
+
+	snprintf(faultEntry.databaseName, sizeof(faultEntry.databaseName), "%s", databaseName);
+
+	snprintf(faultEntry.tableName, sizeof(faultEntry.tableName), "%s", tableName);
+
+	if (startOccurrence < 1 || startOccurrence > 1000)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("invalid start occurrence number, allowed range [1, 1000]")));
+
+
+	if (endOccurrence != INFINITE_END_OCCURRENCE && endOccurrence < startOccurrence)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("invalid end occurrence number, allowed range [startOccurrence, ] or -1")));
+
+	faultEntry.startOccurrence = startOccurrence;
+	faultEntry.endOccurrence = endOccurrence;
+
+	if (FaultInjector_SetFaultInjection(&faultEntry) == STATUS_OK)
+	{
+		if (faultEntry.faultInjectorType == FaultInjectorTypeStatus)
+			appendStringInfo(buf, "%s", faultEntry.bufOutput);
+		else
+		{
+			appendStringInfo(buf, "Success:");
+			elog(LOG, "injected fault '%s' type '%s'", faultName, type);
+		}
+	}
+	else
+		appendStringInfo(buf, "Failure: %s", faultEntry.bufOutput);
+
+	return buf->data;
 }
 #endif

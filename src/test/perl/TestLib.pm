@@ -45,6 +45,8 @@ our @EXPORT = qw(
   program_version_ok
   program_options_handling_ok
   command_like
+  command_warns_like
+  command_fails_like
   issues_sql_like
 
   $tmp_check
@@ -440,8 +442,9 @@ sub command_like
 	like($stdout, $expected_stdout, "$test_name: matches");
 }
 
-sub command_fails_like
+sub command_warns_like
 {
+<<<<<<< HEAD
 	my ($cmd, $expected_sql, $test_name) = @_;
 <<<<<<< HEAD
 	truncate $test_server_logfile, 0;
@@ -456,6 +459,26 @@ sub command_fails_like
 	my $log = `cat '$test_server_logfile'`;
 >>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 	like($log, $expected_sql, "$test_name: SQL found in server log");
+=======
+	my ($cmd, $expected_stderr, $test_name) = @_;
+	my ($stdout, $stderr);
+	print("# Running: " . join(" ", @{$cmd}) . "\n");
+	my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
+	ok($result, "@$cmd exit code 0");
+	like($stderr, $expected_stderr, "$test_name: matches.");
+}
+
+sub command_fails_like
+{
+	my ($cmd, $expected_stderr, $test_name) = @_;
+	my ($stdout, $stderr);
+
+	print("# Running: " . join(" ", @{$cmd}) . "\n");
+	my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
+
+	ok(!$result, "expected failure: got @$cmd exit code 0");
+	like($stderr, $expected_stderr, "$test_name: not match expected stderr");
+>>>>>>> gpdb/master @ b4bf1ed1f972698487d2e1a5140fa68141482091
 }
 
 1;

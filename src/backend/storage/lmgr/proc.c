@@ -56,6 +56,7 @@
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
 #include "storage/spin.h"
+#include "utils/faultinjector.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
 
@@ -321,7 +322,7 @@ InitProcess(void)
 	 * such as mppSessionId being valid and mppIsWriter set to true.
 	 */
 	if (IsAutoVacuumWorkerProcess() || am_walsender || am_ftshandler ||
-		am_ftsprobe)
+		am_ftsprobe || IsFaultHandler)
 		Gp_role = GP_ROLE_UTILITY;
 
 	/*
