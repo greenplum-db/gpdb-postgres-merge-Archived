@@ -178,8 +178,9 @@ _bitmap_xlog_insert_bitmap_lastwords(XLogRecPtr lsn,
 #ifdef DUMP_BITMAPAM_INSERT_RECORDS
 		_dump_page("redo", lsn, &xlrec->bm_node, lovBuffer);
 #endif
-		UnlockReleaseBuffer(lovBuffer);
 	}
+	if (BufferIsValid(lovBuffer))
+		UnlockReleaseBuffer(lovBuffer);
 }
 
 static void
@@ -242,10 +243,7 @@ _bitmap_xlog_insert_bitmapwords(XLogRecPtr lsn, XLogReaderState *record)
 
 			bitmapPage = BufferGetPage(bitmapBuffer);
 			if (PageGetLSN(bitmapPage) >= lsn)
-			{
-				UnlockReleaseBuffer(bitmapBuffer);
 				continue;
-			}
 
 			bitmap = (BMBitmap) PageGetContentsMaxAligned(bitmapPage);
 
@@ -323,7 +321,8 @@ _bitmap_xlog_insert_bitmapwords(XLogRecPtr lsn, XLogReaderState *record)
 #endif
 
 	/* Release buffers */
-	UnlockReleaseBuffer(lovBuffer);
+	if (BufferIsValid(lovBuffer))
+		UnlockReleaseBuffer(lovBuffer);
 	for (bmpageno = 0; bmpageno < xlrec->bm_num_pages; bmpageno++)
 	{
 		if (BufferIsValid(bitmapBuffers[bmpageno]))
