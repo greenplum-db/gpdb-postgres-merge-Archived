@@ -2879,7 +2879,7 @@ create view cube_view as select cn,vn,grouping(vn,cn) from sale group by cube(cn
 View definition:
  SELECT sale.cn,
     sale.vn,
-    grouping(sale.vn, sale.cn) AS "grouping"
+    GROUPING(sale.vn, sale.cn) AS "grouping"
    FROM sale
   GROUP BY CUBE(sale.cn, sale.vn);
 
@@ -2896,7 +2896,7 @@ View definition:
  SELECT sale.cn,
     sale.vn,
     sale.pn,
-    grouping(sale.cn, sale.vn, sale.pn) AS "grouping"
+    GROUPING(sale.cn, sale.vn, sale.pn) AS "grouping"
    FROM sale
   GROUP BY ROLLUP(sale.cn), sale.vn, sale.pn;
 
@@ -2911,7 +2911,7 @@ create view gs_view as select cn,vn,grouping(vn,cn) from sale group by grouping 
 View definition:
  SELECT sale.cn,
     sale.vn,
-    grouping(sale.vn, sale.cn) AS "grouping"
+    GROUPING(sale.vn, sale.cn) AS "grouping"
    FROM sale
   GROUP BY GROUPING SETS ((sale.vn), (sale.cn), (), (sale.cn, sale.vn));
 
@@ -3074,7 +3074,7 @@ union all select null, sum(qty), 0 from sale;
 (105 rows)
 
 select pn, sum(qty), group_id() from sale group by rollup(cn,pn), cube(cn,pn);
- pn  | sum  | ?column? 
+ pn  | sum  | group_id 
 -----+------+----------
      |    2 |        0
      |    2 |        1
@@ -3507,7 +3507,7 @@ order by 6; -- order 6
 (20 rows)
 
 select cn, vn, pn, count(dt),group_id(),grouping(cn,vn,pn) from sale group by grouping sets ((cn,vn,pn), (cn), (cn)) order by grouping(cn,vn,pn); -- order 6
- cn | vn | pn  | count | ?column? | grouping 
+ cn | vn | pn  | count | group_id | grouping 
 ----+----+-----+-------+----------+----------
   4 | 40 | 800 |     1 |        0 |        0
   3 | 30 | 600 |     1 |        0 |        0
@@ -4032,11 +4032,6 @@ select cn,sum(qty) from sale group by grouping sets(cn);
 
 --end_equiv
 select cn,sum(qty),grouping((cn,vn),vn) from sale group by rollup(cn,vn);
-<<<<<<< HEAD
-ERROR:  row type can not be used inside a grouping function
-select sum(qty),grouping(cn+pn) from sale group by cn+vn,vn;
-ERROR:  expression in a grouping function does not appear in GROUP BY
-=======
 ERROR:  arguments to GROUPING must be grouping expressions of the associated query level
 LINE 1: select cn,sum(qty),grouping((cn,vn),vn) from sale group by r...
                                     ^
@@ -4044,7 +4039,6 @@ select sum(qty),grouping(cn+pn) from sale group by cn+vn,vn;
 ERROR:  arguments to GROUPING must be grouping expressions of the associated query level
 LINE 1: select sum(qty),grouping(cn+pn) from sale group by cn+vn,vn;
                                  ^
->>>>>>> dc67f74... Remove old GROUPING SETS implementation.
 select sum(qty),grouping(cn+vn) from sale group by rollup(cn+vn,vn);
  sum  | grouping 
 ------+----------
