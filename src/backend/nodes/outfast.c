@@ -261,9 +261,24 @@ _outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 		}
 		else
 		{
-			length = datumGetSize(value, typbyval, typlen);
-			appendBinaryStringInfo(str, (char *)&length, sizeof(Size));
-			appendBinaryStringInfo(str, s, length);
+			if (typlen == -1 && VARATT_IS_EXTERNAL_EXPANDED(s))
+			{
+				ExpandedObjectHeader *eoh = DatumGetEOHP(value);
+				Size		resultsize;
+				char		*resultptr;
+
+				resultsize = EOH_get_flat_size(eoh);
+				resultptr = (char *) palloc(resultsize);
+				EOH_flatten_into(eoh, (void *) resultptr, resultsize);
+				appendBinaryStringInfo(str, (char *)&resultsize, sizeof(Size));
+				appendBinaryStringInfo(str, resultptr, resultsize);
+			}
+			else
+			{
+				length = datumGetSize(value, typbyval, typlen);
+				appendBinaryStringInfo(str, (char *)&length, sizeof(Size));
+				appendBinaryStringInfo(str, s, length);
+			}
 		}
 	}
 }
