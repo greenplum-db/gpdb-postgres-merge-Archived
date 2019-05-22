@@ -237,11 +237,11 @@ create operator family dd_opfamily using btree;
 comment on operator family dd_opfamily using btree is 'this is an operator family';
 \dd
                               Object descriptions
-      Schema      |    Name     |     Object      |        Description         
-------------------+-------------+-----------------+----------------------------
- test_psql_schema | dd_ichk     | constraint      | this is a constraint
- test_psql_schema | dd_notify   | rule            | this is a rule
- test_psql_schema | dd_opfamily | operator family | this is an operator family
+      Schema      |    Name     |      Object      |        Description         
+------------------+-------------+------------------+----------------------------
+ test_psql_schema | dd_ichk     | table constraint | this is a constraint
+ test_psql_schema | dd_notify   | rule             | this is a rule
+ test_psql_schema | dd_opfamily | operator family  | this is an operator family
 (3 rows)
 
 -- Clean up
