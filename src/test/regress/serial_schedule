@@ -86,16 +86,8 @@ test: union
 test: case
 test: join
 test: aggregates
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 test: groupingsets
->>>>>>> dc67f74... Remove old GROUPING SETS implementation.
 ignore: transactions
-=======
-test: groupingsets
-test: transactions
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 ignore: random
 test: random
 test: portals
@@ -105,15 +97,11 @@ test: hash_index
 test: update
 test: delete
 test: namespace
-<<<<<<< HEAD
 ignore: prepared_xacts
-=======
-test: prepared_xacts
 test: brin
 test: gin
 test: gist
 test: spgist
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 test: privileges
 test: security_label
 test: collate
