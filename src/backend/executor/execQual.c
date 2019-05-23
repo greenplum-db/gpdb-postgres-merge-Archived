@@ -3463,6 +3463,23 @@ ExecEvalCaseTestExpr(ExprState *exprstate,
 	return econtext->caseValue_datum;
 }
 
+static Datum
+ExecEvalGroupingFuncExprForHashJoin(GroupingFuncExprState *gstate,
+						 ExprContext *econtext,
+						 bool *isNull,
+						 ExprDoneCond *isDone)
+{
+	int result = 0;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+
+	*isNull = false;
+
+	return (Datum) result;
+}
+
+
 /*
  * ExecEvalGroupingFuncExpr
  *
@@ -3501,6 +3518,23 @@ ExecEvalGroupingFuncExpr(GroupingFuncExprState *gstate,
 
 	return (Datum) result;
 }
+
+static Datum
+ExecEvalGroupIdExprForHashJoin(GroupIdExprState *gstate,
+					ExprContext *econtext,
+					bool *isNull,
+					ExprDoneCond *isDone)
+{
+	int			group_id = 0;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+
+	*isNull = false;
+
+	return Int32GetDatum(group_id);
+}
+
 
 /*
  * ExecEvalGroupIdExpr
@@ -5391,33 +5425,63 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				GroupingFuncExprState *grp_state = makeNode(GroupingFuncExprState);
 				Agg		   *agg = NULL;
 
-				if (!parent || !IsA(parent, AggState) || !IsA(parent->plan, Agg))
-					elog(ERROR, "parent of GROUPING is not Agg node");
-
-				grp_state->aggstate = (AggState *) parent;
-
-				agg = (Agg *) (parent->plan);
-
-				if (agg->groupingSets)
+				if (parent && IsA(parent, HashJoinState))
+				{
+					/* 
+					 * GPDB_95_MERGE_FIXME: GPDB may choose a HashJoin to combine multiple
+					 * aggregations in targetlist, however, for queries with multiple
+					 * groups, the HashJoin combination will not be taken. For a single
+					 * group, the GROUPING() function should always return 0
+					 * 
+					 */
 					grp_state->clauses = grp_node->cols;
+					state = (ExprState *) grp_state;
+					state->evalfunc = (ExprStateEvalFunc) ExecEvalGroupingFuncExprForHashJoin;
+				}
+				else if (!parent || !IsA(parent, AggState) || !IsA(parent->plan, Agg))
+					elog(ERROR, "parent of GROUPING is not Agg node");
 				else
-					grp_state->clauses = NIL;
+				{
 
-				state = (ExprState *) grp_state;
-				state->evalfunc = (ExprStateEvalFunc) ExecEvalGroupingFuncExpr;
+					grp_state->aggstate = (AggState *) parent;
+
+					agg = (Agg *) (parent->plan);
+
+					if (agg->groupingSets)
+						grp_state->clauses = grp_node->cols;
+					else
+						grp_state->clauses = NIL;
+
+					state = (ExprState *) grp_state;
+					state->evalfunc = (ExprStateEvalFunc) ExecEvalGroupingFuncExpr;
+				}
 			}
 			break;
 		case T_GroupId:
 			{
 				GroupIdExprState *grp_state = makeNode(GroupIdExprState);
 
-				if (!parent || !IsA(parent, AggState) || !IsA(parent->plan, Agg))
+				if (parent && IsA(parent, HashJoinState))
+				{
+					/* 
+					 * GPDB_95_MERGE_FIXME: GPDB may choose a HashJoin to combine multiple
+					 * aggregations in targetlist, however, for queries with multiple
+					 * groups, the HashJoin combination will not be taken. For a single
+					 * group, the GROUP_ID() function should always return 0
+					 * 
+					 */
+					state = (ExprState *) grp_state;
+					state->evalfunc = (ExprStateEvalFunc) ExecEvalGroupIdExprForHashJoin;
+				}
+				else if (!parent || !IsA(parent, AggState) || !IsA(parent->plan, Agg))
 					elog(ERROR, "parent of GROUP_ID is not Agg node");
+				else
+				{
+					grp_state->aggstate = (AggState *) parent;
 
-				grp_state->aggstate = (AggState *) parent;
-
-				state = (ExprState *) grp_state;
-				state->evalfunc = (ExprStateEvalFunc) ExecEvalGroupIdExpr;
+					state = (ExprState *) grp_state;
+					state->evalfunc = (ExprStateEvalFunc) ExecEvalGroupIdExpr;
+				}
 			}
 			break;
 		case T_WindowFunc:
