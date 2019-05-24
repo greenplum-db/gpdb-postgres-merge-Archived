@@ -7672,7 +7672,7 @@ explain select n from ( select row_number() over () from (values (0)) as t(x) ) 
  HashAggregate  (cost=0.02..0.03 rows=1 width=8)
    Group By: pg_catalog.row_number()
    ->  WindowAgg  (cost=0.00..0.01 rows=1 width=0)
-         ->  Values Scan on "*VALUES*"  (cost=0.00..0.01 rows=1 width=0)
+         ->  Result  (cost=0.00..0.01 rows=1 width=0)
  Settings:  optimizer=off
  Optimizer status: Postgres query optimizer
 (6 rows)
@@ -8468,7 +8468,7 @@ create view distinct_windowagg_view as select sum(distinct g/2) OVER (partition 
 --------+--------+-----------+---------+-------------
  sum    | bigint |           | plain   | 
 View definition:
- SELECT sum(DISTINCT g.g / 2) OVER (PARTITION BY g.g / 4) AS sum
+ SELECT sum(DISTINCT g.g / 2) OVER (PARTITION BY (g.g / 4)) AS sum
    FROM generate_series(1, 5) g(g);
 
 -- These are tests for pushing down filter predicates in window functions.
