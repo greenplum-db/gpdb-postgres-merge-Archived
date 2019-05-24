@@ -397,6 +397,23 @@ test_xlog_ao(PG_FUNCTION_ARGS)
 	SRF_RETURN_DONE(funcctx);
 }
 
+struct PrivateData
+{
+	char *data;
+	Size len;
+};
+
+static int
+SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
+				   int reqLen, XLogRecPtr targetRecPtr, char *readBuf,
+				   TimeLineID *pageTLI)
+{
+	struct PrivateData *private = ((struct PrivateData *)xlogreader->private_data);
+
+	memcpy(readBuf, private->data, private->len);
+	return private->len;
+}
+
 /*
  * Verify that AO/AOCO XLOG record is present in buf.
  * Returns the number of AO/AOCO XLOG records found in buf.
@@ -414,6 +431,11 @@ check_ao_record_present(unsigned char type, char *buf, Size len,
 	int         hdrlen = sizeof(int64) + sizeof(int64) + sizeof(int64);
 	StringInfoData incoming_message;
 	initStringInfo(&incoming_message);
+
+	XLogRecord *xlrec;
+	XLogReaderState *xlogreader;
+	struct PrivateData private = { buf, len };
+	char	   *errormsg;
 
 	if (type != 'w')
 		return num_found;
@@ -437,10 +459,11 @@ check_ao_record_present(unsigned char type, char *buf, Size len,
 	test_PrintLog("wal start record", dataStart, sendTime);
 	test_PrintLog("wal end record", walEnd, sendTime);
 
+	xlogreader = XLogReaderAllocate(&SimpleXLogPageRead, &private);
+
 	/* process the xlog records one at a time and check if it is an AO/AOCO record */
-	while (i < len)
+	while ((xlrec = XLogReadRecord(xlogreader, InvalidXLogRecPtr, &errormsg)) != NULL)
 	{
-		XLogRecord 		   *xlrec = (XLogRecord *)(buf + i);
 		XLogPageHeaderData *hdr = (XLogPageHeaderData *)xlrec;
 		uint8	            info = xlrec->xl_info & ~XLR_INFO_MASK;
 		uint32 			    avail_in_block = XLOG_BLCKSZ - ((xrecoff + i) % XLOG_BLCKSZ);
@@ -516,14 +539,14 @@ check_ao_record_present(unsigned char type, char *buf, Size len,
 				elog(DEBUG1, "RM_APPEND_ONLY_ID, else, i: %u", i);
 			}
 
-			xl_ao_target *xlaorecord = (xl_ao_target*) XLogRecGetData(xlrec);
+			xl_ao_target *xlaorecord = (xl_ao_target*) XLogRecGetData(xlogreader);
 
 			aorecordresult->target.node.spcNode = xlaorecord->node.spcNode;
 			aorecordresult->target.node.dbNode = xlaorecord->node.dbNode;
 			aorecordresult->target.node.relNode = xlaorecord->node.relNode;
 			aorecordresult->target.segment_filenum = xlaorecord->segment_filenum;
 			aorecordresult->target.offset = xlaorecord->offset;
-			aorecordresult->len = xlrec->xl_len;
+			aorecordresult->len = XLogRecGetDataLen(xlogreader);
 			aorecordresult->ao_xlog_record_type = info;
 
 			num_found++;
