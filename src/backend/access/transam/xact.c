@@ -1501,6 +1501,8 @@ RecordTransactionCommit(void)
 
 		SetCurrentTransactionStopTimestamp();
 
+		SIMPLE_FAULT_INJECTOR(OnePhaseTransactionCommit);
+
 		if (isDtxPrepared)
 		{
 			getDtxLogInfo(&gxact_log);
