@@ -2147,6 +2147,7 @@ WalSndKill(int code, Datum arg)
 	/* clear latch while holding the spinlock, so it can safely be read */
 	walsnd->latch = NULL;
 	/* Mark WalSnd struct as no longer being in use. */
+	walsnd->replica_disconnected_at = (pg_time_t) time(NULL);
 	walsnd->pid = 0;
 	SpinLockRelease(&walsnd->mutex);
 }
