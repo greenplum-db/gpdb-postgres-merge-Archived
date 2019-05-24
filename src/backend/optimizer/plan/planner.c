@@ -2552,8 +2552,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												   result_plan,
 												   &current_locus,
 												   current_pathkeys);
-				current_pathkeys = NIL;
-
+				if (parse->groupingSets)
+					current_pathkeys = NIL;
 				/*
 				 * these are destroyed by build_grouping_chain, so make sure
 				 * we don't try and touch them again
@@ -3471,30 +3471,41 @@ build_grouping_chain(PlannerInfo *root,
 		Bitmapset  *common_groupcols = NULL;
 		bool		first = true;
 		int			x;
-
-		forboth(lcl, rollup_lists, lcc, rollup_groupclauses)
+		if (rollup_lists)
 		{
-			List	   *rlist = (List *) lfirst(lcl);
-			List	   *rclause = (List *) lfirst(lcc);
-			List	   *last_list = (List *) llast(rlist);
-			Bitmapset  *this_groupcols = NULL;
-
-			this_groupcols = NULL;
-			foreach (lc, last_list)
+			forboth(lcl, rollup_lists, lcc, rollup_groupclauses)
 			{
-				SortGroupClause *sc = list_nth(rclause, lfirst_int(lc));
+				List *rlist = (List *) lfirst(lcl);
+				List *rclause = (List *) lfirst(lcc);
+				List *last_list = (List *) llast(rlist);
+				Bitmapset *this_groupcols = NULL;
 
-				this_groupcols = bms_add_member(this_groupcols, sc->tleSortGroupRef);
+				this_groupcols = NULL;
+				foreach (lc, last_list)
+				{
+					SortGroupClause *sc = list_nth(rclause, lfirst_int(lc));
+
+					this_groupcols = bms_add_member(this_groupcols, sc->tleSortGroupRef);
+				}
+
+				if (first)
+					common_groupcols = this_groupcols;
+				else
+				{
+					common_groupcols = bms_int_members(common_groupcols, this_groupcols);
+					bms_free(this_groupcols);
+				}
+				first = false;
 			}
-
-			if (first)
-				common_groupcols = this_groupcols;
-			else
+		}
+		else
+		{
+			List *rclause = lfirst(list_head(rollup_groupclauses));
+			foreach(lc, rclause)
 			{
-				common_groupcols = bms_int_members(common_groupcols, this_groupcols);
-				bms_free(this_groupcols);
+				SortGroupClause *sc = lfirst(lc);
+				common_groupcols = bms_add_member(common_groupcols, sc->tleSortGroupRef);
 			}
-			first = false;
 		}
 
 		x = -1;
