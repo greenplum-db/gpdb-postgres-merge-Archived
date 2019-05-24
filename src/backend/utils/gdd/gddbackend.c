@@ -167,17 +167,6 @@ GlobalDeadLockDetectorMain(int argc, char *argv[])
 	/* record Start Time for logging */
 	MyStartTime = time(NULL);
 
-	/*
-	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.	(gdd probably never has any
-	 * child processes, but for consistency we make all postmaster child
-	 * processes do this.)
-	 */
-#ifdef HAVE_SETSID
-	if (setsid() < 0)
-		elog(FATAL, "setsid() failed: %m");
-#endif
-
 	/* Identify myself via ps */
 	init_ps_display("global deadlock detector process", "", "", "");
 
