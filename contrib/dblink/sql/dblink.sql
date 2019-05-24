@@ -344,20 +344,29 @@ SELECT dblink_disconnect('myconn');
 -- should get 'connection "myconn" not available' error
 SELECT dblink_disconnect('myconn');
 
--- test nested query for GPDB
 -- test asynchronous queries
 SELECT dblink_connect('dtest1', connection_parameters());
+-- start_ignore
+-- Async more not supported in GPDB
 SELECT * from
  dblink_send_query('dtest1', 'select * from foo where f1 < 3') as t1;
+-- end_ignore
 
 SELECT dblink_connect('dtest2', connection_parameters());
+-- start_ignore
+-- Async more not supported in GPDB
 SELECT * from
  dblink_send_query('dtest2', 'select * from foo where f1 > 2 and f1 < 7') as t1;
+-- end_ignore
 
 SELECT dblink_connect('dtest3', connection_parameters());
+-- start_ignore
+-- Async more not supported in GPDB
 SELECT * from
  dblink_send_query('dtest3', 'select * from foo where f1 > 6') as t1;
+-- end_ignore
 
+-- test nested query for GPDB
 CREATE TEMPORARY TABLE result AS
 (SELECT * from dblink('dbname=contrib_regression','select * from foo where f1 > 2 and f1 < 7') as t1(f1 int, f2 text, f3 text[]))
 UNION
@@ -372,10 +381,6 @@ INSERT INTO result SELECT * FROM dblink ('dbname=contrib_regression','select * f
 SELECT * FROM result;
 SELECT * FROM (SELECT * FROM dblink('dbname=contrib_regression','select * from foo') AS t(f1 int, f2 text, f3 text[])) AS t1;
 
--- test foreign data wrapper functionality
-CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
-  OPTIONS (dbname 'contrib_regression', host 'localhost');
-
 -- dblink_get_connections returns an array with elements in a machine-dependent
 -- ordering, so we must resort to unnesting and sorting for a stable result
 create function unnest(anyarray) returns setof anyelement
@@ -385,7 +390,10 @@ $$;
 
 SELECT * FROM unnest(dblink_get_connections()) ORDER BY 1;
 
+-- start_ignore
+-- GPDB: dblink_is_busy() is not supported
 SELECT dblink_is_busy('dtest1');
+-- end_ignore
 
 SELECT dblink_disconnect('dtest1');
 SELECT dblink_disconnect('dtest2');
@@ -394,8 +402,11 @@ SELECT dblink_disconnect('dtest3');
 SELECT * from result;
 
 SELECT dblink_connect('dtest1', connection_parameters());
+-- start_ignore
+-- Async more not supported in GPDB
 SELECT * from
  dblink_send_query('dtest1', 'select * from foo where f1 < 3') as t1;
+-- end_ignore
 
 SELECT dblink_cancel_query('dtest1');
 SELECT dblink_error_message('dtest1');
@@ -421,6 +432,7 @@ GRANT EXECUTE ON FUNCTION dblink_connect_u(text, text) TO dblink_regression_test
 
 SET SESSION AUTHORIZATION dblink_regression_test;
 -- should fail
+-- GPDB: We also check for hostname in connection string which is checked first
 SELECT dblink_connect('myconn', 'fdtest');
 -- should succeed
 SELECT dblink_connect_u('myconn', 'fdtest');
@@ -429,6 +441,7 @@ SELECT * FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
 \c - -
 REVOKE USAGE ON FOREIGN SERVER fdtest FROM dblink_regression_test;
 REVOKE EXECUTE ON FUNCTION dblink_connect_u(text, text) FROM dblink_regression_test;
+DROP USER dblink_regression_test;
 DROP USER MAPPING FOR public SERVER fdtest;
 DROP SERVER fdtest;
 
