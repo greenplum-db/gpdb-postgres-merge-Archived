@@ -4357,23 +4357,19 @@ select d.* from d left join (select distinct * from b) s
 explain (costs off)
 select d.* from d left join (select * from b group by b.id, b.c_id) s
   on d.a = s.id;
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
- Gather Motion 3:1  (slice3; segments: 3)
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    ->  Hash Left Join
          Hash Cond: (d.a = s.id)
          ->  Seq Scan on d
          ->  Hash
-               ->  Redistribute Motion 1:3  (slice2; segments: 1)
-                     Hash Key: s.id
-                     ->  Subquery Scan on s
-                           ->  GroupAggregate
-                                 Group Key: b.id, b.c_id
-                                 ->  Gather Motion 3:1  (slice1; segments: 3)
-                                       Merge Key: b.id, b.c_id
-                                       ->  Sort
-                                             Sort Key: b.id, b.c_id
-                                             ->  Seq Scan on b
+               ->  Subquery Scan on s
+                     ->  GroupAggregate
+                           Group Key: b.id, b.c_id
+                           ->  Sort
+                                 Sort Key: b.id, b.c_id
+                                 ->  Seq Scan on b
  Optimizer: Postgres query optimizer
 (16 rows)
 
@@ -4381,23 +4377,19 @@ select d.* from d left join (select * from b group by b.id, b.c_id) s
 explain (costs off)
 select d.* from d left join (select distinct * from b) s
   on d.a = s.id;
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
- Gather Motion 3:1  (slice3; segments: 3)
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    ->  Hash Left Join
          Hash Cond: (d.a = s.id)
          ->  Seq Scan on d
          ->  Hash
-               ->  Redistribute Motion 1:3  (slice2; segments: 1)
-                     Hash Key: s.id
-                     ->  Subquery Scan on s
-                           ->  GroupAggregate
-                                 Group Key: b.id, b.c_id
-                                 ->  Gather Motion 3:1  (slice1; segments: 3)
-                                       Merge Key: b.id, b.c_id
-                                       ->  Sort
-                                             Sort Key: b.id, b.c_id
-                                             ->  Seq Scan on b
+               ->  Subquery Scan on s
+                     ->  GroupAggregate
+                           Group Key: b.id, b.c_id
+                           ->  Sort
+                                 Sort Key: b.id, b.c_id
+                                 ->  Seq Scan on b
  Optimizer: Postgres query optimizer
 (16 rows)
 
