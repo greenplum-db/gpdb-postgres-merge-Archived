@@ -5155,8 +5155,8 @@ set_coplan_strategies(PlannerInfo *root, MppGroupContext *ctx, DqaInfo *dqaArg, 
 		 */
 		can_hash_group_key =
 			root->config->enable_hashagg &&
-			ctx->agg_costs->hasNonCombine &&
-			ctx->agg_costs->hasNonSerial &&
+			!ctx->agg_costs->hasNonCombine &&
+			!ctx->agg_costs->hasNonSerial &&
 			ctx->agg_costs->numOrderedAggs > 0 &&
 			grouping_is_hashable(root->parse->groupClause);
 	}
