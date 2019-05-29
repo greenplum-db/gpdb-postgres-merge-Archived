@@ -447,6 +447,13 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 		 */
 		case T_Const:
 		case T_Var:
+		/*
+		 * GPDB_95_MERGE_FIXME: T_CoerceToDomain/T_CoerceToDomainValue was removed
+		 * in upstream Postgres 6a75562ed16b5fa5, but it seems it is still needed
+		 * for CREATE DOMAIN booltrue AS bool CHECK Do we keep it as a Greenplum diff?
+		 */
+		case T_CoerceToDomain:
+		case T_CoerceToDomainValue:
 			{
 				result = (Node *) expr;
 				break;
