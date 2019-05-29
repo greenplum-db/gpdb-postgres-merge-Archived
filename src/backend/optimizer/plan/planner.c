@@ -3520,8 +3520,7 @@ build_grouping_chain(PlannerInfo *root,
 		if (!hash_exprs)
 			need_redistribute = true;
 		else
-			need_redistribute = !cdbpathlocus_is_hashed_on_exprs(*current_locus, hash_exprs,
-																 false /* FIXME: should constants be ignored here? */);
+			need_redistribute = !cdbpathlocus_is_hashed_on_exprs(*current_locus, hash_exprs, true);
 	}
 	else
 	{
