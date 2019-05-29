@@ -1019,7 +1019,11 @@ ExecInitMotion(Motion *node, EState *estate, int eflags)
 	 * this node doesn't do projections.
 	 */
 	outerPlan = outerPlanState(motionstate);
-	if (outerPlan && ExecGetResultType(outerPlan))
+	/*
+	 * GPDB_95_MERGE_FIXME: Should we force ORCA to always use the TL for motion nodes
+	 * or modify ORCA to use the TL from the outer node?
+	 */
+	if (outerPlan && ExecGetResultType(outerPlan) && estate->es_plannedstmt->planGen == PLANGEN_PLANNER)
 		ExecAssignResultType(&motionstate->ps, ExecGetResultType(outerPlan));
 	else
 		ExecAssignResultTypeFromTL(&motionstate->ps);
