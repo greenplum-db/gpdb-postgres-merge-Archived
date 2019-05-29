@@ -1389,6 +1389,7 @@ ExecEndNode(PlanState *node)
 
 		case T_DynamicSeqScanState:
 			ExecEndDynamicSeqScan((DynamicSeqScanState *) node);
+			break;
 		case T_SampleScanState:
 			ExecEndSampleScan((SampleScanState *) node);
 			break;
