@@ -539,6 +539,10 @@ CTranslatorQueryToDXL::TranslateSelectQueryToDXL()
 	if (m_query->returningList)
 		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("RETURNING clause"));
 
+	// ON CONFLICT is not supported yet.
+	if (m_query->onConflict)
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("ON CONFLICT clause"));
+
 	CDXLNode *child_dxlnode = NULL;
 	IntToUlongMap *sort_group_attno_to_colid_mapping =  GPOS_NEW(m_mp) IntToUlongMap(m_mp);
 	IntToUlongMap *output_attno_to_colid_mapping = GPOS_NEW(m_mp) IntToUlongMap(m_mp);
