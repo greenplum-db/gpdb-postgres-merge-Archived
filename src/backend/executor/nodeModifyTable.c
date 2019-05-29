@@ -502,7 +502,7 @@ ExecInsert(ModifyTableState *mtstate,
 		 * we are looking for at this point.
 		 */
 		if (resultRelInfo->ri_WithCheckOptions != NIL)
-			ExecWithCheckOptions(WCO_RLS_INSERT_CHECK,
+			ExecWithCheckOptions(isUpdate ? WCO_RLS_UPDATE_CHECK : WCO_RLS_INSERT_CHECK,
 								 resultRelInfo, slot, estate);
 
 		/*
