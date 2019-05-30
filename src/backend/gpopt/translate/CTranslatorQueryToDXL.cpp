@@ -166,6 +166,11 @@ CTranslatorQueryToDXL::CTranslatorQueryToDXL
 			   GPOS_WSZ_LIT("View with WITH CHECK OPTION"));
 	}
 
+	// Grouping sets are not supported yet.
+	// GPDB_95_MERGE_FIXME: Support grouping sets in ORCA?
+	if (query->groupingSets)
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("Grouping Sets"));
+
 	// Initialize the map that stores gpdb att to optimizer col mapping.
 	// If this is a subquery, make a copy of the parent's mapping, otherwise
 	// initialize a new, empty, mapping.
