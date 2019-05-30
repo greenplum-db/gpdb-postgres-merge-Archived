@@ -485,6 +485,10 @@ CTranslatorQueryToDXL::CheckRangeTable
 			// otherwise ORCA most likely pushes potentially leaky filters down
 			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("views with security_barrier ON"));
 		}
+		if (rte->tablesample)
+		{
+			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("TABLESAMPLE in the FROM clause"));
+		}
 	}
 }
 
