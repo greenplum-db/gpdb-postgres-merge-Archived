@@ -397,23 +397,6 @@ test_xlog_ao(PG_FUNCTION_ARGS)
 	SRF_RETURN_DONE(funcctx);
 }
 
-struct PrivateData
-{
-	char *data;
-	Size len;
-};
-
-static int
-SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
-				   int reqLen, XLogRecPtr targetRecPtr, char *readBuf,
-				   TimeLineID *pageTLI)
-{
-	struct PrivateData *private = ((struct PrivateData *)xlogreader->private_data);
-
-	memcpy(readBuf, private->data, private->len);
-	return private->len;
-}
-
 /*
  * Verify that AO/AOCO XLOG record is present in buf.
  * Returns the number of AO/AOCO XLOG records found in buf.
@@ -434,7 +417,6 @@ check_ao_record_present(unsigned char type, char *buf, Size len,
 
 	XLogRecord *xlrec;
 	XLogReaderState *xlogreader;
-	struct PrivateData private = { buf, len };
 	char	   *errormsg;
 
 	if (type != 'w')
@@ -459,7 +441,7 @@ check_ao_record_present(unsigned char type, char *buf, Size len,
 	test_PrintLog("wal start record", dataStart, sendTime);
 	test_PrintLog("wal end record", walEnd, sendTime);
 
-	xlogreader = XLogReaderAllocate(&SimpleXLogPageRead, &private);
+	xlogreader = XLogReaderAllocate(NULL, NULL);
 
 	/* process the xlog records one at a time and check if it is an AO/AOCO record */
 	while ((xlrec = XLogReadRecord(xlogreader, InvalidXLogRecPtr, &errormsg)) != NULL)
