@@ -327,6 +327,8 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			ExplainPrintPlan(es, queryDesc);
 			if (es->analyze && auto_explain_log_triggers)
 				ExplainPrintTriggers(es, queryDesc);
+			if (es->analyze)
+				ExplainPrintExecStatsEnd(es, queryDesc);
 			ExplainEndOutput(es);
 
 			/* Remove last line break */
