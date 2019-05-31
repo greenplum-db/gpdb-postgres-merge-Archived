@@ -8,6 +8,7 @@
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "access/xlog_internal.h"
+#include "access/xlogrecord.h"
 #include "replication/walreceiver.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbappendonlyxlog.h"
@@ -441,11 +442,15 @@ check_ao_record_present(unsigned char type, char *buf, Size len,
 	test_PrintLog("wal start record", dataStart, sendTime);
 	test_PrintLog("wal end record", walEnd, sendTime);
 
-	xlogreader = XLogReaderAllocate(NULL, NULL);
+	xlogreader = XLogReaderAllocate(&read_local_xlog_page, NULL);
 
 	/* process the xlog records one at a time and check if it is an AO/AOCO record */
-	while ((xlrec = XLogReadRecord(xlogreader, InvalidXLogRecPtr, &errormsg)) != NULL)
+	do
 	{
+		xlrec = XLogReadRecord(xlogreader, dataStart, &errormsg);
+		if (xlrec == NULL)
+			break;
+
 		XLogPageHeaderData *hdr = (XLogPageHeaderData *)xlrec;
 		uint8	            info = xlrec->xl_info & ~XLR_INFO_MASK;
 		uint32 			    avail_in_block = XLOG_BLCKSZ - ((xrecoff + i) % XLOG_BLCKSZ);
@@ -556,6 +561,7 @@ check_ao_record_present(unsigned char type, char *buf, Size len,
 				elog(DEBUG1, "default, else, i: %u, xlrec->xl_tot_len: %u", i, xlrec->xl_tot_len);
 			}
 		}
-	}
+		dataStart = InvalidXLogRecPtr;
+	} while (xlogreader->ReadRecPtr + XLogRecGetTotalLen(xlogreader) + SizeOfXLogRecord < walEnd);
 	return num_found;
 }
