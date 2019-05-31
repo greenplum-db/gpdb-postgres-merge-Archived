@@ -1925,6 +1925,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		Oid			relid;
 		Relation	relation;
 		ExecRowMark *erm;
+		LOCKMODE    lm;
 
 		/* ignore "parent" rowmarks; they are irrelevant at runtime */
 		if (rc->isParent)
@@ -1932,6 +1933,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 		/* get relation's OID (will produce InvalidOid if subquery) */
 		relid = getrelid(rc->rti, rangeTable);
+		lm = rc->canOptSelectLockingClause ? RowShareLock : ExclusiveLock;
 
 		/*
 		 * If you change the conditions under which rel locks are acquired
@@ -1939,20 +1941,26 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		 */
 		switch (rc->markType)
 		{
-			case ROW_MARK_TABLE_EXCLUSIVE:
-				relation = heap_open(relid, ExclusiveLock);
-				break;
-			case ROW_MARK_TABLE_SHARE:
-				relation = heap_open(relid, RowShareLock);
-				break;
+			/*
+			 * Greenplum specific behavior:
+			 * The implementation of select statement with locking clause
+			 * (for update | no key update | share | key share) in postgres
+			 * is to hold RowShareLock on tables during parsing stage, and
+			 * generate a LockRows plan node for executor to lock the tuples.
+			 * It is not easy to lock tuples in Greenplum database, since
+			 * tuples may be fetched through motion nodes.
+			 *
+			 * But when Global Deadlock Detector is enabled, and the select
+			 * statement with locking clause contains only one table, we are
+			 * sure that there are no motions. For such simple cases, we could
+			 * make the behavior just the same as Postgres.
+			 */
 			case ROW_MARK_EXCLUSIVE:
 			case ROW_MARK_NOKEYEXCLUSIVE:
 			case ROW_MARK_SHARE:
 			case ROW_MARK_KEYSHARE:
-				relation = heap_open(relid, RowShareLock);
-				break;
 			case ROW_MARK_REFERENCE:
-				relation = heap_open(relid, AccessShareLock);
+				relation = heap_open(relid, lm);
 				break;
 			case ROW_MARK_COPY:
 				/* no physical table access is required */
@@ -3257,28 +3265,6 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 		 * time.
 		 */
 		if (wco->kind != kind)
-			continue;
-
-		/*
-		 * GPDB_94_MERGE_FIXME
-		 * When we update the view, we need to check if the updated tuple belongs
-		 * to the view. Sometimes we need to execute a subplan to help check.
-		 * The subplan is executed under the update or delete node on segment.
-		 * But we can't correctly execute a mpp subplan in the segment. So let's
-		 * disable the check first.
-		 */
-		ListCell *l;
-		bool is_subplan = false;
-		foreach(l, (List*)wcoExpr)
-		{
-			ExprState  *clause = (ExprState *) lfirst(l);
-			if (*(clause->evalfunc) == (ExprStateEvalFunc)ExecAlternativeSubPlan)
-			{
-				is_subplan = true;
-				break;
-			}
-		}
-		if (is_subplan)
 			continue;
 
 		/*

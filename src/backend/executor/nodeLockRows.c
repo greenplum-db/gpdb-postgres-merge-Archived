@@ -80,11 +80,6 @@ lnext:
 		HTSU_Result test;
 		HeapTuple	copyTuple;
 
-		/* CDB: CTIDs were not fetched for distributed relation. */
-		if (erm->markType == ROW_MARK_TABLE_EXCLUSIVE ||
-			erm->markType == ROW_MARK_TABLE_SHARE)
-			continue;
-
 		/* clear any leftover test tuple for this rel */
 		testTuple = &(node->lr_curtuples[erm->rti - 1]);
 		if (*testTuple != NULL)

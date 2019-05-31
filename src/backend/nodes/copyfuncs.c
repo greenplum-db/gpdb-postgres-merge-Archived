@@ -1317,6 +1317,7 @@ _copyPlanRowMark(const PlanRowMark *from)
 	COPY_SCALAR_FIELD(strength);
 	COPY_SCALAR_FIELD(waitPolicy);
 	COPY_SCALAR_FIELD(isParent);
+	COPY_SCALAR_FIELD(canOptSelectLockingClause);
 
 	return newnode;
 }
@@ -3344,6 +3345,7 @@ _copyQuery(const Query *from)
 	COPY_SCALAR_FIELD(hasModifyingCTE);
 	COPY_SCALAR_FIELD(hasForUpdate);
 	COPY_SCALAR_FIELD(hasRowSecurity);
+	COPY_SCALAR_FIELD(canOptSelectLockingClause);
 	COPY_NODE_FIELD(cteList);
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(jointree);

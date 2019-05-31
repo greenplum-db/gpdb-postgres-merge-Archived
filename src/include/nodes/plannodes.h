@@ -1426,12 +1426,8 @@ typedef enum RowMarkType
 	ROW_MARK_NOKEYEXCLUSIVE,	/* obtain no-key exclusive tuple lock */
 	ROW_MARK_SHARE,				/* obtain shared tuple lock */
 	ROW_MARK_KEYSHARE,			/* obtain keyshare tuple lock */
-	ROW_MARK_REFERENCE,			/* just fetch the TID, don't lock it */
-	ROW_MARK_COPY,				/* physically copy the row value */
-	ROW_MARK_TABLE_SHARE,		/* (GPDB) Acquire RowShareLock on table,
-								 * but no tuple locks */
-	ROW_MARK_TABLE_EXCLUSIVE	/* (GPDB) Acquire ExclusiveLock on table,
-								 * blocking all other updates */
+	ROW_MARK_REFERENCE,			/* just fetch the TID */
+	ROW_MARK_COPY				/* physically copy the row value */
 } RowMarkType;
 
 #define RowMarkRequiresRowShareLock(marktype)  ((marktype) <= ROW_MARK_KEYSHARE)
@@ -1485,6 +1481,7 @@ typedef struct PlanRowMark
 	LockClauseStrength strength;	/* LockingClause's strength, or LCS_NONE */
 	LockWaitPolicy waitPolicy;	/* NOWAIT and SKIP LOCKED options */
 	bool		isParent;		/* true if this is a "dummy" parent entry */
+	bool        canOptSelectLockingClause; /* Whether can do some optimization on select with locking clause */
 } PlanRowMark;
 
 

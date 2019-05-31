@@ -4,11 +4,29 @@
 # session run in the same permutation holds ExclusiveLock that blocks the step.
 # GPDB_94_MERGE_FIXME: Since the introduction of Global Deadlock Detector, an
 # UPDATE/DELETE no longer acquires ExclusiveLock. So we could perhaps enable
-# some of these now.
-# GPDB_94_MERGE_FIXME: But SELECT FOR UPDATE still acquires a whole-table
-# ExclusiveLock. Why?
-# GPDB_95_MERGE_FIXME: Following tests fail because ExclusiveLock is taken for
-# same reason as above GPDB_94_MERGE_FIXME. Tests insert-conflict-do-update-3,
+# some of these now. 
+# A GUC gp_enable_global_deadlock_detector is introduced to control GDD.
+# When GDD is enabled, update|delete on heap tables will lock the table in
+# RowExclusiveLock mode. Otherwise, it locks the whole table in ExlusiveLock mode.
+# By default, GDD is set distabled and most the the cases are tested under this
+# condition.
+# Greeplum's logic for Select-Statement with locking clause (for update|no key update|share|key share)
+# is different from upstream:
+#   - For all kinds of select-statement with locking clause, Greenplum locks the entire table in ExclusiveLock
+#   mode, and does not generate LockRows plannode in the plan.
+#   - For very simple cases (defined below), Greenplum behaves just like Postgres:
+#     1. Hold RowShareLock on the table
+#     2. Generate LockRows plannode in the plan
+#     3. Lock tuples during executing
+
+# Simple cases should meet all the following conditions:
+#   1. GDD(global deadlock detector) is enabled
+#   2. Top level select statements with locking clause
+#   3. FromList in the parse tree contains and only contains one rangeVar
+#   4. No sublink and no subquery
+#   5. No set operations (union, intersect, …)
+
+# GPDB_95_MERGE_FIXME: Tests insert-conflict-do-update-3,
 # nowait, nowait-2, nowait-3, nowait-4, nowait-5, skip-locked, skip-locked-2,
 # skip-locked-3, skip-locked-4, tuplelock-conflict, alter-table-2,
 # alter-table-2, create-trigger. If GDD is enabled, it will then take
@@ -47,7 +65,7 @@
 test: delete-abort-savept
 #test: delete-abort-savept-2
 #test: aborted-keyrevoke
-test: multixact-no-deadlock
+#test: multixact-no-deadlock
 #test: multixact-no-forget
 #test: propagate-lock-delete
 #test: tuplelock-conflict
