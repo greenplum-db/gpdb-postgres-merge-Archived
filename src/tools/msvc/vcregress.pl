@@ -145,7 +145,6 @@ sub ecpgcheck
 	my $schedule = "ecpg";
 	my @args     = (
 		"../../../../$Config/pg_regress_ecpg/pg_regress_ecpg",
-		"--psqldir=../../../$Config/psql",
 		"--dbname=regress1,connectdb",
 		"--create-role=connectuser,connectdb",
 		"--schedule=${schedule}_schedule",
