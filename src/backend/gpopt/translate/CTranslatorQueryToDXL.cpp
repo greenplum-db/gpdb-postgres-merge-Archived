@@ -322,6 +322,8 @@ CTranslatorQueryToDXL::CheckUnsupportedNodeTypes
 		{T_CoerceToDomainValue, GPOS_WSZ_LIT("COERCETODOMAINVALUE")},
 		{T_GroupId, GPOS_WSZ_LIT("GROUPID")},
 		{T_CurrentOfExpr, GPOS_WSZ_LIT("CURRENT OF")},
+		{T_GroupingFunc, GPOS_WSZ_LIT("GROUPINGFUNC")},
+
 	};
 
 	List *unsupported_list = NIL;
