@@ -53,7 +53,10 @@ static void vacuum_all_databases(vacuumingOptions *vacopts,
 					 const char *progname, bool echo, bool quiet);
 
 static void prepare_vacuum_command(PQExpBuffer sql, PGconn *conn,
-					   vacuumingOptions *vacopts, const char *table);
+					   vacuumingOptions *vacopts,
+					   const char *progname,
+					   bool echo,
+					   const char *table);
 
 static void run_vacuum_command(PGconn *conn, const char *sql, bool echo,
 				   const char *dbname, const char *table,
@@ -452,7 +455,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		ParallelSlot *free_slot;
 		const char *tabname = cell ? cell->val : NULL;
 
-		prepare_vacuum_command(&sql, conn, vacopts, tabname);
+		prepare_vacuum_command(&sql, conn, vacopts, progname, echo, tabname);
 
 		if (CancelRequested)
 		{
@@ -603,7 +606,7 @@ vacuum_all_databases(vacuumingOptions *vacopts,
  */
 static void
 prepare_vacuum_command(PQExpBuffer sql, PGconn *conn, vacuumingOptions *vacopts,
-					   const char *table)
+					   const char *progname, bool echo, const char *table)
 {
 	resetPQExpBuffer(sql);
 
@@ -659,7 +662,10 @@ prepare_vacuum_command(PQExpBuffer sql, PGconn *conn, vacuumingOptions *vacopts,
 	}
 
 	if (table)
-		appendPQExpBuffer(sql, " %s", table);
+	{
+		appendPQExpBufferChar(sql, ' ');
+		appendQualifiedRelation(sql, table, conn, progname, echo);
+	}
 	appendPQExpBufferChar(sql, ';');
 }
 
