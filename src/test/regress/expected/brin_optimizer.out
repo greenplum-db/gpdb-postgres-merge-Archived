@@ -375,7 +375,6 @@ BEGIN
 	END LOOP;
 END;
 $x$;
--- GPDB_95_MERGE_FIXME: ORCA support brin indexes?
 WARNING:  did not get bitmap indexscan plan for (oidcol,>,oid,0,100)
 WARNING:  did not get bitmap indexscan plan for (oidcol,>=,oid,0,100)
 WARNING:  did not get bitmap indexscan plan for (oidcol,=,oid,8800,1)
