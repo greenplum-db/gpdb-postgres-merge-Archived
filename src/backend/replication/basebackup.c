@@ -1199,11 +1199,12 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 						(errcode_for_file_access(),
 						 errmsg("could not read symbolic link \"%s\": %m",
 								pathbuf)));
-			if (rllen >= sizeof(linkpath))
+			if (rllen >= MAX_TARABLE_SYMLINK_PATH_LENGTH)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						 errmsg("symbolic link \"%s\" target is too long",
-								pathbuf)));
+						 errmsg("symbolic link \"%s\" target is too long and will not be added to the backup",
+								pathbuf),
+						 errdetail("The symbolic link with target \"%s\" is too long. Symlink targets with length greater than %d characters would be truncated.", pathbuf, MAX_TARABLE_SYMLINK_PATH_LENGTH)));
 
 			/* Lop off the dbid before sending the link target. */
 			char *file_sep_before_dbid_in_link_path = strrchr(linkpath, '/');

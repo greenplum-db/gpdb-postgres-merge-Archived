@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Cwd;
 use TestLib;
-use Test::More tests => 40;
+use Test::More tests => 43;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -141,20 +141,20 @@ SKIP: {
 	mkdir "$longer_tempdir";
 	mkdir "$some_backup_dir";
 	psql 'postgres', "CREATE TABLESPACE too_long_tablespace LOCATION '$longer_tempdir';";
-	command_warns_like([
+	command_fails_like([
 		'pg_basebackup',
 		'-D', "$some_backup_dir",
 		'--target-gp-dbid', '99'],
-				 qr/WARNING:  symbolic link ".*" target is too long and will not be added to the backup/,
-					   'basebackup with a tablespace that has a very long location should warn target is too long.');
+				 qr/symbolic link ".*" target is too long and will not be added to the backup/,
+					   'basebackup with a tablespace that has a very long location should error out with target is too long.');
 
 	mkdir "$some_other_backup_dir";
-	command_warns_like([
+	command_fails_like([
 		'pg_basebackup',
 		'-D', "$some_other_backup_dir",
 		'--target-gp-dbid', '99'],
 				 qr/The symbolic link with target ".*" is too long. Symlink targets with length greater than 100 characters would be truncated./,
-					   'basebackup with a tablespace that has a very long location should warn link not added to the backup.');
+					   'basebackup with a tablespace that has a very long location should error out link not added to the backup.');
 
 	command_fails_like([
 		'ls', "$some_other_backup_dir/pg_tblspc/*"],
@@ -163,28 +163,29 @@ SKIP: {
 }
 
 command_fails(
-	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp', "-T=/foo" ],
+	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '--target-gp-dbid', '123', '-Fp', "-T=/foo" ],
 	'-T with empty old directory fails');
 command_fails(
-	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp', "-T/foo=" ],
+	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '--target-gp-dbid', '123', '-Fp', "-T/foo=" ],
 	'-T with empty new directory fails');
 command_fails(
-	[   'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp',
+	[   'pg_basebackup', '-D', "$tempdir/backup_foo", '--target-gp-dbid', '123', '-Fp',
 		"-T/foo=/bar=/baz" ],
 	'-T with multiple = fails');
 command_fails(
-	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp', "-Tfoo=/bar" ],
+	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '--target-gp-dbid', '123', '-Fp', "-Tfoo=/bar" ],
 	'-T with old directory not absolute fails');
 command_fails(
-	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp', "-T/foo=bar" ],
+	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '--target-gp-dbid', '123', '-Fp', "-T/foo=bar" ],
 	'-T with new directory not absolute fails');
 command_fails(
-	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '-Fp', "-Tfoo" ],
+	[ 'pg_basebackup', '-D', "$tempdir/backup_foo", '--target-gp-dbid', '123', '-Fp', "-Tfoo" ],
 	'-T with invalid format fails');
 
 mkdir "$tempdir/$superlongname";
 psql 'postgres',
   "CREATE TABLESPACE tblspc3 LOCATION '$tempdir/$superlongname';";
-command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup_l3", '-Ft' ],
+command_warns_like([ 'pg_basebackup', '-D', "$tempdir/tarbackup_l3", '--target-gp-dbid', '123', '-Ft' ],
+	qr/WARNING: tar backups are not supported on GPDB/,
 	'pg_basebackup tar with long symlink target');
 psql 'postgres', "DROP TABLESPACE tblspc3;";
