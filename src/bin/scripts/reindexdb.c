@@ -288,7 +288,7 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 	appendPQExpBufferStr(&sql, "REINDEX ");
 
 	if (verbose)
-		appendPQExpBufferStr(&sql, " (VERBOSE)");
+		appendPQExpBufferStr(&sql, "(VERBOSE) ");
 
 	appendPQExpBufferStr(&sql, type);
 	appendPQExpBufferChar(&sql, ' ');
