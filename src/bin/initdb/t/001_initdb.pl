@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 use TestLib;
-use Test::More tests => 19;
+use Test::More tests => 14;
 
 my $tempdir = TestLib::tempdir;
 my $xlogdir = "$tempdir/pgxlog";
