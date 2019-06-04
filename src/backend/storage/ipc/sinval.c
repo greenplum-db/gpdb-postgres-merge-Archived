@@ -23,7 +23,6 @@
 #include "utils/inval.h"
 
 #include "cdb/cdbtm.h"          /* DtxContext */
-#include "cdb/cdbvars.h"
 #include "tcop/idle_resource_cleaner.h"
 
 uint64		SharedInvalidMessageCounter;
@@ -184,25 +183,6 @@ HandleCatchupInterrupt(void)
 void
 ProcessCatchupInterrupt(void)
 {
-	/*
-	 * GPDB_95_MERGE_FIXME: Postgres commit 4f85fde8eb8 changed interrupt
-	 * infrastructure when processing client reads. GPDB commit 698603da5b6
-	 * explains that extra care must be taken when deciding what transaction
-	 * state we can run catchup handler from without deadlocking.
-	 *
-	 * Issue seen as crash on QE when running greenplum_schedule
-	 * and QE is processing catchup interrupt then throws...
-	 *
-	 *   "FATAL","XX000","Unexpected segment distribute transaction context: 'Segment Prepared' (xact.c:2451)"
-	 *
-	 * Then QD would then reset gang and panic....
-	 *
-	 *   "PANIC","XX000","Unexpected internal error (relcache.c:1864)"
-	 *
-	 * Do we need to run catchup from QE? If so then seems like
-	 * in_process_catchup_event logic will need to be updated.
-	 */
-	if (Gp_role != GP_ROLE_EXECUTE)
 	while (catchupInterruptPending)
 	{
 		/*
