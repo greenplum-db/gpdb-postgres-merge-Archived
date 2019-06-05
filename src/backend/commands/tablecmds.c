@@ -4030,8 +4030,12 @@ AlterTableGetLockLevel(List *cmds)
 							 * We add triggers to both tables when we add a
 							 * Foreign Key, so the lock level must be at least
 							 * as strong as CREATE TRIGGER.
+							 *
+							 * GPDB_95_MERGE_FIXME: upstream set the lockmode to
+							 * ShareRowExclusiveLock which will cause pg_upgrade
+							 * test failure, need to know why
 							 */
-							cmd_lockmode = ShareRowExclusiveLock;
+							cmd_lockmode = AccessExclusiveLock;
 							break;
 
 						default:

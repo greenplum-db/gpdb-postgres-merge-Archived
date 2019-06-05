@@ -769,8 +769,16 @@ check_is_install_user(ClusterInfo *cluster)
 	 * We only allow the install user in the new cluster because other defined
 	 * users might match users defined in the old cluster and generate an
 	 * error during pg_dump restore.
+	 *
+	 * However, in Greenplum, if we are upgrading a segment, its users have
+	 * already been replicated to it from the master via gpupgrade.  Hence,
+	 * we only need to do this check for the QD.  In other words, the
+	 * Greenplum cluster upgrade scheme will overwrite the QE's schema
+	 * with the QD's schema, making this check inappropriate for a QE upgrade.
 	 */
-	if (cluster == &new_cluster && atooid(PQgetvalue(res, 0, 0)) != 1)
+	if (user_opts.segment_mode == DISPATCHER &&
+		cluster == &new_cluster &&
+		atooid(PQgetvalue(res, 0, 0)) != 1)
 		pg_fatal("Only the install user can be defined in the new cluster.\n");
 
 	PQclear(res);
