@@ -15284,12 +15284,7 @@ window_specification: '(' opt_existing_window_name opt_partition_clause
 opt_existing_window_name: ColId						{ $$ = $1; }
 			| /*EMPTY*/				%prec Op		{ $$ = NULL; }
 		;
-/*
- * GPDB_95_MERGE_FIXME: The change from sortby_list to expr_list
- * is based on the now closed greenplum PR
- * https://github.com/greenplum-db/gpdb/pull/5440/
- * commit <7b554570>. Verify.
- */
+
 opt_partition_clause: PARTITION BY expr_list { $$ = $3; }
 			| /*EMPTY*/ { $$ = NIL; }
 		;
