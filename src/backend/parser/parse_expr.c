@@ -282,12 +282,6 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			result = transformGroupingFunc(pstate, (GroupingFunc *) expr);
 			break;
 
-		/*
-		 * GPDB_95_MERGE_FIXME: transformGroupId() is not implemented yet.
-		 * It is taken from commit <8b8329c3ae> in the now closed PR 5440
-		 * (https://github.com/greenplum-db/gpdb/pull/5440)
-		 * It is added here as a placeholder during merge conflict resolution.
-		 */
 		case T_GroupId:
 			result = transformGroupId(pstate, (GroupId *) expr);
 			break;
