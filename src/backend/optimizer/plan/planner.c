@@ -3224,29 +3224,12 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		ListCell   *lc;
 		List   *newmarks = NIL;
 
-		foreach(lc, root->rowMarks)
+		if (parse->canOptSelectLockingClause)
 		{
-			PlanRowMark *rc = (PlanRowMark *) lfirst(lc);
-
-			if (parse->canOptSelectLockingClause)
+			foreach(lc, root->rowMarks)
 			{
-#if 0
-				/*
-				 * GPDB_95_MERGE_FIXME: We added this but probably no
-				 * longer needed since canOptSelectLockingClause was introduced
-				 */
-				RelOptInfo *brel = root->simple_rel_array[rc->rti];
+				PlanRowMark *rc = (PlanRowMark *) lfirst(lc);
 
-				/*
-				 * RTEs are not promised to be built to base rels.
-				 * eg: select * from inh_table for share/update, inh_table has
-				 * row level security policy, it is turned into a subquery in
-				 * expand_security_qual(), so children rels are only built in
-				 * down level. 
-				 */
-				if (!brel)
-					continue;
-#endif
 				rc->canOptSelectLockingClause = true;
 				newmarks = lappend(newmarks, rc);
 			}
