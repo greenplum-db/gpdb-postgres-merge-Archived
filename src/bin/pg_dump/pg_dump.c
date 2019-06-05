@@ -10786,7 +10786,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "proiswindow, provolatile, proisstrict, prosecdef, "
 						  "proleakproof, proconfig, procost, prorows, prodataaccess, "
 						  "proexeclocation, "
-						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
+						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname, "
 						  "(SELECT procallback FROM pg_catalog.pg_proc_callback WHERE profnoid::pg_catalog.oid = oid) as callbackfunc "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",

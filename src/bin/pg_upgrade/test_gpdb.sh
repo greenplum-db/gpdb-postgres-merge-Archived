@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# contrib/pg_upgrade/test_gpdb.sh
+# src/bin/pg_upgrade/test_gpdb.sh
 #
 # Test driver for upgrading a Greenplum cluster with pg_upgrade.
 # The upgraded cluster will be a newly created gpdemo
@@ -452,7 +452,7 @@ main() {
 	export MASTER_DATADIR=${temp_root}
 	cp ${OLD_DATADIR}/../lalshell .
 	
-	BLDWRAP_POSTGRES_CONF_ADDONS=fsync=off ${temp_root}/../../../gpAux/gpdemo/demo_cluster.sh ${DEMOCLUSTER_OPTS}
+	BLDWRAP_POSTGRES_CONF_ADDONS=fsync=off ${temp_root}/../../../../gpAux/gpdemo/demo_cluster.sh ${DEMOCLUSTER_OPTS}
 
 	export MASTER_DATA_DIRECTORY="${NEW_DATADIR}/qddir/demoDataDir-1"
 	export PGPORT=17432
