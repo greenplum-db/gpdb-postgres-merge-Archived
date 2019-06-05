@@ -428,10 +428,6 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			 */
 		case T_CaseTestExpr:
 		case T_SetToDefault:
-		/* GPDB_95_MERGE_FIXME: T_Integer seems to be superficial. Remove if
-		 * possible to match closer with upstream.
-		 */
-		case T_Integer:
 		/*
 		 * GPDB_95_MERGE_FIXME: T_Const was removed in upstream Postgres
 		 * 6a75562ed16b5fa5, but it seems it is still needed for ALTER TABLE
