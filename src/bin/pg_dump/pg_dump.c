@@ -13607,7 +13607,7 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 	char	   *fdwname;
 
 	/* Skip if not to be dumped */
-	if (!srvinfo->dobj.dump || dopt->dataOnly || dopt->include_everything)
+	if (!srvinfo->dobj.dump || dopt->dataOnly || !dopt->include_everything)
 		return;
 
 	q = createPQExpBuffer();
