@@ -11,12 +11,11 @@ function make_sync_tools() {
     # IVYREPO_HOST IVYREPO_REALM IVYREPO_USER IVYREPO_PASSWD
     make sync_tools
   popd
-  case "${TARGET_OS}" in
-    centos|ubuntu)
-      mkdir -p orca_src
-      mv ${GPDB_SRC_PATH}/gpAux/ext/${BLD_ARCH}/gporca*/* orca_src/
-      ;;
-  esac
+
+  wget -q -O - https://github.com/greenplum-db/gporca/archive/v3.47.0.tar.gz | tar zxf - -C ${GPDB_SRC_PATH}/gpAux/ext/${BLD_ARCH}
+  mkdir -p orca_src
+  mv ${GPDB_SRC_PATH}/gpAux/ext/${BLD_ARCH}/gporca*/* orca_src/
+
 }
 
 function _main() {
@@ -32,14 +31,11 @@ function _main() {
            ;;
         esac
         ;;
-    sles)
-        export BLD_ARCH=sles11_x86_64
-        ;;
     ubuntu)
         export BLD_ARCH=ubuntu18.04_x86_64
         ;;
     *)
-        echo "only centos, sles, ubuntu are supported TARGET_OS'es"
+        echo "only centos, ubuntu are supported TARGET_OS'es"
         false
         ;;
   esac

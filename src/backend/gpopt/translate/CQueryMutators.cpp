@@ -155,7 +155,7 @@ CQueryMutators::ShouldFallback
 Query *
 CQueryMutators::NormalizeGroupByProjList
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	const Query *query
 	)
@@ -657,7 +657,7 @@ CQueryMutators::FixGroupingCols
 TargetEntry *
 CQueryMutators::GetTargetEntryForAggExpr
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	Node *node,
 	ULONG attno
@@ -1015,7 +1015,7 @@ CQueryMutators::IncrLevelsUpIfOuterRef
 Query *
 CQueryMutators::NormalizeHaving
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	const Query *query
 	)
@@ -1120,7 +1120,7 @@ CQueryMutators::NormalizeHaving
 Query *
 CQueryMutators::NormalizeQuery
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	const Query *query,
 	ULONG query_level
@@ -1440,7 +1440,7 @@ CQueryMutators::NeedsProjListWindowNormalization
 Query *
 CQueryMutators::NormalizeWindowProjList
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	const Query *query
 	)

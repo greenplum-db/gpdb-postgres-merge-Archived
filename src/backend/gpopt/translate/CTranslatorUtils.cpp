@@ -94,7 +94,7 @@ extern bool optimizer_multilevel_partitioning;
 CDXLIndexDescr *
 CTranslatorUtils::GetIndexDescr
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	IMDId *mdid
 	)
@@ -117,7 +117,7 @@ CTranslatorUtils::GetIndexDescr
 CDXLTableDescr *
 CTranslatorUtils::GetTableDescr
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CIdGenerator *id_generator,
 	const RangeTblEntry *rte,
@@ -208,7 +208,7 @@ CTranslatorUtils::GetTableDescr
 BOOL
 CTranslatorUtils::IsSirvFunc
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	OID func_oid
 	)
@@ -265,7 +265,7 @@ CTranslatorUtils::HasSubquery
 CDXLLogicalTVF *
 CTranslatorUtils::ConvertToCDXLLogicalTVF
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CIdGenerator *id_generator,
 	const RangeTblEntry *rte
@@ -368,7 +368,7 @@ CTranslatorUtils::ConvertToCDXLLogicalTVF
 IMdIdArray *
 CTranslatorUtils::ResolvePolymorphicTypes
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	IMdIdArray *mdid_array,
 	List *arg_types_list,
 	FuncExpr *funcexpr
@@ -466,7 +466,7 @@ CTranslatorUtils::ContainsPolymorphicTypes
 CDXLColDescrArray *
 CTranslatorUtils::GetColumnDescriptorsFromRecord
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CIdGenerator *id_generator,
 	List *col_names,
 	List *col_types,
@@ -523,7 +523,7 @@ CTranslatorUtils::GetColumnDescriptorsFromRecord
 CDXLColDescrArray *
 CTranslatorUtils::GetColumnDescriptorsFromRecord
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CIdGenerator *id_generator,
 	List *col_names,
 	IMdIdArray *out_arg_types
@@ -577,7 +577,7 @@ CTranslatorUtils::GetColumnDescriptorsFromRecord
 CDXLColDescrArray *
 CTranslatorUtils::GetColumnDescriptorsFromBase
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CIdGenerator *id_generator,
 	IMDId *mdid_return_type,
 	INT type_modifier,
@@ -616,7 +616,7 @@ CTranslatorUtils::GetColumnDescriptorsFromBase
 CDXLColDescrArray *
 CTranslatorUtils::GetColumnDescriptorsFromComposite
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CIdGenerator *id_generator,
 	const IMDType *type
@@ -663,7 +663,7 @@ CTranslatorUtils::GetColumnDescriptorsFromComposite
 CMDColumnArray *
 CTranslatorUtils::ExpandCompositeType
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	const IMDType *type
 	)
@@ -870,7 +870,7 @@ CTranslatorUtils::GetSystemColName
 CMDIdGPDB *
 CTranslatorUtils::GetSystemColType
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	AttrNumber attno
 	)
 {
@@ -1107,7 +1107,7 @@ CTranslatorUtils::GetSetOpType
 ULongPtrArray *
 CTranslatorUtils::GetGroupingColidArray
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CBitSet *group_by_cols,
 	IntToUlongMap *sort_group_cols_to_colid_map
 	)
@@ -1140,7 +1140,7 @@ CTranslatorUtils::GetGroupingColidArray
 CBitSetArray *
 CTranslatorUtils::GetColumnAttnosForGroupBy
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	List *group_clause_list,
 	ULONG num_cols,
 	UlongToUlongMap *group_col_pos,	// mapping of grouping col positions to SortGroupRef ids
@@ -1179,7 +1179,7 @@ CTranslatorUtils::GetColumnAttnosForGroupBy
 CBitSet *
 CTranslatorUtils::CreateAttnoSetForGroupingSet
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	List *group_elems,
 	ULONG num_cols,
 	UlongToUlongMap *group_col_pos,	// mapping of grouping col positions to SortGroupRef ids,
@@ -1226,7 +1226,7 @@ CTranslatorUtils::CreateAttnoSetForGroupingSet
 ULongPtrArray *
 CTranslatorUtils::GenerateColIds
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	List *target_list,
 	IMdIdArray *input_mdid_arr,
 	ULongPtrArray *input_colids,
@@ -1399,7 +1399,7 @@ CTranslatorUtils::GetTargetListReturnTypeOid
 CDXLColDescrArray *
 CTranslatorUtils::GetDXLColumnDescrArray
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	List *target_list,
 	ULongPtrArray *colids,
 	BOOL keep_res_junked
@@ -1442,7 +1442,7 @@ CTranslatorUtils::GetDXLColumnDescrArray
 ULongPtrArray *
 CTranslatorUtils::GetPosInTargetList
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	List *target_list,
 	BOOL keep_res_junked
 	)
@@ -1479,7 +1479,7 @@ CTranslatorUtils::GetPosInTargetList
 CDXLColDescr *
 CTranslatorUtils::GetColumnDescrAt
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	TargetEntry *target_entry,
 	ULONG colid,
 	ULONG pos
@@ -1530,7 +1530,7 @@ CTranslatorUtils::GetColumnDescrAt
 CDXLNode *
 CTranslatorUtils::CreateDummyProjectElem
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	ULONG colid_input,
 	ULONG colid_output,
 	CDXLColDescr *dxl_col_descr
@@ -1570,7 +1570,7 @@ CTranslatorUtils::CreateDummyProjectElem
 ULongPtrArray *
 CTranslatorUtils::GetOutputColIdsArray
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	List *target_list,
 	IntToUlongMap *attno_to_colid_map
 	)
@@ -1752,7 +1752,7 @@ CTranslatorUtils::IsWindowSpec
 CDXLNode *
 CTranslatorUtils::CreateDXLProjElemFromInt8Const
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	INT val
 	)
@@ -2019,7 +2019,7 @@ CTranslatorUtils::CreateMultiByteCharStringFromWCString
 UlongToUlongMap *
 CTranslatorUtils::MakeNewToOldColMapping
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	ULongPtrArray *old_colids,
 	ULongPtrArray *new_colids
 	)
@@ -2122,7 +2122,7 @@ CTranslatorUtils::HasProjElem
 CDXLNode *
 CTranslatorUtils::CreateDXLProjElemConstNULL
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CIdGenerator *pidgtorCol,
 	const IMDColumn *md_col
@@ -2148,7 +2148,7 @@ CTranslatorUtils::CreateDXLProjElemConstNULL
 CDXLNode *
 CTranslatorUtils::CreateDXLProjElemConstNULL
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	IMDId *mdid,
 	ULONG colid,
@@ -2173,7 +2173,7 @@ CTranslatorUtils::CreateDXLProjElemConstNULL
 CDXLNode *
 CTranslatorUtils::CreateDXLProjElemConstNULL
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	IMDId *mdid,
 	ULONG colid,
@@ -2270,7 +2270,7 @@ CTranslatorUtils::CheckRTEPermissions
 void
 CTranslatorUtils::UpdateGrpColMapping
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	UlongToUlongMap *group_col_pos, 
 	CBitSet *group_cols,
 	ULONG sort_group_ref
@@ -2426,7 +2426,7 @@ CTranslatorUtils::MapSublinkTypeToDXLSubplan
 BOOL
 CTranslatorUtils::RelHasTriggers
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	const IMDRelation *rel,
 	const EdxlDmlType dml_type_dxl
