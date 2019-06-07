@@ -46,8 +46,13 @@ aomd_filehandler.c: % : $(top_srcdir)/src/backend/access/appendonly/%
 check: test_gpdb.sh all
 	bash $< -C -r -s -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
 
+# GPDB_95_MERGE_FIXME: Added -p option as workaround for hangs in CI during
+# pg_ugprade. We should fix this as soon as possible before merging into
+# master. It seems like master and merge branch are running differently in CI.
+# Merge branch updates QEs, but that doesn't seem to be the case currently on
+# master. Why?
 installcheck: test_gpdb.sh all
-	bash $< -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
+	bash $< -p -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
 
 perfcheck: test_gpdb.sh all
 	bash $< -p -r -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
