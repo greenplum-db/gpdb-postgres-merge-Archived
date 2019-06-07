@@ -1716,11 +1716,12 @@ _readForeignScan(void)
 
 	readScanInfo((Scan *)local_node);
 
+	READ_OID_FIELD(fs_server);
 	READ_NODE_FIELD(fdw_exprs);
-	READ_NODE_FIELD(fdw_private);
 	READ_NODE_FIELD(fdw_private);
 	READ_NODE_FIELD(fdw_scan_tlist);
 	READ_BITMAPSET_FIELD(fs_relids);
+	READ_BOOL_FIELD(fsSystemCol);
 	READ_DONE();
 }
 
