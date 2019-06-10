@@ -3940,7 +3940,7 @@ static SSL_CTX *initialize_ctx(void)
 	}
 
 	/* Create our context*/
-	ctx = SSL_CTX_new( TLSv1_server_method() );
+	ctx = SSL_CTX_new(TLS_server_method());
 
 	/* Generate random seed */
 	if ( RAND_poll() == 0 )
