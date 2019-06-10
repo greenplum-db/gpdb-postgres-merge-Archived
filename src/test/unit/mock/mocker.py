@@ -165,7 +165,7 @@ class FuncSignature(object):
     # we need extra space at the end.
     arg_pat = re.compile(
         # argtype.  i.e. 'const unsigned long', 'struct Foo *', 'const char * const'
-        r'((?:register\s+|const\s+|volatile\s+)*(?:enum\s+|struct\s+|unsigned\s+|long\s+)?' +
+        r'((?:register\s+|const\s+|volatile\s+)*(?:enum\s+|struct\s+|unsigned\s+|long\s+long\s+|long\s+)?' +
             r'\w+(?:[\s\*]+)(?:const[\s\*]+)?|\s+)' +
         r'(?:__restrict\s+)?' +
         # argname.  We accept 'arg[]'
