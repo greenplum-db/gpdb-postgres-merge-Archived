@@ -248,6 +248,12 @@ static void write_pipe_chunks(char *data, int len, int dest);
 static void write_csvlog(ErrorData *edata);
 static void elog_debug_linger(ErrorData *edata);
 
+/* GPDB: wrapper function to silence unused result warning */
+static inline void
+ignore_returned_result(long long int result)
+{
+	(void) result;
+}
 
 /* verify string is correctly encoded, and escape it if invalid  */
 static void verify_and_replace_mbstr(char **str, int len)
@@ -3895,7 +3901,7 @@ append_stacktrace(PipeProtoChunk *buffer, StringInfo append, void *const *stacka
 				if (amsyslogger)
 					write_syslogger_file_binary(symbol, symbol_len, LOG_DESTINATION_STDERR);
 				else
-					write(fileno(stderr), symbol, symbol_len);
+					ignore_returned_result(write(fileno(stderr), symbol, symbol_len));
 			}
 		}
 	}
@@ -3918,9 +3924,9 @@ write_syslogger_file_string(const char *str, bool amsyslogger, bool append_comma
 		}
 		else
 		{
-			write(fileno(stderr), "\"", 1);
+			ignore_returned_result(write(fileno(stderr), "\"", 1));
 			syslogger_write_str(str, strlen(str), false, true);
-			write(fileno(stderr), "\"", 1);
+			ignore_returned_result(write(fileno(stderr), "\"", 1));
 		}
 	}
 
@@ -3929,7 +3935,7 @@ write_syslogger_file_string(const char *str, bool amsyslogger, bool append_comma
 		if (amsyslogger)
 			write_syslogger_file_binary(",", 1, LOG_DESTINATION_STDERR);
 		else
-			write(fileno(stderr), ",", 1);
+			ignore_returned_result(write(fileno(stderr), ",", 1));
 	}
 }
 
@@ -4053,7 +4059,7 @@ write_syslogger_in_csv(ErrorData *edata, bool amsyslogger)
 	if (amsyslogger)
 		write_syslogger_file_binary(LOG_EOL, strlen(LOG_EOL), LOG_DESTINATION_STDERR);
 	else
-		write(fileno(stderr), LOG_EOL, strlen(LOG_EOL));
+		ignore_returned_result(write(fileno(stderr), LOG_EOL, strlen(LOG_EOL)));
 }
 
 /*
@@ -4575,7 +4581,7 @@ write_pipe_chunks(char *data, int len, int dest)
 				Assert(p.hdr.pid != 0);
 				Assert(p.hdr.thid != 0);
 #endif
-		write(fd, &p, PIPE_CHUNK_SIZE);
+		ignore_returned_result(write(fd, &p, PIPE_CHUNK_SIZE));
 		data += PIPE_MAX_PAYLOAD;
 		len -= PIPE_MAX_PAYLOAD;
 
@@ -4593,7 +4599,7 @@ write_pipe_chunks(char *data, int len, int dest)
 		Assert(PIPE_HEADER_SIZE + len <= PIPE_CHUNK_SIZE);
 #endif
 	memcpy(p.data, data, len);
-	write(fd, &p, PIPE_HEADER_SIZE + len);
+	ignore_returned_result(write(fd, &p, PIPE_HEADER_SIZE + len));
 }
 
 

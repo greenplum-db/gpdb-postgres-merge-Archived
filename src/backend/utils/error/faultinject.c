@@ -203,6 +203,8 @@ gp_fault_inject_impl(int32 reason, int64 arg)
                 case GP_FAULT_LOG_CRASH:
                         {
                                 PipeProtoHeader hdr;
+								ssize_t r;
+
                                 hdr.zero = 0;
                                 hdr.len = 0;
                                 hdr.pid = 1; 
@@ -214,7 +216,9 @@ gp_fault_inject_impl(int32 reason, int64 arg)
 								hdr.is_segv_msg = 'f';
                                 hdr.log_line_number = reason;
                                 hdr.next = -1;
-                                write(2, &hdr, sizeof(PipeProtoHeader));
+								r = write(2, &hdr, sizeof(PipeProtoHeader));
+								if (r < 0)
+									elog(ERROR, "Failed to write PipeProtoHeader");
                          }
                          break;
 

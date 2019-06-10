@@ -1073,8 +1073,8 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	/* silence valgrind :( */
 	memset(&cp, 0, sizeof(ReplicationSlotOnDisk));
 
-	sprintf(tmppath, "%s/state.tmp", dir);
-	sprintf(path, "%s/state", dir);
+	snprintf(tmppath, sizeof(tmppath), "%s/state.tmp", dir);
+	snprintf(path, sizeof(path), "%s/state", dir);
 
 	fd = OpenTransientFile(tmppath,
 						   O_CREAT | O_EXCL | O_WRONLY | PG_BINARY,

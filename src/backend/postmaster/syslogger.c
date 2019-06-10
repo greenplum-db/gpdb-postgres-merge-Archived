@@ -136,6 +136,13 @@ static HANDLE threadHandle = 0;
 static CRITICAL_SECTION sysloggerSection;
 #endif
 
+/* GPDB: wrapper function to silence unused result warning */
+static inline void
+ignore_returned_result(long long int result)
+{
+	(void) result;
+}
+
 static bool chunk_is_postgres_chunk(PipeProtoHeader *hdr)
 {
     return hdr->zero == 0 && hdr->pid != 0 && hdr->thid != 0 &&
@@ -1202,7 +1209,7 @@ syslogger_append_timestamp(pg_time_t stamp_time, bool amsyslogger, bool append_c
 		if (amsyslogger)
 			write_syslogger_file_binary(strbuf, strlen(strbuf), LOG_DESTINATION_STDERR);
 		else
-			write(fileno(stderr), strbuf, strlen(strbuf));
+			ignore_returned_result(write(fileno(stderr), strbuf, strlen(strbuf)));
     }
 
     if (append_comma)
@@ -1210,7 +1217,7 @@ syslogger_append_timestamp(pg_time_t stamp_time, bool amsyslogger, bool append_c
 		if (amsyslogger)
 			write_syslogger_file_binary(",", 1, LOG_DESTINATION_STDERR);
 		else
-			write(fileno(stderr), ",", 1);
+			ignore_returned_result(write(fileno(stderr), ",", 1));
 	}
 }
 
@@ -1256,8 +1263,8 @@ syslogger_append_current_timestamp(bool amsyslogger)
 	}
 	else
 	{
-		write(fileno(stderr), strbuf, strlen(strbuf));
-		write(fileno(stderr), ",", 1);
+		ignore_returned_result(write(fileno(stderr), strbuf, strlen(strbuf)));
+		ignore_returned_result(write(fileno(stderr), ",", 1));
 	}
 }
 
@@ -1281,13 +1288,13 @@ int syslogger_write_str(const char *data, int len, bool amsyslogger, bool csv)
 			if (amsyslogger)
 				write_syslogger_file_binary("\"", 1, LOG_DESTINATION_STDERR);
 			else
-				write(fileno(stderr), "\"", 1);
+				ignore_returned_result(write(fileno(stderr), "\"", 1));
 		}
 		
 		if (amsyslogger)
 			write_syslogger_file_binary(data+cnt, 1, LOG_DESTINATION_STDERR);
 		else
-			write(fileno(stderr), data+cnt, 1);
+			ignore_returned_result(write(fileno(stderr), data+cnt, 1));
 
         cnt+=1;
     }
@@ -1387,14 +1394,14 @@ syslogger_write_int32(bool test0, const char *prefix, int32 i, bool amsyslogger,
 		if (amsyslogger)
 			write_syslogger_file_binary(buf, len, LOG_DESTINATION_STDERR);
 		else
-			write(fileno(stderr), buf, len);
+			ignore_returned_result(write(fileno(stderr), buf, len));
     }
     if (append_comma)
 	{
 		if (amsyslogger)
 			write_syslogger_file_binary(",", 1, LOG_DESTINATION_STDERR);
 		else
-			write(fileno(stderr), ",", 1);
+			ignore_returned_result(write(fileno(stderr), ",", 1));
 	}
 }
 
