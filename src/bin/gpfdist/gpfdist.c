@@ -54,6 +54,7 @@
 
 #endif
 
+#include <postgres.h>
 #include <pg_config.h>
 #include "gpfdist_helper.h"
 #ifdef USE_SSL
