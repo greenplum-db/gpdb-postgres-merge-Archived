@@ -86,7 +86,7 @@ extern void set_archive_cancel_info(struct _archiveHandle * AH, PGconn *conn);
 
 extern void
 exit_horribly(const char *modulename, const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3), noreturn));
+pg_attribute_printf(2, 3) pg_attribute_noreturn();
 extern void checkAborting(ArchiveHandle *AH);
 
 #endif   /* PG_DUMP_PARALLEL_H */

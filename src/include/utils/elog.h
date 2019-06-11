@@ -136,7 +136,7 @@ extern pthread_t main_tid;
 __declspec(noreturn)
 #endif
 void elog_internalerror(const char *filename, int lineno, const char *funcname)
-                       __attribute__((__noreturn__));
+						pg_attribute_noreturn();
 
 
 /*----------
