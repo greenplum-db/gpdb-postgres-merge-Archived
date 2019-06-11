@@ -32,6 +32,7 @@ function remote_setup() {
     GIT_URI=$(git config --get remote.origin.url)
     GIT_COMMIT=$(git rev-parse HEAD)
     GIT_TAG=$(git describe --tags --always --abbrev=0 | grep -E -o '[0-9]\.[0-9]+\.[0-9]+')
+    GIT_TAG=${GIT_TAG:-0.0.0}
     cd ..
 }
 
