@@ -62,7 +62,7 @@ ao_insert_replay(XLogReaderState *record)
 	int			fileFlags;
 	xl_ao_insert *xlrec = (xl_ao_insert *) XLogRecGetData(record);
 	char	   *buffer = (char *) xlrec + SizeOfAOInsert;
-	uint32		len = XLogRecGetDataLen(record);
+	uint32		len = XLogRecGetDataLen(record) - SizeOfAOInsert;
 
 	dbPath = GetDatabasePath(xlrec->target.node.dbNode,
 							 xlrec->target.node.spcNode);

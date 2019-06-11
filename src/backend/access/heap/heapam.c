@@ -2551,7 +2551,10 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		/* filtering by origin on a row level is much more efficient */
 		XLogIncludeOrigin();
 
-		recptr = XLogInsert(RM_HEAP_ID, info);
+		if (!isFrozen)
+			recptr = XLogInsert(RM_HEAP_ID, info);
+		else
+			recptr = XLogInsert_OverrideXid(RM_HEAP_ID, info, FrozenTransactionId);
 
 		PageSetLSN(page, recptr);
 	}
