@@ -253,7 +253,7 @@ _hash_getbuf_with_strategy(Relation rel, BlockNumber blkno,
  * Lock and pin (refcount) are both dropped.
  */
 void
-_hash_relbuf(Relation rel __attribute__((unused)), Buffer buf)
+_hash_relbuf(Relation rel pg_attribute_unused(), Buffer buf)
 {
 	UnlockReleaseBuffer(buf);
 }
@@ -264,7 +264,7 @@ _hash_relbuf(Relation rel __attribute__((unused)), Buffer buf)
  * This is used to unpin a buffer on which we hold no lock.
  */
 void
-_hash_dropbuf(Relation rel __attribute__((unused)), Buffer buf)
+_hash_dropbuf(Relation rel pg_attribute_unused(), Buffer buf)
 {
 	ReleaseBuffer(buf);
 }
@@ -282,7 +282,7 @@ _hash_dropbuf(Relation rel __attribute__((unused)), Buffer buf)
  * can't be combined with releasing.
  */
 void
-_hash_wrtbuf(Relation rel __attribute__((unused)), Buffer buf)
+_hash_wrtbuf(Relation rel pg_attribute_unused(), Buffer buf)
 {
 	MarkBufferDirty(buf);
 	UnlockReleaseBuffer(buf);
@@ -301,7 +301,7 @@ _hash_wrtbuf(Relation rel __attribute__((unused)), Buffer buf)
  * as HASH_READ (a bit ugly, but handy in some places).
  */
 void
-_hash_chgbufaccess(Relation rel __attribute__((unused)),
+_hash_chgbufaccess(Relation rel pg_attribute_unused(),
 				   Buffer buf,
 				   int from_access,
 				   int to_access)

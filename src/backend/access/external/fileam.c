@@ -1082,7 +1082,7 @@ externalgettup_custom(FileScanDesc scan)
 */
 static HeapTuple
 externalgettup(FileScanDesc scan,
-               ScanDirection dir __attribute__((unused)))
+               ScanDirection dir pg_attribute_unused())
 {
 	bool		custom = (scan->fs_custom_formatter_func != NULL);
 	HeapTuple	tup = NULL;

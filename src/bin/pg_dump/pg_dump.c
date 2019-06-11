@@ -3305,7 +3305,7 @@ dumpBlob(Archive *fout, BlobInfo *binfo)
  *	dump the data contents of all large objects
  */
 static int
-dumpBlobs(Archive *fout, void *arg __attribute__((unused)))
+dumpBlobs(Archive *fout, void *arg pg_attribute_unused())
 {
 	const char *blobQry;
 	const char *blobFetchQry;

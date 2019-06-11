@@ -1920,7 +1920,7 @@ toast_save_datum(Relation rel, Datum value,
  * ----------
  */
 static void
-toast_delete_datum(Relation rel __attribute__((unused)), Datum value)
+toast_delete_datum(Relation rel pg_attribute_unused(), Datum value)
 {
 	struct varlena *attr = (struct varlena *) DatumGetPointer(value);
 	struct varatt_external toast_pointer;

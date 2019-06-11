@@ -8344,7 +8344,7 @@ GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch)
  * This must be called ONCE during postmaster or standalone-backend shutdown
  */
 void
-ShutdownXLOG(int code __attribute__((unused)) , Datum arg __attribute__((unused)) )
+ShutdownXLOG(int code pg_attribute_unused() , Datum arg pg_attribute_unused() )
 {
 	/* Don't be chatty in standalone mode */
 	ereport(IsPostmasterEnvironment ? LOG : NOTICE,

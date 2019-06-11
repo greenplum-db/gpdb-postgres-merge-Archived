@@ -18,7 +18,7 @@
 
 
 Datum
-pgsql_version(PG_FUNCTION_ARGS __attribute__((unused)) )
+pgsql_version(PG_FUNCTION_ARGS pg_attribute_unused() )
 {
 	char version[512];
 

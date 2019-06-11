@@ -5699,7 +5699,7 @@ ShowUsage(const char *title)
  * on_proc_exit handler to log end of session
  */
 static void
-log_disconnections(int code, Datum arg __attribute__((unused)))
+log_disconnections(int code, Datum arg pg_attribute_unused())
 {
 	Port	   *port = MyProcPort;
 	long		secs;

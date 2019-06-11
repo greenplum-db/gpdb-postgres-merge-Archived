@@ -626,7 +626,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
  * ExecEndFunctionScan() will be called for a second time during ExecutorEnd().
  */
 void
-ExecFunctionScanExplainEnd(PlanState *planstate, struct StringInfoData *buf __attribute__((unused)))
+ExecFunctionScanExplainEnd(PlanState *planstate, struct StringInfoData *buf pg_attribute_unused())
 {
 	ExecEagerFreeFunctionScan((FunctionScanState *) planstate);
 }                               /* ExecFunctionScanExplainEnd */

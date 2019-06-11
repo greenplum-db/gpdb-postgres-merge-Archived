@@ -10,7 +10,7 @@
 
 static int expected_elevel;
 
-static void ereport_mock(int elevel, int dummy __attribute__((unused)),...)
+static void ereport_mock(int elevel, int dummy pg_attribute_unused(),...)
 {
 	assert_int_equal(elevel, expected_elevel);
 	

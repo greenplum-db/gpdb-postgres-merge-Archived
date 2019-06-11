@@ -2121,7 +2121,7 @@ ShutdownMultiXact(void)
  * Get the MultiXact data to save in a checkpoint record
  */
 void
-MultiXactGetCheckptMulti(bool is_shutdown __attribute__((unused)) ,
+MultiXactGetCheckptMulti(bool is_shutdown pg_attribute_unused() ,
 						 MultiXactId *nextMulti,
 						 MultiXactOffset *nextMultiOffset,
 						 MultiXactId *oldestMulti,

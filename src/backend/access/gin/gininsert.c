@@ -267,7 +267,7 @@ ginHeapTupleBulkInsert(GinBuildState *buildstate, OffsetNumber attnum,
 
 static void
 ginBuildCallback(Relation index, ItemPointer tupleId, Datum *values,
-				 bool *isnull, bool tupleIsAlive __attribute__((unused)), void *state)
+				 bool *isnull, bool tupleIsAlive pg_attribute_unused(), void *state)
 {
 	GinBuildState *buildstate = (GinBuildState *) state;
 	MemoryContext oldCtx;

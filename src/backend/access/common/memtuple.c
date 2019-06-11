@@ -1008,7 +1008,7 @@ Oid MemTupleGetOid(MemTuple mtup, MemTupleBinding *pbind)
 	return ((Oid *) mtup)[1];
 }
 
-void MemTupleSetOid(MemTuple mtup, MemTupleBinding *pbind __attribute__((unused)), Oid oid)
+void MemTupleSetOid(MemTuple mtup, MemTupleBinding *pbind pg_attribute_unused(), Oid oid)
 {
 	Assert(pbind && mtbind_has_oid(pbind));
 	((Oid *) mtup)[1] = oid;

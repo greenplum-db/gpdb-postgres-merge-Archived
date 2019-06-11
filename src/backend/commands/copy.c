@@ -7157,7 +7157,7 @@ truncateEolStr(char *str, EolType eol_type)
  * copy_dest_startup --- executor startup
  */
 static void
-copy_dest_startup(DestReceiver *self __attribute__((unused)), int operation __attribute__((unused)), TupleDesc typeinfo __attribute__((unused)))
+copy_dest_startup(DestReceiver *self pg_attribute_unused(), int operation pg_attribute_unused(), TupleDesc typeinfo pg_attribute_unused())
 {
 	if (Gp_role == GP_ROLE_DISPATCH)
 		return;
@@ -7186,7 +7186,7 @@ copy_dest_receive(TupleTableSlot *slot, DestReceiver *self)
  * copy_dest_shutdown --- executor end
  */
 static void
-copy_dest_shutdown(DestReceiver *self __attribute__((unused)))
+copy_dest_shutdown(DestReceiver *self pg_attribute_unused())
 {
 	if (Gp_role == GP_ROLE_DISPATCH)
 		return;

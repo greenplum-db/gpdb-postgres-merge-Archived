@@ -843,7 +843,7 @@ extern uint32 Gp_listener_port;
 /*
  * Thread-safe routine to write to the log
  */
-extern void write_log(const char *fmt,...) __attribute__((format(printf, 1, 2)));
+extern void write_log(const char *fmt,...) pg_attribute_printf(1, 2);
 
 
 extern void increment_command_count(void);

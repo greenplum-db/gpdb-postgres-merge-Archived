@@ -4012,7 +4012,7 @@ readNodeBinary(void)
 }
 
 Node *
-readNodeFromBinaryString(const char *str_arg, int len __attribute__((unused)))
+readNodeFromBinaryString(const char *str_arg, int len pg_attribute_unused())
 {
 	Node	   *node;
 	int16		tg;

@@ -6911,7 +6911,7 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 }
 
 static void
-xact_redo_distributed_forget(xl_xact_distributed_forget *xlrec, TransactionId xid __attribute__((unused)) )
+xact_redo_distributed_forget(xl_xact_distributed_forget *xlrec, TransactionId xid pg_attribute_unused() )
 {
 	redoDistributedForgetCommitRecord(&xlrec->gxact_log);
 }

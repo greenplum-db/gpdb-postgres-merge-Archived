@@ -35,7 +35,7 @@ static char expectedErrorMsg[ERROR_MESSAGE_MAX_LEN];
 
 static MemoryContext testMemoryContext = NULL;
 
-int errfinish_impl(int dummy __attribute__((unused)),...)
+int errfinish_impl(int dummy pg_attribute_unused(),...)
 {
 	/* We only throw error if the error message matches our expectation */
 	if (0 == strcmp(lastErrorMsg, expectedErrorMsg))

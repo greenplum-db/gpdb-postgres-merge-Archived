@@ -120,7 +120,7 @@
 static const char *err_gettext(const char *str)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format_arg(1)));
+pg_attribute_format_arg(1);
 
 #undef _
 #define _(x) err_gettext(x)
@@ -577,7 +577,7 @@ errstart(int elevel, const char *filename, int lineno,
  * See elog.h for the error level definitions.
  */
 void
-errfinish(int dummy __attribute__((unused)),...)
+errfinish(int dummy pg_attribute_unused(),...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	int			elevel;
@@ -767,7 +767,7 @@ errfinish(int dummy __attribute__((unused)),...)
  * return it to the caller as a palloc'd ErrorData object.
  */
 ErrorData *
-errfinish_and_return(int dummy __attribute__((unused)),...)
+errfinish_and_return(int dummy pg_attribute_unused(),...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	ErrorData  *edata_copy;

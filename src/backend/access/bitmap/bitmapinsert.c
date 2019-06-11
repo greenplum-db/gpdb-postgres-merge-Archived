@@ -2244,7 +2244,7 @@ _bitmap_write_alltids(Relation rel, BMTidBuildBuf *tids,
  */
 static void
 build_inserttuple(Relation rel, uint64 tidnum,
-				  ItemPointerData ht_ctid  __attribute__((unused)), TupleDesc tupDesc,
+				  ItemPointerData ht_ctid  pg_attribute_unused(), TupleDesc tupDesc,
 				  Datum *attdata, bool *nulls, BMBuildState *state)
 {
 	Buffer 			metabuf;
@@ -2400,7 +2400,7 @@ build_inserttuple(Relation rel, uint64 tidnum,
  */
 static void
 inserttuple(Relation rel, Buffer metabuf, uint64 tidnum, 
-			ItemPointerData ht_ctid __attribute__((unused)), TupleDesc tupDesc, Datum *attdata,
+			ItemPointerData ht_ctid pg_attribute_unused(), TupleDesc tupDesc, Datum *attdata,
 			bool *nulls, Relation lovHeap, Relation lovIndex, ScanKey scanKey,
 		   	IndexScanDesc scanDesc, bool use_wal)
 {

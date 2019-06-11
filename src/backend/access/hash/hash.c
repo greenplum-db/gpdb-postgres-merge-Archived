@@ -136,7 +136,7 @@ hashbuildCallback(Relation index,
 				  ItemPointer tupleId,
 				  Datum *values,
 				  bool *isnull,
-				  bool tupleIsAlive __attribute__((unused)),
+				  bool tupleIsAlive pg_attribute_unused(),
 				  void *state)
 {
 	HashBuildState *buildstate = (HashBuildState *) state;

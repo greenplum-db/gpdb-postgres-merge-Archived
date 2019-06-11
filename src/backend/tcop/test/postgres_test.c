@@ -12,7 +12,7 @@
 #define PG_RE_THROW() siglongjmp(*PG_exception_stack, 1)
 
 #define errfinish errfinish_impl
-int errfinish_impl(int dummy __attribute__((unused)),...)
+int errfinish_impl(int dummy pg_attribute_unused(),...)
 {
 	PG_RE_THROW();
 }

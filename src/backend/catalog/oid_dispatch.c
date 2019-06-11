@@ -786,7 +786,7 @@ rbtree_free(RBNode *node, void *arg)
  * particular usecase the only value we have is the key, so make it a no-op.
  */
 static void
-rbtree_combine(RBNode *existing __attribute__((unused)), const RBNode *new __attribute__((unused)), void *arg)
+rbtree_combine(RBNode *existing pg_attribute_unused(), const RBNode *new pg_attribute_unused(), void *arg)
 {
 	return;
 }

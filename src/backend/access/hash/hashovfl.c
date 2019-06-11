@@ -578,7 +578,7 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno,
  */
 void
 _hash_squeezebucket(Relation rel,
-					Bucket bucket __attribute__((unused)),
+					Bucket bucket pg_attribute_unused(),
 					BlockNumber bucket_blkno,
 					BufferAccessStrategy bstrategy)
 {

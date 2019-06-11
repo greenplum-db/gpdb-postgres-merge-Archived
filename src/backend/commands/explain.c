@@ -144,7 +144,7 @@ static void ExplainProperty(const char *qlabel, const char *value,
 				bool numeric, ExplainState *es);
 static void ExplainPropertyStringInfo(const char *qlabel, ExplainState *es,
 									  const char *fmt,...)
-									  __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
+									  pg_attribute_printf(3, 4);
 static void ExplainDummyGroup(const char *objtype, const char *labelname,
 				  ExplainState *es);
 static void ExplainXMLTag(const char *tagname, int flags, ExplainState *es);

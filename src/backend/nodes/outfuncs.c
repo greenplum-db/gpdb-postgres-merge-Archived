@@ -4302,7 +4302,7 @@ _outValue(StringInfo str, const Value *value)
 
 #ifndef COMPILING_BINARY_FUNCS
 static void
-_outNull(StringInfo str, const Node *n __attribute__((unused)))
+_outNull(StringInfo str, const Node *n pg_attribute_unused())
 {
 	WRITE_NODE_TYPE("NULL");
 }

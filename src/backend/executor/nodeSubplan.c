@@ -1011,7 +1011,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext, QueryDesc *queryDesc
 	ListCell   *pvar;
 	ListCell   *l;
 	bool		found = false;
-	ArrayBuildState *astate __attribute__((unused)) = NULL;
+	ArrayBuildState *astate pg_attribute_unused() = NULL;
 	Size		savepeakspace = MemoryContextGetPeakSpace(planstate->state->es_query_cxt);
 
 	bool		needDtxTwoPhase;

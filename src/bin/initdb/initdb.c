@@ -234,7 +234,7 @@ static char backend_exec[MAXPGPATH];
 
 static char **add_assignment(char **lines, const char *varname, const char *fmt, ...)
                 /* This extension allows gcc to check the format string */
-                __attribute__((format(printf, 3, 4)));
+                pg_attribute_printf(3, 4);
 static char **replace_token(char **lines,
 			  const char *token, const char *replacement);
 
