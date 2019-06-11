@@ -24,29 +24,15 @@
 #include "filemap.h"
 #include "logging.h"
 
-#include <unistd.h>
-
-/* GPDB_95_MERGE_FIXME: some header files can be removed */
-#if 1
-#include "access/bitmap.h"
-#include "access/heapam_xlog.h"
-#include "access/gin_private.h"
-#include "access/gist_private.h"
-#include "access/spgist_private.h"
-#include "access/nbtree.h"
-#include "commands/dbcommands.h"
-#include "commands/tablespace.h"
-#include "commands/sequence.h"
-#include "cdb/cdbappendonlyxlog.h"
-#endif
-
 #include "access/rmgr.h"
 #include "access/xlog_internal.h"
 #include "access/xlogreader.h"
 #include "catalog/pg_control.h"
 #include "catalog/storage_xlog.h"
-
 #include "commands/dbcommands_xlog.h"
+
+/* GPDB specific headers */
+#include "cdb/cdbappendonlyxlog.h"
 
 /*
  * RmgrNames is an array of resource manager names, to make error messages
