@@ -212,7 +212,6 @@ extern pid_t PostmasterPid;
 extern bool IsPostmasterEnvironment;
 extern PGDLLIMPORT bool IsUnderPostmaster;
 extern bool IsBackgroundWorker;
-extern bool IsBinaryUpgrade;
 extern PGDLLIMPORT bool IsBinaryUpgrade;
 extern bool ConvertMasterDataDirToSegment;
 

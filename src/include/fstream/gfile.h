@@ -1,9 +1,6 @@
 #ifndef GFILE_H
 #define GFILE_H
 
-#ifndef WIN32
-#include "c.h"
-#endif
 #include <sys/types.h>
 #ifdef HAVE_LIBBZ2
 #include <bzlib.h>
@@ -22,6 +19,9 @@ typedef long ssize_t;
 typedef _int64 ssize_t;
 #endif
 #endif
+
+
+#include "c.h"
 
 #ifdef WIN32
 typedef BOOL bool_t;
