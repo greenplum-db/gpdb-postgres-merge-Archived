@@ -4185,7 +4185,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 	 * postmaster/postmaster.c (the option sets should not conflict) and with
 	 * the common help() function in main/main.c.
 	 */
-	while ((flag = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lMm:N:nOo:Pp:r:S:sTt:v:W:y:-:")) != -1)
+	while ((flag = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lMm:N:nOo:Pp:r:S:sTt:v:W:-:")) != -1)
 	{
 		switch (flag)
 		{
@@ -4342,26 +4342,6 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 
 			case 'W':
 				SetConfigOption("post_auth_delay", optarg, ctx, gucsource);
-				break;
-
-			case 'y':
-
-				/*
-				 * GPDB_95_MERGE_FIXME: This was deleted in postgres 9.0.
-				 * (commit e710b65c1c) Do we still need it?
-				 */
-				/*
-				 * y - special flag passed if backend was forked by a
-				 * postmaster.
-				 */
-				if (secure)
-				{
-					*dbname = strdup(optarg);
-
-					secure = false;		/* subsequent switches are NOT secure */
-					ctx = PGC_BACKEND;
-					gucsource = PGC_S_CLIENT;
-				}
 				break;
 
 			case 'c':
