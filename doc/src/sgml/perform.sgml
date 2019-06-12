@@ -762,8 +762,6 @@ ROLLBACK;
    </para>
 
    <para>
-<<<<<<< HEAD
-=======
     When an <command>UPDATE</> or <command>DELETE</> command affects an
     inheritance hierarchy, the output might look like this:
 
@@ -796,7 +794,6 @@ EXPLAIN UPDATE parent SET f2 = f2 + 1 WHERE f1 = 101;
    </para>
 
    <para>
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
     The <literal>Planning time</literal> shown by <command>EXPLAIN
     ANALYZE</command> is the time it took to generate the query plan from the
     parsed query and optimize it. It does not include parsing or rewriting.
@@ -1612,13 +1609,8 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
      <listitem>
       <para>
-<<<<<<< HEAD
-       Increase <xref linkend="guc-checkpoint-segments"> and <xref
-       linkend="guc-checkpoint-timeout">; this reduces the frequency
-=======
        Increase <xref linkend="guc-max-wal-size"> and <xref
-       linkend="guc-checkpoint-timeout"> ; this reduces the frequency
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
+       linkend="guc-checkpoint-timeout">; this reduces the frequency
        of checkpoints, but increases the storage requirements of
        <filename>/pg_xlog</>.
       </para>

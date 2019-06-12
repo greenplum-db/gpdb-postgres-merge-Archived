@@ -1906,11 +1906,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-<<<<<<< HEAD
-    <term>BASE_BACKUP [<literal>LABEL</literal> <replaceable>'label'</replaceable>] [<literal>PROGRESS</literal>] [<literal>FAST</literal>] [<literal>WAL</literal>] [<literal>NOWAIT</literal>] [<literal>MAX_RATE</literal> <replaceable>rate</replaceable>]
-=======
     <term>BASE_BACKUP [<literal>LABEL</literal> <replaceable>'label'</replaceable>] [<literal>PROGRESS</literal>] [<literal>FAST</literal>] [<literal>WAL</literal>] [<literal>NOWAIT</literal>] [<literal>MAX_RATE</literal> <replaceable>rate</replaceable>] [<literal>TABLESPACE_MAP</literal>]
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
      <indexterm><primary>BASE_BACKUP</primary></indexterm>
     </term>
     <listitem>
@@ -4851,7 +4847,6 @@ StartupMessage (F)
 </varlistentry>
 </variablelist>
 
-<<<<<<< HEAD
                 In addition to the above, other parameters may be listed.
                 Parameter names beginning with <literal>_pq_.</literal> are
                 reserved for use as protocol extensions, while others are
@@ -4859,13 +4854,6 @@ StartupMessage (F)
                 time.  Such settings will be applied during backend start
                 (after parsing the command-line arguments if any) and will
                 act as session defaults.
-=======
-                In addition to the above, any run-time parameter that can be
-                set at backend start time might be listed.  Such settings
-                will be applied during backend start (after parsing the
-                command-line arguments if any).  The values will act as
-                session defaults.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
 </para>
 </listitem>
 </varlistentry>

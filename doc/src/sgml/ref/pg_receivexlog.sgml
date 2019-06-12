@@ -127,25 +127,15 @@ PostgreSQL documentation
          When this option is used, <application>pg_receivexlog</> will report
          a flush position to the server, indicating when each segment has been
          synchronized to disk so that the server can remove that segment if it
-<<<<<<< HEAD
-         is not otherwise needed.  When using this parameter, it is important
-         to make sure that <application>pg_receivexlog</> cannot become the
-         synchronous standby through an incautious setting of
-         <xref linkend="guc-synchronous-standby-names">; it does not flush
-         data frequently enough for this to work correctly.
-=======
          is not otherwise needed. <literal>--synchronous</literal> option must
          be specified when making <application>pg_receivexlog</> run as
          synchronous standby by using replication slot. Otherwise WAL data
          cannot be flushed frequently enough for this to work correctly.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
         </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-<<<<<<< HEAD
-=======
       <term><option>--synchronous</option></term>
       <listitem>
        <para>
@@ -157,7 +147,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
       <term><option>-v</option></term>
       <term><option>--verbose</option></term>
       <listitem>
@@ -261,8 +250,6 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-<<<<<<< HEAD
-=======
     </variablelist>
    </para>
 
@@ -290,7 +277,6 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
     </variablelist>
    </para>
 

@@ -43,25 +43,18 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ])
-<<<<<<< HEAD
-=======
     ADD <replaceable class="PARAMETER">table_constraint</replaceable> [ NOT VALID ]
     VALIDATE CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
     DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
     DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
     ENABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
     ENABLE REPLICA TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
     ENABLE ALWAYS TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
-<<<<<<< HEAD
-    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
-=======
     SET WITH OIDS
     SET WITHOUT OIDS
     INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
     NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
     OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
     OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ])
 </synopsis>
  </refsynopsisdiv>
@@ -161,8 +154,6 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    </varlistentry>
 
    <varlistentry>
-<<<<<<< HEAD
-=======
     <term>
      <literal>SET STORAGE</literal>
     </term>
@@ -222,7 +213,6 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    </varlistentry>
 
    <varlistentry>
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
     <term><literal>DISABLE</literal>/<literal>ENABLE [ REPLICA | ALWAYS ] TRIGGER</literal></term>
     <listitem>
      <para>
@@ -234,8 +224,6 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    </varlistentry>
 
    <varlistentry>
-<<<<<<< HEAD
-=======
     <term><literal>SET WITH OIDS</literal></term>
     <listitem>
      <para>
@@ -290,7 +278,6 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    </varlistentry>
 
    <varlistentry>
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
     <term><literal>OWNER</literal></term>
     <listitem>
      <para>
@@ -491,8 +478,6 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
-<<<<<<< HEAD
-=======
       <term><replaceable class="PARAMETER">parent_table</replaceable></term>
       <listitem>
        <para>
@@ -502,7 +487,6 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
       <term><replaceable class="PARAMETER">new_owner</replaceable></term>
       <listitem>
        <para>

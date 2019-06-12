@@ -472,8 +472,6 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
        </para>
 
        <para>
-<<<<<<< HEAD:doc/src/sgml/pgbench.sgml
-=======
         If <option>--latency-limit</> is used together with <option>--rate</>,
         a transaction can lag behind so much that it is already over the
         latency limit when the previous transaction ends, because the latency
@@ -483,7 +481,6 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
        </para>
 
        <para>
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:doc/src/sgml/ref/pgbench.sgml
         A high schedule lag time is an indication that the system cannot
         process transactions at the specified rate, with the chosen number of
         clients and threads. When the average transaction execution time is
@@ -973,11 +970,7 @@ END;
    The format of the log is:
 
 <synopsis>
-<<<<<<< HEAD:doc/src/sgml/pgbench.sgml
-<replaceable>client_id</> <replaceable>transaction_no</> <replaceable>time</> <replaceable>file_no</> <replaceable>time_epoch</> <replaceable>time_us</> [<replaceable>schedule_lag</replaceable>]
-=======
 <replaceable>client_id</> <replaceable>transaction_no</> <replaceable>time</> <replaceable>file_no</> <replaceable>time_epoch</> <replaceable>time_us</> <optional><replaceable>schedule_lag</replaceable></optional>
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:doc/src/sgml/ref/pgbench.sgml
 </synopsis>
 
    where <replaceable>time</> is the total elapsed transaction time in microseconds,
@@ -987,12 +980,6 @@ END;
    UNIX epoch format timestamp and an offset
    in microseconds (suitable for creating an ISO 8601
    timestamp with fractional seconds) showing when
-<<<<<<< HEAD:doc/src/sgml/pgbench.sgml
-   the transaction completed. The last field, <replaceable>schedule_lag</>, is
-   the difference between the transaction's scheduled start time, and the
-   time it actually started, in microseconds. It is only present when the
-   <option>--rate</> option is used.
-=======
    the transaction completed.
    Field <replaceable>schedule_lag</> is the difference between the
    transaction's scheduled start time, and the time it actually started, in
@@ -1001,7 +988,6 @@ END;
    transactions skipped because they were too far behind schedule. It is only
    present when both options <option>--rate</> and <option>--latency-limit</>
    are used.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:doc/src/sgml/ref/pgbench.sgml
   </para>
 
   <para>
@@ -1043,11 +1029,7 @@ END;
    With the <option>--aggregate-interval</option> option, the logs use a bit different format:
 
 <synopsis>
-<<<<<<< HEAD:doc/src/sgml/pgbench.sgml
-<replaceable>interval_start</> <replaceable>num_of_transactions</> <replaceable>latency_sum</> <replaceable>latency_2_sum</> <replaceable>min_latency</> <replaceable>max_latency</> [<replaceable>lag_sum</> <replaceable>lag_2_sum</> <replaceable>min_lag</> <replaceable>max_lag</>]
-=======
 <replaceable>interval_start</> <replaceable>num_of_transactions</> <replaceable>latency_sum</> <replaceable>latency_2_sum</> <replaceable>min_latency</> <replaceable>max_latency</> <optional><replaceable>lag_sum</> <replaceable>lag_2_sum</> <replaceable>min_lag</> <replaceable>max_lag</> <optional><replaceable>skipped_transactions</></optional></optional>
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:doc/src/sgml/ref/pgbench.sgml
 </synopsis>
 
    where <replaceable>interval_start</> is the start of the interval (UNIX epoch
@@ -1058,16 +1040,11 @@ END;
    <replaceable>latency_2_sum</> is a sum of 2nd powers of latencies. The next two
    fields are <replaceable>min_latency</> - a minimum latency within the interval, and
    <replaceable>max_latency</> - maximum latency within the interval. A transaction is
-<<<<<<< HEAD:doc/src/sgml/pgbench.sgml
-   counted into the interval when it was committed. The last four fields, 
-   <replaceable>lag_sum</>, <replaceable>lag_2_sum</>, <replaceable>min_lag</>, and <replaceable>max_lag</>, are only present if the --rate option is used.
-=======
    counted into the interval when it was committed. The fields in the end,
    <replaceable>lag_sum</>, <replaceable>lag_2_sum</>, <replaceable>min_lag</>,
    and <replaceable>max_lag</>, are only present if the <option>--rate</>
    option is used. The very last one, <replaceable>skipped_transactions</>,
    is only present if the option <option>--latency-limit</> is present, too.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:doc/src/sgml/ref/pgbench.sgml
    They are calculated from the time each transaction had to wait for the
    previous one to finish, i.e. the difference between each transaction's
    scheduled start time and the time it actually started.

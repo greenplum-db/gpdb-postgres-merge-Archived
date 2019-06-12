@@ -273,12 +273,8 @@ make prefix=/usr/local/pgsql.new install
      into the new cluster, e.g. <filename>pgcrypto.so</filename>,
      whether they are from <filename>contrib</filename>
      or some other source. Do not install the schema definitions, e.g.
-<<<<<<< HEAD:doc/src/sgml/pgupgrade.sgml
      <command>CREATE EXTENSION pgcrypto</>, because these will be upgraded
      from the old cluster.
-=======
-     <filename>pgcrypto.sql</>, because these will be upgraded from the old cluster.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:doc/src/sgml/ref/pgupgrade.sgml
      Also, any custom full text search files (dictionary, synonym,
      thesaurus, stop words) must also be copied to the new cluster.
     </para>
@@ -538,8 +534,6 @@ pg_upgrade.exe
      If you modified <filename>pg_hba.conf</>, restore its original settings.
      It might also be necessary to adjust other configuration files in the new
      cluster to match the old cluster, e.g. <filename>postgresql.conf</>.
-<<<<<<< HEAD:doc/src/sgml/pgupgrade.sgml
-=======
     </para>
    </step>
 
@@ -549,7 +543,6 @@ pg_upgrade.exe
     <para>
      The new server can now be safely started, and then any
      <application>rsync</>'ed standby servers.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8:doc/src/sgml/ref/pgupgrade.sgml
     </para>
    </step>
 

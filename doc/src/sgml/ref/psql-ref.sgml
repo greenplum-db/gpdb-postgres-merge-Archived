@@ -825,11 +825,7 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-<<<<<<< HEAD
         <term><literal>\c</literal> or <literal>\connect [ -reuse-previous=<replaceable class="parameter">on|off</replaceable> ] [ <replaceable class="parameter">dbname</replaceable> [ <replaceable class="parameter">username</replaceable> ] [ <replaceable class="parameter">host</replaceable> ] [ <replaceable class="parameter">port</replaceable> ] | <replaceable class="parameter">conninfo</replaceable> ]</literal></term>
-=======
-        <term><literal>\c</literal> or <literal>\connect</literal> <literal>[ <replaceable class="parameter">dbname</replaceable> [ <replaceable class="parameter">username</replaceable> ] [ <replaceable class="parameter">host</replaceable> ] [ <replaceable class="parameter">port</replaceable> ] ] | <replaceable class="parameter">conninfo</replaceable> </literal></term>
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
         <listitem>
         <para>
         Establishes a new connection to a <productname>PostgreSQL</>
@@ -839,7 +835,6 @@ testdb=&gt;
         </para>
 
         <para>
-<<<<<<< HEAD
         Where the command omits database name, user, host, or port, the new
         connection can reuse values from the previous connection.  By default,
         values from the previous connection are reused except when processing
@@ -853,18 +848,6 @@ testdb=&gt;
         <replaceable class="parameter">host</replaceable> or
         <replaceable class="parameter">port</replaceable>
         as <literal>-</literal> is equivalent to omitting that parameter.
-=======
-        When using positional parameters, if any of
-        <replaceable class="parameter">dbname</replaceable>,
-        <replaceable class="parameter">username</replaceable>,
-        <replaceable class="parameter">host</replaceable> or
-        <replaceable class="parameter">port</replaceable> are omitted or
-        specified as <literal>-</literal>, the value of that parameter from
-        the previous connection is used; if there is no previous connection,
-        the <application>libpq</application> default for the parameter's value
-        is used.  When using <literal>conninfo</> strings, no values from the
-        previous connection are used for the new connection.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
         </para>
 
         <para>
@@ -2960,15 +2943,11 @@ bar
         <literal>queries</literal>,
         <application>psql</application> prints each query to standard output
         as it is sent to the server. The switch for this is
-<<<<<<< HEAD
-        <option>-e</option>.
-=======
         <option>-e</option>. If set to <literal>errors</literal>, then only
         failed queries are displayed on standard error output. The switch
         for this is <option>-b</option>. If unset, or if set to
         <literal>none</literal> (or any other value than those above) then
         no queries are displayed.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
         </para>
         </listitem>
       </varlistentry>
