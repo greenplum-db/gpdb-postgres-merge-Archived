@@ -352,6 +352,12 @@ sub mkvcbuild
 	$pgevent->DisableLinkerWarnings('4104');
 	} #buildclient
 
+	my $psql = AddSimpleFrontend('psql', 1);
+	$psql->AddIncludeDir('src/bin/pg_dump');
+	$psql->AddIncludeDir('src/backend');
+	$psql->AddFile('src/bin/psql/psqlscan.l');
+	$psql->AddLibrary('ws2_32.lib');
+
 	my $pgdump = AddSimpleFrontend('pg_dump', 1);
 	$pgdump->AddIncludeDir('src/backend');
 	$pgdump->AddFile('src/bin/pg_dump/pg_dump.c');
