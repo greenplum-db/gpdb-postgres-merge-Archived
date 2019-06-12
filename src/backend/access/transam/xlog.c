@@ -8587,7 +8587,7 @@ CreateCheckPoint(int flags)
 
 #ifdef FAULT_INJECTOR
 	if (FaultInjector_InjectFaultIfSet(
-			Checkpoint,
+			"checkpoint",
 			DDLNotSpecified,
 			"" /* databaseName */,
 			"" /* tableName */) == FaultInjectorTypeSkip)
@@ -8903,7 +8903,7 @@ CreateCheckPoint(int flags)
 	if (!shutdown && XLogStandbyInfoActive())
 		LogStandbySnapshot();
 
-	SIMPLE_FAULT_INJECTOR(CheckpointAfterRedoCalculated);
+	SIMPLE_FAULT_INJECTOR("checkpoint_after_redo_calculated");
 
 	START_CRIT_SECTION();
 

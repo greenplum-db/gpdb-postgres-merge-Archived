@@ -1199,7 +1199,7 @@ EndPrepare(GlobalTransaction gxact)
 	 */
 	MyPgXact->delayChkpt = false;
 
-	SIMPLE_FAULT_INJECTOR(EndPreparedTwoPhase);
+	SIMPLE_FAULT_INJECTOR("end_prepare_two_phase");
 
 	/*
 	 * Wait for synchronous replication, if required.
@@ -1293,7 +1293,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
     XLogRecPtr   tfXLogRecPtr;
     XLogRecord  *tfRecord  = NULL;
 
-	SIMPLE_FAULT_INJECTOR(FinishPreparedStartOfFunction);
+	SIMPLE_FAULT_INJECTOR("finish_prepared_start_of_function");
 
 	/*
 	 * Validate the GID, and lock the GXACT to ensure that two backends do not
@@ -1465,7 +1465,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	RemoveGXact(gxact);
 	MyLockedGxact = NULL;
 
-	SIMPLE_FAULT_INJECTOR(FinishPreparedAfterRecordCommitPrepared);
+	SIMPLE_FAULT_INJECTOR("finish_prepared_after_record_commit_prepared");
 
 	XLogReaderFree(xlogreader);
 
@@ -1923,7 +1923,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	 */
 	dtxCrackOpenGid(gid, &distribTimeStamp, &distribXid);
 
-	SIMPLE_FAULT_INJECTOR(TwoPhaseTransactionCommitPrepared);
+	SIMPLE_FAULT_INJECTOR("twophase_transaction_commit_prepared");
 
 	/* Emit the XLOG commit record */
 	recptr = XactLogCommitRecord(GetCurrentTimestamp(),
@@ -1995,9 +1995,9 @@ RecordTransactionAbortPrepared(TransactionId xid,
 
 	START_CRIT_SECTION();
 
-	/* Emit the XLOG abort record */
-	SIMPLE_FAULT_INJECTOR(TwoPhaseTransactionAbortPrepared);
+	SIMPLE_FAULT_INJECTOR("twophase_transaction_abort_prepared");
 
+	/* Emit the XLOG abort record */
 	recptr = XactLogAbortRecord(GetCurrentTimestamp(),
 								nchildren, children,
 								nrels, rels,

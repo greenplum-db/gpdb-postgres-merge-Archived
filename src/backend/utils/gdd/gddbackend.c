@@ -379,7 +379,7 @@ GlobalDeadLockDetectorLoop(void)
 		}
 
 #ifdef FAULT_INJECTOR
-		if (SIMPLE_FAULT_INJECTOR(GddProbe) == FaultInjectorTypeSkip)
+		if (SIMPLE_FAULT_INJECTOR("gdd_probe") == FaultInjectorTypeSkip)
 			continue;
 #endif
 

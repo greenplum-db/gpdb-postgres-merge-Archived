@@ -2263,7 +2263,7 @@ ReindexRelationList(List *relids, int options, bool multiple)
 	PopActiveSnapshot();
 	CommitTransactionCommand();
 
-	SIMPLE_FAULT_INJECTOR(ReindexDB);
+	SIMPLE_FAULT_INJECTOR("reindex_db");
 
 	foreach (lc, relids)
 	{
