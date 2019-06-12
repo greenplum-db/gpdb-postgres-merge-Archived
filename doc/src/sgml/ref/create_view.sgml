@@ -139,11 +139,7 @@ CREATE VIEW [ <replaceable>schema</> . ] <replaceable>view_name</> AS WITH RECUR
        </varlistentry>
 
        <varlistentry>
-<<<<<<< HEAD
         <term><literal>security_barrier</literal> (<type>boolean</type>)</term>
-=======
-        <term><literal>security_barrier</literal> (<type>string</type>)</term>
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
         <listitem>
          <para>
           This should be used if the view is intended to provide row-level

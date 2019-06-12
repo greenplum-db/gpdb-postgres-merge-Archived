@@ -414,16 +414,8 @@ Where column_reference_storage_directive is:
       table.
      </para>
      <para>
-<<<<<<< HEAD
       Default expressions for the copied column definitions will be copied
       only if <literal>INCLUDING DEFAULTS</literal> is specified.  The
-=======
-      Default expressions for the copied column definitions will only be
-      copied if <literal>INCLUDING DEFAULTS</literal> is specified.
-      Defaults that call database-modification functions, like
-      <function>nextval</>, create a linkage between the original and
-      new tables.  The
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
       default behavior is to exclude default expressions, resulting in the
       copied columns in the new table having null defaults.
       Note that copying defaults that call database-modification functions,

@@ -166,16 +166,11 @@ CREATE DOMAIN <replaceable class="parameter">name</replaceable> [ AS ] <replacea
      <para><literal>CHECK</> clauses specify integrity constraints or tests
       which values of the domain must satisfy.
       Each constraint must be an expression
-<<<<<<< HEAD
       producing a Boolean result.  It should use the key word <literal>VALUE</literal>
-      to refer to the value being tested.
-=======
-      producing a Boolean result.  It should use the key word <literal>VALUE</>
       to refer to the value being tested.  Expressions evaluating
       to TRUE or UNKNOWN succeed.  If the expression produces a FALSE result,
       an error is reported and the value is not allowed to be converted
       to the domain type.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
      </para>
 
      <para>

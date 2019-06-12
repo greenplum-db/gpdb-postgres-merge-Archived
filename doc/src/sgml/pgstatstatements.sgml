@@ -227,13 +227,8 @@
 
   <para>
    For security reasons, non-superusers are not allowed to see the SQL
-<<<<<<< HEAD
-   text or <structfield>queryid</structfield> of queries executed by other users.  They can see
-   the statistics, however, if the view has been installed in their
-=======
    text or <structfield>queryid</structfield> of queries executed by other users.
    They can see the statistics, however, if the view has been installed in their
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
    database.
   </para>
 

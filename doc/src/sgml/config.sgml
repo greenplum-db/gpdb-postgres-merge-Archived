@@ -174,8 +174,6 @@ shared_buffers = 128MB
      read whenever <filename>postgresql.conf</> is, and its settings take
      effect in the same way.  Settings in <filename>postgresql.auto.conf</>
      override those in <filename>postgresql.conf</>.
-<<<<<<< HEAD
-=======
     </para>
 
     <para>
@@ -184,7 +182,6 @@ shared_buffers = 128MB
      can be helpful for pre-testing changes to the configuration file, or for
      diagnosing problems if a <systemitem>SIGHUP</> signal did not have the
      desired effects.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
     </para>
    </sect2>
 

@@ -7353,15 +7353,8 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   </para>
 
   <para>
-<<<<<<< HEAD
    For instructions on creating certificates, see <xref
    linkend="ssl-certificate-creation">.
-=======
-   Note that the client's <filename>~/.postgresql/root.crt</> lists the top-level CAs
-   that are considered trusted for signing server certificates.  In principle it need
-   not list the CA that signed the client's certificate, though in most cases
-   that CA would also be trusted for server certificates.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
   </para>
  </sect2>
 

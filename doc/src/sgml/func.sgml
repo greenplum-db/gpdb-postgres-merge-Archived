@@ -6223,13 +6223,8 @@ SELECT regexp_matches('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
       <tbody>
        <row>
         <entry><literal>FM</literal> prefix</entry>
-<<<<<<< HEAD
         <entry>fill mode (suppress trailing zeroes and padding blanks)</entry>
         <entry><literal>FM99.99</literal></entry>
-=======
-        <entry>fill mode (suppress leading zeroes and padding blanks)</entry>
-        <entry><literal>FM9999</literal></entry>
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
        </row>
        <row>
         <entry><literal>TH</literal> suffix</entry>
@@ -10520,17 +10515,10 @@ table2-mapping
          Arrays and composites are converted
          (recursively) to arrays and objects; otherwise, if there is a cast
          from the type to <type>json</type>, the cast function will be used to
-<<<<<<< HEAD
-         perform the conversion; otherwise, a JSON scalar value is produced.
-         For any scalar type other than a number, a Boolean, or a null value,
-         the text representation will be used, properly quoted and escaped
-         so that it is a valid JSON string.
-=======
          perform the conversion; otherwise, a scalar value is produced.
          For any scalar type other than a number, a Boolean, or a null value,
          the text representation will be used, in such a fashion that it is a
          valid <type>json</> or <type>jsonb</> value.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
        </entry>
        <entry><literal>to_json('Fred said "Hi."'::text)</literal></entry>
        <entry><literal>"Fred said \"Hi.\""</literal></entry>
@@ -11038,7 +11026,6 @@ table2-mapping
 
   <note>
     <para>
-<<<<<<< HEAD
       While the examples for the functions
       <function>json_populate_record</function>,
       <function>json_populate_recordset</function>,
@@ -11051,14 +11038,16 @@ table2-mapping
       clauses and target lists.  Extracting multiple values in this
       way can improve performance over extracting them separately with
       per-key operators.
-=======
-      In <function>json_populate_record</>, <function>json_populate_recordset</>,
-      <function>json_to_record</> and <function>json_to_recordset</>,
-      type coercion from the JSON is <quote>best effort</> and may not result
-      in desired values for some types.  JSON keys are matched to
-      identical column names in the target row type.  JSON fields that do not
-      appear in the target row type will be omitted from the output, and
-      target columns that do not match any JSON field will simply be NULL.
+    </para>
+
+    <para>
+      JSON keys are matched to identical column names in the target
+      row type.  JSON type coercion for these functions is <quote>best
+      effort</quote> and may not result in desired values for some types.
+      JSON fields that do not appear in the target row type will be
+      omitted from the output, and target columns that do not match any
+      JSON field will simply be NULL.
+
     </para>
   </note>
 
@@ -11080,17 +11069,7 @@ table2-mapping
       and create_missing is true, the new value is added at the beginning
       of the array if the item is negative, and at the end of the array if
       it is positive.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
     </para>
-
-    <para>
-      JSON keys are matched to identical column names in the target
-      row type.  JSON type coercion for these functions is <quote>best
-      effort</quote> and may not result in desired values for some types.
-      JSON fields that do not appear in the target row type will be
-      omitted from the output, and target columns that do not match any
-      JSON field will simply be NULL.
-  </para>
   </note>
 
   <note>
@@ -12625,25 +12604,6 @@ NULL baz</literallayout>(3 rows)</entry>
        <type>json</type>
       </entry>
       <entry>aggregates values as a JSON array</entry>
-<<<<<<< HEAD
-=======
-     </row>
-
-     <row>
-      <entry>
-       <indexterm>
-        <primary>jsonb_agg</primary>
-       </indexterm>
-       <function>jsonb_agg(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>any</type>
-      </entry>
-      <entry>
-       <type>jsonb</type>
-      </entry>
-      <entry>aggregates values as a JSON array</entry>
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
      </row>
 
      <row>
@@ -16200,7 +16160,6 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   </para>
 
   <para>
-<<<<<<< HEAD
    <function>pg_describe_object</function> returns a textual description of a database
    object specified by catalog OID, object OID and a (possibly zero) sub-object ID.
    This description is intended to be human-readable, and might be translated,
@@ -16226,8 +16185,6 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   </para>
 
   <para>
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
    <function>pg_typeof</function> returns the OID of the data type of the
    value that is passed to it.  This can be helpful for troubleshooting or
    dynamically constructing SQL queries.  The function is declared as
@@ -17341,13 +17298,6 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    <title>Replication Functions</title>
 
    <para>
-<<<<<<< HEAD
-    The functions shown in <xref linkend="functions-replication-table"> are
-    for controlling and interacting with replication features.
-    See <xref linkend="streaming-replication">
-    and <xref linkend="streaming-replication-slots"> for information about the
-    underlying features.  Use of these functions is restricted to superusers.
-=======
     The functions shown
     in <xref linkend="functions-replication-table"> are for
     controlling and interacting with replication features.
@@ -17355,7 +17305,6 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     <xref linkend="streaming-replication-slots">, <xref linkend="replication-origins">
     for information about the underlying features.  Use of these
     functions is restricted to superusers.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
    </para>
 
    <para>
@@ -17395,15 +17344,11 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <parameter>slot_name</parameter>. Streaming changes from a physical slot
         is only possible with the streaming-replication protocol - see <xref
         linkend="protocol-replication">. Corresponds to the replication protocol
-<<<<<<< HEAD
         command <literal>CREATE_REPLICATION_SLOT ... PHYSICAL</literal>. The optional
         second parameter,  when <literal>true</>, specifies that the <acronym>LSN</>
         for this replication slot be reserved immediately; the <acronym<LSN</>
         is otherwise reserved on first connection from a streaming replication
         client.
-=======
-        command <literal>CREATE_REPLICATION_SLOT ... PHYSICAL</literal>.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
        </entry>
       </row>
       <row>

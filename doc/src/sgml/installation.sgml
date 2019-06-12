@@ -2006,11 +2006,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
   <para>
    <productname>PostgreSQL</> can be expected to work on these operating
    systems: Linux (all recent distributions), Windows (Win2000 SP4 and later),
-<<<<<<< HEAD
-   FreeBSD, OpenBSD, NetBSD, OS X, AIX, HP/UX, Solaris, Tru64 Unix,
-=======
    FreeBSD, OpenBSD, NetBSD, OS X, AIX, HP/UX, Solaris,
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
    and UnixWare.  Other Unix-like systems may also work but are not currently
    being tested.  In most cases, all CPU architectures supported by
    a given operating system will work.  Look in

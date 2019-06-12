@@ -175,15 +175,10 @@ unaccent(<optional><replaceable class="parameter">dictionary</replaceable> <type
 </synopsis>
 
  <para>
-<<<<<<< HEAD
   If the <replaceable class="parameter">dictionary</replaceable> argument is
   omitted, the text search dictionary named <literal>unaccent</literal> and
   appearing in the same schema as the <function>unaccent()</function>
   function itself is used.
-=======
-  If the <replaceable class="PARAMETER">dictionary</replaceable> argument is
-  omitted, <literal>unaccent</> is assumed.
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
  </para>
 
  <para>
