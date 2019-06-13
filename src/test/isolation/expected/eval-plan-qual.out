@@ -104,7 +104,6 @@ a              b              c
 2              2              2              
 2              3              0              
 step c2: COMMIT;
-<<<<<<< HEAD
 
 starting permutation: wx2 partiallock c2 c1 read
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking';
@@ -231,5 +230,3 @@ step multireadwcte: <... completed>
 subid          id             
 
 1              1              
-=======
->>>>>>> ab93f90cd3a4fcdd891cee9478941c3cc65795b8
