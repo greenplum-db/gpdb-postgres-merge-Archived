@@ -5056,16 +5056,6 @@ l3:
 												  status, infomask, relation,
 														NULL))
 						{
-							/*
-							 * GPDB_95_MERGE_FIXME: This used to be
-							 * HeapTupleBeingUpdated in the old Greenplum
-							 * implementation of LockTupleWaitType which we
-							 * have replaced with upstream Postgres's
-							 * LockWaitPolicy. Need to double check if
-							 * HeapTupleBeingUpdated is what we want or switch
-							 * to HeapTupleWouldBlock and change areas of the
-							 * code accordingly.
-							 */
 							result = HeapTupleWouldBlock;
 							/* recovery code expects to have buffer lock held */
 							LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
@@ -5106,16 +5096,6 @@ l3:
 					case LockWaitSkip:
 						if (!ConditionalXactLockTableWait(xwait))
 						{
-							/*
-							 * GPDB_95_MERGE_FIXME: This used to be
-							 * HeapTupleBeingUpdated in the old Greenplum
-							 * implementation of LockTupleWaitType which we
-							 * have replaced with upstream Postgres's
-							 * LockWaitPolicy. Need to double check if
-							 * HeapTupleBeingUpdated is what we want or switch
-							 * to HeapTupleWouldBlock and change areas of the
-							 * code accordingly.
-							 */
 							result = HeapTupleWouldBlock;
 							/* recovery code expects to have buffer lock held */
 							LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
