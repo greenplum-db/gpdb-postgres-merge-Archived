@@ -2256,7 +2256,6 @@ BeginCopyToOnSegment(QueryDesc *queryDesc)
 
 	copyIntoClause = queryDesc->plannedstmt->copyIntoClause;
 	tupDesc = queryDesc->tupDesc;
-	/* GPDB_95_MERGE_FIXME: what should queryRelId be here? */
 	cstate = BeginCopy(false, NULL, NULL, NULL, InvalidOid, copyIntoClause->attlist,
 					   copyIntoClause->options, tupDesc);
 	oldcontext = MemoryContextSwitchTo(cstate->copycontext);
@@ -2580,8 +2579,7 @@ BeginCopyToForExternalTable(Relation extrel, List *options)
 
 	Assert(RelationIsExternal(extrel));
 
-	/* GPDB_95_MERGE_FIXME: what should queryRelId be? */
-	cstate = BeginCopy(false, extrel, NULL, NULL, RelationGetRelid(extrel), NIL, options, NULL);
+	cstate = BeginCopy(false, extrel, NULL, NULL, InvalidOid, NIL, options, NULL);
 	cstate->dispatch_mode = COPY_DIRECT;
 
 	/*
