@@ -527,7 +527,7 @@ _readReindexStmt(void)
 {
 	READ_LOCALS(ReindexStmt);
 
-	READ_ENUM_FIELD(kind,ObjectType);
+	READ_ENUM_FIELD(kind,ReindexObjectType);
 	READ_NODE_FIELD(relation);
 	READ_STRING_FIELD(name);
 	READ_OID_FIELD(relid);

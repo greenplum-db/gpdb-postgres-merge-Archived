@@ -2795,7 +2795,7 @@ _outReindexStmt(StringInfo str, const ReindexStmt *node)
 {
 	WRITE_NODE_TYPE("REINDEXSTMT");
 
-	WRITE_ENUM_FIELD(kind,ObjectType);
+	WRITE_ENUM_FIELD(kind,ReindexObjectType);
 	WRITE_NODE_FIELD(relation);
 	WRITE_STRING_FIELD(name);
 	WRITE_OID_FIELD(relid);
