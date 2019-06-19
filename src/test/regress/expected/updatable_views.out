@@ -240,7 +240,6 @@ SELECT * FROM rw_view15;
 (6 rows)
 
 INSERT INTO rw_view15 (a) VALUES (3) ON CONFLICT (a) DO UPDATE set a = excluded.a; -- succeeds
-ERROR:  GPDB does not support DO UPDATE SET clause
 SELECT * FROM rw_view15;
  a  |    upper    
 ----+-------------

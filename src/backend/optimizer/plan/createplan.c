@@ -6602,20 +6602,6 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 				all_subplans_replicated = true;
 	int			numsegments = -1;
 
-	if (node->onConflictAction == ONCONFLICT_UPDATE)
-	{
-		/*
-		 * GPDB_95_MERGE_FIXME: In GPDB we disabled "DO UPDATE SET" clause
-		 * because as-is it can create data violations.  For example, suppose
-		 * we have a table with PRIMARY KEY column. UPDATE could set duplicate
-		 * PRIMARY KEY value when tuple already existing with PRIMARY KEY value
-		 * is stored on another segment.
-		 */
-		ereport(ERROR,
-				(errcode(ERRCODE_GP_FEATURE_NOT_YET),
-				 errmsg("GPDB does not support DO UPDATE SET clause")));
-	}
-
 	if (node->operation == CMD_INSERT)
 	{
 		forboth(lcr, node->resultRelations, lcp, node->plans)
