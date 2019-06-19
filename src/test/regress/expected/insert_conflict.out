@@ -45,26 +45,7 @@ explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on con
 
 explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on conflict (key, fruit) do update set fruit = excluded.fruit
   where exists (select 1 from insertconflicttest ii where ii.key = excluded.key);
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
- Insert on insertconflicttest
-   Conflict Resolution: UPDATE
-   Conflict Arbiter Indexes: op_index_key, collation_index_key, both_index_key
-   Conflict Filter: (alternatives: SubPlan 1 or hashed SubPlan 2)
-   ->  Result
-   SubPlan 1  (slice0; segments: 1)
-     ->  Result
-           Filter: (ii.key = excluded.key)
-           ->  Materialize
-                 ->  Broadcast Motion 3:3  (slice1; segments: 3)
-                       ->  Seq Scan on insertconflicttest ii
-   SubPlan 2  (slice0; segments: 1)
-     ->  Materialize
-           ->  Broadcast Motion 3:3  (slice2; segments: 3)
-                 ->  Seq Scan on insertconflicttest ii_1
- Optimizer: Postgres query optimizer
-(14 rows)
-
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- Neither collation nor operator class specifications are required --
 -- supplying them merely *limits* matches to indexes with matching opclasses
 -- used for relevant indexes
@@ -154,81 +135,16 @@ create unique index key_index on insertconflicttest(key);
 -- Explain tests
 --
 explain (costs off) insert into insertconflicttest values (0, 'Bilberry') on conflict (key) do update set fruit = excluded.fruit;
-              QUERY PLAN               
----------------------------------------
- Insert on insertconflicttest
-   Conflict Resolution: UPDATE
-   Conflict Arbiter Indexes: key_index
-   ->  Result
-(4 rows)
-
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- Should display qual actually attributable to internal sequential scan:
 explain (costs off) insert into insertconflicttest values (0, 'Bilberry') on conflict (key) do update set fruit = excluded.fruit where insertconflicttest.fruit != 'Cawesh';
-                           QUERY PLAN                            
------------------------------------------------------------------
- Insert on insertconflicttest
-   Conflict Resolution: UPDATE
-   Conflict Arbiter Indexes: key_index
-   Conflict Filter: (insertconflicttest.fruit <> 'Cawesh'::text)
-   ->  Result
-(5 rows)
-
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- With EXCLUDED.* expression in scan node:
 explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on conflict (key) do update set fruit = excluded.fruit where excluded.fruit != 'Elderberry';
-                        QUERY PLAN                         
------------------------------------------------------------
- Insert on insertconflicttest
-   Conflict Resolution: UPDATE
-   Conflict Arbiter Indexes: key_index
-   Conflict Filter: (excluded.fruit <> 'Elderberry'::text)
-   ->  Result
-(5 rows)
-
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- Does the same, but JSON format shows "Conflict Arbiter Index" as JSON array:
 explain (costs off, format json) insert into insertconflicttest values (0, 'Bilberry') on conflict (key) do update set fruit = excluded.fruit where insertconflicttest.fruit != 'Lime' returning *;
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
- [                                                                         +
-   {                                                                       +
-     "Plan": {                                                             +
-       "Node Type": "Gather Motion",                                       +
-       "Senders": 3,                                                       +
-       "Receivers": 1,                                                     +
-       "Slice": 1,                                                         +
-       "Segments": 3,                                                      +
-       "Gang Type": "primary writer",                                      +
-       "Plans": [                                                          +
-         {                                                                 +
-           "Node Type": "ModifyTable",                                     +
-           "Operation": "Insert",                                          +
-           "Parent Relationship": "Outer",                                 +
-           "Slice": 1,                                                     +
-           "Segments": 3,                                                  +
-           "Gang Type": "primary writer",                                  +
-           "Relation Name": "insertconflicttest",                          +
-           "Alias": "insertconflicttest",                                  +
-           "Conflict Resolution": "UPDATE",                                +
-           "Conflict Arbiter Indexes": ["key_index"],                      +
-           "Conflict Filter": "(insertconflicttest.fruit <> 'Lime'::text)",+
-           "Plans": [                                                      +
-             {                                                             +
-               "Node Type": "Result",                                      +
-               "Parent Relationship": "Member",                            +
-               "Slice": 1,                                                 +
-               "Segments": 3,                                              +
-               "Gang Type": "primary writer"                               +
-             }                                                             +
-           ]                                                               +
-         }                                                                 +
-       ]                                                                   +
-     },                                                                    +
-     "Settings": {                                                         +
-       "Optimizer": "Postgres query optimizer"                             +
-     }                                                                     +
-   }                                                                       +
- ]
-(1 row)
-
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- Fails (no unique index inference specification, required for do update variant):
 insert into insertconflicttest values (1, 'Apple') on conflict do update set fruit = excluded.fruit;
 ERROR:  ON CONFLICT DO UPDATE requires inference specification or constraint name
@@ -237,11 +153,14 @@ LINE 1: ...nsert into insertconflicttest values (1, 'Apple') on conflic...
 HINT:  For example, ON CONFLICT (<column>).
 -- inference succeeds:
 insert into insertconflicttest values (1, 'Apple') on conflict (key) do update set fruit = excluded.fruit;
+ERROR:  GPDB does not support DO UPDATE SET clause
 insert into insertconflicttest values (2, 'Orange') on conflict (key, key, key) do update set fruit = excluded.fruit;
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- Succeed, since multi-assignment does not involve subquery:
 insert into insertconflicttest
 values (1, 'Apple'), (2, 'Orange')
 on conflict (key) do update set (fruit, key) = (excluded.fruit, excluded.key);
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- Give good diagnostic message when EXCLUDED.* spuriously referenced from
 -- RETURNING:
 insert into insertconflicttest values (1, 'Apple') on conflict (key) do update set fruit = excluded.fruit RETURNING excluded.fruit;
@@ -272,8 +191,11 @@ insert into insertconflicttest values (6, 'Passionfruit') on conflict (lower(fru
 ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
 -- Check the target relation can be aliased
 insert into insertconflicttest values (6, 'Passionfruits') on conflict (key) do update set fruit = excluded.fruit;
+ERROR:  GPDB does not support DO UPDATE SET clause
 insert into insertconflicttest AS ict values (6, 'Passionfruit') on conflict (key) do update set fruit = excluded.fruit; -- ok, no reference to target table
+ERROR:  GPDB does not support DO UPDATE SET clause
 insert into insertconflicttest AS ict values (6, 'Passionfruit') on conflict (key) do update set fruit = ict.fruit; -- ok, alias
+ERROR:  GPDB does not support DO UPDATE SET clause
 insert into insertconflicttest AS ict values (6, 'Passionfruit') on conflict (key) do update set fruit = insertconflicttest.fruit; -- error, references aliased away name
 ERROR:  invalid reference to FROM-clause entry for table "insertconflicttest"
 LINE 1: ...onfruit') on conflict (key) do update set fruit = insertconf...
@@ -286,7 +208,9 @@ drop index key_index;
 create unique index comp_key_index on insertconflicttest(key, fruit);
 -- inference succeeds:
 insert into insertconflicttest values (7, 'Raspberry') on conflict (key, fruit) do update set fruit = excluded.fruit;
+ERROR:  GPDB does not support DO UPDATE SET clause
 insert into insertconflicttest values (8, 'Lime') on conflict (fruit, key) do update set fruit = excluded.fruit;
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- inference fails:
 insert into insertconflicttest values (9, 'Banana') on conflict (key) do update set fruit = excluded.fruit;
 ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
@@ -339,17 +263,12 @@ create unique index expr_comp_key_index on insertconflicttest(key, lower(fruit))
 create unique index tricky_expr_comp_key_index on insertconflicttest(key, lower(fruit), upper(fruit));
 -- inference succeeds:
 insert into insertconflicttest values (24, 'Plum') on conflict (key, lower(fruit)) do update set fruit = excluded.fruit;
+ERROR:  GPDB does not support DO UPDATE SET clause
 insert into insertconflicttest values (25, 'Peach') on conflict (lower(fruit), key) do update set fruit = excluded.fruit;
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- Should not infer "tricky_expr_comp_key_index" index:
 explain (costs off) insert into insertconflicttest values (26, 'Fig') on conflict (lower(fruit), key, lower(fruit), key) do update set fruit = excluded.fruit;
-                   QUERY PLAN                    
--------------------------------------------------
- Insert on insertconflicttest
-   Conflict Resolution: UPDATE
-   Conflict Arbiter Indexes: expr_comp_key_index
-   ->  Result
-(4 rows)
-
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- inference fails:
 insert into insertconflicttest values (27, 'Prune') on conflict (key, upper(fruit)) do update set fruit = excluded.fruit;
 ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
@@ -367,11 +286,11 @@ create unique index key_index on insertconflicttest(key);
 create unique index fruit_index on insertconflicttest(fruit);
 -- succeeds, since UPDATE happens to update "fruit" to existing value:
 insert into insertconflicttest values (26, 'Fig') on conflict (key) do update set fruit = excluded.fruit;
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- fails, since UPDATE is to row with key value 26, and we're updating "fruit"
 -- to a value that happens to exist in another row ('peach'):
 insert into insertconflicttest values (26, 'Peach') on conflict (key) do update set fruit = excluded.fruit;
-ERROR:  duplicate key value violates unique constraint "fruit_index"
-DETAIL:  Key (fruit)=(Peach) already exists.
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- succeeds, since "key" isn't repeated/referenced in UPDATE, and "fruit"
 -- arbitrates that statement updates existing "Fig" row:
 insert into insertconflicttest values (25, 'Fig') on conflict (fruit) do update set fruit = excluded.fruit;
@@ -384,6 +303,7 @@ drop index fruit_index;
 create unique index partial_key_index on insertconflicttest(key) where fruit like '%berry';
 -- Succeeds
 insert into insertconflicttest values (23, 'Blackberry') on conflict (key) where fruit like '%berry' do update set fruit = excluded.fruit;
+ERROR:  GPDB does not support DO UPDATE SET clause
 insert into insertconflicttest values (23, 'Blackberry') on conflict (key) where fruit like '%berry' and fruit = 'inconsequential' do nothing;
 -- fails
 insert into insertconflicttest values (23, 'Blackberry') on conflict (key) do update set fruit = excluded.fruit;
@@ -423,42 +343,44 @@ insert into capitals values ('Madison', 1.913E+5, 845, 'WI');
 select * from capitals;
     name    | population | altitude | state 
 ------------+------------+----------+-------
- Sacramento |     369400 |       30 | CA
  Madison    |     191300 |      845 | WI
+ Sacramento |     369400 |       30 | CA
 (2 rows)
 
 -- Succeeds:
 insert into cities values ('Las Vegas', 2.583E+5, 2174) on conflict do nothing;
 insert into capitals values ('Sacramento', 4664.E+5, 30, 'CA') on conflict (name) do update set population = excluded.population;
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- Wrong "Sacramento", so do nothing:
 insert into capitals values ('Sacramento', 50, 2267, 'NE') on conflict (name) do nothing;
 select * from capitals;
     name    | population | altitude | state 
 ------------+------------+----------+-------
  Madison    |     191300 |      845 | WI
- Sacramento |  466400000 |       30 | CA
+ Sacramento |     369400 |       30 | CA
 (2 rows)
 
 insert into cities values ('Las Vegas', 5.83E+5, 2001) on conflict (name) do update set population = excluded.population, altitude = excluded.altitude;
+ERROR:  GPDB does not support DO UPDATE SET clause
 select tableoid::regclass, * from cities;
  tableoid |     name      | population | altitude 
 ----------+---------------+------------+----------
  cities   | San Francisco |     724000 |       63
  cities   | Mariposa      |       1200 |     1953
- cities   | Las Vegas     |     583000 |     2001
+ cities   | Las Vegas     |     258300 |     2174
  capitals | Madison       |     191300 |      845
- capitals | Sacramento    |  466400000 |       30
+ capitals | Sacramento    |     369400 |       30
 (5 rows)
 
 insert into capitals values ('Las Vegas', 5.83E+5, 2222, 'NV') on conflict (name) do update set population = excluded.population;
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- Capitals will contain new capital, Las Vegas:
 select * from capitals;
     name    | population | altitude | state 
 ------------+------------+----------+-------
  Madison    |     191300 |      845 | WI
- Sacramento |  466400000 |       30 | CA
- Las Vegas  |     583000 |     2222 | NV
-(3 rows)
+ Sacramento |     369400 |       30 | CA
+(2 rows)
 
 -- Cities contains two instances of "Las Vegas", since unique constraints don't
 -- work across inheritance:
@@ -467,24 +389,23 @@ select tableoid::regclass, * from cities;
 ----------+---------------+------------+----------
  cities   | San Francisco |     724000 |       63
  cities   | Mariposa      |       1200 |     1953
- cities   | Las Vegas     |     583000 |     2001
+ cities   | Las Vegas     |     258300 |     2174
  capitals | Madison       |     191300 |      845
- capitals | Sacramento    |  466400000 |       30
- capitals | Las Vegas     |     583000 |     2222
-(6 rows)
+ capitals | Sacramento    |     369400 |       30
+(5 rows)
 
 -- This only affects "cities" version of "Las Vegas":
 insert into cities values ('Las Vegas', 5.86E+5, 2223) on conflict (name) do update set population = excluded.population, altitude = excluded.altitude;
+ERROR:  GPDB does not support DO UPDATE SET clause
 select tableoid::regclass, * from cities;
  tableoid |     name      | population | altitude 
 ----------+---------------+------------+----------
  cities   | San Francisco |     724000 |       63
  cities   | Mariposa      |       1200 |     1953
- cities   | Las Vegas     |     586000 |     2223
+ cities   | Las Vegas     |     258300 |     2174
  capitals | Madison       |     191300 |      845
- capitals | Sacramento    |  466400000 |       30
- capitals | Las Vegas     |     583000 |     2222
-(6 rows)
+ capitals | Sacramento    |     369400 |       30
+(5 rows)
 
 -- clean up
 drop table capitals;
@@ -499,24 +420,12 @@ LINE 1: ...es(1, '2') on conflict (key) do update set data = excluded.d...
                                                              ^
 -- ok, aliased
 insert into excluded AS target values(1, '2') on conflict (key) do update set data = excluded.data RETURNING *;
- key | data 
------+------
-   1 | 2
-(1 row)
-
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- ok, aliased
 insert into excluded AS target values(1, '2') on conflict (key) do update set data = target.data RETURNING *;
- key | data 
------+------
-   1 | 2
-(1 row)
-
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- make sure excluded isn't a problem in returning clause
 insert into excluded values(1, '2') on conflict (key) do update set data = 3 RETURNING excluded.*;
- key | data 
------+------
-   1 | 3
-(1 row)
-
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- clean up
 drop table excluded;

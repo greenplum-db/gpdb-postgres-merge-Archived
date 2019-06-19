@@ -335,6 +335,7 @@ EXECUTE PROCEDURE trigger_func('after_upd_stmt');
 -- defined.
 INSERT INTO main_table (a, b) VALUES (5, 10) ON CONFLICT (a)
   DO UPDATE SET b = EXCLUDED.b;
+ERROR:  GPDB does not support DO UPDATE SET clause
 CREATE TRIGGER after_upd_row_trig AFTER UPDATE ON main_table
 FOR EACH ROW EXECUTE PROCEDURE trigger_func('after_upd_row');
 INSERT INTO main_table DEFAULT VALUES;
@@ -1640,47 +1641,25 @@ $$;
 create trigger upsert_after_trig after insert or update on upsert
   for each row execute procedure upsert_after_func();
 insert into upsert values(1, 'black') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (1,black)  (seg1 127.0.0.1:25433 pid=8567)
-WARNING:  after insert (new): (1,black)  (seg1 127.0.0.1:25433 pid=8567)
+ERROR:  GPDB does not support DO UPDATE SET clause
 insert into upsert values(2, 'red') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (2,red)  (seg0 127.0.0.1:25432 pid=8566)
-WARNING:  before insert (new, modified): (3,"red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
-WARNING:  after insert (new): (3,"red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
+ERROR:  GPDB does not support DO UPDATE SET clause
 insert into upsert values(3, 'orange') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (3,orange)  (seg0 127.0.0.1:25432 pid=8566)
-WARNING:  before update (old): (3,"red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
-WARNING:  before update (new): (3,"updated red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
-WARNING:  after update (old): (3,"updated red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
-WARNING:  after update (new): (3,"updated red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
+ERROR:  GPDB does not support DO UPDATE SET clause
 insert into upsert values(4, 'green') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (4,green)  (seg0 127.0.0.1:25432 pid=8566)
-WARNING:  before insert (new, modified): (5,"green trig modified")  (seg0 127.0.0.1:25432 pid=8566)
-WARNING:  after insert (new): (5,"green trig modified")  (seg0 127.0.0.1:25432 pid=8566)
+ERROR:  GPDB does not support DO UPDATE SET clause
 insert into upsert values(5, 'purple') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (5,purple)  (seg2 127.0.0.1:25434 pid=8568)
-WARNING:  after insert (new): (5,purple)  (seg2 127.0.0.1:25434 pid=8568)
+ERROR:  GPDB does not support DO UPDATE SET clause
 insert into upsert values(6, 'white') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (6,white)  (seg2 127.0.0.1:25434 pid=8568)
-WARNING:  before insert (new, modified): (7,"white trig modified")  (seg2 127.0.0.1:25434 pid=8568)
-WARNING:  after insert (new): (7,"white trig modified")  (seg2 127.0.0.1:25434 pid=8568)
+ERROR:  GPDB does not support DO UPDATE SET clause
 insert into upsert values(7, 'pink') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (7,pink)  (seg0 127.0.0.1:25432 pid=8566)
-WARNING:  after insert (new): (7,pink)  (seg0 127.0.0.1:25432 pid=8566)
+ERROR:  GPDB does not support DO UPDATE SET clause
 insert into upsert values(8, 'yellow') on conflict (key) do update set color = 'updated ' || upsert.color;
-WARNING:  before insert (new): (8,yellow)  (seg0 127.0.0.1:25432 pid=8566)
-WARNING:  before insert (new, modified): (9,"yellow trig modified")  (seg0 127.0.0.1:25432 pid=8566)
-WARNING:  after insert (new): (9,"yellow trig modified")  (seg0 127.0.0.1:25432 pid=8566)
+ERROR:  GPDB does not support DO UPDATE SET clause
 select * from upsert;
- key |           color           
------+---------------------------
-   3 | updated red trig modified
-   5 | green trig modified
-   7 | pink
-   9 | yellow trig modified
-   1 | black
-   5 | purple
-   7 | white trig modified
-(7 rows)
+ key | color 
+-----+-------
+(0 rows)
 
 drop table upsert;
 drop function upsert_before_func();

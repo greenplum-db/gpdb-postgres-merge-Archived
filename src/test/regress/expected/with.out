@@ -1896,11 +1896,7 @@ WITH t AS (
     RETURNING *
 )
 SELECT * FROM t JOIN y ON t.k = y.a ORDER BY a, k;
- k |   v    | a 
----+--------+---
- 0 | insert | 0
-(1 row)
-
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- Test EXCLUDED.* reference within CTE
 WITH aa AS (
     INSERT INTO z VALUES(1, 5) ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v
@@ -1908,32 +1904,18 @@ WITH aa AS (
     RETURNING *
 )
 SELECT * FROM aa;
- k | v 
----+---
-(0 rows)
-
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- New query/snapshot demonstrates side-effects of previous query.
 SELECT * FROM z ORDER BY k;
- k  |        v         
-----+------------------
-  0 | insert
-  1 | 1 v, now update
-  2 | insert
-  3 | insert
-  4 | 4 v, now update
-  5 | insert
-  6 | insert
-  7 | 7 v, now update
-  8 | insert
-  9 | insert
- 10 | 10 v, now update
- 11 | insert
- 12 | insert
- 13 | 13 v, now update
- 14 | insert
- 15 | insert
- 16 | 16 v, now update
-(17 rows)
+ k  |  v   
+----+------
+  1 | 1 v
+  4 | 4 v
+  7 | 7 v
+ 10 | 10 v
+ 13 | 13 v
+ 16 | 16 v
+(6 rows)
 
 --
 -- Ensure subqueries within the update clause work, even if they
@@ -1942,18 +1924,23 @@ SELECT * FROM z ORDER BY k;
 WITH aa AS (SELECT 1 a, 2 b)
 INSERT INTO z VALUES(1, 'insert')
 ON CONFLICT (k) DO UPDATE SET v = (SELECT b || ' update' FROM aa WHERE a = 1 LIMIT 1);
+ERROR:  GPDB does not support DO UPDATE SET clause
 WITH aa AS (SELECT 1 a, 2 b)
 INSERT INTO z VALUES(1, 'insert')
 ON CONFLICT (k) DO UPDATE SET v = ' update' WHERE z.k = (SELECT a FROM aa);
+ERROR:  GPDB does not support DO UPDATE SET clause
 WITH aa AS (SELECT 1 a, 2 b)
 INSERT INTO z VALUES(1, 'insert')
 ON CONFLICT (k) DO UPDATE SET v = (SELECT b || ' update' FROM aa WHERE a = 1 LIMIT 1);
+ERROR:  GPDB does not support DO UPDATE SET clause
 WITH aa AS (SELECT 'a' a, 'b' b UNION ALL SELECT 'a' a, 'b' b)
 INSERT INTO z VALUES(1, 'insert')
 ON CONFLICT (k) DO UPDATE SET v = (SELECT b || ' update' FROM aa WHERE a = 'a' LIMIT 1);
+ERROR:  GPDB does not support DO UPDATE SET clause
 WITH aa AS (SELECT 1 a, 2 b)
 INSERT INTO z VALUES(1, (SELECT b || ' insert' FROM aa WHERE a = 1 ))
 ON CONFLICT (k) DO UPDATE SET v = (SELECT b || ' update' FROM aa WHERE a = 1 LIMIT 1);
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- This shows an attempt to update an invisible row, which should really be
 -- reported as a cardinality violation, but it doesn't seem worth fixing:
 WITH simpletup AS (

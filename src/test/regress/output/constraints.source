@@ -445,22 +445,22 @@ INSERT INTO UNIQUE_TBL VALUES (5, 'one');
 INSERT INTO UNIQUE_TBL (t) VALUES ('six');
 INSERT INTO UNIQUE_TBL (t) VALUES ('seven');
 INSERT INTO UNIQUE_TBL VALUES (5, 'five-upsert-insert') ON CONFLICT (i) DO UPDATE SET t = 'five-upsert-update';
+ERROR:  GPDB does not support DO UPDATE SET clause
 INSERT INTO UNIQUE_TBL VALUES (6, 'six-upsert-insert') ON CONFLICT (i) DO UPDATE SET t = 'six-upsert-update';
+ERROR:  GPDB does not support DO UPDATE SET clause
 -- should fail
 INSERT INTO UNIQUE_TBL VALUES (1, 'a'), (2, 'b'), (2, 'b') ON CONFLICT (i) DO UPDATE SET t = 'fails';
-ERROR:  ON CONFLICT DO UPDATE command cannot affect row a second time
-HINT:  Ensure that no rows proposed for insertion within the same command have duplicate constrained values.
+ERROR:  GPDB does not support DO UPDATE SET clause
 SELECT '' AS five, * FROM UNIQUE_TBL;
- five | i |         t          
-------+---+--------------------
+ five | i |   t   
+------+---+-------
+      |   | seven
+      |   | six
       | 1 | one
       | 2 | two
       | 4 | four
-      |   | six
-      |   | seven
-      | 5 | five-upsert-update
-      | 6 | six-upsert-insert
-(7 rows)
+      | 5 | one
+(6 rows)
 
 DROP TABLE UNIQUE_TBL;
 CREATE TABLE UNIQUE_TBL (i int, t text,
