@@ -57,18 +57,10 @@ test: create_misc create_operator
 # These depend on the above two
 test: create_index create_view
 
-# GPDB_95_MERGE_FIXME: These two should be in the below parallel group
-# between `constraints` and `create_table_like`. Why were they
-# extracted out? It seems like they were pulled out because they
-# couldn't run. Now that they are running, should they be placed back
-# into the parallel group?
-test: inherit
-test: triggers
-
 # ----------
 # Another group of parallel tests
 # ----------
-test: create_aggregate create_function_3 create_cast constraints create_table_like typed_table vacuum drop_if_exists updatable_views rolenames
+test: create_aggregate create_function_3 create_cast constraints triggers inherit create_table_like typed_table vacuum drop_if_exists updatable_views rolenames
 
 # ----------
 # Because vacuum will detect concurrently running transactions, it is necessary to
