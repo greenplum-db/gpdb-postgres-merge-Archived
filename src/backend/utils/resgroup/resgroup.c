@@ -124,12 +124,12 @@ struct ResGroupProcData
 {
 	Oid		groupId;
 
+	int32	memUsage;			/* memory usage of current proc */
+
 	ResGroupData		*group;
 	ResGroupSlotData	*slot;
 
 	ResGroupCaps	caps;
-
-	int32	memUsage;			/* memory usage of current proc */
 };
 
 /*
@@ -144,13 +144,13 @@ struct ResGroupSlotData
 {
 	Oid				groupId;
 
-	ResGroupCaps	caps;
-
 	int32			memQuota;	/* memory quota of current slot */
 	int32			memUsage;	/* total memory usage of procs belongs to this slot */
 	int				nProcs;		/* number of procs in this slot */
 
 	ResGroupSlotData	*next;
+
+	ResGroupCaps	caps;
 };
 
 /*
@@ -174,15 +174,6 @@ typedef struct ResGroupMemOperations
 struct ResGroupData
 {
 	Oid			groupId;		/* Id for this group */
-	ResGroupCaps	caps;		/* capabilities of this group */
-	volatile int			nRunning;		/* number of running trans */
-	volatile int	nRunningBypassed;		/* number of running trans in bypass mode */
-	PROC_QUEUE	waitProcs;		/* list of PGPROC objects waiting on this group */
-	int			totalExecuted;	/* total number of executed trans */
-	int			totalQueued;	/* total number of queued trans	*/
-	Interval	totalQueuedTime;/* total queue time */
-
-	bool		lockedForDrop;  /* true if resource group is dropped but not committed yet */
 
 	/*
 	 * memGap is calculated as:
@@ -207,32 +198,43 @@ struct ResGroupData
 	volatile int32	memUsage;
 	volatile int32	memSharedUsage;
 
+	volatile int			nRunning;		/* number of running trans */
+	volatile int	nRunningBypassed;		/* number of running trans in bypass mode */
+	int			totalExecuted;	/* total number of executed trans */
+	int			totalQueued;	/* total number of queued trans	*/
+	Interval	totalQueuedTime;/* total queue time */
+	PROC_QUEUE	waitProcs;		/* list of PGPROC objects waiting on this group */
+
 	/*
 	 * operation functions for resource group
 	 */
 	const ResGroupMemOperations *groupMemOps;
+
+	bool		lockedForDrop;  /* true if resource group is dropped but not committed yet */
+
+	ResGroupCaps	caps;		/* capabilities of this group */
 };
 
 struct ResGroupControl
 {
-	HTAB			*htbl;
-	int 			segmentsOnMaster;
-
-	/*
-	 * The hash table for resource groups in shared memory should only be populated
-	 * once, so we add a flag here to implement this requirement.
-	 */
-	bool			loaded;
-
 	int32			totalChunks;	/* total memory chunks on this segment */
 	volatile int32	freeChunks;		/* memory chunks not allocated to any group,
 									will be used for the query which group share
 									memory is not enough*/
 
 	int32			chunkSizeInBits;
+	int 			segmentsOnMaster;
 
 	ResGroupSlotData	*slots;		/* slot pool shared by all resource groups */
 	ResGroupSlotData	*freeSlot;	/* head of the free list */
+
+	HTAB			*htbl;
+
+	/*
+	 * The hash table for resource groups in shared memory should only be populated
+	 * once, so we add a flag here to implement this requirement.
+	 */
+	bool			loaded;
 
 	int				nGroups;
 	ResGroupData	groups[1];
@@ -2975,6 +2977,10 @@ groupSetMemorySpillRatio(const ResGroupCaps *caps)
 {
 	char value[64];
 
+	/* No need to set memory_spill_ratio if it is already up-to-date */
+	if (caps->memSpillRatio == memory_spill_ratio)
+		return;
+
 	snprintf(value, sizeof(value), "%d", caps->memSpillRatio);
 	set_config_option("memory_spill_ratio", value, PGC_USERSET, PGC_S_RESGROUP,
 			GUC_ACTION_SET, true, 0, false);
@@ -3443,6 +3449,7 @@ shouldBypassQuery(const char *query_string)
 	List *parsetree_list; 
 	ListCell *parsetree_item;
 	Node *parsetree;
+	bool		bypass;
 
 	if (gp_resource_group_bypass)
 		return true;
@@ -3463,16 +3470,21 @@ shouldBypassQuery(const char *query_string)
 		return false;
 
 	/* Only bypass SET/RESET/SHOW command for now */
+	bypass = true;
 	foreach(parsetree_item, parsetree_list)
 	{
 		parsetree = (Node *) lfirst(parsetree_item);
 
 		if (nodeTag(parsetree) != T_VariableSetStmt &&
 			nodeTag(parsetree) != T_VariableShowStmt)
-			return false;
+		{
+			bypass = false;
+			break;
+		}
 	}
 
-	return true;
+	list_free_deep(parsetree_list);
+	return bypass;
 }
 
 /*

@@ -1407,7 +1407,7 @@ RecordTransactionCommit(void)
 	bool		markXidCommitted;
 	TransactionId latestXid = InvalidTransactionId;
 	int			nrels;
-	RelFileNodeWithStorageType *rels;
+	RelFileNodePendingDelete *rels;
 	int			nchildren;
 	TransactionId *children;
 	int			nmsgs = 0;
@@ -1616,6 +1616,15 @@ RecordTransactionCommit(void)
 												getDtxStartTime(),
 												getDistributedTransactionId(),
 												/* isRedo */ false);
+			else if (Gp_role == GP_ROLE_EXECUTE && MyTmGxact->isOnePhaseCommit)
+			{
+				DistributedTransactionTimeStamp distribTimeStamp;
+				DistributedTransactionId distribXid;
+				dtxCrackOpenGid(MyTmGxact->gid, &distribTimeStamp, &distribXid);
+				DistributedLog_SetCommittedTree(xid, nchildren, children,
+												distribTimeStamp, distribXid,
+												/* isRedo */ false);
+			}
 
 			TransactionIdCommitTree(xid, nchildren, children);
 		}
@@ -1882,7 +1891,7 @@ RecordTransactionAbort(bool isSubXact)
 	TransactionId xid;
 	TransactionId latestXid;
 	int			nrels;
-	RelFileNodeWithStorageType *rels;
+	RelFileNodePendingDelete *rels;
 	int			nchildren;
 	TransactionId *children;
 	TimestampTz xact_time;
@@ -6351,7 +6360,7 @@ xactGetCommittedChildren(TransactionId **ptr)
 XLogRecPtr
 XactLogCommitRecord(TimestampTz commit_time,
 					int nsubxacts, TransactionId *subxacts,
-					int nrels, RelFileNodeWithStorageType *rels,
+					int nrels, RelFileNodePendingDelete *rels,
 					int nmsgs, SharedInvalidationMessage *msgs,
 					bool relcacheInval, bool forceSync,
 					TransactionId twophase_xid,
@@ -6444,7 +6453,10 @@ XactLogCommitRecord(TimestampTz commit_time,
 
 		dtxCrackOpenGid(gid, &distrib_timestamp, &distrib_xid);
 
-		xl_xinfo.xinfo |= XACT_XINFO_HAS_DISTRIB;
+		if (Gp_role == GP_ROLE_EXECUTE && MyTmGxact->isOnePhaseCommit)
+			xl_xinfo.xinfo |= XLOG_XACT_ONE_PHASE_COMMIT;
+		else
+			xl_xinfo.xinfo |= XACT_XINFO_HAS_DISTRIB;
 		xl_distrib.distrib_xid = distrib_xid;
 		xl_distrib.distrib_timestamp = distrib_timestamp;
 	}
@@ -6477,7 +6489,7 @@ XactLogCommitRecord(TimestampTz commit_time,
 		XLogRegisterData((char *) (&xl_relfilenodes),
 						 MinSizeOfXactRelfilenodes);
 		XLogRegisterData((char *) rels,
-						 nrels * sizeof(RelFileNodeWithStorageType));
+						 nrels * sizeof(RelFileNodePendingDelete));
 	}
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_INVALS)
@@ -6511,7 +6523,7 @@ XactLogCommitRecord(TimestampTz commit_time,
 XLogRecPtr
 XactLogAbortRecord(TimestampTz abort_time,
 				   int nsubxacts, TransactionId *subxacts,
-				   int nrels, RelFileNodeWithStorageType *rels,
+				   int nrels, RelFileNodePendingDelete *rels,
 				   TransactionId twophase_xid)
 {
 	xl_xact_abort xlrec;
@@ -6580,7 +6592,7 @@ XactLogAbortRecord(TimestampTz abort_time,
 		XLogRegisterData((char *) (&xl_relfilenodes),
 						 MinSizeOfXactRelfilenodes);
 		XLogRegisterData((char *) rels,
-						 nrels * sizeof(RelFileNodeWithStorageType));
+						 nrels * sizeof(RelFileNodePendingDelete));
 	}
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_TWOPHASE)
@@ -6992,6 +7004,14 @@ xact_redo(XLogReaderState *record)
 		if (standbyState >= STANDBY_INITIALIZED)
 			ProcArrayApplyXidAssignment(xlrec->xtop,
 										xlrec->nsubxacts, xlrec->xsub);
+	}
+	else if (info == XLOG_XACT_ONE_PHASE_COMMIT)
+	{
+		xl_xact_commit *xlrec = (xl_xact_commit *) XLogRecGetData(record);
+		xl_xact_parsed_commit parsed;
+
+		ParseCommitRecord(XLogRecGetInfo(record), xlrec, &parsed);
+		xact_redo_commit(&parsed, XLogRecGetXid(record), record->EndRecPtr, XLogRecGetOrigin(record));
 	}
 	else
 		elog(PANIC, "xact_redo: unknown op code %u", info);

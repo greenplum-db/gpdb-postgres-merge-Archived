@@ -80,7 +80,7 @@ ParseCommitRecord(uint8 info, xl_xact_commit *xlrec, xl_xact_parsed_commit *pars
 		parsed->xnodes = xl_relfilenodes->xnodes;
 
 		data += MinSizeOfXactRelfilenodes;
-		data += xl_relfilenodes->nrels * sizeof(RelFileNodeWithStorageType);
+		data += xl_relfilenodes->nrels * sizeof(RelFileNodePendingDelete);
 	}
 
 	if (parsed->xinfo & XACT_XINFO_HAS_INVALS)
@@ -166,7 +166,7 @@ ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed)
 		parsed->xnodes = xl_relfilenodes->xnodes;
 
 		data += MinSizeOfXactRelfilenodes;
-		data += xl_relfilenodes->nrels * sizeof(RelFileNodeWithStorageType);
+		data += xl_relfilenodes->nrels * sizeof(RelFileNodePendingDelete);
 	}
 
 	if (parsed->xinfo & XACT_XINFO_HAS_TWOPHASE)
@@ -198,7 +198,11 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 		appendStringInfoString(buf, "; rels:");
 		for (i = 0; i < parsed.nrels; i++)
 		{
-			char	   *path = relpathperm(parsed.xnodes[i].node, MAIN_FORKNUM);
+			BackendId  backendId = parsed.xnodes[i].isTempRelation ?
+								  TempRelBackendId : InvalidBackendId;
+			char	   *path = relpathbackend(parsed.xnodes[i].node,
+											  backendId,
+											  MAIN_FORKNUM);
 
 			appendStringInfo(buf, " %s", path);
 			pfree(path);
@@ -251,6 +255,9 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 						 (uint32) parsed.origin_lsn,
 						 timestamptz_to_str(parsed.origin_timestamp));
 	}
+
+	if (parsed.distribTimeStamp != 0 || parsed.distribXid != InvalidDistributedTransactionId)
+		appendStringInfo(buf, " gid = %u-%.10u", parsed.distribTimeStamp, parsed.distribXid);
 }
 
 static void
@@ -290,7 +297,11 @@ xact_desc_abort(StringInfo buf, uint8 info, xl_xact_abort *xlrec)
 		appendStringInfoString(buf, "; rels:");
 		for (i = 0; i < parsed.nrels; i++)
 		{
-			char	   *path = relpathperm(parsed.xnodes[i].node, MAIN_FORKNUM);
+			BackendId  backendId = parsed.xnodes[i].isTempRelation ?
+								  TempRelBackendId : InvalidBackendId;
+			char	   *path = relpathbackend(parsed.xnodes[i].node,
+											  backendId,
+											  MAIN_FORKNUM);
 
 			appendStringInfo(buf, " %s", path);
 			pfree(path);
@@ -394,6 +405,9 @@ xact_identify(uint8 info)
 			break;
 		case XLOG_XACT_DISTRIBUTED_FORGET:
 			id = "DISTRIBUTED_FORGET";
+			break;
+		case XLOG_XACT_ONE_PHASE_COMMIT:
+			id = "ONE-PHASE COMMIT";
 			break;
 	}
 

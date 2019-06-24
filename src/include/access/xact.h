@@ -121,9 +121,10 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 #define XLOG_XACT_COMMIT_PREPARED	0x30
 #define XLOG_XACT_ABORT_PREPARED	0x40
 #define XLOG_XACT_ASSIGNMENT		0x50
-/* GPDB takes the last available two opcodes */
+/* GPDB takes the last available three opcodes */
 #define XLOG_XACT_DISTRIBUTED_COMMIT 0x60
 #define XLOG_XACT_DISTRIBUTED_FORGET 0x70
+#define XLOG_XACT_ONE_PHASE_COMMIT	0x90
 
 /* mask for filtering opcodes out of xl_info */
 #define XLOG_XACT_OPMASK			0x70
@@ -218,7 +219,7 @@ typedef struct xl_xact_subxacts
 typedef struct xl_xact_relfilenodes
 {
 	int			nrels;			/* number of subtransaction XIDs */
-	RelFileNodeWithStorageType xnodes[FLEXIBLE_ARRAY_MEMBER];
+	RelFileNodePendingDelete xnodes[FLEXIBLE_ARRAY_MEMBER];
 } xl_xact_relfilenodes;
 #define MinSizeOfXactRelfilenodes offsetof(xl_xact_relfilenodes, xnodes)
 
@@ -285,7 +286,7 @@ typedef struct xl_xact_parsed_commit
 	TransactionId *subxacts;
 
 	int			nrels;
-	RelFileNodeWithStorageType *xnodes;
+	RelFileNodePendingDelete *xnodes;
 
 	int			nmsgs;
 	SharedInvalidationMessage *msgs;
@@ -308,7 +309,7 @@ typedef struct xl_xact_parsed_abort
 	TransactionId *subxacts;
 
 	int			nrels;
-	RelFileNodeWithStorageType *xnodes;
+	RelFileNodePendingDelete *xnodes;
 
 	TransactionId twophase_xid; /* only for 2PC */
 } xl_xact_parsed_abort;
@@ -404,7 +405,7 @@ extern int	xactGetCommittedChildren(TransactionId **ptr);
 
 extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
 					int nsubxacts, TransactionId *subxacts,
-					int nrels, RelFileNodeWithStorageType *rels,
+					int nrels, RelFileNodePendingDelete *rels,
 					int nmsgs, SharedInvalidationMessage *msgs,
 					bool relcacheInval, bool forceSync,
 					TransactionId twophase_xid,
@@ -412,7 +413,7 @@ extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
 
 extern XLogRecPtr XactLogAbortRecord(TimestampTz abort_time,
 				   int nsubxacts, TransactionId *subxacts,
-				   int nrels, RelFileNodeWithStorageType *rels,
+				   int nrels, RelFileNodePendingDelete *rels,
 				   TransactionId twophase_xid);
 extern void xact_redo(XLogReaderState *record);
 

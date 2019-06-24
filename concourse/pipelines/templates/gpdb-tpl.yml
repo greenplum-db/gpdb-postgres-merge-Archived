@@ -102,8 +102,10 @@ groups:
   - gate_cli_start
 {% for test in CLI_BEHAVE_TESTS %}
   - [[ test.name ]]
+  - [[ test.name ]]_ubuntu18
 {% endfor %}
   - check_centos
+  - combine_cli_coverage
 {% endif %}
 {% if "AA" in test_sections %}
   ## --------------------------------------------------------------------
@@ -239,10 +241,13 @@ groups:
 - name: CLI
   jobs:
   - gate_cli_start
+  - compile_gpdb_ubuntu18.04
 {% for test in CLI_BEHAVE_TESTS %}
   - [[ test.name ]]
+  - [[ test.name ]]_ubuntu18
 {% endfor %}
   - check_centos
+  - combine_cli_coverage
   - compile_gpdb_centos6
 {% if "centos6" in os_types and "ICW" in test_sections %}
   - gpexpand
@@ -462,6 +467,8 @@ resources:
     repository: pivotaldata/gpdb6-centos7-build
     tag: latest
 
+{% endif %}
+{% if "centos7" in os_types or "CLI" in test_sections %}
 - name: gpdb6-centos7-test
   type: docker-image
   source:
@@ -1384,11 +1391,25 @@ jobs:
       passed: [gate_gpperfmon_start]
       trigger: true
     - get: gpdb6-centos6-test
+    - get: gpdb6-centos7-test
   - task: gpperfmon
     file: gpdb_src/concourse/tasks/behave_gpdb.yml
     image: gpdb6-centos6-test
     params:
       BEHAVE_TAGS: gpperfmon
+      TEST_NAME: gpperfmon_centos6
+  - task: publish_coverage
+    image: gpdb6-centos7-test
+    config:
+      platform: linux
+      inputs:
+        - name: gpdb_src
+        - name: coverage
+      run:
+        path: gpdb_src/concourse/scripts/gsutil_sync
+        args: [ "./coverage/", "gs://((coverage-bucket-name))/((pipeline-name))/" ]
+      params:
+        JSON_KEY: ((concourse-gcs-resources-service-account-key))
 
 {% if "centos7" in os_types %}
 - name: gpperfmon_centos7
@@ -1409,6 +1430,19 @@ jobs:
     image: gpdb6-centos7-test
     params:
       BEHAVE_TAGS: gpperfmon
+      TEST_NAME: gpperfmon_centos7
+  - task: publish_coverage
+    image: gpdb6-centos7-test
+    config:
+      platform: linux
+      inputs:
+        - name: gpdb_src
+        - name: coverage
+      run:
+        path: gpdb_src/concourse/scripts/gsutil_sync
+        args: [ "./coverage/", "gs://((coverage-bucket-name))/((pipeline-name))/" ]
+      params:
+        JSON_KEY: ((concourse-gcs-resources-service-account-key))
 
 {% endif %}
 
@@ -1444,11 +1478,25 @@ jobs:
       passed: [gate_cli_start]
       trigger: [[ test_trigger ]]
     - get: gpdb6-centos6-test
+    - get: gpdb6-centos7-test
   - task: check_centos
     file: gpdb_src/concourse/tasks/gpMgmt_check_gpdb.yml
     image: gpdb6-centos6-test
     params:
       TEST_OS: centos
+      TEST_NAME: gpmgmt_unit_tests
+  - task: publish_coverage
+    image: gpdb6-centos7-test
+    config:
+      platform: linux
+      inputs:
+        - name: gpdb_src
+        - name: coverage
+      run:
+        path: gpdb_src/concourse/scripts/gsutil_sync
+        args: [ "./coverage/", "gs://((coverage-bucket-name))/((pipeline-name))/" ]
+      params:
+        JSON_KEY: ((concourse-gcs-resources-service-account-key))
 
 {% for test in CLI_BEHAVE_TESTS %}
 - name: [[ test.name ]]
@@ -1460,6 +1508,7 @@ jobs:
             - gpMgmt/bin/pythonSrc/ext
         passed: [gate_cli_start]
       - get: gpdb6-centos6-test
+      - get: gpdb6-centos7-test
     - aggregate:
       {% if test.use_concourse_cluster %}
       - do:
@@ -1486,10 +1535,25 @@ jobs:
           image: ccp-image
           params:
             BEHAVE_FLAGS: --tags=[[ test.name ]] --tags=concourse_cluster
+            TEST_NAME: [[ test.name ]]
           on_success:
             <<: *ccp_destroy
           ensure:
             <<: *set_failed
+          output_mapping:
+            coverage: ccp-coverage
+        - task: publish_ccp_coverage
+          image: gpdb6-centos7-test
+          config:
+            platform: linux
+            inputs:
+              - name: gpdb_src
+              - name: ccp-coverage
+            run:
+              path: gpdb_src/concourse/scripts/gsutil_sync
+              args: [ "./ccp-coverage/", "gs://((coverage-bucket-name))/((pipeline-name))/" ]
+            params:
+              JSON_KEY: ((concourse-gcs-resources-service-account-key))
       {% endif %}
       - do:
         - get: bin_gpdb
@@ -1501,8 +1565,106 @@ jobs:
           image: gpdb6-centos6-test
           params:
             BEHAVE_FLAGS: --tags=[[ test.name ]] --tags=~concourse_cluster,demo_cluster
+            TEST_NAME: [[ test.name ]]
+          output_mapping:
+            coverage: demo-coverage
+        - task: publish_demo_coverage
+          image: gpdb6-centos7-test
+          config:
+            platform: linux
+            inputs:
+              - name: gpdb_src
+              - name: demo-coverage
+            run:
+              path: gpdb_src/concourse/scripts/gsutil_sync
+              args: [ "./demo-coverage/", "gs://((coverage-bucket-name))/((pipeline-name))/" ]
+            params:
+              JSON_KEY: ((concourse-gcs-resources-service-account-key))
+
+- name: [[ test.name ]]_ubuntu18
+  plan:
+    - aggregate:
+      - get: gpdb_src
+        params:
+          submodules:
+            - gpMgmt/bin/pythonSrc/ext
+        passed: [compile_gpdb_ubuntu18.04]
+      - get: gpdb6-ubuntu18.04-test
+    - aggregate:
+      {% if test.use_concourse_cluster %}
+      - do:
+        - get: gpdb_binary
+          resource: bin_gpdb_ubuntu18.04
+          passed: [compile_gpdb_ubuntu18.04]
+          trigger: [[ test_trigger ]]
+        - get: ccp_src
+        - put: terraform
+          params:
+            <<: *ccp_default_params
+            vars:
+              <<: *ccp_default_vars
+              PLATFORM: ubuntu18.04
+              [[ test.additional_ccp_vars ]]
+        - task: gen_cluster
+          file: ccp_src/ci/tasks/gen_cluster.yml
+          params:
+            <<: *ccp_gen_cluster_default_params
+            PLATFORM: ubuntu18.04
+        - task: gpinitsystem
+          file: ccp_src/ci/tasks/gpinitsystem.yml
+        - task: [[ test.name ]]_concourse_cluster_tests
+          file: gpdb_src/concourse/tasks/run_behave_on_ccp_cluster.yml
+          image: gpdb6-ubuntu18.04-test
+          params:
+            BEHAVE_FLAGS: --tags=[[ test.name ]] --tags=concourse_cluster
+          on_success:
+            <<: *ccp_destroy
+          ensure:
+            <<: *set_failed
+      {% endif %}
+      - do:
+        - get: bin_gpdb_ubuntu18.04
+          resource: bin_gpdb_ubuntu18.04
+          passed: [compile_gpdb_ubuntu18.04]
+          trigger: [[ test_trigger ]]
+        - task: [[ test.name ]]_demo_cluster_tests
+          file: gpdb_src/concourse/tasks/behave_gpdb.yml
+          image: gpdb6-ubuntu18.04-test
+          input_mapping:
+            bin_gpdb: bin_gpdb_ubuntu18.04
+          params:
+            BEHAVE_FLAGS: --tags=[[ test.name ]] --tags=~concourse_cluster,demo_cluster
 
 {% endfor %}
+
+- name: combine_cli_coverage
+  plan:
+    - aggregate:
+      - get: gpdb6-centos7-test
+      - get: gpdb_src
+        passed:
+          - compile_gpdb_centos6
+      - get: bin_gpdb_centos6
+        trigger: true
+        passed:
+          - check_centos
+        {% for test in CLI_BEHAVE_TESTS %}
+          - [[ test.name ]]
+        {% endfor %}
+    - task: combine_coverage
+      image: gpdb6-centos7-test
+      input_mapping:
+        bin_gpdb: bin_gpdb_centos6
+      config:
+        platform: linux
+        inputs:
+          - name: gpdb_src
+          - name: bin_gpdb
+        run:
+          path: gpdb_src/concourse/scripts/combine_cli_coverage.bash
+          args: [ "gs://((coverage-bucket-name))/((pipeline-name))/", "((coverage-bucket-name))/((pipeline-name))" ]
+        params:
+          JSON_KEY: ((concourse-gcs-resources-service-account-key))
 
 {% if "centos6" in os_types and "ICW" in test_sections %}
 - name: pg_upgrade
@@ -1776,6 +1938,7 @@ jobs:
       - gpperfmon_centos7
 {% for test in CLI_BEHAVE_TESTS %}
       - [[ test.name ]]
+      - [[ test.name ]]_ubuntu18
 {% endfor %}
  ##     - madlib_build_gppkg
  ##     - MADlib_Test_orca_centos6
@@ -1824,6 +1987,9 @@ jobs:
       - compile_gpdb_ubuntu18.04
       - icw_gporca_ubuntu18.04
       - icw_planner_ubuntu18.04
+{% for test in CLI_BEHAVE_TESTS %}
+      - [[ test.name ]]_ubuntu18
+{% endfor %}
     - get: bin_gpdb_clients_ubuntu18.04
       passed:
       - compile_gpdb_ubuntu18.04

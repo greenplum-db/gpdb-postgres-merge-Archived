@@ -226,6 +226,32 @@ DecodeXactOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	switch (info)
 	{
+		case XLOG_XACT_ONE_PHASE_COMMIT:
+			{
+#if 0
+				/*
+				 * Merged code from master commit <>
+				 * it needs to be refactored to current implementation
+				 */
+				xl_xact_commit *xlrec;
+				TransactionId *subxacts = NULL;
+				SharedInvalidationMessage *invals = NULL;
+
+				xlrec = (xl_xact_commit *) buf->record_data;
+
+				subxacts = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
+				invals = (SharedInvalidationMessage *) &(subxacts[xlrec->nsubxacts]);
+
+				DecodeCommit(ctx, buf, r->xl_xid, xlrec->dbId,
+							 xlrec->xact_time,
+							 xlrec->nsubxacts, subxacts,
+							 xlrec->nmsgs, invals);
+#else
+				elog(ERROR, "Not yet");
+#endif
+
+				break;
+			}
 		case XLOG_XACT_COMMIT:
 		case XLOG_XACT_COMMIT_PREPARED:
 			{
