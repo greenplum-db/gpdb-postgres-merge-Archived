@@ -5152,11 +5152,11 @@ set_coplan_strategies(PlannerInfo *root, MppGroupContext *ctx, DqaInfo *dqaArg, 
 		 * These are all the "hard" conditions on when we can't do hash
 		 * aggregation. These should match the hard checks in
 		 * choose_hashed_grouping().
-		 * GPDB_95_MERGE_FIXME: Is ctx->agg_costs->hasNonCombine and
-		 * ctx->agg_costs->hasNonSerial related to can_hash_group_key?
 		 */
 		can_hash_group_key =
 			root->config->enable_hashagg &&
+			!ctx->agg_costs->hasNonCombine &&
+			!ctx->agg_costs->hasNonSerial &&
 			ctx->agg_costs->numOrderedAggs > 0 &&
 			grouping_is_hashable(root->parse->groupClause);
 	}
