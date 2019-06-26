@@ -139,7 +139,6 @@ gp_dump_query_oids(PG_FUNCTION_ARGS)
 			List	   *q_invalidItems = NIL;
 			bool	   hasRowSecurity = false;
 
-			/* GPDB_95_MERGE_FIXME: What should we do about hasRowSecurity here? */
 			extract_query_dependencies((Node *) q, &q_relationOids, &q_invalidItems, &hasRowSecurity);
 
 			relationOids = list_concat(relationOids, q_relationOids);
