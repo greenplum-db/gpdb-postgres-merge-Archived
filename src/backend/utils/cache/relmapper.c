@@ -74,10 +74,9 @@
 #define RELMAPPER_FILEMAGIC		0x592717		/* version ID value */
 
 /*
- * GPDB_95_MERGE_FIXME: In Postgres this is 62, but Greenplum has exceeded this
- * number due to all of the extra Greenplum specific shared relations. Is it
- * safe to bump this up to 126 to occupy exactly 1 kilobyte? According to the
- * internet, modern disks nowadays have 4 kilobytes fixed sector size.
+ * In Postgres, MAX_MAPPINGS is 62, but GPDB has exceeded this number due to
+ * additional GPDB specific shared relations. Increased to 126 to occupy
+ * exactly 1 kilobyte.
  *
  * New math: 126 * 8 + 16 = 1024
  */
