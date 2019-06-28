@@ -250,10 +250,7 @@ _equalGroupingFunc(const GroupingFunc *a, const GroupingFunc *b)
 static bool
 _equalGroupId(const GroupId *a, const GroupId *b)
 {
-	/*
-	 * GPDB_95_MERGE_FIXME: GroupId in primnodes.h contains an Expr element
-	 * which it is not copied (copyfuncs.c) nor compared (here). Should it?
-	 */
+
 	COMPARE_SCALAR_FIELD(agglevelsup);
 	COMPARE_LOCATION_FIELD(location);
 
