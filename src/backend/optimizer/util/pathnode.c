@@ -1010,12 +1010,7 @@ create_samplescan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer
 	pathnode->locus = cdbpathlocus_from_baserel(root, rel);
 	pathnode->motionHazard = false;
 	pathnode->rescannable = true;
-	/*
-	 * GPDB_95_MERGE_FIXME: we should be able to use rel->relids
-	 * here. NULL was selective to be on the safe side. Investigate if
-	 * we can / should optimize a bit more.
-	 */
-	pathnode->sameslice_relids = NULL;
+	pathnode->sameslice_relids = rel->relids;
 
 	cost_samplescan(pathnode, root, rel);
 
