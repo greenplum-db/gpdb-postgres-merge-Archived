@@ -29,9 +29,9 @@ FETCH NEXT FROM tablesample_cur;
 FETCH NEXT FROM tablesample_cur;
 FETCH NEXT FROM tablesample_cur;
 
--- GPDB_95_MERGE_FIXME: Going backwards on cursors is not supported
--- in greenplum. By closing the cursor and starting again we pass
--- the tests but we don't test the rescan methods of tablesample.
+-- Greenplum: Going backwards on cursors is not supported. By closing the
+-- cursor and starting again we pass the tests and keep the file closer to
+-- upstream. We do test the rescan methods of tablesample afterwards.
 CLOSE tablesample_cur;
 DECLARE tablesample_cur CURSOR FOR SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (100);
 FETCH FIRST FROM tablesample_cur;
@@ -43,6 +43,26 @@ FETCH NEXT FROM tablesample_cur;
 
 CLOSE tablesample_cur;
 END;
+
+-- Greenplum: Test rescan paths by forcing a nested loop
+CREATE TABLE ttr1 (a int, b int) DISTRIBUTED BY (a);
+CREATE TABLE ttr2 (a int, b int) DISTRIBUTED BY (a);
+INSERT INTO ttr1 VALUES (1, 1), (NULL, NULL);
+INSERT INTO ttr2 VALUES (1, 5), (NULL, 6);
+SET enable_hashjoin TO OFF;
+SET enable_mergejoin TO OFF;
+SET enable_nestloop TO ON;
+
+EXPLAIN SELECT * FROM ttr1 TABLESAMPLE BERNOULLI (50) REPEATABLE (100), ttr2 TABLESAMPLE BERNOULLI (50) REPEATABLE (100) WHERE ttr1.a = ttr2.a;
+SELECT * FROM ttr1 TABLESAMPLE BERNOULLI (50) REPEATABLE (100), ttr2 TABLESAMPLE BERNOULLI (50) REPEATABLE (100) WHERE ttr1.a = ttr2.a;
+EXPLAIN SELECT * FROM ttr1 TABLESAMPLE SYSTEM (50) REPEATABLE (100), ttr2 TABLESAMPLE SYSTEM (50) REPEATABLE (100) WHERE ttr1.a = ttr2.a;
+SELECT * FROM ttr1 TABLESAMPLE SYSTEM (50) REPEATABLE (100), ttr2 TABLESAMPLE SYSTEM (50) REPEATABLE (100) WHERE ttr1.a = ttr2.a;
+
+RESET enable_hashjoin;
+RESET enable_mergejoin;
+RESET enable_nestloop;
+DROP TABLE ttr1;
+DROP TABLE ttr2;
 
 EXPLAIN SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (10);
 EXPLAIN SELECT * FROM test_tablesample_v1;
