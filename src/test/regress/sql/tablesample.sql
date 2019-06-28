@@ -1,9 +1,12 @@
--- GPDB_95_MERGE_FIXME: Force skew distribution in order to get deterministic results
--- Maybe we can do better?
 CREATE TABLE test_tablesample (dist int, id int, name text) WITH (fillfactor=10) DISTRIBUTED BY (dist); -- force smaller pages so we don't have to load too much data to get multiple pages
 
--- Changed the column lenght in order to match the expected results based on relation's blocksz
+-- Changed the column length in order to match the expected results based on relation's blocksz
 INSERT INTO test_tablesample SELECT 0, i, repeat(i::text, 875) FROM generate_series(0, 9) s(i) ORDER BY i;
+INSERT INTO test_tablesample SELECT 3, i, repeat(i::text, 875) FROM generate_series(10, 19) s(i) ORDER BY i;
+INSERT INTO test_tablesample SELECT 5, i, repeat(i::text, 875) FROM generate_series(20, 29) s(i) ORDER BY i;
+
+-- Verify that each segment has the same amount of rows;
+SELECT gp_segment_id, count(dist) FROM test_tablesample GROUP BY 1 ORDER BY 1;
 
 SELECT t.id FROM test_tablesample AS t TABLESAMPLE SYSTEM (50) REPEATABLE (10);
 SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (100.0/11) REPEATABLE (9999);
@@ -18,7 +21,7 @@ SELECT pg_get_viewdef('test_tablesample_v1'::regclass);
 SELECT pg_get_viewdef('test_tablesample_v2'::regclass);
 
 BEGIN;
-DECLARE tablesample_cur CURSOR FOR SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (100);
+DECLARE tablesample_cur CURSOR FOR SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (100) ORDER BY id;
 FETCH FIRST FROM tablesample_cur;
 FETCH NEXT FROM tablesample_cur;
 FETCH NEXT FROM tablesample_cur;
@@ -33,7 +36,7 @@ FETCH NEXT FROM tablesample_cur;
 -- cursor and starting again we pass the tests and keep the file closer to
 -- upstream. We do test the rescan methods of tablesample afterwards.
 CLOSE tablesample_cur;
-DECLARE tablesample_cur CURSOR FOR SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (100);
+DECLARE tablesample_cur CURSOR FOR SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (100) ORDER BY id;
 FETCH FIRST FROM tablesample_cur;
 FETCH NEXT FROM tablesample_cur;
 FETCH NEXT FROM tablesample_cur;
