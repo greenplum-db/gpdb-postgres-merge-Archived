@@ -24,7 +24,8 @@
                        'use_concourse_cluster': true,
                        'additional_ccp_vars': 'number_of_nodes: 4'},
                       {'name': 'gpconfig',
-                       'use_concourse_cluster': true},
+                       'use_concourse_cluster': true,
+                       'env': 'LC_CTYPE: en_US.UTF-8'},
                       {'name': 'gpssh-exkeys',
                        'use_concourse_cluster': true,
                        'additional_ccp_vars': 'number_of_nodes: 4'},
@@ -41,6 +42,7 @@
 groups:
 - name: all
   jobs:
+  - concourse_unit_tests
 {% if "centos6" in os_types %}
   - compile_gpdb_centos6
   - compile_gpdb_binary_swap_centos6
@@ -54,6 +56,7 @@ groups:
 {% endif %}
 {% if "win" in os_types %}
   - compile_gpdb_clients_windows
+  - test_gpdb_clients_windows
 {% endif %}
 {% if "ICW" in test_sections %}
   ## --------------------------------------------------------------------
@@ -156,6 +159,7 @@ groups:
 {% endif %}
 {% if "win" in os_types %}
   - compile_gpdb_clients_windows
+  - test_gpdb_clients_windows
 {% endif %}
 
 {% if "ICW" in test_sections %}
@@ -353,6 +357,13 @@ resources:
     ignore_paths:
     - gpdb-doc/*
     - README*
+
+- name: bats_core_src
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/bats-core/bats-core.git
+    tag_filter: v1.1.0
 
 {% if "centos6" in os_types %}
 - name: gpdb_src_binary_swap
@@ -619,13 +630,39 @@ resources:
 
 {% endif %}
 {% if "win" in os_types %}
+- name: terraform_windows
+  type: terraform
+  source:
+    env:
+      AWS_ACCESS_KEY_ID: {{tf-machine-access-key-id}}
+      AWS_SECRET_ACCESS_KEY: {{tf-machine-secret-access-key}}
+      GOOGLE_CREDENTIALS: {{google-service-account-key}}
+    vars:
+      project: {{google-project-id}}
+      region: {{google-region}}
+      region_zone: {{google-zone}}
+    storage:
+      access_key_id: {{tf-machine-access-key-id}}
+      secret_access_key: {{tf-machine-secret-access-key}}
+      region_name: {{aws-region}}
+      # This is not parameterized, on purpose. All tfstates will go to this spot,
+      # and different teams will place there clusters' tfstate files under different paths
+      bucket: gpdb5-pipeline-dynamic-terraform
+      bucket_path: gp-clients-windows-tests-google/
+
 - name: bin_gpdb_clients_windows
   type: gcs
   source:
     bucket: ((gcs-bucket-intermediates))
     json_key: ((concourse-gcs-resources-service-account-key))
-    versioned_file: ((pipeline-name))/bin_gpdb_clients_windows/bin_gpdb_clients_windows.msi
+    versioned_file: ((pipeline-name))/bin_gpdb_clients_windows/greenplum-clients-x86_64.tar.gz
 
+- name: bin_gpdb_clients_windows_rc
+  type: gcs
+  source:
+    bucket: ((gcs-bucket))
+    json_key: ((concourse-gcs-resources-service-account-key))
+    regexp: clients/published/master/clients-rc-*-windows_x86_64((rc-build-type-gcs)).msi
 {% endif %}
 {% if "AA" in test_sections %}
 - name: madlib_src
@@ -811,6 +848,41 @@ anchors:
 jobs:
 
 ## ======================================================================
+##  ____  _            _ _              _   _       _ _     _____         _
+## |  _ \(_)_ __   ___| (_)_ __   ___  | | | |_ __ (_) |_  |_   _|__  ___| |_ ___
+## | |_) | | '_ \ / _ \ | | '_ \ / _ \ | | | | '_ \| | __|   | |/ _ \/ __| __/ __|
+## |  __/| | |_) |  __/ | | | | |  __/ | |_| | | | | | |_    | |  __/\__ \ |_\__ \
+## |_|   |_| .__/ \___|_|_|_| |_|\___|  \___/|_| |_|_|\__|   |_|\___||___/\__|___/
+##         |_|
+## ======================================================================
+
+{% if "centos7" in os_types %}
+- name: concourse_unit_tests
+  plan:
+    - aggregate:
+      - get: bats_core_src
+      - get: gpdb_src
+        trigger: true
+      - get: gpdb6-centos7-build
+    - task: run_unit_tests
+      image: gpdb6-centos7-build
+      config:
+        inputs:
+          - name: bats_core_src
+          - name: gpdb_src
+        platform: linux
+        run:
+          path: bash
+          args:
+          - -exc
+          - |
+            bats_core_src/install.sh /usr/local
+            cd gpdb_src/concourse
+            bats -t scripts/*.bats
+            python -m unittest discover --verbose -s scripts/ -p *_test.py
+{% endif %}
+
+## ======================================================================
 ##   ____                      _ _
 ##  / ___|___  _ __ ___  _ __ (_) | ___
 ## | |   / _ \| '_ ` _ \| '_ \| | |/ _ \
@@ -987,7 +1059,44 @@ jobs:
       REMOTE_KEY: {{remote_win_key_build}}
   - put: bin_gpdb_clients_windows
     params:
-      file: "gpdb_artifacts/greenplum-clients-*-x86_64.msi"
+      file: "gpdb_artifacts/greenplum-clients-x86_64.tar.gz"
+
+- name: test_gpdb_clients_windows
+  plan:
+  - aggregate:
+      - get: ccp_src
+      - get: gpdb_src
+        trigger: true
+        passed: [compile_gpdb_clients_windows]
+      - get: gpdb6-centos7-test
+      - get: bin_gpdb_clients_windows
+        passed: [compile_gpdb_clients_windows]
+      - get: bin_gpdb
+        resource: bin_gpdb_centos7_rc
+  - put: terraform_windows
+    params:
+      action: create
+      delete_on_failure: true
+      generate_random_name: true
+      terraform_source: ccp_src/gpdb_windows_client_test/
+  - task: run_tests
+    file: gpdb_src/concourse/tasks/windows_remote_test.yml
+    image: gpdb6-centos7-test
+    params:
+      REMOTE_PORT: {{remote_win_port_test}}
+      REMOTE_USER: {{remote_win_user_test}}
+      REMOTE_KEY: {{remote_win_key_test}}
+  ensure:
+    put: terraform_windows
+    params:
+      action: destroy
+      env_name_file: terraform_windows/name
+      terraform_source: ccp_src/gpdb_windows_client_test/
+      vars:
+        aws_instance-node-instance_type: t2.micro #t2.micro is ignored in destroy, but aws_instance-node-instance_type is required.
+        aws_ebs_volume_type: standard
+    get_params:
+      action: destroy
 {% endif %}
 {% if "ICW" in test_sections %}
 ## ======================================================================
@@ -1536,6 +1645,7 @@ jobs:
           params:
             BEHAVE_FLAGS: --tags=[[ test.name ]] --tags=concourse_cluster
             TEST_NAME: [[ test.name ]]
+            [[ test.env ]]
           on_success:
             <<: *ccp_destroy
           ensure:
@@ -1566,6 +1676,7 @@ jobs:
           params:
             BEHAVE_FLAGS: --tags=[[ test.name ]] --tags=~concourse_cluster,demo_cluster
             TEST_NAME: [[ test.name ]]
+            [[ test.env ]]
           output_mapping:
             coverage: demo-coverage
         - task: publish_demo_coverage
@@ -1617,6 +1728,7 @@ jobs:
           image: gpdb6-ubuntu18.04-test
           params:
             BEHAVE_FLAGS: --tags=[[ test.name ]] --tags=concourse_cluster
+            [[ test.env ]]
           on_success:
             <<: *ccp_destroy
           ensure:
@@ -1634,6 +1746,7 @@ jobs:
             bin_gpdb: bin_gpdb_ubuntu18.04
           params:
             BEHAVE_FLAGS: --tags=[[ test.name ]] --tags=~concourse_cluster,demo_cluster
+            [[ test.env ]]
 
 {% endfor %}
 
@@ -1936,6 +2049,7 @@ jobs:
       - resource_group_centos7
       - gpperfmon_centos6
       - gpperfmon_centos7
+      - test_gpdb_clients_windows
 {% for test in CLI_BEHAVE_TESTS %}
       - [[ test.name ]]
       - [[ test.name ]]_ubuntu18
@@ -1993,6 +2107,9 @@ jobs:
     - get: bin_gpdb_clients_ubuntu18.04
       passed:
       - compile_gpdb_ubuntu18.04
+    - get: bin_gpdb_clients_windows
+      passed:
+      - test_gpdb_clients_windows
 
 - name: Release_Candidate
   plan:
@@ -2017,6 +2134,8 @@ jobs:
       passed: [gate_release_candidate_start]
     - get: bin_gpdb_clients_ubuntu18.04
       trigger: true
+      passed: [gate_release_candidate_start]
+    - get: bin_gpdb_clients_windows
       passed: [gate_release_candidate_start]
     - get: gpdb6-centos6-build
   - aggregate:
@@ -2045,6 +2164,9 @@ jobs:
     - put: bin_gpdb_clients_ubuntu18.04_rc
       params:
         file: "release_candidates/clients-rc-*ubuntu18.04*.tar.gz"
+    - put: bin_gpdb_clients_windows_rc
+      params:
+        file: "release_candidates/clients-rc-*-windows*.msi"
     - put: bin_gpdb_centos6_rc_s3
       params:
         file: bin_gpdb_centos6/bin_gpdb.tar.gz
