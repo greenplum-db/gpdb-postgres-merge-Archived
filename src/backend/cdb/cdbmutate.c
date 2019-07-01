@@ -1338,14 +1338,6 @@ copy_junk_attributes(List *src, List **dest, AttrNumber startAttrIdx)
 		}
 		else
 		{
-
-			/*
-			 * GPDB_95_MERGE_FIXME: The new feature
-			 * 'UPDATE table SET (col1,col2,...) = (SELECT ...)' add some
-			 * new junk attributes such as record or subplan. These junk
-			 * attributes are useless now on the split update, but I am not
-			 * sure whether we should keep them or not.
-			 */
 			Expr *ex;
 			ex            = copyObject(((TargetEntry *) lfirst(lct))->expr);
 			newTargetEntry = makeTargetEntry((Expr *) ex,
