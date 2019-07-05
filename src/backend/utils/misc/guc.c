@@ -8829,11 +8829,6 @@ _ShowOption(struct config_generic * record, bool use_units)
 					val = (*conf->show_hook) ();
 				else
 				{
-					/*
-					 * GPDB_95_MERGE_FIXME: Why did _ShowOption of PGC_REAL
-					 * differ from upstream? If required then bring back and
-					 * adapt to commit 1b630264730.
-					 */
 					snprintf(buffer, sizeof(buffer), "%g",
 							 *conf->variable);
 					val = buffer;
