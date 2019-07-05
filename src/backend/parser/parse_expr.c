@@ -429,21 +429,11 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 		case T_CaseTestExpr:
 		case T_SetToDefault:
 		/*
-		 * GPDB_95_MERGE_FIXME: T_Const was removed in upstream Postgres
-		 * 6a75562ed16b5fa5, but it seems it is still needed for ALTER TABLE
-		 * SPLIT PARTITION on range partition tables (even though this doesn't
-		 * actually do anything since the node seems to be already
-		 * transformed). Do we keep it as a Greenplum diff?
+		 * AlterPartitionCmd still transform a already-transformed expression
+		 * and re-transform expressions in many places, better to keep T_Const here. 
 		 */
 		case T_Const:
 		case T_Var:
-		/*
-		 * GPDB_95_MERGE_FIXME: T_CoerceToDomain/T_CoerceToDomainValue was removed
-		 * in upstream Postgres 6a75562ed16b5fa5, but it seems it is still needed
-		 * for CREATE DOMAIN booltrue AS bool CHECK Do we keep it as a Greenplum diff?
-		 */
-		case T_CoerceToDomain:
-		case T_CoerceToDomainValue:
 			{
 				result = (Node *) expr;
 				break;
