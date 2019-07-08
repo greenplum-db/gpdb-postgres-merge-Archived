@@ -9959,6 +9959,8 @@ xlog_redo(XLogReaderState *record)
 							checkPoint.ThisTimeLineID, ThisTimeLineID)));
 
 		RecoveryRestartPoint(&checkPoint);
+
+		SIMPLE_FAULT_INJECTOR("after_xlog_redo_checkpoint_online");
 	}
 	else if (info == XLOG_END_OF_RECOVERY)
 	{
@@ -9983,6 +9985,7 @@ xlog_redo(XLogReaderState *record)
 	}
 	else if (info == XLOG_NOOP)
 	{
+		SIMPLE_FAULT_INJECTOR("after_xlog_redo_noop");
 		/* nothing to do here */
 	}
 	else if (info == XLOG_SWITCH)

@@ -30,6 +30,4 @@ extern Oid	get_database_oid(const char *dbname, bool missingok);
 extern char *get_database_name(Oid dbid);
 
 extern void check_encoding_locale_matches(int encoding, const char *collate, const char *ctype);
-extern void DropDatabaseDirectory(Oid db_id, Oid tblspcoid);
-
 #endif   /* DBCOMMANDS_H */

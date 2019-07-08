@@ -35,7 +35,10 @@
 #include "catalog/namespace.h"
 #include "catalog/oid_dispatch.h"
 #include "catalog/storage.h"
+#include "catalog/storage_tablespace.h"
+#include "catalog/storage_database.h"
 #include "commands/async.h"
+#include "commands/dbcommands.h"
 #include "commands/resgroupcmds.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
@@ -1408,6 +1411,8 @@ RecordTransactionCommit(void)
 	TransactionId latestXid = InvalidTransactionId;
 	int			nrels;
 	RelFileNodePendingDelete *rels;
+	DbDirNode	*deldbs;
+	int			ndeldbs;
 	int			nchildren;
 	TransactionId *children;
 	int			nmsgs = 0;
@@ -1429,6 +1434,7 @@ RecordTransactionCommit(void)
 
 	/* Get data needed for commit record */
 	nrels = smgrGetPendingDeletes(true, &rels);
+	ndeldbs = GetPendingDbDeletes(true, &deldbs);
 	nchildren = xactGetCommittedChildren(&children);
 	if (XLogStandbyInfoActive())
 		nmsgs = xactGetCommittedInvalidationMessages(&invalMessages,
@@ -1479,6 +1485,9 @@ RecordTransactionCommit(void)
 		if (markXidCommitted)
 			BufmgrCommit();
 
+		if (isDtxPrepared)
+			SIMPLE_FAULT_INJECTOR("before_xlog_xact_distributed_commit");
+
 		/*
 		 * Mark ourselves as within our "commit critical section".  This
 		 * forces any concurrent checkpoint to wait until we've updated
@@ -1524,6 +1533,7 @@ RecordTransactionCommit(void)
 			XactLogCommitRecord(xactStopTimestamp,
 								nchildren, children, nrels, rels,
 								nmsgs, invalMessages,
+								ndeldbs, deldbs,
 								RelcacheInitFileInval, forceSyncCommit,
 								InvalidTransactionId /* plain commit */,
 								gxact_log.gid /* distributed commit */);
@@ -1533,6 +1543,7 @@ RecordTransactionCommit(void)
 			XactLogCommitRecord(xactStopTimestamp,
 								nchildren, children, nrels, rels,
 								nmsgs, invalMessages,
+								ndeldbs, deldbs,
 								RelcacheInitFileInval, forceSyncCommit,
 								InvalidTransactionId /* plain commit */,
 								NULL);
@@ -1673,6 +1684,7 @@ RecordTransactionCommit(void)
 	{
 		MyPgXact->delayChkpt = false;
 		END_CRIT_SECTION();
+		SIMPLE_FAULT_INJECTOR("after_xlog_xact_distributed_commit");
 	}
 
 	/* Compute latestXid while we have the child XIDs handy */
@@ -1895,6 +1907,8 @@ RecordTransactionAbort(bool isSubXact)
 	int			nchildren;
 	TransactionId *children;
 	TimestampTz xact_time;
+	DbDirNode	*deldbs;
+	int			ndeldbs;
 	bool		isQEReader;
 
 	/* Like in CommitTransaction(), treat a QE reader as if there was no XID */
@@ -1943,6 +1957,7 @@ RecordTransactionAbort(bool isSubXact)
 
 	/* Fetch the data we need for the abort record */
 	nrels = smgrGetPendingDeletes(false, &rels);
+	ndeldbs = GetPendingDbDeletes(false, &deldbs);
 	nchildren = xactGetCommittedChildren(&children);
 
 	/* XXX do we really need a critical section here? */
@@ -1960,6 +1975,7 @@ RecordTransactionAbort(bool isSubXact)
 	XactLogAbortRecord(xact_time,
 					   nchildren, children,
 					   nrels, rels,
+					   ndeldbs, deldbs,
 					   InvalidTransactionId);
 
 	/*
@@ -2603,6 +2619,12 @@ StartTransaction(void)
 					  LocalDistribXact_DisplayString(MyProc->pgprocno))));
 }
 
+static void
+AtEOXact_TablespaceStorage(void)
+{
+	UnscheduleTablespaceDirectoryDeletion();
+}
+
 /*
  *	CommitTransaction
  *
@@ -2789,7 +2811,6 @@ CommitTransaction(void)
 		 * happen after using the dispatcher.
 		 */
 		notifyCommittedDtxTransaction();
-
 		/*
 		 * Clear both local and distributed transaction states.
 		 */
@@ -2863,6 +2884,16 @@ CommitTransaction(void)
 	 * attempt to access affected files.
 	 */
 	smgrDoPendingDeletes(true);
+	DoPendingDbDeletes(true);
+	/*
+	 * Only QD holds the session level lock this long for a movedb operation.
+	 * This is to prevent another transaction from moving database objects into
+	 * the source database oid directory while it is being deleted. We don't
+	 * worry about aborts as we release session level locks automatically during
+	 * an abort as opposed to a commit.
+	 */
+	if(Gp_role == GP_ROLE_DISPATCH)
+		MoveDbSessionLockRelease();
 
 	AtEOXact_AppendOnly();
 	AtCommit_Notify();
@@ -2871,6 +2902,7 @@ CommitTransaction(void)
 	AtEOXact_on_commit_actions(true);
 	AtEOXact_Namespace(true, is_parallel_worker);
 	AtEOXact_SMgr();
+	AtEOXact_TablespaceStorage();
 	AtEOXact_Files();
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(true);
@@ -2919,7 +2951,6 @@ CommitTransaction(void)
 	if (ShouldUnassignResGroup())
 		UnassignResGroup();
 }
-
 
 /*
  *	PrepareTransaction
@@ -3164,6 +3195,8 @@ PrepareTransaction(void)
 
 	PostPrepare_smgr();
 
+	PostPrepare_DatabaseStorage();
+
 	PostPrepare_MultiXact(xid);
 
 	PostPrepare_Locks(xid);
@@ -3405,7 +3438,10 @@ AbortTransaction(void)
 							 RESOURCE_RELEASE_AFTER_LOCKS,
 							 false, true);
 		smgrDoPendingDeletes(false);
+		DoPendingTablespaceDeletion();
+		DoPendingDbDeletes(false);
 
+		DatabaseStorageResetSessionLock();
 		AtEOXact_AppendOnly();
 		AtEOXact_GUC(false, 1);
 		AtEOXact_SPI(false);
@@ -3418,6 +3454,14 @@ AbortTransaction(void)
 		AtEOXact_PgStat(false);
 		pgstat_report_xact_timestamp(0);
 	}
+
+	/*
+	 * Exported snapshots must be cleared before transaction ID is reset.  In
+	 * GPDB, transaction ID is reset below.  In PostgreSQL, because 2PC is not
+	 * needed, exported snapshots are cleared and transaction ID is reset
+	 * later in CleanupTransaction().  We must perform both the actions here.
+	 */
+	AtEOXact_Snapshot(false);	/* and release the transaction's snapshots */
 
 	/*
 	 * Do abort to all QE. NOTE: we don't process
@@ -3479,7 +3523,6 @@ CleanupTransaction(void)
 	 * do abort cleanup processing
 	 */
 	AtCleanup_Portals();		/* now safe to release portal memory */
-	AtEOXact_Snapshot(false);	/* and release the transaction's snapshots */
 
 	CurrentResourceOwner = NULL;	/* and resource owner */
 	if (TopTransactionResourceOwner)
@@ -3902,6 +3945,10 @@ void
 AbortCurrentTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
+	
+	elog(DEBUG5, "AbortCurrentTransaction for %d in state: %d", 
+		s->transactionId, 
+		s->blockState);
 
 	switch (s->blockState)
 	{
@@ -6362,6 +6409,7 @@ XactLogCommitRecord(TimestampTz commit_time,
 					int nsubxacts, TransactionId *subxacts,
 					int nrels, RelFileNodePendingDelete *rels,
 					int nmsgs, SharedInvalidationMessage *msgs,
+					int ndeldbs, DbDirNode *deldbs,
 					bool relcacheInval, bool forceSync,
 					TransactionId twophase_xid,
 					const char *gid)
@@ -6375,6 +6423,7 @@ XactLogCommitRecord(TimestampTz commit_time,
 	xl_xact_twophase xl_twophase;
 	xl_xact_origin xl_origin;
 	xl_xact_distrib xl_distrib;
+	xl_xact_deldbs xl_deldbs;
 
 	uint8		info;
 
@@ -6429,6 +6478,12 @@ XactLogCommitRecord(TimestampTz commit_time,
 	{
 		xl_xinfo.xinfo |= XACT_XINFO_HAS_INVALS;
 		xl_invals.nmsgs = nmsgs;
+	}
+
+	if (ndeldbs > 0)
+	{
+		xl_xinfo.xinfo |= XACT_XINFO_HAS_DELDBS;	
+		xl_deldbs.ndeldbs = ndeldbs;
 	}
 
 	if (TransactionIdIsValid(twophase_xid))
@@ -6499,6 +6554,13 @@ XactLogCommitRecord(TimestampTz commit_time,
 						 nmsgs * sizeof(SharedInvalidationMessage));
 	}
 
+	if (xl_xinfo.xinfo & XACT_XINFO_HAS_DELDBS)
+	{
+		XLogRegisterData((char *) (&xl_deldbs), MinSizeOfXactDelDbs);
+		XLogRegisterData((char *) deldbs,
+						 ndeldbs * sizeof(DbDirNode));
+	}
+
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_TWOPHASE)
 		XLogRegisterData((char *) (&xl_twophase), sizeof(xl_xact_twophase));
 
@@ -6524,6 +6586,7 @@ XLogRecPtr
 XactLogAbortRecord(TimestampTz abort_time,
 				   int nsubxacts, TransactionId *subxacts,
 				   int nrels, RelFileNodePendingDelete *rels,
+				   int ndeldbs, DbDirNode *deldbs,
 				   TransactionId twophase_xid)
 {
 	xl_xact_abort xlrec;
@@ -6531,6 +6594,7 @@ XactLogAbortRecord(TimestampTz abort_time,
 	xl_xact_subxacts xl_subxacts;
 	xl_xact_relfilenodes xl_relfilenodes;
 	xl_xact_twophase xl_twophase;
+	xl_xact_deldbs xl_deldbs;
 
 	uint8		info;
 
@@ -6559,6 +6623,12 @@ XactLogAbortRecord(TimestampTz abort_time,
 	{
 		xl_xinfo.xinfo |= XACT_XINFO_HAS_RELFILENODES;
 		xl_relfilenodes.nrels = nrels;
+	}
+
+	if (ndeldbs > 0)
+	{
+		xl_xinfo.xinfo |= XACT_XINFO_HAS_DISTRIB;
+		xl_deldbs.ndeldbs = ndeldbs;
 	}
 
 	if (TransactionIdIsValid(twophase_xid))
@@ -6594,6 +6664,15 @@ XactLogAbortRecord(TimestampTz abort_time,
 		XLogRegisterData((char *) rels,
 						 nrels * sizeof(RelFileNodePendingDelete));
 	}
+
+	if (xl_xinfo.xinfo & XACT_XINFO_HAS_DELDBS)
+	{
+		XLogRegisterData((char *) (&xl_deldbs),
+						 MinSizeOfXactDelDbs);
+		XLogRegisterData((char *) deldbs,
+						 ndeldbs * sizeof(DbDirNode));
+	}
+
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_TWOPHASE)
 		XLogRegisterData((char *) (&xl_twophase), sizeof(xl_xact_twophase));
@@ -6741,6 +6820,12 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 		DropRelationFiles(parsed->xnodes, parsed->nrels, true);
 	}
 
+	if (parsed->ndeldbs > 0)
+	{
+		XLogFlush(lsn);
+		DropDatabaseDirectories(parsed->deldbs, parsed->ndeldbs, true);
+	}
+
 	/*
 	 * We issue an XLogFlush() for the same reason we emit ForceSyncCommit()
 	 * in normal operation. For example, in CREATE DATABASE, we copy all files
@@ -6837,16 +6922,8 @@ xact_redo_distributed_commit(uint8 info, xl_xact_commit *xlrec, TransactionId xi
 			TransactionIdAdvance(ShmemVariableCache->nextXid);
 		}
 
-		for (i = 0; i < parsed.nrels; i++)
-		{
-			SMgrRelation srel = smgropen(parsed.xnodes[i].node, InvalidBackendId);
-			ForkNumber	fork;
-
-			for (fork = 0; fork <= MAX_FORKNUM; fork++)
-				XLogDropRelation(parsed.xnodes[i].node, fork);
-			smgrdounlink(srel, true, parsed.xnodes[i].relstorage);
-			smgrclose(srel);
-		}
+		DropRelationFiles(parsed.xnodes, parsed.nrels, true);
+		DropDatabaseDirectories(parsed.deldbs, parsed.ndeldbs, true);
 	}
 
 	/*
@@ -6920,6 +6997,8 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 
 	/* Make sure files supposed to be dropped are dropped */
 	DropRelationFiles(parsed->xnodes, parsed->nrels, true);
+	DoTablespaceDeletion(parsed->tablespace_oid_to_abort);
+	DropDatabaseDirectories(parsed->deldbs, parsed->ndeldbs, true);
 }
 
 static void

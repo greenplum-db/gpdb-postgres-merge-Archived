@@ -2439,7 +2439,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 		},
 		&max_worker_processes,
-		8, 1, MAX_BACKENDS,
+		8 + MaxPMAuxProc, 1, MAX_BACKENDS,
 		check_max_worker_processes, NULL, NULL
 	},
 
@@ -7563,7 +7563,7 @@ DispatchSetPGVariable(const char *name, List *args, bool is_local)
 		if (is_local)
 			appendStringInfo(&buffer, "LOCAL ");
 
-		appendStringInfo(&buffer, "%s TO ", name);
+		appendStringInfo(&buffer, "%s TO ", quote_identifier(name));
 
 		foreach(l, args)
 		{
@@ -10438,6 +10438,14 @@ check_max_worker_processes(int *newval, void **extra, GucSource source)
 {
 	if (MaxConnections + autovacuum_max_workers + 1 + *newval > MAX_BACKENDS)
 		return false;
+
+	if (*newval < MaxPMAuxProc)
+	{
+		elog(ERROR, "max_worker_processes less than %d, must reserve %d "
+			 "for auxiliary processes like FTS", MaxPMAuxProc, MaxPMAuxProc);
+		return false;
+	}
+
 	return true;
 }
 

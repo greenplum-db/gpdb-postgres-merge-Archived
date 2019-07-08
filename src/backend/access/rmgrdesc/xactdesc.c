@@ -17,6 +17,7 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
+#include "storage/dbdirnode.h"
 #include "storage/sinval.h"
 #include "utils/timestamp.h"
 
@@ -94,6 +95,17 @@ ParseCommitRecord(uint8 info, xl_xact_commit *xlrec, xl_xact_parsed_commit *pars
 		data += xl_invals->nmsgs * sizeof(SharedInvalidationMessage);
 	}
 
+	if (parsed->xinfo & XACT_XINFO_HAS_DELDBS)
+	{
+		xl_xact_deldbs *xl_deldbs = (xl_xact_deldbs *) data;
+
+		parsed->ndeldbs = xl_deldbs->ndeldbs;
+		parsed->deldbs = xl_deldbs->deldbs;
+
+		data += MinSizeOfXactDelDbs;
+		data += xl_deldbs->ndeldbs * sizeof(DbDirNode);
+	}
+
 	if (parsed->xinfo & XACT_XINFO_HAS_TWOPHASE)
 	{
 		xl_xact_twophase *xl_twophase = (xl_xact_twophase *) data;
@@ -137,6 +149,7 @@ ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed)
 								 * present */
 
 	parsed->xact_time = xlrec->xact_time;
+	parsed->tablespace_oid_to_abort = xlrec->tablespace_oid_to_abort;
 
 	if (info & XLOG_XACT_HAS_INFO)
 	{
@@ -169,6 +182,17 @@ ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed)
 		data += xl_relfilenodes->nrels * sizeof(RelFileNodePendingDelete);
 	}
 
+	if (parsed->xinfo & XACT_XINFO_HAS_DELDBS)
+	{
+		xl_xact_deldbs *xl_deldbs = (xl_xact_deldbs *) data;
+
+		parsed->ndeldbs = xl_deldbs->ndeldbs;
+		parsed->deldbs = xl_deldbs->deldbs;
+
+		data += MinSizeOfXactDelDbs;
+		data += xl_deldbs->ndeldbs * sizeof(DbDirNode);
+	}
+
 	if (parsed->xinfo & XACT_XINFO_HAS_TWOPHASE)
 	{
 		xl_xact_twophase *xl_twophase = (xl_xact_twophase *) data;
@@ -177,6 +201,7 @@ ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed)
 
 		data += sizeof(xl_xact_twophase);
 	}
+
 }
 
 static void
@@ -241,6 +266,18 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 				appendStringInfo(buf, " snapshot %u", msg->sn.relId);
 			else
 				appendStringInfo(buf, " unknown id %d", msg->id);
+		}
+	}
+	if (parsed.ndeldbs > 0)
+	{
+		appendStringInfoString(buf, "; deldbs:");
+		for (i = 0; i < parsed.ndeldbs; i++)
+		{
+			char *path =
+					 GetDatabasePath(parsed.deldbs[i].database, parsed.deldbs[i].tablespace);
+
+			appendStringInfo(buf, " %s", path);
+			pfree(path);
 		}
 	}
 
@@ -313,6 +350,18 @@ xact_desc_abort(StringInfo buf, uint8 info, xl_xact_abort *xlrec)
 		appendStringInfoString(buf, "; subxacts:");
 		for (i = 0; i < parsed.nsubxacts; i++)
 			appendStringInfo(buf, " %u", parsed.subxacts[i]);
+	}
+	if (parsed.ndeldbs > 0)
+	{
+		appendStringInfoString(buf, "; deldbs:");
+		for (i = 0; i < parsed.ndeldbs; i++)
+		{
+			char *path =
+					 GetDatabasePath(parsed.deldbs[i].database, parsed.deldbs[i].tablespace);
+
+			appendStringInfo(buf, " %s", path);
+			pfree(path);
+		}
 	}
 }
 

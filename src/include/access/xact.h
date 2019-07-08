@@ -19,6 +19,7 @@
 #include "nodes/pg_list.h"
 #include "storage/relfilenode.h"
 #include "storage/sinval.h"
+#include "storage/dbdirnode.h"
 #include "utils/datetime.h"
 
 #include "cdb/cdbpublic.h"
@@ -143,6 +144,7 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 #define XACT_XINFO_HAS_TWOPHASE			(1U << 4)
 #define XACT_XINFO_HAS_ORIGIN			(1U << 5)
 #define XACT_XINFO_HAS_DISTRIB			(1U << 6)
+#define XACT_XINFO_HAS_DELDBS			(1U << 7)
 
 /*
  * Also stored in xinfo, these indicating a variety of additional actions that
@@ -230,6 +232,13 @@ typedef struct xl_xact_invals
 } xl_xact_invals;
 #define MinSizeOfXactInvals offsetof(xl_xact_invals, msgs)
 
+typedef struct xl_xact_deldbs
+{
+	int			ndeldbs;		/* number of DbDirNodes */
+	DbDirNode	deldbs[FLEXIBLE_ARRAY_MEMBER];
+} xl_xact_deldbs;
+#define MinSizeOfXactDelDbs offsetof(xl_xact_deldbs, deldbs)
+
 typedef struct xl_xact_twophase
 {
 	TransactionId xid;
@@ -258,6 +267,7 @@ typedef struct xl_xact_commit
 typedef struct xl_xact_abort
 {
 	TimestampTz xact_time;		/* time of abort */
+	Oid	tablespace_oid_to_abort;
 
 	/* xl_xact_xinfo follows if XLOG_XACT_HAS_INFO */
 	/* No db_info required */
@@ -291,6 +301,9 @@ typedef struct xl_xact_parsed_commit
 	int			nmsgs;
 	SharedInvalidationMessage *msgs;
 
+	int			ndeldbs;
+	DbDirNode	*deldbs;
+
 	TransactionId twophase_xid; /* only for 2PC */
 
 	XLogRecPtr	origin_lsn;
@@ -305,11 +318,16 @@ typedef struct xl_xact_parsed_abort
 	TimestampTz xact_time;
 	uint32		xinfo;
 
+	Oid         tablespace_oid_to_abort;
+
 	int			nsubxacts;
 	TransactionId *subxacts;
 
 	int			nrels;
 	RelFileNodePendingDelete *xnodes;
+
+	int			ndeldbs;
+	DbDirNode	*deldbs;
 
 	TransactionId twophase_xid; /* only for 2PC */
 } xl_xact_parsed_abort;
@@ -407,6 +425,7 @@ extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
 					int nsubxacts, TransactionId *subxacts,
 					int nrels, RelFileNodePendingDelete *rels,
 					int nmsgs, SharedInvalidationMessage *msgs,
+					int ndeldbs, DbDirNode *deldbs,
 					bool relcacheInval, bool forceSync,
 					TransactionId twophase_xid,
 					const char *gid);
@@ -414,6 +433,7 @@ extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
 extern XLogRecPtr XactLogAbortRecord(TimestampTz abort_time,
 				   int nsubxacts, TransactionId *subxacts,
 				   int nrels, RelFileNodePendingDelete *rels,
+				   int ndeldbs, DbDirNode *deldbs,
 				   TransactionId twophase_xid);
 extern void xact_redo(XLogReaderState *record);
 

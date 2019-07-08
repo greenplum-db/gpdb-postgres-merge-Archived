@@ -49,6 +49,7 @@ extern ObjectAddress RenameTableSpace(const char *oldname, const char *newname);
 extern Oid	AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt);
 
 extern void TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo);
+extern void UnlinkTablespaceDirectory(Oid tablepace_oid_to_unlink, bool isRedo);
 
 extern Oid	GetDefaultTablespace(char relpersistence);
 

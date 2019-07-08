@@ -22,6 +22,7 @@
 #include "libpq/pqcomm.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
+#include "postmaster/postmaster.h"
 
 
 ProtocolVersion FrontendProtocol;
@@ -139,7 +140,7 @@ int			maintenance_work_mem = 65536;
  */
 int			NBuffers = 4096;
 int			MaxConnections = 90;
-int			max_worker_processes = 8;
+int			max_worker_processes = 8 + MaxPMAuxProc;
 int			MaxBackends = 0;
 
 int			VacuumCostPageHit = 1;		/* GUC parameters for vacuum */

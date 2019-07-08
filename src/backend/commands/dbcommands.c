@@ -45,6 +45,7 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_db_role_setting.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/storage_database.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
 #include "commands/dbcommands_xlog.h"
@@ -1184,8 +1185,7 @@ movedb(const char *dbname, const char *tblspcname)
 	 * lock be released at commit, except that someone could try to move
 	 * relations of the DB back into the old directory while we rmtree() it.)
 	 */
-	LockSharedObjectForSession(DatabaseRelationId, db_id, 0,
-							   AccessExclusiveLock);
+	MoveDbSessionLockAcquire(db_id);
 
 	/*
 	 * Permission checks
@@ -1230,8 +1230,7 @@ movedb(const char *dbname, const char *tblspcname)
 	if (src_tblspcoid == dst_tblspcoid)
 	{
 		heap_close(pgdbrel, NoLock);
-		UnlockSharedObjectForSession(DatabaseRelationId, db_id, 0,
-									 AccessExclusiveLock);
+		MoveDbSessionLockRelease();
 		return;
 	}
 
@@ -1353,6 +1352,8 @@ movedb(const char *dbname, const char *tblspcname)
 							  XLOG_DBASE_CREATE | XLR_SPECIAL_REL_UPDATE);
 		}
 
+		ScheduleDbDirDelete(db_id, dst_tblspcoid, false);
+
 		/*
 		 * Update the database's pg_database tuple
 		 */
@@ -1415,7 +1416,7 @@ movedb(const char *dbname, const char *tblspcname)
 	/*
 	 * GPDB: GPDB uses two phase commit and pending deletes, hence cannot locally
 	 * commit here. The rest of the logic related to the non-catalog changes from
-	 * this function is extracted into DropDatabaseDirectory() which is executed at
+	 * this function is extracted into DropDatabaseDirectories() which is executed at
 	 * commit time.
 	 */
 #if 0
@@ -1443,58 +1444,16 @@ movedb(const char *dbname, const char *tblspcname)
 		 * QE needs to release session level locks as can't Prepare Transaction
 		 * with session locks.
 		 */
-		UnlockSharedObjectForSession(DatabaseRelationId, db_id, 0,
-									 AccessExclusiveLock);
+		MoveDbSessionLockRelease();
 	}
 
 	/*
 	 * register the db_id with pending deletes list to schedule removing database
 	 * directory on transaction commit.
 	 */
-	DatabaseDropStorage(db_id, src_tblspcoid);
+	ScheduleDbDirDelete(db_id, src_tblspcoid, true);
 
 	SIMPLE_FAULT_INJECTOR("inside_move_db_transaction");
-}
-
-/*
- * This functions contains non-catalog modifications to be performed for movedb().
- * Its called after successfully marking the transaction as committed via pending
- * deletes.
- */
-void
-DropDatabaseDirectory(Oid db_id, Oid tblspcoid)
-{
-	char *dbpath = GetDatabasePath(db_id, tblspcoid);
-	/*
-	 * Remove files from the old tablespace
-	 */
-	if (!rmtree(dbpath, true))
-		ereport(WARNING,
-				(errmsg("some useless files may be left behind in old database directory \"%s\"",
-						dbpath)));
-
-	/*
-	 * Record the filesystem change in XLOG
-	 */
-	{
-		xl_dbase_drop_rec xlrec;
-
-		xlrec.db_id = db_id;
-		xlrec.tablespace_id = tblspcoid;
-
-		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, sizeof(xl_dbase_drop_rec));
-
-		(void) XLogInsert(RM_DBASE_ID,
-						  XLOG_DBASE_DROP | XLR_SPECIAL_REL_UPDATE);
-	}
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		/* Now it's safe to release the database lock */
-		UnlockSharedObjectForSession(DatabaseRelationId, db_id, 0,
-									AccessExclusiveLock);
-	}
 }
 
 /* Error cleanup callback for movedb */
