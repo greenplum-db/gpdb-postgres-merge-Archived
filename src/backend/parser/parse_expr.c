@@ -433,6 +433,12 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 		 * and re-transform expressions in many places, better to keep T_Const here. 
 		 */
 		case T_Const:
+		/*
+		 * DefineDomain() dispatch a already-transformed statement to the QEs and
+		 * QEs will re-transform the T_CoerceToDomain/T_CoerceToDomainValue again.
+		 */
+		case T_CoerceToDomain:
+		case T_CoerceToDomainValue:
 		case T_Var:
 			{
 				result = (Node *) expr;
