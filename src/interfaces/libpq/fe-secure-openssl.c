@@ -196,49 +196,12 @@ pgtls_init_library(bool do_ssl, int do_crypto)
 PostgresPollingStatusType
 pgtls_open_client(PGconn *conn)
 {
-	SSL_CTX    *SSL_context = NULL;
-
 	/* First time through? */
 	if (conn->ssl == NULL)
 	{
-#ifdef ENABLE_THREAD_SAFETY
-		int			rc;
-#endif
-
-#ifdef ENABLE_THREAD_SAFETY
-		if ((rc = pthread_mutex_lock(&ssl_config_mutex)))
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-			   libpq_gettext("could not acquire mutex: %s\n"), strerror(rc));
-			return PGRES_POLLING_FAILED;
-		}
-#endif
-		/* Create a connection-specific SSL object */
-		if (!(conn->ssl = SSL_new(SSL_context)) ||
-			!SSL_set_app_data(conn->ssl, conn) ||
-			!my_SSL_set_fd(conn, conn->sock))
-		{
-			char	   *err = SSLerrmessage(ERR_get_error());
-
-			printfPQExpBuffer(&conn->errorMessage,
-				   libpq_gettext("could not establish SSL connection: %s\n"),
-							  err);
-			SSLerrfree(err);
-#ifdef ENABLE_THREAD_SAFETY
-			pthread_mutex_unlock(&ssl_config_mutex);
-#endif
-			pgtls_close(conn);
-
-			return PGRES_POLLING_FAILED;
-		}
-		conn->ssl_in_use = true;
-
-#ifdef ENABLE_THREAD_SAFETY
-		pthread_mutex_unlock(&ssl_config_mutex);
-#endif
-
 		/*
-		 * Load client certificate, private key, and trusted CA certs.
+		 * Create a connection-specific SSL object, and load client certificate,
+		 * private key, and trusted CA certs.
 		 */
 		if (initialize_SSL(conn) != 0)
 		{
@@ -272,26 +235,21 @@ ssize_t
 pgtls_read(PGconn *conn, void *ptr, size_t len)
 {
 	ssize_t		n;
-	int			err;
-	unsigned long ecode;
 	int			result_errno = 0;
 	char		sebuf[256];
 
-	DECLARE_SIGPIPE_INFO(spinfo);
-
-	/* SSL_read can write to the socket, so we need to disable SIGPIPE */
-	DISABLE_SIGPIPE(conn, spinfo, return -1);
+	int			err;
+	unsigned long ecode;
 
 rloop:
 	/*
-	 * Prepare to call SSL_get_error() by clearing thread's OpenSSL
-	 * error queue.  In general, the current thread's error queue must
-	 * be empty before the TLS/SSL I/O operation is attempted, or
-	 * SSL_get_error() will not work reliably.  Since the possibility
-	 * exists that other OpenSSL clients running in the same thread but
-	 * not under our control will fail to call ERR_get_error()
-	 * themselves (after their own I/O operations), pro-actively clear
-	 * the per-thread error queue now.
+	 * Prepare to call SSL_get_error() by clearing thread's OpenSSL error
+	 * queue.  In general, the current thread's error queue must be empty
+	 * before the TLS/SSL I/O operation is attempted, or SSL_get_error()
+	 * will not work reliably.  Since the possibility exists that other
+	 * OpenSSL clients running in the same thread but not under our control
+	 * will fail to call ERR_get_error() themselves (after their own I/O
+	 * operations), pro-actively clear the per-thread error queue now.
 	 */
 	SOCK_ERRNO_SET(0);
 	ERR_clear_error();
@@ -299,12 +257,12 @@ rloop:
 	err = SSL_get_error(conn->ssl, n);
 
 	/*
-	 * Other clients of OpenSSL may fail to call ERR_get_error(), but
-	 * we always do, so as to not cause problems for OpenSSL clients
-	 * that don't call ERR_clear_error() defensively.  Be sure that
-	 * this happens by calling now.  SSL_get_error() relies on the
-	 * OpenSSL per-thread error queue being intact, so this is the
-	 * earliest possible point ERR_get_error() may be called.
+	 * Other clients of OpenSSL may fail to call ERR_get_error(), but we
+	 * always do, so as to not cause problems for OpenSSL clients that
+	 * don't call ERR_clear_error() defensively.  Be sure that this
+	 * happens by calling now.  SSL_get_error() relies on the OpenSSL
+	 * per-thread error queue being intact, so this is the earliest
+	 * possible point ERR_get_error() may be called.
 	 */
 	ecode = (err != SSL_ERROR_NONE || n < 0) ? ERR_get_error() : 0;
 	switch (err)
@@ -335,7 +293,6 @@ rloop:
 			if (n < 0)
 			{
 				result_errno = SOCK_ERRNO;
-				REMEMBER_EPIPE(spinfo, result_errno == EPIPE);
 				if (result_errno == EPIPE ||
 					result_errno == ECONNRESET)
 					printfPQExpBuffer(&conn->errorMessage,
@@ -392,8 +349,6 @@ rloop:
 			break;
 	}
 
-	RESTORE_SIGPIPE(conn, spinfo);
-
 	/* ensure we return the intended errno to caller */
 	SOCK_ERRNO_SET(result_errno);
 
@@ -416,10 +371,6 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 
 	int			err;
 	unsigned long ecode;
-
-	DECLARE_SIGPIPE_INFO(spinfo);
-
-	DISABLE_SIGPIPE(conn, spinfo, return -1);
 
 	SOCK_ERRNO_SET(0);
 	ERR_clear_error();
@@ -454,7 +405,6 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 			if (n < 0)
 			{
 				result_errno = SOCK_ERRNO;
-				REMEMBER_EPIPE(spinfo, result_errno == EPIPE);
 				if (result_errno == EPIPE ||
 					result_errno == ECONNRESET)
 					printfPQExpBuffer(&conn->errorMessage,
@@ -946,7 +896,6 @@ pgtls_init(PGconn *conn)
 			SSL_load_error_strings();
 #endif
 		}
-
 		ssl_lib_initialized = true;
 	}
 
@@ -1214,7 +1163,7 @@ initialize_SSL(PGconn *conn)
 	 */
 	if (!(conn->ssl = SSL_new(SSL_context)) ||
 		!SSL_set_app_data(conn->ssl, conn) ||
-		!SSL_set_fd(conn->ssl, conn->sock))
+		!my_SSL_set_fd(conn, conn->sock))
 	{
 		char	   *err = SSLerrmessage(ERR_get_error());
 
@@ -1225,6 +1174,15 @@ initialize_SSL(PGconn *conn)
 		SSL_CTX_free(SSL_context);
 		return -1;
 	}
+	conn->ssl_in_use = true;
+
+	/*
+	 * SSL contexts are reference counted by OpenSSL. We can free it as soon as we
+	 * have created the SSL object, and it will stick around for as long as it's
+	 * actually needed.
+	 */
+	SSL_CTX_free(SSL_context);
+	SSL_context = NULL;
 
 	/*
 	 * SSL contexts are reference counted by OpenSSL. We can free it as soon as we
@@ -1452,7 +1410,6 @@ open_client_SSL(PGconn *conn)
 				{
 					char	   *err = SSLerrmessage(ecode);
 
-
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("SSL error: %s\n"),
 									  err);
@@ -1479,7 +1436,9 @@ open_client_SSL(PGconn *conn)
 	conn->peer = SSL_get_peer_certificate(conn->ssl);
 	if (conn->peer == NULL)
 	{
-		char	   *err = SSLerrmessage(ERR_get_error());
+		char	   *err;
+
+		err = SSLerrmessage(ERR_get_error());
 
 		printfPQExpBuffer(&conn->errorMessage,
 					libpq_gettext("certificate could not be obtained: %s\n"),
@@ -1557,7 +1516,9 @@ pgtls_close(PGconn *conn)
 
 
 /*
- * Obtain reason string for last SSL error
+ * Obtain reason string for passed SSL errcode
+ *
+ * ERR_get_error() is used by caller to get errcode to pass here.
  *
  * Some caution is needed here since ERR_reason_error_string will
  * return NULL if it doesn't recognize the error code.  We don't
