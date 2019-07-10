@@ -1973,6 +1973,7 @@ RecordTransactionAbort(bool isSubXact)
 	}
 
 	XactLogAbortRecord(xact_time,
+					   GetPendingTablespaceForDeletion(),
 					   nchildren, children,
 					   nrels, rels,
 					   ndeldbs, deldbs,
@@ -6584,6 +6585,7 @@ XactLogCommitRecord(TimestampTz commit_time,
  */
 XLogRecPtr
 XactLogAbortRecord(TimestampTz abort_time,
+				   Oid tablespace_oid_to_abort,
 				   int nsubxacts, TransactionId *subxacts,
 				   int nrels, RelFileNodePendingDelete *rels,
 				   int ndeldbs, DbDirNode *deldbs,
@@ -6612,6 +6614,7 @@ XactLogAbortRecord(TimestampTz abort_time,
 	/* First figure out and collect all the information needed */
 
 	xlrec.xact_time = abort_time;
+	xlrec.tablespace_oid_to_abort = tablespace_oid_to_abort;
 
 	if (nsubxacts > 0)
 	{

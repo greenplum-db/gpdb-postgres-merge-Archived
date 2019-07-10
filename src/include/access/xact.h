@@ -430,7 +430,8 @@ extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
 					TransactionId twophase_xid,
 					const char *gid);
 
-extern XLogRecPtr XactLogAbortRecord(TimestampTz abort_time,
+extern XLogRecPtr XactLogAbortRecord(TimestampTz abort_time, 
+				   Oid tablespace_oid_to_abort,
 				   int nsubxacts, TransactionId *subxacts,
 				   int nrels, RelFileNodePendingDelete *rels,
 				   int ndeldbs, DbDirNode *deldbs,

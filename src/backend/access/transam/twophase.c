@@ -2057,6 +2057,7 @@ RecordTransactionAbortPrepared(TransactionId xid,
 
 	/* Emit the XLOG abort record */
 	recptr = XactLogAbortRecord(GetCurrentTimestamp(),
+								tablespace_oid_to_abort,
 								nchildren, children,
 								nrels, rels,
 								ndeldbs, deldbs,
