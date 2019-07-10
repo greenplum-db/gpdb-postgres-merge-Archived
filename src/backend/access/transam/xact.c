@@ -6630,7 +6630,7 @@ XactLogAbortRecord(TimestampTz abort_time,
 
 	if (ndeldbs > 0)
 	{
-		xl_xinfo.xinfo |= XACT_XINFO_HAS_DISTRIB;
+		xl_xinfo.xinfo |= XACT_XINFO_HAS_DELDBS;
 		xl_deldbs.ndeldbs = ndeldbs;
 	}
 
