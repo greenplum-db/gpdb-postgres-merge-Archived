@@ -6510,7 +6510,7 @@ XactLogCommitRecord(TimestampTz commit_time,
 		dtxCrackOpenGid(gid, &distrib_timestamp, &distrib_xid);
 
 		if (Gp_role == GP_ROLE_EXECUTE && MyTmGxact->isOnePhaseCommit)
-			xl_xinfo.xinfo |= XLOG_XACT_ONE_PHASE_COMMIT;
+			xl_xinfo.xinfo |= XLOG_XACT_COMMIT;
 		else
 			xl_xinfo.xinfo |= XACT_XINFO_HAS_DISTRIB;
 		xl_distrib.distrib_xid = distrib_xid;
@@ -7086,14 +7086,6 @@ xact_redo(XLogReaderState *record)
 		if (standbyState >= STANDBY_INITIALIZED)
 			ProcArrayApplyXidAssignment(xlrec->xtop,
 										xlrec->nsubxacts, xlrec->xsub);
-	}
-	else if (info == XLOG_XACT_ONE_PHASE_COMMIT)
-	{
-		xl_xact_commit *xlrec = (xl_xact_commit *) XLogRecGetData(record);
-		xl_xact_parsed_commit parsed;
-
-		ParseCommitRecord(XLogRecGetInfo(record), xlrec, &parsed);
-		xact_redo_commit(&parsed, XLogRecGetXid(record), record->EndRecPtr, XLogRecGetOrigin(record));
 	}
 	else
 		elog(PANIC, "xact_redo: unknown op code %u", info);

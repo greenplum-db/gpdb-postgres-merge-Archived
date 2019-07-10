@@ -125,7 +125,6 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 /* GPDB takes the last available three opcodes */
 #define XLOG_XACT_DISTRIBUTED_COMMIT 0x60
 #define XLOG_XACT_DISTRIBUTED_FORGET 0x70
-#define XLOG_XACT_ONE_PHASE_COMMIT	0x90
 
 /* mask for filtering opcodes out of xl_info */
 #define XLOG_XACT_OPMASK			0x70

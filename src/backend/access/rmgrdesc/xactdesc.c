@@ -455,9 +455,6 @@ xact_identify(uint8 info)
 		case XLOG_XACT_DISTRIBUTED_FORGET:
 			id = "DISTRIBUTED_FORGET";
 			break;
-		case XLOG_XACT_ONE_PHASE_COMMIT:
-			id = "ONE-PHASE COMMIT";
-			break;
 	}
 
 	return id;
