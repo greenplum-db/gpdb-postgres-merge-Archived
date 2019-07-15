@@ -252,26 +252,29 @@ typedef struct xl_xact_origin
 typedef struct xl_xact_commit
 {
 	TimestampTz xact_time;		/* time of commit */
+	Oid	tablespace_oid_to_delete_on_commit;
 
 	/* xl_xact_xinfo follows if XLOG_XACT_HAS_INFO */
 	/* xl_xact_dbinfo follows if XINFO_HAS_DBINFO */
 	/* xl_xact_subxacts follows if XINFO_HAS_SUBXACT */
 	/* xl_xact_relfilenodes follows if XINFO_HAS_RELFILENODES */
 	/* xl_xact_invals follows if XINFO_HAS_INVALS */
+	/* xl_xact_deldbs follows if XACT_XINFO_HAS_DELDBS */
 	/* xl_xact_twophase follows if XINFO_HAS_TWOPHASE */
 	/* xl_xact_origin follows if XINFO_HAS_ORIGIN, stored unaligned! */
 } xl_xact_commit;
-#define MinSizeOfXactCommit (offsetof(xl_xact_commit, xact_time) + sizeof(TimestampTz))
+#define MinSizeOfXactCommit sizeof(xl_xact_commit) 
 
 typedef struct xl_xact_abort
 {
 	TimestampTz xact_time;		/* time of abort */
-	Oid	tablespace_oid_to_abort;
+	Oid tablespace_oid_to_delete_on_abort;
 
 	/* xl_xact_xinfo follows if XLOG_XACT_HAS_INFO */
 	/* No db_info required */
 	/* xl_xact_subxacts follows if HAS_SUBXACT */
 	/* xl_xact_relfilenodes follows if HAS_RELFILENODES */
+	/* xl_xact_deldbs follows if HAS_DELDBS */
 	/* No invalidation messages needed. */
 	/* xl_xact_twophase follows if XINFO_HAS_TWOPHASE */
 } xl_xact_abort;
@@ -285,8 +288,9 @@ typedef struct xl_xact_abort
 typedef struct xl_xact_parsed_commit
 {
 	TimestampTz xact_time;
-
 	uint32		xinfo;
+
+	Oid			tablespace_oid_to_delete_on_commit;
 
 	Oid			dbId;			/* MyDatabaseId */
 	Oid			tsId;			/* MyDatabaseTableSpace */
@@ -317,7 +321,7 @@ typedef struct xl_xact_parsed_abort
 	TimestampTz xact_time;
 	uint32		xinfo;
 
-	Oid         tablespace_oid_to_abort;
+	Oid         tablespace_oid_to_delete_on_abort;
 
 	int			nsubxacts;
 	TransactionId *subxacts;
@@ -373,7 +377,6 @@ extern TimestampTz GetCurrentTransactionStartTimestamp(void);
 extern TimestampTz GetCurrentStatementStartTimestamp(void);
 extern TimestampTz GetCurrentTransactionStopTimestamp(void);
 extern void SetCurrentStatementStartTimestamp(void);
-extern void SetCurrentStatementStartTimestampToMaster(TimestampTz masterTime);
 extern int	GetCurrentTransactionNestLevel(void);
 extern bool TransactionIdIsCurrentTransactionId(TransactionId xid);
 extern void CommandCounterIncrement(void);
@@ -421,6 +424,7 @@ extern void RecordDistributedForgetCommitted(struct TMGXACT_LOG *gxact_log);
 extern int	xactGetCommittedChildren(TransactionId **ptr);
 
 extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
+					Oid tablespace_oid_to_delete_on_commit,
 					int nsubxacts, TransactionId *subxacts,
 					int nrels, RelFileNodePendingDelete *rels,
 					int nmsgs, SharedInvalidationMessage *msgs,

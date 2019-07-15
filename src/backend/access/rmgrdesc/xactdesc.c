@@ -42,6 +42,7 @@ ParseCommitRecord(uint8 info, xl_xact_commit *xlrec, xl_xact_parsed_commit *pars
 								 * present */
 
 	parsed->xact_time = xlrec->xact_time;
+	parsed->tablespace_oid_to_delete_on_commit = xlrec->tablespace_oid_to_delete_on_commit;
 
 	if (info & XLOG_XACT_HAS_INFO)
 	{
@@ -149,7 +150,7 @@ ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed)
 								 * present */
 
 	parsed->xact_time = xlrec->xact_time;
-	parsed->tablespace_oid_to_abort = xlrec->tablespace_oid_to_abort;
+	parsed->tablespace_oid_to_delete_on_abort = xlrec->tablespace_oid_to_delete_on_abort;
 
 	if (info & XLOG_XACT_HAS_INFO)
 	{

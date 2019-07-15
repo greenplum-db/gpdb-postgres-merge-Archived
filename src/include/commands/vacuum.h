@@ -241,7 +241,6 @@ extern void vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
 										 BlockNumber *rel_pages, double *rel_tuples,
 										 bool *relhasindex);
 extern int vacuum_appendonly_indexes(Relation aoRelation, int options);
-extern void vacuum_aocs_rel(Relation aorel, void *vacrelstats, bool isVacFull);
 
 extern bool std_typanalyze(VacAttrStats *stats);
 

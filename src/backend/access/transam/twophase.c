@@ -50,6 +50,7 @@
 #include "access/transam.h"
 #include "access/twophase.h"
 #include "access/twophase_rmgr.h"
+#include "access/twophase_storage_tablespace.h"
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
@@ -177,7 +178,6 @@ static void RecordTransactionCommitPrepared(TransactionId xid,
 								SharedInvalidationMessage *invalmsgs,
 								bool initfileinval);
 static void RecordTransactionAbortPrepared(TransactionId xid,
-							   Oid tablespace_oid_to_abort,
 							   int nchildren,
 							   TransactionId *children,
 							   int nrels,
@@ -187,6 +187,9 @@ static void RecordTransactionAbortPrepared(TransactionId xid,
 static void ProcessRecords(char *bufptr, TransactionId xid,
 			   const TwoPhaseCallback callbacks[]);
 static void RemoveGXact(GlobalTransaction gxact);
+
+static void finish_prepared_transaction_tablespace_storage(bool isCommit);
+
 
 /*
  * Generic initialisation of hash table.
@@ -971,7 +974,8 @@ typedef struct TwoPhaseFileHeader
 	int32		nabortdbs;		/* number of delete-on-abort dbs */
 	int32		ninvalmsgs;		/* number of cache invalidation messages */
 	bool		initfileinval;	/* does relcache init file need invalidation? */
-	Oid			tablespace_oid_to_abort;
+	Oid			tablespace_oid_to_delete_on_abort;
+	Oid			tablespace_oid_to_delete_on_commit;
 	char		gid[GIDSIZE];	/* GID for transaction */
 } TwoPhaseFileHeader;
 
@@ -1080,7 +1084,8 @@ StartPrepare(GlobalTransaction gxact)
 	hdr.database = proc->databaseId;
 	hdr.prepared_at = gxact->prepared_at;
 	hdr.owner = gxact->owner;
-	hdr.tablespace_oid_to_abort = GetPendingTablespaceForDeletion();
+	hdr.tablespace_oid_to_delete_on_abort = GetPendingTablespaceForDeletionForAbort();
+	hdr.tablespace_oid_to_delete_on_commit = GetPendingTablespaceForDeletionForCommit();
 	hdr.nsubxacts = xactGetCommittedChildren(&children);
 	hdr.ncommitrels = smgrGetPendingDeletes(true, &commitrels);
 	hdr.nabortrels = smgrGetPendingDeletes(false, &abortrels);
@@ -1298,6 +1303,29 @@ StandbyTransactionIdIsPrepared(TransactionId xid)
 #endif
 }
 
+
+static void
+repopulate_tablespace_storage(Oid tablespace_to_delete_on_commit,
+								Oid tablespace_to_delete_on_abort) {
+
+	ScheduleTablespaceDirectoryDeletionForCommit(tablespace_to_delete_on_commit);
+	ScheduleTablespaceDirectoryDeletionForAbort(tablespace_to_delete_on_abort);
+}
+
+
+static void
+finish_prepared_transaction_tablespace_storage(bool isCommit) {
+	if (isCommit)
+	{
+		AtTwoPhaseCommit_TablespaceStorage();
+	}
+	else
+	{
+		AtTwoPhaseAbort_TablespaceStorage();
+	}
+}
+
+
 /*
  * FinishPreparedTransaction: execute COMMIT PREPARED or ROLLBACK PREPARED
  */
@@ -1420,6 +1448,10 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
 
+	repopulate_tablespace_storage(
+		hdr->tablespace_oid_to_delete_on_commit,
+		hdr->tablespace_oid_to_delete_on_abort);
+
 	/*
 	 * The order of operations here is critical: make the XLOG entry for
 	 * commit or abort, then mark the transaction committed or aborted in
@@ -1438,7 +1470,6 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 										hdr->initfileinval);
 	else
 		RecordTransactionAbortPrepared(xid,
-									   hdr->tablespace_oid_to_abort,
 									   hdr->nsubxacts, children,
 									   hdr->nabortrels, abortrels,
 									   hdr->nabortdbs, abortdbs);
@@ -1473,7 +1504,6 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	{
 		delrels = abortrels;
 		ndelrels = hdr->nabortrels;
-		DoTablespaceDeletion(hdr->tablespace_oid_to_abort);
 		deldbs = abortdbs;
 		ndeldbs = hdr->nabortdbs;
 	}
@@ -1483,6 +1513,8 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 
 	/* Make sure database folders to be dropped are dropped */
 	DropDatabaseDirectories(deldbs, ndeldbs, false);
+
+	finish_prepared_transaction_tablespace_storage(isCommit);
 
 	/*
 	 * Handle cache invalidation messages.
@@ -1977,10 +2009,11 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	 */
 	dtxCrackOpenGid(gid, &distribTimeStamp, &distribXid);
 
-	SIMPLE_FAULT_INJECTOR("twophase_transaction_commit_prepared");
+	SIMPLE_FAULT_INJECTOR("before_xlog_xact_commit_prepared");
 
 	/* Emit the XLOG commit record */
 	recptr = XactLogCommitRecord(GetCurrentTimestamp(),
+								 GetPendingTablespaceForDeletionForCommit(),
 								 nchildren, children, nrels, rels,
 								 ninvalmsgs, invalmsgs,
 								 ndeldbs, deldbs,
@@ -2033,7 +2066,6 @@ RecordTransactionCommitPrepared(TransactionId xid,
  */
 static void
 RecordTransactionAbortPrepared(TransactionId xid,
-							   Oid tablespace_oid_to_abort,
 							   int nchildren,
 							   TransactionId *children,
 							   int nrels,
@@ -2057,7 +2089,7 @@ RecordTransactionAbortPrepared(TransactionId xid,
 
 	/* Emit the XLOG abort record */
 	recptr = XactLogAbortRecord(GetCurrentTimestamp(),
-								tablespace_oid_to_abort,
+								GetPendingTablespaceForDeletionForAbort(),
 								nchildren, children,
 								nrels, rels,
 								ndeldbs, deldbs,

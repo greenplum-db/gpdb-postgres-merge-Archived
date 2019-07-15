@@ -274,8 +274,6 @@ extern XLogRecPtr GetFlushRecPtr(void);
 extern void GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch);
 extern void RemovePromoteSignalFiles(void);
 
-extern void XLogGetRecoveryStart(char *callerStr, char *reasonStr, XLogRecPtr *redoCheckPointLoc, CheckPoint *redoCheckPoint);
-
 extern void HandleStartupProcInterrupts(void);
 extern void StartupProcessMain(void);
 extern bool CheckPromoteSignal(void);
@@ -304,7 +302,6 @@ extern void do_pg_abort_backup(void);
 #define TABLESPACE_MAP_OLD		"tablespace_map.old"
 
 /* Greenplum additions */
-extern List *XLogReadTimeLineHistory(TimeLineID targetTLI);
 extern bool IsStandbyMode(void);
 extern DBState GetCurrentDBState(void);
 extern XLogRecPtr last_xlog_replay_location(void);

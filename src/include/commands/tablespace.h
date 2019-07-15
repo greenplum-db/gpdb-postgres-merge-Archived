@@ -64,6 +64,5 @@ extern void remove_tablespace_symlink(const char *linkloc);
 extern void tblspc_redo(XLogReaderState *rptr);
 extern void tblspc_desc(StringInfo buf, XLogReaderState *rptr);
 extern const char *tblspc_identify(uint8 info);
-extern void set_short_version(const char *path);
 
 #endif   /* TABLESPACE_H */

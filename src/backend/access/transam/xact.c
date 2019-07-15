@@ -30,6 +30,7 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
+#include "access/xact_storage_tablespace.h"
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
@@ -1531,6 +1532,7 @@ RecordTransactionCommit(void)
 			insertingDistributedCommitted();
 
 			XactLogCommitRecord(xactStopTimestamp,
+								GetPendingTablespaceForDeletionForCommit(),
 								nchildren, children, nrels, rels,
 								nmsgs, invalMessages,
 								ndeldbs, deldbs,
@@ -1541,6 +1543,7 @@ RecordTransactionCommit(void)
 		}
 		else
 			XactLogCommitRecord(xactStopTimestamp,
+								GetPendingTablespaceForDeletionForCommit(),
 								nchildren, children, nrels, rels,
 								nmsgs, invalMessages,
 								ndeldbs, deldbs,
@@ -1770,6 +1773,7 @@ AtCommit_Memory(void)
 	CurrentTransactionState->curTransactionContext = NULL;
 }
 
+
 /* ----------------------------------------------------------------
  *						CommitSubTransaction stuff
  * ----------------------------------------------------------------
@@ -1973,7 +1977,7 @@ RecordTransactionAbort(bool isSubXact)
 	}
 
 	XactLogAbortRecord(xact_time,
-					   GetPendingTablespaceForDeletion(),
+					   GetPendingTablespaceForDeletionForAbort(),
 					   nchildren, children,
 					   nrels, rels,
 					   ndeldbs, deldbs,
@@ -2620,12 +2624,6 @@ StartTransaction(void)
 					  LocalDistribXact_DisplayString(MyProc->pgprocno))));
 }
 
-static void
-AtEOXact_TablespaceStorage(void)
-{
-	UnscheduleTablespaceDirectoryDeletion();
-}
-
 /*
  *	CommitTransaction
  *
@@ -2883,9 +2881,12 @@ CommitTransaction(void)
 	 * this may take many seconds, also delay until after releasing locks.
 	 * Other backends will observe the attendant catalog changes and not
 	 * attempt to access affected files.
+	 *
+	 * Same considerations for tablespace deletion
 	 */
 	smgrDoPendingDeletes(true);
 	DoPendingDbDeletes(true);
+
 	/*
 	 * Only QD holds the session level lock this long for a movedb operation.
 	 * This is to prevent another transaction from moving database objects into
@@ -2896,6 +2897,8 @@ CommitTransaction(void)
 	if(Gp_role == GP_ROLE_DISPATCH)
 		MoveDbSessionLockRelease();
 
+	AtCommit_TablespaceStorage();
+
 	AtEOXact_AppendOnly();
 	AtCommit_Notify();
 	AtEOXact_GUC(true, 1);
@@ -2903,7 +2906,6 @@ CommitTransaction(void)
 	AtEOXact_on_commit_actions(true);
 	AtEOXact_Namespace(true, is_parallel_worker);
 	AtEOXact_SMgr();
-	AtEOXact_TablespaceStorage();
 	AtEOXact_Files();
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(true);
@@ -3432,6 +3434,7 @@ AbortTransaction(void)
 		AtEOXact_RelationCache(false);
 		AtEOXact_Inval(false);
 		AtEOXact_MultiXact();
+
 		ResourceOwnerRelease(TopTransactionResourceOwner,
 							 RESOURCE_RELEASE_LOCKS,
 							 false, true);
@@ -3439,10 +3442,11 @@ AbortTransaction(void)
 							 RESOURCE_RELEASE_AFTER_LOCKS,
 							 false, true);
 		smgrDoPendingDeletes(false);
-		DoPendingTablespaceDeletion();
-		DoPendingDbDeletes(false);
 
+		DoPendingDbDeletes(false);
 		DatabaseStorageResetSessionLock();
+
+		AtAbort_TablespaceStorage();
 		AtEOXact_AppendOnly();
 		AtEOXact_GUC(false, 1);
 		AtEOXact_SPI(false);
@@ -6407,6 +6411,7 @@ xactGetCommittedChildren(TransactionId **ptr)
  */
 XLogRecPtr
 XactLogCommitRecord(TimestampTz commit_time,
+					Oid tablespace_oid_to_delete_on_commit,
 					int nsubxacts, TransactionId *subxacts,
 					int nrels, RelFileNodePendingDelete *rels,
 					int nmsgs, SharedInvalidationMessage *msgs,
@@ -6446,6 +6451,7 @@ XactLogCommitRecord(TimestampTz commit_time,
 	/* First figure out and collect all the information needed */
 
 	xlrec.xact_time = commit_time;
+	xlrec.tablespace_oid_to_delete_on_commit = tablespace_oid_to_delete_on_commit;
 
 	if (relcacheInval)
 		xl_xinfo.xinfo |= XACT_COMPLETION_UPDATE_RELCACHE_FILE;
@@ -6585,7 +6591,7 @@ XactLogCommitRecord(TimestampTz commit_time,
  */
 XLogRecPtr
 XactLogAbortRecord(TimestampTz abort_time,
-				   Oid tablespace_oid_to_abort,
+				   Oid tablespace_oid_to_delete_on_abort,
 				   int nsubxacts, TransactionId *subxacts,
 				   int nrels, RelFileNodePendingDelete *rels,
 				   int ndeldbs, DbDirNode *deldbs,
@@ -6614,7 +6620,7 @@ XactLogAbortRecord(TimestampTz abort_time,
 	/* First figure out and collect all the information needed */
 
 	xlrec.xact_time = abort_time;
-	xlrec.tablespace_oid_to_abort = tablespace_oid_to_abort;
+	xlrec.tablespace_oid_to_delete_on_abort = tablespace_oid_to_delete_on_abort;
 
 	if (nsubxacts > 0)
 	{
@@ -6695,8 +6701,13 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 {
 	TransactionId max_xid;
 	TimestampTz commit_time;
+	Oid tablespace_oid_to_delete = parsed->tablespace_oid_to_delete_on_commit;
 
 	max_xid = TransactionIdLatest(xid, parsed->nsubxacts, parsed->subxacts);
+
+	ereportif(OidIsValid(tablespace_oid_to_delete), DEBUG5,
+		(errmsg("in xact_redo_commit_internal with tablespace oid to delete: %u",
+			tablespace_oid_to_delete)));
 
 	/*
 	 * Make sure nextXid is beyond any XID mentioned in the record.
@@ -6829,6 +6840,8 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 		DropDatabaseDirectories(parsed->deldbs, parsed->ndeldbs, true);
 	}
 
+	DoTablespaceDeletionForRedoXlog(tablespace_oid_to_delete);
+
 	/*
 	 * We issue an XLogFlush() for the same reason we emit ForceSyncCommit()
 	 * in normal operation. For example, in CREATE DATABASE, we copy all files
@@ -6927,6 +6940,7 @@ xact_redo_distributed_commit(uint8 info, xl_xact_commit *xlrec, TransactionId xi
 
 		DropRelationFiles(parsed.xnodes, parsed.nrels, true);
 		DropDatabaseDirectories(parsed.deldbs, parsed.ndeldbs, true);
+		DoTablespaceDeletionForRedoXlog(parsed.tablespace_oid_to_delete_on_commit);
 	}
 
 	/*
@@ -7000,8 +7014,8 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 
 	/* Make sure files supposed to be dropped are dropped */
 	DropRelationFiles(parsed->xnodes, parsed->nrels, true);
-	DoTablespaceDeletion(parsed->tablespace_oid_to_abort);
 	DropDatabaseDirectories(parsed->deldbs, parsed->ndeldbs, true);
+	DoTablespaceDeletionForRedoXlog(parsed->tablespace_oid_to_delete_on_abort);
 }
 
 static void
