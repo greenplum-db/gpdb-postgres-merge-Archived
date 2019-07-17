@@ -256,11 +256,8 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1;
 SELECT * FROM t1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
 
--- GPDB_95_MERGE_FIXME: GPDB handle COPY WITH OIDS incorrectly, it ignores
--- the oid values provided and insert with its own oid values.
 -- reference to system column
--- SELECT oid, * FROM t1;
-SELECT * FROM t1;
+SELECT oid, * FROM t1;
 EXPLAIN (COSTS OFF) SELECT *, t1 FROM t1;
 
 -- reference to whole-row reference
@@ -444,13 +441,9 @@ EXPLAIN (COSTS OFF) UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
 UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
 
 -- returning clause with system column
--- GPDB_95_MERGE_FIXME: see comments above.
--- UPDATE only t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
-UPDATE only t1 SET b = b WHERE f_leak(b) RETURNING *, t1;
+UPDATE only t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
 UPDATE t1 SET b = b WHERE f_leak(b) RETURNING *;
--- GPDB_95_MERGE_FIXME: see comments above.
--- UPDATE t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
-UPDATE t1 SET b = b WHERE f_leak(b) RETURNING *, t1;
+UPDATE t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
 
 -- updates with from clause
 EXPLAIN (COSTS OFF) UPDATE t2 SET b=t2.b FROM t3
@@ -500,12 +493,9 @@ SET SESSION AUTHORIZATION rls_regress_user1;
 SET row_security TO ON;
 EXPLAIN (COSTS OFF) DELETE FROM only t1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) DELETE FROM t1 WHERE f_leak(b);
- 
--- GPDB_95_MERGE_FIXME: see comments above.
--- DELETE FROM only t1 WHERE f_leak(b) RETURNING oid, *, t1;
--- DELETE FROM t1 WHERE f_leak(b) RETURNING oid, *, t1;
-DELETE FROM only t1 WHERE f_leak(b) RETURNING *, t1;
-DELETE FROM t1 WHERE f_leak(b) RETURNING *, t1;
+
+DELETE FROM only t1 WHERE f_leak(b) RETURNING oid, *, t1;
+DELETE FROM t1 WHERE f_leak(b) RETURNING oid, *, t1;
 
 --
 -- S.b. view on top of Row-level security

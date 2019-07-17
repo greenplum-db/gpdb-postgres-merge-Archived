@@ -592,18 +592,15 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
  Optimizer: Postgres query optimizer
 (11 rows)
 
--- GPDB_95_MERGE_FIXME: GPDB handle COPY WITH OIDS incorrectly, it ignores
--- the oid values provided and insert with its own oid values.
 -- reference to system column
--- SELECT oid, * FROM t1;
-SELECT * FROM t1;
- a |  b  
----+-----
- 2 | yyy
- 2 | bbb
- 4 | ddd
- 2 | bcd
- 4 | def
+SELECT oid, * FROM t1;
+ oid | a |  b  
+-----+---+-----
+ 102 | 2 | bbb
+ 104 | 4 | ddd
+ 202 | 2 | bcd
+ 204 | 4 | def
+ 302 | 2 | yyy
 (5 rows)
 
 EXPLAIN (COSTS OFF) SELECT *, t1 FROM t1;
@@ -1175,15 +1172,13 @@ UPDATE only t1 SET b = b || '_updt' WHERE f_leak(b);
 NOTICE:  f_leak => bbbbbb
 NOTICE:  f_leak => dddddd
 -- returning clause with system column
--- GPDB_95_MERGE_FIXME: see comments above.
--- UPDATE only t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
-UPDATE only t1 SET b = b WHERE f_leak(b) RETURNING *, t1;
-NOTICE:  f_leak => bbbbbb_updt  (seg0 slice1 127.0.0.1:25432 pid=25904)
-NOTICE:  f_leak => dddddd_updt  (seg0 slice1 127.0.0.1:25432 pid=25904)
- a |      b      |       t1        
----+-------------+-----------------
- 2 | bbbbbb_updt | (2,bbbbbb_updt)
- 4 | dddddd_updt | (4,dddddd_updt)
+UPDATE only t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
+NOTICE:  f_leak => bbbbbb_updt
+NOTICE:  f_leak => dddddd_updt
+ oid | a |      b      |       t1        
+-----+---+-------------+-----------------
+ 102 | 2 | bbbbbb_updt | (2,bbbbbb_updt)
+ 104 | 4 | dddddd_updt | (4,dddddd_updt)
 (2 rows)
 
 UPDATE t1 SET b = b WHERE f_leak(b) RETURNING *;
@@ -1201,21 +1196,19 @@ NOTICE:  f_leak => yyyyyy
  2 | yyyyyy
 (5 rows)
 
--- GPDB_95_MERGE_FIXME: see comments above.
--- UPDATE t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
-UPDATE t1 SET b = b WHERE f_leak(b) RETURNING *, t1;
-NOTICE:  f_leak => bbbbbb_updt  (seg0 slice1 127.0.0.1:25432 pid=26979)
-NOTICE:  f_leak => dddddd_updt  (seg0 slice1 127.0.0.1:25432 pid=26979)
-NOTICE:  f_leak => bcdbcd  (seg0 slice1 127.0.0.1:25432 pid=26979)
-NOTICE:  f_leak => defdef  (seg0 slice1 127.0.0.1:25432 pid=26979)
-NOTICE:  f_leak => yyyyyy  (seg2 slice1 127.0.0.1:25434 pid=26980)
- a |      b      |       t1        
----+-------------+-----------------
- 2 | yyyyyy      | (2,yyyyyy)
- 2 | bbbbbb_updt | (2,bbbbbb_updt)
- 4 | dddddd_updt | (4,dddddd_updt)
- 2 | bcdbcd      | (2,bcdbcd)
- 4 | defdef      | (4,defdef)
+UPDATE t1 SET b = b WHERE f_leak(b) RETURNING oid, *, t1;
+NOTICE:  f_leak => bbbbbb_updt
+NOTICE:  f_leak => dddddd_updt
+NOTICE:  f_leak => bcdbcd
+NOTICE:  f_leak => defdef
+NOTICE:  f_leak => yyyyyy
+ oid | a |      b      |       t1        
+-----+---+-------------+-----------------
+ 102 | 2 | bbbbbb_updt | (2,bbbbbb_updt)
+ 104 | 4 | dddddd_updt | (4,dddddd_updt)
+ 202 | 2 | bcdbcd      | (2,bcdbcd)
+ 204 | 4 | defdef      | (4,defdef)
+ 302 | 2 | yyyyyy      | (2,yyyyyy)
 (5 rows)
 
 -- updates with from clause
@@ -1499,28 +1492,24 @@ EXPLAIN (COSTS OFF) DELETE FROM t1 WHERE f_leak(b);
  Optimizer: Postgres query optimizer
 (17 rows)
 
- 
--- GPDB_95_MERGE_FIXME: see comments above.
--- DELETE FROM only t1 WHERE f_leak(b) RETURNING oid, *, t1;
--- DELETE FROM t1 WHERE f_leak(b) RETURNING oid, *, t1;
-DELETE FROM only t1 WHERE f_leak(b) RETURNING *, t1;
-NOTICE:  f_leak => bbbbbb_updt  (seg0 slice1 127.0.0.1:25432 pid=25904)
-NOTICE:  f_leak => dddddd_updt  (seg0 slice1 127.0.0.1:25432 pid=25904)
- a |      b      |       t1        
----+-------------+-----------------
- 2 | bbbbbb_updt | (2,bbbbbb_updt)
- 4 | dddddd_updt | (4,dddddd_updt)
+DELETE FROM only t1 WHERE f_leak(b) RETURNING oid, *, t1;
+NOTICE:  f_leak => bbbbbb_updt
+NOTICE:  f_leak => dddddd_updt
+ oid | a |      b      |       t1        
+-----+---+-------------+-----------------
+ 102 | 2 | bbbbbb_updt | (2,bbbbbb_updt)
+ 104 | 4 | dddddd_updt | (4,dddddd_updt)
 (2 rows)
 
-DELETE FROM t1 WHERE f_leak(b) RETURNING *, t1;
-NOTICE:  f_leak => bcdbcd  (seg0 slice1 127.0.0.1:25432 pid=27936)
-NOTICE:  f_leak => defdef  (seg0 slice1 127.0.0.1:25432 pid=27936)
-NOTICE:  f_leak => yyyyyy  (seg2 slice1 127.0.0.1:25434 pid=27938)
- a |   b    |     t1     
----+--------+------------
- 2 | yyyyyy | (2,yyyyyy)
- 2 | bcdbcd | (2,bcdbcd)
- 4 | defdef | (4,defdef)
+DELETE FROM t1 WHERE f_leak(b) RETURNING oid, *, t1;
+NOTICE:  f_leak => bcdbcd
+NOTICE:  f_leak => defdef
+NOTICE:  f_leak => yyyyyy
+ oid | a |   b    |     t1     
+-----+---+--------+------------
+ 202 | 2 | bcdbcd | (2,bcdbcd)
+ 204 | 4 | defdef | (4,defdef)
+ 302 | 2 | yyyyyy | (2,yyyyyy)
 (3 rows)
 
 --
