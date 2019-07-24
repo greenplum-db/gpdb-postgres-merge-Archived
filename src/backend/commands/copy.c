@@ -4077,8 +4077,6 @@ CopyFrom(CopyState cstate)
 									   slot_get_isnull(slot));
 			skip_tuple = true;
 			processed++;
-			if (cstate->cdbsreh)
-				cstate->cdbsreh->processed++;
 		}
 
 		/* BEFORE ROW INSERT Triggers */
@@ -4906,11 +4904,14 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 			}
 			PG_CATCH();
 			{
-				HandleCopyError(cstate);
+				HandleCopyError(cstate); /* cdbsreh->processed is updated inside here */
 				got_error = true;
 				MemoryContextSwitchTo(oldcontext);
 			}
 			PG_END_TRY();
+
+			if (result)
+				cstate->cdbsreh->processed++;
 
 			if (!got_error)
 				return result;
@@ -7157,7 +7158,7 @@ truncateEolStr(char *str, EolType eol_type)
 static void
 copy_dest_startup(DestReceiver *self pg_attribute_unused(), int operation pg_attribute_unused(), TupleDesc typeinfo pg_attribute_unused())
 {
-	if (Gp_role == GP_ROLE_DISPATCH)
+	if (Gp_role != GP_ROLE_EXECUTE)
 		return;
 	DR_copy    *myState = (DR_copy *) self;
 	myState->cstate = BeginCopyToOnSegment(myState->queryDesc);
@@ -7186,7 +7187,7 @@ copy_dest_receive(TupleTableSlot *slot, DestReceiver *self)
 static void
 copy_dest_shutdown(DestReceiver *self pg_attribute_unused())
 {
-	if (Gp_role == GP_ROLE_DISPATCH)
+	if (Gp_role != GP_ROLE_EXECUTE)
 		return;
 	DR_copy    *myState = (DR_copy *) self;
 	EndCopyToOnSegment(myState->cstate);
@@ -7215,7 +7216,8 @@ CreateCopyDestReceiver(void)
 	self->pub.rDestroy = copy_dest_destroy;
 	self->pub.mydest = DestCopyOut;
 
-	self->cstate = NULL;		/* will be set later */
+	self->cstate = NULL;		/* need to be set later */
+	self->queryDesc = NULL;		/* need to be set later */
 	self->processed = 0;
 
 	return (DestReceiver *) self;

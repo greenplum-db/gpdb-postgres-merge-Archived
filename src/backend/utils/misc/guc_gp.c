@@ -343,6 +343,7 @@ bool		optimizer_enable_tablescan;
 bool		optimizer_enable_hashagg;
 bool		optimizer_enable_groupagg;
 bool		optimizer_expand_fulljoin;
+bool		optimizer_enable_mergejoin;
 
 /* Optimizer plan enumeration related GUCs */
 bool		optimizer_enumerate_plans;
@@ -2504,6 +2505,16 @@ struct config_bool ConfigureNamesBool_gp[] =
 		NULL, NULL, NULL
 	},
 	{
+		{"optimizer_enable_mergejoin", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Enables the optimizer's support of merge joins."),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+		},
+		&optimizer_enable_mergejoin,
+		true,
+		NULL, NULL, NULL
+	},
+	{
 		{"optimizer_enable_streaming_material", PGC_USERSET, DEVELOPER_OPTIONS,
 			gettext_noop("Enable plans with a streaming material node in the optimizer."),
 			NULL,
@@ -3458,17 +3469,7 @@ struct config_int ConfigureNamesInt_gp[] =
 		0, 0, 1,
 		NULL, NULL, NULL
 	},
-
 #endif
-	{
-		{"gp_interconnect_hash_multiplier", PGC_SUSET, GP_ARRAY_TUNING,
-			gettext_noop("Sets the number of hash buckets used by the UDP interconnect to track connections (the number of buckets is given by the product of the segment count and the hash multipliers)."),
-			NULL,
-		},
-		&Gp_interconnect_hash_multiplier,
-		2, 1, 256,
-		NULL, NULL, NULL
-	},
 
 	{
 		{"gp_command_count", PGC_INTERNAL, CLIENT_CONN_OTHER,

@@ -11,7 +11,7 @@ all : devel
 
 # Targets for building GPDB with various options
 # (development builds)
-.PHONY : devel devel_faultinj
+.PHONY : devel
 
 # (release builds)
 .PHONY : dist dist_prof
@@ -29,8 +29,8 @@ all : devel
 
 # Internal functions which are invoked by other rules within this makefile
 .PHONY : mgmtcopy copylibs
-.PHONY : greenplum_path RECONFIG HOMEDEP GPROOTDEP GPROOTDEP GPROOTFAIL
-.PHONY : gccVersionCheck clients
+.PHONY : RECONFIG HOMEDEP GPROOTDEP GPROOTDEP GPROOTFAIL
+.PHONY : clients
 
 #---------------------------------------------------------------------
 # Make 3rd-party libraries and tools
@@ -63,7 +63,6 @@ BLD_CXX_LIB_DIR=$($(BLD_ARCH)_CXX_LIB_DIR)
 GPPGDIR=$(shell cd .. && pwd)
 GPMGMT=../gpMgmt
 GPPERFMON=gpperfmon
-PLATFORM=platform
 BUILDDIR=$(GPPGDIR)
 
 RELEASE=devel
@@ -251,7 +250,6 @@ BLD_GPDB_BUILDSET=$($(BLD_ARCH)_GPDB_BUILDSET)
 define BUILD_STEPS
 	@rm -rf $(INSTLOC)
 	cd $(BUILDDIR) && $(MAKE) $(PARALLEL_MAKE_OPTS) install
-	#@$(MAKE) greenplum_path INSTLOC=$(INSTLOC)
 	#@$(MAKE) mgmtcopy INSTLOC=$(INSTLOC)
 	@$(MAKE) mkpgbouncer INSTLOC=$(INSTLOC) BUILDDIR=$(BUILDDIR)
 	@$(MAKE) mkpgbench INSTLOC=$(INSTLOC) BUILDDIR=$(BUILDDIR)
@@ -340,9 +338,9 @@ devel : CONFIGFLAGS+= --enable-cassert --enable-debug --enable-depend
 ifdef ENABLE_VPATH_BUILD
 devel : BUILDDIR=Debug
 devel : ISCONFIG=$(BUILDDIR)/GNUmakefile
-devel : gccVersionCheck HOMEDEP Debug/GNUmakefile
+devel : HOMEDEP Debug/GNUmakefile
 else
-devel : gccVersionCheck HOMEDEP $(ISCONFIG)
+devel : HOMEDEP $(ISCONFIG)
 endif
 	$(BUILD_STEPS)
 
@@ -356,9 +354,9 @@ dist : CLIENTSINSTLOC=$(CLIENTSDISTPATH)
 ifdef ENABLE_VPATH_BUILD
 dist : BUILDDIR=Release
 dist : ISCONFIG=$(BUILDDIR)/GNUmakefile
-dist : gccVersionCheck GPROOTDEP RECONFIG Release/GNUmakefile
+dist : GPROOTDEP RECONFIG Release/GNUmakefile
 else
-dist : gccVersionCheck GPROOTDEP RECONFIG $(ISCONFIG)
+dist : GPROOTDEP RECONFIG $(ISCONFIG)
 endif
 	$(BUILD_STEPS)
 
@@ -368,10 +366,10 @@ dist_prof : CLIENTSINSTLOC=$(CLIENTSDISTPATH)
 ifdef ENABLE_VPATH_BUILD
 dist_prof : BUILDDIR=Release
 dist_prof : ISCONFIG=$(BUILDDIR)/GNUmakefile
-dist_prof : gccVersionCheck GPROOTDEP RECONFIG $(ISCONFIG)
+dist_prof : GPROOTDEP RECONFIG $(ISCONFIG)
 else
 dist_prof : ISCONFIG=../GNUmakefile
-dist_prof : gccVersionCheck GPROOTDEP RECONFIG $(ISCONFIG)
+dist_prof : GPROOTDEP RECONFIG $(ISCONFIG)
 endif
 	$(BUILD_STEPS)
 
@@ -379,10 +377,10 @@ dist_faultinj : CLIENTSINSTLOC=$(CLIENTSDISTPATH)
 ifdef ENABLE_VPATH_BUILD
 dist_faultinj : BUILDDIR=Release
 dist_faultinj : ISCONFIG=$(BUILDDIR)/GNUmakefile
-dist_faultinj : gccVersionCheck GPROOTDEP RECONFIG Release/GNUmakefile
+dist_faultinj : GPROOTDEP RECONFIG Release/GNUmakefile
 else
 dist_faultinj : ISCONFIG=../GNUmakefile
-dist_faultinj : gccVersionCheck GPROOTDEP RECONFIG $(ISCONFIG)
+dist_faultinj : GPROOTDEP RECONFIG $(ISCONFIG)
 endif
 	$(BUILD_STEPS)
 
@@ -551,7 +549,7 @@ PVK_FILESET = \
 
 pvk : INSTCFLAGS=$(OPTFLAGS)
 pvk : INSTLOC=$(DISTPATH)
-pvk : gccVersionCheck version GPROOTDEP
+pvk : version GPROOTDEP
 	cd $(GPMGMT)/bin && $(MAKE) stream
 	mkdir -p $(INSTLOC)/bin/lib
 	@for file in $(PVK_FILESET); do \
@@ -639,23 +637,15 @@ mgmtcopy :
 	cp $(GPPGDIR)/src/test/regress/*.pm $(INSTLOC)/bin
 	if [ ! -d ${INSTLOC}/docs ] ; then mkdir ${INSTLOC}/docs ; fi
 	if [ -d $(GPMGMT)/doc ]; then cp -rp $(GPMGMT)/doc $(INSTLOC)/docs/cli_help; fi
-	if [ -d $(GPMGMT)/demo/gpmapreduce ]; then \
-	  mkdir -p $(INSTLOC)/demo; \
-	  $(TAR) -C $(GPMGMT)/demo -czf $(INSTLOC)/demo/gpmapreduce.tar.gz gpmapreduce; \
-	fi
 	if [ -d $(GPMGMT)/demo/gpfdist_transform ]; then \
 	  mkdir -p $(INSTLOC)/demo; \
 	  $(TAR) -C $(GPMGMT)/demo -czf $(INSTLOC)/demo/gpfdist_transform.tar.gz gpfdist_transform; \
 	fi
 	$(MAKE) set_scripts_version INSTLOC=$(INSTLOC)
 	# Remove unwanted files.
-	rm -rf $(INSTLOC)/bin/CVS
-	rm -rf $(INSTLOC)/doc/CVS
 	rm -rf $(INSTLOC)/bin/ext
 	rm -rf $(INSTLOC)/bin/pythonSrc
 	rm -rf $(INSTLOC)/bin/Makefile
-	rm -rf $(INSTLOC)/bin/lib/CVS
-	rm -rf $(INSTLOC)/bin/lib/.p4ignore
 	rm -rf $(INSTLOC)/bin/src
 	rm -rf $(INSTLOC)/bin/gppylib
 	find $(INSTLOC)/lib/python/gppylib -name test -type d | xargs rm -rf
@@ -674,11 +664,6 @@ copylibs : thirdparty-dist
 	fi
 	mkdir -p $(INSTLOC)/etc
 	mkdir -p $(INSTLOC)/include
-
-greenplum_path:
-	mkdir -p $(INSTLOC)
-	unset LIBPATH; \
-	  releng/generate-greenplum-path.sh $(INSTLOC) > $(INSTLOC)/greenplum_path.sh
 
 copylicense:
 	for proddir in $(INSTLOC) $(CLIENTSINSTLOC); do \
@@ -734,22 +719,3 @@ distclean :
 distprep : $(ISCONFIG)
 	@cd $(BUILDDIR) && $(MAKE) distprep
 
-#---------------------------------------------------------------------
-# More internal functions
-#---------------------------------------------------------------------
-
-gccVersionCheck :
-	@echo "Checking GCC version" ; \
-	$(BLD_CC) --version > /dev/null 2>&1 ; \
-	if [ $$? -ne 0 ] ; then \
-	    echo "Error running $(BLD_CC) --version" ; \
-	    $(BLD_CC) --version ; \
-	    exit 1 ; \
-	fi
-	@$(BLD_CC) --version | head -n 1 | cut -d' ' -f3 | egrep '[0-3]\.[0-4]\.[0-1]' > /dev/null 2>&1 ; \
-	if [ $$? -eq 0 ] ; then \
-	    echo "Error: GPDB must be compiled with GCC 3.4.2 or later." ; \
-	    echo "Current GCC version:" ; \
-	    $(BLD_CC) --version ; \
-	    exit 1 ; \
-	fi
