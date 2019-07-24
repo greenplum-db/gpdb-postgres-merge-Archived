@@ -1535,26 +1535,19 @@ inheritance_planner(PlannerInfo *root)
 
 		/* tlist processing never got done, either */
 		tlist = preprocess_targetlist(root, parse->targetList);
-<<<<<<< HEAD
-		plan = (Plan *) make_result(root,
-									tlist,
-									(Node *) list_make1(makeBoolConst(false,
-																	  false)),
-									NULL);
-
-		if (Gp_role == GP_ROLE_DISPATCH)
-			mark_plan_general(plan, parentPolicy->numsegments);
-
-		return plan;
-	}
-=======
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 
 		subplan = (Plan *) make_result(root,
 									   tlist,
 									 (Node *) list_make1(makeBoolConst(false,
 																	 false)),
 									   NULL);
+
+		/*
+		 * Attach flow to the dummy Result node, so as to avoid an assertion
+		 * failure.  See GitHub issue #1433.
+		 */
+		if (Gp_role == GP_ROLE_DISPATCH)
+			mark_plan_general(subplan, parentPolicy->numsegments);
 
 		/* These lists must be nonempty to make a valid ModifyTable node */
 		subplans = list_make1(subplan);
