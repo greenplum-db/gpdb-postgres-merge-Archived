@@ -53,7 +53,6 @@ extern Oid TypeCreate(Oid newTypeOid,
 		   bool typeNotNull,
 		   Oid typeCollation);
 
-<<<<<<< HEAD
 extern Oid TypeCreateWithOptions(Oid newtypeOid,
 		   const char *typeName,
 		   Oid typeNamespace,
@@ -87,26 +86,8 @@ extern Oid TypeCreateWithOptions(Oid newtypeOid,
 		   Oid typeCollation,
 		   Datum typoptions);
 
-extern void GenerateTypeDependencies(Oid typeNamespace,
-						 Oid typeObjectId,
-						 Oid relationOid,
-						 char relationKind,
-						 Oid owner,
-						 Oid inputProcedure,
-						 Oid outputProcedure,
-						 Oid receiveProcedure,
-						 Oid sendProcedure,
-						 Oid typmodinProcedure,
-						 Oid typmodoutProcedure,
-						 Oid analyzeProcedure,
-						 Oid elementType,
-						 bool isImplicitArray,
-						 Oid baseType,
-						 Oid typeCollation,
-=======
 extern void GenerateTypeDependencies(Oid typeObjectId,
 						 Form_pg_type typeForm,
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 						 Node *defaultExpr,
 						 void *typacl,
 						 char relationKind, /* only for relation rowtypes */

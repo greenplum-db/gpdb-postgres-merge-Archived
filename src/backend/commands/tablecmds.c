@@ -1646,7 +1646,6 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 				/* find_all_inheritors already got lock */
 				rel = heap_open(childrelid, NoLock);
-<<<<<<< HEAD
 				/*
 				 * This check is performed outside truncate_check_rel() in
 				 * order to provide a more reasonable error message.
@@ -1656,7 +1655,6 @@ ExecuteTruncate(TruncateStmt *stmt)
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 							 errmsg("cannot truncate table having external partition: \"%s\"",
 								    RelationGetRelationName(rel))));
-=======
 
 				/*
 				 * It is possible that the parent table has children that are
@@ -1673,7 +1671,6 @@ ExecuteTruncate(TruncateStmt *stmt)
 					continue;
 				}
 
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 				truncate_check_rel(rel);
 				rels = lappend(rels, rel);
 				relids = lappend_oid(relids, childrelid);
@@ -11148,13 +11145,10 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	ScanKeyData key[3];
 	SysScanDesc scan;
 	HeapTuple	depTup;
-<<<<<<< HEAD
 	bool		relContainsTuples = false;
-=======
 	ListCell   *lc;
 	ListCell   *prev;
 	ListCell   *next;
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 
 	attrelation = heap_open(AttributeRelationId, RowExclusiveLock);
 
@@ -11286,7 +11280,6 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 						 * found all such constraints.
 						 */
 						Assert(foundObject.objectSubId == 0);
-<<<<<<< HEAD
 						if (!list_member_oid(tab->changedIndexOids, foundObject.objectId))
 						{
 							char *indexdefstring = pg_get_indexdef_string(foundObject.objectId);
@@ -11314,11 +11307,9 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 								}
 							}
 						}
-=======
 						tab->changedIndexOids =
 							list_append_unique_oid(tab->changedIndexOids,
 												   foundObject.objectId);
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 					}
 					else if (relKind == RELKIND_SEQUENCE)
 					{

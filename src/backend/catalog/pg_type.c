@@ -637,17 +637,12 @@ GenerateTypeDependencies(Oid typeObjectId,
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
-<<<<<<< HEAD
-		recordDependencyOnOwner(TypeRelationId, typeObjectId, owner);
-		/* dependency on extension */
-=======
 		recordDependencyOnOwner(TypeRelationId, typeObjectId,
 								typeForm->typowner);
 
 		recordDependencyOnNewAcl(TypeRelationId, typeObjectId, 0,
 								 typeForm->typowner, typacl);
 
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 		recordDependencyOnCurrentExtension(&myself, rebuild);
 	}
 

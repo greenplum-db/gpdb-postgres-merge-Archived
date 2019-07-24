@@ -1241,12 +1241,8 @@ mark_dummy_rel(PlannerInfo *root, RelOptInfo *rel)
 	rel->pathlist = NIL;
 
 	/* Set up the dummy path */
-<<<<<<< HEAD
-	add_path(rel, (Path *) create_append_path(root, rel, NIL, NULL));
-=======
-	add_path(rel, (Path *) create_append_path(rel, NIL,
+	add_path(rel, (Path *) create_append_path(root, rel, NIL,
 											  rel->lateral_relids));
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 
 	/* Set or update cheapest_total_path */
 	set_cheapest(rel);
