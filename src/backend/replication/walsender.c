@@ -3220,7 +3220,11 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 			/*
 			 * Treat a standby such as a pg_basebackup background process
 			 * which always returns an invalid flush location, as an
+<<<<<<< HEAD
 			 * asynchronous standby. WAL sender must be streaming or
+=======
+			 * asynchronous standby.  WAL sender must be streaming or
+>>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 			 * stopping.
 			 */
 			sync_priority[i] = XLogRecPtrIsInvalid(walsnd->flush) ?

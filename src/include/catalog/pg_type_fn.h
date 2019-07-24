@@ -53,6 +53,7 @@ extern Oid TypeCreate(Oid newTypeOid,
 		   bool typeNotNull,
 		   Oid typeCollation);
 
+<<<<<<< HEAD
 extern Oid TypeCreateWithOptions(Oid newtypeOid,
 		   const char *typeName,
 		   Oid typeNamespace,
@@ -102,7 +103,15 @@ extern void GenerateTypeDependencies(Oid typeNamespace,
 						 bool isImplicitArray,
 						 Oid baseType,
 						 Oid typeCollation,
+=======
+extern void GenerateTypeDependencies(Oid typeObjectId,
+						 Form_pg_type typeForm,
+>>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 						 Node *defaultExpr,
+						 void *typacl,
+						 char relationKind, /* only for relation rowtypes */
+						 bool isImplicitArray,
+						 bool isDependentType,
 						 bool rebuild);
 
 extern void RenameTypeInternal(Oid typeOid, const char *newTypeName,

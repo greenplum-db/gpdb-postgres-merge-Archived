@@ -1613,13 +1613,14 @@ ExecuteTruncate(TruncateStmt *stmt)
 		Relation	rel;
 		bool		recurse = interpretInhOption(rv->inhOpt);
 		Oid			myrelid;
+		LOCKMODE	lockmode = AccessExclusiveLock;
 
-		rel = heap_openrv(rv, AccessExclusiveLock);
+		rel = heap_openrv(rv, lockmode);
 		myrelid = RelationGetRelid(rel);
 		/* don't throw error for "TRUNCATE foo, foo" */
 		if (list_member_oid(relids, myrelid))
 		{
-			heap_close(rel, AccessExclusiveLock);
+			heap_close(rel, lockmode);
 			continue;
 		}
 		truncate_check_rel(rel);
@@ -1634,7 +1635,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 			ListCell   *child;
 			List	   *children;
 
-			children = find_all_inheritors(myrelid, AccessExclusiveLock, NULL);
+			children = find_all_inheritors(myrelid, lockmode, NULL);
 
 			foreach(child, children)
 			{
@@ -1645,6 +1646,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 				/* find_all_inheritors already got lock */
 				rel = heap_open(childrelid, NoLock);
+<<<<<<< HEAD
 				/*
 				 * This check is performed outside truncate_check_rel() in
 				 * order to provide a more reasonable error message.
@@ -1654,6 +1656,24 @@ ExecuteTruncate(TruncateStmt *stmt)
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 							 errmsg("cannot truncate table having external partition: \"%s\"",
 								    RelationGetRelationName(rel))));
+=======
+
+				/*
+				 * It is possible that the parent table has children that are
+				 * temp tables of other backends.  We cannot safely access
+				 * such tables (because of buffering issues), and the best
+				 * thing to do is to silently ignore them.  Note that this
+				 * check is the same as one of the checks done in
+				 * truncate_check_rel() called below, still it is kept
+				 * here for simplicity.
+				 */
+				if (RELATION_IS_OTHER_TEMP(rel))
+				{
+					heap_close(rel, lockmode);
+					continue;
+				}
+
+>>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 				truncate_check_rel(rel);
 				rels = lappend(rels, rel);
 				relids = lappend_oid(relids, childrelid);
@@ -3199,7 +3219,14 @@ rename_constraint_internal(Oid myrelid,
 	ReleaseSysCache(tuple);
 
 	if (targetrelation)
+	{
+		/*
+		 * Invalidate relcache so as others can see the new constraint name.
+		 */
+		CacheInvalidateRelcache(targetrelation);
+
 		relation_close(targetrelation, NoLock); /* close rel but keep lock */
+	}
 
 	return constraintOid;
 }
@@ -11121,7 +11148,13 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	ScanKeyData key[3];
 	SysScanDesc scan;
 	HeapTuple	depTup;
+<<<<<<< HEAD
 	bool		relContainsTuples = false;
+=======
+	ListCell   *lc;
+	ListCell   *prev;
+	ListCell   *next;
+>>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 
 	attrelation = heap_open(AttributeRelationId, RowExclusiveLock);
 
@@ -11242,7 +11275,18 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 
 					if (relKind == RELKIND_INDEX)
 					{
+						/*
+						 * Indexes that are directly dependent on the table
+						 * might be regular indexes or constraint indexes.
+						 * Constraint indexes typically have only indirect
+						 * dependencies; but there are exceptions, notably
+						 * partial exclusion constraints.  Hence we must check
+						 * whether the index depends on any constraint that's
+						 * due to be rebuilt, which we'll do below after we've
+						 * found all such constraints.
+						 */
 						Assert(foundObject.objectSubId == 0);
+<<<<<<< HEAD
 						if (!list_member_oid(tab->changedIndexOids, foundObject.objectId))
 						{
 							char *indexdefstring = pg_get_indexdef_string(foundObject.objectId);
@@ -11270,6 +11314,11 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 								}
 							}
 						}
+=======
+						tab->changedIndexOids =
+							list_append_unique_oid(tab->changedIndexOids,
+												   foundObject.objectId);
+>>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 					}
 					else if (relKind == RELKIND_SEQUENCE)
 					{
@@ -11423,6 +11472,41 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	}
 
 	systable_endscan(scan);
+
+	/*
+	 * Check the collected index OIDs to see which ones belong to the
+	 * constraint(s) of the table, and drop those from the list of indexes
+	 * that we need to process; rebuilding the constraints will handle them.
+	 */
+	prev = NULL;
+	for (lc = list_head(tab->changedIndexOids); lc; lc = next)
+	{
+		Oid			indexoid = lfirst_oid(lc);
+		Oid			conoid;
+
+		next = lnext(lc);
+
+		conoid = get_index_constraint(indexoid);
+		if (OidIsValid(conoid) &&
+			list_member_oid(tab->changedConstraintOids, conoid))
+			tab->changedIndexOids = list_delete_cell(tab->changedIndexOids,
+													 lc, prev);
+		else
+			prev = lc;
+	}
+
+	/*
+	 * Now collect the definitions of the indexes that must be rebuilt.  (We
+	 * could merge this into the previous loop, but it'd be more complicated
+	 * for little gain.)
+	 */
+	foreach(lc, tab->changedIndexOids)
+	{
+		Oid			indexoid = lfirst_oid(lc);
+
+		tab->changedIndexDefs = lappend(tab->changedIndexDefs,
+										pg_get_indexdef_string(indexoid));
+	}
 
 	/*
 	 * Now scan for dependencies of this column on other things.  The only

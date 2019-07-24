@@ -736,11 +736,15 @@ standard_ProcessUtility(Node *parsetree,
 			{
 				UnlistenStmt *stmt = (UnlistenStmt *) parsetree;
 
+<<<<<<< HEAD
 				if (Gp_role == GP_ROLE_EXECUTE)
 					ereport(ERROR, (errcode(ERRCODE_GP_COMMAND_ERROR),
 							errmsg("unlisten command cannot run in a function running on a segDB")));
 
 				PreventCommandDuringRecovery("UNLISTEN");
+=======
+				/* we allow UNLISTEN during recovery, as it's a noop */
+>>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 				CheckRestrictedOperation("UNLISTEN");
 				if (stmt->conditionname)
 					Async_Unlisten(stmt->conditionname);
