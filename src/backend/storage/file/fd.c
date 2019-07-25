@@ -1526,11 +1526,7 @@ FileClose(File file)
 	if (!FileIsNotOpen(file))
 	{
 		/* close the file */
-<<<<<<< HEAD
 		if (gp_retry_close(vfdP->fd))
-			elog(LOG, "could not close file \"%s\": %m", vfdP->fileName);
-=======
-		if (close(vfdP->fd))
 		{
 			/*
 			 * We may need to panic on failure to close non-temporary files;
@@ -1539,7 +1535,6 @@ FileClose(File file)
 			elog(vfdP->fdstate & FD_TEMPORARY ? LOG : data_sync_elevel(LOG),
 				"could not close file \"%s\": %m", vfdP->fileName);
 		}
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 
 		--nfile;
 		vfdP->fd = VFD_CLOSED;
@@ -3326,7 +3321,6 @@ fsync_parent_path(const char *fname, int elevel)
 	return 0;
 }
 
-<<<<<<< HEAD
 const char *
 FileGetFilename(File file)
 {
@@ -3348,7 +3342,8 @@ void
 FileSetIsWorkfile(File file)
 {
 	VfdCache[file].fdstate |= FD_WORKFILE;
-=======
+}
+
 /*
  * Return the passed-in error level, or PANIC if data_sync_retry is off.
  *
@@ -3370,5 +3365,4 @@ int
 data_sync_elevel(int elevel)
 {
 	return data_sync_retry ? elevel : PANIC;
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 }

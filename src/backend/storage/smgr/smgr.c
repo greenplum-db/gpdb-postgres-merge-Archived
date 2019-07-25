@@ -24,11 +24,8 @@
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
 #include "commands/tablespace.h"
-<<<<<<< HEAD
 #include "postmaster/postmaster.h"
-=======
 #include "lib/ilist.h"
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/smgr.h"

@@ -5564,15 +5564,11 @@ sigusr1_handler(SIGNAL_ARGS)
 		MaybeStartWalReceiver();
 	}
 
-<<<<<<< HEAD
 	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_FTS) && FtsProbePID() != 0)
 	{
 		signal_child(FtsProbePID(), SIGINT);
 	}
 
-	if (CheckPostmasterSignal(PMSIGNAL_ADVANCE_STATE_MACHINE) &&
-		(pmState == PM_WAIT_BACKUP || pmState == PM_WAIT_BACKENDS))
-=======
 	/*
 	 * Try to advance postmaster's state machine, if a child requests it.
 	 *
@@ -5584,7 +5580,6 @@ sigusr1_handler(SIGNAL_ARGS)
 	 * depend on what state we're in now.
 	 */
 	if (CheckPostmasterSignal(PMSIGNAL_ADVANCE_STATE_MACHINE))
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 	{
 		PostmasterStateMachine();
 	}
@@ -5982,16 +5977,11 @@ MaybeStartWalReceiver(void)
 		Shutdown == NoShutdown)
 	{
 		WalReceiverPID = StartWalReceiver();
-<<<<<<< HEAD
-		WalReceiverRequested = false;
-
 		/* wal receiver has been launched */
 		SetMirrorReadyFlag();
-=======
 		if (WalReceiverPID != 0)
 			WalReceiverRequested = false;
 		/* else leave the flag set, so we'll try again later */
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 	}
 }
 

@@ -776,14 +776,7 @@ cache_locale_time(void)
 	bool		strftimefail = false;
 	int			encoding;
 	int			i;
-<<<<<<< HEAD
-#ifdef WIN32
-	char	   *save_lc_ctype;
-#endif
-
-=======
 	char	   *save_lc_time;
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 #ifdef WIN32
 	char	   *save_lc_ctype;
 #endif

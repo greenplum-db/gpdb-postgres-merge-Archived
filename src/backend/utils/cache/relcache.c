@@ -39,11 +39,8 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
-<<<<<<< HEAD
 #include "catalog/heap.h"
 #include "catalog/index.h"
-=======
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_amproc.h"
@@ -3283,28 +3280,6 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid,
 		/* Normal case, update the pg_class entry */
 		classform->relfilenode = newrelfilenode;
 
-<<<<<<< HEAD
-	/* These changes are safe even for a mapped relation */
-	if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
-	{
-		classform->relpages = 0;	/* it's empty until further notice */
-		classform->reltuples = 0;
-		classform->relallvisible = 0;
-	}
-
-	if (TransactionIdIsValid(classform->relfrozenxid))
-	{
-		Assert(TransactionIdIsNormal(freezeXid));
-		classform->relfrozenxid = freezeXid;
-		/*
-		 * Don't know partition parent or not here but passing false is perfect
-		 * for assertion, as valid relfrozenxid means it shouldn't be parent.
-		 */
-		Assert(should_have_valid_relfrozenxid(classform->relkind,
-											  classform->relstorage, false));
-	}
-	classform->relminmxid = minmulti;
-=======
 		/* relpages etc. never change for sequences */
 		if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
 		{
@@ -3312,9 +3287,20 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid,
 			classform->reltuples = 0;
 			classform->relallvisible = 0;
 		}
-		classform->relfrozenxid = freezeXid;
+
+		if (TransactionIdIsValid(classform->relfrozenxid))
+		{
+			Assert(TransactionIdIsNormal(freezeXid));
+			classform->relfrozenxid = freezeXid;
+			/*
+			 * Don't know partition parent or not here but passing false is
+			 * perfect for assertion, as valid relfrozenxid means it shouldn't
+			 * be parent.
+			 */
+			Assert(should_have_valid_relfrozenxid(classform->relkind,
+												  classform->relstorage, false));
+		}
 		classform->relminmxid = minmulti;
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 
 		simple_heap_update(pg_class, &tuple->t_self, tuple);
 		CatalogUpdateIndexes(pg_class, tuple);

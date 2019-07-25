@@ -14,14 +14,7 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS= dest.o fastpath.o postgres.o pquery.o utility.o
 
-<<<<<<< HEAD
 # Greenplum objects
 OBJS+= idle_resource_cleaner.o
 
-ifneq (,$(filter $(PORTNAME),cygwin win32))
-override CPPFLAGS += -DWIN32_STACK_RLIMIT=$(WIN32_STACK_RLIMIT)
-endif
-
-=======
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 include $(top_srcdir)/src/backend/common.mk
