@@ -17,16 +17,12 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-<<<<<<< HEAD
 dnl The PACKAGE_VERSION from upstream PostgreSQL is maintained in the
 dnl PG_PACKAGE_VERSION variable, when merging make sure to update this
 dnl variable with the merge conflict from the AC_INIT() statement.
 AC_INIT([Greenplum Database], [6.0.0-beta.1], [support@greenplum.org])
-[PG_PACKAGE_VERSION=9.4.20]
+[PG_PACKAGE_VERSION=9.4.23]
 AC_SUBST(PG_PACKAGE_VERSION)
-=======
-AC_INIT([PostgreSQL], [9.4.23], [pgsql-bugs@postgresql.org])
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 
 dnl m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.69 is required.
 dnl Untested combinations of 'autoconf' and PostgreSQL versions are not
@@ -1908,12 +1904,9 @@ PGAC_FUNC_WCSTOMBS_L
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-<<<<<<< HEAD
 # net-snmp has the same problem..
 LIBS=`echo "$LIBS" | sed -e 's/-lnetsnmp//g'`
 
-AC_CHECK_FUNCS([cbrt dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll posix_fallocate pstat pthread_is_threaded_np readlink setproctitle setsid shm_open sigprocmask symlink sync_file_range towlower utime utimes wcstombs wcstombs_l])
-=======
 AC_CHECK_FUNCS(m4_normalize([
 	cbrt
 	dlopen
@@ -1941,7 +1934,6 @@ AC_CHECK_FUNCS(m4_normalize([
 	wcstombs
 	wcstombs_l
 ]))
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 
 AC_REPLACE_FUNCS(fseeko)
 case $host_os in
@@ -2196,112 +2188,6 @@ if test "$with_readline" = yes; then
 fi
 
 
-<<<<<<< HEAD
-AC_CACHE_CHECK([for builtin locking functions], pgac_cv_gcc_int_atomics,
-[AC_TRY_LINK([],
-  [int lock = 0;
-   __sync_lock_test_and_set(&lock, 1);
-   __sync_lock_release(&lock);],
-  [pgac_cv_gcc_int_atomics="yes"],
-  [pgac_cv_gcc_int_atomics="no"])])
-if test x"$pgac_cv_gcc_int_atomics" = x"yes"; then
-  AC_DEFINE(HAVE_GCC_INT_ATOMICS, 1, [Define to 1 if you have __sync_lock_test_and_set(int *) and friends.])
-fi
-
-# Lastly, restore full LIBS list and check for readline/libedit symbols
-LIBS="$LIBS_including_readline"
-
-if test "$with_readline" = yes; then
-  PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
-  AC_CHECK_FUNCS([rl_completion_matches rl_filename_completion_function])
-  AC_CHECK_FUNCS([append_history history_truncate_file])
-fi
-
-
-#
-# Pthreads
-#
-# For each platform, we need to know about any special compile and link
-# libraries, and whether the normal C function names are thread-safe.
-# See the comment at the top of src/port/thread.c for more information.
-# WIN32 doesn't need the pthread tests;  it always uses threads
-if test "$enable_thread_safety" = yes -a "$PORTNAME" != "win32"; then
-ACX_PTHREAD	# set thread flags
-
-# Some platforms use these, so just define them.  They can't hurt if they
-# are not supported.  For example, on Solaris -D_POSIX_PTHREAD_SEMANTICS
-# enables 5-arg getpwuid_r, among other things.
-PTHREAD_CFLAGS="$PTHREAD_CFLAGS -D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"
-
-
-# At this point, we don't want to muck with the compiler name for threading.
-# Let's see who fails, perhaps AIX.  2004-04-23
-if test "$PTHREAD_CC" != "$CC"; then
-AC_MSG_ERROR([
-PostgreSQL does not support platforms that require a special compiler
-for thread safety;  use --disable-thread-safety to disable thread safety.])
-fi
-
-# Check for *_r functions
-_CFLAGS="$CFLAGS"
-_LIBS="$LIBS"
-CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-LIBS="$LIBS $PTHREAD_LIBS"
-
-if test "$PORTNAME" != "win32"; then
-AC_CHECK_HEADER(pthread.h, [], [AC_MSG_ERROR([
-pthread.h not found;  use --disable-thread-safety to disable thread safety])])
-fi
-
-AC_CHECK_FUNCS([strerror_r getpwuid_r gethostbyname_r])
-
-# Do test here with the proper thread flags
-PGAC_FUNC_GETPWUID_R_5ARG
-PGAC_FUNC_STRERROR_R_INT
-
-CFLAGS="$_CFLAGS"
-LIBS="$_LIBS"
-
-else
-# do not use values from template file
-PTHREAD_CFLAGS=
-PTHREAD_LIBS=
-fi
-
-AC_SUBST(PTHREAD_CFLAGS)
-AC_SUBST(PTHREAD_LIBS)
-
-
-# We can test for libldap_r only after we know PTHREAD_LIBS
-if test "$with_ldap" = yes ; then
-  _LIBS="$LIBS"
-  if test "$PORTNAME" != "win32"; then
-    AC_CHECK_LIB(ldap, ldap_bind, [],
-		 [AC_MSG_ERROR([library 'ldap' is required for LDAP])],
-		 [$EXTRA_LDAP_LIBS])
-    LDAP_LIBS_BE="-lldap $EXTRA_LDAP_LIBS"
-    if test "$enable_thread_safety" = yes; then
-      # on some platforms ldap_r fails to link without PTHREAD_LIBS
-      AC_CHECK_LIB(ldap_r, ldap_simple_bind, [],
-		   [AC_MSG_ERROR([library 'ldap_r' is required for LDAP])],
-		   [$PTHREAD_CFLAGS $PTHREAD_LIBS $EXTRA_LDAP_LIBS])
-      LDAP_LIBS_FE="-lldap_r $EXTRA_LDAP_LIBS"
-    else
-      LDAP_LIBS_FE="-lldap $EXTRA_LDAP_LIBS"
-    fi
-  else
-    AC_CHECK_LIB(wldap32, ldap_bind, [], [AC_MSG_ERROR([library 'wldap32' is required for LDAP])])
-    LDAP_LIBS_FE="-lwldap32"
-    LDAP_LIBS_BE="-lwldap32"
-  fi
-  LIBS="$_LIBS"
-fi
-AC_SUBST(LDAP_LIBS_FE)
-AC_SUBST(LDAP_LIBS_BE)
-
-
-=======
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 # This test makes sure that run tests work at all.  Sometimes a shared
 # library is found by the linker, but the runtime linker can't find it.
 # This check should come after all modifications of compiler or linker
