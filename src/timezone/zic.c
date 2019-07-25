@@ -3281,12 +3281,8 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 				lastat = &attypes[i];
 		if (!lastat || lastat->at < rpytime(&xr, max_year - 1))
 		{
-<<<<<<< HEAD
-			addtt(rpytime(&xr, max_year + 0), lastat->type);
-=======
 			addtt(rpytime(&xr, max_year + 1),
 				  lastat ? lastat->type : defaulttype);
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 			attypes[timecnt - 1].dontmerge = true;
 		}
 	}
