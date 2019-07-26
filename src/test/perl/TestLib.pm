@@ -104,8 +104,6 @@ delete $ENV{LANGUAGE};
 delete $ENV{LC_ALL};
 $ENV{LC_MESSAGES} = 'C';
 
-<<<<<<< HEAD
-=======
 delete $ENV{PGCONNECT_TIMEOUT};
 delete $ENV{PGDATA};
 delete $ENV{PGDATABASE};
@@ -128,7 +126,6 @@ if ($ENV{PGPORT} < 1024 || $ENV{PGPORT} > 65535)
 }
 
 
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 #
 # Helper functions
 #

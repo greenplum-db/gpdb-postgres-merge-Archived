@@ -55,11 +55,7 @@ match properly on the old version.
 Time Zone code
 ==============
 
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
-The code in this directory is currently synced with tzcode release 2018h.
-================================
 The code in this directory is currently synced with tzcode release 2019a.
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 There are many cosmetic (and not so cosmetic) differences from the
 original tzcode library, but diffs in the upstream version should usually
 be propagated to our version.  Here are some notes about that.
