@@ -1556,6 +1556,9 @@ inheritance_planner(PlannerInfo *root)
 			withCheckOptionLists = list_make1(parse->withCheckOptions);
 		if (parse->returningList)
 			returningLists = list_make1(parse->returningList);
+
+		/* for a dummy subplan, set is_split_update to false */
+		is_split_updates = lappend_int(is_split_updates, false);
 	}
 	else
 	{
