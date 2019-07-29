@@ -246,24 +246,25 @@ EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
  Optimizer: Postgres query optimizer
 (10 rows)
 
-<<<<<<< HEAD
-reset enable_nestloop;
-=======
 -- This should also be a nestloop, but the security barrier forces the inner
 -- scan to be materialized
 EXPLAIN (COSTS OFF) SELECT * FROM atest12sbv x, atest12sbv y WHERE x.a = y.b;
-                QUERY PLAN                 
--------------------------------------------
- Nested Loop
-   Join Filter: (atest12.a = atest12_1.b)
-   ->  Seq Scan on atest12
-         Filter: (b <<< 5)
-   ->  Materialize
-         ->  Seq Scan on atest12 atest12_1
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)
+   ->  Nested Loop
+         Join Filter: (atest12.a = atest12_1.b)
+         ->  Seq Scan on atest12
                Filter: (b <<< 5)
-(7 rows)
+         ->  Materialize
+               ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                     Hash Key: atest12_1.b
+                     ->  Seq Scan on atest12 atest12_1
+                           Filter: (b <<< 5)
+ Optimizer: Postgres query optimizer
+(11 rows)
 
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
+reset enable_nestloop;
 -- Check if regressuser2 can break security.
 SET SESSION AUTHORIZATION regressuser2;
 CREATE FUNCTION leak2(integer,integer) RETURNS boolean
@@ -274,86 +275,82 @@ CREATE OPERATOR >>> (procedure = leak2, leftarg = integer, rightarg = integer,
 -- This should not show any "leak" notices before failing.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12 WHERE a >>> 0;
 ERROR:  permission denied for relation atest12
+set enable_nestloop = 1;
 -- These plans should continue to use a nestloop, since they execute with the
 -- privileges of the view owner.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
-<<<<<<< HEAD
                          QUERY PLAN                         
 ------------------------------------------------------------
  Gather Motion 3:1  (slice2; segments: 3)
-   ->  Hash Join
-         Hash Cond: (atest12_1.b = atest12.a)
+   ->  Nested Loop
          ->  Redistribute Motion 3:3  (slice1; segments: 3)
                Hash Key: atest12_1.b
                ->  Seq Scan on atest12 atest12_1
                      Filter: (b <<< 5)
-         ->  Hash
-               ->  Seq Scan on atest12
-                     Filter: (b <<< 5)
+         ->  Index Scan using atest12_a_idx on atest12
+               Index Cond: (a = atest12_1.b)
+               Filter: (b <<< 5)
  Optimizer: Postgres query optimizer
-(11 rows)
-=======
-                   QUERY PLAN                    
--------------------------------------------------
- Nested Loop
-   ->  Seq Scan on atest12 atest12_1
-         Filter: (b <<< 5)
-   ->  Index Scan using atest12_a_idx on atest12
-         Index Cond: (a = atest12_1.b)
-         Filter: (b <<< 5)
-(6 rows)
+(10 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM atest12sbv x, atest12sbv y WHERE x.a = y.b;
-                QUERY PLAN                 
--------------------------------------------
- Nested Loop
-   Join Filter: (atest12.a = atest12_1.b)
-   ->  Seq Scan on atest12
-         Filter: (b <<< 5)
-   ->  Materialize
-         ->  Seq Scan on atest12 atest12_1
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)
+   ->  Nested Loop
+         Join Filter: (atest12.a = atest12_1.b)
+         ->  Seq Scan on atest12
                Filter: (b <<< 5)
-(7 rows)
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
+         ->  Materialize
+               ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                     Hash Key: atest12_1.b
+                     ->  Seq Scan on atest12 atest12_1
+                           Filter: (b <<< 5)
+ Optimizer: Postgres query optimizer
+(11 rows)
 
 -- A non-security barrier view does not guard against information leakage.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y
   WHERE x.a = y.b and abs(y.a) <<< 5;
-                   QUERY PLAN                    
--------------------------------------------------
- Nested Loop
-   ->  Seq Scan on atest12 atest12_1
-         Filter: ((b <<< 5) AND (abs(a) <<< 5))
-   ->  Index Scan using atest12_a_idx on atest12
-         Index Cond: (a = atest12_1.b)
-         Filter: (b <<< 5)
-(6 rows)
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)
+   ->  Nested Loop
+         ->  Redistribute Motion 3:3  (slice1; segments: 3)
+               Hash Key: atest12_1.b
+               ->  Seq Scan on atest12 atest12_1
+                     Filter: ((b <<< 5) AND (abs(a) <<< 5))
+         ->  Index Scan using atest12_a_idx on atest12
+               Index Cond: (a = atest12_1.b)
+               Filter: (b <<< 5)
+ Optimizer: Postgres query optimizer
+(10 rows)
 
 -- But a security barrier view isolates the leaky operator.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12sbv x, atest12sbv y
   WHERE x.a = y.b and abs(y.a) <<< 5;
-             QUERY PLAN              
--------------------------------------
- Nested Loop
-   Join Filter: (atest12_1.a = y.b)
-   ->  Subquery Scan on y
-         Filter: (abs(y.a) <<< 5)
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)
+   ->  Nested Loop
+         Join Filter: (atest12.a = y.b)
          ->  Seq Scan on atest12
                Filter: (b <<< 5)
-   ->  Seq Scan on atest12 atest12_1
-         Filter: (b <<< 5)
-(8 rows)
+         ->  Materialize
+               ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                     Hash Key: y.b
+                     ->  Subquery Scan on y
+                           Filter: (abs(y.a) <<< 5)
+                           ->  Seq Scan on atest12 atest12_1
+                                 Filter: (b <<< 5)
+ Optimizer: Postgres query optimizer
+(13 rows)
 
 -- Now regressuser1 grants sufficient access to regressuser2.
 SET SESSION AUTHORIZATION regressuser1;
 GRANT SELECT (a, b) ON atest12 TO PUBLIC;
 SET SESSION AUTHORIZATION regressuser2;
-<<<<<<< HEAD
--- Now regressuser2 will also get a good row estimate.
-set enable_nestloop = 1;
-=======
 -- regressuser2 should continue to get a good row estimate.
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
                          QUERY PLAN                         
 ------------------------------------------------------------

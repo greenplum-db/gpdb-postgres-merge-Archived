@@ -166,11 +166,11 @@ EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
 -- And this one.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
   WHERE x.a = y.b and abs(y.a) <<< 5;
-reset enable_nestloop;
 
 -- This should also be a nestloop, but the security barrier forces the inner
 -- scan to be materialized
 EXPLAIN (COSTS OFF) SELECT * FROM atest12sbv x, atest12sbv y WHERE x.a = y.b;
+reset enable_nestloop;
 
 -- Check if regressuser2 can break security.
 SET SESSION AUTHORIZATION regressuser2;
@@ -184,6 +184,7 @@ CREATE OPERATOR >>> (procedure = leak2, leftarg = integer, rightarg = integer,
 -- This should not show any "leak" notices before failing.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12 WHERE a >>> 0;
 
+set enable_nestloop = 1;
 -- These plans should continue to use a nestloop, since they execute with the
 -- privileges of the view owner.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
@@ -202,12 +203,7 @@ SET SESSION AUTHORIZATION regressuser1;
 GRANT SELECT (a, b) ON atest12 TO PUBLIC;
 SET SESSION AUTHORIZATION regressuser2;
 
-<<<<<<< HEAD
--- Now regressuser2 will also get a good row estimate.
-set enable_nestloop = 1;
-=======
 -- regressuser2 should continue to get a good row estimate.
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
 reset enable_nestloop;
 
