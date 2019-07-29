@@ -571,7 +571,6 @@ SELECT '' AS five, f1 FROM FLOAT8_TBL ORDER BY 2;
       |                     0
 (5 rows)
 
-<<<<<<< HEAD
 -- test if you can dump/restore subnormal (1e-323) values
 -- using COPY
 CREATE TABLE FLOATS(a float8);
@@ -642,7 +641,6 @@ SELECT * FROM FLOATS ORDER BY a;
                 1e-308
 (16 rows)
 
-=======
 -- test edge-case coercions to integer
 SELECT '32767.4'::float8::int2;
  int2  
@@ -692,4 +690,3 @@ SELECT '-9223372036854775808.5'::float8::int8;
 
 SELECT '-9223372036854780000'::float8::int8;
 ERROR:  bigint out of range
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
