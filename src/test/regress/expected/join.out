@@ -5495,32 +5495,36 @@ select * from
 explain (verbose, costs off)
 select * from int8_tbl i8 left join lateral
   (select *, i8.q2 from int4_tbl where false) ss on true;
-                  QUERY PLAN                  
-----------------------------------------------
- Nested Loop Left Join
-   Output: i8.q1, i8.q2, int4_tbl.f1, (i8.q2)
-   ->  Seq Scan on public.int8_tbl i8
-         Output: i8.q1, i8.q2
-   ->  Result
-         Output: int4_tbl.f1, (i8.q2)
-         One-Time Filter: false
-         ->  Seq Scan on public.int4_tbl
-               Output: int4_tbl.f1, i8.q2
-(9 rows)
+                 QUERY PLAN                 
+--------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Output: i8.q1, i8.q2, f1, (i8.q2)
+   ->  Nested Loop Left Join
+         Output: i8.q1, i8.q2, f1, (i8.q2)
+         ->  Seq Scan on public.int8_tbl i8
+               Output: i8.q1, i8.q2
+         ->  Result
+               Output: f1, i8.q2
+               One-Time Filter: false
+ Optimizer: Postgres query optimizer
+(10 rows)
 
 explain (verbose, costs off)
 select * from int8_tbl i8 left join lateral
   (select *, i8.q2 from int4_tbl i1, int4_tbl i2 where false) ss on true;
-               QUERY PLAN                
------------------------------------------
- Nested Loop Left Join
+                  QUERY PLAN                   
+-----------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
    Output: i8.q1, i8.q2, f1, f1, (i8.q2)
-   ->  Seq Scan on public.int8_tbl i8
-         Output: i8.q1, i8.q2
-   ->  Result
-         Output: f1, f1, i8.q2
-         One-Time Filter: false
-(7 rows)
+   ->  Nested Loop Left Join
+         Output: i8.q1, i8.q2, f1, f1, (i8.q2)
+         ->  Seq Scan on public.int8_tbl i8
+               Output: i8.q1, i8.q2
+         ->  Result
+               Output: f1, f1, i8.q2
+               One-Time Filter: false
+ Optimizer: Postgres query optimizer
+(10 rows)
 
 -- check handling of nested appendrels inside LATERAL
 select * from
