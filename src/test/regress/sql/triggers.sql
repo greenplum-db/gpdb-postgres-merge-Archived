@@ -1037,8 +1037,6 @@ drop function depth_a_tf();
 drop function depth_b_tf();
 drop function depth_c_tf();
 
-<<<<<<< HEAD
-=======
 --
 -- Test updates to rows during firing of BEFORE ROW triggers.
 -- As of 9.2, such cases should be rejected (see bug #6123).
@@ -1220,4 +1218,3 @@ update stmt_trig_on_empty_upd1 set a = a where false returning a+1 as aa;
 
 drop table stmt_trig_on_empty_upd cascade;
 drop function update_stmt_notice();
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df

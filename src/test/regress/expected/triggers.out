@@ -1387,8 +1387,6 @@ drop table depth_a, depth_b, depth_c;
 drop function depth_a_tf();
 drop function depth_b_tf();
 drop function depth_c_tf();
-<<<<<<< HEAD
-=======
 --
 -- Test updates to rows during firing of BEFORE ROW triggers.
 -- As of 9.2, such cases should be rejected (see bug #6123).
@@ -1449,44 +1447,46 @@ create trigger child_del_trig after delete on child
   for each row execute procedure child_del_func();
 insert into parent values (1, 'a', 'a', 'a', 'a', 0);
 insert into child values (10, 1, 'b');
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg2 127.0.0.1:25434 pid=14245)
+CONTEXT:  SQL statement "update parent set bcnt = bcnt + 1 where aid = new.aid"
+PL/pgSQL function child_ins_func() line 3 at SQL statement
 select * from parent; select * from child;
  aid | val1 | val2 | val3 | val4 | bcnt 
 -----+------+------+------+------+------
-   1 | a    | a    | a    | a    |    1
+   1 | a    | a    | a    | a    |    0
 (1 row)
 
  bid | aid | val1 
 -----+-----+------
-  10 |   1 | b
-(1 row)
+(0 rows)
 
 update parent set val1 = 'b' where aid = 1; -- should fail
-ERROR:  tuple to be updated was already modified by an operation triggered by the current command
-HINT:  Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg1 127.0.0.1:25433 pid=14244)
+CONTEXT:  SQL statement "delete from child where child.aid = new.aid and child.val1 = new.val1"
+PL/pgSQL function parent_upd_func() line 5 at SQL statement
 select * from parent; select * from child;
  aid | val1 | val2 | val3 | val4 | bcnt 
 -----+------+------+------+------+------
-   1 | a    | a    | a    | a    |    1
+   1 | a    | a    | a    | a    |    0
 (1 row)
 
  bid | aid | val1 
 -----+-----+------
-  10 |   1 | b
-(1 row)
+(0 rows)
 
 delete from parent where aid = 1; -- should fail
-ERROR:  tuple to be updated was already modified by an operation triggered by the current command
-HINT:  Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg1 127.0.0.1:25433 pid=14244)
+CONTEXT:  SQL statement "delete from child where aid = old.aid"
+PL/pgSQL function parent_del_func() line 3 at SQL statement
 select * from parent; select * from child;
  aid | val1 | val2 | val3 | val4 | bcnt 
 -----+------+------+------+------+------
-   1 | a    | a    | a    | a    |    1
+   1 | a    | a    | a    | a    |    0
 (1 row)
 
  bid | aid | val1 
 -----+-----+------
-  10 |   1 | b
-(1 row)
+(0 rows)
 
 -- replace the trigger function with one that restarts the deletion after
 -- having modified a child
@@ -1503,10 +1503,14 @@ begin
 end;
 $$;
 delete from parent where aid = 1;
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg1 127.0.0.1:25433 pid=14244)
+CONTEXT:  SQL statement "delete from child where aid = old.aid"
+PL/pgSQL function parent_del_func() line 3 at SQL statement
 select * from parent; select * from child;
  aid | val1 | val2 | val3 | val4 | bcnt 
 -----+------+------+------+------+------
-(0 rows)
+   1 | a    | a    | a    | a    |    0
+(1 row)
 
  bid | aid | val1 
 -----+-----+------
@@ -1525,6 +1529,7 @@ create temp table self_ref_trigger (
     data text,
     nchildren int not null default 0
 );
+WARNING:  referential integrity (FOREIGN KEY) constraints are not supported in Greenplum Database, will not be enforced
 create function self_ref_trigger_ins_func()
   returns trigger language plpgsql as
 $$
@@ -1553,32 +1558,37 @@ create trigger self_ref_trigger_del_trig before delete on self_ref_trigger
   for each row execute procedure self_ref_trigger_del_func();
 insert into self_ref_trigger values (1, null, 'root');
 insert into self_ref_trigger values (2, 1, 'root child A');
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg0 127.0.0.1:25432 pid=14243)
+CONTEXT:  SQL statement "update self_ref_trigger set nchildren = nchildren + 1
+      where id = new.parent"
+PL/pgSQL function self_ref_trigger_ins_func() line 4 at SQL statement
 insert into self_ref_trigger values (3, 1, 'root child B');
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg0 127.0.0.1:25432 pid=14243)
+CONTEXT:  SQL statement "update self_ref_trigger set nchildren = nchildren + 1
+      where id = new.parent"
+PL/pgSQL function self_ref_trigger_ins_func() line 4 at SQL statement
 insert into self_ref_trigger values (4, 2, 'grandchild 1');
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg0 127.0.0.1:25432 pid=14243)
+CONTEXT:  SQL statement "update self_ref_trigger set nchildren = nchildren + 1
+      where id = new.parent"
+PL/pgSQL function self_ref_trigger_ins_func() line 4 at SQL statement
 insert into self_ref_trigger values (5, 3, 'grandchild 2');
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg2 127.0.0.1:25434 pid=14245)
+CONTEXT:  SQL statement "update self_ref_trigger set nchildren = nchildren + 1
+      where id = new.parent"
+PL/pgSQL function self_ref_trigger_ins_func() line 4 at SQL statement
 update self_ref_trigger set data = 'root!' where id = 1;
 select * from self_ref_trigger;
- id | parent |     data     | nchildren 
-----+--------+--------------+-----------
-  2 |      1 | root child A |         1
-  4 |      2 | grandchild 1 |         0
-  3 |      1 | root child B |         1
-  5 |      3 | grandchild 2 |         0
-  1 |        | root!        |         2
-(5 rows)
+ id | parent | data  | nchildren 
+----+--------+-------+-----------
+  1 |        | root! |         0
+(1 row)
 
 delete from self_ref_trigger;
-ERROR:  tuple to be updated was already modified by an operation triggered by the current command
-HINT:  Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.
 select * from self_ref_trigger;
- id | parent |     data     | nchildren 
-----+--------+--------------+-----------
-  2 |      1 | root child A |         1
-  4 |      2 | grandchild 1 |         0
-  3 |      1 | root child B |         1
-  5 |      3 | grandchild 2 |         0
-  1 |        | root!        |         2
-(5 rows)
+ id | parent | data | nchildren 
+----+--------+------+-----------
+(0 rows)
 
 drop table self_ref_trigger;
 drop function self_ref_trigger_ins_func();
@@ -1588,6 +1598,7 @@ drop function self_ref_trigger_del_func();
 --
 create table stmt_trig_on_empty_upd (a int);
 create table stmt_trig_on_empty_upd1 () inherits (stmt_trig_on_empty_upd);
+NOTICE:  table has parent, setting distribution columns to match parent table
 create function update_stmt_notice() returns trigger as $$
 begin
 	raise notice 'updating %', TG_TABLE_NAME;
@@ -1602,14 +1613,12 @@ create trigger before_stmt_trigger
 	execute procedure update_stmt_notice();
 -- inherited no-op update
 update stmt_trig_on_empty_upd set a = a where false returning a+1 as aa;
-NOTICE:  updating stmt_trig_on_empty_upd
  aa 
 ----
 (0 rows)
 
 -- simple no-op update
 update stmt_trig_on_empty_upd1 set a = a where false returning a+1 as aa;
-NOTICE:  updating stmt_trig_on_empty_upd1
  aa 
 ----
 (0 rows)
@@ -1617,4 +1626,3 @@ NOTICE:  updating stmt_trig_on_empty_upd1
 drop table stmt_trig_on_empty_upd cascade;
 NOTICE:  drop cascades to table stmt_trig_on_empty_upd1
 drop function update_stmt_notice();
->>>>>>> a01e72fb69cb808364788b5360546f75cf2198df
