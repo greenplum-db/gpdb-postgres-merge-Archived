@@ -43,6 +43,10 @@ ALTER TABLE view_base_table DROP CONSTRAINT view_base_table_pkey;  -- fails
 CREATE VIEW key_dependent_view_no_cols AS
    SELECT FROM view_base_table GROUP BY key HAVING length(data) > 0;
 
+-- zero-column view cannot pass the gpcheckcat FK check between pg_rewrite/pg_attribute,
+-- so drop the view explicitly to workaround it.
+DROP VIEW key_dependent_view_no_cols;
+
 --
 -- CREATE OR REPLACE VIEW
 --

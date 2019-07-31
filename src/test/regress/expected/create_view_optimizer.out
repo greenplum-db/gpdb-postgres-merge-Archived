@@ -35,6 +35,9 @@ DETAIL:  view key_dependent_view depends on constraint view_base_table_pkey on t
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 CREATE VIEW key_dependent_view_no_cols AS
    SELECT FROM view_base_table GROUP BY key HAVING length(data) > 0;
+-- zero-column view cannot pass the gpcheckcat FK check between pg_rewrite/pg_attribute,
+-- so drop the view explicitly to workaround it.
+DROP VIEW key_dependent_view_no_cols;
 --
 -- CREATE OR REPLACE VIEW
 --
