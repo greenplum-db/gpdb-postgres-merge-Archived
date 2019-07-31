@@ -1582,7 +1582,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 		},
 		&gp_enable_gpperfmon,
 		false,
-		gpvars_check_gp_enable_gpperfmon, NULL, NULL
+		NULL, NULL, NULL
 	},
 
 	{
@@ -2160,13 +2160,13 @@ struct config_bool ConfigureNamesBool_gp[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"optimizer_dpe_stats", PGC_USERSET, LOGGING_WHAT,
+		{"optimizer_dpe_stats", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enable statistics derivation for partitioned tables with dynamic partition elimination."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&optimizer_dpe_stats,
-		false,
+		true,
 		NULL, NULL, NULL
 	},
 	{
@@ -3744,14 +3744,14 @@ struct config_int ConfigureNamesInt_gp[] =
 	},
 
 	{
-		{"gp_gpperfmon_send_interval", PGC_USERSET, LOGGING_WHAT,
+		{"gp_gpperfmon_send_interval", PGC_SUSET, LOGGING_WHAT,
 			gettext_noop("Interval in seconds between sending messages to gpperfmon."),
 			NULL,
 			GUC_GPDB_ADDOPT
 		},
 		&gp_gpperfmon_send_interval,
 		1, 1, 3600,
-		gpvars_check_gp_gpperfmon_send_interval, NULL, NULL
+		NULL, NULL, NULL
 	},
 
 	{

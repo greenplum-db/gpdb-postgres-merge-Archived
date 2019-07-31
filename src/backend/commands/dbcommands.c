@@ -76,7 +76,6 @@
 #include "cdb/cdbdispatchresult.h"
 #include "cdb/cdbhash.h"
 #include "cdb/cdbsreh.h"
-#include "cdb/cdbsrlz.h"
 #include "cdb/cdbvars.h"
 
 #include "utils/pg_rusage.h"
@@ -667,11 +666,19 @@ createdb(const CreatedbStmt *stmt)
 			dstpath = GetDatabasePath(dboid, dsttablespace);
 
 			/*
+			 * Register the database directory to PendingDBDelete link list
+			 * for cleanup in txn abort.
+			 */
+			ScheduleDbDirDelete(dboid, dsttablespace, false);
+
+			/*
 			 * Copy this subdirectory to the new location
 			 *
 			 * We don't need to copy subdirectories
 			 */
 			copydir(srcpath, dstpath, false);
+
+			SIMPLE_FAULT_INJECTOR("create_db_after_file_copy");
 
 			/* Record the filesystem change in XLOG */
 			{
@@ -689,6 +696,9 @@ createdb(const CreatedbStmt *stmt)
 								  XLOG_DBASE_CREATE | XLR_SPECIAL_REL_UPDATE);
 			}
 		}
+
+		SIMPLE_FAULT_INJECTOR("after_xlog_create_database");
+
 		heap_endscan(scan);
 		heap_close(rel, AccessShareLock);
 

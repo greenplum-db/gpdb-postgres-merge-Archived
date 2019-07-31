@@ -252,7 +252,6 @@ define BUILD_STEPS
 	cd $(BUILDDIR) && $(MAKE) $(PARALLEL_MAKE_OPTS) install
 	#@$(MAKE) mgmtcopy INSTLOC=$(INSTLOC)
 	@$(MAKE) mkpgbouncer INSTLOC=$(INSTLOC) BUILDDIR=$(BUILDDIR)
-	@$(MAKE) mkpgbench INSTLOC=$(INSTLOC) BUILDDIR=$(BUILDDIR)
 	@$(MAKE) copylibs INSTLOC=$(INSTLOC)
 	@$(MAKE) clients INSTLOC=$(INSTLOC) CLIENTSINSTLOC=$(CLIENTSINSTLOC)
 	@$(MAKE) set_scripts_version INSTLOC=$(CLIENTSINSTLOC)
@@ -610,9 +609,6 @@ set_scripts_version :
 # Internal functions
 #---------------------------------------------------------------------
 
-mkpgbench:
-	@cd $(BUILDDIR)/src/bin/pgbench && $(MAKE) install
-
 mkpgbouncer:
 ifeq "$(shell uname -s)" "Darwin"
 	echo "pgbouncer can't build on Mac"
@@ -633,8 +629,6 @@ mgmtcopy :
 	cp -rp $(GPMGMT)/bin/ext/* $(INSTLOC)/lib/python
 	cp -rp $(GPMGMT)/bin $(INSTLOC)
 	cp -rp $(GPMGMT)/sbin/* $(INSTLOC)/sbin/.
-	cp $(GPPGDIR)/src/test/regress/*.pl $(INSTLOC)/bin
-	cp $(GPPGDIR)/src/test/regress/*.pm $(INSTLOC)/bin
 	if [ ! -d ${INSTLOC}/docs ] ; then mkdir ${INSTLOC}/docs ; fi
 	if [ -d $(GPMGMT)/doc ]; then cp -rp $(GPMGMT)/doc $(INSTLOC)/docs/cli_help; fi
 	if [ -d $(GPMGMT)/demo/gpfdist_transform ]; then \
