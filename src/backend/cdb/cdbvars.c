@@ -179,10 +179,6 @@ int			Gp_interconnect_transmit_timeout = 3600;
 int			Gp_interconnect_min_retries_before_timeout = 100;
 int			Gp_interconnect_debug_retry_interval = 10;
 
-int			Gp_interconnect_hash_multiplier = 2;	/* sets the size of the
-													 * hash table used by the
-													 * UDP-IC */
-
 int			interconnect_setup_timeout = 7200;
 
 int			Gp_interconnect_type = INTERCONNECT_TYPE_UDPIFC;
@@ -604,42 +600,6 @@ int gp_log_fts;
  * written with a severity level of LOG.
  */
 int gp_log_interconnect;
-
-/*
- * gp_enable_gpperfmon and gp_gpperfmon_send_interval are GUCs that we'd like
- * to have propagate from master to segments but we don't want non-super users
- * to be able to set it.  Unfortunately, as long as we use libpq to connect to
- * the segments its hard to create a clean way of doing this.
- *
- * Here we check and enforce that if the value is being set on the master its being
- * done as superuser and not a regular user.
- *
- */
-bool
-gpvars_check_gp_enable_gpperfmon(bool *newval, void **extra, GucSource source)
-{
-	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster && GetCurrentRoleId() != InvalidOid && !superuser())
-	{
-		GUC_check_errcode(ERRCODE_INSUFFICIENT_PRIVILEGE);
-		GUC_check_errmsg("must be superuser to set gp_enable_gpperfmon");
-		return false;
-	}
-
-	return true;
-}
-
-bool
-gpvars_check_gp_gpperfmon_send_interval(int *newval, void **extra, GucSource source)
-{
-	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster && GetCurrentRoleId() != InvalidOid && !superuser())
-	{
-		GUC_check_errcode(ERRCODE_INSUFFICIENT_PRIVILEGE);
-		GUC_check_errmsg("must be superuser to set gp_gpperfmon_send_interval");
-		return false;
-	}
-
-	return true;
-}
 
 /*
  * gpvars_check_gp_resource_manager_policy
