@@ -1147,7 +1147,6 @@ inheritance_planner(PlannerInfo *root)
 	Oid			parentOid = InvalidOid;
 
 	/* MPP */
-	Plan	   *plan;
 	CdbLocusType append_locustype = CdbLocusType_Null;
 	bool		locus_ok = TRUE;
 
