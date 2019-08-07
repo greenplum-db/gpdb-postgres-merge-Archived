@@ -281,6 +281,8 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 			pfree(path);
 		}
 	}
+	if (xlrec->tablespace_oid_to_delete_on_commit != InvalidOid)
+		appendStringInfo(buf, "; tablespace_oid_to_delete_on_commit: %u", xlrec->tablespace_oid_to_delete_on_commit);
 
 	if (XactCompletionForceSyncCommit(parsed.xinfo))
 		appendStringInfo(buf, "; sync");
@@ -364,6 +366,8 @@ xact_desc_abort(StringInfo buf, uint8 info, xl_xact_abort *xlrec)
 			pfree(path);
 		}
 	}
+	if (xlrec->tablespace_oid_to_delete_on_abort != InvalidOid)
+		appendStringInfo(buf, "; tablespace_oid_to_delete_on_abort: %u", xlrec->tablespace_oid_to_delete_on_abort);
 }
 
 static void

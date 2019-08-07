@@ -6,15 +6,6 @@
 #include "postgres.h"
 #include "storage/pg_shmem.h"
 
-#define Assert(condition) if (!condition) AssertFailed()
-
-bool is_assert_failed = false;
-
-void AssertFailed()
-{
-	is_assert_failed = true;
-}
-
 /* Actual function body */
 #include "../gp_replication.c"
 
@@ -27,19 +18,6 @@ expect_lwlock(LWLockMode lockmode)
 
 	expect_value(LWLockRelease, lock, SyncRepLock);
 	will_be_called(LWLockRelease);
-}
-
-static void
-expect_elog()
-{
-	expect_any(elog_start, filename);
-	expect_any(elog_start, lineno);
-	expect_any(elog_start, funcname);
-	will_be_called(elog_start);
-
-	expect_any(elog_finish, elevel);
-	expect_any(elog_finish, fmt);
-	will_be_called(elog_finish);
 }
 
 static void
@@ -70,7 +48,7 @@ test_setup(int pid, WalSndState state)
 	return WalSndCtl;
 }
 
-void
+static void
 test_GetMirrorStatus_Pid_Zero(void **state)
 {
 	FtsResponse response = { .IsMirrorUp = false };
@@ -96,7 +74,7 @@ test_GetMirrorStatus_Pid_Zero(void **state)
 	assert_false(response.IsInSync);
 }
 
-void
+static void
 test_GetMirrorStatus_RequestRetry(void **state)
 {
 	FtsResponse response = { .IsMirrorUp = false };
@@ -124,7 +102,7 @@ test_GetMirrorStatus_RequestRetry(void **state)
 /*
  * Verify the logic the grace period will exclude the recovery time.
  */
-void
+static void
 test_GetMirrorStatus_Delayed_AcceptingConnectionsStartTime(void **state)
 {
 	FtsResponse response = { .IsMirrorUp = false };
@@ -152,7 +130,7 @@ test_GetMirrorStatus_Delayed_AcceptingConnectionsStartTime(void **state)
 	assert_true(response.RequestRetry);
 }
 
-void
+static void
 test_GetMirrorStatus_Overflow(void **state)
 {
 	FtsResponse response = { .IsMirrorUp = false };
@@ -174,7 +152,7 @@ test_GetMirrorStatus_Overflow(void **state)
 	assert_false(response.IsInSync);
 }
 
-void
+static void
 test_GetMirrorStatus_WALSNDSTATE_STARTUP(void **state)
 {
 	FtsResponse response = { .IsMirrorUp = false };
@@ -197,7 +175,7 @@ test_GetMirrorStatus_WALSNDSTATE_STARTUP(void **state)
 	assert_false(response.IsInSync);
 }
 
-void
+static void
 test_GetMirrorStatus_WALSNDSTATE_BACKUP(void **state)
 {
 	FtsResponse response = { .IsMirrorUp = false };
@@ -224,7 +202,7 @@ test_GetMirrorStatus_WALSNDSTATE_BACKUP(void **state)
 	assert_false(response.IsInSync);
 }
 
-void
+static void
 test_GetMirrorStatus_WALSNDSTATE_CATCHUP(void **state)
 {
 	FtsResponse response = { .IsMirrorUp = false };
@@ -238,7 +216,7 @@ test_GetMirrorStatus_WALSNDSTATE_CATCHUP(void **state)
 	assert_false(response.IsInSync);
 }
 
-void
+static void
 test_GetMirrorStatus_WALSNDSTATE_STREAMING(void **state)
 {
 	FtsResponse response = { .IsMirrorUp = false };
