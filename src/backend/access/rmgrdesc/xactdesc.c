@@ -20,6 +20,7 @@
 #include "storage/dbdirnode.h"
 #include "storage/sinval.h"
 #include "utils/timestamp.h"
+#include "access/twophase.h"
 
 /*
  * Parse the WAL format of an xact commit and abort records into an easier to
@@ -297,7 +298,10 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 	}
 
 	if (parsed.distribTimeStamp != 0 || parsed.distribXid != InvalidDistributedTransactionId)
+	{
 		appendStringInfo(buf, " gid = %u-%.10u", parsed.distribTimeStamp, parsed.distribXid);
+		appendStringInfo(buf, " gxid = %u", parsed.distribXid);
+	}
 }
 
 static void
@@ -381,6 +385,20 @@ xact_desc_assignment(StringInfo buf, xl_xact_assignment *xlrec)
 		appendStringInfo(buf, " %u", xlrec->xsub[i]);
 }
 
+static void
+xact_desc_prepare(StringInfo buf, uint8 info, TwoPhaseFileHeader *tpfh) {
+	Assert(info == XLOG_XACT_PREPARE);
+
+	appendStringInfo(buf, "at = %s", timestamptz_to_str(tpfh->prepared_at));
+
+	appendStringInfo(buf, "; gid = %s", tpfh->gid);
+
+	if (tpfh->tablespace_oid_to_delete_on_commit != InvalidOid)
+		appendStringInfo(buf, "; tablespace_oid_to_delete_on_commit = %u", tpfh->tablespace_oid_to_delete_on_commit);
+	if (tpfh->tablespace_oid_to_delete_on_abort != InvalidOid)
+		appendStringInfo(buf, "; tablespace_oid_to_delete_on_abort = %u", tpfh->tablespace_oid_to_delete_on_abort);
+}
+
 void
 xact_desc(StringInfo buf, XLogReaderState *record)
 {
@@ -399,6 +417,11 @@ xact_desc(StringInfo buf, XLogReaderState *record)
 		xl_xact_abort *xlrec = (xl_xact_abort *) rec;
 
 		xact_desc_abort(buf, XLogRecGetInfo(record), xlrec);
+	}
+	else if (info == XLOG_XACT_PREPARE)
+	{
+		TwoPhaseFileHeader *tpfh = (TwoPhaseFileHeader*) rec;
+		xact_desc_prepare(buf, XLogRecGetInfo(record), tpfh);
 	}
 	else if (info == XLOG_XACT_ASSIGNMENT)
 	{

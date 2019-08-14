@@ -1421,6 +1421,7 @@ RecordTransactionCommit(void)
 	bool		RelcacheInitFileInval = false;
 	bool		wrote_xlog;
 	bool		isDtxPrepared = 0;
+	bool		isOnePhaseQE = (Gp_role == GP_ROLE_EXECUTE && MyTmGxact->isOnePhaseCommit);
 	TMGXACT_LOG gxact_log;
 
 	/* Like in CommitTransaction(), treat a QE reader as if there was no XID */
@@ -1630,7 +1631,7 @@ RecordTransactionCommit(void)
 												getDtxStartTime(),
 												getDistributedTransactionId(),
 												/* isRedo */ false);
-			else if (Gp_role == GP_ROLE_EXECUTE && MyTmGxact->isOnePhaseCommit)
+			else if (isOnePhaseQE)
 			{
 				DistributedTransactionTimeStamp distribTimeStamp;
 				DistributedTransactionId distribXid;

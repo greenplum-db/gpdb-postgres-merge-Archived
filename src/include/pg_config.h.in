@@ -580,6 +580,9 @@
 /* Define to 1 if you have the `strlcpy' function. */
 #undef HAVE_STRLCPY
 
+/* Define to use have a strong random number source */
+#undef HAVE_STRONG_RANDOM
+
 /* Define to 1 if you have the `strtoll' function. */
 #undef HAVE_STRTOLL
 
@@ -903,6 +906,9 @@
 /* Define to 1 to build with Bonjour support. (--with-bonjour) */
 #undef USE_BONJOUR
 
+/* Define to use /dev/urandom for random number generation */
+#undef USE_DEV_URANDOM
+
 /* Define to 1 to build with libcurl support. (--with-libcurl) */
 #undef USE_CURL
 
@@ -946,6 +952,12 @@
 /* Define to 1 to build with Greenplum ORCA optimizer. (--enable-orca) */
 #undef USE_ORCA
 
+/* Define to build with OpenSSL support. (--with-openssl) */
+#undef USE_OPENSSL
+
+/* Define to use OpenSSL for random number generation */
+#undef USE_OPENSSL_RANDOM
+
 /* Define to 1 to build with PAM support. (--with-pam) */
 #undef USE_PAM
 
@@ -969,6 +981,9 @@
 
 /* Define to select unnamed POSIX semaphores. */
 #undef USE_UNNAMED_POSIX_SEMAPHORES
+
+/* Define to use native Windows API for random number generation */
+#undef USE_WIN32_RANDOM
 
 /* Define to select Win32-style semaphores. */
 #undef USE_WIN32_SEMAPHORES

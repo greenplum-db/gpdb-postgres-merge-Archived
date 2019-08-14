@@ -51,8 +51,6 @@ extern const char *synthetic_sql;
 
 extern void	DefineExternalRelation(CreateExternalStmt *stmt);
 
-extern void	DefinePartitionedRelation(CreateStmt *stmt, Oid reloid);
-
 extern void EvaluateDeferredStatements(List *deferredStmts);
 
 extern ObjectAddress DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
