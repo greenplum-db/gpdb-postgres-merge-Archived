@@ -394,13 +394,6 @@ struct ICGlobalControlInfo
 	/* The background thread handle. */
 	pthread_t	threadHandle;
 
-	/* Flag showing whether the thread is created. */
-	bool		threadCreated;
-
-	/* The lock protecting eno field. */
-	pthread_mutex_t errorLock;
-	int			eno;
-
 	/* Keep the udp socket buffer size used. */
 	uint32		socketSendBufferSize;
 	uint32		socketRecvBufferSize;
@@ -424,6 +417,12 @@ struct ICGlobalControlInfo
 
 	/* Am I a sender? */
 	bool		isSender;
+
+	/* Flag showing whether the thread is created. */
+	bool		threadCreated;
+
+	/* Error number. Actually int but we do not have pg_atomic_int32. */
+	pg_atomic_uint32 eno;
 
 	/*
 	 * Global connection htab for both sending connections and receiving
@@ -1099,18 +1098,18 @@ setMainThreadWaiting(ThreadWaitingState *state, int motNodeId, int route, int ic
 static void
 checkRxThreadError()
 {
-	pthread_mutex_lock(&ic_control_info.errorLock);
-	if (ic_control_info.eno != 0)
+	int eno;
+
+	eno = pg_atomic_read_u32(&ic_control_info.eno);
+	if (eno != 0)
 	{
-		errno = ic_control_info.eno;
-		pthread_mutex_unlock(&ic_control_info.errorLock);
+		errno = eno;
 
 		ereport(ERROR,
 				(errcode(ERRCODE_GP_INTERCONNECTION_ERROR),
 				 errmsg("interconnect encountered an error"),
 				 errdetail("%s: %m", "in receive background thread")));
 	}
-	pthread_mutex_unlock(&ic_control_info.errorLock);
 }
 
 /*
@@ -1123,16 +1122,13 @@ checkRxThreadError()
 static void
 setRxThreadError(int eno)
 {
-	pthread_mutex_lock(&ic_control_info.errorLock);
+	uint32 expected = 0;
 
 	/* always let main thread know the error that occurred first. */
-	if (ic_control_info.eno == 0)
+	if (pg_atomic_compare_exchange_u32(&ic_control_info.eno, &expected, (uint32) eno))
 	{
-		ic_control_info.eno = eno;
-		write_log("Interconnect error: in background thread, set ic_control_info.eno to %d, rx_buffer_pool.count %d, rx_buffer_pool.maxCount %d", eno, rx_buffer_pool.count, rx_buffer_pool.maxCount);
+		write_log("Interconnect error: in background thread, set ic_control_info.eno to %d, rx_buffer_pool.count %d, rx_buffer_pool.maxCount %d", expected, rx_buffer_pool.count, rx_buffer_pool.maxCount);
 	}
-
-	pthread_mutex_unlock(&ic_control_info.errorLock);
 }
 
 /*
@@ -1143,9 +1139,7 @@ setRxThreadError(int eno)
 static void
 resetRxThreadError()
 {
-	pthread_mutex_lock(&ic_control_info.errorLock);
-	ic_control_info.eno = 0;
-	pthread_mutex_unlock(&ic_control_info.errorLock);
+	pg_atomic_write_u32(&ic_control_info.eno, 0);
 }
 
 
@@ -1338,6 +1332,53 @@ initMutex(pthread_mutex_t *mutex)
 }
 
 /*
+ * Set up the udp interconnect pthread signal mask, we don't want to run our signal handlers
+ */
+static void
+ic_set_pthread_sigmasks(sigset_t *old_sigs)
+{
+#ifndef WIN32
+	sigset_t sigs;
+	int		 err;
+
+	sigemptyset(&sigs);
+
+	/* make our thread ignore these signals (which should allow that
+	 * they be delivered to the main thread) */
+	sigaddset(&sigs, SIGHUP);
+	sigaddset(&sigs, SIGINT);
+	sigaddset(&sigs, SIGTERM);
+	sigaddset(&sigs, SIGALRM);
+	sigaddset(&sigs, SIGUSR1);
+	sigaddset(&sigs, SIGUSR2);
+
+	err = pthread_sigmask(SIG_BLOCK, &sigs, old_sigs);
+	if (err != 0)
+		elog(ERROR, "Failed to get pthread signal masks with return value: %d", err);
+#else
+	(void) old_sigs;
+#endif
+
+	return;
+}
+
+static void
+ic_reset_pthread_sigmasks(sigset_t *sigs)
+{
+#ifndef WIN32
+	int err;
+
+	err = pthread_sigmask(SIG_SETMASK, sigs, NULL);
+	if (err != 0)
+		elog(ERROR, "Failed to reset pthread signal masks with return value: %d", err);
+#else
+	(void) sigs;
+#endif
+
+	return;
+}
+
+/*
  * InitMotionUDPIFC
  * 		Initialize UDP specific comms, and create rx-thread.
  */
@@ -1349,14 +1390,15 @@ InitMotionUDPIFC(int *listenerSocketFd, uint16 *listenerPort)
 
 	/* attributes of the thread we're creating */
 	pthread_attr_t t_atts;
-	MemoryContext old;
+	sigset_t	   pthread_sigs;
+	MemoryContext  old;
 
 #ifdef USE_ASSERT_CHECKING
 	set_test_mode();
 #endif
 
 	/* Initialize global ic control data. */
-	ic_control_info.eno = 0;
+	pg_atomic_init_u32(&ic_control_info.eno, 0);
 	ic_control_info.isSender = false;
 	ic_control_info.socketSendBufferSize = 2 * 1024 * 1024;
 	ic_control_info.socketRecvBufferSize = 2 * 1024 * 1024;
@@ -1365,7 +1407,6 @@ InitMotionUDPIFC(int *listenerSocketFd, uint16 *listenerPort)
 													   ALLOCSET_DEFAULT_MINSIZE,
 													   ALLOCSET_DEFAULT_INITSIZE,
 													   ALLOCSET_DEFAULT_MAXSIZE);
-	initMutex(&ic_control_info.errorLock);
 	initMutex(&ic_control_info.lock);
 	InitLatch(&ic_control_info.latch);
 	ic_control_info.shutdown = 0;
@@ -1419,7 +1460,9 @@ InitMotionUDPIFC(int *listenerSocketFd, uint16 *listenerPort)
 	pthread_attr_init(&t_atts);
 
 	pthread_attr_setstacksize(&t_atts, Max(PTHREAD_STACK_MIN, (128 * 1024)));
+	ic_set_pthread_sigmasks(&pthread_sigs);
 	pthread_err = pthread_create(&ic_control_info.threadHandle, &t_atts, rxThreadFunc, NULL);
+	ic_reset_pthread_sigmasks(&pthread_sigs);
 
 	pthread_attr_destroy(&t_atts);
 	if (pthread_err != 0)
@@ -1448,7 +1491,6 @@ CleanupMotionUDPIFC(void)
 	 * We should not hold any lock when we reach here even when we report
 	 * FATAL errors. Just in case, We still release the locks here.
 	 */
-	pthread_mutex_unlock(&ic_control_info.errorLock);
 	pthread_mutex_unlock(&ic_control_info.lock);
 
 	uint32		expected = 0;
@@ -2439,8 +2481,7 @@ initUnackQueueRing(UnackQueueRing *uqr)
 {
 	int			i = 0;
 
-	uqr->currentTime = getCurrentTime();
-	uqr->currentTime = uqr->currentTime - (uqr->currentTime % TIMER_SPAN);
+	uqr->currentTime = 0;
 	uqr->idx = 0;
 	uqr->numOutStanding = 0;
 	uqr->numSharedOutStanding = 0;
@@ -3191,7 +3232,30 @@ SetupUDPIFCInterconnect(EState *estate)
 	}
 	PG_CATCH();
 	{
+		/*
+		 * Remove connections from hash table to avoid packet handling in the
+		 * rx pthread, else the packet handling code could use memory whose
+		 * context (InterconnectContext) would be soon reset - that could
+		 * panic the process.
+		 */
+		ConnHashTable *ht = &ic_control_info.connHtab;
+
+		for (int i = 0; i < ht->size; i++)
+		{
+			struct ConnHtabBin *trash;
+			MotionConn *conn;
+
+			trash = ht->table[i];
+			while (trash != NULL)
+			{
+				conn = trash->conn;
+				/* Get trash at first as trash will be pfree-ed in connDelHash. */
+				trash = trash->next;
+				connDelHash(ht, conn);
+			}
+		}
 		pthread_mutex_unlock(&ic_control_info.lock);
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -3588,12 +3652,10 @@ TeardownUDPIFCInterconnect(ChunkTransportState *transportStates,
 	{
 		TeardownUDPIFCInterconnect_Internal(transportStates, forceEOS);
 
-		Assert(pthread_mutex_unlock(&ic_control_info.errorLock) != 0);
 		Assert(pthread_mutex_unlock(&ic_control_info.lock) != 0);
 	}
 	PG_CATCH();
 	{
-		pthread_mutex_unlock(&ic_control_info.errorLock);
 		pthread_mutex_unlock(&ic_control_info.lock);
 		PG_RE_THROW();
 	}
@@ -3860,12 +3922,10 @@ RecvTupleChunkFromAnyUDPIFC(ChunkTransportState *transportStates,
 		icItem = RecvTupleChunkFromAnyUDPIFC_Internal(transportStates, motNodeID, srcRoute);
 
 		/* error if mutex still held (debug build only) */
-		Assert(pthread_mutex_unlock(&ic_control_info.errorLock) != 0);
 		Assert(pthread_mutex_unlock(&ic_control_info.lock) != 0);
 	}
 	PG_CATCH();
 	{
-		pthread_mutex_unlock(&ic_control_info.errorLock);
 		pthread_mutex_unlock(&ic_control_info.lock);
 
 		PG_RE_THROW();
@@ -3966,12 +4026,10 @@ RecvTupleChunkFromUDPIFC(ChunkTransportState *transportStates,
 		icItem = RecvTupleChunkFromUDPIFC_Internal(transportStates, motNodeID, srcRoute);
 
 		/* error if mutex still held (debug build only) */
-		Assert(pthread_mutex_unlock(&ic_control_info.errorLock) != 0);
 		Assert(pthread_mutex_unlock(&ic_control_info.lock) != 0);
 	}
 	PG_CATCH();
 	{
-		pthread_mutex_unlock(&ic_control_info.errorLock);
 		pthread_mutex_unlock(&ic_control_info.lock);
 
 		PG_RE_THROW();
@@ -5002,6 +5060,7 @@ checkExpiration(ChunkTransportState *transportStates,
 	int			count = 0;
 	int			retransmits = 0;
 
+	Assert(unack_queue_ring.currentTime != 0);
 	while (now >= (unack_queue_ring.currentTime + TIMER_SPAN) && count++ < UNACK_QUEUE_RING_SLOTS_NUM)
 	{
 		/* expired, need to resend them */
@@ -5749,9 +5808,14 @@ getCurrentTime(void)
 static void
 putIntoUnackQueueRing(UnackQueueRing *uqr, ICBuffer *buf, uint64 expTime, uint64 now)
 {
-	uint64		diff = now + expTime - uqr->currentTime;
+	uint64		diff = 0;
 	int			idx = 0;
 
+	/* The first packet, currentTime is not initialized */
+	if (uqr->currentTime == 0)
+		uqr->currentTime = now - (now % TIMER_SPAN);
+
+	diff = now + expTime - uqr->currentTime;
 	if (diff >= UNACK_QUEUE_RING_LENGTH)
 	{
 #ifdef AMS_VERBOSE_LOGGING
@@ -6025,8 +6089,6 @@ rxThreadFunc(void *arg)
 	icpkthdr   *pkt = NULL;
 	bool		skip_poll = false;
 	uint32		expected = 1;
-
-	gp_set_thread_sigmasks();
 
 	for (;;)
 	{
@@ -6749,7 +6811,6 @@ WaitInterconnectQuitUDPIFC(void)
 	/*
 	 * Just in case ic thread is waiting on the locks.
 	 */
-	pthread_mutex_unlock(&ic_control_info.errorLock);
 	pthread_mutex_unlock(&ic_control_info.lock);
 
 	pg_atomic_compare_exchange_u32((pg_atomic_uint32 *) &ic_control_info.shutdown, &expected, 1);

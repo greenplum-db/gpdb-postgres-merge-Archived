@@ -386,7 +386,8 @@ xact_desc_assignment(StringInfo buf, xl_xact_assignment *xlrec)
 }
 
 static void
-xact_desc_prepare(StringInfo buf, uint8 info, TwoPhaseFileHeader *tpfh) {
+xact_desc_prepare(StringInfo buf, uint8 info, TwoPhaseFileHeader *tpfh)
+{
 	Assert(info == XLOG_XACT_PREPARE);
 
 	appendStringInfo(buf, "at = %s", timestamptz_to_str(tpfh->prepared_at));

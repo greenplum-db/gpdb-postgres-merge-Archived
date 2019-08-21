@@ -801,6 +801,10 @@ static const unit_conversion time_unit_conversion_table[] =
  *
  * 7. If it's a new GUC_LIST_QUOTE option, you must add it to
  *	  variable_is_guc_list_quote() in src/bin/pg_dump/dumputils.c.
+ *
+ * 8. In gpdb, the guc is force explicit declare whether it needs to sync value
+ * 	  between master and primary. Add guc name into either sync_guc_names_array
+ * 	  or unsync_guc_names_array.
  */
 
 
@@ -1115,8 +1119,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"log_duration", PGC_SUSET, LOGGING_WHAT,
 			gettext_noop("Logs the duration of each completed SQL statement."),
-			NULL,
-			GUC_GPDB_ADDOPT
+			NULL
 		},
 		&log_duration,
 		false,
@@ -1179,8 +1182,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"log_executor_stats", PGC_SUSET, STATS_MONITORING,
 			gettext_noop("Writes executor performance statistics to the server log."),
-			NULL,
-			GUC_GPDB_ADDOPT
+			NULL
 		},
 		&log_executor_stats,
 		false,
@@ -1189,8 +1191,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"log_statement_stats", PGC_SUSET, STATS_MONITORING,
 			gettext_noop("Writes cumulative performance statistics to the server log."),
-			NULL,
-			GUC_GPDB_ADDOPT
+			NULL
 		},
 		&log_statement_stats,
 		false,
@@ -1876,7 +1877,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"temp_buffers", PGC_USERSET, RESOURCES_MEM,
 			gettext_noop("Sets the maximum number of temporary buffers used by each session."),
 			NULL,
-			GUC_UNIT_BLOCKS | GUC_GPDB_ADDOPT
+			GUC_UNIT_BLOCKS
 		},
 		&num_temp_buffers,
 		1024, 100, INT_MAX / 2,
@@ -1928,7 +1929,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("This much memory can be used by each internal "
 						 "sort operation and hash table before switching to "
 						 "temporary disk files."),
-			GUC_UNIT_KB | GUC_GPDB_ADDOPT
+			GUC_UNIT_KB
 		},
 		&work_mem,
         32768, 64, MAX_KILOBYTES,
@@ -1939,7 +1940,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"maintenance_work_mem", PGC_USERSET, RESOURCES_MEM,
 			gettext_noop("Sets the maximum memory to be used for maintenance operations."),
 			gettext_noop("This includes operations such as VACUUM and CREATE INDEX."),
-			GUC_UNIT_KB | GUC_GPDB_ADDOPT
+			GUC_UNIT_KB
 		},
 		&maintenance_work_mem,
 		65536, 1024, MAX_KILOBYTES,
@@ -2096,7 +2097,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"statement_timeout", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the maximum allowed duration of any statement."),
 			gettext_noop("A value of 0 turns off the timeout."),
-			GUC_UNIT_MS | GUC_GPDB_ADDOPT
+			GUC_UNIT_MS
 		},
 		&StatementTimeout,
 		0, 0, INT_MAX,
@@ -2337,7 +2338,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the delay in microseconds between transaction commit and "
 						 "flushing WAL to disk."),
 			NULL,
-			GUC_GPDB_ADDOPT | GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_DISALLOW_USER_SET
+			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_DISALLOW_USER_SET
 			/* we have no microseconds designation, so can't supply units here */
 		},
 		&CommitDelay,
@@ -2350,7 +2351,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the minimum concurrent open transactions before performing "
 						 "commit_delay."),
 			NULL,
-			GUC_GPDB_ADDOPT | GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_DISALLOW_USER_SET
+			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_DISALLOW_USER_SET
 		},
 		&CommitSiblings,
 		5, 0, 1000,
@@ -2374,7 +2375,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the minimum execution time above which "
 						 "statements will be logged."),
 			gettext_noop("Zero prints all queries. -1 turns this feature off."),
-			GUC_UNIT_MS | GUC_GPDB_ADDOPT
+			GUC_UNIT_MS
 		},
 		&log_min_duration_statement,
 		-1, -1, INT_MAX,
@@ -2507,16 +2508,6 @@ static struct config_int ConfigureNamesInt[] =
 		&block_size,
 		BLCKSZ, BLCKSZ, BLCKSZ,
 		NULL, NULL, NULL
-	},
-	{
-		/* see max_connections */
-		{"autovacuum_max_workers", PGC_POSTMASTER, AUTOVACUUM,
-			gettext_noop("Sets the maximum number of simultaneously running autovacuum worker processes."),
-			NULL
-		},
-		&autovacuum_max_workers,
-		3, 1, MAX_BACKENDS,
-		check_autovacuum_max_workers, NULL, NULL
 	},
 
 	{
@@ -2677,8 +2668,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"gin_fuzzy_search_limit", PGC_USERSET, CLIENT_CONN_OTHER,
 			gettext_noop("Sets the maximum allowed result for exact search by GIN."),
-			NULL,
-			GUC_GPDB_ADDOPT
+			NULL
 		},
 		&GinFuzzySearchLimit,
 		0, 0, INT_MAX,
@@ -2947,7 +2937,7 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Sets the display format for date and time values."),
 			gettext_noop("Also controls interpretation of ambiguous "
 						 "date inputs."),
-			GUC_LIST_INPUT | GUC_REPORT | GUC_GPDB_ADDOPT
+			GUC_LIST_INPUT | GUC_REPORT
 		},
 		&datestyle_string,
 		"ISO, MDY",
@@ -2958,7 +2948,7 @@ static struct config_string ConfigureNamesString[] =
 		{"default_tablespace", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the default tablespace to create tables and indexes in."),
 			gettext_noop("An empty string selects the database's default tablespace."),
-			GUC_IS_NAME | GUC_GPDB_ADDOPT
+			GUC_IS_NAME
 		},
 		&default_tablespace,
 		"",
@@ -2969,7 +2959,7 @@ static struct config_string ConfigureNamesString[] =
 		{"temp_tablespaces", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the tablespace(s) to use for temporary tables and sort files."),
 			NULL,
-			GUC_LIST_INPUT | GUC_LIST_QUOTE | GUC_GPDB_ADDOPT
+			GUC_LIST_INPUT | GUC_LIST_QUOTE
 		},
 		&temp_tablespaces,
 		"",
@@ -3058,9 +3048,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"lc_numeric", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the locale for formatting numbers."),
-			NULL,
-			/* Please don't remove GUC_GPDB_ADDOPT or lc_numeric won't work correctly */
-			GUC_GPDB_ADDOPT
+			NULL
 		},
 		&locale_numeric,
 		"C",
@@ -3114,7 +3102,7 @@ static struct config_string ConfigureNamesString[] =
 		{"search_path", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the schema search order for names that are not schema-qualified."),
 			NULL,
-			GUC_LIST_INPUT | GUC_LIST_QUOTE | GUC_GPDB_ADDOPT
+			GUC_LIST_INPUT | GUC_LIST_QUOTE
 		},
 		&namespace_search_path,
 		"\"$user\", public",
@@ -3230,7 +3218,7 @@ static struct config_string ConfigureNamesString[] =
 		{"TimeZone", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the time zone for displaying and interpreting time stamps."),
 			NULL,
-			GUC_REPORT | GUC_GPDB_ADDOPT
+			GUC_REPORT
 		},
 		&timezone_string,
 		"GMT",
@@ -3510,8 +3498,7 @@ static struct config_enum ConfigureNamesEnum[] =
 		{"client_min_messages", PGC_USERSET, LOGGING_WHEN,
 			gettext_noop("Sets the message levels that are sent to the client."),
 			gettext_noop("Each level includes all the levels that follow it. The later"
-						 " the level, the fewer messages are sent."),
-			GUC_GPDB_ADDOPT
+						 " the level, the fewer messages are sent.")
 		},
 		&client_min_messages,
 		NOTICE, client_message_level_options,
@@ -3563,20 +3550,9 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"IntervalStyle", PGC_USERSET, CLIENT_CONN_LOCALE,
-			gettext_noop("Sets the display format for interval values."),
-			NULL,
-			GUC_REPORT | GUC_GPDB_ADDOPT
-		},
-		&IntervalStyle,
-		INTSTYLE_POSTGRES, intervalstyle_options, NULL, NULL
-	},
-
-	{
 		{"log_error_verbosity", PGC_SUSET, LOGGING_WHAT,
 			gettext_noop("Sets the verbosity of logged messages."),
-			NULL,
-			GUC_GPDB_ADDOPT
+			NULL
 		},
 		&Log_error_verbosity,
 		PGERROR_DEFAULT, log_error_verbosity_options,
@@ -3587,8 +3563,7 @@ static struct config_enum ConfigureNamesEnum[] =
 		{"log_min_messages", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Sets the message levels that are logged."),
 			gettext_noop("Each level includes all the levels that follow it. The later"
-						 " the level, the fewer messages are sent."),
-			GUC_GPDB_ADDOPT
+						 " the level, the fewer messages are sent.")
 		},
 		&log_min_messages,
 		WARNING, server_message_level_options,
@@ -3599,8 +3574,7 @@ static struct config_enum ConfigureNamesEnum[] =
 		{"log_min_error_statement", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Causes all statements generating error at or above this level to be logged."),
 			gettext_noop("Each level includes all the levels that follow it. The later"
-						 " the level, the fewer messages are sent."),
-			GUC_GPDB_ADDOPT
+						 " the level, the fewer messages are sent.")
 		},
 		&log_min_error_statement,
 		ERROR, server_message_level_options,
@@ -3804,7 +3778,6 @@ static int	GUCNestLevel = 0;	/* 1 when in main transaction */
 
 
 static int	guc_var_compare(const void *a, const void *b);
-static int	guc_name_compare(const char *namea, const char *nameb);
 static void InitializeGUCOptionsFromEnvironment(void);
 static void InitializeOneGUCOption(struct config_generic * gconf);
 static void push_old_value(struct config_generic * gconf, GucAction action);
@@ -4290,6 +4263,7 @@ build_guc_variables(void)
 	guc_variables = guc_vars;
 	num_guc_variables = num_vars;
 	size_guc_variables = size_vars;
+	gpdb_assign_sync_flag(guc_variables, num_guc_variables, true /* predefine */);
 	qsort((void *) guc_variables, num_guc_variables,
 		  sizeof(struct config_generic *), guc_var_compare);
 }
@@ -4328,6 +4302,7 @@ add_guc_variable(struct config_generic * var, int elevel)
 		size_guc_variables = size_vars;
 	}
 	guc_variables[num_guc_variables++] = var;
+	gpdb_assign_sync_flag(&var, 1, false /* predefine */);
 	qsort((void *) guc_variables, num_guc_variables,
 		  sizeof(struct config_generic *), guc_var_compare);
 	return true;
@@ -4445,7 +4420,7 @@ guc_var_compare(const void *a, const void *b)
 /*
  * the bare comparison function for GUC names
  */
-static int
+int
 guc_name_compare(const char *namea, const char *nameb)
 {
 	/*
@@ -7652,16 +7627,29 @@ set_config_by_name(PG_FUNCTION_ARGS)
 							 is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET,
 							 true, 0, false);
 
-    if (Gp_role == GP_ROLE_DISPATCH && !IsBootstrapProcessingMode())
-    {
-			StringInfoData buffer;
-			initStringInfo(&buffer);
-			appendStringInfo(&buffer, "SET ");
-			if (is_local)
-					appendStringInfo(&buffer, "LOCAL ");
-			appendStringInfo(&buffer, "%s TO '%s'", name, value);
-			CdbDispatchSetCommand(buffer.data, false /* cancelOnError */);
-    }
+	if (Gp_role == GP_ROLE_DISPATCH && !IsBootstrapProcessingMode())
+	{
+		StringInfoData	buffer;
+		char		   *quoted_name;
+		char		   *quoted_value = NULL;
+
+		initStringInfo(&buffer);
+
+		quoted_name = quote_literal_cstr(name);
+		if (value)
+			quoted_value = quote_literal_cstr(value);
+
+		appendStringInfo(&buffer, "SELECT pg_catalog.set_config(%s, %s, %s)",
+						 quoted_name,
+						 quoted_value ? quoted_value : "NULL",
+						 is_local ? "true" : "false");
+
+		if (quoted_value)
+			pfree(quoted_value);
+		pfree(quoted_name);
+
+		CdbDispatchSetCommand(buffer.data, false /* cancelOnError */ );
+	}
 
 	/* get the new current value */
 	new_value = GetConfigOptionByName(name, NULL);
