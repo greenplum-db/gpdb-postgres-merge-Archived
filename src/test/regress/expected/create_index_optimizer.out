@@ -565,7 +565,7 @@ SELECT count(*) FROM point_tbl WHERE f1 <@ box '(0,0,100,100)';
 ----------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Result
                ->  Index Scan using gpointind on point_tbl
                      Index Cond: (f1 <@ '(100,100),(0,0)'::box)
                      Filter: (f1 <@ '(100,100),(0,0)'::box)
@@ -584,7 +584,7 @@ SELECT count(*) FROM point_tbl WHERE box '(0,0,100,100)' @> f1;
 ----------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Result
                ->  Index Scan using gpointind on point_tbl
                      Index Cond: (f1 <@ '(100,100),(0,0)'::box)
                      Filter: (f1 <@ '(100,100),(0,0)'::box)
@@ -603,7 +603,7 @@ SELECT count(*) FROM point_tbl WHERE f1 <@ polygon '(0,0),(0,100),(100,100),(50,
 ----------------------------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Result
                ->  Index Scan using gpointind on point_tbl
                      Index Cond: (f1 <@ '((0,0),(0,100),(100,100),(50,50),(100,0),(0,0))'::polygon)
                      Filter: (f1 <@ '((0,0),(0,100),(100,100),(50,50),(100,0),(0,0))'::polygon)
@@ -622,7 +622,7 @@ SELECT count(*) FROM point_tbl WHERE f1 <@ circle '<(50,50),50>';
 ----------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Result
                ->  Index Scan using gpointind on point_tbl
                      Index Cond: (f1 <@ '<(50,50),50>'::circle)
                      Filter: (f1 <@ '<(50,50),50>'::circle)
@@ -641,7 +641,7 @@ SELECT count(*) FROM point_tbl p WHERE p.f1 << '(0.0, 0.0)';
 -----------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Result
                ->  Index Scan using gpointind on point_tbl
                      Index Cond: (f1 << '(0,0)'::point)
                      Filter: (f1 << '(0,0)'::point)
@@ -660,7 +660,7 @@ SELECT count(*) FROM point_tbl p WHERE p.f1 >> '(0.0, 0.0)';
 -----------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Result
                ->  Index Scan using gpointind on point_tbl
                      Index Cond: (f1 >> '(0,0)'::point)
                      Filter: (f1 >> '(0,0)'::point)
@@ -679,7 +679,7 @@ SELECT count(*) FROM point_tbl p WHERE p.f1 <^ '(0.0, 0.0)';
 -----------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Result
                ->  Index Scan using gpointind on point_tbl
                      Index Cond: (f1 <^ '(0,0)'::point)
                      Filter: (f1 <^ '(0,0)'::point)
@@ -698,7 +698,7 @@ SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
 -----------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Result
                ->  Index Scan using gpointind on point_tbl
                      Index Cond: (f1 >^ '(0,0)'::point)
                      Filter: (f1 >^ '(0,0)'::point)
@@ -717,7 +717,7 @@ SELECT count(*) FROM point_tbl p WHERE p.f1 ~= '(-5, -12)';
 -----------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Result
                ->  Index Scan using gpointind on point_tbl
                      Index Cond: (f1 ~= '(-5,-12)'::point)
                      Filter: (f1 ~= '(-5,-12)'::point)
@@ -3121,7 +3121,7 @@ SELECT count(*) FROM tenk1
 -------------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Result
                ->  Index Scan using tenk1_hundred on tenk1
                      Index Cond: (hundred = 42)
                      Filter: ((thousand = 42) OR (thousand = 99))

@@ -2496,14 +2496,6 @@ _bitmap_buildinsert(Relation rel, ItemPointerData ht_ctid, Datum *attdata,
 	TupleDesc	tupDesc;
 	uint64		tidOffset;
 
-	/*
-	 * Make sure the offset number of ItemPointer is valid,
-	 * Note that 0x8000 is valid when it is a fake ItemPointer which
-	 * is from AO tables.
-	 */
-	Assert(ItemPointerGetOffsetNumber(&ht_ctid) > 0 &&
-		   ItemPointerGetOffsetNumber(&ht_ctid) <= 0x8000);
-
 	tidOffset = BM_IPTR_TO_INT(&ht_ctid); 
 
 	tupDesc = RelationGetDescr(rel);
@@ -2532,14 +2524,6 @@ _bitmap_doinsert(Relation rel, ItemPointerData ht_ctid, Datum *attdata,
 	tupDesc = RelationGetDescr(rel);
 	if (tupDesc->natts <= 0)
 		return ;
-
-	/*
-	 * Make sure the offset number of ItemPointer is valid,
-	 * Note that 0x8000 is valid when it is a fake ItemPointer which
-	 * is from AO tables.
-	 */
-	Assert(ItemPointerGetOffsetNumber(&ht_ctid) > 0 &&
-		   ItemPointerGetOffsetNumber(&ht_ctid) <= 0x8000);
 
 	tidOffset = BM_IPTR_TO_INT(&ht_ctid);
 
