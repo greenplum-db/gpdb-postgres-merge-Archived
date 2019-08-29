@@ -64,10 +64,10 @@ test__supported_filter_type(void **state)
 
 	int array_size = sizeof(oids) / sizeof(Oid);
 	bool result = false;
-	int i = 0;
+	int i;
 
 	/* supported types */
-	for (; i < array_size-1; ++i)
+	for (i = 0; i < array_size-1; ++i)
 	{
 		result = supported_filter_type(oids[i]);
 		assert_true(result);
@@ -109,10 +109,10 @@ test__supported_operator_type_op_expr(void **state)
 
 	int array_size = sizeof(operator_oids) / sizeof(dbop_pxfop_map);
 	bool result = false;
-	int i = 0;
+	int i;
 
 	/* supported types */
-	for (; i < array_size-1; ++i)
+	for (i = 0; i < array_size-1; ++i)
 	{
 		result = supported_operator_type_op_expr(operator_oids[i][0], filter);
 		assert_true(result);
@@ -131,57 +131,6 @@ test__supported_operator_type_op_expr(void **state)
 		assert_true(supported_operator_type_op_expr(pxf_supported_opr_op_expr[i].dbop, filter));
 		assert_true(pxf_supported_opr_op_expr[i].pxfop == filter->op);
 	}
-
-}
-
-static void
-test__supported_operator_type_scalar_array_op_expr(void **state)
-{
-	Oid operator_oids[15][2] = {
-			{Int2EqualOperator, PXFOP_IN},
-			{Int4EqualOperator, PXFOP_IN},
-			{Int8EqualOperator, PXFOP_IN},
-			{TextEqualOperator, PXFOP_IN},
-			{Int24EqualOperator, PXFOP_IN},
-			{Int42EqualOperator, PXFOP_IN},
-			{Int84EqualOperator, PXFOP_IN},
-			{Int48EqualOperator, PXFOP_IN},
-			{Int28EqualOperator, PXFOP_IN},
-			{Int82EqualOperator, PXFOP_IN},
-			{DateEqualOperator, PXFOP_IN},
-			{Float8EqualOperator, PXFOP_IN},
-			{1120 , PXFOP_IN},
-			{BPCharEqualOperator, PXFOP_IN},
-			{BooleanEqualOperator, PXFOP_IN},
-	};
-
-	PxfFilterDesc *filter = (PxfFilterDesc*) palloc0(sizeof(PxfFilterDesc));
-
-	int array_size = sizeof(operator_oids) / sizeof(operator_oids[0]);
-	bool result = false;
-	int i = 0;
-
-	/* supported types */
-	for (; i < array_size-1; ++i)
-	{
-		result = supported_operator_type_scalar_array_op_expr(operator_oids[i][0], filter, true);
-		assert_true(result);
-		assert_true(operator_oids[i][1] == filter->op);
-	}
-
-	/* unsupported type */
-	result = supported_operator_type_op_expr(InvalidOid, filter);
-	assert_false(result);
-
-	/* go over pxf_supported_opr_scalar_array_op_expr array */
-	int nargs = sizeof(pxf_supported_opr_scalar_array_op_expr) / sizeof(dbop_pxfop_array_map);
-	assert_int_equal(nargs, 15);
-	for (i = 0; i < nargs; ++i)
-	{
-		assert_true(supported_operator_type_scalar_array_op_expr(pxf_supported_opr_op_expr[i].dbop, filter, pxf_supported_opr_scalar_array_op_expr[i].useOr));
-		assert_true(pxf_supported_opr_scalar_array_op_expr[i].pxfop == filter->op);
-	}
-
 }
 
 /*
@@ -507,7 +456,8 @@ build_filter(char lopcode, int lattnum, char* lconststr,
 }
 
 static Var *
-build_var(Oid oid, int attno) {
+build_var(Oid oid, int attno)
+{
 	Var *arg_var = (Var*) palloc0(sizeof(Var));
 	arg_var->xpr.type = T_Var;
 	arg_var->vartype = oid;
@@ -559,7 +509,7 @@ build_null_expression_item(int attnum, Oid attrtype, NullTestType nullType)
 {
 	ExpressionItem *expressionItem = (ExpressionItem*) palloc0(sizeof(ExpressionItem));
 	Var *vararg = build_var(attrtype, attnum);
-	OpExpr *operationExpression = build_null_expr(vararg, nullType);
+	NullTest *operationExpression = build_null_expr((Expr *) vararg, nullType);
 
 	expressionItem->node = (Node *) operationExpression;
 	expressionItem->processed = false;
@@ -592,7 +542,8 @@ build_qualifier(int lattnum, Oid lattrtype, char* rconststr, Oid rattrtype, int 
 }
 
 static FuncExpr *
-build_func_expr_operand(List *args, CoercionForm funcformat) {
+build_func_expr_operand(List *args, CoercionForm funcformat)
+{
 	FuncExpr* operand = palloc0(sizeof(FuncExpr));
 	((Node*) operand)->type = T_FuncExpr;
 	operand->args = args;
@@ -609,7 +560,8 @@ build_func_expr_operand(List *args, CoercionForm funcformat) {
  * where Var holds actual arguments - column1, column2,...,columnk
  */
 static FuncExpr *
-build_nested_func_expr_operand(List *columnsOids, List *attrsIndices) {
+build_nested_func_expr_operand(List *columnsOids, List *attrsIndices)
+{
 	assert_int_equal(columnsOids->length, attrsIndices->length);
 	ListCell *columnOidLc = NULL, *attrIndexLc = NULL;
 	Var *var = NULL;
@@ -679,8 +631,7 @@ test__opexpr_to_pxffilter__attributeEqualsNull(void **state)
 {
 	PxfFilterDesc *filter = (PxfFilterDesc*) palloc0(sizeof(PxfFilterDesc));
 	Var *arg_var = build_var(INT2OID, 1);
-	Const* arg_const = build_const(INT2OID, NULL, true
-			);
+	Const* arg_const = build_const(INT2OID, NULL, true);
 	OpExpr *expr = build_op_expr(arg_var, arg_const, 94 /* int2eq */);
 
 	PxfFilterDesc* expected = build_filter(
@@ -703,7 +654,7 @@ static void
 test__opexpr_to_pxffilter__attributeIsNull(void **state)
 {
 	Var *arg_var = build_var(INT2OID, 1);
-	NullTest *expr = build_null_expr(arg_var, IS_NULL);
+	NullTest *expr = build_null_expr((Expr *) arg_var, IS_NULL);
 
 	pfree(expr->arg);
 	pfree(expr);
