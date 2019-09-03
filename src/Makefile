@@ -21,11 +21,8 @@ SUBDIRS = \
 	backend/snowball \
 	include \
 	interfaces \
-<<<<<<< HEAD
-=======
 	backend/replication/libpqwalreceiver \
 	fe_utils \
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	bin \
 	pl \
 	makefiles \

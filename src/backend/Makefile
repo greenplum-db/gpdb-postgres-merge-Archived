@@ -103,11 +103,7 @@ endif # win32
 ifeq ($(PORTNAME), aix)
 
 postgres: $(POSTGRES_IMP)
-<<<<<<< HEAD
 	$(CXX) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $(call expand_subsys,$(OBJS)) -Wl,-bE:$(top_builddir)/src/backend/$(POSTGRES_IMP) $(LIBS) -Wl,-brtllib -o $@
-=======
-	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $(call expand_subsys,$(OBJS)) -Wl,-bE:$(top_builddir)/src/backend/$(POSTGRES_IMP) $(LIBS) -Wl,-brtllib -o $@
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 $(POSTGRES_IMP): $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(call expand_subsys,$^)
@@ -154,18 +150,13 @@ postgres.o: $(OBJS)
 parser/gram.h: parser/gram.y
 	$(MAKE) -C parser gram.h
 
-<<<<<<< HEAD
-utils/fmgroids.h: utils/Gen_fmgrtab.pl catalog/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h $(top_srcdir)/src/include/catalog/pg_proc_gp.h
-	$(MAKE) -C utils fmgroids.h
-=======
 storage/lmgr/lwlocknames.h: storage/lmgr/generate-lwlocknames.pl storage/lmgr/lwlocknames.txt
 	$(MAKE) -C storage/lmgr lwlocknames.h
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 utils/errcodes.h: utils/generate-errcodes.pl utils/errcodes.txt
 	$(MAKE) -C utils errcodes.h
 
-utils/fmgroids.h: utils/Gen_fmgrtab.pl catalog/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h
+utils/fmgroids.h: utils/Gen_fmgrtab.pl catalog/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h $(top_srcdir)/src/include/catalog/pg_proc_gp.h
 	$(MAKE) -C utils fmgroids.h
 
 utils/probes.h: utils/probes.d
