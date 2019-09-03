@@ -20,11 +20,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/tlist.h"
-<<<<<<< HEAD
-#include "optimizer/walkers.h"
-=======
 #include "optimizer/var.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
@@ -34,6 +30,11 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
+/* 
+ * GPDB_96_MERGE_FIXME: is this header really needed? 
+ * It was introduced in Greenplum commit 4319b7bb8e0 yet it is not present in
+ * upstream.
+ */
 #include "optimizer/walkers.h"
 
 
@@ -84,10 +85,7 @@ static bool finalize_grouping_exprs_walker(Node *node,
 static void check_agglevels_and_constraints(ParseState *pstate, Node *expr);
 static List *expand_groupingset_node(GroupingSet *gs);
 static Node *make_agg_arg(Oid argtype, Oid argcollation);
-<<<<<<< HEAD
-=======
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
  * transformAggregateCall -
@@ -1952,24 +1950,6 @@ resolve_aggregate_transtype(Oid aggfuncid,
  * invtransfnexpr.
  */
 void
-<<<<<<< HEAD
-build_aggregate_fnexprs(Oid *agg_input_types,
-						int agg_num_inputs,
-						int agg_num_direct_inputs,
-						int num_finalfn_inputs,
-						bool agg_variadic,
-						Oid agg_state_type,
-						Oid agg_result_type,
-						Oid agg_input_collation,
-						Oid transfn_oid,
-						Oid invtransfn_oid,
-						Oid finalfn_oid,
-						Oid combinefn_oid,
-						Expr **transfnexpr,
-						Expr **invtransfnexpr,
-						Expr **finalfnexpr,
-						Expr **combinefnexpr)
-=======
 build_aggregate_transfn_expr(Oid *agg_input_types,
 							 int agg_num_inputs,
 							 int agg_num_direct_inputs,
@@ -1980,7 +1960,6 @@ build_aggregate_transfn_expr(Oid *agg_input_types,
 							 Oid invtransfn_oid,
 							 Expr **transfnexpr,
 							 Expr **invtransfnexpr)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	List	   *args;
 	FuncExpr   *fexpr;
@@ -2027,70 +2006,6 @@ build_aggregate_transfn_expr(Oid *agg_input_types,
 	}
 }
 
-<<<<<<< HEAD
-	/* see if we have a final function */
-	if (!OidIsValid(finalfn_oid))
-	{
-		*finalfnexpr = NULL;
-	}
-	else
-	{
-		/*
-		 * Build expr tree for final function
-		 */
-		argp = makeNode(Param);
-		argp->paramkind = PARAM_EXEC;
-		argp->paramid = -1;
-		argp->paramtype = agg_state_type;
-		argp->paramtypmod = -1;
-		argp->location = -1;
-		args = list_make1(argp);
-
-		/* finalfn may take additional args, which match agg's input types */
-		for (i = 0; i < num_finalfn_inputs - 1; i++)
-		{
-			argp = makeNode(Param);
-			argp->paramkind = PARAM_EXEC;
-			argp->paramid = -1;
-			argp->paramtype = agg_input_types[i];
-			argp->paramtypmod = -1;
-			argp->paramcollid = agg_input_collation;
-			argp->location = -1;
-			args = lappend(args, argp);
-		}
-
-		*finalfnexpr = (Expr *) makeFuncExpr(finalfn_oid,
-											 agg_result_type,
-											 args,
-											 InvalidOid,
-											 agg_input_collation,
-											 COERCE_EXPLICIT_CALL);
-		/* finalfn is currently never treated as variadic */
-	}
-
-	/* combine function */
-	if (OidIsValid(combinefn_oid))
-	{
-		/*
-		 * Build expr tree for combine function
-		 */
-		argp = makeNode(Param);
-		argp->paramkind = PARAM_EXEC;
-		argp->paramid = -1;
-		argp->paramtype = agg_state_type;
-		argp->paramtypmod = -1;
-		argp->location = -1;
-		args = list_make1(argp);
-
-		/* XXX: is agg_state_type correct here? */
-		*combinefnexpr = (Expr *) makeFuncExpr(combinefn_oid,
-											   agg_state_type,
-											   args,
-											   InvalidOid,
-											   agg_input_collation,
-											   COERCE_EXPLICIT_CALL);
-	}
-=======
 /*
  * Like build_aggregate_transfn_expr, but creates an expression tree for the
  * combine function of an aggregate, rather than the transition function.
@@ -2118,7 +2033,6 @@ build_aggregate_combinefn_expr(Oid agg_state_type,
 						 COERCE_EXPLICIT_CALL);
 	/* combinefn is currently never treated as variadic */
 	*combinefnexpr = (Expr *) fexpr;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
@@ -2168,28 +2082,6 @@ build_aggregate_deserialfn_expr(Oid deserialfn_oid,
 	*deserialfnexpr = (Expr *) fexpr;
 }
 
-<<<<<<< HEAD
-
-/*
- * Convenience function to build dummy argument expressions for aggregates.
- *
- * We really only care that an aggregate support function can discover its
- * actual argument types at runtime using get_fn_expr_argtype(), so it's okay
- * to use Param nodes that don't correspond to any real Param.
- */
-static Node *
-make_agg_arg(Oid argtype, Oid argcollation)
-{
-	Param	   *argp = makeNode(Param);
-
-	argp->paramkind = PARAM_EXEC;
-	argp->paramid = -1;
-	argp->paramtype = argtype;
-	argp->paramtypmod = -1;
-	argp->paramcollid = argcollation;
-	argp->location = -1;
-	return (Node *) argp;
-=======
 /*
  * Like build_aggregate_transfn_expr, but creates an expression tree for the
  * final function of an aggregate, rather than the transition function.
@@ -2225,7 +2117,6 @@ build_aggregate_finalfn_expr(Oid *agg_input_types,
 										 agg_input_collation,
 										 COERCE_EXPLICIT_CALL);
 	/* finalfn is currently never treated as variadic */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
