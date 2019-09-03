@@ -16,11 +16,7 @@ include $(top_builddir)/src/Makefile.global
 all: pg_config.h pg_config_ext.h pg_config_os.h check_oids
 
 
-<<<<<<< HEAD
-# Subdirectories containing headers for server-side dev
-=======
 # Subdirectories containing installable headers
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 SUBDIRS = access bootstrap catalog commands common datatype \
 	executor fe_utils foreign \
 	lib libpq mb nodes optimizer parser postmaster regex replication \
