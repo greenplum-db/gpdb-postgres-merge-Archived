@@ -21,6 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+<<<<<<< HEAD
 ALTER TABLE [ IF EXISTS ] [ONLY] name RENAME [COLUMN] column_name TO new_column_name
 
 ALTER TABLE [ IF EXISTS ] name RENAME TO new_name
@@ -137,6 +138,70 @@ Where column_reference_storage_directive is:
    COLUMN column_name ENCODING ( storage_directive [, ... ] ), ... 
  | DEFAULT COLUMN ENCODING ( storage_directive [, ... ] )
 
+=======
+ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
+    <replaceable class="PARAMETER">action</replaceable> [, ... ]
+ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
+    RENAME [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> TO <replaceable class="PARAMETER">new_column_name</replaceable>
+ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
+    RENAME CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> TO <replaceable class="PARAMETER">new_constraint_name</replaceable>
+ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
+    RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
+    SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
+ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> [ OWNED BY <replaceable class="PARAMETER">role_name</replaceable> [, ... ] ]
+    SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable> [ NOWAIT ]
+
+<phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
+
+    ADD [ COLUMN ] [ IF NOT EXISTS ] <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="PARAMETER">column_name</replaceable> [ RESTRICT | CASCADE ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ USING <replaceable class="PARAMETER">expression</replaceable> ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> DROP DEFAULT
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> { SET | DROP } NOT NULL
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
+    ADD <replaceable class="PARAMETER">table_constraint</replaceable> [ NOT VALID ]
+    ADD <replaceable class="PARAMETER">table_constraint_using_index</replaceable>
+    ALTER CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+    VALIDATE CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
+    DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
+    DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
+    ENABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
+    ENABLE REPLICA TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
+    ENABLE ALWAYS TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
+    DISABLE RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    ENABLE RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    ENABLE REPLICA RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    ENABLE ALWAYS RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    DISABLE ROW LEVEL SECURITY
+    ENABLE ROW LEVEL SECURITY
+    FORCE ROW LEVEL SECURITY
+    NO FORCE ROW LEVEL SECURITY
+    CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
+    SET WITHOUT CLUSTER
+    SET WITH OIDS
+    SET WITHOUT OIDS
+    SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
+    SET { LOGGED | UNLOGGED }
+    SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
+    RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
+    INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
+    NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
+    OF <replaceable class="PARAMETER">type_name</replaceable>
+    NOT OF
+    OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+    REPLICA IDENTITY { DEFAULT | USING INDEX <replaceable class="PARAMETER">index_name</replaceable> | FULL | NOTHING }
+
+<phrase>and <replaceable class="PARAMETER">table_constraint_using_index</replaceable> is:</phrase>
+
+    [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
+    { UNIQUE | PRIMARY KEY } USING INDEX <replaceable class="PARAMETER">index_name</replaceable>
+    [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 </synopsis>
  </refsynopsisdiv>
 
@@ -152,11 +217,13 @@ Where column_reference_storage_directive is:
 
   <variablelist>
    <varlistentry>
-    <term><literal>ADD COLUMN</literal></term>
+    <term><literal>ADD COLUMN [ IF NOT EXISTS ]</literal></term>
     <listitem>
      <para>
       This form adds a new column to the table, using the same syntax as
-      <xref linkend="SQL-CREATETABLE">.
+      <xref linkend="SQL-CREATETABLE">. If <literal>IF NOT EXISTS</literal>
+      is specified and a column already exists with this name,
+      no error is thrown.
      </para>
     </listitem>
    </varlistentry>
@@ -488,6 +555,21 @@ Where column_reference_storage_directive is:
    </varlistentry>
 
    <varlistentry>
+    <term><literal>NO FORCE</literal>/<literal>FORCE ROW LEVEL SECURITY</literal></term>
+    <listitem>
+     <para>
+      These forms control the application of row security policies belonging
+      to the table when the user is the table owner.  If enabled, row level
+      security policies will be applied when the user is the table owner.  If
+      disabled (the default) then row level security will not be applied when
+      the user is the table owner.
+      See also
+      <xref linkend="SQL-CREATEPOLICY">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>CLUSTER ON</literal></term>
     <listitem>
      <para>
@@ -595,6 +677,10 @@ Where column_reference_storage_directive is:
       That can be done with <link linkend="SQL-VACUUM">VACUUM
       FULL</>, <xref linkend="SQL-CLUSTER"> or one of the forms
       of <command>ALTER TABLE</> that forces a table rewrite.
+     </para>
+
+     <para>
+      Changing fillfactor and autovacuum storage parameters acquires a <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
      </para>
 
      <note>
@@ -864,7 +950,9 @@ Where column_reference_storage_directive is:
       <listitem>
        <para>
         Automatically drop objects that depend on the dropped column
-        or constraint (for example, views referencing the column).
+        or constraint (for example, views referencing the column),
+        and in turn all objects that depend on those objects
+        (see <xref linkend="ddl-depend">).
        </para>
       </listitem>
      </varlistentry>
@@ -1130,7 +1218,7 @@ ALTER TABLE distributors
   </para>
 
   <para>
-   To change an integer column containing UNIX timestamps to <type>timestamp
+   To change an integer column containing Unix timestamps to <type>timestamp
    with time zone</type> via a <literal>USING</literal> clause:
 <programlisting>
 ALTER TABLE foo

@@ -32,7 +32,11 @@
 #include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "catalog/namespace.h"
+<<<<<<< HEAD
 #include "catalog/pg_type.h"
+=======
+#include "catalog/pg_am.h"
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"

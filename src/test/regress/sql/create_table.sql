@@ -266,7 +266,13 @@ CREATE TABLE as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 CREATE TABLE IF NOT EXISTS as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 DROP TABLE as_select1;
 
+<<<<<<< HEAD
 -- Test github issue #7340. truncating a toast unlogged table fails.
 CREATE UNLOGGED TABLE unlogged_toast (a text);
 TRUNCATE unlogged_toast;
 DROP TABLE unlogged_toast;
+=======
+-- check that the oid column is added before the primary key is checked
+CREATE TABLE oid_pk (f1 INT, PRIMARY KEY(oid)) WITH OIDS;
+DROP TABLE oid_pk;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

@@ -1,6 +1,7 @@
 <!-- doc/src/sgml/release-9.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<<<<<<< HEAD
  <sect1 id="release-9-2-24">
   <title>Release 9.2.24</title>
 
@@ -1902,6 +1903,15 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
   <title>Release date:</title>
   <para>2016-08-11</para>
   </formalpara>
+=======
+ <sect1 id="release-9-2-18">
+  <title>Release 9.2.18</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-08-11</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.2.17.
@@ -2239,10 +2249,17 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
  <sect1 id="release-9-2-17">
   <title>Release 9.2.17</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2016-05-12</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-05-12</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.2.16.
@@ -2435,10 +2452,17 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
  <sect1 id="release-9-2-16">
   <title>Release 9.2.16</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2016-03-31</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-03-31</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.2.15.
@@ -2523,7 +2547,11 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
 
      <para>
       This dodges a portability problem on FreeBSD-derived platforms
+<<<<<<< HEAD
       (including macOS).
+=======
+      (including OS X).
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
      </para>
     </listitem>
 
@@ -2641,10 +2669,17 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
  <sect1 id="release-9-2-15">
   <title>Release 9.2.15</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2016-02-11</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-02-11</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.2.14.
@@ -3185,10 +3220,17 @@ Branch: REL9_2_STABLE [38bec1805] 2017-01-25 07:02:25 +0900
  <sect1 id="release-9-2-14">
   <title>Release 9.2.14</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2015-10-08</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-10-08</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.2.13.

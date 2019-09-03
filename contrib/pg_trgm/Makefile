@@ -4,11 +4,16 @@ MODULE_big = pg_trgm
 OBJS = trgm_op.o trgm_gist.o trgm_gin.o trgm_regexp.o $(WIN32RES)
 
 EXTENSION = pg_trgm
-DATA = pg_trgm--1.1.sql pg_trgm--1.0--1.1.sql pg_trgm--unpackaged--1.0.sql
+DATA = pg_trgm--1.3.sql pg_trgm--1.2--1.3.sql pg_trgm--1.1--1.2.sql \
+	pg_trgm--1.0--1.1.sql pg_trgm--unpackaged--1.0.sql
 PGFILEDESC = "pg_trgm - trigram matching"
 
+<<<<<<< HEAD
 REGRESS = pg_trgm
 REGRESS_OPTS += --init-file=$(top_srcdir)/src/test/regress/init_file
+=======
+REGRESS = pg_trgm pg_word_trgm
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

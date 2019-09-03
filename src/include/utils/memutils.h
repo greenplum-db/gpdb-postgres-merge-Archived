@@ -7,9 +7,13 @@
  *	  of the API of the memory management subsystem.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/memutils.h
@@ -225,6 +229,7 @@ extern void dump_memory_allocation(const char* fname);
 extern void dump_memory_allocation_ctxt(FILE * ofile, void *ctxt);
 #endif
 extern void MemoryContextStats(MemoryContext context);
+extern void MemoryContextStatsDetail(MemoryContext context, int max_children);
 extern void MemoryContextAllowInCriticalSection(MemoryContext context,
 									bool allow);
 
@@ -305,6 +310,14 @@ extern uint64 mpool_bytes_used(MPool *mpool);
 #define ALLOCSET_START_SMALL_SIZES \
 	ALLOCSET_SMALL_MINSIZE, ALLOCSET_SMALL_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE
 
+
+/*
+ * Threshold above which a request in an AllocSet context is certain to be
+ * allocated separately (and thereby have constant allocation overhead).
+ * Few callers should be interested in this, but tuplesort/tuplestore need
+ * to know it.
+ */
+#define ALLOCSET_SEPARATE_THRESHOLD  8192
 
 /*
  * Threshold above which a request in an AllocSet context is certain to be

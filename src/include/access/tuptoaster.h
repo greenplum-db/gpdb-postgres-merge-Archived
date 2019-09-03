@@ -4,7 +4,7 @@
  *	  POSTGRES definitions for external and compressed storage
  *	  of variable size attributes.
  *
- * Copyright (c) 2000-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2016, PostgreSQL Global Development Group
  *
  * src/include/access/tuptoaster.h
  *
@@ -14,9 +14,12 @@
 #define TUPTOASTER_H
 
 #include "access/htup_details.h"
+<<<<<<< HEAD
 #include "access/memtup.h"
+=======
+#include "storage/lockdefs.h"
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "utils/relcache.h"
-#include "storage/lock.h"
 
 #ifndef VARSIZE_TO_SHORT
 #define VARSIZE_TO_SHORT(PTR)   ((char)(VARSIZE(PTR)-VARHDRSZ+VARHDRSZ_SHORT) | 0x80)

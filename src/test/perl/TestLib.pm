@@ -17,6 +17,7 @@ use File::Spec;
 use File::Temp ();
 use IPC::Run;
 use SimpleTee;
+<<<<<<< HEAD
 
 # specify a recent enough version of Test::More  to support the note() function
 use Test::More 0.82;
@@ -31,6 +32,14 @@ our @EXPORT = qw(
   psql
   slurp_dir
   slurp_file
+=======
+use Test::More;
+
+our @EXPORT = qw(
+  slurp_dir
+  slurp_file
+  append_to_file
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
   system_or_bail
   system_log
   run_log
@@ -42,6 +51,7 @@ our @EXPORT = qw(
   program_version_ok
   program_options_handling_ok
   command_like
+<<<<<<< HEAD
   command_warns_like
   command_fails_like
   issues_sql_like
@@ -103,15 +113,113 @@ autoflush TESTLOG 1;
 delete $ENV{LANGUAGE};
 delete $ENV{LC_ALL};
 $ENV{LC_MESSAGES} = 'C';
+=======
+
+  $windows_os
+);
+
+our ($windows_os, $tmp_check, $log_path, $test_logfile);
+
+BEGIN
+{
+
+	# Set to untranslated messages, to be able to compare program output
+	# with expected strings.
+	delete $ENV{LANGUAGE};
+	delete $ENV{LC_ALL};
+	$ENV{LC_MESSAGES} = 'C';
+
+	delete $ENV{PGCONNECT_TIMEOUT};
+	delete $ENV{PGDATA};
+	delete $ENV{PGDATABASE};
+	delete $ENV{PGHOSTADDR};
+	delete $ENV{PGREQUIRESSL};
+	delete $ENV{PGSERVICE};
+	delete $ENV{PGSSLMODE};
+	delete $ENV{PGUSER};
+	delete $ENV{PGPORT};
+	delete $ENV{PGHOST};
+
+	# Must be set early
+	$windows_os = $Config{osname} eq 'MSWin32' || $Config{osname} eq 'msys';
+}
+
+INIT
+{
+
+	# Determine output directories, and create them.  The base path is the
+	# TESTDIR environment variable, which is normally set by the invoking
+	# Makefile.
+	$tmp_check = $ENV{TESTDIR} ? "$ENV{TESTDIR}/tmp_check" : "tmp_check";
+	$log_path = "$tmp_check/log";
+
+	mkdir $tmp_check;
+	mkdir $log_path;
+
+	# Open the test log file, whose name depends on the test name.
+	$test_logfile = basename($0);
+	$test_logfile =~ s/\.[^.]+$//;
+	$test_logfile = "$log_path/regress_log_$test_logfile";
+	open TESTLOG, '>', $test_logfile
+	  or die "could not open STDOUT to logfile \"$test_logfile\": $!";
+
+	# Hijack STDOUT and STDERR to the log file
+	open(ORIG_STDOUT, ">&STDOUT");
+	open(ORIG_STDERR, ">&STDERR");
+	open(STDOUT,      ">&TESTLOG");
+	open(STDERR,      ">&TESTLOG");
+
+	# The test output (ok ...) needs to be printed to the original STDOUT so
+	# that the 'prove' program can parse it, and display it to the user in
+	# real time. But also copy it to the log file, to provide more context
+	# in the log.
+	my $builder = Test::More->builder;
+	my $fh      = $builder->output;
+	tie *$fh, "SimpleTee", *ORIG_STDOUT, *TESTLOG;
+	$fh = $builder->failure_output;
+	tie *$fh, "SimpleTee", *ORIG_STDERR, *TESTLOG;
+
+	# Enable auto-flushing for all the file handles. Stderr and stdout are
+	# redirected to the same file, and buffering causes the lines to appear
+	# in the log in confusing order.
+	autoflush STDOUT 1;
+	autoflush STDERR 1;
+	autoflush TESTLOG 1;
+}
+
+END
+{
+
+	# Preserve temporary directory for this test on failure
+	$File::Temp::KEEP_ALL = 1 unless all_tests_passing();
+}
+
+sub all_tests_passing
+{
+	my $fail_count = 0;
+	foreach my $status (Test::More->builder->summary)
+	{
+		return 0 unless $status;
+	}
+	return 1;
+}
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #
 # Helper functions
 #
 sub tempdir
 {
+	my ($prefix) = @_;
+	$prefix = "tmp_test" unless defined $prefix;
 	return File::Temp::tempdir(
+<<<<<<< HEAD
 		'tmp_testXXXX',
 		DIR => $tmp_check,
+=======
+		$prefix . '_XXXX',
+		DIR     => $tmp_check,
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		CLEANUP => 1);
 }
 
@@ -123,6 +231,7 @@ sub tempdir_short
 	return File::Temp::tempdir(CLEANUP => 1);
 }
 
+<<<<<<< HEAD
 # Initialize a new cluster for testing.
 #
 # The PGHOST environment variable is set to connect to the new cluster.
@@ -260,18 +369,29 @@ sub slurp_file
 	close $in;
 	$contents =~ s/\r//g if $Config{osname} eq 'msys';
 	return $contents;
+=======
+sub system_log
+{
+	print("# Running: " . join(" ", @_) . "\n");
+	return system(@_);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 sub system_or_bail
 {
 	if (system_log(@_) != 0)
 	{
+<<<<<<< HEAD
 		BAIL_OUT("system $_[0] failed: $?");
+=======
+		BAIL_OUT("system $_[0] failed");
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 }
 
 sub run_log
 {
+<<<<<<< HEAD
 	print("# Running: " . join(" ", @{$_[0]}) ."\n");
 	return IPC::Run::run(@_);
 }
@@ -300,6 +420,34 @@ sub generate_ascii_string
 }
 
 
+=======
+	print("# Running: " . join(" ", @{ $_[0] }) . "\n");
+	return IPC::Run::run(@_);
+}
+
+sub slurp_dir
+{
+	my ($dir) = @_;
+	opendir(my $dh, $dir)
+	  or die "could not opendir \"$dir\": $!";
+	my @direntries = readdir $dh;
+	closedir $dh;
+	return @direntries;
+}
+
+sub slurp_file
+{
+	my ($filename) = @_;
+	local $/;
+	open(my $in, '<', $filename)
+	  or die "could not read \"$filename\": $!";
+	my $contents = <$in>;
+	close $in;
+	$contents =~ s/\r//g if $Config{osname} eq 'msys';
+	return $contents;
+}
+
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 sub append_to_file
 {
 	my ($filename, $str) = @_;
@@ -329,8 +477,13 @@ sub command_fails
 sub command_exit_is
 {
 	my ($cmd, $expected, $test_name) = @_;
+<<<<<<< HEAD
 	print("# Running: " . join(" ", @{$cmd}) ."\n");
 	my $h = start $cmd;
+=======
+	print("# Running: " . join(" ", @{$cmd}) . "\n");
+	my $h = IPC::Run::start $cmd;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	$h->finish();
 
 	# On Windows, the exit status of the process is returned directly as the
@@ -340,8 +493,15 @@ sub command_exit_is
 	# assuming the Unix convention, which will always return 0 on Windows as
 	# long as the process was not terminated by an exception. To work around
 	# that, use $h->full_result on Windows instead.
+<<<<<<< HEAD
 	my $result = ($Config{osname} eq "MSWin32") ?
 		($h->full_results)[0] : $h->result(0);
+=======
+	my $result =
+	    ($Config{osname} eq "MSWin32")
+	  ? ($h->full_results)[0]
+	  : $h->result(0);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	is($result, $expected, $test_name);
 }
 
@@ -350,7 +510,12 @@ sub program_help_ok
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
 	print("# Running: $cmd --help\n");
+<<<<<<< HEAD
 	my $result = run [ $cmd, '--help' ], '>', \$stdout, '2>', \$stderr;
+=======
+	my $result = IPC::Run::run [ $cmd, '--help' ], '>', \$stdout, '2>',
+	  \$stderr;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	ok($result, "$cmd --help exit code 0");
 	isnt($stdout, '', "$cmd --help goes to stdout");
 	is($stderr, '', "$cmd --help nothing to stderr");
@@ -361,7 +526,12 @@ sub program_version_ok
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
 	print("# Running: $cmd --version\n");
+<<<<<<< HEAD
 	my $result = run [ $cmd, '--version' ], '>', \$stdout, '2>', \$stderr;
+=======
+	my $result = IPC::Run::run [ $cmd, '--version' ], '>', \$stdout, '2>',
+	  \$stderr;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	ok($result, "$cmd --version exit code 0");
 	isnt($stdout, '', "$cmd --version goes to stdout");
 	is($stderr, '', "$cmd --version nothing to stderr");
@@ -372,8 +542,14 @@ sub program_options_handling_ok
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
 	print("# Running: $cmd --not-a-valid-option\n");
+<<<<<<< HEAD
 	my $result = run [ $cmd, '--not-a-valid-option' ], '>', \$stdout, '2>',
 	  \$stderr;
+=======
+	my $result = IPC::Run::run [ $cmd, '--not-a-valid-option' ], '>',
+	  \$stdout,
+	  '2>', \$stderr;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	ok(!$result, "$cmd with invalid option nonzero exit code");
 	isnt($stderr, '', "$cmd with invalid option prints error message");
 }
@@ -383,12 +559,17 @@ sub command_like
 	my ($cmd, $expected_stdout, $test_name) = @_;
 	my ($stdout, $stderr);
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
+<<<<<<< HEAD
 	my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
+=======
+	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	ok($result, "@$cmd exit code 0");
 	is($stderr, '', "@$cmd no stderr");
 	like($stdout, $expected_stdout, "$test_name: matches");
 }
 
+<<<<<<< HEAD
 sub command_warns_like
 {
 	my ($cmd, $expected_stderr, $test_name) = @_;
@@ -411,4 +592,6 @@ sub command_fails_like
 	like($stderr, $expected_stderr, "$test_name: not match expected stderr");
 }
 
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 1;

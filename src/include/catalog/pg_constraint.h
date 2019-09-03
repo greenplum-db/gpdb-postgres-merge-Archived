@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_constraint.h
@@ -20,9 +20,12 @@
 #define PG_CONSTRAINT_H
 
 #include "catalog/genbki.h"
+<<<<<<< HEAD
 #include "catalog/dependency.h"
 #include "nodes/pg_list.h"
 #include "access/attnum.h"
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* ----------------
  *		pg_constraint definition.  cpp turns this into
@@ -185,6 +188,13 @@ typedef FormData_pg_constraint *Form_pg_constraint;
 #define Anum_pg_constraint_conbin			23
 #define Anum_pg_constraint_consrc			24
 
+/* ----------------
+ *		initial contents of pg_constraint
+ * ----------------
+ */
+
+/* nothing, at present */
+
 
 /* Valid values for contype */
 #define CONSTRAINT_CHECK			'c'
@@ -200,6 +210,7 @@ typedef FormData_pg_constraint *Form_pg_constraint;
  * the FKCONSTR_MATCH_xxx constants defined in parsenodes.h.
  */
 
+<<<<<<< HEAD
 /*
  * Identify constraint type for lookup purposes
  */
@@ -272,4 +283,6 @@ extern bool check_functional_grouping(Oid relid,
 						  List *grouping_columns,
 						  List **constraintDeps);
 
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #endif   /* PG_CONSTRAINT_H */

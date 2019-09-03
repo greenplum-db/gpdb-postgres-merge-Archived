@@ -200,9 +200,9 @@ output_escaped_str(char *str, bool quoted)
 	int			i = 0;
 	int			len = strlen(str);
 
-	if (quoted && str[0] == '\"' && str[len - 1] == '\"')		/* do not escape quotes
-																 * at beginning and end
-																 * if quoted string */
+	if (quoted && str[0] == '"' && str[len - 1] == '"') /* do not escape quotes
+														 * at beginning and end
+														 * if quoted string */
 	{
 		i = 1;
 		len--;
@@ -244,6 +244,11 @@ output_escaped_str(char *str, bool quoted)
 			fputc(str[i], base_yyout);
 	}
 
+<<<<<<< HEAD
 	if (quoted && str[0] == '\"' && str[len] == '\"')
 		fputs("\"", base_yyout);
+=======
+	if (quoted && str[0] == '"' && str[len] == '"')
+		fputs("\"", yyout);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }

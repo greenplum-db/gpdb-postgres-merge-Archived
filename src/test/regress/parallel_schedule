@@ -48,7 +48,7 @@ test: create_function_2
 # execute two copy tests parallel, to check that copy itself
 # is concurrent safe.
 # ----------
-test: copy copyselect
+test: copy copyselect copydml
 
 # ----------
 # More groups of parallel tests
@@ -62,7 +62,7 @@ test: gp_gin_index
 # ----------
 # Another group of parallel tests
 # ----------
-test: create_aggregate create_function_3 create_cast constraints triggers inherit create_table_like typed_table vacuum drop_if_exists updatable_views rolenames
+test: create_aggregate create_function_3 create_cast constraints triggers inherit create_table_like typed_table vacuum drop_if_exists updatable_views rolenames roleattributes create_am
 
 # ----------
 # Because vacuum will detect concurrently running transactions, it is necessary to
@@ -107,17 +107,22 @@ test: namespace
 # ----------
 # Another group of parallel tests
 # ----------
+<<<<<<< HEAD
 test: brin gin gist spgist privileges security_label collate lock replica_identity rowsecurity object_address tablesample groupingsets
 
 # MATERIALIZED_VIEW_FIXME : matview is not supported on greenplum. Enable the test when the feature is ready.
 #test: matview
+=======
+test: brin gin gist spgist privileges init_privs security_label collate matview lock replica_identity rowsecurity object_address tablesample groupingsets drop_operator
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 # ----------
 # Another group of parallel tests
 # ----------
-test: alter_generic misc psql async
+test: alter_generic alter_operator misc psql async dbsize misc_functions
 
 # rules cannot run concurrently with any test that creates a view
+<<<<<<< HEAD
 #
 # 'rules' test is disabled in GPDB. Maintaining the list of views in it is
 # too painful, and there are also errors because of cross-segment UPDATEs
@@ -127,10 +132,14 @@ test: alter_generic misc psql async
 # merge, it was done a long time ago, it's time to revisit this so we can re-
 # enable it
 #test: rules
+=======
+test: rules psql_crosstab select_parallel amutils
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 # ----------
 # Another group of parallel tests
 # ----------
+<<<<<<< HEAD
 test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json jsonb json_encoding indirect_toast equivclass
 
 # Output of the 'combocid' test contains ctid and cmin values, which will
@@ -141,6 +150,9 @@ test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts f
 # multiple UNIQUE constraints, which is not supported in GPDB.
 #test: foreign_key
 
+=======
+test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json jsonb json_encoding indirect_toast equivclass
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 # ----------
 # Another group of parallel tests
 # NB: temp.sql does a reconnect which transiently uses 2 connections,

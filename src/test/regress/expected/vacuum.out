@@ -79,10 +79,14 @@ VACUUM FULL pg_class;
 VACUUM FULL pg_database;
 VACUUM FULL vaccluster;
 VACUUM FULL vactst;
+<<<<<<< HEAD
 -- check behavior with duplicate column mentions
 VACUUM ANALYZE vaccluster(i,i);
 ERROR:  column "i" of relation "vaccluster" appears more than once
 ANALYZE vaccluster(i,i);
 ERROR:  column "i" of relation "vaccluster" appears more than once
+=======
+VACUUM (DISABLE_PAGE_SKIPPING) vaccluster;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 DROP TABLE vaccluster;
 DROP TABLE vactst;

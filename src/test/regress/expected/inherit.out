@@ -1058,7 +1058,7 @@ DETAIL:  drop cascades to table inht2
 drop cascades to table inhts
 drop cascades to table inht3
 drop cascades to table inht4
--- Test non-inheritable indices [UNIQUE, EXCLUDE] contraints
+-- Test non-inheritable indices [UNIQUE, EXCLUDE] constraints
 CREATE TABLE test_constraints (id int, val1 varchar, val2 int, UNIQUE(val1, val2));
 CREATE TABLE test_constraints_inh () INHERITS (test_constraints);
 \d+ test_constraints
@@ -1132,8 +1132,12 @@ Distributed randomly
 
 DROP TABLE test_ex_constraints_inh;
 DROP TABLE test_ex_constraints;
+<<<<<<< HEAD
 -- end_ignore
 -- Test non-inheritable foreign key contraints
+=======
+-- Test non-inheritable foreign key constraints
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 CREATE TABLE test_primary_constraints(id int PRIMARY KEY);
 CREATE TABLE test_foreign_constraints(id1 int REFERENCES test_primary_constraints(id));
 CREATE TABLE test_foreign_constraints_inh () INHERITS (test_foreign_constraints);
@@ -1499,6 +1503,7 @@ explain (costs off)
 select t1.* from matest0 t1, matest0 t2
 where t1.b = t2.b and t2.c = t2.d
 order by t1.b limit 10;
+<<<<<<< HEAD
                                    QUERY PLAN                                    
 ---------------------------------------------------------------------------------
  Limit
@@ -1521,6 +1526,25 @@ order by t1.b limit 10;
                                                    Filter: (c = d)
  Optimizer: Postgres query optimizer
 (19 rows)
+=======
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Limit
+   ->  Merge Join
+         Merge Cond: (t1.b = t2.b)
+         ->  Merge Append
+               Sort Key: t1.b
+               ->  Index Scan using matest0i on matest0 t1
+               ->  Index Scan using matest1i on matest1 t1_1
+         ->  Materialize
+               ->  Merge Append
+                     Sort Key: t2.b
+                     ->  Index Scan using matest0i on matest0 t2
+                           Filter: (c = d)
+                     ->  Index Scan using matest1i on matest1 t2_1
+                           Filter: (c = d)
+(14 rows)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 reset enable_nestloop;
 drop table matest0 cascade;

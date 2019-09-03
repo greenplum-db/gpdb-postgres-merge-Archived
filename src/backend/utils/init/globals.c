@@ -3,7 +3,7 @@
  * globals.c
  *	  global variable declarations
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -33,6 +33,7 @@ volatile bool QueryCancelCleanup = false;
 volatile bool QueryFinishPending = false;
 volatile bool ProcDiePending = false;
 volatile bool ClientConnectionLost = false;
+<<<<<<< HEAD
 volatile sig_atomic_t ConfigReloadPending = false;
 /*
  * GPDB: Make these signed integers (instead of uint32) to detect garbage
@@ -41,6 +42,12 @@ volatile sig_atomic_t ConfigReloadPending = false;
 volatile int32 InterruptHoldoffCount = 0;
 volatile int32 QueryCancelHoldoffCount = 0;
 volatile int32 CritSectionCount = 0;
+=======
+volatile bool IdleInTransactionSessionTimeoutPending = false;
+volatile uint32 InterruptHoldoffCount = 0;
+volatile uint32 QueryCancelHoldoffCount = 0;
+volatile uint32 CritSectionCount = 0;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 int			MyProcPid;
 pg_time_t	MyStartTime;
@@ -77,6 +84,8 @@ char		postgres_exec_path[MAXPGPATH];		/* full path to backend */
 #endif
 
 BackendId	MyBackendId = InvalidBackendId;
+
+BackendId	ParallelMasterBackendId = InvalidBackendId;
 
 Oid			MyDatabaseId = InvalidOid;
 
@@ -121,6 +130,7 @@ int			IntervalStyle = INTSTYLE_POSTGRES;
 
 bool		enableFsync = true;
 bool		allowSystemTableMods = false;
+<<<<<<< HEAD
 int			planner_work_mem = 32768;
 int			work_mem = 32768;
 int			statement_mem = 256000;
@@ -131,6 +141,11 @@ int			max_statement_mem = 2048000;
  */
 int			gp_vmem_limit_per_query = 0;
 int			maintenance_work_mem = 65536;
+=======
+int			work_mem = 1024;
+int			maintenance_work_mem = 16384;
+int			replacement_sort_tuples = 150000;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
  * Primary determinants of sizes of shared-memory structures.

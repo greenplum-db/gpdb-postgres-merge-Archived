@@ -3,9 +3,13 @@
  * lmgr.c
  *	  POSTGRES lock manager code
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -397,6 +401,41 @@ LockRelationForExtension(Relation relation, LOCKMODE lockmode)
 								relation->rd_lockInfo.lockRelId.relId);
 
 	(void) LockAcquire(&tag, lockmode, false, false);
+}
+
+/*
+ *		ConditionalLockRelationForExtension
+ *
+ * As above, but only lock if we can get the lock without blocking.
+ * Returns TRUE iff the lock was acquired.
+ */
+bool
+ConditionalLockRelationForExtension(Relation relation, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_RELATION_EXTEND(tag,
+								relation->rd_lockInfo.lockRelId.dbId,
+								relation->rd_lockInfo.lockRelId.relId);
+
+	return (LockAcquire(&tag, lockmode, false, true) != LOCKACQUIRE_NOT_AVAIL);
+}
+
+/*
+ *		RelationExtensionLockWaiterCount
+ *
+ * Count the number of processes waiting for the given relation extension lock.
+ */
+int
+RelationExtensionLockWaiterCount(Relation relation)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_RELATION_EXTEND(tag,
+								relation->rd_lockInfo.lockRelId.dbId,
+								relation->rd_lockInfo.lockRelId.relId);
+
+	return LockWaiterCount(&tag);
 }
 
 /*
@@ -1115,6 +1154,7 @@ DescribeLockTag(StringInfo buf, const LOCKTAG *tag)
 }
 
 /*
+<<<<<<< HEAD
  * LockTagIsTemp
  *		Determine whether a locktag is for a lock on a temporary object
  *
@@ -1190,4 +1230,16 @@ CondUpgradeRelLock(Oid relid, bool noWait)
 	relation_close(rel, NoLock);
 
 	return upgrade;
+=======
+ * GetLockNameFromTagType
+ *
+ *	Given locktag type, return the corresponding lock name.
+ */
+const char *
+GetLockNameFromTagType(uint16 locktag_type)
+{
+	if (locktag_type > LOCKTAG_LAST_TYPE)
+		return "???";
+	return LockTagTypeNames[locktag_type];
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }

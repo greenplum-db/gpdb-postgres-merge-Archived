@@ -366,6 +366,21 @@ select aa, bb, unique1, unique1
   where bb < bb and bb is null;
 
 --
+<<<<<<< HEAD
+=======
+-- regression test: check handling of empty-FROM subquery underneath outer join
+--
+explain (costs off)
+select * from int8_tbl i1 left join (int8_tbl i2 join
+  (select 123 as x) ss on i2.q1 = x) on i1.q2 = i2.q2
+order by 1, 2;
+
+select * from int8_tbl i1 left join (int8_tbl i2 join
+  (select 123 as x) ss on i2.q1 = x) on i1.q2 = i2.q2
+order by 1, 2;
+
+--
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 -- regression test: check a case where join_clause_is_movable_into() gives
 -- an imprecise result, causing an assertion failure
 --
@@ -383,10 +398,13 @@ where t4.thousand = t5.unique1 and ss.x1 = t4.tenthous and ss.x2 = t5.stringu1;
 -- regression test: check a case where we formerly missed including an EC
 -- enforcement clause because it was expected to be handled at scan level
 --
+<<<<<<< HEAD
 -- GPDB_94_MERGE_FIXME: The plan output is not as the upstream patch 
 -- 72edc8ffeb0e949 expected. We need to look further.
 set enable_hashjoin = false;
 set enable_nestloop = true;
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 explain (costs off)
 select a.f1, b.f1, t.thousand, t.tenthous from
   tenk1 t,
@@ -399,6 +417,7 @@ select a.f1, b.f1, t.thousand, t.tenthous from
   (select sum(f1)+1 as f1 from int4_tbl i4a) a,
   (select sum(f1) as f1 from int4_tbl i4b) b
 where b.f1 = t.thousand and a.f1 = b.f1 and (a.f1+b.f1+999) = t.tenthous;
+<<<<<<< HEAD
 reset enable_hashjoin;
 reset enable_nestloop;
 
@@ -440,6 +459,8 @@ select count(*) from
   on x.thousand = y.unique2 and x.twothousand = y.hundred and x.fivethous = y.unique2;
 reset enable_mergejoin;
 reset random_page_cost;
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 
 --
@@ -514,6 +535,22 @@ select tt1.*, tt2.* from tt2 right join tt1 on tt1.joincol = tt2.joincol;
 
 reset enable_hashjoin;
 reset enable_nestloop;
+
+--
+-- regression test for bug #13908 (hash join with skew tuples & nbatch increase)
+--
+
+set work_mem to '64kB';
+set enable_mergejoin to off;
+
+explain (costs off)
+select count(*) from tenk1 a, tenk1 b
+  where a.hundred = b.thousand and (b.fivethous % 10) < 10;
+select count(*) from tenk1 a, tenk1 b
+  where a.hundred = b.thousand and (b.fivethous % 10) < 10;
+
+reset work_mem;
+reset enable_mergejoin;
 
 --
 -- regression test for 8.2 bug with improper re-ordering of left joins
@@ -976,6 +1013,55 @@ select ss1.d1 from
 where t1.unique1 < i4.f1;
 
 --
+-- test a corner case in which we shouldn't apply the star-schema optimization
+--
+
+explain (costs off)
+select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
+  tenk1 t1
+  inner join int4_tbl i1
+    left join (select v1.x2, v2.y1, 11 AS d1
+               from (values(1,0)) v1(x1,x2)
+               left join (values(3,1)) v2(y1,y2)
+               on v1.x1 = v2.y2) subq1
+    on (i1.f1 = subq1.x2)
+  on (t1.unique2 = subq1.d1)
+  left join tenk1 t2
+  on (subq1.y1 = t2.unique1)
+where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
+
+select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
+  tenk1 t1
+  inner join int4_tbl i1
+    left join (select v1.x2, v2.y1, 11 AS d1
+               from (values(1,0)) v1(x1,x2)
+               left join (values(3,1)) v2(y1,y2)
+               on v1.x1 = v2.y2) subq1
+    on (i1.f1 = subq1.x2)
+  on (t1.unique2 = subq1.d1)
+  left join tenk1 t2
+  on (subq1.y1 = t2.unique1)
+where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
+
+-- variant that isn't quite a star-schema case
+
+select ss1.d1 from
+  tenk1 as t1
+  inner join tenk1 as t2
+  on t1.tenthous = t2.ten
+  inner join
+    int8_tbl as i8
+    left join int4_tbl as i4
+      inner join (select 64::information_schema.cardinal_number as d1
+                  from tenk1 t3,
+                       lateral (select abs(t3.unique1) + random()) ss0(x)
+                  where t3.fivethous < 0) as ss1
+      on i4.f1 = ss1.d1
+    on i8.q1 = i4.f1
+  on t1.tenthous = ss1.d1
+where t1.unique1 < i4.f1;
+
+--
 -- test extraction of restriction OR clauses from join OR clause
 -- (we used to only do this for indexable clauses)
 --
@@ -1224,12 +1310,17 @@ select * from
 --
 -- test for appropriate join order in the presence of lateral references
 --
+<<<<<<< HEAD
 -- start_ignore
 -- GPDB_94_STABLE_MERGE_FIXME: Currently LATERAL is not fully supported in GPDB
 -- and the queries below are failing at the moment (The first one fails with
 -- error and the other two fail with panic). Comment them off temporarily.
 /*
  explain (verbose, costs off)
+=======
+
+explain (verbose, costs off)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 select * from
   text_tbl t1
   left join int8_tbl i8
@@ -1277,17 +1368,23 @@ select 1 from
   left join text_tbl as tt4 on (tt3.f1 = tt4.f1),
   lateral (select tt4.f1 as c0 from text_tbl as tt5 limit 1) as ss1
 where tt1.f1 = ss1.c0;
+<<<<<<< HEAD
 */
 --end_ignore
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 --
 -- check a case in which a PlaceHolderVar forces join order
 --
 
+<<<<<<< HEAD
 --start_ignore
 --GPDB_94_STABLE_MERGE_FIXME: This query is lateral related and its plan is
 --different from PostgreSQL's.  Do not know why yet. Ignore its plan
 --temporarily.
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 explain (verbose, costs off)
 select ss2.* from
   int4_tbl i41
@@ -1298,7 +1395,10 @@ select ss2.* from
   on i41.f1 = ss1.c1,
   lateral (select i41.*, i8.*, ss1.* from text_tbl limit 1) ss2
 where ss1.c2 = 0;
+<<<<<<< HEAD
 --end_ignore
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select ss2.* from
   int4_tbl i41
@@ -1399,7 +1499,9 @@ select d.* from d left join (select distinct * from b) s
   on d.a = s.id and d.b = s.c_id;
 
 -- join removal is not possible when the GROUP BY contains a column that is
--- not in the join condition
+-- not in the join condition.  (Note: as of 9.6, we notice that b.id is a
+-- primary key and so drop b.c_id from the GROUP BY of the resulting plan;
+-- but this happens too late for join removal in the outer plan level.)
 explain (costs off)
 select d.* from d left join (select * from b group by b.id, b.c_id) s
   on d.a = s.id;
@@ -1555,6 +1657,7 @@ select atts.relid::regclass, s.* from pg_stats s join
     a.attrelid::regclass::text join (select unnest(indkey) attnum,
     indexrelid from pg_index i) atts on atts.attnum = a.attnum where
     schemaname != 'pg_catalog';
+
 --
 -- Test LATERAL
 --
@@ -1762,6 +1865,7 @@ select * from
     select * from (select 3 as z offset 0) z where z.z = x.x
   ) zz on zz.z = y.y;
 
+<<<<<<< HEAD
 -- check handling of nested appendrels inside LATERAL
 select * from
   ((select 2 as v) union all (select 3 as v)) as q1
@@ -1777,6 +1881,9 @@ select * from
 -- GPDB_94_STABLE_MERGE_FIXME: The query below is 'deeply' correlated
 -- and GPDB would not pull up the sublink into a semijoin (why?), while
 -- PostgreSQL will do. So the following test is meaningless in GPDB.
+=======
+-- check we don't try to do a unique-ified semijoin with LATERAL
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 explain (verbose, costs off)
 select * from
   (values (0,9998), (1,1000)) v(id,x),
@@ -1788,7 +1895,31 @@ select * from
   lateral (select f1 from int4_tbl
            where f1 = any (select unique1 from tenk1
                            where unique2 = v.x offset 0)) ss;
+<<<<<<< HEAD
 --end_ignore
+=======
+
+-- check proper extParam/allParam handling (this isn't exactly a LATERAL issue,
+-- but we can make the test case much more compact with LATERAL)
+explain (verbose, costs off)
+select * from (values (0), (1)) v(id),
+lateral (select * from int8_tbl t1,
+         lateral (select * from
+                    (select * from int8_tbl t2
+                     where q1 = any (select q2 from int8_tbl t3
+                                     where q2 = (select greatest(t1.q1,t2.q2))
+                                       and (select v.id=0)) offset 0) ss2) ss
+         where t1.q1 = ss.q2) ss0;
+
+select * from (values (0), (1)) v(id),
+lateral (select * from int8_tbl t1,
+         lateral (select * from
+                    (select * from int8_tbl t2
+                     where q1 = any (select q2 from int8_tbl t3
+                                     where q2 = (select greatest(t1.q1,t2.q2))
+                                       and (select v.id=0)) offset 0) ss2) ss
+         where t1.q1 = ss.q2) ss0;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- test some error cases where LATERAL should have been used but wasn't
 select f1,g from int4_tbl a, (select f1 as g) ss;

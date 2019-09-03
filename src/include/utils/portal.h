@@ -36,7 +36,7 @@
  * to look like NO SCROLL cursors.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/portal.h
@@ -129,6 +129,7 @@ typedef struct PortalData
 	 * in which we ran the portal.
 	 */
 	SubTransactionId createSubid;		/* the creating subxact */
+<<<<<<< HEAD
 
 	/*
 	 * if Resource Scheduling is enabled, we need to save the original
@@ -138,6 +139,9 @@ typedef struct PortalData
 	uint32		portalId;		/* id of this portal 0 for unnamed */
 	NodeTag	    sourceTag;		/* nodetag for the original query */
 	Oid			queueId;		/* Oid of queue locking this portal */
+=======
+	SubTransactionId activeSubid;		/* the last subxact with activity */
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* The query or queries the portal will execute */
 	const char *sourceText;		/* text of query (as of 8.4, never NULL) */
@@ -173,6 +177,16 @@ typedef struct PortalData
 	 */
 	Tuplestorestate *holdStore; /* store for holdable cursors */
 	MemoryContext holdContext;	/* memory containing holdStore */
+
+	/*
+	 * Snapshot under which tuples in the holdStore were read.  We must keep a
+	 * reference to this snapshot if there is any possibility that the tuples
+	 * contain TOAST references, because releasing the snapshot could allow
+	 * recently-dead rows to be vacuumed away, along with any toast data
+	 * belonging to them.  In the case of a held cursor, we avoid needing to
+	 * keep such a snapshot by forcibly detoasting the data.
+	 */
+	Snapshot	holdSnapshot;	/* registered snapshot, or NULL if none */
 
 	/*
 	 * atStart, atEnd and portalPos indicate the current cursor position.

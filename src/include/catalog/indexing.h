@@ -5,9 +5,13 @@
  *	  on system catalogs
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/indexing.h
@@ -171,7 +175,14 @@ DECLARE_UNIQUE_INDEX(pg_inherits_relid_seqno_index, 2680, on pg_inherits using b
 DECLARE_INDEX(pg_inherits_parent_index, 2187, on pg_inherits using btree(inhparent oid_ops));
 #define InheritsParentIndexId  2187
 
+<<<<<<< HEAD
 DECLARE_UNIQUE_INDEX(pg_language_lanname_index, 2681, on pg_language using btree(lanname name_ops));
+=======
+DECLARE_UNIQUE_INDEX(pg_init_privs_o_c_o_index, 3395, on pg_init_privs using btree(objoid oid_ops, classoid oid_ops, objsubid int4_ops));
+#define InitPrivsObjIndexId  3395
+
+DECLARE_UNIQUE_INDEX(pg_language_name_index, 2681, on pg_language using btree(lanname name_ops));
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #define LanguageNameIndexId  2681
 DECLARE_UNIQUE_INDEX(pg_language_oid_index, 2682, on pg_language using btree(oid oid_ops));
 #define LanguageOidIndexId	2682
@@ -426,11 +437,6 @@ DECLARE_UNIQUE_INDEX(pg_replication_origin_roiident_index, 6001, on pg_replicati
 
 DECLARE_UNIQUE_INDEX(pg_replication_origin_roname_index, 6002, on pg_replication_origin using btree(roname text_pattern_ops));
 #define ReplicationOriginNameIndex 6002
-
-DECLARE_UNIQUE_INDEX(pg_tablesample_method_name_index, 3331, on pg_tablesample_method using btree(tsmname name_ops));
-#define TableSampleMethodNameIndexId  3331
-DECLARE_UNIQUE_INDEX(pg_tablesample_method_oid_index, 3332, on pg_tablesample_method using btree(oid oid_ops));
-#define TableSampleMethodOidIndexId  3332
 
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES

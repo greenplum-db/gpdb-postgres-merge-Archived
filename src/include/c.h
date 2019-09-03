@@ -9,9 +9,13 @@
  *	  polluting the namespace with lots of stuff...
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2011, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/c.h
@@ -105,6 +109,29 @@ extern "C" {
 #if defined(WIN32) || defined(__CYGWIN__)
 #include <fcntl.h>				/* ensure O_BINARY is available */
 #endif
+<<<<<<< HEAD
+=======
+
+#if defined(WIN32) || defined(__CYGWIN__)
+/* We have to redefine some system functions after they are included above. */
+#include "pg_config_os.h"
+#endif
+
+/*
+ * Force disable inlining if PG_FORCE_DISABLE_INLINE is defined. This is used
+ * to work around compiler bugs and might also be useful for investigatory
+ * purposes by defining the symbol in the platform's header..
+ *
+ * This is done early (in slightly the wrong section) as functionality later
+ * in this file might want to rely on inline functions.
+ */
+#ifdef PG_FORCE_DISABLE_INLINE
+#undef inline
+#define inline
+#endif
+
+/* Must be before gettext() games below */
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include <locale.h>
 #ifdef ENABLE_NLS
 #include <libintl.h>
@@ -250,6 +277,17 @@ extern "C" {
 #define dummyret	void
 #else
 #define dummyret	char
+#endif
+
+/* Which __func__ symbol do we have, if any? */
+#ifdef HAVE_FUNCNAME__FUNC
+#define PG_FUNCNAME_MACRO	__func__
+#else
+#ifdef HAVE_FUNCNAME__FUNCTION
+#define PG_FUNCNAME_MACRO	__FUNCTION__
+#else
+#define PG_FUNCNAME_MACRO	NULL
+#endif
 #endif
 
 /* ----------------------------------------------------------------
@@ -407,6 +445,7 @@ typedef unsigned long long int uint64;
 #define HAVE_INT64_TIMESTAMP
 #endif
 
+<<<<<<< HEAD
 /* snprintf format strings to use for 64-bit integers */
 #define INT64_FORMAT "%" INT64_MODIFIER "d"
 #define UINT64_FORMAT "%" INT64_MODIFIER "u"
@@ -443,6 +482,8 @@ pg_attribute_aligned(MAXIMUM_ALIGNOF)
 typedef int sig_atomic_t;
 #endif
 
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 /*
  * Size
  *		Size of any memory resident object, as returned by sizeof.
@@ -1019,34 +1060,6 @@ typedef NameData *Name;
  */
 #define UnusedArg(arg)    ((void)(arg))
 
-/*
- * Function inlining support -- Allow modules to define functions that may be
- * inlined, if the compiler supports it.
- *
- * The function bodies must be defined in the module header prefixed by
- * STATIC_IF_INLINE, protected by a cpp symbol that the module's .c file must
- * define.  If the compiler doesn't support inline functions, the function
- * definitions are pulled in by the .c file as regular (not inline) symbols.
- *
- * The header must also declare the functions' prototypes, protected by
- * !PG_USE_INLINE.
- */
-
-/* declarations which are only visible when not inlining and in the .c file */
-#ifdef PG_USE_INLINE
-#define STATIC_IF_INLINE static inline
-#else
-#define STATIC_IF_INLINE
-#endif   /* PG_USE_INLINE */
-
-/* declarations which are marked inline when inlining, extern otherwise */
-#ifdef PG_USE_INLINE
-#define STATIC_IF_INLINE_DECLARE static inline
-#else
-#define STATIC_IF_INLINE_DECLARE extern
-#endif   /* PG_USE_INLINE */
-
-
 /* ----------------------------------------------------------------
  *				Section 8:	random stuff
  * ----------------------------------------------------------------
@@ -1264,9 +1277,9 @@ extern unsigned long long strtoull(const char *str, char **endptr, int base);
 /*
  * When there is no sigsetjmp, its functionality is provided by plain
  * setjmp. Incidentally, nothing provides setjmp's functionality in
- * that case.
+ * that case.  We now support the case only on Windows.
  */
-#ifndef HAVE_SIGSETJMP
+#ifdef WIN32
 #define sigjmp_buf jmp_buf
 #define sigsetjmp(x,y) setjmp(x)
 #define siglongjmp longjmp

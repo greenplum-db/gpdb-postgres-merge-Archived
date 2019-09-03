@@ -23,7 +23,7 @@
 #ifndef PG_BACKUP_H
 #define PG_BACKUP_H
 
-#include "dumputils.h"
+#include "fe_utils/simple_list.h"
 #include "libpq-fe.h"
 
 
@@ -76,6 +76,7 @@ typedef struct _restoreOptions
 	int			column_inserts;
 	int			if_exists;
 	int			no_security_labels;		/* Skip security label entries */
+	int			strict_names;
 
 	const char *filename;
 	int			dataOnly;
@@ -175,6 +176,10 @@ typedef struct Archive
 	int			verbose;
 	char	   *remoteVersionStr;		/* server's version string */
 	int			remoteVersion;	/* same in numeric form */
+<<<<<<< HEAD
+=======
+	bool		isStandby;		/* is server a standby node */
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	int			minRemoteVersion;		/* allowable range */
 	int			maxRemoteVersion;
@@ -186,9 +191,12 @@ typedef struct Archive
 	/* info needed for string escaping */
 	int			encoding;		/* libpq code for client_encoding */
 	bool		std_strings;	/* standard_conforming_strings */
+<<<<<<< HEAD
 
 	/* other important stuff */
 	char	   *searchpath;		/* search_path to set during restore */
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	char	   *use_role;		/* Issue SET ROLE to this */
 
 	/* error handling */
@@ -197,6 +205,10 @@ typedef struct Archive
 
 	/* The rest is private */
 } Archive;
+<<<<<<< HEAD
+=======
+
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
  * pg_dump uses two different mechanisms for identifying database objects:

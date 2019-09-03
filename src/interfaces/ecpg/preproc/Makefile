@@ -2,7 +2,7 @@
 #
 # Makefile for src/interfaces/ecpg/preproc
 #
-# Copyright (c) 1998-2015, PostgreSQL Global Development Group
+# Copyright (c) 1998-2016, PostgreSQL Global Development Group
 #
 # src/interfaces/ecpg/preproc/Makefile
 #
@@ -16,7 +16,7 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 MAJOR_VERSION= 4
-MINOR_VERSION= 11
+MINOR_VERSION= 12
 PATCHLEVEL=0
 
 # The frontend doesn't need everything that's in LIBS, some are backend only
@@ -35,7 +35,11 @@ endif
 override CFLAGS += $(PTHREAD_CFLAGS) -DECPG_COMPILE
 
 OBJS=	preproc.o pgc.o type.o ecpg.o output.o parser.o \
+<<<<<<< HEAD
 	keywords.o c_keywords.o ecpg_keywords.o kwlookup.o ../ecpglib/typename.o descriptor.o variable.o \
+=======
+	keywords.o c_keywords.o ecpg_keywords.o ../ecpglib/typename.o descriptor.o variable.o \
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	$(WIN32RES)
 
 # Suppress parallel build to avoid a bug in GNU make 3.82
@@ -52,10 +56,14 @@ ecpg: $(OBJS) | submake-libpgport
 ../ecpglib/typename.o: ../ecpglib/typename.c
 	$(MAKE) -C $(dir $@) $(notdir $@)
 
+<<<<<<< HEAD
 # See notes in src/backend/parser/Makefile about the following two rules
 preproc.h: preproc.c
 	touch $@
 
+=======
+preproc.h: preproc.c ;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 preproc.c: BISONFLAGS += -d
 
 preproc.y: ../../../backend/parser/gram.y parse.pl ecpg.addons ecpg.header ecpg.tokens ecpg.trailer ecpg.type
@@ -63,9 +71,12 @@ preproc.y: ../../../backend/parser/gram.y parse.pl ecpg.addons ecpg.header ecpg.
 	$(PERL) $(srcdir)/check_rules.pl $(srcdir) $<
 
 ecpg_keywords.o c_keywords.o keywords.o preproc.o pgc.o parser.o: preproc.h
+<<<<<<< HEAD
 
 kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
 	rm -f $@ && $(LN_S) $< .
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 distprep: preproc.y preproc.c preproc.h pgc.c
 
@@ -79,9 +90,13 @@ uninstall:
 	rm -f '$(DESTDIR)$(bindir)/ecpg$(X)'
 
 clean distclean:
+<<<<<<< HEAD
 	rm -f kwlookup.c *.o ecpg$(X)
 # garbage from partial builds
 	@rm -f y.tab.c y.tab.h preproc.tab.c preproc.tab.y preproc.tab.h
+=======
+	rm -f *.o ecpg$(X)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 # garbage from development
 	@rm -f core a.out *.output *.tab.c
 

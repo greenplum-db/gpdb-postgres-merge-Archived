@@ -967,8 +967,25 @@ FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_del_stmt');
 \set QUIET false
 -- Insert into view using trigger
 INSERT INTO main_view VALUES (20, 30);
+<<<<<<< HEAD
 INSERT 0 1
 INSERT INTO main_view VALUES (21, 31) RETURNING a, b;
+=======
+NOTICE:  main_view BEFORE INSERT STATEMENT (before_view_ins_stmt)
+NOTICE:  main_view INSTEAD OF INSERT ROW (instead_of_ins)
+NOTICE:  NEW: (20,30)
+NOTICE:  trigger_func(before_ins_stmt) called: action = INSERT, when = BEFORE, level = STATEMENT
+NOTICE:  trigger_func(after_ins_stmt) called: action = INSERT, when = AFTER, level = STATEMENT
+NOTICE:  main_view AFTER INSERT STATEMENT (after_view_ins_stmt)
+INSERT 0 1
+INSERT INTO main_view VALUES (21, 31) RETURNING a, b;
+NOTICE:  main_view BEFORE INSERT STATEMENT (before_view_ins_stmt)
+NOTICE:  main_view INSTEAD OF INSERT ROW (instead_of_ins)
+NOTICE:  NEW: (21,31)
+NOTICE:  trigger_func(before_ins_stmt) called: action = INSERT, when = BEFORE, level = STATEMENT
+NOTICE:  trigger_func(after_ins_stmt) called: action = INSERT, when = AFTER, level = STATEMENT
+NOTICE:  main_view AFTER INSERT STATEMENT (after_view_ins_stmt)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  a  | b  
 ----+----
  21 | 31
@@ -977,6 +994,7 @@ INSERT INTO main_view VALUES (21, 31) RETURNING a, b;
 INSERT 0 1
 -- Table trigger will prevent updates
 UPDATE main_view SET b = 31 WHERE a = 20;
+<<<<<<< HEAD
 NOTICE:  trigger_func(after_upd_a_b_row) called: action = UPDATE, when = AFTER, level = ROW  (seg1 127.0.0.1:25433 pid=18627)
 NOTICE:  trigger_func(after_upd_b_row) called: action = UPDATE, when = AFTER, level = ROW  (seg1 127.0.0.1:25433 pid=18627)
 NOTICE:  trigger_func(after_upd_a_b_row) called: action = UPDATE, when = AFTER, level = ROW  (seg1 127.0.0.1:25433 pid=18627)
@@ -989,12 +1007,36 @@ NOTICE:  trigger_func(after_upd_b_row) called: action = UPDATE, when = AFTER, le
 ----+----
  21 | 32
 (1 row)
+=======
+NOTICE:  main_view BEFORE UPDATE STATEMENT (before_view_upd_stmt)
+NOTICE:  main_view INSTEAD OF UPDATE ROW (instead_of_upd)
+NOTICE:  OLD: (20,30), NEW: (20,31)
+NOTICE:  trigger_func(before_upd_a_stmt) called: action = UPDATE, when = BEFORE, level = STATEMENT
+NOTICE:  trigger_func(before_upd_a_row) called: action = UPDATE, when = BEFORE, level = ROW
+NOTICE:  trigger_func(after_upd_b_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+NOTICE:  main_view AFTER UPDATE STATEMENT (after_view_upd_stmt)
+UPDATE 0
+UPDATE main_view SET b = 32 WHERE a = 21 AND b = 31 RETURNING a, b;
+NOTICE:  main_view BEFORE UPDATE STATEMENT (before_view_upd_stmt)
+NOTICE:  main_view INSTEAD OF UPDATE ROW (instead_of_upd)
+NOTICE:  OLD: (21,31), NEW: (21,32)
+NOTICE:  trigger_func(before_upd_a_stmt) called: action = UPDATE, when = BEFORE, level = STATEMENT
+NOTICE:  trigger_func(before_upd_a_row) called: action = UPDATE, when = BEFORE, level = ROW
+NOTICE:  trigger_func(after_upd_b_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+NOTICE:  main_view AFTER UPDATE STATEMENT (after_view_upd_stmt)
+ a | b 
+---+---
+(0 rows)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 UPDATE 1
 -- Remove table trigger to allow updates
 DROP TRIGGER before_upd_a_row_trig ON main_table;
 DROP TRIGGER
 UPDATE main_view SET b = 31 WHERE a = 20;
+<<<<<<< HEAD
 NOTICE:  trigger_func(after_upd_a_b_row) called: action = UPDATE, when = AFTER, level = ROW  (seg1 127.0.0.1:25433 pid=18627)
 NOTICE:  trigger_func(after_upd_b_row) called: action = UPDATE, when = AFTER, level = ROW  (seg1 127.0.0.1:25433 pid=18627)
 NOTICE:  trigger_func(after_upd_a_b_row) called: action = UPDATE, when = AFTER, level = ROW  (seg1 127.0.0.1:25433 pid=18627)
@@ -1004,6 +1046,32 @@ UPDATE main_view SET b = 32 WHERE a = 21 AND b = 31 RETURNING a, b;
  a | b 
 ---+---
 (0 rows)
+=======
+NOTICE:  main_view BEFORE UPDATE STATEMENT (before_view_upd_stmt)
+NOTICE:  main_view INSTEAD OF UPDATE ROW (instead_of_upd)
+NOTICE:  OLD: (20,30), NEW: (20,31)
+NOTICE:  trigger_func(before_upd_a_stmt) called: action = UPDATE, when = BEFORE, level = STATEMENT
+NOTICE:  trigger_func(after_upd_a_b_row) called: action = UPDATE, when = AFTER, level = ROW
+NOTICE:  trigger_func(after_upd_b_row) called: action = UPDATE, when = AFTER, level = ROW
+NOTICE:  trigger_func(after_upd_b_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+NOTICE:  main_view AFTER UPDATE STATEMENT (after_view_upd_stmt)
+UPDATE 1
+UPDATE main_view SET b = 32 WHERE a = 21 AND b = 31 RETURNING a, b;
+NOTICE:  main_view BEFORE UPDATE STATEMENT (before_view_upd_stmt)
+NOTICE:  main_view INSTEAD OF UPDATE ROW (instead_of_upd)
+NOTICE:  OLD: (21,31), NEW: (21,32)
+NOTICE:  trigger_func(before_upd_a_stmt) called: action = UPDATE, when = BEFORE, level = STATEMENT
+NOTICE:  trigger_func(after_upd_a_b_row) called: action = UPDATE, when = AFTER, level = ROW
+NOTICE:  trigger_func(after_upd_b_row) called: action = UPDATE, when = AFTER, level = ROW
+NOTICE:  trigger_func(after_upd_b_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+NOTICE:  main_view AFTER UPDATE STATEMENT (after_view_upd_stmt)
+ a  | b  
+----+----
+ 21 | 32
+(1 row)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 UPDATE 0
 -- Before and after stmt triggers should fire even when no rows are affected
@@ -1182,9 +1250,14 @@ DETAIL:  Views that do not select from a single table or view are not automatica
 HINT:  To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.
 -- UPDATE .. RETURNING
 UPDATE city_view SET country_name = 'Japon' WHERE city_name = 'Tokyo'; -- error
+<<<<<<< HEAD
 ERROR:  cannot update view "city_view"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
 HINT:  To make the view updatable, provide an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.
+=======
+ERROR:  No such country: "Japon"
+CONTEXT:  PL/pgSQL function city_update() line 9 at RAISE
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 UPDATE city_view SET country_name = 'Japan' WHERE city_name = 'Takyo'; -- no match
 ERROR:  cannot update view "city_view"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
@@ -1369,9 +1442,23 @@ select pg_trigger_depth();
 (1 row)
 
 insert into depth_a values (1);
+<<<<<<< HEAD
 NOTICE:  depth_a_tr: depth = 1  (seg2 172.17.0.2:25434 pid=123164)
 ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg2 172.17.0.2:25434 pid=123164)
 CONTEXT:  SQL statement "insert into depth_b values (new.id)"
+=======
+NOTICE:  depth_a_tr: depth = 1
+NOTICE:  depth_b_tr: depth = 2
+NOTICE:  depth_c_tr: depth = 3
+NOTICE:  SQLSTATE = U9999: depth = 2
+NOTICE:  depth_b_tr: depth = 2
+NOTICE:  depth_c_tr: depth = 3
+ERROR:  U9999
+CONTEXT:  PL/pgSQL function depth_c_tf() line 5 at RAISE
+SQL statement "insert into depth_c values (1)"
+PL/pgSQL function depth_b_tf() line 12 at EXECUTE
+SQL statement "insert into depth_b values (new.id)"
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 PL/pgSQL function depth_a_tf() line 4 at SQL statement
 select pg_trigger_depth();
  pg_trigger_depth 
@@ -1380,10 +1467,19 @@ select pg_trigger_depth();
 (1 row)
 
 insert into depth_a values (2);
+<<<<<<< HEAD
 NOTICE:  depth_a_tr: depth = 1  (seg1 172.17.0.2:25433 pid=123163)
 ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement  (seg1 172.17.0.2:25433 pid=123163)
 CONTEXT:  SQL statement "insert into depth_b values (new.id)"
 PL/pgSQL function depth_a_tf() line 4 at SQL statement
+=======
+NOTICE:  depth_a_tr: depth = 1
+NOTICE:  depth_b_tr: depth = 2
+NOTICE:  depth_c_tr: depth = 3
+NOTICE:  depth_c_tr: depth = 3
+NOTICE:  depth_b_tr: depth = 2
+NOTICE:  depth_a_tr: depth = 1
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 select pg_trigger_depth();
  pg_trigger_depth 
 ------------------
@@ -1629,7 +1725,7 @@ create function upsert_after_func()
 $$
 begin
   if (TG_OP = 'UPDATE') then
-    raise warning 'after update (old): %', new.*::text;
+    raise warning 'after update (old): %', old.*::text;
     raise warning 'after update (new): %', new.*::text;
   elsif (TG_OP = 'INSERT') then
     raise warning 'after insert (new): %', new.*::text;
@@ -1647,25 +1743,49 @@ WARNING:  before insert (new): (2,red)  (seg0 127.0.0.1:25432 pid=8566)
 WARNING:  before insert (new, modified): (3,"red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
 WARNING:  after insert (new): (3,"red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
 insert into upsert values(3, 'orange') on conflict (key) do update set color = 'updated ' || upsert.color;
+<<<<<<< HEAD
 WARNING:  before insert (new): (3,orange)  (seg0 127.0.0.1:25432 pid=8566)
 WARNING:  before update (old): (3,"red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
 WARNING:  before update (new): (3,"updated red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
 WARNING:  after update (old): (3,"updated red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
 WARNING:  after update (new): (3,"updated red trig modified")  (seg0 127.0.0.1:25432 pid=8566)
+=======
+WARNING:  before insert (new): (3,orange)
+WARNING:  before update (old): (3,"red trig modified")
+WARNING:  before update (new): (3,"updated red trig modified")
+WARNING:  after update (old): (3,"red trig modified")
+WARNING:  after update (new): (3,"updated red trig modified")
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 insert into upsert values(4, 'green') on conflict (key) do update set color = 'updated ' || upsert.color;
 WARNING:  before insert (new): (4,green)  (seg0 127.0.0.1:25432 pid=8566)
 WARNING:  before insert (new, modified): (5,"green trig modified")  (seg0 127.0.0.1:25432 pid=8566)
 WARNING:  after insert (new): (5,"green trig modified")  (seg0 127.0.0.1:25432 pid=8566)
 insert into upsert values(5, 'purple') on conflict (key) do update set color = 'updated ' || upsert.color;
+<<<<<<< HEAD
 WARNING:  before insert (new): (5,purple)  (seg2 127.0.0.1:25434 pid=8568)
 WARNING:  after insert (new): (5,purple)  (seg2 127.0.0.1:25434 pid=8568)
+=======
+WARNING:  before insert (new): (5,purple)
+WARNING:  before update (old): (5,"green trig modified")
+WARNING:  before update (new): (5,"updated green trig modified")
+WARNING:  after update (old): (5,"green trig modified")
+WARNING:  after update (new): (5,"updated green trig modified")
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 insert into upsert values(6, 'white') on conflict (key) do update set color = 'updated ' || upsert.color;
 WARNING:  before insert (new): (6,white)  (seg2 127.0.0.1:25434 pid=8568)
 WARNING:  before insert (new, modified): (7,"white trig modified")  (seg2 127.0.0.1:25434 pid=8568)
 WARNING:  after insert (new): (7,"white trig modified")  (seg2 127.0.0.1:25434 pid=8568)
 insert into upsert values(7, 'pink') on conflict (key) do update set color = 'updated ' || upsert.color;
+<<<<<<< HEAD
 WARNING:  before insert (new): (7,pink)  (seg0 127.0.0.1:25432 pid=8566)
 WARNING:  after insert (new): (7,pink)  (seg0 127.0.0.1:25432 pid=8566)
+=======
+WARNING:  before insert (new): (7,pink)
+WARNING:  before update (old): (7,"white trig modified")
+WARNING:  before update (new): (7,"updated white trig modified")
+WARNING:  after update (old): (7,"white trig modified")
+WARNING:  after update (new): (7,"updated white trig modified")
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 insert into upsert values(8, 'yellow') on conflict (key) do update set color = 'updated ' || upsert.color;
 WARNING:  before insert (new): (8,yellow)  (seg0 127.0.0.1:25432 pid=8566)
 WARNING:  before insert (new, modified): (9,"yellow trig modified")  (seg0 127.0.0.1:25432 pid=8566)

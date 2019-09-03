@@ -2,7 +2,7 @@
 #
 # Makefile for src/bin/pg_config
 #
-# Copyright (c) 1998-2015, PostgreSQL Global Development Group
+# Copyright (c) 1998-2016, PostgreSQL Global Development Group
 #
 # src/bin/pg_config/Makefile
 #
@@ -17,6 +17,7 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS=   pg_config.o $(WIN32RES)
 
+<<<<<<< HEAD
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
 # This program isn't interactive, so doesn't need these
@@ -41,6 +42,8 @@ override CPPFLAGS += -DVAL_LDFLAGS_EX="\"$(LDFLAGS_EX)\""
 override CPPFLAGS += -DVAL_LDFLAGS_SL="\"$(LDFLAGS_SL)\""
 override CPPFLAGS += -DVAL_LIBS="\"$(STD_LIBS)\""
 
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 all: pg_config
 
 pg_config: $(OBJS) | submake-libpgport

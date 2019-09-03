@@ -3,9 +3,13 @@
  * initsplan.c
  *	  Target list, qualification, joininfo initialization routines
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -53,7 +57,6 @@ typedef struct PostponedQual
 
 static void extract_lateral_references(PlannerInfo *root, RelOptInfo *brel,
 						   Index rtindex);
-static void add_lateral_info(PlannerInfo *root, Relids lhs, Relids rhs);
 static List *deconstruct_recurse(PlannerInfo *root, Node *jtnode,
 					bool below_outer_join,
 					Relids *qualscope, Relids *inner_join_rels,
@@ -142,7 +145,7 @@ add_base_rels_to_query(PlannerInfo *root, Node *jtnode)
 /*
  * build_base_rel_tlists
  *	  Add targetlist entries for each var needed in the query's final tlist
- *	  to the appropriate base relations.
+ *	  (and HAVING clause, if any) to the appropriate base relations.
  *
  * We mark such vars as needed by "relation 0" to ensure that they will
  * propagate up through all join plan steps.
@@ -151,13 +154,32 @@ void
 build_base_rel_tlists(PlannerInfo *root, List *final_tlist)
 {
 	List	   *tlist_vars = pull_var_clause((Node *) final_tlist,
-											 PVC_RECURSE_AGGREGATES,
+											 PVC_RECURSE_AGGREGATES |
+											 PVC_RECURSE_WINDOWFUNCS |
 											 PVC_INCLUDE_PLACEHOLDERS);
 
 	if (tlist_vars != NIL)
 	{
 		add_vars_to_targetlist(root, tlist_vars, bms_make_singleton(0), true);
 		list_free(tlist_vars);
+	}
+
+	/*
+	 * If there's a HAVING clause, we'll need the Vars it uses, too.  Note
+	 * that HAVING can contain Aggrefs but not WindowFuncs.
+	 */
+	if (root->parse->havingQual)
+	{
+		List	   *having_vars = pull_var_clause(root->parse->havingQual,
+												  PVC_RECURSE_AGGREGATES |
+												  PVC_INCLUDE_PLACEHOLDERS);
+
+		if (having_vars != NIL)
+		{
+			add_vars_to_targetlist(root, having_vars,
+								   bms_make_singleton(0), true);
+			list_free(having_vars);
+		}
 	}
 }
 
@@ -218,10 +240,11 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars,
 			attno -= rel->min_attr;
 			if (rel->attr_needed[attno] == NULL)
 			{
-				/* Variable not yet requested, so add to reltargetlist */
+				/* Variable not yet requested, so add to rel's targetlist */
 				/* XXX is copyObject necessary here? */
-				rel->reltargetlist = lappend(rel->reltargetlist,
-											 copyObject(var));
+				rel->reltarget->exprs = lappend(rel->reltarget->exprs,
+												copyObject(var));
+				/* reltarget cost and width will be computed later */
 			}
 			rel->attr_needed[attno] = bms_add_members(rel->attr_needed[attno],
 													   where_needed);
@@ -329,7 +352,9 @@ extract_lateral_references(PlannerInfo *root, RelOptInfo *brel, Index rtindex)
 		return;
 
 	/* Fetch the appropriate variables */
-	if (rte->rtekind == RTE_SUBQUERY)
+	if (rte->rtekind == RTE_RELATION)
+		vars = pull_vars_of_level((Node *) rte->tablesample, 0);
+	else if (rte->rtekind == RTE_SUBQUERY)
 		vars = pull_vars_of_level((Node *) rte->subquery, 1);
 	else if (rte->rtekind == RTE_FUNCTION)
 		vars = pull_vars_of_level((Node *) rte->functions, 0);
@@ -403,11 +428,8 @@ extract_lateral_references(PlannerInfo *root, RelOptInfo *brel, Index rtindex)
 
 /*
  * create_lateral_join_info
- *	  For each unflattened LATERAL subquery, create LateralJoinInfo(s) and add
- *	  them to root->lateral_info_list, and fill in the per-rel lateral_relids
- *	  and lateral_referencers sets.  Also generate LateralJoinInfo(s) to
- *	  represent any lateral references within PlaceHolderVars (this part deals
- *	  with the effects of flattened LATERAL subqueries).
+ *	  Fill in the per-base-relation direct_lateral_relids, lateral_relids
+ *	  and lateral_referencers sets.
  *
  * This has to run after deconstruct_jointree, because we need to know the
  * final ph_eval_at values for PlaceHolderVars.
@@ -415,6 +437,7 @@ extract_lateral_references(PlannerInfo *root, RelOptInfo *brel, Index rtindex)
 void
 create_lateral_join_info(PlannerInfo *root)
 {
+	bool		found_laterals = false;
 	Index		rti;
 	ListCell   *lc;
 
@@ -451,8 +474,7 @@ create_lateral_join_info(PlannerInfo *root)
 			{
 				Var		   *var = (Var *) node;
 
-				add_lateral_info(root, bms_make_singleton(var->varno),
-								 brel->relids);
+				found_laterals = true;
 				lateral_relids = bms_add_member(lateral_relids,
 												var->varno);
 			}
@@ -462,7 +484,7 @@ create_lateral_join_info(PlannerInfo *root)
 				PlaceHolderInfo *phinfo = find_placeholder_info(root, phv,
 																false);
 
-				add_lateral_info(root, phinfo->ph_eval_at, brel->relids);
+				found_laterals = true;
 				lateral_relids = bms_add_members(lateral_relids,
 												 phinfo->ph_eval_at);
 			}
@@ -470,6 +492,7 @@ create_lateral_join_info(PlannerInfo *root)
 				Assert(false);
 		}
 
+<<<<<<< HEAD
 		/* We now have all the direct lateral refs from this rel */
 		brel->lateral_relids = lateral_relids;
 	}
@@ -486,46 +509,69 @@ create_lateral_join_info(PlannerInfo *root)
 	 * parameterized by the lateral refs, so there is no point in considering
 	 * unparameterized paths for the baserels; and we mustn't try to join any
 	 * of those baserels to the lateral refs too soon, either.
+=======
+		/* We now have all the simple lateral refs from this rel */
+		brel->direct_lateral_relids = lateral_relids;
+		brel->lateral_relids = bms_copy(lateral_relids);
+	}
+
+	/*
+	 * Now check for lateral references within PlaceHolderVars, and mark their
+	 * eval_at rels as having lateral references to the source rels.
+	 *
+	 * For a PHV that is due to be evaluated at a baserel, mark its source(s)
+	 * as direct lateral dependencies of the baserel (adding onto the ones
+	 * recorded above).  If it's due to be evaluated at a join, mark its
+	 * source(s) as indirect lateral dependencies of each baserel in the join,
+	 * ie put them into lateral_relids but not direct_lateral_relids.  This is
+	 * appropriate because we can't put any such baserel on the outside of a
+	 * join to one of the PHV's lateral dependencies, but on the other hand we
+	 * also can't yet join it directly to the dependency.
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 */
 	foreach(lc, root->placeholder_list)
 	{
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
 		Relids		eval_at = phinfo->ph_eval_at;
+		int			varno;
 
-		if (phinfo->ph_lateral != NULL)
+		if (phinfo->ph_lateral == NULL)
+			continue;			/* PHV is uninteresting if no lateral refs */
+
+		found_laterals = true;
+
+		if (bms_get_singleton_member(eval_at, &varno))
 		{
+<<<<<<< HEAD
 			List	   *vars = pull_var_clause((Node *) phinfo->ph_var->phexpr,
 											   PVC_RECURSE_AGGREGATES,
 											   PVC_INCLUDE_PLACEHOLDERS);
 			ListCell   *lc2;
 			int			ev_at;
+=======
+			/* Evaluation site is a baserel */
+			RelOptInfo *brel = find_base_rel(root, varno);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
-			foreach(lc2, vars)
+			brel->direct_lateral_relids =
+				bms_add_members(brel->direct_lateral_relids,
+								phinfo->ph_lateral);
+			brel->lateral_relids =
+				bms_add_members(brel->lateral_relids,
+								phinfo->ph_lateral);
+		}
+		else
+		{
+			/* Evaluation site is a join */
+			varno = -1;
+			while ((varno = bms_next_member(eval_at, varno)) >= 0)
 			{
-				Node	   *node = (Node *) lfirst(lc2);
+				RelOptInfo *brel = find_base_rel(root, varno);
 
-				if (IsA(node, Var))
-				{
-					Var		   *var = (Var *) node;
-
-					if (!bms_is_member(var->varno, eval_at))
-						add_lateral_info(root,
-										 bms_make_singleton(var->varno),
-										 eval_at);
-				}
-				else if (IsA(node, PlaceHolderVar))
-				{
-					PlaceHolderVar *other_phv = (PlaceHolderVar *) node;
-					PlaceHolderInfo *other_phi;
-
-					other_phi = find_placeholder_info(root, other_phv,
-													  false);
-					if (!bms_is_subset(other_phi->ph_eval_at, eval_at))
-						add_lateral_info(root, other_phi->ph_eval_at, eval_at);
-				}
-				else
-					Assert(false);
+				brel->lateral_relids = bms_add_members(brel->lateral_relids,
+													   phinfo->ph_lateral);
 			}
+<<<<<<< HEAD
 
 			list_free(vars);
 
@@ -537,20 +583,36 @@ create_lateral_join_info(PlannerInfo *root)
 				brel->lateral_relids = bms_add_members(brel->lateral_relids,
 													   phinfo->ph_lateral);
 			}
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 	}
 
-	/* If we found no lateral references, we're done. */
-	if (root->lateral_info_list == NIL)
+	/*
+	 * If we found no actual lateral references, we're done; but reset the
+	 * hasLateralRTEs flag to avoid useless work later.
+	 */
+	if (!found_laterals)
+	{
+		root->hasLateralRTEs = false;
 		return;
+	}
 
 	/*
+<<<<<<< HEAD
 	 * At this point the lateral_relids sets represent only direct lateral
 	 * references.  Replace them by their transitive closure, so that they
 	 * describe both direct and indirect lateral references.  If relation X
 	 * references Y laterally, and Y references Z laterally, then we will have
 	 * to scan X on the inside of a nestloop with Z, so for all intents and
 	 * purposes X is laterally dependent on Z too.
+=======
+	 * Calculate the transitive closure of the lateral_relids sets, so that
+	 * they describe both direct and indirect lateral references.  If relation
+	 * X references Y laterally, and Y references Z laterally, then we will
+	 * have to scan X on the inside of a nestloop with Z, so for all intents
+	 * and purposes X is laterally dependent on Z too.
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 *
 	 * This code is essentially Warshall's algorithm for transitive closure.
 	 * The outer loop considers each baserel, and propagates its lateral
@@ -614,8 +676,13 @@ create_lateral_join_info(PlannerInfo *root)
 		Assert(!bms_is_member(rti, lateral_relids));
 
 		/* Mark this rel's referencees */
+<<<<<<< HEAD
 		lateral_relids = bms_copy(lateral_relids);
 		while ((rti2 = bms_first_member(lateral_relids)) >= 0)
+=======
+		rti2 = -1;
+		while ((rti2 = bms_next_member(lateral_relids, rti2)) >= 0)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{
 			RelOptInfo *brel2 = root->simple_rel_array[rti2];
 
@@ -653,6 +720,8 @@ create_lateral_join_info(PlannerInfo *root)
 					continue;
 				childrel = root->simple_rel_array[appinfo->child_relid];
 				Assert(childrel->reloptkind == RELOPT_OTHER_MEMBER_REL);
+				Assert(childrel->direct_lateral_relids == NULL);
+				childrel->direct_lateral_relids = brel->direct_lateral_relids;
 				Assert(childrel->lateral_relids == NULL);
 				childrel->lateral_relids = brel->lateral_relids;
 				Assert(childrel->lateral_referencers == NULL);
@@ -660,46 +729,6 @@ create_lateral_join_info(PlannerInfo *root)
 			}
 		}
 	}
-}
-
-/*
- * add_lateral_info
- *		Add a LateralJoinInfo to root->lateral_info_list, if needed
- *
- * We suppress redundant list entries.  The passed Relids are copied if saved.
- */
-static void
-add_lateral_info(PlannerInfo *root, Relids lhs, Relids rhs)
-{
-	LateralJoinInfo *ljinfo;
-	ListCell   *lc;
-
-	/* Sanity-check the input */
-	Assert(!bms_is_empty(lhs));
-	Assert(!bms_is_empty(rhs));
-	Assert(!bms_overlap(lhs, rhs));
-
-	/*
-	 * The input is redundant if it has the same RHS and an LHS that is a
-	 * subset of an existing entry's.  If an existing entry has the same RHS
-	 * and an LHS that is a subset of the new one, it's redundant, but we
-	 * don't trouble to get rid of it.  The only case that is really worth
-	 * worrying about is identical entries, and we handle that well enough
-	 * with this simple logic.
-	 */
-	foreach(lc, root->lateral_info_list)
-	{
-		ljinfo = (LateralJoinInfo *) lfirst(lc);
-		if (bms_equal(rhs, ljinfo->lateral_rhs) &&
-			bms_is_subset(lhs, ljinfo->lateral_lhs))
-			return;
-	}
-
-	/* Not there, so make a new entry */
-	ljinfo = makeNode(LateralJoinInfo);
-	ljinfo->lateral_lhs = bms_copy(lhs);
-	ljinfo->lateral_rhs = bms_copy(rhs);
-	root->lateral_info_list = lappend(root->lateral_info_list, ljinfo);
 }
 
 
@@ -1305,9 +1334,15 @@ make_outerjoininfo(PlannerInfo *root,
 		 * For a lower OJ in our RHS, if our join condition does not use the
 		 * lower join's RHS and the lower OJ's join condition is strict, we
 		 * can interchange the ordering of the two OJs; otherwise we must add
-		 * the lower OJ's full syntactic relset to min_righthand.  Also, we
-		 * must preserve ordering anyway if either the current join or the
-		 * lower OJ is either a semijoin or an antijoin.
+		 * the lower OJ's full syntactic relset to min_righthand.
+		 *
+		 * Also, if our join condition does not use the lower join's LHS
+		 * either, force the ordering to be preserved.  Otherwise we can end
+		 * up with SpecialJoinInfos with identical min_righthands, which can
+		 * confuse join_is_legal (see discussion in backend/optimizer/README).
+		 *
+		 * Also, we must preserve ordering anyway if either the current join
+		 * or the lower OJ is either a semijoin or an antijoin.
 		 *
 		 * Here, we have to consider that "our join condition" includes any
 		 * clauses that syntactically appeared above the lower OJ and below
@@ -1884,7 +1919,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	if (bms_membership(relids) == BMS_MULTIPLE)
 	{
 		List	   *vars = pull_var_clause(clause,
-										   PVC_RECURSE_AGGREGATES,
+										   PVC_RECURSE_AGGREGATES |
+										   PVC_RECURSE_WINDOWFUNCS |
 										   PVC_INCLUDE_PLACEHOLDERS);
 
 		add_vars_to_targetlist(root, vars, relids, false);
@@ -2384,6 +2420,174 @@ build_implied_join_equality(Oid opno,
 	check_hashjoinable(restrictinfo);
 
 	return restrictinfo;
+}
+
+
+/*
+ * match_foreign_keys_to_quals
+ *		Match foreign-key constraints to equivalence classes and join quals
+ *
+ * The idea here is to see which query join conditions match equality
+ * constraints of a foreign-key relationship.  For such join conditions,
+ * we can use the FK semantics to make selectivity estimates that are more
+ * reliable than estimating from statistics, especially for multiple-column
+ * FKs, where the normal assumption of independent conditions tends to fail.
+ *
+ * In this function we annotate the ForeignKeyOptInfos in root->fkey_list
+ * with info about which eclasses and join qual clauses they match, and
+ * discard any ForeignKeyOptInfos that are irrelevant for the query.
+ */
+void
+match_foreign_keys_to_quals(PlannerInfo *root)
+{
+	List	   *newlist = NIL;
+	ListCell   *lc;
+
+	foreach(lc, root->fkey_list)
+	{
+		ForeignKeyOptInfo *fkinfo = (ForeignKeyOptInfo *) lfirst(lc);
+		RelOptInfo *con_rel;
+		RelOptInfo *ref_rel;
+		int			colno;
+
+		/*
+		 * Either relid might identify a rel that is in the query's rtable but
+		 * isn't referenced by the jointree so won't have a RelOptInfo.  Hence
+		 * don't use find_base_rel() here.  We can ignore such FKs.
+		 */
+		if (fkinfo->con_relid >= root->simple_rel_array_size ||
+			fkinfo->ref_relid >= root->simple_rel_array_size)
+			continue;			/* just paranoia */
+		con_rel = root->simple_rel_array[fkinfo->con_relid];
+		if (con_rel == NULL)
+			continue;
+		ref_rel = root->simple_rel_array[fkinfo->ref_relid];
+		if (ref_rel == NULL)
+			continue;
+
+		/*
+		 * Ignore FK unless both rels are baserels.  This gets rid of FKs that
+		 * link to inheritance child rels (otherrels) and those that link to
+		 * rels removed by join removal (dead rels).
+		 */
+		if (con_rel->reloptkind != RELOPT_BASEREL ||
+			ref_rel->reloptkind != RELOPT_BASEREL)
+			continue;
+
+		/*
+		 * Scan the columns and try to match them to eclasses and quals.
+		 *
+		 * Note: for simple inner joins, any match should be in an eclass.
+		 * "Loose" quals that syntactically match an FK equality must have
+		 * been rejected for EC status because they are outer-join quals or
+		 * similar.  We can still consider them to match the FK if they are
+		 * not outerjoin_delayed.
+		 */
+		for (colno = 0; colno < fkinfo->nkeys; colno++)
+		{
+			AttrNumber	con_attno,
+						ref_attno;
+			Oid			fpeqop;
+			ListCell   *lc2;
+
+			fkinfo->eclass[colno] = match_eclasses_to_foreign_key_col(root,
+																	  fkinfo,
+																	  colno);
+			/* Don't bother looking for loose quals if we got an EC match */
+			if (fkinfo->eclass[colno] != NULL)
+			{
+				fkinfo->nmatched_ec++;
+				continue;
+			}
+
+			/*
+			 * Scan joininfo list for relevant clauses.  Either rel's joininfo
+			 * list would do equally well; we use con_rel's.
+			 */
+			con_attno = fkinfo->conkey[colno];
+			ref_attno = fkinfo->confkey[colno];
+			fpeqop = InvalidOid;	/* we'll look this up only if needed */
+
+			foreach(lc2, con_rel->joininfo)
+			{
+				RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc2);
+				OpExpr	   *clause = (OpExpr *) rinfo->clause;
+				Var		   *leftvar;
+				Var		   *rightvar;
+
+				/* Ignore outerjoin-delayed clauses */
+				if (rinfo->outerjoin_delayed)
+					continue;
+
+				/* Only binary OpExprs are useful for consideration */
+				if (!IsA(clause, OpExpr) ||
+					list_length(clause->args) != 2)
+					continue;
+				leftvar = (Var *) get_leftop((Expr *) clause);
+				rightvar = (Var *) get_rightop((Expr *) clause);
+
+				/* Operands must be Vars, possibly with RelabelType */
+				while (leftvar && IsA(leftvar, RelabelType))
+					leftvar = (Var *) ((RelabelType *) leftvar)->arg;
+				if (!(leftvar && IsA(leftvar, Var)))
+					continue;
+				while (rightvar && IsA(rightvar, RelabelType))
+					rightvar = (Var *) ((RelabelType *) rightvar)->arg;
+				if (!(rightvar && IsA(rightvar, Var)))
+					continue;
+
+				/* Now try to match the vars to the current foreign key cols */
+				if (fkinfo->ref_relid == leftvar->varno &&
+					ref_attno == leftvar->varattno &&
+					fkinfo->con_relid == rightvar->varno &&
+					con_attno == rightvar->varattno)
+				{
+					/* Vars match, but is it the right operator? */
+					if (clause->opno == fkinfo->conpfeqop[colno])
+					{
+						fkinfo->rinfos[colno] = lappend(fkinfo->rinfos[colno],
+														rinfo);
+						fkinfo->nmatched_ri++;
+					}
+				}
+				else if (fkinfo->ref_relid == rightvar->varno &&
+						 ref_attno == rightvar->varattno &&
+						 fkinfo->con_relid == leftvar->varno &&
+						 con_attno == leftvar->varattno)
+				{
+					/*
+					 * Reverse match, must check commutator operator.  Look it
+					 * up if we didn't already.  (In the worst case we might
+					 * do multiple lookups here, but that would require an FK
+					 * equality operator without commutator, which is
+					 * unlikely.)
+					 */
+					if (!OidIsValid(fpeqop))
+						fpeqop = get_commutator(fkinfo->conpfeqop[colno]);
+					if (clause->opno == fpeqop)
+					{
+						fkinfo->rinfos[colno] = lappend(fkinfo->rinfos[colno],
+														rinfo);
+						fkinfo->nmatched_ri++;
+					}
+				}
+			}
+			/* If we found any matching loose quals, count col as matched */
+			if (fkinfo->rinfos[colno])
+				fkinfo->nmatched_rcols++;
+		}
+
+		/*
+		 * Currently, we drop multicolumn FKs that aren't fully matched to the
+		 * query.  Later we might figure out how to derive some sort of
+		 * estimate from them, in which case this test should be weakened to
+		 * "if ((fkinfo->nmatched_ec + fkinfo->nmatched_rcols) > 0)".
+		 */
+		if ((fkinfo->nmatched_ec + fkinfo->nmatched_rcols) == fkinfo->nkeys)
+			newlist = lappend(newlist, fkinfo);
+	}
+	/* Replace fkey_list, thereby discarding any useless entries */
+	root->fkey_list = newlist;
 }
 
 

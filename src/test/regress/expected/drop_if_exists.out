@@ -64,6 +64,7 @@ ERROR:  type "test_domain_exists" does not exist
 ---
 --- role/user/group
 ---
+<<<<<<< HEAD
 CREATE USER tu1;
 CREATE ROLE tr1;
 CREATE GROUP tg1;
@@ -106,6 +107,29 @@ DROP SCHEMA :cur_user CASCADE;
 NOTICE:  drop cascades to table tbl_to_drop
 \c regression
 drop database drop_table_test;
+=======
+CREATE USER regress_test_u1;
+CREATE ROLE regress_test_r1;
+CREATE GROUP regress_test_g1;
+DROP USER regress_test_u2;
+ERROR:  role "regress_test_u2" does not exist
+DROP USER IF EXISTS regress_test_u1, regress_test_u2;
+NOTICE:  role "regress_test_u2" does not exist, skipping
+DROP USER regress_test_u1;
+ERROR:  role "regress_test_u1" does not exist
+DROP ROLE regress_test_r2;
+ERROR:  role "regress_test_r2" does not exist
+DROP ROLE IF EXISTS regress_test_r1, regress_test_r2;
+NOTICE:  role "regress_test_r2" does not exist, skipping
+DROP ROLE regress_test_r1;
+ERROR:  role "regress_test_r1" does not exist
+DROP GROUP regress_test_g2;
+ERROR:  role "regress_test_g2" does not exist
+DROP GROUP IF EXISTS regress_test_g1, regress_test_g2;
+NOTICE:  role "regress_test_g2" does not exist, skipping
+DROP GROUP regress_test_g1;
+ERROR:  role "regress_test_g1" does not exist
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 -- collation
 DROP COLLATION IF EXISTS test_collation_exists;
 NOTICE:  collation "test_collation_exists" does not exist, skipping
@@ -248,6 +272,11 @@ DROP OPERATOR FAMILY test_operator_family USING no_such_am;
 ERROR:  access method "no_such_am" does not exist
 DROP OPERATOR FAMILY IF EXISTS test_operator_family USING no_such_am;
 ERROR:  access method "no_such_am" does not exist
+-- access method
+DROP ACCESS METHOD no_such_am;
+ERROR:  access method "no_such_am" does not exist
+DROP ACCESS METHOD IF EXISTS no_such_am;
+NOTICE:  access method "no_such_am" does not exist, skipping
 -- drop the table
 DROP TABLE IF EXISTS test_exists;
 DROP TABLE test_exists;

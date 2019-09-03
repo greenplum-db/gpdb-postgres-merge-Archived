@@ -44,7 +44,11 @@ struct ECPGtype_information_cache
 {
 	struct ECPGtype_information_cache *next;
 	int			oid;
+<<<<<<< HEAD
 	enum ARRAY_TYPE	isarray;
+=======
+	enum ARRAY_TYPE isarray;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 };
 
 /* structure to store one statement */

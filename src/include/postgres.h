@@ -7,7 +7,7 @@
  * Client-side code should include postgres_fe.h instead.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
  * src/include/postgres.h
@@ -401,8 +401,11 @@ typedef Datum *DatumPtr;
 static inline bool DatumGetBool(Datum d) { return ((bool)d) != 0; }
 static inline Datum BoolGetDatum(bool b) { return (b ? 1 : 0); } 
 
+<<<<<<< HEAD
 static inline char DatumGetChar(Datum d) { return (char) d; }
 static inline Datum CharGetDatum(char c) { return (Datum) c; } 
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #define DatumGetBool(X) ((bool) (GET_1_BYTE(X) != 0))
 
 static inline int8 DatumGetInt8(Datum d) { return (int8) d; } 
@@ -494,9 +497,65 @@ static inline float4 DatumGetFloat4(Datum d) { Datum_U du; du.d = d; return du.f
 static inline Datum Float4GetDatum(float4 f) { Datum_U du; du.d = 0; du.f4[1] = f; return du.d; } 
 #endif
 
+<<<<<<< HEAD
 static inline float8 DatumGetFloat8(Datum d) { Datum_U du; du.d = d; return du.f8; } 
 static inline Datum Float8GetDatum(float8 f) { Datum_U du; du.f8 = f; return du.d; }
 static inline Datum Float8GetDatumFast(float8 f) { return Float8GetDatum(f); }
+=======
+/*
+ * Int64GetDatum
+ *		Returns datum representation for a 64-bit integer.
+ *
+ * Note: if int64 is pass by reference, this function returns a reference
+ * to palloc'd space.
+ */
+
+#ifdef USE_FLOAT8_BYVAL
+#define Int64GetDatum(X) ((Datum) SET_8_BYTES(X))
+#else
+extern Datum Int64GetDatum(int64 X);
+#endif
+
+/*
+ * DatumGetUInt64
+ *		Returns 64-bit unsigned integer value of a datum.
+ *
+ * Note: this macro hides whether int64 is pass by value or by reference.
+ */
+
+#ifdef USE_FLOAT8_BYVAL
+#define DatumGetUInt64(X) ((uint64) GET_8_BYTES(X))
+#else
+#define DatumGetUInt64(X) (* ((uint64 *) DatumGetPointer(X)))
+#endif
+
+/*
+ * UInt64GetDatum
+ *		Returns datum representation for a 64-bit unsigned integer.
+ *
+ * Note: if int64 is pass by reference, this function returns a reference
+ * to palloc'd space.
+ */
+
+#ifdef USE_FLOAT8_BYVAL
+#define UInt64GetDatum(X) ((Datum) SET_8_BYTES(X))
+#else
+#define UInt64GetDatum(X) Int64GetDatum((int64) (X))
+#endif
+
+/*
+ * DatumGetFloat4
+ *		Returns 4-byte floating point value of a datum.
+ *
+ * Note: this macro hides whether float4 is pass by value or by reference.
+ */
+
+#ifdef USE_FLOAT4_BYVAL
+extern float4 DatumGetFloat4(Datum X);
+#else
+#define DatumGetFloat4(X) (* ((float4 *) DatumGetPointer(X)))
+#endif
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 
 static inline ItemPointer DatumGetItemPointer(Datum d) { return (ItemPointer) DatumGetPointer(d); }

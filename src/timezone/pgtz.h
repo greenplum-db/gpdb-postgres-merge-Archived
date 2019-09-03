@@ -6,7 +6,11 @@
  * Note: this file contains only definitions that are private to the
  * timezone library.  Public definitions are in pgtime.h.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  *
  * IDENTIFICATION
  *	  src/timezone/pgtz.h
@@ -52,6 +56,7 @@ struct state
 	char		chars[BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, 4 /* sizeof gmt */ ),
 							  (2 * (TZ_STRLEN_MAX + 1)))];
 	struct lsinfo lsis[TZ_MAX_LEAPS];
+<<<<<<< HEAD
 
 	/*
 	 * The time type to use for early times or if no transitions. It is always
@@ -59,6 +64,9 @@ struct state
 	 * 2018e or earlier.
 	 */
 	int			defaulttype;
+=======
+	int			defaulttype;	/* for early times or if no transitions */
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 };
 
 
@@ -74,8 +82,14 @@ struct pg_tz
 extern int	pg_open_tzfile(const char *name, char *canonname);
 
 /* in localtime.c */
+<<<<<<< HEAD
 extern int tzload(const char *name, char *canonname, struct state *sp,
 	   bool doextend);
 extern bool tzparse(const char *name, struct state *sp, bool lastditch);
+=======
+extern int tzload(const char *name, char *canonname, struct state * sp,
+	   bool doextend);
+extern bool tzparse(const char *name, struct state * sp, bool lastditch);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #endif							/* _PGTZ_H */

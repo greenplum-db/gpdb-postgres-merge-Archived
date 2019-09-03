@@ -8,7 +8,7 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/test/regress/pg_regress.c
@@ -94,7 +94,7 @@ static _stringlist *schedulelist = NULL;
 static _stringlist *exclude_tests = NULL;
 static _stringlist *extra_tests = NULL;
 static char *temp_instance = NULL;
-static char *temp_config = NULL;
+static _stringlist *temp_configs = NULL;
 static bool nolocale = false;
 static bool use_existing = false;
 static char *hostname = NULL;
@@ -1265,7 +1265,7 @@ current_windows_user(const char **acct, const char **dom)
 	if (!GetTokenInformation(token, TokenUser, NULL, 0, &retlen) && GetLastError() != 122)
 	{
 		fprintf(stderr,
-				_("%s: could not get token user size: error code %lu\n"),
+				_("%s: could not get token information buffer size: error code %lu\n"),
 				progname, GetLastError());
 		exit(2);
 	}
@@ -1273,7 +1273,7 @@ current_windows_user(const char **acct, const char **dom)
 	if (!GetTokenInformation(token, TokenUser, tokenuser, retlen, &retlen))
 	{
 		fprintf(stderr,
-				_("%s: could not get token user: error code %lu\n"),
+				_("%s: could not get token information: error code %lu\n"),
 				progname, GetLastError());
 		exit(2);
 	}
@@ -1718,9 +1718,18 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 	platform_expectfile = get_expectfile(testname, resultsfile, default_expectfile);
 
 	if (platform_expectfile)
+<<<<<<< HEAD
 		strlcpy(expectfile, platform_expectfile, sizeof(expectfile));
 	else
 		strlcpy(expectfile, default_expectfile, sizeof(expectfile));
+=======
+	{
+		/*
+		 * Replace everything after the last slash in expectfile with what the
+		 * platform_expectfile contains.
+		 */
+		char	   *p = strrchr(expectfile, '/');
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (ignore_plans)
 		ignore_plans_opts = " -gpd_ignore_plans";
@@ -2715,7 +2724,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				split_to_stringlist(strdup(optarg), ", ", &extraroles);
 				break;
 			case 19:
-				temp_config = strdup(optarg);
+				add_stringlist_item(&temp_configs, optarg);
 				break;
 			case 20:
 				use_existing = true;
@@ -2853,7 +2862,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		make_directory(temp_instance);
 
 		/* and a directory for log files */
-		snprintf(buf, sizeof(buf), "%s/log", temp_instance);
+		snprintf(buf, sizeof(buf), "%s/log", outputdir);
 		if (!directory_exists(buf))
 			make_directory(buf);
 
@@ -2866,7 +2875,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				 temp_instance,
 				 debug ? " --debug" : "",
 				 nolocale ? " --no-locale" : "",
-				 temp_instance);
+				 outputdir);
 		if (system(buf))
 		{
 			fprintf(stderr, _("\n%s: initdb failed\nExamine %s/log/initdb.log for the reason.\nCommand was: %s\n"), progname, outputdir, buf);
@@ -2895,8 +2904,9 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		fputs("log_temp_files = 128kB\n", pg_conf);
 		fputs("max_prepared_transactions = 2\n", pg_conf);
 
-		if (temp_config != NULL)
+		for (sl = temp_configs; sl != NULL; sl = sl->next)
 		{
+			char	   *temp_config = sl->str;
 			FILE	   *extra_conf;
 			char		line_buf[1024];
 
@@ -2970,7 +2980,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				 bindir ? "/" : "",
 				 temp_instance, debug ? " -d 5" : "",
 				 hostname ? hostname : "", sockdir ? sockdir : "",
-				 temp_instance);
+				 outputdir);
 		postmaster_pid = spawn_process(buf);
 		if (postmaster_pid == INVALID_PID)
 		{
@@ -3044,7 +3054,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 
 		postmaster_running = true;
 
-#ifdef WIN64
+#ifdef _WIN64
 /* need a series of two casts to convert HANDLE without compiler warning */
 #define ULONGPID(x) (unsigned long) (unsigned long long) (x)
 #else

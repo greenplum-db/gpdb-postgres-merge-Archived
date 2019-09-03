@@ -77,7 +77,11 @@ else
         echo '%%'  > conftest.l
         if $pgac_candidate -t conftest.l 2>/dev/null | grep FLEX_SCANNER >/dev/null 2>&1; then
           pgac_flex_version=`$pgac_candidate --version 2>/dev/null`
+<<<<<<< HEAD
           if echo "$pgac_flex_version" | sed ['s/[^0-9]/ /g'] | $AWK '{ if ([$]1 == 2 && ([$]2 > 5 || ([$]2 == 5 && [$]3 >= 4))) exit 0; else exit 1;}'
+=======
+          if echo "$pgac_flex_version" | sed ['s/[.a-z]/ /g'] | $AWK '{ if ([$]1 == 2 && ([$]2 > 5 || ([$]2 == 5 && [$]3 >= 31))) exit 0; else exit 1;}'
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
           then
             pgac_cv_path_flex=$pgac_candidate
             break 2
@@ -200,14 +204,14 @@ fi
 
 AC_DEFUN([PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER],
 [AC_CACHE_CHECK([for rl_completion_append_character], pgac_cv_var_rl_completion_append_character,
-[AC_TRY_LINK([#include <stdio.h>
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <stdio.h>
 #ifdef HAVE_READLINE_READLINE_H
 # include <readline/readline.h>
 #elif defined(HAVE_READLINE_H)
 # include <readline.h>
 #endif
 ],
-[rl_completion_append_character = 'x';],
+[rl_completion_append_character = 'x';])],
 [pgac_cv_var_rl_completion_append_character=yes],
 [pgac_cv_var_rl_completion_append_character=no])])
 if test x"$pgac_cv_var_rl_completion_append_character" = x"yes"; then

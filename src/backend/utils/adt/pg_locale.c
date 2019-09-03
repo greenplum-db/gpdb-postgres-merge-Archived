@@ -2,7 +2,7 @@
  *
  * PostgreSQL locale utilities
  *
- * Portions Copyright (c) 2002-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2002-2016, PostgreSQL Global Development Group
  *
  * src/backend/utils/adt/pg_locale.c
  *
@@ -396,6 +396,11 @@ assign_locale_messages(const char *newval, void *extra)
 static void
 free_struct_lconv(struct lconv * s)
 {
+<<<<<<< HEAD
+=======
+	if (s->currency_symbol)
+		free(s->currency_symbol);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	if (s->decimal_point)
 		free(s->decimal_point);
 	if (s->thousands_sep)
@@ -507,6 +512,7 @@ PGLC_localeconv(void)
 		free_struct_lconv(&CurrentLocaleConv);
 		CurrentLocaleConvAllocated = false;
 	}
+<<<<<<< HEAD
 
 	/*
 	 * This is tricky because we really don't want to risk throwing error
@@ -521,6 +527,8 @@ PGLC_localeconv(void)
 	 * using a single cleanup routine.
 	 */
 	memset(&worklconv, 0, sizeof(worklconv));
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Save user's values of monetary and numeric locales */
 	save_lc_monetary = setlocale(LC_MONETARY, NULL);
@@ -583,6 +591,7 @@ PGLC_localeconv(void)
 	setlocale(LC_MONETARY, locale_monetary);
 	extlconv = localeconv();
 
+<<<<<<< HEAD
 	/* Must copy data now in case setlocale() overwrites it */
 	worklconv.int_curr_symbol = strdup(extlconv->int_curr_symbol);
 	worklconv.currency_symbol = strdup(extlconv->currency_symbol);
@@ -600,6 +609,26 @@ PGLC_localeconv(void)
 	worklconv.n_sep_by_space = extlconv->n_sep_by_space;
 	worklconv.p_sign_posn = extlconv->p_sign_posn;
 	worklconv.n_sign_posn = extlconv->n_sign_posn;
+=======
+	/*
+	 * Must copy all values since restoring internal settings may overwrite
+	 * localeconv()'s results.  Note that if we were to fail within this
+	 * sequence before reaching "CurrentLocaleConvAllocated = true", we could
+	 * leak some memory --- but not much, so it's not worth agonizing over.
+	 */
+	CurrentLocaleConv = *extlconv;
+	CurrentLocaleConv.decimal_point = decimal_point;
+	CurrentLocaleConv.grouping = grouping;
+	CurrentLocaleConv.thousands_sep = thousands_sep;
+	CurrentLocaleConv.int_curr_symbol = db_encoding_strdup(encoding, extlconv->int_curr_symbol);
+	CurrentLocaleConv.currency_symbol = db_encoding_strdup(encoding, extlconv->currency_symbol);
+	CurrentLocaleConv.mon_decimal_point = db_encoding_strdup(encoding, extlconv->mon_decimal_point);
+	CurrentLocaleConv.mon_grouping = strdup(extlconv->mon_grouping);
+	CurrentLocaleConv.mon_thousands_sep = db_encoding_strdup(encoding, extlconv->mon_thousands_sep);
+	CurrentLocaleConv.negative_sign = db_encoding_strdup(encoding, extlconv->negative_sign);
+	CurrentLocaleConv.positive_sign = db_encoding_strdup(encoding, extlconv->positive_sign);
+	CurrentLocaleConvAllocated = true;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Try to restore internal settings */
 	if (save_lc_monetary)
@@ -982,6 +1011,64 @@ IsoLocaleName(const char *winlocname)
 #endif   /* _MSC_VER >= 1400 */
 }
 #endif   /* WIN32 && LC_MESSAGES */
+
+
+/*
+ * Detect aging strxfrm() implementations that, in a subset of locales, write
+ * past the specified buffer length.  Affected users must update OS packages
+ * before using PostgreSQL 9.5 or later.
+ *
+ * Assume that the bug can come and go from one postmaster startup to another
+ * due to physical replication among diverse machines.  Assume that the bug's
+ * presence will not change during the life of a particular postmaster.  Given
+ * those assumptions, call this no less than once per postmaster startup per
+ * LC_COLLATE setting used.  No known-affected system offers strxfrm_l(), so
+ * there is no need to consider pg_collation locales.
+ */
+void
+check_strxfrm_bug(void)
+{
+	char		buf[32];
+	const int	canary = 0x7F;
+	bool		ok = true;
+
+	/*
+	 * Given a two-byte ASCII string and length limit 7, 8 or 9, Solaris 10
+	 * 05/08 returns 18 and modifies 10 bytes.  It respects limits above or
+	 * below that range.
+	 *
+	 * The bug is present in Solaris 8 as well; it is absent in Solaris 10
+	 * 01/13 and Solaris 11.2.  Affected locales include is_IS.ISO8859-1,
+	 * en_US.UTF-8, en_US.ISO8859-1, and ru_RU.KOI8-R.  Unaffected locales
+	 * include de_DE.UTF-8, de_DE.ISO8859-1, zh_TW.UTF-8, and C.
+	 */
+	buf[7] = canary;
+	(void) strxfrm(buf, "ab", 7);
+	if (buf[7] != canary)
+		ok = false;
+
+	/*
+	 * illumos bug #1594 was present in the source tree from 2010-10-11 to
+	 * 2012-02-01.  Given an ASCII string of any length and length limit 1,
+	 * affected systems ignore the length limit and modify a number of bytes
+	 * one less than the return value.  The problem inputs for this bug do not
+	 * overlap those for the Solaris bug, hence a distinct test.
+	 *
+	 * Affected systems include smartos-20110926T021612Z.  Affected locales
+	 * include en_US.ISO8859-1 and en_US.UTF-8.  Unaffected locales include C.
+	 */
+	buf[1] = canary;
+	(void) strxfrm(buf, "a", 1);
+	if (buf[1] != canary)
+		ok = false;
+
+	if (!ok)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYSTEM_ERROR),
+				 errmsg_internal("strxfrm(), in locale \"%s\", writes past the specified array length",
+								 setlocale(LC_COLLATE, NULL)),
+				 errhint("Apply system library package updates.")));
+}
 
 
 /*

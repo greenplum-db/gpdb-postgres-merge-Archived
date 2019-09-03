@@ -6,8 +6,13 @@
  * In this implementation, the NFA defines a necessary but not sufficient
  * condition for a string to match the regex: that is, there can be strings
  * that match the NFA but don't match the full regex, but not vice versa.
+<<<<<<< HEAD
  * Thus, for example, it is okay for the functions below to treat lookahead
  * constraints as no-ops, since they merely constrain the string some more.
+=======
+ * Thus, for example, it is okay for the functions below to ignore lookaround
+ * constraints, which merely constrain the string some more.
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  *
  * Notice that these functions return info into caller-provided arrays
  * rather than doing their own malloc's.  This simplifies the APIs by
@@ -15,7 +20,7 @@
  * allows the caller to decide how big is too big to bother with.
  *
  *
- * Portions Copyright (c) 2013-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2013-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1998, 1999 Henry Spencer
  *
  * IDENTIFICATION

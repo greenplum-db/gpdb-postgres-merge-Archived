@@ -13,6 +13,8 @@
 
 #include "fe_utils/connect.h"
 #include "dumputils.h"
+#include "fe_utils/string_utils.h"
+#include "parallel.h"
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
 #include "pg_backup_utils.h"
@@ -39,6 +41,7 @@ _check_database_version(ArchiveHandle *AH)
 {
 	const char *remoteversion_str;
 	int			remoteversion;
+	PGresult   *res;
 
 	remoteversion_str = PQparameterStatus(AH->connection, "server_version");
 	remoteversion = PQserverVersion(AH->connection);
@@ -58,6 +61,20 @@ _check_database_version(ArchiveHandle *AH)
 				  remoteversion_str, progname, PG_VERSION);
 		exit_horribly(NULL, "aborting because of server version mismatch\n");
 	}
+
+	/*
+	 * When running against 9.0 or later, check if we are in recovery mode,
+	 * which means we are on a hot standby.
+	 */
+	if (remoteversion >= 90000)
+	{
+		res = ExecuteSqlQueryForSingleRow((Archive *) AH, "SELECT pg_catalog.pg_is_in_recovery()");
+
+		AH->public.isStandby = (strcmp(PQgetvalue(res, 0, 0), "t") == 0);
+		PQclear(res);
+	}
+	else
+		AH->public.isStandby = false;
 }
 
 /*
@@ -154,8 +171,13 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 	do
 	{
+<<<<<<< HEAD
 		const char *keywords[8];
 		const char *values[8];
+=======
+		const char *keywords[7];
+		const char *values[7];
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		keywords[0] = "host";
 		values[0] = PQhost(AH->connection);
@@ -270,8 +292,13 @@ ConnectDatabase(Archive *AHX,
 	 */
 	do
 	{
+<<<<<<< HEAD
 		const char *keywords[8];
 		const char *values[8];
+=======
+		const char *keywords[7];
+		const char *values[7];
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		keywords[0] = "host";
 		values[0] = pghost;
@@ -323,11 +350,14 @@ ConnectDatabase(Archive *AHX,
 					  PQdb(AH->connection) ? PQdb(AH->connection) : "",
 					  PQerrorMessage(AH->connection));
 
+<<<<<<< HEAD
 	/* Start strict; later phases may override this. */
 	if (PQserverVersion(AH->connection) >= 70300)
 		PQclear(ExecuteSqlQueryForSingleRow((Archive *) AH,
 											ALWAYS_SECURE_SEARCH_PATH_SQL));
 
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/*
 	 * We want to remember connection's actual password, whether or not we got
 	 * it by prompting.  So we don't just store the password variable.
@@ -366,12 +396,21 @@ DisconnectDatabase(Archive *AHX)
 	if (AH->connCancel)
 	{
 		/*
+<<<<<<< HEAD
 		 * If we have an active query, send a cancel before closing, ignoring
 		 * any errors.  This is of no use for a normal exit, but might be
 		 * helpful during exit_horribly().
 		 */
 		if (PQtransactionStatus(AH->connection) == PQTRANS_ACTIVE)
 			(void) PQcancel(AH->connCancel, errbuf, sizeof(errbuf));
+=======
+		 * If we have an active query, send a cancel before closing.  This is
+		 * of no use for a normal exit, but might be helpful during
+		 * exit_horribly().
+		 */
+		if (PQtransactionStatus(AH->connection) == PQTRANS_ACTIVE)
+			PQcancel(AH->connCancel, errbuf, sizeof(errbuf));
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		/*
 		 * Prevent signal handler from sending a cancel after this.

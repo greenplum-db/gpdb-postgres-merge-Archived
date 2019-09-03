@@ -25,6 +25,41 @@ select substring('asd TO foo' from ' TO (([a-z0-9._]+|"([^"]+|"")+")+)');
 select substring('a' from '((a))+');
 select substring('a' from '((a)+)');
 
+-- Test lookahead constraints
+select regexp_matches('ab', 'a(?=b)b*');
+select regexp_matches('a', 'a(?=b)b*');
+select regexp_matches('abc', 'a(?=b)b*(?=c)c*');
+select regexp_matches('ab', 'a(?=b)b*(?=c)c*');
+select regexp_matches('ab', 'a(?!b)b*');
+select regexp_matches('a', 'a(?!b)b*');
+select regexp_matches('b', '(?=b)b');
+select regexp_matches('a', '(?=b)b');
+
+-- Test lookbehind constraints
+select regexp_matches('abb', '(?<=a)b*');
+select regexp_matches('a', 'a(?<=a)b*');
+select regexp_matches('abc', 'a(?<=a)b*(?<=b)c*');
+select regexp_matches('ab', 'a(?<=a)b*(?<=b)c*');
+select regexp_matches('ab', 'a*(?<!a)b*');
+select regexp_matches('ab', 'a*(?<!a)b+');
+select regexp_matches('b', 'a*(?<!a)b+');
+select regexp_matches('a', 'a(?<!a)b*');
+select regexp_matches('b', '(?<=b)b');
+select regexp_matches('foobar', '(?<=f)b+');
+select regexp_matches('foobar', '(?<=foo)b+');
+select regexp_matches('foobar', '(?<=oo)b+');
+
+-- Test optimization of single-chr-or-bracket-expression lookaround constraints
+select 'xz' ~ 'x(?=[xy])';
+select 'xy' ~ 'x(?=[xy])';
+select 'xz' ~ 'x(?![xy])';
+select 'xy' ~ 'x(?![xy])';
+select 'x'  ~ 'x(?![xy])';
+select 'xyy' ~ '(?<=[xy])yy+';
+select 'zyy' ~ '(?<=[xy])yy+';
+select 'xyy' ~ '(?<![xy])yy+';
+select 'zyy' ~ '(?<![xy])yy+';
+
 -- Test conversion of regex patterns to indexable conditions
 -- start_ignore
 -- GPDB_93_MERGE_FIXME: the statistics and/or cost estimation code
@@ -47,11 +82,14 @@ explain (costs off) select * from pg_proc where proname ~ '^(abc)(def)';
 explain (costs off) select * from pg_proc where proname ~ '^(abc)$';
 explain (costs off) select * from pg_proc where proname ~ '^(abc)?d';
 explain (costs off) select * from pg_proc where proname ~ '^abcd(x|(?=\w\w)q)';
+<<<<<<< HEAD
 
 -- start_ignore
 reset enable_seqscan;
 reset enable_bitmapscan;
 -- end_ignore
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- Test for infinite loop in pullback() (CVE-2007-4772)
 select 'a' ~ '($|^)*';

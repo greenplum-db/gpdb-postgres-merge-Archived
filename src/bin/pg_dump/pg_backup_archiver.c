@@ -25,6 +25,8 @@
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
 #include "pg_backup_utils.h"
+#include "dumputils.h"
+#include "fe_utils/string_utils.h"
 
 #include <ctype.h>
 #include <fcntl.h>
@@ -57,7 +59,11 @@ static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	 const int compression, ArchiveMode mode, SetupWorkerPtr setupWorkerPtr);
 static void _getObjectDescription(PQExpBuffer buf, TocEntry *te,
 					  ArchiveHandle *AH);
+<<<<<<< HEAD
 static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData);
+=======
+static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData, bool acl_pass);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static char *replace_line_endings(const char *str);
 static void _doSetFixedOutputState(ArchiveHandle *AH);
 static void _doSetSessionAuth(ArchiveHandle *AH, const char *user);
@@ -86,8 +92,13 @@ static void SetOutput(ArchiveHandle *AH, const char *filename, int compression);
 static OutputContext SaveOutput(ArchiveHandle *AH);
 static void RestoreOutput(ArchiveHandle *AH, OutputContext savedContext);
 
+<<<<<<< HEAD
 static int restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel);
 static void restore_toc_entries_prefork(ArchiveHandle *AH, TocEntry *pending_list);
+=======
+static int	restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel);
+static void restore_toc_entries_prefork(ArchiveHandle *AH);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void restore_toc_entries_parallel(ArchiveHandle *AH, ParallelState *pstate,
 							 TocEntry *pending_list);
 static void restore_toc_entries_postfork(ArchiveHandle *AH, TocEntry *pending_list);
@@ -110,6 +121,9 @@ static void reduce_dependencies(ArchiveHandle *AH, TocEntry *te,
 					TocEntry *ready_list);
 static void mark_create_done(ArchiveHandle *AH, TocEntry *te);
 static void inhibit_data_for_failed_table(ArchiveHandle *AH, TocEntry *te);
+
+static void StrictNamesCheck(RestoreOptions *ropt);
+
 
 /*
  * Allocate a new DumpOptions block containing all default values.
@@ -298,6 +312,10 @@ ProcessArchiveRestoreOptions(Archive *AHX)
 
 		te->reqs = _tocEntryRequired(te, curSection, ropt);
 	}
+
+	/* Enforce strict names checking */
+	if (ropt->strict_names)
+		StrictNamesCheck(ropt);
 }
 
 /* Public */
@@ -561,8 +579,12 @@ RestoreArchive(Archive *AHX)
 							 * different kinds of CONSTRAINTs, we know to
 							 * search for hardcoded "DROP CONSTRAINT" instead.
 							 */
+<<<<<<< HEAD
 							if (strcmp(te->desc, "DEFAULT") == 0 ||
 								strncmp(dropStmt, "CREATE OR REPLACE VIEW", 22) == 0)
+=======
+							if (strcmp(te->desc, "DEFAULT") == 0)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 								appendPQExpBufferStr(ftStmt, dropStmt);
 							else
 							{
@@ -657,6 +679,7 @@ RestoreArchive(Archive *AHX)
 		bool		haveRefresh = false;
 
 		for (te = AH->toc->next; te != AH->toc; te = te->next)
+<<<<<<< HEAD
 		{
 			if ((te->reqs & (REQ_SCHEMA | REQ_DATA)) == 0)
 				continue;		/* ignore if not to be dumped at all */
@@ -674,6 +697,10 @@ RestoreArchive(Archive *AHX)
 					break;
 			}
 		}
+=======
+			(void) restore_toc_entry(AH, te, false);
+	}
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		if (haveACL)
 		{
@@ -687,12 +714,23 @@ RestoreArchive(Archive *AHX)
 
 		if (haveRefresh)
 		{
+<<<<<<< HEAD
 			for (te = AH->toc->next; te != AH->toc; te = te->next)
 			{
 				if ((te->reqs & (REQ_SCHEMA | REQ_DATA)) != 0 &&
 					_tocEntryRestorePass(te) == RESTORE_PASS_REFRESH)
 					(void) restore_toc_entry(AH, te, false);
 			}
+=======
+			/* Show namespace if available */
+			if (te->namespace)
+				ahlog(AH, 1, "setting owner and privileges for %s \"%s.%s\"\n",
+					  te->desc, te->namespace, te->tag);
+			else
+				ahlog(AH, 1, "setting owner and privileges for %s \"%s\"\n",
+					  te->desc, te->tag);
+			_printTocEntry(AH, te, false, true);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 	}
 
@@ -767,13 +805,17 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 	{
 		/* Show namespace if available */
 		if (te->namespace)
-			ahlog(AH, 1, "creating %s \"%s\".\"%s\"\n",
+			ahlog(AH, 1, "creating %s \"%s.%s\"\n",
 				  te->desc, te->namespace, te->tag);
 		else
 			ahlog(AH, 1, "creating %s \"%s\"\n", te->desc, te->tag);
 
 
+<<<<<<< HEAD
 		_printTocEntry(AH, te, false);
+=======
+		_printTocEntry(AH, te, false, false);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		defnDumped = true;
 
 		if (strcmp(te->desc, "TABLE") == 0 ||
@@ -847,7 +889,11 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 			 */
 			if (AH->PrintTocDataPtr !=NULL)
 			{
+<<<<<<< HEAD
 				_printTocEntry(AH, te, true);
+=======
+				_printTocEntry(AH, te, true, false);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 				if (strcmp(te->desc, "BLOBS") == 0 ||
 					strcmp(te->desc, "BLOB COMMENTS") == 0)
@@ -872,7 +918,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 					_becomeOwner(AH, te);
 					_selectOutputSchema(AH, te->namespace);
 
-					ahlog(AH, 1, "processing data for table \"%s\".\"%s\"\n",
+					ahlog(AH, 1, "processing data for table \"%s.%s\"\n",
 						  te->namespace, te->tag);
 
 					/*
@@ -937,7 +983,11 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 		{
 			/* If we haven't already dumped the defn part, do so now */
 			ahlog(AH, 1, "executing %s %s\n", te->desc, te->tag);
+<<<<<<< HEAD
 			_printTocEntry(AH, te, false);
+=======
+			_printTocEntry(AH, te, false, false);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 	}
 
@@ -1247,6 +1297,10 @@ PrintTOCSummary(Archive *AHX)
 			ahprintf(AH, "\n");
 		}
 	}
+
+	/* Enforce strict names checking */
+	if (ropt->strict_names)
+		StrictNamesCheck(ropt);
 
 	if (ropt->filename)
 		RestoreOutput(AH, sav);
@@ -2772,6 +2826,7 @@ processStdStringsEntry(ArchiveHandle *AH, TocEntry *te)
 }
 
 static void
+<<<<<<< HEAD
 processSearchPathEntry(ArchiveHandle *AH, TocEntry *te)
 {
 	/*
@@ -2779,6 +2834,48 @@ processSearchPathEntry(ArchiveHandle *AH, TocEntry *te)
 	 * verbatim for use later.
 	 */
 	AH->public.searchpath = pg_strdup(te->defn);
+=======
+StrictNamesCheck(RestoreOptions *ropt)
+{
+	const char *missing_name;
+
+	Assert(ropt->strict_names);
+
+	if (ropt->schemaNames.head != NULL)
+	{
+		missing_name = simple_string_list_not_touched(&ropt->schemaNames);
+		if (missing_name != NULL)
+			exit_horribly(modulename, "schema \"%s\" not found\n", missing_name);
+	}
+
+	if (ropt->tableNames.head != NULL)
+	{
+		missing_name = simple_string_list_not_touched(&ropt->tableNames);
+		if (missing_name != NULL)
+			exit_horribly(modulename, "table \"%s\" not found\n", missing_name);
+	}
+
+	if (ropt->indexNames.head != NULL)
+	{
+		missing_name = simple_string_list_not_touched(&ropt->indexNames);
+		if (missing_name != NULL)
+			exit_horribly(modulename, "index \"%s\" not found\n", missing_name);
+	}
+
+	if (ropt->functionNames.head != NULL)
+	{
+		missing_name = simple_string_list_not_touched(&ropt->functionNames);
+		if (missing_name != NULL)
+			exit_horribly(modulename, "function \"%s\" not found\n", missing_name);
+	}
+
+	if (ropt->triggerNames.head != NULL)
+	{
+		missing_name = simple_string_list_not_touched(&ropt->triggerNames);
+		if (missing_name != NULL)
+			exit_horribly(modulename, "trigger \"%s\" not found\n", missing_name);
+	}
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 static teReqs
@@ -2833,9 +2930,19 @@ _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 	if (ropt->selTypes)
 	{
 		if (strcmp(te->desc, "TABLE") == 0 ||
+<<<<<<< HEAD
 			strcmp(te->desc, "EXTERNAL TABLE") == 0 ||
 			strcmp(te->desc, "FOREIGN TABLE") == 0 ||
 			strcmp(te->desc, "TABLE DATA") == 0)
+=======
+			strcmp(te->desc, "TABLE DATA") == 0 ||
+			strcmp(te->desc, "VIEW") == 0 ||
+			strcmp(te->desc, "FOREIGN TABLE") == 0 ||
+			strcmp(te->desc, "MATERIALIZED VIEW") == 0 ||
+			strcmp(te->desc, "MATERIALIZED VIEW DATA") == 0 ||
+			strcmp(te->desc, "SEQUENCE") == 0 ||
+			strcmp(te->desc, "SEQUENCE SET") == 0)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{
 			if (!ropt->selTable)
 				return 0;
@@ -2977,6 +3084,7 @@ _tocEntryIsACL(TocEntry *te)
 static void
 _doSetFixedOutputState(ArchiveHandle *AH)
 {
+<<<<<<< HEAD
 	/*
 	 * SET gp_default_storage_options GUC to built-in default values (similar
 	 * to resetAOStorageOpts function) to prevent restoring a table into a
@@ -2990,10 +3098,16 @@ _doSetFixedOutputState(ArchiveHandle *AH)
 	RestoreOptions *ropt = AH->public.ropt;
 
 	/* Disable statement_timeout since restore is probably slow */
-	ahprintf(AH, "SET statement_timeout = 0;\n");
+=======
+	RestoreOptions *ropt = AH->public.ropt;
 
-	/* Likewise for lock_timeout */
+	/*
+	 * Disable timeouts to allow for slow commands, idle parallel workers, etc
+	 */
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	ahprintf(AH, "SET statement_timeout = 0;\n");
 	ahprintf(AH, "SET lock_timeout = 0;\n");
+	ahprintf(AH, "SET idle_in_transaction_session_timeout = 0;\n");
 
 	/* Select the correct character set encoding */
 	ahprintf(AH, "SET client_encoding = '%s';\n",
@@ -3006,10 +3120,13 @@ _doSetFixedOutputState(ArchiveHandle *AH)
 	/* Select the role to be used during restore */
 	if (ropt && ropt->use_role)
 		ahprintf(AH, "SET ROLE %s;\n", fmtId(ropt->use_role));
+<<<<<<< HEAD
 
 	/* Select the dump-time search_path */
 	if (AH->public.searchpath)
 		ahprintf(AH, "%s", AH->public.searchpath);
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Make sure function checking is disabled */
 	ahprintf(AH, "SET check_function_bodies = false;\n");
@@ -3410,6 +3527,7 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te, ArchiveHandle *AH)
  * will remain at default, until the matching ACL TOC entry is restored.
  */
 static void
+<<<<<<< HEAD
 _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 {
 	RestoreOptions *ropt = AH->public.ropt;
@@ -3423,6 +3541,38 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 	 * that we can maintain its OID from the old cluster
 	 */
 	if (!ropt->dropSchema && !ropt->binary_upgrade)
+=======
+_printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData, bool acl_pass)
+{
+	RestoreOptions *ropt = AH->public.ropt;
+
+	/* ACLs are dumped only during acl pass */
+	if (acl_pass)
+	{
+		if (!_tocEntryIsACL(te))
+			return;
+	}
+	else
+	{
+		if (_tocEntryIsACL(te))
+			return;
+	}
+
+	/*
+	 * Avoid dumping the public schema, as it will already be created ...
+	 * unless we are using --clean mode (and *not* --create mode), in which
+	 * case we've previously issued a DROP for it so we'd better recreate it.
+	 *
+	 * Likewise for its comment, if any.  (We could try issuing the COMMENT
+	 * command anyway; but it'd fail if the restore is done as non-super-user,
+	 * so let's not.)
+	 *
+	 * XXX it looks pretty ugly to hard-wire the public schema like this, but
+	 * it sits in a sort of no-mans-land between being a system object and a
+	 * user object, so it really is special in a way.
+	 */
+	if (!(ropt->dropSchema && !ropt->createDB))
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		if (strcmp(te->desc, "SCHEMA") == 0 &&
 			strcmp(te->tag, "public") == 0)
@@ -3916,12 +4066,16 @@ restore_toc_entries_prefork(ArchiveHandle *AH, TocEntry *pending_list)
 		if (_tocEntryRestorePass(next_work_item) != RESTORE_PASS_MAIN)
 			do_now = false;
 
+<<<<<<< HEAD
 		if (do_now)
 		{
 			/* OK, restore the item and update its dependencies */
 			ahlog(AH, 1, "processing item %d %s %s\n",
 				  next_work_item->dumpId,
 				  next_work_item->desc, next_work_item->tag);
+=======
+		(void) restore_toc_entry(AH, next_work_item, false);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 			(void) restore_toc_entry(AH, next_work_item, false);
 
@@ -4042,10 +4196,14 @@ restore_toc_entries_parallel(ArchiveHandle *AH, ParallelState *pstate,
 		}
 		else
 		{
+<<<<<<< HEAD
 			/*
 			 * We have nothing ready, but at least one child is working, so
 			 * wait for some subjob to finish.
 			 */
+=======
+			/* at least one child is working and we have nothing ready. */
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 
 		for (;;)
@@ -4721,7 +4879,11 @@ CloneArchive(ArchiveHandle *AH)
 		/* this also sets clone->connection */
 		ConnectDatabase((Archive *) clone, ropt->dbname,
 						ropt->pghost, ropt->pgport, ropt->username,
+<<<<<<< HEAD
 						ropt->promptPassword, false);
+=======
+						ropt->promptPassword);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		/* re-establish fixed state */
 		_doSetFixedOutputState(clone);
@@ -4750,7 +4912,11 @@ CloneArchive(ArchiveHandle *AH)
 
 		/* this also sets clone->connection */
 		ConnectDatabase((Archive *) clone, connstr.data,
+<<<<<<< HEAD
 						pghost, pgport, username, TRI_NO, false);
+=======
+						pghost, pgport, username, TRI_NO);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		termPQExpBuffer(&connstr);
 		/* setupDumpWorker will fix up connection state */

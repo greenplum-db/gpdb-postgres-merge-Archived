@@ -1,6 +1,7 @@
 <!-- doc/src/sgml/release-9.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<<<<<<< HEAD
  <sect1 id="release-9-3-25">
   <title>Release 9.3.25</title>
 
@@ -3828,6 +3829,15 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
   <title>Release date:</title>
   <para>2016-08-11</para>
   </formalpara>
+=======
+ <sect1 id="release-9-3-14">
+  <title>Release 9.3.14</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-08-11</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.3.13.
@@ -4314,10 +4324,17 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
  <sect1 id="release-9-3-13">
   <title>Release 9.3.13</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2016-05-12</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-05-12</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.3.12.
@@ -4544,10 +4561,17 @@ Branch: REL9_2_STABLE [37f30b251] 2016-04-18 13:19:52 -0400
  <sect1 id="release-9-3-12">
   <title>Release 9.3.12</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2016-03-31</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-03-31</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.3.11.
@@ -4632,7 +4656,11 @@ Branch: REL9_2_STABLE [37f30b251] 2016-04-18 13:19:52 -0400
 
      <para>
       This dodges a portability problem on FreeBSD-derived platforms
+<<<<<<< HEAD
       (including macOS).
+=======
+      (including OS X).
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
      </para>
     </listitem>
 
@@ -4763,10 +4791,17 @@ Branch: REL9_2_STABLE [37f30b251] 2016-04-18 13:19:52 -0400
  <sect1 id="release-9-3-11">
   <title>Release 9.3.11</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2016-02-11</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-02-11</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.3.10.
@@ -5386,10 +5421,17 @@ Branch: REL9_2_STABLE [37f30b251] 2016-04-18 13:19:52 -0400
  <sect1 id="release-9-3-10">
   <title>Release 9.3.10</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2015-10-08</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-10-08</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.3.9.

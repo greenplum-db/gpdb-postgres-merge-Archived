@@ -4,7 +4,7 @@
  *	  POSTGRES heap tuple header definitions.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/htup_details.h
@@ -238,8 +238,13 @@ struct HeapTupleHeaderData
  */
 #define HEAP_LOCKED_UPGRADED(infomask) \
 ( \
+<<<<<<< HEAD
 	 ((infomask) & HEAP_XMAX_IS_MULTI) != 0 && \
 	 ((infomask) & HEAP_XMAX_LOCK_ONLY) != 0 && \
+=======
+	 ((infomask) & HEAP_XMAX_IS_MULTI) && \
+	 ((infomask) & HEAP_XMAX_LOCK_ONLY) && \
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 (((infomask) & (HEAP_XMAX_EXCL_LOCK | HEAP_XMAX_KEYSHR_LOCK)) == 0) \
 )
 
@@ -829,17 +834,6 @@ extern HeapTuple heap_modify_tuple(HeapTuple tuple,
 				  bool *doReplace);
 extern void heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 				  Datum *values, bool *isnull);
-
-/* these three are deprecated versions of the three above: */
-extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor,
-			   Datum *values, char *nulls);
-extern HeapTuple heap_modifytuple(HeapTuple tuple,
-				 TupleDesc tupleDesc,
-				 Datum *replValues,
-				 char *replNulls,
-				 char *replActions);
-extern void heap_deformtuple(HeapTuple tuple, TupleDesc tupleDesc,
-				 Datum *values, char *nulls);
 extern void heap_freetuple(HeapTuple htup);
 extern MinimalTuple heap_form_minimal_tuple(TupleDesc tupleDescriptor,
 						Datum *values, bool *isnull);

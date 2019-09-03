@@ -48,9 +48,15 @@ attempted.
 
  RecursiveCopy::copypath('/some/path', '/empty/dir',
     filterfn => sub {
+<<<<<<< HEAD
 		# omit log/ and contents
 		my $src = shift;
 		return $src ne 'log';
+=======
+		# omit pg_log and contents
+		my $src = shift;
+		return $src ne 'pg_log';
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
  );
 

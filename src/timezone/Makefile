@@ -20,7 +20,11 @@ OBJS= localtime.o strftime.o pgtz.o
 OBJS += gptime.o
 
 # files needed to build zic utility program
+<<<<<<< HEAD
 ZICOBJS= zic.o
+=======
+ZICOBJS= zic.o $(WIN32RES)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 # we now distribute the timezone data as a single file
 TZDATAFILES = $(srcdir)/data/tzdata.zi

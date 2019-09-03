@@ -3,7 +3,7 @@
  * connection.c
  *		  Connection management functions for postgres_fdw
  *
- * Portions Copyright (c) 2012-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2012-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  contrib/postgres_fdw/connection.c
@@ -20,7 +20,10 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "storage/latch.h"
+<<<<<<< HEAD
 #include "storage/proc.h"
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
@@ -31,9 +34,11 @@
 /*
  * Connection cache hash table entry
  *
- * The lookup key in this hash table is the foreign server OID plus the user
- * mapping OID.  (We use just one connection per user per foreign server,
- * so that we can ensure all scans use the same snapshot during a query.)
+ * The lookup key in this hash table is the user mapping OID. We use just one
+ * connection per user mapping ID, which ensures that all the scans use the
+ * same snapshot during a query.  Using the user mapping OID rather than
+ * the foreign server OID + user OID avoids creating multiple connections when
+ * the public user mapping applies to all user OIDs.
  *
  * The "conn" pointer can be NULL if we don't currently have a live connection.
  * When we do have a connection, xact_depth tracks the current depth of
@@ -42,11 +47,7 @@
  * ourselves, so that rolling back a subtransaction will kill the right
  * queries and not the wrong ones.
  */
-typedef struct ConnCacheKey
-{
-	Oid			serverid;		/* OID of foreign server */
-	Oid			userid;			/* OID of local user whose mapping we use */
-} ConnCacheKey;
+typedef Oid ConnCacheKey;
 
 typedef struct ConnCacheEntry
 {
@@ -107,8 +108,7 @@ static bool pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime,
  * (not even on error), we need this flag to cue manual cleanup.
  */
 PGconn *
-GetConnection(ForeignServer *server, UserMapping *user,
-			  bool will_prep_stmt)
+GetConnection(UserMapping *user, bool will_prep_stmt)
 {
 	bool		found;
 	ConnCacheEntry *entry;
@@ -144,8 +144,7 @@ GetConnection(ForeignServer *server, UserMapping *user,
 	xact_got_connection = true;
 
 	/* Create hash key for the entry.  Assume no pad bytes in key struct */
-	key.serverid = server->serverid;
-	key.userid = user->userid;
+	key = user->umid;
 
 	/*
 	 * Find or create cached entry for requested connection.
@@ -187,10 +186,16 @@ GetConnection(ForeignServer *server, UserMapping *user,
 	 */
 	if (entry->conn == NULL)
 	{
+<<<<<<< HEAD
 		Oid			umoid;
 
 		/* Reset all transient state fields, to be sure all are clean */
 		entry->xact_depth = 0;
+=======
+		ForeignServer *server = GetForeignServer(user->serverid);
+
+		entry->xact_depth = 0;	/* just to be sure */
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		entry->have_prep_stmt = false;
 		entry->have_error = false;
 		entry->changing_xact_state = false;
@@ -214,8 +219,9 @@ GetConnection(ForeignServer *server, UserMapping *user,
 
 		/* Now try to make the connection */
 		entry->conn = connect_pg_server(server, user);
-		elog(DEBUG3, "new postgres_fdw connection %p for server \"%s\"",
-			 entry->conn, server->servername);
+
+		elog(DEBUG3, "new postgres_fdw connection %p for server \"%s\" (user mapping oid %u, userid %u)",
+			 entry->conn, server->servername, user->umid, user->userid);
 	}
 
 	/*
@@ -547,7 +553,11 @@ pgfdw_exec_query(PGconn *conn, const char *query)
  *
  * This function offers quick responsiveness by checking for any interruptions.
  *
+<<<<<<< HEAD
  * This function emulates PQexec()'s behavior of returning the last result
+=======
+ * This function emulates the PQexec()'s behavior of returning the last result
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * when there are many.
  *
  * Caller is responsible for the error handling on the result.
@@ -555,6 +565,7 @@ pgfdw_exec_query(PGconn *conn, const char *query)
 PGresult *
 pgfdw_get_result(PGconn *conn, const char *query)
 {
+<<<<<<< HEAD
 	PGresult   *volatile last_res = NULL;
 
 	/* In what follows, do not leak any PGresults on an error. */
@@ -599,6 +610,42 @@ pgfdw_get_result(PGconn *conn, const char *query)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+=======
+	PGresult   *last_res = NULL;
+
+	for (;;)
+	{
+		PGresult   *res;
+
+		while (PQisBusy(conn))
+		{
+			int			wc;
+
+			/* Sleep until there's something to do */
+			wc = WaitLatchOrSocket(MyLatch,
+								   WL_LATCH_SET | WL_SOCKET_READABLE,
+								   PQsocket(conn),
+								   -1L);
+			ResetLatch(MyLatch);
+
+			CHECK_FOR_INTERRUPTS();
+
+			/* Data available in socket */
+			if (wc & WL_SOCKET_READABLE)
+			{
+				if (!PQconsumeInput(conn))
+					pgfdw_report_error(ERROR, NULL, conn, false, query);
+			}
+		}
+
+		res = PQgetResult(conn);
+		if (res == NULL)
+			break;				/* query is complete */
+
+		PQclear(last_res);
+		last_res = res;
+	}
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	return last_res;
 }
@@ -790,6 +837,7 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 					/*
 					 * If a command has been submitted to the remote server by
 					 * using an asynchronous execution function, the command
+<<<<<<< HEAD
 					 * might not have yet completed.  Check to see if a command
 					 * is still being processed by the remote server, and if so,
 					 * request cancellation of the command.
@@ -815,6 +863,34 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 						/* Trouble clearing prepared statements. */
 						abort_cleanup_failure = true;
 					}
+=======
+					 * might not have yet completed.  Check to see if a
+					 * command is still being processed by the remote server,
+					 * and if so, request cancellation of the command.
+					 */
+					if (PQtransactionStatus(entry->conn) == PQTRANS_ACTIVE)
+					{
+						PGcancel   *cancel;
+						char		errbuf[256];
+
+						if ((cancel = PQgetCancel(entry->conn)))
+						{
+							if (!PQcancel(cancel, errbuf, sizeof(errbuf)))
+								ereport(WARNING,
+										(errcode(ERRCODE_CONNECTION_FAILURE),
+								  errmsg("could not send cancel request: %s",
+										 errbuf)));
+							PQfreeCancel(cancel);
+						}
+					}
+
+					/* If we're aborting, abort all remote transactions too */
+					res = PQexec(entry->conn, "ABORT TRANSACTION");
+					/* Note: can't throw ERROR, it would be infinite loop */
+					if (PQresultStatus(res) != PGRES_COMMAND_OK)
+						pgfdw_report_error(WARNING, res, entry->conn, true,
+										   "ABORT TRANSACTION");
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 					else
 					{
 						entry->have_prep_stmt = false;
@@ -928,6 +1004,7 @@ pgfdw_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 			entry->have_error = true;
 
 			/*
+<<<<<<< HEAD
 			 * If a command has been submitted to the remote server by using an
 			 * asynchronous execution function, the command might not have yet
 			 * completed.  Check to see if a command is still being processed by
@@ -937,6 +1014,37 @@ pgfdw_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 			if (PQtransactionStatus(entry->conn) == PQTRANS_ACTIVE &&
 				!pgfdw_cancel_query(entry->conn))
 				abort_cleanup_failure = true;
+=======
+			 * If a command has been submitted to the remote server by using
+			 * an asynchronous execution function, the command might not have
+			 * yet completed.  Check to see if a command is still being
+			 * processed by the remote server, and if so, request cancellation
+			 * of the command.
+			 */
+			if (PQtransactionStatus(entry->conn) == PQTRANS_ACTIVE)
+			{
+				PGcancel   *cancel;
+				char		errbuf[256];
+
+				if ((cancel = PQgetCancel(entry->conn)))
+				{
+					if (!PQcancel(cancel, errbuf, sizeof(errbuf)))
+						ereport(WARNING,
+								(errcode(ERRCODE_CONNECTION_FAILURE),
+								 errmsg("could not send cancel request: %s",
+										errbuf)));
+					PQfreeCancel(cancel);
+				}
+			}
+
+			/* Rollback all remote subtransactions during abort */
+			snprintf(sql, sizeof(sql),
+					 "ROLLBACK TO SAVEPOINT s%d; RELEASE SAVEPOINT s%d",
+					 curlevel, curlevel);
+			res = PQexec(entry->conn, sql);
+			if (PQresultStatus(res) != PGRES_COMMAND_OK)
+				pgfdw_report_error(WARNING, res, entry->conn, true, sql);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			else
 			{
 				/* Rollback all remote subtransactions during abort */

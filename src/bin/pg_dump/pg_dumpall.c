@@ -2,9 +2,13 @@
  *
  * pg_dumpall.c
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * pg_dumpall forces all pg_dump output to be text, since it also outputs
@@ -28,7 +32,11 @@
 
 #include "dumputils.h"
 #include "pg_backup.h"
+<<<<<<< HEAD
 #include "fe_utils/connect.h"
+=======
+#include "fe_utils/string_utils.h"
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* version string we expect back from pg_dump */
 #define PGDUMP_VERSIONSTR "pg_dump (PostgreSQL) " PG_VERSION "\n"
@@ -1026,7 +1034,13 @@ dropRoles(PGconn *conn)
 	int			i_rolname;
 	int			i;
 
-	if (server_version >= 80100)
+	if (server_version >= 90600)
+		res = executeQuery(conn,
+						   "SELECT rolname "
+						   "FROM pg_authid "
+						   "WHERE rolname !~ '^pg_' "
+						   "ORDER BY 1");
+	else if (server_version >= 80100)
 		res = executeQuery(conn,
 						   "SELECT rolname "
 						   "FROM pg_authid "
@@ -1109,7 +1123,18 @@ dumpRoles(PGconn *conn)
 	 */
 
 	/* note: rolconfig is dumped later */
-	if (server_version >= 90500)
+	if (server_version >= 90600)
+		printfPQExpBuffer(buf,
+						  "SELECT oid, rolname, rolsuper, rolinherit, "
+						  "rolcreaterole, rolcreatedb, "
+						  "rolcanlogin, rolconnlimit, rolpassword, "
+						  "rolvaliduntil, rolreplication, rolbypassrls, "
+			 "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
+						  "rolname = current_user AS is_current_user "
+						  "FROM pg_authid "
+						  "WHERE rolname !~ '^pg_' "
+						  "ORDER BY 2");
+	else if (server_version >= 90500)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
 						  "rolcreaterole, rolcreatedb, "
@@ -1195,6 +1220,13 @@ dumpRoles(PGconn *conn)
 
 		auth_oid = atooid(PQgetvalue(res, i, i_oid));
 		rolename = PQgetvalue(res, i, i_rolname);
+
+		if (strncmp(rolename, "pg_", 3) == 0)
+		{
+			fprintf(stderr, _("%s: role name starting with \"pg_\" skipped (%s)\n"),
+					progname, rolename);
+			continue;
+		}
 
 		resetPQExpBuffer(buf);
 
@@ -1362,6 +1394,7 @@ dumpRoleMembership(PGconn *conn)
 					   "LEFT JOIN pg_authid ur on ur.oid = a.roleid "
 					   "LEFT JOIN pg_authid um on um.oid = a.member "
 					   "LEFT JOIN pg_authid ug on ug.oid = a.grantor "
+					"WHERE NOT (ur.rolname ~ '^pg_' AND um.rolname ~ '^pg_')"
 					   "ORDER BY 1,2,3");
 
 	if (PQntuples(res) > 0)
@@ -1481,6 +1514,7 @@ dumpTablespaces(PGconn *conn)
 	// WALREP_FIXME: filespaces are gone. How do we deal with that here?
 	
 	/*
+<<<<<<< HEAD
 	 * Get all tablespaces execpt built-in ones (named pg_xxx)
 	 *
 	 * [FIXME] the queries need to be slightly different if the backend isn't
@@ -1494,9 +1528,40 @@ dumpTablespaces(PGconn *conn)
 	}
 
 	if (server_version >= 90200)
+=======
+	 * Get all tablespaces except built-in ones (which we assume are named
+	 * pg_xxx)
+	 *
+	 * For the tablespace ACLs, as of 9.6, we extract both the positive (as
+	 * spcacl) and negative (as rspcacl) ACLs, relative to the default ACL for
+	 * tablespaces, which are then passed to buildACLCommands() below.
+	 *
+	 * See buildACLQueries() and buildACLCommands().
+	 *
+	 * Note that we do not support initial privileges (pg_init_privs) on
+	 * tablespaces.
+	 */
+	if (server_version >= 90600)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		res = executeQuery(conn, "SELECT oid, spcname, "
 						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
-						   "pg_catalog.pg_tablespace_location(oid), spcacl, "
+						   "pg_catalog.pg_tablespace_location(oid), "
+						   "(SELECT pg_catalog.array_agg(acl) FROM (SELECT pg_catalog.unnest(coalesce(spcacl,pg_catalog.acldefault('t',spcowner))) AS acl "
+						   "EXCEPT SELECT pg_catalog.unnest(pg_catalog.acldefault('t',spcowner))) as foo)"
+						   "AS spcacl,"
+						   "(SELECT pg_catalog.array_agg(acl) FROM (SELECT pg_catalog.unnest(pg_catalog.acldefault('t',spcowner)) AS acl "
+						   "EXCEPT SELECT pg_catalog.unnest(coalesce(spcacl,pg_catalog.acldefault('t',spcowner)))) as foo)"
+						   "AS rspcacl,"
+						   "array_to_string(spcoptions, ', '),"
+						"pg_catalog.shobj_description(oid, 'pg_tablespace') "
+						   "FROM pg_catalog.pg_tablespace "
+						   "WHERE spcname !~ '^pg_' "
+						   "ORDER BY 1");
+	else if (server_version >= 90200)
+		res = executeQuery(conn, "SELECT oid, spcname, "
+						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
+						   "pg_catalog.pg_tablespace_location(oid), "
+						   "spcacl, '' as rspcacl, "
 						   "array_to_string(spcoptions, ', '),"
 						"pg_catalog.shobj_description(oid, 'pg_tablespace') "
 						   "FROM pg_catalog.pg_tablespace "
@@ -1505,7 +1570,11 @@ dumpTablespaces(PGconn *conn)
 	else if (server_version >= 90000)
 		res = executeQuery(conn, "SELECT oid, spcname, "
 						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
+<<<<<<< HEAD
 						   "pg_catalog.pg_tablespace_location(oid), spcacl, "
+=======
+						   "spclocation, spcacl, '' as rspcacl, "
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 						   "array_to_string(spcoptions, ', '),"
 						"pg_catalog.shobj_description(oid, 'pg_tablespace') "
 						   "FROM pg_catalog.pg_tablespace "
@@ -1514,15 +1583,25 @@ dumpTablespaces(PGconn *conn)
 	else if (server_version >= 80200)
 		res = executeQuery(conn, "SELECT oid, spcname, "
 						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
-						   "spclocation, spcacl, null, "
+						   "spclocation, spcacl, '' as rspcacl, null, "
 						"pg_catalog.shobj_description(oid, 'pg_tablespace') "
 						   "FROM pg_catalog.pg_tablespace "
 						   "WHERE spcname !~ '^pg_' "
 						   "ORDER BY 1");
 	else
+<<<<<<< HEAD
 	{
 		error_unsupported_server_version(conn);
 	}
+=======
+		res = executeQuery(conn, "SELECT oid, spcname, "
+						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
+						   "spclocation, spcacl, '' as rspcacl, "
+						   "null, null "
+						   "FROM pg_catalog.pg_tablespace "
+						   "WHERE spcname !~ '^pg_' "
+						   "ORDER BY 1");
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (PQntuples(res) > 0)
 		fprintf(OPF, "--\n-- Tablespaces\n--\n\n");
@@ -1535,8 +1614,9 @@ dumpTablespaces(PGconn *conn)
 		char	   *spcowner = PQgetvalue(res, i, 2);
 		char	   *spclocation = PQgetvalue(res, i, 3);
 		char	   *spcacl = PQgetvalue(res, i, 4);
-		char	   *spcoptions = PQgetvalue(res, i, 5);
-		char	   *spccomment = PQgetvalue(res, i, 6);
+		char	   *rspcacl = PQgetvalue(res, i, 5);
+		char	   *spcoptions = PQgetvalue(res, i, 6);
+		char	   *spccomment = PQgetvalue(res, i, 7);
 		char	   *fspcname;
 
 		/* needed for buildACLCommands() */
@@ -1554,9 +1634,14 @@ dumpTablespaces(PGconn *conn)
 							  fspcname, spcoptions);
 
 		if (!skip_acls &&
+<<<<<<< HEAD
 			!buildACLCommands(fspcname, NULL, NULL, "TABLESPACE",
 							  spcacl, spcowner,
 							  "", server_version, buf))
+=======
+			!buildACLCommands(fspcname, NULL, "TABLESPACE", spcacl, rspcacl,
+							  spcowner, "", server_version, buf))
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{
 			fprintf(stderr, _("%s: could not parse ACL list (%s) for tablespace \"%s\"\n"),
 					progname, spcacl, spcname);
@@ -1703,14 +1788,44 @@ dumpCreateDB(PGconn *conn)
 
 	PQclear(res);
 
-	/* Now collect all the information about databases to dump */
-	if (server_version >= 90300)
+
+	/*
+	 * Now collect all the information about databases to dump.
+	 *
+	 * For the database ACLs, as of 9.6, we extract both the positive (as
+	 * datacl) and negative (as rdatacl) ACLs, relative to the default ACL for
+	 * databases, which are then passed to buildACLCommands() below.
+	 *
+	 * See buildACLQueries() and buildACLCommands().
+	 *
+	 * Note that we do not support initial privileges (pg_init_privs) on
+	 * databases.
+	 */
+	if (server_version >= 90600)
 		res = executeQuery(conn,
 						   "SELECT datname, "
 						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
 						   "datcollate, datctype, datfrozenxid, datminmxid, "
-						   "datistemplate, datacl, datconnlimit, "
+						   "datistemplate, "
+						   "(SELECT pg_catalog.array_agg(acl) FROM (SELECT pg_catalog.unnest(coalesce(datacl,pg_catalog.acldefault('d',datdba))) AS acl "
+						   "EXCEPT SELECT pg_catalog.unnest(pg_catalog.acldefault('d',datdba))) as foo)"
+						   "AS datacl, "
+						   "(SELECT pg_catalog.array_agg(acl) FROM (SELECT pg_catalog.unnest(pg_catalog.acldefault('d',datdba)) AS acl "
+						   "EXCEPT SELECT pg_catalog.unnest(coalesce(datacl,pg_catalog.acldefault('d',datdba)))) as foo)"
+						   "AS rdatacl, "
+						   "datconnlimit, "
+						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
+			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
+						   "WHERE datallowconn ORDER BY 1");
+	else if (server_version >= 90300)
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "datcollate, datctype, datfrozenxid, datminmxid, "
+						   "datistemplate, datacl, '' as rdatacl, "
+						   "datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
 						   "WHERE datallowconn ORDER BY 1");
@@ -1720,7 +1835,8 @@ dumpCreateDB(PGconn *conn)
 						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
 					  "datcollate, datctype, datfrozenxid, 0 AS datminmxid, "
-						   "datistemplate, datacl, datconnlimit, "
+						   "datistemplate, datacl, '' as rdatacl, "
+						   "datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
 						   "WHERE datallowconn ORDER BY 1");
@@ -1730,12 +1846,68 @@ dumpCreateDB(PGconn *conn)
 						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
 						   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
-						   "datistemplate, datacl, datconnlimit, "
+						   "datistemplate, datacl, '' as rdatacl, "
+						   "datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
 						   "WHERE datallowconn ORDER BY 1");
+<<<<<<< HEAD
 	else
 		error_unsupported_server_version(conn);
+=======
+	else if (server_version >= 80000)
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
+						   "datistemplate, datacl, '' as rdatacl, "
+						   "-1 as datconnlimit, "
+						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
+		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
+						   "WHERE datallowconn ORDER BY 1");
+	else if (server_version >= 70300)
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "null::text AS datcollate, null::text AS datctype, datfrozenxid, 0 AS datminmxid, "
+						   "datistemplate, datacl, '' as rdatacl, "
+						   "-1 as datconnlimit, "
+						   "'pg_default' AS dattablespace "
+		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
+						   "WHERE datallowconn ORDER BY 1");
+	else if (server_version >= 70100)
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "coalesce("
+					"(select usename from pg_shadow where usesysid=datdba), "
+						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid, 0 AS datminmxid, "
+						   "datistemplate, '' as datacl, '' as rdatacl, "
+						   "-1 as datconnlimit, "
+						   "'pg_default' AS dattablespace "
+						   "FROM pg_database d "
+						   "WHERE datallowconn ORDER BY 1");
+	else
+	{
+		/*
+		 * Note: 7.0 fails to cope with sub-select in COALESCE, so just deal
+		 * with getting a NULL by not printing any OWNER clause.
+		 */
+		res = executeQuery(conn,
+						   "SELECT datname, "
+					"(select usename from pg_shadow where usesysid=datdba), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid, 0 AS datminmxid, "
+						   "'f' as datistemplate, "
+						   "'' as datacl, '' as rdatacl, -1 as datconnlimit, "
+						   "'pg_default' AS dattablespace "
+						   "FROM pg_database d "
+						   "ORDER BY 1");
+	}
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -1748,8 +1920,9 @@ dumpCreateDB(PGconn *conn)
 		uint32		dbminmxid = atooid(PQgetvalue(res, i, 6));
 		char	   *dbistemplate = PQgetvalue(res, i, 7);
 		char	   *dbacl = PQgetvalue(res, i, 8);
-		char	   *dbconnlimit = PQgetvalue(res, i, 9);
-		char	   *dbtablespace = PQgetvalue(res, i, 10);
+		char	   *rdbacl = PQgetvalue(res, i, 9);
+		char	   *dbconnlimit = PQgetvalue(res, i, 10);
+		char	   *dbtablespace = PQgetvalue(res, i, 11);
 		char	   *fdbname;
 
 		fdbname = pg_strdup(fmtId(dbname));
@@ -1837,6 +2010,24 @@ dumpCreateDB(PGconn *conn)
 			/* connect to original database */
 			appendPsqlMetaConnect(buf, dbname);
 		}
+		else if (strcmp(dbtablespace, "pg_default") != 0 && !no_tablespaces)
+		{
+			/*
+			 * Cannot change tablespace of the database we're connected to, so
+			 * to move "postgres" to another tablespace, we connect to
+			 * "template1", and vice versa.
+			 */
+			if (strcmp(dbname, "postgres") == 0)
+				appendPQExpBuffer(buf, "\\connect template1\n");
+			else
+				appendPQExpBuffer(buf, "\\connect postgres\n");
+
+			appendPQExpBuffer(buf, "ALTER DATABASE %s SET TABLESPACE %s;\n",
+							  fdbname, fmtId(dbtablespace));
+
+			/* connect to original database */
+			appendPsqlMetaConnect(buf, dbname);
+		}
 
 		if (binary_upgrade)
 		{
@@ -1851,7 +2042,12 @@ dumpCreateDB(PGconn *conn)
 		appendPQExpBuffer(buf, "RESET allow_system_table_mods;\n");
 
 		if (!skip_acls &&
+<<<<<<< HEAD
 			!buildACLCommands(fdbname, NULL, NULL, "DATABASE", dbacl, dbowner,
+=======
+			!buildACLCommands(fdbname, NULL, "DATABASE",
+							  dbacl, rdbacl, dbowner,
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 							  "", server_version, buf))
 		{
 			fprintf(stderr, _("%s: could not parse ACL list (%s) for database \"%s\"\n"),
@@ -2540,6 +2736,7 @@ dumpTimestamp(const char *msg)
 	if (strftime(buf, sizeof(buf), PGDUMP_STRFTIME_FMT, localtime(&now)) != 0)
 		fprintf(OPF, "-- %s %s\n\n", msg, buf);
 }
+<<<<<<< HEAD
 
 /*
  * This GPDB-specific function is copied (in spirit) from pg_dump.c.
@@ -2564,3 +2761,5 @@ error_unsupported_server_version(PGconn *conn)
 	PQfinish(conn);
 	exit(1);
 }
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

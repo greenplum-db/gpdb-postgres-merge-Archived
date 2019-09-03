@@ -107,7 +107,7 @@
  * is a convenient point to initialize replication from, which is why we
  * export a snapshot at that point, which *can* be used to read normal data.
  *
- * Copyright (c) 2012-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2016, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/snapbuild.c
@@ -653,14 +653,33 @@ SnapBuildExportSnapshot(SnapBuild *builder)
 }
 
 /*
+ * Ensure there is a snapshot and if not build one for current transaction.
+ */
+Snapshot
+SnapBuildGetOrBuildSnapshot(SnapBuild *builder, TransactionId xid)
+{
+	Assert(builder->state == SNAPBUILD_CONSISTENT);
+
+	/* only build a new snapshot if we don't have a prebuilt one */
+	if (builder->snapshot == NULL)
+	{
+		builder->snapshot = SnapBuildBuildSnapshot(builder, xid);
+		/* inrease refcount for the snapshot builder */
+		SnapBuildSnapIncRefcount(builder->snapshot);
+	}
+
+	return builder->snapshot;
+}
+
+/*
  * Reset a previously SnapBuildExportSnapshot()'ed snapshot if there is
  * any. Aborts the previously started transaction and resets the resource
  * owner back to its original value.
  */
 void
-SnapBuildClearExportedSnapshot()
+SnapBuildClearExportedSnapshot(void)
 {
-	/* nothing exported, thats the usual case */
+	/* nothing exported, that is the usual case */
 	if (!ExportInProgress)
 		return;
 
@@ -886,6 +905,66 @@ SnapBuildPurgeCommittedTxn(SnapBuild *builder)
 }
 
 /*
+<<<<<<< HEAD
+=======
+ * Common logic for SnapBuildAbortTxn and SnapBuildCommitTxn dealing with
+ * keeping track of the amount of running transactions.
+ */
+static void
+SnapBuildEndTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid)
+{
+	if (builder->state == SNAPBUILD_CONSISTENT)
+		return;
+
+	/*
+	 * NB: This handles subtransactions correctly even if we started from
+	 * suboverflowed xl_running_xacts because we only keep track of toplevel
+	 * transactions. Since the latter are always allocated before their
+	 * subxids and since they end at the same time it's sufficient to deal
+	 * with them here.
+	 */
+	if (SnapBuildTxnIsRunning(builder, xid))
+	{
+		Assert(builder->running.xcnt > 0);
+
+		if (!--builder->running.xcnt)
+		{
+			/*
+			 * None of the originally running transaction is running anymore,
+			 * so our incrementaly built snapshot now is consistent.
+			 */
+			ereport(LOG,
+				  (errmsg("logical decoding found consistent point at %X/%X",
+						  (uint32) (lsn >> 32), (uint32) lsn),
+				   errdetail("Transaction ID %u finished; no more running transactions.",
+							 xid)));
+			builder->state = SNAPBUILD_CONSISTENT;
+		}
+	}
+}
+
+/*
+ * Abort a transaction, throw away all state we kept.
+ */
+void
+SnapBuildAbortTxn(SnapBuild *builder, XLogRecPtr lsn,
+				  TransactionId xid,
+				  int nsubxacts, TransactionId *subxacts)
+{
+	int			i;
+
+	for (i = 0; i < nsubxacts; i++)
+	{
+		TransactionId subxid = subxacts[i];
+
+		SnapBuildEndTxn(builder, lsn, subxid);
+	}
+
+	SnapBuildEndTxn(builder, lsn, xid);
+}
+
+/*
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Handle everything that needs to be done when a transaction commits
  */
 void
@@ -924,10 +1003,15 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 		 * If building an exportable snapshot, force xid to be tracked, even
 		 * if the transaction didn't modify the catalog.
 		 */
+<<<<<<< HEAD
 		if (builder->building_full_snapshot)
 		{
 			needs_timetravel = true;
 		}
+=======
+		forced_timetravel = true;
+		elog(DEBUG1, "forced to assume catalog changes for xid %u because it was running too early", xid);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	for (nxact = 0; nxact < nsubxacts; nxact++)
@@ -1692,12 +1776,12 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 
 	if (ondisk.magic != SNAPBUILD_MAGIC)
 		ereport(ERROR,
-				(errmsg("snapbuild state file \"%s\" has wrong magic %u instead of %u",
+				(errmsg("snapbuild state file \"%s\" has wrong magic number: %u instead of %u",
 						path, ondisk.magic, SNAPBUILD_MAGIC)));
 
 	if (ondisk.version != SNAPBUILD_VERSION)
 		ereport(ERROR,
-				(errmsg("snapbuild state file \"%s\" has unsupported version %u instead of %u",
+				(errmsg("snapbuild state file \"%s\" has unsupported version: %u instead of %u",
 						path, ondisk.version, SNAPBUILD_VERSION)));
 
 	INIT_CRC32C(checksum);
@@ -1763,7 +1847,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	if (!EQ_CRC32C(checksum, ondisk.checksum))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("snapbuild state file %s: checksum mismatch, is %u, should be %u",
+				 errmsg("checksum mismatch for snapbuild state file \"%s\": is %u, should be %u",
 						path, checksum, ondisk.checksum)));
 
 	/*

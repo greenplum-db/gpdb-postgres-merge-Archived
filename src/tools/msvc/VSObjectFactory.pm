@@ -53,11 +53,14 @@ sub CreateSolution
 	{
 		return new VS2015Solution(@_);
 	}
+<<<<<<< HEAD
 	# visual 2017 hasn't changed the nmake version to 15, so adjust the check to support it.
 	elsif (($visualStudioVersion ge '14.10') or ($visualStudioVersion eq '15.00'))
 	{
 		return new VS2017Solution(@_);
 	}
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	else
 	{
 		croak $visualStudioVersion;
@@ -98,11 +101,14 @@ sub CreateProject
 	{
 		return new VC2015Project(@_);
 	}
+<<<<<<< HEAD
 	# visual 2017 hasn't changed the nmake version to 15, so adjust the check to support it.
 	elsif (($visualStudioVersion ge '14.10') or ($visualStudioVersion eq '15.00'))
 	{
 		return new VC2017Project(@_);
 	}
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	else
 	{
 		croak $visualStudioVersion;
@@ -132,7 +138,10 @@ sub DetermineVisualStudioVersion
 sub _GetVisualStudioVersion
 {
 	my ($major, $minor) = @_;
+<<<<<<< HEAD
 	# visual 2017 hasn't changed the nmake version to 15, so still using the older version for comparison.
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	if ($major > 14)
 	{
 		carp

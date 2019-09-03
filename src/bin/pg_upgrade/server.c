@@ -3,12 +3,13 @@
  *
  *	database server functions
  *
- *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/server.c
  */
 
 #include "postgres_fe.h"
 
+<<<<<<< HEAD
 /*
  * GPDB_94_MERGE_FIXME: include introduced in 928bca1a30d7e05cc3857a99e27a
  * which shipped as 9.4.17.  Remove the local define and use the definition
@@ -19,6 +20,9 @@
 #if 0
 #include "fe_utils/connect.h"
 #endif
+=======
+#include "fe_utils/string_utils.h"
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "pg_upgrade.h"
 
 
@@ -79,9 +83,12 @@ get_db_conn(ClusterInfo *cluster, const char *db_name)
 		appendConnStrVal(&conn_opts, cluster->sockdir);
 	}
 
+<<<<<<< HEAD
 	appendPQExpBuffer(&conn_opts, " options=");
 	appendConnStrVal(&conn_opts, "-c gp_session_role=utility");
 
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	conn = PQconnectdb(conn_opts.data);
 	termPQExpBuffer(&conn_opts);
 	return conn;

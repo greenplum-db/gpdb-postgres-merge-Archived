@@ -4,7 +4,7 @@
  *		Functions for handling locale-related info
  *
  *
- * Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2016, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -239,8 +239,13 @@ win32_langinfo(const char *ctype)
 	MultiByteToWideChar(CP_ACP, 0, ctype, -1, wctype, LOCALE_NAME_MAX_LENGTH);
 
 	if (GetLocaleInfoEx(wctype,
+<<<<<<< HEAD
 			LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
 			(LPWSTR) &cp, sizeof(cp) / sizeof(WCHAR)) > 0)
+=======
+						LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+						(LPWSTR) &cp, sizeof(cp) / sizeof(WCHAR)) > 0)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		r = malloc(16);			/* excess */
 		if (r != NULL)
@@ -249,7 +254,10 @@ win32_langinfo(const char *ctype)
 	else
 #endif
 	{
+<<<<<<< HEAD
 
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		/*
 		 * Locale format on Win32 is <Language>_<Country>.<CodePage> . For
 		 * example, English_United States.1252.

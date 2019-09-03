@@ -4,9 +4,13 @@
  *	  POSTGRES memory context node definitions.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/memnodes.h
@@ -17,6 +21,24 @@
 #define MEMNODES_H
 
 #include "nodes/nodes.h"
+
+/*
+ * MemoryContextCounters
+ *		Summarization state for MemoryContextStats collection.
+ *
+ * The set of counters in this struct is biased towards AllocSet; if we ever
+ * add any context types that are based on fundamentally different approaches,
+ * we might need more or different counters here.  A possible API spec then
+ * would be to print only nonzero counters, but for now we just summarize in
+ * the format historically used by AllocSet.
+ */
+typedef struct MemoryContextCounters
+{
+	Size		nblocks;		/* Total number of malloc blocks */
+	Size		freechunks;		/* Total number of free chunks */
+	Size		totalspace;		/* Total bytes requested from malloc */
+	Size		freespace;		/* The unused portion of totalspace */
+} MemoryContextCounters;
 
 /*
  * MemoryContext
@@ -46,8 +68,13 @@ typedef struct MemoryContextMethods
 	void		(*delete_context) (MemoryContext context);
 	Size		(*get_chunk_space) (MemoryContext context, void *pointer);
 	bool		(*is_empty) (MemoryContext context);
+<<<<<<< HEAD
 	void		(*stats) (MemoryContext context, uint64 *nBlocks, uint64 *nChunks, uint64 *currentAvailable, uint64 *allAllocated, uint64 *allFreed, uint64 *maxHeld);
 	void		(*release_accounting)(MemoryContext context);
+=======
+	void		(*stats) (MemoryContext context, int level, bool print,
+									  MemoryContextCounters *totals);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #ifdef MEMORY_CONTEXT_CHECKING
 	void		(*check) (MemoryContext context);
 #endif
@@ -63,6 +90,7 @@ typedef struct MemoryContextData
 	MemoryContextMethods methods;		/* virtual function table */
 	MemoryContext parent;		/* NULL if no parent (toplevel context) */
 	MemoryContext firstchild;	/* head of linked list of children */
+	MemoryContext prevchild;	/* previous child of same parent */
 	MemoryContext nextchild;	/* next child of same parent */
 	char	   *name;			/* context name (just for debugging) */
     /* CDB: Lifetime cumulative stats for this context and all descendants */

@@ -9,9 +9,13 @@
  * storage management for portals (but doesn't run any queries in them).
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -380,10 +384,11 @@ PersistHoldablePortal(Portal portal)
 	Assert(queryDesc != NULL);
 
 	/*
-	 * Caller must have created the tuplestore already.
+	 * Caller must have created the tuplestore already ... but not a snapshot.
 	 */
 	Assert(portal->holdContext != NULL);
 	Assert(portal->holdStore != NULL);
+	Assert(portal->holdSnapshot == NULL);
 
 	/*
 	 * Before closing down the executor, we must copy the tupdesc into
@@ -430,7 +435,8 @@ PersistHoldablePortal(Portal portal)
 
 		/*
 		 * Change the destination to output to the tuplestore.  Note we tell
-		 * the tuplestore receiver to detoast all data passed through it.
+		 * the tuplestore receiver to detoast all data passed through it; this
+		 * makes it safe to not keep a snapshot associated with the data.
 		 */
 		queryDesc->dest = CreateDestReceiver(DestTuplestore);
 		SetTuplestoreDestReceiverParams(queryDesc->dest,
@@ -465,6 +471,7 @@ PersistHoldablePortal(Portal portal)
 		 */
 		if(Gp_role == GP_ROLE_UTILITY)
 		{
+<<<<<<< HEAD
 			if (portal->atEnd)
 			{
 				/*
@@ -477,6 +484,18 @@ PersistHoldablePortal(Portal portal)
 			else
 			{
 				tuplestore_rescan(portal->holdStore);
+=======
+			/*
+			 * Just force the tuplestore forward to its end.  The size of the
+			 * skip request here is arbitrary.
+			 */
+			while (tuplestore_skiptuples(portal->holdStore, 1000000, true))
+				 /* continue */ ;
+		}
+		else
+		{
+			tuplestore_rescan(portal->holdStore);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 				if (!tuplestore_skiptuples(portal->holdStore,
 										   portal->portalPos,

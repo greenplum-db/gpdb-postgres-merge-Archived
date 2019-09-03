@@ -15,7 +15,7 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  *
  * src/bin/pg_config/pg_config.c
  *
@@ -25,8 +25,10 @@
 #include "postgres_fe.h"
 
 #include "port.h"
+#include "common/config_info.h"
 
 static const char *progname;
+<<<<<<< HEAD
 static char mypath[MAXPGPATH];
 
 
@@ -404,6 +406,8 @@ show_version(bool all)
 	printf("PostgreSQL " PG_VERSION "\n");
 }
 
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
  * Table of known information items
@@ -413,10 +417,11 @@ show_version(bool all)
 typedef struct
 {
 	const char *switchname;
-	void		(*show_func) (bool all);
+	const char *configname;
 } InfoItem;
 
 static const InfoItem info_items[] = {
+<<<<<<< HEAD
 	{"--bindir", show_bindir},
 	{"--docdir", show_docdir},
 	{"--htmldir", show_htmldir},
@@ -440,6 +445,31 @@ static const InfoItem info_items[] = {
 	{"--ldflags_sl", show_ldflags_sl},
 	{"--libs", show_libs},
 	{"--version", show_version},
+=======
+	{"--bindir", "BINDIR"},
+	{"--docdir", "DOCDIR"},
+	{"--htmldir", "HTMLDIR"},
+	{"--includedir", "INCLUDEDIR"},
+	{"--pkgincludedir", "PKGINCLUDEDIR"},
+	{"--includedir-server", "INCLUDEDIR-SERVER"},
+	{"--libdir", "LIBDIR"},
+	{"--pkglibdir", "PKGLIBDIR"},
+	{"--localedir", "LOCALEDIR"},
+	{"--mandir", "MANDIR"},
+	{"--sharedir", "SHAREDIR"},
+	{"--sysconfdir", "SYSCONFDIR"},
+	{"--pgxs", "PGXS"},
+	{"--configure", "CONFIGURE"},
+	{"--cc", "CC"},
+	{"--cppflags", "CPPFLAGS"},
+	{"--cflags", "CFLAGS"},
+	{"--cflags_sl", "CFLAGS_SL"},
+	{"--ldflags", "LDFLAGS"},
+	{"--ldflags_ex", "LDFLAGS_EX"},
+	{"--ldflags_sl", "LDFLAGS_SL"},
+	{"--libs", "LIBS"},
+	{"--version", "VERSION"},
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{NULL, NULL}
 };
 
@@ -488,22 +518,27 @@ advice(void)
 }
 
 static void
-show_all(void)
+show_item(const char *configname,
+		  ConfigData *configdata,
+		  size_t configdata_len)
 {
 	int			i;
 
-	for (i = 0; info_items[i].switchname != NULL; i++)
+	for (i = 0; i < configdata_len; i++)
 	{
-		(*info_items[i].show_func) (true);
+		if (strcmp(configname, configdata[i].name) == 0)
+			printf("%s\n", configdata[i].setting);
 	}
 }
 
 int
 main(int argc, char **argv)
 {
+	ConfigData *configdata;
+	size_t		configdata_len;
+	char		my_exec_path[MAXPGPATH];
 	int			i;
 	int			j;
-	int			ret;
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_config"));
 
@@ -519,28 +554,30 @@ main(int argc, char **argv)
 		}
 	}
 
-	ret = find_my_exec(argv[0], mypath);
-
-	if (ret)
+	if (find_my_exec(argv[0], my_exec_path) < 0)
 	{
 		fprintf(stderr, _("%s: could not find own program executable\n"), progname);
 		exit(1);
 	}
 
+	configdata = get_configdata(my_exec_path, &configdata_len);
 	/* no arguments -> print everything */
 	if (argc < 2)
 	{
-		show_all();
+		for (i = 0; i < configdata_len; i++)
+			printf("%s = %s\n", configdata[i].name, configdata[i].setting);
 		exit(0);
 	}
 
+	/* otherwise print requested items */
 	for (i = 1; i < argc; i++)
 	{
 		for (j = 0; info_items[j].switchname != NULL; j++)
 		{
 			if (strcmp(argv[i], info_items[j].switchname) == 0)
 			{
-				(*info_items[j].show_func) (false);
+				show_item(info_items[j].configname,
+						  configdata, configdata_len);
 				break;
 			}
 		}

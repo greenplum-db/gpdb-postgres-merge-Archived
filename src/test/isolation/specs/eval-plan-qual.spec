@@ -78,6 +78,7 @@ step "updateforss"	{
 	UPDATE table_b SET value = 'newTableBValue' WHERE id = 1;
 }
 
+<<<<<<< HEAD
 # these tests exercise EvalPlanQual with conditional InitPlans which
 # have not been executed prior to the EPQ
 
@@ -85,6 +86,8 @@ step "updateforcip"	{
 	UPDATE table_a SET value = NULL WHERE id = 1;
 }
 
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 session "s2"
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
@@ -110,6 +113,7 @@ step "readforss"	{
 	FROM table_a ta
 	WHERE ta.id = 1 FOR UPDATE OF ta;
 }
+<<<<<<< HEAD
 step "updateforcip2"	{
 	UPDATE table_a SET value = COALESCE(value, (SELECT text 'newValue')) WHERE id = 1;
 }
@@ -118,6 +122,8 @@ step "updateforcip3"	{
 	UPDATE table_a SET value = COALESCE(value, (SELECT val FROM d)) WHERE id = 1;
 }
 step "wrtwcte"	{ UPDATE table_a SET value = 'tableAValue2' WHERE id = 1; }
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 step "c2"	{ COMMIT; }
 
 session "s3"
@@ -157,7 +163,10 @@ permutation "writep2" "returningp1" "c1" "c2"
 permutation "wx2" "partiallock" "c2" "c1" "read"
 permutation "wx2" "lockwithvalues" "c2" "c1" "read"
 permutation "updateforss" "readforss" "c1" "c2"
+<<<<<<< HEAD
 permutation "updateforcip" "updateforcip2" "c1" "c2" "read_a"
 permutation "updateforcip" "updateforcip3" "c1" "c2" "read_a"
 permutation "wrtwcte" "readwcte" "c1" "c2"
 permutation "wrtwcte" "multireadwcte" "c1" "c2"
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

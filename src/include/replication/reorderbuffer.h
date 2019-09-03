@@ -2,7 +2,7 @@
  * reorderbuffer.h
  *	  PostgreSQL logical replay/reorder buffer management.
  *
- * Copyright (c) 2012-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2016, PostgreSQL Global Development Group
  *
  * src/include/replication/reorderbuffer.h
  */
@@ -10,13 +10,10 @@
 #define REORDERBUFFER_H
 
 #include "access/htup_details.h"
-
 #include "lib/ilist.h"
-
 #include "storage/sinval.h"
-
 #include "utils/hsearch.h"
-#include "utils/rel.h"
+#include "utils/relcache.h"
 #include "utils/snapshot.h"
 #include "utils/timestamp.h"
 
@@ -30,7 +27,11 @@ typedef struct ReorderBufferTupleBuf
 	HeapTupleData tuple;
 
 	/* pre-allocated size of tuple buffer, different from tuple size */
+<<<<<<< HEAD
 	Size	alloc_tuple_size;
+=======
+	Size		alloc_tuple_size;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* actual tuple data follows */
 } ReorderBufferTupleBuf;
@@ -57,6 +58,7 @@ enum ReorderBufferChangeType
 	REORDER_BUFFER_CHANGE_INSERT,
 	REORDER_BUFFER_CHANGE_UPDATE,
 	REORDER_BUFFER_CHANGE_DELETE,
+	REORDER_BUFFER_CHANGE_MESSAGE,
 	REORDER_BUFFER_CHANGE_INTERNAL_SNAPSHOT,
 	REORDER_BUFFER_CHANGE_INTERNAL_COMMAND_ID,
 	REORDER_BUFFER_CHANGE_INTERNAL_TUPLECID,
@@ -100,6 +102,14 @@ typedef struct ReorderBufferChange
 			/* valid for INSERT || UPDATE */
 			ReorderBufferTupleBuf *newtuple;
 		}			tp;
+
+		/* Message with arbitrary data. */
+		struct
+		{
+			char	   *prefix;
+			Size		message_size;
+			char	   *message;
+		}			msg;
 
 		/* New snapshot, set when action == *_INTERNAL_SNAPSHOT */
 		Snapshot	snapshot;
@@ -261,7 +271,7 @@ typedef struct ReorderBufferTXN
 	/* ---
 	 * Position in one of three lists:
 	 * * list of subtransactions if we are *known* to be subxact
-	 * * list of toplevel xacts (can be am as-yet unknown subxact)
+	 * * list of toplevel xacts (can be an as-yet unknown subxact)
 	 * * list of preallocated ReorderBufferTXNs
 	 * ---
 	 */
@@ -289,6 +299,15 @@ typedef void (*ReorderBufferCommitCB) (
 												   ReorderBuffer *rb,
 												   ReorderBufferTXN *txn,
 												   XLogRecPtr commit_lsn);
+
+/* message callback signature */
+typedef void (*ReorderBufferMessageCB) (
+													ReorderBuffer *rb,
+													ReorderBufferTXN *txn,
+													XLogRecPtr message_lsn,
+													bool transactional,
+												 const char *prefix, Size sz,
+													const char *message);
 
 struct ReorderBuffer
 {
@@ -325,6 +344,7 @@ struct ReorderBuffer
 	ReorderBufferBeginCB begin;
 	ReorderBufferApplyChangeCB apply_change;
 	ReorderBufferCommitCB commit;
+	ReorderBufferMessageCB message;
 
 	/*
 	 * Pointer that will be passed untouched to the callbacks.
@@ -375,6 +395,9 @@ ReorderBufferChange *ReorderBufferGetChange(ReorderBuffer *);
 void		ReorderBufferReturnChange(ReorderBuffer *, ReorderBufferChange *);
 
 void		ReorderBufferQueueChange(ReorderBuffer *, TransactionId, XLogRecPtr lsn, ReorderBufferChange *);
+void ReorderBufferQueueMessage(ReorderBuffer *, TransactionId, Snapshot snapshot, XLogRecPtr lsn,
+						  bool transactional, const char *prefix,
+						  Size message_size, const char *message);
 void ReorderBufferCommit(ReorderBuffer *, TransactionId,
 					XLogRecPtr commit_lsn, XLogRecPtr end_lsn,
 	  TimestampTz commit_time, RepOriginId origin_id, XLogRecPtr origin_lsn);
@@ -394,6 +417,11 @@ void ReorderBufferAddNewTupleCids(ReorderBuffer *, TransactionId, XLogRecPtr lsn
 						 CommandId cmin, CommandId cmax, CommandId combocid);
 void ReorderBufferAddInvalidations(ReorderBuffer *, TransactionId, XLogRecPtr lsn,
 							  Size nmsgs, SharedInvalidationMessage *msgs);
+<<<<<<< HEAD
+=======
+void ReorderBufferImmediateInvalidation(ReorderBuffer *, uint32 ninvalidations,
+								   SharedInvalidationMessage *invalidations);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 void		ReorderBufferProcessXid(ReorderBuffer *, TransactionId xid, XLogRecPtr lsn);
 void		ReorderBufferXidSetCatalogChanges(ReorderBuffer *, TransactionId xid, XLogRecPtr lsn);
 bool		ReorderBufferXidHasCatalogChanges(ReorderBuffer *, TransactionId xid);

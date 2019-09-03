@@ -4,7 +4,7 @@
  *	  putenv() and unsetenv() for win32, which update both process environment
  *	  and caches in (potentially multiple) C run-time library (CRT) versions.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -77,6 +77,7 @@ pgwin32_putenv(const char *envval)
 			"msvcr110", NULL, NULL
 		},						/* Visual Studio 2012 */
 		{
+<<<<<<< HEAD
 			"msvcr110d", NULL, NULL
 		},
 		{
@@ -87,6 +88,12 @@ pgwin32_putenv(const char *envval)
 		},
 		{
 			"urctbase", 0, NULL
+=======
+			"msvcr120", 0, NULL
+		},						/* Visual Studio 2013 */
+		{
+			"ucrtbase", 0, NULL
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		},						/* Visual Studio 2015 and later */
 		{
 			NULL, 0, NULL

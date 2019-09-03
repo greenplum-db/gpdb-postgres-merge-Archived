@@ -472,7 +472,10 @@ lca_inner(ltree **a, int len)
 		l1 = LEVEL_NEXT(l1);
 	}
 
+<<<<<<< HEAD
 	/* ... and construct it by copying from *a */
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	res = (ltree *) palloc0(reslen);
 	SET_VARSIZE(res, reslen);
 	res->numlevel = num;

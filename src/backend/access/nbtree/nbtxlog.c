@@ -4,7 +4,7 @@
  *	  WAL replay logic for btrees.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -390,9 +390,15 @@ btree_xlog_vacuum(XLogReaderState *record)
 	Buffer		buffer;
 	Page		page;
 	BTPageOpaque opaque;
+<<<<<<< HEAD
 
 #ifdef UNUSED
 	xl_btree_vacuum *xlrec = (xl_btree_vacuum *) XLogRecGetData(record);
+=======
+#ifdef UNUSED
+	xl_btree_vacuum *xlrec = (xl_btree_vacuum *) XLogRecGetData(record);
+
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/*
 	 * This section of code is thought to be no longer needed, after analysis
 	 * of the calling paths. It is retained to allow the code to be reinstated
@@ -404,6 +410,10 @@ btree_xlog_vacuum(XLogReaderState *record)
 	 * work in all cases, whereas we now avoid that work in most cases. If
 	 * lastBlockVacuumed is set to InvalidBlockNumber then we skip the
 	 * additional work required for the pin scan.
+<<<<<<< HEAD
+=======
+	 *
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 * Avoiding this extra work is important since it requires us to touch
 	 * every page in the index, so is an O(N) operation. Worse, it is an
 	 * operation performed in the foreground during redo, so it delays

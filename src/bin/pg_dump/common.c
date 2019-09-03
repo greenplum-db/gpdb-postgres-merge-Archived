@@ -4,7 +4,7 @@
  *	Catalog routines used by pg_dump; long ago these were shared
  *	by another dump tool, but not anymore.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -22,6 +22,7 @@
 #include <ctype.h>
 
 #include "catalog/pg_class.h"
+#include "fe_utils/string_utils.h"
 
 
 /*
@@ -53,7 +54,10 @@ static DumpableObject **oprinfoindex;
 static DumpableObject **collinfoindex;
 static DumpableObject **nspinfoindex;
 static DumpableObject **extinfoindex;
+<<<<<<< HEAD
 static DumpableObject **binaryupgradeinfoindex;
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static int	numTables;
 static int	numTypes;
 static int	numFuncs;
@@ -61,7 +65,10 @@ static int	numOperators;
 static int	numCollations;
 static int	numNamespaces;
 static int	numExtensions;
+<<<<<<< HEAD
 static int  numTypeStorageOptions;
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* This is an array of object identities, not actual DumpableObjects */
 static ExtensionMemberId *extmembers;
@@ -100,6 +107,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	int			numProcLangs;
 	int			numCasts;
 	int			numTransforms;
+	int			numAccessMethods;
 	int			numOpclasses;
 	int			numOpfamilies;
 	int			numConversions;
@@ -112,6 +120,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	int			numDefaultACLs;
 	int			numEventTriggers;
 
+<<<<<<< HEAD
 	/* GPDB specific variables */
 	int			numExtProtocols;
 
@@ -126,6 +135,8 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 		binaryupgradeinfoindex = buildIndexArray(binfo, 1, sizeof(BinaryUpgradeInfo));
 	}
 
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/*
 	 * We must read extensions and extension membership info first, because
 	 * extension membership needs to be consultable during decisions about
@@ -195,6 +206,10 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 			write_msg(NULL, "reading user-defined external protocols\n");
 		getExtProtocols(fout, &numExtProtocols);
 	}
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined access methods\n");
+	getAccessMethods(fout, &numAccessMethods);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operator classes\n");
@@ -469,7 +484,7 @@ AssignDumpId(DumpableObject *dobj)
 	dobj->dumpId = ++lastDumpId;
 	dobj->name = NULL;			/* must be set later */
 	dobj->namespace = NULL;		/* may be set later */
-	dobj->dump = true;			/* default assumption */
+	dobj->dump = DUMP_COMPONENT_ALL;	/* default assumption */
 	dobj->ext_member = false;	/* default assumption */
 	dobj->dependencies = NULL;
 	dobj->nDeps = 0;
@@ -1019,6 +1034,7 @@ strInArray(const char *pattern, char **arr, int arr_size)
 	}
 	return -1;
 }
+<<<<<<< HEAD
 
 
 /*
@@ -1119,3 +1135,5 @@ DetectChildConstraintDropped(TableInfo *tbinfo, PQExpBuffer q)
 	}
 
 }
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

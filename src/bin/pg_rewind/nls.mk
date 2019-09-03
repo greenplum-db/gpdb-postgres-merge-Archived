@@ -1,7 +1,12 @@
 # src/bin/pg_rewind/nls.mk
 CATALOG_NAME     = pg_rewind
+<<<<<<< HEAD
 AVAIL_LANGUAGES  =cs de es fr it ko pl pt_BR ru zh_CN
 GETTEXT_FILES    = copy_fetch.c datapagemap.c fetch.c file_ops.c filemap.c libpq_fetch.c logging.c parsexlog.c pg_rewind.c timeline.c ../../common/fe_memutils.c ../../common/restricted_token.c ../../../src/backend/access/transam/xlogreader.c
+=======
+AVAIL_LANGUAGES  =de es fr it ko pl ru zh_CN
+GETTEXT_FILES    = copy_fetch.c datapagemap.c fetch.c file_ops.c filemap.c libpq_fetch.c logging.c parsexlog.c pg_rewind.c timeline.c ../../common/fe_memutils.c ../../common/restricted_token.c xlogreader.c
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 GETTEXT_TRIGGERS = pg_log:2 pg_fatal report_invalid_record:2
 GETTEXT_FLAGS    = pg_log:2:c-format \

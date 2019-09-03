@@ -25,9 +25,14 @@ typedef struct PLyExecutionContext
 /* Get the current execution context */
 extern PLyExecutionContext *PLy_current_execution_context(void);
 
+<<<<<<< HEAD
 extern bool PLy_enter_python_intepreter;
 
 extern int PLy_python_cancel_handler(void *arg);
 extern void PLy_handle_cancel_interrupt(void);
+=======
+/* Get the scratch memory context for specified execution context */
+extern MemoryContext PLy_get_scratch_context(PLyExecutionContext *context);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #endif   /* PLPY_MAIN_H */

@@ -16,9 +16,18 @@ CHAST   45900    # Chatham Standard Time (New Zealand) (obsolete)
 ChST    36000    # Chamorro Standard Time (lower case "h" is as in IANA database)
                  #     (Pacific/Guam)
                  #     (Pacific/Saipan)
+<<<<<<< HEAD
 CHUT    36000    # Chuuk Time (obsolete)
 CKT     Pacific/Rarotonga  # Cook Islands Time (obsolete)
 EASST   Pacific/Easter  # Easter Island Summer Time (obsolete)
+=======
+CHUT    36000    # Chuuk Time
+                 #     (Pacific/Chuuk)
+CKT     Pacific/Rarotonga  # Cook Islands Time
+                 #     (Pacific/Rarotonga)
+EASST   Pacific/Easter  # Easter Island Summer Time
+                 #     (Pacific/Easter)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 # CONFLICT! EAST is not unique
 # Other timezones:
 #  - EAST: East Australian Standard Time (Australia)
@@ -40,9 +49,18 @@ NCT     39600    # New Caledonia Time (obsolete)
 # CONFLICT! NFT is not unique
 # Other timezones:
 #  - NFT: Newfoundland Time (America)
+<<<<<<< HEAD
 NFT     Pacific/Norfolk  # Norfolk Time (obsolete)
 NRT     Pacific/Nauru  # Nauru Time (obsolete)
 NUT     Pacific/Niue  # Niue Time (obsolete)
+=======
+NFT     Pacific/Norfolk  # Norfolk Time
+                 #     (Pacific/Norfolk)
+NRT     Pacific/Nauru  # Nauru Time
+                 #     (Pacific/Nauru)
+NUT     Pacific/Niue  # Niue Time
+                 #     (Pacific/Niue)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 NZDT    46800 D  # New Zealand Daylight Time
                  #     (Antarctica/McMurdo)
                  #     (Pacific/Auckland)

@@ -8,19 +8,25 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = check.o controldata.o dump.o exec.o file.o function.o info.o \
+<<<<<<< HEAD
        option.o page.o parallel.o pg_upgrade.o relfilenode.o server.o \
        tablespace.o util.o version.o version_old_8_3.o $(WIN32RES)
 
 # Source files specific to Greenplum
 OBJS += aotable.o gpdb4_heap_convert.o version_gp.o \
 		check_gp.o file_gp.o reporting.o aomd_filehandler.o
+=======
+       option.o parallel.o pg_upgrade.o relfilenode.o server.o \
+       tablespace.o util.o version.o $(WIN32RES)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 override CPPFLAGS := -DDLSUFFIX=\"$(DLSUFFIX)\" -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
+LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils -lpq
 
 
 all: pg_upgrade
 
-pg_upgrade: $(OBJS) | submake-libpq submake-libpgport
+pg_upgrade: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 install: all installdirs

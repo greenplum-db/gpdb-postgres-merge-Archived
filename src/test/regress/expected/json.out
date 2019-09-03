@@ -463,12 +463,26 @@ SELECT json_agg(q)
   {"b":"a2","c":5,"z":[{"f1":2,"f2":[1,2,3]},{"f1":5,"f2":[4,5,6]}]}]
 (1 row)
 
+<<<<<<< HEAD
 SELECT json_agg(q order by q)
+=======
+SELECT json_agg(q ORDER BY x, y)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
   FROM rows q;
        json_agg        
 -----------------------
  [{"x":1,"y":"txt1"}, +
   {"x":2,"y":"txt2"}, +
+  {"x":3,"y":"txt3"}]
+(1 row)
+
+UPDATE rows SET x = NULL WHERE x = 1;
+SELECT json_agg(q ORDER BY x NULLS FIRST, y)
+  FROM rows q;
+         json_agg         
+--------------------------
+ [{"x":null,"y":"txt1"}, +
+  {"x":2,"y":"txt2"},    +
   {"x":3,"y":"txt3"}]
 (1 row)
 
@@ -565,6 +579,14 @@ WHERE json_type = 'array';
  ?column? 
 ----------
  "two"
+(1 row)
+
+SELECT test_json -> -1
+FROM test_json
+WHERE json_type = 'array';
+ ?column? 
+----------
+ {"f1":9}
 (1 row)
 
 SELECT test_json -> 2
@@ -691,6 +713,12 @@ select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> null::int;
 (1 row)
 
 select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> 1;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '{"a": [{"b": "c"}, {"b": "cc"}]}'::json -> -1;
  ?column? 
 ----------
  
@@ -1384,6 +1412,7 @@ select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,3
  {"z":true}    |  3 | Fri Jan 20 10:42:53 2012
 (2 rows)
 
+<<<<<<< HEAD
 -- negative cases where the wrong record type is supplied
 select * from json_populate_recordset(row(0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
 ERROR:  function return row and query-specified return row do not match
@@ -1397,6 +1426,8 @@ DETAIL:  Returned row contains 3 attributes, but query expects 2.
 select * from json_populate_recordset(row(1000000000::int,50::int),'[{"b":"2"},{"a":"3"}]') q (a text, b text);
 ERROR:  function return row and query-specified return row do not match
 DETAIL:  Returned type integer at ordinal position 1, but query expects text.
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 --json_typeof() function
 select value, json_typeof(value)
   from (values (json '123.4'),
@@ -1596,7 +1627,30 @@ FROM foo;
  {"turbines" : { "847001" : {"name" : "t15", "type" : "GE1043"}, "847002" : {"name" : "t16", "type" : "GE1043"}, "847003" : {"name" : "sub-alpha", "type" : "GESS90"} }}
 (1 row)
 
+SELECT json_object_agg(name, type) FROM foo;
+                        json_object_agg                         
+----------------------------------------------------------------
+ { "t15" : "GE1043", "t16" : "GE1043", "sub-alpha" : "GESS90" }
+(1 row)
+
+INSERT INTO foo VALUES (999999, NULL, 'bar');
+SELECT json_object_agg(name, type) FROM foo;
+ERROR:  field name must not be null
 -- json_object
+-- empty object, one dimension
+SELECT json_object('{}');
+ json_object 
+-------------
+ {}
+(1 row)
+
+-- empty object, two dimensions
+SELECT json_object('{}', '{}');
+ json_object 
+-------------
+ {}
+(1 row)
+
 -- one dimension
 SELECT json_object('{a,1,b,2,3,NULL,"d e f","a b c"}');
                       json_object                      

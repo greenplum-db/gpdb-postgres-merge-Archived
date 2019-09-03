@@ -3,7 +3,7 @@
  *
  *	Definitions for the PostgreSQL statistics collector daemon.
  *
- *	Copyright (c) 2001-2015, PostgreSQL Global Development Group
+ *	Copyright (c) 2001-2016, PostgreSQL Global Development Group
  *
  *	src/include/pgstat.h
  * ----------
@@ -17,6 +17,7 @@
 #include "portability/instr_time.h"
 #include "postmaster/pgarch.h"
 #include "storage/barrier.h"
+#include "storage/proc.h"
 #include "utils/hsearch.h"
 #include "utils/relcache.h"
 
@@ -768,6 +769,33 @@ typedef enum BackendState
 	STATE_DISABLED
 } BackendState;
 
+
+/* ----------
+ * Wait Classes
+ * ----------
+ */
+typedef enum WaitClass
+{
+	WAIT_UNDEFINED,
+	WAIT_LWLOCK_NAMED,
+	WAIT_LWLOCK_TRANCHE,
+	WAIT_LOCK,
+	WAIT_BUFFER_PIN
+}	WaitClass;
+
+
+/* ----------
+ * Command type for progress reporting purposes
+ * ----------
+ */
+typedef enum ProgressCommandType
+{
+	PROGRESS_COMMAND_INVALID,
+	PROGRESS_COMMAND_VACUUM
+} ProgressCommandType;
+
+#define PGSTAT_NUM_PROGRESS_PARAM	10
+
 /* ----------
  * Shared-memory data structures
  * ----------
@@ -846,9 +874,12 @@ typedef struct PgBackendStatus
 	bool		st_ssl;
 	PgBackendSSLStatus *st_sslstatus;
 
+<<<<<<< HEAD
 	/* Is backend currently waiting on something (and what)? */
 	char		st_waiting;
 
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/* current state */
 	BackendState st_state;
 
@@ -858,7 +889,22 @@ typedef struct PgBackendStatus
 	/* current command string; MUST be null-terminated */
 	char	   *st_activity;
 
+<<<<<<< HEAD
 	Oid			st_rsgid;
+=======
+	/*
+	 * Command progress reporting.  Any command which wishes can advertise
+	 * that it is running by setting st_progress_command,
+	 * st_progress_command_target, and st_progress_command[].
+	 * st_progress_command_target should be the OID of the relation which the
+	 * command targets (we assume there's just one, as this is meant for
+	 * utility commands), but the meaning of each element in the
+	 * st_progress_param array is command-specific.
+	 */
+	ProgressCommandType st_progress_command;
+	Oid			st_progress_command_target;
+	int64		st_progress_param[PGSTAT_NUM_PROGRESS_PARAM];
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } PgBackendStatus;
 
 /*
@@ -1025,9 +1071,21 @@ extern void pgstat_report_activity(BackendState state, const char *cmd_str);
 extern void pgstat_report_tempfile(size_t filesize);
 extern void pgstat_report_appname(const char *appname);
 extern void pgstat_report_xact_timestamp(TimestampTz tstamp);
+<<<<<<< HEAD
+=======
+extern const char *pgstat_get_wait_event(uint32 wait_event_info);
+extern const char *pgstat_get_wait_event_type(uint32 wait_event_info);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern const char *pgstat_get_backend_current_activity(int pid, bool checkUser);
 extern const char *pgstat_get_crashed_backend_activity(int pid, char *buffer,
 									int buflen);
+
+extern void pgstat_progress_start_command(ProgressCommandType cmdtype,
+							  Oid relid);
+extern void pgstat_progress_update_param(int index, int64 val);
+extern void pgstat_progress_update_multi_param(int nparam, const int *index,
+								   const int64 *val);
+extern void pgstat_progress_end_command(void);
 
 extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
 extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
@@ -1037,9 +1095,70 @@ extern TimestampTz pgstat_fetch_resgroup_queue_timestamp(void);
 
 extern void pgstat_initstats(Relation rel);
 
+<<<<<<< HEAD
 extern void pgstat_init_localportalhash(void);
 extern PgStat_StatPortalEntry *pgstat_getportalentry(uint32 portalid,
 													 Oid queueid);
+=======
+/* ----------
+ * pgstat_report_wait_start() -
+ *
+ *	Called from places where server process needs to wait.  This is called
+ *	to report wait event information.  The wait information is stored
+ *	as 4-bytes where first byte repersents the wait event class (type of
+ *	wait, for different types of wait, refer WaitClass) and the next
+ *	3-bytes repersent the actual wait event.  Currently 2-bytes are used
+ *	for wait event which is sufficient for current usage, 1-byte is
+ *	reserved for future usage.
+ *
+ * NB: this *must* be able to survive being called before MyProc has been
+ * initialized.
+ * ----------
+ */
+static inline void
+pgstat_report_wait_start(uint8 classId, uint16 eventId)
+{
+	volatile PGPROC *proc = MyProc;
+	uint32		wait_event_val;
+
+	if (!pgstat_track_activities || !proc)
+		return;
+
+	wait_event_val = classId;
+	wait_event_val <<= 24;
+	wait_event_val |= eventId;
+
+	/*
+	 * Since this is a four-byte field which is always read and written as
+	 * four-bytes, updates are atomic.
+	 */
+	proc->wait_event_info = wait_event_val;
+}
+
+/* ----------
+ * pgstat_report_wait_end() -
+ *
+ *	Called to report end of a wait.
+ *
+ * NB: this *must* be able to survive being called before MyProc has been
+ * initialized.
+ * ----------
+ */
+static inline void
+pgstat_report_wait_end(void)
+{
+	volatile PGPROC *proc = MyProc;
+
+	if (!pgstat_track_activities || !proc)
+		return;
+
+	/*
+	 * Since this is a four-byte field which is always read and written as
+	 * four-bytes, updates are atomic.
+	 */
+	proc->wait_event_info = 0;
+}
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* nontransactional event counts are simple enough to inline */
 

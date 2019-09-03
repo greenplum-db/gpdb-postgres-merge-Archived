@@ -4,7 +4,7 @@
  *	  This file contains routines to support creation of toast tables
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -21,7 +21,11 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
+<<<<<<< HEAD
 #include "catalog/oid_dispatch.h"
+=======
+#include "catalog/pg_am.h"
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_type.h"
@@ -215,6 +219,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	 */
 	if (!IsBinaryUpgrade)
 	{
+		/* Normal mode, normal check */
 		if (!needs_toast_table(rel))
 			return false;
 	}
@@ -238,6 +243,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		 * problem that it might take up an OID that will conflict with some
 		 * old-cluster table we haven't seen yet.
 		 */
+<<<<<<< HEAD
 		/*
 		 * In Greenplum, partitioned tables are created in a single CREATE
 		 * TABLE statement instead of each member table individually. The
@@ -250,6 +256,11 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		 *	!OidIsValid(binary_upgrade_next_toast_pg_type_oid))
 		 *	return false;
 		 */
+=======
+		if (!OidIsValid(binary_upgrade_next_toast_pg_class_oid) ||
+			!OidIsValid(binary_upgrade_next_toast_pg_type_oid))
+			return false;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	/*

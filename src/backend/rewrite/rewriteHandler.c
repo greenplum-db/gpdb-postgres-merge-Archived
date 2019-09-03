@@ -3,13 +3,24 @@
  * rewriteHandler.c
  *		Primary module of query rewriter.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  src/backend/rewrite/rewriteHandler.c
+ *
+ * NOTES
+ *	  Some of the terms used in this file are of historic nature: "retrieve"
+ *	  was the PostQUEL keyword for what today is SELECT. "RIR" stands for
+ *	  "Retrieve-Instead-Retrieve", that is an ON SELECT DO INSTEAD SELECT rule
+ *	  (which has to be unconditional and where only one rule can exist on each
+ *	  relation).
  *
  *-------------------------------------------------------------------------
  */
@@ -464,9 +475,15 @@ rewriteRuleAction(Query *parsetree,
 
 			switch (rte->rtekind)
 			{
+<<<<<<< HEAD
 				case RTE_TABLEFUNCTION:
 					sub_action->hasSubLinks =
 						checkExprHasSubLink((Node *) rte->functions);
+=======
+				case RTE_RELATION:
+					sub_action->hasSubLinks =
+						checkExprHasSubLink((Node *) rte->tablesample);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 					break;
 				case RTE_FUNCTION:
 					sub_action->hasSubLinks =
@@ -1885,14 +1902,16 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 		/*
 		 * Fetch any new security quals that must be applied to this RTE.
 		 */
-		get_row_security_policies(parsetree, parsetree->commandType, rte,
-								  rt_index, &securityQuals, &withCheckOptions,
+		get_row_security_policies(parsetree, rte, rt_index,
+								  &securityQuals, &withCheckOptions,
 								  &hasRowSecurity, &hasSubLinks);
 
 		if (securityQuals != NIL || withCheckOptions != NIL)
 		{
 			if (hasSubLinks)
 			{
+				acquireLocksOnSubLinks_context context;
+
 				/*
 				 * Recursively process the new quals, checking for infinite
 				 * recursion.
@@ -1905,6 +1924,23 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 
 				activeRIRs = lcons_oid(RelationGetRelid(rel), activeRIRs);
 
+				/*
+				 * get_row_security_policies just passed back securityQuals
+				 * and/or withCheckOptions, and there were SubLinks, make sure
+				 * we lock any relations which are referenced.
+				 *
+				 * These locks would normally be acquired by the parser, but
+				 * securityQuals and withCheckOptions are added post-parsing.
+				 */
+				context.for_execute = true;
+				(void) acquireLocksOnSubLinks((Node *) securityQuals, &context);
+				(void) acquireLocksOnSubLinks((Node *) withCheckOptions,
+											  &context);
+
+				/*
+				 * Now that we have the locks on anything added by
+				 * get_row_security_policies, fire any RIR rules for them.
+				 */
 				expression_tree_walker((Node *) securityQuals,
 									   fireRIRonSubLink, (void *) activeRIRs);
 
@@ -3149,6 +3185,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 			wco = makeNode(WithCheckOption);
 			wco->kind = WCO_VIEW_CHECK;
 			wco->relname = pstrdup(RelationGetRelationName(view));
+			wco->polname = NULL;
 			wco->qual = NULL;
 			wco->cascaded = cascaded;
 

@@ -10,7 +10,7 @@
  *	  Over time, this has also become the preferred place for widely known
  *	  resource-limitation stuff, such as work_mem and check_stack_depth().
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/miscadmin.h
@@ -85,7 +85,11 @@ extern PGDLLIMPORT volatile bool QueryCancelPending;
 extern PGDLLIMPORT volatile bool QueryCancelCleanup; /* GPDB only */
 extern PGDLLIMPORT volatile bool QueryFinishPending;
 extern PGDLLIMPORT volatile bool ProcDiePending;
+<<<<<<< HEAD
 extern PGDLLIMPORT volatile sig_atomic_t ConfigReloadPending;
+=======
+extern PGDLLIMPORT volatile bool IdleInTransactionSessionTimeoutPending;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 extern volatile bool ClientConnectionLost;
 
@@ -206,7 +210,7 @@ do { \
 /*
  * from utils/init/globals.c
  */
-extern pid_t PostmasterPid;
+extern PGDLLIMPORT pid_t PostmasterPid;
 extern bool IsPostmasterEnvironment;
 extern PGDLLIMPORT bool IsUnderPostmaster;
 extern bool IsBackgroundWorker;
@@ -315,9 +319,13 @@ extern PGDLLIMPORT bool allowSystemTableMods;
 extern PGDLLIMPORT int planner_work_mem;
 extern PGDLLIMPORT int work_mem;
 extern PGDLLIMPORT int maintenance_work_mem;
+<<<<<<< HEAD
 extern PGDLLIMPORT int statement_mem;
 extern PGDLLIMPORT int max_statement_mem;
 extern PGDLLIMPORT int gp_vmem_limit_per_query;
+=======
+extern PGDLLIMPORT int replacement_sort_tuples;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 extern int	VacuumCostPageHit;
 extern int	VacuumCostPageMiss;
@@ -351,8 +359,11 @@ extern pg_stack_base_t set_stack_base(void);
 extern void restore_stack_base(pg_stack_base_t base);
 extern void check_stack_depth(void);
 extern bool stack_is_too_deep(void);
+<<<<<<< HEAD
 
 extern void PostgresSigHupHandler(SIGNAL_ARGS);
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* in tcop/utility.c */
 extern void PreventCommandIfReadOnly(const char *cmdname);
@@ -383,7 +394,7 @@ extern int	trace_recovery(int trace_level);
 /* flags to be OR'd to form sec_context */
 #define SECURITY_LOCAL_USERID_CHANGE	0x0001
 #define SECURITY_RESTRICTED_OPERATION	0x0002
-#define SECURITY_ROW_LEVEL_DISABLED		0x0004
+#define SECURITY_NOFORCE_RLS			0x0004
 
 extern char *DatabasePath;
 
@@ -404,6 +415,7 @@ extern void GetUserIdAndSecContext(Oid *userid, int *sec_context);
 extern void SetUserIdAndSecContext(Oid userid, int sec_context);
 extern bool InLocalUserIdChange(void);
 extern bool InSecurityRestrictedOperation(void);
+extern bool InNoForceRLSOperation(void);
 extern void GetUserIdAndContext(Oid *userid, bool *sec_def_context);
 extern void SetUserIdAndContext(Oid userid, bool sec_def_context);
 extern void InitializeSessionUserId(const char *rolename, Oid useroid);

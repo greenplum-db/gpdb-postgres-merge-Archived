@@ -295,8 +295,30 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 	}
 
 	if (IsNewer(
+<<<<<<< HEAD
 			'src/include/dynloader.h',
 			'src/backend/port/dynloader/win32.h'))
+=======
+			'src/include/storage/lwlocknames.h',
+			'src/backend/storage/lmgr/lwlocknames.txt'))
+	{
+		print "Generating lwlocknames.c and lwlocknames.h...\n";
+		chdir('src/backend/storage/lmgr');
+		system('perl generate-lwlocknames.pl lwlocknames.txt');
+		chdir('../../../..');
+	}
+	if (IsNewer(
+			'src/include/storage/lwlocknames.h',
+			'src/backend/storage/lmgr/lwlocknames.h'))
+	{
+		copyFile(
+			'src/backend/storage/lmgr/lwlocknames.h',
+			'src/include/storage/lwlocknames.h');
+	}
+
+	if (IsNewer(
+			'src/include/dynloader.h', 'src/backend/port/dynloader/win32.h'))
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		copyFile('src/backend/port/dynloader/win32.h',
 			'src/include/dynloader.h');
@@ -306,7 +328,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 	{
 		print "Generating probes.h...\n";
 		system(
-'psed -f src/backend/utils/Gen_dummy_probes.sed src/backend/utils/probes.d > src/include/utils/probes.h'
+'perl src/backend/utils/Gen_dummy_probes.pl src/backend/utils/probes.d > src/include/utils/probes.h'
 		);
 	}
 
@@ -340,6 +362,16 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 		print "Generating plerrcodes.h...\n";
 		system(
 'perl src/pl/plpgsql/src/generate-plerrcodes.pl src/backend/utils/errcodes.txt > src/pl/plpgsql/src/plerrcodes.h'
+		);
+	}
+
+	if ($self->{options}->{tcl}
+		&& IsNewer(
+			'src/pl/tcl/pltclerrcodes.h', 'src/backend/utils/errcodes.txt'))
+	{
+		print "Generating pltclerrcodes.h...\n";
+		system(
+'perl src/pl/tcl/generate-pltclerrcodes.pl src/backend/utils/errcodes.txt > src/pl/tcl/pltclerrcodes.h'
 		);
 	}
 
@@ -662,9 +694,15 @@ sub GetFakeConfigure
 	$cfg .= ' --enable-cassert' if ($self->{options}->{asserts});
 	$cfg .= ' --enable-integer-datetimes'
 	  if ($self->{options}->{integer_datetimes});
+<<<<<<< HEAD
 	$cfg .= ' --enable-nls' if ($self->{options}->{nls});
 	$cfg .= ' --enable-tap-tests' if ($self->{options}->{tap_tests});
 	$cfg .= ' --with-ldap'  if ($self->{options}->{ldap});
+=======
+	$cfg .= ' --enable-nls'       if ($self->{options}->{nls});
+	$cfg .= ' --enable-tap-tests' if ($self->{options}->{tap_tests});
+	$cfg .= ' --with-ldap'        if ($self->{options}->{ldap});
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	$cfg .= ' --without-zlib' unless ($self->{options}->{zlib});
 	$cfg .= ' --with-extra-version' if ($self->{options}->{extraver});
 	$cfg .= ' --with-openssl'       if ($self->{options}->{openssl});
@@ -825,6 +863,7 @@ sub new
 	return $self;
 }
 
+<<<<<<< HEAD
 package VS2017Solution;
 
 #
@@ -851,6 +890,8 @@ sub new
 	return $self;
 }
 
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 sub GetAdditionalHeaders
 {
 	my ($self, $f) = @_;

@@ -1,35 +1,23 @@
 /*-------------------------------------------------------------------------
  *
  * tablesample.c
- *		  TABLESAMPLE internal API
+ *		  Support functions for TABLESAMPLE feature
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
  *		  src/backend/access/tablesample/tablesample.c
  *
- * TABLESAMPLE is the SQL standard clause for sampling the relations.
- *
- * The API is interface between the Executor and the TABLESAMPLE Methods.
- *
- * TABLESAMPLE Methods are implementations of actual sampling algorithms which
- * can be used for returning a sample of the source relation.
- * Methods don't read the table directly but are asked for block number and
- * tuple offset which they want to examine (or return) and the tablesample
- * interface implemented here does the reading for them.
- *
- * We currently only support sampling of the physical relations, but in the
- * future we might extend the API to support subqueries as well.
- *
  * -------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "access/tablesample.h"
+#include "access/tsmapi.h"
 
+<<<<<<< HEAD
 #include "catalog/pg_tablesample_method.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -309,57 +297,30 @@ tablesample_end(TableSampleDesc *desc)
 {
 	(void) FunctionCall1(&desc->tsmend, PointerGetDatum(desc));
 }
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
- * Check visibility of the tuple.
+ * GetTsmRoutine --- get a TsmRoutine struct by invoking the handler.
+ *
+ * This is a convenience routine that's just meant to check for errors.
  */
-static bool
-SampleTupleVisible(HeapTuple tuple, OffsetNumber tupoffset, HeapScanDesc scan)
+TsmRoutine *
+GetTsmRoutine(Oid tsmhandler)
 {
-	/*
-	 * If this scan is reading whole pages at a time, there is already
-	 * visibility info present in rs_vistuples so we can just search it for
-	 * the tupoffset.
-	 */
-	if (scan->rs_pageatatime)
-	{
-		int			start = 0,
-					end = scan->rs_ntuples - 1;
+	Datum		datum;
+	TsmRoutine *routine;
 
-		/*
-		 * Do the binary search over rs_vistuples, it's already sorted by
-		 * OffsetNumber so we don't need to do any sorting ourselves here.
-		 *
-		 * We could use bsearch() here but it's slower for integers because of
-		 * the function call overhead and because it needs boiler plate code
-		 * it would not save us anything code-wise anyway.
-		 */
-		while (start <= end)
-		{
-			int			mid = start + (end - start) / 2;
-			OffsetNumber curoffset = scan->rs_vistuples[mid];
-
-			if (curoffset == tupoffset)
-				return true;
-			else if (curoffset > tupoffset)
-				end = mid - 1;
-			else
-				start = mid + 1;
-		}
-
-		return false;
-	}
-	else
-	{
-		/* No pagemode, we have to check the tuple itself. */
-		Snapshot	snapshot = scan->rs_snapshot;
-		Buffer		buffer = scan->rs_cbuf;
-
+<<<<<<< HEAD
 		bool		visible = HeapTupleSatisfiesVisibility(scan->rs_rd, tuple, snapshot, buffer);
+=======
+	datum = OidFunctionCall1(tsmhandler, PointerGetDatum(NULL));
+	routine = (TsmRoutine *) DatumGetPointer(datum);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
-		CheckForSerializableConflictOut(visible, scan->rs_rd, tuple, buffer,
-										snapshot);
+	if (routine == NULL || !IsA(routine, TsmRoutine))
+		elog(ERROR, "tablesample handler function %u did not return a TsmRoutine struct",
+			 tsmhandler);
 
-		return visible;
-	}
+	return routine;
 }

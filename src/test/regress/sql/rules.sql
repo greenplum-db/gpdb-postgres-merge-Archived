@@ -1117,7 +1117,7 @@ CREATE RULE hat_upsert AS ON INSERT TO hats
         ON CONFLICT (hat_name)
         DO UPDATE
            SET hat_name = hat_data.hat_name, hat_color = excluded.hat_color
-           WHERE excluded.hat_color <>  'forbidden'
+           WHERE excluded.hat_color <>  'forbidden' AND hat_data.* != excluded.*
         RETURNING *;
 SELECT definition FROM pg_rules WHERE tablename = 'hats' ORDER BY rulename;
 
@@ -1157,7 +1157,22 @@ DROP RULE hat_upsert ON hats;
 drop table hats;
 drop table hat_data;
 
+<<<<<<< HEAD
 -- test rule for select-for-update
 create table t_test_rules_select_for_update (c int) distributed randomly;
 create rule myrule as on insert to t_test_rules_select_for_update
 do instead select * from t_test_rules_select_for_update for update;
+=======
+-- tests for pg_get_*def with invalid objects
+SELECT pg_get_constraintdef(0);
+SELECT pg_get_functiondef(0);
+SELECT pg_get_indexdef(0);
+SELECT pg_get_ruledef(0);
+SELECT pg_get_triggerdef(0);
+SELECT pg_get_viewdef(0);
+SELECT pg_get_function_arguments(0);
+SELECT pg_get_function_identity_arguments(0);
+SELECT pg_get_function_result(0);
+SELECT pg_get_function_arg_default(0, 0);
+SELECT pg_get_function_arg_default('pg_class'::regclass, 0);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

@@ -3,7 +3,11 @@
  * pgtz.c
  *	  Timezone Library Integration Functions
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  *
  * IDENTIFICATION
  *	  src/timezone/pgtz.c
@@ -485,7 +489,12 @@ pg_tzenumerate_next(pg_tzenum *dir)
 		 * know it, and pg_open_tzfile's way of finding it out is pretty
 		 * inefficient.
 		 */
+<<<<<<< HEAD
 		if (tzload(fullname + dir->baselen, NULL, &dir->tz.state, true) != 0)
+=======
+		if (tzload(fullname + dir->baselen, dir->tz.TZname, &dir->tz.state,
+				   true) != 0)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{
 			/* Zone could not be loaded, ignore it */
 			continue;

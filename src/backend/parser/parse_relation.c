@@ -3,9 +3,13 @@
  * parse_relation.c
  *	  parser support routines dealing with relations
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -562,7 +566,8 @@ updateFuzzyAttrMatchState(int fuzzy_rte_penalty,
 		varstr_levenshtein_less_equal(actual, strlen(actual), match, matchlen,
 									  1, 1, 1,
 									  fuzzystate->distance + 1
-									  - fuzzy_rte_penalty);
+									  - fuzzy_rte_penalty,
+									  true);
 
 	/*
 	 * If more than half the characters are different, don't treat it as a
@@ -698,9 +703,12 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
 		return result;
 
 	/*
-	 * If the RTE represents a real table, consider system column names.
+	 * If the RTE represents a real relation, consider system column names.
+	 * Composites are only used for pseudo-relations like ON CONFLICT's
+	 * excluded.
 	 */
-	if (rte->rtekind == RTE_RELATION)
+	if (rte->rtekind == RTE_RELATION &&
+		rte->relkind != RELKIND_COMPOSITE_TYPE)
 	{
 		/* In GPDB, system columns like gp_segment_id, ctid, xmin/xmax seem to be
 		 * ambiguous for replicated table, replica in each segment has different
@@ -876,10 +884,12 @@ searchRangeTableForCol(ParseState *pstate, const char *alias, char *colname,
 			 */
 			if (alias != NULL)
 				fuzzy_rte_penalty =
-					varstr_levenshtein(alias, strlen(alias),
-									   rte->eref->aliasname,
-									   strlen(rte->eref->aliasname),
-									   1, 1, 1);
+					varstr_levenshtein_less_equal(alias, strlen(alias),
+												  rte->eref->aliasname,
+												strlen(rte->eref->aliasname),
+												  1, 1, 1,
+												  MAX_FUZZY_DISTANCE + 1,
+												  true);
 
 			/*
 			 * Scan for a matching column; if we find an exact match, we're
@@ -3547,8 +3557,8 @@ errorMissingColumn(ParseState *pstate,
 				 errmsg("column %s.%s does not exist", relname, colname) :
 				 errmsg("column \"%s\" does not exist", colname),
 				 state->rfirst ? closestfirst ?
-		  errhint("Perhaps you meant to reference the column \"%s\".\"%s\".",
-				  state->rfirst->eref->aliasname, closestfirst) :
+			  errhint("Perhaps you meant to reference the column \"%s.%s\".",
+					  state->rfirst->eref->aliasname, closestfirst) :
 				 errhint("There is a column named \"%s\" in table \"%s\", but it cannot be referenced from this part of the query.",
 						 colname, state->rfirst->eref->aliasname) : 0,
 				 parser_errposition(pstate, location)));
@@ -3566,7 +3576,7 @@ errorMissingColumn(ParseState *pstate,
 				 relname ?
 				 errmsg("column %s.%s does not exist", relname, colname) :
 				 errmsg("column \"%s\" does not exist", colname),
-				 errhint("Perhaps you meant to reference the column \"%s\".\"%s\" or the column \"%s\".\"%s\".",
+				 errhint("Perhaps you meant to reference the column \"%s.%s\" or the column \"%s.%s\".",
 						 state->rfirst->eref->aliasname, closestfirst,
 						 state->rsecond->eref->aliasname, closestsecond),
 				 parser_errposition(pstate, location)));

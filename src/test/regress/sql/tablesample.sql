@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 CREATE TABLE test_tablesample (dist int, id int, name text) WITH (fillfactor=10) DISTRIBUTED BY (dist); -- force smaller pages so we don't have to load too much data to get multiple pages
 
 -- Changed the column length in order to match the expected results based on relation's blocksz
@@ -7,26 +8,46 @@ INSERT INTO test_tablesample SELECT 5, i, repeat(i::text, 875) FROM generate_ser
 
 -- Verify that each segment has the same amount of rows;
 SELECT gp_segment_id, count(dist) FROM test_tablesample GROUP BY 1 ORDER BY 1;
+=======
+CREATE TABLE test_tablesample (id int, name text) WITH (fillfactor=10);
+-- use fillfactor so we don't have to load too much data to get multiple pages
 
-SELECT t.id FROM test_tablesample AS t TABLESAMPLE SYSTEM (50) REPEATABLE (10);
-SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (100.0/11) REPEATABLE (9999);
+INSERT INTO test_tablesample
+  SELECT i, repeat(i::text, 200) FROM generate_series(0, 9) s(i);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
+SELECT t.id FROM test_tablesample AS t TABLESAMPLE SYSTEM (50) REPEATABLE (0);
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (100.0/11) REPEATABLE (0);
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (0);
+SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (50) REPEATABLE (0);
+SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (5.5) REPEATABLE (0);
+
+-- 100% should give repeatable count results (ie, all rows) in any case
 SELECT count(*) FROM test_tablesample TABLESAMPLE SYSTEM (100);
-SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (100);
-SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (50) REPEATABLE (100);
-SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (5.5) REPEATABLE (1);
+SELECT count(*) FROM test_tablesample TABLESAMPLE SYSTEM (100) REPEATABLE (1+2);
+SELECT count(*) FROM test_tablesample TABLESAMPLE SYSTEM (100) REPEATABLE (0.4);
 
-CREATE VIEW test_tablesample_v1 AS SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (10*2) REPEATABLE (2);
-CREATE VIEW test_tablesample_v2 AS SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (99);
-SELECT pg_get_viewdef('test_tablesample_v1'::regclass);
-SELECT pg_get_viewdef('test_tablesample_v2'::regclass);
+CREATE VIEW test_tablesample_v1 AS
+  SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (10*2) REPEATABLE (2);
+CREATE VIEW test_tablesample_v2 AS
+  SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (99);
+\d+ test_tablesample_v1
+\d+ test_tablesample_v2
 
+-- check a sampled query doesn't affect cursor in progress
 BEGIN;
+<<<<<<< HEAD
 DECLARE tablesample_cur CURSOR FOR SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (100) ORDER BY id;
+=======
+DECLARE tablesample_cur CURSOR FOR
+  SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (0);
+
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 FETCH FIRST FROM tablesample_cur;
 FETCH NEXT FROM tablesample_cur;
 FETCH NEXT FROM tablesample_cur;
 
-SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (10);
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (0);
 
 FETCH NEXT FROM tablesample_cur;
 FETCH NEXT FROM tablesample_cur;
@@ -47,6 +68,7 @@ FETCH NEXT FROM tablesample_cur;
 CLOSE tablesample_cur;
 END;
 
+<<<<<<< HEAD
 -- Greenplum: Test rescan paths by forcing a nested loop
 CREATE TABLE ttr1 (a int, b int) DISTRIBUTED BY (a);
 CREATE TABLE ttr2 (a int, b int) DISTRIBUTED BY (a);
@@ -69,10 +91,47 @@ DROP TABLE ttr2;
 
 EXPLAIN SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (10);
 EXPLAIN SELECT * FROM test_tablesample_v1;
+=======
+EXPLAIN (COSTS OFF)
+  SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (2);
+EXPLAIN (COSTS OFF)
+  SELECT * FROM test_tablesample_v1;
+
+-- check inheritance behavior
+explain (costs off)
+  select count(*) from person tablesample bernoulli (100);
+select count(*) from person tablesample bernoulli (100);
+select count(*) from person;
+
+-- check that collations get assigned within the tablesample arguments
+SELECT count(*) FROM test_tablesample TABLESAMPLE bernoulli (('1'::text < '0'::text)::int);
+
+-- check behavior during rescans, as well as correct handling of min/max pct
+select * from
+  (values (0),(100)) v(pct),
+  lateral (select count(*) from tenk1 tablesample bernoulli (pct)) ss;
+select * from
+  (values (0),(100)) v(pct),
+  lateral (select count(*) from tenk1 tablesample system (pct)) ss;
+explain (costs off)
+select pct, count(unique1) from
+  (values (0),(100)) v(pct),
+  lateral (select * from tenk1 tablesample bernoulli (pct)) ss
+  group by pct;
+select pct, count(unique1) from
+  (values (0),(100)) v(pct),
+  lateral (select * from tenk1 tablesample bernoulli (pct)) ss
+  group by pct;
+select pct, count(unique1) from
+  (values (0),(100)) v(pct),
+  lateral (select * from tenk1 tablesample system (pct)) ss
+  group by pct;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- errors
 SELECT id FROM test_tablesample TABLESAMPLE FOOBAR (1);
 
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (NULL);
 SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (NULL);
 
 SELECT id FROM test_tablesample TABLESAMPLE BERNOULLI (-1);
@@ -87,19 +146,3 @@ WITH query_select AS (SELECT * FROM test_tablesample)
 SELECT * FROM query_select TABLESAMPLE BERNOULLI (5.5) REPEATABLE (1);
 
 SELECT q.* FROM (SELECT * FROM test_tablesample) as q TABLESAMPLE BERNOULLI (5);
-
--- catalog sanity
-
-SELECT *
-FROM pg_tablesample_method
-WHERE tsminit IS NULL
-   OR tsmseqscan IS NULL
-   OR tsmpagemode IS NULL
-   OR tsmnextblock IS NULL
-   OR tsmnexttuple IS NULL
-   OR tsmend IS NULL
-   OR tsmreset IS NULL
-   OR tsmcost IS NULL;
-
--- done
-DROP TABLE test_tablesample CASCADE;

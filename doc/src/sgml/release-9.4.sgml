@@ -1,6 +1,7 @@
 <!-- doc/src/sgml/release-9.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<<<<<<< HEAD
  <sect1 id="release-9-4-20">
   <title>Release 9.4.20</title>
 
@@ -4499,6 +4500,15 @@ Branch: REL9_4_STABLE [10ad15f48] 2016-09-01 11:45:16 -0400
   <title>Release date:</title>
   <para>2016-08-11</para>
   </formalpara>
+=======
+ <sect1 id="release-9-4-9">
+  <title>Release 9.4.9</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-08-11</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.4.8.
@@ -5017,10 +5027,17 @@ Branch: REL9_1_STABLE [de887cc8a] 2016-05-25 19:39:49 -0400
  <sect1 id="release-9-4-8">
   <title>Release 9.4.8</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2016-05-12</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-05-12</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.4.7.
@@ -5280,10 +5297,17 @@ Branch: REL9_1_STABLE [de887cc8a] 2016-05-25 19:39:49 -0400
  <sect1 id="release-9-4-7">
   <title>Release 9.4.7</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2016-03-31</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-03-31</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.4.6.
@@ -5420,7 +5444,11 @@ Branch: REL9_1_STABLE [de887cc8a] 2016-05-25 19:39:49 -0400
 
      <para>
       This dodges a portability problem on FreeBSD-derived platforms
+<<<<<<< HEAD
       (including macOS).
+=======
+      (including OS X).
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
      </para>
     </listitem>
 
@@ -5551,10 +5579,17 @@ Branch: REL9_1_STABLE [de887cc8a] 2016-05-25 19:39:49 -0400
  <sect1 id="release-9-4-6">
   <title>Release 9.4.6</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2016-02-11</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2016-02-11</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.4.5.
@@ -6648,10 +6683,17 @@ Branch: REL9_1_STABLE [386dcd539] 2015-12-11 19:08:40 -0500
  <sect1 id="release-9-4-5">
   <title>Release 9.4.5</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2015-10-08</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-10-08</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.4.4.
@@ -12320,7 +12362,11 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
+<<<<<<< HEAD
         Add ability to retrieve the current PL/pgSQL call stack
+=======
+        Add ability to retrieve the current PL/PgSQL call stack
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
         using <link linkend="plpgsql-call-stack"><command>GET
         DIAGNOSTICS</></link>
         (Pavel Stehule, Stephen Frost)

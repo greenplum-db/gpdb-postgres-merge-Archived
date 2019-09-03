@@ -75,7 +75,11 @@ chmod 0600, "ssl/client_tmp.key";
 
 #### Part 0. Set up the server.
 
+<<<<<<< HEAD
 note "setting up data directory...";
+=======
+diag "setting up data directory...";
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 my $node = get_new_node('master');
 $node->init;
 
@@ -158,6 +162,7 @@ test_connect_ok("sslmode=verify-ca host=wronghost.test");
 test_connect_fails("sslmode=verify-full host=wronghost.test");
 
 # Test Subject Alternative Names.
+<<<<<<< HEAD
 # GPDB_95_MERGE_FIXME: uncomment these tests when commit acd08d764 is merged.
 #switch_server_cert($node, 'server-multiple-alt-names');
 #
@@ -199,6 +204,45 @@ test_connect_fails("sslmode=verify-full host=wronghost.test");
 #test_connect_ok("host=dns1.alt-name.pg-ssltest.test");
 #test_connect_ok("host=dns2.alt-name.pg-ssltest.test");
 #test_connect_fails("host=common-name.pg-ssltest.test");
+=======
+switch_server_cert($node, 'server-multiple-alt-names');
+
+diag "test hostname matching with X509 Subject Alternative Names";
+$common_connstr =
+"user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
+
+test_connect_ok("host=dns1.alt-name.pg-ssltest.test");
+test_connect_ok("host=dns2.alt-name.pg-ssltest.test");
+test_connect_ok("host=foo.wildcard.pg-ssltest.test");
+
+test_connect_fails("host=wronghost.alt-name.pg-ssltest.test");
+test_connect_fails("host=deep.subdomain.wildcard.pg-ssltest.test");
+
+# Test certificate with a single Subject Alternative Name. (this gives a
+# slightly different error message, that's all)
+switch_server_cert($node, 'server-single-alt-name');
+
+diag "test hostname matching with a single X509 Subject Alternative Name";
+$common_connstr =
+"user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
+
+test_connect_ok("host=single.alt-name.pg-ssltest.test");
+
+test_connect_fails("host=wronghost.alt-name.pg-ssltest.test");
+test_connect_fails("host=deep.subdomain.wildcard.pg-ssltest.test");
+
+# Test server certificate with a CN and SANs. Per RFCs 2818 and 6125, the CN
+# should be ignored when the certificate has both.
+switch_server_cert($node, 'server-cn-and-alt-names');
+
+diag "test certificate with both a CN and SANs";
+$common_connstr =
+"user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
+
+test_connect_ok("host=dns1.alt-name.pg-ssltest.test");
+test_connect_ok("host=dns2.alt-name.pg-ssltest.test");
+test_connect_fails("host=common-name.pg-ssltest.test");
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 # Finally, test a server certificate that has no CN or SANs. Of course, that's
 # not a very sensible certificate, but libpq should handle it gracefully.
@@ -210,7 +254,11 @@ test_connect_ok("sslmode=verify-ca host=common-name.pg-ssltest.test");
 test_connect_fails("sslmode=verify-full host=common-name.pg-ssltest.test");
 
 # Test that the CRL works
+<<<<<<< HEAD
 note "testing client-side CRL";
+=======
+diag "Testing client-side CRL";
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 switch_server_cert($node, 'server-revoked');
 
 $common_connstr =
@@ -245,6 +293,7 @@ test_connect_fails(
 test_connect_fails(
 "user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=ssl/client-revoked.key"
 );
+<<<<<<< HEAD
 
 # intermediate client_ca.crt is provided by client, and isn't in server's ssl_ca_file
 switch_server_cert($node, 'server-cn-only', 'root_ca');
@@ -256,3 +305,5 @@ test_connect_fails("sslmode=require sslcert=ssl/client.crt");
 
 # clean up
 unlink "ssl/client_tmp.key";
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

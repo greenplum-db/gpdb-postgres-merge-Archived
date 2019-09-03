@@ -32,9 +32,13 @@
  *	  clients.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -93,6 +97,10 @@
 
 #ifdef USE_BONJOUR
 #include <dns_sd.h>
+#endif
+
+#ifdef USE_SYSTEMD
+#include <systemd/sd-daemon.h>
 #endif
 
 #ifdef HAVE_PTHREAD_IS_THREADED_NP
@@ -498,7 +506,10 @@ static void TerminateChildren(int signal);
 #define SignalChildren(sig)			   SignalSomeChildren(sig, BACKEND_TYPE_ALL)
 
 static int	CountChildren(int target);
+<<<<<<< HEAD
 static bool assign_backendlist_entry(RegisteredBgWorker *rw);
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void maybe_start_bgworker(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
 static pid_t StartChildProcess(AuxProcType type);
@@ -577,6 +588,8 @@ typedef struct
 #ifndef HAVE_SPINLOCKS
 	PGSemaphore SpinlockSemaArray;
 #endif
+	int			NamedLWLockTrancheRequests;
+	NamedLWLockTranche *NamedLWLockTrancheArray;
 	LWLockPadded *MainLWLockArray;
 	slock_t    *ProcStructLock;
 	PROC_HDR   *ProcGlobal;
@@ -1035,7 +1048,7 @@ PostmasterMain(int argc, char *argv[])
 				(errmsg("WAL archival cannot be enabled when wal_level is \"minimal\"")));
 	if (max_wal_senders > 0 && wal_level == WAL_LEVEL_MINIMAL)
 		ereport(ERROR,
-				(errmsg("WAL streaming (max_wal_senders > 0) requires wal_level \"archive\", \"hot_standby\", or \"logical\"")));
+				(errmsg("WAL streaming (max_wal_senders > 0) requires wal_level \"replica\" or \"logical\"")));
 
     if ( GpIdentity.dbid == -1 && Gp_role == GP_ROLE_UTILITY)
     {
@@ -1402,6 +1415,7 @@ PostmasterMain(int argc, char *argv[])
 	RemovePgTempFiles();
 
 	/*
+<<<<<<< HEAD
 	 * Forcibly remove the files signaling a standby promotion
 	 * request. Otherwise, the existence of those files triggers
 	 * a promotion too early, whether a user wants that or not.
@@ -1419,6 +1433,24 @@ PostmasterMain(int argc, char *argv[])
 	 * Note that promotion signal files need to be removed before
 	 * the startup process is invoked. Because, after that, they can
 	 * be used by postmaster's SIGUSR1 signal handler.
+=======
+	 * Forcibly remove the files signaling a standby promotion request.
+	 * Otherwise, the existence of those files triggers a promotion too early,
+	 * whether a user wants that or not.
+	 *
+	 * This removal of files is usually unnecessary because they can exist
+	 * only during a few moments during a standby promotion. However there is
+	 * a race condition: if pg_ctl promote is executed and creates the files
+	 * during a promotion, the files can stay around even after the server is
+	 * brought up to new master. Then, if new standby starts by using the
+	 * backup taken from that master, the files can exist at the server
+	 * startup and should be removed in order to avoid an unexpected
+	 * promotion.
+	 *
+	 * Note that promotion signal files need to be removed before the startup
+	 * process is invoked. Because, after that, they can be used by
+	 * postmaster's SIGUSR1 signal handler.
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 */
 	RemovePromoteSignalFiles();
 
@@ -2007,7 +2039,7 @@ ServerLoop(void)
 
 		/* If we have lost the archiver, try to start a new one. */
 		if (PgArchPID == 0 && PgArchStartupAllowed())
-				PgArchPID = pgarch_start();
+			PgArchPID = pgarch_start();
 
 		/* If we need to signal the autovacuum launcher, do so now */
 		if (avlauncher_needs_signal)
@@ -2025,6 +2057,7 @@ ServerLoop(void)
 		if (StartWorkerNeeded || HaveCrashedWorker)
 			maybe_start_bgworker();
 
+<<<<<<< HEAD
 #ifdef HAVE_PTHREAD_IS_THREADED_NP
 
 		/*
@@ -2044,6 +2077,8 @@ ServerLoop(void)
 		 */
 		now = time(NULL);
 
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #ifdef HAVE_PTHREAD_IS_THREADED_NP
 
 		/*
@@ -2052,6 +2087,16 @@ ServerLoop(void)
 		 */
 		Assert(pthread_is_threaded_np() == 0);
 #endif
+
+		/*
+		 * Lastly, check to see if it's time to do some things that we don't
+		 * want to do every single time through the loop, because they're a
+		 * bit expensive.  Note that there's up to a minute of slop in when
+		 * these tasks will be performed, since DetermineSleepTime() will let
+		 * us sleep at most that long; except for SIGKILL timeout which has
+		 * special-case logic there.
+		 */
+		now = time(NULL);
 
 		/*
 		 * If we already sent SIGQUIT to children and they are slow to shut
@@ -2354,8 +2399,10 @@ retry1:
 				else if (!parse_bool(valptr, &am_walsender))
 					ereport(FATAL,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					   errmsg("invalid value for parameter \"replication\""),
-							 errhint("Valid values are: false, 0, true, 1, database.")));
+						 errmsg("invalid value for parameter \"%s\": \"%s\"",
+								"replication",
+								valptr),
+							 errhint("Valid values are: \"false\", 0, \"true\", 1, \"database\".")));
 			}
 			else if (strncmp(nameptr, "_pq_.", 5) == 0)
 			{
@@ -3009,6 +3056,9 @@ pmdie(SIGNAL_ARGS)
 			Shutdown = SmartShutdown;
 			ereport(LOG,
 					(errmsg("received smart shutdown request")));
+#ifdef USE_SYSTEMD
+			sd_notify(0, "STOPPING=1");
+#endif
 
 			if (pmState == PM_STARTUP)
 			{
@@ -3078,6 +3128,9 @@ pmdie(SIGNAL_ARGS)
 			Shutdown = FastShutdown;
 			ereport(LOG,
 					(errmsg("received fast shutdown request")));
+#ifdef USE_SYSTEMD
+			sd_notify(0, "STOPPING=1");
+#endif
 
 			if (StartupPID != 0)
 				signal_child(StartupPID, SIGTERM);
@@ -3088,6 +3141,10 @@ pmdie(SIGNAL_ARGS)
 			if (pmState == PM_RECOVERY)
 			{
 				SignalSomeChildren(SIGTERM, BACKEND_TYPE_BGWORKER);
+<<<<<<< HEAD
+=======
+
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				/*
 				 * Only startup, bgwriter, walreceiver, possibly bgworkers,
 				 * and/or checkpointer should be active in this state; we just
@@ -3141,6 +3198,9 @@ pmdie(SIGNAL_ARGS)
 			Shutdown = ImmediateShutdown;
 			ereport(LOG,
 					(errmsg("received immediate shutdown request")));
+#ifdef USE_SYSTEMD
+			sd_notify(0, "STOPPING=1");
+#endif
 
 			TerminateChildren(SIGQUIT);
 			pmState = PM_WAIT_BACKENDS;
@@ -3202,6 +3262,7 @@ reaper(SIGNAL_ARGS)
 			{
 				ereport(LOG,
 						(errmsg("shutdown at recovery target")));
+				StartupStatus = STARTUP_NOT_RUNNING;
 				Shutdown = SmartShutdown;
 				TerminateChildren(SIGTERM);
 				pmState = PM_WAIT_BACKENDS;
@@ -3296,6 +3357,10 @@ reaper(SIGNAL_ARGS)
 
 				PMAcceptingConnectionsStartTime = (pg_time_t) time(NULL);
 			}
+
+#ifdef USE_SYSTEMD
+			sd_notify(0, "READY=1");
+#endif
 
 			continue;
 		}
@@ -3566,9 +3631,15 @@ CleanupBackgroundWorker(int pid,
 
 		/*
 		 * It's possible that this background worker started some OTHER
+<<<<<<< HEAD
 		 * background worker and asked to be notified when that worker
 		 * started or stopped.  If so, cancel any notifications destined
 		 * for the now-dead backend.
+=======
+		 * background worker and asked to be notified when that worker started
+		 * or stopped.  If so, cancel any notifications destined for the
+		 * now-dead backend.
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		 */
 		if (rw->rw_backend->bgworker_notify)
 			BackgroundWorkerStopNotifications(rw->rw_pid);
@@ -3579,7 +3650,7 @@ CleanupBackgroundWorker(int pid,
 		ReportBackgroundWorkerPID(rw);	/* report child death */
 
 		LogChildExit(EXIT_STATUS_0(exitstatus) ? DEBUG1 : LOG,
-							    namebuf, pid, exitstatus);
+					 namebuf, pid, exitstatus);
 
 		return true;
 	}
@@ -5181,6 +5252,7 @@ SubPostmasterMain(int argc, char *argv[])
 	 * to do this before going any further to ensure that we can attach at the
 	 * same address the postmaster used.  On the other hand, if we choose not
 	 * to re-attach, we may have other cleanup to do.
+<<<<<<< HEAD
 	 *
 	 * If testing EXEC_BACKEND on Linux, you should run this as root before
 	 * starting the postmaster:
@@ -5191,6 +5263,8 @@ SubPostmasterMain(int argc, char *argv[])
 	 * child process's memory map to be different from the parent's, making it
 	 * sometimes impossible to attach to shared memory at the desired address.
 	 * Return the setting to its old value (usually '1' or '2') when finished.
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 */
 	if (strcmp(argv[1], "--forkbackend") == 0   ||
 		strcmp(argv[1], "--forkavlauncher") == 0 ||
@@ -5327,6 +5401,12 @@ SubPostmasterMain(int argc, char *argv[])
 		/* do this as early as possible; in particular, before InitProcess() */
 		IsBackgroundWorker = true;
 
+<<<<<<< HEAD
+=======
+		/* Close the postmaster's sockets */
+		ClosePostmasterPorts(false);
+
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		/* Restore basic shared memory pointers */
 		InitShmemAccess(UsedShmemSegAddr);
 
@@ -5336,8 +5416,10 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Attach process to shared data structures */
 		CreateSharedMemoryAndSemaphores(false, 0);
 
+		/* Fetch MyBgworkerEntry from shared memory */
 		shmem_slot = atoi(argv[1] + 15);
 		MyBgworkerEntry = BackgroundWorkerEntry(shmem_slot);
+
 		StartBackgroundWorker();
 	}
 	if (strcmp(argv[1], "--forkarch") == 0)
@@ -5456,6 +5538,11 @@ sigusr1_handler(SIGNAL_ARGS)
 		if (XLogArchivingAlways())
 			PgArchPID = pgarch_start();
 
+#ifdef USE_SYSTEMD
+		if (!EnableHotStandby)
+			sd_notify(0, "READY=1");
+#endif
+
 		pmState = PM_RECOVERY;
 	}
 	if (CheckPostmasterSignal(PMSIGNAL_BEGIN_HOT_STANDBY) &&
@@ -5469,6 +5556,10 @@ sigusr1_handler(SIGNAL_ARGS)
 
 		ereport(LOG,
 		(errmsg("database system is ready to accept read only connections")));
+
+#ifdef USE_SYSTEMD
+		sd_notify(0, "READY=1");
+#endif
 
 		pmState = PM_HOT_STANDBY;
 		/* Some workers may be scheduled to start now */
@@ -5696,7 +5787,7 @@ CountChildren(int target)
 /*
  * StartChildProcess -- start an auxiliary process for the postmaster
  *
- * xlop determines what kind of child will be started.  All child types
+ * "type" determines what kind of child will be started.  All child types
  * initially go to AuxiliaryProcessMain, which will handle common setup.
  *
  * Return value of StartChildProcess is subprocess' PID, or 0 if failed
@@ -6093,9 +6184,19 @@ do_start_bgworker(RegisteredBgWorker *rw)
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
 
-			/* Do NOT release postmaster's working memory context */
+			/*
+			 * Before blowing away PostmasterContext, save this bgworker's
+			 * data where it can find it.
+			 */
+			MyBgworkerEntry = (BackgroundWorker *)
+				MemoryContextAlloc(TopMemoryContext, sizeof(BackgroundWorker));
+			memcpy(MyBgworkerEntry, &rw->rw_worker, sizeof(BackgroundWorker));
 
-			MyBgworkerEntry = &rw->rw_worker;
+			/* Release postmaster's working memory context */
+			MemoryContextSwitchTo(TopMemoryContext);
+			MemoryContextDelete(PostmasterContext);
+			PostmasterContext = NULL;
+
 			StartBackgroundWorker();
 
 			exit(1);			/* should not get here */
@@ -6106,12 +6207,16 @@ do_start_bgworker(RegisteredBgWorker *rw)
 			rw->rw_pid = worker_pid;
 			rw->rw_backend->pid = rw->rw_pid;
 			ReportBackgroundWorkerPID(rw);
+<<<<<<< HEAD
 			/* add new worker to lists of backends */
 			dlist_push_head(&BackendList, &rw->rw_backend->elem);
 #ifdef EXEC_BACKEND
 			ShmemBackendArrayAdd(rw->rw_backend);
 #endif
 			return true;
+=======
+			break;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	return false;
@@ -6322,6 +6427,7 @@ maybe_start_bgworker(void)
 			rw->rw_crashed_at = 0;
 
 			/*
+<<<<<<< HEAD
 			 * Try to start the worker.
 			 *
 			 * On failure, give up processing workers for now, but set
@@ -6337,6 +6443,20 @@ maybe_start_bgworker(void)
 				StartWorkerNeeded = true;
 				return;
 			}
+=======
+			 * Allocate and assign the Backend element.  Note we must do this
+			 * before forking, so that we can handle out of memory properly.
+			 */
+			if (!assign_backendlist_entry(rw))
+				return;
+
+			do_start_bgworker(rw);		/* sets rw->rw_pid */
+
+			dlist_push_head(&BackendList, &rw->rw_backend->elem);
+#ifdef EXEC_BACKEND
+			ShmemBackendArrayAdd(rw->rw_backend);
+#endif
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 			/*
 			 * Quit, but have ServerLoop call us again to look for additional
@@ -6427,6 +6547,8 @@ save_backend_variables(BackendParameters *param, Port *port,
 #ifndef HAVE_SPINLOCKS
 	param->SpinlockSemaArray = SpinlockSemaArray;
 #endif
+	param->NamedLWLockTrancheRequests = NamedLWLockTrancheRequests;
+	param->NamedLWLockTrancheArray = NamedLWLockTrancheArray;
 	param->MainLWLockArray = MainLWLockArray;
 	param->ProcStructLock = ProcStructLock;
 	param->ProcGlobal = ProcGlobal;
@@ -6659,6 +6781,8 @@ restore_backend_variables(BackendParameters *param, Port *port)
 #ifndef HAVE_SPINLOCKS
 	SpinlockSemaArray = param->SpinlockSemaArray;
 #endif
+	NamedLWLockTrancheRequests = param->NamedLWLockTrancheRequests;
+	NamedLWLockTrancheArray = param->NamedLWLockTrancheArray;
 	MainLWLockArray = param->MainLWLockArray;
 	ProcStructLock = param->ProcStructLock;
 	ProcGlobal = param->ProcGlobal;

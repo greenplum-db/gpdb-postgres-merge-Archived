@@ -4,9 +4,13 @@
  *	  POSTGRES lock manager definitions.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/lmgr.h
@@ -57,6 +61,9 @@ extern void UnlockRelationIdForSession(LockRelId *relid, LOCKMODE lockmode);
 /* Lock a relation for extension */
 extern void LockRelationForExtension(Relation relation, LOCKMODE lockmode);
 extern void UnlockRelationForExtension(Relation relation, LOCKMODE lockmode);
+extern bool ConditionalLockRelationForExtension(Relation relation,
+									LOCKMODE lockmode);
+extern int	RelationExtensionLockWaiterCount(Relation relation);
 
 /* Lock a relation for Append-Only segment files. */
 extern LockAcquireResult LockRelationAppendOnlySegmentFile(RelFileNode *relFileNode, int32 segno, LOCKMODE lockmode, bool dontWait);
@@ -109,9 +116,13 @@ extern void UnlockSharedObjectForSession(Oid classid, Oid objid, uint16 objsubid
 /* Describe a locktag for error messages */
 extern void DescribeLockTag(StringInfo buf, const LOCKTAG *tag);
 
+<<<<<<< HEAD
 /* Knowledge about which locktags describe temp objects */
 extern bool LockTagIsTemp(const LOCKTAG *tag);
 
 extern bool CondUpgradeRelLock(Oid relid, bool noWait);
+=======
+extern const char *GetLockNameFromTagType(uint16 locktag_type);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #endif   /* LMGR_H */

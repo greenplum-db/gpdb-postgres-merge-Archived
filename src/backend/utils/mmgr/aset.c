@@ -7,9 +7,13 @@
  * type.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -264,6 +268,7 @@ static void AllocSetReset(MemoryContext context);
 static void AllocSetDelete(MemoryContext context);
 static Size AllocSetGetChunkSpace(MemoryContext context, void *pointer);
 static bool AllocSetIsEmpty(MemoryContext context);
+<<<<<<< HEAD
 static void AllocSet_GetStats(MemoryContext context, uint64 *nBlocks, uint64 *nChunks,
 		uint64 *currentAvailable, uint64 *allAllocated, uint64 *allFreed, uint64 *maxHeld);
 static void AllocSetReleaseAccountingForAllAllocatedChunks(MemoryContext context);
@@ -273,6 +278,10 @@ static void dump_allocset_blocks(FILE *file, AllocBlock blocks);
 static void dump_allocset_freelist(FILE *file, AllocSet set);
 static void dump_mc_for(FILE *file, MemoryContext mc);
 void dump_mc(const char *fname, MemoryContext mc);
+=======
+static void AllocSetStats(MemoryContext context, int level, bool print,
+			  MemoryContextCounters *totals);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #ifdef MEMORY_CONTEXT_CHECKING
 static void AllocSetCheck(MemoryContext context);
@@ -1847,6 +1856,7 @@ AllocSetIsEmpty(MemoryContext context)
 }
 
 /*
+<<<<<<< HEAD
  * AllocSet_GetStats
  *		Returns stats about memory consumption of an AllocSet.
  *
@@ -1871,10 +1881,30 @@ AllocSet_GetStats(MemoryContext context, uint64 *nBlocks, uint64 *nChunks,
 		uint64 *currentAvailable, uint64 *allAllocated, uint64 *allFreed, uint64 *maxHeld)
 {
 	AllocSet	set = (AllocSet) context;
+=======
+ * AllocSetStats
+ *		Compute stats about memory consumption of an allocset.
+ *
+ * level: recursion level (0 at top level); used for print indentation.
+ * print: true to print stats to stderr.
+ * totals: if not NULL, add stats about this allocset into *totals.
+ */
+static void
+AllocSetStats(MemoryContext context, int level, bool print,
+			  MemoryContextCounters *totals)
+{
+	AllocSet	set = (AllocSet) context;
+	Size		nblocks = 0;
+	Size		freechunks = 0;
+	Size		totalspace = 0;
+	Size		freespace = 0;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	AllocBlock	block;
-	AllocChunk	chunk;
 	int			fidx;
+<<<<<<< HEAD
 	uint64 currentAllocated = 0;
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
     *nBlocks = 0;
     *nChunks = 0;
@@ -1900,13 +1930,42 @@ AllocSet_GetStats(MemoryContext context, uint64 *nBlocks, uint64 *nChunks,
     /* Freelists.  Count usable space only, not chunk headers. */
 	for (fidx = 0; fidx < ALLOCSET_NUM_FREELISTS; fidx++)
 	{
+		AllocChunk	chunk;
+
 		for (chunk = set->freelist[fidx]; chunk != NULL;
 			 chunk = (AllocChunk) chunk->sharedHeader)
 		{
+<<<<<<< HEAD
 			*nChunks = *nChunks + 1;
 			*currentAvailable += chunk->size;
 		}
 	}
+=======
+			freechunks++;
+			freespace += chunk->size + ALLOC_CHUNKHDRSZ;
+		}
+	}
+
+	if (print)
+	{
+		int			i;
+
+		for (i = 0; i < level; i++)
+			fprintf(stderr, "  ");
+		fprintf(stderr,
+			"%s: %zu total in %zd blocks; %zu free (%zd chunks); %zu used\n",
+				set->header.name, totalspace, nblocks, freespace, freechunks,
+				totalspace - freespace);
+	}
+
+	if (totals)
+	{
+		totals->nblocks += nblocks;
+		totals->freechunks += freechunks;
+		totals->totalspace += totalspace;
+		totals->freespace += freespace;
+	}
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 #ifdef MEMORY_CONTEXT_CHECKING

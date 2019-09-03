@@ -2187,6 +2187,43 @@ select aa, bb, unique1, unique1
 (0 rows)
 
 --
+<<<<<<< HEAD
+=======
+-- regression test: check handling of empty-FROM subquery underneath outer join
+--
+explain (costs off)
+select * from int8_tbl i1 left join (int8_tbl i2 join
+  (select 123 as x) ss on i2.q1 = x) on i1.q2 = i2.q2
+order by 1, 2;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Sort
+   Sort Key: i1.q1, i1.q2
+   ->  Hash Left Join
+         Hash Cond: (i1.q2 = i2.q2)
+         ->  Seq Scan on int8_tbl i1
+         ->  Hash
+               ->  Hash Join
+                     Hash Cond: (i2.q1 = (123))
+                     ->  Seq Scan on int8_tbl i2
+                     ->  Hash
+                           ->  Result
+(11 rows)
+
+select * from int8_tbl i1 left join (int8_tbl i2 join
+  (select 123 as x) ss on i2.q1 = x) on i1.q2 = i2.q2
+order by 1, 2;
+        q1        |        q2         | q1  |        q2        |  x  
+------------------+-------------------+-----+------------------+-----
+              123 |               456 | 123 |              456 | 123
+              123 |  4567890123456789 | 123 | 4567890123456789 | 123
+ 4567890123456789 | -4567890123456789 |     |                  |    
+ 4567890123456789 |               123 |     |                  |    
+ 4567890123456789 |  4567890123456789 | 123 | 4567890123456789 | 123
+(5 rows)
+
+--
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 -- regression test: check a case where join_clause_is_movable_into() gives
 -- an imprecise result, causing an assertion failure
 --
@@ -2208,16 +2245,20 @@ where t4.thousand = t5.unique1 and ss.x1 = t4.tenthous and ss.x2 = t5.stringu1;
 -- regression test: check a case where we formerly missed including an EC
 -- enforcement clause because it was expected to be handled at scan level
 --
+<<<<<<< HEAD
 -- GPDB_94_MERGE_FIXME: The plan output is not as the upstream patch 
 -- 72edc8ffeb0e949 expected. We need to look further.
 set enable_hashjoin = false;
 set enable_nestloop = true;
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 explain (costs off)
 select a.f1, b.f1, t.thousand, t.tenthous from
   tenk1 t,
   (select sum(f1)+1 as f1 from int4_tbl i4a) a,
   (select sum(f1) as f1 from int4_tbl i4b) b
 where b.f1 = t.thousand and a.f1 = b.f1 and (a.f1+b.f1+999) = t.tenthous;
+<<<<<<< HEAD
                                                                                  QUERY PLAN                                                                                 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice5; segments: 3)
@@ -2239,6 +2280,20 @@ where b.f1 = t.thousand and a.f1 = b.f1 and (a.f1+b.f1+999) = t.tenthous;
                                        ->  Seq Scan on int4_tbl i4b
  Optimizer: Postgres query optimizer
 (18 rows)
+=======
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Nested Loop
+   ->  Aggregate
+         ->  Seq Scan on int4_tbl i4b
+   ->  Nested Loop
+         Join Filter: ((sum(i4b.f1)) = ((sum(i4a.f1) + 1)))
+         ->  Aggregate
+               ->  Seq Scan on int4_tbl i4a
+         ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t
+               Index Cond: ((thousand = (sum(i4b.f1))) AND (tenthous = ((((sum(i4a.f1) + 1)) + (sum(i4b.f1))) + 999)))
+(9 rows)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select a.f1, b.f1, t.thousand, t.tenthous from
   tenk1 t,
@@ -2249,6 +2304,7 @@ where b.f1 = t.thousand and a.f1 = b.f1 and (a.f1+b.f1+999) = t.tenthous;
 ----+----+----------+----------
 (0 rows)
 
+<<<<<<< HEAD
 reset enable_hashjoin;
 reset enable_nestloop;
 --
@@ -2348,6 +2404,8 @@ select count(*) from
 
 reset enable_mergejoin;
 reset random_page_cost;
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 --
 -- Clean up
 --
@@ -2414,7 +2472,7 @@ select t1.x from t1 join t3 on (t1.a = t3.x);
 ERROR:  column t1.x does not exist
 LINE 1: select t1.x from t1 join t3 on (t1.a = t3.x);
                ^
-HINT:  Perhaps you meant to reference the column "t3"."x".
+HINT:  Perhaps you meant to reference the column "t3.x".
 --
 -- regression test for 8.1 merge right join bug
 --
@@ -2445,6 +2503,34 @@ select tt1.*, tt2.* from tt2 right join tt1 on tt1.joincol = tt2.joincol;
 
 reset enable_hashjoin;
 reset enable_nestloop;
+--
+-- regression test for bug #13908 (hash join with skew tuples & nbatch increase)
+--
+set work_mem to '64kB';
+set enable_mergejoin to off;
+explain (costs off)
+select count(*) from tenk1 a, tenk1 b
+  where a.hundred = b.thousand and (b.fivethous % 10) < 10;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Aggregate
+   ->  Hash Join
+         Hash Cond: (a.hundred = b.thousand)
+         ->  Index Only Scan using tenk1_hundred on tenk1 a
+         ->  Hash
+               ->  Seq Scan on tenk1 b
+                     Filter: ((fivethous % 10) < 10)
+(7 rows)
+
+select count(*) from tenk1 a, tenk1 b
+  where a.hundred = b.thousand and (b.fivethous % 10) < 10;
+ count  
+--------
+ 100000
+(1 row)
+
+reset work_mem;
+reset enable_mergejoin;
 --
 -- regression test for 8.2 bug with improper re-ordering of left joins
 --
@@ -3207,6 +3293,77 @@ where t1.unique1 < i4.f1;
 (0 rows)
 
 --
+-- test a corner case in which we shouldn't apply the star-schema optimization
+--
+explain (costs off)
+select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
+  tenk1 t1
+  inner join int4_tbl i1
+    left join (select v1.x2, v2.y1, 11 AS d1
+               from (values(1,0)) v1(x1,x2)
+               left join (values(3,1)) v2(y1,y2)
+               on v1.x1 = v2.y2) subq1
+    on (i1.f1 = subq1.x2)
+  on (t1.unique2 = subq1.d1)
+  left join tenk1 t2
+  on (subq1.y1 = t2.unique1)
+where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Nested Loop
+   Join Filter: (t1.stringu1 > t2.stringu2)
+   ->  Nested Loop
+         Join Filter: ((0) = i1.f1)
+         ->  Nested Loop
+               ->  Nested Loop
+                     Join Filter: ((1) = (1))
+                     ->  Result
+                     ->  Result
+               ->  Index Scan using tenk1_unique2 on tenk1 t1
+                     Index Cond: ((unique2 = (11)) AND (unique2 < 42))
+         ->  Seq Scan on int4_tbl i1
+   ->  Index Scan using tenk1_unique1 on tenk1 t2
+         Index Cond: (unique1 = (3))
+(14 rows)
+
+select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
+  tenk1 t1
+  inner join int4_tbl i1
+    left join (select v1.x2, v2.y1, 11 AS d1
+               from (values(1,0)) v1(x1,x2)
+               left join (values(3,1)) v2(y1,y2)
+               on v1.x1 = v2.y2) subq1
+    on (i1.f1 = subq1.x2)
+  on (t1.unique2 = subq1.d1)
+  left join tenk1 t2
+  on (subq1.y1 = t2.unique1)
+where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
+ unique2 | stringu1 | unique1 | stringu2 
+---------+----------+---------+----------
+      11 | WFAAAA   |       3 | LKIAAA
+(1 row)
+
+-- variant that isn't quite a star-schema case
+select ss1.d1 from
+  tenk1 as t1
+  inner join tenk1 as t2
+  on t1.tenthous = t2.ten
+  inner join
+    int8_tbl as i8
+    left join int4_tbl as i4
+      inner join (select 64::information_schema.cardinal_number as d1
+                  from tenk1 t3,
+                       lateral (select abs(t3.unique1) + random()) ss0(x)
+                  where t3.fivethous < 0) as ss1
+      on i4.f1 = ss1.d1
+    on i8.q1 = i4.f1
+  on t1.tenthous = ss1.d1
+where t1.unique1 < i4.f1;
+ d1 
+----
+(0 rows)
+
+--
 -- test extraction of restriction OR clauses from join OR clause
 -- (we used to only do this for indexable clauses)
 --
@@ -3651,6 +3808,7 @@ select t1.* from
   on (t1.f1 = b1.d1)
   left join int4_tbl i4
   on (i8.q2 = i4.f1);
+<<<<<<< HEAD
                                         QUERY PLAN                                        
 ------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice5; segments: 3)
@@ -3697,6 +3855,41 @@ select t1.* from
                            Output: i4.f1
  Optimizer: Postgres query optimizer
 (43 rows)
+=======
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Hash Left Join
+   Output: t1.f1
+   Hash Cond: (i8.q2 = i4.f1)
+   ->  Nested Loop Left Join
+         Output: t1.f1, i8.q2
+         Join Filter: (t1.f1 = '***'::text)
+         ->  Seq Scan on public.text_tbl t1
+               Output: t1.f1
+         ->  Materialize
+               Output: i8.q2
+               ->  Hash Right Join
+                     Output: i8.q2
+                     Hash Cond: ((NULL::integer) = i8b1.q2)
+                     ->  Hash Left Join
+                           Output: i8.q2, (NULL::integer)
+                           Hash Cond: (i8.q1 = i8b2.q1)
+                           ->  Seq Scan on public.int8_tbl i8
+                                 Output: i8.q1, i8.q2
+                           ->  Hash
+                                 Output: i8b2.q1, (NULL::integer)
+                                 ->  Seq Scan on public.int8_tbl i8b2
+                                       Output: i8b2.q1, NULL::integer
+                     ->  Hash
+                           Output: i8b1.q2
+                           ->  Seq Scan on public.int8_tbl i8b1
+                                 Output: i8b1.q2
+   ->  Hash
+         Output: i4.f1
+         ->  Seq Scan on public.int4_tbl i4
+               Output: i4.f1
+(30 rows)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select t1.* from
   text_tbl t1
@@ -3725,6 +3918,7 @@ select t1.* from
   on (t1.f1 = b1.d1)
   left join int4_tbl i4
   on (i8.q2 = i4.f1);
+<<<<<<< HEAD
                                                QUERY PLAN                                                
 ---------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice6; segments: 3)
@@ -3779,6 +3973,45 @@ select t1.* from
                            Output: i4.f1
  Optimizer: Postgres query optimizer
 (51 rows)
+=======
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Hash Left Join
+   Output: t1.f1
+   Hash Cond: (i8.q2 = i4.f1)
+   ->  Nested Loop Left Join
+         Output: t1.f1, i8.q2
+         Join Filter: (t1.f1 = '***'::text)
+         ->  Seq Scan on public.text_tbl t1
+               Output: t1.f1
+         ->  Materialize
+               Output: i8.q2
+               ->  Hash Right Join
+                     Output: i8.q2
+                     Hash Cond: ((NULL::integer) = i8b1.q2)
+                     ->  Hash Right Join
+                           Output: i8.q2, (NULL::integer)
+                           Hash Cond: (i8b2.q1 = i8.q1)
+                           ->  Nested Loop
+                                 Output: i8b2.q1, NULL::integer
+                                 ->  Seq Scan on public.int8_tbl i8b2
+                                       Output: i8b2.q1, i8b2.q2
+                                 ->  Materialize
+                                       ->  Seq Scan on public.int4_tbl i4b2
+                           ->  Hash
+                                 Output: i8.q1, i8.q2
+                                 ->  Seq Scan on public.int8_tbl i8
+                                       Output: i8.q1, i8.q2
+                     ->  Hash
+                           Output: i8b1.q2
+                           ->  Seq Scan on public.int8_tbl i8b1
+                                 Output: i8b1.q2
+   ->  Hash
+         Output: i4.f1
+         ->  Seq Scan on public.int4_tbl i4
+               Output: i4.f1
+(34 rows)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select t1.* from
   text_tbl t1
@@ -3808,6 +4041,7 @@ select t1.* from
   on (t1.f1 = b1.d1)
   left join int4_tbl i4
   on (i8.q2 = i4.f1);
+<<<<<<< HEAD
                                           QUERY PLAN                                          
 ----------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice5; segments: 3)
@@ -3861,6 +4095,48 @@ select t1.* from
                            Output: i4.f1
  Optimizer: Postgres query optimizer
 (50 rows)
+=======
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Hash Left Join
+   Output: t1.f1
+   Hash Cond: (i8.q2 = i4.f1)
+   ->  Nested Loop Left Join
+         Output: t1.f1, i8.q2
+         Join Filter: (t1.f1 = '***'::text)
+         ->  Seq Scan on public.text_tbl t1
+               Output: t1.f1
+         ->  Materialize
+               Output: i8.q2
+               ->  Hash Right Join
+                     Output: i8.q2
+                     Hash Cond: ((NULL::integer) = i8b1.q2)
+                     ->  Hash Right Join
+                           Output: i8.q2, (NULL::integer)
+                           Hash Cond: (i8b2.q1 = i8.q1)
+                           ->  Hash Join
+                                 Output: i8b2.q1, NULL::integer
+                                 Hash Cond: (i8b2.q1 = i4b2.f1)
+                                 ->  Seq Scan on public.int8_tbl i8b2
+                                       Output: i8b2.q1, i8b2.q2
+                                 ->  Hash
+                                       Output: i4b2.f1
+                                       ->  Seq Scan on public.int4_tbl i4b2
+                                             Output: i4b2.f1
+                           ->  Hash
+                                 Output: i8.q1, i8.q2
+                                 ->  Seq Scan on public.int8_tbl i8
+                                       Output: i8.q1, i8.q2
+                     ->  Hash
+                           Output: i8b1.q2
+                           ->  Seq Scan on public.int8_tbl i8b1
+                                 Output: i8b1.q2
+   ->  Hash
+         Output: i4.f1
+         ->  Seq Scan on public.int4_tbl i4
+               Output: i4.f1
+(37 rows)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select t1.* from
   text_tbl t1
@@ -3888,6 +4164,7 @@ select * from
   on t1.f1 = 'doh!'
   left join int4_tbl i4
   on i8.q1 = i4.f1;
+<<<<<<< HEAD
                                    QUERY PLAN                                    
 ---------------------------------------------------------------------------------
  Gather Motion 3:1  (slice3; segments: 3)
@@ -3921,6 +4198,30 @@ select * from
                                              Filter: (t1.f1 = 'doh!'::text)
  Optimizer: Postgres query optimizer
 (30 rows)
+=======
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Nested Loop Left Join
+   Output: t1.f1, i8.q1, i8.q2, t2.f1, i4.f1
+   ->  Seq Scan on public.text_tbl t2
+         Output: t2.f1
+   ->  Materialize
+         Output: i8.q1, i8.q2, i4.f1, t1.f1
+         ->  Nested Loop
+               Output: i8.q1, i8.q2, i4.f1, t1.f1
+               ->  Nested Loop Left Join
+                     Output: i8.q1, i8.q2, i4.f1
+                     Join Filter: (i8.q1 = i4.f1)
+                     ->  Seq Scan on public.int8_tbl i8
+                           Output: i8.q1, i8.q2
+                           Filter: (i8.q2 = 456)
+                     ->  Seq Scan on public.int4_tbl i4
+                           Output: i4.f1
+               ->  Seq Scan on public.text_tbl t1
+                     Output: t1.f1
+                     Filter: (t1.f1 = 'doh!'::text)
+(19 rows)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select * from
   text_tbl t1
@@ -3939,7 +4240,10 @@ select * from
 --
 -- test for appropriate join order in the presence of lateral references
 --
+<<<<<<< HEAD
 -- start_ignore
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 explain (verbose, costs off)
 select * from
   text_tbl t1
@@ -4075,6 +4379,7 @@ where tt1.f1 = ss1.c0;
  ?column? 
 ----------
 (0 rows)
+<<<<<<< HEAD
 --end_ignore
 --
 -- check a case in which a PlaceHolderVar forces join order
@@ -4083,6 +4388,12 @@ where tt1.f1 = ss1.c0;
 --GPDB_94_STABLE_MERGE_FIXME: This query is lateral related and its plan is
 --different from PostgreSQL's.  Do not know why yet. Ignore its plan
 --temporarily.
+=======
+
+--
+-- check a case in which a PlaceHolderVar forces join order
+--
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 explain (verbose, costs off)
 select ss2.* from
   int4_tbl i41
@@ -4122,7 +4433,10 @@ where ss1.c2 = 0;
                Output: i41.f1, i8.q1, i8.q2, i42.f1, i43.f1, (42)
 (25 rows)
 
+<<<<<<< HEAD
 --end_ignore
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 select ss2.* from
   int4_tbl i41
   left join int8_tbl i8
@@ -4145,6 +4459,7 @@ select * from
   left join
     (tenk1 as a1 full join (select 1 as id) as yy on (a1.unique1 = yy.id))
   on (xx.id = coalesce(yy.id));
+<<<<<<< HEAD
                                   QUERY PLAN                                  
 ------------------------------------------------------------------------------
  Gather Motion 3:1  (slice4; segments: 3)
@@ -4165,6 +4480,19 @@ select * from
                      ->  Result
  Optimizer: Postgres query optimizer
 (17 rows)
+=======
+              QUERY PLAN               
+---------------------------------------
+ Nested Loop Left Join
+   Join Filter: ((1) = COALESCE((1)))
+   ->  Result
+   ->  Hash Full Join
+         Hash Cond: (a1.unique1 = (1))
+         ->  Seq Scan on tenk1 a1
+         ->  Hash
+               ->  Result
+(8 rows)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select * from
   (select 1 as id) as xx
@@ -4356,10 +4684,13 @@ select d.* from d left join (select distinct * from b) s
 (3 rows)
 
 -- join removal is not possible when the GROUP BY contains a column that is
--- not in the join condition
+-- not in the join condition.  (Note: as of 9.6, we notice that b.id is a
+-- primary key and so drop b.c_id from the GROUP BY of the resulting plan;
+-- but this happens too late for join removal in the outer plan level.)
 explain (costs off)
 select d.* from d left join (select * from b group by b.id, b.c_id) s
   on d.a = s.id;
+<<<<<<< HEAD
                        QUERY PLAN                       
 --------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -4375,11 +4706,25 @@ select d.* from d left join (select * from b group by b.id, b.c_id) s
                                  ->  Seq Scan on b
  Optimizer: Postgres query optimizer
 (16 rows)
+=======
+                QUERY PLAN                
+------------------------------------------
+ Merge Right Join
+   Merge Cond: (b.id = d.a)
+   ->  Group
+         Group Key: b.id
+         ->  Index Scan using b_pkey on b
+   ->  Sort
+         Sort Key: d.a
+         ->  Seq Scan on d
+(8 rows)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- similarly, but keying off a DISTINCT clause
 explain (costs off)
 select d.* from d left join (select distinct * from b) s
   on d.a = s.id;
+<<<<<<< HEAD
                        QUERY PLAN                       
 --------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -4395,6 +4740,20 @@ select d.* from d left join (select distinct * from b) s
                                  ->  Seq Scan on b
  Optimizer: Postgres query optimizer
 (16 rows)
+=======
+              QUERY PLAN              
+--------------------------------------
+ Merge Right Join
+   Merge Cond: (b.id = d.a)
+   ->  Unique
+         ->  Sort
+               Sort Key: b.id, b.c_id
+               ->  Seq Scan on b
+   ->  Sort
+         Sort Key: d.a
+         ->  Seq Scan on d
+(9 rows)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- check join removal works when uniqueness of the join condition is enforced
 -- by a UNION
@@ -4554,12 +4913,19 @@ select t1.* from
   on t1.f1 = t2.f1
   left join uniquetbl t3
   on t2.d1 = t3.f1;
+<<<<<<< HEAD
                 QUERY PLAN                
 ------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Seq Scan on uniquetbl t1
  Optimizer: Postgres query optimizer
 (3 rows)
+=======
+        QUERY PLAN        
+--------------------------
+ Seq Scan on uniquetbl t1
+(1 row)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 explain (costs off)
 select t0.*
@@ -4573,6 +4939,7 @@ from
      left join uniquetbl u1 ON u1.f1 = t1.string4) ss
   on t0.f1 = ss.case1
 where ss.stringu2 !~* ss.case1;
+<<<<<<< HEAD
                                             QUERY PLAN                                            
 --------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice3; segments: 3)
@@ -4590,6 +4957,20 @@ where ss.stringu2 !~* ss.case1;
                      ->  Seq Scan on text_tbl t0
  Optimizer: Postgres query optimizer
 (14 rows)
+=======
+                                         QUERY PLAN                                         
+--------------------------------------------------------------------------------------------
+ Nested Loop
+   Join Filter: (CASE t1.ten WHEN 0 THEN 'doh!'::text ELSE NULL::text END = t0.f1)
+   ->  Nested Loop
+         ->  Seq Scan on int4_tbl i4
+         ->  Index Scan using tenk1_unique2 on tenk1 t1
+               Index Cond: (unique2 = i4.f1)
+               Filter: (stringu2 !~* CASE ten WHEN 0 THEN 'doh!'::text ELSE NULL::text END)
+   ->  Materialize
+         ->  Seq Scan on text_tbl t0
+(9 rows)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select t0.*
 from
@@ -4634,19 +5015,19 @@ select t1.uunique1 from
 ERROR:  column t1.uunique1 does not exist
 LINE 1: select t1.uunique1 from
                ^
-HINT:  Perhaps you meant to reference the column "t1"."unique1".
+HINT:  Perhaps you meant to reference the column "t1.unique1".
 select t2.uunique1 from
   tenk1 t1 join tenk2 t2 on t1.two = t2.two; -- error, prefer "t2" suggestion
 ERROR:  column t2.uunique1 does not exist
 LINE 1: select t2.uunique1 from
                ^
-HINT:  Perhaps you meant to reference the column "t2"."unique1".
+HINT:  Perhaps you meant to reference the column "t2.unique1".
 select uunique1 from
   tenk1 t1 join tenk2 t2 on t1.two = t2.two; -- error, suggest both at once
 ERROR:  column "uunique1" does not exist
 LINE 1: select uunique1 from
                ^
-HINT:  Perhaps you meant to reference the column "t1"."unique1" or the column "t2"."unique1".
+HINT:  Perhaps you meant to reference the column "t1.unique1" or the column "t2.unique1".
 --
 -- Take care to reference the correct RTE
 --
@@ -5154,24 +5535,24 @@ select v.* from
   lateral (select x.q1,y.q1 union all select x.q2,y.q2) v(vx,vy);
         vx         |        vy         
 -------------------+-------------------
-               123 |                  
-               456 |                  
-               123 |  4567890123456789
-  4567890123456789 | -4567890123456789
-               123 |  4567890123456789
-  4567890123456789 |  4567890123456789
-               123 |  4567890123456789
-  4567890123456789 |               123
-  4567890123456789 |               123
-               123 |  4567890123456789
   4567890123456789 |               123
                123 |               456
-  4567890123456789 |  4567890123456789
-  4567890123456789 | -4567890123456789
-  4567890123456789 |  4567890123456789
-  4567890123456789 |  4567890123456789
+  4567890123456789 |               123
+               123 |  4567890123456789
   4567890123456789 |  4567890123456789
   4567890123456789 |               123
+               123 |  4567890123456789
+  4567890123456789 |               123
+  4567890123456789 |  4567890123456789
+  4567890123456789 |  4567890123456789
+               123 |  4567890123456789
+  4567890123456789 |  4567890123456789
+  4567890123456789 |  4567890123456789
+  4567890123456789 | -4567890123456789
+               123 |  4567890123456789
+  4567890123456789 | -4567890123456789
+               123 |                  
+               456 |                  
   4567890123456789 |                  
  -4567890123456789 |                  
 (20 rows)
@@ -5185,24 +5566,24 @@ select v.* from
   lateral (select x.q1,y.q1 from dual union all select x.q2,y.q2 from dual) v(vx,vy);
         vx         |        vy         
 -------------------+-------------------
-               123 |                  
-               456 |                  
-               123 |  4567890123456789
-  4567890123456789 | -4567890123456789
-               123 |  4567890123456789
-  4567890123456789 |  4567890123456789
-               123 |  4567890123456789
-  4567890123456789 |               123
-  4567890123456789 |               123
-               123 |  4567890123456789
   4567890123456789 |               123
                123 |               456
-  4567890123456789 |  4567890123456789
-  4567890123456789 | -4567890123456789
-  4567890123456789 |  4567890123456789
-  4567890123456789 |  4567890123456789
+  4567890123456789 |               123
+               123 |  4567890123456789
   4567890123456789 |  4567890123456789
   4567890123456789 |               123
+               123 |  4567890123456789
+  4567890123456789 |               123
+  4567890123456789 |  4567890123456789
+  4567890123456789 |  4567890123456789
+               123 |  4567890123456789
+  4567890123456789 |  4567890123456789
+  4567890123456789 |  4567890123456789
+  4567890123456789 | -4567890123456789
+               123 |  4567890123456789
+  4567890123456789 | -4567890123456789
+               123 |                  
+               456 |                  
   4567890123456789 |                  
  -4567890123456789 |                  
 (20 rows)
@@ -5426,6 +5807,7 @@ select * from
 ---------------------------------------------------------------------------
  Gather Motion 3:1  (slice3; segments: 3)
    Output: a.q1, a.q2, b.q1, c.q1, (LEAST(a.q1, b.q1, c.q1))
+<<<<<<< HEAD
    ->  Nested Loop Left Join
          Output: a.q1, a.q2, b.q1, c.q1, (LEAST(a.q1, b.q1, c.q1))
          ->  Redistribute Motion 3:3  (slice1; segments: 3)
@@ -5448,6 +5830,18 @@ select * from
                                        Output: c.q1
  Optimizer: Postgres query optimizer
 (23 rows)
+=======
+   ->  Seq Scan on public.int8_tbl a
+         Output: a.q1, a.q2
+   ->  Nested Loop
+         Output: b.q1, c.q1, LEAST(a.q1, b.q1, c.q1)
+         ->  Seq Scan on public.int8_tbl b
+               Output: b.q1, b.q2
+               Filter: (a.q2 = b.q1)
+         ->  Seq Scan on public.int8_tbl c
+               Output: c.q1, c.q2
+(11 rows)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select * from
   int8_tbl a left join lateral
@@ -5647,6 +6041,7 @@ select * from
  Settings: optimizer=off
 (17 rows)
 
+<<<<<<< HEAD
 -- check handling of nested appendrels inside LATERAL
 select * from
   ((select 2 as v) union all (select 3 as v)) as q1
@@ -5671,6 +6066,9 @@ select * from
 -- GPDB_94_STABLE_MERGE_FIXME: The query below is 'deeply' correlated
 -- and GPDB would not pull up the sublink into a semijoin (why?), while
 -- PostgreSQL will do. So the following test is meaningless in GPDB.
+=======
+-- check we don't try to do a unique-ified semijoin with LATERAL
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 explain (verbose, costs off)
 select * from
   (values (0,9998), (1,1000)) v(id,x),
@@ -5683,12 +6081,21 @@ select * from
    Output: "*VALUES*".column1, "*VALUES*".column2, int4_tbl.f1
    ->  Values Scan on "*VALUES*"
          Output: "*VALUES*".column1, "*VALUES*".column2
+<<<<<<< HEAD
    ->  Hash Semi Join
          Output: int4_tbl.f1
          Hash Cond: (int4_tbl.f1 = tenk1.unique1)
          ->  Seq Scan on public.int4_tbl
                Output: int4_tbl.f1
          ->  Hash
+=======
+   ->  Nested Loop Semi Join
+         Output: int4_tbl.f1
+         Join Filter: (int4_tbl.f1 = tenk1.unique1)
+         ->  Seq Scan on public.int4_tbl
+               Output: int4_tbl.f1
+         ->  Materialize
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
                Output: tenk1.unique1
                ->  Index Scan using tenk1_unique2 on public.tenk1
                      Output: tenk1.unique1
@@ -5705,7 +6112,67 @@ select * from
   0 | 9998 |  0
 (1 row)
 
+<<<<<<< HEAD
 --end_ignore
+=======
+-- check proper extParam/allParam handling (this isn't exactly a LATERAL issue,
+-- but we can make the test case much more compact with LATERAL)
+explain (verbose, costs off)
+select * from (values (0), (1)) v(id),
+lateral (select * from int8_tbl t1,
+         lateral (select * from
+                    (select * from int8_tbl t2
+                     where q1 = any (select q2 from int8_tbl t3
+                                     where q2 = (select greatest(t1.q1,t2.q2))
+                                       and (select v.id=0)) offset 0) ss2) ss
+         where t1.q1 = ss.q2) ss0;
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Nested Loop
+   Output: "*VALUES*".column1, t1.q1, t1.q2, ss2.q1, ss2.q2
+   ->  Seq Scan on public.int8_tbl t1
+         Output: t1.q1, t1.q2
+   ->  Nested Loop
+         Output: "*VALUES*".column1, ss2.q1, ss2.q2
+         ->  Values Scan on "*VALUES*"
+               Output: "*VALUES*".column1
+         ->  Subquery Scan on ss2
+               Output: ss2.q1, ss2.q2
+               Filter: (t1.q1 = ss2.q2)
+               ->  Seq Scan on public.int8_tbl t2
+                     Output: t2.q1, t2.q2
+                     Filter: (SubPlan 3)
+                     SubPlan 3
+                       ->  Result
+                             Output: t3.q2
+                             One-Time Filter: $4
+                             InitPlan 1 (returns $2)
+                               ->  Result
+                                     Output: GREATEST($0, t2.q2)
+                             InitPlan 2 (returns $4)
+                               ->  Result
+                                     Output: ($3 = 0)
+                             ->  Seq Scan on public.int8_tbl t3
+                                   Output: t3.q1, t3.q2
+                                   Filter: (t3.q2 = $2)
+(27 rows)
+
+select * from (values (0), (1)) v(id),
+lateral (select * from int8_tbl t1,
+         lateral (select * from
+                    (select * from int8_tbl t2
+                     where q1 = any (select q2 from int8_tbl t3
+                                     where q2 = (select greatest(t1.q1,t2.q2))
+                                       and (select v.id=0)) offset 0) ss2) ss
+         where t1.q1 = ss.q2) ss0;
+ id |        q1        |        q2         |        q1        |        q2        
+----+------------------+-------------------+------------------+------------------
+  0 | 4567890123456789 |               123 | 4567890123456789 | 4567890123456789
+  0 | 4567890123456789 |  4567890123456789 | 4567890123456789 | 4567890123456789
+  0 | 4567890123456789 | -4567890123456789 | 4567890123456789 | 4567890123456789
+(3 rows)
+
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 -- test some error cases where LATERAL should have been used but wasn't
 select f1,g from int4_tbl a, (select f1 as g) ss;
 ERROR:  column "f1" does not exist

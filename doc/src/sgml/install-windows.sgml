@@ -19,10 +19,17 @@
  <para>
   There are several different ways of building PostgreSQL on
   <productname>Windows</productname>. The simplest way to build with
+<<<<<<< HEAD
   Microsoft tools is to install <productname>Visual Studio Express 2017
   for Windows Desktop</productname> and use the included
   compiler. It is also possible to build with the full
   <productname>Microsoft Visual C++ 2005 to 2017</productname>.
+=======
+  Microsoft tools is to install <productname>Visual Studio Express 2015
+  for Windows Desktop</productname> and use the included
+  compiler. It is also possible to build with the full
+  <productname>Microsoft Visual C++ 2005 to 2015</productname>.
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
   In some cases that requires the installation of the
   <productname>Windows SDK</productname> in addition to the compiler.
  </para>
@@ -77,19 +84,32 @@
   <productname>Visual Studio Express</productname> or some versions of the
   <productname>Microsoft Windows SDK</productname>. If you do not already have a
   <productname>Visual Studio</productname> environment set up, the easiest
+<<<<<<< HEAD
   ways are to use the compilers from <productname>Visual Studio Express 2017
+=======
+  ways are to use the compilers from <productname>Visual Studio Express 2015
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
   for Windows Desktop</productname> or those in the <productname>Windows SDK
   8.1</productname>, which are both free downloads from Microsoft.
  </para>
 
  <para>
   Both 32-bit and 64-bit builds are possible with the Microsoft Compiler suite.
+<<<<<<< HEAD
   32-bit PostgreSQL buils are possible with
   <productname>Visual Studio 2005</productname> to
   <productname>Visual Studio 2017</productname> (including Express editions),
   as well as standalone Windows SDK releases 6.0 to 8.1.
   64-bit PostgreSQL builds are supported with
   <productname>Microsoft Windows SDK</productname> version 6.0a to 8.1 or
+=======
+  32-bit PostgreSQL builds are possible with
+  <productname>Visual Studio 2005</productname> to
+  <productname>Visual Studio 2015</productname> (including Express editions),
+  as well as standalone Windows SDK releases 6.0 to 7.1.
+  64-bit PostgreSQL builds are supported with
+  <productname>Microsoft Windows SDK</productname> version 6.0a to 7.1 or
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
   <productname>Visual Studio 2008</productname> and above. Compilation
   is supported down to <productname>Windows XP</productname> and
   <productname>Windows Server 2003</> when building with
@@ -97,8 +117,11 @@
   <productname>Visual Studio 2013</productname>. Building with
   <productname>Visual Studio 2015</productname> is supported down to
   <productname>Windows Vista</> and <productname>Windows Server 2008</>.
+<<<<<<< HEAD
    Building with <productname>Visual Studio 2017</productname> is supported
    down to <productname>Windows 7 SP1</> and <productname>Windows Server 2008 R2 SP1</>.
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  </para>
 
  <para>
@@ -246,10 +269,10 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
 
      <note>
        <para>
-       The obsolete "winflex" binaries distributed on the PostgreSQL FTP site
-       and referenced in older documentation will fail with "flex: fatal
-       internal error, exec failed" on 64-bit Windows hosts. Use flex from
-       msys instead.
+       The obsolete <literal>winflex</literal> binaries distributed on the PostgreSQL FTP site
+       and referenced in older documentation will fail with <quote>flex: fatal
+       internal error, exec failed</quote> on 64-bit Windows hosts. Use Flex from
+       MSYS instead.
        </para>
      </note>
      </listitem>
@@ -446,6 +469,10 @@ $ENV{CONFIG}="Debug";
 <userinput>vcregress ecpgcheck</userinput>
 <userinput>vcregress isolationcheck</userinput>
 <userinput>vcregress bincheck</userinput>
+<<<<<<< HEAD
+=======
+<userinput>vcregress recoverycheck</userinput>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 <userinput>vcregress upgradecheck</userinput>
 </screen>
 
@@ -460,8 +487,15 @@ $ENV{CONFIG}="Debug";
   </para>
 
   <para>
+<<<<<<< HEAD
    Running the regression tests on client programs, with "vcregress bincheck",
    requires an additional Perl module to be installed:
+=======
+   Running the regression tests on client programs, with
+   <command>vcregress bincheck</>, or on recovery tests, with
+   <command>vcregress recoverycheck</>, requires an additional Perl module
+   to be installed:
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
    <variablelist>
     <varlistentry>
      <term><productname>IPC::Run</productname></term>
@@ -470,7 +504,11 @@ $ENV{CONFIG}="Debug";
       ActiveState Perl installation, nor in the ActiveState Perl Package
       Manager (PPM) library. To install, download the
       <filename>IPC-Run-&lt;version&gt;.tar.gz</> source archive from CPAN,
+<<<<<<< HEAD
       at <ulink url="https://metacpan.org/release/IPC-Run/"></>, and
+=======
+      at <ulink url="http://search.cpan.org/dist/IPC-Run/"></>, and
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
       uncompress. Edit the <filename>buildenv.pl</> file, and add a PERL5LIB
       variable to point to the <filename>lib</> subdirectory from the
       extracted archive. For example:

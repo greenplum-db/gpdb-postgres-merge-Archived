@@ -464,7 +464,16 @@ DROP TABLE tmp2;
 -- NOT VALID with plan invalidation -- ensure we don't use a constraint for
 -- exclusion until validated
 set constraint_exclusion TO 'partition';
-create table nv_parent (d date);
+create table nv_parent (d date, check (false) no inherit not valid);
+-- not valid constraint added at creation time should automatically become valid
+\d nv_parent
+ Table "public.nv_parent"
+ Column | Type | Modifiers 
+--------+------+-----------
+ d      | date | 
+Check constraints:
+    "nv_parent_check" CHECK (false) NO INHERIT
+
 create table nv_child_2010 () inherits (nv_parent);
 create table nv_child_2011 () inherits (nv_parent);
 alter table nv_child_2010 add check (d between '2010-01-01'::date and '2010-12-31'::date) not valid;
@@ -541,7 +550,10 @@ Check constraints:
     "nv_child_2009_d_check" CHECK (d >= '01-01-2009'::date AND d <= '12-31-2009'::date)
     "nv_parent_d_check" CHECK (d >= '01-01-2001'::date AND d <= '12-31-2099'::date) NOT VALID
 Inherits: nv_parent
+<<<<<<< HEAD
 Distributed by: (d)
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- we leave nv_parent and children around to help test pg_dump logic
 -- Foreign key adding test with mixed types
@@ -703,7 +715,7 @@ create table atacc1 ( test int );
 -- add a check constraint (fails)
 alter table atacc1 add constraint atacc_test1 check (test1>3);
 ERROR:  column "test1" does not exist
-HINT:  Perhaps you meant to reference the column "atacc1"."test".
+HINT:  Perhaps you meant to reference the column "atacc1.test".
 drop table atacc1;
 -- something a little more complicated
 create table atacc1 ( test int, test2 int, test3 int);
@@ -1436,6 +1448,27 @@ select * from child;
 
 drop table child;
 drop table parent;
+-- check error cases for inheritance column merging
+create table parent (a float8, b numeric(10,4), c text collate "C");
+create table child (a float4) inherits (parent); -- fail
+NOTICE:  merging column "a" with inherited definition
+ERROR:  column "a" has a type conflict
+DETAIL:  double precision versus real
+create table child (b decimal(10,7)) inherits (parent); -- fail
+NOTICE:  moving and merging column "b" with inherited definition
+DETAIL:  User-specified column moved to the position of the inherited column.
+ERROR:  column "b" has a type conflict
+DETAIL:  numeric(10,4) versus numeric(10,7)
+create table child (c text collate "POSIX") inherits (parent); -- fail
+NOTICE:  moving and merging column "c" with inherited definition
+DETAIL:  User-specified column moved to the position of the inherited column.
+ERROR:  column "c" has a collation conflict
+DETAIL:  "C" versus "POSIX"
+create table child (a double precision, b decimal(10,4)) inherits (parent);
+NOTICE:  merging column "a" with inherited definition
+NOTICE:  merging column "b" with inherited definition
+drop table child;
+drop table parent;
 -- test copy in/out
 create table alter_table_test (a int4, b int4, c int4);
 insert into alter_table_test values (1,2,3);
@@ -1544,7 +1577,7 @@ select f1 from c1;
 ERROR:  column "f1" does not exist
 LINE 1: select f1 from c1;
                ^
-HINT:  Perhaps you meant to reference the column "c1"."f2".
+HINT:  Perhaps you meant to reference the column "c1.f2".
 drop table p1 cascade;
 NOTICE:  drop cascades to table c1
 create table p1 (f1 int, f2 int);
@@ -1561,7 +1594,7 @@ select f1 from c1;
 ERROR:  column "f1" does not exist
 LINE 1: select f1 from c1;
                ^
-HINT:  Perhaps you meant to reference the column "c1"."f2".
+HINT:  Perhaps you meant to reference the column "c1.f2".
 drop table p1 cascade;
 NOTICE:  drop cascades to table c1
 create table p1 (f1 int, f2 int);
@@ -2037,7 +2070,10 @@ CREATE TABLE test_inh_check_child() INHERITS(test_inh_check);
 Check constraints:
     "test_inh_check_a_check" CHECK (a > 10.2::double precision)
 Number of child tables: 1 (Use \d+ to list them.)
+<<<<<<< HEAD
 Distributed by: (a)
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 \d test_inh_check_child
   Table "public.test_inh_check_child"
@@ -2048,7 +2084,10 @@ Distributed by: (a)
 Check constraints:
     "test_inh_check_a_check" CHECK (a > 10.2::double precision)
 Inherits: test_inh_check
+<<<<<<< HEAD
 Distributed by: (a)
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select relname, conname, coninhcount, conislocal, connoinherit
   from pg_constraint c, pg_class r
@@ -2070,7 +2109,10 @@ ALTER TABLE test_inh_check ALTER COLUMN a TYPE numeric;
 Check constraints:
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Number of child tables: 1 (Use \d+ to list them.)
+<<<<<<< HEAD
 Distributed by: (a)
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 \d test_inh_check_child
   Table "public.test_inh_check_child"
@@ -2081,7 +2123,10 @@ Distributed by: (a)
 Check constraints:
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Inherits: test_inh_check
+<<<<<<< HEAD
 Distributed by: (a)
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select relname, conname, coninhcount, conislocal, connoinherit
   from pg_constraint c, pg_class r
@@ -2110,7 +2155,10 @@ Check constraints:
     "bnoinherit" CHECK (b > 100::double precision) NO INHERIT
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Number of child tables: 1 (Use \d+ to list them.)
+<<<<<<< HEAD
 Distributed by: (a)
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 \d test_inh_check_child
   Table "public.test_inh_check_child"
@@ -2123,7 +2171,10 @@ Check constraints:
     "bmerged" CHECK (b > 1::double precision)
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Inherits: test_inh_check
+<<<<<<< HEAD
 Distributed by: (a)
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select relname, conname, coninhcount, conislocal, connoinherit
   from pg_constraint c, pg_class r
@@ -2166,6 +2217,20 @@ Check constraints:
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Inherits: test_inh_check
 Distributed by: (a)
+
+select relname, conname, coninhcount, conislocal, connoinherit
+  from pg_constraint c, pg_class r
+  where relname like 'test_inh_check%' and c.conrelid = r.oid
+  order by 1, 2;
+       relname        |        conname         | coninhcount | conislocal | connoinherit 
+----------------------+------------------------+-------------+------------+--------------
+ test_inh_check       | bmerged                |           0 | t          | f
+ test_inh_check       | bnoinherit             |           0 | t          | t
+ test_inh_check       | test_inh_check_a_check |           0 | t          | f
+ test_inh_check_child | blocal                 |           0 | t          | f
+ test_inh_check_child | bmerged                |           1 | t          | f
+ test_inh_check_child | test_inh_check_a_check |           1 | f          | f
+(6 rows)
 
 select relname, conname, coninhcount, conislocal, connoinherit
   from pg_constraint c, pg_class r
@@ -2352,39 +2417,39 @@ select * from my_locks order by 1;
 commit;
 begin; alter table alterlock set (fillfactor = 100);
 select * from my_locks order by 1;
-  relname  |    max_lockmode     
------------+---------------------
- alterlock | AccessExclusiveLock
- pg_toast  | AccessExclusiveLock
+  relname  |       max_lockmode       
+-----------+--------------------------
+ alterlock | ShareUpdateExclusiveLock
+ pg_toast  | ShareUpdateExclusiveLock
 (2 rows)
 
 commit;
 begin; alter table alterlock reset (fillfactor);
 select * from my_locks order by 1;
-  relname  |    max_lockmode     
------------+---------------------
- alterlock | AccessExclusiveLock
- pg_toast  | AccessExclusiveLock
+  relname  |       max_lockmode       
+-----------+--------------------------
+ alterlock | ShareUpdateExclusiveLock
+ pg_toast  | ShareUpdateExclusiveLock
 (2 rows)
 
 commit;
 begin; alter table alterlock set (toast.autovacuum_enabled = off);
 WARNING:  autovacuum is not supported in Greenplum
 select * from my_locks order by 1;
-  relname  |    max_lockmode     
------------+---------------------
- alterlock | AccessExclusiveLock
- pg_toast  | AccessExclusiveLock
+  relname  |       max_lockmode       
+-----------+--------------------------
+ alterlock | ShareUpdateExclusiveLock
+ pg_toast  | ShareUpdateExclusiveLock
 (2 rows)
 
 commit;
 begin; alter table alterlock set (autovacuum_enabled = off);
 WARNING:  autovacuum is not supported in Greenplum
 select * from my_locks order by 1;
-  relname  |    max_lockmode     
------------+---------------------
- alterlock | AccessExclusiveLock
- pg_toast  | AccessExclusiveLock
+  relname  |       max_lockmode       
+-----------+--------------------------
+ alterlock | ShareUpdateExclusiveLock
+ pg_toast  | ShareUpdateExclusiveLock
 (2 rows)
 
 commit;
@@ -2396,6 +2461,16 @@ select * from my_locks order by 1;
 (1 row)
 
 rollback;
+-- test that mixing options with different lock levels works as expected
+begin; alter table alterlock set (autovacuum_enabled = off, fillfactor = 80);
+select * from my_locks order by 1;
+  relname  |       max_lockmode       
+-----------+--------------------------
+ alterlock | ShareUpdateExclusiveLock
+ pg_toast  | ShareUpdateExclusiveLock
+(2 rows)
+
+commit;
 begin; alter table alterlock alter column f2 set storage extended;
 select * from my_locks order by 1;
   relname  |    max_lockmode     
@@ -2462,6 +2537,47 @@ select * from my_locks order by 1;
 (1 row)
 
 rollback;
+create or replace view my_locks as
+select case when c.relname like 'pg_toast%' then 'pg_toast' else c.relname end, max(mode::lockmodes) as max_lockmode
+from pg_locks l join pg_class c on l.relation = c.oid
+where virtualtransaction = (
+        select virtualtransaction
+        from pg_locks
+        where transactionid = txid_current()::integer)
+and locktype = 'relation'
+and relnamespace != (select oid from pg_namespace where nspname = 'pg_catalog')
+and c.relname = 'my_locks'
+group by c.relname;
+-- raise exception
+alter table my_locks set (autovacuum_enabled = false);
+ERROR:  unrecognized parameter "autovacuum_enabled"
+alter view my_locks set (autovacuum_enabled = false);
+ERROR:  unrecognized parameter "autovacuum_enabled"
+alter table my_locks reset (autovacuum_enabled);
+alter view my_locks reset (autovacuum_enabled);
+begin;
+alter view my_locks set (security_barrier=off);
+select * from my_locks order by 1;
+ relname  |    max_lockmode     
+----------+---------------------
+ my_locks | AccessExclusiveLock
+(1 row)
+
+alter view my_locks reset (security_barrier);
+rollback;
+-- this test intentionally applies the ALTER TABLE command against a view, but
+-- uses a view option so we expect this to succeed. This form of SQL is
+-- accepted for historical reasons, as shown in the docs for ALTER VIEW
+begin;
+alter table my_locks set (security_barrier=off);
+select * from my_locks order by 1;
+ relname  |    max_lockmode     
+----------+---------------------
+ my_locks | AccessExclusiveLock
+(1 row)
+
+alter table my_locks reset (security_barrier);
+rollback;
 -- cleanup
 drop table alterlock2;
 drop table alterlock;
@@ -2524,6 +2640,7 @@ create text search template alter1.tmpl(init = dsimple_init, lexize = dsimple_le
 create text search dictionary alter1.dict(template = alter1.tmpl);
 insert into alter1.t1(f2) values(11);
 insert into alter1.t1(f2) values(12);
+alter table alter1.t1 set schema alter1; -- no-op, same schema
 alter table alter1.t1 set schema alter2;
 alter table alter1.v1 set schema alter2;
 alter function alter1.plus1(int) set schema alter2;
@@ -2532,6 +2649,7 @@ alter operator class alter1.ctype_hash_ops using hash set schema alter2;
 alter operator family alter1.ctype_hash_ops using hash set schema alter2;
 alter operator alter1.=(alter1.ctype, alter1.ctype) set schema alter2;
 alter function alter1.same(alter1.ctype, alter1.ctype) set schema alter2;
+alter type alter1.ctype set schema alter1; -- no-op, same schema
 alter type alter1.ctype set schema alter2;
 alter conversion alter1.ascii_to_utf8 set schema alter2;
 alter text search parser alter1.prs set schema alter2;
@@ -2885,6 +3003,69 @@ Distributed by: (f1)
 
 DROP TABLE alter2.tt8;
 DROP SCHEMA alter2;
+-- Check that comments on constraints and indexes are not lost at ALTER TABLE.
+CREATE TABLE comment_test (
+  id int,
+  positive_col int CHECK (positive_col > 0),
+  indexed_col int,
+  CONSTRAINT comment_test_pk PRIMARY KEY (id));
+CREATE INDEX comment_test_index ON comment_test(indexed_col);
+COMMENT ON COLUMN comment_test.id IS 'Column ''id'' on comment_test';
+COMMENT ON INDEX comment_test_index IS 'Simple index on comment_test';
+COMMENT ON CONSTRAINT comment_test_positive_col_check ON comment_test IS 'CHECK constraint on comment_test.positive_col';
+COMMENT ON CONSTRAINT comment_test_pk ON comment_test IS 'PRIMARY KEY constraint of comment_test';
+COMMENT ON INDEX comment_test_pk IS 'Index backing the PRIMARY KEY of comment_test';
+SELECT col_description('comment_test'::regclass, 1) as comment;
+           comment           
+-----------------------------
+ Column 'id' on comment_test
+(1 row)
+
+SELECT indexrelid::regclass::text as index, obj_description(indexrelid, 'pg_class') as comment FROM pg_index where indrelid = 'comment_test'::regclass ORDER BY 1, 2;
+       index        |                    comment                    
+--------------------+-----------------------------------------------
+ comment_test_index | Simple index on comment_test
+ comment_test_pk    | Index backing the PRIMARY KEY of comment_test
+(2 rows)
+
+SELECT conname as constraint, obj_description(oid, 'pg_constraint') as comment FROM pg_constraint where conrelid = 'comment_test'::regclass ORDER BY 1, 2;
+           constraint            |                    comment                    
+---------------------------------+-----------------------------------------------
+ comment_test_pk                 | PRIMARY KEY constraint of comment_test
+ comment_test_positive_col_check | CHECK constraint on comment_test.positive_col
+(2 rows)
+
+-- Change the datatype of all the columns. ALTER TABLE is optimized to not
+-- rebuild an index if the new data type is binary compatible with the old
+-- one. Check do a dummy ALTER TABLE that doesn't change the datatype
+-- first, to test that no-op codepath, and another one that does.
+ALTER TABLE comment_test ALTER COLUMN indexed_col SET DATA TYPE int;
+ALTER TABLE comment_test ALTER COLUMN indexed_col SET DATA TYPE text;
+ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE int;
+ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE text;
+ALTER TABLE comment_test ALTER COLUMN positive_col SET DATA TYPE int;
+ALTER TABLE comment_test ALTER COLUMN positive_col SET DATA TYPE bigint;
+-- Check that the comments are intact.
+SELECT col_description('comment_test'::regclass, 1) as comment;
+           comment           
+-----------------------------
+ Column 'id' on comment_test
+(1 row)
+
+SELECT indexrelid::regclass::text as index, obj_description(indexrelid, 'pg_class') as comment FROM pg_index where indrelid = 'comment_test'::regclass ORDER BY 1, 2;
+       index        |                    comment                    
+--------------------+-----------------------------------------------
+ comment_test_index | Simple index on comment_test
+ comment_test_pk    | Index backing the PRIMARY KEY of comment_test
+(2 rows)
+
+SELECT conname as constraint, obj_description(oid, 'pg_constraint') as comment FROM pg_constraint where conrelid = 'comment_test'::regclass ORDER BY 1, 2;
+           constraint            |                    comment                    
+---------------------------------+-----------------------------------------------
+ comment_test_pk                 | PRIMARY KEY constraint of comment_test
+ comment_test_positive_col_check | CHECK constraint on comment_test.positive_col
+(2 rows)
+
 -- Check that we map relation oids to filenodes and back correctly.  Only
 -- display bad mappings so the test output doesn't change all the time.  A
 -- filenode function call can return NULL for a relation dropped concurrently
@@ -2924,9 +3105,8 @@ ALTER TABLE new_system_table SET SCHEMA pg_catalog;
 -- XXX: it's currently impossible to move relations out of pg_catalog
 ALTER TABLE new_system_table SET SCHEMA public;
 ERROR:  cannot remove dependency on schema pg_catalog because it is a system object
--- move back, will currently error out, already there
+-- move back, will be ignored -- already there
 ALTER TABLE new_system_table SET SCHEMA pg_catalog;
-ERROR:  table new_system_table is already in schema "pg_catalog"
 ALTER TABLE new_system_table RENAME TO old_system_table;
 CREATE INDEX old_system_table__othercol ON old_system_table (othercol);
 INSERT INTO old_system_table(othercol) VALUES ('somedata'), ('otherdata');
@@ -2958,8 +3138,7 @@ CREATE UNLOGGED TABLE unlogged2(f1 SERIAL PRIMARY KEY, f2 INTEGER REFERENCES unl
 CREATE UNLOGGED TABLE unlogged3(f1 SERIAL PRIMARY KEY, f2 INTEGER REFERENCES unlogged3); -- self-referencing foreign key
 ALTER TABLE unlogged3 SET LOGGED; -- skip self-referencing foreign key
 ALTER TABLE unlogged2 SET LOGGED; -- fails because a foreign key to an unlogged table exists
-ERROR:  cannot change status of table unlogged2 to logged
-DETAIL:  Table unlogged2 references unlogged table unlogged1.
+ERROR:  could not change table "unlogged2" to logged because it references unlogged table "unlogged1"
 ALTER TABLE unlogged1 SET LOGGED;
 -- check relpersistence of an unlogged table after changing to permament
 SELECT relname, relkind, relpersistence FROM pg_class WHERE relname ~ '^unlogged1'
@@ -3002,8 +3181,7 @@ ORDER BY relname;
 CREATE TABLE logged2(f1 SERIAL PRIMARY KEY, f2 INTEGER REFERENCES logged1); -- foreign key
 CREATE TABLE logged3(f1 SERIAL PRIMARY KEY, f2 INTEGER REFERENCES logged3); -- self-referencing foreign key
 ALTER TABLE logged1 SET UNLOGGED; -- fails because a foreign key from a permanent table exists
-ERROR:  cannot change status of table logged1 to unlogged
-DETAIL:  Logged table logged2 is referenced by table logged1.
+ERROR:  could not change table "logged1" to unlogged because it references logged table "logged2"
 ALTER TABLE logged3 SET UNLOGGED; -- skip self-referencing foreign key
 ALTER TABLE logged2 SET UNLOGGED;
 ALTER TABLE logged1 SET UNLOGGED;
@@ -3027,6 +3205,7 @@ ALTER TABLE logged1 SET UNLOGGED; -- silently do nothing
 DROP TABLE logged3;
 DROP TABLE logged2;
 DROP TABLE logged1;
+<<<<<<< HEAD
 --
 -- Test for splitting after dropping a column
 --
@@ -3081,3 +3260,94 @@ SELECT * FROM test_part WHERE field2 IN (SELECT field1 FROM test_ref) ORDER BY 1
 
 DROP TABLE test_ref;
 DROP TABLE test_part;
+=======
+-- test ADD COLUMN IF NOT EXISTS
+CREATE TABLE test_add_column(c1 integer);
+\d test_add_column
+Table "public.test_add_column"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ c1     | integer | 
+
+ALTER TABLE test_add_column
+	ADD COLUMN c2 integer;
+\d test_add_column
+Table "public.test_add_column"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ c1     | integer | 
+ c2     | integer | 
+
+ALTER TABLE test_add_column
+	ADD COLUMN c2 integer; -- fail because c2 already exists
+ERROR:  column "c2" of relation "test_add_column" already exists
+\d test_add_column
+Table "public.test_add_column"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ c1     | integer | 
+ c2     | integer | 
+
+ALTER TABLE test_add_column
+	ADD COLUMN IF NOT EXISTS c2 integer; -- skipping because c2 already exists
+NOTICE:  column "c2" of relation "test_add_column" already exists, skipping
+\d test_add_column
+Table "public.test_add_column"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ c1     | integer | 
+ c2     | integer | 
+
+ALTER TABLE test_add_column
+	ADD COLUMN c2 integer, -- fail because c2 already exists
+	ADD COLUMN c3 integer;
+ERROR:  column "c2" of relation "test_add_column" already exists
+\d test_add_column
+Table "public.test_add_column"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ c1     | integer | 
+ c2     | integer | 
+
+ALTER TABLE test_add_column
+	ADD COLUMN IF NOT EXISTS c2 integer, -- skipping because c2 already exists
+	ADD COLUMN c3 integer; -- fail because c3 already exists
+NOTICE:  column "c2" of relation "test_add_column" already exists, skipping
+\d test_add_column
+Table "public.test_add_column"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ c1     | integer | 
+ c2     | integer | 
+ c3     | integer | 
+
+ALTER TABLE test_add_column
+	ADD COLUMN IF NOT EXISTS c2 integer, -- skipping because c2 already exists
+	ADD COLUMN IF NOT EXISTS c3 integer; -- skipping because c3 already exists
+NOTICE:  column "c2" of relation "test_add_column" already exists, skipping
+NOTICE:  column "c3" of relation "test_add_column" already exists, skipping
+\d test_add_column
+Table "public.test_add_column"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ c1     | integer | 
+ c2     | integer | 
+ c3     | integer | 
+
+ALTER TABLE test_add_column
+	ADD COLUMN IF NOT EXISTS c2 integer, -- skipping because c2 already exists
+	ADD COLUMN IF NOT EXISTS c3 integer, -- skipping because c3 already exists
+	ADD COLUMN c4 integer;
+NOTICE:  column "c2" of relation "test_add_column" already exists, skipping
+NOTICE:  column "c3" of relation "test_add_column" already exists, skipping
+\d test_add_column
+Table "public.test_add_column"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ c1     | integer | 
+ c2     | integer | 
+ c3     | integer | 
+ c4     | integer | 
+
+DROP TABLE test_add_column;
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

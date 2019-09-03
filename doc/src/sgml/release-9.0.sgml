@@ -4,10 +4,17 @@
  <sect1 id="release-9-0-23">
   <title>Release 9.0.23</title>
 
+<<<<<<< HEAD
   <formalpara>
   <title>Release date:</title>
   <para>2015-10-08</para>
   </formalpara>
+=======
+  <note>
+  <title>Release Date</title>
+  <simpara>2015-10-08</simpara>
+  </note>
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   <para>
    This release contains a variety of fixes from 9.0.22.

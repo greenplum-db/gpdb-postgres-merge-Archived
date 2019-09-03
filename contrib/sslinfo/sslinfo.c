@@ -382,6 +382,10 @@ ssl_issuer_dn(PG_FUNCTION_ARGS)
 	return X509_NAME_to_text(X509_get_issuer_name(MyProcPort->peer));
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 /*
  * Returns information about available SSL extensions.
  *
@@ -401,6 +405,11 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 	SSLExtensionInfoContext *fctx;
 
+<<<<<<< HEAD
+=======
+	STACK_OF(X509_EXTENSION) *ext_stack = NULL;
+
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	if (SRF_IS_FIRSTCALL())
 	{
 
@@ -424,10 +433,23 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 					 errmsg("function returning record called in context that cannot accept type record")));
 		fctx->tupdesc = BlessTupleDesc(tupdesc);
 
+<<<<<<< HEAD
 		/* Set max_calls as a count of extensions in certificate */
 		max_calls = cert != NULL ? X509_get_ext_count(cert) : 0;
 
 		if (max_calls > 0)
+=======
+		/* Get all extensions of certificate */
+		if (cert && cert->cert_info)
+			ext_stack = cert->cert_info->extensions;
+
+		/* Set max_calls as a count of extensions in certificate */
+		max_calls = cert != NULL ? X509_get_ext_count(cert) : 0;
+
+		if (cert != NULL &&
+			ext_stack != NULL &&
+			max_calls > 0)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{
 			/* got results, keep track of them */
 			funcctx->max_calls = max_calls;
@@ -453,6 +475,11 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 	max_calls = funcctx->max_calls;
 	fctx = funcctx->user_fctx;
 
+<<<<<<< HEAD
+=======
+	ext_stack = cert->cert_info->extensions;
+
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/* do while there are more left to send */
 	if (call_cntr < max_calls)
 	{
@@ -475,7 +502,11 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 					 errmsg("could not create OpenSSL BIO structure")));
 
 		/* Get the extension from the certificate */
+<<<<<<< HEAD
 		ext = X509_get_ext(cert, call_cntr);
+=======
+		ext = sk_X509_EXTENSION_value(ext_stack, call_cntr);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		obj = X509_EXTENSION_get_object(ext);
 
 		/* Get the extension name */

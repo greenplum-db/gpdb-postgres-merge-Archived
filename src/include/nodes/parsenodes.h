@@ -10,9 +10,13 @@
  * the location.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/parsenodes.h
@@ -152,8 +156,12 @@ typedef struct Query
 	bool		hasRecursive;	/* WITH RECURSIVE was specified */
 	bool		hasModifyingCTE;	/* has INSERT/UPDATE/DELETE in WITH */
 	bool		hasForUpdate;	/* FOR [KEY] UPDATE/SHARE was specified */
+<<<<<<< HEAD
 	bool		hasRowSecurity; /* row security applied? */
 	bool        canOptSelectLockingClause; /* Whether can do some optimization on select with locking clause */
+=======
+	bool		hasRowSecurity; /* rewriter has applied some RLS policy */
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	List	   *cteList;		/* WITH list (of CommonTableExpr's) */
 
@@ -161,8 +169,6 @@ typedef struct Query
 	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */
 
 	List	   *targetList;		/* target list (of TargetEntry) */
-
-	List	   *withCheckOptions;		/* a list of WithCheckOption's */
 
 	OnConflictExpr *onConflict; /* ON CONFLICT DO [NOTHING | UPDATE] */
 
@@ -193,6 +199,7 @@ typedef struct Query
 	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
 								 * depends on to be semantically valid */
 
+<<<<<<< HEAD
 	/*
 	 * MPP: Used only on QD. Don't serialize. Holds the result distribution
 	 * policy for SELECT ... INTO and set operations.
@@ -204,6 +211,12 @@ typedef struct Query
 	 * would always be dispatched in parallel.
 	 */
 	ParentStmtType	parentStmtType;
+=======
+	List	   *withCheckOptions;		/* a list of WithCheckOption's, which
+										 * are only added during rewrite and
+										 * therefore are not written out as
+										 * part of Query. */
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } Query;
 
 /****************************************************************************
@@ -280,6 +293,7 @@ typedef enum A_Expr_Kind
 	AEXPR_OP_ANY,				/* scalar op ANY (array) */
 	AEXPR_OP_ALL,				/* scalar op ALL (array) */
 	AEXPR_DISTINCT,				/* IS DISTINCT FROM - name must be "=" */
+	AEXPR_NOT_DISTINCT,			/* IS NOT DISTINCT FROM - name must be "=" */
 	AEXPR_NULLIF,				/* NULLIF - name must be "=" */
 	AEXPR_OF,					/* IS [NOT] OF - name must be "=" or "<>" */
 	AEXPR_IN,					/* [NOT] IN - name must be "=" or "<>" */
@@ -384,26 +398,6 @@ typedef struct FuncCall
 } FuncCall;
 
 /*
- * TableSampleClause - a sampling method information
- */
-typedef struct TableSampleClause
-{
-	NodeTag		type;
-	Oid			tsmid;
-	bool		tsmseqscan;
-	bool		tsmpagemode;
-	Oid			tsminit;
-	Oid			tsmnextblock;
-	Oid			tsmnexttuple;
-	Oid			tsmexaminetuple;
-	Oid			tsmend;
-	Oid			tsmreset;
-	Oid			tsmcost;
-	Node	   *repeatable;
-	List	   *args;
-} TableSampleClause;
-
-/*
  * A_Star - '*' representing all columns of a table or compound field
  *
  * This can appear within ColumnRef.fields, A_Indirection.indirection, and
@@ -415,13 +409,17 @@ typedef struct A_Star
 } A_Star;
 
 /*
- * A_Indices - array subscript or slice bounds ([lidx:uidx] or [uidx])
+ * A_Indices - array subscript or slice bounds ([idx] or [lidx:uidx])
+ *
+ * In slice case, either or both of lidx and uidx can be NULL (omitted).
+ * In non-slice case, uidx holds the single subscript and lidx is always NULL.
  */
 typedef struct A_Indices
 {
 	NodeTag		type;
-	Node	   *lidx;			/* NULL if it's a single subscript */
-	Node	   *uidx;
+	bool		is_slice;		/* true if slice (i.e., colon present) */
+	Node	   *lidx;			/* slice lower bound, if any */
+	Node	   *uidx;			/* subscript, or slice upper bound if any */
 } A_Indices;
 
 /*
@@ -604,19 +602,23 @@ typedef struct RangeFunction
 } RangeFunction;
 
 /*
- * RangeTableSample - represents <table> TABLESAMPLE <method> (<params>) REPEATABLE (<num>)
+ * RangeTableSample - TABLESAMPLE appearing in a raw FROM clause
  *
- * SQL Standard specifies only one parameter which is percentage. But we allow
- * custom tablesample methods which may need different input arguments so we
- * accept list of arguments.
+ * This node, appearing only in raw parse trees, represents
+ *		<relation> TABLESAMPLE <method> (<params>) REPEATABLE (<num>)
+ * Currently, the <relation> can only be a RangeVar, but we might in future
+ * allow RangeSubselect and other options.  Note that the RangeTableSample
+ * is wrapped around the node representing the <relation>, rather than being
+ * a subfield of it.
  */
 typedef struct RangeTableSample
 {
 	NodeTag		type;
-	RangeVar   *relation;
-	char	   *method;			/* sampling method */
-	Node	   *repeatable;
-	List	   *args;			/* arguments for sampling method */
+	Node	   *relation;		/* relation to be sampled */
+	List	   *method;			/* sampling method name (possibly qualified) */
+	List	   *args;			/* argument(s) for sampling method */
+	Node	   *repeatable;		/* REPEATABLE expression, or NULL if none */
+	int			location;		/* method name location, or -1 if unknown */
 } RangeTableSample;
 
 /*
@@ -871,7 +873,7 @@ typedef struct RangeTblEntry
 	 */
 	Oid			relid;			/* OID of the relation */
 	char		relkind;		/* relation kind (see pg_class.relkind) */
-	TableSampleClause *tablesample;		/* sampling method and parameters */
+	struct TableSampleClause *tablesample;		/* sampling info, or NULL */
 
 	/*
 	 * Fields valid for a subquery RTE (else NULL):
@@ -997,6 +999,19 @@ typedef struct RangeTblFunction
 } RangeTblFunction;
 
 /*
+ * TableSampleClause - TABLESAMPLE appearing in a transformed FROM clause
+ *
+ * Unlike RangeTableSample, this is a subnode of the relevant RangeTblEntry.
+ */
+typedef struct TableSampleClause
+{
+	NodeTag		type;
+	Oid			tsmhandler;		/* OID of the tablesample handler function */
+	List	   *args;			/* tablesample argument expression(s) */
+	Expr	   *repeatable;		/* REPEATABLE expression, or NULL if none */
+} TableSampleClause;
+
+/*
  * WithCheckOption -
  *		representation of WITH CHECK OPTION checks to be applied to new tuples
  *		when inserting/updating an auto-updatable view, or RLS WITH CHECK
@@ -1015,6 +1030,7 @@ typedef struct WithCheckOption
 	NodeTag		type;
 	WCOKind		kind;			/* kind of WCO */
 	char	   *relname;		/* name of relation that specified the WCO */
+	char	   *polname;		/* name of RLS policy being checked */
 	Node	   *qual;			/* constraint qual to check */
 	bool		cascaded;		/* true for a cascaded WCO on a view */
 } WithCheckOption;
@@ -1475,6 +1491,7 @@ typedef struct SetOperationStmt
 
 typedef enum ObjectType
 {
+	OBJECT_ACCESS_METHOD,
 	OBJECT_AGGREGATE,
 	OBJECT_AMOP,
 	OBJECT_AMPROC,
@@ -1599,6 +1616,7 @@ typedef enum AlterTableType
 	AT_AddIndexConstraint,		/* add constraint using existing index */
 	AT_DropConstraint,			/* drop constraint */
 	AT_DropConstraintRecurse,	/* internal to commands/tablecmds.c */
+	AT_ReAddComment,			/* internal to commands/tablecmds.c */
 	AT_AlterColumnType,			/* alter column type */
 	AT_AlterColumnGenericOptions,		/* alter column OPTIONS (...) */
 	AT_ChangeOwner,				/* change owner */
@@ -1632,6 +1650,7 @@ typedef enum AlterTableType
 	AT_ReplicaIdentity,			/* REPLICA IDENTITY */
 	AT_EnableRowSecurity,		/* ENABLE ROW SECURITY */
 	AT_DisableRowSecurity,		/* DISABLE ROW SECURITY */
+<<<<<<< HEAD
 	AT_GenericOptions,			/* OPTIONS (...) */
 	AT_SetDistributedBy,		/* SET DISTRIBUTED BY */
 	AT_ExpandTable,          /* EXPAND DISTRIBUTED */
@@ -1647,6 +1666,11 @@ typedef enum AlterTableType
 	AT_PartTruncate,			/* Truncate */
 	AT_PartAddInternal,			/* CREATE TABLE time partition addition */
 	AT_PartAttachIndex			/* ALTER INDEX ATTACH PARTITION (not exposed to user) */
+=======
+	AT_ForceRowSecurity,		/* FORCE ROW SECURITY */
+	AT_NoForceRowSecurity,		/* NO FORCE ROW SECURITY */
+	AT_GenericOptions			/* OPTIONS (...) */
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } AlterTableType;
 
 typedef struct ReplicaIdentityStmt
@@ -1873,7 +1897,8 @@ typedef struct CopyStmt
 {
 	NodeTag		type;
 	RangeVar   *relation;		/* the relation to copy */
-	Node	   *query;			/* the SELECT query to copy */
+	Node	   *query;			/* the query (SELECT or DML statement with
+								 * RETURNING) to copy */
 	List	   *attlist;		/* List of column names (as Strings), or NIL
 								 * for all columns */
 	bool		is_from;		/* TO or FROM */
@@ -2437,7 +2462,7 @@ typedef struct CreatePolicyStmt
 	NodeTag		type;
 	char	   *policy_name;	/* Policy's name */
 	RangeVar   *table;			/* the table name the policy applies to */
-	char	   *cmd;			/* the command name the policy applies to */
+	char	   *cmd_name;		/* the command name the policy applies to */
 	List	   *roles;			/* the roles associated with the policy */
 	Node	   *qual;			/* the policy's condition */
 	Node	   *with_check;		/* the policy's WITH CHECK condition. */
@@ -2456,6 +2481,18 @@ typedef struct AlterPolicyStmt
 	Node	   *qual;			/* the policy's condition */
 	Node	   *with_check;		/* the policy's WITH CHECK condition. */
 } AlterPolicyStmt;
+
+/*----------------------
+ *		Create ACCESS METHOD Statement
+ *----------------------
+ */
+typedef struct CreateAmStmt
+{
+	NodeTag		type;
+	char	   *amname;			/* access method name */
+	List	   *handler_name;	/* handler function name */
+	char		amtype;			/* type of access method */
+} CreateAmStmt;
 
 /* ----------------------
  *		Create TRIGGER Statement
@@ -2816,6 +2853,7 @@ typedef struct SecLabelStmt
 #define CURSOR_OPT_FAST_PLAN	0x0020	/* prefer fast-start plan */
 #define CURSOR_OPT_GENERIC_PLAN 0x0040	/* force use of generic plan */
 #define CURSOR_OPT_CUSTOM_PLAN	0x0080	/* force use of custom plan */
+#define CURSOR_OPT_PARALLEL_OK	0x0100	/* parallel mode OK */
 
 /*
  * This is used to request the planner to create a plan that's updatable with
@@ -2991,13 +3029,27 @@ typedef struct RenameStmt
 } RenameStmt;
 
 /* ----------------------
+ * ALTER object DEPENDS ON EXTENSION extname
+ * ----------------------
+ */
+typedef struct AlterObjectDependsStmt
+{
+	NodeTag		type;
+	ObjectType	objectType;		/* OBJECT_FUNCTION, OBJECT_TRIGGER, etc */
+	RangeVar   *relation;		/* in case a table is involved */
+	List	   *objname;		/* name of the object */
+	List	   *objargs;		/* argument types, if applicable */
+	Value	   *extname;		/* extension name */
+} AlterObjectDependsStmt;
+
+/* ----------------------
  *		ALTER object SET SCHEMA Statement
  * ----------------------
  */
 typedef struct AlterObjectSchemaStmt
 {
 	NodeTag		type;
-	ObjectType objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
+	ObjectType	objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
 	RangeVar   *relation;		/* in case it's a table */
 	List	   *object;			/* in case it's some other object */
 	List	   *objarg;			/* argument types, if applicable */
@@ -3012,7 +3064,7 @@ typedef struct AlterObjectSchemaStmt
 typedef struct AlterOwnerStmt
 {
 	NodeTag		type;
-	ObjectType objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
+	ObjectType	objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
 	RangeVar   *relation;		/* in case it's a table */
 	List	   *object;			/* in case it's some other object */
 	List	   *objarg;			/* argument types, if applicable */
@@ -3029,6 +3081,19 @@ typedef struct AlterTypeStmt
 	List	   *typeName;
 	List	   *encoding;
 } AlterTypeStmt;
+
+/* ----------------------
+ *		Alter Operator Set Restrict, Join
+ * ----------------------
+ */
+typedef struct AlterOperatorStmt
+{
+	NodeTag		type;
+	List	   *opername;		/* operator name */
+	List	   *operargs;		/* operator's argument TypeNames */
+	List	   *options;		/* List of DefElem nodes */
+} AlterOperatorStmt;
+
 
 /* ----------------------
  *		Create Rule Statement
@@ -3261,8 +3326,12 @@ typedef enum VacuumOption
 	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
 	VACOPT_NOWAIT = 1 << 5,		/* don't wait to get lock (autovacuum only) */
 	VACOPT_SKIPTOAST = 1 << 6,	/* don't process the TOAST table, if any */
+<<<<<<< HEAD
 	VACOPT_ROOTONLY = 1 << 7,	/* only ANALYZE root partition tables */
 	VACOPT_FULLSCAN = 1 << 8	/* ANALYZE using full table scan */
+=======
+	VACOPT_DISABLE_PAGE_SKIPPING = 1 << 7		/* don't skip any pages */
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } VacuumOption;
 
 typedef enum AOVacuumPhase

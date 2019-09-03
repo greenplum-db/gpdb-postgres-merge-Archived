@@ -30,6 +30,7 @@ AQTT    Asia/Aqtau  # Aqtau Time (obsolete)
 #  - AST: Antigua Standard Time (America) same offset as Atlantic Standard Time
 #  - AST: Antilles Standard Time (America) same offset as Atlantic Standard Time
 #  - AST: Al Manamah Standard Time (Asia) same offset as Arabia Standard Time
+<<<<<<< HEAD
 AST     10800    # Arabia Standard Time (obsolete)
 AZST    Asia/Baku  # Azerbaijan Summer Time (obsolete)
 AZT     Asia/Baku  # Azerbaijan Time (obsolete)
@@ -40,6 +41,30 @@ BTT     21600    # Bhutan Time (obsolete)
 CCT     28800    # China Coastal Time (not in IANA database)
 CHOST   Asia/Choibalsan  # Choibalsan Summer Time (obsolete)
 CHOT    Asia/Choibalsan  # Choibalsan Time (obsolete)
+=======
+AST     10800    # Arabia Standard Time
+                 #     (Asia/Aden)
+                 #     (Asia/Baghdad)
+                 #     (Asia/Bahrain)
+                 #     (Asia/Kuwait)
+                 #     (Asia/Qatar)
+                 #     (Asia/Riyadh)
+AZST    Asia/Baku  # Azerbaijan Summer Time (obsolete)
+AZT     Asia/Baku  # Azerbaijan Time
+                 #     (Asia/Baku)
+BDT     21600    # Bangladesh Time
+                 #     (Asia/Dhaka)
+BNT     28800    # Brunei Darussalam Time
+                 #     (Asia/Brunei)
+BORT    28800    # Borneo Time (Indonesia) (not in zic)
+BTT     21600    # Bhutan Time
+                 #     (Asia/Thimphu)
+CCT     28800    # China Coastal Time (not in zic)
+CHOST   Asia/Choibalsan  # Choibalsan Summer Time
+                 #     (Asia/Choibalsan)
+CHOT    Asia/Choibalsan  # Choibalsan Time
+                 #     (Asia/Choibalsan)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 CIT     28800    # Central Indonesia Time (obsolete, WITA is now preferred)
 # CONFLICT! CST is not unique
 # Other timezones:
@@ -135,7 +160,12 @@ KDT     36000 D  # Korean Daylight Time (not in IANA database)
 KGST    21600 D  # Kyrgyzstan Summer Time (obsolete)
 KGT     Asia/Bishkek  # Kyrgyzstan Time (obsolete)
 KRAST   Asia/Krasnoyarsk  # Krasnoyarsk Summer Time (obsolete)
+<<<<<<< HEAD
 KRAT    Asia/Krasnoyarsk  # Krasnoyarsk Time (obsolete)
+=======
+KRAT    Asia/Krasnoyarsk  # Krasnoyarsk Time
+                 #     (Asia/Krasnoyarsk)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 KST     Asia/Pyongyang    # Korean Standard Time
                  #     (Asia/Pyongyang)
 KST     32400    # Korean Standard Time
@@ -147,9 +177,17 @@ MMT     23400    # Myanmar Time (obsolete)
 MYT     28800    # Malaysia Time (obsolete)
 NOVST   Asia/Novosibirsk  # Novosibirsk Summer Time (obsolete)
 NOVT    Asia/Novosibirsk  # Novosibirsk Time (obsolete)
+<<<<<<< HEAD
 NPT     20700    # Nepal Time (obsolete)
 OMSST   Asia/Omsk  # Omsk Summer Time (obsolete)
 OMST    Asia/Omsk  # Omsk Time (obsolete)
+=======
+NPT     20700    # Nepal Time
+                 #     (Asia/Katmandu)
+OMSST   Asia/Omsk  # Omsk Summer Time (obsolete)
+OMST    Asia/Omsk  # Omsk Time
+                 #     (Asia/Omsk)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 ORAT    Asia/Oral  # Oral Time (obsolete)
 PETST   Asia/Kamchatka  # Petropavlovsk-Kamchatski Summer Time (obsolete)
 PETT    Asia/Kamchatka  # Petropavlovsk-Kamchatski Time (obsolete)
@@ -158,10 +196,13 @@ PKT     18000    # Pakistan Time
                  #     (Asia/Karachi)
 PKST    21600 D  # Pakistan Summer Time
                  #     (Asia/Karachi)
+<<<<<<< HEAD
 # CONFLICT! PST is not unique
 # Other timezones:
 #  - PST: Pacific Standard Time (America)
 PST     28800    # Philippine Standard Time
+=======
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 QYZT    21600    # Kizilorda Time (obsolete)
 SAKST   Asia/Sakhalin  # Sakhalin Summer Time (obsolete)
 SAKT    Asia/Sakhalin  # Sakhalin Time (obsolete)

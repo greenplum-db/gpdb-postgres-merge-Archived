@@ -2,7 +2,7 @@
 #
 # Makefile for ecpg library
 #
-# Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/interfaces/ecpg/ecpglib/Makefile
@@ -16,7 +16,7 @@ include $(top_builddir)/src/Makefile.global
 PGFILEDESC = "ECPG - embedded SQL in C"
 NAME= ecpg
 SO_MAJOR_VERSION= 6
-SO_MINOR_VERSION= 7
+SO_MINOR_VERSION= 8
 
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv -lbz2, $(LIBS))

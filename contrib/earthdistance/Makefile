@@ -3,7 +3,13 @@
 MODULES = earthdistance
 
 EXTENSION = earthdistance
+<<<<<<< HEAD
 DATA = earthdistance--1.0.sql earthdistance--unpackaged--1.0.sql
+=======
+DATA = earthdistance--1.1.sql earthdistance--1.0--1.1.sql \
+	earthdistance--unpackaged--1.0.sql
+PGFILEDESC = "earthdistance - calculate distances on the surface of the Earth"
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 REGRESS = earthdistance
 REGRESS_OPTS = --extra-install=contrib/cube

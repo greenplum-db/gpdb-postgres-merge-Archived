@@ -5,7 +5,7 @@
  *	  clients and standalone backends are supported here).
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -26,9 +26,9 @@
 
 static void printtup_startup(DestReceiver *self, int operation,
 				 TupleDesc typeinfo);
-static void printtup(TupleTableSlot *slot, DestReceiver *self);
-static void printtup_20(TupleTableSlot *slot, DestReceiver *self);
-static void printtup_internal_20(TupleTableSlot *slot, DestReceiver *self);
+static bool printtup(TupleTableSlot *slot, DestReceiver *self);
+static bool printtup_20(TupleTableSlot *slot, DestReceiver *self);
+static bool printtup_internal_20(TupleTableSlot *slot, DestReceiver *self);
 static void printtup_shutdown(DestReceiver *self);
 static void printtup_destroy(DestReceiver *self);
 
@@ -299,7 +299,7 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
  *		printtup --- print a tuple in protocol 3.0
  * ----------------
  */
-static void
+static bool
 printtup(TupleTableSlot *slot, DestReceiver *self)
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
@@ -591,13 +591,15 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 	/* Return to caller's context, and flush row's temporary memory */
 	MemoryContextSwitchTo(oldcontext);
 	MemoryContextReset(myState->tmpcontext);
+
+	return true;
 }
 
 /* ----------------
  *		printtup_20 --- print a tuple in protocol 2.0
  * ----------------
  */
-static void
+static bool
 printtup_20(TupleTableSlot *slot, DestReceiver *self)
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
@@ -671,6 +673,8 @@ printtup_20(TupleTableSlot *slot, DestReceiver *self)
 	/* Return to caller's context, and flush row's temporary memory */
 	MemoryContextSwitchTo(oldcontext);
 	MemoryContextReset(myState->tmpcontext);
+
+	return true;
 }
 
 /* ----------------
@@ -747,8 +751,13 @@ debugStartup(DestReceiver *self pg_attribute_unused(), int operation pg_attribut
  *		debugtup - print one tuple for an interactive backend
  * ----------------
  */
+<<<<<<< HEAD
 void
 debugtup(TupleTableSlot *slot, DestReceiver *self pg_attribute_unused())
+=======
+bool
+debugtup(TupleTableSlot *slot, DestReceiver *self)
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	int			natts = typeinfo->natts;
@@ -772,6 +781,8 @@ debugtup(TupleTableSlot *slot, DestReceiver *self pg_attribute_unused())
 		printatt((unsigned) i + 1, typeinfo->attrs[i], value);
 	}
 	printf("\t----\n");
+
+	return true;
 }
 
 /* ----------------
@@ -783,7 +794,7 @@ debugtup(TupleTableSlot *slot, DestReceiver *self pg_attribute_unused())
  * This is largely same as printtup_20, except we use binary formatting.
  * ----------------
  */
-static void
+static bool
 printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
@@ -858,4 +869,6 @@ printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
 	/* Return to caller's context, and flush row's temporary memory */
 	MemoryContextSwitchTo(oldcontext);
 	MemoryContextReset(myState->tmpcontext);
+
+	return true;
 }

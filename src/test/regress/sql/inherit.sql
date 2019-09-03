@@ -329,7 +329,7 @@ SELECT a.attrelid::regclass, a.attname, a.attinhcount, e.expected
 DROP TABLE inht1, inhs1 CASCADE;
 
 
--- Test non-inheritable indices [UNIQUE, EXCLUDE] contraints
+-- Test non-inheritable indices [UNIQUE, EXCLUDE] constraints
 CREATE TABLE test_constraints (id int, val1 varchar, val2 int, UNIQUE(val1, val2));
 CREATE TABLE test_constraints_inh () INHERITS (test_constraints);
 \d+ test_constraints
@@ -354,7 +354,7 @@ DROP TABLE test_ex_constraints_inh;
 DROP TABLE test_ex_constraints;
 -- end_ignore
 
--- Test non-inheritable foreign key contraints
+-- Test non-inheritable foreign key constraints
 CREATE TABLE test_primary_constraints(id int PRIMARY KEY);
 CREATE TABLE test_foreign_constraints(id1 int REFERENCES test_primary_constraints(id));
 CREATE TABLE test_foreign_constraints_inh () INHERITS (test_foreign_constraints);
@@ -481,6 +481,27 @@ explain (verbose, costs off) select min(1-id) from matest0;
 select min(1-id) from matest0;
 reset enable_seqscan;
 reset enable_bitmapscan;
+
+drop table matest0 cascade;
+
+--
+-- Check that use of an index with an extraneous column doesn't produce
+-- a plan with extraneous sorting
+--
+
+create table matest0 (a int, b int, c int, d int);
+create table matest1 () inherits(matest0);
+create index matest0i on matest0 (b, c);
+create index matest1i on matest1 (b, c);
+
+set enable_nestloop = off;  -- we want a plan with two MergeAppends
+
+explain (costs off)
+select t1.* from matest0 t1, matest0 t2
+where t1.b = t2.b and t2.c = t2.d
+order by t1.b limit 10;
+
+reset enable_nestloop;
 
 drop table matest0 cascade;
 

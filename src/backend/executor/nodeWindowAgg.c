@@ -23,7 +23,7 @@
  * aggregate function over all rows in the current row's window frame.
  *
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -2767,6 +2767,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 											   numArguments);
 
 	/* build expression trees using actual argument & result types */
+<<<<<<< HEAD
 	build_aggregate_fnexprs(inputTypes,
 							numArguments,
 							0,	/* no ordered-set window functions yet */
@@ -2783,6 +2784,18 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 							&invtransfnexpr,
 							&finalfnexpr,
 							NULL);
+=======
+	build_aggregate_transfn_expr(inputTypes,
+								 numArguments,
+								 0,		/* no ordered-set window functions yet */
+								 false, /* no variadic window functions yet */
+								 wfunc->wintype,
+								 wfunc->inputcollid,
+								 transfn_oid,
+								 invtransfn_oid,
+								 &transfnexpr,
+								 &invtransfnexpr);
+>>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* set up infrastructure for calling the transfn(s) and finalfn */
 	fmgr_info(transfn_oid, &peraggstate->transfn);
@@ -2796,6 +2809,13 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 
 	if (OidIsValid(finalfn_oid))
 	{
+		build_aggregate_finalfn_expr(inputTypes,
+									 peraggstate->numFinalArgs,
+									 aggtranstype,
+									 wfunc->wintype,
+									 wfunc->inputcollid,
+									 finalfn_oid,
+									 &finalfnexpr);
 		fmgr_info(finalfn_oid, &peraggstate->finalfn);
 		fmgr_info_set_expr((Node *) finalfnexpr, &peraggstate->finalfn);
 	}
