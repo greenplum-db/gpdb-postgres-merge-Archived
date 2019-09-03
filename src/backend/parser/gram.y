@@ -6,13 +6,9 @@
  * gram.y
  *	  POSTGRESQL BISON rules/actions
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -486,14 +482,10 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 %type <node>	TableElement TypedTableElement ConstraintElem TableFuncElement
 %type <node>	columnDef columnOptions
-<<<<<<< HEAD
-%type <defelt>	def_elem reloption_elem old_aggr_elem keyvalue_pair
+%type <defelt>	def_elem reloption_elem old_aggr_elem keyvalue_pair operator_def_elem
 %type <node>	ExtTableElement
 %type <node>	ExtcolumnDef
 %type <node>	cdb_string
-=======
-%type <defelt>	def_elem reloption_elem old_aggr_elem operator_def_elem
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 %type <node>	def_arg columnElem where_clause where_or_current_clause
 				a_expr b_expr c_expr AexprConst indirection_el opt_slice_bound
 				columnref in_expr having_clause func_table array_expr
@@ -702,12 +694,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 	LEADING LEAKPROOF LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL
 	LOCALTIME LOCALTIMESTAMP LOCATION LOCK_P LOCKED LOGGED
 
-<<<<<<< HEAD
 	MAPPING MATCH MATERIALIZED MAXVALUE MEMORY_LIMIT MEMORY_SHARED_QUOTA MEMORY_SPILL_RATIO
-	MINUTE_P MINVALUE MODE MONTH_P MOVE
-=======
-	MAPPING MATCH MATERIALIZED MAXVALUE METHOD MINUTE_P MINVALUE MODE MONTH_P MOVE
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	METHOD MINUTE_P MINVALUE MODE MONTH_P MOVE
 
 	NAME_P NAMES NATIONAL NATURAL NCHAR NEXT NO NONE
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF
@@ -3974,18 +3962,12 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 					n->query = $3;
 					n->attlist = NIL;
 					n->is_from = false;
-<<<<<<< HEAD
-					n->is_program = $4;
-					n->filename = $5;
-					n->options = $7;
-					n->partitions = NULL;
-					n->ao_segnos = NIL;
-					n->skip_ext_partition = false;
-=======
 					n->is_program = $6;
 					n->filename = $7;
 					n->options = $9;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+					n->partitions = NULL;
+					n->ao_segnos = NIL;
+					n->skip_ext_partition = false;
 
 					if (n->is_program && n->filename == NULL)
 						ereport(ERROR,
@@ -9511,7 +9493,10 @@ common_func_opt_item:
 					/* we abuse the normal content of a DefElem here */
 					$$ = makeDefElem("set", (Node *)$1);
 				}
-<<<<<<< HEAD
+			| PARALLEL ColId
+				{
+					$$ = makeDefElem("parallel", (Node *)makeString($2));
+				}
 			| NO SQL_P
 				{
 					$$ = makeDefElem("data_access", (Node *)makeString("none"));
@@ -9539,11 +9524,6 @@ common_func_opt_item:
 			| EXECUTE ON ALL SEGMENTS
 				{
 					$$ = makeDefElem("exec_location", (Node *)makeString("all_segments"));
-=======
-			| PARALLEL ColId
-				{
-					$$ = makeDefElem("parallel", (Node *)makeString($2));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				}
 		;
 
@@ -16524,11 +16504,8 @@ unreserved_keyword:
 			| DELETE_P
 			| DELIMITER
 			| DELIMITERS
-<<<<<<< HEAD
 			| DENY
-=======
 			| DEPENDS
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			| DICTIONARY
 			| DISABLE_P
 			| DISCARD
@@ -16614,13 +16591,10 @@ unreserved_keyword:
 			| MATCH
 			| MATERIALIZED
 			| MAXVALUE
-<<<<<<< HEAD
 			| MEMORY_LIMIT
 			| MEMORY_SHARED_QUOTA
 			| MEMORY_SPILL_RATIO
-=======
 			| METHOD
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			| MINUTE_P
 			| MINVALUE
 			| MISSING
