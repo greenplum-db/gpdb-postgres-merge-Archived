@@ -86,11 +86,7 @@ extern bool IsUnderMasterDispatchMode(void);
  * compute 4*MaxBackends without any overflow check.  This is rechecked in the
  * relevant GUC check hooks and in RegisterBackgroundWorker().
  */
-<<<<<<< HEAD
-#define MAX_BACKENDS	0x7fffff
-#define MaxPMAuxProc	6
-=======
 #define MAX_BACKENDS	0x3FFFF
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+#define MaxPMAuxProc	6
 
 #endif   /* _POSTMASTER_H */
