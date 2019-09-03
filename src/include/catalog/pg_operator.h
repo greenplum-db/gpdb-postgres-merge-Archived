@@ -160,12 +160,8 @@ DESCR("concatenate");
 
 DATA(insert OID = 352 (  "="	   PGNSP PGUID b f t	28	28	16	352   3315 xideq eqsel eqjoinsel ));
 DESCR("equal");
-<<<<<<< HEAD
 #define XidEqualOperator 352
-DATA(insert OID = 353 (  "="	   PGNSP PGUID b f f	28	23	16	 0	 0 xideqint4 eqsel eqjoinsel ));
-=======
 DATA(insert OID = 353 (  "="	   PGNSP PGUID b f f	28	23	16	0	  3316 xideqint4 eqsel eqjoinsel ));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 DESCR("equal");
 DATA(insert OID = 3315 (  "<>"	   PGNSP PGUID b f f	28	28	16	3315   352 xidneq neqsel neqjoinsel ));
 DESCR("not equal");
@@ -1880,7 +1876,6 @@ DESCR("delete array element");
 DATA(insert OID = 3287 (  "#-"	   PGNSP PGUID b f f 3802 1009 3802 0 0 jsonb_delete_path - - ));
 DESCR("delete path");
 
-<<<<<<< HEAD
 /* operators for complex data type */
 DATA(insert OID = 6469 (  "="	   PGNSP PGUID b t t 7198 7198 16 6469 6470 complex_eq eqsel eqjoinsel));
 DESCR("equal");
@@ -1921,21 +1916,4 @@ DESCR("divide");
 DATA(insert OID = 7096 (  "%"    PGNSP PGUID b f f 1186  1186 1186         0  0 interval_interval_mod - - ));
 DESCR("modulus");
 
-/*
- * function prototypes
- */
-extern ObjectAddress OperatorCreate(const char *operatorName,
-			   Oid operatorNamespace,
-			   Oid leftTypeId,
-			   Oid rightTypeId,
-			   Oid procedureId,
-			   List *commutatorName,
-			   List *negatorName,
-			   Oid restrictionId,
-			   Oid joinId,
-			   bool canMerge,
-			   bool canHash);
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #endif   /* PG_OPERATOR_H */

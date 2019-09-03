@@ -20,12 +20,10 @@
 #define PG_CONSTRAINT_H
 
 #include "catalog/genbki.h"
-<<<<<<< HEAD
+
 #include "catalog/dependency.h"
 #include "nodes/pg_list.h"
 #include "access/attnum.h"
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* ----------------
  *		pg_constraint definition.  cpp turns this into
@@ -210,7 +208,6 @@ typedef FormData_pg_constraint *Form_pg_constraint;
  * the FKCONSTR_MATCH_xxx constants defined in parsenodes.h.
  */
 
-<<<<<<< HEAD
 /*
  * Identify constraint type for lookup purposes
  */
@@ -283,6 +280,4 @@ extern bool check_functional_grouping(Oid relid,
 						  List *grouping_columns,
 						  List **constraintDeps);
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #endif   /* PG_CONSTRAINT_H */
