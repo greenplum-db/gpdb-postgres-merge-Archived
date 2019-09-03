@@ -7,13 +7,9 @@
  *	 ExecProcNode, or ExecEndNode on its subnodes and do the appropriate
  *	 processing.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1581,7 +1577,6 @@ ExecEndNode(PlanState *node)
 	estate->currentExecutingSliceId = origExecutingSliceId;
 }
 
-<<<<<<< HEAD
 
 
 /* -----------------------------------------------------------------------
@@ -1860,7 +1855,7 @@ planstate_walk_kids(PlanState *planstate,
 
 	return v;
 }	/* planstate_walk_kids */
-=======
+
 /*
  * ExecShutdownNode
  *
@@ -1888,4 +1883,3 @@ ExecShutdownNode(PlanState *node)
 
 	return planstate_tree_walker(node, ExecShutdownNode, NULL);
 }
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
