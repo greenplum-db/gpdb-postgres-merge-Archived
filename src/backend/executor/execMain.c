@@ -26,13 +26,9 @@
  *	before ExecutorEnd.  This can be omitted only in case of EXPLAIN,
  *	which should also omit ExecutorRun.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -938,7 +934,6 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 * This cleans up the asynchronous commands running through the threads launched from
 	 * CdbDispatchCommand.
 	 */
-<<<<<<< HEAD
 	PG_TRY();
 	{
 		/*
@@ -982,6 +977,7 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 
 			ExecutePlan(estate,
 						(PlanState *) motionState,
+						queryDesc->plannedstmt->parallelModeNeeded,
 						CMD_SELECT,
 						sendTuples,
 						0,
@@ -999,6 +995,7 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 			 */
 			ExecutePlan(estate,
 						queryDesc->planstate,
+						queryDesc->plannedstmt->parallelModeNeeded,
 						operation,
 						sendTuples,
 						count,
@@ -1064,17 +1061,6 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 		}
 	}
 #endif /* FAULT_INJECTOR */
-=======
-	if (!ScanDirectionIsNoMovement(direction))
-		ExecutePlan(estate,
-					queryDesc->planstate,
-					queryDesc->plannedstmt->parallelModeNeeded,
-					operation,
-					sendTuples,
-					count,
-					direction,
-					dest);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * shutdown tuple receiver, if we started it
@@ -3053,11 +3039,10 @@ ExecutePlan(EState *estate,
 	estate->es_direction = direction;
 
 	/*
-<<<<<<< HEAD
 	 * Make sure slice dependencies are met
 	 */
 	ExecSliceDependencyNode(planstate);
-=======
+	/*
 	 * If a tuple count was supplied, we must force the plan to run without
 	 * parallelism, because we might exit early.
 	 */
@@ -3070,7 +3055,6 @@ ExecutePlan(EState *estate,
 	 */
 	if (use_parallel_mode)
 		EnterParallelMode();
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Loop until we've processed the proper number of tuples from the plan.
@@ -3091,7 +3075,6 @@ ExecutePlan(EState *estate,
 		 */
 		if (TupIsNull(slot))
 		{
-<<<<<<< HEAD
 			/*
 			 * We got end-of-stream. We need to mark it since with a cursor
 			 * end-of-stream will only be received with the fetch that
@@ -3099,10 +3082,8 @@ ExecutePlan(EState *estate,
 			 * received in order to do the right cleanup.
 			 */
 			estate->es_got_eos = true;
-=======
 			/* Allow nodes to release or shut down resources. */
 			(void) ExecShutdownNode(planstate);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			break;
 		}
 
