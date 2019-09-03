@@ -9,13 +9,9 @@
  * shorn of features like subselects, inheritance, aggregates, grouping,
  * and so on.  (Those are the things planner.c deals with.)
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -95,15 +91,10 @@ query_planner(PlannerInfo *root, List *tlist,
 				!has_parallel_hazard(parse->jointree->quals, false);
 
 		/* The only path for it is a trivial Result path */
-<<<<<<< HEAD
-		result_path = (Path *) create_result_path((List *) parse->jointree->quals);
+		result_path = (Path *) create_result_path(root, final_rel,
+												  final_rel->reltarget,
+												  (List *) parse->jointree->quals);
 		add_path(final_rel, result_path);
-=======
-		add_path(final_rel, (Path *)
-				 create_result_path(root, final_rel,
-									final_rel->reltarget,
-									(List *) parse->jointree->quals));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		/* Select cheapest path (pretty easy in this case...) */
 		set_cheapest(final_rel);
