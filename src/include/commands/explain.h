@@ -24,6 +24,10 @@ typedef enum ExplainFormat
 	EXPLAIN_FORMAT_YAML
 } ExplainFormat;
 
+/* 
+ * GPDB_96_MERGE_FIXME: Based on the comment bellow and the changes in
+ * ExplainState since then, does it still make sence to curry the extra state?
+ */
 /* Crude hack to avoid changing sizeof(ExplainState) in released branches */
 typedef struct ExplainStateExtra
 {
@@ -50,7 +54,6 @@ typedef struct ExplainState
 	PlannedStmt *pstmt;			/* top of plan */
 	List	   *rtable;			/* range table */
 	List	   *rtable_names;	/* alias names for RTEs */
-<<<<<<< HEAD
 	int			indent;			/* current indentation level */
 	ExplainStateExtra *extra;	/* pointer to additional data */
 
@@ -59,10 +62,7 @@ typedef struct ExplainState
     Slice          *currentSlice;   /* slice whose nodes we are visiting */
 
 	PlanState  *parentPlanState;
-=======
-	List	   *deparse_cxt;	/* context list for deparsing expressions */
 	Bitmapset  *printed_subplans;		/* ids of SubPlans we've printed */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } ExplainState;
 
 /* Hook for plugins to get control in ExplainOneQuery() */

@@ -883,10 +883,10 @@ report_triggers(ResultRelInfo *rInfo, bool show_relname, ExplainState *es)
 			if (show_relname)
 				appendStringInfo(es->str, " on %s", relname);
 			if (es->timing)
-				appendStringInfo(es->str, ": time=%.3f calls=%.0f\n",
+				appendStringInfo(es->str, ": time=%.3f calls=%.ld\n",
 								 1000.0 * instr->total, instr->ntuples);
 			else
-				appendStringInfo(es->str, ": calls=%.0f\n", instr->ntuples);
+				appendStringInfo(es->str, ": calls=%.ld\n", instr->ntuples);
 		}
 		else
 		{
@@ -1031,11 +1031,11 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 	switch (nodeTag(plan))
 	{
 		case T_SeqScan:
+		case T_SampleScan:
 		case T_DynamicSeqScan:
 		case T_ExternalScan:
 		case T_DynamicIndexScan:
 		case T_ShareInputScan:
-		case T_SampleScan:
 		case T_IndexScan:
 		case T_IndexOnlyScan:
 		case T_BitmapHeapScan:
@@ -1046,6 +1046,10 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 		case T_ValuesScan:
 		case T_CteScan:
 		case T_WorkTableScan:
+		case T_DynamicSeqScan:
+		case T_ExternalScan:
+		case T_DynamicIndexScan:
+		case T_ShareInputScan:
 			*rels_used = bms_add_member(*rels_used,
 										((Scan *) plan)->scanrelid);
 			break;
@@ -1068,96 +1072,6 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 			break;
 	}
 
-	/* initPlan-s */
-	if (planstate->initPlan)
-		ExplainPreScanSubPlans(planstate->initPlan, rels_used);
-
-	/* lefttree */
-	if (outerPlanState(planstate))
-		ExplainPreScanNode(outerPlanState(planstate), rels_used);
-
-	/* righttree */
-	if (innerPlanState(planstate))
-		ExplainPreScanNode(innerPlanState(planstate), rels_used);
-
-	/* special child plans */
-	switch (nodeTag(plan))
-	{
-		case T_ModifyTable:
-			ExplainPreScanMemberNodes(((ModifyTable *) plan)->plans,
-								  ((ModifyTableState *) planstate)->mt_plans,
-									  rels_used);
-			break;
-		case T_Append:
-			ExplainPreScanMemberNodes(((Append *) plan)->appendplans,
-									((AppendState *) planstate)->appendplans,
-									  rels_used);
-			break;
-		case T_MergeAppend:
-			ExplainPreScanMemberNodes(((MergeAppend *) plan)->mergeplans,
-								((MergeAppendState *) planstate)->mergeplans,
-									  rels_used);
-			break;
-		case T_Sequence:
-			ExplainPreScanMemberNodes(((Sequence *) plan)->subplans,
-									((SequenceState *) planstate)->subplans,
-									  rels_used);
-			break;
-		case T_BitmapAnd:
-			ExplainPreScanMemberNodes(((BitmapAnd *) plan)->bitmapplans,
-								 ((BitmapAndState *) planstate)->bitmapplans,
-									  rels_used);
-			break;
-		case T_BitmapOr:
-			ExplainPreScanMemberNodes(((BitmapOr *) plan)->bitmapplans,
-								  ((BitmapOrState *) planstate)->bitmapplans,
-									  rels_used);
-			break;
-		case T_SubqueryScan:
-			ExplainPreScanNode(((SubqueryScanState *) planstate)->subplan,
-							   rels_used);
-			break;
-		default:
-			break;
-	}
-
-	/* subPlan-s */
-	if (planstate->subPlan)
-		ExplainPreScanSubPlans(planstate->subPlan, rels_used);
-}
-
-/*
- * Prescan the constituent plans of a ModifyTable, Append, MergeAppend,
- * BitmapAnd, or BitmapOr node.
- *
- * Note: we don't actually need to examine the Plan list members, but
- * we need the list in order to determine the length of the PlanState array.
- */
-static void
-ExplainPreScanMemberNodes(List *plans, PlanState **planstates,
-						  Bitmapset **rels_used)
-{
-	int			nplans = list_length(plans);
-	int			j;
-
-	for (j = 0; j < nplans; j++)
-		ExplainPreScanNode(planstates[j], rels_used);
-}
-
-/*
- * Prescan a list of SubPlans (or initPlans, which also use SubPlan nodes).
- */
-static void
-ExplainPreScanSubPlans(List *plans, Bitmapset **rels_used)
-{
-	ListCell   *lst;
-
-	foreach(lst, plans)
-	{
-		SubPlanState *sps = (SubPlanState *) lfirst(lst);
-
-		ExplainPreScanNode(sps->planstate, rels_used);
-	}
 	return planstate_tree_walker(planstate, ExplainPreScanNode, rels_used);
 }
 
@@ -1342,6 +1256,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			break;
 		case T_ExternalScan:
 			pname = sname = "External Scan";
+			break;
 		case T_SampleScan:
 			pname = sname = "Sample Scan";
 			break;
@@ -1392,8 +1307,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_WorkTableScan:
 			pname = sname = "WorkTable Scan";
 			break;
+		case T_ShareInputScan:
+			pname = sname = "Shared Scan";
+			break;
 		case T_ForeignScan:
-			pname = sname = "Foreign Scan";
+			sname = "Foreign Scan";
 			switch (((ForeignScan *) plan)->operation)
 			{
 				case CMD_SELECT:
@@ -1417,9 +1335,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 					break;
 			}
 		break;
-		case T_ShareInputScan:
-			pname = sname = "Shared Scan";
-			break;
 		case T_CustomScan:
 			sname = "Custom Scan";
 			custom_name = ((CustomScan *) plan)->methods->CustomName;
