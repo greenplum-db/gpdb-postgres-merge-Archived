@@ -3934,6 +3934,13 @@ planstate_tree_walker(PlanState *planstate,
 									   walker, context))
 				return true;
 			break;
+		/* GPDB_96_MERGE_FIXME: verify walkder works on Sequence node */
+		case T_Sequence:
+			if (planstate_walk_members(((Sequence *) plan)->subplans,
+								  ((SequenceState *) planstate)->subplans,
+									   walker, context))
+				return true;
+			break;
 		case T_SubqueryScan:
 			if (walker(((SubqueryScanState *) planstate)->subplan, context))
 				return true;
