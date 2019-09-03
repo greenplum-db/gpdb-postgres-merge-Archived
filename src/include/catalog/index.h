@@ -25,7 +25,7 @@ struct EState;                  /* #include "nodes/execnodes.h" */
 
 /* Typedef for callback function for IndexBuildScan */
 typedef void (*IndexBuildCallback) (Relation index,
-									ItemPointer tupleId,
+									HeapTuple htup,
 									Datum *values,
 									bool *isnull,
 									bool tupleIsAlive,

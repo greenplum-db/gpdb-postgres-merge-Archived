@@ -36,7 +36,7 @@ typedef struct
 } HashBuildState;
 
 static void hashbuildCallback(Relation index,
-				  ItemPointer tupleId,
+				  HeapTuple htup,
 				  Datum *values,
 				  bool *isnull,
 				  bool tupleIsAlive,
@@ -184,7 +184,7 @@ hashbuildempty(Relation index)
  */
 static void
 hashbuildCallback(Relation index,
-				  ItemPointer tupleId,
+				  HeapTuple htup,
 				  Datum *values,
 				  bool *isnull,
 				  bool tupleIsAlive pg_attribute_unused(),
@@ -203,14 +203,6 @@ hashbuildCallback(Relation index,
 
 	/* Either spool the tuple for sorting, or just put it into the index */
 	if (buildstate->spool)
-<<<<<<< HEAD
-		_h_spool(buildstate->spool, tupleId, values, isnull);
-	else
-	{
-		/* form an index tuple and point it at the heap tuple */
-		itup = _hash_form_tuple(index, values, isnull);
-		itup->t_tid = *tupleId;
-=======
 		_h_spool(buildstate->spool, &htup->t_self,
 				 index_values, index_isnull);
 	else
@@ -219,7 +211,6 @@ hashbuildCallback(Relation index,
 		itup = index_form_tuple(RelationGetDescr(index),
 								index_values, index_isnull);
 		itup->t_tid = htup->t_self;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		_hash_doinsert(index, itup);
 		pfree(itup);
 	}
@@ -377,22 +368,9 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 int64
 hashgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 {
-<<<<<<< HEAD
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	Node	   *n = (Node *) PG_GETARG_POINTER(1);
-	TIDBitmap  *tbm;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	bool		res;
 	int64		ntids = 0;
-
-	if (n == NULL)
-		tbm = tbm_create(work_mem * 1024L);
-	else if (!IsA(n, TIDBitmap))
-		elog(ERROR, "non hash bitmap");
-	else
-		tbm = (TIDBitmap *) n;
 
 	res = _hash_first(scan, ForwardScanDirection);
 
@@ -426,11 +404,7 @@ hashgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 		res = _hash_next(scan, ForwardScanDirection);
 	}
 
-<<<<<<< HEAD
-	PG_RETURN_POINTER(tbm);
-=======
 	return ntids;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 
