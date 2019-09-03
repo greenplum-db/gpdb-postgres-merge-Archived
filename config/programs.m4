@@ -77,11 +77,7 @@ else
         echo '%%'  > conftest.l
         if $pgac_candidate -t conftest.l 2>/dev/null | grep FLEX_SCANNER >/dev/null 2>&1; then
           pgac_flex_version=`$pgac_candidate --version 2>/dev/null`
-<<<<<<< HEAD
           if echo "$pgac_flex_version" | sed ['s/[^0-9]/ /g'] | $AWK '{ if ([$]1 == 2 && ([$]2 > 5 || ([$]2 == 5 && [$]3 >= 4))) exit 0; else exit 1;}'
-=======
-          if echo "$pgac_flex_version" | sed ['s/[.a-z]/ /g'] | $AWK '{ if ([$]1 == 2 && ([$]2 > 5 || ([$]2 == 5 && [$]3 >= 31))) exit 0; else exit 1;}'
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
           then
             pgac_cv_path_flex=$pgac_candidate
             break 2

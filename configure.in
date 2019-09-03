@@ -17,28 +17,22 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-<<<<<<< HEAD
 dnl The PACKAGE_VERSION from upstream PostgreSQL is maintained in the
 dnl PG_PACKAGE_VERSION variable, when merging make sure to update this
 dnl variable with the merge conflict from the AC_INIT() statement.
 AC_INIT([Greenplum Database], [7.0.0-alpha.0], [support@greenplum.org])
-[PG_PACKAGE_VERSION=9.5beta1]
+m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.69 is required.
+Untested combinations of 'autoconf' and PostgreSQL versions are not
+recommended.  You can remove the check from 'configure.in' but it is then
+your responsibility whether the result works or not.])])
+[PG_PACKAGE_VERSION=9.6beta4]
 AC_SUBST(PG_PACKAGE_VERSION)
 
 dnl m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.69 is required.
 dnl Untested combinations of 'autoconf' and PostgreSQL versions are not
 dnl recommended.  You can remove the check from 'configure.in' but it is then
 dnl your responsibility whether the result works or not.])])
-AC_COPYRIGHT([Copyright (c) 1996-2015, PostgreSQL Global Development Group])
-=======
-AC_INIT([PostgreSQL], [9.6beta4], [pgsql-bugs@postgresql.org])
-
-m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.69 is required.
-Untested combinations of 'autoconf' and PostgreSQL versions are not
-recommended.  You can remove the check from 'configure.in' but it is then
-your responsibility whether the result works or not.])])
 AC_COPYRIGHT([Copyright (c) 1996-2016, PostgreSQL Global Development Group])
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 AC_CONFIG_SRCDIR([src/backend/access/common/heaptuple.c])
 AC_CONFIG_AUX_DIR(config)
 AC_PREFIX_DEFAULT(/usr/local/gpdb)
@@ -1649,11 +1643,7 @@ fi
 ##
 
 dnl sys/socket.h is required by AC_FUNC_ACCEPT_ARGTYPES
-<<<<<<< HEAD
-AC_CHECK_HEADERS([atomic.h crypt.h dld.h execinfo.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h])
-=======
-AC_CHECK_HEADERS([atomic.h crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/epoll.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h])
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+AC_CHECK_HEADERS([atomic.h crypt.h dld.h execinfo.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/epoll.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h])
 
 # On BSD, test for net/if.h will fail unless sys/socket.h
 # is included first.
@@ -2009,14 +1999,10 @@ PGAC_FUNC_WCSTOMBS_L
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-<<<<<<< HEAD
 # net-snmp has the same problem..
 LIBS=`echo "$LIBS" | sed -e 's/-lnetsnmp//g'`
 
-AC_CHECK_FUNCS([backtrace_symbols cbrt dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll posix_fallocate pstat pthread_is_threaded_np readlink setproctitle setsid shm_open sigprocmask symlink sync_file_range towlower utime utimes wcstombs wcstombs_l])
-=======
-AC_CHECK_FUNCS([cbrt dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll pstat pthread_is_threaded_np readlink setproctitle setsid shm_open symlink sync_file_range towlower utime utimes wcstombs wcstombs_l])
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+AC_CHECK_FUNCS([backtrace_symbols cbrt dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll posix_fallocate pstat pthread_is_threaded_np readlink setproctitle setsid shm_open symlink sync_file_range towlower utime utimes wcstombs wcstombs_l])
 
 AC_REPLACE_FUNCS(fseeko)
 case $host_os in
@@ -2334,8 +2320,6 @@ fi
 AC_DEFINE_UNQUOTED(PG_INT64_TYPE, $pg_int64_type,
   [Define to the name of a signed 64-bit integer type.])
 
-<<<<<<< HEAD
-=======
 dnl If we need to use "long long int", figure out whether nnnLL notation works.
 
 if test x"$HAVE_LONG_LONG_INT_64" = xyes ; then
@@ -2348,7 +2332,6 @@ long long int foo = INT64CONST(0x1234567890123456);
 fi
 
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 # If we found "long int" is 64 bits, assume snprintf handles it.  If
 # we found we need to use "long long int", better check.  We cope with
 # snprintfs that use %lld, %qd, or %I64d as the format.  If none of these
@@ -2439,15 +2422,7 @@ AC_DEFINE_UNQUOTED(MAXIMUM_ALIGNOF, $MAX_ALIGNOF, [Define as the maximum alignme
 AC_CHECK_TYPES([int8, uint8, int64, uint64], [], [],
 [#include <stdio.h>])
 
-<<<<<<< HEAD
-# We also check for sig_atomic_t, which *should* be defined per ANSI
-# C, but is missing on some old platforms.
-AC_CHECK_TYPES(sig_atomic_t, [], [], [#include <signal.h>])
-
-# Some compilers offer a 128-bit integer scalar type.
-=======
 # Check for extensions offering the integer scalar type __int128.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 PGAC_TYPE_128BIT_INT
 
 # Check for various atomic operations now that we have checked how to declare
@@ -2548,18 +2523,6 @@ fi
 AC_SUBST(PG_CRC32C_OBJS)
 
 
-<<<<<<< HEAD
-# Check that POSIX signals are available if thread safety is enabled.
-if test "$PORTNAME" != "win32"
-then
-PGAC_FUNC_POSIX_SIGNALS
-if test "$pgac_cv_func_posix_signals" != yes -a "$enable_thread_safety" = yes; then
-  AC_MSG_ERROR([
-Thread-safety requires POSIX signals, which are not supported by this
-operating system;  use --disable-thread-safety to disable thread safety.])
-fi
-fi
-
 if test $ac_cv_func_fseeko = yes; then
 AC_SYS_LARGEFILE
 enable_largefile=yes
@@ -2578,9 +2541,6 @@ if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then
 fi
 fi
 
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 # Select semaphore implementation type.
 if test "$PORTNAME" != "win32"; then
   if test x"$USE_NAMED_POSIX_SEMAPHORES" = x"1" ; then
@@ -2610,7 +2570,6 @@ else
   SHMEM_IMPLEMENTATION="src/backend/port/win32_shmem.c"
 fi
 
-<<<<<<< HEAD
 # Select random number source
 #
 # You can override this logic by setting the appropriate USE_*RANDOM flag to 1
@@ -2656,15 +2615,6 @@ else
 *** Not using a strong random number source may be insecure.])
 fi
 
-# Select latch implementation type.
-if test "$PORTNAME" != "win32"; then
-  LATCH_IMPLEMENTATION="src/backend/port/unix_latch.c"
-else
-  LATCH_IMPLEMENTATION="src/backend/port/win32_latch.c"
-fi
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 # If not set in template file, set bytes to use libc memset()
 if test x"$MEMSET_LOOP_LIMIT" = x"" ; then
   MEMSET_LOOP_LIMIT=1024
@@ -2887,7 +2837,6 @@ tr '.' '	' |
 $AWK '{printf "%d%02d%02d", $1, $2, (NF >= 3) ? $3 : 0}'`"]
 AC_DEFINE_UNQUOTED(PG_VERSION_NUM, $PG_VERSION_NUM, [PostgreSQL version as a number])
 AC_SUBST(PG_VERSION_NUM)
-<<<<<<< HEAD
 
 # If we are inserting PG_SYSROOT into CPPFLAGS, do so symbolically not
 # literally, so that it's possible to override it at build time using
@@ -2903,8 +2852,6 @@ AC_SUBST(PG_SYSROOT)
 tr '.' '	' |
 $AWK '{printf "%d%02d%02d", $1, $2, (NF >= 3) ? $3 : 0}'`"]
 AC_DEFINE_UNQUOTED(GP_VERSION_NUM, $GP_VERSION_NUM, [Greenplum version as a number])
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 
 # Begin output steps

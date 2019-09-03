@@ -62,17 +62,10 @@ fi
 AC_DEFUN([PGAC_FUNC_GETTIMEOFDAY_1ARG],
 [AC_CACHE_CHECK(whether gettimeofday takes only one argument,
 pgac_cv_func_gettimeofday_1arg,
-<<<<<<< HEAD
-[AC_TRY_COMPILE([#include <sys/time.h>],
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/time.h>],
 [struct timeval *tp = 0;
 struct timezone *tzp = 0;
-gettimeofday(tp,tzp);],
-=======
-[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/time.h>],
-[struct timeval *tp;
-struct timezone *tzp;
 gettimeofday(tp,tzp);])],
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 [pgac_cv_func_gettimeofday_1arg=no],
 [pgac_cv_func_gettimeofday_1arg=yes])])
 if test x"$pgac_cv_func_gettimeofday_1arg" = xyes ; then
@@ -93,23 +86,11 @@ AH_VERBATIM(GETTIMEOFDAY_1ARG_,
 # The result is uncertain if strerror_r() isn't provided,
 # but we don't much care.
 AC_DEFUN([PGAC_FUNC_STRERROR_R_INT],
-[AC_CACHE_CHECK(whether strerror_r returns int,
-pgac_cv_func_strerror_r_int,
-<<<<<<< HEAD
-[AC_TRY_COMPILE([#include <string.h>],
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <string.h>],
 [char buf[100];
   switch (strerror_r(1, buf, sizeof(buf)))
   { case 0: break; default: break; }
 ],
-=======
-[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <string.h>],
-[#ifndef _AIX
-int strerror_r(int, char *, size_t);
-#else
-/* Older AIX has 'int' for the third argument so we don't test the args. */
-int strerror_r();
-#endif])],
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 [pgac_cv_func_strerror_r_int=yes],
 [pgac_cv_func_strerror_r_int=no])])
 if test x"$pgac_cv_func_strerror_r_int" = xyes ; then
