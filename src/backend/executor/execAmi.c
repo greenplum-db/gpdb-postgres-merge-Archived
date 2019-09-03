@@ -28,12 +28,9 @@
 #include "executor/nodeCustom.h"
 #include "executor/nodeForeignscan.h"
 #include "executor/nodeFunctionscan.h"
-<<<<<<< HEAD
-=======
 #include "executor/nodeGather.h"
 #include "executor/nodeGroup.h"
 #include "executor/nodeGroup.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeIndexonlyscan.h"
