@@ -1008,7 +1008,7 @@ agg_hash_initial_pass(AggState *aggstate)
 			int tup_len = memtuple_get_size((MemTuple)entry->tuple_and_aggs);
 			MemSet((char *)entry->tuple_and_aggs + MAXALIGN(tup_len), 0,
 				   aggstate->numaggs * sizeof(AggStatePerGroupData));
-			initialize_aggregates(aggstate, aggstate->peragg, hashtable->groupaggs->aggs, 0);
+			initialize_aggregates(aggstate, hashtable->groupaggs->aggs, 0);
 		}
 			
 		/* Advance the aggregates */
