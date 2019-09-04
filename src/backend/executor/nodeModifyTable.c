@@ -502,10 +502,7 @@ ExecInsert(ModifyTableState *mtstate,
 		 * tableoid column, so initialize t_tableOid before evaluating them.
 		 */
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		newId = InvalidOid;
 	}
@@ -862,14 +859,8 @@ ExecInsert(ModifyTableState *mtstate,
 		ExecWithCheckOptions(WCO_VIEW_CHECK, resultRelInfo, slot, estate);
 
 	/* Process RETURNING if present */
-<<<<<<< HEAD
-	if (projectReturning)
-		return ExecProcessReturning(projectReturning,
-									parentslot, planSlot);
-=======
 	if (resultRelInfo->ri_projectReturning)
-		return ExecProcessReturning(resultRelInfo, slot, planSlot);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+		return ExecProcessReturning(resultRelInfo, parentslot, planSlot);
 
 	return NULL;
 }
@@ -1008,7 +999,6 @@ ExecDelete(ItemPointer tupleid,
 		 * RETURNING expressions might reference the tableoid column, so
 		 * initialize t_tableOid before evaluating them.
 		 */
-<<<<<<< HEAD
 		if (slot->PRIVATE_tts_flags & TTS_ISEMPTY)
 			ExecStoreAllNullTuple(slot);
 
@@ -1020,12 +1010,6 @@ ExecDelete(ItemPointer tupleid,
 		tuple = ExecMaterializeSlot(slot);
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
 #endif
-=======
-		if (slot->tts_isempty)
-			ExecStoreAllNullTuple(slot);
-		tuple = ExecMaterializeSlot(slot);
-		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 	else
 	{
@@ -1641,10 +1625,7 @@ ExecUpdate(ItemPointer tupleid,
 		 * tableoid column, so initialize t_tableOid before evaluating them.
 		 */
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 	else
 	{
