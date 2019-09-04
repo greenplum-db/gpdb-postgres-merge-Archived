@@ -7,13 +7,9 @@
  *	  and join trees.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/primnodes.h
@@ -330,11 +326,13 @@ typedef struct Aggref
 								 * combined into an array last argument */
 	char		aggkind;		/* aggregate kind (see pg_aggregate.h) */
 	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
-<<<<<<< HEAD
+
+	/* GPDB_96_MERGE_FIXME: aggstage is/was a GPDB thing, and we got
+	 * aggsplit in PostgreSQL 9.6, which I think does more or less the
+	 * same. Surely we don't need both.
+	 */
 	AggStage	aggstage;		/* MPP: 2-stage? If so, which stage */
-=======
 	AggSplit	aggsplit;		/* expected agg-splitting mode of parent Agg */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	int			location;		/* token location, or -1 if unknown */
 } Aggref;
 

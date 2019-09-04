@@ -1400,12 +1400,7 @@ typedef struct PlanState
 								 * nodes point to one EState for the whole
 								 * top-level plan */
 
-<<<<<<< HEAD
 	bool		fHadSentGpmon;
-=======
-	Instrumentation *instrument;	/* Optional runtime stats for this node */
-	WorkerInstrumentation *worker_instrument;	/* per-worker instrumentation */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Common structural data for all Plan types.  These links to subsidiary
@@ -1435,7 +1430,8 @@ typedef struct PlanState
 	/*
 	 * EXPLAIN ANALYZE statistics collection
 	 */
-	Instrumentation *instrument;     /* runtime stats for this node */
+	Instrumentation *instrument;	/* Optional runtime stats for this node */
+	WorkerInstrumentation *worker_instrument;	/* per-worker instrumentation */
 	struct StringInfoData  *cdbexplainbuf;  /* EXPLAIN ANALYZE report buf */
 	void      (*cdbexplainfun)(struct PlanState *planstate, struct StringInfoData *buf);
 	/* callback before ExecutorEnd */
@@ -1714,14 +1710,16 @@ typedef struct ScanState
 	TupleTableSlot *ss_ScanTupleSlot;
 } ScanState;
 
-<<<<<<< HEAD
-/*
- * SeqScanState
- *   State data for scanning heap/AO/AOCS table.
+/* ----------------
+ *	 SeqScanState information
+ * ----------------
  */
 typedef struct SeqScanState
 {
 	ScanState ss;
+	Size		pscan_len;		/* size of parallel heap scan descriptor */
+
+	/* In GPDB, extra information specific to heap/AO/AOCS table scans */
 	struct HeapScanDescData *ss_currentScanDesc_heap;
 	struct AppendOnlyScanDescData *ss_currentScanDesc_ao;
 	struct AOCSScanDescData *ss_currentScanDesc_aocs;
@@ -1729,16 +1727,6 @@ typedef struct SeqScanState
 	/* extra state for AOCS scans */
 	bool	   *ss_aocs_proj;
 	int			ss_aocs_ncol;
-=======
-/* ----------------
- *	 SeqScanState information
- * ----------------
- */
-typedef struct SeqScanState
-{
-	ScanState	ss;				/* its first field is NodeTag */
-	Size		pscan_len;		/* size of parallel heap scan descriptor */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } SeqScanState;
 
 /* ----------------
@@ -2007,7 +1995,7 @@ typedef struct BitmapHeapScanState
 	GenericBMIterator *prefetch_iterator;
 	int			prefetch_pages;
 	int			prefetch_target;
-<<<<<<< HEAD
+	int			prefetch_maximum;
 
 	/* These are used by AO/AOCS scans, to work with lossy bitmap pages */
 	bool		baos_gotpage;
@@ -2015,9 +2003,6 @@ typedef struct BitmapHeapScanState
 	bool		baos_lossy;
 	int			baos_ntuples;
 
-=======
-	int			prefetch_maximum;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } BitmapHeapScanState;
 
 typedef struct DynamicBitmapHeapScanState

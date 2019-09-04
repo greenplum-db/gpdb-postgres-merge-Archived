@@ -133,8 +133,6 @@ typedef struct PlannedStmt
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
 
 	int			nParamExec;		/* number of PARAM_EXEC Params used */
-<<<<<<< HEAD
-	bool		hasRowSecurity; /* row security applied? */
 
 	int			nMotionNodes;	/* number of Motion nodes in plan */
 
@@ -161,8 +159,6 @@ typedef struct PlannedStmt
  	 * GPDB: whether a query is a SPI inner query for extension usage 
  	 */
 	int8		metricsQueryType;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } PlannedStmt;
 
 /*
@@ -200,7 +196,13 @@ typedef struct Plan
 	NodeTag		type;
 
 	/* Plan node id */
-	int			plan_node_id;	/* unique across entire final plan tree */
+	/* GPDB_96_MERGE_FIXME: we had this in GPDB before 9.6 merge, but
+	 * PostgreSQL 9.6 introduced a new field called 'plan_node_id'.
+	 * Is it the same thing? Can we just remove this commented out copy,
+	 * or do we need to have a new field with different name, for the
+	 * stuff that we used to do with this old 'plan_node_id'?
+	 */
+	//int			plan_node_id;	/* unique across entire final plan tree */
 
 	/*
 	 * estimated execution costs for plan (see costsize.c for more info)
@@ -1140,7 +1142,6 @@ typedef struct Agg
 	bool		finalizeAggs;	/* should we call the finalfn on agg states? */
 	Oid		   *grpOperators;	/* equality operators to compare with */
 	long		numGroups;		/* estimated number of groups in input */
-<<<<<<< HEAD
 	Bitmapset	*aggParams;		/* IDs of Params used in Aggref inputs */
 	/* Note: planner provides numGroups & aggParams only in AGG_HASHED case */
 	List		*groupingSets;	/* grouping sets to use */
@@ -1148,11 +1149,6 @@ typedef struct Agg
 
 	/* Stream entries when out of memory instead of spilling to disk */
 	bool		streaming;
-=======
-	/* Note: the planner only provides numGroups in AGG_HASHED case */
-	List	   *groupingSets;	/* grouping sets to use */
-	List	   *chain;			/* chained Agg/Sort nodes */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } Agg;
 
 /* ----------------

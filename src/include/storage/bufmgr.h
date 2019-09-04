@@ -14,14 +14,10 @@
 #ifndef BUFMGR_H
 #define BUFMGR_H
 
-#include "catalog/catalog.h"
-#include "miscadmin.h"
 #include "storage/block.h"
 #include "storage/buf.h"
-#include "storage/buf_internals.h"
 #include "storage/bufpage.h"
 #include "storage/relfilenode.h"
-#include "storage/smgr.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
@@ -42,16 +38,13 @@ typedef enum BufferAccessStrategyType
 typedef enum
 {
 	RBM_NORMAL,					/* Normal read */
-	RBM_DO_NOT_USE,				/* This used to be RBM_ZERO. Only kept for
-								 * binary compatibility with 3rd party
-								 * extensions. */
-	RBM_ZERO_ON_ERROR,			/* Read, but return an all-zeros page on error */
-	RBM_NORMAL_NO_LOG,			/* Don't log page as invalid during WAL
-								 * replay; otherwise same as RBM_NORMAL */
 	RBM_ZERO_AND_LOCK,			/* Don't read from disk, caller will
 								 * initialize. Also locks the page. */
-	RBM_ZERO_AND_CLEANUP_LOCK	/* Like RBM_ZERO_AND_LOCK, but locks the page
+	RBM_ZERO_AND_CLEANUP_LOCK,	/* Like RBM_ZERO_AND_LOCK, but locks the page
 								 * in "cleanup" mode */
+	RBM_ZERO_ON_ERROR,			/* Read, but return an all-zeros page on error */
+	RBM_NORMAL_NO_LOG			/* Don't log page as invalid during WAL
+								 * replay; otherwise same as RBM_NORMAL */
 } ReadBufferMode;
 
 /* forward declared, to avoid having to expose buf_internals.h here */
@@ -213,7 +206,6 @@ extern void DropRelFileNodeBuffers(RelFileNodeBackend rnode,
 					   ForkNumber forkNum, BlockNumber firstDelBlock);
 extern void DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes);
 extern void DropDatabaseBuffers(Oid dbid);
-extern XLogRecPtr BufferGetLSNAtomic(Buffer buffer);
 
 #define RelationGetNumberOfBlocks(reln) \
 	RelationGetNumberOfBlocksInFork(reln, MAIN_FORKNUM)

@@ -4,13 +4,9 @@
  *	  prototypes for pathnode.c, relnode.c.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/pathnode.h
@@ -83,21 +79,16 @@ extern BitmapOrPath *create_bitmap_or_path(PlannerInfo *root,
 					  List *bitmapquals);
 extern TidPath *create_tidscan_path(PlannerInfo *root, RelOptInfo *rel,
 					List *tidquals, Relids required_outer);
-<<<<<<< HEAD
 extern AppendPath *create_append_path(PlannerInfo *root, RelOptInfo *rel,
 				   List *subpaths,
-				   Relids required_outer);
-=======
-extern AppendPath *create_append_path(RelOptInfo *rel, List *subpaths,
 				   Relids required_outer, int parallel_workers);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern MergeAppendPath *create_merge_append_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 List *subpaths,
 						 List *pathkeys,
 						 Relids required_outer);
-<<<<<<< HEAD
-extern ResultPath *create_result_path(List *quals);
+extern ResultPath *create_result_path(PlannerInfo *root, RelOptInfo *rel,
+				   PathTarget *target, List *resconstantqual);
 extern MaterialPath *create_material_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath);
 extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
 				   Path *subpath, SpecialJoinInfo *sjinfo);
@@ -106,19 +97,11 @@ extern UniquePath *create_unique_rowid_path(PlannerInfo *root,
                          Path        *subpath,
                          Relids       distinct_relids,
 						 Relids       required_outer);
-extern Path *create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
-=======
-extern ResultPath *create_result_path(PlannerInfo *root, RelOptInfo *rel,
-				   PathTarget *target, List *resconstantqual);
-extern MaterialPath *create_material_path(RelOptInfo *rel, Path *subpath);
-extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
-				   Path *subpath, SpecialJoinInfo *sjinfo);
 extern GatherPath *create_gather_path(PlannerInfo *root,
 				   RelOptInfo *rel, Path *subpath, PathTarget *target,
 				   Relids required_outer, double *rows);
 extern SubqueryScanPath *create_subqueryscan_path(PlannerInfo *root,
 						 RelOptInfo *rel, Path *subpath,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 						 List *pathkeys, Relids required_outer);
 extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 						 RangeTblEntry *rte,
@@ -301,7 +284,6 @@ extern Relids min_join_parameterization(PlannerInfo *root,
 						  RelOptInfo *outer_rel,
 						  RelOptInfo *inner_rel);
 extern RelOptInfo *build_empty_join_rel(PlannerInfo *root);
-<<<<<<< HEAD
 extern void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel, List *input_tlist);
 
 extern Var *cdb_define_pseudo_column(PlannerInfo   *root,
@@ -314,10 +296,8 @@ extern CdbRelColumnInfo *cdb_find_pseudo_column(PlannerInfo *root, Var *var);
 
 extern CdbRelColumnInfo *cdb_rte_find_pseudo_column(RangeTblEntry *rte, AttrNumber attno);
 
-=======
 extern RelOptInfo *fetch_upper_rel(PlannerInfo *root, UpperRelationKind kind,
 				Relids relids);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern AppendRelInfo *find_childrel_appendrelinfo(PlannerInfo *root,
 							RelOptInfo *rel);
 extern RelOptInfo *find_childrel_top_parent(PlannerInfo *root, RelOptInfo *rel);

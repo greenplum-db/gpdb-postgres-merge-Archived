@@ -196,14 +196,12 @@ extern void XLogReaderFree(XLogReaderState *state);
 extern struct XLogRecord *XLogReadRecord(XLogReaderState *state,
 			   XLogRecPtr recptr, char **errormsg);
 
-<<<<<<< HEAD
 /* Validate a page */
 extern bool XLogReaderValidatePageHeader(XLogReaderState *state,
 					XLogRecPtr recptr, char *phdr);
-=======
+
 /* Invalidate read state */
 extern void XLogReaderInvalReadState(XLogReaderState *state);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #ifdef FRONTEND
 extern XLogRecPtr XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr);

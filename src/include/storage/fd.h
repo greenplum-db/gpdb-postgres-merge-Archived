@@ -83,21 +83,15 @@ extern int	FilePrefetch(File file, off_t offset, int amount);
 extern int	FileRead(File file, char *buffer, int amount);
 extern int	FileWrite(File file, char *buffer, int amount);
 extern int	FileSync(File file);
-<<<<<<< HEAD
 extern int64 FileSeek(File file, int64 offset, int whence);
 extern int64 FileNonVirtualCurSeek(File file);
 extern int	FileTruncate(File file, int64 offset);
-extern char *FilePathName(File file);
-extern int64 FileDiskSize(File file);
-=======
-extern off_t FileSeek(File file, off_t offset, int whence);
-extern int	FileTruncate(File file, off_t offset);
-extern void FileWriteback(File file, off_t offset, off_t nbytes);
+extern void FileWriteback(File file, int64 offset, int64 nbytes);
 extern char *FilePathName(File file);
 extern int	FileGetRawDesc(File file);
 extern int	FileGetRawFlags(File file);
 extern int	FileGetRawMode(File file);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+extern int64 FileDiskSize(File file);
 
 /* Operations that allow use of regular stdio --- USE WITH CAUTION */
 extern FILE *AllocateFile(const char *name, const char *mode);
@@ -137,15 +131,10 @@ extern int	pg_fsync(int fd);
 extern int	pg_fsync_no_writethrough(int fd);
 extern int	pg_fsync_writethrough(int fd);
 extern int	pg_fdatasync(int fd);
-<<<<<<< HEAD
-extern int	pg_flush_data(int fd, off_t offset, off_t amount);
-extern void fsync_fname(const char *fname, bool isdir);
-=======
 extern void pg_flush_data(int fd, off_t offset, off_t amount);
 extern void fsync_fname(const char *fname, bool isdir);
 extern int	durable_rename(const char *oldfile, const char *newfile, int loglevel);
 extern int	durable_link_or_rename(const char *oldfile, const char *newfile, int loglevel);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern void SyncDataDirectory(void);
 extern int	durable_rename(const char *oldfile, const char *newfile, int loglevel);
 extern int	durable_link_or_rename(const char *oldfile, const char *newfile, int loglevel);

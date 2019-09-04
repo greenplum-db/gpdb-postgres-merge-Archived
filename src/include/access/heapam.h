@@ -100,7 +100,6 @@ extern Relation heap_openrv_extended(const RangeVar *relation,
 
 #define heap_close(r,l)  relation_close(r,l)
 
-<<<<<<< HEAD
 /* CDB */
 extern Relation CdbOpenRelation(Oid relid, LOCKMODE reqmode, bool noWait, 
 								bool *lockUpgraded);
@@ -109,10 +108,7 @@ extern Relation CdbTryOpenRelation(Oid relid, LOCKMODE reqmode,
 extern Relation CdbOpenRelationRv(const RangeVar *relation, LOCKMODE reqmode, 
 								  bool noWait, bool *lockUpgraded);
 
-/* struct definition appears in relscan.h */
-=======
 /* struct definitions appear in relscan.h */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 typedef struct HeapScanDescData *HeapScanDesc;
 typedef struct ParallelHeapScanDescData *ParallelHeapScanDesc;
 
