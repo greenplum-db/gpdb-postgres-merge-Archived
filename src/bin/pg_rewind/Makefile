@@ -56,11 +56,7 @@ uninstall:
 
 clean distclean maintainer-clean:
 	rm -f pg_rewind$(X) $(OBJS) xlogreader.c
-<<<<<<< HEAD
 	rm -rf tmp_check_local tmp_check_remote
-=======
-	rm -rf tmp_check
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 # GPDB_95_MERGE_FIXME: 9.4 version of tests were used instead of 9.5 since 9.5
 # once have dependency on common TAP framework functions which are not yet

@@ -17,18 +17,9 @@ subdir = src/test/regress
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-<<<<<<< HEAD
-# file with extra config for temp build
-TEMP_CONF =
-ifdef TEMP_CONFIG
-TEMP_CONF += --temp-config=$(TEMP_CONFIG)
-endif
-
 # Greenplum regression tests use $PGPORT
 PGPORT?=15432
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 # maximum simultaneous connections for parallel tests
 MAXCONNOPT =
 ifdef MAX_CONNECTIONS

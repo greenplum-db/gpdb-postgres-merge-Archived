@@ -41,11 +41,7 @@ SUBDIRS = \
 		pgcrypto	\
 		pgrowlocks	\
 		pgstattuple	\
-<<<<<<< HEAD
-=======
 		pg_visibility	\
-		postgres_fdw	\
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		seg		\
 		spi		\
 		tablefunc	\

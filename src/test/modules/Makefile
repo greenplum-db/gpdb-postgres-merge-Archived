@@ -17,16 +17,9 @@ SUBDIRS = \
 		  test_shm_mq \
 		  worker_spi
 
-<<<<<<< HEAD
 # GPDB subdirs
 SUBDIRS += test_planner
 
-all: submake-errcodes
-
-submake-errcodes:
-	$(MAKE) -C $(top_builddir)/src/backend submake-errcodes
-=======
 all: submake-generated-headers
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 $(recurse)

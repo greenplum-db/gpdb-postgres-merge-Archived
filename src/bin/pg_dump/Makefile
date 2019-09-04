@@ -16,7 +16,7 @@ subdir = src/bin/pg_dump
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-<<<<<<< HEAD
+# GPDB_96_MERGE_FIXME: do we still need these lines?
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv, $(LIBS))
 # This program isn't interactive, so doesn't need these
@@ -29,10 +29,9 @@ override CPPFLAGS := -Wno-deprecated-declarations -I$(libpq_srcdir) $(CPPFLAGS)
 ifeq ($(PORTNAME),openbsd)
 override CFLAGS += -pthread
 endif
-=======
+
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils -lpq
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 OBJS=	pg_backup_archiver.o pg_backup_db.o pg_backup_custom.o \
 	pg_backup_null.o pg_backup_tar.o pg_backup_directory.o \
@@ -67,10 +66,6 @@ uninstall:
 	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, pg_dump$(X) pg_restore$(X) pg_dumpall$(X))
 
 clean distclean maintainer-clean:
-<<<<<<< HEAD
 	$(MAKE) -C test clean
-	rm -f pg_dump$(X) pg_restore$(X) pg_dumpall$(X) $(OBJS) pg_dump.o common.o pg_dump_sort.o pg_restore.o pg_dumpall.o kwlookup.c $(KEYWRDOBJS)
-=======
 	rm -f pg_dump$(X) pg_restore$(X) pg_dumpall$(X) $(OBJS) pg_dump.o common.o pg_dump_sort.o pg_restore.o pg_dumpall.o
 	rm -rf tmp_check
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

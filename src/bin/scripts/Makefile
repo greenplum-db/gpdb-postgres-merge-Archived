@@ -37,19 +37,6 @@ endif
 %: %.o $(WIN32RES)
 	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
-<<<<<<< HEAD
-createdb: createdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
-createlang: createlang.o common.o dumputils.o kwlookup.o keywords.o print.o mbprint.o | submake-libpq submake-libpgport
-createuser: createuser.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
-dropdb: dropdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
-droplang: droplang.o common.o dumputils.o kwlookup.o keywords.o print.o mbprint.o | submake-libpq submake-libpgport
-dropuser: dropuser.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
-clusterdb: clusterdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
-vacuumdb: vacuumdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
-reindexdb: reindexdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
-pg_isready: pg_isready.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
-
-=======
 createdb: createdb.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 createlang: createlang.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 createuser: createuser.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
@@ -60,7 +47,6 @@ clusterdb: clusterdb.o common.o | submake-libpq submake-libpgport submake-libpgf
 vacuumdb: vacuumdb.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 reindexdb: reindexdb.o common.o | submake-libpq submake-libpgport submake-libpgfeutils
 pg_isready: pg_isready.o common.o | submake-libpq submake-libpgport
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 install: all installdirs
 	$(INSTALL_PROGRAM) createdb$(X)   '$(DESTDIR)$(bindir)'/createdb$(X)

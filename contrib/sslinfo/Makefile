@@ -4,11 +4,7 @@ MODULE_big = sslinfo
 OBJS = sslinfo.o $(WIN32RES)
 
 EXTENSION = sslinfo
-<<<<<<< HEAD
-DATA = sslinfo--1.0--1.1.sql sslinfo--1.1.sql \
-=======
 DATA = sslinfo--1.2.sql sslinfo--1.1--1.2.sql sslinfo--1.0--1.1.sql \
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	sslinfo--unpackaged--1.0.sql
 PGFILEDESC = "sslinfo - information about client SSL certificate"
 

@@ -18,8 +18,8 @@ include $(top_builddir)/src/Makefile.global
 
 REFDOCDIR= $(top_srcdir)/doc/src/sgml/ref
 
-<<<<<<< HEAD
-override CPPFLAGS := -DFRONTEND -I. -I$(srcdir) -I$(libpq_srcdir) -I$(top_srcdir)/src/bin/pg_dump $(CPPFLAGS)
+override CPPFLAGS := -DFRONTEND -I. -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
+LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils -lpq
 
 # necessary to get flex to play nice with large files on 32bit solaris sparc
 ifeq ($(PORTNAME), solaris)
@@ -29,10 +29,6 @@ override CFLAGS := -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE=1
 endif
 #endif
 endif
-=======
-override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
-LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils -lpq
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
 	startup.o prompt.o variables.o large_obj.o describe.o \
@@ -51,20 +47,10 @@ psql: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 
 help.o: sql_help.h
 
-<<<<<<< HEAD
-dumputils.c keywords.c: % : $(top_srcdir)/src/bin/pg_dump/%
-	rm -f $@ && $(LN_S) $< .
-
-kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
-	rm -f $@ && $(LN_S) $< .
-
 # See notes in src/backend/parser/Makefile about the following two rules
 sql_help.c: sql_help.h
 	touch $@
 
-=======
-sql_help.c: sql_help.h ;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
 	$(PERL) $< $(REFDOCDIR) $*
 
@@ -76,11 +62,7 @@ ifeq ($(GCC),yes)
 psqlscanslash.o: CFLAGS += -Wno-error
 endif
 
-<<<<<<< HEAD
-distprep: sql_help.h sql_help.c psqlscan.c
-=======
-distprep: sql_help.h psqlscanslash.c
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+distprep: sql_help.h sql_help.c psqlscanslash.c
 
 install: all installdirs
 	$(INSTALL_PROGRAM) psql$(X) '$(DESTDIR)$(bindir)/psql$(X)'
@@ -93,11 +75,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(bindir)/psql$(X)' '$(DESTDIR)$(datadir)/psqlrc.sample'
 
 clean distclean:
-<<<<<<< HEAD
-	rm -f psql$(X) $(OBJS) dumputils.c keywords.c kwlookup.c psqlscan.o
-=======
 	rm -f psql$(X) $(OBJS) lex.backup
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 # files removed here are supposed to be in the distribution tarball,
 # so do not clean them in the clean/distclean rules

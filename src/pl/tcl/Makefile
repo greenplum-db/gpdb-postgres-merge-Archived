@@ -27,13 +27,8 @@ OBJS = pltcl.o $(WIN32RES)
 DATA = pltcl.control pltcl--1.0.sql pltcl--unpackaged--1.0.sql \
        pltclu.control pltclu--1.0.sql pltclu--unpackaged--1.0.sql
 
-<<<<<<< HEAD
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --init-file=$(srcdir)/init_file --load-extension=pltcl
-REGRESS = pltcl_setup pltcl_queries
-=======
-REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-extension=pltcl
 REGRESS = pltcl_setup pltcl_queries pltcl_unicode
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 # Tcl on win32 ships with import libraries only for Microsoft Visual C++,
 # which are not compatible with mingw gcc. Therefore we need to build a

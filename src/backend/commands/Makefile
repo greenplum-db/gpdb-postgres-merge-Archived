@@ -13,13 +13,9 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
-<<<<<<< HEAD
 explain.o: explain_gp.c
 
-OBJS = aggregatecmds.o alter.o analyze.o analyzeutils.o async.o cluster.o comment.o  \
-=======
 OBJS = amcmds.o aggregatecmds.o alter.o analyze.o async.o cluster.o comment.o \
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	collationcmds.o constraint.o conversioncmds.o copy.o createas.o \
 	dbcommands.o define.o discard.o dropcmds.o \
 	event_trigger.o explain.o extension.o foreigncmds.o functioncmds.o \
@@ -29,7 +25,7 @@ OBJS = amcmds.o aggregatecmds.o alter.o analyze.o async.o cluster.o comment.o \
 	tsearchcmds.o typecmds.o user.o vacuum.o vacuumlazy.o \
 	variable.o view.o
 
-OBJS += analyzefuncs.o extprotocolcmds.o exttablecmds.o queue.o
+OBJS += analyzefuncs.o analyzeutils.o extprotocolcmds.o exttablecmds.o queue.o
 OBJS += resgroupcmds.o
 
 include $(top_srcdir)/src/backend/common.mk

@@ -17,33 +17,12 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS=   pg_config.o $(WIN32RES)
 
-<<<<<<< HEAD
+# GPDB_96_MERGE_FIXME: do we still need these lines?
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
 # This program isn't interactive, so doesn't need these
 LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl -lcrypto -lz, $(LIBS))
 
-
-
-# don't include subdirectory-path-dependent -I and -L switches
-# GPDB_94_MERGE_FIXME: Need STD_CFLAGS and STD_LIBS follow the filters in STD_CPPFLAGS and STD_LDFLAGS?
-STD_CFLAGS := $(filter-out -I%,$(CFLAGS))
-STD_LIBS := $(filter-out -L%,$(LIBS))
-STD_CPPFLAGS := $(filter-out -I$(top_srcdir)/src/include -I$(top_builddir)/src/include,$(CPPFLAGS))
-STD_LDFLAGS := $(filter-out -L$(top_builddir)/src/common -L$(top_builddir)/src/port,$(LDFLAGS))
-
-override CPPFLAGS += -DVAL_CONFIGURE="\"$(configure_args)\""
-override CPPFLAGS += -DVAL_CC="\"$(CC)\""
-override CPPFLAGS += -DVAL_CPPFLAGS="\"$(STD_CPPFLAGS)\""
-override CPPFLAGS += -DVAL_CFLAGS="\"$(STD_CFLAGS)\""
-override CPPFLAGS += -DVAL_CFLAGS_SL="\"$(CFLAGS_SL)\""
-override CPPFLAGS += -DVAL_LDFLAGS="\"$(STD_LDFLAGS)\""
-override CPPFLAGS += -DVAL_LDFLAGS_EX="\"$(LDFLAGS_EX)\""
-override CPPFLAGS += -DVAL_LDFLAGS_SL="\"$(LDFLAGS_SL)\""
-override CPPFLAGS += -DVAL_LIBS="\"$(STD_LIBS)\""
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 all: pg_config
 
 pg_config: $(OBJS) | submake-libpgport

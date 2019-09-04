@@ -83,11 +83,7 @@ check: all
 
 # Connect to the server using TCP, and add a TCP-specific test.
 checktcp: all
-<<<<<<< HEAD
-	$(with_temp_install) ./pg_regress $(REGRESS_OPTS) --temp-instance=./tmp_check --bindir= $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule --host=localhost connect/test1
-=======
-	$(with_temp_install) ./pg_regress $(REGRESS_OPTS) --temp-instance=./tmp_check $(TEMP_CONF) --bindir= $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule_tcp --host=localhost
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	$(with_temp_install) ./pg_regress $(REGRESS_OPTS) --temp-instance=./tmp_check $(TEMP_CONF) --bindir= $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule --host=localhost connect/test1
 
 installcheck: all
 	./pg_regress $(REGRESS_OPTS) --bindir='$(bindir)' $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule
