@@ -139,6 +139,7 @@ static void transformLockingClause(ParseState *pstate, Query *qry,
 static bool test_raw_expression_coverage(Node *node, void *context);
 #endif
 
+/* GPDB definitions follow */
 static int get_distkey_by_name(char *key, IntoClause *into, Query *qry, bool *found);
 static void setQryDistributionPolicy(IntoClause *into, Query *qry);
 
@@ -3968,7 +3969,29 @@ applyLockingClause(Query *qry, Index rtindex,
 }
 
 /*
-<<<<<<< HEAD
+ * Coverage testing for raw_expression_tree_walker().
+ *
+ * When enabled, we run raw_expression_tree_walker() over every DML statement
+ * submitted to parse analysis.  Without this provision, that function is only
+ * applied in limited cases involving CTEs, and we don't really want to have
+ * to test everything inside as well as outside a CTE.
+ */
+#ifdef RAW_EXPRESSION_COVERAGE_TEST
+
+static bool
+test_raw_expression_coverage(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	return raw_expression_tree_walker(node,
+									  test_raw_expression_coverage,
+									  context);
+}
+
+#endif   /* RAW_EXPRESSION_COVERAGE_TEST */
+
+/* GPDB statics follow */
+/*
  * Get distribute key by name.
  *
  * Find the distribute key in into->colNames if it is not NULL, otherwise
@@ -4147,25 +4170,3 @@ queryNodeSearch(Node *node, void *context)
 
 	return true;
 }
-=======
- * Coverage testing for raw_expression_tree_walker().
- *
- * When enabled, we run raw_expression_tree_walker() over every DML statement
- * submitted to parse analysis.  Without this provision, that function is only
- * applied in limited cases involving CTEs, and we don't really want to have
- * to test everything inside as well as outside a CTE.
- */
-#ifdef RAW_EXPRESSION_COVERAGE_TEST
-
-static bool
-test_raw_expression_coverage(Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-	return raw_expression_tree_walker(node,
-									  test_raw_expression_coverage,
-									  context);
-}
-
-#endif   /* RAW_EXPRESSION_COVERAGE_TEST */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
