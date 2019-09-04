@@ -2293,13 +2293,30 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 				break;
 
 			/*
+			 * Can't do anything very useful with NULL rowtype values. For a
+			 * function returning set, we consider this a protocol violation
+			 * (but another alternative would be to just ignore the result and
+			 * "continue" to get another row).  For a function not returning
+			 * set, we fall out of the loop; we'll cons up an all-nulls result
+			 * row below.
+			 */
+			if (returnsTuple && fcinfo.isnull)
+			{
+				if (!returnsSet)
+					break;
+				ereport(ERROR,
+				        (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					        errmsg("function returning set of rows cannot return null value")));
+			}
+
+			/*
 			 * If first time through, build tuplestore for result.  For a
 			 * scalar function result type, also make a suitable tupdesc.
 			 */
 			if (first_time)
 			{
 				oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-				tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+				tupstore = tuplestore_begin_heap(randomAccess, false, operatorMemKB);
 				rsinfo.setResult = tupstore;
 				if (!returnsTuple)
 				{
@@ -2310,16 +2327,23 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 									   funcrettype,
 									   -1,
 									   0);
-					rsinfo.setDesc = tupdesc;
 				}
-<<<<<<< HEAD
+				else
+				{
+					/*
+					 * Use the type info embedded in the rowtype Datum to look
+					 * up the needed tupdesc.  Make a copy for the query.
+					 */
+					HeapTupleHeader td;
 
+					td = DatumGetHeapTupleHeader(result);
+					tupdesc = lookup_rowtype_tupdesc_copy(HeapTupleHeaderGetTypeId(td),
+					                                      HeapTupleHeaderGetTypMod(td));
+				}
 				mt_bind = create_memtuple_binding(tupdesc);
 
-				tupstore = tuplestore_begin_heap(randomAccess, false, operatorMemKB);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				MemoryContextSwitchTo(oldcontext);
+				rsinfo.setDesc = tupdesc;
 			}
 
 			/*
@@ -2327,7 +2351,6 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 			 */
 			if (returnsTuple)
 			{
-<<<<<<< HEAD
 				const int staticBufferLimit = 200;
 				HeapTupleHeader td;
 				Datum staticPd[staticBufferLimit];
@@ -2349,11 +2372,9 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
                     pn = staticNull;
                 }
 
-=======
 				if (!fcinfo.isnull)
 				{
-					HeapTupleHeader td = DatumGetHeapTupleHeader(result);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+					td = DatumGetHeapTupleHeader(result);
 
 					if (tupdesc == NULL)
 					{
@@ -2388,8 +2409,9 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 					 */
 					tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
 					tmptup.t_data = td;
-
-					tuplestore_puttuple(tupstore, &tmptup);
+					heap_deform_tuple(&tmptup, tupdesc, pd, pn);
+					tuple = memtuple_form_to(mt_bind, pd, pn, NULL, NULL, false);
+					tuplestore_puttuple(tupstore, (HeapTuple) tuple);
 				}
 				else
 				{
@@ -2404,17 +2426,10 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 					int			natts = expectedDesc->natts;
 					bool	   *nullflags;
 
-<<<<<<< HEAD
-				heap_deform_tuple(&tmptup, tupdesc, pd, pn);
-				tuple = memtuple_form_to(mt_bind, pd, pn, NULL, NULL, false);
-
-				tuplestore_puttuple(tupstore, (HeapTuple) tuple);
-=======
 					nullflags = (bool *) palloc(natts * sizeof(bool));
 					memset(nullflags, true, natts * sizeof(bool));
 					tuplestore_putvalues(tupstore, expectedDesc, NULL, nullflags);
 				}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			}
 			else
 			{
@@ -2467,14 +2482,9 @@ no_function_result:
 
 			MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 			nullflags = (bool *) palloc(natts * sizeof(bool));
-<<<<<<< HEAD
 			MemSetAligned(nullflags, true, natts * sizeof(bool));
 			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-			tuplestore_putvalues(tupstore, expectedDesc, nulldatums, nullflags);
-=======
-			memset(nullflags, true, natts * sizeof(bool));
 			tuplestore_putvalues(tupstore, expectedDesc, NULL, nullflags);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 	}
 
