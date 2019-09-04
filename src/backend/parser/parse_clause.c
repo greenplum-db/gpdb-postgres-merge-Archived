@@ -3,13 +3,9 @@
  * parse_clause.c
  *	  handle clauses in parser
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -24,20 +20,11 @@
 #include "miscadmin.h"
 
 #include "access/heapam.h"
-<<<<<<< HEAD
-#include "access/htup_details.h"
-#include "catalog/catalog.h"
-#include "catalog/heap.h"
-#include "catalog/pg_constraint.h"
-#include "catalog/pg_exttable.h"
-#include "catalog/pg_operator.h"
-=======
 #include "access/tsmapi.h"
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_constraint_fn.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "nodes/makefuncs.h"
@@ -46,7 +33,6 @@
 #include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parsetree.h"
-#include "parser/parse_agg.h"
 #include "parser/parser.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
@@ -60,17 +46,18 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
-<<<<<<< HEAD
-#include "utils/syscache.h"
 #include "utils/rel.h"
 
 #include "cdb/cdbvars.h"
 #include "cdb/cdbpartition.h"
-#include "miscadmin.h"
-=======
-#include "utils/rel.h"
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+/*
+ * GPDB_96_MERGE_FIXME: the following headers are present in Greenplum only.
+ * Verify if they are all needed or remove.
+ */
+#include "catalog/pg_exttable.h"
+#include "catalog/pg_operator.h"
+#include "parser/parse_agg.h"
 
 /* Convenience macro for the most common makeNamespaceItem() case */
 #define makeDefaultNSItem(rte)	makeNamespaceItem(rte, true, true, false, true)
