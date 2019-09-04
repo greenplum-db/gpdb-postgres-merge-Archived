@@ -987,7 +987,6 @@ void ExecModifyMemTuple(TupleTableSlot *slot, Datum *values, bool *isnull, bool 
 	slot->PRIVATE_tts_nvalid = 0;
 }
 
-<<<<<<< HEAD
 /* --------------------------------
  *		ExecMakeSlotContentsReadOnly
  *			Mark any R/W expanded datums in the slot as read-only.
@@ -1033,8 +1032,6 @@ ExecMakeSlotContentsReadOnly(TupleTableSlot *slot)
 	return slot;
 }
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* ----------------------------------------------------------------
  *				convenience initialization routines

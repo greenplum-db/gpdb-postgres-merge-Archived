@@ -7,13 +7,9 @@
  * we need two sets of code.  Ought to look at trying to unify the cases.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -66,7 +62,6 @@ SubqueryNext(SubqueryScanState *node)
 	 * cycles for ExecCopySlot().  (Our own ScanTupleSlot is used only for
 	 * EvalPlanQual rechecks.)
 	 */
-<<<<<<< HEAD
 	if (!TupIsNull(slot))
 		slot = ExecMakeSlotContentsReadOnly(slot);
 
@@ -79,8 +74,6 @@ SubqueryNext(SubqueryScanState *node)
     	slot_set_ctid_from_fake(slot, &node->cdb_fake_ctid);
     }
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	return slot;
 }
 
