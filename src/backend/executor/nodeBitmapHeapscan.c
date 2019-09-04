@@ -949,7 +949,6 @@ BitmapHeapScanState *
 ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 {
 	Relation	currentRelation;
-<<<<<<< HEAD
 	BitmapHeapScanState *bhsState;
 
 	/*
@@ -978,9 +977,7 @@ ExecInitBitmapHeapScanForPartition(BitmapHeapScan *node, EState *estate, int efl
 {
 
 	BitmapHeapScanState *scanstate;
-=======
 	int			io_concurrency;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -1045,8 +1042,6 @@ ExecInitBitmapHeapScanForPartition(BitmapHeapScan *node, EState *estate, int efl
 	ExecInitResultTupleSlot(estate, &scanstate->ss.ps);
 	ExecInitScanTupleSlot(estate, &scanstate->ss);
 
-<<<<<<< HEAD
-=======
 	/*
 	 * open the base relation and acquire appropriate lock on it.
 	 */
@@ -1068,7 +1063,6 @@ ExecInitBitmapHeapScanForPartition(BitmapHeapScan *node, EState *estate, int efl
 			scanstate->prefetch_maximum = rint(maximum);
 	}
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	scanstate->ss.ss_currentRelation = currentRelation;
 
 	/*
