@@ -6,11 +6,7 @@
  *
  * NOTE NOTE NOTE:
  *
-<<<<<<< HEAD
  * The rules in this file must be kept in sync with psql's psqlscan.l!
-=======
- * The rules in this file must be kept in sync with src/fe_utils/psqlscan.l!
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  *
  * The rules are designed so that the scanner never has to backtrack,
  * in the sense that there is always a rule that can match the input
@@ -39,11 +35,7 @@
 #include <unistd.h>
 
 #include "parser/gramparse.h"
-<<<<<<< HEAD
-#include "parser/parser.h"				/* only needed for GUC variables */
-=======
 #include "parser/parser.h"		/* only needed for GUC variables */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "parser/scansup.h"
 #include "mb/pg_wchar.h"
 }
@@ -889,15 +881,9 @@ other			.
 					 * to forbid operator names like '?-' that could not be
 					 * sequences of SQL operators.
 					 */
-<<<<<<< HEAD
 					if (nchars > 1 &&
 						(yytext[nchars - 1] == '+' ||
 						 yytext[nchars - 1] == '-'))
-=======
-					while (nchars > 1 &&
-						   (yytext[nchars - 1] == '+' ||
-							yytext[nchars - 1] == '-'))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 					{
 						int			ic;
 
