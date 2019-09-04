@@ -4,13 +4,9 @@
  *	  Definitions for tagged nodes.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/nodes.h
@@ -73,12 +69,9 @@ typedef enum NodeTag
 	T_BitmapAnd,
 	T_BitmapOr,
 	T_SeqScan,
-<<<<<<< HEAD
 	T_DynamicSeqScan,
 	T_ExternalScan,
-=======
 	T_SampleScan,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	T_IndexScan,
 	T_DynamicIndexScan,
 	T_IndexOnlyScan,
@@ -608,7 +601,10 @@ typedef enum NodeTag
 	T_TIDBitmap,				/* in nodes/tidbitmap.h */
 	T_InlineCodeBlock,			/* in nodes/parsenodes.h */
 	T_FdwRoutine,				/* in foreign/fdwapi.h */
-<<<<<<< HEAD
+	T_TsmRoutine,				/* in access/tsmapi.h */
+	T_IndexAmRoutine,			/* in access/amapi.h */
+	T_ForeignKeyCacheInfo,		/* in utils/rel.h */
+
     T_StreamBitmap,             /* in nodes/tidbitmap.h */
 	T_FormatterData,            /* in access/formatter.h */
 	T_ExtProtocolData,          /* in access/extprotocol.h */
@@ -620,11 +616,6 @@ typedef enum NodeTag
     T_CdbExplain_StatHdr = 1000,             /* in cdb/cdbexplain.c */
 	T_GpPolicy,	/* in catalog/gp_policy.h */
 
-=======
-	T_IndexAmRoutine,			/* in access/amapi.h */
-	T_TsmRoutine,				/* in access/tsmapi.h */
-	T_ForeignKeyCacheInfo		/* in utils/rel.h */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } NodeTag;
 
 /*

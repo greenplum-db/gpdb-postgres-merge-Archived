@@ -4,13 +4,9 @@
  *	  POSTGRES error reporting/logging definitions.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/elog.h
@@ -82,17 +78,6 @@
 #define ERRMSG_GP_INSUFFICIENT_STATEMENT_MEMORY "insufficient memory reserved for statement"
 
 
-<<<<<<< HEAD
-/* Which __func__ symbol do we have, if any? */
-#ifdef HAVE_FUNCNAME__FUNC
-#define PG_FUNCNAME_MACRO	__func__
-#else
-#ifdef HAVE_FUNCNAME__FUNCTION
-#define PG_FUNCNAME_MACRO	__FUNCTION__
-#else
-#define PG_FUNCNAME_MACRO	NULL
-#endif
-#endif
 
 /* threaded thing. 
  * Caller beware: ereport and elog can only be called from main thread.
@@ -146,8 +131,6 @@ void elog_internalerror(const char *filename, int lineno, const char *funcname)
 						pg_attribute_noreturn();
 
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 /*----------
  * New-style error reporting API: to be used in this way:
  *		ereport(ERROR,

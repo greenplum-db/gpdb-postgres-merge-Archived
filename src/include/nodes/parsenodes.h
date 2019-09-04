@@ -10,13 +10,9 @@
  * the location.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/parsenodes.h
@@ -156,12 +152,8 @@ typedef struct Query
 	bool		hasRecursive;	/* WITH RECURSIVE was specified */
 	bool		hasModifyingCTE;	/* has INSERT/UPDATE/DELETE in WITH */
 	bool		hasForUpdate;	/* FOR [KEY] UPDATE/SHARE was specified */
-<<<<<<< HEAD
-	bool		hasRowSecurity; /* row security applied? */
-	bool        canOptSelectLockingClause; /* Whether can do some optimization on select with locking clause */
-=======
 	bool		hasRowSecurity; /* rewriter has applied some RLS policy */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	bool        canOptSelectLockingClause; /* Whether can do some optimization on select with locking clause */
 
 	List	   *cteList;		/* WITH list (of CommonTableExpr's) */
 
@@ -199,7 +191,11 @@ typedef struct Query
 	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
 								 * depends on to be semantically valid */
 
-<<<<<<< HEAD
+	List	   *withCheckOptions;		/* a list of WithCheckOption's, which
+										 * are only added during rewrite and
+										 * therefore are not written out as
+										 * part of Query. */
+
 	/*
 	 * MPP: Used only on QD. Don't serialize. Holds the result distribution
 	 * policy for SELECT ... INTO and set operations.
@@ -211,12 +207,6 @@ typedef struct Query
 	 * would always be dispatched in parallel.
 	 */
 	ParentStmtType	parentStmtType;
-=======
-	List	   *withCheckOptions;		/* a list of WithCheckOption's, which
-										 * are only added during rewrite and
-										 * therefore are not written out as
-										 * part of Query. */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } Query;
 
 /****************************************************************************
@@ -1650,7 +1640,8 @@ typedef enum AlterTableType
 	AT_ReplicaIdentity,			/* REPLICA IDENTITY */
 	AT_EnableRowSecurity,		/* ENABLE ROW SECURITY */
 	AT_DisableRowSecurity,		/* DISABLE ROW SECURITY */
-<<<<<<< HEAD
+	AT_ForceRowSecurity,		/* FORCE ROW SECURITY */
+	AT_NoForceRowSecurity,		/* NO FORCE ROW SECURITY */
 	AT_GenericOptions,			/* OPTIONS (...) */
 	AT_SetDistributedBy,		/* SET DISTRIBUTED BY */
 	AT_ExpandTable,          /* EXPAND DISTRIBUTED */
@@ -1666,11 +1657,6 @@ typedef enum AlterTableType
 	AT_PartTruncate,			/* Truncate */
 	AT_PartAddInternal,			/* CREATE TABLE time partition addition */
 	AT_PartAttachIndex			/* ALTER INDEX ATTACH PARTITION (not exposed to user) */
-=======
-	AT_ForceRowSecurity,		/* FORCE ROW SECURITY */
-	AT_NoForceRowSecurity,		/* NO FORCE ROW SECURITY */
-	AT_GenericOptions			/* OPTIONS (...) */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } AlterTableType;
 
 typedef struct ReplicaIdentityStmt
@@ -3326,12 +3312,10 @@ typedef enum VacuumOption
 	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
 	VACOPT_NOWAIT = 1 << 5,		/* don't wait to get lock (autovacuum only) */
 	VACOPT_SKIPTOAST = 1 << 6,	/* don't process the TOAST table, if any */
-<<<<<<< HEAD
-	VACOPT_ROOTONLY = 1 << 7,	/* only ANALYZE root partition tables */
-	VACOPT_FULLSCAN = 1 << 8	/* ANALYZE using full table scan */
-=======
-	VACOPT_DISABLE_PAGE_SKIPPING = 1 << 7		/* don't skip any pages */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	VACOPT_DISABLE_PAGE_SKIPPING = 1 << 7,		/* don't skip any pages */
+
+	VACOPT_ROOTONLY = 1 << 8,	/* only ANALYZE root partition tables */
+	VACOPT_FULLSCAN = 1 << 9	/* ANALYZE using full table scan */
 } VacuumOption;
 
 typedef enum AOVacuumPhase

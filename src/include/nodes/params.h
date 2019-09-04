@@ -14,13 +14,9 @@
 #ifndef PARAMS_H
 #define PARAMS_H
 
-<<<<<<< HEAD
 #include "nodes/nodes.h"
-/* To avoid including a pile of parser headers, reference ParseState thus: */
-=======
 /* Forward declarations, to avoid including other headers */
 struct Bitmapset;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 struct ParseState;
 
 

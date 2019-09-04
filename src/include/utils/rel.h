@@ -4,13 +4,9 @@
  *	  POSTGRES relation descriptor (a/k/a relcache entry) definitions.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/rel.h
@@ -21,12 +17,8 @@
 #define REL_H
 
 #include "access/tupdesc.h"
-<<<<<<< HEAD
-#include "catalog/pg_am.h"
-#include "catalog/pg_appendonly.h"
-=======
 #include "access/xlog.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+#include "catalog/pg_appendonly.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_index.h"
 #include "fmgr.h"

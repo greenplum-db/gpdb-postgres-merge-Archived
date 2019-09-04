@@ -176,14 +176,10 @@ typedef enum ObjectClass
 	OCLASS_EXTENSION,			/* pg_extension */
 	OCLASS_EVENT_TRIGGER,		/* pg_event_trigger */
 	OCLASS_POLICY,				/* pg_policy */
-<<<<<<< HEAD
 	OCLASS_TRANSFORM,			/* pg_transform */
 	OCLASS_EXTPROTOCOL,			/* pg_extprotocol */
 	OCLASS_COMPRESSION,			/* pg_compression */
 	MAX_OCLASS					/* MUST BE LAST */
-=======
-	OCLASS_TRANSFORM			/* pg_transform */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } ObjectClass;
 
 #define LAST_OCLASS		OCLASS_TRANSFORM
