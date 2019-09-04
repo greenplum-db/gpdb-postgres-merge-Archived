@@ -2,11 +2,7 @@
 
 /*
  * The aim is to get a simpler interface to the database routines.
-<<<<<<< HEAD
- * All the tedious messing around with tuples is supposed to be hidden
-=======
  * All the tidieous messing around with tuples is supposed to be hidden
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * by this function.
  */
 /* Author: Linus Tolke
