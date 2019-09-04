@@ -85,11 +85,8 @@ extern PGDLLIMPORT volatile bool QueryCancelPending;
 extern PGDLLIMPORT volatile bool QueryCancelCleanup; /* GPDB only */
 extern PGDLLIMPORT volatile bool QueryFinishPending;
 extern PGDLLIMPORT volatile bool ProcDiePending;
-<<<<<<< HEAD
-extern PGDLLIMPORT volatile sig_atomic_t ConfigReloadPending;
-=======
 extern PGDLLIMPORT volatile bool IdleInTransactionSessionTimeoutPending;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+extern PGDLLIMPORT volatile sig_atomic_t ConfigReloadPending;
 
 extern volatile bool ClientConnectionLost;
 
@@ -319,13 +316,10 @@ extern PGDLLIMPORT bool allowSystemTableMods;
 extern PGDLLIMPORT int planner_work_mem;
 extern PGDLLIMPORT int work_mem;
 extern PGDLLIMPORT int maintenance_work_mem;
-<<<<<<< HEAD
 extern PGDLLIMPORT int statement_mem;
 extern PGDLLIMPORT int max_statement_mem;
 extern PGDLLIMPORT int gp_vmem_limit_per_query;
-=======
 extern PGDLLIMPORT int replacement_sort_tuples;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 extern int	VacuumCostPageHit;
 extern int	VacuumCostPageMiss;
@@ -359,11 +353,8 @@ extern pg_stack_base_t set_stack_base(void);
 extern void restore_stack_base(pg_stack_base_t base);
 extern void check_stack_depth(void);
 extern bool stack_is_too_deep(void);
-<<<<<<< HEAD
 
 extern void PostgresSigHupHandler(SIGNAL_ARGS);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* in tcop/utility.c */
 extern void PreventCommandIfReadOnly(const char *cmdname);

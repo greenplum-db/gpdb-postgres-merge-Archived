@@ -3,13 +3,9 @@
  * joinpath.c
  *	  Routines to find all possible paths for processing a set of joins
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -108,8 +104,6 @@ add_paths_to_joinrel(PlannerInfo *root,
 	extra.mergeclause_list = NIL;
 	extra.sjinfo = sjinfo;
 	extra.param_source_rels = NULL;
-<<<<<<< HEAD
-	extra.extra_lateral_rels = NULL;
 	extra.redistribution_clauses = NIL;
 
 	Assert(outerrel->pathlist &&
@@ -134,8 +128,6 @@ add_paths_to_joinrel(PlannerInfo *root,
 	}
 	if (cdbpath_contains_wts(innerrel->cheapest_total_path))
 		return;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Find potential mergejoin clauses.  We can skip this if we are not
@@ -257,10 +249,6 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 * 4. Consider paths where both outer and inner relations must be hashed
 	 * before being joined.  As above, disregard enable_hashjoin for full
 	 * joins, because there may be no other alternative.
-     *
-	 * We consider both the cheapest-total-cost and cheapest-startup-cost
-	 * outer paths.  There's no need to consider any but the
-	 * cheapest-total-cost inner path, however.
 	 */
 	if (root->config->enable_hashjoin || jointype == JOIN_FULL)
 		hash_inner_and_outer(root, joinrel, outerrel, innerrel,

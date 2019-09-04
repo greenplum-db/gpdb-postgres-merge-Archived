@@ -14,11 +14,8 @@
 #ifndef BUFMGR_H
 #define BUFMGR_H
 
-<<<<<<< HEAD
-#include "miscadmin.h"
-=======
 #include "catalog/catalog.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+#include "miscadmin.h"
 #include "storage/block.h"
 #include "storage/buf.h"
 #include "storage/buf_internals.h"
