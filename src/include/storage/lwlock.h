@@ -122,47 +122,11 @@ typedef struct NamedLWLockTranche
 	int			trancheId;
 } NamedLWLockTranche;
 
-<<<<<<< HEAD
-#define PG_NUM_INDIVIDUAL_LWLOCKS		41
-
-/* Additional individual locks in GPDB */
-#define SharedSnapshotLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 1].lock)
-#define DistributedLogControlLock	(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 2].lock)
-#define AOSegFileLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 3].lock)
-#define ResQueueLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 4].lock)
-#define ResGroupLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 5].lock)
-#define ErrorLogLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 6].lock)
-#define SessionStateLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 7].lock)
-#define RelfilenodeGenLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 8].lock)
-#define WorkFileManagerLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 9].lock)
-#define DistributedLogTruncateLock	(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 10].lock)
-#define GP_NUM_INDIVIDUAL_LWLOCKS		10
-
-/*
- * It would probably be better to allocate separate LWLock tranches
- * for these. But this will do for now.
- */
-#define FirstWorkfileMgrLock		(&MainLWLockArray[ \
-										 PG_NUM_INDIVIDUAL_LWLOCKS + \
-										 GP_NUM_INDIVIDUAL_LWLOCKS \
-										 ].lock)
-#define FirstWorkfileQuerySpaceLock		(&MainLWLockArray[ \
-										 PG_NUM_INDIVIDUAL_LWLOCKS + \
-										 GP_NUM_INDIVIDUAL_LWLOCKS + \
-										 NUM_WORKFILEMGR_PARTITIONS \
-										 ].lock)
-
-#define NUM_INDIVIDUAL_LWLOCKS (PG_NUM_INDIVIDUAL_LWLOCKS + \
-								GP_NUM_INDIVIDUAL_LWLOCKS + \
-								NUM_WORKFILEMGR_PARTITIONS + \
-								NUM_WORKFILE_QUERYSPACE_PARTITIONS)
-=======
 extern PGDLLIMPORT NamedLWLockTranche *NamedLWLockTrancheArray;
 extern PGDLLIMPORT int NamedLWLockTrancheRequests;
 
 /* Names for fixed lwlocks */
 #include "storage/lwlocknames.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
  * It's a bit odd to declare NUM_BUFFER_PARTITIONS and NUM_LOCK_PARTITIONS
@@ -180,12 +144,6 @@ extern PGDLLIMPORT int NamedLWLockTrancheRequests;
 /* Number of partitions the shared predicate lock tables are divided into */
 #define LOG2_NUM_PREDICATELOCK_PARTITIONS  4
 #define NUM_PREDICATELOCK_PARTITIONS  (1 << LOG2_NUM_PREDICATELOCK_PARTITIONS)
-
-/* Number of partitions of the workfile manager hashtable */
-#define NUM_WORKFILEMGR_PARTITIONS 32
-
-/* Number of partitions of the workfile query diskspace hashtable */
-#define NUM_WORKFILE_QUERYSPACE_PARTITIONS 128
 
 /* Offsets for various chunks of preallocated lwlocks. */
 #define BUFFER_MAPPING_LWLOCK_OFFSET	NUM_INDIVIDUAL_LWLOCKS
