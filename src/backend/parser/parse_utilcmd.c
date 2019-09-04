@@ -29,8 +29,6 @@
 #include "access/amapi.h"
 #include "access/htup_details.h"
 #include "access/reloptions.h"
-#include "catalog/pg_compression.h"
-#include "catalog/pg_constraint.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -38,15 +36,10 @@
 #include "catalog/pg_am.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
-<<<<<<< HEAD
-#include "catalog/pg_inherits_fn.h"
-=======
 #include "catalog/pg_constraint_fn.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
-#include "catalog/pg_type_encoding.h"
 #include "commands/comment.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
@@ -58,7 +51,6 @@
 #include "parser/parse_clause.h"
 #include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
-#include "parser/parse_partition.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
@@ -67,13 +59,8 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
-#include "utils/fmgroids.h"
-=======
 #include "utils/guc.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "utils/lsyscache.h"
-#include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
@@ -83,7 +70,17 @@
 #include "cdb/partitionselection.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
-#include "utils/guc.h"
+
+/*
+ * GPDB_96_MERGE_FIXME: The following are Greenplum only headers. Verify if they
+ * are all needed or amend.
+ */
+#include "catalog/pg_compression.h"
+#include "catalog/pg_inherits_fn.h"
+#include "catalog/pg_type_encoding.h"
+#include "parser/parse_partition.h"
+#include "utils/fmgroids.h"
+#include "utils/memutils.h"
 #include "utils/tqual.h"
 
 /* State shared by transformCreateSchemaStmt and its subroutines */
@@ -168,7 +165,8 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	Oid			namespaceid;
 	Oid			existing_relid;
 	ParseCallbackState pcbstate;
-<<<<<<< HEAD
+	bool		like_found = false;
+
 	DistributedBy *likeDistributedBy = NULL;
 	bool		bQuiet = false;		/* shut up transformDistributedBy messages */
 	List	   *stenc = NIL;		/* column reference storage encoding clauses */
@@ -189,9 +187,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 							  ALLOCSET_DEFAULT_MINSIZE,
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
-=======
-	bool		like_found = false;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * We must not scribble on the passed-in CreateStmt, so copy it.  (This is
@@ -334,10 +329,14 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 				break;
 
 			case T_TableLikeClause:
-<<<<<<< HEAD
 				{
 					bool            isBeginning = (cxt.columns == NIL);
 
+					if (!like_found)
+					{
+						cxt.hasoids = false;
+						like_found = true;
+					}
 					transformTableLikeClause(&cxt, (TableLikeClause *) element, false, stmt, &stenc);
 
 					if (Gp_role == GP_ROLE_DISPATCH && isBeginning &&
@@ -352,14 +351,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 			case T_ColumnReferenceStorageDirective:
 				/* processed below in transformAttributeEncoding() */
 				stenc = lappend(stenc, element);
-=======
-				if (!like_found)
-				{
-					cxt.hasoids = false;
-					like_found = true;
-				}
-				transformTableLikeClause(&cxt, (TableLikeClause *) element);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				break;
 
 			case T_Constraint:
@@ -3937,14 +3928,8 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	save_alist = cxt.alist;
 	cxt.alist = NIL;
 
-<<<<<<< HEAD
-	/* Postprocess index and FK constraints */
-	transformIndexConstraints(&cxt, false);
-
-=======
 	/* Postprocess constraints */
-	transformIndexConstraints(&cxt);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	transformIndexConstraints(&cxt, false);
 	transformFKConstraints(&cxt, skipValidation, true);
 	transformCheckConstraints(&cxt, false);
 
