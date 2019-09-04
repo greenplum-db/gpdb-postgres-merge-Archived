@@ -29,7 +29,7 @@
 /*
  * Buffer state is a single 32-bit variable where following data is combined.
  *
- * - 18 bits refcount
+ * - 17 bits refcount in GPDB (18 bits in Postgres. We have one extra flag, BM_TEMP)
  * - 4 bits usage count
  * - 10 bits of flags
  *
@@ -39,11 +39,11 @@
  * The definition of buffer state components is below.
  */
 #define BUF_REFCOUNT_ONE 1
-#define BUF_REFCOUNT_MASK ((1U << 18) - 1)
-#define BUF_USAGECOUNT_MASK 0x003C0000U
-#define BUF_USAGECOUNT_ONE (1U << 18)
-#define BUF_USAGECOUNT_SHIFT 18
-#define BUF_FLAG_MASK 0xFFC00000U
+#define BUF_REFCOUNT_MASK ((1U << 17) - 1)
+#define BUF_USAGECOUNT_MASK 0x001E0000U
+#define BUF_USAGECOUNT_ONE (1U << 17)
+#define BUF_USAGECOUNT_SHIFT 17
+#define BUF_FLAG_MASK 0xFFE00000U
 
 /* Get refcount and usagecount from buffer state */
 #define BUF_STATE_GET_REFCOUNT(state) ((state) & BUF_REFCOUNT_MASK)
@@ -55,22 +55,6 @@
  * Note: TAG_VALID essentially means that there is a buffer hashtable
  * entry associated with the buffer's tag.
  */
-<<<<<<< HEAD
-#define BM_DIRTY				(1 << 0)		/* data needs writing */
-#define BM_VALID				(1 << 1)		/* data is valid */
-#define BM_TAG_VALID			(1 << 2)		/* tag is assigned */
-#define BM_IO_IN_PROGRESS		(1 << 3)		/* read or write in progress */
-#define BM_IO_ERROR				(1 << 4)		/* previous I/O failed */
-#define BM_JUST_DIRTIED			(1 << 5)		/* dirtied since write started */
-#define BM_PIN_COUNT_WAITER		(1 << 6)		/* have waiter for sole pin */
-#define BM_CHECKPOINT_NEEDED	(1 << 7)		/* must write for checkpoint */
-#define BM_PERMANENT			(1 << 8)		/* permanent relation (neither
-												 * unlogged, or init fork) */
-#define BM_TEMP					(1 << 9)		/* temporary relation */
-
-typedef bits16 BufFlags;
-
-=======
 #define BM_LOCKED				(1U << 22)		/* buffer header is locked */
 #define BM_DIRTY				(1U << 23)		/* data needs writing */
 #define BM_VALID				(1U << 24)		/* data is valid */
@@ -82,7 +66,8 @@ typedef bits16 BufFlags;
 #define BM_CHECKPOINT_NEEDED	(1U << 30)		/* must write for checkpoint */
 #define BM_PERMANENT			(1U << 31)		/* permanent relation (not
 												 * unlogged) */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+#define BM_TEMP					(1U << 21)		/* temporary relation */
+
 /*
  * The maximum allowed value of usage_count represents a tradeoff between
  * accuracy and speed of the clock-sweep buffer management algorithm.  A
