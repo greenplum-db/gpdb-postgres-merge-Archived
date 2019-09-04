@@ -1752,13 +1752,10 @@ typedef struct SeqScanState
 typedef struct SampleScanState
 {
 	ScanState	ss;
-<<<<<<< HEAD
 	struct HeapScanDescData *ss_currentScanDesc_heap;
 	struct AppendOnlyScanDescData *ss_currentScanDesc_ao;
 	struct AOCSScanDescData *ss_currentScanDesc_aocs;
 
-	struct TableSampleDesc *tsdesc;
-=======
 	List	   *args;			/* expr states for TABLESAMPLE params */
 	ExprState  *repeatable;		/* expr state for REPEATABLE expr */
 	/* use struct pointer to avoid including tsmapi.h here */
@@ -1768,7 +1765,6 @@ typedef struct SampleScanState
 	bool		use_pagemode;	/* use page-at-a-time visibility checking? */
 	bool		begun;			/* false means need to call BeginSampleScan */
 	uint32		seed;			/* random seed */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } SampleScanState;
 
 /*

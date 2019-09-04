@@ -73,19 +73,6 @@ tsm_system_handler(PG_FUNCTION_ARGS)
 {
 	TsmRoutine *tsm = makeNode(TsmRoutine);
 
-<<<<<<< HEAD
-	/*
-	 * GPDB_95_MERGE_FIXME: Add support for AO tables, external tables
-	 * should not be supported
-	 */
-	if (!RelationIsHeap(scan->rs_rd))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("invalid relation type"),
-				 errhint("Sampling is only supported in heap tables.")));
-
-	if (percent < 0 || percent > 100)
-=======
 	tsm->parameterTypes = list_make1_oid(FLOAT4OID);
 	tsm->repeatable_across_queries = true;
 	tsm->repeatable_across_scans = true;
@@ -164,7 +151,6 @@ system_beginsamplescan(SampleScanState *node,
 	double		dcutoff;
 
 	if (percent < 0 || percent > 100 || isnan(percent))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLESAMPLE_ARGUMENT),
 				 errmsg("sample percentage must be between 0 and 100")));
@@ -197,7 +183,7 @@ static BlockNumber
 system_nextsampleblock(SampleScanState *node)
 {
 	SystemSamplerData *sampler = (SystemSamplerData *) node->tsm_state;
-	HeapScanDesc scan = node->ss.ss_currentScanDesc;
+	HeapScanDesc scan = node->ss_currentScanDesc_heap;
 	BlockNumber nextblock = sampler->nextblock;
 	uint32		hashinput[2];
 
@@ -272,78 +258,5 @@ system_nextsampletuple(SampleScanState *node,
 
 	sampler->lt = tupoffset;
 
-<<<<<<< HEAD
-	PG_RETURN_UINT16(tupoffset);
-}
-
-/*
- * Cleanup method.
- */
-Datum
-tsm_system_end(PG_FUNCTION_ARGS)
-{
-	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
-
-	pfree(tsdesc->tsmdata);
-
-	PG_RETURN_VOID();
-}
-
-/*
- * Reset state (called by ReScan).
- */
-Datum
-tsm_system_reset(PG_FUNCTION_ARGS)
-{
-	TableSampleDesc *tsdesc = (TableSampleDesc *) PG_GETARG_POINTER(0);
-	SystemSamplerData *sampler = (SystemSamplerData *) tsdesc->tsmdata;
-
-	sampler->lt = InvalidOffsetNumber;
-	BlockSampler_Init(&sampler->bs, sampler->nblocks, sampler->samplesize,
-					  sampler->seed);
-
-	PG_RETURN_VOID();
-}
-
-/*
- * Costing function.
- */
-Datum
-tsm_system_cost(PG_FUNCTION_ARGS)
-{
-	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	Path	   *path = (Path *) PG_GETARG_POINTER(1);
-	RelOptInfo *baserel = (RelOptInfo *) PG_GETARG_POINTER(2);
-	List	   *args = (List *) PG_GETARG_POINTER(3);
-	BlockNumber *pages = (BlockNumber *) PG_GETARG_POINTER(4);
-	double	   *tuples = (double *) PG_GETARG_POINTER(5);
-	Node	   *pctnode;
-	float4		samplesize;
-
-	pctnode = linitial(args);
-	pctnode = estimate_expression_value(root, pctnode);
-
-	if (IsA(pctnode, RelabelType))
-		pctnode = (Node *) ((RelabelType *) pctnode)->arg;
-
-	/* GPDB_95_MERGE_FIXME: is it needed to have a better estimage for explain? */
-	if (IsA(pctnode, Const))
-	{
-		samplesize = DatumGetFloat4(((Const *) pctnode)->constvalue);
-		samplesize /= 100.0;
-	}
-	else
-	{
-		/* Default samplesize if the estimation didn't return Const. */
-		samplesize = 0.1f;
-	}
-
-	*pages = baserel->pages * samplesize;
-	*tuples = path->rows * samplesize;
-	path->rows = *tuples;
-
-	PG_RETURN_VOID();
-=======
 	return tupoffset;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }

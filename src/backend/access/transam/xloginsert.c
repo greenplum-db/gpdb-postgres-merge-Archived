@@ -717,15 +717,9 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	/* followed by the record's origin, if any */
 	if (include_origin && replorigin_session_origin != InvalidRepOriginId)
 	{
-<<<<<<< HEAD
-		*(scratch++) = (char) XLR_BLOCK_ID_ORIGIN;
-		memcpy(scratch, &replorigin_sesssion_origin, sizeof(replorigin_sesssion_origin));
-		scratch += sizeof(replorigin_sesssion_origin);
-=======
 		*(scratch++) = XLR_BLOCK_ID_ORIGIN;
 		memcpy(scratch, &replorigin_session_origin, sizeof(replorigin_session_origin));
 		scratch += sizeof(replorigin_session_origin);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	/* followed by main data, if any */

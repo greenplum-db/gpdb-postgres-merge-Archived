@@ -751,13 +751,8 @@ debugStartup(DestReceiver *self pg_attribute_unused(), int operation pg_attribut
  *		debugtup - print one tuple for an interactive backend
  * ----------------
  */
-<<<<<<< HEAD
-void
-debugtup(TupleTableSlot *slot, DestReceiver *self pg_attribute_unused())
-=======
 bool
 debugtup(TupleTableSlot *slot, DestReceiver *self)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	int			natts = typeinfo->natts;

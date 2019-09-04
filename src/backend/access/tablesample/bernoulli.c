@@ -70,19 +70,6 @@ tsm_bernoulli_handler(PG_FUNCTION_ARGS)
 {
 	TsmRoutine *tsm = makeNode(TsmRoutine);
 
-<<<<<<< HEAD
-	/*
-	 * GPDB_95_MERGE_FIXME: Add support for AO tables, external tables
-	 * should not be supported
-	 */
-	if (!RelationIsHeap(scan->rs_rd))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("invalid relation type"),
-				 errhint("Sampling is only supported in heap tables.")));
-
-	if (percent < 0 || percent > 100)
-=======
 	tsm->parameterTypes = list_make1_oid(FLOAT4OID);
 	tsm->repeatable_across_queries = true;
 	tsm->repeatable_across_scans = true;
@@ -160,7 +147,6 @@ bernoulli_beginsamplescan(SampleScanState *node,
 	double		dcutoff;
 
 	if (percent < 0 || percent > 100 || isnan(percent))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLESAMPLE_ARGUMENT),
 				 errmsg("sample percentage must be between 0 and 100")));

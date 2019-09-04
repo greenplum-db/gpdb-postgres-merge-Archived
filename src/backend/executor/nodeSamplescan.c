@@ -65,7 +65,7 @@ SampleNext(SampleScanState *node)
 	if (tuple)
 		ExecStoreHeapTuple(tuple,	/* tuple to store */
 					   slot,	/* slot to store in */
-					   node->ss.ss_currentScanDesc->rs_cbuf,	/* tuple's buffer */
+					   node->ss_currentScanDesc_heap->rs_cbuf,	/* tuple's buffer */
 					   false);	/* don't pfree this pointer */
 	else
 		ExecClearTuple(slot);
@@ -135,19 +135,20 @@ InitScanRelation(SampleScanState *node, EState *estate, int eflags)
 
 	node->ss.ss_currentRelation = currentRelation;
 
-<<<<<<< HEAD
 	/*
-	 * Even though we aren't going to do a conventional seqscan, it is useful
-	 * to create a HeapScanDesc --- many of the fields in it are usable.
-	 */
-	node->ss_currentScanDesc_heap =
-		heap_beginscan_sampling(currentRelation, estate->es_snapshot, 0, NULL,
-								tablesample->tsmseqscan,
-								tablesample->tsmpagemode);
-=======
+	 * GPDB_96_MERGE: move this comments from bernoulli_beginsamplescan
+         * GPDB_95_MERGE_FIXME: Add support for AO tables, external tables
+         * should not be supported
+         */
+        if (!RelationIsHeap(currentRelation))
+                ereport(ERROR,
+                                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                                 errmsg("invalid relation type"),
+                                 errhint("Sampling is only supported in heap tables.")));
+
+
 	/* we won't set up the HeapScanDesc till later */
-	node->ss.ss_currentScanDesc = NULL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	node->ss_currentScanDesc_heap = NULL;
 
 	/* and report the scan tuple slot's rowtype */
 	ExecAssignScanType(&node->ss, RelationGetDescr(currentRelation));
@@ -268,12 +269,8 @@ ExecEndSampleScan(SampleScanState *node)
 	/*
 	 * close heap scan
 	 */
-<<<<<<< HEAD
-	heap_endscan(node->ss_currentScanDesc_heap);
-=======
-	if (node->ss.ss_currentScanDesc)
-		heap_endscan(node->ss.ss_currentScanDesc);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	if (node->ss_currentScanDesc_heap)
+		heap_endscan(node->ss_currentScanDesc_heap);
 
 	/*
 	 * close the heap relation.
@@ -291,17 +288,8 @@ ExecEndSampleScan(SampleScanState *node)
 void
 ExecReScanSampleScan(SampleScanState *node)
 {
-<<<<<<< HEAD
-	heap_rescan(node->ss_currentScanDesc_heap, NULL);
-
-	/*
-	 * Tell sampling function to reset its state for rescan.
-	 */
-	tablesample_reset(node->tsdesc);
-=======
 	/* Remember we need to do BeginSampleScan again (if we did it at all) */
 	node->begun = false;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	ExecScanReScan(&node->ss);
 }
@@ -386,9 +374,9 @@ tablesample_init(SampleScanState *scanstate)
 	allow_sync = (tsm->NextSampleBlock == NULL);
 
 	/* Now we can create or reset the HeapScanDesc */
-	if (scanstate->ss.ss_currentScanDesc == NULL)
+	if (scanstate->ss_currentScanDesc_heap == NULL)
 	{
-		scanstate->ss.ss_currentScanDesc =
+		scanstate->ss_currentScanDesc_heap =
 			heap_beginscan_sampling(scanstate->ss.ss_currentRelation,
 									scanstate->ss.ps.state->es_snapshot,
 									0, NULL,
@@ -398,7 +386,7 @@ tablesample_init(SampleScanState *scanstate)
 	}
 	else
 	{
-		heap_rescan_set_params(scanstate->ss.ss_currentScanDesc, NULL,
+		heap_rescan_set_params(scanstate->ss_currentScanDesc_heap, NULL,
 							   scanstate->use_bulkread,
 							   allow_sync,
 							   scanstate->use_pagemode);
@@ -420,7 +408,7 @@ static HeapTuple
 tablesample_getnext(SampleScanState *scanstate)
 {
 	TsmRoutine *tsm = scanstate->tsmroutine;
-	HeapScanDesc scan = scanstate->ss.ss_currentScanDesc;
+	HeapScanDesc scan = scanstate->ss_currentScanDesc_heap;
 	HeapTuple	tuple = &(scan->rs_ctup);
 	Snapshot	snapshot = scan->rs_snapshot;
 	bool		pagemode = scan->rs_pageatatime;

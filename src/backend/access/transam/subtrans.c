@@ -277,11 +277,7 @@ StartupSUBTRANS(TransactionId oldestActiveXID)
 		startPage++;
 		/* must account for wraparound */
 		if (startPage > TransactionIdToPage(MaxTransactionId))
-<<<<<<< HEAD
-			startPage=0;
-=======
 			startPage = 0;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 	(void) ZeroSUBTRANSPage(startPage);
 
