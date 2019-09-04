@@ -15,24 +15,6 @@
 
 #include <signal.h>
 
-<<<<<<< HEAD
-#ifdef HAVE_SIGPROCMASK
-extern sigset_t UnBlockSig,
-			BlockSig,
-			StartupBlockSig;
-
-/* 
- * Use pthread_sigmask() instead of sigprocmask() as the latter has undefined
- * behaviour in multithreaded processes.
- */
-#define PG_SETMASK(mask)	pthread_sigmask(SIG_SETMASK, mask, NULL)
-#else							/* not HAVE_SIGPROCMASK */
-extern int	UnBlockSig,
-			BlockSig,
-			StartupBlockSig;
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #ifndef WIN32
 #define PG_SETMASK(mask)	sigprocmask(SIG_SETMASK, mask, NULL)
 #else

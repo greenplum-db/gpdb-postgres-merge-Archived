@@ -815,11 +815,7 @@ StreamConnection(pgsocket server_fd, Port *port)
 		if (getsockopt(port->sock, SOL_SOCKET, SO_SNDBUF, (char *) &oldopt,
 					   &optlen) < 0)
 		{
-<<<<<<< HEAD
-			elog(LOG, "setsockopt(%s) failed: %m", "SO_SNDBUF");
-=======
 			elog(LOG, "getsockopt(SO_SNDBUF) failed: %m");
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			return STATUS_ERROR;
 		}
 		newopt = PQ_SEND_BUFFER_SIZE * 4;

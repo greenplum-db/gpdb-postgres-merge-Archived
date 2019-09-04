@@ -3,12 +3,8 @@
  * fe-protocol3.c
  *	  functions that are specific to frontend/backend protocol version 3
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -319,11 +315,7 @@ pqParseInput3(PGconn *conn)
 							if (!conn->result)
 							{
 								printfPQExpBuffer(&conn->errorMessage,
-<<<<<<< HEAD
-												  libpq_gettext("out of memory"));
-=======
 											 libpq_gettext("out of memory"));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 								pqSaveErrorResult(conn);
 							}
 						}
@@ -403,11 +395,7 @@ pqParseInput3(PGconn *conn)
 							if (!conn->result)
 							{
 								printfPQExpBuffer(&conn->errorMessage,
-<<<<<<< HEAD
-												  libpq_gettext("out of memory"));
-=======
 											 libpq_gettext("out of memory"));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 								pqSaveErrorResult(conn);
 							}
 						}
@@ -871,14 +859,11 @@ advance_and_error:
 	printfPQExpBuffer(&conn->errorMessage, "%s\n", errmsg);
 	pqSaveErrorResult(conn);
 
-<<<<<<< HEAD
-=======
 	/*
 	 * Return zero to allow input parsing to continue.  Essentially, we've
 	 * replaced the COMMAND_OK result with an error result, but since this
 	 * doesn't affect the protocol state, it's fine.
 	 */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	return 0;
 }
 
@@ -1097,6 +1082,29 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	{
 		if (res)
 			res->errMsg = pqResultStrdup(res, workBuf.data);
+
+		/* CDB: Transfer statistical messages on to the new result. */
+		if (conn->result &&
+		    conn->result->cdbstats)
+		{
+			pgCdbStatCell  *cell;
+			pgCdbStatCell  *next;
+			pgCdbStatCell  *prev = NULL;
+
+			/* Copy messages (incidentally reversing the list). */
+			for (cell = conn->result->cdbstats; cell; cell = cell->next)
+				saveCdbStatMsg(res, cell->data, cell->len);
+
+			/* Reverse the list again to restore newest-first ordering. */
+			for (cell = res->cdbstats; cell; cell = next)
+			{
+				next = cell->next;
+				cell->next = prev;
+				prev = cell;
+			}
+			res->cdbstats = prev;
+		}
+
 		pqClearAsyncResult(conn);
 		conn->result = res;
 		if (PQExpBufferDataBroken(workBuf))
@@ -1276,68 +1284,6 @@ pqBuildErrorMessage3(PQExpBuffer msg, const PGresult *res,
 			appendPQExpBufferChar(msg, '\n');
 		}
 	}
-<<<<<<< HEAD
-
-	/*
-	 * Either save error as current async result, or just emit the notice.
-	 */
-	if (isError)
-	{
-		if (res)
-			res->errMsg = pqResultStrdup(res, workBuf.data);
-
-        /* CDB: Transfer statistical messages on to the new result. */
-        if (conn->result &&
-            conn->result->cdbstats)
-        {
-            pgCdbStatCell  *cell;
-            pgCdbStatCell  *next;
-            pgCdbStatCell  *prev = NULL;
-
-            /* Copy messages (incidentally reversing the list). */
-            for (cell = conn->result->cdbstats; cell; cell = cell->next)
-                saveCdbStatMsg(res, cell->data, cell->len);
-
-            /* Reverse the list again to restore newest-first ordering. */
-            for (cell = res->cdbstats; cell; cell = next)
-            {
-                next = cell->next;
-                cell->next = prev;
-                prev = cell;
-            }
-            res->cdbstats = prev;
-        }
-
-        pqClearAsyncResult(conn);	/* redundant, but be safe */
-		conn->result = res;
-		if (PQExpBufferDataBroken(workBuf))
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("out of memory"));
-		else
-			appendPQExpBufferStr(&conn->errorMessage, workBuf.data);
-	}
-	else
-	{
-		/* if we couldn't allocate the result set, just discard the NOTICE */
-		if (res)
-		{
-			/* We can cheat a little here and not copy the message. */
-			res->errMsg = workBuf.data;
-			if (res->noticeHooks.noticeRec != NULL)
-				(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
-			PQclear(res);
-		}
-	}
-
-	termPQExpBuffer(&workBuf);
-	return 0;
-
-fail:
-	PQclear(res);
-	termPQExpBuffer(&workBuf);
-	return EOF;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*

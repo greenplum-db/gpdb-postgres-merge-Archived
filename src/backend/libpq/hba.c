@@ -1283,8 +1283,6 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 		parsedline->auth_method == uaSSPI)
 		parsedline->include_realm = true;
 
-<<<<<<< HEAD
-=======
 	/*
 	 * For SSPI, include_realm defaults to the SAM-compatible domain (aka
 	 * NetBIOS name) and user names instead of the Kerberos principal name for
@@ -1296,7 +1294,6 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 		parsedline->upn_username = false;
 	}
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/* Parse remaining arguments */
 	while ((field = lnext(field)) != NULL)
 	{

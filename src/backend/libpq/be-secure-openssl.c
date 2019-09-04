@@ -332,11 +332,7 @@ be_tls_init(void)
 			else
 				ereport(FATAL,
 						(errmsg("could not load SSL certificate revocation list file \"%s\": %s",
-<<<<<<< HEAD
-								ssl_crl_file, SSLerrmessage(ERR_get_error()))));
-=======
 							 ssl_crl_file, SSLerrmessage(ERR_get_error()))));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 	}
 
@@ -397,20 +393,12 @@ be_tls_open_server(Port *port)
 	port->ssl_in_use = true;
 
 aloop:
-<<<<<<< HEAD
-	/*
-	 * Prepare to call SSL_get_error() by clearing thread's OpenSSL error
-	 * queue.  In general, the current thread's error queue must be empty
-	 * before the TLS/SSL I/O operation is attempted, or SSL_get_error()
-	 * will not work reliably.  An extension may have failed to clear the
-=======
 
 	/*
 	 * Prepare to call SSL_get_error() by clearing thread's OpenSSL error
 	 * queue.  In general, the current thread's error queue must be empty
 	 * before the TLS/SSL I/O operation is attempted, or SSL_get_error() will
 	 * not work reliably.  An extension may have failed to clear the
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 * per-thread error queue following another call to an OpenSSL I/O
 	 * routine.
 	 */
@@ -422,20 +410,11 @@ aloop:
 
 		/*
 		 * Other clients of OpenSSL in the backend may fail to call
-<<<<<<< HEAD
-		 * ERR_get_error(), but we always do, so as to not cause problems
-		 * for OpenSSL clients that don't call ERR_clear_error()
-		 * defensively.  Be sure that this happens by calling now.
-		 * SSL_get_error() relies on the OpenSSL per-thread error queue
-		 * being intact, so this is the earliest possible point
-		 * ERR_get_error() may be called.
-=======
 		 * ERR_get_error(), but we always do, so as to not cause problems for
 		 * OpenSSL clients that don't call ERR_clear_error() defensively.  Be
 		 * sure that this happens by calling now. SSL_get_error() relies on
 		 * the OpenSSL per-thread error queue being intact, so this is the
 		 * earliest possible point ERR_get_error() may be called.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		 */
 		ecode = ERR_get_error();
 		switch (err)

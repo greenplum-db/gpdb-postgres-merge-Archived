@@ -2763,9 +2763,6 @@ CheckRADIUSAuth(Port *port)
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
 
-<<<<<<< HEAD
-	if (strlen(passwd) > RADIUS_VECTOR_LENGTH)
-=======
 	if (strlen(passwd) == 0)
 	{
 		ereport(LOG,
@@ -2774,7 +2771,6 @@ CheckRADIUSAuth(Port *port)
 	}
 
 	if (strlen(passwd) > RADIUS_MAX_PASSWORD_LENGTH)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		ereport(LOG,
 				(errmsg("RADIUS authentication does not support passwords longer than %d characters", RADIUS_MAX_PASSWORD_LENGTH)));

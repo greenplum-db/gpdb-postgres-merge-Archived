@@ -111,7 +111,6 @@ hashed_passwd_verify(const Port *port, const char *role, char *client_pass,
 							  role);
 		return STATUS_ERROR;	/* empty password */
 	}
-<<<<<<< HEAD
 	if (isMD5(shadow_pass))
 	{
 		char		crypt_empty[MD5_PASSWD_LEN + 1];
@@ -128,8 +127,6 @@ hashed_passwd_verify(const Port *port, const char *role, char *client_pass,
 			return STATUS_ERROR;	/* empty password */
 		}
 	}
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Compare with the encrypted or plain password depending on the
