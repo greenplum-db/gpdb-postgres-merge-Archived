@@ -3,13 +3,9 @@
  * nodeHash.c
  *	  Routines to hash relations for hashjoin
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -475,11 +471,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	long		skew_table_bytes;
 	long		max_pointers;
 	long		mppow2;
-<<<<<<< HEAD
-	int			nbatch;
-=======
 	int			nbatch = 1;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	int			nbuckets;
 	double		dbuckets;
 
@@ -542,16 +534,9 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	else
 		*num_skew_mcvs = 0;
 
+
 	/*
-<<<<<<< HEAD
 	 * Set nbuckets to achieve an average bucket load of gp_hashjoin_tuples_per_bucket when
-	 * memory is filled.  Set nbatch to the smallest power of 2 that appears
-	 * sufficient.  The Min() steps limit the results so that the pointer
-	 * arrays we'll try to allocate do not exceed work_mem nor MaxAllocSize.
-	 */
-	max_pointers = (operatorMemKB * 1024L) / sizeof(HashJoinTuple);
-=======
-	 * Set nbuckets to achieve an average bucket load of NTUP_PER_BUCKET when
 	 * memory is filled, assuming a single batch; but limit the value so that
 	 * the pointer arrays we'll try to allocate do not exceed work_mem nor
 	 * MaxAllocSize.
@@ -559,8 +544,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	 * Note that both nbuckets and nbatch must be powers of 2 to make
 	 * ExecHashGetBucketAndBatch fast.
 	 */
-	max_pointers = (work_mem * 1024L) / sizeof(HashJoinTuple);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	max_pointers = (operatorMemKB * 1024L) / sizeof(HashJoinTuple);
 	max_pointers = Min(max_pointers, MaxAllocSize / sizeof(HashJoinTuple));
 	/* If max_pointers isn't a power of 2, must round it down to one */
 	mppow2 = 1L << my_log2(max_pointers);
@@ -571,11 +555,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	/* (this step is redundant given the current value of MaxAllocSize) */
 	max_pointers = Min(max_pointers, INT_MAX / 2);
 
-<<<<<<< HEAD
 	dbuckets = ceil(ntuples / gp_hashjoin_tuples_per_bucket);
-=======
-	dbuckets = ceil(ntuples / NTUP_PER_BUCKET);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	dbuckets = Min(dbuckets, max_pointers);
 	nbuckets = (int) dbuckets;
 	/* don't let nbuckets be really small, though ... */
@@ -602,13 +582,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		 * gp_hashjoin_tuples_per_bucket tuples, whose projected size already includes
 		 * overhead for the hash code, pointer to the next tuple, etc.
 		 */
-<<<<<<< HEAD
 		bucket_size = (tupsize * gp_hashjoin_tuples_per_bucket + sizeof(HashJoinTuple));
-		lbuckets = 1 << my_log2(hash_table_bytes / bucket_size);
-=======
-		bucket_size = (tupsize * NTUP_PER_BUCKET + sizeof(HashJoinTuple));
 		lbuckets = 1L << my_log2(hash_table_bytes / bucket_size);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		lbuckets = Min(lbuckets, max_pointers);
 		nbuckets = (int) lbuckets;
 		nbuckets = 1 << my_log2(nbuckets);
@@ -945,14 +920,10 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 	if (nfreed == 0 || nfreed == ninmemory)
 	{
 		hashtable->growEnabled = false;
-<<<<<<< HEAD
-		elog(LOG, "HJ: Disabling further increase of nbatch");
-=======
 #ifdef HJDEBUG
 		printf("Hashjoin %p: disabling further increase of nbatch\n",
 			   hashtable);
 #endif
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 }
@@ -1089,14 +1060,8 @@ ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
 		 * NTUP_PER_BUCKET threshold, but only when there's still a single
 		 * batch.
 		 */
-<<<<<<< HEAD
-		if ((hashtable->nbatch == 1) &&
-			(hashtable->nbuckets_optimal <= INT_MAX / 2) &&		/* overflow protection */
-			(ntuples >= (hashtable->nbuckets_optimal * gp_hashjoin_tuples_per_bucket)))
-=======
 		if (hashtable->nbatch == 1 &&
-			ntuples > (hashtable->nbuckets_optimal * NTUP_PER_BUCKET))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+			ntuples > (hashtable->nbuckets_optimal * gp_hashjoin_tuples_per_bucket))
 		{
 			/* Guard against integer overflow and alloc size overflow */
 			if (hashtable->nbuckets_optimal <= INT_MAX / 2 &&
