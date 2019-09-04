@@ -3,7 +3,6 @@
  * analyze.c
  *	  the Postgres statistics generator
  *
-<<<<<<< HEAD
  *
  * There are a few things in Greenplum that make this more complicated
  * than in upstream:
@@ -65,10 +64,7 @@
  *
  * TODO: explain how this works.
  *
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -884,7 +880,6 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 		vac_update_relstats(onerel,
 							relpages,
 							totalrows,
-<<<<<<< HEAD
 							RelationIsAppendOptimized(onerel) ?
 							   0 : visibilitymap_count(onerel),
 							hasindex,
@@ -892,14 +887,7 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 							InvalidMultiXactId,
 							in_outer_xact,
 							false /* isvacuum */);
-=======
-							relallvisible,
-							hasindex,
-							InvalidTransactionId,
-							InvalidMultiXactId,
-							in_outer_xact);
 	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
@@ -2683,17 +2671,10 @@ static void compute_trivial_stats(VacAttrStatsP stats,
 					  AnalyzeAttrFetchFunc fetchfunc,
 					  int samplerows,
 					  double totalrows);
-<<<<<<< HEAD
-static void compute_very_minimal_stats(VacAttrStatsP stats,
-					  AnalyzeAttrFetchFunc fetchfunc,
-					  int samplerows,
-					  double totalrows);
-=======
 static void compute_distinct_stats(VacAttrStatsP stats,
 					   AnalyzeAttrFetchFunc fetchfunc,
 					   int samplerows,
 					   double totalrows);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void compute_scalar_stats(VacAttrStatsP stats,
 					 AnalyzeAttrFetchFunc fetchfunc,
 					 int samplerows,
@@ -2739,7 +2720,6 @@ std_typanalyze(VacAttrStats *stats)
 	/*
 	 * Determine which standard statistics algorithm to use
 	 */
-<<<<<<< HEAD
 	List *va_cols = list_make1_int(stats->attr->attnum);
 	if (rel_part_status(attr->attrelid) == PART_STATUS_ROOT &&
 		leaf_parts_analyzed(stats->attr->attrelid, InvalidOid, va_cols, stats->elevel) &&
@@ -2749,10 +2729,7 @@ std_typanalyze(VacAttrStats *stats)
 		stats->compute_stats = merge_leaf_stats;
 		stats->minrows = 300 * attr->attstattarget;
 	}
-	else if (OidIsValid(ltopr) && OidIsValid(eqopr))
-=======
-	if (OidIsValid(eqopr) && OidIsValid(ltopr))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	else if (OidIsValid(eqopr) && OidIsValid(ltopr))
 	{
 		/* Seems to be a scalar datatype */
 		stats->compute_stats = compute_scalar_stats;
@@ -2778,8 +2755,6 @@ std_typanalyze(VacAttrStats *stats)
 		stats->minrows = 300 * attr->attstattarget;
 	}
 	else if (OidIsValid(eqopr))
-<<<<<<< HEAD
-=======
 	{
 		/* We can still recognize distinct values */
 		stats->compute_stats = compute_distinct_stats;
@@ -2787,17 +2762,9 @@ std_typanalyze(VacAttrStats *stats)
 		stats->minrows = 300 * attr->attstattarget;
 	}
 	else
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		/* Can't do much but the trivial stuff */
 		stats->compute_stats = compute_trivial_stats;
-		/* Might as well use the same minrows as above */
-		stats->minrows = 300 * attr->attstattarget;
-	}
-	else
-	{
-		/* Can't do much but the very minimal stuff */
-		stats->compute_stats = compute_very_minimal_stats;
 		/* Might as well use the same minrows as above */
 		stats->minrows = 300 * attr->attstattarget;
 	}
@@ -3238,98 +3205,6 @@ compute_distinct_stats(VacAttrStatsP stats,
 			 * been set before we were called (see vacuum.h)
 			 */
 		}
-	}
-	else if (null_cnt > 0)
-	{
-		/* We found only nulls; assume the column is entirely null */
-		stats->stats_valid = true;
-		stats->stanullfrac = 1.0;
-		if (is_varwidth)
-			stats->stawidth = 0;	/* "unknown" */
-		else
-			stats->stawidth = stats->attrtype->typlen;
-		stats->stadistinct = 0.0;		/* "unknown" */
-	}
-
-	/* We don't need to bother cleaning up any of our temporary palloc's */
-}
-
-
-/*
- *	compute_very_minimal_stats() -- compute minimal column statistics
- *
- *	We use this when we cannot even find an "=" operator for the datatype.
- *	We determine the fraction of non-null rows and the average width. There
- *	isn't much else we can do. These stats are not too useful, but ORCA
- *	gives warnings if a column doesn't have a pg_statistics row, so any
- *	statistics at all is better than none.
- */
-static void
-compute_very_minimal_stats(VacAttrStatsP stats,
-						   AnalyzeAttrFetchFunc fetchfunc,
-						   int samplerows,
-						   double totalrows)
-{
-	int			i;
-	int			null_cnt = 0;
-	int			nonnull_cnt = 0;
-	double		total_width = 0;
-	bool		is_varlena = (!stats->attr->attbyval &&
-							  stats->attr->attlen == -1);
-	bool		is_varwidth = (!stats->attr->attbyval &&
-							   stats->attr->attlen < 0);
-
-	ereport(DEBUG2,
-			(errmsg("Computing Very Minimal Stats for column %s",
-					get_attname(stats->attr->attrelid, stats->attr->attnum))));
-
-	for (i = 0; i < samplerows; i++)
-	{
-		Datum		value;
-		bool		isnull;
-
-		vacuum_delay_point();
-
-		value = fetchfunc(stats, i, &isnull);
-
-		/* Check for null/nonnull */
-		if (isnull)
-		{
-			null_cnt++;
-			continue;
-		}
-		nonnull_cnt++;
-
-		/*
-		 * If it's a variable-width field, add up widths for average width
-		 * calculation.  Note that if the value is toasted, we use the toasted
-		 * width.  We don't bother with this calculation if it's a fixed-width
-		 * type.
-		 */
-		if (is_varlena)
-		{
-			total_width += VARSIZE_ANY(DatumGetPointer(value));
-		}
-		else if (is_varwidth)
-		{
-			/* must be cstring */
-			total_width += strlen(DatumGetCString(value)) + 1;
-		}
-	}
-
-	/* We can only compute real stats if we found some non-null values. */
-	if (nonnull_cnt > 0)
-	{
-		stats->stats_valid = true;
-		/* Do the simple null-frac and width stats */
-		stats->stanullfrac = (double) null_cnt / (double) samplerows;
-		if (is_varwidth)
-			stats->stawidth = total_width / (double) nonnull_cnt;
-		else
-			stats->stawidth = stats->attrtype->typlen;
-
-		/* Assume it's a unique column */
-		stats->stadistinct = -1.0;
 	}
 	else if (null_cnt > 0)
 	{
