@@ -471,15 +471,9 @@
 /* Define to 1 if you have the `posix_fadvise' function. */
 #undef HAVE_POSIX_FADVISE
 
-<<<<<<< HEAD
 /* Define to 1 if you have the `posix_fallocate' function. */
 #undef HAVE_POSIX_FALLOCATE
 
-/* Define to 1 if you have the POSIX signal interface. */
-#undef HAVE_POSIX_SIGNALS
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 /* Define to 1 if the assembler supports PPC's LWARX mutex hint bit. */
 #undef HAVE_PPC_LWARX_MUTEX_HINT
 
@@ -858,15 +852,7 @@
 /* Define to gnu_printf if compiler supports it, else printf. */
 #undef PG_PRINTF_ATTRIBUTE
 
-<<<<<<< HEAD
-/* Define to 1 if "static inline" works without unwanted warnings from
-   compilations where static inline functions are defined but not called. */
-#undef PG_USE_INLINE
-
 /* Postgres version Greenplum Database is based on */
-=======
-/* PostgreSQL version as a string */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #undef PG_VERSION
 
 /* PostgreSQL version as a number */
@@ -923,7 +909,9 @@
 /* Define to 1 to build with Bonjour support. (--with-bonjour) */
 #undef USE_BONJOUR
 
-<<<<<<< HEAD
+/* Define to 1 to build with BSD Authentication support. (--with-bsd-auth) */
+#undef USE_BSD_AUTH
+
 /* Define to 1 to build with libcurl support. (--with-libcurl) */
 #undef USE_CURL
 
@@ -935,13 +923,6 @@
 
 /* Define to 1 if you want float4 values to be passed by value. (Always
    defined in GPDB) */
-=======
-/* Define to 1 to build with BSD Authentication support. (--with-bsd-auth) */
-#undef USE_BSD_AUTH
-
-/* Define to 1 if you want float4 values to be passed by value.
-   (--enable-float4-byval) */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #undef USE_FLOAT4_BYVAL
 
 /* Define to 1 if you want float8, int8, etc values to be passed by value.

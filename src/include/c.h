@@ -9,13 +9,9 @@
  *	  polluting the namespace with lots of stuff...
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2011, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/c.h
@@ -109,29 +105,6 @@ extern "C" {
 #if defined(WIN32) || defined(__CYGWIN__)
 #include <fcntl.h>				/* ensure O_BINARY is available */
 #endif
-<<<<<<< HEAD
-=======
-
-#if defined(WIN32) || defined(__CYGWIN__)
-/* We have to redefine some system functions after they are included above. */
-#include "pg_config_os.h"
-#endif
-
-/*
- * Force disable inlining if PG_FORCE_DISABLE_INLINE is defined. This is used
- * to work around compiler bugs and might also be useful for investigatory
- * purposes by defining the symbol in the platform's header..
- *
- * This is done early (in slightly the wrong section) as functionality later
- * in this file might want to rely on inline functions.
- */
-#ifdef PG_FORCE_DISABLE_INLINE
-#undef inline
-#define inline
-#endif
-
-/* Must be before gettext() games below */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include <locale.h>
 #ifdef ENABLE_NLS
 #include <libintl.h>
@@ -290,6 +263,7 @@ extern "C" {
 #endif
 #endif
 
+
 /* ----------------------------------------------------------------
  *				Section 2:	bool, true, false, TRUE, FALSE, NULL
  * ----------------------------------------------------------------
@@ -414,38 +388,6 @@ typedef unsigned long long int uint64;
 #error must have a working 64-bit integer datatype
 #endif
 
-/* Max value of size_t might be missing if we don't have stdint.h */
-#ifndef SIZE_MAX
-#if SIZEOF_SIZE_T == 8
-#define SIZE_MAX UINT64CONST(0xFFFFFFFFFFFFFFFF)
-#else
-#define SIZE_MAX (0xFFFFFFFFU)
-#endif
-#endif
-
-/*
- * stdint.h limits aren't guaranteed to be present and aren't guaranteed to
- * have compatible types with our fixed width types. So just define our own.
- */
-#define PG_INT8_MIN		(-0x7F-1)
-#define PG_INT8_MAX		(0x7F)
-#define PG_UINT8_MAX	(0xFF)
-#define PG_INT16_MIN	(-0x7FFF-1)
-#define PG_INT16_MAX	(0x7FFF)
-#define PG_UINT16_MAX	(0xFFFF)
-#define PG_INT32_MIN	(-0x7FFFFFFF-1)
-#define PG_INT32_MAX	(0x7FFFFFFF)
-#define PG_UINT32_MAX	(0xFFFFFFFF)
-#define PG_INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
-#define PG_INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
-#define PG_UINT64_MAX	UINT64CONST(0xFFFFFFFFFFFFFFFF)
-
-/* Select timestamp representation (float8 or int64) */
-#ifdef USE_INTEGER_DATETIMES
-#define HAVE_INT64_TIMESTAMP
-#endif
-
-<<<<<<< HEAD
 /* snprintf format strings to use for 64-bit integers */
 #define INT64_FORMAT "%" INT64_MODIFIER "d"
 #define UINT64_FORMAT "%" INT64_MODIFIER "u"
@@ -477,13 +419,37 @@ pg_attribute_aligned(MAXIMUM_ALIGNOF)
 #endif
 #endif
 
-/* sig_atomic_t is required by ANSI C, but may be missing on old platforms */
-#ifndef HAVE_SIG_ATOMIC_T
-typedef int sig_atomic_t;
+/*
+ * stdint.h limits aren't guaranteed to be present and aren't guaranteed to
+ * have compatible types with our fixed width types. So just define our own.
+ */
+#define PG_INT8_MIN		(-0x7F-1)
+#define PG_INT8_MAX		(0x7F)
+#define PG_UINT8_MAX	(0xFF)
+#define PG_INT16_MIN	(-0x7FFF-1)
+#define PG_INT16_MAX	(0x7FFF)
+#define PG_UINT16_MAX	(0xFFFF)
+#define PG_INT32_MIN	(-0x7FFFFFFF-1)
+#define PG_INT32_MAX	(0x7FFFFFFF)
+#define PG_UINT32_MAX	(0xFFFFFFFFU)
+#define PG_INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
+#define PG_INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
+#define PG_UINT64_MAX	UINT64CONST(0xFFFFFFFFFFFFFFFF)
+
+/* Max value of size_t might also be missing if we don't have stdint.h */
+#ifndef SIZE_MAX
+#if SIZEOF_SIZE_T == 8
+#define SIZE_MAX PG_UINT64_MAX
+#else
+#define SIZE_MAX PG_UINT32_MAX
+#endif
 #endif
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+/* Select timestamp representation (float8 or int64) */
+#ifdef USE_INTEGER_DATETIMES
+#define HAVE_INT64_TIMESTAMP
+#endif
+
 /*
  * Size
  *		Size of any memory resident object, as returned by sizeof.
