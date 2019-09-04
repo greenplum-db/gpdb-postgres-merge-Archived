@@ -65,14 +65,11 @@ typedef enum ParseExprKind
 	EXPR_KIND_ALTER_COL_TRANSFORM,	/* transform expr in ALTER COLUMN TYPE */
 	EXPR_KIND_EXECUTE_PARAMETER,	/* parameter value in EXECUTE */
 	EXPR_KIND_TRIGGER_WHEN,		/* WHEN condition in CREATE TRIGGER */
-<<<<<<< HEAD
+	EXPR_KIND_POLICY,			/* USING or WITH CHECK expr in policy */
 	EXPR_KIND_PARTITION_EXPRESSION, /* PARTITION BY expression */
 
 	/* GPDB additions */
 	EXPR_KIND_SCATTER_BY		/* SCATTER BY expression */
-=======
-	EXPR_KIND_POLICY			/* USING or WITH CHECK expr in policy */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } ParseExprKind;
 
 
@@ -161,13 +158,9 @@ struct ParseState
 	bool		p_hasSubLinks;
 	bool		p_hasModifyingCTE;
 	bool		p_is_insert;
-<<<<<<< HEAD
-	bool		p_is_update;
 	bool        p_canOptSelectLockingClause; /* Whether can do some optimization on select with locking clause */
 	LockingClause *p_lockclause_from_parent;
-=======
 	bool		p_locked_from_parent;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	Relation	p_target_relation;
 	RangeTblEntry *p_target_rangetblentry;
 

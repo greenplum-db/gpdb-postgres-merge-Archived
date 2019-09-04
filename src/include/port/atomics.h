@@ -247,11 +247,7 @@ pg_atomic_init_u32(volatile pg_atomic_uint32 *ptr, uint32 val)
  *
  * No barrier semantics.
  */
-<<<<<<< HEAD
-STATIC_IF_INLINE uint32
-=======
 static inline uint32
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 pg_atomic_read_u32(volatile pg_atomic_uint32 *ptr)
 {
 	AssertPointerAlignment(ptr, 4);
@@ -266,11 +262,7 @@ pg_atomic_read_u32(volatile pg_atomic_uint32 *ptr)
  *
  * No barrier semantics.
  */
-<<<<<<< HEAD
-STATIC_IF_INLINE_DECLARE void
-=======
 static inline void
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 pg_atomic_write_u32(volatile pg_atomic_uint32 *ptr, uint32 val)
 {
 	AssertPointerAlignment(ptr, 4);

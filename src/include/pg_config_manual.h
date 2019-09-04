@@ -58,17 +58,6 @@
  * probably far better.
  */
 #define NUM_SPINLOCK_SEMAPHORES		128
-<<<<<<< HEAD
-
-/*
- * When we have neither spinlocks nor atomic operations support we're
- * implementing atomic operations on top of spinlock on top of semaphores. To
- * be safe against atomic operations while holding a spinlock separate
- * semaphores have to be used.
- */
-#define NUM_ATOMICS_SEMAPHORES      64
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
  * When we have neither spinlocks nor atomic operations support we're
