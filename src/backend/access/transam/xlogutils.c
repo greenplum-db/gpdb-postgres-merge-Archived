@@ -656,10 +656,6 @@ XLogTruncateRelation(RelFileNode rnode, ForkNumber forkNum,
 }
 
 /*
-<<<<<<< HEAD
- * TODO: This is duplicate code with pg_xlogdump, similar to walsender.c, but
- * we currently don't have the infrastructure (elog!) to share it.
-=======
  * Read 'count' bytes from WAL into 'buf', starting at location 'startptr'
  * in timeline 'tli'.
  *
@@ -671,7 +667,6 @@ XLogTruncateRelation(RelFileNode rnode, ForkNumber forkNum,
  * XXX This is very similar to pg_xlogdump's XLogDumpXLogRead and to XLogRead
  * in walsender.c but for small differences (such as lack of elog() in
  * frontend).  Probably these should be merged at some point.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 static void
 XLogRead(char *buf, TimeLineID tli, XLogRecPtr startptr, Size count)
@@ -680,15 +675,10 @@ XLogRead(char *buf, TimeLineID tli, XLogRecPtr startptr, Size count)
 	XLogRecPtr	recptr;
 	Size		nbytes;
 
-<<<<<<< HEAD
-	static int	sendFile = -1;
-	static XLogSegNo sendSegNo = 0;
-	static TimeLineID sendTLI = 0;
-=======
 	/* state maintained across calls */
 	static int	sendFile = -1;
 	static XLogSegNo sendSegNo = 0;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	static TimeLineID sendTLI = 0;
 	static uint32 sendOff = 0;
 
 	p = buf;
@@ -704,19 +694,11 @@ XLogRead(char *buf, TimeLineID tli, XLogRecPtr startptr, Size count)
 		startoff = recptr % XLogSegSize;
 
 		/* Do we need to switch to a different xlog segment? */
-<<<<<<< HEAD
 		if (sendFile < 0 || !XLByteInSeg(recptr, sendSegNo) ||
 			sendTLI != tli)
 		{
 			char		path[MAXPGPATH];
 
-			/* Switch to another logfile segment */
-=======
-		if (sendFile < 0 || !XLByteInSeg(recptr, sendSegNo))
-		{
-			char		path[MAXPGPATH];
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			if (sendFile >= 0)
 				close(sendFile);
 
@@ -740,10 +722,7 @@ XLogRead(char *buf, TimeLineID tli, XLogRecPtr startptr, Size count)
 									path)));
 			}
 			sendOff = 0;
-<<<<<<< HEAD
 			sendTLI = tli;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 
 		/* Need to seek in the file? */
@@ -792,7 +771,6 @@ XLogRead(char *buf, TimeLineID tli, XLogRecPtr startptr, Size count)
 }
 
 /*
-<<<<<<< HEAD
  * Determine which timeline to read an xlog page from and set the
  * XLogReaderState's currTLI to that timeline ID.
  *
@@ -920,8 +898,6 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wa
 }
 
 /*
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * read_page callback for reading local xlog files
  *
  * Public because it would likely be very helpful for someone writing another
@@ -934,19 +910,14 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wa
  */
 int
 read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
-<<<<<<< HEAD
-	int reqLen, XLogRecPtr targetRecPtr, char *cur_page, TimeLineID *pageTLI)
-=======
 					 int reqLen, XLogRecPtr targetRecPtr, char *cur_page,
 					 TimeLineID *pageTLI)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	XLogRecPtr	read_upto,
 				loc;
 	int			count;
 
 	loc = targetPagePtr + reqLen;
-<<<<<<< HEAD
 
 	/* Loop waiting for xlog to be available if necessary */
 	while (1)
@@ -1039,58 +1010,5 @@ read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
 
 	XLogRead(cur_page, *pageTLI, targetPagePtr, XLOG_BLCKSZ);
 
-=======
-	while (1)
-	{
-		/*
-		 * TODO: we're going to have to do something more intelligent about
-		 * timelines on standbys. Use readTimeLineHistory() and
-		 * tliOfPointInHistory() to get the proper LSN? For now we'll catch
-		 * that case earlier, but the code and TODO is left in here for when
-		 * that changes.
-		 */
-		if (!RecoveryInProgress())
-		{
-			*pageTLI = ThisTimeLineID;
-			read_upto = GetFlushRecPtr();
-		}
-		else
-			read_upto = GetXLogReplayRecPtr(pageTLI);
-
-		if (loc <= read_upto)
-			break;
-
-		CHECK_FOR_INTERRUPTS();
-		pg_usleep(1000L);
-	}
-
-	if (targetPagePtr + XLOG_BLCKSZ <= read_upto)
-	{
-		/*
-		 * more than one block available; read only that block, have caller
-		 * come back if they need more.
-		 */
-		count = XLOG_BLCKSZ;
-	}
-	else if (targetPagePtr + reqLen > read_upto)
-	{
-		/* not enough data there */
-		return -1;
-	}
-	else
-	{
-		/* enough bytes available to satisfy the request */
-		count = read_upto - targetPagePtr;
-	}
-
-	/*
-	 * Even though we just determined how much of the page can be validly read
-	 * as 'count', read the whole page anyway. It's guaranteed to be
-	 * zero-padded up to the page boundary if it's incomplete.
-	 */
-	XLogRead(cur_page, *pageTLI, targetPagePtr, XLOG_BLCKSZ);
-
-	/* number of valid bytes in the buffer */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	return count;
 }
