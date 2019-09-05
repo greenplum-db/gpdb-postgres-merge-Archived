@@ -54,6 +54,7 @@
 
 #include "access/appendonlywriter.h"
 #include "access/fileam.h"
+#include "catalog/namespace.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbaocsam.h"
 #include "cdb/cdbconn.h"

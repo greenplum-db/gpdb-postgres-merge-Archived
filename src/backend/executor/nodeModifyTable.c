@@ -181,7 +181,9 @@ ExecProcessReturning(ResultRelInfo *resultRelInfo,
 		 */
 		Assert(!TupIsNull(econtext->ecxt_scantuple));
 		tuple = ExecMaterializeSlot(econtext->ecxt_scantuple);
+#if 0
 		tuple->t_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
+#endif
 	}
 	econtext->ecxt_outertuple = planSlot;
 

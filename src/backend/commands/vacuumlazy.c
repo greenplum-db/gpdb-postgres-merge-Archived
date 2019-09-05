@@ -69,6 +69,7 @@
 #include "utils/timestamp.h"
 #include "utils/tqual.h"
 
+#include "catalog/pg_am.h"
 #include "catalog/pg_namespace.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbvars.h"
@@ -120,13 +121,9 @@ typedef struct LVRelStats
 	BlockNumber rel_pages;		/* total number of pages */
 	BlockNumber scanned_pages;	/* number of pages we examined */
 	BlockNumber pinskipped_pages;		/* # of pages we skipped due to a pin */
-<<<<<<< HEAD
+	BlockNumber frozenskipped_pages;	/* # of frozen pages we skipped */
 	BlockNumber	tupcount_pages;	/* pages whose tuples we counted */
 	double		scanned_tuples; /* counts only tuples on tupcount_pages */
-=======
-	BlockNumber frozenskipped_pages;	/* # of frozen pages we skipped */
-	double		scanned_tuples; /* counts only tuples on scanned pages */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	double		old_rel_tuples; /* previous value of pg_class.reltuples */
 	double		new_rel_tuples; /* new estimated total # of tuples */
 	double		new_dead_tuples;	/* new estimated total # of dead tuples */
@@ -155,15 +152,10 @@ static BufferAccessStrategy vac_strategy;
 
 
 /* non-export function prototypes */
-<<<<<<< HEAD
 static void lazy_vacuum_aorel(Relation onerel, int options, AOVacuumPhaseConfig *ao_vacuum_phase_config);
-static void lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
-			   Relation *Irel, int nindexes, bool scan_all);
-=======
 static void lazy_scan_heap(Relation onerel, int options,
 			   LVRelStats *vacrelstats, Relation *Irel, int nindexes,
 			   bool aggressive);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats);
 static bool lazy_check_needs_freeze(Buffer buf, bool *hastup);
 static void lazy_vacuum_index(Relation indrel,
@@ -235,7 +227,6 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 	else
 		elevel = DEBUG2;
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 		elevel = DEBUG2; /* vacuum and analyze messages aren't interesting from the QD */
 
@@ -260,17 +251,16 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 	}
 #endif
 
+	pgstat_progress_start_command(PROGRESS_COMMAND_VACUUM,
+								  RelationGetRelid(onerel));
+
+	vac_strategy = bstrategy;
+
 	/*
 	 * MPP-23647.  Update xid limits for heap as well as appendonly
 	 * relations.  This allows setting relfrozenxid to correct value
 	 * for an appendonly (AO/CO) table.
 	 */
-=======
-	pgstat_progress_start_command(PROGRESS_COMMAND_VACUUM,
-								  RelationGetRelid(onerel));
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
-	vac_strategy = bstrategy;
 
 	vacuum_set_xid_limits(onerel,
 						  params->freeze_min_age,
@@ -1280,16 +1270,11 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 				 * Each non-removable tuple must be checked to see if it needs
 				 * freezing.  Note we already have exclusive buffer lock.
 				 */
-<<<<<<< HEAD
 				if (heap_prepare_freeze_tuple(tuple.t_data,
 											  relfrozenxid, relminmxid,
 											  FreezeLimit, MultiXactCutoff,
-											  &frozen[nfrozen]))
-=======
-				if (heap_prepare_freeze_tuple(tuple.t_data, FreezeLimit,
-										   MultiXactCutoff, &frozen[nfrozen],
+											  &frozen[nfrozen],
 											  &tuple_totally_frozen))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 					frozen[nfrozen++].offset = offnum;
 
 				if (!tuple_totally_frozen)

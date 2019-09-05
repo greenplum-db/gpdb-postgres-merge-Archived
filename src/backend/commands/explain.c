@@ -2231,24 +2231,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				ExplainCloseGroup("Worker", NULL, true, es);
 			}
 		}
-		else
-		{
-			ExplainPropertyLong("Shared Hit Blocks", usage->shared_blks_hit, es);
-			ExplainPropertyLong("Shared Read Blocks", usage->shared_blks_read, es);
-			ExplainPropertyLong("Shared Dirtied Blocks", usage->shared_blks_dirtied, es);
-			ExplainPropertyLong("Shared Written Blocks", usage->shared_blks_written, es);
-			ExplainPropertyLong("Local Hit Blocks", usage->local_blks_hit, es);
-			ExplainPropertyLong("Local Read Blocks", usage->local_blks_read, es);
-			ExplainPropertyLong("Local Dirtied Blocks", usage->local_blks_dirtied, es);
-			ExplainPropertyLong("Local Written Blocks", usage->local_blks_written, es);
-			ExplainPropertyLong("Temp Read Blocks", usage->temp_blks_read, es);
-			ExplainPropertyLong("Temp Written Blocks", usage->temp_blks_written, es);
-			if (track_io_timing)
-			{
-				ExplainPropertyFloat("I/O Read Time", INSTR_TIME_GET_MILLISEC(usage->blk_read_time), 3, es);
-				ExplainPropertyFloat("I/O Write Time", INSTR_TIME_GET_MILLISEC(usage->blk_write_time), 3, es);
-			}
-		}
 
 		if (opened_group)
 			ExplainCloseGroup("Workers", "Workers", false, es);

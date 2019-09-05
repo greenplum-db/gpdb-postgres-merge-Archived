@@ -68,6 +68,67 @@ SeqNext(SeqScanState *node)
 	direction = estate->es_direction;
 	slot = node->ss.ss_ScanTupleSlot;
 
+	if (node->ss_currentScanDesc_ao == NULL &&
+		node->ss_currentScanDesc_aocs == NULL &&
+		node->ss_currentScanDesc_heap == NULL)
+	{
+		/*
+		 * We reach here if the scan is not parallel, or if we're executing a
+		 * scan that was intended to be parallel serially.
+		 */
+		Relation currentRelation = node->ss.ss_currentRelation;
+
+		if (RelationIsAoRows(currentRelation))
+		{
+			Snapshot appendOnlyMetaDataSnapshot;
+
+			appendOnlyMetaDataSnapshot = node->ss.ps.state->es_snapshot;
+			if (appendOnlyMetaDataSnapshot == SnapshotAny)
+			{
+				/*
+				 * the append-only meta data should never be fetched with
+				 * SnapshotAny as bogus results are returned.
+				 */
+				appendOnlyMetaDataSnapshot = GetTransactionSnapshot();
+			}
+
+			node->ss_currentScanDesc_ao = appendonly_beginscan(
+				currentRelation,
+				node->ss.ps.state->es_snapshot,
+				appendOnlyMetaDataSnapshot,
+				0, NULL);
+		}
+		else if (RelationIsAoCols(currentRelation))
+		{
+			Snapshot appendOnlyMetaDataSnapshot;
+
+			InitAOCSScanOpaque(node, currentRelation);
+
+			appendOnlyMetaDataSnapshot = node->ss.ps.state->es_snapshot;
+			if (appendOnlyMetaDataSnapshot == SnapshotAny)
+			{
+				/*
+				 * the append-only meta data should never be fetched with
+				 * SnapshotAny as bogus results are returned.
+				 */
+				appendOnlyMetaDataSnapshot = GetTransactionSnapshot();
+			}
+
+			node->ss_currentScanDesc_aocs =
+				aocs_beginscan(currentRelation,
+							   node->ss.ps.state->es_snapshot,
+							   appendOnlyMetaDataSnapshot,
+							   NULL /* relationTupleDesc */,
+							   node->ss_aocs_proj);
+		}
+		else
+		{
+			node->ss_currentScanDesc_heap = heap_beginscan(currentRelation,
+														   estate->es_snapshot,
+														   0, NULL);
+		}
+	}
+
 	/*
 	 * get the next tuple from the table
 	 */
@@ -145,67 +206,6 @@ ExecSeqScan(SeqScanState *node)
 static void
 InitScanRelation(SeqScanState *node, EState *estate, int eflags, Relation currentRelation)
 {
-	/* initialize a heapscan */
-	if (RelationIsAoRows(currentRelation))
-	{
-		Snapshot appendOnlyMetaDataSnapshot;
-
-		appendOnlyMetaDataSnapshot = node->ss.ps.state->es_snapshot;
-		if (appendOnlyMetaDataSnapshot == SnapshotAny)
-		{
-			/*
-			 * the append-only meta data should never be fetched with
-			 * SnapshotAny as bogus results are returned.
-			 */
-			appendOnlyMetaDataSnapshot = GetTransactionSnapshot();
-		}
-
-		node->ss_currentScanDesc_ao = appendonly_beginscan(
-			currentRelation,
-			node->ss.ps.state->es_snapshot,
-			appendOnlyMetaDataSnapshot,
-			0, NULL);
-	}
-	else if (RelationIsAoCols(currentRelation))
-	{
-		Snapshot appendOnlyMetaDataSnapshot;
-
-		InitAOCSScanOpaque(node, currentRelation);
-
-		appendOnlyMetaDataSnapshot = node->ss.ps.state->es_snapshot;
-		if (appendOnlyMetaDataSnapshot == SnapshotAny)
-		{
-			/*
-			 * the append-only meta data should never be fetched with
-			 * SnapshotAny as bogus results are returned.
-			 */
-			appendOnlyMetaDataSnapshot = GetTransactionSnapshot();
-		}
-
-		node->ss_currentScanDesc_aocs =
-			aocs_beginscan(currentRelation,
-						   node->ss.ps.state->es_snapshot,
-						   appendOnlyMetaDataSnapshot,
-						   NULL /* relationTupleDesc */,
-						   node->ss_aocs_proj);
-	}
-	else
-	{
-		node->ss_currentScanDesc_heap = heap_beginscan(currentRelation,
-										 estate->es_snapshot,
-										 0,
-										 NULL);
-	}
-	Relation	currentRelation;
-
-	/*
-	 * get the relation object id from the relid'th entry in the range table,
-	 * open that relation and acquire appropriate lock on it.
-	 */
-	currentRelation = ExecOpenScanRelation(estate,
-								   ((SeqScan *) node->ss.ps.plan)->scanrelid,
-										   eflags);
-
 	node->ss.ss_currentRelation = currentRelation;
 
 	/* and report the scan tuple slot's rowtype */
@@ -235,7 +235,7 @@ SeqScanState *
 ExecInitSeqScanForPartition(SeqScan *node, EState *estate, int eflags,
 							Relation currentRelation)
 {
-	ScanState *scanstate;
+	SeqScanState *scanstate;
 
 	/*
 	 * Once upon a time it was possible to have an outerPlan of a SeqScan, but
@@ -277,9 +277,7 @@ ExecInitSeqScanForPartition(SeqScan *node, EState *estate, int eflags,
 	/*
 	 * initialize scan relation
 	 */
-	InitScanRelation(scanstate, estate, eflags);
-
-	scanstate->ss.ps.ps_TupFromTlist = false;
+	InitScanRelation(scanstate, estate, eflags, currentRelation);
 
 	/*
 	 * Initialize result tuple type and projection info.
@@ -367,12 +365,8 @@ ExecReScanSeqScan(SeqScanState *node)
 	}
 	else if (node->ss_currentScanDesc_heap)
 	{
-		HeapScanDesc scan;
-
-		scan = node->ss_currentScanDesc_heap;
-
-		heap_rescan(scan,			/* scan desc */
-					NULL);			/* new scan keys */
+		heap_rescan(node->ss_currentScanDesc_heap, /* scan desc */
+					NULL);		/* new scan keys */
 	}
 	else
 		elog(ERROR, "rescan called without scandesc");
@@ -446,12 +440,15 @@ ExecSeqScanInitializeDSM(SeqScanState *node,
 	EState	   *estate = node->ss.ps.state;
 	ParallelHeapScanDesc pscan;
 
+	if (!RelationIsHeap(node->ss.ss_currentRelation))
+		elog(ERROR, "parallel SeqScan not implemented for AO or AOCO tables");
+
 	pscan = shm_toc_allocate(pcxt->toc, node->pscan_len);
 	heap_parallelscan_initialize(pscan,
 								 node->ss.ss_currentRelation,
 								 estate->es_snapshot);
 	shm_toc_insert(pcxt->toc, node->ss.ps.plan->plan_node_id, pscan);
-	node->ss.ss_currentScanDesc =
+	node->ss_currentScanDesc_heap =
 		heap_beginscan_parallel(node->ss.ss_currentRelation, pscan);
 }
 
@@ -466,7 +463,10 @@ ExecSeqScanInitializeWorker(SeqScanState *node, shm_toc *toc)
 {
 	ParallelHeapScanDesc pscan;
 
+	if (!RelationIsHeap(node->ss.ss_currentRelation))
+		elog(ERROR, "parallel SeqScan not implemented for AO or AOCO tables");
+
 	pscan = shm_toc_lookup(toc, node->ss.ps.plan->plan_node_id);
-	node->ss.ss_currentScanDesc =
+	node->ss_currentScanDesc_heap =
 		heap_beginscan_parallel(node->ss.ss_currentRelation, pscan);
 }

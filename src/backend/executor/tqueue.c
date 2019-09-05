@@ -436,7 +436,9 @@ TQExamineRecord(TQueueDestReceiver *tqueue, RecordRemapInfo *remapinfo,
 		isnull = (bool *) palloc(tupledesc->natts * sizeof(bool));
 		tdata.t_len = HeapTupleHeaderGetDatumLength(tup);
 		ItemPointerSetInvalid(&(tdata.t_self));
+#if 0
 		tdata.t_tableOid = InvalidOid;
+#endif
 		tdata.t_data = tup;
 		heap_deform_tuple(&tdata, tupledesc, values, isnull);
 
@@ -744,7 +746,9 @@ TupleQueueHandleDataMessage(TupleQueueReader *reader,
 	 * (which had better be sufficiently aligned).
 	 */
 	ItemPointerSetInvalid(&htup.t_self);
+#if 0
 	htup.t_tableOid = InvalidOid;
+#endif
 	htup.t_len = nbytes;
 	htup.t_data = data;
 
@@ -1020,7 +1024,9 @@ TQRemapRecord(TupleQueueReader *reader, RecordRemapInfo *remapinfo,
 
 		/* Copy tuple, possibly remapping contained fields. */
 		ItemPointerSetInvalid(&htup.t_self);
+#if 0
 		htup.t_tableOid = InvalidOid;
+#endif
 		htup.t_len = HeapTupleHeaderGetDatumLength(tup);
 		htup.t_data = tup;
 		atup = TQRemapTuple(reader,

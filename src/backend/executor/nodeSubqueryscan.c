@@ -62,8 +62,6 @@ SubqueryNext(SubqueryScanState *node)
 	 * cycles for ExecCopySlot().  (Our own ScanTupleSlot is used only for
 	 * EvalPlanQual rechecks.)
 	 */
-	if (!TupIsNull(slot))
-		slot = ExecMakeSlotContentsReadOnly(slot);
 
     /*
      * CDB: Label each row with a synthetic ctid if needed for subquery dedup.
