@@ -361,23 +361,6 @@ static NumericVar const_zero_point_nine =
 {1, -1, NUMERIC_POS, 1, const_zero_point_nine.ndb, const_zero_point_nine_data, {0}};
 
 #if DEC_DIGITS == 4
-<<<<<<< HEAD
-static NumericDigit const_zero_point_01_data[1] = {100};
-static NumericVar const_zero_point_01 =
-{1, -1, NUMERIC_POS, 2, const_zero_point_01.ndb, const_zero_point_01_data, {0}};
-#elif DEC_DIGITS == 2
-static NumericDigit const_zero_point_01_data[1] = {1};
-static NumericVar const_zero_point_01 =
-{1, -1, NUMERIC_POS, 2, const_zero_point_01.ndb, const_zero_point_01_data, {0}};
-#elif DEC_DIGITS == 1
-static NumericDigit const_zero_point_01_data[1] = {1};
-static NumericVar const_zero_point_01 =
-{1, -2, NUMERIC_POS, 2, const_zero_point_01.ndb, const_zero_point_01_data, {0}};
-#endif
-
-#if DEC_DIGITS == 4
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static NumericDigit const_one_point_one_data[2] = {1, 1000};
 #elif DEC_DIGITS == 2
 static NumericDigit const_one_point_one_data[2] = {1, 10};
@@ -2921,7 +2904,6 @@ numeric_power(PG_FUNCTION_ARGS)
 }
 
 /*
-<<<<<<< HEAD
  * numeric_interval_bound()
  *
  * Implements
@@ -3158,7 +3140,8 @@ numeric_interval_bound_shift_rbound(PG_FUNCTION_ARGS)
 	PG_RETURN_NUMERIC(
 			numeric_interval_bound_common(value, width, shift, rbound));
 }
-=======
+
+/*
  * numeric_scale() -
  *
  *	Returns the scale, i.e. the count of decimal digits in the fractional part
@@ -3175,7 +3158,6 @@ numeric_scale(PG_FUNCTION_ARGS)
 }
 
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* ----------------------------------------------------------------------
  *
@@ -3712,17 +3694,10 @@ numeric_accum(PG_FUNCTION_ARGS)
 Datum
 numeric_combine(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	NumericAggState	   *state1;
-	NumericAggState	   *state2;
-	MemoryContext		agg_context;
-	MemoryContext		old_context;
-=======
 	NumericAggState *state1;
 	NumericAggState *state2;
 	MemoryContext agg_context;
 	MemoryContext old_context;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
@@ -3738,11 +3713,7 @@ numeric_combine(PG_FUNCTION_ARGS)
 	{
 		old_context = MemoryContextSwitchTo(agg_context);
 
-<<<<<<< HEAD
-		state1 = makeNumericAggState(fcinfo, true);
-=======
 		state1 = makeNumericAggStateCurrentContext(true);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		state1->N = state2->N;
 		state1->NaNcount = state2->NaNcount;
 		state1->maxScale = state2->maxScale;
@@ -3765,13 +3736,8 @@ numeric_combine(PG_FUNCTION_ARGS)
 		state1->NaNcount += state2->NaNcount;
 
 		/*
-<<<<<<< HEAD
-		 * These are currently only needed for moving aggregates, but let's
-		 * do the right thing anyway...
-=======
 		 * These are currently only needed for moving aggregates, but let's do
 		 * the right thing anyway...
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		 */
 		if (state2->maxScale > state1->maxScale)
 		{
@@ -3819,17 +3785,10 @@ numeric_avg_accum(PG_FUNCTION_ARGS)
 Datum
 numeric_avg_combine(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	NumericAggState	   *state1;
-	NumericAggState	   *state2;
-	MemoryContext		agg_context;
-	MemoryContext		old_context;
-=======
 	NumericAggState *state1;
 	NumericAggState *state2;
 	MemoryContext agg_context;
 	MemoryContext old_context;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
@@ -3845,11 +3804,7 @@ numeric_avg_combine(PG_FUNCTION_ARGS)
 	{
 		old_context = MemoryContextSwitchTo(agg_context);
 
-<<<<<<< HEAD
-		state1 = makeNumericAggState(fcinfo, false);
-=======
 		state1 = makeNumericAggStateCurrentContext(false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		state1->N = state2->N;
 		state1->NaNcount = state2->NaNcount;
 		state1->maxScale = state2->maxScale;
@@ -3869,13 +3824,8 @@ numeric_avg_combine(PG_FUNCTION_ARGS)
 		state1->NaNcount += state2->NaNcount;
 
 		/*
-<<<<<<< HEAD
-		 * These are currently only needed for moving aggregates, but let's
-		 * do the right thing anyway...
-=======
 		 * These are currently only needed for moving aggregates, but let's do
 		 * the right thing anyway...
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		 */
 		if (state2->maxScale > state1->maxScale)
 		{
@@ -3899,31 +3849,19 @@ numeric_avg_combine(PG_FUNCTION_ARGS)
 /*
  * numeric_avg_serialize
  *		Serialize NumericAggState for numeric aggregates that don't require
-<<<<<<< HEAD
  *		sumX2. Serializes NumericAggState into bytea using the standard pq API.
  *
  * numeric_avg_deserialize(numeric_avg_serialize(state)) must result in a state
  * which matches the original input state.
-=======
- *		sumX2.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 Datum
 numeric_avg_serialize(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	NumericAggState	   *state;
-	StringInfoData		buf;
-	Datum				temp;
-	bytea			   *sumX;
-	bytea			   *result;
-=======
 	NumericAggState *state;
 	StringInfoData buf;
 	Datum		temp;
 	bytea	   *sumX;
 	bytea	   *result;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Ensure we disallow calling when not in aggregate context */
 	if (!AggCheckCallContext(fcinfo, NULL))
@@ -3950,11 +3888,7 @@ numeric_avg_serialize(PG_FUNCTION_ARGS)
 	pq_sendbytes(&buf, VARDATA(sumX), VARSIZE(sumX) - VARHDRSZ);
 
 	/* maxScale */
-<<<<<<< HEAD
-	pq_sendint(&buf,  state->maxScale, 4);
-=======
 	pq_sendint(&buf, state->maxScale, 4);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* maxScaleCount */
 	pq_sendint64(&buf, state->maxScaleCount);
@@ -3969,41 +3903,26 @@ numeric_avg_serialize(PG_FUNCTION_ARGS)
 
 /*
  * numeric_avg_deserialize
-<<<<<<< HEAD
  *		Deserialize bytea into NumericAggState  for numeric aggregates that
  *		don't require sumX2. Deserializes bytea into NumericAggState using the
  *		standard pq API.
  *
  * numeric_avg_serialize(numeric_avg_deserialize(bytea)) must result in a value
  * which matches the original bytea value.
-=======
- *		Deserialize bytea into NumericAggState for numeric aggregates that
- *		don't require sumX2.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 Datum
 numeric_avg_deserialize(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	bytea			   *sstate = PG_GETARG_BYTEA_P(0);
-	NumericAggState	   *result;
-	Datum				temp;
-	StringInfoData		buf;
-=======
 	bytea	   *sstate;
 	NumericAggState *result;
 	Datum		temp;
 	StringInfoData buf;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 
-<<<<<<< HEAD
-=======
 	sstate = PG_GETARG_BYTEA_P(0);
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/*
 	 * Copy the bytea into a StringInfo so that we can "receive" it using the
 	 * standard recv-function infrastructure.
@@ -4021,11 +3940,7 @@ numeric_avg_deserialize(PG_FUNCTION_ARGS)
 							   PointerGetDatum(&buf),
 							   InvalidOid,
 							   -1);
-<<<<<<< HEAD
-	init_var_from_num(DatumGetNumeric(temp), &result->sumX);
-=======
 	set_var_from_num(DatumGetNumeric(temp), &result->sumX);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* maxScale */
 	result->maxScale = pq_getmsgint(&buf, 4);
@@ -4042,7 +3957,6 @@ numeric_avg_deserialize(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(result);
 }
 
-<<<<<<< HEAD
 
 /*
  * numeric_serialize
@@ -4052,31 +3966,16 @@ numeric_avg_deserialize(PG_FUNCTION_ARGS)
  *
  * numeric_deserialize(numeric_serialize(state)) must result in a state which
  * matches the original input state.
-=======
-/*
- * numeric_serialize
- *		Serialization function for NumericAggState for numeric aggregates that
- *		require sumX2.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 Datum
 numeric_serialize(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	NumericAggState	   *state;
-	StringInfoData		buf;
-	Datum				temp;
-	bytea			   *sumX;
-	bytea			   *sumX2;
-	bytea			   *result;
-=======
 	NumericAggState *state;
 	StringInfoData buf;
 	Datum		temp;
 	bytea	   *sumX;
 	bytea	   *sumX2;
 	bytea	   *result;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Ensure we disallow calling when not in aggregate context */
 	if (!AggCheckCallContext(fcinfo, NULL))
@@ -4110,11 +4009,7 @@ numeric_serialize(PG_FUNCTION_ARGS)
 	pq_sendbytes(&buf, VARDATA(sumX2), VARSIZE(sumX2) - VARHDRSZ);
 
 	/* maxScale */
-<<<<<<< HEAD
-	pq_sendint(&buf,  state->maxScale, 4);
-=======
 	pq_sendint(&buf, state->maxScale, 4);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* maxScaleCount */
 	pq_sendint64(&buf, state->maxScaleCount);
@@ -4130,39 +4025,25 @@ numeric_serialize(PG_FUNCTION_ARGS)
 /*
  * numeric_deserialize
  *		Deserialization function for NumericAggState for numeric aggregates that
-<<<<<<< HEAD
  *		require sumX2. Deserializes bytea into into NumericAggState using the
  *		standard pq API.
  *
  * numeric_serialize(numeric_deserialize(bytea)) must result in a value which
  * matches the original bytea value.
-=======
- *		require sumX2.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 Datum
 numeric_deserialize(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	bytea			   *sstate = PG_GETARG_BYTEA_P(0);
-	NumericAggState	   *result;
-	Datum				temp;
-	StringInfoData		buf;
-=======
 	bytea	   *sstate;
 	NumericAggState *result;
 	Datum		temp;
 	StringInfoData buf;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 
-<<<<<<< HEAD
-=======
 	sstate = PG_GETARG_BYTEA_P(0);
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/*
 	 * Copy the bytea into a StringInfo so that we can "receive" it using the
 	 * standard recv-function infrastructure.
@@ -4180,22 +4061,14 @@ numeric_deserialize(PG_FUNCTION_ARGS)
 							   PointerGetDatum(&buf),
 							   InvalidOid,
 							   -1);
-<<<<<<< HEAD
-	init_var_from_num(DatumGetNumeric(temp), &result->sumX);
-=======
 	set_var_from_num(DatumGetNumeric(temp), &result->sumX);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* sumX2 */
 	temp = DirectFunctionCall3(numeric_recv,
 							   PointerGetDatum(&buf),
 							   InvalidOid,
 							   -1);
-<<<<<<< HEAD
-	init_var_from_num(DatumGetNumeric(temp), &result->sumX2);
-=======
 	set_var_from_num(DatumGetNumeric(temp), &result->sumX2);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* maxScale */
 	result->maxScale = pq_getmsgint(&buf, 4);
@@ -4445,13 +4318,8 @@ numeric_poly_combine(PG_FUNCTION_ARGS)
 {
 	PolyNumAggState *state1;
 	PolyNumAggState *state2;
-<<<<<<< HEAD
-	MemoryContext	agg_context;
-	MemoryContext	old_context;
-=======
 	MemoryContext agg_context;
 	MemoryContext old_context;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
@@ -4510,33 +4378,20 @@ numeric_poly_combine(PG_FUNCTION_ARGS)
 
 /*
  * numeric_poly_serialize
-<<<<<<< HEAD
  *		Serialize PolyNumAggState into bytea using the standard pq API for
  *		aggregate functions which require sumX2.
  *
  * numeric_poly_deserialize(numeric_poly_serialize(state)) must result in a
  * state which matches the original input state.
-=======
- *		Serialize PolyNumAggState into bytea for aggregate functions which
- *		require sumX2.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 Datum
 numeric_poly_serialize(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	PolyNumAggState	   *state;
-	StringInfoData		buf;
-	bytea			   *sumX;
-	bytea			   *sumX2;
-	bytea			   *result;
-=======
 	PolyNumAggState *state;
 	StringInfoData buf;
 	bytea	   *sumX;
 	bytea	   *sumX2;
 	bytea	   *result;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Ensure we disallow calling when not in aggregate context */
 	if (!AggCheckCallContext(fcinfo, NULL))
@@ -4571,19 +4426,11 @@ numeric_poly_serialize(PG_FUNCTION_ARGS)
 		free_var(&num);
 #else
 		temp = DirectFunctionCall1(numeric_send,
-<<<<<<< HEAD
-								   NumericGetDatum(make_result(&state->sumX)));
-		sumX = DatumGetByteaP(temp);
-
-		temp = DirectFunctionCall1(numeric_send,
-								  NumericGetDatum(make_result(&state->sumX2)));
-=======
 								 NumericGetDatum(make_result(&state->sumX)));
 		sumX = DatumGetByteaP(temp);
 
 		temp = DirectFunctionCall1(numeric_send,
 								NumericGetDatum(make_result(&state->sumX2)));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		sumX2 = DatumGetByteaP(temp);
 #endif
 	}
@@ -4606,42 +4453,26 @@ numeric_poly_serialize(PG_FUNCTION_ARGS)
 
 /*
  * numeric_poly_deserialize
-<<<<<<< HEAD
  *		Deserialize PolyNumAggState from bytea using the standard pq API for
  *		aggregate functions which require sumX2.
  *
  * numeric_poly_serialize(numeric_poly_deserialize(bytea)) must result in a
  * state which matches the original input state.
-=======
- *		Deserialize PolyNumAggState from bytea for aggregate functions which
- *		require sumX2.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 Datum
 numeric_poly_deserialize(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	bytea			   *sstate = PG_GETARG_BYTEA_P(0);
-	PolyNumAggState	   *result;
-	Datum				sumX;
-	Datum				sumX2;
-	StringInfoData		buf;
-=======
 	bytea	   *sstate;
 	PolyNumAggState *result;
 	Datum		sumX;
 	Datum		sumX2;
 	StringInfoData buf;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 
-<<<<<<< HEAD
-=======
 	sstate = PG_GETARG_BYTEA_P(0);
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/*
 	 * Copy the bytea into a StringInfo so that we can "receive" it using the
 	 * standard recv-function infrastructure.
@@ -4662,21 +4493,6 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 
 	/* sumX2 */
 	sumX2 = DirectFunctionCall3(numeric_recv,
-<<<<<<< HEAD
-							   PointerGetDatum(&buf),
-							   InvalidOid,
-							   -1);
-
-#ifdef HAVE_INT128
-	{
-		NumericVar num;
-
-		init_var(&num);
-		init_var_from_num(DatumGetNumeric(sumX), &num);
-		numericvar_to_int128(&num, &result->sumX);
-
-		init_var_from_num(DatumGetNumeric(sumX2), &num);
-=======
 								PointerGetDatum(&buf),
 								InvalidOid,
 								-1);
@@ -4690,19 +4506,13 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 		numericvar_to_int128(&num, &result->sumX);
 
 		set_var_from_num(DatumGetNumeric(sumX2), &num);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		numericvar_to_int128(&num, &result->sumX2);
 
 		free_var(&num);
 	}
 #else
-<<<<<<< HEAD
-	init_var_from_num(DatumGetNumeric(sumX), &result->sumX);
-	init_var_from_num(DatumGetNumeric(sumX2), &result->sumX2);
-=======
 	set_var_from_num(DatumGetNumeric(sumX), &result->sumX);
 	set_var_from_num(DatumGetNumeric(sumX2), &result->sumX2);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #endif
 
 	pq_getmsgend(&buf);
@@ -4748,17 +4558,10 @@ int8_avg_accum(PG_FUNCTION_ARGS)
 Datum
 int8_avg_combine(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	PolyNumAggState	   *state1;
-	PolyNumAggState	   *state2;
-	MemoryContext		agg_context;
-	MemoryContext		old_context;
-=======
 	PolyNumAggState *state1;
 	PolyNumAggState *state2;
 	MemoryContext agg_context;
 	MemoryContext old_context;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
@@ -4812,27 +4615,17 @@ int8_avg_combine(PG_FUNCTION_ARGS)
  * int8_avg_serialize
  *		Serialize PolyNumAggState into bytea using the standard
  *		recv-function infrastructure.
-<<<<<<< HEAD
  *
  * int8_avg_deserialize(int8_avg_serialize(state)) must result in a state which
  * matches the original input state.
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 Datum
 int8_avg_serialize(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	PolyNumAggState	   *state;
-	StringInfoData		buf;
-	bytea			   *sumX;
-	bytea			   *result;
-=======
 	PolyNumAggState *state;
 	StringInfoData buf;
 	bytea	   *sumX;
 	bytea	   *result;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Ensure we disallow calling when not in aggregate context */
 	if (!AggCheckCallContext(fcinfo, NULL))
@@ -4861,11 +4654,7 @@ int8_avg_serialize(PG_FUNCTION_ARGS)
 		sumX = DatumGetByteaP(temp);
 #else
 		temp = DirectFunctionCall1(numeric_send,
-<<<<<<< HEAD
-								   NumericGetDatum(make_result(&state->sumX)));
-=======
 								 NumericGetDatum(make_result(&state->sumX)));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		sumX = DatumGetByteaP(temp);
 #endif
 	}
@@ -4886,36 +4675,23 @@ int8_avg_serialize(PG_FUNCTION_ARGS)
 /*
  * int8_avg_deserialize
  *		Deserialize bytea back into PolyNumAggState.
-<<<<<<< HEAD
  *
  * int8_avg_serialize(int8_avg_deserialize(bytea)) must result in a value which
  * matches the original bytea value.
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 Datum
 int8_avg_deserialize(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	bytea			   *sstate = PG_GETARG_BYTEA_P(0);
-	PolyNumAggState	   *result;
-	StringInfoData		buf;
-	Datum				temp;
-=======
 	bytea	   *sstate;
 	PolyNumAggState *result;
 	StringInfoData buf;
 	Datum		temp;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 
-<<<<<<< HEAD
-=======
 	sstate = PG_GETARG_BYTEA_P(0);
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/*
 	 * Copy the bytea into a StringInfo so that we can "receive" it using the
 	 * standard recv-function infrastructure.
@@ -4936,16 +4712,10 @@ int8_avg_deserialize(PG_FUNCTION_ARGS)
 
 #ifdef HAVE_INT128
 	{
-<<<<<<< HEAD
-		NumericVar num;
-
-		init_var_from_num(DatumGetNumeric(temp), &num);
-=======
 		NumericVar	num;
 
 		init_var(&num);
 		set_var_from_num(DatumGetNumeric(temp), &num);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		numericvar_to_int128(&num, &result->sumX);
 		free_var(&num);
 	}
@@ -6168,17 +5938,11 @@ set_var_from_var(NumericVar *value, NumericVar *dest)
 {
 	NumericDigit *newbuf;
 
-<<<<<<< HEAD
-	newbuf = dest->ndb;			/* most common case */
-	if (value->ndigits > NUMERIC_LOCAL_NMAX)
-		newbuf = digitbuf_alloc(value->ndigits + 1);
-=======
 	newbuf = digitbuf_alloc(value->ndigits + 1);
 	newbuf[0] = 0;				/* spare digit for rounding */
 	if (value->ndigits > 0)		/* else value->digits might be null */
 		memcpy(newbuf + 1, value->digits,
 			   value->ndigits * sizeof(NumericDigit));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	memmove(newbuf + 1, value->digits, value->ndigits * sizeof(NumericDigit));
 
@@ -7263,18 +7027,10 @@ mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 	}
 
 	/* copy these values into local vars for speed in inner loop */
-<<<<<<< HEAD
-	int			var1ndigits = var1->ndigits;
-	int			var2ndigits = var2->ndigits;
-	NumericDigit *var1digits = var1->digits;
-	NumericDigit *var2digits = var2->digits;
-	int			 tdig[NUMERIC_LOCAL_NDIG];
-=======
 	var1ndigits = var1->ndigits;
 	var2ndigits = var2->ndigits;
 	var1digits = var1->digits;
 	var2digits = var2->digits;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (var1ndigits == 0 || var2ndigits == 0)
 	{
@@ -7332,16 +7088,7 @@ mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 	 * possible value divided by NBASE-1, ie, at the top of the loop it is
 	 * known that no dig[] entry exceeds maxdig * (NBASE-1).
 	 */
-	i = res_ndigits * sizeof(int);
-	if (res_ndigits > NUMERIC_LOCAL_NMAX)
-	{
-		dig = (int *) palloc0(i);
-	}
-	else
-	{
-		dig = tdig;
-		memset(dig, 0, i);
-	}
+	dig = (int *) palloc0(res_ndigits * sizeof(int));
 	maxdig = 0;
 
 	/*
@@ -7416,8 +7163,7 @@ mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 	}
 	Assert(carry == 0);
 
-	if (dig != tdig)
-		pfree(dig);
+	pfree(dig);
 
 	/*
 	 * Finally, round the result to the requested precision.
@@ -7841,14 +7587,11 @@ div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
 	 * To avoid overflow in maxdiv itself, it represents the max absolute
 	 * value divided by NBASE-1, ie, at the top of the loop it is known that
 	 * no div[] entry has an absolute value exceeding maxdiv * (NBASE-1).
-<<<<<<< HEAD
-=======
 	 *
 	 * Actually, though, that holds good only for div[] entries after div[qi];
 	 * the adjustment done at the bottom of the loop may cause div[qi + 1] to
 	 * exceed the maxdiv limit, so that div[qi] in the next iteration is
 	 * beyond the limit.  This does not cause problems, as explained below.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 */
 	maxdiv = 1;
 
@@ -8252,92 +7995,6 @@ static void
 exp_var(NumericVar *arg, NumericVar *result, int rscale)
 {
 	NumericVar	x;
-<<<<<<< HEAD
-	int			xintval;
-	bool		xneg = FALSE;
-	int			local_rscale;
-
-	/*----------
-	 * We separate the integral and fraction parts of x, then compute
-	 *		e^x = e^xint * e^xfrac
-	 * where e = exp(1) and e^xfrac = exp(xfrac) are computed by
-	 * exp_var_internal; the limited range of inputs allows that routine
-	 * to do a good job with a simple Taylor series.  Raising e^xint is
-	 * done by repeated multiplications in power_var_int.
-	 *----------
-	 */
-
-	init_var_from_var(arg, &x);
-
-	if (x.sign == NUMERIC_NEG)
-	{
-		xneg = TRUE;
-		x.sign = NUMERIC_POS;
-	}
-
-	/* Extract the integer part, remove it from x */
-	xintval = 0;
-	while (x.weight >= 0)
-	{
-		xintval *= NBASE;
-		if (x.ndigits > 0)
-		{
-			xintval += x.digits[0];
-			x.digits++;
-			x.ndigits--;
-		}
-		x.weight--;
-		/* Guard against overflow */
-		if (xintval >= NUMERIC_MAX_RESULT_SCALE * 3)
-			ereport(ERROR,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("argument for function \"exp\" too big")));
-	}
-
-	/* Select an appropriate scale for internal calculation */
-	local_rscale = rscale + MUL_GUARD_DIGITS * 2;
-
-	/* Compute e^xfrac */
-	exp_var_internal(&x, result, local_rscale);
-
-	/* If there's an integer part, multiply by e^xint */
-	if (xintval > 0)
-	{
-		NumericVar	e;
-
-		quick_init_var(&e);
-		exp_var_internal(&const_one, &e, local_rscale);
-		power_var_int(&e, xintval, &e, local_rscale);
-		mul_var(&e, result, result, local_rscale);
-		free_var(&e);
-	}
-
-	free_var(&x);
-
-	/* Compensate for input sign, and round to requested rscale */
-	if (xneg)
-		div_var_fast(&const_one, result, result, rscale, true);
-	else
-		round_var(result, rscale);
-}
-
-
-/*
- * exp_var_internal() -
- *
- *	Raise e to the power of x, where 0 <= x <= 1
- *
- * NB: the result should be good to at least rscale digits, but it has
- * *not* been rounded off; the caller must do that if wanted.
- */
-static void
-exp_var_internal(NumericVar *arg, NumericVar *result, int rscale)
-{
-	NumericVar	x;
-	NumericVar	xpow;
-	NumericVar	ifac;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	NumericVar	elem;
 	NumericVar	ni;
 	double		val;
@@ -8346,16 +8003,11 @@ exp_var_internal(NumericVar *arg, NumericVar *result, int rscale)
 	int			sig_digits;
 	int			local_rscale;
 
-<<<<<<< HEAD
-	quick_init_var(&elem);
-	init_var_from_var(arg, &x);
-=======
 	init_var(&x);
 	init_var(&elem);
 	init_var(&ni);
 
 	set_var_from_var(arg, &x);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Estimate the dweight of the result using floating point arithmetic, so
@@ -8423,12 +8075,6 @@ exp_var_internal(NumericVar *arg, NumericVar *result, int rscale)
 	 * We run the series until the terms fall below the local_rscale limit.
 	 */
 	add_var(&const_one, &x, result);
-<<<<<<< HEAD
-	init_var_from_var(&x, &xpow);
-	init_ro_var_from_var(&const_one, &ifac);
-	init_ro_var_from_var(&const_one, &ni);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	mul_var(&x, &x, &elem, local_rscale);
 	set_var_from_var(&const_two, &ni);
@@ -8570,19 +8216,11 @@ ln_var(NumericVar *arg, NumericVar *result, int rscale)
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_LOG),
 				 errmsg("cannot take logarithm of a negative number")));
 
-<<<<<<< HEAD
-	local_rscale = rscale + 8;
-
-	quick_init_var(&xx);
-	quick_init_var(&ni);
-	quick_init_var(&elem);
-=======
 	init_var(&x);
 	init_var(&xx);
 	init_var(&ni);
 	init_var(&elem);
 	init_var(&fact);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	init_var_from_var(arg, &x);
 	init_ro_var_from_var(&const_two, &fact);
@@ -8949,14 +8587,8 @@ power_var_int(NumericVar *base, int exp, NumericVar *result, int rscale)
 	neg = (exp < 0);
 	mask = Abs(exp);
 
-<<<<<<< HEAD
-	local_rscale = rscale + MUL_GUARD_DIGITS * 2;
-
-	init_var_from_var(base, &base_prod);
-=======
 	init_var(&base_prod);
 	set_var_from_var(base, &base_prod);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (mask & 1)
 		set_var_from_var(base, result);
