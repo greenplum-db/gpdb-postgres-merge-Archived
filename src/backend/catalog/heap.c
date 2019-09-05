@@ -58,12 +58,9 @@
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
-<<<<<<< HEAD
+#include "catalog/pg_constraint_fn.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_exttable.h"
-=======
-#include "catalog/pg_constraint_fn.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "catalog/pg_foreign_table.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"

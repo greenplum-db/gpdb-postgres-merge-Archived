@@ -82,15 +82,9 @@ AggregateCreate(const char *aggName,
 	Form_pg_proc proc;
 	Oid			transfn;
 	Oid			finalfn = InvalidOid;	/* can be omitted */
-<<<<<<< HEAD
-	Oid			combinefn = InvalidOid;	/* can be omitted */
-	Oid			serialfn = InvalidOid;	/* can be omitted */
-	Oid			deserialfn = InvalidOid;	/* can be omitted */
-=======
 	Oid			combinefn = InvalidOid; /* can be omitted */
 	Oid			serialfn = InvalidOid;	/* can be omitted */
 	Oid			deserialfn = InvalidOid;		/* can be omitted */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	Oid			mtransfn = InvalidOid;	/* can be omitted */
 	Oid			minvtransfn = InvalidOid;		/* can be omitted */
 	Oid			mfinalfn = InvalidOid;	/* can be omitted */
@@ -413,19 +407,11 @@ AggregateCreate(const char *aggName,
 	/* handle the combinefn, if supplied */
 	if (aggcombinefnName)
 	{
-<<<<<<< HEAD
-		Oid combineType;
-
-		/*
-		 * Combine function must have 2 argument, each of which is the
-		 * trans type
-=======
 		Oid			combineType;
 
 		/*
 		 * Combine function must have 2 argument, each of which is the trans
 		 * type
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		 */
 		fnArgs[0] = aggTransType;
 		fnArgs[1] = aggTransType;
@@ -437,15 +423,9 @@ AggregateCreate(const char *aggName,
 		if (combineType != aggTransType)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-<<<<<<< HEAD
-			errmsg("return type of combine function %s is not %s",
-				   NameListToString(aggcombinefnName),
-				   format_type_be(aggTransType))));
-=======
 					 errmsg("return type of combine function %s is not %s",
 							NameListToString(aggcombinefnName),
 							format_type_be(aggTransType))));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		/*
 		 * A combine function to combine INTERNAL states must accept nulls and
@@ -464,32 +444,19 @@ AggregateCreate(const char *aggName,
 	 */
 	if (aggserialfnName)
 	{
-<<<<<<< HEAD
 		/* signature is always serialize(internal) returns bytea */
 		fnArgs[0] = INTERNALOID;
 
 		serialfn = lookup_agg_function(aggserialfnName, 1,
 									   fnArgs, InvalidOid,
-=======
-		fnArgs[0] = INTERNALOID;
-
-		serialfn = lookup_agg_function(aggserialfnName, 1,
-									   fnArgs, variadicArgType,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 									   &rettype);
 
 		if (rettype != BYTEAOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-<<<<<<< HEAD
-					 errmsg("return type of serialization function %s is not %s",
-							NameListToString(aggserialfnName),
-							format_type_be(BYTEAOID))));
-=======
 				 errmsg("return type of serialization function %s is not %s",
 						NameListToString(aggserialfnName),
 						format_type_be(BYTEAOID))));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	/*
@@ -497,33 +464,20 @@ AggregateCreate(const char *aggName,
 	 */
 	if (aggdeserialfnName)
 	{
-<<<<<<< HEAD
 		/* signature is always deserialize(bytea, internal) returns internal */
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		fnArgs[0] = BYTEAOID;
 		fnArgs[1] = INTERNALOID;	/* dummy argument for type safety */
 
 		deserialfn = lookup_agg_function(aggdeserialfnName, 2,
-<<<<<<< HEAD
 										 fnArgs, InvalidOid,
-=======
-										 fnArgs, variadicArgType,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 										 &rettype);
 
 		if (rettype != INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-<<<<<<< HEAD
-					 errmsg("return type of deserialization function %s is not %s",
-							NameListToString(aggdeserialfnName),
-							format_type_be(INTERNALOID))));
-=======
 			   errmsg("return type of deserialization function %s is not %s",
 					  NameListToString(aggdeserialfnName),
 					  format_type_be(INTERNALOID))));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	/*
@@ -822,15 +776,11 @@ AggregateCreate(const char *aggName,
 
 /*
  * lookup_agg_function
-<<<<<<< HEAD
  * common code for finding aggregate support functions
  *
  * fnName: possibly-schema-qualified function name
  * nargs, input_types: expected function argument types
  * variadicArgType: type of variadic argument if any, else InvalidOid
-=======
- * common code for finding transfn, invtransfn, finalfn, and combinefn
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  *
  * Returns OID of function, and stores its return type into *rettype
  *

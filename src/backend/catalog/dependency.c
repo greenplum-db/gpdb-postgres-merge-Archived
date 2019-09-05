@@ -177,14 +177,10 @@ static const Oid object_classes[] = {
 	DefaultAclRelationId,		/* OCLASS_DEFACL */
 	ExtensionRelationId,		/* OCLASS_EXTENSION */
 	EventTriggerRelationId,		/* OCLASS_EVENT_TRIGGER */
-<<<<<<< HEAD
 	ExtprotocolRelationId,		/* OCLASS_EXTPROTOCOL */
 	CompressionRelationId,		/* OCLASS_COMPRESSION */
-	PolicyRelationId			/* OCLASS_POLICY */
-=======
 	PolicyRelationId,			/* OCLASS_POLICY */
 	TransformRelationId			/* OCLASS_TRANSFORM */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 };
 
 
@@ -2589,7 +2585,6 @@ getObjectClass(const ObjectAddress *object)
 	return OCLASS_CLASS;		/* keep compiler quiet */
 }
 
-<<<<<<< HEAD
 /* check if there are dependencies on the objects provides, error out if exists*/
 void
 checkDependencies(const ObjectAddresses *objects,
@@ -2681,7 +2676,8 @@ checkDependencies(const ObjectAddresses *objects,
 	free_object_addresses(targetObjects);
 
 	heap_close(depRel, RowExclusiveLock);
-=======
+}
+
 /*
  * delete initial ACL for extension objects
  */
@@ -2717,5 +2713,4 @@ DeleteInitPrivs(const ObjectAddress *object)
 	systable_endscan(scan);
 
 	heap_close(relation, RowExclusiveLock);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }

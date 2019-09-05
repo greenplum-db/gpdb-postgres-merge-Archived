@@ -23,7 +23,7 @@
 #include "access/htup.h"
 #include "access/tupdesc.h"
 #include "nodes/pg_list.h"
-<<<<<<< HEAD
+#include "storage/lock.h"
 #include "utils/rel.h"
 
 #define AO_DEFAULT_APPENDONLY     false
@@ -43,9 +43,6 @@
 #endif
 #define AO_DEFAULT_CHECKSUM       true
 #define AO_DEFAULT_COLUMNSTORE    false
-=======
-#include "storage/lock.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* types supported by reloptions */
 typedef enum relopt_type

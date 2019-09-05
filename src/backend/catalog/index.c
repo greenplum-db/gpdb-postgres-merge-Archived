@@ -47,18 +47,13 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/objectaccess.h"
-<<<<<<< HEAD
 #include "catalog/oid_dispatch.h"
-#include "catalog/pg_collation.h"
-#include "catalog/pg_constraint.h"
-#include "catalog/pg_inherits_fn.h"
-#include "catalog/pg_namespace.h"
-=======
 #include "catalog/pg_am.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_constraint_fn.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+#include "catalog/pg_inherits_fn.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_tablespace.h"
