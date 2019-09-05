@@ -8246,8 +8246,6 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 	{
 		CheckpointExtendedRecord ckptExtended;
 		UnpackCheckPointRecord(xlogreader, &ckptExtended);
-		if (ckptExtended.ptas)
-			SetupCheckpointPreparedTransactionList(ckptExtended.ptas);
 
 		/*
 		 * Find Xacts that are distributed committed from the checkpoint record and
@@ -8982,25 +8980,6 @@ CreateCheckPoint(int flags)
 
 	/* Greenplum checkpoints have extra info */
 	XLogRegisterData((char *) dtxCheckPointInfo, dtxCheckPointInfoSize);
-	prepared_transaction_agg_state *p = NULL;
-
-	getTwoPhasePreparedTransactionData(&p);
-	XLogRegisterData((char *) p, PREPARED_TRANSACTION_CHECKPOINT_BYTES(p->count));
-
-	/*
-	 * Need to save the oldest prepared transaction XLogRecPtr for use later.
-	 * It is not sufficient to just save the pointer because we may remove the
-	 * space after it is written in XLogInsert.
-	 */
-	XLogRecPtr *ptrd_oldest_ptr = NULL;
-	XLogRecPtr ptrd_oldest;
-
-	memset(&ptrd_oldest, 0, sizeof(ptrd_oldest));
-
-	ptrd_oldest_ptr = getTwoPhaseOldestPreparedTransactionXLogRecPtr(p);
-
-	if (ptrd_oldest_ptr != NULL)
-		memcpy(&ptrd_oldest, ptrd_oldest_ptr, sizeof(ptrd_oldest));
 
 	recptr = XLogInsert(RM_XLOG_ID,
 						shutdown ? XLOG_CHECKPOINT_SHUTDOWN :

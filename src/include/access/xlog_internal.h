@@ -238,7 +238,6 @@ typedef struct CheckpointExtendedRecord
 {
 	struct TMGXACT_CHECKPOINT *dtxCheckpoint;
 	uint32				dtxCheckpointLen;
-	struct prepared_transaction_agg_state  *ptas;
 } CheckpointExtendedRecord;
 
 /*

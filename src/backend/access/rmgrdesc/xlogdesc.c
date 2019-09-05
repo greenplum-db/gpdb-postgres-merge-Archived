@@ -51,7 +51,6 @@ UnpackCheckPointRecord(XLogReaderState *record, CheckpointExtendedRecord *ckptEx
 		/* Special (for bootstrap, xlog switch, maybe others) */
 		ckptExtended->dtxCheckpoint = NULL;
 		ckptExtended->dtxCheckpointLen = 0;
-		ckptExtended->ptas = NULL;
 		return;
 	}
 
@@ -66,24 +65,7 @@ UnpackCheckPointRecord(XLogReaderState *record, CheckpointExtendedRecord *ckptEx
 	ckptExtended->dtxCheckpointLen =
 		TMGXACT_CHECKPOINT_BYTES((ckptExtended->dtxCheckpoint)->committedCount);
 
-	/*
-	 * The master prepared transaction aggregate state (ptas) will be skipped
-	 * when gp_before_filespace_setup is ON.
-	 */
-	if (remainderLen > ckptExtended->dtxCheckpointLen)
-	{
-		current_record_ptr = current_record_ptr + ckptExtended->dtxCheckpointLen;
-		remainderLen -= ckptExtended->dtxCheckpointLen;
-
-		/* Finally, point to prepared transaction information */
-		ckptExtended->ptas = (prepared_transaction_agg_state *) current_record_ptr;
-		Assert(remainderLen == PREPARED_TRANSACTION_CHECKPOINT_BYTES(ckptExtended->ptas->count));
-	}
-	else
-	{
-		Assert(remainderLen == ckptExtended->dtxCheckpointLen);
-		ckptExtended->ptas = NULL;
-	}
+	Assert(remainderLen == ckptExtended->dtxCheckpointLen);
 }
 
 void
@@ -131,10 +113,6 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 							 XLogRecGetDataLen(record),
 							 ckptExtended.dtxCheckpoint->committedCount,
 							 ckptExtended.dtxCheckpointLen);
-			if (ckptExtended.ptas != NULL)
-				appendStringInfo(buf,
-								 ", prepared transaction agg state count = %d",
-								 ckptExtended.ptas->count);
 		}
 	}
 	else if (info == XLOG_NEXTOID)
