@@ -1239,7 +1239,6 @@ CreateExtensionInternal(CreateExtensionStmt *stmt, List *parents)
 	ListCell   *lc;
 	ObjectAddress address;
 
-<<<<<<< HEAD
 	/* Check extension name validity before any filesystem access */
 	check_valid_extension_name(stmt->extname);
 
@@ -1302,8 +1301,6 @@ CreateExtensionInternal(CreateExtensionStmt *stmt, List *parents)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("nested CREATE EXTENSION is not supported")));
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/*
 	 * Read the primary control file.  Note we assume that it does not contain
 	 * any non-ASCII data, so there is no need to worry about encoding at this
