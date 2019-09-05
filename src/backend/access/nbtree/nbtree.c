@@ -592,7 +592,7 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
 /*
  * btgetbitmap() -- construct a TIDBitmap.
  */
-int64
+Node *
 btgetbitmap(IndexScanDesc scan, Node *n)
 {
 	TIDBitmap  *tbm;

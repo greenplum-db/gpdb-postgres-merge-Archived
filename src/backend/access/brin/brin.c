@@ -309,7 +309,7 @@ brinbeginscan(Relation r, int nkeys, int norderbys)
  * unsummarized.  Pages in those ranges need to be returned regardless of scan
  * keys.
  */
-int64
+Node *
 bringetbitmap(IndexScanDesc scan, Node *n)
 {
 	TIDBitmap  *tbm;

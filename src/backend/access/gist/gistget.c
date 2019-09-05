@@ -753,7 +753,7 @@ gistgettuple(IndexScanDesc scan, ScanDirection dir)
 /*
  * gistgetbitmap() -- Get a bitmap of all heap tuple locations
  */
-int64
+Node *
 gistgetbitmap(IndexScanDesc scan, Node *n)
 {
 	TIDBitmap  *tbm;

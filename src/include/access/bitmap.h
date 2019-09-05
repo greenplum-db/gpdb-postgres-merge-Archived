@@ -18,6 +18,7 @@
 #include "access/relscan.h"
 #include "access/xlog.h"
 #include "access/xlogutils.h"
+#include "nodes/execnodes.h"
 
 #define BM_READ		BUFFER_LOCK_SHARE
 #define BM_WRITE	BUFFER_LOCK_EXCLUSIVE
@@ -735,19 +736,28 @@ typedef struct xl_bm_metapage
 } xl_bm_metapage;
 
 /* public routines */
-extern Datum bmbuild(PG_FUNCTION_ARGS);
-extern Datum bmbuildempty(PG_FUNCTION_ARGS);
-extern Datum bminsert(PG_FUNCTION_ARGS);
-extern Datum bmbeginscan(PG_FUNCTION_ARGS);
-extern Datum bmgettuple(PG_FUNCTION_ARGS);
-extern Datum bmgetbitmap(PG_FUNCTION_ARGS);
-extern Datum bmrescan(PG_FUNCTION_ARGS);
-extern Datum bmendscan(PG_FUNCTION_ARGS);
-extern Datum bmmarkpos(PG_FUNCTION_ARGS);
-extern Datum bmrestrpos(PG_FUNCTION_ARGS);
-extern Datum bmbulkdelete(PG_FUNCTION_ARGS);
-extern Datum bmvacuumcleanup(PG_FUNCTION_ARGS);
-extern Datum bmoptions(PG_FUNCTION_ARGS);
+extern Datum bmhandler(PG_FUNCTION_ARGS);
+extern IndexBuildResult *bmbuild(Relation heap, Relation index,
+		struct IndexInfo *indexInfo);
+extern void bmbuildempty(Relation index);
+extern bool bminsert(Relation rel, Datum *values, bool *isnull,
+		 ItemPointer ht_ctid, Relation heapRel,
+		 IndexUniqueCheck checkUnique);
+extern IndexScanDesc bmbeginscan(Relation rel, int nkeys, int norderbys);
+extern bool bmgettuple(IndexScanDesc scan, ScanDirection dir);
+extern Node *bmgetbitmap(IndexScanDesc scan, Node *tbm);
+extern void bmrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
+		 ScanKey orderbys, int norderbys);
+extern void bmendscan(IndexScanDesc scan);
+extern void bmmarkpos(IndexScanDesc scan);
+extern void bmrestrpos(IndexScanDesc scan);
+extern IndexBulkDeleteResult *bmbulkdelete(IndexVacuumInfo *info,
+			 IndexBulkDeleteResult *stats,
+			 IndexBulkDeleteCallback callback,
+			 void *callback_state);
+extern IndexBulkDeleteResult *bmvacuumcleanup(IndexVacuumInfo *info,
+				IndexBulkDeleteResult *stats);
+extern bool bmcanreturn(Relation index, int attno);
 
 extern void GetBitmapIndexAuxOids(Relation index, Oid *heapId, Oid *indexId);
 

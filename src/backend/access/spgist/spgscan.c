@@ -231,7 +231,6 @@ spgendscan(IndexScanDesc scan)
 	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
 
 	MemoryContextDelete(so->tempCxt);
-<<<<<<< HEAD
 
 	if (so->keyData)
 		pfree(so->keyData);
@@ -240,24 +239,6 @@ spgendscan(IndexScanDesc scan)
 		pfree(so->state.deadTupleStorage);
 
 	pfree(so);
-
-	PG_RETURN_VOID();
-}
-
-Datum
-spgmarkpos(PG_FUNCTION_ARGS)
-{
-	elog(ERROR, "SPGiST does not support mark/restore");
-	PG_RETURN_VOID();
-}
-
-Datum
-spgrestrpos(PG_FUNCTION_ARGS)
-{
-	elog(ERROR, "SPGiST does not support mark/restore");
-	PG_RETURN_VOID();
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
@@ -593,18 +574,20 @@ storeBitmap(SpGistScanOpaque so, ItemPointer heapPtr,
 	so->ntids++;
 }
 
-int64
+Node *
 spggetbitmap(IndexScanDesc scan, Node *n)
 {
 	TIDBitmap *tbm;
 
 	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
 
-	if (tbm == NULL)
+	if (n == NULL)
 		/* XXX should we use less than work_mem for this? */
 		tbm = tbm_create(work_mem * 1024L);
-	else if (!IsA(tbm, TIDBitmap))
+	else if (!IsA(n, TIDBitmap))
 		elog(ERROR, "non hash bitmap");
+	else
+		tbm = (TIDBitmap *) n;
 
 	/* Copy want_itup to *so so we don't need to pass it around separately */
 	so->want_itup = false;

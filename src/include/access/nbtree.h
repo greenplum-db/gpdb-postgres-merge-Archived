@@ -662,7 +662,7 @@ extern bool btinsert(Relation rel, Datum *values, bool *isnull,
 		 IndexUniqueCheck checkUnique);
 extern IndexScanDesc btbeginscan(Relation rel, int nkeys, int norderbys);
 extern bool btgettuple(IndexScanDesc scan, ScanDirection dir);
-extern int64 btgetbitmap(IndexScanDesc scan, TIDBitmap *tbm);
+extern Node *btgetbitmap(IndexScanDesc scan, Node *tbm);
 extern void btrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 		 ScanKey orderbys, int norderbys);
 extern void btendscan(IndexScanDesc scan);
