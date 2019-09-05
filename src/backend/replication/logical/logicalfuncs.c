@@ -21,14 +21,9 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 
+#include "access/xact.h"
 #include "access/xlog_internal.h"
 #include "access/xlogutils.h"
-<<<<<<< HEAD
-=======
-
-#include "access/xact.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
-
 #include "catalog/pg_type.h"
 
 #include "nodes/makefuncs.h"
@@ -121,11 +116,7 @@ logical_read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
 	int reqLen, XLogRecPtr targetRecPtr, char *cur_page, TimeLineID *pageTLI)
 {
 	return read_local_xlog_page(state, targetPagePtr, reqLen,
-<<<<<<< HEAD
-						 targetRecPtr, cur_page, pageTLI);
-=======
 								targetRecPtr, cur_page, pageTLI);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
@@ -386,10 +377,7 @@ Datum
 pg_logical_slot_peek_binary_changes(PG_FUNCTION_ARGS)
 {
 	return pg_logical_slot_get_changes_guts(fcinfo, false, true);
-<<<<<<< HEAD
-=======
 }
-
 
 /*
  * SQL function for writing logical decoding message into WAL.
@@ -412,5 +400,4 @@ pg_logical_emit_message_text(PG_FUNCTION_ARGS)
 {
 	/* bytea and text are compatible */
 	return pg_logical_emit_message_bytea(fcinfo);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }

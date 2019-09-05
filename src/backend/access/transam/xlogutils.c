@@ -8,13 +8,9 @@
  * None of this code is used during normal system operation.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/xlogutils.c
@@ -25,12 +21,7 @@
 
 #include <unistd.h>
 
-<<<<<<< HEAD
-#include "miscadmin.h"
-
 #include "access/timeline.h"
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "access/xlogutils.h"
@@ -936,11 +927,7 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wa
  * Public because it would likely be very helpful for someone writing another
  * output method outside walsender, e.g. in a bgworker.
  *
-<<<<<<< HEAD
- * TODO: The walsender has it's own version of this, but it relies on the
-=======
  * TODO: The walsender has its own version of this, but it relies on the
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * walsender's latch being set whenever WAL is flushed. No such infrastructure
  * exists for normal backends, so we have to do a check/sleep/repeat style of
  * loop for now.

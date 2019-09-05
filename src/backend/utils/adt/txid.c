@@ -336,14 +336,9 @@ parse_snapshot(const char *str)
 bad_format:
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-<<<<<<< HEAD
-			 errmsg("invalid input for txid_snapshot: \"%s\"", str_start)));
-	return NULL;
-=======
 			 errmsg("invalid input syntax for type txid_snapshot: \"%s\"",
 					str_start)));
 	return NULL;				/* keep compiler quiet */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*

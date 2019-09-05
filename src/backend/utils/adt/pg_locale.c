@@ -396,11 +396,6 @@ assign_locale_messages(const char *newval, void *extra)
 static void
 free_struct_lconv(struct lconv * s)
 {
-<<<<<<< HEAD
-=======
-	if (s->currency_symbol)
-		free(s->currency_symbol);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	if (s->decimal_point)
 		free(s->decimal_point);
 	if (s->thousands_sep)
@@ -512,7 +507,6 @@ PGLC_localeconv(void)
 		free_struct_lconv(&CurrentLocaleConv);
 		CurrentLocaleConvAllocated = false;
 	}
-<<<<<<< HEAD
 
 	/*
 	 * This is tricky because we really don't want to risk throwing error
@@ -527,8 +521,6 @@ PGLC_localeconv(void)
 	 * using a single cleanup routine.
 	 */
 	memset(&worklconv, 0, sizeof(worklconv));
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Save user's values of monetary and numeric locales */
 	save_lc_monetary = setlocale(LC_MONETARY, NULL);
@@ -591,7 +583,6 @@ PGLC_localeconv(void)
 	setlocale(LC_MONETARY, locale_monetary);
 	extlconv = localeconv();
 
-<<<<<<< HEAD
 	/* Must copy data now in case setlocale() overwrites it */
 	worklconv.int_curr_symbol = strdup(extlconv->int_curr_symbol);
 	worklconv.currency_symbol = strdup(extlconv->currency_symbol);
@@ -609,26 +600,6 @@ PGLC_localeconv(void)
 	worklconv.n_sep_by_space = extlconv->n_sep_by_space;
 	worklconv.p_sign_posn = extlconv->p_sign_posn;
 	worklconv.n_sign_posn = extlconv->n_sign_posn;
-=======
-	/*
-	 * Must copy all values since restoring internal settings may overwrite
-	 * localeconv()'s results.  Note that if we were to fail within this
-	 * sequence before reaching "CurrentLocaleConvAllocated = true", we could
-	 * leak some memory --- but not much, so it's not worth agonizing over.
-	 */
-	CurrentLocaleConv = *extlconv;
-	CurrentLocaleConv.decimal_point = decimal_point;
-	CurrentLocaleConv.grouping = grouping;
-	CurrentLocaleConv.thousands_sep = thousands_sep;
-	CurrentLocaleConv.int_curr_symbol = db_encoding_strdup(encoding, extlconv->int_curr_symbol);
-	CurrentLocaleConv.currency_symbol = db_encoding_strdup(encoding, extlconv->currency_symbol);
-	CurrentLocaleConv.mon_decimal_point = db_encoding_strdup(encoding, extlconv->mon_decimal_point);
-	CurrentLocaleConv.mon_grouping = strdup(extlconv->mon_grouping);
-	CurrentLocaleConv.mon_thousands_sep = db_encoding_strdup(encoding, extlconv->mon_thousands_sep);
-	CurrentLocaleConv.negative_sign = db_encoding_strdup(encoding, extlconv->negative_sign);
-	CurrentLocaleConv.positive_sign = db_encoding_strdup(encoding, extlconv->positive_sign);
-	CurrentLocaleConvAllocated = true;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Try to restore internal settings */
 	if (save_lc_monetary)

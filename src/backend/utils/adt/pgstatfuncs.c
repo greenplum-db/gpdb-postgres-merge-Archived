@@ -76,11 +76,8 @@ extern Datum pg_stat_get_backend_xact_start(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_start(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_client_port(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum pg_stat_get_backend_waiting_reason(PG_FUNCTION_ARGS);
-=======
 extern Datum pg_stat_get_progress_info(PG_FUNCTION_ARGS);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 extern Datum pg_stat_get_db_numbackends(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_xact_commit(PG_FUNCTION_ARGS);

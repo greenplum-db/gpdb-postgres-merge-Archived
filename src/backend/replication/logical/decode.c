@@ -149,12 +149,9 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogReaderState *recor
 		case RM_BRIN_ID:
 		case RM_COMMIT_TS_ID:
 		case RM_REPLORIGIN_ID:
-<<<<<<< HEAD
+		case RM_GENERIC_ID:
 		case RM_BITMAP_ID:
 		case RM_DISTRIBUTEDLOG_ID:
-=======
-		case RM_GENERIC_ID:
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			/* just deal with xid, and done */
 			ReorderBufferProcessXid(ctx->reorder, XLogRecGetXid(record),
 									buf.origptr);

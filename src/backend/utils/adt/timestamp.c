@@ -5525,12 +5525,8 @@ timestamptz_part(PG_FUNCTION_ARGS)
 	text	   *units = PG_GETARG_TEXT_PP(0);
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(1);
 	float8		result;
-<<<<<<< HEAD
-	int			tz = 0;
-=======
 	Timestamp	epoch;
-	int			tz;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	int			tz = 0;
 	int			type,
 				val;
 	char	   *lowunits;

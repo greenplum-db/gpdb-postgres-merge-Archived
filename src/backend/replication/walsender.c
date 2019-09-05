@@ -498,11 +498,7 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 	pq_beginmessage(&buf, 'D');
 	pq_sendint(&buf, 2, 2);		/* # of columns */
 	len = strlen(histfname);
-<<<<<<< HEAD
-	pq_sendint(&buf, len, 4);		/* col1 len */
-=======
 	pq_sendint(&buf, len, 4);	/* col1 len */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	pq_sendbytes(&buf, histfname, len);
 
 	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY, 0666);
@@ -766,11 +762,7 @@ StartReplication(StartReplicationCmd *cmd)
 		pq_sendint(&buf, 2, 2); /* number of columns */
 
 		len = strlen(tli_str);
-<<<<<<< HEAD
-		pq_sendint(&buf, len, 4);	/* length */
-=======
 		pq_sendint(&buf, len, 4);		/* length */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		pq_sendbytes(&buf, tli_str, len);
 
 		len = strlen(startpos_str);
@@ -955,11 +947,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 
 	/* slot_name */
 	len = strlen(NameStr(MyReplicationSlot->data.name));
-<<<<<<< HEAD
-	pq_sendint(&buf, len, 4);		/* col1 len */
-=======
 	pq_sendint(&buf, len, 4);	/* col1 len */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	pq_sendbytes(&buf, NameStr(MyReplicationSlot->data.name), len);
 
 	/* consistent wal location */

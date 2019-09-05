@@ -27,6 +27,7 @@
 #include "postgres.h"
 
 #include "access/sysattr.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"

@@ -21,11 +21,8 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
-<<<<<<< HEAD
 #include "catalog/oid_dispatch.h"
-=======
 #include "catalog/pg_am.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_type.h"

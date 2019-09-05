@@ -47,11 +47,7 @@ Datum
 pg_create_physical_replication_slot(PG_FUNCTION_ARGS)
 {
 	Name		name = PG_GETARG_NAME(0);
-<<<<<<< HEAD
-	bool 		immediately_reserve = PG_GETARG_BOOL(1);
-=======
 	bool		immediately_reserve = PG_GETARG_BOOL(1);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	Datum		values[2];
 	bool		nulls[2];
 	TupleDesc	tupdesc;
@@ -89,10 +85,6 @@ pg_create_physical_replication_slot(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-<<<<<<< HEAD
-		values[0] = NameGetDatum(&MyReplicationSlot->data.name);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		nulls[1] = true;
 	}
 

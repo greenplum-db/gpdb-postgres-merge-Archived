@@ -688,12 +688,9 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		RegisterTimeout(DEADLOCK_TIMEOUT, CheckDeadLockAlert);
 		RegisterTimeout(STATEMENT_TIMEOUT, StatementTimeoutHandler);
 		RegisterTimeout(LOCK_TIMEOUT, LockTimeoutHandler);
-<<<<<<< HEAD
-		RegisterTimeout(GANG_TIMEOUT, IdleGangTimeoutHandler);
-=======
 		RegisterTimeout(IDLE_IN_TRANSACTION_SESSION_TIMEOUT,
 						IdleInTransactionSessionTimeoutHandler);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+		RegisterTimeout(GANG_TIMEOUT, IdleGangTimeoutHandler);
 	}
 
 	/*

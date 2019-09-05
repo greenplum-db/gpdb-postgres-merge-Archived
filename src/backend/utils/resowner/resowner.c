@@ -511,12 +511,8 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 {
 	ResourceOwner child;
 	ResourceOwner save;
-<<<<<<< HEAD
 	ResourceReleaseCallbackItem *item, *next;
-=======
-	ResourceReleaseCallbackItem *item;
 	Datum		foundres;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Recurse to handle descendants */
 	for (child = owner->firstchild; child != NULL; child = child->nextchild)
