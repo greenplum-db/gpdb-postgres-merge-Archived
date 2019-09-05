@@ -131,7 +131,6 @@ typedef uint16 LOCKMETHODID;
 #define RESOURCE_LOCKMETHOD	3
 
 /*
-<<<<<<< HEAD
  * These are the valid values of type LOCKMODE for all the standard lock
  * methods (both DEFAULT and USER).
  */
@@ -168,8 +167,6 @@ extern HTAB	*LockMethodLocalHash;
 
 
 /*
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * LOCKTAG is the key information needed to look up a LOCK item in the
  * lock hashtable.  A LOCKTAG value uniquely identifies a lockable object.
  *
