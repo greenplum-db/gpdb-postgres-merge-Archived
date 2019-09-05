@@ -34,6 +34,15 @@ typedef struct MemoryContextCounters
 	Size		freechunks;		/* Total number of free chunks */
 	Size		totalspace;		/* Total bytes requested from malloc */
 	Size		freespace;		/* The unused portion of totalspace */
+
+	/* GPDB_96_MERGE_FIXME: MemoryContextStats() in GDPB Used to have these
+	 * extra arguments. Are they needed? Are they redundant? Do they work?
+	 */
+	uint64		nChunks;
+	uint64		currentAvailable;
+	uint64		allAllocated;
+	uint64		allFreed;
+	uint64		maxHeld;
 } MemoryContextCounters;
 
 /*
@@ -64,13 +73,9 @@ typedef struct MemoryContextMethods
 	void		(*delete_context) (MemoryContext context);
 	Size		(*get_chunk_space) (MemoryContext context, void *pointer);
 	bool		(*is_empty) (MemoryContext context);
-<<<<<<< HEAD
-	void		(*stats) (MemoryContext context, uint64 *nBlocks, uint64 *nChunks, uint64 *currentAvailable, uint64 *allAllocated, uint64 *allFreed, uint64 *maxHeld);
-	void		(*release_accounting)(MemoryContext context);
-=======
 	void		(*stats) (MemoryContext context, int level, bool print,
 									  MemoryContextCounters *totals);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	void		(*release_accounting)(MemoryContext context);
 #ifdef MEMORY_CONTEXT_CHECKING
 	void		(*check) (MemoryContext context);
 #endif

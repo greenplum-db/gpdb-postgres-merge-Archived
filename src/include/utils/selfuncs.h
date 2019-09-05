@@ -240,21 +240,11 @@ extern double estimate_num_groups(PlannerInfo *root, List *groupExprs,
 extern Selectivity estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey,
 						 double nbuckets);
 
-<<<<<<< HEAD
-extern Datum brincostestimate(PG_FUNCTION_ARGS);
-extern Datum btcostestimate(PG_FUNCTION_ARGS);
-extern Datum hashcostestimate(PG_FUNCTION_ARGS);
-extern Datum gistcostestimate(PG_FUNCTION_ARGS);
-extern Datum spgcostestimate(PG_FUNCTION_ARGS);
-extern Datum gincostestimate(PG_FUNCTION_ARGS);
-extern Datum bmcostestimate(PG_FUNCTION_ARGS);
-=======
 extern List *deconstruct_indexquals(IndexPath *path);
 extern void genericcostestimate(PlannerInfo *root, IndexPath *path,
 					double loop_count,
 					List *qinfos,
 					GenericCosts *costs);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* Functions in array_selfuncs.c */
 

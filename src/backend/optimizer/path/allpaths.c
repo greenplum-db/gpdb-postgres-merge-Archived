@@ -1082,7 +1082,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 *
 		 * GPDB_92_MERGE_FIXME: is childrel->attr_needed accurate?
 		 */
-		foreach (targetListVars, childrel->reltargetlist)
+		foreach (targetListVars, childrel->reltarget->exprs)
 		{
 			int attno;
 			Var *v = (Var*)lfirst(targetListVars);

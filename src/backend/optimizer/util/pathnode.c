@@ -3,13 +3,9 @@
  * pathnode.c
  *	  Routines to manipulate pathlists and create path nodes
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -576,16 +572,12 @@ set_cheapest(RelOptInfo *parent_rel)
  *	  but just recycling discarded Path nodes is a very useful savings in
  *	  a large join tree.  We can recycle the List nodes of pathlist, too.
  *
-<<<<<<< HEAD
  *	  NB: The Path that is passed to add_path() must be considered invalid
  *	  upon return, and not touched again by the caller, because we free it
  *	  if we already know of a better path.  Likewise, a Path that is passed
  *	  to add_path() must not be shared as a subpath of any other Path of the
  *	  same join level.
  *
- *	  BUT: we do not pfree IndexPath objects, since they may be referenced as
- *	  children of BitmapHeapPaths as well as being paths in their own right.
-=======
  *	  As noted in optimizer/README, deleting a previously-accepted Path is
  *	  safe because we know that Paths of this rel cannot yet be referenced
  *	  from any other rel, such as a higher-level join.  However, in some cases
@@ -594,7 +586,6 @@ set_cheapest(RelOptInfo *parent_rel)
  *	  Path.  Currently this occurs only for IndexPath objects, which may be
  *	  referenced as children of BitmapHeapPaths as well as being paths in
  *	  their own right.  Hence, we don't pfree IndexPaths when rejecting them.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  *
  * 'parent_rel' is the relation entry to which the path corresponds.
  * 'new_path' is a potential path for parent_rel.
@@ -1269,16 +1260,12 @@ create_samplescan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer
 	pathnode->parallel_workers = 0;
 	pathnode->pathkeys = NIL;	/* samplescan has unordered result */
 
-<<<<<<< HEAD
 	pathnode->locus = cdbpathlocus_from_baserel(root, rel);
 	pathnode->motionHazard = false;
 	pathnode->rescannable = true;
 	pathnode->sameslice_relids = rel->relids;
 
-	cost_samplescan(pathnode, root, rel);
-=======
 	cost_samplescan(pathnode, root, rel, pathnode->param_info);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	return pathnode;
 }
@@ -1519,12 +1506,8 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals,
  * Note that we must handle subpaths = NIL, representing a dummy access path.
  */
 AppendPath *
-<<<<<<< HEAD
-create_append_path(PlannerInfo *root, RelOptInfo *rel, List *subpaths, Relids required_outer)
-=======
-create_append_path(RelOptInfo *rel, List *subpaths, Relids required_outer,
+create_append_path(PlannerInfo *root, RelOptInfo *rel, List *subpaths, Relids required_outer,
 				   int parallel_workers)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	AppendPath *pathnode = makeNode(AppendPath);
 	ListCell   *l;
@@ -1802,8 +1785,8 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 				cdbpathlocus_pull_above_projection(root,
 												   subpath->locus,
 												   subpath->parent->relids,
-												   subpath->parent->reltargetlist,
-												   rel->reltargetlist,
+												   subpath->parent->reltarget->exprs,
+												   rel->reltarget->exprs,
 												   rel->relid);
 
 		/*
@@ -1894,25 +1877,16 @@ create_result_path(PlannerInfo *root, RelOptInfo *rel,
 	{
 		QualCost	qual_cost;
 
-<<<<<<< HEAD
-	/* Result can be on any segments */
-	CdbPathLocus_MakeGeneral(&pathnode->path.locus, getgpsegmentCount());
-	pathnode->path.motionHazard = false;
-	pathnode->path.rescannable = true;
-
-	/*
-	 * In theory we should include the qual eval cost as well, but at present
-	 * that doesn't accomplish much except duplicate work that will be done
-	 * again in make_result; since this is only used for degenerate cases,
-	 * nothing interesting will be done with the path cost values...
-	 */
-=======
 		cost_qual_eval(&qual_cost, resconstantqual, root);
 		/* resconstantqual is evaluated once at startup */
 		pathnode->path.startup_cost += qual_cost.startup + qual_cost.per_tuple;
 		pathnode->path.total_cost += qual_cost.startup + qual_cost.per_tuple;
 	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
+	/* Result can be on any segments */
+	CdbPathLocus_MakeGeneral(&pathnode->path.locus, getgpsegmentCount());
+	pathnode->path.motionHazard = false;
+	pathnode->path.rescannable = true;
 
 	return pathnode;
 }
@@ -2040,11 +2014,8 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 
 	pathnode->path.pathtype = T_Unique;
 	pathnode->path.parent = rel;
-<<<<<<< HEAD
-	pathnode->path.locus = locus;
-=======
 	pathnode->path.pathtarget = rel->reltarget;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	pathnode->path.locus = locus;
 	pathnode->path.param_info = subpath->param_info;
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
@@ -2394,7 +2365,7 @@ create_unique_rowid_path(PlannerInfo *root,
 		cost_sort(&sort_path, root, NIL,
 				  subpath->total_cost,
 				  rel->rows,
-				  rel->width,
+				  rel->reltarget->width,
 				  0, work_mem,
 				  -1.0);
 
@@ -2413,7 +2384,7 @@ create_unique_rowid_path(PlannerInfo *root,
 		 * Estimate the overhead per hashtable entry at 64 bytes (same as in
 		 * planner.c).
 		 */
-		int			hashentrysize = rel->width + 64;
+		int			hashentrysize = rel->reltarget->width + 64;
 
 		if (hashentrysize * ((Path*)pathnode)->rows > work_mem * 1024L)
 			all_hash = false;	/* don't try to hash */
@@ -2647,16 +2618,12 @@ create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->path.pathkeys = pathkeys;
 	pathnode->subpath = subpath;
 
-<<<<<<< HEAD
 	pathnode->locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
 	pathnode->motionHazard = subquery_motionHazard_walker(rel->subplan);
 	pathnode->rescannable = false;
 	pathnode->sameslice_relids = NULL;
 
-	cost_subqueryscan(pathnode, root, rel, pathnode->param_info);
-=======
 	cost_subqueryscan(pathnode, root, rel, pathnode->path.param_info);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	return pathnode;
 }
@@ -2838,7 +2805,7 @@ create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel,
 								CdbPathLocus_NumSegments(pathnode->locus));
 	pathnode->sameslice_relids = NULL;
 
-	cost_tablefunction(pathnode, root, rel, pathnode->param_info);
+	cost_tablefunction(pathnode, root, rel, pathnode->param_info, rel->subplan);
 
 	return pathnode;
 }
@@ -2903,7 +2870,11 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys,
 	pathnode->pathtarget = rel->reltarget;
 	pathnode->param_info = get_baserel_parampathinfo(root, rel,
 													 required_outer);
-<<<<<<< HEAD
+	pathnode->parallel_aware = false;
+	pathnode->parallel_safe = rel->consider_parallel;
+	pathnode->parallel_workers = 0;
+	// GPDB_96_MERGE_FIXME: Why do we set pathkeys in GPDB, but not in Postgres?
+	// pathnode->pathkeys = NIL;	/* XXX for now, result is always unordered */
 	pathnode->pathkeys = pathkeys;
 
 	pathnode->locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
@@ -2915,12 +2886,6 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys,
 	pathnode->motionHazard = true;
 	pathnode->rescannable = false;
 	pathnode->sameslice_relids = NULL;
-=======
-	pathnode->parallel_aware = false;
-	pathnode->parallel_safe = rel->consider_parallel;
-	pathnode->parallel_workers = 0;
-	pathnode->pathkeys = NIL;	/* XXX for now, result is always unordered */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	cost_ctescan(pathnode, root, rel, pathnode->param_info);
 
@@ -3042,7 +3007,6 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.total_cost = total_cost;
 	pathnode->path.pathkeys = pathkeys;
 
-<<<<<<< HEAD
 	switch (rel->ftEntry->exec_location)
 	{
 		case FTEXECLOCATION_ANY:
@@ -3058,9 +3022,7 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 			elog(ERROR, "unrecognized exec_location '%c'", rel->ftEntry->exec_location);
 	}
 
-=======
 	pathnode->fdw_outerpath = fdw_outerpath;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	pathnode->fdw_private = fdw_private;
 
 	return pathnode;
@@ -3512,9 +3474,9 @@ create_hashjoin_path(PlannerInfo *root,
 		double		outersize;
 		double		innersize;
 
-		outersize = ExecHashRowSize(outer_path->parent->width) *
+		outersize = ExecHashRowSize(outer_path->parent->reltarget->width) *
 			outer_path->rows;
-		innersize = ExecHashRowSize(inner_path->parent->width) *
+		innersize = ExecHashRowSize(inner_path->parent->reltarget->width) *
 			inner_path->rows;
 
 		if (innersize > outersize)
@@ -3798,6 +3760,7 @@ create_sort_path(PlannerInfo *root,
 	return pathnode;
 }
 
+#ifdef NOT_USED /* Group nodes are not used in GPDB */
 /*
  * create_group_path
  *	  Creates a pathnode that represents performing grouping of presorted input
@@ -3850,6 +3813,7 @@ create_group_path(PlannerInfo *root,
 
 	return pathnode;
 }
+#endif
 
 /*
  * create_upper_unique_path
@@ -4631,9 +4595,15 @@ reparameterize_path(PlannerInfo *root, Path *path,
 														loop_count);
 			}
 		case T_SubqueryScan:
-<<<<<<< HEAD
-			return create_subqueryscan_path(root, rel, path->pathkeys,
-											required_outer);
+			{
+				SubqueryScanPath *spath = (SubqueryScanPath *) path;
+
+				return (Path *) create_subqueryscan_path(root,
+														 rel,
+														 spath->subpath,
+														 spath->path.pathkeys,
+														 required_outer);
+			}
 		case T_Append:
 			{
 				AppendPath *apath = (AppendPath *) path;
@@ -4654,21 +4624,9 @@ reparameterize_path(PlannerInfo *root, Path *path,
 				}
 				return (Path *)
 					create_append_path(root, rel, childpaths,
-									   required_outer);
+									   required_outer,
+									   apath->path.parallel_workers);
 			}
-		case T_SampleScan:
-			return (Path *) create_samplescan_path(root, rel, required_outer);
-=======
-			{
-				SubqueryScanPath *spath = (SubqueryScanPath *) path;
-
-				return (Path *) create_subqueryscan_path(root,
-														 rel,
-														 spath->subpath,
-														 spath->path.pathkeys,
-														 required_outer);
-			}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		default:
 			break;
 	}

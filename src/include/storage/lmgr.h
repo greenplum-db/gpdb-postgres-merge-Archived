@@ -112,13 +112,11 @@ extern void UnlockSharedObjectForSession(Oid classid, Oid objid, uint16 objsubid
 /* Describe a locktag for error messages */
 extern void DescribeLockTag(StringInfo buf, const LOCKTAG *tag);
 
-<<<<<<< HEAD
+extern const char *GetLockNameFromTagType(uint16 locktag_type);
+
 /* Knowledge about which locktags describe temp objects */
 extern bool LockTagIsTemp(const LOCKTAG *tag);
 
 extern bool CondUpgradeRelLock(Oid relid, bool noWait);
-=======
-extern const char *GetLockNameFromTagType(uint16 locktag_type);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #endif   /* LMGR_H */

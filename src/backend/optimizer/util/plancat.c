@@ -460,7 +460,6 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 }
 
 /*
-<<<<<<< HEAD
  * Update RelOptInfo to include the external specifications (file URI list
  * and data format) from the pg_exttable catalog.
  */
@@ -678,7 +677,9 @@ cdb_estimate_partitioned_numtuples(Relation rel, bool *stats_missing)
 			heap_close(childrel, NoLock);
 	}
 	return totaltuples;
-=======
+}
+
+/*
  * get_relation_foreign_keys -
  *	  Retrieves foreign key information for a given relation.
  *
@@ -767,7 +768,6 @@ get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,
 			root->fkey_list = lappend(root->fkey_list, info);
 		}
 	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*

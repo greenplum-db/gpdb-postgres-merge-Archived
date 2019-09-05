@@ -85,15 +85,6 @@ xideq(PG_FUNCTION_ARGS)
 }
 
 Datum
-xidne(PG_FUNCTION_ARGS)
-{
-	TransactionId xid1 = PG_GETARG_TRANSACTIONID(0);
-	TransactionId xid2 = PG_GETARG_TRANSACTIONID(1);
-
-	PG_RETURN_BOOL(xid1 != xid2);
-}
-
-Datum
 xidlt(PG_FUNCTION_ARGS)
 {
 	TransactionId xid1 = PG_GETARG_TRANSACTIONID(0);

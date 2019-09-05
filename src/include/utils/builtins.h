@@ -4,13 +4,9 @@
  *	  Declarations for operations on built-in types.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/builtins.h
@@ -360,12 +356,9 @@ extern float get_float4_infinity(void);
 extern double get_float8_nan(void);
 extern float get_float4_nan(void);
 extern int	is_infinite(double val);
-<<<<<<< HEAD
-=======
 extern double float8in_internal(char *num, char **endptr_p,
 				  const char *type_name, const char *orig_string);
 extern char *float8out_internal(double num);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern int	float4_cmp_internal(float4 a, float4 b);
 extern int	float8_cmp_internal(float8 a, float8 b);
 
@@ -438,9 +431,7 @@ extern Datum dcot(PG_FUNCTION_ARGS);
 extern Datum dsin(PG_FUNCTION_ARGS);
 extern Datum dsinh(PG_FUNCTION_ARGS);
 extern Datum dtan(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum dtanh(PG_FUNCTION_ARGS);
-=======
 extern Datum dacosd(PG_FUNCTION_ARGS);
 extern Datum dasind(PG_FUNCTION_ARGS);
 extern Datum datand(PG_FUNCTION_ARGS);
@@ -449,7 +440,6 @@ extern Datum dcosd(PG_FUNCTION_ARGS);
 extern Datum dcotd(PG_FUNCTION_ARGS);
 extern Datum dsind(PG_FUNCTION_ARGS);
 extern Datum dtand(PG_FUNCTION_ARGS);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern Datum degrees(PG_FUNCTION_ARGS);
 extern Datum dpi(PG_FUNCTION_ARGS);
 extern Datum radians(PG_FUNCTION_ARGS);
@@ -849,12 +839,9 @@ extern Datum bpchar_pattern_le(PG_FUNCTION_ARGS);
 extern Datum bpchar_pattern_gt(PG_FUNCTION_ARGS);
 extern Datum bpchar_pattern_ge(PG_FUNCTION_ARGS);
 extern Datum btbpchar_pattern_cmp(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
+extern Datum btbpchar_pattern_sortsupport(PG_FUNCTION_ARGS);
 extern Datum hashtext(PG_FUNCTION_ARGS);
 extern Datum hashvarlena(PG_FUNCTION_ARGS);
-=======
-extern Datum btbpchar_pattern_sortsupport(PG_FUNCTION_ARGS);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 extern Datum varcharin(PG_FUNCTION_ARGS);
 extern Datum varcharout(PG_FUNCTION_ARGS);
@@ -961,16 +948,12 @@ extern Datum xidout(PG_FUNCTION_ARGS);
 extern Datum xidrecv(PG_FUNCTION_ARGS);
 extern Datum xidsend(PG_FUNCTION_ARGS);
 extern Datum xideq(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
-extern Datum xidne(PG_FUNCTION_ARGS);
 extern Datum xidlt(PG_FUNCTION_ARGS);
 extern Datum xidgt(PG_FUNCTION_ARGS);
 extern Datum xidle(PG_FUNCTION_ARGS);
 extern Datum xidge(PG_FUNCTION_ARGS);
 extern Datum btxidcmp(PG_FUNCTION_ARGS);
-=======
 extern Datum xidneq(PG_FUNCTION_ARGS);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern Datum xid_age(PG_FUNCTION_ARGS);
 extern Datum mxid_age(PG_FUNCTION_ARGS);
 extern int	xidComparator(const void *arg1, const void *arg2);
@@ -1133,13 +1116,10 @@ extern Datum numeric_exp(PG_FUNCTION_ARGS);
 extern Datum numeric_ln(PG_FUNCTION_ARGS);
 extern Datum numeric_log(PG_FUNCTION_ARGS);
 extern Datum numeric_power(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
+extern Datum numeric_scale(PG_FUNCTION_ARGS);
 extern Datum numeric_interval_bound(PG_FUNCTION_ARGS);
 extern Datum numeric_interval_bound_shift(PG_FUNCTION_ARGS);
 extern Datum numeric_interval_bound_shift_rbound(PG_FUNCTION_ARGS);
-=======
-extern Datum numeric_scale(PG_FUNCTION_ARGS);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern Datum int4_numeric(PG_FUNCTION_ARGS);
 extern Datum numeric_int4(PG_FUNCTION_ARGS);
 extern Datum int8_numeric(PG_FUNCTION_ARGS);

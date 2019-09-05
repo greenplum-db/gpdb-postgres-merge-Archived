@@ -20,11 +20,6 @@
 #include "storage/off.h"
 #include "miscadmin.h"
 
-#ifndef FRONTEND
-/* Needed by PageGetLSN(), only for asserts in backend code */
-#include "storage/bufmgr.h"
-#endif
-
 /*
  * A postgres disk page is an abstraction layered on top of a postgres
  * disk block (which is simply a unit of i/o, see block.h).
@@ -385,23 +380,12 @@ PageValidateSpecialPointer(Page page)
  * local buffers do not need to worry about concurrency.
  *
  */
+extern bool BufferLockHeldByMe(Page page);
 static inline XLogRecPtr
 PageGetLSN(Page page)
 {
 #if defined (USE_ASSERT_CHECKING) && !defined(FRONTEND)
-	extern PGDLLIMPORT char *BufferBlocks; /* duplicates bufmgr.h */
-	char *pagePtr = page;
-
-	/*
-	 * We only want to assert that we hold a lock on the page contents if the
-	 * page is shared (i.e. it is one of the BufferBlocks).
-	 */
-	if (BufferBlocks <= pagePtr &&
-		pagePtr < (BufferBlocks + NBuffers * BLCKSZ))
-	{
-		BufferDesc *hdr = GetBufferDescriptor((pagePtr - BufferBlocks) / BLCKSZ);
-		Assert(LWLockHeldByMe(hdr->content_lock));
-	}
+	Assert(BufferLockHeldByMe(page));
 #endif
 	return PageXLogRecPtrGet(((PageHeader) (page))->pd_lsn);
 }

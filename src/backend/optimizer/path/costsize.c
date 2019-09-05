@@ -152,25 +152,18 @@ static bool has_indexed_join_quals(NestPath *joinpath);
 static double approx_tuple_count(PlannerInfo *root, JoinPath *path,
 				   List *quals);
 static double calc_joinrel_size_estimate(PlannerInfo *root,
-<<<<<<< HEAD
 						   RelOptInfo *joinrel,
-=======
 						   RelOptInfo *outer_rel,
 						   RelOptInfo *inner_rel,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 						   double outer_rows,
 						   double inner_rows,
 						   SpecialJoinInfo *sjinfo,
 						   List *restrictlist);
-<<<<<<< HEAD
-=======
 static Selectivity get_foreign_key_join_selectivity(PlannerInfo *root,
 								 Relids outer_relids,
 								 Relids inner_relids,
 								 SpecialJoinInfo *sjinfo,
 								 List **restrictlist);
-static void set_rel_width(PlannerInfo *root, RelOptInfo *rel);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static double relation_byte_size(double tuples, int width);
 static double page_size(double tuples, int width);
 static Selectivity adjust_selectivity_for_nulltest(Selectivity selec,
@@ -509,17 +502,12 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	 * correlation to the main-table tuple order.  We need a cast here because
 	 * relation.h uses a weak function type to avoid including amapi.h.
 	 */
-<<<<<<< HEAD
     index->num_leading_eq = 0;
-	OidFunctionCall7(index->amcostestimate,
-					 PointerGetDatum(root),
-					 PointerGetDatum(path),
-					 Float8GetDatum(loop_count),
-					 PointerGetDatum(&indexStartupCost),
-					 PointerGetDatum(&indexTotalCost),
-					 PointerGetDatum(&indexSelectivity),
-					 PointerGetDatum(&indexCorrelation));
-					
+	amcostestimate = (amcostestimate_function) index->amcostestimate;
+	amcostestimate(root, path, loop_count,
+				   &indexStartupCost, &indexTotalCost,
+				   &indexSelectivity, &indexCorrelation);
+
     /*
      * CDB: Note whether all of the key columns are matched by equality
      * predicates.
@@ -539,12 +527,6 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 		indexCorrelation = 0.99;
 	else if (indexCorrelation <= -0.99)
 		indexCorrelation = -0.99;
-=======
-	amcostestimate = (amcostestimate_function) index->amcostestimate;
-	amcostestimate(root, path, loop_count,
-				   &indexStartupCost, &indexTotalCost,
-				   &indexSelectivity, &indexCorrelation);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Save amcostestimate's results for possible use in bitmap scan planning.
@@ -1495,10 +1477,18 @@ cost_functionscan(Path *path, PlannerInfo *root,
 /*
  * cost_tablefunction
  *	  Determines and returns the cost of scanning a table function RTE.
+ *
+ * GPDB_96_MERGE_FIXME: I added the 'plan' argument here while trying to
+ * make stuff compile, and copy-pasted this sentence here from cost_subplan:
+ *
+ * Note: we could dig the subplan's Plan out of the root list, but in practice
+ * all callers have it handy already, so we make them pass it.
+ *
+ * GPDB_96_MERGE_FIXME: but I'm not sure that's actually true.
  */
 void
 cost_tablefunction(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-				   ParamPathInfo *param_info)
+				   ParamPathInfo *param_info, Plan *subplan)
 {
 	Cost		startup_cost;
 	Cost		run_cost;
@@ -1516,8 +1506,8 @@ cost_tablefunction(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 		path->rows = baserel->rows;
 
 	/* Initialize cost of the subquery input */
-	path->startup_cost = baserel->subplan->startup_cost;
-	path->total_cost   = baserel->subplan->total_cost;
+	path->startup_cost = subplan->startup_cost;
+	path->total_cost   = subplan->total_cost;
 
 	/*
 	 * For now, estimate function's cost at one operator eval per function
@@ -3506,15 +3496,9 @@ cost_rescan(PlannerInfo *root, Path *path,
 				 * the run_cost charge in cost_sort, and also see comments in
 				 * cost_material before you change it.)
 				 */
-<<<<<<< HEAD
 				Cost		run_cost = cpu_operator_cost * path->parent->rows;
 				double		nbytes = relation_byte_size(path->parent->rows,
-														path->parent->width);
-=======
-				Cost		run_cost = cpu_operator_cost * path->rows;
-				double		nbytes = relation_byte_size(path->rows,
-													path->pathtarget->width);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+														path->pathtarget->width);
 				long		work_mem_bytes = work_mem * 1024L;
 
 				if (nbytes > work_mem_bytes)
@@ -4298,12 +4282,9 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 						   List *restrictlist)
 {
 	rel->rows = calc_joinrel_size_estimate(root,
-<<<<<<< HEAD
 										   rel,
-=======
 										   outer_rel,
 										   inner_rel,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 										   outer_rel->rows,
 										   inner_rel->rows,
 										   sjinfo,
@@ -4344,16 +4325,11 @@ get_parameterized_joinrel_size(PlannerInfo *root, RelOptInfo *rel,
 	 * estimate for any pair with the same parameterization.
 	 */
 	nrows = calc_joinrel_size_estimate(root,
-<<<<<<< HEAD
 									   rel,
-									   outer_rows,
-									   inner_rows,
-=======
 									   outer_path->parent,
 									   inner_path->parent,
 									   outer_path->rows,
 									   inner_path->rows,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 									   sjinfo,
 									   restrict_clauses);
 	/* For safety, make sure result is not more than the base estimate */
@@ -4373,12 +4349,9 @@ get_parameterized_joinrel_size(PlannerInfo *root, RelOptInfo *rel,
  */
 static double
 calc_joinrel_size_estimate(PlannerInfo *root,
-<<<<<<< HEAD
 						   RelOptInfo *joinrel,
-=======
 						   RelOptInfo *outer_rel,
 						   RelOptInfo *inner_rel,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 						   double outer_rows,
 						   double inner_rows,
 						   SpecialJoinInfo *sjinfo,
@@ -4513,12 +4486,8 @@ calc_joinrel_size_estimate(PlannerInfo *root,
 			/* pselec not used */
 			break;
 		case JOIN_ANTI:
-<<<<<<< HEAD
 		case JOIN_LASJ_NOTIN:
-			nrows = outer_rows * (1.0 - jselec);
-=======
 			nrows = outer_rows * (1.0 - fkselec * jselec);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			nrows *= pselec;
 			break;
 		default:
@@ -4785,20 +4754,15 @@ set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 	rte = planner_rt_fetch(rel->relid, root);
 	Assert(rte->rtekind == RTE_SUBQUERY);
 
-<<<<<<< HEAD
-	/* Copy raw number of output rows from subplan */
-	if (rel->onerow)
-		rel->tuples = 1;
-	else
-		rel->tuples = rel->subplan->plan_rows;
-=======
 	/*
 	 * Copy raw number of output rows from subquery.  All of its paths should
 	 * have the same output rowcount, so just look at cheapest-total.
 	 */
 	sub_final_rel = fetch_upper_rel(subroot, UPPERREL_FINAL, NULL);
-	rel->tuples = sub_final_rel->cheapest_total_path->rows;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	if (rel->onerow)
+		rel->tuples = 1;
+	else
+		rel->tuples = sub_final_rel->cheapest_total_path->rows;
 
 	/*
 	 * Compute per-output-column width estimates by examining the subquery's
@@ -4911,6 +4875,9 @@ set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 void
 set_table_function_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 {
+	PlannerInfo *subroot = rel->subroot;
+	RelOptInfo *sub_final_rel;
+
 	/*
 	 * Estimate number of rows the function itself will return.
 	 *
@@ -4919,11 +4886,15 @@ set_table_function_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 	 *
 	 * This will obviously be way wrong in many cases, to improve we would
 	 * need a stats callback function for table functions.
+	 *
+	 * Copy raw number of output rows from subquery.  All of its paths should
+	 * have the same output rowcount, so just look at cheapest-total.
 	 */
+	sub_final_rel = fetch_upper_rel(subroot, UPPERREL_FINAL, NULL);
 	if (rel->onerow)
 		rel->tuples = 1;
 	else
-		rel->tuples = rel->subplan->plan_rows;
+		rel->tuples = sub_final_rel->cheapest_total_path->rows;
 
 	/* Now estimate number of output rows, etc */
 	set_baserel_size_estimates(root, rel);

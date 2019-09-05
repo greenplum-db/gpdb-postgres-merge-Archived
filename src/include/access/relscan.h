@@ -20,9 +20,8 @@
 #include "access/itup.h"
 #include "access/tupdesc.h"
 
-<<<<<<< HEAD
 #include "access/formatter.h"
-=======
+
 /*
  * Shared state for parallel heap scan.
  *
@@ -42,7 +41,6 @@ typedef struct ParallelHeapScanDescData
 	BlockNumber phs_cblock;		/* current block number */
 	char		phs_snapshot_data[FLEXIBLE_ARRAY_MEMBER];
 }	ParallelHeapScanDescData;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 typedef struct HeapScanDescData
 {

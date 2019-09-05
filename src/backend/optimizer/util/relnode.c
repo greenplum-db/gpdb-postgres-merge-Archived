@@ -3,13 +3,9 @@
  * relnode.c
  *	  Relation-node lookup/construction routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -20,31 +16,25 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
-#include "nodes/makefuncs.h"                /* makeVar() */
-#include "nodes/nodeFuncs.h"
-#include "catalog/gp_policy.h"
-=======
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/placeholder.h"
 #include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
-<<<<<<< HEAD
+#include "optimizer/tlist.h"
+#include "utils/hsearch.h"
+
+#include "catalog/gp_policy.h"
+#include "cdb/cdbpath.h"
+#include "nodes/makefuncs.h"                /* makeVar() */
+#include "nodes/nodeFuncs.h"
 #include "optimizer/var.h"                  /* contain_vars_of_level_or_above */
 #include "parser/parse_expr.h"              /* exprType(), exprTypmod() */
 #include "parser/parsetree.h"
-=======
-#include "optimizer/tlist.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
-#include "utils/hsearch.h"
 #include "utils/lsyscache.h"
-
-#include "cdb/cdbpath.h"
 
 typedef struct JoinHashEntry
 {
@@ -129,11 +119,8 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->reltarget = create_empty_pathtarget();
 	rel->pathlist = NIL;
 	rel->ppilist = NIL;
-<<<<<<< HEAD
-    rel->onerow = false;
-=======
 	rel->partial_pathlist = NIL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+    rel->onerow = false;
 	rel->cheapest_startup_path = NULL;
 	rel->cheapest_total_path = NULL;
 	rel->cheapest_unique_path = NULL;
@@ -149,11 +136,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->pages = 0;
 	rel->tuples = 0;
 	rel->allvisfrac = 0;
-<<<<<<< HEAD
-	rel->subplan = NULL;
 	rel->extEntry = NULL;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	rel->subroot = NULL;
 	rel->subplan_params = NIL;
 	rel->rel_parallel_workers = -1;		/* set up in GetRelationInfo */
@@ -429,11 +412,8 @@ build_join_rel(PlannerInfo *root,
 	joinrel->reltarget = create_empty_pathtarget();
 	joinrel->pathlist = NIL;
 	joinrel->ppilist = NIL;
-<<<<<<< HEAD
-    joinrel->onerow = false;
-=======
 	joinrel->partial_pathlist = NIL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+    joinrel->onerow = false;
 	joinrel->cheapest_startup_path = NULL;
 	joinrel->cheapest_total_path = NULL;
 	joinrel->cheapest_unique_path = NULL;
@@ -451,11 +431,6 @@ build_join_rel(PlannerInfo *root,
 	joinrel->attr_needed = NULL;
 	joinrel->attr_widths = NULL;
 	joinrel->lateral_vars = NIL;
-<<<<<<< HEAD
-	joinrel->lateral_relids = min_join_parameterization(root, joinrel->relids,
-														outer_rel, inner_rel);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	joinrel->lateral_referencers = NULL;
 	joinrel->indexlist = NIL;
 	joinrel->pages = 0;
@@ -528,14 +503,9 @@ build_join_rel(PlannerInfo *root,
 	 * and inner rels we first try to build it from.  But the contents should
 	 * be the same regardless.
 	 */
-<<<<<<< HEAD
-	build_joinrel_tlist(root, joinrel, outer_rel->reltargetlist);
-	build_joinrel_tlist(root, joinrel, inner_rel->reltargetlist);
+	build_joinrel_tlist(root, joinrel, outer_rel->reltarget->exprs);
+	build_joinrel_tlist(root, joinrel, inner_rel->reltarget->exprs);
 	add_placeholders_to_joinrel(root, joinrel);
-=======
-	build_joinrel_tlist(root, joinrel, outer_rel);
-	build_joinrel_tlist(root, joinrel, inner_rel);
-	add_placeholders_to_joinrel(root, joinrel, outer_rel, inner_rel);
 
 	/*
 	 * add_placeholders_to_joinrel also took care of adding the ph_lateral
@@ -548,7 +518,6 @@ build_join_rel(PlannerInfo *root,
 		bms_del_members(joinrel->direct_lateral_relids, joinrel->relids);
 	if (bms_is_empty(joinrel->direct_lateral_relids))
 		joinrel->direct_lateral_relids = NULL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* cap width of output row by sum of its inputs */
 	joinrel->width = Min(joinrel->width, outer_rel->width + inner_rel->width);
@@ -690,11 +659,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 	Relids		relids = joinrel->relids;
 	ListCell   *vars;
 
-<<<<<<< HEAD
 	foreach(vars, input_tlist)
-=======
-	foreach(vars, input_rel->reltarget->exprs)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		Var		   *var = (Var *) lfirst(vars);
 		RelOptInfo *baserel;
@@ -723,8 +688,8 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 
 		    if (bms_nonempty_difference(rci->where_needed, relids))
 		    {
-			    joinrel->reltargetlist = lappend(joinrel->reltargetlist, var);
-			    joinrel->width += rci->attr_width;
+			    joinrel->reltarget->exprs = lappend(joinrel->reltarget->exprs, var);
+			    joinrel->reltarget->width += rci->attr_width;
 		    }
             continue;
         }

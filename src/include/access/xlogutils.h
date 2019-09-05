@@ -47,18 +47,16 @@ extern Buffer XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
 extern Relation CreateFakeRelcacheEntry(RelFileNode rnode);
 extern void FreeFakeRelcacheEntry(Relation fakerel);
 
-<<<<<<< HEAD
+extern int read_local_xlog_page(XLogReaderState *state,
+					 XLogRecPtr targetPagePtr, int reqLen,
+					 XLogRecPtr targetRecPtr, char *cur_page,
+					 TimeLineID *pageTLI);
+
 extern void XLogAOSegmentFile(RelFileNode rnode, uint32 segmentFileNum);
 extern int read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
 	int reqLen, XLogRecPtr targetRecPtr, char *cur_page, TimeLineID *pageTLI);
 
 extern void XLogReadDetermineTimeline(XLogReaderState *state,
 					XLogRecPtr wantPage, uint32 wantLength);
-=======
-extern int read_local_xlog_page(XLogReaderState *state,
-					 XLogRecPtr targetPagePtr, int reqLen,
-					 XLogRecPtr targetRecPtr, char *cur_page,
-					 TimeLineID *pageTLI);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #endif

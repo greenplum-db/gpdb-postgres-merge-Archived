@@ -3,13 +3,9 @@
  * clauses.c
  *	  routines to manipulate qualification clauses
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -479,24 +475,17 @@ contain_agg_clause_walker(Node *node, void *context)
 		Assert(((Aggref *) node)->agglevelsup == 0);
 		return true;			/* abort the tree traversal and return true */
 	}
-<<<<<<< HEAD
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	if (IsA(node, GroupingFunc))
 	{
 		Assert(((GroupingFunc *) node)->agglevelsup == 0);
 		return true;			/* abort the tree traversal and return true */
 	}
-<<<<<<< HEAD
 	if (IsA(node, GroupId))
 	{
 		Assert(((GroupId *) node)->agglevelsup == 0);
 		return true;			/* abort the tree traversal and return true */
 	}
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	Assert(!IsA(node, SubLink));
 	return expression_tree_walker(node, contain_agg_clause_walker, context);
 }
@@ -615,7 +604,6 @@ get_agg_clause_costs_walker(Node *node, get_agg_clause_costs_context *context)
 		}
 
 		/*
-<<<<<<< HEAD
 		 * The PostgreSQL 'numOrderedAggs' field includes DISTINCT aggregates,
 		 * too, but cdbgroup.c handles DISTINCT aggregates differently, and
 		 * needs to know if there are any purely ordered aggs, not counting
@@ -638,28 +626,6 @@ get_agg_clause_costs_walker(Node *node, get_agg_clause_costs_context *context)
 		}
 
 		/*
-		 * If there is no combine function, then partial aggregation is
-		 * not possible. (Note: This is slightly different from the hasNonPartial
-		 * flag in upstream: hasNonPartial is set to 'false', also when there are
-		 * any distinct aggregates, but hasNonCombine is strictly about whether
-		 * every aggregate has a combine function.
-		 */
-		if (!OidIsValid(aggcombinefn))
-			costs->hasNonCombine = true; /* Nope! */
-
-		/*
-		 * If we have any aggs with transtype INTERNAL then we must check
-		 * whether they have serialization/deserialization functions; if
-		 * not, we can't serialize partial-aggregation results.
-		 */
-		if (aggtranstype == INTERNALOID &&
-				 (!OidIsValid(aggserialfn) || !OidIsValid(aggdeserialfn)))
-			costs->hasNonSerial = true;
-
-		/* add component function execution costs to appropriate totals */
-		costs->transCost.per_tuple += get_func_cost(aggtransfn) * cpu_operator_cost;
-		if (OidIsValid(aggfinalfn))
-=======
 		 * Check whether partial aggregation is feasible, unless we already
 		 * found out that we can't do it.
 		 */
@@ -683,6 +649,20 @@ get_agg_clause_costs_walker(Node *node, get_agg_clause_costs_context *context)
 		}
 
 		/*
+		 * If there is no combine function, then partial aggregation is
+		 * not possible. (Note: This is slightly different from the hasNonPartial
+		 * flag in upstream: hasNonPartial is set to 'false', also when there are
+		 * any distinct aggregates, but hasNonCombine is strictly about whether
+		 * every aggregate has a combine function.
+		 */
+		if (!OidIsValid(aggcombinefn))
+			costs->hasNonCombine = true; /* Nope! */
+
+		/* add component function execution costs to appropriate totals */
+		costs->transCost.per_tuple += get_func_cost(aggtransfn) * cpu_operator_cost;
+		if (OidIsValid(aggfinalfn))
+
+		/*
 		 * Add the appropriate component function execution costs to
 		 * appropriate totals.
 		 */
@@ -701,7 +681,6 @@ get_agg_clause_costs_walker(Node *node, get_agg_clause_costs_context *context)
 			costs->finalCost += get_func_cost(aggserialfn) * cpu_operator_cost;
 		if (!DO_AGGSPLIT_SKIPFINAL(context->aggsplit) &&
 			OidIsValid(aggfinalfn))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			costs->finalCost += get_func_cost(aggfinalfn) * cpu_operator_cost;
 
 		/*
@@ -1078,7 +1057,6 @@ contain_mutable_functions_walker(Node *node, void *context)
 {
 	if (node == NULL)
 		return false;
-<<<<<<< HEAD
 
     /* the functions in predtest.c handle expressions and
      * RestrictInfo objects -- so make this function handle
@@ -1089,92 +1067,6 @@ contain_mutable_functions_walker(Node *node, void *context)
         return contain_mutable_functions_walker((Node*)info->clause, context);
     }
 
-	if (IsA(node, FuncExpr))
-	{
-		FuncExpr   *expr = (FuncExpr *) node;
-
-		if (func_volatile(expr->funcid) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, OpExpr))
-	{
-		OpExpr	   *expr = (OpExpr *) node;
-
-		set_opfuncid(expr);
-		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, DistinctExpr))
-	{
-		DistinctExpr *expr = (DistinctExpr *) node;
-
-		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
-		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, NullIfExpr))
-	{
-		NullIfExpr *expr = (NullIfExpr *) node;
-
-		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
-		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, ScalarArrayOpExpr))
-	{
-		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
-
-		set_sa_opfuncid(expr);
-		if (func_volatile(expr->opfuncid) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, CoerceViaIO))
-	{
-		CoerceViaIO *expr = (CoerceViaIO *) node;
-		Oid			iofunc;
-		Oid			typioparam;
-		bool		typisvarlena;
-
-		/* check the result type's input function */
-		getTypeInputInfo(expr->resulttype,
-						 &iofunc, &typioparam);
-		if (func_volatile(iofunc) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* check the input type's output function */
-		getTypeOutputInfo(exprType((Node *) expr->arg),
-						  &iofunc, &typisvarlena);
-		if (func_volatile(iofunc) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, ArrayCoerceExpr))
-	{
-		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
-
-		if (OidIsValid(expr->elemfuncid) &&
-			func_volatile(expr->elemfuncid) != PROVOLATILE_IMMUTABLE)
-			return true;
-		/* else fall through to check args */
-	}
-	else if (IsA(node, RowCompareExpr))
-	{
-		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
-		ListCell   *opid;
-
-		foreach(opid, rcexpr->opnos)
-		{
-			if (op_volatile(lfirst_oid(opid)) != PROVOLATILE_IMMUTABLE)
-				return true;
-		}
-		/* else fall through to check args */
-	}
-	else if (IsA(node, Query))
-=======
 	/* Check for mutable functions in node itself */
 	if (check_functions_in_node(node, contain_mutable_functions_checker,
 								context))
@@ -1192,7 +1084,6 @@ contain_mutable_functions_walker(Node *node, void *context)
 
 	/* Recurse to check arguments */
 	if (IsA(node, Query))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		/* Recurse into subselects */
 		return query_tree_walker((Query *) node,

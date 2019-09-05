@@ -655,7 +655,6 @@ grouping_is_hashable(List *groupClause)
 	return true;
 }
 
-<<<<<<< HEAD
 /*
  * Return the largest sortgroupref value in use in the given
  * target list.
@@ -753,7 +752,7 @@ int get_row_width(List *tlist)
 	}
 
     return width;
-=======
+}
 
 /*****************************************************************************
  *		PathTarget manipulation functions
@@ -985,5 +984,4 @@ apply_pathtarget_labeling_to_tlist(List *tlist, PathTarget *target)
 		}
 		i++;
 	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }

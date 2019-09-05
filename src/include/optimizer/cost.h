@@ -119,7 +119,7 @@ extern void cost_subqueryscan(SubqueryScanPath *path, PlannerInfo *root,
 extern void cost_functionscan(Path *path, PlannerInfo *root,
 				  RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_tablefunction(Path *path, PlannerInfo *root,
-				  RelOptInfo *baserel, ParamPathInfo *param_info);
+				   RelOptInfo *baserel, ParamPathInfo *param_info, Plan *subplan);
 extern void cost_valuesscan(Path *path, PlannerInfo *root,
 				RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_ctescan(Path *path, PlannerInfo *root,

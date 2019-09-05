@@ -4560,3 +4560,24 @@ TestForOldSnapshot_impl(Snapshot snapshot, Relation relation)
 				(errcode(ERRCODE_SNAPSHOT_TOO_OLD),
 				 errmsg("snapshot too old")));
 }
+
+/* This is used by PageGetLSN(). */
+#ifdef USE_ASSERT_CHECKING
+bool
+BufferLockHeldByMe(Page page)
+{
+	char	   *pagePtr = page;
+
+	/*
+	 * We only want to assert that we hold a lock on the page contents if the
+	 * page is shared (i.e. it is one of the BufferBlocks).
+	 */
+	if (BufferBlocks <= pagePtr &&
+		pagePtr < (BufferBlocks + NBuffers * BLCKSZ))
+	{
+		BufferDesc *hdr = GetBufferDescriptor((pagePtr - BufferBlocks) / BLCKSZ);
+		return LWLockHeldByMe(hdr->content_lock);
+	}
+
+}
+#endif
