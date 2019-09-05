@@ -3,13 +3,9 @@
  * readfuncs.c
  *	  Reader functions for Postgres tree nodes.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -17,9 +13,10 @@
  *	  src/backend/nodes/readfuncs.c
  *
  * NOTES
-<<<<<<< HEAD
- *	  Path and Plan nodes do not need to have any readfuncs support, because we
- *	  never have occasion to read them in.  We never read executor state trees, either.
+ *	  Path nodes do not have any readfuncs support, because we never
+ *	  have occasion to read them in.  (There was once code here that
+ *	  claimed to read them, but it was broken as well as unused.)  We
+ *	  never read executor state trees, either.
  *
  *    But due to the use of this routine in older version of CDB/MPP/GPDB,
  *    there are routines that do read those types of nodes (unlike PostgreSQL)
@@ -29,12 +26,6 @@
  *
  *    The purpose of these routines is to read serialized trees that were stored
  *    in the catalog, and reconstruct the trees.
-=======
- *	  Path nodes do not have any readfuncs support, because we never
- *	  have occasion to read them in.  (There was once code here that
- *	  claimed to read them, but it was broken as well as unused.)  We
- *	  never read executor state trees, either.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  *
  *	  Parse location fields are written out by outfuncs.c, but only for
  *	  possible debugging use.  When reading a location field, we discard
@@ -354,12 +345,9 @@ inline static char extended_char(char* token, size_t length)
 
 #endif /* COMPILING_BINARY_FUNCS */
 
-<<<<<<< HEAD
 static Datum readDatum(bool typbyval);
 
 #ifndef COMPILING_BINARY_FUNCS
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 /*
  * _readBitmapset
  */
@@ -1470,11 +1458,13 @@ _readAggref(void)
 	READ_BOOL_FIELD(aggvariadic);
 	READ_CHAR_FIELD(aggkind);
 	READ_UINT_FIELD(agglevelsup);
-<<<<<<< HEAD
+	/*
+	 * GPDB_96_MERGE_FIXME: aggstage and aggsplit is same thing almost
+	 * we do not need both.
+	 */
 	READ_ENUM_FIELD(aggstage, AggStage);
-=======
 	READ_ENUM_FIELD(aggsplit, AggSplit);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -2375,12 +2365,12 @@ _readRangeTblFunction(void)
 }
 
 /*
-<<<<<<< HEAD
  * Greenplum Database additions for serialization support
  * These are currently not used (see outfastc ad readfast.c)
  */
 #include "nodes/plannodes.h"
-=======
+
+/*
  * _readTableSampleClause
  */
 static TableSampleClause *
@@ -4098,7 +4088,96 @@ parseNodeString(void)
 		return_value = _readDefElem();
 	else if (MATCH("DECLARECURSOR", 13))
 		return_value = _readDeclareCursorStmt();
-<<<<<<< HEAD
+	else if (MATCH("PLANNEDSTMT", 11))
+		return_value = _readPlannedStmt();
+	else if (MATCH("PLAN", 4))
+		return_value = _readPlan();
+	else if (MATCH("RESULT", 6))
+		return_value = _readResult();
+	else if (MATCH("MODIFYTABLE", 11))
+		return_value = _readModifyTable();
+	else if (MATCH("APPEND", 6))
+		return_value = _readAppend();
+	else if (MATCH("MERGEAPPEND", 11))
+		return_value = _readMergeAppend();
+	else if (MATCH("RECURSIVEUNION", 14))
+		return_value = _readRecursiveUnion();
+	else if (MATCH("BITMAPAND", 9))
+		return_value = _readBitmapAnd();
+	else if (MATCH("BITMAPOR", 8))
+		return_value = _readBitmapOr();
+	else if (MATCH("SCAN", 4))
+		return_value = _readScan();
+	else if (MATCH("SEQSCAN", 7))
+		return_value = _readSeqScan();
+	else if (MATCH("SAMPLESCAN", 10))
+		return_value = _readSampleScan();
+	else if (MATCH("INDEXSCAN", 9))
+		return_value = _readIndexScan();
+	else if (MATCH("INDEXONLYSCAN", 13))
+		return_value = _readIndexOnlyScan();
+	else if (MATCH("BITMAPINDEXSCAN", 15))
+		return_value = _readBitmapIndexScan();
+	else if (MATCH("BITMAPHEAPSCAN", 14))
+		return_value = _readBitmapHeapScan();
+	else if (MATCH("TIDSCAN", 7))
+		return_value = _readTidScan();
+	else if (MATCH("SUBQUERYSCAN", 12))
+		return_value = _readSubqueryScan();
+	else if (MATCH("FUNCTIONSCAN", 12))
+		return_value = _readFunctionScan();
+	else if (MATCH("VALUESSCAN", 10))
+		return_value = _readValuesScan();
+	else if (MATCH("CTESCAN", 7))
+		return_value = _readCteScan();
+	else if (MATCH("WORKTABLESCAN", 13))
+		return_value = _readWorkTableScan();
+	else if (MATCH("FOREIGNSCAN", 11))
+		return_value = _readForeignScan();
+	else if (MATCH("CUSTOMSCAN", 10))
+		return_value = _readCustomScan();
+	else if (MATCH("JOIN", 4))
+		return_value = _readJoin();
+	else if (MATCH("NESTLOOP", 8))
+		return_value = _readNestLoop();
+	else if (MATCH("MERGEJOIN", 9))
+		return_value = _readMergeJoin();
+	else if (MATCH("HASHJOIN", 8))
+		return_value = _readHashJoin();
+	else if (MATCH("MATERIAL", 8))
+		return_value = _readMaterial();
+	else if (MATCH("SORT", 4))
+		return_value = _readSort();
+	else if (MATCH("GROUP", 5))
+		return_value = _readGroup();
+	else if (MATCH("AGG", 3))
+		return_value = _readAgg();
+	else if (MATCH("WINDOWAGG", 9))
+		return_value = _readWindowAgg();
+	else if (MATCH("UNIQUE", 6))
+		return_value = _readUnique();
+	else if (MATCH("GATHER", 6))
+		return_value = _readGather();
+	else if (MATCH("HASH", 4))
+		return_value = _readHash();
+	else if (MATCH("SETOP", 5))
+		return_value = _readSetOp();
+	else if (MATCH("LOCKROWS", 8))
+		return_value = _readLockRows();
+	else if (MATCH("LIMIT", 5))
+		return_value = _readLimit();
+	else if (MATCH("NESTLOOPPARAM", 13))
+		return_value = _readNestLoopParam();
+	else if (MATCH("PLANROWMARK", 11))
+		return_value = _readPlanRowMark();
+	else if (MATCH("PLANINVALITEM", 13))
+		return_value = _readPlanInvalItem();
+	else if (MATCH("SUBPLAN", 7))
+		return_value = _readSubPlan();
+	else if (MATCH("ALTERNATIVESUBPLAN", 18))
+		return_value = _readAlternativeSubPlan();
+	else if (MATCH("EXTENSIBLENODE", 14))
+		return_value = _readExtensibleNode();
 
 	/* GPDB additions */
 	else if (MATCHX("A_ARRAYEXPR"))
@@ -4267,98 +4346,6 @@ parseNodeString(void)
 		return_value = _readViewStmt();
 	else if (MATCHX("WITHCLAUSE"))
 		return_value = _readWithClause();
-=======
-	else if (MATCH("PLANNEDSTMT", 11))
-		return_value = _readPlannedStmt();
-	else if (MATCH("PLAN", 4))
-		return_value = _readPlan();
-	else if (MATCH("RESULT", 6))
-		return_value = _readResult();
-	else if (MATCH("MODIFYTABLE", 11))
-		return_value = _readModifyTable();
-	else if (MATCH("APPEND", 6))
-		return_value = _readAppend();
-	else if (MATCH("MERGEAPPEND", 11))
-		return_value = _readMergeAppend();
-	else if (MATCH("RECURSIVEUNION", 14))
-		return_value = _readRecursiveUnion();
-	else if (MATCH("BITMAPAND", 9))
-		return_value = _readBitmapAnd();
-	else if (MATCH("BITMAPOR", 8))
-		return_value = _readBitmapOr();
-	else if (MATCH("SCAN", 4))
-		return_value = _readScan();
-	else if (MATCH("SEQSCAN", 7))
-		return_value = _readSeqScan();
-	else if (MATCH("SAMPLESCAN", 10))
-		return_value = _readSampleScan();
-	else if (MATCH("INDEXSCAN", 9))
-		return_value = _readIndexScan();
-	else if (MATCH("INDEXONLYSCAN", 13))
-		return_value = _readIndexOnlyScan();
-	else if (MATCH("BITMAPINDEXSCAN", 15))
-		return_value = _readBitmapIndexScan();
-	else if (MATCH("BITMAPHEAPSCAN", 14))
-		return_value = _readBitmapHeapScan();
-	else if (MATCH("TIDSCAN", 7))
-		return_value = _readTidScan();
-	else if (MATCH("SUBQUERYSCAN", 12))
-		return_value = _readSubqueryScan();
-	else if (MATCH("FUNCTIONSCAN", 12))
-		return_value = _readFunctionScan();
-	else if (MATCH("VALUESSCAN", 10))
-		return_value = _readValuesScan();
-	else if (MATCH("CTESCAN", 7))
-		return_value = _readCteScan();
-	else if (MATCH("WORKTABLESCAN", 13))
-		return_value = _readWorkTableScan();
-	else if (MATCH("FOREIGNSCAN", 11))
-		return_value = _readForeignScan();
-	else if (MATCH("CUSTOMSCAN", 10))
-		return_value = _readCustomScan();
-	else if (MATCH("JOIN", 4))
-		return_value = _readJoin();
-	else if (MATCH("NESTLOOP", 8))
-		return_value = _readNestLoop();
-	else if (MATCH("MERGEJOIN", 9))
-		return_value = _readMergeJoin();
-	else if (MATCH("HASHJOIN", 8))
-		return_value = _readHashJoin();
-	else if (MATCH("MATERIAL", 8))
-		return_value = _readMaterial();
-	else if (MATCH("SORT", 4))
-		return_value = _readSort();
-	else if (MATCH("GROUP", 5))
-		return_value = _readGroup();
-	else if (MATCH("AGG", 3))
-		return_value = _readAgg();
-	else if (MATCH("WINDOWAGG", 9))
-		return_value = _readWindowAgg();
-	else if (MATCH("UNIQUE", 6))
-		return_value = _readUnique();
-	else if (MATCH("GATHER", 6))
-		return_value = _readGather();
-	else if (MATCH("HASH", 4))
-		return_value = _readHash();
-	else if (MATCH("SETOP", 5))
-		return_value = _readSetOp();
-	else if (MATCH("LOCKROWS", 8))
-		return_value = _readLockRows();
-	else if (MATCH("LIMIT", 5))
-		return_value = _readLimit();
-	else if (MATCH("NESTLOOPPARAM", 13))
-		return_value = _readNestLoopParam();
-	else if (MATCH("PLANROWMARK", 11))
-		return_value = _readPlanRowMark();
-	else if (MATCH("PLANINVALITEM", 13))
-		return_value = _readPlanInvalItem();
-	else if (MATCH("SUBPLAN", 7))
-		return_value = _readSubPlan();
-	else if (MATCH("ALTERNATIVESUBPLAN", 18))
-		return_value = _readAlternativeSubPlan();
-	else if (MATCH("EXTENSIBLENODE", 14))
-		return_value = _readExtensibleNode();
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	else
 	{
         ereport(ERROR,
@@ -4434,9 +4421,6 @@ readDatum(bool typbyval)
 
 	return res;
 }
-<<<<<<< HEAD
-#endif /* COMPILING_BINARY_FUNCS */
-=======
 
 /*
  * readAttrNumberCols
@@ -4533,4 +4517,4 @@ readBoolCols(int numCols)
 
 	return bool_vals;
 }
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+#endif /* COMPILING_BINARY_FUNCS */
