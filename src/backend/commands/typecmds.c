@@ -3493,15 +3493,9 @@ AlterTypeOwner_oid(Oid typeOid, Oid newOwnerId, bool hasDependEntry)
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/*
-<<<<<<< HEAD
-	 * If it's a composite type, invoke ATExecChangeOwner so that we fix up the
-	 * pg_class entry properly.  That will call back to AlterTypeOwnerInternal
-	 * to take care of the pg_type entry(s).
-=======
 	 * If it's a composite type, invoke ATExecChangeOwner so that we fix up
 	 * the pg_class entry properly.  That will call back to
 	 * AlterTypeOwnerInternal to take care of the pg_type entry(s).
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 */
 	if (typTup->typtype == TYPTYPE_COMPOSITE)
 		ATExecChangeOwner(typTup->typrelid, newOwnerId, true, AccessExclusiveLock);
