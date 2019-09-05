@@ -240,9 +240,7 @@ ReorderBufferAllocate(void)
 	/* allocate memory in own context, to have better accountability */
 	new_ctx = AllocSetContextCreate(CurrentMemoryContext,
 									"ReorderBuffer",
-									ALLOCSET_DEFAULT_MINSIZE,
-									ALLOCSET_DEFAULT_INITSIZE,
-									ALLOCSET_DEFAULT_MAXSIZE);
+									ALLOCSET_DEFAULT_SIZES);
 
 	buffer =
 		(ReorderBuffer *) MemoryContextAlloc(new_ctx, sizeof(ReorderBuffer));
@@ -485,13 +483,8 @@ ReorderBufferGetTupleBuf(ReorderBuffer *rb, Size tuple_len)
 	/*
 	 * Most tuples are below MaxHeapTupleSize, so we use a slab allocator for
 	 * those. Thus always allocate at least MaxHeapTupleSize. Note that tuples
-<<<<<<< HEAD
-	 * tuples generated for oldtuples can be bigger, as they don't have
-	 * out-of-line toast columns.
-=======
 	 * generated for oldtuples can be bigger, as they don't have out-of-line
 	 * toast columns.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 */
 	if (alloc_len < MaxHeapTupleSize)
 		alloc_len = MaxHeapTupleSize;
@@ -660,15 +653,6 @@ ReorderBufferQueueChange(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn,
 }
 
 /*
-<<<<<<< HEAD
- * AssertTXNLsnOrder
- *		Verify LSN ordering of transaction lists in the reorderbuffer
- *
- * Other LSN-related invariants are checked too.
- *
- * No-op if assertions are not in use.
- */
-=======
  * Queue message into a transaction so it can be processed upon commit.
  */
 void
@@ -722,8 +706,14 @@ ReorderBufferQueueMessage(ReorderBuffer *rb, TransactionId xid,
 	}
 }
 
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+/*
+ * AssertTXNLsnOrder
+ *		Verify LSN ordering of transaction lists in the reorderbuffer
+ *
+ * Other LSN-related invariants are checked too.
+ *
+ * No-op if assertions are not in use.
+ */
 static void
 AssertTXNLsnOrder(ReorderBuffer *rb)
 {
@@ -971,30 +961,6 @@ ReorderBufferCommitChild(ReorderBuffer *rb, TransactionId xid,
 	if (!subtxn)
 		return;
 
-<<<<<<< HEAD
-=======
-	txn = ReorderBufferTXNByXid(rb, xid, false, NULL, commit_lsn, true);
-
-	if (txn == NULL)
-		elog(ERROR, "subxact logged without previous toplevel record");
-
-	/*
-	 * Pass our base snapshot to the parent transaction if it doesn't have
-	 * one, or ours is older. That can happen if there are no changes in the
-	 * toplevel transaction but in one of the child transactions. This allows
-	 * the parent to simply use its base snapshot initially.
-	 */
-	if (subtxn->base_snapshot != NULL &&
-		(txn->base_snapshot == NULL ||
-		 txn->base_snapshot_lsn > subtxn->base_snapshot_lsn))
-	{
-		txn->base_snapshot = subtxn->base_snapshot;
-		txn->base_snapshot_lsn = subtxn->base_snapshot_lsn;
-		subtxn->base_snapshot = NULL;
-		subtxn->base_snapshot_lsn = InvalidXLogRecPtr;
-	}
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	subtxn->final_lsn = commit_lsn;
 	subtxn->end_lsn = end_lsn;
 
@@ -1131,14 +1097,10 @@ ReorderBufferIterTXNInit(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		{
 			ReorderBufferChange *cur_change;
 
-<<<<<<< HEAD
 			if (cur_txn->serialized)
 			{
 				/* serialize remaining changes */
 				ReorderBufferSerializeTXN(rb, cur_txn);
-=======
-			if (cur_txn->nentries != cur_txn->nentries_mem)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				ReorderBufferRestoreChanges(rb, cur_txn,
 											&state->entries[off].fd,
 											&state->entries[off].segno);
@@ -1425,15 +1387,19 @@ ReorderBufferBuildTupleCidHash(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		}
 		else
 		{
+			/*
+			 * Maybe we already saw this tuple before in this transaction,
+			 * but if so it must have the same cmin.
+			 */
 			Assert(ent->cmin == change->data.tuplecid.cmin);
-			Assert(ent->cmax == InvalidCommandId ||
-				   ent->cmax == change->data.tuplecid.cmax);
 
 			/*
-			 * if the tuple got valid in this transaction and now got deleted
-			 * we already have a valid cmin stored. The cmax will be
-			 * InvalidCommandId though.
+			 * cmax may be initially invalid, but once set it can only grow,
+			 * and never become invalid again.
 			 */
+			Assert((ent->cmax == InvalidCommandId) ||
+				   ((change->data.tuplecid.cmax != InvalidCommandId) &&
+					(change->data.tuplecid.cmax > ent->cmax)));
 			ent->cmax = change->data.tuplecid.cmax;
 		}
 	}
@@ -1610,6 +1576,8 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 					 * use as a normal record. It'll be cleaned up at the end
 					 * of INSERT processing.
 					 */
+					if (specinsert == NULL)
+						elog(ERROR, "invalid ordering of speculative insertion changes");
 					Assert(specinsert->data.tp.oldtuple == NULL);
 					change = specinsert;
 					change->action = REORDER_BUFFER_CHANGE_INSERT;
@@ -1689,6 +1657,8 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 						 * freed/reused while restoring spooled data from
 						 * disk.
 						 */
+						Assert(change->data.tp.newtuple != NULL);
+
 						dlist_delete(&change->node);
 						ReorderBufferToastAppendChunk(rb, txn, relation,
 													  change);
@@ -2019,20 +1989,6 @@ ReorderBufferForget(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn)
 }
 
 /*
-<<<<<<< HEAD
- * Tell reorderbuffer about an xid seen in the WAL stream. Has to be called at
- * least once for every xid in XLogRecord->xl_xid (other places in records
- * may, but do not have to be passed through here).
- *
- * Reorderbuffer keeps some datastructures about transactions in LSN order,
- * for efficiency. To do that it has to know about when transactions are seen
- * first in the WAL. As many types of records are not actually interesting for
- * logical decoding, they do not necessarily pass though here.
- */
-void
-ReorderBufferProcessXid(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn)
-{
-=======
  * Execute invalidations happening outside the context of a decoded
  * transaction. That currently happens either for xid-less commits
  * (c.f. RecordTransactionCommit()) or for invalidations in uninteresting
@@ -2077,7 +2033,6 @@ ReorderBufferImmediateInvalidation(ReorderBuffer *rb, uint32 ninvalidations,
 void
 ReorderBufferProcessXid(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn)
 {
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/* many records won't have an xid assigned, centralize check here */
 	if (xid != InvalidTransactionId)
 		ReorderBufferTXNByXid(rb, xid, true, NULL, lsn, true);
@@ -2474,6 +2429,9 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 				data = ((char *) rb->outbuf) + sizeof(ReorderBufferDiskChange);
 
+				/* might have been reallocated above */
+				ondisk = (ReorderBufferDiskChange *) rb->outbuf;
+
 				/* write the prefix including the size */
 				memcpy(data, &prefix_size, sizeof(Size));
 				data += sizeof(Size);
@@ -2538,7 +2496,7 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	errno = 0;
 	if (write(fd, rb->outbuf, ondisk->size) != ondisk->size)
 	{
-		int save_errno = errno;
+		int			save_errno = errno;
 
 		CloseTransientFile(fd);
 
@@ -2768,7 +2726,7 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 				Assert(change->data.msg.prefix[prefix_size - 1] == '\0');
 				data += prefix_size;
 
-				/* read the messsage */
+				/* read the message */
 				memcpy(&change->data.msg.message_size, data, sizeof(Size));
 				data += sizeof(Size);
 				change->data.msg.message = MemoryContextAlloc(rb->context,

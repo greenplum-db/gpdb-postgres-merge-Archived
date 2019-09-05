@@ -302,15 +302,6 @@ CreateInitDecodingContext(char *plugin,
 
 	LWLockRelease(ProcArrayLock);
 
-<<<<<<< HEAD
-=======
-	/*
-	 * tell the snapshot builder to only assemble snapshot once reaching the
-	 * running_xact's record with the respective xmin.
-	 */
-	xmin_horizon = slot->data.catalog_xmin;
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	ReplicationSlotMarkDirty();
 	ReplicationSlotSave();
 

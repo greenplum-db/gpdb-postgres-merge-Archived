@@ -631,14 +631,8 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 			HeapTuple	res = (HeapTuple) DatumGetPointer(foundres);
 
 			if (isCommit)
-<<<<<<< HEAD
-				PrintCatCacheLeakWarning(owner->catrefs[owner->ncatrefs - 1],
-                                         owner->name);
-			ReleaseCatCache(owner->catrefs[owner->ncatrefs - 1]);
-=======
-				PrintCatCacheLeakWarning(res);
+				PrintCatCacheLeakWarning(res, owner->name);
 			ReleaseCatCache(res);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 
 		/* Ditto for catcache lists */
@@ -647,14 +641,8 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 			CatCList   *res = (CatCList *) DatumGetPointer(foundres);
 
 			if (isCommit)
-<<<<<<< HEAD
-				PrintCatCacheListLeakWarning(owner->catlistrefs[owner->ncatlistrefs - 1],
-                                             owner->name);
-			ReleaseCatCacheList(owner->catlistrefs[owner->ncatlistrefs - 1]);
-=======
-				PrintCatCacheListLeakWarning(res);
+				PrintCatCacheListLeakWarning(res, owner->name);
 			ReleaseCatCacheList(res);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 
 		/* Ditto for plancache references */

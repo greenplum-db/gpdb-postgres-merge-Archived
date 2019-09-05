@@ -324,9 +324,7 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 	/* allocate memory in own context, to have better accountability */
 	context = AllocSetContextCreate(CurrentMemoryContext,
 									"snapshot builder context",
-									ALLOCSET_DEFAULT_MINSIZE,
-									ALLOCSET_DEFAULT_INITSIZE,
-									ALLOCSET_DEFAULT_MAXSIZE);
+									ALLOCSET_DEFAULT_SIZES);
 	oldcontext = MemoryContextSwitchTo(context);
 
 	builder = palloc0(sizeof(SnapBuild));
@@ -635,6 +633,8 @@ SnapBuildExportSnapshot(SnapBuild *builder)
 		TransactionIdAdvance(xid);
 	}
 
+	/* adjust remaining snapshot fields as needed */
+	snap->satisfies = HeapTupleSatisfiesMVCC;
 	snap->xcnt = newxcnt;
 	snap->xip = newxip;
 
@@ -664,7 +664,7 @@ SnapBuildGetOrBuildSnapshot(SnapBuild *builder, TransactionId xid)
 	if (builder->snapshot == NULL)
 	{
 		builder->snapshot = SnapBuildBuildSnapshot(builder, xid);
-		/* inrease refcount for the snapshot builder */
+		/* increase refcount for the snapshot builder */
 		SnapBuildSnapIncRefcount(builder->snapshot);
 	}
 
@@ -905,66 +905,6 @@ SnapBuildPurgeCommittedTxn(SnapBuild *builder)
 }
 
 /*
-<<<<<<< HEAD
-=======
- * Common logic for SnapBuildAbortTxn and SnapBuildCommitTxn dealing with
- * keeping track of the amount of running transactions.
- */
-static void
-SnapBuildEndTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid)
-{
-	if (builder->state == SNAPBUILD_CONSISTENT)
-		return;
-
-	/*
-	 * NB: This handles subtransactions correctly even if we started from
-	 * suboverflowed xl_running_xacts because we only keep track of toplevel
-	 * transactions. Since the latter are always allocated before their
-	 * subxids and since they end at the same time it's sufficient to deal
-	 * with them here.
-	 */
-	if (SnapBuildTxnIsRunning(builder, xid))
-	{
-		Assert(builder->running.xcnt > 0);
-
-		if (!--builder->running.xcnt)
-		{
-			/*
-			 * None of the originally running transaction is running anymore,
-			 * so our incrementaly built snapshot now is consistent.
-			 */
-			ereport(LOG,
-				  (errmsg("logical decoding found consistent point at %X/%X",
-						  (uint32) (lsn >> 32), (uint32) lsn),
-				   errdetail("Transaction ID %u finished; no more running transactions.",
-							 xid)));
-			builder->state = SNAPBUILD_CONSISTENT;
-		}
-	}
-}
-
-/*
- * Abort a transaction, throw away all state we kept.
- */
-void
-SnapBuildAbortTxn(SnapBuild *builder, XLogRecPtr lsn,
-				  TransactionId xid,
-				  int nsubxacts, TransactionId *subxacts)
-{
-	int			i;
-
-	for (i = 0; i < nsubxacts; i++)
-	{
-		TransactionId subxid = subxacts[i];
-
-		SnapBuildEndTxn(builder, lsn, subxid);
-	}
-
-	SnapBuildEndTxn(builder, lsn, xid);
-}
-
-/*
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Handle everything that needs to be done when a transaction commits
  */
 void
@@ -1003,15 +943,10 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 		 * If building an exportable snapshot, force xid to be tracked, even
 		 * if the transaction didn't modify the catalog.
 		 */
-<<<<<<< HEAD
 		if (builder->building_full_snapshot)
 		{
 			needs_timetravel = true;
 		}
-=======
-		forced_timetravel = true;
-		elog(DEBUG1, "forced to assume catalog changes for xid %u because it was running too early", xid);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	for (nxact = 0; nxact < nsubxacts; nxact++)
@@ -1567,7 +1502,8 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 
 	if (ret != 0 && errno != ENOENT)
 		ereport(ERROR,
-				(errmsg("could not stat file \"%s\": %m", path)));
+				(errcode_for_file_access(),
+				 errmsg("could not stat file \"%s\": %m", path)));
 
 	else if (ret == 0)
 	{
@@ -1609,7 +1545,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	if (unlink(tmppath) != 0 && errno != ENOENT)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not remove file \"%s\": %m", path)));
+				 errmsg("could not remove file \"%s\": %m", tmppath)));
 
 	needed_length = sizeof(SnapBuildOnDisk) +
 		sizeof(TransactionId) * builder->committed.xcnt;
@@ -1653,7 +1589,8 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 						   S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		ereport(ERROR,
-				(errmsg("could not open file \"%s\": %m", path)));
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\": %m", tmppath)));
 
 	errno = 0;
 	if ((write(fd, ondisk, needed_length)) != needed_length)
@@ -1672,6 +1609,9 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	/*
 	 * fsync the file before renaming so that even if we crash after this we
 	 * have either a fully valid file or nothing.
+	 *
+	 * It's safe to just ERROR on fsync() here because we'll retry the whole
+	 * operation including the writes.
 	 *
 	 * TODO: Do the fsync() via checkpoints/restartpoints, doing it here has
 	 * some noticeable overhead since it's performed synchronously during
@@ -1776,12 +1716,14 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 
 	if (ondisk.magic != SNAPBUILD_MAGIC)
 		ereport(ERROR,
-				(errmsg("snapbuild state file \"%s\" has wrong magic number: %u instead of %u",
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("snapbuild state file \"%s\" has wrong magic number: %u instead of %u",
 						path, ondisk.magic, SNAPBUILD_MAGIC)));
 
 	if (ondisk.version != SNAPBUILD_VERSION)
 		ereport(ERROR,
-				(errmsg("snapbuild state file \"%s\" has unsupported version: %u instead of %u",
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("snapbuild state file \"%s\" has unsupported version: %u instead of %u",
 						path, ondisk.version, SNAPBUILD_VERSION)));
 
 	INIT_CRC32C(checksum);
@@ -1846,7 +1788,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	/* verify checksum of what we've read */
 	if (!EQ_CRC32C(checksum, ondisk.checksum))
 		ereport(ERROR,
-				(errcode_for_file_access(),
+				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("checksum mismatch for snapbuild state file \"%s\": is %u, should be %u",
 						path, checksum, ondisk.checksum)));
 
