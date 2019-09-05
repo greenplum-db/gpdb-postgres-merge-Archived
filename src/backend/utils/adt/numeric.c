@@ -4184,21 +4184,6 @@ makeInt128AggStateCurrentContext(bool calcSumX2)
 }
 
 /*
- * Like makeInt128AggState(), but allocate the state in the current memory
- * context.
- */
-static Int128AggState *
-makeInt128AggStateCurrentContext(bool calcSumX2)
-{
-	Int128AggState *state;
-
-	state = (Int128AggState *) palloc0(sizeof(Int128AggState));
-	state->calcSumX2 = calcSumX2;
-
-	return state;
-}
-
-/*
  * Accumulate a new input value for 128-bit aggregate functions.
  */
 static void

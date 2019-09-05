@@ -61,10 +61,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
-<<<<<<< HEAD
 #include "utils/guc.h"
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -330,12 +327,8 @@ static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
 					   bool attrsOnly, bool showTblSpc,
 					   int prettyFlags, bool missing_ok);
 static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
-<<<<<<< HEAD
-							int prettyFlags);
-static text *pg_get_expr_internal(text *expr, Oid relid, bool pretty, bool trylock);
-=======
 							int prettyFlags, bool missing_ok);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+static text *pg_get_expr_internal(text *expr, Oid relid, bool pretty, bool trylock);
 static text *pg_get_expr_worker(text *expr, Oid relid, const char *relname,
 				   int prettyFlags);
 static int print_function_arguments(StringInfo buf, HeapTuple proctup,
@@ -427,12 +420,9 @@ static void get_rule_expr(Node *node, deparse_context *context,
 			  bool showimplicit);
 static void get_rule_expr_toplevel(Node *node, deparse_context *context,
 					   bool showimplicit);
-<<<<<<< HEAD
 static void get_rule_expr_funccall(Node *node, deparse_context *context,
 					   bool showimplicit);
 static bool looks_like_function(Node *node);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void get_oper_expr(OpExpr *expr, deparse_context *context);
 static void get_func_expr(FuncExpr *expr, deparse_context *context,
 			  bool showimplicit);
@@ -515,12 +505,7 @@ pg_get_ruledef_ext(PG_FUNCTION_ARGS)
 	int			prettyFlags;
 	char	   *res;
 
-<<<<<<< HEAD
 	prettyFlags = pretty ? (PRETTYFLAG_PAREN | PRETTYFLAG_INDENT | PRETTYFLAG_SCHEMA) : PRETTYFLAG_INDENT;
-
-	PG_RETURN_TEXT_P(string_to_text(pg_get_ruledef_worker(ruleoid, prettyFlags)));
-=======
-	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
 
 	res = pg_get_ruledef_worker(ruleoid, prettyFlags);
 
@@ -528,7 +513,6 @@ pg_get_ruledef_ext(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_TEXT_P(string_to_text(res));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 
@@ -642,12 +626,7 @@ pg_get_viewdef_ext(PG_FUNCTION_ARGS)
 	int			prettyFlags;
 	char	   *res;
 
-<<<<<<< HEAD
 	prettyFlags = pretty ? (PRETTYFLAG_PAREN | PRETTYFLAG_INDENT | PRETTYFLAG_SCHEMA) : PRETTYFLAG_INDENT;
-
-	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, prettyFlags, WRAP_COLUMN_DEFAULT)));
-=======
-	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
 
 	res = pg_get_viewdef_worker(viewoid, prettyFlags, WRAP_COLUMN_DEFAULT);
 
@@ -655,7 +634,6 @@ pg_get_viewdef_ext(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_TEXT_P(string_to_text(res));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 Datum
@@ -668,12 +646,7 @@ pg_get_viewdef_wrap(PG_FUNCTION_ARGS)
 	char	   *res;
 
 	/* calling this implies we want pretty printing */
-<<<<<<< HEAD
 	prettyFlags = PRETTYFLAG_PAREN | PRETTYFLAG_INDENT | PRETTYFLAG_SCHEMA;
-
-	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, prettyFlags, wrap)));
-=======
-	prettyFlags = PRETTYFLAG_PAREN | PRETTYFLAG_INDENT;
 
 	res = pg_get_viewdef_worker(viewoid, prettyFlags, wrap);
 
@@ -681,7 +654,6 @@ pg_get_viewdef_wrap(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_TEXT_P(string_to_text(res));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 Datum
@@ -1122,16 +1094,7 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 	int			prettyFlags;
 	char	   *res;
 
-<<<<<<< HEAD
 	prettyFlags = pretty ? (PRETTYFLAG_PAREN | PRETTYFLAG_INDENT | PRETTYFLAG_SCHEMA) : PRETTYFLAG_INDENT;
-
-	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, colno,
-														   NULL,
-														   colno != 0,
-														   false,
-														   prettyFlags)));
-=======
-	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
 
 	res = pg_get_indexdef_worker(indexrelid, colno, NULL, colno != 0, false,
 								 prettyFlags, true);
@@ -1140,7 +1103,6 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_TEXT_P(string_to_text(res));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
@@ -1160,15 +1122,10 @@ pg_get_indexdef_columns(Oid indexrelid, bool pretty)
 {
 	int			prettyFlags;
 
-<<<<<<< HEAD
 	prettyFlags = pretty ? (PRETTYFLAG_PAREN | PRETTYFLAG_INDENT | PRETTYFLAG_SCHEMA) : PRETTYFLAG_INDENT;
 
-	return pg_get_indexdef_worker(indexrelid, 0, NULL, true, false, prettyFlags);
-=======
-	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
 	return pg_get_indexdef_worker(indexrelid, 0, NULL, true, false,
 								  prettyFlags, false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
@@ -1214,15 +1171,14 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	ht_idx = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexrelid));
 	if (!HeapTupleIsValid(ht_idx))
 	{
-<<<<<<< HEAD
+		if (missing_ok)
+			return NULL;
+
+		/* GPDB_96_MERGE_FIXME: This function got the 'missing_ok' argument in 9.6.
+		 * Should we put the elog() back? */
 		/* Was: elog(ERROR, "cache lookup failed for index %u", indexrelid); */
 		/* See: MPP-10387. */
 		return pstrdup("Not an index");
-=======
-		if (missing_ok)
-			return NULL;
-		elog(ERROR, "cache lookup failed for index %u", indexrelid);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 	idxrec = (Form_pg_index) GETSTRUCT(ht_idx);
 
@@ -1502,14 +1458,7 @@ pg_get_constraintdef_ext(PG_FUNCTION_ARGS)
 	int			prettyFlags;
 	char	   *res;
 
-<<<<<<< HEAD
 	prettyFlags = pretty ? (PRETTYFLAG_PAREN | PRETTYFLAG_INDENT | PRETTYFLAG_SCHEMA) : PRETTYFLAG_INDENT;
-
-	PG_RETURN_TEXT_P(string_to_text(pg_get_constraintdef_worker(constraintId,
-																false,
-															  prettyFlags)));
-=======
-	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : PRETTYFLAG_INDENT;
 
 	res = pg_get_constraintdef_worker(constraintId, false, prettyFlags, true);
 
@@ -1517,7 +1466,6 @@ pg_get_constraintdef_ext(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_TEXT_P(string_to_text(res));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
@@ -1533,7 +1481,7 @@ pg_get_constraintdef_command(Oid constraintId)
 char *
 pg_get_constraintexpr_string(Oid constraintId)
 {
-	return pg_get_constraintdef_worker(constraintId, false, 0);
+	return pg_get_constraintdef_worker(constraintId, false, 0, false);
 }
 
 /*
@@ -4762,17 +4710,9 @@ get_values_def(List *values_lists, deparse_context *context)
 				appendStringInfoChar(buf, ',');
 
 			/*
-<<<<<<< HEAD
-			 * Strip any top-level nodes representing indirection assignments,
-			 * then print the result.  Whole-row Vars need special treatment.
-			 */
-			get_rule_expr_toplevel(processIndirection(col, context, false),
-								   context, false);
-=======
 			 * Print the value.  Whole-row Vars need special treatment.
 			 */
 			get_rule_expr_toplevel(col, context, false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 		appendStringInfoChar(buf, ')');
 	}
@@ -6268,123 +6208,11 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 		colinfo = deparse_columns_fetch(var->varno, dpns);
 		attnum = var->varattno;
 	}
-<<<<<<< HEAD
-	else if (var->varno == OUTER_VAR && dpns->outer_tlist)
-	{
-		TargetEntry *tle;
-		deparse_namespace save_dpns;
-
-		tle = get_tle_by_resno(dpns->outer_tlist, var->varattno);
-		if (!tle)
-			elog(ERROR, "bogus varattno for OUTER_VAR var: %d", var->varattno);
-
-		Assert(netlevelsup == 0);
-		push_child_plan(dpns, dpns->outer_planstate, &save_dpns);
-
-		/*
-		 * In cases where the INNER VAR subtree (left/right) contains a CONST
-		 * in Target Entry use outer for refname and resname for attname.
-		 */
-		if (IsA(tle->expr, Const) && tle->resname)
-		{
-			if (context->varprefix)
-			{
-				appendStringInfoString(buf, quote_identifier("outer"));
-				appendStringInfoChar(buf, '.');
-			}
-			appendStringInfoString(buf, tle->resname);
-		}
-		else
-		{
-			/*
-			 * Force parentheses because our caller probably assumed a Var is a
-			 * simple expression.
-			 */
-			if (!IsA(tle->expr, Var))
-				appendStringInfoChar(buf, '(');
-			get_rule_expr((Node *) tle->expr, context, true);
-			if (!IsA(tle->expr, Var))
-				appendStringInfoChar(buf, ')');
-		}
-
-		pop_child_plan(dpns, &save_dpns);
-		return NULL;
-	}
-	else if (var->varno == INNER_VAR && dpns->inner_tlist)
-	{
-		TargetEntry *tle;
-		deparse_namespace save_dpns;
-
-		tle = get_tle_by_resno(dpns->inner_tlist, var->varattno);
-		if (!tle)
-			elog(ERROR, "bogus varattno for INNER_VAR var: %d", var->varattno);
-
-		Assert(netlevelsup == 0);
-		push_child_plan(dpns, dpns->inner_planstate, &save_dpns);
-
-		/*
-		 * In cases where the INNER VAR subtree (left/right) contains a CONST
-		 * in Target Entry use inner for refname and resname for attname.
-		 */
-		if (IsA(tle->expr, Const) && tle->resname)
-		{
-			if (context->varprefix)
-			{
-				appendStringInfoString(buf, quote_identifier("inner"));
-				appendStringInfoChar(buf, '.');
-			}
-			appendStringInfoString(buf, tle->resname);
-		}
-		else
-		{
-			/*
-			 * Force parentheses because our caller probably assumed a Var is a
-			 * simple expression.
-			 */
-			if (!IsA(tle->expr, Var))
-				appendStringInfoChar(buf, '(');
-			get_rule_expr((Node *) tle->expr, context, true);
-			if (!IsA(tle->expr, Var))
-				appendStringInfoChar(buf, ')');
-		}
-
-		pop_child_plan(dpns, &save_dpns);
-		return NULL;
-	}
-	else if (var->varno == INDEX_VAR && dpns->index_tlist)
-	{
-		TargetEntry *tle;
-
-		tle = get_tle_by_resno(dpns->index_tlist, var->varattno);
-		if (!tle)
-			elog(ERROR, "bogus varattno for INDEX_VAR var: %d", var->varattno);
-
-		Assert(netlevelsup == 0);
-
-		/*
-		 * Force parentheses because our caller probably assumed a Var is a
-		 * simple expression.
-		 */
-		if (!IsA(tle->expr, Var))
-			appendStringInfoChar(buf, '(');
-		get_rule_expr((Node *) tle->expr, context, true);
-		if (!IsA(tle->expr, Var))
-			appendStringInfoChar(buf, ')');
-
-		return NULL;
-	}
-	else
-	{
-		elog(WARNING, "bogus varno: %d", var->varno);
-		return psprintf("<BOGUS %d>", var->varattno);
-		return NULL;			/* keep compiler quiet */
-=======
 	else
 	{
 		resolve_special_varno((Node *) var, context, NULL,
 							  get_special_variable);
 		return NULL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	/*
@@ -8650,7 +8478,6 @@ get_rule_expr_toplevel(Node *node, deparse_context *context,
 		get_rule_expr(node, context, showimplicit);
 }
 
-<<<<<<< HEAD
 /*
  * get_rule_expr_funccall		- Parse back a function-call expression
  *
@@ -8707,9 +8534,6 @@ looks_like_function(Node *node)
 	}
 	return false;
 }
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
  * get_oper_expr			- Parse back an OpExpr node
@@ -10143,19 +9967,12 @@ get_opclass_name_for_distribution_key(Oid opclass, Oid actual_datatype,
  * processIndirection - take care of array and subfield assignment
  *
  * We strip any top-level FieldStore or assignment ArrayRef nodes that
-<<<<<<< HEAD
- * appear in the input, and return the subexpression that's to be assigned.
- * If printit is true, we also print out the appropriate decoration for the
- * base column name (that the caller just printed).  We might also need to
+ * appear in the input, printing them as decoration for the base column
+ * name (which we assume the caller just printed).  We might also need to
  * strip CoerceToDomain nodes, but only ones that appear above assignment
  * nodes.
  *
  * Returns the subexpression that's to be assigned.
-=======
- * appear in the input, printing them as decoration for the base column
- * name (which we assume the caller just printed).  Return the subexpression
- * that's to be assigned.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 static Node *
 processIndirection(Node *node, deparse_context *context)

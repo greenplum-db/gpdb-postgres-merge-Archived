@@ -219,15 +219,8 @@ QTNTernary(QTNode *in)
 	{
 		QTNode	   *cc = in->child[i];
 
-<<<<<<< HEAD
 		if (cc->valnode->type == QI_OPR &&
 			in->valnode->qoperator.oper == cc->valnode->qoperator.oper)
-=======
-		/* OP_Phrase isn't associative */
-		if (cc->valnode->type == QI_OPR &&
-			in->valnode->qoperator.oper == cc->valnode->qoperator.oper &&
-			in->valnode->qoperator.oper != OP_PHRASE)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{
 			int			oldnchild = in->nchild;
 

@@ -42,13 +42,15 @@
 #include "utils/relmapper.h"
 #include "utils/syscache.h"
 
-<<<<<<< HEAD
 #include "libpq-fe.h"
 #include "foreign/fdwapi.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdispatchresult.h"
 #include "cdb/cdbvars.h"
 #include "utils/snapmgr.h"
+
+/* Divide by two and round towards positive infinity. */
+#define half_rounded(x)   (((x) + ((x) < 0 ? 0 : 1)) / 2)
 
 static int64 calculate_total_relation_size(Relation rel);
 
@@ -101,10 +103,6 @@ get_size_from_segDBs(const char *cmd)
 
 	return result;
 }
-=======
-/* Divide by two and round towards positive infinity. */
-#define half_rounded(x)   (((x) + ((x) < 0 ? 0 : 1)) / 2)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* Return physical size of directory contents, or 0 if dir doesn't exist */
 static int64

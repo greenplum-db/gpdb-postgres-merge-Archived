@@ -29,12 +29,8 @@
 #include "common/keywords.h"
 #include "funcapi.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
-#include "parser/keywords.h"
-#include "postmaster/fts.h"
-=======
 #include "parser/scansup.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+#include "postmaster/fts.h"
 #include "postmaster/syslogger.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/fd.h"
@@ -381,14 +377,6 @@ pg_terminate_backend_msg(PG_FUNCTION_ARGS)
 Datum
 pg_reload_conf(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	if (!am_ftshandler && !superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to signal the postmaster"))));
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	if (kill(PostmasterPid, SIGHUP))
 	{
 		ereport(WARNING,

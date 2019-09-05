@@ -2038,10 +2038,6 @@ static TSVectorStat *
 ts_stat_sql(MemoryContext persistentContext, text *txt, text *ws)
 {
 	char	   *query = text_to_cstring(txt);
-<<<<<<< HEAD
-	int64			i;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	TSVectorStat *stat;
 	bool		isnull;
 	Portal		portal;

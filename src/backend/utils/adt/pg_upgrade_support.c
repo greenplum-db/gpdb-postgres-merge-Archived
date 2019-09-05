@@ -36,12 +36,9 @@ Datum		binary_upgrade_set_next_toast_pg_class_oid(PG_FUNCTION_ARGS);
 Datum		binary_upgrade_set_next_pg_enum_oid(PG_FUNCTION_ARGS);
 Datum		binary_upgrade_set_next_pg_authid_oid(PG_FUNCTION_ARGS);
 Datum		binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
+Datum		binary_upgrade_set_record_init_privs(PG_FUNCTION_ARGS);
 Datum		binary_upgrade_set_next_pg_namespace_oid(PG_FUNCTION_ARGS);
 Datum		binary_upgrade_set_preassigned_oids(PG_FUNCTION_ARGS);
-=======
-Datum		binary_upgrade_set_record_init_privs(PG_FUNCTION_ARGS);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
 
@@ -240,7 +237,17 @@ binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS)
 }
 
 Datum
-<<<<<<< HEAD
+binary_upgrade_set_record_init_privs(PG_FUNCTION_ARGS)
+{
+	bool		record_init_privs = PG_GETARG_BOOL(0);
+
+	CHECK_IS_BINARY_UPGRADE;
+	binary_upgrade_record_init_privs = record_init_privs;
+
+	PG_RETURN_VOID();
+}
+
+Datum
 binary_upgrade_set_next_pg_namespace_oid(PG_FUNCTION_ARGS)
 {
 	Oid			nspid = PG_GETARG_OID(0);
@@ -276,14 +283,6 @@ binary_upgrade_set_preassigned_oids(PG_FUNCTION_ARGS)
 
 		MarkOidPreassignedFromBinaryUpgrade(oid);
 	}
-=======
-binary_upgrade_set_record_init_privs(PG_FUNCTION_ARGS)
-{
-	bool		record_init_privs = PG_GETARG_BOOL(0);
-
-	CHECK_IS_BINARY_UPGRADE;
-	binary_upgrade_record_init_privs = record_init_privs;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	PG_RETURN_VOID();
 }

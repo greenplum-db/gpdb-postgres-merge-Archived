@@ -182,14 +182,8 @@ pair_decode(char *str, double *x, double *y, char **endptr_p,
 static void
 pair_encode(float8 x, float8 y, StringInfo str)
 {
-<<<<<<< HEAD
-	// dummy assignment to bypass gcc bug on SPARC
-	volatile int ndig = (int) (x + y);
-	ndig = DBL_DIG + extra_float_digits;
-=======
 	char	   *xstr = float8out_internal(x);
 	char	   *ystr = float8out_internal(y);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	appendStringInfo(str, "%s,%s", xstr, ystr);
 	pfree(xstr);
@@ -1742,24 +1736,7 @@ Datum
 point_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-<<<<<<< HEAD
-	Point	   *point;
-	double		x = 0,
-				y = 0;
-	char	   *s;
-
-	if (!pair_decode(str, &x, &y, &s) || (*s != '\0'))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type point: \"%s\"", str)));
-
-	point = (Point *) palloc(sizeof(Point));
-
-	point->x = x;
-	point->y = y;
-=======
 	Point	   *point = (Point *) palloc(sizeof(Point));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	pair_decode(str, &point->x, &point->y, NULL, "point", str);
 	PG_RETURN_POINT_P(point);

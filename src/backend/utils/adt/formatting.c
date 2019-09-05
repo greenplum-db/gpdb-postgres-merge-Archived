@@ -3148,17 +3148,6 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				{
 					int			matched,
 								years,
-<<<<<<< HEAD
-								millenia,
-								nch;
-
-					matched = sscanf(s, "%d,%03d%n", &millenia, &years, &nch);
-					if (matched < 2)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-							 errmsg("invalid input string for \"Y,YYY\" in function \"to_date\"")));
-					years += (millenia * 1000);
-=======
 								millennia,
 								nch;
 
@@ -3166,9 +3155,8 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 					if (matched < 2)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-							  errmsg("invalid input string for \"Y,YYY\"")));
+							 errmsg("invalid input string for \"Y,YYY\" in function \"to_date\"")));
 					years += (millennia * 1000);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 					from_char_set_int(&out->year, years, n);
 					out->yysz = 4;
 					s += nch;

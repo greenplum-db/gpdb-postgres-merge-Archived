@@ -48,9 +48,6 @@ static const uint32 nan[2] = {0xffffffff, 0x7fffffff};
 #define MAXFLOATWIDTH	64
 #define MAXDOUBLEWIDTH	128
 
-<<<<<<< HEAD
-/* ========== USER I/O ROUTINES ========== */
-=======
 /*
  * check to see if a float4/8 val has underflowed or overflowed
  */
@@ -66,7 +63,6 @@ do {															\
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),	\
 		 errmsg("value out of range: underflow")));				\
 } while(0)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 
 /* Configurable GUC parameter */
@@ -82,8 +78,6 @@ static float8 atan_1_0 = 0;
 static float8 tan_45 = 0;
 static float8 cot_45 = 0;
 
-<<<<<<< HEAD
-=======
 /*
  * These are intentionally not static; don't "fix" them.  They will never
  * be referenced by other files, much less changed; but we don't want the
@@ -101,7 +95,6 @@ static double sind_q1(double x);
 static double cosd_q1(double x);
 static void init_degree_constants(void);
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #ifndef HAVE_CBRT
 /*
  * Some machines (in particular, some versions of AIX) have an extern
@@ -426,10 +419,6 @@ Datum
 float8in(PG_FUNCTION_ARGS)
 {
 	char	   *num = PG_GETARG_CSTRING(0);
-<<<<<<< HEAD
-	char	   *orig_num;
-	long double val;
-=======
 
 	PG_RETURN_FLOAT8(float8in_internal(num, NULL, "double precision", num));
 }
@@ -457,7 +446,6 @@ float8in_internal(char *num, char **endptr_p,
 				  const char *type_name, const char *orig_string)
 {
 	double		val;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	char	   *endptr;
 	bool 		literal_inf = true;
 
@@ -584,7 +572,6 @@ float8in_internal(char *num, char **endptr_p,
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						type_name, orig_string)));
 
-<<<<<<< HEAD
 	/*
 	 * strtod does not support values from 1e-323 to 1e-308 for double datatype in rhel6
 	 * due to changes in glibc. In order to overcome this issue we use strtold to parse
@@ -610,10 +597,7 @@ float8in_internal(char *num, char **endptr_p,
 
 	CHECKFLOATVAL((double) val, literal_inf, !(val > 0 || val < 0));
 
-	PG_RETURN_FLOAT8((double) val);
-=======
 	return val;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
