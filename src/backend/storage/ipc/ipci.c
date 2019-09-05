@@ -50,15 +50,12 @@
 #include "storage/procsignal.h"
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
-<<<<<<< HEAD
 #include "utils/backend_cancel.h"
 #include "utils/resource_manager.h"
 #include "utils/faultinjector.h"
 #include "utils/sharedsnapshot.h"
 #include "utils/gpexpand.h"
-=======
 #include "utils/snapmgr.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #include "libpq-fe.h"
 #include "libpq-int.h"
