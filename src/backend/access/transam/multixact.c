@@ -3048,16 +3048,6 @@ TruncateMultiXact(MultiXactId newOldestMulti, Oid newOldestMultiDB)
 	START_CRIT_SECTION();
 
 	/*
-<<<<<<< HEAD
-	 * Now we can truncate MultiXactOffset.  We step back one multixact to
-	 * avoid passing a cutoff page that hasn't been created yet in the rare
-	 * case that oldestMXact would be the first item on a page and oldestMXact
-	 * == nextMXact.  In that case, if we didn't subtract one, we'd trigger
-	 * SimpleLruTruncate's wraparound detection.
-	 */
-	SimpleLruTruncate(MultiXactOffsetCtl,
-				  MultiXactIdToOffsetPage(PreviousMultiXactId(oldestMXact)));
-=======
 	 * Prevent checkpoints from being scheduled concurrently. This is critical
 	 * because otherwise a truncation record might not be replayed after a
 	 * crash/basebackup, even though the state of the data directory would
@@ -3070,7 +3060,6 @@ TruncateMultiXact(MultiXactId newOldestMulti, Oid newOldestMultiDB)
 	WriteMTruncateXlogRec(newOldestMultiDB,
 						  oldestMulti, newOldestMulti,
 						  oldestOffset, newOldestOffset);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Update in-memory limits before performing the truncation, while inside

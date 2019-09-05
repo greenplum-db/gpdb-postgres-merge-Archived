@@ -2002,7 +2002,6 @@ toastrel_valueid_exists(Relation toastrel, Oid valueid)
 	int			num_indexes;
 	int			validIndex;
 	Relation   *toastidxs;
-	SnapshotData SnapshotToast;
 
 	/* Fetch a valid index relation */
 	validIndex = toast_open_indexes(toastrel,
@@ -2364,7 +2363,7 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 		nscankeys = 2;
 
 		toastscan = systable_beginscan_ordered(toastrel, toastidxs[validIndex],
-											   SnapshotToast, nscankeys, toastkey);
+											   &SnapshotToast, nscankeys, toastkey);
 
 		if ((ttup = systable_getnext_ordered(toastscan, ForwardScanDirection)) != NULL)
 		{

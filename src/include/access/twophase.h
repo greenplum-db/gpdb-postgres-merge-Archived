@@ -79,7 +79,7 @@ typedef struct TwoPhaseFileHeader
 	bool		initfileinval;	/* does relcache init file need invalidation? */
 	Oid			tablespace_oid_to_delete_on_abort;
 	Oid			tablespace_oid_to_delete_on_commit;
-	char		gid[GIDSIZE];	/* GID for transaction */
+	uint16		gidlen;			/* length of the GID - GID follows the header */
 } TwoPhaseFileHeader;
 
 /* GPDB-specific end */

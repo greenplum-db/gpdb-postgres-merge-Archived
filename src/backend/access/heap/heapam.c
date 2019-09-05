@@ -1196,11 +1196,7 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 	/* Make note that we've accessed a temporary relation */
 	if (RelationUsesLocalBuffers(r))
 		MyXactAccessedTempRel = true;
-<<<<<<< HEAD
-	}
 #endif
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	pgstat_initstats(r);
 
@@ -1269,11 +1265,7 @@ try_relation_open(Oid relationId, LOCKMODE lockmode, bool noWait)
 	/* Make note that we've accessed a temporary relation */
 	if (RelationUsesLocalBuffers(r))
 		MyXactAccessedTempRel = true;
-<<<<<<< HEAD
-	}
 #endif
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	pgstat_initstats(r);
 
@@ -2701,11 +2693,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * Note: below this point, heaptup is the data we actually intend to store
 	 * into the relation; tup is the caller's original untoasted data.
 	 */
-<<<<<<< HEAD
 	heaptup = heap_prepare_insert(relation, tup, xid, cid, options, isFrozen);
-=======
-	heaptup = heap_prepare_insert(relation, tup, xid, cid, options);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Find buffer to insert this tuple into.  If the page is all visible,
@@ -4338,18 +4326,11 @@ l2:
 		TransactionId xmax_lock_old_tuple;
 		uint16		infomask_lock_old_tuple,
 					infomask2_lock_old_tuple;
-<<<<<<< HEAD
-
-		/*
-		 * To prevent concurrent sessions from updating the tuple, we have to
-		 * temporarily mark it locked, while we release the page-level lock.
-=======
 		bool		cleared_all_frozen = false;
 
 		/*
 		 * To prevent concurrent sessions from updating the tuple, we have to
-		 * temporarily mark it locked, while we release the lock.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+		 * temporarily mark it locked, while we release the page-level lock.
 		 *
 		 * To satisfy the rule that any xid potentially appearing in a buffer
 		 * written out to disk, we unfortunately have to WAL log this
@@ -4361,14 +4342,9 @@ l2:
 
 		/*
 		 * Compute xmax / infomask appropriate for locking the tuple. This has
-<<<<<<< HEAD
 		 * to be done separately from the combo that's going to be used for
 		 * updating, because the potentially created multixact would otherwise
 		 * be wrong.
-=======
-		 * to be done separately from the lock, because the potentially
-		 * created multixact would otherwise be wrong.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		 */
 		compute_new_xmax_infomask(HeapTupleHeaderGetRawXmax(oldtup.t_data),
 								  oldtup.t_data->t_infomask,
@@ -4395,8 +4371,6 @@ l2:
 		/* temporarily make it look not-updated, but locked */
 		oldtup.t_data->t_ctid = oldtup.t_self;
 
-<<<<<<< HEAD
-=======
 		/*
 		 * Clear all-frozen bit on visibility map if needed. We could
 		 * immediately reset ALL_VISIBLE, but given that the WAL logging
@@ -4408,7 +4382,6 @@ l2:
 								VISIBILITYMAP_ALL_FROZEN))
 			cleared_all_frozen = true;
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		MarkBufferDirty(buffer);
 
 		if (RelationNeedsWAL(relation))
@@ -4423,11 +4396,8 @@ l2:
 			xlrec.locking_xid = xmax_lock_old_tuple;
 			xlrec.infobits_set = compute_infobits(oldtup.t_data->t_infomask,
 												  oldtup.t_data->t_infomask2);
-<<<<<<< HEAD
-=======
 			xlrec.flags =
 				cleared_all_frozen ? XLH_LOCK_ALL_FROZEN_CLEARED : 0;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			XLogRegisterData((char *) &xlrec, SizeOfHeapLock);
 			recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_LOCK);
 			PageSetLSN(page, recptr);
@@ -6234,7 +6204,7 @@ l4:
 					 * this tuple and continue locking the next version in the
 					 * update chain.
 					 */
-					if (res == HeapTupleSelfUpdated)
+					if (result == HeapTupleSelfUpdated)
 					{
 						pfree(members);
 						goto next;
@@ -6298,9 +6268,8 @@ l4:
 						status = MultiXactStatusNoKeyUpdate;
 				}
 
-<<<<<<< HEAD
-				res = test_lockmode_for_conflict(status, rawxmax, mode,
-												 &needwait);
+				result = test_lockmode_for_conflict(status, rawxmax, mode,
+													&needwait);
 
 				/*
 				 * If the tuple was already locked by ourselves in a previous
@@ -6311,13 +6280,9 @@ l4:
 				 * either.  We just need to skip this tuple and continue
 				 * locking the next version in the update chain.
 				 */
-				if (res == HeapTupleSelfUpdated)
+				if (result == HeapTupleSelfUpdated)
 					goto next;
 
-=======
-				result = test_lockmode_for_conflict(status, rawxmax, mode,
-													&needwait);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				if (needwait)
 				{
 					LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -6848,7 +6813,6 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 	else if (MultiXactIdPrecedes(multi, cutoff_multi))
 	{
 		/*
-<<<<<<< HEAD
 		 * This old multi cannot possibly have members still running, but
 		 * verify just in case.  If it was a locker only, it can be removed
 		 * without any further consideration; but if it contained an update, we
@@ -6861,15 +6825,6 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 					 errmsg_internal("multixact %u from before cutoff %u found to be still running",
 									 multi, cutoff_multi)));
 
-=======
-		 * This old multi cannot possibly have members still running.  If it
-		 * was a locker only, it can be removed without any further
-		 * consideration; but if it contained an update, we might need to
-		 * preserve it.
-		 */
-		Assert(!MultiXactIdIsRunning(multi,
-									 HEAP_XMAX_IS_LOCKED_ONLY(t_infomask)));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		if (HEAP_XMAX_IS_LOCKED_ONLY(t_infomask))
 		{
 			*flags |= FRM_INVALIDATE_XMAX;
@@ -7133,22 +7088,16 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
  * recovery.  We really need to remove old xids.
  */
 bool
-<<<<<<< HEAD
 heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 						  TransactionId relfrozenxid, TransactionId relminmxid,
 						  TransactionId cutoff_xid, TransactionId cutoff_multi,
-						  xl_heap_freeze_tuple *frz)
-
-=======
-heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
-						  TransactionId cutoff_multi,
 						  xl_heap_freeze_tuple *frz, bool *totally_frozen_p)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	bool		changed = false;
-	bool		freeze_xmax = false;
+	bool		xmax_already_frozen = false;
+	bool		xmin_frozen;
+	bool		freeze_xmax;
 	TransactionId xid;
-	bool		totally_frozen = true;
 
 	frz->frzflags = 0;
 	frz->t_infomask2 = tuple->t_infomask2;
@@ -7159,7 +7108,6 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 	xid = HeapTupleHeaderGetXmin(tuple);
 	if (TransactionIdIsNormal(xid))
 	{
-<<<<<<< HEAD
 		if (TransactionIdPrecedes(xid, relfrozenxid))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
@@ -7176,16 +7124,8 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 
 			frz->t_infomask |= HEAP_XMIN_FROZEN;
 			changed = true;
+			xmin_frozen = true;
 		}
-=======
-		if (TransactionIdPrecedes(xid, cutoff_xid))
-		{
-			frz->t_infomask |= HEAP_XMIN_FROZEN;
-			changed = true;
-		}
-		else
-			totally_frozen = false;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	/*
@@ -7208,9 +7148,9 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 									relfrozenxid, relminmxid,
 									cutoff_xid, cutoff_multi, &flags);
 
-		if (flags & FRM_INVALIDATE_XMAX)
-			freeze_xmax = true;
-		else if (flags & FRM_RETURN_IS_XID)
+		freeze_xmax = (flags & FRM_INVALIDATE_XMAX);
+
+		if (flags & FRM_RETURN_IS_XID)
 		{
 			/*
 			 * NB -- some of these transformations are only valid because we
@@ -7224,8 +7164,7 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 			if (flags & FRM_MARK_COMMITTED)
 				frz->t_infomask |= HEAP_XMAX_COMMITTED;
 			changed = true;
-			totally_frozen = false;
-		}
+			}
 		else if (flags & FRM_RETURN_IS_MULTI)
 		{
 			uint16		newbits;
@@ -7246,16 +7185,10 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 			frz->xmax = newxmax;
 
 			changed = true;
-			totally_frozen = false;
-		}
-		else
-		{
-			Assert(flags & FRM_NOOP);
 		}
 	}
 	else if (TransactionIdIsNormal(xid))
 	{
-<<<<<<< HEAD
 		if (TransactionIdPrecedes(xid, relfrozenxid))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
@@ -7278,16 +7211,25 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 										 xid)));
 			freeze_xmax = true;
 		}
-=======
-		if (TransactionIdPrecedes(xid, cutoff_xid))
-			freeze_xmax = true;
 		else
-			totally_frozen = false;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+			freeze_xmax = false;
 	}
+	else if ((tuple->t_infomask & HEAP_XMAX_INVALID) ||
+			 !TransactionIdIsValid(HeapTupleHeaderGetRawXmax(tuple)))
+	{
+		freeze_xmax = false;
+		xmax_already_frozen = true;
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg_internal("found xmax %u (infomask 0x%04x) not frozen, not multi, not normal",
+								 xid, tuple->t_infomask)));
 
 	if (freeze_xmax)
 	{
+		Assert(!xmax_already_frozen);
+
 		frz->xmax = InvalidTransactionId;
 
 		/*
@@ -7340,7 +7282,8 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 		}
 	}
 
-	*totally_frozen_p = totally_frozen;
+	*totally_frozen_p = (xmin_frozen &&
+						 (freeze_xmax || xmax_already_frozen));
 	return changed;
 }
 
@@ -7394,15 +7337,10 @@ heap_freeze_tuple(HeapTupleHeader tuple,
 	bool		do_freeze;
 	bool		tuple_totally_frozen;
 
-<<<<<<< HEAD
 	do_freeze = heap_prepare_freeze_tuple(tuple,
 										  relfrozenxid, relminmxid,
 										  cutoff_xid, cutoff_multi,
-										  &frz);
-=======
-	do_freeze = heap_prepare_freeze_tuple(tuple, cutoff_xid, cutoff_multi,
 										  &frz, &tuple_totally_frozen);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Note that because this is not a WAL-logged operation, we don't need to
@@ -7571,11 +7509,7 @@ static bool
 DoesMultiXactIdConflict(MultiXactId multi, uint16 infomask,
 						LockTupleMode lockmode)
 {
-<<<<<<< HEAD
-	int		nmembers;
-=======
 	int			nmembers;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	MultiXactMember *members;
 	bool	result = false;
 	LOCKMODE wanted = tupleLockExtraInfo[lockmode].hwlock;
@@ -9500,11 +9434,7 @@ heap_xlog_lock(XLogReaderState *record)
 			lp = PageGetItemId(page, offnum);
 
 		if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsNormal(lp))
-<<<<<<< HEAD
-			elog(PANIC, "heap_xlog_lock: invalid lp");
-=======
 			elog(PANIC, "invalid lp");
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		htup = (HeapTupleHeader) PageGetItem(page, lp);
 

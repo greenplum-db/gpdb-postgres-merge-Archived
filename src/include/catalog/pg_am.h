@@ -39,19 +39,7 @@ CATALOG(pg_am,2601)
 } FormData_pg_am;
 
 /* GPDB added foreign key definitions for gpcheckcat. */
-FOREIGN_KEY(aminsert REFERENCES pg_proc(oid));
-FOREIGN_KEY(ambeginscan REFERENCES pg_proc(oid));
-FOREIGN_KEY(amgettuple REFERENCES pg_proc(oid));
-FOREIGN_KEY(amgetbitmap REFERENCES pg_proc(oid));
-FOREIGN_KEY(amrescan REFERENCES pg_proc(oid));
-FOREIGN_KEY(amendscan REFERENCES pg_proc(oid));
-FOREIGN_KEY(ammarkpos REFERENCES pg_proc(oid));
-FOREIGN_KEY(amrestrpos REFERENCES pg_proc(oid));
-FOREIGN_KEY(ambuild REFERENCES pg_proc(oid));
-FOREIGN_KEY(ambulkdelete REFERENCES pg_proc(oid));
-FOREIGN_KEY(amvacuumcleanup REFERENCES pg_proc(oid));
-FOREIGN_KEY(amcostestimate REFERENCES pg_proc(oid));
-FOREIGN_KEY(amoptions REFERENCES pg_proc(oid));
+FOREIGN_KEY(amhandler REFERENCES pg_proc(oid));
 
 /* ----------------
  *		Form_pg_am corresponds to a pointer to a tuple with
@@ -99,7 +87,7 @@ DATA(insert OID = 3580 (  brin		brinhandler i ));
 DESCR("block range index (BRIN) access method");
 #define BRIN_AM_OID 3580
 
-DATA(insert OID = 7013 (  bitmap	5 1 f f f t t t f f f f f 0 bminsert bmbeginscan bmgettuple bmgetbitmap bmrescan bmendscan bmmarkpos bmrestrpos bmbuild bmbuildempty bmbulkdelete bmvacuumcleanup - bmcostestimate bmoptions ));
+DATA(insert OID = 7013 (  bitmap	bmhandler i ));
 DESCR("bitmap index access method");
 #define BITMAP_AM_OID 7013
 

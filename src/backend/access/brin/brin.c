@@ -1050,18 +1050,12 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 	 * by transactions that are still in progress, among other corner cases.
 	 */
 	state->bs_currRangeStart = heapBlk;
-<<<<<<< HEAD
-	IndexBuildHeapRangeScan(heapRel, state->bs_irel, indexInfo, false,
-							heapBlk, state->bs_pagesPerRange,
-							brinbuildCallback, (void *) state,
-							estate, snapshot, OldestXmin);
-=======
 	scanNumBlks = heapBlk + state->bs_pagesPerRange <= heapNumBlks ?
 		state->bs_pagesPerRange : heapNumBlks - heapBlk;
 	IndexBuildHeapRangeScan(heapRel, state->bs_irel, indexInfo, false, true,
 							heapBlk, scanNumBlks,
-							brinbuildCallback, (void *) state);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+							brinbuildCallback, (void *) state,
+							estate, snapshot, OldestXmin);
 
 	/*
 	 * Now we update the values obtained by the scan with the placeholder
