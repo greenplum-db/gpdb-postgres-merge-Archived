@@ -524,3 +524,4 @@
 		"xmlbinary",
 		"xmloption",
 		"zero_damaged_pages",
+		"ssl_renegotiation_limit",

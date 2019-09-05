@@ -6,13 +6,9 @@
  * See src/backend/utils/misc/README for more information.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2000-2015, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2000-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
@@ -2546,11 +2542,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 		},
 		&max_worker_processes,
-<<<<<<< HEAD
 		8 + MaxPMAuxProc, 1, MAX_BACKENDS,
-=======
-		8, 0, MAX_BACKENDS,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		check_max_worker_processes, NULL, NULL
 	},
 
@@ -2785,8 +2777,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-<<<<<<< HEAD
-=======
 		{"ssl_renegotiation_limit", PGC_USERSET, CONN_AUTH_SECURITY,
 			gettext_noop("SSL renegotiation is no longer supported; this can only be 0."),
 			NULL,
@@ -2798,7 +2788,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{"tcp_keepalives_count", PGC_USERSET, CLIENT_CONN_OTHER,
 			gettext_noop("Maximum number of TCP keepalive retransmits."),
 			gettext_noop("This controls the number of consecutive keepalive retransmits that can be "
