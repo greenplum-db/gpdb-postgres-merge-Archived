@@ -18,13 +18,9 @@
  * "x" to be considered equal() to another reference to "x" in the query.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -233,11 +229,14 @@ _equalAggref(const Aggref *a, const Aggref *b)
 	COMPARE_SCALAR_FIELD(aggvariadic);
 	COMPARE_SCALAR_FIELD(aggkind);
 	COMPARE_SCALAR_FIELD(agglevelsup);
-<<<<<<< HEAD
+
+	/*
+	 * GPDB_96_MERGE_FIXME
+	 * aggstage and aggsplit are same 
+	 * keep one
+	 */
 	COMPARE_SCALAR_FIELD(aggstage);
-=======
 	COMPARE_SCALAR_FIELD(aggsplit);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -2880,7 +2879,6 @@ _equalCommonTableExpr(const CommonTableExpr *a, const CommonTableExpr *b)
 }
 
 static bool
-<<<<<<< HEAD
 _equalTableValueExpr(const TableValueExpr *a, const TableValueExpr *b)
 {
 	COMPARE_NODE_FIELD(subquery);
@@ -2938,8 +2936,6 @@ _equalTableSampleClause(const TableSampleClause *a, const TableSampleClause *b)
 }
 
 static bool
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 _equalXmlSerialize(const XmlSerialize *a, const XmlSerialize *b)
 {
 	COMPARE_SCALAR_FIELD(xmloption);
