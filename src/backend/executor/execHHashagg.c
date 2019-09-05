@@ -198,7 +198,6 @@ adjustInputGroup(AggState *aggstate,
 	int32 tuple_size;
 	void *datum;
 	AggStatePerGroup pergroup;
-	AggStatePerAgg peragg = aggstate->peragg;
 	int aggno;
 	Size datum_size;
 	int16 byteaTranstypeLen = 0;
@@ -215,7 +214,8 @@ adjustInputGroup(AggState *aggstate,
 
 	for (aggno = 0; aggno < aggstate->numaggs; aggno++)
 	{
-		AggStatePerAgg peraggstate = &peragg[aggno];
+		/* GPDB_96_MERGE_FIXME: aggno is right for spilling? */
+		AggStatePerTrans pertrans = &aggstate->pertrans[aggno];
 		AggStatePerGroup pergroupstate = &pergroup[aggno];
 
 		/* Skip null transValue */
@@ -223,14 +223,14 @@ adjustInputGroup(AggState *aggstate,
 			continue;
 
 		/* Deserialize the aggregate states loaded from the spill file */
-		if (OidIsValid(peraggstate->deserialfn_oid))
+		if (OidIsValid(pertrans->deserialfn_oid))
 		{
 			FunctionCallInfoData _dsinfo;
 			FunctionCallInfo dsinfo = &_dsinfo;
 			MemoryContext oldContext;
 
 			InitFunctionCallInfoData(_dsinfo,
-									 &peraggstate->deserialfn,
+									 &pertrans->deserialfn,
 									 2,
 									 InvalidOid,
 									 (void *) aggstate, NULL);
@@ -257,12 +257,12 @@ adjustInputGroup(AggState *aggstate,
 			Assert(MAXALIGN(datum_size) - datum_size <= MAXIMUM_ALIGNOF);
 			datum = (char *)datum + MAXALIGN(datum_size);
 		}
-		else if (!peraggstate->transtypeByVal)
+		else if (!pertrans->transtypeByVal)
 		{
 			pergroupstate->transValue = PointerGetDatum(datum);
 			datum_size = datumGetSize(pergroupstate->transValue,
-									  peraggstate->transtypeByVal,
-									  peraggstate->transtypeLen);
+									  pertrans->transtypeByVal,
+									  pertrans->transtypeLen);
 			Assert(MAXALIGN(datum_size) - datum_size <= MAXIMUM_ALIGNOF);
 			datum = (char *)datum + MAXALIGN(datum_size);
 		}
@@ -1547,7 +1547,6 @@ writeHashEntry(AggState *aggstate, BatchFileInfo *file_info,
 	int32 total_size = 0;
 	AggStatePerGroup pergroup;
 	int aggno;
-	AggStatePerAgg peragg = aggstate->peragg;
 	int32 aggstateSize = 0;
 	Size datum_size;
 	Datum serializedVal;
@@ -1578,7 +1577,8 @@ writeHashEntry(AggState *aggstate, BatchFileInfo *file_info,
 	/* Write the transition aggstates */
 	for (aggno = 0; aggno < aggstate->numaggs; aggno++)
 	{
-		AggStatePerAgg peraggstate = &peragg[aggno];
+		/* GPDB_96_MERGE_FIXME: aggno is right for spilling? */
+		AggStatePerTrans pertrans = &aggstate->pertrans[aggno];
 		AggStatePerGroup pergroupstate = &pergroup[aggno];
 
 		/* Skip null transValue */
@@ -1589,13 +1589,13 @@ writeHashEntry(AggState *aggstate, BatchFileInfo *file_info,
 		 * If it has a serialization function, serialize it without checking
 		 * transtypeByVal since it's INTERNALOID, a pointer but set to byVal.
 		 */
-		if (OidIsValid(peraggstate->serialfn_oid))
+		if (OidIsValid(pertrans->serialfn_oid))
 		{
 			FunctionCallInfoData fcinfo;
 			MemoryContext old_ctx;
 
 			InitFunctionCallInfoData(fcinfo,
-									 &peraggstate->serialfn,
+									 &pertrans->serialfn,
 									 1,
 									 InvalidOid,
 									 (void *) aggstate, NULL);
@@ -1616,11 +1616,11 @@ writeHashEntry(AggState *aggstate, BatchFileInfo *file_info,
 			MemoryContextSwitchTo(old_ctx);
 		}
 		/* If it's a ByRef, write the data to the file */
-		else if (!peraggstate->transtypeByVal)
+		else if (!pertrans->transtypeByVal)
 		{
 			datum_size = datumGetSize(pergroupstate->transValue,
-									  peraggstate->transtypeByVal,
-									  peraggstate->transtypeLen);
+									  pertrans->transtypeByVal,
+									  pertrans->transtypeLen);
 			BufFileWriteOrError(file_info->wfile,
 								DatumGetPointer(pergroupstate->transValue), datum_size);
 		}
@@ -1944,7 +1944,8 @@ agg_hash_reload(AggState *aggstate)
 			/* Advance the aggregates for the group by applying combine function. */
 			for (aggno = 0; aggno < aggstate->numaggs; aggno++)
 			{
-				AggStatePerAgg peraggstate = &aggstate->peragg[aggno];
+				/* GPDB_96_MERGE_FIXME: aggno is right for spilling? */
+				AggStatePerTrans pertrans = &aggstate->pertrans[aggno];
 				AggStatePerGroup pergroupstate = &hashtable->groupaggs->aggs[aggno];
 				FunctionCallInfoData fcinfo;
 
@@ -1955,17 +1956,17 @@ agg_hash_reload(AggState *aggstate)
 				/* Combine to the transition aggstate */
 				pergroupstate->transValue =
 					invoke_agg_trans_func(aggstate,
-										  peraggstate,
-										  &(peraggstate->combinefn),
-										  peraggstate->combinefn.fn_nargs - 1,
+										  pertrans,
+										  &(pertrans->combinefn),
+										  pertrans->combinefn.fn_nargs - 1,
 										  pergroupstate->transValue,
 										  &(pergroupstate->noTransValue),
 										  &(pergroupstate->transValueIsNull),
-										  peraggstate->transtypeByVal,
-										  peraggstate->transtypeLen,
+										  pertrans->transtypeByVal,
+										  pertrans->transtypeLen,
 										  &fcinfo, (void *)aggstate,
 										  aggstate->tmpcontext->ecxt_per_tuple_memory);
-				Assert(peraggstate->transtypeByVal ||
+				Assert(pertrans->transtypeByVal ||
 				       (pergroupstate->transValueIsNull ||
 					PointerIsValid(DatumGetPointer(pergroupstate->transValue))));
 				       

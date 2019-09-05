@@ -103,6 +103,9 @@ typedef struct AggStatePerTransData
 	 */
 	FmgrInfo	transfn;
 
+	/* fmgr lookup data for combine function */
+	FmgrInfo	combinefn;
+
 	/* fmgr lookup data for serialization function */
 	FmgrInfo	serialfn;
 

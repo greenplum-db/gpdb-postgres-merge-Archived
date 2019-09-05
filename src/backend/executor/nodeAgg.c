@@ -2894,8 +2894,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		if (OidIsValid(pertrans->combinefn_oid))
 		{
-			fmgr_info(pertrans->combinefn_oid, &peraggstate->combinefn);
-			fmgr_info_set_expr((Node *) combinefnexpr, &peraggstate->combinefn);
+			fmgr_info(pertrans->combinefn_oid, &pertrans->combinefn);
+			fmgr_info_set_expr((Node *) combinefnexpr, &pertrans->combinefn);
 		}
 
 		/*
@@ -2917,7 +2917,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			}
 
 			if (OidIsValid(aggform->aggserialfn))
-				peraggstate->serialfn_oid = aggform->aggserialfn;
+				pertrans->serialfn_oid = aggform->aggserialfn;
 
 			/* Likewise for deserialization functions */
 			if (aggref->aggstage == AGGSTAGE_INTERMEDIATE ||
@@ -2928,31 +2928,31 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			}
 
 			if (OidIsValid(aggform->aggdeserialfn))
-				peraggstate->deserialfn_oid = aggform->aggdeserialfn;
+				pertrans->deserialfn_oid = aggform->aggdeserialfn;
 		}
 
-		if (OidIsValid(peraggstate->serialfn_oid))
+		if (OidIsValid(pertrans->serialfn_oid))
 		{
-			build_aggregate_serialfn_expr(peraggstate->serialfn_oid,
+			build_aggregate_serialfn_expr(pertrans->serialfn_oid,
 										  &serialfnexpr);
-			fmgr_info(peraggstate->serialfn_oid, &peraggstate->serialfn);
-			fmgr_info_set_expr((Node *) serialfnexpr, &peraggstate->serialfn);
+			fmgr_info(pertrans->serialfn_oid, &pertrans->serialfn);
+			fmgr_info_set_expr((Node *) serialfnexpr, &pertrans->serialfn);
 		}
 
-		if (OidIsValid(peraggstate->deserialfn_oid))
+		if (OidIsValid(pertrans->deserialfn_oid))
 		{
-			build_aggregate_deserialfn_expr(peraggstate->deserialfn_oid,
+			build_aggregate_deserialfn_expr(pertrans->deserialfn_oid,
 											&deserialfnexpr);
-			fmgr_info(peraggstate->deserialfn_oid, &peraggstate->deserialfn);
-			fmgr_info_set_expr((Node *) deserialfnexpr, &peraggstate->deserialfn);
+			fmgr_info(pertrans->deserialfn_oid, &pertrans->deserialfn);
+			fmgr_info_set_expr((Node *) deserialfnexpr, &pertrans->deserialfn);
 		}
 
-		peraggstate->aggCollation = aggref->inputcollid;
+		pertrans->aggCollation = aggref->inputcollid;
 
-		InitFunctionCallInfoData(peraggstate->transfn_fcinfo,
-								 &peraggstate->transfn,
-								 peraggstate->numTransInputs + 1,
-								 peraggstate->aggCollation,
+		InitFunctionCallInfoData(pertrans->transfn_fcinfo,
+								 &pertrans->transfn,
+								 pertrans->numTransInputs + 1,
+								 pertrans->aggCollation,
 								 (void *) aggstate, NULL);
 
 		/* get info about the output value's datatype */
@@ -3013,6 +3013,15 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 */
 	aggstate->numaggs = aggno + 1;
 	aggstate->numtrans = transno + 1;
+
+	/* MPP */
+	aggstate->hhashtable = NULL;
+
+	/* Set the default memory manager */
+	aggstate->mem_manager.alloc = cxt_alloc;
+	aggstate->mem_manager.free = cxt_free;
+	aggstate->mem_manager.manager = aggstate;
+	aggstate->mem_manager.realloc_ratio = 1;
 
 	return aggstate;
 }
@@ -3480,7 +3489,6 @@ ExecEndAgg(AggState *node)
 	PlanState  *outerPlan;
 	int			numGroupingSets = Max(node->maxsets, 1);
 	int			setno;
-	int			transno;
 
 	ExecEagerFreeAgg(node);
 
