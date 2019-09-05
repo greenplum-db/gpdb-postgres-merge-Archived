@@ -593,14 +593,9 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
  * btgetbitmap() -- construct a TIDBitmap.
  */
 int64
-btgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
+btgetbitmap(IndexScanDesc scan, Node *n)
 {
-<<<<<<< HEAD
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	Node	   *n = (Node *) PG_GETARG_POINTER(1);
 	TIDBitmap  *tbm;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	int64		ntids = 0;
 	ItemPointer heapTid;
@@ -626,11 +621,7 @@ btgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	{
 		/* punt if we have any unsatisfiable array keys */
 		if (so->numArrayKeys < 0)
-<<<<<<< HEAD
-			PG_RETURN_POINTER(tbm);
-=======
-			return ntids;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+			return (Node *) tbm;
 
 		_bt_start_array_keys(scan, ForwardScanDirection);
 	}
@@ -668,11 +659,7 @@ btgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 		/* Now see if we have more array keys to deal with */
 	} while (so->numArrayKeys && _bt_advance_array_keys(scan, ForwardScanDirection));
 
-<<<<<<< HEAD
-	PG_RETURN_POINTER(tbm);
-=======
-	return ntids;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	return (Node *) tbm;
 }
 
 /*

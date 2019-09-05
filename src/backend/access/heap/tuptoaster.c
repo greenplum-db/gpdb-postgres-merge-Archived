@@ -2021,14 +2021,9 @@ toastrel_valueid_exists(Relation toastrel, Oid valueid)
 	/*
 	 * Is there any such chunk?
 	 */
-	init_toast_snapshot(&SnapshotToast);
 	toastscan = systable_beginscan(toastrel,
 								   RelationGetRelid(toastidxs[validIndex]),
-<<<<<<< HEAD
 								   true, SnapshotAny, 1, &toastkey);
-=======
-								   true, &SnapshotToast, 1, &toastkey);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (systable_getnext(toastscan) != NULL)
 		result = true;

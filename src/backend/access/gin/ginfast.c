@@ -912,13 +912,8 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 												 * locking */
 
 			/*
-<<<<<<< HEAD
-			 * remove read pages from pending list, at this point all
-			 * content of read pages is in regular structure
-=======
 			 * remove read pages from pending list, at this point all content
 			 * of read pages is in regular structure
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			 */
 			shiftList(index, metabuffer, blkno, fill_fsm, stats);
 

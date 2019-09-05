@@ -310,14 +310,9 @@ brinbeginscan(Relation r, int nkeys, int norderbys)
  * keys.
  */
 int64
-bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
+bringetbitmap(IndexScanDesc scan, Node *n)
 {
-<<<<<<< HEAD
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	Node	   *n = (Node *) PG_GETARG_POINTER(1);
 	TIDBitmap  *tbm;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	Relation	idxRel = scan->indexRelation;
 	Buffer		buf = InvalidBuffer;
 	BrinDesc   *bdesc;
@@ -512,11 +507,7 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	 * returns, but we don't have a precise idea of the number of heap tuples
 	 * involved.
 	 */
-<<<<<<< HEAD
-	PG_RETURN_POINTER(tbm);
-=======
-	return totalpages * 10;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	return (Node *) tbm;
 }
 
 /*

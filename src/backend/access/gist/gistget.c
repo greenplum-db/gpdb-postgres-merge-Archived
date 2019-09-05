@@ -754,14 +754,9 @@ gistgettuple(IndexScanDesc scan, ScanDirection dir)
  * gistgetbitmap() -- Get a bitmap of all heap tuple locations
  */
 int64
-gistgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
+gistgetbitmap(IndexScanDesc scan, Node *n)
 {
-<<<<<<< HEAD
-	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	Node	   *n = (Node *) PG_GETARG_POINTER(1);
 	TIDBitmap  *tbm;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 	int64		ntids = 0;
 	GISTSearchItem fakeItem;
@@ -774,11 +769,7 @@ gistgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 		tbm = (TIDBitmap *) n;
 
 	if (!so->qual_ok)
-<<<<<<< HEAD
-		PG_RETURN_POINTER(tbm);
-=======
-		return 0;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+		return (Node *) tbm;
 
 	pgstat_count_index_scan(scan->indexRelation);
 
@@ -809,11 +800,7 @@ gistgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 		pfree(item);
 	}
 
-<<<<<<< HEAD
-	PG_RETURN_POINTER(tbm);
-=======
-	return ntids;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	return (Node *) tbm;
 }
 
 /*

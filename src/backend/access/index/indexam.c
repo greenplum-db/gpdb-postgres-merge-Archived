@@ -583,13 +583,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 Node *
 index_getbitmap(IndexScanDesc scan, Node *bitmap)
 {
-<<<<<<< HEAD
-	FmgrInfo   *procedure;
-	Node		*bm;
-=======
-	int64		ntids;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
-
 	SCAN_CHECKS;
 	CHECK_SCAN_PROCEDURE(amgetbitmap);
 
@@ -599,19 +592,7 @@ index_getbitmap(IndexScanDesc scan, Node *bitmap)
 	/*
 	 * have the am's getbitmap proc do all the work.
 	 */
-<<<<<<< HEAD
-	bm = (Node *) DatumGetPointer(FunctionCall2(procedure,
-									  PointerGetDatum(scan),
-									  PointerGetDatum(bitmap)));
-
-	return bm;
-=======
-	ntids = scan->indexRelation->rd_amroutine->amgetbitmap(scan, bitmap);
-
-	pgstat_count_index_tuples(scan->indexRelation, ntids);
-
-	return ntids;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	return scan->indexRelation->rd_amroutine->amgetbitmap(scan, bitmap);
 }
 
 /* ----------------

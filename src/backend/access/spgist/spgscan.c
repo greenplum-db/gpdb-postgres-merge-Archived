@@ -594,8 +594,10 @@ storeBitmap(SpGistScanOpaque so, ItemPointer heapPtr,
 }
 
 int64
-spggetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
+spggetbitmap(IndexScanDesc scan, Node *n)
 {
+	TIDBitmap *tbm;
+
 	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
 
 	if (tbm == NULL)
@@ -612,11 +614,7 @@ spggetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 
 	spgWalk(scan->indexRelation, so, true, storeBitmap, scan->xs_snapshot);
 
-<<<<<<< HEAD
-	PG_RETURN_POINTER(tbm);
-=======
-	return so->ntids;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	return (Node *) tbm;
 }
 
 /* storeRes subroutine for gettuple case */
