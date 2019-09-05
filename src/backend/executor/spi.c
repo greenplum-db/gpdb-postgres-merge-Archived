@@ -48,15 +48,7 @@
 #include "cdb/memquota.h"
 #include "parser/analyze.h"
 
-<<<<<<< HEAD
-/*
- * These global variables are part of the API for various SPI functions
- * (a horrible API choice, but it's too late now).  To reduce the risk of
- * interference between different SPI callers, we save and restore them
- * when entering/exiting a SPI nesting level.
- */
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
 uint64		SPI_processed = 0;
 Oid			SPI_lastoid = InvalidOid;
 SPITupleTable *SPI_tuptable = NULL;
@@ -77,22 +69,14 @@ static void _SPI_prepare_oneshot_plan(const char *src, SPIPlanPtr plan);
 
 static int _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				  Snapshot snapshot, Snapshot crosscheck_snapshot,
-<<<<<<< HEAD
-				  bool read_only, bool fire_triggers, int64 tcount);
-=======
 				  bool read_only, bool fire_triggers, uint64 tcount);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 static ParamListInfo _SPI_convert_params(int nargs, Oid *argtypes,
 					Datum *Values, const char *Nulls);
 
-<<<<<<< HEAD
 static void _SPI_assign_query_mem(QueryDesc *queryDesc);
 
-static int	_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, int64 tcount);
-=======
 static int	_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 static void _SPI_error_callback(void *arg);
 
@@ -1893,15 +1877,7 @@ spi_printtup(TupleTableSlot *slot, DestReceiver *self)
 		/* Double the size of the pointer array */
 		tuptable->free = tuptable->alloced;
 		tuptable->alloced += tuptable->free;
-<<<<<<< HEAD
-		/* 
-		 * 74a379b984d4df91acec2436a16c51caee3526af uses repalloc_huge(),
-		 * but this is not yet backported from PG
-		 */
-		tuptable->vals = (HeapTuple *) repalloc(tuptable->vals,
-=======
 		tuptable->vals = (HeapTuple *) repalloc_huge(tuptable->vals,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 									  tuptable->alloced * sizeof(HeapTuple));
 	}
 
@@ -2117,11 +2093,7 @@ _SPI_prepare_oneshot_plan(const char *src, SPIPlanPtr plan)
 static int
 _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				  Snapshot snapshot, Snapshot crosscheck_snapshot,
-<<<<<<< HEAD
-				  bool read_only, bool fire_triggers, int64 tcount)
-=======
 				  bool read_only, bool fire_triggers, uint64 tcount)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	int			my_res = 0;
 	uint64		my_processed = 0;
@@ -2392,13 +2364,6 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 
 					if (strncmp(completionTag, "SELECT ", 7) == 0)
 						_SPI_current->processed =
-<<<<<<< HEAD
-							strtoul(completionTag + 7, NULL, 10);
-					else
-					{
-						/* Must be a CREATE ... WITH NO DATA */
-						Assert(ctastmt->into->skipData);
-=======
 							pg_strtouint64(completionTag + 7, NULL, 10);
 					else
 					{
@@ -2408,7 +2373,6 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 						 */
 						Assert(ctastmt->if_not_exists ||
 							   ctastmt->into->skipData);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 						_SPI_current->processed = 0;
 					}
 
@@ -2572,11 +2536,7 @@ _SPI_assign_query_mem(QueryDesc * queryDesc)
 }
 
 static int
-<<<<<<< HEAD
-_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, int64 tcount)
-=======
 _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	int			operation = queryDesc->operation;
 	int			eflags;
