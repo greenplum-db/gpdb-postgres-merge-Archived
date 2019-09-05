@@ -76,7 +76,6 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/clog.h"
 #include "access/commit_ts.h"
 #include "access/multixact.h"
@@ -84,8 +83,6 @@
 #include "access/subtrans.h"
 #include "access/twophase.h"
 #include "commands/async.h"
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "pg_trace.h"
@@ -382,7 +379,6 @@ NumLWLocksByNamedTranches(void)
 	int			numLocks = 0;
 	int			i;
 
-<<<<<<< HEAD
 	/*
 	 * Possibly this logic should be spread out among the affected modules,
 	 * the same way that shmem space estimation is done.  But for now, there
@@ -439,10 +435,9 @@ NumLWLocksByNamedTranches(void)
 	 */
 	lock_addin_request_allowed = false;
 	numLocks += Max(lock_addin_request, NUM_USER_DEFINED_LWLOCKS);
-=======
+
 	for (i = 0; i < NamedLWLockTrancheRequests; i++)
 		numLocks += NamedLWLockTrancheRequestArray[i].num_lwlocks;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	return numLocks;
 }
@@ -1380,17 +1375,7 @@ LWLockAcquire(LWLock *lock, LWLockMode mode)
 		lwstats->block_count++;
 #endif
 
-<<<<<<< HEAD
-		for (c = 0; c < num_held_lwlocks; c++)
-		{
-			if (held_lwlocks[c].lock == lock  )
-				elog(PANIC, "Waiting on lock already held!");
-		}
-
-
-=======
 		LWLockReportWaitStart(lock);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		TRACE_POSTGRESQL_LWLOCK_WAIT_START(T_NAME(lock), T_ID(lock), mode);
 
 		for (;;)
