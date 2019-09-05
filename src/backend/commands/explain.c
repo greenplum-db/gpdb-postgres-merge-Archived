@@ -3,13 +3,9 @@
  * explain.c
  *	  Explain query execution plans
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
@@ -887,17 +883,10 @@ report_triggers(ResultRelInfo *rInfo, bool show_relname, ExplainState *es)
 			if (show_relname)
 				appendStringInfo(es->str, " on %s", relname);
 			if (es->timing)
-<<<<<<< HEAD
-				appendStringInfo(es->str, ": time=%.3f calls=%.ld\n",
-								 1000.0 * instr->total, instr->ntuples);
-			else
-				appendStringInfo(es->str, ": calls=%.ld\n", instr->ntuples);
-=======
 				appendStringInfo(es->str, ": time=%.3f calls=%.0f\n",
 								 1000.0 * instr->total, instr->ntuples);
 			else
 				appendStringInfo(es->str, ": calls=%.0f\n", instr->ntuples);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 		else
 		{
@@ -1042,14 +1031,11 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 	switch (nodeTag(plan))
 	{
 		case T_SeqScan:
-<<<<<<< HEAD
 		case T_DynamicSeqScan:
 		case T_ExternalScan:
 		case T_DynamicIndexScan:
 		case T_ShareInputScan:
-=======
 		case T_SampleScan:
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		case T_IndexScan:
 		case T_IndexOnlyScan:
 		case T_BitmapHeapScan:
@@ -1082,7 +1068,6 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 			break;
 	}
 
-<<<<<<< HEAD
 	/* initPlan-s */
 	if (planstate->initPlan)
 		ExplainPreScanSubPlans(planstate->initPlan, rels_used);
@@ -1173,9 +1158,7 @@ ExplainPreScanSubPlans(List *plans, Bitmapset **rels_used)
 
 		ExplainPreScanNode(sps->planstate, rels_used);
 	}
-=======
 	return planstate_tree_walker(planstate, ExplainPreScanNode, rels_used);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
@@ -1354,19 +1337,16 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_SeqScan:
 			pname = sname = "Seq Scan";
 			break;
-<<<<<<< HEAD
 		case T_DynamicSeqScan:
 			pname = sname = "Dynamic Seq Scan";
 			break;
 		case T_ExternalScan:
 			pname = sname = "External Scan";
-=======
 		case T_SampleScan:
 			pname = sname = "Sample Scan";
 			break;
 		case T_Gather:
 			pname = sname = "Gather";
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			break;
 		case T_IndexScan:
 			pname = sname = "Index Scan";
@@ -1413,13 +1393,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			pname = sname = "WorkTable Scan";
 			break;
 		case T_ForeignScan:
-<<<<<<< HEAD
 			pname = sname = "Foreign Scan";
-		break;
-		case T_ShareInputScan:
-			pname = sname = "Shared Scan";
-=======
-			sname = "Foreign Scan";
 			switch (((ForeignScan *) plan)->operation)
 			{
 				case CMD_SELECT:
@@ -1442,7 +1416,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 					pname = "???";
 					break;
 			}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+		break;
+		case T_ShareInputScan:
+			pname = sname = "Shared Scan";
 			break;
 		case T_CustomScan:
 			sname = "Custom Scan";
@@ -1714,24 +1690,18 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			ExplainPropertyText("Subplan Name", plan_name, es);
 		if (custom_name)
 			ExplainPropertyText("Custom Plan Provider", custom_name, es);
-<<<<<<< HEAD
 
 		show_dispatch_info(es->currentSlice, es, plan);
-=======
 		ExplainPropertyBool("Parallel Aware", plan->parallel_aware, es);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	switch (nodeTag(plan))
 	{
 		case T_SeqScan:
-<<<<<<< HEAD
 		case T_DynamicSeqScan:
 		case T_ExternalScan:
 		case T_DynamicIndexScan:
-=======
 		case T_SampleScan:
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		case T_BitmapHeapScan:
 		case T_DynamicBitmapHeapScan:
 		case T_TidScan:
@@ -2054,14 +2024,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			if (es->analyze)
 				show_tidbitmap_info((BitmapHeapScanState *) planstate, es);
 			break;
-<<<<<<< HEAD
 		}
-=======
 		case T_SampleScan:
 			show_tablesample(((SampleScan *) plan)->tablesample,
 							 planstate, ancestors, es);
 			/* FALL THRU to print additional fields the same as SeqScan */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		case T_SeqScan:
 		case T_DynamicSeqScan:
 		case T_ExternalScan:
@@ -2353,7 +2320,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				ExplainCloseGroup("Worker", NULL, true, es);
 			}
 		}
-<<<<<<< HEAD
 		else
 		{
 			ExplainPropertyLong("Shared Hit Blocks", usage->shared_blks_hit, es);
@@ -2372,11 +2338,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				ExplainPropertyFloat("I/O Write Time", INSTR_TIME_GET_MILLISEC(usage->blk_write_time), 3, es);
 			}
 		}
-=======
 
 		if (opened_group)
 			ExplainCloseGroup("Workers", "Workers", false, es);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	/* Get ready to display the child plans */
@@ -3427,11 +3391,8 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 	switch (nodeTag(plan))
 	{
 		case T_SeqScan:
-<<<<<<< HEAD
 		case T_DynamicSeqScan:
-=======
 		case T_SampleScan:
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		case T_IndexScan:
 		case T_DynamicIndexScan:
 		case T_IndexOnlyScan:
@@ -3767,14 +3728,12 @@ ExplainSubPlans(List *plans, List *ancestors,
 		SubPlanState *sps = (SubPlanState *) lfirst(lst);
 		SubPlan    *sp = (SubPlan *) sps->xprstate.expr;
 
-<<<<<<< HEAD
 		/* Subplan might have its own root slice */
 		if (sliceTable && sp->qDispSliceId > 0)
 		{
 			es->currentSlice = (Slice *)list_nth(sliceTable->slices,
 												 sp->qDispSliceId);
 		}
-=======
 		/*
 		 * There can be multiple SubPlan nodes referencing the same physical
 		 * subplan (same plan_id, which is its index in PlannedStmt.subplans).
@@ -3789,7 +3748,6 @@ ExplainSubPlans(List *plans, List *ancestors,
 			continue;
 		es->printed_subplans = bms_add_member(es->printed_subplans,
 											  sp->plan_id);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		ExplainNode(sps->planstate, ancestors,
 					relationship, sp->plan_name, es);
