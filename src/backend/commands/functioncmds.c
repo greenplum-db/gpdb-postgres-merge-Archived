@@ -511,12 +511,9 @@ compute_common_attribute(DefElem *defel,
 						 List **set_items,
 						 DefElem **cost_item,
 						 DefElem **rows_item,
-<<<<<<< HEAD
+						 DefElem **parallel_item,
 						 DefElem **data_access_item,
 						 DefElem **exec_location_item)
-=======
-						 DefElem **parallel_item)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	if (strcmp(defel->defname, "volatility") == 0)
 	{
@@ -564,7 +561,13 @@ compute_common_attribute(DefElem *defel,
 
 		*rows_item = defel;
 	}
-<<<<<<< HEAD
+	else if (strcmp(defel->defname, "parallel") == 0)
+	{
+		if (*parallel_item)
+			goto duplicate_error;
+
+		*parallel_item = defel;
+	}
 	else if (strcmp(defel->defname, "data_access") == 0)
 	{
 		if (*data_access_item)
@@ -578,14 +581,6 @@ compute_common_attribute(DefElem *defel,
 			goto duplicate_error;
 
 		*exec_location_item = defel;
-=======
-	else if (strcmp(defel->defname, "parallel") == 0)
-	{
-		if (*parallel_item)
-			goto duplicate_error;
-
-		*parallel_item = defel;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 	else
 		return false;
@@ -619,7 +614,6 @@ interpret_func_volatility(DefElem *defel)
 }
 
 static char
-<<<<<<< HEAD
 interpret_data_access(DefElem *defel)
 {
 	char *str = strVal(defel->arg);
@@ -723,7 +717,10 @@ validate_sql_exec_location(char exec_location, bool proretset)
 
 		default:
 			elog(ERROR, "unrecognized EXECUTE ON type '%c'", exec_location);
-=======
+	}
+}
+
+static char
 interpret_func_parallel(DefElem *defel)
 {
 	char	   *str = strVal(defel->arg);
@@ -740,7 +737,6 @@ interpret_func_parallel(DefElem *defel)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("parameter \"parallel\" must be SAFE, RESTRICTED, or UNSAFE")));
 		return PROPARALLEL_UNSAFE;		/* keep compiler quiet */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 }
 
@@ -793,12 +789,9 @@ compute_attributes_sql_style(List *options,
 							 ArrayType **proconfig,
 							 float4 *procost,
 							 float4 *prorows,
-<<<<<<< HEAD
+							 char *parallel_p,
 							 char *data_access,
 							 char *exec_location)
-=======
-							 char *parallel_p)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	ListCell   *option;
 	DefElem    *as_item = NULL;
@@ -812,12 +805,9 @@ compute_attributes_sql_style(List *options,
 	List	   *set_items = NIL;
 	DefElem    *cost_item = NULL;
 	DefElem    *rows_item = NULL;
-<<<<<<< HEAD
+	DefElem    *parallel_item = NULL;
 	DefElem    *data_access_item = NULL;
 	DefElem    *exec_location_item = NULL;
-=======
-	DefElem    *parallel_item = NULL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	foreach(option, options)
 	{
@@ -863,12 +853,9 @@ compute_attributes_sql_style(List *options,
 										  &set_items,
 										  &cost_item,
 										  &rows_item,
-<<<<<<< HEAD
+										  &parallel_item,
 										  &data_access_item,
 										  &exec_location_item))
-=======
-										  &parallel_item))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{
 			/* recognized common option */
 			continue;
@@ -930,16 +917,12 @@ compute_attributes_sql_style(List *options,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("ROWS must be positive")));
 	}
-<<<<<<< HEAD
-
+	if (parallel_item)
+		*parallel_p = interpret_func_parallel(parallel_item);
 	if (data_access_item)
 		*data_access = interpret_data_access(data_access_item);
 	if (exec_location_item)
 		*exec_location = interpret_exec_location(exec_location_item);
-=======
-	if (parallel_item)
-		*parallel_p = interpret_func_parallel(parallel_item);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 
@@ -1235,15 +1218,12 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	HeapTuple	languageTuple;
 	Form_pg_language languageStruct;
 	List	   *as_clause;
-<<<<<<< HEAD
+	char		parallel;
 	List       *describeQualName = NIL;
 	Oid         describeFuncOid  = InvalidOid;
 	char		dataAccess;
 	char		execLocation;
 	ObjectAddress objAddr;
-=======
-	char		parallel;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Convert list of names to a name and namespace */
 	namespaceId = QualifiedNameGetCreationNamespace(stmt->funcname,
@@ -1264,24 +1244,17 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	proconfig = NULL;
 	procost = -1;				/* indicates not set */
 	prorows = -1;				/* indicates not set */
-<<<<<<< HEAD
+	parallel = PROPARALLEL_UNSAFE;
 	dataAccess = '\0';			/* indicates not set */
 	execLocation = '\0';		/* indicates not set */
-=======
-	parallel = PROPARALLEL_UNSAFE;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* override attributes from explicit list */
 	compute_attributes_sql_style(stmt->options,
 								 &as_clause, &language, &transformDefElem,
 								 &isWindowFunc, &volatility,
 								 &isStrict, &security, &isLeakProof,
-<<<<<<< HEAD
-								 &proconfig, &procost, &prorows,
+								 &proconfig, &procost, &prorows, &parallel,
 								 &dataAccess, &execLocation);
-=======
-								 &proconfig, &procost, &prorows, &parallel);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Look up the language and validate permissions */
 	languageTuple = SearchSysCache1(LANGNAME, PointerGetDatum(language));
@@ -1629,12 +1602,9 @@ AlterFunction(AlterFunctionStmt *stmt)
 									 &set_items,
 									 &cost_item,
 									 &rows_item,
-<<<<<<< HEAD
+									 &parallel_item,
 									 &data_access_item,
 									 &exec_location_item) == false)
-=======
-									 &parallel_item) == false)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			elog(ERROR, "option \"%s\" not recognized", defel->defname);
 	}
 
@@ -1706,7 +1676,8 @@ AlterFunction(AlterFunctionStmt *stmt)
 		tup = heap_modify_tuple(tup, RelationGetDescr(rel),
 								repl_val, repl_null, repl_repl);
 	}
-<<<<<<< HEAD
+	if (parallel_item)
+		procForm->proparallel = interpret_func_parallel(parallel_item);
 	if (data_access_item)
 	{
 		Datum		repl_val[Natts_pg_proc];
@@ -1752,10 +1723,6 @@ AlterFunction(AlterFunctionStmt *stmt)
 							 procForm->prolang);
 	validate_sql_exec_location(exec_location,
 							   procForm->proretset);
-=======
-	if (parallel_item)
-		procForm->proparallel = interpret_func_parallel(parallel_item);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Do the update */
 	simple_heap_update(rel, &tup->t_self, tup);

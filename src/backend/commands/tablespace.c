@@ -442,7 +442,6 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	/* We keep the lock on pg_tablespace until commit */
 	heap_close(rel, NoLock);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -459,8 +458,6 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 						   "CREATE", "TABLESPACE");
 	}
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	return tablespaceoid;
 #else							/* !HAVE_SYMLINK */
 	ereport(ERROR,
@@ -468,7 +465,6 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 			 errmsg("tablespaces are not supported on this platform")));
 	return InvalidOid;			/* keep compiler quiet */
 #endif   /* HAVE_SYMLINK */
-<<<<<<< HEAD
 }
 
 /*
@@ -511,8 +507,6 @@ is_tablespace_empty(const Oid tablespace_oid)
 	pfree(linkloc_with_version_dir);
 
 	return is_empty;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 
@@ -1089,7 +1083,6 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 remove_symlink:
 	linkloc = pstrdup(linkloc_with_version_dir);
 	get_parent_directory(linkloc);
-<<<<<<< HEAD
 
 	/* Remove the symlink target directory if it exists or is valid. */
 	rllen = readlink(linkloc, link_target_dir, sizeof(link_target_dir));
@@ -1118,8 +1111,6 @@ remove_symlink:
 	}
 
 
-	if (lstat(linkloc, &st) == 0 && S_ISDIR(st.st_mode))
-=======
 	if (lstat(linkloc, &st) < 0)
 	{
 		int			saved_errno = errno;
@@ -1130,7 +1121,6 @@ remove_symlink:
 						linkloc)));
 	}
 	else if (S_ISDIR(st.st_mode))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		if (rmdir(linkloc) < 0)
 		{

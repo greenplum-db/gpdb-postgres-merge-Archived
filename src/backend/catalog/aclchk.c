@@ -3288,7 +3288,6 @@ ExecGrant_Namespace(InternalGrant *istmt)
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
 
-<<<<<<< HEAD
 		/* MPP-6929: metadata tracking */
 		if (Gp_role == GP_ROLE_DISPATCH)
 			MetaTrackUpdObject(NamespaceRelationId,
@@ -3297,10 +3296,9 @@ ExecGrant_Namespace(InternalGrant *istmt)
 							   "PRIVILEGE", 
 							   (istmt->is_grant) ? "GRANT" : "REVOKE"
 					);
-=======
+
 		/* Update initial privileges for extensions */
 		recordExtensionInitPriv(nspid, NamespaceRelationId, 0, new_acl);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(NamespaceRelationId, HeapTupleGetOid(tuple), 0,

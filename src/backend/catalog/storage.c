@@ -86,11 +86,7 @@ RelationCreateStorage(RelFileNode rnode, char relpersistence, char relstorage)
 	switch (relpersistence)
 	{
 		case RELPERSISTENCE_TEMP:
-<<<<<<< HEAD
-			backend = TempRelBackendId;
-=======
 			backend = BackendIdForTempRelations();
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			needs_wal = false;
 			break;
 		case RELPERSISTENCE_UNLOGGED:

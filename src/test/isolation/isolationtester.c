@@ -736,10 +736,6 @@ try_complete_step(Step *step, int flags)
 			/* If it's OK for the step to block, check whether it has. */
 			if (flags & STEP_NONBLOCK)
 			{
-<<<<<<< HEAD
-				fprintf(stderr, "lock wait query failed: %s",
-						PQerrorMessage(conns[0]));
-=======
 				bool		waiting;
 
 				res = PQexecPrepared(conns[0], PREP_WAITING, 1,
@@ -749,7 +745,7 @@ try_complete_step(Step *step, int flags)
 					PQntuples(res) != 1)
 				{
 					fprintf(stderr, "lock wait query failed: %s",
-							PQerrorMessage(conn));
+							PQerrorMessage(conns[0]));
 					exit_nicely();
 				}
 				waiting = ((PQgetvalue(res, 0, 0))[0] == 't');
@@ -807,7 +803,6 @@ try_complete_step(Step *step, int flags)
 			{
 				fprintf(stderr, "step %s timed out after 75 seconds\n",
 						step->name);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				exit_nicely();
 			}
 		}

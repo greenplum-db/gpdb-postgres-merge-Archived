@@ -835,11 +835,8 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			case OBJECT_FDW:
 			case OBJECT_FOREIGN_SERVER:
 			case OBJECT_EVENT_TRIGGER:
-<<<<<<< HEAD
 			case OBJECT_EXTPROTOCOL:
-=======
 			case OBJECT_ACCESS_METHOD:
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				address = get_object_address_unqualified(objtype,
 														 objname, missing_ok);
 				break;
@@ -2289,12 +2286,9 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 			break;
 		case OBJECT_TSPARSER:
 		case OBJECT_TSTEMPLATE:
-<<<<<<< HEAD
+		case OBJECT_ACCESS_METHOD:
 		case OBJECT_RESQUEUE:
 		case OBJECT_RESGROUP:
-=======
-		case OBJECT_ACCESS_METHOD:
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			/* We treat these object types as being owned by superusers */
 			if (!superuser_arg(roleid))
 				ereport(ERROR,
@@ -3309,18 +3303,6 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
-<<<<<<< HEAD
-		case OCLASS_EXTPROTOCOL:
-			{
-				appendStringInfo(&buffer, _("protocol %s"),
-								 ExtProtocolGetNameByOid(object->objectId));
-				break;
-			}
-
-		case OCLASS_COMPRESSION:
-			{
-				elog(NOTICE, "NOT YET IMPLEMENTED");
-=======
 		case OCLASS_AM:
 			{
 				HeapTuple	tup;
@@ -3333,7 +3315,19 @@ getObjectDescription(const ObjectAddress *object)
 				appendStringInfo(&buffer, _("access method %s"),
 							 NameStr(((Form_pg_am) GETSTRUCT(tup))->amname));
 				ReleaseSysCache(tup);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+				break;
+			}
+
+		case OCLASS_EXTPROTOCOL:
+			{
+				appendStringInfo(&buffer, _("protocol %s"),
+								 ExtProtocolGetNameByOid(object->objectId));
+				break;
+			}
+
+		case OCLASS_COMPRESSION:
+			{
+				elog(NOTICE, "NOT YET IMPLEMENTED");
 				break;
 			}
 

@@ -135,13 +135,10 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 			finalfuncName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "combinefunc") == 0)
 			combinefuncName = defGetQualifiedName(defel);
-<<<<<<< HEAD
 		/* Alias for COMBINEFUNC, for backwards-compatibility with
 		 * GPDB 5 and below */
 		else if (pg_strcasecmp(defel->defname, "prefunc") == 0)
 			combinefuncName = defGetQualifiedName(defel);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		else if (pg_strcasecmp(defel->defname, "serialfunc") == 0)
 			serialfuncName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "deserialfunc") == 0)
@@ -437,56 +434,8 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
 	 */
-<<<<<<< HEAD
 	ObjectAddress objAddr;
-	objAddr = AggregateCreate(aggName,				/* aggregate name */
-							  aggNamespace,		/* namespace */
-							  aggKind,
-							  numArgs,
-							  numDirectArgs,
-							  parameterTypes,
-							  PointerGetDatum(allParameterTypes),
-							  PointerGetDatum(parameterModes),
-							  PointerGetDatum(parameterNames),
-							  parameterDefaults,
-							  variadicArgType,
-							  transfuncName,		/* step function name */
-							  finalfuncName,		/* final function name */
-							  combinefuncName,		/* combine function name */
-							  serialfuncName,		/* serial function name */
-							  deserialfuncName,	/* deserial function name */
-							  mtransfuncName,		/* fwd trans function name */
-							  minvtransfuncName,	/* inv trans function name */
-							  mfinalfuncName,		/* final function name */
-							  finalfuncExtraArgs,
-							  mfinalfuncExtraArgs,
-							  sortoperatorName,	/* sort operator name */
-							  transTypeId, /* transition data type */
-							  transSpace,	/* transition space */
-							  mtransTypeId,		/* transition data type */
-							  mtransSpace, /* transition space */
-							  initval,		/* initial condition */
-							  minitval);	/* initial condition */
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		DefineStmt * stmt = makeNode(DefineStmt);
-		stmt->kind = OBJECT_AGGREGATE;
-		stmt->oldstyle = oldstyle;
-		stmt->defnames = name;
-		stmt->args = orig_args;
-		stmt->definition = parameters;
-		CdbDispatchUtilityStatement((Node *) stmt,
-									DF_CANCEL_ON_ERROR|
-									DF_WITH_SNAPSHOT|
-									DF_NEED_TWO_PHASE,
-									GetAssignedOidsForDispatch(),
-									NULL);
-	}
-
-	return objAddr;
-=======
-	return AggregateCreate(aggName,		/* aggregate name */
+	objAddr = AggregateCreate(aggName,		/* aggregate name */
 						   aggNamespace,		/* namespace */
 						   aggKind,
 						   numArgs,
@@ -515,5 +464,22 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 						   initval,		/* initial condition */
 						   minitval,	/* initial condition */
 						   proparallel);		/* parallel safe? */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		DefineStmt * stmt = makeNode(DefineStmt);
+		stmt->kind = OBJECT_AGGREGATE;
+		stmt->oldstyle = oldstyle;
+		stmt->defnames = name;
+		stmt->args = orig_args;
+		stmt->definition = parameters;
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+	}
+
+	return objAddr;
 }

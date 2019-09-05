@@ -3,13 +3,9 @@
  * pquery.c
  *	  POSTGRES process query command code
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -61,11 +57,7 @@ static void ProcessQuery(Portal portal, /* Resource queueing need SQL, so we pas
 static void FillPortalStore(Portal portal, bool isTopLevel);
 static uint64 RunFromStore(Portal portal, ScanDirection direction, uint64 count,
 			 DestReceiver *dest);
-<<<<<<< HEAD
 static uint64 PortalRunSelect(Portal portal, bool forward, int64 count,
-=======
-static uint64 PortalRunSelect(Portal portal, bool forward, long count,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				DestReceiver *dest);
 static void PortalRunUtility(Portal portal, Node *utilityStmt,
 				 bool isTopLevel, bool setHoldSnapshot,
@@ -316,12 +308,8 @@ ProcessQuery(Portal portal,
 		{
 			case CMD_SELECT:
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-<<<<<<< HEAD
-						 "SELECT " UINT64_FORMAT "", queryDesc->es_processed);
-=======
 						 "SELECT " UINT64_FORMAT,
 						 queryDesc->estate->es_processed);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				break;
 			case CMD_INSERT:
 				if (queryDesc->es_processed == 1)
@@ -329,17 +317,6 @@ ProcessQuery(Portal portal,
 				else
 					lastOid = InvalidOid;
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-<<<<<<< HEAD
-						 "INSERT %u " UINT64_FORMAT "", lastOid, queryDesc->es_processed);
-				break;
-			case CMD_UPDATE:
-				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-						 "UPDATE " UINT64_FORMAT "", queryDesc->es_processed);
-				break;
-			case CMD_DELETE:
-				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-						 "DELETE " UINT64_FORMAT "", queryDesc->es_processed);
-=======
 						 "INSERT %u " UINT64_FORMAT,
 						 lastOid, queryDesc->estate->es_processed);
 				break;
@@ -352,7 +329,6 @@ ProcessQuery(Portal portal,
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
 						 "DELETE " UINT64_FORMAT,
 						 queryDesc->estate->es_processed);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				break;
 			default:
 				strcpy(completionTag, "???");
@@ -935,13 +911,8 @@ PortalRun(Portal portal, int64 count, bool isTopLevel,
 		  DestReceiver *dest, DestReceiver *altdest,
 		  char *completionTag)
 {
-<<<<<<< HEAD
 	bool		result = false;
-	uint32		nprocessed;
-=======
-	bool		result;
 	uint64		nprocessed;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	ResourceOwner saveTopTransactionResourceOwner;
 	MemoryContext saveTopTransactionContext;
 	Portal		saveActivePortal;
@@ -967,17 +938,7 @@ PortalRun(Portal portal, int64 count, bool isTopLevel,
 	/*
 	 * Check for improper portal use, and mark portal active.
 	 */
-<<<<<<< HEAD
-	if (portal->status != PORTAL_READY && portal->status != PORTAL_QUEUE)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("portal \"%s\" cannot be run", portal->name)));
-	/* Perform the state transition */
-	portal->status = PORTAL_ACTIVE;
-	portal->activeSubid = GetCurrentSubTransactionId();
-=======
 	MarkPortalActive(portal);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Set up global portal context pointers.
@@ -1197,11 +1158,7 @@ PortalRunSelect(Portal portal,
 		{
 			if (nprocessed > 0)
 				portal->atStart = false;		/* OK to go backward now */
-<<<<<<< HEAD
-			if (count == 0 || nprocessed < count)
-=======
 			if (count == 0 || nprocessed < (uint64) count)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				portal->atEnd = true;	/* we retrieved 'em all */
 			portal->portalPos += nprocessed;
 		}
@@ -1243,11 +1200,7 @@ PortalRunSelect(Portal portal,
 				portal->atEnd = false;	/* OK to go forward now */
 				portal->portalPos++;	/* adjust for endpoint case */
 			}
-<<<<<<< HEAD
-			if (count == 0 || nprocessed < count)
-=======
 			if (count == 0 || nprocessed < (uint64) count)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			{
 				portal->atStart = true; /* we retrieved 'em all */
 				portal->portalPos = 0;
@@ -1670,11 +1623,7 @@ PortalRunFetch(Portal portal,
 			   int64 count,
 			   DestReceiver *dest)
 {
-<<<<<<< HEAD
 	uint64		result = 0;
-=======
-	uint64		result;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	Portal		saveActivePortal;
 	ResourceOwner saveResourceOwner;
 	MemoryContext savePortalContext;
@@ -1767,11 +1716,7 @@ PortalRunFetch(Portal portal,
  * count <= 0 is interpreted as a no-op: the destination gets started up
  * and shut down, but nothing else happens.  Also, count == FETCH_ALL is
  * interpreted as "all rows".  (cf FetchStmt.howMany)
-<<<<<<< HEAD
- * 
-=======
  *
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Returns number of rows processed (suitable for use in result tag)
  */
 static uint64
@@ -1851,11 +1796,7 @@ DoPortalRunFetch(Portal portal,
 				}
 				else
 				{
-<<<<<<< HEAD
 					uint64		pos = portal->portalPos;
-=======
-					long		pos = (long) portal->portalPos;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 					if (portal->atEnd)
 						pos++;	/* need one extra fetch if off end */
@@ -2031,7 +1972,6 @@ DoPortalRewind(Portal portal)
 	portal->atStart = true;
 	portal->atEnd = false;
 	portal->portalPos = 0;
-<<<<<<< HEAD
 }
 
 /*
@@ -2047,6 +1987,4 @@ PortalBackoffEntryInit(Portal portal)
 		/* Initialize the SHM backend entry */
 		BackoffBackendEntryInit(gp_session_id, gp_command_count, portal->queueId);
 	}
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }

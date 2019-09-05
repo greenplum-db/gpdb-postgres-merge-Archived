@@ -2235,7 +2235,6 @@ index_update_stats(Relation rel,
 		BlockNumber relpages;
 		BlockNumber relallvisible;
 
-<<<<<<< HEAD
 		if (RelationIsAoRows(rel) || RelationIsAoCols(rel))
 		{
 			int64           totalbytes;
@@ -2257,11 +2256,7 @@ index_update_stats(Relation rel,
 		 * tables, but disable them for now by setting relallvisible to 0.
 		 */
 		if (rd_rel->relkind != RELKIND_INDEX && !RelationIsAppendOptimized(rel))
-			relallvisible = visibilitymap_count(rel);
-=======
-		if (rd_rel->relkind != RELKIND_INDEX)
 			visibilitymap_count(rel, &relallvisible, NULL);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		else	/* don't bother for indexes */
 			relallvisible = 0;
 

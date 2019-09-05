@@ -178,11 +178,10 @@ typedef enum ObjectClass
 	OCLASS_POLICY,				/* pg_policy */
 	OCLASS_TRANSFORM,			/* pg_transform */
 	OCLASS_EXTPROTOCOL,			/* pg_extprotocol */
-	OCLASS_COMPRESSION,			/* pg_compression */
-	MAX_OCLASS					/* MUST BE LAST */
+	OCLASS_COMPRESSION			/* pg_compression */
 } ObjectClass;
 
-#define LAST_OCLASS		OCLASS_TRANSFORM
+#define LAST_OCLASS		OCLASS_COMPRESSION
 
 
 /* in dependency.c */

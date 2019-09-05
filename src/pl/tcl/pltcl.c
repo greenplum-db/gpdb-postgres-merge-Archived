@@ -1106,18 +1106,14 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 			 ************************************************************/
 			attnum = SPI_fnumber(tupdesc, ret_name);
 			if (attnum == SPI_ERROR_NOATTRIBUTE)
-<<<<<<< HEAD
 			{
 				if (strcmp(ret_name, ".tupno") == 0)
 					continue;
-				elog(ERROR, "invalid attribute \"%s\"", ret_name);
-			}
-=======
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("unrecognized attribute \"%s\"",
 								ret_name)));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+			}
 			if (attnum <= 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2408,10 +2404,6 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		pltcl_subtrans_abort(interp, oldcontext, oldowner);
 
 		MemoryContextDelete(plan_cxt);
-<<<<<<< HEAD
-		ckfree((char *) args);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		return TCL_ERROR;
 	}
@@ -2693,18 +2685,13 @@ pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
 	{
 		arrptr = &arrayname;
 		nameptr = &attname;
-<<<<<<< HEAD
 
 		/*
 		 * When outputting to an array, fill the ".tupno" element with the
 		 * current tuple number.  This will be overridden below if ".tupno" is
 		 * in use as an actual field name in the rowtype.
 		 */
-		snprintf(buf, sizeof(buf), "%d", tupno);
-		Tcl_SetVar2(interp, arrayname, ".tupno", buf, 0);
-=======
 		Tcl_SetVar2Ex(interp, arrayname, ".tupno", Tcl_NewWideIntObj(tupno), 0);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	for (i = 0; i < tupdesc->natts; i++)

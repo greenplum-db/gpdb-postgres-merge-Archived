@@ -24,11 +24,7 @@
  * is valid, but is not tracked by any resource owner.
  *
  * The same is true for historic snapshots used during logical decoding,
-<<<<<<< HEAD
  * their lifetime is managed separately (as they live longer than one xact.c
-=======
- * their lifetime is managed separately (as they live longer as one xact.c
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * transaction).
  *
  * These arrangements let us reset MyPgXact->xmin when there are no snapshots

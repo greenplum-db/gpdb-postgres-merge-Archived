@@ -3,13 +3,9 @@
  * tablecmds.c
  *	  Commands for creating and altering table structures and settings
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -41,12 +37,9 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
-<<<<<<< HEAD
+#include "catalog/pg_am.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_attribute_encoding.h"
-=======
-#include "catalog/pg_am.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "catalog/pg_collation.h"
 #include "catalog/pg_compression.h"
 #include "catalog/pg_constraint.h"
@@ -5587,12 +5580,9 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation *rel_p,
 			address =
 				ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
 									true, true, lockmode);
-<<<<<<< HEAD
-=======
 			break;
 		case AT_ReAddComment:	/* Re-add existing comment */
 			address = CommentObject((CommentStmt *) cmd->def);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			break;
 		case AT_AddIndexConstraint:		/* ADD CONSTRAINT USING INDEX */
 			address = ATExecAddIndexConstraint(tab, rel, (IndexStmt *) cmd->def,
@@ -12149,10 +12139,7 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 		Form_pg_constraint con;
 		Oid			relid;
 		Oid			confrelid;
-<<<<<<< HEAD
 		char		contype;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		bool		conislocal;
 
 		tup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(oldId));
@@ -12161,10 +12148,7 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 		con = (Form_pg_constraint) GETSTRUCT(tup);
 		relid = con->conrelid;
 		confrelid = con->confrelid;
-<<<<<<< HEAD
 		contype = con->contype;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		conislocal = con->conislocal;
 		ReleaseSysCache(tup);
 
@@ -12176,7 +12160,6 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 		 */
 		if (!conislocal)
 			continue;
-<<<<<<< HEAD
 
 		/*
 		 * When rebuilding an FK constraint that references the table we're
@@ -12186,8 +12169,6 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 		 */
 		if (relid != tab->relid && contype == CONSTRAINT_FOREIGN)
 			LockRelationOid(relid, AccessExclusiveLock);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		ATPostAlterTypeParse(oldId, relid, confrelid,
 							 (char *) lfirst(def_item),
@@ -14515,11 +14496,9 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
  * coninhcount and conislocal for inherited constraints are adjusted in
  * exactly the same way.
  *
-<<<<<<< HEAD
  * Common to ATExecDropInherit() and ATExecDetachPartition().
-=======
+ *
  * Return value is the address of the relation that is no longer parent.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 static void
 RemoveInheritance(Relation child_rel, Relation parent_rel, bool is_partition)

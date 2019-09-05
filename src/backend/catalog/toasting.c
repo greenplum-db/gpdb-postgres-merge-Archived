@@ -240,7 +240,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		 * problem that it might take up an OID that will conflict with some
 		 * old-cluster table we haven't seen yet.
 		 */
-<<<<<<< HEAD
 		/*
 		 * In Greenplum, partitioned tables are created in a single CREATE
 		 * TABLE statement instead of each member table individually. The
@@ -253,11 +252,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		 *	!OidIsValid(binary_upgrade_next_toast_pg_type_oid))
 		 *	return false;
 		 */
-=======
-		if (!OidIsValid(binary_upgrade_next_toast_pg_class_oid) ||
-			!OidIsValid(binary_upgrade_next_toast_pg_type_oid))
-			return false;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	/*

@@ -195,7 +195,7 @@ static CachedPlanSource *unnamed_stmt_psrc = NULL;
 /* assorted command-line switches */
 static const char *userDoption = NULL;	/* -D switch */
 static bool EchoQuery = false;	/* -E switch */
-<<<<<<< HEAD
+static bool UseSemiNewlineNewline = false;		/* -j switch */
 
 #ifndef _WIN32
 pthread_t main_tid = (pthread_t)0;
@@ -205,19 +205,6 @@ pthread_t main_tid = {0,0};
 
 /* if we're in the middle of dying, let our threads exit with some dignity */
 static volatile sig_atomic_t in_quickdie = false;
-
-/*
- * people who want to use EOF should #define DONTUSENEWLINE in
- * tcop/tcopdebug.h
- */
-#ifndef TCOP_DONTUSENEWLINE
-static int	UseNewLine = 1;		/* Use newlines query delimiters (the default) */
-#else
-static int	UseNewLine = 0;		/* Use EOF as query delimiters */
-#endif   /* TCOP_DONTUSENEWLINE */
-=======
-static bool UseSemiNewlineNewline = false;		/* -j switch */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* whether or not, and why, we were canceled by conflict with recovery */
 static bool RecoveryConflictPending = false;
@@ -3712,11 +3699,8 @@ ProcessInterrupts(const char* filename, int lineno)
 		bool		lock_timeout_occurred;
 		bool		stmt_timeout_occurred;
 
-<<<<<<< HEAD
 		elog(LOG,"Process interrupt for 'query cancel pending' (%s:%d)", filename, lineno);
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		/*
 		 * Don't allow query cancel interrupts while reading input from the
 		 * client, because we might lose sync in the FE/BE protocol.  (Die

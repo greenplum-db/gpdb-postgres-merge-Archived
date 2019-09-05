@@ -992,16 +992,17 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 				portal->activeSubid = parentSubid;
 
 				/*
-<<<<<<< HEAD
+				 * GPDB_96_MERGE_FIXME: We had this different comment here in GPDB.
+				 * Does this scenario happen in GPDB for some reason?
+				 *
 				 * Upper-level portals that failed while running in this
 				 * subtransaction must be forced into FAILED state, for the
 				 * same reasons discussed below.
-=======
+				 *
 				 * A MarkPortalActive() caller ran an upper-level portal in
 				 * this subtransaction and left the portal ACTIVE.  This can't
 				 * happen, but force the portal into FAILED state for the same
 				 * reasons discussed below.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				 *
 				 * We assume we can get away without forcing upper-level READY
 				 * portals to fail, even if they were run and then suspended.
@@ -1041,13 +1042,10 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 		 * We have to do this because they might refer to objects created or
 		 * changed in the failed subtransaction, leading to crashes within
 		 * ExecutorEnd when portalcmds.c tries to close down the portal.
-<<<<<<< HEAD
-=======
 		 * Currently, every MarkPortalActive() caller ensures it updates the
 		 * portal status again before relinquishing control, so ACTIVE can't
 		 * happen here.  If it does happen, dispose the portal like existing
 		 * MarkPortalActive() callers would.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		 */
 		// GPDB_90_MERGE_FIXME: Not in READY portals. See comment in AtAbort_Portals.
 		if (//portal->status == PORTAL_READY ||

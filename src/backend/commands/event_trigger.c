@@ -1184,23 +1184,10 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 		case OCLASS_POLICY:
 		case OCLASS_AM:
 			return true;
-<<<<<<< HEAD
-
 		case OCLASS_EXTPROTOCOL:
 			return true;
 		case OCLASS_COMPRESSION:
 			return false;
-
-		case MAX_OCLASS:
-
-			/*
-			 * This shouldn't ever happen, but we keep the case to avoid a
-			 * compiler warning without a "default" clause in the switch.
-			 */
-			Assert(false);
-			break;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	return true;

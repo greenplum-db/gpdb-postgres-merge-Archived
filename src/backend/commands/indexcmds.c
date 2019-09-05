@@ -3,13 +3,9 @@
  * indexcmds.c
  *	  POSTGRES define and remove index code.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -24,22 +20,17 @@
 #include "access/amapi.h"
 #include "access/htup_details.h"
 #include "access/reloptions.h"
-<<<<<<< HEAD
-#include "access/tupconvert.h"
-=======
 #include "access/sysattr.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+#include "access/tupconvert.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
-<<<<<<< HEAD
+#include "catalog/pg_am.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_constraint_fn.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_inherits_fn.h"
-=======
-#include "catalog/pg_am.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_tablespace.h"
@@ -55,11 +46,8 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planner.h"
-<<<<<<< HEAD
-#include "parser/parse_clause.h"
-=======
 #include "optimizer/var.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+#include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
@@ -439,12 +427,8 @@ DefineIndex(Oid relationId,
 	Form_pg_am	accessMethodForm;
 	IndexAmRoutine *amRoutine;
 	bool		amcanorder;
-<<<<<<< HEAD
-	RegProcedure amoptions;
-	bool		partitioned;
-=======
 	amoptions_function amoptions;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	bool		partitioned;
 	Datum		reloptions;
 	int16	   *coloptions;
 	IndexInfo  *indexInfo;

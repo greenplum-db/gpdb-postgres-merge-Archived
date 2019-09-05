@@ -38,11 +38,8 @@
 #include "access/htup_details.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
-<<<<<<< HEAD
 #include "catalog/oid_dispatch.h"
-=======
 #include "catalog/objectaccess.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "catalog/pg_operator.h"
 #include "catalog/pg_operator_fn.h"
 #include "catalog/pg_type.h"
@@ -57,13 +54,11 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
-=======
+
 static Oid	ValidateRestrictionEstimator(List *restrictionName);
 static Oid	ValidateJoinEstimator(List *joinName);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
  * DefineOperator

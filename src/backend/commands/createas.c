@@ -77,7 +77,6 @@ typedef struct
 	struct AOCSInsertDescData *aocs_insertDes;      /* descriptor for aocs */
 } DR_intorel;
 
-<<<<<<< HEAD
 static void intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo);
 /* utility functions for CTAS definition creation */
 static ObjectAddress create_ctas_internal(List *attrList, IntoClause *into,
@@ -85,16 +84,7 @@ static ObjectAddress create_ctas_internal(List *attrList, IntoClause *into,
 static ObjectAddress create_ctas_nodata(List *tlist, IntoClause *into, QueryDesc *queryDesc);
 
 /* DestReceiver routines for collecting data */
-static void intorel_receive(TupleTableSlot *slot, DestReceiver *self);
-=======
-/* utility functions for CTAS definition creation */
-static ObjectAddress create_ctas_internal(List *attrList, IntoClause *into);
-static ObjectAddress create_ctas_nodata(List *tlist, IntoClause *into);
-
-/* DestReceiver routines for collecting data */
-static void intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
 static bool intorel_receive(TupleTableSlot *slot, DestReceiver *self);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void intorel_shutdown(DestReceiver *self);
 static void intorel_destroy(DestReceiver *self);
 
@@ -107,11 +97,7 @@ static void intorel_destroy(DestReceiver *self);
  * provide a list of attributes (ColumnDef nodes).
  */
 static ObjectAddress
-<<<<<<< HEAD
 create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, bool dispatch)
-=======
-create_ctas_internal(List *attrList, IntoClause *into)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	CreateStmt *create = makeNode(CreateStmt);
 	bool		is_matview;
@@ -120,13 +106,10 @@ create_ctas_internal(List *attrList, IntoClause *into)
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 	ObjectAddress intoRelationAddr;
 
-<<<<<<< HEAD
 	Datum       reloptions;
 	int         relstorage;
 	StdRdOptions *stdRdOptions;
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/* This code supports both CREATE TABLE AS and CREATE MATERIALIZED VIEW */
 	is_matview = (into->viewQuery != NULL);
 	relkind = is_matview ? RELKIND_MATVIEW : RELKIND_RELATION;
@@ -142,7 +125,6 @@ create_ctas_internal(List *attrList, IntoClause *into)
 	create->constraints = NIL;
 	create->options = into->options;
 	create->oncommit = into->onCommit;
-<<<<<<< HEAD
 
 	/*
 	 * Select tablespace to use.  If not specified, use default tablespace
@@ -197,15 +179,10 @@ create_ctas_internal(List *attrList, IntoClause *into)
 	create->relKind = RELKIND_RELATION;
 	create->relStorage = relstorage;
 	create->ownerid = GetUserId();
-=======
-	create->tablespacename = into->tableSpaceName;
-	create->if_not_exists = false;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Create the relation.  (This will error out if there's an existing view,
 	 * so we don't need more code to complain if "replace" is false.)
-<<<<<<< HEAD
 	 *
 	 * Don't dispatch it yet, as we haven't created the toast and other
 	 * auxiliary tables yet.
@@ -220,10 +197,6 @@ create_ctas_internal(List *attrList, IntoClause *into)
 									  false,
 									  queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true,
 									  queryDesc->plannedstmt->intoPolicy);
-=======
-	 */
-	intoRelationAddr = DefineRelation(create, relkind, InvalidOid, NULL);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that
@@ -241,14 +214,10 @@ create_ctas_internal(List *attrList, IntoClause *into)
 
 	(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options, true);
 
-<<<<<<< HEAD
 	NewRelationCreateToastTable(intoRelationAddr.objectId, toast_options, false, false);
 	AlterTableCreateAoSegTable(intoRelationAddr.objectId, false, false);
 	/* don't create AO block directory here, it'll be created when needed. */
 	AlterTableCreateAoVisimapTable(intoRelationAddr.objectId, false, false);
-=======
-	NewRelationCreateToastTable(intoRelationAddr.objectId, toast_options);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Create the "view" part of a materialized view. */
 	if (is_matview)
@@ -259,7 +228,7 @@ create_ctas_internal(List *attrList, IntoClause *into)
 		StoreViewQuery(intoRelationAddr.objectId, query, false);
 		CommandCounterIncrement();
 	}
-<<<<<<< HEAD
+
 	if (Gp_role == GP_ROLE_DISPATCH && dispatch)
 		CdbDispatchUtilityStatement((Node *) create,
 									DF_CANCEL_ON_ERROR |
@@ -267,8 +236,6 @@ create_ctas_internal(List *attrList, IntoClause *into)
 									DF_WITH_SNAPSHOT,
 									GetAssignedOidsForDispatch(),
 									NULL);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	return intoRelationAddr;
 }
@@ -281,11 +248,7 @@ create_ctas_internal(List *attrList, IntoClause *into)
  * the targetlist of the SELECT or view definition.
  */
 static ObjectAddress
-<<<<<<< HEAD
 create_ctas_nodata(List *tlist, IntoClause *into, QueryDesc *queryDesc)
-=======
-create_ctas_nodata(List *tlist, IntoClause *into)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	List	   *attrList;
 	ListCell   *t,
@@ -345,11 +308,7 @@ create_ctas_nodata(List *tlist, IntoClause *into)
 				 errmsg("too many column names were specified")));
 
 	/* Create the relation definition using the ColumnDef list */
-<<<<<<< HEAD
 	return create_ctas_internal(attrList, into, queryDesc, true);
-=======
-	return create_ctas_internal(attrList, into);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 
@@ -370,15 +329,11 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	ObjectAddress address;
 	List	   *rewritten;
 	PlannedStmt *plan;
-<<<<<<< HEAD
 	QueryDesc  *queryDesc = NULL;
 	Oid         relationOid = InvalidOid;   /* relation that is modified */
 	AutoStatsCmdType cmdType = AUTOSTATS_CMDTYPE_SENTINEL;  /* command type */
 
 	Assert(Gp_role != GP_ROLE_EXECUTE);
-=======
-	QueryDesc  *queryDesc;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (stmt->if_not_exists)
 	{
@@ -436,56 +391,6 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		save_nestlevel = NewGUCNestLevel();
 	}
 
-<<<<<<< HEAD
-	/*
-	 * Parse analysis was done already, but we still have to run the rule
-	 * rewriter.  We do not do AcquireRewriteLocks: we assume the query either
-	 * came straight from the parser, or suitable locks were acquired by
-	 * plancache.c.
-	 *
-	 * Because the rewriter and planner tend to scribble on the input, we make
-	 * a preliminary copy of the source querytree.  This prevents problems in
-	 * the case that CTAS is in a portal or plpgsql function and is executed
-	 * repeatedly.  (See also the same hack in EXPLAIN and PREPARE.)
-	 */
-	rewritten = QueryRewrite((Query *) copyObject(query));
-
-	/* SELECT should never rewrite to more or less than one SELECT query */
-	if (list_length(rewritten) != 1)
-		elog(ERROR, "unexpected rewrite result for %s",
-			 is_matview ? "CREATE MATERIALIZED VIEW" :
-			 "CREATE TABLE AS SELECT");
-	query = (Query *) linitial(rewritten);
-	Assert(query->commandType == CMD_SELECT);
-
-	/* plan the query */
-	plan = pg_plan_query(query, 0, params);
-
-	/*GPDB: Save the target information in PlannedStmt */
-	/*
-	 * GPDB_92_MERGE_FIXME: it really should be an optimizer's responsibility
-	 * to correctly set the into-clause and into-policy of the PlannedStmt.
-	 */
-	plan->intoClause = copyObject(stmt->into);
-
-	/*
-	 * Use a snapshot with an updated command ID to ensure this query sees
-	 * results of any previously executed queries.  (This could only
-	 * matter if the planner executed an allegedly-stable function that
-	 * changed the database contents, but let's do it anyway to be
-	 * parallel to the EXPLAIN code path.)
-	 */
-	PushCopiedSnapshot(GetActiveSnapshot());
-	UpdateActiveSnapshotCommandId();
-
-	/* Create a QueryDesc, redirecting output to our tuple receiver */
-	queryDesc = CreateQueryDesc(plan, queryString,
-								GetActiveSnapshot(), InvalidSnapshot,
-								dest, params, 0);
-
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	if (into->skipData)
 	{
 		/*
@@ -494,52 +399,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		 * similar to CREATE VIEW.  This avoids dump/restore problems stemming
 		 * from running the planner before all dependencies are set up.
 		 */
-<<<<<<< HEAD
 		address = create_ctas_nodata(query->targetList, into, queryDesc);
-	}
-	else
-	{
-		queryDesc->plannedstmt->query_mem = ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
-
-		/* call ExecutorStart to prepare the plan for execution */
-		ExecutorStart(queryDesc, GetIntoRelEFlags(into));
-
-		if (Gp_role == GP_ROLE_DISPATCH)
-			autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
-
-		/* run the plan to completion */
-		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
-
-		/* and clean up */
-		ExecutorFinish(queryDesc);
-		ExecutorEnd(queryDesc);
-
-		if (into->distributedBy &&
-			((DistributedBy *)(into->distributedBy))->ptype == POLICYTYPE_REPLICATED)
-			queryDesc->es_processed /= ((DistributedBy *)(into->distributedBy))->numsegments;
-
-		/* MPP-14001: Running auto_stats */
-		if (Gp_role == GP_ROLE_DISPATCH)
-			auto_stats(cmdType, relationOid, queryDesc->es_processed, false /* inFunction */);
-
-		/*
-		 * GPDB: Saving the rowcount happens after ExecutorEnd() because that
-		 * is where it gets the row count from dispatch. There's also some
-		 * special processing if the relation was a replicated table. In
-		 * upstream Postgres, the rowcount is saved before ExecutorFinish().
-		 */
-		/* save the rowcount if we're given a completionTag to fill */
-		if (completionTag)
-			snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-					 "SELECT " UINT64_FORMAT, queryDesc->es_processed);
-
-		/* get object address that intorel_startup saved for us */
-		address = ((DR_intorel *) dest)->reladdr;
-	}
-
-	dest->rDestroy(dest);
-=======
-		address = create_ctas_nodata(query->targetList, into);
 	}
 	else
 	{
@@ -568,6 +428,13 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		/* plan the query */
 		plan = pg_plan_query(query, 0, params);
 
+		/*GPDB: Save the target information in PlannedStmt */
+		/*
+		 * GPDB_92_MERGE_FIXME: it really should be an optimizer's responsibility
+		 * to correctly set the into-clause and into-policy of the PlannedStmt.
+		 */
+		plan->intoClause = copyObject(stmt->into);
+
 		/*
 		 * Use a snapshot with an updated command ID to ensure this query sees
 		 * results of any previously executed queries.  (This could only
@@ -577,24 +444,30 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		 */
 		PushCopiedSnapshot(GetActiveSnapshot());
 		UpdateActiveSnapshotCommandId();
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		/* Create a QueryDesc, redirecting output to our tuple receiver */
 		queryDesc = CreateQueryDesc(plan, queryString,
 									GetActiveSnapshot(), InvalidSnapshot,
 									dest, params, 0);
 
+		queryDesc->plannedstmt->query_mem = ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
+
 		/* call ExecutorStart to prepare the plan for execution */
 		ExecutorStart(queryDesc, GetIntoRelEFlags(into));
+
+		if (Gp_role == GP_ROLE_DISPATCH)
+			autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
 
 		/* run the plan to completion */
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 
-		/* save the rowcount if we're given a completionTag to fill */
-		if (completionTag)
-			snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-					 "SELECT " UINT64_FORMAT,
-					 queryDesc->estate->es_processed);
+		if (into->distributedBy &&
+			((DistributedBy *)(into->distributedBy))->ptype == POLICYTYPE_REPLICATED)
+			queryDesc->es_processed /= ((DistributedBy *)(into->distributedBy))->numsegments;
+
+		/* MPP-14001: Running auto_stats */
+		if (Gp_role == GP_ROLE_DISPATCH)
+			auto_stats(cmdType, relationOid, queryDesc->es_processed, false /* inFunction */);
 
 		/* get object address that intorel_startup saved for us */
 		address = ((DR_intorel *) dest)->reladdr;
@@ -602,6 +475,20 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		/* and clean up */
 		ExecutorFinish(queryDesc);
 		ExecutorEnd(queryDesc);
+
+		/*
+		 * GPDB: Saving the rowcount happens after ExecutorEnd() because that
+		 * is where it gets the row count from dispatch. There's also some
+		 * special processing if the relation was a replicated table. In
+		 * upstream Postgres, the rowcount is saved before ExecutorFinish().
+		 */
+		/* save the rowcount if we're given a completionTag to fill */
+		if (completionTag)
+			snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
+					 "SELECT " UINT64_FORMAT,
+					 queryDesc->estate->es_processed);
+
+		dest->rDestroy(dest);
 
 		FreeQueryDesc(queryDesc);
 
@@ -711,10 +598,7 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	RangeTblEntry *rte;
 	ListCell   *lc;
 	int			attnum;
-<<<<<<< HEAD
 	TupleDesc   typeinfo = queryDesc->tupDesc;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* If EXPLAIN/QE, skip creating the "into" relation. */
 	if ((eflags & EXEC_FLAG_EXPLAIN_ONLY) ||
@@ -778,11 +662,7 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	/*
 	 * Actually create the target table
 	 */
-<<<<<<< HEAD
 	intoRelationAddr = create_ctas_internal(attrList, into, queryDesc, false);
-=======
-	intoRelationAddr = create_ctas_internal(attrList, into);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Finally we can open the target table
@@ -870,7 +750,6 @@ static bool
 intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_intorel *myState = (DR_intorel *) self;
-<<<<<<< HEAD
 	Relation    into_rel = myState->rel;
 
 	if (RelationIsAoRows(into_rel))
@@ -914,34 +793,11 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 					myState->hi_options,
 					myState->bistate,
 					GetCurrentTransactionId());
-
-		/* We know this is a newly created relation, so there are no indexes */
 	}
-=======
-	HeapTuple	tuple;
-
-	/*
-	 * get the heap tuple out of the tuple table slot, making sure we have a
-	 * writable copy
-	 */
-	tuple = ExecMaterializeSlot(slot);
-
-	/*
-	 * force assignment of new OID (see comments in ExecInsert)
-	 */
-	if (myState->rel->rd_rel->relhasoids)
-		HeapTupleSetOid(tuple, InvalidOid);
-
-	heap_insert(myState->rel,
-				tuple,
-				myState->output_cid,
-				myState->hi_options,
-				myState->bistate);
 
 	/* We know this is a newly created relation, so there are no indexes */
 
 	return true;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*

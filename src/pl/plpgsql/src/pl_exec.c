@@ -234,12 +234,8 @@ static Datum exec_eval_expr(PLpgSQL_execstate *estate,
 			   Oid *rettype,
 			   int32 *rettypmod);
 static int exec_run_select(PLpgSQL_execstate *estate,
-<<<<<<< HEAD
-				PLpgSQL_expr *expr, int64 maxtuples, Portal *portalP);
-=======
-				PLpgSQL_expr *expr, long maxtuples, Portal *portalP,
+				PLpgSQL_expr *expr, int64 maxtuples, Portal *portalP,
 				bool parallelOK);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static int exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 			   Portal portal, bool prefetch_ok);
 static ParamListInfo setup_param_list(PLpgSQL_execstate *estate,
@@ -5097,12 +5093,8 @@ exec_eval_expr(PLpgSQL_execstate *estate,
  */
 static int
 exec_run_select(PLpgSQL_execstate *estate,
-<<<<<<< HEAD
-				PLpgSQL_expr *expr, int64 maxtuples, Portal *portalP)
-=======
-				PLpgSQL_expr *expr, long maxtuples, Portal *portalP,
+				PLpgSQL_expr *expr, int64 maxtuples, Portal *portalP,
 				bool parallelOK)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	ParamListInfo paramLI;
 	int			rc;

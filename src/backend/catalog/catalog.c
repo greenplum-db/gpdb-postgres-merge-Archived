@@ -291,16 +291,11 @@ IsAoSegmentNamespace(Oid namespaceId)
  *		True iff name starts with the pg_ prefix.
  *
  *		For some classes of objects, the prefix pg_ is reserved for
-<<<<<<< HEAD
- *		system objects only.  As of 8.0, this is only true for
- *		schema and tablespace names.
- *
- *      As of Greenplum 4.0 we also reserve the prefix gp_
-=======
  *		system objects only.  As of 8.0, this was only true for
  *		schema and tablespace names.  With 9.6, this is also true
  *		for roles.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+ *
+ *      As of Greenplum 4.0 we also reserve the prefix gp_
  */
 bool
 IsReservedName(const char *name)
@@ -668,11 +663,7 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 	switch (relpersistence)
 	{
 		case RELPERSISTENCE_TEMP:
-<<<<<<< HEAD
-			backend = TempRelBackendId;
-=======
 			backend = BackendIdForTempRelations();
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			break;
 		case RELPERSISTENCE_UNLOGGED:
 		case RELPERSISTENCE_PERMANENT:
