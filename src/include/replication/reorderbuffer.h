@@ -27,11 +27,7 @@ typedef struct ReorderBufferTupleBuf
 	HeapTupleData tuple;
 
 	/* pre-allocated size of tuple buffer, different from tuple size */
-<<<<<<< HEAD
-	Size	alloc_tuple_size;
-=======
 	Size		alloc_tuple_size;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* actual tuple data follows */
 } ReorderBufferTupleBuf;
@@ -417,11 +413,8 @@ void ReorderBufferAddNewTupleCids(ReorderBuffer *, TransactionId, XLogRecPtr lsn
 						 CommandId cmin, CommandId cmax, CommandId combocid);
 void ReorderBufferAddInvalidations(ReorderBuffer *, TransactionId, XLogRecPtr lsn,
 							  Size nmsgs, SharedInvalidationMessage *msgs);
-<<<<<<< HEAD
-=======
 void ReorderBufferImmediateInvalidation(ReorderBuffer *, uint32 ninvalidations,
 								   SharedInvalidationMessage *invalidations);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 void		ReorderBufferProcessXid(ReorderBuffer *, TransactionId xid, XLogRecPtr lsn);
 void		ReorderBufferXidSetCatalogChanges(ReorderBuffer *, TransactionId xid, XLogRecPtr lsn);
 bool		ReorderBufferXidHasCatalogChanges(ReorderBuffer *, TransactionId xid);

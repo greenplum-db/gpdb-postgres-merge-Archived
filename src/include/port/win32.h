@@ -9,13 +9,8 @@
  * Leave a higher value in place. When building with at least Visual
  * Studio 2015 the minimum requirement is Windows Vista (0x0600) to
  * get support for GetLocaleInfoEx() with locales. For everything else
-<<<<<<< HEAD
- * the minumum version is Windows XP (0x0501).
- * Also  for VS2015, add a define that stops compiler complaints about
-=======
  * the minimum version is Windows XP (0x0501).
  * Also for VS2015, add a define that stops compiler complaints about
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * using the old Winsock API.
  */
 #if defined(_MSC_VER) && _MSC_VER >= 1900
@@ -301,11 +296,6 @@ typedef int pid_t;
 #define EAGAIN WSAEWOULDBLOCK
 #undef EINTR
 #define EINTR WSAEINTR
-<<<<<<< HEAD
-#undef EAGAIN
-#define EAGAIN WSAEWOULDBLOCK
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #undef EMSGSIZE
 #define EMSGSIZE WSAEMSGSIZE
 #undef EAFNOSUPPORT

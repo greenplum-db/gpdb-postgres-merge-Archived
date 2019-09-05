@@ -72,17 +72,10 @@ extern List *SyncRepGetSyncStandbys(bool *am_sync);
 /* called by checkpointer */
 extern void SyncRepUpdateSyncStandbysDefined(void);
 
-<<<<<<< HEAD
 /* called by various procs */
 extern int  SyncRepWakeQueue(bool all, int mode);
 
-/* forward declaration to avoid pulling in walsender_private.h */
-struct WalSnd;
-extern struct WalSnd *SyncRepGetSynchronousStandby(void);
-
-=======
 /* GUC infrastructure */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern bool check_synchronous_standby_names(char **newval, void **extra, GucSource source);
 extern void assign_synchronous_standby_names(const char *newval, void *extra);
 extern void assign_synchronous_commit(int newval, void *extra);

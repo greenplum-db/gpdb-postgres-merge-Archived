@@ -40,8 +40,6 @@ static inline bool
 pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 									uint32 *expected, uint32 newval)
 {
-<<<<<<< HEAD
-=======
 	bool		ret;
 
 	/*
@@ -59,7 +57,6 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 	ret = __compare_and_swap((volatile int*)&ptr->value,
 							 (int *)expected, (int)newval);
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/*
 	 * xlc's documentation tells us:
 	 * "If __compare_and_swap is used as a locking primitive, insert a call to
@@ -69,29 +66,17 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 	 */
 	__isync();
 
-<<<<<<< HEAD
-	/*
-	 * XXX: __compare_and_swap is defined to take signed parameters, but that
-	 * shouldn't matter since we don't perform any arithmetic operations.
-	 */
-	return __compare_and_swap((volatile int*)&ptr->value,
-							  (int *)expected, (int)newval);
-=======
 	return ret;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 #define PG_HAVE_ATOMIC_FETCH_ADD_U32
 static inline uint32
 pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 {
-<<<<<<< HEAD
-=======
 	/*
 	 * __fetch_and_add() emits a leading "sync" and trailing "isync", thereby
 	 * providing sequential consistency.  This is undocumented.
 	 */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	return __fetch_and_add((volatile int *)&ptr->value, add_);
 }
 
@@ -102,12 +87,6 @@ static inline bool
 pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 									uint64 *expected, uint64 newval)
 {
-<<<<<<< HEAD
-	__isync();
-
-	return __compare_and_swaplp((volatile long*)&ptr->value,
-								(long *)expected, (long)newval);;
-=======
 	bool		ret;
 
 	__asm__ __volatile__ ("	sync \n" ::: "memory");
@@ -118,7 +97,6 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 	__isync();
 
 	return ret;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 #define PG_HAVE_ATOMIC_FETCH_ADD_U64

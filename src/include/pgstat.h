@@ -874,12 +874,6 @@ typedef struct PgBackendStatus
 	bool		st_ssl;
 	PgBackendSSLStatus *st_sslstatus;
 
-<<<<<<< HEAD
-	/* Is backend currently waiting on something (and what)? */
-	char		st_waiting;
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/* current state */
 	BackendState st_state;
 
@@ -889,9 +883,8 @@ typedef struct PgBackendStatus
 	/* current command string; MUST be null-terminated */
 	char	   *st_activity;
 
-<<<<<<< HEAD
 	Oid			st_rsgid;
-=======
+
 	/*
 	 * Command progress reporting.  Any command which wishes can advertise
 	 * that it is running by setting st_progress_command,
@@ -904,7 +897,6 @@ typedef struct PgBackendStatus
 	ProgressCommandType st_progress_command;
 	Oid			st_progress_command_target;
 	int64		st_progress_param[PGSTAT_NUM_PROGRESS_PARAM];
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } PgBackendStatus;
 
 /*
@@ -1071,11 +1063,8 @@ extern void pgstat_report_activity(BackendState state, const char *cmd_str);
 extern void pgstat_report_tempfile(size_t filesize);
 extern void pgstat_report_appname(const char *appname);
 extern void pgstat_report_xact_timestamp(TimestampTz tstamp);
-<<<<<<< HEAD
-=======
 extern const char *pgstat_get_wait_event(uint32 wait_event_info);
 extern const char *pgstat_get_wait_event_type(uint32 wait_event_info);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern const char *pgstat_get_backend_current_activity(int pid, bool checkUser);
 extern const char *pgstat_get_crashed_backend_activity(int pid, char *buffer,
 									int buflen);
@@ -1095,11 +1084,9 @@ extern TimestampTz pgstat_fetch_resgroup_queue_timestamp(void);
 
 extern void pgstat_initstats(Relation rel);
 
-<<<<<<< HEAD
 extern void pgstat_init_localportalhash(void);
 extern PgStat_StatPortalEntry *pgstat_getportalentry(uint32 portalid,
 													 Oid queueid);
-=======
 /* ----------
  * pgstat_report_wait_start() -
  *
@@ -1158,7 +1145,6 @@ pgstat_report_wait_end(void)
 	 */
 	proc->wait_event_info = 0;
 }
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* nontransactional event counts are simple enough to inline */
 

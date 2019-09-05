@@ -132,11 +132,8 @@ typedef struct ReplicationSlot
 #define SlotIsPhysical(slot) (slot->data.database == InvalidOid)
 #define SlotIsLogical(slot) (slot->data.database != InvalidOid)
 
-<<<<<<< HEAD
 #define INTERNAL_WAL_REPLICATION_SLOT_NAME	"internal_wal_replication_slot"
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 /*
  * Shared memory control area for all of replication slots.
  */
