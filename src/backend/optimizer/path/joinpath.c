@@ -433,6 +433,7 @@ try_partial_nestloop_path(PlannerInfo *root,
 										  outer_path,
 										  inner_path,
 										  extra->restrictlist,
+										  extra->redistribution_clauses,
 										  pathkeys,
 										  NULL));
 }
@@ -636,6 +637,7 @@ try_partial_hashjoin_path(PlannerInfo *root,
 										  inner_path,
 										  extra->restrictlist,
 										  NULL,
+										  extra->redistribution_clauses,
 										  hashclauses));
 }
 

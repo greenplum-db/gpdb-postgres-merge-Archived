@@ -54,15 +54,15 @@ typedef struct ExplainState
 	PlannedStmt *pstmt;			/* top of plan */
 	List	   *rtable;			/* range table */
 	List	   *rtable_names;	/* alias names for RTEs */
-	int			indent;			/* current indentation level */
 	ExplainStateExtra *extra;	/* pointer to additional data */
+	List	   *deparse_cxt;	/* context list for deparsing expressions */
+	Bitmapset  *printed_subplans;		/* ids of SubPlans we've printed */
 
     /* CDB */
     struct CdbExplain_ShowStatCtx  *showstatctx;    /* EXPLAIN ANALYZE info */
     Slice          *currentSlice;   /* slice whose nodes we are visiting */
 
 	PlanState  *parentPlanState;
-	Bitmapset  *printed_subplans;		/* ids of SubPlans we've printed */
 } ExplainState;
 
 /* Hook for plugins to get control in ExplainOneQuery() */

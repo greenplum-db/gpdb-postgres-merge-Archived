@@ -4,13 +4,9 @@
  *	  Post-processing of a completed plan tree: fix references to subplan
  *	  vars, compute regproc values for operators, etc
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -168,15 +164,11 @@ static List *set_returning_clause_references(PlannerInfo *root,
 								Plan *topplan,
 								Index resultRelation,
 								int rtoffset);
-<<<<<<< HEAD
-static bool fix_opfuncids_walker(Node *node, void *context);
 static  bool cdb_expr_requires_full_eval(Node *node);
 static Plan *cdb_insert_result_node(PlannerInfo *root,
 									Plan *plan, 
 									int rtoffset);
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static bool extract_query_dependencies_walker(Node *node,
 								  PlannerInfo *context);
 static bool cdb_extract_plan_dependencies_walker(Node *node,
@@ -601,7 +593,6 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 	if (plan == NULL)
 		return NULL;
 
-<<<<<<< HEAD
     /*
      * CDB: If plan has a Flow node, fix up its hashExpr to refer to the
      * plan's own targetlist.
@@ -618,10 +609,9 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 									rtoffset);
         pfree(plan_itlist);
     }
-=======
+
 	/* Assign this node a unique ID. */
 	plan->plan_node_id = root->glob->lastPlanNodeId++;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Plan-type-specific fixes
@@ -1382,15 +1372,6 @@ set_subqueryscan_references(PlannerInfo *root,
 
 	/* Need to look up the subquery's RelOptInfo, since we need its subroot */
 	rel = find_base_rel(root, plan->scan.scanrelid);
-<<<<<<< HEAD
-	/*
-	 * The Assert() on RelOptInfo's subplan being same as the
-	 * subqueryscan's subplan, is valid in Upstream but not for GPDB,
-	 * since we create a new copy of the subplan if two SubPlans refer to
-	 * the same initplan inside adjust_appendrel_attrs_mutator().
-	 */
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Recursively process the subplan */
 	plan->subplan = set_plan_references(rel->subroot, plan->subplan);
@@ -1843,7 +1824,6 @@ fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset)
 	context.root = root;
 	context.rtoffset = rtoffset;
 
-<<<<<<< HEAD
 	/*
 	 * Postgres has an optimization to mutate the expression tree only if
 	 * rtoffset is non-zero. However, this optimization does not work for
@@ -1854,30 +1834,6 @@ fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset)
 	 * using mutation. Therefore, in GPDB we need to unconditionally mutate the tree.
 	 */
 	return fix_scan_expr_mutator(node, &context);
-=======
-	if (rtoffset != 0 ||
-		root->multiexpr_params != NIL ||
-		root->glob->lastPHId != 0 ||
-		root->minmax_aggs != NIL)
-	{
-		return fix_scan_expr_mutator(node, &context);
-	}
-	else
-	{
-		/*
-		 * If rtoffset == 0, we don't need to change any Vars, and if there
-		 * are no MULTIEXPR subqueries then we don't need to replace
-		 * PARAM_MULTIEXPR Params, and if there are no placeholders anywhere
-		 * we won't need to remove them, and if there are no minmax Aggrefs we
-		 * won't need to replace them.  Then it's OK to just scribble on the
-		 * input node tree instead of copying (since the only change, filling
-		 * in any unset opfuncid fields, is harmless).  This saves just enough
-		 * cycles to be noticeable on trivial queries.
-		 */
-		(void) fix_scan_expr_walker(node, &context);
-		return node;
-	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 static Node *
@@ -3198,11 +3154,11 @@ cdb_insert_result_node(PlannerInfo *root, Plan *plan, int rtoffset)
 	 * to insert Result nodes at this late stage in the planner, we should
 	 * eliminate the need for this.
 	 */
-    resultplan = (Plan *) make_result(NULL, plan->targetlist, NULL, plan);
+    resultplan = (Plan *) make_result(plan->targetlist, NULL, plan);
 
     /* Build a new targetlist for the given Plan, with Var nodes only. */
     plan->targetlist = flatten_tlist(plan->targetlist,
-									 PVC_RECURSE_AGGREGATES,
+									 PVC_RECURSE_AGGREGATES |
 									 PVC_INCLUDE_PLACEHOLDERS);
 
     /* Fix up the Result node and the Plan tree below it. */

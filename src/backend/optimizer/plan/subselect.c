@@ -618,12 +618,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 {
 	Query	   *subquery;
 	bool		simple_exists = false;
-<<<<<<< HEAD
 	double		tuple_fraction = 1.0;
-	Plan	   *plan;
-=======
-	double		tuple_fraction;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	PlannerInfo *subroot;
 	RelOptInfo *final_rel;
 	Path	   *best_path;
@@ -675,7 +670,6 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 	/* plan_params should not be in use in current query level */
 	Assert(root->plan_params == NIL);
 
-<<<<<<< HEAD
 	PlannerConfig *config = CopyPlannerConfig(root->config);
 
 	if ((Gp_role == GP_ROLE_DISPATCH)
@@ -689,7 +683,6 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 		config->is_under_subplan = true;
-
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -710,18 +703,12 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 	else
 		config->honor_order_by = false;
 
-	plan = subquery_planner(root->glob, subquery,
-							root,
-							false,
-							tuple_fraction,
-							&subroot,
-							config);
-=======
 	/* Generate Paths for the subquery */
 	subroot = subquery_planner(root->glob, subquery,
 							   root,
-							   false, tuple_fraction);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+							   false,
+							   tuple_fraction,
+							   config);
 
 	/* Isolate the params needed by this specific subplan */
 	plan_params = root->plan_params;
@@ -765,20 +752,10 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 										 &newtestexpr, &paramIds);
 		if (subquery)
 		{
-<<<<<<< HEAD
-			/* Generate the plan for the ANY subquery; we'll need all rows */
-			plan = subquery_planner(root->glob, subquery,
-									root,
-									false,
-									0.0,
-									&subroot,
-									config);
-=======
 			/* Generate Paths for the ANY subquery; we'll need all rows */
 			subroot = subquery_planner(root->glob, subquery,
 									   root,
-									   false, 0.0);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+									   false, 0.0, config);
 
 			/* Isolate the params needed by this specific subplan */
 			plan_params = root->plan_params;
@@ -791,12 +768,8 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 			plan = create_plan(subroot, best_path);
 
 			/* Now we can check if it'll fit in work_mem */
-<<<<<<< HEAD
-			if (subplan_is_hashable(root, plan))
-=======
 			/* XXX can we check this at the Path stage? */
-			if (subplan_is_hashable(plan))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+			if (subplan_is_hashable(root, plan))
 			{
 				SubPlan    *hashplan;
 				AlternativeSubPlan *asplan;
@@ -1424,17 +1397,10 @@ SS_process_ctes(PlannerInfo *root)
 		 * Generate Paths for the CTE query.  Always plan for full retrieval
 		 * --- we don't have enough info to predict otherwise.
 		 */
-<<<<<<< HEAD
-		plan = subquery_planner(root->glob, subquery,
-								root,
-								cte->cterecursive, 0.0,
-								&subroot,
-								root->config);
-=======
 		subroot = subquery_planner(root->glob, subquery,
 								   root,
-								   cte->cterecursive, 0.0);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+								   cte->cterecursive, 0.0,
+								   root->config);
 
 		/*
 		 * Since the current query level doesn't yet contain any RTEs, it
@@ -2519,19 +2485,6 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 /*
  * SS_identify_outer_params - identify the Params available from outer levels
  *
-<<<<<<< HEAD
- * This recursively computes the extParam and allParam sets for every Plan
- * node in the given plan tree.  It also optionally attaches any previously
- * generated InitPlans to the top plan node.  (Any InitPlans should already
- * have been put through SS_finalize_plan.)
- *
- * Input:
- * 	root - PlannerInfo structure that is necessary for walking the tree
- * 	rtable - list of rangetable entries to look at for relids
- * 	attach_initplans - attach all initplans to the top plan node from root
- * Output:
- * 	plan->extParam and plan->allParam - attach params to top of the plan
-=======
  * This must be run after SS_replace_correlation_vars and SS_process_sublinks
  * processing is complete in a given query level as well as all of its
  * descendant levels (which means it's most practical to do it at the end of
@@ -2540,7 +2493,11 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
  * root->outer_params for use while computing extParam/allParam sets in final
  * plan cleanup.  (We can't just compute it then, because the upper levels'
  * plan_params lists are transient and will be gone by then.)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+ *
+ * Input:
+ * 	root - PlannerInfo structure that is necessary for walking the tree
+ * Output:
+ * 	plan->extParam and plan->allParam - attach params to top of the plan
  */
 void
 SS_identify_outer_params(PlannerInfo *root)
@@ -2631,7 +2588,8 @@ SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
 	 */
 	foreach(lc, final_rel->pathlist)
 	{
-<<<<<<< HEAD
+		Path	   *path = (Path *) lfirst(lc);
+
 		/*
 		 * If the topmost plan is a Motion, attach the InitPlan to the node
 		 * below it, instead. The executor machinery that executes InitPlans
@@ -2645,29 +2603,8 @@ SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
 		if (IsA(plan, Motion))
 			plan = plan->lefttree;
 
-		Insist(!plan->initPlan);
-		plan->initPlan = root->init_plans;
-		root->init_plans = NIL; /* make sure they're not attached twice */
-
-		/* allParam must include all these params */
-		plan->allParam = bms_add_members(plan->allParam, initExtParam);
-		plan->allParam = bms_add_members(plan->allParam, initSetParam);
-		/* extParam must include any child extParam */
-		plan->extParam = bms_add_members(plan->extParam, initExtParam);
-		/* but extParam shouldn't include any setParams */
-		plan->extParam = bms_del_members(plan->extParam, initSetParam);
-		/* ensure extParam is exactly NULL if it's empty */
-		if (bms_is_empty(plan->extParam))
-			plan->extParam = NULL;
-
-		plan->startup_cost += initplan_cost;
-		plan->total_cost += initplan_cost;
-=======
-		Path	   *path = (Path *) lfirst(lc);
-
 		path->startup_cost += initplan_cost;
 		path->total_cost += initplan_cost;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	/* We needn't do set_cheapest() here, caller will do it */
@@ -3381,7 +3318,6 @@ finalize_primnode(Node *node, finalize_primnode_context *context)
 }
 
 /*
-<<<<<<< HEAD
  * finalize_agg_primnode: find all Aggref nodes in the given expression tree,
  * and add IDs of all PARAM_EXEC params appearing within their aggregated
  * arguments to the result set.
@@ -3405,10 +3341,7 @@ finalize_agg_primnode(Node *node, finalize_primnode_context *context)
 }
 
 /*
- * SS_make_initplan_from_plan - given a plan tree, make it an InitPlan
-=======
  * SS_make_initplan_output_param - make a Param for an initPlan's output
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  *
  * The plan is expected to return a scalar value of the given type/collation.
  *
@@ -3428,17 +3361,10 @@ SS_make_initplan_output_param(PlannerInfo *root,
  * SS_make_initplan_from_plan - given a plan tree, make it an InitPlan
  *
  * We build an EXPR_SUBLINK SubPlan node and put it into the initplan
-<<<<<<< HEAD
- * list for the current query level.  A Param that represents the initplan's
- * output is returned.
- *
- * We assume the plan hasn't been put through SS_finalize_plan.
- *
- * We treat root->init_plans like the old PlannerInitPlan global here.
-=======
  * list for the outer query level.  A Param that represents the initplan's
  * output has already been assigned using SS_make_initplan_output_param.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+ *
+ * We treat root->init_plans like the old PlannerInitPlan global here.
  */
 void
 SS_make_initplan_from_plan(PlannerInfo *root,
@@ -3465,14 +3391,10 @@ SS_make_initplan_from_plan(PlannerInfo *root,
 							   node->plan_id, prm->paramid);
 	get_first_col_type(plan, &node->firstColType, &node->firstColTypmod,
 					   &node->firstColCollation);
-<<<<<<< HEAD
     node->qDispSliceId = 0;             /*CDB*/
-	node->plan_id = list_length(root->glob->subplans);
 	node->is_initplan = true;
-=======
 	node->setParam = list_make1_int(prm->paramid);
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	root->init_plans = lappend(root->init_plans, node);
 
 	/*
@@ -3480,22 +3402,5 @@ SS_make_initplan_from_plan(PlannerInfo *root,
 	 * parParam and args lists remain empty.
 	 */
 
-<<<<<<< HEAD
 	/* NB PostgreSQL calculates subplan cost here, but GPDB does it elsewhere. */
-
-	/*
-	 * Make a Param that will be the subplan's output.
-	 */
-	prm = generate_new_param(root, resulttype, resulttypmod, resultcollation);
-	node->setParam = list_make1_int(prm->paramid);
-
-	/* Label the subplan for EXPLAIN purposes */
-	node->plan_name = psprintf("InitPlan %d (returns $%d)",
-							   node->plan_id, prm->paramid);
-
-	return prm;
-=======
-	/* Set costs of SubPlan using info from the plan tree */
-	cost_subplan(subroot, node, plan);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }

@@ -116,7 +116,8 @@ extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
 				  Index scanrelid, Plan *subplan);
 extern ForeignScan *make_foreignscan(List *qptlist, List *qpqual,
 				 Index scanrelid, List *fdw_exprs, List *fdw_private,
-				 List *fdw_scan_tlist);
+				 List *fdw_scan_tlist, List *fdw_recheck_quals,
+				 Plan *outer_plan);
 extern List *reconstruct_group_clause(List *orig_groupClause, List *tlist,
 						 AttrNumber *grpColIdx, int numcols);
 
@@ -151,8 +152,7 @@ extern MergeJoin *make_mergejoin(List *tlist,
 			   JoinType jointype);
 extern Material *make_material(Plan *lefttree);
 extern Plan *materialize_finished_plan(PlannerInfo *root, Plan *subplan);
-extern Result *make_result(PlannerInfo *root, List *tlist,
-			Node *resconstantqual, Plan *subplan);
+extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 extern Repeat *make_repeat(List *tlist,
 						   List *qual,
 						   Expr *repeatCountExpr,
@@ -175,20 +175,17 @@ extern Plan *plan_pushdown_tlist(PlannerInfo *root, Plan *plan, List *tlist);   
 extern List *create_external_scan_uri_list(struct ExtTableEntry *extEntry, bool *ismasteronly);
 
 /* External use of these functions is deprecated: */
-extern Sort *make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
-						List *pathkeys, double limit_tuples, bool add_keys_to_targetlist);
-extern Sort *make_sort_from_sortclauses(PlannerInfo *root, List *sortcls,
+extern Sort *make_sort_from_pathkeys(Plan *lefttree, List *pathkeys, bool add_keys_to_targetlist);
+extern Sort *make_sort_from_sortclauses(List *sortcls,
 						   Plan *lefttree);
-extern Sort *make_sort_from_groupcols(PlannerInfo *root, List *groupcls,
-									  AttrNumber *grpColIdx,
+extern Sort *make_sort_from_groupcols(List *groupcls, AttrNumber *grpColIdx,
 									  Plan *lefttree);
-extern Agg *make_agg(PlannerInfo *root, List *tlist, List *qual,
-		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
+extern Agg *make_agg(List *tlist, List *qual,
+		 AggStrategy aggstrategy, AggSplit aggsplit,
 		 bool streaming,
 		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		 List *groupingSets,
-		 long numGroups,
-		 Plan *lefttree);
+		 List *groupingSets, List *chain,
+		 double dNumGroups, Plan *lefttree);
 extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount);
 
 /*

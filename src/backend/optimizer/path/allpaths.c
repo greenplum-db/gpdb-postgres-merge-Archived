@@ -1851,11 +1851,8 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	{
 		/* This is a preplanned sub-query RTE. */
 		rel->subroot = rte->subquery_subroot;
-		subroot = root;
 		/* XXX rel->onerow = ??? */
 	}
-
-	rel->subroot = subroot;
 
 	/* Isolate the params needed by this specific subplan */
 	rel->subplan_params = root->plan_params;
@@ -2197,15 +2194,15 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 			 */
 			subquery = push_down_restrict(root, rel, rte, rel->relid, subquery);
 
-			subplan = subquery_planner(cteroot->glob, subquery, root,
+			subroot = subquery_planner(cteroot->glob, subquery, root,
 									   cte->cterecursive,
-									   tuple_fraction, &subroot, config);
+									   tuple_fraction, config);
 		}
 		else
 		{
-			subplan = subquery_planner(cteroot->glob, subquery, cteroot,
+			subroot = subquery_planner(cteroot->glob, subquery, cteroot,
 									   cte->cterecursive,
-									   tuple_fraction, &subroot, config);
+									   tuple_fraction, config);
 		}
 
 		/*
@@ -2238,8 +2235,8 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 			config->honor_order_by = false;
 
-			subplan = subquery_planner(cteroot->glob, subquery, cteroot, cte->cterecursive,
-									   tuple_fraction, &subroot, config);
+			subroot = subquery_planner(cteroot->glob, subquery, cteroot, cte->cterecursive,
+									   tuple_fraction, config);
 
 			cteplaninfo->shared_plan = prepare_plan_for_sharing(cteroot, subplan);
 			cteplaninfo->subroot = subroot;
@@ -2255,7 +2252,6 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 	pathkeys = subroot->query_pathkeys;
 
-	rel->subplan = subplan;
 	rel->subroot = subroot;
 
 	/* Mark rel with estimated output rows, width, etc */

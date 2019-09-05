@@ -2427,6 +2427,7 @@ _outAggPath(StringInfo str, const AggPath *node)
 	WRITE_FLOAT_FIELD(numGroups, "%.0f");
 	WRITE_NODE_FIELD(groupClause);
 	WRITE_NODE_FIELD(qual);
+	WRITE_BOOL_FIELD(streaming);
 }
 
 static void

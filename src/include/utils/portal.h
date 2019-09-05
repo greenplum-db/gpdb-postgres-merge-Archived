@@ -129,7 +129,7 @@ typedef struct PortalData
 	 * in which we ran the portal.
 	 */
 	SubTransactionId createSubid;		/* the creating subxact */
-<<<<<<< HEAD
+	SubTransactionId activeSubid;		/* the last subxact with activity */
 
 	/*
 	 * if Resource Scheduling is enabled, we need to save the original
@@ -139,9 +139,6 @@ typedef struct PortalData
 	uint32		portalId;		/* id of this portal 0 for unnamed */
 	NodeTag	    sourceTag;		/* nodetag for the original query */
 	Oid			queueId;		/* Oid of queue locking this portal */
-=======
-	SubTransactionId activeSubid;		/* the last subxact with activity */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* The query or queries the portal will execute */
 	const char *sourceText;		/* text of query (as of 8.4, never NULL) */
@@ -207,12 +204,6 @@ typedef struct PortalData
 
 	/* MPP: is this portal a CURSOR, or protocol level portal? */
 	bool		is_extended_query; /* simple or extended query protocol? */
-	/*
-	 * This field belongs with createSubid, but in pre-9.5 branches, add it
-	 * at the end to avoid creating an ABI break for extensions that examine
-	 * Portal structs.
-	 */
-	SubTransactionId activeSubid;		/* the last subxact with activity */
 }	PortalData;
 
 /*

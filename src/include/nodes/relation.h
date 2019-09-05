@@ -1661,6 +1661,7 @@ typedef struct AggPath
 	double		numGroups;		/* estimated number of groups in input */
 	List	   *groupClause;	/* a list of SortGroupClause's */
 	List	   *qual;			/* quals (HAVING quals), if any */
+	bool		streaming;
 } AggPath;
 
 /*

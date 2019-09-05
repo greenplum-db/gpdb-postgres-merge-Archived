@@ -3,13 +3,9 @@
  * initsplan.c
  *	  Target list, qualification, joininfo initialization routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -224,8 +220,8 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars,
 				if (bms_is_empty(rci->where_needed))
 				{
 					Assert(rci->targetresno == 0);
-					rci->targetresno = list_length(rel->reltargetlist);
-					rel->reltargetlist = lappend(rel->reltargetlist, copyObject(var));
+					rci->targetresno = list_length(rel->reltarget->exprs);
+					rel->reltarget->exprs = lappend(rel->reltarget->exprs, copyObject(var));
 				}
 
 				/* Note relids which are consumers of the data from this column. */
@@ -492,24 +488,6 @@ create_lateral_join_info(PlannerInfo *root)
 				Assert(false);
 		}
 
-<<<<<<< HEAD
-		/* We now have all the direct lateral refs from this rel */
-		brel->lateral_relids = lateral_relids;
-	}
-
-	/*
-	 * Now check for lateral references within PlaceHolderVars, and make
-	 * LateralJoinInfos describing each such reference.  Unlike references in
-	 * unflattened LATERAL RTEs, the referencing location could be a join.
-	 *
-	 * For a PHV that is due to be evaluated at a join, we mark each of the
-	 * join's member baserels as having the PHV's lateral references too. Even
-	 * though the baserels could be scanned without considering those lateral
-	 * refs, we will never be able to form the join except as a path
-	 * parameterized by the lateral refs, so there is no point in considering
-	 * unparameterized paths for the baserels; and we mustn't try to join any
-	 * of those baserels to the lateral refs too soon, either.
-=======
 		/* We now have all the simple lateral refs from this rel */
 		brel->direct_lateral_relids = lateral_relids;
 		brel->lateral_relids = bms_copy(lateral_relids);
@@ -527,7 +505,6 @@ create_lateral_join_info(PlannerInfo *root)
 	 * appropriate because we can't put any such baserel on the outside of a
 	 * join to one of the PHV's lateral dependencies, but on the other hand we
 	 * also can't yet join it directly to the dependency.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 */
 	foreach(lc, root->placeholder_list)
 	{
@@ -542,16 +519,8 @@ create_lateral_join_info(PlannerInfo *root)
 
 		if (bms_get_singleton_member(eval_at, &varno))
 		{
-<<<<<<< HEAD
-			List	   *vars = pull_var_clause((Node *) phinfo->ph_var->phexpr,
-											   PVC_RECURSE_AGGREGATES,
-											   PVC_INCLUDE_PLACEHOLDERS);
-			ListCell   *lc2;
-			int			ev_at;
-=======
 			/* Evaluation site is a baserel */
 			RelOptInfo *brel = find_base_rel(root, varno);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 			brel->direct_lateral_relids =
 				bms_add_members(brel->direct_lateral_relids,
@@ -571,20 +540,6 @@ create_lateral_join_info(PlannerInfo *root)
 				brel->lateral_relids = bms_add_members(brel->lateral_relids,
 													   phinfo->ph_lateral);
 			}
-<<<<<<< HEAD
-
-			list_free(vars);
-
-			eval_at = bms_copy(eval_at);
-			while ((ev_at = bms_first_member(eval_at)) >= 0)
-			{
-				RelOptInfo *brel = find_base_rel(root, ev_at);
-
-				brel->lateral_relids = bms_add_members(brel->lateral_relids,
-													   phinfo->ph_lateral);
-			}
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 	}
 
@@ -599,20 +554,11 @@ create_lateral_join_info(PlannerInfo *root)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * At this point the lateral_relids sets represent only direct lateral
-	 * references.  Replace them by their transitive closure, so that they
-	 * describe both direct and indirect lateral references.  If relation X
-	 * references Y laterally, and Y references Z laterally, then we will have
-	 * to scan X on the inside of a nestloop with Z, so for all intents and
-	 * purposes X is laterally dependent on Z too.
-=======
 	 * Calculate the transitive closure of the lateral_relids sets, so that
 	 * they describe both direct and indirect lateral references.  If relation
 	 * X references Y laterally, and Y references Z laterally, then we will
 	 * have to scan X on the inside of a nestloop with Z, so for all intents
 	 * and purposes X is laterally dependent on Z too.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 *
 	 * This code is essentially Warshall's algorithm for transitive closure.
 	 * The outer loop considers each baserel, and propagates its lateral
@@ -676,13 +622,8 @@ create_lateral_join_info(PlannerInfo *root)
 		Assert(!bms_is_member(rti, lateral_relids));
 
 		/* Mark this rel's referencees */
-<<<<<<< HEAD
-		lateral_relids = bms_copy(lateral_relids);
-		while ((rti2 = bms_first_member(lateral_relids)) >= 0)
-=======
 		rti2 = -1;
 		while ((rti2 = bms_next_member(lateral_relids, rti2)) >= 0)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{
 			RelOptInfo *brel2 = root->simple_rel_array[rti2];
 

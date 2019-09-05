@@ -2618,10 +2618,10 @@ create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->path.pathkeys = pathkeys;
 	pathnode->subpath = subpath;
 
-	pathnode->locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
-	pathnode->motionHazard = subquery_motionHazard_walker(rel->subplan);
-	pathnode->rescannable = false;
-	pathnode->sameslice_relids = NULL;
+	pathnode->path.locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
+	pathnode->path.motionHazard = subquery_motionHazard_walker(rel->subplan);
+	pathnode->path.rescannable = false;
+	pathnode->path.sameslice_relids = NULL;
 
 	cost_subqueryscan(pathnode, root, rel, pathnode->path.param_info);
 
@@ -3890,6 +3890,7 @@ create_agg_path(PlannerInfo *root,
 				PathTarget *target,
 				AggStrategy aggstrategy,
 				AggSplit aggsplit,
+				bool streaming,
 				List *groupClause,
 				List *qual,
 				const AggClauseCosts *aggcosts,
@@ -3911,6 +3912,7 @@ create_agg_path(PlannerInfo *root,
 	else
 		pathnode->path.pathkeys = NIL;	/* output is unordered */
 	pathnode->subpath = subpath;
+	pathnode->streaming = streaming;
 
 	pathnode->aggstrategy = aggstrategy;
 	pathnode->aggsplit = aggsplit;

@@ -4698,7 +4698,8 @@ get_foreign_key_join_selectivity(PlannerInfo *root,
 				Selectivity csel;
 
 				csel = clause_selectivity(root, (Node *) rinfo,
-										  0, jointype, sjinfo);
+										  0, jointype, sjinfo,
+										  false /* use_damping */);
 				thisfksel = Min(thisfksel, csel);
 			}
 			fkselec *= thisfksel;
