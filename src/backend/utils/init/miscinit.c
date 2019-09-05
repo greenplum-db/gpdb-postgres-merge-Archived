@@ -33,11 +33,8 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_authid.h"
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
-=======
 #include "libpq/libpq.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"

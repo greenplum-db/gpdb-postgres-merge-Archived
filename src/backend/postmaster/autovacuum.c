@@ -209,11 +209,7 @@ typedef struct autovac_table
  * wi_links		entry into free list or running list
  * wi_dboid		OID of the database this worker is supposed to work on
  * wi_tableoid	OID of the table currently being vacuumed, if any
-<<<<<<< HEAD
- * wi_sharedrel	flag indicating whether table is marked relisshared
-=======
  * wi_sharedrel flag indicating whether table is marked relisshared
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * wi_proc		pointer to PGPROC of the running worker, NULL if not started
  * wi_launchtime Time at which this worker was launched
  * wi_cost_*	Vacuum cost-based delay parameters current in this worker

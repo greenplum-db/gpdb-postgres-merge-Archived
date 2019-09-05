@@ -2276,11 +2276,7 @@ _SPI_strdup(const char *s)
 static List *
 query_to_oid_list(const char *query)
 {
-<<<<<<< HEAD
-	uint64			i;
-=======
 	uint64		i;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	List	   *list = NIL;
 
 	SPI_execute(query, true, 0);
@@ -2399,11 +2395,7 @@ cursor_to_xml(PG_FUNCTION_ARGS)
 
 	StringInfoData result;
 	Portal		portal;
-<<<<<<< HEAD
-	uint64			i;
-=======
 	uint64		i;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	initStringInfo(&result);
 
@@ -2487,11 +2479,7 @@ query_to_xml_internal(const char *query, char *tablename,
 {
 	StringInfo	result;
 	char	   *xmltn;
-<<<<<<< HEAD
-	uint64			i;
-=======
 	uint64		i;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (tablename)
 		xmltn = map_sql_identifier_to_xml_name(tablename, true, false);

@@ -21,16 +21,12 @@
 #include "lib/bipartite_match.h"
 #include "miscadmin.h"
 
-<<<<<<< HEAD
-#include "utils/palloc.h"
-=======
 /*
  * The distances computed in hk_breadth_search can easily be seen to never
  * exceed u_size.  Since we restrict u_size to be less than SHRT_MAX, we
  * can therefore use SHRT_MAX as the "infinity" distance needed as a marker.
  */
 #define HK_INFINITY  SHRT_MAX
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 static bool hk_breadth_search(BipartiteMatchState *state);
 static bool hk_depth_search(BipartiteMatchState *state, int u);

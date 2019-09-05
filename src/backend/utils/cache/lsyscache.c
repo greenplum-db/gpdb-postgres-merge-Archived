@@ -3,13 +3,9 @@
  * lsyscache.c
  *	  Convenience routines for common queries in the system catalog cache.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -2447,8 +2443,6 @@ get_rel_relstorage(Oid relid)
 		return '\0';
 }
 
-<<<<<<< HEAD
-=======
 /*
  * get_rel_persistence
  *
@@ -2472,7 +2466,6 @@ get_rel_persistence(Oid relid)
 }
 
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 /*				---------- TRANSFORM CACHE ----------						 */
 
 Oid
@@ -3770,33 +3763,6 @@ get_range_subtype(Oid rangeOid)
 	else
 		return InvalidOid;
 }
-<<<<<<< HEAD
-
-/*				---------- PG_TABLESAMPLE_METHOD CACHE ----------			 */
-
-/*
- * get_tablesample_method_name - given a tablesample method OID,
- * look up the name or NULL if not found
- */
-char *
-get_tablesample_method_name(Oid tsmid)
-{
-	HeapTuple	tuple;
-
-	tuple = SearchSysCache1(TABLESAMPLEMETHODOID, ObjectIdGetDatum(tsmid));
-	if (HeapTupleIsValid(tuple))
-	{
-		Form_pg_tablesample_method tup =
-		(Form_pg_tablesample_method) GETSTRUCT(tuple);
-		char	   *result;
-
-		result = pstrdup(NameStr(tup->tsmname));
-		ReleaseSysCache(tuple);
-		return result;
-	}
-	else
-		return NULL;
-}
 
 /*
  * relation_exists
@@ -4497,5 +4463,3 @@ child_triggers(Oid relationId, int32 triggerType)
 	/* no child triggers matching the given type */
 	return found;
 }
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

@@ -248,14 +248,9 @@ struct vars
 	int			ntree;			/* number of tree nodes, plus one */
 	struct cvec *cv;			/* interface cvec */
 	struct cvec *cv2;			/* utility cvec */
-<<<<<<< HEAD
-	struct subre *lacons;		/* lookahead-constraint vector */
-	int			nlacons;		/* size of lacons */
-=======
 	struct subre *lacons;		/* lookaround-constraint vector */
 	int			nlacons;		/* size of lacons[]; note that only slots
 								 * numbered 1 .. nlacons-1 are used */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	size_t		spaceused;		/* approx. space used for compilation */
 };
 

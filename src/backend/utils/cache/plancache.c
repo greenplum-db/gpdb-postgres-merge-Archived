@@ -102,11 +102,7 @@ static void AcquireExecutorLocks(List *stmt_list, bool acquire);
 static void AcquirePlannerLocks(List *stmt_list, bool acquire);
 static void ScanQueryForLocks(Query *parsetree, bool acquire);
 static bool ScanQueryWalker(Node *node, bool *acquire);
-<<<<<<< HEAD
-static bool plan_list_is_transient(List *stmt_list);
 static bool plan_list_is_oneoff(List *stmt_list);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static TupleDesc PlanCacheComputeResultDesc(List *stmt_list);
 static void PlanCacheRelCallback(Datum arg, Oid relid);
 static void PlanCacheFuncCallback(Datum arg, int cacheid, uint32 hashvalue);
@@ -1813,30 +1809,12 @@ ScanQueryWalker(Node *node, bool *acquire)
 }
 
 /*
-<<<<<<< HEAD
- * plan_list_is_transient: check if any of the plans in the list are transient.
- */
-static bool
-plan_list_is_transient(List *stmt_list)
-{
-	ListCell   *lc;
-
-	foreach(lc, stmt_list)
-	{
-		PlannedStmt *plannedstmt = (PlannedStmt *) lfirst(lc);
-
-		if (!IsA(plannedstmt, PlannedStmt))
-			continue;			/* Ignore utility statements */
-
-		if (plannedstmt->transientPlan)
-			return true;
-	}
-
-	return false;
-}
-
-/*
  * plan_list_is_oneoff: check if any of the plans in the list are one-off plans
+ *
+ *
+ * GPDB_96_MERGE_FIXME: This GPDB-specific function was inspired by upstream
+ * plan_list_is_transient() function. But that one was removed in PostgreSQL
+ * 9.6. Should we reconsider this one too?
  */
 static bool
 plan_list_is_oneoff(List *stmt_list)
@@ -1858,8 +1836,6 @@ plan_list_is_oneoff(List *stmt_list)
 }
 
 /*
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * PlanCacheComputeResultDesc: given a list of analyzed-and-rewritten Queries,
  * determine the result tupledesc it will produce.  Returns NULL if the
  * execution will not return tuples.

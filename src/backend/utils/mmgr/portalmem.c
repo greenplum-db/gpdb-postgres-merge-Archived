@@ -8,13 +8,9 @@
  * doesn't actually run the executor for them.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -30,15 +26,12 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
-#include "utils/resource_manager.h"
-#include "utils/resscheduler.h"
+#include "utils/snapmgr.h"
+#include "utils/timestamp.h"
 
 #include "cdb/ml_ipc.h"
-=======
-#include "utils/snapmgr.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
-#include "utils/timestamp.h"
+#include "utils/resource_manager.h"
+#include "utils/resscheduler.h"
 
 /*
  * Estimate of the maximum number of open portals a user would have,

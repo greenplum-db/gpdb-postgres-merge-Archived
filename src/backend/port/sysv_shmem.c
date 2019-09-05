@@ -778,20 +778,12 @@ PGSharedMemoryNoReAttach(void)
  *
  * Detach from the shared memory segment, if still attached.  This is not
  * intended to be called explicitly by the process that originally created the
-<<<<<<< HEAD
- * segment (it will have on_shmem_exit callback(s) registered to do that).
-=======
  * segment (it will have an on_shmem_exit callback registered to do that).
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Rather, this is for subprocesses that have inherited an attachment and want
  * to get rid of it.
  *
  * UsedShmemSegID and UsedShmemSegAddr are implicit parameters to this
-<<<<<<< HEAD
  * routine, also AnonymousShmem and AnonymousShmemSize.
-=======
- * routine.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 void
 PGSharedMemoryDetach(void)
