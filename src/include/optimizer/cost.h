@@ -118,8 +118,8 @@ extern void cost_subqueryscan(SubqueryScanPath *path, PlannerInfo *root,
 				  RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_functionscan(Path *path, PlannerInfo *root,
 				  RelOptInfo *baserel, ParamPathInfo *param_info);
-extern void cost_tablefunction(Path *path, PlannerInfo *root,
-				   RelOptInfo *baserel, ParamPathInfo *param_info, Plan *subplan);
+extern void cost_tablefunction(TableFunctionScanPath *path, PlannerInfo *root,
+							   RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_valuesscan(Path *path, PlannerInfo *root,
 				RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_ctescan(Path *path, PlannerInfo *root,
@@ -141,8 +141,7 @@ extern void cost_agg(Path *path, PlannerInfo *root,
 		 int numGroupCols, double numGroups,
 		 Cost input_startup_cost, Cost input_total_cost,
 		 double input_tuples,
-		 double input_width, double hash_batches,
-		 double hashentry_width, bool hash_streaming);
+		 bool hash_streaming);
 extern void cost_windowagg(Path *path, PlannerInfo *root,
 			   List *windowFuncs, int numPartCols, int numOrderCols,
 			   Cost input_startup_cost, Cost input_total_cost,

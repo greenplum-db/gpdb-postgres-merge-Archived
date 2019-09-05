@@ -3911,10 +3911,14 @@ create_tablefunction_plan(PlannerInfo *root,
 						  List *scan_clauses)
 {
 	TableFunctionScan *tablefunc;
-	Plan	   *subplan = best_path->parent->subplan;
+	/* GPDB_96_MERGE_FIXME: Where can we get the subplan? Somewhere in 'best_path'? */
+	Plan	   *subplan = NULL;
+	//Plan	   *subplan = best_path->parent->subplan;
 	Index		scan_relid = best_path->parent->relid;
 	RangeTblEntry *rte;
 	RangeTblFunction *rtf;
+
+	elog(ERROR, "GPDB_96_MERGE_FIXME: create_tablefunction_plan() not resolved");
 
 	/* it should be a function base rel... */
 	Assert(scan_relid > 0);
@@ -4008,10 +4012,14 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 			replace_nestloop_params(root, (Node *) scan_clauses);
 	}
 
+	elog(ERROR, "GPDB_96_MERGE_FIXME: create_tablefunction_plan() not resolved");
+
 	scan_plan = make_subqueryscan(tlist,
 								  scan_clauses,
 								  scan_relid,
-								  best_path->parent->subplan);
+								  // GPDB_96_MERGE_FIXME: This was: best_path->parent->subplan
+								  // Where can we get the subplan now?
+								  NULL);
 
 	copy_generic_path_info(&scan_plan->scan.plan, best_path);
 
@@ -4361,6 +4369,27 @@ create_nestloop_plan(PlannerInfo *root,
 
 	bool		prefetch = false;
 
+#if  0
+	/*
+	 * If the inner path is a nestloop inner indexscan, it might be using some
+	 * of the join quals as index quals, in which case we don't have to check
+	 * them again at the join node.  Remove any join quals that are redundant.
+	 */
+	joinrestrictclauses =
+		select_nonredundant_join_clauses(root,
+										 joinrestrictclauses,
+										 best_path->innerjoinpath);
+#endif
+
+	/* NestLoop can project, so no need to be picky about child tlists */
+	outer_plan = create_plan_recurse(root, best_path->outerjoinpath, 0);
+
+	/* For a nestloop, include outer relids in curOuterRels for inner side */
+	root->curOuterRels = bms_union(root->curOuterRels,
+								   best_path->outerjoinpath->parent->relids);
+
+	inner_plan = create_plan_recurse(root, best_path->innerjoinpath, 0);
+
 	/*
 	 * MPP-1459: subqueries are resolved after our deadlock checks in
 	 * pathnode.c; so we have to check here to make sure that we catch all
@@ -4417,28 +4446,7 @@ create_nestloop_plan(PlannerInfo *root,
 			prefetch = true;
 		}
 	}
-
-#if  0
-	/*
-	 * If the inner path is a nestloop inner indexscan, it might be using some
-	 * of the join quals as index quals, in which case we don't have to check
-	 * them again at the join node.  Remove any join quals that are redundant.
-	 */
-	joinrestrictclauses =
-		select_nonredundant_join_clauses(root,
-										 joinrestrictclauses,
-										 best_path->innerjoinpath);
-#endif
-
-	/* NestLoop can project, so no need to be picky about child tlists */
-	outer_plan = create_plan_recurse(root, best_path->outerjoinpath, 0);
-
-	/* For a nestloop, include outer relids in curOuterRels for inner side */
-	root->curOuterRels = bms_union(root->curOuterRels,
-								   best_path->outerjoinpath->parent->relids);
-
-	inner_plan = create_plan_recurse(root, best_path->innerjoinpath, 0);
-
+	
 	/* Restore curOuterRels */
 	bms_free(root->curOuterRels);
 	root->curOuterRels = saveOuterRels;
@@ -7097,8 +7105,13 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 				 numGroupCols, numGroups,
 				 plan->startup_cost,
 				 plan->total_cost,
-				 plan->plan_rows, hash_info.workmem_per_entry,
-				 hash_info.nbatches, hash_info.hashentry_width, streaming);
+				 plan->plan_rows,
+#if 0 /* GPDB_96_MERGE_FIXME */
+				 hash_info.workmem_per_entry,
+				 hash_info.nbatches,
+				 hash_info.hashentry_width,
+#endif
+				 streaming);
 	}
 	else
 		cost_agg(&agg_path, root,
@@ -7106,8 +7119,8 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 				 numGroupCols, numGroups,
 				 plan->startup_cost,
 				 plan->total_cost,
-				 plan->plan_rows, 0.0, 0.0,
-				 0.0, false);
+				 plan->plan_rows,
+				 false /* streaming */);
 
 	plan->startup_cost = agg_path.startup_cost;
 	plan->total_cost = agg_path.total_cost;

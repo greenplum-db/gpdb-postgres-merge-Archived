@@ -1322,6 +1322,18 @@ typedef struct SubqueryScanPath
 } SubqueryScanPath;
 
 /*
+ * TableFunctionScanPath represents a scan of an unflattened subquery-in-FROM
+ *
+ * Note that the subpath comes from a different planning domain, like in
+ * SubqueryScanPath.
+ */
+typedef struct TableFunctionScanPath
+{
+	Path		path;
+	Path	   *subpath;		/* path representing subquery execution */
+} TableFunctionScanPath;
+
+/*
  * ForeignPath represents a potential scan of a foreign table, foreign join
  * or foreign upper-relation.
  *

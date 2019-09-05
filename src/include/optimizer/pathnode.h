@@ -104,9 +104,9 @@ extern SubqueryScanPath *create_subqueryscan_path(PlannerInfo *root,
 extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 						 RangeTblEntry *rte,
 						 List *pathkeys, Relids required_outer);
-extern Path *create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel,
-						 RangeTblEntry *rte,
-						 Relids required_outer);
+extern TableFunctionScanPath *create_tablefunction_path(PlannerInfo *root,
+						  RelOptInfo *rel, Path *subpath,
+						  List *pathkeys, Relids required_outer);
 extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte,
 					   Relids required_outer);
@@ -114,7 +114,7 @@ extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel,
 					List *pathkeys,
 					Relids required_outer);
 extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
-						  CdbLocusType ctelocus,
+						  CdbPathLocus ctelocus,
 						  Relids required_outer);
 extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 						PathTarget *target,

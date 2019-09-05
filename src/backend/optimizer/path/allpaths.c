@@ -622,6 +622,14 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 				return;
 			break;
 
+		case RTE_TABLEFUNCTION:
+			/* Check for parallel-restricted functions. */
+			if (!function_rte_parallel_ok(rte))
+				return;
+
+			/* GPDB_96_MERGE_FIXME: other than the function itself, I guess this is like RTE_SUBQUERY... */
+			break;
+
 		case RTE_VALUES:
 
 			/*
@@ -640,6 +648,14 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 			 * executed only once.
 			 */
 			return;
+
+		case RTE_VOID:
+
+			/*
+			 * Not sure if parallelizing a "no-op" void RTE makes sense, but
+			 * it's no reason to disable parallelization.
+			 */
+			break;
 	}
 
 	/*
@@ -1755,7 +1771,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	Relids		required_outer;
 	double		tuple_fraction;
 	bool		forceDistRand;
-	Path	   *subquery_path; // GPDB_96_MERGE_FIXME: still needed?
 	PlannerConfig *config;
 	RelOptInfo *sub_final_rel;
 	ListCell   *lc;
@@ -1778,7 +1793,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	forceDistRand = rte->forceDistRandom;
 
 	/* CDB: Could be a preplanned subquery from window_planner. */
-	if (rte->subquery_plan == NULL)
+	if (rte->subquery_root == NULL)
 	{
 		/*
 		 * push down quals if possible. Note subquery might be
@@ -1850,7 +1865,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	else
 	{
 		/* This is a preplanned sub-query RTE. */
-		rel->subroot = rte->subquery_subroot;
+		rel->subroot = rte->subquery_root;
 		/* XXX rel->onerow = ??? */
 	}
 
@@ -1899,8 +1914,8 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 										  pathkeys, required_outer));
 
 		if (forceDistRand)
-			CdbPathLocus_MakeStrewn(&subquery_path->locus,
-									CdbPathLocus_NumSegments(subquery_path->locus));
+			CdbPathLocus_MakeStrewn(&subpath->locus,
+									CdbPathLocus_NumSegments(subpath->locus));
 	}
 }
 
@@ -1983,10 +1998,12 @@ set_tablefunction_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rt
 	RangeTblFunction *rtfunc;
 	FuncExpr   *fexpr;
 	ListCell   *arg;
+	RelOptInfo *sub_final_rel;
 	Relids		required_outer;
+	ListCell   *lc;
 
 	/* Cannot be a preplanned subquery from window_planner. */
-	Assert(!rte->subquery_plan);
+	Assert(!rte->subquery_root);
 
 	Assert(list_length(rte->functions) == 1);
 	rtfunc = (RangeTblFunction *) linitial(rte->functions);
@@ -2010,6 +2027,13 @@ set_tablefunction_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rt
 									config);
 
 	/*
+	 * It's possible that constraint exclusion proved the subquery empty. If
+	 * so, it's desirable to produce an unadorned dummy path so that we will
+	 * recognize appropriate optimizations at this query level.
+	 */
+	sub_final_rel = fetch_upper_rel(rel->subroot, UPPERREL_FINAL, NULL);
+
+	/*
 	 * With the subquery planned we now need to clear the subquery from the
 	 * TableValueExpr nodes, otherwise preprocess_expression will trip over
 	 * it.
@@ -2030,12 +2054,26 @@ set_tablefunction_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rt
 	/* Mark rel with estimated output rows, width, etc */
 	set_table_function_size_estimates(root, rel);
 
-	/* Generate appropriate path */
-	add_path(rel, create_tablefunction_path(root, rel, rte,
-											required_outer));
+	/*
+	 * For each Path that subquery_planner produced, make a SubqueryScanPath
+	 * in the outer query.
+	 */
+	foreach(lc, sub_final_rel->pathlist)
+	{
+		Path	   *subpath = (Path *) lfirst(lc);
+		List	   *pathkeys;
 
-	/* Select cheapest path (pretty easy in this case...) */
-	set_cheapest(rel);
+		/* Convert subpath's pathkeys to outer representation */
+		pathkeys = convert_subquery_pathkeys(root,
+											 rel,
+											 subpath->pathkeys,
+							make_tlist_from_pathtarget(subpath->pathtarget));
+
+		/* Generate appropriate path */
+		add_path(rel, (Path *)
+				 create_tablefunction_path(root, rel, subpath,
+										   pathkeys, required_outer));
+	}
 }
 
 /*
@@ -2083,6 +2121,7 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	Plan	   *subplan = NULL;
 	List	   *pathkeys = NULL;
 	PlannerInfo *subroot = NULL;
+	RelOptInfo *sub_final_rel;
 	Relids		required_outer;
 
 	/*
@@ -2250,15 +2289,24 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		subroot = cteplaninfo->subroot;
 	}
 
-	pathkeys = subroot->query_pathkeys;
+	/*
+	 * It's possible that constraint exclusion proved the subquery empty. If
+	 * so, it's desirable to produce an unadorned dummy path so that we will
+	 * recognize appropriate optimizations at this query level.
+	 */
+	sub_final_rel = fetch_upper_rel(rel->subroot, UPPERREL_FINAL, NULL);
 
+	if (IS_DUMMY_REL(sub_final_rel))
+	{
+		set_dummy_rel_pathlist(root, rel);
+		return;
+	}
+
+	pathkeys = subroot->query_pathkeys;
 	rel->subroot = subroot;
 
 	/* Mark rel with estimated output rows, width, etc */
-	set_cte_size_estimates(root, rel, rel->subplan->plan_rows);
-
-	/* Convert subquery pathkeys to outer representation */
-	pathkeys = convert_subquery_pathkeys(root, rel, pathkeys);
+	set_cte_size_estimates(root, rel, rel->rows);
 
 	/*
 	 * We don't support pushing join clauses into the quals of a CTE scan, but
@@ -2267,8 +2315,22 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 */
 	required_outer = rel->lateral_relids;
 
-	/* Generate appropriate path */
-	add_path(rel, create_ctescan_path(root, rel, pathkeys,required_outer));
+	/*
+	 * For each Path that subquery_planner produced, make a CteScanPath
+	 * in the outer query.
+	 */
+	foreach(lc, sub_final_rel->pathlist)
+	{
+		Path	   *subpath = (Path *) lfirst(lc);
+		List	   *pathkeys;
+	
+		/* Convert subquery pathkeys to outer representation */
+		pathkeys = convert_subquery_pathkeys(root, rel, subpath->pathkeys,
+											 make_tlist_from_pathtarget(subpath->pathtarget));
+
+		/* Generate appropriate path */
+		add_path(rel, create_ctescan_path(root, rel, pathkeys, required_outer));
+	}
 }
 
 /*
@@ -2285,7 +2347,6 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	PlannerInfo *cteroot;
 	Index		levelsup;
 	Relids		required_outer;
-	CdbLocusType ctelocus;
 
 	/*
 	 * We need to find the non-recursive term's path, which is in the plan
@@ -2318,10 +2379,8 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 */
 	required_outer = rel->lateral_relids;
 
-	ctelocus = cteplan->flow->locustype;
-
 	/* Generate appropriate path */
-	add_path(rel, create_worktablescan_path(root, rel, ctelocus, required_outer));
+	add_path(rel, create_worktablescan_path(root, rel, ctepath->locus, required_outer));
 }
 
 /*

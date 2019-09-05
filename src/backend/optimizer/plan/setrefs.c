@@ -767,7 +767,8 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 
 				/* Need to look up the subquery's RelOptInfo, since we need its subroot */
 				rel = find_base_rel(root, tplan->scan.scanrelid);
-				Assert(rel->subplan == subplan);
+				// GPDB_96_MERGE_FIXME: rel->subpla is no more
+				//Assert(rel->subplan == subplan);
 
 				/* recursively process the subplan */
 				plan->lefttree = set_plan_references(rel->subroot, subplan);
@@ -3157,11 +3158,14 @@ cdb_insert_result_node(PlannerInfo *root, Plan *plan, int rtoffset)
     resultplan = (Plan *) make_result(plan->targetlist, NULL, plan);
 
     /* Build a new targetlist for the given Plan, with Var nodes only. */
+	/* GPDB_96_MERGE_FIXME: flatten_tlist was removed in upstream. */
+#if 0
     plan->targetlist = flatten_tlist(plan->targetlist,
 									 PVC_RECURSE_AGGREGATES |
 									 PVC_INCLUDE_PLACEHOLDERS);
+#endif
 
-    /* Fix up the Result node and the Plan tree below it. */
+	/* Fix up the Result node and the Plan tree below it. */
     resultplan = set_plan_refs(root, resultplan, rtoffset);
 
     /* Reattach the Flow node. */

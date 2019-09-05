@@ -658,10 +658,6 @@ get_agg_clause_costs_walker(Node *node, get_agg_clause_costs_context *context)
 		if (!OidIsValid(aggcombinefn))
 			costs->hasNonCombine = true; /* Nope! */
 
-		/* add component function execution costs to appropriate totals */
-		costs->transCost.per_tuple += get_func_cost(aggtransfn) * cpu_operator_cost;
-		if (OidIsValid(aggfinalfn))
-
 		/*
 		 * Add the appropriate component function execution costs to
 		 * appropriate totals.

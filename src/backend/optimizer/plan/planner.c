@@ -1318,10 +1318,6 @@ inheritance_planner(PlannerInfo *root)
 
 	GpPolicy   *parentPolicy = NULL;
 	Oid			parentOid = InvalidOid;
-
-	/* MPP */
-	CdbLocusType append_locustype = CdbLocusType_Null;
-	bool		locus_ok = TRUE;
 	Assert(parse->commandType != CMD_INSERT);
 
 	/*
@@ -1443,7 +1439,8 @@ inheritance_planner(PlannerInfo *root)
 		 * then fool around with subquery RTEs.
 		 */
 		subroot->parse = (Query *)
-			adjust_appendrel_attrs(&subroot, (Node *) parse,
+			adjust_appendrel_attrs(root,
+								   (Node *) parse,
 								   appinfo);
 
 		/*
@@ -1607,6 +1604,7 @@ inheritance_planner(PlannerInfo *root)
 		if (IS_DUMMY_PATH(subpath))
 			continue;
 
+#if 0 /* GPDB_96_MERGE_FIXME */
 		/* MPP needs target loci to match. */
 		if (Gp_role == GP_ROLE_DISPATCH)
 		{
@@ -1653,6 +1651,7 @@ inheritance_planner(PlannerInfo *root)
 					 errmsg("incompatible loci in target inheritance set")));
 			}
 		}
+#endif
 
 		/*
 		 * If this is the first non-excluded child, its post-planning rtable
@@ -2492,6 +2491,8 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 										   limit_tuples);
 	}
 
+	/* GPDB_96_MERGE_FIXME: where should this be done with the upper planner pathification? */
+#if 0
 	/*
 	 * Decorate the top node with a Flow node if it doesn't have one yet. (In
 	 * such cases we require the next-to-top node to have a Flow node from
@@ -2499,7 +2500,8 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	 */
 	if (!result_plan->flow)
 		result_plan->flow = pull_up_Flow(result_plan, getAnySubplan(result_plan));
-
+#endif
+	
 	/*
 	 * An ORDER BY or DISTINCT doesn't make much sense, unless we bring all
 	 * the data to a single node. Otherwise it's just a partial order. (If
@@ -2552,6 +2554,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	 * The conflict with UPDATE|DELETE is implemented by locking the entire
 	 * table in ExclusiveMode. More details please refer docs.
 	 */
+#if 0 /* GPDB_96_MERGE_FIXME: We should be doing this on the paths, we don't have a 'Plan' anymore */
 	if (parse->rowMarks)
 	{
 		ListCell   *lc;
@@ -2598,6 +2601,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 			current_pathkeys = NIL;
 		}
 	}
+#endif
 
 	/*
 	 * Deal with explicit redistribution requirements for TableValueExpr
@@ -2630,6 +2634,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 * Repartition the subquery plan based on our distribution
 		 * requirements
 		 */
+#if 0 /* GPDB_96_MERGE_FIXME: With upper planner pathification, we don't have a Plan here. Do this to the paths */
 		r = repartitionPlan(result_plan, false, false,
 							exprList, opfamilies,
 							result_plan->flow->numsegments);
@@ -2641,6 +2646,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 			 */
 			elog(ERROR, "failure repartitioning plan");
 		}
+#endif
 	}
 
 	/*
@@ -2775,7 +2781,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 										list_make1(root),
 										withCheckOptionLists,
 										returningLists,
-										is_split_updates,
+										NIL, // GPDB_96_MERGE_FIXME: is_split_updates
 										rowMarks,
 										parse->onConflict,
 										SS_assign_special_param(root));
@@ -4487,6 +4493,7 @@ create_grouping_paths(PlannerInfo *root,
 											  path->pathkeys);
 			if (path == cheapest_path || is_sorted)
 			{
+#if 0 /* GPDB_96_MERGE_FIXM: pathify this */
 				/*
 				 * Figure out the desired data distribution to perform the grouping.
 				 *
@@ -4573,7 +4580,8 @@ create_grouping_paths(PlannerInfo *root,
 					result_plan = (Plan *) make_motion_hash(root, result_plan, hash_exprs,
 															hashOpfamilies);
 				}
-
+#endif
+				
 				/* Sort the cheapest-total path if it isn't already sorted */
 				if (!is_sorted)
 				{
@@ -4590,10 +4598,13 @@ create_grouping_paths(PlannerInfo *root,
 					 * but then we'd need to re-sort it. That doesn't seem like a good idea, so
 					 * we prefer to gather it all, and take advantage of the sort order.
 					 */
+#if 0 /* GPDB_96_MEGE_FIXME: pathify this */
 					if (need_redistribute)
 						result_plan = (Plan *) make_motion_gather(root, result_plan, current_pathkeys);
+#endif
 				}
 
+#if 0 /* GPDB_96_MEGE_FIXME: pathify this */
 				if (need_redistribute && !hash_exprs)
 				{
 					result_plan = (Plan *) make_sorted_union_motion(root,
@@ -4608,7 +4619,8 @@ create_grouping_paths(PlannerInfo *root,
 				}
 				else
 					result_plan = (Plan *) sort;
-
+#endif
+				
 				/* Now decide what to stick atop it */
 				if (parse->groupingSets)
 				{
@@ -4967,6 +4979,7 @@ create_one_window_path(PlannerInfo *root,
 		 * node. But we'll do that after the Sort, so that the Sort
 		 * is parallelized.
 		 */
+#if 0  /* GPDB_96_MERGE_FIXME: pathify this */
 		if (CdbPathLocus_IsGeneral(current_locus))
 			need_gather_for_partitioning = false;
 		else
@@ -5047,6 +5060,7 @@ create_one_window_path(PlannerInfo *root,
 			firstOrderCmpOperator = sortcl->sortop;
 			firstOrderNullsFirst = sortcl->nulls_first;
 		}
+#endif
 
 		window_pathkeys = make_pathkeys_for_window(root,
 												   wc,
@@ -5064,6 +5078,7 @@ create_one_window_path(PlannerInfo *root,
 		/*
 		 * If the input's locus doesn't match the PARTITION BY, gather the result.
 		 */
+#if 0  /* GPDB_96_MERGE_FIXME: pathify this */
 		if (need_gather_for_partitioning &&
 			!CdbPathLocus_IsGeneral(current_locus) &&
 			result_plan->flow->flotype != FLOW_SINGLETON)
@@ -5071,6 +5086,7 @@ create_one_window_path(PlannerInfo *root,
 			result_plan =
 				(Plan *) make_motion_gather_to_QE(root, result_plan, current_pathkeys);
 		}
+#endif
 
 		if (lnext(l))
 		{
@@ -5142,6 +5158,7 @@ create_distinct_paths(PlannerInfo *root,
 	distinct_rel = fetch_upper_rel(root, UPPERREL_DISTINCT, NULL);
 
 
+#if 0  /* GPDB_96_MERGE_FIXME: pathify this */
 	if (CdbPathLocus_IsNull(current_locus))
 		current_locus = cdbpathlocus_from_flow(result_plan->flow);
 
@@ -5255,8 +5272,8 @@ create_distinct_paths(PlannerInfo *root,
 		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 						errmsg("unexpected input locus to distinct")));
 	}
-	
-			
+#endif
+
 	/*
 	 * We don't compute anything at this level, so distinct_rel will be
 	 * parallel-safe if the input rel is parallel-safe.  In particular, if
@@ -6082,6 +6099,7 @@ make_window_input_target(PlannerInfo *root,
 	list_free(flattenable_cols);
 
 	/* GPDB_96_MERGE_FIXME: Where does this code belong now? */
+#if 0
 	/*
 	 * Add any Vars that appear in the start/end bounds. In PostgreSQL,
 	 * they're not allowed to contain any Vars of the same query level, but
@@ -6101,6 +6119,7 @@ make_window_input_target(PlannerInfo *root,
 		new_tlist = add_to_flat_tlist(new_tlist, flattenable_vars);
 		list_free(flattenable_vars);
 	}
+#endif
 
 	/* XXX this causes some redundant cost calculation ... */
 	return set_pathtarget_cost_width(root, input_target);

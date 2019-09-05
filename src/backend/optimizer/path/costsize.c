@@ -1477,18 +1477,10 @@ cost_functionscan(Path *path, PlannerInfo *root,
 /*
  * cost_tablefunction
  *	  Determines and returns the cost of scanning a table function RTE.
- *
- * GPDB_96_MERGE_FIXME: I added the 'plan' argument here while trying to
- * make stuff compile, and copy-pasted this sentence here from cost_subplan:
- *
- * Note: we could dig the subplan's Plan out of the root list, but in practice
- * all callers have it handy already, so we make them pass it.
- *
- * GPDB_96_MERGE_FIXME: but I'm not sure that's actually true.
  */
 void
-cost_tablefunction(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-				   ParamPathInfo *param_info, Plan *subplan)
+cost_tablefunction(TableFunctionScanPath *path, PlannerInfo *root, RelOptInfo *baserel,
+				   ParamPathInfo *param_info)
 {
 	Cost		startup_cost;
 	Cost		run_cost;
@@ -1501,13 +1493,13 @@ cost_tablefunction(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 
 	/* Mark the path with the correct row estimate */
 	if (param_info)
-		path->rows = param_info->ppi_rows;
+		path->path.rows = param_info->ppi_rows;
 	else
-		path->rows = baserel->rows;
+		path->path.rows = baserel->rows;
 
 	/* Initialize cost of the subquery input */
-	path->startup_cost = subplan->startup_cost;
-	path->total_cost   = subplan->total_cost;
+	path->path.startup_cost = path->subpath->startup_cost;
+	path->path.total_cost   = path->subpath->total_cost;
 
 	/*
 	 * For now, estimate function's cost at one operator eval per function
@@ -1524,8 +1516,8 @@ cost_tablefunction(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 	run_cost = cpu_per_tuple * baserel->tuples;
 
 	/* Add in the additional cost */
-	path->startup_cost += startup_cost;
-	path->total_cost   += startup_cost + run_cost;
+	path->path.startup_cost += startup_cost;
+	path->path.total_cost   += startup_cost + run_cost;
 }
 
 /*
@@ -1943,14 +1935,21 @@ cost_agg(Path *path, PlannerInfo *root,
 		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 		 int numGroupCols, double numGroups,
 		 Cost input_startup_cost, Cost input_total_cost,
-		 double input_tuples, double input_width,
-		 double hash_batches, double hashentry_width,
+		 double input_tuples,
 		 bool hash_streaming)
+/* GPDB_96_MERGE_FIXME: where can we get these arguments? */
+#if 0
+		 double hash_batches, double hashentry_width,
+#endif
 {
 	double		output_tuples;
 	Cost		startup_cost;
 	Cost		total_cost;
 	AggClauseCosts dummy_aggcosts;
+
+	/* GPDB_96_MERGE_FIXME: dummy values */
+	double hash_batches = 1;
+	double hashentry_width = 100;
 
 	/* Use all-zero per-aggregate costs if NULL is passed */
 	if (aggcosts == NULL)

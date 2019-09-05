@@ -1062,9 +1062,11 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 			 numGroupCols, dNumGroups,
 			 input_path->startup_cost, input_path->total_cost,
 			 input_path->rows,
+#if 0 /* GPDB_96_MERGE_FIXME */
 			 hashentrysize, /* input_width */
 			 0, /* hash_batches - so spilling expected with TupleHashTable */
 			 hashentrysize, /* hashentry_width */
+#endif
 			 false /* hash_streaming */);
 
 	/*

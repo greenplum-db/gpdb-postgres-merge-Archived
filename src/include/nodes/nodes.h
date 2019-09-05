@@ -312,6 +312,7 @@ typedef enum NodeTag
 	T_BitmapOrPath,
 	T_TidPath,
 	T_SubqueryScanPath,
+	T_TableFunctionScanPath,
 	T_ForeignPath,
 	T_CustomPath,
 	T_NestPath,

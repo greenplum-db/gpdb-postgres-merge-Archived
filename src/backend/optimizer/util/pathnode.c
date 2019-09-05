@@ -2159,9 +2159,6 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 					 subpath->startup_cost,
 					 subpath->total_cost,
 					 rel->rows,
-					 0, /* input_width */
-					 0, /* hash_batches */
-					 0, /* hashentry_width */
 					 false /* streaming */
 				);
 	}
@@ -2395,9 +2392,6 @@ create_unique_rowid_path(PlannerInfo *root,
 					 subpath->startup_cost,
 					 subpath->total_cost,
 					 rel->rows,
-					 0, /* input_width */
-					 0, /* hash_batches */
-					 0, /* hashentry_width */
 					 false /* streaming */
 				);
 	}
@@ -2514,47 +2508,6 @@ translate_sub_tlist(List *tlist, int relid)
 	return result;
 }
 
-static bool
-subquery_motionHazard_walker(Plan *node)
-{
-	List       *planlist = NIL;
-
-	if (node == NULL)
-		return false;
-
-	if (IsA(node, Motion))
-		return true;
-	else if (IsA(node, SubqueryScan))
-		return subquery_motionHazard_walker(((SubqueryScan *) node)->subplan);
-	else if (IsA(node, Append))
-		planlist = ((Append *) node)->appendplans;
-	else if (IsA(node, MergeAppend))
-		planlist = ((MergeAppend *) node)->mergeplans;
-	else if (IsA(node, BitmapAnd))
-		planlist = ((BitmapAnd *) node)->bitmapplans;
-	else if (IsA(node, BitmapOr))
-		planlist = ((BitmapOr *) node)->bitmapplans;
-	else if (IsA(node, Sequence))
-		planlist = ((Sequence *) node)->subplans;
-	else if (IsA(node, ModifyTable))
-		planlist = ((ModifyTable *) node)->plans;
-
-	/* Handle plan lists */
-	ListCell   *l;
-	foreach(l, planlist)
-	{
-		if (subquery_motionHazard_walker((Plan *) lfirst(l)))
-			return true;
-	}
-
-	/* left tree and right tree */
-	if (subquery_motionHazard_walker(node->lefttree) ||
-		subquery_motionHazard_walker(node->righttree))
-		return true;
-
-	return false;
-}
-
 /*
  * create_gather_path
  *	  Creates a path corresponding to a gather scan, returning the
@@ -2618,8 +2571,8 @@ create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->path.pathkeys = pathkeys;
 	pathnode->subpath = subpath;
 
-	pathnode->path.locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
-	pathnode->path.motionHazard = subquery_motionHazard_walker(rel->subplan);
+	pathnode->path.locus = subpath->locus;
+	pathnode->path.motionHazard = subpath->motionHazard;
 	pathnode->path.rescannable = false;
 	pathnode->path.sameslice_relids = NULL;
 
@@ -2771,41 +2724,44 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
  *	  Creates a path corresponding to a sequential scan of a table function,
  *	  returning the pathnode.
  */
-Path *
-create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel,
-						  RangeTblEntry *rte,
-						  Relids required_outer)
+TableFunctionScanPath *
+create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
+						  List *pathkeys, Relids required_outer)
 {
-	Path	   *pathnode = makeNode(Path);
-
-	Assert(rte->rtekind == RTE_TABLEFUNCTION);
+	TableFunctionScanPath *pathnode = makeNode(TableFunctionScanPath);
 
 	/* Setup the basics of the TableFunction path */
-	pathnode->pathtype	   = T_TableFunctionScan;
-	pathnode->parent	   = rel;
-	pathnode->param_info = get_baserel_parampathinfo(root, rel,
-													 required_outer);
-	pathnode->pathkeys	   = NIL;		/* no way to specify output ordering */
-	pathnode->motionHazard = true;      /* better safe than sorry */
-	pathnode->rescannable  = false;     /* better safe than sorry */
+	pathnode->path.pathtype = T_TableFunctionScan;
+	pathnode->path.parent = rel;
+	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+														  required_outer);
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		subpath->parallel_safe;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
+	pathnode->path.pathkeys	   = NIL;		/* no way to specify output ordering */
+	pathnode->subpath = subpath;
+
+	pathnode->path.motionHazard = true;      /* better safe than sorry */
+	pathnode->path.rescannable  = false;     /* better safe than sorry */
 
 	/*
-	 * Inherit the locus of the input subquery.  This is necessary to handle the
+	 * Inherit the locus of the input subquery's path.  This is necessary to handle the
 	 * case of a General locus, e.g. if all the data has been concentrated to a
 	 * single segment then the output will all be on that segment, otherwise the
 	 * output must be declared as randomly distributed because we do not know
 	 * what relationship, if any, there is between the input data and the output
 	 * data.
 	 */
-	pathnode->locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
+	pathnode->path.locus = subpath->locus;
 
 	/* Mark the output as random if the input is partitioned */
-	if (CdbPathLocus_IsPartitioned(pathnode->locus))
-		CdbPathLocus_MakeStrewn(&pathnode->locus,
-								CdbPathLocus_NumSegments(pathnode->locus));
-	pathnode->sameslice_relids = NULL;
+	if (CdbPathLocus_IsPartitioned(pathnode->path.locus))
+		CdbPathLocus_MakeStrewn(&pathnode->path.locus,
+								CdbPathLocus_NumSegments(pathnode->path.locus));
+	pathnode->path.sameslice_relids = NULL;
 
-	cost_tablefunction(pathnode, root, rel, pathnode->param_info, rel->subplan);
+	cost_tablefunction(pathnode, root, rel, pathnode->path.param_info);
 
 	return pathnode;
 }
@@ -2877,7 +2833,8 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys,
 	// pathnode->pathkeys = NIL;	/* XXX for now, result is always unordered */
 	pathnode->pathkeys = pathkeys;
 
-	pathnode->locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
+	// GPDB_96_MERGE_FIXME: where to get the locus now?
+	//pathnode->locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
 
 	/*
 	 * We can't extract these two values from the subplan, so we simple set
@@ -2899,28 +2856,16 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys,
  */
 Path *
 create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
-						  CdbLocusType ctelocus,
+						  CdbPathLocus ctelocus,
 						  Relids required_outer)
 {
 	Path	   *pathnode = makeNode(Path);
-	CdbPathLocus result;
 	int			numsegments;
 
 	if (rel->cdbpolicy)
 		numsegments = rel->cdbpolicy->numsegments;
 	else
 		numsegments = getgpsegmentCount(); /* FIXME */
-
-	if (ctelocus == CdbLocusType_Entry)
-		CdbPathLocus_MakeEntry(&result);
-	else if (ctelocus == CdbLocusType_SingleQE)
-		CdbPathLocus_MakeSingleQE(&result, numsegments);
-	else if (ctelocus == CdbLocusType_General)
-		CdbPathLocus_MakeGeneral(&result, numsegments);
-	else if (ctelocus == CdbLocusType_SegmentGeneral)
-		CdbPathLocus_MakeSegmentGeneral(&result, numsegments);
-	else
-		CdbPathLocus_MakeStrewn(&result, numsegments);
 
 	pathnode->pathtype = T_WorkTableScan;
 	pathnode->parent = rel;
@@ -2932,7 +2877,7 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->parallel_workers = 0;
 	pathnode->pathkeys = NIL;	/* result is always unordered */
 
-	pathnode->locus = result;
+	pathnode->locus = ctelocus;
 	pathnode->motionHazard = false;
 	pathnode->rescannable = true;
 	pathnode->sameslice_relids = rel->relids;
@@ -3924,7 +3869,8 @@ create_agg_path(PlannerInfo *root,
 			 aggstrategy, aggcosts,
 			 list_length(groupClause), numGroups,
 			 subpath->startup_cost, subpath->total_cost,
-			 subpath->rows);
+			 subpath->rows,
+			 streaming);
 
 	/* add tlist eval cost for each output row */
 	pathnode->path.startup_cost += target->cost.startup;
@@ -4004,7 +3950,8 @@ create_groupingsets_path(PlannerInfo *root,
 			 numGroups,
 			 subpath->startup_cost,
 			 subpath->total_cost,
-			 subpath->rows);
+			 subpath->rows,
+			 false /* streaming */);
 
 	/*
 	 * Add in the costs and output rows of the additional sorting/aggregation
@@ -4044,7 +3991,8 @@ create_groupingsets_path(PlannerInfo *root,
 					 numGroups, /* XXX surely not right for all steps? */
 					 sort_path.startup_cost,
 					 sort_path.total_cost,
-					 sort_path.rows);
+					 sort_path.rows,
+					 false /* streaming */);
 
 			pathnode->path.total_cost += agg_path.total_cost;
 			pathnode->path.rows += agg_path.rows;
@@ -4361,6 +4309,7 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 						List *resultRelations, List *subpaths,
 						List *subroots,
 						List *withCheckOptionLists, List *returningLists,
+						List *is_split_updates, /* GPDB_96_MERGE_FIXME: unused */
 						List *rowMarks, OnConflictExpr *onconflict,
 						int epqParam)
 {
