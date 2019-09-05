@@ -760,10 +760,6 @@ NIAddAffix(IspellDict *Conf, const char *flag, char flagflags, const char *mask,
 	Conf->naffixes++;
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 /* Parsing states for parse_affentry() and friends */
 #define PAE_WAIT_MASK	0
 #define PAE_INMASK		1
@@ -1278,13 +1274,10 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 	}
 	tsearch_readline_end(&trst);
 
-<<<<<<< HEAD
-=======
 	if (Conf->nCompoundAffixFlag > 1)
 		qsort((void *) Conf->CompoundAffixFlags, Conf->nCompoundAffixFlag,
 			  sizeof(CompoundAffixFlag), cmpcmdflag);
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	if (!tsearch_readline_begin(&trst, filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
@@ -1303,12 +1296,6 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 		if (ptype)
 			pfree(ptype);
 		ptype = lowerstr_ctx(Conf, type);
-<<<<<<< HEAD
-		if (fields_read < 4 ||
-			(STRNCMP(ptype, "sfx") != 0 && STRNCMP(ptype, "pfx") != 0))
-			goto nextline;
-
-=======
 
 		/* First try to parse AF parameter (alias compression) */
 		if (STRNCMP(ptype, "af") == 0)
@@ -1360,7 +1347,6 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 		 * SFX \ N 1
 		 *--------
 		 */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		if (fields_read == 4)
 		{
 			isSuffix = (STRNCMP(ptype, "sfx") == 0);
@@ -1379,26 +1365,11 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 			char	   *ptr;
 			int			aflg = 0;
 
-<<<<<<< HEAD
-			if (strlen(sflag) != 1 || flag != *sflag || flag == 0)
-				goto nextline;
-			/* Get flags after '/' (flags are case sensitive) */
-			if ((ptr = strchr(repl, '/')) != NULL)
-			{
-				ptr++;
-				while (*ptr)
-				{
-					aflg |= Conf->flagval[*(unsigned char *) ptr];
-					ptr++;
-				}
-			}
-=======
 			/* Get flags after '/' (flags are case sensitive) */
 			if ((ptr = strchr(repl, '/')) != NULL)
 				aflg |= getCompoundAffixFlagValue(Conf,
 												  getAffixFlagSet(Conf,
 																  ptr + 1));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			/* Get lowercased version of string before '/' */
 			prepl = lowerstr_ctx(Conf, repl);
 			if ((ptr = strchr(prepl, '/')) != NULL)
@@ -2005,11 +1976,7 @@ NISortAffixes(IspellDict *Conf)
 				/* leave only unique and minimals suffixes */
 				ptr->affix = Affix->repl;
 				ptr->len = Affix->replen;
-<<<<<<< HEAD
 				ptr->issuffix = issuffix;
-=======
-				ptr->issuffix = (Affix->type == FF_SUFFIX);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				ptr++;
 			}
 		}
