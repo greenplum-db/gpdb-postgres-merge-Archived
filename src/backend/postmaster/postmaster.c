@@ -32,13 +32,9 @@
  *	  clients.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -506,10 +502,7 @@ static void TerminateChildren(int signal);
 #define SignalChildren(sig)			   SignalSomeChildren(sig, BACKEND_TYPE_ALL)
 
 static int	CountChildren(int target);
-<<<<<<< HEAD
 static bool assign_backendlist_entry(RegisteredBgWorker *rw);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void maybe_start_bgworker(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
 static pid_t StartChildProcess(AuxProcType type);
@@ -1415,25 +1408,6 @@ PostmasterMain(int argc, char *argv[])
 	RemovePgTempFiles();
 
 	/*
-<<<<<<< HEAD
-	 * Forcibly remove the files signaling a standby promotion
-	 * request. Otherwise, the existence of those files triggers
-	 * a promotion too early, whether a user wants that or not.
-	 *
-	 * This removal of files is usually unnecessary because they
-	 * can exist only during a few moments during a standby
-	 * promotion. However there is a race condition: if pg_ctl promote
-	 * is executed and creates the files during a promotion,
-	 * the files can stay around even after the server is brought up
-	 * to new master. Then, if new standby starts by using the backup
-	 * taken from that master, the files can exist at the server
-	 * startup and should be removed in order to avoid an unexpected
-	 * promotion.
-	 *
-	 * Note that promotion signal files need to be removed before
-	 * the startup process is invoked. Because, after that, they can
-	 * be used by postmaster's SIGUSR1 signal handler.
-=======
 	 * Forcibly remove the files signaling a standby promotion request.
 	 * Otherwise, the existence of those files triggers a promotion too early,
 	 * whether a user wants that or not.
@@ -1450,7 +1424,6 @@ PostmasterMain(int argc, char *argv[])
 	 * Note that promotion signal files need to be removed before the startup
 	 * process is invoked. Because, after that, they can be used by
 	 * postmaster's SIGUSR1 signal handler.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 */
 	RemovePromoteSignalFiles();
 
@@ -2057,28 +2030,6 @@ ServerLoop(void)
 		if (StartWorkerNeeded || HaveCrashedWorker)
 			maybe_start_bgworker();
 
-<<<<<<< HEAD
-#ifdef HAVE_PTHREAD_IS_THREADED_NP
-
-		/*
-		 * With assertions enabled, check regularly for appearance of
-		 * additional threads.  All builds check at start and exit.
-		 */
-		Assert(pthread_is_threaded_np() == 0);
-#endif
-
-		/*
-		 * Lastly, check to see if it's time to do some things that we don't
-		 * want to do every single time through the loop, because they're a
-		 * bit expensive.  Note that there's up to a minute of slop in when
-		 * these tasks will be performed, since DetermineSleepTime() will let
-		 * us sleep at most that long; except for SIGKILL timeout which has
-		 * special-case logic there.
-		 */
-		now = time(NULL);
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #ifdef HAVE_PTHREAD_IS_THREADED_NP
 
 		/*
@@ -3141,10 +3092,7 @@ pmdie(SIGNAL_ARGS)
 			if (pmState == PM_RECOVERY)
 			{
 				SignalSomeChildren(SIGTERM, BACKEND_TYPE_BGWORKER);
-<<<<<<< HEAD
-=======
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				/*
 				 * Only startup, bgwriter, walreceiver, possibly bgworkers,
 				 * and/or checkpointer should be active in this state; we just
@@ -3631,15 +3579,9 @@ CleanupBackgroundWorker(int pid,
 
 		/*
 		 * It's possible that this background worker started some OTHER
-<<<<<<< HEAD
-		 * background worker and asked to be notified when that worker
-		 * started or stopped.  If so, cancel any notifications destined
-		 * for the now-dead backend.
-=======
 		 * background worker and asked to be notified when that worker started
 		 * or stopped.  If so, cancel any notifications destined for the
 		 * now-dead backend.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		 */
 		if (rw->rw_backend->bgworker_notify)
 			BackgroundWorkerStopNotifications(rw->rw_pid);
@@ -5252,7 +5194,6 @@ SubPostmasterMain(int argc, char *argv[])
 	 * to do this before going any further to ensure that we can attach at the
 	 * same address the postmaster used.  On the other hand, if we choose not
 	 * to re-attach, we may have other cleanup to do.
-<<<<<<< HEAD
 	 *
 	 * If testing EXEC_BACKEND on Linux, you should run this as root before
 	 * starting the postmaster:
@@ -5263,8 +5204,6 @@ SubPostmasterMain(int argc, char *argv[])
 	 * child process's memory map to be different from the parent's, making it
 	 * sometimes impossible to attach to shared memory at the desired address.
 	 * Return the setting to its old value (usually '1' or '2') when finished.
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 */
 	if (strcmp(argv[1], "--forkbackend") == 0   ||
 		strcmp(argv[1], "--forkavlauncher") == 0 ||
@@ -5401,12 +5340,6 @@ SubPostmasterMain(int argc, char *argv[])
 		/* do this as early as possible; in particular, before InitProcess() */
 		IsBackgroundWorker = true;
 
-<<<<<<< HEAD
-=======
-		/* Close the postmaster's sockets */
-		ClosePostmasterPorts(false);
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		/* Restore basic shared memory pointers */
 		InitShmemAccess(UsedShmemSegAddr);
 
@@ -6207,16 +6140,12 @@ do_start_bgworker(RegisteredBgWorker *rw)
 			rw->rw_pid = worker_pid;
 			rw->rw_backend->pid = rw->rw_pid;
 			ReportBackgroundWorkerPID(rw);
-<<<<<<< HEAD
 			/* add new worker to lists of backends */
 			dlist_push_head(&BackendList, &rw->rw_backend->elem);
 #ifdef EXEC_BACKEND
 			ShmemBackendArrayAdd(rw->rw_backend);
 #endif
 			return true;
-=======
-			break;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	return false;
@@ -6427,7 +6356,6 @@ maybe_start_bgworker(void)
 			rw->rw_crashed_at = 0;
 
 			/*
-<<<<<<< HEAD
 			 * Try to start the worker.
 			 *
 			 * On failure, give up processing workers for now, but set
@@ -6443,20 +6371,6 @@ maybe_start_bgworker(void)
 				StartWorkerNeeded = true;
 				return;
 			}
-=======
-			 * Allocate and assign the Backend element.  Note we must do this
-			 * before forking, so that we can handle out of memory properly.
-			 */
-			if (!assign_backendlist_entry(rw))
-				return;
-
-			do_start_bgworker(rw);		/* sets rw->rw_pid */
-
-			dlist_push_head(&BackendList, &rw->rw_backend->elem);
-#ifdef EXEC_BACKEND
-			ShmemBackendArrayAdd(rw->rw_backend);
-#endif
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 			/*
 			 * Quit, but have ServerLoop call us again to look for additional
