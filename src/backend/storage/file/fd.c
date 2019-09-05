@@ -3,13 +3,9 @@
  * fd.c
  *	  Virtual file descriptor code.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -3523,7 +3519,6 @@ fsync_parent_path(const char *fname, int elevel)
 		return -1;
 
 	return 0;
-<<<<<<< HEAD
 }
 
 const char *
@@ -3547,6 +3542,4 @@ void
 FileSetIsWorkfile(File file)
 {
 	VfdCache[file].fdstate |= FD_WORKFILE;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
