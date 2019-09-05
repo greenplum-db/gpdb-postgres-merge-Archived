@@ -2632,20 +2632,17 @@ IndexBuildHeapScan(Relation heapRelation,
 /*
  * As above, except that instead of scanning the complete heap, only the given
  * number of blocks are scanned.  Scan to end-of-rel can be signalled by
-<<<<<<< HEAD
- * passing InvalidBlockNumber as numblocks.
- *
- * GPDB: In contrast to postgres which constructs its own estate, snapshot, and
- * OldestXmin here in function IndexBuildHeapRangeScan, in GPDB we pass them
- * from the generic function IndexBuildScan.
-=======
  * passing InvalidBlockNumber as numblocks.  Note that restricting the range
  * to scan cannot be done when requesting syncscan.
  *
  * When "anyvisible" mode is requested, all tuples visible to any transaction
  * are considered, including those inserted or deleted by transactions that are
  * still in progress.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+ *
+ * GPDB: In contrast to postgres which constructs its own estate, snapshot, and
+ * OldestXmin here in function IndexBuildHeapRangeScan, in GPDB we pass them
+ * from the generic function IndexBuildScan.
+ * GPDB_96_MERGE_FIXME: Why do we do things differently?
  */
 double
 IndexBuildHeapRangeScan(Relation heapRelation,
@@ -2681,11 +2678,6 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 	checking_uniqueness = (indexInfo->ii_Unique ||
 						   indexInfo->ii_ExclusionOps != NULL);
 
-<<<<<<< HEAD
-	Assert(estate->es_per_tuple_exprcontext != NULL);
-	econtext = estate->es_per_tuple_exprcontext;
-	slot = econtext->ecxt_scantuple;
-=======
 	/*
 	 * "Any visible" mode is not compatible with uniqueness checks; make sure
 	 * only one of those is requested.
@@ -2696,21 +2688,18 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 	 * Need an EState for evaluation of index expressions and partial-index
 	 * predicates.  Also a slot to hold the current tuple.
 	 */
-	estate = CreateExecutorState();
-	econtext = GetPerTupleExprContext(estate);
-	slot = MakeSingleTupleTableSlot(RelationGetDescr(heapRelation));
+	Assert(estate->es_per_tuple_exprcontext != NULL);
+	econtext = estate->es_per_tuple_exprcontext;
+	slot = econtext->ecxt_scantuple;
 
 	/* Arrange for econtext's scan tuple to be the tuple under test */
 	econtext->ecxt_scantuple = slot;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Set up execution state for predicate, if any. */
 	predicate = (List *)
 		ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
 						estate);
 
-<<<<<<< HEAD
-=======
 	/*
 	 * Prepare for scan of the base relation.  In a normal index build, we use
 	 * SnapshotAny because we must retrieve all tuples and do our own time
@@ -2733,7 +2722,6 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 		OldestXmin = GetOldestXmin(heapRelation, true);
 	}
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	scan = heap_beginscan_strat(heapRelation,	/* relation */
 								snapshot,		/* snapshot */
 								0,		/* number of keys */
@@ -3060,13 +3048,13 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 									   root_offsets[offnum - 1]);
 
 			/* Call the AM's callback routine to process the tuple */
-			callback(indexRelation, &rootTuple, values, isnull, tupleIsAlive,
+			callback(indexRelation, &rootTuple.t_self, values, isnull, tupleIsAlive,
 					 callback_state);
 		}
 		else
 		{
 			/* Call the AM's callback routine to process the tuple */
-			callback(indexRelation, &heapTuple, values, isnull, tupleIsAlive,
+			callback(indexRelation, &heapTuple->t_self, values, isnull, tupleIsAlive,
 					 callback_state);
 		}
 	}
@@ -3528,18 +3516,14 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	ivinfo.num_heap_tuples = heapRelation->rd_rel->reltuples;
 	ivinfo.strategy = NULL;
 
-<<<<<<< HEAD
-	state.tuplesort = tuplesort_begin_datum(NULL,
-											TIDOID, TIDLessOperator,
-=======
 	/*
 	 * Encode TIDs as int8 values for the sort, rather than directly sorting
 	 * item pointers.  This can be significantly faster, primarily because TID
 	 * is a pass-by-reference type on all platforms, whereas int8 is
 	 * pass-by-value on most platforms.
 	 */
-	state.tuplesort = tuplesort_begin_datum(INT8OID, Int8LessOperator,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	state.tuplesort = tuplesort_begin_datum(NULL,
+											INT8OID, Int8LessOperator,
 											InvalidOid, false,
 											maintenance_work_mem,
 											false);

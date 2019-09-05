@@ -74,7 +74,6 @@ extern void ConstraintSetParentConstraint(Oid childConstrId,
 							  Oid parentConstrId);
 extern Oid	get_relation_constraint_oid(Oid relid, const char *conname, bool missing_ok);
 extern Oid	get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok);
-extern void get_constraint_relation_oids(Oid constraint_oid, Oid *conrelid, Oid *confrelid);
 extern Oid	get_relation_idx_constraint_oid(Oid relationId, Oid indexId);
 
 /**

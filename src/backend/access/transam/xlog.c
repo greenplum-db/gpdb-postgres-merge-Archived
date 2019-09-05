@@ -6605,15 +6605,9 @@ StartupXLOG(void)
 				  (uint32) (checkPoint.redo >> 32), (uint32) checkPoint.redo,
 							 wasShutdown ? "TRUE" : "FALSE")));
 	ereport(DEBUG1,
-<<<<<<< HEAD
-			(errmsg("next transaction ID: %u/%u; next OID: %u; next relfilenode: %u",
-					checkPoint.nextXidEpoch, checkPoint.nextXid,
-					checkPoint.nextOid, checkPoint.nextRelfilenode)));
-=======
-			(errmsg_internal("next transaction ID: %u:%u; next OID: %u",
+			(errmsg_internal("next transaction ID: %u:%u; next OID: %u; next relfilenode: %u",
 							 checkPoint.nextXidEpoch, checkPoint.nextXid,
-							 checkPoint.nextOid)));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+							 checkPoint.nextOid, checkPoint.nextRelfilenode)));
 	ereport(DEBUG1,
 			(errmsg_internal("next MultiXactId: %u; next MultiXactOffset: %u",
 						 checkPoint.nextMulti, checkPoint.nextMultiOffset)));
@@ -7223,7 +7217,6 @@ StartupXLOG(void)
 				XLogCtl->lastReplayedTLI = ThisTimeLineID;
 				SpinLockRelease(&XLogCtl->info_lck);
 
-<<<<<<< HEAD
 				if (create_restartpoint_on_ckpt_record_replay && ArchiveRecoveryRequested)
 				{
 					/*
@@ -7247,7 +7240,8 @@ StartupXLOG(void)
 						else
 							elog(LOG, "Skipping CreateRestartPoint() as bgwriter is not launched.");
 					}
-=======
+				}
+
 				/*
 				 * If rm_redo called XLogRequestWalReceiverReply, then we wake
 				 * up the receiver so that it notices the updated
@@ -7257,7 +7251,6 @@ StartupXLOG(void)
 				{
 					doRequestWalReceiverReply = false;
 					WalRcvForceReply();
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				}
 
 				/* Remember this record as the last-applied one */
@@ -8458,14 +8451,7 @@ ShutdownXLOG(int code pg_attribute_unused() , Datum arg pg_attribute_unused() )
 	ShutdownCommitTs();
 	ShutdownSUBTRANS();
 	ShutdownMultiXact();
-<<<<<<< HEAD
 	DistributedLog_Shutdown();
-
-	/* Don't be chatty in standalone mode */
-	ereport(IsPostmasterEnvironment ? LOG : NOTICE,
-			(errmsg("database system is shut down")));
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
@@ -9134,11 +9120,6 @@ CreateCheckPoint(int flags)
 	 */
 	if (!RecoveryInProgress())
 		TruncateSUBTRANS(GetLocalOldestXmin(NULL, false));
-
-	/*
-	 * Truncate pg_multixact too.
-	 */
-	TruncateMultiXact();
 
 	/* Real work is done, but log and update stats before releasing lock. */
 	LogCheckpointEnd(false);
@@ -10123,17 +10104,8 @@ xlog_redo(XLogReaderState *record)
 		/*
 		 * Update minRecoveryPoint to ensure that if recovery is aborted, we
 		 * recover back up to this point before allowing hot standby again.
-<<<<<<< HEAD
-		 * This is particularly important if wal_level was set to 'archive'
-		 * before, and is now 'hot_standby', to ensure you don't run queries
-		 * against the WAL preceding the wal_level change. Same applies to
-		 * decreasing max_* settings.  The local copies cannot be updated as
-		 * long as crash recovery is happening and we expect all the WAL to
-		 * be replayed.
-=======
 		 * This is important if the max_* settings are decreased, to ensure
 		 * you don't run queries against the WAL preceding the change.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		 */
 		if (InArchiveRecovery)
 		{
@@ -10758,7 +10730,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		appendStringInfo(labelfile, "START TIME: %s\n", strfbuf);
 		appendStringInfo(labelfile, "LABEL: %s\n", backupidstr);
 
-		elogif(debug_basebackup, LOG, "basebackup label file --\n%s", labelfbuf.data);
+		elogif(debug_basebackup, LOG, "basebackup label file --\n%s", labelfile->data);
 
 		/*
 		 * Okay, write the file, or return its contents to caller.
@@ -11051,18 +11023,14 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	WALInsertLockAcquireExclusive();
 	if (exclusive)
 	{
-<<<<<<< HEAD
-		XLogCtl->Insert.exclusiveBackupState = EXCLUSIVE_BACKUP_NONE;
-=======
-		if (!XLogCtl->Insert.exclusiveBackup)
+		if (XLogCtl->Insert.exclusiveBackupState != EXCLUSIVE_BACKUP_IN_PROGRESS)
 		{
 			WALInsertLockRelease();
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("exclusive backup not in progress")));
 		}
-		XLogCtl->Insert.exclusiveBackup = false;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+		XLogCtl->Insert.exclusiveBackupState = EXCLUSIVE_BACKUP_NONE;
 	}
 	else
 	{
@@ -11619,18 +11587,7 @@ CancelBackup(void)
 	/* remove leftover file from previously canceled backup if it exists */
 	unlink(BACKUP_LABEL_OLD);
 
-<<<<<<< HEAD
-	if (durable_rename(BACKUP_LABEL_FILE, BACKUP_LABEL_OLD, DEBUG1) == 0)
-	{
-		ereport(LOG,
-				(errmsg("online backup mode canceled"),
-				 errdetail("\"%s\" was renamed to \"%s\".",
-						   BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
-	}
-	else
-=======
 	if (durable_rename(BACKUP_LABEL_FILE, BACKUP_LABEL_OLD, DEBUG1) != 0)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		ereport(WARNING,
 				(errcode_for_file_access(),
@@ -12421,7 +12378,6 @@ SetWalWriterSleeping(bool sleeping)
 }
 
 /*
-<<<<<<< HEAD
  * True if we are running standby-mode continuous recovery.
  * Note this would return false after finishing the recovery, even if
  * we are still on standby master with a primary master running.
@@ -12463,7 +12419,7 @@ wait_for_mirror()
     tmpLogwrtResult = xlogctl->LogwrtResult;
     SpinLockRelease(&xlogctl->info_lck);
 
-    SyncRepWaitForLSN(tmpLogwrtResult.Flush);
+    SyncRepWaitForLSN(tmpLogwrtResult.Flush, false);
 }
 
 /*
@@ -12500,12 +12456,13 @@ XLogRecPtr
 XLogLastInsertBeginLoc(void)
 {
 	return ProcLastRecPtr;
-=======
+}
+
+/*
  * Schedule a walreceiver wakeup in the main recovery loop.
  */
 void
 XLogRequestWalReceiverReply(void)
 {
 	doRequestWalReceiverReply = true;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }

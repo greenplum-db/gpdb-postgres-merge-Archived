@@ -423,16 +423,10 @@ ResolveRecoveryConflictWithLock(LOCKTAG locktag)
 		 */
 		EnableTimeoutParams timeouts[1];
 
-<<<<<<< HEAD
-		if (LockAcquireExtended(&locktag, AccessExclusiveLock, true, true,
-								false, NULL) != LOCKACQUIRE_NOT_AVAIL)
-			lock_acquired = true;
-=======
 		timeouts[0].id = STANDBY_LOCK_TIMEOUT;
 		timeouts[0].type = TMPARAM_AT;
 		timeouts[0].fin_time = ltime;
 		enable_timeouts(timeouts, 1);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	/* Wait to be signaled by the release of the Relation Lock */
@@ -682,13 +676,7 @@ StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid relOid)
 
 	SET_LOCKTAG_RELATION(locktag, newlock->dbOid, newlock->relOid);
 
-<<<<<<< HEAD
-	if (LockAcquireExtended(&locktag, AccessExclusiveLock, true, true,
-							false, NULL) == LOCKACQUIRE_NOT_AVAIL)
-		ResolveRecoveryConflictWithLock(newlock->dbOid, newlock->relOid);
-=======
-	LockAcquireExtended(&locktag, AccessExclusiveLock, true, false, false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	(void) LockAcquire(&locktag, AccessExclusiveLock, true, false);
 }
 
 static void

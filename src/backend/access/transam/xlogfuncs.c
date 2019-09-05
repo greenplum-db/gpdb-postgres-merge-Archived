@@ -67,12 +67,10 @@ nonexclusive_base_backup_cleanup(int code, Datum arg)
  * to tell where the backup dump will be stored) and the starting time and
  * starting WAL location for the dump.
  *
-<<<<<<< HEAD
- * **Note :- Currently this functionality is not supported.**
-=======
  * Permission checking for this function is managed through the normal
  * GRANT system.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
+ * **Note :- Currently this functionality is not supported.**
  */
 Datum
 pg_start_backup(PG_FUNCTION_ARGS)
@@ -146,16 +144,14 @@ pg_start_backup(PG_FUNCTION_ARGS)
  *
  * Note: different from CancelBackup which just cancels online backup mode.
  *
-<<<<<<< HEAD
- * **Note :- Currently this functionality is not supported.**
-=======
  * Note: this version is only called to stop an exclusive backup. The function
  *		 pg_stop_backup_v2 (overloaded as pg_stop_backup in SQL) is called to
  *		 stop non-exclusive backups.
  *
  * Permission checking for this function is managed through the normal
  * GRANT system.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+ *
+ * **Note :- Currently this functionality is not supported.**
  */
 Datum
 pg_stop_backup(PG_FUNCTION_ARGS)
@@ -173,19 +169,6 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 				 errmsg("non-exclusive backup in progress"),
 				 errhint("Did you mean to use pg_stop_backup('f')?")));
 
-<<<<<<< HEAD
-=======
-	/*
-	 * Exclusive backups were typically started in a different connection, so
-	 * don't try to verify that exclusive_backup_running is set in this one.
-	 * Actual verification that an exclusive backup is in fact running is
-	 * handled inside do_pg_stop_backup.
-	 */
-	stoppoint = do_pg_stop_backup(NULL, true, NULL);
-
-	exclusive_backup_running = false;
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	PG_RETURN_LSN(stoppoint);
 }
 

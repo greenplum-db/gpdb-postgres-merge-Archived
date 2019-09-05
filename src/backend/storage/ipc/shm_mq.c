@@ -1087,31 +1087,6 @@ shm_mq_wait_internal(volatile shm_mq *mq, PGPROC *volatile * ptr,
 				result = false;
 				break;
 			}
-<<<<<<< HEAD
-			if (result)
-				break;
-
-			if (handle != NULL)
-			{
-				/* Check for unexpected worker death. */
-				status = GetBackgroundWorkerPid(handle, &pid);
-				if (status != BGWH_STARTED && status != BGWH_NOT_YET_STARTED)
-				{
-					result = false;
-					break;
-				}
-			}
-
-			/* Wait to be signalled. */
-			WaitLatch(MyLatch, WL_LATCH_SET, 0);
-
-			/* Reset the latch so we don't spin. */
-			ResetLatch(MyLatch);
-
-			/* An interrupt may have occurred while we were waiting. */
-			CHECK_FOR_INTERRUPTS();
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 
 		/* Wait to be signalled. */

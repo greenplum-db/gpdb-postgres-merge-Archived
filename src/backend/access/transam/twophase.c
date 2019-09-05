@@ -58,13 +58,10 @@
 #include <time.h>
 #include <unistd.h>
 
-<<<<<<< HEAD
+#include "access/commit_ts.h"
 #include "access/distributedlog.h"
 #include "access/heapam.h"
 #include "access/htup.h"
-=======
-#include "access/commit_ts.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "access/htup_details.h"
 #include "access/subtrans.h"
 #include "access/timeline.h"

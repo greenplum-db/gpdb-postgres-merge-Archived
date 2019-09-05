@@ -453,48 +453,22 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool lockHeld)
 		 * else is taking a snapshot.  See discussion in
 		 * src/backend/access/transam/README.
 		 */
-<<<<<<< HEAD
 		Assert(TransactionIdIsValid(allPgXact[proc->pgprocno].xid) ||
 			   (IsBootstrapProcessingMode() && latestXid == BootstrapTransactionId));
-		if (!lockHeld)
-			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-
-		pgxact->xid = InvalidTransactionId;
-		proc->lxid = InvalidLocalTransactionId;
-		pgxact->xmin = InvalidTransactionId;
-		/* must be cleared with xid/xmin: */
-		pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		pgxact->delayChkpt = false;		/* be sure this is cleared in abort */
-		proc->recoveryConflictPending = false;
-		proc->serializableIsoLevel = false;
-
-		/* Clear the subtransaction-XID cache too while holding the lock */
-		pgxact->nxids = 0;
-		pgxact->overflowed = false;
-
-		/* Also advance global latestCompletedXid while holding the lock */
-		if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid,
-								  latestXid))
-			ShmemVariableCache->latestCompletedXid = latestXid;
-
-		if (!lockHeld)
-			LWLockRelease(ProcArrayLock);
-=======
-		Assert(TransactionIdIsValid(allPgXact[proc->pgprocno].xid));
 
 		/*
 		 * If we can immediately acquire ProcArrayLock, we clear our own XID
 		 * and release the lock.  If not, use group XID clearing to improve
 		 * efficiency.
 		 */
-		if (LWLockConditionalAcquire(ProcArrayLock, LW_EXCLUSIVE))
+		if (lockHeld || LWLockConditionalAcquire(ProcArrayLock, LW_EXCLUSIVE))
 		{
 			ProcArrayEndTransactionInternal(proc, pgxact, latestXid);
-			LWLockRelease(ProcArrayLock);
+			if (!lockHeld)
+				LWLockRelease(ProcArrayLock);
 		}
 		else
 			ProcArrayGroupClearXid(proc, latestXid);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 	else
 	{
@@ -540,6 +514,7 @@ ProcArrayEndTransactionInternal(PGPROC *proc, PGXACT *pgxact,
 	pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 	pgxact->delayChkpt = false; /* be sure this is cleared in abort */
 	proc->recoveryConflictPending = false;
+	proc->serializableIsoLevel = false;
 
 	/* Clear the subtransaction-XID cache too while holding the lock */
 	pgxact->nxids = 0;
@@ -2609,7 +2584,6 @@ GetSnapshotData(Snapshot snapshot, DtxContext distributedTransactionContext)
 	snapshot->regd_count = 0;
 	snapshot->copied = false;
 
-<<<<<<< HEAD
 	/*
 	 * Sort the entry {distribXid} to support the QEs doing culls on their
 	 * DisribToLocalXact sorted lists.
@@ -2633,10 +2607,6 @@ GetSnapshotData(Snapshot snapshot, DtxContext distributedTransactionContext)
 		updateSharedLocalSnapshot(&QEDtxContextInfo, distributedTransactionContext, snapshot, "GetSnapshotData");
 	}
 
-	ereport((Debug_print_snapshot_dtm ? LOG : DEBUG5),
-			(errmsg("GetSnapshotData(): WRITER currentcommandid %d curcid %d segmatesync %d",
-					GetCurrentCommandId(false), snapshot->curcid, QEDtxContextInfo.segmateSync)));
-=======
 	if (old_snapshot_threshold < 0)
 	{
 		/*
@@ -2657,7 +2627,10 @@ GetSnapshotData(Snapshot snapshot, DtxContext distributedTransactionContext)
 		snapshot->whenTaken = GetSnapshotCurrentTimestamp();
 		MaintainOldSnapshotTimeMapping(snapshot->whenTaken, xmin);
 	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
+	ereport((Debug_print_snapshot_dtm ? LOG : DEBUG5),
+			(errmsg("GetSnapshotData(): WRITER currentcommandid %d curcid %d segmatesync %d",
+					GetCurrentCommandId(false), snapshot->curcid, QEDtxContextInfo.segmateSync)));
 
 	return snapshot;
 }

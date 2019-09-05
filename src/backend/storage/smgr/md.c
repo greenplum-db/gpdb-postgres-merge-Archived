@@ -192,14 +192,8 @@ static CycleCtr mdckpt_cycle_ctr = 0;
 
 /* local routines */
 static void mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum,
-<<<<<<< HEAD
 			 bool isRedo, char relstorage);
-static MdfdVec *mdopen(SMgrRelation reln, ForkNumber forknum,
-	   ExtensionBehavior behavior);
-=======
-			 bool isRedo);
 static MdfdVec *mdopen(SMgrRelation reln, ForkNumber forknum, int behavior);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void register_dirty_segment(SMgrRelation reln, ForkNumber forknum,
 					   MdfdVec *seg);
 static void register_unlink(RelFileNodeBackend rnode);

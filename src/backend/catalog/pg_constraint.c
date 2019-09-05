@@ -783,7 +783,6 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 }
 
 /*
-<<<<<<< HEAD
  * ConstraintSetParentConstraint
  *		Set a partition's constraint as child of its parent table's
  *
@@ -842,27 +841,6 @@ ConstraintSetParentConstraint(Oid childConstrId, Oid parentConstrId)
 }
 
 /*
- * get_constraint_relation_oids
- *		Find the IDs of the relations to which a constraint refers.
- */
-void
-get_constraint_relation_oids(Oid constraint_oid, Oid *conrelid, Oid *confrelid)
-{
-	HeapTuple	tup;
-	Form_pg_constraint con;
-
-	tup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(constraint_oid));
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for constraint %u", constraint_oid);
-	con = (Form_pg_constraint) GETSTRUCT(tup);
-	*conrelid = con->conrelid;
-	*confrelid = con->confrelid;
-	ReleaseSysCache(tup);
-}
-
-/*
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * get_relation_constraint_oid
  *		Find a constraint on the specified relation with the specified name.
  *		Returns constraint's OID.
@@ -1025,23 +1003,11 @@ get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok)
  * with attnos being offset by FirstLowInvalidHeapAttributeNumber so that
  * system columns can be represented.
  *
-<<<<<<< HEAD
- * Currently we only check to see if the rel has a primary key that is a
- * subset of the grouping_columns.  We could also use plain unique constraints
- * if all their columns are known not null, but there's a problem: we need
- * to be able to represent the not-null-ness as part of the constraints added
- * to *constraintDeps.  FIXME whenever not-null constraints get represented
- * in pg_constraint.
- *
- * GPDB_91_MERGE_FIXME: this does not seem to correctly reject invalid GROUPING
- * SET queries. Possibly because those were backported from 9.5?
-=======
  * If there is no primary key, return NULL.  We also return NULL if the pkey
  * constraint is deferrable and deferrableOk is false.
  *
  * *constraintOid is set to the OID of the pkey constraint, or InvalidOid
  * on failure.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 Bitmapset *
 get_primary_key_attnos(Oid relid, bool deferrableOk, Oid *constraintOid)
@@ -1136,6 +1102,9 @@ get_primary_key_attnos(Oid relid, bool deferrableOk, Oid *constraintOid)
  * to be able to represent the not-null-ness as part of the constraints added
  * to *constraintDeps.  FIXME whenever not-null constraints get represented
  * in pg_constraint.
+ *
+ * GPDB_91_MERGE_FIXME: this does not seem to correctly reject invalid GROUPING
+ * SET queries. Possibly because those were backported from 9.5?
  */
 bool
 check_functional_grouping(Oid relid,

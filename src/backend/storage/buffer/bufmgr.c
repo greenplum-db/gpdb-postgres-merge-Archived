@@ -3,13 +3,9 @@
  * bufmgr.c
  *	  buffer manager interface routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -497,11 +493,11 @@ static inline void BufferMProtect(volatile BufferDesc *bufHdr, int protectionLev
 
 static inline void ReleaseContentLock(volatile BufferDesc *buf)
 {
-	LWLockRelease(buf->content_lock);
+	LWLockRelease(BufferDescriptorGetContentLock(buf));
 
 #ifdef MPROTECT_BUFFERS
 	/* make the buffer read-only after releasing content lock */
-	if (!LWLockHeldByMe(buf->content_lock))
+	if (!LWLockHeldByMe(BufferDescriptorGetContentLock(buf)))
 		BufferMProtect(buf, PROT_READ);
 #endif
 }
@@ -511,15 +507,15 @@ static inline void AcquireContentLock(volatile BufferDesc *buf, LWLockMode mode)
 {
 #ifdef MPROTECT_BUFFERS
 	const bool newAcquisition =
-		!LWLockHeldByMe(buf->content_lock);
+		!LWLockHeldByMe(BufferDescriptorGetContentLock(buf));
 
-	LWLockAcquire(buf->content_lock, mode);
+	LWLockAcquire(BufferDescriptorGetContentLock(buf), mode);
 
 	/* new acquisition of content lock, allow read/write memory access */
 	if (newAcquisition)
 		BufferMProtect(buf, PROT_READ|PROT_WRITE);
 #else
-	LWLockAcquire(buf->content_lock, mode);
+	LWLockAcquire(BufferDescriptorGetContentLock(buf), mode);
 #endif
 }
 
@@ -528,9 +524,9 @@ static inline bool ConditionalAcquireContentLock(volatile BufferDesc *buf,
 {
 #ifdef MPROTECT_BUFFERS
 	const bool newAcquisition =
-		!LWLockHeldByMe(buf->content_lock);
+		!LWLockHeldByMe(BufferDescriptorGetContentLock(buf));
 
-	if (LWLockConditionalAcquire(buf->content_lock, mode))
+	if (LWLockConditionalAcquire(BufferDescriptorGetContentLock(buf), mode))
 	{
 		/* new acquisition of lock, allow read/write memory access */
 		if (newAcquisition)
@@ -539,7 +535,7 @@ static inline bool ConditionalAcquireContentLock(volatile BufferDesc *buf,
 	}
 	return false;
 #else
-	return LWLockConditionalAcquire(buf->content_lock, mode);
+	return LWLockConditionalAcquire(BufferDescriptorGetContentLock(buf), mode);
 #endif
 }
 
@@ -1199,12 +1195,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			 * happens to be trying to split the page the first one got from
 			 * StrategyGetBuffer.)
 			 */
-<<<<<<< HEAD
 			if (ConditionalAcquireContentLock(buf, LW_SHARED))
-=======
-			if (LWLockConditionalAcquire(BufferDescriptorGetContentLock(buf),
-										 LW_SHARED))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			{
 				/*
 				 * If using a nondefault strategy, and writing the buffer
@@ -1239,14 +1230,10 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 											  smgr->smgr_rnode.node.relNode);
 
 				FlushBuffer(buf, NULL);
-<<<<<<< HEAD
 				ReleaseContentLock(buf);
-=======
-				LWLockRelease(BufferDescriptorGetContentLock(buf));
 
 				ScheduleBufferTagForWriteback(&BackendWritebackContext,
 											  &buf->tag);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(forkNum, blockNum,
 											   smgr->smgr_rnode.node.spcNode,
@@ -1404,19 +1391,14 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	 * just like permanent relations.
 	 */
 	buf->tag = newTag;
-<<<<<<< HEAD
-	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_CHECKPOINT_NEEDED | BM_IO_ERROR | BM_PERMANENT | BM_TEMP);
-	if (relpersistence == RELPERSISTENCE_PERMANENT || forkNum == INIT_FORKNUM)
-		buf->flags |= BM_TAG_VALID | BM_PERMANENT;
-	else if (relpersistence == RELPERSISTENCE_TEMP)
-		buf->flags |= BM_TAG_VALID | BM_TEMP;
-=======
 	buf_state &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED |
 				   BM_CHECKPOINT_NEEDED | BM_IO_ERROR | BM_PERMANENT |
+				   BM_TEMP |
 				   BUF_USAGECOUNT_MASK);
 	if (relpersistence == RELPERSISTENCE_PERMANENT)
 		buf_state |= BM_TAG_VALID | BM_PERMANENT | BUF_USAGECOUNT_ONE;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	else if (relpersistence == RELPERSISTENCE_TEMP)
+		buf_state |= BM_TAG_VALID | BM_TEMP | BUF_USAGECOUNT_ONE;
 	else
 		buf_state |= BM_TAG_VALID | BUF_USAGECOUNT_ONE;
 
@@ -1719,14 +1701,9 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy)
 				break;
 			}
 		}
-<<<<<<< HEAD
-		result = (buf->flags & BM_VALID) != 0;
 #ifdef MPROTECT_BUFFERS
 		BufferMProtect(buf, PROT_READ);
 #endif
-		UnlockBufHdr(buf);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 	else
 	{
@@ -1774,15 +1751,6 @@ PinBuffer_Locked(BufferDesc *buf)
 	 */
 	Assert(GetPrivateRefCountEntry(BufferDescriptorGetBuffer(buf), false) == NULL);
 
-<<<<<<< HEAD
-	buf->refcount++;
-
-#ifdef MPROTECT_BUFFERS
-	BufferMProtect(buf, PROT_READ);
-#endif
-
-	UnlockBufHdr(buf);
-=======
 	/*
 	 * Since we hold the buffer spinlock, we can update the buffer state and
 	 * release the lock in one operation.
@@ -1791,7 +1759,10 @@ PinBuffer_Locked(BufferDesc *buf)
 	Assert(buf_state & BM_LOCKED);
 	buf_state += BUF_REFCOUNT_ONE;
 	UnlockBufHdr(buf, buf_state);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
+#ifdef MPROTECT_BUFFERS
+	BufferMProtect(buf, PROT_READ);
+#endif
 
 	b = BufferDescriptorGetBuffer(buf);
 
@@ -1845,14 +1816,6 @@ UnpinBuffer(BufferDesc *buf, bool fixOwner)
 			if (old_buf_state & BM_LOCKED)
 				old_buf_state = WaitBufHdrUnlocked(buf);
 
-<<<<<<< HEAD
-		/* Decrement the shared reference count */
-		Assert(buf->refcount > 0);
-		buf->refcount--;
-#ifdef MPROTECT_BUFFERS
-		BufferMProtect(buf, PROT_NONE);
-#endif
-=======
 			buf_state = old_buf_state;
 
 			buf_state -= BUF_REFCOUNT_ONE;
@@ -1861,7 +1824,10 @@ UnpinBuffer(BufferDesc *buf, bool fixOwner)
 											   buf_state))
 				break;
 		}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
+#ifdef MPROTECT_BUFFERS
+		BufferMProtect(buf, PROT_NONE);
+#endif
 
 		/* Support LockBufferForCleanup() */
 		if (buf_state & BM_PIN_COUNT_WAITER)
@@ -1957,15 +1923,11 @@ BufferSync(int flags)
 		 */
 		buf_state = LockBufHdr(bufHdr);
 
-<<<<<<< HEAD
 		/*
 		 * Temp tables in Greenplum use shared buffers.  Filter buffers
 		 * belonging to temp tables out during checkpoint.
 		 */
-		if ((bufHdr->flags & mask) == mask && !(bufHdr->flags & BM_TEMP))
-=======
-		if ((buf_state & mask) == mask)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+		if ((buf_state & mask) == mask && !(buf_state & BM_TEMP))
 		{
 			CkptSortItem *item;
 
@@ -2424,14 +2386,8 @@ BgBufferSync(WritebackContext *wb_context)
 	/* Execute the LRU scan */
 	while (num_to_scan > 0 && reusable_buffers < upcoming_alloc_est)
 	{
-<<<<<<< HEAD
-		int		buffer_state = 0;
-
-		buffer_state = SyncOneBuffer(next_to_clean, skip_recently_used);
-=======
-		int			sync_state = SyncOneBuffer(next_to_clean, true,
+		int			sync_state = SyncOneBuffer(next_to_clean, skip_recently_used,
 											   wb_context);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		if (++next_to_clean >= NBuffers)
 		{
@@ -2552,22 +2508,14 @@ SyncOneBuffer(int buf_id, bool skip_recently_used, WritebackContext *wb_context)
 	 * buffer is clean by the time we've locked it.)
 	 */
 	PinBuffer_Locked(bufHdr);
-<<<<<<< HEAD
 	AcquireContentLock(bufHdr, LW_SHARED);
 
 	FlushBuffer(bufHdr, NULL);
 
 	ReleaseContentLock(bufHdr);
-=======
-	LWLockAcquire(BufferDescriptorGetContentLock(bufHdr), LW_SHARED);
-
-	FlushBuffer(bufHdr, NULL);
-
-	LWLockRelease(BufferDescriptorGetContentLock(bufHdr));
 
 	tag = bufHdr->tag;
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	UnpinBuffer(bufHdr, true);
 
 	ScheduleBufferTagForWriteback(wb_context, &tag);
@@ -2863,7 +2811,8 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 		/* it's OK to check this flag without the buffer header lock,
 		 * it cannot change while we hold a pin on it
 		 */
-		bool		istemp = (buf->flags & BM_TEMP) != 0;
+		uint32		buf_state_unlocked = pg_atomic_read_u32(&buf->state);
+		bool		istemp = (buf_state_unlocked & BM_TEMP) != 0;
 
 		reln = smgropen(buf->tag.rnode,
 						istemp ? TempRelBackendId : InvalidBackendId);
@@ -3412,15 +3361,9 @@ FlushRelationBuffers(Relation rel)
 			(buf_state & (BM_VALID | BM_DIRTY)) == (BM_VALID | BM_DIRTY))
 		{
 			PinBuffer_Locked(bufHdr);
-<<<<<<< HEAD
 			AcquireContentLock(bufHdr, LW_SHARED);
 			FlushBuffer(bufHdr, rel->rd_smgr);
 			ReleaseContentLock(bufHdr);
-=======
-			LWLockAcquire(BufferDescriptorGetContentLock(bufHdr), LW_SHARED);
-			FlushBuffer(bufHdr, rel->rd_smgr);
-			LWLockRelease(BufferDescriptorGetContentLock(bufHdr));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			UnpinBuffer(bufHdr, true);
 		}
 		else
@@ -3489,11 +3432,7 @@ FlushDatabaseBuffers(Oid dbid)
 void
 FlushOneBuffer(Buffer buffer)
 {
-<<<<<<< HEAD
-	volatile BufferDesc *bufHdr;
-=======
 	BufferDesc *bufHdr;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* currently not needed, but no fundamental reason not to support */
 	Assert(!BufferIsLocal(buffer));
@@ -3502,11 +3441,7 @@ FlushOneBuffer(Buffer buffer)
 
 	bufHdr = GetBufferDescriptor(buffer - 1);
 
-<<<<<<< HEAD
-	Assert(LWLockHeldByMe(bufHdr->content_lock));
-=======
 	Assert(LWLockHeldByMe(BufferDescriptorGetContentLock(bufHdr)));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	FlushBuffer(bufHdr, NULL);
 }
@@ -3763,19 +3698,11 @@ LockBuffer(Buffer buffer, int mode)
 	buf = GetBufferDescriptor(buffer - 1);
 
 	if (mode == BUFFER_LOCK_UNLOCK)
-<<<<<<< HEAD
 		ReleaseContentLock(buf);
 	else if (mode == BUFFER_LOCK_SHARE)
 		AcquireContentLock(buf, LW_SHARED);
 	else if (mode == BUFFER_LOCK_EXCLUSIVE)
 		AcquireContentLock(buf, LW_EXCLUSIVE);
-=======
-		LWLockRelease(BufferDescriptorGetContentLock(buf));
-	else if (mode == BUFFER_LOCK_SHARE)
-		LWLockAcquire(BufferDescriptorGetContentLock(buf), LW_SHARED);
-	else if (mode == BUFFER_LOCK_EXCLUSIVE)
-		LWLockAcquire(BufferDescriptorGetContentLock(buf), LW_EXCLUSIVE);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	else
 		elog(ERROR, "unrecognized buffer lock mode: %d", mode);
 }
@@ -3796,12 +3723,7 @@ ConditionalLockBuffer(Buffer buffer)
 
 	buf = GetBufferDescriptor(buffer - 1);
 
-<<<<<<< HEAD
 	return ConditionalAcquireContentLock(buf, LW_EXCLUSIVE);
-=======
-	return LWLockConditionalAcquire(BufferDescriptorGetContentLock(buf),
-									LW_EXCLUSIVE);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
@@ -4081,12 +4003,7 @@ StartBufferIO(BufferDesc *buf, bool forInput)
 
 	/* Once we get here, there is definitely no I/O active on this buffer */
 
-<<<<<<< HEAD
-	/* check if we can avoid io because some else already did it */
-	if (forInput ? (buf->flags & BM_VALID) : !(buf->flags & BM_DIRTY))
-=======
 	if (forInput ? (buf_state & BM_VALID) : !(buf_state & BM_DIRTY))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		/* someone else already did the I/O */
 		UnlockBufHdr(buf, buf_state);
@@ -4094,16 +4011,12 @@ StartBufferIO(BufferDesc *buf, bool forInput)
 		return false;
 	}
 
-<<<<<<< HEAD
-	buf->flags |= BM_IO_IN_PROGRESS;
+	buf_state |= BM_IO_IN_PROGRESS;
+	UnlockBufHdr(buf, buf_state);
+
 #ifdef MPROTECT_BUFFERS
     BufferMProtect(buf, forInput ? PROT_WRITE|PROT_READ : PROT_READ);
 #endif
-	UnlockBufHdr(buf);
-=======
-	buf_state |= BM_IO_IN_PROGRESS;
-	UnlockBufHdr(buf, buf_state);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	InProgressBuf = buf;
 	IsForInput = forInput;
@@ -4148,16 +4061,12 @@ TerminateBufferIO(BufferDesc *buf, bool clear_dirty, uint32 set_flag_bits)
 
 	InProgressBuf = NULL;
 
-<<<<<<< HEAD
 #ifdef MPROTECT_BUFFERS
 	/* XXX: should this be PROT_NONE if called from AbortBufferIO? */
 	if (!LWLockHeldByMe(buf->content_lock))
 		BufferMProtect(buf, PROT_READ);
 #endif
-	LWLockRelease(buf->io_in_progress_lock);
-=======
 	LWLockRelease(BufferDescriptorGetIOLock(buf));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
@@ -4207,7 +4116,7 @@ AbortBufferIO(void)
 				char	   *path;
 
 				path = relpathbackend(buf->tag.rnode,
-									  (buf->flags & BM_TEMP) ?
+									  (buf_state & BM_TEMP) ?
 									  TempRelBackendId : InvalidBackendId,
 									  buf->tag.forkNum);
 				ereport(WARNING,
@@ -4233,8 +4142,9 @@ shared_buffer_write_error_callback(void *arg)
 	/* Buffer is pinned, so we can read the tag without locking the spinlock */
 	if (bufHdr != NULL)
 	{
+		uint32		buf_state = pg_atomic_read_u32(&bufHdr->state);
 		char	   *path = relpathbackend(bufHdr->tag.rnode,
-										  (bufHdr->flags & BM_TEMP) ?
+										  (buf_state & BM_TEMP) ?
 										  TempRelBackendId : InvalidBackendId,
 										  bufHdr->tag.forkNum);
 
@@ -4576,8 +4486,8 @@ BufferLockHeldByMe(Page page)
 		pagePtr < (BufferBlocks + NBuffers * BLCKSZ))
 	{
 		BufferDesc *hdr = GetBufferDescriptor((pagePtr - BufferBlocks) / BLCKSZ);
-		return LWLockHeldByMe(hdr->content_lock);
+		return LWLockHeldByMe(BufferDescriptorGetContentLock(hdr));
 	}
-
+	return true;
 }
 #endif

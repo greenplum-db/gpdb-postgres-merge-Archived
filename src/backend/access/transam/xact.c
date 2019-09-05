@@ -1733,13 +1733,8 @@ RecordTransactionCommit(void)
 	 * Note that at this stage we have marked clog, but still show as running
 	 * in the procarray and continue to hold locks.
 	 */
-<<<<<<< HEAD
 	if ((wrote_xlog && markXidCommitted) || isDtxPrepared)
-		SyncRepWaitForLSN(XactLastRecEnd);
-=======
-	if (wrote_xlog && markXidCommitted)
 		SyncRepWaitForLSN(XactLastRecEnd, true);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* remember end of last commit record */
 	XactLastCommitEnd = XactLastRecEnd;
@@ -6780,7 +6775,6 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 		LWLockRelease(XidGenLock);
 	}
 
-<<<<<<< HEAD
 	/* also update distributed commit log */
 	if (parsed->distribXid != 0 && parsed->distribTimeStamp != 0)
 	{
@@ -6789,11 +6783,8 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 										/* isRedo */ true);
 	}
 
-	Assert(!!(parsed->xinfo & XACT_XINFO_HAS_ORIGIN) == (origin_id != InvalidRepOriginId));
-=======
 	Assert(((parsed->xinfo & XACT_XINFO_HAS_ORIGIN) == 0) ==
 		   (origin_id == InvalidRepOriginId));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (parsed->xinfo & XACT_XINFO_HAS_ORIGIN)
 		commit_time = parsed->origin_timestamp;

@@ -3140,6 +3140,7 @@ pgstat_report_waiting(bool waiting)
 }
 #endif
 
+/* GPDB_96_MERGE_FIXME: can we remove this, now that we have upstream wait_event stuff? */
 void
 gpstat_report_waiting(char reason)
 {
