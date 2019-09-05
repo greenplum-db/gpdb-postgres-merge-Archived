@@ -211,8 +211,7 @@ ShmemAlloc(Size size)
 
 	SpinLockAcquire(ShmemLock);
 
-<<<<<<< HEAD
-	newStart = shmemseghdr->freeoffset;
+	newStart = ShmemSegHdr->freeoffset;
 
 	/*
 	 * Extra alignment for large requests, since they are probably buffers.
@@ -223,9 +222,6 @@ ShmemAlloc(Size size)
 	{
 		newStart =  TYPEALIGN(ShmemSystemPageSize, newStart);
 	}
-=======
-	newStart = ShmemSegHdr->freeoffset;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	newFree = newStart + size;
 	if (newFree <= ShmemSegHdr->totalsize)

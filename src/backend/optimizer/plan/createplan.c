@@ -239,10 +239,6 @@ static BitmapHeapScan *make_bitmap_heapscan(List *qptlist,
 					 Index scanrelid);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tidquals);
-static SubqueryScan *make_subqueryscan(List *qptlist,
-				  List *qpqual,
-				  Index scanrelid,
-				  Plan *subplan);
 static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
 				  Index scanrelid, List *functions, bool funcordinality);
 static TableFunctionScan *make_tablefunction(List *qptlist, List *qpqual,
@@ -271,30 +267,6 @@ static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
 static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
 						   Plan *lefttree, List *pathkeys,
 =======
-static NestLoop *make_nestloop(List *tlist,
-			  List *joinclauses, List *otherclauses, List *nestParams,
-			  Plan *lefttree, Plan *righttree,
-			  JoinType jointype);
-static HashJoin *make_hashjoin(List *tlist,
-			  List *joinclauses, List *otherclauses,
-			  List *hashclauses,
-			  Plan *lefttree, Plan *righttree,
-			  JoinType jointype);
-static Hash *make_hash(Plan *lefttree,
-		  Oid skewTable,
-		  AttrNumber skewColumn,
-		  bool skewInherit,
-		  Oid skewColType,
-		  int32 skewColTypmod);
-static MergeJoin *make_mergejoin(List *tlist,
-			   List *joinclauses, List *otherclauses,
-			   List *mergeclauses,
-			   Oid *mergefamilies,
-			   Oid *mergecollations,
-			   int *mergestrategies,
-			   bool *mergenullsfirst,
-			   Plan *lefttree, Plan *righttree,
-			   JoinType jointype);
 static Sort *make_sort(Plan *lefttree, int numCols,
 		  AttrNumber *sortColIdx, Oid *sortOperators,
 		  Oid *collations, bool *nullsFirst);
@@ -313,14 +285,11 @@ static EquivalenceMember *find_ec_member_for_tle(EquivalenceClass *ec,
 					   Relids relids);
 <<<<<<< HEAD
 =======
-static Sort *make_sort_from_pathkeys(Plan *lefttree, List *pathkeys);
-static Sort *make_sort_from_groupcols(List *groupcls,
-						 AttrNumber *grpColIdx,
-						 Plan *lefttree);
 static Material *make_material(Plan *lefttree);
 static WindowAgg *make_windowagg(List *tlist, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
+			   AttrNumber firstOrderCol, Oid firstOrderCmpOperator, bool firstOrderNullsFirst,
 			   int frameOptions, Node *startOffset, Node *endOffset,
 			   Plan *lefttree);
 static Group *make_group(List *tlist, List *qual, int numGroupCols,
@@ -335,7 +304,6 @@ static SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 		   List *distinctList, AttrNumber flagColIdx, int firstFlag,
 		   long numGroups);
 static LockRows *make_lockrows(Plan *lefttree, List *rowMarks, int epqParam);
-static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 static ModifyTable *make_modifytable(PlannerInfo *root,
 				 CmdType operation, bool canSetTag,
 				 Index nominalRelation,
@@ -6296,7 +6264,7 @@ make_tidscan(List *qptlist,
 	return node;
 }
 
-static SubqueryScan *
+SubqueryScan *
 make_subqueryscan(List *qptlist,
 				  List *qpqual,
 				  Index scanrelid,

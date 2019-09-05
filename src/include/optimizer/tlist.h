@@ -23,15 +23,10 @@
 extern TargetEntry *tlist_member(Node *node, List *targetlist);
 extern TargetEntry *tlist_member_ignore_relabel(Node *node, List *targetlist);
 
-<<<<<<< HEAD
 // return a list a target entries that match the node expression
 extern List *tlist_members(Node *node, List *targetlist);
 
-extern List *flatten_tlist(List *tlist, PVCAggregateBehavior aggbehavior,
-			  PVCPlaceHolderBehavior phbehavior);
 extern List *add_to_flat_tlist_junk(List *tlist, List *exprs, bool resjunk);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern List *add_to_flat_tlist(List *tlist, List *exprs);
 
 extern List *get_tlist_exprs(List *tlist, bool includeJunk);
@@ -64,7 +59,6 @@ extern AttrNumber *extract_grouping_cols(List *groupClause, List *tlist);
 extern bool grouping_is_sortable(List *groupClause);
 extern bool grouping_is_hashable(List *groupClause);
 
-<<<<<<< HEAD
 extern void get_sortgroupclauses_tles(List *clauses, List *targetList,
 									  List **tles, List **sortops, List **eqops);
 
@@ -76,7 +70,7 @@ extern bool grouping_is_hashable(List *groupClause);
 extern Index maxSortGroupRef(List *targetlist, bool include_orderedagg);
 
 extern int get_row_width(List *tlist);
-=======
+
 extern PathTarget *make_pathtarget_from_tlist(List *tlist);
 extern List *make_tlist_from_pathtarget(PathTarget *target);
 extern PathTarget *copy_pathtarget(PathTarget *src);
@@ -90,6 +84,5 @@ extern void apply_pathtarget_labeling_to_tlist(List *tlist, PathTarget *target);
 /* Convenience macro to get a PathTarget with valid cost/width fields */
 #define create_pathtarget(root, tlist) \
 	set_pathtarget_cost_width(root, make_pathtarget_from_tlist(tlist))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #endif   /* TLIST_H */

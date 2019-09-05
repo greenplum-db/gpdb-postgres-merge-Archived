@@ -143,9 +143,8 @@ typedef bool (*AnalyzeForeignTable_function) (Relation relation,
 typedef List *(*ImportForeignSchema_function) (ImportForeignSchemaStmt *stmt,
 														   Oid serverOid);
 
-<<<<<<< HEAD
 typedef bool (*ForeignTableSize_function) (Relation relation, int64 *tablesize);
-=======
+
 typedef Size (*EstimateDSMForeignScan_function) (ForeignScanState *node,
 													  ParallelContext *pcxt);
 typedef void (*InitializeDSMForeignScan_function) (ForeignScanState *node,
@@ -157,7 +156,6 @@ typedef void (*InitializeWorkerForeignScan_function) (ForeignScanState *node,
 typedef bool (*IsForeignScanParallelSafe_function) (PlannerInfo *root,
 															 RelOptInfo *rel,
 														 RangeTblEntry *rte);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
  * FdwRoutine is the struct returned by a foreign-data wrapper's handler
@@ -223,16 +221,18 @@ typedef struct FdwRoutine
 	/* Support functions for IMPORT FOREIGN SCHEMA */
 	ImportForeignSchema_function ImportForeignSchema;
 
-<<<<<<< HEAD
-	AcquireSampleRowsFunc AcquireSampleRows;
-	ForeignTableSize_function GetRelationSize;
-=======
 	/* Support functions for parallelism under Gather node */
 	IsForeignScanParallelSafe_function IsForeignScanParallelSafe;
 	EstimateDSMForeignScan_function EstimateDSMForeignScan;
 	InitializeDSMForeignScan_function InitializeDSMForeignScan;
 	InitializeWorkerForeignScan_function InitializeWorkerForeignScan;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
+	/* GPDB_96_MERGE_FIXME: Do we still need these? Seem redundant
+	 * with GetForeignRelSize() and AnalyzeForeignTable
+	 */
+	AcquireSampleRowsFunc AcquireSampleRows;
+	ForeignTableSize_function GetRelationSize;
+
 } FdwRoutine;
 
 

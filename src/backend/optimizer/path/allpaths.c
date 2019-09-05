@@ -109,10 +109,6 @@ static Path *get_cheapest_parameterized_child_path(PlannerInfo *root,
 									  RelOptInfo *rel,
 									  Relids required_outer);
 static List *accumulate_append_subpath(List *subpaths, Path *path);
-<<<<<<< HEAD
-static void set_dummy_rel_pathlist(PlannerInfo *root, RelOptInfo *rel);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
 static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -707,14 +703,6 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	required_outer = rel->lateral_relids;
 
 	/* Consider sequential scan */
-<<<<<<< HEAD
-=======
-	add_path(rel, create_seqscan_path(root, rel, required_outer, 0));
-
-	/* If appropriate, consider parallel sequential scan */
-	if (rel->consider_parallel && required_outer == NULL)
-		create_plain_partial_paths(root, rel);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Generate paths and add them to the rel's pathlist.
@@ -741,7 +729,7 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		case RELSTORAGE_AOROWS:
 		case RELSTORAGE_AOCOLS:
 		case RELSTORAGE_HEAP:
-			seqpath = create_seqscan_path(root, rel, required_outer);
+			seqpath = create_seqscan_path(root, rel, required_outer, 0);
 			break;
 
 		default:
@@ -754,6 +742,10 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 				 rel->relstorage);
 			return;
 	}
+
+	/* If appropriate, consider parallel sequential scan */
+	if (rel->consider_parallel && required_outer == NULL)
+		create_plain_partial_paths(root, rel);
 
 	/* TODO: this might have been too ambitious of a re-ordering */
 	/* If an indexscan is not allowed, don't bother making paths */
@@ -910,7 +902,7 @@ set_tablesample_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *
 		 bms_membership(root->all_baserels) != BMS_SINGLETON) &&
 	 !(GetTsmRoutine(rte->tablesample->tsmhandler)->repeatable_across_scans))
 	{
-		path = (Path *) create_material_path(rel, path);
+		path = (Path *) create_material_path(root, rel, path);
 	}
 
 	add_path(rel, path);
@@ -1153,8 +1145,6 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		/* We have at least one live child. */
 		has_live_children = true;
 
-<<<<<<< HEAD
-=======
 		/*
 		 * If any live child is not parallel-safe, treat the whole appendrel
 		 * as not parallel-safe.  In future we might be able to generate plans
@@ -1167,18 +1157,13 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		if (!childrel->consider_parallel)
 			rel->consider_parallel = false;
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		/*
 		 * Accumulate size information from each live child.
 		 */
 		Assert(childrel->rows > 0);
 
 		parent_rows += childrel->rows;
-<<<<<<< HEAD
-		parent_size += childrel->width * childrel->rows;
-=======
 		parent_size += childrel->reltarget->width * childrel->rows;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		/*
 		 * Accumulate per-column estimates too.  We need not do anything for
@@ -1186,17 +1171,10 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * Var, or we didn't record a width estimate for it, we have to fall
 		 * back on a datatype-based estimate.
 		 *
-<<<<<<< HEAD
-		 * By construction, child's reltargetlist is 1-to-1 with parent's.
-		 */
-		forboth(parentvars, rel->reltargetlist,
-				childvars, childrel->reltargetlist)
-=======
 		 * By construction, child's targetlist is 1-to-1 with parent's.
 		 */
 		forboth(parentvars, rel->reltarget->exprs,
 				childvars, childrel->reltarget->exprs)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{
 			Var		   *parentvar = (Var *) lfirst(parentvars);
 			Node	   *childvar = (Node *) lfirst(childvars);
@@ -1231,11 +1209,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 
 		Assert(parent_rows > 0);
 		rel->rows = parent_rows;
-<<<<<<< HEAD
-		rel->width = rint(parent_size / parent_rows);
-=======
 		rel->reltarget->width = rint(parent_size / parent_rows);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		for (i = 0; i < nattrs; i++)
 			rel->attr_widths[i] = rint(parent_attrsizes[i] / parent_rows);
 
@@ -1252,11 +1226,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * appendrel dummy.  We must do this in this phase so that the rel's
 		 * dummy-ness is visible when we generate paths for other rels.
 		 */
-<<<<<<< HEAD
 		set_dummy_rel_pathlist(root, rel);
-=======
-		set_dummy_rel_pathlist(rel);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	pfree(parent_attrsizes);
@@ -1423,10 +1393,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * if we have zero or one live subpath due to constraint exclusion.)
 	 */
 	if (subpaths_valid)
-<<<<<<< HEAD
-		add_path(rel, (Path *) create_append_path(root, rel, subpaths, NULL));
-=======
-		add_path(rel, (Path *) create_append_path(rel, subpaths, NULL, 0));
+		add_path(rel, (Path *) create_append_path(root, rel, subpaths, NULL, 0));
 
 	/*
 	 * Consider an append of partial unordered, unparameterized partial paths.
@@ -1452,11 +1419,10 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		Assert(parallel_workers > 0);
 
 		/* Generate a partial append path. */
-		appendpath = create_append_path(rel, partial_subpaths, NULL,
+		appendpath = create_append_path(root, rel, partial_subpaths, NULL,
 										parallel_workers);
 		add_partial_path(rel, (Path *) appendpath);
 	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Also build unparameterized MergeAppend paths based on the collected
@@ -1506,11 +1472,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 		if (subpaths_valid)
 			add_path(rel, (Path *)
-<<<<<<< HEAD
-					 create_append_path(root, rel, subpaths, required_outer));
-=======
-					 create_append_path(rel, subpaths, required_outer, 0));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+					 create_append_path(root, rel, subpaths, required_outer, 0));
 	}
 }
 
@@ -1729,13 +1691,8 @@ accumulate_append_subpath(List *subpaths, Path *path)
  *
  * This is exported because inheritance_planner() has need for it.
  */
-<<<<<<< HEAD
-static void
-set_dummy_rel_pathlist(PlannerInfo *root, RelOptInfo *rel)
-=======
 void
-set_dummy_rel_pathlist(RelOptInfo *rel)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+set_dummy_rel_pathlist(PlannerInfo *root, RelOptInfo *rel)
 {
 	/* Set dummy size estimates --- we leave attr_widths[] as zeroes */
 	rel->rows = 0;
@@ -1745,11 +1702,7 @@ set_dummy_rel_pathlist(RelOptInfo *rel)
 	rel->pathlist = NIL;
 	rel->partial_pathlist = NIL;
 
-<<<<<<< HEAD
-	add_path(rel, (Path *) create_append_path(root, rel, NIL, NULL));
-=======
-	add_path(rel, (Path *) create_append_path(rel, NIL, NULL, 0));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	add_path(rel, (Path *) create_append_path(root, rel, NIL, NULL, 0));
 
 	/*
 	 * We set the cheapest path immediately, to ensure that IS_DUMMY_REL()
@@ -1801,16 +1754,11 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	Query	   *subquery = rte->subquery;
 	Relids		required_outer;
 	double		tuple_fraction;
-<<<<<<< HEAD
-	PlannerInfo *subroot;
-	List	   *pathkeys;
 	bool		forceDistRand;
-	Path	   *subquery_path;
+	Path	   *subquery_path; // GPDB_96_MERGE_FIXME: still needed?
 	PlannerConfig *config;
-=======
 	RelOptInfo *sub_final_rel;
 	ListCell   *lc;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Must copy the Query so that planning doesn't mess up the RTE contents
@@ -1887,35 +1835,27 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		else
 			tuple_fraction = root->tuple_fraction;
 
-		/* Generate the plan for the subquery */
+		/* Generate a subroot and Paths for the subquery */
 		config = CopyPlannerConfig(root->config);
 		config->honor_order_by = false;		/* partial order is enough */
 
 		/* plan_params should not be in use in current query level */
 		Assert(root->plan_params == NIL);
 
-<<<<<<< HEAD
-		rel->subplan = subquery_planner(root->glob, subquery,
+		rel->subroot = subquery_planner(root->glob, subquery,
 									root,
 									false, tuple_fraction,
-									&subroot,
 									config);
 	}
 	else
 	{
 		/* This is a preplanned sub-query RTE. */
-		rel->subplan = rte->subquery_plan;
+		rel->subroot = rte->subquery_subroot;
 		subroot = root;
 		/* XXX rel->onerow = ??? */
 	}
 
 	rel->subroot = subroot;
-=======
-	/* Generate a subroot and Paths for the subquery */
-	rel->subroot = subquery_planner(root->glob, subquery,
-									root,
-									false, tuple_fraction);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Isolate the params needed by this specific subplan */
 	rel->subplan_params = root->plan_params;
@@ -1950,19 +1890,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		Path	   *subpath = (Path *) lfirst(lc);
 		List	   *pathkeys;
 
-<<<<<<< HEAD
-	/* Generate appropriate path */
-	subquery_path = create_subqueryscan_path(root, rel, pathkeys, required_outer);
-
-	if (forceDistRand)
-		CdbPathLocus_MakeStrewn(&subquery_path->locus,
-								CdbPathLocus_NumSegments(subquery_path->locus));
-
-	add_path(rel, subquery_path);
-
-	/* Select cheapest path (pretty easy in this case...) */
-	set_cheapest(rel);
-=======
 		/* Convert subpath's pathkeys to outer representation */
 		pathkeys = convert_subquery_pathkeys(root,
 											 rel,
@@ -1973,8 +1900,11 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		add_path(rel, (Path *)
 				 create_subqueryscan_path(root, rel, subpath,
 										  pathkeys, required_outer));
+
+		if (forceDistRand)
+			CdbPathLocus_MakeStrewn(&subquery_path->locus,
+									CdbPathLocus_NumSegments(subquery_path->locus));
 	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
@@ -2053,7 +1983,6 @@ static void
 set_tablefunction_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
 	PlannerConfig *config;
-	PlannerInfo *subroot = NULL;
 	RangeTblFunction *rtfunc;
 	FuncExpr   *fexpr;
 	ListCell   *arg;
@@ -2078,12 +2007,10 @@ set_tablefunction_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rt
 	config->honor_order_by = false;		/* partial order is enough */
 
 	/* Plan input subquery */
-	rel->subplan = subquery_planner(root->glob, rte->subquery, root,
+	rel->subroot = subquery_planner(root->glob, rte->subquery, root,
 									false,
 									0.0, //tuple_fraction
-									& subroot,
 									config);
-	rel->subroot = subroot;
 
 	/*
 	 * With the subquery planned we now need to clear the subquery from the
@@ -2332,14 +2259,10 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	rel->subroot = subroot;
 
 	/* Mark rel with estimated output rows, width, etc */
-<<<<<<< HEAD
-	set_cte_size_estimates(root, rel, rel->subplan);
+	set_cte_size_estimates(root, rel, rel->subplan->plan_rows);
 
 	/* Convert subquery pathkeys to outer representation */
 	pathkeys = convert_subquery_pathkeys(root, rel, pathkeys);
-=======
-	set_cte_size_estimates(root, rel, cteplan->plan_rows);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * We don't support pushing join clauses into the quals of a CTE scan, but
@@ -3556,7 +3479,6 @@ print_path(PlannerInfo *root, Path *path, int indent)
 		print_relids(root, path->parent->relids);
 		printf(")");
 	}
-<<<<<<< HEAD
 
 	switch (path->locus.locustype)
 	{
@@ -3589,8 +3511,6 @@ print_path(PlannerInfo *root, Path *path, int indent)
 			break;
 	}
 	printf(" locus=%s", ltype);
-	printf(" cost=%.2f..%.2f\n", path->startup_cost, path->total_cost);
-=======
 	if (path->param_info)
 	{
 		printf(" required_outer (");
@@ -3599,7 +3519,6 @@ print_path(PlannerInfo *root, Path *path, int indent)
 	}
 	printf(" rows=%.0f cost=%.2f..%.2f\n",
 		   path->rows, path->startup_cost, path->total_cost);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (path->pathkeys)
 	{

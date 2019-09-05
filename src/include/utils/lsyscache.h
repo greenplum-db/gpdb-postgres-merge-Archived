@@ -146,15 +146,12 @@ extern Oid	get_func_variadictype(Oid funcid);
 extern bool get_func_retset(Oid funcid);
 extern bool func_strict(Oid funcid);
 extern char func_volatile(Oid funcid);
-<<<<<<< HEAD
+extern char func_parallel(Oid funcid);
 extern char func_data_access(Oid funcid);
 extern char func_exec_location(Oid funcid);
 extern Oid get_agg_transtype(Oid aggid);
 extern bool is_agg_ordered(Oid aggid);
 extern bool is_agg_partial_capable(Oid aggid);
-=======
-extern char func_parallel(Oid funcid);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern bool get_func_leakproof(Oid funcid);
 extern float4 get_func_cost(Oid funcid);
 extern float4 get_func_rows(Oid funcid);

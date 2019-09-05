@@ -37,7 +37,7 @@ extern void add_path(RelOptInfo *parent_rel, Path *new_path);
 extern void cdb_add_join_path(PlannerInfo *root, RelOptInfo *parent_rel, JoinType orig_jointype,
 				  Relids required_outer, JoinPath *new_path);
 extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel,
-					Relids required_outer);
+					Relids required_outer, int parallel_workers);
 extern ExternalPath *create_external_path(PlannerInfo *root, RelOptInfo *rel,
 					Relids required_outer);
 extern AppendOnlyPath *create_appendonly_path(PlannerInfo *root, RelOptInfo *rel,
@@ -51,8 +51,6 @@ extern void add_partial_path(RelOptInfo *parent_rel, Path *new_path);
 extern bool add_partial_path_precheck(RelOptInfo *parent_rel,
 						  Cost total_cost, List *pathkeys);
 
-extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel,
-					Relids required_outer, int parallel_workers);
 extern Path *create_samplescan_path(PlannerInfo *root, RelOptInfo *rel,
 					   Relids required_outer);
 extern IndexPath *create_index_path(PlannerInfo *root,

@@ -4,13 +4,9 @@
  *	  per-process shared memory data structures
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/proc.h
@@ -169,7 +165,6 @@ struct PGPROC
 
 	struct XidCache subxids;	/* cache for subtransaction XIDs */
 
-<<<<<<< HEAD
 	/*
 	 * Info for Resource Scheduling, what portal (i.e statement) we might
 	 * be waiting on.
@@ -201,9 +196,6 @@ struct PGPROC
    							 * NULL indicates the resource group is
 							 * locked for drop. */
 
-	/* Per-backend LWLock.  Protects fields below. */
-	LWLock	   *backendLock;	/* protects the fields below */
-=======
 	/* Support for group XID clearing. */
 	/* true, if member of ProcArray group waiting for XID clear */
 	bool		procArrayGroupMember;
@@ -220,7 +212,6 @@ struct PGPROC
 
 	/* Per-backend LWLock.  Protects fields below (but not group fields). */
 	LWLock		backendLock;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Lock manager data, recording fast-path locks taken by this backend. */
 	uint64		fpLockBits;		/* lock modes held for each fast-path slot */
@@ -364,15 +355,13 @@ extern void LockErrorCleanup(void);
 extern void ProcWaitForSignal(void);
 extern void ProcSendSignal(int pid);
 
-<<<<<<< HEAD
+extern void BecomeLockGroupLeader(void);
+extern bool BecomeLockGroupMember(PGPROC *leader, int pid);
+
 extern int ResProcSleep(LOCKMODE lockmode, LOCALLOCK *locallock, void *incrementSet);
 
 extern void ResLockWaitCancel(void);
 extern bool ProcCanSetMppSessionId(void);
 extern void ProcNewMppSessionId(int *newSessionId);
-=======
-extern void BecomeLockGroupLeader(void);
-extern bool BecomeLockGroupMember(PGPROC *leader, int pid);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #endif   /* PROC_H */

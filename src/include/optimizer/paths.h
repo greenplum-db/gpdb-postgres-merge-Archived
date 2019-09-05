@@ -48,7 +48,7 @@ extern PGDLLIMPORT join_search_hook_type join_search_hook;
 
 
 extern RelOptInfo *make_one_rel(PlannerInfo *root, List *joinlist);
-extern void set_dummy_rel_pathlist(RelOptInfo *rel);
+extern void set_dummy_rel_pathlist(PlannerInfo *root, RelOptInfo *rel);
 extern RelOptInfo *standard_join_search(PlannerInfo *root, int levels_needed,
 					 List *initial_rels);
 

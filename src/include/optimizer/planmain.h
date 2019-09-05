@@ -110,24 +110,13 @@ extern bool contain_group_id(Node *node);
  * prototypes for plan/createplan.c
  */
 extern Plan *create_plan(PlannerInfo *root, Path *best_path);
-<<<<<<< HEAD
-extern Plan *create_plan_recurse(PlannerInfo *root, Path *best_path);
+extern Plan *create_plan_recurse(PlannerInfo *root, Path *best_path,
+					int flags);
 extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
 				  Index scanrelid, Plan *subplan);
 extern ForeignScan *make_foreignscan(List *qptlist, List *qpqual,
 				 Index scanrelid, List *fdw_exprs, List *fdw_private,
 				 List *fdw_scan_tlist);
-extern Append *make_append(List *appendplans, List *tlist);
-extern RecursiveUnion *make_recursive_union(List *tlist,
-					 Plan *lefttree, Plan *righttree, int wtParam,
-					 List *distinctList, long numGroups);
-extern Sort *make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
-						List *pathkeys, double limit_tuples, bool add_keys_to_targetlist);
-extern Sort *make_sort_from_sortclauses(PlannerInfo *root, List *sortcls,
-						   Plan *lefttree);
-extern Sort *make_sort_from_groupcols(PlannerInfo *root, List *groupcls,
-									  AttrNumber *grpColIdx,
-									  Plan *lefttree);
 extern List *reconstruct_group_clause(List *orig_groupClause, List *tlist,
 						 AttrNumber *grpColIdx, int numcols);
 
@@ -136,13 +125,6 @@ extern Motion *make_motion(PlannerInfo *root, Plan *lefttree,
 			Oid *sortOperators, Oid *collations, bool *nullsFirst,
 			bool useExecutorVarFormat);
 
-extern Agg *make_agg(PlannerInfo *root, List *tlist, List *qual,
-					 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
-					 bool streaming,
-					 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-					 List *groupingSets,
-					 long numGroups,
-					 Plan *lefttree);
 extern HashJoin *make_hashjoin(List *tlist,
 			  List *joinclauses, List *otherclauses,
 			  List *hashclauses, List *hashqualclauses,
@@ -167,22 +149,8 @@ extern MergeJoin *make_mergejoin(List *tlist,
 			   bool *mergenullsfirst,
 			   Plan *lefttree, Plan *righttree,
 			   JoinType jointype);
-extern WindowAgg *make_windowagg(PlannerInfo *root, List *tlist,
-			   List *windowFuncs, Index winref,
-			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
-			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
-			   AttrNumber firstOrderCol, Oid firstOrderCmpOperator, bool firstOrderNullsFirst,
-			   int frameOptions, Node *startOffset, Node *endOffset,
-			   Plan *lefttree);
 extern Material *make_material(Plan *lefttree);
 extern Plan *materialize_finished_plan(PlannerInfo *root, Plan *subplan);
-extern Unique *make_unique(Plan *lefttree, List *distinctList);
-extern LockRows *make_lockrows(Plan *lefttree, List *rowMarks, int epqParam);
-extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
-		   int64 offset_est, int64 count_est);
-extern SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
-		   List *distinctList, AttrNumber flagColIdx, int firstFlag,
-		   long numGroups, double outputRows);
 extern Result *make_result(PlannerInfo *root, List *tlist,
 			Node *resconstantqual, Plan *subplan);
 extern Repeat *make_repeat(List *tlist,
@@ -190,21 +158,7 @@ extern Repeat *make_repeat(List *tlist,
 						   Expr *repeatCountExpr,
 						   uint64 grouping,
 						   Plan *subplan);
-extern ModifyTable *make_modifytable(PlannerInfo *root,
-				 CmdType operation, bool canSetTag,
-				 Index nominalRelation,
-				 List *resultRelations, List *subplans,
-				 List *withCheckOptionLists, List *returningLists,
-				 List *is_split_updates,
-				 List *rowMarks, OnConflictExpr *onconflict, int epqParam);
-=======
-extern ForeignScan *make_foreignscan(List *qptlist, List *qpqual,
-				 Index scanrelid, List *fdw_exprs, List *fdw_private,
-				 List *fdw_scan_tlist, List *fdw_recheck_quals,
-				 Plan *outer_plan);
-extern Plan *materialize_finished_plan(Plan *subplan);
 extern bool is_projection_capable_path(Path *path);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern bool is_projection_capable_plan(Plan *plan);
 extern Plan *add_sort_cost(PlannerInfo *root, Plan *input, 
 						   double limit_tuples);
@@ -221,12 +175,20 @@ extern Plan *plan_pushdown_tlist(PlannerInfo *root, Plan *plan, List *tlist);   
 extern List *create_external_scan_uri_list(struct ExtTableEntry *extEntry, bool *ismasteronly);
 
 /* External use of these functions is deprecated: */
-extern Sort *make_sort_from_sortclauses(List *sortcls, Plan *lefttree);
-extern Agg *make_agg(List *tlist, List *qual,
-		 AggStrategy aggstrategy, AggSplit aggsplit,
+extern Sort *make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
+						List *pathkeys, double limit_tuples, bool add_keys_to_targetlist);
+extern Sort *make_sort_from_sortclauses(PlannerInfo *root, List *sortcls,
+						   Plan *lefttree);
+extern Sort *make_sort_from_groupcols(PlannerInfo *root, List *groupcls,
+									  AttrNumber *grpColIdx,
+									  Plan *lefttree);
+extern Agg *make_agg(PlannerInfo *root, List *tlist, List *qual,
+		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
+		 bool streaming,
 		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		 List *groupingSets, List *chain,
-		 double dNumGroups, Plan *lefttree);
+		 List *groupingSets,
+		 long numGroups,
+		 Plan *lefttree);
 extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount);
 
 /*

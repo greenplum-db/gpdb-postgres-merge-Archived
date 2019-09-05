@@ -40,10 +40,7 @@ extern PlannedStmt *standard_planner(Query *parse, int cursorOptions,
 
 extern PlannerInfo *subquery_planner(PlannerGlobal *glob, Query *parse,
 				 PlannerInfo *parent_root,
-<<<<<<< HEAD
-				 bool hasRecursion,
-				 double tuple_fraction,
-				 PlannerInfo **subroot,
+				 bool hasRecursion, double tuple_fraction,
 				 PlannerConfig *config);
 
 extern bool choose_hashed_grouping(PlannerInfo *root,
@@ -53,12 +50,6 @@ extern bool choose_hashed_grouping(PlannerInfo *root,
 								   Path *sorted_path,
 								   double dNumGroups,
 								   AggClauseCosts *agg_costs);
-
-extern void add_tlist_costs_to_plan(PlannerInfo *root, Plan *plan,
-						List *tlist);
-=======
-				 bool hasRecursion, double tuple_fraction);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 extern bool is_dummy_plan(Plan *plan);
 

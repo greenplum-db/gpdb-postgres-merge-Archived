@@ -333,8 +333,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 			 * probably better to fail than to risk getting stuck in an
 			 * infinite loop.
 			 */
-<<<<<<< HEAD
-			UnlockBufHdr(buf);
+			UnlockBufHdr(buf, local_buf_state);
             ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_RESOURCES),
                             errmsg("Unable to allocate database I/O buffer; "
                                    "no unpinned buffers available.  "
@@ -342,10 +341,6 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
                             errhint("The shared_buffers setting may need to "
                                     "be increased.")
                             ));
-=======
-			UnlockBufHdr(buf, local_buf_state);
-			elog(ERROR, "no unpinned buffers available");
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 		UnlockBufHdr(buf, local_buf_state);
 	}

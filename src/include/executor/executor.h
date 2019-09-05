@@ -4,13 +4,9 @@
  *	  support for the POSTGRES executor module
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/executor.h
@@ -241,11 +237,7 @@ typedef struct AttrMap
 extern void ExecutorStart(QueryDesc *queryDesc, int eflags);
 extern void standard_ExecutorStart(QueryDesc *queryDesc, int eflags);
 extern void ExecutorRun(QueryDesc *queryDesc,
-<<<<<<< HEAD
-			ScanDirection direction, int64 count);
-=======
 			ScanDirection direction, uint64 count);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern void standard_ExecutorRun(QueryDesc *queryDesc,
 					 ScanDirection direction, uint64 count);
 extern void ExecutorFinish(QueryDesc *queryDesc);
