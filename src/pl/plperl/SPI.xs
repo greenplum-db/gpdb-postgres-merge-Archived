@@ -19,37 +19,6 @@
 #include "plperl_helpers.h"
 
 
-<<<<<<< HEAD
-=======
-/*
- * Interface routine to catch ereports and punt them to Perl
- */
-static void
-do_plperl_return_next(SV *sv)
-{
-	MemoryContext oldcontext = CurrentMemoryContext;
-
-	PG_TRY();
-	{
-		plperl_return_next(sv);
-	}
-	PG_CATCH();
-	{
-		ErrorData  *edata;
-
-		/* Must reset elog.c's state */
-		MemoryContextSwitchTo(oldcontext);
-		edata = CopyErrorData();
-		FlushErrorState();
-
-		/* Punt the error to Perl */
-		croak_cstr(edata->message);
-	}
-	PG_END_TRY();
-}
-
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 MODULE = PostgreSQL::InServer::SPI PREFIX = spi_
 
 PROTOTYPES: ENABLE

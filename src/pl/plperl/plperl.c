@@ -284,12 +284,8 @@ static Datum plperl_hash_to_datum(SV *src, TupleDesc td);
 static void plperl_init_shared_libs(pTHX);
 static void plperl_trusted_init(void);
 static void plperl_untrusted_init(void);
-<<<<<<< HEAD
-static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, int, int);
-static void plperl_return_next_internal(SV *sv);
-=======
 static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, uint64, int);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+static void plperl_return_next_internal(SV *sv);
 static char *hek2cstr(HE *he);
 static SV **hv_store_string(HV *hv, const char *key, SV *val);
 static SV **hv_fetch_string(HV *hv, const char *key);
@@ -681,24 +677,16 @@ select_perl_context(bool trusted)
 	{
 		dTHX;
 
-<<<<<<< HEAD
 		newXS("PostgreSQL::InServer::SPI::bootstrap",
 			  boot_PostgreSQL__InServer__SPI, __FILE__);
 
 		eval_pv("PostgreSQL::InServer::SPI::bootstrap()", FALSE);
 		if (SvTRUE(ERRSV))
 			ereport(ERROR,
-					(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+					 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 					 errcontext("while executing PostgreSQL::InServer::SPI::bootstrap")));
 	}
-=======
-	eval_pv("PostgreSQL::InServer::SPI::bootstrap()", FALSE);
-	if (SvTRUE(ERRSV))
-		ereport(ERROR,
-				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
-		errcontext("while executing PostgreSQL::InServer::SPI::bootstrap")));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Fully initialized, so mark the hashtable entry valid */
 	interp_desc->interp = interp;
@@ -876,31 +864,18 @@ plperl_init_interp(void)
 		PL_op_mask = plperl_opmask;
 #endif
 
-<<<<<<< HEAD
 		if (perl_parse(plperl, plperl_init_shared_libs,
 					   nargs, embedding, NULL) != 0)
 			ereport(ERROR,
-					(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+					 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 					 errcontext("while parsing Perl initialization")));
 
 		if (perl_run(plperl) != 0)
 			ereport(ERROR,
-					(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+					 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
 					 errcontext("while running Perl initialization")));
-=======
-	if (perl_parse(plperl, plperl_init_shared_libs,
-				   nargs, embedding, NULL) != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
-				 errcontext("while parsing Perl initialization")));
-
-	if (perl_run(plperl) != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
-				 errcontext("while running Perl initialization")));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #ifdef PLPERL_RESTORE_LOCALE
 		PLPERL_RESTORE_LOCALE(LC_COLLATE, save_collate);

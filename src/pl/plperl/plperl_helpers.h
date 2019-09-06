@@ -63,8 +63,8 @@ sv2cstr(SV *sv)
 	 * SvPVutf8() croaks nastily on certain things, like typeglobs and
 	 * readonly objects such as $^V. That's a perl bug - it's not supposed to
 	 * happen. To avoid crashing the backend, we make a copy of the sv before
-	 * passing it to SvPVutf8(). The copy is garbage collected 
-	 * when we're done with it.
+	 * passing it to SvPVutf8(). The copy is garbage collected when we're done
+	 * with it.
 	 */
 	if (SvREADONLY(sv) ||
 		isGV_with_GP(sv) ||
@@ -136,11 +136,8 @@ cstr2sv(const char *str)
 static inline void
 croak_cstr(const char *str)
 {
-<<<<<<< HEAD
 	dTHX;
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #ifdef croak_sv
 	/* Use sv_2mortal() to be sure the transient SV gets freed */
 	croak_sv(sv_2mortal(cstr2sv(str)));
