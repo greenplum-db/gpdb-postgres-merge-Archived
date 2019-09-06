@@ -8027,6 +8027,42 @@ is_projection_capable_path(Path *path)
 	return true;
 }
 
+
+/*
+ * is_projection_capable_plan
+ *		Check whether a given Path node is able to do projection.
+ *
+ * GPDB_96_MERGE_FIXME: once we're done with "pathifying" all the GPDB
+ * code, this shouldn't be needed anymore.
+ */
+bool
+is_projection_capable_plan(Plan *plan)
+{
+	/* Most plan types can project, so just list the ones that can't */
+	switch (plan->type)
+	{
+		case T_Hash:
+		case T_Material:
+		case T_Sort:
+		case T_Unique:
+		case T_SetOp:
+		case T_LockRows:
+		case T_Limit:
+		case T_ModifyTable:
+		case T_MergeAppend:
+		case T_RecursiveUnion:
+		case T_Motion:
+		case T_ShareInputScan:
+			return false;
+		case T_Append:
+
+			return false;
+		default:
+			break;
+	}
+	return true;
+}
+
 /*
  * plan_pushdown_tlist
  *
