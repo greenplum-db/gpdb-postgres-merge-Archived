@@ -158,6 +158,8 @@ cdbpath_create_motion_path(PlannerInfo *root,
 			pathnode = makeNode(CdbMotionPath);
 			pathnode->path.pathtype = T_Motion;
 			pathnode->path.parent = subpath->parent;
+			/* Motion doesn't project, so use source path's pathtarget */
+			pathnode->path.pathtarget = subpath->pathtarget;
 			pathnode->path.locus = locus;
 			pathnode->path.rows = subpath->rows;
 			pathnode->path.pathkeys = pathkeys;
@@ -190,6 +192,8 @@ cdbpath_create_motion_path(PlannerInfo *root,
 			pathnode = makeNode(CdbMotionPath);
 			pathnode->path.pathtype = T_Motion;
 			pathnode->path.parent = subpath->parent;
+			/* Motion doesn't project, so use source path's pathtarget */
+			pathnode->path.pathtarget = subpath->pathtarget;
 			pathnode->path.locus = locus;
 			pathnode->path.rows = subpath->rows;
 			pathnode->path.pathkeys = pathkeys;
@@ -366,6 +370,8 @@ cdbpath_create_motion_path(PlannerInfo *root,
 	pathnode = makeNode(CdbMotionPath);
 	pathnode->path.pathtype = T_Motion;
 	pathnode->path.parent = subpath->parent;
+	/* Motion doesn't project, so use source path's pathtarget */
+	pathnode->path.pathtarget = subpath->pathtarget;
 	pathnode->path.locus = locus;
 	pathnode->path.rows = subpath->rows;
 	pathnode->path.pathkeys = pathkeys;
