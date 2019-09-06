@@ -378,42 +378,42 @@ static BackgroundWorker PMAuxProcList[MaxPMAuxProc] =
 	 BGWORKER_SHMEM_ACCESS | BGWORKER_BACKEND_DATABASE_CONNECTION,
 	 BgWorkerStart_DtxRecovering, /* no need to wait dtx recovery */
 	 0, /* restart immediately if ftsprobe exits with non-zero code */
-	 FtsProbeMain, {0}, {0}, 0, 0,
+	 FtsProbeMain, {0}, {0}, 0, {0}, 0,
 	 FtsProbeStartRule},
 
 	{"global deadlock detector process",
 	 BGWORKER_SHMEM_ACCESS | BGWORKER_BACKEND_DATABASE_CONNECTION,
 	 BgWorkerStart_RecoveryFinished,
 	 0, /* restart immediately if gdd exits with non-zero code */
-	 GlobalDeadLockDetectorMain, {0}, {0}, 0, 0,
+	 GlobalDeadLockDetectorMain, {0}, {0}, 0, {0}, 0,
 	 GlobalDeadLockDetectorStartRule},
 
 	{"dtx recovery process",
 	 BGWORKER_SHMEM_ACCESS | BGWORKER_BACKEND_DATABASE_CONNECTION,
 	 BgWorkerStart_DtxRecovering, /* no need to wait dtx recovery */
 	 0, /* restart immediately if dtx recovery process exits with non-zero code */
-	 DtxRecoveryMain, {0}, {0}, 0, 0,
+	 DtxRecoveryMain, {0}, {0}, 0, {0}, 0,
 	 DtxRecoveryStartRule},
 
 	{"stats sender process",
 	 BGWORKER_SHMEM_ACCESS,
 	 BgWorkerStart_RecoveryFinished,
 	 0, /* restart immediately if stats sender exits with non-zero code */
-	 SegmentInfoSenderMain, {0}, {0}, 0, 0,
+	 SegmentInfoSenderMain, {0}, {0}, 0, {0}, 0,
 	 SegmentInfoSenderStartRule},
 
 	{"sweeper process",
 	 BGWORKER_SHMEM_ACCESS,
 	 BgWorkerStart_RecoveryFinished,
 	 0, /* restart immediately if sweeper process exits with non-zero code */
-	 BackoffSweeperMain, {0}, {0}, 0, 0,
+	 BackoffSweeperMain, {0}, {0}, 0, {0}, 0,
 	 BackoffSweeperStartRule},
 
 	{"perfmon process",
 	 BGWORKER_SHMEM_ACCESS,
 	 BgWorkerStart_RecoveryFinished,
 	 0, /* restart immediately if perfmon process exits with non-zero code */
-	 PerfmonMain, {0}, {0}, 0, 0,
+	 PerfmonMain, {0}, {0}, 0, {0}, 0,
 	 PerfmonStartRule},
 };
 
