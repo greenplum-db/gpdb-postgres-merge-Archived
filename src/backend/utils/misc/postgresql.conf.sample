@@ -60,7 +60,6 @@
 					# comma-separated list of addresses;
 					# defaults to '*', '*' = all
 					# (change requires restart)
-<<<<<<< HEAD
 
 #port = 5432				# sets the database listener port for 
       					# a Greenplum instance. The master and 
@@ -73,10 +72,6 @@
 # THE PORT NUMBER IN THIS FILE.
 
 #max_connections = 200			# (change requires restart)
-=======
-#port = 5432				# (change requires restart)
-#max_connections = 100			# (change requires restart)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #superuser_reserved_connections = 3	# (change requires restart)
 #unix_socket_directories = '/tmp'	# comma-separated list of directories
 					# (change requires restart)
@@ -134,11 +129,7 @@ max_prepared_transactions = 250		# can be 0 or more
 					# (change requires restart)
 # Caution: it is not advisable to set max_prepared_transactions nonzero unless
 # you actively intend to use prepared transactions.
-<<<<<<< HEAD
 #work_mem = 32MB				# min 64kB
-=======
-#work_mem = 4MB				# min 64kB
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #maintenance_work_mem = 64MB		# min 1MB
 #replacement_sort_tuples = 150000	# limits use of replacement selection sort
 #autovacuum_work_mem = -1		# min 1MB, or -1 to use maintenance_work_mem
@@ -171,17 +162,6 @@ max_prepared_transactions = 250		# can be 0 or more
 #vacuum_cost_page_dirty = 20		# 0-10000 credits
 #vacuum_cost_limit = 200		# 1-10000 credits
 
-<<<<<<< HEAD
-=======
-# - Background Writer -
-
-#bgwriter_delay = 200ms			# 10-10000ms between rounds
-#bgwriter_lru_maxpages = 100		# 0-1000 max buffers written/round
-#bgwriter_lru_multiplier = 2.0		# 0-10.0 multiplier on buffers scanned/round
-#bgwriter_flush_after = 0		# 0 disables,
-					# default is 512kB on linux, 0 otherwise
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 # - Asynchronous Behavior -
 
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
@@ -334,16 +314,13 @@ max_prepared_transactions = 250		# can be 0 or more
 #cpu_tuple_cost = 0.01			# same scale as above
 #cpu_index_tuple_cost = 0.005		# same scale as above
 #cpu_operator_cost = 0.0025		# same scale as above
-<<<<<<< HEAD
-#gp_motion_cost_per_row = 0.0  # (same) (if 0, 2*cpu_tuple_cost is used)
-=======
+# GPDB_96_MERGE_FIXME: figure out the appropriate values for the parallel gucs
 #parallel_tuple_cost = 0.1		# same scale as above
 #parallel_setup_cost = 1000.0	# same scale as above
 #min_parallel_relation_size = 8MB
-#effective_cache_size = 4GB
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
-
 #effective_cache_size = 16GB
+
+#gp_motion_cost_per_row = 0.0  # (same) (if 0, 2*cpu_tuple_cost is used)
 
 # - Other Planner Options -
 
@@ -351,11 +328,9 @@ max_prepared_transactions = 250		# can be 0 or more
 #from_collapse_limit = 20
 #join_collapse_limit = 20		# 1 disables collapsing of explicit
 					# JOIN clauses
-<<<<<<< HEAD
-#gp_segments_for_planner = 0     # if 0, actual number of segments is used
-=======
 #force_parallel_mode = off
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
+#gp_segments_for_planner = 0     # if 0, actual number of segments is used
 
 #gp_enable_direct_dispatch = on
 
@@ -387,18 +362,6 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 					# happen after that much log output.
 					# 0 disables.
 
-<<<<<<< HEAD
-=======
-# These are relevant when logging to syslog:
-#syslog_facility = 'LOCAL0'
-#syslog_ident = 'postgres'
-#syslog_sequence_numbers = on
-#syslog_split_messages = on
-
-# This is only relevant when logging to eventlog (win32):
-#event_source = 'PostgreSQL'
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 # - When to Log -
 
 #client_min_messages = notice		# values in order of decreasing detail:
@@ -487,16 +450,12 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 #log_temp_files = -1			# log temporary files equal or larger
 					# than the specified size in kilobytes;
 					# -1 disables, 0 logs all temp files
-<<<<<<< HEAD
 #log_timezone = 'GMT'			# actually, defaults to TZ environment
 					# setting
-=======
-#log_timezone = 'GMT'
 
 
 # - Process Title -
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #cluster_name = ''			# added to process titles if nonempty
 					# (change requires restart)
 #update_process_title = on
