@@ -31,11 +31,8 @@
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
 #include "utils/datum.h"
-<<<<<<< HEAD
 #include "cdb/cdbgang.h"
-=======
 #include "utils/rel.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 
 /*
@@ -110,13 +107,10 @@ _copyPlannedStmt(const PlannedStmt *from)
 	COPY_SCALAR_FIELD(hasModifyingCTE);
 	COPY_SCALAR_FIELD(canSetTag);
 	COPY_SCALAR_FIELD(transientPlan);
-<<<<<<< HEAD
 	COPY_SCALAR_FIELD(oneoffPlan);
 	COPY_SCALAR_FIELD(simplyUpdatable);
-=======
 	COPY_SCALAR_FIELD(dependsOnRole);
 	COPY_SCALAR_FIELD(parallelModeNeeded);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	COPY_NODE_FIELD(planTree);
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(resultRelations);
@@ -133,8 +127,6 @@ _copyPlannedStmt(const PlannedStmt *from)
 	COPY_NODE_FIELD(relationOids);
 	COPY_NODE_FIELD(invalItems);
 	COPY_SCALAR_FIELD(nParamExec);
-<<<<<<< HEAD
-	COPY_SCALAR_FIELD(hasRowSecurity);
 	COPY_SCALAR_FIELD(nMotionNodes);
 	COPY_SCALAR_FIELD(nInitPlans);
 
@@ -173,8 +165,6 @@ _copyOidAssignment(const OidAssignment *from)
 	COPY_SCALAR_FIELD(keyOid1);
 	COPY_SCALAR_FIELD(keyOid2);
 	COPY_SCALAR_FIELD(oid);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	return newnode;
 }
@@ -1714,11 +1704,8 @@ _copyAggref(const Aggref *from)
 	COPY_SCALAR_FIELD(aggvariadic);
 	COPY_SCALAR_FIELD(aggkind);
 	COPY_SCALAR_FIELD(agglevelsup);
-<<<<<<< HEAD
 	COPY_SCALAR_FIELD(aggstage);
-=======
 	COPY_SCALAR_FIELD(aggsplit);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -3399,12 +3386,9 @@ _copyQuery(const Query *from)
 	COPY_NODE_FIELD(rowMarks);
 	COPY_NODE_FIELD(setOperations);
 	COPY_NODE_FIELD(constraintDeps);
-<<<<<<< HEAD
+	COPY_NODE_FIELD(withCheckOptions);
 	COPY_NODE_FIELD(intoPolicy);
 	COPY_SCALAR_FIELD(parentStmtType);
-=======
-	COPY_NODE_FIELD(withCheckOptions);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	return newnode;
 }
@@ -5510,16 +5494,13 @@ copyObject(const void *from)
 		case T_SeqScan:
 			retval = _copySeqScan(from);
 			break;
-<<<<<<< HEAD
 		case T_DynamicSeqScan:
 			retval = _copyDynamicSeqScan(from);
 			break;
 		case T_ExternalScan:
 			retval = _copyExternalScan(from);
-=======
 		case T_SampleScan:
 			retval = _copySampleScan(from);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			break;
 		case T_IndexScan:
 			retval = _copyIndexScan(from);
@@ -6404,8 +6385,6 @@ copyObject(const void *from)
 		case T_RoleSpec:
 			retval = _copyRoleSpec(from);
 			break;
-
-<<<<<<< HEAD
 		case T_CdbProcess:
 			retval = _copyCdbProcess(from);
 			break;
@@ -6441,13 +6420,11 @@ copyObject(const void *from)
 
 		case T_DistributedBy:
 			retval = _copyDistributedBy(from);
-=======
 			/*
 			 * MISCELLANEOUS NODES
 			 */
 		case T_ForeignKeyCacheInfo:
 			retval = _copyForeignKeyCacheInfo(from);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			break;
 
 		default:
