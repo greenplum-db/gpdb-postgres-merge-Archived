@@ -15,15 +15,12 @@ DROP TABLESPACE regress_tblspacewith;
 -- create a tablespace we can use
 CREATE TABLESPACE regress_tblspace LOCATION '@testtablespace@';
 
-<<<<<<< HEAD
-=======
 -- try setting and resetting some properties for the new tablespace
 ALTER TABLESPACE regress_tblspace SET (random_page_cost = 1.0);
 ALTER TABLESPACE regress_tblspace SET (some_nonexistent_parameter = true);  -- fail
 ALTER TABLESPACE regress_tblspace RESET (random_page_cost = 2.0); -- fail
 ALTER TABLESPACE regress_tblspace RESET (random_page_cost, seq_page_cost); -- ok
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 -- create a schema we can use
 CREATE SCHEMA testschema;
 
@@ -105,35 +102,24 @@ CREATE TABLE bar (i int) TABLESPACE regress_nosuchspace;
 -- Fail, not empty
 DROP TABLESPACE regress_tblspace;
 
-<<<<<<< HEAD
-CREATE ROLE tablespace_testuser1 login;
-CREATE ROLE tablespace_testuser2 login;
-GRANT USAGE ON SCHEMA testschema TO tablespace_testuser2;
-=======
 CREATE ROLE regress_tablespace_user1 login;
 CREATE ROLE regress_tablespace_user2 login;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+GRANT USAGE ON SCHEMA testschema TO regress_tablespace_user2;
 
 ALTER TABLESPACE regress_tblspace OWNER TO regress_tablespace_user1;
 
-<<<<<<< HEAD
 CREATE TABLE testschema.tablespace_acl (c int);
 -- new owner lacks permission to create this index from scratch
-CREATE INDEX k ON testschema.tablespace_acl (c) TABLESPACE testspace;
-ALTER TABLE testschema.tablespace_acl OWNER TO tablespace_testuser2;
+CREATE INDEX k ON testschema.tablespace_acl (c) TABLESPACE regress_tblspace;
+ALTER TABLE testschema.tablespace_acl OWNER TO regress_tablespace_user2;
 
-SET SESSION ROLE tablespace_testuser2;
-CREATE TABLE tablespace_table (i int) TABLESPACE testspace; -- fail
-ALTER TABLE testschema.tablespace_acl ALTER c TYPE bigint;
-=======
 SET SESSION ROLE regress_tablespace_user2;
 CREATE TABLE tablespace_table (i int) TABLESPACE regress_tblspace; -- fail
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+ALTER TABLE testschema.tablespace_acl ALTER c TYPE bigint;
 RESET ROLE;
 
 ALTER TABLESPACE regress_tblspace RENAME TO regress_tblspace_renamed;
 
-<<<<<<< HEAD
 -- Test that default_tablespace GUC is honored even after gang reset.
 CREATE OR REPLACE FUNCTION cleanupAllGangs() RETURNS BOOL
 AS '@abs_builddir@/regress@DLSUFFIX@', 'cleanupAllGangs' LANGUAGE C;
@@ -153,12 +139,8 @@ WHERE c.reltablespace = t.oid and c.relname = 'tablespace_table1';
 SELECT spcname FROM gp_dist_random('pg_class') c, pg_tablespace t
 WHERE c.reltablespace = t.oid and c.relname = 'tablespace_table1';
 
-ALTER TABLE ALL IN TABLESPACE testspace_renamed SET TABLESPACE pg_default;
-ALTER INDEX ALL IN TABLESPACE testspace_renamed SET TABLESPACE pg_default;
-=======
 ALTER TABLE ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
 ALTER INDEX ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- Should show notice that nothing was done
 ALTER TABLE ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
