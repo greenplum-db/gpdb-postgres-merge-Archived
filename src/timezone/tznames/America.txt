@@ -97,19 +97,9 @@ CDT    -18000 D  # Central Daylight Time
                  #     (America/Rainy_River)
                  #     (America/Rankin_Inlet)
                  #     (America/Winnipeg)
-<<<<<<< HEAD
 CLST   -10800 D  # Chile Summer Time (obsolete)
 CLT    America/Santiago  # Chile Time (obsolete)
 COT    -18000    # Columbia Time (obsolete)
-=======
-CLST   -10800 D  # Chile Summer Time
-                 #     (America/Santiago)
-                 #     (Antarctica/Palmer)
-CLT    America/Santiago  # Chile Time
-                 #     (America/Santiago)
-                 #     (Antarctica/Palmer)
-COT    -18000    # Columbia Time (not in zic)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 # CONFLICT! CST is not unique
 # Other timezones:
 #  - CST: Central Standard Time (Australia)
@@ -257,7 +247,6 @@ PST    -28800    # Pacific Standard Time
                  #     (America/Vancouver)
                  #     (America/Whitehorse)
                  #     (Pacific/Pitcairn)
-<<<<<<< HEAD
 PYST   -10800 D  # Paraguay Summer Time (obsolete)
 PYT    America/Asuncion  # Paraguay Time (obsolete)
 SRT    America/Paramaribo  # Suriname Time (obsolete)
@@ -266,21 +255,3 @@ UYT    -10800    # Uruguay Time (obsolete)
 VET    America/Caracas  # Venezuela Time (obsolete)
 WGST    -7200 D  # Western Greenland Summer Time (obsolete)
 WGT    -10800    # West Greenland Time (obsolete)
-=======
-PYST   -10800 D  # Paraguay Summer Time
-                 #     (America/Asuncion)
-PYT    America/Asuncion  # Paraguay Time
-                 #     (America/Asuncion)
-SRT    America/Paramaribo  # Suriname Time
-                 #     (America/Paramaribo)
-UYST    -7200 D  # Uruguay Summer Time (obsolete)
-                 #     (America/Montevideo)
-UYT    -10800    # Uruguay Time
-                 #     (America/Montevideo)
-VET    America/Caracas  # Venezuela Time
-                 #     (America/Caracas)
-WGST    -7200 D  # Western Greenland Summer Time
-                 #     (America/Godthab)
-WGT    -10800    # West Greenland Time
-                 #     (America/Godthab)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

@@ -74,17 +74,8 @@ CDT    -18000 D  # Central Daylight Time
                  #     (America/Rainy_River)
                  #     (America/Rankin_Inlet)
                  #     (America/Winnipeg)
-<<<<<<< HEAD
 CLST   -10800 D  # Chile Summer Time (obsolete)
 CLT    America/Santiago  # Chile Time (obsolete)
-=======
-CLST   -10800 D  # Chile Summer Time
-                 #     (America/Santiago)
-                 #     (Antarctica/Palmer)
-CLT    America/Santiago  # Chile Time
-                 #     (America/Santiago)
-                 #     (Antarctica/Palmer)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 # CONFLICT! CST is not unique
 # Other timezones:
 #  - CST: Central Standard Time (Australia)
@@ -200,7 +191,6 @@ PST    -28800    # Pacific Standard Time
                  #     (America/Vancouver)
                  #     (America/Whitehorse)
                  #     (Pacific/Pitcairn)
-<<<<<<< HEAD
 PYST   -10800 D  # Paraguay Summer Time (obsolete)
 PYT    America/Asuncion  # Paraguay Time (obsolete)
 UYST    -7200 D  # Uruguay Summer Time (obsolete)
@@ -208,22 +198,6 @@ UYT    -10800    # Uruguay Time (obsolete)
 VET    America/Caracas  # Venezuela Time (obsolete)
 WGST    -7200 D  # Western Greenland Summer Time (obsolete)
 WGT    -10800    # West Greenland Time (obsolete)
-=======
-PYST   -10800 D  # Paraguay Summer Time
-                 #     (America/Asuncion)
-PYT    America/Asuncion  # Paraguay Time
-                 #     (America/Asuncion)
-UYST    -7200 D  # Uruguay Summer Time (obsolete)
-                 #     (America/Montevideo)
-UYT    -10800    # Uruguay Time
-                 #     (America/Montevideo)
-VET    America/Caracas  # Venezuela Time
-                 #     (America/Caracas)
-WGST    -7200 D  # Western Greenland Summer Time
-                 #     (America/Godthab)
-WGT    -10800    # West Greenland Time
-                 #     (America/Godthab)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #################### ANTARCTICA ####################
 
@@ -233,12 +207,7 @@ MAWT    Antarctica/Mawson  # Mawson Time (Antarctica) (obsolete)
 
 #################### ASIA ####################
 
-<<<<<<< HEAD
 AFT     16200    # Afghanistan Time (obsolete)
-=======
-AFT     16200    # Afghanistan Time
-                 #     (Asia/Kabul)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 ALMT    21600    # Alma-Ata Time (obsolete)
 ALMST   25200 D  # Alma-Ata Summer Time (obsolete)
 # CONFLICT! AMST is not unique
@@ -250,7 +219,6 @@ AMST    Asia/Yerevan  # Armenia Summer Time (obsolete)
 #  - AMT: Armenia Time (Asia)
 AMT    -14400    # Amazon Time (obsolete)
 ANAST   Asia/Anadyr  # Anadyr Summer Time (obsolete)
-<<<<<<< HEAD
 ANAT    Asia/Anadyr  # Anadyr Time (obsolete)
 AZST    Asia/Baku  # Azerbaijan Summer Time (obsolete)
 AZT     Asia/Baku  # Azerbaijan Time (obsolete)
@@ -259,21 +227,6 @@ BNT     28800    # Brunei Darussalam Time (obsolete)
 BORT    28800    # Borneo Time (Indonesia) (not in IANA database)
 BTT     21600    # Bhutan Time (obsolete)
 CCT     28800    # China Coastal Time (not in IANA database)
-=======
-ANAT    Asia/Anadyr  # Anadyr Time
-                 #     (Asia/Anadyr)
-AZST    Asia/Baku  # Azerbaijan Summer Time (obsolete)
-AZT     Asia/Baku  # Azerbaijan Time
-                 #     (Asia/Baku)
-BDT     21600    # Bangladesh Time
-                 #     (Asia/Dhaka)
-BNT     28800    # Brunei Darussalam Time
-                 #     (Asia/Brunei)
-BORT    28800    # Borneo Time (Indonesia) (not in zic)
-BTT     21600    # Bhutan Time
-                 #     (Asia/Thimphu)
-CCT     28800    # China Coastal Time (not in zic)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 GEST    Asia/Tbilisi  # Georgia Summer Time (obsolete)
 GET     Asia/Tbilisi  # Georgia Time (obsolete)
 HKT     28800    # Hong Kong Time
@@ -307,12 +260,7 @@ MMT     23400    # Myanmar Time (obsolete)
 MYT     28800    # Malaysia Time (obsolete)
 NOVST   Asia/Novosibirsk  # Novosibirsk Summer Time (obsolete)
 NOVT    Asia/Novosibirsk  # Novosibirsk Time (obsolete)
-<<<<<<< HEAD
 NPT     20700    # Nepal Time (obsolete)
-=======
-NPT     20700    # Nepal Time
-                 #     (Asia/Katmandu)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 OMSST   Asia/Omsk  # Omsk Summer Time (obsolete)
 OMST    Asia/Omsk  # Omsk Time (obsolete)
 PETST   Asia/Kamchatka  # Petropavlovsk-Kamchatski Summer Time (obsolete)
@@ -643,7 +591,6 @@ TFT     18000    # Kerguelen Time (obsolete)
 
 #################### PACIFIC ####################
 
-<<<<<<< HEAD
 CHADT   49500 D  # Chatham Daylight Time (New Zealand) (obsolete)
 CHAST   45900    # Chatham Standard Time (New Zealand) (obsolete)
 CHUT    36000    # Chuuk Time (obsolete)
@@ -655,30 +602,6 @@ FJT     43200    # Fiji Time (obsolete)
 GALT   -21600    # Galapagos Time (obsolete)
 GAMT   -32400    # Gambier Time (obsolete)
 GILT    43200    # Gilbert Islands Time (obsolete)
-=======
-CHADT   49500 D  # Chatham Daylight Time (New Zealand)
-                 #     (Pacific/Chatham)
-CHAST   45900    # Chatham Standard Time (New Zealand)
-                 #     (Pacific/Chatham)
-CHUT    36000    # Chuuk Time
-                 #     (Pacific/Chuuk)
-CKT     Pacific/Rarotonga  # Cook Islands Time
-                 #     (Pacific/Rarotonga)
-EASST   Pacific/Easter  # Easter Island Summer Time
-                 #     (Pacific/Easter)
-EAST    Pacific/Easter  # Easter Island Time (Chile)
-                 #     (Pacific/Easter)
-FJST    46800 D  # Fiji Summer Time
-                 #     (Pacific/Fiji)
-FJT     43200    # Fiji Time
-                 #     (Pacific/Fiji)
-GALT   -21600    # Galapagos Time
-                 #     (Pacific/Galapagos)
-GAMT   -32400    # Gambier Time
-                 #     (Pacific/Gambier)
-GILT    43200    # Gilbert Islands Time
-                 #     (Pacific/Tarawa)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 HST    -36000    # Hawaiian Standard Time
                  #     (Pacific/Honolulu)
                  #     (Pacific/Johnston)

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 /* Convert a broken-down timestamp to a string.  */
-=======
-/* Convert a broken-down time stamp to a string. */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
  * Copyright 1989 The Regents of the University of California.
@@ -117,20 +113,9 @@ enum warn
 
 static char *_add(const char *, char *, const char *);
 static char *_conv(int, const char *, char *, const char *);
-<<<<<<< HEAD
 static char *_fmt(const char *, const struct pg_tm *, char *, const char *,
 	 enum warn *);
 static char *_yconv(int, int, bool, bool, char *, char const *);
-=======
-static char *_fmt(const char *, const struct pg_tm *, char *,
-	 const char *, int *);
-static char *_yconv(int, int, bool, bool, char *, const char *);
-
-#define IN_NONE 0
-#define IN_SOME 1
-#define IN_THIS 2
-#define IN_ALL	3
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 
 size_t
@@ -326,11 +311,7 @@ _fmt(const char *format, const struct pg_tm *t, char *pt,
  * (01-53)."
  * (ado, 1993-05-24)
  *
-<<<<<<< HEAD
  * From <https://www.cl.cam.ac.uk/~mgk25/iso-time.html> by Markus Kuhn:
-=======
- * From <http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html> by Markus Kuhn:
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * "Week 01 of a year is per definition the first week which has the
  * Thursday in this year, which is equivalent to the week which contains
  * the fourth day of January. In other words, the first week of a new year
@@ -547,11 +528,7 @@ _yconv(int a, int b, bool convert_top, bool convert_yy,
 	int			lead;
 	int			trail;
 
-<<<<<<< HEAD
 #define DIVISOR	100
-=======
-#define DIVISOR 100
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	trail = a % DIVISOR + b % DIVISOR;
 	lead = a / DIVISOR + b / DIVISOR + trail / DIVISOR;
 	trail %= DIVISOR;

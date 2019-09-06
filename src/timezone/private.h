@@ -40,50 +40,25 @@
 #ifndef EOVERFLOW
 #define EOVERFLOW EINVAL
 #endif
-<<<<<<< HEAD
-=======
-
-#ifndef WIFEXITED
-#define WIFEXITED(status)	(((status) & 0xff) == 0)
-#endif   /* !defined WIFEXITED */
-#ifndef WEXITSTATUS
-#define WEXITSTATUS(status) (((status) >> 8) & 0xff)
-#endif   /* !defined WEXITSTATUS */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX. */
 #define is_digit(c) ((unsigned)(c) - '0' <= 9)
 
-<<<<<<< HEAD
-=======
-#ifndef SIZE_MAX
-#define SIZE_MAX ((size_t) -1)
+/* PG doesn't currently rely on <inttypes.h>, so work around strtoimax() */
+#undef strtoimax
+#ifdef HAVE_STRTOLL
+#define strtoimax strtoll
+#else
+#define strtoimax strtol
 #endif
 
-/*
- * SunOS 4.1.1 libraries lack remove.
- */
-
-#ifndef remove
-extern int	unlink(const char *filename);
-
-#define remove	unlink
-#endif   /* !defined remove */
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
  * Finally, some convenience items.
  */
 
-<<<<<<< HEAD
-=======
-#ifndef TYPE_BIT
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #define TYPE_BIT(type)	(sizeof (type) * CHAR_BIT)
 #define TYPE_SIGNED(type) (((type) -1) < 0)
-#define TWOS_COMPLEMENT(t) ((t) ~ (t) 0 < 0)
-
 #define TWOS_COMPLEMENT(t) ((t) ~ (t) 0 < 0)
 
 /*
@@ -96,13 +71,10 @@ extern int	unlink(const char *filename);
 	- 1 + ((t) 1 << ((b) - 1 - TYPE_SIGNED(t)))))
 #define MINVAL(t, b)						\
   ((t) (TYPE_SIGNED(t) ? - TWOS_COMPLEMENT(t) - MAXVAL(t, b) : 0))
-<<<<<<< HEAD
 
 /* The extreme time values, assuming no padding.  */
 #define TIME_T_MIN MINVAL(pg_time_t, TYPE_BIT(pg_time_t))
 #define TIME_T_MAX MAXVAL(pg_time_t, TYPE_BIT(pg_time_t))
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
  * 302 / 1000 is log10(2.0) rounded up.
@@ -113,25 +85,15 @@ extern int	unlink(const char *filename);
 #define INT_STRLEN_MAXIMUM(type) \
 	((TYPE_BIT(type) - TYPE_SIGNED(type)) * 302 / 1000 + \
 	1 + TYPE_SIGNED(type))
-<<<<<<< HEAD
 
 /*
  * INITIALIZE(x)
  */
 #define INITIALIZE(x)	((x) = 0)
-=======
-#endif   /* !defined INT_STRLEN_MAXIMUM */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
-
-/*
- * INITIALIZE(x)
- */
-#define INITIALIZE(x)  ((x) = 0)
 
 #undef _
 #define _(msgid) (msgid)
 
-<<<<<<< HEAD
 /* Handy macros that are independent of tzfile implementation.  */
 
 #define YEARSPERREPEAT		400 /* years before a Gregorian repeat */
@@ -199,26 +161,3 @@ extern int	unlink(const char *filename);
 #define SECSPERREPEAT_BITS	34	/* ceil(log2(SECSPERREPEAT)) */
 
 #endif							/* !defined PRIVATE_H */
-=======
-#ifndef YEARSPERREPEAT
-#define YEARSPERREPEAT		400 /* years before a Gregorian repeat */
-#endif   /* !defined YEARSPERREPEAT */
-
-/*
- * The Gregorian year averages 365.2425 days, which is 31556952 seconds.
- */
-
-#ifndef AVGSECSPERYEAR
-#define AVGSECSPERYEAR		31556952L
-#endif   /* !defined AVGSECSPERYEAR */
-
-#ifndef SECSPERREPEAT
-#define SECSPERREPEAT		((int64) YEARSPERREPEAT * (int64) AVGSECSPERYEAR)
-#endif   /* !defined SECSPERREPEAT */
-
-#ifndef SECSPERREPEAT_BITS
-#define SECSPERREPEAT_BITS	34	/* ceil(log2(SECSPERREPEAT)) */
-#endif   /* !defined SECSPERREPEAT_BITS */
-
-#endif   /* !defined PRIVATE_H */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

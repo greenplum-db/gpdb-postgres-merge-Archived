@@ -10,29 +10,12 @@
 AWST    28800    # Australian Western Standard Time
                  #     (Antarctica/Casey)
                  #     (Australia/Perth)
-<<<<<<< HEAD
 CLST   -10800 D  # Chile Summer Time (obsolete)
 CLT    America/Santiago  # Chile Time (obsolete)
 DAVT    Antarctica/Davis  # Davis Time (Antarctica) (obsolete)
 DDUT    36000    # Dumont-d`Urville Time (Antarctica) (obsolete)
 MAWT    Antarctica/Mawson  # Mawson Time (Antarctica) (obsolete)
 MIST    39600    # Macquarie Island Time (obsolete)
-=======
-CLST   -10800 D  # Chile Summer Time
-                 #     (America/Santiago)
-                 #     (Antarctica/Palmer)
-CLT    America/Santiago  # Chile Time
-                 #     (America/Santiago)
-                 #     (Antarctica/Palmer)
-DAVT    Antarctica/Davis  # Davis Time (Antarctica)
-                 #     (Antarctica/Davis)
-DDUT    36000    # Dumont-d`Urville Time (Antarctica)
-                 #     (Antarctica/DumontDUrville)
-MAWT    Antarctica/Mawson  # Mawson Time (Antarctica)
-                 #     (Antarctica/Mawson)
-MIST    39600    # Macquarie Island Time
-                 #     (Antarctica/Macquarie)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 NZDT    46800 D  # New Zealand Daylight Time
                  #     (Antarctica/McMurdo)
                  #     (Pacific/Auckland)
