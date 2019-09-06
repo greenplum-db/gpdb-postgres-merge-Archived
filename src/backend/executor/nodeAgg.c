@@ -922,7 +922,7 @@ combine_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 
 		/* Evaluate the current input expressions for this aggregate */
 		slot = ExecProject(pertrans->evalproj, NULL);
-		Assert(slot->tts_nvalid >= 1);
+		Assert(slot->PRIVATE_tts_nvalid >= 1);
 
 		bool       *isnulls = slot_get_isnull(slot);
 		Datum       *values = slot_get_values(slot);
@@ -2692,6 +2692,9 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			aclcheck_error(aclresult, ACL_KIND_PROC,
 						   get_func_name(aggref->aggfnoid));
 		InvokeFunctionExecuteHook(aggref->aggfnoid);
+/* GPDB_96_MERGE_FIXME: parallel aggregation */
+		elog(ERROR, "GPDB_96_MERGE_FIXME: nodeAgg is broken");
+#if 0
 
 		switch (aggref->aggstage)		/* MPP */
 		{
@@ -2719,8 +2722,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		}
 
 		pertrans->combinefn_oid = aggform->aggcombinefn;
-/* GPDB_96_MERGE_FIXME: parallel aggregation */
-#if 0
+
 		/* planner recorded transition state type in the Aggref itself */
 		aggtranstype = aggref->aggtranstype;
 		Assert(OidIsValid(aggtranstype));

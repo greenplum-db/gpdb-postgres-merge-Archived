@@ -25,6 +25,8 @@
 #include "utils/rel.h"
 #include "utils/tqual.h"
 
+#include "parser/parsetree.h"
+
 static void InitScanRelation(SampleScanState *node, EState *estate, int eflags);
 static TupleTableSlot *SampleNext(SampleScanState *node);
 static void tablesample_init(SampleScanState *scanstate);
@@ -115,8 +117,9 @@ InitScanRelation(SampleScanState *node, EState *estate, int eflags)
 	Relation	currentRelation;
 
 	/* GPDB_95_MERGE_FIXME: Add support for AO tables */
-	Oid relid = getrelid(((SampleScan *) node->ss.ps.plan)->scanrelid,
-			estate->es_range_table);
+	Oid			relid = getrelid(
+		((SampleScan *) node->ss.ps.plan)->scan.scanrelid,
+		estate->es_range_table);
 	Relation performStorageTestRelation = RelationIdGetRelation(relid);
 	if (!RelationIsHeap(performStorageTestRelation))
 		ereport(ERROR,
@@ -616,7 +619,7 @@ SampleTupleVisible(HeapTuple tuple, OffsetNumber tupoffset, HeapScanDesc scan)
 	else
 	{
 		/* Otherwise, we have to check the tuple individually. */
-		return HeapTupleSatisfiesVisibility(tuple,
+		return HeapTupleSatisfiesVisibility(scan->rs_rd, tuple,
 											scan->rs_snapshot,
 											scan->rs_cbuf);
 	}

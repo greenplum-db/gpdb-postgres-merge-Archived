@@ -99,7 +99,9 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	outerNode = outerPlan(node);
 	outerPlanState(gatherstate) = ExecInitNode(outerNode, estate, eflags);
 
+#if 0
 	gatherstate->ps.ps_TupFromTlist = false;
+#endif
 
 	/*
 	 * Initialize result tuple type and projection info.
@@ -202,6 +204,7 @@ ExecGather(GatherState *node)
 	 * tuple (because there is a function-returning-set in the projection
 	 * expressions).  If so, try to project another one.
 	 */
+#if 0
 	if (node->ps.ps_TupFromTlist)
 	{
 		resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
@@ -210,6 +213,7 @@ ExecGather(GatherState *node)
 		/* Done with that source tuple... */
 		node->ps.ps_TupFromTlist = false;
 	}
+#endif
 
 	/*
 	 * Reset per-tuple memory context to free any expression evaluation
@@ -243,7 +247,11 @@ ExecGather(GatherState *node)
 
 		if (isDone != ExprEndResult)
 		{
+			if (isDone == ExprMultipleResult)
+				elog(ERROR, "targetlist SRF not supported in Gather node");
+#if 0
 			node->ps.ps_TupFromTlist = (isDone == ExprMultipleResult);
+#endif
 			return resultSlot;
 		}
 	}
@@ -293,7 +301,7 @@ gather_getnext(GatherState *gatherstate)
 
 			if (HeapTupleIsValid(tup))
 			{
-				ExecStoreTuple(tup,		/* tuple to store */
+				ExecStoreHeapTuple(tup,		/* tuple to store */
 							   fslot,	/* slot in which to store the tuple */
 							   InvalidBuffer,	/* buffer associated with this
 												 * tuple */

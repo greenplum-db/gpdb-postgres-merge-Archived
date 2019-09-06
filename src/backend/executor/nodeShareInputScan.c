@@ -185,7 +185,9 @@ ExecShareInputScan(ShareInputScanState *node)
 		}
 		else
 		{
-			gotOK = tuplesort_gettupleslot_pos(node->ts_state->sortstore, (TuplesortPos *)node->ts_pos, forward, slot, CurrentMemoryContext);
+			gotOK = tuplesort_gettupleslot_pos(node->ts_state->sortstore,
+											   (TuplesortPos *) node->ts_pos, forward, slot, NULL,
+											   CurrentMemoryContext);
 		}
 
 		if(!gotOK)

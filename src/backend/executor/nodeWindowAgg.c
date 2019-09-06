@@ -664,7 +664,7 @@ perform_distinct_windowaggregate(WindowAggState *winstate,
 
 	/* load the first tuple from spool */
 	if (tuplesort_getdatum(peraggstate->distinctSortState, true,
-						   &fcinfo->arg[1], &fcinfo->argnull[1]))
+						   &fcinfo->arg[1], &fcinfo->argnull[1], NULL))
 	{
 		call_transfunc(winstate, perfuncstate, peraggstate, fcinfo);
 		prevDatum = fcinfo->arg[1];
@@ -672,7 +672,7 @@ perform_distinct_windowaggregate(WindowAggState *winstate,
 
 		/* continue loading more tuples */
 		while (tuplesort_getdatum(peraggstate->distinctSortState, true,
-								  &fcinfo->arg[1], &fcinfo->argnull[1]))
+								  &fcinfo->arg[1], &fcinfo->argnull[1], NULL))
 		{
 			int		cmp;
 
