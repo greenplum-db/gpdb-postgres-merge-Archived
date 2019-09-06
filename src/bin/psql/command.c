@@ -1847,12 +1847,7 @@ do_connect(enum trivalue reuse_previous_specification,
 	else
 		keep_password =
 			(user && PQuser(o_conn) && strcmp(user, PQuser(o_conn)) == 0) &&
-<<<<<<< HEAD
-			((host && PQhost(o_conn) && strcmp(host, PQhost(o_conn)) == 0) ||
-			 (host == NULL && PQhost(o_conn) == NULL)) &&
-=======
 			(host && PQhost(o_conn) && strcmp(host, PQhost(o_conn)) == 0) &&
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			(port && PQport(o_conn) && strcmp(port, PQport(o_conn)) == 0);
 
 	/*
@@ -3165,15 +3160,11 @@ do_watch(PQExpBuffer query_buf, double sleep)
 {
 	long		sleep_ms = (long) (sleep * 1000);
 	printQueryOpt myopt = pset.popt;
-<<<<<<< HEAD
-	char		title[256];
-=======
 	const char *strftime_fmt;
 	const char *user_title;
 	char	   *title;
 	int			title_len;
 	int			res = 0;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (!query_buf || query_buf->len <= 0)
 	{
