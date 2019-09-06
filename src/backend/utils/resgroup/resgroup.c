@@ -2740,7 +2740,7 @@ waitOnGroup(ResGroupData *group)
 	Assert(!LWLockHeldExclusiveByMe(ResGroupLock));
 	Assert(!selfIsAssigned());
 
-	pgstat_report_wait_start(WAIT_RESGROUP, group->groupId);
+	pgstat_report_wait_start(WAIT_RESOURCE_GROUP, group->groupId);
 	pgstat_report_resgroup(group->groupId);
 
 	/*
