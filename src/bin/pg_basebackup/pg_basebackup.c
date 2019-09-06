@@ -2183,12 +2183,8 @@ main(int argc, char **argv)
 		}
 	}
 
-<<<<<<< HEAD
 	num_exclude = 0;
 	while ((c = getopt_long(argc, argv, "D:F:r:RT:xX:l:zZ:d:c:h:p:U:s:S:wWvPE:",
-=======
-	while ((c = getopt_long(argc, argv, "D:F:r:RT:xX:l:zZ:d:c:h:p:U:s:S:wWvP",
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -2408,11 +2404,7 @@ main(int argc, char **argv)
 	if (replication_slot && !streamwal)
 	{
 		fprintf(stderr,
-<<<<<<< HEAD
-				_("%s: replication slots can only be used with WAL streaming\n"),
-=======
 			_("%s: replication slots can only be used with WAL streaming\n"),
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
