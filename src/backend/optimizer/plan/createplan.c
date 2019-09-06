@@ -307,6 +307,16 @@ create_plan(PlannerInfo *root, Path *path)
 	/* Generate the Plan tree. */
 	plan = create_subplan(root, path);
 
+	/*
+	 * Make sure the topmost plan node's targetlist exposes the original
+	 * column names and other decorative info.  Targetlists generated within
+	 * the planner don't bother with that stuff, but we must have it on the
+	 * top-level tlist seen at execution time.  However, ModifyTable plan
+	 * nodes don't have a tlist matching the querytree targetlist.
+	 */
+	if (!IsA(plan, ModifyTable))
+		apply_tlist_labeling(plan->targetlist, root->processed_tlist);
+
 	/* Decorate the top node of the plan with a Flow node. */
 	plan->flow = cdbpathtoplan_create_flow(root,
 										   path->locus,
@@ -360,16 +370,6 @@ create_subplan(PlannerInfo *root, Path *best_path)
 
 	/* Recursively process the path tree, demanding the correct tlist result */
 	plan = create_plan_recurse(root, best_path, CP_EXACT_TLIST);
-
-	/*
-	 * Make sure the topmost plan node's targetlist exposes the original
-	 * column names and other decorative info.  Targetlists generated within
-	 * the planner don't bother with that stuff, but we must have it on the
-	 * top-level tlist seen at execution time.  However, ModifyTable plan
-	 * nodes don't have a tlist matching the querytree targetlist.
-	 */
-	if (!IsA(plan, ModifyTable))
-		apply_tlist_labeling(plan->targetlist, root->processed_tlist);
 
 	/*
 	 * Attach any initPlans created in this query level to the topmost plan
@@ -768,10 +768,15 @@ create_scan_plan(PlannerInfo *root, Path *best_path, int flags)
 	 * If plan has a flow node, ensure all entries of hashExpr
 	 * are in the targetlist.
 	 */
+	/* GPDB_96_MERGE_FIXME: Why? If they're needed by joins or aggregates or
+	 * anything else, surely they should be in the target list already.
+	 */
+#if 0
 	if (plan->flow && plan->flow->hashExprs)
 	{
 		plan->targetlist = add_to_flat_tlist_junk(plan->targetlist, plan->flow->hashExprs, true /* resjunk */ );
 	}
+#endif
 
 	/*
 	 * If there are any pseudoconstant clauses attached to this node, insert a
