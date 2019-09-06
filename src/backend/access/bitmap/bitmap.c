@@ -32,6 +32,8 @@
 #include "parser/parse_oper.h"
 #include "utils/memutils.h"
 
+#include "nodes/execnodes.h"
+
 static void bmbuildCallback(Relation index,	ItemPointer tupleId, Datum *attdata,
 							bool *nulls, bool tupleIsAlive,	void *state);
 static bool words_get_match(BMBatchWords *words, BMIterateResult *result,

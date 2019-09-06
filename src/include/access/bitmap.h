@@ -39,6 +39,9 @@ typedef uint64			BM_HRL_WORD;
 #define BITMAP_VERSION 2
 #define BITMAP_MAGIC 0x4249544D
 
+/* This file can not and should not depend on execnodes.h */
+struct IndexInfo;
+
 /*
  * Metapage, always the first page (page 0) in the index.
  *
@@ -738,7 +741,7 @@ typedef struct xl_bm_metapage
 /* public routines */
 extern Datum bmhandler(PG_FUNCTION_ARGS);
 extern IndexBuildResult *bmbuild(Relation heap, Relation index,
-		IndexInfo *indexInfo);
+		struct IndexInfo *indexInfo);
 extern void bmbuildempty(Relation index);
 extern bool bminsert(Relation rel, Datum *values, bool *isnull,
 		 ItemPointer ht_ctid, Relation heapRel,
