@@ -24,7 +24,6 @@
 #include "storage/bufmgr.h"
 #include "storage/buffile.h"
 #include "utils/hsearch.h"
-#include "access/genam.h"
 
 /*
  * Maximum number of "halves" a page can be split into in one operation.
