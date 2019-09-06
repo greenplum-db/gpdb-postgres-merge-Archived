@@ -120,8 +120,16 @@
 #define READ_LOCATION_FIELD(fldname) READ_INT_FIELD(fldname)
 
 /* Read a Node field */
+/* GPDB_96_MERGE_FIXME: see comment in WRITE_NODE_FIELD() in outfast.c */
 #define READ_NODE_FIELD(fldname) \
-	local_node->fldname = readNodeBinary()
+	do { \
+		char *xexpected = CppAsString(fldname); \
+		char got[100]; \
+		memcpy(got, read_str_ptr, strlen(xexpected) + 1); read_str_ptr += strlen(xexpected) + 1; \
+if (strcmp(xexpected, got) != 0) \
+	elog(ERROR, "deserialization lost sync: %s vs %02x%02x%02x", xexpected, (unsigned char) got[0], (unsigned char) got[1], (unsigned char) got[2]); \
+local_node->fldname = readNodeBinary(); \
+		} while(0)
 
 /* Read a bitmapset field */
 #define READ_BITMAPSET_FIELD(fldname) \

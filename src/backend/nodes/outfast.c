@@ -115,8 +115,20 @@
 	{ appendBinaryStringInfo(str, (const char *)&node->fldname, sizeof(int)); }
 
 /* Write a Node field */
+/* GPDB_96_MERGE_FIXME: For debugging purposes, I modified this to write out the field
+ * name in the serialized form. And the read function checks that. Makes it much easier
+ * to debug bugs where the out and read functions are not in sync, as you get an error
+ * much earlier, and it can print the field name where the mismatch occurred.
+ *
+ * We should probably have a cleaner #ifdef'd version of this permanently in the tree,
+ * so clean this up and open a separate PR..
+ */
 #define WRITE_NODE_FIELD(fldname) \
-	(_outNode(str, node->fldname))
+	do { \
+		const char *xx = CppAsString(fldname); \
+		appendBinaryStringInfo(str, xx, strlen(xx) + 1); \
+		(_outNode(str, node->fldname)); \
+	} while (0)
 
 /* Write a bitmapset field */
 #define WRITE_BITMAPSET_FIELD(fldname) \
