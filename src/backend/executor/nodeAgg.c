@@ -2640,15 +2640,12 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		HeapTuple	aggTuple;
 		Form_pg_aggregate aggform;
 		AclResult	aclresult;
-		Oid		transfn_oid = InvalidOid,
-				finalfn_oid = InvalidOid;
-		Oid		serialfn_oid = InvalidOid,
-				deserialfn_oid = InvalidOid;
-		Expr	   	*finalfnexpr = NULL,
-			   	*combinefnexpr = NULL;
-		Expr	   	*serialfnexpr = NULL,
-			   	*deserialfnexpr = NULL;
-		Oid		aggtranstype;
+		Oid			transfn_oid,
+					finalfn_oid;
+		Oid			serialfn_oid,
+					deserialfn_oid;
+		Expr	   *finalfnexpr;
+		Oid			aggtranstype;
 		Datum		textInitVal;
 		Datum		initValue;
 		bool		initValueIsNull;
@@ -2845,12 +2842,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		else
 			peragg->numFinalArgs = numDirectArgs + 1;
 
-		/* resolve actual type of transition state, if polymorphic */
-		aggtranstype = resolve_aggregate_transtype(aggref->aggfnoid,
-												   aggform->aggtranstype,
-												   inputTypes,
-												   numArguments);
-
 		/*
 		 * build expression trees using actual argument & result types for the
 		 * finalfn, if it exists and is required.
@@ -2858,14 +2849,14 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		if (OidIsValid(finalfn_oid))
 		{
 			build_aggregate_finalfn_expr(inputTypes,
-										 peraggs->numFinalArgs,
+										 peragg->numFinalArgs,
 										 aggtranstype,
 										 aggref->aggtype,
 										 aggref->inputcollid,
 										 finalfn_oid,
 										 &finalfnexpr);
-			fmgr_info(finalfn_oid, &peraggs->finalfn);
-			fmgr_info_set_expr((Node *) finalfnexpr, &peraggs->finalfn);
+			fmgr_info(finalfn_oid, &peragg->finalfn);
+			fmgr_info_set_expr((Node *) finalfnexpr, &peragg->finalfn);
 		}
 
 		/* GPDB_96_MERGE_FIXME: do we still need some of this 'aggstage' stuff? */
@@ -3678,6 +3669,7 @@ AggRegisterCallback(FunctionCallInfo fcinfo,
 	elog(ERROR, "aggregate function cannot register a callback in this context");
 }
 
+
 /*
  * aggregate_dummy - dummy execution routine for aggregate functions
  *
@@ -3694,28 +3686,6 @@ aggregate_dummy(PG_FUNCTION_ARGS)
 	elog(ERROR, "aggregate function %u called as normal function",
 		 fcinfo->flinfo->fn_oid);
 	return (Datum) 0;			/* keep compiler quiet */
-}
-
-/* resolve actual type of transition state, if polymorphic */
-Oid
-resolve_polymorphic_transtype(Oid aggtranstype, Oid aggfnoid,
-							  Oid *inputTypes)
-{
-	if (IsPolymorphicType(aggtranstype))
-	{
-		/* have to fetch the agg's declared input types... */
-		Oid		   *declaredArgTypes;
-		int			agg_nargs;
-
-		(void) get_func_signature(aggfnoid, &declaredArgTypes, &agg_nargs);
-		aggtranstype = enforce_generic_type_consistency(inputTypes,
-														declaredArgTypes,
-														agg_nargs,
-														aggtranstype,
-														false);
-		pfree(declaredArgTypes);
-	}
-	return aggtranstype;
 }
 
 static void
