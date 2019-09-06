@@ -459,6 +459,7 @@ sub make_opt
 			proisstrict	 => $proisstrict,
 #			proretset
 			provolatile	 => $provolatile,
+			proparallel  => 'u', # GPDB_96_MERGE_FIXME: err on the side of caution, and don't allow parallelism for any GPDB functions
 #			pronargs
 #			prorettype
 			proiswindow	 => 0,
@@ -884,6 +885,7 @@ sub printfndef
 		($tup->{proisstrict} ? "t" : "f") . " " .
 		($tup->{proretset} ? "t" : "f") . " " .
 		($tup->{provolatile} ? $tup->{provolatile} : "_null_" ) . " " .
+		$tup->{proparallel} . " " .
 		($tup->{pronargs} ? $tup->{pronargs} : 0) . " " .
 		($tup->{pronargdefaults} ? $tup->{pronargdefaults} : 0) . " " .
 		($tup->{prorettype} ? $tup->{prorettype} : '""') . " " .
