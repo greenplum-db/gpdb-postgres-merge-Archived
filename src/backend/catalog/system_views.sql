@@ -651,7 +651,6 @@ CREATE VIEW pg_stat_activity AS
             s.backend_xmin,
             S.query,
 
-            S.waiting_reason,
             S.rsgid,
             S.rsgname
     FROM pg_database D, pg_stat_get_activity(NULL) AS S, pg_authid U

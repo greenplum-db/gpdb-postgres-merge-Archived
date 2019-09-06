@@ -2294,7 +2294,7 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 * so, it's desirable to produce an unadorned dummy path so that we will
 	 * recognize appropriate optimizations at this query level.
 	 */
-	sub_final_rel = fetch_upper_rel(rel->subroot, UPPERREL_FINAL, NULL);
+	sub_final_rel = fetch_upper_rel(subroot, UPPERREL_FINAL, NULL);
 
 	if (IS_DUMMY_REL(sub_final_rel))
 	{

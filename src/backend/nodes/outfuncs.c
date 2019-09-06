@@ -299,7 +299,6 @@ static void outLogicalIndexInfo(StringInfo str, const LogicalIndexInfo *node);
  *	Stuff from plannodes.h
  */
 
-#ifndef COMPILING_BINARY_FUNCS
 static void
 _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 {
@@ -330,7 +329,14 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_NODE_FIELD(numSelectorsPerScanId);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(relationOids);
+
+	/*
+	 * Don't serialize invalItems when dispatching. The TIDs of the invalidated items wouldn't
+	 * make sense in segments.
+	 */
+#ifndef COMPILING_BINARY_FUNCS
 	WRITE_NODE_FIELD(invalItems);
+#endif /* COMPILING_BINARY_FUNCS */
 	WRITE_INT_FIELD(nParamExec);
 
 	WRITE_INT_FIELD(nMotionNodes);
@@ -343,7 +349,6 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_NODE_FIELD(copyIntoClause);
 	WRITE_INT_FIELD(metricsQueryType);
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outQueryDispatchDesc(StringInfo str, const QueryDispatchDesc *node)

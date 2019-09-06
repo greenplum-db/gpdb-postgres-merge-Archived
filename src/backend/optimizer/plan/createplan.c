@@ -1294,6 +1294,13 @@ create_result_plan(PlannerInfo *root, ResultPath *best_path)
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
+	/* Decorate the top node of the plan with a Flow node. */
+	plan->plan.flow = cdbpathtoplan_create_flow(root,
+												best_path->path.locus,
+												best_path->path.parent ? best_path->path.parent->relids
+												: NULL,
+												(Plan *) plan);
+
 	return plan;
 }
 

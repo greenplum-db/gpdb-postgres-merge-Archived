@@ -369,7 +369,10 @@ ExecReScanSeqScan(SeqScanState *node)
 					NULL);		/* new scan keys */
 	}
 	else
-		elog(ERROR, "rescan called without scandesc");
+	{
+		/* scan not started yet, nothing to do. */
+	}
+
 	ExecScanReScan((ScanState *) node);
 }
 

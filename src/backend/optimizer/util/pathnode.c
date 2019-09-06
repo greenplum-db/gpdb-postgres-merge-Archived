@@ -218,6 +218,15 @@ pathnode_walk_kids(Path            *path,
 		case T_Motion:
 			v = pathnode_walk_node(((CdbMotionPath *)path)->subpath, walker, context);
 			break;
+		case T_Limit:
+			v = pathnode_walk_node(((LimitPath *)path)->subpath, walker, context);
+			break;
+		case T_Sort:
+			v = pathnode_walk_node(((SortPath *)path)->subpath, walker, context);
+			break;
+		case T_Agg:
+			v = pathnode_walk_node(((AggPath *)path)->subpath, walker, context);
+			break;
 		default:
 			v = CdbVisit_Walk;  /* keep compiler quiet */
 			elog(ERROR, "unrecognized path type: %d", (int)path->pathtype);
@@ -3692,6 +3701,7 @@ create_sort_path(PlannerInfo *root,
 		subpath->parallel_safe;
 	pathnode->path.parallel_workers = subpath->parallel_workers;
 	pathnode->path.pathkeys = pathkeys;
+	pathnode->path.locus = subpath->locus;
 
 	pathnode->subpath = subpath;
 
@@ -3876,6 +3886,8 @@ create_agg_path(PlannerInfo *root,
 	pathnode->path.startup_cost += target->cost.startup;
 	pathnode->path.total_cost += target->cost.startup +
 		target->cost.per_tuple * pathnode->path.rows;
+
+	pathnode->path.locus = subpath->locus;
 
 	return pathnode;
 }
@@ -4336,6 +4348,15 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.pathkeys = NIL;
 
 	/*
+	 * GPDB_96_MERGE_FIXME: this probably works for simple cases, but if
+	 * there are multiple resultRelations, I'm not so sure. In older GPDB
+	 * versions, we did most of the effort of figuring out where a
+	 * ModifyTable runs, in adjust_modifytable_flow(), when working with
+	 * already-created Plans.
+	 */
+	pathnode->path.locus = cdbpathlocus_from_baserel(root, rel);
+
+	/*
 	 * Compute cost & rowcount as sum of subpath costs & rowcounts.
 	 *
 	 * Currently, we don't charge anything extra for the actual table
@@ -4424,6 +4445,7 @@ create_limit_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.startup_cost = subpath->startup_cost;
 	pathnode->path.total_cost = subpath->total_cost;
 	pathnode->path.pathkeys = subpath->pathkeys;
+	pathnode->path.locus = subpath->locus;
 	pathnode->subpath = subpath;
 	pathnode->limitOffset = limitOffset;
 	pathnode->limitCount = limitCount;

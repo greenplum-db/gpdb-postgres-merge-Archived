@@ -292,12 +292,6 @@ ProcessQuery(Portal portal,
 	autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
 
 	/*
-	 * Now, we close down all the scans and free allocated resources.
-	 */
-	ExecutorFinish(queryDesc);
-	ExecutorEnd(queryDesc);
-
-	/*
 	 * Build command completion status string, if caller wants one.
 	 */
 	if (completionTag)
@@ -335,6 +329,12 @@ ProcessQuery(Portal portal,
 				break;
 		}
 	}
+
+	/*
+	 * Now, we close down all the scans and free allocated resources.
+	 */
+	ExecutorFinish(queryDesc);
+	ExecutorEnd(queryDesc);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{

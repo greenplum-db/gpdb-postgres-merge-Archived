@@ -2644,8 +2644,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				finalfn_oid = InvalidOid;
 		Oid		serialfn_oid = InvalidOid,
 				deserialfn_oid = InvalidOid;
-		Expr	   	*transfnexpr = NULL,
-			   	*finalfnexpr = NULL,
+		Expr	   	*finalfnexpr = NULL,
 			   	*combinefnexpr = NULL;
 		Expr	   	*serialfnexpr = NULL,
 			   	*deserialfnexpr = NULL;
@@ -2693,9 +2692,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 						   get_func_name(aggref->aggfnoid));
 		InvokeFunctionExecuteHook(aggref->aggfnoid);
 /* GPDB_96_MERGE_FIXME: parallel aggregation */
-		elog(ERROR, "GPDB_96_MERGE_FIXME: nodeAgg is broken");
 #if 0
-
 		switch (aggref->aggstage)		/* MPP */
 		{
 			case AGGSTAGE_NORMAL:		/* Single-stage aggregation */
@@ -2720,8 +2717,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				peraggs->finalfn_oid = finalfn_oid = aggform->aggfinalfn;
 				break;
 		}
-
 		pertrans->combinefn_oid = aggform->aggcombinefn;
+#endif
 
 		/* planner recorded transition state type in the Aggref itself */
 		aggtranstype = aggref->aggtranstype;
@@ -2783,7 +2780,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				deserialfn_oid = aggform->aggdeserialfn;
 			}
 		}
-#endif
 
 		/* Check that aggregate owner has permission to call component fns */
 		{
@@ -2855,28 +2851,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 												   inputTypes,
 												   numArguments);
 
-		/* build expression trees using actual argument & result types */
-		build_aggregate_fnexprs(inputTypes,
-								numArguments,
-								numDirectArgs,
-								peraggs->numFinalArgs,
-								aggref->aggvariadic,
-								aggtranstype,
-								aggref->aggtype,
-								aggref->inputcollid,
-								transfn_oid,
-								InvalidOid,		/* invtrans is not needed here */
-								finalfn_oid,
-								pertrans->combinefn_oid,
-								&transfnexpr,
-								NULL,
-								&finalfnexpr,
-								&combinefnexpr);
-
-		/* set up infrastructure for calling the transfn and finalfn */
-		fmgr_info(transfn_oid, &pertrans->transfn);
-		fmgr_info_set_expr((Node *) transfnexpr, &pertrans->transfn);
-
 		/*
 		 * build expression trees using actual argument & result types for the
 		 * finalfn, if it exists and is required.
@@ -2894,12 +2868,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			fmgr_info_set_expr((Node *) finalfnexpr, &peraggs->finalfn);
 		}
 
-		if (OidIsValid(pertrans->combinefn_oid))
-		{
-			fmgr_info(pertrans->combinefn_oid, &pertrans->combinefn);
-			fmgr_info_set_expr((Node *) combinefnexpr, &pertrans->combinefn);
-		}
-
+		/* GPDB_96_MERGE_FIXME: do we still need some of this 'aggstage' stuff? */
+#if 0
 		/*
 		 * Check if serialization/deserialization is required.  We only do it
 		 * for aggregates that have transtype INTERNAL.
@@ -2956,6 +2926,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 								 pertrans->numTransInputs + 1,
 								 pertrans->aggCollation,
 								 (void *) aggstate, NULL);
+#endif
 
 		/* get info about the output value's datatype */
 		get_typlenbyval(aggref->aggtype,

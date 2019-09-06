@@ -2329,6 +2329,16 @@ _readPlannedStmt(void)
 #endif /* COMPILING_BINARY_FUNCS */
 	READ_INT_FIELD(nParamExec);
 
+	READ_INT_FIELD(nMotionNodes);
+	READ_INT_FIELD(nInitPlans);
+
+	READ_NODE_FIELD(intoPolicy);
+
+	READ_UINT64_FIELD(query_mem);
+	READ_NODE_FIELD(intoClause);
+	READ_NODE_FIELD(copyIntoClause);
+	READ_INT_FIELD(metricsQueryType);
+
 	READ_DONE();
 }
 
@@ -2357,12 +2367,14 @@ ReadCommonPlan(Plan *local_node)
 	READ_BITMAPSET_FIELD(allParam);
 
 	READ_NODE_FIELD(flow);
-	READ_INT_FIELD(dispatch);
+	READ_ENUM_FIELD(dispatch, DispatchMethod);
 	READ_BOOL_FIELD(directDispatch.isDirectDispatch);
 	READ_NODE_FIELD(directDispatch.contentIds);
 	READ_INT_FIELD(nMotionNodes);
 	READ_INT_FIELD(nInitPlans);
 	READ_NODE_FIELD(sliceTable);
+
+	READ_UINT64_FIELD(operatorMemKB);
 }
 
 /*

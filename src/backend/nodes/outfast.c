@@ -321,50 +321,6 @@ _outRecursiveUnion(StringInfo str, RecursiveUnion *node)
 }
 
 static void
-_outPlannedStmt(StringInfo str, PlannedStmt *node)
-{
-	WRITE_NODE_TYPE("PLANNEDSTMT");
-
-	WRITE_ENUM_FIELD(commandType, CmdType);
-	WRITE_ENUM_FIELD(planGen, PlanGenerator);
-	WRITE_BOOL_FIELD(hasReturning);
-	WRITE_BOOL_FIELD(hasModifyingCTE);
-	WRITE_BOOL_FIELD(canSetTag);
-	WRITE_BOOL_FIELD(transientPlan);
-	WRITE_BOOL_FIELD(oneoffPlan);
-	WRITE_BOOL_FIELD(simplyUpdatable);
-	WRITE_BOOL_FIELD(dependsOnRole);
-	WRITE_BOOL_FIELD(parallelModeNeeded);
-	WRITE_NODE_FIELD(planTree);
-	WRITE_NODE_FIELD(rtable);
-	WRITE_NODE_FIELD(resultRelations);
-	WRITE_NODE_FIELD(utilityStmt);
-	WRITE_NODE_FIELD(subplans);
-	WRITE_BITMAPSET_FIELD(rewindPlanIDs);
-
-	WRITE_NODE_FIELD(result_partitions);
-	WRITE_NODE_FIELD(result_aosegnos);
-	WRITE_NODE_FIELD(queryPartOids);
-	WRITE_NODE_FIELD(queryPartsMetadata);
-	WRITE_NODE_FIELD(numSelectorsPerScanId);
-	WRITE_NODE_FIELD(rowMarks);
-	WRITE_NODE_FIELD(relationOids);
-	/*
-	 * Don't serialize invalItems. The TIDs of the invalidated items wouldn't
-	 * make sense in segments.
-	 */
-	WRITE_INT_FIELD(nParamExec);
-
-	WRITE_INT_FIELD(nMotionNodes);
-	WRITE_INT_FIELD(nInitPlans);
-	WRITE_NODE_FIELD(intoPolicy);
-	WRITE_UINT64_FIELD(query_mem);
-	WRITE_NODE_FIELD(intoClause);
-	WRITE_NODE_FIELD(copyIntoClause);
-	WRITE_INT8_FIELD(metricsQueryType);
-}
-
-static void
 outLogicalIndexInfo(StringInfo str, const LogicalIndexInfo *node)
 {
 	WRITE_OID_FIELD(logicalIndexOid);
