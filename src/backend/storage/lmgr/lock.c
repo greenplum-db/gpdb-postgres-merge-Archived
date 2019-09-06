@@ -389,12 +389,9 @@ static void CleanUpLock(LOCK *lock, PROCLOCK *proclock,
 static void LockRefindAndRelease(LockMethod lockMethodTable, PGPROC *proc,
 					 LOCKTAG *locktag, LOCKMODE lockmode,
 					 bool decrement_strong_lock_count);
-<<<<<<< HEAD
 static bool setFPHoldTillEndXact(Oid relid);
-=======
 static void GetSingleProcBlockerStatusData(PGPROC *blocked_proc,
 							   BlockedProcsData *data);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 
 /*
@@ -801,10 +798,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		locallock->numLockOwners = 0;
 		locallock->maxLockOwners = 8;
 		locallock->holdsStrongLockCount = FALSE;
-<<<<<<< HEAD
 		locallock->lockCleared = false;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		locallock->lockOwners = NULL;	/* in case next line fails */
 		locallock->lockOwners = (LOCALLOCKOWNER *)
 			MemoryContextAlloc(TopMemoryContext,
@@ -1452,21 +1446,15 @@ RemoveLocalLock(LOCALLOCK *locallock)
  * NOTES:
  *		Here's what makes this complicated: one process's locks don't
  * conflict with one another, no matter what purpose they are held for
-<<<<<<< HEAD
- * (eg, session and transaction locks do not conflict).
- * So, we must subtract off our own locks when determining whether the
- * requested new lock conflicts with those already held.
+ * (eg, session and transaction locks do not conflict).  Nor do the locks
+ * of one process in a lock group conflict with those of another process in
+ * the same group.  So, we must subtract off these locks when determining
+ * whether the requested new lock conflicts with those already held.
  *
  * In Greenplum Database, the conflict is more complicated;  not only the
  * process itself but also other processes within the same MPP session may
  * have held conflicting locks.  We must take account  into consideration
  * those MPP session member processes to subtract off the lock mask.
-=======
- * (eg, session and transaction locks do not conflict).  Nor do the locks
- * of one process in a lock group conflict with those of another process in
- * the same group.  So, we must subtract off these locks when determining
- * whether the requested new lock conflicts with those already held.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 int
 LockCheckConflicts(LockMethod lockMethodTable,
@@ -1475,11 +1463,6 @@ LockCheckConflicts(LockMethod lockMethodTable,
 				   PROCLOCK *proclock)
 {
 	int			numLockModes = lockMethodTable->numLockModes;
-<<<<<<< HEAD
-	LOCKMASK	otherLocks;
-	int			i;
-	int			mppSessionId;
-=======
 	LOCKMASK	myLocks;
 	int			conflictMask = lockMethodTable->conflictTab[lockmode];
 	int			conflictsRemaining[MAX_LOCKMODES];
@@ -1487,7 +1470,10 @@ LockCheckConflicts(LockMethod lockMethodTable,
 	int			i;
 	SHM_QUEUE  *procLocks;
 	PROCLOCK   *otherproclock;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
+	//MPP specific used variable
+	LOCKMASK	otherLocks;
+	int			mppSessionId;
 
 	/*
 	 * first check for global conflicts: If no locks conflict with my request,
@@ -1505,29 +1491,103 @@ LockCheckConflicts(LockMethod lockMethodTable,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Rats.  Something conflicts.  But it could still be my own lock. We have
-	 * to construct a conflict mask that does not reflect our own locks, but
-	 * only lock types held by other sessions.
+	 * GPDB_MERGE96_FIXME:
+	 * We do not support parallel execution yet, so it is fine just
+	 * handle mpp session and single process separetelly.
+	 * 
+	 * After parallel execution feature in, mpp session part should
+	 * change.
 	 */
-	otherLocks = 0;
-	mppSessionId = proclock->tag.myProc->mppSessionId;
-	for (i = 1; i <= numLockModes; i++)
-	{
-		int				ourHolding = 0;
+	 mppSessionId = proclock->tag.myProc->mppSessionId;
+	 if (mppSessionId <=0)
+	 {
+		/*
+		 * Rats.  Something conflicts.  But it could still be my own lock, or a
+		 * lock held by another member of my locking group.  First, figure out how
+		 * many conflicts remain after subtracting out any locks I hold myself.
+		 */
+		myLocks = proclock->holdMask;
+		for (i = 1; i <= numLockModes; i++)
+		{
+			if ((conflictMask & LOCKBIT_ON(i)) == 0)
+			{
+				conflictsRemaining[i] = 0;
+				continue;
+			}
+			conflictsRemaining[i] = lock->granted[i];
+			if (myLocks & LOCKBIT_ON(i))
+				--conflictsRemaining[i];
+			totalConflictsRemaining += conflictsRemaining[i];
+		}
+
+		/* If no conflicts remain, we get the lock. */
+		if (totalConflictsRemaining == 0)
+		{
+			PROCLOCK_PRINT("LockCheckConflicts: resolved (simple)", proclock);
+			return STATUS_OK;
+		}
+
+		/* If no group locking, it's definitely a conflict. */
+		if (proclock->groupLeader == MyProc && MyProc->lockGroupLeader == NULL)
+		{
+			Assert(proclock->tag.myProc == MyProc);
+			PROCLOCK_PRINT("LockCheckConflicts: conflicting (simple)",
+						   proclock);
+			return STATUS_FOUND;
+		}
 
 		/*
-		 * If I'm not part of MPP session, consider I am only one process
-		 * in a session.
+		 * Locks held in conflicting modes by members of our own lock group are
+		 * not real conflicts; we can subtract those out and see if we still have
+		 * a conflict.  This is O(N) in the number of processes holding or
+		 * awaiting locks on this object.  We could improve that by making the
+		 * shared memory state more complex (and larger) but it doesn't seem worth
+		 * it.
 		 */
-		if (mppSessionId <= 0)
+		procLocks = &(lock->procLocks);
+		otherproclock = (PROCLOCK *)
+			SHMQueueNext(procLocks, procLocks, offsetof(PROCLOCK, lockLink));
+		while (otherproclock != NULL)
 		{
-			LOCKMASK	myLocks = proclock->holdMask;
-			if (myLocks & LOCKBIT_ON(i))
-				ourHolding = 1;
+			if (proclock != otherproclock &&
+				proclock->groupLeader == otherproclock->groupLeader &&
+				(otherproclock->holdMask & conflictMask) != 0)
+			{
+				int			intersectMask = otherproclock->holdMask & conflictMask;
+
+				for (i = 1; i <= numLockModes; i++)
+				{
+					if ((intersectMask & LOCKBIT_ON(i)) != 0)
+					{
+						if (conflictsRemaining[i] <= 0)
+							elog(PANIC, "proclocks held do not match lock");
+						conflictsRemaining[i]--;
+						totalConflictsRemaining--;
+					}
+				}
+
+				if (totalConflictsRemaining == 0)
+				{
+					PROCLOCK_PRINT("LockCheckConflicts: resolved (group)",
+								   proclock);
+					return STATUS_OK;
+				}
+			}
+			otherproclock = (PROCLOCK *)
+				SHMQueueNext(procLocks, &otherproclock->lockLink,
+							 offsetof(PROCLOCK, lockLink));
 		}
-		else
+
+		/* Nope, it's a real conflict. */
+		PROCLOCK_PRINT("LockCheckConflicts: conflicting (group)", proclock);
+	 }
+	 else
+	 {
+	 	/* in mpp session */
+		otherLocks = 0;
+		for (i = 1; i <= numLockModes; i++)
 		{
+			int				ourHolding = 0;
 			SHM_QUEUE	   *procLocks = &(lock->procLocks);
 			PROCLOCK	   *otherProclock =
 					(PROCLOCK *) SHMQueueNext(procLocks, procLocks,
@@ -1553,100 +1613,29 @@ LockCheckConflicts(LockMethod lockMethodTable,
 											  &otherProclock->lockLink,
 											  offsetof(PROCLOCK, lockLink));
 			}
+			/*
+			 * I'll be blocked only if processes outside of the session are
+			 * holding conflicting locks.
+			 */
+			if (lock->granted[i] > ourHolding)
+				otherLocks |= LOCKBIT_ON(i);
 		}
 
 		/*
-		 * I'll be blocked only if processes outside of the session are
-		 * holding conflicting locks.
+		 * now check again for conflicts.  'otherLocks' describes the types of
+		 * locks held by other sessions.  If one of these conflicts with the kind
+		 * of lock that I want, there is a conflict and I have to sleep.
 		 */
-		if (lock->granted[i] > ourHolding)
-			otherLocks |= LOCKBIT_ON(i);
-	}
-
-	/*
-	 * now check again for conflicts.  'otherLocks' describes the types of
-	 * locks held by other sessions.  If one of these conflicts with the kind
-	 * of lock that I want, there is a conflict and I have to sleep.
-=======
-	 * Rats.  Something conflicts.  But it could still be my own lock, or a
-	 * lock held by another member of my locking group.  First, figure out how
-	 * many conflicts remain after subtracting out any locks I hold myself.
-	 */
-	myLocks = proclock->holdMask;
-	for (i = 1; i <= numLockModes; i++)
-	{
-		if ((conflictMask & LOCKBIT_ON(i)) == 0)
+		if (!(lockMethodTable->conflictTab[lockmode] & otherLocks))
 		{
-			conflictsRemaining[i] = 0;
-			continue;
+			/* no conflict. OK to get the lock */
+			PROCLOCK_PRINT("LockCheckConflicts: resolved", proclock);
+			return STATUS_OK;
 		}
-		conflictsRemaining[i] = lock->granted[i];
-		if (myLocks & LOCKBIT_ON(i))
-			--conflictsRemaining[i];
-		totalConflictsRemaining += conflictsRemaining[i];
-	}
 
-	/* If no conflicts remain, we get the lock. */
-	if (totalConflictsRemaining == 0)
-	{
-		PROCLOCK_PRINT("LockCheckConflicts: resolved (simple)", proclock);
-		return STATUS_OK;
-	}
+		PROCLOCK_PRINT("LockCheckConflicts: conflicting", proclock);
+	 }
 
-	/* If no group locking, it's definitely a conflict. */
-	if (proclock->groupLeader == MyProc && MyProc->lockGroupLeader == NULL)
-	{
-		Assert(proclock->tag.myProc == MyProc);
-		PROCLOCK_PRINT("LockCheckConflicts: conflicting (simple)",
-					   proclock);
-		return STATUS_FOUND;
-	}
-
-	/*
-	 * Locks held in conflicting modes by members of our own lock group are
-	 * not real conflicts; we can subtract those out and see if we still have
-	 * a conflict.  This is O(N) in the number of processes holding or
-	 * awaiting locks on this object.  We could improve that by making the
-	 * shared memory state more complex (and larger) but it doesn't seem worth
-	 * it.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
-	 */
-	procLocks = &(lock->procLocks);
-	otherproclock = (PROCLOCK *)
-		SHMQueueNext(procLocks, procLocks, offsetof(PROCLOCK, lockLink));
-	while (otherproclock != NULL)
-	{
-		if (proclock != otherproclock &&
-			proclock->groupLeader == otherproclock->groupLeader &&
-			(otherproclock->holdMask & conflictMask) != 0)
-		{
-			int			intersectMask = otherproclock->holdMask & conflictMask;
-
-			for (i = 1; i <= numLockModes; i++)
-			{
-				if ((intersectMask & LOCKBIT_ON(i)) != 0)
-				{
-					if (conflictsRemaining[i] <= 0)
-						elog(PANIC, "proclocks held do not match lock");
-					conflictsRemaining[i]--;
-					totalConflictsRemaining--;
-				}
-			}
-
-			if (totalConflictsRemaining == 0)
-			{
-				PROCLOCK_PRINT("LockCheckConflicts: resolved (group)",
-							   proclock);
-				return STATUS_OK;
-			}
-		}
-		otherproclock = (PROCLOCK *)
-			SHMQueueNext(procLocks, &otherproclock->lockLink,
-						 offsetof(PROCLOCK, lockLink));
-	}
-
-	/* Nope, it's a real conflict. */
-	PROCLOCK_PRINT("LockCheckConflicts: conflicting (group)", proclock);
 	return STATUS_FOUND;
 }
 
@@ -1940,11 +1929,7 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 		set_ps_display(new_status, false);
 		new_status[len] = '\0'; /* truncate off " waiting" */
 	}
-<<<<<<< HEAD
-	gpstat_report_waiting(PGBE_WAITING_LOCK);
-=======
 	pgstat_report_wait_start(WAIT_LOCK, locallock->tag.lock.locktag_type);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	awaitedLock = locallock;
 	awaitedOwner = owner;
@@ -1992,11 +1977,7 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 		/* In this path, awaitedLock remains set until LockErrorCleanup */
 
 		/* Report change to non-waiting status */
-<<<<<<< HEAD
-		gpstat_report_waiting(PGBE_WAITING_NONE);
-=======
 		pgstat_report_wait_end();
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		if (update_process_title)
 		{
 			set_ps_display(new_status, false);
@@ -2011,11 +1992,7 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 	awaitedLock = NULL;
 
 	/* Report change to non-waiting status */
-<<<<<<< HEAD
-	gpstat_report_waiting(PGBE_WAITING_NONE);
-=======
 	pgstat_report_wait_end();
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	if (update_process_title)
 	{
 		set_ps_display(new_status, false);
@@ -4882,7 +4859,6 @@ VirtualXactLock(VirtualTransactionId vxid, bool wait)
 }
 
 /*
-<<<<<<< HEAD
  *         setFPHoldTillEndXact
  * Some locks are acquired via fast path, this function is
  * to set the HoldTillEndXact field for those relation locks.
@@ -4931,7 +4907,9 @@ CheckWaitLockModeConflictHoldMask(LOCKTAG tag, LOCKMODE waitLockMode, LOCKMASK h
 	if (holderMask & waiterConflictMask)
 		return true;
 	return false;
-=======
+}
+	
+/*
  * LockWaiterCount
  *
  * Find the number of lock requester on this locktag
@@ -4966,5 +4944,4 @@ LockWaiterCount(const LOCKTAG *locktag)
 	LWLockRelease(partitionLock);
 
 	return waiters;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
