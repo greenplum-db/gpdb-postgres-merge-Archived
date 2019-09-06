@@ -7463,6 +7463,8 @@ make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount)
 	node->limitOffset = limitOffset;
 	node->limitCount = limitCount;
 
+	plan->flow = pull_up_Flow(plan, lefttree);
+
 	return node;
 }
 
