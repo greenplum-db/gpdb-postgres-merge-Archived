@@ -264,9 +264,8 @@ static void AllocSetReset(MemoryContext context);
 static void AllocSetDelete(MemoryContext context);
 static Size AllocSetGetChunkSpace(MemoryContext context, void *pointer);
 static bool AllocSetIsEmpty(MemoryContext context);
-<<<<<<< HEAD
-static void AllocSet_GetStats(MemoryContext context, uint64 *nBlocks, uint64 *nChunks,
-		uint64 *currentAvailable, uint64 *allAllocated, uint64 *allFreed, uint64 *maxHeld);
+static void AllocSetStats(MemoryContext context, int level, bool print,
+			  MemoryContextCounters *totals);
 static void AllocSetReleaseAccountingForAllAllocatedChunks(MemoryContext context);
 
 static void dump_allocset_block(FILE *file, AllocBlock block);
@@ -274,10 +273,6 @@ static void dump_allocset_blocks(FILE *file, AllocBlock blocks);
 static void dump_allocset_freelist(FILE *file, AllocSet set);
 static void dump_mc_for(FILE *file, MemoryContext mc);
 void dump_mc(const char *fname, MemoryContext mc);
-=======
-static void AllocSetStats(MemoryContext context, int level, bool print,
-			  MemoryContextCounters *totals);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #ifdef MEMORY_CONTEXT_CHECKING
 static void AllocSetCheck(MemoryContext context);
@@ -295,7 +290,7 @@ static MemoryContextMethods AllocSetMethods = {
 	AllocSetDelete,
 	AllocSetGetChunkSpace,
 	AllocSetIsEmpty,
-	AllocSet_GetStats,
+	AllocSetStats,
 	AllocSetReleaseAccountingForAllAllocatedChunks
 #ifdef MEMORY_CONTEXT_CHECKING
 	,AllocSetCheck
@@ -1852,32 +1847,6 @@ AllocSetIsEmpty(MemoryContext context)
 }
 
 /*
-<<<<<<< HEAD
- * AllocSet_GetStats
- *		Returns stats about memory consumption of an AllocSet.
- *
- *	Input parameters:
- *		context: the context of interest
- *
- *	Output parameters:
- *		nBlocks: number of blocks in the context
- *		nChunks: number of chunks in the context
- *
- *		currentAvailable: free space across all blocks
- *
- *		allAllocated: total bytes allocated during lifetime (including
- *		blocks that was dropped later on, e.g., freeing a large chunk
- *		in an exclusive block would drop the block)
- *
- *		allFreed: total bytes that was freed during lifetime
- *		maxHeld: maximum bytes held during lifetime
- */
-static void
-AllocSet_GetStats(MemoryContext context, uint64 *nBlocks, uint64 *nChunks,
-		uint64 *currentAvailable, uint64 *allAllocated, uint64 *allFreed, uint64 *maxHeld)
-{
-	AllocSet	set = (AllocSet) context;
-=======
  * AllocSetStats
  *		Compute stats about memory consumption of an allocset.
  *
@@ -1894,36 +1863,15 @@ AllocSetStats(MemoryContext context, int level, bool print,
 	Size		freechunks = 0;
 	Size		totalspace = 0;
 	Size		freespace = 0;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	AllocBlock	block;
 	int			fidx;
-<<<<<<< HEAD
-	uint64 currentAllocated = 0;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
-    *nBlocks = 0;
-    *nChunks = 0;
-    *currentAvailable = 0;
-    *allAllocated = set->header.allBytesAlloc;
-    *allFreed = set->header.allBytesFreed;
-    *maxHeld = set->header.maxBytesHeld;
-
-    /* Total space obtained from host's memory manager */
-    for (block = set->blocks; block != NULL; block = block->next)
-    {
-    	*nBlocks = *nBlocks + 1;
-    	currentAllocated += UserPtr_GetUserPtrSize(block);
+	for (block = set->blocks; block != NULL; block = block->next)
+	{
+		nblocks++;
+		totalspace += UserPtr_GetUserPtrSize(block);
+		freespace += (char *) UserPtr_GetEndPtr(block) - block->freeptr;
 	}
-
-    /* Space at end of first block is available for use. */
-    if (set->blocks)
-    {
-    	*nChunks = *nChunks + 1;
-    	*currentAvailable += (char*)UserPtr_GetEndPtr(set->blocks) - set->blocks->freeptr;
-    }
-
-    /* Freelists.  Count usable space only, not chunk headers. */
 	for (fidx = 0; fidx < ALLOCSET_NUM_FREELISTS; fidx++)
 	{
 		AllocChunk	chunk;
@@ -1931,12 +1879,6 @@ AllocSetStats(MemoryContext context, int level, bool print,
 		for (chunk = set->freelist[fidx]; chunk != NULL;
 			 chunk = (AllocChunk) chunk->sharedHeader)
 		{
-<<<<<<< HEAD
-			*nChunks = *nChunks + 1;
-			*currentAvailable += chunk->size;
-		}
-	}
-=======
 			freechunks++;
 			freespace += chunk->size + ALLOC_CHUNKHDRSZ;
 		}
@@ -1961,7 +1903,6 @@ AllocSetStats(MemoryContext context, int level, bool print,
 		totals->totalspace += totalspace;
 		totals->freespace += freespace;
 	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 #ifdef MEMORY_CONTEXT_CHECKING
