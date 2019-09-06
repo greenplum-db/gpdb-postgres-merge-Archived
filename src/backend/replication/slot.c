@@ -870,76 +870,6 @@ ReplicationSlotReserveWal(void)
 }
 
 /*
- * Reserve WAL for the currently active slot.
- *
- * Compute and set restart_lsn in a manner that's appropriate for the type of
- * the slot and concurrency safe.
- */
-void
-ReplicationSlotReserveWal(void)
-{
-	ReplicationSlot *slot = MyReplicationSlot;
-
-	Assert(slot != NULL);
-	Assert(slot->data.restart_lsn == InvalidXLogRecPtr);
-
-	/*
-	 * The replication slot mechanism is used to prevent removal of required
-	 * WAL. As there is no interlock between this routine and checkpoints, WAL
-	 * segments could concurrently be removed when a now stale return value of
-	 * ReplicationSlotsComputeRequiredLSN() is used. In the unlikely case that
-	 * this happens we'll just retry.
-	 */
-	while (true)
-	{
-		XLogSegNo	segno;
-
-		/*
-		 * For logical slots log a standby snapshot and start logical decoding
-		 * at exactly that position. That allows the slot to start up more
-		 * quickly.
-		 *
-		 * That's not needed (or indeed helpful) for physical slots as they'll
-		 * start replay at the last logged checkpoint anyway. Instead return
-		 * the location of the last redo LSN. While that slightly increases
-		 * the chance that we have to retry, it's where a base backup has to
-		 * start replay at.
-		 */
-		if (!RecoveryInProgress() && SlotIsLogical(slot))
-		{
-			XLogRecPtr	flushptr;
-
-			/* start at current insert position */
-			slot->data.restart_lsn = GetXLogInsertRecPtr();
-
-			/* make sure we have enough information to start */
-			flushptr = LogStandbySnapshot();
-
-			/* and make sure it's fsynced to disk */
-			XLogFlush(flushptr);
-		}
-		else
-		{
-			slot->data.restart_lsn = GetRedoRecPtr();
-		}
-
-		/* prevent WAL removal as fast as possible */
-		ReplicationSlotsComputeRequiredLSN();
-
-		/*
-		 * If all required WAL is still there, great, otherwise retry. The
-		 * slot should prevent further removal of WAL, unless there's a
-		 * concurrent ReplicationSlotsComputeRequiredLSN() after we've written
-		 * the new restart_lsn above, so normally we should never need to loop
-		 * more than twice.
-		 */
-		XLByteToSeg(slot->data.restart_lsn, segno);
-		if (XLogGetLastRemovedSegno() < segno)
-			break;
-	}
-}
-
-/*
  * Flush all replication slots to disk.
  *
  * This needn't actually be part of a checkpoint, but it's a convenient
@@ -1379,12 +1309,12 @@ RestoreSlotFromDisk(const char *name)
 				 errmsg("logical replication slot \"%s\" exists, but wal_level < logical",
 						NameStr(cp.slotdata.name)),
 				 errhint("Change wal_level to be logical or higher.")));
-	else if (wal_level < WAL_LEVEL_ARCHIVE)
+	else if (wal_level < WAL_LEVEL_REPLICA)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("physical replication slot \"%s\" exists, but wal_level < archive",
+				 errmsg("physical replication slot \"%s\" exists, but wal_level < replica",
 						NameStr(cp.slotdata.name)),
-				 errhint("Change wal_level to be archive or higher.")));
+				 errhint("Change wal_level to be replica or higher.")));
 
 	/* nothing can be active yet, don't lock anything */
 	for (i = 0; i < max_replication_slots; i++)

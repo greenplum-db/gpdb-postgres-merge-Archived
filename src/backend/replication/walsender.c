@@ -847,20 +847,12 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 		ReplicationSlotCreate(cmd->slotname, true, RS_EPHEMERAL);
 	}
 
-<<<<<<< HEAD
-=======
-	initStringInfo(&output_message);
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	if (cmd->kind == REPLICATION_KIND_LOGICAL)
 	{
 		LogicalDecodingContext *ctx;
 
 		ctx = CreateInitDecodingContext(cmd->plugin, NIL,
-<<<<<<< HEAD
 										true, /* build snapshot */
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 										logical_read_xlog_page,
 										WalSndPrepareWrite, WalSndWriteData);
 
@@ -2317,23 +2309,10 @@ XLogRead(char *buf, XLogRecPtr startptr, Size count)
 	XLByteToSeg(startptr, segno);
 	CheckXLogRemoved(segno, ThisTimeLineID);
 
-<<<<<<< HEAD
 	// GPDB_93_MERGE_FIXME: This used to happen, when the "has already been removed"
 	// error was thrown. But that's not checked in CheckXLogRemoved(). Do we
 	// still need the 'error' field?
 	//WalSndCtl->error = WALSNDERROR_WALREAD;
-=======
-	/*
-	 * During recovery, the currently-open WAL file might be replaced with the
-	 * file of the same name retrieved from archive. So we always need to
-	 * check what we read was valid after reading into the buffer. If it's
-	 * invalid, we try to open and read the file again.
-	 */
-	if (am_cascading_walsender)
-	{
-		WalSnd	   *walsnd = MyWalSnd;
-		bool		reload;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	WalSndCtl->error = WALSNDERROR_NONE;
 }

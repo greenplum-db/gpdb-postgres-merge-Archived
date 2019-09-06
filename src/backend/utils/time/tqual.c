@@ -1662,13 +1662,8 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
  * Note: GetSnapshotData never stores either top xid or subxids of our own
  * backend into a snapshot, so these xids will not be reported as "running"
  * by this function.  This is OK for current uses, because we always check
-<<<<<<< HEAD
- * TransactionIdIsCurrentTransactionId first, except when it's known the
- * XID could not be ours anyway.
-=======
  * TransactionIdIsCurrentTransactionId first, except for known-committed
  * XIDs which could not be ours anyway.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 bool
 XidInMVCCSnapshot_Local(TransactionId xid, Snapshot snapshot)

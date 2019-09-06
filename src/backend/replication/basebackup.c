@@ -325,13 +325,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				 */
 				if (tblspc_map_file && opt->sendtblspcmapfile)
 				{
-<<<<<<< HEAD
-					sendFileWithContent(TABLESPACE_MAP, tblspc_map_file);
-					sendDir(".", 1, false, tablespaces, false, opt->exclude);
-=======
 					sendFileWithContent(TABLESPACE_MAP, tblspc_map_file->data);
-					sendDir(".", 1, false, tablespaces, false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+					sendDir(".", 1, false, tablespaces, false, opt->exclude);
 				}
 				else
 					sendDir(".", 1, false, tablespaces, true, opt->exclude);
@@ -840,18 +835,12 @@ SendBackupHeader(List *tablespaces)
 		else
 		{
 			Size		len;
-<<<<<<< HEAD
 			char		*link_path_to_be_sent;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 			len = strlen(ti->oid);
 			pq_sendint(&buf, len, 4);
 			pq_sendbytes(&buf, ti->oid, len);
 
-			len = strlen(ti->path);
-			pq_sendint(&buf, len, 4);
-<<<<<<< HEAD
 			if(ti->rpath == NULL)
 			{
 				/* Lop off the dbid before sending the link target. */
@@ -863,10 +852,9 @@ SendBackupHeader(List *tablespaces)
 			}
 			else
 				link_path_to_be_sent = ti->path;
+			len = strlen(link_path_to_be_sent);
+			pq_sendint(&buf, len, 4);
 			pq_sendbytes(&buf, link_path_to_be_sent, len);
-=======
-			pq_sendbytes(&buf, ti->path, len);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 		if (ti->size >= 0)
 			send_int8_string(&buf, ti->size / 1024);

@@ -285,15 +285,10 @@ WalReceiverMain(void)
 	sigdelset(&BlockSig, SIGQUIT);
 
 	/* Load the libpq-specific functions */
-<<<<<<< HEAD
 	libpqwalreceiver_PG_init();
-	if (walrcv_connect == NULL || walrcv_startstreaming == NULL ||
-=======
-	load_file("libpqwalreceiver", false);
 	if (walrcv_connect == NULL ||
 		walrcv_get_conninfo == NULL ||
 		walrcv_startstreaming == NULL ||
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		walrcv_endstreaming == NULL ||
 		walrcv_identify_system == NULL ||
 		walrcv_readtimelinehistoryfile == NULL ||
@@ -1057,18 +1052,13 @@ XLogWalRcvFlush(bool dying)
 {
 	if (LogstreamResult.Flush < LogstreamResult.Write)
 	{
-<<<<<<< HEAD
 #ifdef FAULT_INJECTOR
 		/* Simulate the case that the standby / mirror is lagging behind. */
 		if (SIMPLE_FAULT_INJECTOR("walrecv_skip_flush") == FaultInjectorTypeSkip)
 			return;
 #endif
 
-		/* use volatile pointer to prevent code rearrangement */
-		volatile WalRcvData *walrcv = WalRcv;
-=======
 		WalRcvData *walrcv = WalRcv;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		issue_xlog_fsync(recvFile, recvSegNo);
 
@@ -1271,30 +1261,6 @@ XLogWalRcvSendHSFeedback(bool immed)
 }
 
 /*
- * Return a string constant representing the state.
- */
-const char *
-WalRcvGetStateString(WalRcvState state)
-{
-	switch (state)
-	{
-		case WALRCV_STOPPED:
-			return "stopped";
-		case WALRCV_STARTING:
-			return "starting";
-		case WALRCV_STREAMING:
-			return "streaming";
-		case WALRCV_WAITING:
-			return "waiting";
-		case WALRCV_RESTARTING:
-			return "restarting";
-		case WALRCV_STOPPING:
-			return "stopping";
-	}
-	return "UNKNOWN";
-}
-
-/*
  * Update shared memory status upon receiving a message from primary.
  *
  * 'walEnd' and 'sendTime' are the end-of-WAL and timestamp of the latest
@@ -1364,7 +1330,7 @@ WalRcvForceReply(void)
  * Return a string constant representing the state. This is used
  * in system functions and views, and should *not* be translated.
  */
-static const char *
+const char *
 WalRcvGetStateString(WalRcvState state)
 {
 	switch (state)

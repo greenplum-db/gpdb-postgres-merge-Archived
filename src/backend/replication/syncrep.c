@@ -123,11 +123,6 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 {
 	char	   *new_status = NULL;
 	const char *old_status;
-<<<<<<< HEAD
-	int			mode = SyncRepWaitMode;
-	bool		syncStandbyPresent = false;
-	int			i = 0;
-=======
 	int			mode;
 
 	/* Cap the level for anything other than commit to remote flush only. */
@@ -135,7 +130,6 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 		mode = SyncRepWaitMode;
 	else
 		mode = Min(SyncRepWaitMode, SYNC_REP_WAIT_FLUSH);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * SIGUSR1 is used to wake us up, cannot wait from inside SIGUSR1 handler
@@ -148,7 +142,7 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	Assert(!am_walsender);
 	elogif(debug_walrepl_syncrep, LOG,
 			"syncrep wait -- This backend's commit LSN for syncrep is %X/%X.",
-		   (uint32) (XactCommitLSN >> 32), (uint32) XactCommitLSN);
+		   (uint32) (lsn >> 32), (uint32) lsn);
 
 	/* Fast exit if user has not requested sync replication. */
 	if (!SyncRepRequested())
@@ -168,6 +162,9 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 		 * sender structure to see if anyone is really active, streaming (or
 		 * still catching up within limits) and wants to be synchronous.
 		 */
+		bool		syncStandbyPresent = false;
+		int			i;
+
 		for (i = 0; i < max_wal_senders; i++)
 		{
 			/* use volatile pointer to prevent code rearrangement */
@@ -204,20 +201,15 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	 * condition but we'll be fetching that cache line anyway so it's likely
 	 * to be a low cost check.
 	 */
-<<<<<<< HEAD
 	if (((!IS_QUERY_DISPATCHER()) && !WalSndCtl->sync_standbys_defined) ||
-		XactCommitLSN <= WalSndCtl->lsn[mode])
-=======
-	if (!WalSndCtl->sync_standbys_defined ||
 		lsn <= WalSndCtl->lsn[mode])
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		elogif(debug_walrepl_syncrep, LOG,
 				"syncrep wait -- Not waiting for syncrep because xlog upto LSN (%X/%X) which is "
 				"greater than this backend's commit LSN (%X/%X) has already "
 				"been replicated.",
 			   (uint32) (WalSndCtl->lsn[mode] >> 32), (uint32) WalSndCtl->lsn[mode],
-			   (uint32) (XactCommitLSN >> 32), (uint32) XactCommitLSN);
+			   (uint32) (lsn >> 32), (uint32) lsn);
 
 		LWLockRelease(SyncRepLock);
 		return;
@@ -248,13 +240,8 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 		 */
 		new_status = (char *) palloc(len + 32 + 12 + 1);
 		memcpy(new_status, old_status, len);
-<<<<<<< HEAD
 		sprintf(new_status + len, " waiting for %X/%X replication",
-				(uint32) (XactCommitLSN >> 32), (uint32) XactCommitLSN);
-=======
-		sprintf(new_status + len, " waiting for %X/%X",
 				(uint32) (lsn >> 32), (uint32) lsn);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		set_ps_display(new_status, false);
 		new_status[len] = '\0'; /* truncate off " waiting ..." */
 	}
@@ -280,17 +267,10 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 		 * it will never update it again, so we can't be seeing a stale value
 		 * in that case.
 		 */
-<<<<<<< HEAD
-		syncRepState = MyProc->syncRepState;
-		if (syncRepState == SYNC_REP_WAITING)
-			syncRepState = MyProc->syncRepState;
-		if (syncRepState == SYNC_REP_WAIT_COMPLETE)
+		if (MyProc->syncRepState == SYNC_REP_WAIT_COMPLETE)
 		{
 			elogif(debug_walrepl_syncrep, LOG,
 					"syncrep wait -- This backend's syncrep state is now 'wait complete'.");
-=======
-		if (MyProc->syncRepState == SYNC_REP_WAIT_COMPLETE)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			break;
 		}
 
@@ -479,64 +459,6 @@ SyncRepInitConfig(void)
 }
 
 /*
-<<<<<<< HEAD
- * Find the WAL sender servicing the synchronous standby with the lowest
- * priority value, or NULL if no synchronous standby is connected. If there
- * are multiple standbys with the same lowest priority value, the first one
- * found is selected. The caller must hold SyncRepLock.
- */
-WalSnd *
-SyncRepGetSynchronousStandby(void)
-{
-	WalSnd	   *result = NULL;
-	int			result_priority = 0;
-	int			i;
-
-	for (i = 0; i < max_wal_senders; i++)
-	{
-		/* Use volatile pointer to prevent code rearrangement */
-		volatile WalSnd *walsnd = &WalSndCtl->walsnds[i];
-		int			this_priority;
-
-		/* Must be active */
-		if (walsnd->pid == 0)
-			continue;
-
-		/* Must be streaming or stopping */
-		if (walsnd->state != WALSNDSTATE_STREAMING &&
-			walsnd->state != WALSNDSTATE_STOPPING)
-			continue;
-
-		/* Must be synchronous */
-		this_priority = walsnd->sync_standby_priority;
-		if (this_priority == 0)
-			continue;
-
-		/* Must have a lower priority value than any previous ones */
-		if (result != NULL && result_priority <= this_priority)
-			continue;
-
-		/* Must have a valid flush position */
-		if (XLogRecPtrIsInvalid(walsnd->flush))
-			continue;
-
-		result = (WalSnd *) walsnd;
-		result_priority = this_priority;
-
-		/*
-		 * If priority is equal to 1, there cannot be any other WAL senders
-		 * with a lower priority, so we're done.
-		 */
-		if (this_priority == 1)
-			return result;
-	}
-
-	return result;
-}
-
-/*
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Update the LSNs on each queue based upon our latest state. This
  * implements a simple policy of first-valid-sync-standby-releases-waiter.
  *
@@ -559,14 +481,9 @@ SyncRepReleaseWaiters(void)
 	/*
 	 * If this WALSender is serving a standby that is not on the list of
 	 * potential sync standbys then we have nothing to do. If we are still
-<<<<<<< HEAD
 	 * starting up, still running base backup or the current flush position
 	 * is still invalid, then leave quickly also. Streaming or stopping WAL
 	 * senders are allowed to release waiters.
-=======
-	 * starting up, still running base backup or the current flush position is
-	 * still invalid, then leave quickly also.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 */
 	if (MyWalSnd->sync_standby_priority == 0 ||
 		(MyWalSnd->state != WALSNDSTATE_STREAMING &&
@@ -635,13 +552,8 @@ SyncRepReleaseWaiters(void)
 
 	LWLockRelease(SyncRepLock);
 
-<<<<<<< HEAD
 	elogif(debug_walrepl_syncrep, LOG,
-		 "released %d procs up to write %X/%X, %d procs up to flush %X/%X",
-		 numwrite, (uint32) (MyWalSnd->write >> 32), (uint32) MyWalSnd->write,
-		 numflush, (uint32) (MyWalSnd->flush >> 32), (uint32) MyWalSnd->flush);
-=======
-	elog(DEBUG3, "released %d procs up to write %X/%X, %d procs up to flush %X/%X, %d procs up to apply %X/%X",
+		 "released %d procs up to write %X/%X, %d procs up to flush %X/%X, %d procs up to apply %X/%X",
 		 numwrite, (uint32) (writePtr >> 32), (uint32) writePtr,
 		 numflush, (uint32) (flushPtr >> 32), (uint32) flushPtr,
 		 numapply, (uint32) (applyPtr >> 32), (uint32) applyPtr);
@@ -671,7 +583,6 @@ SyncRepGetOldestSyncRecPtr(XLogRecPtr *writePtr, XLogRecPtr *flushPtr,
 
 	/* Get standbys that are considered as synchronous at this moment */
 	sync_standbys = SyncRepGetSyncStandbys(am_sync);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Quick exit if we are not managing a sync standby or there are not
@@ -902,38 +813,8 @@ SyncRepGetSyncStandbys(bool *am_sync)
 static int
 SyncRepGetStandbyPriority(void)
 {
-<<<<<<< HEAD
 	/* Currently set the priority to 1 */
 	return 1;
-=======
-	const char *standby_name;
-	int			priority;
-	bool		found = false;
-
-	/*
-	 * Since synchronous cascade replication is not allowed, we always set the
-	 * priority of cascading walsender to zero.
-	 */
-	if (am_cascading_walsender)
-		return 0;
-
-	if (!SyncStandbysDefined() || SyncRepConfig == NULL)
-		return 0;
-
-	standby_name = SyncRepConfig->member_names;
-	for (priority = 1; priority <= SyncRepConfig->nmembers; priority++)
-	{
-		if (pg_strcasecmp(standby_name, application_name) == 0 ||
-			strcmp(standby_name, "*") == 0)
-		{
-			found = true;
-			break;
-		}
-		standby_name += strlen(standby_name) + 1;
-	}
-
-	return (found ? priority : 0);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
