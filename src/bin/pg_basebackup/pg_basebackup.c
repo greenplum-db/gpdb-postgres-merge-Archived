@@ -2018,10 +2018,7 @@ BaseBackup(void)
 		int			r;
 #else
 		DWORD		status;
-<<<<<<< HEAD
-=======
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		/*
 		 * get a pointer sized version of bgchild to avoid warnings about
 		 * casting to a different size on WIN64.
