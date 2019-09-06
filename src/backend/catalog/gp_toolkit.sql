@@ -8,6 +8,8 @@
 
 BEGIN;
 
+CREATE SCHEMA gp_toolkit;
+
 GRANT USAGE ON SCHEMA gp_toolkit TO public;
 
 --------------------------------------------------------------------------------
