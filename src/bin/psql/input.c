@@ -81,12 +81,8 @@ gets_interactive(const char *prompt, PQExpBuffer query_buf)
 		rl_reset_screen_size();
 #endif
 
-<<<<<<< HEAD
-=======
 		/* Make current query_buf available to tab completion callback */
 		tab_completion_query_buf = query_buf;
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		/* Enable SIGINT to longjmp to sigint_interrupt_jmp */
 		sigint_interrupt_enabled = true;
 
