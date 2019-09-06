@@ -875,13 +875,15 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 	{
 		BlockNumber relallvisible;
 
-		visibilitymap_count(onerel, &relallvisible, NULL);
+		if (RelationIsAppendOptimized(onerel))
+			relallvisible = 0;
+		else
+			visibilitymap_count(onerel, &relallvisible, NULL);
 
 		vac_update_relstats(onerel,
 							relpages,
 							totalrows,
-							RelationIsAppendOptimized(onerel) ?
-							   0 : visibilitymap_count(onerel),
+							relallvisible,
 							hasindex,
 							InvalidTransactionId,
 							InvalidMultiXactId,

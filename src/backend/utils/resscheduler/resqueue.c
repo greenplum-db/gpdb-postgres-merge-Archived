@@ -1036,7 +1036,8 @@ ResWaitOnLock(LOCALLOCK *locallock, ResourceOwner owner, ResPortalIncrement *inc
 		set_ps_display(new_status, false);		/* truncate off " queuing" */
 		new_status[len] = '\0';
 	}
-	gpstat_report_waiting(PGBE_WAITING_LOCK);
+	/* GPDB_96_MERGE_FIXME: report using a wait event, pgstat_report_wait_start() */
+	//gpstat_report_waiting(PGBE_WAITING_LOCK);
 
 	awaitedLock = locallock;
 	awaitedOwner = owner;
@@ -1063,7 +1064,7 @@ ResWaitOnLock(LOCALLOCK *locallock, ResourceOwner owner, ResPortalIncrement *inc
 		set_ps_display(new_status, false);
 		pfree(new_status);
 	}
-	gpstat_report_waiting(PGBE_WAITING_NONE);
+	//gpstat_report_waiting(PGBE_WAITING_NONE);
 
 	return;
 }
@@ -1368,7 +1369,8 @@ ResCheckSelfDeadLock(LOCK *lock, PROCLOCK *proclock, ResPortalIncrement *increme
 		if (lock->nRequested > lock->nGranted)
 		{
 			/* we're no longer waiting. */
-			gpstat_report_waiting(PGBE_WAITING_NONE);
+			/* GPDB_96_MERGE_FIXME: report using a wait event, pgstat_report_wait_end() */
+			//gpstat_report_waiting(PGBE_WAITING_NONE);
 			ResGrantLock(lock, proclock);
 			ResLockUpdateLimit(lock, proclock, incrementSet, true, true);
 		}

@@ -292,7 +292,6 @@ _readBitmapset(void)
 
 	return result;
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 /*
  * for use by extensions which define extensible nodes
@@ -303,7 +302,6 @@ readBitmapset(void)
 	return _readBitmapset();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 /*
  * _readQuery
  */

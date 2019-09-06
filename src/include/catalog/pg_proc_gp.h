@@ -114,10 +114,6 @@ DESCR("boundary of the interval containing the given value");
 
 
 /* Aggregate-related functions */
-/* pg_stat_get_backend_waiting_reason(int4) => text */
-DATA(insert OID = 7298 ( pg_stat_get_backend_waiting_reason  PGNSP PGUID 12 1 0 0 0 f f f f t f s s 1 0 25 "23" _null_ _null_ _null_ _null_ _null_ pg_stat_get_backend_waiting_reason _null_ _null_ _null_ n a ));
-DESCR("Statistics: Reason backend is waiting for");
-
 /* pg_stat_get_queue_num_exec(oid) => int8 */
 DATA(insert OID = 6031 ( pg_stat_get_queue_num_exec  PGNSP PGUID 12 1 0 0 0 f f f f t f s s 1 0 20 "26" _null_ _null_ _null_ _null_ _null_ pg_stat_get_queue_num_exec _null_ _null_ _null_ n a ));
 DESCR("Statistics: Number of queries that executed in queue");

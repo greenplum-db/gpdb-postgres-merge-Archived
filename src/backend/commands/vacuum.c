@@ -2804,6 +2804,7 @@ scan_index(Relation indrel, double num_tuples, bool check_stats, int elevel)
 	IndexBulkDeleteResult *stats;
 	IndexVacuumInfo ivinfo;
 	PGRUsage	ru0;
+	BlockNumber relallvisible;
 
 	pg_rusage_init(&ru0);
 
@@ -2819,6 +2820,11 @@ scan_index(Relation indrel, double num_tuples, bool check_stats, int elevel)
 	if (!stats)
 		return;
 
+	if (RelationIsAppendOptimized(indrel))
+		relallvisible = 0;
+	else
+		visibilitymap_count(indrel, &relallvisible, NULL);
+
 	/*
 	 * Now update statistics in pg_class, but only if the index says the count
 	 * is accurate.
@@ -2826,7 +2832,7 @@ scan_index(Relation indrel, double num_tuples, bool check_stats, int elevel)
 	if (!stats->estimated_count)
 		vac_update_relstats(indrel,
 							stats->num_pages, stats->num_index_tuples,
-							visibilitymap_count(indrel),
+							relallvisible,
 							false,
 							InvalidTransactionId,
 							InvalidMultiXactId,
@@ -2890,7 +2896,7 @@ vacuum_appendonly_index(Relation indexRelation,
 	if (!stats->estimated_count)
 		vac_update_relstats(indexRelation,
 							stats->num_pages, stats->num_index_tuples,
-							visibilitymap_count(indexRelation),
+							0, /* relallvisible */
 							false,
 							InvalidTransactionId,
 							InvalidMultiXactId,

@@ -1046,10 +1046,6 @@ extern void pgstat_report_deadlock(void);
 extern void pgstat_initialize(void);
 extern void pgstat_bestart(void);
 
-#if 0
-extern void pgstat_report_waiting(bool waiting);
-#endif
-extern void gpstat_report_waiting(char reason);
 extern void pgstat_report_sessionid(int new_sessionid);
 
 extern void pgstat_report_activity(BackendState state, const char *cmd_str);

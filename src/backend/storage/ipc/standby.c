@@ -229,8 +229,6 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 	if (!VirtualTransactionIdIsValid(*waitlist))
 		return;
 
-	gpstat_report_waiting(PGBE_WAITING_LOCK);
-
 	waitStart = GetCurrentTimestamp();
 	new_status = NULL;			/* we haven't changed the ps display */
 
@@ -287,7 +285,6 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 			set_ps_display(new_status, false);
 			pfree(new_status);
 		}
-		gpstat_report_waiting(PGBE_WAITING_NONE);
 
 		/* The virtual transaction is gone now, wait for the next one */
 		waitlist++;

@@ -4433,6 +4433,9 @@ create_grouping_paths(PlannerInfo *root,
 														 &agg_partial_costs,
 														 dNumPartialGroups));
 					else
+					{
+						/* GPDB_96_MERGE_FIXME: Group nodes are not used in GPDB */
+#if 0
 						add_partial_path(grouped_rel, (Path *)
 										 create_group_path(root,
 														   grouped_rel,
@@ -4441,6 +4444,8 @@ create_grouping_paths(PlannerInfo *root,
 														   parse->groupClause,
 														   NIL,
 														 dNumPartialGroups));
+#endif
+					}
 				}
 			}
 		}
@@ -4628,6 +4633,8 @@ create_grouping_paths(PlannerInfo *root,
 					 * We have grouping sets, possibly with aggregation.  Make
 					 * a GroupingSetsPath.
 					 */
+						/* GPDB_96_MERGE_FIXME: Group nodes are not used in GPDB */
+#if 0
 					add_path(grouped_rel, (Path *)
 							 create_groupingsets_path(root,
 													  grouped_rel,
@@ -4638,6 +4645,7 @@ create_grouping_paths(PlannerInfo *root,
 													  rollup_groupclauses,
 													  agg_costs,
 													  dNumGroups));
+#endif
 				}
 				else if (parse->hasAggs)
 				{
@@ -4664,6 +4672,8 @@ create_grouping_paths(PlannerInfo *root,
 					 * We have GROUP BY without aggregation or grouping sets.
 					 * Make a GroupPath.
 					 */
+					/* GPDB_96_MERGE_FIXME: we've disabled Group nodes in GPDB */
+#if 0
 					add_path(grouped_rel, (Path *)
 							 create_group_path(root,
 											   grouped_rel,
@@ -4672,6 +4682,7 @@ create_grouping_paths(PlannerInfo *root,
 											   parse->groupClause,
 											   (List *) parse->havingQual,
 											   dNumGroups));
+#endif
 				}
 				else
 				{
@@ -4724,6 +4735,9 @@ create_grouping_paths(PlannerInfo *root,
 										 &agg_final_costs,
 										 dNumGroups));
 			else
+			{
+				/* GPDB_96_MERGE_FIXME: Group nodes are not used in GPDB */
+#if 0
 				add_path(grouped_rel, (Path *)
 						 create_group_path(root,
 										   grouped_rel,
@@ -4732,6 +4746,8 @@ create_grouping_paths(PlannerInfo *root,
 										   parse->groupClause,
 										   (List *) parse->havingQual,
 										   dNumGroups));
+#endif
+			}
 		}
 	}
 

@@ -145,6 +145,7 @@
 #define booltostr(x)  ((x) ? "true" : "false")
 
 
+#ifndef COMPILING_BINARY_FUNCS
 /*
  * _outToken
  *	  Convert an ordinary string (eg, an identifier) into a form that
@@ -191,7 +192,6 @@ outToken(StringInfo str, const char *s)
 	_outToken(str, s);
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static void
 _outList(StringInfo str, const List *node)
 {
@@ -249,7 +249,6 @@ _outBitmapset(StringInfo str, const Bitmapset *bms)
 		appendStringInfo(str, " %d", x);
 	appendStringInfoChar(str, ')');
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 /* for use by extensions which define extensible nodes */
 void
@@ -292,6 +291,7 @@ outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 		}
 	}
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
 static void outLogicalIndexInfo(StringInfo str, const LogicalIndexInfo *node);
 

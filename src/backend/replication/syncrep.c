@@ -246,9 +246,6 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 		new_status[len] = '\0'; /* truncate off " waiting ..." */
 	}
 
-	/* Inform this backend is waiting for replication to pg_stat_activity */
-	gpstat_report_waiting(PGBE_WAITING_REPLICATION);
-
 	/*
 	 * Wait for specified LSN to be confirmed.
 	 *
@@ -362,9 +359,6 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 		set_ps_display(new_status, false);
 		pfree(new_status);
 	}
-
-	/* Now inform no more waiting for replication */
-	gpstat_report_waiting(PGBE_WAITING_NONE);
 }
 
 /*
