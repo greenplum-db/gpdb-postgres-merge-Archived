@@ -141,17 +141,9 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 	char		procName[NAMEDATALEN + 256];
 	Form_pg_proc procStruct;
 	PLyProcedure *volatile proc;
-<<<<<<< HEAD
-	char	   *volatile procSource = NULL;
-	Datum		prosrcdatum;
-	bool		isnull;
-	int			i,
-				rv;
-=======
 	MemoryContext cxt;
 	MemoryContext oldcxt;
 	int			rv;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	char	   *ptr;
 
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
@@ -164,29 +156,6 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 
 	/* Replace any not-legal-in-Python-names characters with '_' */
 	for (ptr = procName; *ptr; ptr++)
-<<<<<<< HEAD
-	{
-		if (!((*ptr >= 'A' && *ptr <= 'Z') ||
-			  (*ptr >= 'a' && *ptr <= 'z') ||
-			  (*ptr >= '0' && *ptr <= '9')))
-			*ptr = '_';
-	}
-
-	proc = PLy_malloc(sizeof(PLyProcedure));
-	proc->proname = PLy_strdup(NameStr(procStruct->proname));
-	proc->pyname = PLy_strdup(procName);
-	proc->fn_xmin = HeapTupleHeaderGetRawXmin(procTup->t_data);
-	proc->fn_tid = procTup->t_self;
-	/* Remember if function is STABLE/IMMUTABLE */
-	proc->fn_readonly =
-		(procStruct->provolatile != PROVOLATILE_VOLATILE);
-	PLy_typeinfo_init(&proc->result);
-	for (i = 0; i < FUNC_MAX_ARGS; i++)
-		PLy_typeinfo_init(&proc->args[i]);
-	proc->nargs = 0;
-	proc->langid = procStruct->prolang;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		if (!((*ptr >= 'A' && *ptr <= 'Z') ||
 			  (*ptr >= 'a' && *ptr <= 'z') ||

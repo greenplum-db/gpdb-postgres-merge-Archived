@@ -99,20 +99,6 @@ FOR EACH STATEMENT EXECUTE PROCEDURE trigger_data(23,'skidoo');
 insert into trigger_test values(1,'insert');
 NOTICE:  TD[args] => ['23', 'skidoo']
 NOTICE:  TD[event] => INSERT
-<<<<<<< HEAD
-CONTEXT:  PL/Python function "trigger_data"
-=======
-NOTICE:  TD[level] => STATEMENT
-NOTICE:  TD[name] => show_trigger_data_trig_stmt
-NOTICE:  TD[new] => None
-NOTICE:  TD[old] => None
-NOTICE:  TD[relid] => bogus:12345
-NOTICE:  TD[table_name] => trigger_test
-NOTICE:  TD[table_schema] => public
-NOTICE:  TD[when] => BEFORE
-NOTICE:  TD[args] => ['23', 'skidoo']
-NOTICE:  TD[event] => INSERT
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 NOTICE:  TD[level] => ROW
 NOTICE:  TD[name] => show_trigger_data_trig_before
 NOTICE:  TD[new] => {'i': 1, 'v': 'insert'}
@@ -134,20 +120,6 @@ NOTICE:  TD[when] => AFTER
 update trigger_test set v = 'update' where i = 1;
 NOTICE:  TD[args] => ['23', 'skidoo']
 NOTICE:  TD[event] => UPDATE
-<<<<<<< HEAD
-CONTEXT:  PL/Python function "trigger_data"
-=======
-NOTICE:  TD[level] => STATEMENT
-NOTICE:  TD[name] => show_trigger_data_trig_stmt
-NOTICE:  TD[new] => None
-NOTICE:  TD[old] => None
-NOTICE:  TD[relid] => bogus:12345
-NOTICE:  TD[table_name] => trigger_test
-NOTICE:  TD[table_schema] => public
-NOTICE:  TD[when] => BEFORE
-NOTICE:  TD[args] => ['23', 'skidoo']
-NOTICE:  TD[event] => UPDATE
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 NOTICE:  TD[level] => ROW
 NOTICE:  TD[name] => show_trigger_data_trig_before
 NOTICE:  TD[new] => {'i': 1, 'v': 'update'}
@@ -169,20 +141,6 @@ NOTICE:  TD[when] => AFTER
 delete from trigger_test;
 NOTICE:  TD[args] => ['23', 'skidoo']
 NOTICE:  TD[event] => DELETE
-<<<<<<< HEAD
-CONTEXT:  PL/Python function "trigger_data"
-=======
-NOTICE:  TD[level] => STATEMENT
-NOTICE:  TD[name] => show_trigger_data_trig_stmt
-NOTICE:  TD[new] => None
-NOTICE:  TD[old] => None
-NOTICE:  TD[relid] => bogus:12345
-NOTICE:  TD[table_name] => trigger_test
-NOTICE:  TD[table_schema] => public
-NOTICE:  TD[when] => BEFORE
-NOTICE:  TD[args] => ['23', 'skidoo']
-NOTICE:  TD[event] => DELETE
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 NOTICE:  TD[level] => ROW
 NOTICE:  TD[name] => show_trigger_data_trig_before
 NOTICE:  TD[new] => None

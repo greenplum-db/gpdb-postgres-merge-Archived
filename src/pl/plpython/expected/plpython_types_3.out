@@ -502,56 +502,35 @@ plpy.info(x, type(x))
 return x
 $$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_array_int4(ARRAY[0, 100]);
-<<<<<<< HEAD
-INFO:  ([0, 100], <type 'list'>)
-=======
 INFO:  ([0, 100], <class 'list'>)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  test_type_conversion_array_int4 
 ---------------------------------
  {0,100}
 (1 row)
 
 SELECT * FROM test_type_conversion_array_int4(ARRAY[0,-100,55]);
-<<<<<<< HEAD
-INFO:  ([0, -100, 55], <type 'list'>)
-=======
 INFO:  ([0, -100, 55], <class 'list'>)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  test_type_conversion_array_int4 
 ---------------------------------
  {0,-100,55}
 (1 row)
 
 SELECT * FROM test_type_conversion_array_int4(ARRAY[NULL,1]);
-<<<<<<< HEAD
-INFO:  ([None, 1], <type 'list'>)
-=======
 INFO:  ([None, 1], <class 'list'>)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  test_type_conversion_array_int4 
 ---------------------------------
  {NULL,1}
 (1 row)
 
 SELECT * FROM test_type_conversion_array_int4(ARRAY[]::integer[]);
-<<<<<<< HEAD
-INFO:  ([], <type 'list'>)
-=======
 INFO:  ([], <class 'list'>)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  test_type_conversion_array_int4 
 ---------------------------------
  {}
 (1 row)
 
 SELECT * FROM test_type_conversion_array_int4(NULL);
-<<<<<<< HEAD
-INFO:  (None, <type 'NoneType'>)
-CONTEXT:  PL/Python function "test_type_conversion_array_int4"
-=======
 INFO:  (None, <class 'NoneType'>)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  test_type_conversion_array_int4 
 ---------------------------------
  
@@ -682,12 +661,7 @@ return x
 $$ LANGUAGE plpythonu;
 ERROR:  function "test_type_conversion_array_text" already exists with same argument types
 SELECT * FROM test_type_conversion_array_text(ARRAY['foo', 'bar']);
-<<<<<<< HEAD
-INFO:  (['foo', 'bar'], <type 'list'>)
-CONTEXT:  PL/Python function "test_type_conversion_array_text"
-=======
 INFO:  (['foo', 'bar'], <class 'list'>)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  test_type_conversion_array_text 
 ---------------------------------
  {foo,bar}
@@ -698,11 +672,7 @@ plpy.info(x, type(x))
 return x
 $$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_array_bytea(ARRAY[E'\\xdeadbeef'::bytea, NULL]);
-<<<<<<< HEAD
-INFO:  (['\xde\xad\xbe\xef', None], <type 'list'>)
-=======
 INFO:  ([b'\xde\xad\xbe\xef', None], <class 'list'>)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  test_type_conversion_array_bytea 
 ----------------------------------
  {"\\xdeadbeef",NULL}

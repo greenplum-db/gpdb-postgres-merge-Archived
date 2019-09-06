@@ -123,16 +123,13 @@ SELECT join_sequences(sequences) FROM sequences
 ----------------
 (0 rows)
 
-<<<<<<< HEAD
 -- end_ignore
-=======
 SELECT spi_recursive_sum(10);
  spi_recursive_sum 
 -------------------
                 55
 (1 row)
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 --
 -- plan and result objects
 --
@@ -161,12 +158,6 @@ INFO:  [-1, -1]
 
 SELECT result_metadata_test($$CREATE TEMPORARY TABLE foo1 (a int, b text)$$);
 INFO:  True
-<<<<<<< HEAD
-CONTEXT:  PL/Python function "result_metadata_test"
-CONTEXT:  SQL statement "CREATE TEMPORARY TABLE foo1 (a int, b text)"
-PL/Python function "result_metadata_test"
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 ERROR:  plpy.Error: command did not produce a result set
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "result_metadata_test", line 6, in <module>

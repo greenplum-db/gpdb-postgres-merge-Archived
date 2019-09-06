@@ -57,22 +57,12 @@ static void PLy_abort_open_subtransactions(int save_subxact_level);
 Datum
 PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 {
-<<<<<<< HEAD
-
-	Datum						rv;
-	FuncCallContext	*volatile	funcctx		   = NULL;
-	PyObject 		*volatile	plargs		   = NULL;
-	PyObject		*volatile	plrv		   = NULL;
-	bool						bFirstTimeCall = false; 
-	ErrorContextCallback		plerrcontext;
-=======
 	Datum		rv;
 	PyObject   *volatile plargs = NULL;
 	PyObject   *volatile plrv = NULL;
 	FuncCallContext *volatile funcctx = NULL;
 	PLySRFState *volatile srfstate = NULL;
 	ErrorContextCallback plerrcontext;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * If the function is called recursively, we must push outer-level
@@ -83,34 +73,12 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 
 	PG_TRY();
 	{
-<<<<<<< HEAD
-		if (fcinfo->flinfo->fn_retset)
-=======
 		if (proc->is_setof)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{
 			/* First Call setup */
 			if (SRF_IS_FIRSTCALL())
 			{
 				funcctx = SRF_FIRSTCALL_INIT();
-<<<<<<< HEAD
-				bFirstTimeCall = true;
-
-				/*
-				 * Clear all previous left-over exceptions due to some (unknow) reasons
-				 * so that this call will have a fresh start
-				 */
-				PyErr_Clear();
-			}
-
-			/* Every call setup */
-			funcctx = SRF_PERCALL_SETUP();
-
-			Assert(funcctx != NULL);
-		}
-
-		if (!fcinfo->flinfo->fn_retset || bFirstTimeCall)
-=======
 				srfstate = (PLySRFState *)
 					MemoryContextAllocZero(funcctx->multi_call_memory_ctx,
 										   sizeof(PLySRFState));
@@ -128,7 +96,6 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		}
 
 		if (srfstate == NULL || srfstate->iter == NULL)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{
 			/*
 			 * Non-SETOF function or first time for SETOF function: build
@@ -136,17 +103,6 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			 */
 			plargs = PLy_function_build_args(fcinfo, proc);
 			plrv = PLy_procedure_call(proc, "args", plargs);
-<<<<<<< HEAD
-			if (!proc->is_setof)
-			{
-				/*
-				 * SETOF function parameters will be deleted when last row is
-				 * PLySequence_ToTuple
-				 */
-				PLy_function_delete_args(proc);
-			}
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			Assert(plrv != NULL);
 		}
 		else
@@ -169,16 +125,9 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		 * We stay in the SPI context while doing this, because PyIter_Next()
 		 * calls back into Python code which might contain SPI calls.
 		 */
-		if (fcinfo->flinfo->fn_retset)
+		if (proc->is_setof)
 		{
-<<<<<<< HEAD
-			bool		has_error = false;
-			ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
-
-			if (funcctx->user_fctx == NULL)
-=======
 			if (srfstate->iter == NULL)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			{
 				/* first time -- do checks and setup */
 				ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
@@ -194,20 +143,12 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 				rsi->returnMode = SFRM_ValuePerCall;
 
 				/* Make iterator out of returned object */
-<<<<<<< HEAD
-				funcctx->user_fctx = (void*) PyObject_GetIter(plrv);
-=======
 				srfstate->iter = PyObject_GetIter(plrv);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 				Py_DECREF(plrv);
 				plrv = NULL;
 
-<<<<<<< HEAD
-				if (funcctx->user_fctx == NULL)
-=======
 				if (srfstate->iter == NULL)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 							 errmsg("returned object cannot be iterated"),
@@ -215,29 +156,11 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			}
 
 			/* Fetch next from iterator */
-<<<<<<< HEAD
-			plrv = PyIter_Next((PyObject*) funcctx->user_fctx);
-			if (plrv)
-				rsi->isDone = ExprMultipleResult;
-			else
-			{
-				rsi->isDone = ExprEndResult;
-
-				has_error = PyErr_Occurred() != NULL;
-			}
-
-			if (rsi->isDone == ExprEndResult)
-			{
-				/* Iterator is exhausted or error happened */
-				Py_DECREF( (PyObject*) funcctx->user_fctx);
-				funcctx->user_fctx = NULL;
-=======
 			plrv = PyIter_Next(srfstate->iter);
 			if (plrv == NULL)
 			{
 				/* Iterator is exhausted or error happened */
 				bool		has_error = (PyErr_Occurred() != NULL);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 				Py_DECREF(srfstate->iter);
 				srfstate->iter = NULL;
@@ -245,13 +168,6 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 				if (has_error)
 					PLy_elog(ERROR, "function \"%s\" error fetching next item from iterator", proc->proname);
 
-<<<<<<< HEAD
-				/* Disconnect from the SPI manager before returning */
-				if (SPI_finish() != SPI_OK_FINISH)
-					elog(ERROR, "SPI_finish failed");
-
-				SRF_RETURN_DONE(funcctx);
-=======
 				/* Pass a null through the data-returning steps below */
 				Py_INCREF(Py_None);
 				plrv = Py_None;
@@ -264,7 +180,6 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 				 * values.
 				 */
 				srfstate->savedargs = PLy_function_save_args(proc);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			}
 		}
 
@@ -356,13 +271,6 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		 * unnecessary now; plpython_srf_cleanup_callback should take care of
 		 * cleanup.  But it doesn't hurt anything to do it here.)
 		 */
-<<<<<<< HEAD
-
-		if (fcinfo->flinfo->fn_retset && funcctx->user_fctx != NULL)
-		{
-			Py_XDECREF( (PyObject*) funcctx->user_fctx);
-			funcctx->user_fctx = NULL;
-=======
 		if (srfstate)
 		{
 			Py_XDECREF(srfstate->iter);
@@ -371,7 +279,6 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			if (srfstate->savedargs)
 				PLy_function_drop_args(srfstate->savedargs);
 			srfstate->savedargs = NULL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 
 		PG_RE_THROW();
@@ -386,12 +293,6 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 	Py_XDECREF(plargs);
 	Py_DECREF(plrv);
 
-<<<<<<< HEAD
-	if (fcinfo->flinfo->fn_retset)
-		SRF_RETURN_NEXT(funcctx, rv);
-	else
-		return rv;
-=======
 	if (srfstate)
 	{
 		/* We're in a SRF, exit appropriately */
@@ -408,7 +309,6 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 
 	/* Plain function, just return the Datum value (possibly null) */
 	return rv;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /* trigger subhandler

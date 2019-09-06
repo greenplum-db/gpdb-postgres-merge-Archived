@@ -108,10 +108,6 @@ return None
 	LANGUAGE plpython3u;
 SELECT invalid_type_caught('rick');
 NOTICE:  type "test" does not exist
-<<<<<<< HEAD
-CONTEXT:  PL/Python function "invalid_type_caught"
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  invalid_type_caught 
 ---------------------
  
@@ -235,10 +231,6 @@ return "you''ve been warned"
 	LANGUAGE plpython3u;
 SELECT nested_warning();
 WARNING:  boom
-<<<<<<< HEAD
-CONTEXT:  PL/Python function "nested_warning"
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
    nested_warning   
 --------------------
  you've been warned
@@ -342,10 +334,6 @@ SELECT specific_exception(2);
 
 SELECT specific_exception(NULL);
 NOTICE:  Violated the NOT NULL constraint, sqlstate 23502
-<<<<<<< HEAD
-CONTEXT:  PL/Python function "specific_exception"
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  specific_exception 
 --------------------
  
@@ -353,10 +341,6 @@ CONTEXT:  PL/Python function "specific_exception"
 
 SELECT specific_exception(2);
 NOTICE:  Violated the UNIQUE constraint, sqlstate 23505
-<<<<<<< HEAD
-CONTEXT:  PL/Python function "specific_exception"
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  specific_exception 
 --------------------
  
@@ -438,7 +422,6 @@ EXCEPTION WHEN SQLSTATE 'SILLY' THEN
 	-- NOOP
 END
 $$ LANGUAGE plpgsql;
-<<<<<<< HEAD
 /* test the context stack trace for nested execution levels
  */
 CREATE FUNCTION notice_innerfunc() RETURNS int AS $$
@@ -462,5 +445,3 @@ PL/Python function "notice_outerfunc"
                 1
 (1 row)
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

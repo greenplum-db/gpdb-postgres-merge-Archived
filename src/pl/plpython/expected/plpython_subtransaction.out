@@ -153,12 +153,7 @@ SELECT * FROM subtransaction_tbl;
 
 TRUNCATE subtransaction_tbl;
 SELECT subtransaction_nested_test('t');
-<<<<<<< HEAD
 NOTICE:  Swallowed SyntaxError('syntax error at or near "error"')
-CONTEXT:  PL/Python function "subtransaction_nested_test"
-=======
-NOTICE:  Swallowed SyntaxError('syntax error at or near "error"',)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  subtransaction_nested_test 
 ----------------------------
  ok
@@ -183,14 +178,7 @@ with plpy.subtransaction():
 return "ok"
 $$ LANGUAGE plpythonu;
 SELECT subtransaction_deeply_nested_test();
-<<<<<<< HEAD
 NOTICE:  Swallowed SyntaxError('syntax error at or near "error"')
-CONTEXT:  PL/Python function "subtransaction_nested_test"
-SQL statement "SELECT subtransaction_nested_test('t')"
-PL/Python function "subtransaction_deeply_nested_test"
-=======
-NOTICE:  Swallowed SyntaxError('syntax error at or near "error"',)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  subtransaction_deeply_nested_test 
 -----------------------------------
  ok

@@ -30,16 +30,10 @@
 #include "plpy_resultobject.h"
 
 
-<<<<<<< HEAD
-static PyObject *PLy_spi_execute_query(char *query, int64 limit);
-static PyObject *PLy_spi_execute_plan(PyObject *ob, PyObject *list, int64 limit);
-static PyObject *PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int64 rows, int status);
-=======
 static PyObject *PLy_spi_execute_query(char *query, long limit);
 static PyObject *PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit);
 static PyObject *PLy_spi_execute_fetch_result(SPITupleTable *tuptable,
 							 uint64 rows, int status);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void PLy_spi_exception_set(PyObject *excclass, ErrorData *edata);
 
 
@@ -411,11 +405,7 @@ PLy_spi_execute_query(char *query, int64 limit)
 }
 
 static PyObject *
-<<<<<<< HEAD
-PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int64 rows, int status)
-=======
 PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	PLyResultObject *result;
 	volatile MemoryContext oldcontext;
@@ -445,25 +435,13 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 	if (status > 0 && tuptable == NULL)
 	{
 		Py_DECREF(result->nrows);
-<<<<<<< HEAD
-		/* rows is 64 bit, Python Integer holds sys.maxint = 2^63 - 1 */
-		result->nrows = PyInt_FromLong((long) rows);
-=======
 		result->nrows = (rows > (uint64) LONG_MAX) ?
 			PyFloat_FromDouble((double) rows) :
 			PyInt_FromLong((long) rows);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 	else if (status > 0 && tuptable != NULL)
 	{
 		PLyTypeInfo args;
-<<<<<<< HEAD
-		int64			i;
-
-		Py_DECREF(result->nrows);
-		result->nrows = PyInt_FromLong((long) rows);
-		PLy_typeinfo_init(&args);
-=======
 		MemoryContext cxt;
 
 		Py_DECREF(result->nrows);
@@ -477,7 +455,6 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 									ALLOCSET_DEFAULT_INITSIZE,
 									ALLOCSET_DEFAULT_MAXSIZE);
 		PLy_typeinfo_init(&args, cxt);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		oldcontext = CurrentMemoryContext;
 		PG_TRY();

@@ -803,8 +803,6 @@ PLyObject_ToBytea(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 	return rv;
 }
 
-<<<<<<< HEAD
-=======
 
 /*
  * Convert a Python object to a composite type. First look up the type's
@@ -812,7 +810,7 @@ PLyObject_ToBytea(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
  * for obtaining PostgreSQL tuples.
  */
 static Datum
-PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
+PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 {
 	Datum		rv;
 	PLyTypeInfo info;
@@ -841,7 +839,7 @@ PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
 	 * that info instead of looking it up every time a tuple is returned from
 	 * the function.
 	 */
-	rv = PLyObject_ToCompositeDatum(&info, desc, plrv);
+	rv = PLyObject_ToCompositeDatum(&info, desc, plrv, inarray);
 
 	ReleaseTupleDesc(desc);
 
@@ -851,7 +849,6 @@ PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
 }
 
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 /*
  * Convert Python object to C string in server encoding.
  */
@@ -907,45 +904,6 @@ PLyObject_AsString(PyObject *plrv)
 
 	return plrv_sc;
 }
-
-/*
- * Convert a Python object to a composite type. First look up the type's
- * description, then route the Python object through the conversion function
- * for obtaining PostgreSQL tuples.
- */
-static Datum
-PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
-{
-	Datum		rv;
-	PLyTypeInfo info;
-	TupleDesc	desc;
-
-	if (typmod != -1)
-		elog(ERROR, "received unnamed record type as input");
-
-	/* Create a dummy PLyTypeInfo */
-	MemSet(&info, 0, sizeof(PLyTypeInfo));
-	PLy_typeinfo_init(&info);
-	/* Mark it as needing output routines lookup */
-	info.is_rowtype = 2;
-
-	desc = lookup_rowtype_tupdesc(arg->typoid, arg->typmod);
-
-	/*
-	 * This will set up the dummy PLyTypeInfo's output conversion routines,
-	 * since we left is_rowtype as 2. A future optimisation could be caching
-	 * that info instead of looking it up every time a tuple is returned from
-	 * the function.
-	 */
-	rv = PLyObject_ToCompositeDatum(&info, desc, plrv, false);
-
-	ReleaseTupleDesc(desc);
-
-	PLy_typeinfo_dealloc(&info);
-
-	return rv;
-}
-
 
 /*
  * Convert Python object to C string in server encoding.
@@ -1183,10 +1141,6 @@ PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string, bool 
 	Datum		result;
 	HeapTuple	typeTup;
 	PLyTypeInfo locinfo;
-<<<<<<< HEAD
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 	MemoryContext cxt;
 
@@ -1199,33 +1153,19 @@ PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string, bool 
 	MemSet(&locinfo, 0, sizeof(PLyTypeInfo));
 	PLy_typeinfo_init(&locinfo, cxt);
 
-	/* Create a dummy PLyTypeInfo */
-	MemSet(&locinfo, 0, sizeof(PLyTypeInfo));
-	PLy_typeinfo_init(&locinfo);
-
 	typeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(desc->tdtypeid));
 	if (!HeapTupleIsValid(typeTup))
 		elog(ERROR, "cache lookup failed for type %u", desc->tdtypeid);
 
-<<<<<<< HEAD
-	PLy_output_datum_func2(&locinfo.out.d, typeTup,
-=======
 	PLy_output_datum_func2(&locinfo.out.d, locinfo.mcxt, typeTup,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 						   exec_ctx->curr_proc->langid,
 						   exec_ctx->curr_proc->trftypes);
 
 	ReleaseSysCache(typeTup);
 
-<<<<<<< HEAD
 	result = PLyObject_ToDatum(&locinfo.out.d, desc->tdtypmod, string, inarray);
 
-	PLy_typeinfo_dealloc(&locinfo);
-=======
-	result = PLyObject_ToDatum(&locinfo.out.d, desc->tdtypmod, string);
-
 	MemoryContextDelete(cxt);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	return result;
 }
