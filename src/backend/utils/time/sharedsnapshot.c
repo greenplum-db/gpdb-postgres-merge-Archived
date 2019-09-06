@@ -236,6 +236,8 @@ SharedSnapshotShmemSize(void)
 	size = offsetof(SharedSnapshotStruct, xips);
 	size = add_size(size, mul_size(slotSize, slotCount));
 
+	RequestNamedLWLockTranche("SharedSnapshotLocks", slotCount);
+
 	return MAXALIGN(size);
 }
 
@@ -291,7 +293,6 @@ CreateSharedSnapshotArray(void)
 		/* xips start just after the last slot structure */
 		xip_base = (TransactionId *)&sharedSnapshotArray->slots[sharedSnapshotArray->maxSlots];
 
-		RequestNamedLWLockTranche("SharedSnapshotLocks", sharedSnapshotArray->maxSlots);
 		lock_base = GetNamedLWLockTranche("SharedSnapshotLocks");
 		for (i=0; i < sharedSnapshotArray->maxSlots; i++)
 		{

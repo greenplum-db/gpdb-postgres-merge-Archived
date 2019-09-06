@@ -150,6 +150,8 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		}
 		else if (IsResGroupEnabled())
 			size = add_size(size, ResGroupShmemSize());
+		size = add_size(size, SharedSnapshotShmemSize());
+		size = add_size(size, FtsShmemSize());
 
 		size = add_size(size, ProcGlobalShmemSize());
 		size = add_size(size, XLOGShmemSize());
@@ -180,8 +182,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, ShmemBackendArraySize());
 #endif
 
-		size = add_size(size, SharedSnapshotShmemSize());
-		size = add_size(size, FtsShmemSize());
 		size = add_size(size, tmShmemSize());
 		size = add_size(size, CheckpointerShmemSize());
 		size = add_size(size, CancelBackendMsgShmemSize());

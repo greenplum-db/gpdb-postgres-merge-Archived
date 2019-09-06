@@ -52,6 +52,8 @@ extern volatile bool *pm_launch_walreceiver;
 int
 FtsShmemSize(void)
 {
+	RequestNamedLWLockTranche("ftsControlLock", 1);
+
 	/*
 	 * this shared memory block doesn't even need to *exist* on the QEs!
 	 */
@@ -78,7 +80,6 @@ FtsShmemInit(void)
 
 	if (!IsUnderPostmaster)
 	{
-		RequestNamedLWLockTranche("ftsControlLock", 1);
 		shared->ControlLock = &(GetNamedLWLockTranche("ftsControlLock"))->lock;
 		ftsControlLock = shared->ControlLock;
 
