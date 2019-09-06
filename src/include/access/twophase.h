@@ -16,6 +16,7 @@
 
 #include "access/xlogdefs.h"
 #include "datatype/timestamp.h"
+#include "storage/backendid.h"
 
 #include "cdb/cdblocaldistribxact.h"
 

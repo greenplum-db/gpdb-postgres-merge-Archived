@@ -41,10 +41,7 @@
 #include "access/xact.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_proc.h"
-<<<<<<< HEAD
 #include "executor/instrument.h"
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "libpq/ip.h"
 #include "libpq/libpq.h"
 #include "libpq/pqsignal.h"

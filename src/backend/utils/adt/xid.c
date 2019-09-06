@@ -136,14 +136,6 @@ btxidcmp(PG_FUNCTION_ARGS)
 
 
 /*
-<<<<<<< HEAD
- * xid_age - compute age of an XID (relative to latest transaction id
- * allocated in system)
- *
- * ReadNewTransactionId() is used here instead of GetTopTransactionId(), as
- * this function may be called on QE Reader and with laxy XID try to allocate
- * XID as QE Reader which is not allowed.
-=======
  *		xidneq			- are two xids different?
  */
 Datum
@@ -157,7 +149,14 @@ xidneq(PG_FUNCTION_ARGS)
 
 /*
  *		xid_age			- compute age of an XID (relative to latest stable xid)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+ *
+ * ReadNewTransactionId() is used here instead of GetTopTransactionId(), as
+ * this function may be called on QE Reader and with laxy XID try to allocate
+ * XID as QE Reader which is not allowed.
+ *
+ * GPDB_96_MERGE_FIXME: Upstream uses GetStableLatestTransactionId() nowadays,
+ * and looking at what it does, I think it should work. Try reverting this to
+ * upstream version and see if it works.
  */
 Datum
 xid_age(PG_FUNCTION_ARGS)

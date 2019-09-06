@@ -1,13 +1,9 @@
 /*
  * PostgreSQL System Views
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  *
  * src/backend/catalog/system_views.sql
  *
@@ -686,7 +682,6 @@ CREATE VIEW pg_stat_replication AS
     WHERE S.usesysid = U.oid AND
             S.pid = W.pid;
 
-<<<<<<< HEAD
 CREATE FUNCTION gp_stat_get_master_replication() RETURNS SETOF RECORD AS
 $$
     SELECT pg_catalog.gp_execution_segment() AS gp_segment_id, *
@@ -739,7 +734,7 @@ CREATE VIEW gp_stat_replication AS
          replay_location pg_lsn, sync_priority integer, sync_state text)
          ON G.gp_segment_id = R.gp_segment_id
     );
-=======
+
 CREATE VIEW pg_stat_wal_receiver AS
     SELECT
             s.pid,
@@ -756,7 +751,6 @@ CREATE VIEW pg_stat_wal_receiver AS
             s.conninfo
     FROM pg_stat_get_wal_receiver() s
     WHERE s.pid IS NOT NULL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 CREATE VIEW pg_stat_ssl AS
     SELECT
@@ -1475,10 +1469,7 @@ CREATE OR REPLACE FUNCTION pg_create_physical_replication_slot(
     OUT slot_name name, OUT xlog_position pg_lsn)
 RETURNS RECORD
 LANGUAGE INTERNAL
-<<<<<<< HEAD
-=======
 STRICT VOLATILE
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 AS 'pg_create_physical_replication_slot';
 
 CREATE OR REPLACE FUNCTION
@@ -1498,7 +1489,6 @@ LANGUAGE INTERNAL
 STRICT IMMUTABLE PARALLEL SAFE
 AS 'jsonb_set';
 
-<<<<<<< HEAD
 -- pg_tablespace_location wrapper functions to see Greenplum cluster-wide tablespace locations
 CREATE FUNCTION gp_tablespace_segment_location (IN tblspc_oid oid, OUT gp_segment_id int, OUT tblspc_loc text)
 AS 'SELECT pg_catalog.gp_execution_segment() as gp_segment_id, * FROM pg_catalog.pg_tablespace_location($1)'
@@ -1511,7 +1501,7 @@ AS
    UNION ALL
    SELECT pg_catalog.gp_execution_segment() as gp_segment_id, * FROM pg_catalog.pg_tablespace_location($1)'
 LANGUAGE SQL EXECUTE ON MASTER;
-=======
+
 CREATE OR REPLACE FUNCTION
   parse_ident(str text, strict boolean DEFAULT true)
 RETURNS text[]
@@ -1547,4 +1537,3 @@ REVOKE EXECUTE ON FUNCTION pg_stat_reset() FROM public;
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_shared(text) FROM public;
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_single_table_counters(oid) FROM public;
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_single_function_counters(oid) FROM public;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

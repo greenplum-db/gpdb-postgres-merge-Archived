@@ -46,11 +46,8 @@
 #include "postmaster/autovacuum.h"
 #include "replication/slot.h"
 #include "replication/syncrep.h"
-<<<<<<< HEAD
 #include "replication/walsender.h"
-=======
 #include "storage/standby.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "storage/ipc.h"
 #include "storage/spin.h"
 #include "storage/sinval.h"
@@ -394,7 +391,7 @@ InitProcess(void)
 			 MyProcPid, MyProc, MyProc->links.next);
 	}
 
-	int mppLocalProcessSerial = pg_atomic_add_fetch_u32((pg_atomic_uint32 *)&procglobal->mppLocalProcessCounter, 1);
+	int mppLocalProcessSerial = pg_atomic_add_fetch_u32((pg_atomic_uint32 *)&ProcGlobal->mppLocalProcessCounter, 1);
 
 	lockHolderProcPtr = MyProc;
 
@@ -1052,11 +1049,7 @@ ProcKill(int code, Datum arg)
 	}
 
 	/* Update shared estimate of spins_per_delay */
-<<<<<<< HEAD
 	update_spins_per_delay();
-=======
-	ProcGlobal->spins_per_delay = update_spins_per_delay(ProcGlobal->spins_per_delay);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	SpinLockRelease(ProcStructLock);
 
@@ -1981,7 +1974,6 @@ ProcSendSignal(int pid)
 }
 
 /*
-<<<<<<< HEAD
  * ResProcSleep -- put a process to sleep (that is waiting for a resource lock).
  *
  * Notes:
@@ -2162,7 +2154,9 @@ void ProcNewMppSessionId(int *newSessionId)
 
     	MySessionState->sessionId = *newSessionId;
     }
-=======
+}
+
+/*
  * BecomeLockGroupLeader - designate process as lock group leader
  *
  * Once this function has returned, other processes can join the lock group
@@ -2234,5 +2228,4 @@ BecomeLockGroupMember(PGPROC *leader, int pid)
 	LWLockRelease(leader_lwlock);
 
 	return ok;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }

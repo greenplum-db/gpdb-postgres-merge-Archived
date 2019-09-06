@@ -1012,11 +1012,7 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 		case RELPERSISTENCE_TEMP:
 			if (isTempOrTempToastNamespace(relation->rd_rel->relnamespace))
 			{
-<<<<<<< HEAD
-				relation->rd_backend = TempRelBackendId;
-=======
 				relation->rd_backend = BackendIdForTempRelations();
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				relation->rd_islocaltemp = true;
 			}
 			else
@@ -1614,12 +1610,8 @@ LookupOpclassInfo(Oid operatorClassOid,
  *		catalogs.
  *
  * formrdesc is currently used for: pg_database, pg_authid, pg_auth_members,
-<<<<<<< HEAD
- * pg_class, pg_attribute, pg_proc, and pg_type
- * In GPDB, also: pg_auth_time_constraint.
-=======
  * pg_shseclabel, pg_class, pg_attribute, pg_proc, and pg_type
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+ * In GPDB, also: pg_auth_time_constraint.
  * (see RelationCacheInitializePhase2/3).
  *
  * Note that these catalogs can't have constraints (except attnotnull),
@@ -2237,13 +2229,8 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 		pfree(relation->rd_options);
 	if (relation->rd_indextuple)
 		pfree(relation->rd_indextuple);
-<<<<<<< HEAD
 	if (relation->rd_aotuple)
 		pfree(relation->rd_aotuple);
-	if (relation->rd_am)
-		pfree(relation->rd_am);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	if (relation->rd_indexcxt)
 		MemoryContextDelete(relation->rd_indexcxt);
 	if (relation->rd_rulescxt)
@@ -3203,11 +3190,7 @@ RelationBuildLocalRelation(const char *relname,
 			break;
 		case RELPERSISTENCE_TEMP:
 			Assert(isTempOrTempToastNamespace(relnamespace));
-<<<<<<< HEAD
-			rel->rd_backend = TempRelBackendId;
-=======
 			rel->rd_backend = BackendIdForTempRelations();
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			rel->rd_islocaltemp = true;
 			break;
 		default:
@@ -3532,15 +3515,12 @@ RelationCacheInitializePhase2(void)
 				  true, Natts_pg_authid, Desc_pg_authid);
 		formrdesc("pg_auth_members", AuthMemRelation_Rowtype_Id, true,
 				  false, Natts_pg_auth_members, Desc_pg_auth_members);
-<<<<<<< HEAD
-		formrdesc("pg_auth_time_constraint", AuthTimeConstraint_Rowtype_Id, true,
-				  false, Natts_pg_auth_time_constraint, Desc_pg_auth_time_constraint_members);
-=======
 		formrdesc("pg_shseclabel", SharedSecLabelRelation_Rowtype_Id, true,
 				  false, Natts_pg_shseclabel, Desc_pg_shseclabel);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+		formrdesc("pg_auth_time_constraint", AuthTimeConstraint_Rowtype_Id, true,
+				  false, Natts_pg_auth_time_constraint, Desc_pg_auth_time_constraint_members);
 
-#define NUM_CRITICAL_SHARED_RELS	4	/* fix if you change list above */
+#define NUM_CRITICAL_SHARED_RELS	5	/* fix if you change list above */
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -3668,15 +3648,11 @@ RelationCacheInitializePhase3(void)
 	 * non-shared catalogs at all.  Autovacuum calls InitPostgres with a
 	 * database OID, so it instead depends on DatabaseOidIndexId.  We also
 	 * need to nail up some indexes on pg_authid and pg_auth_members for use
-<<<<<<< HEAD
-	 * during client authentication.
-	 *
-	 * GPDB: pg_auth_time_constraint is added to the above list.
-=======
 	 * during client authentication.  SharedSecLabelObjectIndexId isn't
 	 * critical for the core system, but authentication hooks might be
 	 * interested in it.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	 *
+	 * GPDB: pg_auth_time_constraint is added to the above list.
 	 */
 	if (!criticalSharedRelcachesBuilt)
 	{
@@ -3690,15 +3666,12 @@ RelationCacheInitializePhase3(void)
 							AuthIdRelationId);
 		load_critical_index(AuthMemMemRoleIndexId,
 							AuthMemRelationId);
-<<<<<<< HEAD
-		load_critical_index(AuthTimeConstraintAuthIdIndexId,
-							AuthTimeConstraintRelationId);
-=======
 		load_critical_index(SharedSecLabelObjectIndexId,
 							SharedSecLabelRelationId);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+		load_critical_index(AuthTimeConstraintAuthIdIndexId,
+							AuthTimeConstraintRelationId);
 
-#define NUM_CRITICAL_SHARED_INDEXES 6	/* fix if you change list above */
+#define NUM_CRITICAL_SHARED_INDEXES 7	/* fix if you change list above */
 
 		criticalSharedRelcachesBuilt = true;
 	}

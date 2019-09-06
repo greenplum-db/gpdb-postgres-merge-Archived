@@ -2364,17 +2364,6 @@ do_autovacuum(void)
 		}
 
 		/*
-<<<<<<< HEAD
-=======
-		 * Ok, good to go.  Store the table in shared memory before releasing
-		 * the lock so that other workers don't vacuum it concurrently.
-		 */
-		MyWorkerInfo->wi_tableoid = relid;
-		MyWorkerInfo->wi_sharedrel = tab->at_sharedrel;
-		LWLockRelease(AutovacuumScheduleLock);
-
-		/*
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		 * Remember the prevailing values of the vacuum cost GUCs.  We have to
 		 * restore these at the bottom of the loop, else we'll compute wrong
 		 * values in the next iteration of autovac_balance_cost().
@@ -2486,11 +2475,7 @@ deleted:
 		LWLockAcquire(AutovacuumScheduleLock, LW_EXCLUSIVE);
 		MyWorkerInfo->wi_tableoid = InvalidOid;
 		MyWorkerInfo->wi_sharedrel = false;
-<<<<<<< HEAD
 		LWLockRelease(AutovacuumScheduleLock);
-=======
-		LWLockRelease(AutovacuumLock);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		/* restore vacuum cost GUCs for the next iteration */
 		VacuumCostDelay = stdVacuumCostDelay;

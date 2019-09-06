@@ -52,17 +52,13 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
-#include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/shmem.h"
 #include "storage/smgr.h"
 #include "storage/spin.h"
-#include "tcop/tcopprot.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
-#include "postmaster/fork_process.h"
-#include "postmaster/postmaster.h"
 
 
 /*----------
@@ -198,7 +194,6 @@ CheckpointerMain(void)
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext checkpointer_context;
 
-	Assert(CheckpointerShmem != NULL);
 	CheckpointerShmem->checkpointer_pid = MyProcPid;
 
 	/*
@@ -229,11 +224,7 @@ CheckpointerMain(void)
 	pqsignal(SIGWINCH, SIG_DFL);
 
 	/* We allow SIGQUIT (quickdie) at all times */
-#ifdef HAVE_SIGPROCMASK
 	sigdelset(&BlockSig, SIGQUIT);
-#else
-	BlockSig &= ~(sigmask(SIGQUIT));
-#endif
 
 	/*
 	 * Initialize so that first time-driven event happens at the correct time.

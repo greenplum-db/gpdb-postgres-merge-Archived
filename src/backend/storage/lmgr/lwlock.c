@@ -379,63 +379,6 @@ NumLWLocksByNamedTranches(void)
 	int			numLocks = 0;
 	int			i;
 
-	/*
-	 * Possibly this logic should be spread out among the affected modules,
-	 * the same way that shmem space estimation is done.  But for now, there
-	 * are few enough users of LWLocks that we can get away with just keeping
-	 * the knowledge here.
-	 */
-
-	/* Predefined LWLocks */
-	numLocks = NUM_FIXED_LWLOCKS;
-
-	/* bufmgr.c needs two for each shared buffer */
-	numLocks += 2 * NBuffers;
-
-	/* proc.c needs one for each backend or auxiliary process */
-	numLocks += MaxBackends + NUM_AUXILIARY_PROCS;
-
-	/* clog.c needs one per CLOG buffer */
-	numLocks += CLOGShmemBuffers();
-
-	/* commit_ts.c needs one per CommitTs buffer */
-	numLocks += CommitTsShmemBuffers();
-
-	/* subtrans.c needs one per SubTrans buffer */
-	numLocks += NUM_SUBTRANS_BUFFERS;
-    
-    /* cdbtm.c needs one lock */
-    numLocks++;
-    
-    /* cdbfts.c needs one lock */
-    numLocks++;
-
-	/* multixact.c needs two SLRU areas */
-	numLocks += NUM_MXACTOFFSET_BUFFERS + NUM_MXACTMEMBER_BUFFERS;
-
-	/* async.c needs one per Async buffer */
-	numLocks += NUM_ASYNC_BUFFERS;
-
-	/* predicate.c needs one per old serializable xid buffer */
-	numLocks += NUM_OLDSERXID_BUFFERS;
-
-	/* cdbdistributedlog.c needs one per DistributedLog buffer */
-	numLocks += NUM_DISTRIBUTEDLOG_BUFFERS;
-
-	/* sharedsnapshot.c needs one per shared snapshot slot */
-	numLocks += NUM_SHARED_SNAPSHOT_SLOTS;
-
-	/* slot.c needs one for each slot */
-	numLocks += max_replication_slots;
-
-	/*
-	 * Add any requested by loadable modules; for backwards-compatibility
-	 * reasons, allocate at least NUM_USER_DEFINED_LWLOCKS of them even if
-	 * there are no explicit requests.
-	 */
-	lock_addin_request_allowed = false;
-	numLocks += Max(lock_addin_request, NUM_USER_DEFINED_LWLOCKS);
-
 	for (i = 0; i < NamedLWLockTrancheRequests; i++)
 		numLocks += NamedLWLockTrancheRequestArray[i].num_lwlocks;
 
@@ -1317,7 +1260,6 @@ LWLockAcquire(LWLock *lock, LWLockMode mode)
 	for (;;)
 	{
 		bool		mustwait;
-		int			c;
 
 		/*
 		 * Try to grab the lock the first time, we're not in the waitqueue

@@ -1011,18 +1011,6 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	plan->stmt_list = plist;
 
 	/*
-<<<<<<< HEAD
-	 * In GPDB, the planner is more aggressive, and e.g. eagerly evaluates
-	 * stable functions in the planner already. Such plans are marked as
-	 * 'one-off', and mustn't be reused. Likewise, plans for CTAS are not
-	 * reused, because the plan depends on the target data distribution.
-	 */
-	if (plan_list_is_oneoff(plist) || intoClause)
-	{
-		plan->saved_xmin = BootstrapTransactionId;
-	}
-	else if (plan_list_is_transient(plist))
-=======
 	 * CachedPlan is dependent on role either if RLS affected the rewrite
 	 * phase or if a role dependency was injected during planning.  And it's
 	 * transient if any plan is marked so.
@@ -1042,8 +1030,17 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 		if (plannedstmt->dependsOnRole)
 			plan->dependsOnRole = true;
 	}
-	if (is_transient)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	/*
+	 * In GPDB, the planner is more aggressive, and e.g. eagerly evaluates
+	 * stable functions in the planner already. Such plans are marked as
+	 * 'one-off', and mustn't be reused. Likewise, plans for CTAS are not
+	 * reused, because the plan depends on the target data distribution.
+	 */
+	if (plan_list_is_oneoff(plist) || intoClause)
+	{
+		plan->saved_xmin = BootstrapTransactionId;
+	}
+	else if (is_transient)
 	{
 		Assert(TransactionIdIsNormal(TransactionXmin));
 		plan->saved_xmin = TransactionXmin;
