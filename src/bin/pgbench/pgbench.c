@@ -249,16 +249,8 @@ typedef struct
 	PGconn	   *con;			/* connection handle to DB */
 	int			id;				/* client No. */
 	int			state;			/* state No. */
-<<<<<<< HEAD
-	int			cnt;			/* xacts count */
-	int			ecnt;			/* error count */
-	int			listen;			/* 1 indicates that an async query has been
-								 * sent */
-	int			sleeping;		/* 1 indicates that the client is napping */
-=======
 	bool		listen;			/* whether an async query has been sent */
 	bool		sleeping;		/* whether the client is napping */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	bool		throttling;		/* whether nap is for throttling */
 	bool		is_throttled;	/* whether transaction throttling is done */
 	Variable   *variables;		/* array of variable definitions */
@@ -1848,13 +1840,9 @@ top:
 			}
 		}
 
-<<<<<<< HEAD
 		st->txn_scheduled = thread->throttle_trigger;
 		st->sleep_until = st->txn_scheduled;
-		st->sleeping = 1;
-=======
 		st->sleeping = true;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		st->throttling = true;
 		st->is_throttled = true;
 		if (debug)
@@ -1866,26 +1854,7 @@ top:
 	{							/* are we sleeping? */
 		if (INSTR_TIME_IS_ZERO(now))
 			INSTR_TIME_SET_CURRENT(now);
-<<<<<<< HEAD
-		now_us = INSTR_TIME_GET_MICROSEC(now);
-		if (st->sleep_until <= now_us)
-		{
-			st->sleeping = 0;	/* Done sleeping, go ahead with next command */
-			if (st->throttling)
-			{
-				/* Measure lag of throttled transaction relative to target */
-				int64		lag = now_us - st->txn_scheduled;
-
-				thread->throttle_lag += lag;
-				if (lag > thread->throttle_lag_max)
-					thread->throttle_lag_max = lag;
-				st->throttling = false;
-			}
-		}
-		else
-=======
 		if (INSTR_TIME_GET_MICROSEC(now) < st->txn_scheduled)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			return true;		/* Still sleeping, nothing to do here */
 		/* Else done sleeping, go ahead with next command */
 		st->sleeping = false;
@@ -2004,19 +1973,11 @@ top:
 			return clientDone(st);
 		}
 		INSTR_TIME_SET_CURRENT(end);
-<<<<<<< HEAD
-		INSTR_TIME_ACCUM_DIFF(*conn_time, end, start);
-
-		/* Reset session-local state */
-		st->listen = 0;
-		st->sleeping = 0;
-=======
 		INSTR_TIME_ACCUM_DIFF(thread->conn_time, end, start);
 
 		/* Reset session-local state */
 		st->listen = false;
 		st->sleeping = false;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		st->throttling = false;
 		st->is_throttled = false;
 		memset(st->prepared, 0, sizeof(st->prepared));
@@ -2191,13 +2152,9 @@ top:
 				usec *= 1000000;
 
 			INSTR_TIME_SET_CURRENT(now);
-<<<<<<< HEAD
 			st->sleep_until = INSTR_TIME_GET_MICROSEC(now) + usec;
-			st->sleeping = 1;
-=======
 			st->txn_scheduled = INSTR_TIME_GET_MICROSEC(now) + usec;
 			st->sleeping = true;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 			st->listen = true;
 		}
@@ -3371,17 +3328,9 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 	if (throttle_delay || progress || latency_limit)
 		printSimpleStats("latency", &total->latency);
 	else
-<<<<<<< HEAD
-	{
-		/* no measurement, show average latency computed from run time */
-		printf("latency average: %.3f ms\n",
-			   1000.0 * time_include * nclients / normal_xacts);
-	}
-=======
 		/* only an average latency computed from the duration is available */
 		printf("latency average: %.3f ms\n",
 			   1000.0 * duration * nclients / total->cnt);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (throttle_delay)
 	{
@@ -3553,11 +3502,7 @@ main(int argc, char **argv)
 	state = (CState *) pg_malloc(sizeof(CState));
 	memset(state, 0, sizeof(CState));
 
-<<<<<<< HEAD
-	while ((c = getopt_long(argc, argv, "ih:nvp:dqSNc:j:Crs:t:T:U:lf:D:F:M:P:R:L:x:", long_options, &optindex)) != -1)
-=======
 	while ((c = getopt_long(argc, argv, "ih:nvp:dqb:SNc:j:Crs:t:T:U:lf:D:F:M:P:R:L:", long_options, &optindex)) != -1)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		char	   *script;
 
@@ -4355,11 +4300,7 @@ threadRun(void *arg)
 			sock = PQsocket(st->con);
 			if (sock < 0)
 			{
-<<<<<<< HEAD
-				fprintf(stderr, "bad socket: %s", PQerrorMessage(st->con));
-=======
 				fprintf(stderr, "invalid socket: %s", PQerrorMessage(st->con));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				goto done;
 			}
 
@@ -4370,15 +4311,11 @@ threadRun(void *arg)
 		}
 
 		/* also wake up to print the next progress report on time */
-<<<<<<< HEAD
 		if (progress && min_usec > 0
 #if !defined(PTHREAD_FORK_EMULATION)
 			&& thread->tid == 0
 #endif   /* !PTHREAD_FORK_EMULATION */
 			)
-=======
-		if (progress && min_usec > 0 && thread->tid == 0)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{
 			/* get current time if needed */
 			if (now_usec == 0)
@@ -4437,24 +4374,15 @@ threadRun(void *arg)
 
 				if (sock < 0)
 				{
-<<<<<<< HEAD
-					fprintf(stderr, "bad socket: %s", PQerrorMessage(st->con));
-=======
 					fprintf(stderr, "invalid socket: %s",
 							PQerrorMessage(st->con));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 					goto done;
 				}
 				if (FD_ISSET(sock, &input_mask) ||
 					commands[st->state]->type == META_COMMAND)
 				{
-<<<<<<< HEAD
-					if (!doCustom(thread, st, &result->conn_time, logfile, &aggs))
-						remains--;	/* I've aborted */
-=======
 					if (!doCustom(thread, st, &aggs))
 						remains--;		/* I've aborted */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				}
 			}
 
@@ -4468,7 +4396,6 @@ threadRun(void *arg)
 			}
 		}
 
-<<<<<<< HEAD
 #ifdef PTHREAD_FORK_EMULATION
 		/* each process reports its own progression */
 		if (progress)
@@ -4539,8 +4466,6 @@ threadRun(void *arg)
 			}
 		}
 #else
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		/* progress report by thread 0 for all threads */
 		if (progress && thread->tid == 0)
 		{
@@ -4613,10 +4538,6 @@ threadRun(void *arg)
 
 				last = cur;
 				last_report = now;
-<<<<<<< HEAD
-				last_skipped = thread->throttle_latency_skipped;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 				/*
 				 * Ensure that the next report is in the future, in case
