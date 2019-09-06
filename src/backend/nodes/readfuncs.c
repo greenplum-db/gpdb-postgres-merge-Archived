@@ -108,9 +108,6 @@
 /* Read an OID field (don't hard-wire assumption that OID is same as uint) */
 #define READ_OID_FIELD(fldname)     READ_SCALAR_FIELD(fldname, atooid(token))
 
-/* Read a long-integer field (anything written as ":fldname %ld") */
-#define READ_LONG_FIELD(fldname)    READ_SCALAR_FIELD(fldname, atol(token))
-
 /*
  * extended_char
  *    In GPDB some structures have char fields with non-printing characters
@@ -205,99 +202,6 @@ inline static char extended_char(char* token, size_t length)
 /* Routine exit */
 #define READ_DONE() \
 	return local_node
-
-/* Read an integer array (anything written as ":fldname %d %d ...") */
-#define READ_INT_ARRAY(fldname, count, Type) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	if ( local_node->count > 0 ) \
-	{ \
-		int i; \
-		local_node->fldname = (Type *)palloc(local_node->count * sizeof(Type)); \
-		for(i=0; i<local_node->count; i++) \
-		{ \
-			token = pg_strtok(&length);		/* get field value */ \
-			local_node->fldname[i] = (Type) atoi(token); \
-		} \
-	}
-
-/* Read optional integer array (":fldname %d %d ..." or ":fldname <>") */
-#define READ_INT_ARRAY_OR_NULL(fldname, count, Type) \
-	if ( local_node->count > 0 && \
-         NULL != (token = pg_strtok(&length)) &&    /* skip :fldname */ \
-         NULL != (token = pg_strtok(&length)) &&    /* first value or <> */ \
-         length > 0 )                               /* proceed if isn't <> */ \
-	{ \
-		int i; \
-		local_node->fldname = (Type *)palloc(local_node->count * sizeof(Type)); \
-        local_node->fldname[0] = (Type) atoi(token); \
-		for(i=1; i<local_node->count; i++) \
-		{ \
-            token = pg_strtok(&length);		/* get field value */ \
-            local_node->fldname[i] = (Type) atoi(token); \
-		} \
-	}
-
-/* Read an unsigned integer array (anything written as ":fldname %u %u ...") */
-#define READ_UINT_ARRAY(fldname, count, Type) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	if ( local_node->count > 0 ) \
-	{ \
-		int i; \
-		local_node->fldname = (Type *)palloc(local_node->count * sizeof(Type)); \
-		for(i=0; i<local_node->count; i++) \
-		{ \
-			token = pg_strtok(&length);		/* get field value */ \
-			local_node->fldname[i] = (Type) atoui(token); \
-		} \
-	}
-
-/* Read optional unsigned integer array (":fldname %u %u ..." or ":fldname <>") */
-#define READ_UINT_ARRAY_OR_NULL(fldname, count, Type) \
-	if ( local_node->count > 0 && \
-         NULL != (token = pg_strtok(&length)) &&    /* skip :fldname */ \
-         NULL != (token = pg_strtok(&length)) &&    /* first value or <> */ \
-         length > 0 )                               /* proceed if isn't <> */ \
-	{ \
-		int i; \
-		local_node->fldname = (Type *)palloc(local_node->count * sizeof(Type)); \
-        local_node->fldname[0] = (Type) atoui(token); \
-		for(i=1; i<local_node->count; i++) \
-		{ \
-            token = pg_strtok(&length);		/* get field value */ \
-            local_node->fldname[i] = (Type) atoui(token); \
-		} \
-	}
-
-
-/* Read an Trasnaction ID array (written as ":fldname %u %u ... ") */
-#define READ_XID_ARRAY(fldname, count) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	if ( local_node->count > 0 ) \
-	{ \
-		int i; \
-		local_node->fldname = (TransactionId *)palloc(local_node->count * sizeof(TransactionId)); \
-		for(i=0; i<local_node->count; i++) \
-		{ \
-			token = pg_strtok(&length);		/* get field value */ \
-			local_node->fldname[i] = ((TransactionId) strtoul((token), NULL, 10)); \
-		} \
-	}
-
-
-
-/* Read an Oid array (written as ":fldname %u %u ...") */
-#define READ_OID_ARRAY(fldname, count) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	if ( local_node->count > 0 ) \
-	{ \
-		int i; \
-		local_node->fldname = (Oid *)palloc(local_node->count * sizeof(Oid)); \
-		for(i=0; i<local_node->count; i++) \
-		{ \
-			token = pg_strtok(&length);		/* get field value */ \
-			local_node->fldname[i] = atooid(token); \
-		} \
-	}
 
 /*
  * NOTE: use atoi() to read values written with %d, or atoui() to read
@@ -1239,19 +1143,6 @@ _readFuncCall(void)
 	READ_BOOL_FIELD(func_variadic);
 	READ_NODE_FIELD(over);
 	READ_LOCATION_FIELD(location);
-
-	READ_DONE();
-}
-
-static DefElem *
-_readDefElem(void)
-{
-	READ_LOCALS(DefElem);
-
-	READ_STRING_FIELD(defnamespace);
-	READ_STRING_FIELD(defname);
-	READ_NODE_FIELD(arg);
-	READ_ENUM_FIELD(defaction, DefElemAction);
 
 	READ_DONE();
 }
@@ -2410,11 +2301,14 @@ _readPlannedStmt(void)
 	READ_LOCALS(PlannedStmt);
 
 	READ_ENUM_FIELD(commandType, CmdType);
+	READ_ENUM_FIELD(planGen, PlanGenerator);
 	READ_UINT_FIELD(queryId);
 	READ_BOOL_FIELD(hasReturning);
 	READ_BOOL_FIELD(hasModifyingCTE);
 	READ_BOOL_FIELD(canSetTag);
 	READ_BOOL_FIELD(transientPlan);
+	READ_BOOL_FIELD(oneoffPlan);
+	READ_BOOL_FIELD(simplyUpdatable);
 	READ_BOOL_FIELD(dependsOnRole);
 	READ_BOOL_FIELD(parallelModeNeeded);
 	READ_NODE_FIELD(planTree);
@@ -2423,9 +2317,18 @@ _readPlannedStmt(void)
 	READ_NODE_FIELD(utilityStmt);
 	READ_NODE_FIELD(subplans);
 	READ_BITMAPSET_FIELD(rewindPlanIDs);
+	READ_NODE_FIELD(result_partitions);
+	READ_NODE_FIELD(result_aosegnos);
+	READ_NODE_FIELD(queryPartOids);
+	READ_NODE_FIELD(queryPartsMetadata);
+	READ_NODE_FIELD(numSelectorsPerScanId);
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(relationOids);
+
+	/* invalItems not serialized in outfast.c */
+#ifndef COMPILING_BINARY_FUNCS
 	READ_NODE_FIELD(invalItems);
+#endif /* COMPILING_BINARY_FUNCS */
 	READ_INT_FIELD(nParamExec);
 
 	READ_DONE();
@@ -2451,8 +2354,17 @@ ReadCommonPlan(Plan *local_node)
 	READ_NODE_FIELD(lefttree);
 	READ_NODE_FIELD(righttree);
 	READ_NODE_FIELD(initPlan);
+
 	READ_BITMAPSET_FIELD(extParam);
 	READ_BITMAPSET_FIELD(allParam);
+
+	READ_NODE_FIELD(flow);
+	READ_INT_FIELD(dispatch);
+	READ_BOOL_FIELD(directDispatch.isDirectDispatch);
+	READ_NODE_FIELD(directDispatch.contentIds);
+	READ_INT_FIELD(nMotionNodes);
+	READ_INT_FIELD(nInitPlans);
+	READ_NODE_FIELD(sliceTable);
 }
 
 /*
@@ -2479,6 +2391,10 @@ _readResult(void)
 	ReadCommonPlan(&local_node->plan);
 
 	READ_NODE_FIELD(resconstantqual);
+
+	READ_INT_FIELD(numHashFilterCols);
+	READ_ATTRNUMBER_ARRAY(hashFilterColIdx, local_node->numHashFilterCols);
+	READ_OID_ARRAY(hashFilterFuncs, local_node->numHashFilterCols);
 
 	READ_DONE();
 }
@@ -2511,6 +2427,9 @@ _readModifyTable(void)
 	READ_NODE_FIELD(onConflictWhere);
 	READ_UINT_FIELD(exclRelRTI);
 	READ_NODE_FIELD(exclRelTlist);
+	READ_NODE_FIELD(action_col_idxes);
+	READ_NODE_FIELD(ctid_col_idxes);
+	READ_NODE_FIELD(oid_col_idxes);
 
 	READ_DONE();
 }
@@ -2657,12 +2576,39 @@ _readSampleScan(void)
 /*
  * _readIndexScan
  */
+static void readIndexScanFields(IndexScan *local_node);
+static LogicalIndexInfo *readLogicalIndexInfo(void);
+
 static IndexScan *
 _readIndexScan(void)
 {
-	READ_LOCALS(IndexScan);
+	READ_LOCALS_NO_FIELDS(IndexScan);
 
 	ReadCommonScan(&local_node->scan);
+
+	readIndexScanFields(local_node);
+
+	READ_DONE();
+}
+
+static DynamicIndexScan *
+_readDynamicIndexScan(void)
+{
+	READ_LOCALS(DynamicIndexScan);
+
+	/* DynamicIndexScan has some content from IndexScan. */
+	readIndexScanFields(&local_node->indexscan);
+	READ_INT_FIELD(partIndex);
+	READ_INT_FIELD(partIndexPrintable);
+	local_node->logicalIndexInfo = readLogicalIndexInfo();
+
+	READ_DONE();
+}
+
+static void
+readIndexScanFields(IndexScan *local_node)
+{
+	READ_TEMP_LOCALS();
 
 	READ_OID_FIELD(indexid);
 	READ_NODE_FIELD(indexqual);
@@ -2671,8 +2617,28 @@ _readIndexScan(void)
 	READ_NODE_FIELD(indexorderbyorig);
 	READ_NODE_FIELD(indexorderbyops);
 	READ_ENUM_FIELD(indexorderdir, ScanDirection);
+}
 
-	READ_DONE();
+
+static LogicalIndexInfo *
+readLogicalIndexInfo(void)
+{
+	READ_TEMP_LOCALS();
+	LogicalIndexInfo *local_node = palloc(sizeof(LogicalIndexInfo));
+
+	READ_OID_FIELD(logicalIndexOid);
+	READ_INT_FIELD(nColumns);
+	READ_ATTRNUMBER_ARRAY(indexKeys, local_node->nColumns);
+	READ_NODE_FIELD(indPred);
+	READ_NODE_FIELD(indExprs);
+	READ_BOOL_FIELD(indIsUnique);
+	READ_ENUM_FIELD(indType, LogicalIndexType);
+	READ_NODE_FIELD(partCons);
+	READ_NODE_FIELD(defaultLevels);
+
+	/* No READ_DONE, this is "embedded" in other structs */
+
+	return local_node;
 }
 
 /*
@@ -2722,6 +2688,20 @@ _readBitmapHeapScan(void)
 	ReadCommonScan(&local_node->scan);
 
 	READ_NODE_FIELD(bitmapqualorig);
+	/* GPDB NOTE: if new nodes are added here, make sure _readDynamicBitmapHeapScan() stays in sync */
+
+	READ_DONE();
+}
+
+static DynamicBitmapHeapScan *
+_readDynamicBitmapHeapScan(void)
+{
+	READ_LOCALS(DynamicBitmapHeapScan);
+
+	/* DynamicBitmapHeapScan has some content from BitmapHeapScan. */
+	READ_NODE_FIELD(bitmapheapscan.bitmapqualorig);
+	READ_INT_FIELD(partIndex);
+	READ_INT_FIELD(partIndexPrintable);
 
 	READ_DONE();
 }
@@ -2752,6 +2732,21 @@ _readSubqueryScan(void)
 	ReadCommonScan(&local_node->scan);
 
 	READ_NODE_FIELD(subplan);
+
+	READ_DONE();
+}
+
+/*
+ * _readTableFunctionScan
+ */
+static TableFunctionScan *
+_readTableFunctionScan(void)
+{
+	READ_LOCALS(TableFunctionScan);
+
+	ReadCommonScan(&local_node->scan);
+
+	READ_NODE_FIELD(function);
 
 	READ_DONE();
 }
@@ -2840,6 +2835,7 @@ _readForeignScan(void)
 	READ_DONE();
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 /*
  * _readCustomScan
  */
@@ -2868,6 +2864,7 @@ _readCustomScan(void)
 
 	READ_DONE();
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
 /*
  * ReadCommonJoin
@@ -2879,6 +2876,9 @@ ReadCommonJoin(Join *local_node)
 	READ_TEMP_LOCALS();
 
 	ReadCommonPlan(&local_node->plan);
+
+	READ_BOOL_FIELD(prefetch_inner);
+	READ_BOOL_FIELD(prefetch_joinqual);
 
 	READ_ENUM_FIELD(jointype, JoinType);
 	READ_NODE_FIELD(joinqual);
@@ -2909,6 +2909,9 @@ _readNestLoop(void)
 
 	READ_NODE_FIELD(nestParams);
 
+	READ_BOOL_FIELD(shared_outer);
+	READ_BOOL_FIELD(singleton_outer); /*CDB-OLAP*/
+
 	READ_DONE();
 }
 
@@ -2932,6 +2935,7 @@ _readMergeJoin(void)
 	READ_OID_ARRAY(mergeCollations, numCols);
 	READ_INT_ARRAY(mergeStrategies, numCols);
 	READ_BOOL_ARRAY(mergeNullsFirst, numCols);
+	READ_BOOL_FIELD(unique_outer);
 
 	READ_DONE();
 }
@@ -2947,6 +2951,7 @@ _readHashJoin(void)
 	ReadCommonJoin(&local_node->join);
 
 	READ_NODE_FIELD(hashclauses);
+	READ_NODE_FIELD(hashqualclauses);
 
 	READ_DONE();
 }
@@ -2980,22 +2985,14 @@ _readSort(void)
 	READ_OID_ARRAY(collations, local_node->numCols);
 	READ_BOOL_ARRAY(nullsFirst, local_node->numCols);
 
-	READ_DONE();
-}
+    /* CDB */
+	READ_BOOL_FIELD(noduplicates);
 
-/*
- * _readGroup
- */
-static Group *
-_readGroup(void)
-{
-	READ_LOCALS(Group);
-
-	ReadCommonPlan(&local_node->plan);
-
-	READ_INT_FIELD(numCols);
-	READ_ATTRNUMBER_ARRAY(grpColIdx, local_node->numCols);
-	READ_OID_ARRAY(grpOperators, local_node->numCols);
+	READ_ENUM_FIELD(share_type, ShareType);
+	READ_INT_FIELD(share_id);
+	READ_INT_FIELD(driver_slice);
+	READ_INT_FIELD(nsharer);
+	READ_INT_FIELD(nsharer_xslice);
 
 	READ_DONE();
 }
@@ -3018,6 +3015,7 @@ _readAgg(void)
 	READ_LONG_FIELD(numGroups);
 	READ_NODE_FIELD(groupingSets);
 	READ_NODE_FIELD(chain);
+	READ_BOOL_FIELD(streaming);
 
 	READ_DONE();
 }
@@ -3039,6 +3037,9 @@ _readWindowAgg(void)
 	READ_INT_FIELD(ordNumCols);
 	READ_ATTRNUMBER_ARRAY(ordColIdx, local_node->ordNumCols);
 	READ_OID_ARRAY(ordOperators, local_node->ordNumCols);
+	READ_INT_FIELD(firstOrderCol);
+	READ_OID_FIELD(firstOrderCmpOperator);
+	READ_BOOL_FIELD(firstOrderNullsFirst);
 	READ_INT_FIELD(frameOptions);
 	READ_NODE_FIELD(startOffset);
 	READ_NODE_FIELD(endOffset);
@@ -3095,6 +3096,8 @@ _readHash(void)
 	READ_BOOL_FIELD(skewInherit);
 	READ_OID_FIELD(skewColType);
 	READ_INT_FIELD(skewColTypmod);
+
+    READ_BOOL_FIELD(rescannable);           /*CDB*/
 
 	READ_DONE();
 }
@@ -3183,6 +3186,7 @@ _readPlanRowMark(void)
 	READ_ENUM_FIELD(strength, LockClauseStrength);
 	READ_ENUM_FIELD(waitPolicy, LockWaitPolicy);
 	READ_BOOL_FIELD(isParent);
+	READ_BOOL_FIELD(canOptSelectLockingClause);
 
 	READ_DONE();
 }
@@ -3209,6 +3213,7 @@ _readSubPlan(void)
 {
 	READ_LOCALS(SubPlan);
 
+    READ_INT_FIELD(qDispSliceId);   /*CDB*/
 	READ_ENUM_FIELD(subLinkType, SubLinkType);
 	READ_NODE_FIELD(testexpr);
 	READ_NODE_FIELD(paramIds);
@@ -3219,11 +3224,14 @@ _readSubPlan(void)
 	READ_OID_FIELD(firstColCollation);
 	READ_BOOL_FIELD(useHashTable);
 	READ_BOOL_FIELD(unknownEqFalse);
+	READ_BOOL_FIELD(is_initplan); /*CDB*/
+	READ_BOOL_FIELD(is_multirow); /*CDB*/
 	READ_NODE_FIELD(setParam);
 	READ_NODE_FIELD(parParam);
 	READ_NODE_FIELD(args);
 	READ_FLOAT_FIELD(startup_cost);
 	READ_FLOAT_FIELD(per_call_cost);
+	READ_BOOL_FIELD(initPlanParallel); /*CDB*/
 
 	READ_DONE();
 }
@@ -3241,6 +3249,7 @@ _readAlternativeSubPlan(void)
 	READ_DONE();
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 /*
  * _readExtensibleNode
  */
@@ -3270,7 +3279,7 @@ _readExtensibleNode(void)
 
 	READ_DONE();
 }
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+#endif /* COMPILING_BINARY_FUNCS */
 
 #ifndef COMPILING_BINARY_FUNCS
 static CreateStmt *
@@ -3318,8 +3327,8 @@ _readPartition(void)
 	READ_INT_FIELD(parlevel);
 	READ_BOOL_FIELD(paristemplate);
 	READ_INT_FIELD(parnatts);
-	READ_INT_ARRAY(paratts, parnatts, int16);
-	READ_OID_ARRAY(parclass, parnatts);
+	READ_ATTRNUMBER_ARRAY(paratts, local_node->parnatts);
+	READ_OID_ARRAY(parclass, local_node->parnatts);
 
 	READ_DONE();
 }
@@ -3799,7 +3808,7 @@ _readCreatePolicyStmt()
 
 	READ_STRING_FIELD(policy_name);
 	READ_NODE_FIELD(table);
-	READ_STRING_FIELD(cmd);
+	READ_STRING_FIELD(cmd_name);
 	READ_NODE_FIELD(roles);
 	READ_NODE_FIELD(qual);
 	READ_NODE_FIELD(with_check);
@@ -4080,7 +4089,7 @@ parseNodeString(void)
 		return_value = _readRangeTblEntry();
 	else if (MATCH("RANGETBLFUNCTION", 16))
 		return_value = _readRangeTblFunction();
-	else if (MATCH("TABLESAMPLECLAUSE", 17))
+	else if (MATCH("TABLESAMPLECL", 17))
 		return_value = _readTableSampleClause();
 	else if (MATCH("NOTIFY", 6))
 		return_value = _readNotifyStmt();
@@ -4114,16 +4123,22 @@ parseNodeString(void)
 		return_value = _readSampleScan();
 	else if (MATCH("INDEXSCAN", 9))
 		return_value = _readIndexScan();
+	else if (MATCH("DYNAMICINDEXSCAN", 16))
+		return_value = _readDynamicIndexScan();
 	else if (MATCH("INDEXONLYSCAN", 13))
 		return_value = _readIndexOnlyScan();
 	else if (MATCH("BITMAPINDEXSCAN", 15))
 		return_value = _readBitmapIndexScan();
 	else if (MATCH("BITMAPHEAPSCAN", 14))
 		return_value = _readBitmapHeapScan();
+	else if (MATCH("DYNAMICBITMAPHEAPSCAN", 21))
+		return_value = _readDynamicBitmapHeapScan();
 	else if (MATCH("TIDSCAN", 7))
 		return_value = _readTidScan();
 	else if (MATCH("SUBQUERYSCAN", 12))
 		return_value = _readSubqueryScan();
+	else if (MATCH("TABLEFUNCTIONSCAN", 17))
+		return_value = _readTableFunctionScan();
 	else if (MATCH("FUNCTIONSCAN", 12))
 		return_value = _readFunctionScan();
 	else if (MATCH("VALUESSCAN", 10))
@@ -4148,8 +4163,6 @@ parseNodeString(void)
 		return_value = _readMaterial();
 	else if (MATCH("SORT", 4))
 		return_value = _readSort();
-	else if (MATCH("GROUP", 5))
-		return_value = _readGroup();
 	else if (MATCH("AGG", 3))
 		return_value = _readAgg();
 	else if (MATCH("WINDOWAGG", 9))

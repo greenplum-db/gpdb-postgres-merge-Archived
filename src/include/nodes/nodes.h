@@ -716,7 +716,7 @@ extern void outNode(struct StringInfoData *str, const void *obj);
 extern void outToken(struct StringInfoData *str, const char *s);
 extern void outBitmapset(struct StringInfoData *str,
 			 const struct Bitmapset *bms);
-extern void outDatum(struct StringInfoData *str, uintptr_t value,
+extern void outDatum(struct StringInfoData *str, int64 value,
 		 int typlen, bool typbyval);
 
 /*
@@ -732,7 +732,9 @@ extern Node *readNodeFromBinaryString(const char *str, int len);
  */
 extern void *stringToNode(char *str);
 extern struct Bitmapset *readBitmapset(void);
-extern uintptr_t readDatum(bool typbyval);
+// GPDB_96_MERGE_FIXME: this is marked as static in GPDB. Which seems good. Why is it
+// not in PostgreSQL?
+//extern int64 readDatum(bool typbyval);
 extern bool *readBoolCols(int numCols);
 extern int *readIntCols(int numCols);
 extern Oid *readOidCols(int numCols);

@@ -36,11 +36,8 @@
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
 #include "utils/datum.h"
-<<<<<<< HEAD
-#include "cdb/cdbgang.h"
-=======
 #include "utils/rel.h"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+#include "cdb/cdbgang.h"
 
 
 /*
@@ -127,7 +124,7 @@
 /* CDB: Write a Node field, renamed */
 #define WRITE_NODE_FIELD_AS(fldname, asname) \
 	(appendStringInfo(str, " :" CppAsString(asname) " "), \
-	 _outNode(str, node->fldname))
+	 outNode(str, node->fldname))
 
 /* Write a bitmapset field */
 #define WRITE_BITMAPSET_FIELD(fldname) \
@@ -147,11 +144,6 @@
 
 #define booltostr(x)  ((x) ? "true" : "false")
 
-<<<<<<< HEAD
-#ifndef COMPILING_BINARY_FUNCS
-static void _outNode(StringInfo str, const void *obj);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
  * _outToken
@@ -199,6 +191,7 @@ outToken(StringInfo str, const char *s)
 	_outToken(str, s);
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outList(StringInfo str, const List *node)
 {
@@ -235,7 +228,9 @@ _outList(StringInfo str, const List *node)
 
 	appendStringInfoChar(str, ')');
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
+#ifndef COMPILING_BINARY_FUNCS
 /*
  * _outBitmapset -
  *	   converts a bitmap set of integers
@@ -254,6 +249,7 @@ _outBitmapset(StringInfo str, const Bitmapset *bms)
 		appendStringInfo(str, " %d", x);
 	appendStringInfoChar(str, ')');
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
 /* for use by extensions which define extensible nodes */
 void
@@ -297,9 +293,6 @@ outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 	}
 }
 
-#endif /* COMPILING_BINARY_FUNCS */
-
-static void _outPlanInfo(StringInfo str, const Plan *node);
 static void outLogicalIndexInfo(StringInfo str, const LogicalIndexInfo *node);
 
 /*
@@ -319,13 +312,10 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_BOOL_FIELD(hasModifyingCTE);
 	WRITE_BOOL_FIELD(canSetTag);
 	WRITE_BOOL_FIELD(transientPlan);
-<<<<<<< HEAD
 	WRITE_BOOL_FIELD(oneoffPlan);
 	WRITE_BOOL_FIELD(simplyUpdatable);
-=======
 	WRITE_BOOL_FIELD(dependsOnRole);
 	WRITE_BOOL_FIELD(parallelModeNeeded);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	WRITE_NODE_FIELD(planTree);
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(resultRelations);
@@ -342,8 +332,7 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_NODE_FIELD(relationOids);
 	WRITE_NODE_FIELD(invalItems);
 	WRITE_INT_FIELD(nParamExec);
-<<<<<<< HEAD
-	WRITE_BOOL_FIELD(hasRowSecurity);
+
 	WRITE_INT_FIELD(nMotionNodes);
 	WRITE_INT_FIELD(nInitPlans);
 
@@ -379,48 +368,39 @@ _outOidAssignment(StringInfo str, const OidAssignment *node)
 	WRITE_OID_FIELD(keyOid1);
 	WRITE_OID_FIELD(keyOid2);
 	WRITE_OID_FIELD(oid);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 /*
  * print the basic stuff of all nodes that inherit from Plan
  */
 static void
 _outPlanInfo(StringInfo str, const Plan *node)
 {
-	WRITE_INT_FIELD(plan_node_id);
-
 	WRITE_FLOAT_FIELD(startup_cost, "%.2f");
 	WRITE_FLOAT_FIELD(total_cost, "%.2f");
 	WRITE_FLOAT_FIELD(plan_rows, "%.0f");
 	WRITE_INT_FIELD(plan_width);
-<<<<<<< HEAD
-
-=======
 	WRITE_BOOL_FIELD(parallel_aware);
 	WRITE_INT_FIELD(plan_node_id);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	WRITE_NODE_FIELD(targetlist);
 	WRITE_NODE_FIELD(qual);
+	WRITE_NODE_FIELD(lefttree);
+	WRITE_NODE_FIELD(righttree);
+	WRITE_NODE_FIELD(initPlan);
 
 	WRITE_BITMAPSET_FIELD(extParam);
 	WRITE_BITMAPSET_FIELD(allParam);
 
 	WRITE_NODE_FIELD(flow);
 	WRITE_ENUM_FIELD(dispatch, DispatchMethod);
+	WRITE_BOOL_FIELD(directDispatch.isDirectDispatch);
+	WRITE_NODE_FIELD(directDispatch.contentIds);
 	WRITE_INT_FIELD(nMotionNodes);
 	WRITE_INT_FIELD(nInitPlans);
 	WRITE_NODE_FIELD(sliceTable);
 
-	WRITE_NODE_FIELD(lefttree);
-	WRITE_NODE_FIELD(righttree);
-	WRITE_NODE_FIELD(initPlan);
-
 	WRITE_UINT64_FIELD(operatorMemKB);
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 /*
  * print the basic stuff of all nodes that inherit from Scan
@@ -643,9 +623,16 @@ _outSeqScan(StringInfo str, const SeqScan *node)
 }
 
 static void
-<<<<<<< HEAD
 _outDynamicSeqScan(StringInfo str, const DynamicSeqScan *node)
-=======
+{
+	WRITE_NODE_TYPE("DYNAMICSEQSCAN");
+
+	_outScanInfo(str, (Scan *)node);
+	WRITE_INT_FIELD(partIndex);
+	WRITE_INT_FIELD(partIndexPrintable);
+}
+
+static void
 _outSampleScan(StringInfo str, const SampleScan *node)
 {
 	WRITE_NODE_TYPE("SAMPLESCAN");
@@ -653,17 +640,6 @@ _outSampleScan(StringInfo str, const SampleScan *node)
 	_outScanInfo(str, (const Scan *) node);
 
 	WRITE_NODE_FIELD(tablesample);
-}
-
-static void
-_outIndexScan(StringInfo str, const IndexScan *node)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
-{
-	WRITE_NODE_TYPE("DYNAMICSEQSCAN");
-
-	_outScanInfo(str, (Scan *)node);
-	WRITE_INT_FIELD(partIndex);
-	WRITE_INT_FIELD(partIndexPrintable);
 }
 
 static void
@@ -904,21 +880,8 @@ _outCustomScan(StringInfo str, const CustomScan *node)
 	/* CustomName is a key to lookup CustomScanMethods */
 	appendStringInfoString(str, " :methods ");
 	_outToken(str, node->methods->CustomName);
-<<<<<<< HEAD
-	if (node->methods->TextOutCustomScan)
-		node->methods->TextOutCustomScan(str, node);
 }
 #endif /* COMPILING_BINARY_FUNCS */
-
-static void
-_outSampleScan(StringInfo str, const SampleScan *node)
-{
-	WRITE_NODE_TYPE("SAMPLESCAN");
-
-	_outScanInfo(str, (const Scan *) node);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
-}
 
 static void
 _outJoin(StringInfo str, const Join *node)
@@ -970,13 +933,9 @@ _outMergeJoin(StringInfo str, const MergeJoin *node)
 
 	appendStringInfoString(str, " :mergeNullsFirst");
 	for (i = 0; i < numCols; i++)
-<<<<<<< HEAD
-		appendStringInfo(str, " %d", (int) node->mergeNullsFirst[i]);
+		appendStringInfo(str, " %s", booltostr(node->mergeNullsFirst[i]));
 
 	WRITE_BOOL_FIELD(unique_outer);
-=======
-		appendStringInfo(str, " %s", booltostr(node->mergeNullsFirst[i]));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -1522,11 +1481,8 @@ _outAggref(StringInfo str, const Aggref *node)
 	WRITE_BOOL_FIELD(aggvariadic);
 	WRITE_CHAR_FIELD(aggkind);
 	WRITE_UINT_FIELD(agglevelsup);
-<<<<<<< HEAD
 	WRITE_ENUM_FIELD(aggstage, AggStage);
-=======
 	WRITE_ENUM_FIELD(aggsplit, AggSplit);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -2072,6 +2028,21 @@ _outFromExpr(StringInfo str, const FromExpr *node)
 }
 
 static void
+_outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
+{
+	WRITE_NODE_TYPE("ONCONFLICTEXPR");
+
+	WRITE_ENUM_FIELD(action, OnConflictAction);
+	WRITE_NODE_FIELD(arbiterElems);
+	WRITE_NODE_FIELD(arbiterWhere);
+	WRITE_OID_FIELD(constraint);
+	WRITE_NODE_FIELD(onConflictSet);
+	WRITE_NODE_FIELD(onConflictWhere);
+	WRITE_INT_FIELD(exclRelIndex);
+	WRITE_NODE_FIELD(exclRelTlist);
+}
+
+static void
 _outFlow(StringInfo str, const Flow *node)
 {
 	WRITE_NODE_TYPE("FLOW");
@@ -2097,6 +2068,7 @@ _outFlow(StringInfo str, const Flow *node)
 /*
  * _outCdbPathLocus
  */
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outCdbPathLocus(StringInfo str, const CdbPathLocus *node)
 {
@@ -2104,27 +2076,15 @@ _outCdbPathLocus(StringInfo str, const CdbPathLocus *node)
 	WRITE_NODE_FIELD(distkey);
 	WRITE_INT_FIELD(numsegments);
 }                               /* _outCdbPathLocus */
-
-static void
-_outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
-{
-	WRITE_NODE_TYPE("ONCONFLICTEXPR");
-
-	WRITE_ENUM_FIELD(action, OnConflictAction);
-	WRITE_NODE_FIELD(arbiterElems);
-	WRITE_NODE_FIELD(arbiterWhere);
-	WRITE_OID_FIELD(constraint);
-	WRITE_NODE_FIELD(onConflictSet);
-	WRITE_NODE_FIELD(onConflictWhere);
-	WRITE_INT_FIELD(exclRelIndex);
-	WRITE_NODE_FIELD(exclRelTlist);
-}
+#endif /* COMPILING_BINARY_FUNCS */
 
 /*****************************************************************************
  *
  *	Stuff from relation.h.
  *
  *****************************************************************************/
+
+#ifndef COMPILING_BINARY_FUNCS
 
 /*
  * print the basic stuff of all nodes that inherit from Path
@@ -2254,6 +2214,16 @@ _outSubqueryScanPath(StringInfo str, const SubqueryScanPath *node)
 }
 
 static void
+_outTableFunctionScanPath(StringInfo str, const TableFunctionScanPath *node)
+{
+	WRITE_NODE_TYPE("TABLEFUNCTIONSCANPATH");
+
+	_outPathInfo(str, (const Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+}
+
+static void
 _outForeignPath(StringInfo str, const ForeignPath *node)
 {
 	WRITE_NODE_TYPE("FOREIGNPATH");
@@ -2264,7 +2234,6 @@ _outForeignPath(StringInfo str, const ForeignPath *node)
 	WRITE_NODE_FIELD(fdw_private);
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static void
 _outCustomPath(StringInfo str, const CustomPath *node)
 {
@@ -2278,7 +2247,6 @@ _outCustomPath(StringInfo str, const CustomPath *node)
 	appendStringInfoString(str, " :methods ");
 	_outToken(str, node->methods->CustomName);
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outAppendPath(StringInfo str, const AppendPath *node)
@@ -2578,7 +2546,6 @@ _outCdbMotionPath(StringInfo str, const CdbMotionPath *node)
     WRITE_NODE_FIELD(subpath);
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static void
 _outPlannerGlobal(StringInfo str, const PlannerGlobal *node)
 {
@@ -2597,21 +2564,18 @@ _outPlannerGlobal(StringInfo str, const PlannerGlobal *node)
 	WRITE_UINT_FIELD(lastRowMarkId);
 	WRITE_INT_FIELD(lastPlanNodeId);
 	WRITE_BOOL_FIELD(transientPlan);
-<<<<<<< HEAD
 	WRITE_BOOL_FIELD(oneoffPlan);
 	WRITE_NODE_FIELD(share.motStack);
 	WRITE_NODE_FIELD(share.qdShares);
 	WRITE_NODE_FIELD(share.qdSlices);
 	WRITE_INT_FIELD(share.nextPlanId);
-	WRITE_BOOL_FIELD(hasRowSecurity);
-=======
 	WRITE_BOOL_FIELD(dependsOnRole);
 	WRITE_BOOL_FIELD(parallelModeOK);
 	WRITE_BOOL_FIELD(parallelModeNeeded);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outPlannerInfo(StringInfo str, const PlannerInfo *node)
 {
@@ -2660,7 +2624,9 @@ _outPlannerInfo(StringInfo str, const PlannerInfo *node)
 	WRITE_BITMAPSET_FIELD(curOuterRels);
 	WRITE_NODE_FIELD(curOuterParams);
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 {
@@ -2672,25 +2638,18 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_FLOAT_FIELD(rows, "%.0f");
 	WRITE_BOOL_FIELD(consider_startup);
 	WRITE_BOOL_FIELD(consider_param_startup);
-<<<<<<< HEAD
-	WRITE_NODE_FIELD(reltargetlist);
-	/* Skip writing Path ptrs to avoid endless recursion */
-	/* WRITE_NODE_FIELD(pathlist);              */
-	/* WRITE_NODE_FIELD(cheapest_startup_path); */
-	/* WRITE_NODE_FIELD(cheapest_total_path);   */
-=======
 	WRITE_BOOL_FIELD(consider_parallel);
 	WRITE_NODE_FIELD(reltarget);
 	WRITE_NODE_FIELD(pathlist);
 	WRITE_NODE_FIELD(ppilist);
 	WRITE_NODE_FIELD(partial_pathlist);
-	WRITE_NODE_FIELD(cheapest_startup_path);
-	WRITE_NODE_FIELD(cheapest_total_path);
-	WRITE_NODE_FIELD(cheapest_unique_path);
-	WRITE_NODE_FIELD(cheapest_parameterized_paths);
+	/* Skip writing Path ptrs to avoid endless recursion */
+	/* WRITE_NODE_FIELD(cheapest_startup_path); */
+	/* WRITE_NODE_FIELD(cheapest_total_path); */
+	/* WRITE_NODE_FIELD(cheapest_unique_path); */
+	/* WRITE_NODE_FIELD(cheapest_parameterized_paths); */
 	WRITE_BITMAPSET_FIELD(direct_lateral_relids);
 	WRITE_BITMAPSET_FIELD(lateral_relids);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	WRITE_UINT_FIELD(relid);
 	WRITE_OID_FIELD(reltablespace);
 	WRITE_ENUM_FIELD(rtekind, RTEKind);
@@ -2713,6 +2672,7 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_NODE_FIELD(joininfo);
 	WRITE_BOOL_FIELD(has_eclass_joins);
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
 #ifndef COMPILING_BINARY_FUNCS
 static void
@@ -2729,7 +2689,7 @@ _outIndexOptInfo(StringInfo str, const IndexOptInfo *node)
 	WRITE_INT_FIELD(ncolumns);
 	/* array fields aren't really worth the trouble to print */
 	WRITE_OID_FIELD(relam);
-	WRITE_OID_FIELD(amcostestimate);
+
 	/* indexprs is redundant since we print indextlist */
 	WRITE_NODE_FIELD(indpred);
 	WRITE_NODE_FIELD(indextlist);
@@ -2740,7 +2700,9 @@ _outIndexOptInfo(StringInfo str, const IndexOptInfo *node)
 	WRITE_BOOL_FIELD(hypothetical);
 	/* we don't bother with fields copied from the index AM's API struct */
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outForeignKeyOptInfo(StringInfo str, const ForeignKeyOptInfo *node)
 {
@@ -2837,6 +2799,7 @@ _outDistributionKey(StringInfo str, const DistributionKey *node)
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outPathTarget(StringInfo str, const PathTarget *node)
 {
@@ -2855,7 +2818,9 @@ _outPathTarget(StringInfo str, const PathTarget *node)
 	WRITE_FLOAT_FIELD(cost.per_tuple, "%.2f");
 	WRITE_INT_FIELD(width);
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outParamPathInfo(StringInfo str, const ParamPathInfo *node)
 {
@@ -2865,6 +2830,7 @@ _outParamPathInfo(StringInfo str, const ParamPathInfo *node)
 	WRITE_FLOAT_FIELD(ppi_rows, "%.0f");
 	WRITE_NODE_FIELD(ppi_clauses);
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outRestrictInfo(StringInfo str, const RestrictInfo *node)
@@ -2980,6 +2946,8 @@ _outPlannerParamItem(StringInfo str, const PlannerParamItem *node)
  *
  *****************************************************************************/
 
+/* GPDB_96_MERGE_FIXME: I think we'd need outfast/readfast support for this */
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outExtensibleNode(StringInfo str, const ExtensibleNode *node)
 {
@@ -2994,6 +2962,7 @@ _outExtensibleNode(StringInfo str, const ExtensibleNode *node)
 	/* serialize the private fields */
 	methods->nodeOut(str, node);
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
 /*****************************************************************************
  *
@@ -3761,7 +3730,7 @@ _outCreatePolicyStmt(StringInfo str, const CreatePolicyStmt *node)
 
 	WRITE_STRING_FIELD(policy_name);
 	WRITE_NODE_FIELD(table);
-	WRITE_STRING_FIELD(cmd);
+	WRITE_STRING_FIELD(cmd_name);
 	WRITE_NODE_FIELD(roles);
 	WRITE_NODE_FIELD(qual);
 	WRITE_NODE_FIELD(with_check);
@@ -4508,7 +4477,6 @@ _outRangeTblFunction(StringInfo str, const RangeTblFunction *node)
 	WRITE_BITMAPSET_FIELD(funcparams);
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static void
 _outTableSampleClause(StringInfo str, const TableSampleClause *node)
 {
@@ -4519,6 +4487,7 @@ _outTableSampleClause(StringInfo str, const TableSampleClause *node)
 	WRITE_NODE_FIELD(repeatable);
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outAExpr(StringInfo str, const A_Expr *node)
 {
@@ -4912,14 +4881,8 @@ _outConstraint(StringInfo str, const Constraint *node)
 			break;
 	}
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static void
-<<<<<<< HEAD
-_outCreateSchemaStmt(StringInfo str, const CreateSchemaStmt *node)
-{
-	WRITE_NODE_TYPE("CREATESCHEMASTMT");
-=======
 _outForeignKeyCacheInfo(StringInfo str, const ForeignKeyCacheInfo *node)
 {
 	int			i;
@@ -4939,8 +4902,12 @@ _outForeignKeyCacheInfo(StringInfo str, const ForeignKeyCacheInfo *node)
 	for (i = 0; i < node->nkeys; i++)
 		appendStringInfo(str, " %u", node->conpfeqop[i]);
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+static void
+_outCreateSchemaStmt(StringInfo str, const CreateSchemaStmt *node)
+{
+	WRITE_NODE_TYPE("CREATESCHEMASTMT");
 
 	WRITE_STRING_FIELD(schemaname);
 	WRITE_NODE_FIELD(authrole);
@@ -5306,16 +5273,14 @@ outNode(StringInfo str, const void *obj)
 			case T_SeqScan:
 				_outSeqScan(str, obj);
 				break;
-<<<<<<< HEAD
 			case T_DynamicSeqScan:
 				_outDynamicSeqScan(str, obj);
 				break;
 			case T_ExternalScan:
 				_outExternalScan(str, obj);
-=======
+				break;
 			case T_SampleScan:
 				_outSampleScan(str, obj);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				break;
 			case T_IndexScan:
 				_outIndexScan(str, obj);
@@ -5575,9 +5540,6 @@ outNode(StringInfo str, const void *obj)
 			case T_RangeTblRef:
 				_outRangeTblRef(str, obj);
 				break;
-			case T_RangeTblFunction:
-				_outRangeTblFunction(str, obj);
-				break;
 			case T_JoinExpr:
 				_outJoinExpr(str, obj);
 				break;
@@ -5610,6 +5572,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_SubqueryScanPath:
 				_outSubqueryScanPath(str, obj);
+				break;
+			case T_TableFunctionScanPath:
+				_outTableFunctionScanPath(str, obj);
 				break;
 			case T_ForeignPath:
 				_outForeignPath(str, obj);
@@ -5716,13 +5681,11 @@ outNode(StringInfo str, const void *obj)
 			case T_PathKey:
 				_outPathKey(str, obj);
 				break;
-<<<<<<< HEAD
 			case T_DistributionKey:
 				_outDistributionKey(str, obj);
-=======
+				break;
 			case T_PathTarget:
 				_outPathTarget(str, obj);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				break;
 			case T_ParamPathInfo:
 				_outParamPathInfo(str, obj);
@@ -5749,8 +5712,6 @@ outNode(StringInfo str, const void *obj)
 				_outPlannerParamItem(str, obj);
 				break;
 
-<<<<<<< HEAD
-
 			case T_GrantStmt:
 				_outGrantStmt(str, obj);
 				break;
@@ -5762,10 +5723,10 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_LockStmt:
 				_outLockStmt(str, obj);
-=======
+				break;
+
 			case T_ExtensibleNode:
 				_outExtensibleNode(str, obj);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				break;
 
 			case T_CreateStmt:
@@ -6042,15 +6003,12 @@ outNode(StringInfo str, const void *obj)
 			case T_RangeTblEntry:
 				_outRangeTblEntry(str, obj);
 				break;
-<<<<<<< HEAD
-=======
 			case T_RangeTblFunction:
 				_outRangeTblFunction(str, obj);
 				break;
 			case T_TableSampleClause:
 				_outTableSampleClause(str, obj);
 				break;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			case T_A_Expr:
 				_outAExpr(str, obj);
 				break;
@@ -6089,6 +6047,7 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_RangeSubselect:
 				_outRangeSubselect(str, obj);
+
 				break;
 			case T_RangeFunction:
 				_outRangeFunction(str, obj);

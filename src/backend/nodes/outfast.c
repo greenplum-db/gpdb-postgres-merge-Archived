@@ -224,7 +224,7 @@ _outList(StringInfo str, List *node)
  * rules, so there is no support in readfast.c for reading this format.
  */
 static void
-_outBitmapset(StringInfo str, Bitmapset *bms)
+_outBitmapset(StringInfo str, const Bitmapset *bms)
 {
 	int i;
 	int nwords = 0;
@@ -290,42 +290,6 @@ _outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
  *	Stuff from plannodes.h
  */
 
-/*
- * print the basic stuff of all nodes that inherit from Plan
- */
-static void
-_outPlanInfo(StringInfo str, const Plan *node)
-{
-	WRITE_INT_FIELD(plan_node_id);
-
-	WRITE_FLOAT_FIELD(startup_cost, "%.2f");
-	WRITE_FLOAT_FIELD(total_cost, "%.2f");
-	WRITE_FLOAT_FIELD(plan_rows, "%.0f");
-	WRITE_INT_FIELD(plan_width);
-
-	WRITE_NODE_FIELD(targetlist);
-	WRITE_NODE_FIELD(qual);
-
-	WRITE_BITMAPSET_FIELD(extParam);
-	WRITE_BITMAPSET_FIELD(allParam);
-
-	WRITE_NODE_FIELD(flow);
-	WRITE_INT_FIELD(dispatch);
-	WRITE_BOOL_FIELD(directDispatch.isDirectDispatch);
-	WRITE_NODE_FIELD(directDispatch.contentIds);
-
-	WRITE_INT_FIELD(nMotionNodes);
-	WRITE_INT_FIELD(nInitPlans);
-
-	WRITE_NODE_FIELD(sliceTable);
-
-    WRITE_NODE_FIELD(lefttree);
-    WRITE_NODE_FIELD(righttree);
-    WRITE_NODE_FIELD(initPlan);
-
-	WRITE_UINT64_FIELD(operatorMemKB);
-}
-
 static void
 _outResult(StringInfo str, const Result *node)
 {
@@ -369,6 +333,8 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	WRITE_BOOL_FIELD(transientPlan);
 	WRITE_BOOL_FIELD(oneoffPlan);
 	WRITE_BOOL_FIELD(simplyUpdatable);
+	WRITE_BOOL_FIELD(dependsOnRole);
+	WRITE_BOOL_FIELD(parallelModeNeeded);
 	WRITE_NODE_FIELD(planTree);
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(resultRelations);
@@ -388,7 +354,7 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	 * make sense in segments.
 	 */
 	WRITE_INT_FIELD(nParamExec);
-	WRITE_BOOL_FIELD(hasRowSecurity);
+
 	WRITE_INT_FIELD(nMotionNodes);
 	WRITE_INT_FIELD(nInitPlans);
 	WRITE_NODE_FIELD(intoPolicy);
@@ -467,6 +433,7 @@ _outAgg(StringInfo str, Agg *node)
 	_outPlanInfo(str, (Plan *) node);
 
 	WRITE_ENUM_FIELD(aggstrategy, AggStrategy);
+	WRITE_ENUM_FIELD(aggsplit, AggSplit);
 	WRITE_INT_FIELD(numCols);
 
 	WRITE_INT_ARRAY(grpColIdx, node->numCols, AttrNumber);
@@ -659,6 +626,8 @@ _outJoinExpr(StringInfo str, JoinExpr *node)
 	WRITE_INT_FIELD(rtindex);
 }
 
+/* GPDB_96_MERGE_FIXME: I believe this is not needed. Resurrect if I'm wrong. */
+#if 0
 /*****************************************************************************
  *
  *	Stuff from relation.h.
@@ -694,6 +663,7 @@ _outIndexOptInfo(StringInfo str, IndexOptInfo *node)
 
 	WRITE_BOOL_FIELD(amoptionalkey);
 }
+#endif
 
 /*****************************************************************************
  *
@@ -1416,6 +1386,9 @@ _outNode(StringInfo str, void *obj)
 			case T_BitmapOr:
 				_outBitmapOr(str, obj);
 				break;
+			case T_Gather:
+				_outGather(str, obj);
+				break;
 			case T_Scan:
 				_outScan(str, obj);
 				break;
@@ -1424,6 +1397,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_DynamicSeqScan:
 				_outDynamicSeqScan(str, obj);
+				break;
+			case T_SampleScan:
+				_outSampleScan(str, obj);
 				break;
 			case T_CteScan:
 				_outCteScan(str, obj);
@@ -1436,9 +1412,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_CustomScan:
 				_outCustomScan(str, obj);
-				break;
-			case T_SampleScan:
-				_outSampleScan(str, obj);
 				break;
 			case T_ExternalScan:
 				_outExternalScan(str, obj);
@@ -1686,9 +1659,6 @@ _outNode(StringInfo str, void *obj)
 			case T_RangeTblRef:
 				_outRangeTblRef(str, obj);
 				break;
-			case T_RangeTblFunction:
-				_outRangeTblFunction(str, obj);
-				break;
 			case T_JoinExpr:
 				_outJoinExpr(str, obj);
 				break;
@@ -1701,86 +1671,17 @@ _outNode(StringInfo str, void *obj)
 			case T_OnConflictExpr:
 				_outOnConflictExpr(str, obj);
 				break;
-			case T_Path:
-				_outPath(str, obj);
-				break;
-			case T_IndexPath:
-				_outIndexPath(str, obj);
-				break;
-			case T_BitmapHeapPath:
-				_outBitmapHeapPath(str, obj);
-				break;
-			case T_BitmapAndPath:
-				_outBitmapAndPath(str, obj);
-				break;
-			case T_BitmapOrPath:
-				_outBitmapOrPath(str, obj);
-				break;
-			case T_TidPath:
-				_outTidPath(str, obj);
-				break;
-			case T_ForeignPath:
-				_outForeignPath(str, obj);
-				break;
-			case T_AppendPath:
-				_outAppendPath(str, obj);
-				break;
-			case T_MergeAppendPath:
-				_outMergeAppendPath(str, obj);
-				break;
-			case T_AppendOnlyPath:
-				_outAppendOnlyPath(str, obj);
-				break;
-			case T_AOCSPath:
-				_outAOCSPath(str, obj);
-				break;
-			case T_ResultPath:
-				_outResultPath(str, obj);
-				break;
-			case T_MaterialPath:
-				_outMaterialPath(str, obj);
-				break;
-			case T_UniquePath:
-				_outUniquePath(str, obj);
-				break;
-			case T_NestPath:
-				_outNestPath(str, obj);
-				break;
-			case T_MergePath:
-				_outMergePath(str, obj);
-				break;
-			case T_HashPath:
-				_outHashPath(str, obj);
-				break;
-            case T_CdbMotionPath:
-                _outCdbMotionPath(str, obj);
-                break;
-			case T_PlannerInfo:
-				_outPlannerInfo(str, obj);
-				break;
 			case T_PlannerParamItem:
 				_outPlannerParamItem(str, obj);
 				break;
-			case T_RelOptInfo:
-				_outRelOptInfo(str, obj);
-				break;
-			case T_IndexOptInfo:
-				_outIndexOptInfo(str, obj);
-				break;
 			case T_PathKey:
 				_outPathKey(str, obj);
-				break;
-			case T_ParamPathInfo:
-				_outParamPathInfo(str, obj);
 				break;
 			case T_RestrictInfo:
 				_outRestrictInfo(str, obj);
 				break;
 			case T_SpecialJoinInfo:
 				_outSpecialJoinInfo(str, obj);
-				break;
-			case T_LateralJoinInfo:
-				_outLateralJoinInfo(str, obj);
 				break;
 			case T_AppendRelInfo:
 				_outAppendRelInfo(str, obj);
@@ -2082,17 +1983,17 @@ _outNode(StringInfo str, void *obj)
 			case T_CommonTableExpr:
 				_outCommonTableExpr(str, obj);
 				break;
-			case T_RangeTableSample:
-				_outRangeTableSample(str, obj);
-				break;
-			case T_TableSampleClause:
-				_outTableSampleClause(str, obj);
-				break;
 			case T_SetOperationStmt:
 				_outSetOperationStmt(str, obj);
 				break;
 			case T_RangeTblEntry:
 				_outRangeTblEntry(str, obj);
+				break;
+			case T_RangeTblFunction:
+				_outRangeTblFunction(str, obj);
+				break;
+			case T_TableSampleClause:
+				_outTableSampleClause(str, obj);
 				break;
 			case T_A_Expr:
 				_outAExpr(str, obj);

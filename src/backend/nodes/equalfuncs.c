@@ -2887,17 +2887,6 @@ _equalTableValueExpr(const TableValueExpr *a, const TableValueExpr *b)
 }
 
 static bool
-_equalRangeTableSample(const RangeTableSample *a, const RangeTableSample *b)
-{
-	COMPARE_NODE_FIELD(relation);
-	COMPARE_STRING_FIELD(method);
-	COMPARE_NODE_FIELD(repeatable);
-	COMPARE_NODE_FIELD(args);
-
-	return true;
-}
-
-static bool
 _equalAlterTypeStmt(const AlterTypeStmt *a, const AlterTypeStmt *b)
 {
 	COMPARE_NODE_FIELD(typeName);
@@ -2912,25 +2901,6 @@ _equalDistributedBy(const DistributedBy *a, const DistributedBy *b)
 	COMPARE_SCALAR_FIELD(ptype);
 	COMPARE_SCALAR_FIELD(numsegments);
 	COMPARE_NODE_FIELD(keyCols);
-
-	return true;
-}
-
-static bool
-_equalTableSampleClause(const TableSampleClause *a, const TableSampleClause *b)
-{
-	COMPARE_SCALAR_FIELD(tsmid);
-	COMPARE_SCALAR_FIELD(tsmseqscan);
-	COMPARE_SCALAR_FIELD(tsmpagemode);
-	COMPARE_SCALAR_FIELD(tsminit);
-	COMPARE_SCALAR_FIELD(tsmnextblock);
-	COMPARE_SCALAR_FIELD(tsmnexttuple);
-	COMPARE_SCALAR_FIELD(tsmexaminetuple);
-	COMPARE_SCALAR_FIELD(tsmend);
-	COMPARE_SCALAR_FIELD(tsmreset);
-	COMPARE_SCALAR_FIELD(tsmcost);
-	COMPARE_NODE_FIELD(repeatable);
-	COMPARE_NODE_FIELD(args);
 
 	return true;
 }
