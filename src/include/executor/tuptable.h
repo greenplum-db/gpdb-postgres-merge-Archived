@@ -16,7 +16,6 @@
 
 #include "access/htup.h"
 #include "access/htup_details.h"
-#include "access/heapam.h"
 #include "access/memtup.h"
 #include "access/tupdesc.h"
 #include "storage/buf.h"

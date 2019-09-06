@@ -14,11 +14,11 @@
 #ifndef BITMAP_H
 #define BITMAP_H
 
+#include "access/genam.h"
 #include "access/htup.h"
-#include "access/relscan.h"
 #include "access/xlog.h"
 #include "access/xlogutils.h"
-#include "nodes/execnodes.h"
+#include "utils/hsearch.h"
 
 #define BM_READ		BUFFER_LOCK_SHARE
 #define BM_WRITE	BUFFER_LOCK_EXCLUSIVE
@@ -738,7 +738,7 @@ typedef struct xl_bm_metapage
 /* public routines */
 extern Datum bmhandler(PG_FUNCTION_ARGS);
 extern IndexBuildResult *bmbuild(Relation heap, Relation index,
-		struct IndexInfo *indexInfo);
+		IndexInfo *indexInfo);
 extern void bmbuildempty(Relation index);
 extern bool bminsert(Relation rel, Datum *values, bool *isnull,
 		 ItemPointer ht_ctid, Relation heapRel,

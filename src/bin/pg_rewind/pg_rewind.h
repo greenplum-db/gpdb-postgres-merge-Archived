@@ -27,15 +27,13 @@ extern bool debug;
 extern bool showprogress;
 extern bool dry_run;
 
-<<<<<<< HEAD
 extern int32 dbid_target;
 
 extern const char *progname;
-=======
+
 /* Target history */
 extern TimeLineHistoryEntry *targetHistory;
 extern int	targetNentries;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* in parsexlog.c */
 extern void extractPageMap(const char *datadir, XLogRecPtr startpoint,

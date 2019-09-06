@@ -16,7 +16,6 @@
 
 #include "access/xlogdefs.h"
 #include "datatype/timestamp.h"
-#include "storage/lock.h"
 
 #include "cdb/cdblocaldistribxact.h"
 
@@ -65,7 +64,8 @@ extern void TwoPhaseShmemInit(void);
 extern void AtAbort_Twophase(void);
 extern void PostPrepare_Twophase(void);
 
-extern PGPROC *TwoPhaseGetDummyProc(TransactionId xid);
+struct PGPROC;
+extern struct PGPROC *TwoPhaseGetDummyProc(TransactionId xid);
 extern BackendId TwoPhaseGetDummyBackendId(TransactionId xid);
 
 extern GlobalTransaction MarkAsPreparing(TransactionId xid,

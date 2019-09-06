@@ -15,6 +15,7 @@
 #define GIST_PRIVATE_H
 
 #include "access/amapi.h"
+#include "access/genam.h"
 #include "access/gist.h"
 #include "access/itup.h"
 #include "access/xlogreader.h"

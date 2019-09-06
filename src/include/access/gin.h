@@ -10,15 +10,6 @@
 #ifndef GIN_H
 #define GIN_H
 
-#include "access/relscan.h"
-#include "access/sdir.h"
-#include "access/xlogdefs.h"
-#include "storage/bufpage.h"
-#include "storage/off.h"
-#include "utils/rel.h"
-#include "access/genam.h"
-#include "access/itup.h"
-#include "access/xlog.h"
 #include "access/xlogreader.h"
 #include "lib/stringinfo.h"
 #include "storage/block.h"

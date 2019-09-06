@@ -231,7 +231,6 @@ libpqProcessFileList(void)
 		process_source_file(path, type, filesize, link_target);
 	}
 	PQclear(res);
-<<<<<<< HEAD
 }
 
 /*
@@ -254,8 +253,6 @@ pg_recvint64(int64 value)
 	result |= (uint32) ntohl(swap.i32[1]);
 
 	return result;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*----
@@ -355,11 +352,7 @@ receiveFileChunks(const char *sql)
 		if (PQgetisnull(res, 0, 2))
 		{
 			pg_log(PG_DEBUG,
-<<<<<<< HEAD
-			  "received null value for chunk for file \"%s\", file has been deleted\n",
-=======
 				   "received null value for chunk for file \"%s\", file has been deleted\n",
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				   filename);
 			remove_target_file(filename, true);
 			pg_free(filename);

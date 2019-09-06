@@ -38,13 +38,9 @@ static void digestControlFile(ControlFileData *ControlFile, char *source,
 static void updateControlFile(ControlFileData *ControlFile);
 static void syncTargetDirectory(const char *argv0);
 static void sanityChecks(void);
-<<<<<<< HEAD
-static void findCommonAncestorTimeline(XLogRecPtr *recptr, TimeLineID *tli);
+static void findCommonAncestorTimeline(XLogRecPtr *recptr, int *tliIndex);
 static void ensureCleanShutdown(const char *argv0);
 static int32 get_target_dbid(const char *argv0);
-=======
-static void findCommonAncestorTimeline(XLogRecPtr *recptr, int *tliIndex);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 static ControlFileData ControlFile_target;
 static ControlFileData ControlFile_source;
@@ -77,11 +73,8 @@ usage(const char *progname)
 	printf(_("  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"));
 	printf(_("      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"));
 	printf(_("      --source-server=CONNSTR    source server to synchronize with\n"));
-<<<<<<< HEAD
 	printf(_("  -R, --write-recovery-conf      write recovery.conf after backup\n"));
 	printf(_("  -S, --slot=SLOTNAME            replication slot to use\n"));
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	printf(_("  -n, --dry-run                  stop before modifying anything\n"));
 	printf(_("  -P, --progress                 write progress messages\n"));
 	printf(_("      --debug                    write a lot of debug messages\n"));
@@ -274,26 +267,12 @@ main(int argc, char **argv)
 	 */
 	if (ControlFile_target.checkPointCopy.ThisTimeLineID == ControlFile_source.checkPointCopy.ThisTimeLineID)
 	{
-<<<<<<< HEAD
 		printf(_("source and target cluster are on the same timeline: %u\n"),
 			   ControlFile_source.checkPointCopy.ThisTimeLineID);
-=======
-		printf(_("source and target cluster are on the same timeline\n"));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		rewind_needed = false;
 	}
 	else
 	{
-<<<<<<< HEAD
-		findCommonAncestorTimeline(&divergerec, &lastcommontli);
-		printf(_("servers diverged at WAL position %X/%X on timeline %u\n"),
-			   (uint32) (divergerec >> 32), (uint32) divergerec, lastcommontli);
-
-		/*
-		 * Check for the possibility that the target is in fact a direct ancestor
-		 * of the source. In that case, there is no divergent history in the
-		 * target that needs rewinding.
-=======
 		findCommonAncestorTimeline(&divergerec, &lastcommontliIndex);
 		printf(_("servers diverged at WAL position %X/%X on timeline %u\n"),
 			   (uint32) (divergerec >> 32), (uint32) divergerec,
@@ -303,7 +282,6 @@ main(int argc, char **argv)
 		 * Check for the possibility that the target is in fact a direct
 		 * ancestor of the source. In that case, there is no divergent history
 		 * in the target that needs rewinding.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		 */
 		if (ControlFile_target.checkPoint >= divergerec)
 		{
@@ -316,15 +294,6 @@ main(int argc, char **argv)
 			/* Read the checkpoint record on the target to see where it ends. */
 			chkptendrec = readOneRecord(datadir_target,
 										ControlFile_target.checkPoint,
-<<<<<<< HEAD
-						   ControlFile_target.checkPointCopy.ThisTimeLineID);
-
-			/*
-			 * If the histories diverged exactly at the end of the shutdown
-			 * checkpoint record on the target, there are no WAL records in the
-			 * target that don't belong in the source's history, and no rewind is
-			 * needed.
-=======
 										targetNentries - 1);
 
 			/*
@@ -332,7 +301,6 @@ main(int argc, char **argv)
 			 * checkpoint record on the target, there are no WAL records in
 			 * the target that don't belong in the source's history, and no
 			 * rewind is needed.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			 */
 			if (chkptendrec == divergerec)
 				rewind_needed = false;
@@ -344,7 +312,6 @@ main(int argc, char **argv)
 	if (!rewind_needed)
 	{
 		printf(_("no rewind required\n"));
-<<<<<<< HEAD
 
 		if (writerecoveryconf && connstr_source)
 		{
@@ -352,8 +319,6 @@ main(int argc, char **argv)
 			WriteRecoveryConf();
 		}
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		exit(0);
 	}
 
@@ -445,15 +410,12 @@ main(int argc, char **argv)
 	pg_log(PG_PROGRESS, "syncing target data directory\n");
 	syncTargetDirectory(argv[0]);
 
-<<<<<<< HEAD
 	if (writerecoveryconf && connstr_source)
 	{
 		GenerateRecoveryConf(replication_slot);
 		WriteRecoveryConf();
 	}
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	printf(_("Done!\n"));
 
 	return 0;
@@ -771,19 +733,6 @@ updateControlFile(ControlFileData *ControlFile)
 static void
 syncTargetDirectory(const char *argv0)
 {
-<<<<<<< HEAD
-	int		ret;
-#define MAXCMDLEN (2 * MAXPGPATH)
-	char	exec_path[MAXPGPATH];
-	char	cmd[MAXCMDLEN];
-
-	/* locate initdb binary */
-	if ((ret = find_other_exec(argv0, "initdb",
-							   "initdb (Greenplum Database) " PG_VERSION "\n",
-							   exec_path)) < 0)
-	{
-		char        full_path[MAXPGPATH];
-=======
 	int			ret;
 #define MAXCMDLEN (2 * MAXPGPATH)
 	char		exec_path[MAXPGPATH];
@@ -791,21 +740,16 @@ syncTargetDirectory(const char *argv0)
 
 	/* locate initdb binary */
 	if ((ret = find_other_exec(argv0, "initdb",
-							   "initdb (PostgreSQL) " PG_VERSION "\n",
+							   "initdb (Greenplum Database) " PG_VERSION "\n",
 							   exec_path)) < 0)
 	{
 		char		full_path[MAXPGPATH];
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		if (find_my_exec(argv0, full_path) < 0)
 			strlcpy(full_path, progname, sizeof(full_path));
 
 		if (ret == -1)
-<<<<<<< HEAD
-			pg_fatal("The program \"initdb\" is needed by %s but was \n"
-=======
 			pg_fatal("The program \"initdb\" is needed by %s but was\n"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 					 "not found in the same directory as \"%s\".\n"
 					 "Check your installation.\n", progname, full_path);
 		else
@@ -829,7 +773,6 @@ syncTargetDirectory(const char *argv0)
 	if (system(cmd) != 0)
 		pg_fatal("sync of target directory failed\n");
 }
-<<<<<<< HEAD
 
 /*
  * Ensure clean shutdown of target instance by launching single-user mode
@@ -932,5 +875,3 @@ get_target_dbid(const char *argv0)
 
 	return dbid;
 }
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

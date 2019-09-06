@@ -23,12 +23,6 @@
 #include "utils/datetime.h"
 #include "lib/stringinfo.h"
 
-#include "access/twophase.h"
-#include "access/xlog.h"
-#include "catalog/catalog.h"
-#include "catalog/pg_tablespace.h"
-#include "common/relpath.h"
-
 /* copied from timestamp.c */
 pg_time_t
 timestamptz_to_time_t(TimestampTz t)
@@ -105,4 +99,3 @@ appendStringInfoChar(StringInfo str, char ch)
 {
 	appendStringInfo(str, "%c", ch);
 }
-
