@@ -32,13 +32,8 @@ char	   *additional_ext = NULL;		/* Extension to remove from filenames */
 
 char	   *archiveLocation;	/* where to find the archive? */
 char	   *restartWALFileName; /* the file from which we can restart restore */
-<<<<<<< HEAD
 char		WALFilePath[MAXPGPATH * 2];		/* the file path including archive */
-char		exclusiveCleanupFileName[MAXPGPATH];		/* the oldest file we
-=======
-char		WALFilePath[MAXPGPATH];		/* the file path including archive */
 char		exclusiveCleanupFileName[MAXFNAMELEN];		/* the oldest file we
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 														 * want to remain in
 														 * archive */
 
