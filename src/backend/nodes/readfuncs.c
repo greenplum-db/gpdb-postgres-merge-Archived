@@ -2972,9 +2972,18 @@ _readHashJoin(void)
 static Material *
 _readMaterial(void)
 {
-	READ_LOCALS_NO_FIELDS(Material);
+	READ_LOCALS(Material);
 
 	ReadCommonPlan(&local_node->plan);
+
+	READ_BOOL_FIELD(cdb_strict);
+	READ_BOOL_FIELD(cdb_shield_child_from_rescans);
+
+	READ_ENUM_FIELD(share_type, ShareType);
+	READ_INT_FIELD(share_id);
+	READ_INT_FIELD(driver_slice);
+	READ_INT_FIELD(nsharer);
+	READ_INT_FIELD(nsharer_xslice);
 
 	READ_DONE();
 }

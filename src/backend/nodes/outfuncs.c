@@ -1040,6 +1040,8 @@ _outMaterial(StringInfo str, const Material *node)
 {
 	WRITE_NODE_TYPE("MATERIAL");
 
+	_outPlanInfo(str, (Plan *) node);
+
 	WRITE_BOOL_FIELD(cdb_strict);
 	WRITE_BOOL_FIELD(cdb_shield_child_from_rescans);
 
@@ -1048,8 +1050,6 @@ _outMaterial(StringInfo str, const Material *node)
 	WRITE_INT_FIELD(driver_slice);
 	WRITE_INT_FIELD(nsharer);
 	WRITE_INT_FIELD(nsharer_xslice);
-
-	_outPlanInfo(str, (Plan *) node);
 }
 
 static void
