@@ -344,10 +344,9 @@ make_motion_gather(PlannerInfo *root, Plan *subplan, List *sortPathKeys)
 		 * Motion node. They represent the input order that the Motion node
 		 * will preserve, when it receives and merges the inputs.
 		 */
-		sort = make_sort_from_pathkeys(root,
-									   subplan,
+		sort = make_sort_from_pathkeys(subplan,
 									   sortPathKeys,
-									   -1.0,
+									   /* GPDB_96_MERGE_FIXME: the comment here says useExecutorVarFormat, but it's actually 'add_keys_to_targetlist'. Are we mixing things up? */
 									   false /* useExecutorVarFormat */ );
 
 		motion = make_sorted_union_motion(root,

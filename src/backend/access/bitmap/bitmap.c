@@ -20,6 +20,7 @@
 
 #include "postgres.h"
 
+#include "access/amapi.h"
 #include "access/genam.h"
 #include "access/bitmap.h"
 #include "access/xact.h"
@@ -31,6 +32,7 @@
 #include "storage/smgr.h"
 #include "parser/parse_oper.h"
 #include "utils/memutils.h"
+#include "utils/index_selfuncs.h"
 
 #include "nodes/execnodes.h"
 
@@ -54,6 +56,51 @@ typedef struct BMStreamOpaque
 } BMStreamOpaque;
 
 static void stream_free(BMStreamOpaque *so);
+
+/*
+ * Bitmap index handler function: return IndexAmRoutine with access method parameters
+ * and callbacks.
+ */
+Datum
+bmhandler(PG_FUNCTION_ARGS)
+{
+	IndexAmRoutine *amroutine = makeNode(IndexAmRoutine);
+
+	amroutine->amstrategies = 5; /* same as nbtree */
+	amroutine->amsupport = 1;
+	amroutine->amcanorder = false;
+	amroutine->amcanorderbyop = false;
+	amroutine->amcanbackward = false;
+	amroutine->amcanunique = true;
+	amroutine->amcanmulticol = true;
+	amroutine->amoptionalkey = true;
+	amroutine->amsearcharray = false;
+	amroutine->amsearchnulls = false;
+	amroutine->amstorage = false;
+	amroutine->amclusterable = false;
+	amroutine->ampredlocks = false;
+	amroutine->amkeytype = InvalidOid;
+
+	amroutine->ambuild = bmbuild;
+	amroutine->ambuildempty = bmbuildempty;
+	amroutine->aminsert = bminsert;
+	amroutine->ambulkdelete = bmbulkdelete;
+	amroutine->amvacuumcleanup = bmvacuumcleanup;
+	amroutine->amcanreturn = NULL;
+	amroutine->amcostestimate = bmcostestimate;
+	amroutine->amoptions = bmoptions;
+	amroutine->amproperty = NULL;
+	amroutine->amvalidate = NULL;
+	amroutine->ambeginscan = bmbeginscan;
+	amroutine->amrescan = bmrescan;
+	amroutine->amgettuple = bmgettuple;
+	amroutine->amgetbitmap = bmgetbitmap;
+	amroutine->amendscan = bmendscan;
+	amroutine->ammarkpos = bmmarkpos;
+	amroutine->amrestrpos = bmrestrpos;
+
+	PG_RETURN_POINTER(amroutine);
+}
 
 /*
  * bmbuild() -- Build a new bitmap index.

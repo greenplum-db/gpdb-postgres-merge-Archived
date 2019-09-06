@@ -980,8 +980,8 @@ cdbpath_motion_for_join(PlannerInfo *root,
 	}
 
 	/* Get rel sizes. */
-	outer.bytes = outer.path->rows * outer.path->parent->width;
-	inner.bytes = inner.path->rows * inner.path->parent->width;
+	outer.bytes = outer.path->rows * outer.path->pathtarget->width;
+	inner.bytes = inner.path->rows * inner.path->pathtarget->width;
 
 	/*
 	 * Motion not needed if either source is everywhere (e.g. a constant).
@@ -1911,7 +1911,7 @@ cdbpath_dedup_fixup_append(AppendPath *appendPath, CdbpathDedupFixupContext *ctx
 
 	/* Add placeholder columns to the appendrel's targetlist. */
 	cdbpath_dedup_fixup_baserel((Path *) appendPath, ctx);
-	ncol = list_length(appendPath->path.parent->reltargetlist);
+	ncol = list_length(appendPath->path.pathtarget->exprs);
 
 	appendrel_rowid_vars = ctx->rowid_vars;
 	ctx->rowid_vars = NIL;
@@ -1940,7 +1940,7 @@ cdbpath_dedup_fixup_append(AppendPath *appendPath, CdbpathDedupFixupContext *ctx
 		 * CDB TODO: Add dummy columns to other subpaths to keep their
 		 * targetlists in sync.
 		 */
-		if (list_length(subpath->parent->reltargetlist) != ncol)
+		if (list_length(subpath->pathtarget->exprs) != ncol)
 			ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
 							errmsg("The query is not yet supported in "
 								   "this version of " PACKAGE_NAME "."),

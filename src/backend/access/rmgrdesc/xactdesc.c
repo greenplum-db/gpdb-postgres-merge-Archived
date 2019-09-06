@@ -370,7 +370,8 @@ xact_desc_prepare(StringInfo buf, uint8 info, TwoPhaseFileHeader *tpfh)
 
 	appendStringInfo(buf, "at = %s", timestamptz_to_str(tpfh->prepared_at));
 
-	appendStringInfo(buf, "; gid = %s", tpfh->gid);
+	// GPDB_96_MERGE_FIXME: 'gid' is no longer fixed width, got to extract it from after the header
+	//appendStringInfo(buf, "; gid = %s", tpfh->gid);
 
 	if (tpfh->tablespace_oid_to_delete_on_commit != InvalidOid)
 		appendStringInfo(buf, "; tablespace_oid_to_delete_on_commit = %u", tpfh->tablespace_oid_to_delete_on_commit);

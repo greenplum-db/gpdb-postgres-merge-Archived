@@ -25,6 +25,7 @@
 
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h" /* for is_projection_capable_plan() */
+#include "optimizer/var.h"
 #include "parser/parsetree.h"	/* for rt_fetch() */
 #include "nodes/makefuncs.h"	/* for makeTargetEntry() */
 #include "utils/guc.h"			/* for Debug_pretty_print */
@@ -516,11 +517,9 @@ ParallelizeCorrelatedSubPlanMutator(Node *node, ParallelizeCorrelatedPlanWalkerC
 
 		scanVars = list_concat(
 			pull_var_clause((Node *) scanPlan->targetlist,
-							PVC_RECURSE_AGGREGATES,
-							PVC_REJECT_PLACEHOLDERS),
+							PVC_RECURSE_AGGREGATES),
 			pull_var_clause((Node *) resQual,
-							PVC_RECURSE_AGGREGATES,
-							PVC_REJECT_PLACEHOLDERS));
+							PVC_RECURSE_AGGREGATES));
 
 		/*
 		 * Step 4: Construct the new targetlist for the scan node
@@ -583,7 +582,7 @@ ParallelizeCorrelatedSubPlanMutator(Node *node, ParallelizeCorrelatedPlanWalkerC
 		/**
 		 * Step 8: Fix up the result node on top of the material node
 		 */
-		Result	   *res = make_result((PlannerInfo *) ctx->base.node, resTL, NULL, mat);
+		Result	   *res = make_result(resTL, NULL, mat);
 
 		res->plan.qual = resQual;
 		((Plan *) res)->allParam = saveAllParam;

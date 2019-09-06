@@ -1087,15 +1087,16 @@ make_one_stage_agg_plan(PlannerInfo *root,
 	if (use_hashed_grouping)
 	{
 		/* Hashed aggregate plan --- no sort needed */
-		result_plan = (Plan *) make_agg(root,
-										tlist,
+		result_plan = (Plan *) make_agg(tlist,
 										(List *) parse->havingQual,
-										AGG_HASHED, ctx->agg_costs,
-										false,
+										AGG_HASHED,
+										AGGSPLIT_SIMPLE,
+										false, /* streaming */
 										numGroupCols,
 										groupColIdx,
 										groupOperators,
 										NIL, /* groupingSets */
+										NIL, /* chain */
 										numGroups,
 										result_plan);
 		/* Hashed aggregation produces randomly-ordered results */
@@ -1112,8 +1113,7 @@ make_one_stage_agg_plan(PlannerInfo *root,
 									   current_pathkeys))
 			{
 				result_plan = (Plan *)
-					make_sort_from_groupcols(root,
-											 parse->groupClause,
+					make_sort_from_groupcols(parse->groupClause,
 											 groupColIdx,
 											 result_plan);
 				current_pathkeys = root->group_pathkeys;
@@ -1133,16 +1133,16 @@ make_one_stage_agg_plan(PlannerInfo *root,
 			current_pathkeys = NIL;
 		}
 
-		result_plan = (Plan *) make_agg(root,
-										tlist,
+		result_plan = (Plan *) make_agg(tlist,
 										(List *) parse->havingQual,
 										aggstrategy,
-										ctx->agg_costs,
-										false,
+										AGGSPLIT_SIMPLE,
+										false, /* streaming */
 										numGroupCols,
 										groupColIdx,
 										groupOperators,
 										NIL, /* groupingSets */
+										NIL, /* chain */
 										numGroups,
 										result_plan);
 	}
@@ -1344,8 +1344,7 @@ make_two_stage_agg_plan(PlannerInfo *root,
 				 * ordering.)
 				 */
 				result_plan = (Plan *)
-					make_sort_from_groupcols(root,
-											 parse->groupClause,
+					make_sort_from_groupcols(parse->groupClause,
 											 groupColIdx,
 											 result_plan);
 				current_pathkeys = root->group_pathkeys;
@@ -1365,16 +1364,16 @@ make_two_stage_agg_plan(PlannerInfo *root,
 		}
 	}
 
-	result_plan = (Plan *) make_agg(root,
-									prelim_tlist,
+	result_plan = (Plan *) make_agg(prelim_tlist,
 									NIL,	/* no havingQual */
 									aggstrategy,
-									ctx->agg_costs,
+									AGGSPLIT_SIMPLE,
 									root->config->gp_hashagg_streambottom,
 									numGroupCols,
 									groupColIdx,
 									groupOperators,
 									NIL, /* groupingSets */
+									NIL, /* chain */
 									numGroups,
 									result_plan);
 
@@ -1426,8 +1425,7 @@ make_two_stage_agg_plan(PlannerInfo *root,
 	if (aggstrategy == AGG_SORTED)
 	{
 		result_plan = (Plan *)
-			make_sort_from_groupcols(root,
-									 parse->groupClause,
+			make_sort_from_groupcols(parse->groupClause,
 									 prelimGroupColIdx,
 									 result_plan);
 		current_pathkeys = root->group_pathkeys;
@@ -1909,8 +1907,7 @@ make_plan_for_one_dqa(PlannerInfo *root, MppGroupContext *ctx, int dqa_index,
 		 * argument, so just do it.
 		 */
 		result_plan = (Plan *)
-			make_sort_from_groupcols(root,
-									 extendedGroupClause,
+			make_sort_from_groupcols(extendedGroupClause,
 									 inputGroupColIdx,
 									 result_plan);
 		current_pathkeys = root->group_pathkeys;
@@ -1943,22 +1940,22 @@ make_plan_for_one_dqa(PlannerInfo *root, MppGroupContext *ctx, int dqa_index,
 		stream_bottom_agg = false;
 	}
 
-	result_plan = (Plan *) make_agg(root,
-									prelim_tlist,
+	result_plan = (Plan *) make_agg(prelim_tlist,
 									NIL, /* no havingQual */
 									aggstrategy,
+									AGGSPLIT_SIMPLE, /* GPDB_96_MERGE_FIXME: what's the right split here? */
 									/* GPDB_91_MERGE_FIXME: we used to pass
 									 * "ctx->agg_counts->numAggs - ctx->agg_counts->numOrderedAggs + 1"
 									 * as the "numAggs" argument. That argument is gone, make_agg
 									 * gets that number directly from agg_costs now. So this changed
 									 * the costing slightly. Maybe that's OK, or not?
 									 */
-									ctx->agg_costs,
 									stream_bottom_agg,
 									ctx->numGroupCols + 1,
 									inputGroupColIdx,
 									inputGroupOperators,
 									NIL, /* groupingSets */
+									NIL, /* chaining */
 									numGroups,
 									result_plan);
 
@@ -2062,8 +2059,7 @@ make_plan_for_one_dqa(PlannerInfo *root, MppGroupContext *ctx, int dqa_index,
 
 				/* pre-sort required on combined grouping key and DQA argument */
 				result_plan = (Plan *)
-					make_sort_from_groupcols(root,
-											 extendedGroupClause,
+					make_sort_from_groupcols(extendedGroupClause,
 											 prelimGroupColIdx,
 											 result_plan);
 				groups_sorted = true;
@@ -2107,8 +2103,7 @@ make_plan_for_one_dqa(PlannerInfo *root, MppGroupContext *ctx, int dqa_index,
 		case DQACOPLAN_GSH:
 			/* pre-sort required on grouping key */
 			result_plan = (Plan *)
-				make_sort_from_groupcols(root,
-										 root->parse->groupClause,
+				make_sort_from_groupcols(root->parse->groupClause,
 										 prelimGroupColIdx,
 										 result_plan);
 			groups_sorted = true;
@@ -2173,8 +2168,7 @@ make_plan_for_one_dqa(PlannerInfo *root, MppGroupContext *ctx, int dqa_index,
 		case DQACOPLAN_SHH:
 			/* post-sort required */
 			result_plan = (Plan *)
-				make_sort_from_groupcols(root,
-										 root->parse->groupClause,
+				make_sort_from_groupcols(root->parse->groupClause,
 										 prelimGroupColIdx,
 										 result_plan);
 			groups_sorted = true;
@@ -2492,12 +2486,14 @@ make_subplan_tlist(List *tlist, Node *havingQual,
 
 	/* GPDB_84_MERGE_FIXME: Should we pass includePlaceHolderVars as true */
 	/* in pull_var_clause ? */
+	/* GPDB_96_MERGE_FIXME: flatten_tlist is gone */
+	sub_tlist = tlist;
+#if 0 
 	sub_tlist = flatten_tlist(tlist,
 							  PVC_RECURSE_AGGREGATES,
 							  PVC_INCLUDE_PLACEHOLDERS);
-	extravars = pull_var_clause(havingQual,
-								PVC_RECURSE_AGGREGATES,
-								PVC_REJECT_PLACEHOLDERS);
+#endif
+	extravars = pull_var_clause(havingQual, PVC_RECURSE_AGGREGATES);
 	sub_tlist = add_to_flat_tlist(sub_tlist, extravars);
 	list_free(extravars);
 
@@ -4246,7 +4242,7 @@ add_second_stage_agg(PlannerInfo *root,
 	 * Ensure that the plan we're going to attach to the subquery scan has all
 	 * the parameter fields figured out.
 	 */
-	SS_finalize_plan(root, result_plan, false);
+	SS_finalize_plan(root, result_plan);
 
 	/* Construct a range table entry referring to it. */
 	newrte = addRangeTableEntryForSubquery(NULL,
@@ -4285,16 +4281,16 @@ add_second_stage_agg(PlannerInfo *root,
 	/* convert current_numGroups to long int */
 	long		lNumGroups = (long) Min(numGroups, (double) LONG_MAX);
 
-	agg_node = (Plan *) make_agg(root,
-								 final_tlist,
+	agg_node = (Plan *) make_agg(final_tlist,
 								 final_qual,
 								 aggstrategy,
-								 agg_costs,
-								 false,
+								 AGGSPLIT_SIMPLE, /* GPDB_96_MERGE_FIXME: what's the right split? */
+								 false, /* streaming */
 								 numGroupCols,
 								 prelimGroupColIdx,
 								 prelimGroupOperators,
 								 NIL, /* groupingSets */
+								 NIL, /* chain */
 								 lNumGroups,
 								 result_plan);
 
@@ -4482,7 +4478,7 @@ cost_common_agg(PlannerInfo *root, MppGroupContext *ctx, AggPlanInfo *info, Plan
 	if (info->input_path->parent)
 	{
 		input_rows = info->input_path->parent->rows;
-		input_width = info->input_path->parent->width;
+		input_width = info->input_path->pathtarget->width;
 	}
 	else
 	{
@@ -5131,7 +5127,7 @@ static void
 set_coplan_strategies(PlannerInfo *root, MppGroupContext *ctx, DqaInfo *dqaArg, Path *input)
 {
 	double		input_rows = input->parent->rows;
-	int			input_width = input->parent->width;
+	int			input_width = input->pathtarget->width;
 	double		darg_rows = dqaArg->num_rows;
 	double		group_rows = *ctx->p_dNumGroups;
 	long		numGroups = (group_rows < 0) ? 0 :
@@ -5368,12 +5364,11 @@ rebuild_simple_rel_and_rte(PlannerInfo *root, List *subplans, List *subroots)
 		RelOptInfo *rel = build_simple_rel(root, i, RELOPT_BASEREL);
 
 		/*
-		 * Assign subroots and subplans for subquery rels. They are needed in
+		 * Assign subroots for subquery rels. They are needed in
 		 * function set_subqueryscan_references().
 		 */
 		Assert(rel->rtekind == RTE_SUBQUERY);
 		rel->subroot = lfirst(lr);
-		rel->subplan = lfirst(lp);
 
 		i++;
 	}

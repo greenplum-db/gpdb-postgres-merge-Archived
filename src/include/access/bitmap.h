@@ -761,6 +761,7 @@ extern IndexBulkDeleteResult *bmbulkdelete(IndexVacuumInfo *info,
 extern IndexBulkDeleteResult *bmvacuumcleanup(IndexVacuumInfo *info,
 				IndexBulkDeleteResult *stats);
 extern bool bmcanreturn(Relation index, int attno);
+extern bytea *bmoptions(Datum reloptions, bool validate);
 
 extern void GetBitmapIndexAuxOids(Relation index, Oid *heapId, Oid *indexId);
 

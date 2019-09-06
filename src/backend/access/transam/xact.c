@@ -3147,7 +3147,7 @@ PrepareTransaction(void)
 	 */
 	gxact = MarkAsPreparing(xid, &MyProc->localDistribXactData,
 							prepareGID, prepared_at,
-				GetUserId(), MyDatabaseId, InvalidXLogRecPtr);
+							GetUserId(), MyDatabaseId);
 	prepareGID = NULL;
 
 	/*
@@ -7136,7 +7136,7 @@ xact_redo(XLogReaderState *record)
 	{
 		/* the record contents are exactly the 2PC file */
 		RecreateTwoPhaseFile(XLogRecGetXid(record),
-						  XLogRecGetData(record), XLogRecGetDataLen(record), &record->ReadRecPtr);
+							 XLogRecGetData(record), XLogRecGetDataLen(record));
 	}
 	else if (info == XLOG_XACT_DISTRIBUTED_COMMIT)
 	{

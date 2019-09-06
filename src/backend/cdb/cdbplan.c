@@ -1001,6 +1001,9 @@ mutate_join_fields(Join *newjoin, Join *oldjoin, Node *(*mutator) (), void *cont
  * and the corresponding plan should reference it's results through a
  * SubqueryScan node.
  */
+/* GPDB_96_MERGE_FIXME: With the upper planner pathification, we should have
+ * a PlannerInfo, i.e. a "root", not a naked Plan
+ */
 RangeTblEntry *
 package_plan_as_rte(PlannerInfo *root, Query *query, Plan *plan, Alias *eref, List *pathkeys,
 					PlannerInfo **subroot_p)
@@ -1045,7 +1048,6 @@ package_plan_as_rte(PlannerInfo *root, Query *query, Plan *plan, Alias *eref, Li
 	rte->rtekind = RTE_SUBQUERY;
 	rte->subquery = subquery;
 	rte->eref = eref;
-	rte->subquery_plan = plan;
 	rte->subquery_rtable = subquery->rtable;
 	rte->subquery_pathkeys = pathkeys;
 

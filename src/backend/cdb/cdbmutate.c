@@ -42,6 +42,7 @@
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "catalog/gp_policy.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 
@@ -1814,7 +1815,6 @@ shareinput_walker(SHAREINPUT_MUTATOR f, Node *node, PlannerInfo *root)
 			if (root->glob->finalrtable == NULL)
 			{
 				rel = find_base_rel(root, tfscan->scan.scanrelid);
-				Assert(rel->subplan == tfscan->scan.plan.lefttree);
 				subroot = rel->subroot;
 				glob->share.curr_rtable = subroot->parse->rtable;
 			}
@@ -2854,7 +2854,7 @@ initplan_walker(Node *node, ParamWalkerContext *context)
 				 * global list, because that would screw up the plan_id
 				 * numbering of the subplans).
 				 */
-				Result	   *dummy = make_result(root, NIL,
+				Result	   *dummy = make_result(NIL,
 												(Node *) list_make1(makeBoolConst(false, false)),
 												NULL);
 
@@ -2995,7 +2995,7 @@ remove_unused_subplans(PlannerInfo *root, SubPlanWalkerContext *context)
 			 */
 			lc = list_nth_cell(root->glob->subplans, i - 1);
 			pfree(lfirst(lc));
-			lfirst(lc) = make_result(root, NIL,
+			lfirst(lc) = make_result(NIL,
 									 (Node *) list_make1(makeBoolConst(false, false)),
 									 NULL);
 		}

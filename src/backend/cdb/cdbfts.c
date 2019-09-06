@@ -78,7 +78,8 @@ FtsShmemInit(void)
 
 	if (!IsUnderPostmaster)
 	{
-		shared->ControlLock = LWLockAssign();
+		RequestNamedLWLockTranche("ftsControlLock", 1);
+		shared->ControlLock = &(GetNamedLWLockTranche("ftsControlLock"))->lock;
 		ftsControlLock = shared->ControlLock;
 
 		shared->fts_probe_info.status_version = 0;
