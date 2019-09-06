@@ -228,12 +228,7 @@ main(int argc, char *argv[])
 		keywords[3] = "password";
 		values[3] = password;
 		keywords[4] = "dbname"; /* see do_connect() */
-<<<<<<< HEAD
-		values[4] = (options.action == ACT_LIST_DB &&
-					 options.dbname == NULL) ?
-=======
 		values[4] = (options.list_dbs && options.dbname == NULL) ?
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			"postgres" : options.dbname;
 		keywords[5] = "fallback_application_name";
 		values[5] = pset.progname;
