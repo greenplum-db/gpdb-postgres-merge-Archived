@@ -1888,7 +1888,8 @@ setup_description(FILE *cmdfd)
 				" SELECT t.objoid, c.oid, t.description "
 				"  FROM tmp_pg_shdescription t, pg_class c "
 				"   WHERE c.relname = t.classname;\n\n");
-
+	/* GPDB_96_MERGE_FIXME: */
+#if 0
 	/* Create default descriptions for operator implementation functions */
 	PG_CMD_PUTS("WITH funcdescs AS ( "
 				"SELECT p.oid as p_oid, oprname, "
@@ -1901,7 +1902,7 @@ setup_description(FILE *cmdfd)
 				"  WHERE opdesc NOT LIKE 'deprecated%' AND "
 				"  NOT EXISTS (SELECT 1 FROM pg_description "
 		"    WHERE objoid = p_oid AND classoid = 'pg_proc'::regclass);\n\n");
-
+#endif
 	/*
 	 * Even though the tables are temp, drop them explicitly so they don't get
 	 * copied into template0/postgres databases.
@@ -2407,7 +2408,9 @@ setup_cdb_schema(FILE *cmdfd)
 	 * naming them like "01_before.sql" and "02_after.sql"
 	 */
 	if (nscripts > 0)
+	{
 		qsort(scriptnames, nscripts, sizeof(char *), cmpstringp);
+	}
 
 	/*
 	 * Now execute each script.
@@ -2418,6 +2421,11 @@ setup_cdb_schema(FILE *cmdfd)
 		char	  **lines;
 		char	   *path;
 		size_t	    len;
+
+		/* GPDB_96_MERGE_FIXME: gp_toolkit.sql isn't working currently. Skip temporarily.
+		 */
+		if (strcmp(scriptnames[i], "gp_toolkit.sql") == 0)
+			continue;
 
 		len = strlen(share_path) + strlen("cdb_init.d") + strlen(scriptnames[i]) + 3;
 		path = pg_malloc(len);
@@ -2432,18 +2440,6 @@ setup_cdb_schema(FILE *cmdfd)
 		}
 
 		free(lines);
-
-		/* GPDB_96_MERGE_FIXME: which schema again? */
-		PG_CMD_PRINTF1("UPDATE information_schema.sql_implementation_info "
-					   "  SET character_value = '%s' "
-					   "  WHERE implementation_info_name = 'DBMS VERSION';\n\n",
-					   infoversion);
-
-		PG_CMD_PRINTF1("COPY information_schema.sql_features "
-					   "  (feature_id, feature_name, sub_feature_id, "
-					   "  sub_feature_name, is_supported, comments) "
-					   " FROM E'%s';\n\n",
-					   escape_quotes(features_file));
 	}
 }
 
@@ -3627,8 +3623,9 @@ initialize_data_directory(void)
 		setup_conversion(cmdfd);
 	
 		setup_dictionary(cmdfd);
-	
-		setup_privileges(cmdfd);
+
+		// GPDB_96_MERGE_FIXME: the queries here failed, revisit later 
+		//setup_privileges(cmdfd);
 	
 		setup_schema(cmdfd);
 	

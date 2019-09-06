@@ -286,9 +286,6 @@ extern void
 advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup);
 extern TupleTableSlot *fetch_input_tuple(AggState *aggstate);
 
-extern Oid resolve_polymorphic_transtype(Oid aggtranstype, Oid aggfnoid,
-										 Oid *inputTypes);
-
 extern Datum GetAggInitVal(Datum textInitVal, Oid transtype);
 
 extern Datum invoke_agg_trans_func(AggState *aggstate,
