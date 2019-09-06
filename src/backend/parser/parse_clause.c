@@ -58,6 +58,7 @@
 #include "catalog/pg_exttable.h"
 #include "catalog/pg_operator.h"
 #include "parser/parse_agg.h"
+#include "utils/syscache.h"
 
 /* Convenience macro for the most common makeNamespaceItem() case */
 #define makeDefaultNSItem(rte)	makeNamespaceItem(rte, true, true, false, true)
