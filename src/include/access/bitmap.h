@@ -19,6 +19,7 @@
 #include "access/xlog.h"
 #include "access/xlogutils.h"
 #include "utils/hsearch.h"
+#include "nodes/execnodes.h"
 
 #define BM_READ		BUFFER_LOCK_SHARE
 #define BM_WRITE	BUFFER_LOCK_EXCLUSIVE
