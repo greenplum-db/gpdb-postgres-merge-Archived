@@ -41,6 +41,7 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+#include "access/stratnum.h"	/* BTLessStrategyNumber */
 
 typedef struct
 {
