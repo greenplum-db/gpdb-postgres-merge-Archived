@@ -109,13 +109,9 @@ static char backup_file[MAXPGPATH];
 static char recovery_file[MAXPGPATH];
 static char promote_file[MAXPGPATH];
 
-<<<<<<< HEAD
 static volatile pgpid_t postmasterPID = -1;
 
-#if defined(WIN32) || defined(__CYGWIN__)
-=======
 #ifdef WIN32
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static DWORD pgctl_start_type = SERVICE_AUTO_START;
 static SERVICE_STATUS status;
 static SERVICE_STATUS_HANDLE hStatus = (SERVICE_STATUS_HANDLE) 0;
@@ -478,7 +474,6 @@ start_postmaster(void)
 	}
 
 	/* fork succeeded, in child */
-<<<<<<< HEAD
 
 	/*
 	 * If possible, detach the postmaster process from the launching process
@@ -493,8 +488,6 @@ start_postmaster(void)
 		exit(1);
 	}
 #endif
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Since there might be quotes to handle here, it is easier simply to pass
@@ -694,18 +687,12 @@ test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
 						 */
 						if (strcmp(host_str, "*") == 0)
 							strcpy(host_str, "localhost");
-<<<<<<< HEAD
 #if defined(__NetBSD__) || defined(__OpenBSD__) || defined(WIN32)
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 						else if (strcmp(host_str, "0.0.0.0") == 0)
 							strcpy(host_str, "127.0.0.1");
 						else if (strcmp(host_str, "::") == 0)
 							strcpy(host_str, "::1");
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 						/*
 						 * We need to set connect_timeout otherwise on Windows
@@ -756,12 +743,7 @@ test_postmaster_connection(pgpid_t pm_pid, bool do_checkpoint)
 #endif
 
 		/* No response, or startup still in process; wait */
-<<<<<<< HEAD
 		if (i % WAITS_PER_SEC == 0)
-=======
-#ifdef WIN32
-		if (do_checkpoint)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{
 #ifdef WIN32
 			if (do_checkpoint)
@@ -2137,9 +2119,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 		}
 	}
 
-#ifndef __CYGWIN__
     AddUserToTokenDacl(processInfo->hProcess);
-#endif
 
 	CloseHandle(restrictedToken);
 
