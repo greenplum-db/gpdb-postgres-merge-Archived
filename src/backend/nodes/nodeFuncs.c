@@ -2241,7 +2241,6 @@ expression_tree_walker(Node *node,
 			return walker(((PlaceHolderInfo *) node)->ph_var, context);
 		case T_RangeTblFunction:
 			return walker(((RangeTblFunction *) node)->funcexpr, context);
-<<<<<<< HEAD
 
 		case T_WindowDef:
 			{
@@ -2292,7 +2291,6 @@ expression_tree_walker(Node *node,
 			}
 			break;
 
-=======
 		case T_TableSampleClause:
 			{
 				TableSampleClause *tsc = (TableSampleClause *) node;
@@ -2304,7 +2302,6 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
@@ -3165,8 +3162,6 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
-<<<<<<< HEAD
-
 		case T_TableFunctionScan:
 			{
 				TableFunctionScan *tablefunc = (TableFunctionScan *) node;
@@ -3191,6 +3186,7 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 
 			}
+			break;
 		case T_SortGroupClause:
 			{
 				SortGroupClause *sortcl = (SortGroupClause *) node;
@@ -3200,6 +3196,7 @@ expression_tree_mutator(Node *node,
 
 				return (Node *) newnode;
 			}
+			break;
 		case T_DMLActionExpr:
 			{
 				DMLActionExpr *action_expr = (DMLActionExpr *) node;
@@ -3208,7 +3205,7 @@ expression_tree_mutator(Node *node,
 				FLATCOPY(new_action_expr, action_expr, DMLActionExpr);
 				return (Node *)new_action_expr;
 			}
-=======
+			break;
 		case T_TableSampleClause:
 			{
 				TableSampleClause *tsc = (TableSampleClause *) node;
@@ -3220,7 +3217,6 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
@@ -3310,27 +3306,11 @@ range_table_mutator(List *rtable,
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
-<<<<<<< HEAD
-				if (rte->tablesample)
-				{
-					CHECKFLATCOPY(newrte->tablesample, rte->tablesample,
-								  TableSampleClause);
-					MUTATE(newrte->tablesample->args,
-						   newrte->tablesample->args,
-						   List *);
-					MUTATE(newrte->tablesample->repeatable,
-						   newrte->tablesample->repeatable,
-						   Node *);
-				}
-				break;
-			case RTE_VOID:
-			case RTE_CTE:
-=======
 				MUTATE(newrte->tablesample, rte->tablesample,
 					   TableSampleClause *);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				/* we don't bother to copy eref, aliases, etc; OK? */
 				break;
+			case RTE_VOID:
 			case RTE_CTE:
 				/* nothing to do */
 				break;
