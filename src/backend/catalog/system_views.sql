@@ -653,8 +653,7 @@ CREATE VIEW pg_stat_activity AS
 
             S.waiting_reason,
             S.rsgid,
-            S.rsgname,
-            S.rsgqueueduration
+            S.rsgname
     FROM pg_database D, pg_stat_get_activity(NULL) AS S, pg_authid U
     WHERE S.datid = D.oid AND
             S.usesysid = U.oid;

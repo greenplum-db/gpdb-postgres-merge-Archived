@@ -780,7 +780,8 @@ typedef enum WaitClass
 	WAIT_LWLOCK_NAMED,
 	WAIT_LWLOCK_TRANCHE,
 	WAIT_LOCK,
-	WAIT_BUFFER_PIN
+	WAIT_BUFFER_PIN,
+	WAIT_RESOURCE_GROUP
 }	WaitClass;
 
 
@@ -800,12 +801,6 @@ typedef enum ProgressCommandType
  * Shared-memory data structures
  * ----------
  */
-
-/* Definitions of waiting reason */
-#define PGBE_WAITING_LOCK			'l'
-#define PGBE_WAITING_REPLICATION	'r'
-#define PGBE_WAITING_RESGROUP		'g'
-#define PGBE_WAITING_NONE			'\0'
 
 /*
  * PgBackendSSLStatus
@@ -859,8 +854,6 @@ typedef struct PgBackendStatus
 	TimestampTz st_proc_start_timestamp;
 	TimestampTz st_xact_start_timestamp;
 	TimestampTz st_activity_start_timestamp;
-	/* the start time of queueing on resource group */
-	TimestampTz	st_resgroup_queue_start_timestamp;
 	TimestampTz st_state_start_timestamp;
 
 	/* Database OID, owning user's OID, connection client address */
@@ -1079,8 +1072,7 @@ extern void pgstat_progress_end_command(void);
 extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
 extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
 
-extern void pgstat_report_resgroup(TimestampTz queueStart, Oid groupid);
-extern TimestampTz pgstat_fetch_resgroup_queue_timestamp(void);
+extern void pgstat_report_resgroup(Oid groupid);
 
 extern void pgstat_initstats(Relation rel);
 

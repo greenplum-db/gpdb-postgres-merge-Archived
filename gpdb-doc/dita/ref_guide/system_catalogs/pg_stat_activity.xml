@@ -87,10 +87,16 @@ or the same as the user owning the process being reported on.</p><p>The maximum 
             <entry>Time when the <codeph>state</codeph> was last changed</entry>
           </row>
           <row>
-            <entry colname="col1"><codeph>waiting</codeph></entry>
-            <entry colname="col2">boolean</entry>
+            <entry colname="col1"><codeph>wait_event_type</codeph></entry>
+            <entry colname="col2">text</entry>
             <entry colname="col3"/>
-            <entry colname="col4">True if waiting on a lock, false if not waiting</entry>
+            <entry colname="col4">Type of event for which the backend is waiting</entry>
+          </row>
+          <row>
+            <entry colname="col1"><codeph>wait_event</codeph></entry>
+            <entry colname="col2">text</entry>
+            <entry colname="col3"/>
+            <entry colname="col4">Wait event name if backend is currently waiting</entry>
           </row>
           <row>
             <entry><codeph>state</codeph></entry>
@@ -132,13 +138,6 @@ or the same as the user owning the process being reported on.</p><p>The maximum 
               query that was executed.</entry>
           </row>
           <row>
-            <entry colname="col1"><codeph>waiting_reason</codeph></entry>
-            <entry colname="col2">text</entry>
-            <entry colname="col3"/>
-            <entry colname="col4">Reason the server process is waiting. The value can be:<p>lock,
-                replication, or resgroup</p></entry>
-          </row>
-          <row>
             <entry colname="col1"><codeph>rsgid</codeph></entry>
             <entry colname="col2">oid</entry>
             <entry colname="col3">pg_resgroup.oid</entry>
@@ -149,12 +148,5 @@ or the same as the user owning the process being reported on.</p><p>The maximum 
             <entry colname="col2">text</entry>
             <entry colname="col3">pg_resgroup.rsgname</entry>
             <entry colname="col4">Resource group name</entry>
-          </row>
-          <row>
-            <entry colname="col1"><codeph>rsgqueueduration</codeph></entry>
-            <entry colname="col2">interval</entry>
-            <entry colname="col3"/>
-            <entry colname="col4">For a queued query, the total time the query has been
-              queued.</entry>
           </row>
 </tbody></tgroup></table></body></topic>

@@ -69,6 +69,7 @@
 #include "utils/timestamp.h"
 #include "utils/tqual.h"
 #include "cdb/cdbvars.h"
+#include "commands/resgroupcmds.h"
 
 
 /* ----------
@@ -2749,7 +2750,6 @@ pgstat_bestart(void)
 	beentry->st_activity_start_timestamp = 0;
 	beentry->st_state_start_timestamp = 0;
 	beentry->st_xact_start_timestamp = 0;
-	beentry->st_resgroup_queue_start_timestamp = 0;
 	beentry->st_databaseid = MyDatabaseId;
 	beentry->st_userid = userid;
 	beentry->st_session_id = gp_session_id;  /* GPDB only */
@@ -2783,9 +2783,7 @@ pgstat_bestart(void)
 	beentry->st_clienthostname[NAMEDATALEN - 1] = '\0';
 	beentry->st_appname[NAMEDATALEN - 1] = '\0';
 	beentry->st_activity[pgstat_track_activity_query_size - 1] = '\0';
-<<<<<<< HEAD
 	beentry->st_rsgid = InvalidOid;
-=======
 	beentry->st_progress_command = PROGRESS_COMMAND_INVALID;
 	beentry->st_progress_command_target = InvalidOid;
 
@@ -2794,7 +2792,6 @@ pgstat_bestart(void)
 	 * examine it until st_progress_command has been set to something other
 	 * than PROGRESS_COMMAND_INVALID
 	 */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	pgstat_increment_changecount_after(beentry);
 
@@ -3076,7 +3073,7 @@ pgstat_report_xact_timestamp(TimestampTz tstamp)
  * Report the timestamp of transaction start queueing on the resource group.
  */
 void
-pgstat_report_resgroup(TimestampTz queueStart, Oid groupid)
+pgstat_report_resgroup(Oid groupid)
 {
 	volatile PgBackendStatus *beentry = MyBEEntry;
 
@@ -3089,71 +3086,11 @@ pgstat_report_resgroup(TimestampTz queueStart, Oid groupid)
 	 * ensure the compiler doesn't try to get cute.
 	 */
 	beentry->st_changecount++;
-	if (queueStart != 0)
-	{
-		beentry->st_resgroup_queue_start_timestamp = queueStart;
-		beentry->st_waiting = PGBE_WAITING_RESGROUP;
-	}
 
 	beentry->st_rsgid = groupid;
 	beentry->st_changecount++;
 	Assert((beentry->st_changecount & 1) == 0);
 }
-
-/*
- * Fetch the timestamp of transaction start queueing on the resource group.
- */
-TimestampTz
-pgstat_fetch_resgroup_queue_timestamp(void)
-{
-	volatile PgBackendStatus *beentry = MyBEEntry;
-
-	if (!beentry)
-		return 0;
-
-	return beentry->st_resgroup_queue_start_timestamp;
-}
-
-/* ----------
-<<<<<<< HEAD
- * pgstat_report_waiting() -
- *
- *	Called from lock manager to report beginning or end of a lock wait.
- *
- * NB: this *must* be able to survive being called before MyBEEntry has been
- * initialized.
- * ----------
- *
- * In GPDB, this interface is modified to accept a reason for waiting while in
- * upstream, it just accepts a boolean value.  The interface is renamed in GPDB
- * to "gpstat_report_waiting(char waiting)" in order to catch future uses of
- * the interface when merged from upstream.
- */
-#if 0
-void
-pgstat_report_waiting(bool waiting)
-{
-	Assert(false);
-}
-#endif
-
-/* GPDB_96_MERGE_FIXME: can we remove this, now that we have upstream wait_event stuff? */
-void
-gpstat_report_waiting(char reason)
-{
-	volatile PgBackendStatus *beentry = MyBEEntry;
-
-	if (!pgstat_track_activities || !beentry)
-		return;
-
-	/*
-	 * Since this is a single-byte field in a struct that only this process
-	 * may modify, there seems no need to bother with the st_changecount
-	 * protocol.  The update must appear atomic in any case.
-	 */
-	beentry->st_waiting = reason;
-}
-
 
 /* ----------
  * pgstat_report_sessionid() -
@@ -3177,8 +3114,6 @@ pgstat_report_sessionid(int new_sessionid)
 }
 
 /* ----------
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * pgstat_read_current_status() -
  *
  *	Copy the current contents of the PgBackendStatus array to local memory,
@@ -3211,12 +3146,9 @@ pgstat_read_current_status(void)
 	localappname = (char *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   NAMEDATALEN * MaxBackends);
-<<<<<<< HEAD
 	localclienthostname = (char *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   NAMEDATALEN * MaxBackends);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	localactivity = (char *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   pgstat_track_activity_query_size * MaxBackends);
@@ -3336,6 +3268,9 @@ pgstat_get_wait_event_type(uint32 wait_event_info)
 		case WAIT_BUFFER_PIN:
 			event_type = "BufferPin";
 			break;
+		case WAIT_RESOURCE_GROUP:
+			event_type = "ResourceGroup";
+			break;
 		default:
 			event_type = "???";
 			break;
@@ -3375,6 +3310,14 @@ pgstat_get_wait_event(uint32 wait_event_info)
 			event_name = GetLockNameFromTagType(eventId);
 			break;
 		case WAIT_BUFFER_PIN:
+			event_name = "BufferPin";
+			break;
+		case WAIT_RESOURCE_GROUP:
+			{
+				char *groupName = GetResGroupNameForId(eventId);
+
+				event_name = groupName ? groupName : "unknown resource group";
+			}
 			event_name = "BufferPin";
 			break;
 		default:
@@ -4520,7 +4463,6 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 				dbentry->functions = NULL;
 
 				/*
-<<<<<<< HEAD
 				 * In the collector, disregard the timestamp we read from the
 				 * permanent stats file; we should be willing to write a temp
 				 * stats file immediately upon the first request from any
@@ -4530,8 +4472,6 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 					dbentry->stats_timestamp = 0;
 
 				/*
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				 * Don't create tables/functions hashtables for uninteresting
 				 * databases.
 				 */

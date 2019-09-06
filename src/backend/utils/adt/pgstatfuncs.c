@@ -76,7 +76,6 @@ extern Datum pg_stat_get_backend_xact_start(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_start(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_client_port(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_backend_waiting_reason(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_progress_info(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_db_numbackends(PG_FUNCTION_ARGS);
@@ -146,22 +145,6 @@ extern Datum pg_stat_reset_single_function_counters(PG_FUNCTION_ARGS);
 
 /* Global bgwriter statistics, from bgwriter.c */
 extern PgStat_MsgBgWriter bgwriterStats;
-
-static char *
-pgstat_waiting_string(char reason)
-{
-	switch(reason)
-	{
-		case PGBE_WAITING_LOCK:
-			return "lock";
-		case PGBE_WAITING_REPLICATION:
-			return "replication";
-		case PGBE_WAITING_RESGROUP:
-			return "resgroup";
-		default:
-			return NULL;
-	}
-}
 
 Datum
 pg_stat_get_numscans(PG_FUNCTION_ARGS)
@@ -669,11 +652,7 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_activity(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-#define PG_STAT_GET_ACTIVITY_COLS	27
-=======
-#define PG_STAT_GET_ACTIVITY_COLS	23
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+#define PG_STAT_GET_ACTIVITY_COLS	26
 	int			num_backends = pgstat_fetch_stat_numbackends();
 	int			curr_backend;
 	int			pid = PG_ARGISNULL(0) ? -1 : PG_GETARG_INT32(0);
@@ -929,24 +908,9 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				}
 			}
 
-			values[22] = Int32GetDatum(beentry->st_session_id);  /* GPDB */
+			values[23] = Int32GetDatum(beentry->st_session_id);  /* GPDB */
 
-			if (tupdesc->natts > 23)
 			{
-				char	st_waiting = beentry->st_waiting;
-				char   *reason;
-
-				reason = pgstat_waiting_string(st_waiting);
-
-				if (reason != NULL)
-					values[23] = CStringGetTextDatum(reason);
-				else
-					nulls[23] = true;
-			}
-
-			if (tupdesc->natts > 24)
-			{
-				Datum now = TimestampTzGetDatum(GetCurrentTimestamp());
 				char *groupName = GetResGroupNameForId(beentry->st_rsgid);
 
 				values[24] = ObjectIdGetDatum(beentry->st_rsgid);
@@ -955,12 +919,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					values[25] = CStringGetTextDatum(groupName);
 				else
 					nulls[25] = true;
-
-				if (beentry->st_waiting == PGBE_WAITING_RESGROUP)
-					values[26] = DirectFunctionCall2(timestamptz_age, now,
-													 TimestampTzGetDatum(beentry->st_resgroup_queue_start_timestamp));
-				else
-					nulls[26] = true;
 			}
 		}
 		else
@@ -977,20 +935,11 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[12] = true;
 			nulls[13] = true;
 			nulls[14] = true;
-<<<<<<< HEAD
 			nulls[15] = true;
 
-			values[22] = Int32GetDatum(beentry->st_session_id);
-			if (tupdesc->natts > 23)
-				nulls[23] = true;
-			if (tupdesc->natts > 24)
-			{
-				nulls[24] = true;
-				nulls[25] = true;
-				nulls[26] = true;
-			}
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+			values[23] = Int32GetDatum(beentry->st_session_id);
+			nulls[24] = true;
+			nulls[25] = true;
 		}
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
@@ -1103,9 +1052,6 @@ pg_stat_get_backend_wait_event_type(PG_FUNCTION_ARGS)
 	if (!wait_event_type)
 		PG_RETURN_NULL();
 
-<<<<<<< HEAD
-	result = beentry->st_waiting != PGBE_WAITING_NONE;
-=======
 	PG_RETURN_TEXT_P(cstring_to_text(wait_event_type));
 }
 
@@ -1126,7 +1072,6 @@ pg_stat_get_backend_wait_event(PG_FUNCTION_ARGS)
 
 	if (!wait_event)
 		PG_RETURN_NULL();
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	PG_RETURN_TEXT_P(cstring_to_text(wait_event));
 }
@@ -1293,28 +1238,6 @@ pg_stat_get_backend_client_port(PG_FUNCTION_ARGS)
 
 	PG_RETURN_DATUM(DirectFunctionCall1(int4in,
 										CStringGetDatum(remote_port)));
-}
-
-Datum
-pg_stat_get_backend_waiting_reason(PG_FUNCTION_ARGS)
-{
-	int32		beid = PG_GETARG_INT32(0);
-	PgBackendStatus *beentry;
-	char	   *result;
-
-	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
-		PG_RETURN_NULL();
-
-	if (!superuser() && beentry->st_userid != GetUserId())
-		PG_RETURN_NULL();
-
-	result = pgstat_waiting_string(beentry->st_waiting);
-
-	/* waiting for nothing */
-	if (result == NULL)
-		PG_RETURN_NULL();
-
-	PG_RETURN_DATUM(CStringGetTextDatum(result));
 }
 
 Datum

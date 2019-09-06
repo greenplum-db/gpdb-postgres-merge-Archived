@@ -202,7 +202,7 @@ struct ResGroupData
 	volatile int	nRunningBypassed;		/* number of running trans in bypass mode */
 	int			totalExecuted;	/* total number of executed trans */
 	int			totalQueued;	/* total number of queued trans	*/
-	Interval	totalQueuedTime;/* total queue time */
+	int64	totalQueuedTimeMs;	/* total queue time, in milliseconds */
 	PROC_QUEUE	waitProcs;		/* list of PGPROC objects waiting on this group */
 
 	/*
@@ -259,6 +259,8 @@ static ResGroupProcData *self = &__self;
 
 /* If we are waiting on a group, this points to the associated group */
 static ResGroupData *groupAwaited = NULL;
+static int64 groupWaitStart;
+static int64 groupWaitEnd;
 
 /* the resource group self is running in bypass mode */
 static ResGroupData *bypassedGroup = NULL;
@@ -984,8 +986,9 @@ ResGroupGetMaxChunksPerQuery(void)
 Datum
 ResGroupGetStat(Oid groupId, ResGroupStatType type)
 {
-	ResGroupData	*group;
-	Datum result;
+	ResGroupData *group;
+	Interval   *interval;
+	Datum		result;
 
 	Assert(IsResGroupActivated());
 
@@ -1008,7 +1011,16 @@ ResGroupGetStat(Oid groupId, ResGroupStatType type)
 			result = Int32GetDatum(group->totalQueued);
 			break;
 		case RES_GROUP_STAT_TOTAL_QUEUE_TIME:
-			result = IntervalPGetDatum(&group->totalQueuedTime);
+			/* turn milliseconds in totalQueuedTimeMs into an Interval.
+			 *
+			 * GPDB_96_MERGE_FIXME: we should probably set day/month correctly,
+			 * instead of just filling the microseconds field.
+			 */
+			interval = (Interval *) palloc(sizeof(Interval));
+			interval->time = group->totalQueuedTimeMs * 1000;
+			interval->day = 0;
+			interval->month = 0;
+			result = IntervalPGetDatum(interval);
 			break;
 		case RES_GROUP_STAT_MEM_USAGE:
 			result = CStringGetDatum(groupDumpMemUsage(group));
@@ -1309,7 +1321,7 @@ createGroup(Oid groupId, const ResGroupCaps *caps)
 	group->memSharedUsage = 0;
 	group->memQuotaUsed = 0;
 	group->groupMemOps = NULL;
-	memset(&group->totalQueuedTime, 0, sizeof(group->totalQueuedTime));
+	group->totalQueuedTimeMs = 0;
 	group->lockedForDrop = false;
 
 	group->memQuotaGranted = 0;
@@ -1805,7 +1817,7 @@ groupAcquireSlot(ResGroupInfo *pGroupInfo)
 			/* got one, lucky */
 			group->totalExecuted++;
 			LWLockRelease(ResGroupLock);
-			pgstat_report_resgroup(0, group->groupId);
+			pgstat_report_resgroup(group->groupId);
 			return slot;
 		}
 	}
@@ -1839,7 +1851,7 @@ groupAcquireSlot(ResGroupInfo *pGroupInfo)
 	group->totalExecuted++;
 	LWLockRelease(ResGroupLock);
 
-	pgstat_report_resgroup(0, group->groupId);
+	pgstat_report_resgroup(group->groupId);
 	return slot;
 }
 
@@ -2293,15 +2305,7 @@ addTotalQueueDuration(ResGroupData *group)
 	if (group == NULL)
 		return;
 
-	TimestampTz start = pgstat_fetch_resgroup_queue_timestamp();
-	TimestampTz now = GetCurrentTimestamp();
-	Datum durationDatum = DirectFunctionCall2(timestamptz_age,
-											  TimestampTzGetDatum(now),
-											  TimestampTzGetDatum(start));
-	Datum sumDatum = DirectFunctionCall2(interval_pl,
-										 IntervalPGetDatum(&group->totalQueuedTime),
-										 durationDatum);
-	memcpy(&group->totalQueuedTime, DatumGetIntervalP(sumDatum), sizeof(Interval));
+	group->totalQueuedTimeMs += (groupWaitEnd - groupWaitEnd);
 }
 
 /*
@@ -2491,7 +2495,7 @@ AssignResGroupOnMaster(void)
 
 		/* Update pg_stat_activity statistics */
 		bypassedGroup->totalExecuted++;
-		pgstat_report_resgroup(0, bypassedGroup->groupId);
+		pgstat_report_resgroup(bypassedGroup->groupId);
 
 		/* Initialize the fake slot */
 		bypassedSlot.groupId = groupInfo.groupId;
@@ -2568,7 +2572,7 @@ UnassignResGroup(void)
 		bypassedGroup = NULL;
 
 		/* Update pg_stat_activity statistics */
-		pgstat_report_resgroup(0, InvalidOid);
+		pgstat_report_resgroup(InvalidOid);
 		return;
 	}
 
@@ -2617,7 +2621,7 @@ UnassignResGroup(void)
 
 	LWLockRelease(ResGroupLock);
 
-	pgstat_report_resgroup(0, InvalidOid);
+	pgstat_report_resgroup(InvalidOid);
 }
 
 /*
@@ -2736,7 +2740,8 @@ waitOnGroup(ResGroupData *group)
 	Assert(!LWLockHeldExclusiveByMe(ResGroupLock));
 	Assert(!selfIsAssigned());
 
-	pgstat_report_resgroup(GetCurrentTimestamp(), group->groupId);
+	pgstat_report_wait_start(WAIT_RESGROUP, group->groupId);
+	pgstat_report_resgroup(group->groupId);
 
 	/*
 	 * Mark that we are waiting on resource group
@@ -2744,6 +2749,7 @@ waitOnGroup(ResGroupData *group)
 	 * This is used for interrupt cleanup, similar to lockAwaited in ProcSleep
 	 */
 	groupAwaited = group;
+	groupWaitStart = GetCurrentIntegerTimestamp();
 
 	/*
 	 * Make sure we have released all locks before going to sleep, to eliminate
@@ -2764,14 +2770,13 @@ waitOnGroup(ResGroupData *group)
 	}
 	PG_CATCH();
 	{
+		pgstat_report_wait_end();
 		groupWaitCancel();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	groupAwaited = NULL;
-
-	gpstat_report_waiting(PGBE_WAITING_NONE);
 }
 
 /*
@@ -2904,6 +2909,9 @@ groupWaitCancel(void)
 	if (groupAwaited == NULL)
 		return;
 
+	pgstat_report_wait_end();
+	groupWaitEnd = GetCurrentIntegerTimestamp();
+
 	Assert(!selfIsAssigned());
 
 	group = groupAwaited;
@@ -2964,7 +2972,6 @@ groupWaitCancel(void)
 	LWLockRelease(ResGroupLock);
 
 	groupAwaited = NULL;
-	gpstat_report_waiting(PGBE_WAITING_NONE);
 }
 
 static void
