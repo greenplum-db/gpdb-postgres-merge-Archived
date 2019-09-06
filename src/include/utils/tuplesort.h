@@ -566,12 +566,12 @@ switcheroo_tuplesort_begin_pos(switcheroo_Tuplesortstate *state, TuplesortPos **
 
 static inline bool
 switcheroo_tuplesort_gettupleslot_pos(switcheroo_Tuplesortstate *state, TuplesortPos *pos,
-                          bool forward, TupleTableSlot *slot, MemoryContext mcontext)
+                          bool forward, TupleTableSlot *slot, Datum *abbrev, MemoryContext mcontext)
 {
 	if (state->is_mk_tuplesortstate)
-		return tuplesort_gettupleslot_pos_mk((Tuplesortstate_mk *) state, (TuplesortPos_mk *) pos, forward, slot, mcontext);
+		return tuplesort_gettupleslot_pos_mk((Tuplesortstate_mk *) state, (TuplesortPos_mk *) pos, forward, slot, abbrev, mcontext);
 	else
-		return tuplesort_gettupleslot_pos_pg((Tuplesortstate_pg *) state, pos, forward, slot, mcontext);
+		return tuplesort_gettupleslot_pos_pg((Tuplesortstate_pg *) state, pos, forward, slot, abbrev, mcontext);
 }
 
 static inline void

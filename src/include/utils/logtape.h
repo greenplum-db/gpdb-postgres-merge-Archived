@@ -56,6 +56,7 @@ extern long LogicalTapeSetBlocks(LogicalTapeSet *lts);
 extern void LogicalTapeSetForgetFreeSpace(LogicalTapeSet *lts);
 
 extern LogicalTape *LogicalTapeSetGetTape(LogicalTapeSet *lts, int tapenum);
+extern int LogicalTapeGetTapeNum(LogicalTapeSet *lts, LogicalTape *lt);
 extern LogicalTape *LogicalTapeSetDuplicateTape(LogicalTapeSet *lts, LogicalTape *lt);
 
 #endif   /* LOGTAPE_H */

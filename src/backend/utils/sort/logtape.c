@@ -700,10 +700,22 @@ LogicalTapeBackspace(LogicalTapeSet *lts, LogicalTape *lt, size_t size)
 }
 
 /* Get a logical tape given tape number */
-LogicalTape *LogicalTapeSetGetTape(LogicalTapeSet *lts, int tapenum)
+LogicalTape *
+LogicalTapeSetGetTape(LogicalTapeSet *lts, int tapenum)
 {
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
 	return &lts->tapes[tapenum];
+}
+
+
+/* Get tape number, given a pointer to a tape */
+int
+LogicalTapeGetTapeNum(LogicalTapeSet *lts, LogicalTape *lt)
+{
+	int			tapenum = lt - lts->tapes;
+
+	Assert(lt > lts->tapes && tapenum < lts->nTapes);
+	return tapenum;
 }
 
 /*

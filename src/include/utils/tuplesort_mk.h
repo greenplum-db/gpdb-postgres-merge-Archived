@@ -71,7 +71,7 @@ extern void tuplesort_putdatum_mk(Tuplesortstate_mk *state, Datum val, bool isNu
 extern void tuplesort_performsort_mk(Tuplesortstate_mk *state);
 
 extern void tuplesort_begin_pos_mk(Tuplesortstate_mk *state, TuplesortPos_mk **pos);
-extern bool tuplesort_gettupleslot_pos_mk(Tuplesortstate_mk *state, TuplesortPos_mk *pos, bool forward, TupleTableSlot *slot, MemoryContext mcontext);
+extern bool tuplesort_gettupleslot_pos_mk(Tuplesortstate_mk *state, TuplesortPos_mk *pos, bool forward, TupleTableSlot *slot, Datum *abbrev, MemoryContext mcontext);
 
 extern bool tuplesort_gettupleslot_mk(Tuplesortstate_mk *state, bool forward, TupleTableSlot *slot, Datum *abbrev);
 extern HeapTuple tuplesort_getheaptuple_mk(Tuplesortstate_mk *state, bool forward, bool *should_free);
