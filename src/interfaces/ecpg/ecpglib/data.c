@@ -380,11 +380,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 #ifdef HAVE_STRTOULL
 				case ECPGt_unsigned_long_long:
 					*((unsigned long long int *) (var + offset * act_tuple)) = strtoull(pval, &scan_length, 10);
-<<<<<<< HEAD
 					if (garbage_left(isarray, &scan_length, compat))
-=======
-					if (garbage_left(isarray, scan_length, compat))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 					{
 						ecpg_raise(lineno, ECPG_UINT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);

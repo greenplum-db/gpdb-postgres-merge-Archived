@@ -783,7 +783,6 @@ getParamDescriptions(PGconn *conn, int msgLength)
 	const char *errmsg = NULL;	/* means "out of memory", see below */
 	int			nparams;
 	int			i;
-	const char *errmsg = NULL;
 
 	result = PQmakeEmptyPGresult(conn, PGRES_COMMAND_OK);
 	if (!result)

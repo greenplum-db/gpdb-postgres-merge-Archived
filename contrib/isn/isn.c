@@ -444,15 +444,9 @@ ean2ISBN(char *isn)
 	unsigned	check;
 
 	/*
-<<<<<<< HEAD
-	 * The number should come in this format: 978-0-000-00000-0
-	 * or may be an ISBN-13 number, 979-..., which does not have a short
-	 * representation. Do the short output version if possible.
-=======
 	 * The number should come in this format: 978-0-000-00000-0 or may be an
 	 * ISBN-13 number, 979-..., which does not have a short representation. Do
 	 * the short output version if possible.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 */
 	if (strncmp("978-", isn, 4) == 0)
 	{

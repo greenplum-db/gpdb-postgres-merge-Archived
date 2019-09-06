@@ -244,11 +244,6 @@ output_escaped_str(char *str, bool quoted)
 			fputc(str[i], base_yyout);
 	}
 
-<<<<<<< HEAD
-	if (quoted && str[0] == '\"' && str[len] == '\"')
-		fputs("\"", base_yyout);
-=======
 	if (quoted && str[0] == '"' && str[len] == '"')
-		fputs("\"", yyout);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+		fputs("\"", base_yyout);
 }

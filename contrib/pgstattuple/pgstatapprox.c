@@ -147,13 +147,15 @@ statapprox_heap(Relation rel, output_type *stat)
 
 			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			tuple.t_len = ItemIdGetLength(itemid);
+#if 0
 			tuple.t_tableOid = RelationGetRelid(rel);
+#endif
 
 			/*
 			 * We count live and dead tuples, but we also need to add up
 			 * others in order to feed vac_estimate_reltuples.
 			 */
-			switch (HeapTupleSatisfiesVacuum(&tuple, OldestXmin, buf))
+			switch (HeapTupleSatisfiesVacuum(rel, &tuple, OldestXmin, buf))
 			{
 				case HEAPTUPLE_RECENTLY_DEAD:
 					misc_count++;
