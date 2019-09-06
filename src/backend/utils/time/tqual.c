@@ -1068,7 +1068,7 @@ HeapTupleSatisfiesMVCC(Relation relation, HeapTuple htup, Snapshot snapshot,
 
 			if (TransactionIdIsCurrentTransactionId(xvac))
 				return false;
-			if (!XidInMVCCSnapshot(xvac, snapshot))
+			if (!XidInMVCCSnapshot(xvac, snapshot, true, &setDistributedSnapshotIgnore))
 			{
 				if (TransactionIdDidCommit(xvac))
 				{
@@ -1087,7 +1087,7 @@ HeapTupleSatisfiesMVCC(Relation relation, HeapTuple htup, Snapshot snapshot,
 
 			if (!TransactionIdIsCurrentTransactionId(xvac))
 			{
-				if (XidInMVCCSnapshot(xvac, snapshot))
+				if (XidInMVCCSnapshot(xvac, snapshot, true, &setDistributedSnapshotIgnore))
 					return false;
 				if (TransactionIdDidCommit(xvac))
 					SetHintBits(tuple, buffer, relation, HEAP_XMIN_COMMITTED,
@@ -1148,49 +1148,51 @@ HeapTupleSatisfiesMVCC(Relation relation, HeapTuple htup, Snapshot snapshot,
 			else
 				return false;	/* deleted before scan started */
 		}
-		else if (XidInMVCCSnapshot(HeapTupleHeaderGetRawXmin(tuple), snapshot))
-			return false;
-		else if (TransactionIdDidCommit(HeapTupleHeaderGetRawXmin(tuple)))
-			SetHintBits(tuple, buffer, relation, HEAP_XMIN_COMMITTED,
-						HeapTupleHeaderGetRawXmin(tuple));
 		else
 		{
-			/* it must have aborted or crashed */
-			SetHintBits(tuple, buffer, relation, HEAP_XMIN_INVALID,
-						InvalidTransactionId);
-			return false;
+			inSnapshot =
+				XidInMVCCSnapshot(HeapTupleHeaderGetRawXmin(tuple), snapshot,
+								  ((tuple->t_infomask2 & HEAP_XMIN_DISTRIBUTED_SNAPSHOT_IGNORE) != 0),
+								  &setDistributedSnapshotIgnore);
+			if (setDistributedSnapshotIgnore)
+			{
+				tuple->t_infomask2 |= HEAP_XMIN_DISTRIBUTED_SNAPSHOT_IGNORE;
+				markDirty(buffer, relation, tuple, /* isXmin */ true);
+			}
+			if (inSnapshot)
+				return false;
+			else if (TransactionIdDidCommit(HeapTupleHeaderGetRawXmin(tuple)))
+				SetHintBits(tuple, buffer, relation, HEAP_XMIN_COMMITTED,
+							HeapTupleHeaderGetRawXmin(tuple));
+			else
+			{
+				/* it must have aborted or crashed */
+				SetHintBits(tuple, buffer, relation, HEAP_XMIN_INVALID,
+							InvalidTransactionId);
+				return false;
+			}
 		}
 	}
 	else
 	{
 		/* xmin is committed, but maybe not according to our snapshot */
-		if (!HeapTupleHeaderXminFrozen(tuple) &&
-			XidInMVCCSnapshot(HeapTupleHeaderGetRawXmin(tuple), snapshot))
-			return false;		/* treat as still in progress */
+		if (!HeapTupleHeaderXminFrozen(tuple))
+		{
+			inSnapshot =
+				XidInMVCCSnapshot(HeapTupleHeaderGetRawXmin(tuple), snapshot,
+								  ((tuple->t_infomask2 & HEAP_XMIN_DISTRIBUTED_SNAPSHOT_IGNORE) != 0),
+								  &setDistributedSnapshotIgnore);
+			if (setDistributedSnapshotIgnore)
+			{
+				tuple->t_infomask2 |= HEAP_XMIN_DISTRIBUTED_SNAPSHOT_IGNORE;
+				markDirty(buffer, relation, tuple, /* isXmin */ true);
+			}
+			if (inSnapshot)
+				return false;			/* treat as still in progress */
+		}
 	}
 
-<<<<<<< HEAD
-	/*
-	 * By here, the inserting transaction has committed - have to check
-	 * when...
-	 */
-	if (!HeapTupleHeaderXminFrozen(tuple))
-	{
-		inSnapshot =
-			XidInMVCCSnapshot(HeapTupleHeaderGetRawXmin(tuple), snapshot,
-						  ((tuple->t_infomask2 & HEAP_XMIN_DISTRIBUTED_SNAPSHOT_IGNORE) != 0),
-						  &setDistributedSnapshotIgnore);
-		if (setDistributedSnapshotIgnore)
-		{
-			tuple->t_infomask2 |= HEAP_XMIN_DISTRIBUTED_SNAPSHOT_IGNORE;
-			markDirty(buffer, relation, tuple, /* isXmin */ true);
-		}
-		if (inSnapshot)
-			return false;			/* treat as still in progress */
-	}
-=======
 	/* by here, the inserting transaction has committed */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid or aborted */
 		return true;
@@ -1217,28 +1219,19 @@ HeapTupleSatisfiesMVCC(Relation relation, HeapTuple htup, Snapshot snapshot,
 			else
 				return false;	/* deleted before scan started */
 		}
-		if (XidInMVCCSnapshot(xmax, snapshot))
-			return true;
-		if (TransactionIdDidCommit(xmax))
-<<<<<<< HEAD
-		{
-			/* updating transaction committed, but when? */
-			inSnapshot = XidInMVCCSnapshot(xmax, snapshot,
-										   ((tuple->t_infomask2 & HEAP_XMAX_DISTRIBUTED_SNAPSHOT_IGNORE) != 0),
-										   &setDistributedSnapshotIgnore);
-			if (setDistributedSnapshotIgnore)
-			{
-				tuple->t_infomask2 |= HEAP_XMAX_DISTRIBUTED_SNAPSHOT_IGNORE;
-				markDirty(buffer, relation, tuple, /* isXmin */ false);
-			}
 
-			if (inSnapshot)
-				return true;	/* treat as still in progress */
-			return false;
+		inSnapshot = XidInMVCCSnapshot(xmax, snapshot,
+									   ((tuple->t_infomask2 & HEAP_XMAX_DISTRIBUTED_SNAPSHOT_IGNORE) != 0),
+									   &setDistributedSnapshotIgnore);
+		if (setDistributedSnapshotIgnore)
+		{
+			tuple->t_infomask2 |= HEAP_XMAX_DISTRIBUTED_SNAPSHOT_IGNORE;
+			markDirty(buffer, relation, tuple, /* isXmin */ false);
 		}
-=======
+		if (inSnapshot)
+			return true;	/* treat as still in progress */
+		if (TransactionIdDidCommit(xmax))
 			return false;		/* updating transaction committed */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		/* it must have aborted or crashed */
 		return true;
 	}
@@ -1253,7 +1246,15 @@ HeapTupleSatisfiesMVCC(Relation relation, HeapTuple htup, Snapshot snapshot,
 				return false;	/* deleted before scan started */
 		}
 
-		if (XidInMVCCSnapshot(HeapTupleHeaderGetRawXmax(tuple), snapshot))
+		inSnapshot = XidInMVCCSnapshot(HeapTupleHeaderGetRawXmax(tuple), snapshot,
+									   ((tuple->t_infomask2 & HEAP_XMAX_DISTRIBUTED_SNAPSHOT_IGNORE) != 0),
+									   &setDistributedSnapshotIgnore);
+		if (setDistributedSnapshotIgnore)
+		{
+			tuple->t_infomask2 |= HEAP_XMAX_DISTRIBUTED_SNAPSHOT_IGNORE;
+			markDirty(buffer, relation, tuple, /* isXmin */ false);
+		}
+		if (inSnapshot)
 			return true;
 
 		if (!TransactionIdDidCommit(HeapTupleHeaderGetRawXmax(tuple)))
@@ -1271,29 +1272,20 @@ HeapTupleSatisfiesMVCC(Relation relation, HeapTuple htup, Snapshot snapshot,
 	else
 	{
 		/* xmax is committed, but maybe not according to our snapshot */
-		if (XidInMVCCSnapshot(HeapTupleHeaderGetRawXmax(tuple), snapshot))
-			return true;		/* treat as still in progress */
-	}
-
-<<<<<<< HEAD
-	/*
-	 * OK, the deleting transaction committed too ... but when?
-	 */
-	inSnapshot =
+		inSnapshot =
 			XidInMVCCSnapshot(HeapTupleHeaderGetRawXmax(tuple), snapshot,
 							  ((tuple->t_infomask2 & HEAP_XMAX_DISTRIBUTED_SNAPSHOT_IGNORE) != 0),
 							  &setDistributedSnapshotIgnore);
-	if (setDistributedSnapshotIgnore)
-	{
-		tuple->t_infomask2 |= HEAP_XMAX_DISTRIBUTED_SNAPSHOT_IGNORE;
-		markDirty(buffer, relation, tuple, /* isXmin */ false);
-	}
+		if (setDistributedSnapshotIgnore)
+		{
+			tuple->t_infomask2 |= HEAP_XMAX_DISTRIBUTED_SNAPSHOT_IGNORE;
+			markDirty(buffer, relation, tuple, /* isXmin */ false);
+		}
 
-	if (inSnapshot)
-		return true;			/* treat as still in progress */
-=======
+		if (inSnapshot)
+			return true;			/* treat as still in progress */
+	}
 	/* xmax transaction committed */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	return false;
 }
@@ -1442,11 +1434,7 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTuple htup, TransactionId Oldest
 					MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple),
 										 true))
 					return HEAPTUPLE_LIVE;
-<<<<<<< HEAD
 				SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
-=======
-				SetHintBits(tuple, buffer, HEAP_XMAX_INVALID, InvalidTransactionId);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			}
 			else
 			{

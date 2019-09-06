@@ -314,26 +314,7 @@ GetComboCommandId(TransactionId xmin, CommandId cmin, CommandId cmax)
 		return entry->combocid;
 	}
 
-<<<<<<< HEAD
-	/*
-	 * We have to create a new combo cid. Check that there's room for it in
-	 * the array, and grow it if there isn't.
-	 */
-	if (usedComboCids >= sizeComboCids)
-	{
-		/* We need to grow the array */
-		int			newsize = sizeComboCids * 2;
-
-		comboCids = (ComboCidKeyData *)
-			repalloc(comboCids, sizeof(ComboCidKeyData) * newsize);
-		sizeComboCids = newsize;
-	}
-
-	/* We are about to create a new combocid */
-
-=======
 	/* We have to create a new combo cid; we already made room in the array */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	combocid = usedComboCids;
 
 	comboCids[combocid].cmin = cmin;
