@@ -1718,18 +1718,9 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 	platform_expectfile = get_expectfile(testname, resultsfile, default_expectfile);
 
 	if (platform_expectfile)
-<<<<<<< HEAD
 		strlcpy(expectfile, platform_expectfile, sizeof(expectfile));
 	else
 		strlcpy(expectfile, default_expectfile, sizeof(expectfile));
-=======
-	{
-		/*
-		 * Replace everything after the last slash in expectfile with what the
-		 * platform_expectfile contains.
-		 */
-		char	   *p = strrchr(expectfile, '/');
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (ignore_plans)
 		ignore_plans_opts = " -gpd_ignore_plans";
