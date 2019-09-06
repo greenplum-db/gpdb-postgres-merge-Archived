@@ -79,15 +79,11 @@
 /* Ideally this would be in a .h file, but it hardly seems worth the trouble */
 extern const char *select_default_timezone(const char *share_path);
 
-<<<<<<< HEAD
 /* version string we expect back from postgres */
 #define PG_VERSIONSTR "postgres (Greenplum Database) " PG_VERSION "\n"
 
-static const char *auth_methods_host[] = {"trust", "reject", "md5", "password", "ident", "radius",
-=======
 static const char *const auth_methods_host[] = {
 	"trust", "reject", "md5", "password", "ident", "radius",
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #ifdef ENABLE_GSS
 	"gss",
 #endif
@@ -210,11 +206,7 @@ static char *authwarning = NULL;
  * (no quoting to worry about).
  */
 static const char *boot_options = "-F";
-<<<<<<< HEAD
-static const char *backend_options = "--single -F -O -c gp_session_role=utility -c search_path=pg_catalog -c exit_on_error=true";
-=======
-static const char *backend_options = "--single -F -O -j -c search_path=pg_catalog -c exit_on_error=true";
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+static const char *backend_options = "--single -F -O -j -c gp_session_role=utility -c search_path=pg_catalog -c exit_on_error=true";
 
 static const char *const subdirs[] = {
 	"global",
@@ -279,42 +271,24 @@ static void set_null_conf(const char*);
 static void test_config_settings(void);
 static void setup_config(void);
 static void bootstrap_template1(void);
-<<<<<<< HEAD
-static void setup_auth(void);
-static void get_set_pwd(void);
-static void setup_depend(void);
-static void setup_sysviews(void);
-static void setup_description(void);
-#if 0
-static void setup_collation(void);
-#endif
-static void setup_conversion(void);
-static void setup_dictionary(void);
-static void setup_privileges(void);
-static void set_info_version(void);
-static void setup_schema(void);
-static void setup_cdb_schema(void);
-static void load_plpgsql(void);
-static void vacuum_db(void);
-static void make_template0(void);
-static void make_postgres(void);
-=======
 static void setup_auth(FILE *cmdfd);
 static void get_set_pwd(FILE *cmdfd);
 static void setup_depend(FILE *cmdfd);
 static void setup_sysviews(FILE *cmdfd);
 static void setup_description(FILE *cmdfd);
+#if 0
 static void setup_collation(FILE *cmdfd);
+#endif
 static void setup_conversion(FILE *cmdfd);
 static void setup_dictionary(FILE *cmdfd);
 static void setup_privileges(FILE *cmdfd);
 static void set_info_version(void);
 static void setup_schema(FILE *cmdfd);
+static void setup_cdb_schema(FILE *cmdfd);
 static void load_plpgsql(FILE *cmdfd);
 static void vacuum_db(FILE *cmdfd);
 static void make_template0(FILE *cmdfd);
 static void make_postgres(FILE *cmdfd);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void fsync_pgdata(void);
 static void trapsig(int signum);
 static void check_ok(void);
@@ -1705,19 +1679,6 @@ setup_auth(FILE *cmdfd)
 		NULL
 	};
 
-<<<<<<< HEAD
-	fputs(_("initializing pg_authid ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 backend_output);
-
-	PG_CMD_OPEN;
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	for (line = pg_authid_setup; *line != NULL; line++)
 		PG_CMD_PUTS(*line);
 }
@@ -1785,18 +1746,7 @@ get_set_pwd(FILE *cmdfd)
 
 	}
 
-<<<<<<< HEAD
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 backend_output);
-
-	PG_CMD_OPEN;
-
-	PG_CMD_PRINTF2("ALTER USER \"%s\" WITH PASSWORD E'%s';\n",
-=======
 	PG_CMD_PRINTF2("ALTER USER \"%s\" WITH PASSWORD E'%s';\n\n",
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				   username, escape_quotes(pwd1));
 
 	free(pwd1);
@@ -1865,11 +1815,7 @@ setup_depend(FILE *cmdfd)
 		 */
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
 		" FROM pg_namespace "
-<<<<<<< HEAD
-		"    WHERE nspname ~ '^(pg_|gp_)';\n",
-=======
-		"    WHERE nspname LIKE 'pg%';\n\n",
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+		"    WHERE nspname ~ '^(pg_|gp_)';\n\n",
 
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
 		" FROM pg_ts_parser;\n\n",
@@ -1886,19 +1832,6 @@ setup_depend(FILE *cmdfd)
 		NULL
 	};
 
-<<<<<<< HEAD
-	fputs(_("initializing dependencies ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 backend_output);
-
-	PG_CMD_OPEN;
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	for (line = pg_depend_setup; *line != NULL; line++)
 		PG_CMD_PUTS(*line);
 }
@@ -1914,19 +1847,6 @@ setup_sysviews(FILE *cmdfd)
 
 	sysviews_setup = readfile(system_views_file);
 
-<<<<<<< HEAD
-	/*
-	 * We use -j here to avoid backslashing stuff in system_views.sql
-	 */
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s -j template1 >%s",
-			 backend_exec, backend_options,
-			 backend_output);
-
-	PG_CMD_OPEN;
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	for (line = sysviews_setup; *line != NULL; line++)
 	{
 		PG_CMD_PUTS(*line);
@@ -1942,21 +1862,6 @@ setup_sysviews(FILE *cmdfd)
 static void
 setup_description(FILE *cmdfd)
 {
-<<<<<<< HEAD
-	PG_CMD_DECL;
-
-	fputs(_("loading system objects' descriptions ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 backend_output);
-
-	PG_CMD_OPEN;
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	PG_CMD_PUTS("CREATE TEMP TABLE tmp_pg_description ( "
 				"	objoid oid, "
 				"	classname name, "
@@ -1995,12 +1900,6 @@ setup_description(FILE *cmdfd)
 				"  FROM funcdescs "
 				"  WHERE opdesc NOT LIKE 'deprecated%' AND "
 				"  NOT EXISTS (SELECT 1 FROM pg_description "
-<<<<<<< HEAD
-		  "    WHERE objoid = p_oid AND classoid = 'pg_proc'::regclass);\n");
-	PG_CMD_CLOSE;
-
-	check_ok();
-=======
 		"    WHERE objoid = p_oid AND classoid = 'pg_proc'::regclass);\n\n");
 
 	/*
@@ -2009,7 +1908,6 @@ setup_description(FILE *cmdfd)
 	 */
 	PG_CMD_PUTS("DROP TABLE tmp_pg_description;\n\n");
 	PG_CMD_PUTS("DROP TABLE tmp_pg_shdescription;\n\n");
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 #if 0
@@ -2188,19 +2086,6 @@ setup_conversion(FILE *cmdfd)
 	char	  **line;
 	char	  **conv_lines;
 
-<<<<<<< HEAD
-	fputs(_("creating conversions ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 backend_output);
-
-	PG_CMD_OPEN;
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	conv_lines = readfile(conversion_file);
 	for (line = conv_lines; *line != NULL; line++)
 	{
@@ -2383,19 +2268,6 @@ setup_privileges(FILE *cmdfd)
 		NULL
 	};
 
-<<<<<<< HEAD
-	fputs(_("setting privileges on built-in objects ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 backend_output);
-
-	PG_CMD_OPEN;
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	priv_lines = replace_token(privileges_setup, "$POSTGRES_SUPERUSERNAME",
 							   escape_quotes(username));
 	for (line = priv_lines; *line != NULL; line++)
@@ -2441,19 +2313,6 @@ setup_schema(FILE *cmdfd)
 
 	lines = readfile(info_schema_file);
 
-<<<<<<< HEAD
-	/*
-	 * We use -j here to avoid backslashing stuff in information_schema.sql
-	 */
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s -j template1 >%s",
-			 backend_exec, backend_options,
-			 backend_output);
-
-	PG_CMD_OPEN;
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	for (line = lines; *line != NULL; line++)
 	{
 		PG_CMD_PUTS(*line);
@@ -2462,18 +2321,6 @@ setup_schema(FILE *cmdfd)
 
 	free(lines);
 
-<<<<<<< HEAD
-	PG_CMD_CLOSE;
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 backend_output);
-
-	PG_CMD_OPEN;
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	PG_CMD_PRINTF1("UPDATE information_schema.sql_implementation_info "
 				   "  SET character_value = '%s' "
 				   "  WHERE implementation_info_name = 'DBMS VERSION';\n\n",
@@ -2502,16 +2349,13 @@ cmpstringp(const void *p1, const void *p2)
  * cluster.
  */
 static void
-setup_cdb_schema(void)
+setup_cdb_schema(FILE *cmdfd)
 {
 	DIR		   *dir;
 	struct dirent *file;
 	int			nscripts;
 	char	  **scriptnames = NULL;
 	int			i;
-
-	fputs(_("creating Greenplum Database schema ... "), stdout);
-	fflush(stdout);
 
 	dir = opendir(cdb_init_d_dir);
 
@@ -2570,26 +2414,16 @@ setup_cdb_schema(void)
 	 */
 	for (i = 0; i < nscripts; i++)
 	{
-		PG_CMD_DECL;
 		char	  **line;
 		char	  **lines;
 		char	   *path;
+		size_t	    len;
 
-		path = pg_malloc(strlen(share_path) + strlen("cdb_init.d") + strlen(scriptnames[i]) + 3);
-		sprintf(path, "%s/cdb_init.d/%s", share_path, scriptnames[i]);
+		len = strlen(share_path) + strlen("cdb_init.d") + strlen(scriptnames[i]) + 3;
+		path = pg_malloc(len);
+		snprintf(path, len, "%s/cdb_init.d/%s", share_path, scriptnames[i]);
 
 		lines = readfile(path);
-
-		/*
-		 * We use -j here to avoid backslashing stuff in
-		 * information_schema.sql
-		 */
-		snprintf(cmd, sizeof(cmd),
-				 "\"%s\" %s -j template1 >%s",
-				 backend_exec, backend_options,
-				 backend_output);
-
-		PG_CMD_OPEN;
 
 		for (line = lines; *line != NULL; line++)
 		{
@@ -2599,15 +2433,18 @@ setup_cdb_schema(void)
 
 		free(lines);
 
-		PG_CMD_CLOSE;
+		/* GPDB_96_MERGE_FIXME: which schema again? */
+		PG_CMD_PRINTF1("UPDATE information_schema.sql_implementation_info "
+					   "  SET character_value = '%s' "
+					   "  WHERE implementation_info_name = 'DBMS VERSION';\n\n",
+					   infoversion);
 
-		snprintf(cmd, sizeof(cmd),
-				 "\"%s\" %s template1 >%s",
-				 backend_exec, backend_options,
-				 backend_output);
+		PG_CMD_PRINTF1("COPY information_schema.sql_features "
+					   "  (feature_id, feature_name, sub_feature_id, "
+					   "  sub_feature_name, is_supported, comments) "
+					   " FROM E'%s';\n\n",
+					   escape_quotes(features_file));
 	}
-
-	check_ok();
 }
 
 /*
@@ -2625,21 +2462,6 @@ load_plpgsql(FILE *cmdfd)
 static void
 vacuum_db(FILE *cmdfd)
 {
-<<<<<<< HEAD
-	PG_CMD_DECL;
-
-	fputs(_("vacuuming database template1 ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 backend_output);
-
-	PG_CMD_OPEN;
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/* Run analyze before VACUUM so the statistics are frozen. */
 	PG_CMD_PUTS("ANALYZE;\n\nVACUUM FREEZE;\n\n");
 }
@@ -2678,19 +2500,6 @@ make_template0(FILE *cmdfd)
 		NULL
 	};
 
-<<<<<<< HEAD
-	fputs(_("copying template1 to template0 ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 backend_output);
-
-	PG_CMD_OPEN;
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	for (line = template0_setup; *line; line++)
 		PG_CMD_PUTS(*line);
 }
@@ -2701,44 +2510,23 @@ make_template0(FILE *cmdfd)
 static void
 make_postgres(FILE *cmdfd)
 {
-<<<<<<< HEAD
-	PG_CMD_DECL;
-	const char **line;
-	static const char *postgres_setup[] = {
-		"CREATE DATABASE postgres;\n",
-		"COMMENT ON DATABASE postgres IS 'default administrative connection database';\n",
+	const char *const * line;
+	static const char *const postgres_setup[] = {
+		"CREATE DATABASE postgres;\n\n",
+		"COMMENT ON DATABASE postgres IS 'default administrative connection database';\n\n",
 		/*
 		 * Make 'postgres' a template database
 		 */
 		"UPDATE pg_database SET "
 		"	datistemplate = 't' "
-		"    WHERE datname = 'postgres';\n",
+		"    WHERE datname = 'postgres';\n\n",
 		/*
 		 * Clean out dead rows in pg_database
 		 */
-		"VACUUM FULL pg_database;\n",
+		"VACUUM FULL pg_database;\n\n",
 		NULL
 	};
 
-	fputs(_("copying template1 to postgres ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 backend_output);
-
-	PG_CMD_OPEN;
-
-=======
-	const char *const * line;
-	static const char *const postgres_setup[] = {
-		"CREATE DATABASE postgres;\n\n",
-		"COMMENT ON DATABASE postgres IS 'default administrative connection database';\n\n",
-		NULL
-	};
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	for (line = postgres_setup; *line; line++)
 		PG_CMD_PUTS(*line);
 }
@@ -3808,89 +3596,57 @@ initialize_data_directory(void)
 		 */
 		write_version_file("base/1");
 
-<<<<<<< HEAD
-		/* Create the stuff we don't need to use bootstrap mode for */
-
-		setup_auth();
+		/*
+		 * Create the stuff we don't need to use bootstrap mode for, using a
+		 * backend running in simple standalone mode.
+		 */
+		fputs(_("performing post-bootstrap initialization ... "), stdout);
+		fflush(stdout);
+	
+		snprintf(cmd, sizeof(cmd),
+				 "\"%s\" %s template1 >%s",
+				 backend_exec, backend_options,
+				 backend_output);
+	
+		PG_CMD_OPEN;
+	
+		setup_auth(cmdfd);
 		if (pwprompt || pwfilename)
-			get_set_pwd();
-
-		setup_depend();
-
-		setup_sysviews();
-
-		setup_description();
-
+			get_set_pwd(cmdfd);
+	
+		setup_depend(cmdfd);
+	
+		setup_sysviews(cmdfd);
+	
+		setup_description(cmdfd);
+	
 #if 0
-		setup_collation();
+		setup_collation(cmdfd);
 #endif
 
-		setup_conversion();
-
-		setup_dictionary();
-
-		setup_privileges();
-
-		setup_schema();
-
-		load_plpgsql();
-
+		setup_conversion(cmdfd);
+	
+		setup_dictionary(cmdfd);
+	
+		setup_privileges(cmdfd);
+	
+		setup_schema(cmdfd);
+	
+		load_plpgsql(cmdfd);
+	
 		/* sets up the Greenplum Database admin schema */
-		setup_cdb_schema();
-
-		vacuum_db();
-
-		make_template0();
-
-		make_postgres();
+		setup_cdb_schema(cmdfd);
+	
+		vacuum_db(cmdfd);
+	
+		make_template0(cmdfd);
+	
+		make_postgres(cmdfd);
+	
+		PG_CMD_CLOSE;
+	
+		check_ok();
 	}
-=======
-	/*
-	 * Create the stuff we don't need to use bootstrap mode for, using a
-	 * backend running in simple standalone mode.
-	 */
-	fputs(_("performing post-bootstrap initialization ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
-
-	setup_auth(cmdfd);
-	if (pwprompt || pwfilename)
-		get_set_pwd(cmdfd);
-
-	setup_depend(cmdfd);
-
-	setup_sysviews(cmdfd);
-
-	setup_description(cmdfd);
-
-	setup_collation(cmdfd);
-
-	setup_conversion(cmdfd);
-
-	setup_dictionary(cmdfd);
-
-	setup_privileges(cmdfd);
-
-	setup_schema(cmdfd);
-
-	load_plpgsql(cmdfd);
-
-	vacuum_db(cmdfd);
-
-	make_template0(cmdfd);
-
-	make_postgres(cmdfd);
-
-	PG_CMD_CLOSE;
-
-	check_ok();
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 
