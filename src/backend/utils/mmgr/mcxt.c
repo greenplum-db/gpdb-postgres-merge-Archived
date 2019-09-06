@@ -9,13 +9,9 @@
  * context's MemoryContextMethods struct.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -84,12 +80,9 @@ MemoryContext InterconnectContext = NULL;
 MemoryContext PortalContext = NULL;
 
 static void MemoryContextCallResetCallbacks(MemoryContext context);
-<<<<<<< HEAD
-=======
 static void MemoryContextStatsInternal(MemoryContext context, int level,
 						   bool print, int max_children,
 						   MemoryContextCounters *totals);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /*
  * You should not do memory allocations within a critical section, because
@@ -767,225 +760,21 @@ MemoryContextName(MemoryContext context, MemoryContext relativeTo,
 }                               /* MemoryContextName */
 
 /*
- * MemoryContext_LogContextStats
- *		Logs memory consumption details of a given context.
- *
- *	Parameters:
- *		siblingCount: number of sibling context of this context in the memory context tree
- *		allAllocated: total bytes allocated in this context
- *		allFreed: total bytes freed in this context
- *		curAvailable: bytes that are allocated in blocks but are not used in any chunks
- *		contextName: name of the context
+ * GPDB_96_MERGE_FIXME: revisit here to check if Greenplum's
+ * MemoryContextStats_recur() and MemoryContext_LogContextStats() are better at
+ * some places.
  */
-static void
-MemoryContext_LogContextStats(uint64 siblingCount, uint64 allAllocated,
-		uint64 allFreed, uint64 curAvailable, const char *contextName)
-{
-	write_stderr("context: " UINT64_FORMAT ", " UINT64_FORMAT ", " UINT64_FORMAT ", " UINT64_FORMAT ", " UINT64_FORMAT ", %s\n", \
-	siblingCount, (allAllocated - allFreed), curAvailable, \
-	allAllocated, allFreed, contextName);
-}
-
-
-/*
- * MemoryContextStats_recur
- *		Print statistics about the named context and all its descendants.
- *
-<<<<<<< HEAD
- * This is just a debugging utility, so it's not fancy.  The statistics
- * are merely sent to stderr.
- *
- * Parameters:
- * 		topContext: the top of the sub-tree where we start our processing
- * 		rootContext: the root context of the entire tree that can be used
- * 		to generate a bread crumb like context name
- *
- * 		topContexName: the name of the top context
- * 		nameBuffer: a buffer to format the name of any future context
- *		nameBufferSize: size of the nameBuffer
- *		nBlocksTop: number of blocks in the top context
- *		nChunksTop: number of chunks in the top context
- *
- *		currentAvailableTop: free space across all blocks in the top context
- *
- *		allAllocatedTop: total bytes allocated in the top context, including
- *		blocks that are already dropped
- *
- *		allFreedTop: total bytes that were freed in the top context
- *		maxHeldTop: maximum bytes held in the top context
- */
-static void
-MemoryContextStats_recur(MemoryContext topContext, MemoryContext rootContext,
-                         char *topContextName, char *nameBuffer, int nameBufferSize,
-                         uint64 nBlocksTop, uint64 nChunksTop,
-                         uint64 currentAvailableTop, uint64 allAllocatedTop,
-                         uint64 allFreedTop, uint64 maxHeldTop)
-{
-	MemoryContext   child;
-    char*           name;
-
-	AssertArg(MemoryContextIsValid(topContext));
-
-	uint64 nBlocks = 0;
-	uint64 nChunks = 0;
-	uint64 currentAvailable = 0;
-	uint64 allAllocated = 0;
-	uint64 allFreed = 0;
-	uint64 maxHeld = 0;
-
-	/*
-	 * The top context is always supposed to have children contexts. Therefore, it is not
-	 * collapse-able with other siblings. So, the siblingCount is set to 1.
-	 */
-	MemoryContext_LogContextStats(1 /* siblingCount */, allAllocatedTop, allFreedTop, currentAvailableTop, topContextName);
-
-    uint64 cumBlocks = 0;
-    uint64 cumChunks = 0;
-    uint64 cumCurAvailable = 0;
-    uint64 cumAllAllocated = 0;
-    uint64 cumAllFreed = 0;
-    uint64 cumMaxHeld = 0;
-
-    char prevChildName[MAX_CONTEXT_NAME_SIZE] = "";
-
-    uint64 siblingCount = 0;
-
-	for (child = topContext->firstchild; child != NULL; child = child->nextchild)
-	{
-		/* Get name and ancestry of this MemoryContext */
-		name = MemoryContextName(child, rootContext, nameBuffer, nameBufferSize);
-
-		(*child->methods.stats)(child, &nBlocks, &nChunks, &currentAvailable, &allAllocated, &allFreed, &maxHeld);
-
-		if (child->firstchild == NULL)
-		{
-			/* To qualify for sibling collapsing the context must not have any child context */
-
-			if (strcmp(name, prevChildName) == 0)
-			{
-				cumBlocks += nBlocks;
-				cumChunks += nChunks;
-				cumCurAvailable += currentAvailable;
-				cumAllAllocated += allAllocated;
-				cumAllFreed += allFreed;
-				cumMaxHeld = Max(cumMaxHeld, maxHeld);
-
-				siblingCount++;
-			}
-			else
-			{
-				if (siblingCount != 0)
-				{
-					/*
-					 * Output the previous cumulative stat, and start a new run. Note: don't just
-					 * pass the new one to MemoryContextStats_recur, as the new one might be the
-					 * start of another run of duplicate contexts
-					 */
-
-					MemoryContext_LogContextStats(siblingCount, cumAllAllocated, cumAllFreed, cumCurAvailable, prevChildName);
-				}
-
-				cumBlocks = nBlocks;
-				cumChunks = nChunks;
-				cumCurAvailable = currentAvailable;
-				cumAllAllocated = allAllocated;
-				cumAllFreed = allFreed;
-				cumMaxHeld = maxHeld;
-
-				/* Move new name into previous name */
-				strncpy(prevChildName, name, MAX_CONTEXT_NAME_SIZE - 1);
-
-				/* The current one is the sole sibling */
-				siblingCount = 1;
-			}
-		}
-		else
-		{
-			/* Does not qualify for sibling collapsing as the context has child context */
-
-			if (siblingCount != 0)
-			{
-				/*
-				 * We have previously collapsed (one or more siblings with empty children) context
-				 * stats that we want to print here. Output the previous cumulative stat.
-				 */
-
-				MemoryContext_LogContextStats(siblingCount, cumAllAllocated, cumAllFreed, cumCurAvailable, prevChildName);
-			}
-
-			MemoryContextStats_recur(child, rootContext, name, nameBuffer, nameBufferSize, nBlocks,
-					nChunks, currentAvailable, allAllocated, allFreed, maxHeld);
-
-			/*
-			 * We just traversed a child node, so we need to make sure we don't carry over
-			 * any child name from previous matching siblings. So, we reset prevChildName,
-			 * and all cumulative stats
-			 */
-			prevChildName[0] = '\0';
-
-			cumBlocks = 0;
-			cumChunks = 0;
-			cumCurAvailable = 0;
-			cumAllAllocated = 0;
-			cumAllFreed = 0;
-			cumMaxHeld = 0;
-
-			/*
-			 * The current one doesn't qualify for collapsing, and we already
-			 * printed it and its children by calling MemoryContextStats_recur
-			 */
-			siblingCount = 0;
-		}
-	}
-
-	if (siblingCount != 0)
-	{
-		/* Output any unprinted cumulative stats */
-
-		MemoryContext_LogContextStats(siblingCount, cumAllAllocated, cumAllFreed, cumCurAvailable, prevChildName);
-	}
-}
-
 /*
  * MemoryContextStats
- *		Prints the usage details of a context.
+ *		Print statistics about the named context and all its descendants.
  *
- * Parameters:
- * 		context: the context of interest.
-=======
  * This is just a debugging utility, so it's not very fancy.  However, we do
  * make some effort to summarize when the output would otherwise be very long.
  * The statistics are sent to stderr.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  */
 void
 MemoryContextStats(MemoryContext context)
 {
-<<<<<<< HEAD
-    char*     name;
-    char      namebuf[MAX_CONTEXT_NAME_SIZE];
-
-	AssertArg(MemoryContextIsValid(context));
-
-    name = MemoryContextName(context, NULL, namebuf, sizeof(namebuf));
-    write_stderr("pid %d: Memory statistics for %s/\n", MyProcPid, name);
-    write_stderr("context: occurrences_count, currently_allocated, currently_available, total_allocated, total_freed, name\n");
-
-	uint64 nBlocks = 0;
-	uint64 nChunks = 0;
-	uint64 currentAvailable = 0;
-	uint64 allAllocated = 0;
-	uint64 allFreed = 0;
-	uint64 maxHeld = 0;
-	int namebufsize = sizeof(namebuf);
-
-	/* Get the root context's stat and pass it to the MemoryContextStats_recur for printing */
-	(*context->methods.stats)(context, &nBlocks, &nChunks, &currentAvailable, &allAllocated, &allFreed, &maxHeld);
-	name = MemoryContextName(context, context, namebuf, namebufsize);
-
-    MemoryContextStats_recur(context, context, name, namebuf, namebufsize, nBlocks, nChunks,
-    		currentAvailable, allAllocated, allFreed, maxHeld);
-=======
 	/* A hard-wired limit on the number of children is usually good enough */
 	MemoryContextStatsDetail(context, 100);
 }
@@ -1030,7 +819,7 @@ MemoryContextStatsInternal(MemoryContext context, int level,
 	AssertArg(MemoryContextIsValid(context));
 
 	/* Examine the context itself */
-	(*context->methods->stats) (context, level, print, totals);
+	(*context->methods.stats) (context, level, print, totals);
 
 	/*
 	 * Examine children.  If there are more than max_children of them, we do
@@ -1079,7 +868,6 @@ MemoryContextStatsInternal(MemoryContext context, int level,
 			totals->freespace += local_totals.freespace;
 		}
 	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
@@ -1710,20 +1498,10 @@ repalloc(void *pointer, Size size)
 
 	ret = (*context->methods.realloc) (context, pointer, size);
 	if (ret == NULL)
-<<<<<<< HEAD
 		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
 						   context, CDB_MCXT_WHERE(context),
 						   "Out of memory.  Failed on request of size %zu bytes.",
 						   size);
-=======
-	{
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu.", size)));
-	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
 
@@ -1805,20 +1583,10 @@ repalloc_huge(void *pointer, Size size)
 
 	ret = (*context->methods.realloc) (context, pointer, size);
 	if (ret == NULL)
-<<<<<<< HEAD
 		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
 						   context, CDB_MCXT_WHERE(context),
 						   "Out of memory.  Failed on request of size %zu bytes.",
 						   size);
-=======
-	{
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu.", size)));
-	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
 
