@@ -257,29 +257,7 @@ INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e+200');
 
 INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e-200');
 
-<<<<<<< HEAD
 SELECT '' AS five, f1 FROM FLOAT8_TBL ORDER BY 2;
-
--- test if you can dump/restore subnormal (1e-323) values
--- using COPY
-
-CREATE TABLE FLOATS(a float8);
-
-INSERT INTO FLOATS select 1e-307::float8 / 10^i FROM generate_series(1,16) i;
-
-SELECT * FROM FLOATS ORDER BY a;
-
-SELECT float8in(float8out(a)) FROM FLOATS ORDER BY a;
-
-COPY FLOATS TO '/tmp/floats';
-
-TRUNCATE FLOATS;
-
-COPY FLOATS FROM '/tmp/floats';
-
-SELECT * FROM FLOATS ORDER BY a;
-=======
-SELECT '' AS five, * FROM FLOAT8_TBL;
 
 -- test exact cases for trigonometric functions in degrees
 SET extra_float_digits = 3;
@@ -326,4 +304,22 @@ FROM (SELECT 10*cosd(a), 10*sind(a)
       FROM generate_series(0, 360, 90) AS t(a)) AS t(x,y);
 
 RESET extra_float_digits;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
+-- test if you can dump/restore subnormal (1e-323) values
+-- using COPY
+
+CREATE TABLE FLOATS(a float8);
+
+INSERT INTO FLOATS select 1e-307::float8 / 10^i FROM generate_series(1,16) i;
+
+SELECT * FROM FLOATS ORDER BY a;
+
+SELECT float8in(float8out(a)) FROM FLOATS ORDER BY a;
+
+COPY FLOATS TO '/tmp/floats';
+
+TRUNCATE FLOATS;
+
+COPY FLOATS FROM '/tmp/floats';
+
+SELECT * FROM FLOATS ORDER BY a;
