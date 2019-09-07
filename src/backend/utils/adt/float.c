@@ -445,7 +445,7 @@ double
 float8in_internal(char *num, char **endptr_p,
 				  const char *type_name, const char *orig_string)
 {
-	double		val;
+	long double		val;
 	char	   *endptr;
 	bool 		literal_inf = true;
 
