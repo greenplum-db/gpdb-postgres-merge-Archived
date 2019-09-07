@@ -6409,6 +6409,8 @@ make_sort(Plan *lefttree, int numCols,
 	node->nsharer = 0;
 	node->nsharer_xslice = 0;
 
+	plan->flow = pull_up_Flow(plan, lefttree);
+
 	return node;
 }
 
