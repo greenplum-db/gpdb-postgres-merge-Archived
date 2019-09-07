@@ -979,7 +979,6 @@ PrintNewControlValues(void)
 			   ControlFile.checkPointCopy.nextXidEpoch);
 	}
 
-<<<<<<< HEAD
 	if (set_data_checksum_version != -1)
 	{
 		printf(_("Data page checksum version:           %u\n"),
@@ -1001,10 +1000,7 @@ PrintNewControlValues(void)
 			   sysident_str);
 	}
 
-	if (set_oldest_commit_ts != 0)
-=======
 	if (set_oldest_commit_ts_xid != 0)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		printf(_("oldestCommitTsXid:                    %u\n"),
 			   ControlFile.checkPointCopy.oldestCommitTsXid);
