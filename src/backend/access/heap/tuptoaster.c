@@ -2362,6 +2362,7 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 					Int32GetDatum(0));
 		nscankeys = 2;
 
+		init_toast_snapshot(&SnapshotToast);
 		toastscan = systable_beginscan_ordered(toastrel, toastidxs[validIndex],
 											   &SnapshotToast, nscankeys, toastkey);
 
