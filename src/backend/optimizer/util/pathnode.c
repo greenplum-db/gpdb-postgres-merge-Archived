@@ -2846,6 +2846,7 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys,
 
 	// GPDB_96_MERGE_FIXME: where to get the locus now?
 	//pathnode->locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
+	elog(ERROR, "GPDB_96_MERGE_FIXME: create_ctescan_path() not resolved");
 
 	/*
 	 * We can't extract these two values from the subplan, so we simple set
