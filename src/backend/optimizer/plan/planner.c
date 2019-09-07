@@ -172,7 +172,8 @@ static RelOptInfo *create_distinct_paths(PlannerInfo *root,
 static RelOptInfo *create_ordered_paths(PlannerInfo *root,
 					 RelOptInfo *input_rel,
 					 PathTarget *target,
-					 double limit_tuples);
+					 double limit_tuples,
+					 bool must_gather);
 static PathTarget *make_group_input_target(PlannerInfo *root,
 						PathTarget *final_target);
 static PathTarget *make_partial_grouping_target(PlannerInfo *root,
@@ -195,7 +196,7 @@ static bool isSimplyUpdatableQuery(Query *query);
 
 static CdbPathLocus choose_grouping_locus(PlannerInfo *root, Path *path,
 					  List *rollup_lists, List *rollup_groupclauses,
-					  bool *need_redistribute_p, List **hash_exprs_p, List **hash_opfamilies_p);
+					  bool *need_redistribute_p);
 
 /*****************************************************************************
  *
@@ -1971,6 +1972,41 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	/* Make tuple_fraction accessible to lower-level routines */
 	root->tuple_fraction = tuple_fraction;
 
+	/*
+	 * An ORDER BY or DISTINCT doesn't make much sense, unless we bring all
+	 * the data to a single node. Otherwise it's just a partial order. (If
+	 * there's a LIMIT or OFFSET clause, we'll take care of this below, after
+	 * inserting the Limit node).
+	 *
+	 * In a subquery, though, a partial order is OK. In fact, we could
+	 * probably not bother with the sort at all, unless there's a LIMIT or
+	 * OFFSET, because it's not going to make any difference to the overall
+	 * query's result. For example, in "WHERE x IN (SELECT ...  ORDER BY
+	 * foo)", the ORDER BY in the subquery will make no difference. PostgreSQL
+	 * honors the sort, though, and historically, GPDB has also done a partial
+	 * sort, separately on each node. So keep that behavior for now.
+	 *
+	 * A SELECT INTO or CREATE TABLE AS is similar to a subquery: the order
+	 * doesn't really matter, but let's keep the partial order anyway.
+	 *
+	 * In a TABLE function's input subquery, a partial order is the documented
+	 * behavior, so in that case that's definitely what we want.
+	 */
+	if ((parse->distinctClause || parse->sortClause) &&
+		(root->config->honor_order_by || !root->parent_root) &&
+		parse->parentStmtType == PARENTSTMTTYPE_NONE &&
+		/*
+		 * GPDB_84_MERGE_FIXME: Does this do the right thing, if you have a
+		 * SELECT DISTINCT query as argument to a table function?
+		 */
+		!parse->isTableValueSelect &&
+		!parse->limitCount && !parse->limitOffset)
+	{
+		must_gather = true;
+	}
+	else
+		must_gather = false;
+
 	if (parse->setOperations)
 	{
 		/*
@@ -2494,7 +2530,8 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 										   current_rel,
 										   final_target,
 										   have_postponed_srfs ? -1.0 :
-										   limit_tuples);
+										   limit_tuples,
+										   must_gather);
 	}
 
 	/* GPDB_96_MERGE_FIXME: where should this be done with the upper planner pathification? */
@@ -2508,41 +2545,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		result_plan->flow = pull_up_Flow(result_plan, getAnySubplan(result_plan));
 #endif
 	
-	/*
-	 * An ORDER BY or DISTINCT doesn't make much sense, unless we bring all
-	 * the data to a single node. Otherwise it's just a partial order. (If
-	 * there's a LIMIT or OFFSET clause, we'll take care of this below, after
-	 * inserting the Limit node).
-	 *
-	 * In a subquery, though, a partial order is OK. In fact, we could
-	 * probably not bother with the sort at all, unless there's a LIMIT or
-	 * OFFSET, because it's not going to make any difference to the overall
-	 * query's result. For example, in "WHERE x IN (SELECT ...  ORDER BY
-	 * foo)", the ORDER BY in the subquery will make no difference. PostgreSQL
-	 * honors the sort, though, and historically, GPDB has also done a partial
-	 * sort, separately on each node. So keep that behavior for now.
-	 *
-	 * A SELECT INTO or CREATE TABLE AS is similar to a subquery: the order
-	 * doesn't really matter, but let's keep the partial order anyway.
-	 *
-	 * In a TABLE function's input subquery, a partial order is the documented
-	 * behavior, so in that case that's definitely what we want.
-	 */
-	if ((parse->distinctClause || parse->sortClause) &&
-		(root->config->honor_order_by || !root->parent_root) &&
-		parse->parentStmtType == PARENTSTMTTYPE_NONE &&
-		/*
-		 * GPDB_84_MERGE_FIXME: Does this do the right thing, if you have a
-		 * SELECT DISTINCT query as argument to a table function?
-		 */
-		!parse->isTableValueSelect &&
-		!parse->limitCount && !parse->limitOffset)
-	{
-		must_gather = true;
-	}
-	else
-		must_gather = false;
-
 	/*
 	 * Greenplum specific behavior:
 	 * The implementation of select statement with locking clause
@@ -4504,12 +4506,11 @@ create_grouping_paths(PlannerInfo *root,
 											  path->pathkeys);
 			if (path == cheapest_path || is_sorted)
 			{
+				CdbPathLocus locus;
 				bool		need_redistribute;
-				List	   *hash_exprs;
-				List	   *hash_opfamilies;
 
-				choose_grouping_locus(root, path, rollup_lists, rollup_groupclauses,
-									  &need_redistribute, &hash_exprs, &hash_opfamilies);
+				locus = choose_grouping_locus(root, path, rollup_lists, rollup_groupclauses,
+											  &need_redistribute);
 
 				/* Sort the cheapest-total path if it isn't already sorted */
 				if (!is_sorted)
@@ -4525,13 +4526,8 @@ create_grouping_paths(PlannerInfo *root,
 					 * all the data on the segments first, in parallel, and
 					 * do a order-preserving motion to merge the inputs.
 					 */
-					if (need_redistribute && hash_exprs)
-					{
-						CdbPathLocus locus;
-
-						locus = cdbpathlocus_from_exprs(root, hash_exprs, hash_opfamilies, getgpsegmentCount());
+					if (need_redistribute && CdbPathLocus_IsPartitioned(locus))
 						path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
-					}
 
 					path = (Path *) create_sort_path(root,
 													 grouped_rel,
@@ -4539,13 +4535,8 @@ create_grouping_paths(PlannerInfo *root,
 													 root->group_pathkeys,
 													 -1.0);
 
-					if (need_redistribute && !hash_exprs)
-					{
-						CdbPathLocus locus;
-
-						CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+					if (need_redistribute && !CdbPathLocus_IsPartitioned(locus))
 						path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
-					}
 				}
 				else
 				{
@@ -4711,23 +4702,14 @@ create_grouping_paths(PlannerInfo *root,
 			 * so don't bother doing a order-preserving Motion even if we could.
 			 */
 			{
+				CdbPathLocus locus;
 				bool		need_redistribute;
-				List	   *hash_exprs;
-				List	   *hash_opfamilies;
 
-				choose_grouping_locus(root, cheapest_path, rollup_lists, rollup_groupclauses,
-									  &need_redistribute, &hash_exprs, &hash_opfamilies);
+				locus = choose_grouping_locus(root, cheapest_path, rollup_lists, rollup_groupclauses,
+											  &need_redistribute);
 				if (need_redistribute)
-				{
-					CdbPathLocus locus;
-
-					if (hash_exprs)
-						locus = cdbpathlocus_from_exprs(root, hash_exprs, hash_opfamilies, getgpsegmentCount());
-					else
-						CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
-
-					cheapest_path = cdbpath_create_motion_path(root, cheapest_path, NIL /* pathkeys */, false, locus);
-				}
+					cheapest_path = cdbpath_create_motion_path(root, cheapest_path,
+															   NIL /* pathkeys */, false, locus);
 			}
 
 			/*
@@ -4825,8 +4807,9 @@ create_grouping_paths(PlannerInfo *root,
 static CdbPathLocus
 choose_grouping_locus(PlannerInfo *root, Path *path,
 					  List *rollup_lists, List *rollup_groupclauses,
-					  bool *need_redistribute_p, List **hash_exprs_p, List **hash_opfamilies_p)
+					  bool *need_redistribute_p)
 {
+	CdbPathLocus locus;
 	bool		need_redistribute;
 	List	   *hash_exprs;
 	List	   *hash_opfamilies;
@@ -4911,9 +4894,18 @@ choose_grouping_locus(PlannerInfo *root, Path *path,
 		hash_opfamilies = lappend_oid(hash_opfamilies, opfamily);
 	}
 
+	if (need_redistribute)
+	{
+		if (hash_exprs)
+			locus = cdbpathlocus_from_exprs(root, hash_exprs, hash_opfamilies, getgpsegmentCount());
+		else
+			CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+	}
+	else
+		CdbPathLocus_MakeNull(&locus, getgpsegmentCount());
+
 	*need_redistribute_p = need_redistribute;
-	*hash_exprs_p = hash_exprs;
-	*hash_opfamilies_p = hash_opfamilies;
+	return locus;
 }
 
 /*
@@ -5604,12 +5596,17 @@ create_distinct_paths(PlannerInfo *root,
  * target: the output tlist the result Paths must emit
  * limit_tuples: estimated bound on the number of output tuples,
  *		or -1 if no LIMIT or couldn't estimate
+ *
+ * GDPB: must_gather: if set, the result must be brought to a single node,
+ * either a single QE process or the QD. Otherwise, it's enought that the
+ * result on every node is sorted, but the results are not merged together.
  */
 static RelOptInfo *
 create_ordered_paths(PlannerInfo *root,
 					 RelOptInfo *input_rel,
 					 PathTarget *target,
-					 double limit_tuples)
+					 double limit_tuples,
+					 bool must_gather)
 {
 	Path	   *cheapest_input_path = input_rel->cheapest_total_path;
 	RelOptInfo *ordered_rel;
@@ -5658,6 +5655,14 @@ create_ordered_paths(PlannerInfo *root,
 			if (path->pathtarget != target)
 				path = apply_projection_to_path(root, ordered_rel,
 												path, target);
+
+			if (must_gather && CdbPathLocus_IsPartitioned(path->locus))
+			{
+				CdbPathLocus locus;
+
+				CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+				path = cdbpath_create_motion_path(root, path, path->pathkeys, true, locus);
+			}
 
 			add_path(ordered_rel, path);
 		}
