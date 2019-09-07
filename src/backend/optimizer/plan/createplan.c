@@ -1761,6 +1761,8 @@ create_agg_plan(PlannerInfo *root, AggPath *best_path)
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
+	plan->plan.flow = copyObject(subplan->flow);
+
 	return plan;
 }
 
