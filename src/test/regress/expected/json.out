@@ -463,11 +463,7 @@ SELECT json_agg(q)
   {"b":"a2","c":5,"z":[{"f1":2,"f2":[1,2,3]},{"f1":5,"f2":[4,5,6]}]}]
 (1 row)
 
-<<<<<<< HEAD
-SELECT json_agg(q order by q)
-=======
 SELECT json_agg(q ORDER BY x, y)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
   FROM rows q;
        json_agg        
 -----------------------

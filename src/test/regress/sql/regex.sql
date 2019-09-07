@@ -82,14 +82,11 @@ explain (costs off) select * from pg_proc where proname ~ '^(abc)(def)';
 explain (costs off) select * from pg_proc where proname ~ '^(abc)$';
 explain (costs off) select * from pg_proc where proname ~ '^(abc)?d';
 explain (costs off) select * from pg_proc where proname ~ '^abcd(x|(?=\w\w)q)';
-<<<<<<< HEAD
 
 -- start_ignore
 reset enable_seqscan;
 reset enable_bitmapscan;
 -- end_ignore
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- Test for infinite loop in pullback() (CVE-2007-4772)
 select 'a' ~ '($|^)*';

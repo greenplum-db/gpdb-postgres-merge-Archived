@@ -42,26 +42,10 @@ SELECT regtype('int4');
  integer
 (1 row)
 
-<<<<<<< HEAD
-SELECT regrole('regtestrole');
-   regrole   
--------------
- regtestrole
-(1 row)
-
-SELECT regnamespace('pg_catalog');
- regnamespace 
---------------
- pg_catalog
-(1 row)
-
-SELECT to_regoper('<#>');
-=======
 SELECT to_regoper('||/');
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  to_regoper 
 ------------
- <#>
+ <n#>
 (1 row)
 
 SELECT to_regoperator('+(int4,int4)');

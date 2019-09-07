@@ -171,8 +171,6 @@ WHERE aggfnoid = 'myavg'::REGPROC;
 
 DROP AGGREGATE myavg (numeric);
 
-<<<<<<< HEAD
-=======
 -- invalid: bad parallel-safety marking
 CREATE AGGREGATE mysum (int)
 (
@@ -181,7 +179,6 @@ CREATE AGGREGATE mysum (int)
 	parallel = pear
 );
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 -- invalid: nonstrict inverse with strict forward function
 
 CREATE FUNCTION float8mi_n(float8, float8) RETURNS float8 AS

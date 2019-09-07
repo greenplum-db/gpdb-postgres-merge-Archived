@@ -49,11 +49,7 @@ NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to table selinto_schema.tmp1
 drop cascades to table selinto_schema.tmp2
 drop cascades to table selinto_schema.tmp3
-<<<<<<< HEAD
-DROP USER selinto_user;
-=======
 DROP USER regress_selinto_user;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 -- Tests for WITH NO DATA and column name consistency
 CREATE TABLE ctas_base (i int, j int);
 INSERT INTO ctas_base VALUES (1, 2);

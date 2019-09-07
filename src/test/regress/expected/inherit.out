@@ -1132,12 +1132,8 @@ Distributed randomly
 
 DROP TABLE test_ex_constraints_inh;
 DROP TABLE test_ex_constraints;
-<<<<<<< HEAD
 -- end_ignore
--- Test non-inheritable foreign key contraints
-=======
 -- Test non-inheritable foreign key constraints
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 CREATE TABLE test_primary_constraints(id int PRIMARY KEY);
 CREATE TABLE test_foreign_constraints(id1 int REFERENCES test_primary_constraints(id));
 CREATE TABLE test_foreign_constraints_inh () INHERITS (test_foreign_constraints);

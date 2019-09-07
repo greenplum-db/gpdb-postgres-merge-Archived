@@ -167,13 +167,10 @@ SELECT * FROM CASE_TBL;
 -- the third WHEN-clause not to match.  The volatile function calls are needed
 -- to prevent constant-folding in the planner, which would hide the bug.
 
-<<<<<<< HEAD
 -- Wrap this in a single transaction so the transient '=' operator doesn't
 -- cause problems in concurrent sessions
 BEGIN;
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 CREATE FUNCTION vol(text) returns text as
   'begin return $1; end' language plpgsql volatile;
 
@@ -201,11 +198,8 @@ CREATE OPERATOR = (procedure = inline_eq,
 
 SELECT CASE volfoo('bar') WHEN 'foo'::foodomain THEN 'is foo' ELSE 'is not foo' END;
 
-<<<<<<< HEAD
 ROLLBACK;
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 --
 -- Clean up
 --
