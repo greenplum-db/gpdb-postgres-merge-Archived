@@ -492,6 +492,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		gather->plan.plan_width = top_plan->plan_width;
 		gather->plan.parallel_aware = false;
 
+		/* GPDB_96_MERGE_FIXME: how should this work? */
+		gather->plan.flow = pull_up_Flow(&gather->plan, top_plan);
+
 		/* use parallel mode for parallel plans. */
 		root->glob->parallelModeNeeded = true;
 

@@ -2556,6 +2556,9 @@ create_gather_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 
 	cost_gather(pathnode, root, rel, pathnode->path.param_info, rows);
 
+	/* GPDB_96_MERGE_FIXME: how do data distribution locus and parallelism work together? */
+	pathnode->path.locus = subpath->locus;
+
 	return pathnode;
 }
 
@@ -4299,6 +4302,8 @@ create_lockrows_path(PlannerInfo *root, RelOptInfo *rel,
 	 * key columns to be replaced with new values.
 	 */
 	pathnode->path.pathkeys = NIL;
+
+	pathnode->path.locus = subpath->locus;
 
 	pathnode->subpath = subpath;
 	pathnode->rowMarks = rowMarks;

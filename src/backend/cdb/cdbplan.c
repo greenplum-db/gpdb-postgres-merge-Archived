@@ -664,6 +664,17 @@ plan_tree_mutator(Node *node,
 			}
 			break;
 
+		case T_Gather:
+			{
+				Gather	   *gather = (Gather *) node;
+				Gather	   *newgather;
+
+				FLATCOPY(newgather, gather, Gather);
+				PLANMUTATE(newgather, gather);
+				return (Node *) newgather;
+			}
+			break;
+
 		case T_Hash:
 			{
 				Hash	   *hash = (Hash *) node;

@@ -7372,6 +7372,9 @@ make_gather(List *qptlist,
 	node->single_copy = single_copy;
 	node->invisible = false;
 
+	/* GPDB_96_MERGE_FIXME: how should this work? */
+	plan->flow = pull_up_Flow(plan, subplan);
+
 	return node;
 }
 

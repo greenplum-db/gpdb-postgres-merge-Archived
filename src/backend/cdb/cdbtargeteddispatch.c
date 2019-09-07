@@ -566,6 +566,7 @@ AssignContentIdsToPlanData_Walker(Node *node, void *context)
 			case T_Sort:
 			case T_Agg:
 			case T_Unique:
+			case T_Gather:
 			case T_Hash:
 			case T_SetOp:
 			case T_Limit:
