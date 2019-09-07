@@ -4721,7 +4721,11 @@ create_grouping_paths(PlannerInfo *root,
 				{
 					CdbPathLocus locus;
 
-					locus = cdbpathlocus_from_exprs(root, hash_exprs, hash_opfamilies, getgpsegmentCount());
+					if (hash_exprs)
+						locus = cdbpathlocus_from_exprs(root, hash_exprs, hash_opfamilies, getgpsegmentCount());
+					else
+						CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+
 					cheapest_path = cdbpath_create_motion_path(root, cheapest_path, NIL /* pathkeys */, false, locus);
 				}
 			}
@@ -5225,6 +5229,9 @@ create_distinct_paths(PlannerInfo *root,
 	bool		allow_hash;
 	Path	   *path;
 	ListCell   *lc;
+	List	   *distinct_dist_pathkeys = NIL;
+	List	   *distinct_dist_exprs = NIL;
+	List	   *distinct_dist_opfamilies = NIL;
 
 	/*
 	 * GPDB_96_MERGE_FIXME: there was a bunch of GPDB changes in
@@ -5235,10 +5242,6 @@ create_distinct_paths(PlannerInfo *root,
 	/* For now, do all work in the (DISTINCT, NULL) upperrel */
 	distinct_rel = fetch_upper_rel(root, UPPERREL_DISTINCT, NULL);
 
-
-#if 0  /* GPDB_96_MERGE_FIXME: pathify this */
-	if (CdbPathLocus_IsNull(current_locus))
-		current_locus = cdbpathlocus_from_flow(result_plan->flow);
 
 	/*
 	 * MPP: If there's a DISTINCT clause and we're not collocated on the
@@ -5252,20 +5255,17 @@ create_distinct_paths(PlannerInfo *root,
 	 */
 	make_distribution_exprs_for_groupclause(root,
 											parse->distinctClause,
-											result_plan->targetlist,
+											make_tlist_from_pathtarget(input_rel->reltarget),
 											&distinct_dist_pathkeys,
 											&distinct_dist_exprs,
 											&distinct_dist_opfamilies);
 
-	if (Gp_role == GP_ROLE_DISPATCH && CdbPathLocus_IsPartitioned(current_locus))
+#if 0
+	if (Gp_role == GP_ROLE_DISPATCH && CdbPathLocus_IsPartitioned(path->locus))
 	{
-		bool		needMotion;
-
-		needMotion = !cdbpathlocus_collocates_pathkeys(root, current_locus,
-													   distinct_dist_pathkeys, false /* exact_match */ );
-
 		/* Apply the preunique optimization, if enabled and worthwhile. */
 		/* GPDB_84_MERGE_FIXME: pre-unique for hash distinct not implemented. */
+		/* GPDB_96_MERGE_FIXME: disabled altogether */
 		if (root->config->gp_enable_preunique && needMotion && !use_hashed_distinct)
 		{
 			double		base_cost,
@@ -5325,22 +5325,6 @@ create_distinct_paths(PlannerInfo *root,
 					result_plan = pushdown_preliminary_limit(result_plan, parse->limitCount, parse->limitOffset);
 				}
 			}
-		}
-
-		if (needMotion)
-		{
-			if (distinct_dist_exprs)
-			{
-				result_plan = (Plan *) make_motion_hash(root, result_plan,
-														distinct_dist_exprs,
-														distinct_dist_opfamilies);
-				current_pathkeys = NIL;		/* Any pre-existing order now lost. */
-			}
-			else
-			{
-				result_plan = (Plan *) make_motion_gather(root, result_plan, current_pathkeys);
-			}
-			result_plan->total_cost += motion_cost_per_row * result_plan->plan_rows;
 		}
 	}
 	else if ( result_plan->flow->flotype == FLOW_SINGLETON )
@@ -5426,6 +5410,34 @@ create_distinct_paths(PlannerInfo *root,
 
 			if (pathkeys_contained_in(needed_pathkeys, path->pathkeys))
 			{
+
+				if (!cdbpathlocus_collocates_pathkeys(root, path->locus,
+													  distinct_dist_pathkeys, false /* exact_match */ ))
+				{
+					CdbPathLocus locus;
+
+					if (distinct_dist_exprs)
+					{
+						locus = cdbpathlocus_from_exprs(root, distinct_dist_exprs,
+														distinct_dist_opfamilies,
+														getgpsegmentCount());
+					}
+					else
+					{
+						CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+					}
+
+					path = cdbpath_create_motion_path(root, path, path->pathkeys, true, locus);
+					/* GPDB_96_MERGE_FIXME: Not sure if this can happen. I'm sticking an
+					 * assert here, because I'd like to know if it can. But I think the
+					 * rest of the code will work fine if it does, although we may fail
+					 * to find a valid plan if this was the only way to do it.
+					 */
+					Assert(path);
+					if (!path)
+						continue;
+				}
+
 				add_path(distinct_rel, (Path *)
 						 create_upper_unique_path(root, distinct_rel,
 												  path,
@@ -5448,10 +5460,54 @@ create_distinct_paths(PlannerInfo *root,
 
 		path = cheapest_input_path;
 		if (!pathkeys_contained_in(needed_pathkeys, path->pathkeys))
+		{
+			if (!cdbpathlocus_collocates_pathkeys(root, path->locus,
+												  distinct_dist_pathkeys, false /* exact_match */ ))
+			{
+				CdbPathLocus locus;
+
+				if (distinct_dist_exprs)
+				{
+					locus = cdbpathlocus_from_exprs(root, distinct_dist_exprs,
+													distinct_dist_opfamilies,
+													getgpsegmentCount());
+				}
+				else
+				{
+					CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+				}
+				/* we're about to sort the data, so don't try preserving any existing order. */
+				path = cdbpath_create_motion_path(root, path, NIL, false, locus);
+			}
+
 			path = (Path *) create_sort_path(root, distinct_rel,
 											 path,
 											 needed_pathkeys,
 											 -1.0);
+		}
+		else
+		{
+			if (!cdbpathlocus_collocates_pathkeys(root, path->locus,
+												  distinct_dist_pathkeys, false /* exact_match */ ))
+			{
+				CdbPathLocus locus;
+
+				if (distinct_dist_exprs)
+				{
+					locus = cdbpathlocus_from_exprs(root, distinct_dist_exprs,
+													distinct_dist_opfamilies,
+													getgpsegmentCount());
+				}
+				else
+				{
+					CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+				}
+				/* preserve any existing order */
+				path = cdbpath_create_motion_path(root, path, path->pathkeys, true, locus);
+				if (!path)
+					elog(ERROR, "could not create a Motion path that would preserve input order for DISTINCT");
+			}
+		}
 
 		add_path(distinct_rel, (Path *)
 				 create_upper_unique_path(root, distinct_rel,
