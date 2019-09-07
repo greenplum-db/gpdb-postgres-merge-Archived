@@ -5419,15 +5419,7 @@ create_distinct_paths(PlannerInfo *root,
 						CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
 					}
 
-					path = cdbpath_create_motion_path(root, path, path->pathkeys, true, locus);
-					/* GPDB_96_MERGE_FIXME: Not sure if this can happen. I'm sticking an
-					 * assert here, because I'd like to know if it can. But I think the
-					 * rest of the code will work fine if it does, although we may fail
-					 * to find a valid plan if this was the only way to do it.
-					 */
-					Assert(path);
-					if (!path)
-						continue;
+					path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
 				}
 
 				add_path(distinct_rel, (Path *)
@@ -5495,9 +5487,7 @@ create_distinct_paths(PlannerInfo *root,
 					CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
 				}
 				/* preserve any existing order */
-				path = cdbpath_create_motion_path(root, path, path->pathkeys, true, locus);
-				if (!path)
-					elog(ERROR, "could not create a Motion path that would preserve input order for DISTINCT");
+				path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
 			}
 		}
 
@@ -5661,7 +5651,7 @@ create_ordered_paths(PlannerInfo *root,
 				CdbPathLocus locus;
 
 				CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
-				path = cdbpath_create_motion_path(root, path, path->pathkeys, true, locus);
+				path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
 			}
 
 			add_path(ordered_rel, path);
