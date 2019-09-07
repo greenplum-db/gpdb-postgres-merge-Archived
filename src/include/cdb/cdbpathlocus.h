@@ -135,7 +135,7 @@ typedef enum CdbLocusType
 typedef struct CdbPathLocus
 {
 	CdbLocusType locustype;
-	List	   *distkey;
+	List	   *distkey;		/* List of DistributionKeys */
 	int			numsegments;
 } CdbPathLocus;
 

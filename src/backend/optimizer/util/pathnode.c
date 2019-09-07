@@ -3536,6 +3536,7 @@ create_projection_path(PlannerInfo *root,
 	pathnode->path.parallel_workers = subpath->parallel_workers;
 	/* Projection does not change the sort order */
 	pathnode->path.pathkeys = subpath->pathkeys;
+	pathnode->path.locus = subpath->locus;
 
 	pathnode->subpath = subpath;
 
@@ -4194,6 +4195,7 @@ create_setop_path(PlannerInfo *root,
 	/* SetOp preserves the input sort order if in sort mode */
 	pathnode->path.pathkeys =
 		(strategy == SETOP_SORTED) ? subpath->pathkeys : NIL;
+	pathnode->path.locus = subpath->locus;
 
 	pathnode->subpath = subpath;
 	pathnode->cmd = cmd;

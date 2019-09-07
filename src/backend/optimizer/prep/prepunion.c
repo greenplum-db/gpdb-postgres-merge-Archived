@@ -573,19 +573,17 @@ generate_union_path(SetOperationStmt *op, PlannerInfo *root,
 	 * representing different kinds of PSETOP_* implementations, and
 	 * let the "add_path()" choose the cheapest one.
 	 */
-#if 0
 	/* CDB: Decide on approach, condition argument plans to suit. */
 	if ( Gp_role == GP_ROLE_DISPATCH )
 	{
-		optype = choose_setop_type(planlist);
-		adjust_setop_arguments(root, planlist, optype);
+		optype = choose_setop_type(pathlist);
+		adjust_setop_arguments(root, pathlist, optype);
 	}
 	else if (Gp_role == GP_ROLE_UTILITY ||
 			 Gp_role == GP_ROLE_EXECUTE) /* MPP-2928 */
 	{
 		optype = PSETOP_SEQUENTIAL_QD;
 	}
-#endif
 
 	/*
 	 * Generate tlist for Append plan node.
@@ -715,12 +713,12 @@ generate_nonunion_path(SetOperationStmt *op, PlannerInfo *root,
 	 * representing different kinds of PSETOP_* implementations, and
 	 * let the "add_path()" choose the cheapest one.
 	 */
-#if 0
+
 	/* CDB: Decide on approach, condition argument plans to suit. */
 	if ( Gp_role == GP_ROLE_DISPATCH )
 	{
-		optype = choose_setop_type(planlist);
-		adjust_setop_arguments(root, planlist, optype);
+		optype = choose_setop_type(pathlist);
+		adjust_setop_arguments(root, pathlist, optype);
 	}
 	else if ( Gp_role == GP_ROLE_UTILITY 
 			|| Gp_role == GP_ROLE_EXECUTE ) /* MPP-2928 */
@@ -738,10 +736,11 @@ generate_nonunion_path(SetOperationStmt *op, PlannerInfo *root,
 		ListCell   *lc;
 		List	   *l = NIL;
 
-		foreach(lc, planlist)
+		foreach(lc, pathlist)
 		{
-			Plan	   *subplan = (Plan *) lfirst(lc);
-
+			Path	   *subpath = (Path *) lfirst(lc);
+#if 0
+			/* GPDB_96_MERGE_FIXME */
 			/*
 			 * If the subplan already has a Motion at the top, peel it off
 			 * first, so that we don't have a Motion on top of a Motion.
@@ -749,14 +748,13 @@ generate_nonunion_path(SetOperationStmt *op, PlannerInfo *root,
 			 * create such a Motion in the first place, but it's too late
 			 * for that here.
 			 */
-			while (IsA(subplan, Motion))
-				subplan = subplan->lefttree;
-
-			l = lappend(l, make_motion_hash_all_targets(root, subplan));
-		}
-		planlist = l;
-	}
+			while (IsA(subpath, Motion))
+				subpath = subpath->lefttree;
 #endif
+			l = lappend(l, make_motion_hash_all_targets(root, subpath));
+		}
+		pathlist = l;
+	}
 
 	/*
 	 * Generate tlist for Append plan node.
@@ -776,8 +774,7 @@ generate_nonunion_path(SetOperationStmt *op, PlannerInfo *root,
 	 * Append the child results together.
 	 */
 	path = (Path *) create_append_path(root, result_rel, pathlist, NULL, 0);
-	// GPDB_96_MERGE_FIXME: Where should this go now?
-	//mark_append_locus(plan, optype); /* CDB: Mark the plan result locus. */
+	mark_append_locus(path, optype); /* CDB: Mark the plan result locus. */
 
 	/* We have to manually jam the right tlist into the path; ick */
 	path->pathtarget = create_pathtarget(root, tlist);
