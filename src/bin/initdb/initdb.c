@@ -1923,27 +1923,6 @@ setup_description(FILE *cmdfd)
 static void
 setup_collation(FILE *cmdfd)
 {
-<<<<<<< HEAD
-	fputs(_("creating collations ... "), stdout);
-	fflush(stdout);
-
-	PG_CMD_OPEN;
-
-	//PG_CMD_PUTS("SELECT pg_import_system_collations( (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog') ) ;\n\n");
-
-	/* Add an SQL-standard name */
-	PG_CMD_PRINTF2("INSERT INTO pg_collation "
-					"(collname, collnamespace, collowner, collencoding, collcollate, collctype)"
-					"VALUES ('ucs_basic' "
-					",  (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog')"
-					",  (SELECT oid from pg_roles where rolname='%s')"
-					", %d"
-					", 'C'"
-					", 'C');\n\n", escape_quotes(username), PG_UTF8);
-
-	PG_CMD_CLOSE;
-	check_ok();
-=======
 #if defined(HAVE_LOCALE_T) && !defined(WIN32)
 	int			i;
 	FILE	   *locale_a_handle;
@@ -2074,7 +2053,6 @@ setup_collation(FILE *cmdfd)
 		printf(_("Use the option \"--debug\" to see details.\n"));
 	}
 #endif   /* not HAVE_LOCALE_T  && not WIN32 */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 #endif
 
