@@ -1067,6 +1067,10 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 					: NULL,
 					  plan);
 
+	/* GPDB_96_MERGE_FIXME: why did we need this before? If any of the distribution
+	 * keys are useful, shouldn't they be in the target list already?
+	 */
+#if 0
 	/**
 	 * If plan has a flow node, ensure all entries of hashExpr
 	 * are in the targetlist.
@@ -1075,6 +1079,7 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 	{
 		plan->targetlist = add_to_flat_tlist_junk(plan->targetlist, plan->flow->hashExprs, true /* resjunk */ );
 	}
+#endif
 
 	/*
 	 * If there are any pseudoconstant clauses attached to this node, insert a
