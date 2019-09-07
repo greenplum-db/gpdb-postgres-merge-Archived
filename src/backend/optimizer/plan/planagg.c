@@ -49,7 +49,10 @@
 #include "utils/syscache.h"
 
 #include "cdb/cdbllize.h"                   /* pull_up_Flow() */
+#include "cdb/cdbpath.h"
 #include "cdb/cdbsetop.h"
+#include "cdb/cdbutil.h"
+#include "cdb/cdbvars.h"
 
 
 static bool find_minmax_aggs_walker(Node *node, List **context);
@@ -480,6 +483,26 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	 */
 	sorted_path = apply_projection_to_path(subroot, final_rel, sorted_path,
 										   create_pathtarget(subroot, tlist));
+
+	/*
+	 * Need to gather the results to a single node, if it's not already
+	 * like that. Otherwise, we won't get the single min/max row, but
+	 * one min/max row from every segment.
+	 */
+	if (Gp_role == GP_ROLE_DISPATCH && CdbPathLocus_IsPartitioned(sorted_path->locus))
+	{
+		CdbPathLocus    singleQE;
+
+		CdbPathLocus_MakeSingleQE(&singleQE, getgpsegmentCount());
+
+		sorted_path = cdbpath_create_motion_path(root, sorted_path, sorted_path->pathkeys, true, singleQE);
+		/* GPDB_96_MERGE_FIXME: I don't think this should fail. If there are legitimate
+		 * reasons it might, we could punt and  return false here. But I'm leaving this
+		 * as an elog() until we get some experience on whether it can happen.
+		 */
+		if (!sorted_path)
+			elog(ERROR, "could not create an order-preserving gather motion for min/max path");
+	}
 
 	/*
 	 * Determine cost to get just the first row of the presorted path.

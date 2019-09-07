@@ -34,7 +34,9 @@
 #include "catalog/pg_proc.h"
 #include "cdb/cdbhash.h"        /* cdb_default_distribution_opfamily_for_type() */
 #include "cdb/cdbpath.h"        /* cdb_create_motion_path() etc */
+#include "cdb/cdbpathlocus.h"
 #include "cdb/cdbutil.h"		/* getgpsegmentCount() */
+#include "cdb/cdbvars.h"
 #include "executor/nodeHash.h"
 
 typedef enum
@@ -4063,7 +4065,21 @@ create_minmaxagg_path(PlannerInfo *root,
 		MinMaxAggInfo *mminfo = (MinMaxAggInfo *) lfirst(lc);
 
 		initplan_cost += mminfo->pathcost;
+
+		/*
+		 * All the subpaths should have SingleQE locus, build_minmax_path()
+		 * ensures that. But double-check here.
+		 *
+		 * GPDB_96_MERGE_FIXME: improve error message, can we get a text
+		 * representation of the locus? Also, gather the numsegments from
+		 * the children; now we just use getgpsegmentCount()
+		 */
+		if (Gp_role == GP_ROLE_DISPATCH && !CdbPathLocus_IsSingleQE(mminfo->path->locus))
+			elog(ERROR, "minmax path has unexpected path locus");
 	}
+
+	/* we checked that all the child paths are SingleQE */
+	CdbPathLocus_MakeSingleQE(&pathnode->path.locus, getgpsegmentCount());
 
 	/* add tlist eval cost for each output row, plus cpu_tuple_cost */
 	pathnode->path.startup_cost = initplan_cost + target->cost.startup;
