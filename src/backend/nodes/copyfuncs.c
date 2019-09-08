@@ -6420,6 +6420,8 @@ copyObject(const void *from)
 
 		case T_DistributedBy:
 			retval = _copyDistributedBy(from);
+			break;
+
 			/*
 			 * MISCELLANEOUS NODES
 			 */
