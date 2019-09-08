@@ -30,6 +30,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
+#include "optimizer/var.h"
 #include "tcop/utility.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -3137,8 +3138,9 @@ cdb_expr_requires_full_eval(Node *node)
 static Plan *
 cdb_insert_result_node(PlannerInfo *root, Plan *plan, int rtoffset)
 {
-    Plan   *resultplan;
-    Flow   *flow;
+	Plan	   *resultplan;
+	Flow	   *flow;
+	List	   *vlist;
 
     Assert(!IsA(plan, Result) &&
            cdb_expr_requires_full_eval((Node *)plan->targetlist));
@@ -3158,12 +3160,11 @@ cdb_insert_result_node(PlannerInfo *root, Plan *plan, int rtoffset)
     resultplan = (Plan *) make_result(plan->targetlist, NULL, plan);
 
     /* Build a new targetlist for the given Plan, with Var nodes only. */
-	/* GPDB_96_MERGE_FIXME: flatten_tlist was removed in upstream. */
-#if 0
-    plan->targetlist = flatten_tlist(plan->targetlist,
-									 PVC_RECURSE_AGGREGATES |
-									 PVC_INCLUDE_PLACEHOLDERS);
-#endif
+	vlist = pull_var_clause((Node *) plan->targetlist,
+							PVC_RECURSE_AGGREGATES |
+							PVC_INCLUDE_PLACEHOLDERS);
+	plan->targetlist = add_to_flat_tlist(NIL, vlist);
+	list_free(vlist);
 
 	/* Fix up the Result node and the Plan tree below it. */
     resultplan = set_plan_refs(root, resultplan, rtoffset);
