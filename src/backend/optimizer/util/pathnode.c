@@ -1245,6 +1245,7 @@ create_external_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 
 	pathnode->path.pathtype = T_ExternalScan;
 	pathnode->path.parent = rel;
+	pathnode->path.pathtarget = rel->reltarget;
 	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
 													 required_outer);
 	pathnode->path.pathkeys = NIL;	/* external scan has unordered result */
@@ -2352,10 +2353,14 @@ create_unique_rowid_path(PlannerInfo *root,
 
 	pathnode->path.pathtype = T_Unique;
 	pathnode->path.parent = rel;
+	pathnode->path.pathtarget = rel->reltarget;
 	pathnode->path.locus = locus;
-
 	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
 													 required_outer);
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = rel->consider_parallel &&
+		subpath->parallel_safe;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
 	/*
 	 * Treat the output as always unsorted, since we don't necessarily have
 	 * pathkeys to represent it.
