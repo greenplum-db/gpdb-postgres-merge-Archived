@@ -329,7 +329,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	ObjectAddress address;
 	List	   *rewritten;
 	PlannedStmt *plan;
-	QueryDesc  *queryDesc = NULL;
+	QueryDesc  *queryDesc;
 	Oid         relationOid = InvalidOid;   /* relation that is modified */
 	AutoStatsCmdType cmdType = AUTOSTATS_CMDTYPE_SENTINEL;  /* command type */
 
@@ -391,17 +391,6 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		save_nestlevel = NewGUCNestLevel();
 	}
 
-	if (into->skipData)
-	{
-		/*
-		 * If WITH NO DATA was specified, do not go through the rewriter,
-		 * planner and executor.  Just define the relation using a code path
-		 * similar to CREATE VIEW.  This avoids dump/restore problems stemming
-		 * from running the planner before all dependencies are set up.
-		 */
-		address = create_ctas_nodata(query->targetList, into, queryDesc);
-	}
-	else
 	{
 		/*
 		 * Parse analysis was done already, but we still have to run the rule
@@ -435,6 +424,24 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		 */
 		plan->intoClause = copyObject(stmt->into);
 
+		/* Create a QueryDesc, redirecting output to our tuple receiver */
+		queryDesc = CreateQueryDesc(plan, queryString,
+									GetActiveSnapshot(), InvalidSnapshot,
+									dest, params, 0);
+	}
+
+	if (into->skipData)
+	{
+		/*
+		 * If WITH NO DATA was specified, do not go through the rewriter,
+		 * planner and executor.  Just define the relation using a code path
+		 * similar to CREATE VIEW.  This avoids dump/restore problems stemming
+		 * from running the planner before all dependencies are set up.
+		 */
+		address = create_ctas_nodata(query->targetList, into, queryDesc);
+	}
+	else
+	{
 		/*
 		 * Use a snapshot with an updated command ID to ensure this query sees
 		 * results of any previously executed queries.  (This could only
@@ -444,11 +451,6 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		 */
 		PushCopiedSnapshot(GetActiveSnapshot());
 		UpdateActiveSnapshotCommandId();
-
-		/* Create a QueryDesc, redirecting output to our tuple receiver */
-		queryDesc = CreateQueryDesc(plan, queryString,
-									GetActiveSnapshot(), InvalidSnapshot,
-									dest, params, 0);
 
 		queryDesc->plannedstmt->query_mem = ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
 
