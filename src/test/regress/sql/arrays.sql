@@ -350,12 +350,8 @@ insert into arr_tbl values ('{1,2,10}');
 
 set enable_seqscan to off;
 set enable_bitmapscan to off;
-<<<<<<< HEAD
 select * from arr_tbl where f1 > '{1,2,3}' and f1 <= '{1,5,3}' ORDER BY 1;
 select * from arr_tbl where f1 >= '{1,2,3}' and f1 < '{1,5,3}' ORDER BY 1;
-=======
-select * from arr_tbl where f1 > '{1,2,3}' and f1 <= '{1,5,3}';
-select * from arr_tbl where f1 >= '{1,2,3}' and f1 < '{1,5,3}';
 
 -- test ON CONFLICT DO UPDATE with arrays
 create temp table arr_pk_tbl (pk int4 primary key, f1 int[]);
@@ -369,7 +365,6 @@ insert into arr_pk_tbl(pk, f1[1:2]) values (1, '{6,7,8}') on conflict (pk)
     f1[3] = excluded.f1[3]
   returning pk, f1;
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 -- note: if above selects don't produce the expected tuple order,
 -- then you didn't get an indexscan plan, and something is busted.
 reset enable_seqscan;

@@ -5,8 +5,7 @@ CREATE TABLE test_replica_identity (
        nonkey text,
        CONSTRAINT test_replica_identity_unique_defer UNIQUE (keya, keyb) DEFERRABLE,
        CONSTRAINT test_replica_identity_unique_nondefer UNIQUE (keya, keyb)
-<<<<<<< HEAD
-) distributed by (keya);
+) WITH OIDS distributed by (keya);
 
 -- GPDB has a habit of naming the indexes that back constraints differently,
 -- at CREATE TABLE. Rename the constraints, and then rename them back. That
@@ -15,9 +14,6 @@ ALTER TABLE test_replica_identity RENAME CONSTRAINT test_replica_identity_unique
 ALTER TABLE test_replica_identity RENAME CONSTRAINT x TO test_replica_identity_unique_defer;
 ALTER TABLE test_replica_identity RENAME CONSTRAINT test_replica_identity_unique_nondefer TO x;
 ALTER TABLE test_replica_identity RENAME CONSTRAINT x TO test_replica_identity_unique_nondefer;
-=======
-) WITH OIDS;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 CREATE TABLE test_replica_identity_othertable (id serial primary key);
 
@@ -65,14 +61,10 @@ ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_iden
 SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
 \d test_replica_identity
 
-<<<<<<< HEAD
--- succeed, nondeferrable unique constraint over nonnullable cols
-=======
 -- succeed, oid unique index
 ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_oid_idx;
 
--- succeed, nondeferrable unique constraint over nonullable cols
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+-- succeed, nondeferrable unique constraint over nonnullable cols
 ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_unique_nondefer;
 
 -- succeed unique index over nonnullable cols

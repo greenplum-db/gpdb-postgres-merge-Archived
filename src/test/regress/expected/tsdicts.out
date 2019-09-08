@@ -191,9 +191,6 @@ SELECT ts_lexize('hunspell', 'footballyklubber');
  {foot,ball,klubber}
 (1 row)
 
-<<<<<<< HEAD
--- Synonym dictionary
-=======
 -- Test ISpell dictionary with hunspell affix file with FLAG long parameter
 CREATE TEXT SEARCH DICTIONARY hunspell_long (
                         Template=ispell,
@@ -386,8 +383,7 @@ SELECT ts_lexize('hunspell_num', 'footballyklubber');
  {foot,ball,klubber}
 (1 row)
 
--- Synonim dictionary
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+-- Synonym dictionary
 CREATE TEXT SEARCH DICTIONARY synonym (
 						Template=synonym,
 						Synonyms=synonym_sample

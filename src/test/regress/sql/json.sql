@@ -131,16 +131,12 @@ SELECT json_agg(q)
          FROM generate_series(1,2) x,
               generate_series(4,5) y) q;
 
-<<<<<<< HEAD
-SELECT json_agg(q order by q)
-=======
 SELECT json_agg(q ORDER BY x, y)
   FROM rows q;
 
 UPDATE rows SET x = NULL WHERE x = 1;
 
 SELECT json_agg(q ORDER BY x NULLS FIRST, y)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
   FROM rows q;
 
 -- non-numeric output
@@ -408,15 +404,12 @@ select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
 
-<<<<<<< HEAD
 -- negative cases where the wrong record type is supplied
 select * from json_populate_recordset(row(0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
 select * from json_populate_recordset(row(0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
 select * from json_populate_recordset(row(0::int,0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
 select * from json_populate_recordset(row(1000000000::int,50::int),'[{"b":"2"},{"a":"3"}]') q (a text, b text);
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 --json_typeof() function
 select value, json_typeof(value)
   from (values (json '123.4'),
