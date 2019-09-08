@@ -489,7 +489,9 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 			snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
 					 "SELECT " UINT64_FORMAT,
 					 queryDesc->estate->es_processed);
+	}
 
+	{
 		dest->rDestroy(dest);
 
 		FreeQueryDesc(queryDesc);
