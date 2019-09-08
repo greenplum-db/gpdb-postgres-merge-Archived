@@ -214,20 +214,26 @@ pathnode_walk_kids(Path            *path,
 		case T_Material:
 			v = pathnode_walk_node(((MaterialPath *)path)->subpath, walker, context);
 			break;
+		case T_Sort:
+			v = pathnode_walk_node(((SortPath *)path)->subpath, walker, context);
+			break;
+		case T_Agg:
+			v = pathnode_walk_node(((AggPath *)path)->subpath, walker, context);
+			break;
+		case T_WindowAgg:
+			v = pathnode_walk_node(((WindowAggPath *)path)->subpath, walker, context);
+			break;
 		case T_Unique:
 			v = pathnode_walk_node(((UniquePath *)path)->subpath, walker, context);
+			break;
+		case T_Gather:
+			v = pathnode_walk_node(((GatherPath *)path)->subpath, walker, context);
 			break;
 		case T_Motion:
 			v = pathnode_walk_node(((CdbMotionPath *)path)->subpath, walker, context);
 			break;
 		case T_Limit:
 			v = pathnode_walk_node(((LimitPath *)path)->subpath, walker, context);
-			break;
-		case T_Sort:
-			v = pathnode_walk_node(((SortPath *)path)->subpath, walker, context);
-			break;
-		case T_Agg:
-			v = pathnode_walk_node(((AggPath *)path)->subpath, walker, context);
 			break;
 		default:
 			v = CdbVisit_Walk;  /* keep compiler quiet */
