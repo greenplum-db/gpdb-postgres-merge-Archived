@@ -622,6 +622,13 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	if (!new_path)
 		return;
 
+	/*
+	 * GPDB: Check that the correct locus has been determined for the Path.
+	 * This can easily be missing from upstream code that construct Paths
+	 * that haven't been modified in GPDB to set the locus correctly.
+	 */
+	if (!CdbLocusType_IsValid(new_path->locus.locustype))
+		elog(ERROR, "path of type %u is missing distribution locus", new_path->pathtype);
 	Assert(cdbpathlocus_is_valid(new_path->locus));
 
 	/* Pretend parameterized paths have no pathkeys, per comment above */
