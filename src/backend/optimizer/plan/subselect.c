@@ -2621,7 +2621,11 @@ SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
 void
 SS_attach_initplans(PlannerInfo *root, Plan *plan)
 {
-	plan->initPlan = root->init_plans;
+	/*
+	 * GPDB: make a copy of the list, because it gets free'd from the plan
+	 * later, in the remove_unused_initplans() step.
+	 */
+	plan->initPlan = list_copy(root->init_plans);
 }
 
 /*
