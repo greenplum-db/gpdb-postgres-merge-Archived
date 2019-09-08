@@ -760,6 +760,7 @@ static A_Indices *
 _readA_Indices(void)
 {
 	READ_LOCALS(A_Indices);
+	READ_BOOL_FIELD(is_slice);
 	READ_NODE_FIELD(lidx);
 	READ_NODE_FIELD(uidx);
 	READ_DONE();
