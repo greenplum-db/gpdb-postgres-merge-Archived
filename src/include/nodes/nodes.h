@@ -306,6 +306,7 @@ typedef enum NodeTag
 	T_AppendOnlyPath,
 	T_AOCSPath,
 	T_ExternalPath,
+	T_CtePath,
 	T_IndexPath,
 	T_BitmapHeapPath,
 	T_BitmapAndPath,

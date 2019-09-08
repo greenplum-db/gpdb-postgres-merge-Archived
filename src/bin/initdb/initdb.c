@@ -1888,8 +1888,6 @@ setup_description(FILE *cmdfd)
 				" SELECT t.objoid, c.oid, t.description "
 				"  FROM tmp_pg_shdescription t, pg_class c "
 				"   WHERE c.relname = t.classname;\n\n");
-	/* GPDB_96_MERGE_FIXME: */
-#if 0
 	/* Create default descriptions for operator implementation functions */
 	PG_CMD_PUTS("WITH funcdescs AS ( "
 				"SELECT p.oid as p_oid, oprname, "
@@ -1902,7 +1900,6 @@ setup_description(FILE *cmdfd)
 				"  WHERE opdesc NOT LIKE 'deprecated%' AND "
 				"  NOT EXISTS (SELECT 1 FROM pg_description "
 		"    WHERE objoid = p_oid AND classoid = 'pg_proc'::regclass);\n\n");
-#endif
 	/*
 	 * Even though the tables are temp, drop them explicitly so they don't get
 	 * copied into template0/postgres databases.
@@ -3602,9 +3599,8 @@ initialize_data_directory(void)
 	
 		setup_dictionary(cmdfd);
 
-		// GPDB_96_MERGE_FIXME: the queries here failed, revisit later 
-		//setup_privileges(cmdfd);
-	
+		setup_privileges(cmdfd);
+
 		setup_schema(cmdfd);
 	
 		load_plpgsql(cmdfd);

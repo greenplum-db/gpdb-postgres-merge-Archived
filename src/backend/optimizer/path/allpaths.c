@@ -2118,11 +2118,11 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	CommonTableExpr *cte = NULL;
 	double		tuple_fraction = 0.0;
 	CtePlanInfo *cteplaninfo;
-	Plan	   *subplan = NULL;
 	List	   *pathkeys = NULL;
 	PlannerInfo *subroot = NULL;
 	RelOptInfo *sub_final_rel;
 	Relids		required_outer;
+	bool		is_shared;
 
 	/*
 	 * Find the referenced CTE based on the given range table entry
@@ -2197,7 +2197,8 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 * qual expressions between multiple references, but
 	 * so far we don't support it.
 	 */
-	if (!root->config->gp_cte_sharing || cte->cterefcount == 1)
+	is_shared = root->config->gp_cte_sharing && cte->cterefcount > 1;
+	if (!is_shared)
 	{
 		PlannerConfig *config = CopyPlannerConfig(root->config);
 
@@ -2256,7 +2257,7 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		 * subplan will not be used by InitPlans, so that they can be shared
 		 * if this CTE is referenced multiple times (excluding in InitPlans).
 		 */
-		if (cteplaninfo->shared_plan == NULL)
+		if (cteplaninfo->subroot == NULL)
 		{
 			PlannerConfig *config = CopyPlannerConfig(root->config);
 
@@ -2277,17 +2278,21 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 			subroot = subquery_planner(cteroot->glob, subquery, cteroot, cte->cterecursive,
 									   tuple_fraction, config);
 
-			cteplaninfo->shared_plan = prepare_plan_for_sharing(cteroot, subplan);
+			/* Select best Path and turn it into a Plan */
+			sub_final_rel = fetch_upper_rel(subroot, UPPERREL_FINAL, NULL);
+
+			/*
+			 * we cannot use different plans for different instances of this CTE
+			 * reference, so keep only the cheapest
+			 */
+			sub_final_rel->pathlist = list_make1(sub_final_rel->cheapest_total_path);
+
 			cteplaninfo->subroot = subroot;
 		}
-
-		/*
-		 * Create another ShareInputScan to reference the already-created
-		 * subplan.
-		 */
-		subplan = share_prepared_plan(cteroot, cteplaninfo->shared_plan);
-		subroot = cteplaninfo->subroot;
+		else
+			subroot = cteplaninfo->subroot;
 	}
+	rel->subroot = subroot;
 
 	/*
 	 * It's possible that constraint exclusion proved the subquery empty. If
@@ -2303,7 +2308,6 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	}
 
 	pathkeys = subroot->query_pathkeys;
-	rel->subroot = subroot;
 
 	/* Mark rel with estimated output rows, width, etc */
 	set_cte_size_estimates(root, rel, rel->rows);
@@ -2323,13 +2327,18 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	{
 		Path	   *subpath = (Path *) lfirst(lc);
 		List	   *pathkeys;
-	
+
 		/* Convert subquery pathkeys to outer representation */
 		pathkeys = convert_subquery_pathkeys(root, rel, subpath->pathkeys,
 											 make_tlist_from_pathtarget(subpath->pathtarget));
 
 		/* Generate appropriate path */
-		add_path(rel, create_ctescan_path(root, rel, pathkeys, required_outer));
+		add_path(rel, create_ctescan_path(root,
+										  rel,
+										  is_shared ? NULL : subpath,
+										  subpath->locus,
+										  pathkeys,
+										  required_outer));
 	}
 }
 

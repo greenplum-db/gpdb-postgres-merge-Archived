@@ -2848,10 +2848,13 @@ create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
  *	  returning the pathnode.
  */
 Path *
-create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys,
+create_ctescan_path(PlannerInfo *root, RelOptInfo *rel,
+					Path *subpath, CdbPathLocus locus,
+					List *pathkeys,
 					Relids required_outer)
 {
-	Path	   *pathnode = makeNode(Path);
+	CtePath	   *ctepath = makeNode(CtePath);
+	Path	   *pathnode = &ctepath->path;
 
 	pathnode->pathtype = T_CteScan;
 	pathnode->parent = rel;
@@ -2864,18 +2867,20 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys,
 	// GPDB_96_MERGE_FIXME: Why do we set pathkeys in GPDB, but not in Postgres?
 	// pathnode->pathkeys = NIL;	/* XXX for now, result is always unordered */
 	pathnode->pathkeys = pathkeys;
-
-	// GPDB_96_MERGE_FIXME: where to get the locus now?
-	//pathnode->locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
-	elog(ERROR, "GPDB_96_MERGE_FIXME: create_ctescan_path() not resolved");
+	pathnode->locus = locus;
 
 	/*
 	 * We can't extract these two values from the subplan, so we simple set
 	 * them to their worst case here.
+	 *
+	 * GPDB_96_MERGE_FIXME: we do have the subpath, at least if it's not a
+	 * shared cte
 	 */
 	pathnode->motionHazard = true;
 	pathnode->rescannable = false;
 	pathnode->sameslice_relids = NULL;
+
+	ctepath->subpath = subpath;
 
 	cost_ctescan(pathnode, root, rel, pathnode->param_info);
 

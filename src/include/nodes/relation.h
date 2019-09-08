@@ -1162,6 +1162,17 @@ typedef struct PartitionSelectorPath
 #define PATH_REQ_OUTER(path)  \
 	((path)->param_info ? (path)->param_info->ppi_req_outer : (Relids) NULL)
 
+/*
+ * GPDB: CTEs are planned differently from upstream.
+ */
+typedef struct CtePath
+{
+	Path		path;
+
+	Path	   *subpath; /* if NULL, this is a shared CTE reference;
+						  * get the plan from the CtePlanInfo */
+} CtePath;
+
 /*----------
  * IndexPath represents an index scan over a single index.
  *

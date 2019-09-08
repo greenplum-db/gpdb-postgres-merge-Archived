@@ -111,6 +111,7 @@ extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte,
 					   Relids required_outer);
 extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel,
+					Path *subpath, CdbPathLocus locus,
 					List *pathkeys,
 					Relids required_outer);
 extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,

@@ -40,6 +40,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "optimizer/planpartition.h"
+#include "optimizer/planshare.h"
 #include "optimizer/predtest.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/subselect.h"
@@ -155,7 +156,7 @@ static TableFunctionScan *create_tablefunction_plan(PlannerInfo *root,
 						  List *scan_clauses);
 static ValuesScan *create_valuesscan_plan(PlannerInfo *root, Path *best_path,
 					   List *tlist, List *scan_clauses);
-static SubqueryScan *create_ctescan_plan(PlannerInfo *root, Path *best_path,
+static Plan *create_ctescan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses);
 static WorkTableScan *create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 						  List *tlist, List *scan_clauses);
@@ -4021,16 +4022,68 @@ create_valuesscan_plan(PlannerInfo *root, Path *best_path,
  *	 Returns a ctescan plan for the base relation scanned by 'best_path'
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
-static SubqueryScan *
+static Plan *
 create_ctescan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses)
 {
+	Plan	   *scan_plan;
 	Index		scan_relid = best_path->parent->relid;
-	SubqueryScan *scan_plan;
+	RangeTblEntry *rte;
+	CtePlanInfo *cteplaninfo;
+	int			planinfo_id;
+	PlannerInfo *cteroot;
+	Index		levelsup;
+	int			ndx;
+	ListCell   *lc;
+	Plan	   *subplan;
 
 	Assert(best_path->parent->rtekind == RTE_CTE);
-
 	Assert(scan_relid > 0);
+	rte = planner_rt_fetch(scan_relid, root);
+	Assert(rte->rtekind == RTE_CTE);
+	Assert(!rte->self_reference);
+
+	/*
+	 * Find the referenced CTE, and locate the SubPlan previously made for it.
+	 */
+	levelsup = rte->ctelevelsup;
+	cteroot = root;
+	while (levelsup-- > 0)
+	{
+		cteroot = cteroot->parent_root;
+		if (!cteroot)			/* shouldn't happen */
+			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
+	}
+
+	/*
+	 * Note: cte_plan_ids can be shorter than cteList, if we are still working
+	 * on planning the CTEs (ie, this is a side-reference from another CTE).
+	 * So we mustn't use forboth here.
+	 */
+	ndx = 0;
+	foreach(lc, cteroot->parse->cteList)
+	{
+		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+
+		if (strcmp(cte->ctename, rte->ctename) == 0)
+			break;
+		ndx++;
+	}
+	if (lc == NULL)				/* shouldn't happen */
+		elog(ERROR, "could not find CTE \"%s\"", rte->ctename);
+
+	/*
+	 * In PostgreSQL, we use the index to look up the plan ID in the
+	 * cteroot->cte_plan_ids list. In GPDB, CTE plans work differently, and
+	 * we look up the CtePlanInfo struct in the list_cteplaninfo instead.
+	 */
+	planinfo_id = ndx;
+
+	if (planinfo_id < 0 || planinfo_id >= list_length(cteroot->list_cteplaninfo))
+		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
+
+	Assert(list_length(cteroot->list_cteplaninfo) > planinfo_id);
+	cteplaninfo = list_nth(cteroot->list_cteplaninfo, planinfo_id);
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
@@ -4045,16 +4098,42 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 			replace_nestloop_params(root, (Node *) scan_clauses);
 	}
 
-	elog(ERROR, "GPDB_96_MERGE_FIXME: create_tablefunction_plan() not resolved");
+	/*
+	 * If this CTE is not shared, then we have a pre-made sub-Path in the CtePath.
+	 */
+	if (((CtePath *) best_path)->subpath)
+	{
+		/*
+		 * Recursively create Plan from Path for subquery.  Since we are entering
+		 * a different planner context (subroot), recurse to create_plan not
+		 * create_plan_recurse.
+		 */
+		subplan = create_plan(best_path->parent->subroot, ((CtePath *) best_path)->subpath);
+	}
+	else
+	{
+		/*
+		 * This is a shared CTE. On first call, turn the sub-Path into a Plan, and store
+		 * it in CtePlanInfo.
+		 */
+		if (!cteplaninfo->shared_plan)
+		{
+			RelOptInfo *sub_final_rel;
 
-	scan_plan = make_subqueryscan(tlist,
-								  scan_clauses,
-								  scan_relid,
-								  // GPDB_96_MERGE_FIXME: This was: best_path->parent->subplan
-								  // Where can we get the subplan now?
-								  NULL);
+			sub_final_rel = fetch_upper_rel(best_path->parent->subroot, UPPERREL_FINAL, NULL);
+			subplan = create_plan(best_path->parent->subroot, sub_final_rel->cheapest_total_path);
+			cteplaninfo->shared_plan = prepare_plan_for_sharing(cteroot, subplan);
+		}
+		/* Wrap the common Plan tree in a ShareInputScan node */
+		subplan = share_prepared_plan(cteroot, cteplaninfo->shared_plan);
+	}
 
-	copy_generic_path_info(&scan_plan->scan.plan, best_path);
+	scan_plan = (Plan *) make_subqueryscan(tlist,
+										   scan_clauses,
+										   scan_relid,
+										   subplan);
+
+	copy_generic_path_info(scan_plan, best_path);
 
 	return scan_plan;
 }
