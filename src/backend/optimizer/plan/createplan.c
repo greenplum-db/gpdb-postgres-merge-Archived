@@ -2252,6 +2252,8 @@ create_setop_plan(PlannerInfo *root, SetOpPath *best_path, int flags)
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
+	plan->plan.flow = pull_up_Flow(&plan->plan, subplan);
+
 	return plan;
 }
 
@@ -7506,6 +7508,13 @@ make_result(List *tlist,
 	node->numHashFilterCols = 0;
 	node->hashFilterColIdx = NULL;
 	node->hashFilterFuncs = NULL;
+
+	if (subplan)
+		plan->flow = pull_up_Flow(plan, subplan);
+	else
+	{
+		mark_plan_general(plan, getgpsegmentCount());
+	}
 
 	return node;
 }
