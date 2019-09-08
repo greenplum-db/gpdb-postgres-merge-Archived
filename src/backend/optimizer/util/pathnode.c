@@ -4137,6 +4137,7 @@ create_windowagg_path(PlannerInfo *root,
 	pathnode->path.parallel_workers = subpath->parallel_workers;
 	/* WindowAgg preserves the input sort order */
 	pathnode->path.pathkeys = subpath->pathkeys;
+	pathnode->path.locus = subpath->locus;
 
 	pathnode->subpath = subpath;
 	pathnode->winclause = winclause;

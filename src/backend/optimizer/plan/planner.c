@@ -197,6 +197,9 @@ static bool isSimplyUpdatableQuery(Query *query);
 static CdbPathLocus choose_grouping_locus(PlannerInfo *root, Path *path,
 					  List *rollup_lists, List *rollup_groupclauses,
 					  bool *need_redistribute_p);
+static CdbPathLocus choose_one_window_locus(PlannerInfo *root, Path *path,
+											WindowClause *wc,
+											bool *need_redistribute_p);
 
 /*****************************************************************************
  *
@@ -4527,7 +4530,7 @@ create_grouping_paths(PlannerInfo *root,
 					 * do a order-preserving motion to merge the inputs.
 					 */
 					if (need_redistribute && CdbPathLocus_IsPartitioned(locus))
-						path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
+						path = cdbpath_create_motion_path(root, path, NIL, false, locus);
 
 					path = (Path *) create_sort_path(root,
 													 grouped_rel,
@@ -4908,6 +4911,65 @@ choose_grouping_locus(PlannerInfo *root, Path *path,
 	return locus;
 }
 
+
+/*
+ * Figure out the desired data distribution to perform windowing
+ */
+static CdbPathLocus
+choose_one_window_locus(PlannerInfo *root, Path *path,
+						WindowClause *wc,
+						bool *need_redistribute_p)
+{
+	CdbPathLocus locus;
+	bool		need_redistribute;
+
+	if (CdbPathLocus_IsGeneral(path->locus))
+	{
+		need_redistribute = false;
+		locus = path->locus;
+	}
+	else
+	{
+		List	   *partition_dist_pathkeys;
+		List	   *partition_dist_exprs;
+		List	   *partition_dist_opfamilies;
+
+		make_distribution_exprs_for_groupclause(root,
+												wc->partitionClause,
+												make_tlist_from_pathtarget(path->pathtarget),
+												&partition_dist_pathkeys,
+												&partition_dist_exprs,
+												&partition_dist_opfamilies);
+		if (!partition_dist_exprs)
+		{
+			/*
+			 * There is no PARTITION BY, or none of the PARTITION BY
+			 * expressions can be used as a distribution key. Have to
+			 * gather everything to a single node.
+			 */
+			CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+			need_redistribute = true;
+		}
+		else if (cdbpathlocus_collocates_pathkeys(root, path->locus, partition_dist_pathkeys, false))
+		{
+			/*
+			 * The current locus matches the PARTITION BY.
+			 */
+			need_redistribute = false;
+			locus = path->locus;
+		}
+		else
+		{
+			locus = cdbpathlocus_from_exprs(root, partition_dist_exprs, partition_dist_opfamilies,
+											getgpsegmentCount());
+			need_redistribute = true;
+		}
+	}
+
+	*need_redistribute_p = need_redistribute;
+	return locus;
+}
+
 /*
  * create_window_paths
  *
@@ -5042,78 +5104,10 @@ create_one_window_path(PlannerInfo *root,
 	{
 		WindowClause *wc = (WindowClause *) lfirst(l);
 		List	   *window_pathkeys;
+		CdbPathLocus locus;
+		bool		need_redistribute;
 
-		/*
-		 * Unless the PARTITION BY in the window happens to match the
-		 * current distribution, we need a motion. Each partition
-		 * needs to be handled in the same segment.
-		 *
-		 * If there is no PARTITION BY, then all rows form a single
-		 * partition, so we need to gather all the tuples to a single
-		 * node. But we'll do that after the Sort, so that the Sort
-		 * is parallelized.
-		 */
-#if 0  /* GPDB_96_MERGE_FIXME: pathify this */
-		if (CdbPathLocus_IsGeneral(current_locus))
-			need_gather_for_partitioning = false;
-		else
-		{
-			List	   *partition_dist_pathkeys;
-			List	   *partition_dist_exprs;
-			List	   *partition_dist_opfamilies;
-
-			make_distribution_exprs_for_groupclause(root,
-													wc->partitionClause,
-													tlist,
-													&partition_dist_pathkeys,
-													&partition_dist_exprs,
-													&partition_dist_opfamilies);
-			if (!partition_dist_exprs)
-			{
-				/*
-				 * There is no PARTITION BY, or none of the PARTITION BY
-				 * expressions can be used as a distribution key. Have to
-				 * gather everything to a single node.
-				 */
-				need_gather_for_partitioning = true;
-			}
-			else if (cdbpathlocus_collocates_pathkeys(root, current_locus, partition_dist_pathkeys, false))
-			{
-				need_gather_for_partitioning = false;
-			}
-			else
-			{
-				result_plan = (Plan *) make_motion_hash(root, result_plan,
-														partition_dist_exprs,
-														partition_dist_opfamilies);
-				result_plan->total_cost += motion_cost_per_row * result_plan->plan_rows;
-				current_pathkeys = NIL; /* no longer sorted */
-				Assert(result_plan->flow);
-
-				/*
-				 * Change current_locus based on the new distribution
-				 * pathkeys.
-				 */
-				List *partition_dist_distkeys = NIL;
-				ListCell *lc;
-				ListCell *lc2;
-				forboth(lc, partition_dist_pathkeys, lc2, partition_dist_opfamilies)
-				{
-					PathKey	   *pk = (PathKey *) lfirst(lc);
-					Oid			opfamily = lfirst_oid(lc2);
-					DistributionKey *dk = makeNode(DistributionKey);
-
-					dk->dk_opfamily = opfamily;
-					dk->dk_eclasses = list_make1(pk->pk_eclass);
-					partition_dist_distkeys = lappend(partition_dist_distkeys, dk);
-				}
-
-				CdbPathLocus_MakeHashed(&current_locus, partition_dist_distkeys,
-										CdbPathLocus_NumSegments(current_locus));
-				need_gather_for_partitioning = false;
-			}
-		}
-
+#if 0  /* GPDB_96_MERGE_FIXME */
 		if (wc->orderClause)
 		{
 			SortGroupClause *sortcl = (SortGroupClause *) linitial(wc->orderClause);
@@ -5140,6 +5134,20 @@ create_one_window_path(PlannerInfo *root,
 												   wc,
 												   tlist);
 
+		/*
+		 * Unless the PARTITION BY in the window happens to match the
+		 * current distribution, we need a motion. Each partition
+		 * needs to be handled in the same segment.
+		 *
+		 * If there is no PARTITION BY, then all rows form a single
+		 * partition, so we need to gather all the tuples to a single
+		 * node. But we'll do that after the Sort, so that the Sort
+		 * is parallelized.
+		 */
+		locus = choose_one_window_locus(root, path, wc, &need_redistribute);
+		if (need_redistribute && CdbPathLocus_IsPartitioned(locus))
+			path = cdbpath_create_motion_path(root, path, NIL, false, locus);
+
 		/* Sort if necessary */
 		if (!pathkeys_contained_in(window_pathkeys, path->pathkeys))
 		{
@@ -5148,6 +5156,9 @@ create_one_window_path(PlannerInfo *root,
 											 window_pathkeys,
 											 -1.0);
 		}
+
+		if (need_redistribute && !CdbPathLocus_IsPartitioned(locus))
+			path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
 
 		/*
 		 * If the input's locus doesn't match the PARTITION BY, gather the result.
