@@ -162,7 +162,17 @@ cdbpath_create_motion_path(PlannerInfo *root,
 			pathnode->path.pathtarget = subpath->pathtarget;
 			pathnode->path.locus = locus;
 			pathnode->path.rows = subpath->rows;
+
+			/* GPDB_96_MERGE_FIXME: When is a Motion path parallel-safe? I tried
+			 * setting this to 'false' initially, to play it safe, but somehow
+			 * the Paths with motions ended up in gather plans anyway, and tripped
+			 * assertion failures.
+			 */
+			pathnode->path.parallel_aware = false;
+			pathnode->path.parallel_safe = subpath->parallel_safe;
+			pathnode->path.parallel_workers = subpath->parallel_workers;
 			pathnode->path.pathkeys = pathkeys;
+
 			pathnode->subpath = subpath;
 
 			Assert(pathnode->path.locus.numsegments > 0);
@@ -197,6 +207,17 @@ cdbpath_create_motion_path(PlannerInfo *root,
 			pathnode->path.locus = locus;
 			pathnode->path.rows = subpath->rows;
 			pathnode->path.pathkeys = pathkeys;
+
+			/* GPDB_96_MERGE_FIXME: When is a Motion path parallel-safe? I tried
+			 * setting this to 'false' initially, to play it safe, but somehow
+			 * the Paths with motions ended up in gather plans anyway, and tripped
+			 * assertion failures.
+			 */
+			pathnode->path.parallel_aware = false;
+			pathnode->path.parallel_safe = subpath->parallel_safe;
+			pathnode->path.parallel_workers = subpath->parallel_workers;
+			pathnode->path.pathkeys = pathkeys;
+
 			pathnode->subpath = subpath;
 
 			Assert(pathnode->path.locus.numsegments > 0);
@@ -375,6 +396,17 @@ cdbpath_create_motion_path(PlannerInfo *root,
 	pathnode->path.locus = locus;
 	pathnode->path.rows = subpath->rows;
 	pathnode->path.pathkeys = pathkeys;
+
+	/* GPDB_96_MERGE_FIXME: When is a Motion path parallel-safe? I tried
+	 * setting this to 'false' initially, to play it safe, but somehow
+	 * the Paths with motions ended up in gather plans anyway, and tripped
+	 * assertion failures.
+	 */
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = subpath->parallel_safe;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
+	pathnode->path.pathkeys = pathkeys;
+
 	pathnode->subpath = subpath;
 
 	/* Cost of motion */
