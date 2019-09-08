@@ -173,10 +173,6 @@ SELECT ts_rank_cd(' a:1 s:2C d g'::tsvector, 'a & s');
 SELECT ts_rank_cd(' a:1 s:2B d g'::tsvector, 'a & s');
 SELECT ts_rank_cd(' a:1 s:2 d g'::tsvector, 'a & s');
 
-<<<<<<< HEAD
-select to_tsvector('simple', 'x y q y') @@ '!foo' AS "true";
-select to_tsvector('simple', '') @@ '!foo' AS "true";
-=======
 SELECT ts_rank_cd(' a:1 s:2A d g'::tsvector, 'a <-> s');
 SELECT ts_rank_cd(' a:1 s:2C d g'::tsvector, 'a <-> s');
 SELECT ts_rank_cd(' a:1 s:2 d g'::tsvector, 'a <-> s');
@@ -244,4 +240,3 @@ SELECT setweight('a asd w:5,6,12B,13A zxc'::tsvector, 'c', ARRAY['a', 'zxc', NUL
 SELECT ts_filter('base:7A empir:17 evil:15 first:11 galact:16 hidden:6A rebel:1A spaceship:2A strike:3A victori:12 won:9'::tsvector, '{a}');
 SELECT ts_filter('base hidden rebel spaceship strike'::tsvector, '{a}');
 SELECT ts_filter('base hidden rebel spaceship strike'::tsvector, '{a,b,NULL}');
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

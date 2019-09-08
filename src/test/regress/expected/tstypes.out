@@ -888,9 +888,6 @@ SELECT ts_rank_cd(' a:1 s:2 d g'::tsvector, 'a & s');
         0.1
 (1 row)
 
-<<<<<<< HEAD
-select to_tsvector('simple', 'x y q y') @@ '!foo' AS "true";
-=======
 SELECT ts_rank_cd(' a:1 s:2A d g'::tsvector, 'a <-> s');
  ts_rank_cd 
 ------------
@@ -964,15 +961,11 @@ SELECT 'a:1 b:2'::tsvector @@ 'a <0> b'::tsquery AS "false";
 (1 row)
 
 SELECT 'a:1 b:2'::tsvector @@ 'a <1> b'::tsquery AS "true";
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  true 
 ------
  t
 (1 row)
 
-<<<<<<< HEAD
-select to_tsvector('simple', '') @@ '!foo' AS "true";
-=======
 SELECT 'a:1 b:2'::tsvector @@ 'a <2> b'::tsquery AS "false";
  false 
 -------
@@ -998,14 +991,11 @@ SELECT 'a:1 b:3'::tsvector @@ 'a <1> b'::tsquery AS "false";
 (1 row)
 
 SELECT 'a:1 b:3'::tsvector @@ 'a <2> b'::tsquery AS "true";
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  true 
 ------
  t
 (1 row)
 
-<<<<<<< HEAD
-=======
 SELECT 'a:1 b:3'::tsvector @@ 'a <3> b'::tsquery AS "false";
  false 
 -------
@@ -1234,4 +1224,3 @@ SELECT ts_filter('base hidden rebel spaceship strike'::tsvector, '{a}');
 
 SELECT ts_filter('base hidden rebel spaceship strike'::tsvector, '{a,b,NULL}');
 ERROR:  weight array may not contain nulls
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

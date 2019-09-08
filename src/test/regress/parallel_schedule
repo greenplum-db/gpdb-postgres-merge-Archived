@@ -107,14 +107,10 @@ test: namespace
 # ----------
 # Another group of parallel tests
 # ----------
-<<<<<<< HEAD
-test: brin gin gist spgist privileges security_label collate lock replica_identity rowsecurity object_address tablesample groupingsets
+test: brin gin gist spgist privileges init_privs security_label collate lock replica_identity rowsecurity object_address tablesample groupingsets drop_operator
 
 # MATERIALIZED_VIEW_FIXME : matview is not supported on greenplum. Enable the test when the feature is ready.
 #test: matview
-=======
-test: brin gin gist spgist privileges init_privs security_label collate matview lock replica_identity rowsecurity object_address tablesample groupingsets drop_operator
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 # ----------
 # Another group of parallel tests
@@ -122,7 +118,6 @@ test: brin gin gist spgist privileges init_privs security_label collate matview 
 test: alter_generic alter_operator misc psql async dbsize misc_functions
 
 # rules cannot run concurrently with any test that creates a view
-<<<<<<< HEAD
 #
 # 'rules' test is disabled in GPDB. Maintaining the list of views in it is
 # too painful, and there are also errors because of cross-segment UPDATEs
@@ -132,14 +127,11 @@ test: alter_generic alter_operator misc psql async dbsize misc_functions
 # merge, it was done a long time ago, it's time to revisit this so we can re-
 # enable it
 #test: rules
-=======
-test: rules psql_crosstab select_parallel amutils
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+test: psql_crosstab select_parallel amutils
 
 # ----------
 # Another group of parallel tests
 # ----------
-<<<<<<< HEAD
 test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json jsonb json_encoding indirect_toast equivclass
 
 # Output of the 'combocid' test contains ctid and cmin values, which will
@@ -150,9 +142,6 @@ test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts f
 # multiple UNIQUE constraints, which is not supported in GPDB.
 #test: foreign_key
 
-=======
-test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json jsonb json_encoding indirect_toast equivclass
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 # ----------
 # Another group of parallel tests
 # NB: temp.sql does a reconnect which transiently uses 2 connections,
