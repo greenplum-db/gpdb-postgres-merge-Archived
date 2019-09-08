@@ -1143,6 +1143,8 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 
 		copy_generic_path_info(plan, (Path *) best_path);
 
+		mark_plan_general(plan, getgpsegmentCount());
+
 		return plan;
 	}
 
@@ -2487,6 +2489,11 @@ create_seqscan_plan(PlannerInfo *root, Path *best_path,
 							 scan_relid);
 
 	copy_generic_path_info(&scan_plan->plan, best_path);
+
+	scan_plan->plan.flow = cdbpathtoplan_create_flow(root,
+													 best_path->locus,
+													 best_path->parent->relids,
+													 &scan_plan->plan);
 
 	return scan_plan;
 }
@@ -7508,13 +7515,6 @@ make_result(List *tlist,
 	node->numHashFilterCols = 0;
 	node->hashFilterColIdx = NULL;
 	node->hashFilterFuncs = NULL;
-
-	if (subplan)
-		plan->flow = pull_up_Flow(plan, subplan);
-	else
-	{
-		mark_plan_general(plan, getgpsegmentCount());
-	}
 
 	return node;
 }
