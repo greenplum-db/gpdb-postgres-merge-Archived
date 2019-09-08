@@ -57,13 +57,6 @@ CREATE FUNCTION overpaid(emp)
    RETURNS bool
    AS '@libdir@/regress@DLSUFFIX@'
    LANGUAGE C STRICT;
-<<<<<<< HEAD
-=======
-CREATE FUNCTION boxarea(box)
-   RETURNS float8
-   AS '@libdir@/regress@DLSUFFIX@'
-   LANGUAGE C STRICT;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 CREATE FUNCTION interpt_pp(path, path)
    RETURNS point
    AS '@libdir@/regress@DLSUFFIX@'

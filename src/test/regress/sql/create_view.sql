@@ -527,7 +527,6 @@ select 'foo'::text = any(array['abc','def','foo']::text[]) c1,
        'foo'::text = any((select array['abc','def','foo']::text[])::text[]) c2;
 select pg_get_viewdef('tt19v', true);
 
-<<<<<<< HEAD
 -- check display of assorted RTE_FUNCTION expressions
 
 create view tt20v as
@@ -560,8 +559,6 @@ select pg_get_viewdef('tt23v', true);
 select pg_get_ruledef(oid, true) from pg_rewrite
   where ev_class = 'tt23v'::regclass and ev_type = '1';
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 -- clean up all the random objects we made above
 set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;
