@@ -1169,6 +1169,11 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
+	plan->plan.flow = cdbpathtoplan_create_flow(root,
+												best_path->path.locus,
+												best_path->path.parent->relids,
+												&plan->plan);
+
 	return (Plan *) plan;
 }
 
