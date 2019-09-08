@@ -1043,11 +1043,6 @@ ExecInitBitmapHeapScanForPartition(BitmapHeapScan *node, EState *estate, int efl
 	ExecInitScanTupleSlot(estate, &scanstate->ss);
 
 	/*
-	 * open the base relation and acquire appropriate lock on it.
-	 */
-	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
-
-	/*
 	 * Determine the maximum for prefetch_target.  If the tablespace has a
 	 * specific IO concurrency set, use that to compute the corresponding
 	 * maximum value; otherwise, we already initialized to the value computed

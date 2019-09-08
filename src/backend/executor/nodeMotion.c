@@ -885,7 +885,6 @@ ExecInitMotion(Motion *node, EState *estate, int eflags)
 	Slice	   *sendSlice = NULL;
 	Slice	   *recvSlice = NULL;
 	SliceTable *sliceTable = estate->es_sliceTable;
-	PlanState  *outerPlan;
 
 #ifdef CDB_MOTION_DEBUG
 	int			i;
