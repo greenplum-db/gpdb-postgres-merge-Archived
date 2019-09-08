@@ -463,32 +463,32 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		/* run the plan to completion */
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 
-		if (into->distributedBy &&
-			((DistributedBy *)(into->distributedBy))->ptype == POLICYTYPE_REPLICATED)
-			queryDesc->es_processed /= ((DistributedBy *)(into->distributedBy))->numsegments;
-
-		/* MPP-14001: Running auto_stats */
-		if (Gp_role == GP_ROLE_DISPATCH)
-			auto_stats(cmdType, relationOid, queryDesc->es_processed, false /* inFunction */);
-
-		/* get object address that intorel_startup saved for us */
-		address = ((DR_intorel *) dest)->reladdr;
-
 		/* and clean up */
 		ExecutorFinish(queryDesc);
 		ExecutorEnd(queryDesc);
 
 		/*
-		 * GPDB: Saving the rowcount happens after ExecutorEnd() because that
-		 * is where it gets the row count from dispatch. There's also some
-		 * special processing if the relation was a replicated table. In
-		 * upstream Postgres, the rowcount is saved before ExecutorFinish().
+		 * In GPDB, computing the row count needs to happen after ExecutorEnd()
+		 * because that is where it gets the row count from dispatch. There's
+		 * also some special processing if the relation was a replicated table.
+		 * In upstream Postgres, the rowcount is saved before ExecutorFinish().
 		 */
+		if (into->distributedBy &&
+			((DistributedBy *)(into->distributedBy))->ptype == POLICYTYPE_REPLICATED)
+			queryDesc->es_processed /= ((DistributedBy *)(into->distributedBy))->numsegments;
+
+		/* get object address that intorel_startup saved for us */
+		address = ((DR_intorel *) dest)->reladdr;
+
 		/* save the rowcount if we're given a completionTag to fill */
 		if (completionTag)
 			snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
 					 "SELECT " UINT64_FORMAT,
-					 queryDesc->estate->es_processed);
+					 queryDesc->es_processed);
+
+		/* MPP-14001: Running auto_stats */
+		if (Gp_role == GP_ROLE_DISPATCH)
+			auto_stats(cmdType, relationOid, queryDesc->es_processed, false /* inFunction */);
 	}
 
 	{
