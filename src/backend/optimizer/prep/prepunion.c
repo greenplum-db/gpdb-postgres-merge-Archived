@@ -405,7 +405,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		{
 			*pTargetList = generate_setop_tlist(colTypes, colCollations,
 												flag,
-												0,
+												OUTER_VAR,
 												false,
 												*pTargetList,
 												refnames_tlist);
