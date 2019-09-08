@@ -4764,6 +4764,20 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 		 * If gp_statistics_pullup_from_child_partition is set, we attempt to pull up statistics from
 		 * the largest child partition in an inherited or a partitioned table.
 		 */
+		/* GPDB_96_MERGE_FIXME: This was tripping an assertion in the select_distinct regression
+		 * test:
+		 *
+		 *
+		 * SELECT DISTINCT p.age FROM person* p ORDER BY age using >;
+		 * FATAL:  Unexpected internal error (selfuncs.c:4380)
+		 * DETAIL:  FailedAssertion("!(((((const Node*)(rel->cheapest_total_path))->type) == T_AppendPath))", File: "selfuncs.c", Line: 4380)
+		 *
+		 * Heikki: I don't quite understand why pulling the statistics from the largest partition
+		 * is a good idea in the first place. Maybe it seemed like a good idea in the past, but
+		 * we collect whole-table statistics these days, so maybe we should just remove this
+		 * feature?
+		 */
+#if 0
 		if (gp_statistics_pullup_from_child_partition  &&
 			rel->cheapest_total_path != NULL)
 		{
@@ -4795,6 +4809,7 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 				vardata->freefunc = ReleaseSysCache;
 			}
 		}
+#endif
 	}
 	else if (rte->rtekind == RTE_RELATION)
 	{
