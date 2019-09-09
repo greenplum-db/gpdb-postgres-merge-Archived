@@ -3976,6 +3976,15 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 								 parser_errposition(@5)));
 
 					$$ = (Node *)n;
+					/*
+					 * GPDB_96_MERGE_FIXME: The above statement changed in
+					 * upstream commit 92e38182d7c from select_with_parens to
+					 * '(' PreparableStmt ')'. This syntax was not supported in
+					 * ecpg upstream. It was supported and untested in GPDB. If
+					 * it is needed to be added back, then
+					 * preparable_stmt_with_parens should be added as ecpg does
+					 * not fair very well with \' or \( \) chars.
+					 */
 				}
 		;
 
