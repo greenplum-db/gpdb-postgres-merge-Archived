@@ -345,19 +345,9 @@ else # PORTNAME == aix
 
 # AIX case
 
-<<<<<<< HEAD
 # See notes in src/backend/parser/Makefile about the following two rules
 $(stlib): $(shlib)
 	touch $@
-=======
-# There is no correct way to write a rule that generates two files.
-# Rules with two targets don't have that meaning, they are merely
-# shorthand for two otherwise separate rules.  To be safe for parallel
-# make, we must chain the dependencies like this.  The semicolon is
-# important, otherwise make will choose some built-in rule.
-
-$(stlib): $(shlib) ;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 $(shlib): $(OBJS) | $(SHLIB_PREREQS)
 	rm -f $(stlib)
