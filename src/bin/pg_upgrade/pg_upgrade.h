@@ -1,12 +1,8 @@
 /*
  *	pg_upgrade.h
  *
-<<<<<<< HEAD
  *	Portions Copyright (c) 2016-Present, Pivotal Software Inc
- *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
-=======
  *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  *	src/bin/pg_upgrade/pg_upgrade.h
  */
 
@@ -128,16 +124,14 @@ extern char *output_files[];
 #define VISIBILITY_MAP_CRASHSAFE_CAT_VER 201107031
 
 /*
-<<<<<<< HEAD
  * change in JSONB format during 9.4 beta
  */
 #define JSONB_FORMAT_CHANGE_CAT_VER 201409291
 
-=======
+/*
  * The format of visibility map is changed with this 9.6 commit,
  */
 #define VISIBILITY_MAP_FROZEN_BIT_CAT_VER 201603011
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 /*
  * pg_multixact format changed in 9.3 commit 0ac5ad5134f2769ccbaefec73844f85,
  * ("Improve concurrency of foreign key locking") which also updated catalog
@@ -231,7 +225,6 @@ typedef struct
 	/* Can't use NAMEDATALEN; not guaranteed to be same on client */
 	char	   *nspname;		/* namespace name */
 	char	   *relname;		/* relation name */
-<<<<<<< HEAD
 	Oid			reloid;			/* relation oid */
 	char		relstorage;
 	Oid			relfilenode;	/* relation relfile node */
@@ -239,9 +232,9 @@ typedef struct
 	Oid			indtable;		/* if index, OID of its table, else 0 */
 	Oid			toastheap;		/* if toast table, OID of base table, else 0 */
 	/* relation tablespace path, or "" for the cluster default */
-	char	   *tablespace;
-	bool		nsp_alloc;
-	bool		tblsp_alloc;
+	char	   *tablespace;		/* tablespace path; "" for cluster default */
+	bool		nsp_alloc;		/* should nspname be freed? */
+	bool		tblsp_alloc;	/* should tablespace be freed? */
 
 	RelType		reltype;
 
@@ -259,15 +252,6 @@ typedef struct
 	bool		has_numerics;
 	AttInfo	   *atts;
 	int			natts;
-=======
-	Oid			reloid;			/* relation OID */
-	Oid			relfilenode;	/* relation relfile node */
-	Oid			indtable;		/* if index, OID of its table, else 0 */
-	Oid			toastheap;		/* if toast table, OID of base table, else 0 */
-	char	   *tablespace;		/* tablespace path; "" for cluster default */
-	bool		nsp_alloc;		/* should nspname be freed? */
-	bool		tblsp_alloc;	/* should tablespace be freed? */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } RelInfo;
 
 typedef struct
