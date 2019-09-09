@@ -215,11 +215,8 @@ _PG_fini(void)
 static void
 explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
-<<<<<<< HEAD
 	instr_time		starttime;
 
-	if (auto_explain_enabled())
-=======
 	/*
 	 * For rate sampling, randomly choose top-level statement. Either all
 	 * nested statements will be explained or none will.
@@ -229,7 +226,6 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 								 MAX_RANDOM_VALUE);
 
 	if (auto_explain_enabled() && current_query_sampled)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		/* Enable per-node instrumentation iff log_analyze is required. */
 		if (auto_explain_log_analyze && (eflags & EXEC_FLAG_EXPLAIN_ONLY) == 0)
