@@ -216,7 +216,6 @@ cdbpath_create_motion_path(PlannerInfo *root,
 			pathnode->path.parallel_aware = false;
 			pathnode->path.parallel_safe = subpath->parallel_safe;
 			pathnode->path.parallel_workers = subpath->parallel_workers;
-			pathnode->path.pathkeys = pathkeys;
 
 			pathnode->subpath = subpath;
 
@@ -405,7 +404,6 @@ cdbpath_create_motion_path(PlannerInfo *root,
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = subpath->parallel_safe;
 	pathnode->path.parallel_workers = subpath->parallel_workers;
-	pathnode->path.pathkeys = pathkeys;
 
 	pathnode->subpath = subpath;
 

@@ -491,16 +491,20 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH && CdbPathLocus_IsPartitioned(sorted_path->locus))
 	{
-		CdbPathLocus    singleQE;
+		CdbPathLocus singleQE;
+		List	   *pathkeys;
 
 		CdbPathLocus_MakeSingleQE(&singleQE, getgpsegmentCount());
 
-		sorted_path = cdbpath_create_motion_path(root, sorted_path, sorted_path->pathkeys, true, singleQE);
-		/* GPDB_96_MERGE_FIXME: I don't think this should fail. If there are legitimate
-		 * reasons it might, we could punt and  return false here. But I'm leaving this
-		 * as an elog() until we get some experience on whether it can happen.
+		pathkeys = sorted_path->pathkeys;
+		sorted_path = cdbpath_create_motion_path(root, sorted_path, sorted_path->pathkeys,
+												 false, singleQE);
+		/*
+		 * Sanity check that order was preserved. (Given how cdbpath_create_motion_path() is
+		 * implemented, pointer equality is enough here, but in principle we should be
+		 * using something more sophisticated for the comparison.)
 		 */
-		if (!sorted_path)
+		if (sorted_path->pathkeys != pathkeys)
 			elog(ERROR, "could not create an order-preserving gather motion for min/max path");
 	}
 
