@@ -518,6 +518,11 @@ generate_recursion_path(SetOperationStmt *setOp, PlannerInfo *root,
 											   root->wt_param_id,
 											   dNumGroups);
 
+	/* GPDB_96_MERGE_FIXME: is there anything that guarantees that the left and right
+	 * path have the same locus, and that it makes sense?
+	 */
+	path->locus = lpath->locus;
+
 	return path;
 }
 
