@@ -88,14 +88,8 @@
  */
 typedef struct
 {
-<<<<<<< HEAD
-	ArchiveHandle *AH;
-	ParallelSlot *slot;
-	RestoreOptions *ropt;
-=======
 	ArchiveHandle *AH;			/* master database connection */
 	ParallelSlot *slot;			/* this worker's parallel slot */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 } WorkerInfo;
 
 /* Windows implementation of pipe access */
@@ -184,10 +178,6 @@ static void set_cancel_slot_archive(ParallelSlot *slot, ArchiveHandle *AH);
 static void RunWorker(ArchiveHandle *AH, ParallelSlot *slot);
 static bool HasEveryWorkerTerminated(ParallelState *pstate);
 static void lockTableForWorker(ArchiveHandle *AH, TocEntry *te);
-<<<<<<< HEAD
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void WaitForCommands(ArchiveHandle *AH, int pipefd[2]);
 static char *getMessageFromMaster(int pipefd[2]);
 static void sendMessageToMaster(int pipefd[2], const char *str);
