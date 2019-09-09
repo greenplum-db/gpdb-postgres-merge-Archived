@@ -172,8 +172,7 @@ static RelOptInfo *create_distinct_paths(PlannerInfo *root,
 static RelOptInfo *create_ordered_paths(PlannerInfo *root,
 					 RelOptInfo *input_rel,
 					 PathTarget *target,
-					 double limit_tuples,
-					 bool must_gather);
+					 double limit_tuples);
 static PathTarget *make_group_input_target(PlannerInfo *root,
 						PathTarget *final_target);
 static PathTarget *make_partial_grouping_target(PlannerInfo *root,
@@ -189,7 +188,7 @@ static PathTarget *make_sort_input_target(PlannerInfo *root,
 					   PathTarget *final_target,
 					   bool *have_postponed_srfs);
 static int	common_prefix_cmp(const void *a, const void *b);
-static Plan *pushdown_preliminary_limit(Plan *plan, Node *limitCount, Node *limitOffset);
+static Path *pushdown_preliminary_limit(PlannerInfo *root, Path *path, double limit_tuples);
 
 static Plan *getAnySubplan(Plan *node);
 static bool isSimplyUpdatableQuery(Query *query);
@@ -2533,8 +2532,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 										   current_rel,
 										   final_target,
 										   have_postponed_srfs ? -1.0 :
-										   limit_tuples,
-										   must_gather);
+										   limit_tuples);
 	}
 
 	/* GPDB_96_MERGE_FIXME: where should this be done with the upper planner pathification? */
@@ -2722,6 +2720,15 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	foreach(lc, current_rel->pathlist)
 	{
 		Path	   *path = (Path *) lfirst(lc);
+
+		if (CdbPathLocus_IsPartitioned(path->locus) &&
+			(parse->limitCount || parse->limitOffset || must_gather))
+		{
+			CdbPathLocus locus;
+
+			CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+			path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
+		}
 
 		/*
 		 * If there is a FOR [KEY] UPDATE/SHARE clause, add the LockRows node.
@@ -5325,7 +5332,7 @@ create_distinct_paths(PlannerInfo *root,
 					 * third-phase on multi-phase limit (see 2-phase limit
 					 * below)
 					 */
-					result_plan = pushdown_preliminary_limit(result_plan, parse->limitCount, parse->limitOffset);
+					result_plan = pushdown_preliminary_limit(result_plan, parse->limitCount, parse->limitOffset, limit_tuples);
 				}
 			}
 		}
@@ -5597,17 +5604,12 @@ create_distinct_paths(PlannerInfo *root,
  * target: the output tlist the result Paths must emit
  * limit_tuples: estimated bound on the number of output tuples,
  *		or -1 if no LIMIT or couldn't estimate
- *
- * GDPB: must_gather: if set, the result must be brought to a single node,
- * either a single QE process or the QD. Otherwise, it's enought that the
- * result on every node is sorted, but the results are not merged together.
  */
 static RelOptInfo *
 create_ordered_paths(PlannerInfo *root,
 					 RelOptInfo *input_rel,
 					 PathTarget *target,
-					 double limit_tuples,
-					 bool must_gather)
+					 double limit_tuples)
 {
 	Path	   *cheapest_input_path = input_rel->cheapest_total_path;
 	RelOptInfo *ordered_rel;
@@ -5652,18 +5654,14 @@ create_ordered_paths(PlannerInfo *root,
 												 limit_tuples);
 			}
 
+			/* pushdown the first phase of multi-phase limit (which takes offset into account) */
+			if (CdbPathLocus_IsPartitioned(path->locus))
+				path = pushdown_preliminary_limit(root, path, limit_tuples);
+
 			/* Add projection step if needed */
 			if (path->pathtarget != target)
 				path = apply_projection_to_path(root, ordered_rel,
 												path, target);
-
-			if (must_gather && CdbPathLocus_IsPartitioned(path->locus))
-			{
-				CdbPathLocus locus;
-
-				CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
-				path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
-			}
 
 			add_path(ordered_rel, path);
 		}
@@ -6726,11 +6724,13 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
  * In any plan where we are doing multi-phase limit, the first phase needs
  * to take the offset into account.
  */
-static Plan *
-pushdown_preliminary_limit(Plan *plan, Node *limitCount, Node *limitOffset)
+static Path *
+pushdown_preliminary_limit(PlannerInfo *root, Path *path, double limit_tuples)
 {
-	Node *precount = copyObject(limitCount);
-	Plan *result_plan = plan;
+	Node	   *limitCount = root->parse->limitCount;
+	Node	   *limitOffset = root->parse->limitOffset;
+	Node	   *precount = copyObject(limitCount);
+	Path	   *result_path = path;
 
 	/*
 	 * If we've specified an offset *and* a limit, we need to collect
@@ -6741,27 +6741,26 @@ pushdown_preliminary_limit(Plan *plan, Node *limitCount, Node *limitOffset)
 	 */	
 	if (precount && limitOffset)
 	{
-		precount = (Node*)make_op(NULL,
-								  list_make1(makeString(pstrdup("+"))),
-								  copyObject(limitOffset),
-								  precount,
-								  -1);
+		precount = (Node *) make_op(NULL,
+									list_make1(makeString(pstrdup("+"))),
+									copyObject(limitOffset),
+									precount,
+									-1);
 	}
-			
+
 	if (precount != NULL)
 	{
 		/*
 		 * Add a prelimary LIMIT on the partitioned results. This may
 		 * reduce the amount of work done on the QEs.
 		 */
-		result_plan = (Plan *) make_limit(result_plan,
-										  NULL,
-										  precount);
-
-		result_plan->flow = pull_up_Flow(result_plan, result_plan->lefttree);
+		result_path = (Path *) create_limit_path(root, path->parent, path,
+												 NULL,
+												 precount,
+												 -1, limit_tuples);
 	}
 
-	return result_plan;
+	return result_path;
 }
 
 
