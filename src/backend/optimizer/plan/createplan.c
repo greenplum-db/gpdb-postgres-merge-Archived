@@ -2015,6 +2015,7 @@ create_minmaxagg_plan(PlannerInfo *root, MinMaxAggPath *best_path)
 	tlist = build_path_tlist(root, &best_path->path);
 
 	plan = make_result(tlist, (Node *) best_path->quals, NULL);
+	mark_plan_singleQE(&plan->plan, getgpsegmentCount());
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 

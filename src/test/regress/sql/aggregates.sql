@@ -260,14 +260,6 @@ select max(unique1) from tenk1 where unique1 < 42;
 explain (costs off)
   select max(unique1) from tenk1 where unique1 > 42;
 select max(unique1) from tenk1 where unique1 > 42;
-<<<<<<< HEAD
-set enable_seqscan=off;
-set enable_bitmapscan=off;
-explain (costs off)
-  select max(unique1) from tenk1 where unique1 > 42000;
-select max(unique1) from tenk1 where unique1 > 42000;
-reset enable_seqscan;
-=======
 
 -- the planner may choose a generic aggregate here if parallel query is
 -- enabled, since that plan will be parallel safe and the "optimized"
@@ -275,11 +267,13 @@ reset enable_seqscan;
 -- the optimized plan, so temporarily disable parallel query.
 begin;
 set local max_parallel_workers_per_gather = 0;
+-- In GPDB, we also need to disable seqscans and bitmap scans.
+set local enable_seqscan=off;
+set local enable_bitmapscan=off;
 explain (costs off)
   select max(unique1) from tenk1 where unique1 > 42000;
 select max(unique1) from tenk1 where unique1 > 42000;
 rollback;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- multi-column index (uses tenk1_thous_tenthous)
 explain (costs off)
