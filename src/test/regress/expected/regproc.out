@@ -42,10 +42,10 @@ SELECT regtype('int4');
  integer
 (1 row)
 
-SELECT to_regoper('||/');
+SELECT to_regoper('<#>');
  to_regoper 
 ------------
- <n#>
+ <#>
 (1 row)
 
 SELECT to_regoperator('+(int4,int4)');
