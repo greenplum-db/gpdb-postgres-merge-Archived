@@ -225,13 +225,9 @@ main(int argc, char *argv[])
 		   ControlFile->checkPointCopy.nextXidEpoch,
 		   ControlFile->checkPointCopy.nextXid);
 	printf(_("Latest checkpoint's NextOID:          %u\n"),
-<<<<<<< HEAD
-		   ControlFile.checkPointCopy.nextOid);
-	printf(_("Latest checkpoint's NextRelfilenode:  %u\n"),
-		   ControlFile.checkPointCopy.nextRelfilenode);
-=======
 		   ControlFile->checkPointCopy.nextOid);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	printf(_("Latest checkpoint's NextRelfilenode:  %u\n"),
+		   ControlFile->checkPointCopy.nextRelfilenode);
 	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"),
 		   ControlFile->checkPointCopy.nextMulti);
 	printf(_("Latest checkpoint's NextMultiOffset:  %u\n"),
