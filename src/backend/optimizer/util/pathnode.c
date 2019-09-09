@@ -208,6 +208,9 @@ pathnode_walk_kids(Path            *path,
 					break;
 			}
 			break;
+		case T_ModifyTable:
+			v = pathnode_walk_list(((ModifyTablePath *)path)->subpaths, walker, context);
+			break;
 		case T_Append:
 			v = pathnode_walk_list(((AppendPath *)path)->subpaths, walker, context);
 			break;
