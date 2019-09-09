@@ -714,7 +714,7 @@ LogicalTapeGetTapeNum(LogicalTapeSet *lts, LogicalTape *lt)
 {
 	int			tapenum = lt - lts->tapes;
 
-	Assert(lt > lts->tapes && tapenum < lts->nTapes);
+	Assert(lt >= lts->tapes && tapenum < lts->nTapes);
 	return tapenum;
 }
 
