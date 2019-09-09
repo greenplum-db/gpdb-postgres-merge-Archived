@@ -424,8 +424,6 @@ main(int argc, char **argv)
 
 	if (opts->tocFile)
 		SortTocFromFile(AH);
-<<<<<<< HEAD
-=======
 
 	/* See comments in pg_dump.c */
 #ifdef WIN32
@@ -436,7 +434,6 @@ main(int argc, char **argv)
 		exit(1);
 	}
 #endif
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	AH->numWorkers = numWorkers;
 
