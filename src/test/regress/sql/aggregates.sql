@@ -839,15 +839,6 @@ drop view aggordview1;
 select least_agg(q1,q2) from int8_tbl;
 select least_agg(variadic array[q1,q2]) from int8_tbl;
 
-<<<<<<< HEAD
--- check collation-sensitive matching between grouping expressions
-select v||'a', case v||'a' when 'aa' then 1 else 0 end, count(*)
-  from unnest(array['a','b']) u(v)
- group by v||'a' order by 1;
-select v||'a', case when v||'a' = 'aa' then 1 else 0 end, count(*)
-  from unnest(array['a','b']) u(v)
- group by v||'a' order by 1;
-=======
 
 -- test aggregates with common transition functions share the same states
 begin work;
@@ -1012,4 +1003,11 @@ create aggregate my_half_sum(int4)
 select my_sum(one),my_half_sum(one) from (values(1),(2),(3),(4)) t(one);
 
 rollback;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
+-- check collation-sensitive matching between grouping expressions
+select v||'a', case v||'a' when 'aa' then 1 else 0 end, count(*)
+  from unnest(array['a','b']) u(v)
+ group by v||'a' order by 1;
+select v||'a', case when v||'a' = 'aa' then 1 else 0 end, count(*)
+  from unnest(array['a','b']) u(v)
+ group by v||'a' order by 1;

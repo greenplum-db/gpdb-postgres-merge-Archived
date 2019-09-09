@@ -246,15 +246,9 @@ BEGIN;
 SET LOCAL SESSION AUTHORIZATION regress_seq_user;
 CREATE SEQUENCE seq3;
 SELECT nextval('seq3');
-<<<<<<< HEAD
-REVOKE ALL ON seq3 FROM seq_user;
-GRANT USAGE ON seq3 TO seq_user;
---SELECT lastval();
-=======
 REVOKE ALL ON seq3 FROM regress_seq_user;
 GRANT USAGE ON seq3 TO regress_seq_user;
-SELECT lastval();
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+--SELECT lastval();
 ROLLBACK;
 
 -- Sequences should get wiped out as well:

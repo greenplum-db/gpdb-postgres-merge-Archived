@@ -2211,27 +2211,6 @@ select least_agg(variadic array[q1,q2]) from int8_tbl;
  -4567890123456789
 (1 row)
 
-<<<<<<< HEAD
--- check collation-sensitive matching between grouping expressions
-select v||'a', case v||'a' when 'aa' then 1 else 0 end, count(*)
-  from unnest(array['a','b']) u(v)
- group by v||'a' order by 1;
- ?column? | case | count 
-----------+------+-------
- aa       |    1 |     1
- ba       |    0 |     1
-(2 rows)
-
-select v||'a', case when v||'a' = 'aa' then 1 else 0 end, count(*)
-  from unnest(array['a','b']) u(v)
- group by v||'a' order by 1;
- ?column? | case | count 
-----------+------+-------
- aa       |    1 |     1
- ba       |    0 |     1
-(2 rows)
-
-=======
 -- test aggregates with common transition functions share the same states
 begin work;
 create type avg_state as (total bigint, count bigint);
@@ -2436,4 +2415,22 @@ NOTICE:  sum_transfn called with 4
 (1 row)
 
 rollback;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+-- check collation-sensitive matching between grouping expressions
+select v||'a', case v||'a' when 'aa' then 1 else 0 end, count(*)
+  from unnest(array['a','b']) u(v)
+ group by v||'a' order by 1;
+ ?column? | case | count 
+----------+------+-------
+ aa       |    1 |     1
+ ba       |    0 |     1
+(2 rows)
+
+select v||'a', case when v||'a' = 'aa' then 1 else 0 end, count(*)
+  from unnest(array['a','b']) u(v)
+ group by v||'a' order by 1;
+ ?column? | case | count 
+----------+------+-------
+ aa       |    1 |     1
+ ba       |    0 |     1
+(2 rows)
+

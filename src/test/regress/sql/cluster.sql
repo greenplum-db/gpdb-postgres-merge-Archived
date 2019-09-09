@@ -106,15 +106,6 @@ WHERE pg_class.oid=indexrelid
 	AND indisclustered;
 
 -- Verify that clustering all tables does in fact cluster the right ones
-<<<<<<< HEAD
-CREATE USER clstr_user;
-CREATE TABLE clstr_1 (a INT PRIMARY KEY) DISTRIBUTED BY (a);
-CREATE TABLE clstr_2 (a INT PRIMARY KEY) DISTRIBUTED BY (a);
-CREATE TABLE clstr_3 (a INT PRIMARY KEY) DISTRIBUTED BY (a);
-ALTER TABLE clstr_1 OWNER TO clstr_user;
-ALTER TABLE clstr_3 OWNER TO clstr_user;
-GRANT SELECT ON clstr_2 TO clstr_user;
-=======
 CREATE USER regress_clstr_user;
 CREATE TABLE clstr_1 (a INT PRIMARY KEY);
 CREATE TABLE clstr_2 (a INT PRIMARY KEY);
@@ -122,7 +113,6 @@ CREATE TABLE clstr_3 (a INT PRIMARY KEY);
 ALTER TABLE clstr_1 OWNER TO regress_clstr_user;
 ALTER TABLE clstr_3 OWNER TO regress_clstr_user;
 GRANT SELECT ON clstr_2 TO regress_clstr_user;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 INSERT INTO clstr_1 VALUES (2);
 INSERT INTO clstr_1 VALUES (1);
 INSERT INTO clstr_2 VALUES (2);
