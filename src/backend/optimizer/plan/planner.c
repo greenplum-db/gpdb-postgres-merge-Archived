@@ -4189,13 +4189,6 @@ create_grouping_paths(PlannerInfo *root,
 
 	ListCell   *lc;
 
-	/*
-	 * GPDB_96_MERGE_FIXME: There was a bunch of GPDB specific code in the
-	 * before the merge, near the bottom of grouping_planner(), that was
-	 * not copied here correctly. Need to add it back.
-	 */
-
-	
 	/* For now, do all work in the (GROUP_AGG, NULL) upperrel */
 	grouped_rel = fetch_upper_rel(root, UPPERREL_GROUP_AGG, NULL);
 
