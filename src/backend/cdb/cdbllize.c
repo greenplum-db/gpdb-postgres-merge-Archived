@@ -954,8 +954,8 @@ pull_up_Flow(Plan *plan, Plan *subplan)
 	Insist(subplan);
 
 	model_flow = subplan->flow;
-
-	Insist(model_flow);
+	if (!model_flow)
+		elog(ERROR, "subplan is missing flow information");
 
 	/* SubqueryScan always has manifest Flow, so we shouldn't see one here. */
 	Assert(!IsA(plan, SubqueryScan));

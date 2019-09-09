@@ -151,7 +151,7 @@ static SubqueryScan *create_subqueryscan_plan(PlannerInfo *root,
 static FunctionScan *create_functionscan_plan(PlannerInfo *root, Path *best_path,
 						 List *tlist, List *scan_clauses);
 static TableFunctionScan *create_tablefunction_plan(PlannerInfo *root,
-						  Path *best_path,
+						  TableFunctionScanPath *best_path,
 						  List *tlist,
 						  List *scan_clauses);
 static ValuesScan *create_valuesscan_plan(PlannerInfo *root, Path *best_path,
@@ -711,7 +711,7 @@ create_scan_plan(PlannerInfo *root, Path *best_path, int flags)
 
 		case T_TableFunctionScan:
 			plan = (Plan *) create_tablefunction_plan(root,
-													  best_path,
+													  (TableFunctionScanPath *) best_path,
 													  tlist,
 													  scan_clauses);
 			break;
@@ -981,6 +981,7 @@ create_gating_plan(PlannerInfo *root, Path *path, Plan *plan,
 	gplan = (Plan *) make_result(build_path_tlist(root, path),
 								 (Node *) gating_quals,
 								 plan);
+	gplan->flow = pull_up_Flow(gplan, plan);
 
 	/*
 	 * Notice that we don't change cost or size estimates when doing gating.
@@ -3941,35 +3942,48 @@ create_functionscan_plan(PlannerInfo *root, Path *best_path,
  */
 static TableFunctionScan *
 create_tablefunction_plan(PlannerInfo *root,
-						  Path *best_path,
+						  TableFunctionScanPath *best_path,
 						  List *tlist,
 						  List *scan_clauses)
 {
 	TableFunctionScan *tablefunc;
-	/* GPDB_96_MERGE_FIXME: Where can we get the subplan? Somewhere in 'best_path'? */
-	Plan	   *subplan = NULL;
-	//Plan	   *subplan = best_path->parent->subplan;
-	Index		scan_relid = best_path->parent->relid;
+	RelOptInfo *rel = best_path->path.parent;
+	Plan	   *subplan;
+	Index		scan_relid = rel->relid;
 	RangeTblEntry *rte;
 	RangeTblFunction *rtf;
-
-	elog(ERROR, "GPDB_96_MERGE_FIXME: create_tablefunction_plan() not resolved");
 
 	/* it should be a function base rel... */
 	Assert(scan_relid > 0);
 	rte = planner_rt_fetch(scan_relid, root);
-	Assert(best_path->parent->rtekind == RTE_TABLEFUNCTION);
+	Assert(rel->rtekind == RTE_TABLEFUNCTION);
 	Assert(list_length(rte->functions) == 1);
 	rtf = linitial(rte->functions);
 
+	/*
+	 * Recursively create Plan from Path for subquery.  Since we are entering
+	 * a different planner context (subroot), recurse to create_plan not
+	 * create_plan_recurse.
+	 */
+	subplan = create_plan(rel->subroot, best_path->subpath);
+
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
+
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->path.param_info)
+	{
+		scan_clauses = (List *)
+			replace_nestloop_params(root, (Node *) scan_clauses);
+		process_subquery_nestloop_params(root,
+										 rel->subplan_params);
+	}
 
 	/* Create the TableFunctionScan plan */
 	tablefunc = make_tablefunction(tlist, scan_clauses, subplan, scan_relid, rtf);
 
 	/* Cost is determined largely by the cost of the underlying subplan */
-	copy_generic_path_info(&tablefunc->scan.plan, best_path);
+	copy_generic_path_info(&tablefunc->scan.plan, &best_path->path);
 
 	return tablefunc;
 }

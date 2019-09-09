@@ -2768,6 +2768,7 @@ create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	/* Setup the basics of the TableFunction path */
 	pathnode->path.pathtype = T_TableFunctionScan;
 	pathnode->path.parent = rel;
+	pathnode->path.pathtarget = rel->reltarget;
 	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
 														  required_outer);
 	pathnode->path.parallel_aware = false;
