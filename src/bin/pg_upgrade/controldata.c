@@ -283,7 +283,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			segno = str2uint(p);
 			got_log_seg = true;
 		}
-<<<<<<< HEAD
 		/* GPDB 4.3 (and PostgreSQL 8.2) wording of the above two. */
 		else if ((p = strstr(bufin, "Current log file ID:")) != NULL)
 		{
@@ -319,8 +318,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			tli = str2uint(p);
 			got_tli = true;
 		}
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		else if ((p = strstr(bufin, "Latest checkpoint's NextXID:")) != NULL)
 		{
 			p = strchr(p, ':');
@@ -595,14 +592,9 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		(!got_oldestmulti &&
 		 cluster->controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER) ||
 		!got_mxoff || (!live_check && !got_nextxlogfile) ||
-<<<<<<< HEAD
-		!got_align || !got_blocksz || !got_largesz || !got_walsz ||
-		!got_walseg || !got_ident || !got_index || /* !got_toast || */
-=======
 		!got_float8_pass_by_value || !got_align || !got_blocksz ||
 		!got_largesz || !got_walsz || !got_walseg || !got_ident ||
-		!got_index || !got_toast ||
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+		!got_index || /* !got_toast || */
 		(!got_large_object &&
 		 cluster->controldata.ctrl_ver >= LARGE_OBJECT_SIZE_PG_CONTROL_VER) ||
 		!got_date_is_int || !got_data_checksum_version)
@@ -666,13 +658,10 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		if (!got_date_is_int)
 			pg_log(PG_REPORT, "  dates/times are integers?\n");
 
-<<<<<<< HEAD
 		/* value added in Postgres 8.4 */
 		if (!got_float8_pass_by_value)
 			pg_log(PG_REPORT, "  float8 argument passing method\n");
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		/* value added in Postgres 9.3 */
 		if (!got_data_checksum_version)
 			pg_log(PG_REPORT, "  data checksum version\n");
