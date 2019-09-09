@@ -582,7 +582,7 @@ generate_union_path(SetOperationStmt *op, PlannerInfo *root,
 	if ( Gp_role == GP_ROLE_DISPATCH )
 	{
 		optype = choose_setop_type(pathlist);
-		adjust_setop_arguments(root, pathlist, optype);
+		adjust_setop_arguments(root, pathlist, tlist_list, optype);
 	}
 	else if (Gp_role == GP_ROLE_UTILITY ||
 			 Gp_role == GP_ROLE_EXECUTE) /* MPP-2928 */
@@ -723,7 +723,7 @@ generate_nonunion_path(SetOperationStmt *op, PlannerInfo *root,
 	if ( Gp_role == GP_ROLE_DISPATCH )
 	{
 		optype = choose_setop_type(pathlist);
-		adjust_setop_arguments(root, pathlist, optype);
+		adjust_setop_arguments(root, pathlist, tlist_list, optype);
 	}
 	else if ( Gp_role == GP_ROLE_UTILITY 
 			|| Gp_role == GP_ROLE_EXECUTE ) /* MPP-2928 */
@@ -738,12 +738,14 @@ generate_nonunion_path(SetOperationStmt *op, PlannerInfo *root,
 		 * put the Redistribute nodes below the Append, otherwise we lose
 		 * the order of the firstFlags.
 		 */
-		ListCell   *lc;
-		List	   *l = NIL;
+		ListCell   *pathcell;
+		ListCell   *tlistcell;
+		List	   *newpathlist = NIL;
 
-		foreach(lc, pathlist)
+		forboth(pathcell, pathlist, tlistcell, tlist_list)
 		{
-			Path	   *subpath = (Path *) lfirst(lc);
+			Path	   *subpath = (Path *) lfirst(pathcell);
+			List	   *subtlist = (List *) lfirst(tlistcell);
 #if 0
 			/* GPDB_96_MERGE_FIXME */
 			/*
@@ -756,9 +758,10 @@ generate_nonunion_path(SetOperationStmt *op, PlannerInfo *root,
 			while (IsA(subpath, Motion))
 				subpath = subpath->lefttree;
 #endif
-			l = lappend(l, make_motion_hash_all_targets(root, subpath));
+			newpathlist = lappend(newpathlist,
+								  make_motion_hash_all_targets(root, subpath, subtlist));
 		}
-		pathlist = l;
+		pathlist = newpathlist;
 	}
 
 	/*

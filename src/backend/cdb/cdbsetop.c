@@ -100,16 +100,17 @@ choose_setop_type(List *pathlist)
 
 
 void
-adjust_setop_arguments(PlannerInfo *root, List *pathlist, GpSetOpType setop_type)
+adjust_setop_arguments(PlannerInfo *root, List *pathlist, List *tlist_list, GpSetOpType setop_type)
 {
-	ListCell   *cell;
-	Path	   *subpath;
+	ListCell   *pathcell;
+	ListCell   *tlistcell;
 	Path	   *adjusted_path;
 	CdbPathLocus locus;
 
-	foreach(cell, pathlist)
+	forboth(pathcell, pathlist, tlistcell, tlist_list)
 	{
-		subpath = (Path *) lfirst(cell);
+		Path	   *subpath = (Path *) lfirst(pathcell);
+		List	   *subtlist = (List *) lfirst(tlistcell);
 
 		adjusted_path = subpath;
 		switch (setop_type)
@@ -134,7 +135,7 @@ adjust_setop_arguments(PlannerInfo *root, List *pathlist, GpSetOpType setop_type
 						 * dispatched to a 1-gang and collect its result on
 						 * one of our N QEs. Hence ...
 						 */
-						adjusted_path = make_motion_hash_all_targets(root, subpath);
+						adjusted_path = make_motion_hash_all_targets(root, subpath, subtlist);
 						break;
 					case CdbLocusType_Null:
 					case CdbLocusType_Entry:
@@ -229,7 +230,7 @@ adjust_setop_arguments(PlannerInfo *root, List *pathlist, GpSetOpType setop_type
 		if (subpath != adjusted_path)
 		{
 			subpath = adjusted_path;
-			cell->data.ptr_value = subpath;
+			pathcell->data.ptr_value = subpath;
 		}
 	}
 
@@ -367,23 +368,26 @@ make_motion_gather(PlannerInfo *root, Plan *subplan, List *sortPathKeys)
  * list.
  */
 Path *
-make_motion_hash_all_targets(PlannerInfo *root, Path *subpath)
+make_motion_hash_all_targets(PlannerInfo *root, Path *subpath, List *tlist)
 {
 	ListCell   *cell;
 	List	   *hashexprs = NIL;
 	List	   *hashopfamilies = NIL;
 	CdbPathLocus locus;
 
-	foreach(cell, subpath->pathtarget->exprs)
+	foreach(cell, tlist)
 	{
-		Node	   *expr = lfirst(cell);
+		TargetEntry *tle = (TargetEntry *) lfirst(cell);
 		Oid			opfamily;
 
-		opfamily = cdb_default_distribution_opfamily_for_type(exprType(expr));
+		if (tle->resjunk)
+			continue;
+
+		opfamily = cdb_default_distribution_opfamily_for_type(exprType((Node *) tle->expr));
 		if (!opfamily)
 			continue;		/* not hashable */
 
-		hashexprs = lappend(hashexprs, copyObject(expr));
+		hashexprs = lappend(hashexprs, copyObject(tle->expr));
 		hashopfamilies = lappend_oid(hashopfamilies, opfamily);
 	}
 
