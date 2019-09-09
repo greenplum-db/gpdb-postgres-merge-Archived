@@ -140,11 +140,7 @@ main(int argc, char *argv[])
 		static const bool translate_columns[] = {false, true};
 
 		conn = connectDatabase(dbname, host, port, username, prompt_password,
-<<<<<<< HEAD
 							   progname, echo, false);
-=======
-							   progname, false, false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		printfPQExpBuffer(&sql, "SELECT lanname as \"%s\", "
 				"(CASE WHEN lanpltrusted THEN '%s' ELSE '%s' END) as \"%s\" "
@@ -186,17 +182,7 @@ main(int argc, char *argv[])
 			*p += ('a' - 'A');
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-<<<<<<< HEAD
 						   progname, echo, false);
-=======
-						   progname, false, false);
-
-	/*
-	 * Force schema search path to be just pg_catalog, so that we don't have
-	 * to be paranoid about search paths below.
-	 */
-	executeCommand(conn, "SET search_path = pg_catalog;", progname, echo);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Make sure the language is installed

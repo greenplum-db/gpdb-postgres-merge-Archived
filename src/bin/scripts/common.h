@@ -32,11 +32,7 @@ extern void handle_help_version_opts(int argc, char *argv[],
 extern PGconn *connectDatabase(const char *dbname, const char *pghost,
 				const char *pgport, const char *pguser,
 				enum trivalue prompt_password, const char *progname,
-<<<<<<< HEAD
 				bool echo, bool fail_ok);
-=======
-				bool fail_ok, bool allow_password_reuse);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 extern PGconn *connectMaintenanceDatabase(const char *maintenance_db,
 						   const char *pghost, const char *pgport,

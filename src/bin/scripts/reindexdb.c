@@ -282,11 +282,7 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 	PGconn	   *conn;
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-<<<<<<< HEAD
 						   progname, echo, false);
-=======
-						   progname, false, false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	initPQExpBuffer(&sql);
 
@@ -303,11 +299,7 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 	else if (strcmp(type, "SCHEMA") == 0)
 		appendPQExpBufferStr(&sql, name);
 	else if (strcmp(type, "DATABASE") == 0)
-<<<<<<< HEAD
 		appendPQExpBufferStr(&sql, fmtId(PQdb(conn)));
-=======
-		appendPQExpBuffer(&sql, " DATABASE %s", fmtId(PQdb(conn)));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	appendPQExpBufferChar(&sql, ';');
 
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
@@ -381,11 +373,7 @@ reindex_system_catalogs(const char *dbname, const char *host, const char *port,
 	PQExpBufferData sql;
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-<<<<<<< HEAD
 						   progname, echo, false);
-=======
-						   progname, false, false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	initPQExpBuffer(&sql);
 

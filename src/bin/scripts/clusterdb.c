@@ -204,20 +204,12 @@ cluster_one_database(const char *dbname, bool verbose, const char *table,
 	if (verbose)
 		appendPQExpBufferStr(&sql, " VERBOSE");
 	if (table)
-<<<<<<< HEAD
 	{
 		appendPQExpBufferChar(&sql, ' ');
 		appendQualifiedRelation(&sql, table, conn, progname, echo);
 	}
 	appendPQExpBufferChar(&sql, ';');
 
-=======
-		appendPQExpBuffer(&sql, " %s", table);
-	appendPQExpBufferChar(&sql, ';');
-
-	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, false, false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
 		if (table)

@@ -370,12 +370,9 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		fflush(stdout);
 	}
 
-<<<<<<< HEAD
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
 						   progname, echo, false);
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	initPQExpBuffer(&sql);
 
 	/*
@@ -435,13 +432,8 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		for (i = 1; i < concurrentCons; i++)
 		{
 			conn = connectDatabase(dbname, host, port, username, prompt_password,
-<<<<<<< HEAD
 								   progname, echo, false);
 			init_slot(slots + i, conn);
-=======
-								   progname, false, true);
-			init_slot(slots + i, conn, progname);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 
 	}

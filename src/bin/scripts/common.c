@@ -65,16 +65,10 @@ handle_help_version_opts(int argc, char *argv[],
  * as before, else we might create password exposure hazards.)
  */
 PGconn *
-<<<<<<< HEAD
 connectDatabase(const char *dbname, const char *pghost,
 				const char *pgport, const char *pguser,
 				enum trivalue prompt_password, const char *progname,
 				bool echo, bool fail_ok)
-=======
-connectDatabase(const char *dbname, const char *pghost, const char *pgport,
-				const char *pguser, enum trivalue prompt_password,
-				const char *progname, bool fail_ok, bool allow_password_reuse)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	PGconn	   *conn;
 	static char *password = NULL;
@@ -173,7 +167,6 @@ connectMaintenanceDatabase(const char *maintenance_db,
 	/* If a maintenance database name was specified, just connect to it. */
 	if (maintenance_db)
 		return connectDatabase(maintenance_db, pghost, pgport, pguser,
-<<<<<<< HEAD
 							   prompt_password, progname, echo, false);
 
 	/* Otherwise, try postgres first and then template1. */
@@ -182,16 +175,6 @@ connectMaintenanceDatabase(const char *maintenance_db,
 	if (!conn)
 		conn = connectDatabase("template1", pghost, pgport, pguser,
 							   prompt_password, progname, echo, false);
-=======
-							   prompt_password, progname, false, false);
-
-	/* Otherwise, try postgres first and then template1. */
-	conn = connectDatabase("postgres", pghost, pgport, pguser, prompt_password,
-						   progname, true, false);
-	if (!conn)
-		conn = connectDatabase("template1", pghost, pgport, pguser,
-							   prompt_password, progname, false, false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	return conn;
 }

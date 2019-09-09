@@ -129,11 +129,7 @@ main(int argc, char *argv[])
 					  (if_exists ? "IF EXISTS " : ""), fmtId(dropuser));
 
 	conn = connectDatabase("postgres", host, port, username, prompt_password,
-<<<<<<< HEAD
 						   progname, echo, false);
-=======
-						   progname, false, false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (echo)
 		printf("%s\n", sql.data);
