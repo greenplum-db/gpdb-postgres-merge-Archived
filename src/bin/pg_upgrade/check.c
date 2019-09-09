@@ -100,19 +100,16 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 	check_for_prepared_transactions(&old_cluster);
 	check_for_reg_data_type_usage(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
-<<<<<<< HEAD
 	check_for_array_of_partition_table_types(&old_cluster);
 
 	/*
 	 * Check for various Greenplum failure cases
 	 */
 	check_greenplum();
-=======
 
 	/* 9.5 and below should not have roles starting with pg_ */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 905)
 		check_for_pg_role_prefix(&old_cluster);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	if (GET_MAJOR_VERSION(old_cluster.major_version) == 904 &&
 		old_cluster.controldata.cat_ver < JSONB_FORMAT_CHANGE_CAT_VER)
@@ -294,17 +291,10 @@ output_completion_banner(char *analyze_script_file_name,
 			   deletion_script_file_name);
 	else
 		pg_log(PG_REPORT,
-<<<<<<< HEAD
-		  "Could not create a script to delete the old cluster's data files\n"
-		  "because user-defined tablespaces or the new cluster's data directory\n"
-		  "exist in the old cluster directory.  The old cluster's contents must\n"
-		  "be deleted manually.\n");
-=======
 		 "Could not create a script to delete the old cluster's data files\n"
 			   "because user-defined tablespaces or the new cluster's data directory\n"
 			   "exist in the old cluster directory.  The old cluster's contents must\n"
 			   "be deleted manually.\n");
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 
@@ -632,12 +622,8 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 {
 	FILE	   *script = NULL;
 	int			tblnum;
-<<<<<<< HEAD
-	char		old_cluster_pgdata[MAXPGPATH], new_cluster_pgdata[MAXPGPATH];
-=======
 	char		old_cluster_pgdata[MAXPGPATH],
 				new_cluster_pgdata[MAXPGPATH];
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	*deletion_script_file_name = psprintf("%sdelete_old_cluster.%s",
 										  SCRIPT_PREFIX, SCRIPT_EXT);
@@ -652,11 +638,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 	if (path_is_prefix_of_path(old_cluster_pgdata, new_cluster_pgdata))
 	{
 		pg_log(PG_WARNING,
-<<<<<<< HEAD
-		   "\nWARNING:  new data directory should not be inside the old data directory, e.g. %s\n", old_cluster_pgdata);
-=======
 			   "\nWARNING:  new data directory should not be inside the old data directory, e.g. %s\n", old_cluster_pgdata);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		/* Unlink file in case it is left over from a previous run. */
 		unlink(*deletion_script_file_name);
