@@ -24,26 +24,10 @@
 
 #include "extern.h"
 #include "preproc.h"
-<<<<<<< HEAD
 }
 
 %{
 extern YYSTYPE base_yylval;
-=======
-
-/*
- * Change symbol names as expected by preproc.y.  It'd be better to do this
- * with %option prefix="base_yy", but that affects some other names that
- * various files expect *not* to be prefixed with "base_".  Cleaning it up
- * is not worth the trouble right now.
- */
-#define yylex           base_yylex
-#define yylval          base_yylval
-}
-
-%{
-extern YYSTYPE yylval;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
 static char	   *dolqstart = NULL;	/* current $foo$ quote start string */
