@@ -59,11 +59,7 @@ static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	 const int compression, ArchiveMode mode, SetupWorkerPtr setupWorkerPtr);
 static void _getObjectDescription(PQExpBuffer buf, TocEntry *te,
 					  ArchiveHandle *AH);
-<<<<<<< HEAD
 static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData);
-=======
-static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData, bool acl_pass);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static char *replace_line_endings(const char *str);
 static void _doSetFixedOutputState(ArchiveHandle *AH);
 static void _doSetSessionAuth(ArchiveHandle *AH, const char *user);
@@ -92,13 +88,8 @@ static void SetOutput(ArchiveHandle *AH, const char *filename, int compression);
 static OutputContext SaveOutput(ArchiveHandle *AH);
 static void RestoreOutput(ArchiveHandle *AH, OutputContext savedContext);
 
-<<<<<<< HEAD
 static int restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel);
 static void restore_toc_entries_prefork(ArchiveHandle *AH, TocEntry *pending_list);
-=======
-static int	restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel);
-static void restore_toc_entries_prefork(ArchiveHandle *AH);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void restore_toc_entries_parallel(ArchiveHandle *AH, ParallelState *pstate,
 							 TocEntry *pending_list);
 static void restore_toc_entries_postfork(ArchiveHandle *AH, TocEntry *pending_list);
@@ -679,7 +670,6 @@ RestoreArchive(Archive *AHX)
 		bool		haveRefresh = false;
 
 		for (te = AH->toc->next; te != AH->toc; te = te->next)
-<<<<<<< HEAD
 		{
 			if ((te->reqs & (REQ_SCHEMA | REQ_DATA)) == 0)
 				continue;		/* ignore if not to be dumped at all */
@@ -697,10 +687,6 @@ RestoreArchive(Archive *AHX)
 					break;
 			}
 		}
-=======
-			(void) restore_toc_entry(AH, te, false);
-	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		if (haveACL)
 		{
@@ -714,23 +700,12 @@ RestoreArchive(Archive *AHX)
 
 		if (haveRefresh)
 		{
-<<<<<<< HEAD
 			for (te = AH->toc->next; te != AH->toc; te = te->next)
 			{
 				if ((te->reqs & (REQ_SCHEMA | REQ_DATA)) != 0 &&
 					_tocEntryRestorePass(te) == RESTORE_PASS_REFRESH)
 					(void) restore_toc_entry(AH, te, false);
 			}
-=======
-			/* Show namespace if available */
-			if (te->namespace)
-				ahlog(AH, 1, "setting owner and privileges for %s \"%s.%s\"\n",
-					  te->desc, te->namespace, te->tag);
-			else
-				ahlog(AH, 1, "setting owner and privileges for %s \"%s\"\n",
-					  te->desc, te->tag);
-			_printTocEntry(AH, te, false, true);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 	}
 
@@ -811,11 +786,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 			ahlog(AH, 1, "creating %s \"%s\"\n", te->desc, te->tag);
 
 
-<<<<<<< HEAD
 		_printTocEntry(AH, te, false);
-=======
-		_printTocEntry(AH, te, false, false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		defnDumped = true;
 
 		if (strcmp(te->desc, "TABLE") == 0 ||
@@ -889,11 +860,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 			 */
 			if (AH->PrintTocDataPtr !=NULL)
 			{
-<<<<<<< HEAD
 				_printTocEntry(AH, te, true);
-=======
-				_printTocEntry(AH, te, true, false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 				if (strcmp(te->desc, "BLOBS") == 0 ||
 					strcmp(te->desc, "BLOB COMMENTS") == 0)
@@ -983,11 +950,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 		{
 			/* If we haven't already dumped the defn part, do so now */
 			ahlog(AH, 1, "executing %s %s\n", te->desc, te->tag);
-<<<<<<< HEAD
 			_printTocEntry(AH, te, false);
-=======
-			_printTocEntry(AH, te, false, false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 	}
 
@@ -3120,13 +3083,10 @@ _doSetFixedOutputState(ArchiveHandle *AH)
 	/* Select the role to be used during restore */
 	if (ropt && ropt->use_role)
 		ahprintf(AH, "SET ROLE %s;\n", fmtId(ropt->use_role));
-<<<<<<< HEAD
 
 	/* Select the dump-time search_path */
 	if (AH->public.searchpath)
 		ahprintf(AH, "%s", AH->public.searchpath);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/* Make sure function checking is disabled */
 	ahprintf(AH, "SET check_function_bodies = false;\n");
@@ -3527,7 +3487,6 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te, ArchiveHandle *AH)
  * will remain at default, until the matching ACL TOC entry is restored.
  */
 static void
-<<<<<<< HEAD
 _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 {
 	RestoreOptions *ropt = AH->public.ropt;
@@ -3541,38 +3500,6 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 	 * that we can maintain its OID from the old cluster
 	 */
 	if (!ropt->dropSchema && !ropt->binary_upgrade)
-=======
-_printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData, bool acl_pass)
-{
-	RestoreOptions *ropt = AH->public.ropt;
-
-	/* ACLs are dumped only during acl pass */
-	if (acl_pass)
-	{
-		if (!_tocEntryIsACL(te))
-			return;
-	}
-	else
-	{
-		if (_tocEntryIsACL(te))
-			return;
-	}
-
-	/*
-	 * Avoid dumping the public schema, as it will already be created ...
-	 * unless we are using --clean mode (and *not* --create mode), in which
-	 * case we've previously issued a DROP for it so we'd better recreate it.
-	 *
-	 * Likewise for its comment, if any.  (We could try issuing the COMMENT
-	 * command anyway; but it'd fail if the restore is done as non-super-user,
-	 * so let's not.)
-	 *
-	 * XXX it looks pretty ugly to hard-wire the public schema like this, but
-	 * it sits in a sort of no-mans-land between being a system object and a
-	 * user object, so it really is special in a way.
-	 */
-	if (!(ropt->dropSchema && !ropt->createDB))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		if (strcmp(te->desc, "SCHEMA") == 0 &&
 			strcmp(te->tag, "public") == 0)
@@ -4066,16 +3993,12 @@ restore_toc_entries_prefork(ArchiveHandle *AH, TocEntry *pending_list)
 		if (_tocEntryRestorePass(next_work_item) != RESTORE_PASS_MAIN)
 			do_now = false;
 
-<<<<<<< HEAD
 		if (do_now)
 		{
 			/* OK, restore the item and update its dependencies */
 			ahlog(AH, 1, "processing item %d %s %s\n",
 				  next_work_item->dumpId,
 				  next_work_item->desc, next_work_item->tag);
-=======
-		(void) restore_toc_entry(AH, next_work_item, false);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 			(void) restore_toc_entry(AH, next_work_item, false);
 
@@ -4196,14 +4119,10 @@ restore_toc_entries_parallel(ArchiveHandle *AH, ParallelState *pstate,
 		}
 		else
 		{
-<<<<<<< HEAD
 			/*
 			 * We have nothing ready, but at least one child is working, so
 			 * wait for some subjob to finish.
 			 */
-=======
-			/* at least one child is working and we have nothing ready. */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		}
 
 		for (;;)
