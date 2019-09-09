@@ -3,12 +3,8 @@
  *
  *	main source file
  *
-<<<<<<< HEAD
  *	Portions Copyright (c) 2016-Present, Pivotal Software Inc
- *	Copyright (c) 2010-2015, PostgreSQL Global Development Group
-=======
  *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  *	src/bin/pg_upgrade/pg_upgrade.c
  */
 
@@ -504,12 +500,8 @@ create_new_objects(void)
 		 */
 		parallel_exec_prog(log_file_name,
 						   NULL,
-<<<<<<< HEAD
 		 "PGOPTIONS='-c gp_session_role=utility' "
-		 "\"%s/pg_restore\" %s --exit-on-error --binary-upgrade --verbose --dbname %s \"%s\"",
-=======
 		 "\"%s/pg_restore\" %s --exit-on-error --verbose --dbname %s \"%s\"",
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 						   new_cluster.bindir,
 						   cluster_conn_opts(&new_cluster),
 						   escaped_connstr.data,
@@ -526,13 +518,8 @@ create_new_objects(void)
 	check_ok();
 
 	/*
-<<<<<<< HEAD
-	 * We don't have minmxids for databases or relations in pre-9.3
-	 * clusters, so set those after we have restored the schema.
-=======
 	 * We don't have minmxids for databases or relations in pre-9.3 clusters,
 	 * so set those after we have restored the schema.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) < 903)
 		set_frozenxids(true);
@@ -892,15 +879,9 @@ set_frozenxids(bool minmxid_only)
 		/*
 		 * We must update databases where datallowconn = false, e.g.
 		 * template0, because autovacuum increments their datfrozenxids,
-<<<<<<< HEAD
-		 * relfrozenxids, and relminmxid  even if autovacuum is turned off,
-		 * and even though all the data rows are already frozen  To enable
-		 * this, we temporarily change datallowconn.
-=======
 		 * relfrozenxids, and relminmxid even if autovacuum is turned off, and
 		 * even though all the data rows are already frozen.  To enable this,
 		 * we temporarily change datallowconn.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		 */
 		if (strcmp(datallowconn, "f") == 0)
 		{
