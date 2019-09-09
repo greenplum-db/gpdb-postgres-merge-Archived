@@ -244,11 +244,15 @@ SELECT * FROM box_temp WHERE f1 << '(10,20),(30,40)';
 (7 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 << '(10,20),(30,40)';
-                  QUERY PLAN                  
-----------------------------------------------
- Index Only Scan using box_spgist on box_temp
-   Index Cond: (f1 << '(30,40),(10,20)'::box)
-(2 rows)
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Bitmap Heap Scan on box_temp
+         Recheck Cond: (f1 << '(30,40),(10,20)'::box)
+         ->  Bitmap Index Scan on box_spgist
+               Index Cond: (f1 << '(30,40),(10,20)'::box)
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 SELECT * FROM box_temp WHERE f1 &< '(10,4.333334),(5,100)';
              f1             
@@ -264,11 +268,15 @@ SELECT * FROM box_temp WHERE f1 &< '(10,4.333334),(5,100)';
 (8 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 &< '(10,4.333334),(5,100)';
-                     QUERY PLAN                     
-----------------------------------------------------
- Index Only Scan using box_spgist on box_temp
-   Index Cond: (f1 &< '(10,100),(5,4.333334)'::box)
-(2 rows)
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Bitmap Heap Scan on box_temp
+         Recheck Cond: (f1 &< '(10,100),(5,4.333334)'::box)
+         ->  Bitmap Index Scan on box_spgist
+               Index Cond: (f1 &< '(10,100),(5,4.333334)'::box)
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 SELECT * FROM box_temp WHERE f1 && '(15,20),(25,30)';
                     f1                     
@@ -293,11 +301,13 @@ SELECT * FROM box_temp WHERE f1 && '(15,20),(25,30)';
 (17 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 && '(15,20),(25,30)';
-                  QUERY PLAN                  
-----------------------------------------------
- Index Only Scan using box_spgist on box_temp
-   Index Cond: (f1 && '(25,30),(15,20)'::box)
-(2 rows)
+                     QUERY PLAN                     
+----------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Index Only Scan using box_spgist on box_temp
+         Index Cond: (f1 && '(25,30),(15,20)'::box)
+ Optimizer: Postgres query optimizer
+(4 rows)
 
 SELECT * FROM box_temp WHERE f1 &> '(40,30),(45,50)';
         f1         
@@ -316,11 +326,15 @@ SELECT * FROM box_temp WHERE f1 &> '(40,30),(45,50)';
 (11 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 &> '(40,30),(45,50)';
-                  QUERY PLAN                  
-----------------------------------------------
- Index Only Scan using box_spgist on box_temp
-   Index Cond: (f1 &> '(45,50),(40,30)'::box)
-(2 rows)
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Bitmap Heap Scan on box_temp
+         Recheck Cond: (f1 &> '(45,50),(40,30)'::box)
+         ->  Bitmap Index Scan on box_spgist
+               Index Cond: (f1 &> '(45,50),(40,30)'::box)
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 SELECT * FROM box_temp WHERE f1 >> '(30,40),(40,30)';
         f1         
@@ -338,11 +352,15 @@ SELECT * FROM box_temp WHERE f1 >> '(30,40),(40,30)';
 (10 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 >> '(30,40),(40,30)';
-                  QUERY PLAN                  
-----------------------------------------------
- Index Only Scan using box_spgist on box_temp
-   Index Cond: (f1 >> '(40,40),(30,30)'::box)
-(2 rows)
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Bitmap Heap Scan on box_temp
+         Recheck Cond: (f1 >> '(40,40),(30,30)'::box)
+         ->  Bitmap Index Scan on box_spgist
+               Index Cond: (f1 >> '(40,40),(30,30)'::box)
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 SELECT * FROM box_temp WHERE f1 <<| '(10,4.33334),(5,100)';
             f1            
@@ -353,11 +371,15 @@ SELECT * FROM box_temp WHERE f1 <<| '(10,4.33334),(5,100)';
 (3 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 <<| '(10,4.33334),(5,100)';
-                     QUERY PLAN                     
-----------------------------------------------------
- Index Only Scan using box_spgist on box_temp
-   Index Cond: (f1 <<| '(10,100),(5,4.33334)'::box)
-(2 rows)
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Bitmap Heap Scan on box_temp
+         Recheck Cond: (f1 <<| '(10,100),(5,4.33334)'::box)
+         ->  Bitmap Index Scan on box_spgist
+               Index Cond: (f1 <<| '(10,100),(5,4.33334)'::box)
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 SELECT * FROM box_temp WHERE f1 &<| '(10,4.3333334),(5,1)';
             f1            
@@ -368,11 +390,15 @@ SELECT * FROM box_temp WHERE f1 &<| '(10,4.3333334),(5,1)';
 (3 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 &<| '(10,4.3333334),(5,1)';
-                     QUERY PLAN                     
-----------------------------------------------------
- Index Only Scan using box_spgist on box_temp
-   Index Cond: (f1 &<| '(10,4.3333334),(5,1)'::box)
-(2 rows)
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Bitmap Heap Scan on box_temp
+         Recheck Cond: (f1 &<| '(10,4.3333334),(5,1)'::box)
+         ->  Bitmap Index Scan on box_spgist
+               Index Cond: (f1 &<| '(10,4.3333334),(5,1)'::box)
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 SELECT * FROM box_temp WHERE f1 |&> '(49.99,49.99),(49.99,49.99)';
           f1          
@@ -382,11 +408,15 @@ SELECT * FROM box_temp WHERE f1 |&> '(49.99,49.99),(49.99,49.99)';
 (2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 |&> '(49.99,49.99),(49.99,49.99)';
-                        QUERY PLAN                         
------------------------------------------------------------
- Index Only Scan using box_spgist on box_temp
-   Index Cond: (f1 |&> '(49.99,49.99),(49.99,49.99)'::box)
-(2 rows)
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Bitmap Heap Scan on box_temp
+         Recheck Cond: (f1 |&> '(49.99,49.99),(49.99,49.99)'::box)
+         ->  Bitmap Index Scan on box_spgist
+               Index Cond: (f1 |&> '(49.99,49.99),(49.99,49.99)'::box)
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 SELECT * FROM box_temp WHERE f1 |>> '(37,38),(39,40)';
           f1          
@@ -405,11 +435,15 @@ SELECT * FROM box_temp WHERE f1 |>> '(37,38),(39,40)';
 (11 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 |>> '(37,38),(39,40)';
-                  QUERY PLAN                   
------------------------------------------------
- Index Only Scan using box_spgist on box_temp
-   Index Cond: (f1 |>> '(39,40),(37,38)'::box)
-(2 rows)
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Bitmap Heap Scan on box_temp
+         Recheck Cond: (f1 |>> '(39,40),(37,38)'::box)
+         ->  Bitmap Index Scan on box_spgist
+               Index Cond: (f1 |>> '(39,40),(37,38)'::box)
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 SELECT * FROM box_temp WHERE f1 @> '(10,11),(15,16)';
                     f1                     
@@ -421,11 +455,13 @@ SELECT * FROM box_temp WHERE f1 @> '(10,11),(15,16)';
 (4 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 @> '(10,11),(15,15)';
-                  QUERY PLAN                  
-----------------------------------------------
- Index Only Scan using box_spgist on box_temp
-   Index Cond: (f1 @> '(15,15),(10,11)'::box)
-(2 rows)
+                     QUERY PLAN                     
+----------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Index Only Scan using box_spgist on box_temp
+         Index Cond: (f1 @> '(15,15),(10,11)'::box)
+ Optimizer: Postgres query optimizer
+(4 rows)
 
 SELECT * FROM box_temp WHERE f1 <@ '(10,15),(30,35)';
        f1        
@@ -434,11 +470,13 @@ SELECT * FROM box_temp WHERE f1 <@ '(10,15),(30,35)';
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 <@ '(10,15),(30,35)';
-                  QUERY PLAN                  
-----------------------------------------------
- Index Only Scan using box_spgist on box_temp
-   Index Cond: (f1 <@ '(30,35),(10,15)'::box)
-(2 rows)
+                     QUERY PLAN                     
+----------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Index Only Scan using box_spgist on box_temp
+         Index Cond: (f1 <@ '(30,35),(10,15)'::box)
+ Optimizer: Postgres query optimizer
+(4 rows)
 
 SELECT * FROM box_temp WHERE f1 ~= '(20,20),(40,40)';
        f1        
@@ -447,11 +485,13 @@ SELECT * FROM box_temp WHERE f1 ~= '(20,20),(40,40)';
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM box_temp WHERE f1 ~= '(20,20),(40,40)';
-                  QUERY PLAN                  
-----------------------------------------------
- Index Only Scan using box_spgist on box_temp
-   Index Cond: (f1 ~= '(40,40),(20,20)'::box)
-(2 rows)
+                     QUERY PLAN                     
+----------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Index Only Scan using box_spgist on box_temp
+         Index Cond: (f1 ~= '(40,40),(20,20)'::box)
+ Optimizer: Postgres query optimizer
+(4 rows)
 
 RESET enable_seqscan;
 DROP INDEX box_spgist;
