@@ -36,28 +36,19 @@ static int	win32_pghardlink(const char *src, const char *dst);
 const char *
 copyFile(const char *src, const char *dst)
 {
-<<<<<<< HEAD
 	report_progress(NULL, FILE_COPY, "Copy \"%s\" to \"%s\"", src, dst);
 
 	if (pageConverter == NULL)
 	{
 #ifndef WIN32
-		if (copy_file(src, dst, force) == -1)
+		if (copy_file(src, dst) == -1)
 #else
-		if (CopyFile(src, dst, !force) == 0)
+		if (CopyFile(src, dst, true) == 0)
 #endif
 			return getErrorText();
 		else
 			return NULL;
 	}
-=======
-#ifndef WIN32
-	if (copy_file(src, dst) == -1)
-#else
-	if (CopyFile(src, dst, true) == 0)
-#endif
-		return getErrorText();
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	else
 		return NULL;
 }
@@ -75,14 +66,11 @@ copyFile(const char *src, const char *dst)
 const char *
 linkFile(const char *src, const char *dst)
 {
-<<<<<<< HEAD
 	report_progress(NULL, FILE_COPY, "Link \"%s\" to \"%s\"", src, dst);
 
 	if (pageConverter != NULL)
 		return "Cannot in-place update this cluster, page-by-page conversion is required";
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	if (pg_link_file(src, dst) == -1)
 		return getErrorText();
 	else
