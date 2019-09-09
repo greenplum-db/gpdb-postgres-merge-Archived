@@ -541,10 +541,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	 * by treating it as a user table.  Likewise for pg_largeobject_metadata,
 	 * if it exists.
 	 */
-<<<<<<< HEAD
-
-	snprintf(query, sizeof(query),
-	/* get regular heap */
+	snprintf(query + strlen(query), sizeof(query) - strlen(query),
 			 "WITH regular_heap (reloid, indtable, toastheap) AS ("
 			 "	SELECT c.oid, i.indrelid, 0::oid "
 			 "	FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
@@ -552,31 +549,8 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "	LEFT OUTER JOIN pg_catalog.pg_index i "
 			 "			ON c.oid = i.indexrelid "
 			 "	WHERE relkind IN ('r', 'o', 'b', 'i'%s%s) AND "
-
-	/*
-	 * pg_dump only dumps valid indexes;  testing indisready is necessary in
-	 * 9.2, and harmless in earlier/later versions.
-	 */
-			 " %s "
 	/* workaround for Greenplum 4.3 bugs */
 			 " %s "
-	/* exclude possible orphaned temp tables */
-			 "	  ((n.nspname !~ '^pg_temp_' AND "
-			 "	    n.nspname !~ '^pg_toast_temp_' AND "
-	/* skip pg_toast because toast index have relkind == 'i', not 't' */
-			 "    n.nspname NOT IN ('pg_catalog', 'information_schema', "
-			 "						'binary_upgrade', 'pg_toast') AND "
-			 "    n.nspname NOT IN ('gp_toolkit', 'pg_bitmapindex', 'pg_aoseg') AND "
-			 "	  c.oid >= %u) "
-			 "  OR (n.nspname = 'pg_catalog' AND "
-	"    relname IN ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) ))), "
-=======
-	snprintf(query + strlen(query), sizeof(query) - strlen(query),
-			 "WITH regular_heap (reloid, indtable, toastheap) AS ( "
-			 "  SELECT c.oid, 0::oid, 0::oid "
-			 "  FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
-			 "         ON c.relnamespace = n.oid "
-			 "  WHERE relkind IN ('r', 'm', 'S') AND "
 	/* exclude possible orphaned temp tables */
 			 "    ((n.nspname !~ '^pg_temp_' AND "
 			 "      n.nspname !~ '^pg_toast_temp_' AND "
@@ -585,45 +559,25 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "      c.oid >= %u::pg_catalog.oid) OR "
 			 "     (n.nspname = 'pg_catalog' AND "
 			 "      relname IN ('pg_largeobject'%s) ))), ",
-			 FirstNormalObjectId,
-			 (GET_MAJOR_VERSION(old_cluster.major_version) >= 900) ?
-			 ", 'pg_largeobject_metadata'" : "");
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+	/* Greenplum 4.3/5X use 'm' as aovisimap which is now matview in 6X and above. */
+			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
+			 ", 'm'" : ", 'M'",
+	/* see the comment at the top of old_8_3_create_sequence_script() */
+			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
+			 "" : ", 'S'",
+	/* workaround for Greenplum 4.3 bugs */
+			 (GET_MAJOR_VERSION(old_cluster.major_version) > 802) ?
+			 "" : "  AND relname NOT IN ('__gp_localid', '__gp_masterid', "
+			 		 "'__gp_log_segment_ext', '__gp_log_master_ext', 'gp_disk_free') ",
+			FirstNormalObjectId,
+			(GET_MAJOR_VERSION(old_cluster.major_version) >= 900) ?
+			", 'pg_largeobject_metadata'" : "");
 
 	/*
 	 * Add a CTE that collects OIDs of toast tables belonging to the tables
 	 * selected by the regular_heap CTE.  (We have to do this separately
 	 * because the namespace-name rules above don't work for toast tables.)
 	 */
-<<<<<<< HEAD
-	/* get TOAST heap */
-			 "	toast_heap (reloid, indtable, toastheap) AS ( "
-			 "	SELECT reltoastrelid, 0::oid, c.oid "
-			 "	FROM regular_heap JOIN pg_catalog.pg_class c "
-			 "		ON regular_heap.reloid = c.oid "
-			 "		AND c.reltoastrelid != %u), "
-	/* get indexes on regular and TOAST heap */
-			 "	all_index (reloid, indtable, toastheap) AS ( "
-			 "	SELECT indexrelid, indrelid, 0::oid"
-			 "	FROM pg_index "
-			 "	WHERE indisvalid "
-			 "    AND indrelid IN (SELECT reltoastrelid "
-			 "        FROM (SELECT reloid FROM regular_heap "
-			 "			   UNION ALL "
-			 "			   SELECT reloid FROM toast_heap) all_heap "
-			 "            JOIN pg_catalog.pg_class c "
-			 "            ON all_heap.reloid = c.oid "
-			 "            AND c.reltoastrelid != %u)) "
-	/* get all rels */
-			 "SELECT all_rels.*, n.nspname, c.relname, "
-			 "  c.relstorage, c.relkind, "
-			 "	c.relfilenode, c.reltablespace, %s "
-			 "FROM (SELECT reloid, indtable, toastheap FROM regular_heap "
-			 "	   UNION ALL "
-			 "	   SELECT reloid, indtable, toastheap FROM toast_heap  "
-			 "	   UNION ALL "
-			 "	   SELECT reloid, indtable, toastheap FROM all_index) all_rels "
-=======
 	snprintf(query + strlen(query), sizeof(query) - strlen(query),
 			 "  toast_heap (reloid, indtable, toastheap) AS ( "
 			 "  SELECT c.reltoastrelid, 0::oid, c.oid "
@@ -659,7 +613,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "      SELECT * FROM toast_heap "
 			 "      UNION ALL "
 			 "      SELECT * FROM all_index) all_rels "
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			 "  JOIN pg_catalog.pg_class c "
 			 "      ON all_rels.reloid = c.oid "
 			 "  JOIN pg_catalog.pg_namespace n "
@@ -667,33 +620,13 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 "     ON c.reltablespace = t.oid "
 			 "ORDER BY 1;",
-
-
-	/* Greenplum 4.3/5X use 'm' as aovisimap which is now matview in 6X and above. */
-			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
-			 ", 'm'" : ", 'M'",
-	/* see the comment at the top of old_8_3_create_sequence_script() */
-			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
-			 "" : ", 'S'",
-	/* Greenplum 4.3 does not have indisvalid nor indisready */
-			 (GET_MAJOR_VERSION(old_cluster.major_version) == 802) ?
-			 "" : " i.indisvalid IS DISTINCT FROM false AND "
-			 	  "i.indisready IS DISTINCT FROM false AND ",
-	/* workaround for Greenplum 4.3 bugs */
-			 (GET_MAJOR_VERSION(old_cluster.major_version) > 802) ?
-			 "" : "  AND relname NOT IN ('__gp_localid', '__gp_masterid', "
-			 		 "'__gp_log_segment_ext', '__gp_log_master_ext', 'gp_disk_free') ",
-			FirstNormalObjectId,
-	/* does pg_largeobject_metadata need to be migrated? */
-			(GET_MAJOR_VERSION(old_cluster.major_version) <= 804) ?
-	"" : ", 'pg_largeobject_metadata', 'pg_largeobject_metadata_oid_index'",
-			InvalidOid, InvalidOid,
 	/*
 	 * 9.2 removed the spclocation column in upstream postgres, in GPDB it was
 	 * removed in 6.0.0 during the 8.4 merge
 	 */
 			(GET_MAJOR_VERSION(cluster->major_version) <= 803) ?
 			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
+
 
 	res = executeQueryOrDie(conn, "%s", query);
 
