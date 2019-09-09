@@ -54,10 +54,7 @@ static DumpableObject **oprinfoindex;
 static DumpableObject **collinfoindex;
 static DumpableObject **nspinfoindex;
 static DumpableObject **extinfoindex;
-<<<<<<< HEAD
 static DumpableObject **binaryupgradeinfoindex;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static int	numTables;
 static int	numTypes;
 static int	numFuncs;
@@ -65,10 +62,7 @@ static int	numOperators;
 static int	numCollations;
 static int	numNamespaces;
 static int	numExtensions;
-<<<<<<< HEAD
 static int  numTypeStorageOptions;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* This is an array of object identities, not actual DumpableObjects */
 static ExtensionMemberId *extmembers;
@@ -120,7 +114,6 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	int			numDefaultACLs;
 	int			numEventTriggers;
 
-<<<<<<< HEAD
 	/* GPDB specific variables */
 	int			numExtProtocols;
 
@@ -135,8 +128,6 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 		binaryupgradeinfoindex = buildIndexArray(binfo, 1, sizeof(BinaryUpgradeInfo));
 	}
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/*
 	 * We must read extensions and extension membership info first, because
 	 * extension membership needs to be consultable during decisions about
@@ -1034,41 +1025,6 @@ strInArray(const char *pattern, char **arr, int arr_size)
 	}
 	return -1;
 }
-<<<<<<< HEAD
-
-
-/*
- * Support for simple list operations
- */
-
-void
-simple_oid_list_append(SimpleOidList *list, Oid val)
-{
-	SimpleOidListCell *cell;
-
-	cell = (SimpleOidListCell *) pg_malloc(sizeof(SimpleOidListCell));
-	cell->next = NULL;
-	cell->val = val;
-
-	if (list->tail)
-		list->tail->next = cell;
-	else
-		list->head = cell;
-	list->tail = cell;
-}
-
-bool
-simple_oid_list_member(SimpleOidList *list, Oid val)
-{
-	SimpleOidListCell *cell;
-
-	for (cell = list->head; cell; cell = cell->next)
-	{
-		if (cell->val == val)
-			return true;
-	}
-	return false;
-}
 
 /*
  * MPP-1890
@@ -1135,5 +1091,3 @@ DetectChildConstraintDropped(TableInfo *tbinfo, PQExpBuffer q)
 	}
 
 }
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
