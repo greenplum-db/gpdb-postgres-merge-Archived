@@ -30,15 +30,11 @@ $node->issues_sql_like(
 	[ 'reindexdb', '-i', 'test1x', 'postgres' ],
 	qr/statement: REINDEX INDEX public\.test1x;/,
 	'reindex specific index');
-<<<<<<< HEAD
-issues_sql_like(
-=======
 $node->issues_sql_like(
 	[ 'reindexdb', '-S', 'pg_catalog', 'postgres' ],
 	qr/statement: REINDEX SCHEMA pg_catalog;/,
 	'reindex specific schema');
 $node->issues_sql_like(
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	[ 'reindexdb', '-s', 'postgres' ],
 	qr/statement: REINDEX SYSTEM postgres;/,
 	'reindex system tables');

@@ -13,15 +13,11 @@ my $node = get_new_node('main');
 $node->init;
 $node->start;
 
-<<<<<<< HEAD
 # GPDB: drop gp_toolkit before trying to drop plpgsql in tests; otherwise they
 # fail because of the dependency.
-psql 'postgres', 'DROP SCHEMA gp_toolkit CASCADE';
+$node->safe_psql('postgres', 'DROP SCHEMA gp_toolkit CASCADE');
 
-issues_sql_like(
-=======
 $node->issues_sql_like(
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	[ 'droplang', 'plpgsql', 'postgres' ],
 	qr/statement: DROP EXTENSION "plpgsql"/,
 	'SQL DROP EXTENSION run');

@@ -13,16 +13,11 @@ my $node = get_new_node('main');
 $node->init;
 $node->start;
 
-<<<<<<< HEAD
 # GPDB: drop gp_toolkit before trying to drop plpgsql in tests; otherwise they
 # fail because of the dependency.
-psql 'postgres', 'DROP SCHEMA gp_toolkit CASCADE';
+$node->safe_psql('postgres', 'DROP SCHEMA gp_toolkit CASCADE');
 
-command_fails(
-	[ 'createlang', 'plpgsql', 'postgres' ],
-=======
-$node->command_fails([ 'createlang', 'plpgsql' ],
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+$node->command_fails([ 'createlang', 'plpgsql', 'postgres' ],
 	'fails if language already exists');
 
 $node->safe_psql('postgres', 'DROP EXTENSION plpgsql');

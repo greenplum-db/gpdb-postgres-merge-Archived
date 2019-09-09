@@ -15,9 +15,5 @@ my $node = get_new_node('main');
 $node->init;
 $node->start;
 
-<<<<<<< HEAD
 # use a long timeout for the benefit of very slow buildfarm machines
-command_ok([qw(pg_isready --timeout=60)], 'succeeds with server running');
-=======
-$node->command_ok(['pg_isready'], 'succeeds with server running');
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+$node->command_ok([qw(pg_isready --timeout=60)], 'succeeds with server running');
