@@ -1774,6 +1774,7 @@ typedef struct ModifyTablePath
 	bool		canSetTag;		/* do we set the command tag/es_processed? */
 	Index		nominalRelation;	/* Parent RT index for use of EXPLAIN */
 	List	   *resultRelations;	/* integer list of RT indexes */
+	List	   *is_split_updates;
 	List	   *subpaths;		/* Path(s) producing source data */
 	List	   *subroots;		/* per-target-table PlannerInfos */
 	List	   *withCheckOptionLists;	/* per-target-table WCO lists */

@@ -2792,7 +2792,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 										list_make1(root),
 										withCheckOptionLists,
 										returningLists,
-										NIL, // GPDB_96_MERGE_FIXME: is_split_updates
+										list_make1_int(root->is_split_update),
 										rowMarks,
 										parse->onConflict,
 										SS_assign_special_param(root));

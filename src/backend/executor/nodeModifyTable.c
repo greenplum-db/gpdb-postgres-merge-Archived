@@ -2517,13 +2517,16 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 	if (CMD_UPDATE == operation)
 	{
-		Assert(list_length(node->ctid_col_idxes) == nplans);
-		Assert(list_length(node->action_col_idxes) == nplans);
-		Assert(list_length(node->oid_col_idxes) == nplans);
+		if (list_length(node->ctid_col_idxes) != nplans)
+			elog(ERROR, "ModifyTable node is missing CTID column information");
+		if (list_length(node->action_col_idxes) != nplans)
+			elog(ERROR, "ModifyTable node is missing action column information");
+		if (list_length(node->oid_col_idxes) != nplans)
+			elog(ERROR, "ModifyTable node is missing table OID information");
 
-		mtstate->mt_action_col_idxes = (AttrNumber *) palloc0 (sizeof(AttrNumber) * list_length(node->action_col_idxes));
-		mtstate->mt_ctid_col_idxes = (AttrNumber *) palloc0 (sizeof(AttrNumber) * list_length(node->ctid_col_idxes));
-		mtstate->mt_oid_col_idxes = (AttrNumber *) palloc0 (sizeof(AttrNumber) * list_length(node->oid_col_idxes));
+		mtstate->mt_action_col_idxes = (AttrNumber *) palloc0 (sizeof(AttrNumber) * nplans);
+		mtstate->mt_ctid_col_idxes = (AttrNumber *) palloc0 (sizeof(AttrNumber) * nplans);
+		mtstate->mt_oid_col_idxes = (AttrNumber *) palloc0 (sizeof(AttrNumber) * nplans);
 
 		i = 0;
 		foreach(l, node->action_col_idxes)

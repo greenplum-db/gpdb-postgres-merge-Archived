@@ -1642,6 +1642,7 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path)
 		plan = (Plan *) make_result(tlist, NULL, subplan);
 
 		copy_generic_path_info(plan, (Path *) best_path);
+		plan->flow = pull_up_Flow(plan, subplan);
 	}
 
 	return plan;
@@ -2368,7 +2369,7 @@ create_modifytable_plan(PlannerInfo *root, ModifyTablePath *best_path)
 							subplans,
 							best_path->withCheckOptionLists,
 							best_path->returningLists,
-							list_make1_int(root->is_split_update),
+							best_path->is_split_updates,
 							best_path->rowMarks,
 							best_path->onconflict,
 							best_path->epqParam);
@@ -7650,6 +7651,7 @@ make_modifytable(PlannerInfo *root,
 		   list_length(resultRelations) == list_length(withCheckOptionLists));
 	Assert(returningLists == NIL ||
 		   list_length(resultRelations) == list_length(returningLists));
+	Assert(list_length(resultRelations) == list_length(is_split_updates));
 
 	node->plan.lefttree = NULL;
 	node->plan.righttree = NULL;

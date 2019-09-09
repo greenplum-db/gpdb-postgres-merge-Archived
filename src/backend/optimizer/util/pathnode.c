@@ -4369,7 +4369,7 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 						List *resultRelations, List *subpaths,
 						List *subroots,
 						List *withCheckOptionLists, List *returningLists,
-						List *is_split_updates, /* GPDB_96_MERGE_FIXME: unused */
+						List *is_split_updates,
 						List *rowMarks, OnConflictExpr *onconflict,
 						int epqParam)
 {
@@ -4383,6 +4383,7 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 		   list_length(resultRelations) == list_length(withCheckOptionLists));
 	Assert(returningLists == NIL ||
 		   list_length(resultRelations) == list_length(returningLists));
+	Assert(list_length(resultRelations) == list_length(is_split_updates));
 
 	pathnode->path.pathtype = T_ModifyTable;
 	pathnode->path.parent = rel;
@@ -4443,6 +4444,7 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->canSetTag = canSetTag;
 	pathnode->nominalRelation = nominalRelation;
 	pathnode->resultRelations = resultRelations;
+	pathnode->is_split_updates = is_split_updates;
 	pathnode->subpaths = subpaths;
 	pathnode->subroots = subroots;
 	pathnode->withCheckOptionLists = withCheckOptionLists;
