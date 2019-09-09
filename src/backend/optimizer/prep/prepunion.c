@@ -618,14 +618,11 @@ generate_union_path(SetOperationStmt *op, PlannerInfo *root,
 	 */
 	if (!op->all)
 	{
-		/* GPDB_96_MERGE_FIXME: Where should this go now? */
-#if 0
 		if ( optype == PSETOP_PARALLEL_PARTITIONED )
 		{
 			/* CDB: Hash motion to collocate non-distinct tuples. */
-			plan = (Plan *) make_motion_hash_all_targets(root, plan);
+			path = make_motion_hash_all_targets(root, path, tlist);
 		}
-#endif
 		path = make_union_unique(op, path, tlist, root);
 	}
 

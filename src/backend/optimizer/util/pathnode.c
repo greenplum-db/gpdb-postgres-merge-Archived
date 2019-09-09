@@ -3841,6 +3841,7 @@ create_upper_unique_path(PlannerInfo *root,
 	pathnode->path.parallel_workers = subpath->parallel_workers;
 	/* Unique doesn't change the input ordering */
 	pathnode->path.pathkeys = subpath->pathkeys;
+	pathnode->path.locus = subpath->locus;
 
 	pathnode->subpath = subpath;
 	pathnode->numkeys = numCols;
