@@ -124,7 +124,6 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		 * TOAST table names initially match the heap pg_class oid, but
 		 * pre-9.0 they can change during certain commands such as CLUSTER, so
 		 * don't insist on a match if old cluster is < 9.0.
-<<<<<<< HEAD
 		 *
 		 * XXX GPDB: for TOAST tables, don't insist on a match at all
 		 * yet; there are other ways for us to get mismatched names. Ideally
@@ -132,13 +131,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		 */
 		if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
 			(strcmp(old_rel->relname, new_rel->relname) != 0 &&
-			 (/* GET_MAJOR_VERSION(old_cluster.major_version) >= 900 || */
-=======
-		 */
-		if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
-			(strcmp(old_rel->relname, new_rel->relname) != 0 &&
 			 (GET_MAJOR_VERSION(old_cluster.major_version) >= 900 ||
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			  strcmp(old_rel->nspname, "pg_toast") != 0)))
 		{
 			pg_log(PG_WARNING, "Relation names for OID %u in database \"%s\" do not match: "
@@ -152,7 +145,6 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 			continue;
 		}
 
-<<<<<<< HEAD
 		/*
 		 * External tables have relfilenodes but no physical files, and aoseg
 		 * tables are handled by their AO table
@@ -172,8 +164,6 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		else
 			old_rel->reltype = HEAP;
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		/* OK, create a mapping entry */
 		create_rel_filename_map(old_pgdata, new_pgdata, old_db, new_db,
 								old_rel, new_rel, maps + num_maps);
@@ -470,7 +460,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	char	   *last_namespace = NULL,
 			   *last_tablespace = NULL;
 
-<<<<<<< HEAD
 	char		relstorage;
 	char		relkind;
 	int			i_relstorage = -1;
@@ -538,9 +527,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 
 		PQclear(res);
 	}
-=======
 	query[0] = '\0';			/* initialize query string to empty */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Create a CTE that collects OIDs of regular user tables, including
@@ -680,7 +667,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 "     ON c.reltablespace = t.oid "
 			 "ORDER BY 1;",
-<<<<<<< HEAD
 
 
 	/* Greenplum 4.3/5X use 'm' as aovisimap which is now matview in 6X and above. */
@@ -708,12 +694,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	 */
 			(GET_MAJOR_VERSION(cluster->major_version) <= 803) ?
 			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
-=======
-	/* 9.2 removed the pg_tablespace.spclocation column */
-			 (GET_MAJOR_VERSION(cluster->major_version) >= 902) ?
-			 "pg_catalog.pg_tablespace_location(t.oid) AS spclocation" :
-			 "t.spclocation");
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	res = executeQueryOrDie(conn, "%s", query);
 
@@ -736,7 +716,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	{
 		RelInfo    *curr = &relinfos[num_rels++];
 
-<<<<<<< HEAD
 		curr->gpdb4_heap_conversion_needed = false;
 		curr->reloid = atooid(PQgetvalue(res, relnum, i_reloid));
 
@@ -749,10 +728,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			curr->indtable = 0;
 		}
 
-=======
-		curr->reloid = atooid(PQgetvalue(res, relnum, i_reloid));
-		curr->indtable = atooid(PQgetvalue(res, relnum, i_indtable));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		curr->toastheap = atooid(PQgetvalue(res, relnum, i_toastheap));
 
 		nspname = PQgetvalue(res, relnum, i_nspname);
