@@ -570,12 +570,8 @@ RestoreArchive(Archive *AHX)
 							 * different kinds of CONSTRAINTs, we know to
 							 * search for hardcoded "DROP CONSTRAINT" instead.
 							 */
-<<<<<<< HEAD
 							if (strcmp(te->desc, "DEFAULT") == 0 ||
 								strncmp(dropStmt, "CREATE OR REPLACE VIEW", 22) == 0)
-=======
-							if (strcmp(te->desc, "DEFAULT") == 0)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 								appendPQExpBufferStr(ftStmt, dropStmt);
 							else
 							{
@@ -2789,7 +2785,6 @@ processStdStringsEntry(ArchiveHandle *AH, TocEntry *te)
 }
 
 static void
-<<<<<<< HEAD
 processSearchPathEntry(ArchiveHandle *AH, TocEntry *te)
 {
 	/*
@@ -2797,7 +2792,9 @@ processSearchPathEntry(ArchiveHandle *AH, TocEntry *te)
 	 * verbatim for use later.
 	 */
 	AH->public.searchpath = pg_strdup(te->defn);
-=======
+}
+
+static void
 StrictNamesCheck(RestoreOptions *ropt)
 {
 	const char *missing_name;
@@ -2838,7 +2835,6 @@ StrictNamesCheck(RestoreOptions *ropt)
 		if (missing_name != NULL)
 			exit_horribly(modulename, "trigger \"%s\" not found\n", missing_name);
 	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 static teReqs
