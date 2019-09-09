@@ -46,11 +46,8 @@
  */
 volatile bool cancel_pressed = false;
 
-<<<<<<< HEAD:src/bin/psql/print.c
-=======
 static bool always_ignore_sigpipe = false;
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365:src/fe_utils/print.c
 /* info for locale-aware numeric formatting; set up by setDecimalLocale() */
 static char *decimal_point;
 static int	groupdigits;
@@ -307,12 +304,6 @@ format_numeric_locale(const char *my_str)
 
 	/* assert we didn't underestimate new_len (an overestimate is OK) */
 	Assert(strlen(new_str) <= new_len);
-<<<<<<< HEAD:src/bin/psql/print.c
-
-	/* copy the rest (fractional digits and/or exponent, and \0 terminator) */
-	strcpy(&new_str[new_str_pos], &my_str[i]);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365:src/fe_utils/print.c
 
 	return new_str;
 }
@@ -2883,30 +2874,18 @@ PageOutput(int lines, const printTableOpt *topt)
 			pagerprog = getenv("PAGER");
 			if (!pagerprog)
 				pagerprog = DEFAULT_PAGER;
-<<<<<<< HEAD:src/bin/psql/print.c
 			else
 			{
 				/* if PAGER is empty or all-white-space, don't use pager */
 				if (strspn(pagerprog, " \t\r\n") == strlen(pagerprog))
 					return stdout;
 			}
-#ifndef WIN32
-			pqsignal(SIGPIPE, SIG_IGN);
-#endif
-			pagerpipe = popen(pagerprog, "w");
-			if (pagerpipe)
-				return pagerpipe;
-			/* if popen fails, silently proceed without pager */
-#ifndef WIN32
-			pqsignal(SIGPIPE, SIG_DFL);
-#endif
-#ifdef TIOCGWINSZ
-=======
 			disable_sigpipe_trap();
 			pagerpipe = popen(pagerprog, "w");
 			if (pagerpipe)
 				return pagerpipe;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365:src/fe_utils/print.c
+			/* if popen fails, silently proceed without pager */
+			restore_sigpipe_trap();
 		}
 	}
 
