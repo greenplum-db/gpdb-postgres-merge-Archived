@@ -19,20 +19,12 @@
 #include "access/transam.h"
 
 
-<<<<<<< HEAD
-static void transfer_single_new_db(pageCnvCtx *pageConverter,
-					   FileNameMap *maps, int size, char *old_tablespace);
-static void transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
-				 const char *suffix);
-static bool transfer_relfile_segment(int segno, pageCnvCtx *pageConverter,
-									 FileNameMap *map, const char *suffix);
-static void transfer_ao(pageCnvCtx *pageConverter, FileNameMap *map);
-static bool transfer_ao_perFile(const int segno, void *ctx);
-=======
 static void transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace);
 static void transfer_relfile(FileNameMap *map, const char *suffix, bool vm_must_add_frozenbit);
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+static bool transfer_relfile_segment(int segno, FileNameMap *map, const char *suffix);
+static void transfer_ao(FileNameMap *map);
+static bool transfer_ao_perFile(const int segno, void *ctx);
 
 /*
  * transfer_all_new_tablespaces()
@@ -169,22 +161,16 @@ transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
 		if (old_tablespace == NULL ||
 			strcmp(maps[mapnum].old_tablespace, old_tablespace) == 0)
 		{
-<<<<<<< HEAD
 			RelType type = maps[mapnum].type;
-=======
-			/* transfer primary file */
-			transfer_relfile(&maps[mapnum], "", vm_must_add_frozenbit);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 			if (type == AO || type == AOCS)
 			{
-<<<<<<< HEAD
-				transfer_ao(pageConverter, &maps[mapnum]);
+				transfer_ao(&maps[mapnum]);
 			}
 			else
 			{
 				/* transfer primary file */
-				transfer_relfile(pageConverter, &maps[mapnum], "");
+				transfer_relfile(&maps[mapnum], "", vm_must_add_frozenbit);
 
 				/* fsm/vm files added in PG 8.4 */
 				if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804)
@@ -192,18 +178,10 @@ transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
 					/*
 					 * Copy/link any fsm and vm files, if they exist
 					 */
-					transfer_relfile(pageConverter, &maps[mapnum], "_fsm");
+					transfer_relfile(&maps[mapnum], "_fsm", vm_must_add_frozenbit);
 					if (vm_crashsafe_match)
-						transfer_relfile(pageConverter, &maps[mapnum], "_vm");
+						transfer_relfile(&maps[mapnum], "_vm", vm_must_add_frozenbit);
 				}
-=======
-				/*
-				 * Copy/link any fsm and vm files, if they exist
-				 */
-				transfer_relfile(&maps[mapnum], "_fsm", vm_must_add_frozenbit);
-				if (vm_crashsafe_match)
-					transfer_relfile(&maps[mapnum], "_vm", vm_must_add_frozenbit);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			}
 		}
 	}
@@ -219,16 +197,7 @@ transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
 static void
 transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_frozenbit)
 {
-<<<<<<< HEAD
 	int			segno;
-=======
-	const char *msg;
-	char		old_file[MAXPGPATH];
-	char		new_file[MAXPGPATH];
-	int			segno;
-	char		extent_suffix[65];
-	struct stat statbuf;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Now copy/link any related segments as well. Remember, PG breaks large
@@ -237,7 +206,7 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
 	 */
 	for (segno = 0;; segno++)
 	{
-		if (!transfer_relfile_segment(segno, pageConverter, map, type_suffix))
+		if (!transfer_relfile_segment(segno, map, type_suffix))
 			break;
 	}
 }
@@ -254,7 +223,7 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
  * TODO: verify that AO tables must always have a segment zero.
  */
 static bool
-transfer_relfile_segment(int segno, pageCnvCtx *pageConverter, FileNameMap *map,
+transfer_relfile_segment(int segno, FileNameMap *map,
 						 const char *type_suffix)
 {
 	const char *msg;
@@ -262,158 +231,135 @@ transfer_relfile_segment(int segno, pageCnvCtx *pageConverter, FileNameMap *map,
 	char		new_file[MAXPGPATH * 3];
 	int			fd;
 	char		extent_suffix[65];
+	struct stat statbuf;
 
 	/*
 	 * Extra indentation is on purpose, to reduce merge conflicts with upstream.
 	 */
 
-		if (segno == 0)
-			extent_suffix[0] = '\0';
-		else
-			snprintf(extent_suffix, sizeof(extent_suffix), ".%d", segno);
+	if (segno == 0)
+		extent_suffix[0] = '\0';
+	else
+		snprintf(extent_suffix, sizeof(extent_suffix), ".%d", segno);
 
-		snprintf(old_file, sizeof(old_file), "%s%s/%u/%u%s%s",
-				 map->old_tablespace,
-				 map->old_tablespace_suffix,
-				 map->old_db_oid,
-				 map->old_relfilenode,
-				 type_suffix,
-				 extent_suffix);
-		snprintf(new_file, sizeof(new_file), "%s%s/%u/%u%s%s",
-				 map->new_tablespace,
-				 map->new_tablespace_suffix,
-				 map->new_db_oid,
-				 map->new_relfilenode,
-				 type_suffix,
-				 extent_suffix);
+	snprintf(old_file, sizeof(old_file), "%s%s/%u/%u%s%s",
+			map->old_tablespace,
+			map->old_tablespace_suffix,
+			map->old_db_oid,
+			map->old_relfilenode,
+			type_suffix,
+			extent_suffix);
+	snprintf(new_file, sizeof(new_file), "%s%s/%u/%u%s%s",
+			map->new_tablespace,
+			map->new_tablespace_suffix,
+			map->new_db_oid,
+			map->new_relfilenode,
+			type_suffix,
+			extent_suffix);
 
-		/* Is it an extent, fsm, or vm file? */
-		if (type_suffix[0] != '\0' || segno != 0)
+	/* Is it an extent, fsm, or vm file? */
+	if (type_suffix[0] != '\0' || segno != 0)
+	{
+		/* Did file open fail? */
+		if (stat(old_file, &statbuf) != 0)
 		{
-			/* Did file open fail? */
-			if (stat(old_file, &statbuf) != 0)
-			{
-				/* File does not exist?  That's OK, just return */
-				if (errno == ENOENT)
-					return false;
-				else
-					pg_fatal("error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-							 map->nspname, map->relname, old_file, new_file,
-							 getErrorText());
-			}
-
-			/* If file is empty, just return */
-			if (statbuf.st_size == 0)
-				return;
-		}
-
-		unlink(new_file);
-
-		/* Copying files might take some time, so give feedback. */
-		pg_log(PG_STATUS, "%s", old_file);
-
-<<<<<<< HEAD
-		/*
-		 * If the user requested to add checksums, it is taken care of during
-		 * the heap conversion. Thus, we don't need to explicitly test for that
-		 * here as we do for plain copy.
-		 */
-		if (map->gpdb4_heap_conversion_needed)
-		{
-			pg_log(PG_VERBOSE, "copying and converting \"%s\" to \"%s\"\n",
-				   old_file, new_file);
-
-			if ((msg = convert_gpdb4_heap_file(old_file, new_file,
-											   map->has_numerics, map->atts, map->natts)) != NULL)
-				pg_log(PG_FATAL, "error while copying and converting relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-					   map->nspname, map->relname, old_file, new_file, msg);
-
-			/*
-			 * XXX before the split into transfer_relfile_segment(), this simply
-			 * returned from transfer_relfile() directly. Was that correct?
-			 */
-			return true;
-		}
-
-		if ((user_opts.transfer_mode == TRANSFER_MODE_LINK) && (pageConverter != NULL))
-			pg_fatal("This upgrade requires page-by-page conversion, "
-					 "you must use copy mode instead of link mode.\n");
-
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
-		if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
-		{
-			if (user_opts.checksum_mode != CHECKSUM_NONE && map->type == HEAP)
-			{
-				pg_log(PG_VERBOSE, "copying and checksumming \"%s\" to \"%s\"\n", old_file, new_file);
-				if ((msg = rewriteHeapPageChecksum(old_file, new_file, map->nspname, map->relname)))
-					pg_log(PG_FATAL, "error while copying and checksumming relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-						   map->nspname, map->relname, old_file, new_file, pg_strdup(msg));
-			}
+			/* File does not exist?  That's OK, just return */
+			if (errno == ENOENT)
+				return false;
 			else
-			{
-				pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n", old_file, new_file);
+				pg_fatal("error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
+						map->nspname, map->relname, old_file, new_file,
+						getErrorText());
+		}
 
-<<<<<<< HEAD
-				if ((msg = copyAndUpdateFile(pageConverter, old_file, new_file, true)) != NULL)
-					pg_fatal("error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-							 map->nspname, map->relname, old_file, new_file, msg);
-			}
-=======
+		/* If file is empty, just return */
+		if (statbuf.st_size == 0)
+			return;
+	}
+
+	unlink(new_file);
+
+	/* Copying files might take some time, so give feedback. */
+	pg_log(PG_STATUS, "%s", old_file);
+
+	/*
+	 * If the user requested to add checksums, it is taken care of during
+	 * the heap conversion. Thus, we don't need to explicitly test for that
+	 * here as we do for plain copy.
+	 */
+	if (map->gpdb4_heap_conversion_needed)
+	{
+		pg_log(PG_VERBOSE, "copying and converting \"%s\" to \"%s\"\n",
+				old_file, new_file);
+
+		if ((msg = convert_gpdb4_heap_file(old_file, new_file,
+						map->has_numerics, map->atts, map->natts)) != NULL)
+			pg_log(PG_FATAL, "error while copying and converting relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
+					map->nspname, map->relname, old_file, new_file, msg);
+
+		/*
+		 * XXX before the split into transfer_relfile_segment(), this simply
+		 * returned from transfer_relfile() directly. Was that correct?
+		 */
+		return true;
+	}
+
+	if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
+	{
+		if (user_opts.checksum_mode != CHECKSUM_NONE && map->type == HEAP)
+		{
+			pg_log(PG_VERBOSE, "copying and checksumming \"%s\" to \"%s\"\n", old_file, new_file);
+			if ((msg = rewriteHeapPageChecksum(old_file, new_file, map->nspname, map->relname)))
+				pg_log(PG_FATAL, "error while copying and checksumming relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
+						map->nspname, map->relname, old_file, new_file, pg_strdup(msg));
+		}
+		else
+		{
+			pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n", old_file, new_file);
+
 			/* Rewrite visibility map if needed */
 			if (vm_must_add_frozenbit && (strcmp(type_suffix, "_vm") == 0))
 				msg = rewriteVisibilityMap(old_file, new_file);
 			else
 				msg = copyFile(old_file, new_file);
 
-			if (msg)
-				pg_fatal("error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-						 map->nspname, map->relname, old_file, new_file, msg);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+		if (msg)
+			pg_fatal("error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
+					map->nspname, map->relname, old_file, new_file, msg);
 		}
+	}
+	else
+	{
+		pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n", old_file, new_file);
+
+		/* Rewrite visibility map if needed */
+		if (vm_must_add_frozenbit && (strcmp(type_suffix, "_vm") == 0))
+			msg = rewriteVisibilityMap(old_file, new_file);
 		else
-		{
-			pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n", old_file, new_file);
+			msg = linkFile(old_file, new_file);
 
-			/* Rewrite visibility map if needed */
-			if (vm_must_add_frozenbit && (strcmp(type_suffix, "_vm") == 0))
-				msg = rewriteVisibilityMap(old_file, new_file);
-			else
-				msg = linkFile(old_file, new_file);
-
-			if (msg)
-				pg_fatal("error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-						 map->nspname, map->relname, old_file, new_file, msg);
-		}
+		if (msg)
+			pg_fatal("error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
+					map->nspname, map->relname, old_file, new_file, msg);
+	}
 
 	return true;
 }
 
-struct transfer_ao_callback_ctx {
-	pageCnvCtx *pageConverter;
-	FileNameMap *map;
-};
-
 static void
-transfer_ao(pageCnvCtx *pageConverter, FileNameMap *map)
+transfer_ao(FileNameMap *map)
 {
-	struct transfer_ao_callback_ctx upgradeFiles = { 0 };
+	transfer_relfile_segment(0, map, "");
 
-	transfer_relfile_segment(0, pageConverter, map, "");
-
-	upgradeFiles.pageConverter = pageConverter;
-	upgradeFiles.map = map;
-
-    ao_foreach_extent_file(transfer_ao_perFile, &upgradeFiles);
+	ao_foreach_extent_file(transfer_ao_perFile, map);
 }
 
 static bool
 transfer_ao_perFile(const int segno, void *ctx)
 {
-	const struct transfer_ao_callback_ctx *upgradeFiles = ctx;
+	FileNameMap *map = ctx;
 
-	if (!transfer_relfile_segment(segno, upgradeFiles->pageConverter,
-								  upgradeFiles->map , ""))
+	if (!transfer_relfile_segment(segno, map , ""))
 		return false;
 
 	return true;
