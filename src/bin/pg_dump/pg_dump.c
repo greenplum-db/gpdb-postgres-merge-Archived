@@ -4,13 +4,9 @@
  *	  pg_dump is a utility for dumping out a postgres database
  *	  into a script file.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	pg_dump will read the system catalogs in a database and dump out a
@@ -115,15 +111,12 @@ int			postDataSchemaOnly;
 /* subquery used to convert user ID (eg, datdba) to user name */
 static const char *username_subquery;
 
-<<<<<<< HEAD
-=======
 /* obsolete as of 7.3: */
 static Oid	g_last_builtin_oid; /* value of the last builtin oid */
 
 /* The specified names/patterns should to match at least one entity */
 static int	strict_names = 0;
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 /*
  * Object inclusion/exclusion lists
  *
@@ -191,21 +184,13 @@ static NamespaceInfo *findNamespace(Archive *fout, Oid nsoid, Oid objoid);
 static void dumpTableData(Archive *fout, TableDataInfo *tdinfo);
 static void refreshMatViewData(Archive *fout, TableDataInfo *tdinfo);
 static void guessConstraintInheritance(TableInfo *tblinfo, int numTables);
-<<<<<<< HEAD
 static void dumpComment(Archive *fout, const char *type, const char *name,
-=======
-static void dumpComment(Archive *fout, const char *target,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			const char *namespace, const char *owner,
 			CatalogId catalogId, int subid, DumpId dumpId);
 static int findComments(Archive *fout, Oid classoid, Oid objoid,
 			 CommentItem **items);
 static int	collectComments(Archive *fout, CommentItem **items);
-<<<<<<< HEAD
 static void dumpSecLabel(Archive *fout, const char *type, const char *name,
-=======
-static void dumpSecLabel(Archive *fout, const char *target,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			 const char *namespace, const char *owner,
 			 CatalogId catalogId, int subid, DumpId dumpId);
 static int findSecLabels(Archive *fout, Oid classoid, Oid objoid,
@@ -3617,7 +3602,6 @@ dumpBlob(Archive *fout, BlobInfo *binfo)
 					 NULL, NULL);
 
 	/* Dump comment if any */
-<<<<<<< HEAD
 	dumpComment(fout, "LARGE OBJECT", binfo->dobj.name,
 				NULL, binfo->rolname,
 				binfo->dobj.catId, 0, binfo->dobj.dumpId);
@@ -3638,25 +3622,6 @@ dumpBlob(Archive *fout, BlobInfo *binfo)
 		dumpACL(fout, binfo->dobj.catId, binfo->dobj.dumpId, "LARGE OBJECT",
 				binfo->dobj.name, NULL,
 				NULL, binfo->rolname, binfo->blobacl);
-=======
-	if (binfo->dobj.dump & DUMP_COMPONENT_COMMENT)
-		dumpComment(fout, cquery->data,
-					NULL, binfo->rolname,
-					binfo->dobj.catId, 0, binfo->dobj.dumpId);
-
-	/* Dump security label if any */
-	if (binfo->dobj.dump & DUMP_COMPONENT_SECLABEL)
-		dumpSecLabel(fout, cquery->data,
-					 NULL, binfo->rolname,
-					 binfo->dobj.catId, 0, binfo->dobj.dumpId);
-
-	/* Dump ACL if any */
-	if (binfo->blobacl && (binfo->dobj.dump & DUMP_COMPONENT_ACL))
-		dumpACL(fout, binfo->dobj.catId, binfo->dobj.dumpId, "LARGE OBJECT",
-				binfo->dobj.name, NULL, cquery->data,
-				NULL, binfo->rolname, binfo->blobacl, binfo->rblobacl,
-				binfo->initblobacl, binfo->initrblobacl);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	destroyPQExpBuffer(cquery);
 	destroyPQExpBuffer(dquery);
