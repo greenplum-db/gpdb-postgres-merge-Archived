@@ -10,11 +10,8 @@ use Cwd;
 use File::Basename;
 use File::Copy;
 use File::Find ();
-<<<<<<< HEAD
 use File::Spec;
 BEGIN  { use lib File::Spec->rel2abs(dirname(__FILE__)); }
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 use Install qw(Install);
 
@@ -39,11 +36,7 @@ if (-e "src/tools/msvc/buildenv.pl")
 
 my $what = shift || "";
 if ($what =~
-<<<<<<< HEAD
-/^(check|installcheck|plcheck|contribcheck|modulescheck|ecpgcheck|isolationcheck|upgradecheck|bincheck|taptest)$/i
-=======
-/^(check|installcheck|plcheck|contribcheck|modulescheck|ecpgcheck|isolationcheck|upgradecheck|bincheck|recoverycheck)$/i
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+/^(check|installcheck|plcheck|contribcheck|modulescheck|ecpgcheck|isolationcheck|upgradecheck|bincheck|recoverycheck|taptest)$/i
   )
 {
 	$what = uc $what;
@@ -71,18 +64,6 @@ else
 {
 	$ENV{PERL5LIB} = "$topdir/src/tools/msvc";
 }
-<<<<<<< HEAD
-=======
-
-if ($ENV{PERL5LIB})
-{
-	$ENV{PERL5LIB} = "$topdir/src/tools/msvc;$ENV{PERL5LIB}";
-}
-else
-{
-	$ENV{PERL5LIB} = "$topdir/src/tools/msvc";
-}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 my $maxconn = "";
 $maxconn = "--max_connections=$ENV{MAX_CONNECTIONS}"
@@ -103,13 +84,9 @@ my %command = (
 	MODULESCHECK   => \&modulescheck,
 	ISOLATIONCHECK => \&isolationcheck,
 	BINCHECK       => \&bincheck,
-<<<<<<< HEAD
+	RECOVERYCHECK  => \&recoverycheck,
 	UPGRADECHECK   => \&upgradecheck,
 	TAPTEST        => \&taptest,);
-=======
-	RECOVERYCHECK  => \&recoverycheck,
-	UPGRADECHECK   => \&upgradecheck,);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 my $proc = $command{$what};
 
@@ -139,11 +116,7 @@ sub installcheck
 
 sub check
 {
-<<<<<<< HEAD
 	my $schedule = shift || 'parallel';
-	chdir $startdir;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	InstallTemp();
 	chdir "${topdir}/src/test/regress";
 	my @args = (
@@ -169,20 +142,11 @@ sub ecpgcheck
 	exit $status if $status;
 	InstallTemp();
 	chdir "$topdir/src/interfaces/ecpg/test";
-<<<<<<< HEAD
 	my $schedule = "ecpg";
-	my @args     = (
-		"../../../../$Config/pg_regress_ecpg/pg_regress_ecpg",
-		"--dbname=regress1,connectdb",
-		"--create-role=connectuser,connectdb",
-=======
-	$schedule = "ecpg";
-	my @args = (
 		"../../../../$Config/pg_regress_ecpg/pg_regress_ecpg",
 		"--bindir=",
 		"--dbname=ecpg1_regression,ecpg2_regression",
 		"--create-role=regress_ecpg_user1,regress_ecpg_user2",
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		"--schedule=${schedule}_schedule",
 		"--encoding=SQL_ASCII",
 		"--no-locale",
@@ -214,7 +178,6 @@ sub tap_check
 	die "Tap tests not enabled in configuration"
 	  unless $config->{tap_tests};
 
-<<<<<<< HEAD
 	my @flags;
 	foreach my $arg (0 .. scalar(@_))
 	{
@@ -232,16 +195,6 @@ sub tap_check
 	# adjust the environment for just this test
 	local %ENV = %ENV;
 	$ENV{PERL5LIB} = "$topdir/src/test/perl;$ENV{PERL5LIB}";
-=======
-	my $dir = shift;
-	chdir $dir;
-
-	my @args = ("prove", "--verbose", "t/*.pl");
-
-	# adjust the environment for just this test
-	local %ENV = %ENV;
-	$ENV{PERL5LIB}   = "$topdir/src/test/perl;$ENV{PERL5LIB}";
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	$ENV{PG_REGRESS} = "$topdir/$Config/pg_regress/pg_regress";
 
 	$ENV{TESTDIR} = "$dir";
@@ -271,7 +224,6 @@ sub bincheck
 	exit $mstat if $mstat;
 }
 
-<<<<<<< HEAD
 sub taptest
 {
 	my $dir = shift;
@@ -338,8 +290,6 @@ sub mangle_plpython3
 	return @$tests;
 }
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 sub plcheck
 {
 	chdir "../../pl";
@@ -510,7 +460,6 @@ sub standard_initdb
 			$ENV{PGDATA}) == 0);
 }
 
-<<<<<<< HEAD
 # Run "initdb", then reconfigure authentication.
 sub standard_initdb
 {
@@ -520,8 +469,6 @@ sub standard_initdb
 			$ENV{PGDATA}) == 0);
 }
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 # This is similar to appendShellString().  Perl system(@args) bypasses
 # cmd.exe, so omit the caret escape layer.
 sub quote_system_arg
@@ -610,14 +557,9 @@ sub upgradecheck
 	print "\nSetting up new cluster\n\n";
 	standard_initdb() or exit 1;
 	print "\nRunning pg_upgrade\n\n";
-<<<<<<< HEAD
-	@args = ('pg_upgrade', '-d', "$data.old", '-D', $data, '-b', $bindir,
-			 '-B', $bindir);
-=======
 	@args = (
 		'pg_upgrade', '-d', "$data.old", '-D', $data, '-b',
 		$bindir,      '-B', $bindir);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	system(@args) == 0 or exit 1;
 	print "\nStarting new cluster\n\n";
 	@args = ('pg_ctl', '-l', "$logdir/postmaster2.log", '-w', 'start');
@@ -734,27 +676,18 @@ sub GetTests
 
 sub InstallTemp
 {
-<<<<<<< HEAD
 	unless ($ENV{NO_TEMP_INSTALL})
 	{
 		print "Setting up temp install\n\n";
 		Install("$tmp_installdir", "all", $config);
 	}
-=======
-	print "Setting up temp install\n\n";
-	Install("$tmp_installdir", "all", $config);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	$ENV{PATH} = "$tmp_installdir/bin;$ENV{PATH}";
 }
 
 sub usage
 {
 	print STDERR
-<<<<<<< HEAD
 	  "Usage: vcregress.pl <mode> [ <arg>]\n\n",
-=======
-	  "Usage: vcregress.pl <mode> [ <schedule> ]\n\n",
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	  "Options for <mode>:\n",
 	  "  bincheck       run tests of utilities in src/bin/\n",
 	  "  check          deploy instance and run regression tests on it\n",
@@ -762,23 +695,13 @@ sub usage
 	  "  ecpgcheck      run regression tests of ECPG\n",
 	  "  installcheck   run regression tests on existing instance\n",
 	  "  isolationcheck run isolation tests\n",
-<<<<<<< HEAD
-	  "  plcheck        run tests of PL languages\n",
-	  "  taptest        run an arbitrary TAP test set\n",
-	  "  upgradecheck   run tests of pg_upgrade\n",
-	  "\nOptions for <arg>: (used by check and installcheck)\n",
-	  "  serial         serial mode\n",
-	  "  parallel       parallel mode\n",
-	  "\nOption for <arg>: for taptest\n",
-	  "  TEST_DIR       (required) directory where tests reside\n";
-=======
 	  "  modulescheck   run tests of modules in src/test/modules/\n",
 	  "  plcheck        run tests of PL languages\n",
 	  "  recoverycheck  run recovery test suite\n",
+	  "  taptest        run an arbitrary TAP test set\n",
 	  "  upgradecheck   run tests of pg_upgrade\n",
 	  "\nOptions for <schedule>:\n",
 	  "  serial         serial mode\n",
 	  "  parallel       parallel mode\n";
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	exit(1);
 }

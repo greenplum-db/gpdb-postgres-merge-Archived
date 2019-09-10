@@ -295,10 +295,6 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 	}
 
 	if (IsNewer(
-<<<<<<< HEAD
-			'src/include/dynloader.h',
-			'src/backend/port/dynloader/win32.h'))
-=======
 			'src/include/storage/lwlocknames.h',
 			'src/backend/storage/lmgr/lwlocknames.txt'))
 	{
@@ -318,7 +314,6 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 
 	if (IsNewer(
 			'src/include/dynloader.h', 'src/backend/port/dynloader/win32.h'))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		copyFile('src/backend/port/dynloader/win32.h',
 			'src/include/dynloader.h');
@@ -694,15 +689,9 @@ sub GetFakeConfigure
 	$cfg .= ' --enable-cassert' if ($self->{options}->{asserts});
 	$cfg .= ' --enable-integer-datetimes'
 	  if ($self->{options}->{integer_datetimes});
-<<<<<<< HEAD
-	$cfg .= ' --enable-nls' if ($self->{options}->{nls});
-	$cfg .= ' --enable-tap-tests' if ($self->{options}->{tap_tests});
-	$cfg .= ' --with-ldap'  if ($self->{options}->{ldap});
-=======
 	$cfg .= ' --enable-nls'       if ($self->{options}->{nls});
 	$cfg .= ' --enable-tap-tests' if ($self->{options}->{tap_tests});
 	$cfg .= ' --with-ldap'        if ($self->{options}->{ldap});
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	$cfg .= ' --without-zlib' unless ($self->{options}->{zlib});
 	$cfg .= ' --with-extra-version' if ($self->{options}->{extraver});
 	$cfg .= ' --with-openssl'       if ($self->{options}->{openssl});
@@ -863,7 +852,6 @@ sub new
 	return $self;
 }
 
-<<<<<<< HEAD
 package VS2017Solution;
 
 #
@@ -890,8 +878,6 @@ sub new
 	return $self;
 }
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 sub GetAdditionalHeaders
 {
 	my ($self, $f) = @_;

@@ -393,7 +393,6 @@ sub GenerateTimezoneFiles
 	my $conf   = shift;
 	my $mf     = read_file("src/timezone/Makefile");
 	$mf =~ s{\\\r?\n}{}g;
-<<<<<<< HEAD
 
 	$mf =~ /^TZDATAFILES\s*:?=\s*(.*)$/m
 	  || die "Could not find TZDATAFILES line in timezone makefile\n";
@@ -413,19 +412,6 @@ sub GenerateTimezoneFiles
 		my $tzfile = $_;
 		$tzfile =~ s|\$\(srcdir\)|src/timezone|;
 		push(@args, $tzfile);
-=======
-	$mf =~ /^TZDATA\s*:?=\s*(.*)$/m
-	  || die "Could not find TZDATA line in timezone makefile\n";
-	my @tzfiles = split /\s+/, $1;
-
-	print "Generating timezone files...";
-
-	my @args = ("$conf/zic/zic", '-d', "$target/share/timezone");
-	foreach (@tzfiles)
-	{
-		my $tzfile = $_;
-		push(@args, "src/timezone/data/$tzfile");
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	system(@args);
@@ -624,12 +610,8 @@ sub CopyIncludeFiles
 		'Public headers', $target . '/include/',
 		'src/include/',   'postgres_ext.h',
 		'pg_config.h',    'pg_config_ext.h',
-<<<<<<< HEAD
-		'pg_config_os.h', 'dynloader.h', 'pg_config_manual.h');
-=======
 		'pg_config_os.h', 'dynloader.h',
 		'pg_config_manual.h');
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	lcopy('src/include/libpq/libpq-fs.h', $target . '/include/libpq/')
 	  || croak 'Could not copy libpq-fs.h';
 
@@ -682,15 +664,9 @@ sub CopyIncludeFiles
 		next unless (-d "src/include/$d");
 
 		EnsureDirectories("$target/include/server/$d");
-<<<<<<< HEAD
-		my @args = ('xcopy', '/s', '/i', '/q', '/r', '/y',
-				 "src\\include\\$d\\*.h",
-				 "$ctarget\\include\\server\\$d\\");
-=======
 		my @args = (
 			'xcopy', '/s', '/i', '/q', '/r', '/y', "src\\include\\$d\\*.h",
 			"$ctarget\\include\\server\\$d\\");
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		system(@args) && croak("Failed to copy include directory $d\n");
 	}
 	closedir($D);
@@ -745,18 +721,11 @@ sub GenerateNLSFiles
 
 			EnsureDirectories($target, "share/locale/$lang",
 				"share/locale/$lang/LC_MESSAGES");
-<<<<<<< HEAD
-			my @args = ("$nlspath\\bin\\msgfmt",
-			   '-o',
-			   "$target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm-$majorver.mo",
-			   $_);
-=======
 			my @args = (
 				"$nlspath\\bin\\msgfmt",
 				'-o',
 "$target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm-$majorver.mo",
 				$_);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			system(@args) && croak("Could not run msgfmt on $dir\\$_");
 			print ".";
 		}

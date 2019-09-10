@@ -42,17 +42,12 @@ my $contrib_extrasource = {
 	'cube' => [ 'contrib/cube/cubescan.l', 'contrib/cube/cubeparse.y' ],
 	'seg'  => [ 'contrib/seg/segscan.l',   'contrib/seg/segparse.y' ], };
 my @contrib_excludes = (
-<<<<<<< HEAD
-	'commit_ts',      'hstore_plperl', 'hstore_plpython', 'intagg',
-	'ltree_plpython', 'pgcrypto',      'sepgsql',         'sasdemo');
-=======
 	'commit_ts',       'hstore_plperl',
 	'hstore_plpython', 'intagg',
 	'ltree_plpython',  'pgcrypto',
 	'sepgsql',         'brin',
 	'test_extensions', 'test_pg_dump',
 	'snapshot_too_old');
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };
@@ -140,16 +135,13 @@ sub mkvcbuild
 	$libpgcommon->AddDefine('FRONTEND');
 	$libpgcommon->AddFiles('src/common', @pgcommonfrontendfiles);
 
-<<<<<<< HEAD
 	if (!$buildclient)
 	{
-=======
 	$libpgfeutils = $solution->AddProject('libpgfeutils', 'lib', 'misc');
 	$libpgfeutils->AddDefine('FRONTEND');
 	$libpgfeutils->AddIncludeDir('src/interfaces/libpq');
 	$libpgfeutils->AddFiles('src/fe_utils', @pgfeutilsfiles);
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	$postgres = $solution->AddProject('postgres', 'exe', '', 'src/backend');
 	$postgres->AddIncludeDir('src/backend');
 	$postgres->AddDir('src/backend/port/win32');

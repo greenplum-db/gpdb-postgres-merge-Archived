@@ -16,13 +16,8 @@ my ($flexver) = `flex -V`;    # grab first line
 $flexver = (split(/\s+/, $flexver))[1];
 $flexver =~ s/[^0-9.]//g;
 my @verparts = split(/\./, $flexver);
-<<<<<<< HEAD
-unless ($verparts[0] == 2 &&
-	    ($verparts[1] > 5 || ($verparts[1] == 5 && $verparts[2] >= 31)))
-=======
 unless ($verparts[0] == 2
 	&& ($verparts[1] > 5 || ($verparts[1] == 5 && $verparts[2] >= 31)))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 {
 	print "WARNING! Flex install not found, or unsupported Flex version.\n";
 	print "echo Attempting to build without.\n";

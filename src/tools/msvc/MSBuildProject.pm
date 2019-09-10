@@ -491,7 +491,6 @@ sub new
 	return $self;
 }
 
-<<<<<<< HEAD
 package VC2017Project;
 
 #
@@ -515,6 +514,4 @@ sub new
 	return $self;
 }
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 1;
