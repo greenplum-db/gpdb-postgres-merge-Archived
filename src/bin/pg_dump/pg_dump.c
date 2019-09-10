@@ -285,11 +285,8 @@ static char *getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts);
 static void getBlobs(Archive *fout);
 static void dumpBlob(Archive *fout, BlobInfo *binfo);
 static int	dumpBlobs(Archive *fout, void *arg);
-<<<<<<< HEAD
 static void dumpPreassignedOidArchiveEntry(Archive *fout, BinaryUpgradeInfo *binfo);
 static void dumpPreassignedOidDefinition(Archive *fout, BinaryUpgradeInfo *binfo);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void dumpPolicy(Archive *fout, PolicyInfo *polinfo);
 static void dumpDatabase(Archive *AH);
 static void dumpEncoding(Archive *AH);
@@ -328,13 +325,8 @@ static void binary_upgrade_extension_member(PQExpBuffer upgrade_buffer,
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti, PQExpBuffer buffer);
 static bool nonemptyReloptions(const char *reloptions);
-<<<<<<< HEAD
-static void fmtReloptionsArray(Archive *fout, PQExpBuffer buffer,
-				   const char *reloptions, const char *prefix);
-=======
 static void appendReloptionsArrayAH(PQExpBuffer buffer, const char *reloptions,
 						const char *prefix, Archive *fout);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static char *get_synchronized_snapshot(Archive *fout);
 static void setupDumpWorker(Archive *AHX);
 
@@ -17419,20 +17411,11 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			binary_upgrade_set_pg_class_oids(fout, q,
 											 tbinfo->dobj.catId.oid, false);
 
-<<<<<<< HEAD
-		appendPQExpBuffer(q, "CREATE VIEW %s", qualrelname);
-
-		if (nonemptyReloptions(tbinfo->reloptions))
-		{
-			appendPQExpBufferStr(q, " WITH (");
-			fmtReloptionsArray(fout, q, tbinfo->reloptions, "");
-=======
 		appendPQExpBuffer(q, "CREATE VIEW %s", fmtId(tbinfo->dobj.name));
 		if (nonemptyReloptions(tbinfo->reloptions))
 		{
 			appendPQExpBufferStr(q, " WITH (");
 			appendReloptionsArrayAH(q, tbinfo->reloptions, "", fout);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			appendPQExpBufferChar(q, ')');
 		}
 		result = createViewAsClause(fout, tbinfo);
@@ -17717,22 +17700,14 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			if (nonemptyReloptions(tbinfo->reloptions))
 			{
 				addcomma = true;
-<<<<<<< HEAD
-				fmtReloptionsArray(fout, q, tbinfo->reloptions, "");
-=======
 				appendReloptionsArrayAH(q, tbinfo->reloptions, "", fout);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			}
 			if (nonemptyReloptions(tbinfo->toast_reloptions))
 			{
 				if (addcomma)
 					appendPQExpBufferStr(q, ", ");
-<<<<<<< HEAD
-				fmtReloptionsArray(fout, q, tbinfo->toast_reloptions, "toast.");
-=======
 				appendReloptionsArrayAH(q, tbinfo->toast_reloptions, "toast.",
 										fout);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			}
 			appendPQExpBufferChar(q, ')');
 		}
@@ -18668,11 +18643,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 			if (nonemptyReloptions(indxinfo->indreloptions))
 			{
 				appendPQExpBufferStr(q, " WITH (");
-<<<<<<< HEAD
-				fmtReloptionsArray(fout, q, indxinfo->indreloptions, "");
-=======
 				appendReloptionsArrayAH(q, indxinfo->indreloptions, "", fout);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 				appendPQExpBufferChar(q, ')');
 			}
 
@@ -19555,13 +19526,8 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 	if (nonemptyReloptions(rinfo->reloptions))
 	{
 		appendPQExpBuffer(cmd, "ALTER VIEW %s SET (",
-<<<<<<< HEAD
 						  fmtQualifiedDumpable(tbinfo));
-		fmtReloptionsArray(fout, cmd, rinfo->reloptions, "");
-=======
-						  fmtId(tbinfo->dobj.name));
 		appendReloptionsArrayAH(cmd, rinfo->reloptions, "", fout);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		appendPQExpBufferStr(cmd, ");\n");
 	}
 
@@ -20589,74 +20555,6 @@ nonemptyReloptions(const char *reloptions)
 	/* Don't want to print it if it's just "{}" */
 	return (reloptions != NULL && strlen(reloptions) > 2);
 }
-<<<<<<< HEAD
-
-/*
- * Format a reloptions array and append it to the given buffer.
- *
- * "prefix" is prepended to the option names; typically it's "" or "toast.".
- *
- * Note: this logic should generally match the backend's flatten_reloptions()
- * (in adt/ruleutils.c).
- */
-static void
-fmtReloptionsArray(Archive *fout, PQExpBuffer buffer, const char *reloptions,
-				   const char *prefix)
-{
-	char	  **options;
-	int			noptions;
-	int			i;
-
-	if (!parsePGArray(reloptions, &options, &noptions))
-	{
-		write_msg(NULL, "WARNING: could not parse reloptions array\n");
-		if (options)
-			free(options);
-		return;
-	}
-
-	for (i = 0; i < noptions; i++)
-	{
-		char	   *option = options[i];
-		char	   *name;
-		char	   *separator;
-		char	   *value;
-
-		/*
-		 * Each array element should have the form name=value.  If the "=" is
-		 * missing for some reason, treat it like an empty value.
-		 */
-		name = option;
-		separator = strchr(option, '=');
-		if (separator)
-		{
-			*separator = '\0';
-			value = separator + 1;
-		}
-		else
-			value = "";
-
-		if (i > 0)
-			appendPQExpBufferStr(buffer, ", ");
-		appendPQExpBuffer(buffer, "%s%s=", prefix, fmtId(name));
-
-		/*
-		 * In general we need to quote the value; but to avoid unnecessary
-		 * clutter, do not quote if it is an identifier that would not need
-		 * quoting.  (We could also allow numbers, but that is a bit trickier
-		 * than it looks --- for example, are leading zeroes significant?  We
-		 * don't want to assume very much here about what custom reloptions
-		 * might mean.)
-		 */
-		if (strcmp(fmtId(value), value) == 0)
-			appendPQExpBufferStr(buffer, value);
-		else
-			appendStringLiteralAH(buffer, value, fout);
-	}
-
-	if (options)
-		free(options);
-=======
 
 /*
  * Format a reloptions array and append it to the given buffer.
@@ -20673,7 +20571,6 @@ appendReloptionsArrayAH(PQExpBuffer buffer, const char *reloptions,
 								fout->std_strings);
 	if (!res)
 		write_msg(NULL, "WARNING: could not parse reloptions array\n");
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /* START MPP ADDITION */
