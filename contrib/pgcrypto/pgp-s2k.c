@@ -233,17 +233,10 @@ pgp_s2k_fill(PGP_S2K *s2k, int mode, int digest_algo, int count)
 		case PGP_S2K_SIMPLE:
 			break;
 		case PGP_S2K_SALTED:
-<<<<<<< HEAD
-			res = px_get_random_bytes(s2k->salt, PGP_S2K_SALT);
-			break;
-		case PGP_S2K_ISALTED:
-			res = px_get_random_bytes(s2k->salt, PGP_S2K_SALT);
-=======
 			res = px_get_pseudo_random_bytes(s2k->salt, PGP_S2K_SALT);
 			break;
 		case PGP_S2K_ISALTED:
 			res = px_get_pseudo_random_bytes(s2k->salt, PGP_S2K_SALT);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			if (res < 0)
 				break;
 			res = px_get_random_bytes(&tmp, 1);
