@@ -201,10 +201,7 @@ static void dumpNamespace(Archive *fout, NamespaceInfo *nspinfo);
 static void dumpExtension(Archive *fout, ExtensionInfo *extinfo);
 static void dumpType(Archive *fout, TypeInfo *tyinfo);
 static void dumpBaseType(Archive *fout, TypeInfo *tyinfo);
-<<<<<<< HEAD
 static void dumpTypeStorageOptions(Archive *fout, TypeStorageOptions *tstorageoptions);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void dumpEnumType(Archive *fout, TypeInfo *tyinfo);
 static void dumpRangeType(Archive *fout, TypeInfo *tyinfo);
 static void dumpUndefinedType(Archive *fout, TypeInfo *tyinfo);
@@ -10568,17 +10565,13 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 	switch (dobj->objType)
 	{
 		case DO_NAMESPACE:
-<<<<<<< HEAD
 			if (!postDataSchemaOnly)
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			dumpNamespace(fout, (NamespaceInfo *) dobj);
 			break;
 		case DO_EXTENSION:
 			dumpExtension(fout, (ExtensionInfo *) dobj);
 			break;
 		case DO_TYPE:
-<<<<<<< HEAD
 			if (!postDataSchemaOnly)
 			dumpType(fout, (TypeInfo *) dobj);
 			break;
@@ -10606,28 +10599,11 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 			if (!postDataSchemaOnly)
 			dumpOpr(fout, (OprInfo *) dobj);
 			break;
-		case DO_OPCLASS:
-			if (!postDataSchemaOnly)
-=======
-			dumpType(fout, (TypeInfo *) dobj);
-			break;
-		case DO_SHELL_TYPE:
-			dumpShellType(fout, (ShellTypeInfo *) dobj);
-			break;
-		case DO_FUNC:
-			dumpFunc(fout, (FuncInfo *) dobj);
-			break;
-		case DO_AGG:
-			dumpAgg(fout, (AggInfo *) dobj);
-			break;
-		case DO_OPERATOR:
-			dumpOpr(fout, (OprInfo *) dobj);
-			break;
 		case DO_ACCESS_METHOD:
 			dumpAccessMethod(fout, (AccessMethodInfo *) dobj);
 			break;
 		case DO_OPCLASS:
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+			if (!postDataSchemaOnly)
 			dumpOpclass(fout, (OpclassInfo *) dobj);
 			break;
 		case DO_OPFAMILY:
@@ -10637,7 +10613,6 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 			dumpCollation(fout, (CollInfo *) dobj);
 			break;
 		case DO_CONVERSION:
-<<<<<<< HEAD
 			if (!postDataSchemaOnly)
 			dumpConversion(fout, (ConvInfo *) dobj);
 			break;
@@ -10651,27 +10626,13 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 			break;
 		case DO_INDEX:
 			if (!preDataSchemaOnly)
-=======
-			dumpConversion(fout, (ConvInfo *) dobj);
-			break;
-		case DO_TABLE:
-			dumpTable(fout, (TableInfo *) dobj);
-			break;
-		case DO_ATTRDEF:
-			dumpAttrDef(fout, (AttrDefInfo *) dobj);
-			break;
-		case DO_INDEX:
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			dumpIndex(fout, (IndxInfo *) dobj);
 			break;
 		case DO_REFRESH_MATVIEW:
 			refreshMatViewData(fout, (TableDataInfo *) dobj);
 			break;
 		case DO_RULE:
-<<<<<<< HEAD
 			if (!preDataSchemaOnly)
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			dumpRule(fout, (RuleInfo *) dobj);
 			break;
 		case DO_TRIGGER:
@@ -10681,7 +10642,6 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 			dumpEventTrigger(fout, (EventTriggerInfo *) dobj);
 			break;
 		case DO_CONSTRAINT:
-<<<<<<< HEAD
 			if (!preDataSchemaOnly)
 			dumpConstraint(fout, (ConstraintInfo *) dobj);
 			break;
@@ -10709,27 +10669,6 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 				else
 					dumpTableData(fout, (TableDataInfo *) dobj);
 			}
-=======
-			dumpConstraint(fout, (ConstraintInfo *) dobj);
-			break;
-		case DO_FK_CONSTRAINT:
-			dumpConstraint(fout, (ConstraintInfo *) dobj);
-			break;
-		case DO_PROCLANG:
-			dumpProcLang(fout, (ProcLangInfo *) dobj);
-			break;
-		case DO_CAST:
-			dumpCast(fout, (CastInfo *) dobj);
-			break;
-		case DO_TRANSFORM:
-			dumpTransform(fout, (TransformInfo *) dobj);
-			break;
-		case DO_TABLE_DATA:
-			if (((TableDataInfo *) dobj)->tdtable->relkind == RELKIND_SEQUENCE)
-				dumpSequenceData(fout, (TableDataInfo *) dobj);
-			else
-				dumpTableData(fout, (TableDataInfo *) dobj);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			break;
 		case DO_DUMMY_TYPE:
 			/* table rowtypes and array types are never dumped separately */
