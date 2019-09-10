@@ -214,20 +214,14 @@ static void dumpFunc(Archive *fout, FuncInfo *finfo);
 static void dumpCast(Archive *fout, CastInfo *cast);
 static void dumpTransform(Archive *fout, TransformInfo *transform);
 static void dumpOpr(Archive *fout, OprInfo *oprinfo);
-<<<<<<< HEAD
-=======
 static void dumpAccessMethod(Archive *fout, AccessMethodInfo *oprinfo);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void dumpOpclass(Archive *fout, OpclassInfo *opcinfo);
 static void dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo);
 static void dumpCollation(Archive *fout, CollInfo *convinfo);
 static void dumpConversion(Archive *fout, ConvInfo *convinfo);
 static void dumpRule(Archive *fout, RuleInfo *rinfo);
 static void dumpAgg(Archive *fout, AggInfo *agginfo);
-<<<<<<< HEAD
 static void dumpExtProtocol(Archive *fout, ExtProtInfo *ptcinfo);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static void dumpTrigger(Archive *fout, TriggerInfo *tginfo);
 static void dumpEventTrigger(Archive *fout, EventTriggerInfo *evtinfo);
 static void dumpTable(Archive *fout, TableInfo *tbinfo);
@@ -285,16 +279,8 @@ static char *format_function_signature(Archive *fout,
 						  FuncInfo *finfo, bool honor_quotes);
 static char *convertRegProcReference(Archive *fout,
 						const char *proc);
-<<<<<<< HEAD
 static char *getFormattedOperatorName(Archive *fout, const char *oproid);
 static const char *convertTSFunction(Archive *fout, Oid funcOid);
-=======
-static char *convertOperatorReference(Archive *fout, const char *opr);
-static char *convertTSFunction(Archive *fout, Oid funcOid);
-static Oid	findLastBuiltinOid_V71(Archive *fout, const char *);
-static Oid	findLastBuiltinOid_V70(Archive *fout);
-static void selectSourceSchema(Archive *fout, const char *schemaName);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 static char *getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts);
 static void getBlobs(Archive *fout);
 static void dumpBlob(Archive *fout, BlobInfo *binfo);
@@ -4777,8 +4763,6 @@ getTypes(Archive *fout, int *numTypes)
 <<<<<<< HEAD
 	if (fout->remoteVersion >= 90200)
 =======
-	/* Make sure we are in proper schema */
-	selectSourceSchema(fout, "pg_catalog");
 
 	if (fout->remoteVersion >= 90600)
 	{
@@ -5469,9 +5453,6 @@ getAccessMethods(Archive *fout, int *numAccessMethods)
 	}
 
 	query = createPQExpBuffer();
-
-	/* Make sure we are in proper schema */
-	selectSourceSchema(fout, "pg_catalog");
 
 	/* Select all access methods from pg_am table */
 	appendPQExpBuffer(query, "SELECT tableoid, oid, amname, amtype, "
@@ -6367,8 +6348,6 @@ getTables(Archive *fout, int *numTables)
 =======
 	int			i_changed_acl;
 
-	/* Make sure we are in proper schema */
-	selectSourceSchema(fout, "pg_catalog");
 >>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
@@ -8440,8 +8419,6 @@ getProcLangs(Archive *fout, int *numProcLangs)
 	 */
 	if (fout->remoteVersion >= 90000)
 =======
-	/* Make sure we are in proper schema */
-	selectSourceSchema(fout, "pg_catalog");
 
 	if (fout->remoteVersion >= 90600)
 	{
@@ -9826,8 +9803,6 @@ getForeignDataWrappers(Archive *fout, int *numForeignDataWrappers)
 <<<<<<< HEAD
 	if (fout->remoteVersion >= 90100)
 =======
-	/* Make sure we are in proper schema */
-	selectSourceSchema(fout, "pg_catalog");
 
 	if (fout->remoteVersion >= 90600)
 	{
@@ -10014,8 +9989,6 @@ getForeignServers(Archive *fout, int *numForeignServers)
 					  "FROM pg_foreign_server",
 					  username_subquery);
 =======
-	/* Make sure we are in proper schema */
-	selectSourceSchema(fout, "pg_catalog");
 
 	if (fout->remoteVersion >= 90600)
 	{
@@ -15592,6 +15565,9 @@ dumpExtProtocol(Archive *fout, ExtProtInfo *ptcinfo)
 	 * set with the namespaces of the referenced functions. We only need the
 	 * dump file to have the search_path so inject a SET search_path = .. ;
 	 * into the output stream instead of calling selectSourceSchema().
+	 *
+	 * GPDB_96_MERGE_FIXME: update the above comment because selectSourceSchema
+	 * has been removed in upstream 9f6e5296a  Security: CVE-2018-1058
 	 */
 	prev_ns = NULL;
 	for (i = 0; i < FCOUNT; i++)
@@ -19676,12 +19652,6 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 	if (numExtensions == 0)
 		return;
 
-<<<<<<< HEAD
-=======
-	/* Make sure we are in proper schema */
-	selectSourceSchema(fout, "pg_catalog");
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	query = createPQExpBuffer();
 
 	/* refclassid constraint is redundant but may speed the search */
@@ -19880,12 +19850,6 @@ processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
 	 * recreated after the data has been loaded.
 	 */
 
-<<<<<<< HEAD
-=======
-	/* Make sure we are in proper schema */
-	selectSourceSchema(fout, "pg_catalog");
-
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	query = createPQExpBuffer();
 
 	printfPQExpBuffer(query,
