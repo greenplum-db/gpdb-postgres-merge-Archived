@@ -282,7 +282,7 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 	PGconn	   *conn;
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, echo, false);
+						   progname, echo, false, false);
 
 	initPQExpBuffer(&sql);
 
@@ -373,7 +373,7 @@ reindex_system_catalogs(const char *dbname, const char *host, const char *port,
 	PQExpBufferData sql;
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, echo, false);
+						   progname, echo, false, false);
 
 	initPQExpBuffer(&sql);
 

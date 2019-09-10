@@ -357,7 +357,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		   (stage >= 0 && stage < ANALYZE_NUM_STAGES));
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, false, true);
+						   progname, false, true, false);
 
 	if (!quiet)
 	{
@@ -371,7 +371,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	}
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, echo, false);
+						   progname, echo, false, false);
 
 	initPQExpBuffer(&sql);
 
@@ -432,7 +432,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		for (i = 1; i < concurrentCons; i++)
 		{
 			conn = connectDatabase(dbname, host, port, username, prompt_password,
-								   progname, echo, false);
+								   progname, echo, false, false);
 			init_slot(slots + i, conn, progname);
 		}
 
