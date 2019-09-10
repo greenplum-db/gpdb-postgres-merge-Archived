@@ -4549,6 +4549,7 @@ threadRun(void *arg)
 				} while (now >= next_report);
 			}
 		}
+#endif   /* PTHREAD_FORK_EMULATION */
 	}
 
 done:
