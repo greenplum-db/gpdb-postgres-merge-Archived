@@ -82,14 +82,8 @@ select spi_prepared_plan_test_one('doe');
 select spi_prepared_plan_test_one('smith');
 select spi_prepared_plan_test_nested('smith');
 
-<<<<<<< HEAD
-
-
-
 -- start_ignore
 -- Greenplum doesn't support functions that execute SQL from segments
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 SELECT join_sequences(sequences) FROM sequences;
 SELECT join_sequences(sequences) FROM sequences
 	WHERE join_sequences(sequences) ~* '^A';
