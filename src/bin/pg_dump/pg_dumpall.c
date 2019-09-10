@@ -1524,7 +1524,7 @@ dumpTablespaces(PGconn *conn)
 	 * tablespaces.
 	 */
 	if (server_version < 80214)
-	{							
+	{
 		/* Filespaces were introduced in GP 4.0 (server_version 8.2.14) */
 		return;
 	}
@@ -1557,7 +1557,7 @@ dumpTablespaces(PGconn *conn)
 	else if (server_version >= 90000)
 		res = executeQuery(conn, "SELECT oid, spcname, "
 						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
-						   "pg_catalog.pg_tablespace_location(oid), spcacl, "
+						   "pg_catalog.pg_tablespace_location(oid), spcacl, '' as rspcacl,"
 						   "array_to_string(spcoptions, ', '),"
 						"pg_catalog.shobj_description(oid, 'pg_tablespace') "
 						   "FROM pg_catalog.pg_tablespace "
