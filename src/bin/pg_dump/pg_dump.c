@@ -901,7 +901,6 @@ main(int argc, char **argv)
 	 * Open the database using the Archiver, so it knows about it. Errors mean
 	 * death.
 	 */
-<<<<<<< HEAD
 	ConnectDatabase(fout, dopt.dbname, dopt.pghost, dopt.pgport, dopt.username, prompt_password, dopt.binary_upgrade);
 	setup_connection(fout, dumpencoding, dumpsnapshot, use_role);
 
@@ -930,10 +929,6 @@ main(int argc, char **argv)
 			}
 			break;
 	}
-=======
-	ConnectDatabase(fout, dopt.dbname, dopt.pghost, dopt.pgport, dopt.username, prompt_password);
-	setup_connection(fout, dumpencoding, dumpsnapshot, use_role);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Disable security label support if server version < v9.1.x (prevents
@@ -1155,11 +1150,8 @@ main(int argc, char **argv)
 
 	ropt->suppressDumpWarnings = true;	/* We've already shown them */
 
-<<<<<<< HEAD
 	ropt->binary_upgrade = dopt.binary_upgrade;
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	SetArchiveOptions(fout, &dopt, ropt);
 
 	/* Mark which entries should be output */
@@ -1453,12 +1445,8 @@ setupDumpWorker(Archive *AH)
 	 */
 	setup_connection(AH,
 					 pg_encoding_to_char(AH->encoding),
-<<<<<<< HEAD
-					 NULL, NULL);
-=======
 					 NULL,
 					 NULL);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 static char *
@@ -2100,15 +2088,9 @@ selectDumpableExtension(ExtensionInfo *extinfo, DumpOptions *dopt)
  * Use this only for object types without a special-case routine above.
  */
 static void
-<<<<<<< HEAD
-selectDumpableObject(DumpableObject *dobj, DumpOptions *dopt)
-{
-	if (checkExtensionMembership(dobj, dopt))
-=======
 selectDumpableObject(DumpableObject *dobj, Archive *fout)
 {
 	if (checkExtensionMembership(dobj, fout))
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		return;					/* extension membership overrides all else */
 
 	/*
@@ -2118,12 +2100,8 @@ selectDumpableObject(DumpableObject *dobj, Archive *fout)
 	if (dobj->namespace)
 		dobj->dump = dobj->namespace->dobj.dump_contains;
 	else
-<<<<<<< HEAD
-		dobj->dump = dopt->include_everything;
-=======
 		dobj->dump = fout->dopt->include_everything ?
 			DUMP_COMPONENT_ALL : DUMP_COMPONENT_NONE;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 /*
@@ -5223,14 +5201,10 @@ getOperators(Archive *fout, int *numOprs)
 		oprinfo[i].oprcode = atooid(PQgetvalue(res, i, i_oprcode));
 
 		/* Decide whether we want to dump it */
-<<<<<<< HEAD
-		selectDumpableObject(&(oprinfo[i].dobj), dopt);
-=======
 		selectDumpableObject(&(oprinfo[i].dobj), fout);
 
 		/* Operators do not currently have ACLs. */
 		oprinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		if (strlen(oprinfo[i].rolname) == 0)
 			write_msg(NULL, "WARNING: owner of operator \"%s\" appears to be invalid\n",
@@ -5313,14 +5287,10 @@ getCollations(Archive *fout, int *numCollations)
 		collinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 
 		/* Decide whether we want to dump it */
-<<<<<<< HEAD
-		selectDumpableObject(&(collinfo[i].dobj), dopt);
-=======
 		selectDumpableObject(&(collinfo[i].dobj), fout);
 
 		/* Collations do not currently have ACLs. */
 		collinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	PQclear(res);
@@ -5399,14 +5369,10 @@ getConversions(Archive *fout, int *numConversions)
 		convinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 
 		/* Decide whether we want to dump it */
-<<<<<<< HEAD
-		selectDumpableObject(&(convinfo[i].dobj), dopt);
-=======
 		selectDumpableObject(&(convinfo[i].dobj), fout);
 
 		/* Conversions do not currently have ACLs. */
 		convinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	PQclear(res);
@@ -5557,14 +5523,10 @@ getOpclasses(Archive *fout, int *numOpclasses)
 		opcinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 
 		/* Decide whether we want to dump it */
-<<<<<<< HEAD
-		selectDumpableObject(&(opcinfo[i].dobj), dopt);
-=======
 		selectDumpableObject(&(opcinfo[i].dobj), fout);
 
 		/* Op Classes do not currently have ACLs. */
 		opcinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		if (fout->remoteVersion >= 70300)
 		{
@@ -5650,14 +5612,10 @@ getOpfamilies(Archive *fout, int *numOpfamilies)
 		opfinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 
 		/* Decide whether we want to dump it */
-<<<<<<< HEAD
-		selectDumpableObject(&(opfinfo[i].dobj), dopt);
-=======
 		selectDumpableObject(&(opfinfo[i].dobj), fout);
 
 		/* Extensions do not currently have ACLs. */
 		opfinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		if (fout->remoteVersion >= 70300)
 		{
@@ -5894,9 +5852,6 @@ getAggregates(Archive *fout, int *numAggs)
 		}
 
 		/* Decide whether we want to dump it */
-<<<<<<< HEAD
-		selectDumpableObject(&(agginfo[i].aggfn.dobj), dopt);
-=======
 		selectDumpableObject(&(agginfo[i].aggfn.dobj), fout);
 
 		/* Do not try to dump ACL if no ACL exists. */
@@ -5904,7 +5859,6 @@ getAggregates(Archive *fout, int *numAggs)
 			PQgetisnull(res, i, i_initaggacl) &&
 			PQgetisnull(res, i, i_initraggacl))
 			agginfo[i].aggfn.dobj.dump &= ~DUMP_COMPONENT_ACL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	PQclear(res);
@@ -6258,10 +6212,7 @@ getFuncs(Archive *fout, int *numFuncs)
 		}
 
 		/* Decide whether we want to dump it */
-<<<<<<< HEAD
 		selectDumpableFunction(&finfo[i]);
-		selectDumpableObject(&(finfo[i].dobj), dopt);
-=======
 		selectDumpableObject(&(finfo[i].dobj), fout);
 
 		/* Do not try to dump ACL if no ACL exists. */
@@ -6269,7 +6220,6 @@ getFuncs(Archive *fout, int *numFuncs)
 			PQgetisnull(res, i, i_initproacl) &&
 			PQgetisnull(res, i, i_initrproacl))
 			finfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		if (strlen(finfo[i].rolname) == 0)
 			write_msg(NULL,
@@ -8356,14 +8306,10 @@ getEventTriggers(Archive *fout, int *numEventTriggers)
 		evtinfo[i].evtenabled = *(PQgetvalue(res, i, i_evtenabled));
 
 		/* Decide whether we want to dump it */
-<<<<<<< HEAD
-		selectDumpableObject(&(evtinfo[i].dobj), dopt);
-=======
 		selectDumpableObject(&(evtinfo[i].dobj), fout);
 
 		/* Event Triggers do not currently have ACLs. */
 		evtinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	PQclear(res);
@@ -8843,18 +8789,10 @@ getTransforms(Archive *fout, int *numTransforms)
 			appendPQExpBuffer(&namebuf, "%s %s",
 							  typeInfo->dobj.name, lanname);
 		transforminfo[i].dobj.name = namebuf.data;
-<<<<<<< HEAD
-
-		free(lanname);
-
-		/* Decide whether we want to dump it */
-		selectDumpableObject(&(transforminfo[i].dobj), dopt);
-=======
 		free(lanname);
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(transforminfo[i].dobj), fout);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	PQclear(res);
@@ -9483,14 +9421,10 @@ getTSParsers(Archive *fout, int *numTSParsers)
 		prsinfo[i].prslextype = atooid(PQgetvalue(res, i, i_prslextype));
 
 		/* Decide whether we want to dump it */
-<<<<<<< HEAD
-		selectDumpableObject(&(prsinfo[i].dobj), dopt);
-=======
 		selectDumpableObject(&(prsinfo[i].dobj), fout);
 
 		/* Text Search Parsers do not currently have ACLs. */
 		prsinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	PQclear(res);
@@ -9573,14 +9507,10 @@ getTSDictionaries(Archive *fout, int *numTSDicts)
 			dictinfo[i].dictinitoption = pg_strdup(PQgetvalue(res, i, i_dictinitoption));
 
 		/* Decide whether we want to dump it */
-<<<<<<< HEAD
-		selectDumpableObject(&(dictinfo[i].dobj), dopt);
-=======
 		selectDumpableObject(&(dictinfo[i].dobj), fout);
 
 		/* Text Search Dictionaries do not currently have ACLs. */
 		dictinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	PQclear(res);
@@ -9655,14 +9585,10 @@ getTSTemplates(Archive *fout, int *numTSTemplates)
 		tmplinfo[i].tmpllexize = atooid(PQgetvalue(res, i, i_tmpllexize));
 
 		/* Decide whether we want to dump it */
-<<<<<<< HEAD
-		selectDumpableObject(&(tmplinfo[i].dobj), dopt);
-=======
 		selectDumpableObject(&(tmplinfo[i].dobj), fout);
 
 		/* Text Search Templates do not currently have ACLs. */
 		tmplinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	PQclear(res);
@@ -9738,14 +9664,10 @@ getTSConfigurations(Archive *fout, int *numTSConfigs)
 		cfginfo[i].cfgparser = atooid(PQgetvalue(res, i, i_cfgparser));
 
 		/* Decide whether we want to dump it */
-<<<<<<< HEAD
-		selectDumpableObject(&(cfginfo[i].dobj), dopt);
-=======
 		selectDumpableObject(&(cfginfo[i].dobj), fout);
 
 		/* Text Search Configurations do not currently have ACLs. */
 		cfginfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	PQclear(res);
@@ -9910,9 +9832,6 @@ getForeignDataWrappers(Archive *fout, int *numForeignDataWrappers)
 		fdwinfo[i].initrfdwacl = pg_strdup(PQgetvalue(res, i, i_initrfdwacl));
 
 		/* Decide whether we want to dump it */
-<<<<<<< HEAD
-		selectDumpableObject(&(fdwinfo[i].dobj), dopt);
-=======
 		selectDumpableObject(&(fdwinfo[i].dobj), fout);
 
 		/* Do not try to dump ACL if no ACL exists. */
@@ -9920,7 +9839,6 @@ getForeignDataWrappers(Archive *fout, int *numForeignDataWrappers)
 			PQgetisnull(res, i, i_initfdwacl) &&
 			PQgetisnull(res, i, i_initrfdwacl))
 			fdwinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	PQclear(res);
@@ -10079,9 +9997,6 @@ getForeignServers(Archive *fout, int *numForeignServers)
 		srvinfo[i].initrsrvacl = pg_strdup(PQgetvalue(res, i, i_initrsrvacl));
 
 		/* Decide whether we want to dump it */
-<<<<<<< HEAD
-		selectDumpableObject(&(srvinfo[i].dobj), dopt);
-=======
 		selectDumpableObject(&(srvinfo[i].dobj), fout);
 
 		/* Do not try to dump ACL if no ACL exists. */
@@ -10089,7 +10004,6 @@ getForeignServers(Archive *fout, int *numForeignServers)
 			PQgetisnull(res, i, i_initsrvacl) &&
 			PQgetisnull(res, i, i_initrsrvacl))
 			srvinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 
 	PQclear(res);
