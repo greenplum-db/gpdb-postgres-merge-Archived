@@ -3,13 +3,9 @@
  * pg_dump.h
  *	  Common header file for the pg_dump utility
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pg_dump/pg_dump.h
@@ -375,11 +371,8 @@ typedef struct _tableInfo
 	int			numParents;		/* number of (immediate) parent tables */
 	struct _tableInfo **parents;	/* TableInfos of immediate parents */
 	struct _tableDataInfo *dataObj;		/* TableDataInfo, if dumping its data */
-<<<<<<< HEAD
 	Oid			parrelid;			/* external partition's parent oid */
 	bool		parparent;		/* true if the table is partition parent */
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	int			numTriggers;	/* number of triggers for table */
 	struct _triggerInfo *triggers;		/* array of TriggerInfo structs */
 } TableInfo;
@@ -640,14 +633,9 @@ extern const char *EXT_PARTITION_NAME_POSTFIX;
 /*
  *	common utility functions
  */
-extern TableInfo *getSchemaData(Archive *, int *numTablesPtr);
-
-<<<<<<< HEAD
-extern void DetectChildConstraintDropped(TableInfo *tbinfo, PQExpBuffer q); /* GPDB only */
-=======
 extern TableInfo *getSchemaData(Archive *fout, int *numTablesPtr);
+extern void DetectChildConstraintDropped(TableInfo *tbinfo, PQExpBuffer q); /* GPDB only */
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 extern void AssignDumpId(DumpableObject *dobj);
 extern DumpId createDumpId(void);
 extern DumpId getMaxDumpId(void);
@@ -667,12 +655,6 @@ extern OprInfo *findOprByOid(Oid oid);
 extern CollInfo *findCollationByOid(Oid oid);
 extern NamespaceInfo *findNamespaceByOid(Oid oid);
 extern ExtensionInfo *findExtensionByOid(Oid oid);
-<<<<<<< HEAD
-
-extern void setExtensionMembership(ExtensionMemberId *extmems, int nextmems);
-extern ExtensionInfo *findOwningExtension(CatalogId catalogId);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 extern void setExtensionMembership(ExtensionMemberId *extmems, int nextmems);
 extern ExtensionInfo *findOwningExtension(CatalogId catalogId);
