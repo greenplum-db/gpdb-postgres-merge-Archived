@@ -1122,17 +1122,10 @@ Where column_reference_storage_directive is:
     <term><literal>autovacuum_freeze_max_age</>, <literal>toast.autovacuum_freeze_max_age</literal> (<type>integer</>)</term>
     <listitem>
      <para>
-<<<<<<< HEAD
-     Custom <xref linkend="guc-autovacuum-freeze-max-age"> parameter. Note that
-     autovacuum will ignore attempts to set a per-table
-     <literal>autovacuum_freeze_max_age</> larger than the system-wide setting
-     (it can only be set smaller).
-=======
       Per-table value for <xref linkend="guc-autovacuum-freeze-max-age">
       parameter.  Note that autovacuum will ignore
       per-table <literal>autovacuum_freeze_max_age</> parameters that are
       larger than the system-wide setting (it can only be set smaller).
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
      </para>
     </listitem>
    </varlistentry>
@@ -1165,19 +1158,12 @@ Where column_reference_storage_directive is:
     <term><literal>autovacuum_multixact_freeze_max_age</literal>, <literal>toast.autovacuum_multixact_freeze_max_age</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
-<<<<<<< HEAD
-      Custom <xref linkend="guc-autovacuum-multixact-freeze-max-age"> parameter. Note
-      that autovacuum will ignore attempts to set a per-table
-      <literal>autovacuum_multixact_freeze_max_age</> larger than the
-      system-wide setting (it can only be set smaller).
-=======
       Per-table value
       for <xref linkend="guc-autovacuum-multixact-freeze-max-age"> parameter.
       Note that autovacuum will ignore
       per-table <literal>autovacuum_multixact_freeze_max_age</> parameters
       that are larger than the system-wide setting (it can only be set
       smaller).
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
      </para>
     </listitem>
    </varlistentry>

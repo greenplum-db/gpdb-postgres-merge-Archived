@@ -28,14 +28,11 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
       SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB
     | CREATEROLE | NOCREATEROLE
-<<<<<<< HEAD
     | CREATEEXTTABLE | NOCREATEEXTTABLE 
       [ ( attribute='value'[, ...] ) ]
            where attributes and values are:
            type='readable'|'writable'
            protocol='gpfdist'|'http'
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
     | REPLICATION | NOREPLICATION

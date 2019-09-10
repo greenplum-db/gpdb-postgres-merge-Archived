@@ -425,19 +425,6 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-<<<<<<< HEAD
-    <term><replaceable class="parameter">serialfunc</replaceable></term>
-    <listitem>
-     <para>
-      An aggregate function
-      whose <replaceable class="parameter">state_data_type</replaceable>
-      is <type>internal</type> can participate in parallel aggregation only if it
-      has a <replaceable class="parameter">serialfunc</replaceable> function,
-      which must serialize the aggregate state into a <type>bytea</type> value for
-      transmission to another process.  This function must take a single
-      argument of type <type>internal</type> and return type <type>bytea</type>.  A
-      corresponding <replaceable class="parameter">deserialfunc</replaceable>
-=======
     <term><replaceable class="PARAMETER">combinefunc</replaceable></term>
     <listitem>
      <para>
@@ -492,23 +479,12 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       transmission to another process.  This function must take a single
       argument of type <type>internal</> and return type <type>bytea</>.  A
       corresponding <replaceable class="PARAMETER">deserialfunc</replaceable>
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
       is also required.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-<<<<<<< HEAD
-    <term><replaceable class="parameter">deserialfunc</replaceable></term>
-    <listitem>
-     <para>
-      Deserialize a previously serialized aggregate state back into
-      <replaceable class="parameter">state_data_type</replaceable>. This
-      function must take two arguments of types <type>bytea</type>
-      and <type>internal</type>, and produce a result of type <type>internal</type>.
-      (Note: the second, <type>internal</type> argument is unused, but is required
-=======
     <term><replaceable class="PARAMETER">deserialfunc</replaceable></term>
     <listitem>
      <para>
@@ -517,7 +493,6 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       function must take two arguments of types <type>bytea</>
       and <type>internal</>, and produce a result of type <type>internal</>.
       (Note: the second, <type>internal</> argument is unused, but is required
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
       for type safety reasons.)
      </para>
     </listitem>

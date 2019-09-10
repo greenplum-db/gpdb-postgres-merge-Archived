@@ -30,11 +30,8 @@ CREATE [ OR REPLACE ] FUNCTION
     | IMMUTABLE | STABLE | VOLATILE | [ NOT ] LEAKPROOF
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
     | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
-<<<<<<< HEAD
-    | EXECUTE ON { ANY | MASTER | ALL SEGMENTS }
-=======
     | PARALLEL { UNSAFE | RESTRICTED | SAFE }
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+    | EXECUTE ON { ANY | MASTER | ALL SEGMENTS }
     | COST <replaceable class="parameter">execution_cost</replaceable>
     | ROWS <replaceable class="parameter">result_rows</replaceable>
     | SET <replaceable class="parameter">configuration_parameter</replaceable> { TO <replaceable class="parameter">value</replaceable> | = <replaceable class="parameter">value</replaceable> | FROM CURRENT }

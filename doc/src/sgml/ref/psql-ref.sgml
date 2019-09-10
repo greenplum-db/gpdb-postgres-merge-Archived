@@ -216,12 +216,8 @@ EOF
       <para>
        If <replaceable>filename</replaceable> is <literal>-</literal>
        (hyphen), then standard input is read until an EOF indication
-<<<<<<< HEAD
-       or <command>\q</> meta-command.  Note however that Readline
-=======
        or <command>\q</> meta-command.  This can be used to intersperse
        interactive input with input from files.  Note however that Readline
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
        is not used in this case (much as if <option>-n</option> had been
        specified).
       </para>
