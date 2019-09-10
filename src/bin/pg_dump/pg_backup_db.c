@@ -171,13 +171,8 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 	do
 	{
-<<<<<<< HEAD
-		const char *keywords[8];
-		const char *values[8];
-=======
 		const char *keywords[7];
 		const char *values[7];
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		keywords[0] = "host";
 		values[0] = PQhost(AH->connection);
@@ -292,13 +287,8 @@ ConnectDatabase(Archive *AHX,
 	 */
 	do
 	{
-<<<<<<< HEAD
-		const char *keywords[8];
-		const char *values[8];
-=======
 		const char *keywords[7];
 		const char *values[7];
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		keywords[0] = "host";
 		values[0] = pghost;
@@ -350,14 +340,11 @@ ConnectDatabase(Archive *AHX,
 					  PQdb(AH->connection) ? PQdb(AH->connection) : "",
 					  PQerrorMessage(AH->connection));
 
-<<<<<<< HEAD
 	/* Start strict; later phases may override this. */
 	if (PQserverVersion(AH->connection) >= 70300)
 		PQclear(ExecuteSqlQueryForSingleRow((Archive *) AH,
 											ALWAYS_SECURE_SEARCH_PATH_SQL));
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	/*
 	 * We want to remember connection's actual password, whether or not we got
 	 * it by prompting.  So we don't just store the password variable.
@@ -396,21 +383,12 @@ DisconnectDatabase(Archive *AHX)
 	if (AH->connCancel)
 	{
 		/*
-<<<<<<< HEAD
-		 * If we have an active query, send a cancel before closing, ignoring
-		 * any errors.  This is of no use for a normal exit, but might be
-		 * helpful during exit_horribly().
-		 */
-		if (PQtransactionStatus(AH->connection) == PQTRANS_ACTIVE)
-			(void) PQcancel(AH->connCancel, errbuf, sizeof(errbuf));
-=======
 		 * If we have an active query, send a cancel before closing.  This is
 		 * of no use for a normal exit, but might be helpful during
 		 * exit_horribly().
 		 */
 		if (PQtransactionStatus(AH->connection) == PQTRANS_ACTIVE)
 			PQcancel(AH->connCancel, errbuf, sizeof(errbuf));
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		/*
 		 * Prevent signal handler from sending a cancel after this.
