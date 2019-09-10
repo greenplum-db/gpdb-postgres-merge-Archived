@@ -2235,9 +2235,6 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches4("CREATE", "ROLE|USER|GROUP", MatchAny, "IN"))
 		COMPLETE_WITH_LIST2("GROUP", "ROLE");
 
-		COMPLETE_WITH_LIST(list_CREATEROLE3);
-	}
-
 /* CREATE/DROP RESOURCE GROUP/QUEUE */
 	else if ((pg_strcasecmp(prev2_wd, "CREATE") == 0 || pg_strcasecmp(prev2_wd, "DROP") == 0) &&
 			 pg_strcasecmp(prev_wd, "RESOURCE") == 0)
