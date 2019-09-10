@@ -1571,7 +1571,6 @@ expand_table_name_patterns(Archive *fout,
 
 	for (cell = patterns->head; cell; cell = cell->next)
 	{
-<<<<<<< HEAD
 		/*
 		 * Query must remain ABSOLUTELY devoid of unqualified names.  This
 		 * would be unnecessary given a pg_table_is_visible() variant taking a
@@ -1579,8 +1578,6 @@ expand_table_name_patterns(Archive *fout,
 		 */
 		if (cell != patterns->head)
 			appendPQExpBufferStr(query, "UNION ALL\n");
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		appendPQExpBuffer(query,
 						  "SELECT c.oid"
 						  "\nFROM pg_catalog.pg_class c"
@@ -1594,12 +1591,10 @@ expand_table_name_patterns(Archive *fout,
 							  false, "n.nspname", "c.relname", NULL,
 							  "pg_catalog.pg_table_is_visible(c.oid)");
 
-<<<<<<< HEAD
-	ExecuteSqlStatement(fout, "RESET search_path");
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-	PQclear(ExecuteSqlQueryForSingleRow(fout, ALWAYS_SECURE_SEARCH_PATH_SQL));
-=======
+		ExecuteSqlStatement(fout, "RESET search_path");
 		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+		PQclear(ExecuteSqlQueryForSingleRow(fout, ALWAYS_SECURE_SEARCH_PATH_SQL));
+
 		if (strict_names && PQntuples(res) == 0)
 			exit_horribly(NULL, "no matching tables were found for pattern \"%s\"\n", cell->val);
 
@@ -1607,7 +1602,6 @@ expand_table_name_patterns(Archive *fout,
 		{
 			simple_oid_list_append(oids, atooid(PQgetvalue(res, i, 0)));
 		}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		PQclear(res);
 		resetPQExpBuffer(query);
