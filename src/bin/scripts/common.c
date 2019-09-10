@@ -18,9 +18,8 @@
 #include <unistd.h>
 
 #include "common.h"
-#include "dumputils.h"
 #include "fe_utils/connect.h"
-
+#include "fe_utils/string_utils.h"
 
 static PGcancel *volatile cancelConn = NULL;
 bool		CancelRequested = false;
@@ -68,7 +67,7 @@ PGconn *
 connectDatabase(const char *dbname, const char *pghost,
 				const char *pgport, const char *pguser,
 				enum trivalue prompt_password, const char *progname,
-				bool echo, bool fail_ok)
+				bool echo, bool fail_ok, bool allow_password_reuse)
 {
 	PGconn	   *conn;
 	static char *password = NULL;
@@ -167,14 +166,14 @@ connectMaintenanceDatabase(const char *maintenance_db,
 	/* If a maintenance database name was specified, just connect to it. */
 	if (maintenance_db)
 		return connectDatabase(maintenance_db, pghost, pgport, pguser,
-							   prompt_password, progname, echo, false);
+							   prompt_password, progname, echo, false, false);
 
 	/* Otherwise, try postgres first and then template1. */
 	conn = connectDatabase("postgres", pghost, pgport, pguser, prompt_password,
-						   progname, echo, true);
+						   progname, echo, true, false);
 	if (!conn)
 		conn = connectDatabase("template1", pghost, pgport, pguser,
-							   prompt_password, progname, echo, false);
+							   prompt_password, progname, echo, false, false);
 
 	return conn;
 }
