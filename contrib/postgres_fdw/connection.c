@@ -20,10 +20,7 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "storage/latch.h"
-<<<<<<< HEAD
 #include "storage/proc.h"
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 #include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
@@ -186,16 +183,10 @@ GetConnection(UserMapping *user, bool will_prep_stmt)
 	 */
 	if (entry->conn == NULL)
 	{
-<<<<<<< HEAD
-		Oid			umoid;
+		ForeignServer *server = GetForeignServer(user->serverid);
 
 		/* Reset all transient state fields, to be sure all are clean */
 		entry->xact_depth = 0;
-=======
-		ForeignServer *server = GetForeignServer(user->serverid);
-
-		entry->xact_depth = 0;	/* just to be sure */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		entry->have_prep_stmt = false;
 		entry->have_error = false;
 		entry->changing_xact_state = false;
@@ -203,19 +194,8 @@ GetConnection(UserMapping *user, bool will_prep_stmt)
 		entry->server_hashvalue =
 			GetSysCacheHashValue1(FOREIGNSERVEROID,
 								  ObjectIdGetDatum(server->serverid));
-		/* Pre-9.6, UserMapping doesn't store its OID, so look it up again */
-		umoid = GetSysCacheOid2(USERMAPPINGUSERSERVER,
-								ObjectIdGetDatum(user->userid),
-								ObjectIdGetDatum(user->serverid));
-		if (!OidIsValid(umoid))
-		{
-			/* Not found for the specific user -- try PUBLIC */
-			umoid = GetSysCacheOid2(USERMAPPINGUSERSERVER,
-									ObjectIdGetDatum(InvalidOid),
-									ObjectIdGetDatum(user->serverid));
-		}
 		entry->mapping_hashvalue =
-			GetSysCacheHashValue1(USERMAPPINGOID, ObjectIdGetDatum(umoid));
+			GetSysCacheHashValue1(USERMAPPINGOID, ObjectIdGetDatum(user->umid));
 
 		/* Now try to make the connection */
 		entry->conn = connect_pg_server(server, user);
@@ -553,11 +533,7 @@ pgfdw_exec_query(PGconn *conn, const char *query)
  *
  * This function offers quick responsiveness by checking for any interruptions.
  *
-<<<<<<< HEAD
- * This function emulates PQexec()'s behavior of returning the last result
-=======
  * This function emulates the PQexec()'s behavior of returning the last result
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
  * when there are many.
  *
  * Caller is responsible for the error handling on the result.
@@ -565,7 +541,6 @@ pgfdw_exec_query(PGconn *conn, const char *query)
 PGresult *
 pgfdw_get_result(PGconn *conn, const char *query)
 {
-<<<<<<< HEAD
 	PGresult   *volatile last_res = NULL;
 
 	/* In what follows, do not leak any PGresults on an error. */
@@ -610,42 +585,6 @@ pgfdw_get_result(PGconn *conn, const char *query)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
-=======
-	PGresult   *last_res = NULL;
-
-	for (;;)
-	{
-		PGresult   *res;
-
-		while (PQisBusy(conn))
-		{
-			int			wc;
-
-			/* Sleep until there's something to do */
-			wc = WaitLatchOrSocket(MyLatch,
-								   WL_LATCH_SET | WL_SOCKET_READABLE,
-								   PQsocket(conn),
-								   -1L);
-			ResetLatch(MyLatch);
-
-			CHECK_FOR_INTERRUPTS();
-
-			/* Data available in socket */
-			if (wc & WL_SOCKET_READABLE)
-			{
-				if (!PQconsumeInput(conn))
-					pgfdw_report_error(ERROR, NULL, conn, false, query);
-			}
-		}
-
-		res = PQgetResult(conn);
-		if (res == NULL)
-			break;				/* query is complete */
-
-		PQclear(last_res);
-		last_res = res;
-	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	return last_res;
 }
@@ -837,33 +776,6 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 					/*
 					 * If a command has been submitted to the remote server by
 					 * using an asynchronous execution function, the command
-<<<<<<< HEAD
-					 * might not have yet completed.  Check to see if a command
-					 * is still being processed by the remote server, and if so,
-					 * request cancellation of the command.
-					 */
-					if (PQtransactionStatus(entry->conn) == PQTRANS_ACTIVE &&
-						!pgfdw_cancel_query(entry->conn))
-					{
-						/* Unable to cancel running query. */
-						abort_cleanup_failure = true;
-					}
-					else if (!pgfdw_exec_cleanup_query(entry->conn,
-													   "ABORT TRANSACTION",
-													   false))
-					{
-						/* Unable to abort remote transaction. */
-						abort_cleanup_failure = true;
-					}
-					else if (entry->have_prep_stmt && entry->have_error &&
-							 !pgfdw_exec_cleanup_query(entry->conn,
-													   "DEALLOCATE ALL",
-													   true))
-					{
-						/* Trouble clearing prepared statements. */
-						abort_cleanup_failure = true;
-					}
-=======
 					 * might not have yet completed.  Check to see if a
 					 * command is still being processed by the remote server,
 					 * and if so, request cancellation of the command.
@@ -890,7 +802,6 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 					if (PQresultStatus(res) != PGRES_COMMAND_OK)
 						pgfdw_report_error(WARNING, res, entry->conn, true,
 										   "ABORT TRANSACTION");
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 					else
 					{
 						entry->have_prep_stmt = false;
@@ -1004,17 +915,6 @@ pgfdw_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 			entry->have_error = true;
 
 			/*
-<<<<<<< HEAD
-			 * If a command has been submitted to the remote server by using an
-			 * asynchronous execution function, the command might not have yet
-			 * completed.  Check to see if a command is still being processed by
-			 * the remote server, and if so, request cancellation of the
-			 * command.
-			 */
-			if (PQtransactionStatus(entry->conn) == PQTRANS_ACTIVE &&
-				!pgfdw_cancel_query(entry->conn))
-				abort_cleanup_failure = true;
-=======
 			 * If a command has been submitted to the remote server by using
 			 * an asynchronous execution function, the command might not have
 			 * yet completed.  Check to see if a command is still being
@@ -1044,7 +944,6 @@ pgfdw_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 			res = PQexec(entry->conn, sql);
 			if (PQresultStatus(res) != PGRES_COMMAND_OK)
 				pgfdw_report_error(WARNING, res, entry->conn, true, sql);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 			else
 			{
 				/* Rollback all remote subtransactions during abort */
