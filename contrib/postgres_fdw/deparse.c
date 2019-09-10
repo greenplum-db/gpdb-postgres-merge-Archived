@@ -822,10 +822,6 @@ deparseSelectSql(List *tlist, List **retrieved_attrs, deparse_expr_cxt *context)
 	 * Construct SELECT list
 	 */
 	appendStringInfoString(buf, "SELECT ");
-<<<<<<< HEAD
-	deparseTargetList(buf, root, baserel->relid, rel, false, attrs_used,
-					  retrieved_attrs);
-=======
 
 	if (foreignrel->reloptkind == RELOPT_JOINREL)
 	{
@@ -850,7 +846,6 @@ deparseSelectSql(List *tlist, List **retrieved_attrs, deparse_expr_cxt *context)
 						  fpinfo->attrs_used, false, retrieved_attrs);
 		heap_close(rel, NoLock);
 	}
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	/*
 	 * Construct FROM clause
@@ -1478,11 +1473,7 @@ deparseReturningList(StringInfo buf, PlannerInfo *root,
 	}
 
 	if (attrs_used != NULL)
-<<<<<<< HEAD
-		deparseTargetList(buf, root, rtindex, rel, true, attrs_used,
-=======
 		deparseTargetList(buf, root, rtindex, rel, true, attrs_used, false,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 						  retrieved_attrs);
 	else
 		*retrieved_attrs = NIL;
