@@ -22,7 +22,7 @@
 static void transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace);
 static void transfer_relfile(FileNameMap *map, const char *suffix, bool vm_must_add_frozenbit);
 
-static bool transfer_relfile_segment(int segno, FileNameMap *map, const char *suffix);
+static bool transfer_relfile_segment(int segno, FileNameMap *map, const char *suffix, bool vm_must_add_frozenbit);
 static void transfer_ao(FileNameMap *map);
 static bool transfer_ao_perFile(const int segno, void *ctx);
 
@@ -206,7 +206,7 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
 	 */
 	for (segno = 0;; segno++)
 	{
-		if (!transfer_relfile_segment(segno, map, type_suffix))
+		if (!transfer_relfile_segment(segno, map, type_suffix, vm_must_add_frozenbit))
 			break;
 	}
 }
@@ -224,12 +224,11 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
  */
 static bool
 transfer_relfile_segment(int segno, FileNameMap *map,
-						 const char *type_suffix)
+						 const char *type_suffix, bool vm_must_add_frozenbit)
 {
 	const char *msg;
 	char		old_file[MAXPGPATH * 3];
 	char		new_file[MAXPGPATH * 3];
-	int			fd;
 	char		extent_suffix[65];
 	struct stat statbuf;
 
@@ -274,7 +273,7 @@ transfer_relfile_segment(int segno, FileNameMap *map,
 
 		/* If file is empty, just return */
 		if (statbuf.st_size == 0)
-			return;
+			return true;
 	}
 
 	unlink(new_file);
@@ -349,7 +348,7 @@ transfer_relfile_segment(int segno, FileNameMap *map,
 static void
 transfer_ao(FileNameMap *map)
 {
-	transfer_relfile_segment(0, map, "");
+	transfer_relfile_segment(0, map, "", false);
 
 	ao_foreach_extent_file(transfer_ao_perFile, map);
 }
@@ -359,7 +358,7 @@ transfer_ao_perFile(const int segno, void *ctx)
 {
 	FileNameMap *map = ctx;
 
-	if (!transfer_relfile_segment(segno, map , ""))
+	if (!transfer_relfile_segment(segno, map , "", false))
 		return false;
 
 	return true;

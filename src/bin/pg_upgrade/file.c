@@ -38,17 +38,12 @@ copyFile(const char *src, const char *dst)
 {
 	report_progress(NULL, FILE_COPY, "Copy \"%s\" to \"%s\"", src, dst);
 
-	if (pageConverter == NULL)
-	{
 #ifndef WIN32
-		if (copy_file(src, dst) == -1)
+	if (copy_file(src, dst) == -1)
 #else
-		if (CopyFile(src, dst, true) == 0)
+	if (CopyFile(src, dst, true) == 0)
 #endif
-			return getErrorText();
-		else
-			return NULL;
-	}
+		return getErrorText();
 	else
 		return NULL;
 }
@@ -67,9 +62,6 @@ const char *
 linkFile(const char *src, const char *dst)
 {
 	report_progress(NULL, FILE_COPY, "Link \"%s\" to \"%s\"", src, dst);
-
-	if (pageConverter != NULL)
-		return "Cannot in-place update this cluster, page-by-page conversion is required";
 
 	if (pg_link_file(src, dst) == -1)
 		return getErrorText();
