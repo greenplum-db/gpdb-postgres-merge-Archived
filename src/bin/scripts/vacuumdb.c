@@ -433,7 +433,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		{
 			conn = connectDatabase(dbname, host, port, username, prompt_password,
 								   progname, echo, false);
-			init_slot(slots + i, conn);
+			init_slot(slots + i, conn, progname);
 		}
 
 	}
