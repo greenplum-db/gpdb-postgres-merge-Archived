@@ -2889,11 +2889,7 @@ _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 	if (ropt->selTypes)
 	{
 		if (strcmp(te->desc, "TABLE") == 0 ||
-<<<<<<< HEAD
 			strcmp(te->desc, "EXTERNAL TABLE") == 0 ||
-			strcmp(te->desc, "FOREIGN TABLE") == 0 ||
-			strcmp(te->desc, "TABLE DATA") == 0)
-=======
 			strcmp(te->desc, "TABLE DATA") == 0 ||
 			strcmp(te->desc, "VIEW") == 0 ||
 			strcmp(te->desc, "FOREIGN TABLE") == 0 ||
@@ -2901,7 +2897,6 @@ _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 			strcmp(te->desc, "MATERIALIZED VIEW DATA") == 0 ||
 			strcmp(te->desc, "SEQUENCE") == 0 ||
 			strcmp(te->desc, "SEQUENCE SET") == 0)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		{
 			if (!ropt->selTable)
 				return 0;
@@ -3043,7 +3038,6 @@ _tocEntryIsACL(TocEntry *te)
 static void
 _doSetFixedOutputState(ArchiveHandle *AH)
 {
-<<<<<<< HEAD
 	/*
 	 * SET gp_default_storage_options GUC to built-in default values (similar
 	 * to resetAOStorageOpts function) to prevent restoring a table into a
@@ -3056,14 +3050,9 @@ _doSetFixedOutputState(ArchiveHandle *AH)
 
 	RestoreOptions *ropt = AH->public.ropt;
 
-	/* Disable statement_timeout since restore is probably slow */
-=======
-	RestoreOptions *ropt = AH->public.ropt;
-
 	/*
 	 * Disable timeouts to allow for slow commands, idle parallel workers, etc
 	 */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	ahprintf(AH, "SET statement_timeout = 0;\n");
 	ahprintf(AH, "SET lock_timeout = 0;\n");
 	ahprintf(AH, "SET idle_in_transaction_session_timeout = 0;\n");
@@ -4794,11 +4783,7 @@ CloneArchive(ArchiveHandle *AH)
 		/* this also sets clone->connection */
 		ConnectDatabase((Archive *) clone, ropt->dbname,
 						ropt->pghost, ropt->pgport, ropt->username,
-<<<<<<< HEAD
 						ropt->promptPassword, false);
-=======
-						ropt->promptPassword);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		/* re-establish fixed state */
 		_doSetFixedOutputState(clone);
@@ -4827,11 +4812,7 @@ CloneArchive(ArchiveHandle *AH)
 
 		/* this also sets clone->connection */
 		ConnectDatabase((Archive *) clone, connstr.data,
-<<<<<<< HEAD
 						pghost, pgport, username, TRI_NO, false);
-=======
-						pghost, pgport, username, TRI_NO);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 		termPQExpBuffer(&connstr);
 		/* setupDumpWorker will fix up connection state */
