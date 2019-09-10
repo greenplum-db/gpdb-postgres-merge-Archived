@@ -313,15 +313,12 @@
 /* Define to 1 if you have the <poll.h> header file. */
 /* #undef HAVE_POLL_H */
 
-<<<<<<< HEAD
 /* Define to 1 if you have the `posix_fallocate' function. */
 /* #undef HAVE_POSIX_FALLOCATE */
 
 /* Define to 1 if you have the POSIX signal interface. */
 /* #undef HAVE_POSIX_SIGNALS */
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 /* Define to 1 if you have the `pstat' function. */
 /* #undef HAVE_PSTAT */
 
@@ -621,11 +618,7 @@
 #define PACKAGE_NAME "Greenplum Database"
 
 /* Define to the full name and version of this package. */
-<<<<<<< HEAD
 #define PACKAGE_STRING "Greenplum Database 7.0.0-alpha"
-=======
-#define PACKAGE_STRING "PostgreSQL 9.6beta4"
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "9.6beta4"
@@ -684,17 +677,15 @@
 /* Define to 1 to build with Bonjour support. (--with-bonjour) */
 /* #undef USE_BONJOUR */
 
-<<<<<<< HEAD
 /* Define to use /dev/urandom for random number generation */
 /* #undef USE_DEV_URANDOM */
 
 /* Define to 1 if "static inline" works without unwanted warnings from
    compilations where static inline functions are defined but not called. */
 #define PG_USE_INLINE 1
-=======
+
 /* Define to 1 to build with BSD Authentication support. (--with-bsd-auth) */
 /* #undef USE_BSD_AUTH */
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 /* Define to 1 if you want 64-bit integer timestamp and interval support.
    (--enable-integer-datetimes) */
