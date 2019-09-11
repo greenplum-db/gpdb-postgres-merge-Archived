@@ -17,7 +17,6 @@ use File::Spec;
 use File::Temp ();
 use IPC::Run;
 use SimpleTee;
-<<<<<<< HEAD
 
 # specify a recent enough version of Test::More  to support the note() function
 use Test::More 0.82;
@@ -32,14 +31,7 @@ our @EXPORT = qw(
   psql
   slurp_dir
   slurp_file
-=======
-use Test::More;
-
-our @EXPORT = qw(
-  slurp_dir
-  slurp_file
   append_to_file
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
   system_or_bail
   system_log
   run_log
@@ -213,13 +205,8 @@ sub tempdir
 	my ($prefix) = @_;
 	$prefix = "tmp_test" unless defined $prefix;
 	return File::Temp::tempdir(
-<<<<<<< HEAD
-		'tmp_testXXXX',
-		DIR => $tmp_check,
-=======
 		$prefix . '_XXXX',
 		DIR     => $tmp_check,
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		CLEANUP => 1);
 }
 
@@ -381,11 +368,7 @@ sub system_or_bail
 {
 	if (system_log(@_) != 0)
 	{
-<<<<<<< HEAD
 		BAIL_OUT("system $_[0] failed: $?");
-=======
-		BAIL_OUT("system $_[0] failed");
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	}
 }
 
@@ -477,13 +460,8 @@ sub command_fails
 sub command_exit_is
 {
 	my ($cmd, $expected, $test_name) = @_;
-<<<<<<< HEAD
-	print("# Running: " . join(" ", @{$cmd}) ."\n");
-	my $h = start $cmd;
-=======
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
 	my $h = IPC::Run::start $cmd;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	$h->finish();
 
 	# On Windows, the exit status of the process is returned directly as the
@@ -493,15 +471,10 @@ sub command_exit_is
 	# assuming the Unix convention, which will always return 0 on Windows as
 	# long as the process was not terminated by an exception. To work around
 	# that, use $h->full_result on Windows instead.
-<<<<<<< HEAD
-	my $result = ($Config{osname} eq "MSWin32") ?
-		($h->full_results)[0] : $h->result(0);
-=======
 	my $result =
 	    ($Config{osname} eq "MSWin32")
 	  ? ($h->full_results)[0]
 	  : $h->result(0);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	is($result, $expected, $test_name);
 }
 
@@ -510,12 +483,8 @@ sub program_help_ok
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
 	print("# Running: $cmd --help\n");
-<<<<<<< HEAD
-	my $result = run [ $cmd, '--help' ], '>', \$stdout, '2>', \$stderr;
-=======
 	my $result = IPC::Run::run [ $cmd, '--help' ], '>', \$stdout, '2>',
 	  \$stderr;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	ok($result, "$cmd --help exit code 0");
 	isnt($stdout, '', "$cmd --help goes to stdout");
 	is($stderr, '', "$cmd --help nothing to stderr");
@@ -526,12 +495,8 @@ sub program_version_ok
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
 	print("# Running: $cmd --version\n");
-<<<<<<< HEAD
-	my $result = run [ $cmd, '--version' ], '>', \$stdout, '2>', \$stderr;
-=======
 	my $result = IPC::Run::run [ $cmd, '--version' ], '>', \$stdout, '2>',
 	  \$stderr;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	ok($result, "$cmd --version exit code 0");
 	isnt($stdout, '', "$cmd --version goes to stdout");
 	is($stderr, '', "$cmd --version nothing to stderr");
@@ -542,14 +507,9 @@ sub program_options_handling_ok
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
 	print("# Running: $cmd --not-a-valid-option\n");
-<<<<<<< HEAD
-	my $result = run [ $cmd, '--not-a-valid-option' ], '>', \$stdout, '2>',
-	  \$stderr;
-=======
 	my $result = IPC::Run::run [ $cmd, '--not-a-valid-option' ], '>',
 	  \$stdout,
 	  '2>', \$stderr;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	ok(!$result, "$cmd with invalid option nonzero exit code");
 	isnt($stderr, '', "$cmd with invalid option prints error message");
 }
@@ -559,11 +519,7 @@ sub command_like
 	my ($cmd, $expected_stdout, $test_name) = @_;
 	my ($stdout, $stderr);
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
-<<<<<<< HEAD
-	my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
-=======
 	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	ok($result, "@$cmd exit code 0");
 	is($stderr, '', "@$cmd no stderr");
 	like($stdout, $expected_stdout, "$test_name: matches");
