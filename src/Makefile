@@ -12,6 +12,9 @@ subdir = src
 top_builddir = ..
 include Makefile.global
 
+# In PostgreSQL, libpqwalreceiver is linked into a separate shared library.
+# In GPDB, it's linked as a normal object, check src/backend/replication/Makefile.
+# Remove backend/replication/libpqwalreceiver from SUBDIRS here.
 SUBDIRS = \
 	common \
 	port \
@@ -21,9 +24,6 @@ SUBDIRS = \
 	backend/snowball \
 	include \
 	interfaces \
-	# In PostgreSQL, libpqwalreceiver is linked into a separate shared library.
-	# In GPDB, it's linked as a normal object.
-	# backend/replication/libpqwalreceiver
 	fe_utils \
 	bin \
 	pl \
