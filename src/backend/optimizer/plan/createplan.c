@@ -7169,6 +7169,8 @@ make_agg(List *tlist, List *qual,
 	plan->extParam = bms_copy(lefttree->extParam);
 	plan->allParam = bms_copy(lefttree->allParam);
 
+	plan->flow = pull_up_Flow(plan, lefttree);
+
 	return node;
 }
 
