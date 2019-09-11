@@ -1801,7 +1801,7 @@ BaseBackup(void)
 	 */
 	if (replication_slot)
 	{
-		CreateReplicationSlot(conn, replication_slot, NULL, NULL, true);
+		CreateReplicationSlot(conn, replication_slot, NULL, true, false);
 	}
 
 	/*
