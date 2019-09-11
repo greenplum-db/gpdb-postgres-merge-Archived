@@ -36,8 +36,6 @@
 #endif
 
 
-extern char *formatPGVersionNumber(int version_number, bool include_minor,
-					  char *buf, size_t buflen);
 extern bool buildACLCommands(const char *name, const char *subname, const char *nspname,
 				 const char *type, const char *acls, const char *racls,
 				 const char *owner, const char *prefix, int remoteVersion,

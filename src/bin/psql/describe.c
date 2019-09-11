@@ -1623,6 +1623,7 @@ describeOneTableDetails(const char *schemaname,
 			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
 						  "c.relhastriggers, false, false, c.relhasoids, "
 						  "%s, c.reltablespace\n"
+						  ", %s as relstorage "
 						  "FROM pg_catalog.pg_class c\n "
 		   "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
 						  "WHERE c.oid = '%s';",
@@ -1640,6 +1641,7 @@ describeOneTableDetails(const char *schemaname,
 					  "SELECT relchecks, relkind, relhasindex, relhasrules, "
 						  "reltriggers <> 0, false, false, relhasoids, "
 						  "%s, reltablespace\n"
+						  ", %s as relstorage "
 						  "FROM pg_catalog.pg_class WHERE oid = '%s';",
 						  (verbose ?
 					 "pg_catalog.array_to_string(reloptions, E', ')" : "''"),

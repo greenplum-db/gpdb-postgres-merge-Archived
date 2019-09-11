@@ -23,9 +23,9 @@
 #include "settings.h"
 #include "command.h"
 #include "copy.h"
-#include "dumputils.h"
 #include "crosstabview.h"
 #include "fe_utils/mbprint.h"
+#include "fe_utils/string_utils.h"
 
 
 static bool ExecQueryUsingCursor(const char *query, double *elapsed_msec);

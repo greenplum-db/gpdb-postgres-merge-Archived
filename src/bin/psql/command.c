@@ -408,7 +408,7 @@ exec_command(const char *cmd,
 			case '\0':
 			case '+':
 			case 'S':  /* GPDB:  This is a change from old behavior: We used to show just system tables */
- 				if (pattern)
+				if (pattern)
 					success = describeTableDetails(pattern, show_verbose, show_system);
 				else
 					/* standard listing of interesting things */
@@ -485,9 +485,9 @@ exec_command(const char *cmd,
 			case 'm':
 			case 'i':
 			case 's':
-			case 'E':	/* PostgreSQL use dx for extension, change to dE for foreign table */
-            /* case 'S':  // GPDB:  We used to show just system tables for this */
-			case 'P':   /* GPDB: Parent-only tables, no children */
+			case 'E':  /* PostgreSQL use dx for extension, change to dE for foreign table */
+			/* case 'S':  // GPDB:  We used to show just system tables for this */
+			case 'P':  /* GPDB: Parent-only tables, no children */
 				success = listTables(&cmd[1], pattern, show_verbose, show_system);
 				break;
 			case 'r':
@@ -1223,7 +1223,8 @@ exec_command(const char *cmd,
 
 			for (i = 0; my_list[i] != NULL; i++)
 			{
-				char   *val = pset_value_string(my_list[i], &pset.popt);
+				char	   *val = pset_value_string(my_list[i], &pset.popt);
+
 				printf("%-24s %s\n", my_list[i], val);
 				free(val);
 			}
@@ -1839,8 +1840,7 @@ do_connect(enum trivalue reuse_previous_specification,
 	/*
 	 * Any change in the parameters read above makes us discard the password.
 	 * We also discard it if we're to use a conninfo rather than the
-	 * positional syntax.  Note that currently, PQhost() can return NULL for a
-	 * default Unix-socket connection, so we have to allow NULL for host.
+	 * positional syntax.
 	 */
 	if (has_connection_string)
 		keep_password = false;
@@ -2061,7 +2061,6 @@ connection_warnings(bool in_startup)
 
 			/* Try to get full text form, might include "devel" etc */
 			server_version = PQparameterStatus(pset.db, "server_version");
-			/* Otherwise fall back on pset.sversion */
 			if (!server_version)
 			{
 				formatPGVersionNumber(pset.sversion, true,
