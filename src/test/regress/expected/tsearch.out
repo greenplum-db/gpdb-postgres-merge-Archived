@@ -1605,10 +1605,6 @@ SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
      1
 (1 row)
 
-<<<<<<< HEAD
-COPY test_tsvector TO '/tmp/test_tsvector.txt';
-COPY test_tsvector FROM '/tmp/test_tsvector.txt';
-=======
 -- test finding items in GIN's pending list
 create temp table pendtest (ts tsvector);
 create index pendtest_idx on pendtest using gin(ts);
@@ -1656,4 +1652,5 @@ select * from phrase_index_test where fts @@ phraseto_tsquery('english', 'fat ca
 (1 row)
 
 set enable_seqscan = on;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+COPY test_tsvector TO '/tmp/test_tsvector.txt';
+COPY test_tsvector FROM '/tmp/test_tsvector.txt';

@@ -290,7 +290,6 @@ create index on test_table (a,b);
 set enable_sort = off;
 explain (costs off)
 select a,b from test_table where (a,b) > ('a','a') order by a,b;
-<<<<<<< HEAD
                           QUERY PLAN                          
 --------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -299,13 +298,6 @@ select a,b from test_table where (a,b) > ('a','a') order by a,b;
          Index Cond: (ROW(a, b) > ROW('a'::text, 'a'::text))
  Optimizer: Postgres query optimizer
 (5 rows)
-=======
-                       QUERY PLAN                       
---------------------------------------------------------
- Index Only Scan using test_table_a_b_idx on test_table
-   Index Cond: (ROW(a, b) > ROW('a'::text, 'a'::text))
-(2 rows)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select a,b from test_table where (a,b) > ('a','a') order by a,b;
  a | b 
@@ -717,7 +709,6 @@ with r(a,b) as
   (values (1,row(1,2)), (1,row(null,null)), (1,null),
           (null,row(1,2)), (null,row(null,null)), (null,null) )
 select r, r is null as isnull, r is not null as isnotnull from r;
-<<<<<<< HEAD
                        QUERY PLAN                       
 --------------------------------------------------------
  Subquery Scan on r
@@ -725,15 +716,6 @@ select r, r is null as isnull, r is not null as isnotnull from r;
    ->  Values Scan on "*VALUES*"
          Output: "*VALUES*".column1, "*VALUES*".column2
  Optimizer: Postgres query optimizer
-=======
-                        QUERY PLAN                        
-----------------------------------------------------------
- CTE Scan on r
-   Output: r.*, (r.* IS NULL), (r.* IS NOT NULL)
-   CTE r
-     ->  Values Scan on "*VALUES*"
-           Output: "*VALUES*".column1, "*VALUES*".column2
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 (5 rows)
 
 with r(a,b) as

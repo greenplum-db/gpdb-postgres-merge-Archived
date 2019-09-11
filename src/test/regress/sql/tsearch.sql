@@ -447,17 +447,14 @@ SELECT ts_rewrite( 'moscow', 'SELECT keyword, sample FROM test_tsquery');
 SELECT ts_rewrite( 'moscow & hotel', 'SELECT keyword, sample FROM test_tsquery');
 SELECT ts_rewrite( 'bar & new & qq & foo & york', 'SELECT keyword, sample FROM test_tsquery');
 
-<<<<<<< HEAD
--- Check empty substitution
-SELECT ts_rewrite(to_tsquery('5 & (6 | 5)'), to_tsquery('5'), to_tsquery(''));
-SELECT ts_rewrite(to_tsquery('!5'), to_tsquery('5'), to_tsquery(''));
-=======
 SELECT ts_rewrite('1 & (2 <-> 3)', 'SELECT keyword, sample FROM test_tsquery'::text );
 SELECT ts_rewrite('1 & (2 <2> 3)', 'SELECT keyword, sample FROM test_tsquery'::text );
 SELECT ts_rewrite('5 <-> (1 & (2 <-> 3))', 'SELECT keyword, sample FROM test_tsquery'::text );
 SELECT ts_rewrite('5 <-> (6 | 8)', 'SELECT keyword, sample FROM test_tsquery'::text );
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+-- Check empty substitution
+SELECT ts_rewrite(to_tsquery('5 & (6 | 5)'), to_tsquery('5'), to_tsquery(''));
+SELECT ts_rewrite(to_tsquery('!5'), to_tsquery('5'), to_tsquery(''));
 
 SELECT keyword FROM test_tsquery WHERE keyword @> 'new';
 SELECT keyword FROM test_tsquery WHERE keyword @> 'moscow';
@@ -520,10 +517,6 @@ INSERT INTO test_tsvector (t) VALUES ('345 qwerty');
 
 SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
 
-<<<<<<< HEAD
-COPY test_tsvector TO '/tmp/test_tsvector.txt';
-COPY test_tsvector FROM '/tmp/test_tsvector.txt';
-=======
 -- test finding items in GIN's pending list
 create temp table pendtest (ts tsvector);
 create index pendtest_idx on pendtest using gin(ts);
@@ -543,4 +536,6 @@ create index phrase_index_test_idx on phrase_index_test using gin(fts);
 set enable_seqscan = off;
 select * from phrase_index_test where fts @@ phraseto_tsquery('english', 'fat cat');
 set enable_seqscan = on;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+
+COPY test_tsvector TO '/tmp/test_tsvector.txt';
+COPY test_tsvector FROM '/tmp/test_tsvector.txt';
