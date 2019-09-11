@@ -2236,8 +2236,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST2("GROUP", "ROLE");
 
 /* CREATE/DROP RESOURCE GROUP/QUEUE */
-	else if ((pg_strcasecmp(prev2_wd, "CREATE") == 0 || pg_strcasecmp(prev2_wd, "DROP") == 0) &&
-			 pg_strcasecmp(prev_wd, "RESOURCE") == 0)
+	else if (Matches2("CREATE|DROP", "RESOURCE"))
 	 {
 		static const char *const list_CREATERESOURCEGROUP[] =
 		{"GROUP", "QUEUE", NULL};
@@ -2245,20 +2244,12 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_CREATERESOURCEGROUP);
 	 }
 	/* CREATE/DROP RESOURCE GROUP */
-	else if ((pg_strcasecmp(prev3_wd, "CREATE") == 0 ||
-			  pg_strcasecmp(prev3_wd, "DROP") == 0) &&
-			 pg_strcasecmp(prev2_wd, "RESOURCE") == 0 &&
-			 pg_strcasecmp(prev_wd, "GROUP") == 0)
+	else if (TailMatches3("CREATE|DROP", "RESOURCE", "GROUP"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_resgroups);
 	/* CREATE RESOURCE GROUP <name> */
-	else if (pg_strcasecmp(prev4_wd, "CREATE") == 0 &&
-			 pg_strcasecmp(prev3_wd, "RESOURCE") == 0 &&
-			 pg_strcasecmp(prev2_wd, "GROUP") == 0)
+	else if (TailMatches4("CREATE|DROP", "RESOURCE", "GROUP", MatchAny))
 		COMPLETE_WITH_CONST("WITH (");
-	else if (pg_strcasecmp(prev5_wd, "RESOURCE") == 0 &&
-			 pg_strcasecmp(prev4_wd, "GROUP") == 0 &&
-			 pg_strcasecmp(prev2_wd, "WITH") == 0 &&
-			 pg_strcasecmp(prev_wd, "(") == 0)
+	else if (TailMatches5("RESOURCE", "GROUP", MatchAny, "WITH", "("))
 	{
 		static const char *const list_CREATERESOURCEGROUP[] =
 		{"CONCURRENCY", "CPU_RATE_LIMIT", "MEMORY_LIMIT", "MEMORY_REDZONE_LIMIT", NULL};
