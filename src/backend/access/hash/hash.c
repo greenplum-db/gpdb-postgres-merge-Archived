@@ -35,8 +35,10 @@ typedef struct
 	double		indtuples;		/* # tuples accepted into index */
 } HashBuildState;
 
+/* GPDB: This takes an ItemPointer, rather than HeapTuple, because this is also
+ * used with AO/AOCO tables */
 static void hashbuildCallback(Relation index,
-				  HeapTuple htup,
+				  ItemPointer tupleId,
 				  Datum *values,
 				  bool *isnull,
 				  bool tupleIsAlive,
@@ -184,7 +186,7 @@ hashbuildempty(Relation index)
  */
 static void
 hashbuildCallback(Relation index,
-				  HeapTuple htup,
+				  ItemPointer tupleId,
 				  Datum *values,
 				  bool *isnull,
 				  bool tupleIsAlive pg_attribute_unused(),
@@ -203,14 +205,14 @@ hashbuildCallback(Relation index,
 
 	/* Either spool the tuple for sorting, or just put it into the index */
 	if (buildstate->spool)
-		_h_spool(buildstate->spool, &htup->t_self,
+		_h_spool(buildstate->spool, tupleId,
 				 index_values, index_isnull);
 	else
 	{
 		/* form an index tuple and point it at the heap tuple */
 		itup = index_form_tuple(RelationGetDescr(index),
 								index_values, index_isnull);
-		itup->t_tid = htup->t_self;
+		itup->t_tid = *tupleId;
 		_hash_doinsert(index, itup);
 		pfree(itup);
 	}
