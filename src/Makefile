@@ -21,7 +21,9 @@ SUBDIRS = \
 	backend/snowball \
 	include \
 	interfaces \
-	backend/replication/libpqwalreceiver \
+	# In PostgreSQL, libpqwalreceiver is linked into a separate shared library.
+	# In GPDB, it's linked as a normal object.
+	# backend/replication/libpqwalreceiver
 	fe_utils \
 	bin \
 	pl \
