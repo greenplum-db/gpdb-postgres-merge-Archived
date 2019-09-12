@@ -976,7 +976,10 @@ ExecDelete(ItemPointer tupleid,
 	}
 	else if (resultRelInfo->ri_FdwRoutine)
 	{
+#if 0
+		/* See comment regarding t_tableOid bellow */
 		HeapTuple	tuple;
+#endif
 
 		/*
 		 * delete from foreign table: let the FDW do it

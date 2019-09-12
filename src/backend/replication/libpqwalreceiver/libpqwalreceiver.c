@@ -64,7 +64,10 @@ static void libpqrcv_send(const char *buffer, int nbytes);
 static void libpqrcv_disconnect(void);
 
 /* Prototypes for private functions */
+#ifdef NOT_USED
+/* GPDB: see comment in function definition */
 static bool libpq_select(int timeout_ms);
+#endif
 static PGresult *libpqrcv_PQexec(const char *query);
 static PGresult *libpqrcv_PQgetResult(PGconn *streamConn);
 
@@ -372,6 +375,13 @@ libpqrcv_readtimelinehistoryfile(TimeLineID tli,
 	PQclear(res);
 }
 
+#ifdef NOT_USED
+/* GPDB: The patch that introduced synchronous_commit = 'remote_apply'
+ * (314cbfc5da) removed the final use of libpq_select() in our side. We had
+ * backported upstream a1a789eb5a which had refactored other places of its use.
+ * However in upstream, commit 597a87ccc9a in v10 removes the function
+ * completely. Disable until we incomporate that upstream commit.
+ */
 /*
  * Wait until we can read WAL stream, or timeout.
  *
@@ -432,6 +442,7 @@ libpq_select(int timeout_ms)
 				 errmsg("select() failed: %m")));
 	return true;
 }
+#endif /* NOT_USED */
 
 /*
  * Send a query and wait for the results by using the asynchronous libpq
