@@ -1788,8 +1788,8 @@ scanPendingInsert(IndexScanDesc scan, TIDBitmap *tbm, int64 *ntids)
 
 #define GinIsVoidRes(s)		( ((GinScanOpaque) scan->opaque)->isVoidRes )
 
-int64
-gingetbitmap(IndexScanDesc scan, TIDBitmap *n)
+Node *
+gingetbitmap(IndexScanDesc scan, Node *n)
 {
 
 	TIDBitmap  *tbm;

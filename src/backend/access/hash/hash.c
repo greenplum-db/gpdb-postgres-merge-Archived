@@ -367,12 +367,26 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 /*
  * hashgetbitmap() -- get all tuples at once
  */
-int64
-hashgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
+Node *
+hashgetbitmap(IndexScanDesc scan, Node *n)
 {
+	TIDBitmap  *tbm;
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	bool		res;
-	int64		ntids = 0;
+
+	if (n == NULL)
+	{
+		/* XXX should we use less than work_mem for this? */
+		tbm = tbm_create(work_mem * 1024L);
+	}
+	else if (!IsA(n, TIDBitmap))
+	{
+		elog(ERROR, "non hash bitmap");
+	}
+	else
+	{
+		tbm = (TIDBitmap *)n;
+	}
 
 	res = _hash_first(scan, ForwardScanDirection);
 
@@ -400,13 +414,12 @@ hashgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 		{
 			/* Note we mark the tuple ID as requiring recheck */
 			tbm_add_tuples(tbm, &(so->hashso_heappos), 1, true);
-			ntids++;
 		}
 
 		res = _hash_next(scan, ForwardScanDirection);
 	}
 
-	return ntids;
+	return (Node *)tbm;
 }
 
 

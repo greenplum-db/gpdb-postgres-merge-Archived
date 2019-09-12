@@ -252,7 +252,7 @@ extern bool hashinsert(Relation rel, Datum *values, bool *isnull,
 		   ItemPointer ht_ctid, Relation heapRel,
 		   IndexUniqueCheck checkUnique);
 extern bool hashgettuple(IndexScanDesc scan, ScanDirection dir);
-extern int64 hashgetbitmap(IndexScanDesc scan, TIDBitmap *tbm);
+extern Node *hashgetbitmap(IndexScanDesc scan, Node *tbm);
 extern IndexScanDesc hashbeginscan(Relation rel, int nkeys, int norderbys);
 extern void hashrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 		   ScanKey orderbys, int norderbys);

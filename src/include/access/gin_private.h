@@ -878,7 +878,7 @@ extern void ginNewScanKey(IndexScanDesc scan);
 extern void ginFreeScanKeys(GinScanOpaque so);
 
 /* ginget.c */
-extern int64 gingetbitmap(IndexScanDesc scan, TIDBitmap *tbm);
+extern Node *gingetbitmap(IndexScanDesc scan, Node *tbm);
 
 /* ginfast.c */
 extern Datum gin_clean_pending_list(PG_FUNCTION_ARGS);
