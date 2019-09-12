@@ -287,8 +287,8 @@ ConnectDatabase(Archive *AHX,
 	 */
 	do
 	{
-		const char *keywords[7];
-		const char *values[7];
+		const char *keywords[8];
+		const char *values[8];
 
 		keywords[0] = "host";
 		values[0] = pghost;
