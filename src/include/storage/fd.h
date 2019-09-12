@@ -82,7 +82,7 @@ extern int	FileSync(File file);
 extern int64 FileSeek(File file, int64 offset, int whence);
 extern int64 FileNonVirtualCurSeek(File file);
 extern int	FileTruncate(File file, int64 offset);
-extern void FileWriteback(File file, int64 offset, int64 nbytes);
+extern void FileWriteback(File file, off_t offset, off_t nbytes);
 extern char *FilePathName(File file);
 extern int	FileGetRawDesc(File file);
 extern int	FileGetRawFlags(File file);
