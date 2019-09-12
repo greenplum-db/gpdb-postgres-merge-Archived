@@ -20591,6 +20591,9 @@ char *alterTableCmdString(AlterTableType subtype)
 			cmdstring = pstrdup("drop a constraint from");
 			break;
 
+		case AT_ReAddComment:
+			break;
+
 		case AT_SetLogged:
 		case AT_SetUnLogged:
 			cmdstring = pstrdup("alter the WAL logging status of");
@@ -20598,6 +20601,8 @@ char *alterTableCmdString(AlterTableType subtype)
 
 		case AT_EnableRowSecurity:
 		case AT_DisableRowSecurity:
+		case AT_ForceRowSecurity:
+		case AT_NoForceRowSecurity:
 			cmdstring = pstrdup("alter the row security of");
 			break;
 			
