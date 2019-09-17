@@ -380,12 +380,16 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 * time and execution time, so don't generate a parallel plan if we're in
 	 * serializable mode.
 	 */
-	glob->parallelModeOK = (cursorOptions & CURSOR_OPT_PARALLEL_OK) != 0 &&
-		IsUnderPostmaster && dynamic_shared_memory_type != DSM_IMPL_NONE &&
-		parse->commandType == CMD_SELECT && !parse->hasModifyingCTE &&
-		parse->utilityStmt == NULL && max_parallel_workers_per_gather > 0 &&
-		!IsParallelWorker() && !IsolationIsSerializable() &&
-		!has_parallel_hazard((Node *) parse, true);
+	/* GPDB_96_MERGE_FIXME: disable parallel workers for now */
+	glob->parallelModeOK = false;
+	/*
+	 * glob->parallelModeOK = (cursorOptions & CURSOR_OPT_PARALLEL_OK) != 0 &&
+	 *         IsUnderPostmaster && dynamic_shared_memory_type != DSM_IMPL_NONE &&
+	 *         parse->commandType == CMD_SELECT && !parse->hasModifyingCTE &&
+	 *         parse->utilityStmt == NULL && max_parallel_workers_per_gather > 0 &&
+	 *         !IsParallelWorker() && !IsolationIsSerializable() &&
+	 *         !has_parallel_hazard((Node *) parse, true);
+	 */
 
 	/*
 	 * glob->parallelModeNeeded should tell us whether it's necessary to

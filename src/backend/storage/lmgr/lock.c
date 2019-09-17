@@ -1491,7 +1491,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 	}
 
 	/*
-	 * GPDB_MERGE96_FIXME:
+	 * GPDB_96_MERGE_FIXME:
 	 * We do not support parallel execution yet, so it is fine just
 	 * handle mpp session and single process separetelly.
 	 * 
