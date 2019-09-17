@@ -66,10 +66,10 @@ SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
 (1 row)
 
 -- check that default_tablespace doesn't affect ALTER TABLE index rebuilds
-CREATE TABLE testschema.test_default_tab(id bigint) TABLESPACE testspace;
+CREATE TABLE testschema.test_default_tab(id bigint) TABLESPACE regress_tblspace;
 INSERT INTO testschema.test_default_tab VALUES (1);
 CREATE INDEX test_index1 on testschema.test_default_tab (id);
-CREATE INDEX test_index2 on testschema.test_default_tab (id) TABLESPACE testspace;
+CREATE INDEX test_index2 on testschema.test_default_tab (id) TABLESPACE regress_tblspace;
 \d testschema.test_index1
 Index "testschema.test_index1"
  Column |  Type  | Definition 
@@ -83,10 +83,10 @@ Index "testschema.test_index2"
 --------+--------+------------
  id     | bigint | id
 btree, for table "testschema.test_default_tab"
-Tablespace: "testspace"
+Tablespace: "regress_tblspace"
 
 -- use a custom tablespace for default_tablespace
-SET default_tablespace TO testspace;
+SET default_tablespace TO regress_tblspace;
 -- tablespace should not change if no rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
 ERROR:  cannot alter indexed column
@@ -104,7 +104,7 @@ Index "testschema.test_index2"
 --------+--------+------------
  id     | bigint | id
 btree, for table "testschema.test_default_tab"
-Tablespace: "testspace"
+Tablespace: "regress_tblspace"
 
 ANALYZE testschema.test_default_tab;
 SELECT * FROM testschema.test_default_tab;
@@ -130,7 +130,7 @@ Index "testschema.test_index2"
 --------+--------+------------
  id     | bigint | id
 btree, for table "testschema.test_default_tab"
-Tablespace: "testspace"
+Tablespace: "regress_tblspace"
 
 ANALYZE testschema.test_default_tab;
 SELECT * FROM testschema.test_default_tab;
@@ -158,7 +158,7 @@ Index "testschema.test_index2"
 --------+--------+------------
  id     | bigint | id
 btree, for table "testschema.test_default_tab"
-Tablespace: "testspace"
+Tablespace: "regress_tblspace"
 
 -- tablespace should not change even if there is an index rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
@@ -177,7 +177,7 @@ Index "testschema.test_index2"
 --------+--------+------------
  id     | bigint | id
 btree, for table "testschema.test_default_tab"
-Tablespace: "testspace"
+Tablespace: "regress_tblspace"
 
 DROP TABLE testschema.test_default_tab;
 -- let's try moving a table from one place to another
@@ -217,6 +217,8 @@ SET SESSION ROLE regress_tablespace_user2;
 CREATE TABLE tablespace_table (i int) TABLESPACE regress_tblspace; -- fail
 ERROR:  permission denied for tablespace regress_tblspace
 ALTER TABLE testschema.tablespace_acl ALTER c TYPE bigint;
+ERROR:  cannot alter indexed column
+HINT:  DROP the index first, and recreate it after the ALTER
 RESET ROLE;
 ALTER TABLESPACE regress_tblspace RENAME TO regress_tblspace_renamed;
 -- Test that default_tablespace GUC is honored even after gang reset.
@@ -247,7 +249,6 @@ WHERE c.reltablespace = t.oid and c.relname = 'tablespace_table1';
  regress_tblspace_renamed
  regress_tblspace_renamed
  regress_tblspace_renamed
-
 (3 rows)
 
 ALTER TABLE ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
