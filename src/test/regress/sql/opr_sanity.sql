@@ -1255,14 +1255,6 @@ FROM pg_amproc as p1
 WHERE p1.amprocfamily = 0 OR p1.amproclefttype = 0 OR p1.amprocrighttype = 0
     OR p1.amprocnum < 1 OR p1.amproc = 0;
 
-<<<<<<< HEAD
--- Cross-check amprocnum index against parent AM
-
-SELECT p1.amprocfamily, p1.amprocnum, p2.oid, p2.amname
-FROM pg_amproc AS p1, pg_am AS p2, pg_opfamily AS p3
-WHERE p1.amprocfamily = p3.oid AND p3.opfmethod = p2.oid AND
-    p1.amprocnum > p2.amsupport;
-
 -- Detect missing pg_amproc entries: should have as many support functions
 -- as AM expects for each datatype combination supported by the opfamily.
 
@@ -1387,8 +1379,6 @@ WHERE p3.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'spgist')
                OR proargtypes[1] != 'internal'::regtype
           ELSE true END);
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 -- Support routines that are primary members of opfamilies must be immutable
 -- (else it suggests that the index ordering isn't fixed).  But cross-type
 -- members need only be stable, since they are just shorthands
@@ -1406,7 +1396,6 @@ WHERE p1.amproc = p2.oid AND
     p1.amproclefttype != p1.amprocrighttype AND
     p2.provolatile = 'v';
 
-<<<<<<< HEAD
 -- Check for oid collisions between pg_proc/pg_type/pg_class
 SELECT *
 FROM
@@ -1418,8 +1407,6 @@ FROM
          select oid, 'pg_class' as catalgo, relname as name from pg_class) cats
   ) cat_counts
 WHERE oid_count > 1;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- **************** pg_index ****************
 

@@ -1716,9 +1716,15 @@ WHERE p1.oid != p2.oid AND
 -- Ask access methods to validate opclasses
 -- (this replaces a lot of SQL-level checks that used to be done in this file)
 SELECT oid, opcname FROM pg_opclass WHERE NOT amvalidate(oid);
- oid | opcname 
------+---------
-(0 rows)
+INFO:  hash operator family "cdbhash_text_ops" is missing operator(s) for types character varying and character varying
+INFO:  hash operator family "cdbhash_text_ops" is missing cross-type operator(s)
+INFO:  hash operator family "cdbhash_text_ops" is missing operator(s) for types character varying and character varying
+INFO:  hash operator family "cdbhash_text_ops" is missing cross-type operator(s)
+  oid  |       opcname       
+-------+---------------------
+ 10203 | cdbhash_text_ops
+ 10204 | cdbhash_varchar_ops
+(2 rows)
 
 -- **************** pg_am ****************
 -- Look for illegal values in pg_am fields
@@ -1891,7 +1897,6 @@ ORDER BY 1, 2, 3;
        4000 |           15 | >
        4000 |           16 | @>
        4000 |           18 | =
-<<<<<<< HEAD
        7013 |            1 | <
        7013 |            1 | ~<~
        7013 |            2 | <=
@@ -1901,10 +1906,7 @@ ORDER BY 1, 2, 3;
        7013 |            4 | ~>=~
        7013 |            5 | >
        7013 |            5 | ~>~
-(121 rows)
-=======
-(112 rows)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+(125 rows)
 
 -- Check that all opclass search operators have selectivity estimators.
 -- This is not absolutely required, but it seems a reasonable thing
@@ -1973,16 +1975,6 @@ WHERE p1.amprocfamily = 0 OR p1.amproclefttype = 0 OR p1.amprocrighttype = 0
     OR p1.amprocnum < 1 OR p1.amproc = 0;
  amprocfamily | amprocnum 
 --------------+-----------
-(0 rows)
-
-<<<<<<< HEAD
--- Cross-check amprocnum index against parent AM
-SELECT p1.amprocfamily, p1.amprocnum, p2.oid, p2.amname
-FROM pg_amproc AS p1, pg_am AS p2, pg_opfamily AS p3
-WHERE p1.amprocfamily = p3.oid AND p3.opfmethod = p2.oid AND
-    p1.amprocnum > p2.amsupport;
- amprocfamily | amprocnum | oid | amname 
---------------+-----------+-----+--------
 (0 rows)
 
 -- Detect missing pg_amproc entries: should have as many support functions
@@ -2127,8 +2119,6 @@ WHERE p3.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'spgist')
 --------------+-----------+-----+---------+---------
 (0 rows)
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 -- Support routines that are primary members of opfamilies must be immutable
 -- (else it suggests that the index ordering isn't fixed).  But cross-type
 -- members need only be stable, since they are just shorthands
