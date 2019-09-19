@@ -154,6 +154,12 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
  *
  * Returns a slot holding the result tuple
  */
+/*
+ * GPDB_MERGE96_FIXME:
+ * So far, `insert into tbl values ... returning ...` dose not support 
+ * in gpdb. Since the returning execute in segment and master can not 
+ * collect it.
+ */
 static TupleTableSlot *
 ExecProcessReturning(ResultRelInfo *resultRelInfo,
 					 TupleTableSlot *tupleSlot,
