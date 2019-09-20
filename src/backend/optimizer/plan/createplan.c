@@ -319,7 +319,14 @@ create_plan(PlannerInfo *root, Path *path)
 		apply_tlist_labeling(plan->targetlist, root->processed_tlist);
 
 	/* Decorate the top node of the plan with a Flow node. */
-	plan->flow = cdbpathtoplan_create_flow(root,
+	/*
+	 * ModifyTable's flow was set by adjust_modifytable_flow(), which did
+	 * most of the effort of figuring out where a ModifyTable runs.
+	 *
+	 * GPDB_96_MERGE_FIXME: am I doing this right? please kindly review this, thanks
+	 */
+	if (!IsA(plan, ModifyTable))
+		plan->flow = cdbpathtoplan_create_flow(root,
 										   path->locus,
 										   path->parent ? path->parent->relids
 										   : NULL,
@@ -7661,7 +7668,7 @@ make_modifytable(PlannerInfo *root,
 	List	   *fdw_private_list;
 	Bitmapset  *direct_modify_plans;
 	ListCell   *lc;
-	int         i;
+	int			i;
 
 	Assert(list_length(resultRelations) == list_length(subplans));
 	Assert(withCheckOptionLists == NIL ||
@@ -7680,7 +7687,7 @@ make_modifytable(PlannerInfo *root,
 	node->canSetTag = canSetTag;
 	node->nominalRelation = nominalRelation;
 	node->resultRelations = resultRelations;
-	node->resultRelIndex = -1;  /* will be set correctly in setrefs.c */
+	node->resultRelIndex = -1;	/* will be set correctly in setrefs.c */
 	node->plans = subplans;
 	if (!onconflict)
 	{
@@ -7719,15 +7726,15 @@ make_modifytable(PlannerInfo *root,
 	adjust_modifytable_flow(root, node, is_split_updates);
 
 	/*
-     * For each result relation that is a foreign table, allow the FDW to
-     * construct private plan data, and accumulate it all into a list.
-     */
+	 * For each result relation that is a foreign table, allow the FDW to
+	 * construct private plan data, and accumulate it all into a list.
+	 */
 	fdw_private_list = NIL;
 	direct_modify_plans = NULL;
 	i = 0;
 	foreach(lc, resultRelations)
 	{
-		Index       rti = lfirst_int(lc);
+		Index		rti = lfirst_int(lc);
 		FdwRoutine *fdwroutine;
 		List	   *fdw_private;
 		bool		direct_modify;
@@ -8165,10 +8172,9 @@ is_projection_capable_path(Path *path)
 	return true;
 }
 
-
 /*
  * is_projection_capable_plan
- *		Check whether a given Path node is able to do projection.
+ *		Check whether a given Plan node is able to do projection.
  *
  * GPDB_96_MERGE_FIXME: once we're done with "pathifying" all the GPDB
  * code, this shouldn't be needed anymore.
@@ -8187,13 +8193,11 @@ is_projection_capable_plan(Plan *plan)
 		case T_LockRows:
 		case T_Limit:
 		case T_ModifyTable:
+		case T_Append:
 		case T_MergeAppend:
 		case T_RecursiveUnion:
 		case T_Motion:
 		case T_ShareInputScan:
-			return false;
-		case T_Append:
-
 			return false;
 		default:
 			break;
