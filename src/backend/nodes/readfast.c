@@ -1756,6 +1756,18 @@ _readCreateTableSpaceStmt(void)
 	READ_DONE();
 }
 
+static CreateAmStmt *
+_readCreateAmStmt()
+{
+	READ_LOCALS(CreateAmStmt);
+
+	READ_STRING_FIELD(amname);
+	READ_NODE_FIELD(handler_name);
+	READ_INT_FIELD(amtype);
+
+	READ_DONE();
+}
+
 static AlterTableMoveAllStmt *
 _readAlterTableMoveAllStmt(void)
 {
@@ -3141,7 +3153,9 @@ readNodeBinary(void)
 			case T_CreateTransformStmt:
 				return_value = _readCreateTransformStmt();
 				break;
-
+			case T_CreateAmStmt:
+				return_value = _readCreateAmStmt();
+				break;
 			case T_LockingClause:
 				return_value = _readLockingClause();
 				break;

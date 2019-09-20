@@ -1289,6 +1289,16 @@ _outAlterTableSpaceOptionsStmt(StringInfo str, AlterTableSpaceOptionsStmt *node)
 	WRITE_BOOL_FIELD(isReset);
 }
 
+static void
+_outCreateAmStmt(StringInfo str, const CreateAmStmt *node)
+{
+	WRITE_NODE_TYPE("CREATEAMSTMT");
+
+	WRITE_STRING_FIELD(amname);
+	WRITE_NODE_FIELD(handler_name);
+	WRITE_INT_FIELD(amtype);
+}
+
 /*
  * _outNode -
  *	  converts a Node into binary string and append it to 'str'
@@ -2199,6 +2209,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_CreateTransformStmt:
 				_outCreateTransformStmt(str, obj);
+				break;
+			case T_CreateAmStmt:
+				_outCreateAmStmt(str, obj);
 				break;
 
 			default:

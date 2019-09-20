@@ -28,6 +28,9 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
+#include "cdb/cdbdisp_query.h"
+#include "cdb/cdbvars.h"
+#include "catalog/oid_dispatch.h"
 
 static Oid	lookup_index_am_handler_func(List *handler_name, char amtype);
 static const char *get_am_type_string(char amtype);
@@ -103,6 +106,16 @@ CreateAccessMethod(CreateAmStmt *stmt)
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	recordDependencyOnCurrentExtension(&myself, false);
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+	}
 
 	heap_close(rel, RowExclusiveLock);
 
