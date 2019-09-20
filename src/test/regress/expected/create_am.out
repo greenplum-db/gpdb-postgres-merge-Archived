@@ -6,7 +6,7 @@ CREATE ACCESS METHOD gist2 TYPE INDEX HANDLER gisthandler;
 -- Try to create gist2 index on fast_emp4000: fail because opclass doesn't exist
 CREATE INDEX grect2ind2 ON fast_emp4000 USING gist2 (home_base);
 ERROR:  data type box has no default operator class for access method "gist2"
-HINT:  You must specify an operator class for the index or define a default operator class for the data type.
+HINT:  You must specify an operator class or define a default operator class for the data type.
 -- Make operator class for boxes using gist2
 CREATE OPERATOR CLASS box_ops DEFAULT
 	FOR TYPE box USING gist2 AS
