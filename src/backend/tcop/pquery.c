@@ -292,6 +292,12 @@ ProcessQuery(Portal portal,
 	autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
 
 	/*
+	 * Now, we close down all the scans and free allocated resources.
+	 */
+	ExecutorFinish(queryDesc);
+	ExecutorEnd(queryDesc);
+
+	/*
 	 * Build command completion status string, if caller wants one.
 	 */
 	if (completionTag)
@@ -303,7 +309,7 @@ ProcessQuery(Portal portal,
 			case CMD_SELECT:
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
 						 "SELECT " UINT64_FORMAT,
-						 queryDesc->estate->es_processed);
+						 queryDesc->es_processed);
 				break;
 			case CMD_INSERT:
 				if (queryDesc->es_processed == 1)
@@ -312,29 +318,23 @@ ProcessQuery(Portal portal,
 					lastOid = InvalidOid;
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
 						 "INSERT %u " UINT64_FORMAT,
-						 lastOid, queryDesc->estate->es_processed);
+						 lastOid, queryDesc->es_processed);
 				break;
 			case CMD_UPDATE:
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
 						 "UPDATE " UINT64_FORMAT,
-						 queryDesc->estate->es_processed);
+						 queryDesc->es_processed);
 				break;
 			case CMD_DELETE:
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
 						 "DELETE " UINT64_FORMAT,
-						 queryDesc->estate->es_processed);
+						 queryDesc->es_processed);
 				break;
 			default:
 				strcpy(completionTag, "???");
 				break;
 		}
 	}
-
-	/*
-	 * Now, we close down all the scans and free allocated resources.
-	 */
-	ExecutorFinish(queryDesc);
-	ExecutorEnd(queryDesc);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
