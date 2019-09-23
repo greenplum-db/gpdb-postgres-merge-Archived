@@ -206,8 +206,3 @@ ROLLBACK;
 
 DROP TABLE CASE_TBL;
 DROP TABLE CASE2_TBL;
-DROP OPERATOR = (foodomain, foodomain);
-DROP FUNCTION inline_eq(foodomain, foodomain);
-DROP FUNCTION volfoo(text);
-DROP DOMAIN foodomain;
-DROP FUNCTION vol(text);
