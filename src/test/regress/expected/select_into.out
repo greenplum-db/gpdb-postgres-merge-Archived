@@ -88,7 +88,6 @@ DROP TABLE ctas_nodata;
 DROP TABLE ctas_nodata_2;
 DROP TABLE ctas_nodata_3;
 DROP TABLE ctas_nodata_4;
-<<<<<<< HEAD
 -- Test for WITH NO DATA on toast column
 CREATE TABLE ctas_base (i text);
 INSERT INTO ctas_base VALUES ('a');
@@ -100,8 +99,6 @@ SELECT * FROM ctas_nodata;
 
 DROP TABLE ctas_base;
 DROP TABLE ctas_nodata;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 --
 -- CREATE TABLE AS/SELECT INTO as last command in a SQL function
 -- have been known to cause problems
