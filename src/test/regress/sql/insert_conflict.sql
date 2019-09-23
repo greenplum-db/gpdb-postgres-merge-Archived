@@ -60,6 +60,8 @@ drop index both_index_expr_key;
 --
 -- Make sure that cross matching of attribute opclass/collation does not occur
 --
+-- GPDB: it is not possible (yet) to express a unique index with the required characteristics
+-- start_ignore
 create unique index cross_match on insertconflicttest(lower(fruit) collate "C", upper(fruit) text_pattern_ops);
 
 -- fails:
@@ -68,6 +70,7 @@ explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on con
 explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on conflict (lower(fruit) collate "C", upper(fruit) text_pattern_ops) do nothing;
 
 drop index cross_match;
+-- end_ignore
 
 --
 -- Single key tests
@@ -269,6 +272,8 @@ drop table syscolconflicttest;
 -- Previous tests all managed to not test any expressions requiring
 -- planner preprocessing ...
 --
+-- GPDB: it is not possible (yet) to express a unique index with expressions
+-- start_ignore
 create table insertconflict (a bigint, b bigint);
 
 create unique index insertconflicti1 on insertconflict(coalesce(a, 0));
@@ -286,6 +291,7 @@ insert into insertconflict values (1, 2)
 on conflict (b) where coalesce(a, 1) > 1 do nothing;
 
 drop table insertconflict;
+-- end_ignore
 
 
 -- ******************************************************************
@@ -413,6 +419,8 @@ insert into dropcol(key, keep1, keep2) values(1, '5', 5) on conflict(key)
 DROP TABLE dropcol;
 
 -- check handling of regular btree constraint along with gist constraint
+-- GPDB: does not support exclusion constraints
+-- start_ignore
 
 create table twoconstraints (f1 int unique, f2 box,
                              exclude using gist(f2 with &&));
@@ -425,3 +433,4 @@ insert into twoconstraints values(2, '((0,0),(1,2))')
   on conflict on constraint twoconstraints_f2_excl do nothing;  -- do nothing
 select * from twoconstraints;
 drop table twoconstraints;
+-- end_ignore
