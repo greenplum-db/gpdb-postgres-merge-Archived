@@ -680,6 +680,8 @@ CREATE INDEX gin_relopts_test ON array_index_op_test USING gin (i)
 --
 -- HASH
 --
+-- GPDB: does not support hash indexes
+-- start_ignore
 CREATE INDEX hash_i4_index ON hash_i4_heap USING hash (random int4_ops);
 
 CREATE INDEX hash_name_index ON hash_name_heap USING hash (random name_ops);
@@ -702,6 +704,7 @@ EXPLAIN (COSTS OFF)
 SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
 SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
 DROP INDEX hash_tuplesort_idx;
+-- end_ignore
 RESET maintenance_work_mem;
 
 
