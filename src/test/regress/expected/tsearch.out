@@ -124,11 +124,12 @@ SET enable_bitmapscan=OFF;
 explain (costs off) SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
                             QUERY PLAN                             
 -------------------------------------------------------------------
- Aggregate
+ Finalize Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Partial Aggregate
                ->  Index Scan using wowidx on test_tsvector
                      Index Cond: (a @@ '''wr'' | ''qh'''::tsquery)
+ Optimizer: Postgres query optimizer
 (6 rows)
 
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
@@ -196,13 +197,14 @@ SET enable_bitmapscan=ON;
 explain (costs off) SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
                                QUERY PLAN                                
 -------------------------------------------------------------------------
- Aggregate
+ Finalize Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Partial Aggregate
                ->  Bitmap Heap Scan on test_tsvector
                      Recheck Cond: (a @@ '''wr'' | ''qh'''::tsquery)
                      ->  Bitmap Index Scan on wowidx
                            Index Cond: (a @@ '''wr'' | ''qh'''::tsquery)
+ Optimizer: Postgres query optimizer
 (8 rows)
 
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
@@ -275,13 +277,14 @@ SET enable_seqscan=OFF;
 explain (costs off) SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
                                QUERY PLAN                                
 -------------------------------------------------------------------------
- Aggregate
+ Finalize Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Partial Aggregate
                ->  Bitmap Heap Scan on test_tsvector
                      Recheck Cond: (a @@ '''wr'' | ''qh'''::tsquery)
                      ->  Bitmap Index Scan on wowidx
                            Index Cond: (a @@ '''wr'' | ''qh'''::tsquery)
+ Optimizer: Postgres query optimizer
 (8 rows)
 
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';

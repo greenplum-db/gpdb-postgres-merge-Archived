@@ -67,14 +67,15 @@ SELECT * FROM fast_emp4000
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
-                            QUERY PLAN                             
--------------------------------------------------------------------
- Aggregate
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Finalize Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Index Only Scan using grect2ind2 on fast_emp4000
-               Index Cond: (home_base && '(1000,1000),(0,0)'::box)
+         ->  Partial Aggregate
+               ->  Index Only Scan using grect2ind2 on fast_emp4000
+                     Index Cond: (home_base && '(1000,1000),(0,0)'::box)
  Optimizer: Postgres query optimizer
-(5 rows)
+(6 rows)
 
 SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
  count 
@@ -84,14 +85,15 @@ SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
-                          QUERY PLAN                          
---------------------------------------------------------------
- Aggregate
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Finalize Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Index Only Scan using grect2ind2 on fast_emp4000
-               Index Cond: (home_base IS NULL)
+         ->  Partial Aggregate
+               ->  Index Only Scan using grect2ind2 on fast_emp4000
+                     Index Cond: (home_base IS NULL)
  Optimizer: Postgres query optimizer
-(5 rows)
+(6 rows)
 
 SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
  count 
