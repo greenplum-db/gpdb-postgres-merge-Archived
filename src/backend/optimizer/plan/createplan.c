@@ -1293,6 +1293,11 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 
 	node->mergeplans = subplans;
 
+	node->plan.flow = cdbpathtoplan_create_flow(root,
+												best_path->path.locus,
+												best_path->path.parent->relids,
+												&node->plan);
+
 	return (Plan *) node;
 }
 
