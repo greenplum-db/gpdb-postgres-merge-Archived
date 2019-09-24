@@ -628,16 +628,19 @@ select a,count(*) from gstest2 group by rollup(a) having a is distinct from 1 or
 
 explain (costs off)
   select a,count(*) from gstest2 group by rollup(a) having a is distinct from 1 order by a;
-            QUERY PLAN            
-----------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  GroupAggregate
    Group Key: a
    Group Key: ()
    Filter: (a IS DISTINCT FROM 1)
-   ->  Sort
-         Sort Key: a
-         ->  Seq Scan on gstest2
-(7 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: a
+         ->  Sort
+               Sort Key: a
+               ->  Seq Scan on gstest2
+ Optimizer: Postgres query optimizer
+(10 rows)
 
 select v.c, (select count(*) from gstest2 group by () having v.c)
   from (values (false),(true)) v(c) order by v.c;
@@ -650,8 +653,8 @@ select v.c, (select count(*) from gstest2 group by () having v.c)
 explain (costs off)
   select v.c, (select count(*) from gstest2 group by () having v.c)
     from (values (false),(true)) v(c) order by v.c;
-                        QUERY PLAN                         
------------------------------------------------------------
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Sort
    Sort Key: "*VALUES*".column1
    ->  Values Scan on "*VALUES*"
@@ -661,8 +664,12 @@ explain (costs off)
                  Filter: "*VALUES*".column1
                  ->  Result
                        One-Time Filter: "*VALUES*".column1
-                       ->  Seq Scan on gstest2
-(10 rows)
+                       ->  Result
+                             ->  Materialize
+                                   ->  Gather Motion 3:1  (slice1; segments: 3)
+                                         ->  Seq Scan on gstest2
+ Optimizer: Postgres query optimizer
+(14 rows)
 
 -- HAVING with GROUPING queries
 select ten, grouping(ten) from onek
