@@ -71,7 +71,8 @@
 #include "cdb/cdbpartition.h"
 #include "cdb/cdbpath.h"		/* cdbpath_segments */
 #include "cdb/cdbpullup.h"
-#include "cdb/cdbgroup.h"		/* grouping_planner extensions */
+#include "cdb/cdbgroup.h"
+#include "cdb/cdbgroupingpaths.h"		/* create_grouping_paths() extensions */
 #include "cdb/cdbsetop.h"		/* motion utilities */
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
@@ -4192,6 +4193,7 @@ create_grouping_paths(PlannerInfo *root,
 	bool		can_hash;
 	bool		can_sort;
 	bool		try_parallel_aggregation;
+	bool		try_mpp_multistage_aggregation;
 
 	ListCell   *lc;
 
@@ -4362,17 +4364,37 @@ create_grouping_paths(PlannerInfo *root,
 	}
 
 	/*
-	 * Before generating paths for grouped_rel, we first generate any possible
-	 * partial paths; that way, later code can easily consider both parallel
-	 * and non-parallel approaches to grouping.  Note that the partial paths
-	 * we generate here are also partially aggregated, so simply pushing a
-	 * Gather node on top is insufficient to create a final path, as would be
-	 * the case for a scan/join rel.
+	 * In PostgreSQL, partial_grouping_target and the partial/final agg
+	 * costs are only needed for parallel aggregation. In GPDB we also use
+	 * them when building MPP two- and three-stage plans.
 	 */
-	if (try_parallel_aggregation)
+	if (Gp_role != GP_ROLE_DISPATCH)
 	{
-		Path	   *cheapest_partial_path = linitial(input_rel->partial_pathlist);
+		try_mpp_multistage_aggregation = false;
+	}
+	else if (!root->config->gp_enable_multiphase_agg)
+	{
+		try_mpp_multistage_aggregation = false;
+	}
+	else if (!parse->hasAggs && parse->groupClause == NIL)
+	{
+		try_mpp_multistage_aggregation = false;
+	}
+	else if (parse->groupingSets)
+	{
+		try_mpp_multistage_aggregation = false;
+	}
+	else if (agg_costs->hasNonPartial || agg_costs->hasNonSerial)
+	{
+		try_mpp_multistage_aggregation = false;
+	}
+	else
+	{
+		try_mpp_multistage_aggregation = true;
+	}
 
+	if (try_parallel_aggregation || try_mpp_multistage_aggregation)
+	{
 		/*
 		 * Build target list for partial aggregate paths.  These paths cannot
 		 * just emit the same tlist as regular aggregate paths, because (1) we
@@ -4381,12 +4403,6 @@ create_grouping_paths(PlannerInfo *root,
 		 * partial mode.
 		 */
 		partial_grouping_target = make_partial_grouping_target(root, target);
-
-		/* Estimate number of partial groups. */
-		dNumPartialGroups = get_number_of_groups(root,
-												 cheapest_partial_path->rows,
-												 NIL,
-												 NIL);
 
 		/*
 		 * Collect statistics about aggregates for estimating costs of
@@ -4409,6 +4425,25 @@ create_grouping_paths(PlannerInfo *root,
 								 AGGSPLIT_FINAL_DESERIAL,
 								 &agg_final_costs);
 		}
+	}
+
+	/*
+	 * Before generating paths for grouped_rel, we first generate any possible
+	 * partial paths; that way, later code can easily consider both parallel
+	 * and non-parallel approaches to grouping.  Note that the partial paths
+	 * we generate here are also partially aggregated, so simply pushing a
+	 * Gather node on top is insufficient to create a final path, as would be
+	 * the case for a scan/join rel.
+	 */
+	if (try_parallel_aggregation)
+	{
+		Path	   *cheapest_partial_path = linitial(input_rel->partial_pathlist);
+
+		/* Estimate number of partial groups. */
+		dNumPartialGroups = get_number_of_groups(root,
+												 cheapest_partial_path->rows,
+												 NIL,
+												 NIL);
 
 		if (can_sort)
 		{
@@ -4781,6 +4816,19 @@ create_grouping_paths(PlannerInfo *root,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("could not implement GROUP BY"),
 				 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
+
+	/*
+	 * Add GPDB two-and three-stage agg plans
+	 */
+	if (try_mpp_multistage_aggregation)
+		cdb_create_grouping_paths(root,
+								  input_rel,
+								  grouped_rel,
+								  target,
+								  partial_grouping_target,
+								  agg_costs,
+								  &agg_partial_costs,
+								  &agg_final_costs);
 
 	/*
 	 * If there is an FDW that's responsible for all baserels of the query,
