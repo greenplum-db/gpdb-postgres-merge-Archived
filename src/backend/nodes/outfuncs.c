@@ -321,6 +321,10 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_NODE_FIELD(utilityStmt);
 	WRITE_NODE_FIELD(subplans);
 	WRITE_BITMAPSET_FIELD(rewindPlanIDs);
+#ifdef COMPILING_BINARY_FUNCS
+	WRITE_INT_ARRAY(subplan_sliceIds, list_length(node->subplans) + 1, int);
+	WRITE_INT_ARRAY(subplan_initPlanParallel, list_length(node->subplans) + 1, bool);
+#endif /* COMPILING_BINARY_FUNCS */
 
 	WRITE_NODE_FIELD(result_partitions);
 	WRITE_NODE_FIELD(result_aosegnos);

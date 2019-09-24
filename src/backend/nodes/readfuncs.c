@@ -2315,6 +2315,10 @@ _readPlannedStmt(void)
 	READ_NODE_FIELD(utilityStmt);
 	READ_NODE_FIELD(subplans);
 	READ_BITMAPSET_FIELD(rewindPlanIDs);
+#ifdef COMPILING_BINARY_FUNCS
+	READ_INT_ARRAY(subplan_sliceIds, list_length(local_node->subplans) + 1);
+	READ_BOOL_ARRAY(subplan_initPlanParallel, list_length(local_node->subplans) + 1);
+#endif /* COMPILING_BINARY_FUNCS */
 	READ_NODE_FIELD(result_partitions);
 	READ_NODE_FIELD(result_aosegnos);
 	READ_NODE_FIELD(queryPartOids);
