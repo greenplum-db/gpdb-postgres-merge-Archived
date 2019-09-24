@@ -1894,6 +1894,7 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 	Assert(!root->hasInheritedTarget);
 	Assert(root->grouping_map == NULL);
 	root->grouping_map = grouping_map;
+	root->grouping_map_size = maxref + 1;
 
 	/*
 	 * Generate the side nodes that describe the other sort and group

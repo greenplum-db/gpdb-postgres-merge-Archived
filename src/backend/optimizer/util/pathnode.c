@@ -4054,6 +4054,8 @@ create_groupingsets_path(PlannerInfo *root,
 	pathnode->path.total_cost += target->cost.startup +
 		target->cost.per_tuple * pathnode->path.rows;
 
+	pathnode->path.locus = subpath->locus;
+
 	return pathnode;
 }
 

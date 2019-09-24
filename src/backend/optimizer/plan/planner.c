@@ -4436,7 +4436,7 @@ create_grouping_paths(PlannerInfo *root,
 														 root->group_pathkeys,
 														 -1.0);
 
-					if (parse->hasAggs)
+					if (parse->hasAggs || parse->groupClause)
 						add_partial_path(grouped_rel, (Path *)
 										 create_agg_path(root,
 														 grouped_rel,
@@ -4571,8 +4571,6 @@ create_grouping_paths(PlannerInfo *root,
 					 * We have grouping sets, possibly with aggregation.  Make
 					 * a GroupingSetsPath.
 					 */
-						/* GPDB_96_MERGE_FIXME: Group nodes are not used in GPDB */
-#if 0
 					add_path(grouped_rel, (Path *)
 							 create_groupingsets_path(root,
 													  grouped_rel,
@@ -4583,9 +4581,8 @@ create_grouping_paths(PlannerInfo *root,
 													  rollup_groupclauses,
 													  agg_costs,
 													  dNumGroups));
-#endif
 				}
-				else if (parse->hasAggs)
+				else if (parse->hasAggs || parse->groupClause)
 				{
 					/*
 					 * We have aggregation, possibly with plain GROUP BY. Make
@@ -4659,7 +4656,7 @@ create_grouping_paths(PlannerInfo *root,
 												 root->group_pathkeys,
 												 -1.0);
 
-			if (parse->hasAggs)
+			if (parse->hasAggs || parse->groupClause)
 				add_path(grouped_rel, (Path *)
 						 create_agg_path(root,
 										 grouped_rel,
