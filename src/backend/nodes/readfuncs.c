@@ -4109,7 +4109,7 @@ parseNodeString(void)
 		return_value = _readRangeTblEntry();
 	else if (MATCH("RANGETBLFUNCTION", 16))
 		return_value = _readRangeTblFunction();
-	else if (MATCH("TABLESAMPLECL", 17))
+	else if (MATCH("TABLESAMPLECLAUSE", 17))
 		return_value = _readTableSampleClause();
 	else if (MATCH("NOTIFY", 6))
 		return_value = _readNotifyStmt();

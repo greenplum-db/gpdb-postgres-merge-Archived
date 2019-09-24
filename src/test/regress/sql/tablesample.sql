@@ -1,5 +1,5 @@
-<<<<<<< HEAD
-CREATE TABLE test_tablesample (dist int, id int, name text) WITH (fillfactor=10) DISTRIBUTED BY (dist); -- force smaller pages so we don't have to load too much data to get multiple pages
+CREATE TABLE test_tablesample (dist int, id int, name text) WITH (fillfactor=10) DISTRIBUTED BY (dist);
+-- use fillfactor so we don't have to load too much data to get multiple pages
 
 -- Changed the column length in order to match the expected results based on relation's blocksz
 INSERT INTO test_tablesample SELECT 0, i, repeat(i::text, 875) FROM generate_series(0, 9) s(i) ORDER BY i;
@@ -8,13 +8,6 @@ INSERT INTO test_tablesample SELECT 5, i, repeat(i::text, 875) FROM generate_ser
 
 -- Verify that each segment has the same amount of rows;
 SELECT gp_segment_id, count(dist) FROM test_tablesample GROUP BY 1 ORDER BY 1;
-=======
-CREATE TABLE test_tablesample (id int, name text) WITH (fillfactor=10);
--- use fillfactor so we don't have to load too much data to get multiple pages
-
-INSERT INTO test_tablesample
-  SELECT i, repeat(i::text, 200) FROM generate_series(0, 9) s(i);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 SELECT t.id FROM test_tablesample AS t TABLESAMPLE SYSTEM (50) REPEATABLE (0);
 SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (100.0/11) REPEATABLE (0);
@@ -36,13 +29,9 @@ CREATE VIEW test_tablesample_v2 AS
 
 -- check a sampled query doesn't affect cursor in progress
 BEGIN;
-<<<<<<< HEAD
-DECLARE tablesample_cur CURSOR FOR SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (100) ORDER BY id;
-=======
 DECLARE tablesample_cur CURSOR FOR
   SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (0);
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 FETCH FIRST FROM tablesample_cur;
 FETCH NEXT FROM tablesample_cur;
 FETCH NEXT FROM tablesample_cur;
@@ -68,7 +57,6 @@ FETCH NEXT FROM tablesample_cur;
 CLOSE tablesample_cur;
 END;
 
-<<<<<<< HEAD
 -- Greenplum: Test rescan paths by forcing a nested loop
 CREATE TABLE ttr1 (a int, b int) DISTRIBUTED BY (a);
 CREATE TABLE ttr2 (a int, b int) DISTRIBUTED BY (a);
@@ -89,9 +77,6 @@ RESET enable_nestloop;
 DROP TABLE ttr1;
 DROP TABLE ttr2;
 
-EXPLAIN SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (10);
-EXPLAIN SELECT * FROM test_tablesample_v1;
-=======
 EXPLAIN (COSTS OFF)
   SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (2);
 EXPLAIN (COSTS OFF)
@@ -126,7 +111,6 @@ select pct, count(unique1) from
   (values (0),(100)) v(pct),
   lateral (select * from tenk1 tablesample system (pct)) ss
   group by pct;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- errors
 SELECT id FROM test_tablesample TABLESAMPLE FOOBAR (1);
