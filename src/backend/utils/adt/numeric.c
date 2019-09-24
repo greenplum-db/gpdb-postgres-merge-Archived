@@ -3940,7 +3940,7 @@ numeric_avg_deserialize(PG_FUNCTION_ARGS)
 							   PointerGetDatum(&buf),
 							   InvalidOid,
 							   -1);
-	set_var_from_num(DatumGetNumeric(temp), &result->sumX);
+	init_var_from_num(DatumGetNumeric(temp), &result->sumX);
 
 	/* maxScale */
 	result->maxScale = pq_getmsgint(&buf, 4);
@@ -4061,14 +4061,14 @@ numeric_deserialize(PG_FUNCTION_ARGS)
 							   PointerGetDatum(&buf),
 							   InvalidOid,
 							   -1);
-	set_var_from_num(DatumGetNumeric(temp), &result->sumX);
+	init_var_from_num(DatumGetNumeric(temp), &result->sumX);
 
 	/* sumX2 */
 	temp = DirectFunctionCall3(numeric_recv,
 							   PointerGetDatum(&buf),
 							   InvalidOid,
 							   -1);
-	set_var_from_num(DatumGetNumeric(temp), &result->sumX2);
+	init_var_from_num(DatumGetNumeric(temp), &result->sumX2);
 
 	/* maxScale */
 	result->maxScale = pq_getmsgint(&buf, 4);
@@ -4486,8 +4486,7 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 	{
 		NumericVar	num;
 
-		init_var(&num);
-		set_var_from_num(DatumGetNumeric(sumX), &num);
+		init_var_from_num(DatumGetNumeric(sumX), &num);
 		numericvar_to_int128(&num, &result->sumX);
 
 		set_var_from_num(DatumGetNumeric(sumX2), &num);
@@ -4496,8 +4495,8 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 		free_var(&num);
 	}
 #else
-	set_var_from_num(DatumGetNumeric(sumX), &result->sumX);
-	set_var_from_num(DatumGetNumeric(sumX2), &result->sumX2);
+	init_var_from_num(DatumGetNumeric(sumX), &result->sumX);
+	init_var_from_num(DatumGetNumeric(sumX2), &result->sumX2);
 #endif
 
 	pq_getmsgend(&buf);
