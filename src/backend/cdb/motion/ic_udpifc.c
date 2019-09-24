@@ -55,7 +55,6 @@
 #include <limits.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include "pgtime.h"
 #include <netinet/in.h>
 
 #ifdef WIN32
@@ -132,6 +131,9 @@ int
 	512							/* MAX_TRY */
 };
 #define TIMEOUT(try) ((try) < MAX_TRY ? (timeoutArray[(try)]) : (timeoutArray[MAX_TRY]))
+
+#define USECS_PER_SECOND 1000000
+#define MSECS_PER_SECOND 1000
 
 /* 1/4 sec in msec */
 #define RX_THREAD_POLL_TIMEOUT (250)
@@ -3206,6 +3208,7 @@ SetupUDPIFCInterconnect_Internal(SliceTable *sliceTable)
 	interconnect_context->activated = true;
 
 	pthread_mutex_unlock(&ic_control_info.lock);
+
 	return interconnect_context;
 }
 
@@ -3263,6 +3266,10 @@ SetupUDPIFCInterconnect(EState *estate)
 	icContext->estate = estate;
 	estate->interconnect_context = icContext;
 	estate->es_interconnect_is_setup = true;
+
+	/* Check if any of the QEs has already finished with error */
+	if (Gp_role == GP_ROLE_DISPATCH)
+		checkForCancelFromQD(icContext);
 }
 
 

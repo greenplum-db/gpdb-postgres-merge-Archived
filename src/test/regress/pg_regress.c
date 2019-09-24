@@ -105,7 +105,6 @@ static char *user = NULL;
 static _stringlist *extraroles = NULL;
 static char *config_auth_datadir = NULL;
 static char *initfile = NULL;
-static char *aodir = NULL;
 static bool  ignore_plans = false;
 
 /* internal variables */
@@ -139,6 +138,9 @@ static void psql_command(const char *database, const char *query,...) pg_attribu
 static bool detectCgroupMountPoint(char *cgdir, int len);
 static bool should_exclude_test(char *test);
 static int run_diff(const char *cmd, const char *filename);
+
+static char *content_zero_hostname = NULL;
+static char *get_host_name(int16 contentid, char role);
 
 /*
  * allow core files if possible.
@@ -492,6 +494,8 @@ typedef struct replacements
 	char *bindir;
 	char *orientation;
 	char *cgroup_mnt_point;
+	char *content_zero_hostname;
+	const char *username;
 } replacements;
 
 /* Internal helper function to detect cgroup mount point at runtime.*/
@@ -542,6 +546,8 @@ convert_line(char *line, replacements *repls)
 	replace_string(line, "@libdir@", repls->dlpath);
 	replace_string(line, "@DLSUFFIX@", repls->dlsuffix);
 	replace_string(line, "@bindir@", repls->bindir);
+	replace_string(line, "@hostname@", repls->content_zero_hostname);
+	replace_string(line, "@curusername@", (char *) repls->username);
 	if (repls->orientation)
 	{
 		replace_string(line, "@orientation@", repls->orientation);
@@ -662,13 +668,14 @@ generate_uao_sourcefiles(char *src_dir, char *dest_dir, char *suffix, replacemen
 			 * Remember if there are any more tokens that we didn't recognize.
 			 * They need to be handled by the gpstringsubs.pl script
 			 */
-			if (!has_tokens && strchr(line, '@') != NULL)
+			if (!has_tokens && strstr(line, "@gp") != NULL)
 				has_tokens = true;
 		}
 
 		fclose(infile);
 		fclose(outfile_row);
 		fclose(outfile_col);
+
 		if (has_tokens)
 		{
 			char		cmd[MAXPGPATH * 3];
@@ -711,6 +718,7 @@ convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, c
 	char	  **name;
 	char	  **names;
 	int			count = 0;
+	char *errstr;
 
 	snprintf(indir, MAXPGPATH, "%s/%s", inputdir, source_subdir);
 
@@ -771,6 +779,14 @@ convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, c
 	repls.dlsuffix = DLSUFFIX;
 	repls.bindir = bindir;
 	repls.cgroup_mnt_point = cgroup_mnt_point;
+	repls.content_zero_hostname = content_zero_hostname;
+	repls.username = get_user_name(&errstr);
+
+	if (repls.username == NULL)
+	{
+		fprintf(stderr, "%s: %s\n", progname, errstr);
+		exit_nicely(2);
+	}
 
 	/* finally loop on each file and do the replacement */
 	for (name = names; *name; name++)
@@ -784,15 +800,6 @@ convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, c
 		bool		has_tokens = false;
 		struct stat fst;
 
-		if (aodir && strncmp(*name, aodir, strlen(aodir)) == 0 &&
-			(strlen(*name) < 8 || strcmp(*name + strlen(*name) - 7, ".source") != 0))
-		{
-			snprintf(srcfile, MAXPGPATH, "%s/%s",  indir, *name);
-			snprintf(destfile, MAXPGPATH, "%s/%s", dest_subdir, *name);
-			count += generate_uao_sourcefiles(srcfile, destfile, suffix, &repls);
-			continue;
-		}
-
 		snprintf(srcfile, MAXPGPATH, "%s/%s",  indir, *name);
 		if (stat(srcfile, &fst) < 0)
 		{
@@ -804,9 +811,17 @@ convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, c
 		/* recurse if it's a directory */
 		if (S_ISDIR(fst.st_mode))
 		{
+			char generate_uao_file[MAXPGPATH];
+			snprintf(generate_uao_file, MAXPGPATH, "%s/%s",  srcfile, "GENERATE_ROW_AND_COLUMN_FILES");
+
 			snprintf(srcfile, MAXPGPATH, "%s/%s", source_subdir, *name);
 			snprintf(destfile, MAXPGPATH, "%s/%s", dest_subdir, *name);
-			count += convert_sourcefiles_in(srcfile, dest_dir, destfile, suffix);
+
+			if (access(generate_uao_file, F_OK) != -1)
+				count += generate_uao_sourcefiles(srcfile, destfile, suffix, &repls);
+			else
+				count += convert_sourcefiles_in(srcfile, dest_dir, destfile, suffix);
+
 			continue;
 		}
 
@@ -847,7 +862,7 @@ convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, c
 			 * Remember if there are any more tokens that we didn't recognize.
 			 * They need to be handled by the gpstringsubs.pl script
 			 */
-			if (!has_tokens && strchr(line, '@') != NULL)
+			if (!has_tokens && strstr(line, "@gp") != NULL)
 				has_tokens = true;
 		}
 		fclose(infile);
@@ -887,6 +902,8 @@ convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, c
 static void
 convert_sourcefiles(void)
 {
+	content_zero_hostname = get_host_name(0, 'p');
+
 	convert_sourcefiles_in("input", outputdir, "sql", "sql");
 	convert_sourcefiles_in("output", outputdir, "expected", "out");
 
@@ -2560,8 +2577,6 @@ help(void)
 	/* Please put GPDB specific options at the end */
 	printf(_("  --exclude-tests=TEST      command or space delimited tests to exclude from running\n"));
     printf(_(" --init-file=GPD_INIT_FILE  init file to be used for gpdiff\n"));
-	printf(_("  --ao-dir=DIR              directory name prefix containing generic\n"));
-	printf(_("                            UAO row and column tests\n"));
 	printf(_("  --ignore-plans            ignore any explain plan diffs\n"));
 	printf(_("  --print-failure-diffs     Print the diff file to standard out after a failure\n"));
 	printf(_("  --tablespace-dir=DIR      place tablespace files in DIR/testtablespace (default \"./testtablespace\")\n"));
@@ -2610,7 +2625,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"load-extension", required_argument, NULL, 22},
 		{"config-auth", required_argument, NULL, 24},
 		{"init-file", required_argument, NULL, 25},
-		{"ao-dir", required_argument, NULL, 26},
 		{"exclude-tests", required_argument, NULL, 27},
 		{"ignore-plans", no_argument, NULL, 28},
 		{"prehook", required_argument, NULL, 29},
@@ -2733,18 +2747,15 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
                 initfile = strdup(optarg);
                 break;
             case 26:
-                aodir = strdup(optarg);
-                break;
-            case 27:
                 split_to_stringlist(strdup(optarg), ", ", &exclude_tests);
                 break;
-			case 28:
+			case 27:
 				ignore_plans = true;
 				break;
-			case 29:
+			case 28:
 				prehook = strdup(optarg);
 				break;
-			case 30:
+			case 29:
 				print_failure_diffs_is_enabled = true;
 				break;
 			case 80:
@@ -3188,4 +3199,55 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		exit(1);
 
 	return 0;
+}
+
+static char *
+get_host_name(int16 contentid, char role)
+{
+	char psql_cmd[MAXPGPATH];
+	FILE       *fp;
+	char line[1024];
+	int len;
+	char *hostname = NULL;
+
+	len = snprintf(psql_cmd, sizeof(psql_cmd),
+			"\"%s%spsql\" -X -t -c \"select hostname from gp_segment_configuration where role=\'%c\' and content = %d;\" -d \"postgres\"",
+				   bindir ? bindir : "",
+				   bindir ? "/" : "",
+				   role,
+				   contentid);
+
+	if (len >= sizeof(psql_cmd))
+		exit_nicely(2);
+
+	/* Execute the command with pipe and read the standard output. */
+	if ((fp = popen(psql_cmd, "r")) == NULL)
+	{
+		fprintf(stderr, "%s: cannot launch shell command\n", progname);
+		exit_nicely(2);
+	}
+
+	if (fgets(line, sizeof(line), fp) == NULL)
+	{
+		fprintf(stderr, "%s: cannot read the result\n", progname);
+		(void) pclose(fp);
+		exit_nicely(2);
+	}
+
+	if (pclose(fp) < 0)
+	{
+		fprintf(stderr, "%s: cannot close shell command\n", progname);
+		exit_nicely(2);
+	}
+
+	hostname = psprintf("%s", trim_white_space(line));
+
+	if (strcmp("", hostname) == 0)
+	{
+		fprintf(stderr, _("%s: failed to determine hostname for content 0 primary\n"),
+				progname);
+		exit_nicely(2);
+	}
+
+	return hostname;
 }

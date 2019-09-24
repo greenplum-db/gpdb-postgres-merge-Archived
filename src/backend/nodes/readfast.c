@@ -153,11 +153,11 @@ local_node->fldname = readNodeBinary(); \
 
 /* Read an integer array  */
 #define READ_ARRAY_OF_TYPE(fldname, count, Type) \
-	if ( count > 0 ) \
+	if ( (count) > 0 ) \
 	{ \
 		int i; \
-		local_node->fldname = (Type *)palloc(count * sizeof(Type)); \
-		for(i = 0; i < count; i++) \
+		local_node->fldname = (Type *)palloc((count) * sizeof(Type)); \
+		for(i = 0; i < (count); i++) \
 		{ \
 			memcpy(&local_node->fldname[i], read_str_ptr, sizeof(Type)); read_str_ptr+=sizeof(Type); \
 		} \
@@ -165,11 +165,11 @@ local_node->fldname = readNodeBinary(); \
 
 /* Read a bool array  */
 #define READ_BOOL_ARRAY(fldname, count) \
-	if ( count > 0 ) \
+	if ( (count) > 0 ) \
 	{ \
 		int i; \
-		local_node->fldname = (bool *) palloc(count * sizeof(bool)); \
-		for(i = 0; i < count; i++) \
+		local_node->fldname = (bool *) palloc((count) * sizeof(bool)); \
+		for(i = 0; i < (count); i++) \
 		{ \
 			local_node->fldname[i] = *read_str_ptr ? true : false; \
 			read_str_ptr++; \
@@ -671,6 +671,7 @@ _readSelectStmt(void)
 	READ_BOOL_FIELD(all);
 	READ_NODE_FIELD(larg);
 	READ_NODE_FIELD(rarg);
+	READ_BOOL_FIELD(disableLockingOptimization);
 	READ_DONE();
 }
 
@@ -1557,14 +1558,15 @@ _readMotion(void)
 	READ_INT_FIELD(motionID);
 	READ_ENUM_FIELD(motionType, MotionType);
 
-	Assert(local_node->motionType == MOTIONTYPE_FIXED || local_node->motionType == MOTIONTYPE_HASH || local_node->motionType == MOTIONTYPE_EXPLICIT);
+	Assert(local_node->motionType == MOTIONTYPE_GATHER ||
+		   local_node->motionType == MOTIONTYPE_HASH ||
+		   local_node->motionType == MOTIONTYPE_BROADCAST ||
+		   local_node->motionType == MOTIONTYPE_EXPLICIT);
 
 	READ_BOOL_FIELD(sendSorted);
 
 	READ_NODE_FIELD(hashExprs);
 	READ_OID_ARRAY(hashFuncs, list_length(local_node->hashExprs));
-
-	READ_INT_FIELD(isBroadcast);
 
 	READ_INT_FIELD(numSortCols);
 	READ_ATTRNUMBER_ARRAY(sortColIdx, local_node->numSortCols);

@@ -33,7 +33,6 @@
 		"check_function_bodies",
 		"checkpoint_completion_target",
 		"checkpoint_flush_after",
-		"checkpoint_segments",
 		"checkpoint_timeout",
 		"checkpoint_warning",
 		"client_encoding",

@@ -96,6 +96,8 @@ typedef struct PlannedStmt
 	Node	   *utilityStmt;	/* non-null if this is DECLARE CURSOR */
 
 	List	   *subplans;		/* Plan trees for SubPlan expressions */
+	int		   *subplan_sliceIds; /* Slice IDs for initplans. Size equals 'subplans'. 0 for non-initplans */
+	bool	   *subplan_initPlanParallel;
 
 	Bitmapset  *rewindPlanIDs;	/* indices of subplans that require REWIND */
 
@@ -269,26 +271,6 @@ typedef struct Plan
 	 *   set.
 	 */
 	DirectDispatchInfo directDispatch;
-
-	/*
-	 * CDB: Now many motion nodes are there in the Plan.  How many init plans?
-	 * Additional plan tree global significant only in the root node.
-	 */
-	int nMotionNodes;
-	int nInitPlans;
-
-	/*
-	 * CDB: This allows the slice table to accompany the plan as it
-	 * moves around the executor. This is anoter plan tree global that
-	 * should be non-NULL only in the top node of a dispatchable tree.
-	 * It could (and should) move to a TopPlan node if we ever do that.
-	 *
-	 * Currently, the slice table should not be installed on the QD.
-	 * Rather is it shipped to QEs as a separate parameter to MPPEXEC.
-	 * The implementation of MPPEXEC, which runs on the QEs, installs
-	 * the slice table in the plan as required there.
-	 */
-	Node *sliceTable;
 
 	/**
 	 * How much memory (in KB) should be used to execute this plan node?
@@ -1304,8 +1286,9 @@ typedef struct Limit
  */
 typedef enum MotionType
 {
+	MOTIONTYPE_GATHER,		/* Send tuples from N senders to one receiver */
 	MOTIONTYPE_HASH,		/* Use hashing to select a segindex destination */
-	MOTIONTYPE_FIXED,		/* Send tuples to a fixed set of segindexes */
+	MOTIONTYPE_BROADCAST,	/* Send tuples from one sender to a fixed set of segindexes */
 	MOTIONTYPE_EXPLICIT		/* Send tuples to the segment explicitly specified in their segid column */
 } MotionType;
 
@@ -1324,18 +1307,6 @@ typedef struct Motion
 	/* For Hash */
 	List		*hashExprs;			/* list of hash expressions */
 	Oid			*hashFuncs;			/* corresponding hash functions */
-
-	/*
-	 * The isBroadcast field is only used for motionType=MOTIONTYPE_FIXED,
-	 * if it is other kind of motion, please do not access this field.
-	 * The field is set true for Broadcast motion, and set false for
-	 * Gather motion.
-	 *
-	 * TODO: Historically, broadcast motion and gather motion's motiontype
-	 * are both MOTIONTYPE_FIXED. It is not a good idea. They should belong
-	 * to different motiontypes. We should refactor the motion types in future.
-	 */
-	bool 	  	isBroadcast;
 
 	/* For Explicit */
 	AttrNumber segidColIdx;			/* index of the segid column in the target list */

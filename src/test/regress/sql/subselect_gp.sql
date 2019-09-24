@@ -621,8 +621,9 @@ create table bar(a int, b int) distributed by (a);
 with CT as (select a from foo except select a from bar)
 select * from foo
 where exists (select 1 from CT where CT.a = foo.a);
+
 --
--- Multiple SUBPLAN nodes must not refer to same plan_id
+-- Multiple SUBPLAN nodes referring to the same plan_id
 --
 CREATE TABLE bar_s (c integer, d character varying(10));
 INSERT INTO bar_s VALUES (9,9);
@@ -635,7 +636,20 @@ INSERT INTO foo_s VALUES (2,9);
 SELECT bar_s.c from bar_s, foo_s WHERE foo_s.a=2 AND foo_s.b = (SELECT max(b) FROM foo_s WHERE bar_s.c = 9);
 CREATE TABLE baz_s (i int4);
 INSERT INTO baz_s VALUES (9);
+
+-- In this query, the planner avoids using SubPlan 1 in the qual in the join,
+-- because it avoids picking SubPlans from an equivalence class, when it has
+-- other choices.
 SELECT bar_s.c FROM bar_s, foo_s WHERE foo_s.b = (SELECT max(i) FROM baz_s WHERE bar_s.c = 9) AND foo_s.b = bar_s.d::int4;
+
+-- Same as above, but with another subquery, so it must use a SubPlan. There
+-- are two references to the same SubPlan in the plan, on different slices.
+-- GPDB_96_MERGE_FIXME: this EXPLAIN output should become nicer-looking once we
+-- merge upstream commit 4d042999f9, to suppress the SubPlans from being
+-- printed twice.
+explain SELECT bar_s.c FROM bar_s, foo_s WHERE foo_s.b = (SELECT max(i) FROM baz_s WHERE bar_s.c = 9) AND foo_s.b = (select bar_s.d::int4);
+SELECT bar_s.c FROM bar_s, foo_s WHERE foo_s.b = (SELECT max(i) FROM baz_s WHERE bar_s.c = 9) AND foo_s.b = (select bar_s.d::int4);
+
 DROP TABLE bar_s;
 DROP TABLE foo_s;
 DROP TABLE baz_s;
@@ -796,3 +810,17 @@ ANALYZE TEST_IN;
 SELECT COUNT(*) FROM
 TEST_IN A
 WHERE A.C01 IN(SELECT C02 FROM TEST_IN);
+
+--
+-- Variant of the test in upstream 'subselect' test, for PostgreSQL bug #14924
+-- At one point, this produced wrong results on GPDB for different reasons than
+-- the original bug: we forgot to handle the VALUES list in the function to
+-- mutate a plan tree (plan_tree_mutator()).
+--
+create temp table onerowtmp as select 1;
+select val.x
+  from generate_series(1,10) as s(i),
+  lateral (
+    values ((select s.i + 1 from onerowtmp)), (s.i + 101)
+  ) as val(x)
+where s.i < 10 and val.x < 110;

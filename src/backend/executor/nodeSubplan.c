@@ -782,7 +782,8 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 			/**
 			 * If we need to evaluate a parameter, save the planstate to do so.
 			 */
-			if ((Gp_role != GP_ROLE_EXECUTE || !subplan->is_initplan))
+			if ((Gp_role != GP_ROLE_EXECUTE || !subplan->is_initplan ||
+				 estate->es_sliceTable == NULL))
 			{
 				prmExec->execPlan = sstate;
 			}
@@ -1021,7 +1022,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext, QueryDesc *queryDesc
 	if (Gp_role == GP_ROLE_DISPATCH &&
 		planstate != NULL &&
 		planstate->plan != NULL &&
-		subplan->initPlanParallel)
+		queryDesc && queryDesc->plannedstmt->subplan_initPlanParallel[subplan->plan_id])
 		shouldDispatch = true;
 
 	planstate->state->currentSubplanLevel++;
@@ -1042,7 +1043,7 @@ PG_TRY();
 {
 	if (shouldDispatch)
 	{			
-		needDtxTwoPhase = isCurrentDtxTwoPhase();
+		needDtxTwoPhase = isCurrentDtxTwoPhaseActivated();
 
 		/*
 		 * This call returns after launching the threads that send the

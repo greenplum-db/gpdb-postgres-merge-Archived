@@ -1061,7 +1061,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	 * make actual Paths for these steps.
 	 */
 	cost_agg(&hashed_p, root, AGG_HASHED, NULL,
-			 numGroupCols, dNumGroups,
+			 numGroupCols, dNumGroups / planner_segment_count(NULL),
 			 input_path->startup_cost, input_path->total_cost,
 			 input_path->rows,
 #if 0 /* GPDB_96_MERGE_FIXME */

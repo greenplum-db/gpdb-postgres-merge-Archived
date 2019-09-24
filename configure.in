@@ -235,8 +235,8 @@ AC_SUBST(enable_pxf)
 #
 # include debug extensions in gpcontrib
 #
-PGAC_ARG_BOOL(enable, debug-extensions, no,
-              [include debug extensions in gpcontrib])
+PGAC_ARG_BOOL(enable, debug-extensions, yes,
+              [exclude debug extensions in gpcontrib])
 AC_SUBST(enable_debug_extensions)
 
 #
@@ -1162,6 +1162,10 @@ fi
 
 if test "$with_libcurl" = "no" && test "$enable_gpcloud" = "yes"; then
   AC_MSG_ERROR([libcurl is required by gpcloud])
+fi
+
+if test "$with_libxml" = "no" && test "$enable_gpcloud" = "yes"; then
+  AC_MSG_ERROR([libxml is required by gpcloud])
 fi
 
 #

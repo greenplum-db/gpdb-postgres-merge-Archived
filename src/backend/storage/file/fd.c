@@ -1714,7 +1714,7 @@ FileClose(File file)
 
 		/* in any case do the unlink */
 		if (unlink(vfdP->fileName))
-			elog(LOG, "could not unlink file \"%s\": %m", vfdP->fileName);
+			elog(DEBUG1, "could not unlink file \"%s\": %m", vfdP->fileName);
 
 		/* and last report the stat results */
 		if (stat_errno == 0)
@@ -1733,7 +1733,7 @@ FileClose(File file)
 		else
 		{
 			errno = stat_errno;
-			elog(LOG, "could not stat file \"%s\": %m", vfdP->fileName);
+			elog(DEBUG1, "could not stat file \"%s\": %m", vfdP->fileName);
 		}
 	}
 

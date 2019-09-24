@@ -400,9 +400,6 @@ _outPlanInfo(StringInfo str, const Plan *node)
 	WRITE_ENUM_FIELD(dispatch, DispatchMethod);
 	WRITE_BOOL_FIELD(directDispatch.isDirectDispatch);
 	WRITE_NODE_FIELD(directDispatch.contentIds);
-	WRITE_INT_FIELD(nMotionNodes);
-	WRITE_INT_FIELD(nInitPlans);
-	WRITE_NODE_FIELD(sliceTable);
 
 	WRITE_UINT64_FIELD(operatorMemKB);
 }
@@ -1245,8 +1242,6 @@ _outMotion(StringInfo str, const Motion *node)
 	for (i = 0; i < list_length(node->hashExprs); i++)
 		appendStringInfo(str, " %u", node->hashFuncs[i]);
 
-	WRITE_INT_FIELD(isBroadcast);
-
 	WRITE_INT_FIELD(numSortCols);
 	appendStringInfoLiteral(str, " :sortColIdx");
 	for (i = 0; i < node->numSortCols; i++)
@@ -1678,7 +1673,6 @@ _outSubPlan(StringInfo str, const SubPlan *node)
 {
 	WRITE_NODE_TYPE("SUBPLAN");
 
-    WRITE_INT_FIELD(qDispSliceId);  /*CDB*/
 	WRITE_ENUM_FIELD(subLinkType, SubLinkType);
 	WRITE_NODE_FIELD(testexpr);
 	WRITE_NODE_FIELD(paramIds);
@@ -1697,7 +1691,6 @@ _outSubPlan(StringInfo str, const SubPlan *node)
 	WRITE_NODE_FIELD(extParam);
 	WRITE_FLOAT_FIELD(startup_cost, "%.2f");
 	WRITE_FLOAT_FIELD(per_call_cost, "%.2f");
-	WRITE_BOOL_FIELD(initPlanParallel); /*CDB*/
 }
 
 static void
@@ -3917,6 +3910,7 @@ _outSelectStmt(StringInfo str, const SelectStmt *node)
 	WRITE_BOOL_FIELD(all);
 	WRITE_NODE_FIELD(larg);
 	WRITE_NODE_FIELD(rarg);
+	WRITE_BOOL_FIELD(disableLockingOptimization);
 }
 
 static void

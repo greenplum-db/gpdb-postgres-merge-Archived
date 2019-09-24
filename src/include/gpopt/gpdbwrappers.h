@@ -392,9 +392,6 @@ namespace gpdb {
 	// deep free of a list
 	void ListFreeDeep(List *list);
 
-	// is this a Gather motion
-	bool IsMotionGather(const Motion *motion);
-
 	// does a partition table have an appendonly child
 	bool IsAppendOnlyPartitionTable(Oid root_oid);
 
@@ -665,6 +662,8 @@ namespace gpdb {
 	uint32 HashBpChar(Datum d);
 
 	uint32 HashText(Datum d);
+
+	uint32 UUIDHash(Datum d);
 
 } //namespace gpdb
 

@@ -134,6 +134,8 @@ typedef struct PlannerGlobal
 	ParamListInfo boundParams;	/* Param values provided to planner() */
 
 	List	   *subplans;		/* Plans for SubPlan nodes */
+	int		   *subplan_sliceIds; /* Slice IDs for initplans */
+	bool	   *subplan_initPlanParallel;
 
 	List	   *subroots;		/* PlannerInfos for SubPlan nodes */
 
@@ -168,6 +170,10 @@ typedef struct PlannerGlobal
 	bool		parallelModeOK; /* parallel mode potentially OK? */
 
 	bool		parallelModeNeeded;		/* parallel mode actually required? */
+
+	int			nMotionNodes;
+	int			nInitPlans;
+
 } PlannerGlobal;
 
 /*----------

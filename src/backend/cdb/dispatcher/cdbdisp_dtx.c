@@ -36,10 +36,8 @@
 typedef struct DispatchCommandDtxProtocolParms
 {
 	DtxProtocolCommand dtxProtocolCommand;
-	int			flags;
 	char	   *dtxProtocolCommandLoggingStr;
 	char		gid[TMGIDSIZE];
-	DistributedTransactionId gxid;
 	char	   *serializedDtxContextInfo;
 	int			serializedDtxContextInfoLen;
 } DispatchCommandDtxProtocolParms;
@@ -68,10 +66,8 @@ static char *buildGpDtxProtocolCommand(DispatchCommandDtxProtocolParms *pDtxProt
  */
 struct pg_result **
 CdbDispatchDtxProtocolCommand(DtxProtocolCommand dtxProtocolCommand,
-							  int flags,
 							  char *dtxProtocolCommandLoggingStr,
 							  char *gid,
-							  DistributedTransactionId gxid,
 							  ErrorData **qeError,
 							  int *numresults,
 							  bool *badGangs,
@@ -88,18 +84,14 @@ CdbDispatchDtxProtocolCommand(DtxProtocolCommand dtxProtocolCommand,
 	char	   *queryText = NULL;
 	int			queryTextLen = 0;
 
-	*badGangs = false;
 	*qeError = NULL;
 
 	MemSet(&dtxProtocolParms, 0, sizeof(dtxProtocolParms));
 	dtxProtocolParms.dtxProtocolCommand = dtxProtocolCommand;
-	dtxProtocolParms.flags = flags;
-	dtxProtocolParms.dtxProtocolCommandLoggingStr =
-		dtxProtocolCommandLoggingStr;
+	dtxProtocolParms.dtxProtocolCommandLoggingStr = dtxProtocolCommandLoggingStr;
 	if (strlen(gid) >= TMGIDSIZE)
 		elog(PANIC, "Distribute transaction identifier too long (%d)", (int) strlen(gid));
 	memcpy(dtxProtocolParms.gid, gid, TMGIDSIZE);
-	dtxProtocolParms.gxid = gxid;
 	dtxProtocolParms.serializedDtxContextInfo = serializedDtxContextInfo;
 	dtxProtocolParms.serializedDtxContextInfoLen = serializedDtxContextInfoLen;
 
@@ -113,14 +105,6 @@ CdbDispatchDtxProtocolCommand(DtxProtocolCommand dtxProtocolCommand,
 	primaryGang = AllocateGang(ds, GANGTYPE_PRIMARY_WRITER, twophaseSegments);
 
 	Assert(primaryGang);
-
-	if (primaryGang->dispatcherActive)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("query plan with multiple segworker groups is not supported"),
-				 errhint("dispatching DTX commands to a busy gang")));
-	}
 
 	cdbdisp_makeDispatchResults(ds, 1, false);
 	cdbdisp_makeDispatchParams(ds, 1, queryText, queryTextLen);
@@ -136,7 +120,7 @@ CdbDispatchDtxProtocolCommand(DtxProtocolCommand dtxProtocolCommand,
 
 	if (!pr)
 	{
-		if (!GangOK(primaryGang))
+		if (!GangOK(primaryGang) && badGangs != NULL)
 		{
 			*badGangs = true;
 			elog((Debug_print_full_dtm ? LOG : DEBUG5),
@@ -241,10 +225,8 @@ buildGpDtxProtocolCommand(DispatchCommandDtxProtocolParms *pDtxProtocolParms,
 						 int *finalLen)
 {
 	int			dtxProtocolCommand = (int) pDtxProtocolParms->dtxProtocolCommand;
-	int			flags = pDtxProtocolParms->flags;
 	char	   *dtxProtocolCommandLoggingStr = pDtxProtocolParms->dtxProtocolCommandLoggingStr;
 	char	   *gid = pDtxProtocolParms->gid;
-	int			gxid = pDtxProtocolParms->gxid;
 	char	   *serializedDtxContextInfo = pDtxProtocolParms->serializedDtxContextInfo;
 	int			serializedDtxContextInfoLen = pDtxProtocolParms->serializedDtxContextInfoLen;
 	int			tmp = 0;
@@ -255,12 +237,10 @@ buildGpDtxProtocolCommand(DispatchCommandDtxProtocolParms *pDtxProtocolParms,
 	int			total_query_len = 1 /* 'T' */ +
 	sizeof(len) +
 	sizeof(dtxProtocolCommand) +
-	sizeof(flags) +
 	sizeof(loggingStrLen) +
 	loggingStrLen +
 	sizeof(gidLen) +
 	gidLen +
-	sizeof(gxid) +
 	sizeof(serializedDtxContextInfoLen) +
 	serializedDtxContextInfoLen;
 
@@ -281,10 +261,6 @@ buildGpDtxProtocolCommand(DispatchCommandDtxProtocolParms *pDtxProtocolParms,
 	memcpy(pos, &tmp, sizeof(tmp));
 	pos += sizeof(tmp);
 
-	tmp = htonl(flags);
-	memcpy(pos, &tmp, sizeof(tmp));
-	pos += sizeof(tmp);
-
 	tmp = htonl(loggingStrLen);
 	memcpy(pos, &tmp, sizeof(tmp));
 	pos += sizeof(tmp);
@@ -298,10 +274,6 @@ buildGpDtxProtocolCommand(DispatchCommandDtxProtocolParms *pDtxProtocolParms,
 
 	memcpy(pos, gid, gidLen);
 	pos += gidLen;
-
-	tmp = htonl(gxid);
-	memcpy(pos, &tmp, sizeof(tmp));
-	pos += sizeof(tmp);
 
 	tmp = htonl(serializedDtxContextInfoLen);
 	memcpy(pos, &tmp, sizeof(tmp));

@@ -1763,20 +1763,6 @@ gpdb::ListFreeDeep
 }
 
 bool
-gpdb::IsMotionGather
-	(
-	const Motion *motion
-	)
-{
-	GP_WRAP_START;
-	{
-		return isMotionGather(motion);
-	}
-	GP_WRAP_END;
-	return false;
-}
-
-bool
 gpdb::IsAppendOnlyPartitionTable
 	(
 	Oid root_oid
@@ -3266,5 +3252,16 @@ gpdb::HashText(Datum d)
 	}
 	GP_WRAP_END;
 }
+
+uint32
+gpdb::UUIDHash(Datum d)
+{
+	GP_WRAP_START;
+	{
+		return DatumGetUInt32(DirectFunctionCall1(uuid_hash, d));
+	}
+	GP_WRAP_END;
+}
+
 
 // EOF

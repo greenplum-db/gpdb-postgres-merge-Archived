@@ -2223,8 +2223,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 								 ninvalmsgs, invalmsgs,
 								 ndeldbs, deldbs,
 								 initfileinval, false,
-								 xid,
-								 NULL/* commit prepared */);
+								 xid);
 
 
 	if (replorigin)
