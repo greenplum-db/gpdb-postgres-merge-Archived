@@ -21,8 +21,17 @@ extern void cdb_create_grouping_paths(PlannerInfo *root,
 									  RelOptInfo *output_rel,
 									  PathTarget *target,
 									  PathTarget *partial_grouping_target,
+									  bool can_sort,
+									  bool consider_hash,
+									  double dNumGroups,
 									  const AggClauseCosts *agg_costs,
 									  const AggClauseCosts *agg_partial_costs,
 									  const AggClauseCosts *agg_final_costs);
+
+extern CdbPathLocus cdb_choose_grouping_locus(PlannerInfo *root, Path *path,
+											  PathTarget *target,
+											  List *rollup_lists,
+											  List *rollup_groupclauses,
+											  bool *need_redistribute_p);
 
 #endif   /* CDBGROUPINGPATHS_H */

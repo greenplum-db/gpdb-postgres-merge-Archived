@@ -194,11 +194,6 @@ static Path *pushdown_preliminary_limit(PlannerInfo *root, Path *path, double li
 static Plan *getAnySubplan(Plan *node);
 static bool isSimplyUpdatableQuery(Query *query);
 
-static CdbPathLocus choose_grouping_locus(PlannerInfo *root, Path *path,
-					  PathTarget *target,
-					  List *rollup_lists,
-					  List *rollup_groupclauses,
-					  bool *need_redistribute_p);
 static CdbPathLocus choose_one_window_locus(PlannerInfo *root, Path *path,
 											WindowClause *wc,
 											bool *need_redistribute_p);
@@ -4162,6 +4157,7 @@ create_grouping_paths(PlannerInfo *root,
 	bool		can_sort;
 	bool		try_parallel_aggregation;
 	bool		try_mpp_multistage_aggregation;
+	bool		consider_hash = false;
 
 	ListCell   *lc;
 
@@ -4521,9 +4517,9 @@ create_grouping_paths(PlannerInfo *root,
 				CdbPathLocus locus;
 				bool		need_redistribute;
 
-				locus = choose_grouping_locus(root, path, target,
-											  rollup_lists, rollup_groupclauses,
-											  &need_redistribute);
+				locus = cdb_choose_grouping_locus(root, path, target,
+												  rollup_lists, rollup_groupclauses,
+												  &need_redistribute);
 
 				/* Sort the cheapest-total path if it isn't already sorted */
 				if (!is_sorted)
@@ -4711,13 +4707,15 @@ create_grouping_paths(PlannerInfo *root,
 			 * The hash agg doesn't care about input order, and it destroys any order there was,
 			 * so don't bother doing a order-preserving Motion even if we could.
 			 */
+			consider_hash = true;
+
 			{
 				CdbPathLocus locus;
 				bool		need_redistribute;
 
-				locus = choose_grouping_locus(root, cheapest_path, target,
-											  rollup_lists, rollup_groupclauses,
-											  &need_redistribute);
+				locus = cdb_choose_grouping_locus(root, cheapest_path, target,
+												  rollup_lists, rollup_groupclauses,
+												  &need_redistribute);
 				if (need_redistribute)
 					cheapest_path = cdbpath_create_motion_path(root, cheapest_path,
 															   NIL /* pathkeys */, false, locus);
@@ -4796,6 +4794,9 @@ create_grouping_paths(PlannerInfo *root,
 								  grouped_rel,
 								  target,
 								  partial_grouping_target,
+								  can_sort,
+								  consider_hash,
+								  dNumGroups,
 								  agg_costs,
 								  &agg_partial_costs,
 								  &agg_final_costs);
@@ -4819,119 +4820,6 @@ create_grouping_paths(PlannerInfo *root,
 
 	return grouped_rel;
 }
-
-/*
- * Figure out the desired data distribution to perform the grouping.
- *
- * In case of a simple GROUP BY, we prefer to distribute the data according to
- * the GROUP BY. With multiple grouping sets, identify the set of common
- * entries, and distribute based on that. For example, if you do
- * GROUP BY GROUPING SETS ((a, b, c), (b, c)), the common cols are b and c.
- */
-static CdbPathLocus
-choose_grouping_locus(PlannerInfo *root, Path *path,
-					  PathTarget *target,
-					  List *rollup_lists,
-					  List *rollup_groupclauses,
-					  bool *need_redistribute_p)
-{
-	List	   *tlist = make_tlist_from_pathtarget(target);
-	CdbPathLocus locus;
-	bool		need_redistribute;
-	List	   *hash_exprs;
-	List	   *hash_opfamilies;
-	ListCell   *lc;
-
-	if (!CdbPathLocus_IsBottleneck(path->locus))
-	{
-		ListCell   *lcl, *lcc;
-		Bitmapset  *common_groupcols = NULL;
-		bool		first = true;
-		int			x;
-
-		if (rollup_lists)
-		{
-			forboth(lcl, rollup_lists, lcc, rollup_groupclauses)
-			{
-				List *rlist = (List *) lfirst(lcl);
-				List *rclause = (List *) lfirst(lcc);
-				List *last_list = (List *) llast(rlist);
-				Bitmapset *this_groupcols = NULL;
-
-				this_groupcols = NULL;
-				foreach (lc, last_list)
-				{
-					SortGroupClause *sc = list_nth(rclause, lfirst_int(lc));
-
-					this_groupcols = bms_add_member(this_groupcols, sc->tleSortGroupRef);
-				}
-
-				if (first)
-					common_groupcols = this_groupcols;
-				else
-				{
-					common_groupcols = bms_int_members(common_groupcols, this_groupcols);
-					bms_free(this_groupcols);
-				}
-				first = false;
-			}
-		}
-		else
-		{
-			List	   *rclause = root->parse->groupClause;
-
-			foreach(lc, rclause)
-			{
-				SortGroupClause *sc = lfirst(lc);
-
-				common_groupcols = bms_add_member(common_groupcols, sc->tleSortGroupRef);
-			}
-		}
-
-		x = -1;
-		hash_exprs = NIL;
-		while ((x = bms_next_member(common_groupcols, x)) >= 0)
-		{
-			TargetEntry *tle = get_sortgroupref_tle(x, tlist);
-
-			hash_exprs = lappend(hash_exprs, tle->expr);
-		}
-
-		if (!hash_exprs)
-			need_redistribute = true;
-		else
-			need_redistribute = !cdbpathlocus_is_hashed_on_exprs(path->locus, hash_exprs, true);
-	}
-	else
-	{
-		need_redistribute = false;
-		hash_exprs = NIL;
-	}
-
-	hash_opfamilies = NIL;
-	foreach(lc, hash_exprs)
-	{
-		Node	   *expr = lfirst(lc);
-		Oid			opfamily;
-
-		opfamily = cdb_default_distribution_opfamily_for_type(exprType(expr));
-		hash_opfamilies = lappend_oid(hash_opfamilies, opfamily);
-	}
-
-	if (need_redistribute)
-	{
-		if (hash_exprs)
-			locus = cdbpathlocus_from_exprs(root, hash_exprs, hash_opfamilies, getgpsegmentCount());
-		else
-			CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
-	}
-	else
-		CdbPathLocus_MakeNull(&locus, getgpsegmentCount());
-
-	*need_redistribute_p = need_redistribute;
-	return locus;
-}
-
 
 /*
  * Figure out the desired data distribution to perform windowing
