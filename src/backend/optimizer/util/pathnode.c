@@ -178,8 +178,13 @@ pathnode_walk_kids(Path            *path,
 		case T_CteScan:
 		case T_WorkTableScan:
 		case T_TableFunctionScan:
-		case T_Result:
 			return CdbVisit_Walk;
+		case T_Result:
+			if (IsA(path, ProjectionPath))
+				v = pathnode_walk_node(((ProjectionPath *) path)->subpath, walker, context);
+			else
+				return CdbVisit_Walk;
+			break;
 		case T_BitmapHeapScan:
 			v = pathnode_walk_node(((BitmapHeapPath *)path)->bitmapqual, walker, context);
 			break;
@@ -2117,9 +2122,6 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 
 		if (query_supports_distinctness(rte->subquery))
 		{
-			/* Subpath node could be a motion. See previous comment for details. */
-			if (add_motion)
-				return NULL;
 			List	   *sub_tlist_colnos;
 
 			sub_tlist_colnos = translate_sub_tlist(sjinfo->semi_rhs_exprs,
@@ -2130,6 +2132,9 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 									  sub_tlist_colnos,
 									  sjinfo->semi_operators))
 			{
+				/* Subpath node could be a motion. See previous comment for details. */
+				if (add_motion)
+					return NULL;
 				pathnode->umethod = UNIQUE_PATH_NOOP;
 				pathnode->path.rows = rel->rows;
 				pathnode->path.startup_cost = subpath->startup_cost;
