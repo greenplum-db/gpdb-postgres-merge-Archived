@@ -282,8 +282,8 @@ typedef struct AggStatePerGroupData
 extern void initialize_aggregates(AggState *aggstate,
 					  AggStatePerGroup pergroup,
 					  int numReset);
-extern void 
-advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup);
+extern void advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup);
+extern void combine_aggregates(AggState *aggstate, AggStatePerGroup pergroup);
 extern TupleTableSlot *fetch_input_tuple(AggState *aggstate);
 
 extern Datum GetAggInitVal(Datum textInitVal, Oid transtype);

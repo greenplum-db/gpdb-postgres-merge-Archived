@@ -237,7 +237,6 @@ static void advance_transition_function(AggState *aggstate,
 static void advance_combine_function(AggState *aggstate,
 						 AggStatePerTrans pertrans,
 						 AggStatePerGroup pergroupstate);
-static void combine_aggregates(AggState *aggstate, AggStatePerGroup pergroup);
 static void process_ordered_aggregate_single(AggState *aggstate,
 								 AggStatePerTrans pertrans,
 								 AggStatePerGroup pergroupstate);
@@ -904,7 +903,7 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
  * is actually the aggregate's combinefn).  Also, we know we don't need to
  * handle FILTER, DISTINCT, ORDER BY, or grouping sets.
  */
-static void
+void
 combine_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 {
 	int			transno;

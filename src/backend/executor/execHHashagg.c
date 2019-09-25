@@ -1012,7 +1012,10 @@ agg_hash_initial_pass(AggState *aggstate)
 		}
 			
 		/* Advance the aggregates */
-		advance_aggregates(aggstate, hashtable->groupaggs->aggs);
+		if (DO_AGGSPLIT_COMBINE(aggstate->aggsplit))
+			combine_aggregates(aggstate, hashtable->groupaggs->aggs);
+		else
+			advance_aggregates(aggstate, hashtable->groupaggs->aggs);
 
 		hashtable->num_tuples++;
 
