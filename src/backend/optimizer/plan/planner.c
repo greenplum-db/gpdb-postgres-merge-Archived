@@ -4348,7 +4348,7 @@ create_grouping_paths(PlannerInfo *root,
 	{
 		try_mpp_multistage_aggregation = false;
 	}
-	else if (agg_costs->hasNonPartial || agg_costs->hasNonSerial)
+	else if (agg_costs->hasNonCombine || agg_costs->hasNonSerial)
 	{
 		try_mpp_multistage_aggregation = false;
 	}
@@ -4789,17 +4789,17 @@ create_grouping_paths(PlannerInfo *root,
 	 * Add GPDB two-and three-stage agg plans
 	 */
 	if (try_mpp_multistage_aggregation)
-		cdb_create_grouping_paths(root,
-								  input_rel,
-								  grouped_rel,
-								  target,
-								  partial_grouping_target,
-								  can_sort,
-								  consider_hash,
-								  dNumGroups,
-								  agg_costs,
-								  &agg_partial_costs,
-								  &agg_final_costs);
+		cdb_create_twostage_grouping_paths(root,
+										   input_rel,
+										   grouped_rel,
+										   target,
+										   partial_grouping_target,
+										   can_sort,
+										   consider_hash,
+										   dNumGroups,
+										   agg_costs,
+										   &agg_partial_costs,
+										   &agg_final_costs);
 
 	/*
 	 * If there is an FDW that's responsible for all baserels of the query,

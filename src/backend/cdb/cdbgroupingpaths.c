@@ -42,17 +42,17 @@
  * example.
  */
 void
-cdb_create_grouping_paths(PlannerInfo *root,
-						  RelOptInfo *input_rel,
-						  RelOptInfo *output_rel,
-						  PathTarget *target,
-						  PathTarget *partial_grouping_target,
-						  bool can_sort,
-						  bool consider_hash,
-						  double dNumGroups,
-						  const AggClauseCosts *agg_costs,
-						  const AggClauseCosts *agg_partial_costs,
-						  const AggClauseCosts *agg_final_costs)
+cdb_create_twostage_grouping_paths(PlannerInfo *root,
+								   RelOptInfo *input_rel,
+								   RelOptInfo *output_rel,
+								   PathTarget *target,
+								   PathTarget *partial_grouping_target,
+								   bool can_sort,
+								   bool consider_hash,
+								   double dNumGroups,
+								   const AggClauseCosts *agg_costs,
+								   const AggClauseCosts *agg_partial_costs,
+								   const AggClauseCosts *agg_final_costs)
 {
 	Query	   *parse = root->parse;
 	Path	   *cheapest_path = input_rel->cheapest_total_path;
@@ -60,19 +60,15 @@ cdb_create_grouping_paths(PlannerInfo *root,
 
 	/* The caller should've checked these already */
 	Assert(parse->hasAggs || parse->groupClause);
-	Assert(!agg_costs->hasNonPartial && !agg_costs->hasNonSerial);
-	Assert(root->config->gp_enable_multiphase_agg);
-
-	/* The caller already constructed a one-stage plan. */
-
-
 	/*
 	 * This prohibition could be relaxed if we tracked missing combine
 	 * functions per DQA and were willing to plan some DQAs as single and
 	 * some as multiple phases.  Not currently, however.
 	 */
-	if (agg_costs->hasNonCombine || agg_costs->hasNonSerial)
-		return;
+	Assert(!agg_costs->hasNonCombine && !agg_costs->hasNonSerial);
+	Assert(root->config->gp_enable_multiphase_agg);
+
+	/* The caller already constructed a one-stage plan. */
 
 	/*
 	 * Ordered aggregates need to run the transition function on the
@@ -89,10 +85,17 @@ cdb_create_grouping_paths(PlannerInfo *root,
 	if (!CdbPathLocus_IsPartitioned(cheapest_path->locus))
 		return;
 
+
+	/* GPDB_96_MERGE_FIXME: having more than 1 distinct agg would require
+	 * three-phase strategy, like we used to have in cdbgroup.c
+	 */
+	if (list_length(agg_costs->dqaArgs) > 1)
+		return;
+
 	/*
 	 * Consider 2-phase aggs
 	 *
-	 * AGG_PLAIN -> MOTION AGG_PLAIN
+	 * AGG_PLAIN  -> MOTION -> AGG_PLAIN
 	 * AGG_SORTED -> MOTION -> AGG_SORTED
 	 * AGG_SORTED -> MOTION -> AGG_HASHED
 	 * AGG_HASHED -> MOTION -> AGG_HASHED
@@ -117,14 +120,25 @@ cdb_create_grouping_paths(PlannerInfo *root,
 				locus = cdb_choose_grouping_locus(root, path, target,
 												  NIL, NIL,
 												  &need_redistribute);
-
 				if (!need_redistribute)
 				{
 					/*
-					 * If the distribution of this path is suitable, two-stage aggregation
-					 * is not applicable.
+					 * If the distribution of this path matches the GROUP BY clause,
+					 * there's no need for two-stage aggregation, we can run the aggregates
+					 * directly in one stage where the data already is.
 					 */
 					continue;
+				}
+
+				if (list_length(agg_costs->dqaArgs) > 0)
+				{
+					/*
+					 * the input distribution must match the DISTINCT argument,
+					 * otherwise we can't do it in two phases
+					 */
+					if (!CdbPathLocus_IsHashed(path->locus) ||
+						!cdbpathlocus_is_hashed_on_exprs(path->locus, agg_costs->dqaArgs, true))
+						continue;
 				}
 
 				if (!is_sorted)
@@ -195,18 +209,33 @@ cdb_create_grouping_paths(PlannerInfo *root,
 		CdbPathLocus locus;
 		bool		need_redistribute;
 		Path	   *initial_agg_path;
-		Path	   *path;
+		bool		doit = true;
 
 		locus = cdb_choose_grouping_locus(root, cheapest_path, target,
 										  NIL, NIL,
 										  &need_redistribute);
-
 		/*
 		 * If the distribution of this path is suitable, two-stage aggregation
 		 * is not applicable.
 		 */
-		if (need_redistribute)
+		if (!need_redistribute)
+			doit = false;
+
+		if (doit && list_length(agg_costs->dqaArgs) > 0)
 		{
+			/*
+			 * the input distribution must match the DISTINCT argument,
+			 * otherwise we can't do it in two phases
+			 */
+			if (!CdbPathLocus_IsHashed(cheapest_path->locus) ||
+				!cdbpathlocus_is_hashed_on_exprs(cheapest_path->locus, agg_costs->dqaArgs, true))
+				doit = false;
+		}
+
+		if (doit)
+		{
+			Path	   *path;
+
 			initial_agg_path = (Path *) create_agg_path(root,
 														output_rel,
 														cheapest_path,
@@ -256,7 +285,6 @@ cdb_create_grouping_paths(PlannerInfo *root,
 		}
 	}
 }
-
 
 
 /*

@@ -70,7 +70,6 @@ typedef struct AggClauseCosts
 	int			numAggs;		/* total number of aggregate functions */
 	int			numOrderedAggs; /* number w/ DISTINCT/ORDER BY/WITHIN GROUP */
 	int			numPureOrderedAggs; /* CDB: number that use ORDER BY/WITHIN GROUP, not counting DISTINCT */
-	/* GPDB_96_MERGE_FIXME: We got hasNonPartial from 9.6. Is hasNonCombine redundant with it? */
 	bool		hasNonCombine;	/* CDB: any agg func w/o a combine func? */
 	bool		hasNonPartial;	/* does any agg not support partial mode? */
 	bool		hasNonSerial;	/* is any partial agg non-serializable? */

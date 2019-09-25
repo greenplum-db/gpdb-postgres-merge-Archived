@@ -2173,7 +2173,14 @@ convert_combining_aggrefs(Node *node, void *context)
 
 		/* Assert we've not chosen to partial-ize any unsupported cases */
 		Assert(orig_agg->aggorder == NIL);
+
+		/*
+		 * In GPDB, we can do two-stage aggregation even when there is a
+		 * distinct-aggregate, as long as there's only one.
+		 */
+#if 0
 		Assert(orig_agg->aggdistinct == NIL);
+#endif
 
 		/*
 		 * Since aggregate calls can't be nested, we needn't recurse into the
@@ -2209,6 +2216,13 @@ convert_combining_aggrefs(Node *node, void *context)
 		parent_agg->args = list_make1(makeTargetEntry((Expr *) child_agg,
 													  1, NULL, false));
 		mark_partial_aggref(parent_agg, AGGSPLIT_FINAL_DESERIAL);
+
+		/*
+		 * In GPDB two-stage aggregates with DISTINCT, the first stage
+		 * takes care of the deduplication, and the second phase doesn't
+		 * need to care about the DISTINCT
+		 */
+		parent_agg->aggdistinct = NIL;
 
 		return (Node *) parent_agg;
 	}

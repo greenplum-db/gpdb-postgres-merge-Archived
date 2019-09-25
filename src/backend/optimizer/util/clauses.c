@@ -628,15 +628,25 @@ get_agg_clause_costs_walker(Node *node, get_agg_clause_costs_context *context)
 		/*
 		 * Check whether partial aggregation is feasible, unless we already
 		 * found out that we can't do it.
+		 *
+		 * In GPDB, we can do two-stage aggregation with DISTINCT-qualified
+		 * aggregates, if the data distribution happens to match the DISTINCT
+		 * expressions. So we keep track whether all aggregates have combine
+		 * functions, even if there are DISTINCT aggregates. hasNonCombine is
+		 * set if there are any aggregates without combine functions, even if
+		 * there are DISTINCT aggregates.
 		 */
-		if (!costs->hasNonPartial)
+		if (!costs->hasNonCombine)
 		{
 			/*
 			 * If there is no combine function, then partial aggregation is
 			 * not possible.
 			 */
 			if (!OidIsValid(aggcombinefn))
+			{
+				costs->hasNonCombine = true;
 				costs->hasNonPartial = true;
+			}
 
 			/*
 			 * If we have any aggs with transtype INTERNAL then we must check
@@ -647,16 +657,6 @@ get_agg_clause_costs_walker(Node *node, get_agg_clause_costs_context *context)
 					 (!OidIsValid(aggserialfn) || !OidIsValid(aggdeserialfn)))
 				costs->hasNonSerial = true;
 		}
-
-		/*
-		 * If there is no combine function, then partial aggregation is
-		 * not possible. (Note: This is slightly different from the hasNonPartial
-		 * flag in upstream: hasNonPartial is set to 'false', also when there are
-		 * any distinct aggregates, but hasNonCombine is strictly about whether
-		 * every aggregate has a combine function.
-		 */
-		if (!OidIsValid(aggcombinefn))
-			costs->hasNonCombine = true; /* Nope! */
 
 		/*
 		 * Add the appropriate component function execution costs to
