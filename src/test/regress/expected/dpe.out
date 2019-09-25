@@ -406,11 +406,11 @@ select * from pt where exists (select 1 from t where tid = ptid and t1 = 'hello'
 explain select count(*) from t, pt where tid = ptid;
                                                     QUERY PLAN                                                     
 -------------------------------------------------------------------------------------------------------------------
- Aggregate  (cost=21.67..21.68 rows=1 width=8)
-   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=21.62..21.66 rows=1 width=8)
-         ->  Aggregate  (cost=21.62..21.63 rows=1 width=8)
-               ->  Hash Join  (cost=2.13..21.48 rows=18 width=0)
-                     Hash Cond: pt_1_prt_junk_data.ptid = t.tid
+ Finalize Aggregate  (cost=20.17..20.18 rows=1 width=8)
+   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=20.14..20.17 rows=1 width=8)
+         ->  Partial Aggregate  (cost=20.14..20.15 rows=1 width=8)
+               ->  Hash Join  (cost=1.18..20.10 rows=6 width=0)
+                     Hash Cond: (pt_1_prt_junk_data.ptid = t.tid)
                      ->  Append  (cost=0.00..18.54 rows=18 width=4)
                            ->  Result  (cost=0.00..3.09 rows=3 width=4)
                                  One-Time Filter: PartSelected
@@ -430,11 +430,11 @@ explain select count(*) from t, pt where tid = ptid;
                            ->  Result  (cost=0.00..3.09 rows=3 width=4)
                                  One-Time Filter: PartSelected
                                  ->  Seq Scan on pt_1_prt_6  (cost=0.00..3.09 rows=3 width=4)
-                     ->  Hash  (cost=2.08..2.08 rows=2 width=4)
-                           ->  Partition Selector for pt (dynamic scan id: 1)  (cost=0.00..2.08 rows=2 width=4)
+                     ->  Hash  (cost=1.10..1.10 rows=2 width=4)
+                           ->  Partition Selector for pt (dynamic scan id: 1)  (cost=0.00..1.10 rows=2 width=4)
                                  Filter: t.tid
-                                 ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=0.00..2.08 rows=2 width=4)
-                                       ->  Seq Scan on t  (cost=0.00..2.02 rows=1 width=4)
+                                 ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=0.00..1.10 rows=2 width=4)
+                                       ->  Seq Scan on t  (cost=0.00..1.02 rows=1 width=4)
  Optimizer: Postgres query optimizer
 (30 rows)
 
@@ -1178,9 +1178,9 @@ select * from pt, pt1 where pt.ptid = pt1.ptid and pt.pt1 = 'hello0' order by pt
 explain select count(*) from pt, pt1 where pt.ptid = pt1.ptid and pt.pt1 = 'hello0';
                                                      QUERY PLAN                                                     
 --------------------------------------------------------------------------------------------------------------------
- Aggregate  (cost=40.04..40.05 rows=1 width=8)
-   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=39.98..40.03 rows=1 width=8)
-         ->  Aggregate  (cost=39.98..39.99 rows=1 width=8)
+ Finalize Aggregate  (cost=40.01..40.02 rows=1 width=8)
+   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=39.98..40.01 rows=1 width=8)
+         ->  Partial Aggregate  (cost=39.98..39.99 rows=1 width=8)
                ->  Hash Join  (cost=19.14..39.84 rows=19 width=0)
                      Hash Cond: (pt1_1_prt_junk_data.ptid = pt_1_prt_junk_data.ptid)
                      ->  Append  (cost=0.00..19.08 rows=36 width=4)
