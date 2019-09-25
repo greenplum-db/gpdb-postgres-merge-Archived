@@ -150,7 +150,6 @@ test: json_encoding
 test: indirect_toast
 test: equivclass
 test: plancache
-test: json
 test: limit
 test: plpgsql
 test: copy2
