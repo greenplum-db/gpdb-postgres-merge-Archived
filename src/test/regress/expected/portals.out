@@ -1174,11 +1174,7 @@ fetch all in c1;
 (1 row)
 
 fetch backward all in c1;
- x  
-----
- 42
-(1 row)
-
+ERROR:  backward scan is not supported in this version of Greenplum Database
 rollback;
 begin;
 explain (costs off) declare c2 cursor for select generate_series(1,3) as g;
@@ -1204,11 +1200,5 @@ fetch all in c2;
 (3 rows)
 
 fetch backward all in c2;
- g 
----
- 3
- 2
- 1
-(3 rows)
-
+ERROR:  backward scan is not supported in this version of Greenplum Database
 rollback;
