@@ -305,19 +305,32 @@ cdb_choose_grouping_locus(PlannerInfo *root, Path *path,
 	List	   *tlist = make_tlist_from_pathtarget(target);
 	CdbPathLocus locus;
 	bool		need_redistribute;
-	List	   *hash_exprs;
-	List	   *hash_opfamilies;
-	ListCell   *lc;
 
-	if (!CdbPathLocus_IsBottleneck(path->locus))
+	/*
+	 * If the input is already collected to a single segment, just perform the
+	 * aggregation there. We could redistribute it, so that we could perform
+	 * the aggregation in parallel, but Motions are pretty expensive so it's
+	 * probably not worthwhile.
+	 */
+	if (CdbPathLocus_IsBottleneck(path->locus))
 	{
-		ListCell   *lcl, *lcc;
+		need_redistribute = false;
+		CdbPathLocus_MakeNull(&locus, getgpsegmentCount());
+	}
+	else
+	{
+		List	   *group_exprs;
+		List	   *hash_exprs;
+		List	   *hash_opfamilies;
+		ListCell   *lc;
 		Bitmapset  *common_groupcols = NULL;
 		bool		first = true;
 		int			x;
 
 		if (rollup_lists)
 		{
+			ListCell   *lcl, *lcc;
+
 			forboth(lcl, rollup_lists, lcc, rollup_groupclauses)
 			{
 				List *rlist = (List *) lfirst(lcl);
@@ -356,44 +369,44 @@ cdb_choose_grouping_locus(PlannerInfo *root, Path *path,
 		}
 
 		x = -1;
-		hash_exprs = NIL;
+		group_exprs = NIL;
 		while ((x = bms_next_member(common_groupcols, x)) >= 0)
 		{
 			TargetEntry *tle = get_sortgroupref_tle(x, tlist);
 
-			hash_exprs = lappend(hash_exprs, tle->expr);
+			group_exprs = lappend(group_exprs, tle->expr);
 		}
 
-		if (!hash_exprs)
+		if (!group_exprs)
 			need_redistribute = true;
 		else
-			need_redistribute = !cdbpathlocus_is_hashed_on_exprs(path->locus, hash_exprs, true);
-	}
-	else
-	{
-		need_redistribute = false;
+			need_redistribute = !cdbpathlocus_is_hashed_on_exprs(path->locus, group_exprs, true);
+
 		hash_exprs = NIL;
-	}
+		hash_opfamilies = NIL;
+		foreach(lc, group_exprs)
+		{
+			Node	   *expr = lfirst(lc);
+			Oid			opfamily;
 
-	hash_opfamilies = NIL;
-	foreach(lc, hash_exprs)
-	{
-		Node	   *expr = lfirst(lc);
-		Oid			opfamily;
+			opfamily = cdb_default_distribution_opfamily_for_type(exprType(expr));
+			if (OidIsValid(opfamily))
+			{
+				hash_exprs = lappend(hash_exprs, expr);
+				hash_opfamilies = lappend_oid(hash_opfamilies, opfamily);
+			}
+		}
 
-		opfamily = cdb_default_distribution_opfamily_for_type(exprType(expr));
-		hash_opfamilies = lappend_oid(hash_opfamilies, opfamily);
-	}
-
-	if (need_redistribute)
-	{
-		if (hash_exprs)
-			locus = cdbpathlocus_from_exprs(root, hash_exprs, hash_opfamilies, getgpsegmentCount());
+		if (need_redistribute)
+		{
+			if (hash_exprs)
+				locus = cdbpathlocus_from_exprs(root, hash_exprs, hash_opfamilies, getgpsegmentCount());
+			else
+				CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+		}
 		else
-			CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+			CdbPathLocus_MakeNull(&locus, getgpsegmentCount());
 	}
-	else
-		CdbPathLocus_MakeNull(&locus, getgpsegmentCount());
 
 	*need_redistribute_p = need_redistribute;
 	return locus;
