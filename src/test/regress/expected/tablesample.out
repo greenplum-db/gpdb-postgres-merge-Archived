@@ -308,21 +308,22 @@ EXPLAIN (COSTS OFF)
 -- check inheritance behavior
 explain (costs off)
   select count(*) from person tablesample bernoulli (100);
-                      QUERY PLAN                       
--------------------------------------------------------
- Aggregate
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Finalize Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Append
-               ->  Sample Scan on person
-                     Sampling: bernoulli ('100'::real)
-               ->  Sample Scan on emp
-                     Sampling: bernoulli ('100'::real)
-               ->  Sample Scan on student
-                     Sampling: bernoulli ('100'::real)
-               ->  Sample Scan on stud_emp
-                     Sampling: bernoulli ('100'::real)
+         ->  Partial Aggregate
+               ->  Append
+                     ->  Sample Scan on person
+                           Sampling: bernoulli ('100'::real)
+                     ->  Sample Scan on emp
+                           Sampling: bernoulli ('100'::real)
+                     ->  Sample Scan on student
+                           Sampling: bernoulli ('100'::real)
+                     ->  Sample Scan on stud_emp
+                           Sampling: bernoulli ('100'::real)
  Optimizer: Postgres query optimizer
-(12 rows)
+(13 rows)
 
 select count(*) from person tablesample bernoulli (100);
  count 
