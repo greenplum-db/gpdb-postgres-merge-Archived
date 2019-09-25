@@ -241,6 +241,9 @@ pathnode_walk_kids(Path            *path,
 		case T_Limit:
 			v = pathnode_walk_node(((LimitPath *)path)->subpath, walker, context);
 			break;
+		case T_SetOp:
+			v = pathnode_walk_node(((SetOpPath *)path)->subpath, walker, context);
+			break;
 		default:
 			v = CdbVisit_Walk;  /* keep compiler quiet */
 			elog(ERROR, "unrecognized path type: %d", (int)path->pathtype);

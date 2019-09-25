@@ -2554,72 +2554,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 #endif
 	
 	/*
-	 * Greenplum specific behavior:
-	 * The implementation of select statement with locking clause
-	 * (for update | no key update | share | key share) in postgres
-	 * is to hold RowShareLock on tables during parsing stage, and
-	 * generate a LockRows plan node for executor to lock the tuples.
-	 * It is not easy to lock tuples in Greenplum database, since
-	 * tuples may be fetched through motion nodes.
-	 *
-	 * But when Global Deadlock Detector is enabled, and the select
-	 * statement with locking clause contains only one table, we are
-	 * sure that there are no motions. For such simple cases, we could
-	 * make the behavior just the same as Postgres.
-	 *
-	 * The conflict with UPDATE|DELETE is implemented by locking the entire
-	 * table in ExclusiveMode. More details please refer docs.
-	 */
-#if 0 /* GPDB_96_MERGE_FIXME: We should be doing this on the paths, we don't have a 'Plan' anymore */
-	if (parse->rowMarks)
-	{
-		ListCell   *lc;
-		List   *newmarks = NIL;
-
-		if (parse->canOptSelectLockingClause)
-		{
-			foreach(lc, root->rowMarks)
-			{
-				PlanRowMark *rc = (PlanRowMark *) lfirst(lc);
-
-				rc->canOptSelectLockingClause = true;
-				newmarks = lappend(newmarks, rc);
-			}
-		}
-
-		if (newmarks)
-		{
-			result_plan = (Plan *) make_lockrows(result_plan,
-												 newmarks,
-												 SS_assign_special_param(root));
-			result_plan->flow = pull_up_Flow(result_plan, result_plan->lefttree);
-
-
-			if (must_gather && result_plan->flow->flotype != FLOW_SINGLETON)
-			{
-				/*
-				 * Greenplum specific behavior:
-				 * Add the postponed gather motion of sorting here.
-				 *`The SQL can reach here has the pattern: select xxx from t order by yyy for update (see
-				 * above must_gather's assignment for details). For read committed isolation level,
-				 * The statement `select order by for update` cannot guarantee order (see discussion
-				 * https://www.postgresql.org/message-id/CAO0i4_QCf8LUCO9xDgDpJ0zdsyM7q83APtqHamdsswQ6NVT3ZQ%40mail.gmail.com
-				 * for details) even in postgres. So it is OK to generate two-stage merge sort plan here. And
-				 * document the limitations in Greenplum.
-				 */
-				result_plan = (Plan *) make_motion_gather(root, result_plan, current_pathkeys);
-			}
-
-			/*
-			 * The result can no longer be assumed sorted, since locking might
-			 * cause the sort key columns to be replaced with new values.
-			 */
-			current_pathkeys = NIL;
-		}
-	}
-#endif
-
-	/*
 	 * Deal with explicit redistribution requirements for TableValueExpr
 	 * subplans with explicit distribitution
 	 */
@@ -2738,17 +2672,49 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		}
 
 		/*
-		 * If there is a FOR [KEY] UPDATE/SHARE clause, add the LockRows node.
-		 * (Note: we intentionally test parse->rowMarks not root->rowMarks
-		 * here.  If there are only non-locking rowmarks, they should be
-		 * handled by the ModifyTable node instead.  However, root->rowMarks
-		 * is what goes into the LockRows node.)
+		 * Greenplum specific behavior:
+		 * The implementation of select statement with locking clause
+		 * (for update | no key update | share | key share) in postgres
+		 * is to hold RowShareLock on tables during parsing stage, and
+		 * generate a LockRows plan node for executor to lock the tuples.
+		 * It is not easy to lock tuples in Greenplum database, since
+		 * tuples may be fetched through motion nodes.
+		 *
+		 * But when Global Deadlock Detector is enabled, and the select
+		 * statement with locking clause contains only one table, we are
+		 * sure that there are no motions. For such simple cases, we could
+		 * make the behavior just the same as Postgres.
+		 *
+		 * The conflict with UPDATE|DELETE is implemented by locking the entire
+		 * table in ExclusiveMode. More details please refer docs.
+		 */
+		/*
+		 * GPDB_96_MERGE_FIXME: since we now process this in the path
+		 * context, it's much simpler than before, please kindly
+		 * revisit this, I'm not quite sure here.
 		 */
 		if (parse->rowMarks)
 		{
-			path = (Path *) create_lockrows_path(root, final_rel, path,
-												 root->rowMarks,
-											  SS_assign_special_param(root));
+			ListCell   *lc;
+			List   *newmarks = NIL;
+
+			if (parse->canOptSelectLockingClause)
+			{
+				foreach(lc, root->rowMarks)
+				{
+					PlanRowMark *rc = (PlanRowMark *) lfirst(lc);
+
+					rc->canOptSelectLockingClause = true;
+					newmarks = lappend(newmarks, rc);
+				}
+			}
+
+			if (newmarks)
+			{
+				path = (Path *) create_lockrows_path(root, final_rel, path,
+									root->rowMarks,
+									SS_assign_special_param(root));
+			}
 		}
 
 		/*

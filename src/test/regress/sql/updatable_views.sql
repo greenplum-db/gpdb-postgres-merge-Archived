@@ -1134,7 +1134,6 @@ DROP VIEW v2;
 DROP VIEW v1;
 DROP TABLE t2;
 DROP TABLE t1;
-<<<<<<< HEAD
 
 --
 -- Test CREATE OR REPLACE VIEW turning a non-updatable view into an
@@ -1149,5 +1148,3 @@ INSERT INTO v1 VALUES (-1, 'invalid'); -- should fail
 
 DROP VIEW v1;
 DROP TABLE t1;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

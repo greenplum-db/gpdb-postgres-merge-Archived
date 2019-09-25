@@ -1093,13 +1093,13 @@ typedef struct Path
 	Cost		startup_cost;	/* cost expended before fetching any tuples */
 	Cost		total_cost;		/* total cost (assuming all tuples fetched) */
 
-    EstimatedBytes  memory;     /* executor RAM needed for Path + kids */
+	EstimatedBytes  memory;     /* executor RAM needed for Path + kids */
 
-    CdbPathLocus    locus;      /* distribution of the result tuples */
+	CdbPathLocus    locus;      /* distribution of the result tuples */
 
-    bool        motionHazard;   /* true => path contains a CdbMotion operator
-                                 *    without a slackening operator above it */
-	
+	bool        motionHazard;   /* true => path contains a CdbMotion operator
+					without a slackening operator above it */
+
 	bool		rescannable;    /* CDB: true => path can accept ExecRescan call
                                  */
 	List	   *pathkeys;		/* sort ordering of path's output */
