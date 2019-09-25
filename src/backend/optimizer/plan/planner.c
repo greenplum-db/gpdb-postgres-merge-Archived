@@ -4580,7 +4580,7 @@ create_grouping_paths(PlannerInfo *root,
 													  rollup_lists,
 													  rollup_groupclauses,
 													  agg_costs,
-													  dNumGroups));
+													  dNumGroups / path->locus.numsegments));
 				}
 				else if (parse->hasAggs || parse->groupClause)
 				{
@@ -4599,7 +4599,7 @@ create_grouping_paths(PlannerInfo *root,
 											 parse->groupClause,
 											 (List *) parse->havingQual,
 											 agg_costs,
-											 dNumGroups));
+											 dNumGroups / path->locus.numsegments));
 				}
 				else if (parse->groupClause)
 				{
@@ -4688,9 +4688,16 @@ create_grouping_paths(PlannerInfo *root,
 
 	if (can_hash)
 	{
+		CdbPathLocus locus;
+		bool		need_redistribute;
+
+		locus = cdb_choose_grouping_locus(root, cheapest_path, target,
+										  rollup_lists, rollup_groupclauses,
+										  &need_redistribute);
+
 		hashaggtablesize = estimate_hashagg_tablesize(cheapest_path,
 													  agg_costs,
-													  dNumGroups);
+													  dNumGroups / locus.numsegments);
 
 		/*
 		 * Provided that the estimated size of the hashtable does not exceed
@@ -4709,17 +4716,9 @@ create_grouping_paths(PlannerInfo *root,
 			 */
 			consider_hash = true;
 
-			{
-				CdbPathLocus locus;
-				bool		need_redistribute;
-
-				locus = cdb_choose_grouping_locus(root, cheapest_path, target,
-												  rollup_lists, rollup_groupclauses,
-												  &need_redistribute);
-				if (need_redistribute)
-					cheapest_path = cdbpath_create_motion_path(root, cheapest_path,
-															   NIL /* pathkeys */, false, locus);
-			}
+			if (need_redistribute)
+				cheapest_path = cdbpath_create_motion_path(root, cheapest_path,
+														   NIL /* pathkeys */, false, locus);
 
 			/*
 			 * We just need an Agg over the cheapest-total input path, since
@@ -4735,7 +4734,7 @@ create_grouping_paths(PlannerInfo *root,
 									 parse->groupClause,
 									 (List *) parse->havingQual,
 									 agg_costs,
-									 dNumGroups));
+									 dNumGroups / locus.numsegments));
 		}
 
 		/*

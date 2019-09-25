@@ -280,7 +280,7 @@ cdb_create_twostage_grouping_paths(PlannerInfo *root,
 											parse->groupClause,
 											(List *) parse->havingQual,
 											agg_final_costs,
-											dNumGroups);
+											dNumGroups / getgpsegmentCount());
 			add_path(output_rel, path);
 		}
 	}
