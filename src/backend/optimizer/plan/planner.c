@@ -195,7 +195,9 @@ static Plan *getAnySubplan(Plan *node);
 static bool isSimplyUpdatableQuery(Query *query);
 
 static CdbPathLocus choose_grouping_locus(PlannerInfo *root, Path *path,
-					  List *rollup_lists, List *rollup_groupclauses,
+					  PathTarget *target,
+					  List *rollup_lists,
+					  List *rollup_groupclauses,
 					  bool *need_redistribute_p);
 static CdbPathLocus choose_one_window_locus(PlannerInfo *root, Path *path,
 											WindowClause *wc,
@@ -4519,7 +4521,8 @@ create_grouping_paths(PlannerInfo *root,
 				CdbPathLocus locus;
 				bool		need_redistribute;
 
-				locus = choose_grouping_locus(root, path, rollup_lists, rollup_groupclauses,
+				locus = choose_grouping_locus(root, path, target,
+											  rollup_lists, rollup_groupclauses,
 											  &need_redistribute);
 
 				/* Sort the cheapest-total path if it isn't already sorted */
@@ -4712,7 +4715,8 @@ create_grouping_paths(PlannerInfo *root,
 				CdbPathLocus locus;
 				bool		need_redistribute;
 
-				locus = choose_grouping_locus(root, cheapest_path, rollup_lists, rollup_groupclauses,
+				locus = choose_grouping_locus(root, cheapest_path, target,
+											  rollup_lists, rollup_groupclauses,
 											  &need_redistribute);
 				if (need_redistribute)
 					cheapest_path = cdbpath_create_motion_path(root, cheapest_path,
@@ -4826,9 +4830,12 @@ create_grouping_paths(PlannerInfo *root,
  */
 static CdbPathLocus
 choose_grouping_locus(PlannerInfo *root, Path *path,
-					  List *rollup_lists, List *rollup_groupclauses,
+					  PathTarget *target,
+					  List *rollup_lists,
+					  List *rollup_groupclauses,
 					  bool *need_redistribute_p)
 {
+	List	   *tlist = make_tlist_from_pathtarget(target);
 	CdbPathLocus locus;
 	bool		need_redistribute;
 	List	   *hash_exprs;
@@ -4842,8 +4849,6 @@ choose_grouping_locus(PlannerInfo *root, Path *path,
 		bool		first = true;
 		int			x;
 
-		/* GPDB_96_MERGE_FIXME: resurrect this */
-#if 0
 		if (rollup_lists)
 		{
 			forboth(lcl, rollup_lists, lcc, rollup_groupclauses)
@@ -4873,7 +4878,7 @@ choose_grouping_locus(PlannerInfo *root, Path *path,
 		}
 		else
 		{
-			List	   *rclause = lfirst(list_head(rollup_groupclauses));
+			List	   *rclause = root->parse->groupClause;
 
 			foreach(lc, rclause)
 			{
@@ -4891,8 +4896,7 @@ choose_grouping_locus(PlannerInfo *root, Path *path,
 
 			hash_exprs = lappend(hash_exprs, tle->expr);
 		}
-#endif
-		hash_exprs = NIL;
+
 		if (!hash_exprs)
 			need_redistribute = true;
 		else
