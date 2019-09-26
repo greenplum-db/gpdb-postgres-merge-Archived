@@ -1758,12 +1758,12 @@ CREATE VIEW rw_view2 AS
   SELECT * FROM rw_view1 WHERE a > 0 WITH LOCAL CHECK OPTION;
 INSERT INTO rw_view2 VALUES (-5); -- should fail
 ERROR:  new row violates check option for view "rw_view2"
-DETAIL:  Failing row contains (-5).
+DETAIL:  Failing row contains (-5, null).
 INSERT INTO rw_view2 VALUES (5); -- ok
 INSERT INTO rw_view2 VALUES (50); -- ok, but not in view
 UPDATE rw_view2 SET a = a - 10; -- should fail
-ERROR:  new row violates check option for view "rw_view2"
-DETAIL:  Failing row contains (-5).
+-- Greenplum doesn't fail because nothing was inserted into view, which is
+-- because Greenplum doesn't support INSTEAD OF triggers.
 SELECT * FROM base_tbl;
  a  | b 
 ----+---
