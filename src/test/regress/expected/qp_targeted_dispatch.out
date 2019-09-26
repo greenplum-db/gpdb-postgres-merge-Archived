@@ -516,9 +516,9 @@ INFO:  (slice 1) Dispatch command to SINGLE content
 explain select count(*) from mpp7638 where a =1;
                                         QUERY PLAN                                        
 ------------------------------------------------------------------------------------------
- Aggregate  (cost=8900.41..8900.42 rows=1 width=8)
-   ->  Gather Motion 1:1  (slice1; segments: 1)  (cost=8900.35..8900.40 rows=1 width=8)
-         ->  Aggregate  (cost=8900.35..8900.36 rows=1 width=8)
+ Finalize Aggregate  (cost=8900.38..8900.39 rows=1 width=8)
+   ->  Gather Motion 1:1  (slice1; segments: 1)  (cost=8900.35..8900.38 rows=1 width=8)
+         ->  Partial Aggregate  (cost=8900.35..8900.36 rows=1 width=8)
                ->  Append  (cost=0.00..8898.75 rows=214 width=0)
                      ->  Seq Scan on mpp7638_1_prt_1  (cost=0.00..988.75 rows=24 width=0)
                            Filter: (a = 1)
@@ -537,9 +537,9 @@ explain select count(*) from mpp7638 where a =1;
                      ->  Seq Scan on mpp7638_1_prt_8  (cost=0.00..988.75 rows=24 width=0)
                            Filter: (a = 1)
                      ->  Seq Scan on mpp7638_1_prt_9  (cost=0.00..988.75 rows=24 width=0)
-                           Filter: a = 1
+                           Filter: (a = 1)
  Optimizer: Postgres query optimizer
-(24 rows)
+(23 rows)
 
 alter table mpp7638 set distributed by (a, b, c);
 INFO:  (slice 1) Dispatch command to ALL contents: 0 1 2
