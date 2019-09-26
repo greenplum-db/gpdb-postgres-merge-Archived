@@ -2007,7 +2007,7 @@ cdbpath_dedup_fixup_walker(Path *path, void *context)
 	Assert(!ctx->rowid_vars);
 
 	/* Watch for a UniquePath node calling for removal of dups by row id. */
-	if (path->pathtype == T_Unique)
+	if (IsA(path, UniquePath))
 		return cdbpath_dedup_fixup_unique((UniquePath *) path, ctx);
 
 	/* Leave node unchanged unless a downstream Unique op needs row ids. */
