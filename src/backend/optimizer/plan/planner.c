@@ -4860,13 +4860,15 @@ choose_one_window_locus(PlannerInfo *root, Path *path,
 		List	   *partition_dist_pathkeys;
 		List	   *partition_dist_exprs;
 		List	   *partition_dist_opfamilies;
+		List	   *partition_dist_sortrefs;
 
 		make_distribution_exprs_for_groupclause(root,
 												wc->partitionClause,
 												make_tlist_from_pathtarget(path->pathtarget),
 												&partition_dist_pathkeys,
 												&partition_dist_exprs,
-												&partition_dist_opfamilies);
+												&partition_dist_opfamilies,
+												&partition_dist_sortrefs);
 		if (!partition_dist_exprs)
 		{
 			/*
@@ -4887,7 +4889,10 @@ choose_one_window_locus(PlannerInfo *root, Path *path,
 		}
 		else
 		{
-			locus = cdbpathlocus_from_exprs(root, partition_dist_exprs, partition_dist_opfamilies,
+			locus = cdbpathlocus_from_exprs(root,
+											partition_dist_exprs,
+											partition_dist_opfamilies,
+											partition_dist_sortrefs,
 											getgpsegmentCount());
 			need_redistribute = true;
 		}
@@ -5139,6 +5144,7 @@ create_distinct_paths(PlannerInfo *root,
 	List	   *distinct_dist_pathkeys = NIL;
 	List	   *distinct_dist_exprs = NIL;
 	List	   *distinct_dist_opfamilies = NIL;
+	List	   *distinct_dist_sortrefs = NIL;
 
 	/*
 	 * GPDB_96_MERGE_FIXME: there was a bunch of GPDB changes in
@@ -5165,7 +5171,8 @@ create_distinct_paths(PlannerInfo *root,
 			make_tlist_from_pathtarget(root->upper_targets[UPPERREL_WINDOW]),
 											&distinct_dist_pathkeys,
 											&distinct_dist_exprs,
-											&distinct_dist_opfamilies);
+											&distinct_dist_opfamilies,
+											&distinct_dist_sortrefs);
 
 #if 0
 	if (Gp_role == GP_ROLE_DISPATCH && CdbPathLocus_IsPartitioned(path->locus))
@@ -5325,8 +5332,10 @@ create_distinct_paths(PlannerInfo *root,
 
 					if (distinct_dist_exprs)
 					{
-						locus = cdbpathlocus_from_exprs(root, distinct_dist_exprs,
+						locus = cdbpathlocus_from_exprs(root,
+														distinct_dist_exprs,
 														distinct_dist_opfamilies,
+														distinct_dist_sortrefs,
 														getgpsegmentCount());
 					}
 					else
@@ -5367,8 +5376,10 @@ create_distinct_paths(PlannerInfo *root,
 
 				if (distinct_dist_exprs)
 				{
-					locus = cdbpathlocus_from_exprs(root, distinct_dist_exprs,
+					locus = cdbpathlocus_from_exprs(root,
+													distinct_dist_exprs,
 													distinct_dist_opfamilies,
+													distinct_dist_sortrefs,
 													getgpsegmentCount());
 				}
 				else
@@ -5393,8 +5404,10 @@ create_distinct_paths(PlannerInfo *root,
 
 				if (distinct_dist_exprs)
 				{
-					locus = cdbpathlocus_from_exprs(root, distinct_dist_exprs,
+					locus = cdbpathlocus_from_exprs(root,
+													distinct_dist_exprs,
 													distinct_dist_opfamilies,
+													distinct_dist_sortrefs,
 													getgpsegmentCount());
 				}
 				else

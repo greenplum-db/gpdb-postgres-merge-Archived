@@ -1735,7 +1735,7 @@ cdbpath_dedup_fixup_unique(UniquePath *uniquePath, CdbpathDedupFixupContext *ctx
 				opfamily = get_compatible_hash_opfamily(TIDEqualOperator);
 
 				cdistkey = cdb_make_distkey_for_expr(ctx->root,_(Node *) var,
-													 opfamily);
+													 opfamily, false);
 				distkeys = lappend(distkeys, cdistkey);
 			}
 		}

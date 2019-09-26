@@ -237,26 +237,27 @@ CdbPathLocus
 cdbpathlocus_from_exprs(struct PlannerInfo *root,
 						List *hash_on_exprs,
 						List *hash_opfamilies,
+						List *hash_sortrefs,
 						int numsegments)
 {
 	CdbPathLocus locus;
 	List	   *distkeys = NIL;
-	ListCell   *le, *lof;
+	ListCell   *le, *lof, *lsr;
 
-	forboth(le, hash_on_exprs, lof, hash_opfamilies)
+	forthree(le, hash_on_exprs, lof, hash_opfamilies, lsr, hash_sortrefs)
 	{
 		Node	   *expr = (Node *) lfirst(le);
 		Oid			opfamily = lfirst_oid(lof);
+		int			sortref = lfirst_int(lsr);
 		DistributionKey *distkey;
 
-		distkey = cdb_make_distkey_for_expr(root, expr, opfamily);
+		distkey = cdb_make_distkey_for_expr(root, expr, opfamily, sortref);
 		distkeys = lappend(distkeys, distkey);
 	}
 
 	CdbPathLocus_MakeHashed(&locus, distkeys, numsegments);
 	return locus;
 }								/* cdbpathlocus_from_exprs */
-
 
 /*
  * cdbpathlocus_from_subquery
@@ -335,7 +336,7 @@ cdbpathlocus_from_subquery(struct PlannerInfo *root,
 								  exprTypmod((Node *) tle->expr),
 								  exprCollation((Node *) tle->expr),
 								  0);
-					distkey = cdb_make_distkey_for_expr(root, (Node *) var, opfamily);
+					distkey = cdb_make_distkey_for_expr(root, (Node *) var, opfamily, tle->ressortgroupref);
 					distkeys = lappend(distkeys, distkey);
 				}
 				if (distkeys && !expr_cell)
@@ -778,6 +779,91 @@ cdbpathlocus_is_hashed_on_eclasses(CdbPathLocus locus, List *eclasses,
 		return !CdbPathLocus_IsStrewn(locus);
 }								/* cdbpathlocus_is_hashed_on_exprs */
 
+/*
+ * cdbpathlocus_is_hashed_on_tlist
+ *
+ * This function tests whether grouping on a given set of exprs can be done
+ * in place without motion.
+ *
+ * For a hashed locus, returns false if the distkey has a column whose
+ * equivalence class contains no expr belonging to the given list.
+ *
+ * If 'ignore_constants' is true, any constants in the locus are ignored.
+ */
+bool
+cdbpathlocus_is_hashed_on_tlist(CdbPathLocus locus, List *tlist,
+								bool ignore_constants)
+{
+	ListCell   *distkeycell;
+
+	Assert(cdbpathlocus_is_valid(locus));
+
+	if (CdbPathLocus_IsHashed(locus) || CdbPathLocus_IsHashedOJ(locus))
+	{
+		foreach(distkeycell, locus.distkey)
+		{
+			DistributionKey *distkey = (DistributionKey *) lfirst(distkeycell);
+			ListCell   *distkeyeccell;
+			bool		found = false;
+
+			foreach(distkeyeccell, distkey->dk_eclasses)
+			{
+				/* Does some expr in distkey match some item in exprlist? */
+				EquivalenceClass *dk_eclass = (EquivalenceClass *) lfirst(distkeyeccell);
+				ListCell   *i;
+
+				if (ignore_constants && CdbEquivClassIsConstant(dk_eclass))
+				{
+					found = true;
+					break;
+				}
+
+				if (dk_eclass->ec_sortref != 0)
+				{
+					foreach(i, tlist)
+					{
+						TargetEntry *tle = (TargetEntry *) lfirst(i);
+
+						if (tle->ressortgroupref == dk_eclass->ec_sortref)
+						{
+							found = true;
+							break;
+						}
+					}
+				}
+				else
+				{
+					foreach(i, dk_eclass->ec_members)
+					{
+						EquivalenceMember *em = (EquivalenceMember *) lfirst(i);
+						ListCell *ltl;
+
+						foreach(ltl, tlist)
+						{
+							TargetEntry *tle = (TargetEntry *) lfirst(ltl);
+
+							if (equal(tle->expr, em->em_expr))
+							{
+								found = true;
+								break;
+							}
+						}
+						if (found)
+							break;
+					}
+				}
+				if (found)
+					break;
+			}
+			if (!found)
+				return false;
+		}
+		/* Every column of the distkey contains an expr in exprlist. */
+		return true;
+	}
+	else
+		return !CdbPathLocus_IsStrewn(locus);
+}
 
 /*
  * cdbpathlocus_is_hashed_on_relids

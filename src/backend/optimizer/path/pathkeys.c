@@ -1202,7 +1202,8 @@ build_join_pathkeys(PlannerInfo *root,
 DistributionKey *
 cdb_make_distkey_for_expr(PlannerInfo *root,
 						  Node *expr,
-						  Oid opfamily /* hash opfamily */)
+						  Oid opfamily /* hash opfamily */,
+						  int sortref)
 {
 	Oid			typeoid;
 	Oid			eqopoid;
@@ -1253,7 +1254,7 @@ cdb_make_distkey_for_expr(PlannerInfo *root,
 									  mergeopfamilies,
 									  lefttype,
 									  exprCollation(expr),
-									  0,
+									  sortref,
 									  NULL,
 									  true);
 
@@ -1438,11 +1439,13 @@ void
 make_distribution_exprs_for_groupclause(PlannerInfo *root, List *groupclause, List *tlist,
 										List **partition_dist_pathkeys,
 										List **partition_dist_exprs,
-										List **partition_dist_opfamilies)
+										List **partition_dist_opfamilies,
+										List **partition_dist_sortrefs)
 {
 	List	   *pathkeys = NIL;
 	List	   *exprs = NIL;
 	List	   *opfamilies = NIL;
+	List	   *sortrefs = NIL;
 	ListCell   *l;
 
 	foreach(l, groupclause)
@@ -1470,11 +1473,13 @@ make_distribution_exprs_for_groupclause(PlannerInfo *root, List *groupclause, Li
 		pathkeys = lappend(pathkeys, pathkey);
 		exprs = lappend(exprs, expr);
 		opfamilies = lappend_oid(opfamilies, opfamily);
+		sortrefs = lappend_int(sortrefs, sortcl->tleSortGroupRef);
 	}
 
 	*partition_dist_pathkeys = pathkeys;
 	*partition_dist_exprs = exprs;
 	*partition_dist_opfamilies = opfamilies;
+	*partition_dist_sortrefs = sortrefs;
 }
 
 /****************************************************************************

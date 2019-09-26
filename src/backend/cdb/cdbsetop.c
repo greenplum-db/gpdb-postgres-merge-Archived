@@ -373,6 +373,7 @@ make_motion_hash_all_targets(PlannerInfo *root, Path *subpath, List *tlist)
 	ListCell   *cell;
 	List	   *hashexprs = NIL;
 	List	   *hashopfamilies = NIL;
+	List	   *hashsortrefs = NIL;
 	CdbPathLocus locus;
 
 	foreach(cell, tlist)
@@ -389,12 +390,13 @@ make_motion_hash_all_targets(PlannerInfo *root, Path *subpath, List *tlist)
 
 		hashexprs = lappend(hashexprs, copyObject(tle->expr));
 		hashopfamilies = lappend_oid(hashopfamilies, opfamily);
+		hashsortrefs = lappend_int(hashsortrefs, tle->ressortgroupref);
 	}
 
 	if (hashexprs)
 	{
 		/* Distribute to ALL to maximize parallelism */
-		locus = cdbpathlocus_from_exprs(root, hashexprs, hashopfamilies, getgpsegmentCount());
+		locus = cdbpathlocus_from_exprs(root, hashexprs, hashopfamilies, hashsortrefs, getgpsegmentCount());
 	}
 	else
 	{

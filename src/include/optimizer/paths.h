@@ -214,7 +214,7 @@ extern List *build_join_pathkeys(PlannerInfo *root,
 					List *outer_pathkeys);
 
 extern DistributionKey *cdb_make_distkey_for_expr(PlannerInfo  *root,
-						  Node *expr, Oid opfamily /* hash opfamily */);
+												  Node *expr, Oid opfamily /* hash opfamily */, int sortref);
 extern EquivalenceClass *
 cdb_pull_up_eclass(PlannerInfo    *root,
 					EquivalenceClass *eclass,
@@ -230,7 +230,8 @@ extern void make_distribution_exprs_for_groupclause(PlannerInfo *root,
 										List *groupclause, List *tlist,
 										List **partition_dist_pathkeys,
 										List **partition_dist_exprs,
-										List **partition_dist_opfamilies);
+										List **partition_dist_opfamilies,
+										List **partition_dist_sortrefs);
 extern void initialize_mergeclause_eclasses(PlannerInfo *root,
 								RestrictInfo *restrictinfo);
 extern void update_mergeclause_eclasses(PlannerInfo *root,

@@ -5420,6 +5420,7 @@ add_motion_to_dqa_child(Plan *plan, PlannerInfo *root, bool *motion_added)
 		locus = cdbpathlocus_from_exprs(root,
 										plan->flow->hashExprs,
 										plan->flow->hashOpfamilies,
+										NIL,
 										plan->flow->numsegments);
 	}
 

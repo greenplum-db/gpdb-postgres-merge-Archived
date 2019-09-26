@@ -319,9 +319,10 @@ cdb_choose_grouping_locus(PlannerInfo *root, Path *path,
 	}
 	else
 	{
-		List	   *group_exprs;
+		List	   *group_tles;
 		List	   *hash_exprs;
 		List	   *hash_opfamilies;
+		List	   *hash_sortrefs;
 		ListCell   *lc;
 		Bitmapset  *common_groupcols = NULL;
 		bool		first = true;
@@ -369,38 +370,40 @@ cdb_choose_grouping_locus(PlannerInfo *root, Path *path,
 		}
 
 		x = -1;
-		group_exprs = NIL;
+		group_tles = NIL;
 		while ((x = bms_next_member(common_groupcols, x)) >= 0)
 		{
 			TargetEntry *tle = get_sortgroupref_tle(x, tlist);
 
-			group_exprs = lappend(group_exprs, tle->expr);
+			group_tles = lappend(group_tles, tle);
 		}
 
-		if (!group_exprs)
+		if (!group_tles)
 			need_redistribute = true;
 		else
-			need_redistribute = !cdbpathlocus_is_hashed_on_exprs(path->locus, group_exprs, true);
+			need_redistribute = !cdbpathlocus_is_hashed_on_tlist(path->locus, group_tles, true);
 
 		hash_exprs = NIL;
 		hash_opfamilies = NIL;
-		foreach(lc, group_exprs)
+		hash_sortrefs = NIL;
+		foreach(lc, group_tles)
 		{
-			Node	   *expr = lfirst(lc);
+			TargetEntry *tle = (TargetEntry *) lfirst(lc);
 			Oid			opfamily;
 
-			opfamily = cdb_default_distribution_opfamily_for_type(exprType(expr));
+			opfamily = cdb_default_distribution_opfamily_for_type(exprType((Node *) tle->expr));
 			if (OidIsValid(opfamily))
 			{
-				hash_exprs = lappend(hash_exprs, expr);
+				hash_exprs = lappend(hash_exprs, tle->expr);
 				hash_opfamilies = lappend_oid(hash_opfamilies, opfamily);
+				hash_sortrefs = lappend_int(hash_sortrefs, tle->ressortgroupref);
 			}
 		}
 
 		if (need_redistribute)
 		{
 			if (hash_exprs)
-				locus = cdbpathlocus_from_exprs(root, hash_exprs, hash_opfamilies, getgpsegmentCount());
+				locus = cdbpathlocus_from_exprs(root, hash_exprs, hash_opfamilies, hash_sortrefs, getgpsegmentCount());
 			else
 				CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
 		}

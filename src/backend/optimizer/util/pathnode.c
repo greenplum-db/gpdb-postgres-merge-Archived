@@ -2084,6 +2084,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		int			numsegments = CdbPathLocus_NumSegments(subpath->locus);
 
 		List	   *opfamilies = NIL;
+		List	   *sortrefs = NIL;
 		ListCell   *lc;
 
 		foreach(lc, sjinfo->semi_rhs_exprs)
@@ -2093,9 +2094,10 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 
 			opfamily = cdb_default_distribution_opfamily_for_type(exprType(expr));
 			opfamilies = lappend_oid(opfamilies, opfamily);
+			sortrefs = lappend_int(sortrefs, 0);
 		}
 
-		locus = cdbpathlocus_from_exprs(root, sjinfo->semi_rhs_exprs, opfamilies, numsegments);
+		locus = cdbpathlocus_from_exprs(root, sjinfo->semi_rhs_exprs, opfamilies, sortrefs, numsegments);
         subpath = cdbpath_create_motion_path(root, subpath, NIL, false, locus);
 		/*
 		 * We probably add agg/sort node above the added motion node, but it is

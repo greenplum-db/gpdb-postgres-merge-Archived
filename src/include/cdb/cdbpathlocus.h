@@ -249,6 +249,7 @@ CdbPathLocus
 cdbpathlocus_from_exprs(struct PlannerInfo     *root,
                         List                   *hash_on_exprs,
 						List *hash_opclasses,
+						List *hash_sortrefs,
                         int                     numsegments);
 CdbPathLocus
 cdbpathlocus_from_subquery(struct PlannerInfo  *root,
@@ -329,6 +330,9 @@ cdbpathlocus_is_hashed_on_exprs(CdbPathLocus locus, List *exprlist, bool ignore_
  */
 bool
 cdbpathlocus_is_hashed_on_eclasses(CdbPathLocus locus, List *eclasses, bool ignore_constants);
+
+bool
+cdbpathlocus_is_hashed_on_tlist(CdbPathLocus locus, List *tlist, bool ignore_constants);
 
 /*
  * cdbpathlocus_is_hashed_on_relids
