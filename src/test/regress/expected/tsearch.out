@@ -1333,9 +1333,9 @@ SELECT ts_rewrite('foo & bar & qq & new & york',  'new & york'::tsquery, 'big & 
 
 SELECT ts_rewrite(ts_rewrite('new & !york ', 'york', '!jersey'),
                   'jersey', 'mexico');
-       ts_rewrite       
-------------------------
- 'new' & !( !'mexico' )
+     ts_rewrite     
+--------------------
+ 'new' & !!'mexico'
 (1 row)
 
 SELECT ts_rewrite('moscow', 'SELECT keyword, sample FROM test_tsquery'::text );
