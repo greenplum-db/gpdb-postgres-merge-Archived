@@ -1741,6 +1741,8 @@ create_upper_unique_plan(PlannerInfo *root, UpperUniquePath *best_path, int flag
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
+	plan->plan.flow = copyObject(subplan->flow);
+
 	return plan;
 }
 
