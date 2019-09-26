@@ -3866,7 +3866,7 @@ split_aggref(Aggref *aggref, MppGroupContext *ctx)
 			 */
 			pref = (Aggref *) copyObject(aggref);
 			pref->aggtype = transtype;
-			pref->aggstage = AGGSTAGE_PARTIAL;
+			//pref->aggstage = AGGSTAGE_PARTIAL;
 			if (pref->aggtype == INTERNALOID)
 				pref->aggtype = BYTEAOID;
 
@@ -3902,7 +3902,7 @@ split_aggref(Aggref *aggref, MppGroupContext *ctx)
 				iref->aggstar = false;
 				iref->aggkind = aggref->aggkind;
 				iref->aggdistinct = NIL;
-				iref->aggstage = AGGSTAGE_INTERMEDIATE;
+				//iref->aggstage = AGGSTAGE_INTERMEDIATE;
 				iref->location = -1;
 
 				inter_tle = makeTargetEntry((Expr *) iref, attrno, NULL, false);
@@ -3923,7 +3923,7 @@ split_aggref(Aggref *aggref, MppGroupContext *ctx)
 			fref->aggstar = false;
 			fref->aggkind = aggref->aggkind;
 			fref->aggdistinct = NIL; /* handled in preliminary aggregation */
-			fref->aggstage = AGGSTAGE_FINAL;
+			//fref->aggstage = AGGSTAGE_FINAL;
 			fref->location = -1;
 			final_tle = makeTargetEntry((Expr *) fref, attrno, NULL, false);
 			final_tle->ressortgroupref = ctx->split_aggref_sortgroupref;

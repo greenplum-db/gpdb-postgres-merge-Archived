@@ -838,9 +838,7 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 			 * deserialfn_oid will be set if we must deserialize the input state
 			 * before calling the combine function
 			 */
-			if (OidIsValid(pertrans->deserialfn_oid) &&
-				(pertrans->aggref->aggstage == AGGSTAGE_INTERMEDIATE ||
-				 pertrans->aggref->aggstage == AGGSTAGE_FINAL))
+			if (OidIsValid(pertrans->deserialfn_oid))
 			{
 				Datum		serialized = fcinfo->arg[1];
 				bool		serializednull = fcinfo->argnull[1];
@@ -1348,9 +1346,7 @@ finalize_aggregate(AggState *aggstate,
 	 * serialfn_oid will be set if we must serialize the transvalue before
 	 * returning it
 	 */
-	else if (OidIsValid(pertrans->serialfn_oid) &&
-			 (pertrans->aggref->aggstage == AGGSTAGE_INTERMEDIATE ||
-			  pertrans->aggref->aggstage == AGGSTAGE_PARTIAL))
+	else if (OidIsValid(pertrans->serialfn_oid))
 	{
 		/* Don't call a strict serialization function with NULL input. */
 		if (pertrans->serialfn.fn_strict && pergroupstate->transValueIsNull)
@@ -2687,34 +2683,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			aclcheck_error(aclresult, ACL_KIND_PROC,
 						   get_func_name(aggref->aggfnoid));
 		InvokeFunctionExecuteHook(aggref->aggfnoid);
-/* GPDB_96_MERGE_FIXME: parallel aggregation */
-#if 0
-		switch (aggref->aggstage)		/* MPP */
-		{
-			case AGGSTAGE_NORMAL:		/* Single-stage aggregation */
-				pertrans->transfn_oid = transfn_oid = aggform->aggtransfn;
-				peraggs->finalfn_oid = finalfn_oid = aggform->aggfinalfn;
-				break;
-
-			case AGGSTAGE_PARTIAL:		/* Two-stage aggregation --
-										 * preliminary stage */
-				/* the perliminary stage for two-stage aggregation */
-				pertrans->transfn_oid = transfn_oid = aggform->aggtransfn;
-				peraggs->finalfn_oid = finalfn_oid = InvalidOid;
-				break;
-
-			case AGGSTAGE_INTERMEDIATE:
-				pertrans->transfn_oid = transfn_oid = aggform->aggcombinefn;
-				peraggs->finalfn_oid = finalfn_oid = InvalidOid;
-				break;
-
-			case AGGSTAGE_FINAL:		/* Two-stage aggregation - final stage */
-				pertrans->transfn_oid = transfn_oid = aggform->aggcombinefn;
-				peraggs->finalfn_oid = finalfn_oid = aggform->aggfinalfn;
-				break;
-		}
-		pertrans->combinefn_oid = aggform->aggcombinefn;
-#endif
 
 		/* planner recorded transition state type in the Aggref itself */
 		aggtranstype = aggref->aggtranstype;
@@ -2857,66 +2825,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			fmgr_info(finalfn_oid, &peragg->finalfn);
 			fmgr_info_set_expr((Node *) finalfnexpr, &peragg->finalfn);
 		}
-
-		/* GPDB_96_MERGE_FIXME: do we still need some of this 'aggstage' stuff? */
-#if 0
-		/*
-		 * Check if serialization/deserialization is required.  We only do it
-		 * for aggregates that have transtype INTERNAL.
-		 */
-		if (aggtranstype == INTERNALOID)
-		{
-			/*
-			 * The planner should only have generated a serialize agg node if
-			 * every aggregate with an INTERNAL state has a serialization
-			 * function.  Verify that.
-			 */
-			if (aggref->aggstage == AGGSTAGE_PARTIAL ||
-				aggref->aggstage == AGGSTAGE_INTERMEDIATE)
-			{
-				if (!OidIsValid(aggform->aggserialfn))
-					elog(ERROR, "serialfunc not provided for serialization aggregation");
-			}
-
-			if (OidIsValid(aggform->aggserialfn))
-				pertrans->serialfn_oid = aggform->aggserialfn;
-
-			/* Likewise for deserialization functions */
-			if (aggref->aggstage == AGGSTAGE_INTERMEDIATE ||
-				aggref->aggstage == AGGSTAGE_FINAL)
-			{
-				if (!OidIsValid(aggform->aggdeserialfn))
-					elog(ERROR, "deserialfunc not provided for deserialization aggregation");
-			}
-
-			if (OidIsValid(aggform->aggdeserialfn))
-				pertrans->deserialfn_oid = aggform->aggdeserialfn;
-		}
-
-		if (OidIsValid(pertrans->serialfn_oid))
-		{
-			build_aggregate_serialfn_expr(pertrans->serialfn_oid,
-										  &serialfnexpr);
-			fmgr_info(pertrans->serialfn_oid, &pertrans->serialfn);
-			fmgr_info_set_expr((Node *) serialfnexpr, &pertrans->serialfn);
-		}
-
-		if (OidIsValid(pertrans->deserialfn_oid))
-		{
-			build_aggregate_deserialfn_expr(pertrans->deserialfn_oid,
-											&deserialfnexpr);
-			fmgr_info(pertrans->deserialfn_oid, &pertrans->deserialfn);
-			fmgr_info_set_expr((Node *) deserialfnexpr, &pertrans->deserialfn);
-		}
-
-		pertrans->aggCollation = aggref->inputcollid;
-
-		InitFunctionCallInfoData(pertrans->transfn_fcinfo,
-								 &pertrans->transfn,
-								 pertrans->numTransInputs + 1,
-								 pertrans->aggCollation,
-								 (void *) aggstate, NULL);
-#endif
 
 		/* get info about the output value's datatype */
 		get_typlenbyval(aggref->aggtype,

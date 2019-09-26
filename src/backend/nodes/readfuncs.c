@@ -1347,11 +1347,6 @@ _readAggref(void)
 	READ_BOOL_FIELD(aggvariadic);
 	READ_CHAR_FIELD(aggkind);
 	READ_UINT_FIELD(agglevelsup);
-	/*
-	 * GPDB_96_MERGE_FIXME: aggstage and aggsplit is same thing almost
-	 * we do not need both.
-	 */
-	READ_ENUM_FIELD(aggstage, AggStage);
 	READ_ENUM_FIELD(aggsplit, AggSplit);
 
 	READ_LOCATION_FIELD(location);

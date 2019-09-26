@@ -1485,7 +1485,6 @@ _outAggref(StringInfo str, const Aggref *node)
 	WRITE_BOOL_FIELD(aggvariadic);
 	WRITE_CHAR_FIELD(aggkind);
 	WRITE_UINT_FIELD(agglevelsup);
-	WRITE_ENUM_FIELD(aggstage, AggStage);
 	WRITE_ENUM_FIELD(aggsplit, AggSplit);
 	WRITE_LOCATION_FIELD(location);
 }

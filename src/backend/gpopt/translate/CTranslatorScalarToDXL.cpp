@@ -1380,14 +1380,6 @@ CTranslatorScalarToDXL::TranslateAggrefToDXL
 	const Aggref *aggref = (Aggref *) expr;
 	BOOL is_distinct = false;
 
-	static ULONG mapping[][2] =
-		{
-		{AGGSTAGE_NORMAL, EdxlaggstageNormal},
-		{AGGSTAGE_PARTIAL, EdxlaggstagePartial},
-		{AGGSTAGE_INTERMEDIATE, EdxlaggstageIntermediate},
-		{AGGSTAGE_FINAL, EdxlaggstageFinal},
-		};
-
 	if (aggref->aggorder != NIL)
 	{
 		GPOS_RAISE
@@ -1403,18 +1395,12 @@ CTranslatorScalarToDXL::TranslateAggrefToDXL
 		is_distinct = true;
 	}
 
-	EdxlAggrefStage agg_stage = EdxlaggstageSentinel;
-	const ULONG arity = GPOS_ARRAY_SIZE(mapping);
-	for (ULONG ul = 0; ul < arity; ul++)
-	{
-		ULONG *elem = mapping[ul];
-		if ((ULONG) aggref->aggstage == elem[0])
-		{
-			agg_stage = (EdxlAggrefStage) elem[1];
-			break;
-		}
-	}
-	GPOS_ASSERT(EdxlaggstageSentinel != agg_stage && "Invalid agg stage");
+	/*
+	 * We shouldn't see any partial aggregates in the parse tree, they're produced
+	 * by the planner.
+	 */
+	GPOS_ASSERT(aggref->aggsplit == AGGSPLIT_SIMPLE);
+	EdxlAggrefStage agg_stage = EdxlaggstageNormal;
 
 	CMDIdGPDB *agg_mdid = GPOS_NEW(m_mp) CMDIdGPDB(aggref->aggfnoid);
 	GPOS_ASSERT(!m_md_accessor->RetrieveAgg(agg_mdid)->IsOrdered());

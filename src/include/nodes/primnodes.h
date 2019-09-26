@@ -252,21 +252,6 @@ typedef struct Param
 	int			location;		/* token location, or -1 if unknown */
 } Param;
 
-/* AggStage enumeration indicates how the executor should handle an
- * Aggref node.
- */
-typedef enum AggStage
-{
-	AGGSTAGE_NORMAL = 0,
-	AGGSTAGE_PARTIAL, /* First (lower, earlier) stage of 2-stage aggregation. */
-	AGGSTAGE_INTERMEDIATE, /* The intermediate stage between AGGSTAGE_PARTIAL and
-							* AGGSTAGE_FINAL that handles the higher aggregation
-							* level in a (partial) ROLLUP grouping extension
-							* query.
-							*/
-	AGGSTAGE_FINAL /* Second (upper, later) stage of 2-stage aggregation. */
-} AggStage;
-
 
 /*
  * Aggref
@@ -326,12 +311,6 @@ typedef struct Aggref
 								 * combined into an array last argument */
 	char		aggkind;		/* aggregate kind (see pg_aggregate.h) */
 	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
-
-	/* GPDB_96_MERGE_FIXME: aggstage is/was a GPDB thing, and we got
-	 * aggsplit in PostgreSQL 9.6, which I think does more or less the
-	 * same. Surely we don't need both.
-	 */
-	AggStage	aggstage;		/* MPP: 2-stage? If so, which stage */
 	AggSplit	aggsplit;		/* expected agg-splitting mode of parent Agg */
 	int			location;		/* token location, or -1 if unknown */
 } Aggref;

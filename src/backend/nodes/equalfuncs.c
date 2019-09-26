@@ -229,13 +229,6 @@ _equalAggref(const Aggref *a, const Aggref *b)
 	COMPARE_SCALAR_FIELD(aggvariadic);
 	COMPARE_SCALAR_FIELD(aggkind);
 	COMPARE_SCALAR_FIELD(agglevelsup);
-
-	/*
-	 * GPDB_96_MERGE_FIXME
-	 * aggstage and aggsplit are same 
-	 * keep one
-	 */
-	COMPARE_SCALAR_FIELD(aggstage);
 	COMPARE_SCALAR_FIELD(aggsplit);
 	COMPARE_LOCATION_FIELD(location);
 

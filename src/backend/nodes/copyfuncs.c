@@ -1701,7 +1701,6 @@ _copyAggref(const Aggref *from)
 	COPY_SCALAR_FIELD(aggvariadic);
 	COPY_SCALAR_FIELD(aggkind);
 	COPY_SCALAR_FIELD(agglevelsup);
-	COPY_SCALAR_FIELD(aggstage);
 	COPY_SCALAR_FIELD(aggsplit);
 	COPY_LOCATION_FIELD(location);
 

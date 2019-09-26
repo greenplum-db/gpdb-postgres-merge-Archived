@@ -8734,37 +8734,10 @@ get_agg_expr(Aggref *aggref, deparse_context *context,
 	Oid			argtypes[FUNC_MAX_ARGS];
 	int			nargs;
 	bool		use_variadic;
-	Oid fnoid;
 
 	/* Special handling of MEDIAN */
 	if (get_median_expr(aggref, context))
 		return;
-
-	/*
-	 * Depending on the stage of aggregation, this Aggref
-	 * may represent functions that are different from the
-	 * function initially specified. Thus, it is possible that these
-	 * functions take different number of arguments. However,
-	 * this is pretty rare. I think that COUNT(*) is the only one
-	 * so far -- COUNT(*) has no argument in the first stage, while in the
-	 * second stage, we add one argument for COUNT. So COUNT(*) becomes
-	 * COUNT(ANY).
-	 */
-	fnoid = aggref->aggfnoid;
-	switch(aggref->aggstage)
-	{
-		case AGGSTAGE_FINAL:
-		{
-			if (aggref->aggfnoid == COUNT_STAR_OID)
-				fnoid = COUNT_ANY_OID;
-
-			break;
-		}
-		case AGGSTAGE_PARTIAL:
-		case AGGSTAGE_NORMAL:
-		default:
-			break;
-	}
 
 	/*
 	 * For a combining aggregate, we look up and deparse the corresponding
@@ -8796,7 +8769,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context,
 
 	/* Print the aggregate name, schema-qualified if needed */
 	appendStringInfo(buf, "%s(%s",
-					 generate_function_name(fnoid, nargs,
+					 generate_function_name(aggref->aggfnoid, nargs,
 											NIL, argtypes,
 											aggref->aggvariadic,
 											&use_variadic,

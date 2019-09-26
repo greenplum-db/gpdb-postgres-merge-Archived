@@ -481,6 +481,14 @@ CTranslatorDXLToScalar::TranslateDXLScalarAggrefToScalar
 		aggref->aggtype = CMDIdGPDB::CastMdid(pmdagg->GetResultTypeMdid())->Oid();
 	}
 
+	/* GPDB_96_MERGE_FIXME: aggstage is gone. Rewrite this using upstream aggsplit */
+	GPOS_RAISE
+	  (
+	   gpdxl::ExmaDXL,
+	   gpdxl::ExmiPlStmt2DXLConversion,
+	   GPOS_WSZ_LIT("GPDB_96_MERGE_FIXME: AggRef->aggstage need sto be replaced with aggsplit")
+	   );
+#if 0
 	switch(dxlop->GetDXLAggStage())
 	{
 		case EdxlaggstageNormal:
@@ -503,6 +511,7 @@ CTranslatorDXLToScalar::TranslateDXLScalarAggrefToScalar
 					GPOS_WSZ_LIT("AGGREF: Specified AggStage value is invalid")
 					);
 	}
+#endif
 
 	// translate each DXL argument
 	List *exprs = TranslateScalarChildren(aggref->args, aggref_node, colid_var);
