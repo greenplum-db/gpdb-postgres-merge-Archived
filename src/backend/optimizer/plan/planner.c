@@ -5185,7 +5185,7 @@ create_distinct_paths(PlannerInfo *root,
 	 */
 	make_distribution_exprs_for_groupclause(root,
 											parse->distinctClause,
-			make_tlist_from_pathtarget(root->upper_targets[UPPERREL_GROUP_AGG]),
+			make_tlist_from_pathtarget(root->upper_targets[UPPERREL_WINDOW]),
 											&distinct_dist_pathkeys,
 											&distinct_dist_exprs,
 											&distinct_dist_opfamilies);
