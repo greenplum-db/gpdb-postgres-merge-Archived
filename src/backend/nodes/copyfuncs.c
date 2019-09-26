@@ -5494,6 +5494,7 @@ copyObject(const void *from)
 			break;
 		case T_ExternalScan:
 			retval = _copyExternalScan(from);
+			break;
 		case T_SampleScan:
 			retval = _copySampleScan(from);
 			break;
