@@ -588,6 +588,25 @@ allocate_reloption(bits32 kinds, int type, char *name, char *desc)
 }
 
 /*
+ * GPDB: the add_*_reloption() functions don't take 'lockmode' argument,but
+ * we need to set it correctly for the GPDB-specific options. So use this
+ * to set it after calling add_*_reloption() function.
+ */
+void
+set_reloption_lockmode(const char *name, LOCKMODE lockmode)
+{
+	for (int i = num_custom_options - 1; i >= 0; i--)
+	{
+		if (strcmp(custom_options[i]->name, name) == 0)
+		{
+			custom_options[i]->lockmode = lockmode;
+			return;
+		}
+	}
+	elog(ERROR, "could not find reloption \"%s\"", name);
+}
+
+/*
  * add_bool_reloption
  *		Add a new boolean reloption
  */

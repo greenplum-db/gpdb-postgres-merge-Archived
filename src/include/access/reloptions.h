@@ -274,6 +274,8 @@ extern void add_real_reloption(bits32 kinds, char *name, char *desc,
 extern void add_string_reloption(bits32 kinds, char *name, char *desc,
 					 char *default_val, validate_string_relopt validator);
 
+extern void set_reloption_lockmode(const char *name, LOCKMODE lockmode);
+
 extern Datum transformRelOptions(Datum oldOptions, List *defList,
 					char *namspace, char *validnsps[],
 					bool ignoreOids, bool isReset);
