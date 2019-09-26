@@ -2655,12 +2655,29 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	 * Generate paths for the final_rel.  Insert all surviving paths, with
 	 * LockRows, Limit, and/or ModifyTable steps added if needed.
 	 */
+	bool offset_needed;
 	foreach(lc, current_rel->pathlist)
 	{
 		Path	   *path = (Path *) lfirst(lc);
 
+		/*
+		 * `OFFSET 0` means nothing, remove the node to prevent
+		 * Gather Motion push down.
+		 */
+		offset_needed = false;
+		if (parse->limitOffset && IsA(parse->limitOffset, Const))
+		{
+			Const *c = (Const *)parse->limitOffset;
+			if (!c->constisnull)
+			{
+				int64 offset = DatumGetInt64(c->constvalue);
+				if (offset != 0)
+					offset_needed = true;
+			}
+		}
+
 		if (CdbPathLocus_IsPartitioned(path->locus) &&
-			(parse->limitCount || parse->limitOffset || must_gather))
+			(parse->limitCount || (parse->limitOffset && offset_needed) || must_gather))
 		{
 			CdbPathLocus locus;
 
