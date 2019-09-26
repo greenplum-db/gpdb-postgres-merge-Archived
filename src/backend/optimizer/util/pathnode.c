@@ -2960,9 +2960,21 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->rescannable = false;
 	pathnode->sameslice_relids = NULL;
 
-	ctepath->subpath = subpath;
+	if (subpath)
+	{
+		/* copy the cost estimates from the subpath */
+		pathnode->rows = rel->rows;
+		pathnode->startup_cost = subpath->startup_cost;
+		pathnode->total_cost = subpath->total_cost;
+		pathnode->pathkeys = subpath->pathkeys;
 
-	cost_ctescan(pathnode, root, rel, pathnode->param_info);
+		ctepath->subpath = subpath;
+	}
+	else
+	{
+		/* Shared scan. We'll use the cost estimates from the CTE rel. */
+		cost_ctescan(pathnode, root, rel, pathnode->param_info);
+	}
 
 	return pathnode;
 }

@@ -2310,7 +2310,7 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	pathkeys = subroot->query_pathkeys;
 
 	/* Mark rel with estimated output rows, width, etc */
-	set_cte_size_estimates(root, rel, rel->rows);
+	set_cte_size_estimates(root, rel, sub_final_rel->cheapest_total_path->rows);
 
 	/*
 	 * We don't support pushing join clauses into the quals of a CTE scan, but
