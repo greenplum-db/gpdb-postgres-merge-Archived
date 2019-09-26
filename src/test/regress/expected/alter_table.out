@@ -2428,6 +2428,7 @@ select * from my_locks order by 1;
 rollback;
 -- test that mixing options with different lock levels works as expected
 begin; alter table alterlock set (autovacuum_enabled = off, fillfactor = 80);
+WARNING:  autovacuum is not supported in Greenplum
 select * from my_locks order by 1;
   relname  |       max_lockmode       
 -----------+--------------------------
@@ -2515,11 +2516,15 @@ and c.relname = 'my_locks'
 group by c.relname;
 -- raise exception
 alter table my_locks set (autovacuum_enabled = false);
+WARNING:  autovacuum is not supported in Greenplum
 ERROR:  unrecognized parameter "autovacuum_enabled"
 alter view my_locks set (autovacuum_enabled = false);
+WARNING:  autovacuum is not supported in Greenplum
 ERROR:  unrecognized parameter "autovacuum_enabled"
 alter table my_locks reset (autovacuum_enabled);
+WARNING:  autovacuum is not supported in Greenplum
 alter view my_locks reset (autovacuum_enabled);
+WARNING:  autovacuum is not supported in Greenplum
 begin;
 alter view my_locks set (security_barrier=off);
 select * from my_locks order by 1;
@@ -3000,6 +3005,8 @@ SELECT conname as constraint, obj_description(oid, 'pg_constraint') as comment F
  comment_test_positive_col_check | CHECK constraint on comment_test.positive_col
 (2 rows)
 
+-- Changing the data type of an indexed column is not supported in GPDB as of fecd245
+--start_ignore
 -- Change the datatype of all the columns. ALTER TABLE is optimized to not
 -- rebuild an index if the new data type is binary compatible with the old
 -- one. Check do a dummy ALTER TABLE that doesn't change the datatype
@@ -3010,6 +3017,7 @@ ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE int;
 ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE text;
 ALTER TABLE comment_test ALTER COLUMN positive_col SET DATA TYPE int;
 ALTER TABLE comment_test ALTER COLUMN positive_col SET DATA TYPE bigint;
+--end_ignore
 -- Check that the comments are intact.
 SELECT col_description('comment_test'::regclass, 1) as comment;
            comment           
