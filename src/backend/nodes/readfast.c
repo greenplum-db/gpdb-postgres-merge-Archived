@@ -469,6 +469,7 @@ _readConstraint(void)
 			 * ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK NO INHERIT (b > 0);
 			 */
 			READ_BOOL_FIELD(skip_validation);
+			READ_BOOL_FIELD(initially_valid);
 			READ_BOOL_FIELD(is_no_inherit);
 		case CONSTR_DEFAULT:
 			READ_NODE_FIELD(raw_expr);

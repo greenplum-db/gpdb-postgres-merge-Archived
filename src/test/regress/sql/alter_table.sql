@@ -1923,7 +1923,6 @@ DROP TABLE logged3;
 DROP TABLE logged2;
 DROP TABLE logged1;
 
-<<<<<<< HEAD
 --
 -- Test for splitting after dropping a column
 --
@@ -1959,7 +1958,7 @@ SELECT * FROM test_part WHERE field2 IN (SELECT field1 FROM test_ref) ORDER BY 1
 
 DROP TABLE test_ref;
 DROP TABLE test_part;
-=======
+
 -- test ADD COLUMN IF NOT EXISTS
 CREATE TABLE test_add_column(c1 integer);
 \d test_add_column
@@ -1990,4 +1989,3 @@ ALTER TABLE test_add_column
 	ADD COLUMN c4 integer;
 \d test_add_column
 DROP TABLE test_add_column;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365

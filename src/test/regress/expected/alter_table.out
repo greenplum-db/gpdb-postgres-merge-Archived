@@ -550,10 +550,7 @@ Check constraints:
     "nv_child_2009_d_check" CHECK (d >= '01-01-2009'::date AND d <= '12-31-2009'::date)
     "nv_parent_d_check" CHECK (d >= '01-01-2001'::date AND d <= '12-31-2099'::date) NOT VALID
 Inherits: nv_parent
-<<<<<<< HEAD
 Distributed by: (d)
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- we leave nv_parent and children around to help test pg_dump logic
 -- Foreign key adding test with mixed types
@@ -2070,10 +2067,7 @@ CREATE TABLE test_inh_check_child() INHERITS(test_inh_check);
 Check constraints:
     "test_inh_check_a_check" CHECK (a > 10.2::double precision)
 Number of child tables: 1 (Use \d+ to list them.)
-<<<<<<< HEAD
 Distributed by: (a)
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 \d test_inh_check_child
   Table "public.test_inh_check_child"
@@ -2084,10 +2078,7 @@ Distributed by: (a)
 Check constraints:
     "test_inh_check_a_check" CHECK (a > 10.2::double precision)
 Inherits: test_inh_check
-<<<<<<< HEAD
 Distributed by: (a)
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select relname, conname, coninhcount, conislocal, connoinherit
   from pg_constraint c, pg_class r
@@ -2109,10 +2100,7 @@ ALTER TABLE test_inh_check ALTER COLUMN a TYPE numeric;
 Check constraints:
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Number of child tables: 1 (Use \d+ to list them.)
-<<<<<<< HEAD
 Distributed by: (a)
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 \d test_inh_check_child
   Table "public.test_inh_check_child"
@@ -2123,10 +2111,7 @@ Distributed by: (a)
 Check constraints:
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Inherits: test_inh_check
-<<<<<<< HEAD
 Distributed by: (a)
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select relname, conname, coninhcount, conislocal, connoinherit
   from pg_constraint c, pg_class r
@@ -2155,10 +2140,7 @@ Check constraints:
     "bnoinherit" CHECK (b > 100::double precision) NO INHERIT
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Number of child tables: 1 (Use \d+ to list them.)
-<<<<<<< HEAD
 Distributed by: (a)
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 \d test_inh_check_child
   Table "public.test_inh_check_child"
@@ -2171,10 +2153,7 @@ Check constraints:
     "bmerged" CHECK (b > 1::double precision)
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Inherits: test_inh_check
-<<<<<<< HEAD
 Distributed by: (a)
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select relname, conname, coninhcount, conislocal, connoinherit
   from pg_constraint c, pg_class r
@@ -3205,7 +3184,6 @@ ALTER TABLE logged1 SET UNLOGGED; -- silently do nothing
 DROP TABLE logged3;
 DROP TABLE logged2;
 DROP TABLE logged1;
-<<<<<<< HEAD
 --
 -- Test for splitting after dropping a column
 --
@@ -3260,7 +3238,7 @@ SELECT * FROM test_part WHERE field2 IN (SELECT field1 FROM test_ref) ORDER BY 1
 
 DROP TABLE test_ref;
 DROP TABLE test_part;
-=======
+
 -- test ADD COLUMN IF NOT EXISTS
 CREATE TABLE test_add_column(c1 integer);
 \d test_add_column
@@ -3350,4 +3328,3 @@ Table "public.test_add_column"
  c4     | integer | 
 
 DROP TABLE test_add_column;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
