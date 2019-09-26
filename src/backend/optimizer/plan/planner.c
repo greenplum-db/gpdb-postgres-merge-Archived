@@ -5034,29 +5034,6 @@ create_one_window_path(PlannerInfo *root,
 		CdbPathLocus locus;
 		bool		need_redistribute;
 
-#if 0  /* GPDB_96_MERGE_FIXME */
-		if (wc->orderClause)
-		{
-			SortGroupClause *sortcl = (SortGroupClause *) linitial(wc->orderClause);
-			ListCell	*l_tle;
-
-			firstOrderCol = 0;
-			foreach(l_tle, window_tlist)
-			{
-				TargetEntry *tle = (TargetEntry *) lfirst(l_tle);
-
-				firstOrderCol++;
-				if (sortcl->tleSortGroupRef == tle->ressortgroupref)
-					break;
-			}
-			if (!l_tle)
-				elog(ERROR, "failed to locate ORDER BY column");
-
-			firstOrderCmpOperator = sortcl->sortop;
-			firstOrderNullsFirst = sortcl->nulls_first;
-		}
-#endif
-
 		window_pathkeys = make_pathkeys_for_window(root,
 												   wc,
 												   tlist);

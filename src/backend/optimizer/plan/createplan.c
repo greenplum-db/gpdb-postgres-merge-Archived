@@ -2073,6 +2073,9 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 	int			ordNumCols;
 	AttrNumber *ordColIdx;
 	Oid		   *ordOperators;
+	int			firstOrderCol = 0;
+	Oid			firstOrderCmpOperator = InvalidOid;
+	bool		firstOrderNullsFirst = false;
 
 	/*
 	 * WindowAgg can project, so no need to be terribly picky about child
@@ -2111,6 +2114,27 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 							   &ordColIdx,
 							   &ordOperators);
 
+	if (wc->orderClause)
+	{
+		SortGroupClause *sortcl = (SortGroupClause *) linitial(wc->orderClause);
+		ListCell	*l_tle;
+
+		firstOrderCol = 0;
+		foreach(l_tle, subplan->targetlist)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(l_tle);
+
+			firstOrderCol++;
+			if (sortcl->tleSortGroupRef == tle->ressortgroupref)
+				break;
+		}
+		if (!l_tle)
+			elog(ERROR, "failed to locate ORDER BY column");
+
+		firstOrderCmpOperator = sortcl->sortop;
+		firstOrderNullsFirst = sortcl->nulls_first;
+	}
+
 	/* And finally we can make the WindowAgg node */
 	plan = make_windowagg(tlist,
 						  wc->winref,
@@ -2120,8 +2144,9 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 						  ordNumCols,
 						  ordColIdx,
 						  ordOperators,
-						  /* GPDB_96_MERGE_FIXME firstOrderCol stuff. Where to get these? */
-						  0, InvalidOid, false,
+						  firstOrderCol,
+						  firstOrderCmpOperator,
+						  firstOrderNullsFirst,
 						  wc->frameOptions,
 						  wc->startOffset,
 						  wc->endOffset,
