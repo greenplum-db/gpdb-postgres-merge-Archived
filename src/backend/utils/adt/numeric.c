@@ -6217,7 +6217,12 @@ get_str_from_var_sci(NumericVar *var, int rscale)
  *
  *	Create the packed db numeric format in palloc()'d memory from
  *	a variable.
- *	CAUTION: we free_var(var) here!
+ *
+ * GPDB_96_MERGE_FIXME: We used to free_var(var) here. But that was not cool,
+ * at least with the numeric_sum() window aggregate, we call numeric_sum() on
+ * the transition value multiple time, and if we free_var() the "state->sumX",
+ * then it's garbage on the subsequent calls. Looks like we've removed the
+ * free_var() calls from the callers in GPDB. Put them back.
  */
 static Numeric
 make_result(NumericVar *var)
@@ -6296,7 +6301,6 @@ make_result(NumericVar *var)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("value overflows numeric format")));
 
-	free_var(var);
 	dump_numeric("make_result()", result);
 	return result;
 }
