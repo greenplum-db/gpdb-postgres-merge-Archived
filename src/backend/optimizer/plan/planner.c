@@ -189,7 +189,10 @@ static PathTarget *make_sort_input_target(PlannerInfo *root,
 					   PathTarget *final_target,
 					   bool *have_postponed_srfs);
 static int	common_prefix_cmp(const void *a, const void *b);
-static Path *pushdown_preliminary_limit(PlannerInfo *root, Path *path, double limit_tuples);
+static Path *create_preliminary_limit_path(PlannerInfo *root, RelOptInfo *rel,
+										   Path *subpath,
+										   Node *limitOffset, Node *limitCount,
+										   int64 offset_est, int64 count_est);
 
 static Plan *getAnySubplan(Plan *node);
 static bool isSimplyUpdatableQuery(Query *query);
@@ -2655,31 +2658,30 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	 * Generate paths for the final_rel.  Insert all surviving paths, with
 	 * LockRows, Limit, and/or ModifyTable steps added if needed.
 	 */
-	bool offset_needed;
 	foreach(lc, current_rel->pathlist)
 	{
 		Path	   *path = (Path *) lfirst(lc);
 
-		/*
-		 * `OFFSET 0` means nothing, remove the node to prevent
-		 * Gather Motion push down.
-		 */
-		offset_needed = false;
-		if (parse->limitOffset && IsA(parse->limitOffset, Const))
-		{
-			Const *c = (Const *)parse->limitOffset;
-			if (!c->constisnull)
-			{
-				int64 offset = DatumGetInt64(c->constvalue);
-				if (offset != 0)
-					offset_needed = true;
-			}
-		}
-
 		if (CdbPathLocus_IsPartitioned(path->locus) &&
-			(parse->limitCount || (parse->limitOffset && offset_needed) || must_gather))
+			(limit_needed(parse) || must_gather))
 		{
 			CdbPathLocus locus;
+
+			/*
+			 * If there is a LIMIT clause, add a Limit node to below the
+			 * Motion, as a preliminary step, so that the QEs can stop
+			 * executing early. We'll still need a Limit node after the
+			 * Gather Motion, which will be added below.
+			 */
+			if (parse->limitCount && limit_needed(parse) &&
+				!contain_volatile_functions(parse->limitOffset) &&
+				!contain_volatile_functions(parse->limitCount))
+			{
+				path = (Path *) create_preliminary_limit_path(root, final_rel, path,
+															  parse->limitOffset,
+															  parse->limitCount,
+															  offset_est, count_est);
+			}
 
 			CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
 			path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
@@ -5620,10 +5622,6 @@ create_ordered_paths(PlannerInfo *root,
 												 limit_tuples);
 			}
 
-			/* pushdown the first phase of multi-phase limit (which takes offset into account) */
-			if (CdbPathLocus_IsPartitioned(path->locus))
-				path = pushdown_preliminary_limit(root, path, limit_tuples);
-
 			/* Add projection step if needed */
 			if (path->pathtarget != target)
 				path = apply_projection_to_path(root, ordered_rel,
@@ -6692,12 +6690,13 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
  * to take the offset into account.
  */
 static Path *
-pushdown_preliminary_limit(PlannerInfo *root, Path *path, double limit_tuples)
+create_preliminary_limit_path(PlannerInfo *root, RelOptInfo *rel,
+							  Path *subpath,
+							  Node *limitOffset, Node *limitCount,
+							  int64 offset_est, int64 count_est)
 {
-	Node	   *limitCount = root->parse->limitCount;
-	Node	   *limitOffset = root->parse->limitOffset;
 	Node	   *precount = copyObject(limitCount);
-	Path	   *result_path = path;
+	Path	   *result_path;
 
 	/*
 	 * If we've specified an offset *and* a limit, we need to collect
@@ -6721,11 +6720,13 @@ pushdown_preliminary_limit(PlannerInfo *root, Path *path, double limit_tuples)
 		 * Add a prelimary LIMIT on the partitioned results. This may
 		 * reduce the amount of work done on the QEs.
 		 */
-		result_path = (Path *) create_limit_path(root, path->parent, path,
-												 NULL,
-												 precount,
-												 -1, limit_tuples);
+		result_path = (Path *) create_limit_path(root, rel, subpath,
+												 NULL, /* limitOffset */
+												 precount,	/* limitCount */
+												 -1, offset_est + count_est);
 	}
+	else
+		result_path = subpath;
 
 	return result_path;
 }
