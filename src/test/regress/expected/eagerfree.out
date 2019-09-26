@@ -69,24 +69,25 @@ select count(*) from (select i, t, d, count(*) from bigt group by i, t, d) tmp;
 (1 row)
 
 explain analyze select count(*) from (select i, t, d, count(*) from bigt group by i, t, d) tmp;
-                                                                 QUERY PLAN                                                                 
---------------------------------------------------------------------------------------------------------------------------------------------
- Aggregate  (cost=23896.20..23896.21 rows=1 width=8) (actual time=491.631..491.631 rows=1 loops=1)
-   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=23896.14..23896.19 rows=1 width=8) (actual time=474.563..491.612 rows=3 loops=1)
-         ->  Aggregate  (cost=23896.14..23896.15 rows=1 width=8) (actual time=474.293..474.293 rows=1 loops=1)
-               ->  Subquery Scan on tmp  (cost=21640.56..23645.52 rows=33416 width=0) (actual time=416.937..464.573 rows=44568 loops=1)
-                     ->  HashAggregate  (cost=21640.56..22643.04 rows=33416 width=48) (actual time=416.936..451.297 rows=44568 loops=1)
-                           Group Key: bigt.i, bigt.t, bigt.d
-                           (seg0)   44568 groups total in 32 batches; 1 overflows; 44568 spill groups.
-                           (seg0)   Hash chain length 3.3 avg, 14 max, using 23361 of 24576 buckets; total 1 expansions.
-                           ->  Seq Scan on bigt  (cost=0.00..11615.78 rows=334160 width=18) (actual time=0.042..59.788 rows=333490 loops=1)
-   (slice0)    Executor memory: 386K bytes.
-   (slice1)  * Executor memory: 3004K bytes avg x 3 workers, 3004K bytes max (seg0).  Work_mem: 2361K bytes max, 4738K bytes wanted.
+                                                               QUERY PLAN                                                               
+----------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=21460.17..21460.18 rows=1 width=8) (actual time=931.342..931.342 rows=1 loops=1)
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=21460.14..21460.17 rows=1 width=8) (actual time=668.252..931.329 rows=3 loops=1)
+         ->  Partial Aggregate  (cost=21460.14..21460.15 rows=1 width=8) (actual time=813.044..813.044 rows=1 loops=1)
+               ->  HashAggregate  (cost=19192.52..20200.35 rows=33595 width=26) (actual time=594.976..656.124 rows=44538 loops=1)
+                     Group Key: bigt.i, bigt.t, bigt.d
+                     Extra Text: (seg0)   44473 groups total in 32 batches; 1 overflows; 44473 spill groups.
+ (seg0)   Hash chain length 2.8 avg, 10 max, using 30386 of 32768 buckets; total 3 expansions.
+ 
+                     ->  Seq Scan on bigt  (cost=0.00..11590.00 rows=333334 width=18) (actual time=0.042..267.687 rows=334620 loops=1)
+ Planning time: 0.864 ms
+   (slice0)    Executor memory: 123K bytes.
+ * (slice1)    Executor memory: 3605K bytes avg x 3 workers, 3605K bytes max (seg0).  Work_mem: 2461K bytes max, 4865K bytes wanted.
  Memory used:  2560kB
- Memory wanted:  5237kB
+ Memory wanted:  5264kB
  Optimizer: Postgres query optimizer
- Total runtime: 492.921 ms
-(15 rows)
+ Execution time: 931.980 ms
+(16 rows)
 
 set statement_mem=128000;
 -- DQA
