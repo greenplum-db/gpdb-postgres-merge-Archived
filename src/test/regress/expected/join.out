@@ -4076,10 +4076,7 @@ select * from
 --
 -- test for appropriate join order in the presence of lateral references
 --
-<<<<<<< HEAD
 -- start_ignore
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 explain (verbose, costs off)
 select * from
   text_tbl t1
@@ -4215,7 +4212,7 @@ where tt1.f1 = ss1.c0;
  ?column? 
 ----------
 (0 rows)
-<<<<<<< HEAD
+
 --end_ignore
 --
 -- check a case in which a PlaceHolderVar forces join order
@@ -4224,12 +4221,6 @@ where tt1.f1 = ss1.c0;
 --GPDB_94_STABLE_MERGE_FIXME: This query is lateral related and its plan is
 --different from PostgreSQL's.  Do not know why yet. Ignore its plan
 --temporarily.
-=======
-
---
--- check a case in which a PlaceHolderVar forces join order
---
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 explain (verbose, costs off)
 select ss2.* from
   int4_tbl i41
@@ -4269,10 +4260,7 @@ where ss1.c2 = 0;
                Output: i41.f1, i8.q1, i8.q2, i42.f1, i43.f1, (42)
 (25 rows)
 
-<<<<<<< HEAD
 --end_ignore
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 select ss2.* from
   int4_tbl i41
   left join int8_tbl i8
@@ -4295,7 +4283,6 @@ select * from
   left join
     (tenk1 as a1 full join (select 1 as id) as yy on (a1.unique1 = yy.id))
   on (xx.id = coalesce(yy.id));
-<<<<<<< HEAD
                                   QUERY PLAN                                  
 ------------------------------------------------------------------------------
  Gather Motion 3:1  (slice4; segments: 3)
@@ -4316,19 +4303,6 @@ select * from
                      ->  Result
  Optimizer: Postgres query optimizer
 (17 rows)
-=======
-              QUERY PLAN               
----------------------------------------
- Nested Loop Left Join
-   Join Filter: ((1) = COALESCE((1)))
-   ->  Result
-   ->  Hash Full Join
-         Hash Cond: (a1.unique1 = (1))
-         ->  Seq Scan on tenk1 a1
-         ->  Hash
-               ->  Result
-(8 rows)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select * from
   (select 1 as id) as xx
@@ -5855,7 +5829,6 @@ select * from
  Settings: optimizer=off
 (17 rows)
 
-<<<<<<< HEAD
 -- check handling of nested appendrels inside LATERAL
 select * from
   ((select 2 as v) union all (select 3 as v)) as q1
@@ -5880,9 +5853,6 @@ select * from
 -- GPDB_94_STABLE_MERGE_FIXME: The query below is 'deeply' correlated
 -- and GPDB would not pull up the sublink into a semijoin (why?), while
 -- PostgreSQL will do. So the following test is meaningless in GPDB.
-=======
--- check we don't try to do a unique-ified semijoin with LATERAL
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 explain (verbose, costs off)
 select * from
   (values (0,9998), (1,1000)) v(id,x),
@@ -5926,9 +5896,7 @@ select * from
   0 | 9998 |  0
 (1 row)
 
-<<<<<<< HEAD
 --end_ignore
-=======
 -- check proper extParam/allParam handling (this isn't exactly a LATERAL issue,
 -- but we can make the test case much more compact with LATERAL)
 explain (verbose, costs off)
@@ -5986,7 +5954,6 @@ lateral (select * from int8_tbl t1,
   0 | 4567890123456789 | -4567890123456789 | 4567890123456789 | 4567890123456789
 (3 rows)
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 -- test some error cases where LATERAL should have been used but wasn't
 select f1,g from int4_tbl a, (select f1 as g) ss;
 ERROR:  column "f1" does not exist

@@ -1301,17 +1301,12 @@ select * from
 --
 -- test for appropriate join order in the presence of lateral references
 --
-<<<<<<< HEAD
 -- start_ignore
 -- GPDB_94_STABLE_MERGE_FIXME: Currently LATERAL is not fully supported in GPDB
 -- and the queries below are failing at the moment (The first one fails with
 -- error and the other two fail with panic). Comment them off temporarily.
 /*
- explain (verbose, costs off)
-=======
-
 explain (verbose, costs off)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 select * from
   text_tbl t1
   left join int8_tbl i8
@@ -1359,23 +1354,17 @@ select 1 from
   left join text_tbl as tt4 on (tt3.f1 = tt4.f1),
   lateral (select tt4.f1 as c0 from text_tbl as tt5 limit 1) as ss1
 where tt1.f1 = ss1.c0;
-<<<<<<< HEAD
 */
 --end_ignore
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 --
 -- check a case in which a PlaceHolderVar forces join order
 --
 
-<<<<<<< HEAD
 --start_ignore
 --GPDB_94_STABLE_MERGE_FIXME: This query is lateral related and its plan is
 --different from PostgreSQL's.  Do not know why yet. Ignore its plan
 --temporarily.
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 explain (verbose, costs off)
 select ss2.* from
   int4_tbl i41
@@ -1386,10 +1375,7 @@ select ss2.* from
   on i41.f1 = ss1.c1,
   lateral (select i41.*, i8.*, ss1.* from text_tbl limit 1) ss2
 where ss1.c2 = 0;
-<<<<<<< HEAD
 --end_ignore
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 select ss2.* from
   int4_tbl i41
@@ -1856,7 +1842,6 @@ select * from
     select * from (select 3 as z offset 0) z where z.z = x.x
   ) zz on zz.z = y.y;
 
-<<<<<<< HEAD
 -- check handling of nested appendrels inside LATERAL
 select * from
   ((select 2 as v) union all (select 3 as v)) as q1
@@ -1872,9 +1857,6 @@ select * from
 -- GPDB_94_STABLE_MERGE_FIXME: The query below is 'deeply' correlated
 -- and GPDB would not pull up the sublink into a semijoin (why?), while
 -- PostgreSQL will do. So the following test is meaningless in GPDB.
-=======
--- check we don't try to do a unique-ified semijoin with LATERAL
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 explain (verbose, costs off)
 select * from
   (values (0,9998), (1,1000)) v(id,x),
@@ -1886,9 +1868,7 @@ select * from
   lateral (select f1 from int4_tbl
            where f1 = any (select unique1 from tenk1
                            where unique2 = v.x offset 0)) ss;
-<<<<<<< HEAD
 --end_ignore
-=======
 
 -- check proper extParam/allParam handling (this isn't exactly a LATERAL issue,
 -- but we can make the test case much more compact with LATERAL)
@@ -1910,7 +1890,6 @@ lateral (select * from int8_tbl t1,
                                      where q2 = (select greatest(t1.q1,t2.q2))
                                        and (select v.id=0)) offset 0) ss2) ss
          where t1.q1 = ss.q2) ss0;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- test some error cases where LATERAL should have been used but wasn't
 select f1,g from int4_tbl a, (select f1 as g) ss;
