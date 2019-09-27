@@ -580,16 +580,12 @@ DECLARE
     skewsegid int;
     skewtablename record;
     skewreplicated record;
-
 BEGIN
-
     SELECT INTO skewrec *
     FROM pg_catalog.pg_appendonly pga, pg_catalog.pg_roles pgr
     WHERE pga.relid = $1::regclass and pgr.rolname = current_user and pgr.rolsuper = 't';
-
     IF FOUND THEN
         -- append only table
-
         FOR skewrec IN
             SELECT $1, segid, COALESCE(tupcount, 0)::bigint AS cnt
             FROM (SELECT generate_series(0, numsegments - 1) FROM gp_toolkit.__gp_number_of_segments) segs(segid)
@@ -598,15 +594,11 @@ BEGIN
         LOOP
             RETURN NEXT skewrec;
         END LOOP;
-
     ELSE
         -- heap table
-
         SELECT * INTO skewtablename FROM gp_toolkit.__gp_fullname
         WHERE fnoid = $1;
-
         SELECT * INTO skewreplicated FROM gp_distribution_policy WHERE policytype = 'r' AND localoid = $1;
-
         IF FOUND THEN
             -- replicated table, gp_segment_id is user-invisible and all replicas have same count of tuples.
             OPEN skewcrs
@@ -634,7 +626,6 @@ BEGIN
                         ' GROUP BY 1) details ' ||
                     'ON segid = gp_segment_id';
         END IF;
-
         FOR skewsegid IN
             SELECT generate_series(1, numsegments)
             FROM gp_toolkit.__gp_number_of_segments
@@ -648,11 +639,10 @@ BEGIN
         END LOOP;
         CLOSE skewcrs;
     END IF;
-
     RETURN;
-END
+END;
 $$
-LANGUAGE plpgSQL READS SQL DATA;
+LANGUAGE plpgsql READS SQL DATA;
 
 GRANT EXECUTE ON FUNCTION gp_toolkit.gp_skew_details(oid) TO public;
 
@@ -729,7 +719,6 @@ $$
 DECLARE
     skcoid oid;
     skcrec record;
-
 BEGIN
     FOR skcoid IN SELECT autoid from gp_toolkit.__gp_user_data_tables_readable WHERE autrelstorage != 'x'
     LOOP
@@ -738,7 +727,7 @@ BEGIN
             gp_toolkit.gp_skew_coefficient(skcoid);
         RETURN NEXT skcrec;
     END LOOP;
-END
+END;
 $$
 LANGUAGE plpgsql READS SQL DATA;
 
@@ -828,7 +817,6 @@ $$
 DECLARE
     skcoid oid;
     skcrec record;
-
 BEGIN
     FOR skcoid IN SELECT autoid from gp_toolkit.__gp_user_data_tables_readable WHERE autrelstorage != 'x'
     LOOP
@@ -837,7 +825,7 @@ BEGIN
             gp_toolkit.gp_skew_idle_fraction(skcoid);
         RETURN NEXT skcrec;
     END LOOP;
-END
+END;
 $$
 LANGUAGE plpgsql READS SQL DATA;
 
@@ -1249,7 +1237,8 @@ AS
         pgl.pid           AS lorpid,
         pgl.mode          AS lormode,
         pgl.granted       AS lorgranted,
-        pgsa.waiting      AS lorwaiting
+        pgl.wait_event AS lorwaitevent,
+        pgl.wait_event_type AS lorwaiteventtype
     FROM pg_catalog.pg_stat_activity pgsa
 
     JOIN pg_catalog.pg_locks pgl
@@ -2057,7 +2046,8 @@ BEGIN
     RAISE NOTICE 'gp_appendonly_compaction_threshold = %', threshold;
     RETURN;
 END;
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 -- gp_toolkit.__gp_remove_ao_entry_from_cache
 --   Helper function to evict an entry from AppendOnlyHash cache that is

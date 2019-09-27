@@ -2397,11 +2397,6 @@ setup_cdb_schema(FILE *cmdfd)
 		char	   *path;
 		size_t	    len;
 
-		/* GPDB_96_MERGE_FIXME: gp_toolkit.sql isn't working currently. Skip temporarily.
-		 */
-		if (strcmp(scriptnames[i], "gp_toolkit.sql") == 0)
-			continue;
-
 		len = strlen(share_path) + strlen("cdb_init.d") + strlen(scriptnames[i]) + 3;
 		path = pg_malloc(len);
 		snprintf(path, len, "%s/cdb_init.d/%s", share_path, scriptnames[i]);
