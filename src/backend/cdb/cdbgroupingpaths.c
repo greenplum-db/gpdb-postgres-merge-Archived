@@ -175,7 +175,11 @@ cdb_create_twostage_grouping_paths(PlannerInfo *root,
 					CdbPathLocus singleQE_locus;
 
 					CdbPathLocus_MakeSingleQE(&singleQE_locus, getgpsegmentCount());
-					path = cdbpath_create_motion_path(root, initial_agg_path, path->pathkeys, false, singleQE_locus);
+					path = cdbpath_create_motion_path(root,
+													  initial_agg_path,
+													  initial_agg_path->pathkeys,
+													  false,
+													  singleQE_locus);
 
 					/* GPDB_96_MERGE_FIXME: also consider paths that send the output
 					 * to a single QE, and retain the order. That might be beneficial
@@ -249,13 +253,7 @@ cdb_create_twostage_grouping_paths(PlannerInfo *root,
 														dNumGroups);
 
 			/*
-			 * GroupAgg -> GATHER MOTION -> GroupAgg.
-			 *
-			 * This has the advantage that it retains the input order. The
-			 * downside is that it gathers everything to a single node. If that's
-			 * where the final result is needed anyway, that's quite possibly better
-			 * than scattering the partial aggregate results and having another
-			 * motion to gather the final results, though,
+			 * HashAgg -> GATHER MOTION -> HashAgg.
 			 */
 			path = cdbpath_create_motion_path(root, initial_agg_path, NIL, false,
 											  locus);
