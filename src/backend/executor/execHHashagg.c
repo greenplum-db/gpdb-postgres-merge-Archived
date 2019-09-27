@@ -1950,29 +1950,18 @@ agg_hash_reload(AggState *aggstate)
 				/* GPDB_96_MERGE_FIXME: aggno is right for spilling? */
 				AggStatePerTrans pertrans = &aggstate->pertrans[aggno];
 				AggStatePerGroup pergroupstate = &hashtable->groupaggs->aggs[aggno];
-				FunctionCallInfoData fcinfo;
+				FunctionCallInfo fcinfo = &pertrans->combinefn_fcinfo;
 
 				/* Set the input aggregate values */
-				fcinfo.arg[1] = input_pergroupstate[aggno].transValue;
-				fcinfo.argnull[1] = input_pergroupstate[aggno].transValueIsNull;
+				fcinfo->arg[1] = input_pergroupstate[aggno].transValue;
+				fcinfo->argnull[1] = input_pergroupstate[aggno].transValueIsNull;
 
 				/* Combine to the transition aggstate */
-				pergroupstate->transValue =
-					invoke_agg_trans_func(aggstate,
-										  pertrans,
-										  &(pertrans->combinefn),
-										  pertrans->combinefn.fn_nargs - 1,
-										  pergroupstate->transValue,
-										  &(pergroupstate->noTransValue),
-										  &(pergroupstate->transValueIsNull),
-										  pertrans->transtypeByVal,
-										  pertrans->transtypeLen,
-										  &fcinfo, (void *)aggstate,
-										  aggstate->tmpcontext->ecxt_per_tuple_memory);
+				advance_combine_function(aggstate, pertrans, pergroupstate,
+										 fcinfo);
 				Assert(pertrans->transtypeByVal ||
 				       (pergroupstate->transValueIsNull ||
 					PointerIsValid(DatumGetPointer(pergroupstate->transValue))));
-				       
 			}
 		}
 		

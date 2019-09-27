@@ -197,6 +197,15 @@ typedef struct AggStatePerTransData
 	FunctionCallInfoData serialfn_fcinfo;
 
 	FunctionCallInfoData deserialfn_fcinfo;
+
+	/* in GPDB, we need to call both trans and combine functions if the hash
+	 * table spills, so we need this separately from transfn_fcinfo. Like
+	 * in upstream, if this is the final stage of an aggregate, transfn
+	 * actually points to the combine function, but this one points to the
+	 * combine function in all cases.
+	 */
+	FunctionCallInfoData combinefn_fcinfo;
+
 }	AggStatePerTransData;
 
 /*
@@ -288,14 +297,10 @@ extern TupleTableSlot *fetch_input_tuple(AggState *aggstate);
 
 extern Datum GetAggInitVal(Datum textInitVal, Oid transtype);
 
-extern Datum invoke_agg_trans_func(AggState *aggstate,
-								   AggStatePerTrans pertrans,
-								   FmgrInfo *transfn, int numargs, 
-								   Datum transValue, bool *noTransvalue, 
-								   bool *transValueIsNull, bool transtypeByVal,
-								   int16 transtypeLen,
-								   FunctionCallInfoData *fcinfo, void *funcctx,
-								   MemoryContext tuplecontext);
+extern void advance_combine_function(AggState *aggstate,
+						 AggStatePerTrans pertrans,
+						 AggStatePerGroup pergroupstate,
+						 FunctionCallInfo fcinfo);
 
 extern Datum datumCopyWithMemManager(Datum oldvalue, Datum value, bool typByVal, int typLen,
 									 MemoryManagerContainer *mem_manager);

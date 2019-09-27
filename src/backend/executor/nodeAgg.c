@@ -234,9 +234,6 @@ static void initialize_phase(AggState *aggstate, int newphase);
 static void advance_transition_function(AggState *aggstate,
 							AggStatePerTrans pertrans,
 							AggStatePerGroup pergroupstate);
-static void advance_combine_function(AggState *aggstate,
-						 AggStatePerTrans pertrans,
-						 AggStatePerGroup pergroupstate);
 static void process_ordered_aggregate_single(AggState *aggstate,
 								 AggStatePerTrans pertrans,
 								 AggStatePerGroup pergroupstate);
@@ -270,6 +267,7 @@ static TupleTableSlot *agg_retrieve_hash_table_internal(AggState *aggstate);
 static void build_pertrans_for_aggref(AggStatePerTrans pertrans,
 						  AggState *aggsate, EState *estate,
 						  Aggref *aggref, Oid aggtransfn, Oid aggtranstype,
+						  Oid aggcombinefn,
 						  Oid aggserialfn, Oid aggdeserialfn,
 						  Datum initValue, bool initValueIsNull,
 						  Oid *inputTypes, int numArguments);
@@ -620,35 +618,12 @@ advance_transition_function(AggState *aggstate,
 							AggStatePerTrans pertrans,
 							AggStatePerGroup pergroupstate)
 {
-	pergroupstate->transValue = 
-		invoke_agg_trans_func(aggstate,
-							  pertrans,
-							  &(pertrans->transfn), 
-							  pertrans->numTransInputs,
-							  pergroupstate->transValue,
-							  &(pergroupstate->noTransValue),
-							  &(pergroupstate->transValueIsNull),
-							  pertrans->transtypeByVal,
-							  pertrans->transtypeLen,
-							  &pertrans->transfn_fcinfo,
-							  (void *)aggstate,
-							  aggstate->tmpcontext->ecxt_per_tuple_memory);
-}
-
-Datum
-invoke_agg_trans_func(AggState *aggstate,
-					  AggStatePerTrans pertrans,
-					  FmgrInfo *transfn, int numTransInputs, Datum transValue,
-					  bool *noTransvalue, bool *transValueIsNull,
-					  bool transtypeByVal, int16 transtypeLen, 
-					  FunctionCallInfoData *fcinfo, void *funcctx,
-					  MemoryContext tuplecontext)
-{
 	MemoryManagerContainer *mem_manager = &aggstate->mem_manager;
+	FunctionCallInfo fcinfo = &pertrans->transfn_fcinfo;
 	MemoryContext oldContext;
 	Datum		newVal;
 
-	if (transfn->fn_strict)
+	if (pertrans->transfn.fn_strict)
 	{
 		/*
 		 * For a strict transfn, nothing happens when there's a NULL input; we
@@ -660,9 +635,9 @@ invoke_agg_trans_func(AggState *aggstate,
 		for (i = 1; i <= numTransInputs; i++)
 		{
 			if (fcinfo->argnull[i])
-				return transValue;
+				return;
 		}
-		if (*noTransvalue)
+		if (pergroupstate->noTransValue)
 		{
 			/*
 			 * transValue has not been initialized. This is the first non-NULL
@@ -673,15 +648,17 @@ invoke_agg_trans_func(AggState *aggstate,
 			 * We must copy the datum into aggcontext if it is pass-by-ref.
 			 * We do not need to pfree the old transValue, since it's NULL.
 			 */
-			newVal = datumCopyWithMemManager(transValue, fcinfo->arg[1], transtypeByVal,
-											 transtypeLen, mem_manager);
-			*transValueIsNull = false;
-			*noTransvalue = false;
-			fcinfo->isnull = false;
-
-			return newVal;
+			pergroupstate->transValue =
+				datumCopyWithMemManager(pergroupstate->transValue,
+										fcinfo->arg[1],
+										pertrans->transtypeByVal,
+										pertrans->transtypeLen,
+										mem_manager);
+			pergroupstate->transValueIsNull = false;
+			pergroupstate->noTransValue = false;
+			return;
 		}
-		if (*transValueIsNull)
+		if (pergroupstate->transValueIsNull)
 		{
 			/*
 			 * Don't call a strict function with NULL inputs.  Note it is
@@ -689,13 +666,12 @@ invoke_agg_trans_func(AggState *aggstate,
 			 * strict *and* returned a NULL on a prior cycle. If that happens
 			 * we will propagate the NULL all the way to the end.
 			 */
-			fcinfo->isnull = true;
-			return transValue;
+			return;
 		}
 	}
 
 	/* We run the transition functions in per-input-tuple memory context */
-	oldContext = MemoryContextSwitchTo(tuplecontext);
+	oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
 
 	/* set up aggstate->curpertrans for AggGetAggref() */
 	aggstate->curpertrans = pertrans;
@@ -703,13 +679,8 @@ invoke_agg_trans_func(AggState *aggstate,
 	/*
 	 * OK to call the transition function
 	 */
-	InitFunctionCallInfoData(*fcinfo,
-							 transfn,
-							 numTransInputs + 1,
-							 pertrans->aggCollation,
-							 (void *) aggstate, NULL);
-	fcinfo->arg[0] = transValue;
-	fcinfo->argnull[0] = *transValueIsNull;
+	fcinfo->arg[0] = pergroupstate->transValue;
+	fcinfo->argnull[0] = pergroupstate->transValueIsNull;
 	fcinfo->isnull = false;		/* just in case transfn doesn't set it */
 
 	newVal = FunctionCallInvoke(fcinfo);
@@ -721,22 +692,23 @@ invoke_agg_trans_func(AggState *aggstate,
 	 * pfree the prior transValue.  But if transfn returned a pointer to its
 	 * first input, we don't need to do anything.
 	 */
-	if (!transtypeByVal && 
-		DatumGetPointer(newVal) != DatumGetPointer(transValue))
+	if (!pertrans->transtypeByVal &&
+		DatumGetPointer(newVal) != DatumGetPointer(pergroupstate->transValue))
 	{
 		if (!fcinfo->isnull)
 		{
-			newVal = datumCopyWithMemManager(transValue, newVal, transtypeByVal,
-											 transtypeLen, mem_manager);
+			newVal = datumCopyWithMemManager(pergroupstate->transValue,
+											 newVal,
+											 pertrans->transtypeByVal,
+											 pertrans->transtypeLen,
+											 mem_manager);
 		}
 	}
 
-	*transValueIsNull = fcinfo->isnull;
-	if (!fcinfo->isnull)
-		*noTransvalue = false;
+	pergroupstate->transValue = newVal;
+	pergroupstate->transValueIsNull = fcinfo->isnull;
 
 	MemoryContextSwitchTo(oldContext);
-	return newVal;
 }
 
 /*
@@ -965,7 +937,7 @@ combine_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 			fcinfo->argnull[1] = isnulls[0];
 		}
 
-		advance_combine_function(aggstate, pertrans, pergroupstate);
+		advance_combine_function(aggstate, pertrans, pergroupstate, fcinfo);
 	}
 }
 
@@ -977,13 +949,14 @@ combine_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
  * Note that in this case transfn is set to the combination function. This
  * perhaps should be changed to avoid confusion, but one field is ok for now
  * as they'll never be needed at the same time.
+ * GPDB: we do need them at the same time. Caller must therefore pass 'fcinfo'.
  */
-static void
+void
 advance_combine_function(AggState *aggstate,
 						 AggStatePerTrans pertrans,
-						 AggStatePerGroup pergroupstate)
+						 AggStatePerGroup pergroupstate,
+						 FunctionCallInfo fcinfo)
 {
-	FunctionCallInfo fcinfo = &pertrans->transfn_fcinfo;
 	MemoryContext oldContext;
 	Datum		newVal;
 
@@ -2637,6 +2610,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		AclResult	aclresult;
 		Oid			transfn_oid,
 					finalfn_oid;
+		Oid			combinefn_oid;
 		Oid			serialfn_oid,
 					deserialfn_oid;
 		Expr	   *finalfnexpr;
@@ -2703,6 +2677,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		else
 			transfn_oid = aggform->aggtransfn;
 
+		combinefn_oid = aggform->aggcombinefn;
+
 		/* Final function only required if we're finalizing the aggregates */
 		if (DO_AGGSPLIT_SKIPFINAL(aggstate->aggsplit))
 			peragg->finalfn_oid = finalfn_oid = InvalidOid;
@@ -2764,6 +2740,15 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				aclcheck_error(aclresult, ACL_KIND_PROC,
 							   get_func_name(transfn_oid));
 			InvokeFunctionExecuteHook(transfn_oid);
+			if (OidIsValid(combinefn_oid))
+			{
+				aclresult = pg_proc_aclcheck(combinefn_oid, aggOwner,
+											 ACL_EXECUTE);
+				if (aclresult != ACLCHECK_OK)
+					aclcheck_error(aclresult, ACL_KIND_PROC,
+								   get_func_name(combinefn_oid));
+				InvokeFunctionExecuteHook(combinefn_oid);
+			}
 			if (OidIsValid(finalfn_oid))
 			{
 				aclresult = pg_proc_aclcheck(finalfn_oid, aggOwner,
@@ -2870,6 +2855,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			pertrans = &pertransstates[++transno];
 			build_pertrans_for_aggref(pertrans, aggstate, estate,
 									  aggref, transfn_oid, aggtranstype,
+									  combinefn_oid,
 									  serialfn_oid, deserialfn_oid,
 									  initValue, initValueIsNull,
 									  inputTypes, numArguments);
@@ -2910,6 +2896,7 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 						  AggState *aggstate, EState *estate,
 						  Aggref *aggref,
 						  Oid aggtransfn, Oid aggtranstype,
+						  Oid aggcombinefn,
 						  Oid aggserialfn, Oid aggdeserialfn,
 						  Datum initValue, bool initValueIsNull,
 						  Oid *inputTypes, int numArguments)
@@ -2954,20 +2941,28 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	 * function's transfn. Instead we use the combinefn.  In this case, the
 	 * transfn and transfn_oid fields of pertrans refer to the combine
 	 * function rather than the transition function.
+	 *
+	 * GPDB: In GPDB, if a hash agg spills to disk, we need the combine
+	 * function *and* the trans function at the same time. Therefore,
+	 * we look up the combine function always (if it exists). Like in
+	 * upstream, if this is the finalize-stage of the aggregate,
+	 * pertrans->transfn and pertrans->combinefn_fcinfo will point to the
+	 * combine function, but we have extra combinefn and combinefn_fcinfo
+	 * fields which will point to the combine function, in any case.
 	 */
-	if (DO_AGGSPLIT_COMBINE(aggstate->aggsplit))
+	if (aggcombinefn)
 	{
 		Expr	   *combinefnexpr;
 
 		build_aggregate_combinefn_expr(aggtranstype,
 									   aggref->inputcollid,
-									   aggtransfn,
+									   aggcombinefn,
 									   &combinefnexpr);
-		fmgr_info(aggtransfn, &pertrans->transfn);
-		fmgr_info_set_expr((Node *) combinefnexpr, &pertrans->transfn);
+		fmgr_info(aggcombinefn, &pertrans->combinefn);
+		fmgr_info_set_expr((Node *) combinefnexpr, &pertrans->combinefn);
 
-		InitFunctionCallInfoData(pertrans->transfn_fcinfo,
-								 &pertrans->transfn,
+		InitFunctionCallInfoData(pertrans->combinefn_fcinfo,
+								 &pertrans->combinefn,
 								 2,
 								 pertrans->aggCollation,
 								 (void *) aggstate, NULL);
@@ -2977,11 +2972,23 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 		 * strict. This should have been checked during CREATE AGGREGATE, but
 		 * the strict property could have been changed since then.
 		 */
-		if (pertrans->transfn.fn_strict && aggtranstype == INTERNALOID)
+		if (pertrans->combinefn.fn_strict && aggtranstype == INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("combine function for aggregate %u must be declared as STRICT",
 							aggref->aggfnoid)));
+	}
+
+	if (DO_AGGSPLIT_COMBINE(aggstate->aggsplit))
+	{
+		Assert(aggcombinefn);
+		fmgr_info_copy(&pertrans->transfn, &pertrans->combinefn, CurrentMemoryContext);
+
+		InitFunctionCallInfoData(pertrans->transfn_fcinfo,
+								 &pertrans->transfn,
+								 2,
+								 pertrans->aggCollation,
+								 (void *) aggstate, NULL);
 	}
 	else
 	{

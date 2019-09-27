@@ -645,7 +645,7 @@ static void tuplesort_heap_siftup(Tuplesortstate *state, bool checkIndex);
 static void reversedirection(Tuplesortstate *state);
 static unsigned int getlen(Tuplesortstate *state, TuplesortPos *pos, LogicalTape *lt, bool eofOK);
 static void markrunend(Tuplesortstate *state, int tapenum);
-static void *readtup_alloc(Tuplesortstate *state, int tapenum, Size tuplen);
+static void *readtup_alloc(Tuplesortstate *state, LogicalTape *lt, Size tuplen);
 static int comparetup_heap(const SortTuple *a, const SortTuple *b,
 				Tuplesortstate *state);
 static void copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup);
@@ -4142,12 +4142,18 @@ markrunend(Tuplesortstate *state, int tapenum)
  * reset tuple child memory context, and account for that with a
  * FREEMEM().  Currently, this only ever needs to happen in WRITETUP()
  * routines.
+ *
+ * GPDB: Batch allocation is only possible if 'lt' was allocated from
+ * the tapeset. If it was a copy made with LogicalTapeSetDuplicateTape(),
+ * then 'state->batchUsed' must be false. Luckily, that's enough for
+ * current use.
  */
 static void *
-readtup_alloc(Tuplesortstate *state, int tapenum, Size tuplen)
+readtup_alloc(Tuplesortstate *state, LogicalTape *lt, Size tuplen)
 {
 	if (state->batchUsed)
 	{
+		int			tapenum = LogicalTapeGetTapeNum(state->tapeset, lt);
 		/*
 		 * No USEMEM() call, because during final on-the-fly merge accounting
 		 * is based on tape-private state. ("Overflow" allocations are
@@ -4318,10 +4324,9 @@ static void
 readtup_heap(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 			 LogicalTape *lt, uint32 len)
 {
-	int			tapenum = LogicalTapeGetTapeNum(state->tapeset, lt);
 	uint32		tuplen;
 
-	stup->tuple = (MemTuple) readtup_alloc(state, tapenum, memtuple_size_from_uint32(len));
+	stup->tuple = (MemTuple) readtup_alloc(state, lt, memtuple_size_from_uint32(len));
 	memtuple_set_mtlen(stup->tuple, len);
 
 	Assert(lt);
@@ -4561,10 +4566,9 @@ static void
 readtup_cluster(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 				LogicalTape *lt, unsigned int tuplen)
 {
-	int			tapenum = LogicalTapeGetTapeNum(state->tapeset, lt);
 	unsigned int t_len = tuplen - sizeof(ItemPointerData) - sizeof(int);
 	HeapTuple	tuple = (HeapTuple) readtup_alloc(state,
-												  tapenum,
+												  lt,
 												  t_len + HEAPTUPLESIZE);
 
 	/* Reconstruct the HeapTupleData header */
@@ -4881,9 +4885,8 @@ static void
 readtup_index(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 			  LogicalTape *lt, unsigned int len)
 {
-	int			tapenum = LogicalTapeGetTapeNum(state->tapeset, lt);
 	unsigned int tuplen = len - sizeof(unsigned int);
-	IndexTuple	tuple = (IndexTuple) readtup_alloc(state, tapenum, tuplen);
+	IndexTuple	tuple = (IndexTuple) readtup_alloc(state, lt, tuplen);
 
 	Assert(lt); 
 
@@ -5006,8 +5009,7 @@ readtup_datum(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 	}
 	else
 	{
-		int			tapenum = LogicalTapeGetTapeNum(state->tapeset, lt);
-		void	   *raddr = readtup_alloc(state, tapenum, tuplen);
+		void	   *raddr = readtup_alloc(state, lt, tuplen);
 
 		LogicalTapeReadExact(state->tapeset, lt,
 							 raddr, tuplen);
@@ -5134,6 +5136,12 @@ tuplesort_begin_heap_file_readerwriter(ScanState *ss,
 		state = tuplesort_begin_common(workMem, randomAccess, false);
 		state->status = TSS_SORTEDONTAPE;
 		state->randomAccess = true;
+
+		/*
+		 * gettupleslot checks if 'abbrev_converter' is set, so set up an empty
+		 * SortSupportData.
+		 */
+		state->sortKeys = (SortSupport) palloc0(sizeof(SortSupportData));
 
 		state->readtup = readtup_heap;
 
