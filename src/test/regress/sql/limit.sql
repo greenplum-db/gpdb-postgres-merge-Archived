@@ -50,20 +50,23 @@ create temp sequence testseq;
 explain (verbose, costs off)
 select unique1, unique2, nextval('testseq')
   from tenk1 order by unique2 limit 10;
-
-select unique1, unique2, nextval('testseq')
-  from tenk1 order by unique2 limit 10;
-
-select currval('testseq');
-
-explain (verbose, costs off)
-select unique1, unique2, nextval('testseq')
-  from tenk1 order by tenthous limit 10;
-
-select unique1, unique2, nextval('testseq')
-  from tenk1 order by tenthous limit 10;
-
-select currval('testseq');
+-- In gpdb, our sequence can only promise monotonicity due to MPP structure
+-- The follow case does not make sence for us.
+--
+--select unique1, unique2, nextval('testseq')
+--  from tenk1 order by unique2 limit 10;
+--
+--select currval('testseq');
+--
+--explain (verbose, costs off)
+--select unique1, unique2, nextval('testseq')
+--  from tenk1 order by tenthous limit 10;
+--
+--select unique1, unique2, nextval('testseq')
+--  from tenk1 order by tenthous limit 10;
+--
+--select currval('testseq');
+--
 
 explain (verbose, costs off)
 select unique1, unique2, generate_series(1,10)
