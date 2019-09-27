@@ -4322,7 +4322,6 @@ readtup_heap(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 	uint32		tuplen;
 
 	stup->tuple = (MemTuple) readtup_alloc(state, tapenum, memtuple_size_from_uint32(len));
-	USEMEM(state, GetMemoryChunkSpace(stup->tuple));
 	memtuple_set_mtlen(stup->tuple, len);
 
 	Assert(lt);
