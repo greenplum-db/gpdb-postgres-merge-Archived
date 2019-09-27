@@ -578,15 +578,6 @@ select x.aa/100 aaa, x.c, y.c from cte1 x join cte1 y on x.aa=y.aa;
 select from t2_ncols union select * from t2_ncols;
 
 --
--- Test mixing a set-returning function, which can be evaluated anywhere,
--- (it has General locus) and a diststributed table, in an Append.
---
-create table tab (i integer);
-select * from tab
-union all
-select g from generate_series(1,2) g;
-
---
 -- Clean up
 --
 
