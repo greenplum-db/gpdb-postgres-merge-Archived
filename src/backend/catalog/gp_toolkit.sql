@@ -1237,8 +1237,8 @@ AS
         pgl.pid           AS lorpid,
         pgl.mode          AS lormode,
         pgl.granted       AS lorgranted,
-        pgl.wait_event AS lorwaitevent,
-        pgl.wait_event_type AS lorwaiteventtype
+        pgsa.wait_event   AS lorwaitevent,
+        pgsa.wait_event_type AS lorwaiteventtype
     FROM pg_catalog.pg_stat_activity pgsa
 
     JOIN pg_catalog.pg_locks pgl
