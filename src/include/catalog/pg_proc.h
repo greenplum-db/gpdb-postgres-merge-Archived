@@ -4691,6 +4691,7 @@ DESCR("GIN tsvector support (obsolete)");
 DATA(insert OID = 3792 (  gin_tsquery_consistent PGNSP PGUID 12 1 0 0 0 f f f f t f i s 8 0 16 "2281 21 3615 23 2281 2281 2281 2281" _null_ _null_ _null_ _null_ _null_ gin_tsquery_consistent_oldsig _null_ _null_ _null_ ));
 DESCR("GIN tsvector support (obsolete)");
 
+GPDB_EXTRA_COL(proexeclocation = s);
 DATA(insert OID = 3789 (  gin_clean_pending_list PGNSP PGUID 12 1 0 0 0 f f f f t f v s 1 0 20 "2205" _null_ _null_ _null_ _null_ _null_ gin_clean_pending_list _null_ _null_ _null_ ));
 DESCR("clean up GIN pending list");
 

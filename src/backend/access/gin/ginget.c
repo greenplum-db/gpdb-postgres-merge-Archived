@@ -425,7 +425,6 @@ restartScanEntry:
 
 	if (needUnlock)
 		LockBuffer(stackEntry->buffer, GIN_UNLOCK);
-
 	freeGinBtreeStack(stackEntry);
 }
 
