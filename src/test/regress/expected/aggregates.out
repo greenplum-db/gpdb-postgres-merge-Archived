@@ -1018,13 +1018,15 @@ explain (costs off) select a,c from t1 group by a,c,d;
                          QUERY PLAN                         
 ------------------------------------------------------------
  Gather Motion 3:1  (slice2; segments: 3)
-   ->  HashAggregate
+   ->  Finalize HashAggregate
          Group Key: a, c, d
          ->  Redistribute Motion 3:3  (slice1; segments: 3)
                Hash Key: a, c, d
-               ->  Seq Scan on t1
+               ->  Partial HashAggregate
+                     Group Key: a, c, d
+                     ->  Seq Scan on t1
  Optimizer: Postgres query optimizer
-(7 rows)
+(9 rows)
 
 -- Test removal across multiple relations
 explain (costs off) select *
