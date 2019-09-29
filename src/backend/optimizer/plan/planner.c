@@ -4573,13 +4573,25 @@ create_grouping_paths(PlannerInfo *root,
 					 * redistribute it by hash, but then we'd need to re-sort
 					 * it. That doesn't seem like a good idea, so we prefer to
 					 * gather it all, and take advantage of the sort order.
+					 *
+					 * If the grouping doesn't require any sorting (I think that
+					 * case only arises with plain aggregates, and no GROUP BY)
+					 * then we do redistribute so that we can run the aggregation
+					 * in parallel.
 					 */
 					if (need_redistribute)
 					{
-						CdbPathLocus locus;
+						if (root->group_pathkeys)
+						{
+							CdbPathLocus locus;
 
-						CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
-						path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
+							CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+							path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
+						}
+						else
+						{
+							path = cdbpath_create_motion_path(root, path, NIL, false, locus);
+						}
 					}
 				}
 
