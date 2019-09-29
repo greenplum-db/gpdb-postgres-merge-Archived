@@ -498,14 +498,14 @@ DROP SERVER s9 CASCADE;                                         -- ERROR
 SET ROLE regress_test_role;
 CREATE SERVER s10 FOREIGN DATA WRAPPER foo;
 CREATE USER MAPPING FOR public SERVER s10 OPTIONS (user 'secret');
-CREATE USER MAPPING FOR unprivileged_role SERVER s10 OPTIONS (user 'secret');
+CREATE USER MAPPING FOR regress_unprivileged_role SERVER s10 OPTIONS (user 'secret');
 -- owner of server can see some option fields
 \deu+
 RESET ROLE;
 -- superuser can see all option fields
 \deu+
 -- unprivileged user cannot see any option field
-SET ROLE unprivileged_role;
+SET ROLE regress_unprivileged_role;
 \deu+
 RESET ROLE;
 \set VERBOSITY terse
