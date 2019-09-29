@@ -57,21 +57,12 @@ REASSIGN OWNED BY regress_dep_user1 TO regress_dep_user0;
 -- this one is allowed
 DROP OWNED BY regress_dep_user0;
 
-<<<<<<< HEAD
 CREATE TABLE deptest1 (f1 int unique) DISTRIBUTED BY (f1);
-GRANT ALL ON deptest1 TO regression_user1 WITH GRANT OPTION;
-
-SET SESSION AUTHORIZATION regression_user1;
-CREATE TABLE deptest (a serial primary key, b text) DISTRIBUTED BY (a);
-GRANT ALL ON deptest1 TO regression_user2;
-=======
-CREATE TABLE deptest1 (f1 int unique);
 GRANT ALL ON deptest1 TO regress_dep_user1 WITH GRANT OPTION;
 
 SET SESSION AUTHORIZATION regress_dep_user1;
-CREATE TABLE deptest (a serial primary key, b text);
+CREATE TABLE deptest (a serial primary key, b text) DISTRIBUTED BY (a);
 GRANT ALL ON deptest1 TO regress_dep_user2;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 RESET SESSION AUTHORIZATION;
 \z deptest1
 
@@ -82,16 +73,6 @@ DROP OWNED BY regress_dep_user1;
 \d deptest
 
 -- Test REASSIGN OWNED
-<<<<<<< HEAD
-GRANT ALL ON deptest1 TO regression_user1;
-GRANT CREATE ON DATABASE regression TO regression_user1;
-
-SET SESSION AUTHORIZATION regression_user1;
-CREATE SCHEMA deptest;
-CREATE TABLE deptest (a serial primary key, b text) DISTRIBUTED BY (a);
-ALTER DEFAULT PRIVILEGES FOR ROLE regression_user1 IN SCHEMA deptest
-  GRANT ALL ON TABLES TO regression_user2;
-=======
 GRANT ALL ON deptest1 TO regress_dep_user1;
 GRANT CREATE ON DATABASE regression TO regress_dep_user1;
 
@@ -100,7 +81,6 @@ CREATE SCHEMA deptest;
 CREATE TABLE deptest (a serial primary key, b text);
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_dep_user1 IN SCHEMA deptest
   GRANT ALL ON TABLES TO regress_dep_user2;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 CREATE FUNCTION deptest_func() RETURNS void LANGUAGE plpgsql
   AS $$ BEGIN END; $$;
 CREATE TYPE deptest_enum AS ENUM ('red');
@@ -119,11 +99,7 @@ SELECT typowner = relowner
 FROM pg_type JOIN pg_class c ON typrelid = c.oid WHERE typname = 'deptest_t';
 
 RESET SESSION AUTHORIZATION;
-<<<<<<< HEAD
-REASSIGN OWNED BY regression_user1 TO regression_user2;
-=======
 REASSIGN OWNED BY regress_dep_user1 TO regress_dep_user2;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 \dt deptest
 
 SELECT typowner = relowner
