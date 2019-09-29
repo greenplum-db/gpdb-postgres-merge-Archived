@@ -15,22 +15,12 @@ SET client_min_messages TO 'warning';
 DROP ROLE IF EXISTS regress_group1;
 DROP ROLE IF EXISTS regress_group2;
 
-<<<<<<< HEAD
-DROP ROLE IF EXISTS regressuser1;
-DROP ROLE IF EXISTS regressuser2;
-DROP ROLE IF EXISTS regressuser3;
-DROP ROLE IF EXISTS regressuser4;
-DROP ROLE IF EXISTS regressuser5;
-DROP ROLE IF EXISTS regressuser6;
-DROP ROLE IF EXISTS non_superuser_schema;
-=======
 DROP ROLE IF EXISTS regress_user1;
 DROP ROLE IF EXISTS regress_user2;
 DROP ROLE IF EXISTS regress_user3;
 DROP ROLE IF EXISTS regress_user4;
 DROP ROLE IF EXISTS regress_user5;
 DROP ROLE IF EXISTS regress_user6;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- start_ignore
 SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
@@ -146,8 +136,8 @@ SELECT * FROM atest1; -- ok
 
 -- test leaky-function protections in selfuncs
 
--- regressuser1 will own a table and provide a view for it.
-SET SESSION AUTHORIZATION regressuser1;
+-- regress_user1 will own a table and provide a view for it.
+SET SESSION AUTHORIZATION regress_user1;
 
 CREATE TABLE atest12 as
   SELECT x AS a, 10001 - x AS b FROM generate_series(1,10000) x;
@@ -175,8 +165,8 @@ EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
   WHERE x.a = y.b and abs(y.a) <<< 5;
 reset enable_nestloop;
 
--- Check if regressuser2 can break security.
-SET SESSION AUTHORIZATION regressuser2;
+-- Check if regress_user2 can break security.
+SET SESSION AUTHORIZATION regress_user2;
 
 CREATE FUNCTION leak2(integer,integer) RETURNS boolean
   AS $$begin raise notice 'leak % %', $1, $2; return $1 > $2; end$$
@@ -190,12 +180,12 @@ EXPLAIN (COSTS OFF) SELECT * FROM atest12 WHERE a >>> 0;
 -- This plan should use hashjoin, as it will expect many rows to be selected.
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
 
--- Now regressuser1 grants sufficient access to regressuser2.
-SET SESSION AUTHORIZATION regressuser1;
+-- Now regress_user1 grants sufficient access to regress_user2.
+SET SESSION AUTHORIZATION regress_user1;
 GRANT SELECT (a, b) ON atest12 TO PUBLIC;
-SET SESSION AUTHORIZATION regressuser2;
+SET SESSION AUTHORIZATION regress_user2;
 
--- Now regressuser2 will also get a good row estimate.
+-- Now regress_user2 will also get a good row estimate.
 set enable_nestloop = 1;
 EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
 reset enable_nestloop;
@@ -205,7 +195,7 @@ reset enable_nestloop;
 EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
   WHERE x.a = y.b and abs(y.a) <<< 5;
 
--- clean up (regressuser1's objects are all dropped later)
+-- clean up (regress_user1's objects are all dropped later)
 DROP FUNCTION leak2(integer, integer) CASCADE;
 
 
@@ -275,13 +265,8 @@ SELECT * FROM atestv2; -- fail (even though regress_user2 can access underlying 
 
 -- Test column level permissions
 
-<<<<<<< HEAD
-SET SESSION AUTHORIZATION regressuser1;
-CREATE TABLE atest5 (one int, two int unique, three int, four int);
-=======
 SET SESSION AUTHORIZATION regress_user1;
-CREATE TABLE atest5 (one int, two int unique, three int, four int unique);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
+CREATE TABLE atest5 (one int, two int unique, three int, four int);
 CREATE TABLE atest6 (one int, two int, blue int);
 GRANT SELECT (one), INSERT (two), UPDATE (three) ON atest5 TO regress_user4;
 GRANT ALL (one) ON atest5 TO regress_user3;
@@ -449,17 +434,10 @@ REVOKE ALL PRIVILEGES ON LANGUAGE sql FROM PUBLIC;
 GRANT USAGE ON LANGUAGE sql TO regress_user1; -- ok
 GRANT USAGE ON LANGUAGE c TO PUBLIC; -- fail
 
-<<<<<<< HEAD
-SET SESSION AUTHORIZATION regressuser1;
-GRANT USAGE ON LANGUAGE sql TO regressuser2; -- fail
-CREATE FUNCTION testfunc1(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql CONTAINS SQL;
-CREATE FUNCTION testfunc2(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql CONTAINS SQL;
-=======
 SET SESSION AUTHORIZATION regress_user1;
 GRANT USAGE ON LANGUAGE sql TO regress_user2; -- fail
 CREATE FUNCTION testfunc1(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql;
 CREATE FUNCTION testfunc2(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 REVOKE ALL ON FUNCTION testfunc1(int), testfunc2(int) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION testfunc1(int), testfunc2(int) TO regress_user2;
@@ -469,17 +447,12 @@ GRANT ALL PRIVILEGES ON FUNCTION testfunc_nosuch(int) TO regress_user4;
 
 CREATE FUNCTION testfunc4(boolean) RETURNS text
   AS 'select col1 from atest2 where col2 = $1;'
-<<<<<<< HEAD
-  LANGUAGE sql SECURITY DEFINER READS SQL DATA;
-GRANT EXECUTE ON FUNCTION testfunc4(boolean) TO regressuser3;
-=======
   LANGUAGE sql SECURITY DEFINER;
 GRANT EXECUTE ON FUNCTION testfunc4(boolean) TO regress_user3;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 SET SESSION AUTHORIZATION regress_user2;
 SELECT testfunc1(5), testfunc2(5); -- ok
-CREATE FUNCTION testfunc3(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql CONTAINS SQL; -- fail
+CREATE FUNCTION testfunc3(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql; -- fail
 
 SET SESSION AUTHORIZATION regress_user3;
 SELECT testfunc1(5); -- fail
@@ -727,7 +700,7 @@ alter table mytable drop column f2;
 select has_column_privilege('mytable','f2','select');
 select has_column_privilege('mytable','........pg.dropped.2........','select');
 select has_column_privilege('mytable',2::int2,'select');
-revoke select on table mytable from regressuser3;
+revoke select on table mytable from regress_user3;
 select has_column_privilege('mytable',2::int2,'select');
 drop table mytable;
 
@@ -1101,23 +1074,6 @@ DROP GROUP regress_group1;
 DROP GROUP regress_group2;
 
 -- these are needed to clean up permissions
-<<<<<<< HEAD
-REVOKE USAGE ON LANGUAGE sql FROM regressuser1;
-DROP OWNED BY regressuser1;
-
--- regression test: superuser create a schema and authorize it to a non-superuser
-CREATE ROLE "non_superuser_schema";
-CREATE SCHEMA test_non_superuser_schema AUTHORIZATION "non_superuser_schema";
-DROP SCHEMA test_non_superuser_schema;
-DROP USER non_superuser_schema;
-
-DROP USER regressuser1;
-DROP USER regressuser2;
-DROP USER regressuser3;
-DROP USER regressuser4;
-DROP USER regressuser5;
-DROP USER regressuser6;
-=======
 REVOKE USAGE ON LANGUAGE sql FROM regress_user1;
 DROP OWNED BY regress_user1;
 
@@ -1211,4 +1167,3 @@ REVOKE TRUNCATE ON lock_table FROM regress_locktable_user;
 -- clean up
 DROP TABLE lock_table;
 DROP USER regress_locktable_user;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
