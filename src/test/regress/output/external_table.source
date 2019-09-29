@@ -1693,7 +1693,7 @@ SQL statement "SELECT sum(distinct e1.i) as sum_i, sum(distinct e2.i) as sum_j, 
 	   (SELECT i, j FROM exttab_udfs_1 WHERE i < 5 ) e1,
 	   (SELECT i, j FROM exttab_udfs_2 WHERE i < 10) e2
 	   group by e1.j"
-PL/pgSQL function exttab_udfs_func1() line 3 at EXECUTE statement
+PL/pgSQL function exttab_udfs_func1() line 3 at EXECUTE
 -- Should be populated
 SELECT COUNT(*) > 0 FROM
 (
@@ -1733,7 +1733,7 @@ SQL statement "SELECT sum(distinct e1.i) as sum_i, sum(distinct e2.i) as sum_j, 
 	   (SELECT i, j FROM exttab_udfs_1 WHERE i < 5 ) e1,
 	   (SELECT i, j FROM exttab_udfs_2 WHERE i < 10) e2
 	   group by e1.j"
-PL/pgSQL function exttab_udfs_func1() line 3 at EXECUTE statement
+PL/pgSQL function exttab_udfs_func1() line 3 at EXECUTE
 SELECT * FROM exttab_udfs_insert_1;
  a 
 ---
