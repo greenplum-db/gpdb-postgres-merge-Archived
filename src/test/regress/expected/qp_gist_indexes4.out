@@ -869,20 +869,18 @@ SELECT count(*) FROM gist_tbl, gist_tbl2
 
 EXPLAIN SELECT count(*) FROM gist_tbl, gist_tbl2 
  WHERE gist_tbl.p <@ gist_tbl2.p;
-                                                   QUERY PLAN                                                   
-----------------------------------------------------------------------------------------------------------------
- Aggregate  (cost=398146.51..398146.52 rows=1 width=8)
-   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=398146.44..398146.49 rows=1 width=8)
-         ->  Aggregate  (cost=398146.44..398146.45 rows=1 width=8)
-               ->  Nested Loop  (cost=0.00..391855.82 rows=838750 width=0)
-                     ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=0.00..2715.85 rows=49997 width=101)
-                           ->  Seq Scan on gist_tbl2  (cost=0.00..715.97 rows=16666 width=101)
-                     ->  Index Scan using poly_index on gist_tbl  (cost=0.00..1.97 rows=17 width=101)
-                           Index Cond: gist_tbl.p <@ gist_tbl2.p
-                           Filter: gist_tbl.p <@ gist_tbl2.p
- Settings:  enable_seqscan=off; optimizer=off
- Optimizer status: Postgres query optimizer
-(11 rows)
+                                                           QUERY PLAN                                                            
+---------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=20000362441.03..20000362441.04 rows=1 width=8)
+   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=20000362441.00..20000362441.03 rows=1 width=8)
+         ->  Partial Aggregate  (cost=20000362441.00..20000362441.01 rows=1 width=8)
+               ->  Nested Loop  (cost=20000000000.28..20000356191.00 rows=833334 width=0)
+                     ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=10000000000.00..10000002716.00 rows=50000 width=101)
+                           ->  Seq Scan on gist_tbl2  (cost=10000000000.00..10000000716.00 rows=16667 width=101)
+                     ->  Index Scan using poly_index on gist_tbl  (cost=0.28..1.86 rows=17 width=101)
+                           Index Cond: (p <@ gist_tbl2.p)
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 -- ----------------------------------------------------------------------
 -- Test: teardown.sql
