@@ -442,7 +442,11 @@ select * from clstr_temp;
 drop table clstr_temp;
 RESET SESSION AUTHORIZATION;
 -- Test CLUSTER with external tuplesorting
-create table clstr_4 as select * from tenk1;
+-- The tests assume that the rows come out in the physical order, as
+-- sorted by CLUSTER. In GPDB, add a dummy column to force all the rows to go
+-- to the same segment, otherwise the rows come out in random order from the
+-- segments.
+create table clstr_4 as select 1 as dummy, * from tenk1 distributed by (dummy);
 create index cluster_sort on clstr_4 (hundred, thousand, tenthous);
 -- ensure we don't use the index in CLUSTER nor the checking SELECTs
 set enable_indexscan = off;
