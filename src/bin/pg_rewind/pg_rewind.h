@@ -14,10 +14,11 @@
 #include "datapagemap.h"
 
 #include "access/timeline.h"
+#include "common/logging.h"
+#include "libpq-fe.h"
 #include "storage/block.h"
 #include "storage/relfilenode.h"
 
-#include "common/logging.h"
 
 /* Configuration options */
 extern char *datadir_target;
@@ -34,6 +35,9 @@ extern const char *progname;
 /* Target history */
 extern TimeLineHistoryEntry *targetHistory;
 extern int	targetNentries;
+
+/* general state */
+extern PGconn *conn;
 
 /* Progress counters */
 extern uint64 fetch_size;
@@ -57,6 +61,7 @@ extern void progress_report(bool force);
 
 /* in timeline.c */
 extern TimeLineHistoryEntry *rewind_parseTimeLineHistory(char *buffer,
-														 TimeLineID targetTLI, int *nentries);
+														 TimeLineID targetTLI,
+														 int *nentries);
 
 #endif							/* PG_REWIND_H */
