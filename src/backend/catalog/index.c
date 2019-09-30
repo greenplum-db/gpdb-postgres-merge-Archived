@@ -2642,7 +2642,9 @@ IndexBuildHeapScan(Relation heapRelation,
  * GPDB: In contrast to postgres which constructs its own estate, snapshot, and
  * OldestXmin here in function IndexBuildHeapRangeScan, in GPDB we pass them
  * from the generic function IndexBuildScan.
- * GPDB_96_MERGE_FIXME: Why do we do things differently?
+ * GPDB_96_MERGE_FIXME: Why do we do things differently? The commit message that
+ * introduced this behaviour in the historical greenplum repo states laconically
+ * 'Add AOa Index'.
  */
 double
 IndexBuildHeapRangeScan(Relation heapRelation,
@@ -2700,6 +2702,8 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 		ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
 						estate);
 
+	/* GPDB_96_MERGE_FIXME: See comment above */
+#if 0
 	/*
 	 * Prepare for scan of the base relation.  In a normal index build, we use
 	 * SnapshotAny because we must retrieve all tuples and do our own time
@@ -2721,6 +2725,7 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 		/* okay to ignore lazy VACUUMs here */
 		OldestXmin = GetOldestXmin(heapRelation, true);
 	}
+#endif
 
 	scan = heap_beginscan_strat(heapRelation,	/* relation */
 								snapshot,		/* snapshot */
