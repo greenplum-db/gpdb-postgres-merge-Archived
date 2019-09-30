@@ -466,11 +466,7 @@ LINE 1: SELECT '<>' IS NOT DOCUMENT;
 DETAIL:  line 1: StartTag: invalid element name
 <>
  ^
-<<<<<<< HEAD
 SELECT xmlagg(data order by id) FROM xmltest;
-=======
-SELECT xmlagg(data) FROM xmltest;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
                 xmlagg                
 --------------------------------------
  <value>one</value><value>two</value>
@@ -482,17 +478,10 @@ SELECT xmlagg(data) FROM xmltest WHERE id > 10;
  
 (1 row)
 
-<<<<<<< HEAD
 SELECT xmlelement(name employees, xmlagg(xmlelement(name name, name) order by name)) FROM emp;
                                                            xmlelement                                                           
 --------------------------------------------------------------------------------------------------------------------------------
  <employees><name>bill</name><name>cim</name><name>jeff</name><name>linda</name><name>sam</name><name>sharon</name></employees>
-=======
-SELECT xmlelement(name employees, xmlagg(xmlelement(name name, name))) FROM emp;
-                                                           xmlelement                                                           
---------------------------------------------------------------------------------------------------------------------------------
- <employees><name>sharon</name><name>sam</name><name>bill</name><name>jeff</name><name>cim</name><name>linda</name></employees>
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 (1 row)
 
 -- Check mapping SQL identifier to XML name
@@ -661,7 +650,6 @@ SELECT xpath('/nosuchtag', '<root/>');
  {}
 (1 row)
 
-<<<<<<< HEAD
 -- Round-trip non-ASCII data through xpath().
 DO $$
 DECLARE
@@ -697,8 +685,6 @@ EXCEPTION
     RAISE LOG 'skip: %', SQLERRM;
 END
 $$;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 -- Test xmlexists and xpath_exists
 SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
  xmlexists 
@@ -950,15 +936,10 @@ CONTEXT:  SQL function "xpath" statement 1
 -- throw an error, only a warning.
 SELECT xpath('/*', '<relativens xmlns=''relative''/>');
 WARNING:  line 1: xmlns: URI relative is not absolute
-<<<<<<< HEAD
 DETAIL:  
 <relativens xmlns='relative'/>
                             ^
 CONTEXT:  SQL function "xpath" statement 1
-=======
-<relativens xmlns='relative'/>
-                            ^
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
                 xpath                 
 --------------------------------------
  {"<relativens xmlns=\"relative\"/>"}
