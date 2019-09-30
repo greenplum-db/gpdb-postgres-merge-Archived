@@ -34,11 +34,10 @@ SELECT t.id FROM test_tablesample AS t TABLESAMPLE SYSTEM (50) REPEATABLE (0);
  19
 (16 rows)
 
-SELECT count(*) FROM test_tablesample TABLESAMPLE SYSTEM (100);
- count 
--------
-    30
-(1 row)
+SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (100.0/11) REPEATABLE (0);
+ id 
+----
+(0 rows)
 
 SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (0);
  id 
