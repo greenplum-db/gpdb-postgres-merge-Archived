@@ -667,9 +667,9 @@ create function extractq2_append(t int8_tbl) returns table(ret1 int8) as $$
 $$ language sql immutable;
 
 explain (verbose, costs off)
-select x from int8_tbl, extractq2_append(int8_tbl) f(x);
+select x from (select * from int8_tbl order by 1 limit 100) as int8_tbl, extractq2_append(int8_tbl) f(x);
 
-select x from int8_tbl, extractq2_append(int8_tbl) f(x);
+select x from (select * from int8_tbl order by 1 limit 100) as int8_tbl, extractq2_append(int8_tbl) f(x);
 
 create function extractq2_wapper(t int8_tbl) returns table(ret1 int8) as $$      
   select (select extractq2(t))                                                  
