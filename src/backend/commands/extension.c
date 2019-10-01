@@ -1239,67 +1239,6 @@ CreateExtensionInternal(CreateExtensionStmt *stmt, List *parents)
 	ListCell   *lc;
 	ObjectAddress address;
 
-	/* Check extension name validity before any filesystem access */
-	check_valid_extension_name(stmt->extname);
-
-	/*
-	 * Check for duplicate extension name.  The unique index on
-	 * pg_extension.extname would catch this anyway, and serves as a backstop
-	 * in case of race conditions; but this is a friendlier error message, and
-	 * besides we need a check to support IF NOT EXISTS.
-	 */
-	if (stmt->create_ext_state != CREATE_EXTENSION_END &&
-			get_extension_oid(stmt->extname, true) != InvalidOid)
-	{
-		if (stmt->if_not_exists)
-		{
-			ereport(NOTICE,
-					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("extension \"%s\" already exists, skipping",
-							stmt->extname)));
-			return InvalidObjectAddress;
-		}
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("extension \"%s\" already exists",
-							stmt->extname)));
-	}
-
-	if (Gp_role == GP_ROLE_EXECUTE)
-	{
-		switch (stmt->create_ext_state)
-		{
-			case CREATE_EXTENSION_INIT:
-				elog(ERROR, "invalid CREATE EXTENSION state");
-
-			case CREATE_EXTENSION_BEGIN:	/* Mark creating_extension flag and add pg_extension catalog tuple */
-				creating_extension = true;
-				break;
-			case CREATE_EXTENSION_END:		/* Mark creating_extension flag = false */
-				creating_extension = false;
-				CurrentExtensionObject = InvalidOid;
-				ObjectAddressSet(address,
-								 ExtensionRelationId,
-								 get_extension_oid(stmt->extname, true));
-				return address;
-
-			default:
-				elog(ERROR, "unrecognized create_ext_state: %d",
-						stmt->create_ext_state);
-		}
-	}
-
-	/*
-	 * We use global variables to track the extension being created, so we can
-	 * create only one extension at the same time.
-	 * Except that QE do CREATE_EXTENSION_BEGIN.
-	 */
-	if (creating_extension && !(stmt->create_ext_state == CREATE_EXTENSION_BEGIN &&
-				Gp_role == GP_ROLE_EXECUTE))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("nested CREATE EXTENSION is not supported")));
 
 	/*
 	 * Read the primary control file.  Note we assume that it does not contain
@@ -1643,6 +1582,8 @@ CreateExtensionInternal(CreateExtensionStmt *stmt, List *parents)
 ObjectAddress
 CreateExtension(CreateExtensionStmt *stmt)
 {
+	ObjectAddress address;
+
 	/* Check extension name validity before any filesystem access */
 	check_valid_extension_name(stmt->extname);
 
@@ -1652,7 +1593,8 @@ CreateExtension(CreateExtensionStmt *stmt)
 	 * in case of race conditions; but this is a friendlier error message, and
 	 * besides we need a check to support IF NOT EXISTS.
 	 */
-	if (get_extension_oid(stmt->extname, true) != InvalidOid)
+	if (stmt->create_ext_state != CREATE_EXTENSION_END &&
+		get_extension_oid(stmt->extname, true) != InvalidOid)
 	{
 		if (stmt->if_not_exists)
 		{
@@ -1665,18 +1607,44 @@ CreateExtension(CreateExtensionStmt *stmt)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("extension \"%s\" already exists",
+					 errmsg("extension \"%s\" already exists. CreateExtension. ",
 							stmt->extname)));
+	}
+
+	if (Gp_role == GP_ROLE_EXECUTE)
+	{
+		switch (stmt->create_ext_state)
+		{
+			case CREATE_EXTENSION_INIT:
+				elog(ERROR, "invalid CREATE EXTENSION state");
+
+			case CREATE_EXTENSION_BEGIN:	/* Mark creating_extension flag and add pg_extension catalog tuple */
+				creating_extension = true;
+				break;
+			case CREATE_EXTENSION_END:		/* Mark creating_extension flag = false */
+				creating_extension = false;
+				CurrentExtensionObject = InvalidOid;
+				ObjectAddressSet(address,
+								 ExtensionRelationId,
+								 get_extension_oid(stmt->extname, true));
+				return address;
+
+			default:
+				elog(ERROR, "unrecognized create_ext_state: %d",
+					 stmt->create_ext_state);
+		}
 	}
 
 	/*
 	 * We use global variables to track the extension being created, so we can
 	 * create only one extension at the same time.
+	 * Except that QE do CREATE_EXTENSION_BEGIN.
 	 */
-	if (creating_extension)
+	if (creating_extension && !(stmt->create_ext_state == CREATE_EXTENSION_BEGIN &&
+		Gp_role == GP_ROLE_EXECUTE))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("nested CREATE EXTENSION is not supported")));
+					errmsg("nested CREATE EXTENSION is not supported")));
 
 
 	/* Finally create the extension. */
