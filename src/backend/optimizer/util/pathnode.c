@@ -38,6 +38,7 @@
 #include "cdb/cdbutil.h"		/* getgpsegmentCount() */
 #include "cdb/cdbvars.h"
 #include "executor/nodeHash.h"
+#include "utils/guc.h"
 
 typedef enum
 {
@@ -65,6 +66,11 @@ static CdbVisitOpt pathnode_walk_list(List *pathlist,
 static CdbVisitOpt pathnode_walk_kids(Path *path,
 				   CdbVisitOpt (*walker)(Path *path, void *context),
 				   void *context);
+
+static CdbPathLocus
+adjust_modifytable_subpaths(PlannerInfo *root, CmdType operation,
+							List *resultRelations, List *subpaths,
+							List *is_split_updates);
 
 /*
  * pathnode_walk_node
@@ -218,6 +224,9 @@ pathnode_walk_kids(Path            *path,
 			break;
 		case T_LockRows:
 			v = pathnode_walk_node(((LockRowsPath *)path)->subpath, walker, context);
+			break;
+		case T_SplitUpdate:
+			v = pathnode_walk_node(((SplitUpdatePath *)path)->subpath, walker, context);
 			break;
 		case T_Append:
 			v = pathnode_walk_list(((AppendPath *)path)->subpaths, walker, context);
@@ -4498,7 +4507,10 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 	 * ModifyTable runs, in adjust_modifytable_flow(), when working with
 	 * already-created Plans.
 	 */
-	pathnode->path.locus = cdbpathlocus_from_baserel(root, rel);
+	pathnode->path.locus =
+		adjust_modifytable_subpaths(root, operation,
+									resultRelations, subpaths,
+									is_split_updates);
 
 	/*
 	 * Compute cost & rowcount as sum of subpath costs & rowcounts.
@@ -4549,6 +4561,288 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->epqParam = epqParam;
 
 	return pathnode;
+}
+
+
+/*
+ * Add Motions to children of a ModifyTable path, so that data
+ * is modified on the correct segments.
+ *
+ * The input to a ModifyTable node must be distributed according to the
+ * DISTRIBUTED BY of the target table. Add Motion paths to the child
+ * plans for that. Returns a locus to represent the distribution of the
+ * ModifyTable node itself.
+ */
+static CdbPathLocus
+adjust_modifytable_subpaths(PlannerInfo *root, CmdType operation,
+							List *resultRelations, List *subpaths,
+							List *is_split_updates)
+{
+	/*
+	 * The input plans must be distributed correctly.
+	 */
+	ListCell   *lcr,
+			   *lcp,
+			   *lci = NULL;
+	bool		all_subplans_entry = true,
+				all_subplans_replicated = true;
+	int			numsegments = -1;
+
+	if (operation == CMD_UPDATE || operation == CMD_DELETE)
+		lci = list_head(is_split_updates);
+
+	forboth(lcr, resultRelations, lcp, subpaths)
+	{
+		int			rti = lfirst_int(lcr);
+		Path	   *subpath = (Path *) lfirst(lcp);
+		RangeTblEntry *rte = rt_fetch(rti, root->parse->rtable);
+		GpPolicy   *targetPolicy;
+		GpPolicyType targetPolicyType;
+		CdbPathLocus targetLocus;
+
+		Assert(rte->rtekind == RTE_RELATION);
+
+		targetPolicy = GpPolicyFetch(rte->relid);
+		targetPolicyType = targetPolicy->ptype;
+
+		numsegments = Max(targetPolicy->numsegments, numsegments);
+
+		if (operation == CMD_INSERT)
+		{
+			targetLocus = cdbpathlocus_for_insert(root, rti, targetPolicy, subpath->pathtarget);
+
+			if (targetPolicyType == POLICYTYPE_PARTITIONED)
+			{
+				all_subplans_entry = false;
+				all_subplans_replicated = false;
+
+				/*
+				 * A query to reach here: INSERT INTO t1 VALUES(1).
+				 * There is no need to add a motion from General, we could
+				 * simply put General on the same segments with target table.
+				 */
+				/* FIXME: also do this for other targetPolicyType? */
+				/* FIXME: also do this for all the subplans */
+				if (CdbPathLocus_IsGeneral(subpath->locus))
+				{
+					subpath->locus.numsegments = targetPolicy->numsegments;
+				}
+
+				if (targetPolicy->nattrs == 0 && CdbPathLocus_IsPartitioned(subpath->locus))
+				{
+					/*
+					 * If the target table is DISTRIBUTED RANDOMLY, we can insert the
+					 * rows anywhere. So if the input path is already partitioned, let
+					 * the insertions happen where they are.
+					 */
+					/* GPDB_96_MERGE_FIXME: we need it anyway, otherwise the plan isn't
+					 * dispatched at all. Not sure why, although that's what we did before the
+					 * 9.6 merge too. Investigate if that could be improved easily.
+					 */
+					subpath = cdbpath_create_motion_path(root, subpath, NIL, false, targetLocus);
+				}
+				else
+					subpath = cdbpath_create_motion_path(root, subpath, NIL, false, targetLocus);
+			}
+			else if (targetPolicyType == POLICYTYPE_ENTRY)
+			{
+				/* Master-only table */
+				all_subplans_replicated = false;
+
+				/*
+				 * Query result needs to be brought back to the QD.
+				 */
+				subpath = cdbpath_create_motion_path(root, subpath, NIL, false, targetLocus);
+			}
+			else if (targetPolicyType == POLICYTYPE_REPLICATED)
+			{
+				all_subplans_entry = false;
+
+				/*
+				 * CdbLocusType_SegmentGeneral is only used by replicated table
+				 * right now, so if both input and target are replicated table,
+				 * no need to add a motion.
+				 *
+				 * Also, to expand a replicated table to new segments, gpexpand
+				 * force a data reorganization by a query like:
+				 * CREATE TABLE tmp_tab AS SELECT * FROM source_table DISTRIBUTED REPLICATED
+				 * Obviously, tmp_tab in new segments can't get data if we don't
+				 * add a broadcast here.
+				 */
+				if (optimizer_replicated_table_insert &&
+					CdbPathLocus_IsSegmentGeneral(subpath->locus) &&
+					!contain_volatile_functions((Node *)subpath->pathtarget->exprs))
+				{
+					if (subpath->locus.numsegments >= targetPolicy->numsegments)
+					{
+						/*
+						 * A query to reach here:
+						 *     INSERT INTO d1 SELECT * FROM d1;
+						 * There is no need to add a motion from General, we
+						 * could simply put General on the same segments with
+						 * target table.
+						 */
+						subpath->locus.numsegments = targetPolicy->numsegments;
+						continue;
+					}
+
+					/*
+					 * Otherwise a broadcast motion is needed otherwise d2 will
+					 * only have data on segment 0.
+					 *
+					 * A query to reach here:
+					 *     INSERT INTO d2 SELECT * FROM d1;
+					 */
+				}
+
+				/* plan's data are available on all segment, no motion needed */
+				if (optimizer_replicated_table_insert &&
+					CdbPathLocus_IsGeneral(subpath->locus) &&
+					!contain_volatile_functions((Node *) subpath->pathtarget->exprs))
+				{
+					if (subpath->locus.numsegments >= targetPolicy->numsegments)
+					{
+						/*
+						 * A query to reach here: INSERT INTO d1 VALUES(1).
+						 * There is no need to add a motion from General, we
+						 * could simply put General on the same segments with
+						 * target table.
+						 */
+						subpath->locus.numsegments = targetPolicy->numsegments;
+					}
+					else
+					{
+						/* FIXME: is here reachable? */
+					}
+					continue;
+				}
+				subpath = cdbpath_create_broadcast_motion_path(root, subpath, targetPolicy->numsegments);
+			}
+			else
+				elog(ERROR, "unrecognized policy type %u", targetPolicyType);
+		}
+		else if (operation == CMD_DELETE)
+		{
+			if (targetPolicyType == POLICYTYPE_PARTITIONED)
+			{
+				all_subplans_entry = false;
+				all_subplans_replicated = false;
+
+				/* GPDB_96_MERGE_FIXME: avoid creating the Explicit Motion in
+				 * simple cases, where all the input data is already on the
+				 * same segment.
+				 *
+				 * Is "strewn" correct here? Can we do better?
+				 */
+				CdbPathLocus_MakeStrewn(&targetLocus, targetPolicy->numsegments);
+				subpath = cdbpath_create_explicit_motion_path(root,
+															  subpath,
+															  targetLocus);
+			}
+			else if (targetPolicyType == POLICYTYPE_ENTRY)
+			{
+				all_subplans_replicated = false;
+
+				/* Master-only table */
+				CdbPathLocus_MakeEntry(&targetLocus);
+				subpath = cdbpath_create_motion_path(root, subpath, NIL, false, targetLocus);
+			}
+			else if (targetPolicyType == POLICYTYPE_REPLICATED)
+			{
+				all_subplans_entry = false;
+			}
+			else
+				elog(ERROR, "unrecognized policy type %u", targetPolicyType);
+		}
+		else if (operation == CMD_UPDATE)
+		{
+			bool		is_split_update;
+
+			is_split_update = (bool) lfirst_int(lci);
+
+			if (targetPolicyType == POLICYTYPE_PARTITIONED)
+			{
+				all_subplans_entry = false;
+				all_subplans_replicated = false;
+
+				/*
+				 * If any of the distribution key columns are being changed,
+				 * the UPDATE might move tuples from one segment to another.
+				 * Create a Split Update node to deal with that.
+				 *
+				 * If the input is a dummy plan that cannot return any rows,
+				 * e.g. because the input was eliminated by constraint
+				 * exclusion, we can skip it.
+				 */
+				if (is_split_update)
+				{
+					targetLocus = cdbpathlocus_for_insert(root, rti, targetPolicy, subpath->pathtarget);
+
+					subpath = (Path *) create_splitupdate_path(root, subpath, rti);
+				}
+				else
+				{
+					CdbPathLocus_MakeStrewn(&targetLocus, targetPolicy->numsegments);
+				}
+				subpath = cdbpath_create_explicit_motion_path(root,
+															  subpath,
+															  targetLocus);
+			}
+			else if (targetPolicyType == POLICYTYPE_ENTRY)
+			{
+				all_subplans_replicated = false;
+
+				/* Master-only table */
+				CdbPathLocus_MakeEntry(&targetLocus);
+				subpath = cdbpath_create_motion_path(root, subpath, NIL, false, targetLocus);
+			}
+			else if (targetPolicyType == POLICYTYPE_REPLICATED)
+			{
+				all_subplans_entry = false;
+			}
+			else
+				elog(ERROR, "unrecognized policy type %u", targetPolicyType);
+			lci = lnext(lci);
+		}
+		lfirst(lcp) = subpath;
+	}
+
+	Assert(numsegments >= 0);
+
+	/*
+	 * Set the distribution of the ModifyTable node itself. If there is only
+	 * one subplan, or all the subplans have a compatible distribution, then
+	 * we could mark the ModifyTable with the same distribution key. However,
+	 * currently, because a ModifyTable node can only be at the top of the
+	 * plan, it won't make any difference to the overall plan.
+	 * GPDB_96_MERGE_FIXME: it might with e.g. a INSERT RETURNING in a CTE
+	 *
+	 * GPDB_90_MERGE_FIXME: I've hacked a basic implementation of the above for
+	 * the case where all the subplans are POLICYTYPE_ENTRY, but it seems like
+	 * there should be a more general way to do this.
+	 */
+	if (all_subplans_entry)
+	{
+		CdbPathLocus resultLocus;
+
+		CdbPathLocus_MakeEntry(&resultLocus);
+		return resultLocus;
+	}
+	else if (all_subplans_replicated)
+	{
+		CdbPathLocus resultLocus;
+
+		CdbPathLocus_MakeReplicated(&resultLocus, numsegments);
+		return resultLocus;
+	}
+	else
+	{
+		CdbPathLocus resultLocus;
+
+		CdbPathLocus_MakeStrewn(&resultLocus, numsegments);
+
+		return resultLocus;
+	}
 }
 
 /*

@@ -1261,13 +1261,14 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 		case T_Motion:
 			{
 				Motion	   *motion = (Motion *) plan;
-				/* test flag to prevent processing the node multi times */
 				indexed_tlist *childplan_itlist =
 					build_tlist_index(plan->lefttree->targetlist);
 
 				motion->hashExprs = (List *)
 					fix_upper_expr(root, (Node*) motion->hashExprs, childplan_itlist,  OUTER_VAR, rtoffset);
 
+				/* GPDB_96_MERGE_FIXME: hashed Motion with no keys means DISTRIBUTED RANDOMLY */
+#if 0
 #ifdef USE_ASSERT_CHECKING
 				/* 1. Assert that the Motion node has same number of hash data types as that of hash expressions*/
 				/* 2. Motion node must have atleast one hash expression */
@@ -1279,6 +1280,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				}
 
 #endif			/* USE_ASSERT_CHECKING */
+#endif
 
 				/* no need to fix targetlist and qual */
 				Assert(plan->qual == NIL);
@@ -1287,10 +1289,8 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			}
 			break;
 		case T_SplitUpdate:
-			/*
-			 * when we make the target list for SplitUpdate node, we
-			 * have used the OUTER as the varno, so we can skip to fix the varno.
-			 */
+			Assert(plan->qual == NIL);
+			set_upper_references(root, plan, rtoffset);
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",

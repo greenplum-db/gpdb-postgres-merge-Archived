@@ -57,11 +57,6 @@ extern Node *exec_make_plan_constant(struct PlannedStmt *stmt, EState *estate,
 						bool is_SRI, List **cursorPositions);
 extern void remove_subquery_in_RTEs(Node *node);
 
-extern void request_explicit_motion(Plan *plan, Index resultRelationIdx, List *rtable);
-extern void sri_optimize_for_result(PlannerInfo *root, Plan *plan, RangeTblEntry *rte,
-									GpPolicy **targetPolicy, List **hashExprs_p, List **hashOpclasses_p);
-extern SplitUpdate *make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan,
-									 RangeTblEntry *rte);
-
+extern Plan *cdbpathtoplan_create_sri_plan(RangeTblEntry *rte, PlannerInfo *subroot, Path *subpath, int createplan_flags);
 
 #endif   /* CDBMUTATE_H */

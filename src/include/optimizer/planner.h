@@ -51,8 +51,6 @@ extern bool choose_hashed_grouping(PlannerInfo *root,
 								   double dNumGroups,
 								   AggClauseCosts *agg_costs);
 
-extern bool is_dummy_plan(Plan *plan);
-
 extern RowMarkType select_rowmark_type(RangeTblEntry *rte,
 					LockClauseStrength strength);
 

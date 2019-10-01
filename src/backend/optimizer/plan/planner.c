@@ -2654,6 +2654,24 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	final_rel->useridiscurrent = current_rel->useridiscurrent;
 	final_rel->fdwroutine = current_rel->fdwroutine;
 
+	if (root->is_split_update)
+	{
+		bool		all_dummy = true;
+
+		foreach(lc, current_rel->pathlist)
+		{
+			Path	   *path = (Path *) lfirst(lc);
+
+			if (!IS_DUMMY_PATH(path))
+			{
+				all_dummy = false;
+				break;
+			}
+		}
+		if (all_dummy)
+			root->is_split_update = false;
+	}
+
 	/*
 	 * Generate paths for the final_rel.  Insert all surviving paths, with
 	 * LockRows, Limit, and/or ModifyTable steps added if needed.
@@ -2825,140 +2843,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 									current_rel, final_rel);
 
 	/* Note: currently, we leave it to callers to do set_cheapest() */
-}
-
-
-/*
- * Entry is through is_dummy_plan().
- *
- * Detect whether a plan node is a "dummy" plan created when a relation
- * is deemed not to need scanning due to constraint exclusion.
- *
- * Currently, such dummy plans are Result nodes with constant FALSE
- * filter quals (see set_dummy_rel_pathlist and create_append_plan).
- *
- * XXX this probably ought to be somewhere else, but not clear where.
- *
- * BTW The plan_tree_walker framework is overkill here, but it's good to 
- *     do things the standard way.
- */
-static bool
-is_dummy_plan_walker(Node *node, bool *context)
-{
-	/*
-	 * We are only interested in Plan nodes.
-	 */
-	if (node == NULL || !is_plan_node(node))
-		return false;
-
-	switch (nodeTag(node))
-	{
-		case T_Result:
-
-			/*
-			 * This tests the base case of a dummy plan which is a Result node
-			 * with a constant FALSE filter quals.  (This is the case
-			 * constructed as an empty Append path by set_plain_rel_pathlist
-			 * in allpaths.c and made into a Result plan by create_append_plan
-			 * in createplan.c.
-			 */
-			{
-				List	   *rcqual = (List *) ((Result *) node)->resconstantqual;
-
-				if (list_length(rcqual) == 1)
-				{
-					Const	   *constqual = (Const *) linitial(rcqual);
-
-					if (constqual && IsA(constqual, Const))
-					{
-						if (!constqual->constisnull &&
-							!DatumGetBool(constqual->constvalue))
-							*context = true;
-						return true;
-					}
-				}
-			}
-			return false;
-
-		case T_NestLoop:
-		case T_MergeJoin:
-		case T_HashJoin:
-
-			/*
-			 * Joins with dummy inner and/or outer plans are dummy or not
-			 * based on the type of join.
-			 */
-			{
-				switch (((Join *) node)->jointype)
-				{
-					case JOIN_INNER:	/* either */
-						*context = is_dummy_plan(innerPlan(node))
-							|| is_dummy_plan(outerPlan(node));
-						break;
-
-					case JOIN_LEFT:
-					case JOIN_FULL:
-					case JOIN_RIGHT:	/* both */
-						*context = is_dummy_plan(innerPlan(node))
-							&& is_dummy_plan(outerPlan(node));
-						break;
-
-					case JOIN_SEMI:
-					case JOIN_LASJ_NOTIN:
-					case JOIN_ANTI:		/* outer */
-						*context = is_dummy_plan(outerPlan(node));
-						break;
-
-					default:
-						break;
-				}
-
-				return true;
-			}
-
-			/*
-			 * It may seem that we should check for Append or SetOp nodes with
-			 * all dummy branches, but that case should not occur.  It would
-			 * cause big problems elsewhere in the code.
-			 */
-
-		case T_Hash:
-		case T_Material:
-		case T_Sort:
-		case T_Unique:
-		case T_LockRows:
-		case T_SubqueryScan:
-
-			/*
-			 * Some node types are dummy, if their outer plan or subplan is
-			 * dummy so we just recur.
-			 *
-			 * We don't include "tricky" nodes like Motion that might affect
-			 * plan topology, even though we know they will return no rows
-			 * from a dummy.
-			 */
-			return plan_tree_walker(node, is_dummy_plan_walker, context, true);
-
-		default:
-
-			/*
-			 * Other node types are "opaque" so we choose a conservative
-			 * course and terminate the walk.
-			 */
-			return true;
-	}
-	/* not reached */
-}
-
-
-bool
-is_dummy_plan(Plan *plan)
-{
-	bool		is_dummy = false;
-
-	is_dummy_plan_walker((Node *) plan, &is_dummy);
-
-	return is_dummy;
 }
 
 /*

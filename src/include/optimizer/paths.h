@@ -199,9 +199,6 @@ extern Path *get_cheapest_fractional_path_for_pathkeys(List *paths,
 extern List *build_index_pathkeys(PlannerInfo *root, IndexOptInfo *index,
 					 ScanDirection scandir);
 
-Var *
-find_indexkey_var(PlannerInfo *root, RelOptInfo *rel, AttrNumber varattno);
-
 extern List *build_expression_pathkey(PlannerInfo *root, Expr *expr,
 						 Relids nullable_relids, Oid opno,
 						 Relids rel, bool create_it);

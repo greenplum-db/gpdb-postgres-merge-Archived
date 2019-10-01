@@ -21,9 +21,11 @@
 #include "nodes/nodeFuncs.h"	/* exprType() and exprTypmod() */
 #include "nodes/plannodes.h"	/* Plan */
 #include "nodes/relation.h"		/* RelOptInfo */
+#include "optimizer/clauses.h"
 #include "optimizer/pathnode.h" /* Path */
 #include "optimizer/paths.h"	/* cdb_make_distkey_for_expr() */
 #include "optimizer/tlist.h"	/* tlist_member() */
+#include "parser/parsetree.h"	/* rt_fetch() */
 #include "utils/lsyscache.h"
 
 #include "cdb/cdbpath.h"
@@ -32,8 +34,8 @@
 #include "cdb/cdbpathlocus.h"	/* me */
 
 static List *cdb_build_distribution_keys(PlannerInfo *root,
-								RelOptInfo *rel,
-								GpPolicy *policy);
+										 Index rti,
+										 GpPolicy *policy);
 
 /*
  * cdbpathlocus_equal
@@ -109,10 +111,10 @@ cdbpathlocus_equal(CdbPathLocus a, CdbPathLocus b)
  * cdb_build_distribution_keys
  *	  Build DistributionKeys that match the policy of the given relation.
  */
-static List *
-cdb_build_distribution_keys(PlannerInfo *root, RelOptInfo *rel,
-							GpPolicy *policy)
+List *
+cdb_build_distribution_keys(PlannerInfo *root, Index rti, GpPolicy *policy)
 {
+	RangeTblEntry *rte = planner_rt_fetch(rti, root);
 	List	   *retval = NIL;
 	int			i;
 
@@ -121,13 +123,18 @@ cdb_build_distribution_keys(PlannerInfo *root, RelOptInfo *rel,
 		DistributionKey *cdistkey;
 
 		/* Find or create a Var node that references the specified column. */
-		Var		   *expr = find_indexkey_var(root, rel, policy->attrs[i]);
+		Var		   *expr;
+		Oid			typeoid;
+		int32		type_mod;
+		Oid			varcollid;
 		Oid			eqopoid;
 		Oid			opfamily = get_opclass_family(policy->opclasses[i]);
 		Oid			opcintype = get_opclass_input_type(policy->opclasses[i]);
-		Oid			typeoid = expr->vartype;
 		List	   *mergeopfamilies;
 		EquivalenceClass *eclass;
+
+		get_atttypetypmodcoll(rte->relid, policy->attrs[i], &typeoid, &type_mod, &varcollid);
+		expr = makeVar(rti, policy->attrs[i], typeoid, type_mod, varcollid, 0);
 
 		/*
 		 * Look up the equality operator corresponding to the distribution
@@ -174,6 +181,124 @@ cdb_build_distribution_keys(PlannerInfo *root, RelOptInfo *rel,
 }
 
 /*
+ * cdbpathlocus_for_insert
+ *	  Build DistributionKeys that match the policy of the given relation.
+ *
+ * This is used for INSERT or split UPDATE, where 'pathtarget' the target list of
+ * subpath that's producing the rows to be inserted/updated.
+ */
+CdbPathLocus
+cdbpathlocus_for_insert(PlannerInfo *root, Index rti, GpPolicy *policy,
+						PathTarget *pathtarget)
+{
+	CdbPathLocus targetLocus;
+
+	if (policy->ptype == POLICYTYPE_PARTITIONED)
+	{
+		/* rows are distributed by hashing on specified columns */
+		RangeTblEntry *rte = planner_rt_fetch(rti, root);
+		List	   *distkeys = NIL;
+		Index		maxRef = 0;
+
+		for (int i = 0; i < list_length(pathtarget->exprs); i++)
+			maxRef = Max(maxRef, pathtarget->sortgrouprefs[i]);
+
+		for (int i = 0; i < policy->nattrs; ++i)
+		{
+			AttrNumber	attno = policy->attrs[i];
+			DistributionKey *cdistkey;
+			Expr	   *expr;
+			Oid			typeoid;
+			int32		type_mod;
+			Oid			varcollid;
+			Oid			eqopoid;
+			Oid			opfamily = get_opclass_family(policy->opclasses[i]);
+			Oid			opcintype = get_opclass_input_type(policy->opclasses[i]);
+			List	   *mergeopfamilies;
+			EquivalenceClass *eclass;
+
+			get_atttypetypmodcoll(rte->relid, attno, &typeoid, &type_mod, &varcollid);
+
+			expr = list_nth(pathtarget->exprs, attno - 1);
+
+			/*
+			 * Look up the equality operator corresponding to the distribution
+			 * opclass.
+			 */
+			eqopoid = get_opfamily_member(opfamily, opcintype, opcintype, 1);
+
+			/*
+			 * Get Oid of the sort operator that would be used for a sort-merge
+			 * equijoin on a pair of exprs of the same type.
+			 */
+			if (eqopoid == InvalidOid || !op_mergejoinable(eqopoid, typeoid))
+			{
+				/*
+				 * It's in principle possible that there is no b-tree operator family
+				 * that's compatible with the hash opclass's equality operator. However,
+				 * we cannot construct an EquivalenceClass without the b-tree operator
+				 * family, and therefore cannot build a DistributionKey to represent it.
+				 * Bail out. (That makes the distribution key rather useless.)
+				 */
+				/*
+				 * GPDB_96_MERGE_FIXME: copied this from cdbpathlocus_from_baserel().
+				 * Can it really happen?
+				 */
+				elog(ERROR, "could not build distribution key for target relation");
+			}
+
+			mergeopfamilies = get_mergejoin_opfamilies(eqopoid);
+
+			if (pathtarget->sortgrouprefs[attno - 1] == 0 &&
+				contain_volatile_functions((Node *) expr))
+			{
+				/*
+				 * GPDB_96_MERGE_FIXME: this modifies the subpath's targetlist in place.
+				 * That's a bit ugly.
+				 */
+				pathtarget->sortgrouprefs[i] = ++maxRef;
+			}
+
+			eclass = get_eclass_for_sort_expr(root, (Expr *) expr,
+											  NULL, /* nullable_relids */ /* GPDB_94_MERGE_FIXME: is NULL ok here? */
+											  mergeopfamilies,
+											  opcintype,
+											  exprCollation((Node *) expr),
+											  pathtarget->sortgrouprefs[attno - 1],
+											  NULL,
+											  true);
+
+			/* Create a distribution key for it. */
+			cdistkey = makeNode(DistributionKey);
+			cdistkey->dk_opfamily = opfamily;
+			cdistkey->dk_eclasses = list_make1(eclass);
+
+			distkeys = lappend(distkeys, cdistkey);
+		}
+
+		if (distkeys)
+			CdbPathLocus_MakeHashed(&targetLocus, distkeys, policy->numsegments);
+		else
+		{
+			/* DISTRIBUTED RANDOMLY */
+			CdbPathLocus_MakeStrewn(&targetLocus, policy->numsegments);
+		}
+	}
+	else if (policy->ptype == POLICYTYPE_ENTRY)
+	{
+		CdbPathLocus_MakeEntry(&targetLocus);
+	}
+	else if (policy->ptype == POLICYTYPE_REPLICATED)
+	{
+		CdbPathLocus_MakeReplicated(&targetLocus, policy->numsegments);
+	}
+	else
+		elog(ERROR, "unrecognized policy type %u", policy->ptype);
+
+	return targetLocus;
+}
+
+/*
  * cdbpathlocus_from_baserel
  *
  * Returns a locus describing the distribution of a base relation.
@@ -197,7 +322,7 @@ cdbpathlocus_from_baserel(struct PlannerInfo *root,
 		if (policy->nattrs > 0)
 		{
 			List	   *distkeys = cdb_build_distribution_keys(root,
-															   rel,
+															   rel->relid,
 															   policy);
 
 			if (distkeys)

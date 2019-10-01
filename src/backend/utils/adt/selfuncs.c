@@ -4812,7 +4812,6 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 	}
 	else if (rte->inh)
 	{
-		RelOptInfo   *rel      = root->simple_rel_array[var->varno];
 		const char *attname  = get_relid_attribute_name(rte->relid, var->varattno);
 
 		vardata->statsTuple = NULL;
@@ -7899,9 +7898,10 @@ bmcostestimate(struct PlannerInfo *root,
 			   Selectivity *indexSelectivity,
 			   double *indexCorrelation)
 {
+	RelOptInfo *rel = path->indexinfo->rel;
+	Oid			reloid = getrelid(rel->relid, root->parse->rtable);
 	List	   *qinfos;
 	GenericCosts costs;
-
 	List *selectivityQuals;
 	double numIndexTuples;
 	List *groupExprs = NIL;
@@ -7931,7 +7931,7 @@ bmcostestimate(struct PlannerInfo *root,
 
 	/* Estimate the fraction of main-table tuples that will be visited */
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
-											   path->indexinfo->rel->relid,
+											   rel->relid,
 											   JOIN_INNER,
 											   NULL,
 											   false /* use_damping */);
@@ -7942,11 +7942,17 @@ bmcostestimate(struct PlannerInfo *root,
 	 */
 	for (i = 0; i < path->indexinfo->ncolumns; i ++)
 	{
-		if (path->indexinfo->indexkeys[i] > 0)
-		{
-			Var *var = find_indexkey_var(root, path->indexinfo->rel,
-										 (AttrNumber) path->indexinfo->indexkeys[i]);
+		AttrNumber attno = path->indexinfo->indexkeys[i];
 
+		if (attno > 0)
+		{
+			Var		   *var;
+			Oid			vartypeid;
+			int32		type_mod;
+			Oid			varcollid;
+
+			get_atttypetypmodcoll(reloid, attno, &vartypeid, &type_mod, &varcollid);
+			var = makeVar(rel->relid, attno, vartypeid, type_mod, varcollid, 0);
 			groupExprs = lappend(groupExprs, var);
 		}
 	}

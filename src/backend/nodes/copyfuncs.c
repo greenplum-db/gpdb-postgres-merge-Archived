@@ -1443,6 +1443,10 @@ _copySplitUpdate(const SplitUpdate *from)
 	COPY_NODE_FIELD(insertColIdx);
 	COPY_NODE_FIELD(deleteColIdx);
 
+	COPY_SCALAR_FIELD(numHashAttrs);
+	COPY_POINTER_FIELD(hashAttnos, from->numHashAttrs * sizeof(AttrNumber));
+	COPY_POINTER_FIELD(hashFuncs, from->numHashAttrs * sizeof(Oid));
+
 	return newnode;
 }
 

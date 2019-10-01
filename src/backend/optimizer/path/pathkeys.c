@@ -826,42 +826,6 @@ build_index_pathkeys(PlannerInfo *root,
 }
 
 /*
- * Find or make a Var node for the specified attribute of the rel.
- *
- * We first look for the var in the rel's target list, because that's
- * easy and fast.  But the var might not be there (this should normally
- * only happen for vars that are used in WHERE restriction clauses,
- * but not in join clauses or in the SELECT target list).  In that case,
- * gin up a Var node the hard way.
- */
-Var *
-find_indexkey_var(PlannerInfo *root, RelOptInfo *rel, AttrNumber varattno)
-{
-	ListCell   *temp;
-	Index		relid;
-	Oid			reloid,
-				vartypeid,
-				varcollid;
-	int32		type_mod;
-
-	foreach(temp, rel->reltarget->exprs)
-	{
-		Var		   *var = (Var *) lfirst(temp);
-
-		if (IsA(var, Var) &&
-			var->varattno == varattno)
-			return var;
-	}
-
-	relid = rel->relid;
-	reloid = getrelid(relid, root->parse->rtable);
-	get_atttypetypmodcoll(reloid, varattno, &vartypeid, &type_mod, &varcollid);
-
-	return makeVar(relid, varattno, vartypeid, type_mod, varcollid, 0);
-}
-
-
-/*
  * build_expression_pathkey
  *	  Build a pathkeys list that describes an ordering by a single expression
  *	  using the given sort operator.

@@ -354,6 +354,7 @@ typedef struct PlannerInfo
 	/* These fields are workspace for createplan.c */
 	Relids		curOuterRels;	/* outer rels above current node */
 	List	   *curOuterParams; /* not-yet-assigned NestLoopParams */
+	int			numMotions;
 
 	PlannerConfig *config;		/* Planner configuration */
 
@@ -1321,6 +1322,7 @@ typedef struct CdbMotionPath
 {
 	Path		path;
     Path	   *subpath;
+	bool		is_explicit_motion;
 } CdbMotionPath;
 
 /*
@@ -1764,6 +1766,16 @@ typedef struct LockRowsPath
 	List	   *rowMarks;		/* a list of PlanRowMark's */
 	int			epqParam;		/* ID of Param for EvalPlanQual re-eval */
 } LockRowsPath;
+
+/*
+ * SplitUpdatePath
+ */
+typedef struct SplitUpdatePath
+{
+	Path		path;
+	Path	   *subpath;
+	Index		resultRelation;
+} SplitUpdatePath;
 
 /*
  * ModifyTablePath represents performing INSERT/UPDATE/DELETE modifications

@@ -53,8 +53,10 @@
 #include "utils/lsyscache.h"
 #include "utils/uri.h"
 
+#include "cdb/cdbhash.h"
 #include "cdb/cdbllize.h"		/* pull_up_Flow() */
 #include "cdb/cdbmutate.h"
+#include "cdb/cdbpartition.h"
 #include "cdb/cdbpath.h"		/* cdbpath_rows() */
 #include "cdb/cdbpathtoplan.h"	/* cdbpathtoplan_create_flow() etc. */
 #include "cdb/cdbpullup.h"		/* cdbpullup_targetlist() */
@@ -103,6 +105,7 @@ static Material *create_material_plan(PlannerInfo *root, MaterialPath *best_path
 static Plan *create_unique_plan(PlannerInfo *root, UniquePath *best_path,
 				   int flags);
 static Plan *create_motion_plan(PlannerInfo *root, CdbMotionPath *path);
+static Plan *create_splitupdate_plan(PlannerInfo *root, SplitUpdatePath *path);
 static Gather *create_gather_plan(PlannerInfo *root, GatherPath *best_path);
 static Plan *create_projection_plan(PlannerInfo *root, ProjectionPath *best_path);
 static Plan *inject_projection_plan(Plan *subplan, List *tlist);
@@ -235,7 +238,6 @@ static RecursiveUnion *make_recursive_union(List *tlist,
 					 long numGroups);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
-static void adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_updates);
 static Sort *make_sort(Plan *lefttree, int numCols,
 		  AttrNumber *sortColIdx, Oid *sortOperators,
 		  Oid *collations, bool *nullsFirst);
@@ -319,14 +321,7 @@ create_plan(PlannerInfo *root, Path *path)
 		apply_tlist_labeling(plan->targetlist, root->processed_tlist);
 
 	/* Decorate the top node of the plan with a Flow node. */
-	/*
-	 * ModifyTable's flow was set by adjust_modifytable_flow(), which did
-	 * most of the effort of figuring out where a ModifyTable runs.
-	 *
-	 * GPDB_96_MERGE_FIXME: am I doing this right? please kindly review this, thanks
-	 */
-	if (!IsA(plan, ModifyTable))
-		plan->flow = cdbpathtoplan_create_flow(root,
+	plan->flow = cdbpathtoplan_create_flow(root,
 										   path->locus,
 										   path->parent ? path->parent->relids
 										   : NULL,
@@ -536,6 +531,9 @@ create_plan_recurse(PlannerInfo *root, Path *best_path, int flags)
 			break;
 		case T_PartitionSelector:
 			plan = create_partition_selector_plan(root, (PartitionSelectorPath *) best_path);
+			break;
+		case T_SplitUpdate:
+			plan = create_splitupdate_plan(root, (SplitUpdatePath *) best_path);
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",
@@ -2375,14 +2373,21 @@ create_modifytable_plan(PlannerInfo *root, ModifyTablePath *best_path)
 	List	   *subplans = NIL;
 	ListCell   *subpaths,
 			   *subroots;
+	ListCell   *is_split_updates;
 
 	/* Build the plan for each input path */
-	forboth(subpaths, best_path->subpaths,
-			subroots, best_path->subroots)
+	forthree(subpaths, best_path->subpaths,
+			 subroots, best_path->subroots,
+			 is_split_updates, best_path->is_split_updates)
 	{
 		Path	   *subpath = (Path *) lfirst(subpaths);
 		PlannerInfo *subroot = (PlannerInfo *) lfirst(subroots);
+		bool		is_split_update = (bool) lfirst_int(is_split_updates);
 		Plan	   *subplan;
+		RangeTblEntry *rte = planner_rt_fetch(best_path->nominalRelation, root);
+
+		/* Try the Single-Row-Insert optimization first. */
+		subplan = cdbpathtoplan_create_sri_plan(rte, subroot, subpath, CP_EXACT_TLIST);
 
 		/*
 		 * In an inherited UPDATE/DELETE, reference the per-child modified
@@ -2395,10 +2400,20 @@ create_modifytable_plan(PlannerInfo *root, ModifyTablePath *best_path)
 		 * and have it "stick" for subsequent processing such as setrefs.c.
 		 * That's not great, but it seems better than the alternative.
 		 */
-		subplan = create_plan_recurse(subroot, subpath, CP_EXACT_TLIST);
+		if (!subplan)
+		{
+			subplan = create_plan_recurse(subroot, subpath, CP_EXACT_TLIST);
 
-		/* Transfer resname/resjunk labeling, too, to keep executor happy */
-		apply_tlist_labeling(subplan->targetlist, subroot->processed_tlist);
+			/*
+			 * Transfer resname/resjunk labeling, too, to keep executor happy.
+			 * But not if it's a Split Update. A Split Update contains an extra
+			 * DMLActionExpr column in its target list, so it doesn't match
+			 * subroot->processed_tlist. The code to create the Split Update node
+			 * takes care to label junk columns correctly, instead.
+			 */
+			if (!is_split_update)
+				apply_tlist_labeling(subplan->targetlist, subroot->processed_tlist);
+		}
 
 		subplans = lappend(subplans, subplan);
 	}
@@ -2417,6 +2432,15 @@ create_modifytable_plan(PlannerInfo *root, ModifyTablePath *best_path)
 							best_path->epqParam);
 
 	copy_generic_path_info(&plan->plan, &best_path->path);
+
+	/*
+	 * GPDB_96_MERGE_FIXME: is this needed here? I think we set directDispatch later in the
+	 * planning, so that this has no effect here. Try removing and see what happens.
+	 */
+	if (list_length(plan->plans) == 1)
+	{
+		plan->plan.directDispatch = ((Plan *) linitial(plan->plans))->directDispatch;
+	}
 
 	return plan;
 }
@@ -2457,6 +2481,7 @@ create_motion_plan(PlannerInfo *root, CdbMotionPath *path)
 	Plan	   *subplan;
 	Relids		save_curOuterRels = root->curOuterRels;
 	List	   *save_curOuterParams = root->curOuterParams;
+	int			before_numMotions;
 
 	/*
 	 * singleQE-->entry:  Elide the motion.  The subplan will run in the same
@@ -2478,7 +2503,30 @@ create_motion_plan(PlannerInfo *root, CdbMotionPath *path)
 		return subplan;
 	}
 
+	/*
+	 * Remember old value of 'numMotions', before recursing. By comparing
+	 * the old value with the new value after the call returns, we know
+	 * if there were any Motions in the subtree.
+	 */
+	before_numMotions = root->numMotions;
+
 	subplan = create_subplan(root, subpath);
+
+	/*
+	 * Elide explicit motion, if the subplan doesn't contain any motions.
+	 *
+	 * This is quite conservative, we could elide the motion even if there are
+	 * Motions, as long as there are no Motions between the scan on the target
+	 * table and the ModifyTable.
+	 */
+	if (root->numMotions == before_numMotions && path->is_explicit_motion)
+	{
+		/* GPDB_96_MERGE_FIXME: does this set the locus correctly? */
+		root->curOuterRels = save_curOuterRels;
+		root->curOuterParams = save_curOuterParams;
+
+		return subplan;
+	}
 
 	/* Add motion operator. */
 	motion = cdbpathtoplan_create_motion_plan(root, path, subplan);
@@ -2490,6 +2538,136 @@ create_motion_plan(PlannerInfo *root, CdbMotionPath *path)
 
 	return (Plan *) motion;
 }	/* create_motion_plan */
+
+/*
+ * create_splitupdate_plan
+ */
+static Plan *
+create_splitupdate_plan(PlannerInfo *root, SplitUpdatePath *path)
+{
+	Path	   *subpath = path->subpath;
+	Plan	   *subplan;
+	SplitUpdate *splitupdate;
+	Relation	resultRel;
+	TupleDesc	resultDesc;
+	GpPolicy   *cdbpolicy;
+	int			attrIdx;
+	ListCell   *lc;
+	int			lastresno;
+	Oid		   *hashFuncs;
+	int			i;
+
+	resultRel = relation_open(planner_rt_fetch(path->resultRelation, root)->relid, NoLock);
+	resultDesc = RelationGetDescr(resultRel);
+	cdbpolicy = resultRel->rd_cdbpolicy;
+
+	subplan = create_subplan(root, subpath);
+
+	/* Transfer resname/resjunk labeling, too, to keep executor happy */
+	apply_tlist_labeling(subplan->targetlist, root->processed_tlist);
+
+	splitupdate = makeNode(SplitUpdate);
+
+	splitupdate->plan.targetlist = NIL; /* filled in below */
+	splitupdate->plan.qual = NIL;
+	splitupdate->plan.lefttree = subplan;
+	splitupdate->plan.righttree = NULL;
+	splitupdate->plan.dispatch = DISPATCH_PARALLEL;
+
+	copy_generic_path_info(&splitupdate->plan, (Path *) path);
+
+	/*
+	 * Build the insertColIdx and deleteColIdx arrays, to indicate how the
+	 * inputs are mapped to the output tuples, for the DELETE and INSERT
+	 * actions.
+	 *
+	 * For the DELETE rows, we only need the 'gp_segment_id' and 'ctid'
+	 * junk columns, so we fill deleteColIdx with -1. The gp_segment_id
+	 * column is used to indicate the target segment. In other words,
+	 * there should be an Explicit Motion on top of the Split Update node.
+	 * NOTE: ORCA uses SplitUpdate differently. It puts a Redistribute
+	 * Motion on top of the SplitUpdate, and fills in the distribution key
+	 * columns on DELETE rows with the old values. The Redistribute Motion
+	 * then computes the target segment. So deleteColIdx is needed for
+	 * ORCA, but we don't use it here.
+	 */
+	lc = list_head(subplan->targetlist);
+	for (attrIdx = 1; attrIdx <= resultDesc->natts; ++attrIdx)
+	{
+		TargetEntry			*tle;
+		Form_pg_attribute	attr;
+
+		tle = (TargetEntry *) lfirst(lc);
+		lc = lnext(lc);
+		Assert(tle);
+
+		attr = resultDesc->attrs[attrIdx - 1];
+		if (attr->attisdropped)
+		{
+			Assert(IsA(tle->expr, Const) && ((Const *) tle->expr)->constisnull);
+		}
+		else
+		{
+			Assert(exprType((Node *) tle->expr) == attr->atttypid);
+		}
+
+		splitupdate->insertColIdx = lappend_int(splitupdate->insertColIdx, attrIdx);
+		splitupdate->deleteColIdx = lappend_int(splitupdate->deleteColIdx, -1);
+
+		splitupdate->plan.targetlist = lappend(splitupdate->plan.targetlist, tle);
+	}
+	lastresno = list_length(splitupdate->plan.targetlist);
+
+	/* Copy all junk attributes. */
+	for (; lc != NULL; lc = lnext(lc))
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+		TargetEntry *newtle;
+
+		if (!tle->resjunk)
+			continue;
+
+		newtle = makeTargetEntry(tle->expr,
+								 ++lastresno,
+								 tle->resname,
+								 tle->resjunk);
+		splitupdate->plan.targetlist = lappend(splitupdate->plan.targetlist, newtle);
+	}
+	splitupdate->plan.targetlist = lappend(splitupdate->plan.targetlist,
+										   makeTargetEntry((Expr *) makeNode(DMLActionExpr),
+														   ++lastresno,
+														   "DMLAction",
+														   true));
+
+	/* Look up the right hash functions for the hash expressions */
+	hashFuncs = palloc(cdbpolicy->nattrs * sizeof(Oid));
+	for (i = 0; i < cdbpolicy->nattrs; i++)
+	{
+		AttrNumber	attnum = cdbpolicy->attrs[i];
+		Oid			typeoid = resultDesc->attrs[attnum - 1]->atttypid;
+		Oid			opfamily;
+
+		opfamily = get_opclass_family(cdbpolicy->opclasses[i]);
+
+		hashFuncs[i] = cdb_hashproc_in_opfamily(opfamily, typeoid);
+	}
+	splitupdate->numHashAttrs = cdbpolicy->nattrs;
+	splitupdate->hashAttnos = palloc(cdbpolicy->nattrs * sizeof(AttrNumber));
+	memcpy(splitupdate->hashAttnos, cdbpolicy->attrs, cdbpolicy->nattrs * sizeof(AttrNumber));
+	splitupdate->hashFuncs = hashFuncs;
+	splitupdate->plan.flow = makeFlow(FLOW_PARTITIONED, cdbpolicy->numsegments);
+
+	/* XXX: strewn is good enough */
+	splitupdate->plan.flow->locustype = CdbLocusType_Strewn;
+	splitupdate->plan.flow->hashExprs = NIL;
+	splitupdate->plan.flow->hashOpfamilies = NIL;
+
+	relation_close(resultRel, NoLock);
+
+	root->numMotions++;
+
+	return (Plan *) splitupdate;
+}
 
 
 /*****************************************************************************
@@ -7747,7 +7925,46 @@ make_modifytable(PlannerInfo *root,
 	node->action_col_idxes = NIL;
 	node->oid_col_idxes = NIL;
 
-	adjust_modifytable_flow(root, node, is_split_updates);
+	/* Set action/oid_col_idxes */
+	if (operation == CMD_UPDATE)
+	{
+		ListCell   *cell_subplan;
+		ListCell   *cell_is_split_update;
+
+		forboth(cell_subplan, subplans, cell_is_split_update, is_split_updates)
+		{
+			Plan	   *subplan = (Plan *) lfirst(cell_subplan);
+			bool		is_split_update = (bool) lfirst_int(cell_is_split_update);
+
+			if (is_split_update)
+			{
+				AttrNumber	action_col_idx = -1;
+				ListCell   *cell_targetlist;
+
+				foreach(cell_targetlist, subplan->targetlist)
+				{
+					TargetEntry *tle = (TargetEntry *) lfirst(cell_targetlist);
+
+					if (IsA(tle->expr, DMLActionExpr))
+					{
+						action_col_idx = tle->resno;
+						break;
+					}
+				}
+				if (action_col_idx == -1)
+					elog(WARNING, "could not find DMLActionExpr in split update target list");
+				node->action_col_idxes = lappend_int(node->action_col_idxes, action_col_idx);
+
+				/* GPDB_96_MERGE_FIXME: if with oids... */
+				node->oid_col_idxes = lappend_int(node->oid_col_idxes, 0);
+			}
+			else
+			{
+				node->action_col_idxes = lappend_int(node->action_col_idxes, -1);
+				node->oid_col_idxes = lappend_int(node->oid_col_idxes, 0);
+			}
+		}
+	}
 
 	/*
 	 * For each result relation that is a foreign table, allow the FDW to
@@ -7816,343 +8033,6 @@ make_modifytable(PlannerInfo *root,
 	node->fdwDirectModifyPlans = direct_modify_plans;
 
 	return node;
-}
-
-/*
- * Set the Flow in a ModifyTable and its children correctly.
- *
- * The input to a ModifyTable node must be distributed according to the
- * DISTRIBUTED BY of the target table. Adjust the Flows of the child
- * plans for that. Also set the Flow of the ModifyTable node itself.
- */
-static void
-adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_updates)
-{
-	/*
-	 * The input plans must be distributed correctly.
-	 */
-	ListCell   *lcr,
-			   *lcp,
-			   *lci;
-	bool		all_subplans_entry = true,
-				all_subplans_replicated = true;
-	int			numsegments = -1;
-
-	if (node->operation == CMD_INSERT)
-	{
-		forboth(lcr, node->resultRelations, lcp, node->plans)
-		{
-			int			rti = lfirst_int(lcr);
-			Plan	   *subplan = (Plan *) lfirst(lcp);
-			RangeTblEntry *rte = rt_fetch(rti, root->parse->rtable);
-			List	   *hashExprs = NIL;
-			List	   *hashOpfamilies = NIL;
-			GpPolicy   *targetPolicy;
-			GpPolicyType targetPolicyType;
-
-			Assert(rte->rtekind == RTE_RELATION);
-
-			targetPolicy = GpPolicyFetch(rte->relid);
-			targetPolicyType = targetPolicy->ptype;
-
-			numsegments = Max(targetPolicy->numsegments, numsegments);
-
-			if (targetPolicyType == POLICYTYPE_PARTITIONED)
-			{
-				all_subplans_entry = false;
-				all_subplans_replicated = false;
-
-				/*
-				 * A query to reach here: INSERT INTO t1 VALUES(1).
-				 * There is no need to add a motion from General, we could
-				 * simply put General on the same segments with target table.
-				 */
-				/* FIXME: also do this for other targetPolicyType? */
-				/* FIXME: also do this for all the subplans */
-				if (subplan->flow->locustype == CdbLocusType_General)
-				{
-					subplan->flow->numsegments = targetPolicy->numsegments;
-				}
-
-				if (gp_enable_fast_sri && IsA(subplan, Result))
-					sri_optimize_for_result(root, subplan, rte,
-											&targetPolicy, &hashExprs, &hashOpfamilies);
-
-				if (!hashExprs)
-				{
-					hashExprs = getExprListFromTargetList(subplan->targetlist,
-														  targetPolicy->nattrs,
-														  targetPolicy->attrs,
-														  false);
-					hashOpfamilies = NIL;
-					for (int i = 0; i < targetPolicy->nattrs; i++)
-					{
-						hashOpfamilies = lappend_oid(hashOpfamilies,
-													 get_opclass_family(targetPolicy->opclasses[i]));
-					}
-				}
-
-				if (!repartitionPlan(subplan, false, false, hashExprs, hashOpfamilies, numsegments))
-					ereport(ERROR,
-							(errcode(ERRCODE_GP_FEATURE_NOT_YET),
-							 errmsg("cannot parallelize that INSERT yet")));
-			}
-			else if (targetPolicyType == POLICYTYPE_ENTRY)
-			{
-				/* Master-only table */
-
-				all_subplans_replicated = false;
-
-				/* All's well if query result is already on the QD. */
-				if (!(subplan->flow->flotype == FLOW_SINGLETON &&
-					  subplan->flow->segindex < 0))
-				{
-					/*
-					 * Query result needs to be brought back to the QD.
-					 * Ask for motion to a single QE.  Later, apply_motion
-					 * will override that to bring it to the QD instead.
-					 */
-					if (!focusPlan(subplan, false, false))
-						ereport(ERROR,
-								(errcode(ERRCODE_GP_FEATURE_NOT_YET),
-								 errmsg("cannot parallelize that INSERT yet")));
-				}
-			}
-			else if (targetPolicyType == POLICYTYPE_REPLICATED)
-			{
-				Assert(subplan->flow->flotype != FLOW_REPLICATED);
-
-				all_subplans_entry = false;
-
-				/*
-				 * CdbLocusType_SegmentGeneral is only used by replicated table
-				 * right now, so if both input and target are replicated table,
-				 * no need to add a motion.
-				 *
-				 * Also, to expand a replicated table to new segments, gpexpand
-				 * force a data reorganization by a query like:
-				 * CREATE TABLE tmp_tab AS SELECT * FROM source_table DISTRIBUTED REPLICATED
-				 * Obviously, tmp_tab in new segments can't get data if we don't
-				 * add a broadcast here. 
-				 */
-				if (optimizer_replicated_table_insert &&
-					subplan->flow->flotype == FLOW_SINGLETON &&
-					subplan->flow->locustype == CdbLocusType_SegmentGeneral &&
-					!contain_volatile_functions((Node *)subplan->targetlist))
-				{
-					if (subplan->flow->numsegments >= targetPolicy->numsegments)
-					{
-						/*
-						 * A query to reach here:
-						 *     INSERT INTO d1 SELECT * FROM d1;
-						 * There is no need to add a motion from General, we
-						 * could simply put General on the same segments with
-						 * target table.
-						 */
-						subplan->flow->numsegments = targetPolicy->numsegments;
-						continue;
-					}
-
-					/*
-					 * Otherwise a broadcast motion is needed otherwise d2 will
-					 * only have data on segment 0.
-					 *
-					 * A query to reach here:
-					 *     INSERT INTO d2 SELECT * FROM d1;
-					 */
-				}
-
-				/* plan's data are available on all segment, no motion needed */
-				if (optimizer_replicated_table_insert &&
-					subplan->flow->flotype == FLOW_SINGLETON &&
-					subplan->flow->locustype == CdbLocusType_General &&
-					!contain_volatile_functions((Node *)subplan->targetlist))
-				{
-					subplan->dispatch = DISPATCH_PARALLEL;
-					if (subplan->flow->numsegments >= targetPolicy->numsegments)
-					{
-						/*
-						 * A query to reach here: INSERT INTO d1 VALUES(1).
-						 * There is no need to add a motion from General, we
-						 * could simply put General on the same segments with
-						 * target table.
-						 */
-						subplan->flow->numsegments = targetPolicy->numsegments;
-					}
-					else
-					{
-						/* FIXME: is here reachable? */
-					}
-					continue;
-				}
-
-				if (!broadcastPlan(subplan, false, false, targetPolicy->numsegments))
-					ereport(ERROR,
-							(errcode(ERRCODE_GP_FEATURE_NOT_YET),
-							 errmsg("cannot parallelize that INSERT yet")));
-
-			}
-			else
-				elog(ERROR, "unrecognized policy type %u", targetPolicyType);
-		}
-	}
-	else if (node->operation == CMD_UPDATE || node->operation == CMD_DELETE)
-	{
-		forthree(lcr, node->resultRelations, lcp, node->plans, lci, is_split_updates)
-		{
-			int			rti = lfirst_int(lcr);
-			Plan	   *subplan = (Plan *) lfirst(lcp);
-			bool		is_split_update = lfirst_int(lci) ? true : false;
-			RangeTblEntry *rte = rt_fetch(rti, root->parse->rtable);
-			GpPolicy   *targetPolicy;
-			GpPolicyType targetPolicyType;
-
-			Assert(rti > 0);
-			Assert(rte->rtekind == RTE_RELATION);
-
-			targetPolicy = GpPolicyFetch(rte->relid);
-			targetPolicyType = targetPolicy->ptype;
-
-			numsegments = Max(targetPolicy->numsegments, numsegments);
-
-			if (targetPolicyType == POLICYTYPE_PARTITIONED)
-			{
-				all_subplans_entry = false;
-				all_subplans_replicated = false;
-
-				/*
-				 * If any of the distribution key columns are being changed,
-				 * the UPDATE might move tuples from one segment to another.
-				 * Create a Split Update node to deal with that.
-				 *
-				 * If the input is a dummy plan that cannot return any rows,
-				 * e.g. because the input was eliminated by constraint
-				 * exclusion, we can skip it.
-				 */
-				if (is_split_update && !is_dummy_plan(subplan))
-				{
-					List	   *hashExprs;
-					List	   *hashOpfamilies;
-					int			i;
-					Plan	*new_subplan;
-
-					Assert(node->operation == CMD_UPDATE);
-
-					if (Gp_role == GP_ROLE_UTILITY)
-					{
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("cannot update distribution key columns in utility mode")));
-					}
-
-					new_subplan = (Plan *) make_splitupdate(root, (ModifyTable *) node, subplan, rte);
-
-					hashExprs = getExprListFromTargetList(new_subplan->targetlist,
-														  targetPolicy->nattrs,
-														  targetPolicy->attrs,
-														  false);
-					hashOpfamilies = NIL;
-					for (i = 0; i < targetPolicy->nattrs; i++)
-					{
-						hashOpfamilies = lappend_oid(hashOpfamilies,
-													 get_opclass_family(targetPolicy->opclasses[i]));
-					}
-					if (!repartitionPlan(new_subplan, false, false,
-										 hashExprs, hashOpfamilies,
-										 targetPolicy->numsegments))
-						ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
-										errmsg("Cannot parallelize that UPDATE yet")));
-
-					lcp->data.ptr_value = new_subplan;
-				}
-				else
-				{
-					node->action_col_idxes = lappend_int(node->action_col_idxes, -1);
-					node->oid_col_idxes = lappend_int(node->oid_col_idxes, 0);
-					request_explicit_motion(subplan, rti, root->glob->finalrtable);
-				}
-			}
-			else if (targetPolicyType == POLICYTYPE_ENTRY)
-			{
-				all_subplans_replicated = false;
-
-				/* Master-only table */
-				if (subplan->flow->flotype == FLOW_PARTITIONED ||
-					subplan->flow->flotype == FLOW_REPLICATED ||
-					(subplan->flow->flotype == FLOW_SINGLETON && subplan->flow->segindex != -1))
-				{
-					/*
-					 * target table is master-only but flow is
-					 * distributed: add a GatherMotion on top
-					 */
-
-					/* create a shallow copy of the plan flow */
-					Flow	   *flow = subplan->flow;
-
-					subplan->flow = (Flow *) palloc(sizeof(Flow));
-					*(subplan->flow) = *flow;
-
-					/* save original flow information */
-					subplan->flow->flow_before_req_move = flow;
-
-					/* request a GatherMotion node */
-					subplan->flow->req_move = MOVEMENT_FOCUS;
-					subplan->flow->hashExprs = NIL;
-					subplan->flow->hashOpfamilies = NIL;
-					subplan->flow->segindex = 0;
-				}
-				else
-				{
-					/*
-					 * Source is, presumably, a dispatcher singleton.
-					 */
-					subplan->flow->req_move = MOVEMENT_NONE;
-				}
-				node->action_col_idxes = lappend_int(node->action_col_idxes, -1);
-				node->oid_col_idxes = lappend_int(node->oid_col_idxes, 0);
-			}
-			else if (targetPolicyType == POLICYTYPE_REPLICATED)
-			{
-				node->action_col_idxes = lappend_int(node->action_col_idxes, -1);
-				node->oid_col_idxes = lappend_int(node->oid_col_idxes, 0);
-				all_subplans_entry = false;
-			}
-			else
-				elog(ERROR, "unrecognized policy type %u", targetPolicyType);
-		}
-	}
-
-	Assert(numsegments >= 0);
-
-	/*
-	 * Set the distribution of the ModifyTable node itself. If there is only
-	 * one subplan, or all the subplans have a compatible distribution, then
-	 * we could mark the ModifyTable with the same distribution key. However,
-	 * currently, because a ModifyTable node can only be at the top of the
-	 * plan, it won't make any difference to the overall plan.
-	 *
-	 * GPDB_90_MERGE_FIXME: I've hacked a basic implementation of the above for
-	 * the case where all the subplans are POLICYTYPE_ENTRY, but it seems like
-	 * there should be a more general way to do this.
-	 */
-	if (all_subplans_entry)
-	{
-		mark_plan_entry((Plan *) node);
-		((Plan *) node)->flow->numsegments = numsegments;
-	}
-	else if (all_subplans_replicated)
-	{
-		mark_plan_replicated((Plan *) node, numsegments);
-	}
-	else
-	{
-		mark_plan_strewn((Plan *) node, numsegments);
-
-		if (list_length(node->plans) == 1)
-		{
-			node->plan.directDispatch = ((Plan *) linitial(node->plans))->directDispatch;
-		}
-	}
 }
 
 /*
@@ -8272,6 +8152,27 @@ plan_pushdown_tlist(PlannerInfo *root, Plan *plan, List *tlist)
 	return plan;
 }	/* plan_pushdown_tlist */
 
+static TargetEntry *
+find_junk_tle(List *targetList, const char *junkAttrName)
+{
+	ListCell	*lct;
+
+	foreach(lct, targetList)
+	{
+		TargetEntry	*tle = (TargetEntry*) lfirst(lct);
+
+		if (!tle->resjunk)
+			continue;
+
+		if (!tle->resname)
+			continue;
+
+		if (strcmp(tle->resname, junkAttrName) == 0)
+			return tle;
+	}
+	return NULL;
+}
+
 /*
  * cdbpathtoplan_create_motion_plan
  */
@@ -8286,8 +8187,31 @@ cdbpathtoplan_create_motion_plan(PlannerInfo *root,
 
 	numsegments = CdbPathLocus_NumSegments(path->path.locus);
 
+	if (path->is_explicit_motion)
+	{
+		TargetEntry *segmentid_tle;
+
+		Assert(CdbPathLocus_IsPartitioned(path->path.locus));
+
+		/*
+		 * The junk columns in the subplan need to be labeled as such, otherwise
+		 * we won't find the "gp_segment_id" column.
+		 *
+		 * The target list of a SplitUpdate is correctly labeled already. It has
+		 * different layout than normal ModifyTable inputs, because it contains
+		 * the DMLActionExpr column, so we cannot apply the
+		 * labeling here even if we wanted.
+		 */
+		if (!IsA(subplan, SplitUpdate))
+			apply_tlist_labeling(subplan->targetlist, root->processed_tlist);
+
+		segmentid_tle = find_junk_tle(subplan->targetlist, "gp_segment_id");
+		if (!segmentid_tle)
+			elog(ERROR, "could not find gp_segment_id in subplan's targetlist");
+		motion = make_explicit_motion(subplan, segmentid_tle->resno, false);
+	}
 	/* Send all tuples to a single process? */
-	if (CdbPathLocus_IsBottleneck(path->path.locus))
+	else if (CdbPathLocus_IsBottleneck(path->path.locus))
 	{
 		if (path->path.pathkeys)
 		{
@@ -8386,8 +8310,17 @@ cdbpathtoplan_create_motion_plan(PlannerInfo *root,
                                     false /* useExecutorVarFormat */,
 									numsegments);
     }
-    else
-        Insist(0);
+	/* Hashed redistribution to all QEs in gang above... */
+	else if (CdbPathLocus_IsStrewn(path->path.locus))
+	{
+		motion = make_hashed_motion(subplan,
+									NIL,
+									NIL,
+									false /* useExecutorVarFormat */,
+									numsegments);
+	}
+	else
+		Insist(0);
 
     /*
      * Decorate the subplan with a Flow node telling the plan slicer
@@ -8399,6 +8332,8 @@ cdbpathtoplan_create_motion_plan(PlannerInfo *root,
                                                 ? subpath->parent->relids
                                                 : NULL,
                                               subplan);
+
+	root->numMotions++;
 
 	return motion;
 }								/* cdbpathtoplan_create_motion_plan */

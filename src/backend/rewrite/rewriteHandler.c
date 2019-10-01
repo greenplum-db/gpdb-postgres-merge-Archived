@@ -1380,6 +1380,24 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 							  0,
 							  false);
 
+		/*
+		 * GPDB also needs gp_segment_id. ctid is only unique in the same
+		 * segment.
+		 */
+		Oid			reloid;
+		Oid			vartypeid;
+		int32		type_mod;
+		Oid			type_coll;
+
+		reloid = RelationGetRelid(target_relation);
+		get_atttypetypmodcoll(reloid, GpSegmentIdAttributeNumber, &vartypeid, &type_mod, &type_coll);
+		varSegid = makeVar(parsetree->resultRelation,
+						   GpSegmentIdAttributeNumber,
+						   vartypeid,
+						   type_mod,
+						   type_coll,
+						   0);
+
 		attrname = "wholerow";
 	}
 
@@ -3028,7 +3046,16 @@ rewriteTargetView(Query *parsetree, Relation view)
 		Assert(tle->resjunk);
 		Assert(IsA(tle->expr, Var) &&
 			   ((Var *) tle->expr)->varno == parsetree->resultRelation &&
+			   ((Var *) tle->expr)->varattno == GpSegmentIdAttributeNumber);
+		Assert(strcmp(tle->resname, "gp_segment_id") == 0);
+		parsetree->targetList = list_delete_ptr(parsetree->targetList, tle);
+
+		tle = (TargetEntry *) llast(parsetree->targetList);
+		Assert(tle->resjunk);
+		Assert(IsA(tle->expr, Var) &&
+			   ((Var *) tle->expr)->varno == parsetree->resultRelation &&
 			   ((Var *) tle->expr)->varattno == 0);
+		Assert(strcmp(tle->resname, "wholerow") == 0);
 		parsetree->targetList = list_delete_ptr(parsetree->targetList, tle);
 	}
 

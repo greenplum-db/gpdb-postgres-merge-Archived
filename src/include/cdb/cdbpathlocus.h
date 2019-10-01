@@ -21,6 +21,8 @@
 struct Plan;                    /* defined in plannodes.h */
 struct RelOptInfo;              /* defined in relation.h */
 struct PlannerInfo;				/* defined in relation.h */
+struct GpPolicy;				/* defined in gp_policy.h */
+struct PathTarget;
 
 
 /*
@@ -241,6 +243,11 @@ typedef struct CdbPathLocus
 extern bool cdbpathlocus_equal(CdbPathLocus a, CdbPathLocus b);
 
 /************************************************************************/
+
+extern CdbPathLocus cdbpathlocus_for_insert(struct PlannerInfo *root,
+											Index rti,
+											struct GpPolicy *policy,
+											struct PathTarget *pathtarget);
 
 CdbPathLocus
 cdbpathlocus_from_baserel(struct PlannerInfo   *root,

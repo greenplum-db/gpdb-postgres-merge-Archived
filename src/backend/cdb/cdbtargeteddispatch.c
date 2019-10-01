@@ -606,6 +606,7 @@ AssignContentIdsToPlanData_Walker(Node *node, void *context)
 			case T_SubPlan:
 				{
 					SubPlan    *subplan = (SubPlan *) node;
+					Plan	   *subplan_plan = plan_tree_base_subplan_get_plan(context, subplan);
 
 					if (!subplan->is_initplan)
 					{
@@ -616,9 +617,8 @@ AssignContentIdsToPlanData_Walker(Node *node, void *context)
 						 * dispatching to all segments even if the main plan
 						 * does not need to (MPP-22019)
 						 */
-						Plan	   *subplan_plan = plan_tree_base_subplan_get_plan(context, subplan);
-
-						plan_tree_walker((Node *) subplan_plan, AssignContentIdsToPlanData_Walker, context, true);
+						if (AssignContentIdsToPlanData_Walker((Node *) subplan_plan, context))
+							return true;
 					}
 					pushNewDirectDispatchInfo = true;
 					break;
@@ -664,8 +664,10 @@ AssignContentIdsToPlanData_Walker(Node *node, void *context)
 	/*
 	 * note that the SubqueryScan nodes do NOT reach here -- its children are
 	 * managed in the switch above
+	 *
+	 * We already recursed into SubPlans above, if needed.
 	 */
-	result = plan_tree_walker(node, AssignContentIdsToPlanData_Walker, context, true);
+	result = plan_tree_walker(node, AssignContentIdsToPlanData_Walker, context, false);
 	Assert(!result);
 
 	if (pushNewDirectDispatchInfo)

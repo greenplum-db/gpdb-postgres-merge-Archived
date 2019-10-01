@@ -27,6 +27,18 @@ cdbpath_create_motion_path(PlannerInfo     *root,
                            bool             require_existing_order,
                            CdbPathLocus     locus);
 
+Path *
+cdbpath_create_explicit_motion_path(PlannerInfo *root,
+									Path *subpath,
+									CdbPathLocus locus);
+
+Path *
+cdbpath_create_broadcast_motion_path(PlannerInfo *root,
+									 Path *subpath,
+									 int numsegments);
+
+extern SplitUpdatePath *create_splitupdate_path(PlannerInfo *root, Path *subpath, Index rti);
+
 CdbPathLocus
 cdbpath_motion_for_join(PlannerInfo    *root,
                         JoinType        jointype,           /* JOIN_INNER/FULL/LEFT/RIGHT/IN */

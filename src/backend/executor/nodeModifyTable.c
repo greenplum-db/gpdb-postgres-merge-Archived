@@ -126,6 +126,10 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
 			 * In any case the planner has most likely inserted an INT4 null.
 			 * What we insist on is just *some* NULL constant.
 			 */
+			/* GPDB_96_MERGE_FIXME: the subplan can be a Motion, so that the NULLs
+			 * are transferred throught he Motion node.
+			 */
+#if 0
 			if (!IsA(tle->expr, Const) ||
 				!((Const *) tle->expr)->constisnull)
 				ereport(ERROR,
@@ -133,6 +137,7 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
 						 errmsg("table row type and query-specified row type do not match"),
 						 errdetail("Query provides a value for a dropped column at ordinal position %d.",
 								   attno)));
+#endif
 		}
 	}
 	if (attno != resultDesc->natts)

@@ -186,6 +186,8 @@ typedef struct CopyDirectDispatchToSliceContext
 {
 	plan_tree_base_prefix	base; /* Required prefix for plan_tree_walker/mutator */
 	EState					*estate; /* EState instance */
+
+	Bitmapset *processed_subplans;
 } CopyDirectDispatchToSliceContext;
 
 static bool CopyDirectDispatchFromPlanToSliceTableWalker( Node *node, CopyDirectDispatchToSliceContext *context);
@@ -209,8 +211,8 @@ CopyDirectDispatchToSlice( Plan *ddPlan, int sliceId, CopyDirectDispatchToSliceC
 static bool
 CopyDirectDispatchFromPlanToSliceTableWalker( Node *node, CopyDirectDispatchToSliceContext *context)
 {
-	int sliceId = -1;
-	Plan *ddPlan = NULL;
+	int			sliceId = -1;
+	bool		recurse_into_subplan = true;
 
 	if (node == NULL)
 		return false;
@@ -219,15 +221,29 @@ CopyDirectDispatchFromPlanToSliceTableWalker( Node *node, CopyDirectDispatchToSl
 	{
 		Motion *motion = (Motion *) node;
 
-		ddPlan = (Plan*)node;
 		sliceId = motion->motionID;
+
+		CopyDirectDispatchToSlice(&motion->plan, sliceId, context);
+	}
+	else if (IsA(node, SubPlan))
+	{
+		SubPlan	   *spexpr = (SubPlan *) node;
+
+		/*
+		 * Only recurse into each subplan on first encounter. But do process
+		 * any test expressions on the SubPlan node itself, in any case. (I'm
+		 * not sure if the test expressions can actually be different on
+		 * different SubPlan references to the same subquery, but let's not
+		 * assume that they can't be.)
+		 */
+		if (!bms_is_member(spexpr->plan_id, context->processed_subplans))
+			context->processed_subplans = bms_add_member(context->processed_subplans, spexpr->plan_id);
+		else
+			recurse_into_subplan = false;
 	}
 
-	if (ddPlan != NULL)
-	{
-		CopyDirectDispatchToSlice(ddPlan, sliceId, context);
-	}
-	return plan_tree_walker(node, CopyDirectDispatchFromPlanToSliceTableWalker, context, true);
+	return plan_tree_walker(node, CopyDirectDispatchFromPlanToSliceTableWalker, context,
+							recurse_into_subplan);
 }
 
 static void
@@ -236,6 +252,7 @@ CopyDirectDispatchFromPlanToSliceTable(PlannedStmt *stmt, EState *estate)
 	CopyDirectDispatchToSliceContext context;
 	exec_init_plan_tree_base(&context.base, stmt);
 	context.estate = estate;
+	context.processed_subplans = NULL;
 	CopyDirectDispatchToSlice( stmt->planTree, 0, &context);
 	CopyDirectDispatchFromPlanToSliceTableWalker((Node *) stmt->planTree, &context);
 }

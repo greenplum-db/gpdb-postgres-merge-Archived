@@ -13,16 +13,21 @@
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_trigger.h"
+#include "commands/trigger.h"
 #include "nodes/makefuncs.h"	/* makeFuncExpr() */
 #include "nodes/relation.h"		/* PlannerInfo, RelOptInfo */
 #include "optimizer/cost.h"		/* cpu_tuple_cost */
 #include "optimizer/pathnode.h" /* Path, pathnode_walker() */
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
+#include "optimizer/tlist.h"
+#include "parser/parsetree.h"
 
 #include "parser/parse_expr.h"	/* exprType() */
 #include "parser/parse_oper.h"
@@ -355,7 +360,7 @@ cdbpath_create_motion_path(PlannerInfo *root,
 		 *
 		 * FIXME: HashedOJ?
 		 */
-		if (CdbPathLocus_IsHashed(locus))
+		if (CdbPathLocus_IsPartitioned(locus))
 		{
 			pathkeys = subpath->pathkeys;
 		}
@@ -406,6 +411,7 @@ cdbpath_create_motion_path(PlannerInfo *root,
 	pathnode->path.parallel_workers = subpath->parallel_workers;
 
 	pathnode->subpath = subpath;
+	pathnode->is_explicit_motion = false;
 
 	/* Cost of motion */
 	cdbpath_cost_motion(root, pathnode);
@@ -421,6 +427,84 @@ invalid_motion_request:
 	Assert(0);
 	return NULL;
 }								/* cdbpath_create_motion_path */
+
+Path *
+cdbpath_create_explicit_motion_path(PlannerInfo *root,
+									Path *subpath,
+									CdbPathLocus locus)
+{
+	CdbMotionPath *pathnode;
+
+	/* Create CdbMotionPath node. */
+	pathnode = makeNode(CdbMotionPath);
+	pathnode->path.pathtype = T_Motion;
+	pathnode->path.parent = subpath->parent;
+	/* Motion doesn't project, so use source path's pathtarget */
+	pathnode->path.pathtarget = subpath->pathtarget;
+	pathnode->path.locus = locus;
+	pathnode->path.rows = subpath->rows;
+	pathnode->path.pathkeys = NIL;
+
+	/* GPDB_96_MERGE_FIXME: When is a Motion path parallel-safe? I tried
+	 * setting this to 'false' initially, to play it safe, but somehow
+	 * the Paths with motions ended up in gather plans anyway, and tripped
+	 * assertion failures.
+	 */
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = subpath->parallel_safe;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
+
+	pathnode->subpath = subpath;
+	pathnode->is_explicit_motion = true;
+
+	/* Cost of motion */
+	cdbpath_cost_motion(root, pathnode);
+
+	/* Tell operators above us that slack may be needed for deadlock safety. */
+	pathnode->path.motionHazard = true;
+	pathnode->path.rescannable = false;
+
+	return (Path *) pathnode;
+}
+
+Path *
+cdbpath_create_broadcast_motion_path(PlannerInfo *root,
+									 Path *subpath,
+									 int numsegments)
+{
+	CdbMotionPath *pathnode;
+
+	/* Create CdbMotionPath node. */
+	pathnode = makeNode(CdbMotionPath);
+	pathnode->path.pathtype = T_Motion;
+	pathnode->path.parent = subpath->parent;
+	/* Motion doesn't project, so use source path's pathtarget */
+	pathnode->path.pathtarget = subpath->pathtarget;
+	CdbPathLocus_MakeReplicated(&pathnode->path.locus, numsegments);
+	pathnode->path.rows = subpath->rows;
+	pathnode->path.pathkeys = NIL;
+
+	/* GPDB_96_MERGE_FIXME: When is a Motion path parallel-safe? I tried
+	 * setting this to 'false' initially, to play it safe, but somehow
+	 * the Paths with motions ended up in gather plans anyway, and tripped
+	 * assertion failures.
+	 */
+	pathnode->path.parallel_aware = false;
+	pathnode->path.parallel_safe = subpath->parallel_safe;
+	pathnode->path.parallel_workers = subpath->parallel_workers;
+
+	pathnode->subpath = subpath;
+	pathnode->is_explicit_motion = false;
+
+	/* Cost of motion */
+	cdbpath_cost_motion(root, pathnode);
+
+	/* Tell operators above us that slack may be needed for deadlock safety. */
+	pathnode->path.motionHazard = true;
+	pathnode->path.rescannable = false;
+
+	return (Path *) pathnode;
+}
 
 /*
  * cdbpath_match_preds_to_partkey_tail
@@ -1796,8 +1880,8 @@ cdbpath_dedup_fixup_baserel(Path *path, CdbpathDedupFixupContext *ctx)
 
 	Assert(!ctx->rowid_vars);
 
-	/* Find or make a Var node referencing our 'ctid' system attribute. */
-	var = find_indexkey_var(ctx->root, rel, SelfItemPointerAttributeNumber);
+	/* Make a Var node referencing our 'ctid' system attribute. */
+	var = makeVar(rel->relid, SelfItemPointerAttributeNumber, TIDOID, -1, InvalidOid, 0);
 	rowid_vars = lappend(rowid_vars, var);
 
 	/*
@@ -1812,7 +1896,7 @@ cdbpath_dedup_fixup_baserel(Path *path, CdbpathDedupFixupContext *ctx)
 		if (!CdbPathLocus_IsBottleneck(path->locus) &&
 			!CdbPathLocus_IsGeneral(path->locus))
 		{
-			var = find_indexkey_var(ctx->root, rel, GpSegmentIdAttributeNumber);
+			var = makeVar(rel->relid, GpSegmentIdAttributeNumber, INT4OID, -1, InvalidOid, 0);
 			rowid_vars = lappend(rowid_vars, var);
 		}
 	}
@@ -2222,4 +2306,135 @@ try_redistribute(PlannerInfo *root, CdbpathMfjRel *g, CdbpathMfjRel *o,
 	 * to let caller know.
 	 */
 	return false;
+}
+
+
+static void
+failIfUpdateTriggers(Relation relation)
+{
+	bool	found = false;
+
+	if (relation->rd_rel->relhastriggers && NULL == relation->trigdesc)
+		RelationBuildTriggers(relation);
+
+	if (!relation->trigdesc)
+		return;
+
+	if (relation->rd_rel->relhastriggers)
+	{
+		for (int i = 0; i < relation->trigdesc->numtriggers && !found; i++)
+		{
+			Trigger trigger = relation->trigdesc->triggers[i];
+			found = trigger_enabled(trigger.tgoid) &&
+					(get_trigger_type(trigger.tgoid) & TRIGGER_TYPE_UPDATE) == TRIGGER_TYPE_UPDATE;
+			if (found)
+				break;
+		}
+	}
+
+	if (found || child_triggers(relation->rd_id, TRIGGER_TYPE_UPDATE))
+		ereport(ERROR,
+				(errcode(ERRCODE_GP_FEATURE_NOT_YET),
+				 errmsg("UPDATE on distributed key column not allowed on relation with update triggers")));
+}
+
+/*
+ * In Postgres planner, we add a SplitUpdate node at top so that updating on
+ * distribution columns could be handled. The SplitUpdate will split each
+ * update into delete + insert.
+ *
+ * There are several important points should be highlighted:
+ *
+ * First, in order to split each update operation into two operations,
+ * delete + insert, we need several junk columns in the subplan's targetlist,
+ * in addition to the row's new values:
+ *
+ * ctid            the tuple id used for deletion
+ *
+ * gp_segment_id   the segment that the row originates from. Usually the
+ *                 current segment where the SplitUpdate runs, but not
+ *                 necessarily, if there are multiple joins involved and the
+ *                 planner decided redistribute the data.
+ *
+ * oid             if result relation has oids, the old OID, so that it can be
+ *                 preserved in the new row.
+ *
+ * We will add one more column to the output, the "action". It's an integer
+ * that indicates for each row, whether it represents the DELETE or the INSERT
+ * of that row. It is generated by the Split Update node.
+ *
+ * Second, current GPDB executor don't support statement-level update triggers
+ * and will skip row-level update triggers because a split-update is actually
+ * consist of a delete and insert. So, if the result relation has update
+ * triggers, we should reject and error out because it's not functional.
+ *
+ * GPDB_96_MERGE_FIXME: the below comment is obsolete. Nowadays, SplitUpdate
+ * computes the new row's hash, and the corresponding. target segment. The
+ * old segment comes from the gp_segment_id junk column. But ORCA still
+ * does it the old way!
+ *
+ * Third, to support deletion, and hash delete operation to correct segment,
+ * we need to get attributes of OLD tuple. The old attributes must therefore
+ * be present in the subplan's target list. That is handled earlier in the
+ * planner, in expand_targetlist().
+ *
+ * For example, a typical plan would be as following for statement:
+ * update foo set id = l.v + 1 from dep l where foo.v = l.id:
+ *
+ * |-- join ( targetlist: [ l.v + 1, foo.v, foo.id, foo.ctid, foo.gp_segment_id ] )
+ *       |
+ *       |-- motion ( targetlist: [l.id, l.v] )
+ *       |    |
+ *       |    |-- seqscan on dep ....
+ *       |
+ *       |-- hash (targetlist [ v, foo.ctid, foo.gp_segment_id ] )
+ *            |
+ *            |-- seqscan on foo (targetlist: [ v, foo.id, foo.ctid, foo.gp_segment_id ] )
+ *
+ * From the plan above, the target foo.id is assigned as l.v + 1, and expand_targetlist()
+ * ensured that the old value of id, is also available, even though it would not otherwise
+ * be needed.
+ *
+ * 'rti' is the UPDATE target relation.
+ */
+SplitUpdatePath *
+create_splitupdate_path(PlannerInfo *root, Path *subpath, Index rti)
+{
+	RangeTblEntry  *rte;
+	PathTarget		*splitUpdatePathTarget;
+	SplitUpdatePath	*splitupdatepath;
+	DMLActionExpr	*actionExpr;
+	Relation		resultRelation;
+
+	/* Suppose we already hold locks before caller */
+	rte = planner_rt_fetch(rti, root);
+	resultRelation = relation_open(rte->relid, NoLock);
+
+	failIfUpdateTriggers(resultRelation);
+
+	relation_close(resultRelation, NoLock);
+
+	/* Add action column at the end of targetlist */
+	actionExpr = makeNode(DMLActionExpr);
+	splitUpdatePathTarget = copy_pathtarget(subpath->pathtarget);
+	add_column_to_pathtarget(splitUpdatePathTarget, (Expr *) actionExpr, 0);
+
+	/* populate information generated above into splitupdate node */
+	splitupdatepath = makeNode(SplitUpdatePath);
+	splitupdatepath->path.pathtype = T_SplitUpdate;
+	splitupdatepath->path.parent = subpath->parent;
+	splitupdatepath->path.pathtarget = splitUpdatePathTarget;
+	splitupdatepath->path.param_info = NULL;
+	splitupdatepath->path.parallel_aware = false;
+	splitupdatepath->path.parallel_safe = subpath->parallel_safe;
+	splitupdatepath->path.parallel_workers = subpath->parallel_workers;
+	splitupdatepath->path.rows = 2 * subpath->rows;
+	splitupdatepath->path.startup_cost = subpath->startup_cost;
+	splitupdatepath->path.total_cost = subpath->total_cost;
+	splitupdatepath->path.pathkeys = subpath->pathkeys;
+	splitupdatepath->path.locus = subpath->locus;
+	splitupdatepath->subpath = subpath;
+	splitupdatepath->resultRelation = rti;
+
+	return splitupdatepath;
 }
