@@ -501,7 +501,6 @@ _outModifyTable(StringInfo str, const ModifyTable *node)
 	WRITE_UINT_FIELD(exclRelRTI);
 	WRITE_NODE_FIELD(exclRelTlist);
 	WRITE_NODE_FIELD(action_col_idxes);
-	WRITE_NODE_FIELD(ctid_col_idxes);
 	WRITE_NODE_FIELD(oid_col_idxes);
 }
 
@@ -1290,7 +1289,6 @@ _outSplitUpdate(StringInfo str, const SplitUpdate *node)
 	WRITE_NODE_TYPE("SplitUpdate");
 
 	WRITE_INT_FIELD(actionColIdx);
-	WRITE_INT_FIELD(ctidColIdx);
 	WRITE_INT_FIELD(tupleoidColIdx);
 	WRITE_NODE_FIELD(insertColIdx);
 	WRITE_NODE_FIELD(deleteColIdx);

@@ -1609,7 +1609,6 @@ _readSplitUpdate(void)
 	READ_LOCALS(SplitUpdate);
 
 	READ_INT_FIELD(actionColIdx);
-	READ_INT_FIELD(ctidColIdx);
 	READ_INT_FIELD(tupleoidColIdx);
 	READ_NODE_FIELD(insertColIdx);
 	READ_NODE_FIELD(deleteColIdx);

@@ -1235,25 +1235,6 @@ find_junk_tle(List *targetList, const char *junkAttrName)
 }
 
 static AttrNumber
-find_ctid_attribute_check(List *targetList)
-{
-	TargetEntry	*ctid;
-	Var			*var;
-
-	ctid = find_junk_tle(targetList, "ctid");
-	if (!ctid)
-		elog(ERROR, "could not find \"ctid\" column in input to UPDATE");
-	Assert(IsA(ctid->expr, Var));
-
-	var = (Var *) (ctid->expr);
-
-	/* Ctid should follow after normal attributes */
-	Assert(var->vartype == TIDOID);
-
-	return ctid->resno;
-}
-
-static AttrNumber
 find_oid_attribute_check(List *targetList)
 {
 	TargetEntry	*tle;
@@ -1458,7 +1439,6 @@ process_targetlist_for_splitupdate(Relation resultRel, List *targetlist,
 SplitUpdate *
 make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntry *rte)
 {
-	AttrNumber		ctidColIdx = 0;
 	List			*deleteColIdx = NIL;
 	List			*insertColIdx = NIL;
 	int				actionColIdx;
@@ -1488,8 +1468,6 @@ make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntr
 	process_targetlist_for_splitupdate(resultRelation,
 									   subplan->targetlist,
 									   &splitUpdateTargetList, &insertColIdx, &deleteColIdx);
-	ctidColIdx = find_ctid_attribute_check(subplan->targetlist);
-
 	if (resultRelation->rd_rel->relhasoids)
 		oidColIdx = find_oid_attribute_check(subplan->targetlist);
 
@@ -1506,10 +1484,7 @@ make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntr
 	splitupdate = makeNode(SplitUpdate);
 	splitupdate->actionColIdx = actionColIdx;
 
-	Assert(ctidColIdx > 0);
-
 	/* populate information generated above into splitupdate node */
-	splitupdate->ctidColIdx = ctidColIdx;
 	splitupdate->tupleoidColIdx = oidColIdx;
 	splitupdate->insertColIdx = insertColIdx;
 	splitupdate->deleteColIdx = deleteColIdx;
@@ -1539,7 +1514,6 @@ make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntr
 		mark_plan_entry((Plan *) splitupdate);
 
 	mt->action_col_idxes = lappend_int(mt->action_col_idxes, actionColIdx);
-	mt->ctid_col_idxes = lappend_int(mt->ctid_col_idxes, ctidColIdx);
 	mt->oid_col_idxes = lappend_int(mt->oid_col_idxes, oidColIdx);
 
 	return splitupdate;

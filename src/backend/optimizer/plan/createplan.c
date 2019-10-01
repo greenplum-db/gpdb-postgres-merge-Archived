@@ -7745,7 +7745,6 @@ make_modifytable(PlannerInfo *root,
 	node->rowMarks = rowMarks;
 	node->epqParam = epqParam;
 	node->action_col_idxes = NIL;
-	node->ctid_col_idxes = NIL;
 	node->oid_col_idxes = NIL;
 
 	adjust_modifytable_flow(root, node, is_split_updates);
@@ -8069,7 +8068,6 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 				else
 				{
 					node->action_col_idxes = lappend_int(node->action_col_idxes, -1);
-					node->ctid_col_idxes = lappend_int(node->ctid_col_idxes, -1);
 					node->oid_col_idxes = lappend_int(node->oid_col_idxes, 0);
 					request_explicit_motion(subplan, rti, root->glob->finalrtable);
 				}
@@ -8111,13 +8109,11 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 					subplan->flow->req_move = MOVEMENT_NONE;
 				}
 				node->action_col_idxes = lappend_int(node->action_col_idxes, -1);
-				node->ctid_col_idxes = lappend_int(node->ctid_col_idxes, -1);
 				node->oid_col_idxes = lappend_int(node->oid_col_idxes, 0);
 			}
 			else if (targetPolicyType == POLICYTYPE_REPLICATED)
 			{
 				node->action_col_idxes = lappend_int(node->action_col_idxes, -1);
-				node->ctid_col_idxes = lappend_int(node->ctid_col_idxes, -1);
 				node->oid_col_idxes = lappend_int(node->oid_col_idxes, 0);
 				all_subplans_entry = false;
 			}

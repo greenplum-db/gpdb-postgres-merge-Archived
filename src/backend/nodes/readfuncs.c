@@ -2434,7 +2434,6 @@ _readModifyTable(void)
 	READ_UINT_FIELD(exclRelRTI);
 	READ_NODE_FIELD(exclRelTlist);
 	READ_NODE_FIELD(action_col_idxes);
-	READ_NODE_FIELD(ctid_col_idxes);
 	READ_NODE_FIELD(oid_col_idxes);
 
 	READ_DONE();

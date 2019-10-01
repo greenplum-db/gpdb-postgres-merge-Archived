@@ -1556,7 +1556,6 @@ typedef struct ModifyTableState
 	TupleTableSlot *mt_conflproj;		/* CONFLICT ... SET ... projection
 										 * target */
 	AttrNumber		*mt_action_col_idxes;
-	AttrNumber		*mt_ctid_col_idxes;
 	AttrNumber		*mt_oid_col_idxes;
 } ModifyTableState;
 

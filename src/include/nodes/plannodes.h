@@ -381,7 +381,6 @@ typedef struct ModifyTable
 	Index		exclRelRTI;		/* RTI of the EXCLUDED pseudo relation */
 	List	   *exclRelTlist;	/* tlist of the EXCLUDED pseudo relation */
 	List	   *action_col_idxes;
-	List	   *ctid_col_idxes;
 	List	   *oid_col_idxes;
 } ModifyTable;
 
@@ -1340,7 +1339,6 @@ typedef struct SplitUpdate
 {
 	Plan		plan;
 	AttrNumber	actionColIdx;		/* index of action column into the target list */
-	AttrNumber	ctidColIdx;			/* index of ctid column into the target list */
 	AttrNumber	tupleoidColIdx;		/* index of tuple oid column into the target list */
 	List		*insertColIdx;		/* list of columns to INSERT into the target list */
 	List		*deleteColIdx;		/* list of columns to DELETE into the target list */
