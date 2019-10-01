@@ -621,6 +621,30 @@ MemoryContextSetPeakSpace(MemoryContext context, Size nbytes)
 }                               /* MemoryContextSetPeakSpace */
 
 /*
+ * Find the memory allocated to blocks for this memory context. If recurse is
+ * true, also include children.
+ */
+int64
+MemoryContextMemAllocated(MemoryContext context, bool recurse)
+{
+	int64 total = context->mem_allocated;
+
+	AssertArg(MemoryContextIsValid(context));
+
+	if (recurse)
+	{
+		MemoryContext child = context->firstchild;
+
+		for (child = context->firstchild;
+			 child != NULL;
+			 child = child->nextchild)
+			total += MemoryContextMemAllocated(child, true);
+	}
+
+	return total;
+}
+
+/*
  * MemoryContextStats
  *		Print statistics about the named context and all its descendants.
  *
@@ -897,6 +921,7 @@ MemoryContextCreate(MemoryContext node,
 	node->methods = methods;
 	node->parent = parent;
 	node->firstchild = NULL;
+	node->mem_allocated = 0;
 	node->prevchild = NULL;
 	node->name = name;
 	node->ident = NULL;
