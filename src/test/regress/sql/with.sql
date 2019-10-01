@@ -1029,14 +1029,10 @@ INSERT INTO parent VALUES ( 1, 'p1' );
 INSERT INTO child1 VALUES ( 11, 'c11' ),( 12, 'c12' );
 INSERT INTO child2 VALUES ( 23, 'c21' ),( 24, 'c22' );
 
--- start_ignore
--- This query fails due to the 2 stage agg having issues with inherited tables:
--- ERROR:  incompatible loci in target inheritance set (planner.c:1426)
 WITH rcte AS ( SELECT sum(id) AS totalid FROM parent )
 UPDATE parent SET id = id + totalid FROM rcte;
 
 SELECT * FROM parent;
--- end_ignore
 
 WITH wcte AS ( INSERT INTO child1 VALUES ( 42, 'new' ) RETURNING id AS newid )
 UPDATE parent SET id = id + newid FROM wcte;

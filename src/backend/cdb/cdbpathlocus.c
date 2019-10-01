@@ -256,7 +256,7 @@ cdbpathlocus_for_insert(PlannerInfo *root, Index rti, GpPolicy *policy,
 				 * GPDB_96_MERGE_FIXME: this modifies the subpath's targetlist in place.
 				 * That's a bit ugly.
 				 */
-				pathtarget->sortgrouprefs[i] = ++maxRef;
+				pathtarget->sortgrouprefs[attno - 1] = ++maxRef;
 			}
 
 			eclass = get_eclass_for_sort_expr(root, (Expr *) expr,
