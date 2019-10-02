@@ -193,6 +193,7 @@ static Path *create_preliminary_limit_path(PlannerInfo *root, RelOptInfo *rel,
 										   Path *subpath,
 										   Node *limitOffset, Node *limitCount,
 										   int64 offset_est, int64 count_est);
+static Path *create_scatter_path(PlannerInfo *root, List *scatterClause, Path *path);
 
 static Plan *getAnySubplan(Plan *node);
 static bool isSimplyUpdatableQuery(Query *query);
@@ -2527,6 +2528,23 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	}							/* end of if (setOperations) */
 
 	/*
+	 * Deal with explicit redistribution requirements for TableValueExpr
+	 * subplans with a SCATTER BY clause. But if there's a LIMIT, we must
+	 * do this after applying the limit.
+	 */
+	if (parse->scatterClause && !limit_needed(parse))
+	{
+		foreach(lc, current_rel->pathlist)
+		{
+			Path	   *path = (Path *) lfirst(lc);
+
+			path = create_scatter_path(root, parse->scatterClause, path);
+			lfirst(lc) = path;
+		}
+		set_cheapest(current_rel);
+	}
+
+	/*
 	 * If ORDER BY was given, consider ways to implement that, and generate a
 	 * new upperrel containing only paths that emit the correct ordering and
 	 * project the correct final_target.  We can apply the original
@@ -2552,52 +2570,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	if (!result_plan->flow)
 		result_plan->flow = pull_up_Flow(result_plan, getAnySubplan(result_plan));
 #endif
-	
-	/*
-	 * Deal with explicit redistribution requirements for TableValueExpr
-	 * subplans with explicit distribitution
-	 */
-	if (parse->scatterClause)
-	{
-		//bool		r;
-		List	   *exprList;
-		List	   *opfamilies;
-		ListCell   *lc;
-
-		/* Deal with the special case of SCATTER RANDOMLY */
-		if (list_length(parse->scatterClause) == 1 && linitial(parse->scatterClause) == NULL)
-			exprList = NIL;
-		else
-			exprList = parse->scatterClause;
-
-		opfamilies = NIL;
-		foreach(lc, exprList)
-		{
-			Node	   *expr = lfirst(lc);
-			Oid			opfamily;
-
-			opfamily = cdb_default_distribution_opfamily_for_type(exprType(expr));
-			opfamilies = lappend_oid(opfamilies, opfamily);
-		}
-
-		/*
-		 * Repartition the subquery plan based on our distribution
-		 * requirements
-		 */
-#if 0 /* GPDB_96_MERGE_FIXME: With upper planner pathification, we don't have a Plan here. Do this to the paths */
-		r = repartitionPlan(result_plan, false, false,
-							exprList, opfamilies,
-							result_plan->flow->numsegments);
-		if (!r)
-		{
-			/*
-			 * This should not be possible, repartitionPlan should never fail
-			 * when both stable and rescannable are false.
-			 */
-			elog(ERROR, "failure repartitioning plan");
-		}
-#endif
-	}
 
 	/*
 	 * If there are set-returning functions in the tlist, scale up the output
@@ -2772,6 +2744,13 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 											  parse->limitOffset,
 											  parse->limitCount,
 											  offset_est, count_est);
+
+			/*
+			 * If there was a SCATTER BY clause, obey it. (If there was
+			 * no LIMIT, we did this before sorting for ORDER BY already.)
+			 */
+			if (parse->scatterClause)
+				path = create_scatter_path(root, parse->scatterClause, path);
 		}
 
 		/*
@@ -5562,6 +5541,50 @@ create_ordered_paths(PlannerInfo *root,
 	Assert(ordered_rel->pathlist != NIL);
 
 	return ordered_rel;
+}
+
+static Path *
+create_scatter_path(PlannerInfo *root, List *scatterClause, Path *path)
+{
+	CdbPathLocus locus;
+
+	/* Deal with the special case of SCATTER RANDOMLY */
+	if (list_length(scatterClause) == 1 && linitial(scatterClause) == NULL)
+	{
+		CdbPathLocus_MakeStrewn(&locus, getgpsegmentCount());
+	}
+	else
+	{
+		List	   *opfamilies;
+		List	   *sortrefs;
+		ListCell   *lc;
+
+		opfamilies = NIL;
+		sortrefs = NIL;
+		foreach(lc, scatterClause)
+		{
+			Node	   *expr = lfirst(lc);
+			Oid			opfamily;
+
+			opfamily = cdb_default_distribution_opfamily_for_type(exprType(expr));
+			opfamilies = lappend_oid(opfamilies, opfamily);
+			sortrefs = lappend_int(sortrefs, 0);
+		}
+
+		locus = cdbpathlocus_from_exprs(root, scatterClause, opfamilies, sortrefs, getgpsegmentCount());
+	}
+
+	/*
+	 * Repartition the subquery plan based on our distribution
+	 * requirements
+	 */
+	path = cdbpath_create_motion_path(root,
+									  path,
+									  NIL,
+									  false,
+									  locus);
+
+	return path;
 }
 
 
