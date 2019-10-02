@@ -195,7 +195,6 @@ static Path *create_preliminary_limit_path(PlannerInfo *root, RelOptInfo *rel,
 										   int64 offset_est, int64 count_est);
 static Path *create_scatter_path(PlannerInfo *root, List *scatterClause, Path *path);
 
-static Plan *getAnySubplan(Plan *node);
 static bool isSimplyUpdatableQuery(Query *query);
 
 static CdbPathLocus choose_one_window_locus(PlannerInfo *root, Path *path,
@@ -1830,93 +1829,6 @@ inheritance_planner(PlannerInfo *root)
 									 SS_assign_special_param(root)));
 }
 
-#ifdef USE_ASSERT_CHECKING
-
-static void grouping_planner_output_asserts(PlannerInfo *root, Plan *plan);
-
-/**
- * Ensure goodness of plans returned by grouping planner
- */
-void
-grouping_planner_output_asserts(PlannerInfo *root, Plan *plan)
-{
-	/*
-	 * Ensure that plan refers to vars that have varlevelsup = 0 AND varno is
-	 * in the rtable
-	 */
-	List	   *allVars = extract_nodes(root->glob, (Node *) plan, T_Var);
-	ListCell   *lc = NULL;
-
-	foreach(lc, allVars)
-	{
-		Var		   *var = (Var *) lfirst(lc);
-
-		/*
-		 * GPDB_92_MERGE_FIXME: In PG 9.2, there is a new varno 'INDEX_VAR'.
-		 * GPDB codes should revise to work with the new varno.
-		 */
-		Assert(var->varlevelsup == 0 && "Plan contains vars that refer to outer plan.");
-		Assert((var->varno == OUTER_VAR || var->varno == INDEX_VAR
-		|| (var->varno > 0 && var->varno <= list_length(root->parse->rtable)))
-			   && "Plan contains var that refer outside the rtable.");
-
-#if 0
-		Assert(var->varno == var->varnoold && "Varno and varnoold do not agree!");
-#endif
-
-		/** If a pseudo column, there should be a corresponding entry in the relation */
-		if (var->varattno <= FirstLowInvalidHeapAttributeNumber)
-		{
-			RangeTblEntry *rte = rt_fetch(var->varno, root->parse->rtable);
-
-			Assert(rte);
-			Assert(rte->pseudocols);
-			Assert(list_length(rte->pseudocols) > var->varattno - FirstLowInvalidHeapAttributeNumber);
-		}
-	}
-}
-#endif
-
-/*
- * getAnySubplan
- *	 Return one subplan for the given node.
- *
- * If the given node is an Append, the first subplan is returned.
- * If the given node is a SubqueryScan, its subplan is returned.
- * Otherwise, the lefttree of the given node is returned.
- */
-static Plan *
-getAnySubplan(Plan *node)
-{
-	Assert(is_plan_node((Node *) node));
-
-	if (IsA(node, Append))
-	{
-		Append	   *append = (Append *) node;
-
-		Assert(list_length(append->appendplans) > 0);
-		return (Plan *) linitial(append->appendplans);
-	}
-
-	else if (IsA(node, SubqueryScan))
-	{
-		SubqueryScan *subqueryScan = (SubqueryScan *) node;
-
-		return subqueryScan->subplan;
-	}
-	else if (IsA(node, ModifyTable))
-	{
-		ModifyTable *mt = (ModifyTable *) node;
-
-		if (!mt->plans)
-			elog(ERROR, "ModifyTable has no child plans");
-
-		return (Plan *) linitial(mt->plans);
-	}
-
-	return node->lefttree;
-}
-
 /*--------------------
  * grouping_planner
  *	  Perform planning steps related to grouping, aggregation, etc.
@@ -2559,17 +2471,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 										   have_postponed_srfs ? -1.0 :
 										   limit_tuples);
 	}
-
-	/* GPDB_96_MERGE_FIXME: where should this be done with the upper planner pathification? */
-#if 0
-	/*
-	 * Decorate the top node with a Flow node if it doesn't have one yet. (In
-	 * such cases we require the next-to-top node to have a Flow node from
-	 * which we can obtain the distribution info.)
-	 */
-	if (!result_plan->flow)
-		result_plan->flow = pull_up_Flow(result_plan, getAnySubplan(result_plan));
-#endif
 
 	/*
 	 * If there are set-returning functions in the tlist, scale up the output
