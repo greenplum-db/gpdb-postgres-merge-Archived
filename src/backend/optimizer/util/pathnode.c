@@ -4172,6 +4172,8 @@ create_minmaxagg_path(PlannerInfo *root,
 	MinMaxAggPath *pathnode = makeNode(MinMaxAggPath);
 	Cost		initplan_cost;
 	ListCell   *lc;
+	CdbLocusType locustype = CdbLocusType_Null;
+	int			numsegments;
 
 	/* The topmost generated Plan node will be a Result */
 	pathnode->path.pathtype = T_Result;
@@ -4199,19 +4201,32 @@ create_minmaxagg_path(PlannerInfo *root,
 		initplan_cost += mminfo->pathcost;
 
 		/*
-		 * All the subpaths should have SingleQE locus, build_minmax_path()
-		 * ensures that. But double-check here.
-		 *
-		 * GPDB_96_MERGE_FIXME: improve error message, can we get a text
-		 * representation of the locus? Also, gather the numsegments from
-		 * the children; now we just use getgpsegmentCount()
+		 * All the subpaths should have SingleQE locus, if the underlying
+		 * table is partitioned, build_minmax_path() ensures that. But
+		 * double-check here.
 		 */
-		if (Gp_role == GP_ROLE_DISPATCH && !CdbPathLocus_IsSingleQE(mminfo->path->locus))
-			elog(ERROR, "minmax path has unexpected path locus");
+		if (Gp_role == GP_ROLE_DISPATCH)
+		{
+			if (locustype == CdbLocusType_Null)
+			{
+				locustype = mminfo->path->locus.locustype;
+				numsegments = mminfo->path->locus.numsegments;
+			}
+			else if (CdbPathLocus_IsPartitioned(mminfo->path->locus))
+			{
+				elog(ERROR, "minmax path has unexpected path locus of type %d",
+					 mminfo->path->locus.locustype);
+			}
+			else if (locustype != mminfo->path->locus.locustype)
+			{
+				elog(ERROR, "minmax paths have different loci");
+			}
+		}
 	}
 
-	/* we checked that all the child paths are SingleQE */
-	CdbPathLocus_MakeSingleQE(&pathnode->path.locus, getgpsegmentCount());
+	/* we checked that all the child paths have compatible loci */
+	if (Gp_role == GP_ROLE_DISPATCH)
+		CdbPathLocus_MakeSimple(&pathnode->path.locus, locustype, numsegments);
 
 	/* add tlist eval cost for each output row, plus cpu_tuple_cost */
 	pathnode->path.startup_cost = initplan_cost + target->cost.startup;
