@@ -4387,7 +4387,7 @@ create_grouping_paths(PlannerInfo *root,
 													  rollup_lists,
 													  rollup_groupclauses,
 													  agg_costs,
-													  dNumGroups / path->locus.numsegments));
+													  dNumGroups));
 				}
 				else if (parse->hasAggs || parse->groupClause)
 				{
@@ -4406,7 +4406,7 @@ create_grouping_paths(PlannerInfo *root,
 											 parse->groupClause,
 											 (List *) parse->havingQual,
 											 agg_costs,
-											 dNumGroups / path->locus.numsegments));
+											 dNumGroups));
 				}
 				else if (parse->groupClause)
 				{
@@ -4504,7 +4504,7 @@ create_grouping_paths(PlannerInfo *root,
 
 		hashaggtablesize = estimate_hashagg_tablesize(cheapest_path,
 													  agg_costs,
-													  dNumGroups / locus.numsegments);
+													  dNumGroups);
 
 		/*
 		 * Provided that the estimated size of the hashtable does not exceed
@@ -4541,7 +4541,7 @@ create_grouping_paths(PlannerInfo *root,
 									 parse->groupClause,
 									 (List *) parse->havingQual,
 									 agg_costs,
-									 dNumGroups / locus.numsegments));
+									 dNumGroups));
 		}
 
 		/*

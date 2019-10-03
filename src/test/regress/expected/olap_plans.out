@@ -11,8 +11,7 @@ analyze olap_test;
 -- If the GROUP BY is a superset of the table's distribution keys, the
 -- aggregation can be independently in segments, and just gather the
 -- results. (1-phase agg)
-explain
-select a, b, sum(d) from olap_test group by a, b;
+explain select a, b, sum(d) from olap_test group by a, b;
                                     QUERY PLAN                                    
 ----------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)  (cost=190.93..191.26 rows=33 width=16)
@@ -38,8 +37,7 @@ select a, b, sum(d) from olap_test group by a, b;
  0 |  4 | 4499500
 (11 rows)
 
-explain
-select a, b, c, sum(d) from olap_test group by a, b, c;
+explain select a, b, c, sum(d) from olap_test group by a, b, c;
                                     QUERY PLAN                                     
 -----------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)  (cost=215.30..222.23 rows=693 width=20)
@@ -76,8 +74,7 @@ select a, b, c, sum(d) from olap_test group by a, b, c;
 (21 rows)
 
 -- If it's not a superset, redistribution is needed.
-explain
-select a, sum(d) from olap_test group by a;
+explain select a, sum(d) from olap_test group by a;
                                             QUERY PLAN                                             
 ---------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice2; segments: 3)  (cost=166.29..166.32 rows=3 width=12)
@@ -100,8 +97,7 @@ select a, sum(d) from olap_test group by a;
 (3 rows)
 
 -- Two-phase plain agg
-explain
-select sum(d) from olap_test;
+explain select sum(d) from olap_test;
                                       QUERY PLAN                                      
 --------------------------------------------------------------------------------------
  Finalize Aggregate  (cost=141.03..141.04 rows=1 width=8)
@@ -122,8 +118,7 @@ select sum(d) from olap_test;
 --
 -- If the DISTINCT argument matches the distribution key, two-stage aggregation
 -- is possible.
-explain
-select sum(distinct a) from olap_test_single;
+explain select sum(distinct a) from olap_test_single;
                                       QUERY PLAN                                       
 ---------------------------------------------------------------------------------------
  Finalize Aggregate  (cost=140.03..140.04 rows=1 width=8)
@@ -140,8 +135,7 @@ select sum(distinct a) from olap_test_single;
 (1 row)
 
 -- Otherwise, it's not
-explain
-select sum(distinct b) from olap_test_single;
+explain select sum(distinct b) from olap_test_single;
                                        QUERY PLAN                                       
 ----------------------------------------------------------------------------------------
  Aggregate  (cost=340.00..340.01 rows=1 width=8)

@@ -2045,7 +2045,7 @@ cost_agg(Path *path, PlannerInfo *root,
 		total_cost += (cpu_operator_cost * numGroupCols) * input_tuples;
 		total_cost += aggcosts->finalCost * numGroups;
 		total_cost += cpu_tuple_cost * numGroups;
-		output_tuples = numGroups * planner_segment_count(NULL);
+		output_tuples = numGroups;
 	}
 	else
 	{
@@ -2081,7 +2081,7 @@ cost_agg(Path *path, PlannerInfo *root,
 				/* startup gets charged the write-cost */
 				startup_cost += seq_page_cost * (spilled_bytes / BLCKSZ);
 
-				output_tuples = numGroups * planner_segment_count(NULL);;
+				output_tuples = numGroups;
 			}
 			else
 			{
@@ -2090,7 +2090,7 @@ cost_agg(Path *path, PlannerInfo *root,
 		}
 		else
 		{
-			output_tuples = numGroups * planner_segment_count(NULL);;
+			output_tuples = numGroups;
 		}
 
 		total_cost = startup_cost;

@@ -160,7 +160,7 @@ cdb_create_twostage_grouping_paths(PlannerInfo *root,
 												parse->groupClause,
 												NIL,
 												agg_partial_costs,
-												dNumGroups);
+												dNumGroups * getgpsegmentCount());
 
 				/*
 				 * GroupAgg -> GATHER MOTION -> GroupAgg.
@@ -250,7 +250,7 @@ cdb_create_twostage_grouping_paths(PlannerInfo *root,
 														parse->groupClause,
 														NIL,
 														agg_partial_costs,
-														dNumGroups);
+														dNumGroups * getgpsegmentCount());
 
 			/*
 			 * HashAgg -> GATHER MOTION -> HashAgg.
@@ -278,7 +278,7 @@ cdb_create_twostage_grouping_paths(PlannerInfo *root,
 											parse->groupClause,
 											(List *) parse->havingQual,
 											agg_final_costs,
-											dNumGroups / getgpsegmentCount());
+											dNumGroups);
 			add_path(output_rel, path);
 		}
 	}
