@@ -160,11 +160,10 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
  * Returns a slot holding the result tuple
  */
 static TupleTableSlot *
-ExecProcessReturning(ResultRelInfo *resultRelInfo,
+ExecProcessReturning(ProjectionInfo *projectReturning,
 					 TupleTableSlot *tupleSlot,
 					 TupleTableSlot *planSlot)
 {
-	ProjectionInfo *projectReturning = resultRelInfo->ri_projectReturning;
 	ExprContext *econtext = projectReturning->pi_exprContext;
 
 	/*
@@ -866,8 +865,8 @@ ExecInsert(ModifyTableState *mtstate,
 		ExecWithCheckOptions(WCO_VIEW_CHECK, resultRelInfo, slot, estate);
 
 	/* Process RETURNING if present */
-	if (resultRelInfo->ri_projectReturning)
-		return ExecProcessReturning(resultRelInfo, parentslot, planSlot);
+	if (projectReturning)
+		return ExecProcessReturning(projectReturning, parentslot, planSlot);
 
 	return NULL;
 }
@@ -1306,7 +1305,7 @@ ldelete:;
 			ExecStoreHeapTuple(&deltuple, slot, InvalidBuffer, false);
 		}
 
-		rslot = ExecProcessReturning(resultRelInfo, slot, planSlot);
+		rslot = ExecProcessReturning(resultRelInfo->ri_projectReturning, slot, planSlot);
 
 		/*
 		 * Before releasing the target tuple again, make sure rslot has a
@@ -1874,7 +1873,7 @@ ExecUpdate(ItemPointer tupleid,
 
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
-		return ExecProcessReturning(resultRelInfo, slot, planSlot);
+		return ExecProcessReturning(resultRelInfo->ri_projectReturning, slot, planSlot);
 
 	return NULL;
 }
@@ -2251,7 +2250,7 @@ ExecModifyTable(ModifyTableState *node)
 			 * ExecProcessReturning by IterateDirectModify, so no need to
 			 * provide it here.
 			 */
-			slot = ExecProcessReturning(resultRelInfo, NULL, planSlot);
+			slot = ExecProcessReturning(resultRelInfo->ri_projectReturning, NULL, planSlot);
 
 			estate->es_result_relation_info = saved_resultRelInfo;
 			return slot;
