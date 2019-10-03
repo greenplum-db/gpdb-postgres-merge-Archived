@@ -4173,7 +4173,7 @@ create_minmaxagg_path(PlannerInfo *root,
 	Cost		initplan_cost;
 	ListCell   *lc;
 	CdbLocusType locustype = CdbLocusType_Null;
-	int			numsegments;
+	int			numsegments = -1;
 
 	/* The topmost generated Plan node will be a Result */
 	pathnode->path.pathtype = T_Result;
@@ -4222,6 +4222,12 @@ create_minmaxagg_path(PlannerInfo *root,
 				elog(ERROR, "minmax paths have different loci");
 			}
 		}
+	}
+
+	if (mmaggregates == NIL)
+	{
+		locustype = CdbLocusType_General;
+		numsegments = getgpsegmentCount();
 	}
 
 	/* we checked that all the child paths have compatible loci */
