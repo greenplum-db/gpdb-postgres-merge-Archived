@@ -85,7 +85,6 @@ cdb_create_twostage_grouping_paths(PlannerInfo *root,
 	if (!CdbPathLocus_IsPartitioned(cheapest_path->locus))
 		return;
 
-
 	/* GPDB_96_MERGE_FIXME: having more than 1 distinct agg would require
 	 * three-phase strategy, like we used to have in cdbgroup.c
 	 */
