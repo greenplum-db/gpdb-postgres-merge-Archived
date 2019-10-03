@@ -23,8 +23,7 @@ explain select a, sum(d) from olap_test group by a;
 select a, sum(d) from olap_test group by a;
 
 -- Two-phase plain agg
-explain
-select sum(d) from olap_test;
+explain select sum(d) from olap_test;
 select sum(d) from olap_test;
 
 
