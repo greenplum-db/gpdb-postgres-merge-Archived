@@ -6034,12 +6034,11 @@ make_window_input_target(PlannerInfo *root,
 	list_free(flattenable_vars);
 	list_free(flattenable_cols);
 
-	/* GPDB_96_MERGE_FIXME: Where does this code belong now? */
-#if 0
 	/*
 	 * Add any Vars that appear in the start/end bounds. In PostgreSQL,
 	 * they're not allowed to contain any Vars of the same query level, but
-	 * we do allow it in GPDB. They shouldn't contain any aggregates, though.
+	 * we do allow it in GPDB. They shouldn't contain any AggRefs or
+	 * WindowFuncs.
 	 */
 	foreach(lc, activeWindows)
 	{
@@ -6047,15 +6046,14 @@ make_window_input_target(PlannerInfo *root,
 
 		flattenable_vars = pull_var_clause(wc->startOffset,
 										   PVC_INCLUDE_PLACEHOLDERS);
-		new_tlist = add_to_flat_tlist(new_tlist, flattenable_vars);
+		add_new_columns_to_pathtarget(input_target, flattenable_vars);
 		list_free(flattenable_vars);
 
 		flattenable_vars = pull_var_clause(wc->endOffset,
 										   PVC_INCLUDE_PLACEHOLDERS);
-		new_tlist = add_to_flat_tlist(new_tlist, flattenable_vars);
+		add_new_columns_to_pathtarget(input_target, flattenable_vars);
 		list_free(flattenable_vars);
 	}
-#endif
 
 	/* XXX this causes some redundant cost calculation ... */
 	return set_pathtarget_cost_width(root, input_target);

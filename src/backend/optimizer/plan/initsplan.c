@@ -177,6 +177,25 @@ build_base_rel_tlists(PlannerInfo *root, List *final_tlist)
 			list_free(having_vars);
 		}
 	}
+
+	/*
+	 * Add any Vars that appear in the start/end bounds. In PostgreSQL,
+	 * they're not allowed to contain any Vars of the same query level, but
+	 * we do allow it in GPDB. They shouldn't contain any AggRefs or
+	 * WindowFuncs.
+	 */
+	if (root->parse->windowClause)
+	{
+		List	   *window_vars = pull_var_clause((Node *) root->parse->windowClause,
+												  PVC_INCLUDE_PLACEHOLDERS);
+
+		if (window_vars != NIL)
+		{
+			add_vars_to_targetlist(root, window_vars,
+								   bms_make_singleton(0), true);
+			list_free(window_vars);
+		}
+	}
 }
 
 /*
