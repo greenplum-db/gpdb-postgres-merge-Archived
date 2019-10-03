@@ -3741,10 +3741,10 @@ using (join_key);
                Output: i1.f1, 666
                Hash Cond: (i2.unique2 = i1.f1)
                ->  Redistribute Motion 3:3  (slice1; segments: 3)
-                     Output: i2.unique2, i2.unique1
+                     Output: i2.unique2
                      Hash Key: i2.unique2
                      ->  Seq Scan on public.tenk1 i2
-                           Output: i2.unique2, i2.unique1
+                           Output: i2.unique2
                ->  Hash
                      Output: i1.f1
                      ->  Seq Scan on public.int4_tbl i1
