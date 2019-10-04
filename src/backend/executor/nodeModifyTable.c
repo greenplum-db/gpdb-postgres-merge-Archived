@@ -428,7 +428,10 @@ ExecInsert(ModifyTableState *mtstate,
 		}
 	}
 
-	slot = reconstructMatchingTupleSlot(parentslot, resultRelInfo);
+	if (estate->es_result_partitions)
+		slot = reconstructMatchingTupleSlot(parentslot, resultRelInfo);
+	else
+		slot = parentslot;
 
 	if (RelationIsExternal(resultRelationDesc) &&
 		estate->es_result_partitions &&

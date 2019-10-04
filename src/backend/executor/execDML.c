@@ -78,6 +78,13 @@ reconstructMatchingTupleSlot(TupleTableSlot *slot, ResultRelInfo *resultRelInfo)
 	bool tupleDescMatch = (resultRelInfo->tupdesc_match == 1);
 	if (resultRelInfo->tupdesc_match == 0)
 	{
+		/*
+		 * GPDB_96_MERGE_FIXME: While debugging another issue, I noticed that
+		 * after the merge, this equalTupleDescs() call was failing even for
+		 * simple cases, because the one of the tuple descs was missing attribute
+		 * names. It's not a correctness issue, but we reconstruct the slot
+		 * unnecessarily.
+		 */
 		tupleDescMatch = equalTupleDescs(inputTupDesc, resultTupDesc, false);
 
 		if (tupleDescMatch)
