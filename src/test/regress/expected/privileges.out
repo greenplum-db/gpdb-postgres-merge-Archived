@@ -1639,7 +1639,7 @@ SELECT has_table_privilege('regress_user1', 'testns.t1', 'SELECT'); -- false
  f
 (1 row)
 
-SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t1', 'SELECT'); -- false
+SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t1', 'SELECT'); -- false
  segid | has_table_privilege 
 -------+---------------------
      2 | f
@@ -1647,7 +1647,7 @@ SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t1', 'SELECT'); --
      1 | f
 (3 rows)
 
-SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t3', 'SELECT'); -- false
+SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t3', 'SELECT'); -- false
  segid | has_table_privilege 
 -------+---------------------
      0 | f
@@ -1655,7 +1655,7 @@ SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t3', 'SELECT'); --
      2 | f
 (3 rows)
 
-SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t3_1_prt_extra', 'SELECT'); -- false
+SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t3_1_prt_extra', 'SELECT'); -- false
  segid | has_table_privilege 
 -------+---------------------
      0 | f
@@ -1663,7 +1663,7 @@ SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t3_1_prt_extra', '
      2 | f
 (3 rows)
 
-SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t4', 'SELECT'); -- false
+SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t4', 'SELECT'); -- false
  segid | has_table_privilege 
 -------+---------------------
      0 | f
@@ -1684,7 +1684,7 @@ SELECT has_table_privilege('regress_user1', 'testns.t2', 'SELECT'); -- true
  t
 (1 row)
 
-SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t1', 'SELECT'); -- true
+SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t1', 'SELECT'); -- true
  segid | has_table_privilege 
 -------+---------------------
      0 | t
@@ -1692,7 +1692,7 @@ SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t1', 'SELECT'); --
      2 | t
 (3 rows)
 
-SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t3', 'SELECT'); -- true
+SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t3', 'SELECT'); -- true
  segid | has_table_privilege 
 -------+---------------------
      0 | t
@@ -1700,7 +1700,7 @@ SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t3', 'SELECT'); --
      2 | t
 (3 rows)
 
-SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t3_1_prt_extra', 'SELECT'); -- true
+SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t3_1_prt_extra', 'SELECT'); -- true
  segid | has_table_privilege 
 -------+---------------------
      0 | t
@@ -1708,7 +1708,7 @@ SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t3_1_prt_extra', '
      2 | t
 (3 rows)
 
-SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t4', 'SELECT'); -- true
+SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t4', 'SELECT'); -- true
  segid | has_table_privilege 
 -------+---------------------
      0 | t
@@ -1729,7 +1729,7 @@ SELECT has_table_privilege('regress_user1', 'testns.t2', 'SELECT'); -- false
  f
 (1 row)
 
-SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t3', 'SELECT'); -- false
+SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t3', 'SELECT'); -- false
  segid | has_table_privilege 
 -------+---------------------
      0 | f
@@ -1737,7 +1737,7 @@ SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t3', 'SELECT'); --
      2 | f
 (3 rows)
 
-SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t3_1_prt_extra', 'SELECT'); -- false
+SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t3_1_prt_extra', 'SELECT'); -- false
  segid | has_table_privilege 
 -------+---------------------
      0 | f
@@ -1745,7 +1745,7 @@ SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t3_1_prt_extra', '
      2 | f
 (3 rows)
 
-SELECT * FROM has_table_privilege_seg('regressuser1', 'testns.t4', 'SELECT'); -- false
+SELECT * FROM has_table_privilege_seg('regress_user1', 'testns.t4', 'SELECT'); -- false
  segid | has_table_privilege 
 -------+---------------------
      0 | f
