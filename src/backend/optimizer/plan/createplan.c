@@ -8210,6 +8210,46 @@ cdbpathtoplan_create_motion_plan(PlannerInfo *root,
 			elog(ERROR, "could not find gp_segment_id in subplan's targetlist");
 		motion = make_explicit_motion(subplan, segmentid_tle->resno, false);
 	}
+	else if (path->policy)
+	{
+		List	   *hashExprs = NIL;
+		List	   *hashOpfamilies = NIL;
+
+		for (int i = 0; i < path->policy->nattrs; ++i)
+		{
+			AttrNumber	attno = path->policy->attrs[i];
+			Expr	   *expr;
+			Oid			opfamily = get_opclass_family(path->policy->opclasses[i]);
+
+			expr = list_nth(subpath->pathtarget->exprs, attno - 1);
+
+			hashExprs = lappend(hashExprs, expr);
+			hashOpfamilies = lappend_oid(hashOpfamilies, opfamily);
+		}
+
+		/**
+		 * If there are subplans in the hashExpr, push it down to lower level.
+		 */
+		if (contain_subplans((Node *) hashExprs))
+		{
+			/* make a Result node to do the projection if necessary */
+			if (!is_projection_capable_plan(subplan))
+			{
+				List	   *tlist = copyObject(subplan->targetlist);
+
+				subplan = (Plan *) make_result(tlist, NULL, subplan);
+			}
+			subplan->targetlist = add_to_flat_tlist_junk(subplan->targetlist,
+														 hashExprs,
+														 true /* resjunk */);
+		}
+
+		motion = make_hashed_motion(subplan,
+									hashExprs,
+									hashOpfamilies,
+									false /* useExecutorVarFormat */,
+									numsegments);
+	}
 	/* Send all tuples to a single process? */
 	else if (CdbPathLocus_IsBottleneck(path->path.locus))
 	{

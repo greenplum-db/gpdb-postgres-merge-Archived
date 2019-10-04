@@ -1317,12 +1317,20 @@ typedef struct TidPath
 /*
  * CdbMotionPath represents transmission of the child Path results
  * from a set of sending processes to a set of receiving processes.
+ *
+ * Normally, the distribution is determined by the 'locus' of the path.
+ * However, if the distribution cannot be represented by a DistributionKeys,
+ * an alternative representation is to mark the locus as Strewn, and list
+ * the hash expressions explicitly in hashExprs/hashFamilies. In the normal
+ * case, they are not used.
  */
 typedef struct CdbMotionPath
 {
 	Path		path;
     Path	   *subpath;
 	bool		is_explicit_motion;
+
+	GpPolicy   *policy;
 } CdbMotionPath;
 
 /*

@@ -186,6 +186,13 @@ cdb_build_distribution_keys(PlannerInfo *root, Index rti, GpPolicy *policy)
  *
  * This is used for INSERT or split UPDATE, where 'pathtarget' the target list of
  * subpath that's producing the rows to be inserted/updated.
+ *
+ * As a side-effect, this assigns sortgrouprefs to any volatile expressions
+ * that are used in the distribution keys.
+ *
+ * If the target table is distributed, but the distribution keys cannot be
+ * represented as Equivalence Classes (because a datatype is missing merge
+ * opfamilies), returns a NULL locus.
  */
 CdbPathLocus
 cdbpathlocus_for_insert(PlannerInfo *root, Index rti, GpPolicy *policy,
@@ -199,6 +206,7 @@ cdbpathlocus_for_insert(PlannerInfo *root, Index rti, GpPolicy *policy,
 		RangeTblEntry *rte = planner_rt_fetch(rti, root);
 		List	   *distkeys = NIL;
 		Index		maxRef = 0;
+		bool		failed = false;
 
 		for (int i = 0; i < list_length(pathtarget->exprs); i++)
 			maxRef = Max(maxRef, pathtarget->sortgrouprefs[i]);
@@ -227,28 +235,6 @@ cdbpathlocus_for_insert(PlannerInfo *root, Index rti, GpPolicy *policy,
 			 */
 			eqopoid = get_opfamily_member(opfamily, opcintype, opcintype, 1);
 
-			/*
-			 * Get Oid of the sort operator that would be used for a sort-merge
-			 * equijoin on a pair of exprs of the same type.
-			 */
-			if (eqopoid == InvalidOid || !op_mergejoinable(eqopoid, typeoid))
-			{
-				/*
-				 * It's in principle possible that there is no b-tree operator family
-				 * that's compatible with the hash opclass's equality operator. However,
-				 * we cannot construct an EquivalenceClass without the b-tree operator
-				 * family, and therefore cannot build a DistributionKey to represent it.
-				 * Bail out. (That makes the distribution key rather useless.)
-				 */
-				/*
-				 * GPDB_96_MERGE_FIXME: copied this from cdbpathlocus_from_baserel().
-				 * Can it really happen?
-				 */
-				elog(ERROR, "could not build distribution key for target relation");
-			}
-
-			mergeopfamilies = get_mergejoin_opfamilies(eqopoid);
-
 			if (pathtarget->sortgrouprefs[attno - 1] == 0 &&
 				contain_volatile_functions((Node *) expr))
 			{
@@ -258,6 +244,25 @@ cdbpathlocus_for_insert(PlannerInfo *root, Index rti, GpPolicy *policy,
 				 */
 				pathtarget->sortgrouprefs[attno - 1] = ++maxRef;
 			}
+
+			/*
+			 * Get Oid of the sort operator that would be used for a sort-merge
+			 * equijoin on a pair of exprs of the same type.
+			 */
+			if (failed || eqopoid == InvalidOid || !op_mergejoinable(eqopoid, typeoid))
+			{
+				/*
+				 * It's in principle possible that there is no b-tree operator family
+				 * that's compatible with the hash opclass's equality operator. However,
+				 * we cannot construct an EquivalenceClass without the b-tree operator
+				 * family, and therefore cannot build a DistributionKey to represent it.
+				 * Bail out. (That makes the distribution key rather useless.)
+				 */
+				failed = true;
+				continue;
+			}
+
+			mergeopfamilies = get_mergejoin_opfamilies(eqopoid);
 
 			eclass = get_eclass_for_sort_expr(root, (Expr *) expr,
 											  NULL, /* nullable_relids */ /* GPDB_94_MERGE_FIXME: is NULL ok here? */
@@ -276,7 +281,11 @@ cdbpathlocus_for_insert(PlannerInfo *root, Index rti, GpPolicy *policy,
 			distkeys = lappend(distkeys, cdistkey);
 		}
 
-		if (distkeys)
+		if (failed)
+		{
+			CdbPathLocus_MakeNull(&targetLocus, policy->numsegments);
+		}
+		else if (distkeys)
 			CdbPathLocus_MakeHashed(&targetLocus, distkeys, policy->numsegments);
 		else
 		{
