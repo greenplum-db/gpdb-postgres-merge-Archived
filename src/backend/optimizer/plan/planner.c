@@ -5059,7 +5059,6 @@ create_distinct_paths(PlannerInfo *root,
 
 			if (pathkeys_contained_in(needed_pathkeys, path->pathkeys))
 			{
-
 				if (!cdbpathlocus_collocates_pathkeys(root, path->locus,
 													  distinct_dist_pathkeys, false /* exact_match */ ))
 				{
@@ -5221,11 +5220,35 @@ create_distinct_paths(PlannerInfo *root,
 	if (allow_hash && grouping_is_hashable(parse->distinctClause))
 	{
 		/* Generate hashed aggregate path --- no sort needed */
+		Path	   *path;
+
+		path = cheapest_input_path;
+		if (!cdbpathlocus_collocates_pathkeys(root, path->locus,
+											  distinct_dist_pathkeys, false /* exact_match */ ))
+		{
+			CdbPathLocus locus;
+
+			if (distinct_dist_exprs)
+			{
+				locus = cdbpathlocus_from_exprs(root,
+												distinct_dist_exprs,
+												distinct_dist_opfamilies,
+												distinct_dist_sortrefs,
+												getgpsegmentCount());
+			}
+			else
+			{
+				CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+			}
+
+			path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
+		}
+
 		add_path(distinct_rel, (Path *)
 				 create_agg_path(root,
 								 distinct_rel,
-								 cheapest_input_path,
-								 cheapest_input_path->pathtarget,
+								 path,
+								 path->pathtarget,
 								 AGG_HASHED,
 								 AGGSPLIT_SIMPLE,
 								 false, /* streaming */
