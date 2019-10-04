@@ -25,6 +25,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/tlist.h"
+#include "utils/lsyscache.h"
 
 /*
  * Function: cdb_grouping_planner
@@ -386,15 +387,25 @@ cdb_choose_grouping_locus(PlannerInfo *root, Path *path,
 		foreach(lc, group_tles)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(lc);
+			Oid			typeoid = exprType((Node *) tle->expr);
 			Oid			opfamily;
+			Oid			eqopoid;
 
-			opfamily = cdb_default_distribution_opfamily_for_type(exprType((Node *) tle->expr));
-			if (OidIsValid(opfamily))
-			{
-				hash_exprs = lappend(hash_exprs, tle->expr);
-				hash_opfamilies = lappend_oid(hash_opfamilies, opfamily);
-				hash_sortrefs = lappend_int(hash_sortrefs, tle->ressortgroupref);
-			}
+			opfamily = cdb_default_distribution_opfamily_for_type(typeoid);
+			if (!OidIsValid(opfamily))
+				continue;
+
+			/*
+			 * If the datatype isn't mergejoinable, then we cannot represent
+			 * the grouping in the locus. Skip such expressions.
+			 */
+			eqopoid = cdb_eqop_in_hash_opfamily(opfamily, typeoid);
+			if (!op_mergejoinable(eqopoid, typeoid))
+				continue;
+
+			hash_exprs = lappend(hash_exprs, tle->expr);
+			hash_opfamilies = lappend_oid(hash_opfamilies, opfamily);
+			hash_sortrefs = lappend_int(hash_sortrefs, tle->ressortgroupref);
 		}
 
 		if (need_redistribute)
