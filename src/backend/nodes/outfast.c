@@ -1211,6 +1211,18 @@ _outAlterUserMappingStmt(StringInfo str, AlterUserMappingStmt *node)
 }
 
 static void
+_outAlterObjectDependsStmt(StringInfo str, const AlterObjectDependsStmt *node)
+{
+	WRITE_NODE_TYPE("ALTEROBJECTDEPENDSSTMT");
+
+	WRITE_ENUM_FIELD(objectType,ObjectType);
+	WRITE_NODE_FIELD(relation);
+	WRITE_NODE_FIELD(objname);
+	WRITE_NODE_FIELD(objargs);
+	WRITE_NODE_FIELD(extname);
+}
+
+static void
 _outCustomScan(StringInfo str, const CustomScan *node)
 {
 	WRITE_NODE_TYPE("CUSTOMSCAN");
@@ -1760,6 +1772,10 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_AlterFunctionStmt:
 				_outAlterFunctionStmt(str, obj);
+				break;
+
+			case T_AlterObjectDependsStmt:
+				_outAlterObjectDependsStmt(str, obj);
 				break;
 
 			case T_DefineStmt:

@@ -456,6 +456,16 @@ ExecAlterObjectDependsStmt(AlterObjectDependsStmt *stmt, ObjectAddress *refAddre
 
 	recordDependencyOn(&address, &refAddr, DEPENDENCY_AUTO_EXTENSION);
 
+	if (Gp_role == GP_ROLE_DISPATCH && stmt->objectType != OBJECT_EVENT_TRIGGER)
+	{
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+										DF_WITH_SNAPSHOT|
+										DF_NEED_TWO_PHASE,
+									NIL,
+									NULL);
+	}
+
 	return address;
 }
 

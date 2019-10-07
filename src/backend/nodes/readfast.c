@@ -619,6 +619,20 @@ _readAlterPartitionCmd(void)
 	READ_DONE();
 }
 
+static AlterObjectDependsStmt *
+_readAlterObjectDependsStmt(void)
+{
+	READ_LOCALS(AlterObjectDependsStmt);
+
+	READ_ENUM_FIELD(objectType,ObjectType);
+	READ_NODE_FIELD(relation);
+	READ_NODE_FIELD(objname);
+	READ_NODE_FIELD(objargs);
+	READ_NODE_FIELD(extname);
+
+	READ_DONE();
+}
+
 static AlterObjectSchemaStmt *
 _readAlterObjectSchemaStmt(void)
 {
@@ -2829,6 +2843,10 @@ readNodeBinary(void)
 				break;
 			case T_AlterRoleSetStmt:
 				return_value = _readAlterRoleSetStmt();
+				break;
+
+			case T_AlterObjectDependsStmt:
+				return_value = _readAlterObjectDependsStmt();
 				break;
 
 			case T_AlterObjectSchemaStmt:
