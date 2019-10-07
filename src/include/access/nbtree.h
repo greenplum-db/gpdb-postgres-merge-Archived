@@ -756,6 +756,7 @@ extern bool btproperty(Oid index_oid, int attno,
  * prototypes for functions in nbtvalidate.c
  */
 extern bool btvalidate(Oid opclassoid);
+extern bool btree_or_bitmap_validate(Oid opclassoid, const char *amname);
 
 /*
  * prototypes for functions in nbtsort.c

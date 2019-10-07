@@ -762,6 +762,7 @@ extern IndexBulkDeleteResult *bmvacuumcleanup(IndexVacuumInfo *info,
 				IndexBulkDeleteResult *stats);
 extern bool bmcanreturn(Relation index, int attno);
 extern bytea *bmoptions(Datum reloptions, bool validate);
+extern bool bmvalidate(Oid opclassoid);
 
 extern void GetBitmapIndexAuxOids(Relation index, Oid *heapId, Oid *indexId);
 
@@ -856,7 +857,6 @@ extern bool _bitmap_findvalue(Relation lovHeap, Relation lovIndex,
 extern void bitmap_redo(XLogReaderState *record);
 extern void bitmap_desc(StringInfo buf, XLogReaderState *record);
 extern const char *bitmap_identify(uint8 info);
-extern bool bmvalidate(Oid opclassoid);
 
 /* reloptions.c */
 #define BITMAP_MIN_FILLFACTOR		10

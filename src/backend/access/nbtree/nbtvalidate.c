@@ -36,6 +36,16 @@
 bool
 btvalidate(Oid opclassoid)
 {
+	/*
+	 * In GPDB, bitmap indexes use the same support functions as B-tree indexes,
+	 * so this function is shared.
+	 */
+	return btree_or_bitmap_validate(opclassoid, "btree");
+}
+
+bool
+btree_or_bitmap_validate(Oid opclassoid, const char *amname)
+{
 	bool		result = true;
 	HeapTuple	classtup;
 	Form_pg_opclass classform;
@@ -97,7 +107,8 @@ btvalidate(Oid opclassoid)
 			default:
 				ereport(INFO,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree operator family \"%s\" contains function %s with invalid support number %d",
+						 errmsg("%s operator family \"%s\" contains function %s with invalid support number %d",
+								amname,
 								opfamilyname,
 								format_procedure(procform->amproc),
 								procform->amprocnum)));
@@ -109,7 +120,8 @@ btvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree operator family \"%s\" contains function %s with wrong signature for support number %d",
+					 errmsg("%s operator family \"%s\" contains function %s with wrong signature for support number %d",
+							amname,
 							opfamilyname,
 							format_procedure(procform->amproc),
 							procform->amprocnum)));
@@ -129,7 +141,8 @@ btvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree operator family \"%s\" contains operator %s with invalid strategy number %d",
+					 errmsg("%s operator family \"%s\" contains operator %s with invalid strategy number %d",
+							amname,
 							opfamilyname,
 							format_operator(oprform->amopopr),
 							oprform->amopstrategy)));
@@ -142,7 +155,8 @@ btvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree operator family \"%s\" contains invalid ORDER BY specification for operator %s",
+					 errmsg("%s operator family \"%s\" contains invalid ORDER BY specification for operator %s",
+							amname,
 							opfamilyname,
 							format_operator(oprform->amopopr))));
 			result = false;
@@ -155,7 +169,8 @@ btvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree operator family \"%s\" contains operator %s with wrong signature",
+					 errmsg("%soperator family \"%s\" contains operator %s with wrong signature",
+							amname,
 							opfamilyname,
 							format_operator(oprform->amopopr))));
 			result = false;
@@ -197,7 +212,8 @@ btvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree operator family \"%s\" is missing operator(s) for types %s and %s",
+					 errmsg("%s operator family \"%s\" is missing operator(s) for types %s and %s",
+							amname,
 							opfamilyname,
 							format_type_be(thisgroup->lefttype),
 							format_type_be(thisgroup->righttype))));
@@ -207,7 +223,8 @@ btvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree operator family \"%s\" is missing support function for types %s and %s",
+					 errmsg("%s operator family \"%s\" is missing support function for types %s and %s",
+							amname,
 							opfamilyname,
 							format_type_be(thisgroup->lefttype),
 							format_type_be(thisgroup->righttype))));
@@ -221,7 +238,8 @@ btvalidate(Oid opclassoid)
 	{
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("btree operator class \"%s\" is missing operator(s)",
+				 errmsg("%s operator class \"%s\" is missing operator(s)",
+						amname,
 						opclassname)));
 		result = false;
 	}
@@ -238,7 +256,8 @@ btvalidate(Oid opclassoid)
 	{
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("btree operator family \"%s\" is missing cross-type operator(s)",
+				 errmsg("%s operator family \"%s\" is missing cross-type operator(s)",
+						amname,
 						opfamilyname)));
 		result = false;
 	}
