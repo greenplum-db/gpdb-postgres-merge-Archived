@@ -2530,7 +2530,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		if (list_length(node->action_col_idxes) != nplans)
 			elog(ERROR, "ModifyTable node is missing action column information");
 		if (list_length(node->oid_col_idxes) != nplans)
-			elog(ERROR, "ModifyTable node is missing table OID information");
+			elog(ERROR, "ModifyTable node is missing tuple OID information");
 
 		mtstate->mt_action_col_idxes = (AttrNumber *) palloc0 (sizeof(AttrNumber) * nplans);
 		mtstate->mt_oid_col_idxes = (AttrNumber *) palloc0 (sizeof(AttrNumber) * nplans);

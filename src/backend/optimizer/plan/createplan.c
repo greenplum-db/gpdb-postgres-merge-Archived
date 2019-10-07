@@ -276,6 +276,7 @@ static ModifyTable *make_modifytable(PlannerInfo *root,
 				 List *is_split_updates,
 				 List *rowMarks, OnConflictExpr *onconflict, int epqParam);
 
+static TargetEntry *find_junk_tle(List *targetList, const char *junkAttrName);
 static Motion *cdbpathtoplan_create_motion_plan(PlannerInfo *root,
 								 CdbMotionPath *path,
 								 Plan *subplan);
@@ -7939,7 +7940,9 @@ make_modifytable(PlannerInfo *root,
 			if (is_split_update)
 			{
 				AttrNumber	action_col_idx = -1;
+				AttrNumber	oid_col_idx = -1;
 				ListCell   *cell_targetlist;
+				TargetEntry *oid_tle;
 
 				foreach(cell_targetlist, subplan->targetlist)
 				{
@@ -7955,12 +7958,16 @@ make_modifytable(PlannerInfo *root,
 					elog(WARNING, "could not find DMLActionExpr in split update target list");
 				node->action_col_idxes = lappend_int(node->action_col_idxes, action_col_idx);
 
-				/* GPDB_96_MERGE_FIXME: if with oids... */
-				node->oid_col_idxes = lappend_int(node->oid_col_idxes, 0);
+				oid_tle = find_junk_tle(subplan->targetlist, "oid");
+				if (oid_tle)
+					oid_col_idx = oid_tle->resno;
+				else
+					oid_col_idx = 0;
+				node->oid_col_idxes = lappend_int(node->oid_col_idxes, oid_col_idx);
 			}
 			else
 			{
-				node->action_col_idxes = lappend_int(node->action_col_idxes, -1);
+				node->action_col_idxes = lappend_int(node->action_col_idxes, 0);
 				node->oid_col_idxes = lappend_int(node->oid_col_idxes, 0);
 			}
 		}
