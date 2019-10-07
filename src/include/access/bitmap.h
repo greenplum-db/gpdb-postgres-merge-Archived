@@ -856,7 +856,7 @@ extern bool _bitmap_findvalue(Relation lovHeap, Relation lovIndex,
 extern void bitmap_redo(XLogReaderState *record);
 extern void bitmap_desc(StringInfo buf, XLogReaderState *record);
 extern const char *bitmap_identify(uint8 info);
-extern Datum bmvalidate(Oid opclassoid);
+extern bool bmvalidate(Oid opclassoid);
 
 /* reloptions.c */
 #define BITMAP_MIN_FILLFACTOR		10

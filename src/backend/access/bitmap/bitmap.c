@@ -1091,7 +1091,7 @@ GetBitmapIndexAuxOids(Relation index, Oid *heapId, Oid *indexId)
 /*
  * Ask appropriate access method to validate the specified opclass.
  */
-Datum
+bool
 bmvalidate(Oid opclassoid)
 {
 	bool		result = true;
