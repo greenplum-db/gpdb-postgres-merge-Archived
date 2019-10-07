@@ -4233,6 +4233,8 @@ create_minmaxagg_path(PlannerInfo *root,
 	/* we checked that all the child paths have compatible loci */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbPathLocus_MakeSimple(&pathnode->path.locus, locustype, numsegments);
+	else
+		CdbPathLocus_MakeEntry(&pathnode->path.locus);
 
 	/* add tlist eval cost for each output row, plus cpu_tuple_cost */
 	pathnode->path.startup_cost = initplan_cost + target->cost.startup;
