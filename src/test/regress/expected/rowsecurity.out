@@ -216,7 +216,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
                InitPlan 1 (returns $0)  (slice3)
                  ->  Gather Motion 1:1  (slice1; segments: 1)
                        ->  Seq Scan on uaccount
-                             Filter: (pguser = 'rls_regress_user2'::name)
+                             Filter: (pguser = 'regress_rls_carol'::name)
  Optimizer: Postgres query optimizer
 (10 rows)
 
@@ -233,9 +233,9 @@ EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dt
                      ->  Seq Scan on document document_1
                            Filter: (dlevel <= $0)
                            InitPlan 1 (returns $0)  (slice4)
-                             ->  Gather Motion 3:1  (slice1; segments: 3)
+                             ->  Gather Motion 1:1  (slice1; segments: 1)
                                    ->  Seq Scan on uaccount
-                                         Filter: (pguser = 'rls_regress_user2'::name)
+                                         Filter: (pguser = 'regress_rls_carol'::name)
          ->  Hash
                ->  Seq Scan on category
  Optimizer: Postgres query optimizer
@@ -311,7 +311,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
    ->  Subquery Scan on document
          Filter: f_leak(document.dtitle)
          ->  Seq Scan on document document_1
-               Filter: (dauthor = 'rls_regress_user2'::name)
+               Filter: (dauthor = 'regress_rls_carol'::name)
  Optimizer: Postgres query optimizer
 (6 rows)
 
@@ -326,7 +326,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM document NATURAL JOIN category WHERE f_leak(dt
                ->  Subquery Scan on document
                      Filter: f_leak(document.dtitle)
                      ->  Seq Scan on document document_1
-                           Filter: (dauthor = 'rls_regress_user2'::name)
+                           Filter: (dauthor = 'regress_rls_carol'::name)
          ->  Hash
                ->  Seq Scan on category
  Optimizer: Postgres query optimizer
