@@ -5157,22 +5157,21 @@ select  * from qp_misc_jiras.test_co where ctid='(33554432,2)' and gp_segment_id
 set gp_enable_explain_allstat=on;
 insert into qp_misc_jiras.test_heap select i, i from generate_series(0, 99999) i;
 explain analyze select count(*) from qp_misc_jiras.test_heap;
-                                                                         QUERY PLAN                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------
- Aggregate  (cost=1176.32..1176.33 rows=1 width=8)
-   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=1176.25..1176.30 rows=1 width=8)
-         ->  Aggregate  (cost=1176.25..1176.26 rows=1 width=8)
-               allstat: seg_firststart_total_ntuples/seg0_0.621 ms_15 ms_1/seg1_0.621 ms_15 ms_1/seg2_0.634 ms_15 ms_1//end
-               ->  Seq Scan on test_heap  (cost=0.00..961.00 rows=28700 width=0)
-                     allstat: seg_firststart_total_ntuples/seg0_0.622 ms_7.878 ms_33350/seg1_0.622 ms_7.850 ms_33336/seg2_0.634 ms_7.866 ms_33315//end
- Slice statistics:
-   (slice0)    Executor memory: 382K bytes.
-   (slice1)    Executor memory: 163K bytes avg x 3 workers, 163K bytes max (seg0).
- Statement statistics:
-   Memory used: 128000K bytes
- Settings:  enable_bitmapscan=off; enable_groupagg=on; enable_indexscan=on; enable_seqscan=off; optimizer_segments=3
- Total runtime: 15.974 ms
-(17 rows)
+                                                                      QUERY PLAN                                                                       
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=10000001176.28..10000001176.29 rows=1 width=8) (actual time=10.355..10.355 rows=1 loops=1)
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=10000001176.25..10000001176.28 rows=1 width=8) (actual time=9.789..10.341 rows=3 loops=1)
+         ->  Partial Aggregate  (cost=10000001176.25..10000001176.26 rows=1 width=8) (actual time=9.702..9.702 rows=1 loops=1)
+               allstat: seg_firststart_total_ntuples/seg0_0.540 ms_9.702 ms_1/seg1_0.553 ms_9.939 ms_1/seg2_0.551 ms_9.415 ms_1//end
+               ->  Seq Scan on test_heap  (cost=10000000000.00..10000000961.00 rows=28700 width=0) (actual time=0.039..4.990 rows=33462 loops=1)
+                     allstat: seg_firststart_total_ntuples/seg0_0.540 ms_4.990 ms_33462/seg1_0.554 ms_5.083 ms_33329/seg2_0.551 ms_4.803 ms_33210//end
+ Planning time: 0.393 ms
+   (slice0)    Executor memory: 59K bytes.
+   (slice1)    Executor memory: 57K bytes avg x 3 workers, 57K bytes max (seg0).
+ Memory used:  128000kB
+ Optimizer: Postgres query optimizer
+ Execution time: 11.537 ms
+(12 rows)
 
 -- start_ignore
 -- This is to verify MPP-8946
