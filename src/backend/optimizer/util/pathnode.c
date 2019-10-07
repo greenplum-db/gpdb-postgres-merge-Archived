@@ -4662,6 +4662,8 @@ adjust_modifytable_subpaths(PlannerInfo *root, CmdType operation,
 				subpath = create_split_update_path(root, rti, rte, targetPolicy, subpath);
 			else
 				subpath = create_motion_path_for_update(root, rti, rte, targetPolicy, subpath);
+
+			lci = lnext(lci);
 		}
 		lfirst(lcp) = subpath;
 	}
