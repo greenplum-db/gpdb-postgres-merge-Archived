@@ -49,7 +49,7 @@ static vbits *collect_visibility_data(Oid relid, bool include_pd);
 static corrupt_items *collect_corrupt_items(Oid relid, bool all_visible,
 					  bool all_frozen);
 static void record_corrupt_item(corrupt_items *items, ItemPointer tid);
-static bool tuple_all_visible(HeapTuple tup, TransactionId OldestXmin,
+static bool tuple_all_visible(Relation rel, HeapTuple tup, TransactionId OldestXmin,
 				  Buffer buffer);
 
 /*
@@ -621,14 +621,14 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 			/* Initialize a HeapTupleData structure for checks below. */
 			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			tuple.t_len = ItemIdGetLength(itemid);
-			tuple.t_tableOid = relid;
+			/* tuple.t_tableOid = relid; */
 
 			/*
 			 * If we're checking whether the page is all-visible, we expect
 			 * the tuple to be all-visible.
 			 */
 			if (check_visible &&
-				!tuple_all_visible(&tuple, OldestXmin, buffer))
+				!tuple_all_visible(rel, &tuple, OldestXmin, buffer))
 			{
 				TransactionId RecomputedOldestXmin;
 
@@ -653,7 +653,7 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 				else
 				{
 					OldestXmin = RecomputedOldestXmin;
-					if (!tuple_all_visible(&tuple, OldestXmin, buffer))
+					if (!tuple_all_visible(rel, &tuple, OldestXmin, buffer))
 						record_corrupt_item(items, &tuple.t_data->t_ctid);
 				}
 			}
@@ -711,12 +711,12 @@ record_corrupt_item(corrupt_items *items, ItemPointer tid)
  * The buffer should contain the tuple and should be locked and pinned.
  */
 static bool
-tuple_all_visible(HeapTuple tup, TransactionId OldestXmin, Buffer buffer)
+tuple_all_visible(Relation rel, HeapTuple tup, TransactionId OldestXmin, Buffer buffer)
 {
 	HTSV_Result state;
 	TransactionId xmin;
 
-	state = HeapTupleSatisfiesVacuum(tup, OldestXmin, buffer);
+	state = HeapTupleSatisfiesVacuum(rel, tup, OldestXmin, buffer);
 	if (state != HEAPTUPLE_LIVE)
 		return false;			/* all-visible implies live */
 
