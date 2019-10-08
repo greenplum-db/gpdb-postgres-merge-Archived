@@ -520,8 +520,9 @@ generate_recursion_path(SetOperationStmt *setOp, PlannerInfo *root,
 
 	/* GPDB_96_MERGE_FIXME: is there anything that guarantees that the left and right
 	 * path have the same locus, and that it makes sense?
+	 * In fact, the outer path is a WorktableScan.
 	 */
-	path->locus = lpath->locus;
+	path->locus = rpath->locus;
 
 	return path;
 }
