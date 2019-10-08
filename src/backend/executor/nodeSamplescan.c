@@ -116,18 +116,6 @@ InitScanRelation(SampleScanState *node, EState *estate, int eflags)
 {
 	Relation	currentRelation;
 
-	/* GPDB_95_MERGE_FIXME: Add support for AO tables */
-	Oid			relid = getrelid(
-		((SampleScan *) node->ss.ps.plan)->scan.scanrelid,
-		estate->es_range_table);
-	Relation performStorageTestRelation = RelationIdGetRelation(relid);
-	if (!RelationIsHeap(performStorageTestRelation))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("invalid relation type"),
-				 errhint("Sampling is only supported in heap tables.")));
-	RelationClose(performStorageTestRelation);
-
 	/*
 	 * get the relation object id from the relid'th entry in the range table,
 	 * open that relation and acquire appropriate lock on it.
@@ -139,16 +127,16 @@ InitScanRelation(SampleScanState *node, EState *estate, int eflags)
 	node->ss.ss_currentRelation = currentRelation;
 
 	/*
-	 * GPDB_96_MERGE: move this comments from bernoulli_beginsamplescan
-         * GPDB_95_MERGE_FIXME: Add support for AO tables, external tables
-         * should not be supported
-         */
-        if (!RelationIsHeap(currentRelation))
-                ereport(ERROR,
-                                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                                 errmsg("invalid relation type"),
-                                 errhint("Sampling is only supported in heap tables.")));
+	 * GPDB_95_MERGE_FIXME: Add support for AO tables, external tables
+	 * should not be supported
+	 */
+	if (!RelationIsHeap(currentRelation))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("invalid relation type"),
+				 errhint("Sampling is only supported in heap tables.")));
 
+	node->ss.ss_currentRelation = currentRelation;
 
 	/* we won't set up the HeapScanDesc till later */
 	node->ss_currentScanDesc_heap = NULL;

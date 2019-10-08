@@ -30,7 +30,7 @@ CREATE VIEW test_tablesample_v2 AS
 -- check a sampled query doesn't affect cursor in progress
 BEGIN;
 DECLARE tablesample_cur CURSOR FOR
-  SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (0);
+  SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (0) ORDER BY id;
 
 FETCH FIRST FROM tablesample_cur;
 FETCH NEXT FROM tablesample_cur;
@@ -46,7 +46,7 @@ FETCH NEXT FROM tablesample_cur;
 -- cursor and starting again we pass the tests and keep the file closer to
 -- upstream. We do test the rescan methods of tablesample afterwards.
 CLOSE tablesample_cur;
-DECLARE tablesample_cur CURSOR FOR SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (100) ORDER BY id;
+DECLARE tablesample_cur CURSOR FOR SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (0) ORDER BY id;
 FETCH FIRST FROM tablesample_cur;
 FETCH NEXT FROM tablesample_cur;
 FETCH NEXT FROM tablesample_cur;
@@ -56,26 +56,6 @@ FETCH NEXT FROM tablesample_cur;
 
 CLOSE tablesample_cur;
 END;
-
--- Greenplum: Test rescan paths by forcing a nested loop
-CREATE TABLE ttr1 (a int, b int) DISTRIBUTED BY (a);
-CREATE TABLE ttr2 (a int, b int) DISTRIBUTED BY (a);
-INSERT INTO ttr1 VALUES (1, 1), (NULL, NULL);
-INSERT INTO ttr2 VALUES (1, 5), (NULL, 6);
-SET enable_hashjoin TO OFF;
-SET enable_mergejoin TO OFF;
-SET enable_nestloop TO ON;
-
-EXPLAIN SELECT * FROM ttr1 TABLESAMPLE BERNOULLI (50) REPEATABLE (100), ttr2 TABLESAMPLE BERNOULLI (50) REPEATABLE (100) WHERE ttr1.a = ttr2.a;
-SELECT * FROM ttr1 TABLESAMPLE BERNOULLI (50) REPEATABLE (100), ttr2 TABLESAMPLE BERNOULLI (50) REPEATABLE (100) WHERE ttr1.a = ttr2.a;
-EXPLAIN SELECT * FROM ttr1 TABLESAMPLE SYSTEM (50) REPEATABLE (100), ttr2 TABLESAMPLE SYSTEM (50) REPEATABLE (100) WHERE ttr1.a = ttr2.a;
-SELECT * FROM ttr1 TABLESAMPLE SYSTEM (50) REPEATABLE (100), ttr2 TABLESAMPLE SYSTEM (50) REPEATABLE (100) WHERE ttr1.a = ttr2.a;
-
-RESET enable_hashjoin;
-RESET enable_mergejoin;
-RESET enable_nestloop;
-DROP TABLE ttr1;
-DROP TABLE ttr2;
 
 EXPLAIN (COSTS OFF)
   SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (50) REPEATABLE (2);
@@ -91,7 +71,27 @@ select count(*) from person;
 -- check that collations get assigned within the tablesample arguments
 SELECT count(*) FROM test_tablesample TABLESAMPLE bernoulli (('1'::text < '0'::text)::int);
 
+-- Greenplum: Test rescan paths by forcing a nested loop
+CREATE TABLE ttr1 (a int, b int) DISTRIBUTED BY (a);
+CREATE TABLE ttr2 (a int, b int) DISTRIBUTED BY (a);
+INSERT INTO ttr1 VALUES (1, 1), (12, 1), (31, 1), (NULL, NULL);
+INSERT INTO ttr2 VALUES (1, 2), (12, 2), (31, 2), (NULL, 6);
+SET enable_hashjoin TO OFF;
+SET enable_mergejoin TO OFF;
+SET enable_nestloop TO ON;
+
+EXPLAIN (COSTS OFF) SELECT * FROM ttr1 TABLESAMPLE BERNOULLI (50) REPEATABLE (1), ttr2 TABLESAMPLE BERNOULLI (50) REPEATABLE (1) WHERE ttr1.a = ttr2.a;
+SELECT * FROM ttr1 TABLESAMPLE BERNOULLI (50) REPEATABLE (1), ttr2 TABLESAMPLE BERNOULLI (50) REPEATABLE (1) WHERE ttr1.a = ttr2.a;
+EXPLAIN (COSTS OFF) SELECT * FROM ttr1 TABLESAMPLE SYSTEM (50) REPEATABLE (1), ttr2 TABLESAMPLE SYSTEM (50) REPEATABLE (1) WHERE ttr1.a = ttr2.a;
+SELECT * FROM ttr1 TABLESAMPLE SYSTEM (50) REPEATABLE (1), ttr2 TABLESAMPLE SYSTEM (50) REPEATABLE (1) WHERE ttr1.a = ttr2.a;
+
+RESET enable_hashjoin;
+RESET enable_mergejoin;
+RESET enable_nestloop;
+
 -- check behavior during rescans, as well as correct handling of min/max pct
+-- Greenplum: does not support laterals completely, rescan specific tests above
+-- start_ignore
 select * from
   (values (0),(100)) v(pct),
   lateral (select count(*) from tenk1 tablesample bernoulli (pct)) ss;
@@ -111,6 +111,24 @@ select pct, count(unique1) from
   (values (0),(100)) v(pct),
   lateral (select * from tenk1 tablesample system (pct)) ss
   group by pct;
+-- end_ignore
+
+-- Greenplum: we do have to test min/max pct tests though
+select 0 as pct, count(*) from tenk1 tablesample bernoulli (0)
+union all
+select 100 as pct, count(*) from tenk1 tablesample bernoulli (100);
+
+select 0 as pct, count(*) from tenk1 tablesample system (0)
+union all
+select 100 as pct, count(*) from tenk1 tablesample system (100);
+
+select 0 as pct, count(unique1) from tenk1 tablesample bernoulli (0)
+union all
+select 100 as pct, count(unique1) from tenk1 tablesample bernoulli (100);
+
+select 0 as pct, count(unique1) from tenk1 tablesample system (0)
+union all
+select 100 as pct, count(unique1) from tenk1 tablesample system (100);
 
 -- errors
 SELECT id FROM test_tablesample TABLESAMPLE FOOBAR (1);
