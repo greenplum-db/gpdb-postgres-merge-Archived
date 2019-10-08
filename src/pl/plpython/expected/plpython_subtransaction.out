@@ -450,8 +450,6 @@ CONTEXT:  Traceback (most recent call last):
     fetched = cur.fetch(10)
 PL/Python function "cursor_aborted_subxact"
 SELECT cursor_plan_aborted_subxact();
-CONTEXT:  SQL statement "create temporary table tmp(i) as select generate_series(1, 10)"
-PL/Python function "cursor_plan_aborted_subxact"
 ERROR:  ValueError: iterating a cursor in an aborted subtransaction
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "cursor_plan_aborted_subxact", line 10, in <module>
