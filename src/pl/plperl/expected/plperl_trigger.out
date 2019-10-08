@@ -255,19 +255,19 @@ create event trigger perl_a_snitch on ddl_command_start
 create event trigger perl_b_snitch on ddl_command_end
    execute procedure perlsnitch();
 create or replace function foobar() returns int language sql as $$select 1;$$;
-NOTICE:  perlsnitch: ddl_command_start CREATE FUNCTION 
-NOTICE:  perlsnitch: ddl_command_end CREATE FUNCTION 
+NOTICE:  perlsnitch: ddl_command_start CREATE FUNCTION
+NOTICE:  perlsnitch: ddl_command_end CREATE FUNCTION
 alter function foobar() cost 77;
-NOTICE:  perlsnitch: ddl_command_start ALTER FUNCTION 
-NOTICE:  perlsnitch: ddl_command_end ALTER FUNCTION 
+NOTICE:  perlsnitch: ddl_command_start ALTER FUNCTION
+NOTICE:  perlsnitch: ddl_command_end ALTER FUNCTION
 drop function foobar();
-NOTICE:  perlsnitch: ddl_command_start DROP FUNCTION 
-NOTICE:  perlsnitch: ddl_command_end DROP FUNCTION 
+NOTICE:  perlsnitch: ddl_command_start DROP FUNCTION
+NOTICE:  perlsnitch: ddl_command_end DROP FUNCTION
 create table foo();
-NOTICE:  perlsnitch: ddl_command_start CREATE TABLE 
-NOTICE:  perlsnitch: ddl_command_end CREATE TABLE 
+NOTICE:  perlsnitch: ddl_command_start CREATE TABLE
+NOTICE:  perlsnitch: ddl_command_end CREATE TABLE
 drop table foo;
-NOTICE:  perlsnitch: ddl_command_start DROP TABLE 
-NOTICE:  perlsnitch: ddl_command_end DROP TABLE 
+NOTICE:  perlsnitch: ddl_command_start DROP TABLE
+NOTICE:  perlsnitch: ddl_command_end DROP TABLE
 drop event trigger perl_a_snitch;
 drop event trigger perl_b_snitch;
