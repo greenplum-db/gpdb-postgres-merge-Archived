@@ -946,17 +946,16 @@ select * from subselect_t1 where x in (select y from subselect_t2 union all sele
 explain select count(*) from subselect_t1 where x in (select y from subselect_t2);
                                         QUERY PLAN                                        
 ------------------------------------------------------------------------------------------
- Aggregate  (cost=2.21..2.22 rows=1 width=8)
-   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=2.14..2.19 rows=1 width=8)
-         ->  Aggregate  (cost=2.14..2.15 rows=1 width=8)
-               ->  Hash Semi Join  (cost=1.07..2.13 rows=2 width=0)
-                     Hash Cond: subselect_t1.x = subselect_t2.y
-                     ->  Seq Scan on subselect_t1  (cost=0.00..1.02 rows=1 width=4)
-                     ->  Hash  (cost=1.03..1.03 rows=1 width=4)
-                           ->  Seq Scan on subselect_t2  (cost=0.00..1.03 rows=1 width=4)
- Settings:  optimizer_segments=3
- Optimizer status: Postgres query optimizer
-(10 rows)
+ Finalize Aggregate  (cost=4.17..4.18 rows=1 width=8)
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=4.14..4.17 rows=1 width=8)
+         ->  Partial Aggregate  (cost=4.14..4.15 rows=1 width=8)
+               ->  Hash Semi Join  (cost=2.07..4.13 rows=2 width=0)
+                     Hash Cond: (subselect_t1.x = subselect_t2.y)
+                     ->  Seq Scan on subselect_t1  (cost=0.00..2.02 rows=1 width=4)
+                     ->  Hash  (cost=2.03..2.03 rows=1 width=4)
+                           ->  Seq Scan on subselect_t2  (cost=0.00..2.03 rows=1 width=4)
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 select count(*) from subselect_t1 where x in (select y from subselect_t2);
  count 
