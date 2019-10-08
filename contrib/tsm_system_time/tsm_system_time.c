@@ -219,8 +219,13 @@ static BlockNumber
 system_time_nextsampleblock(SampleScanState *node)
 {
 	SystemTimeSamplerData *sampler = (SystemTimeSamplerData *) node->tsm_state;
-	HeapScanDesc scan = node->ss.ss_currentScanDesc;
+	HeapScanDesc scan;
 	instr_time	cur_time;
+
+	/* GPDB_96_MERGE_FIXME: this only works with heap tables for now. */
+	if (node->ss_currentScanDesc_heap == NULL)
+		elog(ERROR, "cannot use tsm_system_rows with AO / AOCO tables");
+	scan = node->ss_currentScanDesc_heap;
 
 	/* First call within scan? */
 	if (sampler->doneblocks == 0)
