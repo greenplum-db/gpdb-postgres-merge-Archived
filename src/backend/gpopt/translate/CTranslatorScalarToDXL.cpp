@@ -1970,6 +1970,23 @@ CTranslatorScalarToDXL::TranslateArrayRefToDXL
 
 	CDXLNode *dxlnode = GPOS_NEW(m_mp) CDXLNode(m_mp, dxlop);
 
+	// GPDB_96_MERGE_FIXME: Since upstream commit 9246af6799, the List can contain NULLs,
+	// to indicate omitted array boundaries. Need to add support for them, but until then,
+	// bail out.
+	ListCell *lc;
+	ForEach (lc, parrayref->reflowerindexpr)
+	{
+		Expr *child_expr = (Expr *) lfirst(lc);
+		if (child_expr == NULL)
+			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("Omitted array bound"));
+	}
+	ForEach (lc, parrayref->refupperindexpr)
+	{
+		Expr *child_expr = (Expr *) lfirst(lc);
+		if (child_expr == NULL)
+			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("Omitted array bound"));
+	}
+
 	// add children
 	AddArrayIndexList(dxlnode, parrayref->reflowerindexpr, CDXLScalarArrayRefIndexList::EilbLower, var_colid_mapping);
 	AddArrayIndexList(dxlnode, parrayref->refupperindexpr, CDXLScalarArrayRefIndexList::EilbUpper, var_colid_mapping);
