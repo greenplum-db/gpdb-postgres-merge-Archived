@@ -71,7 +71,7 @@ initCachedPage(BloomBuildState *buildstate)
  * Per-tuple callback from IndexBuildHeapScan.
  */
 static void
-bloomBuildCallback(Relation index, HeapTuple htup, Datum *values,
+bloomBuildCallback(Relation index, ItemPointer tupleId, Datum *values,
 				   bool *isnull, bool tupleIsAlive, void *state)
 {
 	BloomBuildState *buildstate = (BloomBuildState *) state;
@@ -80,7 +80,7 @@ bloomBuildCallback(Relation index, HeapTuple htup, Datum *values,
 
 	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
 
-	itup = BloomFormTuple(&buildstate->blstate, &htup->t_self, values, isnull);
+	itup = BloomFormTuple(&buildstate->blstate, tupleId, values, isnull);
 
 	/* Try to add next item to cached page */
 	if (BloomPageAddItem(&buildstate->blstate, buildstate->data, itup))
@@ -136,7 +136,7 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	initCachedPage(&buildstate);
 
 	/* Do the heap scan */
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
+	reltuples = IndexBuildScan(heap, index, indexInfo, true,
 								   bloomBuildCallback, (void *) &buildstate);
 
 	/*
