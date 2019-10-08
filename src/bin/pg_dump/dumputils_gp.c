@@ -7,7 +7,6 @@
 #include "postgres_fe.h"
 
 #include "dumputils.h"
-#include "fe_utils/string_utils.h"
 
 /*
  * Escape any backslashes in given string (from initdb.c)
