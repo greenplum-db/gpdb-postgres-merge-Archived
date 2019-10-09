@@ -1072,6 +1072,8 @@ EndPrepare(GlobalTransaction gxact)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("two-phase state file maximum length exceeded")));
 
+	SIMPLE_FAULT_INJECTOR("before_xlog_xact_prepare");
+
 	/*
 	 * Now writing 2PC state data to WAL. We let the WAL's CRC protection
 	 * cover us, so no need to calculate a separate CRC.
