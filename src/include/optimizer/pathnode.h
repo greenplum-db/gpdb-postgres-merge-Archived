@@ -100,7 +100,7 @@ extern GatherPath *create_gather_path(PlannerInfo *root,
 				   Relids required_outer, double *rows);
 extern SubqueryScanPath *create_subqueryscan_path(PlannerInfo *root,
 						 RelOptInfo *rel, Path *subpath,
-						 List *pathkeys, Relids required_outer);
+						 List *pathkeys, CdbPathLocus locus, Relids required_outer);
 extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 						 RangeTblEntry *rte,
 						 List *pathkeys, Relids required_outer);

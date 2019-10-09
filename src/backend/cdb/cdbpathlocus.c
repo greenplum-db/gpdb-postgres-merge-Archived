@@ -405,84 +405,85 @@ cdbpathlocus_from_exprs(struct PlannerInfo *root,
  */
 CdbPathLocus
 cdbpathlocus_from_subquery(struct PlannerInfo *root,
-						   struct Plan *subqplan,
-						   Index subqrelid)
+						   RelOptInfo *rel,
+						   Path *subpath)
 {
 	CdbPathLocus locus;
-	Flow	   *flow = subqplan->flow;
-	int			numsegments;
 
-	Insist(flow);
-
-	/*
-	 * We want to create a locus representing the subquery, so numsegments
-	 * should be the same with the subquery.
-	 */
-	numsegments = flow->numsegments;
-
-	/* Flow node was made from CdbPathLocus by cdbpathtoplan_create_flow() */
-	switch (flow->flotype)
+	if (CdbPathLocus_IsHashed(subpath->locus) ||
+		CdbPathLocus_IsHashedOJ(subpath->locus))
 	{
-		case FLOW_SINGLETON:
-			if (flow->segindex == -1)
-				CdbPathLocus_MakeEntry(&locus);
-			else
-			{
-				/*
-				 * keep segmentGeneral character, otherwise planner may put
-				 * this subplan to qDisp unexpectedly 
-				 */
-				if (flow->locustype == CdbLocusType_SegmentGeneral)
-					CdbPathLocus_MakeSegmentGeneral(&locus, numsegments);
-				else
-					CdbPathLocus_MakeSingleQE(&locus, numsegments);
-			}
-			break;
-		case FLOW_REPLICATED:
-			CdbPathLocus_MakeReplicated(&locus, numsegments);
-			break;
-		case FLOW_PARTITIONED:
-			{
-				List	   *distkeys = NIL;
-				ListCell   *expr_cell;
-				ListCell   *opf_cell;
+		bool		failed = false;
+		List	   *distkeys = NIL;
+		int			numsegments = subpath->locus.numsegments;
+		ListCell   *dk_cell;
+		List	   *usable_subtlist = NIL;
+		List	   *new_vars = NIL;
+		ListCell   *lc;
 
-				forboth(expr_cell, flow->hashExprs, opf_cell, flow->hashOpfamilies)
+		foreach (lc, rel->reltarget->exprs)
+		{
+			Var		   *var = (Var *) lfirst(lc);
+			Node	   *subexpr;
+
+			if (!IsA(var, Var))
+				continue;
+
+			/* ignore whole-row vars */
+			if (var->varattno == 0)
+				continue;
+
+			subexpr = list_nth(subpath->pathtarget->exprs, var->varattno - 1);
+			usable_subtlist = lappend(usable_subtlist, subexpr);
+			new_vars = lappend(new_vars, var);
+		}
+
+		foreach (dk_cell, subpath->locus.distkey)
+		{
+			DistributionKey *sub_dk = (DistributionKey *) lfirst(dk_cell);
+			ListCell *ec_cell;
+			DistributionKey *outer_dk = NULL;
+
+			foreach (ec_cell, sub_dk->dk_eclasses)
+			{
+				EquivalenceClass *sub_ec = (EquivalenceClass *) lfirst(ec_cell);
+				EquivalenceClass *outer_ec;
+
+				outer_ec = cdb_pull_up_eclass(root,
+											  sub_ec,
+											  rel->relids,
+											  usable_subtlist,
+											  new_vars,
+											  -1 /* not used */);
+				if (outer_ec)
 				{
-					Node	   *expr = (Node *) lfirst(expr_cell);
-					Oid			opfamily = lfirst_oid(opf_cell);
-					TargetEntry *tle;
-					Var		   *var;
-					DistributionKey *distkey;
-
-					/*
-					 * Look for hash key expr among the subquery result
-					 * columns.
-					 */
-					tle = tlist_member_ignore_relabel(expr, subqplan->targetlist);
-					if (!tle)
-						break;
-
-					Assert(tle->resno >= 1);
-					var = makeVar(subqrelid,
-								  tle->resno,
-								  exprType((Node *) tle->expr),
-								  exprTypmod((Node *) tle->expr),
-								  exprCollation((Node *) tle->expr),
-								  0);
-					distkey = cdb_make_distkey_for_expr(root, (Node *) var, opfamily, tle->ressortgroupref);
-					distkeys = lappend(distkeys, distkey);
+					outer_dk = makeNode(DistributionKey);
+					outer_dk->dk_eclasses = list_make1(outer_ec);
+					outer_dk->dk_opfamily = sub_dk->dk_opfamily;
+					break;
 				}
-				if (distkeys && !expr_cell)
-					CdbPathLocus_MakeHashed(&locus, distkeys, numsegments);
-				else
-					CdbPathLocus_MakeStrewn(&locus, numsegments);
+			}
+
+			if (outer_dk == NULL)
+			{
+				failed = true;
 				break;
 			}
-		default:
-			CdbPathLocus_MakeNull(&locus, GP_POLICY_INVALID_NUMSEGMENTS());
-			Insist(0);
+			distkeys = lappend(distkeys, outer_dk);
+		}
+
+		if (failed)
+			CdbPathLocus_MakeStrewn(&locus, numsegments);
+		else if (CdbPathLocus_IsHashed(subpath->locus))
+			CdbPathLocus_MakeHashed(&locus, distkeys, numsegments);
+		else
+		{
+			Assert(CdbPathLocus_IsHashedOJ(subpath->locus));
+			CdbPathLocus_MakeHashedOJ(&locus, distkeys, numsegments);
+		}
 	}
+	else
+		locus = subpath->locus;
 	return locus;
 }								/* cdbpathlocus_from_subquery */
 

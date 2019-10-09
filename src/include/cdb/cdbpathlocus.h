@@ -18,7 +18,7 @@
 #include "nodes/pg_list.h"      /* List */
 #include "nodes/bitmapset.h"    /* Bitmapset */
 
-struct Plan;                    /* defined in plannodes.h */
+struct Path;                    /* defined in relation.h */
 struct RelOptInfo;              /* defined in relation.h */
 struct PlannerInfo;				/* defined in relation.h */
 struct GpPolicy;				/* defined in gp_policy.h */
@@ -270,8 +270,8 @@ cdbpathlocus_from_exprs(struct PlannerInfo     *root,
                         int                     numsegments);
 CdbPathLocus
 cdbpathlocus_from_subquery(struct PlannerInfo  *root,
-                           struct Plan         *subqplan,
-                           Index                subqrelid);
+						   struct RelOptInfo   *rel,
+						   struct Path         *subpath);
 
 CdbPathLocus
 cdbpathlocus_join(JoinType jointype, CdbPathLocus a, CdbPathLocus b);

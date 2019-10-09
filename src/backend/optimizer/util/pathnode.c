@@ -2689,7 +2689,7 @@ create_gather_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
  */
 SubqueryScanPath *
 create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
-						 List *pathkeys, Relids required_outer)
+						 List *pathkeys, CdbPathLocus locus, Relids required_outer)
 {
 	SubqueryScanPath *pathnode = makeNode(SubqueryScanPath);
 
@@ -2705,7 +2705,7 @@ create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->path.pathkeys = pathkeys;
 	pathnode->subpath = subpath;
 
-	pathnode->path.locus = subpath->locus;
+	pathnode->path.locus = locus;
 	pathnode->path.motionHazard = subpath->motionHazard;
 	pathnode->path.rescannable = false;
 	pathnode->path.sameslice_relids = NULL;
@@ -4932,6 +4932,7 @@ reparameterize_path(PlannerInfo *root, Path *path,
 														 rel,
 														 spath->subpath,
 														 spath->path.pathkeys,
+														 spath->path.locus,
 														 required_outer);
 			}
 		case T_Append:

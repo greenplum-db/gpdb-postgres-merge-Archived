@@ -1964,6 +1964,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		Path	   *subpath = (Path *) lfirst(lc);
 		Path	   *subquery_path;
 		List	   *pathkeys;
+		CdbPathLocus locus;
 
 		/* Convert subpath's pathkeys to outer representation */
 		pathkeys = convert_subquery_pathkeys(root,
@@ -1971,15 +1972,16 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 											 subpath->pathkeys,
 							make_tlist_from_pathtarget(subpath->pathtarget));
 
+		if (forceDistRand)
+			CdbPathLocus_MakeStrewn(&locus,
+									CdbPathLocus_NumSegments(subpath->locus));
+		else
+			locus = cdbpathlocus_from_subquery(root, rel, subpath);
+
 		/* Generate outer path using this subpath */
 		subquery_path = (Path *)
 			create_subqueryscan_path(root, rel, subpath,
-									 pathkeys, required_outer);
-
-		if (forceDistRand)
-			CdbPathLocus_MakeStrewn(&subquery_path->locus,
-									CdbPathLocus_NumSegments(subpath->locus));
-
+									 pathkeys, locus, required_outer);
 		add_path(rel, subquery_path);
 	}
 }
