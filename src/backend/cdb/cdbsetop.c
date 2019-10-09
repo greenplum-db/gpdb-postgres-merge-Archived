@@ -67,8 +67,11 @@ choose_setop_type(List *pathlist)
 				break;
 
 			case CdbLocusType_Entry:
-				ok_general = ok_partitioned = ok_single_qe = FALSE;
+				ok_general = ok_partitioned = ok_single_qe = false;
 				break;
+
+			case CdbLocusType_OuterQuery:
+				return PSETOP_SEQUENTIAL_OUTERQUERY;
 
 			case CdbLocusType_SingleQE:
 				ok_general = FALSE;
@@ -81,10 +84,13 @@ choose_setop_type(List *pathlist)
 			case CdbLocusType_General:
 				break;
 
-			case CdbLocusType_Null:
 			case CdbLocusType_Replicated:
+				break;
+
+			case CdbLocusType_Null:
+				elog(ERROR, "unexpected Null locus in set operation branch");
 			default:
-				return PSETOP_NONE;
+				elog(ERROR, "unexpected locus type in set operation branch");
 		}
 	}
 
@@ -173,6 +179,7 @@ adjust_setop_arguments(PlannerInfo *root, List *pathlist, List *tlist_list, GpSe
 
 					case CdbLocusType_Entry:
 					case CdbLocusType_General:
+					case CdbLocusType_OuterQuery:
 						break;
 
 					case CdbLocusType_Null:
@@ -185,6 +192,7 @@ adjust_setop_arguments(PlannerInfo *root, List *pathlist, List *tlist_list, GpSe
 				break;
 
 			case PSETOP_SEQUENTIAL_QE:
+			case PSETOP_SEQUENTIAL_OUTERQUERY:
 				switch (subpath->locus.locustype)
 				{
 					case CdbLocusType_Hashed:
@@ -199,6 +207,7 @@ adjust_setop_arguments(PlannerInfo *root, List *pathlist, List *tlist_list, GpSe
 					case CdbLocusType_SingleQE:
 						break;
 
+					case CdbLocusType_OuterQuery:
 					case CdbLocusType_General:
 						break;
 
@@ -333,8 +342,7 @@ make_motion_gather(PlannerInfo *root, Plan *subplan, List *sortPathKeys)
 		 */
 		sort = make_sort_from_pathkeys(subplan,
 									   sortPathKeys,
-									   /* GPDB_96_MERGE_FIXME: the comment here says useExecutorVarFormat, but it's actually 'add_keys_to_targetlist'. Are we mixing things up? */
-									   false /* useExecutorVarFormat */ );
+									   false /* add_keys_to_targetlist */ );
 
 		motion = make_sorted_union_motion(root,
 										  subplan,
@@ -342,7 +350,6 @@ make_motion_gather(PlannerInfo *root, Plan *subplan, List *sortPathKeys)
 										  sort->sortColIdx,
 										  sort->sortOperators,
 										  sort->collations,sort->nullsFirst,
-										  false,
 										  subplan->flow->numsegments);
 
 		/* throw away the Sort */
@@ -350,7 +357,7 @@ make_motion_gather(PlannerInfo *root, Plan *subplan, List *sortPathKeys)
 	}
 	else
 	{
-		motion = make_union_motion(subplan, false, subplan->flow->numsegments);
+		motion = make_union_motion(subplan, subplan->flow->numsegments);
 	}
 
 	return motion;
@@ -396,7 +403,11 @@ make_motion_hash_all_targets(PlannerInfo *root, Path *subpath, List *tlist)
 	if (hashexprs)
 	{
 		/* Distribute to ALL to maximize parallelism */
-		locus = cdbpathlocus_from_exprs(root, hashexprs, hashopfamilies, hashsortrefs, getgpsegmentCount());
+		locus = cdbpathlocus_from_exprs(root,
+										hashexprs,
+										hashopfamilies,
+										hashsortrefs,
+										getgpsegmentCount());
 	}
 	else
 	{
@@ -428,7 +439,6 @@ make_motion_hash(PlannerInfo *root, Plan *subplan, List *hashExprs, List *hashOp
 	return make_hashed_motion(subplan,
 							  hashExprs,
 							  hashOpfamilies,
-							  false /* useExecutorVarFormat */,
 							  subplan->flow->numsegments);
 }
 
@@ -462,7 +472,6 @@ make_motion_hash_exprs(PlannerInfo *root, Plan *subplan, List *hashExprs)
 	return make_hashed_motion(subplan,
 							  hashExprs,
 							  hashOpfamilies,
-							  false /* useExecutorVarFormat */,
 							  subplan->flow->numsegments);
 }
 
@@ -491,6 +500,10 @@ mark_append_locus(Path *path, GpSetOpType optype)
 			break;
 		case PSETOP_SEQUENTIAL_QE:
 			CdbPathLocus_MakeSingleQE(&path->locus, numsegments);
+			break;
+		case PSETOP_SEQUENTIAL_OUTERQUERY:
+			CdbPathLocus_MakeOuterQuery(&path->locus, numsegments);
+			break;
 		case PSETOP_NONE:
 			break;
 	}
@@ -594,6 +607,15 @@ mark_plan_singleQE(Plan *plan, int numsegments)
 	plan->flow = makeFlow(FLOW_SINGLETON, numsegments);
 	plan->flow->segindex = 0;
 	plan->flow->locustype = CdbLocusType_SingleQE;
+}
+
+void
+mark_plan_outerquery(Plan *plan, int numsegments)
+{
+	Assert(is_plan_node((Node *) plan) && plan->flow == NULL);
+	plan->flow = makeFlow(FLOW_SINGLETON, numsegments);
+	plan->flow->segindex = 0;
+	plan->flow->locustype = CdbLocusType_OuterQuery;
 }
 
 void

@@ -129,7 +129,35 @@ cdbpath_create_motion_path(PlannerInfo *root,
 	Assert(numsegments > 0);
 
 	/* Moving subpath output to a single executor process (qDisp or qExec)? */
-	if (CdbPathLocus_IsBottleneck(locus))
+	if (CdbPathLocus_IsOuterQuery(locus))
+	{
+		/* GPDB_96_MERGE_FIXME: this is special */
+		if (CdbPathLocus_IsOuterQuery(subpath->locus))
+		{
+			return subpath;
+		}
+
+		if (CdbPathLocus_IsGeneral(subpath->locus))
+		{
+			/* XXX: this is a bit bogus. We just change the subpath's locus. */
+			subpath->locus = locus;
+			return subpath;
+		}
+
+		if (CdbPathLocus_IsEntry(subpath->locus) ||
+			CdbPathLocus_IsSingleQE(subpath->locus))
+		{
+			/*
+			 * XXX: this is a bit bogus. We just change the subpath's locus.
+			 *
+			 * This is also bogus, because the outer query might need to run
+			 * in segments.
+			 */
+			subpath->locus = locus;
+			return subpath;
+		}
+	}
+	else if (CdbPathLocus_IsBottleneck(locus))
 	{
 		/* entry-->entry?  No motion needed. */
 		if (CdbPathLocus_IsEntry(subpath->locus) &&
@@ -148,6 +176,14 @@ cdbpath_create_motion_path(PlannerInfo *root,
 
 		/* entry-->singleQE?  Don't move.  Slice's QE will run on entry db. */
 		if (CdbPathLocus_IsEntry(subpath->locus))
+		{
+			subpath->locus.numsegments = numsegments;
+			return subpath;
+		}
+
+		/* outerquery-->entry?  No motion needed. */
+		if (CdbPathLocus_IsOuterQuery(subpath->locus) &&
+			CdbPathLocus_IsEntry(locus))
 		{
 			subpath->locus.numsegments = numsegments;
 			return subpath;
@@ -381,7 +417,6 @@ cdbpath_create_motion_path(PlannerInfo *root,
 		else
 			goto invalid_motion_request;
 	}
-
 	else
 		goto invalid_motion_request;
 
@@ -424,11 +459,22 @@ cdbpath_create_motion_path(PlannerInfo *root,
 	pathnode->path.motionHazard = true;
 	pathnode->path.rescannable = false;
 
+	/*
+	 * A motion to bring data to the outer query's locus needs a Material node
+	 * on top, to shield the Motion node from rescanning, when the SubPlan
+	 * is rescanned.
+	 */
+	if (CdbPathLocus_IsOuterQuery(locus))
+	{
+		return (Path *) create_material_path(root, subpath->parent,
+											 &pathnode->path);
+	}
+
 	return (Path *) pathnode;
 
 	/* Unexpected source or destination locus. */
 invalid_motion_request:
-	Assert(0);
+	elog(ERROR, "could not build Motion path");
 	return NULL;
 }								/* cdbpath_create_motion_path */
 
@@ -1151,18 +1197,34 @@ cdbpath_motion_for_join(PlannerInfo *root,
 	outer.bytes = outer.path->rows * outer.path->pathtarget->width;
 	inner.bytes = inner.path->rows * inner.path->pathtarget->width;
 
-	/*
-	 * Motion not needed if either source is everywhere (e.g. a constant).
-	 *
-	 * But if a row is everywhere and is preserved in an outer join, we don't
-	 * want to preserve it in every qExec process where it is unmatched,
-	 * because that would produce duplicate null-augmented rows. So in that
-	 * case, bring all the partitions to a single qExec to be joined. CDB
-	 * TODO: Can this case be handled without introducing a bottleneck?
-	 */
-	if (CdbPathLocus_IsGeneral(outer.locus) ||
+	if (CdbPathLocus_IsOuterQuery(outer.locus) ||
+		CdbPathLocus_IsOuterQuery(inner.locus))
+	{
+		/*
+		 * If one side of the join has "outer query" locus, must bring the
+		 * other side there too.
+		 */
+		if (CdbPathLocus_IsOuterQuery(outer.locus) &&
+			CdbPathLocus_IsOuterQuery(inner.locus))
+			return outer.locus;
+
+		if (CdbPathLocus_IsOuterQuery(outer.locus))
+			inner.move_to = outer.locus;
+		else
+			outer.move_to = inner.locus;
+	}
+	else if (CdbPathLocus_IsGeneral(outer.locus) ||
 		CdbPathLocus_IsGeneral(inner.locus))
 	{
+		/*
+		 * Motion not needed if either source is everywhere (e.g. a constant).
+		 *
+		 * But if a row is everywhere and is preserved in an outer join, we don't
+		 * want to preserve it in every qExec process where it is unmatched,
+		 * because that would produce duplicate null-augmented rows. So in that
+		 * case, bring all the partitions to a single qExec to be joined. CDB
+		 * TODO: Can this case be handled without introducing a bottleneck?
+		 */
 		/*
 		 * The logic for the join result's locus is (outer's locus is general):
 		 *   1. if outer is ok to replicated, then result's locus is the same
@@ -1866,8 +1928,10 @@ cdbpath_dedup_fixup_unique(UniquePath *uniquePath, CdbpathDedupFixupContext *ctx
 
 				opfamily = get_compatible_hash_opfamily(TIDEqualOperator);
 
-				cdistkey = cdb_make_distkey_for_expr(ctx->root,_(Node *) var,
-													 opfamily, false);
+				cdistkey = cdb_make_distkey_for_expr(ctx->root,
+													 (Node *) var,
+													 opfamily,
+													 0);
 				distkeys = lappend(distkeys, cdistkey);
 			}
 		}

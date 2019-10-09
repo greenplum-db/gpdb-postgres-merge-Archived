@@ -123,8 +123,7 @@ extern List *reconstruct_group_clause(List *orig_groupClause, List *tlist,
 
 extern Motion *make_motion(PlannerInfo *root, Plan *lefttree,
 			int numSortCols, AttrNumber *sortColIdx,
-			Oid *sortOperators, Oid *collations, bool *nullsFirst,
-			bool useExecutorVarFormat);
+			Oid *sortOperators, Oid *collations, bool *nullsFirst);
 
 extern HashJoin *make_hashjoin(List *tlist,
 			  List *joinclauses, List *otherclauses,
@@ -198,6 +197,8 @@ extern void add_base_rels_to_query(PlannerInfo *root, Node *jtnode);
 extern void build_base_rel_tlists(PlannerInfo *root, List *final_tlist);
 extern void add_vars_to_targetlist(PlannerInfo *root, List *vars,
 					   Relids where_needed, bool create_new_ph);
+extern void add_vars_to_targetlist_x(PlannerInfo *root, List *vars,
+						 Relids where_needed, bool create_new_ph, bool force);
 extern void find_lateral_references(PlannerInfo *root);
 extern void create_lateral_join_info(PlannerInfo *root);
 extern List *deconstruct_jointree(PlannerInfo *root);

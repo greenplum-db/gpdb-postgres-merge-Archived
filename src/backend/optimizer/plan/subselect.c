@@ -1034,16 +1034,9 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 		 * is false, then the user does not want us to materialize anything
 		 * unnecessarily, so we don't.
 		 */
-#if 0
-		/*
-		 * In GPDB, don't add a MATERIAL node here. We'll most likely add one
-		 * later anyway, when the SubPlan reference is "parallelized" in
-		 * ParallelizeCorrelatedSubPlan.
-		 */
 		else if (splan->parParam == NIL && enable_material &&
 				 !ExecMaterializesOutput(nodeTag(plan)))
-			plan = materialize_finished_plan(plan);
-#endif
+			plan = materialize_finished_plan(root, plan);
 
 		result = (Node *) splan;
 	}

@@ -235,6 +235,10 @@ ExecReScan(PlanState *node)
 			ExecReScanFunctionScan((FunctionScanState *) node);
 			break;
 
+		case T_TableFunctionState:
+			ExecReScanTableFunction((TableFunctionState *) node);
+			break;
+
 		case T_ValuesScanState:
 			ExecReScanValuesScan((ValuesScanState *) node);
 			break;

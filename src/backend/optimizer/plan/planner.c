@@ -74,6 +74,7 @@
 #include "cdb/cdbgroup.h"
 #include "cdb/cdbgroupingpaths.h"		/* create_grouping_paths() extensions */
 #include "cdb/cdbsetop.h"		/* motion utilities */
+#include "cdb/cdbtargeteddispatch.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
 #include "storage/lmgr.h"
@@ -260,6 +261,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	instr_time		starttime;
 	instr_time		endtime;
 	MemoryAccountIdType curMemoryAccountId;
+	bool		needToAssignDirectDispatchContentIds = false;
 
 	/*
 	 * Use ORCA only if it is enabled and we are in a master QD process.
@@ -549,20 +551,10 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	Assert(glob->finalrowmarks == NIL);
 	Assert(glob->resultRelations == NIL);
 	Assert(parse == root->parse);
-	top_plan = set_plan_references(root, top_plan);
-	/* ... and the subplans (both regular subplans and initplans) */
-	Assert(list_length(glob->subplans) == list_length(glob->subroots));
-	forboth(lp, glob->subplans, lr, glob->subroots)
-	{
-		Plan	   *subplan = (Plan *) lfirst(lp);
-		PlannerInfo *subroot = (PlannerInfo *) lfirst(lr);
-
-		lfirst(lp) = set_plan_references(subroot, subplan);
-	}
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-		top_plan = cdbparallelize(root, top_plan);
+		top_plan = cdbparallelize(root, top_plan, &needToAssignDirectDispatchContentIds);
 
 		/*
 		 * cdbparallelize() mutates all the nodes, so the producer nodes we
@@ -589,6 +581,23 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		 */
 		glob->subplan_sliceIds = palloc0((list_length(glob->subplans) + 1) * sizeof(int));
 		glob->subplan_initPlanParallel = palloc0((list_length(glob->subplans) + 1) * sizeof(bool));
+	}
+
+	top_plan = set_plan_references(root, top_plan);
+	/* ... and the subplans (both regular subplans and initplans) */
+	Assert(list_length(glob->subplans) == list_length(glob->subroots));
+	forboth(lp, glob->subplans, lr, glob->subroots)
+	{
+		Plan	   *subplan = (Plan *) lfirst(lp);
+		PlannerInfo *subroot = (PlannerInfo *) lfirst(lr);
+
+		lfirst(lp) = set_plan_references(subroot, subplan);
+	}
+
+	if (needToAssignDirectDispatchContentIds)
+	{
+		/* figure out if we can run on a reduced set of nodes */
+		AssignContentIdsToPlanData(root, top_plan);
 	}
 
 	/* fix ShareInputScans for EXPLAIN */
@@ -4569,6 +4578,17 @@ choose_one_window_locus(PlannerInfo *root, Path *path,
 	bool		need_redistribute;
 
 	if (CdbPathLocus_IsGeneral(path->locus))
+	{
+		need_redistribute = false;
+		locus = path->locus;
+	}
+	/*
+	 * If the input is already collected to a single segment, just perform the
+	 * aggregation there. We could redistribute it, so that we could perform
+	 * the aggregation in parallel, but Motions are pretty expensive so it's
+	 * probably not worthwhile.
+	 */
+	else if (CdbPathLocus_IsBottleneck(path->locus))
 	{
 		need_redistribute = false;
 		locus = path->locus;

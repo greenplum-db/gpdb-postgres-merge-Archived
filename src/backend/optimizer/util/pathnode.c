@@ -33,6 +33,7 @@
 
 #include "catalog/pg_proc.h"
 #include "cdb/cdbhash.h"        /* cdb_default_distribution_opfamily_for_type() */
+#include "cdb/cdbmutate.h"
 #include "cdb/cdbpath.h"        /* cdb_create_motion_path() etc */
 #include "cdb/cdbpathlocus.h"
 #include "cdb/cdbutil.h"		/* getgpsegmentCount() */
@@ -1757,7 +1758,19 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 	} append_locus_compatibility_table[] =
 	{
 		/*
-		 * If any of the children have 'entry' locus, bring all the subpaths
+		 * If any of the children have 'outerquery' locus, bring all the subpaths
+		 * to the outer query's locus.
+		 */
+		{ CdbLocusType_OuterQuery, CdbLocusType_OuterQuery,     CdbLocusType_OuterQuery },
+		{ CdbLocusType_OuterQuery, CdbLocusType_Entry,          CdbLocusType_OuterQuery },
+		{ CdbLocusType_OuterQuery, CdbLocusType_SingleQE,       CdbLocusType_OuterQuery },
+		{ CdbLocusType_OuterQuery, CdbLocusType_Strewn,         CdbLocusType_OuterQuery },
+		{ CdbLocusType_OuterQuery, CdbLocusType_Replicated,     CdbLocusType_OuterQuery },
+		{ CdbLocusType_OuterQuery, CdbLocusType_SegmentGeneral, CdbLocusType_OuterQuery },
+		{ CdbLocusType_OuterQuery, CdbLocusType_General,        CdbLocusType_OuterQuery },
+		
+		/*
+		 * Similarly, if any of the children have 'entry' locus, bring all the subpaths
 		 * to the entry db.
 		 */
 		{ CdbLocusType_Entry, CdbLocusType_Entry,          CdbLocusType_Entry },
@@ -1837,7 +1850,8 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 		/* nothing more to do */
 		CdbPathLocus_MakeEntry(&targetlocus);
 	}
-	else if (targetlocustype == CdbLocusType_SingleQE ||
+	else if (targetlocustype == CdbLocusType_OuterQuery ||
+			 targetlocustype == CdbLocusType_SingleQE ||
 			 targetlocustype == CdbLocusType_Replicated ||
 			 targetlocustype == CdbLocusType_SegmentGeneral ||
 			 targetlocustype == CdbLocusType_General)
@@ -2715,6 +2729,7 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 	ListCell   *lc;
 	char		exec_location;
 	bool		contain_mutables = false;
+	bool		contain_outer_params = false;
 
 	pathnode->pathtype = T_FunctionScan;
 	pathnode->parent = rel;
@@ -2732,6 +2747,17 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 	 * Otherwise let it be evaluated in the same slice as its parent operator.
 	 */
 	Assert(rte->rtekind == RTE_FUNCTION);
+
+	foreach (lc, rel->baserestrictinfo)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		if (rinfo->contain_outer_query_references)
+		{
+			contain_outer_params = true;
+			break;
+		}
+	}
 
 	/*
 	 * Decide where to execute the FunctionScan.
@@ -2796,6 +2822,10 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 			 * be executed anywhere.
 			 */
 		}
+
+		if (!contain_outer_params &&
+			contains_outer_params(rtfunc->funcexpr, root))
+			contain_outer_params = true;
 	}
 	switch (exec_location)
 	{
@@ -2807,16 +2837,22 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 			 * non-IMMUTABLE functions on the master. Keep that behavior
 			 * for backwards compatibility.
 			 */
-			if (contain_mutables)
+			if (contain_outer_params)
+				CdbPathLocus_MakeOuterQuery(&pathnode->locus, getgpsegmentCount());
+			else if (contain_mutables)
 				CdbPathLocus_MakeEntry(&pathnode->locus);
 			else
 				CdbPathLocus_MakeGeneral(&pathnode->locus,
 										 getgpsegmentCount());
 			break;
 		case PROEXECLOCATION_MASTER:
+			if (contain_outer_params)
+				elog(ERROR, "cannot execute EXECUTE ON MASTER function in a subquery with arguments from outer query");
 			CdbPathLocus_MakeEntry(&pathnode->locus);
 			break;
 		case PROEXECLOCATION_ALL_SEGMENTS:
+			if (contain_outer_params)
+				elog(ERROR, "cannot execute EXECUTE ON ALL SEGMENTS function in a subquery with arguments from outer query");
 			CdbPathLocus_MakeStrewn(&pathnode->locus,
 									getgpsegmentCount());
 			break;
@@ -2917,10 +2953,12 @@ create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
 	if (contain_mutable_functions((Node *)rte->values_lists))
 		CdbPathLocus_MakeEntry(&pathnode->locus);
 	else
+	{
 		/*
 		 * ValuesScan can be on any segment.
 		 */
 		CdbPathLocus_MakeGeneral(&pathnode->locus, getgpsegmentCount());
+	}
 
 	pathnode->motionHazard = false;
 	pathnode->rescannable = true;
@@ -3649,6 +3687,16 @@ create_projection_path(PlannerInfo *root,
 					   Path *subpath,
 					   PathTarget *target)
 {
+	return create_projection_path_with_quals(root, rel, subpath, target, NIL);
+}
+
+ProjectionPath *
+create_projection_path_with_quals(PlannerInfo *root,
+					   RelOptInfo *rel,
+					   Path *subpath,
+					   PathTarget *target,
+					   List *restrict_clauses)
+{
 	ProjectionPath *pathnode = makeNode(ProjectionPath);
 	PathTarget *oldtarget = subpath->pathtarget;
 
@@ -3676,9 +3724,14 @@ create_projection_path(PlannerInfo *root,
 	 * tlist (possibly changing its ressortgroupref labels, but nothing else).
 	 * Note: in the latter case, create_projection_plan has to recheck our
 	 * conclusion; see comments therein.
+	 *
+	 * GPDB: The 'restrict_clauses' is a GPDB addition. If the subpath supports
+	 * Filters, we could push them down too. But currently this is only used on
+	 * top of Material paths, which don't support it, so it doesn't matter.
 	 */
-	if (is_projection_capable_path(subpath) ||
-		equal(oldtarget->exprs, target->exprs))
+	if (!restrict_clauses &&
+		(is_projection_capable_path(subpath) ||
+		 equal(oldtarget->exprs, target->exprs)))
 	{
 		/* No separate Result node needed */
 		pathnode->dummypp = true;
@@ -3708,6 +3761,8 @@ create_projection_path(PlannerInfo *root,
 		pathnode->path.total_cost = subpath->total_cost +
 			target->cost.startup +
 			(cpu_tuple_cost + target->cost.per_tuple) * subpath->rows;
+
+		pathnode->cdb_restrict_clauses = restrict_clauses;
 	}
 
 	return pathnode;
