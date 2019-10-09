@@ -3240,6 +3240,15 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 	plan->extParam = bms_del_members(plan->extParam, initSetParam);
 
 	/*
+	 * Currently GPDB doesn't fully support shareinputscan referencing outer
+	 * rels.
+	 */
+	if (IsA(plan, ShareInputScan) && !bms_is_empty(plan->extParam))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("shareinputscan with outer refs is not supported by GPDB")));
+
+	/*
 	 * For speed at execution time, make sure extParam/allParam are actually
 	 * NULL if they are empty sets.
 	 */
