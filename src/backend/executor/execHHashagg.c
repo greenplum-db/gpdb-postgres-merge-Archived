@@ -223,7 +223,7 @@ adjustInputGroup(AggState *aggstate,
 			continue;
 
 		/* Deserialize the aggregate states loaded from the spill file */
-		if (OidIsValid(pertrans->deserialfn_oid))
+		if (OidIsValid(pertrans->deserialfn.fn_oid))
 		{
 			FunctionCallInfoData _dsinfo;
 			FunctionCallInfo dsinfo = &_dsinfo;
@@ -1591,8 +1591,12 @@ writeHashEntry(AggState *aggstate, BatchFileInfo *file_info,
 		/*
 		 * If it has a serialization function, serialize it without checking
 		 * transtypeByVal since it's INTERNALOID, a pointer but set to byVal.
+		 *
+		 * NOTE: pertrans->serialfn_oid and ->deserialfn_oid are only set if
+		 * this is a partial aggregate, and the serial/deserial function are
+		 * needed for that.
 		 */
-		if (OidIsValid(pertrans->serialfn_oid))
+		if (OidIsValid(pertrans->serialfn.fn_oid))
 		{
 			FunctionCallInfoData fcinfo;
 			MemoryContext old_ctx;

@@ -2721,6 +2721,16 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			}
 		}
 
+		/*
+		 * In GPDB, we also need the serial/deserial functions in any case, to support
+		 * hash agg spilling.
+		 */
+		if (IS_HASHAGG(aggstate))
+		{
+			serialfn_oid = aggform->aggserialfn;
+			deserialfn_oid = aggform->aggdeserialfn;
+		}
+
 		/* Check that aggregate owner has permission to call component fns */
 		{
 			HeapTuple	procTuple;
@@ -2838,7 +2848,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 */
 		existing_transno = find_compatible_pertrans(aggstate, aggref,
 													transfn_oid, aggtranstype,
-												serialfn_oid, deserialfn_oid,
+													DO_AGGSPLIT_SERIALIZE(aggstate->aggsplit) ? serialfn_oid : InvalidOid,
+													DO_AGGSPLIT_DESERIALIZE(aggstate->aggsplit) ? deserialfn_oid : InvalidOid,
 												  initValue, initValueIsNull,
 													same_input_transnos);
 		if (existing_transno != -1)
@@ -2853,6 +2864,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		else
 		{
 			pertrans = &pertransstates[++transno];
+
 			build_pertrans_for_aggref(pertrans, aggstate, estate,
 									  aggref, transfn_oid, aggtranstype,
 									  combinefn_oid,
@@ -2917,8 +2929,8 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	pertrans->aggref = aggref;
 	pertrans->aggCollation = aggref->inputcollid;
 	pertrans->transfn_oid = aggtransfn;
-	pertrans->serialfn_oid = aggserialfn;
-	pertrans->deserialfn_oid = aggdeserialfn;
+	pertrans->serialfn_oid = DO_AGGSPLIT_SERIALIZE(aggstate->aggsplit) ? aggserialfn : InvalidOid;
+	pertrans->deserialfn_oid = DO_AGGSPLIT_DESERIALIZE(aggstate->aggsplit) ? aggdeserialfn : InvalidOid;
 	pertrans->initValue = initValue;
 	pertrans->initValueIsNull = initValueIsNull;
 
