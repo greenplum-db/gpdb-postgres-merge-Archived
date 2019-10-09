@@ -2207,8 +2207,11 @@ rel_need_upper(PlannerInfo *root, RelOptInfo *rel)
 				GpPolicyIsReplicated(rel->cdbpolicy);
 
 		case RTE_SUBQUERY:
-			/* GPDB_96_MERGE_FIXME: should this be 'false', on the same grounds as RTE_CTE is? */
-			return true;
+			/*
+			 * The subquery will always be brought to "outer query" locus, and it's
+			 * safe to evaluate the base restrict infos there.
+			 */
+			return false;
 
 		case RTE_FUNCTION:
 			/* XXX: depends on EXECUTE ON directive */
@@ -2223,8 +2226,9 @@ rel_need_upper(PlannerInfo *root, RelOptInfo *rel)
 			return true;
 
 		case RTE_CTE:
-			/* The CTE will always be brought to "outer query" locus, and it's
-			 * safe to evaluate the base restrict infos there
+			/*
+			 * Like RTE_SUBQUERY, the CTE will always be brought to "outer query"
+			 * locus, and it's safe to evaluate the base restrict infos there.
 			 */
 			return false;
 
