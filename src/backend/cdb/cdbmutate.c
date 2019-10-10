@@ -2292,6 +2292,30 @@ param_walker(Node *node, ParamWalkerContext *context)
 			break;
 
 		case T_SubqueryScan:
+			{
+				SubqueryScan *sscan = (SubqueryScan *) node;
+				RelOptInfo *rel;
+				Node	   *save_root;
+
+				/* Need to look up the subquery's RelOptInfo, since we need its subroot */
+				rel = find_base_rel(root, sscan->scan.scanrelid);
+
+				/* Recurse into any expressions on the SubqueryScan node itself. */
+				if (walk_plan_node_fields(&sscan->scan.plan, param_walker, context))
+					return true;
+
+				/* recurse into the subquery, with the new 'root' */
+				save_root = context->base.node;
+				context->base.node = (Node *) rel->subroot;
+
+				if (param_walker((Node *) sscan->subplan, context))
+					return true;
+
+				context->base.node = save_root;
+				return false;
+			}
+			break;
+
 		case T_ValuesScan:
 		case T_FunctionScan:
 		case T_TableFunctionScan:
