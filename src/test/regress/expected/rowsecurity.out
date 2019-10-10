@@ -1818,13 +1818,15 @@ EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
 
 PREPARE plancache_test AS SELECT * FROM z1 WHERE f_leak(b);
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 0)
-(4 rows)
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Subquery Scan on z1
+         Filter: f_leak(z1.b)
+         ->  Seq Scan on z1 z1_1
+               Filter: ((a % 2) = 0)
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 PREPARE plancache_test2 AS WITH q AS (SELECT * FROM z1 WHERE f_leak(b)) SELECT * FROM q,z2;
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
@@ -1878,13 +1880,15 @@ EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
 (6 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 0)
-(4 rows)
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Subquery Scan on z1
+         Filter: f_leak(z1.b)
+         ->  Seq Scan on z1 z1_1
+               Filter: ((a % 2) = 0)
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
               QUERY PLAN               
@@ -1936,13 +1940,15 @@ EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
 (6 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 1)
-(4 rows)
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Subquery Scan on z1
+         Filter: f_leak(z1.b)
+         ->  Seq Scan on z1 z1_1
+               Filter: ((a % 2) = 1)
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
               QUERY PLAN               
@@ -1994,13 +2000,15 @@ EXPLAIN (COSTS OFF) SELECT * FROM z1 WHERE f_leak(b);
 (6 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test;
-          QUERY PLAN           
--------------------------------
- Subquery Scan on z1
-   Filter: f_leak(z1.b)
-   ->  Seq Scan on z1 z1_1
-         Filter: ((a % 2) = 1)
-(4 rows)
+                QUERY PLAN                
+------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Subquery Scan on z1
+         Filter: f_leak(z1.b)
+         ->  Seq Scan on z1 z1_1
+               Filter: ((a % 2) = 1)
+ Optimizer: Postgres query optimizer
+(6 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE plancache_test2;
               QUERY PLAN               
