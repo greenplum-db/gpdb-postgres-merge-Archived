@@ -1851,7 +1851,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 */
 	required_outer = rel->lateral_relids;
 
-
 	forceDistRand = rte->forceDistRandom;
 
 	/* CDB: Could be a preplanned subquery from window_planner. */
@@ -1962,7 +1961,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	foreach(lc, sub_final_rel->pathlist)
 	{
 		Path	   *subpath = (Path *) lfirst(lc);
-		Path	   *subquery_path;
 		List	   *pathkeys;
 		CdbPathLocus locus;
 
@@ -1979,10 +1977,9 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			locus = cdbpathlocus_from_subquery(root, rel, subpath);
 
 		/* Generate outer path using this subpath */
-		subquery_path = (Path *)
-			create_subqueryscan_path(root, rel, subpath,
-									 pathkeys, locus, required_outer);
-		add_path(rel, subquery_path);
+		add_path(rel, (Path *)
+				 create_subqueryscan_path(root, rel, subpath,
+										  pathkeys, locus, required_outer));
 	}
 }
 
@@ -2394,16 +2391,20 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	{
 		Path	   *subpath = (Path *) lfirst(lc);
 		List	   *pathkeys;
+		CdbPathLocus locus;
 
 		/* Convert subquery pathkeys to outer representation */
 		pathkeys = convert_subquery_pathkeys(root, rel, subpath->pathkeys,
 											 make_tlist_from_pathtarget(subpath->pathtarget));
 
+		/* GPDB_96_MERGE_FIXME: Should we check forceDistRandom here, like set_subquery_pathlist() does? */
+		locus = cdbpathlocus_from_subquery(root, rel, subpath);
+
 		/* Generate appropriate path */
 		add_path(rel, create_ctescan_path(root,
 										  rel,
 										  is_shared ? NULL : subpath,
-										  subpath->locus,
+										  locus,
 										  pathkeys,
 										  required_outer));
 	}
