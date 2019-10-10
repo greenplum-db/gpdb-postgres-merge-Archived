@@ -376,7 +376,10 @@ cdb_choose_grouping_locus(PlannerInfo *root, Path *path,
 			group_tles = lappend(group_tles, tle);
 		}
 
-		need_redistribute = !cdbpathlocus_is_hashed_on_tlist(path->locus, group_tles, true);
+		if (!group_tles)
+			need_redistribute = true;
+		else
+			need_redistribute = !cdbpathlocus_is_hashed_on_tlist(path->locus, group_tles, true);
 
 		hash_exprs = NIL;
 		hash_opfamilies = NIL;
