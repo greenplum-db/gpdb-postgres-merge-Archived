@@ -434,7 +434,11 @@ cdbpathlocus_from_subquery(struct PlannerInfo *root,
 				continue;
 
 			subexpr = list_nth(subpath->pathtarget->exprs, var->varattno - 1);
-			usable_subtlist = lappend(usable_subtlist, subexpr);
+			usable_subtlist = lappend(usable_subtlist,
+									  makeTargetEntry((Expr *) subexpr,
+													  list_length(usable_subtlist) + 1,
+													  NULL,
+													  false));
 			new_vars = lappend(new_vars, var);
 		}
 
