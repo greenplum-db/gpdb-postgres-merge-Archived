@@ -909,18 +909,6 @@ select * from int4_tbl a full join int4_tbl b on true;
 select * from int4_tbl a full join int4_tbl b on false;
 
 --
--- test handling of potential equivalence clauses above outer joins
---
-
-select q1, unique2, thousand, hundred
-  from int8_tbl a left join tenk1 b on q1 = unique2
-  where coalesce(thousand,123) = q1 and q1 = coalesce(hundred,123);
-
-select f1, unique2, case when unique2 is null then f1 else 0 end
-  from int4_tbl a left join tenk1 b on f1 = unique2
-  where (case when unique2 is null then f1 else 0 end) = 0;
-
---
 -- test for ability to use a cartesian join when necessary
 --
 
@@ -971,55 +959,6 @@ select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
   on (subq1.y1 = t2.unique1)
 where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
 --end_ignore
-
-select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
-  tenk1 t1
-  inner join int4_tbl i1
-    left join (select v1.x2, v2.y1, 11 AS d1
-               from (values(1,0)) v1(x1,x2)
-               left join (values(3,1)) v2(y1,y2)
-               on v1.x1 = v2.y2) subq1
-    on (i1.f1 = subq1.x2)
-  on (t1.unique2 = subq1.d1)
-  left join tenk1 t2
-  on (subq1.y1 = t2.unique1)
-where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
-
--- variant that isn't quite a star-schema case
-
-select ss1.d1 from
-  tenk1 as t1
-  inner join tenk1 as t2
-  on t1.tenthous = t2.ten
-  inner join
-    int8_tbl as i8
-    left join int4_tbl as i4
-      inner join (select 64::information_schema.cardinal_number as d1
-                  from tenk1 t3,
-                       lateral (select abs(t3.unique1) + random()) ss0(x)
-                  where t3.fivethous < 0) as ss1
-      on i4.f1 = ss1.d1
-    on i8.q1 = i4.f1
-  on t1.tenthous = ss1.d1
-where t1.unique1 < i4.f1;
-
---
--- test a corner case in which we shouldn't apply the star-schema optimization
---
-
-explain (costs off)
-select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
-  tenk1 t1
-  inner join int4_tbl i1
-    left join (select v1.x2, v2.y1, 11 AS d1
-               from (values(1,0)) v1(x1,x2)
-               left join (values(3,1)) v2(y1,y2)
-               on v1.x1 = v2.y2) subq1
-    on (i1.f1 = subq1.x2)
-  on (t1.unique2 = subq1.d1)
-  left join tenk1 t2
-  on (subq1.y1 = t2.unique1)
-where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
 
 select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
   tenk1 t1
@@ -1793,10 +1732,9 @@ select * from int4_tbl a,
   ) ss;
 
 -- lateral reference in a PlaceHolderVar evaluated at join level
--- GPDB_94_STABLE_MERGE_FIXME: The query below gives wrong results. The change
--- is related to upstream commit acfcd4. Disable this case temporarily and will
--- come back to fix it when understanding more about that commit.
---start_ignore
+-- GPDB_94_STABLE_MERGE_FIXME: The query fails. The change is related to
+-- upstream commit acfcd4. Need to come back to fix it when understanding more
+-- about that commit.
 explain (verbose, costs off)
 select * from
   int8_tbl a left join lateral
@@ -1808,7 +1746,6 @@ select * from
   (select b.q1 as bq1, c.q1 as cq1, least(a.q1,b.q1,c.q1) from
    int8_tbl b cross join int8_tbl c) ss
   on a.q2 = ss.bq1;
---end_ignore
 
 -- case requiring nested PlaceHolderVars
 explain (verbose, costs off)
@@ -1853,10 +1790,6 @@ select * from
   ) as q2;
 
 -- check we don't try to do a unique-ified semijoin with LATERAL
--- start_ignore
--- GPDB_94_STABLE_MERGE_FIXME: The query below is 'deeply' correlated
--- and GPDB would not pull up the sublink into a semijoin (why?), while
--- PostgreSQL will do. So the following test is meaningless in GPDB.
 explain (verbose, costs off)
 select * from
   (values (0,9998), (1,1000)) v(id,x),
@@ -1868,7 +1801,6 @@ select * from
   lateral (select f1 from int4_tbl
            where f1 = any (select unique1 from tenk1
                            where unique2 = v.x offset 0)) ss;
---end_ignore
 
 -- check proper extParam/allParam handling (this isn't exactly a LATERAL issue,
 -- but we can make the test case much more compact with LATERAL)
