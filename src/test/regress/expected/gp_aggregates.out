@@ -348,6 +348,9 @@ SELECT DISTINCT distinct_test();
 
 DROP FUNCTION distinct_test();
 -- Test multi-phase aggregate with subquery scan
+-- start_ignore
+-- GPDB_96_MERGE_FIXME: this used to get a smarter multi-dqa agg plan
+-- end_ignore
 create table multiagg_with_subquery (i int, j int, k int, m int) distributed by (i);
 insert into multiagg_with_subquery select i, i+1, i+2, i+3 from generate_series(1, 10)i;
 explain (costs off)
