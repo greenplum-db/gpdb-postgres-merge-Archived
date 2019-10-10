@@ -672,39 +672,34 @@ SELECT * FROM rw_view2;
 (2 rows)
 
 EXPLAIN (costs off) UPDATE rw_view2 SET a=3 WHERE a=2;
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
+                              QUERY PLAN                              
+----------------------------------------------------------------------
  Update on base_tbl
-   ->  Explicit Redistribute Motion 3:3  (slice2; segments: 3)
-         ->  Nested Loop
-               ->  Broadcast Motion 3:3  (slice1; segments: 3)
-                     ->  Seq Scan on base_tbl
-                           Filter: ((a < 10) AND (a = 2))
-               ->  Materialize
-                     ->  Subquery Scan on rw_view1
-                           Filter: ((rw_view1.a < 10) AND (rw_view1.a = 2))
-                           ->  Seq Scan on base_tbl base_tbl_1
-                                 Filter: (a > 0)
+   ->  Nested Loop
+         ->  Seq Scan on base_tbl
+               Filter: ((a < 10) AND (a = 2))
+         ->  Materialize
+               ->  Subquery Scan on rw_view1
+                     Filter: ((rw_view1.a < 10) AND (rw_view1.a = 2))
+                     ->  Seq Scan on base_tbl base_tbl_1
+                           Filter: (a > 0)
  Optimizer: Postgres query optimizer
-(12 rows)
+(10 rows)
 
 EXPLAIN (costs off) DELETE FROM rw_view2 WHERE a=2;
-                                    QUERY PLAN                                    
-----------------------------------------------------------------------------------
+                              QUERY PLAN                              
+----------------------------------------------------------------------
  Delete on base_tbl
-   ->  Explicit Redistribute Motion 3:3  (slice2; segments: 3)
-         ->  Nested Loop
-               ->  Seq Scan on base_tbl
-                     Filter: ((a < 10) AND (a = 2))
-               ->  Materialize
-                     ->  Redistribute Motion 3:3  (slice1; segments: 3)
-                           Hash Key: rw_view1.a
-                           ->  Subquery Scan on rw_view1
-                                 Filter: ((rw_view1.a < 10) AND (rw_view1.a = 2))
-                                 ->  Seq Scan on base_tbl base_tbl_1
-                                       Filter: (a > 0)
+   ->  Nested Loop
+         ->  Seq Scan on base_tbl
+               Filter: ((a < 10) AND (a = 2))
+         ->  Materialize
+               ->  Subquery Scan on rw_view1
+                     Filter: ((rw_view1.a < 10) AND (rw_view1.a = 2))
+                     ->  Seq Scan on base_tbl base_tbl_1
+                           Filter: (a > 0)
  Optimizer: Postgres query optimizer
-(13 rows)
+(10 rows)
 
 DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to 2 other objects
@@ -2063,22 +2058,19 @@ SELECT * FROM rw_view1;
 (1 row)
 
 EXPLAIN (costs off) DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Update on base_tbl base_tbl_1
-   ->  Explicit Redistribute Motion 3:3  (slice2; segments: 3)
-         ->  Nested Loop
-               ->  Redistribute Motion 3:3  (slice1; segments: 3)
-                     Hash Key: 1
-                     ->  Seq Scan on base_tbl base_tbl_1
-                           Filter: (id = 1)
-               ->  Materialize
-                     ->  Subquery Scan on base_tbl
-                           Filter: snoop(base_tbl.data)
-                           ->  Seq Scan on base_tbl base_tbl_2
-                                 Filter: ((NOT deleted) AND (id = 1))
+   ->  Nested Loop
+         ->  Seq Scan on base_tbl base_tbl_1
+               Filter: (id = 1)
+         ->  Materialize
+               ->  Subquery Scan on base_tbl
+                     Filter: snoop(base_tbl.data)
+                     ->  Seq Scan on base_tbl base_tbl_2
+                           Filter: ((NOT deleted) AND (id = 1))
  Optimizer: Postgres query optimizer
-(13 rows)
+(10 rows)
 
 DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
 NOTICE:  snooped value: Row 1
