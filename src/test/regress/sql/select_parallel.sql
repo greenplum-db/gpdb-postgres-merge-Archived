@@ -2,6 +2,11 @@
 -- PARALLEL
 --
 
+-- GPDB_96_MERGE_FIXME: We don't support parallel query. These tests won't actually
+-- generate any parallel plans. Should we pay attention to the parallel restrictions
+-- when creating MPP plans? For example, should we force parallel restricted functions
+-- to run in the QD?
+
 create or replace function parallel_restricted(int) returns int as
   $$begin return $1; end$$ language plpgsql parallel restricted;
 
