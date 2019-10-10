@@ -4451,8 +4451,15 @@ create_grouping_paths(PlannerInfo *root,
 		 * to sort above, then we'd better generate a Path, so that we at
 		 * least have one.
 		 */
-		if (hashaggtablesize < work_mem * 1024L ||
-			grouped_rel->pathlist == NIL)
+		/*
+		 * GPDB_96_MERGE_FIXME:
+		 * Remove hashagg path create condition, since in gpdb our hashagg has ability to spilling 
+		 * out data to disk if memory is packed.
+		 * However, I'm not sure whether it will impact other test case. Just add the commons and 
+		 * give the final decision before 96 merge down.
+		 */
+		//if (hashaggtablesize < work_mem * 1024L ||
+		//	grouped_rel->pathlist == NIL)
 		{
 			/*
 			 * Redistribute if needed.
