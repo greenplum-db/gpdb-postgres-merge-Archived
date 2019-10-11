@@ -3106,7 +3106,7 @@ DELETE FROM current_check WHERE CURRENT OF current_check_cursor RETURNING *;
 FETCH RELATIVE 1 FROM current_check_cursor;
  currentid | payload |     rlsuser     
 -----------+---------+-----------------
-         4 | def     | regress_rls_bob
+         4 | def_new | regress_rls_bob
 (1 row)
 
 DELETE FROM current_check WHERE CURRENT OF current_check_cursor RETURNING *;
