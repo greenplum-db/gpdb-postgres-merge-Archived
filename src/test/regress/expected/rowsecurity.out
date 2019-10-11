@@ -3079,16 +3079,16 @@ SELECT * FROM current_check;
 
 -- Plan should be a subquery TID scan
 EXPLAIN (COSTS OFF) UPDATE current_check SET payload = payload WHERE CURRENT OF current_check_cursor;
-                             QUERY PLAN                              
----------------------------------------------------------------------
+                          QUERY PLAN                           
+---------------------------------------------------------------
  Update on current_check current_check_1
    ->  Subquery Scan on current_check
          ->  Subquery Scan on current_check_2
                Filter: ((current_check_2.currentid % 2) = 0)
-               ->  LockRows
-                     ->  Tid Scan on current_check current_check_3
-                           TID Cond: CURRENT OF current_check_cursor
-                           Filter: (currentid = 4)
+               ->  Tid Scan on current_check current_check_3
+                     TID Cond: CURRENT OF current_check_cursor
+                     Filter: (currentid = 4)
+ Optimizer: Postgres query optimizer
 (8 rows)
 
 -- Similarly can only delete row 4

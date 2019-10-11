@@ -1182,6 +1182,12 @@ UPDATE current_check SET payload = payload || '_new' WHERE CURRENT OF current_ch
 SELECT * FROM current_check;
 -- Plan should be a subquery TID scan
 EXPLAIN (COSTS OFF) UPDATE current_check SET payload = payload WHERE CURRENT OF current_check_cursor;
+-- GPDB: does not support backwards scans, commit and restart
+-- start_ignore
+COMMIT;
+BEGIN;
+DECLARE current_check_cursor SCROLL CURSOR FOR SELECT * FROM current_check;
+-- end_ignore
 -- Similarly can only delete row 4
 FETCH ABSOLUTE 1 FROM current_check_cursor;
 DELETE FROM current_check WHERE CURRENT OF current_check_cursor RETURNING *;
