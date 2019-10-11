@@ -142,6 +142,8 @@ static void recurse_push_qual(Node *setOp, Query *topquery,
 				  RangeTblEntry *rte, Index rti, Node *qual);
 static void remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel);
 
+static void bring_to_outer_query(PlannerInfo *root, RelOptInfo *rel, List *outer_quals);
+
 
 /*
  * make_one_rel
@@ -417,7 +419,7 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
  * result to OuterQuery locus. The final plan will look something like
  * this:
  *
- *   Result (with quals from 'upperrestrictinfo')
+ *   Result (with quals from 'outer_quals')
  *           \
  *            \_Material
  *                   \
@@ -426,7 +428,7 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
  *                            \_SeqScan (with quals from 'baserestrictinfo')
  */
 static void
-bring_to_outer_query(PlannerInfo *root, RelOptInfo *rel)
+bring_to_outer_query(PlannerInfo *root, RelOptInfo *rel, List *outer_quals)
 {
 	List	   *origpathlist;
 	ListCell   *lc;
@@ -460,15 +462,15 @@ bring_to_outer_query(PlannerInfo *root, RelOptInfo *rel)
 											  NIL, // DESTROY pathkeys
 											  false,
 											  outerquery_locus);
-
+		}
+		else
+			path = origpath;
+		if (outer_quals)
 			path = (Path *) create_projection_path_with_quals(root,
 															  rel,
 															  path,
 															  path->parent->reltarget,
-															  rel->upperrestrictinfo);
-		}
-		else
-			path = origpath;
+															  outer_quals);
 		add_path(rel, path);
 	}
 	set_cheapest(rel);
@@ -520,7 +522,7 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				set_function_pathlist(root, rel, rte);
 				break;
 			case RTE_TABLEFUNCTION:
-				/* RangeFunction --- generate a suitable path for it */
+				/* RangeFunction --- fully handled during set_rel_size */
 				break;
 			case RTE_VALUES:
 				/* Values list */
@@ -554,7 +556,7 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		(*set_rel_pathlist_hook) (root, rel, rti, rte);
 
 	if (rel->upperrestrictinfo)
-		bring_to_outer_query(root, rel);
+		bring_to_outer_query(root, rel, rel->upperrestrictinfo);
 
 	/* Now find the cheapest of the paths for this rel */
 	set_cheapest(rel);
@@ -2562,7 +2564,11 @@ make_rel_from_joinlist(PlannerInfo *root, List *joinlist)
 
 		if (bms_equal(rel->relids, root->all_baserels) && root->is_correlated_subplan)
 		{
-			bring_to_outer_query(root, rel);
+			/*
+			 * if the relation had any "outer restrictinfos", we dealt with them
+			 * already.
+			 */
+			bring_to_outer_query(root, rel, NIL);
 		}
 
 		return rel;
@@ -2668,7 +2674,7 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 
 			if (bms_equal(rel->relids, root->all_baserels) && root->is_correlated_subplan)
 			{
-				bring_to_outer_query(root, rel);
+				bring_to_outer_query(root, rel, NIL);
 			}
 
 			/* Find and save the cheapest paths for this rel */

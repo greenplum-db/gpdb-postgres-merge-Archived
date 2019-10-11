@@ -2198,7 +2198,7 @@ check_redundant_nullability_qual(PlannerInfo *root, Node *clause)
 }
 
 static bool
-rel_need_upper(PlannerInfo *root, RelOptInfo *rel)
+rel_need_to_separate_outer_query_restrictinfos(PlannerInfo *root, RelOptInfo *rel)
 {
 	switch (rel->rtekind)
 	{
@@ -2207,11 +2207,7 @@ rel_need_upper(PlannerInfo *root, RelOptInfo *rel)
 				GpPolicyIsReplicated(rel->cdbpolicy);
 
 		case RTE_SUBQUERY:
-			/*
-			 * The subquery will always be brought to "outer query" locus, and it's
-			 * safe to evaluate the base restrict infos there.
-			 */
-			return false;
+			return true;
 
 		case RTE_FUNCTION:
 			/* XXX: depends on EXECUTE ON directive */
@@ -2226,11 +2222,7 @@ rel_need_upper(PlannerInfo *root, RelOptInfo *rel)
 			return true;
 
 		case RTE_CTE:
-			/*
-			 * Like RTE_SUBQUERY, the CTE will always be brought to "outer query"
-			 * locus, and it's safe to evaluate the base restrict infos there.
-			 */
-			return false;
+			return true;
 
 		case RTE_VOID:
 		case RTE_JOIN:
@@ -2271,7 +2263,7 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
 
 			/* Add clause to rel's restriction list */
 			if (restrictinfo->contain_outer_query_references &&
-				rel_need_upper(root, rel))
+				rel_need_to_separate_outer_query_restrictinfos(root, rel))
 			{
 				List	   *vars = pull_var_clause((Node *) restrictinfo->clause,
 												   PVC_RECURSE_AGGREGATES |
