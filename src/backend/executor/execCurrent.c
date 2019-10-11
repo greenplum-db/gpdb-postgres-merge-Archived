@@ -198,6 +198,18 @@ getCurrentOf(CurrentOfExpr *cexpr,
 						cursor_name, table_name)));
 
 	/*
+	 * GPDB_96_MERGE_FIXME: The assumption and test performed bellow does not
+	 * really match the current state of code. Upstream commits <842faa714c0>
+	 * and <b26e3d660df> altered the way that CURRENT OF nodes work with respect
+	 * to Row Level Security.
+	 * Now the RangeTableEntries will have been expanded with the subquery(ies)
+	 * containing Row Level Security, if present causeing the following test to
+	 * fail.
+	 * The inheritance cases are not visited at the moment and for this, the
+	 * fixme comment is added.
+	 */
+#if 0
+	/*
 	 * The target relation must directly match the cursor's relation. This throws out
 	 * the simple case in which a cursor is declared against table X and the update is
 	 * issued against Y. Moreover, this disallows some subtler inheritance cases where
@@ -211,6 +223,7 @@ getCurrentOf(CurrentOfExpr *cexpr,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
 				 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
 						cursor_name, table_name)));
+#endif
 
 	/*
 	 * The cursor must have a current result row: per the SQL spec, it's an
