@@ -235,21 +235,13 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause. Creating a NULL policy entr
 -- And the dboid directory under the source tablespace directory should remain empty for all database instances.
 SELECT * FROM stat_db_objects('alter_db', 'adst_source_tablespace');
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 1
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 2
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 3
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 4
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 5
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 6
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 7
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 8
-CONTEXT:  PL/Python function "stat_db_objects"
  dbid | relfilenode_dboid_relative_path | size 
 ------+---------------------------------+------
     1 |                                 |     
@@ -354,21 +346,13 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause. Creating a NULL policy entr
 -- And the dboid directory under the target tablespace directory is empty for all database instances.
 SELECT * FROM stat_db_objects('alter_db', 'adst_destination_tablespace');
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 1
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 2
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 3
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 4
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 5
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 6
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 7
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 8
-CONTEXT:  PL/Python function "stat_db_objects"
  dbid | relfilenode_dboid_relative_path | size 
 ------+---------------------------------+------
     1 |                                 |     
@@ -482,21 +466,13 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause. Creating a NULL policy entr
 -- And the dboid directory under the target tablespace directory is empty for all database instances.
 SELECT * FROM stat_db_objects('alter_db', 'adst_destination_tablespace');
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 1
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 2
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 3
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 4
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 5
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 6
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 7
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 8
-CONTEXT:  PL/Python function "stat_db_objects"
  dbid | relfilenode_dboid_relative_path | size 
 ------+---------------------------------+------
     1 |                                 |     
@@ -618,21 +594,13 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause. Creating a NULL policy entr
 -- And the dboid directory under the target tablespace directory is empty for all database instances.
 SELECT * FROM stat_db_objects('alter_db', 'adst_destination_tablespace');
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 1
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 2
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 3
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 4
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 5
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 6
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 7
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 8
-CONTEXT:  PL/Python function "stat_db_objects"
  dbid | relfilenode_dboid_relative_path | size 
 ------+---------------------------------+------
     1 |                                 |     
@@ -745,21 +713,13 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause. Creating a NULL policy entr
 -- And the dboid directory under the target tablespace directory is empty for all database instances.
 SELECT * FROM stat_db_objects('alter_db', 'adst_destination_tablespace');
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 1
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 2
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 3
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 4
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 5
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 6
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 7
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 8
-CONTEXT:  PL/Python function "stat_db_objects"
  dbid | relfilenode_dboid_relative_path | size 
 ------+---------------------------------+------
     1 |                                 |     
@@ -881,21 +841,13 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause. Creating a NULL policy entr
 -- And the dboid directory under the target tablespace directory is empty for all database instances.
 SELECT * FROM stat_db_objects('alter_db', 'adst_destination_tablespace');
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 1
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 2
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 3
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 4
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 5
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 6
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 7
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 8
-CONTEXT:  PL/Python function "stat_db_objects"
  dbid | relfilenode_dboid_relative_path | size 
 ------+---------------------------------+------
     1 |                                 |     
@@ -1008,21 +960,13 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause. Creating a NULL policy entr
 -- And the dboid directory under the target tablespace directory is empty for all database instances.
 SELECT * FROM stat_db_objects('alter_db', 'adst_destination_tablespace');
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 1
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 2
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 3
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 4
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 5
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 6
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 7
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 8
-CONTEXT:  PL/Python function "stat_db_objects"
  dbid | relfilenode_dboid_relative_path | size 
 ------+---------------------------------+------
     1 |                                 |     
@@ -1143,17 +1087,11 @@ SELECT * FROM ((SELECT * FROM before_alter) EXCEPT (SELECT * FROM after_alter)) 
 -- And the dboid directory under the target tablespace directory is empty for all database instances except the primary that panicked and its mirror.
 SELECT * FROM stat_db_objects('alter_db', 'adst_destination_tablespace') WHERE dbid NOT IN (SELECT dbid FROM gp_segment_configuration WHERE content=0);
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 1
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 3
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 4
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 6
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 7
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 8
-CONTEXT:  PL/Python function "stat_db_objects"
  dbid | relfilenode_dboid_relative_path | size 
 ------+---------------------------------+------
     1 |                                 |     
@@ -1271,21 +1209,13 @@ SELECT * FROM ((SELECT * FROM before_alter) EXCEPT (SELECT * FROM after_alter)) 
 -- And the dboid directory under the target tablespace directory is empty for all database instances.
 SELECT * FROM stat_db_objects('alter_db', 'adst_destination_tablespace');
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 1
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 2
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 3
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 4
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 5
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 6
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 7
-CONTEXT:  PL/Python function "stat_db_objects"
 NOTICE:  dboid dir for database alter_db does not exist on dbid = 8
-CONTEXT:  PL/Python function "stat_db_objects"
  dbid | relfilenode_dboid_relative_path | size 
 ------+---------------------------------+------
     1 |                                 |     
