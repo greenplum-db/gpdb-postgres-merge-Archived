@@ -1475,29 +1475,6 @@ _readExternalScan(void)
 
 	READ_DONE();
 }
-static void
-readBitmapIndexScanFields(BitmapIndexScan *local_node)
-{
-	ReadCommonScan(&local_node->scan);
-
-	READ_OID_FIELD(indexid);
-	READ_NODE_FIELD(indexqual);
-	READ_NODE_FIELD(indexqualorig);
-}
-
-static DynamicBitmapIndexScan *
-_readDynamicBitmapIndexScan(void)
-{
-	READ_LOCALS(DynamicBitmapIndexScan);
-
-	/* DynamicBitmapIndexScan has some content from BitmapIndexScan. */
-	readBitmapIndexScanFields(&local_node->biscan);
-	READ_INT_FIELD(partIndex);
-	READ_INT_FIELD(partIndexPrintable);
-	local_node->logicalIndexInfo = readLogicalIndexInfo();
-
-	READ_DONE();
-}
 
 static CustomScan *
 _readCustomScan(void)

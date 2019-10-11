@@ -333,20 +333,6 @@ _outRecursiveUnion(StringInfo str, RecursiveUnion *node)
 }
 
 static void
-outLogicalIndexInfo(StringInfo str, const LogicalIndexInfo *node)
-{
-	WRITE_OID_FIELD(logicalIndexOid);
-	WRITE_INT_FIELD(nColumns);
-	WRITE_INT_ARRAY(indexKeys, node->nColumns, AttrNumber);
-	WRITE_NODE_FIELD(indPred);
-	WRITE_NODE_FIELD(indExprs);
-	WRITE_BOOL_FIELD(indIsUnique);
-	WRITE_ENUM_FIELD(indType, LogicalIndexType);
-	WRITE_NODE_FIELD(partCons);
-	WRITE_NODE_FIELD(defaultLevels);
-}
-
-static void
 _outCopyStmt(StringInfo str, CopyStmt *node)
 {
 	WRITE_NODE_TYPE("COPYSTMT");

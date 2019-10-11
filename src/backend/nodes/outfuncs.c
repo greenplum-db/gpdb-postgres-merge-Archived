@@ -666,26 +666,6 @@ _outExternalScan(StringInfo str, const ExternalScan *node)
 	WRITE_INT_FIELD(scancounter);
 }
 
-#ifndef COMPILING_BINARY_FUNCS
-static void
-outLogicalIndexInfo(StringInfo str, const LogicalIndexInfo *node)
-{
-	WRITE_OID_FIELD(logicalIndexOid);
-	WRITE_INT_FIELD(nColumns);
-	appendStringInfoLiteral(str, " :indexKeys");
-	for (int i = 0; i < node->nColumns; i++)
-	{
-		appendStringInfo(str, " %d", node->indexKeys[i]);
-	}
-	WRITE_NODE_FIELD(indPred);
-	WRITE_NODE_FIELD(indExprs);
-	WRITE_BOOL_FIELD(indIsUnique);
-	WRITE_ENUM_FIELD(indType, LogicalIndexType);
-	WRITE_NODE_FIELD(partCons);
-	WRITE_NODE_FIELD(defaultLevels);
-}
-#endif /* COMPILING_BINARY_FUNCS */
-
 static void
 outIndexScanFields(StringInfo str, const IndexScan *node)
 {
@@ -698,6 +678,22 @@ outIndexScanFields(StringInfo str, const IndexScan *node)
 	WRITE_NODE_FIELD(indexorderbyorig);
 	WRITE_NODE_FIELD(indexorderbyops);
 	WRITE_ENUM_FIELD(indexorderdir, ScanDirection);
+}
+
+static void
+outLogicalIndexInfo(StringInfo str, const LogicalIndexInfo *node)
+{
+	WRITE_OID_FIELD(logicalIndexOid);
+	WRITE_INT_FIELD(nColumns);
+#ifdef COMPILING_BINARY_FUNCS
+	WRITE_INT_ARRAY(indexKeys, node->nColumns, AttrNumber);
+#endif /* COMPILING_BINARY_FUNCS */
+	WRITE_NODE_FIELD(indPred);
+	WRITE_NODE_FIELD(indExprs);
+	WRITE_BOOL_FIELD(indIsUnique);
+	WRITE_ENUM_FIELD(indType, LogicalIndexType);
+	WRITE_NODE_FIELD(partCons);
+	WRITE_NODE_FIELD(defaultLevels);
 }
 
 static void
