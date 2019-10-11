@@ -17,6 +17,7 @@
 #include "nodes/parsenodes.h"
 #include "nodes/primnodes.h"
 #include "nodes/makefuncs.h"
+#include "nodes/nodes.h"
 #include "catalog/pg_collation.h"
 #include "utils/datum.h"
 
@@ -481,37 +482,25 @@ CTranslatorDXLToScalar::TranslateDXLScalarAggrefToScalar
 		aggref->aggtype = CMDIdGPDB::CastMdid(pmdagg->GetResultTypeMdid())->Oid();
 	}
 
-	/* GPDB_96_MERGE_FIXME: aggstage is gone. Rewrite this using upstream aggsplit */
-	GPOS_RAISE
-	  (
-	   gpdxl::ExmaDXL,
-	   gpdxl::ExmiPlStmt2DXLConversion,
-	   GPOS_WSZ_LIT("GPDB_96_MERGE_FIXME: AggRef->aggstage need sto be replaced with aggsplit")
-	   );
-#if 0
 	switch(dxlop->GetDXLAggStage())
 	{
 		case EdxlaggstageNormal:
-					aggref->aggstage = AGGSTAGE_NORMAL;
-					break;
+			aggref->aggsplit = AGGSPLIT_SIMPLE;
+			break;
 		case EdxlaggstagePartial:
-					aggref->aggstage = AGGSTAGE_PARTIAL;
-					break;
+			aggref->aggsplit = AGGSPLIT_INITIAL_SERIAL;
+			break;
 		case EdxlaggstageIntermediate:
-					aggref->aggstage = AGGSTAGE_INTERMEDIATE;
-					break;
+			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiPlStmt2DXLConversion,
+				   GPOS_WSZ_LIT("GPDB_96_MERGE_FIXME: Intermediate aggregate stage not implemented"));
+			break;
 		case EdxlaggstageFinal:
-					aggref->aggstage = AGGSTAGE_FINAL;
-					break;
+			aggref->aggsplit = AGGSPLIT_FINAL_DESERIAL;
+			break;
 		default:
-				GPOS_RAISE
-					(
-					gpdxl::ExmaDXL,
-					gpdxl::ExmiPlStmt2DXLConversion,
-					GPOS_WSZ_LIT("AGGREF: Specified AggStage value is invalid")
-					);
+			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiPlStmt2DXLConversion,
+				   GPOS_WSZ_LIT("AGGREF: Specified AggStage value is invalid"));
 	}
-#endif
 
 	// translate each DXL argument
 	List *exprs = TranslateScalarChildren(aggref->args, aggref_node, colid_var);
@@ -546,6 +535,15 @@ CTranslatorDXLToScalar::TranslateDXLScalarAggrefToScalar
 		}
 		aggref->args = gpdb::LAppend(aggref->args, new_target_entry);
 	}
+
+	/* GPDB_96_MERGE_FIXME: need to set aggargtypes and aggtranstype here, like in
+	 * get_agg_clause_costs_walker(). */
+	GPOS_RAISE
+	  (
+	   gpdxl::ExmaDXL,
+	   gpdxl::ExmiPlStmt2DXLConversion,
+	   GPOS_WSZ_LIT("GPDB_96_MERGE_FIXME: AggRef not implemented yet")
+	   );
 
 	// GPDB_91_MERGE_FIXME: collation
 	aggref->inputcollid = gpdb::ExprCollation((Node *) exprs);
