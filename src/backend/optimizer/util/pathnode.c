@@ -4579,16 +4579,27 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.pathkeys = NIL;
 
 	/*
-	 * GPDB_96_MERGE_FIXME: this probably works for simple cases, but if
-	 * there are multiple resultRelations, I'm not so sure. In older GPDB
-	 * versions, we did most of the effort of figuring out where a
-	 * ModifyTable runs, in adjust_modifytable_flow(), when working with
-	 * already-created Plans.
+	 * Put Motions on top of the subpaths as needed, and set the locus of the
+	 * ModifyTable path itself.
 	 */
-	pathnode->path.locus =
-		adjust_modifytable_subpaths(root, operation,
-									resultRelations, subpaths,
-									is_split_updates);
+	if (Gp_role == GP_ROLE_DISPATCH)
+		pathnode->path.locus =
+			adjust_modifytable_subpaths(root, operation,
+										resultRelations, subpaths,
+										is_split_updates);
+	else
+	{
+		/* don't allow split updates in utility mode. */
+		if (Gp_role == GP_ROLE_UTILITY && operation == CMD_UPDATE &&
+			list_member_int(is_split_updates, (int) true))
+		{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot update distribution key columns in utility mode")));
+		}
+
+		CdbPathLocus_MakeEntry(&pathnode->path.locus);
+	}
 
 	/*
 	 * Compute cost & rowcount as sum of subpath costs & rowcounts.
@@ -4666,7 +4677,7 @@ adjust_modifytable_subpaths(PlannerInfo *root, CmdType operation,
 				all_subplans_replicated = true;
 	int			numsegments = -1;
 
-	if (operation == CMD_UPDATE || operation == CMD_DELETE)
+	if (operation == CMD_UPDATE)
 		lci = list_head(is_split_updates);
 
 	forboth(lcr, resultRelations, lcp, subpaths)
