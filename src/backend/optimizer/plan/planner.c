@@ -4022,6 +4022,13 @@ create_grouping_paths(PlannerInfo *root,
 				grouping_is_hashable(parse->groupClause));
 
 	/*
+	 * In GPDB, the hash aggregate can spill to disk, and it needs combine function
+	 * support for that.
+	 */
+	if (agg_costs->hasNonCombine)
+		can_hash = false;
+
+	/*
 	 * If grouped_rel->consider_parallel is true, then paths that we generate
 	 * for this grouping relation could be run inside of a worker, but that
 	 * doesn't mean we can actually use the PartialAggregate/FinalizeAggregate
