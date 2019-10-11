@@ -1353,6 +1353,9 @@ evalFunc(TState *thread, CState *st,
 							Assert(0);
 					}
 				}
+
+				Assert(0);
+				return false;	/* NOTREACHED */
 			}
 
 			/* no arguments */

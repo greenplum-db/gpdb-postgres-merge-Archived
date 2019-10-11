@@ -1651,6 +1651,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 
 			/* This shouldn't happen */
 			elog(ERROR, "attempted to lock invisible tuple");
+			break;
 
 		case HeapTupleSelfUpdated:
 
@@ -1660,6 +1661,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 			 * seen this row to conflict with.
 			 */
 			elog(ERROR, "unexpected self-updated tuple");
+			break;
 
 		case HeapTupleUpdated:
 			if (IsolationUsesXactSnapshot())

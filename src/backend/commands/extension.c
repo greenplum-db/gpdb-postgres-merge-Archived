@@ -1239,7 +1239,6 @@ CreateExtensionInternal(CreateExtensionStmt *stmt, List *parents)
 	ListCell   *lc;
 	ObjectAddress address;
 
-
 	/*
 	 * Read the primary control file.  Note we assume that it does not contain
 	 * any non-ASCII data, so there is no need to worry about encoding at this
@@ -1617,6 +1616,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 		{
 			case CREATE_EXTENSION_INIT:
 				elog(ERROR, "invalid CREATE EXTENSION state");
+				break;
 
 			case CREATE_EXTENSION_BEGIN:	/* Mark creating_extension flag and add pg_extension catalog tuple */
 				creating_extension = true;

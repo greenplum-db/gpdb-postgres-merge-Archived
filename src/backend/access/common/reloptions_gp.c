@@ -1149,7 +1149,7 @@ validateAppendOnlyRelOptions(bool ao,
 							 char relkind,
 							 bool co)
 {
-	if (relkind != RELKIND_RELATION)
+	if (relkind != RELKIND_RELATION  && relkind != RELKIND_MATVIEW)
 	{
 		if (ao)
 			ereport(ERROR,

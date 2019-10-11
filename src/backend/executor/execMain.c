@@ -2037,6 +2037,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			switch (relation->rd_rel->relkind)
 			{
 				case RELKIND_RELATION:
+				case RELKIND_MATVIEW:
 					/* OK */
 					break;
 				case RELKIND_SEQUENCE:
@@ -2246,7 +2247,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		queryDesc->dest = CreateCopyDestReceiver();
 		((DR_copy*)queryDesc->dest)->queryDesc = queryDesc;
 	}
-
+	else if (queryDesc->plannedstmt->refreshClause != NULL && Gp_role == GP_ROLE_EXECUTE)
+		transientrel_init(queryDesc);
 	if (DEBUG1 >= log_min_messages)
 			{
 				char		msec_str[32];
@@ -3948,6 +3950,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 
 				case HeapTupleInvisible:
 					elog(ERROR, "attempted to lock invisible tuple");
+					break;
 
 				default:
 					ReleaseBuffer(buffer);
@@ -5235,7 +5238,7 @@ FillSliceTable(EState *estate, PlannedStmt *stmt)
 	cxt.estate = estate;
 	cxt.currentSliceId = 0;
 
-	if (stmt->intoClause != NULL || stmt->copyIntoClause != NULL)
+	if (stmt->intoClause != NULL || stmt->copyIntoClause != NULL || stmt->refreshClause)
 	{
 		Slice	   *currentSlice = (Slice *) linitial(sliceTable->slices);
 		int			numsegments;
