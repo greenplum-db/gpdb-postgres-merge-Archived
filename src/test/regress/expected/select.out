@@ -811,11 +811,12 @@ explain (costs off)
 select unique2 from onek2 where unique2 = 11 and stringu1 < 'B' for update;
                   QUERY PLAN                   
 -----------------------------------------------
- LockRows
+ Gather Motion 3:1  (slice1; segments: 3)
    ->  Index Scan using onek2_u2_prtl on onek2
          Index Cond: (unique2 = 11)
          Filter: (stringu1 < 'B'::name)
-(4 rows)
+ Optimizer: Postgres query optimizer
+(5 rows)
 
 select unique2 from onek2 where unique2 = 11 and stringu1 < 'B' for update;
  unique2 
