@@ -646,23 +646,20 @@ select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1 where t
 explain select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1 where t0.t=t1.v);
                                                    QUERY PLAN                                                    
 -----------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice2; segments: 3)  (cost=1.09..2.14 rows=4 width=19)
-   ->  Hash Join  (cost=1.09..2.14 rows=2 width=19)
-         Hash Cond: t0.t = "Expr_SUBQUERY".csq_c0
-         ->  Seq Scan on csq_pullup t0  (cost=0.00..1.01 rows=1 width=19)
-         ->  Hash  (cost=1.08..1.08 rows=1 width=32)
-               ->  Subquery Scan on "Expr_SUBQUERY"  (cost=1.05..1.08 rows=1 width=32)
-                     ->  HashAggregate  (cost=1.05..1.07 rows=1 width=40)
-                           Filter: count(partial_aggregation.unnamed_attr_2) = 1
-                           Group By: "?column1?"
-                           ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=1.02..1.04 rows=1 width=40)
-                                 Hash Key: unnamed_attr_1
-                                 ->  HashAggregate  (cost=1.02..1.02 rows=1 width=40)
-                                       Group By: t1.v::text
-                                       ->  Seq Scan on csq_pullup t1  (cost=0.00..1.01 rows=1 width=4)
- Settings:  optimizer_segments=3
- Optimizer status: Postgres query optimizer
-(16 rows)
+ Gather Motion 3:1  (slice2; segments: 3)  (cost=1.06..2.11 rows=4 width=17)
+   ->  Hash Join  (cost=1.06..2.11 rows=2 width=17)
+         Hash Cond: (t0.t = "Expr_SUBQUERY".csq_c0)
+         ->  Seq Scan on csq_pullup t0  (cost=0.00..1.01 rows=1 width=17)
+         ->  Hash  (cost=1.05..1.05 rows=1 width=32)
+               ->  Subquery Scan on "Expr_SUBQUERY"  (cost=1.03..1.05 rows=1 width=32)
+                     ->  HashAggregate  (cost=1.03..1.04 rows=1 width=40)
+                           Group Key: ((t1.v)::text)
+                           Filter: (1 = count(*))
+                           ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..1.03 rows=1 width=32)
+                                 Hash Key: ((t1.v)::text)
+                                 ->  Seq Scan on csq_pullup t1  (cost=0.00..1.01 rows=1 width=32)
+ Optimizer: Postgres query optimizer
+(13 rows)
 
 select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1 where t0.t=t1.v);
   t  | n | i |  v  
@@ -676,27 +673,23 @@ select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1 where t
 -- numeric, numeric
 --
 explain select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1 where t0.n=t1.n);
-                                                   QUERY PLAN                                                    
------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice3; segments: 3)  (cost=1.09..2.16 rows=4 width=19)
-   ->  Hash Join  (cost=1.09..2.16 rows=2 width=19)
-         Hash Cond: t0.n = "Expr_SUBQUERY".csq_c0
-         ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..1.03 rows=1 width=19)
-               Hash Key: t0.n
-               ->  Seq Scan on csq_pullup t0  (cost=0.00..1.01 rows=1 width=19)
-         ->  Hash  (cost=1.08..1.08 rows=1 width=32)
-               ->  Subquery Scan on "Expr_SUBQUERY"  (cost=1.05..1.08 rows=1 width=32)
-                     ->  HashAggregate  (cost=1.05..1.07 rows=1 width=40)
-                           Filter: count(partial_aggregation.unnamed_attr_2) = 1
-                           Group By: t1.n
-                           ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=1.02..1.04 rows=1 width=40)
-                                 Hash Key: t1.n
-                                 ->  HashAggregate  (cost=1.02..1.02 rows=1 width=40)
-                                       Group By: t1.n
-                                       ->  Seq Scan on csq_pullup t1  (cost=0.00..1.01 rows=1 width=7)
- Settings:  optimizer_segments=3
- Optimizer status: Postgres query optimizer
-(18 rows)
+                                                      QUERY PLAN                                                      
+----------------------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice3; segments: 3)  (cost=1.13..2.17 rows=4 width=17)
+   ->  Hash Join  (cost=1.13..2.17 rows=2 width=17)
+         Hash Cond: (t0.n = "Expr_SUBQUERY".csq_c0)
+         ->  Seq Scan on csq_pullup t0  (cost=0.00..1.01 rows=1 width=17)
+         ->  Hash  (cost=1.09..1.09 rows=1 width=5)
+               ->  Broadcast Motion 3:3  (slice2; segments: 3)  (cost=1.03..1.09 rows=1 width=5)
+                     ->  Subquery Scan on "Expr_SUBQUERY"  (cost=1.03..1.05 rows=1 width=5)
+                           ->  HashAggregate  (cost=1.03..1.04 rows=1 width=13)
+                                 Group Key: t1.n
+                                 Filter: (1 = count(*))
+                                 ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..1.03 rows=1 width=5)
+                                       Hash Key: t1.n
+                                       ->  Seq Scan on csq_pullup t1  (cost=0.00..1.01 rows=1 width=5)
+ Optimizer: Postgres query optimizer
+(14 rows)
 
 select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1 where t0.n=t1.n);
   t  | n | i |  v  
@@ -712,25 +705,22 @@ select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1 where t
 explain select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1 where t0.n + 1=t1.n + 1);
                                                    QUERY PLAN                                                    
 -----------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice3; segments: 3)  (cost=1.10..2.17 rows=4 width=19)
-   ->  Hash Join  (cost=1.10..2.17 rows=2 width=19)
-         Hash Cond: (t0.n + 1::numeric) = "Expr_SUBQUERY".csq_c0
-         ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..1.03 rows=1 width=19)
-               Hash Key: t0.n + 1::numeric
-               ->  Seq Scan on csq_pullup t0  (cost=0.00..1.01 rows=1 width=19)
-         ->  Hash  (cost=1.09..1.09 rows=1 width=32)
-               ->  Subquery Scan on "Expr_SUBQUERY"  (cost=1.06..1.09 rows=1 width=32)
-                     ->  HashAggregate  (cost=1.06..1.08 rows=1 width=40)
-                           Filter: count(partial_aggregation.unnamed_attr_2) = 1
-                           Group By: "?column1?"
-                           ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=1.02..1.04 rows=1 width=40)
-                                 Hash Key: unnamed_attr_1
-                                 ->  HashAggregate  (cost=1.02..1.02 rows=1 width=40)
-                                       Group By: t1.n + 1::numeric
-                                       ->  Seq Scan on csq_pullup t1  (cost=0.00..1.01 rows=1 width=7)
- Settings:  optimizer_segments=3
- Optimizer status: Postgres query optimizer
-(18 rows)
+ Gather Motion 3:1  (slice3; segments: 3)  (cost=1.07..2.13 rows=4 width=17)
+   ->  Hash Join  (cost=1.07..2.13 rows=2 width=17)
+         Hash Cond: ((t0.n + '1'::numeric) = "Expr_SUBQUERY".csq_c0)
+         ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..1.03 rows=1 width=17)
+               Hash Key: (t0.n + '1'::numeric)
+               ->  Seq Scan on csq_pullup t0  (cost=0.00..1.01 rows=1 width=17)
+         ->  Hash  (cost=1.05..1.05 rows=1 width=32)
+               ->  Subquery Scan on "Expr_SUBQUERY"  (cost=1.03..1.05 rows=1 width=32)
+                     ->  HashAggregate  (cost=1.03..1.04 rows=1 width=40)
+                           Group Key: ((t1.n + '1'::numeric))
+                           Filter: (1 = count(*))
+                           ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=0.00..1.03 rows=1 width=32)
+                                 Hash Key: ((t1.n + '1'::numeric))
+                                 ->  Seq Scan on csq_pullup t1  (cost=0.00..1.01 rows=1 width=32)
+ Optimizer: Postgres query optimizer
+(15 rows)
 
 select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1 where t0.n + 1=t1.n + 1);
   t  | n | i |  v  
@@ -746,25 +736,22 @@ select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1 where t
 explain select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1 where t0.n + 1=t1.i + 1);
                                                    QUERY PLAN                                                    
 -----------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice3; segments: 3)  (cost=1.10..2.18 rows=4 width=19)
-   ->  Hash Join  (cost=1.10..2.18 rows=2 width=19)
-         Hash Cond: (t0.n + 1::numeric) = "Expr_SUBQUERY".csq_c0
-         ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..1.03 rows=1 width=19)
-               Hash Key: t0.n + 1::numeric
-               ->  Seq Scan on csq_pullup t0  (cost=0.00..1.01 rows=1 width=19)
-         ->  Hash  (cost=1.09..1.09 rows=1 width=32)
-               ->  Subquery Scan on "Expr_SUBQUERY"  (cost=1.06..1.09 rows=1 width=32)
-                     ->  HashAggregate  (cost=1.06..1.08 rows=1 width=40)
-                           Filter: count(partial_aggregation.unnamed_attr_2) = 1
-                           Group By: "?column1?"
-                           ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=1.02..1.05 rows=1 width=40)
-                                 Hash Key: unnamed_attr_1
-                                 ->  HashAggregate  (cost=1.02..1.03 rows=1 width=40)
-                                       Group By: (t1.i + 1)::numeric
-                                       ->  Seq Scan on csq_pullup t1  (cost=0.00..1.01 rows=1 width=4)
- Settings:  optimizer_segments=3
- Optimizer status: Postgres query optimizer
-(18 rows)
+ Gather Motion 3:1  (slice3; segments: 3)  (cost=1.07..2.14 rows=4 width=17)
+   ->  Hash Join  (cost=1.07..2.14 rows=2 width=17)
+         Hash Cond: ((t0.n + '1'::numeric) = "Expr_SUBQUERY".csq_c0)
+         ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..1.03 rows=1 width=17)
+               Hash Key: (t0.n + '1'::numeric)
+               ->  Seq Scan on csq_pullup t0  (cost=0.00..1.01 rows=1 width=17)
+         ->  Hash  (cost=1.06..1.06 rows=1 width=32)
+               ->  Subquery Scan on "Expr_SUBQUERY"  (cost=1.03..1.06 rows=1 width=32)
+                     ->  HashAggregate  (cost=1.03..1.05 rows=1 width=40)
+                           Group Key: (((t1.i + 1))::numeric)
+                           Filter: (1 = count(*))
+                           ->  Redistribute Motion 3:3  (slice2; segments: 3)  (cost=0.00..1.03 rows=1 width=32)
+                                 Hash Key: (((t1.i + 1))::numeric)
+                                 ->  Seq Scan on csq_pullup t1  (cost=0.00..1.01 rows=1 width=32)
+ Optimizer: Postgres query optimizer
+(15 rows)
 
 select * from csq_pullup t0 where 1= (select count(*) from csq_pullup t1 where t0.n + 1=t1.i + 1);
   t  | n | i |  v  
