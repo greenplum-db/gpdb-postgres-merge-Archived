@@ -246,6 +246,9 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 		new_status[len] = '\0'; /* truncate off " waiting ..." */
 	}
 
+	/* Report the wait */
+	pgstat_report_wait_start(WAIT_REPLICATION, 0);
+
 	/*
 	 * Wait for specified LSN to be confirmed.
 	 *
@@ -352,6 +355,8 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	Assert(SHMQueueIsDetached(&(MyProc->syncRepLinks)));
 	MyProc->syncRepState = SYNC_REP_NOT_WAITING;
 	MyProc->waitLSN = 0;
+
+	pgstat_report_wait_end();
 
 	if (new_status)
 	{
