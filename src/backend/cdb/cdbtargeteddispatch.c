@@ -689,6 +689,8 @@ AssignContentIdsToPlanData(PlannerInfo *root, Plan *plan)
 	DirectDispatchCalculationInfo *ddcr;
 	MemoryContext		old_context;
 	MemoryContext		new_context;
+	ListCell   *lp;
+	int			plan_id;
 
 	new_context = AllocSetContextCreate(CurrentMemoryContext,
 										"AssignContentIdsToPlanData",
@@ -738,6 +740,34 @@ AssignContentIdsToPlanData(PlannerInfo *root, Plan *plan)
 			list_free(plan->directDispatch.contentIds);
 			plan->directDispatch.contentIds = NIL;
 		}
+	}
+
+	/*
+	 * Also handle initplans. We already recursed into non-initplans while processing
+	 * the main plan.
+	 */
+	plan_id = 1;
+	foreach(lp, root->glob->subplans)
+	{
+		Plan	   *subplan = (Plan *) lfirst(lp);
+		bool		initPlanParallel = root->glob->subplan_initPlanParallel[plan_id];
+
+		if (initPlanParallel)
+		{
+			/* Do it! */
+			ddcr = palloc(sizeof(DirectDispatchCalculationInfo));
+
+			InitDirectDispatchCalculationInfo(ddcr);
+			data.sliceStack = list_make1(ddcr);
+			AssignContentIdsToPlanData_Walker((Node *) subplan, &data);
+
+			if (!IsA(subplan, SubPlan) &&!IsA(subplan, Motion))
+			{
+				/* subplan and motion will already have been finalized */
+				FinalizeDirectDispatchDataForSlice((Node *) subplan, &data, true);
+			}
+		}
+		plan_id++;
 	}
 
 	MemoryContextSwitchTo(old_context);
