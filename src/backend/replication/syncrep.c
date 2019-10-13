@@ -668,7 +668,8 @@ SyncRepGetSyncStandbys(bool *am_sync)
 			if (syncStandbyPresent)
 			{
 				result = lappend_int(result, i);
-				*am_sync = true;
+				if (am_sync)
+					*am_sync = true;
 				return result;
 			}
 		}
