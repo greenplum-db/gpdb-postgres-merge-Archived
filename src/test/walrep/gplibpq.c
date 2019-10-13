@@ -139,7 +139,7 @@ test_receive_and_verify(PG_FUNCTION_ARGS)
 			/* Accept the received data, and process it */
 			test_XLogWalRcvProcessMsg(buf[0], &buf[1], len-1, &logStreamStart);
 
-			/* Compare received everthing from start */
+			/* Compare received everything from start */
 			if (startpoint != logStreamStart)
 			{
 				elog(ERROR, "Start point (%X/%X) differs from expected (%X/%X)",
