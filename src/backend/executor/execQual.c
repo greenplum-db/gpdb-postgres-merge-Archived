@@ -5397,7 +5397,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				else
 				{
 					/* planner messed up */
-					elog(ERROR, "Aggref found in non-Agg plan node");
+					elog(WARNING, "Aggref found in non-Agg plan node");
 				}
 				state = (ExprState *) astate;
 			}

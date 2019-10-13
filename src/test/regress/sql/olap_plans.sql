@@ -37,7 +37,7 @@ select sum(d) from olap_test;
 explain select sum(distinct a) from olap_test_single;
 select sum(distinct a) from olap_test_single;
 
--- Otherwise, it's not
+-- Otherwise, need a more complicated plans
 explain select sum(distinct b) from olap_test_single;
 select sum(distinct b) from olap_test_single;
 

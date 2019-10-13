@@ -1382,6 +1382,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				}
 				else
 					partialmode = "Simple";
+
+				if (agg->streaming)
+					pname = psprintf("Streaming %s", pname);
 			}
 			break;
 		case T_WindowAgg:

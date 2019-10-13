@@ -122,6 +122,7 @@ static bool fix_scan_expr_walker(Node *node, fix_scan_expr_context *context);
 static void set_join_references(PlannerInfo *root, Join *join, int rtoffset);
 static void set_upper_references(PlannerInfo *root, Plan *plan, int rtoffset);
 static Node *convert_combining_aggrefs(Node *node, void *context);
+static Node *convert_deduplicated_aggrefs(Node *node, void *context);
 static void set_dummy_tlist_references(Plan *plan, int rtoffset);
 static indexed_tlist *build_tlist_index(List *tlist);
 static Var *search_indexed_tlist_for_var(Var *var,
@@ -977,6 +978,18 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 		case T_Agg:
 			{
 				Agg		   *agg = (Agg *) plan;
+
+				if (DO_AGGSPLIT_DEDUPLICATED(agg->aggsplit))
+				{
+					plan->targetlist = (List *)
+						convert_deduplicated_aggrefs((Node *) plan->targetlist,
+													 NULL);
+					plan->qual = (List *)
+						convert_deduplicated_aggrefs((Node *) plan->qual,
+													 NULL);
+
+					agg->aggsplit &= ~AGGSPLITOP_DEDUPLICATED;
+				}
 
 				/*
 				 * If this node is combining partial-aggregation results, we
@@ -2140,14 +2153,12 @@ convert_combining_aggrefs(Node *node, void *context)
 
 		/* Assert we've not chosen to partial-ize any unsupported cases */
 		Assert(orig_agg->aggorder == NIL);
-
 		/*
 		 * In GPDB, we can do two-stage aggregation even when there is a
-		 * distinct-aggregate, as long as there's only one.
+		 * distinct-aggregate, as long as there's only one. But the 'aggdistinct'
+		 * should've been stripped away in that case already.
 		 */
-#if 0
-		Assert(orig_agg->aggdistinct == NIL);
-#endif
+		//Assert(orig_agg->aggdistinct == NIL);
 
 		/*
 		 * Since aggregate calls can't be nested, we needn't recurse into the
@@ -2194,6 +2205,32 @@ convert_combining_aggrefs(Node *node, void *context)
 		return (Node *) parent_agg;
 	}
 	return expression_tree_mutator(node, convert_combining_aggrefs,
+								   (void *) context);
+}
+
+static Node *
+convert_deduplicated_aggrefs(Node *node, void *context)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Aggref))
+	{
+		Aggref	   *orig_agg = (Aggref *) node;
+		Aggref	   *parent_agg;
+
+		/*
+		 * Since aggregate calls can't be nested, we needn't recurse into the
+		 * arguments.  But for safety, flat-copy the Aggref node itself rather
+		 * than modifying it in-place.
+		 */
+		parent_agg = makeNode(Aggref);
+		memcpy(parent_agg, orig_agg, sizeof(Aggref));
+
+		parent_agg->aggdistinct = NIL;
+
+		return (Node *) parent_agg;
+	}
+	return expression_tree_mutator(node, convert_deduplicated_aggrefs,
 								   (void *) context);
 }
 

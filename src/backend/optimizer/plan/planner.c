@@ -3888,10 +3888,10 @@ create_grouping_paths(PlannerInfo *root,
 	double		dNumGroups;
 	double		dNumPartialGroups = 0;
 	bool		can_hash;
+	bool		can_mpp_hash;
 	bool		can_sort;
 	bool		try_parallel_aggregation;
 	bool		try_mpp_multistage_aggregation;
-	bool		consider_hash = false;
 
 	ListCell   *lc;
 
@@ -4021,12 +4021,18 @@ create_grouping_paths(PlannerInfo *root,
 				agg_costs->numOrderedAggs == 0 &&
 				grouping_is_hashable(parse->groupClause));
 
+	/* GPDB can also do a two-stage aggregate when there is exactly one DISTINCT agg. */
+	can_mpp_hash = (parse->groupClause != NIL &&
+				parse->groupingSets == NIL &&
+				agg_costs->numPureOrderedAggs == 0 &&
+				grouping_is_hashable(parse->groupClause));
+
 	/*
 	 * In GPDB, the hash aggregate can spill to disk, and it needs combine function
 	 * support for that.
 	 */
 	if (agg_costs->hasNonCombine)
-		can_hash = false;
+		can_hash = can_mpp_hash = false;
 
 	/*
 	 * If grouped_rel->consider_parallel is true, then paths that we generate
@@ -4259,6 +4265,7 @@ create_grouping_paths(PlannerInfo *root,
 				bool		need_redistribute;
 
 				locus = cdb_choose_grouping_locus(root, path, target,
+												  parse->groupClause,
 												  rollup_lists, rollup_groupclauses,
 												  &need_redistribute);
 
@@ -4445,7 +4452,7 @@ create_grouping_paths(PlannerInfo *root,
 		bool		need_redistribute;
 
 		locus = cdb_choose_grouping_locus(root, cheapest_path, target,
-										  rollup_lists, rollup_groupclauses,
+										  parse->groupClause, rollup_lists, rollup_groupclauses,
 										  &need_redistribute);
 
 		hashaggtablesize = estimate_hashagg_tablesize(cheapest_path,
@@ -4474,8 +4481,6 @@ create_grouping_paths(PlannerInfo *root,
 			 * The hash agg doesn't care about input order, and it destroys any order there was,
 			 * so don't bother doing a order-preserving Motion even if we could.
 			 */
-			consider_hash = true;
-
 			if (need_redistribute)
 				cheapest_path = cdbpath_create_motion_path(root, cheapest_path,
 														   NIL /* pathkeys */, false, locus);
@@ -4554,7 +4559,7 @@ create_grouping_paths(PlannerInfo *root,
 										   target,
 										   partial_grouping_target,
 										   can_sort,
-										   consider_hash,
+										   can_mpp_hash,
 										   dNumGroups,
 										   agg_costs,
 										   &agg_partial_costs,

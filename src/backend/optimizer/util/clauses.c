@@ -613,17 +613,7 @@ get_agg_clause_costs_walker(Node *node, get_agg_clause_costs_context *context)
 			costs->numPureOrderedAggs++;
 
 		if (aggref->aggdistinct != NIL)
-		{
-			ListCell *lc;
-
-			foreach(lc, aggref->args)
-			{
-				TargetEntry *tle = (TargetEntry *) lfirst(lc);
-
-				if ( !list_member(costs->dqaArgs, tle->expr) )
-					costs->dqaArgs = lappend(costs->dqaArgs, tle->expr);
-			}
-		}
+			costs->distinctAggrefs = lappend(costs->distinctAggrefs, aggref);
 
 		/*
 		 * Check whether partial aggregation is feasible, unless we already

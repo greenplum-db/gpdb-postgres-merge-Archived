@@ -77,7 +77,7 @@ typedef struct AggClauseCosts
 	Cost		finalCost;		/* total per-aggregated-row costs */
 	Size		transitionSpace;	/* space for pass-by-ref transition data */
 
-	List   *dqaArgs;	/* CDB: List of distinct DQA argument exprs. */
+	List	   *distinctAggrefs;	/* CDB: List of Aggrfefs with aggdistinct */
 } AggClauseCosts;
 
 /*

@@ -921,6 +921,8 @@ typedef enum AggStrategy
 #define AGGSPLITOP_SERIALIZE	0x04	/* apply serializefn to output */
 #define AGGSPLITOP_DESERIALIZE	0x08	/* apply deserializefn to input */
 
+#define AGGSPLITOP_DEDUPLICATED	0x100
+
 /* Supported operating modes (i.e., useful combinations of these options): */
 typedef enum AggSplit
 {
@@ -929,7 +931,14 @@ typedef enum AggSplit
 	/* Initial phase of partial aggregation, with serialization: */
 	AGGSPLIT_INITIAL_SERIAL = AGGSPLITOP_SKIPFINAL | AGGSPLITOP_SERIALIZE,
 	/* Final phase of partial aggregation, with deserialization: */
-	AGGSPLIT_FINAL_DESERIAL = AGGSPLITOP_COMBINE | AGGSPLITOP_DESERIALIZE
+	AGGSPLIT_FINAL_DESERIAL = AGGSPLITOP_COMBINE | AGGSPLITOP_DESERIALIZE,
+
+	/*
+	 * The inputs have already been deduplicated for DISTINCT.
+	 * This is internal to the planner, it is never set on Aggrefs, and is
+	 * stripped away from Aggs in setrefs.c.
+	 */
+	AGGSPLIT_DEDUPLICATED = AGGSPLITOP_DEDUPLICATED,
 } AggSplit;
 
 /* Test whether an AggSplit value selects each primitive option: */
@@ -937,6 +946,8 @@ typedef enum AggSplit
 #define DO_AGGSPLIT_SKIPFINAL(as)	(((as) & AGGSPLITOP_SKIPFINAL) != 0)
 #define DO_AGGSPLIT_SERIALIZE(as)	(((as) & AGGSPLITOP_SERIALIZE) != 0)
 #define DO_AGGSPLIT_DESERIALIZE(as) (((as) & AGGSPLITOP_DESERIALIZE) != 0)
+
+#define DO_AGGSPLIT_DEDUPLICATED(as) (((as) & AGGSPLITOP_DEDUPLICATED) != 0)
 
 /*
  * SetOpCmd and SetOpStrategy -

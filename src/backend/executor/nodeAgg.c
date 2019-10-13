@@ -3124,7 +3124,7 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	 * caught earlier, but we defend against it here anyway.)
 	 */
 	if (naggs != aggstate->numaggs)
-		ereport(ERROR,
+		ereport(WARNING,
 				(errcode(ERRCODE_GROUPING_ERROR),
 				 errmsg("aggregate function calls cannot be nested")));
 
