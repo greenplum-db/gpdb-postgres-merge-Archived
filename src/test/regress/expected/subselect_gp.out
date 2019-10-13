@@ -908,11 +908,11 @@ select count(*) from subselect_t1 where x in (select y from subselect_t2);
 explain select count(*) from subselect_t1 where x in (select y from subselect_t2 union all select y from subselect_t2);
                                                   QUERY PLAN                                                   
 ---------------------------------------------------------------------------------------------------------------
- Aggregate  (cost=6.33..6.34 rows=1 width=8)
-   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=6.26..6.31 rows=1 width=8)
-         ->  Aggregate  (cost=6.26..6.27 rows=1 width=8)
+ Finalize Aggregate  (cost=6.30..6.31 rows=1 width=8)
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=6.26..6.29 rows=1 width=8)
+         ->  Partial Aggregate  (cost=6.26..6.27 rows=1 width=8)
                ->  Hash Semi Join  (cost=4.19..6.26 rows=2 width=0)
-                     Hash Cond: subselect_t1.x = subselect_t2.y
+                     Hash Cond: (subselect_t1.x = subselect_t2.y)
                      ->  Seq Scan on subselect_t1  (cost=0.00..2.02 rows=1 width=4)
                      ->  Hash  (cost=4.12..4.12 rows=2 width=4)
                            ->  Append  (cost=0.00..4.06 rows=2 width=4)
@@ -1581,18 +1581,18 @@ EXPLAIN select count(*) from
    where unique1 IN (select hundred from tenk1 b)) ss;
                                                         QUERY PLAN                                                         
 ---------------------------------------------------------------------------------------------------------------------------
- Aggregate  (cost=640.06..640.07 rows=1 width=8)
-   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=640.00..640.05 rows=1 width=8)
-         ->  Aggregate  (cost=640.00..640.01 rows=1 width=8)
-               ->  Hash Join  (cost=414.25..639.75 rows=34 width=0)
-                     Hash Cond: a.unique1 = b.hundred
-                     ->  Seq Scan on tenk1 a  (cost=0.00..187.00 rows=3334 width=4)
-                     ->  Hash  (cost=413.00..413.00 rows=34 width=4)
-                           ->  HashAggregate  (cost=412.00..413.00 rows=34 width=4)
+ Finalize Aggregate  (cost=643.26..643.27 rows=1 width=8)
+   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=643.23..643.26 rows=1 width=8)
+         ->  Partial Aggregate  (cost=643.23..643.24 rows=1 width=8)
+               ->  Hash Join  (cost=415.48..642.98 rows=34 width=0)
+                     Hash Cond: (a.unique1 = b.hundred)
+                     ->  Seq Scan on tenk1 a  (cost=0.00..189.00 rows=3334 width=4)
+                     ->  Hash  (cost=414.23..414.23 rows=34 width=4)
+                           ->  HashAggregate  (cost=413.90..414.23 rows=34 width=4)
                                  Group Key: b.hundred
-                                 ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..387.00 rows=3334 width=4)
+                                 ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..389.00 rows=3334 width=4)
                                        Hash Key: b.hundred
-                                       ->  Seq Scan on tenk1 b  (cost=0.00..187.00 rows=3334 width=4)
+                                       ->  Seq Scan on tenk1 b  (cost=0.00..189.00 rows=3334 width=4)
  Optimizer: Postgres query optimizer
 (13 rows)
 
@@ -1623,18 +1623,18 @@ EXPLAIN select count(*) from
    where unique1 IN (select distinct hundred from tenk1 b)) ss;
                                                         QUERY PLAN                                                         
 ---------------------------------------------------------------------------------------------------------------------------
- Aggregate  (cost=640.06..640.07 rows=1 width=8)
-   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=640.00..640.05 rows=1 width=8)
-         ->  Aggregate  (cost=640.00..640.01 rows=1 width=8)
-               ->  Hash Join  (cost=414.25..639.75 rows=34 width=0)
-                     Hash Cond: a.unique1 = b.hundred
-                     ->  Seq Scan on tenk1 a  (cost=0.00..187.00 rows=3334 width=4)
-                     ->  Hash  (cost=413.00..413.00 rows=34 width=4)
-                           ->  HashAggregate  (cost=412.00..413.00 rows=34 width=4)
+ Finalize Aggregate  (cost=643.26..643.27 rows=1 width=8)
+   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=643.23..643.26 rows=1 width=8)
+         ->  Partial Aggregate  (cost=643.23..643.24 rows=1 width=8)
+               ->  Hash Join  (cost=415.48..642.98 rows=34 width=0)
+                     Hash Cond: (a.unique1 = b.hundred)
+                     ->  Seq Scan on tenk1 a  (cost=0.00..189.00 rows=3334 width=4)
+                     ->  Hash  (cost=414.23..414.23 rows=34 width=4)
+                           ->  HashAggregate  (cost=413.90..414.23 rows=34 width=4)
                                  Group Key: b.hundred
-                                 ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..387.00 rows=3334 width=4)
+                                 ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..389.00 rows=3334 width=4)
                                        Hash Key: b.hundred
-                                       ->  Seq Scan on tenk1 b  (cost=0.00..187.00 rows=3334 width=4)
+                                       ->  Seq Scan on tenk1 b  (cost=0.00..189.00 rows=3334 width=4)
  Optimizer: Postgres query optimizer
 (13 rows)
 
