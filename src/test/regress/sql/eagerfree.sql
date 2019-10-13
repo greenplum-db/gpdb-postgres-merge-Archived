@@ -16,6 +16,7 @@ insert into smallt2 select i%5, 'text ' || (i%10), '2011-01-01'::date + ((i%15) 
 from generate_series(0, 49) i;
 
 set optimizer_segments = 3;
+set gp_motion_cost_per_row = 0.1;
 
 -- HashAgg, Agg
 select d, count(*) from smallt group by d;

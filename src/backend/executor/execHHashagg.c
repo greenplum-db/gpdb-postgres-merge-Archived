@@ -2249,7 +2249,7 @@ agg_hash_explain(AggState *aggstate)
 		appendStringInfo(hbuf,
 				"Hash chain length %.1f avg, %.0f max,"
 				" using %d of " INT64_FORMAT " buckets"
-				"; total %d expansions.\n",
+				"; total %d expansions.",
 				cdbexplain_agg_avg(&hashtable->chainlength),
 				hashtable->chainlength.vmax,
 				hashtable->chainlength.vcnt,
