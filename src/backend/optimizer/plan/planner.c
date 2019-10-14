@@ -2493,43 +2493,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	{
 		Path	   *path = (Path *) lfirst(lc);
 
-		if (CdbPathLocus_IsPartitioned(path->locus) &&
-			(limit_needed(parse) || must_gather))
-		{
-			CdbPathLocus locus;
-			List	   *pathkeys;
-
-			/*
-			 * If there is a LIMIT clause, add a Limit node to below the
-			 * Motion, as a preliminary step, so that the QEs can stop
-			 * executing early. We'll still need a Limit node after the
-			 * Gather Motion, which will be added below.
-			 */
-			if (parse->limitCount && limit_needed(parse) &&
-				!contain_volatile_functions(parse->limitOffset) &&
-				!contain_volatile_functions(parse->limitCount))
-			{
-				path = (Path *) create_preliminary_limit_path(root, final_rel, path,
-															  parse->limitOffset,
-															  parse->limitCount,
-															  offset_est, count_est);
-			}
-
-
-			/*
-			 * The subpath might be ordered by TLEs that we don't need
-			 * in the final result, and will therefore not be present in the
-			 * final target list. We can't preserve them in the Motion node,
-			 * because we don't have them available anymore.
-			 */
-			pathkeys =
-				cdbpullup_truncatePathKeysForTargetList(path->pathkeys,
-														make_tlist_from_pathtarget(path->pathtarget));
-
-			CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
-			path = cdbpath_create_motion_path(root, path, pathkeys, false, locus);
-		}
-
 		/*
 		 * Greenplum specific behavior:
 		 * The implementation of select statement with locking clause
@@ -2574,6 +2537,42 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 									root->rowMarks,
 									SS_assign_special_param(root));
 			}
+		}
+
+		if (CdbPathLocus_IsPartitioned(path->locus) &&
+			(limit_needed(parse) || must_gather))
+		{
+			CdbPathLocus locus;
+			List	   *pathkeys;
+
+			/*
+			 * If there is a LIMIT clause, add a Limit node to below the
+			 * Motion, as a preliminary step, so that the QEs can stop
+			 * executing early. We'll still need a Limit node after the
+			 * Gather Motion, which will be added below.
+			 */
+			if (parse->limitCount && limit_needed(parse) &&
+				!contain_volatile_functions(parse->limitOffset) &&
+				!contain_volatile_functions(parse->limitCount))
+			{
+				path = (Path *) create_preliminary_limit_path(root, final_rel, path,
+															  parse->limitOffset,
+															  parse->limitCount,
+															  offset_est, count_est);
+			}
+
+			/*
+			 * The subpath might be ordered by TLEs that we don't need
+			 * in the final result, and will therefore not be present in the
+			 * final target list. We can't preserve them in the Motion node,
+			 * because we don't have them available anymore.
+			 */
+			pathkeys =
+				cdbpullup_truncatePathKeysForTargetList(path->pathkeys,
+														make_tlist_from_pathtarget(path->pathtarget));
+
+			CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+			path = cdbpath_create_motion_path(root, path, pathkeys, false, locus);
 		}
 
 		/*

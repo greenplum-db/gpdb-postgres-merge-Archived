@@ -2359,6 +2359,7 @@ create_lockrows_plan(PlannerInfo *root, LockRowsPath *best_path,
 	plan = make_lockrows(subplan, best_path->rowMarks, best_path->epqParam);
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
+	plan->plan.flow = pull_up_Flow(&plan->plan, subplan);
 
 	return plan;
 }
