@@ -1334,6 +1334,10 @@ inheritance_planner(PlannerInfo *root)
 	Oid			parentOid = InvalidOid;
 	Assert(parse->commandType != CMD_INSERT);
 
+	/* MPP */
+	CdbLocusType append_locustype = CdbLocusType_Null;
+	bool		locus_ok = TRUE;
+
 	/*
 	 * We generate a modified instance of the original Query for each target
 	 * relation, plan that, and put all the plans into a list that will be
@@ -1618,12 +1622,10 @@ inheritance_planner(PlannerInfo *root)
 		if (IS_DUMMY_PATH(subpath))
 			continue;
 
-#if 0 /* GPDB_96_MERGE_FIXME */
 		/* MPP needs target loci to match. */
 		if (Gp_role == GP_ROLE_DISPATCH)
 		{
-			CdbLocusType locustype = (subplan->flow == NULL) ?
-			CdbLocusType_Null : subplan->flow->locustype;
+			CdbLocusType locustype = subpath->locus.locustype;
 
 			if (append_locustype == CdbLocusType_Null && locus_ok)
 			{
@@ -1670,7 +1672,6 @@ inheritance_planner(PlannerInfo *root)
 						 errmsg("incompatible loci in target inheritance set")));
 			}
 		}
-#endif
 
 		/*
 		 * If this is the first non-excluded child, its post-planning rtable
