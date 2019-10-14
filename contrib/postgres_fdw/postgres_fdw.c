@@ -3266,7 +3266,7 @@ get_returning_data(ForeignScanState *node)
 												dmstate->retrieved_attrs,
 												NULL,
 												dmstate->temp_cxt);
-			ExecStoreTuple(newtup, slot, InvalidBuffer, false);
+			ExecStoreHeapTuple(newtup, slot, InvalidBuffer, false);
 		}
 		PG_CATCH();
 		{
