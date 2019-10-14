@@ -168,28 +168,8 @@ RETURNS text
 AS 'MODULE_PATHNAME','dblink_current_query'
 LANGUAGE C PARALLEL RESTRICTED;
 
-<<<<<<< HEAD:contrib/dblink/dblink--1.1.sql
 -- GPDB does not support these functions correctly
--- CREATE FUNCTION dblink_send_query(text, text)
--- RETURNS int4
--- AS 'MODULE_PATHNAME', 'dblink_send_query'
--- LANGUAGE C STRICT;
---
--- CREATE FUNCTION dblink_is_busy(text)
--- RETURNS int4
--- AS 'MODULE_PATHNAME', 'dblink_is_busy'
--- LANGUAGE C STRICT;
---
--- CREATE FUNCTION dblink_get_result(text)
--- RETURNS SETOF record
--- AS 'MODULE_PATHNAME', 'dblink_get_result'
--- LANGUAGE C STRICT;
---
--- CREATE FUNCTION dblink_get_result(text, bool)
--- RETURNS SETOF record
--- AS 'MODULE_PATHNAME', 'dblink_get_result'
--- LANGUAGE C STRICT;
-=======
+/*
 CREATE FUNCTION dblink_send_query(text, text)
 RETURNS int4
 AS 'MODULE_PATHNAME', 'dblink_send_query'
@@ -209,7 +189,8 @@ CREATE FUNCTION dblink_get_result(text, bool)
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'dblink_get_result'
 LANGUAGE C STRICT PARALLEL RESTRICTED;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365:contrib/dblink/dblink--1.2.sql
+*/
+-- end of GPDB unsupported functions
 
 CREATE FUNCTION dblink_get_connections()
 RETURNS text[]
