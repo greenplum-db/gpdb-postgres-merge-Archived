@@ -1182,8 +1182,8 @@ UPDATE current_check SET payload = payload || '_new' WHERE CURRENT OF current_ch
 SELECT * FROM current_check;
 -- Plan should be a subquery TID scan
 EXPLAIN (COSTS OFF) UPDATE current_check SET payload = payload WHERE CURRENT OF current_check_cursor;
--- GPDB: does not support backwards scans, commit and restart
 -- start_ignore
+-- GPDB: does not support backwards scans, commit and restart
 COMMIT;
 BEGIN;
 DECLARE current_check_cursor SCROLL CURSOR FOR SELECT * FROM current_check;
@@ -1397,6 +1397,7 @@ ALTER TABLE r2 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE r2 FORCE ROW LEVEL SECURITY;
 
 -- Errors due to rows in r2
+-- GPDB: Foreign key constraints are not enforced in GPDB, so no error.
 DELETE FROM r1;
 
 -- Reset r2 to no-RLS
@@ -1442,6 +1443,7 @@ ALTER TABLE r2 NO FORCE ROW LEVEL SECURITY;
 
 -- As owner, we now bypass RLS
 -- verify no rows in r2 now
+-- GPDB: Foreign key constraints are not enforced in GPDB, hence the rows are still there.
 TABLE r2;
 
 DROP TABLE r2;
@@ -1461,6 +1463,7 @@ ALTER TABLE r2 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE r2 FORCE ROW LEVEL SECURITY;
 
 -- Updates records in both
+-- not supported in GPDB
 UPDATE r1 SET a = a+5;
 
 -- Remove FORCE from r2

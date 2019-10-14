@@ -3411,9 +3411,8 @@ CREATE POLICY p1 ON r2 USING (false);
 ALTER TABLE r2 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE r2 FORCE ROW LEVEL SECURITY;
 -- Errors due to rows in r2
+-- GPDB: Foreign key constraints are not enforced in GPDB, so no error.
 DELETE FROM r1;
-ERROR:  update or delete on table "r1" violates foreign key constraint "r2_a_fkey" on table "r2"
-DETAIL:  Key (a)=(10) is still referenced from table "r2".
 -- Reset r2 to no-RLS
 DROP POLICY p1 ON r2;
 ALTER TABLE r2 NO FORCE ROW LEVEL SECURITY;
@@ -3451,10 +3450,13 @@ DELETE FROM r1;
 ALTER TABLE r2 NO FORCE ROW LEVEL SECURITY;
 -- As owner, we now bypass RLS
 -- verify no rows in r2 now
+-- GPDB: Foreign key constraints are not enforced in GPDB, hence the rows are still there.
 TABLE r2;
- a 
----
-(0 rows)
+ a  
+----
+ 20
+ 10
+(2 rows)
 
 DROP TABLE r2;
 DROP TABLE r1;
@@ -3470,7 +3472,9 @@ CREATE POLICY p1 ON r2 USING (false);
 ALTER TABLE r2 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE r2 FORCE ROW LEVEL SECURITY;
 -- Updates records in both
+-- not supported in GPDB
 UPDATE r1 SET a = a+5;
+ERROR:  UPDATE on distributed key column not allowed on relation with update triggers
 -- Remove FORCE from r2
 ALTER TABLE r2 NO FORCE ROW LEVEL SECURITY;
 -- As owner, we now bypass RLS
@@ -3478,8 +3482,8 @@ ALTER TABLE r2 NO FORCE ROW LEVEL SECURITY;
 TABLE r2;
  a  
 ----
- 15
- 25
+ 10
+ 20
 (2 rows)
 
 DROP TABLE r2;

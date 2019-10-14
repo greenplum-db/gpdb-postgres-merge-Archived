@@ -2444,6 +2444,7 @@ failIfUpdateTriggers(Relation relation)
 		}
 	}
 
+	/* GPDB_96_MERGE_FIXME: Why is this not allowed? */
 	if (found || child_triggers(relation->rd_id, TRIGGER_TYPE_UPDATE))
 		ereport(ERROR,
 				(errcode(ERRCODE_GP_FEATURE_NOT_YET),
