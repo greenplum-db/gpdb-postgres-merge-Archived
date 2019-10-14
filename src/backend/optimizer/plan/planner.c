@@ -1636,6 +1636,7 @@ inheritance_planner(PlannerInfo *root)
 				switch (locustype)
 				{
 					case CdbLocusType_Entry:
+					case CdbLocusType_SingleQE:
 						locus_ok = locus_ok && (locustype == append_locustype);
 						break;
 					case CdbLocusType_Hashed:
@@ -1647,7 +1648,6 @@ inheritance_planner(PlannerInfo *root)
 					case CdbLocusType_SegmentGeneral:
 						break;
 					case CdbLocusType_Null:
-					case CdbLocusType_SingleQE:
 					case CdbLocusType_General:
 					case CdbLocusType_Replicated:
 						/* These loci are not valid on base relations */
