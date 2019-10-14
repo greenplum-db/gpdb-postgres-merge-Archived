@@ -780,28 +780,27 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 					 * command is still being processed by the remote server,
 					 * and if so, request cancellation of the command.
 					 */
-					if (PQtransactionStatus(entry->conn) == PQTRANS_ACTIVE)
+					if (PQtransactionStatus(entry->conn) == PQTRANS_ACTIVE &&
+						!pgfdw_cancel_query(entry->conn))
 					{
-						PGcancel   *cancel;
-						char		errbuf[256];
-
-						if ((cancel = PQgetCancel(entry->conn)))
-						{
-							if (!PQcancel(cancel, errbuf, sizeof(errbuf)))
-								ereport(WARNING,
-										(errcode(ERRCODE_CONNECTION_FAILURE),
-								  errmsg("could not send cancel request: %s",
-										 errbuf)));
-							PQfreeCancel(cancel);
-						}
+						/* Unable to cancel running query. */
+						abort_cleanup_failure = true;
 					}
-
-					/* If we're aborting, abort all remote transactions too */
-					res = PQexec(entry->conn, "ABORT TRANSACTION");
-					/* Note: can't throw ERROR, it would be infinite loop */
-					if (PQresultStatus(res) != PGRES_COMMAND_OK)
-						pgfdw_report_error(WARNING, res, entry->conn, true,
-										   "ABORT TRANSACTION");
+					else if (!pgfdw_exec_cleanup_query(entry->conn,
+													   "ABORT TRANSACTION",
+													   false))
+					{
+						/* Unable to abort remote transaction. */
+						abort_cleanup_failure = true;
+					}
+					else if (entry->have_prep_stmt && entry->have_error &&
+							 !pgfdw_exec_cleanup_query(entry->conn,
+													   "DEALLOCATE ALL",
+													   true))
+					{
+						/* Trouble clearing prepared statements. */
+						abort_cleanup_failure = true;
+					}
 					else
 					{
 						entry->have_prep_stmt = false;
@@ -921,29 +920,9 @@ pgfdw_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 			 * processed by the remote server, and if so, request cancellation
 			 * of the command.
 			 */
-			if (PQtransactionStatus(entry->conn) == PQTRANS_ACTIVE)
-			{
-				PGcancel   *cancel;
-				char		errbuf[256];
-
-				if ((cancel = PQgetCancel(entry->conn)))
-				{
-					if (!PQcancel(cancel, errbuf, sizeof(errbuf)))
-						ereport(WARNING,
-								(errcode(ERRCODE_CONNECTION_FAILURE),
-								 errmsg("could not send cancel request: %s",
-										errbuf)));
-					PQfreeCancel(cancel);
-				}
-			}
-
-			/* Rollback all remote subtransactions during abort */
-			snprintf(sql, sizeof(sql),
-					 "ROLLBACK TO SAVEPOINT s%d; RELEASE SAVEPOINT s%d",
-					 curlevel, curlevel);
-			res = PQexec(entry->conn, sql);
-			if (PQresultStatus(res) != PGRES_COMMAND_OK)
-				pgfdw_report_error(WARNING, res, entry->conn, true, sql);
+			if (PQtransactionStatus(entry->conn) == PQTRANS_ACTIVE &&
+				!pgfdw_cancel_query(entry->conn))
+				abort_cleanup_failure = true;
 			else
 			{
 				/* Rollback all remote subtransactions during abort */
@@ -1017,6 +996,8 @@ pgfdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue)
 static void
 pgfdw_reject_incomplete_xact_state_change(ConnCacheEntry *entry)
 {
+	HeapTuple	tup;
+	Form_pg_user_mapping umform;
 	ForeignServer *server;
 
 	/* nothing to do for inactive entries and entries of sane state */
@@ -1027,7 +1008,13 @@ pgfdw_reject_incomplete_xact_state_change(ConnCacheEntry *entry)
 	disconnect_pg_server(entry);
 
 	/* find server name to be shown in the message below */
-	server = GetForeignServer(entry->key.serverid);
+	tup = SearchSysCache1(USERMAPPINGOID,
+						  ObjectIdGetDatum(entry->key));
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for user mapping %u", entry->key);
+	umform = (Form_pg_user_mapping) GETSTRUCT(tup);
+	server = GetForeignServer(umform->umserver);
+	ReleaseSysCache(tup);
 
 	ereport(ERROR,
 			(errcode(ERRCODE_CONNECTION_EXCEPTION),

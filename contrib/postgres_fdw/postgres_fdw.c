@@ -4307,7 +4307,8 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
 													 fpinfo->local_conds,
 													 0,
 													 JOIN_INNER,
-													 NULL);
+													 NULL,
+													 false);
 	cost_qual_eval(&fpinfo->local_conds_cost, fpinfo->local_conds, root);
 
 	/*
@@ -4317,7 +4318,8 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
 	if (!fpinfo->use_remote_estimate)
 		fpinfo->joinclause_sel = clauselist_selectivity(root, fpinfo->joinclauses,
 														0, fpinfo->jointype,
-														extra->sjinfo);
+														extra->sjinfo,
+														false);
 
 	/* Estimate costs for bare join relation */
 	estimate_path_cost_size(root, joinrel, NIL, NIL, &rows,
