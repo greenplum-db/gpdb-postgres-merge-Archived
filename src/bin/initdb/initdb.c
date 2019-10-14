@@ -2403,6 +2403,9 @@ setup_cdb_schema(FILE *cmdfd)
 
 		lines = readfile(path);
 
+		/* Reset any GUCs that the previous script might have created. Notably, search_path */
+		PG_CMD_PUTS("RESET ALL;\n");
+
 		for (line = lines; *line != NULL; line++)
 		{
 			PG_CMD_PUTS(*line);
