@@ -43,69 +43,8 @@ our @EXPORT = qw(
   program_version_ok
   program_options_handling_ok
   command_like
-<<<<<<< HEAD
   command_warns_like
   command_fails_like
-  issues_sql_like
-
-  $tmp_check
-  $log_path
-  $windows_os
-);
-
-use Cwd;
-use File::Basename;
-use File::Spec;
-use File::Temp ();
-use IPC::Run qw(run start);
-
-use SimpleTee;
-
-use Test::More;
-
-our $windows_os = $Config{osname} eq 'MSWin32' || $Config{osname} eq 'msys';
-
-# Open log file. For each test, the log file name uses the name of the
-# file launching this module, without the .pl suffix.
-our ($tmp_check, $log_path);
-$tmp_check = $ENV{TESTDIR} ? "$ENV{TESTDIR}/tmp_check" : "tmp_check";
-$log_path = "$tmp_check/log";
-mkdir $tmp_check;
-mkdir $log_path;
-my $test_logfile = basename($0);
-$test_logfile =~ s/\.[^.]+$//;
-$test_logfile = "$log_path/regress_log_$test_logfile";
-open TESTLOG, '>', $test_logfile or die "Cannot open STDOUT to logfile: $!";
-
-# Hijack STDOUT and STDERR to the log file
-open(ORIG_STDOUT, ">&STDOUT");
-open(ORIG_STDERR, ">&STDERR");
-open(STDOUT, ">&TESTLOG");
-open(STDERR, ">&TESTLOG");
-
-# The test output (ok ...) needs to be printed to the original STDOUT so
-# that the 'prove' program can parse it, and display it to the user in
-# real time. But also copy it to the log file, to provide more context
-# in the log.
-my $builder = Test::More->builder;
-my $fh = $builder->output;
-tie *$fh, "SimpleTee", *ORIG_STDOUT, *TESTLOG;
-$fh = $builder->failure_output;
-tie *$fh, "SimpleTee", *ORIG_STDERR, *TESTLOG;
-
-# Enable auto-flushing for all the file handles. Stderr and stdout are
-# redirected to the same file, and buffering causes the lines to appear
-# in the log in confusing order.
-autoflush STDOUT 1;
-autoflush STDERR 1;
-autoflush TESTLOG 1;
-
-# Set to untranslated messages, to be able to compare program output
-# with expected strings.
-delete $ENV{LANGUAGE};
-delete $ENV{LC_ALL};
-$ENV{LC_MESSAGES} = 'C';
-=======
 
   $windows_os
 );
@@ -195,7 +134,6 @@ sub all_tests_passing
 	}
 	return 1;
 }
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 #
 # Helper functions
@@ -218,150 +156,10 @@ sub tempdir_short
 	return File::Temp::tempdir(CLEANUP => 1);
 }
 
-<<<<<<< HEAD
-# Initialize a new cluster for testing.
-#
-# The PGHOST environment variable is set to connect to the new cluster.
-#
-# Authentication is set up so that only the current OS user can access the
-# cluster. On Unix, we use Unix domain socket connections, with the socket in
-# a directory that's only accessible to the current user to ensure that.
-# On Windows, we use SSPI authentication to ensure the same (by pg_regress
-# --config-auth).
-sub standard_initdb
-{
-	my $pgdata = shift;
-	system_or_bail('initdb', '-D', "$pgdata", '-A' , 'trust', '-N');
-	system_or_bail($ENV{PG_REGRESS}, '--config-auth', $pgdata);
-
-	my $tempdir_short = tempdir_short;
-
-	open CONF, ">>$pgdata/postgresql.conf";
-	print CONF "\n# Added by TestLib.pm)\n";
-	print CONF "fsync = off\n";
-	if ($windows_os)
-	{
-		print CONF "listen_addresses = '127.0.0.1'\n";
-	}
-	else
-	{
-		print CONF "unix_socket_directories = '$tempdir_short'\n";
-		print CONF "listen_addresses = ''\n";
-	}
-	close CONF;
-
-	$ENV{PGHOST}         = $windows_os ? "127.0.0.1" : $tempdir_short;
-}
-
-# Set up the cluster to allow replication connections, in the same way that
-# standard_initdb does for normal connections.
-sub configure_hba_for_replication
-{
-	my $pgdata = shift;
-
-	open HBA, ">>$pgdata/pg_hba.conf";
-	print HBA "\n# Allow replication (set up by TestLib.pm)\n";
-	if (! $windows_os)
-	{
-		print HBA "local replication all trust\n";
-	}
-	else
-	{
-		print HBA "host replication all 127.0.0.1/32 sspi include_realm=1 map=regress\n";
-	}
-	close HBA;
-}
-
-my ($test_server_datadir, $test_server_logfile);
-
-
-# Initialize a new cluster for testing in given directory, and start it.
-sub start_test_server
-{
-	my ($tempdir) = @_;
-	my $ret;
-
-	print("### Starting test server in $tempdir\n");
-	standard_initdb "$tempdir/pgdata";
-
-	$ret = system_log('pg_ctl', '-D', "$tempdir/pgdata", '-w', '-l',
-	  "$log_path/postmaster.log", '-o',
-	  "--log-statement=all -c gp_role=utility --gp_dbid=1 --gp_contentid=-1 --logging-collector=off",
-	  'start');
-
-	if ($ret != 0)
-	{
-		print "# pg_ctl failed; logfile:\n";
-		system('cat', "$log_path/postmaster.log");
-		BAIL_OUT("pg_ctl failed");
-	}
-
-	$ENV{PGOPTIONS}      = '-c gp_session_role=utility';
-	$test_server_datadir = "$tempdir/pgdata";
-	$test_server_logfile = "$log_path/postmaster.log";
-}
-
-sub restart_test_server
-{
-	print("### Restarting test server\n");
-	system_log('pg_ctl', '-D', $test_server_datadir, '-w', '-l',
-	  $test_server_logfile, '-o',
-	  "--log-statement=all -c gp_role=utility --gp_dbid=1 --gp_contentid=-1 --logging-collector=off",
-	  'restart');
-}
-
-END
-{
-	if ($test_server_datadir)
-	{
-		system_log('pg_ctl', '-D', $test_server_datadir, '-m',
-		  'immediate', 'stop');
-	}
-}
-
-sub psql
-{
-	my ($dbname, $sql) = @_;
-	my ($stdout, $stderr);
-	print("# Running SQL command: $sql\n");
-	run [ 'psql', '-X', '-A', '-t', '-q', '-d', $dbname, '-f', '-' ], '<', \$sql, '>', \$stdout, '2>', \$stderr or die;
-	chomp $stdout;
-	$stdout =~ s/\r//g if $Config{osname} eq 'msys';
-	return $stdout;
-}
-
-sub system_log
-{
-	print("# Running: " . join(" ", @_) ."\n");
-	return system(@_);
-}
-
-sub slurp_dir
-{
-	my ($dir) = @_;
-	opendir(my $dh, $dir)
-	  or die "could not opendir \"$dir\": $!";
-	my @direntries = readdir $dh;
-	closedir $dh;
-	return @direntries;
-}
-
-sub slurp_file
-{
-	my ($filename) = @_;
-	local $/;
-	open(my $in, '<', $filename)
-	  or die "could not read \"$filename\": $!";
-	my $contents = <$in>;
-	close $in;
-	$contents =~ s/\r//g if $Config{osname} eq 'msys';
-	return $contents;
-=======
 sub system_log
 {
 	print("# Running: " . join(" ", @_) . "\n");
 	return system(@_);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 sub system_or_bail
@@ -374,36 +172,6 @@ sub system_or_bail
 
 sub run_log
 {
-<<<<<<< HEAD
-	print("# Running: " . join(" ", @{$_[0]}) ."\n");
-	return IPC::Run::run(@_);
-}
-
-sub issues_sql_like
-{
-	my ($cmd, $expected_sql, $test_name) = @_;
-	truncate $test_server_logfile, 0;
-	my $result = run_log($cmd);
-	ok($result, "@$cmd exit code 0");
-	my $log = slurp_file($test_server_logfile);
-	like($log, $expected_sql, "$test_name: SQL found in server log");
-}
-
-# Generate a string made of the given range of ASCII characters
-sub generate_ascii_string
-{
-	my ($from_char, $to_char) = @_;
-	my $res;
-
-	for my $i ($from_char .. $to_char)
-	{
-		$res .= sprintf("%c", $i);
-	}
-	return $res;
-}
-
-
-=======
 	print("# Running: " . join(" ", @{ $_[0] }) . "\n");
 	return IPC::Run::run(@_);
 }
@@ -430,7 +198,6 @@ sub slurp_file
 	return $contents;
 }
 
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 sub append_to_file
 {
 	my ($filename, $str) = @_;
@@ -525,13 +292,12 @@ sub command_like
 	like($stdout, $expected_stdout, "$test_name: matches");
 }
 
-<<<<<<< HEAD
 sub command_warns_like
 {
 	my ($cmd, $expected_stderr, $test_name) = @_;
 	my ($stdout, $stderr);
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
-	my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
+	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
 	ok($result, "@$cmd exit code 0");
 	like($stderr, $expected_stderr, "$test_name: matches.");
 }
@@ -542,12 +308,10 @@ sub command_fails_like
 	my ($stdout, $stderr);
 
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
-	my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
+	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
 
 	ok(!$result, "expected failure: got @$cmd exit code 0");
 	like($stderr, $expected_stderr, "$test_name: not match expected stderr");
 }
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 1;

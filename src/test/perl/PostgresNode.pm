@@ -9,11 +9,7 @@ PostgresNode - class representing PostgreSQL server instance
 
   use PostgresNode;
 
-<<<<<<< HEAD
   my $node = PostgresNode->get_new_node('mynode');
-=======
-  my $node = get_new_node('mynode');
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   # Create a data directory with initdb
   $node->init();
@@ -23,11 +19,7 @@ PostgresNode - class representing PostgreSQL server instance
 
   # Change a setting and restart
   $node->append_conf('postgresql.conf', 'hot_standby = on');
-<<<<<<< HEAD
   $node->restart();
-=======
-  $node->restart('fast');
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   # run a query with psql, like:
   #   echo 'SELECT 1' | psql -qAXt postgres -v ON_ERROR_STOP=1
@@ -51,11 +43,7 @@ PostgresNode - class representing PostgreSQL server instance
   # run query every second until it returns 't'
   # or times out
   $node->poll_query_until('postgres', q|SELECT random() < 0.1;|')
-<<<<<<< HEAD
     or die "timed out";
-=======
-    or print "timed out";
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
   # Do an online pg_basebackup
   my $ret = $node->backup('testbackup1');
@@ -113,7 +101,6 @@ our @EXPORT = qw(
 
 our ($test_localhost, $test_pghost, $last_port_assigned, @all_nodes);
 
-<<<<<<< HEAD
 # Windows path to virtual file system root
 
 our $vfs_path = '';
@@ -123,8 +110,6 @@ if ($Config{osname} eq 'msys')
 	chomp $vfs_path;
 }
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 INIT
 {
 
@@ -426,14 +411,10 @@ sub init
 	open my $conf, ">>$pgdata/postgresql.conf";
 	print $conf "\n# Added by PostgresNode.pm\n";
 	print $conf "fsync = off\n";
-<<<<<<< HEAD
 	print $conf "restart_after_crash = off\n";
 	print $conf "log_statement = all\n";
 	# GPDB: this GUC is not yet supported
 	# print $conf "wal_retrieve_retry_interval = '500ms'\n";
-=======
-	print $conf "log_statement = all\n";
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	print $conf "port = $port\n";
 
 	if ($params{allows_streaming})
@@ -472,11 +453,7 @@ A shortcut method to append to files like pg_hba.conf and postgresql.conf.
 Does no validation or sanity checking. Does not reload the configuration
 after writing.
 
-<<<<<<< HEAD
 A newline is automatically appended to the string.
-=======
-A newline is NOT automatically appended to the string.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 =cut
 
@@ -486,11 +463,7 @@ sub append_conf
 
 	my $conffile = $self->data_dir . '/' . $filename;
 
-<<<<<<< HEAD
 	TestLib::append_to_file($conffile, $str . "\n");
-=======
-	TestLib::append_to_file($conffile, $str);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 =pod
@@ -675,7 +648,6 @@ sub start
 	my $port   = $self->port;
 	my $pgdata = $self->data_dir;
 	my $name   = $self->name;
-<<<<<<< HEAD
 	BAIL_OUT("node \"$name\" is already running") if defined $self->{_pid};
 	print("### Starting node \"$name\"\n");
 	my $ret = TestLib::system_log('pg_ctl', '-w', '-D', $self->data_dir, '-l',
@@ -690,20 +662,6 @@ sub start
 	}
 
 	$self->_update_pid(1);
-=======
-	print("### Starting node \"$name\"\n");
-	my $ret = TestLib::system_log('pg_ctl', '-w', '-D', $self->data_dir, '-l',
-		$self->logfile, 'start');
-
-	if ($ret != 0)
-	{
-		print "# pg_ctl failed; logfile:\n";
-		print TestLib::slurp_file($self->logfile);
-		BAIL_OUT("pg_ctl failed");
-	}
-
-	$self->_update_pid;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 =pod
@@ -712,13 +670,10 @@ sub start
 
 Stop the node using pg_ctl -m $mode and wait for it to stop.
 
-<<<<<<< HEAD
 Note: if the node is already known stopped, this does nothing.
 However, if we think it's running and it's not, it's important for
 this to fail.  Otherwise, tests might fail to detect server crashes.
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 =cut
 
 sub stop
@@ -730,14 +685,8 @@ sub stop
 	$mode = 'fast' unless defined $mode;
 	return unless defined $self->{_pid};
 	print "### Stopping node \"$name\" using mode $mode\n";
-<<<<<<< HEAD
 	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-m', $mode, 'stop');
 	$self->_update_pid(0);
-=======
-	TestLib::system_log('pg_ctl', '-D', $pgdata, '-m', $mode, 'stop');
-	$self->{_pid} = undef;
-	$self->_update_pid;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 =pod
@@ -755,11 +704,7 @@ sub reload
 	my $pgdata = $self->data_dir;
 	my $name   = $self->name;
 	print "### Reloading node \"$name\"\n";
-<<<<<<< HEAD
 	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, 'reload');
-=======
-	TestLib::system_log('pg_ctl', '-D', $pgdata, 'reload');
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 =pod
@@ -778,15 +723,9 @@ sub restart
 	my $logfile = $self->logfile;
 	my $name    = $self->name;
 	print "### Restarting node \"$name\"\n";
-<<<<<<< HEAD
 	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-w', '-l', $logfile,
 							'restart');
 	$self->_update_pid(1);
-=======
-	TestLib::system_log('pg_ctl', '-D', $pgdata, '-w', '-l', $logfile,
-		'restart');
-	$self->_update_pid;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 =pod
@@ -805,12 +744,8 @@ sub promote
 	my $logfile = $self->logfile;
 	my $name    = $self->name;
 	print "### Promoting node \"$name\"\n";
-<<<<<<< HEAD
 	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-l', $logfile,
 							'promote');
-=======
-	TestLib::system_log('pg_ctl', '-D', $pgdata, '-l', $logfile, 'promote');
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 # Internal routine to enable streaming replication on a standby node.
@@ -832,11 +767,7 @@ standby_mode=on
 sub enable_restoring
 {
 	my ($self, $root_node) = @_;
-<<<<<<< HEAD
 	my $path = $vfs_path . $root_node->archive_dir;
-=======
-	my $path = $root_node->archive_dir;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	my $name = $self->name;
 
 	print "### Enabling WAL restore for node \"$name\"\n";
@@ -864,11 +795,7 @@ standby_mode = on
 sub enable_archiving
 {
 	my ($self) = @_;
-<<<<<<< HEAD
 	my $path   = $vfs_path. $self->archive_dir;
-=======
-	my $path   = $self->archive_dir;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	my $name   = $self->name;
 
 	print "### Enabling WAL archiving for node \"$name\"\n";
@@ -896,48 +823,30 @@ archive_command = '$copy_command'
 # Internal method
 sub _update_pid
 {
-<<<<<<< HEAD
 	my ($self, $is_running) = @_;
 	my $name = $self->name;
 
 	# If we can open the PID file, read its first line and that's the PID we
 	# want.
 	if (open my $pidfile, '<', $self->data_dir . "/postmaster.pid")
-=======
-	my $self = shift;
-	my $name = $self->name;
-
-	# If we can open the PID file, read its first line and that's the PID we
-	# want.  If the file cannot be opened, presumably the server is not
-	# running; don't be noisy in that case.
-	if (open my $pidfile, $self->data_dir . "/postmaster.pid")
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	{
 		chomp($self->{_pid} = <$pidfile>);
 		print "# Postmaster PID for node \"$name\" is $self->{_pid}\n";
 		close $pidfile;
-<<<<<<< HEAD
 
 		# If we found a pidfile when there shouldn't be one, complain.
 		BAIL_OUT("postmaster.pid unexpectedly present") unless $is_running;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 		return;
 	}
 
 	$self->{_pid} = undef;
-<<<<<<< HEAD
 	print "# No postmaster PID for node \"$name\"\n";
 	# Complain if we expected to find a pidfile.
 	BAIL_OUT("postmaster.pid unexpectedly not present") if $is_running;
-=======
-	print "# No postmaster PID\n";
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 }
 
 =pod
 
-<<<<<<< HEAD
 =item PostgresNode->get_new_node(node_name)
 
 Build a new object of class C<PostgresNode> (or of a subclass, if you have
@@ -949,27 +858,13 @@ You should generally use this instead of C<PostgresNode::new(...)>.
 
 For backwards compatibility, it is also exported as a standalone function,
 which can only create objects of class C<PostgresNode>.
-=======
-=item get_new_node(node_name)
-
-Build a new PostgresNode object, assigning a free port number. Standalone
-function that's automatically imported.
-
-Remembers the node, to prevent its port number from being reused for another
-node, and to ensure that it gets shut down when the test script exits.
-
-You should generally use this instead of PostgresNode::new(...).
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 =cut
 
 sub get_new_node
 {
-<<<<<<< HEAD
 	my $class = 'PostgresNode';
 	$class = shift if 1 < scalar @_;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	my $name  = shift;
 	my $found = 0;
 	my $port  = $last_port_assigned;
@@ -1014,11 +909,7 @@ sub get_new_node
 	print "# Found free port $port\n";
 
 	# Lock port number found by creating a new node
-<<<<<<< HEAD
 	my $node = $class->new($name, $test_pghost, $port);
-=======
-	my $node = new PostgresNode($name, $test_pghost, $port);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 	# Add node to list of nodes
 	push(@all_nodes, $node);
@@ -1096,10 +987,7 @@ sub safe_psql
 		print "\n#### End standard error\n";
 	}
 
-<<<<<<< HEAD
 	$stdout =~ s/\r//g if $TestLib::windows_os;
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	return $stdout;
 }
 
@@ -1191,12 +1079,9 @@ sub psql
 	my $stderr            = $params{stderr};
 	my $timeout           = undef;
 	my $timeout_exception = 'psql timed out';
-<<<<<<< HEAD
 
 	local $ENV{PGOPTIONS} = '-c gp_session_role=utility';
 
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	my @psql_params =
 	  ('psql', '-XAtq', '-d', $self->connstr($dbname), '-f', '-');
 
@@ -1261,11 +1146,7 @@ sub psql
 			# IPC::Run::run threw an exception. re-throw unless it's a
 			# timeout, which we'll handle by testing is_expired
 			die $exc_save
-<<<<<<< HEAD
 			  if (blessed($exc_save) || $exc_save !~ /^\Q$timeout_exception\E/);
-=======
-			  if (blessed($exc_save) || $exc_save ne $timeout_exception);
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 			$ret = undef;
 
@@ -1333,11 +1214,7 @@ sub psql
 =item $node->poll_query_until(dbname, query)
 
 Run a query once a second, until it returns 't' (i.e. SQL boolean true).
-<<<<<<< HEAD
 Continues polling if psql returns an error result. Times out after 180 seconds.
-=======
-Continues polling if psql returns an error result. Times out after 90 seconds.
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 =cut
 
@@ -1367,7 +1244,6 @@ sub poll_query_until
 		$attempts++;
 	}
 
-<<<<<<< HEAD
 	# The query result didn't change in 180 seconds. Give up. Print the
 	# output from the last attempt, hopefully that's useful for debugging.
 	chomp($stderr);
@@ -1380,11 +1256,6 @@ last actual query output:
 $stdout
 with stderr:
 $stderr);
-=======
-	# The query result didn't change in 90 seconds. Give up. Print the stderr
-	# from the last attempt, hopefully that's useful for debugging.
-	diag $stderr;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	return 0;
 }
 
