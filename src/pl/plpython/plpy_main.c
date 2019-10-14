@@ -101,6 +101,10 @@ _PG_init(void)
 	/* ... and announce my presence */
 	*plpython_version_bitmask_ptr |= (1 << PY_MAJOR_VERSION);
 
+	/* Register SIGINT/SIGTERM handler for python */
+	prev_cancel_pending_hook = cancel_pending_hook;
+	cancel_pending_hook = PLy_handle_cancel_interrupt;
+
 	/*
 	 * This should be safe even in the presence of conflicting plpythons, and
 	 * it's necessary to do it before possibly throwing a conflict error, or
