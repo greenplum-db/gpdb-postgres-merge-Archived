@@ -21,6 +21,7 @@
 #include "cdb/cdbhash.h"
 #include "cdb/cdbpath.h"
 #include "cdb/cdbutil.h"
+#include "cdb/cdbvars.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -506,6 +507,9 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 	bool		distinct_need_redistribute;
 	PathTarget *input_target = NULL;
 
+	if (!gp_enable_agg_distinct)
+		return;
+
 	if (!analyze_dqas(root, path, ctx, &input_target, &dqa_group_clause))
 		return;
 
@@ -583,17 +587,18 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 		 * but the Agg node can't do DISTINCT-aggregation by hashing at the
 		 * moment. So we have to do it with two separate Aggs steps.
 		 */
-		path = (Path *) create_agg_path(root,
-										output_rel,
-										path,
-										input_target,
-										AGG_HASHED,
-										AGGSPLIT_SIMPLE,
-										true, /* streaming */
-										dqa_group_clause,
-										NIL,
-										ctx->agg_partial_costs, /* FIXME */
-										ctx->dNumGroups * getgpsegmentCount());
+		if (gp_enable_dqa_pruning)
+			path = (Path *) create_agg_path(root,
+											output_rel,
+											path,
+											input_target,
+											AGG_HASHED,
+											AGGSPLIT_SIMPLE,
+											true, /* streaming */
+											dqa_group_clause,
+											NIL,
+											ctx->agg_partial_costs, /* FIXME */
+											ctx->dNumGroups * getgpsegmentCount());
 
 		path = cdbpath_create_motion_path(root, path, NIL, false,
 										  group_locus);
