@@ -462,6 +462,8 @@ CTranslatorDXLToScalar::TranslateDXLScalarAggrefToScalar
 	aggref->agglevelsup = 0;
 	aggref->aggkind = 'n';
 	aggref->location = -1;
+	aggref->aggtranstype = gpdb::GetAggIntermediateResultType(aggref->aggfnoid);
+	aggref->aggargtypes = NIL;
 
 	CMDIdGPDB *agg_mdid = GPOS_NEW(m_mp) CMDIdGPDB(aggref->aggfnoid);
 	const IMDAggregate *pmdagg = m_md_accessor->RetrieveAgg(agg_mdid);
@@ -512,6 +514,7 @@ CTranslatorDXLToScalar::TranslateDXLScalarAggrefToScalar
 	ForEachWithCount (lc, exprs, attno)
 	{
 		TargetEntry *new_target_entry = gpdb::MakeTargetEntry((Expr *) lfirst(lc), attno + 1, NULL, false);
+		Oid aggargtype = gpdb::ExprType((Node *) lfirst(lc));
 		/*
 		 * Translate the aggdistinct bool set to true (in ORCA),
 		 * to a List of SortGroupClause in the PLNSTMT
@@ -534,16 +537,31 @@ CTranslatorDXLToScalar::TranslateDXLScalarAggrefToScalar
 			sortgrpindex++;
 		}
 		aggref->args = gpdb::LAppend(aggref->args, new_target_entry);
+		aggref->aggargtypes = gpdb::LAppendOid(aggref->aggargtypes, aggargtype);
 	}
 
-	/* GPDB_96_MERGE_FIXME: need to set aggargtypes and aggtranstype here, like in
-	 * get_agg_clause_costs_walker(). */
-	GPOS_RAISE
-	  (
-	   gpdxl::ExmaDXL,
-	   gpdxl::ExmiPlStmt2DXLConversion,
-	   GPOS_WSZ_LIT("GPDB_96_MERGE_FIXME: AggRef not implemented yet")
-	   );
+	Oid aggtranstype = aggref->aggtranstype;
+	/*
+	 * Resolve the possibly-polymorphic aggregate transition type, unless
+	 * already done in a previous pass over the expression.
+	 */
+	if (OidIsValid(aggref->aggtranstype))
+		aggtranstype = aggref->aggtranstype;
+	else
+	{
+		Oid			inputTypes[FUNC_MAX_ARGS];
+		int			numArguments;
+
+		/* extract argument types (ignoring any ORDER BY expressions) */
+		numArguments = gpdb::GetAggregateArgTypes(aggref, inputTypes);
+
+		/* resolve actual type of transition state, if polymorphic */
+		aggtranstype = gpdb::ResolveAggregateTransType(aggref->aggfnoid,
+												   aggtranstype,
+												   inputTypes,
+												   numArguments);
+		aggref->aggtranstype = aggtranstype;
+	}
 
 	// GPDB_91_MERGE_FIXME: collation
 	aggref->inputcollid = gpdb::ExprCollation((Node *) exprs);
