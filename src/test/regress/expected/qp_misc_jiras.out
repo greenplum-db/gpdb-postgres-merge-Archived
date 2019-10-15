@@ -4365,7 +4365,6 @@ reset enable_nestloop;
 reset enable_seqscan; 
 reset gp_enable_agg_distinct; 
 reset gp_enable_agg_distinct_pruning;
-set enable_groupagg=off;
 -- both queries should use hashagg
 explain select count(distinct j) from (select t1.* from qp_misc_jiras.tbl5994_test t1, qp_misc_jiras.tbl5994_test t2 where t1.j = t2.j) tmp group by j;
                                                       QUERY PLAN                                                       
@@ -4388,27 +4387,28 @@ explain select count(distinct j) from (select t1.* from qp_misc_jiras.tbl5994_te
 (15 rows)
 
 explain select count(distinct j) from (select t1.* from qp_misc_jiras.tbl5994_test t1, qp_misc_jiras.tbl5994_test t2 where t1.i = t2.i) tmp group by j;
-                                                    QUERY PLAN                                                    
-------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice2; segments: 3)  (cost=1059658.43..1059668.43 rows=1000 width=12)
-   ->  HashAggregate  (cost=1059658.43..1059668.43 rows=334 width=12)
+                                                    QUERY PLAN                                                     
+-------------------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)  (cost=1059753.43..1059763.43 rows=1000 width=12)
+   ->  HashAggregate  (cost=1059753.43..1059763.43 rows=334 width=12)
          Group Key: t1.j
-         ->  HashAggregate  (cost=1059633.43..1059643.43 rows=334 width=8)
+         ->  HashAggregate  (cost=1059708.43..1059738.43 rows=1000 width=4)
                Group Key: t1.j, t1.j
-               ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=1059595.93..1059615.93 rows=334 width=8)
+               ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=1059595.93..1059685.93 rows=1000 width=4)
                      Hash Key: t1.j
-                     ->  HashAggregate  (cost=1059595.93..1059595.93 rows=334 width=8)
+                     ->  Streaming HashAggregate  (cost=1059595.93..1059625.93 rows=1000 width=4)
                            Group Key: t1.j, t1.j
                            ->  Hash Join  (cost=2037.25..1003996.85 rows=2471070 width=4)
-                                 Hash Cond: t1.i = t2.i
+                                 Hash Cond: (t1.i = t2.i)
                                  ->  Seq Scan on tbl5994_test t1  (cost=0.00..961.00 rows=28700 width=8)
                                  ->  Hash  (cost=961.00..961.00 rows=28700 width=4)
                                        ->  Seq Scan on tbl5994_test t2  (cost=0.00..961.00 rows=28700 width=4)
  Optimizer: Postgres query optimizer
 (15 rows)
 
+-- Try same two queries, with group agg.
 set enable_groupagg=on;
--- first query should use groupagg, and second one - hashagg
+set enable_hashagg=off;
 explain select count(distinct j) from (select t1.* from qp_misc_jiras.tbl5994_test t1, qp_misc_jiras.tbl5994_test t2 where t1.j = t2.j) tmp group by j;
                                                       QUERY PLAN                                                       
 -----------------------------------------------------------------------------------------------------------------------
@@ -4430,25 +4430,25 @@ explain select count(distinct j) from (select t1.* from qp_misc_jiras.tbl5994_te
 (15 rows)
 
 explain select count(distinct j) from (select t1.* from qp_misc_jiras.tbl5994_test t1, qp_misc_jiras.tbl5994_test t2 where t1.i = t2.i) tmp group by j;
-                                                    QUERY PLAN                                                    
-------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice2; segments: 3)  (cost=1059658.43..1059668.43 rows=1000 width=12)
-   ->  HashAggregate  (cost=1059658.43..1059668.43 rows=334 width=12)
+                                                    QUERY PLAN                                                     
+-------------------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)  (cost=2371030.10..2426639.17 rows=1000 width=12)
+   ->  GroupAggregate  (cost=2371030.10..2426639.17 rows=334 width=12)
          Group Key: t1.j
-         ->  HashAggregate  (cost=1059633.43..1059643.43 rows=334 width=8)
-               Group Key: t1.j, t1.j
-               ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=1059595.93..1059615.93 rows=334 width=8)
+         ->  Sort  (cost=2371030.10..2389563.12 rows=2471070 width=4)
+               Sort Key: t1.j
+               ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=2037.25..1152261.05 rows=2471070 width=4)
                      Hash Key: t1.j
-                     ->  HashAggregate  (cost=1059595.93..1059595.93 rows=334 width=8)
-                           Group Key: t1.j, t1.j
-                           ->  Hash Join  (cost=2037.25..1003996.85 rows=2471070 width=4)
-                                 Hash Cond: t1.i = t2.i
-                                 ->  Seq Scan on tbl5994_test t1  (cost=0.00..961.00 rows=28700 width=8)
-                                 ->  Hash  (cost=961.00..961.00 rows=28700 width=4)
-                                       ->  Seq Scan on tbl5994_test t2  (cost=0.00..961.00 rows=28700 width=4)
+                     ->  Hash Join  (cost=2037.25..1003996.85 rows=2471070 width=4)
+                           Hash Cond: (t1.i = t2.i)
+                           ->  Seq Scan on tbl5994_test t1  (cost=0.00..961.00 rows=28700 width=8)
+                           ->  Hash  (cost=961.00..961.00 rows=28700 width=4)
+                                 ->  Seq Scan on tbl5994_test t2  (cost=0.00..961.00 rows=28700 width=4)
  Optimizer: Postgres query optimizer
-(15 rows)
+(13 rows)
 
+reset enable_groupagg;
+reset enable_hashagg;
 drop table qp_misc_jiras.tbl5994_test;
 CREATE TABLE qp_misc_jiras.tbl_8205 (
 text_col text,
@@ -4490,6 +4490,9 @@ select reltablespace from pg_class where oid = (select reltoastrelid from pg_cla
 (1 row)
 
 drop table qp_misc_jiras.tbl_8205;
+reset enable_seqscan;
+reset enable_bitmapscan;
+reset enable_indexscan;
 -- create sample table
 create table qp_misc_jiras.tbl2976(x int);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'x' as the Greenplum Database data distribution key for this table.
@@ -4619,6 +4622,7 @@ CREATE TABLE qp_misc_jiras.bar_6325 (
   bar_6325_attr text
 )
 DISTRIBUTED RANDOMLY;
+set enable_nestloop=on;
 -- force_explain
 explain
 select  t1.bar_6325_attr::int, t1.foo_6325_attr 
@@ -4628,21 +4632,22 @@ from (
 	group by 1,2
      ) as t1 
 group by 1, 2;
-                                                             QUERY PLAN                                                             
-------------------------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice2; segments: 3)  (cost=0.16..0.17 rows=1 width=36)
-   ->  HashAggregate  (cost=0.16..0.17 rows=1 width=36)
-         Group By: "?column3?", a.foo_6325_attr
-         ->  HashAggregate  (cost=0.13..0.14 rows=1 width=36)
-               Group By: c.bar_6325_attr::integer, a.foo_6325_attr
-               ->  Nested Loop  (cost=0.04..0.11 rows=2 width=64)
-                     ->  Seq Scan on foo_6325 a  (cost=0.00..0.00 rows=1 width=32)
-                     ->  Materialize  (cost=0.04..0.07 rows=1 width=32)
-                           ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=0.00..0.04 rows=1 width=32)
-                                 ->  Seq Scan on bar_6325 c  (cost=0.00..0.00 rows=1 width=32)
- Settings:  enable_bitmapscan=off; enable_groupagg=on; enable_indexscan=on; enable_seqscan=off; optimizer=off; optimizer_segments=3
- Optimizer status: Postgres query optimizer
-(12 rows)
+                                                        QUERY PLAN                                                         
+---------------------------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)  (cost=146545723.88..146554223.88 rows=100000 width=36)
+   ->  GroupAggregate  (cost=146545723.88..146554223.88 rows=33334 width=36)
+         Group Key: ((c.bar_6325_attr)::integer), a.foo_6325_attr
+         ->  Sort  (cost=146545723.88..146548223.88 rows=333334 width=36)
+               Sort Key: ((c.bar_6325_attr)::integer), a.foo_6325_attr
+               ->  HashAggregate  (cost=146421066.04..146436066.04 rows=333334 width=36)
+                     Group Key: (c.bar_6325_attr)::integer, a.foo_6325_attr
+                     ->  Nested Loop  (cost=0.00..104548028.00 rows=929280000 width=36)
+                           ->  Seq Scan on foo_6325 a  (cost=0.00..628.00 rows=17600 width=32)
+                           ->  Materialize  (cost=0.00..3532.00 rows=52800 width=32)
+                                 ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=0.00..2740.00 rows=52800 width=32)
+                                       ->  Seq Scan on bar_6325 c  (cost=0.00..628.00 rows=17600 width=32)
+ Optimizer: Postgres query optimizer
+(13 rows)
 
 -- start_ignore
 drop table qp_misc_jiras.foo_6325;
@@ -4870,6 +4875,7 @@ drop index qp_misc_jiras.badbitmapindex1;
 drop index qp_misc_jiras.bmap2_index;
 drop table qp_misc_jiras.badbitmapindex;
 drop table qp_misc_jiras.bmap2;
+-- Test for ancient bug that led to a crash in EXPLAIN (MPP-9957)
 CREATE TABLE qp_misc_jiras.ir_voice_sms_and_data (
     imsi_number character varying(35),
     ir_call_country_name character varying(35),
@@ -4881,6 +4887,7 @@ CREATE TABLE qp_misc_jiras.ir_voice_sms_and_data (
     ir_call_supplementary_svc_code character(3),
     ir_call_charged_item_code character(1)
 ) distributed randomly;
+set gp_motion_cost_per_row =0.1; -- to get a two-stage agg
 explain select
 case when ir_call_type_group_code in ('H', 'VH', 'PCB') then 'Thailland'
 else 'Unidentify' end || 'a'
@@ -4892,21 +4899,21 @@ then 'MO' else 'foo' end
 case when ir_call_type_group_code in ('H', 'VH', 'PCB') then 'Thailland'
 else 'Unidentify' end
 ;
-                                                                                                                                                   QUERY PLAN                                                                                                                                                   
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice2; segments: 3)  (cost=0.05..0.07 rows=1 width=96)
-   ->  HashAggregate  (cost=0.05..0.07 rows=1 width=96)
-         Group By: "?column1?", "?column2?"
-         ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.01..0.04 rows=1 width=64)
-               Hash Key: unnamed_attr_1, unnamed_attr_2
-               ->  HashAggregate  (cost=0.01..0.02 rows=1 width=64)
-                     Group By: CASE WHEN ir_voice_sms_and_data.ir_call_supplementary_svc_code = ANY ('{S20,S21}'::bpchar[]) THEN 'MO'::text ELSE 'foo'::text END, CASE WHEN ir_voice_sms_and_data.ir_call_type_group_code::text = ANY ('{H,VH,PCB}'::text[]) THEN 'Thailland'::text ELSE 'Unidentify'::text END
-                     ->  Seq Scan on ir_voice_sms_and_data  (cost=0.00..0.01 rows=1 width=54)
- Settings:  enable_bitmapscan=off; enable_groupagg=on; enable_indexscan=on; enable_seqscan=off; optimizer=off; optimizer_segments=3
- Optimizer status: Postgres query optimizer
-(10 rows)
+                                                                                                                                QUERY PLAN                                                                                                                                 
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)  (cost=587.00..609.50 rows=1000 width=96)
+   ->  Finalize HashAggregate  (cost=587.00..609.50 rows=334 width=96)
+         Group Key: (CASE WHEN (ir_call_supplementary_svc_code = ANY ('{S20,S21}'::bpchar[])) THEN 'MO'::text ELSE 'foo'::text END), (CASE WHEN ((ir_call_type_group_code)::text = ANY ('{H,VH,PCB}'::text[])) THEN 'Thailland'::text ELSE 'Unidentify'::text END)
+         ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=223.25..572.00 rows=1000 width=102)
+               Hash Key: (CASE WHEN (ir_call_supplementary_svc_code = ANY ('{S20,S21}'::bpchar[])) THEN 'MO'::text ELSE 'foo'::text END), (CASE WHEN ((ir_call_type_group_code)::text = ANY ('{H,VH,PCB}'::text[])) THEN 'Thailland'::text ELSE 'Unidentify'::text END)
+               ->  Partial HashAggregate  (cost=223.25..272.00 rows=1000 width=102)
+                     Group Key: CASE WHEN (ir_call_supplementary_svc_code = ANY ('{S20,S21}'::bpchar[])) THEN 'MO'::text ELSE 'foo'::text END, CASE WHEN ((ir_call_type_group_code)::text = ANY ('{H,VH,PCB}'::text[])) THEN 'Thailland'::text ELSE 'Unidentify'::text END
+                     ->  Seq Scan on ir_voice_sms_and_data  (cost=0.00..194.25 rows=1934 width=102)
+ Optimizer: Postgres query optimizer
+(9 rows)
 
 DROP TABLE qp_misc_jiras.ir_voice_sms_and_data;
+reset gp_motion_cost_per_row;
 create table qp_misc_jiras.r
     (a int, b int, c int)
     with (appendonly = true)
