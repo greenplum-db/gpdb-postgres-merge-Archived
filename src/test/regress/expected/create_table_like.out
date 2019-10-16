@@ -273,8 +273,9 @@ SELECT oid FROM like_test3;
  * CREATE TABLE like_test4 (z INTEGER, PRIMARY KEY(oid), LIKE has_oid);
  * SELECT oid FROM like_test4;
  */
-
 CREATE TABLE like_test5 (z INTEGER, LIKE no_oid) WITH OIDS;
+NOTICE:  OIDS=TRUE is not recommended for user-created tables
+HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
 SELECT oid FROM like_test5;
  oid 
 -----

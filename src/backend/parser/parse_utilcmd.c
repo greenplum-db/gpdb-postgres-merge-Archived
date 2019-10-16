@@ -332,6 +332,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 			case T_TableLikeClause:
 			{
 				bool            isBeginning = (cxt.columns == NIL);
+				like_found = true;
 
 				transformTableLikeClause(&cxt, (TableLikeClause *) element, false, stmt, &stenc);
 
