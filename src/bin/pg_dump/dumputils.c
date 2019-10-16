@@ -154,7 +154,10 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 		appendPQExpBuffer(firstsql, "%sREVOKE ALL", prefix);
 		if (subname)
 			appendPQExpBuffer(firstsql, "(%s)", subname);
-		appendPQExpBuffer(firstsql, " ON %s %s FROM PUBLIC;\n", type, name);
+		appendPQExpBuffer(firstsql, " ON %s ", type);
+		if (nspname && *nspname)
+			appendPQExpBuffer(firstsql, "%s.", fmtId(nspname));
+		appendPQExpBuffer(firstsql, "%s FROM PUBLIC;\n", name);
 	}
 	else
 	{
@@ -398,11 +401,12 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
  */
 bool
 buildDefaultACLCommands(const char *type, const char *nspname,
-						const char *acls, const char *owner,
+						const char *acls, const char *racls,
+						const char *initacls, const char *initracls,
+						const char *owner,
 						int remoteVersion,
 						PQExpBuffer sql)
 {
-	bool		result;
 	PQExpBuffer prefix;
 
 	prefix = createPQExpBuffer();
@@ -418,14 +422,30 @@ buildDefaultACLCommands(const char *type, const char *nspname,
 	if (nspname)
 		appendPQExpBuffer(prefix, "IN SCHEMA %s ", fmtId(nspname));
 
-	result = buildACLCommands("", NULL, NULL,
-							  type, acls, "", owner,
-							  prefix->data, remoteVersion,
-							  sql);
+	if (strlen(initacls) != 0 || strlen(initracls) != 0)
+	{
+		appendPQExpBuffer(sql, "SELECT pg_catalog.binary_upgrade_set_record_init_privs(true);\n");
+		if (!buildACLCommands("", NULL, NULL, type,
+							  initacls, initracls, owner,
+							  prefix->data, remoteVersion, sql))
+		{
+			destroyPQExpBuffer(prefix);
+			return false;
+		}
+		appendPQExpBuffer(sql, "SELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\n");
+	}
+
+	if (!buildACLCommands("", NULL, NULL, type,
+						  acls, racls, owner,
+						  prefix->data, remoteVersion, sql))
+	{
+		destroyPQExpBuffer(prefix);
+		return false;
+	}
 
 	destroyPQExpBuffer(prefix);
 
-	return result;
+	return true;
 }
 
 /*
