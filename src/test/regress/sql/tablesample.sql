@@ -148,3 +148,7 @@ WITH query_select AS (SELECT * FROM test_tablesample)
 SELECT * FROM query_select TABLESAMPLE BERNOULLI (5.5) REPEATABLE (1);
 
 SELECT q.* FROM (SELECT * FROM test_tablesample) as q TABLESAMPLE BERNOULLI (5);
+
+DROP VIEW test_tablesample_v1;
+DROP VIEW test_tablesample_v2;
+DROP TABLE test_tablesample;
