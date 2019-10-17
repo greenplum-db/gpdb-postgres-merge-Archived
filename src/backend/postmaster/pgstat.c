@@ -3271,6 +3271,9 @@ pgstat_get_wait_event_type(uint32 wait_event_info)
 		case WAIT_RESOURCE_GROUP:
 			event_type = "ResourceGroup";
 			break;
+		case WAIT_RESOURCE_QUEUE:
+			event_type = "ResourceQueue";
+			break;
 		case WAIT_REPLICATION:
 			event_type = "Replication";
 			break;
@@ -3317,11 +3320,15 @@ pgstat_get_wait_event(uint32 wait_event_info)
 			break;
 		case WAIT_RESOURCE_GROUP:
 			{
+				/* GPDB_96_MERGE_FIXME: this is broken: eventId is only 16 bits wide */
 				char *groupName = GetResGroupNameForId(eventId);
 
 				event_name = groupName ? groupName : "unknown resource group";
 			}
-			event_name = "BufferPin";
+			event_name = "ResourceGroup";
+			break;
+		case WAIT_RESOURCE_QUEUE:
+			event_name = "ResourceQueue";
 			break;
 		case WAIT_REPLICATION:
 			event_name = "Replication";
