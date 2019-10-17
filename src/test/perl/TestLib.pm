@@ -306,10 +306,8 @@ sub command_fails_like
 {
 	my ($cmd, $expected_stderr, $test_name) = @_;
 	my ($stdout, $stderr);
-
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
 	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
-
 	ok(!$result, "expected failure: got @$cmd exit code 0");
 	like($stderr, $expected_stderr, "$test_name: not match expected stderr");
 }

@@ -651,7 +651,7 @@ sub start
 	BAIL_OUT("node \"$name\" is already running") if defined $self->{_pid};
 	print("### Starting node \"$name\"\n");
 	my $ret = TestLib::system_log('pg_ctl', '-w', '-D', $self->data_dir, '-l',
-		$self->logfile, '-o', "-c gp_role=utility --gp_dbid=-1 --gp_contentid=-1 --logging-collector=off",
+		$self->logfile, '-o', "-c gp_role=utility --gp_dbid=1 --gp_contentid=-1 --logging-collector=off",
 		'start');
 
 	if ($ret != 0)
