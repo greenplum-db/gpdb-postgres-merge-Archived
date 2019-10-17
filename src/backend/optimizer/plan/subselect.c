@@ -2688,7 +2688,15 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 	 * SS_finalize_plan was run on them already.)
 	 */
 	initExtParam = initSetParam = NULL;
-	foreach(l, plan->initPlan)
+
+	/*
+	 * In gpdb, we traverse init_plans in PlannerInfo to fetch initSetParam fetch.
+	 * In upstream should be `foreach(l, plan->initPlan)`
+	 *
+	 * The different is introduced since sometimes we create a Materized node upon
+	 * subplan, so initPlan info is hidden under Materized Node lefttree.
+	 */
+	foreach(l, root->init_plans)
 	{
 		SubPlan    *initsubplan = (SubPlan *) lfirst(l);
 		Plan	   *initplan = planner_subplan_get_plan(root, initsubplan);
