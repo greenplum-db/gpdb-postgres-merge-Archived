@@ -40,10 +40,10 @@
 # has additional issue where GPDB does not support creating unique indexes on
 # mutated columns via lower().
 
-test: read-write-unique
-test: read-write-unique-2
-test: read-write-unique-3
-test: read-write-unique-4
+#test: read-write-unique
+#test: read-write-unique-2
+#test: read-write-unique-3
+#test: read-write-unique-4
 #test: simple-write-skew
 #test: receipt-report
 #test: temporal-range-integrity
@@ -75,12 +75,12 @@ test: delete-abort-savept
 #test: aborted-keyrevoke
 #test: multixact-no-deadlock
 #test: multixact-no-forget
-test: lock-committed-update
-test: lock-committed-keyupdate
+#test: lock-committed-update
+#test: lock-committed-keyupdate
 test: update-locked-tuple
 #test: propagate-lock-delete
 #test: tuplelock-conflict
-test: tuplelock-update
+#test: tuplelock-update
 #test: nowait
 #test: nowait-2
 #test: nowait-3
