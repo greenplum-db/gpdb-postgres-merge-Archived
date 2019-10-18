@@ -441,7 +441,7 @@ SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
  Finalize Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Partial Aggregate
-               ->  Index Only Scan using grect2ind on fast_emp4000
+               ->  Index Scan using grect2ind on fast_emp4000
                      Index Cond: (home_base && '(1000,1000),(0,0)'::box)
                      Filter: (home_base && '(1000,1000),(0,0)'::box)
  Optimizer: Pivotal Optimizer (GPORCA) version 2.68.0
@@ -544,9 +544,9 @@ EXPLAIN (COSTS OFF)
 SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
                             QUERY PLAN                             
 -------------------------------------------------------------------
- Aggregate
+ Finalize Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Partial Aggregate
                ->  Index Scan using ggcircleind on gcircle_tbl
                      Index Cond: (f1 && '<(500,500),500>'::circle)
                      Filter: (f1 && '<(500,500),500>'::circle)
@@ -822,9 +822,8 @@ SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
 -----------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
-               ->  Index Only Scan using sp_quad_ind on quad_point_tbl
-                     Index Cond: (p IS NULL)
+         ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+               Index Cond: (p IS NULL)
  Optimizer: Postgres query optimizer
 (6 rows)
 
@@ -2637,7 +2636,7 @@ SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
          ->  Partial Aggregate
                ->  Seq Scan on tenk1
                      Filter: (stringu1 = 'TVAAAA'::name)
- Optimizer: Postgres query optimizer
+ Optimizer: Pivotal Optimizer (GPORCA) version 3.77.0
 (6 rows)
 
 SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
@@ -3188,9 +3187,9 @@ EXPLAIN (COSTS OFF)
     WHERE f1 BETWEEN 'WA' AND 'ZZZ' and id < 1000 and f1 ~<~ 'YX';
                                           QUERY PLAN                                          
 ----------------------------------------------------------------------------------------------
- Aggregate
+ Finalize Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Partial Aggregate
                ->  Index Scan using dupindexcols_i on dupindexcols
                      Index Cond: ((f1 >= 'WA'::text) AND (f1 <= 'ZZZ'::text) AND (id < 1000))
                      Filter: (f1 ~<~ 'YX'::text)
