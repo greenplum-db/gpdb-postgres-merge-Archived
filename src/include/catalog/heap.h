@@ -45,12 +45,12 @@ typedef struct CookedConstraint
 	bool		skip_validation;	/* skip validation? (only for CHECK) */
 	bool		is_local;		/* constraint has local (non-inherited) def */
 	int			inhcount;		/* number of times constraint is inherited */
+	bool		is_no_inherit;	/* constraint has local def and cannot be
+								 * inherited */
 	/*
 	 * Remember to update copy/out/read functions if new fields are added
 	 * here!
 	 */
-	bool		is_no_inherit;	/* constraint has local def and cannot be
-								 * inherited */
 } CookedConstraint;
 
 extern Relation heap_create(const char *relname,
