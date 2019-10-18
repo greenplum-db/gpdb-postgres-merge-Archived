@@ -75,10 +75,7 @@ sub configure_test_server_for_ssl
 	copy_files("ssl/server-*.key", $pgdata);
 	chmod(0600, glob "$pgdata/server-*.key") or die $!;
 	copy_files("ssl/root+client_ca.crt", $pgdata);
-<<<<<<< HEAD
 	copy_files("ssl/root_ca.crt", $pgdata);
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	copy_files("ssl/root+client.crl",    $pgdata);
 
   # Only accept SSL connections from localhost. Our tests don't depend on this
@@ -105,10 +102,7 @@ sub switch_server_cert
 {
 	my $node     = $_[0];
 	my $certfile = $_[1];
-<<<<<<< HEAD
 	my $cafile = $_[2] || "root+client_ca";
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 	my $pgdata   = $node->data_dir;
 
 	note "Restarting server with certfile \"$certfile\" and cafile \"$cafile\"...";
