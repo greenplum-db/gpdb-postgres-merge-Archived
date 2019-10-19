@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 18;
+use Test::More tests => 20;
 
 program_help_ok('reindexdb');
 program_version_ok('reindexdb');
