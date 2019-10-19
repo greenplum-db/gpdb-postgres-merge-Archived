@@ -1499,7 +1499,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 	 * change.
 	 */
 	 mppSessionId = proclock->tag.myProc->mppSessionId;
-	 if (mppSessionId <=0)
+	 if (mppSessionId == InvalidGpSessionId)
 	 {
 		/*
 		 * Rats.  Something conflicts.  But it could still be my own lock, or a

@@ -132,7 +132,7 @@ CreateDestReceiver(CommandDest dest)
 			return CreateSQLFunctionDestReceiver();
 
 		case DestTransientRel:
-			return CreateTransientRelDestReceiver(InvalidOid, InvalidOid, false, 't');
+			return CreateTransientRelDestReceiver(InvalidOid, InvalidOid, false, 't', false);
 
 		case DestTupleQueue:
 			return CreateTupleQueueDestReceiver(NULL);

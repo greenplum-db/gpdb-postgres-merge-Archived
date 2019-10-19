@@ -219,7 +219,6 @@ char	   *Unix_socket_directories;
 
 /* The TCP listen address(es) */
 char	   *ListenAddresses;
-char	   *BackendListenAddress;
 
 /*
  * ReservedBackends is the number of backends reserved for superuser use.
@@ -1181,12 +1180,6 @@ PostmasterMain(int argc, char *argv[])
 					 errmsg("invalid list syntax in parameter \"%s\"",
 							"listen_addresses")));
 		}
-
-		/* If there are more than one listen address, backend bind on all addresses*/
-		if (list_length(elemlist) > 1 || strcmp(ListenAddresses, "*") == 0)
-			BackendListenAddress = NULL;
-		else
-			BackendListenAddress = ListenAddresses;
 
 		foreach(l, elemlist)
 		{
