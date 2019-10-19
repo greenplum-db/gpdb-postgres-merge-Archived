@@ -451,10 +451,6 @@ WHERE t2.a = 3 and t3.a = 2 AND f_leak(t2.b) AND f_leak(t3.b);
 EXPLAIN (COSTS OFF) UPDATE t1 SET b=t1.b FROM t2
 WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
 
--- GPDB_95_MERGE_FIXME: It is legal for f_leak t2 to see a row
--- with t2.a = 3. In upstream, since all the data are on the same
--- server and AND'd together, f_leak does not see that row. In
--- Greenplum however it is possible. Verify that we can't do better.
 UPDATE t1 SET b=t1.b FROM t2
 WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
 
