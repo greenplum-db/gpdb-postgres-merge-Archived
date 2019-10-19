@@ -106,15 +106,11 @@ NOTICE:  f_leak => great manga
 -- try a sampled version
 SELECT * FROM document TABLESAMPLE BERNOULLI(50) REPEATABLE(0)
   WHERE f_leak(dtitle) ORDER BY did;
-NOTICE:  f_leak => my first manga
-NOTICE:  f_leak => great science fiction
 NOTICE:  f_leak => great manga
- did | cid | dlevel |      dauthor      |        dtitle         
------+-----+--------+-------------------+-----------------------
-   4 |  44 |      1 | regress_rls_bob   | my first manga
-   6 |  22 |      1 | regress_rls_carol | great science fiction
+ did | cid | dlevel |      dauthor      |   dtitle    
+-----+-----+--------+-------------------+-------------
    8 |  44 |      1 | regress_rls_carol | great manga
-(3 rows)
+(1 row)
 
 -- viewpoint from regress_rls_carol
 SET SESSION AUTHORIZATION regress_rls_carol;
@@ -163,17 +159,13 @@ NOTICE:  f_leak => great manga
 -- try a sampled version
 SELECT * FROM document TABLESAMPLE BERNOULLI(50) REPEATABLE(0)
   WHERE f_leak(dtitle) ORDER BY did;
-NOTICE:  f_leak => my first manga
-NOTICE:  f_leak => my second manga
-NOTICE:  f_leak => great science fiction
+NOTICE:  f_leak => great technology book
 NOTICE:  f_leak => great manga
  did | cid | dlevel |      dauthor      |        dtitle         
 -----+-----+--------+-------------------+-----------------------
-   4 |  44 |      1 | regress_rls_bob   | my first manga
-   5 |  44 |      2 | regress_rls_bob   | my second manga
-   6 |  22 |      1 | regress_rls_carol | great science fiction
+   7 |  33 |      2 | regress_rls_carol | great technology book
    8 |  44 |      1 | regress_rls_carol | great manga
-(4 rows)
+(2 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM document WHERE f_leak(dtitle);
                                 QUERY PLAN                                
