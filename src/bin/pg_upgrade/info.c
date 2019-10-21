@@ -607,6 +607,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	 */
 	snprintf(query + strlen(query), sizeof(query) - strlen(query),
 			 "SELECT all_rels.*, n.nspname, c.relname, "
+			 "  c.relstorage, c.relkind, "
 			 "  c.relfilenode, c.reltablespace, %s "
 			 "FROM (SELECT * FROM regular_heap "
 			 "      UNION ALL "
