@@ -30,9 +30,9 @@
 
 #include "gpopt/gpdbwrappers.h"
 #include "catalog/pg_collation.h"
-#include "utils/memutils.h"
-#include "parser/parse_agg.h"
-
+extern "C" {
+	#include "utils/memutils.h"
+}
 #define GP_WRAP_START	\
 	sigjmp_buf local_sigjmp_buf;	\
 	{	\
