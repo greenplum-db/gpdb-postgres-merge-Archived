@@ -13125,8 +13125,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	if (strlen(opcfamilyname) > 0)
 	{
 		appendPQExpBufferStr(q, " FAMILY ");
-		if (strcmp(opcfamilynsp, opcinfo->dobj.namespace->dobj.name) != 0)
-			appendPQExpBuffer(q, "%s.", fmtId(opcfamilynsp));
+		appendPQExpBuffer(q, "%s.", fmtId(opcfamilynsp));
 		appendPQExpBufferStr(q, fmtId(opcfamilyname));
 	}
 	appendPQExpBufferStr(q, " AS\n    ");
