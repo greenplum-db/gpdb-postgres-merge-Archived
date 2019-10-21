@@ -24,6 +24,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "cdb/cdbvars.h"
+#include "cdb/cdbpartition.h"
 
 
 static char *fetch_cursor_param_value(ExprContext *econtext, int paramId);
@@ -138,7 +139,6 @@ getCurrentOf(CurrentOfExpr *cexpr,
 	AttrNumber	tableoid_attno;
 	bool		isnull;
 	Datum		value;
-	ScanState  *scanstate;
 
 	/*
 	 * In an executor node, execCurrentOf() is supposed to use the cursor
@@ -188,16 +188,53 @@ getCurrentOf(CurrentOfExpr *cexpr,
 						cursor_name)));
 
 	/*
-	 * Without FOR UPDATE, we dig through the cursor's plan to find the
-	 * scan node.  Fail if it's not there or buried underneath
-	 * aggregation.
+	 * gpdb partition table routine is different with upstream
+	 * so we hold private updatable check method.
 	 */
-	scanstate = search_plan_tree(queryDesc->planstate, table_oid);
-	if (!scanstate)
-		ereport(ERROR,
-		        (errcode(ERRCODE_INVALID_CURSOR_STATE),
-				        errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
-				               cursor_name, table_name)));
+	if(rel_is_partitioned(table_oid) || rel_is_leaf_partition(table_oid))
+	{
+		/*
+		 * The referenced cursor must be simply updatable. This has already
+		 * been discerned by parse/analyze for the DECLARE CURSOR of the given
+		 * cursor. This flag assures us that gp_segment_id, ctid, and tableoid (if necessary)
+		 * will be available as junk metadata, courtesy of preprocess_targetlist.
+		 */
+		if (!queryDesc->plannedstmt->simplyUpdatable)
+			ereport(ERROR,
+			        (errcode(ERRCODE_INVALID_CURSOR_STATE),
+					        errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
+					               cursor_name, table_name)));
+
+		/*
+		 * The target relation must directly match the cursor's relation. This throws out
+		 * the simple case in which a cursor is declared against table X and the update is
+		 * issued against Y. Moreover, this disallows some subtler inheritance cases where
+		 * Y inherits from X. While such cases could be implemented, it seems wiser to
+		 * simply error out cleanly.
+		 */
+		Index varno = extractSimplyUpdatableRTEIndex(queryDesc->plannedstmt->rtable);
+		Oid cursor_relid = getrelid(varno, queryDesc->plannedstmt->rtable);
+		if (table_oid != cursor_relid)
+			ereport(ERROR,
+			        (errcode(ERRCODE_INVALID_CURSOR_STATE),
+					        errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
+					               cursor_name, table_name)));
+	}
+	else
+	{
+		ScanState  *scanstate;
+		/*
+		 * Without FOR UPDATE, we dig through the cursor's plan to find the
+		 * scan node.  Fail if it's not there or buried underneath
+		 * aggregation.
+		 */
+		scanstate = search_plan_tree(queryDesc->planstate, table_oid);
+		if (!scanstate)
+			ereport(ERROR,
+			        (errcode(ERRCODE_INVALID_CURSOR_STATE),
+					        errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
+					               cursor_name, table_name)));
+	}
 
 	/*
 	 * The cursor must have a current result row: per the SQL spec, it's an
