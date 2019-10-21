@@ -540,7 +540,6 @@ transientrel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	if (myState->skipData)
 		return;
 
-
 	transientrel = heap_open(myState->transientoid, NoLock);
 
 	/*
@@ -571,7 +570,7 @@ transientrel_receive(TupleTableSlot *slot, DestReceiver *self)
 	DR_transientrel *myState = (DR_transientrel *) self;
 
 	if (myState->skipData)
-		return;
+		return true;
 
 	/*
 	 * get the heap tuple out of the tuple table slot, making sure we have a
