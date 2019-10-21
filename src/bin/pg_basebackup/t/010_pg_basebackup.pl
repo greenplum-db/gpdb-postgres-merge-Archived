@@ -4,7 +4,7 @@ use Cwd;
 use Config;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 51;
+use Test::More tests => 58;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -177,36 +177,6 @@ SKIP:
 		[ 'pg_basebackup', '-D', "$tempdir/tarbackup_l3", '--target-gp-dbid', '123', '-Ft' ],
 		'pg_basebackup tar with long symlink target');
 	$node->safe_psql('postgres', "DROP TABLESPACE tblspc3;");
-
-
-	# Some additional GPDB tests
-	my $twenty_characters = '11111111112222222222';
-	my $longer_tempdir = "$tempdir/some_long_directory_path_$twenty_characters$twenty_characters$twenty_characters$twenty_characters$twenty_characters";
-	my $some_backup_dir = "$tempdir/backup_dir";
-	my $some_other_backup_dir = "$tempdir/other_backup_dir";
-
-	mkdir "$longer_tempdir";
-	mkdir "$some_backup_dir";
-	$node->psql('postgres', "CREATE TABLESPACE too_long_tablespace LOCATION '$longer_tempdir';");
-	command_fails_like([
-		'pg_basebackup',
-		'-D', "$some_backup_dir",
-		'--target-gp-dbid', '99'],
-				 qr/symbolic link ".*" target is too long and will not be added to the backup/,
-					   'basebackup with a tablespace that has a very long location should error out with target is too long.');
-
-	mkdir "$some_other_backup_dir";
-	command_fails_like([
-		'pg_basebackup',
-		'-D', "$some_other_backup_dir",
-		'--target-gp-dbid', '99'],
-				 qr/The symbolic link with target ".*" is too long. Symlink targets with length greater than 100 characters would be truncated./,
-					   'basebackup with a tablespace that has a very long location should error out link not added to the backup.');
-
-	command_fails_like([
-		'ls', "$some_other_backup_dir/pg_tblspc/*"],
-				 qr/No such file/,
-				 'tablespace directory should be empty');
 }
 
 $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backupR", '--target-gp-dbid', '123', '-R' ],
@@ -270,3 +240,33 @@ like(
 	slurp_file("$tempdir/backupxs_sl_R/recovery.conf"),
 	qr/^primary_slot_name = 'slot1'$/m,
 	'recovery.conf sets primary_slot_name');
+
+
+# Some additional GPDB tests
+my $twenty_characters = '11111111112222222222';
+my $longer_tempdir = "$tempdir/some_long_directory_path_$twenty_characters$twenty_characters$twenty_characters$twenty_characters$twenty_characters";
+my $some_backup_dir = "$tempdir/backup_dir";
+my $some_other_backup_dir = "$tempdir/other_backup_dir";
+
+mkdir "$longer_tempdir";
+mkdir "$some_backup_dir";
+$node->psql('postgres', "CREATE TABLESPACE too_long_tablespace LOCATION '$longer_tempdir';");
+$node->command_fails_like([
+	'pg_basebackup',
+	'-D', "$some_backup_dir",
+	'--target-gp-dbid', '99'],
+						  qr/symbolic link ".*" target is too long and will not be added to the backup/,
+						  'basebackup with a tablespace that has a very long location should error out with target is too long.');
+
+mkdir "$some_other_backup_dir";
+$node->command_fails_like([
+	'pg_basebackup',
+	'-D', "$some_other_backup_dir",
+	'--target-gp-dbid', '99'],
+						  qr/The symbolic link with target ".*" is too long. Symlink targets with length greater than 100 characters would be truncated./,
+						  'basebackup with a tablespace that has a very long location should error out link not added to the backup.');
+
+$node->command_fails_like([
+	'ls', "$some_other_backup_dir/pg_tblspc/*"],
+						  qr/No such file/,
+						  'tablespace directory should be empty');

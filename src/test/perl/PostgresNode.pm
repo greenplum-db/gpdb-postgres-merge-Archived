@@ -1339,6 +1339,24 @@ sub issues_sql_like
 	like($log, $expected_sql, "$test_name: SQL found in server log");
 }
 
+sub command_warns_like
+{
+	my $self = shift;
+
+	local $ENV{PGPORT} = $self->port;
+
+	TestLib::command_warns_like(@_);
+}
+
+sub command_fails_like
+{
+	my $self = shift;
+
+	local $ENV{PGPORT} = $self->port;
+
+	TestLib::command_fails_like(@_);
+}
+
 =pod
 
 =back
