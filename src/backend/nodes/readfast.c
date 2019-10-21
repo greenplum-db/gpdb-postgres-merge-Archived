@@ -2133,6 +2133,21 @@ _readLockingClause(void)
 	READ_DONE();
 }
 
+static RangeFunction *
+_readRangeFunction(void)
+{
+	READ_LOCALS(RangeFunction);
+
+	READ_BOOL_FIELD(lateral);
+	READ_BOOL_FIELD(ordinality);
+	READ_BOOL_FIELD(is_rowsfrom);
+	READ_NODE_FIELD(functions);
+	READ_NODE_FIELD(alias);
+	READ_NODE_FIELD(coldeflist);
+
+	READ_DONE();
+}
+
 static Node *
 _readValue(NodeTag nt)
 {
@@ -3116,6 +3131,10 @@ readNodeBinary(void)
 			case T_LockingClause:
 				return_value = _readLockingClause();
 				break;
+			case T_RangeFunction:
+				return_value = _readRangeFunction();
+				break;
+
 
 			default:
 				return_value = NULL; /* keep the compiler silent */
