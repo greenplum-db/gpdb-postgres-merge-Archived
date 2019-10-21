@@ -1259,19 +1259,6 @@ _outCreateAmStmt(StringInfo str, const CreateAmStmt *node)
 	WRITE_INT_FIELD(amtype);
 }
 
-static void
-_outRangeFunction(StringInfo str, const RangeFunction *node)
-{
-	WRITE_NODE_TYPE("RANGEFUNCTION");
-
-	WRITE_BOOL_FIELD(lateral);
-	WRITE_BOOL_FIELD(ordinality);
-	WRITE_BOOL_FIELD(is_rowsfrom);
-	WRITE_NODE_FIELD(functions);
-	WRITE_NODE_FIELD(alias);
-	WRITE_NODE_FIELD(coldeflist);
-}
-
 /*
  * _outNode -
  *	  converts a Node into binary string and append it to 'str'
@@ -2169,9 +2156,6 @@ _outNode(StringInfo str, void *obj)
 				_outCreateAmStmt(str, obj);
 				break;
 
-			case T_RangeFunction:
-				_outRangeFunction(str, obj);
-				break;
 			default:
 				elog(ERROR, "could not serialize unrecognized node type: %d",
 						 (int) nodeTag(obj));
