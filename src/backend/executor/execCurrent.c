@@ -191,7 +191,9 @@ getCurrentOf(CurrentOfExpr *cexpr,
 	 * gpdb partition table routine is different with upstream
 	 * so we hold private updatable check method.
 	 */
-	if(rel_is_partitioned(table_oid) || rel_is_leaf_partition(table_oid))
+	if(rel_is_partitioned(table_oid)
+	|| rel_is_leaf_partition(table_oid)
+	|| get_rel_persistence(table_oid) == RELPERSISTENCE_TEMP)
 	{
 		/*
 		 * The referenced cursor must be simply updatable. This has already
