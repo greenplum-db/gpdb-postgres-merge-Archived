@@ -14,6 +14,5 @@ command_fails([ 'pg_controldata', 'nonexistent' ],
 my $node = get_new_node('main');
 $node->init;
 
-system_or_bail 'initdb', '-D', $node->data_dir, '-A', 'trust';
 command_like([ 'pg_controldata', $node->data_dir ],
 	qr/checkpoint/, 'pg_controldata produces output');
