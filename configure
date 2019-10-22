@@ -5750,9 +5750,7 @@ if test x"$pgac_cv_prog_cc_cflags__Wno_address" = x"yes"; then
 fi
 
 
-  gccversion=`$CC -dumpversion | cut -d . -f1`
-  if test "$gccversion" -ge 7 ; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wimplicit-fallthrough" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wimplicit-fallthrough" >&5
 $as_echo_n "checking whether $CC supports -Wimplicit-fallthrough... " >&6; }
 if ${pgac_cv_prog_cc_cflags__Wimplicit_fallthrough+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -5787,7 +5785,7 @@ if test x"$pgac_cv_prog_cc_cflags__Wimplicit_fallthrough" = x"yes"; then
   CFLAGS="$CFLAGS -Wimplicit-fallthrough"
 fi
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Werror=implicit-fallthrough" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Werror=implicit-fallthrough" >&5
 $as_echo_n "checking whether $CC supports -Werror=implicit-fallthrough... " >&6; }
 if ${pgac_cv_prog_cc_cflags__Werror_implicit_fallthrough+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -5822,7 +5820,6 @@ if test x"$pgac_cv_prog_cc_cflags__Werror_implicit_fallthrough" = x"yes"; then
   CFLAGS="$CFLAGS -Werror=implicit-fallthrough"
 fi
 
-  fi
 
   #-Wno-error=enum-compare -Wno-error=address -Wno-error=maybe-uninitialized
 
@@ -15080,7 +15077,7 @@ int
 main ()
 {
 
-return strncmp("3.78.", GPORCA_VERSION_STRING, 5);
+return strncmp("3.79.", GPORCA_VERSION_STRING, 5);
 
   ;
   return 0;
@@ -15090,7 +15087,7 @@ if ac_fn_cxx_try_run "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: ok" >&5
 $as_echo "ok" >&6; }
 else
-  as_fn_error $? "Your ORCA version is expected to be 3.78.XXX" "$LINENO" 5
+  as_fn_error $? "Your ORCA version is expected to be 3.79.XXX" "$LINENO" 5
 
 fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
