@@ -131,7 +131,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		 */
 		if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
 			(strcmp(old_rel->relname, new_rel->relname) != 0 &&
-			 (GET_MAJOR_VERSION(old_cluster.major_version) >= 900 ||
+			 (/* GET_MAJOR_VERSION(old_cluster.major_version) >= 900 || */
 			  strcmp(old_rel->nspname, "pg_toast") != 0)))
 		{
 			pg_log(PG_WARNING, "Relation names for OID %u in database \"%s\" do not match: "
