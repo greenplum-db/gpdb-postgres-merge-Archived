@@ -17028,11 +17028,11 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 	if (tbinfo->relkind == RELKIND_FOREIGN_TABLE && tbinfo->hasoids)
 		appendPQExpBuffer(q, "\nALTER TABLE ONLY %s SET WITH OIDS;\n",
-						  fmtId(tbinfo->dobj.name));
+						  qualrelname);
 
 	if (tbinfo->forcerowsec)
 		appendPQExpBuffer(q, "\nALTER TABLE ONLY %s FORCE ROW LEVEL SECURITY;\n",
-						  fmtId(tbinfo->dobj.name));
+						  qualrelname);
 
 	if (dopt->binary_upgrade)
 		binary_upgrade_extension_member(q, &tbinfo->dobj,
