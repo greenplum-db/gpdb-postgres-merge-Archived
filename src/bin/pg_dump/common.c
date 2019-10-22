@@ -1043,6 +1043,29 @@ strInArray(const char *pattern, char **arr, int arr_size)
 void
 DetectChildConstraintDropped(TableInfo *tbinfo, PQExpBuffer q)
 {
+	/*
+	 * GPDB_96_MERGE_FIXME: I believe this is no longer needed.
+	 * Upstream commit 61d81bd28d, and subsequent changes to the syntax
+	 * that evolved it to NO INHERIT, should have taken care of this
+	 * problem. With this, we were emitting an ALTER TABLE DROP CONSTRAINT
+	 * command e.g. when dumping this:
+
+CREATE TABLE nv_parent (
+    "d" "date",
+    CONSTRAINT nv_parent_check CHECK (false) NO INHERIT
+);
+
+CREATE TABLE nv_child_2009 (
+    d date,
+    CONSTRAINT nv_child_2009_d_check CHECK (((d >= '2009-01-01'::date) AND (d <= '2009-12-31'::date)))
+)
+ DISTRIBUTED BY (d);
+
+ALTER TABLE ONLY nv_child_2009 INHERIT nv_parent;
+
+	 * That was causing the pg_upgrade test to fail.
+	 */
+#if 0
 	TableInfo  *parent;
 	TableInfo **parents = tbinfo->parents;
 	int			j,
@@ -1089,5 +1112,5 @@ DetectChildConstraintDropped(TableInfo *tbinfo, PQExpBuffer q)
 			}
 		}
 	}
-
+#endif
 }
