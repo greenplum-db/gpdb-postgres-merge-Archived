@@ -77,7 +77,7 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause. Creating a NULL policy entr
                                        Sort Key: type
                                        ->  Redistribute Motion 3:3  (slice1; segments: 3)
                                              Hash Key: type
-                                             ->  Seq Scan on t
+                                             ->  Seq Scan on mvtest_t
  Optimizer: Pivotal Optimizer (GPORCA) version 3.71.0
 (14 rows)
 

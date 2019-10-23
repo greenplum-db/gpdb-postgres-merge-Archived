@@ -636,7 +636,7 @@ select first_value(max(x)) over (), y
                      ->  Redistribute Motion 3:3  (slice1; segments: 3)
                            Hash Key: ((ten + four))
                            ->  Result
-                                 ->  Partial HashAggregate
+                                 ->  Streaming Partial HashAggregate
                                        Group Key: (ten + four)
                                        ->  Result
                                              ->  Seq Scan on tenk1
