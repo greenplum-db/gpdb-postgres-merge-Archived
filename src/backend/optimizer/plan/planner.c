@@ -500,8 +500,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		gather->plan.plan_rows = top_plan->plan_rows;
 		gather->plan.plan_width = top_plan->plan_width;
 		gather->plan.parallel_aware = false;
-
-		/* GPDB_96_MERGE_FIXME: how should this work? */
 		gather->plan.flow = pull_up_Flow(&gather->plan, top_plan);
 
 		/* use parallel mode for parallel plans. */
@@ -1780,10 +1778,6 @@ inheritance_planner(PlannerInfo *root)
 	 */
 	if (subpaths == NIL)
 	{
-		/* GPDB_96_MERGE_FIXME: where should this go now? */
-		//if (Gp_role == GP_ROLE_DISPATCH)
-		//	mark_plan_general(plan, parentPolicy->numsegments);
-
 		set_dummy_rel_pathlist(root, final_rel);
 		return;
 	}
@@ -4197,7 +4191,7 @@ create_grouping_paths(PlannerInfo *root,
 														 dNumPartialGroups));
 					else
 					{
-						/* GPDB_96_MERGE_FIXME: Group nodes are not used in GPDB */
+						/* Group nodes are not used in GPDB */
 #if 0
 						add_partial_path(grouped_rel, (Path *)
 										 create_group_path(root,
@@ -4361,14 +4355,14 @@ create_grouping_paths(PlannerInfo *root,
 											 agg_costs,
 											 dNumGroups));
 				}
+				/* Group nodes are not used in GPDB */
+#if 0
 				else if (parse->groupClause)
 				{
 					/*
 					 * We have GROUP BY without aggregation or grouping sets.
 					 * Make a GroupPath.
 					 */
-					/* GPDB_96_MERGE_FIXME: we've disabled Group nodes in GPDB */
-#if 0
 					add_path(grouped_rel, (Path *)
 							 create_group_path(root,
 											   grouped_rel,
@@ -4377,8 +4371,8 @@ create_grouping_paths(PlannerInfo *root,
 											   parse->groupClause,
 											   (List *) parse->havingQual,
 											   dNumGroups));
-#endif
 				}
+#endif
 				else
 				{
 					/* Other cases should have been handled above */
@@ -4429,10 +4423,10 @@ create_grouping_paths(PlannerInfo *root,
 										 (List *) parse->havingQual,
 										 &agg_final_costs,
 										 dNumGroups));
+			/* Group nodes are not used in GPDB */
+#if 0
 			else
 			{
-				/* GPDB_96_MERGE_FIXME: Group nodes are not used in GPDB */
-#if 0
 				add_path(grouped_rel, (Path *)
 						 create_group_path(root,
 										   grouped_rel,
@@ -4441,8 +4435,8 @@ create_grouping_paths(PlannerInfo *root,
 										   parse->groupClause,
 										   (List *) parse->havingQual,
 										   dNumGroups));
-#endif
 			}
+#endif
 		}
 	}
 
@@ -4913,12 +4907,6 @@ create_distinct_paths(PlannerInfo *root,
 	List	   *distinct_dist_exprs = NIL;
 	List	   *distinct_dist_opfamilies = NIL;
 	List	   *distinct_dist_sortrefs = NIL;
-
-	/*
-	 * GPDB_96_MERGE_FIXME: there was a bunch of GPDB changes in
-	 * choose_hashed_grouping(), that were not copied over to this
-	 * function correctly yet.
-	 */
 
 	/* For now, do all work in the (DISTINCT, NULL) upperrel */
 	distinct_rel = fetch_upper_rel(root, UPPERREL_DISTINCT, NULL);
