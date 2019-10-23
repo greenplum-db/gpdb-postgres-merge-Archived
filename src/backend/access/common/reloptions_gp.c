@@ -97,17 +97,6 @@ static relopt_int intRelOpts_gp[] =
 		},
 		AO_DEFAULT_COMPRESSLEVEL, AO_MIN_COMPRESSLEVEL, AO_MAX_COMPRESSLEVEL
 	},
-	/* GPDB_96_MERGE_FIXME: why is this twice in the array ? */
-	{
-		{
-			SOPT_FILLFACTOR,
-			"Packs bitmap index pages only to this percentage",
-			RELOPT_KIND_BITMAP,
-			ShareUpdateExclusiveLock	/* since it applies only to later
-										 * inserts */
-		},
-		HEAP_DEFAULT_FILLFACTOR, HEAP_MIN_FILLFACTOR, 100
-	},
 	/* list terminator */
 	{{NULL}}
 };
