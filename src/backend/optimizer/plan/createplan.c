@@ -2519,9 +2519,14 @@ create_motion_plan(PlannerInfo *root, CdbMotionPath *path)
 	/*
 	 * Elide explicit motion, if the subplan doesn't contain any motions.
 	 *
-	 * This is quite conservative, we could elide the motion even if there are
-	 * Motions, as long as there are no Motions between the scan on the target
-	 * table and the ModifyTable.
+	 * The idea is that if an Explicit Motion has no Motions underneath it,
+	 * then the row to update must originate from the same segment, and no
+	 * Motion is needed. This is quite conservative, we could elide the motion
+	 * even if there are Motions, as long as they are not between the scan
+	 * on the target table and the ModifyTable.
+	 *
+	 * A SplitUpdate also computes the target segment ID, based on other columns,
+	 * so we treat it the same as a Motion node for this purpose.
 	 */
 	if (root->numMotions == before_numMotions && path->is_explicit_motion)
 	{
@@ -2668,6 +2673,10 @@ create_splitupdate_plan(PlannerInfo *root, SplitUpdatePath *path)
 
 	relation_close(resultRel, NoLock);
 
+	/*
+	 * A SplitUpdate also computes the target segment ID, based on other columns,
+	 * so we treat it the same as a Motion node for this purpose.
+	 */
 	root->numMotions++;
 
 	return (Plan *) splitupdate;
@@ -8391,6 +8400,7 @@ cdbpathtoplan_create_motion_plan(PlannerInfo *root,
                                                 : NULL,
                                               subplan);
 
+	/* Remember that this subtree contains a Motion */
 	root->numMotions++;
 
 	return motion;

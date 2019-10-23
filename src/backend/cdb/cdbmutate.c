@@ -998,34 +998,6 @@ make_broadcast_motion(Plan *lefttree, int numsegments)
 	return motion;
 }
 
-/*
- * Returns true, if the given subtree contains any motion nodes.
- *
- * This is used at an Explicit Motion node, to omit the Explicit Motion, if
- * there were no other Motions in the subtree. The idea is that if an Explicit
- * Motion has no Motions underneath it, then the row to update must originate
- * from the same segment, and no Motion is needed.
- *
- * A SplitUpdate also computes the target segment ID, based on other columns,
- * so we treat it the same as a Motion node for this purpose.
- *
- * Note that this does not take InitPlans containing Motion nodes into
- * account. InitPlans are executed as a separate step before the main plan,
- * and hence any Motion nodes in them don't need to affect the way the main
- * plan is executed.
- */
-static bool
-contain_motions_walker(Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-
-	if (IsA(node, Motion) || IsA(node, SplitUpdate))
-		return true;
-	else
-		return plan_tree_walker(node, contain_motions_walker, context, true);
-}
-
 Plan *
 make_explicit_motion(PlannerInfo *root, Plan *lefttree, AttrNumber segidColIdx)
 {
@@ -1034,14 +1006,6 @@ make_explicit_motion(PlannerInfo *root, Plan *lefttree, AttrNumber segidColIdx)
 	plan_tree_base_prefix base;
 
 	base.node = (Node *) root;
-
-	/*
-	 * add an ExplicitRedistribute motion node only if child plan
-	 * has a motion node
-	 */
-	// GPDB_96_MERGE_FIXME: is this still needed?
-	//if (!contain_motions_walker((Node *) lefttree, &base))
-	//	return lefttree;
 
 	/*
 	 * For explicit motion data come back to the source segments,
