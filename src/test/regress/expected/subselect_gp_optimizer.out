@@ -1624,12 +1624,12 @@ EXPLAIN select count(*) from
 -------------------------------------------------------------------------------------------------------------------------------
  Finalize Aggregate  (cost=0.00..864.07 rows=1 width=8)
    ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=0.00..864.07 rows=1 width=8)
-         ->  Aggregate  (cost=0.00..864.07 rows=1 width=8)
+         ->  Partial Aggregate  (cost=0.00..864.07 rows=1 width=8)
                ->  Hash Join  (cost=0.00..864.07 rows=34 width=1)
                      Hash Cond: tenk1.unique1 = tenk1_1.hundred
                      ->  Seq Scan on tenk1  (cost=0.00..431.51 rows=3334 width=4)
                      ->  Hash  (cost=431.94..431.94 rows=34 width=4)
-                           ->  Partial GroupAggregate  (cost=0.00..431.94 rows=34 width=4)
+                           ->  GroupAggregate  (cost=0.00..431.94 rows=34 width=4)
                                  Group Key: tenk1_1.hundred
                                  ->  Sort  (cost=0.00..431.94 rows=34 width=4)
                                        Sort Key: tenk1_1.hundred
