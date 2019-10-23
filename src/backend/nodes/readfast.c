@@ -141,7 +141,7 @@ local_node->fldname = readNodeBinary(); \
 
 /* Read a bytea field */
 #define READ_BYTEA_FIELD(fldname) \
-	local_node->fldname = (bytea *) DatumGetPointer(readDatum(false))
+	local_node->fldname = (bytea *) DatumGetPointer(readDatumBinary(false))
 
 /* Read a dummy field */
 #define READ_DUMMY_FIELD(fldname,fldvalue) \
@@ -188,7 +188,8 @@ local_node->fldname = readNodeBinary(); \
 
 static void *readNodeBinary(void);
 
-static Datum readDatum(bool typbyval);
+static Datum readDatumBinary(bool typbyval);
+#define readDatum(x) readDatumBinary(x)
 
 static Bitmapset *_readBitmapset(void);
 
@@ -407,7 +408,7 @@ _readConst(void)
 	if (local_node->constisnull)
 		local_node->constvalue = 0;
 	else
-		local_node->constvalue = readDatum(local_node->constbyval);
+		local_node->constvalue = readDatumBinary(local_node->constbyval);
 
 	READ_DONE();
 }
@@ -1912,7 +1913,7 @@ _readSerializedParamExternData(void)
 	READ_BOOL_FIELD(pbyval);
 
 	if (!local_node->isnull)
-		local_node->value = readDatum(local_node->pbyval);
+		local_node->value = readDatumBinary(local_node->pbyval);
 
 	READ_DONE();
 }
@@ -3145,14 +3146,12 @@ readNodeFromBinaryString(const char *str_arg, int len pg_attribute_unused())
 
 }
 /*
- * readDatum
+ * readDatumBinary
  *
- * Given a binary string representation of a constant, recreate the appropriate
- * Datum.  The string representation embeds length info, but not byValue,
- * so we must be told that.
+ * Like readDatum() in readfuncs.c.
  */
 static Datum
-readDatum(bool typbyval)
+readDatumBinary(bool typbyval)
 {
 	Size		length;
 

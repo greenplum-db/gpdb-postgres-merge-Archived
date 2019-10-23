@@ -249,8 +249,6 @@ inline static char extended_char(char* token, size_t length)
 
 #endif /* COMPILING_BINARY_FUNCS */
 
-static Datum readDatum(bool typbyval);
-
 #ifndef COMPILING_BINARY_FUNCS
 /*
  * _readBitmapset
