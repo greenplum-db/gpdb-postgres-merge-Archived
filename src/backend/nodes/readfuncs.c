@@ -2715,18 +2715,25 @@ _readDynamicBitmapIndexScan(void)
 	READ_DONE();
 }
 
+static void
+readBitmapHeapScanFields(BitmapHeapScan *local_node)
+{
+	READ_TEMP_LOCALS();
+
+	ReadCommonScan(&local_node->scan);
+
+	READ_NODE_FIELD(bitmapqualorig);
+}
+
 /*
  * _readBitmapHeapScan
  */
 static BitmapHeapScan *
 _readBitmapHeapScan(void)
 {
-	READ_LOCALS(BitmapHeapScan);
+	READ_LOCALS_NO_FIELDS(BitmapHeapScan);
 
-	ReadCommonScan(&local_node->scan);
-
-	READ_NODE_FIELD(bitmapqualorig);
-	/* GPDB NOTE: if new nodes are added here, make sure _readDynamicBitmapHeapScan() stays in sync */
+	readBitmapHeapScanFields(local_node);
 
 	READ_DONE();
 }
@@ -2737,7 +2744,8 @@ _readDynamicBitmapHeapScan(void)
 	READ_LOCALS(DynamicBitmapHeapScan);
 
 	/* DynamicBitmapHeapScan has some content from BitmapHeapScan. */
-	READ_NODE_FIELD(bitmapheapscan.bitmapqualorig);
+	readBitmapHeapScanFields(&local_node->bitmapheapscan);
+
 	READ_INT_FIELD(partIndex);
 	READ_INT_FIELD(partIndexPrintable);
 
