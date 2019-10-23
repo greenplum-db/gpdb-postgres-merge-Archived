@@ -518,8 +518,6 @@ bmbulkdelete(IndexVacuumInfo *info,
 
 	CommandCounterIncrement();
 
-	/* GPDB_96_MERGE_FIXME: Why do we reallocated it here? */
-	stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 	stats->num_pages = RelationGetNumberOfBlocks(rel);
 	/* Since we re-build the index, set this to number of heap tuples. */
 	stats->num_index_tuples = info->num_heap_tuples;
