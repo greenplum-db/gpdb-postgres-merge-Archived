@@ -48,16 +48,10 @@
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 
-#include "cdb/cdbvars.h"
-#include "cdb/cdbpartition.h"
-
-/*
- * GPDB_96_MERGE_FIXME: the following headers are present in Greenplum only.
- * Verify if they are all needed or remove.
- */
 #include "catalog/pg_exttable.h"
 #include "catalog/pg_operator.h"
-#include "parser/parse_agg.h"
+#include "cdb/cdbvars.h"
+#include "cdb/cdbpartition.h"
 #include "utils/syscache.h"
 
 /* Convenience macro for the most common makeNamespaceItem() case */
@@ -215,6 +209,7 @@ winref_checkspec_walker(Node *node, void *ctx)
 						 errmsg("DISTINCT cannot be used with window specification containing a framing clause"),
 						 parser_errposition(ref->pstate, winref->location)));
 		}
+		// GPDB_96_MERGE_FIXME: What is this block? Where did it come from?
 #if 0 // FIXME
 		/*
 		 * Check compatibilities between function's requirement and

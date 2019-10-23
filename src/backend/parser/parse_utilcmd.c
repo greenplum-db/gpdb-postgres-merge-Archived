@@ -65,23 +65,16 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
+#include "catalog/pg_compression.h"
+#include "catalog/pg_type_encoding.h"
 #include "cdb/cdbhash.h"
 #include "cdb/cdbpartition.h"
 #include "cdb/partitionselection.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
-
-/*
- * GPDB_96_MERGE_FIXME: The following are Greenplum only headers. Verify if they
- * are all needed or amend.
- */
-#include "catalog/pg_compression.h"
-#include "catalog/pg_inherits_fn.h"
-#include "catalog/pg_type_encoding.h"
 #include "parser/parse_partition.h"
 #include "utils/fmgroids.h"
 #include "utils/memutils.h"
-#include "utils/tqual.h"
 
 /* State shared by transformCreateSchemaStmt and its subroutines */
 typedef struct

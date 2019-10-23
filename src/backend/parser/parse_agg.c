@@ -30,13 +30,6 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
-/* 
- * GPDB_96_MERGE_FIXME: is this header really needed? 
- * It was introduced in Greenplum commit 4319b7bb8e0 yet it is not present in
- * upstream.
- */
-#include "optimizer/walkers.h"
-
 
 typedef struct
 {
