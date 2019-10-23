@@ -761,11 +761,6 @@ MemoryContextName(MemoryContext context, MemoryContext relativeTo,
 }                               /* MemoryContextName */
 
 /*
- * GPDB_96_MERGE_FIXME: revisit here to check if Greenplum's
- * MemoryContextStats_recur() and MemoryContext_LogContextStats() are better at
- * some places.
- */
-/*
  * MemoryContextStats
  *		Print statistics about the named context and all its descendants.
  *
