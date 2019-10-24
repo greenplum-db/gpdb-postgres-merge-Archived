@@ -131,7 +131,7 @@ cdbpath_create_motion_path(PlannerInfo *root,
 	/* Moving subpath output to a single executor process (qDisp or qExec)? */
 	if (CdbPathLocus_IsOuterQuery(locus))
 	{
-		/* GPDB_96_MERGE_FIXME: this is special */
+		/* Outer -> Outer is a no-op */
 		if (CdbPathLocus_IsOuterQuery(subpath->locus))
 		{
 			return subpath;
