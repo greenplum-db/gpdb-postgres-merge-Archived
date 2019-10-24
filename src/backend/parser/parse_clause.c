@@ -325,7 +325,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	 * parserOpenTable upgrades the lock to Exclusive mode for distributed
 	 * tables.
 	 */
-	if (pstate->p_is_insert && !pstate->p_is_update)
+	if (pstate->p_is_insert)
 	{
 		setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
 		pstate->p_target_relation = heap_openrv(relation, RowExclusiveLock);
