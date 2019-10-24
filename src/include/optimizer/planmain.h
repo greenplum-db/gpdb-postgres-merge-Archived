@@ -161,14 +161,6 @@ extern bool is_projection_capable_path(Path *path);
 extern bool is_projection_capable_plan(Plan *plan);
 extern Plan *add_sort_cost(PlannerInfo *root, Plan *input, 
 						   double limit_tuples);
-extern Plan *add_agg_cost(PlannerInfo *root, Plan *plan, 
-		 List *tlist, List *qual,
-		 AggStrategy aggstrategy, 
-		 bool streaming, 
-		 int numGroupCols,
-		 List *groupingSets,
-		 long numGroups,
-		 const AggClauseCosts *aggcosts);
 extern Plan *plan_pushdown_tlist(PlannerInfo *root, Plan *plan, List *tlist);      /*CDB*/
 
 extern List *create_external_scan_uri_list(struct ExtTableEntry *extEntry, bool *ismasteronly);
