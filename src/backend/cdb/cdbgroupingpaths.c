@@ -74,14 +74,6 @@ static bool analyze_dqas(PlannerInfo *root,
  * This is basically an extension of the function create_grouping_paths() from
  * planner.c.  It creates two- and three-stage Paths to implement aggregates
  * and/or GROUP BY.
- *
- *
- * GPDB_96_MERGE_FIXME: This is roughly equivalent to the old
- * cdb_grouping_planner() function in cdbgroup.c, but for the brave
- * new upper-planner pathification world. Remove all the dead code from
- * cdbgroup.c when this is finished. Currently, this only handles a few
- * simple path types. None of the DQA stuff that was in cdbgroup.c, for
- * example.
  */
 void
 cdb_create_twostage_grouping_paths(PlannerInfo *root,
