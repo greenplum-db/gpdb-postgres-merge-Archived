@@ -83,6 +83,13 @@ drop rule qqq on copydml_test;
 -- triggers
 create function qqq_trig() returns trigger as $$
 begin
+
+-- In GPDB, the tuple is sent from the QE to QD via the interconnect, while
+-- the NOTICE is sent via the main QE-QD libpq connection. It's not
+-- deterministic, which one reaches the QD first. Add a little sleep here
+-- to make it more consistent, for the sake of having stable expected output.
+perform pg_sleep(0.2);
+
 if tg_op in ('INSERT', 'UPDATE') then
     raise notice '% %', tg_op, new.id;
     return new;
