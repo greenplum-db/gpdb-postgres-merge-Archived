@@ -114,21 +114,29 @@
 #define WRITE_LOCATION_FIELD(fldname) \
 	{ appendBinaryStringInfo(str, (const char *)&node->fldname, sizeof(int)); }
 
-/* Write a Node field */
-/* GPDB_96_MERGE_FIXME: For debugging purposes, I modified this to write out the field
- * name in the serialized form. And the read function checks that. Makes it much easier
- * to debug bugs where the out and read functions are not in sync, as you get an error
- * much earlier, and it can print the field name where the mismatch occurred.
+/*
+ * Write a Node field
  *
- * We should probably have a cleaner #ifdef'd version of this permanently in the tree,
- * so clean this up and open a separate PR..
+ * If compiled with GP_SERIALIZATION_DEBUG, write the field name in the
+ * serialized form, and check that it matches in the read function
+ * (READ_NODE_FIELD in readfast.c). That makes it much easier to debug bugs
+ * where the out and read functions are not in sync, as you get an error
+ * much earlier, and it can print the field name where the mismatch occurred.
+ * It makes the serialized plans much larger, though, so we don't want to do
+ * it production.
  */
+#ifdef GP_SERIALIZATION_DEBUG
 #define WRITE_NODE_FIELD(fldname) \
 	do { \
 		const char *xx = CppAsString(fldname); \
 		appendBinaryStringInfo(str, xx, strlen(xx) + 1); \
 		(_outNode(str, node->fldname)); \
 	} while (0)
+#else
+#define WRITE_NODE_FIELD(fldname) \
+	(_outNode(str, node->fldname))
+#endif
+
 
 /* Write a bitmapset field */
 #define WRITE_BITMAPSET_FIELD(fldname) \

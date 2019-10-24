@@ -209,44 +209,6 @@ winref_checkspec_walker(Node *node, void *ctx)
 						 errmsg("DISTINCT cannot be used with window specification containing a framing clause"),
 						 parser_errposition(ref->pstate, winref->location)));
 		}
-		// GPDB_96_MERGE_FIXME: What is this block? Where did it come from?
-#if 0 // FIXME
-		/*
-		 * Check compatibilities between function's requirement and
-		 * window specification by looking up pg_window catalog.
-		 */
-		if (!ref->has_order || ref->has_frame)
-		{
-			HeapTuple		tuple;
-			Form_pg_window	wf;
-
-			tuple = SearchSysCache1(WINFNOID,
-									ObjectIdGetDatum(winref->winfnoid));
-
-			/*
-			 * Check only "true" window function.
-			 * Otherwise, it must be an aggregate.
-			 */
-			if (HeapTupleIsValid(tuple))
-			{
-				wf = (Form_pg_window) GETSTRUCT(tuple);
-				if (wf->winrequireorder && !ref->has_order)
-					ereport(ERROR,
-							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("window function \"%s\" requires a window specification with an ordering clause",
-									get_func_name(wf->winfnoid)),
-								parser_errposition(ref->pstate, winref->location)));
-
-				if (!wf->winallowframe && ref->has_frame)
-					ereport(ERROR,
-							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("window function \"%s\" cannot be used with a framed window specification",
-									get_func_name(wf->winfnoid)),
-								parser_errposition(ref->pstate, winref->location)));
-				ReleaseSysCache(tuple);
-			}
-		}
-#endif
 	}
 
 	return expression_tree_walker(node, winref_checkspec_walker, ctx);
