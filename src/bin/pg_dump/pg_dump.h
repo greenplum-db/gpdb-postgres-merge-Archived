@@ -637,7 +637,6 @@ extern const char *EXT_PARTITION_NAME_POSTFIX;
  *	common utility functions
  */
 extern TableInfo *getSchemaData(Archive *fout, int *numTablesPtr);
-extern void DetectChildConstraintDropped(TableInfo *tbinfo, PQExpBuffer q); /* GPDB only */
 
 extern void AssignDumpId(DumpableObject *dobj);
 extern DumpId createDumpId(void);

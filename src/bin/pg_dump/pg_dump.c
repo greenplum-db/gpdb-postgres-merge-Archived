@@ -16986,21 +16986,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 								  tbinfo->attfdwoptions[j]);
 			}
 		}
-
-
-		/* MPP-1890 */
-
-		/*
-		 * An inherited constraint may be dropped from a child table.  While
-		 * this arguably severs the inheritance contract between the child and
-		 * the parent, the current pg_constraint content doesn't track
-		 * inherited/shared/disjoint constraints of a child.
-		 * the INHERITS clause is used on a CREATE
-		 * TABLE statement to re-establish the inheritance relationship and
-		 * "recovers" the dropped constraint(s).
-		 */
-		if (numParents > 0)
-			DetectChildConstraintDropped(tbinfo, q);
 	}
 
 	/*
