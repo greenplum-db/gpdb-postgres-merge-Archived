@@ -17,12 +17,6 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS=   pg_config.o $(WIN32RES)
 
-# GPDB_96_MERGE_FIXME: do we still need these lines?
-# The frontend doesn't need everything that's in LIBS, some are backend only
-LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
-# This program isn't interactive, so doesn't need these
-LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl -lcrypto -lz, $(LIBS))
-
 all: pg_config
 
 pg_config: $(OBJS) | submake-libpgport
