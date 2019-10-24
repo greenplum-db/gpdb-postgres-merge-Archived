@@ -51,7 +51,7 @@ extern PGDLLIMPORT BackendId ParallelMasterBackendId;
  * The BackendId to use for our session's temp relations is normally our own,
  * but parallel workers should use their leader's ID.
  *
- * In GDPB, we use TempRelBackendId for everything.
+ * In GPDB, we use TempRelBackendId for everything.
  */
 #define BackendIdForTempRelations() TempRelBackendId
 
