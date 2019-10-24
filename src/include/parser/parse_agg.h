@@ -36,24 +36,6 @@ extern Oid resolve_aggregate_transtype(Oid aggfuncid,
 							Oid *inputTypes,
 							int numArguments);
 
-/* GPDB_96_MERGE_FIXME: postgres build less, fix this while resolving nodeAgg.c and parse_agg.c */
-extern void build_aggregate_fnexprs(Oid *agg_input_types,
-						int agg_num_inputs,
-						int agg_num_direct_inputs,
-						int num_finalfn_inputs,
-						bool agg_variadic,
-						Oid agg_state_type,
-						Oid agg_result_type,
-						Oid agg_input_collation,
-						Oid transfn_oid,
-						Oid invtransfn_oid,
-						Oid finalfn_oid,
-						Oid combinefn_oid,
-						Expr **transfnexpr,
-						Expr **invtransfnexpr,
-						Expr **finalfnexpr,
-						Expr **combinefnexpr);
-
 extern void build_aggregate_transfn_expr(Oid *agg_input_types,
 							 int agg_num_inputs,
 							 int agg_num_direct_inputs,
