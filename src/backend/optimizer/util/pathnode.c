@@ -4744,7 +4744,31 @@ adjust_modifytable_subpaths(PlannerInfo *root, CmdType operation,
 	 * we could mark the ModifyTable with the same distribution key. However,
 	 * currently, because a ModifyTable node can only be at the top of the
 	 * plan, it won't make any difference to the overall plan.
+	 *
 	 * GPDB_96_MERGE_FIXME: it might with e.g. a INSERT RETURNING in a CTE
+	 * I tried here, the locus setting is quite simple, but failed if it's not
+	 * in a CTE and the locus is General. Haven't figured out how to create
+	 * flow in that case.
+	 * Example:
+	 * CREATE TABLE cte_returning_locus(c1 int) DISTRIBUTED BY (c1);
+	 * COPY cte_returning_locus FROM PROGRAM 'seq 1 100';
+	 * EXPLAIN WITH aa AS (
+	 *        INSERT INTO cte_returning_locus SELECT generate_series(3,300) RETURNING c1
+	 * )
+	 * SELECT count(*) FROM aa,cte_returning_locus WHERE aa.c1 = cte_returning_locus.c1;
+	 *
+	 * The returning doesn't need a motion to be hash joined, works fine. But
+	 * without the WITH, what is the proper flow? FLOW_SINGLETON returns
+	 * nothing, FLOW_PARTITIONED without hashExprs(General locus has no
+	 * distkeys) returns duplication.
+	 *
+	 * Notes: 1, make a copy of plan->plan.directDispatch.contentIds in
+	 * create_modifytable_plan(), otherwise the original data will be freed in
+	 * AssignContentIdsToPlanData() by FinalizeDirectDispatchDataForSlice(),
+	 * because there is no extra motions then. Which should not be a problem,
+	 * but _outNode() fails.
+	 *        2, cdbpathtoplan_create_flow() in create_modifytable_plan(), non
+	 * CTE cases need the flow to gather results.
 	 *
 	 * GPDB_90_MERGE_FIXME: I've hacked a basic implementation of the above for
 	 * the case where all the subplans are POLICYTYPE_ENTRY, but it seems like

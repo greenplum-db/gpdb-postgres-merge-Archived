@@ -2478,7 +2478,7 @@ create_motion_path_for_insert(PlannerInfo *root, Index rti, RangeTblEntry *rte,
 
 		targetLocus = cdbpathlocus_for_insert(root, rti, policy, subpath->pathtarget);
 
-		if (policy->nattrs == 0 && CdbPathLocus_IsPartitioned(subpath->locus))
+		if (policy->nattrs == 0 && CdbPathLocus_IsPartitioned(targetLocus))
 		{
 			/*
 			 * If the target table is DISTRIBUTED RANDOMLY, we can insert the
