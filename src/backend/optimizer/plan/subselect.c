@@ -2576,20 +2576,6 @@ SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
 	{
 		Path	   *path = (Path *) lfirst(lc);
 
-		/*
-		 * If the topmost plan is a Motion, attach the InitPlan to the node
-		 * below it, instead. The executor machinery that executes InitPlans
-		 * in the QD node, and sends the resulting exec parameters to the QE
-		 * nodes, gets confused if the InitPlan is attached to the Motion
-		 * node, and fails to deliver the exec parameter value to where it's
-		 * needed. I'm not sure why that fails, but historically the InitPlans
-		 * have always been attached to the node below the Motion, so let's
-		 * just keep that behavior for now.
-		 */
-#if 0 /* GPDB_96_MERGE_FIXME: pathify this */
-		if (IsA(plan, Motion))
-			plan = plan->lefttree;
-#endif
 		path->startup_cost += initplan_cost;
 		path->total_cost += initplan_cost;
 	}
