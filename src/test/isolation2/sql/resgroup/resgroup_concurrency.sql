@@ -19,6 +19,11 @@ SELECT r.rsgname, num_running, num_queueing, num_queued, num_executed FROM gp_to
 
 -- new transaction will be blocked when the concurrency limit of the resource group is reached.
 SELECT r.rsgname, num_running, num_queueing, num_queued, num_executed FROM gp_toolkit.gp_resgroup_status s, pg_resgroup r WHERE s.groupid=r.oid AND r.rsgname='rg_concurrency_test';
+--GPDB_96_MERGE_FIXME
+-- resource group test env is disposable even in pipeline.
+-- I do not want to guess the table content, just print it out.
+select * from pg_stat_activity;
+
 SELECT wait_event_type, wait_event from pg_stat_activity where query = 'BEGIN;' and state = 'active' and rsgname = 'rg_concurrency_test' and wait_event='ResourceQueue';
 2:END;
 3:END;
