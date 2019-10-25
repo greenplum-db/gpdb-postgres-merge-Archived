@@ -24,7 +24,7 @@ SELECT r.rsgname, num_running, num_queueing, num_queued, num_executed FROM gp_to
 -- I do not want to guess the table content, just print it out.
 select * from pg_stat_activity;
 
-SELECT wait_event_type, wait_event from pg_stat_activity where query = 'BEGIN;' and state = 'active' and rsgname = 'rg_concurrency_test' and wait_event='ResourceQueue';
+SELECT wait_event from pg_stat_activity where query = 'BEGIN;' and state = 'active' and rsgname = 'rg_concurrency_test' and wait_event='ResourceGroup';
 2:END;
 3:END;
 4<:
