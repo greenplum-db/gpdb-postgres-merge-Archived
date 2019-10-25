@@ -1897,7 +1897,6 @@ CONTEXT:  SQL function "least_accum" during startup
 select least_agg(variadic array[q1,q2]) from int8_tbl;
 INFO:  GPORCA failed to produce a plan, falling back to planner
 DETAIL:  GPDB Expression type: Query Parameter not supported in DXL
-CONTEXT:  SQL function "least_accum" during startup
      least_agg     
 -------------------
  -4567890123456789
@@ -2369,7 +2368,6 @@ CONTEXT:  SQL function "least_accum" during startup
 select least_agg(variadic array[q1,q2]) from int8_tbl;
 INFO:  GPORCA failed to produce a plan, falling back to planner
 DETAIL:  GPDB Expression type: Query Parameter not supported in DXL
-CONTEXT:  SQL function "least_accum" during startup
      least_agg     
 -------------------
  -4567890123456789
