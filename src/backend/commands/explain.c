@@ -1364,7 +1364,17 @@ ExplainNode(PlanState *planstate, List *ancestors,
 						break;
 				}
 
-				if (DO_AGGSPLIT_SKIPFINAL(agg->aggsplit))
+				if (agg->aggsplit == AGGSPLIT_INTERMEDIATE)
+				{
+					partialmode = "Intermediate";
+					pname = psprintf("%s %s", partialmode, pname);
+				}
+				else if (agg->aggsplit == AGGSPLIT_MIXED)
+				{
+					partialmode = "Mixed";
+					pname = psprintf("%s %s", partialmode, pname);
+				}
+				else if (DO_AGGSPLIT_SKIPFINAL(agg->aggsplit))
 				{
 					partialmode = "Partial";
 					pname = psprintf("%s %s", partialmode, pname);

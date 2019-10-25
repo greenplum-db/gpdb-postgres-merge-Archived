@@ -921,6 +921,8 @@ typedef enum AggStrategy
 
 #define AGGSPLITOP_DEDUPLICATED	0x100
 
+#define AGGSPLITOP_MIXED		0x200
+
 /* Supported operating modes (i.e., useful combinations of these options): */
 typedef enum AggSplit
 {
@@ -932,12 +934,58 @@ typedef enum AggSplit
 	AGGSPLIT_FINAL_DESERIAL = AGGSPLITOP_COMBINE | AGGSPLITOP_DESERIALIZE,
 
 	/*
+	 * Orca can create plans with "intermediate" stages, which combines partial
+	 * results, and passes them up to next stage still as partial.
+	 */
+	AGGSPLIT_INTERMEDIATE = AGGSPLIT_INITIAL_SERIAL | AGGSPLIT_FINAL_DESERIAL,
+	/*
+	 * Orca can create plans that finalize aggregates from previous stage, and
+	 * compute other aggregates from scratch. We mark Agg plan nodes as MIXED
+	 * in such cases. Note that MIXED can only appear in Agg->aggsplit, not
+	 * in Aggref->aggsplit.
+	 */
+	AGGSPLIT_MIXED = AGGSPLITOP_MIXED,
+
+	/*
 	 * The inputs have already been deduplicated for DISTINCT.
 	 * This is internal to the planner, it is never set on Aggrefs, and is
 	 * stripped away from Aggs in setrefs.c.
 	 */
 	AGGSPLIT_DEDUPLICATED = AGGSPLITOP_DEDUPLICATED,
 } AggSplit;
+
+/*
+ * GPDB:
+ * With MIXED type Aggregates, the same Agg node can combine partial results
+ * from an earlier stage, but also compute new aggregates from scratch. In
+ * other words, it may contain Aggrefs with different aggsplit codes. The
+ * Agg node is marked with AGGSPLIT_MIXED in that case, but we should never
+ * see AGGSPLIT_MIXED in an Aggref, only in the Agg that contains it.
+ *
+ * The DO_AGGSPLIT_*() macros are intended to be used in nodeAgg.c. In
+ * PostgreSQL, the Aggref->aggsplit must be the same in all Aggregs that
+ * belong to the same Agg node, and they must match Agg->aggsplit. But in
+ * GDPB, we've loosened that to support the more complicated Mixed Agg
+ * plans. Therefore in GPDB, DO_AGGSPLIT_*() macros should only be used on
+ * Aggref->aggsplit, not on Agg->aggsplit! This assert_aggsplit_not_mixed()
+ * checks for that, the best we can.
+ *
+ * It's defined in this weird way, to avoid modifying the DO_AGGSPLIT_*()
+ * macros below, to make merging and diffing with upstream easier.
+ */
+#ifdef USE_ASSERT_CHECKING
+static inline AggSplit
+assert_aggsplit_not_mixed(AggSplit as)
+{
+	Assert(as != AGGSPLIT_MIXED);		/* should only appear in Agg, not in Aggref */
+	Assert(as == AGGSPLIT_SIMPLE ||
+		   as == AGGSPLIT_INITIAL_SERIAL ||
+		   as == AGGSPLIT_FINAL_DESERIAL ||
+		   as == AGGSPLIT_INTERMEDIATE);
+	return as;
+}
+#define as (assert_as_not_mixed(as))
+#endif
 
 /* Test whether an AggSplit value selects each primitive option: */
 #define DO_AGGSPLIT_COMBINE(as)		(((as) & AGGSPLITOP_COMBINE) != 0)
@@ -946,6 +994,10 @@ typedef enum AggSplit
 #define DO_AGGSPLIT_DESERIALIZE(as) (((as) & AGGSPLITOP_DESERIALIZE) != 0)
 
 #define DO_AGGSPLIT_DEDUPLICATED(as) (((as) & AGGSPLITOP_DEDUPLICATED) != 0)
+
+#ifdef USE_ASSERT_CHECKING
+#undef as
+#endif
 
 /*
  * SetOpCmd and SetOpStrategy -
