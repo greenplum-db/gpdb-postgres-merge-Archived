@@ -1543,7 +1543,7 @@ finalize_aggregates(AggState *aggstate,
 
 		pergroupstate = &pergroup[transno + (currentSet * (aggstate->numtrans))];
 
-		if (DO_AGGSPLIT_SKIPFINAL(peragg->aggsplit))
+		if (DO_AGGSPLIT_SKIPFINAL(aggstate->aggsplit))
 			finalize_partialaggregate(aggstate, peragg, pergroupstate,
 									  &aggvalues[aggno], &aggnulls[aggno]);
 		else
@@ -2011,7 +2011,7 @@ agg_retrieve_direct(AggState *aggstate)
 				 */
 				for (;;)
 				{
-					if (DO_AGGSPLIT_COMBINE(peragg->aggsplit))
+					if (DO_AGGSPLIT_COMBINE(aggstate->aggsplit))
 						combine_aggregates(aggstate, pergroup);
 					else
 						advance_aggregates(aggstate, pergroup);
@@ -2638,11 +2638,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		/* Planner should have assigned aggregate to correct level */
 		Assert(aggref->agglevelsup == 0);
 		/* ... and the split mode should match */
-		/*
-		 * In Orca generated plans, an intermediate stage aggregate can contain a
-		 * mix of partial and finalize Aggrefs
-		 */
-		Assert(aggref->aggsplit == aggstate->aggsplit || aggstate->aggsplit == AGGSPLIT_MIXED);
+		Assert(aggref->aggsplit == aggstate->aggsplit);
 
 		/* 1. Check for already processed aggs which can be re-used */
 		existing_aggno = find_compatible_peragg(aggref, aggstate, aggno,
@@ -2660,7 +2656,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		/* Mark Aggref state node with assigned index in the result array */
 		peragg = &peraggs[++aggno];
 		peragg->aggref = aggref;
-		peragg->aggsplit = aggref->aggsplit;
 		aggrefstate->aggno = aggno;
 
 		/* Fetch the pg_aggregate row */
@@ -2687,7 +2682,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 * If this aggregation is performing state combines, then instead of
 		 * using the transition function, we'll use the combine function
 		 */
-		if (DO_AGGSPLIT_COMBINE(peragg->aggsplit))
+		if (DO_AGGSPLIT_COMBINE(aggstate->aggsplit))
 		{
 			transfn_oid = aggform->aggcombinefn;
 
@@ -2701,7 +2696,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		combinefn_oid = aggform->aggcombinefn;
 
 		/* Final function only required if we're finalizing the aggregates */
-		if (DO_AGGSPLIT_SKIPFINAL(peragg->aggsplit))
+		if (DO_AGGSPLIT_SKIPFINAL(aggstate->aggsplit))
 			peragg->finalfn_oid = finalfn_oid = InvalidOid;
 		else
 			peragg->finalfn_oid = finalfn_oid = aggform->aggfinalfn;
@@ -2720,10 +2715,10 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			 * every aggregate with an INTERNAL state has a serialization
 			 * function.  Verify that.
 			 */
-			if (DO_AGGSPLIT_SERIALIZE(peragg->aggsplit))
+			if (DO_AGGSPLIT_SERIALIZE(aggstate->aggsplit))
 			{
 				/* serialization only valid when not running finalfn */
-				Assert(DO_AGGSPLIT_SKIPFINAL(peragg->aggsplit));
+				Assert(DO_AGGSPLIT_SKIPFINAL(aggstate->aggsplit));
 
 				if (!OidIsValid(aggform->aggserialfn))
 					elog(ERROR, "serialfunc not provided for serialization aggregation");
@@ -2731,10 +2726,10 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			}
 
 			/* Likewise for deserialization functions */
-			if (DO_AGGSPLIT_DESERIALIZE(peragg->aggsplit))
+			if (DO_AGGSPLIT_DESERIALIZE(aggstate->aggsplit))
 			{
 				/* deserialization only valid when combining states */
-				Assert(DO_AGGSPLIT_COMBINE(peragg->aggsplit));
+				Assert(DO_AGGSPLIT_COMBINE(aggstate->aggsplit));
 
 				if (!OidIsValid(aggform->aggdeserialfn))
 					elog(ERROR, "deserialfunc not provided for deserialization aggregation");
@@ -2869,8 +2864,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 */
 		existing_transno = find_compatible_pertrans(aggstate, aggref,
 													transfn_oid, aggtranstype,
-													DO_AGGSPLIT_SERIALIZE(peragg->aggsplit) ? serialfn_oid : InvalidOid,
-													DO_AGGSPLIT_DESERIALIZE(peragg->aggsplit) ? deserialfn_oid : InvalidOid,
+													DO_AGGSPLIT_SERIALIZE(aggstate->aggsplit) ? serialfn_oid : InvalidOid,
+													DO_AGGSPLIT_DESERIALIZE(aggstate->aggsplit) ? deserialfn_oid : InvalidOid,
 												  initValue, initValueIsNull,
 													same_input_transnos);
 		if (existing_transno != -1)
@@ -2950,8 +2945,8 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	pertrans->aggref = aggref;
 	pertrans->aggCollation = aggref->inputcollid;
 	pertrans->transfn_oid = aggtransfn;
-	pertrans->serialfn_oid = DO_AGGSPLIT_SERIALIZE(aggref->aggsplit) ? aggserialfn : InvalidOid;
-	pertrans->deserialfn_oid = DO_AGGSPLIT_DESERIALIZE(aggref->aggsplit) ? aggdeserialfn : InvalidOid;
+	pertrans->serialfn_oid = DO_AGGSPLIT_SERIALIZE(aggstate->aggsplit) ? aggserialfn : InvalidOid;
+	pertrans->deserialfn_oid = DO_AGGSPLIT_DESERIALIZE(aggstate->aggsplit) ? aggdeserialfn : InvalidOid;
 	pertrans->initValue = initValue;
 	pertrans->initValueIsNull = initValueIsNull;
 
@@ -3012,7 +3007,7 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 							aggref->aggfnoid)));
 	}
 
-	if (DO_AGGSPLIT_COMBINE(aggref->aggsplit))
+	if (DO_AGGSPLIT_COMBINE(aggstate->aggsplit))
 	{
 		Assert(aggcombinefn);
 		fmgr_info_copy(&pertrans->transfn, &pertrans->combinefn, CurrentMemoryContext);
@@ -3287,19 +3282,6 @@ find_compatible_peragg(Aggref *newagg, AggState *aggstate,
 	if (contain_volatile_functions((Node *) newagg))
 		return -1;
 
-	/*
-	 * Don't attempt to share GPDB mixed-stage aggregates. We would get
-	 * confused and incorrectly share the partial results of e.g.
-	 * SUM(x) and SUM(DISTINCT x).
-	 *
-	 * Would be nice to improve this, but there's been some chatter in the
-	 * Postgres community that we should move this whole state sharing
-	 * decision to the planner. Until then, not much point in working
-	 * harder here.
-	 */
-	if (((Agg *) aggstate->ss.ps.plan)->aggsplit == AGGSPLIT_MIXED)
-		return -1;
-
 	peraggs = aggstate->peragg;
 
 	/*
@@ -3377,13 +3359,6 @@ find_compatible_pertrans(AggState *aggstate, Aggref *newagg,
 	 * losing performance in the normal non-shared case will take some work.
 	 */
 	if (AGGKIND_IS_ORDERED_SET(newagg->aggkind))
-		return -1;
-
-	/*
-	 * Like in find_compatible_peragg(), don't attempt to share GPDB mixed-stage
-	 * aggregates.
-	 */
-	if (((Agg *) aggstate->ss.ps.plan)->aggsplit == AGGSPLIT_MIXED)
 		return -1;
 
 	foreach(lc, transnos)

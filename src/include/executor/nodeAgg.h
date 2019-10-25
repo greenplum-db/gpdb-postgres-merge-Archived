@@ -227,8 +227,6 @@ typedef struct AggStatePerAggData
 	 */
 	Aggref	   *aggref;
 
-	AggSplit	aggsplit;	/* copied from aggref->aggsplit for convenience */
-
 	/* index to the state value which this agg should use */
 	int			transno;
 
