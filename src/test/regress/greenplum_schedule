@@ -142,28 +142,13 @@ test: rle rle_delta dsp not_out_of_shmem_exit_slots
 # direct dispatch tests
 test: direct_dispatch bfv_dd bfv_dd_multicolumn bfv_dd_types
 
-# catalog test uses pg_get_constraintdef which may report ERROR when executed
-# concurrently with other tests. Cause pg_get_constraintdef() looks up
-# information on the constraint from the syscache, which uses SnapshotNow to
-# fetch the information. But the query itself uses an MVCC snapshot. If the
-# query's MVCC snapshot sees a constraint that is concurrently dropped so that
-# it's not visible to SnapshotNow, you get error.
-#
-# This has been fixed in PostgreSQL 9.4, as part of a larger patch that relaxed
-# locking requirements of ALTER TABLE
-# (https://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=e5550d5fec66aa74caad1f79b79826ec64898688)
-test: catalog
+test: bfv_catalog bfv_index bfv_olap bfv_aggregate bfv_partition bfv_partition_plans DML_over_joins bfv_statistic nested_case_null sort bb_mpph aggregate_with_groupingsets gporca
 
-test: bfv_catalog bfv_index bfv_olap bfv_aggregate bfv_partition bfv_partition_plans DML_over_joins gporca bfv_statistic
 # NOTE: gporca_faults uses gp_fault_injector - so do not add to a parallel group
 test: gporca_faults
- 
-test: aggregate_with_groupingsets 
 
-test: nested_case_null sort bb_mpph
 test: bb_memory_quota memconsumption
 
-test: tuple_serialization
 # Tests for replicated table
 test: rpt rpt_joins rpt_tpch rpt_returning
 
@@ -184,7 +169,8 @@ test: dpe qp_dpe qp_subquery qp_left_anti_semi_join qp_union_intersect qp_functi
 test: olap_setup
 test: qp_olap_group qp_olap_group2
 
-test: hooktest partition_rank
+test: hooktest partition_rank tuple_serialization
+
 
 # Test query_info_collect_hook are called in expected sequence on normal query, query error/abort
 test: query_info_hook_test
