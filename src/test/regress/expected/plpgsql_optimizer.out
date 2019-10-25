@@ -2310,14 +2310,8 @@ begin
 end$$ language plpgsql;
 select test_variable_storage();
 NOTICE:  should see this
-CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
-PL/pgSQL function test_variable_storage() line 8 at PERFORM
 NOTICE:  should see this only if -100 <> 0
-CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
-PL/pgSQL function test_variable_storage() line 8 at PERFORM
 NOTICE:  should see this only if -100 fits in smallint
-CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
-PL/pgSQL function test_variable_storage() line 8 at PERFORM
  test_variable_storage 
 -----------------------
  123456789012
@@ -3073,21 +3067,58 @@ NOTICE:  10
  
 (1 row)
 
--- CONTINUE is only legal inside a loop
-create function continue_test2() returns void as $$
+drop function continue_test1();
+drop table conttesttbl;
+-- should fail: CONTINUE is only legal inside a loop
+create function continue_error1() returns void as $$
 begin
     begin
         continue;
     end;
-    return;
 end;
 $$ language plpgsql;
--- should fail
-select continue_test2();
 ERROR:  CONTINUE cannot be used outside a loop
-CONTEXT:  PL/pgSQL function continue_test2()
--- CONTINUE can't reference the label of a named block
-create function continue_test3() returns void as $$
+LINE 4:         continue;
+                ^
+-- should fail: unlabeled EXIT is only legal inside a loop
+create function exit_error1() returns void as $$
+begin
+    begin
+        exit;
+    end;
+end;
+$$ language plpgsql;
+ERROR:  EXIT cannot be used outside a loop, unless it has a label
+LINE 4:         exit;
+                ^
+-- should fail: no such label
+create function continue_error2() returns void as $$
+begin
+    begin
+        loop
+            continue no_such_label;
+        end loop;
+    end;
+end;
+$$ language plpgsql;
+ERROR:  there is no label "no_such_label" attached to any block or loop enclosing this statement
+LINE 5:             continue no_such_label;
+                             ^
+-- should fail: no such label
+create function exit_error2() returns void as $$
+begin
+    begin
+        loop
+            exit no_such_label;
+        end loop;
+    end;
+end;
+$$ language plpgsql;
+ERROR:  there is no label "no_such_label" attached to any block or loop enclosing this statement
+LINE 5:             exit no_such_label;
+                         ^
+-- should fail: CONTINUE can't reference the label of a named block
+create function continue_error3() returns void as $$
 begin
     <<begin_block1>>
     begin
@@ -3097,14 +3128,28 @@ begin
     end;
 end;
 $$ language plpgsql;
--- should fail
-select continue_test3();
-ERROR:  CONTINUE cannot be used outside a loop
-CONTEXT:  PL/pgSQL function continue_test3()
-drop function continue_test1();
-drop function continue_test2();
-drop function continue_test3();
-drop table conttesttbl;
+ERROR:  block label "begin_block1" cannot be used in CONTINUE
+LINE 6:             continue begin_block1;
+                             ^
+-- On the other hand, EXIT *can* reference the label of a named block
+create function exit_block1() returns void as $$
+begin
+    <<begin_block1>>
+    begin
+        loop
+            exit begin_block1;
+            raise exception 'should not get here';
+        end loop;
+    end;
+end;
+$$ language plpgsql;
+select exit_block1();
+ exit_block1 
+-------------
+ 
+(1 row)
+
+drop function exit_block1();
 -- verbose end block and end loop
 create function end_label1() returns void as $$
 <<blbl>>
@@ -3134,7 +3179,7 @@ begin
   end loop flbl1;
 end;
 $$ language plpgsql;
-ERROR:  label does not exist at or near "flbl1"
+ERROR:  end label "flbl1" specified for unlabelled block
 LINE 5:   end loop flbl1;
                    ^
 -- should fail: end label does not match start label
@@ -5601,24 +5646,16 @@ $$ language plpgsql;
 select outer_outer_func(10);
 NOTICE:  calling down into outer_func()
 NOTICE:  calling down into inner_func()
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 4 at GET DIAGNOSTICS
 DETAIL:  
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 7 at GET DIAGNOSTICS
 DETAIL:  
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  lets make sure we didnt break anything
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  inner_func() done
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  outer_func() done
  outer_outer_func 
 ------------------
@@ -5629,24 +5666,16 @@ NOTICE:  outer_func() done
 select outer_outer_func(20);
 NOTICE:  calling down into outer_func()
 NOTICE:  calling down into inner_func()
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 4 at GET DIAGNOSTICS
 DETAIL:  
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 7 at GET DIAGNOSTICS
 DETAIL:  
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  lets make sure we didnt break anything
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  inner_func() done
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  outer_func() done
  outer_outer_func 
 ------------------
@@ -5703,24 +5732,16 @@ $$ language plpgsql;
 select outer_outer_func(10);
 NOTICE:  calling down into outer_func()
 NOTICE:  calling down into inner_func()
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 10 at GET DIAGNOSTICS
 DETAIL:  
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 15 at GET DIAGNOSTICS
 DETAIL:  
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  lets make sure we didnt break anything
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  inner_func() done
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  outer_func() done
  outer_outer_func 
 ------------------
@@ -5731,24 +5752,16 @@ NOTICE:  outer_func() done
 select outer_outer_func(20);
 NOTICE:  calling down into outer_func()
 NOTICE:  calling down into inner_func()
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 10 at GET DIAGNOSTICS
 DETAIL:  
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 15 at GET DIAGNOSTICS
 DETAIL:  
 PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  lets make sure we didnt break anything
-CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  inner_func() done
-CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  outer_func() done
  outer_outer_func 
 ------------------
