@@ -8019,15 +8019,12 @@ is_projection_capable_path(Path *path)
 /*
  * is_projection_capable_plan
  *		Check whether a given Plan node is able to do projection.
- *
- * GPDB_96_MERGE_FIXME: once we're done with "pathifying" all the GPDB
- * code, this shouldn't be needed anymore.
  */
 bool
 is_projection_capable_plan(Plan *plan)
 {
 	/* Most plan types can project, so just list the ones that can't */
-	switch (plan->type)
+	switch (nodeTag(plan))
 	{
 		case T_Hash:
 		case T_Material:
