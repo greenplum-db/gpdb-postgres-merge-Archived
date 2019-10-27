@@ -623,7 +623,7 @@ SELECT * FROM rg_activity_status;
 ---------+-----------------+-------+-------
 (0 rows)
 
--- 10: drop a ResourceGroup with concurrency=0 and pending queries
+-- 10: drop a resgroup with concurrency=0 and pending queries
 DROP ROLE IF EXISTS role_concurrency_test;
 DROP
 -- start_ignore

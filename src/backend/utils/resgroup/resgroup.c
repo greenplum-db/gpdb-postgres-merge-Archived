@@ -2773,6 +2773,8 @@ waitOnGroup(ResGroupData *group)
 	PG_END_TRY();
 
 	groupAwaited = NULL;
+
+	pgstat_report_wait_end();
 }
 
 /*
