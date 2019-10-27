@@ -4831,19 +4831,6 @@ create_one_window_path(PlannerInfo *root,
 			path = cdbpath_create_motion_path(root, path, pathkeys, false, locus);
 		}
 
-		/*
-		 * If the input's locus doesn't match the PARTITION BY, gather the result.
-		 */
-#if 0  /* GPDB_96_MERGE_FIXME: pathify this */
-		if (need_gather_for_partitioning &&
-			!CdbPathLocus_IsGeneral(current_locus) &&
-			result_plan->flow->flotype != FLOW_SINGLETON)
-		{
-			result_plan =
-				(Plan *) make_motion_gather_to_QE(root, result_plan, current_pathkeys);
-		}
-#endif
-
 		if (lnext(l))
 		{
 			/*
