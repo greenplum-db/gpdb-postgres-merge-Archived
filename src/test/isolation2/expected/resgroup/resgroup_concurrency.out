@@ -37,9 +37,9 @@ SELECT r.rsgname, num_running, num_queueing, num_queued, num_executed FROM gp_to
  rg_concurrency_test | 2           | 1            | 1          | 2            
 (1 row)
 SELECT wait_event from pg_stat_activity where query = 'BEGIN;' and state = 'active' and rsgname = 'rg_concurrency_test' and wait_event='ResourceGroup';
-  wait_event
+ wait_event    
 ---------------
- ResourceGroup
+ ResourceGroup 
 (1 row)
 2:END;
 END
