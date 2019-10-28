@@ -491,7 +491,7 @@ SET
 11&:BEGIN;  <waiting ...>
 SELECT * FROM rg_activity_status;
  rsgname             | wait_event_type | state  | query  
----------------------+---- ------------+--------+--------
+---------------------+-----------------+--------+--------
  rg_concurrency_test | ResourceGroup   | active | BEGIN; 
 (1 row)
 
