@@ -214,7 +214,6 @@ adjustInputGroup(AggState *aggstate,
 
 	for (aggno = 0; aggno < aggstate->numaggs; aggno++)
 	{
-		/* GPDB_96_MERGE_FIXME: aggno is right for spilling? */
 		AggStatePerTrans pertrans = &aggstate->pertrans[aggno];
 		AggStatePerGroup pergroupstate = &pergroup[aggno];
 
@@ -1584,7 +1583,6 @@ writeHashEntry(AggState *aggstate, BatchFileInfo *file_info,
 
 	for (aggno = 0; aggno < aggstate->numaggs; aggno++)
 	{
-		/* GPDB_96_MERGE_FIXME: aggno is right for spilling? */
 		AggStatePerTrans pertrans = &aggstate->pertrans[aggno];
 		AggStatePerGroup pergroupstate = &pergroup[aggno];
 		char *datum_value = NULL;
@@ -1952,7 +1950,6 @@ agg_hash_reload(AggState *aggstate)
 			/* Advance the aggregates for the group by applying combine function. */
 			for (aggno = 0; aggno < aggstate->numaggs; aggno++)
 			{
-				/* GPDB_96_MERGE_FIXME: aggno is right for spilling? */
 				AggStatePerTrans pertrans = &aggstate->pertrans[aggno];
 				AggStatePerGroup pergroupstate = &hashtable->groupaggs->aggs[aggno];
 				FunctionCallInfo fcinfo = &pertrans->combinefn_fcinfo;
