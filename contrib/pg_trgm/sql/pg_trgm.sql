@@ -120,10 +120,8 @@ select * from test2 where t ~ 'z foo bar';
 select * from test2 where t ~ ' z foo bar';
 select * from test2 where t ~ '  z foo bar';
 select * from test2 where t ~ '  z foo';
-<<<<<<< HEAD
 select * from test2 where t ~ 'qua(?!foo)';
 select * from test2 where t ~ '/\d+/-\d';
-=======
 
 -- Check similarity threshold (bug #14202)
 
@@ -145,4 +143,3 @@ SELECT DISTINCT city, similarity(city, 'Warsaw'), show_limit()
 SELECT set_limit(0.5);
 SELECT DISTINCT city, similarity(city, 'Warsaw'), show_limit()
   FROM restaurants WHERE city % 'Warsaw';
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
