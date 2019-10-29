@@ -462,7 +462,7 @@ CTranslatorDXLToScalar::TranslateDXLScalarAggrefToScalar
 	aggref->agglevelsup = 0;
 	aggref->aggkind = 'n';
 	aggref->location = -1;
-	aggref->aggtranstype = gpdb::GetAggIntermediateResultType(aggref->aggfnoid);
+	aggref->aggtranstype = InvalidOid;
 	aggref->aggargtypes = NIL;
 
 	CMDIdGPDB *agg_mdid = GPOS_NEW(m_mp) CMDIdGPDB(aggref->aggfnoid);
@@ -540,28 +540,24 @@ CTranslatorDXLToScalar::TranslateDXLScalarAggrefToScalar
 		aggref->aggargtypes = gpdb::LAppendOid(aggref->aggargtypes, aggargtype);
 	}
 
-	Oid aggtranstype = aggref->aggtranstype;
 	/*
-	 * Resolve the possibly-polymorphic aggregate transition type, unless
-	 * already done in a previous pass over the expression.
+	 * Resolve the possibly-polymorphic aggregate transition type.
 	 */
-	if (OidIsValid(aggref->aggtranstype))
-		aggtranstype = aggref->aggtranstype;
-	else
-	{
-		Oid			inputTypes[FUNC_MAX_ARGS];
-		int			numArguments;
+	Oid			aggtranstype;
+	Oid			inputTypes[FUNC_MAX_ARGS];
+	int			numArguments;
 
-		/* extract argument types (ignoring any ORDER BY expressions) */
-		numArguments = gpdb::GetAggregateArgTypes(aggref, inputTypes);
+	aggtranstype = gpdb::GetAggIntermediateResultType(aggref->aggfnoid);
 
-		/* resolve actual type of transition state, if polymorphic */
-		aggtranstype = gpdb::ResolveAggregateTransType(aggref->aggfnoid,
-												   aggtranstype,
-												   inputTypes,
-												   numArguments);
-		aggref->aggtranstype = aggtranstype;
-	}
+	/* extract argument types (ignoring any ORDER BY expressions) */
+	numArguments = gpdb::GetAggregateArgTypes(aggref, inputTypes);
+
+	/* resolve actual type of transition state, if polymorphic */
+	aggtranstype = gpdb::ResolveAggregateTransType(aggref->aggfnoid,
+						       aggtranstype,
+						       inputTypes,
+						       numArguments);
+	aggref->aggtranstype = aggtranstype;
 
 	// GPDB_91_MERGE_FIXME: collation
 	aggref->inputcollid = gpdb::ExprCollation((Node *) exprs);

@@ -89,6 +89,11 @@ SELECT * FROM memory_result;
 SELECT * FROM memory_result;
 1q:
 
+-- GPDB_96_MERGE_FIXME
+-- For 2.2 failed and also don't know the reason yet
+-- just print out all infor I need and let's see pipeline 
+select * from gp_toolkit.gp_resgroup_status;
+
 -- 2.2) QEs on one slice in transaction
 1: SET ROLE TO role1_memory_test;
 1: BEGIN;
