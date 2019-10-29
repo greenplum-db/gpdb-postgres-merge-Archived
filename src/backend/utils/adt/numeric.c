@@ -849,6 +849,7 @@ numeric_recv(PG_FUNCTION_ARGS)
 	apply_typmod(&value, typmod);
 
 	res = make_result(&value);
+	free_var(&value);
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -1195,6 +1196,7 @@ numeric_sign(PG_FUNCTION_ARGS)
 	}
 
 	res = make_result(&result);
+	free_var(&result);
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -1244,6 +1246,7 @@ numeric_round(PG_FUNCTION_ARGS)
 	 */
 	res = make_result(&arg);
 
+	free_var(&arg);
 	PG_RETURN_NUMERIC(res);
 }
 
@@ -1292,6 +1295,7 @@ numeric_trunc(PG_FUNCTION_ARGS)
 	 */
 	res = make_result(&arg);
 
+	free_var(&arg);
 	PG_RETURN_NUMERIC(res);
 }
 
@@ -1315,6 +1319,7 @@ numeric_ceil(PG_FUNCTION_ARGS)
 	ceil_var(&result, &result);
 
 	res = make_result(&result);
+	free_var(&result);
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -1339,6 +1344,7 @@ numeric_floor(PG_FUNCTION_ARGS)
 	floor_var(&result, &result);
 
 	res = make_result(&result);
+	free_var(&result);
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -1574,14 +1580,14 @@ compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
 				select_div_scale(&operand_var, &bound1_var), true);
 	}
 
-	free_var(&bound1_var);
-	free_var(&bound2_var);
-	free_var(&operand_var);
-
 	mul_var(result_var, count_var, result_var,
 			result_var->dscale + count_var->dscale);
 	add_var(result_var, &const_one, result_var);
 	floor_var(result_var, result_var);
+
+	free_var(&bound1_var);
+	free_var(&bound2_var);
+	free_var(&operand_var);
 }
 
 /* ----------------------------------------------------------------------
@@ -2538,6 +2544,8 @@ numeric_dec(PG_FUNCTION_ARGS)
 
 	res = make_result(&arg);
 
+	free_var(&arg);
+
 	PG_RETURN_NUMERIC(res);
 }
 
@@ -2641,6 +2649,7 @@ numeric_fac(PG_FUNCTION_ARGS)
 	res = make_result(&result);
 
 	free_var(&fact);
+	free_var(&result);
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -2901,6 +2910,7 @@ numeric_power(PG_FUNCTION_ARGS)
 	res = make_result(&result);
 
 	free_var(&result);
+	free_var(&arg2_trunc);
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -3182,6 +3192,8 @@ int4_numeric(PG_FUNCTION_ARGS)
 
 	res = make_result(&result);
 
+	free_var(&result);
+
 	PG_RETURN_NUMERIC(res);
 }
 
@@ -3246,6 +3258,8 @@ int8_numeric(PG_FUNCTION_ARGS)
 
 	res = make_result(&result);
 
+	free_var(&result);
+
 	PG_RETURN_NUMERIC(res);
 }
 
@@ -3287,6 +3301,8 @@ int2_numeric(PG_FUNCTION_ARGS)
 	int64_to_numericvar((int64) val, &result);
 
 	res = make_result(&result);
+
+	free_var(&result);
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -3350,6 +3366,8 @@ float8_numeric(PG_FUNCTION_ARGS)
 
 	res = make_result(&result);
 
+	free_var(&result);
+
 	PG_RETURN_NUMERIC(res);
 }
 
@@ -3412,6 +3430,8 @@ float4_numeric(PG_FUNCTION_ARGS)
 	(void) init_var_from_str(buf, buf, &result);
 
 	res = make_result(&result);
+
+	free_var(&result);
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -6220,11 +6240,10 @@ get_str_from_var_sci(NumericVar *var, int rscale)
  *	Create the packed db numeric format in palloc()'d memory from
  *	a variable.
  *
- * GPDB_96_MERGE_FIXME: We used to free_var(var) here. But that was not cool,
- * at least with the numeric_sum() window aggregate, we call numeric_sum() on
- * the transition value multiple time, and if we free_var() the "state->sumX",
- * then it's garbage on the subsequent calls. Looks like we've removed the
- * free_var() calls from the callers in GPDB. Put them back.
+ * We used to free_var(var) here. But that was not cool, at least with the
+ * numeric_sum() window aggregate, we call numeric_sum() on the transition
+ * value multiple time, and if we free_var() the "state->sumX", then it's
+ * garbage on the subsequent calls.
  */
 static Numeric
 make_result(NumericVar *var)
