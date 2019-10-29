@@ -18,10 +18,10 @@ CREATE
 CREATE OR REPLACE VIEW eat_memory_on_qd AS SELECT hold_memory(0,20);
 CREATE
 
-CREATE OR REPLACE VIEW eat_memory_on_one_slice AS SELECT count(null) FROM gp_dist_random('gp_id') t1 WHERE hold_memory(t1.dbid,20)=0 ;
+CREATE OR REPLACE VIEW eat_memory_on_one_slice AS SELECT count(null) = 0 FROM gp_dist_random('gp_id') t1 WHERE hold_memory(t1.dbid,20)=0 ;
 CREATE
 
-CREATE OR REPLACE VIEW eat_memory_on_slices AS SELECT count(null) FROM gp_dist_random('gp_id') t1, gp_dist_random('gp_id') t2 WHERE hold_memory(t1.dbid,20)=0 AND hold_memory(t2.dbid,20)=0 ;
+CREATE OR REPLACE VIEW eat_memory_on_slices AS SELECT count(null) = 0 FROM gp_dist_random('gp_id') t1, gp_dist_random('gp_id') t2 WHERE hold_memory(t1.dbid,20)=0 AND hold_memory(t2.dbid,20)=0 ;
 CREATE
 
 CREATE OR REPLACE FUNCTION round_test(float, integer) RETURNS float AS $$ SELECT round($1 / $2) * $2 $$ LANGUAGE sql;
@@ -116,10 +116,10 @@ SELECT * FROM memory_result;
 -- 2.1) QEs on one slice
 1: SET ROLE TO role1_memory_test;
 SET
-1: SELECT 1 FROM eat_memory_on_one_slice;
+1: SELECT * FROM eat_memory_on_one_slice;
  ?column? 
 ----------
- 1        
+ t        
 (1 row)
 SELECT * FROM memory_result;
  rsgname         | ismaster | avg_mem 
@@ -136,10 +136,10 @@ SELECT * FROM memory_result;
 SET
 1: BEGIN;
 BEGIN
-1: SELECT 1 FROM eat_memory_on_one_slice;
+1: SELECT * FROM eat_memory_on_one_slice;
  ?column? 
 ----------
- 1        
+ t        
 (1 row)
 SELECT * FROM memory_result;
  rsgname         | ismaster | avg_mem 
@@ -154,10 +154,10 @@ SELECT * FROM memory_result;
 -- 2.3) QEs on one slice change resource group
 1: SET ROLE TO role1_memory_test;
 SET
-1: SELECT 1 FROM eat_memory_on_one_slice;
+1: SELECT * FROM eat_memory_on_one_slice;
  ?column? 
 ----------
- 1        
+ t        
 (1 row)
 SELECT * FROM memory_result;
  rsgname         | ismaster | avg_mem 
@@ -169,10 +169,10 @@ SELECT * FROM memory_result;
 (4 rows)
 1: SET ROLE TO role2_memory_test;
 SET
-1: SELECT 1 FROM eat_memory_on_one_slice;
+1: SELECT * FROM eat_memory_on_one_slice;
  ?column? 
 ----------
- 1        
+ t        
 (1 row)
 SELECT * FROM memory_result;
  rsgname         | ismaster | avg_mem 
@@ -187,10 +187,10 @@ SELECT * FROM memory_result;
 -- 3) QEs on multiple slices
 1: SET ROLE TO role1_memory_test;
 SET
-1: SELECT 1 FROM eat_memory_on_slices;
+1: SELECT * FROM eat_memory_on_slices;
  ?column? 
 ----------
- 1        
+ t        
 (1 row)
 SELECT * FROM memory_result;
  rsgname         | ismaster | avg_mem 
@@ -218,15 +218,15 @@ SET
 2: SET ROLE TO role1_memory_test;
 SET
 -- QEs on multiple slices
-1: SELECT 1 FROM eat_memory_on_slices;
+1: SELECT * FROM eat_memory_on_slices;
  ?column? 
 ----------
- 1        
+ t        
 (1 row)
-2: SELECT 1 FROM eat_memory_on_slices;
+2: SELECT * FROM eat_memory_on_slices;
  ?column? 
 ----------
- 1        
+ t        
 (1 row)
 SELECT * FROM memory_result;
  rsgname         | ismaster | avg_mem 
@@ -246,14 +246,14 @@ SET
 SET
 -- QEs on multiple slices
 1: SELECT * FROM eat_memory_on_slices;
- count 
--------
- 0     
+ ?column? 
+----------
+ t        
 (1 row)
 2: SELECT * FROM eat_memory_on_slices;
- count 
--------
- 0     
+ ?column? 
+----------
+ t        
 (1 row)
 SELECT * FROM memory_result;
  rsgname         | ismaster | avg_mem 
