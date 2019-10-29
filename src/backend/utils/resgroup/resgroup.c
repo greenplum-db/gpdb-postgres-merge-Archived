@@ -994,6 +994,7 @@ ResGroupGetStat(Oid groupId, ResGroupStatType type)
 	ResGroupData *group;
 	Interval   *interval;
 	Datum		result;
+	int64		ms_left;
 
 	Assert(IsResGroupActivated());
 
@@ -1016,15 +1017,18 @@ ResGroupGetStat(Oid groupId, ResGroupStatType type)
 			result = Int32GetDatum(group->totalQueued);
 			break;
 		case RES_GROUP_STAT_TOTAL_QUEUE_TIME:
-			/* turn milliseconds in totalQueuedTimeMs into an Interval.
-			 *
-			 * GPDB_96_MERGE_FIXME: we should probably set day/month correctly,
-			 * instead of just filling the microseconds field.
-			 */
+			/* turn milliseconds in totalQueuedTimeMs into an Interval. */
 			interval = (Interval *) palloc(sizeof(Interval));
-			interval->time = group->totalQueuedTimeMs * 1000;
-			interval->day = 0;
-			interval->month = 0;
+			ms_left = group->totalQueuedTimeMs;
+
+			interval->month = ms_left / ((int64) DAYS_PER_MONTH * SECS_PER_DAY * MSECS_PER_SECOND);
+			ms_left -= (int64) DAYS_PER_MONTH * SECS_PER_DAY * MSECS_PER_SECOND * interval->month;
+
+			interval->day = ms_left / ((int64) SECS_PER_DAY * MSECS_PER_SECOND);
+			ms_left -= (int64) SECS_PER_DAY * MSECS_PER_SECOND * interval->day;
+
+			interval->time = ms_left * 1000;
+
 			result = IntervalPGetDatum(interval);
 			break;
 		case RES_GROUP_STAT_MEM_USAGE:
