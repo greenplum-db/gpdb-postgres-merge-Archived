@@ -241,15 +241,6 @@ SELECT count(*), min(data), max(data)
 FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
 GROUP BY substring(data, 1, 24)
 ORDER BY 1,2;
-<<<<<<< HEAD
- count |                                min                                |                                  max                                   
--------+-------------------------------------------------------------------+------------------------------------------------------------------------
-     1 | BEGIN                                                             | BEGIN
-     1 | COMMIT                                                            | COMMIT
-     1 | table public.tr_oddlength: INSERT: id[text]:'ab' data[text]:'foo' | table public.tr_oddlength: INSERT: id[text]:'ab' data[text]:'foo'
- 20467 | table public.tr_etoomuch: DELETE: id[integer]:1                   | table public.tr_etoomuch: UPDATE: id[integer]:9999 data[integer]:-9999
-(4 rows)
-=======
  count |                                  min                                  |                                  max                                   
 -------+-----------------------------------------------------------------------+------------------------------------------------------------------------
      1 | BEGIN                                                                 | BEGIN
@@ -258,7 +249,6 @@ ORDER BY 1,2;
      1 | table public.tr_oddlength: INSERT: id[text]:'ab' data[text]:'foo'     | table public.tr_oddlength: INSERT: id[text]:'ab' data[text]:'foo'
  20467 | table public.tr_etoomuch: DELETE: id[integer]:1                       | table public.tr_etoomuch: UPDATE: id[integer]:9999 data[integer]:-9999
 (5 rows)
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 
 -- check updates of primary keys work correctly
 BEGIN;

@@ -28,12 +28,9 @@ SELECT * FROM test_ne WHERE a <> '2009-01-01' AND b <> 10.7;
 (2 rows)
 
 RESET enable_indexscan;
-<<<<<<< HEAD
 -- The below test use an exclusion constraint, which isn't supported in GPDB
 -- so we need to ignore this test
 -- start_ignore
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
 -- test search for "not equals" using an exclusion constraint
 CREATE TABLE zoo (
    cage   INTEGER,
