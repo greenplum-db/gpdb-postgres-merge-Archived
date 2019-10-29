@@ -163,7 +163,6 @@ ta_id          ta_value       tb_row
 
 1              newTableAValue (1,tableBValue)
 step c2: COMMIT;
-<<<<<<< HEAD
 
 starting permutation: updateforcip updateforcip2 c1 c2 read_a
 step updateforcip: 
@@ -231,5 +230,3 @@ step multireadwcte: <... completed>
 subid          id             
 
 1              1              
-=======
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
