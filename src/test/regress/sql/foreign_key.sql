@@ -1011,7 +1011,16 @@ update pp set f1=f1+1; -- fail
 drop table pp, cc;
 
 --
-<<<<<<< HEAD
+-- Test interaction of foreign-key optimization with rules (bug #14219)
+--
+create temp table t1 (a integer primary key, b text);
+create temp table t2 (a integer primary key, b integer references t1);
+create rule r1 as on delete to t1 do delete from t2 where t2.b = old.a;
+
+explain (costs off) delete from t1 where a = 1;
+delete from t1 where a = 1;
+
+--
 -- Test deferred FK check on a tuple deleted by a rolled-back subtransaction
 --
 create table pktable2(f1 int primary key);
@@ -1046,13 +1055,3 @@ alter table fktable2 drop constraint fktable2_f1_fkey;
 commit;
 
 drop table pktable2, fktable2;
-=======
--- Test interaction of foreign-key optimization with rules (bug #14219)
---
-create temp table t1 (a integer primary key, b text);
-create temp table t2 (a integer primary key, b integer references t1);
-create rule r1 as on delete to t1 do delete from t2 where t2.b = old.a;
-
-explain (costs off) delete from t1 where a = 1;
-delete from t1 where a = 1;
->>>>>>> b5bce6c1ec6061c8a4f730d927e162db7e2ce365
