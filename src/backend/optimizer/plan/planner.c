@@ -1917,10 +1917,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 	if ((parse->distinctClause || parse->sortClause) &&
 		(root->config->honor_order_by || !root->parent_root) &&
 		parse->parentStmtType == PARENTSTMTTYPE_NONE &&
-		/*
-		 * GPDB_84_MERGE_FIXME: Does this do the right thing, if you have a
-		 * SELECT DISTINCT query as argument to a table function?
-		 */
 		!parse->isTableValueSelect &&
 		!parse->limitCount && !parse->limitOffset)
 	{
