@@ -1995,10 +1995,6 @@ cost_agg(Path *path, PlannerInfo *root,
 	Cost		total_cost;
 	AggClauseCosts dummy_aggcosts;
 
-	/* GPDB_96_MERGE_FIXME: dummy values */
-	double hash_batches = 1;
-	double hashentry_width = 100;
-
 	/* Use all-zero per-aggregate costs if NULL is passed */
 	if (aggcosts == NULL)
 	{
