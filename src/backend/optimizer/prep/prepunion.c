@@ -55,6 +55,7 @@
 
 #include "cdb/cdbllize.h"                   /* pull_up_Flow() */
 #include "cdb/cdbpartition.h"
+#include "cdb/cdbpath.h"
 #include "cdb/cdbsetop.h"
 #include "cdb/cdbvars.h"
 #include "commands/tablecmds.h"
@@ -119,7 +120,6 @@ static Node *adjust_appendrel_attrs_mutator(Node *node,
 static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
 static List *adjust_inherited_tlist(List *tlist,
 					   AppendRelInfo *context);
-
 
 /*
  * plan_set_operations
@@ -465,6 +465,28 @@ generate_recursion_path(SetOperationStmt *setOp, PlannerInfo *root,
 								   refnames_tlist,
 								   &lpath_tlist,
 								   NULL);
+
+	/*
+	 * If the non-recursive side is SegmentGeneral, force it to be executed
+	 * on exactly one segment. The worktable scan we build on the recursive
+	 * side will use the same locus as the non-recursive side, and if it's
+	 * SegmentGeneral, the result of the join may end up having a different
+	 * locus.
+	 *
+	 * GPDB_96_MERGE_FIXME: On master, before the merge, more complicated
+	 * logic was added in commit ad6a6067d9 to make the loci on the WorkTableScan
+	 * and the RecursiveUnion correct. That was largely reverted as part of the
+	 * merge, and things seem to be working with this much simpler thing, but
+	 * I'm not sure if the logic is 100% correct now.
+	 */
+	if (CdbPathLocus_IsSegmentGeneral(lpath->locus))
+	{
+		CdbPathLocus gather_locus;
+
+		CdbPathLocus_MakeSingleQE(&gather_locus, lpath->locus.numsegments);
+		lpath = cdbpath_create_motion_path(root, lpath, NIL, false, gather_locus);
+	}
+
 	/* The right path will want to look at the left one ... */
 	root->non_recursive_path = lpath;
 	rpath = recurse_set_operations(setOp->rarg, root,
@@ -512,7 +534,7 @@ generate_recursion_path(SetOperationStmt *setOp, PlannerInfo *root,
 	}
 
 	/*
-	 * And make the path node.
+	 * And make the plan node.
 	 */
 	path = (Path *) create_recursiveunion_path(root,
 											   result_rel,
@@ -522,11 +544,6 @@ generate_recursion_path(SetOperationStmt *setOp, PlannerInfo *root,
 											   groupList,
 											   root->wt_param_id,
 											   dNumGroups);
-
-	/* GPDB_96_MERGE_FIXME: is there anything that guarantees that the left and right
-	 * path have the same locus, and that it makes sense?
-	 * In fact, the outer path is a WorktableScan.
-	 */
 	path->locus = rpath->locus;
 
 	return path;
@@ -983,7 +1000,8 @@ make_union_unique(SetOperationStmt *op, Path *path, List *tlist,
 										groupList,
 										NIL,
 										NULL,
-										dNumGroups);
+										dNumGroups,
+										NULL);
 	}
 	else
 	{
@@ -1049,6 +1067,17 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	/*
 	 * Don't do it if it doesn't look like the hashtable will fit into
 	 * work_mem.
+	 *
+	 * GPDB: In other places where we are building a Hash Aggregate, we use
+	 * calcHashAggTableSizes(), which takes into account that in GPDB, a Hash
+	 * Aggregate can spill to disk. We must *not* do that here, because we
+	 * might be building a Hashed SetOp, not a Hash Aggregate. A Hashed SetOp
+	 * uses the upstream hash table implementation unmodified, and cannot
+	 * spill.
+	 * FIXME: It's a bit lame that Hashed SetOp cannot spill to disk. And it's
+	 * even more lame that we don't account the spilling correctly, if we are
+	 * in fact constructing a Hash Aggregate. A UNION is implemented with a
+	 * Hash Aggregate, only INTERSECT and EXCEPT use Hashed SetOp.
 	 */
 	hashentrysize = MAXALIGN(input_path->pathtarget->width) + MAXALIGN(SizeofMinimalTupleHeader);
 
@@ -1070,11 +1099,8 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 			 numGroupCols, dNumGroups / planner_segment_count(NULL),
 			 input_path->startup_cost, input_path->total_cost,
 			 input_path->rows,
-#if 0 /* GPDB_96_MERGE_FIXME */
-			 hashentrysize, /* input_width */
-			 0, /* hash_batches - so spilling expected with TupleHashTable */
-			 hashentrysize, /* hashentry_width */
-#endif
+			 NULL, /* GPDB: We are using the upstream hash table implementation,
+					* which does not spill. */
 			 false /* hash_streaming */);
 
 	/*

@@ -22,6 +22,7 @@
 #include "cdb/cdbpath.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
+#include "executor/execHHashagg.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -244,7 +245,8 @@ add_twostage_group_agg_path(PlannerInfo *root,
 												parse->groupClause,
 												NIL,
 												ctx->agg_partial_costs,
-												ctx->dNumGroups * getgpsegmentCount());
+												ctx->dNumGroups * getgpsegmentCount(),
+												NULL);
 
 	/*
 	 * GroupAgg -> GATHER MOTION -> GroupAgg.
@@ -277,7 +279,8 @@ add_twostage_group_agg_path(PlannerInfo *root,
 									parse->groupClause,
 									(List *) parse->havingQual,
 									ctx->agg_final_costs,
-									ctx->dNumGroups);
+									ctx->dNumGroups,
+									NULL);
 	add_path(output_rel, path);
 }
 
@@ -291,6 +294,7 @@ add_twostage_hash_agg_path(PlannerInfo *root,
 	Path	   *initial_agg_path;
 	CdbPathLocus group_locus;
 	bool		need_redistribute;
+	HashAggTableSizes hash_info;
 
 	group_locus = cdb_choose_grouping_locus(root, path, ctx->target,
 											parse->groupClause, NIL, NIL,
@@ -302,6 +306,13 @@ add_twostage_hash_agg_path(PlannerInfo *root,
 	if (!need_redistribute)
 		return;
 
+	if (!calcHashAggTableSizes(work_mem * 1024L,
+							   ctx->dNumGroups,
+							   path->pathtarget->width,
+							   false,	/* force */
+							   &hash_info))
+		return;	/* don't try to hash */
+
 	initial_agg_path = (Path *) create_agg_path(root,
 												output_rel,
 												path,
@@ -312,7 +323,8 @@ add_twostage_hash_agg_path(PlannerInfo *root,
 												parse->groupClause,
 												NIL,
 												ctx->agg_partial_costs,
-												ctx->dNumGroups * getgpsegmentCount());
+												ctx->dNumGroups * getgpsegmentCount(),
+												&hash_info);
 
 	/*
 	 * HashAgg -> Redistribute or Gather Motion -> HashAgg.
@@ -330,7 +342,8 @@ add_twostage_hash_agg_path(PlannerInfo *root,
 									parse->groupClause,
 									(List *) parse->havingQual,
 									ctx->agg_final_costs,
-									ctx->dNumGroups);
+									ctx->dNumGroups,
+									&hash_info);
 	add_path(output_rel, path);
 }
 
@@ -498,12 +511,26 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 	CdbPathLocus distinct_locus;
 	bool		distinct_need_redistribute;
 	PathTarget *input_target = NULL;
+	HashAggTableSizes hash_info;
 
 	if (!gp_enable_agg_distinct)
 		return;
 
 	if (!analyze_dqas(root, path, ctx, &input_target, &dqa_group_clause))
 		return;
+
+
+	/*
+	 * GPDB_96_MERGE_FIXME: compute the hash table size once. But we create
+	 * several different Hash Aggs below, depending on the query. Is this
+	 * computation sensible for all of them?
+	 */
+	if (!calcHashAggTableSizes(work_mem * 1024L,
+							   ctx->dNumGroups,
+							   path->pathtarget->width,
+							   false,	/* force */
+							   &hash_info))
+		return;	/* don't try to hash */
 
 	path = (Path *) create_projection_path(root, path->parent, path, input_target);
 
@@ -547,7 +574,8 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 										dqa_group_clause,
 										NIL,
 										ctx->agg_partial_costs, /* FIXME */
-										ctx->dNumGroups * getgpsegmentCount());
+										ctx->dNumGroups * getgpsegmentCount(),
+										&hash_info);
 
 		if (group_need_redistribute)
 			path = cdbpath_create_motion_path(root, path, NIL, false,
@@ -563,7 +591,8 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 										parse->groupClause,
 										(List *) parse->havingQual,
 										ctx->agg_final_costs,
-										ctx->dNumGroups);
+										ctx->dNumGroups,
+										&hash_info);
 		add_path(output_rel, path);
 	}
 	else if (CdbPathLocus_IsHashed(group_locus))
@@ -590,7 +619,8 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 											dqa_group_clause,
 											NIL,
 											ctx->agg_partial_costs, /* FIXME */
-											ctx->dNumGroups * getgpsegmentCount());
+											ctx->dNumGroups * getgpsegmentCount(),
+											&hash_info);
 
 		path = cdbpath_create_motion_path(root, path, NIL, false,
 										  group_locus);
@@ -604,8 +634,9 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 										dqa_group_clause,
 										NIL,
 										ctx->agg_partial_costs, /* FIXME */
-										ctx->dNumGroups * getgpsegmentCount());
-		
+										ctx->dNumGroups * getgpsegmentCount(),
+										&hash_info);
+
 		path = (Path *) create_agg_path(root,
 										output_rel,
 										path,
@@ -616,7 +647,8 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 										parse->groupClause,
 										(List *) parse->havingQual,
 										ctx->agg_final_costs,
-										ctx->dNumGroups);
+										ctx->dNumGroups,
+										&hash_info);
 		add_path(output_rel, path);
 	}
 	else if (CdbPathLocus_IsHashed(distinct_locus))
@@ -640,7 +672,8 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 										dqa_group_clause,
 										NIL,
 										ctx->agg_partial_costs, /* FIXME */
-										ctx->dNumGroups * getgpsegmentCount());
+										ctx->dNumGroups * getgpsegmentCount(),
+										&hash_info);
 
 		path = cdbpath_create_motion_path(root, path, NIL, false,
 										  distinct_locus);
@@ -654,7 +687,8 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 										dqa_group_clause,
 										NIL,
 										ctx->agg_partial_costs, /* FIXME */
-										ctx->dNumGroups * getgpsegmentCount());
+										ctx->dNumGroups * getgpsegmentCount(),
+										&hash_info);
 
 		path = (Path *) create_agg_path(root,
 										output_rel,
@@ -666,7 +700,8 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 										parse->groupClause,
 										NIL,
 										ctx->agg_partial_costs,
-										ctx->dNumGroups * getgpsegmentCount());
+										ctx->dNumGroups * getgpsegmentCount(),
+										&hash_info);
 		path = cdbpath_create_motion_path(root, path, NIL, false,
 										  group_locus);
 
@@ -680,7 +715,8 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 										parse->groupClause,
 										(List *) parse->havingQual,
 										ctx->agg_final_costs,
-										ctx->dNumGroups);
+										ctx->dNumGroups,
+										&hash_info);
 
 		add_path(output_rel, path);
 	}

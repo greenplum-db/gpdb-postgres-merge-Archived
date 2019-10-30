@@ -38,6 +38,7 @@
 #include "cdb/cdbpathlocus.h"
 #include "cdb/cdbutil.h"		/* getgpsegmentCount() */
 #include "cdb/cdbvars.h"
+#include "executor/execHHashagg.h"
 #include "executor/nodeHash.h"
 #include "utils/guc.h"
 
@@ -2269,9 +2270,13 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		 * Estimate the overhead per hashtable entry at 64 bytes (same as in
 		 * planner.c).
 		 */
-		int			hashentrysize = subpath->pathtarget->width + 64;
+		HashAggTableSizes hash_info;
 
-		if (hashentrysize * pathnode->path.rows > work_mem * 1024L)
+		if (!calcHashAggTableSizes(work_mem * 1024L,
+								   pathnode->path.rows,
+								   subpath->pathtarget->width,
+								   true,
+								   &hash_info))
 		{
 			/*
 			 * We should not try to hash.  Hack the SpecialJoinInfo to
@@ -2286,6 +2291,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 					 subpath->startup_cost,
 					 subpath->total_cost,
 					 rel->rows,
+					 &hash_info,
 					 false /* streaming */
 				);
 	}
@@ -2512,9 +2518,13 @@ create_unique_rowid_path(PlannerInfo *root,
 		 * Estimate the overhead per hashtable entry at 64 bytes (same as in
 		 * planner.c).
 		 */
-		int			hashentrysize = rel->reltarget->width + 64;
+		HashAggTableSizes hash_info;
 
-		if (hashentrysize * ((Path*)pathnode)->rows > work_mem * 1024L)
+		if (!calcHashAggTableSizes(work_mem * 1024L,
+								   ((Path *)pathnode)->rows,
+								   rel->reltarget->width,
+								   false,	/* force */
+								   &hash_info))
 			all_hash = false;	/* don't try to hash */
 		else
 			cost_agg(&agg_path, root,
@@ -2523,6 +2533,7 @@ create_unique_rowid_path(PlannerInfo *root,
 					 subpath->startup_cost,
 					 subpath->total_cost,
 					 rel->rows,
+					 &hash_info,
 					 false /* streaming */
 				);
 	}
@@ -3039,6 +3050,7 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
 	Path	   *pathnode = makeNode(Path);
 	int			numsegments;
 
+	/* GPDB_96_MERGE_FIXME: should we use ctelocus as is?  */
 	if (rel->cdbpolicy)
 		numsegments = rel->cdbpolicy->numsegments;
 	else
@@ -4036,7 +4048,8 @@ create_agg_path(PlannerInfo *root,
 				List *groupClause,
 				List *qual,
 				const AggClauseCosts *aggcosts,
-				double numGroups)
+				double numGroups,
+				HashAggTableSizes *hash_info)
 {
 	AggPath    *pathnode = makeNode(AggPath);
 
@@ -4067,6 +4080,7 @@ create_agg_path(PlannerInfo *root,
 			 list_length(groupClause), numGroups,
 			 subpath->startup_cost, subpath->total_cost,
 			 subpath->rows,
+			 hash_info,
 			 streaming);
 
 	/* add tlist eval cost for each output row */
@@ -4150,6 +4164,7 @@ create_groupingsets_path(PlannerInfo *root,
 			 subpath->startup_cost,
 			 subpath->total_cost,
 			 subpath->rows,
+			 NULL, /* hash_info */
 			 false /* streaming */);
 
 	/*
@@ -4191,6 +4206,7 @@ create_groupingsets_path(PlannerInfo *root,
 					 sort_path.startup_cost,
 					 sort_path.total_cost,
 					 sort_path.rows,
+					 NULL, /* hash_info */
 					 false /* streaming */);
 
 			pathnode->path.total_cost += agg_path.total_cost;

@@ -145,9 +145,11 @@ static double get_number_of_groups(PlannerInfo *root,
 					 double path_rows,
 					 List *rollup_lists,
 					 List *rollup_groupclauses);
+#if 0
 static Size estimate_hashagg_tablesize(Path *path,
 						   const AggClauseCosts *agg_costs,
 						   double dNumGroups);
+#endif
 static RelOptInfo *create_grouping_paths(PlannerInfo *root,
 					  RelOptInfo *input_rel,
 					  PathTarget *target,
@@ -3825,7 +3827,12 @@ get_number_of_groups(PlannerInfo *root,
  * estimate_hashagg_tablesize
  *	  estimate the number of bytes that a hash aggregate hashtable will
  *	  require based on the agg_costs, path width and dNumGroups.
+ *
+ * In Greenplum, Hash Aggregate has been modified quite heavily, to
+ * make it spill to disk. calcHashAggTableSizes() handles the estimation,
+ * and this function is not used.
  */
+#if 0
 static Size
 estimate_hashagg_tablesize(Path *path, const AggClauseCosts *agg_costs,
 						   double dNumGroups)
@@ -3843,6 +3850,7 @@ estimate_hashagg_tablesize(Path *path, const AggClauseCosts *agg_costs,
 
 	return hashentrysize * dNumGroups;
 }
+#endif
 
 /*
  * create_grouping_paths
@@ -3878,7 +3886,7 @@ create_grouping_paths(PlannerInfo *root,
 	PathTarget *partial_grouping_target = NULL;
 	AggClauseCosts agg_partial_costs;	/* parallel only */
 	AggClauseCosts agg_final_costs;		/* parallel only */
-	Size		hashaggtablesize;
+	HashAggTableSizes hash_info;
 	double		dNumGroups;
 	double		dNumPartialGroups = 0;
 	bool		can_hash;
@@ -4188,7 +4196,8 @@ create_grouping_paths(PlannerInfo *root,
 														 parse->groupClause,
 														 NIL,
 														 &agg_partial_costs,
-														 dNumPartialGroups));
+														 dNumPartialGroups,
+														 NULL));
 					else
 					{
 						/* Group nodes are not used in GPDB */
@@ -4212,16 +4221,15 @@ create_grouping_paths(PlannerInfo *root,
 			/* Checked above */
 			Assert(parse->hasAggs || parse->groupClause);
 
-			hashaggtablesize =
-				estimate_hashagg_tablesize(cheapest_partial_path,
-										   &agg_partial_costs,
-										   dNumPartialGroups);
-
 			/*
 			 * Tentatively produce a partial HashAgg Path, depending on if it
 			 * looks as if the hash table will fit in work_mem.
 			 */
-			if (hashaggtablesize < work_mem * 1024L)
+			if (calcHashAggTableSizes(work_mem * 1024L,
+									  dNumPartialGroups,
+									  cheapest_partial_path->pathtarget->width,
+									  false, /* force */
+									  &hash_info))
 			{
 				add_partial_path(grouped_rel, (Path *)
 								 create_agg_path(root,
@@ -4234,7 +4242,8 @@ create_grouping_paths(PlannerInfo *root,
 												 parse->groupClause,
 												 NIL,
 												 &agg_partial_costs,
-												 dNumPartialGroups));
+												 dNumPartialGroups,
+												 &hash_info));
 			}
 		}
 	}
@@ -4353,7 +4362,8 @@ create_grouping_paths(PlannerInfo *root,
 											 parse->groupClause,
 											 (List *) parse->havingQual,
 											 agg_costs,
-											 dNumGroups));
+											 dNumGroups,
+											 NULL));
 				}
 				/* Group nodes are not used in GPDB */
 #if 0
@@ -4422,7 +4432,8 @@ create_grouping_paths(PlannerInfo *root,
 										 parse->groupClause,
 										 (List *) parse->havingQual,
 										 &agg_final_costs,
-										 dNumGroups));
+										 dNumGroups,
+										 NULL));
 			/* Group nodes are not used in GPDB */
 #if 0
 			else
@@ -4449,25 +4460,21 @@ create_grouping_paths(PlannerInfo *root,
 										  parse->groupClause, rollup_lists, rollup_groupclauses,
 										  &need_redistribute);
 
-		hashaggtablesize = estimate_hashagg_tablesize(cheapest_path,
-													  agg_costs,
-													  dNumGroups);
-
 		/*
 		 * Provided that the estimated size of the hashtable does not exceed
 		 * work_mem, we'll generate a HashAgg Path, although if we were unable
 		 * to sort above, then we'd better generate a Path, so that we at
 		 * least have one.
+		 *
+		 * This calculation is slightly different in GPDB, because in GPDB,
+		 * Hash Aggregates can spill to disk.
 		 */
-		/*
-		 * GPDB_96_MERGE_FIXME:
-		 * Remove hashagg path create condition, since in gpdb our hashagg has ability to spilling 
-		 * out data to disk if memory is packed.
-		 * However, I'm not sure whether it will impact other test case. Just add the commons and 
-		 * give the final decision before 96 merge down.
-		 */
-		//if (hashaggtablesize < work_mem * 1024L ||
-		//	grouped_rel->pathlist == NIL)
+		if (calcHashAggTableSizes(work_mem * 1024L,
+								  dNumGroups,
+								  cheapest_path->pathtarget->width,
+								  false, /* force */
+								  &hash_info) ||
+			grouped_rel->pathlist == NIL)
 		{
 			/*
 			 * Redistribute if needed.
@@ -4493,7 +4500,8 @@ create_grouping_paths(PlannerInfo *root,
 									 parse->groupClause,
 									 (List *) parse->havingQual,
 									 agg_costs,
-									 dNumGroups));
+									 dNumGroups,
+									 &hash_info));
 		}
 
 		/*
@@ -4505,11 +4513,11 @@ create_grouping_paths(PlannerInfo *root,
 		{
 			Path	   *path = (Path *) linitial(grouped_rel->partial_pathlist);
 
-			hashaggtablesize = estimate_hashagg_tablesize(path,
-														  &agg_final_costs,
-														  dNumGroups);
-
-			if (hashaggtablesize < work_mem * 1024L)
+			if (calcHashAggTableSizes(work_mem * 1024L,
+									  dNumGroups,
+									  path->pathtarget->width,
+									  false, /* force */
+									  &hash_info))
 			{
 				double		total_groups = path->rows * path->parallel_workers;
 
@@ -4531,7 +4539,8 @@ create_grouping_paths(PlannerInfo *root,
 										 parse->groupClause,
 										 (List *) parse->havingQual,
 										 &agg_final_costs,
-										 dNumGroups));
+										 dNumGroups,
+										 &hash_info));
 			}
 		}
 	}
@@ -4888,6 +4897,7 @@ create_distinct_paths(PlannerInfo *root,
 	RelOptInfo *distinct_rel;
 	double		numDistinctRows;
 	bool		allow_hash;
+	HashAggTableSizes hash_info = { 0 };
 	Path	   *path;
 	ListCell   *lc;
 	List	   *distinct_dist_pathkeys = NIL;
@@ -5194,8 +5204,9 @@ create_distinct_paths(PlannerInfo *root,
 	cost_agg(&hashed_p, root, AGG_HASHED, agg_costs,
 			 numGroupCols, dNumGroups / planner_segment_count(NULL),
 			 cheapest_path->startup_cost, cheapest_path->total_cost,
-			 path_rows, hash_info.workmem_per_entry,
-			 hash_info.nbatches, hash_info.hashentry_width, false);
+			 path_rows,
+			 &hash_info,
+			 false);
 	/* Result of hashed agg is always unsorted */
 	if (target_pathkeys)
 		cost_sort(&hashed_p, root, target_pathkeys, hashed_p.total_cost,
@@ -5213,16 +5224,12 @@ create_distinct_paths(PlannerInfo *root,
 			
 	else
 	{
-		Size		hashentrysize;
-
-		/* Estimate per-hash-entry space at tuple width... */
-		hashentrysize = MAXALIGN(cheapest_input_path->pathtarget->width) +
-			MAXALIGN(SizeofMinimalTupleHeader);
-		/* plus the per-hash-entry overhead */
-		hashentrysize += hash_agg_entry_size(0);
-
 		/* Allow hashing only if hashtable is predicted to fit in work_mem */
-		allow_hash = (hashentrysize * numDistinctRows <= work_mem * 1024L);
+		allow_hash = calcHashAggTableSizes(work_mem * 1024L,
+										   numDistinctRows,
+										   cheapest_input_path->pathtarget->width,
+										   false, /* force */
+										   &hash_info);
 	}
 
 	if (allow_hash && grouping_is_hashable(parse->distinctClause))
@@ -5263,7 +5270,8 @@ create_distinct_paths(PlannerInfo *root,
 								 parse->distinctClause,
 								 NIL,
 								 NULL,
-								 numDistinctRows));
+								 numDistinctRows,
+								 &hash_info));
 	}
 
 	/* Give a helpful error if we failed to find any implementation */
@@ -5282,7 +5290,7 @@ create_distinct_paths(PlannerInfo *root,
 		cost_agg(&sorted_p, root, AGG_SORTED, agg_costs,
 				 numGroupCols, dNumGroups / planner_segment_count(NULL),
 				 sorted_p.startup_cost, sorted_p.total_cost,
-				 path_rows, 0.0, 0.0, 0.0, false);
+				 path_rows, NULL, false);
 	else
 		cost_group(&sorted_p, root, numGroupCols, dNumGroups,
 				   sorted_p.startup_cost, sorted_p.total_cost,

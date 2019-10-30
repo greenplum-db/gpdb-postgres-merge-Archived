@@ -200,6 +200,7 @@ extern UpperUniquePath *create_upper_unique_path(PlannerInfo *root,
 						 Path *subpath,
 						 int numCols,
 						 double numGroups);
+struct HashAggTableSizes; /* defined in execHHashagg.h */
 extern AggPath *create_agg_path(PlannerInfo *root,
 				RelOptInfo *rel,
 				Path *subpath,
@@ -210,7 +211,8 @@ extern AggPath *create_agg_path(PlannerInfo *root,
 				List *groupClause,
 				List *qual,
 				const AggClauseCosts *aggcosts,
-				double numGroups);
+				double numGroups,
+				struct HashAggTableSizes *hash_info);
 extern GroupingSetsPath *create_groupingsets_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 Path *subpath,

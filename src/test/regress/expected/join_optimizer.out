@@ -5646,8 +5646,7 @@ select * from
                ->  Result
                      Output: (COALESCE((COALESCE(b.q2, '42'::bigint)), d.q2))
  Optimizer: Postgres query optimizer
- Settings: optimizer=off
-(38 rows)
+(37 rows)
 
 -- case that breaks the old ph_may_need optimization
 explain (verbose, costs off)
@@ -5790,7 +5789,7 @@ select * from
                                    ->  Seq Scan on public.tenk1
                                          Output: tenk1.unique1, tenk1.unique2
  Optimizer: Postgres query optimizer
-(22 rows)
+(20 rows)
 
 select * from
   (values (0,9998), (1,1000)) v(id,x),

@@ -136,12 +136,16 @@ extern void cost_merge_append(Path *path, PlannerInfo *root,
 extern void cost_material(Path *path, PlannerInfo *root,
 			  Cost input_startup_cost, Cost input_total_cost,
 			  double tuples, int width);
+
+struct HashAggTableSizes; /* defined in execHHashagg.h */
 extern void cost_agg(Path *path, PlannerInfo *root,
 		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 		 int numGroupCols, double numGroups,
 		 Cost input_startup_cost, Cost input_total_cost,
 		 double input_tuples,
+		 struct HashAggTableSizes *hash_info,
 		 bool hash_streaming);
+
 extern void cost_windowagg(Path *path, PlannerInfo *root,
 			   List *windowFuncs, int numPartCols, int numOrderCols,
 			   Cost input_startup_cost, Cost input_total_cost,
