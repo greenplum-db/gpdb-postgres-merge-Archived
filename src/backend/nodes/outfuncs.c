@@ -2819,7 +2819,6 @@ _outDistributionKey(StringInfo str, const DistributionKey *node)
 	WRITE_OID_FIELD(dk_opfamily);
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static void
 _outPathTarget(StringInfo str, const PathTarget *node)
 {
@@ -2838,9 +2837,7 @@ _outPathTarget(StringInfo str, const PathTarget *node)
 	WRITE_FLOAT_FIELD(cost.per_tuple, "%.2f");
 	WRITE_INT_FIELD(width);
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
-#ifndef COMPILING_BINARY_FUNCS
 static void
 _outParamPathInfo(StringInfo str, const ParamPathInfo *node)
 {
@@ -2850,7 +2847,6 @@ _outParamPathInfo(StringInfo str, const ParamPathInfo *node)
 	WRITE_FLOAT_FIELD(ppi_rows, "%.0f");
 	WRITE_NODE_FIELD(ppi_clauses);
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outRestrictInfo(StringInfo str, const RestrictInfo *node)
