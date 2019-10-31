@@ -733,6 +733,8 @@ extern Node *readNodeFromBinaryString(const char *str, int len);
 /*
  * nodes/{readfuncs.c,read.c}
  */
+extern void save_strtok_states(char **save_ptr, char **save_begin);
+extern void set_strtok_states(char *ptr, char *begin);
 extern void *stringToNode(char *str);
 extern struct Bitmapset *readBitmapset(void);
 extern int64 readDatum(bool typbyval);

@@ -34,6 +34,25 @@ static char *pg_strtok_begin = NULL;                    /*CDB*/
 
 static void nodeReadSkipThru(char closingDelimiter);    /*CDB*/
 
+/*
+ * Helper functions for saving current states and pg_strtok() another string
+ *
+ * External functions like ExtensibleNodeMethods->nodeRead() uses the
+ * pg_strtok_ptr information via pg_strtok() but the context could be binary
+ * (readfast.c), set_strtok_states() to pg_strtok() the string.
+ */
+save_strtok_states(char **save_ptr, char **save_begin)
+{
+	*save_ptr = pg_strtok_ptr;		/* point pg_strtok at the string to read */
+	*save_begin = pg_strtok_begin;	/* CDB: save starting position for debug */
+}
+
+void
+set_strtok_states(char *ptr, char *begin)
+{
+	pg_strtok_ptr = ptr;		/* point pg_strtok at the string to read */
+	pg_strtok_begin = begin;	/* CDB: save starting position for debug */
+}
 
 /*
  * stringToNode -
