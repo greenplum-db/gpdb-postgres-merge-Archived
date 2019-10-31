@@ -475,8 +475,8 @@ pg_relation_size(PG_FUNCTION_ARGS)
 
 		fdwroutine = GetFdwRoutineForRelation(rel, false);
 
-		if (fdwroutine->GetRelationSize != NULL)
-			ok = fdwroutine->GetRelationSize(rel, &size);
+		if (fdwroutine->GetRelationSizeOnSegment != NULL)
+			ok = fdwroutine->GetRelationSizeOnSegment(rel, &size);
 
 		if (!ok)
 			ereport(WARNING,

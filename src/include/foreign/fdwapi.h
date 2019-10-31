@@ -227,11 +227,16 @@ typedef struct FdwRoutine
 	InitializeDSMForeignScan_function InitializeDSMForeignScan;
 	InitializeWorkerForeignScan_function InitializeWorkerForeignScan;
 
-	/* GPDB_96_MERGE_FIXME: Do we still need these? Seem redundant
-	 * with GetForeignRelSize() and AnalyzeForeignTable
+	/*
+	 * These two callbacks are MPP interface for analyze and
+	 * only invoked by QE.
+	 *
+	 * In gpdb, `gp_acquire_sample_rows` and `pg_relation_size`
+	 * take responsebility to fetch statistic information from segment.
+	 * If the table is a foreign data wrapper, these two calls will be called.
 	 */
-	AcquireSampleRowsFunc AcquireSampleRows;
-	ForeignTableSize_function GetRelationSize;
+	AcquireSampleRowsFunc AcquireSampleRowsOnSegment;
+	ForeignTableSize_function GetRelationSizeOnSegment;
 
 } FdwRoutine;
 
