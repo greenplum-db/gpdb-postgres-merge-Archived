@@ -104,11 +104,14 @@
 		char b = node->fldname ? 1 : 0; \
 		appendBinaryStringInfo(str, (const char *)&b, 1); }
 
-/* Write a character-string (possibly NULL) field */
-#define WRITE_STRING_FIELD(fldname) \
-	{ int slen = node->fldname != NULL ? strlen(node->fldname) : 0; \
+/* Write a character-string (possibly NULL) varable */
+#define WRITE_STRING_VAR(var) \
+	{ int slen = var != NULL ? strlen(var) : 0; \
 		appendBinaryStringInfo(str, (const char *)&slen, sizeof(int)); \
-		if (slen>0) appendBinaryStringInfo(str, node->fldname, strlen(node->fldname));}
+		if (slen>0) appendBinaryStringInfo(str, var, strlen(var));}
+
+/* Write a character-string (possibly NULL) field */
+#define WRITE_STRING_FIELD(fldname)  WRITE_STRING_VAR(node->fldname)
 
 /* Write a parse location field (actually same as INT case) */
 #define WRITE_LOCATION_FIELD(fldname) \
@@ -584,6 +587,30 @@ _outJoinExpr(StringInfo str, JoinExpr *node)
 	WRITE_NODE_FIELD(quals);
 	WRITE_NODE_FIELD(alias);
 	WRITE_INT_FIELD(rtindex);
+}
+
+/*****************************************************************************
+ *
+ *	Stuff from extensible.h
+ *
+ *****************************************************************************/
+
+static void
+_outExtensibleNode(StringInfo str, const ExtensibleNode *node)
+{
+	const ExtensibleNodeMethods *methods;
+	StringInfoData buf;
+
+	methods = GetExtensibleNodeMethods(node->extnodename, false);
+
+	WRITE_NODE_TYPE("EXTENSIBLENODE");
+
+	WRITE_STRING_FIELD(extnodename);
+
+	/* serialize the private fields */
+	methods->nodeOut(&buf, node);
+
+	WRITE_STRING_VAR(buf.data);
 }
 
 /*****************************************************************************
@@ -1638,6 +1665,10 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_LockStmt:
 				_outLockStmt(str, obj);
+				break;
+
+			case T_ExtensibleNode:
+				_outExtensibleNode(str, obj);
 				break;
 
 			case T_CreateStmt:

@@ -34,6 +34,19 @@ static char *pg_strtok_begin = NULL;                    /*CDB*/
 
 static void nodeReadSkipThru(char closingDelimiter);    /*CDB*/
 
+void
+save_strtok_states(char **save_ptr, char **save_begin)
+{
+	*save_ptr = pg_strtok_ptr;		/* point pg_strtok at the string to read */
+	*save_begin = pg_strtok_begin;	/* CDB: save starting position for debug */
+}
+
+void
+set_strtok_states(char *ptr, char *begin)
+{
+	pg_strtok_ptr = ptr;		/* point pg_strtok at the string to read */
+	pg_strtok_begin = begin;	/* CDB: save starting position for debug */
+}
 
 /*
  * stringToNode -

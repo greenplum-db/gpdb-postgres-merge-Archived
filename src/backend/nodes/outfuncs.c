@@ -2965,7 +2965,6 @@ _outPlannerParamItem(StringInfo str, const PlannerParamItem *node)
  *
  *****************************************************************************/
 
-/* GPDB_96_MERGE_FIXME: I think we'd need outfast/readfast support for this */
 #ifndef COMPILING_BINARY_FUNCS
 static void
 _outExtensibleNode(StringInfo str, const ExtensibleNode *node)

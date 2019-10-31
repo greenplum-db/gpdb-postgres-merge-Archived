@@ -104,8 +104,8 @@
 #define READ_BOOL_FIELD(fldname) \
 	local_node->fldname = read_str_ptr[0] != 0;  Assert(read_str_ptr[0]==1 || read_str_ptr[0]==0); read_str_ptr++
 
-/* Read a character-string field */
-#define READ_STRING_FIELD(fldname) \
+/* Read a character-string variable */
+#define READ_STRING_VAR(var) \
 	{ int slen; char * nn = NULL; \
 		memcpy(&slen, read_str_ptr, sizeof(int)); \
 		read_str_ptr+=sizeof(int); \
@@ -114,7 +114,10 @@
 		    memcpy(nn,read_str_ptr,slen); \
 		    read_str_ptr+=(slen); nn[slen]='\0'; \
 		} \
-		local_node->fldname = nn;  }
+		var = nn;  }
+
+/* Read a character-string field */
+#define READ_STRING_FIELD(fldname)  READ_STRING_VAR(local_node->fldname)
 
 /* Read a parse location field (and throw away the value, per notes above) */
 #define READ_LOCATION_FIELD(fldname) READ_INT_FIELD(fldname)
@@ -1040,6 +1043,45 @@ _readCollateClause(void)
 	READ_NODE_FIELD(arg);
 	READ_NODE_FIELD(collname);
 	READ_INT_FIELD(location);
+
+	READ_DONE();
+}
+
+static ExtensibleNode *
+_readExtensibleNode(void)
+{
+	const ExtensibleNodeMethods *methods;
+	ExtensibleNode *local_node;
+	const char *extnodename;
+
+	char *str;
+	char **save_strtok = NULL;
+	char **save_begin = NULL;
+
+	READ_STRING_VAR(extnodename);
+	if (!extnodename)
+		elog(ERROR, "extnodename has to be supplied");
+	methods = GetExtensibleNodeMethods(extnodename, false);
+
+	local_node = (ExtensibleNode *) newNode(methods->node_size,
+											T_ExtensibleNode);
+	local_node->extnodename = extnodename;
+
+	READ_STRING_VAR(str);
+
+	/*
+	 * deserialize the private fields
+	 */
+
+	/* set the states for pg_strtok(), let methods->nodeRead() to process str */
+	save_strtok_states(save_strtok, save_begin);
+	set_strtok_states(str, str);
+
+	/* do reading */
+	methods->nodeRead(local_node);
+
+	/* set the states for pg_strtok() back */
+	set_strtok_states(*save_strtok, *save_begin);
 
 	READ_DONE();
 }
@@ -2627,6 +2669,9 @@ readNodeBinary(void)
 				return_value = _readLockStmt();
 				break;
 
+			case T_ExtensibleNode:
+				return_value = _readExtensibleNode();
+				break;
 			case T_CreateStmt:
 				return_value = _readCreateStmt();
 				break;
