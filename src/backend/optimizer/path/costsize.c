@@ -2048,12 +2048,7 @@ cost_agg(Path *path, PlannerInfo *root,
 		total_cost += cpu_tuple_cost * numGroups;
 		output_tuples = numGroups;
 
-		/* GPDB_96_MERGE_FIXME: PostgreSQL doesn't have this. We used to implement
-		 * this differently elsewhere, but this is the proper place. But I wonder
-		 * if we really need this? PostgreSQL is happy without it. It's used in a
-		 * few tests, but almost all of them passed even before this was put back.
-		 */
-		if (!root->config->enable_groupagg)
+		if (!enable_groupagg)
 		{
 			startup_cost += disable_cost;
 			total_cost += disable_cost;
