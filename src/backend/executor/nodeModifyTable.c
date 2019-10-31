@@ -143,7 +143,7 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
 			 * What we insist on is just *some* NULL constant.
 			 */
 			/* GPDB_96_MERGE_FIXME: the subplan can be a Motion, so that the NULLs
-			 * are transferred throught he Motion node.
+			 * are transferred through the Motion node.
 			 */
 #if 0
 			if (!IsA(tle->expr, Const) ||
