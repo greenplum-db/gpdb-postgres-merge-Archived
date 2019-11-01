@@ -471,7 +471,7 @@ systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup)
 		Assert(BufferIsValid(scan->xs_cbuf));
 		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
-		result = HeapTupleSatisfiesVisibility(NULL, tup, freshsnap, scan->xs_cbuf);
+		result = HeapTupleSatisfiesVisibility(sysscan->heap_rel, tup, freshsnap, scan->xs_cbuf);
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
 	}
 	else
