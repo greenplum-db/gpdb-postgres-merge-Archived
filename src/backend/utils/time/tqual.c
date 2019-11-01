@@ -1619,10 +1619,24 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
 	{
 		DistributedSnapshotCommitted	distributedSnapshotCommitted;
 
+		/* Special XIDs don't belong to snapshots, distributed or not. */
+		if (!TransactionIdIsNormal(xid))
+			return false;
+
 		/*
-		 * First, check if this committed transaction is a distributed committed
-		 * transaction and should be evaluated against the distributed snapshot
-		 * instead.
+		 * A transaction's distributed snapshot always "lags behind" its local
+		 * snapshot. So if the local snapshot still sees a transaction as
+		 * in-progress, it must be in-progress for the distributed snapshot,
+		 * too. Perform this quick xmax check first to avoid the more
+		 * expensive distributed snapshot check, if possible.
+		 */
+		if (TransactionIdFollowsOrEquals(xid, snapshot->xmax))
+			return true;
+
+		/*
+		 * Check if this committed transaction is a distributed committed
+		 * transaction and evaluate it against the distributed snapshot if
+		 * it is.
 		 */
 		distributedSnapshotCommitted =
 			DistributedSnapshotWithLocalMapping_CommittedTest(
@@ -1635,6 +1649,13 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
 				return true;
 
 			case DISTRIBUTEDSNAPSHOT_COMMITTED_VISIBLE:
+				/*
+				 * GPDB_96_MERGE_FIXME: Many of the callers will call
+				 * TransactionIdDidCommit() after this, but if we get here, we
+				 * know that it committed. If we could somehow communicate it
+				 * to the caller, we could skip the TransactionIdDidCommit()
+				 * call.
+				 */
 				return false;
 
 			case DISTRIBUTEDSNAPSHOT_COMMITTED_IGNORE:
@@ -1643,6 +1664,14 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
 				 * snapshots.
 				 */
 				*setDistributedSnapshotIgnore = true;
+				break;
+
+			case DISTRIBUTEDSNAPSHOT_COMMITTED_UNKNOWN:
+				/*
+				 * The distributed log doesn't know anything about this XID. It may
+				 * be a local-only transaction, or still in-progress. Proceed to
+				 * perform a local visibility check.
+				 */
 				break;
 
 			default:
