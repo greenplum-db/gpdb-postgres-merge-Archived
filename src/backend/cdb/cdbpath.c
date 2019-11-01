@@ -2515,22 +2515,23 @@ create_motion_path_for_insert(PlannerInfo *root, Index rti, RangeTblEntry *rte,
 	}
 	else if (policyType == POLICYTYPE_REPLICATED)
 	{
-		/*
-		 * CdbLocusType_SegmentGeneral is only used by replicated table
-		 * right now, so if both input and target are replicated table,
-		 * no need to add a motion.
-		 *
-		 * Also, to expand a replicated table to new segments, gpexpand
-		 * force a data reorganization by a query like:
-		 * CREATE TABLE tmp_tab AS SELECT * FROM source_table DISTRIBUTED REPLICATED
-		 * Obviously, tmp_tab in new segments can't get data if we don't
-		 * add a broadcast here.
-		 */
+		/* try to optimize insert with no motion introduced into */
 		if (optimizer_replicated_table_insert &&
-			CdbPathLocus_IsSegmentGeneral(subpath->locus) &&
 			!contain_volatile_functions((Node *)subpath->pathtarget->exprs))
 		{
-			if (subpath->locus.numsegments >= policy->numsegments)
+			/*
+			 * CdbLocusType_SegmentGeneral is only used by replicated table
+			 * right now, so if both input and target are replicated table,
+			 * no need to add a motion.
+			 *
+			 * Also, to expand a replicated table to new segments, gpexpand
+			 * force a data reorganization by a query like:
+			 * CREATE TABLE tmp_tab AS SELECT * FROM source_table DISTRIBUTED REPLICATED
+			 * Obviously, tmp_tab in new segments can't get data if we don't
+			 * add a broadcast here.
+			 */
+			if(CdbPathLocus_IsSegmentGeneral(subpath->locus) &&
+					subpath->locus.numsegments >= policy->numsegments)
 			{
 				/*
 				 * A query to reach here:
@@ -2538,26 +2539,16 @@ create_motion_path_for_insert(PlannerInfo *root, Index rti, RangeTblEntry *rte,
 				 * There is no need to add a motion from General, we
 				 * could simply put General on the same segments with
 				 * target table.
+				 *
+				 * Otherwise a broadcast motion is needed otherwise d2 will
+				 * only have data on segment 0.
 				 */
 				subpath->locus.numsegments = policy->numsegments;
 				return subpath;
 			}
 
-			/*
-			 * Otherwise a broadcast motion is needed otherwise d2 will
-			 * only have data on segment 0.
-			 *
-			 * A query to reach here:
-			 *     INSERT INTO d2 SELECT * FROM d1;
-			 */
-		}
-
-		/* plan's data are available on all segment, no motion needed */
-		if (optimizer_replicated_table_insert &&
-			CdbPathLocus_IsGeneral(subpath->locus) &&
-			!contain_volatile_functions((Node *) subpath->pathtarget->exprs))
-		{
-			if (subpath->locus.numsegments >= policy->numsegments)
+			/* plan's data are available on all segment, no motion needed */
+			if(CdbPathLocus_IsGeneral(subpath->locus))
 			{
 				/*
 				 * A query to reach here: INSERT INTO d1 VALUES(1).
@@ -2565,13 +2556,10 @@ create_motion_path_for_insert(PlannerInfo *root, Index rti, RangeTblEntry *rte,
 				 * could simply put General on the same segments with
 				 * target table.
 				 */
-				subpath->locus.numsegments = policy->numsegments;
+				subpath->locus.numsegments = Min(subpath->locus.numsegments,policy->numsegments) ;
+				return subpath;
 			}
-			else
-			{
-				/* FIXME: is here reachable? */
-			}
-			return subpath;
+
 		}
 		subpath = cdbpath_create_broadcast_motion_path(root, subpath, policy->numsegments);
 	}
