@@ -34,6 +34,7 @@ static char *pg_strtok_begin = NULL;                    /*CDB*/
 
 static void nodeReadSkipThru(char closingDelimiter);    /*CDB*/
 
+/* Helper functions for saving current states and pg_strtok() another string */
 void
 save_strtok_states(char **save_ptr, char **save_begin)
 {

@@ -24,6 +24,9 @@
  * block, and readfast.c provides the binary version of the function.
  * outfast.c and outfuncs.c have a similar relationship.
  *
+ * By this, CDB could link only readfast.o (#includes readfuncs.c) to get all
+ * the fast version deserializing functions, outfast.o likewise.
+ *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -1055,8 +1058,10 @@ _readExtensibleNode(void)
 	const char *extnodename;
 
 	char *str;
-	char **save_strtok = NULL;
-	char **save_begin = NULL;
+	char *save_strtok = NULL;
+	char *save_begin = NULL;
+	char **save_strtok_ptr = &save_strtok;
+	char **save_begin_ptr = &save_begin;
 
 	READ_STRING_VAR(extnodename);
 	if (!extnodename)
@@ -1074,14 +1079,14 @@ _readExtensibleNode(void)
 	 */
 
 	/* set the states for pg_strtok(), let methods->nodeRead() to process str */
-	save_strtok_states(save_strtok, save_begin);
+	save_strtok_states(save_strtok_ptr, save_begin_ptr);
 	set_strtok_states(str, str);
 
 	/* do reading */
 	methods->nodeRead(local_node);
 
 	/* set the states for pg_strtok() back */
-	set_strtok_states(*save_strtok, *save_begin);
+	set_strtok_states(save_strtok, save_begin);
 
 	READ_DONE();
 }

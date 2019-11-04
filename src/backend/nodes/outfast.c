@@ -108,7 +108,7 @@
 #define WRITE_STRING_VAR(var) \
 	{ int slen = var != NULL ? strlen(var) : 0; \
 		appendBinaryStringInfo(str, (const char *)&slen, sizeof(int)); \
-		if (slen>0) appendBinaryStringInfo(str, var, strlen(var));}
+		if (slen>0) appendBinaryStringInfo(str, var, slen);}
 
 /* Write a character-string (possibly NULL) field */
 #define WRITE_STRING_FIELD(fldname)  WRITE_STRING_VAR(node->fldname)
@@ -600,6 +600,7 @@ _outExtensibleNode(StringInfo str, const ExtensibleNode *node)
 {
 	const ExtensibleNodeMethods *methods;
 	StringInfoData buf;
+	initStringInfo(&buf);
 
 	methods = GetExtensibleNodeMethods(node->extnodename, false);
 
