@@ -41,6 +41,7 @@ static void nodeReadSkipThru(char closingDelimiter);    /*CDB*/
  * pg_strtok_ptr information via pg_strtok() but the context could be binary
  * (readfast.c), set_strtok_states() to pg_strtok() the string.
  */
+void
 save_strtok_states(char **save_ptr, char **save_begin)
 {
 	*save_ptr = pg_strtok_ptr;		/* point pg_strtok at the string to read */
