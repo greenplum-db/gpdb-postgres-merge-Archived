@@ -91,6 +91,24 @@ typedef struct FileFdwPlanState
 	double		ntuples;		/* estimate of number of rows in file */
 } FileFdwPlanState;
 
+#include "nodes/extensible.h"
+#include "nodes/readfuncs.h"
+#include "cdb/cdbvars.h"
+#define ExtendedNodeName "PgColorExtendedNode"
+
+typedef struct color
+{
+	uint8 r;
+	uint8 g;
+	uint8 b;
+} color;
+
+typedef struct PgColorExtendedNode
+{
+	ExtensibleNode extensible;
+	color *interceptedColor;
+} PgColorExtendedNode;
+
 /*
  * FDW-specific information for ForeignScanState.fdw_state.
  */
@@ -153,6 +171,94 @@ static int file_acquire_sample_rows(Relation onerel, int elevel,
 						 HeapTuple *rows, int targrows,
 						 double *totalrows, double *totaldeadrows);
 
+void _PG_init(void);
+
+/* Write a Node field */
+#define WRITE_NODE_FIELD(fldname) \
+	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
+	 outNode(str, node->fldname))
+
+#define WRITE_INT_FIELD(fldname) \
+	appendStringInfo(str, " :" CppAsString(fldname) " %d", node->fldname)
+
+#define READ_NODE_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	(void) token;				/* in case not used elsewhere */ \
+	local_node->fldname = nodeRead(NULL, 0)
+
+#define READ_INT_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	token = pg_strtok(&length);		/* get field value */ \
+	local_node->fldname = atoi(token)
+
+static void CopyPgColorExtendedNode(struct ExtensibleNode *target_node,
+									const struct ExtensibleNode *source_node);
+static bool EqualPgColorExtendedNode(const struct ExtensibleNode *target_node,
+									 const struct ExtensibleNode *source_node);
+
+static void OutPgColorExtendedNode(struct StringInfoData *str,
+								   const struct ExtensibleNode *raw_node);
+static void ReadPgColorExtendedNode(struct ExtensibleNode *node);
+
+
+const ExtensibleNodeMethods nodeMethods =
+{
+	.extnodename = ExtendedNodeName,
+	.node_size =  sizeof(PgColorExtendedNode),
+	.nodeCopy = CopyPgColorExtendedNode,
+	.nodeEqual = EqualPgColorExtendedNode,
+	.nodeRead = ReadPgColorExtendedNode,
+	.nodeOut = OutPgColorExtendedNode
+};
+
+static void
+CopyPgColorExtendedNode(struct ExtensibleNode *target_node, const struct ExtensibleNode *source_node)
+{
+	PgColorExtendedNode *targetPlan = (PgColorExtendedNode *) target_node;
+	PgColorExtendedNode *sourcePlan = (PgColorExtendedNode *) source_node;
+
+	targetPlan->interceptedColor = palloc0(sizeof(color));
+
+	targetPlan->interceptedColor->r = sourcePlan->interceptedColor->r;
+	targetPlan->interceptedColor->g = sourcePlan->interceptedColor->g;
+	targetPlan->interceptedColor->b = sourcePlan->interceptedColor->b;
+}
+
+static bool
+EqualPgColorExtendedNode(const struct ExtensibleNode *target_node, const struct ExtensibleNode *source_node)
+{
+	return true;
+}
+
+static void
+OutPgColorExtendedNode( struct StringInfoData *str, const struct ExtensibleNode *raw_node)
+{
+	const PgColorExtendedNode *node = (const PgColorExtendedNode *) raw_node;
+
+	WRITE_INT_FIELD(interceptedColor->r);
+	WRITE_INT_FIELD(interceptedColor->g);
+	WRITE_INT_FIELD(interceptedColor->b);
+}
+
+
+static void
+ReadPgColorExtendedNode(struct ExtensibleNode *node)
+{
+	PgColorExtendedNode *local_node = (PgColorExtendedNode *) node;
+	const char		*token;
+	int			length;
+
+	local_node->interceptedColor = palloc0(sizeof(color));
+	READ_INT_FIELD(interceptedColor->r);
+	READ_INT_FIELD(interceptedColor->g);
+	READ_INT_FIELD(interceptedColor->b);
+}
+
+void
+_PG_init(void)
+{
+	RegisterExtensibleNodeMethods(&nodeMethods);
+}
 
 /*
  * Foreign-data wrapper handler function: return a struct with pointers
@@ -637,12 +743,28 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
 		return;
 
+	ForeignTable *rel = GetForeignTable(RelationGetRelid(node->ss.ss_currentRelation));
+	if (rel->exec_location == FTEXECLOCATION_ALL_SEGMENTS && Gp_role == GP_ROLE_DISPATCH)
+	{
+		PgColorExtendedNode *pgcolor = palloc0(sizeof(PgColorExtendedNode));
+		pgcolor->interceptedColor = palloc0(sizeof(color));
+		pgcolor->interceptedColor->r = 2;
+		pgcolor->interceptedColor->g = 3;
+		pgcolor->interceptedColor->b = 3;
+		ExtensibleNode *ptr = (ExtensibleNode *)pgcolor;
+		ptr->type = T_ExtensibleNode;
+		ptr->extnodename = pstrdup(ExtendedNodeName);
+		plan->fdw_private = list_make1(ptr);
+	}
+	else if (Gp_role == GP_ROLE_DISPATCH)
+		plan->fdw_private = NULL;
+
 	/* Fetch options of foreign table */
 	fileGetOptions(RelationGetRelid(node->ss.ss_currentRelation),
 				   &filename, &options);
 
 	/* Add any options from the plan (currently only convert_selectively) */
-	options = list_concat(options, plan->fdw_private);
+	/* options = list_concat(options, plan->fdw_private); */
 
 	/*
 	 * Create CopyState from FDW options.  We always acquire all columns, so
@@ -687,6 +809,16 @@ fileIterateForeignScan(ForeignScanState *node)
 	errcallback.arg = (void *) festate->cstate;
 	errcallback.previous = error_context_stack;
 	error_context_stack = &errcallback;
+
+	ForeignScan *fsplan = (ForeignScan *) node->ss.ps.plan;
+	if (fsplan->fdw_private)
+	{
+		color *input = ((PgColorExtendedNode*)linitial(fsplan->fdw_private))->interceptedColor;
+		if (input && input->r == 2 && input->g == 3 && input->b == 3)
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Bingo!")));
+	}
 
 	/*
 	 * The protocol for loading a virtual tuple into a slot is first
