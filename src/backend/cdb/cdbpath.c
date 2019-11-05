@@ -2484,14 +2484,19 @@ create_motion_path_for_insert(PlannerInfo *root, Index rti, RangeTblEntry *rte,
 			 * If the target table is DISTRIBUTED RANDOMLY, we can insert the
 			 * rows anywhere. So if the input path is already partitioned, let
 			 * the insertions happen where they are.
+			 *
+			 * If you `explain` the query insert into tab_random select * from tab_partition
+			 * there is not Motion node in plan. However, it is not means that the query only
+			 * execute in entry db. It is dispatched to QE and do everything well as we expect.
+			 *
+			 * But, we need to grant a Motion node if target locus' segnumber is different with
+			 * subpath.
 			 */
-			/* GPDB_96_MERGE_FIXME: we need it anyway, otherwise the plan isn't
-			 * dispatched at all. Not sure why, although that's what we did
-			 * before the 9.6 merge too. Investigate if that could be improved
-			 * easily.
-			 */
-			CdbPathLocus_MakeStrewn(&targetLocus, policy->numsegments);
-			subpath = cdbpath_create_motion_path(root, subpath, NIL, false, targetLocus);
+			if(targetLocus.numsegments != subpath->locus.numsegments)
+			{
+				CdbPathLocus_MakeStrewn(&targetLocus, policy->numsegments);
+				subpath = cdbpath_create_motion_path(root, subpath, NIL, false, targetLocus);
+			}
 		}
 		else if (CdbPathLocus_IsNull(targetLocus))
 		{
