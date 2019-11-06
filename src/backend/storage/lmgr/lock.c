@@ -4007,7 +4007,9 @@ GetLockStatusData(void)
 		instance->backend = proc->backendId;
 		instance->lxid = proc->lxid;
 		instance->pid = proc->pid;
-		instance->leaderPid = proclock->groupLeader->pid;
+		/* GPDB_96_MERGE_FIXME: revisit here to check if this a fix or workaround */
+		if (proclock->groupLeader)
+			instance->leaderPid = proclock->groupLeader->pid;
 		instance->fastpath = false;
 		instance->databaseId = proc->databaseId;
 		instance->mppSessionId = proc->mppSessionId;
