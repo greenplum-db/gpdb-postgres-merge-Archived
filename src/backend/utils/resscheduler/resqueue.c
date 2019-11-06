@@ -268,6 +268,15 @@ ResLockAcquire(LOCKTAG *locktag, ResPortalIncrement *incrementSet)
 	 */
 	if (!found)
 	{
+		/*
+		 * Resource queues don't participate in "group locking", used to share
+		 * locks between leader process and parallel worker processes in
+		 * PostgreSQL. But we better still set 'groupLeader', it is assumed
+		 * to be valid on all PROCLOCKs, and is accessed e.g. by
+		 * GetLockStatusData().
+		 */
+		proclock->groupLeader = MyProc->lockGroupLeader != NULL ?
+			MyProc->lockGroupLeader : MyProc;
 		proclock->holdMask = 0;
 		proclock->releaseMask = 0;
 		/* Add proclock to appropriate lists */
@@ -1145,11 +1154,11 @@ ResProcLockRemoveSelfAndWakeup(LOCK *lock)
 		 * See if it is ok to wake this guy. (note that the wakeup writes to
 		 * the wait list, and gives back a *new* next proc).
 		 */
-		status = ResLockCheckLimit(lock, (PROCLOCK *) proc->waitProcLock, incrementSet, true);
+		status = ResLockCheckLimit(lock, proc->waitProcLock, incrementSet, true);
 		if (status == STATUS_OK)
 		{
-			ResGrantLock(lock, (PROCLOCK *) proc->waitProcLock);
-			ResLockUpdateLimit(lock, (PROCLOCK *) proc->waitProcLock, incrementSet, true, false);
+			ResGrantLock(lock, proc->waitProcLock);
+			ResLockUpdateLimit(lock, proc->waitProcLock, incrementSet, true, false);
 
 			proc = ResProcWakeup(proc, STATUS_OK);
 		}
@@ -1260,7 +1269,7 @@ ResRemoveFromWaitQueue(PGPROC *proc, uint32 hashcode)
 	 * LockRelease expects there to be no remaining proclocks.) Then see if
 	 * any other waiters for the lock can be woken up now.
 	 */
-	ResCleanUpLock(waitLock, (PROCLOCK *) proclock, hashcode, true);
+	ResCleanUpLock(waitLock, proclock, hashcode, true);
 	LWLockRelease(ResQueueLock);
 
 }
