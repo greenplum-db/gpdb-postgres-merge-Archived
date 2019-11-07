@@ -100,68 +100,64 @@ create table t_volatile_limit_1 (a int, b int) distributed randomly;
 -- and QD and this cannot guarantee correct results. Suppose seg 0 contains the
 -- top 3 minimum values, but random() returns 1, then you lose 2 values.
 explain select * from t_volatile_limit order by i limit (random() * 10);
-                                      QUERY PLAN                                      
---------------------------------------------------------------------------------------
- Limit  (cost=0.00..431.01 rows=34 width=4)
-   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..431.01 rows=100 width=4)
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Limit  (cost=0.00..431.00 rows=1 width=4)
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..431.00 rows=1 width=4)
          Merge Key: i
-         ->  Sort  (cost=0.00..431.00 rows=34 width=4)
+         ->  Sort  (cost=0.00..431.00 rows=1 width=4)
                Sort Key: i
-               ->  Seq Scan on t_volatile_limit  (cost=0.00..431.00 rows=34 width=4)
+               ->  Seq Scan on t_volatile_limit  (cost=0.00..431.00 rows=1 width=4)
  Optimizer: Pivotal Optimizer (GPORCA) version 3.80.0
 (7 rows)
 
 explain select * from t_volatile_limit order by i limit 2 offset (random()*5);
-                                      QUERY PLAN                                      
---------------------------------------------------------------------------------------
- Limit  (cost=0.00..431.01 rows=1 width=4)
-   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..431.01 rows=100 width=4)
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Limit  (cost=0.00..431.00 rows=1 width=4)
+   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..431.00 rows=1 width=4)
          Merge Key: i
-         ->  Sort  (cost=0.00..431.00 rows=34 width=4)
+         ->  Sort  (cost=0.00..431.00 rows=1 width=4)
                Sort Key: i
-               ->  Seq Scan on t_volatile_limit  (cost=0.00..431.00 rows=34 width=4)
+               ->  Seq Scan on t_volatile_limit  (cost=0.00..431.00 rows=1 width=4)
  Optimizer: Pivotal Optimizer (GPORCA) version 3.80.0
 (7 rows)
 
 explain select distinct(a), sum(b) from t_volatile_limit_1 group by a order by a, sum(b) limit (random()+3);
-                                                        QUERY PLAN                                                        
---------------------------------------------------------------------------------------------------------------------------
- Limit  (cost=1556.33..1559.08 rows=100 width=12)
-   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=1556.33..1583.83 rows=1000 width=12)
+                                                    QUERY PLAN                                                    
+------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.00..431.00 rows=1 width=12)
+   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=0.00..431.00 rows=1 width=12)
          Merge Key: a, (sum(b))
-         ->  Unique  (cost=1556.33..1563.83 rows=334 width=12)
-               Group Key: a, (sum(b))
-               ->  Sort  (cost=1556.33..1558.83 rows=334 width=12)
-                     Sort Key: a, (sum(b))
-                     ->  Finalize HashAggregate  (cost=1496.50..1506.50 rows=334 width=12)
-                           Group Key: a
-                           ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=1391.50..1481.50 rows=1000 width=12)
+         ->  Sort  (cost=0.00..431.00 rows=1 width=12)
+               Sort Key: a, (sum(b))
+               ->  GroupAggregate  (cost=0.00..431.00 rows=1 width=12)
+                     Group Key: a
+                     ->  Sort  (cost=0.00..431.00 rows=1 width=8)
+                           Sort Key: a
+                           ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..431.00 rows=1 width=8)
                                  Hash Key: a
-                                 ->  Partial HashAggregate  (cost=1391.50..1421.50 rows=1000 width=12)
-                                       Group Key: a
-                                       ->  Seq Scan on t_volatile_limit_1  (cost=0.00..961.00 rows=28700 width=8)
- Optimizer: Postgres query optimizer
-(15 rows)
+                                 ->  Seq Scan on t_volatile_limit_1  (cost=0.00..431.00 rows=1 width=8)
+ Optimizer: Pivotal Optimizer (GPORCA) version 3.80.0
+(13 rows)
 
 explain select distinct(a), sum(b) from t_volatile_limit_1 group by a order by a, sum(b) limit 2 offset (random()*2);
-                                                        QUERY PLAN                                                        
---------------------------------------------------------------------------------------------------------------------------
- Limit  (cost=1559.08..1559.13 rows=2 width=12)
-   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=1556.33..1583.83 rows=1000 width=12)
+                                                    QUERY PLAN                                                    
+------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.00..431.00 rows=1 width=12)
+   ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=0.00..431.00 rows=1 width=12)
          Merge Key: a, (sum(b))
-         ->  Unique  (cost=1556.33..1563.83 rows=334 width=12)
-               Group Key: a, (sum(b))
-               ->  Sort  (cost=1556.33..1558.83 rows=334 width=12)
-                     Sort Key: a, (sum(b))
-                     ->  Finalize HashAggregate  (cost=1496.50..1506.50 rows=334 width=12)
-                           Group Key: a
-                           ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=1391.50..1481.50 rows=1000 width=12)
+         ->  Sort  (cost=0.00..431.00 rows=1 width=12)
+               Sort Key: a, (sum(b))
+               ->  GroupAggregate  (cost=0.00..431.00 rows=1 width=12)
+                     Group Key: a
+                     ->  Sort  (cost=0.00..431.00 rows=1 width=8)
+                           Sort Key: a
+                           ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..431.00 rows=1 width=8)
                                  Hash Key: a
-                                 ->  Partial HashAggregate  (cost=1391.50..1421.50 rows=1000 width=12)
-                                       Group Key: a
-                                       ->  Seq Scan on t_volatile_limit_1  (cost=0.00..961.00 rows=28700 width=8)
- Optimizer: Postgres query optimizer
-(15 rows)
+                                 ->  Seq Scan on t_volatile_limit_1  (cost=0.00..431.00 rows=1 width=8)
+ Optimizer: Pivotal Optimizer (GPORCA) version 3.80.0
+(13 rows)
 
 drop table t_volatile_limit;
 drop table t_volatile_limit_1;
