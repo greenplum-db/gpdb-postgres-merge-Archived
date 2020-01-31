@@ -6,13 +6,9 @@
  * gram.y
  *	  POSTGRESQL BISON rules/actions
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -18112,11 +18108,8 @@ unreserved_keyword:
 			| MOVE
 			| NAME_P
 			| NAMES
-<<<<<<< HEAD
-			| NEWLINE
-=======
 			| NEW
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			| NEWLINE
 			| NEXT
 			| NO
 			| NOCREATEEXTTABLE
@@ -18137,11 +18130,8 @@ unreserved_keyword:
 			| ORDINALITY
 			| OTHERS
 			| OVER
-<<<<<<< HEAD
 			| OVERCOMMIT
-=======
 			| OVERRIDING
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			| OWNED
 			| OWNER
 			| PARALLEL
@@ -18162,12 +18152,9 @@ unreserved_keyword:
 			| PROCEDURE
 			| PROCEDURES
 			| PROGRAM
-<<<<<<< HEAD
 			| PROTOCOL
-			| QUEUE
-=======
 			| PUBLICATION
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			| QUEUE
 			| QUOTE
 			| RANDOMLY /* gp */
 			| RANGE
@@ -18198,12 +18185,9 @@ unreserved_keyword:
 			| ROLE
 			| ROLLBACK
 			| ROLLUP
-<<<<<<< HEAD
 			| ROOTPARTITION
-=======
 			| ROUTINE
 			| ROUTINES
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			| ROWS
 			| RULE
 			| SAVEPOINT
@@ -18240,12 +18224,9 @@ unreserved_keyword:
 			| STORED
 			| STRICT_P
 			| STRIP_P
-<<<<<<< HEAD
 			| SUBPARTITION
-=======
 			| SUBSCRIPTION
 			| SUPPORT
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			| SYSID
 			| SYSTEM_P
 			| TABLES
@@ -18254,10 +18235,7 @@ unreserved_keyword:
 			| TEMPLATE
 			| TEMPORARY
 			| TEXT_P
-<<<<<<< HEAD
 			| THRESHOLD
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			| TIES
 			| TRANSACTION
 			| TRANSFORM
