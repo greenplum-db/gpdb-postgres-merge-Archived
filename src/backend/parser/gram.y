@@ -196,7 +196,6 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 			   bool *no_inherit, core_yyscan_t yyscanner);
 static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
-static void checkWindowExclude(void);
 static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 %}
@@ -491,15 +490,10 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 %type <boolean> opt_instead
 %type <boolean> opt_unique opt_concurrently opt_verbose opt_full
-<<<<<<< HEAD
-%type <boolean> opt_freeze opt_default opt_ordered opt_recheck
+%type <boolean> opt_freeze opt_analyze opt_default opt_ordered opt_recheck
 %type <boolean> opt_rootonly_all
 %type <boolean> opt_dxl
-%type <defelt>	opt_binary opt_oids copy_delimiter
-=======
-%type <boolean> opt_freeze opt_analyze opt_default opt_recheck
 %type <defelt>	opt_binary copy_delimiter
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 %type <boolean> copy_from opt_program skip_external_partition
 
@@ -531,11 +525,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <node>	cdb_string
 %type <node>	def_arg columnElem where_clause where_or_current_clause
 				a_expr b_expr c_expr AexprConst indirection_el opt_slice_bound
-<<<<<<< HEAD
-				columnref in_expr having_clause func_table array_expr
-=======
 				columnref in_expr having_clause func_table xmltable array_expr
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				ExclusionWhereClause operator_def_arg
 %type <list>	rowsfrom_item rowsfrom_list opt_col_def_list
 %type <boolean> opt_ordinality
@@ -545,14 +535,9 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <list>	row explicit_row implicit_row type_list array_expr_list
 %type <node>	case_expr case_arg when_clause when_operand case_default
 %type <list>	when_clause_list
-<<<<<<< HEAD
 %type <node>	decode_expr search_result decode_default
 %type <list>	search_result_list
-%type <ival>	sub_type
-%type <node>	ctext_expr
-=======
 %type <ival>	sub_type opt_materialized
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 %type <value>	NumericOnly
 %type <list>	NumericOnly_list
 %type <alias>	alias_clause opt_alias_clause
@@ -621,16 +606,12 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <list>	constraints_set_list
 %type <boolean> constraints_set_mode
 %type <str>		OptTableSpace OptConsTableSpace
-<<<<<<< HEAD
-%type <node>	OptTableSpaceOwner
+%type <rolespec> OptTableSpaceOwner
 %type <node>    DistributedBy OptDistributedBy 
 %type <ival>	TabPartitionByType OptTabPartitionRangeInclusive
 %type <node>	OptTabPartitionBy TabSubPartitionBy TabSubPartition
 				tab_part_val tab_part_val_no_paran
 %type <node>	opt_list_subparts
-=======
-%type <rolespec> OptTableSpaceOwner
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 %type <ival>	opt_check_option
 %type <node>	OptTabPartitionSpec OptTabSubPartitionSpec TabSubPartitionTemplate      /* PartitionSpec */
 %type <list>	TabPartitionElemList TabSubPartitionElemList /* list of PartitionElem */
@@ -680,7 +661,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 				opt_frame_clause frame_extent frame_bound
 %type <ival>	opt_window_exclusion_clause
 %type <str>		opt_existing_window_name
-%type <ival>	window_frame_exclusion
 
 %type <list>	distributed_by_list
 %type <ielem>	distributed_by_elem
@@ -840,7 +820,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	NEWLINE NOCREATEEXTTABLE NOOVERCOMMIT
 
-	ORDERED OTHERS OVERCOMMIT
+	ORDERED OVERCOMMIT
 
 	PARTITIONS PERCENT PROTOCOL
 
@@ -851,7 +831,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	SCATTER SEGMENT SEGMENTS SPLIT SUBPARTITION
 
-	THRESHOLD TIES
+	THRESHOLD
 
 	VALIDATION
 
@@ -910,8 +890,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
  * blame any funny behavior of UNBOUNDED on the SQL standard, though.
  */
 %nonassoc	UNBOUNDED		/* ideally should have same precedence as IDENT */
-<<<<<<< HEAD
-%nonassoc	IDENT NULL_P PARTITION RANGE ROWS PRECEDING FOLLOWING CUBE ROLLUP
+%nonassoc	IDENT GENERATED NULL_P PARTITION RANGE ROWS GROUPS PRECEDING FOLLOWING CUBE ROLLUP
 
 /*
  * This is a bit ugly... To allow these to be column aliases without
@@ -1215,9 +1194,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 			%nonassoc UNKNOWN
 			%nonassoc ZONE
 
-=======
-%nonassoc	IDENT GENERATED NULL_P PARTITION RANGE ROWS GROUPS PRECEDING FOLLOWING CUBE ROLLUP
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
 %left		'+' '-'
 %left		'*' '/' '%'
@@ -1305,23 +1281,17 @@ stmt :
 			| AlterPolicyStmt
 			| AlterQueueStmt
 			| AlterResourceGroupStmt
-			| AlterRoleSetStmt
-			| AlterRoleStmt
 			| AlterSeqStmt
 			| AlterSystemStmt
+			| AlterTSConfigurationStmt
+			| AlterTSDictionaryStmt
+			| AlterTableStmt
 			| AlterTblSpcStmt
-<<<<<<< HEAD
-=======
 			| AlterCompositeTypeStmt
 			| AlterPublicationStmt
 			| AlterRoleSetStmt
 			| AlterRoleStmt
 			| AlterSubscriptionStmt
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-			| AlterTSConfigurationStmt
-			| AlterTSDictionaryStmt
-			| AlterTableStmt
-			| AlterCompositeTypeStmt
 			| AlterTypeStmt
 			| AlterUserMappingStmt
 			| AnalyzeStmt
@@ -1378,12 +1348,8 @@ stmt :
 			| DropOpFamilyStmt
 			| DropOwnedStmt
 			| DropPLangStmt
-<<<<<<< HEAD
 			| DropQueueStmt
 			| DropResourceGroupStmt
-			| DropRuleStmt
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			| DropStmt
 			| DropSubscriptionStmt
 			| DropTableSpaceStmt
@@ -1431,7 +1397,6 @@ stmt :
 
 /*****************************************************************************
  *
-<<<<<<< HEAD
  * Create a new Postgres Resource Queue
  *
  *****************************************************************************/
@@ -1647,7 +1612,10 @@ OptResourceGroupElem:
 				{
 					$$ = makeDefElem("memory_spill_ratio", (Node *) makeInteger($2));
 				}
-=======
+		;
+
+/*****************************************************************************
+ *
  * CALL statement
  *
  *****************************************************************************/
@@ -1658,7 +1626,6 @@ CallStmt:	CALL func_application
 					n->funccall = castNode(FuncCall, $2);
 					$$ = (Node *)n;
 				}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		;
 
 /*****************************************************************************
@@ -1967,29 +1934,10 @@ AlterRoleSetStmt:
 					n->database = $4;
 					n->setstmt = $5;
 					$$ = (Node *)n;
-<<<<<<< HEAD
-				 }
-		;
-
-
-AlterUserSetStmt:
-			ALTER USER RoleSpec opt_in_database SetResetClause
-				{
-					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
-					n->role = $3;
-					n->database = $4;
-					n->setstmt = $5;
-					$$ = (Node *)n;
 				}
 			| ALTER USER ALL opt_in_database SetResetClause
 				{
 					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
-=======
-				}
-			| ALTER USER ALL opt_in_database SetResetClause
-				{
-					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					n->role = NULL;
 					n->database = $4;
 					n->setstmt = $5;
@@ -2637,17 +2585,6 @@ AlterTableStmt:
 					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
-		|	ALTER EXTERNAL TABLE relation_expr alter_table_cmds
-				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->relation = $4;
-					n->cmds = $5;
-					n->relkind = OBJECT_FOREIGN_TABLE;
-					n->missing_ok = false;
-					$$ = (Node *)n;
-				}
-=======
 		|	ALTER TABLE relation_expr partition_cmd
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
@@ -2666,7 +2603,6 @@ AlterTableStmt:
 					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		|	ALTER TABLE ALL IN_P TABLESPACE name SET TABLESPACE name opt_nowait
 				{
 					AlterTableMoveAllStmt *n =
@@ -2687,6 +2623,15 @@ AlterTableStmt:
 					n->roles = $9;
 					n->new_tablespacename = $12;
 					n->nowait = $13;
+					$$ = (Node *)n;
+				}
+		|	ALTER EXTERNAL TABLE relation_expr alter_table_cmds
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->relation = $4;
+					n->cmds = $5;
+					n->relkind = OBJECT_FOREIGN_TABLE;
+					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
 		|	ALTER INDEX qualified_name alter_table_cmds
@@ -3473,7 +3418,6 @@ reloption_list:
 reloption_elem:
 			ColLabel '=' def_arg
 				{
-<<<<<<< HEAD
 					/*
 					 * appendoptimized is an alias for appendonly in order to
 					 * provide a reloption syntax which better reflects the
@@ -3482,12 +3426,9 @@ reloption_elem:
 					 * say appendonly.
 					 */
 					if (strcmp($1, "appendoptimized") == 0)
-						$$ = makeDefElem("appendonly", (Node *) $3);
+						$$ = makeDefElem("appendonly", (Node *) $3, @1);
 					else
-						$$ = makeDefElem($1, (Node *) $3);
-=======
-					$$ = makeDefElem($1, (Node *) $3, @1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						$$ = makeDefElem($1, (Node *) $3, @1);
 				}
 			| ColLabel
 				{
@@ -3504,7 +3445,157 @@ reloption_elem:
 				}
 		;
 
-<<<<<<< HEAD
+alter_identity_column_option_list:
+			alter_identity_column_option
+				{ $$ = list_make1($1); }
+			| alter_identity_column_option_list alter_identity_column_option
+				{ $$ = lappend($1, $2); }
+		;
+
+alter_identity_column_option:
+			RESTART
+				{
+					$$ = makeDefElem("restart", NULL, @1);
+				}
+			| RESTART opt_with NumericOnly
+				{
+					$$ = makeDefElem("restart", (Node *)$3, @1);
+				}
+			| SET SeqOptElem
+				{
+					if (strcmp($2->defname, "as") == 0 ||
+						strcmp($2->defname, "restart") == 0 ||
+						strcmp($2->defname, "owned_by") == 0)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("sequence option \"%s\" not supported here", $2->defname),
+								 parser_errposition(@2)));
+					$$ = $2;
+				}
+			| SET GENERATED generated_when
+				{
+					$$ = makeDefElem("generated", (Node *) makeInteger($3), @1);
+				}
+		;
+
+PartitionBoundSpec:
+			/* a HASH partition */
+			FOR VALUES WITH '(' hash_partbound ')'
+				{
+					ListCell   *lc;
+					PartitionBoundSpec *n = makeNode(PartitionBoundSpec);
+
+					n->strategy = PARTITION_STRATEGY_HASH;
+					n->modulus = n->remainder = -1;
+
+					foreach (lc, $5)
+					{
+						DefElem    *opt = lfirst_node(DefElem, lc);
+
+						if (strcmp(opt->defname, "modulus") == 0)
+						{
+							if (n->modulus != -1)
+								ereport(ERROR,
+										(errcode(ERRCODE_DUPLICATE_OBJECT),
+										 errmsg("modulus for hash partition provided more than once"),
+										 parser_errposition(opt->location)));
+							n->modulus = defGetInt32(opt);
+						}
+						else if (strcmp(opt->defname, "remainder") == 0)
+						{
+							if (n->remainder != -1)
+								ereport(ERROR,
+										(errcode(ERRCODE_DUPLICATE_OBJECT),
+										 errmsg("remainder for hash partition provided more than once"),
+										 parser_errposition(opt->location)));
+							n->remainder = defGetInt32(opt);
+						}
+						else
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("unrecognized hash partition bound specification \"%s\"",
+											opt->defname),
+									 parser_errposition(opt->location)));
+					}
+
+					if (n->modulus == -1)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("modulus for hash partition must be specified")));
+					if (n->remainder == -1)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("remainder for hash partition must be specified")));
+
+					n->location = @3;
+
+					$$ = n;
+				}
+
+			/* a LIST partition */
+			| FOR VALUES IN_P '(' expr_list ')'
+				{
+					PartitionBoundSpec *n = makeNode(PartitionBoundSpec);
+
+					n->strategy = PARTITION_STRATEGY_LIST;
+					n->is_default = false;
+					n->listdatums = $5;
+					n->location = @3;
+
+					$$ = n;
+				}
+
+			/* a RANGE partition */
+			| FOR VALUES FROM '(' expr_list ')' TO '(' expr_list ')'
+				{
+					PartitionBoundSpec *n = makeNode(PartitionBoundSpec);
+
+					n->strategy = PARTITION_STRATEGY_RANGE;
+					n->is_default = false;
+					n->lowerdatums = $5;
+					n->upperdatums = $9;
+					n->location = @3;
+
+					$$ = n;
+				}
+
+			/* a DEFAULT partition */
+			| DEFAULT
+				{
+					PartitionBoundSpec *n = makeNode(PartitionBoundSpec);
+
+					n->is_default = true;
+					n->location = @1;
+
+					$$ = n;
+				}
+		;
+
+hash_partbound_elem:
+		NonReservedWord Iconst
+			{
+				$$ = makeDefElem($1, (Node *)makeInteger($2), @1);
+			}
+		;
+
+hash_partbound:
+		hash_partbound_elem
+			{
+				$$ = list_make1($1);
+			}
+		| hash_partbound ',' hash_partbound_elem
+			{
+				$$ = lappend($1, $3);
+			}
+		;
+
+
+
+/*****************************************************************************
+ *
+ *	ALTER TABLE legacy GPDB partition manipulation subcommands.
+ *
+ *****************************************************************************/
 opt_table_partition_split_into: 
 			INTO '(' 
             alter_table_partition_id_spec_with_opt_default ','
@@ -4037,151 +4128,6 @@ alter_table_partition_cmd:
 				}
 		;
 
-=======
-alter_identity_column_option_list:
-			alter_identity_column_option
-				{ $$ = list_make1($1); }
-			| alter_identity_column_option_list alter_identity_column_option
-				{ $$ = lappend($1, $2); }
-		;
-
-alter_identity_column_option:
-			RESTART
-				{
-					$$ = makeDefElem("restart", NULL, @1);
-				}
-			| RESTART opt_with NumericOnly
-				{
-					$$ = makeDefElem("restart", (Node *)$3, @1);
-				}
-			| SET SeqOptElem
-				{
-					if (strcmp($2->defname, "as") == 0 ||
-						strcmp($2->defname, "restart") == 0 ||
-						strcmp($2->defname, "owned_by") == 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("sequence option \"%s\" not supported here", $2->defname),
-								 parser_errposition(@2)));
-					$$ = $2;
-				}
-			| SET GENERATED generated_when
-				{
-					$$ = makeDefElem("generated", (Node *) makeInteger($3), @1);
-				}
-		;
-
-PartitionBoundSpec:
-			/* a HASH partition */
-			FOR VALUES WITH '(' hash_partbound ')'
-				{
-					ListCell   *lc;
-					PartitionBoundSpec *n = makeNode(PartitionBoundSpec);
-
-					n->strategy = PARTITION_STRATEGY_HASH;
-					n->modulus = n->remainder = -1;
-
-					foreach (lc, $5)
-					{
-						DefElem    *opt = lfirst_node(DefElem, lc);
-
-						if (strcmp(opt->defname, "modulus") == 0)
-						{
-							if (n->modulus != -1)
-								ereport(ERROR,
-										(errcode(ERRCODE_DUPLICATE_OBJECT),
-										 errmsg("modulus for hash partition provided more than once"),
-										 parser_errposition(opt->location)));
-							n->modulus = defGetInt32(opt);
-						}
-						else if (strcmp(opt->defname, "remainder") == 0)
-						{
-							if (n->remainder != -1)
-								ereport(ERROR,
-										(errcode(ERRCODE_DUPLICATE_OBJECT),
-										 errmsg("remainder for hash partition provided more than once"),
-										 parser_errposition(opt->location)));
-							n->remainder = defGetInt32(opt);
-						}
-						else
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("unrecognized hash partition bound specification \"%s\"",
-											opt->defname),
-									 parser_errposition(opt->location)));
-					}
-
-					if (n->modulus == -1)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("modulus for hash partition must be specified")));
-					if (n->remainder == -1)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("remainder for hash partition must be specified")));
-
-					n->location = @3;
-
-					$$ = n;
-				}
-
-			/* a LIST partition */
-			| FOR VALUES IN_P '(' expr_list ')'
-				{
-					PartitionBoundSpec *n = makeNode(PartitionBoundSpec);
-
-					n->strategy = PARTITION_STRATEGY_LIST;
-					n->is_default = false;
-					n->listdatums = $5;
-					n->location = @3;
-
-					$$ = n;
-				}
-
-			/* a RANGE partition */
-			| FOR VALUES FROM '(' expr_list ')' TO '(' expr_list ')'
-				{
-					PartitionBoundSpec *n = makeNode(PartitionBoundSpec);
-
-					n->strategy = PARTITION_STRATEGY_RANGE;
-					n->is_default = false;
-					n->lowerdatums = $5;
-					n->upperdatums = $9;
-					n->location = @3;
-
-					$$ = n;
-				}
-
-			/* a DEFAULT partition */
-			| DEFAULT
-				{
-					PartitionBoundSpec *n = makeNode(PartitionBoundSpec);
-
-					n->is_default = true;
-					n->location = @1;
-
-					$$ = n;
-				}
-		;
-
-hash_partbound_elem:
-		NonReservedWord Iconst
-			{
-				$$ = makeDefElem($1, (Node *)makeInteger($2), @1);
-			}
-		;
-
-hash_partbound:
-		hash_partbound_elem
-			{
-				$$ = list_make1($1);
-			}
-		| hash_partbound ',' hash_partbound_elem
-			{
-				$$ = lappend($1, $3);
-			}
-		;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*****************************************************************************
  *
@@ -4304,33 +4250,22 @@ ClosePortalStmt:
  *
  *****************************************************************************/
 
-<<<<<<< HEAD
-CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
-			copy_from opt_program copy_file_name copy_delimiter opt_with copy_options
-			OptSingleRowErrorHandling skip_external_partition
-=======
 CopyStmt:	COPY opt_binary qualified_name opt_column_list
 			copy_from opt_program copy_file_name copy_delimiter opt_with
 			copy_options where_clause
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			OptSingleRowErrorHandling skip_external_partition
 				{
 					CopyStmt *n = makeNode(CopyStmt);
 					n->relation = $3;
 					n->query = NULL;
 					n->attlist = $4;
-<<<<<<< HEAD
-					n->is_from = $6;
-					n->is_program = $7;
-					n->filename = $8;
-					n->sreh = $12;
-					n->partitions = NULL;
-					n->ao_segnos = NIL;
-=======
 					n->is_from = $5;
 					n->is_program = $6;
 					n->filename = $7;
 					n->whereClause = $11;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+					n->sreh = $12;
+					n->partitions = NULL;
+					n->ao_segnos = NIL;
 
 					if (n->is_program && n->filename == NULL)
 						ereport(ERROR,
@@ -4567,13 +4502,9 @@ copy_generic_opt_arg_list_item:
  *****************************************************************************/
 
 CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
-<<<<<<< HEAD
-			OptInherit OptWith OnCommitOption OptTableSpace OptDistributedBy 
-			OptTabPartitionBy
-=======
 			OptInherit OptPartitionSpec table_access_method_clause OptWith
 			OnCommitOption OptTableSpace
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			OptDistributedBy OptTabPartitionBy				
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->relpersistence = $2;
@@ -4594,14 +4525,9 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name '('
-<<<<<<< HEAD
-			OptTableElementList ')' OptInherit OptWith OnCommitOption
-			OptTableSpace OptDistributedBy 
-			OptTabPartitionBy
-=======
 			OptTableElementList ')' OptInherit OptPartitionSpec table_access_method_clause
 			OptWith OnCommitOption OptTableSpace
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			OptDistributedBy OptTabPartitionBy				
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$7->relpersistence = $2;
@@ -4622,13 +4548,9 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE qualified_name OF any_name
-<<<<<<< HEAD
-			OptTypedTableElementList OptWith OnCommitOption OptTableSpace
-			OptDistributedBy OptTabPartitionBy
-=======
 			OptTypedTableElementList OptPartitionSpec table_access_method_clause
 			OptWith OnCommitOption OptTableSpace
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			OptDistributedBy OptTabPartitionBy
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->relpersistence = $2;
@@ -4650,13 +4572,9 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name OF any_name
-<<<<<<< HEAD
-			OptTypedTableElementList OptWith OnCommitOption OptTableSpace
-			OptDistributedBy OptTabPartitionBy
-=======
 			OptTypedTableElementList OptPartitionSpec table_access_method_clause
 			OptWith OnCommitOption OptTableSpace
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			OptDistributedBy OptTabPartitionBy
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$7->relpersistence = $2;
@@ -5266,7 +5184,6 @@ columnElem: ColId
 				}
 		;
 
-<<<<<<< HEAD
 distributed_by_list:
 			distributed_by_elem						{ $$ = list_make1($1); }
 			| distributed_by_list ',' distributed_by_elem
@@ -5298,10 +5215,9 @@ distributed_by_elem: ColId opt_class
 					$$->name = $1;
 					$$->opclass = $2;
 				}
-=======
+
 opt_c_include:	INCLUDE '(' columnList ')'			{ $$ = $3; }
 			 |		/* EMPTY */						{ $$ = NIL; }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		;
 
 key_match:  MATCH FULL
@@ -5474,7 +5390,6 @@ OptConsTableSpace:   USING INDEX TABLESPACE name	{ $$ = $4; }
 ExistingIndex:   USING INDEX index_name				{ $$ = $3; }
 		;
 
-<<<<<<< HEAD
 DistributedBy:   DISTRIBUTED BY  '(' distributed_by_list ')'
 			{
 				DistributedBy *distributedBy = makeNode(DistributedBy);
@@ -5505,7 +5420,7 @@ OptDistributedBy:   DistributedBy			{ $$ = $1; }
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-/* START PARTITION RULES */
+/* START GPDB LEGACY PARTITION SYNTAX RULES */
 
 OptTabPartitionColumnEncList: TabPartitionColumnEncList { $$ = $1; }
 			| /*EMPTY*/ { $$ = NULL; }
@@ -6011,9 +5926,8 @@ TabSubPartition:
 					$$ = (Node *)pby;
 				}
 		;
-/* END PARTITION RULES */
+/* END GPDB LEGACY PARTITION SYNTAX RULES */
 
-=======
 /*****************************************************************************
  *
  *		QUERY :
@@ -6054,7 +5968,6 @@ CreateStatsStmt:
 					$$ = (Node *)n;
 				}
 			;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*****************************************************************************
  *
@@ -8072,41 +7985,27 @@ CreateAssertionStmt:
  *****************************************************************************/
 
 DefineStmt:
-<<<<<<< HEAD
-			CREATE opt_ordered AGGREGATE func_name aggr_args definition
-=======
-			CREATE opt_or_replace AGGREGATE func_name aggr_args definition
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			CREATE opt_or_replace opt_ordered AGGREGATE func_name aggr_args definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_AGGREGATE;
 					n->oldstyle = false;
-<<<<<<< HEAD
-=======
 					n->replace = $2;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-					n->defnames = $4;
-					n->args = $5;
-					n->definition = $6;
+					n->defnames = $5;
+					n->args = $6;
+					n->definition = $7;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
-			| CREATE opt_ordered AGGREGATE func_name old_aggr_definition
-=======
-			| CREATE opt_or_replace AGGREGATE func_name old_aggr_definition
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			| CREATE opt_or_replace opt_ordered AGGREGATE func_name old_aggr_definition
 				{
 					/* old-style (pre-8.2) syntax for CREATE AGGREGATE */
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_AGGREGATE;
 					n->oldstyle = true;
-<<<<<<< HEAD
-=======
 					n->replace = $2;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-					n->defnames = $4;
+					n->defnames = $5;
 					n->args = NIL;
-					n->definition = $5;
+					n->definition = $6;
 					$$ = (Node *)n;
 				}
 			| CREATE OPERATOR any_operator definition
@@ -8273,7 +8172,6 @@ def_list:	def_elem								{ $$ = list_make1($1); }
 
 def_elem:	ColLabel '=' def_arg
 				{
-<<<<<<< HEAD
 					/*
 					 * appendoptimized is an alias for appendonly in order to
 					 * provide a reloption syntax which better reflects the
@@ -8282,12 +8180,9 @@ def_elem:	ColLabel '=' def_arg
 					 * say appendonly.
 					 */
 					if (strcmp($1, "appendoptimized") == 0)
-						$$ = makeDefElem("appendonly", (Node *) $3);
+						$$ = makeDefElem("appendonly", (Node *) $3, @1);
 					else
-						$$ = makeDefElem($1, (Node *) $3);
-=======
-					$$ = makeDefElem($1, (Node *) $3, @1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						$$ = makeDefElem($1, (Node *) $3, @1);
 				}
 			| ColLabel
 				{
@@ -8303,17 +8198,7 @@ def_arg:	func_type						{ $$ = (Node *)$1; }
 			| qual_all_Op					{ $$ = (Node *)$1; }
 			| NumericOnly					{ $$ = (Node *)$1; }
 			| Sconst						{ $$ = (Node *)makeString($1); }
-<<<<<<< HEAD
-
-			/* 
-			 * For compresstype=none in ENCODING clauses. Allows us to avoid
-			 * promoting that to a reserved word or adding the column reserved
-			 * list here which could get tricky.
-			 */
-			| NONE							{ $$ = (Node *)makeString(pstrdup("none")); }
-=======
 			| NONE							{ $$ = (Node *)makeString(pstrdup($1)); }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		;
 
 old_aggr_definition: '(' old_aggr_list ')'			{ $$ = $2; }
@@ -8784,13 +8669,10 @@ drop_type_any_name:
 			| MATERIALIZED VIEW						{ $$ = OBJECT_MATVIEW; }
 			| INDEX									{ $$ = OBJECT_INDEX; }
 			| FOREIGN TABLE							{ $$ = OBJECT_FOREIGN_TABLE; }
-<<<<<<< HEAD
 			| EXTERNAL TABLE						{ $$ = OBJECT_FOREIGN_TABLE; }
 			| EXTERNAL WEB TABLE					{ $$ = OBJECT_FOREIGN_TABLE; }	
 			| ACCESS METHOD							{ $$ = OBJECT_ACCESS_METHOD; }
 			| EVENT TRIGGER 						{ $$ = OBJECT_EVENT_TRIGGER; }
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			| COLLATION								{ $$ = OBJECT_COLLATION; }
 			| CONVERSION_P							{ $$ = OBJECT_CONVERSION; }
 			| STATISTICS							{ $$ = OBJECT_STATISTIC_EXT; }
@@ -9874,16 +9756,13 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->initdeferred = false;
 					n->transformed = false;
 					n->if_not_exists = false;
-<<<<<<< HEAD
+					n->reset_default_tblspc = false;
 
 					if (n->concurrent)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("CREATE INDEX CONCURRENTLY is not supported")));
 
-=======
-					n->reset_default_tblspc = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					$$ = (Node *)n;
 				}
 			| CREATE opt_unique INDEX opt_concurrently IF_P NOT EXISTS index_name
@@ -9911,16 +9790,13 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->initdeferred = false;
 					n->transformed = false;
 					n->if_not_exists = true;
-<<<<<<< HEAD
+					n->reset_default_tblspc = false;
 
 					if (n->concurrent)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("CREATE INDEX CONCURRENTLY is not supported")));
 
-=======
-					n->reset_default_tblspc = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					$$ = (Node *)n;
 				}
 		;
@@ -11852,11 +11728,6 @@ operator_def_list:	operator_def_elem								{ $$ = list_make1($1); }
 		;
 
 operator_def_elem: ColLabel '=' NONE
-<<<<<<< HEAD
-						{ $$ = makeDefElem($1, NULL); }
-				   | ColLabel '=' operator_def_arg
-						{ $$ = makeDefElem($1, (Node *) $3); }
-=======
 						{ $$ = makeDefElem($1, NULL, @1); }
 				   | ColLabel '=' operator_def_arg
 						{ $$ = makeDefElem($1, (Node *) $3, @1); }
@@ -11869,19 +11740,6 @@ operator_def_arg:
 			| qual_all_Op					{ $$ = (Node *)$1; }
 			| NumericOnly					{ $$ = (Node *)$1; }
 			| Sconst						{ $$ = (Node *)makeString($1); }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-		;
-
-/*
- * GPDB: Like def_arg but without the gpdb specific 'NONE' and 'ROW' and closer
- * to upstream.
- */
-operator_def_arg:
-					func_type						{ $$ = (Node *)$1; }
-					| reserved_keyword				{ $$ = (Node *)makeString(pstrdup($1)); }
-					| qual_all_Op					{ $$ = (Node *)$1; }
-					| NumericOnly					{ $$ = (Node *)$1; }
-					| Sconst						{ $$ = (Node *)makeString($1); }
 		;
 
 /*****************************************************************************
@@ -13164,11 +13022,11 @@ vac_analyze_option_list:
 				{
 					$$ = list_make1($1);
 				}
-<<<<<<< HEAD
-		;
-
-AnalyzeStmt:
-			analyze_keyword opt_verbose opt_rootonly_all
+			| vac_analyze_option_list ',' vac_analyze_option_elem
+				{
+					$$ = lappend($1, $3);
+				}
+			| analyze_keyword opt_verbose opt_rootonly_all FULLSCAN qualified_name opt_name_list
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->options = VACOPT_ANALYZE;
@@ -13176,34 +13034,9 @@ AnalyzeStmt:
 						n->options |= VACOPT_VERBOSE;
 					if ($3)
 						n->options |= VACOPT_ROOTONLY;
-					n->relation = NULL;
-					n->va_cols = NIL;
-					$$ = (Node *)n;
-				}
-			| analyze_keyword opt_verbose qualified_name opt_name_list
-				{
-					VacuumStmt *n = makeNode(VacuumStmt);
-					n->options = VACOPT_ANALYZE;
-					if ($2)
-						n->options |= VACOPT_VERBOSE;
-					n->relation = $3;
-					n->va_cols = $4;
-					$$ = (Node *)n;
-=======
-			| vac_analyze_option_list ',' vac_analyze_option_elem
-				{
-					$$ = lappend($1, $3);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-				}
-			| analyze_keyword opt_verbose FULLSCAN qualified_name opt_name_list
-				{
-					VacuumStmt *n = makeNode(VacuumStmt);
-					n->options = VACOPT_ANALYZE;
-					if ($2)
-						n->options |= VACOPT_VERBOSE;
 					n->options |= VACOPT_FULLSCAN;
-					n->relation = $4;
-					n->va_cols = $5;
+					n->relation = $5;
+					n->va_cols = $6;
 					$$ = (Node *)n;
 				}
 			| analyze_keyword opt_verbose ROOTPARTITION qualified_name opt_name_list
@@ -13252,18 +13085,13 @@ opt_verbose:
 			| /*EMPTY*/								{ $$ = false; }
 		;
 
-<<<<<<< HEAD
 opt_rootonly_all:
-			ROOTPARTITION ALL						{ $$ = TRUE; }
-			| /*EMPTY*/								{ $$ = FALSE; }
+			ROOTPARTITION ALL						{ $$ = true; }
+			| /*EMPTY*/								{ $$ = false; }
 		;
 			
-opt_full:	FULL									{ $$ = TRUE; }
-			| /*EMPTY*/								{ $$ = FALSE; }
-=======
 opt_full:	FULL									{ $$ = true; }
 			| /*EMPTY*/								{ $$ = false; }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		;
 
 opt_freeze: FREEZE									{ $$ = true; }
@@ -13314,37 +13142,24 @@ ExplainStmt:
 		| EXPLAIN analyze_keyword opt_verbose opt_dxl ExplainableStmt
 				{
 					ExplainStmt *n = makeNode(ExplainStmt);
-<<<<<<< HEAD
 					n->query = $5;
-					n->options = list_make1(makeDefElem("analyze", NULL));
-					if ($3)
-						n->options = lappend(n->options,
-											 makeDefElem("verbose", NULL));
-					if ($4)
-						n->options = lappend(n->options,
-											 makeDefElem("dxl", NULL));
-=======
-					n->query = $4;
 					n->options = list_make1(makeDefElem("analyze", NULL, @2));
 					if ($3)
 						n->options = lappend(n->options,
 											 makeDefElem("verbose", NULL, @3));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+					if ($4)
+						n->options = lappend(n->options,
+											 makeDefElem("dxl", NULL, @4));
 					$$ = (Node *) n;
 				}
 		| EXPLAIN VERBOSE opt_dxl ExplainableStmt
 				{
 					ExplainStmt *n = makeNode(ExplainStmt);
-<<<<<<< HEAD
 					n->query = $4;
-					n->options = list_make1(makeDefElem("verbose", NULL));
+					n->options = list_make1(makeDefElem("verbose", NULL, @2));
 					if ($3)
 						n->options = lappend(n->options,
-											 makeDefElem("dxl", NULL));
-=======
-					n->query = $3;
-					n->options = list_make1(makeDefElem("verbose", NULL, @2));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+											 makeDefElem("dxl", NULL, @3));
 					$$ = (Node *) n;
 				}
 		| EXPLAIN '(' explain_option_list ')' ExplainableStmt
@@ -16926,31 +16741,6 @@ opt_partition_clause: PARTITION BY expr_list { $$ = $3; }
  * frameOptions, startOffset, and endOffset.
  */
 opt_frame_clause:
-<<<<<<< HEAD
-			RANGE frame_extent
-				window_frame_exclusion
-				{
-					WindowDef *n = $2;
-					n->frameOptions |= FRAMEOPTION_NONDEFAULT | FRAMEOPTION_RANGE;
-#if 0
-					if (n->frameOptions & (FRAMEOPTION_START_VALUE_PRECEDING |
-										   FRAMEOPTION_END_VALUE_PRECEDING))
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("RANGE PRECEDING is only supported with UNBOUNDED"),
-								 parser_errposition(@1)));
-					if (n->frameOptions & (FRAMEOPTION_START_VALUE_FOLLOWING |
-										   FRAMEOPTION_END_VALUE_FOLLOWING))
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("RANGE FOLLOWING is only supported with UNBOUNDED"),
-								 parser_errposition(@1)));
-#endif
-					$$ = n;
-				}
-			| ROWS frame_extent
-				window_frame_exclusion
-=======
 			RANGE frame_extent opt_window_exclusion_clause
 				{
 					WindowDef *n = $2;
@@ -16959,7 +16749,6 @@ opt_frame_clause:
 					$$ = n;
 				}
 			| ROWS frame_extent opt_window_exclusion_clause
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				{
 					WindowDef *n = $2;
 					n->frameOptions |= FRAMEOPTION_NONDEFAULT | FRAMEOPTION_ROWS;
@@ -17087,20 +16876,12 @@ frame_bound:
 				}
 		;
 
-<<<<<<< HEAD
-window_frame_exclusion: EXCLUDE CURRENT_P ROW { checkWindowExclude(); $$ = 0; }
-			| EXCLUDE GROUP_P { checkWindowExclude(); $$ = 0; }
-			| EXCLUDE TIES { checkWindowExclude(); $$ = 0; }
-			| EXCLUDE NO OTHERS { checkWindowExclude(); $$ = 0; }
-			| /*EMPTY*/ { $$ = 0; }
-=======
 opt_window_exclusion_clause:
 			EXCLUDE CURRENT_P ROW	{ $$ = FRAMEOPTION_EXCLUDE_CURRENT_ROW; }
 			| EXCLUDE GROUP_P		{ $$ = FRAMEOPTION_EXCLUDE_GROUP; }
 			| EXCLUDE TIES			{ $$ = FRAMEOPTION_EXCLUDE_TIES; }
 			| EXCLUDE NO OTHERS		{ $$ = 0; }
 			| /*EMPTY*/				{ $$ = 0; }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		;
 
 
@@ -19422,23 +19203,6 @@ TableFuncTypeName(List *columns)
 	result->setof = true;
 
 	return result;
-}
-
-static void 
-checkWindowExclude(void)
-{
-	/*
-	 * because the syntax has historically existed without doing anything
-	 * we have chosen to add a guc to allow simply ignoring the exclude clause
-	 * rather than raising an error.
-	 */
-	if (gp_ignore_window_exclude)
-		return;
-
-	/* MPP-13628 */
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("window EXCLUDE clause not yet implemented")));
 }
 
 /*
