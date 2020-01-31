@@ -19,12 +19,10 @@ override CPPFLAGS := -I$(libpq_srcdir) -DFRONTEND $(CPPFLAGS)
 LDFLAGS_INTERNAL += $(libpq_pgport)
 
 OBJS	= pg_rewind.o parsexlog.o xlogreader.o datapagemap.o timeline.o \
-<<<<<<< HEAD
-	fetch.o file_ops.o copy_fetch.o libpq_fetch.o filemap.o logging.o compat.o \
-=======
-	fetch.o file_ops.o copy_fetch.o libpq_fetch.o filemap.o \
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	fetch.o file_ops.o copy_fetch.o libpq_fetch.o filemap.o logging.o \
 	$(WIN32RES)
+
+OBJS += compat.o
 
 EXTRA_CLEAN = xlogreader.c compat.c
 
@@ -44,6 +42,7 @@ xlogreader.c: % : $(top_srcdir)/src/backend/access/transam/%
 	rm -f $@ && $(LN_S) $< .
 
 # compat.c is symlinked from the PostgreSQL sources.
+# GPDB_12_MERGE_FIXME: is it still needed?
 compat.c: % : $(top_srcdir)/src/bin/pg_xlogdump/%
 	rm -f $@ && $(LN_S) $< .
 

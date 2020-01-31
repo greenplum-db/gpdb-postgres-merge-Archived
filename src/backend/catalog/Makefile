@@ -36,23 +36,12 @@ CATALOG_JSON:= $(addprefix $(top_srcdir)/gpMgmt/bin/gppylib/data/, $(addsuffix .
 
 include $(top_srcdir)/src/backend/common.mk
 
-<<<<<<< HEAD
-all: $(BKIFILES) schemapg.h $(CATALOG_JSON) postgres.description postgres.shdescription
-
-# Note: there are some undocumented dependencies on the ordering in which
-# the catalog header files are assembled into postgres.bki.  In particular,
-# indexing.h had better be last, and toasting.h just before it.
-
-POSTGRES_BKI_SRCS = $(addprefix $(top_srcdir)/src/include/catalog/,\
-	pg_type.h pg_attribute.h pg_class.h \
-=======
 # Note: the order of this list determines the order in which the catalog
 # header files are assembled into postgres.bki.  BKI_BOOTSTRAP catalogs
 # must appear first, and there are reputedly other, undocumented ordering
 # dependencies.
 CATALOG_HEADERS := \
 	pg_proc.h pg_type.h pg_attribute.h pg_class.h \
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	pg_attrdef.h pg_constraint.h pg_inherits.h pg_index.h pg_operator.h \
 	pg_opfamily.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
 	pg_language.h pg_largeobject_metadata.h pg_largeobject.h pg_aggregate.h \
@@ -84,15 +73,7 @@ CATALOG_HEADERS := \
 	pg_sequence.h pg_publication.h pg_publication_rel.h pg_subscription.h \
 	pg_subscription_rel.h
 
-<<<<<<< HEAD
-POSTGRES_BKI_SRCS := pg_proc_combined.h $(POSTGRES_BKI_SRCS)
-
-
-# location of Catalog.pm
-catalogdir = $(top_srcdir)/src/backend/catalog
-=======
 GENERATED_HEADERS := $(CATALOG_HEADERS:%.h=%_d.h) schemapg.h
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # In the list of headers used to assemble postgres.bki, indexing.h needs
 # be last, and toasting.h just before it.  This ensures we don't try to
@@ -101,44 +82,13 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\
 	$(CATALOG_HEADERS) toasting.h indexing.h \
 	)
 
-<<<<<<< HEAD
-# see notes in src/backend/parser/Makefile about multiple output files
-postgres.description: postgres.bki
-	touch $@
-
-postgres.shdescription: postgres.bki
-	touch $@
-
-schemapg.h: postgres.bki
-	touch $@
-
-# In Greenplum, contents of the pg_proc catalog is in two files, pg_proc.h
-# and pg_proc_gp.h. Combine them into a single file, so that genbki.pl can
-# process it.
-pg_proc_combined.h: $(top_srcdir)/src/include/catalog/pg_proc.h $(top_srcdir)/src/include/catalog/pg_proc_gp.h
-	cat $^ > $@
-
-catalog_json: $(CATALOG_JSON)
-
-$(CATALOG_JSON): process_foreign_keys.pl $(POSTGRES_BKI_SRCS) $(top_srcdir)/src/include/catalog/catversion.h
-	cat $(POSTGRES_BKI_SRCS) $(top_srcdir)/src/include/catalog/catversion.h | $(PERL) process_foreign_keys.pl > $@
-
-# Technically, this should depend on Makefile.global, but then
-# postgres.bki would need to be rebuilt after every configure run,
-# even in distribution tarballs.  So this is cheating a bit, but it
-# will achieve the goal of updating the version number when it
-# changes.
-postgres.bki: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS) $(top_srcdir)/configure $(top_srcdir)/src/include/catalog/duplicate_oids
-	cd $(top_srcdir)/src/include/catalog && $(PERL) ./duplicate_oids
-	$(PERL) -I $(catalogdir) $< $(pg_includes) --set-version=$(PG_MAJORVERSION) $(POSTGRES_BKI_SRCS)
-=======
 # The .dat files we need can just be listed alphabetically.
 POSTGRES_BKI_DATA = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_aggregate.dat pg_am.dat pg_amop.dat pg_amproc.dat pg_authid.dat \
 	pg_cast.dat pg_class.dat pg_collation.dat pg_conversion.dat \
 	pg_database.dat pg_language.dat \
 	pg_namespace.dat pg_opclass.dat pg_operator.dat pg_opfamily.dat \
-	pg_pltemplate.dat pg_proc.dat pg_range.dat pg_tablespace.dat \
+	pg_pltemplate.dat pg_proc_combined.dat pg_range.dat pg_tablespace.dat \
 	pg_ts_config.dat pg_ts_config_map.dat pg_ts_dict.dat pg_ts_parser.dat \
 	pg_ts_template.dat pg_type.dat \
 	)
@@ -148,7 +98,17 @@ all: distprep generated-header-symlinks
 distprep: bki-stamp
 
 .PHONY: generated-header-symlinks
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+# In Greenplum, contents of the pg_proc catalog is in two files, pg_proc.h
+# and pg_proc_gp.h. Combine them into a single file, so that genbki.pl can
+# process it.
+pg_proc_combined.dat: $(top_srcdir)/src/include/catalog/pg_proc.dat $(top_srcdir)/src/include/catalog/pg_proc_gp.dat
+	cat $^ > $@
+
+catalog_json: $(CATALOG_JSON)
+
+$(CATALOG_JSON): process_foreign_keys.pl $(POSTGRES_BKI_SRCS) $(top_srcdir)/src/include/catalog/catversion.h
+	cat $(POSTGRES_BKI_SRCS) $(top_srcdir)/src/include/catalog/catversion.h | $(PERL) process_foreign_keys.pl > $@
 
 generated-header-symlinks: $(top_builddir)/src/include/catalog/header-stamp
 
@@ -200,7 +160,7 @@ uninstall-data:
 # and the generated headers are in the distribution tarball,
 # so they are not cleaned here.
 clean:
-	rm -f pg_proc_combined.h
+	rm -f pg_proc_combined.dat
 
 maintainer-clean: clean
 	rm -f bki-stamp $(BKIFILES) $(GENERATED_HEADERS)

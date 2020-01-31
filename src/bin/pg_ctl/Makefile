@@ -21,24 +21,14 @@ include $(top_builddir)/src/Makefile.global
 ifeq ($(PORTNAME), win32)
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS_INTERNAL += $(libpq_pgport)
-<<<<<<< HEAD
-
-ifeq ($(PORTNAME),openbsd)
-override CFLAGS += -pthread
-=======
 SUBMAKE_LIBPQ := submake-libpq
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 endif
 
 OBJS=	pg_ctl.o $(WIN32RES)
 
 all: pg_ctl
 
-<<<<<<< HEAD
-pg_ctl: $(OBJS) | submake-libpq submake-libpgport
-=======
 pg_ctl: $(OBJS) | submake-libpgport $(SUBMAKE_LIBPQ)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 install: all installdirs

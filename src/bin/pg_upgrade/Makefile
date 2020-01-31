@@ -43,25 +43,15 @@ clean distclean maintainer-clean:
 		   clusterConfigPostgresAddonsFile clusterConfigFile gpdemo-env.sh \
 		   hostfile regression.diffs aomd_filehandler.c
 
-<<<<<<< HEAD
 greenplum/aomd_filehandler.c: $(top_srcdir)/src/backend/access/appendonly/aomd_filehandler.c
 	rm -f $@ && $(LN_S) ../$< $@
-
-check: test_gpdb.sh all
-	bash $< -C -r -s -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
 
 # GPDB_95_MERGE_FIXME:
 # GPDB want to run installcheck of pg_upgrade in the end of installcheck-world
 # let installcheck be a no-op, so "make -C src/bin/ installcheck" does nothing on
 # src/bin/pg_upgrade, the real test of pg_upgrade will be triggerred by
 # "make check" in the end of installcheck-world, see GNUmakefile.in
-#
-#installcheck: test_gpdb.sh all
-#	bash $< -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
 
-perfcheck: test_gpdb.sh all
-	bash $< -p -r -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
-=======
 # When $(MAKE) is present, make automatically infers that this is a
 # recursive make. which is not actually what we want here, as that
 # e.g. prevents output synchronization from working (as make thinks
@@ -71,9 +61,11 @@ perfcheck: test_gpdb.sh all
 # See https://www.gnu.org/software/make/manual/html_node/MAKE-Variable.html#MAKE-Variable
 NOTSUBMAKEMAKE=$(MAKE)
 
-check: test.sh all temp-install
-	MAKE=$(NOTSUBMAKEMAKE) $(with_temp_install) bindir=$(abs_top_builddir)/tmp_install/$(bindir) EXTRA_REGRESS_OPTS="$(EXTRA_REGRESS_OPTS)" $(SHELL) $<
+check: test_gpdb.sh all
+	bash $< -C -r -s -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
+
+perfcheck: test_gpdb.sh all
+	bash $< -p -r -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
 
 # installcheck is not supported because there's no meaningful way to test
 # pg_upgrade against a single already-running server
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

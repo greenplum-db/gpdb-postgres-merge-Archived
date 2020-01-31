@@ -22,14 +22,7 @@ override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-DECPG_COMPILE \
 	$(CPPFLAGS)
 
-<<<<<<< HEAD
-ifeq ($(GCC), yes)
-override CFLAGS +=  $(PTHREAD_CFLAGS) -DECPG_COMPILE -Wno-unused-label -Wno-error
-endif
-override CFLAGS += $(PTHREAD_CFLAGS) -DECPG_COMPILE
-=======
 override CFLAGS += $(PTHREAD_CFLAGS)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 OBJS=	preproc.o pgc.o type.o ecpg.o output.o parser.o \
 	keywords.o c_keywords.o ecpg_keywords.o typename.o descriptor.o variable.o \
@@ -59,13 +52,6 @@ typename.c: % : $(top_srcdir)/src/interfaces/ecpg/ecpglib/%
 preproc.h: preproc.c
 	touch $@
 
-<<<<<<< HEAD
-# See notes in src/backend/parser/Makefile about the following two rules
-preproc.h: preproc.c
-	touch $@
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 preproc.c: BISONFLAGS += -d
 
 preproc.y: ../../../backend/parser/gram.y parse.pl ecpg.addons ecpg.header ecpg.tokens ecpg.trailer ecpg.type
@@ -100,14 +86,7 @@ uninstall:
 # are in the distribution tarball, so they are not cleaned here.
 clean distclean:
 	rm -f *.o ecpg$(X)
-<<<<<<< HEAD
-# garbage from partial builds
-	@rm -f y.tab.c y.tab.h preproc.tab.c preproc.tab.y preproc.tab.h
-# garbage from development
-	@rm -f core a.out *.output *.tab.c
-=======
 	rm -f typename.c
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 maintainer-clean: distclean
 	rm -f preproc.y preproc.c preproc.h pgc.c c_kwlist_d.h ecpg_kwlist_d.h

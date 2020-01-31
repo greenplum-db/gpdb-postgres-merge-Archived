@@ -109,13 +109,12 @@ REGRESS = \
 	plpython_quote \
 	plpython_composite \
 	plpython_subtransaction \
-<<<<<<< HEAD
-	plpython_returns \
-	plpython_gpdb \
-=======
 	plpython_transaction \
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	plpython_drop
+
+REGRESS += \
+	plpython_returns \
+	plpython_gpdb
 
 REGRESS_PLPYTHON3_MANGLE := $(REGRESS)
 

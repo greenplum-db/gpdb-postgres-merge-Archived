@@ -2,11 +2,7 @@
 #
 # Makefile for src/test/ssl
 #
-<<<<<<< HEAD
-# Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
-=======
 # Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/test/ssl/Makefile
@@ -145,12 +141,9 @@ clean distclean maintainer-clean:
 check:
 ifeq ($(with_openssl),yes)
 	$(prove_check)
-<<<<<<< HEAD
 else
 	@echo "SSL is disabled for this build"
 endif
-=======
 
 installcheck:
 	$(prove_installcheck)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

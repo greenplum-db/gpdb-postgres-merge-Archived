@@ -41,17 +41,9 @@ OBJS = $(LIBOBJS) $(PG_CRC32C_OBJS) chklocale.o erand48.o inet_net_ntop.o \
 	qsort.o qsort_arg.o quotes.o snprintf.o sprompt.o strerror.o \
 	tar.o thread.o
 
-<<<<<<< HEAD
-ifeq ($(enable_strong_random), yes)
-OBJS += pg_strong_random.o
-endif
-
-# foo_srv.o and foo.o are both built from foo.c, but only foo.o has -DFRONTEND
-=======
 # libpgport.a, libpgport_shlib.a, and libpgport_srv.a contain the same files
 # foo.o, foo_shlib.o, and foo_srv.o are all built from foo.c
 OBJS_SHLIB = $(OBJS:%.o=%_shlib.o)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 OBJS_SRV = $(OBJS:%.o=%_srv.o)
 
 all: libpgport.a libpgport_shlib.a libpgport_srv.a

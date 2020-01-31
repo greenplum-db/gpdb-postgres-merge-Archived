@@ -22,12 +22,7 @@ SUBDIRS = \
 		  unsafe_tests \
 		  worker_spi
 
-<<<<<<< HEAD
 # GPDB subdirs
 SUBDIRS += test_planner
 
-all: submake-generated-headers
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 $(recurse)

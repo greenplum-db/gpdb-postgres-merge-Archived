@@ -14,14 +14,8 @@ include $(top_builddir)/src/Makefile.global
 
 SUBDIRS = perl regress isolation modules authentication recovery subscription
 
-<<<<<<< HEAD
-SUBDIRS += perl fsync walrep heap_checksum isolation2 kerberos
+SUBDIRS += fsync walrep heap_checksum isolation2
 
-# We don't build or execute examples/, locale/, or thread/ by default,
-# but we do want "make clean" etc to recurse into them.  Likewise for ssl/,
-# because the SSL test suite is not secure to run on a multi-user system.
-ALWAYS_SUBDIRS = examples locale thread ssl
-=======
 # Test suites that are not safe by default but can be run if selected
 # by the user via the whitespace-separated list in variable
 # PG_TEST_EXTRA:
@@ -46,7 +40,6 @@ endif
 # have conditionally included into SUBDIRS above, else there will be
 # make confusion.)
 ALWAYS_SUBDIRS = $(filter-out $(SUBDIRS),examples kerberos ldap locale thread ssl)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # We want to recurse to all subdirs for all standard targets, except that
 # installcheck and install should not recurse into the subdirectory "modules".

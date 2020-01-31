@@ -26,17 +26,6 @@ all: distprep probes.h generated-header-symlinks
 
 distprep: fmgr-stamp errcodes.h
 
-<<<<<<< HEAD
-# see notes in src/backend/parser/Makefile
-fmgroids.h: fmgrtab.c
-	touch $@
-
-pg_proc_combined.h: $(catalogdir)/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h $(top_srcdir)/src/include/catalog/pg_proc_gp.h
-	cat $^ > $@
-
-fmgrtab.c: Gen_fmgrtab.pl pg_proc_combined.h
-	$(PERL) -I $(catalogdir) $< pg_proc_combined.h
-=======
 .PHONY: generated-header-symlinks
 
 generated-header-symlinks: $(top_builddir)/src/include/utils/header-stamp $(top_builddir)/src/include/utils/probes.h
@@ -46,10 +35,9 @@ $(SUBDIRS:%=%-recursive): fmgr-stamp errcodes.h
 # fmgr-stamp records the last time we ran Gen_fmgrtab.pl.  We don't rely on
 # the timestamps of the individual output files, because the Perl script
 # won't update them if they didn't change (to avoid unnecessary recompiles).
-fmgr-stamp: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.dat $(top_srcdir)/src/include/access/transam.h
-	$(PERL) -I $(catalogdir) $< --include-path=$(top_srcdir)/src/include/ $(top_srcdir)/src/include/catalog/pg_proc.dat
+fmgr-stamp: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc_combined.dat $(top_srcdir)/src/include/access/transam.h
+	$(PERL) -I $(catalogdir) $< --include-path=$(top_srcdir)/src/include/ $(top_srcdir)/src/include/catalog/pg_proc_combined.dat
 	touch $@
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 errcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errcodes.pl
 	$(PERL) $(srcdir)/generate-errcodes.pl $< > $@
@@ -104,7 +92,6 @@ uninstall-data:
 # distribution tarball, so they are not cleaned here.
 clean:
 	rm -f probes.h
-	rm -f pg_proc_combined.h
 
 maintainer-clean: clean
 	rm -f fmgroids.h fmgrprotos.h fmgrtab.c fmgr-stamp errcodes.h

@@ -22,15 +22,8 @@ override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-DFRONTEND $(CPPFLAGS)
 override CFLAGS += $(PTHREAD_CFLAGS)
 
-<<<<<<< HEAD
-# Need to recompile any libpgport object files
-LIBS := $(filter-out -lpgport, $(LIBS))
-
-SHLIB_LINK += $(filter -lm, $(LIBS))
-=======
 SHLIB_LINK_INTERNAL = -lpgcommon_shlib -lpgport_shlib
 SHLIB_LINK += $(filter -lintl -lm, $(LIBS))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 SHLIB_EXPORTS = exports.txt
 

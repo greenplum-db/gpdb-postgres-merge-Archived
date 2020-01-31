@@ -27,17 +27,11 @@ OBJS = execAmi.o execCurrent.o execExpr.o execExprInterp.o \
        nodeMaterial.o nodeMergeAppend.o nodeMergejoin.o nodeModifyTable.o \
        nodeNestloop.o nodeProjectSet.o nodeRecursiveunion.o nodeResult.o \
        nodeSamplescan.o nodeSeqscan.o nodeSetOp.o nodeSort.o nodeUnique.o \
-<<<<<<< HEAD
-       nodeValuesscan.o nodeCtescan.o nodeWorktablescan.o \
-       nodeSubplan.o nodeSubqueryscan.o nodeTidscan.o nodeTupleSplit.o \
-       nodeForeignscan.o nodeWindowAgg.o tstoreReceiver.o tqueue.o spi.o
-=======
        nodeValuesscan.o \
        nodeCtescan.o nodeNamedtuplestorescan.o nodeWorktablescan.o \
        nodeGroup.o nodeSubplan.o nodeSubqueryscan.o nodeTidscan.o \
        nodeForeignscan.o nodeWindowAgg.o tstoreReceiver.o tqueue.o spi.o \
        nodeTableFuncscan.o
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 OBJS += nodeDynamicIndexscan.o \
        nodeDynamicBitmapHeapscan.o \
@@ -51,6 +45,7 @@ OBJS += nodeDynamicIndexscan.o \
        nodeRowTrigger.o \
        nodeAssertOp.o \
        nodeSplitUpdate.o \
+       nodeTupleSplit.o \
        execDML.o \
        nodePartitionSelector.o \
        execDynamicScan.o \

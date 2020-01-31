@@ -15,7 +15,6 @@ OBJS =  specparse.o isolationtester.o $(WIN32RES)
 
 all: isolationtester$(X) pg_isolation_regress$(X)
 
-<<<<<<< HEAD
 gpstringsubs.pl:
 	rm -f $@ && $(LN_S) $(top_builddir)/src/test/regress/gpstringsubs.pl
 
@@ -30,14 +29,13 @@ atmsort.pm:
 
 explain.pm:
 	rm -f $@ && $(LN_S) $(top_builddir)/src/test/regress/explain.pm
-=======
+
 # Though we don't install these binaries, build them during installation
 # (including temp-install).  Otherwise, "make -j check-world" and "make -j
 # installcheck-world" would spawn multiple, concurrent builds in this
 # directory.  Later builds would overwrite files while earlier builds are
 # reading them, causing occasional failures.
 install: | all
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 submake-regress:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress.o
@@ -67,17 +65,12 @@ clean distclean:
 maintainer-clean: distclean
 	rm -f specparse.c specscanner.c
 
-<<<<<<< HEAD
 # GPDB: pageinspect module is needed by some tests.
 install-tests:
 	$(MAKE) -C $(top_builddir)/contrib/pageinspect install
 
 installcheck: all gpdiff.pl gpstringsubs.pl install-tests
-	./pg_isolation_regress --bindir='$(bindir)' $(EXTRA_REGRESS_OPTS) --inputdir=$(srcdir) --init-file=$(srcdir)/init_file --load-extension=pageinspect --schedule=$(srcdir)/isolation_schedule
-=======
-installcheck: all
-	$(pg_isolation_regress_installcheck) --schedule=$(srcdir)/isolation_schedule
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	$(pg_isolation_regress_installcheck) --init-file=$(srcdir)/init_file --schedule=$(srcdir)/isolation_schedule
 
 check: all
 	$(pg_isolation_regress_check) --schedule=$(srcdir)/isolation_schedule

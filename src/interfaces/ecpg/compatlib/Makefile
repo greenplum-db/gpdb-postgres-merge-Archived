@@ -22,11 +22,7 @@ override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(libpq_srcdir) -I$(top_srcdir)/src/include/utils -DFRONTEND $(CPPFLAGS)
 override CFLAGS += $(PTHREAD_CFLAGS)
 
-<<<<<<< HEAD
-SHLIB_LINK_INTERNAL = -L../ecpglib -lecpg -L../pgtypeslib -lpgtypes $(libpq)
-=======
 SHLIB_LINK_INTERNAL = -L../ecpglib -lecpg -L../pgtypeslib -lpgtypes $(libpq_pgport_shlib)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SHLIB_LINK = $(filter -lintl -lm, $(LIBS)) $(PTHREAD_LIBS)
 SHLIB_PREREQS = submake-ecpglib submake-pgtypeslib
 
