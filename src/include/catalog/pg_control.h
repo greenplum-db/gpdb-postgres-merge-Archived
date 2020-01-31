@@ -21,21 +21,16 @@
 #include "port/pg_crc32c.h"
 
 
-<<<<<<< HEAD
 /*
  * Version identifier for this pg_control format.
  *
- * The first three digits is the PostgreSQL version number. The last
+ * The first four digits is the PostgreSQL version number. The last
  * four digits indicates the GPDB version.
  */
-#define PG_CONTROL_VERSION	9600700
-=======
-/* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	1201
+#define PG_CONTROL_VERSION	12010700
 
 /* Nonce key length, see below */
 #define MOCK_AUTH_NONCE_LEN		32
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep

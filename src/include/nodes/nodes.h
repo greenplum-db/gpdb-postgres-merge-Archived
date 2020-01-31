@@ -4,13 +4,9 @@
  *	  Definitions for tagged nodes.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/nodes.h
@@ -55,8 +51,7 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR PLAN NODES (plannodes.h)
 	 */
-<<<<<<< HEAD
-	T_Plan = 100,
+	T_Plan,
 	T_Scan,
 	T_Join,
 
@@ -66,11 +61,7 @@ typedef enum NodeTag
 	 */
 	T_Result,
 	T_Plan_Start = T_Result,
-=======
-	T_Plan,
-	T_Result,
 	T_ProjectSet,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	T_ModifyTable,
 	T_Append,
 	T_MergeAppend,
@@ -136,17 +127,13 @@ typedef enum NodeTag
 	 *
 	 * These should correspond one-to-one with Plan node types.
 	 */
-<<<<<<< HEAD
-	T_PlanState = 200,
+	T_PlanState,
 	T_ScanState,
 	T_JoinState,
 
 	/* Real plan node starts below.  Scan and Join are "Virtal nodes",
 	 * It will take the form of IndexScan, SeqScan, etc.
 	 */
-=======
-	T_PlanState,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	T_ResultState,
 	T_ProjectSetState,
 	T_ModifyTableState,
@@ -169,11 +156,8 @@ typedef enum NodeTag
 	T_TidScanState,
 	T_SubqueryScanState,
 	T_FunctionScanState,
-<<<<<<< HEAD
 	T_TableFunctionState,
-=======
 	T_TableFuncScanState,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	T_ValuesScanState,
 	T_CteScanState,
 	T_NamedTuplestoreScanState,
@@ -285,24 +269,17 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR EXPRESSION STATE NODES (execnodes.h)
 	 *
-<<<<<<< HEAD
-	 * These correspond (not always one-for-one) to primitive nodes derivedO
-	 * from Expr.
-=======
 	 * ExprState represents the evaluation state for a whole expression tree.
 	 * Most Expr-based plan nodes do not have a corresponding expression state
 	 * node, they're fully handled within execExpr* - but sometimes the state
 	 * needs to be shared with other parts of the executor, as for example
 	 * with AggrefExprState, which nodeAgg.c has to modify.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	T_ExprState,
 	T_AggrefExprState,
-<<<<<<< HEAD
-	T_GroupingFuncExprState,
-	T_GroupIdExprState,
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	// GPDB_12_MERGE_FIXME: The similar T_GroupingFuncExprState was removed
+	// in upstream. Do we still need T_GroupIdExprState?
+	//T_GroupIdExprState,
 	T_WindowFuncExprState,
 	T_SetExprState,
 	T_SubPlanState,
@@ -399,12 +376,9 @@ typedef enum NodeTag
 	 */
 	T_MemoryContext,
 	T_AllocSetContext,
-<<<<<<< HEAD
-	T_MemoryAccount,
-=======
 	T_SlabContext,
 	T_GenerationContext,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	T_MemoryAccount,
 
 	/*
 	 * TAGS FOR VALUE NODES (value.h)
@@ -557,10 +531,7 @@ typedef enum NodeTag
 
 	/* GPDB additions */
 	T_PartitionBy,
-	T_PartitionElem,
 	T_PartitionRangeItem,
-	T_PartitionBoundSpec,
-	T_PartitionSpec,
 	T_PartitionValuesSpec,
 	T_AlterPartitionId,
 	T_AlterPartitionCmd,
@@ -659,11 +630,18 @@ typedef enum NodeTag
 	T_TIDBitmap,				/* in nodes/tidbitmap.h */
 	T_InlineCodeBlock,			/* in nodes/parsenodes.h */
 	T_FdwRoutine,				/* in foreign/fdwapi.h */
-<<<<<<< HEAD
-	T_TsmRoutine,				/* in access/tsmapi.h */
 	T_IndexAmRoutine,			/* in access/amapi.h */
+	T_TableAmRoutine,			/* in access/tableam.h */
+	T_TsmRoutine,				/* in access/tsmapi.h */
 	T_ForeignKeyCacheInfo,		/* in utils/rel.h */
+	T_CallContext,				/* in nodes/parsenodes.h */
+	T_SupportRequestSimplify,	/* in nodes/supportnodes.h */
+	T_SupportRequestSelectivity,	/* in nodes/supportnodes.h */
+	T_SupportRequestCost,		/* in nodes/supportnodes.h */
+	T_SupportRequestRows,		/* in nodes/supportnodes.h */
+	T_SupportRequestIndexCondition	/* in nodes/supportnodes.h */
 
+	,
     T_StreamBitmap,             /* in nodes/tidbitmap.h */
 	T_FormatterData,            /* in access/formatter.h */
 	T_ExtProtocolData,          /* in access/extprotocol.h */
@@ -676,18 +654,6 @@ typedef enum NodeTag
     T_CdbExplain_StatHdr = 1000,             /* in cdb/cdbexplain.c */
 	T_GpPolicy,	/* in catalog/gp_policy.h */
 
-=======
-	T_IndexAmRoutine,			/* in access/amapi.h */
-	T_TableAmRoutine,			/* in access/tableam.h */
-	T_TsmRoutine,				/* in access/tsmapi.h */
-	T_ForeignKeyCacheInfo,		/* in utils/rel.h */
-	T_CallContext,				/* in nodes/parsenodes.h */
-	T_SupportRequestSimplify,	/* in nodes/supportnodes.h */
-	T_SupportRequestSelectivity,	/* in nodes/supportnodes.h */
-	T_SupportRequestCost,		/* in nodes/supportnodes.h */
-	T_SupportRequestRows,		/* in nodes/supportnodes.h */
-	T_SupportRequestIndexCondition	/* in nodes/supportnodes.h */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } NodeTag;
 
 /*
@@ -755,15 +721,8 @@ extern PGDLLIMPORT Node *newNodeMacroHolder;
  *
  * Use an inline function when assertions are enabled, to avoid multiple
  * evaluations of the ptr argument (which could e.g. be a function call).
-<<<<<<< HEAD
- * If inline functions are not available - only a small number of platforms -
- * don't Assert, but use the non-checking version.
- */
-#if defined(USE_ASSERT_CHECKING) && defined(PG_USE_INLINE)
-=======
  */
 #ifdef USE_ASSERT_CHECKING
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static inline Node *
 castNodeImpl(NodeTag type, void *ptr)
 {
@@ -773,11 +732,7 @@ castNodeImpl(NodeTag type, void *ptr)
 #define castNode(_type_, nodeptr) ((_type_ *) castNodeImpl(T_##_type_, nodeptr))
 #else
 #define castNode(_type_, nodeptr) ((_type_ *) (nodeptr))
-<<<<<<< HEAD
-#endif   /* USE_ASSERT_CHECKING && PG_USE_INLINE */
-=======
 #endif							/* USE_ASSERT_CHECKING */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /* ----------------------------------------------------------------
@@ -794,17 +749,11 @@ struct StringInfoData;			/* not to include stringinfo.h here */
 extern void outNode(struct StringInfoData *str, const void *obj);
 extern void outToken(struct StringInfoData *str, const char *s);
 extern void outBitmapset(struct StringInfoData *str,
-<<<<<<< HEAD
-			 const struct Bitmapset *bms);
-extern void outDatum(struct StringInfoData *str, int64 value,
-		 int typlen, bool typbyval);
-=======
 						 const struct Bitmapset *bms);
-extern void outDatum(struct StringInfoData *str, uintptr_t value,
+extern void outDatum(struct StringInfoData *str, int64 value,
 					 int typlen, bool typbyval);
 extern char *nodeToString(const void *obj);
 extern char *bmsToString(const struct Bitmapset *bms);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * nodes/outfast.c. This special version of nodeToString is only used by serializeNode.
@@ -817,16 +766,12 @@ extern Node *readNodeFromBinaryString(const char *str, int len);
 /*
  * nodes/{readfuncs.c,read.c}
  */
-<<<<<<< HEAD
 extern void save_strtok_states(char **save_ptr, char **save_begin);
 extern void set_strtok_states(char *ptr, char *begin);
-extern void *stringToNode(char *str);
-=======
 extern void *stringToNode(const char *str);
 #ifdef WRITE_READ_PARSE_PLAN_TREES
 extern void *stringToNodeWithLocations(const char *str);
 #endif
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern struct Bitmapset *readBitmapset(void);
 extern int64 readDatum(bool typbyval);
 extern bool *readBoolCols(int numCols);

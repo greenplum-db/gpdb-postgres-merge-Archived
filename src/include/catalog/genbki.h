@@ -61,11 +61,6 @@
  */
 #undef EXPOSE_TO_CLIENT_CODE
 
-<<<<<<< HEAD
-/* for process_col_defaults.pl */
-#define GPDB_COLUMN_DEFAULT(col, default) extern int no_such_variable
-#define GPDB_EXTRA_COL(x) extern int no_such_variable
-
 /* for process_foreign_keys.pl */
 #define FOREIGN_KEY(x) extern int no_such_variable
 
@@ -73,7 +68,4 @@
 typedef int aclitem;
 typedef int pg_node_tree;
 
-#endif   /* GENBKI_H */
-=======
 #endif							/* GENBKI_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

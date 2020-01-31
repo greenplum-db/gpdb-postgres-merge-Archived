@@ -96,7 +96,6 @@ typedef struct RelFileNodeBackend
 	 (node1).backend == (node2).backend && \
 	 (node1).node.spcNode == (node2).node.spcNode)
 
-<<<<<<< HEAD
 inline static bool RelFileNode_IsEmpty(
 	RelFileNode	*relFileNode)
 {
@@ -119,7 +118,4 @@ typedef struct RelFileNodePendingDelete
 	char relstorage;
 } RelFileNodePendingDelete;
 
-#endif   /* RELFILENODE_H */
-=======
 #endif							/* RELFILENODE_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

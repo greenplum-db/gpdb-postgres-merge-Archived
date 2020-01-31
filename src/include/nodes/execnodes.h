@@ -4,13 +4,9 @@
  *	  definitions for executor state nodes
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/execnodes.h
@@ -1611,7 +1607,6 @@ typedef struct ResultState
 } ResultState;
 
 /* ----------------
-<<<<<<< HEAD
  *	 RepeatState information
  * ----------------
  */
@@ -1624,7 +1619,8 @@ typedef struct RepeatState
 	int			repeat_count;	/* The number of repeats for the current tuple */
 	ExprState  *expr_state;		/* The state to evaluate the expression */
 } RepeatState;
-=======
+
+/* ----------------
  *	 ProjectSetState information
  *
  * Note: at least one of the "elems" will be a SetExprState; the rest are
@@ -1640,7 +1636,6 @@ typedef struct ProjectSetState
 	bool		pending_srf_tuples; /* still evaluating srfs in tlist? */
 	MemoryContext argcontext;	/* context for SRF arguments */
 } ProjectSetState;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* ----------------
  *	 ModifyTableState information
@@ -2759,19 +2754,12 @@ typedef struct HashJoinTableData *HashJoinTable;
 typedef struct HashJoinState
 {
 	JoinState	js;				/* its first field is NodeTag */
-<<<<<<< HEAD
-	List	   *hashclauses;	/* list of ExprState nodes */
-	List	   *hashqualclauses;	/* CDB: list of ExprState nodes (match) */
-	List	   *hj_OuterHashKeys;		/* list of ExprState nodes */
-	List	   *hj_InnerHashKeys;		/* list of ExprState nodes */
-	List	   *hj_HashOperators;		/* list of operator OIDs */
-=======
 	ExprState  *hashclauses;
+	List	   *hashqualclauses;	/* CDB: list of ExprState nodes (match) */
 	List	   *hj_OuterHashKeys;	/* list of ExprState nodes */
 	List	   *hj_InnerHashKeys;	/* list of ExprState nodes */
 	List	   *hj_HashOperators;	/* list of operator OIDs */
 	List	   *hj_Collations;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	HashJoinTable hj_HashTable;
 	uint32		hj_CurHashValue;
 	int			hj_CurBucketNo;
@@ -3423,7 +3411,6 @@ typedef struct LimitState
 	TupleTableSlot *subSlot;	/* tuple last obtained from subplan */
 } LimitState;
 
-<<<<<<< HEAD
 /*
  * DML Operations
  */
@@ -3533,10 +3520,11 @@ typedef struct MotionState
 	int			numInputSegs;	/* the number of segments on the sending slice */
 } MotionState;
 
-/*zx
+/*
  * ExecNode for PartitionSelector.
  * This operator contains a Plannode in PlanState.
  */
+// GPDB_12_MERGE_FIXME: This belongs to legacy GPDB partitioning. Can we remove it?
 typedef struct PartitionSelectorState
 {
 	PlanState ps;                                       /* its first field is NodeTag */
@@ -3553,7 +3541,4 @@ typedef struct PartitionSelectorState
 	ProjectionInfo *partTabProj;
 } PartitionSelectorState;
 
-#endif   /* EXECNODES_H */
-=======
 #endif							/* EXECNODES_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

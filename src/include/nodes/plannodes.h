@@ -4,13 +4,9 @@
  *	  definitions for query plan nodes
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/plannodes.h
@@ -80,13 +76,9 @@ typedef struct PlannedStmt
 
 	CmdType		commandType;	/* select|insert|update|delete|utility */
 
-<<<<<<< HEAD
 	PlanGenerator	planGen;		/* optimizer generation */
 
-	uint32		queryId;		/* query identifier (copied from Query) */
-=======
 	uint64		queryId;		/* query identifier (copied from Query) */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	bool		hasReturning;	/* is it insert|update|delete RETURNING? */
 
@@ -122,13 +114,9 @@ typedef struct PlannedStmt
 	 */
 	List	   *rootResultRelations;
 
-<<<<<<< HEAD
-	List	   *subplans;		/* Plan trees for SubPlan expressions */
-	int		   *subplan_sliceIds;	/* slice IDs containing SubPlans; size equals 'subplans' */
-=======
 	List	   *subplans;		/* Plan trees for SubPlan expressions; note
 								 * that some could be NULL */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	int		   *subplan_sliceIds;	/* slice IDs containing SubPlans; size equals 'subplans' */
 
 	Bitmapset  *rewindPlanIDs;	/* indices of subplans that require REWIND */
 
@@ -400,7 +388,6 @@ typedef struct Result
 } Result;
 
 /* ----------------
-<<<<<<< HEAD
  * Repeat node -
  *   Repeatly output the results of the subplan.
  *
@@ -429,7 +416,8 @@ typedef struct Repeat
 	 */
 	uint64 grouping;
 } Repeat;
-=======
+
+/* ----------------
  *	 ProjectSet node -
  *		Apply a projection that includes set-returning functions to the
  *		output tuples of the outer plan.
@@ -439,7 +427,6 @@ typedef struct ProjectSet
 {
 	Plan		plan;
 } ProjectSet;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* ----------------
  *	 ModifyTable node -
@@ -1239,24 +1226,6 @@ typedef struct Sort
 } Sort;
 
 /* ---------------
-<<<<<<< HEAD
-=======
- *	 group node -
- *		Used for queries with GROUP BY (but no aggregates) specified.
- *		The input must be presorted according to the grouping columns.
- * ---------------
- */
-typedef struct Group
-{
-	Plan		plan;
-	int			numCols;		/* number of grouping columns */
-	AttrNumber *grpColIdx;		/* their indexes in the target list */
-	Oid		   *grpOperators;	/* equality operators to compare with */
-	Oid		   *grpCollations;
-} Group;
-
-/* ---------------
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *		aggregate node
  *
  * An Agg node implements plain or grouped aggregation.  For grouped
@@ -1357,7 +1326,7 @@ typedef struct WindowAgg
 	int			ordNumCols;		/* number of columns in ordering clause */
 	AttrNumber *ordColIdx;		/* their indexes in the target list */
 	Oid		   *ordOperators;	/* equality operators for ordering columns */
-<<<<<<< HEAD
+	Oid		   *ordCollations;	/* collations for ordering columns */
 
 	/*
 	 * GPDB: Information on the first ORDER BY column. This is different from
@@ -1374,9 +1343,6 @@ typedef struct WindowAgg
 	Oid			firstOrderCmpOperator; /* ordering op */
 	bool		firstOrderNullsFirst;
 
-=======
-	Oid		   *ordCollations;	/* collations for ordering columns */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			frameOptions;	/* frame_clause options, see WindowDef */
 	Node	   *startOffset;	/* expression for starting bound, if any */
 	Node	   *endOffset;		/* expression for ending bound, if any */
@@ -1863,7 +1829,6 @@ typedef struct PlanInvalItem
 	uint32		hashValue;		/* hash value of object's cache lookup key */
 } PlanInvalItem;
 
-<<<<<<< HEAD
 /* ----------------
  * PartitionSelector node
  *
@@ -1883,6 +1848,8 @@ typedef struct PlanInvalItem
  *
  * ----------------
  */
+// GPDB_12_MERGE_FIXME: This came from legacy GPDB partitioning. Is it still
+// used?
 typedef struct PartitionSelector
 {
 	Plan		plan;
@@ -1912,7 +1879,4 @@ typedef struct PartitionSelector
 
 } PartitionSelector;
 
-#endif   /* PLANNODES_H */
-=======
 #endif							/* PLANNODES_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

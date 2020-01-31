@@ -29,20 +29,11 @@
 
 
 /* "options" flag bits for heap_insert */
-<<<<<<< HEAD
-#define HEAP_INSERT_SKIP_WAL	0x0001
-#define HEAP_INSERT_SKIP_FSM	0x0002
-#define HEAP_INSERT_FROZEN		0x0004
-#define HEAP_INSERT_SPECULATIVE 0x0008
-/* gap, to keep NO_LOGICAL in sync w/ newer branches */
-#define HEAP_INSERT_NO_LOGICAL	0x0010
-=======
 #define HEAP_INSERT_SKIP_WAL	TABLE_INSERT_SKIP_WAL
 #define HEAP_INSERT_SKIP_FSM	TABLE_INSERT_SKIP_FSM
 #define HEAP_INSERT_FROZEN		TABLE_INSERT_FROZEN
 #define HEAP_INSERT_NO_LOGICAL	TABLE_INSERT_NO_LOGICAL
 #define HEAP_INSERT_SPECULATIVE 0x0010
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 typedef struct BulkInsertStateData *BulkInsertState;
 struct TupleTableSlot;
@@ -109,7 +100,7 @@ typedef enum
  * ----------------
  */
 
-<<<<<<< HEAD
+<<<<f<<< HEAD
 /* in heap/heapam.c */
 extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
 extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode, 
@@ -225,12 +216,8 @@ extern bool heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_
 									MultiXactId cutoff_multi, Buffer buf);
 extern bool heap_tuple_needs_eventual_freeze(HeapTupleHeader tuple);
 
-<<<<<<< HEAD
-extern Oid	simple_heap_insert(Relation relation, HeapTuple tup);
-extern Oid frozen_heap_insert(Relation relation, HeapTuple tup);
-=======
 extern void simple_heap_insert(Relation relation, HeapTuple tup);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern void frozen_heap_insert(Relation relation, HeapTuple tup);
 extern void simple_heap_delete(Relation relation, ItemPointer tid);
 extern void simple_heap_update(Relation relation, ItemPointer otid,
 							   HeapTuple tup);

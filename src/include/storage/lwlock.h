@@ -150,11 +150,7 @@ extern void LWLockRelease(LWLock *lock);
 extern void LWLockReleaseClearVar(LWLock *lock, uint64 *valptr, uint64 val);
 extern void LWLockReleaseAll(void);
 extern bool LWLockHeldByMe(LWLock *lock);
-<<<<<<< HEAD
-extern bool LWLockHeldExclusiveByMe(LWLock *lock);
-=======
 extern bool LWLockHeldByMeInMode(LWLock *lock, LWLockMode mode);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern bool LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval);
 extern void LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 value);
@@ -215,9 +211,6 @@ typedef enum BuiltinTrancheIds
 	LWTRANCHE_BUFFER_MAPPING,
 	LWTRANCHE_LOCK_MANAGER,
 	LWTRANCHE_PREDICATE_LOCK_MANAGER,
-<<<<<<< HEAD
-	LWTRANCHE_DISTRIBUTEDLOG_BUFFERS,
-=======
 	LWTRANCHE_PARALLEL_HASH_JOIN,
 	LWTRANCHE_PARALLEL_QUERY_DSA,
 	LWTRANCHE_SESSION_DSA,
@@ -227,7 +220,7 @@ typedef enum BuiltinTrancheIds
 	LWTRANCHE_TBM,
 	LWTRANCHE_PARALLEL_APPEND,
 	LWTRANCHE_SXACT,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	LWTRANCHE_DISTRIBUTEDLOG_BUFFERS,
 	LWTRANCHE_FIRST_USER_DEFINED
 }			BuiltinTrancheIds;
 

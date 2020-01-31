@@ -38,7 +38,6 @@ typedef enum IOFuncSelector
 	IOFunc_send
 } IOFuncSelector;
 
-<<<<<<< HEAD
 /* comparison types */
 typedef enum CmpType
 {
@@ -51,8 +50,6 @@ typedef enum CmpType
 	CmptOther	// other operator
 } CmpType;
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* Flag bits for get_attstatsslot */
 #define ATTSTATSSLOT_VALUES		0x01
 #define ATTSTATSSLOT_NUMBERS	0x02
@@ -62,10 +59,7 @@ typedef struct AttStatsSlot
 {
 	/* Always filled: */
 	Oid			staop;			/* Actual staop for the found slot */
-<<<<<<< HEAD
-=======
 	Oid			stacoll;		/* Actual collation for the found slot */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* Filled if ATTSTATSSLOT_VALUES is specified: */
 	Oid			valuetype;		/* Actual datatype of the values */
 	Datum	   *values;			/* slot's "values" array, or NULL if none */
@@ -93,26 +87,18 @@ extern void get_op_opfamily_properties(Oid opno, Oid opfamily, bool ordering_op,
 extern Oid	get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
 								int16 strategy);
 extern bool get_ordering_op_properties(Oid opno,
-<<<<<<< HEAD
-						   Oid *opfamily, Oid *opcintype, int16 *strategy);
+									   Oid *opfamily, Oid *opcintype, int16 *strategy);
 extern bool get_compare_function_for_ordering_op(Oid opno,
 												 Oid *cmpfunc, bool *reverse);
-=======
-									   Oid *opfamily, Oid *opcintype, int16 *strategy);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern Oid	get_equality_op_for_ordering_op(Oid opno, bool *reverse);
 extern Oid	get_ordering_op_for_equality_op(Oid opno, bool use_lhs_type);
 extern List *get_mergejoin_opfamilies(Oid opno);
 extern bool get_compatible_hash_operators(Oid opno,
-<<<<<<< HEAD
-							  Oid *lhs_opno, Oid *rhs_opno);
+										  Oid *lhs_opno, Oid *rhs_opno);
 extern bool get_compatible_hash_operators_and_family(Oid opno,
 										 Oid *lhs_opno, Oid *rhs_opno,
 										 Oid *opfamily);
 extern Oid get_compatible_hash_opfamily(Oid opno);
-=======
-										  Oid *lhs_opno, Oid *rhs_opno);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern bool get_op_hash_functions(Oid opno,
 								  RegProcedure *lhs_procno, RegProcedure *rhs_procno);
 extern List *get_op_btree_interpretation(Oid opno);
@@ -181,11 +167,8 @@ extern char *get_rel_name_partition(Oid relid);
 extern Oid	get_rel_namespace(Oid relid);
 extern Oid	get_rel_type_id(Oid relid);
 extern char get_rel_relkind(Oid relid);
-<<<<<<< HEAD
 extern char get_rel_relstorage(Oid relid);
-=======
 extern bool get_rel_relispartition(Oid relid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern Oid	get_rel_tablespace(Oid relid);
 extern char get_rel_persistence(Oid relid);
 extern Oid	get_transform_fromsql(Oid typid, Oid langid, List *trftypes);

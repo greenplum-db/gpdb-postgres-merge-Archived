@@ -69,18 +69,14 @@ typedef enum ParseExprKind
 	EXPR_KIND_EXECUTE_PARAMETER,	/* parameter value in EXECUTE */
 	EXPR_KIND_TRIGGER_WHEN,		/* WHEN condition in CREATE TRIGGER */
 	EXPR_KIND_POLICY,			/* USING or WITH CHECK expr in policy */
-<<<<<<< HEAD
-	EXPR_KIND_PARTITION_EXPRESSION, /* PARTITION BY expression */
-
-	/* GPDB additions */
-	EXPR_KIND_SCATTER_BY		/* SCATTER BY expression */
-=======
 	EXPR_KIND_PARTITION_BOUND,	/* partition bound expression */
 	EXPR_KIND_PARTITION_EXPRESSION, /* PARTITION BY expression */
 	EXPR_KIND_CALL_ARGUMENT,	/* procedure argument in CALL */
 	EXPR_KIND_COPY_WHERE,		/* WHERE condition in COPY FROM */
 	EXPR_KIND_GENERATED_COLUMN, /* generation expression for a column */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	/* GPDB additions */
+	EXPR_KIND_SCATTER_BY		/* SCATTER BY expression */
 } ParseExprKind;
 
 
@@ -213,18 +209,10 @@ struct ParseState
 	bool		p_hasTargetSRFs;
 	bool		p_hasSubLinks;
 	bool		p_hasModifyingCTE;
-<<<<<<< HEAD
-	bool		p_is_insert;
+	Node	   *p_last_srf;		/* most recent set-returning func/op found */
 	bool        p_is_on_conflict_update;
 	bool        p_canOptSelectLockingClause; /* Whether can do some optimization on select with locking clause */
 	LockingClause *p_lockclause_from_parent;
-	bool		p_locked_from_parent;
-	Relation	p_target_relation;
-	RangeTblEntry *p_target_rangetblentry;
-=======
-
-	Node	   *p_last_srf;		/* most recent set-returning func/op found */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	struct HTAB *p_namecache;  /* parse state object name cache */
 	bool        p_hasTblValueExpr;

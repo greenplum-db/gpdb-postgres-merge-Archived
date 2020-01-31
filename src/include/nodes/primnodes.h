@@ -821,15 +821,14 @@ typedef struct SubPlan
 	bool		unknownEqFalse; /* true if it's okay to return FALSE when the
 								 * spec result is UNKNOWN; this allows much
 								 * simpler handling of null values */
-<<<<<<< HEAD
+	bool		parallel_safe;	/* is the subplan parallel-safe? */
+	/* Note: parallel_safe does not consider contents of testexpr or args */
+
 	bool		is_initplan;	/* CDB: Is the subplan implemented as an
 								 * initplan? */
 	bool		is_multirow;	/* CDB: May the subplan return more than
 								 * one row? */
-=======
-	bool		parallel_safe;	/* is the subplan parallel-safe? */
-	/* Note: parallel_safe does not consider contents of testexpr or args */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
 	/* Information for passing params into and out of the subselect: */
 	/* setParam and parParam are lists of integers (param IDs) */
 	List	   *setParam;		/* initplan subqueries have to set these
@@ -1654,7 +1653,6 @@ typedef struct OnConflictExpr
 	List	   *exclRelTlist;	/* tlist of the EXCLUDED pseudo relation */
 } OnConflictExpr;
 
-<<<<<<< HEAD
 /*
  * DMLActionExpr
  *
@@ -1664,6 +1662,9 @@ typedef struct DMLActionExpr
 {
 	Expr        xpr;
 } DMLActionExpr;
+
+/* GPDB_12_MERGE_FIXME: THe below Part* nodes belong to the legacy GPDB partitioning
+ * Can they all be removed now? */
 
 /*
  * PartSelectedExpr
@@ -1753,7 +1754,4 @@ typedef struct PartListNullTestExpr
 	NullTestType nulltesttype;	/* IS NULL, IS NOT NULL */
 } PartListNullTestExpr;
 
-#endif   /* PRIMNODES_H */
-=======
 #endif							/* PRIMNODES_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -25,9 +25,7 @@
 /*
  * Defines for gp_policy
  */
-#define GpPolicyRelationId  5002
-
-CATALOG(gp_distribution_policy,5002) BKI_WITHOUT_OIDS
+CATALOG(gp_distribution_policy,7110,GpPolicyRelationId)
 {
 	Oid			localoid;
 	char		policytype; /* distribution policy type */

@@ -40,9 +40,7 @@
  *		typedef struct FormData_gp_segment_configuration
  * ----------------
  */
-#define GpSegmentConfigRelationId	5036
-
-CATALOG(gp_segment_configuration,5036) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
+CATALOG(gp_segment_configuration,5036,GpSegmentConfigRelationId) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 {
 	int16		dbid;				/* up to 32767 segment databases */
 	int16		content;			/* up to 32767 contents -- only 16384 usable with mirroring (see dbid) */
@@ -69,23 +67,6 @@ CATALOG(gp_segment_configuration,5036) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
  * ----------------
  */
 typedef FormData_gp_segment_configuration *Form_gp_segment_configuration;
-
-
-/* ----------------
- *		compiler constants for gp_segment_configuration
- * ----------------
- */
-#define Natts_gp_segment_configuration					10
-#define Anum_gp_segment_configuration_dbid				1
-#define Anum_gp_segment_configuration_content			2
-#define Anum_gp_segment_configuration_role				3
-#define Anum_gp_segment_configuration_preferred_role	4
-#define Anum_gp_segment_configuration_mode				5
-#define Anum_gp_segment_configuration_status			6
-#define Anum_gp_segment_configuration_port				7
-#define Anum_gp_segment_configuration_hostname			8
-#define Anum_gp_segment_configuration_address			9
-#define Anum_gp_segment_configuration_datadir			10
 
 extern bool gp_segment_config_has_mirrors(void);
 

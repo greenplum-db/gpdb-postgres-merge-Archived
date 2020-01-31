@@ -143,8 +143,7 @@ extern void appendStringInfoSpaces(StringInfo str, int count);
  * if necessary.
  */
 extern void appendBinaryStringInfo(StringInfo str,
-<<<<<<< HEAD
-					   const void *data, int datalen);
+								   const char *data, int datalen);
 
 /*------------------------
  * appendStringInfoLiteral
@@ -155,8 +154,6 @@ extern void appendBinaryStringInfo(StringInfo str,
  * NOTE: sizeof() returns full size, including NULL.
  */
 #define appendStringInfoLiteral(str, lit) (appendBinaryStringInfo(str, (lit), sizeof((lit)) - 1))
-=======
-								   const char *data, int datalen);
 
 /*------------------------
  * appendBinaryStringInfoNT
@@ -165,7 +162,6 @@ extern void appendBinaryStringInfo(StringInfo str,
  */
 extern void appendBinaryStringInfoNT(StringInfo str,
 									 const char *data, int datalen);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*------------------------
  * enlargeStringInfo
@@ -173,7 +169,6 @@ extern void appendBinaryStringInfoNT(StringInfo str,
  */
 extern void enlargeStringInfo(StringInfo str, int needed);
 
-<<<<<<< HEAD
 /*------------------------
  * replaceStringInfoString
  * Replace all occurrences of a string in a StringInfo with a different string.
@@ -181,7 +176,4 @@ extern void enlargeStringInfo(StringInfo str, int needed);
 
 extern void replaceStringInfoString(StringInfo str, char *replace, char *replacement);
 
-#endif   /* STRINGINFO_H */
-=======
 #endif							/* STRINGINFO_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

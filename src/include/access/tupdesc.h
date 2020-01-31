@@ -88,7 +88,6 @@ typedef struct TupleDescData
 }			TupleDescData;
 typedef struct TupleDescData *TupleDesc;
 
-<<<<<<< HEAD
 /*
  * When dispatching a planned statement from QD to QEs, we need to be able
  * to transmit TupleDescs. TupleDesc doesn't have the Node header, so for
@@ -106,11 +105,7 @@ typedef struct tupleDescNode
 } TupleDescNode;
 
 /* Accessor for the i'th attribute of tupdesc. */
-#define TupleDescAttr(tupdesc, i) ((tupdesc)->attrs[(i)])
-=======
-/* Accessor for the i'th attribute of tupdesc. */
 #define TupleDescAttr(tupdesc, i) (&(tupdesc)->attrs[(i)])
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern TupleDesc CreateTemplateTupleDesc(int natts);
 

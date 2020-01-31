@@ -77,11 +77,7 @@ typedef enum
 
 extern Bitmapset *bms_copy(const Bitmapset *a);
 extern bool bms_equal(const Bitmapset *a, const Bitmapset *b);
-<<<<<<< HEAD
-extern int bms_compare(const Bitmapset *a, const Bitmapset *b);
-=======
 extern int	bms_compare(const Bitmapset *a, const Bitmapset *b);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern Bitmapset *bms_make_singleton(int x);
 extern void bms_free(Bitmapset *a);
 
@@ -121,7 +117,6 @@ extern int	bms_prev_member(const Bitmapset *a, int prevbit);
 /* support for hashtables using Bitmapsets as keys: */
 extern uint32 bms_hash_value(const Bitmapset *a);
 
-<<<<<<< HEAD
 /* 
  * returns true iff the bitmap is sufficently large that
  * it stores the bit for member x
@@ -135,7 +130,4 @@ extern bool bms_covers_member(const Bitmapset *a, int x);
  */
 extern Bitmapset *bms_resize(Bitmapset *a, int wc);
 
-#endif   /* BITMAPSET_H */
-=======
 #endif							/* BITMAPSET_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

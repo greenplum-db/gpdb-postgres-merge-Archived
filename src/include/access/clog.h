@@ -48,15 +48,11 @@ extern void TrimCLOG(void);
 extern void ShutdownCLOG(void);
 extern void CheckPointCLOG(void);
 extern void ExtendCLOG(TransactionId newestXact);
-<<<<<<< HEAD
-extern void TruncateCLOG(TransactionId oldestXact);
+extern void TruncateCLOG(TransactionId oldestXact, Oid oldestxid_datoid);
 extern bool CLOGScanForPrevStatus(
 	TransactionId	*indexXid,
 	XidStatus		*status);
 extern bool CLOGTransactionIsOld(TransactionId xid);
-=======
-extern void TruncateCLOG(TransactionId oldestXact, Oid oldestxid_datoid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* XLOG stuff */
 #define CLOG_ZEROPAGE		0x00

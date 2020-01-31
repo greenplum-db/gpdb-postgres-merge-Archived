@@ -34,7 +34,7 @@ my $oids = Catalog::FindAllOidsFromHeaders(@input_files);
 
 # Also push FirstGenbkiObjectId to serve as a terminator for the last gap.
 my $FirstGenbkiObjectId =
-  Catalog::FindDefinedSymbol('access/transam.h', '..', 'FirstGenbkiObjectId');
+  Catalog::FindDefinedSymbol('catalog/pg_magic_oid.h', '..', 'FirstGenbkiObjectId');
 push @{$oids}, $FirstGenbkiObjectId;
 
 # This value splits the OID range into two so that GPDB and GPSQL can add

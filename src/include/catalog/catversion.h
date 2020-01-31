@@ -55,12 +55,7 @@
  * catalog versions from Greenplum.
  */
 
-<<<<<<< HEAD
-/*							3yyymmddN */
-#define CATALOG_VERSION_NO	301911081
-=======
 /*							yyyymmddN */
-#define CATALOG_VERSION_NO	201906161
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#define CATALOG_VERSION_NO	301906161
 
 #endif

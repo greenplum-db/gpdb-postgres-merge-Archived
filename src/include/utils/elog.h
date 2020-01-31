@@ -74,7 +74,6 @@
 /* SQLSTATE codes for errors are defined in a separate file */
 #include "utils/errcodes.h"
 
-<<<<<<< HEAD
 /* Common error messages */
 #define ERRMSG_GP_INSUFFICIENT_STATEMENT_MEMORY "insufficient memory reserved for statement"
 
@@ -130,7 +129,7 @@ __declspec(noreturn)
 #endif
 void elog_internalerror(const char *filename, int lineno, const char *funcname)
 						pg_attribute_noreturn();
-=======
+
 /*
  * Provide a way to prevent "errno" from being accidentally used inside an
  * elog() or ereport() invocation.  Since we know that some operating systems
@@ -147,7 +146,6 @@ void elog_internalerror(const char *filename, int lineno, const char *funcname)
 #else
 #define pg_prevent_errno_in_scope()
 #endif
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /*----------
@@ -301,10 +299,7 @@ extern int errFatalReturn(bool fatalReturn); /* GPDB: true => return on FATAL er
 #else							/* !HAVE__BUILTIN_CONSTANT_P */
 #define elog(elevel, ...)  \
 	do { \
-<<<<<<< HEAD
-=======
 		pg_prevent_errno_in_scope(); \
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO); \
 		{ \
 			const int elevel_ = (elevel); \
@@ -576,7 +571,6 @@ extern void set_syslog_parameters(const char *ident, int facility);
  */
 extern void write_stderr(const char *fmt,...) pg_attribute_printf(1, 2);
 
-<<<<<<< HEAD
 extern void write_message_to_server_log(int elevel,
 										int sqlerrcode,
 										const char *message,
@@ -609,7 +603,4 @@ extern bool gp_log_stack_trace_lines;   /* session GUC, controls line info in st
 extern const char *SegvBusIllName(int signal);
 extern void StandardHandlerForSigillSigsegvSigbus_OnMainThread(char * processName, SIGNAL_ARGS);
 
-#endif   /* ELOG_H */
-=======
 #endif							/* ELOG_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

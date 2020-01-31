@@ -282,11 +282,6 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena *datum);
 /* and this if you can handle 1-byte-header datums: */
 #define PG_GETARG_VARLENA_PP(n) PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(n))
 /* DatumGetFoo macros for varlena types will typically look like this: */
-<<<<<<< HEAD
-#define PG_GETARG_TID(n)	 (*((ItemPointer) DatumGetPointer(PG_GETARG_DATUM(n))))
-#define DatumGetByteaP(X)			((bytea *) PG_DETOAST_DATUM(X))
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #define DatumGetByteaPP(X)			((bytea *) PG_DETOAST_DATUM_PACKED(X))
 #define DatumGetTextPP(X)			((text *) PG_DETOAST_DATUM_PACKED(X))
 #define DatumGetBpCharPP(X)			((BpChar *) PG_DETOAST_DATUM_PACKED(X))
@@ -362,11 +357,7 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena *datum);
 #define PG_RETURN_FLOAT4(x)  return Float4GetDatum(x)
 #define PG_RETURN_FLOAT8(x)  return Float8GetDatum(x)
 #define PG_RETURN_INT64(x)	 return Int64GetDatum(x)
-<<<<<<< HEAD
-#define PG_RETURN_UINT64(x)	 return UInt64GetDatum(x)
-=======
 #define PG_RETURN_UINT64(x)  return UInt64GetDatum(x)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* RETURN macros for other pass-by-ref types will typically look like this: */
 #define PG_RETURN_BYTEA_P(x)   PG_RETURN_POINTER(x)
 #define PG_RETURN_TEXT_P(x)    PG_RETURN_POINTER(x)
@@ -761,13 +752,8 @@ extern void RestoreLibraryState(char *start_address);
  */
 
 /* AggCheckCallContext can return one of the following codes, or 0: */
-<<<<<<< HEAD
-#define AGG_CONTEXT_AGGREGATE   1       /* regular aggregate */
-#define AGG_CONTEXT_WINDOW      2       /* window function */
-=======
 #define AGG_CONTEXT_AGGREGATE	1	/* regular aggregate */
 #define AGG_CONTEXT_WINDOW		2	/* window function */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern int	AggCheckCallContext(FunctionCallInfo fcinfo,
 								MemoryContext *aggcontext);
@@ -805,8 +791,4 @@ extern PGDLLIMPORT fmgr_hook_type fmgr_hook;
 #define FmgrHookIsNeeded(fn_oid)							\
 	(!needs_fmgr_hook ? false : (*needs_fmgr_hook)(fn_oid))
 
-<<<<<<< HEAD
-#endif   /* FMGR_H */
-=======
 #endif							/* FMGR_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

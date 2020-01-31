@@ -12,13 +12,9 @@
  * identifying statement boundaries in multi-statement source strings.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/parsenodes.h
@@ -31,13 +27,12 @@
 #include "nodes/lockoptions.h"
 #include "nodes/primnodes.h"
 #include "nodes/value.h"
-<<<<<<< HEAD
-#include "catalog/gp_policy.h"
-
-typedef struct PartitionNode PartitionNode; /* see relation.h */
-=======
 #include "partitioning/partdefs.h"
 
+#include "catalog/gp_policy.h"
+
+// GPDB_12_MERGE_FIXME: this belongs to the GPDB legacy partitioning. Can remove now?
+typedef struct PartitionNode PartitionNode; /* see relation.h */
 
 typedef enum OverridingKind
 {
@@ -45,7 +40,6 @@ typedef enum OverridingKind
 	OVERRIDING_USER_VALUE,
 	OVERRIDING_SYSTEM_VALUE
 } OverridingKind;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* Possible sources of a Query */
 typedef enum QuerySource
@@ -211,11 +205,8 @@ typedef struct Query
 	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
 								 * depends on to be semantically valid */
 
-<<<<<<< HEAD
-	List	   *withCheckOptions;		/* a list of WithCheckOption's, which
-										 * are only added during rewrite and
-										 * therefore are not written out as
-										 * part of Query. */
+	List	   *withCheckOptions;	/* a list of WithCheckOption's (added
+									 * during rewrite) */
 
 	/*
 	 * MPP: Used only on QD. Don't serialize. Holds the result distribution
@@ -228,9 +219,6 @@ typedef struct Query
 	 * would always be dispatched in parallel.
 	 */
 	ParentStmtType	parentStmtType;
-=======
-	List	   *withCheckOptions;	/* a list of WithCheckOption's (added
-									 * during rewrite) */
 
 	/*
 	 * The following two fields identify the portion of the source text string
@@ -240,7 +228,6 @@ typedef struct Query
 	 */
 	int			stmt_location;	/* start location, or -1 if unknown */
 	int			stmt_len;		/* length in bytes; 0 means "rest of string" */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } Query;
 
 /****************************************************************************
@@ -1035,17 +1022,14 @@ typedef enum RTEKind
 	RTE_FUNCTION,				/* function in FROM */
 	RTE_TABLEFUNC,				/* TableFunc(.., column list) */
 	RTE_VALUES,					/* VALUES (<exprlist>), (<exprlist>), ... */
-<<<<<<< HEAD
-	RTE_VOID,                   /* CDB: deleted RTE */
-	RTE_CTE,					/* common table expr (WITH list element) */
-	RTE_TABLEFUNCTION,          /* CDB: Functions over multiset input */
-=======
 	RTE_CTE,					/* common table expr (WITH list element) */
 	RTE_NAMEDTUPLESTORE,		/* tuplestore, e.g. for AFTER triggers */
 	RTE_RESULT					/* RTE represents an empty FROM clause; such
 								 * RTEs are added by the planner, they're not
 								 * present during parsing or rewriting */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	,
+	RTE_VOID,                   /* CDB: deleted RTE */
+	RTE_TABLEFUNCTION,          /* CDB: Functions over multiset input */
 } RTEKind;
 
 typedef struct RangeTblEntry
@@ -1191,8 +1175,8 @@ typedef struct RangeTblEntry
 	Bitmapset  *selectedCols;	/* columns needing SELECT permission */
 	Bitmapset  *insertedCols;	/* columns needing INSERT permission */
 	Bitmapset  *updatedCols;	/* columns needing UPDATE permission */
-<<<<<<< HEAD
-	List	   *securityQuals;	/* any security barrier quals to apply */
+	Bitmapset  *extraUpdatedCols;	/* generated columns being updated */
+	List	   *securityQuals;	/* security barrier quals to apply, if any */
 
     List       *pseudocols;     /* CDB: List of CdbRelColumnInfo nodes defining
                                  *  pseudo columns for targetlist of scan node.
@@ -1201,10 +1185,6 @@ typedef struct RangeTblEntry
                                  *  the 0-based position in the list.  Used
                                  *  only in planner & EXPLAIN, not in executor.
                                  */
-=======
-	Bitmapset  *extraUpdatedCols;	/* generated columns being updated */
-	List	   *securityQuals;	/* security barrier quals to apply, if any */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } RangeTblEntry;
 
 /*
@@ -1233,16 +1213,11 @@ typedef struct RangeTblFunction
 	List	   *funccolnames;	/* column names (list of String) */
 	List	   *funccoltypes;	/* OID list of column type OIDs */
 	List	   *funccoltypmods; /* integer list of column typmods */
-<<<<<<< HEAD
-	List	   *funccolcollations;		/* OID list of column collation OIDs */
+	List	   *funccolcollations;	/* OID list of column collation OIDs */
 
 	bytea	   *funcuserdata;	/* describe function user data. assume bytea */
 
-/* This is set during planning for use by the executor: */
-=======
-	List	   *funccolcollations;	/* OID list of column collation OIDs */
 	/* This is set during planning for use by the executor: */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	Bitmapset  *funcparams;		/* PARAM_EXEC Param IDs affecting this func */
 } RangeTblFunction;
 
@@ -1974,10 +1949,16 @@ typedef enum AlterTableType
 	AT_ForceRowSecurity,		/* FORCE ROW SECURITY */
 	AT_NoForceRowSecurity,		/* NO FORCE ROW SECURITY */
 	AT_GenericOptions,			/* OPTIONS (...) */
-<<<<<<< HEAD
+	AT_AttachPartition,			/* ATTACH PARTITION */
+	AT_DetachPartition,			/* DETACH PARTITION */
+	AT_AddIdentity,				/* ADD IDENTITY */
+	AT_SetIdentity,				/* SET identity column options */
+	AT_DropIdentity,			/* DROP IDENTITY */
+
 	AT_SetDistributedBy,		/* SET DISTRIBUTED BY */
 	AT_ExpandTable,          /* EXPAND DISTRIBUTED */
 	/* CDB: Partitioned Tables */
+	// GPDB_12_MERGE_FIXME: can all this be removed now?
 	AT_PartAdd,					/* Add */
 	AT_PartAddForSplit,			/* Add, as subcommand of a split */
 	AT_PartAlter,				/* Alter */
@@ -1989,13 +1970,6 @@ typedef enum AlterTableType
 	AT_PartTruncate,			/* Truncate */
 	AT_PartAddInternal,			/* CREATE TABLE time partition addition */
 	AT_PartAttachIndex			/* ALTER INDEX ATTACH PARTITION (not exposed to user) */
-=======
-	AT_AttachPartition,			/* ATTACH PARTITION */
-	AT_DetachPartition,			/* DETACH PARTITION */
-	AT_AddIdentity,				/* ADD IDENTITY */
-	AT_SetIdentity,				/* SET identity column options */
-	AT_DropIdentity				/* DROP IDENTITY */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } AlterTableType;
 
 typedef struct ReplicaIdentityStmt
@@ -2010,15 +1984,10 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	NodeTag		type;
 	AlterTableType subtype;		/* Type of table alteration to apply */
 	char	   *name;			/* column, constraint, or trigger to act on,
-<<<<<<< HEAD
-								 * or new owner or tablespace */
-	Node	   *newowner;		/* RoleSpec */
-=======
 								 * or tablespace */
 	int16		num;			/* attribute number for columns referenced by
 								 * number */
 	RoleSpec   *newowner;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	Node	   *def;			/* definition of new column, index,
 								 * constraint, or parent table */
 	Node	   *transform;		/* transformation expr for ALTER TYPE */
@@ -2126,27 +2095,6 @@ typedef enum GrantTargetType
 	ACL_TARGET_DEFAULTS			/* ALTER DEFAULT PRIVILEGES */
 } GrantTargetType;
 
-<<<<<<< HEAD
-typedef enum GrantObjectType
-{
-	ACL_OBJECT_COLUMN,			/* column */
-	ACL_OBJECT_RELATION,		/* table, view */
-	ACL_OBJECT_SEQUENCE,		/* sequence */
-	ACL_OBJECT_DATABASE,		/* database */
-	ACL_OBJECT_EXTPROTOCOL,		/* external table protocol */
-	ACL_OBJECT_DOMAIN,			/* domain */
-	ACL_OBJECT_FDW,				/* foreign-data wrapper */
-	ACL_OBJECT_FOREIGN_SERVER,	/* foreign server */
-	ACL_OBJECT_FUNCTION,		/* function */
-	ACL_OBJECT_LANGUAGE,		/* procedural language */
-	ACL_OBJECT_LARGEOBJECT,		/* largeobject */
-	ACL_OBJECT_NAMESPACE,		/* namespace */
-	ACL_OBJECT_TABLESPACE,		/* tablespace */
-	ACL_OBJECT_TYPE				/* type */
-} GrantObjectType;
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 typedef struct GrantStmt
 {
 	NodeTag		type;
@@ -2255,14 +2203,12 @@ typedef struct CopyStmt
 	bool		skip_ext_partition;		/* skip external partitions */
 	char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
 	List	   *options;		/* List of DefElem nodes */
-<<<<<<< HEAD
+	Node	   *whereClause;	/* WHERE condition (or NULL) */
+
 	Node	   *sreh;			/* Single row error handling info */
 	/* Convenient location for dispatch of misc meta data */
 	PartitionNode *partitions;
 	List		*ao_segnos;		/* AO segno map */
-=======
-	Node	   *whereClause;	/* WHERE condition (or NULL) */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } CopyStmt;
 
 /* ----------------------
@@ -2319,13 +2265,12 @@ typedef struct CreateStmt
 	List	   *tableElts;		/* column definitions (list of ColumnDef) */
 	List	   *inhRelations;	/* relations to inherit from (list of
 								 * inhRelation) */
-<<<<<<< HEAD
-	List	   *inhOids;		/* list relations Oids to inherit from */
-	int			parentOidCount; /* count of parent with OIDs */
-=======
 	PartitionBoundSpec *partbound;	/* FOR VALUES clause */
 	PartitionSpec *partspec;	/* PARTITION BY clause */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	List	   *inhOids;		/* list relations Oids to inherit from */
+	int			parentOidCount; /* count of parent with OIDs */
+
 	TypeName   *ofTypename;		/* OF typename */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
 	List	   *options;		/* options from WITH clause */
@@ -2527,8 +2472,10 @@ typedef struct Constraint
 /* ----------
  * Definitions for Table Partition clauses in CreateStmt
  *
+ * GPDB_12_MERGE_FIXME: We don't need this anymore, right?
  * ----------
  */
+#if 0
 typedef enum PartitionByType			/* types of Partitions */
 {
 	PARTTYP_RANGE,
@@ -2626,6 +2573,8 @@ typedef struct PartitionSpec			/* a Partition Specification */
 	bool				istemplate;
 	int					location;		/* token location, or -1 if unknown */
 } PartitionSpec;
+
+#endif // GPDB_12_MERGE_FIXME: end of legacy partitionging stuff
 
 typedef struct ExpandStmtSpec
 {
@@ -3086,12 +3035,10 @@ typedef struct DefineStmt
 	List	   *defnames;		/* qualified name (list of Value strings) */
 	List	   *args;			/* a list of TypeName (if needed) */
 	List	   *definition;		/* a list of DefElem */
-<<<<<<< HEAD
-	bool		trusted;		/* used only for PROTOCOL as this point */
-=======
 	bool		if_not_exists;	/* just do nothing if it already exists? */
 	bool		replace;		/* replace if already exists? */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	bool		trusted;		/* used only for PROTOCOL as this point */
 } DefineStmt;
 
 /* ----------------------
@@ -3324,14 +3271,13 @@ typedef struct IndexStmt
 	bool		transformed;	/* true when transformIndexStmt is finished */
 	bool		concurrent;		/* should this be a concurrent index build? */
 	bool		if_not_exists;	/* just do nothing if index already exists? */
-<<<<<<< HEAD
+	bool		reset_default_tblspc;	/* reset default_tablespace prior to
+										 * executing */
+
+	// GPDB_12_MERGE_FIXME: GPDB legacy partitioning stuff. Remove?
 	bool		is_split_part;	/* Is this for SPLIT PARTITION command? */
 	Oid			parentIndexId;	/* attach to a parent index if set */
 	Oid			parentConstraintId;		/* attach to a parent constraint if set */
-=======
-	bool		reset_default_tblspc;	/* reset default_tablespace prior to
-										 * executing */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } IndexStmt;
 
 /* ----------------------
@@ -3439,13 +3385,8 @@ typedef struct RenameStmt
 	ObjectType	renameType;		/* OBJECT_TABLE, OBJECT_COLUMN, etc */
 	ObjectType	relationType;	/* if column name, associated relation type */
 	RangeVar   *relation;		/* in case it's a table */
-<<<<<<< HEAD
 	Oid			objid;			/* in case it's a table */
-	List	   *object;			/* in case it's some other object */
-	List	   *objarg;			/* argument types, if applicable */
-=======
 	Node	   *object;			/* in case it's some other object */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	char	   *subname;		/* name of contained object (column, rule,
 								 * trigger, etc) */
 	char	   *newname;		/* the new name */
@@ -3748,21 +3689,6 @@ typedef struct ClusterStmt
  * just one node type for both.
  * ----------------------
  */
-<<<<<<< HEAD
-typedef enum VacuumOption
-{
-	VACOPT_VACUUM = 1 << 0,		/* do VACUUM */
-	VACOPT_ANALYZE = 1 << 1,	/* do ANALYZE */
-	VACOPT_VERBOSE = 1 << 2,	/* print progress info */
-	VACOPT_FREEZE = 1 << 3,		/* FREEZE option */
-	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
-	VACOPT_NOWAIT = 1 << 5,		/* don't wait to get lock (autovacuum only) */
-	VACOPT_SKIPTOAST = 1 << 6,	/* don't process the TOAST table, if any */
-	VACOPT_DISABLE_PAGE_SKIPPING = 1 << 7,		/* don't skip any pages */
-
-	VACOPT_ROOTONLY = 1 << 8,	/* only ANALYZE root partition tables */
-	VACOPT_FULLSCAN = 1 << 9	/* ANALYZE using full table scan */
-} VacuumOption;
 
 typedef enum AOVacuumPhase
 {
@@ -3810,20 +3736,12 @@ typedef struct AOVacuumPhaseConfig
 typedef struct VacuumStmt
 {
 	NodeTag		type;
-	int			options;		/* OR of VacuumOption flags */
-	RangeVar   *relation;		/* single table to process, or NULL */
-	List	   *va_cols;		/* list of column names, or NIL for all */
-
-	bool skip_twophase; /* GPDB */
-	AOVacuumPhaseConfig *ao_vacuum_phase_config; /* GPDB */
-=======
-typedef struct VacuumStmt
-{
-	NodeTag		type;
 	List	   *options;		/* list of DefElem nodes */
 	List	   *rels;			/* list of VacuumRelation, or NIL for all */
 	bool		is_vacuumcmd;	/* true for VACUUM, false for ANALYZE */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	bool skip_twophase; /* GPDB */
+	AOVacuumPhaseConfig *ao_vacuum_phase_config; /* GPDB */
 } VacuumStmt;
 
 /*
@@ -3967,11 +3885,8 @@ typedef struct ReindexStmt
 	RangeVar   *relation;		/* Table or index to reindex */
 	const char *name;			/* name of database to reindex */
 	int			options;		/* Reindex options flags */
-<<<<<<< HEAD
-	Oid			relid;			/* oid of TABLE, used by QE */
-=======
 	bool		concurrent;		/* reindex concurrently? */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	Oid			relid;			/* oid of TABLE, used by QE */
 } ReindexStmt;
 
 /* ----------------------

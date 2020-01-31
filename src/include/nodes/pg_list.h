@@ -301,12 +301,10 @@ extern void list_free_deep(List *list);
 extern List *list_copy(const List *list);
 extern List *list_copy_tail(const List *list, int nskip);
 
-<<<<<<< HEAD
 extern void *list_nth_replace(List *list, int n, void *new_data);
-=======
+
 typedef int (*list_qsort_comparator) (const void *a, const void *b);
 extern List *list_qsort(const List *list, list_qsort_comparator cmp);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * To ease migration to the new list API, a set of compatibility

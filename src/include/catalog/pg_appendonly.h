@@ -20,10 +20,7 @@
 /*
  * pg_appendonly definition.
  */
-
-#define AppendOnlyRelationId  6105
-
-CATALOG(pg_appendonly,6105) BKI_WITHOUT_OIDS
+CATALOG(pg_appendonly,6105,AppendOnlyRelationId) BKI_WITHOUT_OIDS
 {
 	Oid				relid;				/* relation id */
 	int32			blocksize;			/* the max block size of this relation */

@@ -140,10 +140,10 @@ die "found $found duplicate OID(s) in catalog data\n" if $found;
 # Oids not specified in the input files are automatically assigned,
 # starting at FirstGenbkiObjectId, extending up to FirstBootstrapObjectId.
 my $FirstGenbkiObjectId =
-  Catalog::FindDefinedSymbol('access/transam.h', $include_path,
+  Catalog::FindDefinedSymbol('catalog/pg_magic_oid.h', $include_path,
 	'FirstGenbkiObjectId');
 my $FirstBootstrapObjectId =
-  Catalog::FindDefinedSymbol('access/transam.h', $include_path,
+  Catalog::FindDefinedSymbol('catalog/pg_magic_oid.h', $include_path,
 	'FirstBootstrapObjectId');
 my $GenbkiNextOid = $FirstGenbkiObjectId;
 

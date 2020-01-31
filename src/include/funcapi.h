@@ -160,17 +160,11 @@ extern TypeFuncClass get_expr_result_type(Node *expr,
 										  Oid *resultTypeId,
 										  TupleDesc *resultTupleDesc);
 extern TypeFuncClass get_func_result_type(Oid functionId,
-<<<<<<< HEAD
-					 Oid *resultTypeId,
-					 TupleDesc *resultTupleDesc);
-extern void  assign_func_result_transient_type(Oid functionId);
-
-=======
 										  Oid *resultTypeId,
 										  TupleDesc *resultTupleDesc);
+extern void  assign_func_result_transient_type(Oid functionId);
 
 extern TupleDesc get_expr_result_tupdesc(Node *expr, bool noError);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern bool resolve_polymorphic_argtypes(int numargs, Oid *argtypes,
 										 char *argmodes,

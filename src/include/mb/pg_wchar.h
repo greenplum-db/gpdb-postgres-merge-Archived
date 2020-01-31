@@ -355,13 +355,8 @@ extern const char *get_encoding_name_for_icu(int encoding);
  * pg_wchar stuff
  */
 typedef int (*mb2wchar_with_len_converter) (const unsigned char *from,
-<<<<<<< HEAD
-													pg_wchar *to,
-													int len);
-=======
 											pg_wchar *to,
 											int len);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 typedef int (*wchar2mb_with_len_converter) (const pg_wchar *from,
 											unsigned char *to,

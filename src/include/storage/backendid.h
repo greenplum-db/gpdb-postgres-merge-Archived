@@ -22,7 +22,6 @@ typedef int BackendId;			/* unique currently active backend identifier */
 
 #define InvalidBackendId		(-1)
 
-<<<<<<< HEAD
 /*
  * TempRelBackendId is used in GPDB in place of a real backend ID in some
  * places where we deal with a temporary tables.
@@ -43,10 +42,7 @@ typedef int BackendId;			/* unique currently active backend identifier */
  */
 #define TempRelBackendId		(-2)
 
-extern PGDLLIMPORT BackendId MyBackendId;		/* backend id of this backend */
-=======
 extern PGDLLIMPORT BackendId MyBackendId;	/* backend id of this backend */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* backend id of our parallel session leader, or InvalidBackendId if none */
 extern PGDLLIMPORT BackendId ParallelMasterBackendId;

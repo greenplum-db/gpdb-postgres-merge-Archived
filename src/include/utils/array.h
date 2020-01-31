@@ -455,38 +455,4 @@ extern ExpandedArrayHeader *DatumGetExpandedArrayX(Datum d,
 extern AnyArrayType *DatumGetAnyArrayP(Datum d);
 extern void deconstruct_expanded_array(ExpandedArrayHeader *eah);
 
-<<<<<<< HEAD
-/*
- * prototypes for functions defined in array_userfuncs.c
- */
-extern Datum array_append(PG_FUNCTION_ARGS);
-extern Datum array_prepend(PG_FUNCTION_ARGS);
-extern Datum array_cat(PG_FUNCTION_ARGS);
-
-extern ArrayType *create_singleton_array(FunctionCallInfo fcinfo,
-					   Oid element_type,
-					   Datum element,
-					   bool isNull,
-					   int ndims);
-
-extern Datum array_agg_transfn(PG_FUNCTION_ARGS);
-extern Datum array_agg_finalfn(PG_FUNCTION_ARGS);
-extern Datum array_agg_array_transfn(PG_FUNCTION_ARGS);
-extern Datum array_agg_array_finalfn(PG_FUNCTION_ARGS);
-
-extern Datum array_position(PG_FUNCTION_ARGS);
-extern Datum array_position_start(PG_FUNCTION_ARGS);
-extern Datum array_positions(PG_FUNCTION_ARGS);
-
-/* MPP Additions: */
-extern Datum array_int4_add(PG_FUNCTION_ARGS);
-
-/*
- * prototypes for functions defined in array_typanalyze.c
- */
-extern Datum array_typanalyze(PG_FUNCTION_ARGS);
-
-#endif   /* ARRAY_H */
-=======
 #endif							/* ARRAY_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
