@@ -20,9 +20,6 @@
 
 #include "catalog/genbki.h"
 
-/* MPP-6929: metadata tracking */
-#define StatLastOpRelationId 6052
-
 /*
  * The CATALOG definition has to refer to the type of log_time as
  * "timestamptz" (lower case) so that bootstrap mode recognizes it.  But
@@ -34,7 +31,7 @@
 
 #define timestamptz Datum
 
-CATALOG(pg_stat_last_operation,6052) BKI_WITHOUT_OIDS
+CATALOG(pg_stat_last_operation,6052,StatLastOpRelationId)
 {
 	/* unique key */
 	Oid			classid;		/* OID of table containing object */
@@ -63,18 +60,5 @@ FOREIGN_KEY(stasysid REFERENCES pg_authid(oid));
  * ----------------
  */
 typedef FormData_pg_statlastop *Form_pg_statlastop;
-
-/* ----------------
- *		compiler constants for pg_stat_last_operation
- * ----------------
- */
-#define Natts_pg_statlastop					7
-#define Anum_pg_statlastop_classid			1
-#define Anum_pg_statlastop_objid			2
-#define Anum_pg_statlastop_staactionname	3
-#define Anum_pg_statlastop_stasysid			4
-#define Anum_pg_statlastop_stausename		5
-#define Anum_pg_statlastop_stasubtype		6
-#define Anum_pg_statlastop_statime			7
 
 #endif   /* PG_STAT_LAST_OPERATION_H */

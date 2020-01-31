@@ -87,7 +87,6 @@ extern void UnregisterResourceReleaseCallback(ResourceReleaseCallback callback,
 extern void CreateAuxProcessResourceOwner(void);
 extern void ReleaseAuxProcessResources(bool isCommit);
 
-<<<<<<< HEAD
 /* support for buffer refcount management */
 extern void ResourceOwnerEnlargeBuffers(ResourceOwner owner);
 extern void ResourceOwnerRememberBuffer(ResourceOwner owner, Buffer buffer);
@@ -148,7 +147,4 @@ extern void ResourceOwnerForgetFile(ResourceOwner owner,
 extern void CdbResourceOwnerWalker(ResourceOwner owner,
 							ResourceWalkerCallback callback);
 
-#endif   /* RESOWNER_H */
-=======
 #endif							/* RESOWNER_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

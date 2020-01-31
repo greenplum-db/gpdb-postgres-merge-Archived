@@ -375,7 +375,10 @@ extern SessionBackupState get_backup_status(void);
 #define TABLESPACE_MAP			"tablespace_map"
 #define TABLESPACE_MAP_OLD		"tablespace_map.old"
 
-<<<<<<< HEAD
+/* files to signal promotion to primary */
+#define PROMOTE_SIGNAL_FILE		"promote"
+#define FALLBACK_PROMOTE_SIGNAL_FILE  "fallback_promote"
+
 /* Greenplum additions */
 extern bool IsStandbyMode(void);
 extern DBState GetCurrentDBState(void);
@@ -386,11 +389,5 @@ extern bool IsRoleMirror(void);
 extern void SignalPromote(void);
 extern XLogRecPtr XLogLastInsertBeginLoc(void);
 extern void initialize_wal_bytes_written(void);
-#endif   /* XLOG_H */
-=======
-/* files to signal promotion to primary */
-#define PROMOTE_SIGNAL_FILE		"promote"
-#define FALLBACK_PROMOTE_SIGNAL_FILE  "fallback_promote"
 
 #endif							/* XLOG_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

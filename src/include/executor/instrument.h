@@ -4,13 +4,9 @@
  *	  definitions for run-time statistics collection
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2001-2016, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2001-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * src/include/executor/instrument.h
  *
@@ -56,14 +52,9 @@ typedef enum InstrumentOption
 typedef struct Instrumentation
 {
 	/* Parameters set at node creation: */
-<<<<<<< HEAD
-	bool		need_timer;		/* TRUE if we need timer data */
-	bool		need_cdb;		/* TRUE if we need cdb statistics */
-	bool		need_bufusage;	/* TRUE if we need buffer usage data */
-=======
 	bool		need_timer;		/* true if we need timer data */
+	bool		need_cdb;		/* true if we need cdb statistics */
 	bool		need_bufusage;	/* true if we need buffer usage data */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* Info about current plan cycle: */
 	bool		running;		/* true if we've completed first tuple */
 	instr_time	starttime;		/* Start time of current iteration of node */

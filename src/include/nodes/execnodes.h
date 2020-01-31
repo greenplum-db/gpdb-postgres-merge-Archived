@@ -16,11 +16,6 @@
 #ifndef EXECNODES_H
 #define EXECNODES_H
 
-<<<<<<< HEAD
-#include "access/genam.h"
-#include "access/heapam.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/tupconvert.h"
 #include "executor/instrument.h"
 #include "lib/pairingheap.h"
@@ -35,8 +30,6 @@
 #include "utils/snapshot.h"
 #include "utils/sortsupport.h"
 #include "utils/tuplestore.h"
-<<<<<<< HEAD
-=======
 #include "utils/tuplesort.h"
 #include "nodes/tidbitmap.h"
 #include "storage/condition_variable.h"
@@ -123,7 +116,6 @@ typedef struct ExprState
 	Datum	   *innermost_domainval;
 	bool	   *innermost_domainnull;
 } ExprState;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #include "gpmon/gpmon.h"                /* gpmon_packet_t */
 
@@ -196,14 +188,10 @@ typedef struct IndexInfo
 	bool		ii_ReadyForInserts;
 	bool		ii_Concurrent;
 	bool		ii_BrokenHotChain;
-<<<<<<< HEAD
-	Oid			ii_Am;
-=======
 	int			ii_ParallelWorkers;
 	Oid			ii_Am;
 	void	   *ii_AmCache;
 	MemoryContext ii_Context;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } IndexInfo;
 
 /* ----------------
@@ -1988,17 +1976,13 @@ typedef struct IndexScanState
 	SortSupport iss_SortSupport;
 	bool	   *iss_OrderByTypByVals;
 	int16	   *iss_OrderByTypLens;
-<<<<<<< HEAD
+	Size		iss_PscanLen;
 
 	/*
 	 * tableOid is the oid of the partition or relation on which our current
 	 * index relation is defined.
 	 */
 	Oid			tableOid;
-
-=======
-	Size		iss_PscanLen;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } IndexScanState;
 
 /*
@@ -2879,8 +2863,10 @@ typedef struct SortState
 	bool		sort_Done;		/* sort completed yet? */
 	bool		bounded_Done;	/* value of bounded we did the sort with */
 	int64		bound_Done;		/* value of bound we did the sort with */
-<<<<<<< HEAD
 	GenericTupStore *tuplesortstate; /* private state of tuplesort.c */
+	bool		am_worker;		/* are we a worker? */
+	SharedSortInfo *shared_info;	/* one entry per worker */
+
 	bool		noduplicates;	/* true if discard duplicate rows */
 
 	bool		delayEagerFree;		/* is is safe to free memory used by this node,
@@ -2891,25 +2877,6 @@ typedef struct SortState
 } SortState;
 
 /* ---------------------
-=======
-	void	   *tuplesortstate; /* private state of tuplesort.c */
-	bool		am_worker;		/* are we a worker? */
-	SharedSortInfo *shared_info;	/* one entry per worker */
-} SortState;
-
-/* ---------------------
- *	GroupState information
- * ---------------------
- */
-typedef struct GroupState
-{
-	ScanState	ss;				/* its first field is NodeTag */
-	ExprState  *eqfunction;		/* equality function */
-	bool		grp_done;		/* indicates completion of Group scan */
-} GroupState;
-
-/* ---------------------
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *	AggState information
  *
  *	ss.ss_ScanTupleSlot refers to output of underlying plan.

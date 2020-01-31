@@ -22,9 +22,7 @@
  *		typedef struct FormData_pg_partition_encoding
  * ----------------
  */
-#define PartitionEncodingRelationId	9903
-
-CATALOG(pg_partition_encoding,9903) BKI_WITHOUT_OIDS
+CATALOG(pg_partition_encoding,9903,PartitionEncodingRelationId)
 {
 	Oid		parencoid;				
 	int16	parencattnum;			
@@ -42,15 +40,5 @@ FOREIGN_KEY(parencoid REFERENCES pg_partition(oid));
  * ----------------
  */
 typedef FormData_pg_partition_encoding *Form_pg_partition_encoding;
-
-
-/* ----------------
- *		compiler constants for pg_partition_encoding
- * ----------------
- */
-#define Natts_pg_partition_encoding					3
-#define Anum_pg_partition_encoding_parencoid		1
-#define Anum_pg_partition_encoding_parencattnum		2
-#define Anum_pg_partition_encoding_parencattoptions	3
 
 #endif   /* PG_PARTITION_ENCODING_H */

@@ -100,7 +100,7 @@ typedef enum
  * ----------------
  */
 
-<<<<f<<< HEAD
+<<<<<<< HEAD
 /* in heap/heapam.c */
 extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
 extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode, 

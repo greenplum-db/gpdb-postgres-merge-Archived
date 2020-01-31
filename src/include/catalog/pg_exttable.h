@@ -28,9 +28,7 @@
  *		typedef struct FormData_pg_exttable
  * ----------------
  */
-#define ExtTableRelationId	6040
-
-CATALOG(pg_exttable,6040) BKI_WITHOUT_OIDS
+CATALOG(pg_exttable,6040,ExtTableRelationId)
 {
 	Oid		reloid;				/* refers to this relation's oid in pg_class  */
 #ifdef CATALOG_VARLEN
@@ -57,26 +55,6 @@ FOREIGN_KEY(reloid REFERENCES pg_class(oid));
  * ----------------
  */
 typedef FormData_pg_exttable *Form_pg_exttable;
-
-
-/* ----------------
- *		compiler constants for pg_exttable
- * ----------------
- */
-#define Natts_pg_exttable					12
-#define Anum_pg_exttable_reloid				1
-#define Anum_pg_exttable_urilocation			2
-#define Anum_pg_exttable_execlocation			3
-#define Anum_pg_exttable_fmttype			4
-#define Anum_pg_exttable_fmtopts			5
-#define Anum_pg_exttable_options			6
-#define Anum_pg_exttable_command			7
-#define Anum_pg_exttable_rejectlimit		8
-#define Anum_pg_exttable_rejectlimittype	9
-#define Anum_pg_exttable_logerrors			10
-#define Anum_pg_exttable_encoding			11
-#define Anum_pg_exttable_writable			12
-
 
 /*
  * Descriptor of a single AO relation.

@@ -196,26 +196,15 @@ extern CachedPlanSource *CreateOneShotCachedPlan(struct RawStmt *raw_parse_tree,
 												 const char *query_string,
 												 const char *commandTag);
 extern void CompleteCachedPlan(CachedPlanSource *plansource,
-<<<<<<< HEAD
-				   List *querytree_list,
-				   MemoryContext querytree_context,
-				   NodeTag sourceTag,
-				   Oid *param_types,
-				   int num_params,
-				   ParserSetupHook parserSetup,
-				   void *parserSetupArg,
-				   int cursor_options,
-				   bool fixed_result);
-=======
 							   List *querytree_list,
 							   MemoryContext querytree_context,
+							   NodeTag sourceTag,
 							   Oid *param_types,
 							   int num_params,
 							   ParserSetupHook parserSetup,
 							   void *parserSetupArg,
 							   int cursor_options,
 							   bool fixed_result);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern void SaveCachedPlan(CachedPlanSource *plansource);
 extern void DropCachedPlan(CachedPlanSource *plansource);

@@ -4,13 +4,9 @@
  *	  support for the POSTGRES executor module
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/executor.h
@@ -677,8 +673,16 @@ extern bool RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
 										 TupleTableSlot *outslot);
 extern bool RelationFindReplTupleSeq(Relation rel, LockTupleMode lockmode,
 									 TupleTableSlot *searchslot, TupleTableSlot *outslot);
+extern void ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot);
+extern void ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
+									 TupleTableSlot *searchslot, TupleTableSlot *slot);
+extern void ExecSimpleRelationDelete(EState *estate, EPQState *epqstate,
+									 TupleTableSlot *searchslot);
+extern void CheckCmdReplicaIdentity(Relation rel, CmdType cmd);
 
-<<<<<<< HEAD
+extern void CheckSubscriptionRelkind(char relkind, const char *nspname,
+									 const char *relname);
+
 /* Share input utilities defined in execUtils.c */
 extern ShareNodeEntry * ExecGetShareNodeEntry(EState *estate, int shareid, bool fCreate);
 
@@ -700,17 +704,4 @@ extern ResultRelInfo *slot_get_partition(TupleTableSlot *slot, EState *estate, b
 
 extern void SendAOTupCounts(EState *estate);
 
-#endif   /* EXECUTOR_H  */
-=======
-extern void ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot);
-extern void ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
-									 TupleTableSlot *searchslot, TupleTableSlot *slot);
-extern void ExecSimpleRelationDelete(EState *estate, EPQState *epqstate,
-									 TupleTableSlot *searchslot);
-extern void CheckCmdReplicaIdentity(Relation rel, CmdType cmd);
-
-extern void CheckSubscriptionRelkind(char relkind, const char *nspname,
-									 const char *relname);
-
 #endif							/* EXECUTOR_H  */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

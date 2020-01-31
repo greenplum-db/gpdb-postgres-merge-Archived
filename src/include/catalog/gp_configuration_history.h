@@ -47,9 +47,7 @@
  *		typedef struct FormData_gp_configuration_history
  * ----------------
  */
-#define GpConfigHistoryRelationId	5106
-
-CATALOG(gp_configuration_history,5106) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
+CATALOG(gp_configuration_history,5106,GpConfigHistoryRelationId) BKI_SHARED_RELATION
 {
 	timestamptz	time;	
 	int16		dbid;	
@@ -67,14 +65,5 @@ CATALOG(gp_configuration_history,5106) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
  * ----------------
  */
 typedef FormData_gp_configuration_history *Form_gp_configuration_history;
-
-/* ----------------
- *		compiler constants for gp_configuration_history
- * ----------------
- */
-#define Natts_gp_configuration_history		3
-#define Anum_gp_configuration_history_time	1
-#define Anum_gp_configuration_history_dbid	2
-#define Anum_gp_configuration_history_desc	3
 
 #endif /*_GP_CONFIGURATION_HISTORY_H_*/

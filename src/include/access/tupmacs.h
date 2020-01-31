@@ -68,32 +68,6 @@
 	: \
 	PointerGetDatum((char *) (T)) \
 )
-<<<<<<< HEAD
-=======
-#else							/* SIZEOF_DATUM != 8 */
-
-#define fetch_att(T,attbyval,attlen) \
-( \
-	(attbyval) ? \
-	( \
-		(attlen) == (int) sizeof(int32) ? \
-			Int32GetDatum(*((int32 *)(T))) \
-		: \
-		( \
-			(attlen) == (int) sizeof(int16) ? \
-				Int16GetDatum(*((int16 *)(T))) \
-			: \
-			( \
-				AssertMacro((attlen) == 1), \
-				CharGetDatum(*((char *)(T))) \
-			) \
-		) \
-	) \
-	: \
-	PointerGetDatum((char *) (T)) \
-)
-#endif							/* SIZEOF_DATUM == 8 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * att_align_datum aligns the given offset as needed for a datum of alignment
@@ -221,7 +195,6 @@
 		} \
 	} while (0)
 
-<<<<<<< HEAD
 #ifndef FRONTEND
 /*
  * Determine if a datum of type oid can be stored in short varlena format.
@@ -238,27 +211,5 @@ value_type_could_short(Pointer ptr, Oid typid)
 		  typid < FirstNormalObjectId));
 }
 #endif
-=======
-#define store_att_byval(T,newdatum,attlen) \
-	do { \
-		switch (attlen) \
-		{ \
-			case sizeof(char): \
-				*(char *) (T) = DatumGetChar(newdatum); \
-				break; \
-			case sizeof(int16): \
-				*(int16 *) (T) = DatumGetInt16(newdatum); \
-				break; \
-			case sizeof(int32): \
-				*(int32 *) (T) = DatumGetInt32(newdatum); \
-				break; \
-			default: \
-				elog(ERROR, "unsupported byval length: %d", \
-					 (int) (attlen)); \
-				break; \
-		} \
-	} while (0)
-#endif							/* SIZEOF_DATUM == 8 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #endif

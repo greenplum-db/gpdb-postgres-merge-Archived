@@ -3264,4 +3264,6 @@
   oprresult => 'bool', oprcode => 'jsonb_path_match_opr(jsonb,jsonpath)',
   oprrest => 'contsel', oprjoin => 'contjoinsel' },
 
+// GPDB_12_MERGE_FIXME: Put back GPDB complex datatype's operators here
+
 ]
