@@ -28,20 +28,6 @@
  */
 CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID(1248,DatabaseRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
-<<<<<<< HEAD
-	NameData	datname;		/* database name */
-	Oid			datdba;			/* owner of database */
-	int32		encoding;		/* character encoding */
-	NameData	datcollate;		/* LC_COLLATE setting */
-	NameData	datctype;		/* LC_CTYPE setting */
-	bool		datistemplate;	/* allowed as CREATE DATABASE template? */
-	bool		datallowconn;	/* new connections allowed? */
-	int32		datconnlimit;	/* max connections allowed (-1=no limit) */
-	Oid			datlastsysoid;	/* highest OID to consider a system OID */
-	TransactionId datfrozenxid; /* all Xids < this are frozen in this DB */
-	TransactionId datminmxid;	/* all multixacts in the DB are >= this */
-	Oid			dattablespace;	/* default table space for this DB */
-=======
 	/* oid */
 	Oid			oid;
 
@@ -81,7 +67,6 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
 	/* default table space for this DB */
 	Oid			dattablespace BKI_LOOKUP(pg_tablespace);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* access permissions */
 	aclitem		datacl[1];

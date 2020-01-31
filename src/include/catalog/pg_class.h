@@ -52,20 +52,6 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 
 	/* identifier of physical storage file */
 	/* relfilenode == 0 means it is a "mapped" relation, see relmapper.c */
-<<<<<<< HEAD
-	Oid			reltablespace;	/* identifier of table space for relation */
-	int32		relpages;		/* # of blocks (not always up-to-date) */
-	float4		reltuples;		/* # of tuples (not always up-to-date) */
-	int32		relallvisible;	/* # of all-visible blocks (not always
-								 * up-to-date) */
-	Oid			reltoastrelid;	/* OID of toast table; 0 if none */
-	bool		relhasindex;	/* T if has (or has had) any indexes */
-	bool		relisshared;	/* T if shared across databases */
-	char		relpersistence; /* see RELPERSISTENCE_xxx constants below */
-	char		relkind;		/* see RELKIND_xxx constants below */
-	char		relstorage;		/* see RELSTORAGE_xxx constants below */
-	int16		relnatts;		/* number of user attributes */
-=======
 	Oid			relfilenode;
 
 	/* identifier of table space for relation (0 means default for database) */
@@ -95,9 +81,11 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 	/* see RELKIND_xxx constants below */
 	char		relkind;
 
+	/* see RELSTORAGE_xxx constants below (GPDB-specific) */
+	char		relstorage BKI_DEFAULT(h);
+	
 	/* number of user attributes */
 	int16		relnatts;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Class pg_attribute must contain exactly "relnatts" user attributes
@@ -175,82 +163,6 @@ typedef FormData_pg_class *Form_pg_class;
 
 #ifdef EXPOSE_TO_CLIENT_CODE
 
-<<<<<<< HEAD
-#define Natts_pg_class					32
-#define Anum_pg_class_relname			1
-#define Anum_pg_class_relnamespace		2
-#define Anum_pg_class_reltype			3
-#define Anum_pg_class_reloftype			4
-#define Anum_pg_class_relowner			5
-#define Anum_pg_class_relam				6
-#define Anum_pg_class_relfilenode		7
-#define Anum_pg_class_reltablespace		8
-#define Anum_pg_class_relpages			9
-#define Anum_pg_class_reltuples			10
-#define Anum_pg_class_relallvisible		11
-#define Anum_pg_class_reltoastrelid		12
-#define Anum_pg_class_relhasindex		13
-#define Anum_pg_class_relisshared		14
-#define Anum_pg_class_relpersistence	15
-#define Anum_pg_class_relkind			16
-#define Anum_pg_class_relstorage		17 /* GPDB specific */
-GPDB_COLUMN_DEFAULT(relstorage, h);
-#define Anum_pg_class_relnatts			18
-#define Anum_pg_class_relchecks			19
-#define Anum_pg_class_relhasoids		20
-#define Anum_pg_class_relhaspkey		21
-#define Anum_pg_class_relhasrules		22
-#define Anum_pg_class_relhastriggers	23
-#define Anum_pg_class_relhassubclass	24
-#define Anum_pg_class_relrowsecurity	25
-#define Anum_pg_class_relforcerowsecurity	26
-#define Anum_pg_class_relispopulated	27
-#define Anum_pg_class_relreplident		28
-#define Anum_pg_class_relfrozenxid		29
-#define Anum_pg_class_relminmxid		30
-#define Anum_pg_class_relacl			31
-#define Anum_pg_class_reloptions		32
-
-/* ----------------
- *		initial contents of pg_class
- *
- * NOTE: only "bootstrapped" relations need to be declared here.  Be sure that
- * the OIDs listed here match those given in their CATALOG macros, and that
- * the relnatts values are correct.
- * ----------------
- */
-
-/*
- * Note: "3" in the relfrozenxid column stands for FirstNormalTransactionId;
- * similarly, "1" in relminmxid stands for FirstMultiXactId
- */
-DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 f f p r 30 0 t f f f f f f t n 3 1 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 f f p r 21 0 f f f f f f f t n 3 1 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 f f p r 31 0 t f f f f f f t n 3 1 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 f f p r 32 0 t f f f f f f t n 3 1 _null_ _null_ ));
-DESCR("");
-
-
-#define		  RELKIND_RELATION		  'r'		/* ordinary table */
-#define		  RELKIND_INDEX			  'i'		/* secondary index */
-#define		  RELKIND_SEQUENCE		  'S'		/* sequence object */
-#define		  RELKIND_TOASTVALUE	  't'		/* for out-of-line values */
-#define		  RELKIND_VIEW			  'v'		/* view */
-#define		  RELKIND_COMPOSITE_TYPE  'c'		/* composite type */
-#define		  RELKIND_FOREIGN_TABLE   'f'		/* foreign table */
-#define		  RELKIND_UNCATALOGED	  'u'		/* not yet cataloged */
-#define		  RELKIND_MATVIEW		  'm'		/* materialized view */
-#define		  RELKIND_AOSEGMENTS	  'o'		/* AO segment files and eof's */
-#define		  RELKIND_AOBLOCKDIR	  'b'		/* AO block directory */
-#define		  RELKIND_AOVISIMAP		  'M'		/* AO visibility map */
-
-#define		  RELPERSISTENCE_PERMANENT	'p'		/* regular table */
-#define		  RELPERSISTENCE_UNLOGGED	'u'		/* unlogged permanent table */
-#define		  RELPERSISTENCE_TEMP		't'		/* temporary table */
-=======
 #define		  RELKIND_RELATION		  'r'	/* ordinary table */
 #define		  RELKIND_INDEX			  'i'	/* secondary index */
 #define		  RELKIND_SEQUENCE		  'S'	/* sequence object */
@@ -261,11 +173,13 @@ DESCR("");
 #define		  RELKIND_FOREIGN_TABLE   'f'	/* foreign table */
 #define		  RELKIND_PARTITIONED_TABLE 'p' /* partitioned table */
 #define		  RELKIND_PARTITIONED_INDEX 'I' /* partitioned index */
+#define		  RELKIND_AOSEGMENTS	  'o'		/* AO segment files and eof's */
+#define		  RELKIND_AOBLOCKDIR	  'b'		/* AO block directory */
+#define		  RELKIND_AOVISIMAP		  'M'		/* AO visibility map */
 
 #define		  RELPERSISTENCE_PERMANENT	'p' /* regular table */
 #define		  RELPERSISTENCE_UNLOGGED	'u' /* unlogged permanent table */
 #define		  RELPERSISTENCE_TEMP		't' /* temporary table */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* default selection for replica identity (primary key or nothing) */
 #define		  REPLICA_IDENTITY_DEFAULT	'd'
@@ -281,7 +195,21 @@ DESCR("");
 #define		  REPLICA_IDENTITY_INDEX	'i'
 
 /*
-<<<<<<< HEAD
+ * Relation kinds that have physical storage. These relations normally have
+ * relfilenode set to non-zero, but it can also be zero if the relation is
+ * mapped.
+ *
+ * GPDB: Note, this is not to be confused with the GPDB-specific 'relstorage'
+ * field, or the RELSTORAGE_* values below!
+ */
+#define RELKIND_HAS_STORAGE(relkind) \
+	((relkind) == RELKIND_RELATION || \
+	 (relkind) == RELKIND_INDEX || \
+	 (relkind) == RELKIND_SEQUENCE || \
+	 (relkind) == RELKIND_TOASTVALUE || \
+	 (relkind) == RELKIND_MATVIEW)
+
+/*
  * relstorage describes how a relkind is physically stored in the database.
  *
  * RELSTORAGE_HEAP    - stored on disk using heap storage.
@@ -311,21 +239,6 @@ static inline bool relstorage_is_ao(char c)
 	return (c == RELSTORAGE_AOROWS || c == RELSTORAGE_AOCOLS);
 }
 
-#endif   /* PG_CLASS_H */
-=======
- * Relation kinds that have physical storage. These relations normally have
- * relfilenode set to non-zero, but it can also be zero if the relation is
- * mapped.
- */
-#define RELKIND_HAS_STORAGE(relkind) \
-	((relkind) == RELKIND_RELATION || \
-	 (relkind) == RELKIND_INDEX || \
-	 (relkind) == RELKIND_SEQUENCE || \
-	 (relkind) == RELKIND_TOASTVALUE || \
-	 (relkind) == RELKIND_MATVIEW)
-
-
 #endif							/* EXPOSE_TO_CLIENT_CODE */
 
 #endif							/* PG_CLASS_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
