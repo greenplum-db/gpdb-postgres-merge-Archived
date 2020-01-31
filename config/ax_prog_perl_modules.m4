@@ -75,7 +75,3 @@ if test "x$PERL" != x; then
 else
   AC_MSG_WARN(could not find perl)
 fi])dnl
-<<<<<<< HEAD
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

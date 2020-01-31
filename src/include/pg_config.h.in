@@ -94,12 +94,9 @@
 /* Define to 1 if you have the `append_history' function. */
 #undef HAVE_APPEND_HISTORY
 
-<<<<<<< HEAD
 /* Define to 1 if you have the <apr_getopt.h> header file. */
 #undef HAVE_APR_GETOPT_H
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* Define to 1 if you have the `ASN1_STRING_get0_data' function. */
 #undef HAVE_ASN1_STRING_GET0_DATA
 
@@ -109,13 +106,11 @@
 /* Define to 1 if you have the <atomic.h> header file. */
 #undef HAVE_ATOMIC_H
 
-<<<<<<< HEAD
 /* Define to 1 if you have the `backtrace_symbols' function. */
 #undef HAVE_BACKTRACE_SYMBOLS
-=======
+
 /* Define to 1 if you have the `BIO_get_data' function. */
 #undef HAVE_BIO_GET_DATA
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* Define to 1 if you have the `BIO_meth_new' function. */
 #undef HAVE_BIO_METH_NEW
@@ -201,19 +196,7 @@
    don't. */
 #undef HAVE_DECL_STRLCPY
 
-<<<<<<< HEAD
-/* Define to 1 if you have the declaration of `strtoll', and to 0 if you
-   don't. */
-#undef HAVE_DECL_STRTOLL
-
-/* Define to 1 if you have the declaration of `strtoull', and to 0 if you
-   don't. */
-#undef HAVE_DECL_STRTOULL
-
-/* Define to 1 if you have the declaration of `sys_siglist', and to 0 if you
-=======
 /* Define to 1 if you have the declaration of `strnlen', and to 0 if you
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
    don't. */
 #undef HAVE_DECL_STRNLEN
 
@@ -392,13 +375,11 @@
 /* Define to 1 if you have the <ldap.h> header file. */
 #undef HAVE_LDAP_H
 
-<<<<<<< HEAD
-/* Define to 1 if you have the `bz2' library (-lbz2). */
-#undef HAVE_LIBBZ2
-=======
 /* Define to 1 if you have the `ldap_initialize' function. */
 #undef HAVE_LDAP_INITIALIZE
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+/* Define to 1 if you have the `bz2' library (-lbz2). */
+#undef HAVE_LIBBZ2
 
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
 #undef HAVE_LIBCRYPTO
@@ -463,12 +444,9 @@
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_LIBZ
 
-<<<<<<< HEAD
 /* Define to 1 if you have the `zstd' library (-lzstd). */
 #undef HAVE_LIBZSTD
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* Define to 1 if the system has the type `locale_t'. */
 #undef HAVE_LOCALE_T
 
@@ -499,27 +477,18 @@
 /* Define to 1 if you have the `mkdtemp' function. */
 #undef HAVE_MKDTEMP
 
-<<<<<<< HEAD
 /* Define to 1 if you have the <naucrates/init.h> header file. */
 #undef HAVE_NAUCRATES_INIT_H
 
-/* Define to 1 if you have the <netinet/in.h> header file. */
-#undef HAVE_NETINET_IN_H
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #undef HAVE_NETINET_TCP_H
 
 /* Define to 1 if you have the <net/if.h> header file. */
 #undef HAVE_NET_IF_H
 
-<<<<<<< HEAD
 /* Define to 1 if you have the <numa.h> header file. */
 #undef HAVE_NUMA_H
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* Define to 1 if you have the `OPENSSL_init_ssl' function. */
 #undef HAVE_OPENSSL_INIT_SSL
 
@@ -570,9 +539,6 @@
 
 /* Define to 1 if you have the `random' function. */
 #undef HAVE_RANDOM
-
-/* Define to 1 if you have the `RAND_OpenSSL' function. */
-#undef HAVE_RAND_OPENSSL
 
 /* Define to 1 if you have the <readline.h> header file. */
 #undef HAVE_READLINE_H
@@ -656,10 +622,6 @@
 /* Define to 1 if you have the `strlcpy' function. */
 #undef HAVE_STRLCPY
 
-<<<<<<< HEAD
-/* Define to use have a strong random number source */
-#undef HAVE_STRONG_RANDOM
-=======
 /* Define to 1 if you have the `strnlen' function. */
 #undef HAVE_STRNLEN
 
@@ -668,7 +630,6 @@
 
 /* Define to 1 if you have the `strtof' function. */
 #undef HAVE_STRTOF
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* Define to 1 if you have the `strtoll' function. */
 #undef HAVE_STRTOLL
@@ -848,25 +809,23 @@
 /* Define to 1 if you have the <winldap.h> header file. */
 #undef HAVE_WINLDAP_H
 
-<<<<<<< HEAD
 /* Define to 1 if you have the <winsock2.h> header file. */
 #undef HAVE_WINSOCK2_H
 
-/* Define to 1 if you have the <yaml.h> header file. */
-#undef HAVE_YAML_H
-=======
 /* Define to 1 if you have the `X509_get_signature_nid' function. */
 #undef HAVE_X509_GET_SIGNATURE_NID
 
 /* Define to 1 if the assembler supports X86_64's POPCNTQ instruction. */
 #undef HAVE_X86_64_POPCNTQ
 
+/* Define to 1 if you have the <yaml.h> header file. */
+#undef HAVE_YAML_H
+
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
 
 /* Define to 1 if your compiler understands __builtin_bswap16. */
 #undef HAVE__BUILTIN_BSWAP16
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* Define to 1 if your compiler understands __builtin_bswap32. */
 #undef HAVE__BUILTIN_BSWAP32
@@ -910,20 +869,10 @@
 /* Define to 1 if you have the `__strtoll' function. */
 #undef HAVE___STRTOLL
 
-<<<<<<< HEAD
-/* Define to 1 if you have the `__strtoll' function. */
-#undef HAVE___STRTOLL
-
-/* Define to 1 if you have the `__strtoull' function. */
-#undef HAVE___STRTOULL
-
-/* Define to the appropriate snprintf length modifier for 64-bit ints. */
-=======
 /* Define to 1 if you have the `__strtoull' function. */
 #undef HAVE___STRTOULL
 
 /* Define to the appropriate printf length modifier for 64-bit ints. */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #undef INT64_MODIFIER
 
 /* Define to 1 if `locale_t' requires <xlocale.h>. */
@@ -1038,7 +987,6 @@
 /* Define to 1 to build with BSD Authentication support. (--with-bsd-auth) */
 #undef USE_BSD_AUTH
 
-<<<<<<< HEAD
 /* Define to 1 to build with libcurl support. (--with-libcurl) */
 #undef USE_CURL
 
@@ -1047,30 +995,17 @@
 
 /* Define to 1 if you want float4 values to be passed by value. (Always
    defined in GPDB) */
-=======
-/* Define to use /dev/urandom for random number generation */
-#undef USE_DEV_URANDOM
-
-/* Define to 1 if you want float4 values to be passed by value.
-   (--enable-float4-byval) */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #undef USE_FLOAT4_BYVAL
 
 /* Define to 1 if you want float8, int8, etc values to be passed by value.
    (Always defined in GPDB) */
 #undef USE_FLOAT8_BYVAL
 
-<<<<<<< HEAD
 /* Define to 1 to build with gpcloud (--enable-gpcloud) */
 #undef USE_GPCLOUD
 
-/* Define to 1 if you want 64-bit integer timestamp and interval support.
-   (--enable-integer-datetimes) */
-#undef USE_INTEGER_DATETIMES
-=======
 /* Define to build with ICU support. (--with-icu) */
 #undef USE_ICU
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* Define to 1 to build with LDAP support. (--with-ldap) */
 #undef USE_LDAP
@@ -1082,13 +1017,11 @@
    (--with-libxslt) */
 #undef USE_LIBXSLT
 
-<<<<<<< HEAD
-/* Define to 1 to build with Mapreduce capabilities (--enable-mapreduce) */
-#undef USE_MAPREDUCE
-=======
 /* Define to 1 to build with LLVM based JIT support. (--with-llvm) */
 #undef USE_LLVM
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+/* Define to 1 to build with Mapreduce capabilities (--enable-mapreduce) */
+#undef USE_MAPREDUCE
 
 /* Define to select named POSIX semaphores. */
 #undef USE_NAMED_POSIX_SEMAPHORES
@@ -1099,12 +1032,9 @@
 /* Define to use OpenSSL for random number generation */
 #undef USE_OPENSSL_RANDOM
 
-<<<<<<< HEAD
 /* Define to 1 to build with Greenplum ORCA optimizer. (--enable-orca) */
 #undef USE_ORCA
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* Define to 1 to build with PAM support. (--with-pam) */
 #undef USE_PAM
 
@@ -1160,19 +1090,10 @@
    */
 #undef XLOG_BLCKSZ
 
-<<<<<<< HEAD
-/* XLOG_SEG_SIZE is the size of a single WAL file. This must be a power of 2
-   and larger than XLOG_BLCKSZ (preferably, a great deal larger than
-   XLOG_BLCKSZ). Changing XLOG_SEG_SIZE requires an initdb. */
-#undef XLOG_SEG_SIZE
-
 /* Enable large inode numbers on Mac OS X 10.5.  */
 #ifndef _DARWIN_USE_64_BIT_INODE
 # define _DARWIN_USE_64_BIT_INODE 1
 #endif
-=======
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS

@@ -145,10 +145,6 @@ if (d != a+1)
 [pgac_cv__128bit_int=yes],
 [pgac_cv__128bit_int=no])])
 if test x"$pgac_cv__128bit_int" = xyes ; then
-<<<<<<< HEAD
-  AC_DEFINE(PG_INT128_TYPE, __int128, [Define to the name of a signed 128-bit integer type.])
-  AC_CHECK_ALIGNOF(PG_INT128_TYPE)
-=======
   # Use of non-default alignment with __int128 tickles bugs in some compilers.
   # If not cross-compiling, we can test for bugs and disable use of __int128
   # with buggy compilers.  If cross-compiling, hope for the best.
@@ -181,7 +177,6 @@ if (q != holder)
     AC_DEFINE(PG_INT128_TYPE, __int128, [Define to the name of a signed 128-bit integer type.])
     AC_CHECK_ALIGNOF(PG_INT128_TYPE)
   fi
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 fi])# PGAC_TYPE_128BIT_INT
 
 

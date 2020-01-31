@@ -1,14 +1,8 @@
 #! /bin/sh
 # Configuration validation subroutine script.
-<<<<<<< HEAD
-#   Copyright 1992-2017 Free Software Foundation, Inc.
-
-timestamp='2018-09-05'
-=======
 #   Copyright 1992-2019 Free Software Foundation, Inc.
 
 timestamp='2019-01-05'
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -73,11 +67,7 @@ Report bugs and patches to <config-patches@gnu.org>."
 version="\
 GNU config.sub ($timestamp)
 
-<<<<<<< HEAD
-Copyright 1992-2017 Free Software Foundation, Inc.
-=======
 Copyright 1992-2019 Free Software Foundation, Inc.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
@@ -120,37 +110,11 @@ case $# in
     exit 1;;
 esac
 
-<<<<<<< HEAD
-# Separate what the user gave into CPU-COMPANY and OS or KERNEL-OS (if any).
-# Here we must recognize all the valid KERNEL-OS combinations.
-maybe_os=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\2/'`
-case $maybe_os in
-  nto-qnx* | linux-gnu* | linux-android* | linux-dietlibc | linux-newlib* | \
-  linux-musl* | linux-uclibc* | uclinux-uclibc* | uclinux-gnu* | kfreebsd*-gnu* | \
-  knetbsd*-gnu* | netbsd*-gnu* | netbsd*-eabi* | \
-  kopensolaris*-gnu* | cloudabi*-eabi* | \
-  storm-chaos* | os2-emx* | rtmk-nova*)
-    os=-$maybe_os
-    basic_machine=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\1/'`
-    ;;
-  android-linux)
-    os=-linux-android
-    basic_machine=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\1/'`-unknown
-    ;;
-  *)
-    basic_machine=`echo $1 | sed 's/-[^-]*$//'`
-    if [ $basic_machine != $1 ]
-    then os=`echo $1 | sed 's/.*-/-/'`
-    else os=; fi
-    ;;
-esac
-=======
 # Split fields of configuration type
 # shellcheck disable=SC2162
 IFS="-" read field1 field2 field3 field4 <<EOF
 $1
 EOF
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # Separate into logical components for further validation
 case $1 in
@@ -162,218 +126,6 @@ case $1 in
 		basic_machine=$field1-$field2
 		os=$field3-$field4
 		;;
-<<<<<<< HEAD
-	-bluegene*)
-		os=-cnk
-		;;
-	-sim | -cisco | -oki | -wec | -winbond)
-		os=
-		basic_machine=$1
-		;;
-	-scout)
-		;;
-	-wrs)
-		os=-vxworks
-		basic_machine=$1
-		;;
-	-chorusos*)
-		os=-chorusos
-		basic_machine=$1
-		;;
-	-chorusrdb)
-		os=-chorusrdb
-		basic_machine=$1
-		;;
-	-hiux*)
-		os=-hiuxwe2
-		;;
-	-sco6)
-		os=-sco5v6
-		basic_machine=`echo $1 | sed -e 's/86-.*/86-pc/'`
-		;;
-	-sco5)
-		os=-sco3.2v5
-		basic_machine=`echo $1 | sed -e 's/86-.*/86-pc/'`
-		;;
-	-sco4)
-		os=-sco3.2v4
-		basic_machine=`echo $1 | sed -e 's/86-.*/86-pc/'`
-		;;
-	-sco3.2.[4-9]*)
-		os=`echo $os | sed -e 's/sco3.2./sco3.2v/'`
-		basic_machine=`echo $1 | sed -e 's/86-.*/86-pc/'`
-		;;
-	-sco3.2v[4-9]*)
-		# Don't forget version if it is 3.2v4 or newer.
-		basic_machine=`echo $1 | sed -e 's/86-.*/86-pc/'`
-		;;
-	-sco5v6*)
-		# Don't forget version if it is 3.2v4 or newer.
-		basic_machine=`echo $1 | sed -e 's/86-.*/86-pc/'`
-		;;
-	-sco*)
-		os=-sco3.2v2
-		basic_machine=`echo $1 | sed -e 's/86-.*/86-pc/'`
-		;;
-	-udk*)
-		basic_machine=`echo $1 | sed -e 's/86-.*/86-pc/'`
-		;;
-	-isc)
-		os=-isc2.2
-		basic_machine=`echo $1 | sed -e 's/86-.*/86-pc/'`
-		;;
-	-clix*)
-		basic_machine=clipper-intergraph
-		;;
-	-isc*)
-		basic_machine=`echo $1 | sed -e 's/86-.*/86-pc/'`
-		;;
-	-lynx*178)
-		os=-lynxos178
-		;;
-	-lynx*5)
-		os=-lynxos5
-		;;
-	-lynx*)
-		os=-lynxos
-		;;
-	-ptx*)
-		basic_machine=`echo $1 | sed -e 's/86-.*/86-sequent/'`
-		;;
-	-windowsnt*)
-		os=`echo $os | sed -e 's/windowsnt/winnt/'`
-		;;
-	-psos*)
-		os=-psos
-		;;
-	-mint | -mint[0-9]*)
-		basic_machine=m68k-atari
-		os=-mint
-		;;
-esac
-
-# Decode aliases for certain CPU-COMPANY combinations.
-case $basic_machine in
-	# Recognize the basic CPU types without company name.
-	# Some are omitted here because they have special meanings below.
-	1750a | 580 \
-	| a29k \
-	| aarch64 | aarch64_be \
-	| alpha | alphaev[4-8] | alphaev56 | alphaev6[78] | alphapca5[67] \
-	| alpha64 | alpha64ev[4-8] | alpha64ev56 | alpha64ev6[78] | alpha64pca5[67] \
-	| am33_2.0 \
-	| arc | arceb \
-	| arm | arm[bl]e | arme[lb] | armv[2-8] | armv[3-8][lb] | armv7[arm] \
-	| avr | avr32 \
-	| ba \
-	| be32 | be64 \
-	| bfin \
-	| c4x | c8051 | clipper \
-	| d10v | d30v | dlx | dsp16xx \
-	| e2k | epiphany \
-	| fido | fr30 | frv | ft32 \
-	| h8300 | h8500 | hppa | hppa1.[01] | hppa2.0 | hppa2.0[nw] | hppa64 \
-	| hexagon \
-	| i370 | i860 | i960 | ia64 \
-	| ip2k | iq2000 \
-	| le32 | le64 \
-	| lm32 \
-	| m32c | m32r | m32rle | m68000 | m68k | m88k \
-	| maxq | mb | microblaze | microblazeel | mcore | mep | metag \
-	| mips | mipsbe | mipseb | mipsel | mipsle \
-	| mips16 \
-	| mips64 | mips64el \
-	| mips64octeon | mips64octeonel \
-	| mips64orion | mips64orionel \
-	| mips64r5900 | mips64r5900el \
-	| mips64vr | mips64vrel \
-	| mips64vr4100 | mips64vr4100el \
-	| mips64vr4300 | mips64vr4300el \
-	| mips64vr5000 | mips64vr5000el \
-	| mips64vr5900 | mips64vr5900el \
-	| mipsisa32 | mipsisa32el \
-	| mipsisa32r2 | mipsisa32r2el \
-	| mipsisa32r6 | mipsisa32r6el \
-	| mipsisa64 | mipsisa64el \
-	| mipsisa64r2 | mipsisa64r2el \
-	| mipsisa64r6 | mipsisa64r6el \
-	| mipsisa64sb1 | mipsisa64sb1el \
-	| mipsisa64sr71k | mipsisa64sr71kel \
-	| mipsr5900 | mipsr5900el \
-	| mipstx39 | mipstx39el \
-	| mn10200 | mn10300 \
-	| moxie \
-	| mt \
-	| msp430 \
-	| nds32 | nds32le | nds32be \
-	| nios | nios2 | nios2eb | nios2el \
-	| ns16k | ns32k \
-	| open8 | or1knd \
-	| or1k | or32 \
-	| pdp10 | pdp11 | pj | pjl \
-	| powerpc | powerpc64 | powerpc64le | powerpcle \
-	| pru \
-	| pyramid \
-	| riscv32 | riscv64 \
-	| rl78 | rx \
-	| score \
-	| sh | sh[1234] | sh[24]a | sh[24]aeb | sh[23]e | sh[234]eb | sheb | shbe | shle | sh[1234]le | sh3ele \
-	| sh64 | sh64le \
-	| sparc | sparc64 | sparc64b | sparc64v | sparc86x | sparclet | sparclite \
-	| sparcv8 | sparcv9 | sparcv9b | sparcv9v \
-	| spu \
-	| tahoe | tic4x | tic54x | tic55x | tic6x | tic80 | tron \
-	| ubicom32 \
-	| v850 | v850e | v850e1 | v850e2 | v850es | v850e2v3 \
-	| visium \
-	| we32k \
-	| x86 | xc16x | xstormy16 | xtensa \
-	| z8k | z80)
-		basic_machine=$basic_machine-unknown
-		;;
-	c54x)
-		basic_machine=tic54x-unknown
-		;;
-	c55x)
-		basic_machine=tic55x-unknown
-		;;
-	c6x)
-		basic_machine=tic6x-unknown
-		;;
-	m6811 | m68hc11 | m6812 | m68hc12 | m68hcs12x | picochip)
-		basic_machine=$basic_machine-unknown
-		os=-none
-		;;
-	m88110 | m680[12346]0 | m683?2 | m68360 | m5200 | v70 | w65 | z8k)
-		;;
-	ms1)
-		basic_machine=mt-unknown
-		;;
-
-	strongarm | thumb | xscale)
-		basic_machine=arm-unknown
-		;;
-	xgate)
-		basic_machine=$basic_machine-unknown
-		os=-none
-		;;
-	xscaleeb)
-		basic_machine=armeb-unknown
-		;;
-
-	xscaleel)
-		basic_machine=armel-unknown
-		;;
-
-	# We use `pc' rather than `unknown'
-	# because (1) that's what they normally are, and
-	# (2) the word "unknown" tends to confuse beginning users.
-	i*86 | x86_64)
-	  basic_machine=$basic_machine-pc
-	  ;;
-	# Object if more than one company name word.
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	*-*-*)
 		# Ambiguous whether COMPANY is present, or skipped and KERNEL-OS is two
 		# parts
@@ -397,90 +149,6 @@ case $basic_machine in
 				;;
 		esac
 		;;
-<<<<<<< HEAD
-	# Recognize the basic CPU types with company name.
-	580-* \
-	| a29k-* \
-	| aarch64-* | aarch64_be-* \
-	| alpha-* | alphaev[4-8]-* | alphaev56-* | alphaev6[78]-* \
-	| alpha64-* | alpha64ev[4-8]-* | alpha64ev56-* | alpha64ev6[78]-* \
-	| alphapca5[67]-* | alpha64pca5[67]-* | arc-* | arceb-* \
-	| arm-*  | armbe-* | armle-* | armeb-* | armv*-* \
-	| avr-* | avr32-* \
-	| ba-* \
-	| be32-* | be64-* \
-	| bfin-* | bs2000-* \
-	| c[123]* | c30-* | [cjt]90-* | c4x-* \
-	| c8051-* | clipper-* | craynv-* | cydra-* \
-	| d10v-* | d30v-* | dlx-* \
-	| e2k-* | elxsi-* \
-	| f30[01]-* | f700-* | fido-* | fr30-* | frv-* | fx80-* \
-	| h8300-* | h8500-* \
-	| hppa-* | hppa1.[01]-* | hppa2.0-* | hppa2.0[nw]-* | hppa64-* \
-	| hexagon-* \
-	| i*86-* | i860-* | i960-* | ia64-* \
-	| ip2k-* | iq2000-* \
-	| le32-* | le64-* \
-	| lm32-* \
-	| m32c-* | m32r-* | m32rle-* \
-	| m68000-* | m680[012346]0-* | m68360-* | m683?2-* | m68k-* \
-	| m88110-* | m88k-* | maxq-* | mcore-* | metag-* \
-	| microblaze-* | microblazeel-* \
-	| mips-* | mipsbe-* | mipseb-* | mipsel-* | mipsle-* \
-	| mips16-* \
-	| mips64-* | mips64el-* \
-	| mips64octeon-* | mips64octeonel-* \
-	| mips64orion-* | mips64orionel-* \
-	| mips64r5900-* | mips64r5900el-* \
-	| mips64vr-* | mips64vrel-* \
-	| mips64vr4100-* | mips64vr4100el-* \
-	| mips64vr4300-* | mips64vr4300el-* \
-	| mips64vr5000-* | mips64vr5000el-* \
-	| mips64vr5900-* | mips64vr5900el-* \
-	| mipsisa32-* | mipsisa32el-* \
-	| mipsisa32r2-* | mipsisa32r2el-* \
-	| mipsisa32r6-* | mipsisa32r6el-* \
-	| mipsisa64-* | mipsisa64el-* \
-	| mipsisa64r2-* | mipsisa64r2el-* \
-	| mipsisa64r6-* | mipsisa64r6el-* \
-	| mipsisa64sb1-* | mipsisa64sb1el-* \
-	| mipsisa64sr71k-* | mipsisa64sr71kel-* \
-	| mipsr5900-* | mipsr5900el-* \
-	| mipstx39-* | mipstx39el-* \
-	| mmix-* \
-	| mt-* \
-	| msp430-* \
-	| nds32-* | nds32le-* | nds32be-* \
-	| nios-* | nios2-* | nios2eb-* | nios2el-* \
-	| none-* | np1-* | ns16k-* | ns32k-* \
-	| open8-* \
-	| or1k*-* \
-	| orion-* \
-	| pdp10-* | pdp11-* | pj-* | pjl-* | pn-* | power-* \
-	| powerpc-* | powerpc64-* | powerpc64le-* | powerpcle-* \
-	| pru-* \
-	| pyramid-* \
-	| riscv32-* | riscv64-* \
-	| rl78-* | romp-* | rs6000-* | rx-* \
-	| sh-* | sh[1234]-* | sh[24]a-* | sh[24]aeb-* | sh[23]e-* | sh[34]eb-* | sheb-* | shbe-* \
-	| shle-* | sh[1234]le-* | sh3ele-* | sh64-* | sh64le-* \
-	| sparc-* | sparc64-* | sparc64b-* | sparc64v-* | sparc86x-* | sparclet-* \
-	| sparclite-* \
-	| sparcv8-* | sparcv9-* | sparcv9b-* | sparcv9v-* | sv1-* | sx*-* \
-	| tahoe-* \
-	| tic30-* | tic4x-* | tic54x-* | tic55x-* | tic6x-* | tic80-* \
-	| tile*-* \
-	| tron-* \
-	| ubicom32-* \
-	| v850-* | v850e-* | v850e1-* | v850es-* | v850e2-* | v850e2v3-* \
-	| vax-* \
-	| visium-* \
-	| we32k-* \
-	| x86-* | x86_64-* | xc16x-* | xps100-* \
-	| xstormy16-* | xtensa*-* \
-	| ymp-* \
-	| z8k-* | z80-*)
-=======
 	*-*)
 		# A lone config we happen to match not fitting any pattern
 		case $field1-$field2 in
@@ -516,7 +184,6 @@ case $basic_machine in
 				esac
 			;;
 		esac
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		;;
 	*)
 		# Convert single-component short-hands not valid as part of
@@ -1036,48 +703,10 @@ case $basic_machine in
 		cpu=m68k
 		vendor=motorola
 		;;
-<<<<<<< HEAD
-	delta88)
-		basic_machine=m88k-motorola
-		os=-sysv3
-		;;
-	dicos)
-		basic_machine=i686-pc
-		os=-dicos
-		;;
-	djgpp)
-		basic_machine=i586-pc
-		os=-msdosdjgpp
-		;;
-	dpx20 | dpx20-*)
-		basic_machine=rs6000-bull
-		os=-bosx
-		;;
-	dpx2* | dpx2*-bull)
-		basic_machine=m68k-bull
-		os=-sysv3
-		;;
-	e500v[12])
-		basic_machine=powerpc-unknown
-		os=$os"spe"
-		;;
-	e500v[12]-*)
-		basic_machine=powerpc-`echo $basic_machine | sed 's/^[^-]*-//'`
-		os=$os"spe"
-		;;
-	ebmon29k)
-		basic_machine=a29k-amd
-		os=-ebmon
-		;;
-	elxsi)
-		basic_machine=elxsi-elxsi
-		os=-bsd
-=======
 	dpx2*)
 		cpu=m68k
 		vendor=bull
 		os=sysv3
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		;;
 	encore | umax | mmax)
 		cpu=ns32k
@@ -1179,73 +808,10 @@ case $basic_machine in
 		cpu=m68000
 		vendor=convergent
 		;;
-<<<<<<< HEAD
-	*mint | -mint[0-9]* | *MiNT | *MiNT[0-9]*)
-		basic_machine=m68k-atari
-		os=-mint
-		;;
-	mips3*-*)
-		basic_machine=`echo $basic_machine | sed -e 's/mips3/mips64/'`
-		;;
-	mips3*)
-		basic_machine=`echo $basic_machine | sed -e 's/mips3/mips64/'`-unknown
-		;;
-	monitor)
-		basic_machine=m68k-rom68k
-		os=-coff
-		;;
-	morphos)
-		basic_machine=powerpc-unknown
-		os=-morphos
-		;;
-	moxiebox)
-		basic_machine=moxie-unknown
-		os=-moxiebox
-		;;
-	msdos)
-		basic_machine=i386-pc
-		os=-msdos
-		;;
-	ms1-*)
-		basic_machine=`echo $basic_machine | sed -e 's/ms1-/mt-/'`
-		;;
-	msys)
-		basic_machine=i386-pc
-		os=-msys
-		;;
-	mvs)
-		basic_machine=i370-ibm
-		os=-mvs
-		;;
-	nacl)
-		basic_machine=le32-unknown
-		os=-nacl
-		;;
-	ncr3000)
-		basic_machine=i486-ncr
-		os=-sysv4
-		;;
-	netbsd386)
-		basic_machine=i386-unknown
-		os=-netbsd
-		;;
-	netwinder)
-		basic_machine=armv4l-rebel
-		os=-linux
-		;;
-	news | news700 | news800 | news900)
-		basic_machine=m68k-sony
-		os=-newsos
-		;;
-	news1000)
-		basic_machine=m68030-sony
-		os=-newsos
-=======
 	*mint | mint[0-9]* | *MiNT | *MiNT[0-9]*)
 		cpu=m68k
 		vendor=atari
 		os=mint
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		;;
 	news-3600 | risc-news)
 		cpu=mips
@@ -1298,34 +864,9 @@ case $basic_machine in
 		cpu=pn
 		vendor=gould
 		;;
-<<<<<<< HEAD
-	power)	basic_machine=power-ibm
-		;;
-	ppc | ppcbe)	basic_machine=powerpc-unknown
-		;;
-	ppc-* | ppcbe-*)
-		basic_machine=powerpc-`echo $basic_machine | sed 's/^[^-]*-//'`
-		;;
-	ppcle | powerpclittle)
-		basic_machine=powerpcle-unknown
-		;;
-	ppcle-* | powerpclittle-*)
-		basic_machine=powerpcle-`echo $basic_machine | sed 's/^[^-]*-//'`
-		;;
-	ppc64)	basic_machine=powerpc64-unknown
-		;;
-	ppc64-*) basic_machine=powerpc64-`echo $basic_machine | sed 's/^[^-]*-//'`
-		;;
-	ppc64le | powerpc64little)
-		basic_machine=powerpc64le-unknown
-		;;
-	ppc64le-* | powerpc64little-*)
-		basic_machine=powerpc64le-`echo $basic_machine | sed 's/^[^-]*-//'`
-=======
 	power)
 		cpu=power
 		vendor=ibm
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		;;
 	ps2)
 		cpu=i386
@@ -1798,37 +1339,6 @@ case $os in
 		;;
 	# Now accept the basic system types.
 	# The portable systems comes first.
-<<<<<<< HEAD
-	# Each alternative MUST END IN A *, to match a version number.
-	# -sysv* is not here because it comes later, after sysvr4.
-	-gnu* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
-	      | -*vms* | -sco* | -esix* | -isc* | -aix* | -cnk* | -sunos | -sunos[34]*\
-	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
-	      | -sym* | -kopensolaris* | -plan9* \
-	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
-	      | -aos* | -aros* | -cloudabi* | -sortix* \
-	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
-	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
-	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* \
-	      | -bitrig* | -openbsd* | -solidbsd* | -libertybsd* \
-	      | -ekkobsd* | -kfreebsd* | -freebsd* | -riscix* | -lynxos* \
-	      | -bosx* | -nextstep* | -cxux* | -aout* | -elf* | -oabi* \
-	      | -ptx* | -coff* | -ecoff* | -winnt* | -domain* | -vsta* \
-	      | -udi* | -eabi* | -lites* | -ieee* | -go32* | -aux* \
-	      | -chorusos* | -chorusrdb* | -cegcc* \
-	      | -cygwin* | -msys* | -pe* | -psos* | -moss* | -proelf* | -rtems* \
-	      | -mingw32* | -mingw64* | -linux-gnu* | -linux-android* \
-	      | -linux-newlib* | -linux-musl* | -linux-uclibc* \
-	      | -uxpv* | -beos* | -mpeix* | -udk* | -moxiebox* \
-	      | -interix* | -uwin* | -mks* | -rhapsody* | -darwin* | -opened* \
-	      | -openstep* | -oskit* | -conix* | -pw32* | -nonstopux* \
-	      | -storm-chaos* | -tops10* | -tenex* | -tops20* | -its* \
-	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
-	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
-	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
-	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* \
-	      | -onefs* | -tirtos* | -phoenix* | -fuchsia* | -redox*)
-=======
 	# Each alternative MUST end in a * to match a version number.
 	# sysv* is not here because it comes later, after sysvr4.
 	gnu* | bsd* | mach* | minix* | genix* | ultrix* | irix* \
@@ -1859,7 +1369,6 @@ case $os in
 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
 	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi*)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	# Remember, each alternative MUST END IN *, to match a version number.
 		;;
 	qnx*)
@@ -2092,9 +1601,6 @@ case $cpu-$vendor in
 	mips*-*)
 		os=elf
 		;;
-	or1k-*)
-		os=-elf
-		;;
 	or32-*)
 		os=coff
 		;;
@@ -2106,9 +1612,6 @@ case $cpu-$vendor in
 		;;
 	pru-*)
 		os=elf
-		;;
-	pru-*)
-		os=-elf
 		;;
 	*-be)
 		os=beos

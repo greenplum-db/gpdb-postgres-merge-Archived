@@ -98,27 +98,21 @@ AC_MSG_CHECKING([how to link an embedded Python application])
 
 python_libdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBDIR'))))"`
 python_ldlibrary=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LDLIBRARY'))))"`
-<<<<<<< HEAD
-ldlibrary=`echo "${python_ldlibrary}" | sed -e 's/\.so$//' -e 's/\.dll$//' -e 's/\.dylib$//' -e 's/\.sl$//'`
-python_enable_shared=`${PYTHON} -c "import distutils.sysconfig; print(distutils.sysconfig.get_config_vars().get('Py_ENABLE_SHARED',0))"`
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # If LDLIBRARY exists and has a shlib extension, use it verbatim.
 ldlibrary=`echo "${python_ldlibrary}" | sed -e 's/\.so$//' -e 's/\.dll$//' -e 's/\.dylib$//' -e 's/\.sl$//'`
 if test -e "${python_libdir}/${python_ldlibrary}" -a x"${python_ldlibrary}" != x"${ldlibrary}"
 then
 	ldlibrary=`echo "${ldlibrary}" | sed "s/^lib//"`
-<<<<<<< HEAD
-	# special for greenplum... python was built in /opt/, but resides in the ext directory
-	if test ! -d "${python_libdir}"
-	then
-		python_libdir=`echo "${python_configdir}" | sed "s/\/python2.7\/config//"`
-	fi
-	python_libspec="-L${python_libdir} -l${ldlibrary}"
-=======
 	found_shlib=1
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	# GPDB_12_MERGE_FIXME: Is this still needed?
+	# special for greenplum... python was built in /opt/, but resides in the ext directory
+	#if test ! -d "${python_libdir}"
+	#then
+	#	python_libdir=`echo "${python_configdir}" | sed "s/\/python2.7\/config//"`
+	#fi
+	#python_libspec="-L${python_libdir} -l${ldlibrary}"
 else
 	# Otherwise, guess the base name of the shlib.
 	# LDVERSION was added in Python 3.2, before that use VERSION,
