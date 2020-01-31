@@ -9,13 +9,9 @@
  *	  polluting the namespace with lots of stuff...
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2011, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/c.h
@@ -33,11 +29,7 @@
  *	  -------	------------------------------------------------
  *		0)		pg_config.h and standard system headers
  *		1)		compiler characteristics
-<<<<<<< HEAD
- *		2)		bool, true, false, TRUE, FALSE, NULL
-=======
  *		2)		bool, true, false
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *		3)		standard system types
  *		4)		IsValid macros for system types
  *		5)		offsetof, lengthof, alignment
@@ -56,6 +48,8 @@
 #ifndef C_H
 #define C_H
 
+// GPDB_12_MERGE_FIXME: is this C++ guard still needed? Upstream is happy
+// without it..
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -94,12 +88,6 @@ extern "C" {
 #include <locale.h>
 #ifdef ENABLE_NLS
 #include <libintl.h>
-<<<<<<< HEAD
-#endif
-
-#if defined(WIN32) || defined(__CYGWIN__)
-/* We have to redefine some system functions after they are included above. */
-#include "pg_config_os.h"
 #endif
 
 
@@ -109,119 +97,6 @@ extern "C" {
  * type prefixes (const, signed, volatile, inline) are handled in pg_config.h.
  * ----------------------------------------------------------------
  */
-
-/*
- * Disable "inline" if PG_FORCE_DISABLE_INLINE is defined.
- * This is used to work around compiler bugs and might also be useful for
- * investigatory purposes.
- */
-#ifdef PG_FORCE_DISABLE_INLINE
-#undef inline
-#define inline
-#endif
-
-/*
- * Attribute macros
- *
- * GCC: https://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
- * GCC: https://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html
- * Sunpro: https://docs.oracle.com/cd/E18659_01/html/821-1384/gjzke.html
- * XLC: http://www-01.ibm.com/support/knowledgecenter/SSGH2K_11.1.0/com.ibm.xlc111.aix.doc/language_ref/function_attributes.html
- * XLC: http://www-01.ibm.com/support/knowledgecenter/SSGH2K_11.1.0/com.ibm.xlc111.aix.doc/language_ref/type_attrib.html
- */
-
-/* only GCC supports the unused attribute */
-#ifdef __GNUC__
-#define pg_attribute_unused() __attribute__((unused))
-#else
-#define pg_attribute_unused()
-#endif
-
-/*
- * Append PG_USED_FOR_ASSERTS_ONLY to definitions of variables that are only
- * used in assert-enabled builds, to avoid compiler warnings about unused
- * variables in assert-disabled builds.
- */
-#ifdef USE_ASSERT_CHECKING
-#define PG_USED_FOR_ASSERTS_ONLY
-#else
-#define PG_USED_FOR_ASSERTS_ONLY pg_attribute_unused()
-#endif
-
-/* GCC and XLC support format attributes */
-#if defined(__GNUC__) || defined(__IBMC__)
-#define pg_attribute_format_arg(a) __attribute__((format_arg(a)))
-#define pg_attribute_printf(f,a) __attribute__((format(PG_PRINTF_ATTRIBUTE, f, a)))
-#else
-#define pg_attribute_format_arg(a)
-#define pg_attribute_printf(f,a)
-#endif
-
-/* GCC, Sunpro and XLC support aligned, packed and noreturn */
-#if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__IBMC__)
-#define pg_attribute_aligned(a) __attribute__((aligned(a)))
-#define pg_attribute_noreturn() __attribute__((noreturn))
-#define pg_attribute_packed() __attribute__((packed))
-#define HAVE_PG_ATTRIBUTE_NORETURN 1
-#else
-/*
- * NB: aligned and packed are not given default definitions because they
- * affect code functionality; they *must* be implemented by the compiler
- * if they are to be used.
- */
-#define pg_attribute_noreturn()
-#endif
-
-/*
- * Forcing a function not to be inlined can be useful if it's the slow path of
- * a performance-critical function, or should be visible in profiles to allow
- * for proper cost attribution.  Note that unlike the pg_attribute_XXX macros
- * above, this should be placed before the function's return type and name.
- */
-/* GCC, Sunpro and XLC support noinline via __attribute__ */
-#if (defined(__GNUC__) && __GNUC__ > 2) || defined(__SUNPRO_C) || defined(__IBMC__)
-#define pg_noinline __attribute__((noinline))
-/* msvc via declspec */
-#elif defined(_MSC_VER)
-#define pg_noinline __declspec(noinline)
-#else
-#define pg_noinline
-#endif
-
-/*
- * Mark a point as unreachable in a portable fashion.  This should preferably
- * be something that the compiler understands, to aid code generation.
- * In assert-enabled builds, we prefer abort() for debugging reasons.
- */
-#if defined(HAVE__BUILTIN_UNREACHABLE) && !defined(USE_ASSERT_CHECKING)
-#define pg_unreachable() __builtin_unreachable()
-#elif defined(_MSC_VER) && !defined(USE_ASSERT_CHECKING)
-#define pg_unreachable() __assume(0)
-#else
-#define pg_unreachable() abort()
-#endif
-
-/*
- * Hints to the compiler about the likelihood of a branch. Both likely() and
- * unlikely() return the boolean value of the contained expression.
-=======
-#endif
-
-
-/* ----------------------------------------------------------------
- *				Section 1: compiler characteristics
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
- *
- * These should only be used sparingly, in very hot code paths. It's very easy
- * to mis-estimate likelihoods.
- */
-#if __GNUC__ >= 3
-#define likely(x)	__builtin_expect((x) != 0, 1)
-#define unlikely(x) __builtin_expect((x) != 0, 0)
-#else
-#define likely(x)	((x) != 0)
-#define unlikely(x) ((x) != 0)
-#endif
 
 /*
  * Disable "inline" if PG_FORCE_DISABLE_INLINE is defined.
@@ -453,11 +328,6 @@ typedef unsigned char bool;
 #ifndef false
 #define false	((bool) 0)
 #endif
-<<<<<<< HEAD
-
-#endif   /* not C++ */
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #endif
 #endif							/* not C++ */
@@ -557,17 +427,6 @@ typedef unsigned long long int uint64;
 
 typedef PG_INT128_TYPE int128
 #if defined(pg_attribute_aligned)
-<<<<<<< HEAD
-pg_attribute_aligned(MAXIMUM_ALIGNOF)
-#endif
-;
-
-typedef unsigned PG_INT128_TYPE uint128
-#if defined(pg_attribute_aligned)
-pg_attribute_aligned(MAXIMUM_ALIGNOF)
-#endif
-;
-=======
 			pg_attribute_aligned(MAXIMUM_ALIGNOF)
 #endif
 		   ;
@@ -577,7 +436,6 @@ typedef unsigned PG_INT128_TYPE uint128
 			pg_attribute_aligned(MAXIMUM_ALIGNOF)
 #endif
 		   ;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #endif
 #endif
@@ -608,15 +466,10 @@ typedef unsigned PG_INT128_TYPE uint128
 #endif
 #endif
 
-<<<<<<< HEAD
-/* Select timestamp representation (float8 or int64) */
-#ifdef USE_INTEGER_DATETIMES
-=======
 /*
  * We now always use int64 timestamps, but keep this symbol defined for the
  * benefit of external code that might test it.
  */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #define HAVE_INT64_TIMESTAMP
 
 /*
@@ -923,15 +776,6 @@ typedef NameData *Name;
 #define AssertArg(condition) assert(condition)
 #define AssertState(condition) assert(condition)
 #define AssertPointerAlignment(ptr, bndr)	((void)true)
-<<<<<<< HEAD
-#define Trap(condition, errorType) \
-	do { \
-		(void) assert(!(condition)); \
-	} while (0)
-#define TrapMacro(condition, errorType) \
-	((bool) (assert(!(condition)), 0))
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #else							/* USE_ASSERT_CHECKING && !FRONTEND */
 
@@ -1210,22 +1054,6 @@ extern void ExceptionalCondition(const char *conditionName,
 	} while (0)
 
 
-<<<<<<< HEAD
-/*
- * UnusedArg
- *  Silence the compiler's warning about an unreferenced parameter or variable.
- *
- *  int f(int x)
- *  {
- *      int result = 1;
- *      UnusedArg(x);
- *      return result;
- *  }
- */
-#define UnusedArg(arg)    ((void)(arg))
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* ----------------------------------------------------------------
  *				Section 8:	random stuff
  * ----------------------------------------------------------------
@@ -1405,20 +1233,6 @@ extern int	fdatasync(int fildes);
 #define HAVE_STRTOLL 1
 #endif
 
-<<<<<<< HEAD
-#if defined(HAVE_FDATASYNC) && !HAVE_DECL_FDATASYNC
-extern int	fdatasync(int fildes);
-#endif
-
-#ifdef HAVE_LONG_LONG_INT
-/* Older platforms may provide strto[u]ll functionality under other names */
-#if !defined(HAVE_STRTOLL) && defined(HAVE___STRTOLL)
-#define strtoll __strtoll
-#define HAVE_STRTOLL 1
-#endif
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #if !defined(HAVE_STRTOLL) && defined(HAVE_STRTOQ)
 #define strtoll strtoq
 #define HAVE_STRTOLL 1
@@ -1483,17 +1297,6 @@ extern unsigned long long strtoull(const char *str, char **endptr, int base);
 #define siglongjmp longjmp
 #endif
 
-<<<<<<< HEAD
-/*
- * We assume if we have these two functions, we have their friends too, and
- * can use the wide-character functions.
- */
-#if defined(HAVE_WCSTOMBS) && defined(HAVE_TOWLOWER)
-#define USE_WIDE_UPPER_LOWER
-#endif
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* EXEC_BACKEND defines */
 #ifdef EXEC_BACKEND
 #define NON_EXEC_STATIC
@@ -1504,12 +1307,8 @@ extern unsigned long long strtoull(const char *str, char **endptr, int base);
 /* /port compatibility functions */
 #include "port.h"
 
-<<<<<<< HEAD
 #ifdef __cplusplus
 }   /* extern "C" */
 #endif
 
-#endif   /* C_H */
-=======
 #endif							/* C_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

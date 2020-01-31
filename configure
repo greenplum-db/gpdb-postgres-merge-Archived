@@ -3086,7 +3086,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 configure_args=$ac_configure_args
 
 
-PG_MAJORVERSION=`expr "$PGPACKAGE_VERSION" : '\([0-9][0-9]*\)'`
+PG_MAJORVERSION=`expr "$PG_PACKAGE_VERSION" : '\([0-9][0-9]*\)'`
 
 
 cat >>confdefs.h <<_ACEOF

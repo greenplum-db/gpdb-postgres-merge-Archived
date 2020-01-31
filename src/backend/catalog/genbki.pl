@@ -381,8 +381,6 @@ my @tables_needing_macros;
 # produce output, one catalog at a time
 foreach my $catname (@catnames)
 {
-<<<<<<< HEAD
-=======
 	my $catalog = $catalogs{$catname};
 
 	# Create one definition header with macro definitions for each catalog.
@@ -423,7 +421,6 @@ EOM
 	  if $catalog->{rowtype_oid_macro};
 	print $def "\n";
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	# .bki CREATE command for this catalog
 	print $bki "create $catname $catalog->{relation_oid}"
 	  . $catalog->{shared_relation}
@@ -570,28 +567,6 @@ EOM
 			}
 		}
 
-<<<<<<< HEAD
-			# Generate entries for system attributes.
-			# We only need postgres.bki entries, not schemapg.h entries.
-			if ($is_bootstrap eq ' bootstrap')
-			{
-				$attnum = 0;
-				my @SYS_ATTRS = (
-					{ name => 'ctid',     type => 'tid' },
-					{ name => 'oid',      type => 'oid' },
-					{ name => 'xmin',     type => 'xid' },
-					{ name => 'cmin',     type => 'cid' },
-					{ name => 'xmax',     type => 'xid' },
-					{ name => 'cmax',     type => 'cid' },
-					{ name => 'tableoid', type => 'oid' },
-					{ name => 'gp_segment_id', type => 'int4' });
-				foreach my $attr (@SYS_ATTRS)
-				{
-					$attnum--;
-					my $row = emit_pgattr_row($table_name, $attr, 1);
-					$row->{attnum}        = $attnum;
-					$row->{attstattarget} = '0';
-=======
 		# Special hack to generate OID symbols for pg_type entries
 		# that lack one.
 		if ($catname eq 'pg_type' and !exists $bki_values{oid_symbol})
@@ -600,7 +575,6 @@ EOM
 			$bki_values{oid_symbol} = $symbol
 			  if defined $symbol;
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		# Write to postgres.bki
 		print_bki_insert(\%bki_values, $schema);
@@ -772,7 +746,8 @@ sub gen_pg_attribute
 				{ name => 'cmin',     type => 'cid' },
 				{ name => 'xmax',     type => 'xid' },
 				{ name => 'cmax',     type => 'cid' },
-				{ name => 'tableoid', type => 'oid' });
+				{ name => 'tableoid', type => 'oid' },
+				{ name => 'gp_segment_id', type => 'int4' });
 			foreach my $attr (@SYS_ATTRS)
 			{
 				$attnum--;

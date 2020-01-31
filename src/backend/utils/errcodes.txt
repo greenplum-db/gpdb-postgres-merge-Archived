@@ -2,13 +2,9 @@
 # errcodes.txt
 #      PostgreSQL error codes
 #
-<<<<<<< HEAD
 # Portions Copyright (c) 2005-2008, Greenplum inc.
 # Portions Copyright (c) 2012-Present Pivotal Software, Inc.
-# Copyright (c) 2003-2015, PostgreSQL Global Development Group
-=======
 # Copyright (c) 2003-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #
 # This list serves as the basis for generating source files containing error
 # codes. It is kept in a common format to make sure all these source files have
@@ -224,9 +220,6 @@ Section: Class 22 - Data Exception
 2200N    E    ERRCODE_INVALID_XML_CONTENT                                    invalid_xml_content
 2200S    E    ERRCODE_INVALID_XML_COMMENT                                    invalid_xml_comment
 2200T    E    ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION                     invalid_xml_processing_instruction
-<<<<<<< HEAD
-22M01    E    ERRCODE_NO_PARTITION_FOR_PARTITIONING_KEY                      no_partition_for_partitioning_key
-=======
 22030    E    ERRCODE_DUPLICATE_JSON_OBJECT_KEY_VALUE                        duplicate_json_object_key_value
 22032    E    ERRCODE_INVALID_JSON_TEXT                                      invalid_json_text
 22033    E    ERRCODE_INVALID_JSON_SUBSCRIPT                                 invalid_json_subscript
@@ -242,7 +235,6 @@ Section: Class 22 - Data Exception
 2203F    E    ERRCODE_JSON_SCALAR_REQUIRED                                   json_scalar_required
 2203D    E    ERRCODE_TOO_MANY_JSON_ARRAY_ELEMENTS                           too_many_json_array_elements
 2203E    E    ERRCODE_TOO_MANY_JSON_OBJECT_MEMBERS                           too_many_json_object_members
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 Section: Class 23 - Integrity Constraint Violation
 

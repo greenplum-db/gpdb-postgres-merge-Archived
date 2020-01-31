@@ -8671,8 +8671,6 @@ drop_type_any_name:
 			| FOREIGN TABLE							{ $$ = OBJECT_FOREIGN_TABLE; }
 			| EXTERNAL TABLE						{ $$ = OBJECT_FOREIGN_TABLE; }
 			| EXTERNAL WEB TABLE					{ $$ = OBJECT_FOREIGN_TABLE; }	
-			| ACCESS METHOD							{ $$ = OBJECT_ACCESS_METHOD; }
-			| EVENT TRIGGER 						{ $$ = OBJECT_EVENT_TRIGGER; }
 			| COLLATION								{ $$ = OBJECT_COLLATION; }
 			| CONVERSION_P							{ $$ = OBJECT_CONVERSION; }
 			| STATISTICS							{ $$ = OBJECT_STATISTIC_EXT; }
