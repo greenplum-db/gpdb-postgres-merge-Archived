@@ -122,13 +122,8 @@ static text *text_substring(Datum str,
 							int32 length,
 							bool length_not_specified);
 static text *text_overlay(text *t1, text *t2, int sp, int sl);
-<<<<<<< HEAD
-static int	text_position(text *t1, text *t2);
-static void text_position_setup(text *t1, text *t2, TextPositionState *state);
-=======
 static int	text_position(text *t1, text *t2, Oid collid);
 static void text_position_setup(text *t1, text *t2, Oid collid, TextPositionState *state);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static bool text_position_next(TextPositionState *state);
 static char *text_position_next_internal(char *start_ptr, TextPositionState *state);
 static char *text_position_get_match_ptr(TextPositionState *state);
@@ -1126,11 +1121,7 @@ text_position(text *t1, text *t2, Oid collid)
 	if (VARSIZE_ANY_EXHDR(t1) < 1 || VARSIZE_ANY_EXHDR(t2) < 1)
 		return 0;
 
-<<<<<<< HEAD
-	text_position_setup(t1, t2, &state);
-=======
 	text_position_setup(t1, t2, collid, &state);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (!text_position_next(&state))
 		result = 0;
 	else
@@ -1163,8 +1154,6 @@ text_position_setup(text *t1, text *t2, Oid collid, TextPositionState *state)
 	int			len2 = VARSIZE_ANY_EXHDR(t2);
 	pg_locale_t mylocale = 0;
 
-<<<<<<< HEAD
-=======
 	check_collation_set(collid);
 
 	if (!lc_collate_is_c(collid) && collid != DEFAULT_COLLATION_OID)
@@ -1175,7 +1164,6 @@ text_position_setup(text *t1, text *t2, Oid collid, TextPositionState *state)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("nondeterministic collations are not supported for substring searches")));
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	Assert(len1 > 0);
 	Assert(len2 > 0);
 
@@ -1451,8 +1439,6 @@ static void
 text_position_cleanup(TextPositionState *state)
 {
 	/* no cleanup needed */
-<<<<<<< HEAD
-=======
 }
 
 static void
@@ -1469,7 +1455,6 @@ check_collation_set(Oid collid)
 				 errmsg("could not determine which collation to use for string comparison"),
 				 errhint("Use the COLLATE clause to set the collation explicitly.")));
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* varstr_cmp()
@@ -4244,11 +4229,7 @@ replace_text(PG_FUNCTION_ARGS)
 		PG_RETURN_TEXT_P(src_text);
 	}
 
-<<<<<<< HEAD
-	text_position_setup(src_text, from_sub_text, &state);
-=======
 	text_position_setup(src_text, from_sub_text, PG_GET_COLLATION(), &state);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	found = text_position_next(&state);
 
@@ -4609,11 +4590,7 @@ split_text(PG_FUNCTION_ARGS)
 			PG_RETURN_TEXT_P(cstring_to_text(""));
 	}
 
-<<<<<<< HEAD
-	text_position_setup(inputstring, fldsep, &state);
-=======
 	text_position_setup(inputstring, fldsep, PG_GET_COLLATION(), &state);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* identify bounds of first field */
 	start_ptr = VARDATA_ANY(inputstring);
@@ -4759,14 +4736,11 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 		 */
 		if (fldsep_len < 1)
 		{
-<<<<<<< HEAD
-=======
 			Datum		elems[1];
 			bool		nulls[1];
 			int			dims[1];
 			int			lbs[1];
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			/* single element can be a NULL too */
 			is_null = null_string ? text_isequal(inputstring, null_string, PG_GET_COLLATION()) : false;
 
@@ -4780,11 +4754,7 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 													 TEXTOID, -1, false, 'i'));
 		}
 
-<<<<<<< HEAD
-		text_position_setup(inputstring, fldsep, &state);
-=======
 		text_position_setup(inputstring, fldsep, PG_GET_COLLATION(), &state);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		start_ptr = VARDATA_ANY(inputstring);
 

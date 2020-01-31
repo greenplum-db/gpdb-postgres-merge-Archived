@@ -98,16 +98,14 @@ report_name_conflict(Oid classId, const char *name)
 		case LanguageRelationId:
 			msgfmt = gettext_noop("language \"%s\" already exists");
 			break;
-<<<<<<< HEAD
 		case ExtprotocolRelationId:
 			msgfmt = gettext_noop("protocol \"%s\" already exists");
-=======
+			break;
 		case PublicationRelationId:
 			msgfmt = gettext_noop("publication \"%s\" already exists");
 			break;
 		case SubscriptionRelationId:
 			msgfmt = gettext_noop("subscription \"%s\" already exists");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 		default:
 			elog(ERROR, "unsupported object class %u", classId);

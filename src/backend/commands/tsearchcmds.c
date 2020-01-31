@@ -1292,12 +1292,7 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 	/* Update dependencies */
 	makeConfigurationDependencies(tup, true, relMap);
 
-<<<<<<< HEAD
-	InvokeObjectPostAlterHook(TSConfigRelationId,
-							  HeapTupleGetOid(tup), 0);
-=======
 	InvokeObjectPostAlterHook(TSConfigRelationId, cfgId, 0);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	ObjectAddressSet(address, TSConfigRelationId, cfgId);
 

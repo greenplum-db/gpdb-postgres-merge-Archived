@@ -28,11 +28,8 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
-<<<<<<< HEAD
 #include "catalog/pg_proc_callback.h"
 #include "catalog/pg_proc_fn.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/pg_transform.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_rewrite.h"

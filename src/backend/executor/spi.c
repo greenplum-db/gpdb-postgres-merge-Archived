@@ -85,13 +85,8 @@ static int	_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount);
 static void _SPI_error_callback(void *arg);
 
 static void _SPI_cursor_operation(Portal portal,
-<<<<<<< HEAD
-					  FetchDirection direction, int64 count,
-					  DestReceiver *dest);
-=======
-								  FetchDirection direction, long count,
+								  FetchDirection direction, int64 count,
 								  DestReceiver *dest);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static SPIPlanPtr _SPI_make_plan_non_temp(SPIPlanPtr plan);
 static SPIPlanPtr _SPI_save_plan(SPIPlanPtr plan);
@@ -212,11 +207,7 @@ SPI_finish(void)
 {
 	int			res;
 
-<<<<<<< HEAD
-	res = _SPI_begin_call(false);		/* just check we're connected */
-=======
 	res = _SPI_begin_call(false);	/* just check we're connected */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (res < 0)
 		return res;
 

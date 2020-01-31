@@ -2663,16 +2663,11 @@ XLogRead(char *buf, XLogRecPtr startptr, Size count)
 
 				ereport(ERROR,
 						(errcode_for_file_access(),
-<<<<<<< HEAD
-				  errmsg("could not seek in log segment %s to offset %u: %m",
-						 XLogFileNameP(curFileTimeLine, sendSegNo),
-						 startoff)));
-			}
-=======
 						 errmsg("could not seek in log segment %s to offset %u: %m",
 								XLogFileNameP(curFileTimeLine, sendSegNo),
 								startoff)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			}
+
 			sendOff = startoff;
 		}
 

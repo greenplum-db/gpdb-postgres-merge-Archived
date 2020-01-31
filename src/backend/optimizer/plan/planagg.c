@@ -17,13 +17,9 @@
  * scan all the rows anyway.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -113,17 +109,17 @@ preprocess_minmax_aggregates(PlannerInfo *root)
 		return;
 
 	/*
-<<<<<<< HEAD
 	 * Reject if disabled by caller.
 	 */
 	if (!root->config->gp_enable_minmax_optimization)
-=======
+		return;
+
+	/*
 	 * Reject if query contains any CTEs; there's no way to build an indexscan
 	 * on one so we couldn't succeed here.  (If the CTEs are unreferenced,
 	 * that's not true, but it doesn't seem worth expending cycles to check.)
 	 */
 	if (parse->cteList)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return;
 
 	/*

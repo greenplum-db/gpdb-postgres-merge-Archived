@@ -401,11 +401,7 @@ help(const char *progname)
 	printf(_("\nPlease read the documentation for the complete list of run-time\n"
 			 "configuration settings and how to set them on the command line or in\n"
 			 "the configuration file.\n\n"
-<<<<<<< HEAD
 			 "Report bugs to <bugs@greenplum.org>.\n"));
-=======
-			 "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 
@@ -448,10 +444,6 @@ check_root(const char *progname)
 					 "more information on how to properly start the server.\n");
 		exit(1);
 	}
-<<<<<<< HEAD
 #endif
-#endif   /* WIN32 */
-=======
 #endif							/* WIN32 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

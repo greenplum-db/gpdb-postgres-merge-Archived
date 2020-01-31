@@ -3,13 +3,9 @@
  * joinrels.c
  *	  Routines to determine which relations should be joined
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -20,12 +16,8 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
-#include "miscadmin.h"                  /* CHECK_FOR_INTERRUPTS */
-=======
 #include "miscadmin.h"
 #include "optimizer/appendinfo.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"

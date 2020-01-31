@@ -6,13 +6,9 @@
  * There is hardly anything left of Paul Brown's original implementation...
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  *
@@ -1260,19 +1256,11 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 
 	if (OldIndex != NULL)
 		index_close(OldIndex, NoLock);
-<<<<<<< HEAD
-	heap_close(OldHeap, NoLock);
-	heap_close(NewHeap, NoLock);
-
-	/* Update pg_class to reflect the correct values of pages and tuples. */
-	relRelation = heap_open(RelationRelationId, RowExclusiveLock);
-=======
 	table_close(OldHeap, NoLock);
 	table_close(NewHeap, NoLock);
 
 	/* Update pg_class to reflect the correct values of pages and tuples. */
 	relRelation = table_open(RelationRelationId, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	reltup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(OIDNewHeap));
 	if (!HeapTupleIsValid(reltup))

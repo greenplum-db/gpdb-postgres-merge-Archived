@@ -110,7 +110,6 @@ CreateAccessMethod(CreateAmStmt *stmt)
 
 	recordDependencyOnCurrentExtension(&myself, false);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -121,10 +120,7 @@ CreateAccessMethod(CreateAmStmt *stmt)
 									NULL);
 	}
 
-	heap_close(rel, RowExclusiveLock);
-=======
 	table_close(rel, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return myself;
 }

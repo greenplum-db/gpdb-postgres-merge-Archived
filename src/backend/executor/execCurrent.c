@@ -12,10 +12,7 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
-=======
 #include "access/genam.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/relscan.h"
 #include "access/sysattr.h"
 #include "catalog/pg_type.h"

@@ -1803,11 +1803,8 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 			return false;
 		}
 
-<<<<<<< HEAD
-=======
 		if (urldata->lud_scheme)
 			hbaline->ldapscheme = pstrdup(urldata->lud_scheme);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (urldata->lud_host)
 			hbaline->ldapserver = pstrdup(urldata->lud_host);
 		hbaline->ldapport = urldata->lud_port;

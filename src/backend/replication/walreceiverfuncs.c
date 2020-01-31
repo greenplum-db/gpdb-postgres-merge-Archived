@@ -340,11 +340,7 @@ GetReplicationApplyDelay(void)
 	long		secs;
 	int			usecs;
 
-<<<<<<< HEAD
-	TimestampTz	chunkReplayStartTime;
-=======
 	TimestampTz chunkReplayStartTime;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	SpinLockAcquire(&walrcv->mutex);
 	receivePtr = walrcv->receivedUpto;

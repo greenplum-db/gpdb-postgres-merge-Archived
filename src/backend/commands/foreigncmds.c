@@ -680,7 +680,6 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	/* Post creation hook for new foreign data wrapper */
 	InvokeObjectPostCreateHook(ForeignDataWrapperRelationId, fdwId, 0);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -689,10 +688,7 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 									NULL);
 	}
 
-	heap_close(rel, RowExclusiveLock);
-=======
 	table_close(rel, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return myself;
 }
@@ -1014,7 +1010,6 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	/* Post creation hook for new foreign server */
 	InvokeObjectPostCreateHook(ForeignServerRelationId, srvId, 0);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -1023,10 +1018,7 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 									NULL);
 	}
 
-	heap_close(rel, RowExclusiveLock);
-=======
 	table_close(rel, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return myself;
 }
@@ -1125,7 +1117,6 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 
 	heap_freetuple(tp);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -1134,10 +1125,7 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 									NULL);
 	}
 
-	heap_close(rel, RowExclusiveLock);
-=======
 	table_close(rel, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return address;
 }
@@ -1310,7 +1298,6 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	/* Post creation hook for new user mapping */
 	InvokeObjectPostCreateHook(UserMappingRelationId, umId, 0);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -1319,10 +1306,7 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 									NULL);
 	}
 
-	heap_close(rel, RowExclusiveLock);
-=======
 	table_close(rel, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return myself;
 }
@@ -1417,7 +1401,6 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 
 	heap_freetuple(tp);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -1426,10 +1409,7 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 									NULL);
 	}
 
-	heap_close(rel, RowExclusiveLock);
-=======
 	table_close(rel, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return address;
 }

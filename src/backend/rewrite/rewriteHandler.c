@@ -3,13 +3,9 @@
  * rewriteHandler.c
  *		Primary module of query rewriter.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -232,7 +228,6 @@ AcquireRewriteLocks(Query *parsetree,
 				else
 					lockmode = rte->rellockmode;
 
-<<<<<<< HEAD
 				/* Take a lock either using CDB lock promotion or not */
 				if (needLockUpgrade)
 				{
@@ -240,11 +235,8 @@ AcquireRewriteLocks(Query *parsetree,
 				}
 				else
 				{
-					rel = heap_open(rte->relid, lockmode);
+					rel = table_open(rte->relid, lockmode);
 				}
-=======
-				rel = table_open(rte->relid, lockmode);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 				/*
 				 * While we have the relation open, update the RTE's relkind,
@@ -252,12 +244,8 @@ AcquireRewriteLocks(Query *parsetree,
 				 */
 				rte->relkind = rel->rd_rel->relkind;
 
-<<<<<<< HEAD
 				/* Close the relcache entry without releasing the lock. */
-				heap_close(rel, NoLock);
-=======
 				table_close(rel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 
 			case RTE_JOIN:

@@ -50,11 +50,8 @@
 #include "commands/prepare.h"
 #include "commands/queue.h"
 #include "commands/proclang.h"
-<<<<<<< HEAD
-#include "commands/resgroupcmds.h"
-=======
 #include "commands/publicationcmds.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#include "commands/resgroupcmds.h"
 #include "commands/schemacmds.h"
 #include "commands/seclabel.h"
 #include "commands/sequence.h"
@@ -1654,16 +1651,10 @@ ProcessUtilitySlow(ParseState *pstate,
 							break;
 						case OBJECT_COLLATION:
 							Assert(stmt->args == NIL);
-<<<<<<< HEAD
-							address = DefineCollation(stmt->defnames,
-													  stmt->definition,
-													  false);
-=======
 							address = DefineCollation(pstate,
 													  stmt->defnames,
 													  stmt->definition,
 													  stmt->if_not_exists);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							break;
 						case OBJECT_EXTPROTOCOL:
 							Assert(stmt->args == NIL);
@@ -2577,13 +2568,6 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 		case OBJECT_MATVIEW:
 			tag = "ALTER MATERIALIZED VIEW";
 			break;
-<<<<<<< HEAD
-
-		case OBJECT_EXTPROTOCOL:
-			tag = "ALTER PROTOCOL";
-			break;
-
-=======
 		case OBJECT_PUBLICATION:
 			tag = "ALTER PUBLICATION";
 			break;
@@ -2593,7 +2577,9 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 		case OBJECT_STATISTIC_EXT:
 			tag = "ALTER STATISTICS";
 			break;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		case OBJECT_EXTPROTOCOL:
+			tag = "ALTER PROTOCOL";
+			break;
 		default:
 			tag = "???";
 			break;

@@ -91,11 +91,7 @@ static int	outbuf_maxlen = 0;
 Datum
 gtsvectorout(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	SignTSVector *key = (SignTSVector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
-=======
 	SignTSVector *key = (SignTSVector *) PG_DETOAST_DATUM(PG_GETARG_POINTER(0));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	char	   *outbuf;
 
 	if (outbuf_maxlen == 0)

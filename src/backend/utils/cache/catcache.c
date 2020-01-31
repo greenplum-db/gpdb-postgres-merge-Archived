@@ -555,11 +555,7 @@ CatCacheInvalidate(CatCache *cache, uint32 hashValue)
 	Index		hashIndex;
 	dlist_mutable_iter iter;
 
-<<<<<<< HEAD
-	CACHE1_elog(DEBUG2, "CatCacheInvalidate: called");
-=======
 	CACHE_elog(DEBUG2, "CatCacheInvalidate: called");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * We don't bother to check whether the cache has finished initialization
@@ -599,11 +595,7 @@ CatCacheInvalidate(CatCache *cache, uint32 hashValue)
 			}
 			else
 				CatCacheRemoveCTup(cache, ct);
-<<<<<<< HEAD
-			CACHE1_elog(DEBUG2, "CatCacheInvalidate: invalidated");
-=======
 			CACHE_elog(DEBUG2, "CatCacheInvalidate: invalidated");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #ifdef CATCACHE_STATS
 			cache->cc_invals++;
 #endif

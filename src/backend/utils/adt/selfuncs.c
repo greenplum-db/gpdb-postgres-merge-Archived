@@ -10,13 +10,9 @@
  *	  Index cost functions are located via the index AM's API struct,
  *	  which is obtained from the handler function registered in pg_am.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -424,20 +420,12 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 				/* be careful to apply operator right way 'round */
 				if (varonleft)
 					match = DatumGetBool(FunctionCall2Coll(&eqproc,
-<<<<<<< HEAD
-														   DEFAULT_COLLATION_OID,
-=======
 														   sslot.stacoll,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 														   sslot.values[i],
 														   constval));
 				else
 					match = DatumGetBool(FunctionCall2Coll(&eqproc,
-<<<<<<< HEAD
-														   DEFAULT_COLLATION_OID,
-=======
 														   sslot.stacoll,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 														   constval,
 														   sslot.values[i]));
 				if (match)
@@ -826,11 +814,7 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 		{
 			if (varonleft ?
 				DatumGetBool(FunctionCall2Coll(opproc,
-<<<<<<< HEAD
-											   DEFAULT_COLLATION_OID,
-=======
 											   sslot.stacoll,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 											   sslot.values[i],
 											   constval)) :
 				DatumGetBool(FunctionCall2Coll(opproc,
@@ -918,11 +902,7 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 			{
 				if (varonleft ?
 					DatumGetBool(FunctionCall2Coll(opproc,
-<<<<<<< HEAD
-												   DEFAULT_COLLATION_OID,
-=======
 												   sslot.stacoll,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 												   sslot.values[i],
 												   constval)) :
 					DatumGetBool(FunctionCall2Coll(opproc,
@@ -1023,11 +1003,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 			 */
 			double		histfrac;
 			int			lobound = 0;	/* first possible slot to search */
-<<<<<<< HEAD
-			int			hibound = sslot.nvalues;		/* last+1 slot to search */
-=======
 			int			hibound = sslot.nvalues;	/* last+1 slot to search */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			bool		have_end = false;
 
 			/*
@@ -1067,11 +1043,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 														 &sslot.values[probe]);
 
 				ltcmp = DatumGetBool(FunctionCall2Coll(opproc,
-<<<<<<< HEAD
-													   DEFAULT_COLLATION_OID,
-=======
 													   sslot.stacoll,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 													   sslot.values[probe],
 													   constval));
 				if (isgt)
@@ -1156,12 +1128,8 @@ ineq_histogram_selectivity(PlannerInfo *root,
 				 * values to a uniform comparison scale, and do a linear
 				 * interpolation within this bin.
 				 */
-<<<<<<< HEAD
-				if (convert_to_scalar(constval, consttype, &val,
-=======
 				if (convert_to_scalar(constval, consttype, sslot.stacoll,
 									  &val,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 									  sslot.values[i - 1], sslot.values[i],
 									  vardata->vartype,
 									  &low, &high, isgt))
@@ -3057,11 +3025,7 @@ eqjoinsel_inner(Oid opfuncoid,
  *
  * (Also used for anti join, which we are supposed to estimate the same way.)
  * Caller has ensured that vardata1 is the LHS variable.
-<<<<<<< HEAD
- * Unlike eqjoinsel_inner, we have to cope with operator being InvalidOid.
-=======
  * Unlike eqjoinsel_inner, we have to cope with opfuncoid being InvalidOid.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 static double
 eqjoinsel_semi(Oid opfuncoid,

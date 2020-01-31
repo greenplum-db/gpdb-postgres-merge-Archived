@@ -7,13 +7,9 @@
  *
  * src/backend/utils/misc/ps_status.c
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2000-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * various details abducted from various places
  *--------------------------------------------------------------------
  */

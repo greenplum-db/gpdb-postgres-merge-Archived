@@ -154,13 +154,8 @@ static xmlChar *pg_xmlCharStrndup(const char *str, size_t len);
 #endif							/* USE_LIBXML */
 
 static void xmldata_root_element_start(StringInfo result, const char *eltname,
-<<<<<<< HEAD
-						   const char *xmlschema, const char *targetns,
-						   bool top_level);
-=======
 									   const char *xmlschema, const char *targetns,
 									   bool top_level);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void xmldata_root_element_end(StringInfo result, const char *eltname);
 static StringInfo query_to_xml_internal(const char *query, char *tablename,
 										const char *xmlschema, bool nulls, bool tableforest,

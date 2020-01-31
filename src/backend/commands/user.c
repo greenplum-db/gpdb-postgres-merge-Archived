@@ -3,13 +3,9 @@
  * user.c
  *	  Commands for manipulating roles (formerly called users).
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/commands/user.c
@@ -81,9 +77,8 @@ static void AddRoleMems(const char *rolename, Oid roleid,
 						List *memberSpecs, List *memberIds,
 						Oid grantorId, bool admin_opt);
 static void DelRoleMems(const char *rolename, Oid roleid,
-<<<<<<< HEAD
-			List *memberSpecs, List *memberIds,
-			bool admin_opt);
+						List *memberSpecs, List *memberIds,
+						bool admin_opt);
 static extAuthPair *TransformExttabAuthClause(DefElem *defel);
 static void SetCreateExtTableForRole(List* allow,
 			List* disallow, bool* createrextgpfd,
@@ -98,10 +93,6 @@ static void AddRoleDenials(const char *rolename, Oid roleid,
 			List *addintervals);
 static void DelRoleDenials(const char *rolename, Oid roleid,
 			List *dropintervals);
-=======
-						List *memberSpecs, List *memberIds,
-						bool admin_opt);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /* Check if current user has createrole privileges */

@@ -721,8 +721,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	/* Post creation hook for new operator class */
 	InvokeObjectPostCreateHook(OperatorClassRelationId, opclassoid, 0);
 
-<<<<<<< HEAD
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 	
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -733,9 +732,6 @@ DefineOpClass(CreateOpClassStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
-	table_close(rel, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return myself;
 }

@@ -1161,19 +1161,17 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 		case OBJECT_VIEW:
 			return true;
 
-<<<<<<< HEAD
 		/* GPDB additions */
 		case OBJECT_EXTPROTOCOL:
 			return true;
 		case OBJECT_RESQUEUE:
 		case OBJECT_RESGROUP:
 			return false;
-=======
+
 			/*
 			 * There's intentionally no default: case here; we want the
 			 * compiler to warn if a new ObjectType hasn't been handled above.
 			 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/* Shouldn't get here, but if we do, say "no support" */
@@ -1231,11 +1229,15 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 		case OCLASS_SUBSCRIPTION:
 		case OCLASS_TRANSFORM:
 			return true;
-<<<<<<< HEAD
 		case OCLASS_EXTPROTOCOL:
 			return true;
 		case OCLASS_COMPRESSION:
 			return false;
+
+			/*
+			 * There's intentionally no default: case here; we want the
+			 * compiler to warn if a new OCLASS hasn't been handled above.
+			 */
 	}
 
 	return true;
@@ -1264,16 +1266,11 @@ EventTriggerSupportsGrantObjectType(GrantObjectType objtype)
 		case ACL_OBJECT_TYPE:
 		case ACL_OBJECT_EXTPROTOCOL:
 			return true;
-		default:
-			Assert(false);
-			return true;
-=======
 
 			/*
 			 * There's intentionally no default: case here; we want the
-			 * compiler to warn if a new OCLASS hasn't been handled above.
+			 * compiler to warn if a new ACL_OBJECT hasn't been handled above.
 			 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/* Shouldn't get here, but if we do, say "no support" */

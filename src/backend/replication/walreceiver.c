@@ -131,10 +131,7 @@ static void WalRcvSigUsr1Handler(SIGNAL_ARGS);
 static void WalRcvShutdownHandler(SIGNAL_ARGS);
 static void WalRcvQuickDieHandler(SIGNAL_ARGS);
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * Process any interrupts the walreceiver process may have received.
  * This should be called any time the process's latch has become set.
@@ -860,19 +857,11 @@ WalRcvQuickDieHandler(SIGNAL_ARGS)
 	 * anyway.
 	 *
 	 * Note we use _exit(2) not _exit(0).  This is to force the postmaster
-<<<<<<< HEAD
-	 * into a system reset cycle if someone sends a manual SIGQUIT to a
-	 * random backend.  This is necessary precisely because we don't clean up
-	 * our shared memory state.  (The "dead man switch" mechanism in
-	 * pmsignal.c should ensure the postmaster sees this as a crash, too, but
-	 * no harm in being doubly sure.)
-=======
 	 * into a system reset cycle if someone sends a manual SIGQUIT to a random
 	 * backend.  This is necessary precisely because we don't clean up our
 	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
 	 * should ensure the postmaster sees this as a crash, too, but no harm in
 	 * being doubly sure.)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	_exit(2);
 }
@@ -1210,10 +1199,7 @@ XLogWalRcvSendHSFeedback(bool immed)
 	TransactionId xmin,
 				catalog_xmin;
 	static TimestampTz sendTime = 0;
-<<<<<<< HEAD
-=======
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* initially true so we always send at least one feedback message */
 	static bool master_has_standby_xmin = true;
 
@@ -1246,13 +1232,8 @@ XLogWalRcvSendHSFeedback(bool immed)
 	 *
 	 * Bailing out here also ensures that we don't send feedback until we've
 	 * read our own replication slot state, so we don't tell the master to
-<<<<<<< HEAD
-	 * discard needed xmin or catalog_xmin from any slots that may exist
-	 * on this replica.
-=======
 	 * discard needed xmin or catalog_xmin from any slots that may exist on
 	 * this replica.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	if (!HotStandbyActive())
 		return;

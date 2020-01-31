@@ -34,11 +34,8 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
-<<<<<<< HEAD
 #include "access/reloptions.h"
-=======
 #include "access/tableam.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/xact.h"
 #include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
@@ -56,11 +53,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_range.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "catalog/pg_type_encoding.h"
-#include "catalog/pg_type_fn.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "commands/typecmds.h"
@@ -121,18 +114,12 @@ static void validateDomainConstraint(Oid domainoid, char *ccbin);
 static List *get_rels_with_domain(Oid domainOid, LOCKMODE lockmode);
 static void checkEnumOwner(HeapTuple tup);
 static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
-<<<<<<< HEAD
-					Oid baseTypeOid,
-					int typMod, Constraint *constr,
-					char *domainName, ObjectAddress *constrAddr);
-static void remove_type_encoding(Oid typid);
-=======
 								 Oid baseTypeOid,
 								 int typMod, Constraint *constr,
 								 const char *domainName, ObjectAddress *constrAddr);
 static Node *replace_domain_constraint_value(ParseState *pstate,
 											 ColumnRef *cref);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static void remove_type_encoding(Oid typid);
 
 
 /*
@@ -793,7 +780,6 @@ RemoveTypeById(Oid typeOid)
 	Relation	relation;
 	HeapTuple	tup;
 
-<<<<<<< HEAD
 	/* 
 	 * It might look like the call in RemoveType() is enough for
 	 * pg_type_encoding but it's not. This case catches array type derivations
@@ -801,10 +787,7 @@ RemoveTypeById(Oid typeOid)
 	 */
 	remove_type_encoding(typeOid);
 
-	relation = heap_open(TypeRelationId, RowExclusiveLock);
-=======
 	relation = table_open(TypeRelationId, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeOid));
 	if (!HeapTupleIsValid(tup))
@@ -830,11 +813,7 @@ RemoveTypeById(Oid typeOid)
 
 	ReleaseSysCache(tup);
 
-<<<<<<< HEAD
-	heap_close(relation,  Gp_role == GP_ROLE_DISPATCH ? NoLock : RowExclusiveLock);
-=======
-	table_close(relation, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	table_close(relation, Gp_role == GP_ROLE_DISPATCH ? NoLock : RowExclusiveLock);
 }
 
 

@@ -539,13 +539,8 @@ SyncRepReleaseWaiters(void)
 	/*
 	 * If this WALSender is serving a standby that is not on the list of
 	 * potential sync standbys then we have nothing to do. If we are still
-<<<<<<< HEAD
-	 * starting up, still running base backup or the current flush position
-	 * is still invalid, then leave quickly also. Streaming or stopping WAL
-=======
 	 * starting up, still running base backup or the current flush position is
 	 * still invalid, then leave quickly also.  Streaming or stopping WAL
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * senders are allowed to release waiters.
 	 */
 	if (MyWalSnd->sync_standby_priority == 0 ||

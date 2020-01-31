@@ -3,13 +3,9 @@
  * clauses.c
  *	  routines to manipulate qualification clauses
  *
-<<<<<<< HEAD
- * Portions Copyright (c) 2005-2008, Greenplum inc
+g * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -137,20 +133,13 @@ static List *simplify_and_arguments(List *args,
 									bool *haveNull, bool *forceFalse);
 static Node *simplify_boolean_equality(Oid opno, List *args);
 static Expr *simplify_function(Oid funcid,
-<<<<<<< HEAD
-				  Oid result_type, int32 result_typmod,
-				  Oid result_collid, Oid input_collid, List **args_p,
-				  bool funcvariadic, bool process_args, bool allow_non_const,
-				  eval_const_expressions_context *context);
-static bool large_const(Expr *expr, Size max_size);
-static List *expand_function_arguments(List *args, Oid result_type,
-						  HeapTuple func_tuple);
-=======
 							   Oid result_type, int32 result_typmod,
 							   Oid result_collid, Oid input_collid, List **args_p,
 							   bool funcvariadic, bool process_args, bool allow_non_const,
 							   eval_const_expressions_context *context);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static bool large_const(Expr *expr, Size max_size);
+static List *expand_function_arguments(List *args, Oid result_type,
+						  HeapTuple func_tuple);
 static List *reorder_function_arguments(List *args, HeapTuple func_tuple);
 static List *add_function_defaults(List *args, HeapTuple func_tuple);
 static List *fetch_function_defaults(HeapTuple func_tuple);

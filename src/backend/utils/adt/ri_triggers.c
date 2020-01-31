@@ -182,17 +182,10 @@ static Datum ri_set(TriggerData *trigdata, bool is_set_null);
 static void quoteOneName(char *buffer, const char *name);
 static void quoteRelationName(char *buffer, Relation rel);
 static void ri_GenerateQual(StringInfo buf,
-<<<<<<< HEAD
-				const char *sep,
-				const char *leftop, Oid leftoptype,
-				Oid opoid,
-				const char *rightop, Oid rightoptype);
-=======
 							const char *sep,
 							const char *leftop, Oid leftoptype,
 							Oid opoid,
 							const char *rightop, Oid rightoptype);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void ri_GenerateQualCollation(StringInfo buf, Oid collation);
 static int	ri_NullCheck(TupleDesc tupdesc, TupleTableSlot *slot,
 						 const RI_ConstraintInfo *riinfo, bool rel_is_pk);

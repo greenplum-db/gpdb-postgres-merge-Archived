@@ -6,13 +6,9 @@
  * See src/backend/utils/misc/README for more information.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2000-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
@@ -35,10 +31,7 @@
 #include "access/commit_ts.h"
 #include "access/gin.h"
 #include "access/rmgr.h"
-<<<<<<< HEAD
-=======
 #include "access/tableam.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/transam.h"
 #include "access/twophase.h"
 #include "access/xact.h"
@@ -59,11 +52,7 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
-<<<<<<< HEAD
-=======
-#include "optimizer/geqo.h"
 #include "optimizer/optimizer.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "parser/parse_expr.h"
@@ -933,13 +922,10 @@ static const unit_conversion time_unit_conversion_table[] =
  *
  * 7. If it's a new GUC_LIST_QUOTE option, you must add it to
  *	  variable_is_guc_list_quote() in src/bin/pg_dump/dumputils.c.
-<<<<<<< HEAD
  *
  * 8. In gpdb, the guc is force explicit declare whether it needs to sync value
  * 	  between master and primary. Add guc name into either sync_guc_names_array
  * 	  or unsync_guc_names_array.
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 
 
@@ -1120,18 +1106,10 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-<<<<<<< HEAD
 		{"geqo", PGC_USERSET, DEFUNCT_OPTIONS,
 			gettext_noop("Unused. Syntax check only for PostgreSQL compatibility."),
             NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-=======
-		{"geqo", PGC_USERSET, QUERY_TUNING_GEQO,
-			gettext_noop("Enables genetic query optimization."),
-			gettext_noop("This algorithm attempts to do planning without "
-						 "exhaustive searching."),
-			GUC_EXPLAIN
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		},
 		&defunct_bool,
 		false,

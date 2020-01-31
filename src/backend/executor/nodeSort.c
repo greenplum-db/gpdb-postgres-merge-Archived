@@ -3,13 +3,9 @@
  * nodeSort.c
  *	  Routines to handle sorting of relations.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -274,17 +270,13 @@ ExecSort(PlanState *pstate)
 	slot = node->ss.ps.ps_ResultTupleSlot;
 	(void) tuplesort_gettupleslot(tuplesortstate,
 								  ScanDirectionIsForward(dir),
-<<<<<<< HEAD
-								  slot, NULL);
+								  false, slot, NULL);
 
 	if (TupIsNull(slot) && !node->delayEagerFree)
 	{
 		ExecEagerFreeSort(node);
 	}
 
-=======
-								  false, slot, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	return slot;
 }
 

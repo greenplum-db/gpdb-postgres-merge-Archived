@@ -804,17 +804,12 @@ acldefault(ObjectType objtype, Oid ownerId)
 			world_default = ACL_NO_RIGHTS;
 			owner_default = ACL_ALL_RIGHTS_FOREIGN_SERVER;
 			break;
-<<<<<<< HEAD
-		case ACL_OBJECT_EXTPROTOCOL:
+		case OBJECT_EXTPROTOCOL:
 			world_default = ACL_NO_RIGHTS;
 			owner_default = ACL_ALL_RIGHTS_EXTPROTOCOL;
 			break;
-		case ACL_OBJECT_DOMAIN:
-		case ACL_OBJECT_TYPE:
-=======
 		case OBJECT_DOMAIN:
 		case OBJECT_TYPE:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			world_default = ACL_USAGE;
 			owner_default = ACL_ALL_RIGHTS_TYPE;
 			break;

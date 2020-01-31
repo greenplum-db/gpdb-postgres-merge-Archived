@@ -505,44 +505,7 @@ regoperin(PG_FUNCTION_ARGS)
 
 	/* The rest of this wouldn't work in bootstrap mode */
 	if (IsBootstrapProcessingMode())
-<<<<<<< HEAD
-	{
-		int			matches = 0;
-		Relation	hdesc;
-		ScanKeyData skey[1];
-		SysScanDesc sysscan;
-		HeapTuple	tuple;
-
-		ScanKeyInit(&skey[0],
-					Anum_pg_operator_oprname,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					CStringGetDatum(opr_name_or_oid));
-
-		hdesc = heap_open(OperatorRelationId, AccessShareLock);
-		sysscan = systable_beginscan(hdesc, OperatorNameNspIndexId, true,
-									 NULL, 1, skey);
-
-		while (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
-		{
-			result = (RegProcedure) HeapTupleGetOid(tuple);
-			if (++matches > 1)
-				break;
-		}
-		if (matches == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("operator does not exist: %s", opr_name_or_oid)));
-		else if (matches > 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-					 errmsg("more than one operator named %s",
-							opr_name_or_oid)));
-
-		PG_RETURN_OID(result);
-	}
-=======
 		elog(ERROR, "regoper values must be OIDs in bootstrap mode");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Normal case: parse the name into components and see if it matches any

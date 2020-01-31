@@ -34,10 +34,6 @@
 #include "utils/syscache.h"
 
 
-<<<<<<< HEAD
-=======
-/* Potentially set by pg_upgrade_support functions */
-Oid			binary_upgrade_next_pg_enum_oid = InvalidOid;
 
 /*
  * Hash table of enum value OIDs created during the current transaction by
@@ -50,7 +46,6 @@ Oid			binary_upgrade_next_pg_enum_oid = InvalidOid;
  */
 static HTAB *enum_blacklist = NULL;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void RenumberEnumType(Relation pg_enum, HeapTuple *existing, int nelems);
 static int	sort_order_cmp(const void *p1, const void *p2);
 

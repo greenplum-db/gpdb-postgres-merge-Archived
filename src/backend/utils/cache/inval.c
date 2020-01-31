@@ -539,11 +539,7 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 	 * If the relation being invalidated is one of those cached in a relcache
 	 * init file, mark that we need to zap that file at commit. For simplicity
 	 * invalidations for a specific database always invalidate the shared file
-<<<<<<< HEAD
-	 * as well.
-=======
 	 * as well.  Also zap when we are invalidating whole relcache.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	if (relId == InvalidOid || RelationIdIsInInitFile(relId))
 		transInvalInfo->RelcacheInitFileInval = true;
@@ -1565,11 +1561,7 @@ CallSyscacheCallbacks(int cacheid, uint32 hashvalue)
 		struct SYSCACHECALLBACK *ccitem = syscache_callback_list + i;
 
 		Assert(ccitem->id == cacheid);
-<<<<<<< HEAD
-		(*ccitem->function) (ccitem->arg, cacheid, hashvalue);
-=======
 		ccitem->function(ccitem->arg, cacheid, hashvalue);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		i = ccitem->link - 1;
 	}
 }

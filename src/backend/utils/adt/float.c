@@ -25,13 +25,8 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "utils/array.h"
-<<<<<<< HEAD
-#include "utils/builtins.h"
-#include "utils/float_utils.h"
-=======
 #include "utils/float.h"
 #include "utils/fmgrprotos.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/sortsupport.h"
 #include "utils/timestamp.h"
 

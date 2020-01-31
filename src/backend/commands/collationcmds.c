@@ -20,11 +20,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
-<<<<<<< HEAD
-#include "catalog/oid_dispatch.h"
-=======
 #include "catalog/objectaccess.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/pg_collation.h"
 #include "commands/alter.h"
 #include "commands/collationcmds.h"
@@ -39,12 +35,10 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-<<<<<<< HEAD
+#include "catalog/oid_dispatch.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
 #include "storage/fd.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 typedef struct
 {

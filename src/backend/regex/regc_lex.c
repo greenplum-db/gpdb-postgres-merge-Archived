@@ -875,11 +875,7 @@ lexescape(struct vars *v)
 			/* oops, doesn't look like it's a backref after all... */
 			v->now = save;
 			/* and fall through into octal number */
-<<<<<<< HEAD
-			/* fallthrough */
-=======
 			/* FALLTHROUGH */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		case CHR('0'):
 			NOTE(REG_UUNPORT);
 			v->now--;			/* put first digit back */

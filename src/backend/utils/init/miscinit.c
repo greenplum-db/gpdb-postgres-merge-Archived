@@ -32,11 +32,7 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_authid.h"
-<<<<<<< HEAD
-#include "cdb/cdbvars.h"
-=======
 #include "common/file_perm.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "libpq/libpq.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -59,15 +55,14 @@
 #include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
+#include "utils/pidfile.h"
+#include "utils/syscache.h"
+#include "utils/varlena.h"
+
+#include "cdb/cdbvars.h"
 #include "utils/resgroup.h"
 #include "utils/resource_manager.h"
 #include "utils/resscheduler.h"
-=======
-#include "utils/pidfile.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-#include "utils/syscache.h"
-#include "utils/varlena.h"
 
 
 #define DIRECTORY_LOCK_FILE		"postmaster.pid"

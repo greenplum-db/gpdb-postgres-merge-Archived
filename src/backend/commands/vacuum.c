@@ -9,13 +9,9 @@
  * in cluster.c.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -48,20 +44,14 @@
 #include "catalog/pg_am.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_database.h"
-<<<<<<< HEAD
 #include "catalog/pg_index.h"
-#include "catalog/indexing.h"
-=======
 #include "catalog/pg_inherits.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
 #include "commands/analyzeutils.h"
 #include "commands/cluster.h"
-<<<<<<< HEAD
 #include "commands/tablecmds.h"
-=======
 #include "commands/defrem.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "commands/vacuum.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbpartition.h"

@@ -3,13 +3,9 @@
  * indexcmds.c
  *	  POSTGRES define and remove index code.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -26,24 +22,15 @@
 #include "access/htup_details.h"
 #include "access/reloptions.h"
 #include "access/sysattr.h"
-<<<<<<< HEAD
 #include "access/tupconvert.h"
-=======
 #include "access/tableam.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_constraint.h"
-<<<<<<< HEAD
-#include "catalog/pg_constraint_fn.h"
 #include "catalog/pg_inherits.h"
-#include "catalog/pg_inherits_fn.h"
-=======
-#include "catalog/pg_inherits.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_tablespace.h"
@@ -1600,11 +1587,7 @@ DefineIndex(Oid relationId,
 										 opfamOids,
 										 attmap, maplen))
 					{
-<<<<<<< HEAD
-						Oid		cldConstrOid = InvalidOid;
-=======
 						Oid			cldConstrOid = InvalidOid;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 						/*
 						 * Found a match.
@@ -1681,11 +1664,7 @@ DefineIndex(Oid relationId,
 				}
 
 				list_free(childidxs);
-<<<<<<< HEAD
-				heap_close(childrel, NoLock);
-=======
 				table_close(childrel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 				/*
 				 * If no matching index was found, create our own.

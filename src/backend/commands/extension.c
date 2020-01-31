@@ -1640,23 +1640,14 @@ CreateExtensionInternal(char *extensionName,
 							 requiredSchemas,
 							 schemaName, schemaOid);
 
-<<<<<<< HEAD
 		/*
 		 * If additional update scripts have to be executed, apply the updates as
 		 * though a series of ALTER EXTENSION UPDATE commands were given
 		 */
 		ApplyExtensionUpdates(extensionOid, pcontrol,
-							  versionName, updateVersions);
+							  versionName, updateVersions,
+							  origSchemaName, cascade, is_create);
 	}
-=======
-	/*
-	 * If additional update scripts have to be executed, apply the updates as
-	 * though a series of ALTER EXTENSION UPDATE commands were given
-	 */
-	ApplyExtensionUpdates(extensionOid, pcontrol,
-						  versionName, updateVersions,
-						  origSchemaName, cascade, is_create);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return address;
 }

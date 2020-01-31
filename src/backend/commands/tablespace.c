@@ -41,13 +41,9 @@
  * and munge the system catalogs of the new database.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010 Greenplum Inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -817,15 +813,9 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 										  "restarting the server.") : 0));
 		else
 			ereport(ERROR,
-<<<<<<< HEAD
-				(errcode_for_file_access(),
-				 errmsg("could not set permissions on directory \"%s\": %m",
-						location)));
-=======
 					(errcode_for_file_access(),
 					 errmsg("could not set permissions on directory \"%s\": %m",
 							location)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	if (InRecovery)

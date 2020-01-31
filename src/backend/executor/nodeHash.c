@@ -3,13 +3,9 @@
  * nodeHash.c
  *	  Routines to hash relations for hashjoin
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -59,21 +55,12 @@ static void ExecHashIncreaseNumBuckets(HashJoinTable hashtable);
 static void ExecParallelHashIncreaseNumBatches(HashJoinTable hashtable);
 static void ExecParallelHashIncreaseNumBuckets(HashJoinTable hashtable);
 static void ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node,
-<<<<<<< HEAD
-					  int mcvsToUse);
-static void ExecHashSkewTableInsert(HashState *hashState, HashJoinTable hashtable,
-						TupleTableSlot *slot,
-						uint32 hashvalue,
-						int bucketNumber);
-static void ExecHashRemoveNextSkewBucket(HashState *hashState, HashJoinTable hashtable);
-=======
 								  int mcvsToUse);
 static void ExecHashSkewTableInsert(HashJoinTable hashtable,
 									TupleTableSlot *slot,
 									uint32 hashvalue,
 									int bucketNumber);
 static void ExecHashRemoveNextSkewBucket(HashJoinTable hashtable);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static void ExecHashTableExplainEnd(PlanState *planstate, struct StringInfoData *buf);
 static void

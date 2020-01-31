@@ -390,15 +390,9 @@ static void asyncQueueFillWarning(void);
 static bool SignalBackends(void);
 static void asyncQueueReadAllNotifications(void);
 static bool asyncQueueProcessPageEntries(volatile QueuePosition *current,
-<<<<<<< HEAD
-							 QueuePosition stop,
-							 char *page_buffer,
-							 Snapshot snapshot);
-=======
 										 QueuePosition stop,
 										 char *page_buffer,
 										 Snapshot snapshot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void asyncQueueAdvanceTail(void);
 static void ProcessIncomingNotify(void);
 static bool AsyncExistsPendingNotify(const char *channel, const char *payload);
@@ -1949,11 +1943,7 @@ asyncQueueProcessPageEntries(volatile QueuePosition *current,
 		/* Ignore messages destined for other databases */
 		if (qe->dboid == MyDatabaseId)
 		{
-<<<<<<< HEAD
 			if (XidInMVCCSnapshot_Local(qe->xid, snapshot))
-=======
-			if (XidInMVCCSnapshot(qe->xid, snapshot))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			{
 				/*
 				 * The source transaction is still in progress, so we can't
@@ -1967,11 +1957,7 @@ asyncQueueProcessPageEntries(volatile QueuePosition *current,
 				 * Note that we must test XidInMVCCSnapshot before we test
 				 * TransactionIdDidCommit, else we might return a message from
 				 * a transaction that is not yet visible to snapshots; compare
-<<<<<<< HEAD
-				 * the comments at the head of tqual.c.
-=======
 				 * the comments at the head of heapam_visibility.c.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				 *
 				 * Also, while our own xact won't be listed in the snapshot,
 				 * we need not check for TransactionIdIsCurrentTransactionId

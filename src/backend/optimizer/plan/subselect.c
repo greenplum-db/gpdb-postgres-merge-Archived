@@ -3,16 +3,12 @@
  * subselect.c
  *	  Planning routines for subselects.
  *
-<<<<<<< HEAD
- * Portions Copyright (c) 2005-2008, Greenplum inc
- * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * This module deals with SubLinks and CTEs, but not subquery RTEs (i.e.,
  * not sub-SELECT-in-FROM cases).
  *
+ * Portions Copyright (c) 2005-2008, Greenplum inc
+ * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION

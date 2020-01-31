@@ -143,15 +143,11 @@ DefineAggregate(ParseState *pstate,
 			finalfuncName = defGetQualifiedName(defel);
 		else if (strcmp(defel->defname, "combinefunc") == 0)
 			combinefuncName = defGetQualifiedName(defel);
-<<<<<<< HEAD
 		/* Alias for COMBINEFUNC, for backwards-compatibility with
 		 * GPDB 5 and below */
-		else if (pg_strcasecmp(defel->defname, "prefunc") == 0)
+		else if (strcmp(defel->defname, "prefunc") == 0)
 			combinefuncName = defGetQualifiedName(defel);
-		else if (pg_strcasecmp(defel->defname, "serialfunc") == 0)
-=======
 		else if (strcmp(defel->defname, "serialfunc") == 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			serialfuncName = defGetQualifiedName(defel);
 		else if (strcmp(defel->defname, "deserialfunc") == 0)
 			deserialfuncName = defGetQualifiedName(defel);

@@ -163,17 +163,10 @@ static const Size max_changes_in_memory = 4096;
 static ReorderBufferTXN *ReorderBufferGetTXN(ReorderBuffer *rb);
 static void ReorderBufferReturnTXN(ReorderBuffer *rb, ReorderBufferTXN *txn);
 static ReorderBufferTXN *ReorderBufferTXNByXid(ReorderBuffer *rb,
-<<<<<<< HEAD
-					  TransactionId xid, bool create, bool *is_new,
-					  XLogRecPtr lsn, bool create_as_top);
-static void ReorderBufferTransferSnapToParent(ReorderBufferTXN *txn,
-								  ReorderBufferTXN *subtxn);
-=======
 											   TransactionId xid, bool create, bool *is_new,
 											   XLogRecPtr lsn, bool create_as_top);
 static void ReorderBufferTransferSnapToParent(ReorderBufferTXN *txn,
 											  ReorderBufferTXN *subtxn);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static void AssertTXNLsnOrder(ReorderBuffer *rb);
 
@@ -207,11 +200,7 @@ static void ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 static void ReorderBufferRestoreCleanup(ReorderBuffer *rb, ReorderBufferTXN *txn);
 static void ReorderBufferCleanupSerializedTXNs(const char *slotname);
 static void ReorderBufferSerializedPath(char *path, ReplicationSlot *slot,
-<<<<<<< HEAD
-							TransactionId xid, XLogSegNo segno);
-=======
 										TransactionId xid, XLogSegNo segno);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static void ReorderBufferFreeSnap(ReorderBuffer *rb, Snapshot snap);
 static Snapshot ReorderBufferCopySnap(ReorderBuffer *rb, Snapshot orig_snap,
@@ -285,19 +274,6 @@ ReorderBufferAllocate(void)
 
 	dlist_init(&buffer->toplevel_by_lsn);
 	dlist_init(&buffer->txns_by_base_snapshot_lsn);
-<<<<<<< HEAD
-	dlist_init(&buffer->cached_transactions);
-	dlist_init(&buffer->cached_changes);
-	slist_init(&buffer->cached_tuplebufs);
-=======
-
-	/*
-	 * Ensure there's no stale data from prior uses of this slot, in case some
-	 * prior exit avoided calling ReorderBufferFree. Failure to do this can
-	 * produce duplicated txns, and it's very cheap if there's nothing there.
-	 */
-	ReorderBufferCleanupSerializedTXNs(NameStr(MyReplicationSlot->data.name));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Ensure there's no stale data from prior uses of this slot, in case some
@@ -815,15 +791,9 @@ ReorderBufferAssignChild(ReorderBuffer *rb, TransactionId xid,
 		else
 		{
 			/*
-<<<<<<< HEAD
-			 * We already saw this transaction, but initially added it to the list
-			 * of top-level txns.  Now that we know it's not top-level, remove
-			 * it from there.
-=======
 			 * We already saw this transaction, but initially added it to the
 			 * list of top-level txns.  Now that we know it's not top-level,
 			 * remove it from there.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			 */
 			dlist_delete(&subtxn->node);
 		}
@@ -1357,13 +1327,8 @@ ReorderBufferBuildTupleCidHash(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		else
 		{
 			/*
-<<<<<<< HEAD
-			 * Maybe we already saw this tuple before in this transaction,
-			 * but if so it must have the same cmin.
-=======
 			 * Maybe we already saw this tuple before in this transaction, but
 			 * if so it must have the same cmin.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			 */
 			Assert(ent->cmin == change->data.tuplecid.cmin);
 
@@ -1568,11 +1533,7 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 					/*
 					 * Mapped catalog tuple without data, emitted while
 					 * catalog table was in the process of being rewritten. We
-<<<<<<< HEAD
-					 * can fail to look up the relfilenode, because the the
-=======
 					 * can fail to look up the relfilenode, because the
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					 * relmapper has no "historic" view, in contrast to normal
 					 * the normal catalog during decoding. Thus repeated
 					 * rewrites can cause a lookup failure. That's OK because
@@ -1947,11 +1908,7 @@ ReorderBufferAbortOld(ReorderBuffer *rb, TransactionId oldestRunningXid)
 			if (txn->serialized && txn->final_lsn == 0)
 			{
 				ReorderBufferChange *last =
-<<<<<<< HEAD
-					dlist_tail_element(ReorderBufferChange, node, &txn->changes);
-=======
 				dlist_tail_element(ReorderBufferChange, node, &txn->changes);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 				txn->final_lsn = last->lsn;
 			}
@@ -2332,11 +2289,7 @@ ReorderBufferSerializeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 			if (fd != -1)
 				CloseTransientFile(fd);
 
-<<<<<<< HEAD
-			XLByteToSeg(change->lsn, curOpenSegNo);
-=======
 			XLByteToSeg(change->lsn, curOpenSegNo, wal_segment_size);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * No need to care about TLIs here, only used during a single run,
@@ -2540,10 +2493,7 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	ondisk->size = sz;
 
 	errno = 0;
-<<<<<<< HEAD
-=======
 	pgstat_report_wait_start(WAIT_EVENT_REORDER_BUFFER_WRITE);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (write(fd, rb->outbuf, ondisk->size) != ondisk->size)
 	{
 		int			save_errno = errno;
@@ -2601,11 +2551,7 @@ ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 			/* first time in */
 			if (*segno == 0)
-<<<<<<< HEAD
-				XLByteToSeg(txn->first_lsn, *segno);
-=======
 				XLByteToSeg(txn->first_lsn, *segno, wal_segment_size);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			Assert(*segno != 0 || dlist_is_empty(&txn->changes));
 
@@ -2900,11 +2846,7 @@ ReorderBufferCleanupSerializedTXNs(const char *slotname)
 			if (unlink(path) != 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-<<<<<<< HEAD
-						 errmsg("could not remove file \"%s\" during removal of pg_replslot/%s/*.xid: %m",
-=======
 						 errmsg("could not remove file \"%s\" during removal of pg_replslot/%s/xid*: %m",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 								path, slotname)));
 		}
 	}
@@ -2922,21 +2864,12 @@ ReorderBufferSerializedPath(char *path, ReplicationSlot *slot, TransactionId xid
 {
 	XLogRecPtr	recptr;
 
-<<<<<<< HEAD
-	XLogSegNoOffsetToRecPtr(segno, 0, recptr);
-
-	snprintf(path, MAXPGPATH, "pg_replslot/%s/xid-%u-lsn-%X-%X.snap",
-			NameStr(MyReplicationSlot->data.name),
-			xid,
-			(uint32) (recptr >> 32), (uint32) recptr);
-=======
 	XLogSegNoOffsetToRecPtr(segno, 0, wal_segment_size, recptr);
 
 	snprintf(path, MAXPGPATH, "pg_replslot/%s/xid-%u-lsn-%X-%X.spill",
 			 NameStr(MyReplicationSlot->data.name),
 			 xid,
 			 (uint32) (recptr >> 32), (uint32) recptr);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -3427,14 +3360,10 @@ ApplyLogicalMappingFile(HTAB *tuplecid_data, Oid relid, const char *fname)
 		}
 	}
 
-<<<<<<< HEAD
-	CloseTransientFile(fd);
-=======
 	if (CloseTransientFile(fd))
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", path)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 

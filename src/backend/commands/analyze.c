@@ -3,7 +3,6 @@
  * analyze.c
  *	  the Postgres statistics generator
  *
-<<<<<<< HEAD
  *
  * There are a few things in Greenplum that make this more complicated
  * than in upstream:
@@ -65,10 +64,7 @@
  *
  * TODO: explain how this works.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -566,13 +562,8 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 			if (i == InvalidAttrNumber)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-<<<<<<< HEAD
-					errmsg("column \"%s\" of relation \"%s\" does not exist",
-						   col, RelationGetRelationName(onerel))));
-=======
 						 errmsg("column \"%s\" of relation \"%s\" does not exist",
 								col, RelationGetRelationName(onerel))));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			if (bms_is_member(i, unique_cols))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),

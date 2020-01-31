@@ -20,11 +20,7 @@
  * have regd_count = 1 and are listed in RegisteredSnapshots, but are not
  * tracked by any resource owner.
  *
-<<<<<<< HEAD
- * Likewise, the CatalogSnapshot is counted in RegisteredSnapshots when it
-=======
  * Likewise, the CatalogSnapshot is listed in RegisteredSnapshots when it
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * is valid, but is not tracked by any resource owner.
  *
  * The same is true for historic snapshots used during logical decoding,
@@ -330,11 +326,7 @@ GetTransactionSnapshot(void)
 	{
 		/*
 		 * Don't allow catalog snapshot to be older than xact snapshot.  Must
-<<<<<<< HEAD
-		 * do this first to allow the following Assert to succeed.
-=======
 		 * do this first to allow the empty-heap Assert to succeed.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 */
 		InvalidateCatalogSnapshot();
 
@@ -367,11 +359,7 @@ GetTransactionSnapshot(void)
 			pairingheap_add(&RegisteredSnapshots, &FirstXactSnapshot->ph_node);
 		}
 		else
-<<<<<<< HEAD
 			CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData, DistributedTransactionContext);
-=======
-			CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		FirstSnapshotSet = true;
 		return CurrentSnapshot;

@@ -74,7 +74,6 @@
 
 #define RELMAPPER_FILEMAGIC		0x592717	/* version ID value */
 
-<<<<<<< HEAD
 /*
  * In Postgres, MAX_MAPPINGS is 62, but GPDB has exceeded this number due to
  * additional GPDB specific shared relations. Increased to 126 to occupy
@@ -83,9 +82,6 @@
  * New math: 126 * 8 + 16 = 1024
  */
 #define MAX_MAPPINGS			126		/* 62 * 8 + 16 = 512 */
-=======
-#define MAX_MAPPINGS			62	/* 62 * 8 + 16 = 512 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 typedef struct RelMapping
 {

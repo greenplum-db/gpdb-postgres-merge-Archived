@@ -65,15 +65,12 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
-#include "cdb/cdbvars.h"
-#include "tcop/utility.h"
-=======
 #include "utils/varlena.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbtm.h"
+#include "cdb/cdbvars.h"
+#include "tcop/utility.h"
 
 /*
  * The namespace search path is a possibly-empty list of namespace OIDs.

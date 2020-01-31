@@ -3,13 +3,9 @@
  * outfuncs.c
  *	  Output functions for Postgres tree nodes.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -78,16 +74,10 @@ static void outChar(StringInfo str, char c);
 #define WRITE_UINT_FIELD(fldname) \
 	appendStringInfo(str, " :" CppAsString(fldname) " %u", node->fldname)
 
-<<<<<<< HEAD
-/* Write an uint64 field (anything written as ":fldname %u") */
-#define WRITE_UINT64_FIELD(fldname) \
-	appendStringInfo(str, " :" CppAsString(fldname) " " UINT64_FORMAT, node->fldname)
-=======
 /* Write an unsigned integer field (anything written with UINT64_FORMAT) */
 #define WRITE_UINT64_FIELD(fldname) \
 	appendStringInfo(str, " :" CppAsString(fldname) " " UINT64_FORMAT, \
 					 node->fldname)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* Write an OID field (don't hard-wire assumption that OID is same as uint) */
 #define WRITE_OID_FIELD(fldname) \
@@ -1081,11 +1071,6 @@ _outHashJoin(StringInfo str, const HashJoin *node)
 static void
 _outAgg(StringInfo str, const Agg *node)
 {
-<<<<<<< HEAD
-	int         i;
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	WRITE_NODE_TYPE("AGG");
 
 	_outPlanInfo(str, (const Plan *) node);

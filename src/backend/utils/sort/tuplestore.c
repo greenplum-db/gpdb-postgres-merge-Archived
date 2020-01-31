@@ -43,13 +43,9 @@
  * before switching to the other state or activating a different read pointer.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2010, Greenplum Inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -1036,12 +1032,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 							(errcode_for_file_access(),
 							 errmsg("could not seek in tuplestore temporary file: %m")));
 			state->status = TSS_READFILE;
-<<<<<<< HEAD
-			/* FALL THRU into READFILE case */
-			/* fallthrough */
-=======
 			/* FALLTHROUGH */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		case TSS_READFILE:
 			*should_free = true;

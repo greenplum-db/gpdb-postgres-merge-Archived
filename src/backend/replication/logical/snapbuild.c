@@ -59,11 +59,7 @@
  * by the following graph describing the SnapBuild->state transitions:
  *
  *		   +-------------------------+
-<<<<<<< HEAD
- *	  +----|         START			 |-------------+
-=======
  *	  +----|		 START			 |-------------+
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *	  |    +-------------------------+			   |
  *	  |					|						   |
  *	  |					|						   |
@@ -72,38 +68,22 @@
  *	  |					|						   |
  *	  |					v						   |
  *	  |    +-------------------------+			   v
-<<<<<<< HEAD
- *	  |    |   BUILDING_SNAPSHOT     |------------>|
- *	  |    +-------------------------+			   |
- *	  |					|						   |
- *	  |					|						   |
- *	  |	running_xacts #2, xacts from #1 finished   |
-=======
  *	  |    |   BUILDING_SNAPSHOT	 |------------>|
  *	  |    +-------------------------+			   |
  *	  |					|						   |
  *	  |					|						   |
  *	  | running_xacts #2, xacts from #1 finished   |
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *	  |					|						   |
  *	  |					|						   |
  *	  |					v						   |
  *	  |    +-------------------------+			   v
-<<<<<<< HEAD
- *	  |    |       FULL_SNAPSHOT     |------------>|
-=======
  *	  |    |	   FULL_SNAPSHOT	 |------------>|
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *	  |    +-------------------------+			   |
  *	  |					|						   |
  * running_xacts		|					   saved snapshot
  * with zero xacts		|				  at running_xacts's lsn
  *	  |					|						   |
-<<<<<<< HEAD
- *	  |	running_xacts with xacts from #2 finished  |
-=======
  *	  | running_xacts with xacts from #2 finished  |
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *	  |					|						   |
  *	  |					v						   |
  *	  |    +-------------------------+			   |
@@ -195,11 +175,7 @@ struct SnapBuild
 	 */
 	TransactionId initial_xmin_horizon;
 
-<<<<<<< HEAD
-	/* Indicates if we are building full snapshot or just catalog one .*/
-=======
 	/* Indicates if we are building full snapshot or just catalog one. */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	bool		building_full_snapshot;
 
 	/*
@@ -232,15 +208,9 @@ struct SnapBuild
 		TransactionId was_xmin;
 		TransactionId was_xmax;
 
-<<<<<<< HEAD
-		size_t		was_xcnt;		/* number of used xip entries */
-		size_t		was_xcnt_space; /* allocated size of xip */
-		TransactionId *was_xip;		/* running xacts array, xidComparator-sorted */
-=======
 		size_t		was_xcnt;	/* number of used xip entries */
 		size_t		was_xcnt_space; /* allocated size of xip */
 		TransactionId *was_xip; /* running xacts array, xidComparator-sorted */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}			was_running;
 
 	/*
@@ -1029,10 +999,7 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 			if (NormalTransactionIdFollows(subxid, xmax))
 				xmax = subxid;
 		}
-<<<<<<< HEAD
-=======
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		/*
 		 * If we're forcing timetravel we also need visibility information
 		 * about subtransaction, so keep track of subtransaction's state, even
@@ -1078,13 +1045,8 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 
 	/*
 	 * Adjust xmax of the snapshot builder, we only do that for committed,
-<<<<<<< HEAD
-	 * catalog modifying, transactions, everything else isn't interesting
-	 * for us since we'll never look at the respective rows.
-=======
 	 * catalog modifying, transactions, everything else isn't interesting for
 	 * us since we'll never look at the respective rows.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	if (needs_timetravel &&
 		(!TransactionIdIsValid(builder->xmax) ||
@@ -1261,19 +1223,11 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	 *	  modifying transactions.
 	 *
 	 * c) First incrementally build a snapshot for catalog tuples
-<<<<<<< HEAD
-	 *    (BUILDING_SNAPSHOT), that requires all, already in-progress,
-	 *    transactions to finish.  Every transaction starting after that
-	 *    (FULL_SNAPSHOT state), has enough information to be decoded.  But
-	 *    for older running transactions no viable snapshot exists yet, so
-	 *    CONSISTENT will only be reached once all of those have finished.
-=======
 	 *	  (BUILDING_SNAPSHOT), that requires all, already in-progress,
 	 *	  transactions to finish.  Every transaction starting after that
 	 *	  (FULL_SNAPSHOT state), has enough information to be decoded.  But
 	 *	  for older running transactions no viable snapshot exists yet, so
 	 *	  CONSISTENT will only be reached once all of those have finished.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * ---
 	 */
 
@@ -1288,13 +1242,8 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		ereport(DEBUG1,
 				(errmsg_internal("skipping snapshot at %X/%X while building logical decoding snapshot, xmin horizon too low",
 								 (uint32) (lsn >> 32), (uint32) lsn),
-<<<<<<< HEAD
-		errdetail_internal("initial xmin horizon of %u vs the snapshot's %u",
-				 builder->initial_xmin_horizon, running->oldestRunningXid)));
-=======
 				 errdetail_internal("initial xmin horizon of %u vs the snapshot's %u",
 									builder->initial_xmin_horizon, running->oldestRunningXid)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 		SnapBuildWaitSnapshot(running, builder->initial_xmin_horizon);
@@ -1492,15 +1441,9 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
  *
  * This isn't required for the correctness of decoding, but to:
  * a) allow isolationtester to notice that we're currently waiting for
-<<<<<<< HEAD
- *    something.
- * b) log a new xl_running_xacts record where it'd be helpful, without having
- *    to write for bgwriter or checkpointer.
-=======
  *	  something.
  * b) log a new xl_running_xacts record where it'd be helpful, without having
  *	  to write for bgwriter or checkpointer.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * ---
  */
 static void
@@ -1513,15 +1456,9 @@ SnapBuildWaitSnapshot(xl_running_xacts *running, TransactionId cutoff)
 		TransactionId xid = running->xids[off];
 
 		/*
-<<<<<<< HEAD
-		 * Upper layers should prevent that we ever need to wait on
-		 * ourselves. Check anyway, since failing to do so would either
-		 * result in an endless wait or an Assert() failure.
-=======
 		 * Upper layers should prevent that we ever need to wait on ourselves.
 		 * Check anyway, since failing to do so would either result in an
 		 * endless wait or an Assert() failure.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 */
 		if (TransactionIdIsCurrentTransactionId(xid))
 			elog(ERROR, "waiting for ourselves");

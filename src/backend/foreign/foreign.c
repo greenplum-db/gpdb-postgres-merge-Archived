@@ -29,7 +29,6 @@
 #include "utils/syscache.h"
 
 
-<<<<<<< HEAD
 extern Datum pg_options_to_table(PG_FUNCTION_ARGS);
 extern Datum postgresql_fdw_validator(PG_FUNCTION_ARGS);
 
@@ -73,8 +72,6 @@ SeparateOutMppExecute(List **options)
 	return exec_location;
 }
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * GetForeignDataWrapper -	look up the foreign-data wrapper by OID.
  */

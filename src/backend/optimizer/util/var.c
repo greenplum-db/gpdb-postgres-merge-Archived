@@ -27,11 +27,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/prep.h"
-<<<<<<< HEAD
-#include "optimizer/var.h"
 #include "optimizer/walkers.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"

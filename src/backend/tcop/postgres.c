@@ -45,12 +45,9 @@
 #include "catalog/pg_type.h"
 #include "commands/async.h"
 #include "commands/prepare.h"
-<<<<<<< HEAD
 #include "commands/extension.h"
-=======
 #include "executor/spi.h"
 #include "jit/jit.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
@@ -3744,13 +3741,8 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 				if (!IsWaitingForLock())
 					return;
 
-<<<<<<< HEAD
-				/* Intentional drop through to check wait for pin */
-				/* fallthrough */
-=======
 				/* Intentional fall through to check wait for pin */
 				/* FALLTHROUGH */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			case PROCSIG_RECOVERY_CONFLICT_BUFFERPIN:
 
@@ -3763,13 +3755,8 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 
 				MyProc->recoveryConflictPending = true;
 
-<<<<<<< HEAD
-				/* Intentional drop through to error handling */
-				/* fallthrough */
-=======
 				/* Intentional fall through to error handling */
 				/* FALLTHROUGH */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			case PROCSIG_RECOVERY_CONFLICT_LOCK:
 			case PROCSIG_RECOVERY_CONFLICT_TABLESPACE:
@@ -3813,13 +3800,8 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 					break;
 				}
 
-<<<<<<< HEAD
-				/* Intentional drop through to session cancel */
-				/* fallthrough */
-=======
 				/* Intentional fall through to session cancel */
 				/* FALLTHROUGH */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			case PROCSIG_RECOVERY_CONFLICT_DATABASE:
 				RecoveryConflictPending = true;
@@ -4819,15 +4801,9 @@ PostgresMain(int argc, char *argv[],
 		WalSndSignals();
 	else
 	{
-<<<<<<< HEAD
-		pqsignal(SIGHUP, PostgresSigHupHandler);		/* set flag to read config
-														 * file */
-		pqsignal(SIGINT, StatementCancelHandler);		/* cancel current query */
-=======
 		pqsignal(SIGHUP, PostgresSigHupHandler);	/* set flag to read config
 													 * file */
 		pqsignal(SIGINT, StatementCancelHandler);	/* cancel current query */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		pqsignal(SIGTERM, die); /* cancel current query and exit */
 
 		/*

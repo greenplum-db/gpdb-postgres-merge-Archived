@@ -14,7 +14,6 @@
  *		remove_useless_result_rtes
  *
  *
-<<<<<<< HEAD
  * In PostgreSQL, there is code here to do with pulling up "simple UNION ALLs".
  * In GPDB, there is no such thing as a simple UNION ALL as locus of the relations
  * may be different, so all that has been removed.
@@ -22,10 +21,7 @@
  *
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *

@@ -3,13 +3,9 @@
  * view.c
  *	  use rewrite rules to construct views
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -73,11 +69,8 @@ validateWithCheckOption(const char *value)
  *
  * Create a view relation and use the rules system to store the query
  * for the view.
-<<<<<<< HEAD
-=======
  *
  * EventTriggerAlterTableStart must have been called already.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *---------------------------------------------------------------------
  */
 static ObjectAddress
@@ -200,10 +193,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 				atcmds = lappend(atcmds, atcmd);
 			}
 
-<<<<<<< HEAD
-=======
 			/* EventTriggerAlterTableStart called by ProcessUtilitySlow */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			AlterTableInternal(viewOid, atcmds, true);
 
 			/* Make the new view columns visible */
@@ -235,10 +225,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		atcmd->def = (Node *) options;
 		atcmds = list_make1(atcmd);
 
-<<<<<<< HEAD
-=======
 		/* EventTriggerAlterTableStart called by ProcessUtilitySlow */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		AlterTableInternal(viewOid, atcmds, true);
 
 		ObjectAddressSet(address, RelationRelationId, viewOid);
@@ -622,7 +609,6 @@ DefineView(ViewStmt *stmt, const char *queryString,
 	 */
 	address = DefineVirtualRelation(view, viewParse->targetList,
 									stmt->replace, stmt->options, viewParse);
-<<<<<<< HEAD
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -635,8 +621,6 @@ DefineView(ViewStmt *stmt, const char *queryString,
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return address;
 }

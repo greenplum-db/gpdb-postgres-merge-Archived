@@ -3,13 +3,9 @@
  * explain.c
  *	  Explain query execution plans
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
@@ -81,17 +77,14 @@ static void ExplainOneQuery(Query *query, int cursorOptions,
 							const char *queryString, ParamListInfo params,
 							QueryEnvironment *queryEnv);
 static void report_triggers(ResultRelInfo *rInfo, bool show_relname,
-<<<<<<< HEAD
-				ExplainState *es);
+							ExplainState *es);
 
 #ifdef USE_ORCA
 static void ExplainDXL(Query *query, ExplainState *es,
 							const char *queryString,
 							ParamListInfo params);
 #endif
-=======
-							ExplainState *es);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
 static double elapsed_time(instr_time *starttime);
 static bool ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used);
 static void ExplainNode(PlanState *planstate, List *ancestors,
@@ -116,24 +109,15 @@ static void show_sort_keys(SortState *sortstate, List *ancestors,
 static void show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
 								   ExplainState *es);
 static void show_agg_keys(AggState *astate, List *ancestors,
-<<<<<<< HEAD
-			  ExplainState *es);
+						  ExplainState *es);
 static void show_tuple_split_keys(TupleSplitState *tstate, List *ancestors,
 								  ExplainState *es);
-=======
-						  ExplainState *es);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void show_grouping_sets(PlanState *planstate, Agg *agg,
 							   List *ancestors, ExplainState *es);
 static void show_grouping_set_keys(PlanState *planstate,
 								   Agg *aggnode, Sort *sortnode,
 								   List *context, bool useprefix,
 								   List *ancestors, ExplainState *es);
-<<<<<<< HEAD
-=======
-static void show_group_keys(GroupState *gstate, List *ancestors,
-							ExplainState *es);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
 								 int nkeys, AttrNumber *keycols,
 								 Oid *sortOperators, Oid *collations, bool *nullsFirst,
@@ -163,22 +147,14 @@ static void show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 static void ExplainMemberNodes(PlanState **planstates, int nsubnodes,
 							   int nplans, List *ancestors, ExplainState *es);
 static void ExplainSubPlans(List *plans, List *ancestors,
-<<<<<<< HEAD
-				const char *relationship, ExplainState *es, SliceTable *sliceTable);
-static void ExplainCustomChildren(CustomScanState *css,
-					  List *ancestors, ExplainState *es);
-static void ExplainProperty(const char *qlabel, const char *value,
-				bool numeric, ExplainState *es);
-static void ExplainPropertyStringInfo(const char *qlabel, ExplainState *es,
-									  const char *fmt,...)
-									  pg_attribute_printf(3, 4);
-=======
-							const char *relationship, ExplainState *es);
+							const char *relationship, ExplainState *es, SliceTable *sliceTable);
 static void ExplainCustomChildren(CustomScanState *css,
 								  List *ancestors, ExplainState *es);
 static void ExplainProperty(const char *qlabel, const char *unit,
 							const char *value, bool numeric, ExplainState *es);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static void ExplainPropertyStringInfo(const char *qlabel, ExplainState *es,
+									  const char *fmt,...)
+									  pg_attribute_printf(3, 4);
 static void ExplainDummyGroup(const char *objtype, const char *labelname,
 							  ExplainState *es);
 static void ExplainXMLTag(const char *tagname, int flags, ExplainState *es);
