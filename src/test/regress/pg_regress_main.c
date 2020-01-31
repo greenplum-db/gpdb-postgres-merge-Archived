@@ -8,13 +8,15 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/test/regress/pg_regress_main.c
  *
  *-------------------------------------------------------------------------
  */
+
+#include "postgres_fe.h"
 
 #include "pg_regress.h"
 
@@ -37,12 +39,16 @@ psql_start_test(const char *testname,
 	char		expectfile[MAXPGPATH] = "";
 	char		psql_cmd[MAXPGPATH * 4];
 	size_t		offset = 0;
+<<<<<<< HEAD
 	char		use_utility_mode = 0;
 	char	   *lastslash;
 
 	/* generalise later */
 	if (strcmp(testname, "upg2") == 0)
 		use_utility_mode = 1;
+=======
+	char	   *appnameenv;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Look for files in the output dir first, consistent with a vpath search.
@@ -105,6 +111,7 @@ psql_start_test(const char *testname,
 	}
 
 	/*
+<<<<<<< HEAD
 	 * We need to pass multiple input files (prehook and infile) to psql,
 	 * to do this a simple way is to execute it like this:
 	 *
@@ -134,11 +141,30 @@ psql_start_test(const char *testname,
 					   outfile,
 					   prehook[0] ? prehook : "/dev/null",
 					   infile);
+=======
+	 * Use HIDE_TABLEAM to hide different AMs to allow to use regression tests
+	 * against different AMs without unnecessary differences.
+	 */
+	offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
+					   "\"%s%spsql\" -X -a -q -d \"%s\" -v %s < \"%s\" > \"%s\" 2>&1",
+					   bindir ? bindir : "",
+					   bindir ? "/" : "",
+					   dblist->str,
+					   "HIDE_TABLEAM=\"on\"",
+					   infile,
+					   outfile);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (offset >= sizeof(psql_cmd))
 	{
 		fprintf(stderr, _("command too long\n"));
 		exit(2);
 	}
+<<<<<<< HEAD
+=======
+
+	appnameenv = psprintf("PGAPPNAME=pg_regress/%s", testname);
+	putenv(appnameenv);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	pid = spawn_process(psql_cmd);
 
@@ -148,6 +174,9 @@ psql_start_test(const char *testname,
 				testname);
 		exit(2);
 	}
+
+	unsetenv("PGAPPNAME");
+	free(appnameenv);
 
 	return pid;
 }

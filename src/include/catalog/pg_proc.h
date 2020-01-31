@@ -1,24 +1,22 @@
 /*-------------------------------------------------------------------------
  *
  * pg_proc.h
- *	  definition of the system "procedure" relation (pg_proc)
- *	  along with the relation's initial contents.
+ *	  definition of the "procedure" system catalog (pg_proc)
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_proc.h
  *
  * NOTES
- *	  The script catalog/genbki.pl reads this file and generates .bki
- *	  information from the DATA() statements.  utils/Gen_fmgrtab.pl
- *	  generates fmgroids.h and fmgrtab.c the same way.
- *
- *	  XXX do NOT break up DATA() statements into multiple lines!
- *		  the scripts are not as smart as you might think...
- *	  XXX (eg. #if 0 #endif won't do what you think)
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -26,44 +24,85 @@
 #define PG_PROC_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_proc_d.h"
+
+#include "catalog/objectaddress.h"
+#include "nodes/pg_list.h"
 
 /* ----------------
  *		pg_proc definition.  cpp turns this into
  *		typedef struct FormData_pg_proc
  * ----------------
  */
-#define ProcedureRelationId  1255
-#define ProcedureRelation_Rowtype_Id  81
-
-CATALOG(pg_proc,1255) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81) BKI_SCHEMA_MACRO
+CATALOG(pg_proc,1255,ProcedureRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81,ProcedureRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
-	NameData	proname;		/* procedure name */
-	Oid			pronamespace;	/* OID of namespace containing this proc */
-	Oid			proowner;		/* procedure owner */
-	Oid			prolang;		/* OID of pg_language entry */
-	float4		procost;		/* estimated execution cost */
-	float4		prorows;		/* estimated # of rows out (if proretset) */
-	Oid			provariadic;	/* element type of variadic array, or 0 */
-	regproc		protransform;	/* transforms calls to it during planning */
-	bool		proisagg;		/* is it an aggregate? */
-	bool		proiswindow;	/* is it a window function? */
-	bool		prosecdef;		/* security definer */
-	bool		proleakproof;	/* is it a leak-proof function? */
-	bool		proisstrict;	/* strict with respect to NULLs? */
-	bool		proretset;		/* returns a set? */
-	char		provolatile;	/* see PROVOLATILE_ categories below */
-	char		proparallel;	/* see PROPARALLEL_ categories below */
-	int16		pronargs;		/* number of arguments */
-	int16		pronargdefaults;	/* number of arguments with defaults */
-	Oid			prorettype;		/* OID of result type */
+	Oid			oid;			/* oid */
+
+	/* procedure name */
+	NameData	proname;
+
+	/* OID of namespace containing this proc */
+	Oid			pronamespace BKI_DEFAULT(PGNSP);
+
+	/* procedure owner */
+	Oid			proowner BKI_DEFAULT(PGUID);
+
+	/* OID of pg_language entry */
+	Oid			prolang BKI_DEFAULT(internal) BKI_LOOKUP(pg_language);
+
+	/* estimated execution cost */
+	float4		procost BKI_DEFAULT(1);
+
+	/* estimated # of rows out (if proretset) */
+	float4		prorows BKI_DEFAULT(0);
+
+	/* element type of variadic array, or 0 */
+	Oid			provariadic BKI_DEFAULT(0) BKI_LOOKUP(pg_type);
+
+	/* planner support function for this function, or 0 if none */
+	regproc		prosupport BKI_DEFAULT(0) BKI_LOOKUP(pg_proc);
+
+	/* see PROKIND_ categories below */
+	char		prokind BKI_DEFAULT(f);
+
+	/* security definer */
+	bool		prosecdef BKI_DEFAULT(f);
+
+	/* is it a leak-proof function? */
+	bool		proleakproof BKI_DEFAULT(f);
+
+	/* strict with respect to NULLs? */
+	bool		proisstrict BKI_DEFAULT(t);
+
+	/* returns a set? */
+	bool		proretset BKI_DEFAULT(f);
+
+	/* see PROVOLATILE_ categories below */
+	char		provolatile BKI_DEFAULT(i);
+
+	/* see PROPARALLEL_ categories below */
+	char		proparallel BKI_DEFAULT(s);
+
+	/* number of arguments */
+	/* Note: need not be given in pg_proc.dat; genbki.pl will compute it */
+	int16		pronargs;
+
+	/* number of arguments with defaults */
+	int16		pronargdefaults BKI_DEFAULT(0);
+
+	/* OID of result type */
+	Oid			prorettype BKI_LOOKUP(pg_type);
 
 	/*
 	 * variable-length fields start here, but we allow direct access to
 	 * proargtypes
 	 */
-	oidvector	proargtypes;	/* parameter types (excludes OUT params) */
+
+	/* parameter types (excludes OUT params) */
+	oidvector	proargtypes BKI_LOOKUP(pg_type);
 
 #ifdef CATALOG_VARLEN
+<<<<<<< HEAD
 	Oid			proallargtypes[1];		/* all param types (NULL if IN only) */
 	char		proargmodes[1]; /* parameter modes (NULL if IN only) */
 	text		proargnames[1]; /* parameter names (NULL if no names) */
@@ -76,6 +115,35 @@ CATALOG(pg_proc,1255) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81) BKI_SCHEMA_MACRO
 	aclitem		proacl[1];		/* access permissions */
 	char		prodataaccess;	/* data access indicator */
 	char		proexeclocation; /* EXECUTE ON ANY or SEGMENTS. GPDB specific */
+=======
+
+	/* all param types (NULL if IN only) */
+	Oid			proallargtypes[1] BKI_DEFAULT(_null_) BKI_LOOKUP(pg_type);
+
+	/* parameter modes (NULL if IN only) */
+	char		proargmodes[1] BKI_DEFAULT(_null_);
+
+	/* parameter names (NULL if no names) */
+	text		proargnames[1] BKI_DEFAULT(_null_);
+
+	/* list of expression trees for argument defaults (NULL if none) */
+	pg_node_tree proargdefaults BKI_DEFAULT(_null_);
+
+	/* types for which to apply transforms */
+	Oid			protrftypes[1] BKI_DEFAULT(_null_);
+
+	/* procedure source text */
+	text		prosrc BKI_FORCE_NOT_NULL;
+
+	/* secondary procedure info (can be NULL) */
+	text		probin BKI_DEFAULT(_null_);
+
+	/* procedure-local GUC settings */
+	text		proconfig[1] BKI_DEFAULT(_null_);
+
+	/* access permissions */
+	aclitem		proacl[1] BKI_DEFAULT(_null_);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #endif
 } FormData_pg_proc;
 
@@ -94,6 +162,7 @@ FOREIGN_KEY(prorettype REFERENCES pg_type(oid));
  */
 typedef FormData_pg_proc *Form_pg_proc;
 
+<<<<<<< HEAD
 /* ----------------
  *		compiler constants for pg_proc
  * ----------------
@@ -143,25 +212,14 @@ GPDB_COLUMN_DEFAULT(proexeclocation, a);
  *		initial contents of pg_proc
  * ----------------
  */
+=======
+#ifdef EXPOSE_TO_CLIENT_CODE
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
- * Note: every entry in pg_proc.h is expected to have a DESCR() comment,
- * except for functions that implement pg_operator.h operators and don't
- * have a good reason to be called directly rather than via the operator.
- * (If you do expect such a function to be used directly, you should
- * duplicate the operator's comment.)  initdb will supply suitable default
- * comments for functions referenced by pg_operator.
- *
- * Try to follow the style of existing functions' comments.
- * Some recommended conventions:
- *		"I/O" for typinput, typoutput, typreceive, typsend functions
- *		"I/O typmod" for typmodin, typmodout functions
- *		"aggregate transition function" for aggtransfn functions, unless
- *					they are reasonably useful in their own right
- *		"aggregate final function" for aggfinalfn functions (likewise)
- *		"convert srctypename to desttypename" for cast functions
- *		"less-equal-greater" for B-tree comparison functions
+ * Symbolic values for prokind column
  */
+<<<<<<< HEAD
 
 /* keep the following ordered by OID so that later changes can be made easier */
 
@@ -5447,6 +5505,12 @@ DESCR("pg_controldata recovery state information as a function");
 
 DATA(insert OID = 3444 ( pg_control_init PGNSP PGUID 12 1 0 0 0 f f f f t f v s 0 0 2249 "" "{23,23,23,23,23,23,23,23,23,16,16,16,23}" "{o,o,o,o,o,o,o,o,o,o,o,o,o}" "{max_data_alignment,database_block_size,blocks_per_segment,wal_block_size,bytes_per_wal_segment,max_identifier_length,max_index_columns,max_toast_chunk_size,large_object_chunk_size,bigint_timestamps,float4_pass_by_value,float8_pass_by_value,data_page_checksum_version}" _null_ _null_ pg_control_init _null_ _null_ _null_ ));
 DESCR("pg_controldata init state information as a function");
+=======
+#define PROKIND_FUNCTION 'f'
+#define PROKIND_AGGREGATE 'a'
+#define PROKIND_WINDOW 'w'
+#define PROKIND_PROCEDURE 'p'
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* collation management functions */
 DATA(insert OID = 3445 ( pg_import_system_collations  PGNSP PGUID 12 1 0 0 0 f f f f t f v s 1 0 23 "26" _null_ _null_ _null_ _null_ _null_ pg_import_system_collations _null_ _null_ _null_ n a ));
@@ -5467,18 +5531,18 @@ DESCR("import collations from operating system");
  * must be labeled volatile to ensure they will not get optimized away,
  * even if the actual return value is not changeable.
  */
-#define PROVOLATILE_IMMUTABLE	'i'		/* never changes for given input */
-#define PROVOLATILE_STABLE		's'		/* does not change within a scan */
-#define PROVOLATILE_VOLATILE	'v'		/* can change even within a scan */
+#define PROVOLATILE_IMMUTABLE	'i' /* never changes for given input */
+#define PROVOLATILE_STABLE		's' /* does not change within a scan */
+#define PROVOLATILE_VOLATILE	'v' /* can change even within a scan */
 
 /*
  * Symbolic values for proparallel column: these indicate whether a function
  * can be safely be run in a parallel backend, during parallelism but
  * necessarily in the master, or only in non-parallel mode.
  */
-#define PROPARALLEL_SAFE		's'		/* can run in worker or master */
-#define PROPARALLEL_RESTRICTED	'r'		/* can run in parallel master only */
-#define PROPARALLEL_UNSAFE		'u'		/* banned while in parallel mode */
+#define PROPARALLEL_SAFE		's' /* can run in worker or master */
+#define PROPARALLEL_RESTRICTED	'r' /* can run in parallel master only */
+#define PROPARALLEL_UNSAFE		'u' /* banned while in parallel mode */
 
 /*
  * Symbolic values for proargmodes column.  Note that these must agree with
@@ -5491,6 +5555,7 @@ DESCR("import collations from operating system");
 #define PROARGMODE_VARIADIC 'v'
 #define PROARGMODE_TABLE	't'
 
+<<<<<<< HEAD
 /*
  * Symbolic values for prodataaccess column: these provide a hint regarding
  * what kind of statements are included in the function.
@@ -5505,3 +5570,40 @@ DESCR("import collations from operating system");
 #define PROEXECLOCATION_ALL_SEGMENTS 's'
 
 #endif   /* PG_PROC_H */
+=======
+#endif							/* EXPOSE_TO_CLIENT_CODE */
+
+
+extern ObjectAddress ProcedureCreate(const char *procedureName,
+									 Oid procNamespace,
+									 bool replace,
+									 bool returnsSet,
+									 Oid returnType,
+									 Oid proowner,
+									 Oid languageObjectId,
+									 Oid languageValidator,
+									 const char *prosrc,
+									 const char *probin,
+									 char prokind,
+									 bool security_definer,
+									 bool isLeakProof,
+									 bool isStrict,
+									 char volatility,
+									 char parallel,
+									 oidvector *parameterTypes,
+									 Datum allParameterTypes,
+									 Datum parameterModes,
+									 Datum parameterNames,
+									 List *parameterDefaults,
+									 Datum trftypes,
+									 Datum proconfig,
+									 Oid prosupport,
+									 float4 procost,
+									 float4 prorows);
+
+extern bool function_parse_error_transpose(const char *prosrc);
+
+extern List *oid_array_to_list(Datum datum);
+
+#endif							/* PG_PROC_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

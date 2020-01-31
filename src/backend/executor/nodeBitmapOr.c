@@ -3,7 +3,7 @@
  * nodeBitmapOr.c
  *	  routines to handle BitmapOr nodes.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -36,6 +36,19 @@
 
 
 /* ----------------------------------------------------------------
+ *		ExecBitmapOr
+ *
+ *		stub for pro forma compliance
+ * ----------------------------------------------------------------
+ */
+static TupleTableSlot *
+ExecBitmapOr(PlanState *pstate)
+{
+	elog(ERROR, "BitmapOr node does not support ExecProcNode call convention");
+	return NULL;
+}
+
+/* ----------------------------------------------------------------
  *		ExecInitBitmapOr
  *
  *		Begin all of the subscans of the BitmapOr node.
@@ -66,15 +79,9 @@ ExecInitBitmapOr(BitmapOr *node, EState *estate, int eflags)
 	 */
 	bitmaporstate->ps.plan = (Plan *) node;
 	bitmaporstate->ps.state = estate;
+	bitmaporstate->ps.ExecProcNode = ExecBitmapOr;
 	bitmaporstate->bitmapplans = bitmapplanstates;
 	bitmaporstate->nplans = nplans;
-
-	/*
-	 * Miscellaneous initialization
-	 *
-	 * BitmapOr plans don't have expression contexts because they never call
-	 * ExecQual or ExecProject.  They don't need any tuple slots either.
-	 */
 
 	/*
 	 * call ExecInitNode on each of the plans to be executed and save the
@@ -87,6 +94,13 @@ ExecInitBitmapOr(BitmapOr *node, EState *estate, int eflags)
 		bitmapplanstates[i] = ExecInitNode(initNode, estate, eflags);
 		i++;
 	}
+
+	/*
+	 * Miscellaneous initialization
+	 *
+	 * BitmapOr plans don't have expression contexts because they never call
+	 * ExecQual or ExecProject.  They don't need any tuple slots either.
+	 */
 
 	return bitmaporstate;
 }
@@ -129,7 +143,24 @@ MultiExecBitmapOr(BitmapOrState *node)
 		PlanState  *subnode = bitmapplans[i];
 		Node	   *subresult = NULL;
 
+<<<<<<< HEAD
 		subresult = MultiExecProcNode(subnode);
+=======
+		/*
+		 * We can special-case BitmapIndexScan children to avoid an explicit
+		 * tbm_union step for each child: just pass down the current result
+		 * bitmap and let the child OR directly into it.
+		 */
+		if (IsA(subnode, BitmapIndexScanState))
+		{
+			if (result == NULL) /* first subplan */
+			{
+				/* XXX should we use less than work_mem for this? */
+				result = tbm_create(work_mem * 1024L,
+									((BitmapOr *) node->ps.plan)->isshared ?
+									node->ps.state->es_query_dsa : NULL);
+			}
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		if(subresult == NULL)
 			continue;
@@ -149,7 +180,19 @@ MultiExecBitmapOr(BitmapOrState *node)
 		}
 		else
 		{
+<<<<<<< HEAD
 			if(node->bitmap)
+=======
+			/* standard implementation */
+			subresult = (TIDBitmap *) MultiExecProcNode(subnode);
+
+			if (!subresult || !IsA(subresult, TIDBitmap))
+				elog(ERROR, "unrecognized result from subplan");
+
+			if (result == NULL)
+				result = subresult; /* first subplan */
+			else
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			{
 				if(node->bitmap != subresult)
 				{

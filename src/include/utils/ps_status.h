@@ -17,14 +17,18 @@ extern bool update_process_title;
 extern char **save_ps_display_args(int argc, char **argv);
 
 extern void init_ps_display(const char *username, const char *dbname,
-				const char *host_info, const char *initial_str);
+							const char *host_info, const char *initial_str);
 
 extern void set_ps_display(const char *activity, bool force);
 
 extern const char *get_ps_display(int *displen);
 
+<<<<<<< HEAD
 /* CDB: Get the "username" string saved by init_ps_display().  */
 extern const char *get_ps_display_username(void);
 extern const char *get_real_act_ps_display(int *displen);
 
 #endif   /* PS_STATUS_H */
+=======
+#endif							/* PS_STATUS_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

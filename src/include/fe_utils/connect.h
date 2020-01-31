@@ -3,7 +3,11 @@
  * Interfaces in support of FE/BE connections.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/fe_utils/connect.h
@@ -23,6 +27,10 @@
  * might work with the old server, skip this.
  */
 #define ALWAYS_SECURE_SEARCH_PATH_SQL \
+<<<<<<< HEAD
 	"SELECT pg_catalog.set_config('search_path', '', false)"
+=======
+	"SELECT pg_catalog.set_config('search_path', '', false);"
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #endif							/* CONNECT_H */

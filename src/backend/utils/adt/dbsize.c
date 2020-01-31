@@ -2,7 +2,7 @@
  * dbsize.c
  *		Database object size functions, and related inquiries
  *
- * Copyright (c) 2002-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2019, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/adt/dbsize.c
@@ -11,18 +11,25 @@
 
 #include "postgres.h"
 
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <glob.h>
 
+<<<<<<< HEAD
 #include "access/heapam.h"
 #include "access/appendonlywriter.h"
 #include "access/aocssegfiles.h"
 #include "access/heapam.h"
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/htup_details.h"
+#include "access/relation.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
+<<<<<<< HEAD
 #include "catalog/pg_appendonly_fn.h"
+=======
+#include "catalog/pg_authid.h"
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
@@ -156,14 +163,24 @@ calculate_database_size(Oid dbOid)
 	DIR		   *dirdesc;
 	struct dirent *direntry;
 	char		dirpath[MAXPGPATH];
+<<<<<<< HEAD
 	char		pathname[MAXPGPATH + 13 + get_dbid_string_length() + 1 + sizeof(GP_TABLESPACE_VERSION_DIRECTORY)];
+=======
+	char		pathname[MAXPGPATH + 21 + sizeof(TABLESPACE_VERSION_DIRECTORY)];
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	AclResult	aclresult;
 
-	/* User must have connect privilege for target database */
+	/*
+	 * User must have connect privilege for target database or be a member of
+	 * pg_read_all_stats
+	 */
 	aclresult = pg_database_aclcheck(dbOid, GetUserId(), ACL_CONNECT);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_DATABASE,
+	if (aclresult != ACLCHECK_OK &&
+		!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_STATS))
+	{
+		aclcheck_error(aclresult, OBJECT_DATABASE,
 					   get_database_name(dbOid));
+	}
 
 	/* Shared storage in pg_global is not counted */
 
@@ -174,11 +191,6 @@ calculate_database_size(Oid dbOid)
 	/* Scan the non-default tablespaces */
 	snprintf(dirpath, MAXPGPATH, "pg_tblspc");
 	dirdesc = AllocateDir(dirpath);
-	if (!dirdesc)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open tablespace directory \"%s\": %m",
-						dirpath)));
 
 	while ((direntry = ReadDir(dirdesc, dirpath)) != NULL)
 	{
@@ -189,7 +201,11 @@ calculate_database_size(Oid dbOid)
 			continue;
 
 		snprintf(pathname, sizeof(pathname), "pg_tblspc/%s/%s/%u",
+<<<<<<< HEAD
 				 direntry->d_name, GP_TABLESPACE_VERSION_DIRECTORY, dbOid);
+=======
+				 direntry->d_name, TABLESPACE_VERSION_DIRECTORY, dbOid);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		totalsize += db_dir_size(pathname);
 	}
 
@@ -262,15 +278,16 @@ calculate_tablespace_size(Oid tblspcOid)
 	AclResult	aclresult;
 
 	/*
-	 * User must have CREATE privilege for target tablespace, either
-	 * explicitly granted or implicitly because it is default for current
-	 * database.
+	 * User must be a member of pg_read_all_stats or have CREATE privilege for
+	 * target tablespace, either explicitly granted or implicitly because it
+	 * is default for current database.
 	 */
-	if (tblspcOid != MyDatabaseTableSpace)
+	if (tblspcOid != MyDatabaseTableSpace &&
+		!is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_STATS))
 	{
 		aclresult = pg_tablespace_aclcheck(tblspcOid, GetUserId(), ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
+			aclcheck_error(aclresult, OBJECT_TABLESPACE,
 						   get_tablespace_name(tblspcOid));
 	}
 
@@ -443,8 +460,12 @@ Datum
 pg_relation_size(PG_FUNCTION_ARGS)
 {
 	Oid			relOid = PG_GETARG_OID(0);
+<<<<<<< HEAD
 	text	   *forkName = PG_GETARG_TEXT_P(1);
 	ForkNumber	forkNumber;
+=======
+	text	   *forkName = PG_GETARG_TEXT_PP(1);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	Relation	rel;
 	int64		size = 0;
 
@@ -468,6 +489,7 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	if (rel == NULL)
 		PG_RETURN_NULL();
 
+<<<<<<< HEAD
 	if(RelationIsForeign(rel))
 	{
 		FdwRoutine *fdwroutine;
@@ -505,6 +527,10 @@ pg_relation_size(PG_FUNCTION_ARGS)
 
 		size += get_size_from_segDBs(sql);
 	}
+=======
+	size = calculate_relation_size(&(rel->rd_node), rel->rd_backend,
+								   forkname_to_number(text_to_cstring(forkName)));
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	relation_close(rel, AccessShareLock);
 
@@ -1002,13 +1028,15 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 	/* Part (4): optional exponent */
 	if (*endptr == 'e' || *endptr == 'E')
 	{
+		long		exponent;
 		char	   *cp;
 
 		/*
 		 * Note we might one day support EB units, so if what follows 'E'
 		 * isn't a number, just treat it all as a unit to be parsed.
 		 */
-		(void) strtol(endptr + 1, &cp, 10);
+		exponent = strtol(endptr + 1, &cp, 10);
+		(void) exponent;		/* Silence -Wunused-result warnings */
 		if (cp > endptr + 1)
 			endptr = cp;
 	}
@@ -1072,10 +1100,10 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 			Numeric		mul_num;
 
 			mul_num = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
-												 Int64GetDatum(multiplier)));
+														  Int64GetDatum(multiplier)));
 
 			num = DatumGetNumeric(DirectFunctionCall2(numeric_mul,
-													NumericGetDatum(mul_num),
+													  NumericGetDatum(mul_num),
 													  NumericGetDatum(num)));
 		}
 	}
@@ -1123,7 +1151,7 @@ pg_relation_filenode(PG_FUNCTION_ARGS)
 			/* okay, these have storage */
 			if (relform->relfilenode)
 				result = relform->relfilenode;
-			else	/* Consult the relation mapper */
+			else				/* Consult the relation mapper */
 				result = RelationMapOidToFilenode(relid,
 												  relform->relisshared);
 			break;
@@ -1213,9 +1241,9 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 				rnode.dbNode = MyDatabaseId;
 			if (relform->relfilenode)
 				rnode.relNode = relform->relfilenode;
-			else	/* Consult the relation mapper */
+			else				/* Consult the relation mapper */
 				rnode.relNode = RelationMapOidToFilenode(relid,
-													   relform->relisshared);
+														 relform->relisshared);
 			break;
 
 		default:

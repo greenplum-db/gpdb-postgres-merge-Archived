@@ -3,9 +3,18 @@
 MODULES = test_decoding
 PGFILEDESC = "test_decoding - example of a logical decoding output plugin"
 
-# Note: because we don't tell the Makefile there are any regression tests,
-# we have to clean those result files explicitly
-EXTRA_CLEAN = $(pg_regress_clean_files) ./regression_output ./isolation_output
+REGRESS = ddl xact rewrite toast permissions decoding_in_xact \
+	decoding_into_rel binary prepared replorigin time messages \
+	spill slot truncate
+ISOLATION = mxact delayed_startup ondisk_startup concurrent_ddl_dml \
+	oldest_xmin snapshot_transfer
+
+REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/test_decoding/logical.conf
+ISOLATION_OPTS = --temp-config $(top_srcdir)/contrib/test_decoding/logical.conf
+
+# Disabled because these tests require "wal_level=logical", which
+# typical installcheck users do not have (e.g. buildfarm clients).
+NO_INSTALLCHECK = 1
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -18,12 +27,9 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-# Disabled because these tests require "wal_level=logical", which
-# typical installcheck users do not have (e.g. buildfarm clients).
-installcheck:;
-
 # But it can nonetheless be very helpful to run tests on preexisting
 # installation, allow to do so, but only if requested explicitly.
+<<<<<<< HEAD
 installcheck-force: regresscheck-install-force isolationcheck-install-force
 
 check: regresscheck isolationcheck
@@ -72,3 +78,8 @@ isolationcheck-install-force: all | submake-isolation submake-test_decoding temp
 	isolationcheck isolationcheck-install-force
 
 temp-install: EXTRA_INSTALL=contrib/test_decoding
+=======
+installcheck-force:
+	$(pg_regress_installcheck) $(REGRESS)
+	$(pg_isolation_regress_installcheck) $(ISOLATION)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

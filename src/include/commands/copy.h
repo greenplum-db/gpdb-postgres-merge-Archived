@@ -4,7 +4,7 @@
  *	  Definitions for using the POSTGRES copy command.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/copy.h
@@ -16,6 +16,7 @@
 
 #include "nodes/execnodes.h"
 #include "nodes/parsenodes.h"
+#include "parser/parse_node.h"
 #include "tcop/dest.h"
 #include "executor/executor.h"
 #include "cdb/cdbhash.h"
@@ -258,7 +259,9 @@ typedef struct CopyStateData
 } CopyStateData;
 
 typedef struct CopyStateData *CopyState;
+typedef int (*copy_data_source_cb) (void *outbuf, int minread, int maxread);
 
+<<<<<<< HEAD
 /* DestReceiver for COPY (query) TO */
 typedef struct
 {
@@ -298,12 +301,27 @@ extern CopyState BeginCopyToForExternalTable(Relation extrel, List *options);
 extern void EndCopyFrom(CopyState cstate);
 extern bool NextCopyFrom(CopyState cstate, ExprContext *econtext,
 						 Datum *values, bool *nulls, Oid *tupleOid);
+=======
+extern void DoCopy(ParseState *state, const CopyStmt *stmt,
+				   int stmt_location, int stmt_len,
+				   uint64 *processed);
+
+extern void ProcessCopyOptions(ParseState *pstate, CopyState cstate, bool is_from, List *options);
+extern CopyState BeginCopyFrom(ParseState *pstate, Relation rel, const char *filename,
+							   bool is_program, copy_data_source_cb data_source_cb, List *attnamelist, List *options);
+extern void EndCopyFrom(CopyState cstate);
+extern bool NextCopyFrom(CopyState cstate, ExprContext *econtext,
+						 Datum *values, bool *nulls);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern bool NextCopyFromRawFields(CopyState cstate,
-					  char ***fields, int *nfields);
+								  char ***fields, int *nfields);
 extern void CopyFromErrorCallback(void *arg);
+
+extern uint64 CopyFrom(CopyState cstate);
 
 extern DestReceiver *CreateCopyDestReceiver(void);
 
+<<<<<<< HEAD
 extern List *CopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist);
 
 extern void CopyOneRowTo(CopyState cstate, Oid tupleOid,
@@ -338,3 +356,6 @@ typedef struct GpDistributionData
 } GpDistributionData;
 
 #endif /* COPY_H */
+=======
+#endif							/* COPY_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

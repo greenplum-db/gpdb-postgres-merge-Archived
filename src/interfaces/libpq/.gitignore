@@ -1,5 +1,6 @@
 /exports.list
 /libpq.rc
+<<<<<<< HEAD
 # .c files that are symlinked in from elsewhere
 /chklocale.c
 /crypt.c
@@ -21,6 +22,9 @@
 /pgsleep.c
 /md5.c
 /ip.c
+=======
+/libpq-dist.rc
+# .c files that are symlinked in from elsewhere
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /encnames.c
 /wchar.c
-/libpq.rc

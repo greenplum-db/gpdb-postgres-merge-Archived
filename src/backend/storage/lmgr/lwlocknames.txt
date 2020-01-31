@@ -47,6 +47,7 @@ CommitTsLock						39
 ReplicationOriginLock				40
 MultiXactTruncationLock				41
 OldSnapshotTimeMapLock				42
+<<<<<<< HEAD
 
 # Additional individual locks in GPDB
 SharedSnapshotLock					43
@@ -60,3 +61,7 @@ RelfilenodeGenLock					50
 WorkFileManagerLock					51
 DistributedLogTruncateLock			52
 TwophaseCommitLock				53
+=======
+LogicalRepWorkerLock				43
+CLogTruncationLock					44
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

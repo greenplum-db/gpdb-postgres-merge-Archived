@@ -4,7 +4,7 @@ CREATE TEMP TABLE x (
 	c text not null default 'stuff',
 	d text,
 	e text
-) WITH OIDS;
+) ;
 
 CREATE FUNCTION fn_x_before () RETURNS TRIGGER AS '
   BEGIN
@@ -73,10 +73,10 @@ COPY x from stdin;
 \.
 
 -- various COPY options: delimiters, oids, NULL string, encoding
-COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';
-500000,x,45,80,90
-500001,x,\x,\\x,\\\x
-500002,x,\,,\\\,,\\
+COPY x (b, c, d, e) from stdin delimiter ',' null 'x';
+x,45,80,90
+x,\x,\\x,\\\x
+x,\,,\\\,,\\
 \.
 
 COPY x from stdin WITH DELIMITER AS ';' NULL AS '';
@@ -95,21 +95,34 @@ COPY x from stdin WITH DELIMITER AS ':' NULL AS E'\\X' ENCODING 'sql_ascii';
 4008:8:Delimiter:\::\:
 \.
 
+COPY x TO stdout WHERE a = 1;
+COPY x from stdin WHERE a = 50004;
+50003	24	34	44	54
+50004	25	35	45	55
+50005	26	36	46	56
+\.
+
+COPY x from stdin WHERE a > 60003;
+60001	22	32	42	52
+60002	23	33	43	53
+60003	24	34	44	54
+60004	25	35	45	55
+60005	26	36	46	56
+\.
+
+COPY x from stdin WHERE f > 60003;
+
+COPY x from stdin WHERE a = max(x.b);
+
+COPY x from stdin WHERE a IN (SELECT 1 FROM x);
+
+COPY x from stdin WHERE a IN (generate_series(1,5));
+
+COPY x from stdin WHERE a = row_number() over(b);
+
+
 -- check results of copy in
 SELECT * FROM x;
-
--- COPY w/ oids on a table w/o oids should fail
-CREATE TABLE no_oids (
-	a	int,
-	b	int
-) WITHOUT OIDS;
-
-INSERT INTO no_oids (a, b) VALUES (5, 10);
-INSERT INTO no_oids (a, b) VALUES (20, 30);
-
--- should fail
-COPY no_oids FROM stdin WITH OIDS;
-COPY no_oids TO stdout WITH OIDS;
 
 -- check copy out
 COPY x TO stdout;
@@ -329,12 +342,117 @@ copy check_con_tbl from stdin;
 \.
 select * from check_con_tbl;
 
+-- test with RLS enabled.
+CREATE ROLE regress_rls_copy_user;
+CREATE ROLE regress_rls_copy_user_colperms;
+CREATE TABLE rls_t1 (a int, b int, c int);
+
+COPY rls_t1 (a, b, c) from stdin;
+1	4	1
+2	3	2
+3	2	3
+4	1	4
+\.
+
+CREATE POLICY p1 ON rls_t1 FOR SELECT USING (a % 2 = 0);
+ALTER TABLE rls_t1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rls_t1 FORCE ROW LEVEL SECURITY;
+
+GRANT SELECT ON TABLE rls_t1 TO regress_rls_copy_user;
+GRANT SELECT (a, b) ON TABLE rls_t1 TO regress_rls_copy_user_colperms;
+
+-- all columns
+COPY rls_t1 TO stdout;
+COPY rls_t1 (a, b, c) TO stdout;
+
+-- subset of columns
+COPY rls_t1 (a) TO stdout;
+COPY rls_t1 (a, b) TO stdout;
+
+-- column reordering
+COPY rls_t1 (b, a) TO stdout;
+
+SET SESSION AUTHORIZATION regress_rls_copy_user;
+
+-- all columns
+COPY rls_t1 TO stdout;
+COPY rls_t1 (a, b, c) TO stdout;
+
+-- subset of columns
+COPY rls_t1 (a) TO stdout;
+COPY rls_t1 (a, b) TO stdout;
+
+-- column reordering
+COPY rls_t1 (b, a) TO stdout;
+
+RESET SESSION AUTHORIZATION;
+
+SET SESSION AUTHORIZATION regress_rls_copy_user_colperms;
+
+-- attempt all columns (should fail)
+COPY rls_t1 TO stdout;
+COPY rls_t1 (a, b, c) TO stdout;
+
+-- try to copy column with no privileges (should fail)
+COPY rls_t1 (c) TO stdout;
+
+-- subset of columns (should succeed)
+COPY rls_t1 (a) TO stdout;
+COPY rls_t1 (a, b) TO stdout;
+
+RESET SESSION AUTHORIZATION;
+
+-- test with INSTEAD OF INSERT trigger on a view
+CREATE TABLE instead_of_insert_tbl(id serial, name text);
+CREATE VIEW instead_of_insert_tbl_view AS SELECT ''::text AS str;
+
+COPY instead_of_insert_tbl_view FROM stdin; -- fail
+test1
+\.
+
+CREATE FUNCTION fun_instead_of_insert_tbl() RETURNS trigger AS $$
+BEGIN
+  INSERT INTO instead_of_insert_tbl (name) VALUES (NEW.str);
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER trig_instead_of_insert_tbl_view
+  INSTEAD OF INSERT ON instead_of_insert_tbl_view
+  FOR EACH ROW EXECUTE PROCEDURE fun_instead_of_insert_tbl();
+
+COPY instead_of_insert_tbl_view FROM stdin;
+test1
+\.
+
+SELECT * FROM instead_of_insert_tbl;
+
+-- Test of COPY optimization with view using INSTEAD OF INSERT
+-- trigger when relation is created in the same transaction as
+-- when COPY is executed.
+BEGIN;
+CREATE VIEW instead_of_insert_tbl_view_2 as select ''::text as str;
+CREATE TRIGGER trig_instead_of_insert_tbl_view_2
+  INSTEAD OF INSERT ON instead_of_insert_tbl_view_2
+  FOR EACH ROW EXECUTE PROCEDURE fun_instead_of_insert_tbl();
+
+COPY instead_of_insert_tbl_view_2 FROM stdin;
+test1
+\.
+
+SELECT * FROM instead_of_insert_tbl;
+COMMIT;
+
+-- clean up
 DROP TABLE forcetest;
 DROP TABLE vistest;
 DROP FUNCTION truncate_in_subxact();
 DROP TABLE x, y;
+DROP TABLE rls_t1 CASCADE;
+DROP ROLE regress_rls_copy_user;
+DROP ROLE regress_rls_copy_user_colperms;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();
+<<<<<<< HEAD
 
 CREATE TABLE check_copy_with_oids (a int) WITH OIDS;
 COPY check_copy_with_oids FROM stdin WITH (oids);
@@ -354,3 +472,9 @@ COPY copy_eoc_marker FROM stdin LOG ERRORS SEGMENT REJECT LIMIT 5;
 \.
 SELECT * FROM copy_eoc_marker;
 DROP TABLE copy_eoc_marker;
+=======
+DROP TABLE instead_of_insert_tbl;
+DROP VIEW instead_of_insert_tbl_view;
+DROP VIEW instead_of_insert_tbl_view_2;
+DROP FUNCTION fun_instead_of_insert_tbl();
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

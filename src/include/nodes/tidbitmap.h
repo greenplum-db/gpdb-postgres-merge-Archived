@@ -13,9 +13,13 @@
  * fact that a particular page needs to be visited.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2003-2016, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2003-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * src/include/nodes/tidbitmap.h
  *
@@ -29,8 +33,12 @@
 #include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "storage/itemptr.h"
+<<<<<<< HEAD
 #include "storage/bufpage.h"
 #include "access/appendonlytid.h"
+=======
+#include "utils/dsa.h"
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 struct Instrumentation;                 /* #include "executor/instrument.h" */
 
@@ -113,6 +121,7 @@ typedef struct TIDBitmap TIDBitmap;
 
 /* Likewise, TBMIterator is private */
 typedef struct TBMIterator TBMIterator;
+typedef struct TBMSharedIterator TBMSharedIterator;
 
 /*
  * Stream bitmap representation.
@@ -156,7 +165,7 @@ typedef struct StreamNode   IndexStream;
 typedef struct StreamNode   OpStream;
 
 /* Result structure for tbm_iterate */
-typedef struct
+typedef struct TBMIterateResult
 {
 	BlockNumber blockno;		/* page number containing tuples */
 	int			ntuples;		/* -1 indicates lossy result */
@@ -187,21 +196,34 @@ struct StreamBMIterator
 };
 
 /* function prototypes in nodes/tidbitmap.c */
+<<<<<<< HEAD
 extern TIDBitmap *tbm_create(long maxbytes);
+=======
+
+extern TIDBitmap *tbm_create(long maxbytes, dsa_area *dsa);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void tbm_free(TIDBitmap *tbm);
+extern void tbm_free_shared_area(dsa_area *dsa, dsa_pointer dp);
 
 extern void tbm_add_tuples(TIDBitmap *tbm,
-			   const ItemPointer tids, int ntids,
-			   bool recheck);
+						   const ItemPointer tids, int ntids,
+						   bool recheck);
 extern void tbm_add_page(TIDBitmap *tbm, BlockNumber pageno);
 extern void tbm_union(TIDBitmap *a, const TIDBitmap *b);
 extern void tbm_intersect(TIDBitmap *a, const TIDBitmap *b);
 extern bool tbm_is_empty(const TIDBitmap *tbm);
 
 extern TBMIterator *tbm_begin_iterate(TIDBitmap *tbm);
+extern dsa_pointer tbm_prepare_shared_iterate(TIDBitmap *tbm);
 extern TBMIterateResult *tbm_iterate(TBMIterator *iterator);
+extern TBMIterateResult *tbm_shared_iterate(TBMSharedIterator *iterator);
 extern void tbm_end_iterate(TBMIterator *iterator);
+extern void tbm_end_shared_iterate(TBMSharedIterator *iterator);
+extern TBMSharedIterator *tbm_attach_shared_iterate(dsa_area *dsa,
+													dsa_pointer dp);
+extern long tbm_calculate_entries(double maxbytes);
 
+<<<<<<< HEAD
 extern void stream_move_node(StreamBitmap *strm, StreamBitmap *other, StreamType kind);
 extern void stream_add_node(StreamBitmap *strm, StreamNode *node, StreamType kind);
 extern StreamNode *tbm_create_stream_node(TIDBitmap *tbm);
@@ -218,3 +240,6 @@ extern void tbm_convert_appendonly_tid_out(ItemPointer psudeoHeapTid, AOTupleId 
 
 
 #endif   /* TIDBITMAP_H */
+=======
+#endif							/* TIDBITMAP_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

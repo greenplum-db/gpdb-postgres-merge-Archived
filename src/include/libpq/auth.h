@@ -4,7 +4,7 @@
  *	  Definitions for network authentication routines
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/libpq/auth.h
@@ -28,6 +28,7 @@ extern void FakeClientAuthentication(Port *port);  /* GPDB only */
 typedef void (*ClientAuthentication_hook_type) (Port *, int);
 extern PGDLLIMPORT ClientAuthentication_hook_type ClientAuthentication_hook;
 
+<<<<<<< HEAD
 /*
  * Support for time-based authentication
  *  
@@ -56,3 +57,6 @@ extern int CheckAuthTimeConstraints(char *rolname);
 extern int check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp);
 
 #endif   /* AUTH_H */
+=======
+#endif							/* AUTH_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

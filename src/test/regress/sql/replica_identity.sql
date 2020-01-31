@@ -5,6 +5,7 @@ CREATE TABLE test_replica_identity (
        nonkey text,
        CONSTRAINT test_replica_identity_unique_defer UNIQUE (keya, keyb) DEFERRABLE,
        CONSTRAINT test_replica_identity_unique_nondefer UNIQUE (keya, keyb)
+<<<<<<< HEAD
 ) distributed by (keya);
 
 -- GPDB has a habit of naming the indexes that back constraints differently,
@@ -14,6 +15,9 @@ ALTER TABLE test_replica_identity RENAME CONSTRAINT test_replica_identity_unique
 ALTER TABLE test_replica_identity RENAME CONSTRAINT x TO test_replica_identity_unique_defer;
 ALTER TABLE test_replica_identity RENAME CONSTRAINT test_replica_identity_unique_nondefer TO x;
 ALTER TABLE test_replica_identity RENAME CONSTRAINT x TO test_replica_identity_unique_nondefer;
+=======
+) ;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 CREATE TABLE test_replica_identity_othertable (id serial primary key);
 

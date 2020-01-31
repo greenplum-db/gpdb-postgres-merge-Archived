@@ -2,7 +2,7 @@
 #
 # Makefile for src/bin/pg_rewind
 #
-# Portions Copyright (c) 2013-2016, PostgreSQL Global Development Group
+# Portions Copyright (c) 2013-2019, PostgreSQL Global Development Group
 #
 # src/bin/pg_rewind/Makefile
 #
@@ -15,13 +15,15 @@ subdir = src/bin/pg_rewind
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-PG_CPPFLAGS = -I$(libpq_srcdir)
-PG_LIBS = $(libpq_pgport)
-
 override CPPFLAGS := -I$(libpq_srcdir) -DFRONTEND $(CPPFLAGS)
+LDFLAGS_INTERNAL += $(libpq_pgport)
 
 OBJS	= pg_rewind.o parsexlog.o xlogreader.o datapagemap.o timeline.o \
+<<<<<<< HEAD
 	fetch.o file_ops.o copy_fetch.o libpq_fetch.o filemap.o logging.o compat.o \
+=======
+	fetch.o file_ops.o copy_fetch.o libpq_fetch.o filemap.o \
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	$(WIN32RES)
 
 EXTRA_CLEAN = xlogreader.c compat.c
@@ -36,7 +38,7 @@ REGRESS_OPTS=--init-file=./regress_init_file --use-existing --launcher=./launche
 all: pg_rewind
 
 pg_rewind: $(OBJS) | submake-libpq submake-libpgport
-	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 xlogreader.c: % : $(top_srcdir)/src/backend/access/transam/%
 	rm -f $@ && $(LN_S) $< .

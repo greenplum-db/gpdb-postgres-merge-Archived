@@ -4,7 +4,7 @@
  *	  This file contains routines to support creation of toast tables
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -14,9 +14,10 @@
  */
 #include "postgres.h"
 
-#include "access/tuptoaster.h"
+#include "access/heapam.h"
 #include "access/xact.h"
 #include "catalog/binary_upgrade.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -39,11 +40,17 @@
 Oid			binary_upgrade_next_toast_pg_type_oid = InvalidOid;
 
 static void CheckAndCreateToastTable(Oid relOid, Datum reloptions,
+<<<<<<< HEAD
 						 LOCKMODE lockmode, bool check,
 						 bool is_part_child, bool is_part_parent);
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 				   Datum reloptions, LOCKMODE lockmode, bool check,
 				   bool is_part_child, bool is_part_parent);
+=======
+									 LOCKMODE lockmode, bool check);
+static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
+							   Datum reloptions, LOCKMODE lockmode, bool check);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static bool needs_toast_table(Relation rel);
 
 
@@ -119,13 +126,13 @@ CheckAndCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode, bool c
 {
 	Relation	rel;
 
-	rel = heap_open(relOid, lockmode);
+	rel = table_open(relOid, lockmode);
 
 	/* create_toast_table does all the work */
 	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, lockmode, check,
 							  is_part_child, is_part_parent);
 
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 }
 
 /*
@@ -138,7 +145,7 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 {
 	Relation	rel;
 
-	rel = heap_openrv(makeRangeVar(NULL, relName, -1), AccessExclusiveLock);
+	rel = table_openrv(makeRangeVar(NULL, relName, -1), AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
 		rel->rd_rel->relkind != RELKIND_MATVIEW)
@@ -154,7 +161,7 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 		elog(ERROR, "\"%s\" does not require a toast table",
 			 relName);
 
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 }
 
 
@@ -189,21 +196,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	int16		coloptions[2];
 	ObjectAddress baseobject,
 				toastobject;
-
-	/*
-	 * Toast table is shared if and only if its parent is.
-	 *
-	 * We cannot allow toasting a shared relation after initdb (because
-	 * there's no way to mark it toasted in other databases' pg_class).
-	 */
-	shared_relation = rel->rd_rel->relisshared;
-	if (shared_relation && !IsBootstrapProcessingMode())
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("shared tables cannot be toasted after initdb")));
-
-	/* It's mapped if and only if its parent is, too */
-	mapped_relation = RelationIsMapped(rel);
 
 	/*
 	 * Is it already toasted?
@@ -270,7 +262,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 			 "pg_toast_%u_index", relOid);
 
 	/* this is pretty painful...  need a tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(3, false);
+	tupdesc = CreateTemplateTupleDesc(3);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 					   "chunk_id",
 					   OIDOID,
@@ -289,9 +281,9 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	 * toast :-(.  This is essential for chunk_data because type bytea is
 	 * toastable; hit the other two just to be sure.
 	 */
-	tupdesc->attrs[0]->attstorage = 'p';
-	tupdesc->attrs[1]->attstorage = 'p';
-	tupdesc->attrs[2]->attstorage = 'p';
+	TupleDescAttr(tupdesc, 0)->attstorage = 'p';
+	TupleDescAttr(tupdesc, 1)->attstorage = 'p';
+	TupleDescAttr(tupdesc, 2)->attstorage = 'p';
 
 	/*
 	 * Toast tables for regular relations go in pg_toast; those for temp
@@ -315,6 +307,12 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		toast_typid = GetPreassignedOidForType(namespaceid, toast_relname, true);
 	}
 
+	/* Toast table is shared if and only if its parent is. */
+	shared_relation = rel->rd_rel->relisshared;
+
+	/* It's mapped if and only if its parent is, too */
+	mapped_relation = RelationIsMapped(rel);
+
 	toast_relid = heap_create_with_catalog(toast_relname,
 										   namespaceid,
 										   rel->rd_rel->reltablespace,
@@ -322,6 +320,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   toast_typid,
 										   InvalidOid,
 										   rel->rd_rel->relowner,
+										   rel->rd_rel->relam,
 										   tupdesc,
 										   NIL,
 										   RELKIND_TOASTVALUE,
@@ -329,25 +328,28 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   RELSTORAGE_HEAP,
 										   shared_relation,
 										   mapped_relation,
-										   true,
-										   0,
 										   ONCOMMIT_NOOP,
 										   NULL, /* CDB POLICY */
 										   reloptions,
 										   false,
 										   true,
 										   true,
+<<<<<<< HEAD
 										   NULL,
 										   /* valid_opts */ false,
 										   /* is_part_child */ false,
 										   is_part_parent);
+=======
+										   InvalidOid,
+										   NULL);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	Assert(toast_relid != InvalidOid);
 
-	/* make the toast relation visible, else heap_open will fail */
+	/* make the toast relation visible, else table_open will fail */
 	CommandCounterIncrement();
 
 	/* ShareLock is not really needed here, but take it anyway */
-	toast_rel = heap_open(toast_relid, ShareLock);
+	toast_rel = table_open(toast_relid, ShareLock);
 
 	/*
 	 * Create unique index on chunk_id, chunk_seq.
@@ -363,12 +365,13 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 
 	indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_NumIndexAttrs = 2;
-	indexInfo->ii_KeyAttrNumbers[0] = 1;
-	indexInfo->ii_KeyAttrNumbers[1] = 2;
+	indexInfo->ii_NumIndexKeyAttrs = 2;
+	indexInfo->ii_IndexAttrNumbers[0] = 1;
+	indexInfo->ii_IndexAttrNumbers[1] = 2;
 	indexInfo->ii_Expressions = NIL;
 	indexInfo->ii_ExpressionsState = NIL;
 	indexInfo->ii_Predicate = NIL;
-	indexInfo->ii_PredicateState = NIL;
+	indexInfo->ii_PredicateState = NULL;
 	indexInfo->ii_ExclusionOps = NULL;
 	indexInfo->ii_ExclusionProcs = NULL;
 	indexInfo->ii_ExclusionStrats = NULL;
@@ -376,6 +379,10 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	indexInfo->ii_ReadyForInserts = true;
 	indexInfo->ii_Concurrent = false;
 	indexInfo->ii_BrokenHotChain = false;
+	indexInfo->ii_ParallelWorkers = 0;
+	indexInfo->ii_Am = BTREE_AM_OID;
+	indexInfo->ii_AmCache = NULL;
+	indexInfo->ii_Context = CurrentMemoryContext;
 
 	collationObjectId[0] = InvalidOid;
 	collationObjectId[1] = InvalidOid;
@@ -386,20 +393,28 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	coloptions[0] = 0;
 	coloptions[1] = 0;
 
+<<<<<<< HEAD
 	if (IsBinaryUpgrade)
 		toastIndexOid = GetPreassignedOidForRelation(namespaceid, toast_idxname);
 
 	toast_idxid = index_create(toast_rel, toast_idxname, toastIndexOid, InvalidOid,
+=======
+	index_create(toast_rel, toast_idxname, toastIndexOid, InvalidOid,
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				 InvalidOid, InvalidOid,
 				 indexInfo,
 				 list_make2("chunk_id", "chunk_seq"),
 				 BTREE_AM_OID,
 				 rel->rd_rel->reltablespace,
 				 collationObjectId, classObjectId, coloptions, (Datum) 0,
+<<<<<<< HEAD
 				 true, false, false, false,
 				 true, false, false, true, false, NULL);
+=======
+				 INDEX_CREATE_IS_PRIMARY, 0, true, true, NULL);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
-	heap_close(toast_rel, NoLock);
+	table_close(toast_rel, NoLock);
 
 	/*
 	 * If this is a partitioned child, we can unlock since the master is
@@ -414,7 +429,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	/*
 	 * Store the toast table's OID in the parent relation's pg_class row
 	 */
-	class_rel = heap_open(RelationRelationId, RowExclusiveLock);
+	class_rel = table_open(RelationRelationId, RowExclusiveLock);
 
 	reltup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relOid));
 	if (!HeapTupleIsValid(reltup))
@@ -425,10 +440,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	if (!IsBootstrapProcessingMode())
 	{
 		/* normal case, use a transactional update */
-		simple_heap_update(class_rel, &reltup->t_self, reltup);
-
-		/* Keep catalog indexes current */
-		CatalogUpdateIndexes(class_rel, reltup);
+		CatalogTupleUpdate(class_rel, &reltup->t_self, reltup);
 	}
 	else
 	{
@@ -438,7 +450,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 
 	heap_freetuple(reltup);
 
-	heap_close(class_rel, RowExclusiveLock);
+	table_close(class_rel, RowExclusiveLock);
 
 	/*
 	 * Register dependency from the toast table to the master, so that the
@@ -466,54 +478,33 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 }
 
 /*
- * Check to see whether the table needs a TOAST table.  It does only if
- * (1) there are any toastable attributes, and (2) the maximum length
- * of a tuple could exceed TOAST_TUPLE_THRESHOLD.  (We don't want to
- * create a toast table for something like "f1 varchar(20)".)
+ * Check to see whether the table needs a TOAST table.
  */
 static bool
 needs_toast_table(Relation rel)
 {
-	int32		data_length = 0;
-	bool		maxlength_unknown = false;
-	bool		has_toastable_attrs = false;
-	TupleDesc	tupdesc;
-	Form_pg_attribute *att;
-	int32		tuple_length;
-	int			i;
+	/*
+	 * No need to create a TOAST table for partitioned tables.
+	 */
+	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		return false;
 
-	tupdesc = rel->rd_att;
-	att = tupdesc->attrs;
+	/*
+	 * We cannot allow toasting a shared relation after initdb (because
+	 * there's no way to mark it toasted in other databases' pg_class).
+	 */
+	if (rel->rd_rel->relisshared && !IsBootstrapProcessingMode())
+		return false;
 
-	for (i = 0; i < tupdesc->natts; i++)
-	{
-		if (att[i]->attisdropped)
-			continue;
-		data_length = att_align_nominal(data_length, att[i]->attalign);
-		if (att[i]->attlen > 0)
-		{
-			/* Fixed-length types are never toastable */
-			data_length += att[i]->attlen;
-		}
-		else
-		{
-			int32		maxlen = type_maximum_size(att[i]->atttypid,
-												   att[i]->atttypmod);
+	/*
+	 * Ignore attempts to create toast tables on catalog tables after initdb.
+	 * Which catalogs get toast tables is explicitly chosen in
+	 * catalog/toasting.h.  (We could get here via some ALTER TABLE command if
+	 * the catalog doesn't have a toast table.)
+	 */
+	if (IsCatalogRelation(rel) && !IsBootstrapProcessingMode())
+		return false;
 
-			if (maxlen < 0)
-				maxlength_unknown = true;
-			else
-				data_length += maxlen;
-			if (att[i]->attstorage != 'p')
-				has_toastable_attrs = true;
-		}
-	}
-	if (!has_toastable_attrs)
-		return false;			/* nothing to toast? */
-	if (maxlength_unknown)
-		return true;			/* any unlimited-length attrs? */
-	tuple_length = MAXALIGN(SizeofHeapTupleHeader +
-							BITMAPLEN(tupdesc->natts)) +
-		MAXALIGN(data_length);
-	return (tuple_length > TOAST_TUPLE_THRESHOLD);
+	/* Otherwise, let the AM decide. */
+	return table_relation_needs_toast_table(rel);
 }

@@ -77,9 +77,15 @@ install-world:
 # build src/ before contrib/
 install-world-contrib-recurse: install-world-src-recurse
 
+<<<<<<< HEAD
 $(call recurse,installdirs uninstall coverage,doc src config contrib gpcontrib)
 
 $(call recurse,distprep,doc src config contrib gpcontrib)
+=======
+$(call recurse,installdirs uninstall init-po update-po,doc src config)
+
+$(call recurse,distprep coverage,doc src config contrib)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # clean, distclean, etc should apply to contrib too, even though
 # it's not built by default
@@ -111,6 +117,7 @@ distclean maintainer-clean:
 	@rm -rf autom4te.cache/
 	rm -f config.cache config.log config.status GNUmakefile
 
+<<<<<<< HEAD
 installcheck-resgroup:
 	$(MAKE) -C src/test/isolation2 $@
 
@@ -127,6 +134,14 @@ check check-tests installcheck installcheck-parallel installcheck-tests:
 	$(MAKE) -C src/test/regress $@
 
 $(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib src/bin gpcontrib,check)
+=======
+check check-tests installcheck installcheck-parallel installcheck-tests: CHECKPREP_TOP=src/test/regress
+check check-tests installcheck installcheck-parallel installcheck-tests: submake-generated-headers
+	$(MAKE) -C src/test/regress $@
+
+$(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib src/bin,check)
+$(call recurse,checkprep,  src/test src/pl src/interfaces/ecpg contrib src/bin)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # This is a top-level target that runs "all" regression test suites against
 # a running server. This is what the CI pipeline runs.
@@ -181,7 +196,6 @@ GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 
 distdir	= postgresql-$(VERSION)
 dummy	= =install=
-garbage = =*  "#"*  ."#"*  *~*  *.orig  *.rej  core  postgresql-*
 
 dist: $(distdir).tar.gz $(distdir).tar.bz2
 	rm -rf $(distdir)
@@ -229,5 +243,8 @@ distcheck: dist
 # is sufficiently similar to the original one.
 	rm -rf $(distdir) $(dummy)
 	@echo "Distribution integrity checks out."
+
+cpluspluscheck: submake-generated-headers
+	$(top_srcdir)/src/tools/pginclude/cpluspluscheck $(top_srcdir) $(abs_top_builddir)
 
 .PHONY: dist distdir distcheck docs install-docs world check-world install-world installcheck-world

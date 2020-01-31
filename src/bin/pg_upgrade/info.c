@@ -3,7 +3,7 @@
  *
  *	information support functions
  *
- *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2019, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/info.c
  */
 
@@ -12,16 +12,20 @@
 #include "pg_upgrade.h"
 
 #include "access/transam.h"
+<<<<<<< HEAD
 #include "catalog/pg_class.h"
+=======
+#include "catalog/pg_class_d.h"
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #include "greenplum/pg_upgrade_greenplum.h"
 
 static void create_rel_filename_map(const char *old_data, const char *new_data,
-						const DbInfo *old_db, const DbInfo *new_db,
-						const RelInfo *old_rel, const RelInfo *new_rel,
-						FileNameMap *map);
+									const DbInfo *old_db, const DbInfo *new_db,
+									const RelInfo *old_rel, const RelInfo *new_rel,
+									FileNameMap *map);
 static void report_unmatched_relation(const RelInfo *rel, const DbInfo *db,
-						  bool is_new_db);
+									  bool is_new_db);
 static void free_db_and_rel_infos(DbInfoArr *db_arr);
 static void get_db_infos(ClusterInfo *cluster);
 static void get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo);
@@ -234,6 +238,7 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	/* new_relfilenode will match old and new pg_class.oid */
 	map->new_relfilenode = new_rel->relfilenode;
 
+<<<<<<< HEAD
 	/* GPDB additions to map data */
 	map->has_numerics = old_rel->has_numerics;
 	map->atts = old_rel->atts;
@@ -245,6 +250,9 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	map->missing_seg0_ok = relstorage_is_ao(old_rel->relstorage);
 
 	/* used only for logging and error reporing, old/new are identical */
+=======
+	/* used only for logging and error reporting, old/new are identical */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	map->nspname = old_rel->nspname;
 	map->relname = old_rel->relname;
 }
@@ -273,7 +281,7 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 			{
 				snprintf(reldesc + strlen(reldesc),
 						 sizeof(reldesc) - strlen(reldesc),
-						 " which is an index on \"%s.%s\"",
+						 _(" which is an index on \"%s.%s\""),
 						 hrel->nspname, hrel->relname);
 				/* Shift attention to index's table for toast check */
 				rel = hrel;
@@ -283,7 +291,7 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 		if (i >= db->rel_arr.nrels)
 			snprintf(reldesc + strlen(reldesc),
 					 sizeof(reldesc) - strlen(reldesc),
-					 " which is an index on OID %u", rel->indtable);
+					 _(" which is an index on OID %u"), rel->indtable);
 	}
 	if (rel->toastheap)
 	{
@@ -295,7 +303,7 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 			{
 				snprintf(reldesc + strlen(reldesc),
 						 sizeof(reldesc) - strlen(reldesc),
-						 " which is the TOAST table for \"%s.%s\"",
+						 _(" which is the TOAST table for \"%s.%s\""),
 						 brel->nspname, brel->relname);
 				break;
 			}
@@ -303,7 +311,7 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 		if (i >= db->rel_arr.nrels)
 			snprintf(reldesc + strlen(reldesc),
 					 sizeof(reldesc) - strlen(reldesc),
-					 " which is the TOAST table for OID %u", rel->toastheap);
+					 _(" which is the TOAST table for OID %u"), rel->toastheap);
 	}
 
 	if (is_new_db)
@@ -354,7 +362,11 @@ get_db_and_rel_infos(ClusterInfo *cluster)
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 		get_rel_infos(cluster, &cluster->dbarr.dbs[dbnum]);
 
-	pg_log(PG_VERBOSE, "\n%s databases:\n", CLUSTER_NAME(cluster));
+	if (cluster == &old_cluster)
+		pg_log(PG_VERBOSE, "\nsource databases:\n");
+	else
+		pg_log(PG_VERBOSE, "\ntarget databases:\n");
+
 	if (log_opts.verbose)
 		print_db_infos(&cluster->dbarr);
 }
@@ -539,10 +551,10 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	 *
 	 * pg_largeobject contains user data that does not appear in pg_dump
 	 * output, so we have to copy that system table.  It's easiest to do that
-	 * by treating it as a user table.  Likewise for pg_largeobject_metadata,
-	 * if it exists.
+	 * by treating it as a user table.
 	 */
 	snprintf(query + strlen(query), sizeof(query) - strlen(query),
+<<<<<<< HEAD
 			 "WITH regular_heap (reloid, indtable, toastheap) AS ("
 			 "	SELECT c.oid, i.indrelid, 0::oid "
 			 "	FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
@@ -552,6 +564,14 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "	WHERE relkind IN ('r', 'o', 'b', 'i'%s%s) AND "
 	/* workaround for Greenplum 4.3 bugs */
 			 " %s "
+=======
+			 "WITH regular_heap (reloid, indtable, toastheap) AS ( "
+			 "  SELECT c.oid, 0::oid, 0::oid "
+			 "  FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
+			 "         ON c.relnamespace = n.oid "
+			 "  WHERE relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+			 CppAsString2(RELKIND_MATVIEW) ") AND "
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* exclude possible orphaned temp tables */
 			 "    ((n.nspname !~ '^pg_temp_' AND "
 			 "      n.nspname !~ '^pg_toast_temp_' AND "
@@ -560,6 +580,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "                        'binary_upgrade', 'pg_toast') AND "
 			 "      c.oid >= %u::pg_catalog.oid) OR "
 			 "     (n.nspname = 'pg_catalog' AND "
+<<<<<<< HEAD
 			 "      relname IN ('pg_largeobject'%s) ))), ",
 	/* Greenplum 4.3/5X use 'm' as aovisimap which is now matview in 6X and above. */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
@@ -574,6 +595,10 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			FirstNormalObjectId,
 			(GET_MAJOR_VERSION(old_cluster.major_version) >= 900) ?
 			", 'pg_largeobject_metadata'" : "");
+=======
+			 "      relname IN ('pg_largeobject') ))), ",
+			 FirstNormalObjectId);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Add a CTE that collects OIDs of toast tables belonging to the tables

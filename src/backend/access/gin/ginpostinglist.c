@@ -4,7 +4,7 @@
  *	  routines for dealing with posting lists.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -86,6 +86,7 @@ itemptr_to_uint64(const ItemPointer iptr)
 	uint64		val;
 
 	Assert(ItemPointerIsValid(iptr));
+<<<<<<< HEAD
 	/*
 	 * Greenplum allow 16 bits for the offsetnumber, which turns the below
 	 * upstream assertion into an always-true comparison which generates a
@@ -94,12 +95,13 @@ itemptr_to_uint64(const ItemPointer iptr)
 #if 0
 	Assert(iptr->ip_posid < (1 << MaxHeapTuplesPerPageBits));
 #endif
+=======
+	Assert(GinItemPointerGetOffsetNumber(iptr) < (1 << MaxHeapTuplesPerPageBits));
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
-	val = iptr->ip_blkid.bi_hi;
-	val <<= 16;
-	val |= iptr->ip_blkid.bi_lo;
+	val = GinItemPointerGetBlockNumber(iptr);
 	val <<= MaxHeapTuplesPerPageBits;
-	val |= iptr->ip_posid;
+	val |= GinItemPointerGetOffsetNumber(iptr);
 
 	return val;
 }
@@ -107,11 +109,9 @@ itemptr_to_uint64(const ItemPointer iptr)
 static inline void
 uint64_to_itemptr(uint64 val, ItemPointer iptr)
 {
-	iptr->ip_posid = val & ((1 << MaxHeapTuplesPerPageBits) - 1);
+	GinItemPointerSetOffsetNumber(iptr, val & ((1 << MaxHeapTuplesPerPageBits) - 1));
 	val = val >> MaxHeapTuplesPerPageBits;
-	iptr->ip_blkid.bi_lo = val & 0xFFFF;
-	val = val >> 16;
-	iptr->ip_blkid.bi_hi = val & 0xFFFF;
+	GinItemPointerSetBlockNumber(iptr, val);
 
 	Assert(ItemPointerIsValid(iptr));
 }

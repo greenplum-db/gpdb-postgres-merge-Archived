@@ -93,7 +93,7 @@ static struct pg_tm *gmtsub(pg_time_t const *, int32, struct pg_tm *);
 static bool increment_overflow(int *, int);
 static bool increment_overflow_time(pg_time_t *, int32);
 static struct pg_tm *timesub(pg_time_t const *, int32, struct state const *,
-		struct pg_tm *);
+							 struct pg_tm *);
 static bool typesequiv(struct state const *, int, int);
 
 
@@ -109,7 +109,11 @@ static struct pg_tm tm;
 
 /* Initialize *S to a value based on UTOFF, ISDST, and DESIGIDX.  */
 static void
+<<<<<<< HEAD
 init_ttinfo(struct ttinfo *s, int32 utoff, bool isdst, int desigidx)
+=======
+init_ttinfo(struct ttinfo *s, int32 gmtoff, bool isdst, int abbrind)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	s->tt_utoff = utoff;
 	s->tt_isdst = isdst;
@@ -251,7 +255,11 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 	for (stored = 4; stored <= 8; stored *= 2)
 	{
 		int32		ttisstdcnt = detzcode(up->tzhead.tzh_ttisstdcnt);
+<<<<<<< HEAD
 		int32		ttisutcnt = detzcode(up->tzhead.tzh_ttisutcnt);
+=======
+		int32		ttisgmtcnt = detzcode(up->tzhead.tzh_ttisgmtcnt);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		int64		prevtr = 0;
 		int32		prevcorr = 0;
 		int32		leapcnt = detzcode(up->tzhead.tzh_leapcnt);
@@ -1358,6 +1366,7 @@ localsub(struct state const *sp, pg_time_t const *timep,
 
 	/*
 	 * To get (wrong) behavior that's compatible with System V Release 2.0
+<<<<<<< HEAD
 	 * you'd replace the statement below with t += ttisp->tt_utoff;
 	 * timesub(&t, 0L, sp, tmp);
 	 */
@@ -1366,6 +1375,16 @@ localsub(struct state const *sp, pg_time_t const *timep,
 	{
 		result->tm_isdst = ttisp->tt_isdst;
 		result->tm_zone = (char *) &sp->chars[ttisp->tt_desigidx];
+=======
+	 * you'd replace the statement below with t += ttisp->tt_gmtoff;
+	 * timesub(&t, 0L, sp, tmp);
+	 */
+	result = timesub(&t, ttisp->tt_gmtoff, sp, tmp);
+	if (result)
+	{
+		result->tm_isdst = ttisp->tt_isdst;
+		result->tm_zone = unconstify(char *, &sp->chars[ttisp->tt_abbrind]);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	return result;
 }

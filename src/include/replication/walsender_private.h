@@ -3,7 +3,7 @@
  * walsender_private.h
  *	  Private definitions from replication/walsender.c.
  *
- * Portions Copyright (c) 2010-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2019, PostgreSQL Global Development Group
  *
  * src/include/replication/walsender_private.h
  *
@@ -30,10 +30,17 @@ typedef enum WalSndState
 
 /*
  * Each walsender has a WalSnd struct in shared memory.
+ *
+ * This struct is protected by 'mutex', with two exceptions: one is
+ * sync_standby_priority as noted below.  The other exception is that some
+ * members are only written by the walsender process itself, and thus that
+ * process is free to read those members without holding spinlock.  pid and
+ * needreload always require the spinlock to be held for all accesses.
  */
 typedef struct WalSnd
 {
-	pid_t		pid;			/* this walsender's process id, or 0 */
+	pid_t		pid;			/* this walsender's PID, or 0 if not active */
+
 	WalSndState state;			/* this walsender's state */
 	XLogRecPtr	sentPtr;		/* WAL has been sent up to this point */
 	bool		sendKeepalive;	/* do we send keepalives on this connection? */
@@ -49,6 +56,7 @@ typedef struct WalSnd
 	XLogRecPtr	flush;
 	XLogRecPtr	apply;
 
+<<<<<<< HEAD
 	/*
 	 * This boolean indicates if this WAL sender has caught up within the
 	 * range defined by user (guc). This helps the backends to decide if they
@@ -73,6 +81,12 @@ typedef struct WalSnd
 	 * This helps to detect time passed since mirror didn't connect.
 	 */
 	pg_time_t   replica_disconnected_at;
+=======
+	/* Measured lag times, or -1 for unknown/none. */
+	TimeOffset	writeLag;
+	TimeOffset	flushLag;
+	TimeOffset	applyLag;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Protects shared variables shown above. */
 	slock_t		mutex;
@@ -91,10 +105,16 @@ typedef struct WalSnd
 	int			sync_standby_priority;
 
 	/*
+<<<<<<< HEAD
 	 * Indicates whether the WalSnd represents a connection with a Greenplum
 	 * mirror in streaming mode
 	 */
 	bool 		is_for_gp_walreceiver;
+=======
+	 * Timestamp of the last message received from standby.
+	 */
+	TimestampTz replyTime;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } WalSnd;
 
 extern WalSnd *MyWalSnd;
@@ -174,6 +194,10 @@ extern void replication_scanner_finish(void);
 
 extern Node *replication_parse_result;
 
+<<<<<<< HEAD
 #define GP_WALRECEIVER_APPNAME "gp_walreceiver"
 
 #endif   /* _WALSENDER_PRIVATE_H */
+=======
+#endif							/* _WALSENDER_PRIVATE_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

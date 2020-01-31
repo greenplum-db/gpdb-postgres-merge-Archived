@@ -7,9 +7,13 @@
  * we need two sets of code.  Ought to look at trying to unify the cases.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -94,9 +98,11 @@ SubqueryRecheck(SubqueryScanState *node, TupleTableSlot *slot)
  *		access method functions.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecSubqueryScan(SubqueryScanState *node)
+static TupleTableSlot *
+ExecSubqueryScan(PlanState *pstate)
 {
+	SubqueryScanState *node = castNode(SubqueryScanState, pstate);
+
 	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) SubqueryNext,
 					(ExecScanRecheckMtd) SubqueryRecheck);
@@ -124,6 +130,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	subquerystate = makeNode(SubqueryScanState);
 	subquerystate->ss.ps.plan = (Plan *) node;
 	subquerystate->ss.ps.state = estate;
+	subquerystate->ss.ps.ExecProcNode = ExecSubqueryScan;
 
 	/*
 	 * Miscellaneous initialization
@@ -133,6 +140,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &subquerystate->ss.ps);
 
 	/*
+<<<<<<< HEAD
 	 * initialize child expressions
 	 */
 	subquerystate->ss.ps.targetlist = (List *)
@@ -153,21 +161,44 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	ExecInitScanTupleSlot(estate, &subquerystate->ss);
 
 	/*
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * initialize subquery
 	 */
 	subquerystate->subplan = ExecInitNode(node->subplan, estate, eflags);
 
+<<<<<<< HEAD
+=======
 	/*
-	 * Initialize scan tuple type (needed by ExecAssignScanProjectionInfo)
+	 * Initialize scan slot and type (needed by ExecAssignScanProjectionInfo)
 	 */
-	ExecAssignScanType(&subquerystate->ss,
-					   ExecGetResultType(subquerystate->subplan));
+	ExecInitScanTupleSlot(estate, &subquerystate->ss,
+						  ExecGetResultType(subquerystate->subplan),
+						  ExecGetResultSlotOps(subquerystate->subplan, NULL));
+
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	/*
+	 * The slot used as the scantuple isn't the slot above (outside of EPQ),
+	 * but the one from the node below.
+	 */
+	subquerystate->ss.ps.scanopsset = true;
+	subquerystate->ss.ps.scanops = ExecGetResultSlotOps(subquerystate->subplan,
+														&subquerystate->ss.ps.scanopsfixed);
+	subquerystate->ss.ps.resultopsset = true;
+	subquerystate->ss.ps.resultops = subquerystate->ss.ps.scanops;
+	subquerystate->ss.ps.resultopsfixed = subquerystate->ss.ps.scanopsfixed;
 
 	/*
-	 * Initialize result tuple type and projection info.
+	 * Initialize result type and projection.
 	 */
-	ExecAssignResultTypeFromTL(&subquerystate->ss.ps);
+	ExecInitResultTypeTL(&subquerystate->ss.ps);
 	ExecAssignScanProjectionInfo(&subquerystate->ss);
+
+	/*
+	 * initialize child expressions
+	 */
+	subquerystate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) subquerystate);
 
 	return subquerystate;
 }
@@ -189,6 +220,7 @@ ExecEndSubqueryScan(SubqueryScanState *node)
 	/*
 	 * clean out the upper tuple table
 	 */
+<<<<<<< HEAD
 	if (node->ss.ss_ScanTupleSlot != NULL)
 	{
 		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
@@ -197,6 +229,11 @@ ExecEndSubqueryScan(SubqueryScanState *node)
 
 	/* gpmon */
 	EndPlanStateGpmonPkt(&node->ss.ps);
+=======
+	if (node->ss.ps.ps_ResultTupleSlot)
+		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+	ExecClearTuple(node->ss.ss_ScanTupleSlot);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * close down subquery

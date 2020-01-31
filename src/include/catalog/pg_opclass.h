@@ -1,8 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_opclass.h
- *	  definition of the system "opclass" relation (pg_opclass)
- *	  along with the relation's initial contents.
+ *	  definition of the "operator class" system catalog (pg_opclass)
  *
  * The primary key for this table is <opcmethod, opcname, opcnamespace> ---
  * that is, there is a row for each valid combination of opclass name and
@@ -25,14 +24,14 @@
  * AMs support this.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_opclass.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -40,24 +39,40 @@
 #define PG_OPCLASS_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_opclass_d.h"
 
 /* ----------------
  *		pg_opclass definition.  cpp turns this into
  *		typedef struct FormData_pg_opclass
  * ----------------
  */
-#define OperatorClassRelationId  2616
-
-CATALOG(pg_opclass,2616)
+CATALOG(pg_opclass,2616,OperatorClassRelationId)
 {
-	Oid			opcmethod;		/* index access method opclass is for */
-	NameData	opcname;		/* name of this opclass */
-	Oid			opcnamespace;	/* namespace of this opclass */
-	Oid			opcowner;		/* opclass owner */
-	Oid			opcfamily;		/* containing operator family */
-	Oid			opcintype;		/* type of data indexed by opclass */
-	bool		opcdefault;		/* T if opclass is default for opcintype */
-	Oid			opckeytype;		/* type of data in index, or InvalidOid */
+	Oid			oid;			/* oid */
+
+	/* index access method opclass is for */
+	Oid			opcmethod BKI_LOOKUP(pg_am);
+
+	/* name of this opclass */
+	NameData	opcname;
+
+	/* namespace of this opclass */
+	Oid			opcnamespace BKI_DEFAULT(PGNSP);
+
+	/* opclass owner */
+	Oid			opcowner BKI_DEFAULT(PGUID);
+
+	/* containing operator family */
+	Oid			opcfamily BKI_LOOKUP(pg_opfamily);
+
+	/* type of data indexed by opclass */
+	Oid			opcintype BKI_LOOKUP(pg_type);
+
+	/* T if opclass is default for opcintype */
+	bool		opcdefault BKI_DEFAULT(t);
+
+	/* type of data in index, or InvalidOid */
+	Oid			opckeytype BKI_DEFAULT(0) BKI_LOOKUP(pg_type);
 } FormData_pg_opclass;
 
 /* GPDB added foreign key definitions for gpcheckcat. */
@@ -71,6 +86,7 @@ FOREIGN_KEY(opcowner REFERENCES pg_authid(oid));
  */
 typedef FormData_pg_opclass *Form_pg_opclass;
 
+<<<<<<< HEAD
 /* ----------------
  *		compiler constants for pg_opclass
  * ----------------
@@ -324,3 +340,6 @@ DATA(insert (	405		cdbhash_uuid_ops	PGNSP PGUID 7129 2950 f 0 ));
 DATA(insert (	405		cdbhash_enum_ops	PGNSP PGUID 7130 3500 f 0 ));
 
 #endif   /* PG_OPCLASS_H */
+=======
+#endif							/* PG_OPCLASS_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -14,7 +14,11 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
 
+<<<<<<< HEAD
 OBJS = logtape.o sortsupport.o tuplesort.o tuplestore.o tuplestorenew.o tuplesort_mk.o tuplesort_mkheap.o tuplesort_mkqsort.o
+=======
+OBJS = logtape.o sharedtuplestore.o sortsupport.o tuplesort.o tuplestore.o
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 tuplesort.o: qsort_tuple.c
 

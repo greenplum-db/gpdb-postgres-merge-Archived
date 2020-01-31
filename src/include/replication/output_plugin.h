@@ -2,7 +2,7 @@
  * output_plugin.h
  *	   PostgreSQL Logical Decode Plugin Interface
  *
- * Copyright (c) 2012-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2019, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@ typedef enum OutputPluginOutputType
 typedef struct OutputPluginOptions
 {
 	OutputPluginOutputType output_type;
+	bool		receive_rewrites;
 } OutputPluginOptions;
 
 /*
@@ -42,49 +43,76 @@ typedef void (*LogicalOutputPluginInit) (struct OutputPluginCallbacks *cb);
  * the same slot is used from there one, it will be "false".
  */
 typedef void (*LogicalDecodeStartupCB) (struct LogicalDecodingContext *ctx,
+<<<<<<< HEAD
 												OutputPluginOptions *options,
 													bool is_init);
+=======
+										OutputPluginOptions *options,
+										bool is_init);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Callback called for every (explicit or implicit) BEGIN of a successful
  * transaction.
  */
 typedef void (*LogicalDecodeBeginCB) (struct LogicalDecodingContext *ctx,
+<<<<<<< HEAD
 												  ReorderBufferTXN *txn);
+=======
+									  ReorderBufferTXN *txn);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Callback for every individual change in a successful transaction.
  */
 typedef void (*LogicalDecodeChangeCB) (struct LogicalDecodingContext *ctx,
+<<<<<<< HEAD
 												   ReorderBufferTXN *txn,
 												   Relation relation,
 												ReorderBufferChange *change);
+=======
+									   ReorderBufferTXN *txn,
+									   Relation relation,
+									   ReorderBufferChange *change);
+
+/*
+ * Callback for every TRUNCATE in a successful transaction.
+ */
+typedef void (*LogicalDecodeTruncateCB) (struct LogicalDecodingContext *ctx,
+										 ReorderBufferTXN *txn,
+										 int nrelations,
+										 Relation relations[],
+										 ReorderBufferChange *change);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Called for every (explicit or implicit) COMMIT of a successful transaction.
  */
 typedef void (*LogicalDecodeCommitCB) (struct LogicalDecodingContext *ctx,
+<<<<<<< HEAD
 												   ReorderBufferTXN *txn,
 												   XLogRecPtr commit_lsn);
+=======
+									   ReorderBufferTXN *txn,
+									   XLogRecPtr commit_lsn);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Called for the generic logical decoding messages.
  */
-typedef void (*LogicalDecodeMessageCB) (
-											 struct LogicalDecodingContext *,
-													ReorderBufferTXN *txn,
-													XLogRecPtr message_lsn,
-													bool transactional,
-													const char *prefix,
-													Size message_size,
-													const char *message);
+typedef void (*LogicalDecodeMessageCB) (struct LogicalDecodingContext *ctx,
+										ReorderBufferTXN *txn,
+										XLogRecPtr message_lsn,
+										bool transactional,
+										const char *prefix,
+										Size message_size,
+										const char *message);
 
 /*
  * Filter changes by origin.
  */
-typedef bool (*LogicalDecodeFilterByOriginCB) (
-											 struct LogicalDecodingContext *,
-													  RepOriginId origin_id);
+typedef bool (*LogicalDecodeFilterByOriginCB) (struct LogicalDecodingContext *ctx,
+											   RepOriginId origin_id);
 
 /*
  * Called to shutdown an output plugin.
@@ -99,6 +127,7 @@ typedef struct OutputPluginCallbacks
 	LogicalDecodeStartupCB startup_cb;
 	LogicalDecodeBeginCB begin_cb;
 	LogicalDecodeChangeCB change_cb;
+	LogicalDecodeTruncateCB truncate_cb;
 	LogicalDecodeCommitCB commit_cb;
 	LogicalDecodeMessageCB message_cb;
 	LogicalDecodeFilterByOriginCB filter_by_origin_cb;
@@ -108,5 +137,9 @@ typedef struct OutputPluginCallbacks
 /* Functions in replication/logical/logical.c */
 extern void OutputPluginPrepareWrite(struct LogicalDecodingContext *ctx, bool last_write);
 extern void OutputPluginWrite(struct LogicalDecodingContext *ctx, bool last_write);
+<<<<<<< HEAD
+=======
+extern void OutputPluginUpdateProgress(struct LogicalDecodingContext *ctx);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
-#endif   /* OUTPUT_PLUGIN_H */
+#endif							/* OUTPUT_PLUGIN_H */

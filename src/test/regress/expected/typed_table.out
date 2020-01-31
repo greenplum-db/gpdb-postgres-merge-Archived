@@ -10,11 +10,11 @@ SELECT * FROM persons;
 (0 rows)
 
 \d persons
-    Table "public.persons"
- Column |  Type   | Modifiers 
---------+---------+-----------
- id     | integer | 
- name   | text    | 
+              Table "public.persons"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           |          | 
+ name   | text    |           |          | 
 Typed table of type: person_type
 Distributed by: (id)
 
@@ -52,6 +52,7 @@ CREATE TABLE persons2 OF person_type (
 ERROR:  UNIQUE or PRIMARY KEY definitions are incompatible with each other
 HINT:  When there are multiple PRIMARY KEY / UNIQUE constraints, they must have at least one column in common.
 \d persons2
+<<<<<<< HEAD
 -- These are added for Greenplum, as the previous table creation statement
 -- should have failed.
 CREATE TABLE gppersons1 OF person_type (
@@ -63,6 +64,13 @@ CREATE TABLE gppersons1 OF person_type (
 --------+---------+-----------
  id     | integer | not null
  name   | text    | 
+=======
+              Table "public.persons2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+ name   | text    |           |          | 
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 Indexes:
     "gppersons1_pkey" PRIMARY KEY, btree (id)
 Typed table of type: person_type
@@ -87,11 +95,11 @@ CREATE TABLE persons3 OF person_type (
     name WITH OPTIONS DEFAULT ''
 );
 \d persons3
-       Table "public.persons3"
- Column |  Type   |    Modifiers     
---------+---------+------------------
- id     | integer | not null
- name   | text    | default ''::text
+              Table "public.persons3"
+ Column |  Type   | Collation | Nullable | Default  
+--------+---------+-----------+----------+----------
+ id     | integer |           | not null | 
+ name   | text    |           |          | ''::text
 Indexes:
     "persons3_pkey" PRIMARY KEY, btree (id)
 Typed table of type: person_type
@@ -131,7 +139,32 @@ SELECT id, namelen(persons) FROM persons;
   1 |       4
 (1 row)
 
-DROP TYPE person_type CASCADE;
-NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to table persons
-drop cascades to function namelen(person_type)
+CREATE TABLE persons2 OF person_type (
+    id WITH OPTIONS PRIMARY KEY,
+    UNIQUE (name)
+);
+\d persons2
+              Table "public.persons2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+ name   | text    |           |          | 
+Indexes:
+    "persons2_pkey" PRIMARY KEY, btree (id)
+    "persons2_name_key" UNIQUE CONSTRAINT, btree (name)
+Typed table of type: person_type
+
+CREATE TABLE persons3 OF person_type (
+    PRIMARY KEY (id),
+    name NOT NULL DEFAULT ''
+);
+\d persons3
+              Table "public.persons3"
+ Column |  Type   | Collation | Nullable | Default  
+--------+---------+-----------+----------+----------
+ id     | integer |           | not null | 
+ name   | text    |           | not null | ''::text
+Indexes:
+    "persons3_pkey" PRIMARY KEY, btree (id)
+Typed table of type: person_type
+

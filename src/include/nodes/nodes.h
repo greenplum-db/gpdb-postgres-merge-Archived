@@ -4,9 +4,13 @@
  *	  Definitions for tagged nodes.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/nodes.h
@@ -20,10 +24,10 @@
  * The first field of every node is NodeTag. Each node created (with makeNode)
  * will have one of the following tags as the value of its first field.
  *
- * Note that the numbers of the node tags are not contiguous. We left holes
- * here so that we can add more tags without changing the existing enum's.
- * (Since node tag numbers never exist outside backend memory, there's no
- * real harm in renumbering, it just costs a full rebuild ...)
+ * Note that inserting or deleting node types changes the numbers of other
+ * node types later in the list.  This is no problem during development, since
+ * the node numbers are never stored on disk.  But don't do it in a released
+ * branch, because that would represent an ABI break for extensions.
  */
 typedef enum NodeTag
 {
@@ -32,10 +36,11 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR EXECUTOR NODES (execnodes.h)
 	 */
-	T_IndexInfo = 10,
+	T_IndexInfo,
 	T_ExprContext,
 	T_ProjectionInfo,
 	T_JunkFilter,
+	T_OnConflictSetState,
 	T_ResultRelInfo,
 	T_EState,
 	T_TupleTableSlot,
@@ -50,6 +55,7 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR PLAN NODES (plannodes.h)
 	 */
+<<<<<<< HEAD
 	T_Plan = 100,
 	T_Scan,
 	T_Join,
@@ -60,6 +66,11 @@ typedef enum NodeTag
 	 */
 	T_Result,
 	T_Plan_Start = T_Result,
+=======
+	T_Plan,
+	T_Result,
+	T_ProjectSet,
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	T_ModifyTable,
 	T_Append,
 	T_MergeAppend,
@@ -82,7 +93,9 @@ typedef enum NodeTag
 	T_FunctionScan,
 	T_TableFunctionScan,
 	T_ValuesScan,
+	T_TableFuncScan,
 	T_CteScan,
+	T_NamedTuplestoreScan,
 	T_WorkTableScan,
 	T_ForeignScan,
 	T_CustomScan,
@@ -96,6 +109,7 @@ typedef enum NodeTag
 	T_WindowAgg,
 	T_Unique,
 	T_Gather,
+	T_GatherMerge,
 	T_Hash,
 	T_SetOp,
 	T_LockRows,
@@ -111,6 +125,10 @@ typedef enum NodeTag
 	/* these aren't subclasses of Plan: */
 	T_NestLoopParam,
 	T_PlanRowMark,
+	T_PartitionPruneInfo,
+	T_PartitionedRelPruneInfo,
+	T_PartitionPruneStepOp,
+	T_PartitionPruneStepCombine,
 	T_PlanInvalItem,
 
 	/*
@@ -118,6 +136,7 @@ typedef enum NodeTag
 	 *
 	 * These should correspond one-to-one with Plan node types.
 	 */
+<<<<<<< HEAD
 	T_PlanState = 200,
 	T_ScanState,
 	T_JoinState,
@@ -125,7 +144,11 @@ typedef enum NodeTag
 	/* Real plan node starts below.  Scan and Join are "Virtal nodes",
 	 * It will take the form of IndexScan, SeqScan, etc.
 	 */
+=======
+	T_PlanState,
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	T_ResultState,
+	T_ProjectSetState,
 	T_ModifyTableState,
 	T_AppendState,
 	T_MergeAppendState,
@@ -146,9 +169,14 @@ typedef enum NodeTag
 	T_TidScanState,
 	T_SubqueryScanState,
 	T_FunctionScanState,
+<<<<<<< HEAD
 	T_TableFunctionState,
+=======
+	T_TableFuncScanState,
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	T_ValuesScanState,
 	T_CteScanState,
+	T_NamedTuplestoreScanState,
 	T_WorkTableScanState,
 	T_ForeignScanState,
 	T_CustomScanState,
@@ -162,6 +190,7 @@ typedef enum NodeTag
 	T_WindowAggState,
 	T_UniqueState,
 	T_GatherState,
+	T_GatherMergeState,
 	T_HashState,
 	T_SetOpState,
 	T_LockRowsState,
@@ -184,8 +213,9 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR PRIMITIVE NODES (primnodes.h)
 	 */
-	T_Alias = 300,
+	T_Alias,
 	T_RangeVar,
+	T_TableFunc,
 	T_Expr,
 	T_Var,
 	T_Const,
@@ -193,7 +223,7 @@ typedef enum NodeTag
 	T_Aggref,
 	T_GroupingFunc,
 	T_WindowFunc,
-	T_ArrayRef,
+	T_SubscriptingRef,
 	T_FuncExpr,
 	T_NamedArgExpr,
 	T_OpExpr,
@@ -219,6 +249,7 @@ typedef enum NodeTag
 	T_RowCompareExpr,
 	T_CoalesceExpr,
 	T_MinMaxExpr,
+	T_SQLValueFunction,
 	T_XmlExpr,
 	T_NullTest,
 	T_BooleanTest,
@@ -226,6 +257,7 @@ typedef enum NodeTag
 	T_CoerceToDomainValue,
 	T_SetToDefault,
 	T_CurrentOfExpr,
+	T_NextValueExpr,
 	T_InferenceElem,
 	T_TargetEntry,
 	T_RangeTblRef,
@@ -253,37 +285,28 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR EXPRESSION STATE NODES (execnodes.h)
 	 *
+<<<<<<< HEAD
 	 * These correspond (not always one-for-one) to primitive nodes derivedO
 	 * from Expr.
+=======
+	 * ExprState represents the evaluation state for a whole expression tree.
+	 * Most Expr-based plan nodes do not have a corresponding expression state
+	 * node, they're fully handled within execExpr* - but sometimes the state
+	 * needs to be shared with other parts of the executor, as for example
+	 * with AggrefExprState, which nodeAgg.c has to modify.
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
-	T_ExprState = 400,
-	T_GenericExprState,
-	T_WholeRowVarExprState,
+	T_ExprState,
 	T_AggrefExprState,
+<<<<<<< HEAD
 	T_GroupingFuncExprState,
 	T_GroupIdExprState,
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	T_WindowFuncExprState,
-	T_ArrayRefExprState,
-	T_FuncExprState,
-	T_ScalarArrayOpExprState,
-	T_BoolExprState,
+	T_SetExprState,
 	T_SubPlanState,
 	T_AlternativeSubPlanState,
-	T_FieldSelectState,
-	T_FieldStoreState,
-	T_CoerceViaIOState,
-	T_ArrayCoerceExprState,
-	T_ConvertRowtypeExprState,
-	T_CaseExprState,
-	T_CaseWhenState,
-	T_ArrayExprState,
-	T_RowExprState,
-	T_RowCompareExprState,
-	T_CoalesceExprState,
-	T_MinMaxExprState,
-	T_XmlExprState,
-	T_NullTestState,
-	T_CoerceToDomainState,
 	T_DomainConstraintState,
 	T_PartSelectedExprState,
 	T_PartDefaultExprState,
@@ -295,9 +318,9 @@ typedef enum NodeTag
 	T_AggExprIdState,
 
 	/*
-	 * TAGS FOR PLANNER NODES (relation.h)
+	 * TAGS FOR PLANNER NODES (pathnodes.h)
 	 */
-	T_PlannerInfo = 500,
+	T_PlannerInfo,
 	T_PlannerGlobal,
 	T_RelOptInfo,
 	T_IndexOptInfo,
@@ -322,11 +345,13 @@ typedef enum NodeTag
 	T_HashPath,
 	T_AppendPath,
 	T_MergeAppendPath,
-	T_ResultPath,
+	T_GroupResultPath,
 	T_MaterialPath,
 	T_UniquePath,
 	T_GatherPath,
+	T_GatherMergePath,
 	T_ProjectionPath,
+	T_ProjectSetPath,
 	T_SortPath,
 	T_GroupPath,
 	T_UpperUniquePath,
@@ -346,6 +371,7 @@ typedef enum NodeTag
 	T_PathKey,
 	T_PathTarget,
 	T_RestrictInfo,
+	T_IndexClause,
 	T_PlaceHolderVar,
 	T_SpecialJoinInfo,
 	T_AppendRelInfo,
@@ -357,6 +383,9 @@ typedef enum NodeTag
 	T_PgPartRule,
 	T_SegfileMapNode,
 	T_PlannerParamItem,
+	T_RollupData,
+	T_GroupingSetData,
+	T_StatisticExtInfo,
 
     /* Tags for MPP planner nodes (relation.h) */
     T_CdbMotionPath = 580,
@@ -368,14 +397,19 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR MEMORY NODES (memnodes.h)
 	 */
-	T_MemoryContext = 600,
+	T_MemoryContext,
 	T_AllocSetContext,
+<<<<<<< HEAD
 	T_MemoryAccount,
+=======
+	T_SlabContext,
+	T_GenerationContext,
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * TAGS FOR VALUE NODES (value.h)
 	 */
-	T_Value = 650,
+	T_Value,
 	T_Integer,
 	T_Float,
 	T_String,
@@ -397,7 +431,8 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR STATEMENT NODES (mostly in parsenodes.h)
 	 */
-	T_Query = 700,
+	T_RawStmt,
+	T_Query,
 	T_PlannedStmt,
 	T_InsertStmt,
 	T_DeleteStmt,
@@ -511,6 +546,14 @@ typedef enum NodeTag
 	T_AlterPolicyStmt,
 	T_CreateTransformStmt,
 	T_CreateAmStmt,
+	T_CreatePublicationStmt,
+	T_AlterPublicationStmt,
+	T_CreateSubscriptionStmt,
+	T_AlterSubscriptionStmt,
+	T_DropSubscriptionStmt,
+	T_CreateStatsStmt,
+	T_AlterCollationStmt,
+	T_CallStmt,
 
 	/* GPDB additions */
 	T_PartitionBy,
@@ -536,7 +579,7 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)
 	 */
-	T_A_Expr = 900,
+	T_A_Expr,
 	T_ColumnRef,
 	T_ParamRef,
 	T_A_Const,
@@ -554,6 +597,8 @@ typedef enum NodeTag
 	T_RangeSubselect,
 	T_RangeFunction,
 	T_RangeTableSample,
+	T_RangeTableFunc,
+	T_RangeTableFuncCol,
 	T_TypeName,
 	T_ColumnDef,
 	T_IndexElem,
@@ -566,7 +611,7 @@ typedef enum NodeTag
 	T_SortGroupClause,
 	T_GroupingSet,
 	T_WindowClause,
-	T_FuncWithArgs,
+	T_ObjectWithArgs,
 	T_AccessPriv,
 	T_CreateOpClassItem,
 	T_TableLikeClause,
@@ -580,6 +625,13 @@ typedef enum NodeTag
 	T_CommonTableExpr,
 	T_ColumnReferenceStorageDirective,
 	T_RoleSpec,
+	T_TriggerTransition,
+	T_PartitionElem,
+	T_PartitionSpec,
+	T_PartitionBoundSpec,
+	T_PartitionRangeDatum,
+	T_PartitionCmd,
+	T_VacuumRelation,
 
 	/*
 	 * TAGS FOR REPLICATION GRAMMAR PARSE NODES (replnodes.h)
@@ -590,6 +642,7 @@ typedef enum NodeTag
 	T_DropReplicationSlotCmd,
 	T_StartReplicationCmd,
 	T_TimeLineHistoryCmd,
+	T_SQLCmd,
 
 	/*
 	 * TAGS FOR RANDOM OTHER STUFF
@@ -599,13 +652,14 @@ typedef enum NodeTag
 	 * purposes (usually because they are involved in APIs where we want to
 	 * pass multiple object types through the same pointer).
 	 */
-	T_TriggerData = 950,		/* in commands/trigger.h */
+	T_TriggerData,				/* in commands/trigger.h */
 	T_EventTriggerData,			/* in commands/event_trigger.h */
 	T_ReturnSetInfo,			/* in nodes/execnodes.h */
 	T_WindowObjectData,			/* private in nodeWindowAgg.c */
 	T_TIDBitmap,				/* in nodes/tidbitmap.h */
 	T_InlineCodeBlock,			/* in nodes/parsenodes.h */
 	T_FdwRoutine,				/* in foreign/fdwapi.h */
+<<<<<<< HEAD
 	T_TsmRoutine,				/* in access/tsmapi.h */
 	T_IndexAmRoutine,			/* in access/amapi.h */
 	T_ForeignKeyCacheInfo,		/* in utils/rel.h */
@@ -622,6 +676,18 @@ typedef enum NodeTag
     T_CdbExplain_StatHdr = 1000,             /* in cdb/cdbexplain.c */
 	T_GpPolicy,	/* in catalog/gp_policy.h */
 
+=======
+	T_IndexAmRoutine,			/* in access/amapi.h */
+	T_TableAmRoutine,			/* in access/tableam.h */
+	T_TsmRoutine,				/* in access/tsmapi.h */
+	T_ForeignKeyCacheInfo,		/* in utils/rel.h */
+	T_CallContext,				/* in nodes/parsenodes.h */
+	T_SupportRequestSimplify,	/* in nodes/supportnodes.h */
+	T_SupportRequestSelectivity,	/* in nodes/supportnodes.h */
+	T_SupportRequestCost,		/* in nodes/supportnodes.h */
+	T_SupportRequestRows,		/* in nodes/supportnodes.h */
+	T_SupportRequestIndexCondition	/* in nodes/supportnodes.h */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } NodeTag;
 
 /*
@@ -675,7 +741,7 @@ extern PGDLLIMPORT Node *newNodeMacroHolder;
 	newNodeMacroHolder->type = (tag), \
 	newNodeMacroHolder \
 )
-#endif   /* __GNUC__ */
+#endif							/* __GNUC__ */
 
 
 #define makeNode(_type_)		((_type_ *) newNode(sizeof(_type_),T_##_type_))
@@ -689,10 +755,15 @@ extern PGDLLIMPORT Node *newNodeMacroHolder;
  *
  * Use an inline function when assertions are enabled, to avoid multiple
  * evaluations of the ptr argument (which could e.g. be a function call).
+<<<<<<< HEAD
  * If inline functions are not available - only a small number of platforms -
  * don't Assert, but use the non-checking version.
  */
 #if defined(USE_ASSERT_CHECKING) && defined(PG_USE_INLINE)
+=======
+ */
+#ifdef USE_ASSERT_CHECKING
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static inline Node *
 castNodeImpl(NodeTag type, void *ptr)
 {
@@ -702,7 +773,11 @@ castNodeImpl(NodeTag type, void *ptr)
 #define castNode(_type_, nodeptr) ((_type_ *) castNodeImpl(T_##_type_, nodeptr))
 #else
 #define castNode(_type_, nodeptr) ((_type_ *) (nodeptr))
+<<<<<<< HEAD
 #endif   /* USE_ASSERT_CHECKING && PG_USE_INLINE */
+=======
+#endif							/* USE_ASSERT_CHECKING */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /* ----------------------------------------------------------------
@@ -713,16 +788,23 @@ castNodeImpl(NodeTag type, void *ptr)
 /*
  * nodes/{outfuncs.c,print.c}
  */
-extern char *nodeToString(const void *obj);
-
 struct Bitmapset;				/* not to include bitmapset.h here */
 struct StringInfoData;			/* not to include stringinfo.h here */
+
 extern void outNode(struct StringInfoData *str, const void *obj);
 extern void outToken(struct StringInfoData *str, const char *s);
 extern void outBitmapset(struct StringInfoData *str,
+<<<<<<< HEAD
 			 const struct Bitmapset *bms);
 extern void outDatum(struct StringInfoData *str, int64 value,
 		 int typlen, bool typbyval);
+=======
+						 const struct Bitmapset *bms);
+extern void outDatum(struct StringInfoData *str, uintptr_t value,
+					 int typlen, bool typbyval);
+extern char *nodeToString(const void *obj);
+extern char *bmsToString(const struct Bitmapset *bms);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * nodes/outfast.c. This special version of nodeToString is only used by serializeNode.
@@ -735,9 +817,16 @@ extern Node *readNodeFromBinaryString(const char *str, int len);
 /*
  * nodes/{readfuncs.c,read.c}
  */
+<<<<<<< HEAD
 extern void save_strtok_states(char **save_ptr, char **save_begin);
 extern void set_strtok_states(char *ptr, char *begin);
 extern void *stringToNode(char *str);
+=======
+extern void *stringToNode(const char *str);
+#ifdef WRITE_READ_PARSE_PLAN_TREES
+extern void *stringToNodeWithLocations(const char *str);
+#endif
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern struct Bitmapset *readBitmapset(void);
 extern int64 readDatum(bool typbyval);
 extern bool *readBoolCols(int numCols);
@@ -748,7 +837,14 @@ extern int16 *readAttrNumberCols(int numCols);
 /*
  * nodes/copyfuncs.c
  */
-extern void *copyObject(const void *obj);
+extern void *copyObjectImpl(const void *obj);
+
+/* cast result back to argument type, if supported by compiler */
+#ifdef HAVE_TYPEOF
+#define copyObject(obj) ((typeof(obj)) copyObjectImpl(obj))
+#else
+#define copyObject(obj) copyObjectImpl(obj)
+#endif
 
 /*
  * nodes/equalfuncs.c
@@ -874,20 +970,21 @@ typedef enum JoinType
  * AggStrategy -
  *	  overall execution strategies for Agg plan nodes
  *
- * This is needed in both plannodes.h and relation.h, so put it here...
+ * This is needed in both pathnodes.h and plannodes.h, so put it here...
  */
 typedef enum AggStrategy
 {
 	AGG_PLAIN,					/* simple agg across all input rows */
 	AGG_SORTED,					/* grouped agg, input must be sorted */
-	AGG_HASHED					/* grouped agg, use internal hashtable */
+	AGG_HASHED,					/* grouped agg, use internal hashtable */
+	AGG_MIXED					/* grouped agg, hash and sort both used */
 } AggStrategy;
 
 /*
  * AggSplit -
  *	  splitting (partial aggregation) modes for Agg plan nodes
  *
- * This is needed in both plannodes.h and relation.h, so put it here...
+ * This is needed in both pathnodes.h and plannodes.h, so put it here...
  */
 
 /* Primitive options supported by nodeAgg.c: */
@@ -928,7 +1025,7 @@ typedef enum AggSplit
  * SetOpCmd and SetOpStrategy -
  *	  overall semantics and execution strategies for SetOp plan nodes
  *
- * This is needed in both plannodes.h and relation.h, so put it here...
+ * This is needed in both pathnodes.h and plannodes.h, so put it here...
  */
 typedef enum SetOpCmd
 {
@@ -957,4 +1054,4 @@ typedef enum OnConflictAction
 	ONCONFLICT_UPDATE			/* ON CONFLICT ... DO UPDATE */
 } OnConflictAction;
 
-#endif   /* NODES_H */
+#endif							/* NODES_H */

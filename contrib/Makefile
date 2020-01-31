@@ -12,12 +12,16 @@ include $(top_builddir)/src/Makefile.global
 # GPDB.
 
 SUBDIRS = \
+<<<<<<< HEAD
+=======
+		adminpack	\
+		amcheck		\
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		auth_delay	\
 		auto_explain	\
 		bloom		\
 		btree_gin	\
 		btree_gist	\
-		chkpass		\
 		citext		\
 		dblink		\
 		dict_int	\
@@ -85,15 +89,15 @@ ALWAYS_SUBDIRS += sepgsql
 endif
 
 ifeq ($(with_perl),yes)
-SUBDIRS += hstore_plperl
+SUBDIRS += hstore_plperl jsonb_plperl
 else
-ALWAYS_SUBDIRS += hstore_plperl
+ALWAYS_SUBDIRS += hstore_plperl jsonb_plperl
 endif
 
 ifeq ($(with_python),yes)
-SUBDIRS += hstore_plpython ltree_plpython
+SUBDIRS += hstore_plpython jsonb_plpython ltree_plpython
 else
-ALWAYS_SUBDIRS += hstore_plpython ltree_plpython
+ALWAYS_SUBDIRS += hstore_plpython jsonb_plpython ltree_plpython
 endif
 
 # Missing:

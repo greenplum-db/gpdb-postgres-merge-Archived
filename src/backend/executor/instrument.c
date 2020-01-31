@@ -4,9 +4,13 @@
  *	 functions for instrumentation of plan execution
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2001-2016, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2001-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * IDENTIFICATION
  *	  src/backend/executor/instrument.c
@@ -30,7 +34,7 @@ static BufferUsage save_pgBufferUsage;
 
 static void BufferUsageAdd(BufferUsage *dst, const BufferUsage *add);
 static void BufferUsageAccumDiff(BufferUsage *dst,
-					 const BufferUsage *add, const BufferUsage *sub);
+								 const BufferUsage *add, const BufferUsage *sub);
 
 /* GPDB specific */
 static bool shouldPickInstrInShmem(NodeTag tag);
@@ -70,7 +74,7 @@ InstrAlloc(int n, int instrument_options)
 	return instr;
 }
 
-/* Initialize an pre-allocated instrumentation structure. */
+/* Initialize a pre-allocated instrumentation structure. */
 void
 InstrInit(Instrumentation *instr, int instrument_options)
 {
@@ -83,13 +87,9 @@ InstrInit(Instrumentation *instr, int instrument_options)
 void
 InstrStartNode(Instrumentation *instr)
 {
-	if (instr->need_timer)
-	{
-		if (INSTR_TIME_IS_ZERO(instr->starttime))
-			INSTR_TIME_SET_CURRENT(instr->starttime);
-		else
-			elog(ERROR, "InstrStartNode called twice in a row");
-	}
+	if (instr->need_timer &&
+		!INSTR_TIME_SET_CURRENT_LAZY(instr->starttime))
+		elog(ERROR, "InstrStartNode called twice in a row");
 
 	/* save buffer usage totals at node entry, if needed */
 	if (instr->need_bufusage)
@@ -185,6 +185,7 @@ InstrAggNode(Instrumentation *dst, Instrumentation *add)
 	dst->startup += add->startup;
 	dst->total += add->total;
 	dst->ntuples += add->ntuples;
+	dst->ntuples2 += add->ntuples2;
 	dst->nloops += add->nloops;
 	dst->nfiltered1 += add->nfiltered1;
 	dst->nfiltered2 += add->nfiltered2;

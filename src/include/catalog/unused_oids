@@ -1,24 +1,31 @@
-#!/bin/sh
+#!/usr/bin/perl
+#----------------------------------------------------------------------
 #
 # unused_oids
+#    Finds blocks of manually-assignable OIDs that have not already been
+#    claimed by previous hackers.  The main use is for finding available
+#    OIDs for new internal functions.  The numbers printed are inclusive
+#    ranges of unused OIDs.
+#
+#    Before using a large empty block, make sure you aren't about
+#    to take over what was intended as expansion space for something
+#    else.
+#
+# Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/include/catalog/unused_oids
 #
-#	finds blocks of manually-assignable oids that have not already been
-#	claimed by post_hackers.  primarily useful for finding available
-#	oids for new internal functions.  the numbers printed are inclusive
-#	ranges of unused oids.
-#
-#	before using a large empty block, make sure you aren't about
-#	to take over what was intended as expansion space for something
-#	else.
-#
-#	run this script in src/include/catalog.
-#
+#----------------------------------------------------------------------
 
+use strict;
+use warnings;
 
-AWK="awk"
+# Must run in src/include/catalog
+use FindBin;
+chdir $FindBin::RealBin or die "could not cd to $FindBin::RealBin: $!\n";
 
+<<<<<<< HEAD
 # Get FirstBootstrapObjectId from access/transam.h
 FIRSTOBJECTID=`grep '#define[ 	]*FirstBootstrapObjectId' ./pg_magic_oid.h | $AWK '{ print $3 }'`
 export FIRSTOBJECTID
@@ -53,12 +60,41 @@ BEGIN {
 			print last + 1, "-", $1 - 1;
 		} else {
 			print last + 1;
+=======
+use lib "$FindBin::RealBin/../../backend/catalog/";
+use Catalog;
+
+my @input_files = (glob("pg_*.h"), qw(indexing.h toasting.h));
+
+my $oids = Catalog::FindAllOidsFromHeaders(@input_files);
+
+# Also push FirstGenbkiObjectId to serve as a terminator for the last gap.
+my $FirstGenbkiObjectId =
+  Catalog::FindDefinedSymbol('access/transam.h', '..', 'FirstGenbkiObjectId');
+push @{$oids}, $FirstGenbkiObjectId;
+
+my $prev_oid = 0;
+foreach my $oid (sort { $a <=> $b } @{$oids})
+{
+	if ($oid > $prev_oid + 1)
+	{
+		if ($oid > $prev_oid + 2)
+		{
+			printf "%d - %d\n", $prev_oid + 1, $oid - 1;
+		}
+		else
+		{
+			printf "%d\n", $prev_oid + 1;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
-	last = $1;
+	$prev_oid = $oid;
 }
+<<<<<<< HEAD
 END {
 	if (last < ENVIRON["LOWESTGPSQLOID"]) {
 		print last + 1, "-", ENVIRON["LOWESTGPSQLOID"]-1;
 	}
 }'
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

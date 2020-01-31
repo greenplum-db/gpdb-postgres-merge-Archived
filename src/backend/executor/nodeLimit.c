@@ -3,9 +3,13 @@
  * nodeLimit.c
  *	  Routines to handle limiting of query results where appropriate
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -26,10 +30,11 @@
 #include "cdb/cdbvars.h"
 #include "executor/executor.h"
 #include "executor/nodeLimit.h"
+#include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 
 static void recompute_limits(LimitState *node);
-static void pass_down_bound(LimitState *node, PlanState *child_node);
+static int64 compute_tuples_needed(LimitState *node);
 
 
 /* ----------------------------------------------------------------
@@ -39,12 +44,20 @@ static void pass_down_bound(LimitState *node, PlanState *child_node);
  *		filtering on the stream of tuples returned by a subplan.
  * ----------------------------------------------------------------
  */
+<<<<<<< HEAD
 static TupleTableSlot *				/* return: a tuple or NULL */
 ExecLimit_guts(LimitState *node)
+=======
+static TupleTableSlot *			/* return: a tuple or NULL */
+ExecLimit(PlanState *pstate)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
+	LimitState *node = castNode(LimitState, pstate);
 	ScanDirection direction;
 	TupleTableSlot *slot;
 	PlanState  *outerPlan;
+
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * get information from the node
@@ -133,6 +146,14 @@ ExecLimit_guts(LimitState *node)
 					node->position - node->offset >= node->count)
 				{
 					node->lstate = LIMIT_WINDOWEND;
+
+					/*
+					 * If we know we won't need to back up, we can release
+					 * resources at this point.
+					 */
+					if (!(node->ps.state->es_top_eflags & EXEC_FLAG_BACKWARD))
+						(void) ExecShutdownNode(outerPlan);
+
 					return NULL;
 				}
 
@@ -262,8 +283,7 @@ recompute_limits(LimitState *node)
 	{
 		val = ExecEvalExprSwitchContext(node->limitOffset,
 										econtext,
-										&isNull,
-										NULL);
+										&isNull);
 		/* Interpret NULL offset as no offset */
 		if (isNull)
 			node->offset = 0;
@@ -272,8 +292,8 @@ recompute_limits(LimitState *node)
 			node->offset = DatumGetInt64(val);
 			if (node->offset < 0)
 				ereport(ERROR,
-				 (errcode(ERRCODE_INVALID_ROW_COUNT_IN_RESULT_OFFSET_CLAUSE),
-				  errmsg("OFFSET must not be negative")));
+						(errcode(ERRCODE_INVALID_ROW_COUNT_IN_RESULT_OFFSET_CLAUSE),
+						 errmsg("OFFSET must not be negative")));
 		}
 	}
 	else
@@ -286,8 +306,7 @@ recompute_limits(LimitState *node)
 	{
 		val = ExecEvalExprSwitchContext(node->limitCount,
 										econtext,
-										&isNull,
-										NULL);
+										&isNull);
 		/* Interpret NULL count as no count (LIMIT ALL) */
 		if (isNull)
 		{
@@ -318,29 +337,23 @@ recompute_limits(LimitState *node)
 	/* Set state-machine state */
 	node->lstate = LIMIT_RESCAN;
 
-	/* Notify child node about limit, if useful */
-	pass_down_bound(node, outerPlanState(node));
+	/*
+	 * Notify child node about limit.  Note: think not to "optimize" by
+	 * skipping ExecSetTupleBound if compute_tuples_needed returns < 0.  We
+	 * must update the child node anyway, in case this is a rescan and the
+	 * previous time we got a different result.
+	 */
+	ExecSetTupleBound(compute_tuples_needed(node), outerPlanState(node));
 }
 
 /*
- * If we have a COUNT, and our input is a Sort node, notify it that it can
- * use bounded sort.  Also, if our input is a MergeAppend, we can apply the
- * same bound to any Sorts that are direct children of the MergeAppend,
- * since the MergeAppend surely need read no more than that many tuples from
- * any one input.  We also have to be prepared to look through a Result,
- * since the planner might stick one atop MergeAppend for projection purposes.
- *
- * This is a bit of a kluge, but we don't have any more-abstract way of
- * communicating between the two nodes; and it doesn't seem worth trying
- * to invent one without some more examples of special communication needs.
- *
- * Note: it is the responsibility of nodeSort.c to react properly to
- * changes of these parameters.  If we ever do redesign this, it'd be a
- * good idea to integrate this signaling with the parameter-change mechanism.
+ * Compute the maximum number of tuples needed to satisfy this Limit node.
+ * Return a negative value if there is not a determinable limit.
  */
-static void
-pass_down_bound(LimitState *node, PlanState *child_node)
+static int64
+compute_tuples_needed(LimitState *node)
 {
+<<<<<<< HEAD
 	if (IsA(child_node, SortState))
 	{
 		SortState  *sortState = (SortState *) child_node;
@@ -383,6 +396,12 @@ pass_down_bound(LimitState *node, PlanState *child_node)
 			!expression_returns_set((Node *) child_node->plan->targetlist))
 			pass_down_bound(node, outerPlanState(child_node));
 	}
+=======
+	if (node->noCount)
+		return -1;
+	/* Note: if this overflows, we'll return a negative value, which is OK */
+	return node->count + node->offset;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* ----------------------------------------------------------------
@@ -407,6 +426,7 @@ ExecInitLimit(Limit *node, EState *estate, int eflags)
 	limitstate = makeNode(LimitState);
 	limitstate->ps.plan = (Plan *) node;
 	limitstate->ps.state = estate;
+	limitstate->ps.ExecProcNode = ExecLimit;
 
 	limitstate->lstate = LIMIT_INITIAL;
 
@@ -419,6 +439,12 @@ ExecInitLimit(Limit *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &limitstate->ps);
 
 	/*
+	 * initialize outer plan
+	 */
+	outerPlan = outerPlan(node);
+	outerPlanState(limitstate) = ExecInitNode(outerPlan, estate, eflags);
+
+	/*
 	 * initialize child expressions
 	 */
 	limitstate->limitOffset = ExecInitExpr((Expr *) node->limitOffset,
@@ -427,21 +453,18 @@ ExecInitLimit(Limit *node, EState *estate, int eflags)
 										  (PlanState *) limitstate);
 
 	/*
-	 * Tuple table initialization (XXX not actually used...)
+	 * Initialize result type.
 	 */
-	ExecInitResultTupleSlot(estate, &limitstate->ps);
+	ExecInitResultTypeTL(&limitstate->ps);
 
-	/*
-	 * then initialize outer plan
-	 */
-	outerPlan = outerPlan(node);
-	outerPlanState(limitstate) = ExecInitNode(outerPlan, estate, eflags);
+	limitstate->ps.resultopsset = true;
+	limitstate->ps.resultops = ExecGetResultSlotOps(outerPlanState(limitstate),
+													&limitstate->ps.resultopsfixed);
 
 	/*
 	 * limit nodes do no projections, so initialize projection info for this
 	 * node appropriately
 	 */
-	ExecAssignResultTypeFromTL(&limitstate->ps);
 	limitstate->ps.ps_ProjInfo = NULL;
 
 	return limitstate;

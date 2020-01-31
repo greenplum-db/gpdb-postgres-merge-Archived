@@ -2,7 +2,11 @@
 
 #include "postgres_fe.h"
 
+<<<<<<< HEAD
 #include "extern.h"
+=======
+#include "pgtypeslib_extern.h"
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "pgtypes.h"
 
 /* Return value is zero-filled. */
@@ -13,7 +17,7 @@ pgtypes_alloc(long size)
 
 	if (!new)
 		errno = ENOMEM;
-	return (new);
+	return new;
 }
 
 char *
@@ -23,7 +27,7 @@ pgtypes_strdup(const char *str)
 
 	if (!new)
 		errno = ENOMEM;
-	return (new);
+	return new;
 }
 
 int

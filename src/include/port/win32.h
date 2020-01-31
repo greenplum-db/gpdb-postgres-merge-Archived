@@ -1,7 +1,12 @@
 /* src/include/port/win32.h */
 
-#if defined(_MSC_VER) || defined(__BORLANDC__)
-#define WIN32_ONLY_COMPILER
+/*
+ * We always rely on the WIN32 macro being set by our build system,
+ * but _WIN32 is the compiler pre-defined macro. So make sure we define
+ * WIN32 whenever _WIN32 is set, to facilitate standalone building.
+ */
+#if defined(_WIN32) && !defined(WIN32)
+#define WIN32
 #endif
 
 /*
@@ -10,11 +15,8 @@
  * Studio 2015 the minimum requirement is Windows Vista (0x0600) to
  * get support for GetLocaleInfoEx() with locales. For everything else
  * the minimum version is Windows XP (0x0501).
- * Also for VS2015, add a define that stops compiler complaints about
- * using the old Winsock API.
  */
 #if defined(_MSC_VER) && _MSC_VER >= 1900
-#define  _WINSOCK_DEPRECATED_NO_WARNINGS
 #define MIN_WINNT 0x0600
 #else
 #define MIN_WINNT 0x0501
@@ -29,22 +31,20 @@
 #endif
 
 /*
- * Always build with SSPI support. Keep it as a #define in case
- * we want a switch to disable it sometime in the future.
+ * We need to prevent <crtdefs.h> from defining a symbol conflicting with
+ * our errcode() function.  Since it's likely to get included by standard
+ * system headers, pre-emptively include it now.
  */
-#ifndef __BORLANDC__
-#define ENABLE_SSPI 1
+#if _MSC_VER >= 1400 || defined(HAVE_CRTDEFS_H)
+#define errcode __msvc_errcode
+#include <crtdefs.h>
+#undef errcode
 #endif
 
-/* undefine and redefine after #include */
-#undef mkdir
-
-#undef ERROR
-
 /*
- * The Mingw64 headers choke if this is already defined - they
- * define it themselves.
+ * defines for dynamic linking on Win32 platform
  */
+<<<<<<< HEAD
 #if !defined(__MINGW64_VERSION_MAJOR) || defined(WIN32_ONLY_COMPILER)
 #define _WINSOCKAPI_
 #endif
@@ -88,10 +88,12 @@
  */
 
 #if defined(WIN32) || defined(__CYGWIN__)
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #ifdef BUILDING_DLL
 #define PGDLLIMPORT __declspec (dllexport)
-#else							/* not BUILDING_DLL */
+#else
 #define PGDLLIMPORT __declspec (dllimport)
 #endif
 
@@ -100,6 +102,7 @@
 #else
 #define PGDLLEXPORT
 #endif
+<<<<<<< HEAD
 #else							/* not CYGWIN, not MSVC, not MingW */
 #define PGDLLIMPORT
 #define PGDLLEXPORT
@@ -501,3 +504,5 @@ typedef unsigned short mode_t;
 #define S_IRWXO 0
 
 #endif   /* __BORLANDC__ */
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

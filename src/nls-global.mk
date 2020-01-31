@@ -40,7 +40,11 @@ ALL_PO_FILES = $(addprefix po/, $(addsuffix .po, $(AVAIL_LANGUAGES)))
 MO_FILES = $(addprefix po/, $(addsuffix .mo, $(LANGUAGES)))
 
 ifdef XGETTEXT
+<<<<<<< HEAD
 XGETTEXT += -ctranslator --copyright-holder='Greenplum Projec' --msgid-bugs-address=bugs@greenplum.org --no-wrap --sort-by-file --package-name='$(CATALOG_NAME) (Greenplum)' --package-version='$(MAJORVERSION)'
+=======
+XGETTEXT += -ctranslator --copyright-holder='PostgreSQL Global Development Group' --msgid-bugs-address=pgsql-bugs@lists.postgresql.org --no-wrap --sort-by-file --package-name='$(CATALOG_NAME) (PostgreSQL)' --package-version='$(MAJORVERSION)'
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 endif
 
 ifdef MSGMERGE
@@ -66,6 +70,14 @@ BACKEND_COMMON_GETTEXT_FLAGS = \
     errdetail:1:c-format errdetail_log:1:c-format errdetail_plural:1:c-format errdetail_plural:2:c-format \
     errhint:1:c-format \
     errcontext:1:c-format
+
+FRONTEND_COMMON_GETTEXT_FILES = $(top_srcdir)/src/common/logging.c
+
+FRONTEND_COMMON_GETTEXT_TRIGGERS = \
+    pg_log_fatal pg_log_error pg_log_warning pg_log_info pg_log_generic:2 pg_log_generic_v:2
+
+FRONTEND_COMMON_GETTEXT_FLAGS = \
+    pg_log_fatal:1:c-format pg_log_error:1:c-format pg_log_warning:1:c-format pg_log_info:1:c-format pg_log_generic:2:c-format pg_log_generic_v:2:c-format
 
 
 all-po: $(MO_FILES)

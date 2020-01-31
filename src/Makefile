@@ -24,12 +24,26 @@ SUBDIRS = \
 	backend/snowball \
 	include \
 	interfaces \
+<<<<<<< HEAD
+=======
+	backend/replication/libpqwalreceiver \
+	backend/replication/pgoutput \
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	fe_utils \
 	bin \
 	pl \
 	makefiles \
 	test/regress \
+<<<<<<< HEAD
 	test/perl
+=======
+	test/isolation \
+	test/perl
+
+ifeq ($(with_llvm), yes)
+SUBDIRS += backend/jit/llvm
+endif
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # There are too many interdependencies between the subdirectories, so
 # don't attempt parallel make here.
@@ -71,6 +85,7 @@ distclean maintainer-clean:
 	$(MAKE) -C test/thread $@
 	rm -f Makefile.port Makefile.global
 
+<<<<<<< HEAD
 coverage:
 	$(MAKE) -C timezone $@
 	$(MAKE) -C backend $@
@@ -80,5 +95,7 @@ coverage:
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 .PHONY: install-local installdirs-local uninstall-local

@@ -2,7 +2,7 @@
 #
 # Makefile for ecpg compatibility library
 #
-# Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/interfaces/ecpg/compatlib/Makefile
@@ -16,13 +16,17 @@ include $(top_builddir)/src/Makefile.global
 PGFILEDESC = "ECPG compat - compatibility library for ECPG"
 NAME= ecpg_compat
 SO_MAJOR_VERSION= 3
-SO_MINOR_VERSION= 8
+SO_MINOR_VERSION= $(MAJORVERSION)
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(libpq_srcdir) -I$(top_srcdir)/src/include/utils -DFRONTEND $(CPPFLAGS)
 override CFLAGS += $(PTHREAD_CFLAGS)
 
+<<<<<<< HEAD
 SHLIB_LINK_INTERNAL = -L../ecpglib -lecpg -L../pgtypeslib -lpgtypes $(libpq)
+=======
+SHLIB_LINK_INTERNAL = -L../ecpglib -lecpg -L../pgtypeslib -lpgtypes $(libpq_pgport_shlib)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SHLIB_LINK = $(filter -lintl -lm, $(LIBS)) $(PTHREAD_LIBS)
 SHLIB_PREREQS = submake-ecpglib submake-pgtypeslib
 
@@ -35,10 +39,7 @@ SHLIB_EXPORTS = exports.txt
 
 SHLIB_EXPORTS = exports.txt
 
-# Need to recompile any libpgport object files
-LIBS := $(filter-out -lpgport, $(LIBS))
-
-OBJS= informix.o $(filter snprintf.o, $(LIBOBJS)) $(WIN32RES)
+OBJS= informix.o $(WIN32RES)
 
 PKG_CONFIG_REQUIRES_PRIVATE = libecpg libpgtypes
 
@@ -55,9 +56,6 @@ submake-pgtypeslib:
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
 
-snprintf.c: % : $(top_srcdir)/src/port/%
-	rm -f $@ && $(LN_S) $< .
-
 install: all installdirs install-lib
 
 installdirs: installdirs-lib
@@ -65,6 +63,6 @@ installdirs: installdirs-lib
 uninstall: uninstall-lib
 
 clean distclean: clean-lib
-	rm -f $(OBJS) snprintf.c
+	rm -f $(OBJS)
 
 maintainer-clean: distclean maintainer-clean-lib

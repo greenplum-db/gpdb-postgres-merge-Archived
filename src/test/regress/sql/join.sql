@@ -37,6 +37,12 @@ INSERT INTO J2_TBL VALUES (0, NULL);
 INSERT INTO J2_TBL VALUES (NULL, NULL);
 INSERT INTO J2_TBL VALUES (NULL, 0);
 
+-- useful in some tests below
+create temp table onerow();
+insert into onerow default values;
+analyze onerow;
+
+
 --
 -- CORRELATION NAMES
 -- Make sure that table/column aliases are supported
@@ -193,6 +199,15 @@ SELECT '' AS "xxx", *
 SELECT '' AS "xxx", *
   FROM J1_TBL LEFT JOIN J2_TBL USING (i) WHERE (i = 1);
 
+--
+-- semijoin selectivity for <>
+--
+explain (costs off)
+select * from int4_tbl i4, tenk1 a
+where exists(select * from tenk1 b
+             where a.twothousand = b.twothousand and a.fivethous <> b.fivethous)
+      and i4.f1 = a.tenthous;
+
 
 --
 -- More complicated constructs
@@ -287,6 +302,13 @@ NATURAL FULL JOIN
     NATURAL FULL JOIN
     (SELECT name, n as s3_n FROM t3) as s3
   ) ss2;
+
+-- Constants as join keys can also be problematic
+SELECT * FROM
+  (SELECT name, n as s1_n FROM t1) as s1
+FULL JOIN
+  (SELECT name, 2 as s2_n FROM t2) as s2
+ON (s1_n = s2_n);
 
 
 -- Test for propagation of nullability constraints into sub-joins
@@ -452,6 +474,37 @@ select count(*) from
   on x.thousand = y.unique2 and x.twothousand = y.hundred and x.fivethous = y.unique2;
 reset enable_mergejoin;
 reset random_page_cost;
+
+--
+-- check a case where we formerly got confused by conflicting sort orders
+-- in redundant merge join path keys
+--
+explain (costs off)
+select * from
+  j1_tbl full join
+  (select * from j2_tbl order by j2_tbl.i desc, j2_tbl.k asc) j2_tbl
+  on j1_tbl.i = j2_tbl.i and j1_tbl.i = j2_tbl.k;
+
+select * from
+  j1_tbl full join
+  (select * from j2_tbl order by j2_tbl.i desc, j2_tbl.k asc) j2_tbl
+  on j1_tbl.i = j2_tbl.i and j1_tbl.i = j2_tbl.k;
+
+--
+-- a different check for handling of redundant sort keys in merge joins
+--
+explain (costs off)
+select count(*) from
+  (select * from tenk1 x order by x.thousand, x.twothousand, x.fivethous) x
+  left join
+  (select * from tenk1 y order by y.unique2) y
+  on x.thousand = y.unique2 and x.twothousand = y.hundred and x.fivethous = y.unique2;
+
+select count(*) from
+  (select * from tenk1 x order by x.thousand, x.twothousand, x.fivethous) x
+  left join
+  (select * from tenk1 y order by y.unique2) y
+  on x.thousand = y.unique2 and x.twothousand = y.hundred and x.fivethous = y.unique2;
 
 
 --
@@ -694,7 +747,10 @@ explain (costs off)
 select a.idv, b.idv from tidv a, tidv b where a.idv = b.idv;
 
 set enable_mergejoin = 0;
+<<<<<<< HEAD
 set enable_nestloop = 1;
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 explain (costs off)
 select a.idv, b.idv from tidv a, tidv b where a.idv = b.idv;
@@ -950,8 +1006,8 @@ select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
   tenk1 t1
   inner join int4_tbl i1
     left join (select v1.x2, v2.y1, 11 AS d1
-               from (values(1,0)) v1(x1,x2)
-               left join (values(3,1)) v2(y1,y2)
+               from (select 1,0 from onerow) v1(x1,x2)
+               left join (select 3,1 from onerow) v2(y1,y2)
                on v1.x1 = v2.y2) subq1
     on (i1.f1 = subq1.x2)
   on (t1.unique2 = subq1.d1)
@@ -964,8 +1020,8 @@ select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
   tenk1 t1
   inner join int4_tbl i1
     left join (select v1.x2, v2.y1, 11 AS d1
-               from (values(1,0)) v1(x1,x2)
-               left join (values(3,1)) v2(y1,y2)
+               from (select 1,0 from onerow) v1(x1,x2)
+               left join (select 3,1 from onerow) v2(y1,y2)
                on v1.x1 = v2.y2) subq1
     on (i1.f1 = subq1.x2)
   on (t1.unique2 = subq1.d1)
@@ -990,6 +1046,35 @@ select ss1.d1 from
     on i8.q1 = i4.f1
   on t1.tenthous = ss1.d1
 where t1.unique1 < i4.f1;
+
+-- this variant is foldable by the remove-useless-RESULT-RTEs code
+
+explain (costs off)
+select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
+  tenk1 t1
+  inner join int4_tbl i1
+    left join (select v1.x2, v2.y1, 11 AS d1
+               from (values(1,0)) v1(x1,x2)
+               left join (values(3,1)) v2(y1,y2)
+               on v1.x1 = v2.y2) subq1
+    on (i1.f1 = subq1.x2)
+  on (t1.unique2 = subq1.d1)
+  left join tenk1 t2
+  on (subq1.y1 = t2.unique1)
+where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
+
+select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
+  tenk1 t1
+  inner join int4_tbl i1
+    left join (select v1.x2, v2.y1, 11 AS d1
+               from (values(1,0)) v1(x1,x2)
+               left join (values(3,1)) v2(y1,y2)
+               on v1.x1 = v2.y2) subq1
+    on (i1.f1 = subq1.x2)
+  on (t1.unique2 = subq1.d1)
+  left join tenk1 t2
+  on (subq1.y1 = t2.unique1)
+where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
 
 --
 -- test extraction of restriction OR clauses from join OR clause
@@ -1438,6 +1523,11 @@ explain (costs off)
 select i8.* from int8_tbl i8 left join (select f1 from int4_tbl group by f1) i4
   on i8.q1 = i4.f1;
 
+-- check join removal with lateral references
+explain (costs off)
+select 1 from (select a.id FROM a left join b on a.b_id = b.id) q,
+			  lateral generate_series(1, q.id) gs(i) where q.id = gs.i;
+
 rollback;
 
 create temp table parent (k int primary key, pd int);
@@ -1558,7 +1648,7 @@ select * from
 --
 
 select t1.uunique1 from
-  tenk1 t1 join tenk2 t2 on t1.two = t2.two; -- error, prefer "t1" suggestipn
+  tenk1 t1 join tenk2 t2 on t1.two = t2.two; -- error, prefer "t1" suggestion
 select t2.uunique1 from
   tenk1 t1 join tenk2 t2 on t1.two = t2.two; -- error, prefer "t2" suggestion
 select uunique1 from
@@ -1646,11 +1736,17 @@ select count(*) from tenk1 a,
 explain (costs off)
   select * from int8_tbl a,
     int8_tbl x left join lateral (select a.q1 from int4_tbl y) ss(z)
-      on x.q2 = ss.z;
+      on x.q2 = ss.z
+  order by a.q1, a.q2, x.q1, x.q2, ss.z;
 select * from int8_tbl a,
   int8_tbl x left join lateral (select a.q1 from int4_tbl y) ss(z)
+<<<<<<< HEAD
     on x.q2 = ss.z;
 --end_ignore
+=======
+    on x.q2 = ss.z
+  order by a.q1, a.q2, x.q1, x.q2, ss.z;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- lateral reference to a join alias variable
 select * from (select f1/2 as x from int4_tbl) ss1 join int4_tbl i4 on x = f1,
@@ -1686,13 +1782,10 @@ select v.* from
   (int8_tbl x left join (select q1,(select coalesce(q2,0)) q2 from int8_tbl) y on x.q2 = y.q1)
   left join int4_tbl z on z.f1 = x.q2,
   lateral (select x.q1,y.q1 union all select x.q2,y.q2) v(vx,vy);
-create temp table dual();
-insert into dual default values;
-analyze dual;
 select v.* from
   (int8_tbl x left join (select q1,(select coalesce(q2,0)) q2 from int8_tbl) y on x.q2 = y.q1)
   left join int4_tbl z on z.f1 = x.q2,
-  lateral (select x.q1,y.q1 from dual union all select x.q2,y.q2 from dual) v(vx,vy);
+  lateral (select x.q1,y.q1 from onerow union all select x.q2,y.q2 from onerow) v(vx,vy);
 
 explain (verbose, costs off)
 select * from
@@ -1779,6 +1872,17 @@ select * from
     select * from (select 3 as z offset 0) z where z.z = x.x
   ) zz on zz.z = y.y;
 
+<<<<<<< HEAD
+=======
+-- check dummy rels with lateral references (bug #15694)
+explain (verbose, costs off)
+select * from int8_tbl i8 left join lateral
+  (select *, i8.q2 from int4_tbl where false) ss on true;
+explain (verbose, costs off)
+select * from int8_tbl i8 left join lateral
+  (select *, i8.q2 from int4_tbl i1, int4_tbl i2 where false) ss on true;
+
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- check handling of nested appendrels inside LATERAL
 select * from
   ((select 2 as v) union all (select 3 as v)) as q1
@@ -1853,3 +1957,205 @@ update xx1 set x2 = f1 from xx1, lateral (select * from int4_tbl where f1 = x1) 
 delete from xx1 using (select * from int4_tbl where f1 = x1) ss;
 delete from xx1 using (select * from int4_tbl where f1 = xx1.x1) ss;
 delete from xx1 using lateral (select * from int4_tbl where f1 = x1) ss;
+
+--
+-- test LATERAL reference propagation down a multi-level inheritance hierarchy
+-- produced for a multi-level partitioned table hierarchy.
+--
+create table join_pt1 (a int, b int, c varchar) partition by range(a);
+create table join_pt1p1 partition of join_pt1 for values from (0) to (100) partition by range(b);
+create table join_pt1p2 partition of join_pt1 for values from (100) to (200);
+create table join_pt1p1p1 partition of join_pt1p1 for values from (0) to (100);
+insert into join_pt1 values (1, 1, 'x'), (101, 101, 'y');
+create table join_ut1 (a int, b int, c varchar);
+insert into join_ut1 values (101, 101, 'y'), (2, 2, 'z');
+explain (verbose, costs off)
+select t1.b, ss.phv from join_ut1 t1 left join lateral
+              (select t2.a as t2a, t3.a t3a, least(t1.a, t2.a, t3.a) phv
+					  from join_pt1 t2 join join_ut1 t3 on t2.a = t3.b) ss
+              on t1.a = ss.t2a order by t1.a;
+select t1.b, ss.phv from join_ut1 t1 left join lateral
+              (select t2.a as t2a, t3.a t3a, least(t1.a, t2.a, t3.a) phv
+					  from join_pt1 t2 join join_ut1 t3 on t2.a = t3.b) ss
+              on t1.a = ss.t2a order by t1.a;
+
+drop table join_pt1;
+drop table join_ut1;
+--
+-- test that foreign key join estimation performs sanely for outer joins
+--
+
+begin;
+
+create table fkest (a int, b int, c int unique, primary key(a,b));
+create table fkest1 (a int, b int, primary key(a,b));
+
+insert into fkest select x/10, x%10, x from generate_series(1,1000) x;
+insert into fkest1 select x/10, x%10 from generate_series(1,1000) x;
+
+alter table fkest1
+  add constraint fkest1_a_b_fkey foreign key (a,b) references fkest;
+
+analyze fkest;
+analyze fkest1;
+
+explain (costs off)
+select *
+from fkest f
+  left join fkest1 f1 on f.a = f1.a and f.b = f1.b
+  left join fkest1 f2 on f.a = f2.a and f.b = f2.b
+  left join fkest1 f3 on f.a = f3.a and f.b = f3.b
+where f.c = 1;
+
+rollback;
+
+--
+-- test planner's ability to mark joins as unique
+--
+
+create table j1 (id int primary key);
+create table j2 (id int primary key);
+create table j3 (id int);
+
+insert into j1 values(1),(2),(3);
+insert into j2 values(1),(2),(3);
+insert into j3 values(1),(1);
+
+analyze j1;
+analyze j2;
+analyze j3;
+
+-- ensure join is properly marked as unique
+explain (verbose, costs off)
+select * from j1 inner join j2 on j1.id = j2.id;
+
+-- ensure join is not unique when not an equi-join
+explain (verbose, costs off)
+select * from j1 inner join j2 on j1.id > j2.id;
+
+-- ensure non-unique rel is not chosen as inner
+explain (verbose, costs off)
+select * from j1 inner join j3 on j1.id = j3.id;
+
+-- ensure left join is marked as unique
+explain (verbose, costs off)
+select * from j1 left join j2 on j1.id = j2.id;
+
+-- ensure right join is marked as unique
+explain (verbose, costs off)
+select * from j1 right join j2 on j1.id = j2.id;
+
+-- ensure full join is marked as unique
+explain (verbose, costs off)
+select * from j1 full join j2 on j1.id = j2.id;
+
+-- a clauseless (cross) join can't be unique
+explain (verbose, costs off)
+select * from j1 cross join j2;
+
+-- ensure a natural join is marked as unique
+explain (verbose, costs off)
+select * from j1 natural join j2;
+
+-- ensure a distinct clause allows the inner to become unique
+explain (verbose, costs off)
+select * from j1
+inner join (select distinct id from j3) j3 on j1.id = j3.id;
+
+-- ensure group by clause allows the inner to become unique
+explain (verbose, costs off)
+select * from j1
+inner join (select id from j3 group by id) j3 on j1.id = j3.id;
+
+drop table j1;
+drop table j2;
+drop table j3;
+
+-- test more complex permutations of unique joins
+
+create table j1 (id1 int, id2 int, primary key(id1,id2));
+create table j2 (id1 int, id2 int, primary key(id1,id2));
+create table j3 (id1 int, id2 int, primary key(id1,id2));
+
+insert into j1 values(1,1),(1,2);
+insert into j2 values(1,1);
+insert into j3 values(1,1);
+
+analyze j1;
+analyze j2;
+analyze j3;
+
+-- ensure there's no unique join when not all columns which are part of the
+-- unique index are seen in the join clause
+explain (verbose, costs off)
+select * from j1
+inner join j2 on j1.id1 = j2.id1;
+
+-- ensure proper unique detection with multiple join quals
+explain (verbose, costs off)
+select * from j1
+inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2;
+
+-- ensure we don't detect the join to be unique when quals are not part of the
+-- join condition
+explain (verbose, costs off)
+select * from j1
+inner join j2 on j1.id1 = j2.id1 where j1.id2 = 1;
+
+-- as above, but for left joins.
+explain (verbose, costs off)
+select * from j1
+left join j2 on j1.id1 = j2.id1 where j1.id2 = 1;
+
+-- validate logic in merge joins which skips mark and restore.
+-- it should only do this if all quals which were used to detect the unique
+-- are present as join quals, and not plain quals.
+set enable_nestloop to 0;
+set enable_hashjoin to 0;
+set enable_sort to 0;
+
+-- create indexes that will be preferred over the PKs to perform the join
+create index j1_id1_idx on j1 (id1) where id1 % 1000 = 1;
+create index j2_id1_idx on j2 (id1) where id1 % 1000 = 1;
+
+-- need an additional row in j2, if we want j2_id1_idx to be preferred
+insert into j2 values(1,2);
+analyze j2;
+
+explain (costs off) select * from j1
+inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2
+where j1.id1 % 1000 = 1 and j2.id1 % 1000 = 1;
+
+select * from j1
+inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2
+where j1.id1 % 1000 = 1 and j2.id1 % 1000 = 1;
+
+reset enable_nestloop;
+reset enable_hashjoin;
+reset enable_sort;
+
+drop table j1;
+drop table j2;
+drop table j3;
+
+-- check that semijoin inner is not seen as unique for a portion of the outerrel
+explain (verbose, costs off)
+select t1.unique1, t2.hundred
+from onek t1, tenk1 t2
+where exists (select 1 from tenk1 t3
+              where t3.thousand = t1.unique1 and t3.tenthous = t2.hundred)
+      and t1.unique1 < 1;
+
+-- ... unless it actually is unique
+create table j3 as select unique1, tenthous from onek;
+vacuum analyze j3;
+create unique index on j3(unique1, tenthous);
+
+explain (verbose, costs off)
+select t1.unique1, t2.hundred
+from onek t1, tenk1 t2
+where exists (select 1 from j3
+              where j3.unique1 = t1.unique1 and j3.tenthous = t2.hundred)
+      and t1.unique1 < 1;
+
+drop table j3;

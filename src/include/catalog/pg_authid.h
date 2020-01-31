@@ -1,22 +1,25 @@
 /*-------------------------------------------------------------------------
  *
  * pg_authid.h
- *	  definition of the system "authorization identifier" relation (pg_authid)
- *	  along with the relation's initial contents.
+ *	  definition of the "authorization identifier" system catalog (pg_authid)
  *
  *	  pg_shadow and pg_group are now publicly accessible views on pg_authid.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_authid.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +27,7 @@
 #define PG_AUTHID_H
 
 #include "catalog/genbki.h"
+<<<<<<< HEAD
 
 /*
  * The CATALOG definition has to refer to the type of "rolvaliduntil" as
@@ -35,17 +39,18 @@
  */
 #define timestamptz int
 
+=======
+#include "catalog/pg_authid_d.h"
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* ----------------
  *		pg_authid definition.  cpp turns this into
  *		typedef struct FormData_pg_authid
  * ----------------
  */
-#define AuthIdRelationId	1260
-#define AuthIdRelation_Rowtype_Id	2842
-
-CATALOG(pg_authid,1260) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2842) BKI_SCHEMA_MACRO
+CATALOG(pg_authid,1260,AuthIdRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2842,AuthIdRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
+	Oid			oid;			/* oid */
 	NameData	rolname;		/* name of role */
 	bool		rolsuper;		/* read this field via superuser() only! */
 	bool		rolinherit;		/* inherit privileges from other roles? */
@@ -70,6 +75,7 @@ CATALOG(pg_authid,1260) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2842) BKI_SCHEMA_MAC
 #endif
 } FormData_pg_authid;
 
+<<<<<<< HEAD
 /* GPDB added foreign key definitions for gpcheckcat. */
 FOREIGN_KEY(rolresqueue REFERENCES pg_resqueue(oid));
 FOREIGN_KEY(rolresgroup REFERENCES pg_resgroup(oid));
@@ -77,6 +83,8 @@ FOREIGN_KEY(rolresgroup REFERENCES pg_resgroup(oid));
 #undef timestamptz
 
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* ----------------
  *		Form_pg_authid corresponds to a pointer to a tuple with
  *		the format of pg_authid relation.
@@ -84,6 +92,7 @@ FOREIGN_KEY(rolresgroup REFERENCES pg_resgroup(oid));
  */
 typedef FormData_pg_authid *Form_pg_authid;
 
+<<<<<<< HEAD
 
 /* ----------------
  *		compiler constants for pg_authid
@@ -128,3 +137,6 @@ DATA(insert OID = 4200 ( "pg_signal_backend" f t f f f f f -1 _null_ _null_ 6055
 #define DEFAULT_ROLE_SIGNAL_BACKENDID	4200
 
 #endif   /* PG_AUTHID_H */
+=======
+#endif							/* PG_AUTHID_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

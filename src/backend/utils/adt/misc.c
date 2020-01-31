@@ -3,7 +3,7 @@
  * misc.c
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -15,42 +15,43 @@
 #include "postgres.h"
 
 #include <sys/file.h>
-#include <signal.h>
 #include <dirent.h>
 #include <math.h>
 #include <unistd.h>
 
 #include "access/sysattr.h"
-#include "catalog/pg_authid.h"
+#include "access/table.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
+#include "commands/tablespace.h"
 #include "common/keywords.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "parser/scansup.h"
 #include "postmaster/fts.h"
 #include "postmaster/syslogger.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/fd.h"
+<<<<<<< HEAD
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/backend_cancel.h"
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/lsyscache.h"
 #include "utils/ruleutils.h"
 #include "tcop/tcopprot.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/timestamp.h"
-
-#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 
 /*
  * Common subroutine for num_nulls() and num_nonnulls().
- * Returns TRUE if successful, FALSE if function should return NULL.
+ * Returns true if successful, false if function should return NULL.
  * If successful, total argument count and number of nulls are
  * returned into *nargs and *nulls.
  */
@@ -200,6 +201,7 @@ current_query(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 }
 
+<<<<<<< HEAD
 /*
  * Send a signal to another backend.
  *
@@ -408,6 +410,8 @@ pg_rotate_logfile(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(true);
 }
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* Function to find out which databases make use of a tablespace */
 
 typedef struct
@@ -458,7 +462,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 							 errmsg("could not open directory \"%s\": %m",
 									fctx->location)));
 				ereport(WARNING,
-					  (errmsg("%u is not a tablespace OID", tablespaceOid)));
+						(errmsg("%u is not a tablespace OID", tablespaceOid)));
 			}
 		}
 		funcctx->user_fctx = fctx;
@@ -473,9 +477,9 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 
 	while ((de = ReadDir(fctx->dirdesc, fctx->location)) != NULL)
 	{
-		char	   *subdir;
-		DIR		   *dirdesc;
 		Oid			datOid = atooid(de->d_name);
+		char	   *subdir;
+		bool		isempty;
 
 		/* this test skips . and .., but is awfully weak */
 		if (!datOid)
@@ -484,16 +488,10 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		/* if database subdir is empty, don't report tablespace as used */
 
 		subdir = psprintf("%s/%s", fctx->location, de->d_name);
-		dirdesc = AllocateDir(subdir);
-		while ((de = ReadDir(dirdesc, subdir)) != NULL)
-		{
-			if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
-				break;
-		}
-		FreeDir(dirdesc);
+		isempty = directory_is_empty(subdir);
 		pfree(subdir);
 
-		if (!de)
+		if (isempty)
 			continue;			/* indeed, nothing in it */
 
 		SRF_RETURN_NEXT(funcctx, ObjectIdGetDatum(datOid));
@@ -588,12 +586,7 @@ pg_sleep(PG_FUNCTION_ARGS)
 	 * less than the specified time when WaitLatch is terminated early by a
 	 * non-query-canceling signal such as SIGHUP.
 	 */
-
-#ifdef HAVE_INT64_TIMESTAMP
 #define GetNowFloat()	((float8) GetCurrentTimestamp() / 1000000.0)
-#else
-#define GetNowFloat()	GetCurrentTimestamp()
-#endif
 
 	endtime = GetNowFloat() + secs;
 
@@ -613,8 +606,9 @@ pg_sleep(PG_FUNCTION_ARGS)
 			break;
 
 		(void) WaitLatch(MyLatch,
-						 WL_LATCH_SET | WL_TIMEOUT,
-						 delay_ms);
+						 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+						 delay_ms,
+						 WAIT_EVENT_PG_SLEEP);
 		ResetLatch(MyLatch);
 	}
 
@@ -635,7 +629,7 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		tupdesc = CreateTemplateTupleDesc(3, false);
+		tupdesc = CreateTemplateTupleDesc(3);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "word",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "catcode",
@@ -650,15 +644,17 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 
 	funcctx = SRF_PERCALL_SETUP();
 
-	if (funcctx->call_cntr < NumScanKeywords)
+	if (funcctx->call_cntr < ScanKeywords.num_keywords)
 	{
 		char	   *values[3];
 		HeapTuple	tuple;
 
 		/* cast-away-const is ugly but alternatives aren't much better */
-		values[0] = (char *) ScanKeywords[funcctx->call_cntr].name;
+		values[0] = unconstify(char *,
+							   GetScanKeyword(funcctx->call_cntr,
+											  &ScanKeywords));
 
-		switch (ScanKeywords[funcctx->call_cntr].category)
+		switch (ScanKeywordCategories[funcctx->call_cntr])
 		{
 			case UNRESERVED_KEYWORD:
 				values[1] = "U";
@@ -829,7 +825,7 @@ parse_ident(PG_FUNCTION_ARGS)
 	nextp = qualname_str;
 
 	/* skip leading whitespace */
-	while (isspace((unsigned char) *nextp))
+	while (scanner_isspace(*nextp))
 		nextp++;
 
 	for (;;)
@@ -848,9 +844,9 @@ parse_ident(PG_FUNCTION_ARGS)
 				if (endp == NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						   errmsg("string is not a valid identifier: \"%s\"",
-								  text_to_cstring(qualname)),
-						   errdetail("String has unclosed double quotes.")));
+							 errmsg("string is not a valid identifier: \"%s\"",
+									text_to_cstring(qualname)),
+							 errdetail("String has unclosed double quotes.")));
 				if (endp[1] != '"')
 					break;
 				memmove(endp, endp + 1, strlen(endp));
@@ -917,14 +913,14 @@ parse_ident(PG_FUNCTION_ARGS)
 								text_to_cstring(qualname))));
 		}
 
-		while (isspace((unsigned char) *nextp))
+		while (scanner_isspace(*nextp))
 			nextp++;
 
 		if (*nextp == '.')
 		{
 			after_dot = true;
 			nextp++;
-			while (isspace((unsigned char) *nextp))
+			while (scanner_isspace(*nextp))
 				nextp++;
 		}
 		else if (*nextp == '\0')
@@ -943,4 +939,121 @@ parse_ident(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_DATUM(makeArrayResult(astate, CurrentMemoryContext));
+}
+
+/*
+ * pg_current_logfile
+ *
+ * Report current log file used by log collector by scanning current_logfiles.
+ */
+Datum
+pg_current_logfile(PG_FUNCTION_ARGS)
+{
+	FILE	   *fd;
+	char		lbuffer[MAXPGPATH];
+	char	   *logfmt;
+	char	   *log_filepath;
+	char	   *log_format = lbuffer;
+	char	   *nlpos;
+
+	/* The log format parameter is optional */
+	if (PG_NARGS() == 0 || PG_ARGISNULL(0))
+		logfmt = NULL;
+	else
+	{
+		logfmt = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+		if (strcmp(logfmt, "stderr") != 0 && strcmp(logfmt, "csvlog") != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("log format \"%s\" is not supported", logfmt),
+					 errhint("The supported log formats are \"stderr\" and \"csvlog\".")));
+	}
+
+	fd = AllocateFile(LOG_METAINFO_DATAFILE, "r");
+	if (fd == NULL)
+	{
+		if (errno != ENOENT)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m",
+							LOG_METAINFO_DATAFILE)));
+		PG_RETURN_NULL();
+	}
+
+	/*
+	 * Read the file to gather current log filename(s) registered by the
+	 * syslogger.
+	 */
+	while (fgets(lbuffer, sizeof(lbuffer), fd) != NULL)
+	{
+		/*
+		 * Extract log format and log file path from the line; lbuffer ==
+		 * log_format, they share storage.
+		 */
+		log_filepath = strchr(lbuffer, ' ');
+		if (log_filepath == NULL)
+		{
+			/* Uh oh.  No space found, so file content is corrupted. */
+			elog(ERROR,
+				 "missing space character in \"%s\"", LOG_METAINFO_DATAFILE);
+			break;
+		}
+
+		*log_filepath = '\0';
+		log_filepath++;
+		nlpos = strchr(log_filepath, '\n');
+		if (nlpos == NULL)
+		{
+			/* Uh oh.  No newline found, so file content is corrupted. */
+			elog(ERROR,
+				 "missing newline character in \"%s\"", LOG_METAINFO_DATAFILE);
+			break;
+		}
+		*nlpos = '\0';
+
+		if (logfmt == NULL || strcmp(logfmt, log_format) == 0)
+		{
+			FreeFile(fd);
+			PG_RETURN_TEXT_P(cstring_to_text(log_filepath));
+		}
+	}
+
+	/* Close the current log filename file. */
+	FreeFile(fd);
+
+	PG_RETURN_NULL();
+}
+
+/*
+ * Report current log file used by log collector (1 argument version)
+ *
+ * note: this wrapper is necessary to pass the sanity check in opr_sanity,
+ * which checks that all built-in functions that share the implementing C
+ * function take the same number of arguments
+ */
+Datum
+pg_current_logfile_1arg(PG_FUNCTION_ARGS)
+{
+	return pg_current_logfile(fcinfo);
+}
+
+/*
+ * SQL wrapper around RelationGetReplicaIndex().
+ */
+Datum
+pg_get_replica_identity_index(PG_FUNCTION_ARGS)
+{
+	Oid			reloid = PG_GETARG_OID(0);
+	Oid			idxoid;
+	Relation	rel;
+
+	rel = table_open(reloid, AccessShareLock);
+	idxoid = RelationGetReplicaIndex(rel);
+	table_close(rel, AccessShareLock);
+
+	if (OidIsValid(idxoid))
+		PG_RETURN_OID(idxoid);
+	else
+		PG_RETURN_NULL();
 }

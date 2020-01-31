@@ -3,9 +3,13 @@
  * nodeMaterial.c
  *	  Routines to handle materialization nodes.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -48,9 +52,10 @@ static void ExecEagerFreeMaterial(MaterialState *node);
  *
  * ----------------------------------------------------------------
  */
-TupleTableSlot *				/* result tuple from subplan */
-ExecMaterial(MaterialState *node)
+static TupleTableSlot *			/* result tuple from subplan */
+ExecMaterial(PlanState *pstate)
 {
+	MaterialState *node = castNode(MaterialState, pstate);
 	EState	   *estate;
 	ScanDirection dir;
 	bool		forward;
@@ -61,6 +66,8 @@ ExecMaterial(MaterialState *node)
 	bool		eof_tuplestore;
 	TupleTableSlot *slot;
 	Material *ma;
+
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * get state info from node
@@ -85,6 +92,7 @@ ExecMaterial(MaterialState *node)
 		 */
 		if(ma->share_type == SHARE_MATERIAL_XSLICE)
 		{
+<<<<<<< HEAD
 			char rwfile_prefix[100];
 
 			if(ma->driver_slice != currentSliceId)
@@ -92,6 +100,13 @@ ExecMaterial(MaterialState *node)
 				elog(LOG, "Material Exec on CrossSlice, current slice %d", currentSliceId);
 				return NULL;
 			}
+=======
+			/*
+			 * Allocate a second read pointer to serve as the mark. We know it
+			 * must have index 1, so needn't store that.
+			 */
+			int			ptrno PG_USED_FOR_ASSERTS_ONLY;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			shareinput_create_bufname_prefix(rwfile_prefix, sizeof(rwfile_prefix), ma->share_id);
 			elog(DEBUG1, "Material node creates shareinput rwfile %s", rwfile_prefix);
@@ -230,10 +245,8 @@ ExecMaterial(MaterialState *node)
 		if (tsa)
 			ntuplestore_acc_put_tupleslot(tsa, outerslot);
 
-		/*
-		 * We can just return the subplan's returned tuple, without copying.
-		 */
-		return outerslot;
+		ExecCopySlot(slot, outerslot);
+		return slot;
 	}
 
 
@@ -264,6 +277,7 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	matstate = makeNode(MaterialState);
 	matstate->ss.ps.plan = (Plan *) node;
 	matstate->ss.ps.state = estate;
+	matstate->ss.ps.ExecProcNode = ExecMaterial;
 
 	if (node->cdb_strict)
 		eflags |= EXEC_FLAG_REWIND;
@@ -316,6 +330,7 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	 */
 
 	/*
+<<<<<<< HEAD
 	 * tuple table initialization
 	 *
 	 * material nodes only return tuples from their materialized relation.
@@ -331,6 +346,8 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 		((eflags & (EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)) != 0);
 
 	/*
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * initialize child nodes
 	 *
 	 * We shield the child node from the need to support BACKWARD, or
@@ -362,14 +379,16 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	outerPlanState(matstate) = ExecInitNode(outerPlan, estate, eflags);
 
 	/*
-	 * initialize tuple type.  no need to initialize projection info because
-	 * this node doesn't do projections.
+	 * Initialize result type and slot. No need to initialize projection info
+	 * because this node doesn't do projections.
+	 *
+	 * material nodes only return tuples from their materialized relation.
 	 */
-	ExecAssignResultTypeFromTL(&matstate->ss.ps);
-	ExecAssignScanTypeFromOuterPlan(&matstate->ss);
+	ExecInitResultTupleSlotTL(&matstate->ss.ps, &TTSOpsMinimalTuple);
 	matstate->ss.ps.ps_ProjInfo = NULL;
 
 	/*
+<<<<<<< HEAD
 	 * If share input, need to register with range table entry
 	 */
 	if (node->share_type != SHARE_NOTSHARED)
@@ -378,6 +397,11 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 		snEntry->sharePlan = (Node *) node;
 		snEntry->shareState = (Node *) matstate;
 	}
+=======
+	 * initialize tuple type.
+	 */
+	ExecCreateScanSlotFromOuterPlan(estate, &matstate->ss, &TTSOpsMinimalTuple);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return matstate;
 }

@@ -18,13 +18,12 @@ OBJS += greenplum/aotable.o greenplum/gpdb4_heap_convert.o greenplum/version_gp.
 		greenplum/controldata_gp.o
 
 override CPPFLAGS := -DDLSUFFIX=\"$(DLSUFFIX)\" -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
-LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils -lpq
-
+LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
 
 all: pg_upgrade
 
 pg_upgrade: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
-	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_upgrade$(X) '$(DESTDIR)$(bindir)/pg_upgrade$(X)'
@@ -38,11 +37,13 @@ uninstall:
 clean distclean maintainer-clean:
 	rm -f pg_upgrade$(X) $(OBJS)
 	rm -rf analyze_new_cluster.sh delete_old_cluster.sh log/ tmp_check/ \
+	       loadable_libraries.txt reindex_hash.sql \
 	       pg_upgrade_dump_globals.sql \
 	       pg_upgrade_dump_*.custom pg_upgrade_*.log \
 		   clusterConfigPostgresAddonsFile clusterConfigFile gpdemo-env.sh \
 		   hostfile regression.diffs aomd_filehandler.c
 
+<<<<<<< HEAD
 greenplum/aomd_filehandler.c: $(top_srcdir)/src/backend/access/appendonly/aomd_filehandler.c
 	rm -f $@ && $(LN_S) ../$< $@
 
@@ -60,3 +61,19 @@ check: test_gpdb.sh all
 
 perfcheck: test_gpdb.sh all
 	bash $< -p -r -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
+=======
+# When $(MAKE) is present, make automatically infers that this is a
+# recursive make. which is not actually what we want here, as that
+# e.g. prevents output synchronization from working (as make thinks
+# that the subsidiary make knows how to deal with that itself, but
+# we're invoking a shell script that doesn't know). Referencing
+# $(MAKE) indirectly avoids that behaviour.
+# See https://www.gnu.org/software/make/manual/html_node/MAKE-Variable.html#MAKE-Variable
+NOTSUBMAKEMAKE=$(MAKE)
+
+check: test.sh all temp-install
+	MAKE=$(NOTSUBMAKEMAKE) $(with_temp_install) bindir=$(abs_top_builddir)/tmp_install/$(bindir) EXTRA_REGRESS_OPTS="$(EXTRA_REGRESS_OPTS)" $(SHELL) $<
+
+# installcheck is not supported because there's no meaningful way to test
+# pg_upgrade against a single already-running server
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

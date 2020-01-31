@@ -12,12 +12,16 @@
 
 /* this must be first: */
 #include "postgres.h"
+
 #include "fmgr.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"       /* for byteain & byteaout */
+<<<<<<< HEAD
 
 /* Defined by Perl */
 #undef _
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* perl stuff */
 #define PG_NEED_PERL_XSUB_H
@@ -78,7 +82,7 @@ util_quote_literal(sv)
     }
     else {
         text *arg = sv2text(sv);
-		text *quoted = DatumGetTextP(DirectFunctionCall1(quote_literal, PointerGetDatum(arg)));
+		text *quoted = DatumGetTextPP(DirectFunctionCall1(quote_literal, PointerGetDatum(arg)));
 		char *str;
 
 		pfree(arg);
@@ -100,7 +104,7 @@ util_quote_nullable(sv)
     else
 	{
         text *arg = sv2text(sv);
-		text *quoted = DatumGetTextP(DirectFunctionCall1(quote_nullable, PointerGetDatum(arg)));
+		text *quoted = DatumGetTextPP(DirectFunctionCall1(quote_nullable, PointerGetDatum(arg)));
 		char *str;
 
 		pfree(arg);
@@ -120,7 +124,7 @@ util_quote_ident(sv)
 		char *str;
     CODE:
         arg = sv2text(sv);
-		quoted = DatumGetTextP(DirectFunctionCall1(quote_ident, PointerGetDatum(arg)));
+		quoted = DatumGetTextPP(DirectFunctionCall1(quote_ident, PointerGetDatum(arg)));
 
 		pfree(arg);
 		str = text_to_cstring(quoted);
@@ -137,9 +141,9 @@ util_decode_bytea(sv)
         text *ret;
     CODE:
         arg = SvPVbyte_nolen(sv);
-        ret = DatumGetTextP(DirectFunctionCall1(byteain, PointerGetDatum(arg)));
+        ret = DatumGetTextPP(DirectFunctionCall1(byteain, PointerGetDatum(arg)));
         /* not cstr2sv because this is raw bytes not utf8'able */
-        RETVAL = newSVpvn(VARDATA(ret), (VARSIZE(ret) - VARHDRSZ));
+        RETVAL = newSVpvn(VARDATA_ANY(ret), VARSIZE_ANY_EXHDR(ret));
     OUTPUT:
     RETVAL
 

@@ -1,13 +1,19 @@
 # Global excludes across all subdirectories
 *.o
 *.obj
+*.bc
 *.so
 *.so.[0-9]
 *.so.[0-9].[0-9]
+*.so.[0-9].[0-9][0-9]
 *.sl
 *.sl.[0-9]
 *.sl.[0-9].[0-9]
+<<<<<<< HEAD
 *.swp
+=======
+*.sl.[0-9].[0-9][0-9]
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 *.dylib
 *.dll
 *.exp
@@ -21,8 +27,9 @@ objfiles.txt
 *.gcda
 *.gcov
 *.gcov.out
-lcov.info
+lcov*.info
 coverage/
+coverage-html-stamp
 *.vcproj
 *.vcxproj
 win32ver.rc

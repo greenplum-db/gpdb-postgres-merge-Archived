@@ -1,21 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * pg_operator.h
- *	  definition of the system "operator" relation (pg_operator)
- *	  along with the relation's initial contents.
+ *	  definition of the "operator" system catalog (pg_operator)
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_operator.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
- *
- *	  XXX do NOT break up DATA() statements into multiple lines!
- *		  the scripts are not as smart as you might think...
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -23,30 +19,61 @@
 #define PG_OPERATOR_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_operator_d.h"
+
+#include "catalog/objectaddress.h"
+#include "nodes/pg_list.h"
 
 /* ----------------
  *		pg_operator definition.  cpp turns this into
  *		typedef struct FormData_pg_operator
  * ----------------
  */
-#define OperatorRelationId	2617
-
-CATALOG(pg_operator,2617)
+CATALOG(pg_operator,2617,OperatorRelationId)
 {
-	NameData	oprname;		/* name of operator */
-	Oid			oprnamespace;	/* OID of namespace containing this oper */
-	Oid			oprowner;		/* operator owner */
-	char		oprkind;		/* 'l', 'r', or 'b' */
-	bool		oprcanmerge;	/* can be used in merge join? */
-	bool		oprcanhash;		/* can be used in hash join? */
-	Oid			oprleft;		/* left arg type, or 0 if 'l' oprkind */
-	Oid			oprright;		/* right arg type, or 0 if 'r' oprkind */
-	Oid			oprresult;		/* result datatype */
-	Oid			oprcom;			/* OID of commutator oper, or 0 if none */
-	Oid			oprnegate;		/* OID of negator oper, or 0 if none */
-	regproc		oprcode;		/* OID of underlying function */
-	regproc		oprrest;		/* OID of restriction estimator, or 0 */
-	regproc		oprjoin;		/* OID of join estimator, or 0 */
+	Oid			oid;			/* oid */
+
+	/* name of operator */
+	NameData	oprname;
+
+	/* OID of namespace containing this oper */
+	Oid			oprnamespace BKI_DEFAULT(PGNSP);
+
+	/* operator owner */
+	Oid			oprowner BKI_DEFAULT(PGUID);
+
+	/* 'l', 'r', or 'b' */
+	char		oprkind BKI_DEFAULT(b);
+
+	/* can be used in merge join? */
+	bool		oprcanmerge BKI_DEFAULT(f);
+
+	/* can be used in hash join? */
+	bool		oprcanhash BKI_DEFAULT(f);
+
+	/* left arg type, or 0 if 'l' oprkind */
+	Oid			oprleft BKI_LOOKUP(pg_type);
+
+	/* right arg type, or 0 if 'r' oprkind */
+	Oid			oprright BKI_LOOKUP(pg_type);
+
+	/* result datatype */
+	Oid			oprresult BKI_LOOKUP(pg_type);
+
+	/* OID of commutator oper, or 0 if none */
+	Oid			oprcom BKI_DEFAULT(0) BKI_LOOKUP(pg_operator);
+
+	/* OID of negator oper, or 0 if none */
+	Oid			oprnegate BKI_DEFAULT(0) BKI_LOOKUP(pg_operator);
+
+	/* OID of underlying function */
+	regproc		oprcode BKI_LOOKUP(pg_proc);
+
+	/* OID of restriction estimator, or 0 */
+	regproc		oprrest BKI_DEFAULT(-) BKI_LOOKUP(pg_proc);
+
+	/* OID of join estimator, or 0 */
+	regproc		oprjoin BKI_DEFAULT(-) BKI_LOOKUP(pg_proc);
 } FormData_pg_operator;
 
 /* GPDB added foreign key definitions for gpcheckcat. */
@@ -68,39 +95,24 @@ FOREIGN_KEY(oprjoin REFERENCES pg_proc(oid));
  */
 typedef FormData_pg_operator *Form_pg_operator;
 
-/* ----------------
- *		compiler constants for pg_operator
- * ----------------
- */
 
-#define Natts_pg_operator				14
-#define Anum_pg_operator_oprname		1
-#define Anum_pg_operator_oprnamespace	2
-#define Anum_pg_operator_oprowner		3
-#define Anum_pg_operator_oprkind		4
-#define Anum_pg_operator_oprcanmerge	5
-#define Anum_pg_operator_oprcanhash		6
-#define Anum_pg_operator_oprleft		7
-#define Anum_pg_operator_oprright		8
-#define Anum_pg_operator_oprresult		9
-#define Anum_pg_operator_oprcom			10
-#define Anum_pg_operator_oprnegate		11
-#define Anum_pg_operator_oprcode		12
-#define Anum_pg_operator_oprrest		13
-#define Anum_pg_operator_oprjoin		14
+extern ObjectAddress OperatorCreate(const char *operatorName,
+									Oid operatorNamespace,
+									Oid leftTypeId,
+									Oid rightTypeId,
+									Oid procedureId,
+									List *commutatorName,
+									List *negatorName,
+									Oid restrictionId,
+									Oid joinId,
+									bool canMerge,
+									bool canHash);
 
-/* ----------------
- *		initial contents of pg_operator
- * ----------------
- */
+extern ObjectAddress makeOperatorDependencies(HeapTuple tuple, bool isUpdate);
 
-/*
- * Note: every entry in pg_operator.h is expected to have a DESCR() comment.
- * If the operator is a deprecated equivalent of some other entry, be sure
- * to comment it as such so that initdb doesn't think it's a preferred name
- * for the underlying function.
- */
+extern void OperatorUpd(Oid baseId, Oid commId, Oid negId, bool isDelete);
 
+<<<<<<< HEAD
 DATA(insert OID =  15 ( "="		   PGNSP PGUID b t t	23	20	16 416	36 int48eq eqsel eqjoinsel ));
 DESCR("equal");
 #define Int48EqualOperator 15
@@ -1917,3 +1929,6 @@ DATA(insert OID = 7096 (  "%"    PGNSP PGUID b f f 1186  1186 1186         0  0 
 DESCR("modulus");
 
 #endif   /* PG_OPERATOR_H */
+=======
+#endif							/* PG_OPERATOR_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -6,9 +6,13 @@
  * There is hardly anything left of Paul Brown's original implementation...
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  *
@@ -20,9 +24,10 @@
 #include "postgres.h"
 
 #include "access/amapi.h"
+#include "access/heapam.h"
 #include "access/multixact.h"
 #include "access/relscan.h"
-#include "access/rewriteheap.h"
+#include "access/tableam.h"
 #include "access/transam.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
@@ -41,14 +46,15 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/toasting.h"
 #include "commands/cluster.h"
+#include "commands/progress.h"
 #include "commands/tablecmds.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
-#include "optimizer/planner.h"
+#include "optimizer/optimizer.h"
+#include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
-#include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
@@ -58,7 +64,6 @@
 #include "utils/relmapper.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 #include "utils/tuplesort.h"
 
 #include "catalog/aoseg.h"
@@ -83,14 +88,10 @@ typedef struct
 
 
 static void rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose);
-static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
-			   bool verbose, bool *pSwapToastByContent,
-			   TransactionId *pFreezeXid, MultiXactId *pCutoffMulti);
+static void copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
+							bool verbose, bool *pSwapToastByContent,
+							TransactionId *pFreezeXid, MultiXactId *pCutoffMulti);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
-static void reform_and_rewrite_tuple(HeapTuple tuple,
-						 TupleDesc oldTupDesc, TupleDesc newTupDesc,
-						 Datum *values, bool *isnull,
-						 bool newRelHasOids, RewriteState rwstate);
 
 
 /*---------------------------------------------------------------------------
@@ -130,9 +131,9 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		/* Find, lock, and check permissions on the table */
 		tableOid = RangeVarGetRelidExtended(stmt->relation,
 											AccessExclusiveLock,
-											false, false,
+											0,
 											RangeVarCallbackOwnsTable, NULL);
-		rel = heap_open(tableOid, NoLock);
+		rel = table_open(tableOid, NoLock);
 
 		/*
 		 * Reject clustering a remote temp table ... their local buffer
@@ -141,7 +142,15 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		if (RELATION_IS_OTHER_TEMP(rel))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot cluster temporary tables of other sessions")));
+					 errmsg("cannot cluster temporary tables of other sessions")));
+
+		/*
+		 * Reject clustering a partitioned table.
+		 */
+		if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot cluster a partitioned table")));
 
 		if (stmt->indexname == NULL)
 		{
@@ -185,14 +194,15 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			if (!OidIsValid(indexOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-					   errmsg("index \"%s\" for table \"%s\" does not exist",
-							  stmt->indexname, stmt->relation->relname)));
+						 errmsg("index \"%s\" for table \"%s\" does not exist",
+								stmt->indexname, stmt->relation->relname)));
 		}
 
 		/* close relation, keep lock till commit */
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 
 		/* Do the job. */
+<<<<<<< HEAD
 		cluster_rel(tableOid, indexOid, false, stmt->verbose, true /* printError */);
 
 		if (Gp_role == GP_ROLE_DISPATCH)
@@ -204,6 +214,9 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 										GetAssignedOidsForDispatch(),
 										NULL);
 		}
+=======
+		cluster_rel(tableOid, indexOid, stmt->options);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 	{
@@ -219,7 +232,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		 * We cannot run this form of CLUSTER inside a user transaction block;
 		 * we'd be holding locks way too long.
 		 */
-		PreventTransactionChain(isTopLevel, "CLUSTER");
+		PreventInTransactionBlock(isTopLevel, "CLUSTER");
 
 		/*
 		 * Create special memory context for cross-transaction storage.
@@ -229,9 +242,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		 */
 		cluster_context = AllocSetContextCreate(PortalContext,
 												"Cluster",
-												ALLOCSET_DEFAULT_MINSIZE,
-												ALLOCSET_DEFAULT_INITSIZE,
-												ALLOCSET_DEFAULT_MAXSIZE);
+												ALLOCSET_DEFAULT_SIZES);
 
 		/*
 		 * Build the list of relations to cluster.  Note that this lives in
@@ -254,6 +265,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			/* functions in indexes may want a snapshot set */
 			PushActiveSnapshot(GetTransactionSnapshot());
 			/* Do the job. */
+<<<<<<< HEAD
 			dispatch = cluster_rel(rvtc->tableOid, rvtc->indexOid, true, stmt->verbose,
 								   false /* printError */);
 
@@ -269,6 +281,10 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 											NULL);
 			}
 
+=======
+			cluster_rel(rvtc->tableOid, rvtc->indexOid,
+						stmt->options | CLUOPT_RECHECK);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			PopActiveSnapshot();
 			CommitTransactionCommand();
 		}
@@ -302,13 +318,28 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
  * this function errors out when the relation is an AO table. Otherwise, this
  * functions prints out a warning message when the relation is an AO table.
  */
+<<<<<<< HEAD
 bool
 cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose, bool printError)
+=======
+void
+cluster_rel(Oid tableOid, Oid indexOid, int options)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	Relation	OldHeap;
+	bool		verbose = ((options & CLUOPT_VERBOSE) != 0);
+	bool		recheck = ((options & CLUOPT_RECHECK) != 0);
 
 	/* Check for user-requested abort. */
 	CHECK_FOR_INTERRUPTS();
+
+	pgstat_progress_start_command(PROGRESS_COMMAND_CLUSTER, tableOid);
+	if (OidIsValid(indexOid))
+		pgstat_progress_update_param(PROGRESS_CLUSTER_COMMAND,
+									 PROGRESS_CLUSTER_COMMAND_CLUSTER);
+	else
+		pgstat_progress_update_param(PROGRESS_CLUSTER_COMMAND,
+									 PROGRESS_CLUSTER_COMMAND_VACUUM_FULL);
 
 	/*
 	 * We grab exclusive access to the target rel and index for the duration
@@ -320,7 +351,14 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose, bool printEr
 
 	/* If the table has gone away, we can skip processing it */
 	if (!OldHeap)
+<<<<<<< HEAD
 		return false;
+=======
+	{
+		pgstat_progress_end_command();
+		return;
+	}
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * We don't support cluster on an AO table. We print out a warning/error to
@@ -354,7 +392,12 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose, bool printEr
 		if (!pg_class_ownercheck(tableOid, GetUserId()))
 		{
 			relation_close(OldHeap, AccessExclusiveLock);
+<<<<<<< HEAD
 			return false;
+=======
+			pgstat_progress_end_command();
+			return;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		/*
@@ -368,7 +411,12 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose, bool printEr
 		if (RELATION_IS_OTHER_TEMP(OldHeap))
 		{
 			relation_close(OldHeap, AccessExclusiveLock);
+<<<<<<< HEAD
 			return false;		
+=======
+			pgstat_progress_end_command();
+			return;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		if (OidIsValid(indexOid))
@@ -379,24 +427,39 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose, bool printEr
 			if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(indexOid)))
 			{
 				relation_close(OldHeap, AccessExclusiveLock);
+<<<<<<< HEAD
 				return false;
+=======
+				pgstat_progress_end_command();
+				return;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 
 			/*
 			 * Check that the index is still the one with indisclustered set.
 			 */
 			tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
-			if (!HeapTupleIsValid(tuple))		/* probably can't happen */
+			if (!HeapTupleIsValid(tuple))	/* probably can't happen */
 			{
 				relation_close(OldHeap, AccessExclusiveLock);
+<<<<<<< HEAD
 				return false;
+=======
+				pgstat_progress_end_command();
+				return;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 			indexForm = (Form_pg_index) GETSTRUCT(tuple);
 			if (!indexForm->indisclustered)
 			{
 				ReleaseSysCache(tuple);
 				relation_close(OldHeap, AccessExclusiveLock);
+<<<<<<< HEAD
 				return false;
+=======
+				pgstat_progress_end_command();
+				return;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 			ReleaseSysCache(tuple);
 		}
@@ -422,11 +485,11 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose, bool printEr
 		if (OidIsValid(indexOid))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot cluster temporary tables of other sessions")));
+					 errmsg("cannot cluster temporary tables of other sessions")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("cannot vacuum temporary tables of other sessions")));
+					 errmsg("cannot vacuum temporary tables of other sessions")));
 	}
 
 	/*
@@ -450,7 +513,12 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose, bool printEr
 		!RelationIsPopulated(OldHeap))
 	{
 		relation_close(OldHeap, AccessExclusiveLock);
+<<<<<<< HEAD
 		return false;
+=======
+		pgstat_progress_end_command();
+		return;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*
@@ -464,8 +532,14 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose, bool printEr
 	/* rebuild_relation does all the dirty work */
 	rebuild_relation(OldHeap, indexOid, verbose);
 
+<<<<<<< HEAD
 	/* NB: rebuild_relation does heap_close() on OldHeap */
 	return true;
+=======
+	/* NB: rebuild_relation does table_close() on OldHeap */
+
+	pgstat_progress_end_command();
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -495,7 +569,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMOD
 						RelationGetRelationName(OldHeap))));
 
 	/* Index AM must allow clustering */
-	if (!OldIndex->rd_amroutine->amclusterable)
+	if (!OldIndex->rd_indam->amclusterable)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot cluster on index \"%s\" because access method does not support clustering",
@@ -507,7 +581,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMOD
 	 * seqscan pass over the table to copy the missing rows, but that seems
 	 * expensive and tedious.
 	 */
-	if (!heap_attisnull(OldIndex->rd_indextuple, Anum_pg_index_indpred))
+	if (!heap_attisnull(OldIndex->rd_indextuple, Anum_pg_index_indpred, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot cluster on partial index \"%s\"",
@@ -521,7 +595,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMOD
 	 * might put recently-dead tuples out-of-order in the new table, and there
 	 * is little harm in that.)
 	 */
-	if (!IndexIsValid(OldIndex->rd_index))
+	if (!OldIndex->rd_index->indisvalid)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot cluster on invalid index \"%s\"",
@@ -543,6 +617,12 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 	Form_pg_index indexForm;
 	Relation	pg_index;
 	ListCell   *index;
+
+	/* Disallow applying to a partitioned table */
+	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot mark index clustered in partitioned table")));
 
 	/*
 	 * If the index is already marked clustered, no need to do anything.
@@ -566,7 +646,7 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 	/*
 	 * Check each index of the relation and set/clear the bit as needed.
 	 */
-	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
+	pg_index = table_open(IndexRelationId, RowExclusiveLock);
 
 	foreach(index, RelationGetIndexList(rel))
 	{
@@ -585,17 +665,15 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 		if (indexForm->indisclustered)
 		{
 			indexForm->indisclustered = false;
-			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
-			CatalogUpdateIndexes(pg_index, indexTuple);
+			CatalogTupleUpdate(pg_index, &indexTuple->t_self, indexTuple);
 		}
 		else if (thisIndexOid == indexOid)
 		{
 			/* this was checked earlier, but let's be real sure */
-			if (!IndexIsValid(indexForm))
+			if (!indexForm->indisvalid)
 				elog(ERROR, "cannot cluster on invalid index %u", indexOid);
 			indexForm->indisclustered = true;
-			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
-			CatalogUpdateIndexes(pg_index, indexTuple);
+			CatalogTupleUpdate(pg_index, &indexTuple->t_self, indexTuple);
 		}
 
 		InvokeObjectPostAlterHookArg(IndexRelationId, thisIndexOid, 0,
@@ -604,7 +682,7 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 		heap_freetuple(indexTuple);
 	}
 
-	heap_close(pg_index, RowExclusiveLock);
+	table_close(pg_index, RowExclusiveLock);
 }
 
 /*
@@ -636,18 +714,22 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	is_system_catalog = IsSystemRelation(OldHeap);
 
 	/* Close relcache entry, but keep lock until transaction commit */
-	heap_close(OldHeap, NoLock);
+	table_close(OldHeap, NoLock);
 
 	/* Create the transient table that will receive the re-ordered data */
 	OIDNewHeap = make_new_heap(tableOid, tableSpace,
 							   relpersistence,
+<<<<<<< HEAD
 							   AccessExclusiveLock,
 							   true /* createAoBlockDirectory */,
 							   false);
+=======
+							   AccessExclusiveLock);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Copy the heap data into the new table in the desired order */
-	copy_heap_data(OIDNewHeap, tableOid, indexOid, verbose,
-				   &swap_toast_by_content, &frozenXid, &cutoffMulti);
+	copy_table_data(OIDNewHeap, tableOid, indexOid, verbose,
+					&swap_toast_by_content, &frozenXid, &cutoffMulti);
 
 	/*
 	 * Swap the physical files of the target and transient tables, then
@@ -690,7 +772,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 	bool		is_part_child;
 	bool		is_part_parent;
 
-	OldHeap = heap_open(OIDOldHeap, lockmode);
+	OldHeap = table_open(OIDOldHeap, lockmode);
 	OldHeapDesc = RelationGetDescr(OldHeap);
 
 	is_part_child = !rel_needs_long_lock(OIDOldHeap);
@@ -751,6 +833,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 										  InvalidOid,
 										  InvalidOid,
 										  OldHeap->rd_rel->relowner,
+										  OldHeap->rd_rel->relam,
 										  OldHeapDesc,
 										  NIL,
 										  RELKIND_RELATION,
@@ -758,25 +841,28 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 										  OldHeap->rd_rel->relstorage,
 										  false,
 										  RelationIsMapped(OldHeap),
-										  true,
-										  0,
 										  ONCOMMIT_NOOP,
 										  makeCdbPolicy? OldHeap->rd_cdbpolicy: NULL,/*CDB*/
 										  reloptions,
 										  false,
 										  true,
 										  true,
+<<<<<<< HEAD
 										  NULL,
 										  /* valid_opts */ true,
 										  is_part_child,
 										  is_part_parent);
+=======
+										  OIDOldHeap,
+										  NULL);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	Assert(OIDNewHeap != InvalidOid);
 
 	ReleaseSysCache(tuple);
 
 	/*
 	 * Advance command counter so that the newly-created relation's catalog
-	 * tuples will be visible to heap_open.
+	 * tuples will be visible to table_open.
 	 */
 	CommandCounterIncrement();
 
@@ -821,13 +907,13 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 						   OIDNewHeap,
 						   RelationGetNumberOfAttributes(OldHeap));
 
-	heap_close(OldHeap, NoLock);
+	table_close(OldHeap, NoLock);
 
 	return OIDNewHeap;
 }
 
 /*
- * Do the physical copying of heap data.
+ * Do the physical copying of table data.
  *
  * There are three output parameters:
  * *pSwapToastByContent is set true if toast tables must be swapped by content.
@@ -835,15 +921,16 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
  * *pCutoffMulti receives the MultiXactId used as a cutoff point.
  */
 static void
-copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
-			   bool *pSwapToastByContent, TransactionId *pFreezeXid,
-			   MultiXactId *pCutoffMulti)
+copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
+				bool *pSwapToastByContent, TransactionId *pFreezeXid,
+				MultiXactId *pCutoffMulti)
 {
 	Relation	NewHeap,
 				OldHeap,
 				OldIndex;
 	Relation	relRelation;
 	HeapTuple	reltup;
+<<<<<<< HEAD
 	Form_pg_class	relform;
 	TupleDesc	oldTupDesc;
 	TupleDesc	newTupDesc;
@@ -854,12 +941,15 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	HeapScanDesc heapScan;
 	bool		use_wal;
 	bool		is_system_catalog;
+=======
+	Form_pg_class relform;
+	TupleDesc	oldTupDesc PG_USED_FOR_ASSERTS_ONLY;
+	TupleDesc	newTupDesc PG_USED_FOR_ASSERTS_ONLY;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	TransactionId OldestXmin;
 	TransactionId FreezeXid;
 	MultiXactId MultiXactCutoff;
-	RewriteState rwstate;
 	bool		use_sort;
-	Tuplesortstate *tuplesort;
 	double		num_tuples = 0,
 				tups_vacuumed = 0,
 				tups_recently_dead = 0;
@@ -872,8 +962,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	/*
 	 * Open the relations we need.
 	 */
-	NewHeap = heap_open(OIDNewHeap, AccessExclusiveLock);
-	OldHeap = heap_open(OIDOldHeap, AccessExclusiveLock);
+	NewHeap = table_open(OIDNewHeap, AccessExclusiveLock);
+	OldHeap = table_open(OIDOldHeap, AccessExclusiveLock);
 	if (OidIsValid(OIDOldIndex))
 		OldIndex = index_open(OIDOldIndex, AccessExclusiveLock);
 	else
@@ -886,11 +976,6 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	oldTupDesc = RelationGetDescr(OldHeap);
 	newTupDesc = RelationGetDescr(NewHeap);
 	Assert(newTupDesc->natts == oldTupDesc->natts);
-
-	/* Preallocate values/isnull arrays */
-	natts = newTupDesc->natts;
-	values = (Datum *) palloc(natts * sizeof(Datum));
-	isnull = (bool *) palloc(natts * sizeof(bool));
 
 	/*
 	 * If the OldHeap has a toast table, get lock on the toast table to keep
@@ -907,15 +992,6 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	 */
 	if (OldHeap->rd_rel->reltoastrelid)
 		LockRelationOid(OldHeap->rd_rel->reltoastrelid, AccessExclusiveLock);
-
-	/*
-	 * We need to log the copied data in WAL iff WAL archiving/streaming is
-	 * enabled AND it's a WAL-logged rel.
-	 */
-	use_wal = XLogIsNeeded() && RelationNeedsWAL(NewHeap);
-
-	/* use_wal off requires smgr_targblock be initially invalid */
-	Assert(RelationGetTargetBlock(NewHeap) == InvalidBlockNumber);
 
 	/*
 	 * If both tables have TOAST tables, perform toast swap by content.  It is
@@ -964,25 +1040,16 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go
 	 * backwards, so take the max.
 	 */
-	if (TransactionIdPrecedes(FreezeXid, OldHeap->rd_rel->relfrozenxid))
+	if (TransactionIdIsValid(OldHeap->rd_rel->relfrozenxid) &&
+		TransactionIdPrecedes(FreezeXid, OldHeap->rd_rel->relfrozenxid))
 		FreezeXid = OldHeap->rd_rel->relfrozenxid;
 
 	/*
 	 * MultiXactCutoff, similarly, shouldn't go backwards either.
 	 */
-	if (MultiXactIdPrecedes(MultiXactCutoff, OldHeap->rd_rel->relminmxid))
+	if (MultiXactIdIsValid(OldHeap->rd_rel->relminmxid) &&
+		MultiXactIdPrecedes(MultiXactCutoff, OldHeap->rd_rel->relminmxid))
 		MultiXactCutoff = OldHeap->rd_rel->relminmxid;
-
-	/* return selected values to caller */
-	*pFreezeXid = FreezeXid;
-	*pCutoffMulti = MultiXactCutoff;
-
-	/* Remember if it's a system catalog */
-	is_system_catalog = IsSystemRelation(OldHeap);
-
-	/* Initialize the rewrite operation */
-	rwstate = begin_heap_rewrite(OldHeap, NewHeap, OldestXmin, FreezeXid,
-								 MultiXactCutoff, use_wal);
 
 	/*
 	 * Decide whether to use an indexscan or seqscan-and-optional-sort to scan
@@ -996,38 +1063,14 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	else
 		use_sort = false;
 
-	/* Set up sorting if wanted */
-	if (use_sort)
-		tuplesort = tuplesort_begin_cluster(oldTupDesc, OldIndex,
-											maintenance_work_mem, false);
-	else
-		tuplesort = NULL;
-
-	/*
-	 * Prepare to scan the OldHeap.  To ensure we see recently-dead tuples
-	 * that still need to be copied, we scan with SnapshotAny and use
-	 * HeapTupleSatisfiesVacuum for the visibility test.
-	 */
-	if (OldIndex != NULL && !use_sort)
-	{
-		heapScan = NULL;
-		indexScan = index_beginscan(OldHeap, OldIndex, SnapshotAny, 0, 0);
-		index_rescan(indexScan, NULL, 0, NULL, 0);
-	}
-	else
-	{
-		heapScan = heap_beginscan(OldHeap, SnapshotAny, 0, (ScanKey) NULL);
-		indexScan = NULL;
-	}
-
 	/* Log what we're doing */
-	if (indexScan != NULL)
+	if (OldIndex != NULL && !use_sort)
 		ereport(elevel,
 				(errmsg("clustering \"%s.%s\" using index scan on \"%s\"",
 						get_namespace_name(RelationGetNamespace(OldHeap)),
 						RelationGetRelationName(OldHeap),
 						RelationGetRelationName(OldIndex))));
-	else if (tuplesort != NULL)
+	else if (use_sort)
 		ereport(elevel,
 				(errmsg("clustering \"%s.%s\" using sequential scan and sort",
 						get_namespace_name(RelationGetNamespace(OldHeap)),
@@ -1039,11 +1082,12 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 						RelationGetRelationName(OldHeap))));
 
 	/*
-	 * Scan through the OldHeap, either in OldIndex order or sequentially;
-	 * copy each tuple into the NewHeap, or transiently to the tuplesort
-	 * module.  Note that we don't bother sorting dead tuples (they won't get
-	 * to the new table anyway).
+	 * Hand of the actual copying to AM specific function, the generic code
+	 * cannot know how to deal with visibility across AMs. Note that this
+	 * routine is allowed to set FreezeXid / MultiXactCutoff to different
+	 * values (e.g. because the AM doesn't use freezing).
 	 */
+<<<<<<< HEAD
 	for (;;)
 	{
 		HeapTuple	tuple;
@@ -1187,6 +1231,16 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 
 	/* Write out any remaining tuples, and fsync if needed */
 	end_heap_rewrite(rwstate);
+=======
+	table_relation_copy_for_cluster(OldHeap, NewHeap, OldIndex, use_sort,
+									OldestXmin, &FreezeXid, &MultiXactCutoff,
+									&num_tuples, &tups_vacuumed,
+									&tups_recently_dead);
+
+	/* return selected values to caller, get set as relfrozenxid/minmxid */
+	*pFreezeXid = FreezeXid;
+	*pCutoffMulti = MultiXactCutoff;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Reset rd_toastoid just to be tidy --- it shouldn't be looked at again */
 	NewHeap->rd_toastoid = InvalidOid;
@@ -1204,17 +1258,21 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 					   tups_recently_dead,
 					   pg_rusage_show(&ru0))));
 
-	/* Clean up */
-	pfree(values);
-	pfree(isnull);
-
 	if (OldIndex != NULL)
 		index_close(OldIndex, NoLock);
+<<<<<<< HEAD
 	heap_close(OldHeap, NoLock);
 	heap_close(NewHeap, NoLock);
 
 	/* Update pg_class to reflect the correct values of pages and tuples. */
 	relRelation = heap_open(RelationRelationId, RowExclusiveLock);
+=======
+	table_close(OldHeap, NoLock);
+	table_close(NewHeap, NoLock);
+
+	/* Update pg_class to reflect the correct values of pages and tuples. */
+	relRelation = table_open(RelationRelationId, RowExclusiveLock);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	reltup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(OIDNewHeap));
 	if (!HeapTupleIsValid(reltup))
@@ -1226,17 +1284,22 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 
 	/* Don't update the stats for pg_class.  See swap_relation_files. */
 	if (OIDOldHeap != RelationRelationId)
+<<<<<<< HEAD
 	{
 		simple_heap_update(relRelation, &reltup->t_self, reltup);
 
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relRelation, reltup);
 	}
+=======
+		CatalogTupleUpdate(relRelation, &reltup->t_self, reltup);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	else
 		CacheInvalidateRelcacheByTuple(reltup);
 
 	/* Clean up. */
 	heap_freetuple(reltup);
+<<<<<<< HEAD
 	heap_close(relRelation, RowExclusiveLock);
 
 	/* Make the update visible */
@@ -1292,6 +1355,12 @@ changeDependencyLinks(Oid baseOid1, Oid baseOid2, Oid oid1, Oid oid2,
 		newobject.objectId = oid2;
 		recordDependencyOn(&newobject, &baseobject, DEPENDENCY_INTERNAL);
 	}
+=======
+	table_close(relRelation, RowExclusiveLock);
+
+	/* Make the update visible */
+	CommandCounterIncrement();
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -1342,11 +1411,14 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	Oid			swaptemp;
 	char		swapchar;
 	char		swptmpchr;
+<<<<<<< HEAD
 	CatalogIndexState indstate;
 	bool		isAO1, isAO2;
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* We need writable copies of both pg_class tuples. */
-	relRelation = heap_open(RelationRelationId, RowExclusiveLock);
+	relRelation = table_open(RelationRelationId, RowExclusiveLock);
 
 	reltup1 = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(r1));
 	if (!HeapTupleIsValid(reltup1))
@@ -1470,6 +1542,18 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	 * and then fail to commit the pg_class update.
 	 */
 
+<<<<<<< HEAD
+=======
+	/* set rel1's frozen Xid and minimum MultiXid */
+	if (relform1->relkind != RELKIND_INDEX)
+	{
+		Assert(!TransactionIdIsValid(frozenXid) ||
+			   TransactionIdIsNormal(frozenXid));
+		relform1->relfrozenxid = frozenXid;
+		relform1->relminmxid = cutoffMulti;
+	}
+
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* swap size statistics too, since new rel has freshly-updated stats */
 	if (swap_stats)
 	{
@@ -1527,13 +1611,13 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	 */
 	if (!target_is_pg_class)
 	{
-		simple_heap_update(relRelation, &reltup1->t_self, reltup1);
-		simple_heap_update(relRelation, &reltup2->t_self, reltup2);
+		CatalogIndexState indstate;
 
-		/* Keep system catalogs current */
 		indstate = CatalogOpenIndexes(relRelation);
-		CatalogIndexInsert(indstate, reltup1);
-		CatalogIndexInsert(indstate, reltup2);
+		CatalogTupleUpdateWithInfo(relRelation, &reltup1->t_self, reltup1,
+								   indstate);
+		CatalogTupleUpdateWithInfo(relRelation, &reltup2->t_self, reltup2,
+								   indstate);
 		CatalogCloseIndexes(indstate);
 	}
 	else
@@ -1656,7 +1740,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	heap_freetuple(reltup1);
 	heap_freetuple(reltup2);
 
-	heap_close(relRelation, RowExclusiveLock);
+	table_close(relRelation, RowExclusiveLock);
 
 	/*
 	 * Close both relcache entries' smgr links.  We need this kluge because
@@ -1698,6 +1782,10 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	int			reindex_flags;
 	int			i;
 
+	/* Report that we are now swapping relation files */
+	pgstat_progress_update_param(PROGRESS_CLUSTER_PHASE,
+								 PROGRESS_CLUSTER_PHASE_SWAP_REL_FILES);
+
 	/* Zero out possible results from swapped_relation_files */
 	memset(mapped_tables, 0, sizeof(mapped_tables));
 
@@ -1713,8 +1801,8 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 						frozenXid, cutoffMulti, mapped_tables);
 
 	/*
-	 * If it's a system catalog, queue an sinval message to flush all
-	 * catcaches on the catalog when we reach CommandCounterIncrement.
+	 * If it's a system catalog, queue a sinval message to flush all catcaches
+	 * on the catalog when we reach CommandCounterIncrement.
 	 */
 	if (is_system_catalog)
 		CacheInvalidateCatalog(OIDOldHeap);
@@ -1747,7 +1835,15 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	else if (newrelpersistence == RELPERSISTENCE_PERMANENT)
 		reindex_flags |= REINDEX_REL_FORCE_INDEXES_PERMANENT;
 
+	/* Report that we are now reindexing relations */
+	pgstat_progress_update_param(PROGRESS_CLUSTER_PHASE,
+								 PROGRESS_CLUSTER_PHASE_REBUILD_INDEX);
+
 	reindex_relation(OIDOldHeap, reindex_flags, 0);
+
+	/* Report that we are now doing clean up */
+	pgstat_progress_update_param(PROGRESS_CLUSTER_PHASE,
+								 PROGRESS_CLUSTER_PHASE_FINAL_CLEANUP);
 
 	/*
 	 * If the relation being rebuild is pg_class, swap_relation_files()
@@ -1767,7 +1863,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 		HeapTuple	reltup;
 		Form_pg_class relform;
 
-		relRelation = heap_open(RelationRelationId, RowExclusiveLock);
+		relRelation = table_open(RelationRelationId, RowExclusiveLock);
 
 		reltup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(OIDOldHeap));
 		if (!HeapTupleIsValid(reltup))
@@ -1777,10 +1873,9 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 		relform->relfrozenxid = frozenXid;
 		relform->relminmxid = cutoffMulti;
 
-		simple_heap_update(relRelation, &reltup->t_self, reltup);
-		CatalogUpdateIndexes(relRelation, reltup);
+		CatalogTupleUpdate(relRelation, &reltup->t_self, reltup);
 
-		heap_close(relRelation, RowExclusiveLock);
+		table_close(relRelation, RowExclusiveLock);
 	}
 
 	/* Destroy new heap with old filenode */
@@ -1819,7 +1914,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	{
 		Relation	newrel;
 
-		newrel = heap_open(OIDOldHeap, NoLock);
+		newrel = table_open(OIDOldHeap, NoLock);
 		if (OidIsValid(newrel->rd_rel->reltoastrelid))
 		{
 			Oid			toastidx;
@@ -1833,15 +1928,25 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 			snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u",
 					 OIDOldHeap);
 			RenameRelationInternal(newrel->rd_rel->reltoastrelid,
-								   NewToastName, true);
+								   NewToastName, true, false);
 
 			/* ... and its valid index too. */
 			snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u_index",
 					 OIDOldHeap);
 
 			RenameRelationInternal(toastidx,
-								   NewToastName, true);
+								   NewToastName, true, true);
 		}
+		relation_close(newrel, NoLock);
+	}
+
+	/* if it's not a catalog table, clear any missing attribute settings */
+	if (!is_system_catalog)
+	{
+		Relation	newrel;
+
+		newrel = table_open(OIDOldHeap, NoLock);
+		RelationClearMissing(newrel);
 		relation_close(newrel, NoLock);
 	}
 }
@@ -1857,7 +1962,7 @@ static List *
 get_tables_to_cluster(MemoryContext cluster_context)
 {
 	Relation	indRelation;
-	HeapScanDesc scan;
+	TableScanDesc scan;
 	ScanKeyData entry;
 	HeapTuple	indexTuple;
 	Form_pg_index index;
@@ -1871,12 +1976,12 @@ get_tables_to_cluster(MemoryContext cluster_context)
 	 * have indisclustered set, because CLUSTER will refuse to set it when
 	 * called with one of them as argument.
 	 */
-	indRelation = heap_open(IndexRelationId, AccessShareLock);
+	indRelation = table_open(IndexRelationId, AccessShareLock);
 	ScanKeyInit(&entry,
 				Anum_pg_index_indisclustered,
 				BTEqualStrategyNumber, F_BOOLEQ,
 				BoolGetDatum(true));
-	scan = heap_beginscan_catalog(indRelation, 1, &entry);
+	scan = table_beginscan_catalog(indRelation, 1, &entry);
 	while ((indexTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		index = (Form_pg_index) GETSTRUCT(indexTuple);
@@ -1897,56 +2002,9 @@ get_tables_to_cluster(MemoryContext cluster_context)
 
 		MemoryContextSwitchTo(old_context);
 	}
-	heap_endscan(scan);
+	table_endscan(scan);
 
 	relation_close(indRelation, AccessShareLock);
 
 	return rvs;
-}
-
-
-/*
- * Reconstruct and rewrite the given tuple
- *
- * We cannot simply copy the tuple as-is, for several reasons:
- *
- * 1. We'd like to squeeze out the values of any dropped columns, both
- * to save space and to ensure we have no corner-case failures. (It's
- * possible for example that the new table hasn't got a TOAST table
- * and so is unable to store any large values of dropped cols.)
- *
- * 2. The tuple might not even be legal for the new table; this is
- * currently only known to happen as an after-effect of ALTER TABLE
- * SET WITHOUT OIDS.
- *
- * So, we must reconstruct the tuple from component Datums.
- */
-static void
-reform_and_rewrite_tuple(HeapTuple tuple,
-						 TupleDesc oldTupDesc, TupleDesc newTupDesc,
-						 Datum *values, bool *isnull,
-						 bool newRelHasOids, RewriteState rwstate)
-{
-	HeapTuple	copiedTuple;
-	int			i;
-
-	heap_deform_tuple(tuple, oldTupDesc, values, isnull);
-
-	/* Be sure to null out any dropped columns */
-	for (i = 0; i < newTupDesc->natts; i++)
-	{
-		if (newTupDesc->attrs[i]->attisdropped)
-			isnull[i] = true;
-	}
-
-	copiedTuple = heap_form_tuple(newTupDesc, values, isnull);
-
-	/* Preserve OID, if any */
-	if (newRelHasOids)
-		HeapTupleSetOid(copiedTuple, HeapTupleGetOid(tuple));
-
-	/* The heap rewrite module does the rest */
-	rewrite_heap_tuple(rwstate, tuple, copiedTuple);
-
-	heap_freetuple(copiedTuple);
 }

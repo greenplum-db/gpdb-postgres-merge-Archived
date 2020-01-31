@@ -3,7 +3,7 @@
  * execCurrent.c
  *	  executor support for WHERE CURRENT OF cursor
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	src/backend/executor/execCurrent.c
@@ -12,6 +12,10 @@
  */
 #include "postgres.h"
 
+<<<<<<< HEAD
+=======
+#include "access/genam.h"
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/relscan.h"
 #include "access/sysattr.h"
 #include "catalog/pg_type.h"
@@ -28,11 +32,17 @@
 
 
 static char *fetch_cursor_param_value(ExprContext *econtext, int paramId);
+<<<<<<< HEAD
 static ScanState *search_plan_tree(PlanState *node, Oid table_oid);
 #ifdef NOT_USED
 static ScanState *search_plan_tree(PlanState *node, Oid table_oid,
 				 bool *pending_rescan);
 #endif /* NOT_USED */
+=======
+static ScanState *search_plan_tree(PlanState *node, Oid table_oid,
+								   bool *pending_rescan);
+
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * execCurrentOf
@@ -41,7 +51,7 @@ static ScanState *search_plan_tree(PlanState *node, Oid table_oid,
  * of the table is currently being scanned by the cursor named by CURRENT OF,
  * and return the row's TID into *current_tid.
  *
- * Returns TRUE if a row was identified.  Returns FALSE if the cursor is valid
+ * Returns true if a row was identified.  Returns false if the cursor is valid
  * for the table but is not currently scanning a row of the table (this is a
  * legal situation in inheritance cases).  Raises error if cursor is not a
  * valid updatable scan of the specified table.
@@ -180,7 +190,7 @@ getCurrentOf(CurrentOfExpr *cexpr,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
 				 errmsg("cursor \"%s\" is not a SELECT query",
 						cursor_name)));
-	queryDesc = PortalGetQueryDesc(portal);
+	queryDesc = portal->queryDesc;
 	if (queryDesc == NULL || queryDesc->estate == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
@@ -264,22 +274,27 @@ getCurrentOf(CurrentOfExpr *cexpr,
 	 * has been received by a Motion node higher up in the tree instead. So
 	 * we use a different approach.
 	 */
+<<<<<<< HEAD
 #if 0
 	if (queryDesc->estate->es_rowMarks)
+=======
+	if (queryDesc->estate->es_rowmarks)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		ExecRowMark *erm;
-		ListCell   *lc;
+		Index		i;
 
 		/*
 		 * Here, the query must have exactly one FOR UPDATE/SHARE reference to
 		 * the target table, and we dig the ctid info out of that.
 		 */
 		erm = NULL;
-		foreach(lc, queryDesc->estate->es_rowMarks)
+		for (i = 0; i < queryDesc->estate->es_range_table_size; i++)
 		{
-			ExecRowMark *thiserm = (ExecRowMark *) lfirst(lc);
+			ExecRowMark *thiserm = queryDesc->estate->es_rowmarks[i];
 
-			if (!RowMarkRequiresRowShareLock(thiserm->markType))
+			if (thiserm == NULL ||
+				!RowMarkRequiresRowShareLock(thiserm->markType))
 				continue;		/* ignore non-FOR UPDATE/SHARE items */
 
 			if (thiserm->relid == table_oid)
@@ -376,7 +391,11 @@ getCurrentOf(CurrentOfExpr *cexpr,
 			 */
 			IndexScanDesc scan = ((IndexOnlyScanState *) scanstate)->ioss_ScanDesc;
 
+<<<<<<< HEAD
 			*current_tid = scan->xs_ctup.t_self;
+=======
+			*current_tid = scan->xs_heaptid;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		else
 		{
@@ -391,14 +410,22 @@ getCurrentOf(CurrentOfExpr *cexpr,
 			ItemPointer tuple_tid;
 
 #ifdef USE_ASSERT_CHECKING
+<<<<<<< HEAD
 			if (!slot_getsysattr(scanstate->ss_ScanTupleSlot,
 								 TableOidAttributeNumber,
 								 &ldatum,
 								 &lisnull))
+=======
+			ldatum = slot_getsysattr(scanstate->ss_ScanTupleSlot,
+									 TableOidAttributeNumber,
+									 &lisnull);
+			if (lisnull)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_CURSOR_STATE),
 						 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
 								cursor_name, table_name)));
+<<<<<<< HEAD
 			Assert(!lisnull);
 			Assert(DatumGetObjectId(ldatum) == table_oid);
 #endif
@@ -407,11 +434,23 @@ getCurrentOf(CurrentOfExpr *cexpr,
 								 SelfItemPointerAttributeNumber,
 								 &ldatum,
 								 &lisnull))
+=======
+			Assert(DatumGetObjectId(ldatum) == table_oid);
+#endif
+
+			ldatum = slot_getsysattr(scanstate->ss_ScanTupleSlot,
+									 SelfItemPointerAttributeNumber,
+									 &lisnull);
+			if (lisnull)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_CURSOR_STATE),
 						 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
 								cursor_name, table_name)));
+<<<<<<< HEAD
 			Assert(!lisnull);
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			tuple_tid = (ItemPointer) DatumGetPointer(ldatum);
 
 			*current_tid = *tuple_tid;
@@ -499,11 +538,14 @@ fetch_cursor_param_value(ExprContext *econtext, int paramId)
 	if (paramInfo &&
 		paramId > 0 && paramId <= paramInfo->numParams)
 	{
-		ParamExternData *prm = &paramInfo->params[paramId - 1];
+		ParamExternData *prm;
+		ParamExternData prmdata;
 
 		/* give hook a chance in case parameter is dynamic */
-		if (!OidIsValid(prm->ptype) && paramInfo->paramFetch != NULL)
-			(*paramInfo->paramFetch) (paramInfo, paramId);
+		if (paramInfo->paramFetch != NULL)
+			prm = paramInfo->paramFetch(paramInfo, paramId, false, &prmdata);
+		else
+			prm = &paramInfo->params[paramId - 1];
 
 		if (OidIsValid(prm->ptype) && !prm->isnull)
 		{
@@ -532,10 +574,20 @@ fetch_cursor_param_value(ExprContext *econtext, int paramId)
  *
  * Search through a PlanState tree for a scan node on the specified table.
  * Return NULL if not found or multiple candidates.
+ *
+ * If a candidate is found, set *pending_rescan to true if that candidate
+ * or any node above it has a pending rescan action, i.e. chgParam != NULL.
+ * That indicates that we shouldn't consider the node to be positioned on a
+ * valid tuple, even if its own state would indicate that it is.  (Caller
+ * must initialize *pending_rescan to false, and should not trust its state
+ * if multiple candidates are found.)
  */
 static ScanState *
-search_plan_tree(PlanState *node, Oid table_oid)
+search_plan_tree(PlanState *node, Oid table_oid,
+				 bool *pending_rescan)
 {
+	ScanState  *result = NULL;
+
 	if (node == NULL)
 		return NULL;
 	switch (nodeTag(node))
@@ -554,10 +606,17 @@ search_plan_tree(PlanState *node, Oid table_oid)
 		{
 			ScanState  *sstate = (ScanState *) node;
 
+<<<<<<< HEAD
 			if (RelationGetRelid(sstate->ss_currentRelation) == table_oid)
 				return sstate;
 			break;
 		}
+=======
+				if (RelationGetRelid(sstate->ss_currentRelation) == table_oid)
+					result = sstate;
+				break;
+			}
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * For Append, we must look through the members; watch out for
@@ -571,6 +630,7 @@ search_plan_tree(PlanState *node, Oid table_oid)
 
 			for (i = 0; i < astate->as_nplans; i++)
 			{
+<<<<<<< HEAD
 				ScanState  *elem = search_plan_tree(astate->appendplans[i],
 				                                    table_oid);
 
@@ -579,6 +639,24 @@ search_plan_tree(PlanState *node, Oid table_oid)
 				if (result)
 					return NULL;	/* multiple matches */
 				result = elem;
+=======
+				AppendState *astate = (AppendState *) node;
+				int			i;
+
+				for (i = 0; i < astate->as_nplans; i++)
+				{
+					ScanState  *elem = search_plan_tree(astate->appendplans[i],
+														table_oid,
+														pending_rescan);
+
+					if (!elem)
+						continue;
+					if (result)
+						return NULL;	/* multiple matches */
+					result = elem;
+				}
+				break;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 			return result;
 		}
@@ -594,6 +672,7 @@ search_plan_tree(PlanState *node, Oid table_oid)
 
 			for (i = 0; i < mstate->ms_nplans; i++)
 			{
+<<<<<<< HEAD
 				ScanState  *elem = search_plan_tree(mstate->mergeplans[i],
 				                                    table_oid);
 
@@ -602,6 +681,24 @@ search_plan_tree(PlanState *node, Oid table_oid)
 				if (result)
 					return NULL;	/* multiple matches */
 				result = elem;
+=======
+				MergeAppendState *mstate = (MergeAppendState *) node;
+				int			i;
+
+				for (i = 0; i < mstate->ms_nplans; i++)
+				{
+					ScanState  *elem = search_plan_tree(mstate->mergeplans[i],
+														table_oid,
+														pending_rescan);
+
+					if (!elem)
+						continue;
+					if (result)
+						return NULL;	/* multiple matches */
+					result = elem;
+				}
+				break;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 			return result;
 		}
@@ -612,21 +709,39 @@ search_plan_tree(PlanState *node, Oid table_oid)
 			 */
 		case T_ResultState:
 		case T_LimitState:
-			return search_plan_tree(node->lefttree, table_oid);
+			result = search_plan_tree(node->lefttree,
+									  table_oid,
+									  pending_rescan);
+			break;
 
 			/*
 			 * SubqueryScan too, but it keeps the child in a different place
 			 */
 		case T_SubqueryScanState:
+<<<<<<< HEAD
 			return search_plan_tree(((SubqueryScanState *) node)->subplan,
 			                        table_oid);
 
 		case T_MotionState:
 			return search_plan_tree(node->lefttree, table_oid);
+=======
+			result = search_plan_tree(((SubqueryScanState *) node)->subplan,
+									  table_oid,
+									  pending_rescan);
+			break;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		default:
 			/* Otherwise, assume we can't descend through it */
 			break;
 	}
-	return NULL;
+
+	/*
+	 * If we found a candidate at or below this node, then this node's
+	 * chgParam indicates a pending rescan that will affect the candidate.
+	 */
+	if (result && node->chgParam != NULL)
+		*pending_rescan = true;
+
+	return result;
 }

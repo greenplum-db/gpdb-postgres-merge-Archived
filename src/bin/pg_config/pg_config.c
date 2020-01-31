@@ -15,7 +15,7 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  *
  * src/bin/pg_config/pg_config.c
  *
@@ -102,7 +102,11 @@ help(void)
 	printf(_("  --version             show the PostgreSQL version\n"));
 	printf(_("  -?, --help            show this help, then exit\n"));
 	printf(_("\nWith no arguments, all known items are shown.\n\n"));
+<<<<<<< HEAD
 	printf(_("Report bugs to <bugs@greenplum.org>.\n"));
+=======
+	printf(_("Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 static void

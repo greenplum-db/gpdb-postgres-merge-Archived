@@ -34,7 +34,11 @@ check_prepare_conn(PGconn *conn, const char *dbName)
 		exit(1);
 	}
 
+<<<<<<< HEAD
 	/* Set always-secure search path, so malicous users can't take control. */
+=======
+	/* Set always-secure search path, so malicious users can't take control. */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	res = PQexec(conn,
 				 "SELECT pg_catalog.set_config('search_path', '', false)");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)

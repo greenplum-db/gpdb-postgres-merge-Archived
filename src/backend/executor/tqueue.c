@@ -3,27 +3,12 @@
  * tqueue.c
  *	  Use shm_mq to send & receive tuples between parallel backends
  *
- * Most of the complexity in this module arises from transient RECORD types,
- * which all have type RECORDOID and are distinguished by typmod numbers
- * that are managed per-backend (see src/backend/utils/cache/typcache.c).
- * The sender's set of RECORD typmod assignments probably doesn't match the
- * receiver's.  To deal with this, we make the sender send a description
- * of each transient RECORD type appearing in the data it sends.  The
- * receiver finds or creates a matching type in its own typcache, and then
- * maps the sender's typmod for that type to its own typmod.
- *
  * A DestReceiver of type DestTupleQueue, which is a TQueueDestReceiver
- * under the hood, writes tuples from the executor to a shm_mq.  If
- * necessary, it also writes control messages describing transient
- * record types used within the tuple.
+ * under the hood, writes tuples from the executor to a shm_mq.
  *
- * A TupleQueueReader reads tuples, and control messages if any are sent,
- * from a shm_mq and returns the tuples.  If transient record types are
- * in use, it registers those types locally based on the control messages
- * and rewrites the typmods sent by the remote side to the corresponding
- * local record typmods.
+ * A TupleQueueReader reads tuples from a shm_mq and returns the tuples.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -35,198 +20,43 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
-#include "catalog/pg_type.h"
 #include "executor/tqueue.h"
-#include "funcapi.h"
-#include "lib/stringinfo.h"
-#include "miscadmin.h"
-#include "utils/array.h"
-#include "utils/lsyscache.h"
-#include "utils/memutils.h"
-#include "utils/rangetypes.h"
-#include "utils/syscache.h"
-#include "utils/typcache.h"
-
-
-/*
- * The data transferred through the shm_mq is divided into messages.
- * One-byte messages are mode-switch messages, telling the receiver to switch
- * between "control" and "data" modes.  (We always start up in "data" mode.)
- * Otherwise, when in "data" mode, each message is a tuple.  When in "control"
- * mode, each message defines one transient-typmod-to-tupledesc mapping to
- * let us interpret future tuples.  Both of those cases certainly require
- * more than one byte, so no confusion is possible.
- */
-#define TUPLE_QUEUE_MODE_CONTROL	'c' /* mode-switch message contents */
-#define TUPLE_QUEUE_MODE_DATA		'd'
-
-/*
- * Both the sender and receiver build trees of TupleRemapInfo nodes to help
- * them identify which (sub) fields of transmitted tuples are composite and
- * may thus need remap processing.  We might need to look within arrays and
- * ranges, not only composites, to find composite sub-fields.  A NULL
- * TupleRemapInfo pointer indicates that it is known that the described field
- * is not composite and has no composite substructure.
- *
- * Note that we currently have to look at each composite field at runtime,
- * even if we believe it's of a named composite type (i.e., not RECORD).
- * This is because we allow the actual value to be a compatible transient
- * RECORD type.  That's grossly inefficient, and it would be good to get
- * rid of the requirement, but it's not clear what would need to change.
- *
- * Also, we allow the top-level tuple structure, as well as the actual
- * structure of composite subfields, to change from one tuple to the next
- * at runtime.  This may well be entirely historical, but it's mostly free
- * to support given the previous requirement; and other places in the system
- * also permit this, so it's not entirely clear if we could drop it.
- */
-
-typedef enum
-{
-	TQUEUE_REMAP_ARRAY,			/* array */
-	TQUEUE_REMAP_RANGE,			/* range */
-	TQUEUE_REMAP_RECORD			/* composite type, named or transient */
-} TupleRemapClass;
-
-typedef struct TupleRemapInfo TupleRemapInfo;
-
-typedef struct ArrayRemapInfo
-{
-	int16		typlen;			/* array element type's storage properties */
-	bool		typbyval;
-	char		typalign;
-	TupleRemapInfo *element_remap;		/* array element type's remap info */
-} ArrayRemapInfo;
-
-typedef struct RangeRemapInfo
-{
-	TypeCacheEntry *typcache;	/* range type's typcache entry */
-	TupleRemapInfo *bound_remap;	/* range bound type's remap info */
-} RangeRemapInfo;
-
-typedef struct RecordRemapInfo
-{
-	/* Original (remote) type ID info last seen for this composite field */
-	Oid			rectypid;
-	int32		rectypmod;
-	/* Local RECORD typmod, or -1 if unset; not used on sender side */
-	int32		localtypmod;
-	/* If no fields of the record require remapping, these are NULL: */
-	TupleDesc	tupledesc;		/* copy of record's tupdesc */
-	TupleRemapInfo **field_remap;		/* each field's remap info */
-} RecordRemapInfo;
-
-struct TupleRemapInfo
-{
-	TupleRemapClass remapclass;
-	union
-	{
-		ArrayRemapInfo arr;
-		RangeRemapInfo rng;
-		RecordRemapInfo rec;
-	}			u;
-};
 
 /*
  * DestReceiver object's private contents
  *
- * queue and tupledesc are pointers to data supplied by DestReceiver's caller.
- * The recordhtab and remap info are owned by the DestReceiver and are kept
- * in mycontext.  tmpcontext is a tuple-lifespan context to hold cruft
- * created while traversing each tuple to find record subfields.
+ * queue is a pointer to data supplied by DestReceiver's caller.
  */
 typedef struct TQueueDestReceiver
 {
 	DestReceiver pub;			/* public fields */
 	shm_mq_handle *queue;		/* shm_mq to send to */
-	MemoryContext mycontext;	/* context containing TQueueDestReceiver */
-	MemoryContext tmpcontext;	/* per-tuple context, if needed */
-	HTAB	   *recordhtab;		/* table of transmitted typmods, if needed */
-	char		mode;			/* current message mode */
-	TupleDesc	tupledesc;		/* current top-level tuple descriptor */
-	TupleRemapInfo **field_remapinfo;	/* current top-level remap info */
 } TQueueDestReceiver;
-
-/*
- * Hash table entries for mapping remote to local typmods.
- */
-typedef struct RecordTypmodMap
-{
-	int32		remotetypmod;	/* hash key (must be first!) */
-	int32		localtypmod;
-} RecordTypmodMap;
 
 /*
  * TupleQueueReader object's private contents
  *
- * queue and tupledesc are pointers to data supplied by reader's caller.
- * The typmodmap and remap info are owned by the TupleQueueReader and
- * are kept in mycontext.
+ * queue is a pointer to data supplied by reader's caller.
  *
  * "typedef struct TupleQueueReader TupleQueueReader" is in tqueue.h
  */
 struct TupleQueueReader
 {
 	shm_mq_handle *queue;		/* shm_mq to receive from */
-	MemoryContext mycontext;	/* context containing TupleQueueReader */
-	HTAB	   *typmodmap;		/* RecordTypmodMap hashtable, if needed */
-	char		mode;			/* current message mode */
-	TupleDesc	tupledesc;		/* current top-level tuple descriptor */
-	TupleRemapInfo **field_remapinfo;	/* current top-level remap info */
 };
-
-/* Local function prototypes */
-static void TQExamine(TQueueDestReceiver *tqueue,
-		  TupleRemapInfo *remapinfo,
-		  Datum value);
-static void TQExamineArray(TQueueDestReceiver *tqueue,
-			   ArrayRemapInfo *remapinfo,
-			   Datum value);
-static void TQExamineRange(TQueueDestReceiver *tqueue,
-			   RangeRemapInfo *remapinfo,
-			   Datum value);
-static void TQExamineRecord(TQueueDestReceiver *tqueue,
-				RecordRemapInfo *remapinfo,
-				Datum value);
-static void TQSendRecordInfo(TQueueDestReceiver *tqueue, int32 typmod,
-				 TupleDesc tupledesc);
-static void TupleQueueHandleControlMessage(TupleQueueReader *reader,
-							   Size nbytes, char *data);
-static HeapTuple TupleQueueHandleDataMessage(TupleQueueReader *reader,
-							Size nbytes, HeapTupleHeader data);
-static HeapTuple TQRemapTuple(TupleQueueReader *reader,
-			 TupleDesc tupledesc,
-			 TupleRemapInfo **field_remapinfo,
-			 HeapTuple tuple);
-static Datum TQRemap(TupleQueueReader *reader, TupleRemapInfo *remapinfo,
-		Datum value, bool *changed);
-static Datum TQRemapArray(TupleQueueReader *reader, ArrayRemapInfo *remapinfo,
-			 Datum value, bool *changed);
-static Datum TQRemapRange(TupleQueueReader *reader, RangeRemapInfo *remapinfo,
-			 Datum value, bool *changed);
-static Datum TQRemapRecord(TupleQueueReader *reader, RecordRemapInfo *remapinfo,
-			  Datum value, bool *changed);
-static TupleRemapInfo *BuildTupleRemapInfo(Oid typid, MemoryContext mycontext);
-static TupleRemapInfo *BuildArrayRemapInfo(Oid elemtypid,
-					MemoryContext mycontext);
-static TupleRemapInfo *BuildRangeRemapInfo(Oid rngtypid,
-					MemoryContext mycontext);
-static TupleRemapInfo **BuildFieldRemapInfo(TupleDesc tupledesc,
-					MemoryContext mycontext);
-
 
 /*
  * Receive a tuple from a query, and send it to the designated shm_mq.
  *
- * Returns TRUE if successful, FALSE if shm_mq has been detached.
+ * Returns true if successful, false if shm_mq has been detached.
  */
 static bool
 tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)
 {
 	TQueueDestReceiver *tqueue = (TQueueDestReceiver *) self;
-	TupleDesc	tupledesc = slot->tts_tupleDescriptor;
 	HeapTuple	tuple;
 	shm_mq_result result;
+<<<<<<< HEAD
 
 	/*
 	 * If first time through, compute remapping info for the top-level fields.
@@ -309,10 +139,16 @@ tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)
 			shm_mq_send(tqueue->queue, sizeof(char), &tqueue->mode, false);
 		}
 	}
+=======
+	bool		should_free;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Send the tuple itself. */
-	tuple = ExecMaterializeSlot(slot);
+	tuple = ExecFetchSlotHeapTuple(slot, true, &should_free);
 	result = shm_mq_send(tqueue->queue, tuple->t_len, tuple->t_data, false);
+
+	if (should_free)
+		heap_freetuple(tuple);
 
 	/* Check for failure. */
 	if (result == SHM_MQ_DETACHED)
@@ -326,6 +162,7 @@ tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)
 }
 
 /*
+<<<<<<< HEAD
  * Examine the given datum and send any necessary control messages for
  * transient record types contained in it.
  *
@@ -570,6 +407,8 @@ TQSendRecordInfo(TQueueDestReceiver *tqueue, int32 typmod, TupleDesc tupledesc)
 }
 
 /*
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Prepare to receive tuples from executor.
  */
 static void
@@ -586,7 +425,9 @@ tqueueShutdownReceiver(DestReceiver *self)
 {
 	TQueueDestReceiver *tqueue = (TQueueDestReceiver *) self;
 
-	shm_mq_detach(shm_mq_get_queue(tqueue->queue));
+	if (tqueue->queue != NULL)
+		shm_mq_detach(tqueue->queue);
+	tqueue->queue = NULL;
 }
 
 /*
@@ -597,13 +438,9 @@ tqueueDestroyReceiver(DestReceiver *self)
 {
 	TQueueDestReceiver *tqueue = (TQueueDestReceiver *) self;
 
-	if (tqueue->tmpcontext != NULL)
-		MemoryContextDelete(tqueue->tmpcontext);
-	if (tqueue->recordhtab != NULL)
-		hash_destroy(tqueue->recordhtab);
-	/* Is it worth trying to free substructure of the remap tree? */
-	if (tqueue->field_remapinfo != NULL)
-		pfree(tqueue->field_remapinfo);
+	/* We probably already detached from queue, but let's be sure */
+	if (tqueue->queue != NULL)
+		shm_mq_detach(tqueue->queue);
 	pfree(self);
 }
 
@@ -623,13 +460,6 @@ CreateTupleQueueDestReceiver(shm_mq_handle *handle)
 	self->pub.rDestroy = tqueueDestroyReceiver;
 	self->pub.mydest = DestTupleQueue;
 	self->queue = handle;
-	self->mycontext = CurrentMemoryContext;
-	self->tmpcontext = NULL;
-	self->recordhtab = NULL;
-	self->mode = TUPLE_QUEUE_MODE_DATA;
-	/* Top-level tupledesc is not known yet */
-	self->tupledesc = NULL;
-	self->field_remapinfo = NULL;
 
 	return (DestReceiver *) self;
 }
@@ -638,32 +468,24 @@ CreateTupleQueueDestReceiver(shm_mq_handle *handle)
  * Create a tuple queue reader.
  */
 TupleQueueReader *
-CreateTupleQueueReader(shm_mq_handle *handle, TupleDesc tupledesc)
+CreateTupleQueueReader(shm_mq_handle *handle)
 {
 	TupleQueueReader *reader = palloc0(sizeof(TupleQueueReader));
 
 	reader->queue = handle;
-	reader->mycontext = CurrentMemoryContext;
-	reader->typmodmap = NULL;
-	reader->mode = TUPLE_QUEUE_MODE_DATA;
-	reader->tupledesc = tupledesc;
-	reader->field_remapinfo = BuildFieldRemapInfo(tupledesc, reader->mycontext);
 
 	return reader;
 }
 
 /*
  * Destroy a tuple queue reader.
+ *
+ * Note: cleaning up the underlying shm_mq is the caller's responsibility.
+ * We won't access it here, as it may be detached already.
  */
 void
 DestroyTupleQueueReader(TupleQueueReader *reader)
 {
-	shm_mq_detach(shm_mq_get_queue(reader->queue));
-	if (reader->typmodmap != NULL)
-		hash_destroy(reader->typmodmap);
-	/* Is it worth trying to free substructure of the remap tree? */
-	if (reader->field_remapinfo != NULL)
-		pfree(reader->field_remapinfo);
 	pfree(reader);
 }
 
@@ -675,9 +497,8 @@ DestroyTupleQueueReader(TupleQueueReader *reader)
  * is set to true when there are no remaining tuples and otherwise to false.
  *
  * The returned tuple, if any, is allocated in CurrentMemoryContext.
- * That should be a short-lived (tuple-lifespan) context, because we are
- * pretty cavalier about leaking memory in that context if we have to do
- * tuple remapping.
+ * Note that this routine must not leak memory!  (We used to allow that,
+ * but not any more.)
  *
  * Even when shm_mq_receive() returns SHM_MQ_WOULD_BLOCK, this can still
  * accumulate bytes from a partially-read message, so it's useful to call
@@ -686,64 +507,29 @@ DestroyTupleQueueReader(TupleQueueReader *reader)
 HeapTuple
 TupleQueueReaderNext(TupleQueueReader *reader, bool nowait, bool *done)
 {
+	HeapTupleData htup;
 	shm_mq_result result;
+	Size		nbytes;
+	void	   *data;
 
 	if (done != NULL)
 		*done = false;
 
-	for (;;)
+	/* Attempt to read a message. */
+	result = shm_mq_receive(reader->queue, &nbytes, &data, nowait);
+
+	/* If queue is detached, set *done and return NULL. */
+	if (result == SHM_MQ_DETACHED)
 	{
-		Size		nbytes;
-		void	   *data;
-
-		/* Attempt to read a message. */
-		result = shm_mq_receive(reader->queue, &nbytes, &data, nowait);
-
-		/* If queue is detached, set *done and return NULL. */
-		if (result == SHM_MQ_DETACHED)
-		{
-			if (done != NULL)
-				*done = true;
-			return NULL;
-		}
-
-		/* In non-blocking mode, bail out if no message ready yet. */
-		if (result == SHM_MQ_WOULD_BLOCK)
-			return NULL;
-		Assert(result == SHM_MQ_SUCCESS);
-
-		/*
-		 * We got a message (see message spec at top of file).  Process it.
-		 */
-		if (nbytes == 1)
-		{
-			/* Mode switch message. */
-			reader->mode = ((char *) data)[0];
-		}
-		else if (reader->mode == TUPLE_QUEUE_MODE_DATA)
-		{
-			/* Tuple data. */
-			return TupleQueueHandleDataMessage(reader, nbytes, data);
-		}
-		else if (reader->mode == TUPLE_QUEUE_MODE_CONTROL)
-		{
-			/* Control message, describing a transient record type. */
-			TupleQueueHandleControlMessage(reader, nbytes, data);
-		}
-		else
-			elog(ERROR, "unrecognized tqueue mode: %d", (int) reader->mode);
+		if (done != NULL)
+			*done = true;
+		return NULL;
 	}
-}
 
-/*
- * Handle a data message - that is, a tuple - from the remote side.
- */
-static HeapTuple
-TupleQueueHandleDataMessage(TupleQueueReader *reader,
-							Size nbytes,
-							HeapTupleHeader data)
-{
-	HeapTupleData htup;
+	/* In non-blocking mode, bail out if no message ready yet. */
+	if (result == SHM_MQ_WOULD_BLOCK)
+		return NULL;
+	Assert(result == SHM_MQ_SUCCESS);
 
 	/*
 	 * Set up a dummy HeapTupleData pointing to the data from the shm_mq
@@ -756,6 +542,7 @@ TupleQueueHandleDataMessage(TupleQueueReader *reader,
 	htup.t_len = nbytes;
 	htup.t_data = data;
 
+<<<<<<< HEAD
 	/*
 	 * Either just copy the data into a regular palloc'd tuple, or remap it,
 	 * as required.
@@ -1285,4 +1072,7 @@ BuildFieldRemapInfo(TupleDesc tupledesc, MemoryContext mycontext)
 	}
 
 	return remapinfo;
+=======
+	return heap_copytuple(&htup);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

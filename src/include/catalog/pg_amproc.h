@@ -1,8 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_amproc.h
- *	  definition of the system "amproc" relation (pg_amproc)
- *	  along with the relation's initial contents.
+ *	  definition of the "access method procedure" system catalog (pg_amproc)
  *
  * The amproc table identifies support procedures associated with index
  * operator families and classes.  These procedures can't be listed in pg_amop
@@ -19,14 +18,14 @@
  * some don't pay attention to non-default functions at all.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_amproc.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -34,21 +33,31 @@
 #define PG_AMPROC_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_amproc_d.h"
 
 /* ----------------
  *		pg_amproc definition.  cpp turns this into
  *		typedef struct FormData_pg_amproc
  * ----------------
  */
-#define AccessMethodProcedureRelationId  2603
-
-CATALOG(pg_amproc,2603)
+CATALOG(pg_amproc,2603,AccessMethodProcedureRelationId)
 {
-	Oid			amprocfamily;	/* the index opfamily this entry is for */
-	Oid			amproclefttype; /* procedure's left input data type */
-	Oid			amprocrighttype;	/* procedure's right input data type */
-	int16		amprocnum;		/* support procedure index */
-	regproc		amproc;			/* OID of the proc */
+	Oid			oid;			/* oid */
+
+	/* the index opfamily this entry is for */
+	Oid			amprocfamily BKI_LOOKUP(pg_opfamily);
+
+	/* procedure's left input data type */
+	Oid			amproclefttype BKI_LOOKUP(pg_type);
+
+	/* procedure's right input data type */
+	Oid			amprocrighttype BKI_LOOKUP(pg_type);
+
+	/* support procedure index */
+	int16		amprocnum;
+
+	/* OID of the proc */
+	regproc		amproc BKI_LOOKUP(pg_proc);
 } FormData_pg_amproc;
 
 /* GPDB added foreign key definitions for gpcheckcat. */
@@ -64,6 +73,7 @@ FOREIGN_KEY(amproc REFERENCES pg_proc(oid));
  */
 typedef FormData_pg_amproc *Form_pg_amproc;
 
+<<<<<<< HEAD
 /* ----------------
  *		compiler constants for pg_amproc
  * ----------------
@@ -729,3 +739,6 @@ DATA(insert (	7129 2950 2950 1 6170));	/* uuid */
 DATA(insert (	7130 3500 3500 1 6171));	/* enum */
 
 #endif   /* PG_AMPROC_H */
+=======
+#endif							/* PG_AMPROC_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

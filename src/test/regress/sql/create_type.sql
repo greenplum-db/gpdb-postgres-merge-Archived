@@ -84,6 +84,16 @@ INSERT INTO default_test DEFAULT VALUES;
 
 SELECT * FROM default_test;
 
+-- invalid: non-lowercase quoted identifiers
+CREATE TYPE case_int42 (
+	"Internallength" = 4,
+	"Input" = int42_in,
+	"Output" = int42_out,
+	"Alignment" = int4,
+	"Default" = 42,
+	"Passedbyvalue"
+);
+
 -- Test stand-alone composite type
 
 CREATE TYPE default_test_row AS (f1 text_w_default, f2 int42);
@@ -135,6 +145,7 @@ CREATE TEMP TABLE mytab (foo widget(42,13));
 SELECT format_type(atttypid,atttypmod) FROM pg_attribute
 WHERE attrelid = 'mytab'::regclass AND attnum > 0;
 
+<<<<<<< HEAD
 -- Create & Drop type as non-superuser
 CREATE USER user_bob;
 SET SESSION AUTHORIZATION user_bob;
@@ -143,3 +154,14 @@ CREATE TYPE compfoo as (f1 int, f2 text);
 DROP TYPE compfoo;
 RESET SESSION AUTHORIZATION;
 DROP USER user_bob;
+=======
+-- might as well exercise the widget type while we're here
+INSERT INTO mytab VALUES ('(1,2,3)'), ('(-44,5.5,12)');
+TABLE mytab;
+
+-- and test format_type() a bit more, too
+select format_type('varchar'::regtype, 42);
+select format_type('bpchar'::regtype, null);
+-- this behavior difference is intentional
+select format_type('bpchar'::regtype, -1);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

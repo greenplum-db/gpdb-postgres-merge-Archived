@@ -4,7 +4,7 @@
  *	  Physical access information for relations.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/relfilenode.h
@@ -96,6 +96,7 @@ typedef struct RelFileNodeBackend
 	 (node1).backend == (node2).backend && \
 	 (node1).node.spcNode == (node2).node.spcNode)
 
+<<<<<<< HEAD
 inline static bool RelFileNode_IsEmpty(
 	RelFileNode	*relFileNode)
 {
@@ -119,3 +120,6 @@ typedef struct RelFileNodePendingDelete
 } RelFileNodePendingDelete;
 
 #endif   /* RELFILENODE_H */
+=======
+#endif							/* RELFILENODE_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

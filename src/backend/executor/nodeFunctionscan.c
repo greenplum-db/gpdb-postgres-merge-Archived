@@ -3,9 +3,13 @@
  * nodeFunctionscan.c
  *	  Support routines for scanning RangeFunctions (functions in rangetable).
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -42,7 +46,7 @@
  */
 typedef struct FunctionScanPerFuncState
 {
-	ExprState  *funcexpr;		/* state of the expression being evaluated */
+	SetExprState *setexpr;		/* state of the expression being evaluated */
 	TupleDesc	tupdesc;		/* desc of the function result type */
 	int			colcount;		/* expected number of result columns */
 	Tuplestorestate *tstore;	/* holds the function result set */
@@ -101,10 +105,11 @@ FunctionNext_guts(FunctionScanState *node)
 		if (tstore == NULL)
 		{
 			node->funcstates[0].tstore = tstore =
-				ExecMakeTableFunctionResult(node->funcstates[0].funcexpr,
+				ExecMakeTableFunctionResult(node->funcstates[0].setexpr,
 											node->ss.ps.ps_ExprContext,
 											node->argcontext,
 											node->funcstates[0].tupdesc,
+<<<<<<< HEAD
 											node->eflags & EXEC_FLAG_BACKWARD,
 											PlanStateOperatorMemKB( (PlanState *) node));
 
@@ -117,6 +122,9 @@ FunctionNext_guts(FunctionScanState *node)
 				/* Request a callback at end of query. */
 				node->ss.ps.cdbexplainfun = ExecFunctionScanExplainEnd;
 			}
+=======
+											node->eflags & EXEC_FLAG_BACKWARD);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * paranoia - cope if the function, which may have constructed the
@@ -181,10 +189,11 @@ FunctionNext_guts(FunctionScanState *node)
 		if (fs->tstore == NULL)
 		{
 			fs->tstore =
-				ExecMakeTableFunctionResult(fs->funcexpr,
+				ExecMakeTableFunctionResult(fs->setexpr,
 											node->ss.ps.ps_ExprContext,
 											node->argcontext,
 											fs->tupdesc,
+<<<<<<< HEAD
 											node->eflags & EXEC_FLAG_BACKWARD,
 											PlanStateOperatorMemKB( (PlanState *) node));
 
@@ -197,6 +206,9 @@ FunctionNext_guts(FunctionScanState *node)
 				/* Request a callback at end of query. */
 				node->ss.ps.cdbexplainfun = ExecFunctionScanExplainEnd;
 			}
+=======
+											node->eflags & EXEC_FLAG_BACKWARD);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * paranoia - cope if the function, which may have constructed the
@@ -330,9 +342,11 @@ FunctionRecheck(FunctionScanState *node, TupleTableSlot *slot)
  *		access method functions.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecFunctionScan(FunctionScanState *node)
+static TupleTableSlot *
+ExecFunctionScan(PlanState *pstate)
 {
+	FunctionScanState *node = castNode(FunctionScanState, pstate);
+
 	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) FunctionNext,
 					(ExecScanRecheckMtd) FunctionRecheck);
@@ -367,6 +381,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	scanstate = makeNode(FunctionScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
+	scanstate->ss.ps.ExecProcNode = ExecFunctionScan;
 	scanstate->eflags = eflags;
 
 	/*
@@ -399,6 +414,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &scanstate->ss.ps);
 
+<<<<<<< HEAD
 	/*
 	 * tuple table initialization
 	 */
@@ -415,6 +431,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		ExecInitExpr((Expr *) node->scan.plan.qual,
 					 (PlanState *) scanstate);
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	scanstate->funcstates = palloc(nfuncs * sizeof(FunctionScanPerFuncState));
 
 	natts = 0;
@@ -429,7 +447,10 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		Oid			funcrettype;
 		TupleDesc	tupdesc;
 
-		fs->funcexpr = ExecInitExpr((Expr *) funcexpr, (PlanState *) scanstate);
+		fs->setexpr =
+			ExecInitTableFunctionResult((Expr *) funcexpr,
+										scanstate->ss.ps.ps_ExprContext,
+										&scanstate->ss.ps);
 
 		/*
 		 * Don't allocate the tuplestores; the actual calls to the functions
@@ -449,7 +470,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 											&funcrettype,
 											&tupdesc);
 
-		if (functypclass == TYPEFUNC_COMPOSITE)
+		if (functypclass == TYPEFUNC_COMPOSITE ||
+			functypclass == TYPEFUNC_COMPOSITE_DOMAIN)
 		{
 			/* Composite data type, e.g. a table's row type */
 			Assert(tupdesc);
@@ -460,7 +482,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		else if (functypclass == TYPEFUNC_SCALAR)
 		{
 			/* Base data type, i.e. scalar */
-			tupdesc = CreateTemplateTupleDesc(1, false);
+			tupdesc = CreateTemplateTupleDesc(1);
 			TupleDescInitEntry(tupdesc,
 							   (AttrNumber) 1,
 							   NULL,	/* don't care about the name here */
@@ -501,8 +523,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		 */
 		if (!scanstate->simple)
 		{
-			fs->func_slot = ExecInitExtraTupleSlot(estate);
-			ExecSetSlotDescriptor(fs->func_slot, fs->tupdesc);
+			fs->func_slot = ExecInitExtraTupleSlot(estate, fs->tupdesc,
+												   &TTSOpsMinimalTuple);
 		}
 		else
 			fs->func_slot = NULL;
@@ -537,7 +559,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		if (node->funcordinality)
 			natts++;
 
-		scan_tupdesc = CreateTemplateTupleDesc(natts, false);
+		scan_tupdesc = CreateTemplateTupleDesc(natts);
 
 		for (i = 0; i < nfuncs; i++)
 		{
@@ -563,12 +585,16 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		Assert(attno == natts);
 	}
 
-	ExecAssignScanType(&scanstate->ss, scan_tupdesc);
+	/*
+	 * Initialize scan slot and type.
+	 */
+	ExecInitScanTupleSlot(estate, &scanstate->ss, scan_tupdesc,
+						  &TTSOpsMinimalTuple);
 
 	/*
-	 * Initialize result tuple type and projection info.
+	 * Initialize result slot, type and projection.
 	 */
-	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
+	ExecInitResultTypeTL(&scanstate->ss.ps);
 	ExecAssignScanProjectionInfo(&scanstate->ss);
 	
 	if (!IsResManagerMemoryPolicyNone())
@@ -612,6 +638,12 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 												  ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
+	 * initialize child expressions
+	 */
+	scanstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
+
+	/*
 	 * Create a memory context that ExecMakeTableFunctionResult can use to
 	 * evaluate function arguments in.  We can't use the per-tuple context for
 	 * this because it gets reset too often; but we don't want to leak
@@ -620,9 +652,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	 */
 	scanstate->argcontext = AllocSetContextCreate(CurrentMemoryContext,
 												  "Table function arguments",
-												  ALLOCSET_DEFAULT_MINSIZE,
-												  ALLOCSET_DEFAULT_INITSIZE,
-												  ALLOCSET_DEFAULT_MAXSIZE);
+												  ALLOCSET_DEFAULT_SIZES);
 
 	return scanstate;
 }
@@ -658,7 +688,8 @@ ExecEndFunctionScan(FunctionScanState *node)
 	/*
 	 * clean out the tuple table
 	 */
-	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+	if (node->ss.ps.ps_ResultTupleSlot)
+		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	ExecEagerFreeFunctionScan(node);
@@ -679,7 +710,8 @@ ExecReScanFunctionScan(FunctionScanState *node)
 	int			i;
 	Bitmapset  *chgparam = node->ss.ps.chgParam;
 
-	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+	if (node->ss.ps.ps_ResultTupleSlot)
+		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 	for (i = 0; i < node->nfuncs; i++)
 	{
 		FunctionScanPerFuncState *fs = &node->funcstates[i];

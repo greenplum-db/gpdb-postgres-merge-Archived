@@ -92,7 +92,12 @@ if ($opt{v})
 
 if ($opt{e})
 {
+<<<<<<< HEAD
 	my @plan = map { "$_->[0]\n" } @{$dbi->selectall_arrayref("explain $sql")};
+=======
+	my @plan =
+	  map { "$_->[0]\n" } @{ $dbi->selectall_arrayref("explain $sql") };
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	print @plan;
 }
 

@@ -1,8 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_amop.h
- *	  definition of the system "amop" relation (pg_amop)
- *	  along with the relation's initial contents.
+ *	  definition of the "access method operator" system catalog (pg_amop)
  *
  * The amop table identifies the operators associated with each index operator
  * family and operator class (classes are subsets of families).  An associated
@@ -30,14 +29,14 @@
  * intentional denormalization of the catalogs to buy lookup speed.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_amop.h
  *
  * NOTES
- *	 the genbki.pl script reads this file and generates .bki
- *	 information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -45,26 +44,43 @@
 #define PG_AMOP_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_amop_d.h"
 
 /* ----------------
  *		pg_amop definition.  cpp turns this into
  *		typedef struct FormData_pg_amop
  * ----------------
  */
-#define AccessMethodOperatorRelationId	2602
-
-CATALOG(pg_amop,2602)
+CATALOG(pg_amop,2602,AccessMethodOperatorRelationId)
 {
-	Oid			amopfamily;		/* the index opfamily this entry is for */
-	Oid			amoplefttype;	/* operator's left input data type */
-	Oid			amoprighttype;	/* operator's right input data type */
-	int16		amopstrategy;	/* operator strategy number */
-	char		amoppurpose;	/* is operator for 's'earch or 'o'rdering? */
-	Oid			amopopr;		/* the operator's pg_operator OID */
-	Oid			amopmethod;		/* the index access method this entry is for */
-	Oid			amopsortfamily; /* ordering opfamily OID, or 0 if search op */
+	Oid			oid;			/* oid */
+
+	/* the index opfamily this entry is for */
+	Oid			amopfamily BKI_LOOKUP(pg_opfamily);
+
+	/* operator's left input data type */
+	Oid			amoplefttype BKI_LOOKUP(pg_type);
+
+	/* operator's right input data type */
+	Oid			amoprighttype BKI_LOOKUP(pg_type);
+
+	/* operator strategy number */
+	int16		amopstrategy;
+
+	/* is operator for 's'earch or 'o'rdering? */
+	char		amoppurpose BKI_DEFAULT(s);
+
+	/* the operator's pg_operator OID */
+	Oid			amopopr BKI_LOOKUP(pg_operator);
+
+	/* the index access method this entry is for */
+	Oid			amopmethod BKI_LOOKUP(pg_am);
+
+	/* ordering opfamily OID, or 0 if search op */
+	Oid			amopsortfamily BKI_DEFAULT(0) BKI_LOOKUP(pg_opfamily);
 } FormData_pg_amop;
 
+<<<<<<< HEAD
 /* GPDB added foreign key definitions for gpcheckcat. */
 FOREIGN_KEY(amopfamily REFERENCES pg_opfamily(oid));
 FOREIGN_KEY(amoplefttype REFERENCES pg_type(oid));
@@ -76,6 +92,8 @@ FOREIGN_KEY(amopmethod REFERENCES pg_am(oid));
 #define AMOP_SEARCH		's'		/* operator is for search */
 #define AMOP_ORDER		'o'		/* operator is for ordering */
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* ----------------
  *		Form_pg_amop corresponds to a pointer to a tuple with
  *		the format of pg_amop relation.
@@ -83,29 +101,15 @@ FOREIGN_KEY(amopmethod REFERENCES pg_am(oid));
  */
 typedef FormData_pg_amop *Form_pg_amop;
 
-/* ----------------
- *		compiler constants for pg_amop
- * ----------------
- */
-#define Natts_pg_amop					8
-#define Anum_pg_amop_amopfamily			1
-#define Anum_pg_amop_amoplefttype		2
-#define Anum_pg_amop_amoprighttype		3
-#define Anum_pg_amop_amopstrategy		4
-#define Anum_pg_amop_amoppurpose		5
-#define Anum_pg_amop_amopopr			6
-#define Anum_pg_amop_amopmethod			7
-#define Anum_pg_amop_amopsortfamily		8
+#ifdef EXPOSE_TO_CLIENT_CODE
 
-/* ----------------
- *		initial contents of pg_amop
- * ----------------
- */
+/* allowed values of amoppurpose: */
+#define AMOP_SEARCH		's'		/* operator is for search */
+#define AMOP_ORDER		'o'		/* operator is for ordering */
 
-/*
- *	btree integer_ops
- */
+#endif							/* EXPOSE_TO_CLIENT_CODE */
 
+<<<<<<< HEAD
 /* default operators int2 */
 DATA(insert (	1976   21 21 1 s	95	403 0 ));
 DATA(insert (	1976   21 21 2 s	522 403 0 ));
@@ -1203,3 +1207,6 @@ DATA(insert (	7129 2950 2950 1 s 2972 405 0 ));	/* uuid */
 DATA(insert (	7130 3500 3500 1 s 3516 405 0 ));	/* enum */
 
 #endif   /* PG_AMOP_H */
+=======
+#endif							/* PG_AMOP_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

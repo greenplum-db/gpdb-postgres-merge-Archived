@@ -30,7 +30,7 @@
  * destroyed at the end of each transaction.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -160,11 +160,16 @@ HeapTupleHeaderGetCmax(HeapTupleHeader tup)
 	 * weakens the check, but not using GetCmax() inside one would complicate
 	 * things too much.
 	 */
+<<<<<<< HEAD
 	/*
 	 * MPP-8317: cursors can't always *tell* that this is the current transaction.
 	 */
 	Assert(QEDtxContextInfo.cursorContext || CritSectionCount > 0 ||
 	  TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(tup)));
+=======
+	Assert(CritSectionCount > 0 ||
+		   TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(tup)));
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (tup->t_infomask & HEAP_COMBOCID)
 		return GetRealCmax(HeapTupleHeaderGetXmin(tup), cid);
@@ -177,8 +182,8 @@ HeapTupleHeaderGetCmax(HeapTupleHeader tup)
  * into its t_cid field.
  *
  * If we don't need a combo CID, *cmax is unchanged and *iscombo is set to
- * FALSE.  If we do need one, *cmax is replaced by a combo CID and *iscombo
- * is set to TRUE.
+ * false.  If we do need one, *cmax is replaced by a combo CID and *iscombo
+ * is set to true.
  *
  * The reason this is separate from the actual HeapTupleHeaderSetCmax()
  * operation is that this could fail due to out-of-memory conditions.  Hence

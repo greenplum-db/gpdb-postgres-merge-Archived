@@ -3,7 +3,7 @@
  * reinit.c
  *	  Reinitialization of unlogged relations
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -16,9 +16,12 @@
 
 #include <unistd.h>
 
+<<<<<<< HEAD
 #include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"
 #include "cdb/cdbvars.h"
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "common/relpath.h"
 #include "storage/copydir.h"
 #include "storage/fd.h"
@@ -27,11 +30,9 @@
 #include "utils/memutils.h"
 
 static void ResetUnloggedRelationsInTablespaceDir(const char *tsdirname,
-									  int op);
+												  int op);
 static void ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname,
-								   int op);
-static bool parse_filename_for_nontemp_relation(const char *name,
-									int *oidchars, ForkNumber *fork);
+											   int op);
 
 typedef struct
 {
@@ -50,7 +51,11 @@ typedef struct
 void
 ResetUnloggedRelations(int op)
 {
+<<<<<<< HEAD
 	char		temp_path[MAXPGPATH + 11 + get_dbid_string_length() + 1 + sizeof(GP_TABLESPACE_VERSION_DIRECTORY)];
+=======
+	char		temp_path[MAXPGPATH + 10 + sizeof(TABLESPACE_VERSION_DIRECTORY)];
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	DIR		   *spc_dir;
 	struct dirent *spc_de;
 	MemoryContext tmpctx,
@@ -67,9 +72,7 @@ ResetUnloggedRelations(int op)
 	 */
 	tmpctx = AllocSetContextCreate(CurrentMemoryContext,
 								   "ResetUnloggedRelations",
-								   ALLOCSET_DEFAULT_MINSIZE,
-								   ALLOCSET_DEFAULT_INITSIZE,
-								   ALLOCSET_DEFAULT_MAXSIZE);
+								   ALLOCSET_DEFAULT_SIZES);
 	oldctx = MemoryContextSwitchTo(tmpctx);
 
 	/*
@@ -102,7 +105,9 @@ ResetUnloggedRelations(int op)
 	MemoryContextDelete(tmpctx);
 }
 
-/* Process one tablespace directory for ResetUnloggedRelations */
+/*
+ * Process one tablespace directory for ResetUnloggedRelations
+ */
 static void
 ResetUnloggedRelationsInTablespaceDir(const char *tsdirname, int op)
 {
@@ -111,28 +116,32 @@ ResetUnloggedRelationsInTablespaceDir(const char *tsdirname, int op)
 	char		dbspace_path[MAXPGPATH * 2];
 
 	ts_dir = AllocateDir(tsdirname);
-	if (ts_dir == NULL)
+
+	/*
+	 * If we get ENOENT on a tablespace directory, log it and return.  This
+	 * can happen if a previous DROP TABLESPACE crashed between removing the
+	 * tablespace directory and removing the symlink in pg_tblspc.  We don't
+	 * really want to prevent database startup in that scenario, so let it
+	 * pass instead.  Any other type of error will be reported by ReadDir
+	 * (causing a startup failure).
+	 */
+	if (ts_dir == NULL && errno == ENOENT)
 	{
-		/* anything except ENOENT is fishy */
-		if (errno != ENOENT)
-			elog(LOG,
-				 "could not open tablespace directory \"%s\": %m",
-				 tsdirname);
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not open directory \"%s\": %m",
+						tsdirname)));
 		return;
 	}
 
 	while ((de = ReadDir(ts_dir, tsdirname)) != NULL)
 	{
-		int			i = 0;
-
 		/*
 		 * We're only interested in the per-database directories, which have
 		 * numeric names.  Note that this code will also (properly) ignore "."
 		 * and "..".
 		 */
-		while (isdigit((unsigned char) de->d_name[i]))
-			++i;
-		if (de->d_name[i] != '\0' || i == 0)
+		if (strspn(de->d_name, "0123456789") != strlen(de->d_name))
 			continue;
 
 		snprintf(dbspace_path, sizeof(dbspace_path), "%s/%s",
@@ -143,7 +152,9 @@ ResetUnloggedRelationsInTablespaceDir(const char *tsdirname, int op)
 	FreeDir(ts_dir);
 }
 
-/* Process one per-dbspace directory for ResetUnloggedRelations */
+/*
+ * Process one per-dbspace directory for ResetUnloggedRelations
+ */
 static void
 ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 {
@@ -161,18 +172,8 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 	 */
 	if ((op & UNLOGGED_RELATION_CLEANUP) != 0)
 	{
-		HTAB	   *hash = NULL;
+		HTAB	   *hash;
 		HASHCTL		ctl;
-
-		/* Open the directory. */
-		dbspace_dir = AllocateDir(dbspacedirname);
-		if (dbspace_dir == NULL)
-		{
-			elog(LOG,
-				 "could not open dbspace directory \"%s\": %m",
-				 dbspacedirname);
-			return;
-		}
 
 		/*
 		 * It's possible that someone could create a ton of unlogged relations
@@ -181,11 +182,13 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		 * need to be reset.  Otherwise, this cleanup operation would be
 		 * O(n^2).
 		 */
+		memset(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(unlogged_relation_entry);
 		ctl.entrysize = sizeof(unlogged_relation_entry);
 		hash = hash_create("unlogged hash", 32, &ctl, HASH_ELEM);
 
 		/* Scan the directory. */
+		dbspace_dir = AllocateDir(dbspacedirname);
 		while ((de = ReadDir(dbspace_dir, dbspacedirname)) != NULL)
 		{
 			ForkNumber	forkNum;
@@ -224,20 +227,9 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		}
 
 		/*
-		 * Now, make a second pass and remove anything that matches. First,
-		 * reopen the directory.
+		 * Now, make a second pass and remove anything that matches.
 		 */
 		dbspace_dir = AllocateDir(dbspacedirname);
-		if (dbspace_dir == NULL)
-		{
-			elog(LOG,
-				 "could not open dbspace directory \"%s\": %m",
-				 dbspacedirname);
-			hash_destroy(hash);
-			return;
-		}
-
-		/* Scan the directory. */
 		while ((de = ReadDir(dbspace_dir, dbspacedirname)) != NULL)
 		{
 			ForkNumber	forkNum;
@@ -267,15 +259,11 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 			{
 				snprintf(rm_path, sizeof(rm_path), "%s/%s",
 						 dbspacedirname, de->d_name);
-
-				/*
-				 * It's tempting to actually throw an error here, but since
-				 * this code gets run during database startup, that could
-				 * result in the database failing to start.  (XXX Should we do
-				 * it anyway?)
-				 */
-				if (unlink(rm_path))
-					elog(LOG, "could not unlink file \"%s\": %m", rm_path);
+				if (unlink(rm_path) < 0)
+					ereport(ERROR,
+							(errcode_for_file_access(),
+							 errmsg("could not remove file \"%s\": %m",
+									rm_path)));
 				else
 					elog(DEBUG2, "unlinked file \"%s\"", rm_path);
 			}
@@ -295,18 +283,8 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 	 */
 	if ((op & UNLOGGED_RELATION_INIT) != 0)
 	{
-		/* Open the directory. */
-		dbspace_dir = AllocateDir(dbspacedirname);
-		if (dbspace_dir == NULL)
-		{
-			/* we just saw this directory, so it really ought to be there */
-			elog(LOG,
-				 "could not open dbspace directory \"%s\": %m",
-				 dbspacedirname);
-			return;
-		}
-
 		/* Scan the directory. */
+		dbspace_dir = AllocateDir(dbspacedirname);
 		while ((de = ReadDir(dbspace_dir, dbspacedirname)) != NULL)
 		{
 			ForkNumber	forkNum;
@@ -350,15 +328,6 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		 * (especially the metadata ones) at once.
 		 */
 		dbspace_dir = AllocateDir(dbspacedirname);
-		if (dbspace_dir == NULL)
-		{
-			/* we just saw this directory, so it really ought to be there */
-			elog(LOG,
-				 "could not open dbspace directory \"%s\": %m",
-				 dbspacedirname);
-			return;
-		}
-
 		while ((de = ReadDir(dbspace_dir, dbspacedirname)) != NULL)
 		{
 			ForkNumber	forkNum;
@@ -387,6 +356,14 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 
 		FreeDir(dbspace_dir);
 
+		/*
+		 * Lastly, fsync the database directory itself, ensuring the
+		 * filesystem remembers the file creations and deletions we've done.
+		 * We don't bother with this during a call that does only
+		 * UNLOGGED_RELATION_CLEANUP, because if recovery crashes before we
+		 * get to doing UNLOGGED_RELATION_INIT, we'll redo the cleanup step
+		 * too at the next startup attempt.
+		 */
 		fsync_fname(dbspacedirname, true);
 	}
 }
@@ -403,7 +380,7 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
  * portion of the filename.  This is critical to protect against a possible
  * buffer overrun.
  */
-static bool
+bool
 parse_filename_for_nontemp_relation(const char *name, int *oidchars,
 									ForkNumber *fork)
 {

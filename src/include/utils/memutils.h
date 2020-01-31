@@ -7,9 +7,13 @@
  *	  of the API of the memory management subsystem.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/memutils.h
@@ -40,7 +44,7 @@
  * MemoryContextAllocHuge().  Both limits permit code to assume that it may
  * compute twice an allocation's size without overflow.
  */
-#define MaxAllocSize	((Size) 0x3fffffff)		/* 1 gigabyte - 1 */
+#define MaxAllocSize	((Size) 0x3fffffff) /* 1 gigabyte - 1 */
 
 #define AllocSizeIsValid(size)	((Size) (size) <= MaxAllocSize)
 
@@ -48,6 +52,7 @@
 
 #define AllocHugeSizeIsValid(size)	((Size) (size) <= MaxAllocHugeSize)
 
+<<<<<<< HEAD
 /*
  * Multiple chunks can share a SharedChunkHeader if their shared information
  * such as owning memory context, memoryAccount, memory account generation etc.
@@ -169,6 +174,8 @@ typedef struct AllocSetContext
 } AllocSetContext;
 
 typedef AllocSetContext *AllocSet;
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Standard top-level memory contexts.
@@ -204,10 +211,10 @@ extern void MemoryContextReset(MemoryContext context);
 extern void MemoryContextResetOnly(MemoryContext context);
 extern void MemoryContextResetChildren(MemoryContext context);
 extern void MemoryContextDeleteChildren(MemoryContext context);
+extern void MemoryContextSetIdentifier(MemoryContext context, const char *id);
 extern void MemoryContextSetParent(MemoryContext context,
-					   MemoryContext new_parent);
+								   MemoryContext new_parent);
 extern Size GetMemoryChunkSpace(void *pointer);
-extern MemoryContext GetMemoryChunkContext(void *pointer);
 extern MemoryContext MemoryContextGetParent(MemoryContext context);
 extern bool MemoryContextIsEmpty(MemoryContext context);
 
@@ -228,7 +235,7 @@ extern void dump_memory_allocation_ctxt(FILE * ofile, void *ctxt);
 extern void MemoryContextStats(MemoryContext context);
 extern void MemoryContextStatsDetail(MemoryContext context, int max_children);
 extern void MemoryContextAllowInCriticalSection(MemoryContext context,
-									bool allow);
+												bool allow);
 
 #ifdef MEMORY_CONTEXT_CHECKING
 extern void MemoryContextCheck(MemoryContext context);
@@ -248,15 +255,56 @@ extern void MemoryContextError(int errorcode, MemoryContext context,
                               pg_attribute_noreturn()
                               pg_attribute_printf(5, 6);
 
+/* Handy macro for copying and assigning context ID ... but note double eval */
+#define MemoryContextCopyAndSetIdentifier(cxt, id) \
+	MemoryContextSetIdentifier(cxt, MemoryContextStrdup(cxt, id))
+
+/*
+ * GetMemoryChunkContext
+ *		Given a currently-allocated chunk, determine the context
+ *		it belongs to.
+ *
+ * All chunks allocated by any memory context manager are required to be
+ * preceded by the corresponding MemoryContext stored, without padding, in the
+ * preceding sizeof(void*) bytes.  A currently-allocated chunk must contain a
+ * backpointer to its owning context.  The backpointer is used by pfree() and
+ * repalloc() to find the context to call.
+ */
+#ifndef FRONTEND
+static inline MemoryContext
+GetMemoryChunkContext(void *pointer)
+{
+	MemoryContext context;
+
+	/*
+	 * Try to detect bogus pointers handed to us, poorly though we can.
+	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
+	 * allocated chunk.
+	 */
+	Assert(pointer != NULL);
+	Assert(pointer == (void *) MAXALIGN(pointer));
+
+	/*
+	 * OK, it's probably safe to look at the context.
+	 */
+	context = *(MemoryContext *) (((char *) pointer) - sizeof(void *));
+
+	AssertArg(MemoryContextIsValid(context));
+
+	return context;
+}
+#endif
+
 /*
  * This routine handles the context-type-independent part of memory
  * context creation.  It's intended to be called from context-type-
  * specific creation routines, and noplace else.
  */
-extern MemoryContext MemoryContextCreate(NodeTag tag, Size size,
-					MemoryContextMethods *methods,
-					MemoryContext parent,
-					const char *name);
+extern void MemoryContextCreate(MemoryContext node,
+								NodeTag tag,
+								const MemoryContextMethods *methods,
+								MemoryContext parent,
+								const char *name);
 
 
 /*
@@ -264,11 +312,37 @@ extern MemoryContext MemoryContextCreate(NodeTag tag, Size size,
  */
 
 /* aset.c */
-extern MemoryContext AllocSetContextCreate(MemoryContext parent,
-					  const char *name,
-					  Size minContextSize,
-					  Size initBlockSize,
-					  Size maxBlockSize);
+extern MemoryContext AllocSetContextCreateInternal(MemoryContext parent,
+												   const char *name,
+												   Size minContextSize,
+												   Size initBlockSize,
+												   Size maxBlockSize);
+
+/*
+ * This wrapper macro exists to check for non-constant strings used as context
+ * names; that's no longer supported.  (Use MemoryContextSetIdentifier if you
+ * want to provide a variable identifier.)
+ */
+#ifdef HAVE__BUILTIN_CONSTANT_P
+#define AllocSetContextCreate(parent, name, ...) \
+	(StaticAssertExpr(__builtin_constant_p(name), \
+					  "memory context names must be constant strings"), \
+	 AllocSetContextCreateInternal(parent, name, __VA_ARGS__))
+#else
+#define AllocSetContextCreate \
+	AllocSetContextCreateInternal
+#endif
+
+/* slab.c */
+extern MemoryContext SlabContextCreate(MemoryContext parent,
+									   const char *name,
+									   Size blockSize,
+									   Size chunkSize);
+
+/* generation.c */
+extern MemoryContext GenerationContextCreate(MemoryContext parent,
+											 const char *name,
+											 Size blockSize);
 
 /* mpool.c */
 typedef struct MPool MPool;
@@ -307,6 +381,17 @@ extern uint64 mpool_bytes_used(MPool *mpool);
 #define ALLOCSET_START_SMALL_SIZES \
 	ALLOCSET_SMALL_MINSIZE, ALLOCSET_SMALL_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE
 
+<<<<<<< HEAD
+
+/*
+ * Threshold above which a request in an AllocSet context is certain to be
+ * allocated separately (and thereby have constant allocation overhead).
+ * Few callers should be interested in this, but tuplesort/tuplestore need
+ * to know it.
+ */
+#define ALLOCSET_SEPARATE_THRESHOLD  8192
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Threshold above which a request in an AllocSet context is certain to be
@@ -316,12 +401,7 @@ extern uint64 mpool_bytes_used(MPool *mpool);
  */
 #define ALLOCSET_SEPARATE_THRESHOLD  8192
 
-/*
- * Threshold above which a request in an AllocSet context is certain to be
- * allocated separately (and thereby have constant allocation overhead).
- * Few callers should be interested in this, but tuplesort/tuplestore need
- * to know it.
- */
-#define ALLOCSET_SEPARATE_THRESHOLD  8192
+#define SLAB_DEFAULT_BLOCK_SIZE		(8 * 1024)
+#define SLAB_LARGE_BLOCK_SIZE		(8 * 1024 * 1024)
 
-#endif   /* MEMUTILS_H */
+#endif							/* MEMUTILS_H */

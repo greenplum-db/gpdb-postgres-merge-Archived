@@ -1,22 +1,26 @@
 /*-------------------------------------------------------------------------
  *
  * pg_cast.h
- *	  definition of the system "type casts" relation (pg_cast)
- *	  along with the relation's initial contents.
+ *	  definition of the "type casts" system catalog (pg_cast)
  *
  * As of Postgres 8.0, pg_cast describes not only type coercion functions
  * but also length coercion functions.
  *
+<<<<<<< HEAD
  *
  * Portions Copyright (c) 2006-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2002-2016, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * src/include/catalog/pg_cast.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -24,29 +28,49 @@
 #define PG_CAST_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_cast_d.h"
 
 /* ----------------
  *		pg_cast definition.  cpp turns this into
  *		typedef struct FormData_pg_cast
  * ----------------
  */
-#define CastRelationId	2605
-
-CATALOG(pg_cast,2605)
+CATALOG(pg_cast,2605,CastRelationId)
 {
-	Oid			castsource;		/* source datatype for cast */
-	Oid			casttarget;		/* destination datatype for cast */
-	Oid			castfunc;		/* cast function; 0 = binary coercible */
-	char		castcontext;	/* contexts in which cast can be used */
-	char		castmethod;		/* cast method */
+	Oid			oid;			/* oid */
+
+	/* source datatype for cast */
+	Oid			castsource BKI_LOOKUP(pg_type);
+
+	/* destination datatype for cast */
+	Oid			casttarget BKI_LOOKUP(pg_type);
+
+	/* cast function; 0 = binary coercible */
+	Oid			castfunc BKI_LOOKUP(pg_proc);
+
+	/* contexts in which cast can be used */
+	char		castcontext;
+
+	/* cast method */
+	char		castmethod;
 } FormData_pg_cast;
 
+<<<<<<< HEAD
 /* GPDB added foreign key definitions for gpcheckcat. */
 FOREIGN_KEY(castsource REFERENCES pg_type(oid));
 FOREIGN_KEY(casttarget REFERENCES pg_type(oid));
 FOREIGN_KEY(castfunc REFERENCES pg_proc(oid));
 
+=======
+/* ----------------
+ *		Form_pg_cast corresponds to a pointer to a tuple with
+ *		the format of pg_cast relation.
+ * ----------------
+ */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 typedef FormData_pg_cast *Form_pg_cast;
+
+#ifdef EXPOSE_TO_CLIENT_CODE
 
 /*
  * The allowable values for pg_cast.castcontext are specified by this enum.
@@ -59,8 +83,8 @@ typedef FormData_pg_cast *Form_pg_cast;
 
 typedef enum CoercionCodes
 {
-	COERCION_CODE_IMPLICIT = 'i',		/* coercion in context of expression */
-	COERCION_CODE_ASSIGNMENT = 'a',		/* coercion in context of assignment */
+	COERCION_CODE_IMPLICIT = 'i',	/* coercion in context of expression */
+	COERCION_CODE_ASSIGNMENT = 'a', /* coercion in context of assignment */
 	COERCION_CODE_EXPLICIT = 'e'	/* explicit cast operation */
 } CoercionCodes;
 
@@ -71,12 +95,14 @@ typedef enum CoercionCodes
  */
 typedef enum CoercionMethod
 {
-	COERCION_METHOD_FUNCTION = 'f',		/* use a function */
-	COERCION_METHOD_BINARY = 'b',		/* types are binary-compatible */
+	COERCION_METHOD_FUNCTION = 'f', /* use a function */
+	COERCION_METHOD_BINARY = 'b',	/* types are binary-compatible */
 	COERCION_METHOD_INOUT = 'i' /* use input/output functions */
 } CoercionMethod;
 
+#endif							/* EXPOSE_TO_CLIENT_CODE */
 
+<<<<<<< HEAD
 /* ----------------
  *		compiler constants for pg_cast
  * ----------------
@@ -396,3 +422,6 @@ DATA(insert (7198  600 0 e b));
 DATA(insert (1700 7198 7597 i f));
 
 #endif   /* PG_CAST_H */
+=======
+#endif							/* PG_CAST_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

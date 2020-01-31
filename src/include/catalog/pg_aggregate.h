@@ -1,18 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * pg_aggregate.h
- *	  definition of the system "aggregate" relation (pg_aggregate)
- *	  along with the relation's initial contents.
+ *	  definition of the "aggregate" system catalog (pg_aggregate)
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_aggregate.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,62 +19,85 @@
 #define PG_AGGREGATE_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_aggregate_d.h"
+
 #include "catalog/objectaddress.h"
 #include "nodes/pg_list.h"
 
 /* ----------------------------------------------------------------
  *		pg_aggregate definition.
- *
  *		cpp turns this into typedef struct FormData_pg_aggregate
- *
- *	aggfnoid			pg_proc OID of the aggregate itself
- *	aggkind				aggregate kind, see AGGKIND_ categories below
- *	aggnumdirectargs	number of arguments that are "direct" arguments
- *	aggtransfn			transition function
- *	aggfinalfn			final function (0 if none)
- *	aggcombinefn		combine function (0 if none)
- *	aggserialfn			function to convert transtype to bytea (0 if none)
- *	aggdeserialfn		function to convert bytea to transtype (0 if none)
- *	aggmtransfn			forward function for moving-aggregate mode (0 if none)
- *	aggminvtransfn		inverse function for moving-aggregate mode (0 if none)
- *	aggmfinalfn			final function for moving-aggregate mode (0 if none)
- *	aggfinalextra		true to pass extra dummy arguments to aggfinalfn
- *	aggmfinalextra		true to pass extra dummy arguments to aggmfinalfn
- *	aggsortop			associated sort operator (0 if none)
- *	aggtranstype		type of aggregate's transition (state) data
- *	aggtransspace		estimated size of state data (0 for default estimate)
- *	aggmtranstype		type of moving-aggregate state data (0 if none)
- *	aggmtransspace		estimated size of moving-agg state (0 for default est)
- *	agginitval			initial value for transition state (can be NULL)
- *	aggminitval			initial value for moving-agg state (can be NULL)
  * ----------------------------------------------------------------
  */
-#define AggregateRelationId  2600
-
-CATALOG(pg_aggregate,2600) BKI_WITHOUT_OIDS
+CATALOG(pg_aggregate,2600,AggregateRelationId)
 {
-	regproc		aggfnoid;
-	char		aggkind;
-	int16		aggnumdirectargs;
-	regproc		aggtransfn;
-	regproc		aggfinalfn;
-	regproc		aggcombinefn;
-	regproc		aggserialfn;
-	regproc		aggdeserialfn;
-	regproc		aggmtransfn;
-	regproc		aggminvtransfn;
-	regproc		aggmfinalfn;
-	bool		aggfinalextra;
-	bool		aggmfinalextra;
-	Oid			aggsortop;
-	Oid			aggtranstype;
-	int32		aggtransspace;
-	Oid			aggmtranstype;
-	int32		aggmtransspace;
+	/* pg_proc OID of the aggregate itself */
+	regproc		aggfnoid BKI_LOOKUP(pg_proc);
+
+	/* aggregate kind, see AGGKIND_ categories below */
+	char		aggkind BKI_DEFAULT(n);
+
+	/* number of arguments that are "direct" arguments */
+	int16		aggnumdirectargs BKI_DEFAULT(0);
+
+	/* transition function */
+	regproc		aggtransfn BKI_LOOKUP(pg_proc);
+
+	/* final function (0 if none) */
+	regproc		aggfinalfn BKI_DEFAULT(-) BKI_LOOKUP(pg_proc);
+
+	/* combine function (0 if none) */
+	regproc		aggcombinefn BKI_DEFAULT(-) BKI_LOOKUP(pg_proc);
+
+	/* function to convert transtype to bytea (0 if none) */
+	regproc		aggserialfn BKI_DEFAULT(-) BKI_LOOKUP(pg_proc);
+
+	/* function to convert bytea to transtype (0 if none) */
+	regproc		aggdeserialfn BKI_DEFAULT(-) BKI_LOOKUP(pg_proc);
+
+	/* forward function for moving-aggregate mode (0 if none) */
+	regproc		aggmtransfn BKI_DEFAULT(-) BKI_LOOKUP(pg_proc);
+
+	/* inverse function for moving-aggregate mode (0 if none) */
+	regproc		aggminvtransfn BKI_DEFAULT(-) BKI_LOOKUP(pg_proc);
+
+	/* final function for moving-aggregate mode (0 if none) */
+	regproc		aggmfinalfn BKI_DEFAULT(-) BKI_LOOKUP(pg_proc);
+
+	/* true to pass extra dummy arguments to aggfinalfn */
+	bool		aggfinalextra BKI_DEFAULT(f);
+
+	/* true to pass extra dummy arguments to aggmfinalfn */
+	bool		aggmfinalextra BKI_DEFAULT(f);
+
+	/* tells whether aggfinalfn modifies transition state */
+	char		aggfinalmodify BKI_DEFAULT(r);
+
+	/* tells whether aggmfinalfn modifies transition state */
+	char		aggmfinalmodify BKI_DEFAULT(r);
+
+	/* associated sort operator (0 if none) */
+	Oid			aggsortop BKI_DEFAULT(0) BKI_LOOKUP(pg_operator);
+
+	/* type of aggregate's transition (state) data */
+	Oid			aggtranstype BKI_LOOKUP(pg_type);
+
+	/* estimated size of state data (0 for default estimate) */
+	int32		aggtransspace BKI_DEFAULT(0);
+
+	/* type of moving-aggregate state data (0 if none) */
+	Oid			aggmtranstype BKI_DEFAULT(0) BKI_LOOKUP(pg_type);
+
+	/* estimated size of moving-agg state (0 for default est) */
+	int32		aggmtransspace BKI_DEFAULT(0);
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	text		agginitval;
-	text		aggminitval;
+
+	/* initial value for transition state (can be NULL) */
+	text		agginitval BKI_DEFAULT(_null_);
+
+	/* initial value for moving-agg state (can be NULL) */
+	text		aggminitval BKI_DEFAULT(_null_);
 #endif
 } FormData_pg_aggregate;
 
@@ -100,32 +122,7 @@ FOREIGN_KEY(aggmtranstype REFERENCES pg_type(oid));
  */
 typedef FormData_pg_aggregate *Form_pg_aggregate;
 
-/* ----------------
- *		compiler constants for pg_aggregate
- * ----------------
- */
-
-#define Natts_pg_aggregate					20
-#define Anum_pg_aggregate_aggfnoid			1
-#define Anum_pg_aggregate_aggkind			2
-#define Anum_pg_aggregate_aggnumdirectargs	3
-#define Anum_pg_aggregate_aggtransfn		4
-#define Anum_pg_aggregate_aggfinalfn		5
-#define Anum_pg_aggregate_aggcombinefn		6
-#define Anum_pg_aggregate_aggserialfn		7
-#define Anum_pg_aggregate_aggdeserialfn		8
-#define Anum_pg_aggregate_aggmtransfn		9
-#define Anum_pg_aggregate_aggminvtransfn	10
-#define Anum_pg_aggregate_aggmfinalfn		11
-#define Anum_pg_aggregate_aggfinalextra		12
-#define Anum_pg_aggregate_aggmfinalextra	13
-#define Anum_pg_aggregate_aggsortop			14
-#define Anum_pg_aggregate_aggtranstype		15
-#define Anum_pg_aggregate_aggtransspace		16
-#define Anum_pg_aggregate_aggmtranstype		17
-#define Anum_pg_aggregate_aggmtransspace	18
-#define Anum_pg_aggregate_agginitval		19
-#define Anum_pg_aggregate_aggminitval		20
+#ifdef EXPOSE_TO_CLIENT_CODE
 
 /*
  * Symbolic values for aggkind column.  We distinguish normal aggregates
@@ -142,6 +139,7 @@ typedef FormData_pg_aggregate *Form_pg_aggregate;
 /* Use this macro to test for "ordered-set agg including hypothetical case" */
 #define AGGKIND_IS_ORDERED_SET(kind)  ((kind) != AGGKIND_NORMAL)
 
+<<<<<<< HEAD
 /*
  * Constant definitions of pg_proc.oid for aggregate functions.
  */
@@ -362,37 +360,54 @@ DATA(insert ( 6130	o 1 ordered_set_transition			percentile_cont_timestamptz_fina
 /* hyperloglog */
 DATA(insert ( 7164	n 0 gp_hyperloglog_add_item_agg_default gp_hyperloglog_comp		gp_hyperloglog_merge	-	-	-		-		-		f f 0	7157	0	0		0	_null_ _null_ ));
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
- * prototypes for functions in pg_aggregate.c
+ * Symbolic values for aggfinalmodify and aggmfinalmodify columns.
+ * Preferably, finalfns do not modify the transition state value at all,
+ * but in some cases that would cost too much performance.  We distinguish
+ * "pure read only" and "trashes it arbitrarily" cases, as well as the
+ * intermediate case where multiple finalfn calls are allowed but the
+ * transfn cannot be applied anymore after the first finalfn call.
  */
-extern ObjectAddress AggregateCreate(const char *aggName,
-				Oid aggNamespace,
-				char aggKind,
-				int numArgs,
-				int numDirectArgs,
-				oidvector *parameterTypes,
-				Datum allParameterTypes,
-				Datum parameterModes,
-				Datum parameterNames,
-				List *parameterDefaults,
-				Oid variadicArgType,
-				List *aggtransfnName,
-				List *aggfinalfnName,
-				List *aggcombinefnName,
-				List *aggserialfnName,
-				List *aggdeserialfnName,
-				List *aggmtransfnName,
-				List *aggminvtransfnName,
-				List *aggmfinalfnName,
-				bool finalfnExtraArgs,
-				bool mfinalfnExtraArgs,
-				List *aggsortopName,
-				Oid aggTransType,
-				int32 aggTransSpace,
-				Oid aggmTransType,
-				int32 aggmTransSpace,
-				const char *agginitval,
-				const char *aggminitval,
-				char proparallel);
+#define AGGMODIFY_READ_ONLY			'r'
+#define AGGMODIFY_SHAREABLE			's'
+#define AGGMODIFY_READ_WRITE		'w'
 
-#endif   /* PG_AGGREGATE_H */
+#endif							/* EXPOSE_TO_CLIENT_CODE */
+
+
+extern ObjectAddress AggregateCreate(const char *aggName,
+									 Oid aggNamespace,
+									 bool replace,
+									 char aggKind,
+									 int numArgs,
+									 int numDirectArgs,
+									 oidvector *parameterTypes,
+									 Datum allParameterTypes,
+									 Datum parameterModes,
+									 Datum parameterNames,
+									 List *parameterDefaults,
+									 Oid variadicArgType,
+									 List *aggtransfnName,
+									 List *aggfinalfnName,
+									 List *aggcombinefnName,
+									 List *aggserialfnName,
+									 List *aggdeserialfnName,
+									 List *aggmtransfnName,
+									 List *aggminvtransfnName,
+									 List *aggmfinalfnName,
+									 bool finalfnExtraArgs,
+									 bool mfinalfnExtraArgs,
+									 char finalfnModify,
+									 char mfinalfnModify,
+									 List *aggsortopName,
+									 Oid aggTransType,
+									 int32 aggTransSpace,
+									 Oid aggmTransType,
+									 int32 aggmTransSpace,
+									 const char *agginitval,
+									 const char *aggminitval,
+									 char proparallel);
+
+#endif							/* PG_AGGREGATE_H */

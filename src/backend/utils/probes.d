@@ -1,7 +1,7 @@
 /* ----------
  *	DTrace probes for PostgreSQL backend
  *
- *	Copyright (c) 2006-2016, PostgreSQL Global Development Group
+ *	Copyright (c) 2006-2019, PostgreSQL Global Development Group
  *
  *	src/backend/utils/probes.d
  * ----------
@@ -12,7 +12,7 @@
  * Typedefs used in PostgreSQL.
  *
  * NOTE: Do not use system-provided typedefs (e.g. uintptr_t, uint32_t, etc)
- * in probe definitions, as they cause compilation errors on Mac OS X 10.5.
+ * in probe definitions, as they cause compilation errors on macOS 10.5.
  */
 #define LocalTransactionId unsigned int
 #define LWLockMode int
@@ -28,6 +28,7 @@ provider postgresql {
 	probe transaction__commit(LocalTransactionId);
 	probe transaction__abort(LocalTransactionId);
 
+<<<<<<< HEAD
 	probe execprocnode__enter(int, int, int, int);
 	probe execprocnode__exit(int, int, int, int);
 
@@ -49,6 +50,16 @@ provider postgresql {
 	probe lwlock__condacquire__fail(const char *, int, LWLockMode);
 	probe lwlock__acquire__or__wait(const char *, int, LWLockMode);
 	probe lwlock__acquire__or__wait__fail(const char *, int, LWLockMode);
+=======
+	probe lwlock__acquire(const char *, LWLockMode);
+	probe lwlock__release(const char *);
+	probe lwlock__wait__start(const char *, LWLockMode);
+	probe lwlock__wait__done(const char *, LWLockMode);
+	probe lwlock__condacquire(const char *, LWLockMode);
+	probe lwlock__condacquire__fail(const char *, LWLockMode);
+	probe lwlock__acquire__or__wait(const char *, LWLockMode);
+	probe lwlock__acquire__or__wait__fail(const char *, LWLockMode);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	probe lock__wait__start(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, LOCKMODE);
 	probe lock__wait__done(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, LOCKMODE);
@@ -65,7 +76,7 @@ provider postgresql {
 	probe query__done(const char *);
 	probe statement__status(const char *);
 
-	probe sort__start(int, bool, int, int, bool);
+	probe sort__start(int, bool, int, int, bool, int);
 	probe sort__done(bool, long);
 
 	probe buffer__read__start(ForkNumber, BlockNumber, Oid, Oid, Oid, int, bool);
@@ -100,8 +111,8 @@ provider postgresql {
 	probe smgr__md__write__start(ForkNumber, BlockNumber, Oid, Oid, Oid, int);
 	probe smgr__md__write__done(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int, int);
 
-	probe xlog__insert(unsigned char, unsigned char);
-	probe xlog__switch();
+	probe wal__insert(unsigned char, unsigned char);
+	probe wal__switch();
 	probe wal__buffer__write__dirty__start();
 	probe wal__buffer__write__dirty__done();
 };

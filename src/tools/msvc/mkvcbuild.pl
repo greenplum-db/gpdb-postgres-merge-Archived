@@ -9,7 +9,11 @@ use warnings;
 
 use File::Basename;
 use File::Spec;
+<<<<<<< HEAD
 BEGIN  { use lib File::Spec->rel2abs(dirname(__FILE__)); }
+=======
+BEGIN { use lib File::Spec->rel2abs(dirname(__FILE__)); }
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 use Mkvcbuild;
 
@@ -23,7 +27,7 @@ print "Warning: no config.pl found, using default.\n"
   unless (-f 'src/tools/msvc/config.pl');
 
 our $config;
-require 'src/tools/msvc/config_default.pl';
-require 'src/tools/msvc/config.pl' if (-f 'src/tools/msvc/config.pl');
+do './src/tools/msvc/config_default.pl';
+do './src/tools/msvc/config.pl' if (-f 'src/tools/msvc/config.pl');
 
 Mkvcbuild::mkvcbuild($config);

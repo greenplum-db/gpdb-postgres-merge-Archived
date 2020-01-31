@@ -10,7 +10,7 @@
  * analyze.c and related files.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -30,7 +30,8 @@
  * raw_parser
  *		Given a query in string form, do lexical and grammatical analysis.
  *
- * Returns a list of raw (un-analyzed) parse trees.
+ * Returns a list of raw (un-analyzed) parse trees.  The immediate elements
+ * of the list are always RawStmt nodes.
  */
 List *
 raw_parser(const char *str)
@@ -39,6 +40,7 @@ raw_parser(const char *str)
 	base_yy_extra_type yyextra;
 	int			yyresult;
 
+<<<<<<< HEAD
 	/*
 	 * In GPDB, temporarily disable escape_string_warning, if we're in a QE
 	 * node. When we're parsing a PL/pgSQL function, e.g. in a CREATE FUNCTION
@@ -67,6 +69,11 @@ raw_parser(const char *str)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+=======
+	/* initialize the flex scanner */
+	yyscanner = scanner_init(str, &yyextra.core_yy_extra,
+							 &ScanKeywords, ScanKeywordTokens);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* base_yylex() only needs this much initialization */
 	yyextra.have_lookahead = false;

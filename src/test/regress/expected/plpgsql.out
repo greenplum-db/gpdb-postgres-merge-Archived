@@ -2104,7 +2104,7 @@ create table perform_test (
 	a	INT,
 	b	INT
 );
-create function simple_func(int) returns boolean as '
+create function perform_simple_func(int) returns boolean as '
 BEGIN
 	IF $1 < 20 THEN
 		INSERT INTO perform_test VALUES ($1, $1 + 10);
@@ -2119,13 +2119,13 @@ BEGIN
 		INSERT INTO perform_test VALUES (100, 100);
 	END IF;
 
-	PERFORM simple_func(5);
+	PERFORM perform_simple_func(5);
 
 	IF FOUND then
 		INSERT INTO perform_test VALUES (100, 100);
 	END IF;
 
-	PERFORM simple_func(50);
+	PERFORM perform_simple_func(50);
 
 	IF FOUND then
 		INSERT INTO perform_test VALUES (100, 100);
@@ -2149,6 +2149,7 @@ SELECT * FROM perform_test;
 
 drop table perform_test;
 --
+<<<<<<< HEAD
 -- Test error trapping
 --
 create function trap_zero_divide(int) returns int as $$
@@ -2395,6 +2396,8 @@ commit;				-- still fails
 drop function trap_foreign_key(int);
 drop function trap_foreign_key_2();
 --
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- Test proper snapshot handling in simple expressions
 --
 create temp table users(login text, id serial);
@@ -2469,6 +2472,30 @@ drop function sp_id_user(text);
 --
 create table rc_test (a int, b int);
 copy rc_test from stdin;
+create function return_unnamed_refcursor() returns refcursor as $$
+declare
+    rc refcursor;
+begin
+    open rc for select a from rc_test;
+    return rc;
+end
+$$ language plpgsql;
+create function use_refcursor(rc refcursor) returns int as $$
+declare
+    rc refcursor;
+    x record;
+begin
+    rc := return_unnamed_refcursor();
+    fetch next from rc into x;
+    return x.a;
+end
+$$ language plpgsql;
+select use_refcursor(return_unnamed_refcursor());
+ use_refcursor 
+---------------
+             5
+(1 row)
+
 create function return_refcursor(rc refcursor) returns refcursor as $$
 begin
     open rc for select a from rc_test order by a;
@@ -2933,6 +2960,7 @@ NOTICE:  {10,20,30}; 20; xyz; xyzabc; (10,aaa,,30); <NULL>
 (1 row)
 
 drop function raise_exprs();
+<<<<<<< HEAD
 -- continue statement
 create table conttesttbl(idx serial, v integer);
 insert into conttesttbl(v) values(10);
@@ -3272,6 +3300,8 @@ NOTICE:  4 bb cc
  
 (1 row)
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- regression test: verify that multiple uses of same plpgsql datum within
 -- a SQL command all get mapped to the same $n parameter.  The return value
 -- of the SELECT is not important, we only care that it doesn't fail with
@@ -3297,55 +3327,56 @@ select multi_datum_use(42);
 --
 create temp table foo (f1 int, f2 int);
 insert into foo values (1,2), (3,4);
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should work
   insert into foo values(5,6) returning * into x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 NOTICE:  x.f1 = 5, x.f2 = 6
- footest 
----------
+ stricttest 
+------------
  
 (1 row)
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail due to implicit strict
   insert into foo values(7,8),(9,10) returning * into x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function footest() line 5 at SQL statement
-create or replace function footest() returns void as $$
+HINT:  Make sure the query returns a single row, or use LIMIT 1.
+CONTEXT:  PL/pgSQL function stricttest() line 5 at SQL statement
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should work
   execute 'insert into foo values(5,6) returning *' into x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 NOTICE:  x.f1 = 5, x.f2 = 6
- footest 
----------
+ stricttest 
+------------
  
 (1 row)
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- this should work since EXECUTE isn't as picky
   execute 'insert into foo values(7,8),(9,10) returning *' into x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 NOTICE:  x.f1 = 7, x.f2 = 8
- footest 
----------
+ stricttest 
+------------
  
 (1 row)
 
@@ -3360,78 +3391,79 @@ select * from foo;
   9 | 10
 (6 rows)
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should work
   select * from foo where f1 = 3 into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 NOTICE:  x.f1 = 3, x.f2 = 4
- footest 
----------
+ stricttest 
+------------
  
 (1 row)
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail, no rows
   select * from foo where f1 = 0 into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned no rows
-CONTEXT:  PL/pgSQL function footest() line 5 at SQL statement
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 5 at SQL statement
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail, too many rows
   select * from foo where f1 > 3 into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function footest() line 5 at SQL statement
-create or replace function footest() returns void as $$
+HINT:  Make sure the query returns a single row, or use LIMIT 1.
+CONTEXT:  PL/pgSQL function stricttest() line 5 at SQL statement
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should work
   execute 'select * from foo where f1 = 3' into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 NOTICE:  x.f1 = 3, x.f2 = 4
- footest 
----------
+ stricttest 
+------------
  
 (1 row)
 
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail, no rows
   execute 'select * from foo where f1 = 0' into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned no rows
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 5 at EXECUTE
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- should fail, too many rows
   execute 'select * from foo where f1 > 3' into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
-drop function footest();
+CONTEXT:  PL/pgSQL function stricttest() line 5 at EXECUTE
+drop function stricttest();
 -- test printing parameters after failure due to STRICT
 set plpgsql.print_strict_params to true;
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 declare
 x record;
 p1 int := 2;
@@ -3441,11 +3473,11 @@ begin
   select * from foo where f1 = p1 and f1::text = p3 into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned no rows
 DETAIL:  parameters: p1 = '2', p3 = 'foo'
-CONTEXT:  PL/pgSQL function footest() line 8 at SQL statement
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 8 at SQL statement
+create or replace function stricttest() returns void as $$
 declare
 x record;
 p1 int := 2;
@@ -3455,53 +3487,55 @@ begin
   select * from foo where f1 > p1 or f1::text = p3  into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
 DETAIL:  parameters: p1 = '2', p3 = 'foo'
-CONTEXT:  PL/pgSQL function footest() line 8 at SQL statement
-create or replace function footest() returns void as $$
+HINT:  Make sure the query returns a single row, or use LIMIT 1.
+CONTEXT:  PL/pgSQL function stricttest() line 8 at SQL statement
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- too many rows, no params
   select * from foo where f1 > 3 into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function footest() line 5 at SQL statement
-create or replace function footest() returns void as $$
+HINT:  Make sure the query returns a single row, or use LIMIT 1.
+CONTEXT:  PL/pgSQL function stricttest() line 5 at SQL statement
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- no rows
   execute 'select * from foo where f1 = $1 or f1::text = $2' using 0, 'foo' into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned no rows
 DETAIL:  parameters: $1 = '0', $2 = 'foo'
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 5 at EXECUTE
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- too many rows
   execute 'select * from foo where f1 > $1' using 1 into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
 DETAIL:  parameters: $1 = '1'
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 5 at EXECUTE
+create or replace function stricttest() returns void as $$
 declare x record;
 begin
   -- too many rows, no parameters
   execute 'select * from foo where f1 > 3' into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE
-create or replace function footest() returns void as $$
+CONTEXT:  PL/pgSQL function stricttest() line 5 at EXECUTE
+create or replace function stricttest() returns void as $$
 -- override the global
 #print_strict_params off
 declare
@@ -3513,11 +3547,12 @@ begin
   select * from foo where f1 > p1 or f1::text = p3  into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function footest() line 10 at SQL statement
+HINT:  Make sure the query returns a single row, or use LIMIT 1.
+CONTEXT:  PL/pgSQL function stricttest() line 10 at SQL statement
 reset plpgsql.print_strict_params;
-create or replace function footest() returns void as $$
+create or replace function stricttest() returns void as $$
 -- override the global
 #print_strict_params on
 declare
@@ -3529,10 +3564,11 @@ begin
   select * from foo where f1 > p1 or f1::text = p3  into strict x;
   raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
 end$$ language plpgsql;
-select footest();
+select stricttest();
 ERROR:  query returned more than one row
 DETAIL:  parameters: p1 = '2', p3 = 'foo'
-CONTEXT:  PL/pgSQL function footest() line 10 at SQL statement
+HINT:  Make sure the query returns a single row, or use LIMIT 1.
+CONTEXT:  PL/pgSQL function stricttest() line 10 at SQL statement
 -- test warnings and errors
 set plpgsql.extra_warnings to 'all';
 set plpgsql.extra_warnings to 'none';
@@ -3655,6 +3691,107 @@ select shadowtest(1);
  t
 (1 row)
 
+-- runtime extra checks
+set plpgsql.extra_warnings to 'too_many_rows';
+do $$
+declare x int;
+begin
+  select v from generate_series(1,2) g(v) into x;
+end;
+$$;
+WARNING:  query returned more than one row
+HINT:  Make sure the query returns a single row, or use LIMIT 1.
+set plpgsql.extra_errors to 'too_many_rows';
+do $$
+declare x int;
+begin
+  select v from generate_series(1,2) g(v) into x;
+end;
+$$;
+ERROR:  query returned more than one row
+HINT:  Make sure the query returns a single row, or use LIMIT 1.
+CONTEXT:  PL/pgSQL function inline_code_block line 4 at SQL statement
+reset plpgsql.extra_errors;
+reset plpgsql.extra_warnings;
+set plpgsql.extra_warnings to 'strict_multi_assignment';
+do $$
+declare
+  x int;
+  y int;
+begin
+  select 1 into x, y;
+  select 1,2 into x, y;
+  select 1,2,3 into x, y;
+end
+$$;
+WARNING:  number of source and target fields in assignment does not match
+DETAIL:  strict_multi_assignment check of extra_warnings is active.
+HINT:  Make sure the query returns the exact list of columns.
+WARNING:  number of source and target fields in assignment does not match
+DETAIL:  strict_multi_assignment check of extra_warnings is active.
+HINT:  Make sure the query returns the exact list of columns.
+set plpgsql.extra_errors to 'strict_multi_assignment';
+do $$
+declare
+  x int;
+  y int;
+begin
+  select 1 into x, y;
+  select 1,2 into x, y;
+  select 1,2,3 into x, y;
+end
+$$;
+ERROR:  number of source and target fields in assignment does not match
+DETAIL:  strict_multi_assignment check of extra_errors is active.
+HINT:  Make sure the query returns the exact list of columns.
+CONTEXT:  PL/pgSQL function inline_code_block line 6 at SQL statement
+create table test_01(a int, b int, c int);
+alter table test_01 drop column a;
+-- the check is active only when source table is not empty
+insert into test_01 values(10,20);
+do $$
+declare
+  x int;
+  y int;
+begin
+  select * from test_01 into x, y; -- should be ok
+  raise notice 'ok';
+  select * from test_01 into x;    -- should to fail
+end;
+$$;
+NOTICE:  ok
+ERROR:  number of source and target fields in assignment does not match
+DETAIL:  strict_multi_assignment check of extra_errors is active.
+HINT:  Make sure the query returns the exact list of columns.
+CONTEXT:  PL/pgSQL function inline_code_block line 8 at SQL statement
+do $$
+declare
+  t test_01;
+begin
+  select 1, 2 into t;  -- should be ok
+  raise notice 'ok';
+  select 1, 2, 3 into t; -- should fail;
+end;
+$$;
+NOTICE:  ok
+ERROR:  number of source and target fields in assignment does not match
+DETAIL:  strict_multi_assignment check of extra_errors is active.
+HINT:  Make sure the query returns the exact list of columns.
+CONTEXT:  PL/pgSQL function inline_code_block line 7 at SQL statement
+do $$
+declare
+  t test_01;
+begin
+  select 1 into t; -- should fail;
+end;
+$$;
+ERROR:  number of source and target fields in assignment does not match
+DETAIL:  strict_multi_assignment check of extra_errors is active.
+HINT:  Make sure the query returns the exact list of columns.
+CONTEXT:  PL/pgSQL function inline_code_block line 5 at SQL statement
+drop table test_01;
+reset plpgsql.extra_errors;
+reset plpgsql.extra_warnings;
 -- test scrollable cursor support
 create function sc_test() returns setof integer as $$
 declare
@@ -4297,7 +4434,7 @@ begin
 end;
 $$ language plpgsql;
 select compos();
-ERROR:  invalid input syntax for integer: "(1,hello)"
+ERROR:  invalid input syntax for type integer: "(1,hello)"
 CONTEXT:  PL/pgSQL function compos() while casting return value to function's return type
 -- test: invalid use of composite expression in scalar-returning function
 create or replace function compos() returns int as $$
@@ -4306,7 +4443,7 @@ begin
 end;
 $$ language plpgsql;
 select compos();
-ERROR:  invalid input syntax for integer: "(1,hello)"
+ERROR:  invalid input syntax for type integer: "(1,hello)"
 CONTEXT:  PL/pgSQL function compos() while casting return value to function's return type
 drop function compos();
 drop type compostype;
@@ -4574,136 +4711,6 @@ NOTICE:  column >>some column name<<, constraint >>some constraint name<<, type 
 (1 row)
 
 drop function stacked_diagnostics_test();
--- test CASE statement
-create or replace function case_test(bigint) returns text as $$
-declare a int = 10;
-        b int = 1;
-begin
-  case $1
-    when 1 then
-      return 'one';
-    when 2 then
-      return 'two';
-    when 3,4,3+5 then
-      return 'three, four or eight';
-    when a then
-      return 'ten';
-    when a+b, a+b+1 then
-      return 'eleven, twelve';
-  end case;
-end;
-$$ language plpgsql immutable;
-select case_test(1);
- case_test 
------------
- one
-(1 row)
-
-select case_test(2);
- case_test 
------------
- two
-(1 row)
-
-select case_test(3);
-      case_test       
-----------------------
- three, four or eight
-(1 row)
-
-select case_test(4);
-      case_test       
-----------------------
- three, four or eight
-(1 row)
-
-select case_test(5); -- fails
-ERROR:  case not found
-HINT:  CASE statement is missing ELSE part.
-CONTEXT:  PL/pgSQL function case_test(bigint) line 5 at CASE
-select case_test(8);
-      case_test       
-----------------------
- three, four or eight
-(1 row)
-
-select case_test(10);
- case_test 
------------
- ten
-(1 row)
-
-select case_test(11);
-   case_test    
-----------------
- eleven, twelve
-(1 row)
-
-select case_test(12);
-   case_test    
-----------------
- eleven, twelve
-(1 row)
-
-select case_test(13); -- fails
-ERROR:  case not found
-HINT:  CASE statement is missing ELSE part.
-CONTEXT:  PL/pgSQL function case_test(bigint) line 5 at CASE
-create or replace function catch() returns void as $$
-begin
-  raise notice '%', case_test(6);
-exception
-  when case_not_found then
-    raise notice 'caught case_not_found % %', SQLSTATE, SQLERRM;
-end
-$$ language plpgsql;
-select catch();
-NOTICE:  caught case_not_found 20000 case not found
- catch 
--------
- 
-(1 row)
-
--- test the searched variant too, as well as ELSE
-create or replace function case_test(bigint) returns text as $$
-declare a int = 10;
-begin
-  case
-    when $1 = 1 then
-      return 'one';
-    when $1 = a + 2 then
-      return 'twelve';
-    else
-      return 'other';
-  end case;
-end;
-$$ language plpgsql immutable;
-select case_test(1);
- case_test 
------------
- one
-(1 row)
-
-select case_test(2);
- case_test 
------------
- other
-(1 row)
-
-select case_test(12);
- case_test 
------------
- twelve
-(1 row)
-
-select case_test(13);
- case_test 
------------
- other
-(1 row)
-
-drop function catch();
-drop function case_test(bigint);
 -- test variadic functions
 create or replace function vari(variadic int[])
 returns void as $$
@@ -4829,6 +4836,7 @@ drop function tftest(int);
 create or replace function rttest()
 returns setof int as $$
 declare rc int;
+  rca int[];
 begin
   return query values(10),(20);
   get diagnostics rc = row_count;
@@ -4837,11 +4845,12 @@ begin
   get diagnostics rc = row_count;
   raise notice '% %', found, rc;
   return query execute 'values(10),(20)';
-  get diagnostics rc = row_count;
-  raise notice '% %', found, rc;
+  -- just for fun, let's use array elements as targets
+  get diagnostics rca[1] = row_count;
+  raise notice '% %', found, rca[1];
   return query execute 'select * from (values(10),(20)) f(a) where false';
-  get diagnostics rc = row_count;
-  raise notice '% %', found, rc;
+  get diagnostics rca[2] = row_count;
+  raise notice '% %', found, rca[2];
 end;
 $$ language plpgsql;
 select * from rttest();
@@ -5317,6 +5326,27 @@ select unreserved_test();
               43
 (1 row)
 
+create or replace function unreserved_test() returns int as $$
+declare
+  comment int := 21;
+begin
+  comment := comment * 2;
+  comment on function unreserved_test() is 'this is a test';
+  return comment;
+end
+$$ language plpgsql;
+select unreserved_test();
+ unreserved_test 
+-----------------
+              42
+(1 row)
+
+select obj_description('unreserved_test()'::regprocedure, 'pg_proc');
+ obj_description 
+-----------------
+ this is a test
+(1 row)
+
 drop function unreserved_test();
 --
 -- Test FOREACH over arrays
@@ -5586,6 +5616,12 @@ create function consumes_rw_array(int[]) returns int
 language plpgsql as $$
   begin return $1[1]; end;
 $$ stable;
+select consumes_rw_array(returns_rw_array(42));
+ consumes_rw_array 
+-------------------
+                42
+(1 row)
+
 -- bug #14174
 --start_ignore
 -- GPDB: Stable function inlining is performed for returns_rw_array.
@@ -5646,6 +5682,13 @@ select consumes_rw_array(a), a from
                  2 | {2,2}
 (2 rows)
 
+do $$
+declare a int[] := array[1,2];
+begin
+  a := a || 3;
+  raise notice 'a = %', a;
+end$$;
+NOTICE:  a = {1,2,3}
 --
 -- Test access to call stack
 --
@@ -5861,3 +5904,420 @@ end;
 $$;
 ERROR:  unhandled assertion
 CONTEXT:  PL/pgSQL function inline_code_block line 3 at ASSERT
+-- Test use of plpgsql in a domain check constraint (cf. bug #14414)
+create function plpgsql_domain_check(val int) returns boolean as $$
+begin return val > 0; end
+$$ language plpgsql immutable;
+create domain plpgsql_domain as integer check(plpgsql_domain_check(value));
+do $$
+declare v_test plpgsql_domain;
+begin
+  v_test := 1;
+end;
+$$;
+do $$
+declare v_test plpgsql_domain := 1;
+begin
+  v_test := 0;  -- fail
+end;
+$$;
+ERROR:  value for domain plpgsql_domain violates check constraint "plpgsql_domain_check"
+CONTEXT:  PL/pgSQL function inline_code_block line 4 at assignment
+-- Test handling of expanded array passed to a domain constraint (bug #14472)
+create function plpgsql_arr_domain_check(val int[]) returns boolean as $$
+begin return val[1] > 0; end
+$$ language plpgsql immutable;
+create domain plpgsql_arr_domain as int[] check(plpgsql_arr_domain_check(value));
+do $$
+declare v_test plpgsql_arr_domain;
+begin
+  v_test := array[1];
+  v_test := v_test || 2;
+end;
+$$;
+do $$
+declare v_test plpgsql_arr_domain := array[1];
+begin
+  v_test := 0 || v_test;  -- fail
+end;
+$$;
+ERROR:  value for domain plpgsql_arr_domain violates check constraint "plpgsql_arr_domain_check"
+CONTEXT:  PL/pgSQL function inline_code_block line 4 at assignment
+--
+-- test usage of transition tables in AFTER triggers
+--
+CREATE TABLE transition_table_base (id int PRIMARY KEY, val text);
+CREATE FUNCTION transition_table_base_ins_func()
+  RETURNS trigger
+  LANGUAGE plpgsql
+AS $$
+DECLARE
+  t text;
+  l text;
+BEGIN
+  t = '';
+  FOR l IN EXECUTE
+           $q$
+             EXPLAIN (TIMING off, COSTS off, VERBOSE on)
+             SELECT * FROM newtable
+           $q$ LOOP
+    t = t || l || E'\n';
+  END LOOP;
+
+  RAISE INFO '%', t;
+  RETURN new;
+END;
+$$;
+CREATE TRIGGER transition_table_base_ins_trig
+  AFTER INSERT ON transition_table_base
+  REFERENCING OLD TABLE AS oldtable NEW TABLE AS newtable
+  FOR EACH STATEMENT
+  EXECUTE PROCEDURE transition_table_base_ins_func();
+ERROR:  OLD TABLE can only be specified for a DELETE or UPDATE trigger
+CREATE TRIGGER transition_table_base_ins_trig
+  AFTER INSERT ON transition_table_base
+  REFERENCING NEW TABLE AS newtable
+  FOR EACH STATEMENT
+  EXECUTE PROCEDURE transition_table_base_ins_func();
+INSERT INTO transition_table_base VALUES (1, 'One'), (2, 'Two');
+INFO:  Named Tuplestore Scan
+  Output: id, val
+
+INSERT INTO transition_table_base VALUES (3, 'Three'), (4, 'Four');
+INFO:  Named Tuplestore Scan
+  Output: id, val
+
+CREATE OR REPLACE FUNCTION transition_table_base_upd_func()
+  RETURNS trigger
+  LANGUAGE plpgsql
+AS $$
+DECLARE
+  t text;
+  l text;
+BEGIN
+  t = '';
+  FOR l IN EXECUTE
+           $q$
+             EXPLAIN (TIMING off, COSTS off, VERBOSE on)
+             SELECT * FROM oldtable ot FULL JOIN newtable nt USING (id)
+           $q$ LOOP
+    t = t || l || E'\n';
+  END LOOP;
+
+  RAISE INFO '%', t;
+  RETURN new;
+END;
+$$;
+CREATE TRIGGER transition_table_base_upd_trig
+  AFTER UPDATE ON transition_table_base
+  REFERENCING OLD TABLE AS oldtable NEW TABLE AS newtable
+  FOR EACH STATEMENT
+  EXECUTE PROCEDURE transition_table_base_upd_func();
+UPDATE transition_table_base
+  SET val = '*' || val || '*'
+  WHERE id BETWEEN 2 AND 3;
+INFO:  Hash Full Join
+  Output: COALESCE(ot.id, nt.id), ot.val, nt.val
+  Hash Cond: (ot.id = nt.id)
+  ->  Named Tuplestore Scan
+        Output: ot.id, ot.val
+  ->  Hash
+        Output: nt.id, nt.val
+        ->  Named Tuplestore Scan
+              Output: nt.id, nt.val
+
+CREATE TABLE transition_table_level1
+(
+      level1_no serial NOT NULL ,
+      level1_node_name varchar(255),
+       PRIMARY KEY (level1_no)
+) WITHOUT OIDS;
+CREATE TABLE transition_table_level2
+(
+      level2_no serial NOT NULL ,
+      parent_no int NOT NULL,
+      level1_node_name varchar(255),
+       PRIMARY KEY (level2_no)
+) WITHOUT OIDS;
+CREATE TABLE transition_table_status
+(
+      level int NOT NULL,
+      node_no int NOT NULL,
+      status int,
+       PRIMARY KEY (level, node_no)
+) WITHOUT OIDS;
+CREATE FUNCTION transition_table_level1_ri_parent_del_func()
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+AS $$
+  DECLARE n bigint;
+  BEGIN
+    PERFORM FROM p JOIN transition_table_level2 c ON c.parent_no = p.level1_no;
+    IF FOUND THEN
+      RAISE EXCEPTION 'RI error';
+    END IF;
+    RETURN NULL;
+  END;
+$$;
+CREATE TRIGGER transition_table_level1_ri_parent_del_trigger
+  AFTER DELETE ON transition_table_level1
+  REFERENCING OLD TABLE AS p
+  FOR EACH STATEMENT EXECUTE PROCEDURE
+    transition_table_level1_ri_parent_del_func();
+CREATE FUNCTION transition_table_level1_ri_parent_upd_func()
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+AS $$
+  DECLARE
+    x int;
+  BEGIN
+    WITH p AS (SELECT level1_no, sum(delta) cnt
+                 FROM (SELECT level1_no, 1 AS delta FROM i
+                       UNION ALL
+                       SELECT level1_no, -1 AS delta FROM d) w
+                 GROUP BY level1_no
+                 HAVING sum(delta) < 0)
+    SELECT level1_no
+      FROM p JOIN transition_table_level2 c ON c.parent_no = p.level1_no
+      INTO x;
+    IF FOUND THEN
+      RAISE EXCEPTION 'RI error';
+    END IF;
+    RETURN NULL;
+  END;
+$$;
+CREATE TRIGGER transition_table_level1_ri_parent_upd_trigger
+  AFTER UPDATE ON transition_table_level1
+  REFERENCING OLD TABLE AS d NEW TABLE AS i
+  FOR EACH STATEMENT EXECUTE PROCEDURE
+    transition_table_level1_ri_parent_upd_func();
+CREATE FUNCTION transition_table_level2_ri_child_insupd_func()
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+AS $$
+  BEGIN
+    PERFORM FROM i
+      LEFT JOIN transition_table_level1 p
+        ON p.level1_no IS NOT NULL AND p.level1_no = i.parent_no
+      WHERE p.level1_no IS NULL;
+    IF FOUND THEN
+      RAISE EXCEPTION 'RI error';
+    END IF;
+    RETURN NULL;
+  END;
+$$;
+CREATE TRIGGER transition_table_level2_ri_child_ins_trigger
+  AFTER INSERT ON transition_table_level2
+  REFERENCING NEW TABLE AS i
+  FOR EACH STATEMENT EXECUTE PROCEDURE
+    transition_table_level2_ri_child_insupd_func();
+CREATE TRIGGER transition_table_level2_ri_child_upd_trigger
+  AFTER UPDATE ON transition_table_level2
+  REFERENCING NEW TABLE AS i
+  FOR EACH STATEMENT EXECUTE PROCEDURE
+    transition_table_level2_ri_child_insupd_func();
+-- create initial test data
+INSERT INTO transition_table_level1 (level1_no)
+  SELECT generate_series(1,200);
+ANALYZE transition_table_level1;
+INSERT INTO transition_table_level2 (level2_no, parent_no)
+  SELECT level2_no, level2_no / 50 + 1 AS parent_no
+    FROM generate_series(1,9999) level2_no;
+ANALYZE transition_table_level2;
+INSERT INTO transition_table_status (level, node_no, status)
+  SELECT 1, level1_no, 0 FROM transition_table_level1;
+INSERT INTO transition_table_status (level, node_no, status)
+  SELECT 2, level2_no, 0 FROM transition_table_level2;
+ANALYZE transition_table_status;
+INSERT INTO transition_table_level1(level1_no)
+  SELECT generate_series(201,1000);
+ANALYZE transition_table_level1;
+-- behave reasonably if someone tries to modify a transition table
+CREATE FUNCTION transition_table_level2_bad_usage_func()
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+AS $$
+  BEGIN
+    INSERT INTO dx VALUES (1000000, 1000000, 'x');
+    RETURN NULL;
+  END;
+$$;
+CREATE TRIGGER transition_table_level2_bad_usage_trigger
+  AFTER DELETE ON transition_table_level2
+  REFERENCING OLD TABLE AS dx
+  FOR EACH STATEMENT EXECUTE PROCEDURE
+    transition_table_level2_bad_usage_func();
+DELETE FROM transition_table_level2
+  WHERE level2_no BETWEEN 301 AND 305;
+ERROR:  relation "dx" cannot be the target of a modifying statement
+CONTEXT:  SQL statement "INSERT INTO dx VALUES (1000000, 1000000, 'x')"
+PL/pgSQL function transition_table_level2_bad_usage_func() line 3 at SQL statement
+DROP TRIGGER transition_table_level2_bad_usage_trigger
+  ON transition_table_level2;
+-- attempt modifications which would break RI (should all fail)
+DELETE FROM transition_table_level1
+  WHERE level1_no = 25;
+ERROR:  RI error
+CONTEXT:  PL/pgSQL function transition_table_level1_ri_parent_del_func() line 6 at RAISE
+UPDATE transition_table_level1 SET level1_no = -1
+  WHERE level1_no = 30;
+ERROR:  RI error
+CONTEXT:  PL/pgSQL function transition_table_level1_ri_parent_upd_func() line 15 at RAISE
+INSERT INTO transition_table_level2 (level2_no, parent_no)
+  VALUES (10000, 10000);
+ERROR:  RI error
+CONTEXT:  PL/pgSQL function transition_table_level2_ri_child_insupd_func() line 8 at RAISE
+UPDATE transition_table_level2 SET parent_no = 2000
+  WHERE level2_no = 40;
+ERROR:  RI error
+CONTEXT:  PL/pgSQL function transition_table_level2_ri_child_insupd_func() line 8 at RAISE
+-- attempt modifications which would not break RI (should all succeed)
+DELETE FROM transition_table_level1
+  WHERE level1_no BETWEEN 201 AND 1000;
+DELETE FROM transition_table_level1
+  WHERE level1_no BETWEEN 100000000 AND 100000010;
+SELECT count(*) FROM transition_table_level1;
+ count 
+-------
+   200
+(1 row)
+
+DELETE FROM transition_table_level2
+  WHERE level2_no BETWEEN 211 AND 220;
+SELECT count(*) FROM transition_table_level2;
+ count 
+-------
+  9989
+(1 row)
+
+CREATE TABLE alter_table_under_transition_tables
+(
+  id int PRIMARY KEY,
+  name text
+);
+CREATE FUNCTION alter_table_under_transition_tables_upd_func()
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+AS $$
+BEGIN
+  RAISE WARNING 'old table = %, new table = %',
+                  (SELECT string_agg(id || '=' || name, ',') FROM d),
+                  (SELECT string_agg(id || '=' || name, ',') FROM i);
+  RAISE NOTICE 'one = %', (SELECT 1 FROM alter_table_under_transition_tables LIMIT 1);
+  RETURN NULL;
+END;
+$$;
+-- should fail, TRUNCATE is not compatible with transition tables
+CREATE TRIGGER alter_table_under_transition_tables_upd_trigger
+  AFTER TRUNCATE OR UPDATE ON alter_table_under_transition_tables
+  REFERENCING OLD TABLE AS d NEW TABLE AS i
+  FOR EACH STATEMENT EXECUTE PROCEDURE
+    alter_table_under_transition_tables_upd_func();
+ERROR:  TRUNCATE triggers with transition tables are not supported
+-- should work
+CREATE TRIGGER alter_table_under_transition_tables_upd_trigger
+  AFTER UPDATE ON alter_table_under_transition_tables
+  REFERENCING OLD TABLE AS d NEW TABLE AS i
+  FOR EACH STATEMENT EXECUTE PROCEDURE
+    alter_table_under_transition_tables_upd_func();
+INSERT INTO alter_table_under_transition_tables
+  VALUES (1, '1'), (2, '2'), (3, '3');
+UPDATE alter_table_under_transition_tables
+  SET name = name || name;
+WARNING:  old table = 1=1,2=2,3=3, new table = 1=11,2=22,3=33
+NOTICE:  one = 1
+-- now change 'name' to an integer to see what happens...
+ALTER TABLE alter_table_under_transition_tables
+  ALTER COLUMN name TYPE int USING name::integer;
+UPDATE alter_table_under_transition_tables
+  SET name = (name::text || name::text)::integer;
+WARNING:  old table = 1=11,2=22,3=33, new table = 1=1111,2=2222,3=3333
+NOTICE:  one = 1
+-- now drop column 'name'
+ALTER TABLE alter_table_under_transition_tables
+  DROP column name;
+UPDATE alter_table_under_transition_tables
+  SET id = id;
+ERROR:  column "name" does not exist
+LINE 1: SELECT (SELECT string_agg(id || '=' || name, ',') FROM d)
+                                               ^
+QUERY:  SELECT (SELECT string_agg(id || '=' || name, ',') FROM d)
+CONTEXT:  PL/pgSQL function alter_table_under_transition_tables_upd_func() line 3 at RAISE
+--
+-- Test multiple reference to a transition table
+--
+CREATE TABLE multi_test (i int);
+INSERT INTO multi_test VALUES (1);
+CREATE OR REPLACE FUNCTION multi_test_trig() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    RAISE NOTICE 'count = %', (SELECT COUNT(*) FROM new_test);
+    RAISE NOTICE 'count union = %',
+      (SELECT COUNT(*)
+       FROM (SELECT * FROM new_test UNION ALL SELECT * FROM new_test) ss);
+    RETURN NULL;
+END$$;
+CREATE TRIGGER my_trigger AFTER UPDATE ON multi_test
+  REFERENCING NEW TABLE AS new_test OLD TABLE as old_test
+  FOR EACH STATEMENT EXECUTE PROCEDURE multi_test_trig();
+UPDATE multi_test SET i = i;
+NOTICE:  count = 1
+NOTICE:  count union = 2
+DROP TABLE multi_test;
+DROP FUNCTION multi_test_trig();
+--
+-- Check type parsing and record fetching from partitioned tables
+--
+CREATE TABLE partitioned_table (a int, b text) PARTITION BY LIST (a);
+CREATE TABLE pt_part1 PARTITION OF partitioned_table FOR VALUES IN (1);
+CREATE TABLE pt_part2 PARTITION OF partitioned_table FOR VALUES IN (2);
+INSERT INTO partitioned_table VALUES (1, 'Row 1');
+INSERT INTO partitioned_table VALUES (2, 'Row 2');
+CREATE OR REPLACE FUNCTION get_from_partitioned_table(partitioned_table.a%type)
+RETURNS partitioned_table AS $$
+DECLARE
+    a_val partitioned_table.a%TYPE;
+    result partitioned_table%ROWTYPE;
+BEGIN
+    a_val := $1;
+    SELECT * INTO result FROM partitioned_table WHERE a = a_val;
+    RETURN result;
+END; $$ LANGUAGE plpgsql;
+NOTICE:  type reference partitioned_table.a%TYPE converted to integer
+SELECT * FROM get_from_partitioned_table(1) AS t;
+ a |   b   
+---+-------
+ 1 | Row 1
+(1 row)
+
+CREATE OR REPLACE FUNCTION list_partitioned_table()
+RETURNS SETOF partitioned_table.a%TYPE AS $$
+DECLARE
+    row partitioned_table%ROWTYPE;
+    a_val partitioned_table.a%TYPE;
+BEGIN
+    FOR row IN SELECT * FROM partitioned_table ORDER BY a LOOP
+        a_val := row.a;
+        RETURN NEXT a_val;
+    END LOOP;
+    RETURN;
+END; $$ LANGUAGE plpgsql;
+NOTICE:  type reference partitioned_table.a%TYPE converted to integer
+SELECT * FROM list_partitioned_table() AS t;
+ t 
+---
+ 1
+ 2
+(2 rows)
+
+--
+-- Check argument name is used instead of $n in error message
+--
+CREATE FUNCTION fx(x WSlot) RETURNS void AS $$
+BEGIN
+  GET DIAGNOSTICS x = ROW_COUNT;
+  RETURN;
+END; $$ LANGUAGE plpgsql;
+ERROR:  "x" is not a scalar variable
+LINE 3:   GET DIAGNOSTICS x = ROW_COUNT;
+                          ^

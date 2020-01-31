@@ -4,7 +4,7 @@
  *	  POSTGRES definitions for external and compressed storage
  *	  of variable size attributes.
  *
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2019, PostgreSQL Global Development Group
  *
  * src/include/access/tuptoaster.h
  *
@@ -90,7 +90,7 @@
  *
  * NB: Changing TOAST_MAX_CHUNK_SIZE requires an initdb.
  */
-#define EXTERN_TUPLES_PER_PAGE	4		/* tweak only this */
+#define EXTERN_TUPLES_PER_PAGE	4	/* tweak only this */
 
 #define EXTERN_TUPLE_MAX_SIZE	MaximumBytesPerTuple(EXTERN_TUPLES_PER_PAGE)
 
@@ -147,6 +147,7 @@ do { \
  * ----------
  */
 extern HeapTuple toast_insert_or_update(Relation rel,
+<<<<<<< HEAD
 					   HeapTuple newtup, HeapTuple oldtup, 
 					   int toast_tuple_target,
 					   bool isFrozen, int options);
@@ -155,6 +156,10 @@ extern MemTuple toast_insert_or_update_memtup(Relation rel,
 							  MemTuple newtup, MemTuple oldtup, 
 							  MemTupleBinding *pbind, int toast_tuple_target,
 							  bool isFrozen, int options);
+=======
+										HeapTuple newtup, HeapTuple oldtup,
+										int options);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* ----------
  * toast_delete -
@@ -162,7 +167,11 @@ extern MemTuple toast_insert_or_update_memtup(Relation rel,
  *	Called by heap_delete().
  * ----------
  */
+<<<<<<< HEAD
 extern void toast_delete(Relation rel, GenericTuple oldtup, MemTupleBinding *pbind);
+=======
+extern void toast_delete(Relation rel, HeapTuple oldtup, bool is_speculative);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* ----------
  * heap_tuple_fetch_attr() -
@@ -172,7 +181,7 @@ extern void toast_delete(Relation rel, GenericTuple oldtup, MemTupleBinding *pbi
  *		in compressed format.
  * ----------
  */
-extern struct varlena *heap_tuple_fetch_attr(struct varlena * attr);
+extern struct varlena *heap_tuple_fetch_attr(struct varlena *attr);
 
 /* ----------
  * varattrib_untoast_ptr_len
@@ -197,7 +206,7 @@ extern int varattrib_untoast_len(Datum d);
  *		it as needed.
  * ----------
  */
-extern struct varlena *heap_tuple_untoast_attr(struct varlena * attr);
+extern struct varlena *heap_tuple_untoast_attr(struct varlena *attr);
 
 /* ----------
  * heap_tuple_untoast_attr_slice() -
@@ -206,9 +215,9 @@ extern struct varlena *heap_tuple_untoast_attr(struct varlena * attr);
  *		(Handles all cases for attribute storage)
  * ----------
  */
-extern struct varlena *heap_tuple_untoast_attr_slice(struct varlena * attr,
-							  int32 sliceoffset,
-							  int32 slicelength);
+extern struct varlena *heap_tuple_untoast_attr_slice(struct varlena *attr,
+													 int32 sliceoffset,
+													 int32 slicelength);
 
 /* ----------
  * toast_flatten_tuple -
@@ -226,8 +235,19 @@ extern HeapTuple toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc);
  * ----------
  */
 extern Datum toast_flatten_tuple_to_datum(HeapTupleHeader tup,
-							 uint32 tup_len,
-							 TupleDesc tupleDesc);
+										  uint32 tup_len,
+										  TupleDesc tupleDesc);
+
+/* ----------
+ * toast_build_flattened_tuple -
+ *
+ *	Build a tuple containing no out-of-line toasted fields.
+ *	(This does not eliminate compressed or short-header datums.)
+ * ----------
+ */
+extern HeapTuple toast_build_flattened_tuple(TupleDesc tupleDesc,
+											 Datum *values,
+											 bool *isnull);
 
 /* ----------
  * toast_compress_datum -
@@ -261,4 +281,4 @@ extern Size toast_datum_size(Datum value);
  */
 extern Oid	toast_get_valid_index(Oid toastoid, LOCKMODE lock);
 
-#endif   /* TUPTOASTER_H */
+#endif							/* TUPTOASTER_H */

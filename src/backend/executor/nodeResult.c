@@ -34,9 +34,13 @@
  *		plan normally and pass back the results.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -49,6 +53,7 @@
 
 #include "executor/executor.h"
 #include "executor/nodeResult.h"
+#include "miscadmin.h"
 #include "utils/memutils.h"
 
 #include "catalog/pg_type.h"
@@ -126,10 +131,19 @@ static TupleTableSlot *NextInputSlot(ResultState *node)
  *		'nil' if the constant qualification is not satisfied.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecResult(ResultState *node)
+static TupleTableSlot *
+ExecResult(PlanState *pstate)
 {
+<<<<<<< HEAD
 	ExprContext *econtext;
+=======
+	ResultState *node = castNode(ResultState, pstate);
+	TupleTableSlot *outerTupleSlot;
+	PlanState  *outerPlan;
+	ExprContext *econtext;
+
+	CHECK_FOR_INTERRUPTS();
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	econtext = node->ps.ps_ExprContext;
 
@@ -138,18 +152,32 @@ ExecResult(ResultState *node)
 	 */
 	if (node->rs_checkqual)
 	{
-		bool		qualResult = ExecQual((List *) node->resconstantqual,
-										  econtext,
-										  false);
+		bool		qualResult = ExecQual(node->resconstantqual, econtext);
 
 		node->rs_checkqual = false;
 		if (!qualResult)
 			return NULL;
 	}
 
+<<<<<<< HEAD
 	TupleTableSlot *outputSlot = NULL;
 
 	while (!outputSlot)
+=======
+	/*
+	 * Reset per-tuple memory context to free any expression evaluation
+	 * storage allocated in the previous tuple cycle.
+	 */
+	ResetExprContext(econtext);
+
+	/*
+	 * if rs_done is true then it means that we were asked to return a
+	 * constant tuple and we already did the last time ExecResult() was
+	 * called, OR that we failed the constant qual check. Either way, now we
+	 * are through.
+	 */
+	while (!node->rs_done)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		TupleTableSlot *candidateOutputSlot = NULL;
 
@@ -232,6 +260,7 @@ ExecResult(ResultState *node)
 			}
 		}
 
+<<<<<<< HEAD
 		/*
 		 * Under these conditions, we don't expect to find any more tuples.
 		 */
@@ -279,6 +308,10 @@ TupleMatchesHashFilter(ResultState *node, TupleTableSlot *resultSlot)
 		int targetSeg = cdbhashreduce(node->hashFilter);
 
 		res = (targetSeg == GpIdentity.segindex);
+=======
+		/* form the result tuple using ExecProject(), and return it */
+		return ExecProject(node->ps.ps_ProjInfo);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	return res;
@@ -337,6 +370,7 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	resstate = makeNode(ResultState);
 	resstate->ps.plan = (Plan *) node;
 	resstate->ps.state = estate;
+	resstate->ps.ExecProcNode = ExecResult;
 
 	resstate->inputFullyConsumed = false;
 	resstate->rs_checkqual = (node->resconstantqual == NULL) ? false : true;
@@ -348,6 +382,7 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &resstate->ps);
 
+<<<<<<< HEAD
 	resstate->isSRF = false;
 
 	/*resstate->ps.ps_TupFromTlist = false;*/
@@ -369,6 +404,8 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	resstate->resconstantqual = ExecInitExpr((Expr *) node->resconstantqual,
 											 (PlanState *) resstate);
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * initialize child nodes
 	 */
@@ -380,12 +417,13 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	Assert(innerPlan(node) == NULL);
 
 	/*
-	 * initialize tuple type and projection info
+	 * Initialize result slot, type and projection.
 	 */
-	ExecAssignResultTypeFromTL(&resstate->ps);
+	ExecInitResultTupleSlotTL(&resstate->ps, &TTSOpsVirtual);
 	ExecAssignProjectionInfo(&resstate->ps, NULL);
 
 	/*
+<<<<<<< HEAD
 	 * initialize hash filter
 	 */
 	if (node->numHashFilterCols > 0)
@@ -403,6 +441,14 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	{
 		SPI_ReserveMemory(((Plan *)node)->operatorMemKB * 1024L);
 	}
+=======
+	 * initialize child expressions
+	 */
+	resstate->ps.qual =
+		ExecInitQual(node->plan.qual, (PlanState *) resstate);
+	resstate->resconstantqual =
+		ExecInitQual((List *) node->resconstantqual, (PlanState *) resstate);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return resstate;
 }
@@ -438,8 +484,12 @@ ExecEndResult(ResultState *node)
 void
 ExecReScanResult(ResultState *node)
 {
+<<<<<<< HEAD
 	node->inputFullyConsumed = false;
 	node->isSRF = false;
+=======
+	node->rs_done = false;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	node->rs_checkqual = (node->resconstantqual == NULL) ? false : true;
 
 	/*

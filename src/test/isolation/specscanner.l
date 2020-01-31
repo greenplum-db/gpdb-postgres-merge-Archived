@@ -4,7 +4,7 @@
  * specscanner.l
  *	  a lexical scanner for an isolation test specification
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *-------------------------------------------------------------------------
@@ -18,6 +18,8 @@ static size_t litbufsize = 0;
 static size_t litbufpos = 0;
 
 static void addlitchar(char c);
+
+/* LCOV_EXCL_START */
 
 %}
 
@@ -46,11 +48,19 @@ comment			("#"{non_newline}*)
 	litbufsize = LITBUF_INIT;
 %}
 
+<<<<<<< HEAD
 permutation		{ return(PERMUTATION); }
 session			{ return(SESSION); }
 setup			{ return(SETUP); }
 step			{ return(STEP); }
 teardown		{ return(TEARDOWN); }
+=======
+permutation		{ return PERMUTATION; }
+session			{ return SESSION; }
+setup			{ return SETUP; }
+step			{ return STEP; }
+teardown		{ return TEARDOWN; }
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 [\n]			{ yyline++; }
 {comment}		{ /* ignore */ }
@@ -63,7 +73,7 @@ teardown		{ return(TEARDOWN); }
 				}
 <qstr>\"		{
 					litbuf[litbufpos] = '\0';
-					yylval.str = strdup(litbuf);
+					yylval.str = pg_strdup(litbuf);
 					BEGIN(INITIAL);
 					return(string_literal);
 				}
@@ -79,7 +89,7 @@ teardown		{ return(TEARDOWN); }
 				}
 <sql>{space}*"}" {
 					litbuf[litbufpos] = '\0';
-					yylval.str = strdup(litbuf);
+					yylval.str = pg_strdup(litbuf);
 					BEGIN(INITIAL);
 					return(sqlblock);
 				}
@@ -99,6 +109,8 @@ teardown		{ return(TEARDOWN); }
 					exit(1);
 				}
 %%
+
+/* LCOV_EXCL_STOP */
 
 static void
 addlitchar(char c)

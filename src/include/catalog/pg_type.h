@@ -1,18 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * pg_type.h
- *	  definition of the system "type" relation (pg_type)
- *	  along with the relation's initial contents.
+ *	  definition of the "type" system catalog (pg_type)
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_type.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +19,10 @@
 #define PG_TYPE_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_type_d.h"
+
+#include "catalog/objectaddress.h"
+#include "nodes/nodes.h"
 
 /* ----------------
  *		pg_type definition.  cpp turns this into
@@ -31,14 +34,18 @@
  *		See struct FormData_pg_attribute for details.
  * ----------------
  */
-#define TypeRelationId	1247
-#define TypeRelation_Rowtype_Id  71
-
-CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
+CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
-	NameData	typname;		/* type name */
-	Oid			typnamespace;	/* OID of namespace containing this type */
-	Oid			typowner;		/* type owner */
+	Oid			oid;			/* oid */
+
+	/* type name */
+	NameData	typname;
+
+	/* OID of namespace containing this type */
+	Oid			typnamespace BKI_DEFAULT(PGNSP);
+
+	/* type owner */
+	Oid			typowner BKI_DEFAULT(PGUID);
 
 	/*
 	 * For a fixed-size type, typlen is the number of bytes we use to
@@ -47,17 +54,17 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 * "varlena" type (one that has a length word), -2 to indicate a
 	 * null-terminated C string.
 	 */
-	int16		typlen;
+	int16		typlen BKI_ARRAY_DEFAULT(-1);
 
 	/*
 	 * typbyval determines whether internal Postgres routines pass a value of
-	 * this type by value or by reference.  typbyval had better be FALSE if
+	 * this type by value or by reference.  typbyval had better be false if
 	 * the length is not 1, 2, or 4 (or 8 on 8-byte-Datum machines).
 	 * Variable-length types are always passed by reference. Note that
-	 * typbyval can be false even if the length would allow pass-by-value;
-	 * this is currently true for type float4, for example.
+	 * typbyval can be false even if the length would allow pass-by-value; for
+	 * example, type macaddr8 is pass-by-ref even when Datum is 8 bytes.
 	 */
-	bool		typbyval;
+	bool		typbyval BKI_ARRAY_DEFAULT(f);
 
 	/*
 	 * typtype is 'b' for a base type, 'c' for a composite type (e.g., a
@@ -66,7 +73,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 *
 	 * If typtype is 'c', typrelid is the OID of the class' entry in pg_class.
 	 */
-	char		typtype;
+	char		typtype BKI_DEFAULT(b) BKI_ARRAY_DEFAULT(b);
 
 	/*
 	 * typcategory and typispreferred help the parser distinguish preferred
@@ -74,19 +81,25 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 * character (but not \0).  The categories used for built-in types are
 	 * identified by the TYPCATEGORY macros below.
 	 */
-	char		typcategory;	/* arbitrary type classification */
 
-	bool		typispreferred; /* is type "preferred" within its category? */
+	/* arbitrary type classification */
+	char		typcategory BKI_ARRAY_DEFAULT(A);
+
+	/* is type "preferred" within its category? */
+	bool		typispreferred BKI_DEFAULT(f) BKI_ARRAY_DEFAULT(f);
 
 	/*
 	 * If typisdefined is false, the entry is only a placeholder (forward
-	 * reference).  We know the type name, but not yet anything else about it.
+	 * reference).  We know the type's name and owner, but not yet anything
+	 * else about it.
 	 */
-	bool		typisdefined;
+	bool		typisdefined BKI_DEFAULT(t);
 
-	char		typdelim;		/* delimiter for arrays of this type */
+	/* delimiter for arrays of this type */
+	char		typdelim BKI_DEFAULT(',');
 
-	Oid			typrelid;		/* 0 if not a composite type */
+	/* associated pg_class OID if a composite type, else 0 */
+	Oid			typrelid BKI_DEFAULT(0) BKI_ARRAY_DEFAULT(0) BKI_LOOKUP(pg_class);
 
 	/*
 	 * If typelem is not 0 then it identifies another row in pg_type. The
@@ -99,32 +112,36 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 *
 	 * typelem != 0 and typlen == -1.
 	 */
-	Oid			typelem;
+	Oid			typelem BKI_DEFAULT(0) BKI_LOOKUP(pg_type);
 
 	/*
 	 * If there is a "true" array type having this type as element type,
 	 * typarray links to it.  Zero if no associated "true" array type.
 	 */
-	Oid			typarray;
+	Oid			typarray BKI_DEFAULT(0) BKI_ARRAY_DEFAULT(0) BKI_LOOKUP(pg_type);
 
 	/*
 	 * I/O conversion procedures for the datatype.
 	 */
-	regproc		typinput;		/* text format (required) */
-	regproc		typoutput;
-	regproc		typreceive;		/* binary format (optional) */
-	regproc		typsend;
+
+	/* text format (required) */
+	regproc		typinput BKI_ARRAY_DEFAULT(array_in) BKI_LOOKUP(pg_proc);
+	regproc		typoutput BKI_ARRAY_DEFAULT(array_out) BKI_LOOKUP(pg_proc);
+
+	/* binary format (optional) */
+	regproc		typreceive BKI_ARRAY_DEFAULT(array_recv) BKI_LOOKUP(pg_proc);
+	regproc		typsend BKI_ARRAY_DEFAULT(array_send) BKI_LOOKUP(pg_proc);
 
 	/*
 	 * I/O functions for optional type modifiers.
 	 */
-	regproc		typmodin;
-	regproc		typmodout;
+	regproc		typmodin BKI_DEFAULT(-) BKI_LOOKUP(pg_proc);
+	regproc		typmodout BKI_DEFAULT(-) BKI_LOOKUP(pg_proc);
 
 	/*
 	 * Custom ANALYZE procedure for the datatype (0 selects the default).
 	 */
-	regproc		typanalyze;
+	regproc		typanalyze BKI_DEFAULT(-) BKI_ARRAY_DEFAULT(array_typanalyze) BKI_LOOKUP(pg_proc);
 
 	/* ----------------
 	 * typalign is the alignment required when storing a value of this
@@ -162,7 +179,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 * 'm' MAIN		  like 'x' but try to keep in main tuple
 	 * ----------------
 	 */
-	char		typstorage;
+	char		typstorage BKI_DEFAULT(p) BKI_ARRAY_DEFAULT(x);
 
 	/*
 	 * This flag represents a "NOT NULL" constraint against this datatype.
@@ -172,32 +189,33 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 *
 	 * Used primarily for domain types.
 	 */
-	bool		typnotnull;
+	bool		typnotnull BKI_DEFAULT(f);
 
 	/*
 	 * Domains use typbasetype to show the base (or domain) type that the
 	 * domain is based on.  Zero if the type is not a domain.
 	 */
-	Oid			typbasetype;
+	Oid			typbasetype BKI_DEFAULT(0);
 
 	/*
 	 * Domains use typtypmod to record the typmod to be applied to their base
 	 * type (-1 if base type does not use a typmod).  -1 if this type is not a
 	 * domain.
 	 */
-	int32		typtypmod;
+	int32		typtypmod BKI_DEFAULT(-1);
 
 	/*
 	 * typndims is the declared number of dimensions for an array domain type
 	 * (i.e., typbasetype is an array type).  Otherwise zero.
 	 */
-	int32		typndims;
+	int32		typndims BKI_DEFAULT(0);
 
 	/*
-	 * Collation: 0 if type cannot use collations, DEFAULT_COLLATION_OID for
-	 * collatable base types, possibly other OID for domains
+	 * Collation: 0 if type cannot use collations, nonzero (typically
+	 * DEFAULT_COLLATION_OID) for collatable base types, possibly some other
+	 * OID for domains over collatable types
 	 */
-	Oid			typcollation;
+	Oid			typcollation BKI_DEFAULT(0) BKI_LOOKUP(pg_collation);
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 
@@ -206,7 +224,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 * a default expression for the type.  Currently this is only used for
 	 * domains.
 	 */
-	pg_node_tree typdefaultbin;
+	pg_node_tree typdefaultbin BKI_DEFAULT(_null_) BKI_ARRAY_DEFAULT(_null_);
 
 	/*
 	 * typdefault is NULL if the type has no associated default value. If
@@ -216,12 +234,12 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 * external representation of the type's default value, which may be fed
 	 * to the type's input converter to produce a constant.
 	 */
-	text		typdefault;
+	text		typdefault BKI_DEFAULT(_null_) BKI_ARRAY_DEFAULT(_null_);
 
 	/*
 	 * Access permissions
 	 */
-	aclitem		typacl[1];
+	aclitem		typacl[1] BKI_DEFAULT(_null_);
 #endif
 } FormData_pg_type;
 
@@ -244,6 +262,7 @@ FOREIGN_KEY(typmodout REFERENCES pg_proc(oid));
  */
 typedef FormData_pg_type *Form_pg_type;
 
+<<<<<<< HEAD
 /* ----------------
  *		compiler constants for pg_type
  * ----------------
@@ -729,9 +748,12 @@ DESCR("Represents a generic TABLE value expression");
 DATA(insert OID = 7157 ( gp_hyperloglog_estimator		PGNSP PGUID -1 f b X f t \054 0    0 7165 gp_hyperloglog_in gp_hyperloglog_out - - - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("gp_hyperloglog_estimator’s internal bytea representation for hyperloglog counter");
 DATA(insert OID = 7165 ( _gp_hyperloglog_estimator		PGNSP PGUID -1 f b A f t \054 0	7157 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+=======
+#ifdef EXPOSE_TO_CLIENT_CODE
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
- * macros
+ * macros for values of poor-mans-enumerated-type columns
  */
 #define  TYPTYPE_BASE		'b' /* base type (ordinary scalar type) */
 #define  TYPTYPE_COMPOSITE	'c' /* composite (e.g., table's rowtype) */
@@ -747,14 +769,14 @@ DATA(insert OID = 7165 ( _gp_hyperloglog_estimator		PGNSP PGUID -1 f b A f t \05
 #define  TYPCATEGORY_DATETIME	'D'
 #define  TYPCATEGORY_ENUM		'E'
 #define  TYPCATEGORY_GEOMETRIC	'G'
-#define  TYPCATEGORY_NETWORK	'I'		/* think INET */
+#define  TYPCATEGORY_NETWORK	'I' /* think INET */
 #define  TYPCATEGORY_NUMERIC	'N'
 #define  TYPCATEGORY_PSEUDOTYPE 'P'
 #define  TYPCATEGORY_RANGE		'R'
 #define  TYPCATEGORY_STRING		'S'
 #define  TYPCATEGORY_TIMESPAN	'T'
 #define  TYPCATEGORY_USER		'U'
-#define  TYPCATEGORY_BITSTRING	'V'		/* er ... "varbit"? */
+#define  TYPCATEGORY_BITSTRING	'V' /* er ... "varbit"? */
 #define  TYPCATEGORY_UNKNOWN	'X'
 
 /* Is a type OID a polymorphic pseudotype?	(Beware of multiple evaluation) */
@@ -765,8 +787,69 @@ DATA(insert OID = 7165 ( _gp_hyperloglog_estimator		PGNSP PGUID -1 f b A f t \05
 	 (typid) == ANYENUMOID || \
 	 (typid) == ANYRANGEOID)
 
+<<<<<<< HEAD
 /* Is a type OID suitable for describe callback functions? */
 #define TypeSupportsDescribe(typid)  \
 	((typid) == RECORDOID)
 
 #endif   /* PG_TYPE_H */
+=======
+#endif							/* EXPOSE_TO_CLIENT_CODE */
+
+
+extern ObjectAddress TypeShellMake(const char *typeName,
+								   Oid typeNamespace,
+								   Oid ownerId);
+
+extern ObjectAddress TypeCreate(Oid newTypeOid,
+								const char *typeName,
+								Oid typeNamespace,
+								Oid relationOid,
+								char relationKind,
+								Oid ownerId,
+								int16 internalSize,
+								char typeType,
+								char typeCategory,
+								bool typePreferred,
+								char typDelim,
+								Oid inputProcedure,
+								Oid outputProcedure,
+								Oid receiveProcedure,
+								Oid sendProcedure,
+								Oid typmodinProcedure,
+								Oid typmodoutProcedure,
+								Oid analyzeProcedure,
+								Oid elementType,
+								bool isImplicitArray,
+								Oid arrayType,
+								Oid baseType,
+								const char *defaultTypeValue,
+								char *defaultTypeBin,
+								bool passedByValue,
+								char alignment,
+								char storage,
+								int32 typeMod,
+								int32 typNDims,
+								bool typeNotNull,
+								Oid typeCollation);
+
+extern void GenerateTypeDependencies(Oid typeObjectId,
+									 Form_pg_type typeForm,
+									 Node *defaultExpr,
+									 void *typacl,
+									 char relationKind, /* only for relation
+														 * rowtypes */
+									 bool isImplicitArray,
+									 bool isDependentType,
+									 bool rebuild);
+
+extern void RenameTypeInternal(Oid typeOid, const char *newTypeName,
+							   Oid typeNamespace);
+
+extern char *makeArrayTypeName(const char *typeName, Oid typeNamespace);
+
+extern bool moveArrayTypeName(Oid typeOid, const char *typeName,
+							  Oid typeNamespace);
+
+#endif							/* PG_TYPE_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

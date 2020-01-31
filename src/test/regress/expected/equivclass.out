@@ -346,6 +346,7 @@ explain (costs off)
      union all
      select ff + 4 as x from ec1) as ss2
   where ss1.x = ec1.f1 and ss1.x = ss2.x and ec1.ff = 42::int8;
+<<<<<<< HEAD
                                    QUERY PLAN                                    
 ---------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -376,6 +377,30 @@ explain (costs off)
                      ->  Seq Scan on ec1 ec1_4
  Optimizer: Postgres query optimizer
 (27 rows)
+=======
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Merge Join
+   Merge Cond: ((((ec1_4.ff + 2) + 1)) = (((ec1_1.ff + 2) + 1)))
+   ->  Merge Append
+         Sort Key: (((ec1_4.ff + 2) + 1))
+         ->  Index Scan using ec1_expr2 on ec1 ec1_4
+         ->  Index Scan using ec1_expr3 on ec1 ec1_5
+         ->  Index Scan using ec1_expr4 on ec1 ec1_6
+   ->  Materialize
+         ->  Merge Join
+               Merge Cond: ((((ec1_1.ff + 2) + 1)) = ec1.f1)
+               ->  Merge Append
+                     Sort Key: (((ec1_1.ff + 2) + 1))
+                     ->  Index Scan using ec1_expr2 on ec1 ec1_1
+                     ->  Index Scan using ec1_expr3 on ec1 ec1_2
+                     ->  Index Scan using ec1_expr4 on ec1 ec1_3
+               ->  Sort
+                     Sort Key: ec1.f1 USING <
+                     ->  Index Scan using ec1_pkey on ec1
+                           Index Cond: (ff = '42'::bigint)
+(19 rows)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- check partially indexed scan
 set enable_nestloop = on;
@@ -420,6 +445,7 @@ explain (costs off)
      union all
      select ff + 4 as x from ec1) as ss1
   where ss1.x = ec1.f1 and ec1.ff = 42::int8;
+<<<<<<< HEAD
                           QUERY PLAN                           
 ---------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -437,4 +463,82 @@ explain (costs off)
                            Index Cond: (ff = '42'::bigint)
  Optimizer: Postgres query optimizer
 (14 rows)
+=======
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Merge Join
+   Merge Cond: ((((ec1_1.ff + 2) + 1)) = ec1.f1)
+   ->  Merge Append
+         Sort Key: (((ec1_1.ff + 2) + 1))
+         ->  Index Scan using ec1_expr2 on ec1 ec1_1
+         ->  Sort
+               Sort Key: (((ec1_2.ff + 3) + 1))
+               ->  Seq Scan on ec1 ec1_2
+         ->  Index Scan using ec1_expr4 on ec1 ec1_3
+   ->  Sort
+         Sort Key: ec1.f1 USING <
+         ->  Index Scan using ec1_pkey on ec1
+               Index Cond: (ff = '42'::bigint)
+(13 rows)
+
+-- check effects of row-level security
+set enable_nestloop = on;
+set enable_mergejoin = off;
+alter table ec1 enable row level security;
+create policy p1 on ec1 using (f1 < '5'::int8alias1);
+create user regress_user_ectest;
+grant select on ec0 to regress_user_ectest;
+grant select on ec1 to regress_user_ectest;
+-- without any RLS, we'll treat {a.ff, b.ff, 43} as an EquivalenceClass
+explain (costs off)
+  select * from ec0 a, ec1 b
+  where a.ff = b.ff and a.ff = 43::bigint::int8alias1;
+                 QUERY PLAN                  
+---------------------------------------------
+ Nested Loop
+   ->  Index Scan using ec0_pkey on ec0 a
+         Index Cond: (ff = '43'::int8alias1)
+   ->  Index Scan using ec1_pkey on ec1 b
+         Index Cond: (ff = '43'::int8alias1)
+(5 rows)
+
+set session authorization regress_user_ectest;
+-- with RLS active, the non-leakproof a.ff = 43 clause is not treated
+-- as a suitable source for an EquivalenceClass; currently, this is true
+-- even though the RLS clause has nothing to do directly with the EC
+explain (costs off)
+  select * from ec0 a, ec1 b
+  where a.ff = b.ff and a.ff = 43::bigint::int8alias1;
+                 QUERY PLAN                  
+---------------------------------------------
+ Nested Loop
+   ->  Index Scan using ec0_pkey on ec0 a
+         Index Cond: (ff = '43'::int8alias1)
+   ->  Index Scan using ec1_pkey on ec1 b
+         Index Cond: (ff = a.ff)
+         Filter: (f1 < '5'::int8alias1)
+(6 rows)
+
+reset session authorization;
+revoke select on ec0 from regress_user_ectest;
+revoke select on ec1 from regress_user_ectest;
+drop user regress_user_ectest;
+-- check that X=X is converted to X IS NOT NULL when appropriate
+explain (costs off)
+  select * from tenk1 where unique1 = unique1 and unique2 = unique2;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Seq Scan on tenk1
+   Filter: ((unique1 IS NOT NULL) AND (unique2 IS NOT NULL))
+(2 rows)
+
+-- this could be converted, but isn't at present
+explain (costs off)
+  select * from tenk1 where unique1 = unique1 or unique2 = unique2;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Seq Scan on tenk1
+   Filter: ((unique1 = unique1) OR (unique2 = unique2))
+(2 rows)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 

@@ -9,7 +9,7 @@
  * into a lot of low-level code.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/reloptions.h
@@ -66,10 +66,15 @@ typedef enum relopt_kind
 	RELOPT_KIND_TABLESPACE = (1 << 7),
 	RELOPT_KIND_SPGIST = (1 << 8),
 	RELOPT_KIND_VIEW = (1 << 9),
+<<<<<<< HEAD
 	RELOPT_KIND_BITMAP = (1 << 10),
 	RELOPT_KIND_BRIN = (1 << 11),
+=======
+	RELOPT_KIND_BRIN = (1 << 10),
+	RELOPT_KIND_PARTITIONED = (1 << 11),
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* if you add a new kind, make sure you update "last_default" too */
-	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_BRIN,
+	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_PARTITIONED,
 	/* some compilers treat enums as signed ints, so we can't use 1 << 31 */
 	RELOPT_KIND_MAX = (1 << 30)
 } relopt_kind;
@@ -127,7 +132,7 @@ typedef struct relopt_real
 } relopt_real;
 
 /* validation routines for strings */
-typedef void (*validate_string_relopt) (char *value);
+typedef void (*validate_string_relopt) (const char *value);
 
 typedef struct relopt_string
 {
@@ -185,7 +190,7 @@ typedef struct
  *	code block.
  */
 #define HAVE_RELOPTION(optname, option) \
-	(pg_strncasecmp(option.gen->name, optname, option.gen->namelen + 1) == 0)
+	(strncmp(option.gen->name, optname, option.gen->namelen + 1) == 0)
 
 #define HANDLE_INT_RELOPTION(optname, var, option, wasset)		\
 	do {														\
@@ -265,42 +270,43 @@ typedef struct
 
 
 extern relopt_kind add_reloption_kind(void);
-extern void add_bool_reloption(bits32 kinds, char *name, char *desc,
-				   bool default_val);
-extern void add_int_reloption(bits32 kinds, char *name, char *desc,
-				  int default_val, int min_val, int max_val);
-extern void add_real_reloption(bits32 kinds, char *name, char *desc,
-				   double default_val, double min_val, double max_val);
-extern void add_string_reloption(bits32 kinds, char *name, char *desc,
-					 char *default_val, validate_string_relopt validator);
+extern void add_bool_reloption(bits32 kinds, const char *name, const char *desc,
+							   bool default_val);
+extern void add_int_reloption(bits32 kinds, const char *name, const char *desc,
+							  int default_val, int min_val, int max_val);
+extern void add_real_reloption(bits32 kinds, const char *name, const char *desc,
+							   double default_val, double min_val, double max_val);
+extern void add_string_reloption(bits32 kinds, const char *name, const char *desc,
+								 const char *default_val, validate_string_relopt validator);
 
 extern void set_reloption_lockmode(const char *name, LOCKMODE lockmode);
 
 extern Datum transformRelOptions(Datum oldOptions, List *defList,
-					char *namspace, char *validnsps[],
-					bool ignoreOids, bool isReset);
+								 const char *namspace, char *validnsps[],
+								 bool acceptOidsOff, bool isReset);
 extern List *untransformRelOptions(Datum options);
 extern bytea *extractRelOptions(HeapTuple tuple, TupleDesc tupdesc,
-				  amoptions_function amoptions);
+								amoptions_function amoptions);
 extern relopt_value *parseRelOptions(Datum options, bool validate,
-				relopt_kind kind, int *numrelopts);
+									 relopt_kind kind, int *numrelopts);
 extern void *allocateReloptStruct(Size base, relopt_value *options,
-					 int numoptions);
+								  int numoptions);
 extern void fillRelOptions(void *rdopts, Size basesize,
-			   relopt_value *options, int numoptions,
-			   bool validate,
-			   const relopt_parse_elt *elems, int nelems);
+						   relopt_value *options, int numoptions,
+						   bool validate,
+						   const relopt_parse_elt *elems, int nelems);
 
 extern bytea *default_reloptions(Datum reloptions, bool validate,
-				   relopt_kind kind);
+								 relopt_kind kind);
 extern bytea *heap_reloptions(char relkind, Datum reloptions, bool validate);
 extern bytea *view_reloptions(Datum reloptions, bool validate);
 extern bytea *index_reloptions(amoptions_function amoptions, Datum reloptions,
-				 bool validate);
+							   bool validate);
 extern bytea *attribute_reloptions(Datum reloptions, bool validate);
 extern bytea *tablespace_reloptions(Datum reloptions, bool validate);
 extern LOCKMODE AlterTableGetRelOptionsLockLevel(List *defList);
 
+<<<<<<< HEAD
 extern void validateAppendOnlyRelOptions(bool ao, int blocksize, int writesize,
 										 int complevel, char* comptype, 
 										 bool checksum, char relkind, bool co);
@@ -325,3 +331,6 @@ extern void validate_and_adjust_options(StdRdOptions *result, relopt_value *opti
 										int num_options, relopt_kind kind, bool validate);
 
 #endif   /* RELOPTIONS_H */
+=======
+#endif							/* RELOPTIONS_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

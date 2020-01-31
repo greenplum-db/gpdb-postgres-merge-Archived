@@ -1,18 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * pg_namespace.h
- *	  definition of the system "namespace" relation (pg_namespace)
- *	  along with the relation's initial contents.
+ *	  definition of the "namespace" system catalog (pg_namespace)
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_namespace.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +19,7 @@
 #define PG_NAMESPACE_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_namespace_d.h"
 
 /* ----------------------------------------------------------------
  *		pg_namespace definition.
@@ -31,10 +31,10 @@
  *	nspacl				access privilege list
  * ----------------------------------------------------------------
  */
-#define NamespaceRelationId  2615
-
-CATALOG(pg_namespace,2615)
+CATALOG(pg_namespace,2615,NamespaceRelationId)
 {
+	Oid			oid;			/* oid */
+
 	NameData	nspname;
 	Oid			nspowner;
 
@@ -53,6 +53,7 @@ FOREIGN_KEY(nspowner REFERENCES pg_authid(oid));
  */
 typedef FormData_pg_namespace *Form_pg_namespace;
 
+<<<<<<< HEAD
 /* ----------------
  *		compiler constants for pg_namespace
  * ----------------
@@ -99,9 +100,11 @@ DESCR("Reserved schema for internal relations of bitmap indexes");
 	 namespaceId == PG_PUBLIC_NAMESPACE || \
 	 namespaceId == PG_AOSEGMENT_NAMESPACE)
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * prototypes for functions in pg_namespace.c
  */
 extern Oid	NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp);
 
-#endif   /* PG_NAMESPACE_H */
+#endif							/* PG_NAMESPACE_H */

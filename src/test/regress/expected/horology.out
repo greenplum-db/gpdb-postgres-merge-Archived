@@ -527,7 +527,7 @@ SELECT date '1991-02-03' - time with time zone '04:05:06 UTC' AS "Subtract Time 
 ERROR:  operator does not exist: date - time with time zone
 LINE 1: SELECT date '1991-02-03' - time with time zone '04:05:06 UTC...
                                  ^
-HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
 --
 -- timestamp, interval arithmetic
 --
@@ -2254,6 +2254,7 @@ SELECT '' AS "226", d1.f1 AS timestamp1, d2.f1 AS timestamp2, d1.f1 - d2.f1 AS d
 (256 rows)
 
 --
+<<<<<<< HEAD
 -- abstime, reltime arithmetic
 --
 SELECT '' AS ten, ABSTIME_HOROLOGY_TBL.f1 AS abstime, RELTIME_HOROLOGY_TBL.f1 AS reltime
@@ -2318,6 +2319,8 @@ SELECT '' AS three, * FROM ABSTIME_HOROLOGY_TBL
 (3 rows)
 
 --
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- Conversions
 --
 SELECT '' AS "16", f1 AS "timestamp", date(f1) AS date
@@ -2344,6 +2347,7 @@ SELECT '' AS "16", f1 AS "timestamp", date(f1) AS date
     | Sat Sep 22 18:19:20 2001 PDT | 09-22-2001
 (16 rows)
 
+<<<<<<< HEAD
 SELECT '' AS "16", f1 AS "timestamp", abstime(f1) AS abstime
   FROM TEMP_TIMESTAMP
   ORDER BY abstime;
@@ -2418,6 +2422,8 @@ SELECT '' AS six, f1 as reltime, CAST(f1 AS interval) AS interval
      | @ 34 years    | @ 34 years
 (6 rows)
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 DROP TABLE TEMP_TIMESTAMP;
 --
 -- Formats
@@ -2499,6 +2505,7 @@ SELECT '' AS "64", d1 AS us_postgres FROM TIMESTAMP_HOROLOGY_TBL ORDER BY 2;
     | infinity
 (65 rows)
 
+<<<<<<< HEAD
 SELECT '' AS seven, f1 AS us_postgres FROM ABSTIME_HOROLOGY_TBL ORDER BY 2;
  seven |         us_postgres          
 -------+------------------------------
@@ -2511,6 +2518,8 @@ SELECT '' AS seven, f1 AS us_postgres FROM ABSTIME_HOROLOGY_TBL ORDER BY 2;
        | invalid
 (7 rows)
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SET DateStyle TO 'US,ISO';
 SELECT '' AS "64", d1 AS us_iso FROM TIMESTAMP_HOROLOGY_TBL ORDER BY 2;
  64 |         us_iso         
@@ -2582,6 +2591,7 @@ SELECT '' AS "64", d1 AS us_iso FROM TIMESTAMP_HOROLOGY_TBL ORDER BY 2;
     | infinity
 (65 rows)
 
+<<<<<<< HEAD
 SELECT '' AS seven, f1 AS us_iso FROM ABSTIME_HOROLOGY_TBL ORDER BY 2;
  seven |         us_iso         
 -------+------------------------
@@ -2594,6 +2604,8 @@ SELECT '' AS seven, f1 AS us_iso FROM ABSTIME_HOROLOGY_TBL ORDER BY 2;
        | invalid
 (7 rows)
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SET DateStyle TO 'US,SQL';
 SHOW DateStyle;
  DateStyle 
@@ -2671,6 +2683,7 @@ SELECT '' AS "64", d1 AS us_sql FROM TIMESTAMP_HOROLOGY_TBL ORDER BY 2;
     | infinity
 (65 rows)
 
+<<<<<<< HEAD
 SELECT '' AS seven, f1 AS us_sql FROM ABSTIME_HOROLOGY_TBL ORDER BY 2;
  seven |         us_sql          
 -------+-------------------------
@@ -2683,6 +2696,8 @@ SELECT '' AS seven, f1 AS us_sql FROM ABSTIME_HOROLOGY_TBL ORDER BY 2;
        | invalid
 (7 rows)
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SET DateStyle TO 'European,Postgres';
 SHOW DateStyle;
    DateStyle   
@@ -2768,6 +2783,7 @@ SELECT '' AS "65", d1 AS european_postgres FROM TIMESTAMP_HOROLOGY_TBL ORDER BY 
     | infinity
 (66 rows)
 
+<<<<<<< HEAD
 SELECT '' AS seven, f1 AS european_postgres FROM ABSTIME_HOROLOGY_TBL ORDER BY 2;
  seven |      european_postgres       
 -------+------------------------------
@@ -2780,6 +2796,8 @@ SELECT '' AS seven, f1 AS european_postgres FROM ABSTIME_HOROLOGY_TBL ORDER BY 2
        | invalid
 (7 rows)
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SET DateStyle TO 'European,ISO';
 SHOW DateStyle;
  DateStyle 
@@ -2858,6 +2876,7 @@ SELECT '' AS "65", d1 AS european_iso FROM TIMESTAMP_HOROLOGY_TBL ORDER BY 2;
     | infinity
 (66 rows)
 
+<<<<<<< HEAD
 SELECT '' AS seven, f1 AS european_iso FROM ABSTIME_HOROLOGY_TBL ORDER BY 2;
  seven |      european_iso      
 -------+------------------------
@@ -2870,6 +2889,8 @@ SELECT '' AS seven, f1 AS european_iso FROM ABSTIME_HOROLOGY_TBL ORDER BY 2;
        | invalid
 (7 rows)
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SET DateStyle TO 'European,SQL';
 SHOW DateStyle;
  DateStyle 
@@ -2948,6 +2969,7 @@ SELECT '' AS "65", d1 AS european_sql FROM TIMESTAMP_HOROLOGY_TBL ORDER BY 2;
     | infinity
 (66 rows)
 
+<<<<<<< HEAD
 SELECT '' AS seven, f1 AS european_sql FROM ABSTIME_HOROLOGY_TBL ORDER BY 2;
  seven |      european_sql       
 -------+-------------------------
@@ -2960,6 +2982,8 @@ SELECT '' AS seven, f1 AS european_sql FROM ABSTIME_HOROLOGY_TBL ORDER BY 2;
        | invalid
 (7 rows)
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 RESET DateStyle;
 --
 -- to_timestamp()
@@ -2976,14 +3000,32 @@ SELECT to_timestamp('97/2/16 8:14:30', 'FMYYYY/FMMM/FMDD FMHH:FMMI:FMSS');
  Sat Feb 16 08:14:30 0097 PST
 (1 row)
 
+SELECT to_timestamp('2011$03!18 23_38_15', 'YYYY-MM-DD HH24:MI:SS');
+         to_timestamp         
+------------------------------
+ Fri Mar 18 23:38:15 2011 PDT
+(1 row)
+
 SELECT to_timestamp('1985 January 12', 'YYYY FMMonth DD');
          to_timestamp         
 ------------------------------
  Sat Jan 12 00:00:00 1985 PST
 (1 row)
 
+SELECT to_timestamp('1985 FMMonth 12', 'YYYY "FMMonth" DD');
+         to_timestamp         
+------------------------------
+ Sat Jan 12 00:00:00 1985 PST
+(1 row)
+
+SELECT to_timestamp('1985 \ 12', 'YYYY \\ DD');
+         to_timestamp         
+------------------------------
+ Sat Jan 12 00:00:00 1985 PST
+(1 row)
+
 SELECT to_timestamp('My birthday-> Year: 1976, Month: May, Day: 16',
-                    '"My birthday-> Year" YYYY, "Month:" FMMonth, "Day:" DD');
+                    '"My birthday-> Year:" YYYY, "Month:" FMMonth, "Day:" DD');
          to_timestamp         
 ------------------------------
  Sun May 16 00:00:00 1976 PDT
@@ -2996,7 +3038,7 @@ SELECT to_timestamp('1,582nd VIII 21', 'Y,YYYth FMRM DD');
 (1 row)
 
 SELECT to_timestamp('15 "text between quote marks" 98 54 45',
-                    E'HH24 "\\text between quote marks\\"" YY MI SS');
+                    E'HH24 "\\"text between quote marks\\"" YY MI SS');
          to_timestamp         
 ------------------------------
  Thu Jan 01 15:54:45 1998 PST
@@ -3017,6 +3059,24 @@ SELECT to_timestamp('2000January09Sunday', 'YYYYFMMonthDDFMDay');
 SELECT to_timestamp('97/Feb/16', 'YYMonDD');
 ERROR:  invalid value "/Fe" for "Mon"
 DETAIL:  The given value did not match any of the allowed values for this field.
+SELECT to_timestamp('97/Feb/16', 'YY:Mon:DD');
+         to_timestamp         
+------------------------------
+ Sun Feb 16 00:00:00 1997 PST
+(1 row)
+
+SELECT to_timestamp('97/Feb/16', 'FXYY:Mon:DD');
+         to_timestamp         
+------------------------------
+ Sun Feb 16 00:00:00 1997 PST
+(1 row)
+
+SELECT to_timestamp('97/Feb/16', 'FXYY/Mon/DD');
+         to_timestamp         
+------------------------------
+ Sun Feb 16 00:00:00 1997 PST
+(1 row)
+
 SELECT to_timestamp('19971116', 'YYYYMMDD');
          to_timestamp         
 ------------------------------
@@ -3137,13 +3197,46 @@ SELECT to_timestamp('2011-12-18 11:38 PM', 'YYYY-MM-DD HH12:MI PM');
  Sun Dec 18 23:38:00 2011 PST
 (1 row)
 
+<<<<<<< HEAD
+=======
+SELECT to_timestamp('2011-12-18 11:38 +05',    'YYYY-MM-DD HH12:MI TZH');
+         to_timestamp         
+------------------------------
+ Sat Dec 17 22:38:00 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18 11:38 -05',    'YYYY-MM-DD HH12:MI TZH');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 08:38:00 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18 11:38 +05:20', 'YYYY-MM-DD HH12:MI TZH:TZM');
+         to_timestamp         
+------------------------------
+ Sat Dec 17 22:18:00 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18 11:38 -05:20', 'YYYY-MM-DD HH12:MI TZH:TZM');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 08:58:00 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18 11:38 20',     'YYYY-MM-DD HH12:MI TZM');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 03:18:00 2011 PST
+(1 row)
+
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 --
 -- Check handling of multiple spaces in format and/or input
 --
 SELECT to_timestamp('2011-12-18 23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
          to_timestamp         
 ------------------------------
- Sun Dec 18 03:38:15 2011 PST
+ Sun Dec 18 23:38:15 2011 PST
 (1 row)
 
 SELECT to_timestamp('2011-12-18  23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
@@ -3173,7 +3266,64 @@ SELECT to_timestamp('2011-12-18  23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
 SELECT to_timestamp('2011-12-18  23:38:15', 'YYYY-MM-DD   HH24:MI:SS');
          to_timestamp         
 ------------------------------
- Sun Dec 18 03:38:15 2011 PST
+ Sun Dec 18 23:38:15 2011 PST
+(1 row)
+
+SELECT to_timestamp('2000+   JUN', 'YYYY/MON');
+         to_timestamp         
+------------------------------
+ Thu Jun 01 00:00:00 2000 PDT
+(1 row)
+
+SELECT to_timestamp('  2000 +JUN', 'YYYY/MON');
+         to_timestamp         
+------------------------------
+ Thu Jun 01 00:00:00 2000 PDT
+(1 row)
+
+SELECT to_timestamp(' 2000 +JUN', 'YYYY//MON');
+         to_timestamp         
+------------------------------
+ Thu Jun 01 00:00:00 2000 PDT
+(1 row)
+
+SELECT to_timestamp('2000  +JUN', 'YYYY//MON');
+         to_timestamp         
+------------------------------
+ Thu Jun 01 00:00:00 2000 PDT
+(1 row)
+
+SELECT to_timestamp('2000 + JUN', 'YYYY MON');
+         to_timestamp         
+------------------------------
+ Thu Jun 01 00:00:00 2000 PDT
+(1 row)
+
+SELECT to_timestamp('2000 ++ JUN', 'YYYY  MON');
+         to_timestamp         
+------------------------------
+ Thu Jun 01 00:00:00 2000 PDT
+(1 row)
+
+SELECT to_timestamp('2000 + + JUN', 'YYYY  MON');
+ERROR:  invalid value "+ J" for "MON"
+DETAIL:  The given value did not match any of the allowed values for this field.
+SELECT to_timestamp('2000 + + JUN', 'YYYY   MON');
+         to_timestamp         
+------------------------------
+ Thu Jun 01 00:00:00 2000 PDT
+(1 row)
+
+SELECT to_timestamp('2000 -10', 'YYYY TZH');
+         to_timestamp         
+------------------------------
+ Sat Jan 01 02:00:00 2000 PST
+(1 row)
+
+SELECT to_timestamp('2000 -10', 'YYYY  TZH');
+         to_timestamp         
+------------------------------
+ Fri Dec 31 06:00:00 1999 PST
 (1 row)
 
 SELECT to_date('2011 12  18', 'YYYY MM DD');
@@ -3191,13 +3341,13 @@ SELECT to_date('2011 12  18', 'YYYY MM  DD');
 SELECT to_date('2011 12  18', 'YYYY MM   DD');
   to_date   
 ------------
- 12-08-2011
+ 12-18-2011
 (1 row)
 
 SELECT to_date('2011 12 18', 'YYYY  MM DD');
   to_date   
 ------------
- 02-18-2011
+ 12-18-2011
 (1 row)
 
 SELECT to_date('2011  12 18', 'YYYY  MM DD');
@@ -3212,6 +3362,21 @@ SELECT to_date('2011   12 18', 'YYYY  MM DD');
  12-18-2011
 (1 row)
 
+SELECT to_date('2011 12 18', 'YYYYxMMxDD');
+  to_date   
+------------
+ 12-18-2011
+(1 row)
+
+SELECT to_date('2011x 12x 18', 'YYYYxMMxDD');
+  to_date   
+------------
+ 12-18-2011
+(1 row)
+
+SELECT to_date('2011 x12 x18', 'YYYYxMMxDD');
+ERROR:  invalid value "x1" for "MM"
+DETAIL:  Value must be an integer.
 --
 -- Check errors for some incorrect usages of to_timestamp() and to_date()
 --
@@ -3255,6 +3420,7 @@ SELECT to_timestamp('2016-06-13 15:50:55', 'YYYY-MM-DD HH24:MI:SS');  -- ok
 (1 row)
 
 SELECT to_timestamp('2016-06-13 15:50:55', 'YYYY-MM-DD HH:MI:SS');
+<<<<<<< HEAD
 WARNING:  hour "15" is invalid for the 12-hour clock
 HINT:  Use the 24-hour clock, or give an hour between 1 and 12.
          to_timestamp         
@@ -3262,6 +3428,10 @@ HINT:  Use the 24-hour clock, or give an hour between 1 and 12.
  Mon Jun 13 15:50:55 2016 PDT
 (1 row)
 
+=======
+ERROR:  hour "15" is invalid for the 12-hour clock
+HINT:  Use the 24-hour clock, or give an hour between 1 and 12.
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SELECT to_timestamp('2016-13-01 15:50:55', 'YYYY-MM-DD HH24:MI:SS');
 ERROR:  date/time field value out of range: "2016-13-01 15:50:55"
 SELECT to_timestamp('2016-02-30 15:50:55', 'YYYY-MM-DD HH24:MI:SS');

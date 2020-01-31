@@ -3,36 +3,38 @@
  * filemap.c
  *	  A data structure for keeping track of files that have changed.
  *
- * Copyright (c) 2013-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2019, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres_fe.h"
 
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 #include "datapagemap.h"
 #include "filemap.h"
-#include "logging.h"
 #include "pg_rewind.h"
 
 #include "catalog/catalog.h"
 #include "common/string.h"
-#include "catalog/pg_tablespace.h"
+#include "catalog/pg_tablespace_d.h"
 #include "storage/fd.h"
 
 filemap_t  *filemap = NULL;
 
 static bool isRelDataFile(const char *path);
 static char *datasegpath(RelFileNode rnode, ForkNumber forknum,
-			BlockNumber segno);
+						 BlockNumber segno);
 static int	path_cmp(const void *a, const void *b);
 static int	final_filemap_cmp(const void *a, const void *b);
 static void filemap_list_to_array(filemap_t *map);
+<<<<<<< HEAD
 static bool check_file_excluded(const char *path, const char *type);
+=======
+static bool check_file_excluded(const char *path, bool is_source);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * The contents of these directories are removed or recreated during server
@@ -50,7 +52,11 @@ static const char *excludeDirContents[] =
 	 * when stats_temp_directory is set because PGSS_TEXT_FILE is always
 	 * created there.
 	 */
+<<<<<<< HEAD
 	"pg_stat_tmp",	/* defined as PG_STAT_TMP_DIR */
+=======
+	"pg_stat_tmp",				/* defined as PG_STAT_TMP_DIR */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * It is generally not useful to backup the contents of this directory
@@ -60,7 +66,11 @@ static const char *excludeDirContents[] =
 	"pg_replslot",
 
 	/* Contents removed on startup, see dsm_cleanup_for_mmap(). */
+<<<<<<< HEAD
 	"pg_dynshmem",	/* defined as PG_DYNSHMEM_DIR */
+=======
+	"pg_dynshmem",				/* defined as PG_DYNSHMEM_DIR */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Contents removed on startup, see AsyncShmemInit(). */
 	"pg_notify",
@@ -77,9 +87,12 @@ static const char *excludeDirContents[] =
 	/* Contents zeroed on startup, see StartupSUBTRANS(). */
 	"pg_subtrans",
 
+<<<<<<< HEAD
 	/* Contents unique to each segment instance. */
 	"pg_log",
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* end of list */
 	NULL
 };
@@ -109,8 +122,11 @@ static const char *excludeFiles[] =
 	"postmaster.pid",
 	"postmaster.opts",
 
+<<<<<<< HEAD
 	GP_INTERNAL_AUTO_CONF_FILE_NAME,
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* end of list */
 	NULL
 };
@@ -172,19 +188,27 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 		return;
 
 	/*
+<<<<<<< HEAD
 	 * Pretend that pg_xlog is a directory, even if it's really a symlink.
 	 * We don't want to mess with the symlink itself, nor complain if it's a
 	 * symlink in source but not in target or vice versa.
 	 */
 	if (strcmp(path, "pg_xlog") == 0 && type == FILE_TYPE_SYMLINK)
 		type = FILE_TYPE_DIRECTORY;
+=======
+	 * Skip any files matching the exclusion filters. This has the effect to
+	 * remove all those files on the target.
+	 */
+	if (check_file_excluded(path, true))
+		return;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
-	 * Pretend that pg_xlog is a directory, even if it's really a symlink. We
+	 * Pretend that pg_wal is a directory, even if it's really a symlink. We
 	 * don't want to mess with the symlink itself, nor complain if it's a
 	 * symlink in source but not in target or vice versa.
 	 */
-	if (strcmp(path, "pg_xlog") == 0 && type == FILE_TYPE_SYMLINK)
+	if (strcmp(path, "pg_wal") == 0 && type == FILE_TYPE_SYMLINK)
 		type = FILE_TYPE_DIRECTORY;
 
 	/*
@@ -202,7 +226,7 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 	 * regular file
 	 */
 	if (type != FILE_TYPE_REGULAR && isRelDataFile(path))
-		pg_fatal("data file \"%s\" in source is not a regular file\n", path);
+		pg_fatal("data file \"%s\" in source is not a regular file", path);
 
 	snprintf(localpath, sizeof(localpath), "%s/%s", datadir_target, path);
 
@@ -210,8 +234,8 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 	if (lstat(localpath, &statbuf) < 0)
 	{
 		if (errno != ENOENT)
-			pg_fatal("could not stat file \"%s\": %s\n",
-					 localpath, strerror(errno));
+			pg_fatal("could not stat file \"%s\": %m",
+					 localpath);
 
 		exists = false;
 	}
@@ -221,10 +245,10 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 	switch (type)
 	{
 		case FILE_TYPE_DIRECTORY:
-			if (exists && !S_ISDIR(statbuf.st_mode) && strcmp(path, "pg_xlog") != 0)
+			if (exists && !S_ISDIR(statbuf.st_mode) && strcmp(path, "pg_wal") != 0)
 			{
 				/* it's a directory in source, but not in target. Strange.. */
-				pg_fatal("\"%s\" is not a directory\n", localpath);
+				pg_fatal("\"%s\" is not a directory", localpath);
 			}
 
 			if (!exists)
@@ -247,7 +271,7 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 				 * It's a symbolic link in source, but not in target.
 				 * Strange..
 				 */
-				pg_fatal("\"%s\" is not a symbolic link\n", localpath);
+				pg_fatal("\"%s\" is not a symbolic link", localpath);
 			}
 
 			if (!exists)
@@ -263,7 +287,7 @@ process_source_file(const char *path, file_type_t type, size_t newsize,
 
 		case FILE_TYPE_REGULAR:
 			if (exists && !S_ISREG(statbuf.st_mode))
-				pg_fatal("\"%s\" is not a regular file\n", localpath);
+				pg_fatal("\"%s\" is not a regular file", localpath);
 
 			if (!exists || !isRelDataFile(path))
 			{
@@ -370,19 +394,26 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 	file_entry_t *entry;
 
 	/*
+<<<<<<< HEAD
 	 * Ignore any path matching the exclusion filters.  This is not actually
 	 * mandatory for target files, but this does not hurt and let's be
 	 * consistent with the source processing.
 	 */
 	if (check_file_excluded(path, "target"))
 		return;
+=======
+	 * Do not apply any exclusion filters here.  This has advantage to remove
+	 * from the target data folder all paths which have been filtered out from
+	 * the source data folder when processing the source files.
+	 */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	snprintf(localpath, sizeof(localpath), "%s/%s", datadir_target, path);
 	if (lstat(localpath, &statbuf) < 0)
 	{
 		if (errno != ENOENT)
-			pg_fatal("could not stat file \"%s\": %s\n",
-					 localpath, strerror(errno));
+			pg_fatal("could not stat file \"%s\": %m",
+					 localpath);
 
 		exists = false;
 	}
@@ -393,7 +424,7 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 		if (map->nlist == 0)
 		{
 			/* should not happen */
-			pg_fatal("source file list is empty\n");
+			pg_fatal("source file list is empty");
 		}
 
 		filemap_list_to_array(map);
@@ -404,15 +435,18 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 	}
 
 	/*
+<<<<<<< HEAD
 	 * Like in process_source_file, pretend that xlog is always a  directory.
 	 */
 	if (strcmp(path, "pg_xlog") == 0 && type == FILE_TYPE_SYMLINK)
 		type = FILE_TYPE_DIRECTORY;
 
 	/*
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * Like in process_source_file, pretend that xlog is always a  directory.
 	 */
-	if (strcmp(path, "pg_xlog") == 0 && type == FILE_TYPE_SYMLINK)
+	if (strcmp(path, "pg_wal") == 0 && type == FILE_TYPE_SYMLINK)
 		type = FILE_TYPE_DIRECTORY;
 
 	key.path = (char *) path;
@@ -514,7 +548,7 @@ process_block_change(ForkNumber forknum, RelFileNode rnode, BlockNumber blkno)
 				break;
 
 			case FILE_ACTION_CREATE:
-				pg_fatal("unexpected page modification for directory or symbolic link \"%s\"\n", entry->path);
+				pg_fatal("unexpected page modification for directory or symbolic link \"%s\"", entry->path);
 		}
 	}
 	else
@@ -649,6 +683,59 @@ check_file_excluded(const char *path, const char *type)
 }
 
 /*
+ * Is this the path of file that pg_rewind can skip copying?
+ */
+static bool
+check_file_excluded(const char *path, bool is_source)
+{
+	char		localpath[MAXPGPATH];
+	int			excludeIdx;
+	const char *filename;
+
+	/* check individual files... */
+	for (excludeIdx = 0; excludeFiles[excludeIdx] != NULL; excludeIdx++)
+	{
+		filename = last_dir_separator(path);
+		if (filename == NULL)
+			filename = path;
+		else
+			filename++;
+		if (strcmp(filename, excludeFiles[excludeIdx]) == 0)
+		{
+			if (is_source)
+				pg_log_debug("entry \"%s\" excluded from source file list",
+							 path);
+			else
+				pg_log_debug("entry \"%s\" excluded from target file list",
+							 path);
+			return true;
+		}
+	}
+
+	/*
+	 * ... And check some directories.  Note that this includes any contents
+	 * within the directories themselves.
+	 */
+	for (excludeIdx = 0; excludeDirContents[excludeIdx] != NULL; excludeIdx++)
+	{
+		snprintf(localpath, sizeof(localpath), "%s/",
+				 excludeDirContents[excludeIdx]);
+		if (strstr(path, localpath) == path)
+		{
+			if (is_source)
+				pg_log_debug("entry \"%s\" excluded from source file list",
+							 path);
+			else
+				pg_log_debug("entry \"%s\" excluded from target file list",
+							 path);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/*
  * Convert the linked list of entries in map->first/last to the array,
  * map->array.
  */
@@ -767,11 +854,8 @@ print_filemap(void)
 		if (entry->action != FILE_ACTION_NONE ||
 			entry->pagemap.bitmapsize > 0)
 		{
-			pg_log(PG_DEBUG,
-			/*------
-			   translator: first %s is a file path, second is a keyword such as COPY */
-				   "%s (%s)\n", entry->path,
-				   action_to_str(entry->action));
+			pg_log_debug("%s (%s)", entry->path,
+						 action_to_str(entry->action));
 
 			if (entry->pagemap.bitmapsize > 0)
 				datapagemap_print(&entry->pagemap);
@@ -839,7 +923,11 @@ isRelDataFile(const char *path)
 		}
 		else
 		{
+<<<<<<< HEAD
 			nmatch = sscanf(path, "pg_tblspc/%u/" GP_TABLESPACE_VERSION_DIRECTORY "/%u/%u.%u",
+=======
+			nmatch = sscanf(path, "pg_tblspc/%u/" TABLESPACE_VERSION_DIRECTORY "/%u/%u.%u",
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							&rnode.spcNode, &rnode.dbNode, &rnode.relNode,
 							&segNo);
 			if (nmatch == 3 || nmatch == 4)
@@ -850,8 +938,13 @@ isRelDataFile(const char *path)
 	/*
 	 * The sscanf tests above can match files that have extra characters at
 	 * the end. To eliminate such cases, cross-check that GetRelationPath
+<<<<<<< HEAD
 	 * creates the exact same filename, when passed the RelFileNode information
 	 * we extracted from the filename.
+=======
+	 * creates the exact same filename, when passed the RelFileNode
+	 * information we extracted from the filename.
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	if (matched)
 	{

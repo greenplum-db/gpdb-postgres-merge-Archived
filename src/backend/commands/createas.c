@@ -13,7 +13,7 @@
  * we must return a tuples-processed count in the completionTag.  (We no
  * longer do that for CTAS ... WITH NO DATA, however.)
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -24,9 +24,11 @@
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/reloptions.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
+#include "access/tableam.h"
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/namespace.h"
@@ -70,7 +72,7 @@ typedef struct
 	Relation	rel;			/* relation to write to */
 	ObjectAddress reladdr;		/* address of rel, for ExecCreateTableAs */
 	CommandId	output_cid;		/* cmin to insert in output tuples */
-	int			hi_options;		/* heap_insert performance options */
+	int			ti_options;		/* table_tuple_insert performance options */
 	BulkInsertState bistate;	/* bulk insert state */
 
 	struct AppendOnlyInsertDescData *ao_insertDesc; /* descriptor to AO tables */
@@ -147,6 +149,7 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	else
 		create->tablespacename = into->tableSpaceName;
 	create->if_not_exists = false;
+<<<<<<< HEAD
 	
 	/* Parse and validate any reloptions */
 	reloptions = transformRelOptions((Datum) 0,
@@ -179,6 +182,9 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	create->relKind = relkind;
 	create->relStorage = relstorage;
 	create->ownerid = GetUserId();
+=======
+	create->accessMethod = into->accessMethod;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Create the relation.  (This will error out if there's an existing view,
@@ -189,6 +195,7 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	 *
 	 * Pass the policy that was computed by the planner.
 	 */
+<<<<<<< HEAD
 	intoRelationAddr = DefineRelation(create,
 									  relkind,
 									  InvalidOid,
@@ -197,6 +204,9 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 									  false,
 									  queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true,
 									  queryDesc->plannedstmt->intoPolicy);
+=======
+	intoRelationAddr = DefineRelation(create, relkind, InvalidOid, NULL, NULL);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that
@@ -317,9 +327,10 @@ create_ctas_nodata(List *tlist, IntoClause *into, QueryDesc *queryDesc)
  */
 ObjectAddress
 ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
-				  ParamListInfo params, char *completionTag)
+				  ParamListInfo params, QueryEnvironment *queryEnv,
+				  char *completionTag)
 {
-	Query	   *query = (Query *) stmt->query;
+	Query	   *query = castNode(Query, stmt->query);
 	IntoClause *into = stmt->into;
 	bool		is_matview = (into->viewQuery != NULL);
 	DestReceiver *dest;
@@ -360,11 +371,10 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	 * The contained Query could be a SELECT, or an EXECUTE utility command.
 	 * If the latter, we just pass it off to ExecuteQuery.
 	 */
-	Assert(IsA(query, Query));
 	if (query->commandType == CMD_UTILITY &&
 		IsA(query->utilityStmt, ExecuteStmt))
 	{
-		ExecuteStmt *estmt = (ExecuteStmt *) query->utilityStmt;
+		ExecuteStmt *estmt = castNode(ExecuteStmt, query->utilityStmt);
 
 		Assert(!is_matview);	/* excluded by syntax */
 		ExecuteQuery(estmt, into, queryString, params, dest, completionTag);
@@ -387,7 +397,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	{
 		GetUserIdAndSecContext(&save_userid, &save_sec_context);
 		SetUserIdAndSecContext(save_userid,
-						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+							   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 		save_nestlevel = NewGUCNestLevel();
 	}
 
@@ -404,18 +414,18 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		 * and is executed repeatedly.  (See also the same hack in EXPLAIN and
 		 * PREPARE.)
 		 */
-		rewritten = QueryRewrite((Query *) copyObject(query));
+		rewritten = QueryRewrite(copyObject(query));
 
 		/* SELECT should never rewrite to more or less than one SELECT query */
 		if (list_length(rewritten) != 1)
 			elog(ERROR, "unexpected rewrite result for %s",
 				 is_matview ? "CREATE MATERIALIZED VIEW" :
 				 "CREATE TABLE AS SELECT");
-		query = (Query *) linitial(rewritten);
+		query = linitial_node(Query, rewritten);
 		Assert(query->commandType == CMD_SELECT);
 
 		/* plan the query */
-		plan = pg_plan_query(query, 0, params);
+		plan = pg_plan_query(query, CURSOR_OPT_PARALLEL_OK, params);
 
 		/*GPDB: Save the target information in PlannedStmt */
 		/*
@@ -452,7 +462,14 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		PushCopiedSnapshot(GetActiveSnapshot());
 		UpdateActiveSnapshotCommandId();
 
+<<<<<<< HEAD
 		queryDesc->plannedstmt->query_mem = ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
+=======
+		/* Create a QueryDesc, redirecting output to our tuple receiver */
+		queryDesc = CreateQueryDesc(plan, queryString,
+									GetActiveSnapshot(), InvalidSnapshot,
+									dest, params, queryEnv, 0);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/* call ExecutorStart to prepare the plan for execution */
 		ExecutorStart(queryDesc, GetIntoRelEFlags(into));
@@ -461,7 +478,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 			autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
 
 		/* run the plan to completion */
-		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
+		ExecutorRun(queryDesc, ForwardScanDirection, 0L, true);
 
 		/* and clean up */
 		ExecutorFinish(queryDesc);
@@ -522,20 +539,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 int
 GetIntoRelEFlags(IntoClause *intoClause)
 {
-	int			flags;
-
-	/*
-	 * We need to tell the executor whether it has to produce OIDs or not,
-	 * because it doesn't have enough information to do so itself (since we
-	 * can't build the target relation until after ExecutorStart).
-	 *
-	 * Disallow the OIDS option for materialized views.
-	 */
-	if (interpretOidsOption(intoClause->options,
-							(intoClause->viewQuery == NULL)))
-		flags = EXEC_FLAG_WITH_OIDS;
-	else
-		flags = EXEC_FLAG_WITHOUT_OIDS;
+	int			flags = 0;
 
 	if (intoClause->skipData)
 		flags |= EXEC_FLAG_WITH_NO_DATA;
@@ -623,7 +627,7 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	lc = list_head(into->colNames);
 	for (attnum = 0; attnum < typeinfo->natts; attnum++)
 	{
-		Form_pg_attribute attribute = typeinfo->attrs[attnum];
+		Form_pg_attribute attribute = TupleDescAttr(typeinfo, attnum);
 		ColumnDef  *col;
 		char	   *colname;
 
@@ -671,7 +675,7 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	/*
 	 * Finally we can open the target table
 	 */
-	intoRelationDesc = heap_open(intoRelationAddr.objectId, AccessExclusiveLock);
+	intoRelationDesc = table_open(intoRelationAddr.objectId, AccessExclusiveLock);
 
 	/*
 	 * Add column encoding entries based on the WITH clause.
@@ -696,11 +700,12 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	rte->rtekind = RTE_RELATION;
 	rte->relid = intoRelationAddr.objectId;
 	rte->relkind = relkind;
+	rte->rellockmode = RowExclusiveLock;
 	rte->requiredPerms = ACL_INSERT;
 
 	for (attnum = 1; attnum <= intoRelationDesc->rd_att->natts; attnum++)
 		rte->insertedCols = bms_add_member(rte->insertedCols,
-								attnum - FirstLowInvalidHeapAttributeNumber);
+										   attnum - FirstLowInvalidHeapAttributeNumber);
 
 	ExecCheckRTPerms(list_make1(rte), true);
 
@@ -739,8 +744,8 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	 * We can skip WAL-logging the insertions, unless PITR or streaming
 	 * replication is in use. We can skip the FSM in any case.
 	 */
-	myState->hi_options = HEAP_INSERT_SKIP_FSM |
-		(XLogIsNeeded() ? 0 : HEAP_INSERT_SKIP_WAL);
+	myState->ti_options = TABLE_INSERT_SKIP_FSM |
+		(XLogIsNeeded() ? 0 : TABLE_INSERT_SKIP_WAL);
 	myState->bistate = GetBulkInsertState();
 
 	/* Not using WAL requires smgr_targblock be initially invalid */
@@ -754,6 +759,7 @@ static bool
 intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_intorel *myState = (DR_intorel *) self;
+<<<<<<< HEAD
 	Relation    into_rel = myState->rel;
 
 	if (RelationIsAoRows(into_rel))
@@ -798,6 +804,23 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 					myState->bistate,
 					GetCurrentTransactionId());
 	}
+=======
+
+	/*
+	 * Note that the input slot might not be of the type of the target
+	 * relation. That's supported by table_tuple_insert(), but slightly less
+	 * efficient than inserting with the right slot - but the alternative
+	 * would be to copy into a slot of the right type, which would not be
+	 * cheap either. This also doesn't allow accessing per-AM data (say a
+	 * tuple's xmin), but since we don't do that here...
+	 */
+
+	table_tuple_insert(myState->rel,
+					   slot,
+					   myState->output_cid,
+					   myState->ti_options,
+					   myState->bistate);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* We know this is a newly created relation, so there are no indexes */
 
@@ -818,9 +841,7 @@ intorel_shutdown(DestReceiver *self)
 
 	FreeBulkInsertState(myState->bistate);
 
-	/* If we skipped using WAL, must heap_sync before commit */
-	if (myState->hi_options & HEAP_INSERT_SKIP_WAL)
-		heap_sync(myState->rel);
+	table_finish_bulk_insert(myState->rel, myState->ti_options);
 
 	if (RelationIsAoRows(into_rel) && myState->ao_insertDesc)
 		appendonly_insert_finish(myState->ao_insertDesc);
@@ -828,7 +849,11 @@ intorel_shutdown(DestReceiver *self)
 		aocs_insert_finish(myState->aocs_insertDes);
 
 	/* close rel, but keep lock until commit */
+<<<<<<< HEAD
 	heap_close(into_rel, NoLock);
+=======
+	table_close(myState->rel, NoLock);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	myState->rel = NULL;
 }
 

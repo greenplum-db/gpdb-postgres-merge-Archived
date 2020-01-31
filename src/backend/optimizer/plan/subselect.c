@@ -1,11 +1,18 @@
 /*-------------------------------------------------------------------------
  *
  * subselect.c
- *	  Planning routines for subselects and parameters.
+ *	  Planning routines for subselects.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+=======
+ * This module deals with SubLinks and CTEs, but not subquery RTEs (i.e.,
+ * not sub-SELECT-in-FROM cases).
+ *
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -27,12 +34,13 @@
 #include "nodes/relation.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
+#include "optimizer/optimizer.h"
+#include "optimizer/paramassign.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
 #include "optimizer/subselect.h"
-#include "optimizer/var.h"
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "parser/parse_oper.h"
@@ -64,37 +72,68 @@ typedef struct finalize_primnode_context
 	Bitmapset  *paramids;		/* Non-local PARAM_EXEC paramids found */
 } finalize_primnode_context;
 
+typedef struct inline_cte_walker_context
+{
+	const char *ctename;		/* name and relative level of target CTE */
+	int			levelsup;
+	int			refcount;		/* number of remaining references */
+	Query	   *ctequery;		/* query to substitute */
+} inline_cte_walker_context;
+
 
 static Node *build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
-			  List *plan_params,
-			  SubLinkType subLinkType, int subLinkId,
-			  Node *testexpr, bool adjust_testexpr,
-			  bool unknownEqFalse);
+						   List *plan_params,
+						   SubLinkType subLinkType, int subLinkId,
+						   Node *testexpr, bool adjust_testexpr,
+						   bool unknownEqFalse);
 static List *generate_subquery_params(PlannerInfo *root, List *tlist,
+<<<<<<< HEAD
 						 List **paramIds);
 static Node *convert_testexpr_mutator(Node *node,
 						 convert_testexpr_context *context);
 static bool subplan_is_hashable(PlannerInfo *root, Plan *plan);
+=======
+									  List **paramIds);
+static List *generate_subquery_vars(PlannerInfo *root, List *tlist,
+									Index varno);
+static Node *convert_testexpr(PlannerInfo *root,
+							  Node *testexpr,
+							  List *subst_nodes);
+static Node *convert_testexpr_mutator(Node *node,
+									  convert_testexpr_context *context);
+static bool subplan_is_hashable(Plan *plan);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static bool testexpr_is_hashable(Node *testexpr);
 static bool hash_ok_operator(OpExpr *expr);
+static bool contain_dml(Node *node);
+static bool contain_dml_walker(Node *node, void *context);
+static bool contain_outer_selfref(Node *node);
+static bool contain_outer_selfref_walker(Node *node, Index *depth);
+static void inline_cte(PlannerInfo *root, CommonTableExpr *cte);
+static bool inline_cte_walker(Node *node, inline_cte_walker_context *context);
 static bool simplify_EXISTS_query(PlannerInfo *root, Query *query);
 static Query *convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
-					  Node **testexpr, List **paramIds);
+									Node **testexpr, List **paramIds);
 static Node *replace_correlation_vars_mutator(Node *node, PlannerInfo *root);
 static Node *process_sublinks_mutator(Node *node,
-						 process_sublinks_context *context);
+									  process_sublinks_context *context);
 static Bitmapset *finalize_plan(PlannerInfo *root,
-			  Plan *plan,
-			  Bitmapset *valid_params,
-			  Bitmapset *scan_params);
+								Plan *plan,
+								int gather_param,
+								Bitmapset *valid_params,
+								Bitmapset *scan_params);
 static bool finalize_primnode(Node *node, finalize_primnode_context *context);
 static bool finalize_agg_primnode(Node *node, finalize_primnode_context *context);
+<<<<<<< HEAD
 static Node *remove_useless_EXISTS_sublink(PlannerInfo *root,
 						Query *subselect, bool under_not);
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern	double global_work_mem(PlannerInfo *root);
 
 /*
+<<<<<<< HEAD
  * Select a PARAM_EXEC number to identify the given Var as a parameter for
  * the current subquery, or for a nestloop's inner scan.
  * If the Var already has a param in the current context, return that one.
@@ -470,6 +509,8 @@ SS_assign_special_param(PlannerInfo *root)
 }
 
 /*
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Get the datatype/typmod/collation of the first column of the plan's output.
  *
  * This information is stored for ARRAY_SUBLINK execution and for
@@ -485,9 +526,8 @@ get_first_col_type(Plan *plan, Oid *coltype, int32 *coltypmod,
 	/* In cases such as EXISTS, tlist might be empty; arbitrarily use VOID */
 	if (plan->targetlist)
 	{
-		TargetEntry *tent = (TargetEntry *) linitial(plan->targetlist);
+		TargetEntry *tent = linitial_node(TargetEntry, plan->targetlist);
 
-		Assert(IsA(tent, TargetEntry));
 		if (!tent->resjunk)
 		{
 			*coltype = exprType((Node *) tent->expr);
@@ -631,7 +671,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 	 * same sub-Query node, but the planner wants to scribble on the Query.
 	 * Try to clean this up when we do querytree redesign...
 	 */
-	subquery = (Query *) copyObject(orig_subquery);
+	subquery = copyObject(orig_subquery);
 
 	/*
 	 * If it's an EXISTS subplan, we might be able to simplify it.
@@ -747,7 +787,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 		List	   *paramIds;
 
 		/* Make a second copy of the original subquery */
-		subquery = (Query *) copyObject(orig_subquery);
+		subquery = copyObject(orig_subquery);
 		/* and re-simplify */
 		simple_exists = simplify_EXISTS_query(root, subquery);
 		Assert(simple_exists);
@@ -782,13 +822,13 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 				AlternativeSubPlan *asplan;
 
 				/* OK, convert to SubPlan format. */
-				hashplan = (SubPlan *) build_subplan(root, plan, subroot,
-													 plan_params,
-													 ANY_SUBLINK, 0,
-													 newtestexpr,
-													 false, true);
+				hashplan = castNode(SubPlan,
+									build_subplan(root, plan, subroot,
+												  plan_params,
+												  ANY_SUBLINK, 0,
+												  newtestexpr,
+												  false, true));
 				/* Check we got what we expected */
-				Assert(IsA(hashplan, SubPlan));
 				Assert(hashplan->parParam == NIL);
 				Assert(hashplan->useHashTable);
 				/* build_subplan won't have filled in paramIds */
@@ -837,8 +877,12 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 					   &splan->firstColCollation);
 	splan->useHashTable = false;
 	splan->unknownEqFalse = unknownEqFalse;
+<<<<<<< HEAD
 	splan->is_initplan = false;
 	splan->is_multirow = false;
+=======
+	splan->parallel_safe = plan->parallel_safe;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	splan->setParam = NIL;
 	splan->parParam = NIL;
 	splan->args = NIL;
@@ -901,7 +945,7 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 		Param	   *prm;
 
 		Assert(testexpr == NULL);
-		prm = generate_new_param(root, BOOLOID, -1, InvalidOid);
+		prm = generate_new_exec_param(root, BOOLOID, -1, InvalidOid);
 		splan->setParam = list_make1_int(prm->paramid);
 		splan->is_initplan = true;
 		result = (Node *) prm;
@@ -913,10 +957,10 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 
 		Assert(!te->resjunk);
 		Assert(testexpr == NULL);
-		prm = generate_new_param(root,
-								 exprType((Node *) te->expr),
-								 exprTypmod((Node *) te->expr),
-								 exprCollation((Node *) te->expr));
+		prm = generate_new_exec_param(root,
+									  exprType((Node *) te->expr),
+									  exprTypmod((Node *) te->expr),
+									  exprCollation((Node *) te->expr));
 		splan->setParam = list_make1_int(prm->paramid);
 		splan->is_initplan = true;
 		result = (Node *) prm;
@@ -933,10 +977,10 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 		if (!OidIsValid(arraytype))
 			elog(ERROR, "could not find array type for datatype %s",
 				 format_type_be(exprType((Node *) te->expr)));
-		prm = generate_new_param(root,
-								 arraytype,
-								 exprTypmod((Node *) te->expr),
-								 exprCollation((Node *) te->expr));
+		prm = generate_new_exec_param(root,
+									  arraytype,
+									  exprTypmod((Node *) te->expr),
+									  exprCollation((Node *) te->expr));
 		splan->setParam = list_make1_int(prm->paramid);
 		splan->is_initplan = true;
 		result = (Node *) prm;
@@ -1121,10 +1165,10 @@ generate_subquery_params(PlannerInfo *root, List *tlist, List **paramIds)
 		if (tent->resjunk)
 			continue;
 
-		param = generate_new_param(root,
-								   exprType((Node *) tent->expr),
-								   exprTypmod((Node *) tent->expr),
-								   exprCollation((Node *) tent->expr));
+		param = generate_new_exec_param(root,
+										exprType((Node *) tent->expr),
+										exprTypmod((Node *) tent->expr),
+										exprCollation((Node *) tent->expr));
 		result = lappend(result, param);
 		ids = lappend_int(ids, param->paramid);
 	}
@@ -1275,7 +1319,7 @@ testexpr_is_hashable(Node *testexpr)
 		if (hash_ok_operator((OpExpr *) testexpr))
 			return true;
 	}
-	else if (and_clause(testexpr))
+	else if (is_andclause(testexpr))
 	{
 		ListCell   *l;
 
@@ -1347,10 +1391,13 @@ hash_ok_operator(OpExpr *expr)
 /*
  * SS_process_ctes: process a query's WITH list
  *
- * We plan each interesting WITH item and convert it to an initplan.
+ * Consider each CTE in the WITH list and either ignore it (if it's an
+ * unreferenced SELECT), "inline" it to create a regular sub-SELECT-in-FROM,
+ * or convert it to an initplan.
+ *
  * A side effect is to fill in root->cte_plan_ids with a list that
  * parallels root->parse->cteList and provides the subplan ID for
- * each CTE's initplan.
+ * each CTE's initplan, or a dummy ID (-1) if we didn't make an initplan.
  */
 void
 SS_process_ctes(PlannerInfo *root)
@@ -1376,6 +1423,53 @@ SS_process_ctes(PlannerInfo *root)
 		 */
 		if (cte->cterefcount == 0 && cmdType == CMD_SELECT)
 		{
+			/* Make a dummy entry in cte_plan_ids */
+			root->cte_plan_ids = lappend_int(root->cte_plan_ids, -1);
+			continue;
+		}
+
+		/*
+		 * Consider inlining the CTE (creating RTE_SUBQUERY RTE(s)) instead of
+		 * implementing it as a separately-planned CTE.
+		 *
+		 * We cannot inline if any of these conditions hold:
+		 *
+		 * 1. The user said not to (the CTEMaterializeAlways option).
+		 *
+		 * 2. The CTE is recursive.
+		 *
+		 * 3. The CTE has side-effects; this includes either not being a plain
+		 * SELECT, or containing volatile functions.  Inlining might change
+		 * the side-effects, which would be bad.
+		 *
+		 * 4. The CTE is multiply-referenced and contains a self-reference to
+		 * a recursive CTE outside itself.  Inlining would result in multiple
+		 * recursive self-references, which we don't support.
+		 *
+		 * Otherwise, we have an option whether to inline or not.  That should
+		 * always be a win if there's just a single reference, but if the CTE
+		 * is multiply-referenced then it's unclear: inlining adds duplicate
+		 * computations, but the ability to absorb restrictions from the outer
+		 * query level could outweigh that.  We do not have nearly enough
+		 * information at this point to tell whether that's true, so we let
+		 * the user express a preference.  Our default behavior is to inline
+		 * only singly-referenced CTEs, but a CTE marked CTEMaterializeNever
+		 * will be inlined even if multiply referenced.
+		 *
+		 * Note: we check for volatile functions last, because that's more
+		 * expensive than the other tests needed.
+		 */
+		if ((cte->ctematerialized == CTEMaterializeNever ||
+			 (cte->ctematerialized == CTEMaterializeDefault &&
+			  cte->cterefcount == 1)) &&
+			!cte->cterecursive &&
+			cmdType == CMD_SELECT &&
+			!contain_dml(cte->ctequery) &&
+			(cte->cterefcount <= 1 ||
+			 !contain_outer_selfref(cte->ctequery)) &&
+			!contain_volatile_functions(cte->ctequery))
+		{
+			inline_cte(root, cte);
 			/* Make a dummy entry in cte_plan_ids */
 			root->cte_plan_ids = lappend_int(root->cte_plan_ids, -1);
 			continue;
@@ -1430,6 +1524,13 @@ SS_process_ctes(PlannerInfo *root)
 						   &splan->firstColCollation);
 		splan->useHashTable = false;
 		splan->unknownEqFalse = false;
+
+		/*
+		 * CTE scans are not considered for parallelism (cf
+		 * set_rel_consider_parallel), and even if they were, initPlans aren't
+		 * parallel-safe.
+		 */
+		splan->parallel_safe = false;
 		splan->setParam = NIL;
 		splan->parParam = NIL;
 		splan->args = NIL;
@@ -1449,7 +1550,7 @@ SS_process_ctes(PlannerInfo *root)
 		 * ParamExecData slot for this param ID for communication among
 		 * multiple CteScan nodes that might be scanning this CTE.)
 		 */
-		paramid = SS_assign_special_param(root);
+		paramid = assign_special_exec_param(root);
 		splan->setParam = list_make1_int(paramid);
 
 		/*
@@ -1471,6 +1572,182 @@ SS_process_ctes(PlannerInfo *root)
 	}
 }
 #endif
+
+/*
+ * contain_dml: is any subquery not a plain SELECT?
+ *
+ * We reject SELECT FOR UPDATE/SHARE as well as INSERT etc.
+ */
+static bool
+contain_dml(Node *node)
+{
+	return contain_dml_walker(node, NULL);
+}
+
+static bool
+contain_dml_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Query))
+	{
+		Query	   *query = (Query *) node;
+
+		if (query->commandType != CMD_SELECT ||
+			query->rowMarks != NIL)
+			return true;
+
+		return query_tree_walker(query, contain_dml_walker, context, 0);
+	}
+	return expression_tree_walker(node, contain_dml_walker, context);
+}
+
+/*
+ * contain_outer_selfref: is there an external recursive self-reference?
+ */
+static bool
+contain_outer_selfref(Node *node)
+{
+	Index		depth = 0;
+
+	/*
+	 * We should be starting with a Query, so that depth will be 1 while
+	 * examining its immediate contents.
+	 */
+	Assert(IsA(node, Query));
+
+	return contain_outer_selfref_walker(node, &depth);
+}
+
+static bool
+contain_outer_selfref_walker(Node *node, Index *depth)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, RangeTblEntry))
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) node;
+
+		/*
+		 * Check for a self-reference to a CTE that's above the Query that our
+		 * search started at.
+		 */
+		if (rte->rtekind == RTE_CTE &&
+			rte->self_reference &&
+			rte->ctelevelsup >= *depth)
+			return true;
+		return false;			/* allow range_table_walker to continue */
+	}
+	if (IsA(node, Query))
+	{
+		/* Recurse into subquery, tracking nesting depth properly */
+		Query	   *query = (Query *) node;
+		bool		result;
+
+		(*depth)++;
+
+		result = query_tree_walker(query, contain_outer_selfref_walker,
+								   (void *) depth, QTW_EXAMINE_RTES_BEFORE);
+
+		(*depth)--;
+
+		return result;
+	}
+	return expression_tree_walker(node, contain_outer_selfref_walker,
+								  (void *) depth);
+}
+
+/*
+ * inline_cte: convert RTE_CTE references to given CTE into RTE_SUBQUERYs
+ */
+static void
+inline_cte(PlannerInfo *root, CommonTableExpr *cte)
+{
+	struct inline_cte_walker_context context;
+
+	context.ctename = cte->ctename;
+	/* Start at levelsup = -1 because we'll immediately increment it */
+	context.levelsup = -1;
+	context.refcount = cte->cterefcount;
+	context.ctequery = castNode(Query, cte->ctequery);
+
+	(void) inline_cte_walker((Node *) root->parse, &context);
+
+	/* Assert we replaced all references */
+	Assert(context.refcount == 0);
+}
+
+static bool
+inline_cte_walker(Node *node, inline_cte_walker_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Query))
+	{
+		Query	   *query = (Query *) node;
+
+		context->levelsup++;
+
+		/*
+		 * Visit the query's RTE nodes after their contents; otherwise
+		 * query_tree_walker would descend into the newly inlined CTE query,
+		 * which we don't want.
+		 */
+		(void) query_tree_walker(query, inline_cte_walker, context,
+								 QTW_EXAMINE_RTES_AFTER);
+
+		context->levelsup--;
+
+		return false;
+	}
+	else if (IsA(node, RangeTblEntry))
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) node;
+
+		if (rte->rtekind == RTE_CTE &&
+			strcmp(rte->ctename, context->ctename) == 0 &&
+			rte->ctelevelsup == context->levelsup)
+		{
+			/*
+			 * Found a reference to replace.  Generate a copy of the CTE query
+			 * with appropriate level adjustment for outer references (e.g.,
+			 * to other CTEs).
+			 */
+			Query	   *newquery = copyObject(context->ctequery);
+
+			if (context->levelsup > 0)
+				IncrementVarSublevelsUp((Node *) newquery, context->levelsup, 1);
+
+			/*
+			 * Convert the RTE_CTE RTE into a RTE_SUBQUERY.
+			 *
+			 * Historically, a FOR UPDATE clause has been treated as extending
+			 * into views and subqueries, but not into CTEs.  We preserve this
+			 * distinction by not trying to push rowmarks into the new
+			 * subquery.
+			 */
+			rte->rtekind = RTE_SUBQUERY;
+			rte->subquery = newquery;
+			rte->security_barrier = false;
+
+			/* Zero out CTE-specific fields */
+			rte->ctename = NULL;
+			rte->ctelevelsup = 0;
+			rte->self_reference = false;
+			rte->coltypes = NIL;
+			rte->coltypmods = NIL;
+			rte->colcollations = NIL;
+
+			/* Count the number of replacements we've done */
+			context->refcount--;
+		}
+
+		return false;
+	}
+
+	return expression_tree_walker(node, inline_cte_walker, context);
+}
+
 
 /*
  * convert_ANY_sublink_to_join: try to convert an ANY SubLink to a join
@@ -1680,7 +1957,7 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * Copy the subquery so we can modify it safely (see comments in
 	 * make_subplan).
 	 */
-	subselect = (Query *) copyObject(subselect);
+	subselect = copyObject(subselect);
 
 	/*
 	 * Check if the EXISTS sublink doesn't actually need to be executed at all,
@@ -1696,12 +1973,6 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * with noplace to evaluate the targetlist.
 	 */
 	if (!simplify_EXISTS_query(root, subselect))
-		return NULL;
-
-	/*
-	 * The subquery must have a nonempty jointree, else we won't have a join.
-	 */
-	if (subselect->jointree->fromlist == NIL)
 		return NULL;
 
 	/*
@@ -1731,6 +2002,11 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 */
 	if (contain_volatile_functions(whereClause))
 		return NULL;
+
+	/*
+	 * The subquery must have a nonempty jointree, but we can make it so.
+	 */
+	replace_empty_jointree(subselect);
 
 	/*
 	 * Prepare to pull up the sub-select into top range table.
@@ -1819,7 +2095,7 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
  * won't occur, nor will other side-effects of volatile functions.  This seems
  * unlikely to bother anyone in practice.
  *
- * Returns TRUE if was able to discard the targetlist, else FALSE.
+ * Returns true if was able to discard the targetlist, else false.
  */
 static bool
 simplify_EXISTS_query(PlannerInfo *root, Query *query)
@@ -1828,7 +2104,7 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 	 * PostgreSQL:
 	 *
 	 * We don't try to simplify at all if the query uses set operations,
-	 * aggregates, grouping sets, modifying CTEs, HAVING, OFFSET, or FOR
+	 * aggregates, grouping sets, SRFs, modifying CTEs, HAVING, OFFSET, or FOR
 	 * UPDATE/SHARE; none of these seem likely in normal usage and their
 	 * possible effects are complex.  (Note: we could ignore an "OFFSET 0"
 	 * clause, but that traditionally is used as an optimization fence, so we
@@ -1847,6 +2123,11 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 		query->groupingSets ||
 #if 0
 		query->hasWindowFuncs ||
+<<<<<<< HEAD
+=======
+		query->hasTargetSRFs ||
+		query->hasModifyingCTE ||
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		query->havingQual ||
 #endif
 		query->hasModifyingCTE ||
@@ -1889,6 +2170,7 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 	}
 
 	/*
+<<<<<<< HEAD
 	 * Mustn't throw away the targetlist if it contains set-returning
 	 * functions; those could affect whether zero rows are returned!
 	 */
@@ -1917,6 +2199,8 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 	}
 
 	/*
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * Otherwise, we can throw away the targetlist, as well as any GROUP,
 	 * WINDOW, DISTINCT, and ORDER BY clauses; none of those clauses will
 	 * change a nonzero-rows result to zero rows or vice versa.  (Furthermore,
@@ -2095,7 +2379,11 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 	 * subroot.
 	 */
 	whereClause = eval_const_expressions(root, whereClause);
+<<<<<<< HEAD
 	whereClause = (Node *) canonicalize_qual_ext((Expr *) whereClause, false);
+=======
+	whereClause = (Node *) canonicalize_qual((Expr *) whereClause, false);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	whereClause = (Node *) make_ands_implicit((Expr *) whereClause);
 
 	/*
@@ -2207,9 +2495,7 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 	 */
 	tlist = testlist = paramids = NIL;
 	resno = 1;
-	/* there's no "forfour" so we have to chase one of the lists manually */
-	cc = list_head(opcollations);
-	forthree(lc, leftargs, rc, rightargs, oc, opids)
+	forfour(lc, leftargs, rc, rightargs, oc, opids, cc, opcollations)
 	{
 		Node	   *leftarg = (Node *) lfirst(lc);
 		Node	   *rightarg = (Node *) lfirst(rc);
@@ -2217,11 +2503,10 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 		Oid			opcollation = lfirst_oid(cc);
 		Param	   *param;
 
-		cc = lnext(cc);
-		param = generate_new_param(root,
-								   exprType(rightarg),
-								   exprTypmod(rightarg),
-								   exprCollation(rightarg));
+		param = generate_new_exec_param(root,
+										exprType(rightarg),
+										exprTypmod(rightarg),
+										exprCollation(rightarg));
 		tlist = lappend(tlist,
 						makeTargetEntry((Expr *) rightarg,
 										resno++,
@@ -2288,7 +2573,7 @@ replace_correlation_vars_mutator(Node *node, PlannerInfo *root)
 	{
 		if (((PlaceHolderVar *) node)->phlevelsup > 0)
 			return (Node *) replace_outer_placeholdervar(root,
-													(PlaceHolderVar *) node);
+														 (PlaceHolderVar *) node);
 	}
 	if (IsA(node, Aggref))
 	{
@@ -2399,7 +2684,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 	 * propagates down in both cases.  (Note that this is unlike the meaning
 	 * of "top level qual" used in most other places in Postgres.)
 	 */
-	if (and_clause(node))
+	if (is_andclause(node))
 	{
 		List	   *newargs = NIL;
 		ListCell   *l;
@@ -2412,7 +2697,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 			Node	   *newarg;
 
 			newarg = process_sublinks_mutator(lfirst(l), &locContext);
-			if (and_clause(newarg))
+			if (is_andclause(newarg))
 				newargs = list_concat(newargs, ((BoolExpr *) newarg)->args);
 			else
 				newargs = lappend(newargs, newarg);
@@ -2420,7 +2705,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 		return (Node *) make_andclause(newargs);
 	}
 
-	if (or_clause(node))
+	if (is_orclause(node))
 	{
 		List	   *newargs = NIL;
 		ListCell   *l;
@@ -2433,7 +2718,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 			Node	   *newarg;
 
 			newarg = process_sublinks_mutator(lfirst(l), &locContext);
-			if (or_clause(newarg))
+			if (is_orclause(newarg))
 				newargs = list_concat(newargs, ((BoolExpr *) newarg)->args);
 			else
 				newargs = lappend(newargs, newarg);
@@ -2480,7 +2765,7 @@ SS_identify_outer_params(PlannerInfo *root)
 	 * If no parameters have been assigned anywhere in the tree, we certainly
 	 * don't need to do anything here.
 	 */
-	if (root->glob->nParamExec == 0)
+	if (root->glob->paramExecTypes == NIL)
 		return;
 
 	/*
@@ -2518,11 +2803,13 @@ SS_identify_outer_params(PlannerInfo *root)
 }
 
 /*
- * SS_charge_for_initplans - account for cost of initplans in Path costs
+ * SS_charge_for_initplans - account for initplans in Path costs & parallelism
  *
  * If any initPlans have been created in the current query level, they will
  * get attached to the Plan tree created from whichever Path we select from
- * the given rel; so increment all the rel's Paths' costs to account for them.
+ * the given rel.  Increment all that rel's Paths' costs to account for them,
+ * and make sure the paths get marked as parallel-unsafe, since we can't
+ * currently transmit initPlans to parallel workers.
  *
  * This is separate from SS_attach_initplans because we might conditionally
  * create more initPlans during create_plan(), depending on which Path we
@@ -2554,7 +2841,7 @@ SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
 	}
 
 	/*
-	 * Now adjust the costs.
+	 * Now adjust the costs and parallel_safe flags.
 	 */
 	foreach(lc, final_rel->pathlist)
 	{
@@ -2562,7 +2849,15 @@ SS_charge_for_initplans(PlannerInfo *root, RelOptInfo *final_rel)
 
 		path->startup_cost += initplan_cost;
 		path->total_cost += initplan_cost;
+		path->parallel_safe = false;
 	}
+
+	/*
+	 * Forget about any partial paths and clear consider_parallel, too;
+	 * they're not usable if we attached an initPlan.
+	 */
+	final_rel->partial_pathlist = NIL;
+	final_rel->consider_parallel = false;
 
 	/* We needn't do set_cheapest() here, caller will do it */
 }
@@ -2601,11 +2896,14 @@ void
 SS_finalize_plan(PlannerInfo *root, Plan *plan)
 {
 	/* No setup needed, just recurse through plan tree. */
-	(void) finalize_plan(root, plan, root->outer_params, NULL);
+	(void) finalize_plan(root, plan, -1, root->outer_params, NULL);
 }
 
 /*
  * Recursive processing of all nodes in the plan tree
+ *
+ * gather_param is the rescan_param of an ancestral Gather/GatherMerge,
+ * or -1 if there is none.
  *
  * valid_params is the set of param IDs supplied by outer plan levels
  * that are valid to reference in this plan node or its children.
@@ -2633,7 +2931,9 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan)
  * can be handled more cleanly.
  */
 static Bitmapset *
-finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
+finalize_plan(PlannerInfo *root, Plan *plan,
+			  int gather_param,
+			  Bitmapset *valid_params,
 			  Bitmapset *scan_params)
 {
 	finalize_primnode_context context;
@@ -2693,6 +2993,18 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 	/* Find params in targetlist and qual */
 	finalize_primnode((Node *) plan->targetlist, &context);
 	finalize_primnode((Node *) plan->qual, &context);
+
+	/*
+	 * If it's a parallel-aware scan node, mark it as dependent on the parent
+	 * Gather/GatherMerge's rescan Param.
+	 */
+	if (plan->parallel_aware)
+	{
+		if (gather_param < 0)
+			elog(ERROR, "parallel-aware plan node is not below a Gather");
+		context.paramids =
+			bms_add_member(context.paramids, gather_param);
+	}
 
 	/* Check additional node-type-specific fields */
 	switch (nodeTag(plan))
@@ -2764,10 +3076,16 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 			{
 				SubqueryScan *sscan = (SubqueryScan *) plan;
 				RelOptInfo *rel;
+				Bitmapset  *subquery_params;
 
-				/* We must run SS_finalize_plan on the subquery */
+				/* We must run finalize_plan on the subquery */
 				rel = find_base_rel(root, sscan->scan.scanrelid);
-				SS_finalize_plan(rel->subroot, sscan->subplan);
+				subquery_params = rel->subroot->outer_params;
+				if (gather_param >= 0)
+					subquery_params = bms_add_member(bms_copy(subquery_params),
+													 gather_param);
+				finalize_plan(rel->subroot, sscan->subplan, gather_param,
+							  subquery_params, NULL);
 
 				/* Now we can add its extParams to the parent's params */
 				context.paramids = bms_add_members(context.paramids,
@@ -2834,6 +3152,12 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 			}
 			break;
 
+		case T_TableFuncScan:
+			finalize_primnode((Node *) ((TableFuncScan *) plan)->tablefunc,
+							  &context);
+			context.paramids = bms_add_members(context.paramids, scan_params);
+			break;
+
 		case T_ValuesScan:
 			finalize_primnode((Node *) ((ValuesScan *) plan)->values_lists,
 							  &context);
@@ -2883,6 +3207,10 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 
+		case T_NamedTuplestoreScan:
+			context.paramids = bms_add_members(context.paramids, scan_params);
+			break;
+
 		case T_ForeignScan:
 			{
 				ForeignScan *fscan = (ForeignScan *) plan;
@@ -2916,6 +3244,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(lc),
+													  gather_param,
 													  valid_params,
 													  scan_params));
 				}
@@ -2946,6 +3275,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
+													  gather_param,
 													  valid_params,
 													  scan_params));
 				}
@@ -2962,6 +3292,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
+													  gather_param,
 													  valid_params,
 													  scan_params));
 				}
@@ -2978,6 +3309,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
+													  gather_param,
 													  valid_params,
 													  scan_params));
 				}
@@ -2994,6 +3326,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
+													  gather_param,
 													  valid_params,
 													  scan_params));
 				}
@@ -3010,6 +3343,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
+													  gather_param,
 													  valid_params,
 													  scan_params));
 				}
@@ -3124,16 +3458,61 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 							  &context);
 			break;
 
+		case T_Gather:
+			/* child nodes are allowed to reference rescan_param, if any */
+			locally_added_param = ((Gather *) plan)->rescan_param;
+			if (locally_added_param >= 0)
+			{
+				valid_params = bms_add_member(bms_copy(valid_params),
+											  locally_added_param);
+
+				/*
+				 * We currently don't support nested Gathers.  The issue so
+				 * far as this function is concerned would be how to identify
+				 * which child nodes depend on which Gather.
+				 */
+				Assert(gather_param < 0);
+				/* Pass down rescan_param to child parallel-aware nodes */
+				gather_param = locally_added_param;
+			}
+			/* rescan_param does *not* get added to scan_params */
+			break;
+
+		case T_GatherMerge:
+			/* child nodes are allowed to reference rescan_param, if any */
+			locally_added_param = ((GatherMerge *) plan)->rescan_param;
+			if (locally_added_param >= 0)
+			{
+				valid_params = bms_add_member(bms_copy(valid_params),
+											  locally_added_param);
+
+				/*
+				 * We currently don't support nested Gathers.  The issue so
+				 * far as this function is concerned would be how to identify
+				 * which child nodes depend on which Gather.
+				 */
+				Assert(gather_param < 0);
+				/* Pass down rescan_param to child parallel-aware nodes */
+				gather_param = locally_added_param;
+			}
+			/* rescan_param does *not* get added to scan_params */
+			break;
+
+		case T_ProjectSet:
 		case T_Hash:
 		case T_Material:
 		case T_Sort:
 		case T_ShareInputScan:
 		case T_Unique:
-		case T_Gather:
 		case T_SetOp:
+<<<<<<< HEAD
 		case T_Repeat:
 		case T_SplitUpdate:
 		case T_TupleSplit:
+=======
+		case T_Group:
+			/* no node-type-specific fields need fixing */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 
 		default:
@@ -3142,6 +3521,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 	}
 
 	/* Process left and right child plans, if any */
+<<<<<<< HEAD
 	/*
 	 * In a TableFunctionScan, the 'lefttree' is more like a SubQueryScan's
 	 * subplan, and contains a plan that's already been finalized by the
@@ -3155,12 +3535,21 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 									 scan_params);
 		context.paramids = bms_add_members(context.paramids, child_params);
 	}
+=======
+	child_params = finalize_plan(root,
+								 plan->lefttree,
+								 gather_param,
+								 valid_params,
+								 scan_params);
+	context.paramids = bms_add_members(context.paramids, child_params);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (nestloop_params)
 	{
 		/* right child can reference nestloop_params as well as valid_params */
 		child_params = finalize_plan(root,
 									 plan->righttree,
+									 gather_param,
 									 bms_union(nestloop_params, valid_params),
 									 scan_params);
 		/* ... and they don't count as parameters used at my level */
@@ -3172,6 +3561,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 		/* easy case */
 		child_params = finalize_plan(root,
 									 plan->righttree,
+									 gather_param,
 									 valid_params,
 									 scan_params);
 	}
@@ -3266,7 +3656,7 @@ finalize_primnode(Node *node, finalize_primnode_context *context)
 		 * parameter change signaling since we always re-evaluate the subplan.
 		 * Note that this wouldn't work too well if there might be uses of the
 		 * same param IDs elsewhere in the plan, but that can't happen because
-		 * generate_new_param never tries to merge params.
+		 * generate_new_exec_param never tries to merge params.
 		 */
 		foreach(lc, subplan->paramIds)
 		{
@@ -3332,7 +3722,8 @@ SS_make_initplan_output_param(PlannerInfo *root,
 							  Oid resulttype, int32 resulttypmod,
 							  Oid resultcollation)
 {
-	return generate_new_param(root, resulttype, resulttypmod, resultcollation);
+	return generate_new_exec_param(root, resulttype,
+								   resulttypmod, resultcollation);
 }
 
 /*

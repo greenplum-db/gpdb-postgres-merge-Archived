@@ -28,9 +28,13 @@ extern PLyExecutionContext *PLy_current_execution_context(void);
 /* Get the scratch memory context for specified execution context */
 extern MemoryContext PLy_get_scratch_context(PLyExecutionContext *context);
 
+<<<<<<< HEAD
 extern bool PLy_enter_python_intepreter;
 
 extern int PLy_python_cancel_handler(void *arg);
 extern void PLy_handle_cancel_interrupt(void);
 
 #endif   /* PLPY_MAIN_H */
+=======
+#endif							/* PLPY_MAIN_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

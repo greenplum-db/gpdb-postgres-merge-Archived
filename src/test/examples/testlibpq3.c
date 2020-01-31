@@ -142,7 +142,11 @@ main(int argc, char **argv)
 		exit_nicely(conn);
 	}
 
+<<<<<<< HEAD
 	/* Set always-secure search path, so malicous users can't take control. */
+=======
+	/* Set always-secure search path, so malicious users can't take control. */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	res = PQexec(conn, "SET search_path = testlibpq3");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{

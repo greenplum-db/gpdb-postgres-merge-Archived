@@ -1,18 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * pg_pltemplate.h
- *	  definition of the system "PL template" relation (pg_pltemplate)
- *	  along with the relation's initial contents.
+ *	  definition of the "PL template" system catalog (pg_pltemplate)
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_pltemplate.h
  *
  * NOTES
- *	  the genbki.pl script reads this file and generates .bki
- *	  information from the DATA() statements.
+ *	  The Catalog.pm module reads this file and derives schema
+ *	  information.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,26 +19,25 @@
 #define PG_PLTEMPLATE_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_pltemplate_d.h"
 
 /* ----------------
  *		pg_pltemplate definition.  cpp turns this into
  *		typedef struct FormData_pg_pltemplate
  * ----------------
  */
-#define PLTemplateRelationId	1136
-
-CATALOG(pg_pltemplate,1136) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
+CATALOG(pg_pltemplate,1136,PLTemplateRelationId) BKI_SHARED_RELATION
 {
 	NameData	tmplname;		/* name of PL */
 	bool		tmpltrusted;	/* PL is trusted? */
 	bool		tmpldbacreate;	/* PL is installable by db owner? */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	text tmplhandler BKI_FORCE_NOT_NULL;		/* name of call handler
+	text		tmplhandler BKI_FORCE_NOT_NULL; /* name of call handler
 												 * function */
 	text		tmplinline;		/* name of anonymous-block handler, or NULL */
 	text		tmplvalidator;	/* name of validator function, or NULL */
-	text tmpllibrary BKI_FORCE_NOT_NULL;		/* path of shared library */
+	text		tmpllibrary BKI_FORCE_NOT_NULL; /* path of shared library */
 	aclitem		tmplacl[1];		/* access privileges for template */
 #endif
 } FormData_pg_pltemplate;
@@ -54,6 +52,7 @@ CATALOG(pg_pltemplate,1136) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
  */
 typedef FormData_pg_pltemplate *Form_pg_pltemplate;
 
+<<<<<<< HEAD
 /* ----------------
  *		compiler constants for pg_pltemplate
  * ----------------
@@ -88,3 +87,6 @@ DATA(insert ( "plr"         f f "plr_call_handler" _null_ _null_ "$libdir/plr" _
 DATA(insert ( "pljava"      t t "pljava_call_handler" _null_ _null_ "$libdir/pljava" _null_ ));
 DATA(insert ( "pljavau"     f f "pljavau_call_handler" _null_ _null_ "$libdir/pljava" _null_ ));
 #endif   /* PG_PLTEMPLATE_H */
+=======
+#endif							/* PG_PLTEMPLATE_H */
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

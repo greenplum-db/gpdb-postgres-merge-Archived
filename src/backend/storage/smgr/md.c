@@ -10,7 +10,7 @@
  * It doesn't matter whether the bits are on spinning rust or some other
  * storage technology.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -34,17 +34,19 @@
 #include "miscadmin.h"
 #include "access/xlogutils.h"
 #include "access/xlog.h"
-#include "catalog/catalog.h"
-#include "portability/instr_time.h"
+#include "pgstat.h"
 #include "postmaster/bgwriter.h"
 #include "storage/fd.h"
 #include "storage/bufmgr.h"
+#include "storage/md.h"
 #include "storage/relfilenode.h"
 #include "storage/smgr.h"
+#include "storage/sync.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "pg_trace.h"
 
+<<<<<<< HEAD
 #include "catalog/pg_tablespace.h"
 #include "utils/faultinjector.h"
 
@@ -84,6 +86,8 @@
 #define FILE_POSSIBLY_DELETED(err)	((err) == ENOENT || (err) == EACCES)
 #endif
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  *	The magnetic disk storage manager keeps track of open file
  *	descriptors in its own descriptor pool.  This is done to make it
@@ -109,32 +113,29 @@
  *	out to an unlinked old copy of a segment file that will eventually
  *	disappear.
  *
- *	The file descriptor pointer (md_fd field) stored in the SMgrRelation
- *	cache is, therefore, just the head of a list of MdfdVec objects, one
- *	per segment.  But note the md_fd pointer can be NULL, indicating
- *	relation not open.
- *
- *	Also note that mdfd_chain == NULL does not necessarily mean the relation
- *	doesn't have another segment after this one; we may just not have
- *	opened the next segment yet.  (We could not have "all segments are
- *	in the chain" as an invariant anyway, since another backend could
- *	extend the relation when we weren't looking.)  We do not make chain
+ *	File descriptors are stored in the per-fork md_seg_fds arrays inside
+ *	SMgrRelation. The length of these arrays is stored in md_num_open_segs.
+ *	Note that a fork's md_num_open_segs having a specific value does not
+ *	necessarily mean the relation doesn't have additional segments; we may
+ *	just not have opened the next segment yet.  (We could not have "all
+ *	segments are in the array" as an invariant anyway, since another backend
+ *	could extend the relation while we aren't looking.)  We do not have
  *	entries for inactive segments, however; as soon as we find a partial
  *	segment, we assume that any subsequent segments are inactive.
  *
- *	All MdfdVec objects are palloc'd in the MdCxt memory context.
+ *	The entire MdfdVec array is palloc'd in the MdCxt memory context.
  */
 
 typedef struct _MdfdVec
 {
 	File		mdfd_vfd;		/* fd number in fd.c's pool */
 	BlockNumber mdfd_segno;		/* segment number, from 0 */
-	struct _MdfdVec *mdfd_chain;	/* next segment, or NULL */
 } MdfdVec;
 
 static MemoryContext MdCxt;		/* context for all MdfdVec objects */
 
 
+<<<<<<< HEAD
 /*
  * In some contexts (currently, standalone backends and the checkpointer)
  * we keep track of pending fsync operations: we need to remember all relation
@@ -179,6 +180,17 @@ static MemoryContext pendingOpsCxt;		/* context for the above  */
 
 static CycleCtr mdsync_cycle_ctr = 0;
 static CycleCtr mdckpt_cycle_ctr = 0;
+=======
+/* Populate a file tag describing an md.c segment file. */
+#define INIT_MD_FILETAG(a,xx_rnode,xx_forknum,xx_segno) \
+( \
+	memset(&(a), 0, sizeof(FileTag)), \
+	(a).handler = SYNC_HANDLER_MD, \
+	(a).rnode = (xx_rnode), \
+	(a).forknum = (xx_forknum), \
+	(a).segno = (xx_segno) \
+)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /*** behavior for mdopen & _mdfd_getseg ***/
@@ -192,7 +204,7 @@ static CycleCtr mdckpt_cycle_ctr = 0;
 #define EXTENSION_CREATE_RECOVERY	(1 << 3)
 /*
  * Allow opening segments which are preceded by segments smaller than
- * RELSEG_SIZE, e.g. inactive segments (see above). Note that this is breaks
+ * RELSEG_SIZE, e.g. inactive segments (see above). Note that this breaks
  * mdnblocks() and related functionality henceforth - which currently is ok,
  * because this is only required in the checkpointer which never uses
  * mdnblocks().
@@ -202,20 +214,33 @@ static CycleCtr mdckpt_cycle_ctr = 0;
 
 /* local routines */
 static void mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum,
+<<<<<<< HEAD
 			 bool isRedo, char relstorage);
+=======
+						 bool isRedo);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static MdfdVec *mdopen(SMgrRelation reln, ForkNumber forknum, int behavior);
 static void register_dirty_segment(SMgrRelation reln, ForkNumber forknum,
-					   MdfdVec *seg);
-static void register_unlink(RelFileNodeBackend rnode);
-static MdfdVec *_fdvec_alloc(void);
+								   MdfdVec *seg);
+static void register_unlink_segment(RelFileNodeBackend rnode, ForkNumber forknum,
+									BlockNumber segno);
+static void register_forget_request(RelFileNodeBackend rnode, ForkNumber forknum,
+									BlockNumber segno);
+static void _fdvec_resize(SMgrRelation reln,
+						  ForkNumber forknum,
+						  int nseg);
 static char *_mdfd_segpath(SMgrRelation reln, ForkNumber forknum,
-			  BlockNumber segno);
+						   BlockNumber segno);
 static MdfdVec *_mdfd_openseg(SMgrRelation reln, ForkNumber forkno,
-			  BlockNumber segno, int oflags);
+							  BlockNumber segno, int oflags);
 static MdfdVec *_mdfd_getseg(SMgrRelation reln, ForkNumber forkno,
+<<<<<<< HEAD
 			 BlockNumber blkno, bool skipFsync, bool is_appendoptimized, int behavior);
+=======
+							 BlockNumber blkno, bool skipFsync, int behavior);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static BlockNumber _mdnblocks(SMgrRelation reln, ForkNumber forknum,
-		   MdfdVec *seg);
+							  MdfdVec *seg);
 
 
 /*
@@ -226,69 +251,7 @@ mdinit(void)
 {
 	MdCxt = AllocSetContextCreate(TopMemoryContext,
 								  "MdSmgr",
-								  ALLOCSET_DEFAULT_MINSIZE,
-								  ALLOCSET_DEFAULT_INITSIZE,
-								  ALLOCSET_DEFAULT_MAXSIZE);
-
-	/*
-	 * Create pending-operations hashtable if we need it.  Currently, we need
-	 * it if we are standalone (not under a postmaster) or if we are a startup
-	 * or checkpointer auxiliary process.
-	 */
-	if (!IsUnderPostmaster || AmStartupProcess() || AmCheckpointerProcess())
-	{
-		HASHCTL		hash_ctl;
-
-		/*
-		 * XXX: The checkpointer needs to add entries to the pending ops table
-		 * when absorbing fsync requests.  That is done within a critical
-		 * section, which isn't usually allowed, but we make an exception. It
-		 * means that there's a theoretical possibility that you run out of
-		 * memory while absorbing fsync requests, which leads to a PANIC.
-		 * Fortunately the hash table is small so that's unlikely to happen in
-		 * practice.
-		 */
-		pendingOpsCxt = AllocSetContextCreate(MdCxt,
-											  "Pending Ops Context",
-											  ALLOCSET_DEFAULT_MINSIZE,
-											  ALLOCSET_DEFAULT_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
-		MemoryContextAllowInCriticalSection(pendingOpsCxt, true);
-
-		MemSet(&hash_ctl, 0, sizeof(hash_ctl));
-		hash_ctl.keysize = sizeof(RelFileNode);
-		hash_ctl.entrysize = sizeof(PendingOperationEntry);
-		hash_ctl.hcxt = pendingOpsCxt;
-		pendingOpsTable = hash_create("Pending Ops Table",
-									  100L,
-									  &hash_ctl,
-									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
-		pendingUnlinks = NIL;
-	}
-}
-
-/*
- * In archive recovery, we rely on checkpointer to do fsyncs, but we will have
- * already created the pendingOpsTable during initialization of the startup
- * process.  Calling this function drops the local pendingOpsTable so that
- * subsequent requests will be forwarded to checkpointer.
- */
-void
-SetForwardFsyncRequests(void)
-{
-	/* Perform any pending fsyncs we may have queued up, then drop table */
-	if (pendingOpsTable)
-	{
-		mdsync();
-		hash_destroy(pendingOpsTable);
-	}
-	pendingOpsTable = NULL;
-
-	/*
-	 * We should not have any pending unlink requests, since mdunlink doesn't
-	 * queue unlink requests when isRedo.
-	 */
-	Assert(pendingUnlinks == NIL);
+								  ALLOCSET_DEFAULT_SIZES);
 }
 
 /*
@@ -316,30 +279,25 @@ mdexists(SMgrRelation reln, ForkNumber forkNum)
 void
 mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 {
+	MdfdVec    *mdfd;
 	char	   *path;
 	File		fd;
 
-	if (isRedo && reln->md_fd[forkNum] != NULL)
+	if (isRedo && reln->md_num_open_segs[forkNum] > 0)
 		return;					/* created and opened already... */
 
-	Assert(reln->md_fd[forkNum] == NULL);
+	Assert(reln->md_num_open_segs[forkNum] == 0);
 
 	path = relpath(reln->smgr_rnode, forkNum);
 
-	fd = PathNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
+	fd = PathNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY);
 
 	if (fd < 0)
 	{
 		int			save_errno = errno;
 
-		/*
-		 * During bootstrap, there are cases where a system relation will be
-		 * accessed (by internal backend processes) before the bootstrap
-		 * script nominally creates it.  Therefore, allow the file to exist
-		 * already, even if isRedo is not set.  (See also mdopen)
-		 */
-		if (isRedo || IsBootstrapProcessingMode())
-			fd = PathNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
+		if (isRedo)
+			fd = PathNameOpenFile(path, O_RDWR | PG_BINARY);
 		if (fd < 0)
 		{
 			/* be sure to report the error reported by create, not open */
@@ -352,11 +310,10 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 
 	pfree(path);
 
-	reln->md_fd[forkNum] = _fdvec_alloc();
-
-	reln->md_fd[forkNum]->mdfd_vfd = fd;
-	reln->md_fd[forkNum]->mdfd_segno = 0;
-	reln->md_fd[forkNum]->mdfd_chain = NULL;
+	_fdvec_resize(reln, forkNum, 1);
+	mdfd = &reln->md_seg_fds[forkNum][0];
+	mdfd->mdfd_vfd = fd;
+	mdfd->mdfd_segno = 0;
 }
 
 /*
@@ -451,6 +408,7 @@ mdcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
 void
 mdunlink(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char relstorage)
 {
+<<<<<<< HEAD
 	/*
 	 * We have to clean out any pending fsync requests for the doomed
 	 * relation, else the next mdsync() will fail.  There can't be any such
@@ -473,6 +431,8 @@ mdunlink(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char relstor
 		 !relstorage_is_ao(relstorage)))
 		ForgetRelationFsyncRequests(rnode.node, forkNum);
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* Now do the per-fork work */
 	if (forkNum == InvalidForkNumber)
 	{
@@ -496,6 +456,11 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char rel
 	 */
 	if (isRedo || forkNum != MAIN_FORKNUM || RelFileNodeBackendIsTemp(rnode))
 	{
+		/* First, forget any pending sync requests for the first segment */
+		if (!RelFileNodeBackendIsTemp(rnode))
+			register_forget_request(rnode, forkNum, 0 /* first seg */ );
+
+		/* Next unlink the file */
 		ret = unlink(path);
 		if (ret < 0 && errno != ENOENT)
 			ereport(WARNING,
@@ -507,7 +472,7 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char rel
 		/* truncate(2) would be easier here, but Windows hasn't got it */
 		int			fd;
 
-		fd = OpenTransientFile(path, O_RDWR | PG_BINARY, 0);
+		fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
 		if (fd >= 0)
 		{
 			int			save_errno;
@@ -525,7 +490,7 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char rel
 					 errmsg("could not truncate file \"%s\": %m", path)));
 
 		/* Register request to unlink first segment later */
-		register_unlink(rnode);
+		register_unlink_segment(rnode, forkNum, 0 /* first seg */ );
 	}
 
 	/*
@@ -549,6 +514,13 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char rel
 		 */
 		for (segno = 1;; segno++)
 		{
+			/*
+			 * Forget any pending sync requests for this segment before we try
+			 * to unlink.
+			 */
+			if (!RelFileNodeBackendIsTemp(rnode))
+				register_forget_request(rnode, forkNum, segno);
+
 			sprintf(segpath, "%s.%u", path, segno);
 			if (unlink(segpath) < 0)
 			{
@@ -602,26 +574,11 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 	v = _mdfd_getseg(reln, forknum, blocknum, skipFsync, false, EXTENSION_CREATE);
 
-	seekpos = (off_t) BLCKSZ *(blocknum % ((BlockNumber) RELSEG_SIZE));
+	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 
-	/*
-	 * Note: because caller usually obtained blocknum by calling mdnblocks,
-	 * which did a seek(SEEK_END), this seek is often redundant and will be
-	 * optimized away by fd.c.  It's not redundant, however, if there is a
-	 * partial page at the end of the file. In that case we want to try to
-	 * overwrite the partial page with a full page.  It's also not redundant
-	 * if bufmgr.c had to dump another buffer of the same file to make room
-	 * for the new page's buffer.
-	 */
-	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not seek to block %u in file \"%s\": %m",
-						blocknum, FilePathName(v->mdfd_vfd))));
-
-	if ((nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
+	if ((nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ, seekpos, WAIT_EVENT_DATA_FILE_EXTEND)) != BLCKSZ)
 	{
 		if (nbytes < 0)
 			ereport(ERROR,
@@ -662,44 +619,33 @@ mdopen(SMgrRelation reln, ForkNumber forknum, int behavior)
 	File		fd;
 
 	/* No work if already open */
-	if (reln->md_fd[forknum])
-		return reln->md_fd[forknum];
+	if (reln->md_num_open_segs[forknum] > 0)
+		return &reln->md_seg_fds[forknum][0];
 
 	path = relpath(reln->smgr_rnode, forknum);
 
-	fd = PathNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
+	fd = PathNameOpenFile(path, O_RDWR | PG_BINARY);
 
 	if (fd < 0)
 	{
-		/*
-		 * During bootstrap, there are cases where a system relation will be
-		 * accessed (by internal backend processes) before the bootstrap
-		 * script nominally creates it.  Therefore, accept mdopen() as a
-		 * substitute for mdcreate() in bootstrap mode only. (See mdcreate)
-		 */
-		if (IsBootstrapProcessingMode())
-			fd = PathNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
-		if (fd < 0)
+		if ((behavior & EXTENSION_RETURN_NULL) &&
+			FILE_POSSIBLY_DELETED(errno))
 		{
-			if ((behavior & EXTENSION_RETURN_NULL) &&
-				FILE_POSSIBLY_DELETED(errno))
-			{
-				pfree(path);
-				return NULL;
-			}
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not open file \"%s\": %m", path)));
+			pfree(path);
+			return NULL;
 		}
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\": %m", path)));
 	}
 
 	pfree(path);
 
-	reln->md_fd[forknum] = mdfd = _fdvec_alloc();
-
+	_fdvec_resize(reln, forknum, 1);
+	mdfd = &reln->md_seg_fds[forknum][0];
 	mdfd->mdfd_vfd = fd;
 	mdfd->mdfd_segno = 0;
-	mdfd->mdfd_chain = NULL;
+
 	Assert(_mdnblocks(reln, forknum, mdfd) <= ((BlockNumber) RELSEG_SIZE));
 
 	return mdfd;
@@ -711,25 +657,29 @@ mdopen(SMgrRelation reln, ForkNumber forknum, int behavior)
 void
 mdclose(SMgrRelation reln, ForkNumber forknum)
 {
-	MdfdVec    *v = reln->md_fd[forknum];
+	int			nopensegs = reln->md_num_open_segs[forknum];
 
 	/* No work if already closed */
-	if (v == NULL)
+	if (nopensegs == 0)
 		return;
 
-	reln->md_fd[forknum] = NULL;	/* prevent dangling pointer after error */
-
-	while (v != NULL)
+	/* close segments starting from the end */
+	while (nopensegs > 0)
 	{
-		MdfdVec    *ov = v;
+		MdfdVec    *v = &reln->md_seg_fds[forknum][nopensegs - 1];
 
 		/* if not closed already */
 		if (v->mdfd_vfd >= 0)
+		{
 			FileClose(v->mdfd_vfd);
-		/* Now free vector */
-		v = v->mdfd_chain;
-		pfree(ov);
+			v->mdfd_vfd = -1;
+		}
+
+		nopensegs--;
 	}
+
+	/* resize just once, avoids pointless reallocations */
+	_fdvec_resize(reln, forknum, 0);
 }
 
 /*
@@ -744,12 +694,12 @@ mdprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
 
 	v = _mdfd_getseg(reln, forknum, blocknum, false, false, EXTENSION_FAIL);
 
-	seekpos = (off_t) BLCKSZ *(blocknum % ((BlockNumber) RELSEG_SIZE));
+	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 
-	(void) FilePrefetch(v->mdfd_vfd, seekpos, BLCKSZ);
-#endif   /* USE_PREFETCH */
+	(void) FilePrefetch(v->mdfd_vfd, seekpos, BLCKSZ, WAIT_EVENT_DATA_FILE_PREFETCH);
+#endif							/* USE_PREFETCH */
 }
 
 /*
@@ -795,9 +745,9 @@ mdwriteback(SMgrRelation reln, ForkNumber forknum,
 		Assert(nflush >= 1);
 		Assert(nflush <= nblocks);
 
-		seekpos = (off_t) BLCKSZ *(blocknum % ((BlockNumber) RELSEG_SIZE));
+		seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
-		FileWriteback(v->mdfd_vfd, seekpos, (off_t) BLCKSZ * nflush);
+		FileWriteback(v->mdfd_vfd, seekpos, (off_t) BLCKSZ * nflush, WAIT_EVENT_DATA_FILE_FLUSH);
 
 		nblocks -= nflush;
 		blocknum += nflush;
@@ -824,17 +774,11 @@ mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	v = _mdfd_getseg(reln, forknum, blocknum, false, false,
 					 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
 
-	seekpos = (off_t) BLCKSZ *(blocknum % ((BlockNumber) RELSEG_SIZE));
+	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 
-	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not seek to block %u in file \"%s\": %m",
-						blocknum, FilePathName(v->mdfd_vfd))));
-
-	nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ);
+	nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ, seekpos, WAIT_EVENT_DATA_FILE_READ);
 
 	TRACE_POSTGRESQL_SMGR_MD_READ_DONE(forknum, blocknum,
 									   reln->smgr_rnode.node.spcNode,
@@ -900,17 +844,11 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	v = _mdfd_getseg(reln, forknum, blocknum, skipFsync, false,
 					 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
 
-	seekpos = (off_t) BLCKSZ *(blocknum % ((BlockNumber) RELSEG_SIZE));
+	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
 	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
 
-	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not seek to block %u in file \"%s\": %m",
-						blocknum, FilePathName(v->mdfd_vfd))));
-
-	nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ);
+	nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ, seekpos, WAIT_EVENT_DATA_FILE_WRITE);
 
 	TRACE_POSTGRESQL_SMGR_MD_WRITE_DONE(forknum, blocknum,
 										reln->smgr_rnode.node.spcNode,
@@ -945,9 +883,9 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  *	mdnblocks() -- Get the number of blocks stored in a relation.
  *
  *		Important side effect: all active segments of the relation are opened
- *		and added to the mdfd_chain list.  If this routine has not been
+ *		and added to the mdfd_seg_fds array.  If this routine has not been
  *		called, then only segments up to the last one actually touched
- *		are present in the chain.
+ *		are present in the array.
  */
 BlockNumber
 mdnblocks(SMgrRelation reln, ForkNumber forknum)
@@ -956,24 +894,24 @@ mdnblocks(SMgrRelation reln, ForkNumber forknum)
 	BlockNumber nblocks;
 	BlockNumber segno = 0;
 
+	/* mdopen has opened the first segment */
+	Assert(reln->md_num_open_segs[forknum] > 0);
+
 	/*
-	 * Skip through any segments that aren't the last one, to avoid redundant
-	 * seeks on them.  We have previously verified that these segments are
-	 * exactly RELSEG_SIZE long, and it's useless to recheck that each time.
+	 * Start from the last open segments, to avoid redundant seeks.  We have
+	 * previously verified that these segments are exactly RELSEG_SIZE long,
+	 * and it's useless to recheck that each time.
 	 *
 	 * NOTE: this assumption could only be wrong if another backend has
 	 * truncated the relation.  We rely on higher code levels to handle that
 	 * scenario by closing and re-opening the md fd, which is handled via
 	 * relcache flush.  (Since the checkpointer doesn't participate in
-	 * relcache flush, it could have segment chain entries for inactive
-	 * segments; that's OK because the checkpointer never needs to compute
-	 * relation size.)
+	 * relcache flush, it could have segment entries for inactive segments;
+	 * that's OK because the checkpointer never needs to compute relation
+	 * size.)
 	 */
-	while (v->mdfd_chain != NULL)
-	{
-		segno++;
-		v = v->mdfd_chain;
-	}
+	segno = reln->md_num_open_segs[forknum] - 1;
+	v = &reln->md_seg_fds[forknum][segno];
 
 	for (;;)
 	{
@@ -988,21 +926,16 @@ mdnblocks(SMgrRelation reln, ForkNumber forknum)
 		 */
 		segno++;
 
-		if (v->mdfd_chain == NULL)
-		{
-			/*
-			 * We used to pass O_CREAT here, but that's has the disadvantage
-			 * that it might create a segment which has vanished through some
-			 * operating system misadventure.  In such a case, creating the
-			 * segment here undermines _mdfd_getseg's attempts to notice and
-			 * report an error upon access to a missing segment.
-			 */
-			v->mdfd_chain = _mdfd_openseg(reln, forknum, segno, 0);
-			if (v->mdfd_chain == NULL)
-				return segno * ((BlockNumber) RELSEG_SIZE);
-		}
-
-		v = v->mdfd_chain;
+		/*
+		 * We used to pass O_CREAT here, but that has the disadvantage that it
+		 * might create a segment which has vanished through some operating
+		 * system misadventure.  In such a case, creating the segment here
+		 * undermines _mdfd_getseg's attempts to notice and report an error
+		 * upon access to a missing segment.
+		 */
+		v = _mdfd_openseg(reln, forknum, segno, 0);
+		if (v == NULL)
+			return segno * ((BlockNumber) RELSEG_SIZE);
 	}
 }
 
@@ -1012,9 +945,9 @@ mdnblocks(SMgrRelation reln, ForkNumber forknum)
 void
 mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 {
-	MdfdVec    *v;
 	BlockNumber curnblk;
 	BlockNumber priorblocks;
+	int			curopensegs;
 
 	/*
 	 * NOTE: mdnblocks makes sure we have opened all active segments, so that
@@ -1035,21 +968,26 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 	if (nblocks == curnblk && (forknum != MAIN_FORKNUM))
 		return;					/* no work */
 
-	v = mdopen(reln, forknum, EXTENSION_FAIL);
-
-	priorblocks = 0;
-	while (v != NULL)
+	/*
+	 * Truncate segments, starting at the last one. Starting at the end makes
+	 * managing the memory for the fd array easier, should there be errors.
+	 */
+	curopensegs = reln->md_num_open_segs[forknum];
+	while (curopensegs > 0)
 	{
-		MdfdVec    *ov = v;
+		MdfdVec    *v;
+
+		priorblocks = (curopensegs - 1) * RELSEG_SIZE;
+
+		v = &reln->md_seg_fds[forknum][curopensegs - 1];
 
 		if (priorblocks > nblocks)
 		{
 			/*
-			 * This segment is no longer active (and has already been unlinked
-			 * from the mdfd_chain). We truncate the file, but do not delete
-			 * it, for reasons explained in the header comments.
+			 * This segment is no longer active. We truncate the file, but do
+			 * not delete it, for reasons explained in the header comments.
 			 */
-			if (FileTruncate(v->mdfd_vfd, 0) < 0)
+			if (FileTruncate(v->mdfd_vfd, 0, WAIT_EVENT_DATA_FILE_TRUNCATE) < 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not truncate file \"%s\": %m",
@@ -1057,44 +995,50 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 
 			if (!SmgrIsTemp(reln))
 				register_dirty_segment(reln, forknum, v);
+<<<<<<< HEAD
 			v = v->mdfd_chain;
 			Assert(ov != reln->md_fd[forknum]); /* we never drop the 1st
 												 * segment */
 			FileClose(ov->mdfd_vfd);
 			pfree(ov);
+=======
+
+			/* we never drop the 1st segment */
+			Assert(v != &reln->md_seg_fds[forknum][0]);
+
+			FileClose(v->mdfd_vfd);
+			_fdvec_resize(reln, forknum, curopensegs - 1);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		else if (priorblocks + ((BlockNumber) RELSEG_SIZE) > nblocks)
 		{
 			/*
 			 * This is the last segment we want to keep. Truncate the file to
-			 * the right length, and clear chain link that points to any
-			 * remaining segments (which we shall zap). NOTE: if nblocks is
-			 * exactly a multiple K of RELSEG_SIZE, we will truncate the K+1st
-			 * segment to 0 length but keep it. This adheres to the invariant
-			 * given in the header comments.
+			 * the right length. NOTE: if nblocks is exactly a multiple K of
+			 * RELSEG_SIZE, we will truncate the K+1st segment to 0 length but
+			 * keep it. This adheres to the invariant given in the header
+			 * comments.
 			 */
 			BlockNumber lastsegblocks = nblocks - priorblocks;
 
-			if (FileTruncate(v->mdfd_vfd, (off_t) lastsegblocks * BLCKSZ) < 0)
+			if (FileTruncate(v->mdfd_vfd, (off_t) lastsegblocks * BLCKSZ, WAIT_EVENT_DATA_FILE_TRUNCATE) < 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-					errmsg("could not truncate file \"%s\" to %u blocks: %m",
-						   FilePathName(v->mdfd_vfd),
-						   nblocks)));
+						 errmsg("could not truncate file \"%s\" to %u blocks: %m",
+								FilePathName(v->mdfd_vfd),
+								nblocks)));
 			if (!SmgrIsTemp(reln))
 				register_dirty_segment(reln, forknum, v);
-			v = v->mdfd_chain;
-			ov->mdfd_chain = NULL;
 		}
 		else
 		{
 			/*
-			 * We still need this segment and 0 or more blocks beyond it, so
-			 * nothing to do here.
+			 * We still need this segment, so nothing to do for this and any
+			 * earlier segment.
 			 */
-			v = v->mdfd_chain;
+			break;
 		}
-		priorblocks += RELSEG_SIZE;
+		curopensegs--;
 	}
 }
 
@@ -1107,7 +1051,7 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 void
 mdimmedsync(SMgrRelation reln, ForkNumber forknum)
 {
-	MdfdVec    *v;
+	int			segno;
 
 	/*
 	 * NOTE: mdnblocks makes sure we have opened all active segments, so that
@@ -1115,15 +1059,18 @@ mdimmedsync(SMgrRelation reln, ForkNumber forknum)
 	 */
 	mdnblocks(reln, forknum);
 
-	v = mdopen(reln, forknum, EXTENSION_FAIL);
+	segno = reln->md_num_open_segs[forknum];
 
-	while (v != NULL)
+	while (segno > 0)
 	{
-		if (FileSync(v->mdfd_vfd) < 0)
-			ereport(ERROR,
+		MdfdVec    *v = &reln->md_seg_fds[forknum][segno - 1];
+
+		if (FileSync(v->mdfd_vfd, WAIT_EVENT_DATA_FILE_IMMEDIATE_SYNC) < 0)
+			ereport(data_sync_elevel(ERROR),
 					(errcode_for_file_access(),
 					 errmsg("could not fsync file \"%s\": %m",
 							FilePathName(v->mdfd_vfd))));
+<<<<<<< HEAD
 		v = v->mdfd_chain;
 	}
 }
@@ -1525,6 +1472,9 @@ mdpostckpt(void)
 			AbsorbFsyncRequests();
 			absorb_counter = UNLINKS_PER_ABSORB;
 		}
+=======
+		segno--;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 }
 
@@ -1532,19 +1482,24 @@ mdpostckpt(void)
  * register_dirty_segment() -- Mark a relation segment as needing fsync
  *
  * If there is a local pending-ops table, just make an entry in it for
- * mdsync to process later.  Otherwise, try to pass off the fsync request
- * to the checkpointer process.  If that fails, just do the fsync
- * locally before returning (we hope this will not happen often enough
- * to be a performance problem).
+ * ProcessSyncRequests to process later.  Otherwise, try to pass off the
+ * fsync request to the checkpointer process.  If that fails, just do the
+ * fsync locally before returning (we hope this will not happen often
+ * enough to be a performance problem).
  */
 static void
 register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 {
+	FileTag		tag;
+
+	INIT_MD_FILETAG(tag, reln->smgr_rnode.node, forknum, seg->mdfd_segno);
+
 	/* Temp relations should never be fsync'd */
 	Assert(!SmgrIsTemp(reln));
 
-	if (pendingOpsTable)
+	if (!RegisterSyncRequest(&tag, SYNC_REQUEST, false /* retryOnError */ ))
 	{
+<<<<<<< HEAD
 		/* push it into local pending-ops table */
 		RememberFsyncRequest(reln->smgr_rnode.node, forknum, seg->mdfd_segno, false);
 	}
@@ -1553,11 +1508,13 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 		if (ForwardFsyncRequest(reln->smgr_rnode.node, forknum, seg->mdfd_segno, false))
 			return;				/* passed it off successfully */
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ereport(DEBUG1,
 				(errmsg("could not forward fsync request because request queue is full")));
 
-		if (FileSync(seg->mdfd_vfd) < 0)
-			ereport(ERROR,
+		if (FileSync(seg->mdfd_vfd, WAIT_EVENT_DATA_FILE_SYNC) < 0)
+			ereport(data_sync_elevel(ERROR),
 					(errcode_for_file_access(),
 					 errmsg("could not fsync file \"%s\": %m",
 							FilePathName(seg->mdfd_vfd))));
@@ -1565,6 +1522,7 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 }
 
 /*
+<<<<<<< HEAD
  * register_dirty_segment_ao()
  *
  * Similar to register_dirty_segment() but it is for append optimized tables.
@@ -1604,13 +1562,22 @@ register_dirty_segment_ao(RelFileNode rnode, int segno, File vfd)
  *
  * As with register_dirty_segment, this could involve either a local or
  * a remote pending-ops table.
+=======
+ * register_unlink_segment() -- Schedule a file to be deleted after next checkpoint
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 static void
-register_unlink(RelFileNodeBackend rnode)
+register_unlink_segment(RelFileNodeBackend rnode, ForkNumber forknum,
+						BlockNumber segno)
 {
+	FileTag		tag;
+
+	INIT_MD_FILETAG(tag, rnode.node, forknum, segno);
+
 	/* Should never be used with temp relations */
 	Assert(!RelFileNodeBackendIsTemp(rnode));
 
+<<<<<<< HEAD
 	if (pendingOpsTable)
 	{
 		/* push it into local pending-ops table */
@@ -1632,29 +1599,15 @@ register_unlink(RelFileNodeBackend rnode)
 									UNLINK_RELATION_REQUEST, false))
 			pg_usleep(10000L);	/* 10 msec seems a good number */
 	}
+=======
+	RegisterSyncRequest(&tag, SYNC_UNLINK_REQUEST, true /* retryOnError */ );
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
- * RememberFsyncRequest() -- callback from checkpointer side of fsync request
- *
- * We stuff fsync requests into the local hash table for execution
- * during the checkpointer's next checkpoint.  UNLINK requests go into a
- * separate linked list, however, because they get processed separately.
- *
- * The range of possible segment numbers is way less than the range of
- * BlockNumber, so we can reserve high values of segno for special purposes.
- * We define three:
- * - FORGET_RELATION_FSYNC means to cancel pending fsyncs for a relation,
- *	 either for one fork, or all forks if forknum is InvalidForkNumber
- * - FORGET_DATABASE_FSYNC means to cancel pending fsyncs for a whole database
- * - UNLINK_RELATION_REQUEST is a request to delete the file after the next
- *	 checkpoint.
- * Note also that we're assuming real segment numbers don't exceed INT_MAX.
- *
- * (Handling FORGET_DATABASE_FSYNC requests is a tad slow because the hash
- * table has to be searched linearly, but dropping a database is a pretty
- * heavyweight operation anyhow, so we'll live with it.)
+ * register_forget_request() -- forget any fsyncs for a relation fork's segment
  */
+<<<<<<< HEAD
 void
 RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno,
 					 bool is_ao_segno)
@@ -1830,26 +1783,33 @@ ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum)
 		 */
 		while (!ForwardFsyncRequest(rnode, forknum, FORGET_RELATION_FSYNC, false))
 			pg_usleep(10000L);	/* 10 msec seems a good number */
+=======
+static void
+register_forget_request(RelFileNodeBackend rnode, ForkNumber forknum,
+						BlockNumber segno)
+{
+	FileTag		tag;
 
-		/*
-		 * Note we don't wait for the checkpointer to actually absorb the
-		 * cancel message; see mdsync() for the implications.
-		 */
-	}
+	INIT_MD_FILETAG(tag, rnode.node, forknum, segno);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	RegisterSyncRequest(&tag, SYNC_FORGET_REQUEST, true /* retryOnError */ );
 }
 
 /*
- * ForgetDatabaseFsyncRequests -- forget any fsyncs and unlinks for a DB
+ * ForgetDatabaseSyncRequests -- forget any fsyncs and unlinks for a DB
  */
 void
-ForgetDatabaseFsyncRequests(Oid dbid)
+ForgetDatabaseSyncRequests(Oid dbid)
 {
+	FileTag		tag;
 	RelFileNode rnode;
 
 	rnode.dbNode = dbid;
 	rnode.spcNode = 0;
 	rnode.relNode = 0;
 
+<<<<<<< HEAD
 	if (pendingOpsTable)
 	{
 		/* standalone backend or startup process: fsync state is local */
@@ -1861,7 +1821,42 @@ ForgetDatabaseFsyncRequests(Oid dbid)
 		while (!ForwardFsyncRequest(rnode, InvalidForkNumber,
 									FORGET_DATABASE_FSYNC, false))
 			pg_usleep(10000L);	/* 10 msec seems a good number */
+=======
+	INIT_MD_FILETAG(tag, rnode, InvalidForkNumber, InvalidBlockNumber);
+
+	RegisterSyncRequest(&tag, SYNC_FILTER_REQUEST, true /* retryOnError */ );
+}
+
+/*
+ * DropRelationFiles -- drop files of all given relations
+ */
+void
+DropRelationFiles(RelFileNode *delrels, int ndelrels, bool isRedo)
+{
+	SMgrRelation *srels;
+	int			i;
+
+	srels = palloc(sizeof(SMgrRelation) * ndelrels);
+	for (i = 0; i < ndelrels; i++)
+	{
+		SMgrRelation srel = smgropen(delrels[i], InvalidBackendId);
+
+		if (isRedo)
+		{
+			ForkNumber	fork;
+
+			for (fork = 0; fork <= MAX_FORKNUM; fork++)
+				XLogDropRelation(delrels[i], fork);
+		}
+		srels[i] = srel;
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
+
+	smgrdounlinkall(srels, ndelrels, isRedo);
+
+	for (i = 0; i < ndelrels; i++)
+		smgrclose(srels[i]);
+	pfree(srels);
 }
 
 /*
@@ -1909,12 +1904,40 @@ DropRelationFiles(RelFileNodePendingDelete *delrels, int ndelrels, bool isRedo)
 }
 
 /*
- *	_fdvec_alloc() -- Make a MdfdVec object.
+ *	_fdvec_resize() -- Resize the fork's open segments array
  */
-static MdfdVec *
-_fdvec_alloc(void)
+static void
+_fdvec_resize(SMgrRelation reln,
+			  ForkNumber forknum,
+			  int nseg)
 {
-	return (MdfdVec *) MemoryContextAlloc(MdCxt, sizeof(MdfdVec));
+	if (nseg == 0)
+	{
+		if (reln->md_num_open_segs[forknum] > 0)
+		{
+			pfree(reln->md_seg_fds[forknum]);
+			reln->md_seg_fds[forknum] = NULL;
+		}
+	}
+	else if (reln->md_num_open_segs[forknum] == 0)
+	{
+		reln->md_seg_fds[forknum] =
+			MemoryContextAlloc(MdCxt, sizeof(MdfdVec) * nseg);
+	}
+	else
+	{
+		/*
+		 * It doesn't seem worthwhile complicating the code by having a more
+		 * aggressive growth strategy here; the number of segments doesn't
+		 * grow that fast, and the memory context internally will sometimes
+		 * avoid doing an actual reallocation.
+		 */
+		reln->md_seg_fds[forknum] =
+			repalloc(reln->md_seg_fds[forknum],
+					 sizeof(MdfdVec) * nseg);
+	}
+
+	reln->md_num_open_segs[forknum] = nseg;
 }
 
 /*
@@ -1955,20 +1978,21 @@ _mdfd_openseg(SMgrRelation reln, ForkNumber forknum, BlockNumber segno,
 	fullpath = _mdfd_segpath(reln, forknum, segno);
 
 	/* open the file */
-	fd = PathNameOpenFile(fullpath, O_RDWR | PG_BINARY | oflags, 0600);
+	fd = PathNameOpenFile(fullpath, O_RDWR | PG_BINARY | oflags);
 
 	pfree(fullpath);
 
 	if (fd < 0)
 		return NULL;
 
-	/* allocate an mdfdvec entry for it */
-	v = _fdvec_alloc();
+	if (segno <= reln->md_num_open_segs[forknum])
+		_fdvec_resize(reln, forknum, segno + 1);
 
 	/* fill the entry */
+	v = &reln->md_seg_fds[forknum][segno];
 	v->mdfd_vfd = fd;
 	v->mdfd_segno = segno;
-	v->mdfd_chain = NULL;
+
 	Assert(_mdnblocks(reln, forknum, v) <= ((BlockNumber) RELSEG_SIZE));
 
 	/* all done */
@@ -1987,7 +2011,7 @@ static MdfdVec *
 _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 			 bool skipFsync, bool is_ao_segno, int behavior)
 {
-	MdfdVec    *v = mdopen(reln, forknum, behavior);
+	MdfdVec    *v;
 	BlockNumber targetseg;
 	BlockNumber nextsegno;
 
@@ -1995,10 +2019,8 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 	Assert(behavior &
 		   (EXTENSION_FAIL | EXTENSION_CREATE | EXTENSION_RETURN_NULL));
 
-	if (!v)
-		return NULL;			/* if behavior & EXTENSION_RETURN_NULL */
-
 	targetseg = blkno / ((BlockNumber) RELSEG_SIZE);
+<<<<<<< HEAD
 	/*
 	 * Append-optimized segment files are not numbered consecutively on disk.
 	 * E.g. it is perfectly valid for .129 file to exist without .2 to .128
@@ -2009,91 +2031,117 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 		 nextsegno++)
 	{
 		Assert(is_ao_segno || (nextsegno == v->mdfd_segno + 1));
+=======
 
-		if (v->mdfd_chain == NULL)
-		{
-			BlockNumber nblocks = _mdnblocks(reln, forknum, v);
-			int			flags = 0;
-
-			if (nblocks > ((BlockNumber) RELSEG_SIZE))
-				elog(FATAL, "segment too big");
-
-			if ((behavior & EXTENSION_CREATE) ||
-				(InRecovery && (behavior & EXTENSION_CREATE_RECOVERY)))
-			{
-				/*
-				 * Normally we will create new segments only if authorized by
-				 * the caller (i.e., we are doing mdextend()).  But when doing
-				 * WAL recovery, create segments anyway; this allows cases
-				 * such as replaying WAL data that has a write into a
-				 * high-numbered segment of a relation that was later deleted.
-				 * We want to go ahead and create the segments so we can
-				 * finish out the replay.  However if the caller has specified
-				 * EXTENSION_REALLY_RETURN_NULL, then extension is not desired
-				 * even in recovery; we won't reach this point in that case.
-				 *
-				 * We have to maintain the invariant that segments before the
-				 * last active segment are of size RELSEG_SIZE; therefore, if
-				 * extending, pad them out with zeroes if needed.  (This only
-				 * matters if in recovery, or if the caller is extending the
-				 * relation discontiguously, but that can happen in hash
-				 * indexes.)
-				 */
-				if (nblocks < ((BlockNumber) RELSEG_SIZE))
-				{
-					char	   *zerobuf = palloc0(BLCKSZ);
-
-					mdextend(reln, forknum,
-							 nextsegno * ((BlockNumber) RELSEG_SIZE) - 1,
-							 zerobuf, skipFsync);
-					pfree(zerobuf);
-				}
-				flags = O_CREAT;
-			}
-			else if (!(behavior & EXTENSION_DONT_CHECK_SIZE) &&
-					 nblocks < ((BlockNumber) RELSEG_SIZE))
-			{
-				/*
-				 * When not extending (or explicitly including truncated
-				 * segments), only open the next segment if the current one is
-				 * exactly RELSEG_SIZE.  If not (this branch), either return
-				 * NULL or fail.
-				 */
-				if (behavior & EXTENSION_RETURN_NULL)
-				{
-					/*
-					 * Some callers discern between reasons for _mdfd_getseg()
-					 * returning NULL based on errno. As there's no failing
-					 * syscall involved in this case, explicitly set errno to
-					 * ENOENT, as that seems the closest interpretation.
-					 */
-					errno = ENOENT;
-					return NULL;
-				}
-
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not open file \"%s\" (target block %u): previous segment is only %u blocks",
-								_mdfd_segpath(reln, forknum, nextsegno),
-								blkno, nblocks)));
-			}
-
-			v->mdfd_chain = _mdfd_openseg(reln, forknum, nextsegno, flags);
-
-			if (v->mdfd_chain == NULL)
-			{
-				if ((behavior & EXTENSION_RETURN_NULL) &&
-					FILE_POSSIBLY_DELETED(errno))
-					return NULL;
-				ereport(ERROR,
-						(errcode_for_file_access(),
-				   errmsg("could not open file \"%s\" (target block %u): %m",
-						  _mdfd_segpath(reln, forknum, nextsegno),
-						  blkno)));
-			}
-		}
-		v = v->mdfd_chain;
+	/* if an existing and opened segment, we're done */
+	if (targetseg < reln->md_num_open_segs[forknum])
+	{
+		v = &reln->md_seg_fds[forknum][targetseg];
+		return v;
 	}
+
+	/*
+	 * The target segment is not yet open. Iterate over all the segments
+	 * between the last opened and the target segment. This way missing
+	 * segments either raise an error, or get created (according to
+	 * 'behavior'). Start with either the last opened, or the first segment if
+	 * none was opened before.
+	 */
+	if (reln->md_num_open_segs[forknum] > 0)
+		v = &reln->md_seg_fds[forknum][reln->md_num_open_segs[forknum] - 1];
+	else
+	{
+		v = mdopen(reln, forknum, behavior);
+		if (!v)
+			return NULL;		/* if behavior & EXTENSION_RETURN_NULL */
+	}
+
+	for (nextsegno = reln->md_num_open_segs[forknum];
+		 nextsegno <= targetseg; nextsegno++)
+	{
+		BlockNumber nblocks = _mdnblocks(reln, forknum, v);
+		int			flags = 0;
+
+		Assert(nextsegno == v->mdfd_segno + 1);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+		if (nblocks > ((BlockNumber) RELSEG_SIZE))
+			elog(FATAL, "segment too big");
+
+		if ((behavior & EXTENSION_CREATE) ||
+			(InRecovery && (behavior & EXTENSION_CREATE_RECOVERY)))
+		{
+			/*
+			 * Normally we will create new segments only if authorized by the
+			 * caller (i.e., we are doing mdextend()).  But when doing WAL
+			 * recovery, create segments anyway; this allows cases such as
+			 * replaying WAL data that has a write into a high-numbered
+			 * segment of a relation that was later deleted. We want to go
+			 * ahead and create the segments so we can finish out the replay.
+			 * However if the caller has specified
+			 * EXTENSION_REALLY_RETURN_NULL, then extension is not desired
+			 * even in recovery; we won't reach this point in that case.
+			 *
+			 * We have to maintain the invariant that segments before the last
+			 * active segment are of size RELSEG_SIZE; therefore, if
+			 * extending, pad them out with zeroes if needed.  (This only
+			 * matters if in recovery, or if the caller is extending the
+			 * relation discontiguously, but that can happen in hash indexes.)
+			 */
+			if (nblocks < ((BlockNumber) RELSEG_SIZE))
+			{
+				char	   *zerobuf = palloc0(BLCKSZ);
+
+				mdextend(reln, forknum,
+						 nextsegno * ((BlockNumber) RELSEG_SIZE) - 1,
+						 zerobuf, skipFsync);
+				pfree(zerobuf);
+			}
+			flags = O_CREAT;
+		}
+		else if (!(behavior & EXTENSION_DONT_CHECK_SIZE) &&
+				 nblocks < ((BlockNumber) RELSEG_SIZE))
+		{
+			/*
+			 * When not extending (or explicitly including truncated
+			 * segments), only open the next segment if the current one is
+			 * exactly RELSEG_SIZE.  If not (this branch), either return NULL
+			 * or fail.
+			 */
+			if (behavior & EXTENSION_RETURN_NULL)
+			{
+				/*
+				 * Some callers discern between reasons for _mdfd_getseg()
+				 * returning NULL based on errno. As there's no failing
+				 * syscall involved in this case, explicitly set errno to
+				 * ENOENT, as that seems the closest interpretation.
+				 */
+				errno = ENOENT;
+				return NULL;
+			}
+
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not open file \"%s\" (target block %u): previous segment is only %u blocks",
+							_mdfd_segpath(reln, forknum, nextsegno),
+							blkno, nblocks)));
+		}
+
+		v = _mdfd_openseg(reln, forknum, nextsegno, flags);
+
+		if (v == NULL)
+		{
+			if ((behavior & EXTENSION_RETURN_NULL) &&
+				FILE_POSSIBLY_DELETED(errno))
+				return NULL;
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not open file \"%s\" (target block %u): %m",
+							_mdfd_segpath(reln, forknum, nextsegno),
+							blkno)));
+		}
+	}
+
 	return v;
 }
 
@@ -2105,7 +2153,7 @@ _mdnblocks(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 {
 	off_t		len;
 
-	len = FileSeek(seg->mdfd_vfd, 0L, SEEK_END);
+	len = FileSize(seg->mdfd_vfd);
 	if (len < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -2113,4 +2161,72 @@ _mdnblocks(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 						FilePathName(seg->mdfd_vfd))));
 	/* note that this calculation will ignore any partial block at EOF */
 	return (BlockNumber) (len / BLCKSZ);
+}
+
+/*
+ * Sync a file to disk, given a file tag.  Write the path into an output
+ * buffer so the caller can use it in error messages.
+ *
+ * Return 0 on success, -1 on failure, with errno set.
+ */
+int
+mdsyncfiletag(const FileTag *ftag, char *path)
+{
+	SMgrRelation reln = smgropen(ftag->rnode, InvalidBackendId);
+	MdfdVec    *v;
+	char	   *p;
+
+	/* Provide the path for informational messages. */
+	p = _mdfd_segpath(reln, ftag->forknum, ftag->segno);
+	strlcpy(path, p, MAXPGPATH);
+	pfree(p);
+
+	/* Try to open the requested segment. */
+	v = _mdfd_getseg(reln,
+					 ftag->forknum,
+					 ftag->segno * (BlockNumber) RELSEG_SIZE,
+					 false,
+					 EXTENSION_RETURN_NULL | EXTENSION_DONT_CHECK_SIZE);
+	if (v == NULL)
+		return -1;
+
+	/* Try to fsync the file. */
+	return FileSync(v->mdfd_vfd, WAIT_EVENT_DATA_FILE_SYNC);
+}
+
+/*
+ * Unlink a file, given a file tag.  Write the path into an output
+ * buffer so the caller can use it in error messages.
+ *
+ * Return 0 on success, -1 on failure, with errno set.
+ */
+int
+mdunlinkfiletag(const FileTag *ftag, char *path)
+{
+	char	   *p;
+
+	/* Compute the path. */
+	p = relpathperm(ftag->rnode, MAIN_FORKNUM);
+	strlcpy(path, p, MAXPGPATH);
+	pfree(p);
+
+	/* Try to unlink the file. */
+	return unlink(path);
+}
+
+/*
+ * Check if a given candidate request matches a given tag, when processing
+ * a SYNC_FILTER_REQUEST request.  This will be called for all pending
+ * requests to find out whether to forget them.
+ */
+bool
+mdfiletagmatches(const FileTag *ftag, const FileTag *candidate)
+{
+	/*
+	 * For now we only use filter requests as a way to drop all scheduled
+	 * callbacks relating to a given database, when dropping the database.
+	 * We'll return true for all candidates that have the same database OID as
+	 * the ftag from the SYNC_FILTER_REQUEST request, so they're forgotten.
+	 */
+	return ftag->rnode.dbNode == candidate->rnode.dbNode;
 }

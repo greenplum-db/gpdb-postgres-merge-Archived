@@ -4,20 +4,22 @@
  *	  Routines to preprocess the parse tree target list
  *
  * For INSERT and UPDATE queries, the targetlist must contain an entry for
- * each attribute of the target relation in the correct order.  For all query
+ * each attribute of the target relation in the correct order.  For UPDATE and
+ * DELETE queries, it must also contain junk tlist entries needed to allow the
+ * executor to identify the rows to be updated or deleted.  For all query
  * types, we may need to add junk tlist entries for Vars used in the RETURNING
  * list and row ID information needed for SELECT FOR UPDATE locking and/or
  * EvalPlanQual checking.
  *
- * The rewriter's rewriteTargetListIU and rewriteTargetListUD routines
- * also do preprocessing of the targetlist.  The division of labor between
- * here and there is partially historical, but it's not entirely arbitrary.
- * In particular, consider an UPDATE across an inheritance tree.  What the
- * rewriter does need be done only once (because it depends only on the
- * properties of the parent relation).  What's done here has to be done over
- * again for each child relation, because it depends on the column list of
- * the child, which might have more columns and/or a different column order
- * than the parent.
+ * The query rewrite phase also does preprocessing of the targetlist (see
+ * rewriteTargetListIU).  The division of labor between here and there is
+ * partially historical, but it's not entirely arbitrary.  In particular,
+ * consider an UPDATE across an inheritance tree.  What rewriteTargetListIU
+ * does need be done only once (because it depends only on the properties of
+ * the parent relation).  What's done here has to be done over again for each
+ * child relation, because it depends on the properties of the child, which
+ * might be of a different relation type, or have more columns and/or a
+ * different column order than the parent.
  *
  * The fact that rewriteTargetListIU sorts non-resjunk tlist entries by column
  * position, which expand_targetlist depends on, violates the above comment
@@ -26,9 +28,14 @@
  * the tlists for child tables to keep expand_targetlist happy.  We do it like
  * that because it's faster in typical non-inherited cases.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+=======
+ *
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -39,18 +46,24 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/sysattr.h"
+<<<<<<< HEAD
 #include "catalog/gp_policy.h"     /* CDB: POLICYTYPE_PARTITIONED */
 #include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/plancat.h"
+=======
+#include "access/table.h"
+#include "catalog/pg_type.h"
+#include "nodes/makefuncs.h"
+#include "optimizer/optimizer.h"
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "optimizer/prep.h"
 #include "optimizer/tlist.h"
-#include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
+<<<<<<< HEAD
 #include "parser/parse_relation.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -60,6 +73,14 @@ static List *expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 				  Index result_relation, List *range_table);
 static List *supplement_simply_updatable_targetlist(List *range_table,
 													List *tlist);
+=======
+#include "rewrite/rewriteHandler.h"
+#include "utils/rel.h"
+
+
+static List *expand_targetlist(List *tlist, int command_type,
+							   Index result_relation, Relation rel);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /*
@@ -67,36 +88,66 @@ static List *supplement_simply_updatable_targetlist(List *range_table,
  *	  Driver for preprocessing the parse tree targetlist.
  *
  *	  Returns the new targetlist.
+ *
+ * As a side effect, if there's an ON CONFLICT UPDATE clause, its targetlist
+ * is also preprocessed (and updated in-place).
  */
 List *
-preprocess_targetlist(PlannerInfo *root, List *tlist)
+preprocess_targetlist(PlannerInfo *root)
 {
 	Query	   *parse = root->parse;
 	int			result_relation = parse->resultRelation;
 	List	   *range_table = parse->rtable;
 	CmdType		command_type = parse->commandType;
+	RangeTblEntry *target_rte = NULL;
+	Relation	target_relation = NULL;
+	List	   *tlist;
 	ListCell   *lc;
 
 	/*
-	 * Sanity check: if there is a result relation, it'd better be a real
-	 * relation not a subquery.  Else parser or rewriter messed up.
+	 * If there is a result relation, open it so we can look for missing
+	 * columns and so on.  We assume that previous code already acquired at
+	 * least AccessShareLock on the relation, so we need no lock here.
 	 */
 	if (result_relation)
 	{
-		RangeTblEntry *rte = rt_fetch(result_relation, range_table);
+		target_rte = rt_fetch(result_relation, range_table);
 
-		if (rte->subquery != NULL || rte->relid == InvalidOid)
-			elog(ERROR, "subquery cannot be result relation");
+		/*
+		 * Sanity check: it'd better be a real relation not, say, a subquery.
+		 * Else parser or rewriter messed up.
+		 */
+		if (target_rte->rtekind != RTE_RELATION)
+			elog(ERROR, "result relation must be a regular relation");
+
+		target_relation = table_open(target_rte->relid, NoLock);
 	}
+	else
+		Assert(command_type == CMD_SELECT);
+
+	/*
+	 * For UPDATE/DELETE, add any junk column(s) needed to allow the executor
+	 * to identify the rows to be updated or deleted.  Note that this step
+	 * scribbles on parse->targetList, which is not very desirable, but we
+	 * keep it that way to avoid changing APIs used by FDWs.
+	 */
+	if (command_type == CMD_UPDATE || command_type == CMD_DELETE)
+		rewriteTargetListUD(parse, target_rte, target_relation);
 
 	/*
 	 * for heap_form_tuple to work, the targetlist must match the exact order
 	 * of the attributes. We also need to fill in any missing attributes. -ay
 	 * 10/94
 	 */
+	tlist = parse->targetList;
 	if (command_type == CMD_INSERT || command_type == CMD_UPDATE)
+<<<<<<< HEAD
 		tlist = expand_targetlist(root, tlist, command_type,
 								  result_relation, range_table);
+=======
+		tlist = expand_targetlist(tlist, command_type,
+								  result_relation, target_relation);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* simply updatable cursors */
 	if (root->glob->simplyUpdatable)
@@ -105,7 +156,9 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 	/*
 	 * Add necessary junk columns for rowmarked rels.  These values are needed
 	 * for locking of rels selected FOR UPDATE/SHARE, and to do EvalPlanQual
-	 * rechecking.  See comments for PlanRowMark in plannodes.h.
+	 * rechecking.  See comments for PlanRowMark in plannodes.h.  If you
+	 * change this stanza, see also expand_inherited_rtentry(), which has to
+	 * be able to add on junk columns equivalent to these.
 	 */
 	foreach(lc, root->rowMarks)
 	{
@@ -192,7 +245,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 				var->varno == result_relation)
 				continue;		/* don't need it */
 
-			if (tlist_member((Node *) var, tlist))
+			if (tlist_member((Expr *) var, tlist))
 				continue;		/* already got it */
 
 			tle = makeTargetEntry((Expr *) var,
@@ -205,9 +258,24 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 		list_free(vars);
 	}
 
+	/*
+	 * If there's an ON CONFLICT UPDATE clause, preprocess its targetlist too
+	 * while we have the relation open.
+	 */
+	if (parse->onConflict)
+		parse->onConflict->onConflictSet =
+			expand_targetlist(parse->onConflict->onConflictSet,
+							  CMD_UPDATE,
+							  result_relation,
+							  target_relation);
+
+	if (target_relation)
+		table_close(target_relation, NoLock);
+
 	return tlist;
 }
 
+<<<<<<< HEAD
 /*
  * preprocess_onconflict_targetlist
  *	  Process ON CONFLICT SET targetlist.
@@ -220,6 +288,8 @@ preprocess_onconflict_targetlist(PlannerInfo *root, List *tlist, int result_rela
 	return expand_targetlist(root, tlist, CMD_UPDATE, result_relation, range_table);
 }
 
+=======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*****************************************************************************
  *
@@ -234,12 +304,16 @@ preprocess_onconflict_targetlist(PlannerInfo *root, List *tlist, int result_rela
  *	  non-junk attributes appear in proper field order.
  */
 static List *
+<<<<<<< HEAD
 expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 				  Index result_relation, List *range_table)
+=======
+expand_targetlist(List *tlist, int command_type,
+				  Index result_relation, Relation rel)
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	List	   *new_tlist = NIL;
 	ListCell   *tlist_item;
-	Relation	rel;
 	int			attrno,
 				numattrs;
 	Bitmapset  *changed_cols = NULL;
@@ -251,17 +325,13 @@ expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 	 * order; but we have to insert TLEs for any missing attributes.
 	 *
 	 * Scan the tuple description in the relation's relcache entry to make
-	 * sure we have all the user attributes in the right order.  We assume
-	 * that the rewriter already acquired at least AccessShareLock on the
-	 * relation, so we need no lock here.
+	 * sure we have all the user attributes in the right order.
 	 */
-	rel = heap_open(getrelid(result_relation, range_table), NoLock);
-
 	numattrs = RelationGetNumberOfAttributes(rel);
 
 	for (attrno = 1; attrno <= numattrs; attrno++)
 	{
-		Form_pg_attribute att_tup = rel->rd_att->attrs[attrno - 1];
+		Form_pg_attribute att_tup = TupleDescAttr(rel->rd_att, attrno - 1);
 		TargetEntry *new_tle = NULL;
 
 		if (tlist_item != NULL)
@@ -340,14 +410,14 @@ expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 													  attcollation,
 													  att_tup->attlen,
 													  (Datum) 0,
-													  true,		/* isnull */
+													  true, /* isnull */
 													  att_tup->attbyval);
 						new_expr = coerce_to_domain(new_expr,
 													InvalidOid, -1,
 													atttype,
+													COERCION_IMPLICIT,
 													COERCE_IMPLICIT_CAST,
 													-1,
-													false,
 													false);
 					}
 					else
@@ -358,7 +428,7 @@ expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 													  InvalidOid,
 													  sizeof(int32),
 													  (Datum) 0,
-													  true,		/* isnull */
+													  true, /* isnull */
 													  true /* byval */ );
 					}
 					break;
@@ -380,7 +450,7 @@ expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 													  InvalidOid,
 													  sizeof(int32),
 													  (Datum) 0,
-													  true,		/* isnull */
+													  true, /* isnull */
 													  true /* byval */ );
 					}
 					break;
@@ -494,8 +564,6 @@ expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 		attrno++;
 		tlist_item = lnext(tlist_item);
 	}
-
-	heap_close(rel, NoLock);
 
 	return new_tlist;
 }
