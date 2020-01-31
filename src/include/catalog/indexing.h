@@ -343,8 +343,8 @@ DECLARE_UNIQUE_INDEX(pg_extension_name_index, 3081, on pg_extension using btree(
 DECLARE_UNIQUE_INDEX(gp_policy_localoid_index, 6103, on gp_distribution_policy using btree(localoid oid_ops));
 #define GpPolicyLocalOidIndexId  6103
 
-DECLARE_UNIQUE_INDEX(pg_appendonly_relid_index, 5007, on pg_appendonly using btree(relid oid_ops));
-#define AppendOnlyRelidIndexId  5007
+DECLARE_UNIQUE_INDEX(pg_appendonly_relid_index, 7109, on pg_appendonly using btree(relid oid_ops));
+#define AppendOnlyRelidIndexId  7109
 
 DECLARE_UNIQUE_INDEX(gp_fastsequence_objid_objmod_index, 6067, on gp_fastsequence using btree(objid oid_ops, objmod  int8_ops));
 #define FastSequenceObjidObjmodIndexId 6067
@@ -411,10 +411,10 @@ DECLARE_INDEX(pg_partition_rule_paroid_parentrule_ruleord_index, 5126, on pg_par
 DECLARE_UNIQUE_INDEX(pg_exttable_reloid_index, 6041, on pg_exttable using btree(reloid oid_ops));
 #define ExtTableReloidIndexId	6041
 
-DECLARE_UNIQUE_INDEX(gp_segment_config_content_preferred_role_index, 6106, on gp_segment_configuration using btree(content int2_ops, preferred_role char_ops));
-#define GpSegmentConfigContentPreferred_roleIndexId	6106
-DECLARE_UNIQUE_INDEX(gp_segment_config_dbid_index, 6107, on gp_segment_configuration using btree(dbid int2_ops));
-#define GpSegmentConfigDbidIndexId	6107
+DECLARE_UNIQUE_INDEX(gp_segment_config_content_preferred_role_index, 7106, on gp_segment_configuration using btree(content int2_ops, preferred_role char_ops));
+#define GpSegmentConfigContentPreferred_roleIndexId	7106
+DECLARE_UNIQUE_INDEX(gp_segment_config_dbid_index, 7107, on gp_segment_configuration using btree(dbid int2_ops));
+#define GpSegmentConfigDbidIndexId	7107
 
 DECLARE_UNIQUE_INDEX(pg_extprotocol_oid_index, 7156, on pg_extprotocol using btree(oid oid_ops));
 #define ExtprotocolOidIndexId	7156

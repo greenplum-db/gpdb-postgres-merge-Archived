@@ -25,42 +25,6 @@ use warnings;
 use FindBin;
 chdir $FindBin::RealBin or die "could not cd to $FindBin::RealBin: $!\n";
 
-<<<<<<< HEAD
-# Get FirstBootstrapObjectId from access/transam.h
-FIRSTOBJECTID=`grep '#define[ 	]*FirstBootstrapObjectId' ./pg_magic_oid.h | $AWK '{ print $3 }'`
-export FIRSTOBJECTID
-
-# This value splits the OID range into two so that GPDB and GPSQL can add
-# new built-in objects in parallel.
-LOWESTGPSQLOID=`grep '#define[ 	]*LowestGPSQLBootstrapObjectId' ./pg_magic_oid.h | $AWK '{ print $3 }'`
-export LOWESTGPSQLOID
-
-# this part (down to the uniq step) should match the duplicate_oids script
-# note: we exclude BKI_BOOTSTRAP relations since they are expected to have
-# matching DATA lines in pg_class.h and pg_type.h
-
-cat pg_*.h gp_*.h toasting.h indexing.h | \
-egrep -v -e '^CATALOG\(.*BKI_BOOTSTRAP' | \
-sed -n	-e 's/^DATA(insert *OID *= *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*BKI_ROWTYPE_OID(\([0-9][0-9]*\)).*$/\1,\2/p' \
-	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^DECLARE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^DECLARE_UNIQUE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^DECLARE_TOAST([^,]*, *\([0-9][0-9]*\), *\([0-9][0-9]*\).*$/\1,\2/p' | \
-tr ',' '\n' | \
-sort -n | \
-uniq | \
-$AWK '
-BEGIN {
-	last = 0;
-}
-/^[0-9]/ {
-	if ($1 > last + 1 && $1 < ENVIRON["LOWESTGPSQLOID"]) {
-		if ($1 > last + 2) {
-			print last + 1, "-", $1 - 1;
-		} else {
-			print last + 1;
-=======
 use lib "$FindBin::RealBin/../../backend/catalog/";
 use Catalog;
 
@@ -73,10 +37,15 @@ my $FirstGenbkiObjectId =
   Catalog::FindDefinedSymbol('access/transam.h', '..', 'FirstGenbkiObjectId');
 push @{$oids}, $FirstGenbkiObjectId;
 
+# This value splits the OID range into two so that GPDB and GPSQL can add
+# new built-in objects in parallel.
+my $FirstGPDBObjectId =
+  Catalog::FindDefinedSymbol('catalog/pg_magic_oid.h', '..', 'LowestGPSQLBootstrapObjectId');
+
 my $prev_oid = 0;
 foreach my $oid (sort { $a <=> $b } @{$oids})
 {
-	if ($oid > $prev_oid + 1)
+	if ($oid > $prev_oid + 1 && $oid < $FirstGPDBObjectId)
 	{
 		if ($oid > $prev_oid + 2)
 		{
@@ -85,16 +54,7 @@ foreach my $oid (sort { $a <=> $b } @{$oids})
 		else
 		{
 			printf "%d\n", $prev_oid + 1;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 	$prev_oid = $oid;
 }
-<<<<<<< HEAD
-END {
-	if (last < ENVIRON["LOWESTGPSQLOID"]) {
-		print last + 1, "-", ENVIRON["LOWESTGPSQLOID"]-1;
-	}
-}'
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
