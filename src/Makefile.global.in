@@ -254,18 +254,15 @@ TCL_SHLIB_LD_LIBS	= @TCL_SHLIB_LD_LIBS@
 PTHREAD_CFLAGS		= @PTHREAD_CFLAGS@
 PTHREAD_LIBS		= @PTHREAD_LIBS@
 
-<<<<<<< HEAD
-have_yaml 		= @have_yaml@
-with_zstd 		= @with_zstd@
-with_quicklz		= @with_quicklz@
-
-=======
 LLVM_CONFIG = @LLVM_CONFIG@
 LLVM_BINPATH = @LLVM_BINPATH@
 CLANG = @CLANG@
 BITCODE_CFLAGS = @BITCODE_CFLAGS@
 BITCODE_CXXFLAGS = @BITCODE_CXXFLAGS@
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+have_yaml 		= @have_yaml@
+with_zstd 		= @with_zstd@
+with_quicklz		= @with_quicklz@
 
 ##########################################################################
 #
@@ -276,11 +273,8 @@ BITCODE_CXXFLAGS = @BITCODE_CXXFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 PG_SYSROOT = @PG_SYSROOT@
-<<<<<<< HEAD
-=======
 
 override CPPFLAGS := $(ICU_CFLAGS) $(CPPFLAGS)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 ifdef PGXS
 override CPPFLAGS := -I$(includedir_server) -I$(includedir_internal) $(CPPFLAGS)
@@ -374,10 +368,6 @@ endif
 perl_archlibexp		= @perl_archlibexp@
 perl_privlibexp		= @perl_privlibexp@
 perl_includespec	= @perl_includespec@
-<<<<<<< HEAD
-perl_useshrplib		= @perl_useshrplib@
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 perl_embed_ccflags	= @perl_embed_ccflags@
 perl_embed_ldflags	= @perl_embed_ldflags@
 
@@ -433,16 +423,11 @@ endif
 
 # Testing
 
-<<<<<<< HEAD
 NO_TEMP_INSTALL = yes # GPDB: We assume a GPDB cluster is running (gpdemo)
 
-abs_top_builddir = @abs_top_builddir@
-abs_top_srcdir = @abs_top_srcdir@
-=======
 # In much the same way as above, these rules ensure that we build a temp
 # install tree just once in any recursive "make check".  The additional test
 # on abs_top_builddir prevents doing anything foolish to the root directory.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 check: temp-install
 
@@ -482,8 +467,6 @@ endef
 # individual ports can override this later, this is the default name
 ld_library_path_var = LD_LIBRARY_PATH
 
-<<<<<<< HEAD
-=======
 # with_temp_install_extra is for individual ports to define if they
 # need something more here. If not defined then the expansion does
 # nothing.
@@ -492,18 +475,8 @@ with_temp_install = \
 	$(call add_to_path,$(strip $(ld_library_path_var)),$(abs_top_builddir)/tmp_install$(libdir)) \
 	$(with_temp_install_extra)
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 ifeq ($(enable_tap_tests),yes)
 define prove_installcheck
-<<<<<<< HEAD
-rm -rf $(CURDIR)/tmp_check/log
-cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' top_builddir='$(CURDIR)/$(top_builddir)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
-endef
-
-define prove_check
-rm -rf $(CURDIR)/tmp_check/log
-cd $(srcdir) && TESTDIR='$(CURDIR)' $(with_temp_install) PGPORT='6$(DEF_PGPORT)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
-=======
 rm -rf '$(CURDIR)'/tmp_check
 $(MKDIR_P) '$(CURDIR)'/tmp_check
 cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' top_builddir='$(CURDIR)/$(top_builddir)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' REGRESS_SHLIB='$(abs_top_builddir)/src/test/regress/regress$(DLSUFFIX)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
@@ -513,7 +486,6 @@ define prove_check
 rm -rf '$(CURDIR)'/tmp_check
 $(MKDIR_P) '$(CURDIR)'/tmp_check
 cd $(srcdir) && TESTDIR='$(CURDIR)' $(with_temp_install) PGPORT='6$(DEF_PGPORT)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' REGRESS_SHLIB='$(abs_top_builddir)/src/test/regress/regress$(DLSUFFIX)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 endef
 
 else

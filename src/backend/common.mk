@@ -41,17 +41,13 @@ $(SUBDIRS:%=%-recursive):
 $(call recurse,clean)
 clean: clean-local
 clean-local:
-<<<<<<< HEAD
-	rm -f $(subsysfilename) $(OBJS)
+	rm -f $(subsysfilename) $(OBJS) $(patsubst %.o,%.bc, $(OBJS))
 	@if [ -d $(CURDIR)/test ]; then $(MAKE) -C $(CURDIR)/test clean; fi
 
 $(call recurse,unittest-check)
 unittest-check: unittest-check-local
 unittest-check-local:
 	@if [ -d $(CURDIR)/test ]; then $(MAKE) -C $(CURDIR)/test check; fi
-=======
-	rm -f $(subsysfilename) $(OBJS) $(patsubst %.o,%.bc, $(OBJS))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 $(call recurse,coverage)
 $(call recurse,install)

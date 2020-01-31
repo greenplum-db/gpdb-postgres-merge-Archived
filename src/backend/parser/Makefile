@@ -14,15 +14,10 @@ override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
 
 OBJS= analyze.o gram.o scan.o parser.o \
       parse_agg.o parse_clause.o parse_coerce.o parse_collate.o parse_cte.o \
-<<<<<<< HEAD
-      parse_expr.o parse_func.o parse_node.o parse_oper.o parse_param.o \
-      parse_relation.o parse_target.o parse_type.o parse_utilcmd.o scansup.o
-OBJS+= parse_partition.o
-=======
       parse_enr.o parse_expr.o parse_func.o parse_node.o parse_oper.o \
       parse_param.o parse_relation.o parse_target.o parse_type.o \
       parse_utilcmd.o scansup.o
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+OBJS+= parse_partition.o
 
 include $(top_srcdir)/src/backend/common.mk
 
