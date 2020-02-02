@@ -13,21 +13,9 @@
  *
  *-------------------------------------------------------------------------
  */
+// GPDB_12_MERGE_FIXME: This file was removed in upstream
 #ifndef VAR_H
 #define VAR_H
-
-#include "nodes/relation.h"
-
-/* Bits that can be OR'd into the flags argument of pull_var_clause() */
-#define PVC_INCLUDE_AGGREGATES	0x0001	/* include Aggrefs in output list */
-#define PVC_RECURSE_AGGREGATES	0x0002	/* recurse into Aggref arguments */
-#define PVC_INCLUDE_WINDOWFUNCS 0x0004	/* include WindowFuncs in output list */
-#define PVC_RECURSE_WINDOWFUNCS 0x0008	/* recurse into WindowFunc arguments */
-#define PVC_INCLUDE_PLACEHOLDERS	0x0010		/* include PlaceHolderVars in
-												 * output list */
-#define PVC_RECURSE_PLACEHOLDERS	0x0020		/* recurse into PlaceHolderVar
-												 * arguments */
-
 
 typedef bool (*Cdb_walk_vars_callback_Aggref)(Aggref *aggref, void *context, int sublevelsup);
 typedef bool (*Cdb_walk_vars_callback_Var)(Var *var, void *context, int sublevelsup);
@@ -41,19 +29,10 @@ bool        cdb_walk_vars(Node                         *node,
                           void                         *context,
                           int                           levelsup);
 
-extern Relids pull_varnos(Node *node);
-extern Relids pull_varnos_of_level(Node *node, int levelsup);
 extern Relids pull_upper_varnos(Node *node);
 
-extern void pull_varattnos(Node *node, Index varno, Bitmapset **varattnos);
-extern List *pull_vars_of_level(Node *node, int levelsup);
 extern bool contain_ctid_var_reference(Scan *scan);
-extern bool contain_var_clause(Node *node);
-extern bool contain_vars_of_level(Node *node, int levelsup);
 extern bool contain_vars_of_level_or_above(Node *node, int levelsup);
-extern int	locate_var_of_level(Node *node, int levelsup);
-extern List *pull_var_clause(Node *node, int flags);
-extern Node *flatten_join_alias_vars(PlannerInfo *root, Node *node);
 bool contain_vars_of_level_or_above_cbPlaceHolderVar(PlaceHolderVar *placeholdervar, void *unused, int sublevelsup);
 
 #endif   /* VAR_H */

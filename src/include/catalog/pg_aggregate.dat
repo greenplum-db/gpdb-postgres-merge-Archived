@@ -589,4 +589,78 @@
   aggfinalfn => 'dense_rank_final', aggfinalextra => 't', aggfinalmodify => 'w',
   aggmfinalmodify => 'w', aggtranstype => 'internal' },
 
+# MPP Aggregate -- array_sum -- special for prospective customer.
+{ aggfnoid => 'array_sum(_int4)', aggkind => 'n',
+  aggtransfn => 'array_add(_int4, _int4)', aggtranstype => '_int4', agginitval => '{}' },
+
+# sum(array[])
+{ aggfnoid => 'sum(_int2)', aggtransfn => 'int2_matrix_accum(_int8, _int2)', aggkind => 'n',
+  aggcombinefn => 'int8_matrix_accum(_int8, _int8)',
+  aggtranstype => '_int8' },
+{ aggfnoid => 'sum(_int4)', aggtransfn => 'int4_matrix_accum(_int8, _int2)', aggkind => 'n',
+  aggcombinefn => 'int8_matrix_accum(_int8, _int8)',
+  aggtranstype => '_int8' },
+{ aggfnoid => 'sum(_int8)', aggtransfn => 'int8_matrix_accum(_int8, _int2)', aggkind => 'n',
+  aggcombinefn => 'int8_matrix_accum(_int8, _int8)',
+  aggtranstype => '_int8' },
+{ aggfnoid => 'sum(_float8)', aggtransfn => 'float8_matrix_accum(_float8, _float8)', aggkind => 'n',
+  aggcombinefn => 'float8_matrix_accum(_float8, _float8)',
+  aggtranstype => '_float8' },
+
+# GPDB_12_MERGE_FIXME: is transtype really _int4? does that work with int8_matrix_accum?
+{ aggfnoid => 'pivot_sum(_text, text, int4)', aggtransfn => 'int4_pivot_accum(_int4, _text, text, int4)', aggkind => 'n',
+  aggcombinefn => 'int8_matrix_accum(_int8, _int8)',
+  aggtranstype => '_int4' },
+
+{ aggfnoid => 'pivot_sum(_text, text, int8)', aggtransfn => 'int8_pivot_accum(_int8, _text, text, int8)', aggkind => 'n',
+  aggcombinefn => 'int8_matrix_accum(_float8, _float8)',
+  aggtranstype => '_int8' },
+{ aggfnoid => 'pivot_sum(_text, text, float8)', aggtransfn => 'float8_pivot_accum(_int8, _text, text, int8)', aggkind => 'n',
+  aggcombinefn => 'float8_matrix_accum(_float8, _float8)',
+  aggtranstype => '_float8' },
+
+# GPDB: additional variants of percentile_cont, for timestamps
+{ aggfnoid => 'percentile_cont(float8, timestamp)', aggkind => 'o',
+  aggnumdirectargs => '1', aggtransfn => 'ordered_set_transition',
+  aggfinalfn => 'percentile_cont_timestamp_final',
+  aggtranstype => 'internal' },
+{ aggfnoid => 'percentile_cont(_float8, timestamp)', aggkind => 'o',
+  aggnumdirectargs => '1', aggtransfn => 'ordered_set_transition',
+  aggfinalfn => 'percentile_cont_timestamp_multi_final',
+  aggtranstype => 'internal' },
+{ aggfnoid => 'percentile_cont(float8, timestamptz)', aggkind => 'o',
+  aggnumdirectargs => '1', aggtransfn => 'ordered_set_transition',
+  aggfinalfn => 'percentile_cont_timestamptz_final',
+  aggtranstype => 'internal' },
+{ aggfnoid => 'percentile_cont(_float8, timestamptz)', aggkind => 'o',
+  aggnumdirectargs => '1', aggtransfn => 'ordered_set_transition',
+  aggfinalfn => 'percentile_cont_timestamptz_multi_final',
+  aggtranstype => 'internal' },
+
+# median
+{ aggfnoid => 'median(float8, float8)', aggkind => 'o',
+  aggnumdirectargs => '1', aggtransfn => 'ordered_set_transition',
+  aggfinalfn => 'percentile_cont_float8_final',
+  aggtranstype => 'internal' },
+{ aggfnoid => 'median(float8, interval)', aggkind => 'o',
+  aggnumdirectargs => '1', aggtransfn => 'ordered_set_transition',
+  aggfinalfn => 'percentile_cont_interval_final',
+  aggtranstype => 'internal' },
+{ aggfnoid => 'median(float8, timestamp)', aggkind => 'o',
+  aggnumdirectargs => '1', aggtransfn => 'ordered_set_transition',
+  aggfinalfn => 'percentile_cont_timestamp_final',
+  aggtranstype => 'internal' },
+{ aggfnoid => 'median(float8, timestamptz)', aggkind => 'o',
+  aggnumdirectargs => '1', aggtransfn => 'ordered_set_transition',
+  aggfinalfn => 'percentile_cont_timestamptz_final',
+  aggtranstype => 'internal' },
+
+# hyperloglog
+{ aggfnoid => 'gp_hyperloglog_accum(anyelement)', aggkind => 'n',
+  aggtransfn => 'gp_hyperloglog_add_item_agg_default',
+  aggfinalfn => 'gp_hyperloglog_comp',
+  aggcombinefn => 'gp_hyperloglog_merge',
+  aggtranstype => 'gp_hyperloglog_estimator' },
+
+
 ]

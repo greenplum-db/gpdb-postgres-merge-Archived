@@ -18,7 +18,6 @@
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
-<<<<<<< HEAD
 #define OIDCHARS		10		/* max chars printed by %u */
 /*
  * In PostgreSQL, this is called just TABLESPACE_VERSION_DIRECTORY..
@@ -36,8 +35,6 @@
  * pg_basebackup and pg_rewind to mirror from primary.
  */
 #define GP_INTERNAL_AUTO_CONF_FILE_NAME "internal.auto.conf"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern bool IsSystemRelation(Relation relation);
 extern bool IsToastRelation(Relation relation);

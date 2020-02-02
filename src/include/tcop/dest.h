@@ -143,10 +143,6 @@ extern void EndCommand(const char *commandTag, CommandDest dest);
 extern void NullCommand(CommandDest dest);
 extern void ReadyForQuery(CommandDest dest);
 
-<<<<<<< HEAD
 extern void sendQEDetails(void);
 
-#endif   /* DEST_H */
-=======
 #endif							/* DEST_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

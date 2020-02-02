@@ -1586,7 +1586,9 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		{
 			cstate = BeginCopyTo(rel, query, queryString, relid,
 								 stmt->filename, stmt->is_program,
-								 stmt->attlist, options, stmt->skip_ext_partition);
+								 stmt->attlist, options);
+								 // GPB_12_MERGE_FIXME: skip_ext_partition moved to 'options'
+								 // stmt->skip_ext_partition);
 
 			cstate->partitions = stmt->partitions;
 

@@ -159,25 +159,10 @@ typedef enum LockTagType
 	LOCKTAG_TUPLE,				/* one physical tuple */
 	LOCKTAG_TRANSACTION,		/* transaction (for waiting for xact done) */
 	LOCKTAG_VIRTUALTRANSACTION, /* virtual transaction (ditto) */
-<<<<<<< HEAD
-	/* ID info for a virtual transaction is its VirtualTransactionId */
 	LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE,	/* Segment file within an Append-Only relation */
-	/* ID info for a relation is DB OID + REL OID + (LOGICAL) SEGMENT FILE # */
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	LOCKTAG_SPECULATIVE_TOKEN,	/* speculative insertion Xid and token */
 	LOCKTAG_OBJECT,				/* non-relation database object */
-<<<<<<< HEAD
-	/* ID info for an object is DB OID + CLASS OID + OBJECT OID + SUBID */
-
-	/*
-	 * Note: object ID has same representation as in pg_depend and
-	 * pg_description, but notice that we are constraining SUBID to 16 bits.
-	 * Also, we use DB OID = 0 for shared objects such as tablespaces.
-	 */
 	LOCKTAG_RESOURCE_QUEUE,		/* ID info for resource queue is QUEUE ID */
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	LOCKTAG_USERLOCK,			/* reserved for old contrib/userlock code */
 	LOCKTAG_ADVISORY			/* advisory user locks */
 } LockTagType;
@@ -264,7 +249,7 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_VIRTUALTRANSACTION, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
-<<<<<<< HEAD
+/* ID info for a virtual transaction is its VirtualTransactionId */
 #define SET_LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE(locktag,dboid,reloid,segno) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (reloid), \
@@ -273,12 +258,10 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
-=======
 /*
  * ID info for a speculative insert is TRANSACTION info +
  * its speculative insert counter.
  */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #define SET_LOCKTAG_SPECULATIVE_INSERTION(locktag,xid,token) \
 	((locktag).locktag_field1 = (xid), \
 	 (locktag).locktag_field2 = (token),		\
@@ -468,13 +451,13 @@ typedef struct LOCALLOCK
 	uint32		hashcode;		/* copy of LOCKTAG's hash value */
 	LOCK	   *lock;			/* associated LOCK object, if any */
 	PROCLOCK   *proclock;		/* associated PROCLOCK object, if any */
-	bool		istemptable;	/* MPP: During prepare we set this if the lock is on a temp table, to avoid MPP-1094 */
 	int64		nLocks;			/* total number of times lock is held */
 	int			numLockOwners;	/* # of relevant ResourceOwners */
 	int			maxLockOwners;	/* allocated size of array */
+	LOCALLOCKOWNER *lockOwners; /* dynamically resizable array */
 	bool		holdsStrongLockCount;	/* bumped FastPathStrongRelationLocks */
 	bool		lockCleared;	/* we read all sinval msgs for lock */
-	LOCALLOCKOWNER *lockOwners; /* dynamically resizable array */
+	bool		istemptable;	/* MPP: During prepare we set this if the lock is on a temp table, to avoid MPP-1094 */
 } LOCALLOCK;
 
 #define LOCALLOCK_LOCKMETHOD(llock) ((llock).tag.lock.locktag_lockmethodid)
@@ -617,18 +600,6 @@ extern LockAcquireResult LockAcquire(const LOCKTAG *locktag,
 									 bool sessionLock,
 									 bool dontWait);
 extern LockAcquireResult LockAcquireExtended(const LOCKTAG *locktag,
-<<<<<<< HEAD
-					LOCKMODE lockmode,
-					bool sessionLock,
-					bool dontWait,
-					bool reportMemoryError,
-					LOCALLOCK **locallockp);
-extern void AbortStrongLockAcquire(void);
-extern void MarkLockClear(LOCALLOCK *locallock);
-extern bool LockRelease(const LOCKTAG *locktag,
-			LOCKMODE lockmode, bool sessionLock);
-extern void LockSetHoldTillEndXact(const LOCKTAG *locktag);
-=======
 											 LOCKMODE lockmode,
 											 bool sessionLock,
 											 bool dontWait,
@@ -638,7 +609,7 @@ extern void AbortStrongLockAcquire(void);
 extern void MarkLockClear(LOCALLOCK *locallock);
 extern bool LockRelease(const LOCKTAG *locktag,
 						LOCKMODE lockmode, bool sessionLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern void LockSetHoldTillEndXact(const LOCKTAG *locktag);
 extern void LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks);
 extern void LockReleaseSession(LOCKMETHODID lockmethodid);
 extern void LockReleaseCurrentOwner(LOCALLOCK **locallocks, int nlocks);
@@ -647,12 +618,8 @@ extern bool LockHeldByMe(const LOCKTAG *locktag, LOCKMODE lockmode);
 extern bool LockHasWaiters(const LOCKTAG *locktag,
 						   LOCKMODE lockmode, bool sessionLock);
 extern VirtualTransactionId *GetLockConflicts(const LOCKTAG *locktag,
-<<<<<<< HEAD
-				 LOCKMODE lockmode);
-extern void PrePrepare_Locks(void);
-=======
 											  LOCKMODE lockmode, int *countp);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern void PrePrepare_Locks(void);
 extern void AtPrepare_Locks(void);
 extern void PostPrepare_Locks(TransactionId xid);
 extern int	LockCheckConflicts(LockMethod lockMethodTable,
@@ -699,10 +666,7 @@ extern void VirtualXactLockTableInsert(VirtualTransactionId vxid);
 extern void VirtualXactLockTableCleanup(void);
 extern bool VirtualXactLock(VirtualTransactionId vxid, bool wait);
 
-<<<<<<< HEAD
 /* Check whether a waiter's request lockmode conflict with the holder's hold mask */
 extern bool CheckWaitLockModeConflictHoldMask(LOCKTAG tag, LOCKMODE waitLockMode, LOCKMASK holderMask);
-#endif   /* LOCK_H */
-=======
+
 #endif							/* LOCK_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

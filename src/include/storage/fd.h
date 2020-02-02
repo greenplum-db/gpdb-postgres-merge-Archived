@@ -4,13 +4,9 @@
  *	  Virtual file descriptor definitions.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/fd.h
@@ -53,10 +49,6 @@ typedef int File;
 
 /* GUC parameter */
 extern PGDLLIMPORT int max_files_per_process;
-<<<<<<< HEAD
-=======
-extern PGDLLIMPORT bool data_sync_retry;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * This is private to fd.c, but exported for save/restore_backend_variables()
@@ -81,37 +73,19 @@ extern int	max_safe_fds;
  */
 
 /* Operations on virtual Files --- equivalent to Unix kernel file ops */
-<<<<<<< HEAD
-extern File PathNameOpenFile(FileName fileName, int fileFlags, int fileMode);
+extern File PathNameOpenFile(const char *fileName, int fileFlags);
+extern File PathNameOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode);
 
 extern File OpenNamedTemporaryFile(const char *fileName,
 								   bool create,
 								   bool delOnClose,
 								   bool interXact);
 extern File OpenTemporaryFile(bool interXact, const char *filePrefix);
-extern void FileClose(File file);
-extern int	FilePrefetch(File file, off_t offset, int amount);
-extern int	FileRead(File file, char *buffer, int amount);
-extern int	FileWrite(File file, char *buffer, int amount);
-extern int	FileSync(File file);
-extern int64 FileSeek(File file, int64 offset, int whence);
-extern int64 FileNonVirtualCurSeek(File file);
-extern int	FileTruncate(File file, int64 offset);
-extern void FileWriteback(File file, off_t offset, off_t nbytes);
-extern char *FilePathName(File file);
-extern int	FileGetRawDesc(File file);
-extern int	FileGetRawFlags(File file);
-extern int	FileGetRawMode(File file);
-extern int64 FileDiskSize(File file);
-=======
-extern File PathNameOpenFile(const char *fileName, int fileFlags);
-extern File PathNameOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode);
-extern File OpenTemporaryFile(bool interXact);
-extern void FileClose(File file);
 extern int	FilePrefetch(File file, off_t offset, int amount, uint32 wait_event_info);
 extern int	FileRead(File file, char *buffer, int amount, off_t offset, uint32 wait_event_info);
 extern int	FileWrite(File file, char *buffer, int amount, off_t offset, uint32 wait_event_info);
 extern int	FileSync(File file, uint32 wait_event_info);
+//extern int64 FileNonVirtualCurSeek(File file); // GPDB_12_MERGE_FIXME
 extern off_t FileSize(File file);
 extern int	FileTruncate(File file, off_t offset, uint32 wait_event_info);
 extern void FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_event_info);
@@ -119,6 +93,7 @@ extern char *FilePathName(File file);
 extern int	FileGetRawDesc(File file);
 extern int	FileGetRawFlags(File file);
 extern mode_t FileGetRawMode(File file);
+extern int64 FileDiskSize(File file);
 
 /* Operations used for sharing named temporary files */
 extern File PathNameCreateTemporaryFile(const char *name, bool error_on_failure);
@@ -127,7 +102,6 @@ extern bool PathNameDeleteTemporaryFile(const char *name, bool error_on_failure)
 extern void PathNameCreateTemporaryDir(const char *base, const char *name);
 extern void PathNameDeleteTemporaryDir(const char *name);
 extern void TempTablespacePath(char *path, Oid tablespace);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* Operations that allow use of regular stdio --- USE WITH CAUTION */
 extern FILE *AllocateFile(const char *name, const char *mode);
@@ -141,11 +115,7 @@ extern int	ClosePipeStream(FILE *file);
 extern DIR *AllocateDir(const char *dirname);
 extern struct dirent *ReadDir(DIR *dir, const char *dirname);
 extern struct dirent *ReadDirExtended(DIR *dir, const char *dirname,
-<<<<<<< HEAD
-				int elevel);
-=======
 									  int elevel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern int	FreeDir(DIR *dir);
 
 /* Operations to allow use of a plain kernel FD, with automatic cleanup */
@@ -184,27 +154,19 @@ extern int	durable_rename(const char *oldfile, const char *newfile, int loglevel
 extern int	durable_unlink(const char *fname, int loglevel);
 extern int	durable_link_or_rename(const char *oldfile, const char *newfile, int loglevel);
 extern void SyncDataDirectory(void);
-<<<<<<< HEAD
 extern int	durable_rename(const char *oldfile, const char *newfile, int loglevel);
 extern int	durable_link_or_rename(const char *oldfile, const char *newfile, int loglevel);
 
 extern int gp_retry_close(int fd);
-=======
-extern int	data_sync_elevel(int elevel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* Filename components */
 #define PG_TEMP_FILES_DIR "pgsql_tmp"
 #define PG_TEMP_FILE_PREFIX "pgsql_tmp"
 
-<<<<<<< HEAD
 extern char *GetTempFilePath(const char *filename, bool createdir);
 
 extern const char *FileGetFilename(File file);
 
 extern void FileSetIsWorkfile(File file);
 
-#endif   /* FD_H */
-=======
 #endif							/* FD_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -63,18 +63,10 @@ typedef void (*RangeVarGetRelidCallback) (const RangeVar *relation, Oid relId,
 	RangeVarGetRelidExtended(relation, lockmode, \
 							 (missing_ok) ? RVR_MISSING_OK : 0, NULL, NULL)
 
-<<<<<<< HEAD
-
-extern Oid RangeVarGetRelidExtended(const RangeVar *relation,
-						 LOCKMODE lockmode, bool missing_ok, bool nowait,
-						 RangeVarGetRelidCallback callback,
-						 void *callback_arg);
-=======
 extern Oid	RangeVarGetRelidExtended(const RangeVar *relation,
 									 LOCKMODE lockmode, uint32 flags,
 									 RangeVarGetRelidCallback callback,
 									 void *callback_arg);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern Oid	RangeVarGetCreationNamespace(const RangeVar *newRelation);
 extern Oid	RangeVarGetAndCheckCreationNamespace(RangeVar *newRelation,
 												 LOCKMODE lockmode,

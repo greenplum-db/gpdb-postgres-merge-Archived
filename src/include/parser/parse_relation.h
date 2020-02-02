@@ -63,11 +63,7 @@ extern Node *colNameToVar(ParseState *pstate, const char *colname, bool localonl
 extern void markVarForSelectPriv(ParseState *pstate, Var *var,
 								 RangeTblEntry *rte);
 extern Relation parserOpenTable(ParseState *pstate, const RangeVar *relation,
-<<<<<<< HEAD
 								int lockmode, bool nowait, bool *lockUpgraded);
-=======
-								int lockmode);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
 										 RangeVar *relation,
 										 Alias *alias,
@@ -111,13 +107,6 @@ extern RangeTblEntry *addRangeTableEntryForJoin(ParseState *pstate,
 												Alias *alias,
 												bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForCTE(ParseState *pstate,
-<<<<<<< HEAD
-						 CommonTableExpr *cte,
-						 Index levelsup,
-						 RangeVar *rv,
-						 bool inFromCl);
-extern LockingClause *getLockedRefname(ParseState *pstate, const char *refname);
-=======
 											   CommonTableExpr *cte,
 											   Index levelsup,
 											   RangeVar *rv,
@@ -125,8 +114,8 @@ extern LockingClause *getLockedRefname(ParseState *pstate, const char *refname);
 extern RangeTblEntry *addRangeTableEntryForENR(ParseState *pstate,
 											   RangeVar *rv,
 											   bool inFromCl);
+extern LockingClause *getLockedRefname(ParseState *pstate, const char *refname);
 extern bool isLockedRefname(ParseState *pstate, const char *refname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 						  bool addToJoinList,
 						  bool addToRelNameSpace, bool addToVarNameSpace);
@@ -144,11 +133,7 @@ extern Oid	attnumTypeId(Relation rd, int attid);
 extern Oid	attnumCollationId(Relation rd, int attid);
 extern bool isQueryUsingTempRelation(Query *query);
 
-<<<<<<< HEAD
 extern bool isSimplyUpdatableRelation(Oid relid, bool noerror);
 extern Index extractSimplyUpdatableRTEIndex(List *rtable);
 
-#endif   /* PARSE_RELATION_H */
-=======
 #endif							/* PARSE_RELATION_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -4,9 +4,6 @@
 -- This file is translated into DATA rows by catullus.pl. See
 -- README.add_catalog_function for instructions on how to run it.
 
--- MPP -- array_add -- special for prospective customer 
- CREATE FUNCTION array_add(_int4, _int4) RETURNS _int4 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE AS 'array_int4_add' WITH (OID=5066, DESCRIPTION="itemwise add two integer arrays");
-
  CREATE FUNCTION interval_interval_div("interval", "interval") RETURNS float8 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE AS 'interval_interval_div' WITH (OID=6115);
 
  CREATE FUNCTION interval_interval_mod("interval", "interval") RETURNS "interval" LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE AS 'interval_interval_mod' WITH (OID=6116);
@@ -89,9 +86,6 @@
  CREATE FUNCTION pg_file_length(text) RETURNS int8 LANGUAGE internal VOLATILE STRICT PARALLEL SAFE AS 'pg_file_length' WITH (OID=6051, DESCRIPTION="Get the length of a file (via stat)");
 
 -- Aggregates (moved here from pg_aggregate for 7.3) 
-
--- MPP Aggregate -- array_sum -- special for prospective customer. 
- CREATE FUNCTION array_sum(_int4) RETURNS _int4 LANGUAGE internal IMMUTABLE PARALLEL SAFE AS 'aggregate_dummy' WITH (OID=5067, proisagg="t", DESCRIPTION = "array sum aggregate");
 
 -- Greenplum Analytic functions
  CREATE FUNCTION int2_matrix_accum(_int8, _int2) RETURNS _int8 LANGUAGE internal IMMUTABLE PARALLEL SAFE AS 'matrix_add' WITH (OID=6212, DESCRIPTION="perform matrix addition on two conformable matrices");

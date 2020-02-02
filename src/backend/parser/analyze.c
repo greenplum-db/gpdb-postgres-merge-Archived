@@ -32,23 +32,16 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
+#include "optimizer/optimizer.h"
 #include "optimizer/plancat.h"
 #include "optimizer/tlist.h"
-#include "optimizer/var.h"
-=======
-#include "optimizer/optimizer.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "parser/analyze.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_collate.h"
 #include "parser/parse_cte.h"
-<<<<<<< HEAD
-=======
 #include "parser/parse_expr.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_param.h"

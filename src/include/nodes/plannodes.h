@@ -149,8 +149,13 @@ typedef struct PlannedStmt
 
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
 
-<<<<<<< HEAD
-	int			nParamExec;		/* number of PARAM_EXEC Params used */
+	List	   *paramExecTypes; /* type OIDs for PARAM_EXEC Params */
+
+	Node	   *utilityStmt;	/* non-null if this is utility stmt */
+
+	/* statement location in source string (copied from Query) */
+	int			stmt_location;	/* start location, or -1 if unknown */
+	int			stmt_len;		/* length in bytes; 0 means "rest of string" */
 
 	/* 
 	 * Cloned from top Query node at the end of planning.
@@ -174,15 +179,6 @@ typedef struct PlannedStmt
  	 * GPDB: whether a query is a SPI inner query for extension usage 
  	 */
 	int8		metricsQueryType;
-=======
-	List	   *paramExecTypes; /* type OIDs for PARAM_EXEC Params */
-
-	Node	   *utilityStmt;	/* non-null if this is utility stmt */
-
-	/* statement location in source string (copied from Query) */
-	int			stmt_location;	/* start location, or -1 if unknown */
-	int			stmt_len;		/* length in bytes; 0 means "rest of string" */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } PlannedStmt;
 
 /*
@@ -1251,23 +1247,16 @@ typedef struct Agg
 	Oid		   *grpOperators;	/* equality operators to compare with */
 	Oid		   *grpCollations;
 	long		numGroups;		/* estimated number of groups in input */
-<<<<<<< HEAD
-	Bitmapset	*aggParams;		/* IDs of Params used in Aggref inputs */
-	/* Note: planner provides numGroups & aggParams only in AGG_HASHED case */
-	List		*groupingSets;	/* grouping sets to use */
-	List		*chain;			/* chained Agg/Sort nodes */
+	Bitmapset  *aggParams;		/* IDs of Params used in Aggref inputs */
+	/* Note: planner provides numGroups & aggParams only in HASHED/MIXED case */
+	List	   *groupingSets;	/* grouping sets to use */
+	List	   *chain;			/* chained Agg/Sort nodes */
 
 	/* Stream entries when out of memory instead of spilling to disk */
 	bool		streaming;
 
 	/* if input tuple has an AggExprId, save the tlist index */
 	Index       agg_expr_id;
-=======
-	Bitmapset  *aggParams;		/* IDs of Params used in Aggref inputs */
-	/* Note: planner provides numGroups & aggParams only in HASHED/MIXED case */
-	List	   *groupingSets;	/* grouping sets to use */
-	List	   *chain;			/* chained Agg/Sort nodes */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } Agg;
 
 /* ---------------

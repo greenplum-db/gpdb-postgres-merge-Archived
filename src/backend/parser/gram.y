@@ -495,7 +495,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <boolean> opt_dxl
 %type <defelt>	opt_binary copy_delimiter
 
-%type <boolean> copy_from opt_program skip_external_partition
+%type <boolean> copy_from opt_program
 
 %type <ival>	opt_column event cursor_options opt_hold opt_set_data
 %type <objtype>	drop_type_any_name drop_type_name drop_type_name_on_any_name
@@ -4253,7 +4253,7 @@ ClosePortalStmt:
 CopyStmt:	COPY opt_binary qualified_name opt_column_list
 			copy_from opt_program copy_file_name copy_delimiter opt_with
 			copy_options where_clause
-			OptSingleRowErrorHandling skip_external_partition
+			OptSingleRowErrorHandling
 				{
 					CopyStmt *n = makeNode(CopyStmt);
 					n->relation = $3;
@@ -4280,7 +4280,6 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list
 								 parser_errposition(@11)));
 
 					n->options = NIL;
-					n->skip_ext_partition = $13;
 
 					/* Concatenate user-supplied flags */
 					if ($2)
@@ -4332,11 +4331,6 @@ copy_from:
 opt_program:
 			PROGRAM									{ $$ = true; }
 			| /* EMPTY */							{ $$ = false; }
-		;
-
-skip_external_partition:
-			IGNORE_P EXTERNAL PARTITIONS			{ $$ = TRUE; }
-			| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
 /*
@@ -4424,6 +4418,10 @@ copy_opt_item:
 			| ON SEGMENT
 				{
 					$$ = makeDefElem("on_segment", (Node *)makeInteger(TRUE));
+				}
+			| IGNORE_P EXTERNAL PARTITIONS
+				{
+					$$ = makeDefElem("skip_external_partitions", (Node *)makeInteger(TRUE));
 				}
 		;
 
@@ -5302,8 +5300,11 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
 		;
 
 /* Optional partition key specification */
-OptPartitionSpec: PartitionSpec	{ $$ = $1; }
-			| /*EMPTY*/			{ $$ = NULL; }
+OptPartitionSpec:
+/* GPDB_12_MERGE_FIXME: Legacy GPDB partitioning syntax. Was causing conflicts, but need
+ * to put this back.. */
+/* PartitionSpec	{ $$ = $1; } 
+   | */ /*EMPTY*/			{ $$ = NULL; }
 		;
 
 PartitionSpec: PARTITION BY part_strategy '(' part_params ')'
@@ -13024,7 +13025,10 @@ vac_analyze_option_list:
 				{
 					$$ = lappend($1, $3);
 				}
-			| analyze_keyword opt_verbose opt_rootonly_all FULLSCAN qualified_name opt_name_list
+
+/* GPDB_12_MERGE_FIXME: GPDB ROOTPARTITION options */
+/*
+| analyze_keyword opt_verbose opt_rootonly_all FULLSCAN qualified_name opt_name_list
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->options = VACOPT_ANALYZE;
@@ -13048,6 +13052,7 @@ vac_analyze_option_list:
 					n->va_cols = $5;
 					$$ = (Node *)n;
 				}
+*/
 		;
 
 analyze_keyword:

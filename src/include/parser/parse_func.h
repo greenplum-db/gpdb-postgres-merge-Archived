@@ -67,13 +67,9 @@ extern Oid	LookupFuncName(List *funcname, int nargs, const Oid *argtypes,
 extern Oid	LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func,
 							   bool missing_ok);
 
-<<<<<<< HEAD
-extern void parseCheckTableFunctions(ParseState *pstate, Query *qry);
-
-#endif   /* PARSE_FUNC_H */
-=======
 extern void check_srf_call_placement(ParseState *pstate, Node *last_srf,
 									 int location);
 
+extern void parseCheckTableFunctions(ParseState *pstate, Query *qry);
+
 #endif							/* PARSE_FUNC_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

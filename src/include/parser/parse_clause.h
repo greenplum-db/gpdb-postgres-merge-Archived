@@ -41,23 +41,17 @@ extern List *transformDistinctToGroupBy(ParseState *pstate, List **targetlist,
 extern List *transformDistinctClause(ParseState *pstate,
 									 List **targetlist, List *sortClause, bool is_agg);
 extern List *transformDistinctOnClause(ParseState *pstate, List *distinctlist,
-<<<<<<< HEAD
 						  List **targetlist, List *sortClause);
 extern List *transformScatterClause(ParseState *pstate, List *scatterlist,
 									List **targetlist);
-extern List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
-					List *sortlist, List *targetlist, SortBy *sortby,
-					bool resolveUnknown);
-=======
-									   List **targetlist, List *sortClause);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void transformOnConflictArbiter(ParseState *pstate,
 									   OnConflictClause *onConflictClause,
 									   List **arbiterExpr, Node **arbiterWhere,
 									   Oid *constraint);
 
 extern List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
-								 List *sortlist, List *targetlist, SortBy *sortby);
+								 List *sortlist, List *targetlist, SortBy *sortby,
+								 bool resolveUnknown);
 extern Index assignSortGroupRef(TargetEntry *tle, List *tlist);
 extern bool targetIsInSortList(TargetEntry *tle, Oid sortop, List *sortList);
 

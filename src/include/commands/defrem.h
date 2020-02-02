@@ -27,16 +27,6 @@ extern void RemoveObjects(DropStmt *stmt);
 
 /* commands/indexcmds.c */
 extern ObjectAddress DefineIndex(Oid relationId,
-<<<<<<< HEAD
-			IndexStmt *stmt,
-			Oid indexRelationId,
-			bool is_alter_table,
-			bool check_rights,
-			bool skip_build,
-			bool quiet);
-extern Oid	ReindexIndex(ReindexStmt *stmt);
-extern Oid	ReindexTable(ReindexStmt *stmt);
-=======
 								 IndexStmt *stmt,
 								 Oid indexRelationId,
 								 Oid parentIndexId,
@@ -48,14 +38,13 @@ extern Oid	ReindexTable(ReindexStmt *stmt);
 								 bool quiet);
 extern void ReindexIndex(RangeVar *indexRelation, int options, bool concurrent);
 extern Oid	ReindexTable(RangeVar *relation, int options, bool concurrent);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 								  int options, bool concurrent);
 extern char *makeObjectName(const char *name1, const char *name2,
 							const char *label);
 extern char *ChooseRelationName(const char *name1, const char *name2,
-<<<<<<< HEAD
-				   const char *label, Oid namespaceid);
+								const char *label, Oid namespaceid,
+								bool isconstraint);
 extern char *ChooseRelationNameWithCache(const char *name1, const char *name2,
 								const char *label, Oid namespaceid, 
 								struct HTAB *cache);
@@ -63,22 +52,13 @@ extern char *ChooseIndexName(const char *tabname, Oid namespaceId,
 				List *colnames, List *exclusionOpNames,
 				bool primary, bool isconstraint);
 extern List *ChooseIndexColumnNames(List *indexElems);
-=======
-								const char *label, Oid namespaceid,
-								bool isconstraint);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern bool CheckIndexCompatible(Oid oldId,
 								 const char *accessMethodName,
 								 List *attributeList,
 								 List *exclusionOpNames);
 extern Oid	GetDefaultOpClass(Oid type_id, Oid am_id);
-<<<<<<< HEAD
-extern Oid GetIndexOpClass(List *opclass, Oid attrType,
-				char *accessMethodName, Oid accessMethodId);
-=======
 extern Oid	ResolveOpClass(List *opclass, Oid attrType,
 						   const char *accessMethodName, Oid accessMethodId);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* commands/functioncmds.c */
 extern ObjectAddress CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt);

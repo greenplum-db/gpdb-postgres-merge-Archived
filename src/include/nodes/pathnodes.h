@@ -4,13 +4,9 @@
  *	  Definitions for planner's internal data structures, especially Paths.
  *
  *
-<<<<<<< HEAD:src/include/nodes/relation.h
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/include/nodes/pathnodes.h
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/pathnodes.h
@@ -187,8 +183,11 @@ typedef struct PlannerGlobal
 
 	bool		parallelModeOK; /* parallel mode potentially OK? */
 
-<<<<<<< HEAD:src/include/nodes/relation.h
-	bool		parallelModeNeeded;		/* parallel mode actually required? */
+	bool		parallelModeNeeded; /* parallel mode actually required? */
+
+	char		maxParallelHazard;	/* worst PROPARALLEL hazard level */
+
+	PartitionDirectory partition_directory; /* partition descriptors */
 
 	/*
 	 * Slice table. Built by cdbllize_build_slice_table() near the end of
@@ -197,13 +196,6 @@ typedef struct PlannerGlobal
 	int			numSlices;
 	struct PlanSlice *slices;
 
-=======
-	bool		parallelModeNeeded; /* parallel mode actually required? */
-
-	char		maxParallelHazard;	/* worst PROPARALLEL hazard level */
-
-	PartitionDirectory partition_directory; /* partition descriptors */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/include/nodes/pathnodes.h
 } PlannerGlobal;
 
 /*----------
@@ -322,7 +314,6 @@ struct PlannerInfo
 
 	List	   *canon_pathkeys; /* list of "canonical" PathKeys */
 
-<<<<<<< HEAD:src/include/nodes/relation.h
 	PartitionNode *result_partitions;
 	List	   *result_aosegnos;
 
@@ -331,14 +322,9 @@ struct PlannerInfo
 	/*
 	 * Outer join info
 	 */
-	List	   *left_join_clauses;		/* list of RestrictInfos for
-										 * mergejoinable outer join clauses
-										 * w/nonnullable var on left */
-=======
 	List	   *left_join_clauses;	/* list of RestrictInfos for mergejoinable
 									 * outer join clauses w/nonnullable var on
 									 * left */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/include/nodes/pathnodes.h
 
 	List	   *right_join_clauses; /* list of RestrictInfos for mergejoinable
 									 * outer join clauses w/nonnullable var on
@@ -435,17 +421,14 @@ struct PlannerInfo
 	/* optional private data for join_search_hook, e.g., GEQO */
 	void	   *join_search_private;
 
-<<<<<<< HEAD:src/include/nodes/relation.h
+	/* Does this query modify any partition key columns? */
+	bool		partColsUpdated;
+
 	int			upd_del_replicated_table;
 	bool		is_split_update;	/* true if UPDATE that modifies
 									 * distribution key columns */
 	bool		is_correlated_subplan; /* true for correlated subqueries nested within subplans */
-} PlannerInfo;
-=======
-	/* Does this query modify any partition key columns? */
-	bool		partColsUpdated;
 };
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/include/nodes/pathnodes.h
 
 /*
  * CtePlanInfo
@@ -865,18 +848,6 @@ typedef struct RelOptInfo
 											 * baserestrictinfo */
 	List	   *joininfo;		/* RestrictInfo structures for join clauses
 								 * involving this rel */
-<<<<<<< HEAD:src/include/nodes/relation.h
-	bool		has_eclass_joins;		/* T means joininfo is incomplete */
-
-	/*
-	 * In a subquery, if this base relation contains quals that must
-	 * be evaluated at "outerquery" locus, and the base relation has a
-	 * different locus, they are kept here in 'upperrestrictinfo', instead of
-	 * 'baserestrictinfo'.
-	 */
-	List	   *upperrestrictinfo;		/* RestrictInfo structures (if base
-										 * rel) */
-=======
 	bool		has_eclass_joins;	/* T means joininfo is incomplete */
 
 	/* used by partitionwise joins: */
@@ -895,7 +866,15 @@ typedef struct RelOptInfo
 	List	  **partexprs;		/* Non-nullable partition key expressions. */
 	List	  **nullable_partexprs; /* Nullable partition key expressions. */
 	List	   *partitioned_child_rels; /* List of RT indexes. */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/include/nodes/pathnodes.h
+
+	/*
+	 * In a subquery, if this base relation contains quals that must
+	 * be evaluated at "outerquery" locus, and the base relation has a
+	 * different locus, they are kept here in 'upperrestrictinfo', instead of
+	 * 'baserestrictinfo'.
+	 */
+	List	   *upperrestrictinfo;		/* RestrictInfo structures (if base
+										 * rel) */
 } RelOptInfo;
 
 /*
@@ -1005,15 +984,13 @@ struct IndexOptInfo
 	bool		amsearchnulls;	/* can AM search for NULL/NOT NULL entries? */
 	bool		amhasgettuple;	/* does AM have amgettuple interface? */
 	bool		amhasgetbitmap; /* does AM have amgetbitmap interface? */
-<<<<<<< HEAD:src/include/nodes/relation.h
+	bool		amcanparallel;	/* does AM support parallel scan? */
+
     int         num_leading_eq; /* CDB: always 0, except amcostestimate proc may
                                  * set it briefly; it is transferred forthwith
                                  * to the IndexPath (q.v.), then reset. Kludge.
                                  */
 
-=======
-	bool		amcanparallel;	/* does AM support parallel scan? */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/include/nodes/pathnodes.h
 	/* Rather than include amapi.h here, we declare amcostestimate like this */
 	void		(*amcostestimate) ();	/* AM's cost estimator */
 };
@@ -2031,23 +2008,6 @@ typedef struct AggPath
 } AggPath;
 
 /*
-<<<<<<< HEAD:src/include/nodes/relation.h
- * TupleSplitPath represents tuple split by DQAs expr
- *
- * In gpdb, we need to split one input tuple to n output tuples for MultiDQA
- * MPP execution. Each output tuple only contains one DQA expr and all GROUP BY
- * exprs.
- */
-typedef struct TupleSplitPath
-{
-	Path		path;
-	Path	   *subpath;		/* path representing input source */
-	List	   *groupClause;	/* a list of SortGroupClause's */
-
-	int         numDisDQAs;     /* the number of different DQAs */
-	Bitmapset **agg_args_id_bms;  /* the bitmapsets which store the dqa arg indexes */
-} TupleSplitPath;
-=======
  * Various annotations used for grouping sets in the planner.
  */
 
@@ -2068,7 +2028,6 @@ typedef struct RollupData
 	bool		hashable;		/* can be hashed */
 	bool		is_hashed;		/* to be implemented as a hashagg */
 } RollupData;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/include/nodes/pathnodes.h
 
 /*
  * GroupingSetsPath represents a GROUPING SETS aggregation
@@ -2078,14 +2037,9 @@ typedef struct GroupingSetsPath
 {
 	Path		path;
 	Path	   *subpath;		/* path representing input source */
-<<<<<<< HEAD:src/include/nodes/relation.h
-	AggSplit	aggsplit;		/* agg-splitting mode, see nodes.h */
-	List	   *rollup_groupclauses;	/* list of lists of SortGroupClause's */
-	List	   *rollup_lists;	/* parallel list of lists of grouping sets */
-=======
 	AggStrategy aggstrategy;	/* basic strategy */
+	AggSplit	aggsplit;		/* agg-splitting mode, see nodes.h */
 	List	   *rollups;		/* list of RollupData */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/include/nodes/pathnodes.h
 	List	   *qual;			/* quals (HAVING quals), if any */
 } GroupingSetsPath;
 
@@ -2108,6 +2062,23 @@ typedef struct WindowAggPath
 	Path	   *subpath;		/* path representing input source */
 	WindowClause *winclause;	/* WindowClause we'll be using */
 } WindowAggPath;
+
+/*
+ * TupleSplitPath represents tuple split by DQAs expr
+ *
+ * In gpdb, we need to split one input tuple to n output tuples for MultiDQA
+ * MPP execution. Each output tuple only contains one DQA expr and all GROUP BY
+ * exprs.
+ */
+typedef struct TupleSplitPath
+{
+	Path		path;
+	Path	   *subpath;		/* path representing input source */
+	List	   *groupClause;	/* a list of SortGroupClause's */
+
+	int         numDisDQAs;     /* the number of different DQAs */
+	Bitmapset **agg_args_id_bms;  /* the bitmapsets which store the dqa arg indexes */
+} TupleSplitPath;
 
 /*
  * SetOpPath represents a set-operation, that is INTERSECT or EXCEPT
@@ -2350,17 +2321,15 @@ typedef struct RestrictInfo
 
 	bool		pseudoconstant; /* see comment above */
 
-<<<<<<< HEAD:src/include/nodes/relation.h
+	bool		leakproof;		/* true if known to contain no leaked Vars */
+
+	Index		security_level; /* see comment above */
+
 	/*
 	 * GPDB: does the clause refer to outer query levels? (Which implies that
 	 * it must be evaluted in the same slice as the parent query)
 	 */
 	bool		contain_outer_query_references;
-=======
-	bool		leakproof;		/* true if known to contain no leaked Vars */
-
-	Index		security_level; /* see comment above */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/include/nodes/pathnodes.h
 
 	/* The set of relids (varnos) actually referenced in the clause: */
 	Relids		clause_relids;
@@ -2758,8 +2727,9 @@ typedef struct PlannerParamItem
 } PlannerParamItem;
 
 /*
-<<<<<<< HEAD:src/include/nodes/relation.h
  * Partitioning meta data
+ *
+ * GPDB_12_MERGE_FIXME: legacy GPDB partitioning stuff. Remove?
  */
 
 /*
@@ -2844,12 +2814,8 @@ typedef struct SegfileMapNode
 } SegfileMapNode;
 
 /*
- * When making cost estimates for a SEMI or ANTI join, there are some
- * correction factors that are needed in both nestloop and hash joins
-=======
  * When making cost estimates for a SEMI/ANTI/inner_unique join, there are
  * some correction factors that are needed in both nestloop and hash joins
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/include/nodes/pathnodes.h
  * to account for the fact that the executor can stop scanning inner rows
  * as soon as it finds a match to the current outer row.  These numbers
  * depend only on the selected outer and inner join relations, not on the

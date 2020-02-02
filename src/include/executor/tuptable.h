@@ -15,15 +15,12 @@
 #define TUPTABLE_H
 
 #include "access/htup.h"
-<<<<<<< HEAD
-#include "access/htup_details.h"
-#include "access/memtup.h"
-=======
 #include "access/sysattr.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/tupdesc.h"
 #include "access/htup_details.h"
 #include "storage/buf.h"
+
+#include "access/memtup.h"
 
 /*----------
  * The executor stores tuples in a "tuple table" which is a List of

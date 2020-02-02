@@ -97,7 +97,6 @@ extern List *GetForeignColumnOptions(Oid relid, AttrNumber attnum);
 extern Oid	get_foreign_data_wrapper_oid(const char *fdwname, bool missing_ok);
 extern Oid	get_foreign_server_oid(const char *servername, bool missing_ok);
 
-<<<<<<< HEAD
 /* ----------------
  *		compiler constants for ForeignTable's exec_location
  * ----------------
@@ -108,7 +107,4 @@ extern Oid	get_foreign_server_oid(const char *servername, bool missing_ok);
 #define FTEXECLOCATION_ALL_SEGMENTS 's'
 #define FTEXECLOCATION_NOT_DEFINED 'n'
 
-#endif   /* FOREIGN_H */
-=======
 #endif							/* FOREIGN_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

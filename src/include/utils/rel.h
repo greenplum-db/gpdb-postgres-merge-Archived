@@ -277,7 +277,10 @@ typedef struct StdRdOptions
 	float8		vacuum_cleanup_index_scale_factor;
 	int			toast_tuple_target; /* target for tuple toasting */
 	AutoVacOpts autovacuum;		/* autovacuum-related options */
-<<<<<<< HEAD
+	bool		user_catalog_table; /* use as an additional catalog relation */
+	int			parallel_workers;	/* max number of parallel workers */
+	bool		vacuum_index_cleanup;	/* enables index vacuuming and cleanup */
+	bool		vacuum_truncate;	/* enables vacuum to truncate a relation */
 
 	bool		appendonly;		/* is this an appendonly relation? */
 	int			blocksize;		/* max varblock size (AO rels only) */
@@ -286,15 +289,6 @@ typedef struct StdRdOptions
 	bool		checksum;		/* checksum (AO rels only) */
 	bool 		columnstore;	/* columnstore (AO only) */
 	char		orientation[NAMEDATALEN]; /* orientation (AO only) */
-	bool		user_catalog_table;		/* use as an additional catalog
-										 * relation */
-	int			parallel_workers;		/* max number of parallel workers */
-=======
-	bool		user_catalog_table; /* use as an additional catalog relation */
-	int			parallel_workers;	/* max number of parallel workers */
-	bool		vacuum_index_cleanup;	/* enables index vacuuming and cleanup */
-	bool		vacuum_truncate;	/* enables vacuum to truncate a relation */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } StdRdOptions;
 
 #define HEAP_MIN_FILLFACTOR			10

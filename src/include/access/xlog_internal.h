@@ -300,14 +300,6 @@ typedef struct RmgrData
 	const char *(*rm_identify) (uint8 info);
 	void		(*rm_startup) (void);
 	void		(*rm_cleanup) (void);
-<<<<<<< HEAD
-
-	/*
-	 * rm_mask takes as input a page modified by the resource manager and masks
-	 * out bits that shouldn't be flagged by wal_consistency_checking.
-	 */
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	void		(*rm_mask) (char *pagedata, BlockNumber blkno);
 } RmgrData;
 

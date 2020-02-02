@@ -60,12 +60,4 @@ typedef FormData_pg_am *Form_pg_am;
 
 #endif							/* EXPOSE_TO_CLIENT_CODE */
 
-<<<<<<< HEAD
-DATA(insert OID = 7013 (  bitmap	bmhandler i ));
-DESCR("bitmap index access method");
-#define BITMAP_AM_OID 7013
-
-#endif   /* PG_AM_H */
-=======
 #endif							/* PG_AM_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

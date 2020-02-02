@@ -2200,7 +2200,6 @@ typedef struct CopyStmt
 								 * for all columns */
 	bool		is_from;		/* TO or FROM */
 	bool		is_program;		/* is 'filename' a program to popen? */
-	bool		skip_ext_partition;		/* skip external partitions */
 	char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
 	List	   *options;		/* List of DefElem nodes */
 	Node	   *whereClause;	/* WHERE condition (or NULL) */

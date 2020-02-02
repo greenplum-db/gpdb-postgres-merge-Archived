@@ -6177,6 +6177,7 @@
   prosrc => 'aggregate_dummy' },
 
 { oid => '2107', descr => 'sum as numeric across all bigint input values',
+  oid_symbol => 'AGGFNOID_COUNT_ANY',
   proname => 'sum', prokind => 'a', proisstrict => 'f', prorettype => 'numeric',
   proargtypes => 'int8', prosrc => 'aggregate_dummy' },
 { oid => '2108', descr => 'sum as bigint across all integer input values',
@@ -6332,6 +6333,7 @@
 
 # count has two forms: count(any) and count(*)
 { oid => '2147',
+  oid_symbol => 'AGGFNOID_COUNT_ANY',
   descr => 'number of input rows for which the input expression is not null',
   proname => 'count', prokind => 'a', proisstrict => 'f', prorettype => 'int8',
   proargtypes => 'any', prosrc => 'aggregate_dummy' },
@@ -10730,5 +10732,19 @@
 { oid => '3424', descr => 'get top-most partition root parent',
   proname => 'pg_partition_root', prorettype => 'regclass',
   proargtypes => 'regclass', prosrc => 'pg_partition_root' },
+
+# GPDB additions
+
+#MPP -- array_sum/add -- special for prospective customer 
+{ oid => '7111', descr => 'itemwise add two integer arrays',
+  proname => 'array_add', proisstrict => 't',
+  provolatile => 'i', proparallel => 's', prorettype => '_int4',
+  prorettype => '_int4', proargtypes => '_int4 _int4',
+  prosrc => 'array_int4_add' },
+
+{ oid => '7112', descr => 'array sum aggregate',
+  proname => 'array_sum', prokind => 'a', proisstrict => 'f',
+  prorettype => '_int4', proargtypes => '_int4',
+  prosrc => 'aggregate_dummy' },
 
 ]

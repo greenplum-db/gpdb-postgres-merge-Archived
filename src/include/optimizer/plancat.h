@@ -4,13 +4,9 @@
  *	  prototypes for plancat.c.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/plancat.h
@@ -39,7 +35,6 @@ extern List *infer_arbiter_indexes(PlannerInfo *root);
 extern void estimate_rel_size(Relation rel, int32 *attr_widths,
 							  BlockNumber *pages, double *tuples, double *allvisfrac);
 
-<<<<<<< HEAD
 extern void cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
 							  Relation      rel,
 							  int32        *attr_widths,
@@ -48,9 +43,7 @@ extern void cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
 							  double       *allvisfrac);
 extern double cdb_estimate_partitioned_numtuples(Relation rel, bool *stats_missing);
 
-=======
 extern int32 get_rel_data_width(Relation rel, int32 *attr_widths);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern int32 get_relation_data_width(Oid relid, int32 *attr_widths);
 
 extern bool relation_excluded_by_constraints(PlannerInfo *root,
@@ -89,15 +82,11 @@ extern double get_function_rows(PlannerInfo *root, Oid funcid, Node *node);
 
 extern bool has_row_triggers(PlannerInfo *root, Index rti, CmdType event);
 
-<<<<<<< HEAD
+extern bool has_stored_generated_columns(PlannerInfo *root, Index rti);
+
 #define DEFAULT_EXTERNAL_TABLE_PAGES 1000
 #define DEFAULT_EXTERNAL_TABLE_TUPLES 1000000
 
 #define DEFAULT_INTERNAL_TABLE_PAGES 100
 
-#endif   /* PLANCAT_H */
-=======
-extern bool has_stored_generated_columns(PlannerInfo *root, Index rti);
-
 #endif							/* PLANCAT_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

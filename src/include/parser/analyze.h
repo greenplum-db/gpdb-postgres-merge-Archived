@@ -28,14 +28,9 @@ extern Query *parse_analyze_varparams(RawStmt *parseTree, const char *sourceText
 									  Oid **paramTypes, int *numParams);
 
 extern Query *parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
-<<<<<<< HEAD
-				  CommonTableExpr *parentCTE,
-				  LockingClause *lockclause_from_parent);
-=======
 								CommonTableExpr *parentCTE,
 								bool locked_from_parent,
 								bool resolve_unknowns);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern Query *transformTopLevelStmt(ParseState *pstate, RawStmt *parseTree);
 extern Query *transformStmt(ParseState *pstate, Node *parseTree);
@@ -48,7 +43,6 @@ extern void applyLockingClause(Query *qry, Index rtindex,
 							   LockClauseStrength strength,
 							   LockWaitPolicy waitPolicy, bool pushedDown);
 
-<<<<<<< HEAD
 /* State shared by transformCreateStmt and its subroutines */
 typedef struct
 {
@@ -79,11 +73,14 @@ typedef struct
 	MemoryContext tempCtx;
 } CreateStmtContext;
 
+/* GDPB_12_MERGE_FIXME: legacy partitioning stuff */
+#if 0
 extern int validate_partition_spec(CreateStmtContext *cxt, 
 							CreateStmt 			*stmt, 
 							PartitionBy 		*partitionBy, 	
 							char	   			*at_depth,
 							int					 partNumber);
+#endif
 
 extern bool is_aocs(List *opts);
 
@@ -91,10 +88,7 @@ List *transformStorageEncodingClause(List *options);
 List *TypeNameGetStorageDirective(TypeName *typname);
 extern List * form_default_storage_directive(List *enc);
 
-#endif   /* ANALYZE_H */
-=======
 extern List *BuildOnConflictExcludedTargetlist(Relation targetrel,
 											   Index exclRelIndex);
 
 #endif							/* ANALYZE_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -4,13 +4,9 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2000-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * src/include/utils/guc.h
@@ -233,12 +229,9 @@ typedef enum
 #define GUC_CUSTOM_PLACEHOLDER	0x0080	/* placeholder for custom variable */
 #define GUC_SUPERUSER_ONLY		0x0100	/* show only to superusers */
 #define GUC_IS_NAME				0x0200	/* limit string to NAMEDATALEN-1 */
-<<<<<<< HEAD
-=======
 #define GUC_NOT_WHILE_SEC_REST	0x0400	/* can't set if security restricted */
 #define GUC_DISALLOW_IN_AUTO_FILE 0x0800	/* can't set in
 											 * PG_AUTOCONF_FILENAME */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #define GUC_UNIT_KB				0x1000	/* value is in kilobytes */
 #define GUC_UNIT_BLOCKS			0x2000	/* value is in blocks */
@@ -255,9 +248,6 @@ typedef enum
 #define GUC_EXPLAIN			  0x100000	/* include in explain */
 
 #define GUC_UNIT				(GUC_UNIT_MEMORY | GUC_UNIT_TIME)
-
-#define GUC_NOT_WHILE_SEC_REST	0x8000	/* can't set if security restricted */
-#define GUC_DISALLOW_IN_AUTO_FILE	0x00010000	/* can't set in PG_AUTOCONF_FILENAME */
 
 /* GPDB speific */
 #define GUC_DISALLOW_USER_SET  0x00200000 /* Do not allow this GUC to be set by the user */
@@ -814,7 +804,6 @@ extern void assign_search_path(const char *newval, void *extra);
 extern bool check_wal_buffers(int *newval, void **extra, GucSource source);
 extern void assign_xlog_sync_method(int new_sync_method, void *extra);
 
-<<<<<<< HEAD
 /* in cdb/cdbvars.c */
 extern bool check_gp_session_role(char **newval, void **extra, GucSource source);
 extern void assign_gp_session_role(const char *newval, void *extra);
@@ -834,7 +823,4 @@ extern bool gpvars_check_gp_gpperfmon_send_interval(int *newval, void **extra, G
 extern int guc_name_compare(const char *namea, const char *nameb);
 extern void DispatchSyncPGVariable(struct config_generic * gconfig);
 
-#endif   /* GUC_H */
-=======
 #endif							/* GUC_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -183,39 +183,6 @@ typedef enum
 	ACLCHECK_NOT_OWNER
 } AclResult;
 
-<<<<<<< HEAD
-/* this enum covers all object types that can have privilege errors */
-/* currently it's only used to tell aclcheck_error what to say */
-typedef enum AclObjectKind
-{
-	ACL_KIND_COLUMN,			/* pg_attribute */
-	ACL_KIND_CLASS,				/* pg_class */
-	ACL_KIND_SEQUENCE,			/* pg_sequence */
-	ACL_KIND_DATABASE,			/* pg_database */
-	ACL_KIND_PROC,				/* pg_proc */
-	ACL_KIND_OPER,				/* pg_operator */
-	ACL_KIND_TYPE,				/* pg_type */
-	ACL_KIND_LANGUAGE,			/* pg_language */
-	ACL_KIND_LARGEOBJECT,		/* pg_largeobject */
-	ACL_KIND_NAMESPACE,			/* pg_namespace */
-	ACL_KIND_OPCLASS,			/* pg_opclass */
-	ACL_KIND_OPFAMILY,			/* pg_opfamily */
-	ACL_KIND_COLLATION,			/* pg_collation */
-	ACL_KIND_CONVERSION,		/* pg_conversion */
-	ACL_KIND_TABLESPACE,		/* pg_tablespace */
-	ACL_KIND_TSDICTIONARY,		/* pg_ts_dict */
-	ACL_KIND_TSCONFIGURATION,	/* pg_ts_config */
-	ACL_KIND_FDW,				/* pg_foreign_data_wrapper */
-	ACL_KIND_FOREIGN_SERVER,	/* pg_foreign_server */
-	ACL_KIND_EVENT_TRIGGER,		/* pg_event_trigger */
-	ACL_KIND_EXTENSION,			/* pg_extension */
-	ACL_KIND_EXTPROTOCOL,		/* pg_extprotocol */
-	MAX_ACL_KIND				/* MUST BE LAST */
-} AclObjectKind;
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-
 /*
  * routines used internally
  */
@@ -290,13 +257,9 @@ extern AclMode pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
 extern AclMode pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
 											   AclMode mask, AclMaskHow how);
 extern AclMode pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
-<<<<<<< HEAD
-						  AclMode mask, AclMaskHow how);
-extern AclMode pg_extprotocol_aclmask(Oid ptc_oid, Oid roleid,
-					   AclMode mask, AclMaskHow how);
-=======
 										 AclMode mask, AclMaskHow how);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern AclMode pg_extprotocol_aclmask(Oid ptc_oid, Oid roleid,
+									  AclMode mask, AclMaskHow how);
 extern AclMode pg_type_aclmask(Oid type_oid, Oid roleid,
 							   AclMode mask, AclMaskHow how);
 

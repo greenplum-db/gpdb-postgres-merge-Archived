@@ -65,14 +65,11 @@ typedef struct Instrumentation
 	/* Accumulated statistics across all completed cycles: */
 	double		startup;		/* Total startup time (in seconds) */
 	double		total;			/* Total total time (in seconds) */
-<<<<<<< HEAD
 	uint64		ntuples;		/* Total tuples produced */
-	uint64		nloops;			/* # of run cycles for this node */
-=======
-	double		ntuples;		/* Total tuples produced */
+	// GPDB_12_MERGE_FIXME: we had changed 'ntuples' and 'nloops' to uint64. Do the same
+	// for 'ntuples2', or?
 	double		ntuples2;		/* Secondary node-specific tuple counter */
-	double		nloops;			/* # of run cycles for this node */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	uint64		nloops;			/* # of run cycles for this node */
 	double		nfiltered1;		/* # tuples removed by scanqual or joinqual */
 	double		nfiltered2;		/* # tuples removed by "other" quals */
 	BufferUsage	bufusage;		/* Total buffer usage */
@@ -108,7 +105,6 @@ extern void InstrStartParallelQuery(void);
 extern void InstrEndParallelQuery(BufferUsage *result);
 extern void InstrAccumParallelQuery(BufferUsage *result);
 
-<<<<<<< HEAD
 #define GP_INSTRUMENT_OPTS (gp_enable_query_metrics ? INSTRUMENT_ROWS : INSTRUMENT_NONE)
 
 /* Greenplum query metrics */
@@ -170,7 +166,4 @@ extern Instrumentation *GpInstrAlloc(const Plan *node, int instrument_options);
  */
 #define MAX_SCAN_ON_SHMEM 300
 
-#endif   /* INSTRUMENT_H */
-=======
 #endif							/* INSTRUMENT_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

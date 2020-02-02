@@ -25,19 +25,10 @@
 
 #include <signal.h>
 
-<<<<<<< HEAD
-#include "pgtime.h"				/* for pg_time_t */
-
-
-#define PG_VERSIONSTR "postgres (Greenplum Database) " PG_VERSION "\n"
-#define PG_BACKEND_VERSIONSTR "postgres (Greenplum Database) " PG_VERSION "\n"
-
-=======
 #include "datatype/timestamp.h" /* for TimestampTZ */
 #include "pgtime.h"				/* for pg_time_t */
 
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #define InvalidPid				(-1)
 
 
@@ -87,19 +78,12 @@
 
 /* in globals.c */
 /* these are marked volatile because they are set by signal handlers: */
-<<<<<<< HEAD
-extern PGDLLIMPORT volatile bool InterruptPending;
-extern PGDLLIMPORT volatile bool QueryCancelPending;
-extern PGDLLIMPORT volatile bool QueryCancelCleanup; /* GPDB only */
-extern PGDLLIMPORT volatile bool QueryFinishPending;
-extern PGDLLIMPORT volatile bool ProcDiePending;
-extern PGDLLIMPORT volatile bool IdleInTransactionSessionTimeoutPending;
-=======
 extern PGDLLIMPORT volatile sig_atomic_t InterruptPending;
 extern PGDLLIMPORT volatile sig_atomic_t QueryCancelPending;
+extern PGDLLIMPORT volatile sig_atomic_t QueryCancelCleanup; /* GPDB only */
+extern PGDLLIMPORT volatile sig_atomic_t QueryFinishPending;
 extern PGDLLIMPORT volatile sig_atomic_t ProcDiePending;
 extern PGDLLIMPORT volatile sig_atomic_t IdleInTransactionSessionTimeoutPending;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern PGDLLIMPORT volatile sig_atomic_t ConfigReloadPending;
 
 extern PGDLLIMPORT volatile sig_atomic_t ClientConnectionLost;
@@ -237,11 +221,8 @@ extern PGDLLIMPORT int NBuffers;
 extern PGDLLIMPORT int MaxBackends;
 extern PGDLLIMPORT int MaxConnections;
 extern PGDLLIMPORT int max_worker_processes;
-<<<<<<< HEAD
-extern int gp_workfile_max_entries;
-=======
 extern PGDLLIMPORT int max_parallel_workers;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern int gp_workfile_max_entries;
 
 extern PGDLLIMPORT int MyProcPid;
 extern PGDLLIMPORT pg_time_t MyStartTime;
@@ -333,19 +314,13 @@ extern PGDLLIMPORT int IntervalStyle;
 
 extern bool enableFsync;
 extern PGDLLIMPORT bool allowSystemTableMods;
-<<<<<<< HEAD
 extern PGDLLIMPORT int planner_work_mem;
 extern PGDLLIMPORT int work_mem;
 extern PGDLLIMPORT int maintenance_work_mem;
+extern PGDLLIMPORT int max_parallel_maintenance_workers;
 extern PGDLLIMPORT int statement_mem;
 extern PGDLLIMPORT int max_statement_mem;
 extern PGDLLIMPORT int gp_vmem_limit_per_query;
-extern PGDLLIMPORT int replacement_sort_tuples;
-=======
-extern PGDLLIMPORT int work_mem;
-extern PGDLLIMPORT int maintenance_work_mem;
-extern PGDLLIMPORT int max_parallel_maintenance_workers;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern int	VacuumCostPageHit;
 extern int	VacuumCostPageMiss;
@@ -360,13 +335,10 @@ extern int	VacuumPageDirty;
 extern int	VacuumCostBalance;
 extern bool VacuumCostActive;
 
-<<<<<<< HEAD
-extern int gp_vmem_protect_limit;
-extern int gp_vmem_protect_gang_cache_limit;
-=======
 extern double vacuum_cleanup_index_scale_factor;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern int gp_vmem_protect_limit;
+extern int gp_vmem_protect_gang_cache_limit;
 
 /* in tcop/postgres.c */
 
