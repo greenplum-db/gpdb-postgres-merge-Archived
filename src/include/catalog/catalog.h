@@ -18,15 +18,6 @@
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
-#define OIDCHARS		10		/* max chars printed by %u */
-/*
- * In PostgreSQL, this is called just TABLESPACE_VERSION_DIRECTORY..
- * This constant has been renamed so that we catch and know to modify all
- * upstream uses of TABLESPACE_VERSION_DIRECTORY.
- */
-#define GP_TABLESPACE_VERSION_DIRECTORY	"GPDB_" GP_MAJORVERSION "_" \
-									CppAsString2(CATALOG_VERSION_NO)
-
 /*
  * This file is used to store internal configuration information specific to a
  * server that's not same between primary and mirror pair. For example it
@@ -54,23 +45,13 @@ extern char* GetReservedPrefix(const char *name);
 
 extern bool IsSharedRelation(Oid relationId);
 
-<<<<<<< HEAD
-extern Oid GetNewOid(Relation relation);
 extern Oid GetNewOidWithIndex(Relation relation, Oid indexId,
-				   AttrNumber oidcolumn);
+							  AttrNumber oidcolumn);
 extern Oid GetNewRelFileNode(Oid reltablespace, Relation pg_class,
-				  char relpersistence);
+							 char relpersistence);
 
 extern void reldir_and_filename(RelFileNode rnode, BackendId backend, ForkNumber forknum,
 					char **dir, char **filename);
 extern char *aorelpathbackend(RelFileNode node, BackendId backend, int32 segno);
 
-#endif   /* CATALOG_H */
-=======
-extern Oid	GetNewOidWithIndex(Relation relation, Oid indexId,
-							   AttrNumber oidcolumn);
-extern Oid	GetNewRelFileNode(Oid reltablespace, Relation pg_class,
-							  char relpersistence);
-
 #endif							/* CATALOG_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -4,12 +4,8 @@
  *	  prototypes for optimizer/util/placeholder.c.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2017, Pivotal Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/placeholder.h
@@ -34,10 +30,6 @@ extern void add_placeholders_to_base_rels(PlannerInfo *root);
 extern void add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 										RelOptInfo *outer_rel, RelOptInfo *inner_rel);
 
-<<<<<<< HEAD
 extern void make_placeholders_for_subplans(PlannerInfo *root);
 
-#endif   /* PLACEHOLDER_H */
-=======
 #endif							/* PLACEHOLDER_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

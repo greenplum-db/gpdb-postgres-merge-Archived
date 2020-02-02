@@ -22,9 +22,14 @@
 
 /*
  * Name of major-version-specific tablespace subdirectories
+ *
+ * In PostgreSQL, this is called just TABLESPACE_VERSION_DIRECTORY..
+ * This constant has been renamed so that we catch and know to modify all
+ * upstream uses of TABLESPACE_VERSION_DIRECTORY.
  */
-#define TABLESPACE_VERSION_DIRECTORY	"PG_" PG_MAJORVERSION "_" \
+#define GP_TABLESPACE_VERSION_DIRECTORY	"GPDB_" GP_MAJORVERSION "_" \
 									CppAsString2(CATALOG_VERSION_NO)
+
 
 /* Characters to allow for an OID in a relation path */
 #define OIDCHARS		10		/* max chars printed by %u */

@@ -176,14 +176,9 @@ extern bool Db_user_namespace;
 #define AUTH_REQ_GSS		7	/* GSSAPI without wrap() */
 #define AUTH_REQ_GSS_CONT	8	/* Continue GSS exchanges */
 #define AUTH_REQ_SSPI		9	/* SSPI negotiate without wrap() */
-<<<<<<< HEAD
-#define AUTH_REQ_SASL	   10	/* SASL authentication. Not supported before
-								 * libpq version 10. */
-=======
 #define AUTH_REQ_SASL	   10	/* Begin SASL authentication */
 #define AUTH_REQ_SASL_CONT 11	/* Continue SASL authentication */
 #define AUTH_REQ_SASL_FIN  12	/* Final SASL message */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 typedef uint32 AuthRequest;
 
@@ -223,7 +218,6 @@ typedef struct CancelRequestPacket
 #define NEGOTIATE_SSL_CODE PG_PROTOCOL(1234,5679)
 #define NEGOTIATE_GSS_CODE PG_PROTOCOL(1234,5680)
 
-<<<<<<< HEAD
 /* the number of times trying to acquire the send mutex for the front
  * end connection after detecting process is exitting */
 #define PQ_BUSY_TEST_COUNT_IN_EXITING 5
@@ -232,7 +226,4 @@ typedef struct CancelRequestPacket
 #define GPCONN_TYPE_FTS "fts"
 #define GPCONN_TYPE_FAULT "fault"
 
-#endif   /* PQCOMM_H */
-=======
 #endif							/* PQCOMM_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

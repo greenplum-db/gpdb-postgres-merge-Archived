@@ -6,15 +6,10 @@
  * As of Postgres 8.0, pg_cast describes not only type coercion functions
  * but also length coercion functions.
  *
-<<<<<<< HEAD
- *
  * Portions Copyright (c) 2006-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2002-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * src/include/catalog/pg_cast.h
  *
@@ -55,19 +50,16 @@ CATALOG(pg_cast,2605,CastRelationId)
 	char		castmethod;
 } FormData_pg_cast;
 
-<<<<<<< HEAD
 /* GPDB added foreign key definitions for gpcheckcat. */
 FOREIGN_KEY(castsource REFERENCES pg_type(oid));
 FOREIGN_KEY(casttarget REFERENCES pg_type(oid));
 FOREIGN_KEY(castfunc REFERENCES pg_proc(oid));
 
-=======
 /* ----------------
  *		Form_pg_cast corresponds to a pointer to a tuple with
  *		the format of pg_cast relation.
  * ----------------
  */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 typedef FormData_pg_cast *Form_pg_cast;
 
 #ifdef EXPOSE_TO_CLIENT_CODE

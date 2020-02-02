@@ -66,7 +66,6 @@ do \
 	} \
 } while (0)
 
-<<<<<<< HEAD
 /*
  *		HeapKeyTestUsingSlot
  *
@@ -119,7 +118,4 @@ do \
 	} \
 } while (0)
 
-#endif   /* VALID_H */
-=======
 #endif							/* VALID_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

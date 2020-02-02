@@ -821,6 +821,11 @@ typedef enum BackendState
 #define PG_WAIT_TIMEOUT				0x09000000U
 #define PG_WAIT_IO					0x0A000000U
 
+/* GPDB additions */
+#define PG_WAIT_RESOURCE_GROUP		0xA0000000U
+#define PG_WAIT_RESOURCE_QUEUE		0xA1000000U
+#define PG_WAIT_REPLICATION			0xA2000000U
+
 /* ----------
  * Wait Events - Activity
  *
@@ -924,22 +929,10 @@ typedef enum
  */
 typedef enum
 {
-<<<<<<< HEAD
-	WAIT_UNDEFINED,
-	WAIT_LWLOCK_NAMED,
-	WAIT_LWLOCK_TRANCHE,
-	WAIT_LOCK,
-	WAIT_BUFFER_PIN,
-	WAIT_RESOURCE_GROUP,
-	WAIT_RESOURCE_QUEUE,
-	WAIT_REPLICATION
-}	WaitClass;
-=======
 	WAIT_EVENT_BASE_BACKUP_THROTTLE = PG_WAIT_TIMEOUT,
 	WAIT_EVENT_PG_SLEEP,
 	WAIT_EVENT_RECOVERY_APPLY_DELAY
 } WaitEventTimeout;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* ----------
  * Wait Events - IO
@@ -1379,14 +1372,12 @@ extern void pgstat_report_resgroup(Oid groupid);
 
 extern void pgstat_initstats(Relation rel);
 
-<<<<<<< HEAD
+extern char *pgstat_clip_activity(const char *raw_activity);
+
 extern void pgstat_init_localportalhash(void);
 extern PgStat_StatPortalEntry *pgstat_getportalentry(uint32 portalid,
 													 Oid queueid);
-=======
-extern char *pgstat_clip_activity(const char *raw_activity);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* ----------
  * pgstat_report_wait_start() -
  *
