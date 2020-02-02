@@ -66,24 +66,14 @@ extern void TwoPhaseShmemInit(void);
 extern void AtAbort_Twophase(void);
 extern void PostPrepare_Twophase(void);
 
-<<<<<<< HEAD
-struct PGPROC;
-extern struct PGPROC *TwoPhaseGetDummyProc(TransactionId xid);
-extern BackendId TwoPhaseGetDummyBackendId(TransactionId xid);
-
-extern GlobalTransaction MarkAsPreparing(TransactionId xid,
-				LocalDistribXactData *localDistribXactRef,
-				const char *gid,
-				TimestampTz prepared_at,
-				Oid owner, Oid databaseid);
-=======
 extern PGPROC *TwoPhaseGetDummyProc(TransactionId xid, bool lock_held);
 extern BackendId TwoPhaseGetDummyBackendId(TransactionId xid, bool lock_held);
 
-extern GlobalTransaction MarkAsPreparing(TransactionId xid, const char *gid,
+extern GlobalTransaction MarkAsPreparing(TransactionId xid,
+										 LocalDistribXactData *localDistribXactRef,
+										 const char *gid,
 										 TimestampTz prepared_at,
 										 Oid owner, Oid databaseid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern void StartPrepare(GlobalTransaction gxact);
 extern void EndPrepare(GlobalTransaction gxact);

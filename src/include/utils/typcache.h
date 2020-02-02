@@ -192,11 +192,6 @@ extern uint64 assign_record_type_identifier(Oid type_id, int32 typmod);
 
 extern int	compare_values_of_enum(TypeCacheEntry *tcache, Oid arg1, Oid arg2);
 
-<<<<<<< HEAD
-extern List *build_tuple_node_list(int start);
-
-#endif   /* TYPCACHE_H */
-=======
 extern size_t SharedRecordTypmodRegistryEstimate(void);
 
 extern void SharedRecordTypmodRegistryInit(SharedRecordTypmodRegistry *,
@@ -204,5 +199,6 @@ extern void SharedRecordTypmodRegistryInit(SharedRecordTypmodRegistry *,
 
 extern void SharedRecordTypmodRegistryAttach(SharedRecordTypmodRegistry *);
 
+extern List *build_tuple_node_list(int start);
+
 #endif							/* TYPCACHE_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

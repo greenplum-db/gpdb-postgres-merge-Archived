@@ -8,11 +8,7 @@
  *
  * See src/tools/testint128.c for a simple test harness for this file.
  *
-<<<<<<< HEAD
- * Copyright (c) 2017, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2017-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * src/include/common/int128.h
  *
@@ -39,8 +35,6 @@
 typedef int128 INT128;
 
 /*
-<<<<<<< HEAD
-=======
  * Add an unsigned int64 value into an INT128 variable.
  */
 static inline void
@@ -59,7 +53,6 @@ int128_add_int64(INT128 *i128, int64 v)
 }
 
 /*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Add the 128-bit product of two int64 values into an INT128 variable.
  *
  * XXX with a stupid compiler, this could actually be less efficient than
@@ -68,11 +61,7 @@ int128_add_int64(INT128 *i128, int64 v)
 static inline void
 int128_add_int64_mul_int64(INT128 *i128, int64 x, int64 y)
 {
-<<<<<<< HEAD
-	*i128 += (int128) x *(int128) y;
-=======
 	*i128 += (int128) x * (int128) y;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -148,8 +137,6 @@ int128_add_uint64(INT128 *i128, uint64 v)
 }
 
 /*
-<<<<<<< HEAD
-=======
  * Add a signed int64 value into an INT128 variable.
  */
 static inline void
@@ -177,7 +164,6 @@ int128_add_int64(INT128 *i128, int64 v)
 }
 
 /*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * INT64_AU32 extracts the most significant 32 bits of int64 as int64, while
  * INT64_AL32 extracts the least significant 32 bits as uint64.
  */
@@ -285,12 +271,6 @@ int128_to_int64(INT128 val)
 	return (int64) val.lo;
 }
 
-<<<<<<< HEAD
-#endif   /* USE_NATIVE_INT128 */
-
-#endif   /* INT128_H */
-=======
 #endif							/* USE_NATIVE_INT128 */
 
 #endif							/* INT128_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

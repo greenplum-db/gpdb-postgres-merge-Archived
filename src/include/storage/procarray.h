@@ -93,12 +93,8 @@ extern RunningTransactions GetRunningTransactionData(void);
 
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern bool TransactionIdIsActive(TransactionId xid);
-<<<<<<< HEAD
-extern TransactionId GetOldestXmin(Relation rel, bool ignoreVacuum);
-extern TransactionId GetLocalOldestXmin(Relation rel, bool ignoreVacuum);
-=======
 extern TransactionId GetOldestXmin(Relation rel, int flags);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern TransactionId GetLocalOldestXmin(Relation rel, int flags);
 extern TransactionId GetOldestActiveTransactionId(void);
 extern TransactionId GetOldestSafeDecodingTransactionId(bool catalogOnly);
 
@@ -122,18 +118,20 @@ extern int	CountDBConnections(Oid databaseid);
 extern void CancelDBBackends(Oid databaseid, ProcSignalReason sigmode, bool conflictPending);
 extern int	CountUserBackends(Oid roleid);
 extern bool CountOtherDBBackends(Oid databaseId,
-<<<<<<< HEAD
-					 int *nbackends, int *nprepared);
+								 int *nbackends, int *nprepared);
 extern bool HasSerializableBackends(bool allDbs);
 
 extern void XidCacheRemoveRunningXids(TransactionId xid,
-						  int nxids, const TransactionId *xids,
-						  TransactionId latestXid);
+									  int nxids, const TransactionId *xids,
+									  TransactionId latestXid);
 						  
 extern PGPROC *FindProcByGpSessionId(long gp_session_id);
 extern void UpdateSerializableCommandId(CommandId curcid);
 
-extern void updateSharedLocalSnapshot(struct DtxContextInfo *dtxContextInfo, DtxContext distributedTransactionContext, struct SnapshotData *snapshot, char* debugCaller);
+extern void updateSharedLocalSnapshot(struct DtxContextInfo *dtxContextInfo,
+									  DtxContext distributedTransactionContext,
+									  struct SnapshotData *snapshot,
+									  char *debugCaller);
 
 extern void GetSlotTableDebugInfo(void **snapshotArray, int *maxSlots);
 
@@ -141,13 +139,6 @@ extern void getDtxCheckPointInfo(char **result, int *result_size);
 
 extern List *ListAllGxid(void);
 extern int GetPidByGxid(DistributedTransactionId gxid);
-=======
-								 int *nbackends, int *nprepared);
-
-extern void XidCacheRemoveRunningXids(TransactionId xid,
-									  int nxids, const TransactionId *xids,
-									  TransactionId latestXid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern void ProcArraySetReplicationSlotXmin(TransactionId xmin,
 											TransactionId catalog_xmin, bool already_locked);

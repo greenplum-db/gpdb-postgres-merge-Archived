@@ -153,7 +153,28 @@ typedef struct IndexScanDescData
 	struct ParallelIndexScanDescData *parallel_scan;
 }			IndexScanDescData;
 
-<<<<<<< HEAD
+/* Generic structure for parallel scans */
+typedef struct ParallelIndexScanDescData
+{
+	Oid			ps_relid;
+	Oid			ps_indexid;
+	Size		ps_offset;		/* Offset in bytes of am specific structure */
+	char		ps_snapshot_data[FLEXIBLE_ARRAY_MEMBER];
+}			ParallelIndexScanDescData;
+
+struct TupleTableSlot;
+
+/* Struct for storage-or-index scans of system tables */
+typedef struct SysScanDescData
+{
+	Relation	heap_rel;		/* catalog being scanned */
+	Relation	irel;			/* NULL if doing heap scan */
+	struct TableScanDescData *scan; /* only valid in storage-scan case */
+	struct IndexScanDescData *iscan;	/* only valid in index-scan case */
+	struct SnapshotData *snapshot;	/* snapshot to unregister at end of scan */
+	struct TupleTableSlot *slot;
+}			SysScanDescData;
+
 /*
  * used for scan of external relations with the file protocol
  */
@@ -192,30 +213,5 @@ typedef struct FileScanDescData
 }	FileScanDescData;
 
 typedef FileScanDescData *FileScanDesc;
-
-/* Struct for heap-or-index scans of system tables */
-=======
-/* Generic structure for parallel scans */
-typedef struct ParallelIndexScanDescData
-{
-	Oid			ps_relid;
-	Oid			ps_indexid;
-	Size		ps_offset;		/* Offset in bytes of am specific structure */
-	char		ps_snapshot_data[FLEXIBLE_ARRAY_MEMBER];
-}			ParallelIndexScanDescData;
-
-struct TupleTableSlot;
-
-/* Struct for storage-or-index scans of system tables */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-typedef struct SysScanDescData
-{
-	Relation	heap_rel;		/* catalog being scanned */
-	Relation	irel;			/* NULL if doing heap scan */
-	struct TableScanDescData *scan; /* only valid in storage-scan case */
-	struct IndexScanDescData *iscan;	/* only valid in index-scan case */
-	struct SnapshotData *snapshot;	/* snapshot to unregister at end of scan */
-	struct TupleTableSlot *slot;
-}			SysScanDescData;
 
 #endif							/* RELSCAN_H */

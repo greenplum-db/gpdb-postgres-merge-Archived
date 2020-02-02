@@ -54,12 +54,8 @@ extern void	DefineExternalRelation(CreateExternalStmt *stmt);
 extern void EvaluateDeferredStatements(List *deferredStmts);
 
 extern ObjectAddress DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
-<<<<<<< HEAD
-			   ObjectAddress *typaddress, char relstorage, bool dispatch,
-			   bool useChangedOpts, GpPolicy *intoPolicy);
-=======
-									ObjectAddress *typaddress, const char *queryString);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+									ObjectAddress *typaddress, const char *queryString, bool dispatch,
+									bool useChangedOpts, GpPolicy *intoPolicy);
 
 extern void RemoveRelations(DropStmt *drop);
 
@@ -146,15 +142,10 @@ extern void RangeVarCallbackOwnsTable(const RangeVar *relation,
 									  Oid relId, Oid oldRelId, void *arg);
 
 extern void RangeVarCallbackOwnsRelation(const RangeVar *relation,
-<<<<<<< HEAD
-							 Oid relId, Oid oldRelId, void *noCatalogs);
-
-extern List * rel_get_column_encodings(Relation rel);
-#endif   /* TABLECMDS_H */
-=======
 										 Oid relId, Oid oldRelId, void *noCatalogs);
 extern bool PartConstraintImpliedByRelConstraint(Relation scanrel,
 												 List *partConstraint);
 
+extern List * rel_get_column_encodings(Relation rel);
+
 #endif							/* TABLECMDS_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -423,17 +423,6 @@ extern RecursiveUnionPath *create_recursiveunion_path(PlannerInfo *root,
 extern LockRowsPath *create_lockrows_path(PlannerInfo *root, RelOptInfo *rel,
 										  Path *subpath, List *rowMarks, int epqParam);
 extern ModifyTablePath *create_modifytable_path(PlannerInfo *root,
-<<<<<<< HEAD
-						RelOptInfo *rel,
-						CmdType operation, bool canSetTag,
-						Index nominalRelation,
-						List *resultRelations, List *subpaths,
-						List *subroots,
-						List *withCheckOptionLists, List *returningLists,
-						List *is_split_updates,
-						List *rowMarks, OnConflictExpr *onconflict,
-						int epqParam);
-=======
 												RelOptInfo *rel,
 												CmdType operation, bool canSetTag,
 												Index nominalRelation, Index rootRelation,
@@ -441,9 +430,9 @@ extern ModifyTablePath *create_modifytable_path(PlannerInfo *root,
 												List *resultRelations, List *subpaths,
 												List *subroots,
 												List *withCheckOptionLists, List *returningLists,
+												List *is_split_updates,
 												List *rowMarks, OnConflictExpr *onconflict,
 												int epqParam);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern LimitPath *create_limit_path(PlannerInfo *root, RelOptInfo *rel,
 									Path *subpath,
 									Node *limitOffset, Node *limitCount,
@@ -475,11 +464,9 @@ extern RelOptInfo *build_join_rel(PlannerInfo *root,
 								  SpecialJoinInfo *sjinfo,
 								  List **restrictlist_ptr);
 extern Relids min_join_parameterization(PlannerInfo *root,
-<<<<<<< HEAD
-						  Relids joinrelids,
-						  RelOptInfo *outer_rel,
-						  RelOptInfo *inner_rel);
-extern RelOptInfo *build_empty_join_rel(PlannerInfo *root);
+										Relids joinrelids,
+										RelOptInfo *outer_rel,
+										RelOptInfo *inner_rel);
 extern void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel, List *input_tlist);
 
 extern Var *cdb_define_pseudo_column(PlannerInfo   *root,
@@ -492,11 +479,6 @@ extern CdbRelColumnInfo *cdb_find_pseudo_column(PlannerInfo *root, Var *var);
 
 extern CdbRelColumnInfo *cdb_rte_find_pseudo_column(RangeTblEntry *rte, AttrNumber attno);
 
-=======
-										Relids joinrelids,
-										RelOptInfo *outer_rel,
-										RelOptInfo *inner_rel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern RelOptInfo *fetch_upper_rel(PlannerInfo *root, UpperRelationKind kind,
 								   Relids relids);
 extern Relids find_childrel_parents(PlannerInfo *root, RelOptInfo *rel);

@@ -36,14 +36,6 @@ extern TupleConversionMap *convert_tuples_by_position(TupleDesc indesc,
 													  const char *msg);
 
 extern TupleConversionMap *convert_tuples_by_name(TupleDesc indesc,
-<<<<<<< HEAD
-												  TupleDesc outdesc);
-
-extern AttrNumber *convert_tuples_by_name_map(TupleDesc indesc,
-											  TupleDesc outdesc);
-extern AttrNumber *convert_tuples_by_name_map_if_req(TupleDesc indesc,
-													 TupleDesc outdesc);
-=======
 												  TupleDesc outdesc,
 												  const char *msg);
 
@@ -53,7 +45,6 @@ extern AttrNumber *convert_tuples_by_name_map(TupleDesc indesc,
 extern AttrNumber *convert_tuples_by_name_map_if_req(TupleDesc indesc,
 													 TupleDesc outdesc,
 													 const char *msg);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern HeapTuple execute_attr_map_tuple(HeapTuple tuple, TupleConversionMap *map);
 extern TupleTableSlot *execute_attr_map_slot(AttrNumber *attrMap,
@@ -61,9 +52,6 @@ extern TupleTableSlot *execute_attr_map_slot(AttrNumber *attrMap,
 
 extern void free_conversion_map(TupleConversionMap *map);
 
-<<<<<<< HEAD
 extern AttrNumber attrMap(TupleConversionMap *map, AttrNumber attno);
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #endif							/* TUPCONVERT_H */

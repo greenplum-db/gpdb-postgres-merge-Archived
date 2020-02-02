@@ -18,7 +18,6 @@
 #include "datatype/timestamp.h"
 #include "lib/pairingheap.h"
 #include "storage/buf.h"
-#include "utils/rel.h"
 
 #include "cdb/cdbdistributedsnapshot.h"  /* DistributedSnapshotWithLocalMapping */
 

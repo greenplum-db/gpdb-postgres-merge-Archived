@@ -828,23 +828,4 @@ extern IndexBuildResult *btbuild(Relation heap, Relation index,
 								 struct IndexInfo *indexInfo);
 extern void _bt_parallel_build_main(dsm_segment *seg, shm_toc *toc);
 
-<<<<<<< HEAD
-extern BTSpool *_bt_spoolinit(Relation heap, Relation index,
-			  bool isunique, bool isdead);
-extern void _bt_spooldestroy(BTSpool *btspool);
-extern void _bt_spool(BTSpool *btspool, ItemPointer self,
-		  Datum *values, bool *isnull);
-extern void _bt_leafbuild(BTSpool *btspool, BTSpool *spool2);
-
-/*
- * prototypes for functions in nbtxlog.c
- */
-extern void btree_redo(XLogReaderState *record);
-extern void btree_desc(StringInfo buf, XLogReaderState *record);
-extern const char *btree_identify(uint8 info);
-extern void btree_mask(char *pagedata, BlockNumber blkno);
-
-#endif   /* NBTREE_H */
-=======
 #endif							/* NBTREE_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

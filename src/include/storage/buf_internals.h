@@ -55,21 +55,6 @@
  * Note: TAG_VALID essentially means that there is a buffer hashtable
  * entry associated with the buffer's tag.
  */
-<<<<<<< HEAD
-#define BM_LOCKED				(1U << 22)		/* buffer header is locked */
-#define BM_DIRTY				(1U << 23)		/* data needs writing */
-#define BM_VALID				(1U << 24)		/* data is valid */
-#define BM_TAG_VALID			(1U << 25)		/* tag is assigned */
-#define BM_IO_IN_PROGRESS		(1U << 26)		/* read or write in progress */
-#define BM_IO_ERROR				(1U << 27)		/* previous I/O failed */
-#define BM_JUST_DIRTIED			(1U << 28)		/* dirtied since write started */
-#define BM_PIN_COUNT_WAITER		(1U << 29)		/* have waiter for sole pin */
-#define BM_CHECKPOINT_NEEDED	(1U << 30)		/* must write for checkpoint */
-#define BM_PERMANENT			(1U << 31)		/* permanent relation (not
-												 * unlogged) */
-#define BM_TEMP					(1U << 21)		/* temporary relation */
-
-=======
 #define BM_LOCKED				(1U << 22)	/* buffer header is locked */
 #define BM_DIRTY				(1U << 23)	/* data needs writing */
 #define BM_VALID				(1U << 24)	/* data is valid */
@@ -81,7 +66,8 @@
 #define BM_CHECKPOINT_NEEDED	(1U << 30)	/* must write for checkpoint */
 #define BM_PERMANENT			(1U << 31)	/* permanent buffer (not unlogged,
 											 * or init fork) */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#define BM_TEMP					(1U << 21)	/* GPDB: temporary relation */
+
 /*
  * The maximum allowed value of usage_count represents a tradeoff between
  * accuracy and speed of the clock-sweep buffer management algorithm.  A

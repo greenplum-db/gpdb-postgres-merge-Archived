@@ -332,16 +332,8 @@ extern void end_MultiFuncCall(PG_FUNCTION_ARGS, FuncCallContext *funcctx);
  * The return result is the number of elements stored, or -1 in the case of
  * "VARIADIC NULL".
  */
-<<<<<<< HEAD
-extern int extract_variadic_args(FunctionCallInfo fcinfo, int variadic_start,
-								 bool convert_unknown, Datum **values,
-								 Oid **types, bool **nulls);
-
-#endif   /* FUNCAPI_H */
-=======
 extern int	extract_variadic_args(FunctionCallInfo fcinfo, int variadic_start,
 								  bool convert_unknown, Datum **values,
 								  Oid **types, bool **nulls);
 
 #endif							/* FUNCAPI_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

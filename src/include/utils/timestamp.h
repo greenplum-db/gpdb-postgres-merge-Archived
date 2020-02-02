@@ -72,136 +72,16 @@ extern TimestampTz PgStartTime;
 /* Set at configuration reload */
 extern TimestampTz PgReloadTime;
 
-<<<<<<< HEAD
-/*
- * timestamp.c prototypes
- */
+/* Internal routines (not fmgr-callable) */
 
-extern Datum timestamp_in(PG_FUNCTION_ARGS);
-extern Datum timestamp_out(PG_FUNCTION_ARGS);
-extern Datum timestamp_recv(PG_FUNCTION_ARGS);
-extern Datum timestamp_send(PG_FUNCTION_ARGS);
-extern Datum timestamptypmodin(PG_FUNCTION_ARGS);
-extern Datum timestamptypmodout(PG_FUNCTION_ARGS);
-extern Datum timestamp_interval_bound(PG_FUNCTION_ARGS);
-extern Datum timestamp_interval_bound_shift(PG_FUNCTION_ARGS);
-extern Datum timestamp_interval_bound_shift_reg(PG_FUNCTION_ARGS);
-extern Datum timestamptz_interval_bound(PG_FUNCTION_ARGS);
-extern Datum timestamptz_interval_bound_shift(PG_FUNCTION_ARGS);
-extern Datum timestamptz_interval_bound_shift_reg(PG_FUNCTION_ARGS);
-extern Datum timestamp_transform(PG_FUNCTION_ARGS);
-extern Datum timestamp_scale(PG_FUNCTION_ARGS);
-extern Datum timestamp_eq(PG_FUNCTION_ARGS);
-extern Datum timestamp_ne(PG_FUNCTION_ARGS);
-extern Datum timestamp_lt(PG_FUNCTION_ARGS);
-extern Datum timestamp_le(PG_FUNCTION_ARGS);
-extern Datum timestamp_ge(PG_FUNCTION_ARGS);
-extern Datum timestamp_gt(PG_FUNCTION_ARGS);
-extern Datum timestamp_finite(PG_FUNCTION_ARGS);
-extern Datum timestamp_cmp(PG_FUNCTION_ARGS);
-extern Datum timestamp_sortsupport(PG_FUNCTION_ARGS);
-extern Datum timestamp_hash(PG_FUNCTION_ARGS);
-extern Datum timestamp_smaller(PG_FUNCTION_ARGS);
-extern Datum timestamp_larger(PG_FUNCTION_ARGS);
-
-extern Datum timestamp_eq_timestamptz(PG_FUNCTION_ARGS);
-extern Datum timestamp_ne_timestamptz(PG_FUNCTION_ARGS);
-extern Datum timestamp_lt_timestamptz(PG_FUNCTION_ARGS);
-extern Datum timestamp_le_timestamptz(PG_FUNCTION_ARGS);
-extern Datum timestamp_gt_timestamptz(PG_FUNCTION_ARGS);
-extern Datum timestamp_ge_timestamptz(PG_FUNCTION_ARGS);
-extern Datum timestamp_cmp_timestamptz(PG_FUNCTION_ARGS);
-
-extern Datum make_timestamp(PG_FUNCTION_ARGS);
-extern Datum make_timestamptz(PG_FUNCTION_ARGS);
-extern Datum make_timestamptz_at_timezone(PG_FUNCTION_ARGS);
-extern Datum float8_timestamptz(PG_FUNCTION_ARGS);
-
-extern Datum timestamptz_eq_timestamp(PG_FUNCTION_ARGS);
-extern Datum timestamptz_ne_timestamp(PG_FUNCTION_ARGS);
-extern Datum timestamptz_lt_timestamp(PG_FUNCTION_ARGS);
-extern Datum timestamptz_le_timestamp(PG_FUNCTION_ARGS);
-extern Datum timestamptz_gt_timestamp(PG_FUNCTION_ARGS);
-extern Datum timestamptz_ge_timestamp(PG_FUNCTION_ARGS);
-extern Datum timestamptz_cmp_timestamp(PG_FUNCTION_ARGS);
-
-extern Datum interval_in(PG_FUNCTION_ARGS);
-extern Datum interval_out(PG_FUNCTION_ARGS);
-extern Datum interval_recv(PG_FUNCTION_ARGS);
-extern Datum interval_send(PG_FUNCTION_ARGS);
-extern Datum intervaltypmodin(PG_FUNCTION_ARGS);
-extern Datum intervaltypmodout(PG_FUNCTION_ARGS);
-extern Datum interval_transform(PG_FUNCTION_ARGS);
-extern Datum interval_scale(PG_FUNCTION_ARGS);
-extern Datum interval_eq(PG_FUNCTION_ARGS);
-extern Datum interval_ne(PG_FUNCTION_ARGS);
-extern Datum interval_lt(PG_FUNCTION_ARGS);
-extern Datum interval_le(PG_FUNCTION_ARGS);
-extern Datum interval_ge(PG_FUNCTION_ARGS);
-extern Datum interval_gt(PG_FUNCTION_ARGS);
-extern Datum interval_finite(PG_FUNCTION_ARGS);
-extern Datum interval_cmp(PG_FUNCTION_ARGS);
-extern Datum interval_hash(PG_FUNCTION_ARGS);
-extern Datum interval_smaller(PG_FUNCTION_ARGS);
-extern Datum interval_larger(PG_FUNCTION_ARGS);
-extern Datum interval_justify_interval(PG_FUNCTION_ARGS);
-extern Datum interval_justify_hours(PG_FUNCTION_ARGS);
-extern Datum interval_justify_days(PG_FUNCTION_ARGS);
 extern float8 interval_li_fraction(Interval *x, Interval *x0, Interval *x1, 
 								   bool *eq_bounds, bool *eq_abscissas);
 extern Interval *interval_li_value(float8 f, Interval *y0, Interval *y1);
-extern Datum make_interval(PG_FUNCTION_ARGS);
-
-extern Datum timestamp_trunc(PG_FUNCTION_ARGS);
-extern Datum interval_trunc(PG_FUNCTION_ARGS);
-extern Datum timestamp_part(PG_FUNCTION_ARGS);
-extern Datum interval_part(PG_FUNCTION_ARGS);
-extern Datum timestamp_zone_transform(PG_FUNCTION_ARGS);
-extern Datum timestamp_zone(PG_FUNCTION_ARGS);
-extern Datum timestamp_izone_transform(PG_FUNCTION_ARGS);
-extern Datum timestamp_izone(PG_FUNCTION_ARGS);
-extern Datum timestamp_timestamptz(PG_FUNCTION_ARGS);
-
-extern Datum timestamptz_in(PG_FUNCTION_ARGS);
-extern Datum timestamptz_out(PG_FUNCTION_ARGS);
-extern Datum timestamptz_recv(PG_FUNCTION_ARGS);
-extern Datum timestamptz_send(PG_FUNCTION_ARGS);
-extern Datum timestamptztypmodin(PG_FUNCTION_ARGS);
-extern Datum timestamptztypmodout(PG_FUNCTION_ARGS);
-extern Datum timestamptz_scale(PG_FUNCTION_ARGS);
-extern Datum timestamptz_timestamp(PG_FUNCTION_ARGS);
-extern Datum timestamptz_zone(PG_FUNCTION_ARGS);
-extern Datum timestamptz_izone(PG_FUNCTION_ARGS);
-
-extern Datum interval_um(PG_FUNCTION_ARGS);
-extern Datum interval_pl(PG_FUNCTION_ARGS);
-extern Datum interval_mi(PG_FUNCTION_ARGS);
-extern Datum interval_mul(PG_FUNCTION_ARGS);
-extern Datum mul_d_interval(PG_FUNCTION_ARGS);
-extern Datum interval_div(PG_FUNCTION_ARGS);
 extern bool interval_div_internal(Interval *interval1, 
 								  Interval *interval2, 
 								  float8 *quo, 
 								  Interval *rem); /* GPDB Share implementation */
 extern int interval_cmp_internal(const Interval *interval1, const Interval *interval2);
-extern Datum interval_interval_div(PG_FUNCTION_ARGS);  /*GPDB*/
-extern Datum interval_interval_mod(PG_FUNCTION_ARGS);		/*GPDB*/
-extern Datum interval_accum(PG_FUNCTION_ARGS);
-extern Datum interval_combine(PG_FUNCTION_ARGS);
-extern Datum interval_accum_inv(PG_FUNCTION_ARGS);
-extern Datum interval_avg(PG_FUNCTION_ARGS);
-
-extern Datum timestamp_mi(PG_FUNCTION_ARGS);
-extern Datum timestamp_pl_interval(PG_FUNCTION_ARGS);
-extern Datum timestamp_mi_interval(PG_FUNCTION_ARGS);
-extern Datum timestamp_age(PG_FUNCTION_ARGS);
-extern Datum overlaps_timestamp(PG_FUNCTION_ARGS);
-
-extern Datum timestamptz_pl_interval(PG_FUNCTION_ARGS);
-extern Datum timestamptz_mi_interval(PG_FUNCTION_ARGS);
-extern Datum timestamptz_age(PG_FUNCTION_ARGS);
-extern Datum timestamptz_trunc(PG_FUNCTION_ARGS);
-extern Datum timestamptz_part(PG_FUNCTION_ARGS);
 
 extern float8 timestamp_li_fraction(Timestamp x, Timestamp x0, Timestamp x1, 
 									bool *eq_bounds, bool *eq_abscissas);
@@ -210,20 +90,6 @@ extern Timestamp timestamp_li_value(float8 f, Timestamp y0, Timestamp y1);
 extern float8 timestamptz_li_fraction(TimestampTz x, TimestampTz x0, TimestampTz x1, 
 									  bool *eq_bounds, bool *eq_abscissas);
 extern Timestamp timestamptz_li_value(float8 f, TimestampTz y0, TimestampTz y1);
-
-extern Datum now(PG_FUNCTION_ARGS);
-extern Datum statement_timestamp(PG_FUNCTION_ARGS);
-extern Datum clock_timestamp(PG_FUNCTION_ARGS);
-
-extern Datum pg_postmaster_start_time(PG_FUNCTION_ARGS);
-extern Datum pg_conf_load_time(PG_FUNCTION_ARGS);
-
-extern Datum generate_series_timestamp(PG_FUNCTION_ARGS);
-extern Datum generate_series_timestamptz(PG_FUNCTION_ARGS);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-
-/* Internal routines (not fmgr-callable) */
 
 extern int32 anytimestamp_typmod_check(bool istz, int32 typmod);
 

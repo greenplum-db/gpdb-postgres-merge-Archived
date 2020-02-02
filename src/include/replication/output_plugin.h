@@ -43,34 +43,20 @@ typedef void (*LogicalOutputPluginInit) (struct OutputPluginCallbacks *cb);
  * the same slot is used from there one, it will be "false".
  */
 typedef void (*LogicalDecodeStartupCB) (struct LogicalDecodingContext *ctx,
-<<<<<<< HEAD
-												OutputPluginOptions *options,
-													bool is_init);
-=======
 										OutputPluginOptions *options,
 										bool is_init);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Callback called for every (explicit or implicit) BEGIN of a successful
  * transaction.
  */
 typedef void (*LogicalDecodeBeginCB) (struct LogicalDecodingContext *ctx,
-<<<<<<< HEAD
-												  ReorderBufferTXN *txn);
-=======
 									  ReorderBufferTXN *txn);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Callback for every individual change in a successful transaction.
  */
 typedef void (*LogicalDecodeChangeCB) (struct LogicalDecodingContext *ctx,
-<<<<<<< HEAD
-												   ReorderBufferTXN *txn,
-												   Relation relation,
-												ReorderBufferChange *change);
-=======
 									   ReorderBufferTXN *txn,
 									   Relation relation,
 									   ReorderBufferChange *change);
@@ -83,19 +69,13 @@ typedef void (*LogicalDecodeTruncateCB) (struct LogicalDecodingContext *ctx,
 										 int nrelations,
 										 Relation relations[],
 										 ReorderBufferChange *change);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Called for every (explicit or implicit) COMMIT of a successful transaction.
  */
 typedef void (*LogicalDecodeCommitCB) (struct LogicalDecodingContext *ctx,
-<<<<<<< HEAD
-												   ReorderBufferTXN *txn,
-												   XLogRecPtr commit_lsn);
-=======
 									   ReorderBufferTXN *txn,
 									   XLogRecPtr commit_lsn);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Called for the generic logical decoding messages.
@@ -137,9 +117,6 @@ typedef struct OutputPluginCallbacks
 /* Functions in replication/logical/logical.c */
 extern void OutputPluginPrepareWrite(struct LogicalDecodingContext *ctx, bool last_write);
 extern void OutputPluginWrite(struct LogicalDecodingContext *ctx, bool last_write);
-<<<<<<< HEAD
-=======
 extern void OutputPluginUpdateProgress(struct LogicalDecodingContext *ctx);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #endif							/* OUTPUT_PLUGIN_H */

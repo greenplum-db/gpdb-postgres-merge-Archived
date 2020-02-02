@@ -126,16 +126,10 @@ typedef struct Port hbaPort;
 extern bool load_hba(void);
 extern bool load_ident(void);
 extern void hba_getauthmethod(hbaPort *port);
-<<<<<<< HEAD
-extern int check_usermap(const char *usermap_name,
-			  const char *pg_role, const char *auth_user,
-			  bool case_sensitive);
-extern bool check_same_host_or_net(SockAddr *raddr, IPCompareMethod method);
-=======
 extern int	check_usermap(const char *usermap_name,
 						  const char *pg_role, const char *auth_user,
 						  bool case_sensitive);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-extern bool pg_isblank(const char c);
+extern bool check_same_host_or_net(SockAddr *raddr, IPCompareMethod method);
+oextern bool pg_isblank(const char c);
 
 #endif							/* HBA_H */

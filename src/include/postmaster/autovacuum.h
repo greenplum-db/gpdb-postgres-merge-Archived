@@ -14,10 +14,8 @@
 #ifndef AUTOVACUUM_H
 #define AUTOVACUUM_H
 
-<<<<<<< HEAD
-#include "tcop/utility.h"
-=======
 #include "storage/block.h"
+#include "tcop/utility.h"
 
 /*
  * Other processes can request specific work from autovacuum, identified by
@@ -28,7 +26,6 @@ typedef enum
 	AVW_BRINSummarizeRange
 } AutoVacuumWorkItemType;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* GUC variables */
 extern bool autovacuum_start_daemon;

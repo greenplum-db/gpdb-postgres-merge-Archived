@@ -86,11 +86,8 @@ typedef struct VacAttrStats
 	Oid			attrtypid;		/* type of data being analyzed */
 	int32		attrtypmod;		/* typmod of data being analyzed */
 	Form_pg_type attrtype;		/* copy of pg_type row for attrtypid */
-<<<<<<< HEAD
-	char		relstorage;		/* pg_class.relstorage for table */
-=======
 	Oid			attrcollid;		/* collation of data being analyzed */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	char		relstorage;		/* pg_class.relstorage for table */
 	MemoryContext anl_context;	/* where to save long-lived data */
 	int16		elevel;			/* set to LOG for ANALYZE VERBOSE */
 
@@ -318,7 +315,6 @@ extern double anl_random_fract(void);
 extern double anl_init_selection_state(int n);
 extern double anl_get_next_S(double t, int n, double *stateptr);
 
-<<<<<<< HEAD
 extern int acquire_sample_rows(Relation onerel, int elevel,
 							   HeapTuple *rows, int targrows,
 							   double *totalrows, double *totaldeadrows);
@@ -330,7 +326,4 @@ extern int acquire_inherited_sample_rows(Relation onerel, int elevel,
 extern Datum gp_acquire_sample_rows(PG_FUNCTION_ARGS);
 extern Oid gp_acquire_sample_rows_col_type(Oid typid);
 
-#endif   /* VACUUM_H */
-=======
 #endif							/* VACUUM_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

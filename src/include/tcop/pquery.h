@@ -28,34 +28,19 @@ extern List *FetchPortalTargetList(Portal portal);
 extern List *FetchStatementTargetList(Node *stmt);
 
 extern void PortalStart(Portal portal, ParamListInfo params,
-<<<<<<< HEAD
-			int eflags, Snapshot snapshot,
-			QueryDispatchDesc *ddesc);
-=======
-						int eflags, Snapshot snapshot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						int eflags, Snapshot snapshot,
+						QueryDispatchDesc *ddesc);
 
 extern void PortalSetResultFormat(Portal portal, int nFormats,
 								  int16 *formats);
 
-<<<<<<< HEAD
 extern bool PortalRun(Portal portal, int64 count, bool isTopLevel,
-		  DestReceiver *dest, DestReceiver *altdest,
-		  char *completionTag);
-
-extern uint64 PortalRunFetch(Portal portal,
-			   FetchDirection fdirection,
-			   int64 count,
-			   DestReceiver *dest);
-=======
-extern bool PortalRun(Portal portal, long count, bool isTopLevel,
 					  bool run_once, DestReceiver *dest, DestReceiver *altdest,
 					  char *completionTag);
 
 extern uint64 PortalRunFetch(Portal portal,
 							 FetchDirection fdirection,
-							 long count,
+							 int64 count,
 							 DestReceiver *dest);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #endif							/* PQUERY_H */

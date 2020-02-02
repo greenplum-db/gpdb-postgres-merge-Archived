@@ -31,25 +31,9 @@ extern void flatten_simple_union_all(PlannerInfo *root);
 extern void reduce_outer_joins(PlannerInfo *root);
 extern void remove_useless_result_rtes(PlannerInfo *root);
 extern Relids get_relids_in_jointree(Node *jtnode, bool include_joins);
-<<<<<<< HEAD
-extern Relids get_relids_for_join(PlannerInfo *root, int joinrelid);
+extern Relids get_relids_for_join(Query *query, int joinrelid);
 
 extern List *init_list_cteplaninfo(int numCtes);
-
-/*
- * prototypes for prepqual.c
- */
-extern Node *negate_clause(Node *node);
-extern Expr *canonicalize_qual(Expr *qual);
-extern Expr *canonicalize_qual_ext(Expr *qual, bool is_check);
-
-/*
- * prototypes for prepsecurity.c
- */
-extern void expand_security_quals(PlannerInfo *root, List *tlist);
-=======
-extern Relids get_relids_for_join(Query *query, int joinrelid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * prototypes for preptlist.c

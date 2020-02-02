@@ -286,16 +286,10 @@ extern void RI_PartitionRemove_Check(Trigger *trigger, Relation fk_rel,
 
 extern int	RI_FKey_trigger_type(Oid tgfoid);
 
-<<<<<<< HEAD
 extern HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
  					int tgindx,
  					FmgrInfo *finfo,
  					Instrumentation *instr,
  					MemoryContext per_tuple_context);
  
-extern Datum pg_trigger_depth(PG_FUNCTION_ARGS);
-
-#endif   /* TRIGGER_H */
-=======
 #endif							/* TRIGGER_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

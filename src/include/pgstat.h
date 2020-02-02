@@ -1493,7 +1493,6 @@ pgstat_report_wait_end(void)
 #define pgstat_count_buffer_write_time(n)							\
 	(pgStatBlockWriteTime += (n))
 
-<<<<<<< HEAD
 /* Resource queue statistics: */
 #define pgstat_count_queue_exec(p, q) 									\
 	do {																\
@@ -1560,30 +1559,7 @@ pgstat_report_wait_end(void)
 		}																\
 	} while (0)
 	
-extern void pgstat_count_heap_update(Relation rel, bool hot);
-extern void pgstat_count_heap_delete(Relation rel);
-extern void pgstat_update_heap_dead_tuples(Relation rel, int delta);
-
-extern void pgstat_init_function_usage(FunctionCallInfoData *fcinfo,
-						   PgStat_FunctionCallUsage *fcu);
-extern void pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu,
-						  bool finalize);
-
-extern void AtEOXact_PgStat(bool isCommit);
-extern void AtEOSubXact_PgStat(bool isCommit, int nestDepth);
-
-extern void AtPrepare_PgStat(void);
-extern void PostPrepare_PgStat(void);
-
-extern void pgstat_twophase_postcommit(TransactionId xid, uint16 info,
-						   void *recdata, uint32 len);
-extern void pgstat_twophase_postabort(TransactionId xid, uint16 info,
-						  void *recdata, uint32 len);
-
-extern void pgstat_count_heap_insert(Relation rel, int n);
-=======
 extern void pgstat_count_heap_insert(Relation rel, PgStat_Counter n);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void pgstat_count_heap_update(Relation rel, bool hot);
 extern void pgstat_count_heap_delete(Relation rel);
 extern void pgstat_count_truncate(Relation rel);

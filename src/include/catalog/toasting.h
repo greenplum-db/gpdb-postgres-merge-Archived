@@ -117,7 +117,6 @@ DECLARE_TOAST(pg_tablespace, 4185, 4186);
 #define PgTablespaceToastTable 4185
 #define PgTablespaceToastIndex 4186
 
-<<<<<<< HEAD
 /* relation id: 5036 - gp_segment_configuration 20101122 */
 DECLARE_TOAST(gp_segment_configuration, 6092, 6093);
 #define GpSegmentConfigToastTable	6092
@@ -135,7 +134,4 @@ DECLARE_TOAST(pg_partition_encoding, 9905, 9906);
 #define PgPartitionEncodingToastTable	9905
 #define PgPartitionEncodingToastIndex	9906
 
-#endif   /* TOASTING_H */
-=======
 #endif							/* TOASTING_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -3,13 +3,9 @@
  * sequence.h
  *	  prototypes for sequence.c.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/sequence.h
@@ -64,16 +60,8 @@ typedef struct xl_seq_rec
 
 extern int64 nextval_internal(Oid relid, bool check_permissions);
 extern Datum nextval(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
-extern Datum nextval_oid(PG_FUNCTION_ARGS);
 extern void nextval_qd(Oid relid, int64 *plast, int64 *pcached, int64  *pincrement, bool *poverflow);
-extern Datum currval_oid(PG_FUNCTION_ARGS);
-extern Datum setval_oid(PG_FUNCTION_ARGS);
-extern Datum setval3_oid(PG_FUNCTION_ARGS);
-extern Datum lastval(PG_FUNCTION_ARGS);
-=======
 extern List *sequence_options(Oid relid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern ObjectAddress DefineSequence(ParseState *pstate, CreateSeqStmt *stmt);
 extern ObjectAddress AlterSequence(ParseState *pstate, AlterSeqStmt *stmt);

@@ -20,10 +20,6 @@ extern WindowAggState *ExecInitWindowAgg(WindowAgg *node, EState *estate, int ef
 extern void ExecEndWindowAgg(WindowAggState *node);
 extern void ExecReScanWindowAgg(WindowAggState *node);
 
-<<<<<<< HEAD
 extern void ExecSquelchWindowAgg(WindowAggState *node);
 
-#endif   /* NODEWINDOWAGG_H */
-=======
 #endif							/* NODEWINDOWAGG_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

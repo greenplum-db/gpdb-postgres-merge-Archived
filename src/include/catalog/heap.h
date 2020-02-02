@@ -160,23 +160,15 @@ extern void InsertPgClassTuple(Relation pg_class_desc,
 							   Datum reloptions);
 
 extern List *AddRelationNewConstraints(Relation rel,
-<<<<<<< HEAD
-						  List *newColDefaults,
-						  List *newConstraints,
-						  bool allow_merge,
-						  bool is_local,
-						  bool is_internal);
-extern List *AddRelationConstraints(Relation rel,
-						  List *rawColDefaults,
-						  List *constraints);
-=======
 									   List *newColDefaults,
 									   List *newConstraints,
 									   bool allow_merge,
 									   bool is_local,
 									   bool is_internal,
 									   const char *queryString);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern List *AddRelationConstraints(Relation rel,
+						  List *rawColDefaults,
+						  List *constraints);
 
 extern void RelationClearMissing(Relation rel);
 extern void SetAttrMissing(Oid relid, char *attname, char *value);

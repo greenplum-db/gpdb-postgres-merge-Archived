@@ -28,14 +28,9 @@ extern void ExecHashJoinReInitializeDSM(HashJoinState *state, ParallelContext *p
 extern void ExecHashJoinInitializeWorker(HashJoinState *state,
 										 ParallelWorkerContext *pwcxt);
 
-<<<<<<< HEAD
 extern void ExecHashJoinSaveTuple(PlanState *ps, MemTuple tuple, uint32 hashvalue,
 								  HashJoinTable hashtable, BufFile **fileptr,
 								  MemoryContext bfCxt);
 extern void ExecSquelchHashJoin(HashJoinState *node);
-=======
-extern void ExecHashJoinSaveTuple(MinimalTuple tuple, uint32 hashvalue,
-								  BufFile **fileptr);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #endif							/* NODEHASHJOIN_H */

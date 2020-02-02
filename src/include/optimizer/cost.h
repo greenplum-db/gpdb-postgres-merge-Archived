@@ -4,13 +4,9 @@
  *	  prototypes for costsize.c and clausesel.c.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/cost.h
@@ -66,36 +62,6 @@ clamp_row_est(double nrows)
  *	  routines to compute costs and sizes
  */
 
-<<<<<<< HEAD
-/* parameter variables and flags */
-extern PGDLLIMPORT double seq_page_cost;
-extern PGDLLIMPORT double random_page_cost;
-extern PGDLLIMPORT double cpu_tuple_cost;
-extern PGDLLIMPORT double cpu_index_tuple_cost;
-extern PGDLLIMPORT double cpu_operator_cost;
-extern PGDLLIMPORT double parallel_tuple_cost;
-extern PGDLLIMPORT double parallel_setup_cost;
-extern PGDLLIMPORT int effective_cache_size;
-extern Cost disable_cost;
-extern int	max_parallel_workers_per_gather;
-extern bool enable_seqscan;
-extern bool enable_indexscan;
-extern bool enable_indexonlyscan;
-extern bool enable_bitmapscan;
-extern bool enable_tidscan;
-extern bool enable_sort;
-extern bool enable_hashagg;
-extern bool enable_groupagg;
-extern bool enable_nestloop;
-extern bool enable_material;
-extern bool enable_mergejoin;
-extern bool enable_hashjoin;
-extern int	constraint_exclusion;
-
-extern bool gp_enable_hashjoin_size_heuristic;          /*CDB*/
-extern bool gp_enable_predicate_propagation;
-
-=======
 /* parameter variables and flags (see also optimizer.h) */
 extern PGDLLIMPORT Cost disable_cost;
 extern PGDLLIMPORT int max_parallel_workers_per_gather;
@@ -106,6 +72,7 @@ extern PGDLLIMPORT bool enable_bitmapscan;
 extern PGDLLIMPORT bool enable_tidscan;
 extern PGDLLIMPORT bool enable_sort;
 extern PGDLLIMPORT bool enable_hashagg;
+extern PGDLLIMPORT bool enable_groupagg;
 extern PGDLLIMPORT bool enable_nestloop;
 extern PGDLLIMPORT bool enable_material;
 extern PGDLLIMPORT bool enable_mergejoin;
@@ -118,7 +85,9 @@ extern PGDLLIMPORT bool enable_parallel_hash;
 extern PGDLLIMPORT bool enable_partition_pruning;
 extern PGDLLIMPORT int constraint_exclusion;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern bool gp_enable_hashjoin_size_heuristic;          /*CDB*/
+extern bool gp_enable_predicate_propagation;
+
 extern double index_pages_fetched(double tuples_fetched, BlockNumber pages,
 								  double index_pages, PlannerInfo *root);
 extern void cost_seqscan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
@@ -128,19 +97,14 @@ extern void cost_samplescan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 extern void cost_index(IndexPath *path, PlannerInfo *root,
 					   double loop_count, bool partial_path);
 extern void cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-<<<<<<< HEAD
-					  ParamPathInfo *param_info,
-					  Path *bitmapqual, double loop_count);
+								  ParamPathInfo *param_info,
+								  Path *bitmapqual, double loop_count);
 /* GPDB_92_MERGE_FIXME: Suspect we need to add ParamPathInfo for some scans below. */
 extern void cost_bitmap_appendonly_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 					  ParamPathInfo *param_info,
 					  Path *bitmapqual, double loop_count);
 extern void cost_bitmap_table_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 					  Path *bitmapqual, RelOptInfo *outer_rel);
-=======
-								  ParamPathInfo *param_info,
-								  Path *bitmapqual, double loop_count);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void cost_bitmap_and_node(BitmapAndPath *path, PlannerInfo *root);
 extern void cost_bitmap_or_node(BitmapOrPath *path, PlannerInfo *root);
 extern void cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec);
@@ -149,13 +113,9 @@ extern void cost_tidscan(Path *path, PlannerInfo *root,
 extern void cost_subqueryscan(SubqueryScanPath *path, PlannerInfo *root,
 							  RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_functionscan(Path *path, PlannerInfo *root,
-<<<<<<< HEAD
-				  RelOptInfo *baserel, ParamPathInfo *param_info);
+							  RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_tablefunction(TableFunctionScanPath *path, PlannerInfo *root,
 							   RelOptInfo *baserel, ParamPathInfo *param_info);
-=======
-							  RelOptInfo *baserel, ParamPathInfo *param_info);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void cost_valuesscan(Path *path, PlannerInfo *root,
 							RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_tablefuncscan(Path *path, PlannerInfo *root,
@@ -173,57 +133,36 @@ extern void cost_sort(Path *path, PlannerInfo *root,
 					  double limit_tuples);
 extern void cost_append(AppendPath *path);
 extern void cost_merge_append(Path *path, PlannerInfo *root,
-<<<<<<< HEAD
-				  List *pathkeys, int n_streams,
-				  Cost input_startup_cost, Cost input_total_cost,
-				  double tuples);
-extern void cost_material(Path *path, PlannerInfo *root,
-			  Cost input_startup_cost, Cost input_total_cost,
-			  double tuples, int width);
-
-struct HashAggTableSizes; /* defined in execHHashagg.h */
-extern void cost_agg(Path *path, PlannerInfo *root,
-		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
-		 int numGroupCols, double numGroups,
-		 Cost input_startup_cost, Cost input_total_cost,
-		 double input_tuples,
-		 struct HashAggTableSizes *hash_info,
-		 bool hash_streaming);
-extern void cost_tup_split(Path *path, PlannerInfo *root,
-						   int numDQAs,
-						   Cost input_startup_cost, Cost input_total_cost,
-						   double input_tuples);
-=======
 							  List *pathkeys, int n_streams,
 							  Cost input_startup_cost, Cost input_total_cost,
 							  double tuples);
 extern void cost_material(Path *path,
 						  Cost input_startup_cost, Cost input_total_cost,
 						  double tuples, int width);
+extern void cost_tup_split(Path *path, PlannerInfo *root,
+						   int numDQAs,
+						   Cost input_startup_cost, Cost input_total_cost,
+						   double input_tuples);
+struct HashAggTableSizes; /* defined in execHHashagg.h */
 extern void cost_agg(Path *path, PlannerInfo *root,
 					 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 					 int numGroupCols, double numGroups,
 					 List *quals,
 					 Cost input_startup_cost, Cost input_total_cost,
-					 double input_tuples);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+					 double input_tuples,
+					 struct HashAggTableSizes *hash_info,
+					 bool hash_streaming);
 extern void cost_windowagg(Path *path, PlannerInfo *root,
 						   List *windowFuncs, int numPartCols, int numOrderCols,
 						   Cost input_startup_cost, Cost input_total_cost,
 						   double input_tuples);
 extern void cost_group(Path *path, PlannerInfo *root,
-<<<<<<< HEAD
-		   int numGroupCols, double numGroups,
-		   Cost input_startup_cost, Cost input_total_cost,
-		   double input_tuples);
-/* GPDB_92_MERGE_FIXME: parameterized path for shared input scan? */
-extern void cost_shareinputscan(Path *path, PlannerInfo *root, Cost sharecost, double ntuples, int width);
-=======
 					   int numGroupCols, double numGroups,
 					   List *quals,
 					   Cost input_startup_cost, Cost input_total_cost,
 					   double input_tuples);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+/* GPDB_92_MERGE_FIXME: parameterized path for shared input scan? */
+extern void cost_shareinputscan(Path *path, PlannerInfo *root, Cost sharecost, double ntuples, int width);
 extern void initial_cost_nestloop(PlannerInfo *root,
 								  JoinCostWorkspace *workspace,
 								  JoinType jointype,
@@ -299,7 +238,6 @@ extern PathTarget *set_pathtarget_cost_width(PlannerInfo *root, PathTarget *targ
 extern double compute_bitmap_pages(PlannerInfo *root, RelOptInfo *baserel,
 								   Path *bitmapqual, int loop_count, Cost *cost, double *tuple);
 
-<<<<<<< HEAD
 /* Additional costsize.c prototypes for CDB incremental cost functions. */
 extern Cost incremental_hashjoin_cost(double rows, 
 									  int inner_width, int outer_width, 
@@ -307,26 +245,7 @@ extern Cost incremental_hashjoin_cost(double rows,
 									  PlannerInfo *root);
 extern Cost incremental_mergejoin_cost(double rows, List *mergeclauses, PlannerInfo *root);
 
-/*
- * prototypes for clausesel.c
- *	  routines to compute clause selectivities
- */
-extern Selectivity clauselist_selectivity(PlannerInfo *root,
-					   List *clauses,
-					   int varRelid,
-					   JoinType jointype,
-					   SpecialJoinInfo *sjinfo,
-					   bool use_damping);
-extern Selectivity clause_selectivity(PlannerInfo *root,
-				   Node *clause,
-				   int varRelid,
-				   JoinType jointype,
-				   SpecialJoinInfo *sjinfo,
-				   bool use_damping);
 extern int planner_segment_count(GpPolicy *policy);
 extern double global_work_mem(PlannerInfo *root);
 
-#endif   /* COST_H */
-=======
 #endif							/* COST_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

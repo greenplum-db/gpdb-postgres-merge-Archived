@@ -143,15 +143,10 @@ extern void HandleCatchupInterrupt(void);
  */
 extern void ProcessCatchupInterrupt(void);
 
-<<<<<<< HEAD
 extern volatile int in_process_catchup_event;
 
-extern int xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
-									 bool *RelcacheInitFileInval);
-=======
 extern int	xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
 												 bool *RelcacheInitFileInval);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
 												 int nmsgs, bool RelcacheInitFileInval,
 												 Oid dbid, Oid tsid);

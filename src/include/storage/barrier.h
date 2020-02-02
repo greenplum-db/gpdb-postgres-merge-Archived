@@ -19,10 +19,6 @@
  * barriers.
  */
 
-<<<<<<< HEAD
-#endif   /* BARRIER_H */
-
-=======
 #include "storage/condition_variable.h"
 #include "storage/spin.h"
 
@@ -47,4 +43,3 @@ extern int	BarrierPhase(Barrier *barrier);
 extern int	BarrierParticipants(Barrier *barrier);
 
 #endif							/* BARRIER_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

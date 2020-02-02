@@ -167,11 +167,7 @@ extern MemTuple toast_insert_or_update_memtup(Relation rel,
  *	Called by heap_delete().
  * ----------
  */
-<<<<<<< HEAD
-extern void toast_delete(Relation rel, GenericTuple oldtup, MemTupleBinding *pbind);
-=======
-extern void toast_delete(Relation rel, HeapTuple oldtup, bool is_speculative);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern void toast_delete(Relation rel, GenericTuple oldtup, MemTupleBinding *pbind, bool is_speculative);
 
 /* ----------
  * heap_tuple_fetch_attr() -

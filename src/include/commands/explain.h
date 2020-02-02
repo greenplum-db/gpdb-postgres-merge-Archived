@@ -120,16 +120,10 @@ extern void ExplainPropertyBool(const char *qlabel, bool value,
 								ExplainState *es);
 
 extern void ExplainOpenGroup(const char *objtype, const char *labelname,
-<<<<<<< HEAD
-				 bool labeled, ExplainState *es);
-extern void ExplainCloseGroup(const char *objtype, const char *labelname,
-				  bool labeled, ExplainState *es);
-
-extern void ExplainPrintExecStatsEnd(ExplainState *es, QueryDesc *queryDesc);
-=======
 							 bool labeled, ExplainState *es);
 extern void ExplainCloseGroup(const char *objtype, const char *labelname,
 							  bool labeled, ExplainState *es);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+extern void ExplainPrintExecStatsEnd(ExplainState *es, QueryDesc *queryDesc);
 
 #endif							/* EXPLAIN_H */

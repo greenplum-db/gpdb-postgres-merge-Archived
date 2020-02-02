@@ -192,12 +192,8 @@ struct StreamBMIterator
 };
 
 /* function prototypes in nodes/tidbitmap.c */
-<<<<<<< HEAD
-extern TIDBitmap *tbm_create(long maxbytes);
-=======
 
 extern TIDBitmap *tbm_create(long maxbytes, dsa_area *dsa);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void tbm_free(TIDBitmap *tbm);
 extern void tbm_free_shared_area(dsa_area *dsa, dsa_pointer dp);
 
@@ -219,7 +215,6 @@ extern TBMSharedIterator *tbm_attach_shared_iterate(dsa_area *dsa,
 													dsa_pointer dp);
 extern long tbm_calculate_entries(double maxbytes);
 
-<<<<<<< HEAD
 extern void stream_move_node(StreamBitmap *strm, StreamBitmap *other, StreamType kind);
 extern void stream_add_node(StreamBitmap *strm, StreamNode *node, StreamType kind);
 extern StreamNode *tbm_create_stream_node(TIDBitmap *tbm);
@@ -234,8 +229,4 @@ extern void tbm_generic_upd_instrument(Node *bm);
 
 extern void tbm_convert_appendonly_tid_out(ItemPointer psudeoHeapTid, AOTupleId *aoTid);
 
-
-#endif   /* TIDBITMAP_H */
-=======
 #endif							/* TIDBITMAP_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

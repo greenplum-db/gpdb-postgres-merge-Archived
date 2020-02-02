@@ -18,9 +18,6 @@
 #include "access/tupdesc.h"
 #include "lib/ilist.h"
 #include "nodes/params.h"
-<<<<<<< HEAD
-#include "nodes/parsenodes.h"
-=======
 #include "utils/queryenvironment.h"
 
 /* Forward declaration, to avoid including parsenodes.h here */
@@ -36,7 +33,6 @@ typedef enum
 
 /* GUC parameter */
 extern int	plan_cache_mode;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #define CACHEDPLANSOURCE_MAGIC		195726186
 #define CACHEDPLAN_MAGIC			953717834
@@ -220,15 +216,10 @@ extern List *CachedPlanGetTargetList(CachedPlanSource *plansource,
 									 QueryEnvironment *queryEnv);
 
 extern CachedPlan *GetCachedPlan(CachedPlanSource *plansource,
-<<<<<<< HEAD
-			  ParamListInfo boundParams,
-			  bool useResOwner,
-			  IntoClause *intoClause);
-=======
 								 ParamListInfo boundParams,
 								 bool useResOwner,
-								 QueryEnvironment *queryEnv);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+								 QueryEnvironment *queryEnv,
+								 IntoClause *intoClause);
 extern void ReleaseCachedPlan(CachedPlan *plan, bool useResOwner);
 
 extern CachedExpression *GetCachedExpression(Node *expr);

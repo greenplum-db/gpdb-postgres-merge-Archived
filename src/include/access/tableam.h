@@ -140,6 +140,11 @@ typedef struct TM_FailureData
 
 
 /* Typedef for callback function for table_index_build_scan */
+/* GDPB_12_MERGE_FIXME: We had previously modified this in GPDB, to take
+ * ItemPointer rather than HeapTuple as argument. (because this is also
+ * used with AO/AOCO tables). Is that still relevant with v12 table AM api?
+ * I left out that change for now.
+ */
 typedef void (*IndexBuildCallback) (Relation index,
 									HeapTuple htup,
 									Datum *values,

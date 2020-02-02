@@ -214,11 +214,7 @@ typedef struct ReorderBufferTXN
 	 */
 	Snapshot	base_snapshot;
 	XLogRecPtr	base_snapshot_lsn;
-<<<<<<< HEAD
-	dlist_node	base_snapshot_node;	/* link in txns_by_base_snapshot_lsn */
-=======
 	dlist_node	base_snapshot_node; /* link in txns_by_base_snapshot_lsn */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * How many ReorderBufferChange's do we have in this txn.
@@ -235,15 +231,9 @@ typedef struct ReorderBufferTXN
 
 	/*
 	 * Has this transaction been spilled to disk?  It's not always possible to
-<<<<<<< HEAD
-	 * deduce that fact by comparing nentries with nentries_mem, because
-	 * e.g. subtransactions of a large transaction might get serialized
-	 * together with the parent - if they're restored to memory they'd have
-=======
 	 * deduce that fact by comparing nentries with nentries_mem, because e.g.
 	 * subtransactions of a large transaction might get serialized together
 	 * with the parent - if they're restored to memory they'd have
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * nentries_mem == nentries.
 	 */
 	bool		serialized;

@@ -30,9 +30,5 @@ extern Oid	get_database_oid(const char *dbname, bool missingok);
 extern char *get_database_name(Oid dbid);
 
 extern void check_encoding_locale_matches(int encoding, const char *collate, const char *ctype);
-<<<<<<< HEAD
-#endif   /* DBCOMMANDS_H */
-=======
 
 #endif							/* DBCOMMANDS_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

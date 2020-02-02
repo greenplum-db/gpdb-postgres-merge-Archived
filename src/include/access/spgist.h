@@ -209,13 +209,8 @@ extern bool spginsert(Relation index, Datum *values, bool *isnull,
 extern IndexScanDesc spgbeginscan(Relation rel, int keysz, int orderbysz);
 extern void spgendscan(IndexScanDesc scan);
 extern void spgrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
-<<<<<<< HEAD
-		  ScanKey orderbys, int norderbys);
-extern Node *spggetbitmap(IndexScanDesc scan, Node *tbm);
-=======
 					  ScanKey orderbys, int norderbys);
-extern int64 spggetbitmap(IndexScanDesc scan, TIDBitmap *tbm);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern Node *spggetbitmap(IndexScanDesc scan, Node *tbm);
 extern bool spggettuple(IndexScanDesc scan, ScanDirection dir);
 extern bool spgcanreturn(Relation index, int attno);
 

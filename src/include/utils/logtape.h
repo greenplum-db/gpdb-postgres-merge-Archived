@@ -16,14 +16,9 @@
 #ifndef LOGTAPE_H
 #define LOGTAPE_H
 
-<<<<<<< HEAD
 #include "storage/buffile.h"
-#include "utils/workfile_mgr.h"
-=======
 #include "storage/sharedfileset.h"
-
-/* LogicalTapeSet is an opaque type whose details are not known outside logtape.c. */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#include "utils/workfile_mgr.h"
 
 typedef struct LogicalTapePos
 {

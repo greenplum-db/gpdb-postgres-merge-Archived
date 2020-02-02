@@ -14,17 +14,13 @@
 /* Number of SLRU buffers to use for subtrans */
 #define NUM_SUBTRANS_BUFFERS	32
 
-<<<<<<< HEAD
 typedef struct SubTransData
 {
 	TransactionId parent;
 	TransactionId topMostParent;
 } SubTransData;
 
-extern void SubTransSetParent(TransactionId xid, TransactionId parent, bool overwriteOK);
-=======
 extern void SubTransSetParent(TransactionId xid, TransactionId parent);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern TransactionId SubTransGetParent(TransactionId xid);
 extern TransactionId SubTransGetTopmostTransaction(TransactionId xid);
 

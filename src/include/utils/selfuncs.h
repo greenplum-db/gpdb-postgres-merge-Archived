@@ -131,11 +131,7 @@ extern PGDLLIMPORT get_index_stats_hook_type get_index_stats_hook;
 /* Functions in selfuncs.c */
 
 extern void examine_variable(PlannerInfo *root, Node *node, int varRelid,
-<<<<<<< HEAD
-				 VariableStatData *vardata);
-=======
 							 VariableStatData *vardata);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern bool statistic_proc_security_check(VariableStatData *vardata, Oid func_oid);
 extern bool get_restriction_variable(PlannerInfo *root, List *args,
 									 int varRelid,
@@ -152,49 +148,10 @@ extern double mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 							  Datum constval, bool varonleft,
 							  double *sumcommonp);
 extern double histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
-<<<<<<< HEAD
-					  Datum constval, bool varonleft,
-					  int min_hist_size, int n_skip,
-					  int *hist_size);
-extern double convert_timevalue_to_scalar(Datum value, Oid typid, bool *failure);
-
-extern Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
-					 Pattern_Type ptype,
-					 Oid collation,
-					 Const **prefix,
-					 Selectivity *rest_selec);
-extern Const *make_greater_string(const Const *str_const, FmgrInfo *ltproc,
-					Oid collation);
-
-extern Datum eqsel(PG_FUNCTION_ARGS);
-extern Datum neqsel(PG_FUNCTION_ARGS);
-extern Datum scalarltsel(PG_FUNCTION_ARGS);
-extern Datum scalargtsel(PG_FUNCTION_ARGS);
-extern Datum regexeqsel(PG_FUNCTION_ARGS);
-extern Datum icregexeqsel(PG_FUNCTION_ARGS);
-extern Datum likesel(PG_FUNCTION_ARGS);
-extern Datum iclikesel(PG_FUNCTION_ARGS);
-extern Datum regexnesel(PG_FUNCTION_ARGS);
-extern Datum icregexnesel(PG_FUNCTION_ARGS);
-extern Datum nlikesel(PG_FUNCTION_ARGS);
-extern Datum icnlikesel(PG_FUNCTION_ARGS);
-
-extern Datum eqjoinsel(PG_FUNCTION_ARGS);
-extern Datum neqjoinsel(PG_FUNCTION_ARGS);
-extern Datum scalarltjoinsel(PG_FUNCTION_ARGS);
-extern Datum scalargtjoinsel(PG_FUNCTION_ARGS);
-extern Datum regexeqjoinsel(PG_FUNCTION_ARGS);
-extern Datum icregexeqjoinsel(PG_FUNCTION_ARGS);
-extern Datum likejoinsel(PG_FUNCTION_ARGS);
-extern Datum iclikejoinsel(PG_FUNCTION_ARGS);
-extern Datum regexnejoinsel(PG_FUNCTION_ARGS);
-extern Datum icregexnejoinsel(PG_FUNCTION_ARGS);
-extern Datum nlikejoinsel(PG_FUNCTION_ARGS);
-extern Datum icnlikejoinsel(PG_FUNCTION_ARGS);
-=======
 									Datum constval, bool varonleft,
 									int min_hist_size, int n_skip,
 									int *hist_size);
+extern double convert_timevalue_to_scalar(Datum value, Oid typid, bool *failure);
 extern double ineq_histogram_selectivity(PlannerInfo *root,
 										 VariableStatData *vardata,
 										 FmgrInfo *opproc, bool isgt, bool iseq,
@@ -205,7 +162,6 @@ extern double var_eq_const(VariableStatData *vardata, Oid oproid,
 extern double var_eq_non_const(VariableStatData *vardata, Oid oproid,
 							   Node *other,
 							   bool varonleft, bool negate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern Selectivity boolvarsel(PlannerInfo *root, Node *arg, int varRelid);
 extern Selectivity booltestsel(PlannerInfo *root, BoolTestType booltesttype,
@@ -231,10 +187,6 @@ extern void mergejoinscansel(PlannerInfo *root, Node *clause,
 extern double estimate_num_groups(PlannerInfo *root, List *groupExprs,
 								  double input_rows, List **pgset);
 
-<<<<<<< HEAD
-extern Selectivity estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey,
-											double nbuckets, Path *path);
-=======
 extern void estimate_hash_bucket_stats(PlannerInfo *root,
 									   Node *hashkey, double nbuckets,
 									   Selectivity *mcv_freq,
@@ -242,7 +194,6 @@ extern void estimate_hash_bucket_stats(PlannerInfo *root,
 extern double estimate_hashagg_tablesize(Path *path,
 										 const AggClauseCosts *agg_costs,
 										 double dNumGroups);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern List *get_quals_from_indexclauses(List *indexclauses);
 extern Cost index_other_operands_eval_cost(PlannerInfo *root,
@@ -256,18 +207,10 @@ extern void genericcostestimate(PlannerInfo *root, IndexPath *path,
 /* Functions in array_selfuncs.c */
 
 extern Selectivity scalararraysel_containment(PlannerInfo *root,
-<<<<<<< HEAD
-						   Node *leftop, Node *rightop,
-						   Oid elemtype, bool isEquality, bool useOr,
-						   int varRelid);
-extern Datum arraycontsel(PG_FUNCTION_ARGS);
-extern Datum arraycontjoinsel(PG_FUNCTION_ARGS);
-extern double estimate_num_groups_per_segment(double groupNum, double numPerGroup, double numsegments);
-extern double estimate_num_groups_across_segments(double groupNum, double numPerGroup, double numsegments);
-=======
 											  Node *leftop, Node *rightop,
 											  Oid elemtype, bool isEquality, bool useOr,
 											  int varRelid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern double estimate_num_groups_per_segment(double groupNum, double numPerGroup, double numsegments);
+extern double estimate_num_groups_across_segments(double groupNum, double numPerGroup, double numsegments);
 
 #endif							/* SELFUNCS_H */

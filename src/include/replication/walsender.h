@@ -51,12 +51,8 @@ extern void WalSndInitStopping(void);
 extern void WalSndWaitStopping(void);
 extern void HandleWalSndInitStopping(void);
 extern void WalSndRqstFileReload(void);
-<<<<<<< HEAD
 extern XLogRecPtr WalSndCtlGetXLogCleanUpTo(void);
 extern void WalSndSetXLogCleanUpTo(XLogRecPtr xlogPtr);
-extern Datum pg_stat_get_wal_senders(PG_FUNCTION_ARGS);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Remember that we want to wakeup walsenders later

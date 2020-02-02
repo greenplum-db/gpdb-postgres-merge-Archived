@@ -22,14 +22,8 @@ extern bool check_log_timezone(char **newval, void **extra, GucSource source);
 extern void assign_log_timezone(const char *newval, void *extra);
 extern const char *show_log_timezone(void);
 extern bool check_transaction_read_only(bool *newval, void **extra, GucSource source);
-<<<<<<< HEAD
-extern bool check_XactIsoLevel(char **newval, void **extra, GucSource source);
-extern void assign_XactIsoLevel(const char *newval, void *extra);
-extern bool check_DefaultXactIsoLevel(int *newval, void **extra, GucSource source);
-extern const char *show_XactIsoLevel(void);
-=======
 extern bool check_XactIsoLevel(int *newval, void **extra, GucSource source);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern bool check_DefaultXactIsoLevel(int *newval, void **extra, GucSource source);
 extern bool check_transaction_deferrable(bool *newval, void **extra, GucSource source);
 extern bool check_random_seed(double *newval, void **extra, GucSource source);
 extern void assign_random_seed(double newval, void *extra);

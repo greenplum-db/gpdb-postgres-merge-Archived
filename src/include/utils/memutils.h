@@ -7,13 +7,9 @@
  *	  of the API of the memory management subsystem.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/memutils.h
@@ -381,17 +377,6 @@ extern uint64 mpool_bytes_used(MPool *mpool);
 #define ALLOCSET_START_SMALL_SIZES \
 	ALLOCSET_SMALL_MINSIZE, ALLOCSET_SMALL_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE
 
-<<<<<<< HEAD
-
-/*
- * Threshold above which a request in an AllocSet context is certain to be
- * allocated separately (and thereby have constant allocation overhead).
- * Few callers should be interested in this, but tuplesort/tuplestore need
- * to know it.
- */
-#define ALLOCSET_SEPARATE_THRESHOLD  8192
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Threshold above which a request in an AllocSet context is certain to be

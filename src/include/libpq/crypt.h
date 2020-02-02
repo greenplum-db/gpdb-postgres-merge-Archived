@@ -12,16 +12,6 @@
  */
 #ifndef PG_CRYPT_H
 #define PG_CRYPT_H
-
-<<<<<<< HEAD
-#include "c.h"
-
-#include "libpq/libpq-be.h"
-#include "libpq/md5.h"
-
-extern int hashed_passwd_verify(const Port *port, const char *role,
-				 char *client_pass, char **logdetail);
-=======
 #include "datatype/timestamp.h"
 
 /*
@@ -51,6 +41,10 @@ extern int	md5_crypt_verify(const char *role, const char *shadow_pass,
 							 int md5_salt_len, char **logdetail);
 extern int	plain_crypt_verify(const char *role, const char *shadow_pass,
 							   const char *client_pass, char **logdetail);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+// GPDB_12_MERGE_FIXME: We had previously changed md5_crypt_verify to
+// hashed_crypt_verify, to support SHA hashes in place of md5. Do we still
+// need that? We have SCRAM now... If we need to keep it, refactor it to
+// fit the new PasswordType enum and stuff.
 
 #endif

@@ -23,19 +23,6 @@ struct EState;                  /* #include "nodes/execnodes.h" */
 
 #define DEFAULT_INDEX_TYPE	"btree"
 
-<<<<<<< HEAD
-/* Typedef for callback function for IndexBuildScan */
-/* GPDB: This takes an ItemPointer, rather than HeapTuple, because this is also
- * used with AO/AOCO tables */
-typedef void (*IndexBuildCallback) (Relation index,
-									ItemPointer tupleId,
-									Datum *values,
-									bool *isnull,
-									bool tupleIsAlive,
-									void *state);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* Action code for index_set_state_flags */
 typedef enum
 {

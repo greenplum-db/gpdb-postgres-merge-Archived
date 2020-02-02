@@ -305,10 +305,6 @@ void		libpqwalreceiver_PG_init(void);
 /* prototypes for functions in walreceiver.c */
 extern void WalReceiverMain(void) pg_attribute_noreturn();
 extern void ProcessWalRcvInterrupts(void);
-<<<<<<< HEAD
-extern Datum pg_stat_get_wal_receiver(PG_FUNCTION_ARGS);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* prototypes for functions in walreceiverfuncs.c */
 extern Size WalRcvShmemSize(void);

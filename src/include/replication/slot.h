@@ -207,16 +207,6 @@ extern void CheckPointReplicationSlots(void);
 
 extern void CheckSlotRequirements(void);
 
-<<<<<<< HEAD
-/* SQL callable functions */
-extern Datum pg_create_physical_replication_slot(PG_FUNCTION_ARGS);
-extern Datum pg_create_logical_replication_slot(PG_FUNCTION_ARGS);
-extern Datum pg_drop_replication_slot(PG_FUNCTION_ARGS);
-extern Datum pg_get_replication_slots(PG_FUNCTION_ARGS);
-
 extern void ReplicationSlotDropIfExists(const char *name);
 
-#endif   /* SLOT_H */
-=======
 #endif							/* SLOT_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

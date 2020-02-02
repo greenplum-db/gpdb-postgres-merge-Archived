@@ -74,16 +74,6 @@ FOREIGN_KEY(amproc REFERENCES pg_proc(oid));
 typedef FormData_pg_amproc *Form_pg_amproc;
 
 <<<<<<< HEAD
-/* ----------------
- *		compiler constants for pg_amproc
- * ----------------
- */
-#define Natts_pg_amproc					5
-#define Anum_pg_amproc_amprocfamily		1
-#define Anum_pg_amproc_amproclefttype	2
-#define Anum_pg_amproc_amprocrighttype	3
-#define Anum_pg_amproc_amprocnum		4
-#define Anum_pg_amproc_amproc			5
 
 /* ----------------
  *		initial contents of pg_amproc

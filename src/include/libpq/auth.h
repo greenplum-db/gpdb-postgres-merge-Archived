@@ -28,7 +28,6 @@ extern void FakeClientAuthentication(Port *port);  /* GPDB only */
 typedef void (*ClientAuthentication_hook_type) (Port *, int);
 extern PGDLLIMPORT ClientAuthentication_hook_type ClientAuthentication_hook;
 
-<<<<<<< HEAD
 /*
  * Support for time-based authentication
  *  
@@ -56,7 +55,4 @@ extern bool interval_contains(const authInterval *interval, const authPoint *poi
 extern int CheckAuthTimeConstraints(char *rolname);
 extern int check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp);
 
-#endif   /* AUTH_H */
-=======
 #endif							/* AUTH_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -18,13 +18,8 @@
 #endif
 
 /*
-<<<<<<< HEAD
- * 64 bit atomics on arm are implemented using kernel fallbacks and might be
- * slow, so disable entirely for now, unless we're on ARM64.
-=======
  * 64 bit atomics on ARM32 are implemented using kernel fallbacks and thus
  * might be slow, so disable entirely. On ARM64 that problem doesn't exist.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 #if !defined(__aarch64__) && !defined(__aarch64)
 #define PG_DISABLE_64_BIT_ATOMICS

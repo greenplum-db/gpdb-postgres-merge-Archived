@@ -194,10 +194,6 @@ extern void replication_scanner_finish(void);
 
 extern Node *replication_parse_result;
 
-<<<<<<< HEAD
 #define GP_WALRECEIVER_APPNAME "gp_walreceiver"
 
-#endif   /* _WALSENDER_PRIVATE_H */
-=======
 #endif							/* _WALSENDER_PRIVATE_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

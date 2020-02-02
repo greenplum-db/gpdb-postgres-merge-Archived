@@ -4,13 +4,9 @@
  *	  definition of the "statistics" system catalog (pg_statistic)
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_statistic.h
@@ -283,7 +279,6 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  */
 #define STATISTIC_KIND_BOUNDS_HISTOGRAM  7
 
-<<<<<<< HEAD
 /*
  * A "hyperloglog" slot stores the hyperloglog_counter created for sampled data.
  * This hyperloglog_counter data structure is converted into a bytea and stored
@@ -299,9 +294,6 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  */
 #define STATISTIC_KIND_FULLHLL  98
 
-#endif   /* PG_STATISTIC_H */
-=======
 #endif							/* EXPOSE_TO_CLIENT_CODE */
 
 #endif							/* PG_STATISTIC_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

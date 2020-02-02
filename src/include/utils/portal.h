@@ -157,12 +157,9 @@ typedef struct PortalData
 	/* Status data */
 	PortalStatus status;		/* see above */
 	bool		portalPinned;	/* a pinned portal can't be dropped */
-<<<<<<< HEAD
-	bool		hasResQueueLock;	/* true => resscheduler lock must be released */
-=======
 	bool		autoHeld;		/* was automatically converted from pinned to
 								 * held (see HoldPinnedPortals()) */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	bool		hasResQueueLock;	/* true => resscheduler lock must be released */
 
 	/* If not NULL, Executor is active; call ExecutorEnd eventually: */
 	QueryDesc  *queryDesc;		/* info needed for executor invocation */
@@ -208,14 +205,10 @@ typedef struct PortalData
 	/* Presentation data, primarily used by the pg_cursors system view */
 	TimestampTz creation_time;	/* time at which this portal was defined */
 	bool		visible;		/* include this portal in pg_cursors? */
-<<<<<<< HEAD
 
 	/* MPP: is this portal a CURSOR, or protocol level portal? */
 	bool		is_extended_query; /* simple or extended query protocol? */
-}	PortalData;
-=======
 }			PortalData;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * PortalIsValid
@@ -248,33 +241,20 @@ extern void MarkPortalFailed(Portal portal);
 extern void PortalDrop(Portal portal, bool isTopCommit);
 extern Portal GetPortalByName(const char *name);
 extern void PortalDefineQuery(Portal portal,
-<<<<<<< HEAD
-				  const char *prepStmtName,
-				  const char *sourceText,
-				  NodeTag	  sourceTag, /* GPDB */
-				  const char *commandTag,
-				  List *stmts,
-				  CachedPlan *cplan);
-extern Node *PortalListGetPrimaryStmt(List *stmts);
-=======
 							  const char *prepStmtName,
 							  const char *sourceText,
+							  NodeTag	  sourceTag, /* GPDB */
 							  const char *commandTag,
 							  List *stmts,
 							  CachedPlan *cplan);
 extern PlannedStmt *PortalGetPrimaryStmt(Portal portal);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void PortalCreateHoldStore(Portal portal);
 extern void PortalHashTableDeleteAll(void);
 extern bool ThereAreNoReadyPortals(void);
 extern void HoldPinnedPortals(void);
 
-<<<<<<< HEAD
 extern void AtExitCleanup_ResPortals(void);
 extern void TotalResPortalIncrements(int pid, Oid queueid,
 									 Cost *totalIncrements, int *num);
 
-#endif   /* PORTAL_H */
-=======
 #endif							/* PORTAL_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

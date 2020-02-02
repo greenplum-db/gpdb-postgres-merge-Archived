@@ -16,15 +16,6 @@
 
 #include "storage/block.h"
 #include "storage/relfilenode.h"
-<<<<<<< HEAD
-#include "storage/dbdirnode.h"
-#include "utils/relcache.h"
-
-extern void RelationCreateStorage(RelFileNode rnode, char relpersistence, char relstorage);
-extern void RelationDropStorage(Relation rel);
-extern void RelationPreserveStorage(RelFileNode rnode, bool atCommit);
-extern void RelationTruncate(Relation rel, BlockNumber nblocks);
-=======
 #include "storage/smgr.h"
 #include "utils/relcache.h"
 
@@ -35,7 +26,6 @@ extern void RelationTruncate(Relation rel, BlockNumber nblocks);
 extern void RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
 								ForkNumber forkNum, char relpersistence);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * These functions used to be in storage/smgr/smgr.c, which explains the
  * naming

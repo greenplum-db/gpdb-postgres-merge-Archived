@@ -74,17 +74,4 @@ extern void ginGetStats(Relation index, GinStatsData *stats);
 extern void ginUpdateStats(Relation index, const GinStatsData *stats,
 						   bool is_build);
 
-<<<<<<< HEAD
-/* ginxlog.c */
-extern void gin_redo(XLogReaderState *record);
-extern void gin_desc(StringInfo buf, XLogReaderState *record);
-extern const char *gin_identify(uint8 info);
-extern void gin_xlog_startup(void);
-extern void gin_xlog_cleanup(void);
-
-extern void gin_mask(char *pagedata, BlockNumber blkno);
-
-#endif   /* GIN_H */
-=======
 #endif							/* GIN_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

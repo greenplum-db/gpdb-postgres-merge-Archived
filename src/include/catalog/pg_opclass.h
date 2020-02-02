@@ -87,19 +87,6 @@ FOREIGN_KEY(opcowner REFERENCES pg_authid(oid));
 typedef FormData_pg_opclass *Form_pg_opclass;
 
 <<<<<<< HEAD
-/* ----------------
- *		compiler constants for pg_opclass
- * ----------------
- */
-#define Natts_pg_opclass				8
-#define Anum_pg_opclass_opcmethod		1
-#define Anum_pg_opclass_opcname			2
-#define Anum_pg_opclass_opcnamespace	3
-#define Anum_pg_opclass_opcowner		4
-#define Anum_pg_opclass_opcfamily		5
-#define Anum_pg_opclass_opcintype		6
-#define Anum_pg_opclass_opcdefault		7
-#define Anum_pg_opclass_opckeytype		8
 
 /* ----------------
  *		initial contents of pg_opclass

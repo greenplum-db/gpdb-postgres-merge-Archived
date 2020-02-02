@@ -95,13 +95,6 @@ typedef struct LogicalDecodingContext
 extern void CheckLogicalDecodingRequirements(void);
 
 extern LogicalDecodingContext *CreateInitDecodingContext(char *plugin,
-<<<<<<< HEAD
-						  List *output_plugin_options,
-						  bool need_full_snapshot,
-						  XLogPageReadCB read_page,
-						  LogicalOutputPluginWriterPrepareWrite prepare_write,
-						  LogicalOutputPluginWriterWrite do_write);
-=======
 														 List *output_plugin_options,
 														 bool need_full_snapshot,
 														 XLogRecPtr restart_lsn,
@@ -109,7 +102,6 @@ extern LogicalDecodingContext *CreateInitDecodingContext(char *plugin,
 														 LogicalOutputPluginWriterPrepareWrite prepare_write,
 														 LogicalOutputPluginWriterWrite do_write,
 														 LogicalOutputPluginWriterUpdateProgress update_progress);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern LogicalDecodingContext *CreateDecodingContext(
 													 XLogRecPtr start_lsn,
 													 List *output_plugin_options,

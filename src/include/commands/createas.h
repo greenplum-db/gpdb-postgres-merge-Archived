@@ -28,11 +28,7 @@ extern int	GetIntoRelEFlags(IntoClause *intoClause);
 
 extern DestReceiver *CreateIntoRelDestReceiver(IntoClause *intoClause);
 
-<<<<<<< HEAD
 struct QueryDesc;
 extern void intorel_initplan(struct QueryDesc *queryDesc, int eflags);
 
-#endif   /* CREATEAS_H */
-=======
 #endif							/* CREATEAS_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

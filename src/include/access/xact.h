@@ -547,11 +547,7 @@ extern void EnterParallelMode(void);
 extern void ExitParallelMode(void);
 extern bool IsInParallelMode(void);
 
-<<<<<<< HEAD
 /* GPDB: Used for logging */
 extern const char *IsoLevelAsUpperString(int IsoLevel);
 
-#endif   /* XACT_H */
-=======
 #endif							/* XACT_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

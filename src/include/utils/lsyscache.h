@@ -150,16 +150,13 @@ extern bool get_func_retset(Oid funcid);
 extern bool func_strict(Oid funcid);
 extern char func_volatile(Oid funcid);
 extern char func_parallel(Oid funcid);
-<<<<<<< HEAD
+extern char get_func_prokind(Oid funcid);
+extern bool get_func_leakproof(Oid funcid);
 extern char func_data_access(Oid funcid);
 extern char func_exec_location(Oid funcid);
 extern Oid get_agg_transtype(Oid aggid);
 extern bool is_agg_ordered(Oid aggid);
 extern bool is_agg_partial_capable(Oid aggid);
-=======
-extern char get_func_prokind(Oid funcid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-extern bool get_func_leakproof(Oid funcid);
 extern RegProcedure get_func_support(Oid funcid);
 extern Oid	get_relname_relid(const char *relname, Oid relnamespace);
 extern char *get_rel_name(Oid relid);
@@ -213,15 +210,10 @@ extern Oid	getBaseType(Oid typid);
 extern Oid	getBaseTypeAndTypmod(Oid typid, int32 *typmod);
 extern int32 get_typavgwidth(Oid typid, int32 typmod);
 extern int32 get_attavgwidth(Oid relid, AttrNumber attnum);
-<<<<<<< HEAD
 extern float4 get_attnullfrac(Oid relid, AttrNumber attnum);
 extern HeapTuple get_att_stats(Oid relid, AttrNumber attnum);
 extern bool get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
-				 int reqkind, Oid reqop, int flags);
-=======
-extern bool get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 							 int reqkind, Oid reqop, int flags);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void free_attstatsslot(AttStatsSlot *sslot);
 extern char *get_namespace_name(Oid nspid);
 extern char *get_namespace_name_or_temp(Oid nspid);

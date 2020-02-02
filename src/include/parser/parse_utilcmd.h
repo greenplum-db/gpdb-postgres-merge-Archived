@@ -35,10 +35,6 @@ extern IndexStmt *generateClonedIndexStmt(RangeVar *heapRel,
 										  const AttrNumber *attmap, int attmap_length,
 										  Oid *constraintOid);
 
-<<<<<<< HEAD
 extern GpPolicy *getPolicyForDistributedBy(DistributedBy *distributedBy, TupleDesc tupdesc);
 
-#endif   /* PARSE_UTILCMD_H */
-=======
 #endif							/* PARSE_UTILCMD_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

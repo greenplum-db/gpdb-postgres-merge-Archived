@@ -33,13 +33,8 @@ typedef enum
 	 * that started after this.
 	 *
 	 * Once we reached this we start to collect changes. We cannot apply them
-<<<<<<< HEAD
-	 * yet, because they might be based on transactions that were still running
-	 * when FULL_SNAPSHOT was reached.
-=======
 	 * yet, because they might be based on transactions that were still
 	 * running when FULL_SNAPSHOT was reached.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	SNAPBUILD_FULL_SNAPSHOT = 1,
 
@@ -65,13 +60,8 @@ struct xl_running_xacts;
 extern void CheckPointSnapBuild(void);
 
 extern SnapBuild *AllocateSnapshotBuilder(struct ReorderBuffer *cache,
-<<<<<<< HEAD
-						TransactionId xmin_horizon, XLogRecPtr start_lsn,
-						bool need_full_snapshot);
-=======
 										  TransactionId xmin_horizon, XLogRecPtr start_lsn,
 										  bool need_full_snapshot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void FreeSnapshotBuilder(SnapBuild *cache);
 
 extern void SnapBuildSnapDecRefcount(Snapshot snap);
@@ -87,13 +77,8 @@ extern Snapshot SnapBuildGetOrBuildSnapshot(SnapBuild *builder,
 extern bool SnapBuildXactNeedsSkip(SnapBuild *snapstate, XLogRecPtr ptr);
 
 extern void SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn,
-<<<<<<< HEAD
-				   TransactionId xid, int nsubxacts,
-				   TransactionId *subxacts);
-=======
 							   TransactionId xid, int nsubxacts,
 							   TransactionId *subxacts);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern bool SnapBuildProcessChange(SnapBuild *builder, TransactionId xid,
 								   XLogRecPtr lsn);
 extern void SnapBuildProcessNewCid(SnapBuild *builder, TransactionId xid,

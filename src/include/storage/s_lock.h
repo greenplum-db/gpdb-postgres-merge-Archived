@@ -914,11 +914,7 @@ spin_delay(void)
 
 /* Blow up if we didn't have any way to do spinlocks */
 #ifndef HAS_TEST_AND_SET
-<<<<<<< HEAD
 #error Greenplum does not have native spinlock support on this platform.  To continue the compilation, rerun configure using --disable-spinlocks.  However, performance will be poor.  Please report this to bugs@greenplum.org.
-=======
-#error PostgreSQL does not have native spinlock support on this platform.  To continue the compilation, rerun configure using --disable-spinlocks.  However, performance will be poor.  Please report this to pgsql-bugs@lists.postgresql.org.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #endif
 
 

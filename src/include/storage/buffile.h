@@ -15,13 +15,9 @@
  * but currently we have no need for oversize temp files without buffered
  * access.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/buffile.h
@@ -55,8 +51,9 @@ extern Size BufFileWrite(BufFile *file, const void *ptr, Size size);
 
 extern int	BufFileSeek(BufFile *file, int fileno, off_t offset, int whence);
 extern void BufFileTell(BufFile *file, int *fileno, off_t *offset);
-<<<<<<< HEAD
 extern int	BufFileSeekBlock(BufFile *file, int64 blknum);
+extern int64 BufFileSize(BufFile *file);
+extern long BufFileAppend(BufFile *target, BufFile *source);
 extern void BufFileFlush(BufFile *file);
 extern int64 BufFileGetSize(BufFile *buffile);
 
@@ -67,11 +64,6 @@ extern void BufFileResume(BufFile *buffile);
 
 extern bool gp_workfile_compression;
 extern void BufFilePledgeSequential(BufFile *buffile);
-=======
-extern int	BufFileSeekBlock(BufFile *file, long blknum);
-extern int64 BufFileSize(BufFile *file);
-extern long BufFileAppend(BufFile *target, BufFile *source);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern BufFile *BufFileCreateShared(SharedFileSet *fileset, const char *name);
 extern void BufFileExportShared(BufFile *file);

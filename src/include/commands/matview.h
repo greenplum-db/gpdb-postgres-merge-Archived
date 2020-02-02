@@ -32,10 +32,6 @@ extern DestReceiver *CreateTransientRelDestReceiver(Oid oid, Oid oldreloid, bool
 
 extern bool MatViewIncrementalMaintenanceIsEnabled(void);
 
-<<<<<<< HEAD
 extern void transientrel_init(QueryDesc *queryDesc);
 
-#endif   /* MATVIEW_H */
-=======
 #endif							/* MATVIEW_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -407,21 +407,12 @@ extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
 								  TransactionId cutoff_xid, xl_heap_freeze_tuple *tuples,
 								  int ntuples);
 extern bool heap_prepare_freeze_tuple(HeapTupleHeader tuple,
-<<<<<<< HEAD
-						  TransactionId relfrozenxid,
-						  TransactionId relminmxid,
-						  TransactionId cutoff_xid,
-						  TransactionId cutoff_multi,
-						  xl_heap_freeze_tuple *frz,
-						  bool *totally_frozen);
-=======
 									  TransactionId relfrozenxid,
 									  TransactionId relminmxid,
 									  TransactionId cutoff_xid,
 									  TransactionId cutoff_multi,
 									  xl_heap_freeze_tuple *frz,
 									  bool *totally_frozen);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void heap_execute_freeze_tuple(HeapTupleHeader tuple,
 									  xl_heap_freeze_tuple *xlrec_tp);
 extern XLogRecPtr log_heap_visible(RelFileNode rnode, Buffer heap_buffer,
