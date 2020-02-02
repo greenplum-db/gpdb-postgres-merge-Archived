@@ -885,33 +885,23 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 	 * ----------
 	 */
 
-<<<<<<< HEAD
 	if (!ismemtuple)
 	{
 		/* compute header overhead --- this should match heap_form_tuple() */
 		hoff = SizeofHeapTupleHeader;
 		if (has_nulls)
 			hoff += BITMAPLEN(numAttrs);
-		if (((HeapTuple) newtup)->t_data->t_infomask & HEAP_HASOID)
-			hoff += sizeof(Oid);
 		hoff = MAXALIGN(hoff);
 		/* now convert to a limit on the tuple data size */
+		maxDataLen = RelationGetToastTupleTarget(rel, TOAST_TUPLE_TARGET) - hoff;
 		maxDataLen = TOAST_TUPLE_TARGET - hoff;
 	}
 	else
 	{
+		// GPDB_12_MERGE_FIXME: use RelationGetToastTupleTarget here too?
 		maxDataLen = toast_tuple_target;
 		hoff = -1; /* keep compiler quiet about using 'hoff' uninitialized */
 	}
-=======
-	/* compute header overhead --- this should match heap_form_tuple() */
-	hoff = SizeofHeapTupleHeader;
-	if (has_nulls)
-		hoff += BITMAPLEN(numAttrs);
-	hoff = MAXALIGN(hoff);
-	/* now convert to a limit on the tuple data size */
-	maxDataLen = RelationGetToastTupleTarget(rel, TOAST_TUPLE_TARGET) - hoff;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Look for attributes with attstorage 'x' to compress.  Also find large

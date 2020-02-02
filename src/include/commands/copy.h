@@ -179,7 +179,6 @@ typedef struct CopyStateData
 	 * Working state for COPY FROM
 	 */
 	AttrNumber	num_defaults;
-	bool		file_has_oids;
 	FmgrInfo	oid_in_function;
 	Oid			oid_typioparam;
 	FmgrInfo   *in_functions;	/* array of input functions for each attrs */

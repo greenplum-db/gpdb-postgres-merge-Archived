@@ -3670,12 +3670,6 @@ CopyTo(CopyState cstate)
 					values = slot_get_values(slot);
 					nulls = slot_get_isnull(slot);
 
-					if (mtbind_has_oid(mt_bind))
-					{
-						tuple = TupGetMemTuple(slot);
-						tupleOid = MemTupleGetOid(tuple, mt_bind);
-					}
-
 					/* Format and send the data */
 					CopyOneRowTo(cstate, tupleOid, values, nulls);
 					processed++;

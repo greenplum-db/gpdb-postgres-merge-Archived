@@ -275,7 +275,6 @@ AppendOnlyMoveTuple(TupleTableSlot *slot,
 {
 	MemTuple	tuple;
 	AOTupleId  *oldAoTupleId;
-	Oid			tupleOid;
 	AOTupleId	newAoTupleId;
 
 	Assert(resultRelInfo);
@@ -288,10 +287,8 @@ AppendOnlyMoveTuple(TupleTableSlot *slot,
 	slot_getallattrs(slot);
 
 	tuple = TupGetMemTuple(slot);
-	tupleOid = MemTupleGetOid(tuple, mt_bind);
 	appendonly_insert(insertDesc,
 					  tuple,
-					  tupleOid,
 					  &newAoTupleId);
 
 	/* insert index' tuples if needed */

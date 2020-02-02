@@ -33,8 +33,6 @@
  *   	bit 31 is set if the memtuple is longer than 64K.
  *	bit 32 is if has null.
  *
- * Followed by optional 4 byte for Oid (depends on if mtbind_has_oid)
- * 
  * Followed by optional null bitmaps.  
  *
  * Align to bind.column_align, either 4 or 8.
@@ -679,10 +677,6 @@ MemTuple memtuple_form_to(
 	if(hasext)
 		memtuple_set_hasext(mtup);
 
-	/* Clear Oid */ 
-	if(mtbind_has_oid(pbind))
-		MemTupleSetOid(mtup, pbind, InvalidOid);
-
 	if(hasnull)
 		nullp = memtuple_get_nullp(mtup, pbind);
 
@@ -988,41 +982,6 @@ memtuple_deform_misaligned(MemTuple mtup, MemTupleBinding *pbind,
 {
 	memtuple_get_values(mtup, pbind, datum, isnull, false /* aligned */);
 }
-
-/*
- * Get the Oid assigned to this tuple (when WITH OIDS is used).
- *
- * Note that similarly to HeapTupleGetOid this function will 
- * sometimes get called when no oid is assigned, in which case
- * we return InvalidOid. It is possible to make the check earlier
- * and avoid this call but for simplicity and compatibility with
- * the HeapTuple interface we keep it the same. 
- */
-Oid MemTupleGetOid(MemTuple mtup, MemTupleBinding *pbind)
-{
-	Assert(pbind);
-		
-	if(!mtbind_has_oid(pbind))
-		return InvalidOid;
-
-	return ((Oid *) mtup)[1];
-}
-
-/*
- * Like MemTuleGetOid(), but must only be used if the caller is sure that the
- * tuple has an OID (or at least it has space for it; it can be invalid).
- */
-Oid MemTupleGetOidDirect(MemTuple mtup)
-{
-	return ((Oid *) mtup)[1];
-}
-
-void MemTupleSetOid(MemTuple mtup, MemTupleBinding *pbind pg_attribute_unused(), Oid oid)
-{
-	Assert(pbind && mtbind_has_oid(pbind));
-	((Oid *) mtup)[1] = oid;
-}
-
 
 bool MemTupleHasExternal(MemTuple mtup, MemTupleBinding *pbind)
 {
