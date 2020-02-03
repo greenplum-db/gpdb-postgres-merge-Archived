@@ -707,14 +707,11 @@ InitAuxiliaryProcess(void)
 	MyProc->backendId = InvalidBackendId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
-<<<<<<< HEAD
     MyProc->mppLocalProcessSerial = 0;
 	MyProc->mppSessionId = InvalidGpSessionId;
     MyProc->mppIsWriter = false;
-=======
 	MyProc->tempNamespaceId = InvalidOid;
 	MyProc->isBackgroundWorker = IsBackgroundWorker;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	MyPgXact->delayChkpt = false;
 	MyPgXact->vacuumFlags = 0;
 	MyProc->lwWaiting = false;
@@ -1036,16 +1033,13 @@ ProcKill(int code, Datum arg)
 	 */
 	LWLockReleaseAll();
 
-<<<<<<< HEAD
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
     MyProc->mppLocalProcessSerial = 0;
 	MyProc->mppSessionId = InvalidGpSessionId;
     MyProc->mppIsWriter = false;
 	MyProc->pid = 0;
-=======
 	/* Cancel any pending condition variable sleep, too */
 	ConditionVariableCancelSleep();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Make sure active replication slots are released */
 	if (MyReplicationSlot != NULL)

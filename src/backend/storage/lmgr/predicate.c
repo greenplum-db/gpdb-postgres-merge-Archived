@@ -118,15 +118,12 @@
  *			than its own active transaction must acquire an exclusive
  *			lock.
  *
-<<<<<<< HEAD
-=======
  *	SERIALIZABLEXACT's member 'predicateLockListLock'
  *		- Protects the linked list of locks held by a transaction.  Only
  *			needed for parallel mode, where multiple backends share the
  *			same SERIALIZABLEXACT object.  Not needed if
  *			SerializablePredicateLockListLock is held exclusively.
  *
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *	PredicateLockHashPartitionLock(hashcode)
  *		- The same lock protects a target, all locks on that target, and
  *			the linked list of locks on the target.
@@ -1750,15 +1747,9 @@ GetSerializableTransactionSnapshotInt(Snapshot snapshot,
 	} while (!sxact);
 
 	/* Get the snapshot, or check that it's safe to use */
-<<<<<<< HEAD
-	if (!TransactionIdIsValid(sourcexid))
+	if (!TransactionIdIsValid(sourcevxid))
 		snapshot = GetSnapshotData(snapshot, DistributedTransactionContext);
-	else if (!ProcArrayInstallImportedXmin(snapshot->xmin, sourcexid))
-=======
-	if (!sourcevxid)
-		snapshot = GetSnapshotData(snapshot);
 	else if (!ProcArrayInstallImportedXmin(snapshot->xmin, sourcevxid))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		ReleasePredXact(sxact);
 		LWLockRelease(SerializableXactHashLock);

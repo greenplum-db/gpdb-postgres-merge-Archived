@@ -1902,33 +1902,38 @@ LWLockHeldByMe(LWLock *l)
 }
 
 /*
-<<<<<<< HEAD
- * LWLockHeldByMe - test whether my process currently holds an exclusive lock
+ * LWLockHeldExclusiveByMe - test whether my process currently holds an exclusive lock
  *
  * This is meant as debug support only.  We do not distinguish whether the
  * lock is held shared or exclusive.
  */
 bool
 LWLockHeldExclusiveByMe(LWLockId lockid)
-=======
+{
+    int                     i;
+
+    for (i = 0; i < num_held_lwlocks; i++)
+    {
+        if (held_lwlocks[i].lock == lockid &&
+                held_lwlocks[i].mode == LW_EXCLUSIVE)
+            return true;
+    }
+    return false;
+}
+
+/*
  * LWLockHeldByMeInMode - test whether my process holds a lock in given mode
  *
  * This is meant as debug support only.
  */
 bool
 LWLockHeldByMeInMode(LWLock *l, LWLockMode mode)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	int			i;
 
 	for (i = 0; i < num_held_lwlocks; i++)
 	{
-<<<<<<< HEAD
-		if (held_lwlocks[i].lock == lockid &&
-			held_lwlocks[i].mode == LW_EXCLUSIVE)
-=======
 		if (held_lwlocks[i].lock == l && held_lwlocks[i].mode == mode)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			return true;
 	}
 	return false;
