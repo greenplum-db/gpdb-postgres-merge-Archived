@@ -1,4 +1,3 @@
-/*-------------------------------------------------------------------------
  *
  * smgr.c
  *	  public interface routines to storage manager switch.
@@ -24,11 +23,8 @@
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
 #include "commands/tablespace.h"
-<<<<<<< HEAD
 #include "postmaster/postmaster.h"
-=======
 #include "lib/ilist.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/md.h"
@@ -42,12 +38,11 @@
  * For example, disk quota extension will use these hooks to
  * detect active tables.
  */
-<<<<<<< HEAD
 file_create_hook_type file_create_hook = NULL;
 file_extend_hook_type file_extend_hook = NULL;
 file_truncate_hook_type file_truncate_hook = NULL;
 file_unlink_hook_type file_unlink_hook = NULL;
-=======
+
 typedef struct f_smgr
 {
 	void		(*smgr_init) (void);	/* may be NULL */
@@ -95,7 +90,6 @@ static const f_smgr smgrsw[] = {
 };
 
 static const int NSmgr = lengthof(smgrsw);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Each backend has a hashtable that stores all extant SMgrRelation objects.
@@ -120,9 +114,6 @@ static void smgrshutdown(int code, Datum arg);
 void
 smgrinit(void)
 {
-<<<<<<< HEAD
-	mdinit();
-=======
 	int			i;
 
 	for (i = 0; i < NSmgr; i++)
@@ -130,7 +121,6 @@ smgrinit(void)
 		if (smgrsw[i].smgr_init)
 			smgrsw[i].smgr_init();
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* register the shutdown proc */
 	on_proc_exit(smgrshutdown, 0);
@@ -142,8 +132,6 @@ smgrinit(void)
 static void
 smgrshutdown(int code, Datum arg)
 {
-<<<<<<< HEAD
-=======
 	int			i;
 
 	for (i = 0; i < NSmgr; i++)
@@ -151,7 +139,6 @@ smgrshutdown(int code, Datum arg)
 		if (smgrsw[i].smgr_shutdown)
 			smgrsw[i].smgr_shutdown();
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -270,11 +257,7 @@ smgrclearowner(SMgrRelation *owner, SMgrRelation reln)
 bool
 smgrexists(SMgrRelation reln, ForkNumber forknum)
 {
-<<<<<<< HEAD
-	return mdexists(reln, forknum);
-=======
 	return smgrsw[reln->smgr_which].smgr_exists(reln, forknum);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -287,11 +270,7 @@ smgrclose(SMgrRelation reln)
 	ForkNumber	forknum;
 
 	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-<<<<<<< HEAD
-		mdclose(reln, forknum);
-=======
 		smgrsw[reln->smgr_which].smgr_close(reln, forknum);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	owner = reln->smgr_owner;
 
@@ -387,8 +366,7 @@ smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 							reln->smgr_rnode.node.dbNode,
 							isRedo);
 
-<<<<<<< HEAD
-	mdcreate(reln, forknum, isRedo);
+    smgrsw[reln->smgr_which].smgr_create(reln, forknum, isRedo);
 
 	if (file_create_hook)
 		(*file_create_hook)(reln->smgr_rnode);
@@ -408,9 +386,6 @@ smgrcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
 	mdcreate_ao(rnode, segmentFileNum, isRedo);
 	if (file_create_hook)
 		(*file_create_hook)(rnode);
-=======
-	smgrsw[reln->smgr_which].smgr_create(reln, forknum, isRedo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -426,15 +401,12 @@ void
 smgrdounlink(SMgrRelation reln, bool isRedo, char relstorage)
 {
 	RelFileNodeBackend rnode = reln->smgr_rnode;
+    int                which = reln->smgr_which;
 	ForkNumber	forknum;
 
 	/* Close the forks at smgr level */
 	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-<<<<<<< HEAD
-		mdclose(reln, forknum);
-=======
 		smgrsw[which].smgr_close(reln, forknum);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Get rid of any remaining buffers for the relation.  bufmgr will just
@@ -472,12 +444,8 @@ smgrdounlink(SMgrRelation reln, bool isRedo, char relstorage)
 	 * ERROR, because we've already decided to commit or abort the current
 	 * xact.
 	 */
-<<<<<<< HEAD
 	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-		mdunlink(rnode, forknum, isRedo, relstorage);
-=======
-	smgrsw[which].smgr_unlink(rnode, InvalidForkNumber, isRedo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+        smgrsw[which].smgr_unlink(rnode, InvalidForkNumber, isRedo);
 }
 
 /*
@@ -515,20 +483,17 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo, char *relstorages)
 	for (i = 0; i < nrels; i++)
 	{
 		RelFileNodeBackend rnode = rels[i]->smgr_rnode;
+        int                which = rels[i]->smgr_which;
 
 		rnodes[i] = rnode;
 
 		/* Close the forks at smgr level */
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-<<<<<<< HEAD
-			mdclose(rels[i], forknum);
+            smgrsw[which].smgr_close(rels[i], forknum);
 
 		if ((relstorages[i] != RELSTORAGE_AOROWS) &&
 			(relstorages[i] != RELSTORAGE_AOCOLS))
 			has_heaps = true;
-=======
-			smgrsw[which].smgr_close(rels[i], forknum);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*
@@ -564,12 +529,10 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo, char *relstorages)
 
 	for (i = 0; i < nrels; i++)
 	{
+        int                which = rels[i]->smgr_which;
+
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-<<<<<<< HEAD
-			mdunlink(rnodes[i], forknum, isRedo, relstorages[i]);
-=======
 			smgrsw[which].smgr_unlink(rnodes[i], forknum, isRedo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	if (file_unlink_hook)
@@ -580,8 +543,6 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo, char *relstorages)
 }
 
 /*
-<<<<<<< HEAD
-=======
  *	smgrdounlinkfork() -- Immediately unlink one fork of a relation.
  *
  *		The specified fork of the relation is removed from the store.  This
@@ -634,7 +595,6 @@ smgrdounlinkfork(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 }
 
 /*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *	smgrextend() -- Add a new block to a file.
  *
  *		The semantics are nearly the same as smgrwrite(): write at the
@@ -648,14 +608,10 @@ void
 smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		   char *buffer, bool skipFsync)
 {
-<<<<<<< HEAD
-	mdextend(reln, forknum, blocknum, buffer, skipFsync);
-	if (file_extend_hook)
-		(*file_extend_hook)(reln->smgr_rnode);
-=======
 	smgrsw[reln->smgr_which].smgr_extend(reln, forknum, blocknum,
 										 buffer, skipFsync);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+    if (file_extend_hook)
+        (*file_extend_hook)(reln->smgr_rnode);
 }
 
 /*
@@ -664,11 +620,7 @@ smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 void
 smgrprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
 {
-<<<<<<< HEAD
-	mdprefetch(reln, forknum, blocknum);
-=======
 	smgrsw[reln->smgr_which].smgr_prefetch(reln, forknum, blocknum);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -683,11 +635,7 @@ void
 smgrread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		 char *buffer)
 {
-<<<<<<< HEAD
-	mdread(reln, forknum, blocknum, buffer);
-=======
 	smgrsw[reln->smgr_which].smgr_read(reln, forknum, blocknum, buffer);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -709,12 +657,8 @@ void
 smgrwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		  char *buffer, bool skipFsync)
 {
-<<<<<<< HEAD
-	mdwrite(reln, forknum, blocknum, buffer, skipFsync);
-=======
 	smgrsw[reln->smgr_which].smgr_write(reln, forknum, blocknum,
 										buffer, skipFsync);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 
@@ -726,12 +670,8 @@ void
 smgrwriteback(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			  BlockNumber nblocks)
 {
-<<<<<<< HEAD
-	mdwriteback(reln, forknum, blocknum, nblocks);
-=======
 	smgrsw[reln->smgr_which].smgr_writeback(reln, forknum, blocknum,
 											nblocks);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -741,11 +681,7 @@ smgrwriteback(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 BlockNumber
 smgrnblocks(SMgrRelation reln, ForkNumber forknum)
 {
-<<<<<<< HEAD
-	return mdnblocks(reln, forknum);
-=======
 	return smgrsw[reln->smgr_which].smgr_nblocks(reln, forknum);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -778,14 +714,10 @@ smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 	/*
 	 * Do the truncation.
 	 */
-<<<<<<< HEAD
-	mdtruncate(reln, forknum, nblocks);
+    smgrsw[reln->smgr_which].smgr_truncate(reln, forknum, nblocks);
 
 	if (file_truncate_hook)
 		(*file_truncate_hook)(reln->smgr_rnode);
-=======
-	smgrsw[reln->smgr_which].smgr_truncate(reln, forknum, nblocks);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -814,39 +746,7 @@ smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 void
 smgrimmedsync(SMgrRelation reln, ForkNumber forknum)
 {
-<<<<<<< HEAD
-	mdimmedsync(reln, forknum);
-}
-
-
-/*
- *	smgrpreckpt() -- Prepare for checkpoint.
- */
-void
-smgrpreckpt(void)
-{
-	mdpreckpt();
-}
-
-/*
- *	smgrsync() -- Sync files to disk during checkpoint.
- */
-void
-smgrsync(void)
-{
-	mdsync();
-}
-
-/*
- *	smgrpostckpt() -- Post-checkpoint cleanup.
- */
-void
-smgrpostckpt(void)
-{
-	mdpostckpt();
-=======
-	smgrsw[reln->smgr_which].smgr_immedsync(reln, forknum);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+    smgrsw[reln->smgr_which].smgr_immedsync(reln, forknum);
 }
 
 /*
