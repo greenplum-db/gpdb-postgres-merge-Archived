@@ -133,18 +133,6 @@ FullTransactionId XactTopFullTransactionId = {InvalidTransactionId};
 int			nParallelCurrentXids = 0;
 TransactionId *ParallelCurrentXids;
 
-/*
-<<<<<<< HEAD
- * MyXactAccessedTempRel is set when a temporary relation is accessed.
- * We don't allow PREPARE TRANSACTION in that case.  (This is global
- * so that it can be set from heapam.c.)
- *
- * Not used in GPDB, see comments in PrepareTransaction()
- */
-#if 0
-bool		MyXactAccessedTempRel = false;
-#endif
-
 int32 gp_subtrans_warn_limit = 16777216; /* 16 million */
 
 /* gp-specific
@@ -154,15 +142,18 @@ int32 gp_subtrans_warn_limit = 16777216; /* 16 million */
  * and will complain loudly if its violated.
  */
 bool		seqXlogWrite;
-=======
+
+/*
  * Miscellaneous flag bits to record events which occur on the top level
  * transaction. These flags are only persisted in MyXactFlags and are intended
  * so we remember to do certain things later on in the transaction. This is
  * globally accessible, so can be set from anywhere in the code that requires
  * recording flags.
+ *
+ * Flag XACT_FLAGS_ACCESSEDTEMPREL not used in GPDB, see comments in
+ * PrepareTransaction()
  */
 int			MyXactFlags;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  *	transaction states - transaction state from server perspective
@@ -2463,15 +2454,8 @@ StartTransaction(void)
 	XactDeferrable = DefaultXactDeferrable;
 	XactIsoLevel = DefaultXactIsoLevel;
 	forceSyncCommit = false;
-<<<<<<< HEAD
-	/* Disabled in GPDB as per comment in PrepareTransaction(). */
-#if 0
-	MyXactAccessedTempRel = false;
-#endif
 	seqXlogWrite = false;
-=======
 	MyXactFlags = 0;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * reinitialize within-transaction counters
@@ -3194,10 +3178,10 @@ PrepareTransaction(void)
 	/* NOTIFY will be handled below */
 
 	/*
-	 * In Postgres, MyXactAccessedTempRel is used to error out if PREPARE TRANSACTION
-	 * operated on temp table.
+	 * In Postgres, XACT_FLAGS_ACCESSEDTEMPNAMESPACE is used to error out if
+	 * PREPARE TRANSACTION operated on temp table.
 	 *
-	 * In GPDB, MyXactAccessedTempRel is removed.
+	 * In GPDB, XACT_FLAGS_ACCESSEDTEMPNAMESPACE is removed.
 	 *
 	 * GPDB treat temporary table like a regular table, e.g. stored in shared buffer
 	 * instead of keep it in local buffer. The temporary table just have a shorter life

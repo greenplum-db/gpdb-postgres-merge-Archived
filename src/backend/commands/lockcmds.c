@@ -130,6 +130,7 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 				 errmsg("\"%s\" is not a table or view",
 						rv->relname)));
 
+#if 0 /* Upstream code not applicable to GPDB */
 	/*
 	 * Make note if a temporary relation has been accessed in this
 	 * transaction.
@@ -137,6 +138,7 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 	relpersistence = get_rel_persistence(relid);
 	if (relpersistence == RELPERSISTENCE_TEMP)
 		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPNAMESPACE;
+#endif
 
 	/* Check permissions. */
 	aclresult = LockTableAclCheck(relid, lockmode, GetUserId());

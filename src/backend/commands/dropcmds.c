@@ -109,12 +109,14 @@ RemoveObjects(DropStmt *stmt)
 			check_object_ownership(GetUserId(), stmt->removeType, address,
 								   object, relation);
 
+#if 0 /* Upstream code not applicable to GPDB */
 		/*
 		 * Make note if a temporary namespace has been accessed in this
 		 * transaction.
 		 */
 		if (OidIsValid(namespaceId) && isTempNamespace(namespaceId))
 			MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPNAMESPACE;
+#endif
 
 		/* Release any relcache reference count, but keep lock until commit. */
 		if (relation)

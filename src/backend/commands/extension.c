@@ -1555,12 +1555,14 @@ CreateExtensionInternal(char *extensionName,
 		list_free(search_path);
 	}
 
+#if 0 /* Upstream code not applicable to GPDB */
 	/*
 	 * Make note if a temporary namespace has been accessed in this
 	 * transaction.
 	 */
 	if (isTempNamespace(schemaOid))
 		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPNAMESPACE;
+#endif
 
 	/*
 	 * We don't check creation rights on the target namespace here.  If the

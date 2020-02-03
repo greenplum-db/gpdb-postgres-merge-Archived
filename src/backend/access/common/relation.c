@@ -69,9 +69,11 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 		   IsBootstrapProcessingMode() ||
 		   CheckRelationLockedByMe(r, AccessShareLock, true));
 
+#if 0 /* Upstream code not applicable to GPDB */
 	/* Make note that we've accessed a temporary relation */
 	if (RelationUsesLocalBuffers(r))
 		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPNAMESPACE;
+#endif
 
 	pgstat_initstats(r);
 
@@ -119,9 +121,11 @@ try_relation_open(Oid relationId, LOCKMODE lockmode)
 	Assert(lockmode != NoLock ||
 		   CheckRelationLockedByMe(r, AccessShareLock, true));
 
+#if 0 /* Upstream code not applicable to GPDB */
 	/* Make note that we've accessed a temporary relation */
 	if (RelationUsesLocalBuffers(r))
 		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPNAMESPACE;
+#endif
 
 	pgstat_initstats(r);
 

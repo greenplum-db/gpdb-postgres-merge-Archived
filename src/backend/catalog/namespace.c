@@ -3978,11 +3978,13 @@ recomputeNamespacePath(void)
 static void
 AccessTempTableNamespace(bool force)
 {
+#if 0 /* Upstream code not applicable to GPDB */
 	/*
 	 * Make note that this temporary namespace has been accessed in this
 	 * transaction.
 	 */
 	MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPNAMESPACE;
+#endif
 
 	/*
 	 * If the caller attempting to access a temporary schema expects the

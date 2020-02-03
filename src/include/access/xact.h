@@ -85,13 +85,6 @@ typedef enum
 /* Synchronous commit level */
 extern int	synchronous_commit;
 
-<<<<<<< HEAD
-/* Disabled in GPDB as per comment in PrepareTransaction(). */
-#if 0
-/* Kluge for 2PC support */
-extern bool MyXactAccessedTempRel;
-#endif
-=======
 /*
  * Miscellaneous flag bits to record events which occur on the top level
  * transaction. These flags are only persisted in MyXactFlags and are intended
@@ -101,18 +94,20 @@ extern bool MyXactAccessedTempRel;
  */
 extern int	MyXactFlags;
 
+/* Disabled in GPDB as per comment in PrepareTransaction(). */
+#if 0
 /*
  * XACT_FLAGS_ACCESSEDTEMPNAMESPACE - set when a temporary object is accessed.
  * We don't allow PREPARE TRANSACTION in that case.
  */
 #define XACT_FLAGS_ACCESSEDTEMPNAMESPACE		(1U << 0)
+#endif
 
 /*
  * XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK - records whether the top level xact
  * logged any Access Exclusive Locks.
  */
 #define XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK	(1U << 1)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  *	start- and end-of-transaction callbacks for dynamically loaded modules
