@@ -16,12 +16,9 @@
 
 #include <unistd.h>
 
-<<<<<<< HEAD
 #include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"
 #include "cdb/cdbvars.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "common/relpath.h"
 #include "storage/copydir.h"
 #include "storage/fd.h"
@@ -51,11 +48,7 @@ typedef struct
 void
 ResetUnloggedRelations(int op)
 {
-<<<<<<< HEAD
 	char		temp_path[MAXPGPATH + 11 + get_dbid_string_length() + 1 + sizeof(GP_TABLESPACE_VERSION_DIRECTORY)];
-=======
-	char		temp_path[MAXPGPATH + 10 + sizeof(TABLESPACE_VERSION_DIRECTORY)];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	DIR		   *spc_dir;
 	struct dirent *spc_de;
 	MemoryContext tmpctx,

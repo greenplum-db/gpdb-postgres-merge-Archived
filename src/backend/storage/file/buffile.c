@@ -34,7 +34,11 @@
  * (by opening multiple fd.c temporary files).  This is an essential feature
  * for sorts and hashjoins on large amounts of data.
  *
-<<<<<<< HEAD
+ * BufFile supports temporary files that can be made read-only and shared with
+ * other backends, as infrastructure for parallel execution.  Such files need
+ * to be created as a member of a SharedFileSet that all participants are
+ * attached to.
+ *
  * GPDB:
  *
  * The purpose of BufFiles is the same in GPDB as in PostgreSQL, but the
@@ -55,24 +59,15 @@
  * - We support compressing the files, with some limitations. See
  *   BufFilePledgeSequential().
  *
-=======
- * BufFile supports temporary files that can be made read-only and shared with
- * other backends, as infrastructure for parallel execution.  Such files need
- * to be created as a member of a SharedFileSet that all participants are
- * attached to.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-<<<<<<< HEAD
 #ifdef HAVE_LIBZSTD
 #include <zstd.h>
 #endif
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "commands/tablespace.h"
 #include "executor/instrument.h"
 #include "miscadmin.h"
@@ -82,13 +77,11 @@
 #include "storage/buf_internals.h"
 #include "utils/resowner.h"
 
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "storage/gp_compress.h"
 #include "utils/faultinjector.h"
 #include "utils/memutils.h"
 #include "utils/workfile_mgr.h"
-=======
 /*
  * We break BufFiles into gigabyte-sized segments, regardless of RELSEG_SIZE.
  * The reason is that we'd like large BufFiles to be spread across multiple
@@ -96,7 +89,6 @@
  */
 #define MAX_PHYSICAL_FILESIZE	0x40000000
 #define BUFFILE_SEG_SIZE		(MAX_PHYSICAL_FILESIZE / BLCKSZ)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * This data structure represents a buffered file that consists of one

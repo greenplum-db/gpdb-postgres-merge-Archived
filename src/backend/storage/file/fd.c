@@ -85,11 +85,8 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/pg_tablespace.h"
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
-=======
 #include "common/file_perm.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "pgstat.h"
 #include "portability/mem.h"
 #include "storage/fd.h"
@@ -188,7 +185,6 @@ bool		data_sync_retry = false;
 
 #define FileIsNotOpen(file) (VfdCache[file].fd == VFD_CLOSED)
 
-<<<<<<< HEAD
 /*
  * Note: a VFD's seekPos is normally always valid, but if for some reason
  * an lseek() fails, it might become set to FileUnknownPos.  We can struggle
@@ -199,15 +195,11 @@ bool		data_sync_retry = false;
 #define FilePosIsUnknown(pos) ((pos) < 0)
 
 /* these are the assigned bits in fdstate below: */
-#define FD_TEMPORARY		(1 << 0)	/* T = delete when closed */
-#define FD_XACT_TEMPORARY	(1 << 1)	/* T = delete at eoXact */
-#define FD_WORKFILE			(1 << 2)	/* tracked by workfile manager */
-=======
-/* these are the assigned bits in fdstate below: */
 #define FD_DELETE_AT_CLOSE	(1 << 0)	/* T = delete when closed */
 #define FD_CLOSE_AT_EOXACT	(1 << 1)	/* T = close at eoXact */
 #define FD_TEMP_FILE_LIMIT	(1 << 2)	/* T = respect temp_file_limit */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+/* GPDB private flag */
+#define FD_WORKFILE			(1 << 3)	/* tracked by workfile manager */
 
 typedef struct vfd
 {
