@@ -23,10 +23,9 @@
 #include "storage/dbdirnode.h"
 #include "utils/datetime.h"
 
-<<<<<<< HEAD
 #include "cdb/cdbpublic.h"
 #include "cdb/cdbtm.h"
-=======
+
 /*
  * Maximum size of Global Transaction ID (including '\0').
  *
@@ -34,7 +33,6 @@
  * specified in TwoPhaseFileHeader.
  */
 #define GIDSIZE 200
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Xact isolation levels
@@ -375,12 +373,9 @@ typedef struct xl_xact_parsed_abort
 	TimestampTz xact_time;
 	uint32		xinfo;
 
-<<<<<<< HEAD
 	Oid         tablespace_oid_to_delete_on_abort;
-=======
 	Oid			dbId;			/* MyDatabaseId */
 	Oid			tsId;			/* MyDatabaseTableSpace */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	int			nsubxacts;
 	TransactionId *subxacts;
@@ -453,16 +448,6 @@ extern void RestoreTransactionCharacteristics(void);
 extern void CommitTransactionCommand(void);
 extern void AbortCurrentTransaction(void);
 extern void BeginTransactionBlock(void);
-<<<<<<< HEAD
-extern bool EndTransactionBlock(void);
-extern bool PrepareTransactionBlock(char *gid);
-extern void UserAbortTransactionBlock(void);
-extern void ReleaseSavepoint(List *options);
-extern void DefineSavepoint(char *name);
-extern void DefineDispatchSavepoint(char *name);
-extern void RollbackToSavepoint(List *options);
-extern void BeginInternalSubTransaction(char *name);
-=======
 extern bool EndTransactionBlock(bool chain);
 extern bool PrepareTransactionBlock(const char *gid);
 extern void UserAbortTransactionBlock(bool chain);
@@ -470,9 +455,9 @@ extern void BeginImplicitTransactionBlock(void);
 extern void EndImplicitTransactionBlock(void);
 extern void ReleaseSavepoint(const char *name);
 extern void DefineSavepoint(const char *name);
+extern void DefineDispatchSavepoint(char *name);
 extern void RollbackToSavepoint(const char *name);
 extern void BeginInternalSubTransaction(const char *name);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void ReleaseCurrentSubTransaction(void);
 extern void RollbackAndReleaseCurrentSubTransaction(void);
 extern bool IsSubTransaction(void);
