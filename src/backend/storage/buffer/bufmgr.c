@@ -2941,7 +2941,6 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 BlockNumber
 RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 {
-<<<<<<< HEAD
 	/*
 	 * This doesn't do the right thing for AO tables. That's OK, none of
 	 * the callers do that. But let's check.
@@ -2949,9 +2948,6 @@ RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 	if (RelationIsAppendOptimized(relation))
 		elog(ERROR, "cannot get number of blocks for AO table");
 
-	/* Open it at the smgr level if not already done */
-	RelationOpenSmgr(relation);
-=======
 	switch (relation->rd_rel->relkind)
 	{
 		case RELKIND_SEQUENCE:
@@ -2959,7 +2955,6 @@ RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 		case RELKIND_PARTITIONED_INDEX:
 			/* Open it at the smgr level if not already done */
 			RelationOpenSmgr(relation);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			return smgrnblocks(relation->rd_smgr, forkNum);
 
