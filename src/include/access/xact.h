@@ -178,13 +178,10 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 #define XACT_XINFO_HAS_INVALS			(1U << 3)
 #define XACT_XINFO_HAS_TWOPHASE			(1U << 4)
 #define XACT_XINFO_HAS_ORIGIN			(1U << 5)
-<<<<<<< HEAD
-#define XACT_XINFO_HAS_DISTRIB			(1U << 6)
-#define XACT_XINFO_HAS_DELDBS			(1U << 7)
-=======
 #define XACT_XINFO_HAS_AE_LOCKS			(1U << 6)
 #define XACT_XINFO_HAS_GID				(1U << 7)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#define XACT_XINFO_HAS_DISTRIB			(1U << 8)
+#define XACT_XINFO_HAS_DELDBS			(1U << 9)
 
 /*
  * Also stored in xinfo, these indicating a variety of additional actions that
