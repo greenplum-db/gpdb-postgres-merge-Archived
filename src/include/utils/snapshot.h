@@ -125,18 +125,6 @@ typedef struct SnapshotData *Snapshot;
 #define InvalidSnapshot		((Snapshot) NULL)
 
 /*
-<<<<<<< HEAD
- * We use SnapshotData structures to represent both "regular" (MVCC)
- * snapshots and "special" snapshots that have non-MVCC semantics.
- * The specific semantics of a snapshot are encoded by the "satisfies"
- * function.
- */
-typedef bool (*SnapshotSatisfiesFunc) (Relation relation, HeapTuple htup,
-										   Snapshot snapshot, Buffer buffer);
-
-/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Struct representing all kind of possible snapshots.
  *
  * There are several different kinds of snapshots:

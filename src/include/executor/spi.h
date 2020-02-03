@@ -81,50 +81,24 @@ extern PGDLLIMPORT int SPI_result;
 extern int	SPI_connect(void);
 extern int	SPI_connect_ext(int options);
 extern int	SPI_finish(void);
-<<<<<<< HEAD
-extern void SPI_push(void);
-extern void SPI_pop(void);
-extern bool SPI_push_conditional(void);
-extern void SPI_pop_conditional(bool pushed);
-extern void SPI_restore_connection(void);
 extern int	SPI_execute(const char *src, bool read_only, int64 tcount);
 extern int SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
-				 bool read_only, int64 tcount);
+							bool read_only, int64 tcount);
 extern int SPI_execute_plan_with_paramlist(SPIPlanPtr plan,
-								ParamListInfo params,
-								bool read_only, long tcount);
+										   ParamListInfo params,
+										   bool read_only, long tcount);
 extern int	SPI_exec(const char *src, int64 tcount);
 extern int SPI_execp(SPIPlanPtr plan, Datum *Values, const char *Nulls,
-		  int64 tcount);
+					 int64 tcount);
 extern int SPI_execute_snapshot(SPIPlanPtr plan,
-					 Datum *Values, const char *Nulls,
-					 Snapshot snapshot,
-					 Snapshot crosscheck_snapshot,
-					 bool read_only, bool fire_triggers, int64 tcount);
+								Datum *Values, const char *Nulls,
+								Snapshot snapshot,
+								Snapshot crosscheck_snapshot,
+								bool read_only, bool fire_triggers, int64 tcount);
 extern int SPI_execute_with_args(const char *src,
-					  int nargs, Oid *argtypes,
-					  Datum *Values, const char *Nulls,
-					  bool read_only, int64 tcount);
-=======
-extern int	SPI_execute(const char *src, bool read_only, long tcount);
-extern int	SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
-							 bool read_only, long tcount);
-extern int	SPI_execute_plan_with_paramlist(SPIPlanPtr plan,
-											ParamListInfo params,
-											bool read_only, long tcount);
-extern int	SPI_exec(const char *src, long tcount);
-extern int	SPI_execp(SPIPlanPtr plan, Datum *Values, const char *Nulls,
-					  long tcount);
-extern int	SPI_execute_snapshot(SPIPlanPtr plan,
+								 int nargs, Oid *argtypes,
 								 Datum *Values, const char *Nulls,
-								 Snapshot snapshot,
-								 Snapshot crosscheck_snapshot,
-								 bool read_only, bool fire_triggers, long tcount);
-extern int	SPI_execute_with_args(const char *src,
-								  int nargs, Oid *argtypes,
-								  Datum *Values, const char *Nulls,
-								  bool read_only, long tcount);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+								 bool read_only, int64 tcount);
 extern SPIPlanPtr SPI_prepare(const char *src, int nargs, Oid *argtypes);
 extern SPIPlanPtr SPI_prepare_cursor(const char *src, int nargs, Oid *argtypes,
 									 int cursorOptions);
@@ -193,7 +167,7 @@ extern void SPI_rollback_and_chain(void);
 extern void SPICleanup(void);
 extern void AtEOXact_SPI(bool isCommit);
 extern void AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid);
-<<<<<<< HEAD
+extern bool SPI_inside_nonatomic_context(void);
 extern bool SPI_context(void);
 
 /**
@@ -203,8 +177,5 @@ extern void SPI_InitMemoryReservation(void);
 extern uint64 SPI_GetMemoryReservation(void);
 extern void SPI_ReserveMemory(uint64 mem_reserved);
 extern bool SPI_IsMemoryReserved(void);
-=======
-extern bool SPI_inside_nonatomic_context(void);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #endif							/* SPI_H */

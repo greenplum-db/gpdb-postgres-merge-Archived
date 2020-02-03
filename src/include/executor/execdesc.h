@@ -228,7 +228,9 @@ typedef struct QueryDesc
 	EState	   *estate;			/* executor's query-wide state */
 	PlanState  *planstate;		/* tree of per-plan-node state */
 
-<<<<<<< HEAD
+	/* This field is set by ExecutorRun */
+	bool		already_executed;	/* true if previously executed */
+
 	/* This field is set by ExecutorEnd after collecting cdbdisp results */
 	uint64		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* oid of row inserted */
@@ -242,10 +244,6 @@ typedef struct QueryDesc
 
 	/* Gpmon */
 	gpmon_packet_t *gpmon_pkt;
-=======
-	/* This field is set by ExecutorRun */
-	bool		already_executed;	/* true if previously executed */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* This is always set NULL by the core system, but plugins can change it */
 	struct Instrumentation *totaltime;	/* total time spent in ExecutorRun */

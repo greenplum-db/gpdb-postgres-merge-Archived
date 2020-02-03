@@ -388,16 +388,8 @@ typedef struct JunkFilter
 	AttrNumber	jf_junkAttNo;
 } JunkFilter;
 
-<<<<<<< HEAD
-typedef void *RelationUpdateDesc;
-typedef void *RelationDeleteDesc;
-
-/* ----------------
- *	  ResultRelInfo information
-=======
 /*
  * OnConflictSetState
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * Executor state of an ON CONFLICT DO UPDATE operation.
  */
@@ -411,41 +403,12 @@ typedef struct OnConflictSetState
 	ExprState  *oc_WhereClause; /* state for the WHERE clause */
 } OnConflictSetState;
 
+typedef void *RelationUpdateDesc;
+typedef void *RelationDeleteDesc;
+
 /*
  * ResultRelInfo
  *
-<<<<<<< HEAD
- *		RangeTableIndex			result relation's range table index
- *		RelationDesc			relation descriptor for result relation
- *		NumIndices				# of indices existing on result relation
- *		IndexRelationDescs		array of relation descriptors for indices
- *		IndexRelationInfo		array of key/attr info for indices
- *		TrigDesc				triggers to be fired, if any
- *		TrigFunctions			cached lookup info for trigger functions
- *		TrigWhenExprs			array of trigger WHEN expr states
- *		TrigInstrument			optional runtime measurements for triggers
- *		FdwRoutine				FDW callback functions, if foreign table
- *		FdwState				available to save private state of FDW
- *		usesFdwDirectModify		true when modifying foreign table directly
- *		WithCheckOptions		list of WithCheckOption's to be checked
- *		WithCheckOptionExprs	list of WithCheckOption expr states
- *		ConstraintExprs			array of constraint-checking expr states
- *		junkFilter				for removing junk attributes from tuples
- *		projectReturning		for computing a RETURNING list
- *		onConflictSetProj		for computing ON CONFLICT DO UPDATE SET
- *		onConflictSetWhere		list of ON CONFLICT DO UPDATE exprs (qual)
- *		mt_bind					???
- *		aoInsertDesc			context for appendonly relation buffered INSERT.
- *		aoDeleteDesc			context for appendonly relation buffered DELETE.
- *		ao_segno				the AO segfile we inserted into.
- *		extinsertDesc			???
- *		aosegno					???
- *		aoprocessed				???
- *		partInsertMap			map input attrno to target attrno
- *		partSlot				TupleTableSlot for the target part relation
- *		resultSlot          	TupleTableSlot for the target relation
- * ----------------
-=======
  * Whenever we update an existing relation, we have to update indexes on the
  * relation, and perhaps also fire triggers.  ResultRelInfo holds all the
  * information needed about a result relation, including indexes.
@@ -456,7 +419,6 @@ typedef struct OnConflictSetState
  * in ResultRelInfos used only for triggers, ri_RangeTableIndex is zero
  * and ri_RelationDesc is a separately-opened relcache pointer that needs
  * to be separately closed.  See ExecGetTriggerResultRel.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 typedef struct ResultRelInfo
 {
@@ -517,7 +479,7 @@ typedef struct ResultRelInfo
 
 	/* for removing junk attributes from tuples */
 	JunkFilter *ri_junkFilter;
-<<<<<<< HEAD
+
 	/*
 	 * Extra GPDB junk columns. ri_segid_attno is used with DELETE, to indicate
 	 * the segment the target tuple came from. 'action' and 'tupleoid' are used with
@@ -529,9 +491,6 @@ typedef struct ResultRelInfo
 	AttrNumber	ri_action_attno;	/* is this an INSERT or DELETE ? */
 	AttrNumber	ri_tupleoid_attno;	/* old OID, when updating table with OIDs */
 
-	ProjectionInfo *ri_projectReturning;
-	ProjectionInfo *ri_onConflictSetProj;
-	List	   *ri_onConflictSetWhere;
 	struct MemTupleBinding *mt_bind;
 
 	struct AppendOnlyInsertDescData *ri_aoInsertDesc;
@@ -543,40 +502,6 @@ typedef struct ResultRelInfo
 
 	int			ri_aosegno;
 	uint64		ri_aoprocessed; /* tuples added/deleted for AO */
-
-	/* Attribute map for mapping tuples from parent table format to child partition */
-	struct TupleConversionMap *ri_partInsertMap;
-
-	/* slot to hold a mapped tuple, in this partition's format */
-	TupleTableSlot *ri_resultSlot;
-
-	/* tupdesc_match for checkPartitionUpdate */
-	int			ri_PartCheckTupDescMatch;
-	/*
-	 * Attribute map in checkPartitionUpdate, to map a tuple from child
-	 * partition format to parent table's format.
-	 */
-	struct TupleConversionMap *ri_PartCheckMap;
-	/* slot to hold a mapped tuple, in the parent table's format */
-	TupleTableSlot *ri_PartitionParentSlot;
-
-	/*
-	 * Hash table of sub-ResultRelInfos, one for each active partition.
-	 * Keyed by partition's OID.
-	 */
-	HTAB	   *ri_partition_hash;
-
-	/*
-	 * cdb: CopyFrom() buffers the tuples and flush them all together
-	 * in CopyFromInsertBatch()
-	 * For partition table, each child partition needs a buffer array
-	 * to hold the tuples.
-	 */
-	BulkInsertState biState;
-	int			nBufferedTuples;
-	HeapTuple	*bufferedTuples;
-	Size		bufferedTuplesSize;
-=======
 
 	/* list of RETURNING expressions */
 	List	   *ri_returningList;
@@ -604,7 +529,6 @@ typedef struct ResultRelInfo
 
 	/* For use by copy.c when performing multi-inserts */
 	struct CopyMultiInsertBuffer *ri_CopyMultiInsertBuffer;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } ResultRelInfo;
 
 typedef struct ShareNodeEntry
@@ -767,21 +691,10 @@ typedef struct EState
 	List	   *es_tuple_routing_result_relations;
 
 	/* Stuff used for firing triggers: */
-<<<<<<< HEAD
-	List	   *es_trig_target_relations;		/* trigger-only ResultRelInfos */
-
-	/* partitioning info for target relation */
-	PartitionNode *es_result_partitions;
+	List	   *es_trig_target_relations;	/* trigger-only ResultRelInfos */
 
 	/* AO fileseg info for target relation */
 	List	   *es_result_aosegnos;
-
-	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
-	TupleTableSlot *es_trig_oldtup_slot;		/* for TriggerEnabled */
-	TupleTableSlot *es_trig_newtup_slot;		/* for TriggerEnabled */
-=======
-	List	   *es_trig_target_relations;	/* trigger-only ResultRelInfos */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Parameter info: */
 	ParamListInfo es_param_list_info;	/* values of external params */
@@ -814,19 +727,31 @@ typedef struct EState
 	ExprContext *es_per_tuple_exprcontext;
 
 	/*
-	 * These fields are for re-evaluating plan quals when an updated tuple is
-	 * substituted in READ COMMITTED mode.  es_epqTupleSlot[] contains test
-	 * tuples that scan plan nodes should return instead of whatever they'd
-	 * normally return, or an empty slot if there is nothing to return; if
-	 * es_epqTupleSlot[] is not NULL if a particular array entry is valid; and
-	 * es_epqScanDone[] is state to remember if the tuple has been returned
-	 * already.  Arrays are of size es_range_table_size and are indexed by
-	 * scan node scanrelid - 1.
+	 * If not NULL, this is an EPQState's EState. This is a field in EState
+	 * both to allow EvalPlanQual aware executor nodes to detect that they
+	 * need to perform EPQ related work, and to provide necessary information
+	 * to do so.
 	 */
-	TupleTableSlot **es_epqTupleSlot;	/* array of EPQ substitute tuples */
-	bool	   *es_epqScanDone; /* true if EPQ tuple has been fetched */
+	struct EPQState *es_epq_active;
 
-<<<<<<< HEAD
+	bool		es_use_parallel_mode;	/* can we use parallel workers? */
+
+	/* The per-query shared memory area to use for parallel execution. */
+	struct dsa_area *es_query_dsa;
+
+	/*
+	 * JIT information. es_jit_flags indicates whether JIT should be performed
+	 * and with which options.  es_jit is created on-demand when JITing is
+	 * performed.
+	 *
+	 * es_jit_combined_instr is the combined, on demand allocated,
+	 * instrumentation from all workers. The leader's instrumentation is kept
+	 * separate, and is combined on demand by ExplainPrintJITSummary().
+	 */
+	int			es_jit_flags;
+	struct JitContext *es_jit;
+	struct JitInstrumentation *es_jit_worker_instr;
+
 	/* Additions for MPP plan slicing. */
 	struct SliceTable *es_sliceTable;
 
@@ -870,25 +795,6 @@ typedef struct EState
 
 	/* Should the executor skip past the alien plan nodes */
 	bool eliminateAliens;
-=======
-	bool		es_use_parallel_mode;	/* can we use parallel workers? */
-
-	/* The per-query shared memory area to use for parallel execution. */
-	struct dsa_area *es_query_dsa;
-
-	/*
-	 * JIT information. es_jit_flags indicates whether JIT should be performed
-	 * and with which options.  es_jit is created on-demand when JITing is
-	 * performed.
-	 *
-	 * es_jit_combined_instr is the combined, on demand allocated,
-	 * instrumentation from all workers. The leader's instrumentation is kept
-	 * separate, and is combined on demand by ExplainPrintJITSummary().
-	 */
-	int			es_jit_flags;
-	struct JitContext *es_jit;
-	struct JitInstrumentation *es_jit_worker_instr;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } EState;
 
 struct PlanState;
@@ -975,13 +881,7 @@ typedef struct TupleHashTableData *TupleHashTable;
 
 typedef struct TupleHashEntryData
 {
-<<<<<<< HEAD
-	/* firstTuple must be the first field in this struct! */
 	struct MemTupleData *firstTuple;	/* copy of first tuple in this group */
-	/* there may be additional data beyond the end of this struct */
-} TupleHashEntryData;			/* VARIABLE LENGTH STRUCT */
-=======
-	MinimalTuple firstTuple;	/* copy of first tuple in this group */
 	void	   *additional;		/* user data */
 	uint32		status;			/* hash status */
 	uint32		hash;			/* hash value (cached) */
@@ -994,7 +894,6 @@ typedef struct TupleHashEntryData
 #define SH_SCOPE extern
 #define SH_DECLARE
 #include "lib/simplehash.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 typedef struct TupleHashTableData
 {
@@ -1069,26 +968,10 @@ typedef struct AggrefExprState
 } AggrefExprState;
 
 /* ----------------
-<<<<<<< HEAD
- *		GroupingFuncExprState node
- *
- * The list of column numbers refers to the input tuples of the Agg node to
- * which the GroupingFunc belongs, and may contain 0 for references to columns
- * that are only present in grouping sets processed by different Agg nodes (and
- * which are therefore always considered "grouping" here).
- * ----------------
- */
-typedef struct GroupingFuncExprState
-{
-	ExprState	xprstate;
-	struct AggState *aggstate;
-	List	   *clauses;		/* integer list of column numbers */
-} GroupingFuncExprState;
-
-/* ----------------
  *		GroupIdExprState node
  *
  * ----------------
+ * GPDB_12_MERGE_FIXME: Is this still needed? GroupingFuncExprState was removed in upstream.
  */
 typedef struct GroupIdExprState
 {
@@ -1097,8 +980,6 @@ typedef struct GroupIdExprState
 } GroupIdExprState;
 
 /* ----------------
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *		WindowFuncExprState node
  * ----------------
  */
@@ -1184,49 +1065,8 @@ typedef struct SetExprState
 	 * (by InitFunctionCallInfoData) if func.fn_oid is valid.  It also saves
 	 * argument values between calls, when setArgsValid is true.
 	 */
-<<<<<<< HEAD
-	FunctionCallInfoData fcinfo_data;
-
-	/* Fast Path */
-	ExprState  *fp_arg[2];
-	Datum		fp_datum[2];
-	bool		fp_null[2];
-} FuncExprState;
-
-/* ----------------
- *		ScalarArrayOpExprState node
- *
- * This is a FuncExprState plus some additional data.
- * ----------------
- */
-typedef struct ScalarArrayOpExprState
-{
-	FuncExprState fxprstate;
-	/* Cached info about array element type */
-	Oid			element_type;
-	int16		typlen;
-	bool		typbyval;
-	char		typalign;
-
-	/* Fast path x in ('A', 'B', 'C') */
-	int			fp_n;
-	int		   *fp_len;
-	Datum	   *fp_datum;
-} ScalarArrayOpExprState;
-
-/* ----------------
- *		BoolExprState node
- * ----------------
- */
-typedef struct BoolExprState
-{
-	ExprState	xprstate;
-	List	   *args;			/* states of argument expression(s) */
-} BoolExprState;
-=======
 	FunctionCallInfo fcinfo;
 } SetExprState;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* ----------------
  *		PartSelectedExprState node
@@ -1415,16 +1255,14 @@ typedef struct PlanState
 								 * nodes point to one EState for the whole
 								 * top-level plan */
 
-<<<<<<< HEAD
-	bool		fHadSentGpmon;
-=======
 	ExecProcNodeMtd ExecProcNode;	/* function to return next tuple */
 	ExecProcNodeMtd ExecProcNodeReal;	/* actual function, if above is a
 										 * wrapper */
 
 	Instrumentation *instrument;	/* Optional runtime stats for this node */
 	WorkerInstrumentation *worker_instrument;	/* per-worker instrumentation */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	bool		fHadSentGpmon;
 
 	/* Per-worker JIT instrumentation */
 	struct SharedJitInstrumentation *worker_jit_instrument;
@@ -1456,27 +1294,6 @@ typedef struct PlanState
 	ProjectionInfo *ps_ProjInfo;	/* info for doing tuple projection */
 
 	/*
-<<<<<<< HEAD
-	 * EXPLAIN ANALYZE statistics collection
-	 */
-	Instrumentation *instrument;	/* Optional runtime stats for this node */
-	WorkerInstrumentation *worker_instrument;	/* per-worker instrumentation */
-	struct StringInfoData  *cdbexplainbuf;  /* EXPLAIN ANALYZE report buf */
-	void      (*cdbexplainfun)(struct PlanState *planstate, struct StringInfoData *buf);
-	/* callback before ExecutorEnd */
-
-	/*
-	 * GpMon packet
-	 */
-	int		gpmon_plan_tick;
-	gpmon_packet_t gpmon_pkt;
-	bool		fHadSentNodeStart;
-
-	bool		squelched;		/* has ExecSquelchNode() been called already? */
-
-	/* MemoryAccount to use for recording the memory usage of different plan nodes. */
-	MemoryAccountIdType memoryAccountId;
-=======
 	 * Scanslot's descriptor if known. This is a bit of a hack, but otherwise
 	 * it's hard for expression compilation to optimize based on the
 	 * descriptor, without encoding knowledge about all executor nodes.
@@ -1518,7 +1335,27 @@ typedef struct PlanState
 	bool		outeropsset;
 	bool		inneropsset;
 	bool		resultopsset;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	/*
+	 * EXPLAIN ANALYZE statistics collection
+	 */
+	Instrumentation *instrument;	/* Optional runtime stats for this node */
+	WorkerInstrumentation *worker_instrument;	/* per-worker instrumentation */
+	struct StringInfoData  *cdbexplainbuf;  /* EXPLAIN ANALYZE report buf */
+	void      (*cdbexplainfun)(struct PlanState *planstate, struct StringInfoData *buf);
+	/* callback before ExecutorEnd */
+
+	/*
+	 * GpMon packet
+	 */
+	int		gpmon_plan_tick;
+	gpmon_packet_t gpmon_pkt;
+	bool		fHadSentNodeStart;
+
+	bool		squelched;		/* has ExecSquelchNode() been called already? */
+
+	/* MemoryAccount to use for recording the memory usage of different plan nodes. */
+	MemoryAccountIdType memoryAccountId;
 } PlanState;
 
 /* Gpperfmon helper functions defined in execGpmon.c */
@@ -1646,17 +1483,7 @@ typedef struct ModifyTableState
 	List	  **mt_arowmarks;	/* per-subplan ExecAuxRowMark lists */
 	EPQState	mt_epqstate;	/* for evaluating EvalPlanQual rechecks */
 	bool		fireBSTriggers; /* do we need to fire stmt triggers? */
-<<<<<<< HEAD
-	OnConflictAction mt_onconflict;		/* ON CONFLICT type */
-	List	   *mt_arbiterindexes;		/* unique index OIDs to arbitrate
-										 * taking alt path */
-	TupleTableSlot *mt_existing;	/* slot to store existing target tuple in */
-	List	   *mt_excludedtlist;		/* the excluded pseudo relation's
-										 * tlist  */
-	TupleTableSlot *mt_conflproj;		/* CONFLICT ... SET ... projection
-										 * target */
 	bool	   *mt_isSplitUpdates; /* per-subplan flag to indicate if it's a split update */
-=======
 	List	   *mt_excludedtlist;	/* the excluded pseudo relation's tlist  */
 
 	/*
@@ -1676,7 +1503,6 @@ typedef struct ModifyTableState
 
 	/* Per plan map for tuple conversion from child to root */
 	TupleConversionMap **mt_per_subplan_tupconv_maps;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } ModifyTableState;
 
 /* ----------------
@@ -1853,10 +1679,7 @@ typedef struct ScanState
 {
 	PlanState	ps;				/* its first field is NodeTag */
 	Relation	ss_currentRelation;
-<<<<<<< HEAD
-=======
 	struct TableScanDescData *ss_currentScanDesc;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	TupleTableSlot *ss_ScanTupleSlot;
 } ScanState;
 
@@ -1868,15 +1691,6 @@ typedef struct SeqScanState
 {
 	ScanState ss;
 	Size		pscan_len;		/* size of parallel heap scan descriptor */
-
-	/* In GPDB, extra information specific to heap/AO/AOCS table scans */
-	struct HeapScanDescData *ss_currentScanDesc_heap;
-	struct AppendOnlyScanDescData *ss_currentScanDesc_ao;
-	struct AOCSScanDescData *ss_currentScanDesc_aocs;
-
-	/* extra state for AOCS scans */
-	bool	   *ss_aocs_proj;
-	int			ss_aocs_ncol;
 } SeqScanState;
 
 /* ----------------
@@ -2083,13 +1897,8 @@ typedef struct IndexOnlyScanState
 typedef struct BitmapIndexScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-<<<<<<< HEAD
 	Node       *biss_result;	/* output bitmap */
-	ScanKey		biss_ScanKeys;
-=======
-	TIDBitmap  *biss_result;
 	struct ScanKeyData *biss_ScanKeys;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			biss_NumScanKeys;
 	IndexRuntimeKeyInfo *biss_RuntimeKeys;
 	int			biss_NumRuntimeKeys;
@@ -2195,21 +2004,9 @@ typedef struct ParallelBitmapHeapState
 typedef struct BitmapHeapScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-<<<<<<< HEAD
-
-	struct HeapScanDescData *bhs_currentScanDesc_heap;
-	struct AppendOnlyFetchDescData *bhs_currentAOFetchDesc;
-	struct AOCSFetchDescData *bhs_currentAOCSFetchDesc;
-	struct AOCSFetchDescData *bhs_currentAOCSLossyFetchDesc;
-
-	List	   *bitmapqualorig;
+	ExprState  *bitmapqualorig;
 	Node	   *tbm;
 	GenericBMIterator *tbmiterator;
-=======
-	ExprState  *bitmapqualorig;
-	TIDBitmap  *tbm;
-	TBMIterator *tbmiterator;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	TBMIterateResult *tbmres;
 	bool		can_skip_fetch;
 	int			return_empty_tuples;
@@ -2221,21 +2018,11 @@ typedef struct BitmapHeapScanState
 	int			prefetch_pages;
 	int			prefetch_target;
 	int			prefetch_maximum;
-<<<<<<< HEAD
-
-	/* These are used by AO/AOCS scans, to work with lossy bitmap pages */
-	bool		baos_gotpage;
-	int			baos_cindex;
-	bool		baos_lossy;
-	int			baos_ntuples;
-
-=======
 	Size		pscan_len;
 	bool		initialized;
 	TBMSharedIterator *shared_tbmiterator;
 	TBMSharedIterator *shared_prefetch_iterator;
 	ParallelBitmapHeapState *pstate;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } BitmapHeapScanState;
 
 typedef struct DynamicBitmapHeapScanState
@@ -2812,7 +2599,6 @@ typedef struct MaterialState
 } MaterialState;
 
 /* ----------------
-<<<<<<< HEAD
  *	  ShareInputScanState information
  *
  *		State of each scanner of the ShareInput node
@@ -2839,7 +2625,8 @@ extern void *shareinput_writer_notifyready(int share_id, int nsharer_xslice_noti
 extern void shareinput_reader_notifydone(void *, int share_id);
 extern void shareinput_writer_waitdone(void *, int share_id, int nsharer_xslice_wait_done);
 extern void shareinput_create_bufname_prefix(char* p, int size, int share_id);
-=======
+
+/* ----------------
  *	 Shared memory container for per-worker sort information
  * ----------------
  */
@@ -2848,7 +2635,6 @@ typedef struct SharedSortInfo
 	int			num_workers;
 	TuplesortInstrumentation sinstrument[FLEXIBLE_ARRAY_MEMBER];
 } SharedSortInfo;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* ----------------
  *	 SortState information
@@ -2963,26 +2749,32 @@ typedef struct AggState
 #define FIELDNO_AGGSTATE_CURRENT_SET 20
 	int			current_set;	/* The current grouping set being evaluated */
 	Bitmapset  *grouped_cols;	/* grouped cols in current projection */
-<<<<<<< HEAD
 	int			group_id;		/* GROUP_ID in current projection */
 	int			gset_id;		/* GROUP_ID in current projection */
 	int			numgsets;		/* number of grouping sets */
-	List	   *all_grouped_cols;		/* list of all grouped cols in DESC
-										 * order */
+	List	   *all_grouped_cols;	/* list of all grouped cols in DESC order */
 	/* These fields are for grouping set phase data */
 	int			maxsets;		/* The max number of sets in any phase */
 	AggStatePerPhase phases;	/* array of all phases */
-	struct switcheroo_Tuplesortstate *sort_in;	/* sorted input to phases > 0 */
+	struct switcheroo_Tuplesortstate *sort_in;	/* sorted input to phases > 1 */
 	struct switcheroo_Tuplesortstate *sort_out;	/* input is copied here for next phase */
 	TupleTableSlot *sort_slot;	/* slot for sort results */
 	/* these fields are used in AGG_PLAIN and AGG_SORTED modes: */
-	AggStatePerGroup pergroup;	/* per-Aggref-per-group working state */
+	AggStatePerGroup *pergroups;	/* grouping set indexed array of per-group
+									 * pointers */
 	struct MemTupleData *grp_firstTuple; /* copy of first tuple of current group */
-	/* these fields are used in AGG_HASHED mode: */
-	TupleHashTable hashtable;	/* hash table with one entry per group */
-	TupleTableSlot *hashslot;	/* slot for loading hash table */
-	List	   *hash_needed;	/* list of columns needed in hash table */
-	TupleHashIterator hashiter; /* for iterating through hash table */
+	/* these fields are used in AGG_HASHED and AGG_MIXED modes: */
+	bool		table_filled;	/* hash table filled yet? */
+	int			num_hashes;
+	AggStatePerHash perhash;	/* array of per-hashtable data */
+	AggStatePerGroup *hash_pergroup;	/* grouping set indexed array of
+										 * per-group pointers */
+
+	/* support for evaluation of agg input expressions: */
+#define FIELDNO_AGGSTATE_ALL_PERGROUPS 34
+	AggStatePerGroup *all_pergroups;	/* array of first ->pergroups, than
+										 * ->hash_pergroup */
+	ProjectionInfo *combinedproj;	/* projection machinery */
 
 	/* MPP */
 	struct HashAggTable *hhashtable;
@@ -3011,31 +2803,6 @@ typedef struct AggState
 
 	/* if input tuple has an AggExprId, save the Attribute Number */
 	Index       AggExprId_AttrNum;
-=======
-	List	   *all_grouped_cols;	/* list of all grouped cols in DESC order */
-	/* These fields are for grouping set phase data */
-	int			maxsets;		/* The max number of sets in any phase */
-	AggStatePerPhase phases;	/* array of all phases */
-	Tuplesortstate *sort_in;	/* sorted input to phases > 1 */
-	Tuplesortstate *sort_out;	/* input is copied here for next phase */
-	TupleTableSlot *sort_slot;	/* slot for sort results */
-	/* these fields are used in AGG_PLAIN and AGG_SORTED modes: */
-	AggStatePerGroup *pergroups;	/* grouping set indexed array of per-group
-									 * pointers */
-	HeapTuple	grp_firstTuple; /* copy of first tuple of current group */
-	/* these fields are used in AGG_HASHED and AGG_MIXED modes: */
-	bool		table_filled;	/* hash table filled yet? */
-	int			num_hashes;
-	AggStatePerHash perhash;	/* array of per-hashtable data */
-	AggStatePerGroup *hash_pergroup;	/* grouping set indexed array of
-										 * per-group pointers */
-
-	/* support for evaluation of agg input expressions: */
-#define FIELDNO_AGGSTATE_ALL_PERGROUPS 34
-	AggStatePerGroup *all_pergroups;	/* array of first ->pergroups, than
-										 * ->hash_pergroup */
-	ProjectionInfo *combinedproj;	/* projection machinery */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } AggState;
 
 typedef struct TupleSplitState
@@ -3103,24 +2870,12 @@ typedef struct WindowAggState
 	Datum		startOffsetValue;	/* result of startOffset evaluation */
 	Datum		endOffsetValue; /* result of endOffset evaluation */
 
-<<<<<<< HEAD
-	FmgrInfo	ordCmpFunction;	/* btree cmp function for first ORDER BY col */
-	bool		ordReverse;		/* is the first ORDER BY col reversed? */
-	bool		start_offset_valid;	/* is startOffsetValue valid for current row? */
-	bool		end_offset_valid;	/* is endOffsetValue valid for current row? */
-
-	ExprState  *startBound;		/* expression for RANGE starting boundary */
-	ExprState  *endBound;		/* expression for RANGE ending boundary */
-	Datum		startBoundValue;
-	bool		startBoundIsNull;
-	Datum		endBoundValue;
-	bool		endBoundIsNull;
-	int16		boundTypeLen;
-	bool		boundTypeByVal;
-
-	ExprState  *startOffsetIsNegative; /* expression to test if startOffset is negative */
-	ExprState  *endOffsetIsNegative; /* expression to test if startOffset is negative */
-
+	/* these fields are used with RANGE offset PRECEDING/FOLLOWING: */
+	FmgrInfo	startInRangeFunc;	/* in_range function for startOffset */
+	FmgrInfo	endInRangeFunc; /* in_range function for endOffset */
+	Oid			inRangeColl;	/* collation for in_range tests */
+	bool		inRangeAsc;		/* use ASC sort order for in_range tests? */
+	bool		inRangeNullsFirst;	/* nulls sort first for in_range tests? */
 	/*
 	 * In GPDB, we support RANGE/ROWS start/end expressions to contain
 	 * variables. You lose on some optimizations in that case, so we use
@@ -3129,13 +2884,6 @@ typedef struct WindowAggState
 	 */
 	bool		start_offset_var_free;
 	bool		end_offset_var_free;
-=======
-	/* these fields are used with RANGE offset PRECEDING/FOLLOWING: */
-	FmgrInfo	startInRangeFunc;	/* in_range function for startOffset */
-	FmgrInfo	endInRangeFunc; /* in_range function for endOffset */
-	Oid			inRangeColl;	/* collation for in_range tests */
-	bool		inRangeAsc;		/* use ASC sort order for in_range tests? */
-	bool		inRangeNullsFirst;	/* nulls sort first for in_range tests? */
 
 	/* these fields are used in GROUPS mode: */
 	int64		currentgroup;	/* peer group # of current row in partition */
@@ -3143,7 +2891,6 @@ typedef struct WindowAggState
 	int64		frametailgroup; /* peer group # of frame tail row */
 	int64		groupheadpos;	/* current row's peer group head position */
 	int64		grouptailpos;	/* " " " " tail position (group end+1) */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	MemoryContext partcontext;	/* context for partition-lifespan data */
 	MemoryContext aggcontext;	/* shared context for aggregate working data */

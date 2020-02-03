@@ -21,16 +21,9 @@ extern SubPlanState *ExecInitSubPlan(SubPlan *subplan, PlanState *parent);
 
 extern AlternativeSubPlanState *ExecInitAlternativeSubPlan(AlternativeSubPlan *asplan, PlanState *parent);
 
-<<<<<<< HEAD
-extern Datum ExecAlternativeSubPlan(AlternativeSubPlanState *node,
-							 		ExprContext *econtext,
-							 		bool *isNull,
-							 		ExprDoneCond *isDone);
-=======
 extern Datum ExecSubPlan(SubPlanState *node, ExprContext *econtext, bool *isNull);
 
 extern Datum ExecAlternativeSubPlan(AlternativeSubPlanState *node, ExprContext *econtext, bool *isNull);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern void ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent);
 

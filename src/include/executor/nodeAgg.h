@@ -310,10 +310,6 @@ typedef struct AggStatePerHashData
 
 
 extern AggState *ExecInitAgg(Agg *node, EState *estate, int eflags);
-<<<<<<< HEAD
-extern struct TupleTableSlot *ExecAgg(AggState *node);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void ExecEndAgg(AggState *node);
 extern void ExecReScanAgg(AggState *node);
 
@@ -321,7 +317,6 @@ extern Size hash_agg_entry_size(int numAggs);
 
 extern Datum aggregate_dummy(PG_FUNCTION_ARGS);
 
-<<<<<<< HEAD
 /* MPP needs to see these in execHHashAgg.c */
 
 /*
@@ -601,7 +596,4 @@ extern Datum datumCopyWithMemManager(Datum oldvalue, Datum value, bool typByVal,
 									 MemoryManagerContainer *mem_manager);
 extern void ExecSquelchAgg(AggState *aggstate);
 
-#endif   /* NODEAGG_H */
-=======
 #endif							/* NODEAGG_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

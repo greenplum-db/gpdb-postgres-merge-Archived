@@ -198,12 +198,8 @@ extern void ExecutorEnd(QueryDesc *queryDesc);
 extern void standard_ExecutorEnd(QueryDesc *queryDesc);
 extern void ExecutorRewind(QueryDesc *queryDesc);
 extern bool ExecCheckRTPerms(List *rangeTable, bool ereport_on_violation);
-<<<<<<< HEAD
 extern bool ExecCheckRTEPerms(RangeTblEntry *rte);
-extern void CheckValidResultRel(Relation resultRel, CmdType operation);
-=======
 extern void CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void InitResultRelInfo(ResultRelInfo *resultRelInfo,
 							  Relation resultRelationDesc,
 							  Index resultRelationIndex,
@@ -611,10 +607,7 @@ extern void ExecCreateScanSlotFromOuterPlan(EState *estate,
 extern bool ExecRelationIsTargetRelation(EState *estate, Index scanrelid);
 
 extern Relation ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags);
-<<<<<<< HEAD
 extern Relation ExecOpenScanExternalRelation(EState *estate, Index scanrelid);
-extern void ExecCloseScanRelation(Relation scanrel);
-=======
 
 extern void ExecInitRangeTable(EState *estate, List *rangeTable);
 
@@ -628,7 +621,6 @@ exec_rt_fetch(Index rti, EState *estate)
 extern Relation ExecGetRangeTableRelation(EState *estate, Index rti);
 
 extern int	executor_errposition(EState *estate, int location);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern void RegisterExprContextCallback(ExprContext *econtext,
 										ExprContextCallbackFunction function,

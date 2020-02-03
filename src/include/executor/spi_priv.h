@@ -33,16 +33,8 @@ typedef struct
 	MemoryContext procCxt;		/* procedure context */
 	MemoryContext execCxt;		/* executor context */
 	MemoryContext savedcxt;		/* context of SPI_connect's caller */
-<<<<<<< HEAD
-	SubTransactionId connectSubid;		/* ID of connecting subtransaction */
-
-	/* subtransaction in which current Executor call was started */
-	SubTransactionId execSubid;
-
-	/* saved values of API global variables for previous nesting level */
-	uint32		outer_processed;
-	Oid			outer_lastoid;
-=======
+	SubTransactionId connectSubid;	/* ID of connecting subtransaction */
+	QueryEnvironment *queryEnv; /* query environment setup for SPI level */
 	SubTransactionId connectSubid;	/* ID of connecting subtransaction */
 	QueryEnvironment *queryEnv; /* query environment setup for SPI level */
 
@@ -54,7 +46,6 @@ typedef struct
 
 	/* saved values of API global variables for previous nesting level */
 	uint64		outer_processed;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	SPITupleTable *outer_tuptable;
 	int			outer_result;
 } _SPI_connection;

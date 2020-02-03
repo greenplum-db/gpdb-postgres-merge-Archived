@@ -89,11 +89,7 @@ extern void tuplestore_clear(Tuplestorestate *state);
 
 extern void tuplestore_end(Tuplestorestate *state);
 
-<<<<<<< HEAD
 extern void tuplestore_set_instrument(Tuplestorestate *state,
-                          struct Instrumentation *instrument);
+									  struct Instrumentation *instrument);
 
-#endif   /* TUPLESTORE_H */
-=======
 #endif							/* TUPLESTORE_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

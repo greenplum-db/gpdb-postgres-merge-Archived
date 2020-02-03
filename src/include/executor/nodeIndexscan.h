@@ -19,12 +19,8 @@
 #include "nodes/execnodes.h"
 
 extern IndexScanState *ExecInitIndexScan(IndexScan *node, EState *estate, int eflags);
-<<<<<<< HEAD
 extern IndexScanState *ExecInitIndexScanForPartition(IndexScan *node, EState *estate, int eflags,
 							  Relation currentRelation, Oid indexid);
-extern TupleTableSlot *ExecIndexScan(IndexScanState *node);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void ExecEndIndexScan(IndexScanState *node);
 extern void ExecIndexMarkPos(IndexScanState *node);
 extern void ExecIndexRestrPos(IndexScanState *node);

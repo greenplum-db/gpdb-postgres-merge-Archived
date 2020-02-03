@@ -18,12 +18,8 @@
 #include "nodes/execnodes.h"
 
 extern SeqScanState *ExecInitSeqScan(SeqScan *node, EState *estate, int eflags);
-<<<<<<< HEAD
 extern SeqScanState *ExecInitSeqScanForPartition(SeqScan *node, EState *estate, int eflags,
 							Relation currentRelation);
-extern TupleTableSlot *ExecSeqScan(SeqScanState *node);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void ExecEndSeqScan(SeqScanState *node);
 extern void ExecReScanSeqScan(SeqScanState *node);
 

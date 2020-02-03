@@ -361,14 +361,9 @@ typedef struct HashJoinTableData
 
 	bool		growEnabled;	/* flag to shut off nbatch increases */
 
-<<<<<<< HEAD
 	uint64		totalTuples;	/* # tuples obtained from inner plan */
+	uint64		partialTuples;	/* # tuples obtained from inner plan by me */
 	uint64		skewTuples;		/* # tuples inserted into skew tuples */
-=======
-	double		totalTuples;	/* # tuples obtained from inner plan */
-	double		partialTuples;	/* # tuples obtained from inner plan by me */
-	double		skewTuples;		/* # tuples inserted into skew tuples */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * These arrays are allocated for the life of the hash join, but only if
