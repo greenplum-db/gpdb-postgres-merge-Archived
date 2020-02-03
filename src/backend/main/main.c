@@ -170,22 +170,18 @@ main(int argc, char *argv[])
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-<<<<<<< HEAD
-			puts("postgres (Greenplum Database) " PG_VERSION);
+			fputs("postgres (Greenplum Database) " PG_VERSION, stdout);
 			exit(0);
 		}
 		if (strcmp(argv[1], "--gp-version") == 0)
 		{
-			puts("postgres (Greenplum Database) " GP_VERSION);
+			fputs("postgres (Greenplum Database) " GP_VERSION, stdout);
 			exit(0);
 		}
 		if (strcmp(argv[1], "--catalog-version") == 0 )
 		{
 			printf(_("Catalog version number:               %u\n"),
 				   CATALOG_VERSION_NO);
-=======
-			fputs(PG_BACKEND_VERSIONSTR, stdout);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			exit(0);
 		}
 
