@@ -485,36 +485,22 @@ extern void RecordDistributedForgetCommitted(struct TMGXACT_LOG *gxact_log);
 extern int	xactGetCommittedChildren(TransactionId **ptr);
 
 extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
-<<<<<<< HEAD
-					Oid tablespace_oid_to_delete_on_commit,
-					int nsubxacts, TransactionId *subxacts,
-					int nrels, RelFileNodePendingDelete *rels,
-					int nmsgs, SharedInvalidationMessage *msgs,
-					int ndeldbs, DbDirNode *deldbs,
-					bool relcacheInval, bool forceSync,
-					TransactionId twophase_xid);
-
-extern XLogRecPtr XactLogAbortRecord(TimestampTz abort_time, 
-				   Oid tablespace_oid_to_abort,
-				   int nsubxacts, TransactionId *subxacts,
-				   int nrels, RelFileNodePendingDelete *rels,
-				   int ndeldbs, DbDirNode *deldbs,
-				   TransactionId twophase_xid);
-=======
+									  Oid tablespace_oid_to_delete_on_commit,
 									  int nsubxacts, TransactionId *subxacts,
-									  int nrels, RelFileNode *rels,
+									  int nrels, RelFileNodePendingDelete *rels,
 									  int nmsgs, SharedInvalidationMessage *msgs,
+									  int ndeldbs, DbDirNode *deldbs,
 									  bool relcacheInval, bool forceSync,
-									  int xactflags,
-									  TransactionId twophase_xid,
+									  int xactflags, TransactionId twophase_xid,
 									  const char *twophase_gid);
 
 extern XLogRecPtr XactLogAbortRecord(TimestampTz abort_time,
+									 Oid tablespace_oid_to_abort,
 									 int nsubxacts, TransactionId *subxacts,
-									 int nrels, RelFileNode *rels,
+									 int nrels, RelFileNodePendingDelete *rels,
+									 int ndeldbs, DbDirNode *deldbs,
 									 int xactflags, TransactionId twophase_xid,
 									 const char *twophase_gid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void xact_redo(XLogReaderState *record);
 
 /* xactdesc.c */

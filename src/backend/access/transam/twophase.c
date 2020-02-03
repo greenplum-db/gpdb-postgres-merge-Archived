@@ -2695,7 +2695,6 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	MyPgXact->delayChkpt = true;
 
 	/*
-<<<<<<< HEAD
 	 * Crack open the gid to get the DTM start time and distributed
 	 * transaction id.
 	 */
@@ -2703,13 +2702,11 @@ RecordTransactionCommitPrepared(TransactionId xid,
 
 	SIMPLE_FAULT_INJECTOR("before_xlog_xact_commit_prepared");
 
-	/* Emit the XLOG commit record */
-=======
+	/*
 	 * Emit the XLOG commit record. Note that we mark 2PC commits as
 	 * potentially having AccessExclusiveLocks since we don't know whether or
 	 * not they do.
 	 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	recptr = XactLogCommitRecord(committs,
 								 GetPendingTablespaceForDeletionForCommit(),
 								 nchildren, children, nrels, rels,
@@ -2813,28 +2810,20 @@ RecordTransactionAbortPrepared(TransactionId xid,
 
 	START_CRIT_SECTION();
 
-<<<<<<< HEAD
 	SIMPLE_FAULT_INJECTOR("twophase_transaction_abort_prepared");
 
-	/* Emit the XLOG abort record */
-=======
 	/*
 	 * Emit the XLOG commit record. Note that we mark 2PC aborts as
 	 * potentially having AccessExclusiveLocks since we don't know whether or
 	 * not they do.
 	 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	recptr = XactLogAbortRecord(GetCurrentTimestamp(),
 								GetPendingTablespaceForDeletionForAbort(),
 								nchildren, children,
 								nrels, rels,
-<<<<<<< HEAD
 								ndeldbs, deldbs,
-								xid);
-=======
 								MyXactFlags | XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK,
 								xid, gid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Always flush, since we're about to remove the 2PC state file */
 	XLogFlush(recptr);

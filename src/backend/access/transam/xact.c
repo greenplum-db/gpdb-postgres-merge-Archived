@@ -1692,12 +1692,8 @@ RecordTransactionCommit(void)
 							nmsgs, invalMessages,
 							ndeldbs, deldbs,
 							RelcacheInitFileInval, forceSyncCommit,
-<<<<<<< HEAD
-							InvalidTransactionId /* plain commit */);
-=======
 							MyXactFlags,
 							InvalidTransactionId, NULL /* plain commit */ );
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		if (replorigin)
 			/* Move LSNs forward for this replication origin */
@@ -2125,13 +2121,9 @@ RecordTransactionAbort(bool isSubXact)
 					   GetPendingTablespaceForDeletionForAbort(),
 					   nchildren, children,
 					   nrels, rels,
-<<<<<<< HEAD
 					   ndeldbs, deldbs,
-					   InvalidTransactionId);
-=======
 					   MyXactFlags, InvalidTransactionId,
 					   NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Report the latest async abort LSN, so that the WAL writer knows to
@@ -6805,15 +6797,12 @@ XactLogCommitRecord(TimestampTz commit_time,
 	xl_xact_invals xl_invals;
 	xl_xact_twophase xl_twophase;
 	xl_xact_origin xl_origin;
-<<<<<<< HEAD
 	xl_xact_distrib xl_distrib;
 	xl_xact_deldbs xl_deldbs;
 	XLogRecPtr recptr;
 	bool isOnePhaseQE = (Gp_role == GP_ROLE_EXECUTE && MyTmGxactLocal->isOnePhaseCommit);
 	bool isDtxPrepared = isPreparedDtxTransaction();
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	uint8		info;
 
 	Assert(CritSectionCount > 0);
@@ -6990,15 +6979,10 @@ XLogRecPtr
 XactLogAbortRecord(TimestampTz abort_time,
 				   Oid tablespace_oid_to_delete_on_abort,
 				   int nsubxacts, TransactionId *subxacts,
-<<<<<<< HEAD
 				   int nrels, RelFileNodePendingDelete *rels,
 				   int ndeldbs, DbDirNode *deldbs,
-				   TransactionId twophase_xid)
-=======
-				   int nrels, RelFileNode *rels,
 				   int xactflags, TransactionId twophase_xid,
 				   const char *twophase_gid)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	xl_xact_abort xlrec;
 	xl_xact_xinfo xl_xinfo;
