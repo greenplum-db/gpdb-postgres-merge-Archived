@@ -232,7 +232,6 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 						 relation->rd_lockInfo.lockRelId.relId);
 
 	res = LockAcquireExtended(&tag, lockmode, false, false, true, &locallock);
-<<<<<<< HEAD
 
 	/*
 	 * Now that we have the lock, check for invalidation messages; see notes
@@ -263,23 +262,15 @@ LockRelationNoWait(Relation relation, LOCKMODE lockmode)
 						 relation->rd_lockInfo.lockRelId.relId);
 
 	res = LockAcquire(&tag, lockmode, false, true);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Now that we have the lock, check for invalidation messages; see notes
 	 * in LockRelationOid.
 	 */
-	if (res != LOCKACQUIRE_ALREADY_CLEAR)
-	{
+	if (res != LOCKACQUIRE_ALREADY_HELD)
 		AcceptInvalidationMessages();
-<<<<<<< HEAD
 
 	return res;
-=======
-		MarkLockClear(locallock);
-	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*

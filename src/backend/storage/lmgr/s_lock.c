@@ -250,11 +250,7 @@ recompute_spins_per_delay(int shared_spins_per_delay)
 static void
 tas_dummy()
 {
-<<<<<<< HEAD
-	__asm__		__volatile__(
-=======
 	__asm__ __volatile__(
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #if (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(__ELF__)
 /* no underscore for label and % for registers */
 						 "\
@@ -280,13 +276,8 @@ _tas:							\n\
 _success:						\n\
 			moveq 	#0,d0		\n\
 			rts					\n"
-<<<<<<< HEAD
-#endif   /* (__NetBSD__ || __OpenBSD__) && __ELF__ */
-	);
-=======
 #endif							/* (__NetBSD__ || __OpenBSD__) && __ELF__ */
 		);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 #endif							/* __m68k__ && !__linux__ */
 #endif							/* not __GNUC__ */

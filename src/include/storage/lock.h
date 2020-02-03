@@ -468,22 +468,13 @@ typedef struct LOCALLOCK
 	uint32		hashcode;		/* copy of LOCKTAG's hash value */
 	LOCK	   *lock;			/* associated LOCK object, if any */
 	PROCLOCK   *proclock;		/* associated PROCLOCK object, if any */
-<<<<<<< HEAD
-	uint32		hashcode;		/* copy of LOCKTAG's hash value */
 	bool		istemptable;	/* MPP: During prepare we set this if the lock is on a temp table, to avoid MPP-1094 */
 	int64		nLocks;			/* total number of times lock is held */
 	int			numLockOwners;	/* # of relevant ResourceOwners */
 	int			maxLockOwners;	/* allocated size of array */
 	bool		holdsStrongLockCount;	/* bumped FastPathStrongRelationLocks */
 	bool		lockCleared;	/* we read all sinval msgs for lock */
-=======
-	int64		nLocks;			/* total number of times lock is held */
-	int			numLockOwners;	/* # of relevant ResourceOwners */
-	int			maxLockOwners;	/* allocated size of array */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	LOCALLOCKOWNER *lockOwners; /* dynamically resizable array */
-	bool		holdsStrongLockCount;	/* bumped FastPathStrongRelationLocks */
-	bool		lockCleared;	/* we read all sinval msgs for lock */
 } LOCALLOCK;
 
 #define LOCALLOCK_LOCKMETHOD(llock) ((llock).tag.lock.locktag_lockmethodid)

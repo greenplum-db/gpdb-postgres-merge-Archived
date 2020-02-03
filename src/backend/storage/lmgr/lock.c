@@ -387,14 +387,9 @@ static void CleanUpLock(LOCK *lock, PROCLOCK *proclock,
 						LockMethod lockMethodTable, uint32 hashcode,
 						bool wakeupNeeded);
 static void LockRefindAndRelease(LockMethod lockMethodTable, PGPROC *proc,
-<<<<<<< HEAD
-					 LOCKTAG *locktag, LOCKMODE lockmode,
-					 bool decrement_strong_lock_count);
+                                 LOCKTAG *locktag, LOCKMODE lockmode,
+                                 bool decrement_strong_lock_count);
 static bool setFPHoldTillEndXact(Oid relid);
-=======
-								 LOCKTAG *locktag, LOCKMODE lockmode,
-								 bool decrement_strong_lock_count);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void GetSingleProcBlockerStatusData(PGPROC *blocked_proc,
 										   BlockedProcsData *data);
 
@@ -744,13 +739,6 @@ LockAcquire(const LOCKTAG *locktag,
 /*
  * LockAcquireExtended - allows us to specify additional options
  *
-<<<<<<< HEAD
- * reportMemoryError specifies whether a lock request that fills the
- * lock table should generate an ERROR or not. This allows a priority
- * caller to note that the lock table is full and then begin taking
- * extreme action to reduce the number of other lock holders before
- * retrying the action.
-=======
  * reportMemoryError specifies whether a lock request that fills the lock
  * table should generate an ERROR or not.  Passing "false" allows the caller
  * to attempt to recover from lock-table-full situations, perhaps by forcibly
@@ -758,7 +746,6 @@ LockAcquire(const LOCKTAG *locktag,
  * return code for that is LOCKACQUIRE_NOT_AVAIL, so that it's unsafe to use
  * in combination with dontWait = true, as the cause of failure couldn't be
  * distinguished.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * If locallockp isn't NULL, *locallockp receives a pointer to the LOCALLOCK
  * table entry if a lock is successfully acquired, or NULL if not.
@@ -838,11 +825,6 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		locallock->lockCleared = false;
 		locallock->numLockOwners = 0;
 		locallock->maxLockOwners = 8;
-<<<<<<< HEAD
-		locallock->holdsStrongLockCount = FALSE;
-		locallock->lockCleared = false;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		locallock->lockOwners = NULL;	/* in case next line fails */
 		locallock->lockOwners = (LOCALLOCKOWNER *)
 			MemoryContextAlloc(TopMemoryContext,
@@ -879,22 +861,21 @@ LockAcquireExtended(const LOCKTAG *locktag,
 			return LOCKACQUIRE_ALREADY_CLEAR;
 		else
 			return LOCKACQUIRE_ALREADY_HELD;
-<<<<<<< HEAD
 	}
-	
+
 	/*
 	 * lockHolder is the gang member that should hold and manage locks for this
 	 * transaction.  In Utility mode, or on the QD, it's allways myself.
-	 * 
+	 *
 	 * On the QEs, it should normally be the Writer gang member.
 	 */
 	if (lockHolderProcPtr == NULL)
 		lockHolderProcPtr = MyProc;
-	
+
 	if (lockmethodid == DEFAULT_LOCKMETHOD && locktag->locktag_type != LOCKTAG_TRANSACTION)
 	{
 		if (Gp_role == GP_ROLE_EXECUTE && !Gp_is_writer)
-		{	
+		{
 			if (lockHolderProcPtr == NULL || lockHolderProcPtr == MyProc)
 			{
 				/* Find the guy who should manage our locks */
@@ -919,8 +900,6 @@ LockAcquireExtended(const LOCKTAG *locktag,
 						 (int)locktag->locktag_type);
 			}
 		}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*
