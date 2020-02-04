@@ -2337,7 +2337,6 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
 			rel = find_base_rel(root, bms_singleton_member(relids));
 
 			/* Add clause to rel's restriction list */
-<<<<<<< HEAD
 			if (restrictinfo->contain_outer_query_references &&
 				rel_need_to_separate_outer_query_restrictinfos(root, rel))
 			{
@@ -2356,13 +2355,9 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
 			else
 				rel->baserestrictinfo = lappend(rel->baserestrictinfo,
 												restrictinfo);
-=======
-			rel->baserestrictinfo = lappend(rel->baserestrictinfo,
-											restrictinfo);
 			/* Update security level info */
 			rel->baserestrict_min_security = Min(rel->baserestrict_min_security,
 												 restrictinfo->security_level);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 		case BMS_MULTIPLE:
 
@@ -2517,20 +2512,12 @@ build_implied_join_equality(Oid opno,
 	 * Build the RestrictInfo node itself.
 	 */
 	restrictinfo = make_restrictinfo(clause,
-<<<<<<< HEAD
-									 true,		/* is_pushed_down */
-									 false,		/* outerjoin_delayed */
-									 false,		/* pseudoconstant */
-									 qualscope,	/* required_relids */
-									 NULL,		/* outer_relids */
-=======
 									 true,	/* is_pushed_down */
 									 false, /* outerjoin_delayed */
 									 false, /* pseudoconstant */
 									 security_level,	/* security_level */
 									 qualscope, /* required_relids */
 									 NULL,	/* outer_relids */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 									 nullable_relids);	/* nullable_relids */
 
 	/* Set mergejoinability/hashjoinability flags */

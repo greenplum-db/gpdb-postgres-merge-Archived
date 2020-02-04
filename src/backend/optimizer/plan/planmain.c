@@ -66,64 +66,6 @@ query_planner(PlannerInfo *root,
 	Query	   *parse = root->parse;
 	List	   *joinlist;
 	RelOptInfo *final_rel;
-<<<<<<< HEAD
-	Index		rti;
-	double		total_pages;
-
-	/*
-	 * If the query has an empty join tree, then it's something easy like
-	 * "SELECT 2+2;" or "INSERT ... VALUES()".  Fall through quickly.
-	 */
-	if (parse->jointree->fromlist == NIL)
-	{
-		Path	   *result_path;
-
-		/* We need a dummy joinrel to describe the empty set of baserels */
-		final_rel = build_empty_join_rel(root);
-
-		/*
-		 * If query allows parallelism in general, check whether the quals are
-		 * parallel-restricted.  There's currently no real benefit to setting
-		 * this flag correctly because we can't yet reference subplans from
-		 * parallel workers.  But that might change someday, so set this
-		 * correctly anyway.
-		 */
-		if (root->glob->parallelModeOK)
-			final_rel->consider_parallel =
-				!has_parallel_hazard(parse->jointree->quals, false);
-
-		/* The only path for it is a trivial Result path */
-		result_path = (Path *) create_result_path(root, final_rel,
-												  final_rel->reltarget,
-												  (List *) parse->jointree->quals);
-		add_path(final_rel, result_path);
-
-		/* Select cheapest path (pretty easy in this case...) */
-		set_cheapest(final_rel);
-
-		/*
-		 * We still are required to call qp_callback, in case it's something
-		 * like "SELECT 2+2 ORDER BY 1".
-		 */
-		root->canon_pathkeys = NIL;
-		(*qp_callback) (root, qp_extra);
-
-		{
-			char		exec_location;
-
-			exec_location = check_execute_on_functions((Node *) parse->targetList);
-
-			if (exec_location == PROEXECLOCATION_MASTER)
-				CdbPathLocus_MakeEntry(&result_path->locus);
-			else if (exec_location == PROEXECLOCATION_ALL_SEGMENTS)
-				CdbPathLocus_MakeStrewn(&result_path->locus,
-										getgpsegmentCount());
-		}
-
-		return final_rel;
-	}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Init planner lists to empty.
@@ -197,10 +139,11 @@ query_planner(PlannerInfo *root,
 				 * SELECT is a kind of degenerate-grouping case, so it's not
 				 * that much of a cheat.)
 				 */
-				add_path(final_rel, (Path *)
+				Path *result_path =
 						 create_group_result_path(root, final_rel,
 												  final_rel->reltarget,
-												  (List *) parse->jointree->quals));
+												  (List *) parse->jointree->quals);
+				add_path(final_rel, result_path);
 
 				/* Select cheapest path (pretty easy in this case...) */
 				set_cheapest(final_rel);
@@ -210,6 +153,18 @@ query_planner(PlannerInfo *root,
 				 * something like "SELECT 2+2 ORDER BY 1".
 				 */
 				(*qp_callback) (root, qp_extra);
+
+				{
+					char		exec_location;
+
+					exec_location = check_execute_on_functions((Node *) parse->targetList);
+
+					if (exec_location == PROEXECLOCATION_MASTER)
+						CdbPathLocus_MakeEntry(&result_path->locus);
+					else if (exec_location == PROEXECLOCATION_ALL_SEGMENTS)
+						CdbPathLocus_MakeStrewn(&result_path->locus,
+												getgpsegmentCount());
+				}
 
 				return final_rel;
 			}

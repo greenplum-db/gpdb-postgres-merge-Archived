@@ -83,22 +83,10 @@ static Node *build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 						   Node *testexpr, bool adjust_testexpr,
 						   bool unknownEqFalse);
 static List *generate_subquery_params(PlannerInfo *root, List *tlist,
-<<<<<<< HEAD
-						 List **paramIds);
-static Node *convert_testexpr_mutator(Node *node,
-						 convert_testexpr_context *context);
-static bool subplan_is_hashable(PlannerInfo *root, Plan *plan);
-=======
 									  List **paramIds);
-static List *generate_subquery_vars(PlannerInfo *root, List *tlist,
-									Index varno);
-static Node *convert_testexpr(PlannerInfo *root,
-							  Node *testexpr,
-							  List *subst_nodes);
 static Node *convert_testexpr_mutator(Node *node,
 									  convert_testexpr_context *context);
-static bool subplan_is_hashable(Plan *plan);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static bool subplan_is_hashable(PlannerInfo *root, Plan *plan);
 static bool testexpr_is_hashable(Node *testexpr);
 static bool hash_ok_operator(OpExpr *expr);
 static bool contain_dml(Node *node);
@@ -120,393 +108,12 @@ static Bitmapset *finalize_plan(PlannerInfo *root,
 								Bitmapset *scan_params);
 static bool finalize_primnode(Node *node, finalize_primnode_context *context);
 static bool finalize_agg_primnode(Node *node, finalize_primnode_context *context);
-<<<<<<< HEAD
 static Node *remove_useless_EXISTS_sublink(PlannerInfo *root,
 						Query *subselect, bool under_not);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern	double global_work_mem(PlannerInfo *root);
 
 /*
-<<<<<<< HEAD
- * Select a PARAM_EXEC number to identify the given Var as a parameter for
- * the current subquery, or for a nestloop's inner scan.
- * If the Var already has a param in the current context, return that one.
- */
-static int
-assign_param_for_var(PlannerInfo *root, Var *var)
-{
-	ListCell   *ppl;
-	PlannerParamItem *pitem;
-	Index		levelsup;
-
-	/* Find the query level the Var belongs to */
-	for (levelsup = var->varlevelsup; levelsup > 0; levelsup--)
-		root = root->parent_root;
-
-	/* If there's already a matching PlannerParamItem there, just use it */
-	foreach(ppl, root->plan_params)
-	{
-		pitem = (PlannerParamItem *) lfirst(ppl);
-		if (IsA(pitem->item, Var))
-		{
-			Var		   *pvar = (Var *) pitem->item;
-
-			/*
-			 * This comparison must match _equalVar(), except for ignoring
-			 * varlevelsup.  Note that _equalVar() ignores the location.
-			 */
-			if (pvar->varno == var->varno &&
-				pvar->varattno == var->varattno &&
-				pvar->vartype == var->vartype &&
-				pvar->vartypmod == var->vartypmod &&
-				pvar->varcollid == var->varcollid &&
-				pvar->varnoold == var->varnoold &&
-				pvar->varoattno == var->varoattno)
-				return pitem->paramId;
-		}
-	}
-
-	/* Nope, so make a new one */
-	var = (Var *) copyObject(var);
-	var->varlevelsup = 0;
-
-	pitem = makeNode(PlannerParamItem);
-	pitem->item = (Node *) var;
-	pitem->paramId = root->glob->nParamExec++;
-
-	root->plan_params = lappend(root->plan_params, pitem);
-
-	return pitem->paramId;
-}
-
-/*
- * Generate a Param node to replace the given Var,
- * which is expected to have varlevelsup > 0 (ie, it is not local).
- */
-static Param *
-replace_outer_var(PlannerInfo *root, Var *var)
-{
-	Param	   *retval;
-	int			i;
-
-	Assert(var->varlevelsup > 0 && var->varlevelsup < root->query_level);
-
-	/* Find the Var in the appropriate plan_params, or add it if not present */
-	i = assign_param_for_var(root, var);
-
-	retval = makeNode(Param);
-	retval->paramkind = PARAM_EXEC;
-	retval->paramid = i;
-	retval->paramtype = var->vartype;
-	retval->paramtypmod = var->vartypmod;
-	retval->paramcollid = var->varcollid;
-	retval->location = var->location;
-
-	return retval;
-}
-
-/*
- * Generate a Param node to replace the given Var, which will be supplied
- * from an upper NestLoop join node.
- *
- * This is effectively the same as replace_outer_var, except that we expect
- * the Var to be local to the current query level.
- */
-Param *
-assign_nestloop_param_var(PlannerInfo *root, Var *var)
-{
-	Param	   *retval;
-	int			i;
-
-	Assert(var->varlevelsup == 0);
-
-	i = assign_param_for_var(root, var);
-
-	retval = makeNode(Param);
-	retval->paramkind = PARAM_EXEC;
-	retval->paramid = i;
-	retval->paramtype = var->vartype;
-	retval->paramtypmod = var->vartypmod;
-	retval->paramcollid = var->varcollid;
-	retval->location = var->location;
-
-	return retval;
-}
-
-/*
- * Select a PARAM_EXEC number to identify the given PlaceHolderVar as a
- * parameter for the current subquery, or for a nestloop's inner scan.
- * If the PHV already has a param in the current context, return that one.
- *
- * This is just like assign_param_for_var, except for PlaceHolderVars.
- */
-static int
-assign_param_for_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
-{
-	ListCell   *ppl;
-	PlannerParamItem *pitem;
-	Index		levelsup;
-
-	/* Find the query level the PHV belongs to */
-	for (levelsup = phv->phlevelsup; levelsup > 0; levelsup--)
-		root = root->parent_root;
-
-	/* If there's already a matching PlannerParamItem there, just use it */
-	foreach(ppl, root->plan_params)
-	{
-		pitem = (PlannerParamItem *) lfirst(ppl);
-		if (IsA(pitem->item, PlaceHolderVar))
-		{
-			PlaceHolderVar *pphv = (PlaceHolderVar *) pitem->item;
-
-			/* We assume comparing the PHIDs is sufficient */
-			if (pphv->phid == phv->phid)
-				return pitem->paramId;
-		}
-	}
-
-	/* Nope, so make a new one */
-	phv = (PlaceHolderVar *) copyObject(phv);
-	if (phv->phlevelsup != 0)
-	{
-		IncrementVarSublevelsUp((Node *) phv, -((int) phv->phlevelsup), 0);
-		Assert(phv->phlevelsup == 0);
-	}
-
-	pitem = makeNode(PlannerParamItem);
-	pitem->item = (Node *) phv;
-	pitem->paramId = root->glob->nParamExec++;
-
-	root->plan_params = lappend(root->plan_params, pitem);
-
-	return pitem->paramId;
-}
-
-/*
- * Generate a Param node to replace the given PlaceHolderVar,
- * which is expected to have phlevelsup > 0 (ie, it is not local).
- *
- * This is just like replace_outer_var, except for PlaceHolderVars.
- */
-static Param *
-replace_outer_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
-{
-	Param	   *retval;
-	int			i;
-
-	Assert(phv->phlevelsup > 0 && phv->phlevelsup < root->query_level);
-
-	/* Find the PHV in the appropriate plan_params, or add it if not present */
-	i = assign_param_for_placeholdervar(root, phv);
-
-	retval = makeNode(Param);
-	retval->paramkind = PARAM_EXEC;
-	retval->paramid = i;
-	retval->paramtype = exprType((Node *) phv->phexpr);
-	retval->paramtypmod = exprTypmod((Node *) phv->phexpr);
-	retval->paramcollid = exprCollation((Node *) phv->phexpr);
-	retval->location = -1;
-
-	return retval;
-}
-
-/*
- * Generate a Param node to replace the given PlaceHolderVar, which will be
- * supplied from an upper NestLoop join node.
- *
- * This is just like assign_nestloop_param_var, except for PlaceHolderVars.
- */
-Param *
-assign_nestloop_param_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
-{
-	Param	   *retval;
-	int			i;
-
-	Assert(phv->phlevelsup == 0);
-
-	i = assign_param_for_placeholdervar(root, phv);
-
-	retval = makeNode(Param);
-	retval->paramkind = PARAM_EXEC;
-	retval->paramid = i;
-	retval->paramtype = exprType((Node *) phv->phexpr);
-	retval->paramtypmod = exprTypmod((Node *) phv->phexpr);
-	retval->paramcollid = exprCollation((Node *) phv->phexpr);
-	retval->location = -1;
-
-	return retval;
-}
-
-/*
- * Generate a Param node to replace the given Aggref
- * which is expected to have agglevelsup > 0 (ie, it is not local).
- */
-static Param *
-replace_outer_agg(PlannerInfo *root, Aggref *agg)
-{
-	Param	   *retval;
-	PlannerParamItem *pitem;
-	Index		levelsup;
-
-	Assert(agg->agglevelsup > 0 && agg->agglevelsup < root->query_level);
-
-	/* Find the query level the Aggref belongs to */
-	for (levelsup = agg->agglevelsup; levelsup > 0; levelsup--)
-		root = root->parent_root;
-
-	/*
-	 * It does not seem worthwhile to try to match duplicate outer aggs. Just
-	 * make a new slot every time.
-	 */
-	agg = (Aggref *) copyObject(agg);
-	IncrementVarSublevelsUp((Node *) agg, -((int) agg->agglevelsup), 0);
-	Assert(agg->agglevelsup == 0);
-
-	pitem = makeNode(PlannerParamItem);
-	pitem->item = (Node *) agg;
-	pitem->paramId = root->glob->nParamExec++;
-
-	root->plan_params = lappend(root->plan_params, pitem);
-
-	retval = makeNode(Param);
-	retval->paramkind = PARAM_EXEC;
-	retval->paramid = pitem->paramId;
-	retval->paramtype = agg->aggtype;
-	retval->paramtypmod = -1;
-	retval->paramcollid = agg->aggcollid;
-	retval->location = agg->location;
-
-	return retval;
-}
-
-/*
- * Generate a Param node to replace the given GroupingFunc expression which is
- * expected to have agglevelsup > 0 (ie, it is not local).
- */
-static Param *
-replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp)
-{
-	Param	   *retval;
-	PlannerParamItem *pitem;
-	Index		levelsup;
-
-	Assert(grp->agglevelsup > 0 && grp->agglevelsup < root->query_level);
-
-	/* Find the query level the GroupingFunc belongs to */
-	for (levelsup = grp->agglevelsup; levelsup > 0; levelsup--)
-		root = root->parent_root;
-
-	/*
-	 * It does not seem worthwhile to try to match duplicate outer aggs. Just
-	 * make a new slot every time.
-	 */
-	grp = (GroupingFunc *) copyObject(grp);
-	IncrementVarSublevelsUp((Node *) grp, -((int) grp->agglevelsup), 0);
-	Assert(grp->agglevelsup == 0);
-
-	pitem = makeNode(PlannerParamItem);
-	pitem->item = (Node *) grp;
-	pitem->paramId = root->glob->nParamExec++;
-
-	root->plan_params = lappend(root->plan_params, pitem);
-
-	retval = makeNode(Param);
-	retval->paramkind = PARAM_EXEC;
-	retval->paramid = pitem->paramId;
-	retval->paramtype = exprType((Node *) grp);
-	retval->paramtypmod = -1;
-	retval->paramcollid = InvalidOid;
-	retval->location = grp->location;
-
-	return retval;
-}
-
-/*
- * Generate a Param node to replace the given GroupId expression which is
- * expected to have agglevelsup > 0 (ie, it is not local).
- */
-static Param *
-replace_outer_group_id(PlannerInfo *root, GroupId *grp)
-{
-	Param	   *retval;
-	PlannerParamItem *pitem;
-	Index		levelsup;
-
-	Assert(grp->agglevelsup > 0 && grp->agglevelsup < root->query_level);
-
-	/* Find the query level the GroupingFunc belongs to */
-	for (levelsup = grp->agglevelsup; levelsup > 0; levelsup--)
-		root = root->parent_root;
-
-	/*
-	 * It does not seem worthwhile to try to match duplicate outer aggs. Just
-	 * make a new slot every time.
-	 */
-	grp = (GroupId *) copyObject(grp);
-	IncrementVarSublevelsUp((Node *) grp, -((int) grp->agglevelsup), 0);
-	Assert(grp->agglevelsup == 0);
-
-	pitem = makeNode(PlannerParamItem);
-	pitem->item = (Node *) grp;
-	pitem->paramId = root->glob->nParamExec++;
-
-	root->plan_params = lappend(root->plan_params, pitem);
-
-	retval = makeNode(Param);
-	retval->paramkind = PARAM_EXEC;
-	retval->paramid = pitem->paramId;
-	retval->paramtype = exprType((Node *) grp);
-	retval->paramtypmod = -1;
-	retval->paramcollid = InvalidOid;
-	retval->location = grp->location;
-
-	return retval;
-}
-
-/*
- * Generate a new Param node that will not conflict with any other.
- *
- * This is used to create Params representing subplan outputs.
- * We don't need to build a PlannerParamItem for such a Param, but we do
- * need to record the PARAM_EXEC slot number as being allocated.
- */
-static Param *
-generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod,
-				   Oid paramcollation)
-{
-	Param	   *retval;
-
-	retval = makeNode(Param);
-	retval->paramkind = PARAM_EXEC;
-	retval->paramid = root->glob->nParamExec++;
-	retval->paramtype = paramtype;
-	retval->paramtypmod = paramtypmod;
-	retval->paramcollid = paramcollation;
-	retval->location = -1;
-
-	return retval;
-}
-
-
-/*
- * Assign a (nonnegative) PARAM_EXEC ID for a special parameter (one that
- * is not actually used to carry a value at runtime).  Such parameters are
- * used for special runtime signaling purposes, such as connecting a
- * recursive union node to its worktable scan node or forcing plan
- * re-evaluation within the EvalPlanQual mechanism.  No actual Param node
- * exists with this ID, however.
- */
-int
-SS_assign_special_param(PlannerInfo *root)
-{
-	return root->glob->nParamExec++;
-}
-
-/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Get the datatype/typmod/collation of the first column of the plan's output.
  *
  * This information is stored for ARRAY_SUBLINK execution and for
@@ -873,12 +480,9 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 					   &splan->firstColCollation);
 	splan->useHashTable = false;
 	splan->unknownEqFalse = unknownEqFalse;
-<<<<<<< HEAD
+	splan->parallel_safe = plan->parallel_safe;
 	splan->is_initplan = false;
 	splan->is_multirow = false;
-=======
-	splan->parallel_safe = plan->parallel_safe;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	splan->setParam = NIL;
 	splan->parParam = NIL;
 	splan->args = NIL;
@@ -2119,13 +1723,9 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 		query->groupingSets ||
 #if 0
 		query->hasWindowFuncs ||
-<<<<<<< HEAD
-=======
-		query->hasTargetSRFs ||
-		query->hasModifyingCTE ||
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		query->havingQual ||
 #endif
+		query->hasTargetSRFs ||
 		query->hasModifyingCTE ||
 		query->limitOffset ||
 		query->rowMarks)
@@ -2165,14 +1765,6 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 		query->limitCount = NULL;
 	}
 
-	/*
-<<<<<<< HEAD
-	 * Mustn't throw away the targetlist if it contains set-returning
-	 * functions; those could affect whether zero rows are returned!
-	 */
-	if (expression_returns_set((Node *) query->targetList))
-		return false;
-
 	if (query->havingQual)
 	{
 		/*
@@ -2195,8 +1787,6 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 	}
 
 	/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * Otherwise, we can throw away the targetlist, as well as any GROUP,
 	 * WINDOW, DISTINCT, and ORDER BY clauses; none of those clauses will
 	 * change a nonzero-rows result to zero rows or vice versa.  (Furthermore,
@@ -3509,7 +3099,6 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 	}
 
 	/* Process left and right child plans, if any */
-<<<<<<< HEAD
 	/*
 	 * In a TableFunctionScan, the 'lefttree' is more like a SubQueryScan's
 	 * subplan, and contains a plan that's already been finalized by the
@@ -3519,18 +3108,11 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 	{
 		child_params = finalize_plan(root,
 									 plan->lefttree,
+									 gather_param,
 									 valid_params,
 									 scan_params);
 		context.paramids = bms_add_members(context.paramids, child_params);
 	}
-=======
-	child_params = finalize_plan(root,
-								 plan->lefttree,
-								 gather_param,
-								 valid_params,
-								 scan_params);
-	context.paramids = bms_add_members(context.paramids, child_params);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (nestloop_params)
 	{

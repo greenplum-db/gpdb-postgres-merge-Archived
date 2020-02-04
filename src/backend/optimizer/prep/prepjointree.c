@@ -81,35 +81,14 @@ static Node *pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 										JoinExpr *lowest_nulling_outer_join,
 										AppendRelInfo *containing_appendrel);
 static Node *pull_up_simple_subquery(PlannerInfo *root, Node *jtnode,
-<<<<<<< HEAD
-						RangeTblEntry *rte,
-						JoinExpr *lowest_outer_join,
-						JoinExpr *lowest_nulling_outer_join,
-						AppendRelInfo *containing_appendrel,
-						bool deletion_ok);
-=======
 									 RangeTblEntry *rte,
 									 JoinExpr *lowest_outer_join,
 									 JoinExpr *lowest_nulling_outer_join,
 									 AppendRelInfo *containing_appendrel);
-static Node *pull_up_simple_union_all(PlannerInfo *root, Node *jtnode,
-									  RangeTblEntry *rte);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root,
 									   int parentRTindex, Query *setOpQuery,
 									   int childRToffset);
 static void make_setop_translation_list(Query *query, Index newvarno,
-<<<<<<< HEAD
-							List **translated_vars);
-bool is_simple_subquery(PlannerInfo *root, Query *subquery,
-						RangeTblEntry *rte,
-						JoinExpr *lowest_outer_join,
-						bool deletion_ok);
-static Node *pull_up_simple_values(PlannerInfo *root, Node *jtnode,
-								   RangeTblEntry *rte);
-static bool is_simple_values(PlannerInfo *root, RangeTblEntry *rte,
-							 bool deletion_ok);
-=======
 										List **translated_vars);
 static bool is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 							   JoinExpr *lowest_outer_join);
@@ -119,7 +98,6 @@ static bool is_simple_values(PlannerInfo *root, RangeTblEntry *rte);
 static bool is_simple_union_all(Query *subquery);
 static bool is_simple_union_all_recurse(Node *setOp, Query *setOpQuery,
 										List *colTypes);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static bool is_safe_append_member(Query *subquery);
 static bool jointree_contains_lateral_outer_refs(Node *jtnode, bool restricted,
 												 Relids safe_upper_varnos);
@@ -827,7 +805,6 @@ inline_set_returning_functions(PlannerInfo *root)
 			funcquery = inline_set_returning_function(root, rte);
 			if (funcquery)
 			{
-<<<<<<< HEAD
 
 				/*
 				 * GPDB: Normalize the resulting query, like standard_planner()
@@ -835,10 +812,7 @@ inline_set_returning_functions(PlannerInfo *root)
 				 */
 				funcquery = normalize_query(funcquery);
 
-				/* Successful expansion, replace the rtable entry */
-=======
 				/* Successful expansion, convert the RTE to a subquery */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				rte->rtekind = RTE_SUBQUERY;
 				rte->subquery = funcquery;
 				rte->security_barrier = false;
@@ -928,12 +902,8 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 		 * unless is_safe_append_member says so.
 		 */
 		if (rte->rtekind == RTE_SUBQUERY &&
-<<<<<<< HEAD
 			!rte->forceDistRandom &&
-			is_simple_subquery(root, rte->subquery, rte, lowest_outer_join, deletion_ok) &&
-=======
 			is_simple_subquery(rte->subquery, rte, lowest_outer_join) &&
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			(containing_appendrel == NULL ||
 			 is_safe_append_member(rte->subquery)))
 			return pull_up_simple_subquery(root, jtnode, rte,
@@ -999,10 +969,7 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 		switch (j->jointype)
 		{
 			case JOIN_INNER:
-<<<<<<< HEAD
 			case JOIN_SEMI:
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				j->larg = pull_up_subqueries_recurse(root, j->larg,
 													 lowest_outer_join,
 													 lowest_nulling_outer_join,
@@ -1176,11 +1143,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * easier just to keep this "if" looking the same as the one in
 	 * pull_up_subqueries_recurse.
 	 */
-<<<<<<< HEAD
-	if (is_simple_subquery(root, subquery, rte, lowest_outer_join, deletion_ok) &&
-=======
-	if (is_simple_subquery(subquery, rte, lowest_outer_join) &&
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	if (is_simple_subquery(root, subquery, rte, lowest_outer_join) &&
 		(containing_appendrel == NULL || is_safe_append_member(subquery)))
 	{
 		/* good to go */
@@ -1419,12 +1382,9 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 					break;
 				case RTE_JOIN:
 				case RTE_CTE:
-<<<<<<< HEAD
-				case RTE_VOID:
-=======
 				case RTE_NAMEDTUPLESTORE:
 				case RTE_RESULT:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				case RTE_VOID:
 					/* these can't contain any lateral references */
 					break;
 			}
@@ -1708,21 +1668,13 @@ make_setop_translation_list(Query *query, Index newvarno,
  * (Note subquery is not necessarily equal to rte->subquery; it could be a
  * processed copy of that.)
  * lowest_outer_join is the lowest outer join above the subquery, or NULL.
-<<<<<<< HEAD
  *
  * In GPDB, 'rte' can be passed as NULL, if this is a sublink, rather
  * than a subselect in the FROM list, that we are trying to pull up.
- * deletion_ok is TRUE if it'd be okay to delete the subquery entirely.
  */
 bool
 is_simple_subquery(PlannerInfo *root, Query *subquery, RangeTblEntry *rte,
-				   JoinExpr *lowest_outer_join, bool deletion_ok)
-=======
- */
-static bool
-is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 				   JoinExpr *lowest_outer_join)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	/*
 	 * Let's just make sure it's a valid subselect ...
@@ -2271,12 +2223,9 @@ replace_vars_in_jointree(Node *jtnode,
 						break;
 					case RTE_JOIN:
 					case RTE_CTE:
-<<<<<<< HEAD
-					case RTE_VOID:
-=======
 					case RTE_NAMEDTUPLESTORE:
 					case RTE_RESULT:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+					case RTE_VOID:
 						/* these shouldn't be marked LATERAL */
 						Assert(false);
 						break;
@@ -2553,77 +2502,6 @@ pullup_replace_vars_subquery(Query *query,
 										   NULL);
 }
 
-<<<<<<< HEAD
-/*
- * pull_up_subqueries_cleanup
- *		Recursively fix up jointree after deletion of some subqueries.
- *
- * The jointree now contains some NULL subtrees, which we need to get rid of.
- * In a FromExpr, just rebuild the child-node list with null entries deleted.
- * In an inner JOIN, replace the JoinExpr node with a one-child FromExpr.
- */
-static Node *
-pull_up_subqueries_cleanup(Node *jtnode)
-{
-	Assert(jtnode != NULL);
-	if (IsA(jtnode, RangeTblRef))
-	{
-		/* Nothing to do at leaf nodes. */
-	}
-	else if (IsA(jtnode, FromExpr))
-	{
-		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *newfrom = NIL;
-		ListCell   *l;
-
-		foreach(l, f->fromlist)
-		{
-			Node	   *child = (Node *) lfirst(l);
-
-			if (child == NULL)
-				continue;
-			child = pull_up_subqueries_cleanup(child);
-			newfrom = lappend(newfrom, child);
-		}
-		f->fromlist = newfrom;
-	}
-	else if (IsA(jtnode, JoinExpr))
-	{
-		JoinExpr   *j = (JoinExpr *) jtnode;
-
-		if (j->larg)
-			j->larg = pull_up_subqueries_cleanup(j->larg);
-		if (j->rarg)
-			j->rarg = pull_up_subqueries_cleanup(j->rarg);
-		if (j->larg == NULL)
-		{
-			Assert(j->jointype == JOIN_INNER);
-			Assert(j->rarg != NULL);
-			return (Node *) makeFromExpr(list_make1(j->rarg), j->quals);
-		}
-		else if (j->rarg == NULL)
-		{
-			/*
-			 * GPDB_95_MERGE_FIXME: Should JOIN_SEMI be allowed here as well?
-			 *
-			 * GPDB commits that may be of interest in order to answer:
-			 *   330dd1b3802
-			 *   fe2eb2c9ed3
-			 *
-			 * Postgres commit f4abd0241de that may be of interest.
-			 */
-			Assert(j->jointype == JOIN_INNER || j->jointype == JOIN_SEMI);
-			return (Node *) makeFromExpr(list_make1(j->larg), j->quals);
-		}
-	}
-	else
-		elog(ERROR, "unrecognized node type: %d",
-			 (int) nodeTag(jtnode));
-	return jtnode;
-}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * flatten_simple_union_all

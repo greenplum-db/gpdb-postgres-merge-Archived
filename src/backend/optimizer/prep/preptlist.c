@@ -43,40 +43,25 @@
 #include "postgres.h"
 
 #include "access/sysattr.h"
-<<<<<<< HEAD
-#include "catalog/gp_policy.h"     /* CDB: POLICYTYPE_PARTITIONED */
-#include "catalog/pg_inherits_fn.h"
-#include "catalog/pg_type.h"
-#include "nodes/makefuncs.h"
-#include "optimizer/plancat.h"
-=======
 #include "access/table.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/optimizer.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "optimizer/prep.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
-<<<<<<< HEAD
-#include "parser/parse_relation.h"
-#include "utils/lsyscache.h"
-#include "utils/rel.h"
-
-
-static List *expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
-				  Index result_relation, List *range_table);
-static List *supplement_simply_updatable_targetlist(List *range_table,
-													List *tlist);
-=======
 #include "rewrite/rewriteHandler.h"
 #include "utils/rel.h"
 
+#include "catalog/gp_policy.h"     /* CDB: POLICYTYPE_PARTITIONED */
+#include "catalog/pg_inherits_fn.h"
+#include "optimizer/plancat.h"
 
-static List *expand_targetlist(List *tlist, int command_type,
+static List *expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 							   Index result_relation, Relation rel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static List *supplement_simply_updatable_targetlist(List *range_table,
+													List *tlist);
 
 
 /*
@@ -137,13 +122,8 @@ preprocess_targetlist(PlannerInfo *root)
 	 */
 	tlist = parse->targetList;
 	if (command_type == CMD_INSERT || command_type == CMD_UPDATE)
-<<<<<<< HEAD
 		tlist = expand_targetlist(root, tlist, command_type,
-								  result_relation, range_table);
-=======
-		tlist = expand_targetlist(tlist, command_type,
 								  result_relation, target_relation);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* simply updatable cursors */
 	if (root->glob->simplyUpdatable)
@@ -285,13 +265,8 @@ preprocess_targetlist(PlannerInfo *root)
  *	  non-junk attributes appear in proper field order.
  */
 static List *
-<<<<<<< HEAD
 expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
-				  Index result_relation, List *range_table)
-=======
-expand_targetlist(List *tlist, int command_type,
 				  Index result_relation, Relation rel)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	List	   *new_tlist = NIL;
 	ListCell   *tlist_item;
