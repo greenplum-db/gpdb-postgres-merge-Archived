@@ -17,7 +17,7 @@
 
 #include "catalog/genbki.h"
 #include "utils/relcache.h"
-#include "utils/tqual.h"
+#include "utils/snapshot.h"
 
 extern void
 InsertAppendOnlyEntry(Oid relid,

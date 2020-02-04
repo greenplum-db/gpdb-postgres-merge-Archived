@@ -55,7 +55,6 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 #include "utils/fmgroids.h"
-#include "utils/tqual.h"
 #include "funcapi.h"
 
 #include "catalog/heap.h"                   /* SystemAttributeDefinition() */

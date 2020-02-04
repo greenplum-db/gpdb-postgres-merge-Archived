@@ -63,7 +63,6 @@
 #include "utils/combocid.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
-#include "utils/tqual.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 

@@ -34,7 +34,6 @@
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 /*
  * Add a single attribute encoding entry.

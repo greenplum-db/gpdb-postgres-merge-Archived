@@ -50,7 +50,6 @@
 #include "utils/regproc.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 #include "cdb/cdbvars.h"
 
 

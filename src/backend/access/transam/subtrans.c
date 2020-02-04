@@ -33,7 +33,6 @@
 #include "access/transam.h"
 #include "pg_trace.h"
 #include "utils/snapmgr.h"
-#include "utils/tqual.h"
 
 
 /*

@@ -40,7 +40,7 @@
 /* GPDB includes */
 #include "executor/executor.h"
 #include "storage/procarray.h"
-#include "utils/tqual.h"
+#include "utils/snapshot.h"
 
 /*
  * We use a BrinBuildState during initial construction of a BRIN index.

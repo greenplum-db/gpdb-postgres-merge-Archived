@@ -23,7 +23,6 @@
 #include "cdb/cdbtm.h"
 
 struct DtxContextInfo;         /* cdb/cdbdtxcontextinfo.h */
-struct SnapshotData;           /* utils/tqual.h */
 
 /*
  * These are to implement PROCARRAY_FLAGS_XXX
@@ -130,7 +129,7 @@ extern void UpdateSerializableCommandId(CommandId curcid);
 
 extern void updateSharedLocalSnapshot(struct DtxContextInfo *dtxContextInfo,
 									  DtxContext distributedTransactionContext,
-									  struct SnapshotData *snapshot,
+									  Snapshot snapshot,
 									  char *debugCaller);
 
 extern void GetSlotTableDebugInfo(void **snapshotArray, int *maxSlots);

@@ -25,7 +25,7 @@
 #include "nodes/primnodes.h"
 #include "storage/block.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
+#include "utils/snapshot.h"
 #include "cdb/cdbappendonlyblockdirectory.h"
 #include "cdb/cdbappendonlystoragelayer.h"
 #include "cdb/cdbappendonlystorageread.h"

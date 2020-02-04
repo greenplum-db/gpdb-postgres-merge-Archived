@@ -22,7 +22,7 @@
 #include "storage/buf.h"
 #include "storage/lock.h"
 #include "utils/relcache.h"
-#include "utils/tqual.h"
+#include "utils/snapshot.h"
 
 /*----------
  * ANALYZE builds one of these structs for each attribute (column) that is

@@ -95,12 +95,8 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-<<<<<<< HEAD
 #include "utils/tarrable.h"
-#include "utils/tqual.h"
-=======
 #include "utils/varlena.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #include "catalog/heap.h"
 #include "catalog/oid_dispatch.h"

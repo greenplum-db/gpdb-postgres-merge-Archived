@@ -22,7 +22,6 @@
 #include "access/htup.h"
 #include "access/heapam.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 #include "access/appendonlywriter.h"
 
 static void insert_or_update_fastsequence(

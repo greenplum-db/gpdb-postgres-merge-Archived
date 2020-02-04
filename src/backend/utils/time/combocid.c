@@ -48,7 +48,6 @@
 #include "utils/combocid.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
-#include "utils/tqual.h"
 #include "cdb/cdbdtxcontextinfo.h"
 
 #include "access/twophase.h"  /* max_prepared_xacts */

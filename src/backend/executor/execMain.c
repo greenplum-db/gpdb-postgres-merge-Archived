@@ -97,7 +97,6 @@
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
 <<<<<<< HEAD
-#include "utils/tqual.h"
 #include "utils/metrics_utils.h"
 
 #include "utils/ps_status.h"

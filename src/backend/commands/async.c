@@ -139,7 +139,6 @@
 #include "utils/ps_status.h"
 #include "utils/snapmgr.h"
 #include "utils/timestamp.h"
-#include "utils/tqual.h"
 
 #include "tcop/idle_resource_cleaner.h"
 

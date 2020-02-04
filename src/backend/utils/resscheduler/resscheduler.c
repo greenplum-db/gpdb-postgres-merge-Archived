@@ -47,7 +47,6 @@
 #include "utils/resscheduler.h"
 #include "utils/syscache.h"
 #include "utils/metrics_utils.h"
-#include "utils/tqual.h"
 
 /*
  * GUC variables.

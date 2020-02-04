@@ -26,7 +26,7 @@
 #include "access/appendonly_visimap_entry.h"
 #include "access/appendonly_visimap_store.h"
 #include "storage/buffile.h"
-#include "utils/tqual.h"
+#include "utils/snapshot.h"
 
 /*
  * The uncompressed visibility entry bitmap should not be larger than 4 KB.

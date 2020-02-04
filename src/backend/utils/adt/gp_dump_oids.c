@@ -19,7 +19,6 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 static List *proc_oids_for_dump = NIL;
 static bool is_proc_oids_valid = false;

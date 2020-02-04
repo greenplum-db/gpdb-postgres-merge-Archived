@@ -79,14 +79,9 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/timeout.h"
-<<<<<<< HEAD
-#include "utils/tqual.h"
-#include "utils/memutils.h"
 
 #include "utils/resource_manager.h"
 #include "utils/session_state.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 static HeapTuple GetDatabaseTuple(const char *dbname);

@@ -52,7 +52,6 @@
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
-#include "utils/tqual.h"
 =======
 #include "port/pg_bswap.h"
 >>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

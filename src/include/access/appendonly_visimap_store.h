@@ -20,7 +20,7 @@
 #include "access/appendonly_visimap_entry.h"
 #include "storage/lock.h"
 #include "utils/rel.h"
-#include "utils/tqual.h"
+#include "utils/snapshot.h"
 
 /*
  * The visimap store is responsible for all

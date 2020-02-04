@@ -62,7 +62,6 @@
 #include "libpq-int.h"
 #include "cdb/cdbfts.h"
 #include "cdb/cdbtm.h"
-#include "utils/tqual.h"
 #include "postmaster/backoff.h"
 #include "cdb/memquota.h"
 #include "executor/instrument.h"

@@ -18,7 +18,7 @@
 
 #include "access/appendonly_visimap.h"
 #include "access/aosegfiles.h"
-#include "utils/tqual.h"
+#include "utils/snapshot.h"
 
 #define Natts_pg_aocsseg 7
 #define Anum_pg_aocs_segno 1

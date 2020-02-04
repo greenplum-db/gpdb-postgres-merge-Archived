@@ -120,7 +120,6 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 <<<<<<< HEAD
-#include "utils/tqual.h"
 #include "utils/timestamp.h"
 
 #include "catalog/aocatalog.h"

@@ -62,8 +62,8 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/ruleutils.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 #define DEFAULT_CONSTRAINT_ESTIMATE 16
 #define MIN_XCHG_CONTEXT_SIZE 4096

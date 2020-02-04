@@ -146,7 +146,15 @@ extern char *ExportSnapshot(Snapshot snapshot);
 /*
  * Utility functions for implementing visibility routines in table AMs.
  */
-extern bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot);
+typedef enum
+{
+	XID_NOT_IN_SNAPSHOT,
+	XID_IN_SNAPSHOT,
+	XID_SURELY_COMMITTED
+} XidInMVCCSnapshotCheckResult;
+extern XidInMVCCSnapshotCheckResult XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
+							  bool distributedSnapshotIgnore, bool *setDistributedSnapshotIgnore);
+extern bool XidInMVCCSnapshot_Local(TransactionId xid, Snapshot snapshot);
 
 /* Support for catalog timetravel for logical decoding */
 struct HTAB;

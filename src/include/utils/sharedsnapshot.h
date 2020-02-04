@@ -15,7 +15,7 @@
 
 #include "storage/proc.h"
 #include "utils/combocid.h"
-#include "utils/tqual.h"
+#include "utils/snapshot.h"
 
 /* MPP Shared Snapshot */
 typedef struct SharedSnapshotSlot

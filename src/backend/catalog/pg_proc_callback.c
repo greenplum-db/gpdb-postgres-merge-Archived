@@ -25,7 +25,6 @@
 #include "catalog/pg_proc_callback.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
-#include "utils/tqual.h"
 
 /* ---------------------
  * deleteProcCallbacks() - Remove callbacks from pg_proc_callback
