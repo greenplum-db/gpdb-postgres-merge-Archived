@@ -64,16 +64,8 @@ static void vacuum_all_databases(vacuumingOptions *vacopts,
 								 int concurrentCons,
 								 const char *progname, bool echo, bool quiet);
 
-<<<<<<< HEAD
-static void prepare_vacuum_command(PQExpBuffer sql, PGconn *conn,
-					   vacuumingOptions *vacopts,
-					   const char *progname,
-					   bool echo,
-					   const char *table);
-=======
 static void prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
 								   vacuumingOptions *vacopts, const char *table);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static void run_vacuum_command(PGconn *conn, const char *sql, bool echo,
 							   const char *table, const char *progname, bool async);
@@ -411,9 +403,6 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		   (stage >= 0 && stage < ANALYZE_NUM_STAGES));
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
-<<<<<<< HEAD
-						   progname, false, true, false);
-=======
 						   progname, echo, false, true);
 
 	if (vacopts->disable_page_skipping && PQserverVersion(conn) < 90600)
@@ -445,7 +434,6 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 					 "--min-mxid-age", "9.6");
 		exit(1);
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (!quiet)
 	{
@@ -458,14 +446,6 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		fflush(stdout);
 	}
 
-<<<<<<< HEAD
-	conn = connectDatabase(dbname, host, port, username, prompt_password,
-						   progname, echo, false, false);
-
-	initPQExpBuffer(&sql);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Prepare the list of tables to process by querying the catalogs.
 	 *
@@ -651,13 +631,8 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		for (i = 1; i < concurrentCons; i++)
 		{
 			conn = connectDatabase(dbname, host, port, username, prompt_password,
-<<<<<<< HEAD
-								   progname, echo, false, false);
-			init_slot(slots + i, conn, progname);
-=======
 								   progname, echo, false, true);
 			init_slot(slots + i, conn);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 	}
@@ -684,12 +659,6 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	{
 		const char *tabname = cell->val;
 		ParallelSlot *free_slot;
-<<<<<<< HEAD
-		const char *tabname = cell ? cell->val : NULL;
-
-		prepare_vacuum_command(&sql, conn, vacopts, progname, echo, tabname);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		if (CancelRequested)
 		{
@@ -783,13 +752,8 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 	int			stage;
 	int			i;
 
-<<<<<<< HEAD
-	conn = connectMaintenanceDatabase(maintenance_db, host, port,
-									  username, prompt_password, progname, echo);
-=======
 	conn = connectMaintenanceDatabase(maintenance_db, host, port, username,
 									  prompt_password, progname, echo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	result = executeQuery(conn,
 						  "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;",
 						  progname, echo);
@@ -852,13 +816,8 @@ vacuum_all_databases(vacuumingOptions *vacopts,
  * depends on the server version involved and it is semicolon-terminated.
  */
 static void
-<<<<<<< HEAD
-prepare_vacuum_command(PQExpBuffer sql, PGconn *conn, vacuumingOptions *vacopts,
-					   const char *progname, bool echo, const char *table)
-=======
 prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
 					   vacuumingOptions *vacopts, const char *table)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	const char *paren = " (";
 	const char *comma = ", ";
@@ -951,16 +910,7 @@ prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
 		}
 	}
 
-<<<<<<< HEAD
-	if (table)
-	{
-		appendPQExpBufferChar(sql, ' ');
-		appendQualifiedRelation(sql, table, conn, progname, echo);
-	}
-	appendPQExpBufferChar(sql, ';');
-=======
 	appendPQExpBuffer(sql, " %s;", table);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -1293,9 +1243,5 @@ help(const char *progname)
 	printf(_("  -W, --password            force password prompt\n"));
 	printf(_("  --maintenance-db=DBNAME   alternate maintenance database\n"));
 	printf(_("\nRead the description of the SQL command VACUUM for details.\n"));
-<<<<<<< HEAD
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("\nReport bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

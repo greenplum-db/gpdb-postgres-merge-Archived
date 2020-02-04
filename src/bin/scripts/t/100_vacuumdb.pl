@@ -3,11 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-<<<<<<< HEAD
-use Test::More tests => 23;
-=======
 use Test::More tests => 44;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 program_help_ok('vacuumdb');
 program_version_ok('vacuumdb');
@@ -37,19 +33,6 @@ $node->issues_sql_like(
 	[ 'vacuumdb', '-Z', 'postgres' ],
 	qr/statement: ANALYZE.*;/,
 	'vacuumdb -Z');
-<<<<<<< HEAD
-$node->command_ok([qw(vacuumdb -Z --table=pg_am dbname=template1)],
-	'vacuumdb with connection string');
-
-$node->command_fails([qw(vacuumdb -Zt pg_am;ABORT postgres)],
-	'trailing command in "-t", without COLUMNS');
-# Unwanted; better if it failed.
-$node->command_ok([qw(vacuumdb -Zt pg_am(amname);ABORT postgres)],
-	'trailing command in "-t", with COLUMNS');
-
-$node->safe_psql('postgres', q|
-  CREATE TABLE "need""q(uot" (")x" text);
-=======
 $node->issues_sql_like(
 	[ 'vacuumdb', '--disable-page-skipping', 'postgres' ],
 	qr/statement: VACUUM \(DISABLE_PAGE_SKIPPING\).*;/,
@@ -82,7 +65,6 @@ $node->safe_psql(
   CREATE TABLE "need""q(uot" (")x" text);
   CREATE TABLE vactable (a int, b int);
   CREATE VIEW vacview AS SELECT 1 as a;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
   CREATE FUNCTION f0(int) RETURNS int LANGUAGE SQL AS 'SELECT $1 * $1';
   CREATE FUNCTION f1(int) RETURNS int LANGUAGE SQL AS 'SELECT f0($1)';
@@ -92,10 +74,6 @@ $node->safe_psql(
 |);
 $node->command_ok([qw|vacuumdb -Z --table="need""q(uot"(")x") postgres|],
 	'column list');
-<<<<<<< HEAD
-$node->command_fails([qw|vacuumdb -Zt funcidx postgres|],
-	'unqualifed name via functional index');
-=======
 $node->command_fails(
 	[qw|vacuumdb -Zt funcidx postgres|],
 	'unqualifed name via functional index');

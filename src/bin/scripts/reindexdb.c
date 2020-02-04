@@ -291,9 +291,11 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
 						   progname, echo, false, false);
-<<<<<<< HEAD
-=======
 
+	/*
+	 * GPDB_12_MERGE_FIXME: do we still report this as PostgreSQL 12 or should
+	 * it say Greenplum 7?
+	 */
 	if (concurrently && PQserverVersion(conn) < 120000)
 	{
 		PQfinish(conn);
@@ -301,7 +303,6 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 					 "concurrently", "12");
 		exit(1);
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	initPQExpBuffer(&sql);
 
@@ -312,11 +313,8 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 
 	appendPQExpBufferStr(&sql, type);
 	appendPQExpBufferChar(&sql, ' ');
-<<<<<<< HEAD
-=======
 	if (concurrently)
 		appendPQExpBufferStr(&sql, "CONCURRENTLY ");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (strcmp(type, "TABLE") == 0 ||
 		strcmp(type, "INDEX") == 0)
 		appendQualifiedRelation(&sql, name, conn, progname, echo);
@@ -451,9 +449,5 @@ help(const char *progname)
 	printf(_("  -W, --password            force password prompt\n"));
 	printf(_("  --maintenance-db=DBNAME   alternate maintenance database\n"));
 	printf(_("\nRead the description of the SQL command REINDEX for details.\n"));
-<<<<<<< HEAD
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("\nReport bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
