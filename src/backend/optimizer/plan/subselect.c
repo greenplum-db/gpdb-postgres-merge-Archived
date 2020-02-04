@@ -2375,11 +2375,7 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 	 * subroot.
 	 */
 	whereClause = eval_const_expressions(root, whereClause);
-<<<<<<< HEAD
-	whereClause = (Node *) canonicalize_qual_ext((Expr *) whereClause, false);
-=======
 	whereClause = (Node *) canonicalize_qual((Expr *) whereClause, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	whereClause = (Node *) make_ands_implicit((Expr *) whereClause);
 
 	/*
@@ -3501,14 +3497,10 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 		case T_ShareInputScan:
 		case T_Unique:
 		case T_SetOp:
-<<<<<<< HEAD
 		case T_Repeat:
 		case T_SplitUpdate:
 		case T_TupleSplit:
-=======
-		case T_Group:
 			/* no node-type-specific fields need fixing */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 
 		default:

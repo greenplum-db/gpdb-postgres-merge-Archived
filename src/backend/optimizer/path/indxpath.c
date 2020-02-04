@@ -22,11 +22,6 @@
 #include "access/stratnum.h"
 #include "access/sysattr.h"
 #include "catalog/pg_am.h"
-<<<<<<< HEAD
-#include "catalog/pg_class.h"
-#include "catalog/pg_collation.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_type.h"
@@ -39,16 +34,11 @@
 #include "optimizer/paths.h"
 #include "optimizer/prep.h"
 #include "optimizer/restrictinfo.h"
-<<<<<<< HEAD
-#include "optimizer/subselect.h"
-#include "optimizer/var.h"
-#include "parser/parsetree.h"
-#include "utils/builtins.h"
-#include "utils/bytea.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
+
+#include "optimizer/subselect.h"
+#include "parser/parsetree.h"
 
 
 /* XXX see PartCollMatchesExprColl */
@@ -2302,7 +2292,6 @@ match_clause_to_index(PlannerInfo *root,
 {
 	int			indexcol;
 
-<<<<<<< HEAD
 	if (rinfo->contain_outer_query_references &&
 		(GpPolicyIsPartitioned(index->rel->cdbpolicy) ||
 		 GpPolicyIsReplicated(index->rel->cdbpolicy)))
@@ -2314,8 +2303,6 @@ match_clause_to_index(PlannerInfo *root,
 		return;
 	}
 
-	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
-=======
 	/*
 	 * Never match pseudoconstants to indexes.  (Normally a match could not
 	 * happen anyway, since a pseudoconstant clause couldn't contain a Var,
@@ -2334,7 +2321,6 @@ match_clause_to_index(PlannerInfo *root,
 
 	/* OK, check each index key column for a match */
 	for (indexcol = 0; indexcol < index->nkeycolumns; indexcol++)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		IndexClause *iclause;
 		ListCell   *lc;

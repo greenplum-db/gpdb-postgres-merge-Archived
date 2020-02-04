@@ -41,19 +41,12 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/print.h"
-<<<<<<< HEAD
-#include "optimizer/clauses.h"
-#include "optimizer/cost.h"
-#include "optimizer/orca.h"
-=======
-#endif
 #include "optimizer/appendinfo.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/inherit.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/paramassign.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
@@ -91,6 +84,7 @@
 #include "cdb/cdbtargeteddispatch.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
+#include "optimizer/orca.h"
 #include "storage/lmgr.h"
 #include "utils/guc.h"
 
@@ -108,20 +102,6 @@ create_upper_paths_hook_type create_upper_paths_hook = NULL;
 
 
 /* Expression kind codes for preprocess_expression */
-<<<<<<< HEAD
-#define EXPRKIND_QUAL			0
-#define EXPRKIND_TARGET			1
-#define EXPRKIND_RTFUNC			2
-#define EXPRKIND_RTFUNC_LATERAL 3
-#define EXPRKIND_VALUES			4
-#define EXPRKIND_VALUES_LATERAL 5
-#define EXPRKIND_LIMIT			6
-#define EXPRKIND_APPINFO		7
-#define EXPRKIND_PHV			8
-#define EXPRKIND_TABLESAMPLE	9
-#define EXPRKIND_ARBITER_ELEM	10
-#define EXPRKIND_WINDOW_BOUND	11
-=======
 #define EXPRKIND_QUAL				0
 #define EXPRKIND_TARGET				1
 #define EXPRKIND_RTFUNC				2
@@ -135,7 +115,7 @@ create_upper_paths_hook_type create_upper_paths_hook = NULL;
 #define EXPRKIND_ARBITER_ELEM		10
 #define EXPRKIND_TABLEFUNC			11
 #define EXPRKIND_TABLEFUNC_LATERAL	12
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#define EXPRKIND_WINDOW_BOUND		13
 
 /* Passthrough data for standard_qp_callback */
 typedef struct
@@ -145,13 +125,8 @@ typedef struct
 } standard_qp_extra;
 
 /*
-<<<<<<< HEAD
- * Temporary structure for use during WindowClause reordering in order to be
- * be able to sort WindowClauses on partitioning/ordering prefix.
-=======
  * Data specific to grouping sets
  */
-
 typedef struct
 {
 	List	   *rollups;
@@ -167,7 +142,6 @@ typedef struct
 /*
  * Temporary structure for use during WindowClause reordering in order to be
  * able to sort WindowClauses on partitioning/ordering prefix.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 typedef struct
 {
@@ -195,20 +169,9 @@ static List *extract_rollup_sets(List *groupingSets);
 static List *reorder_grouping_sets(List *groupingSets, List *sortclause);
 static void standard_qp_callback(PlannerInfo *root, void *extra);
 static double get_number_of_groups(PlannerInfo *root,
-<<<<<<< HEAD
-					 double path_rows,
-					 List *rollup_lists,
-					 List *rollup_groupclauses);
-#if 0
-static Size estimate_hashagg_tablesize(Path *path,
-						   const AggClauseCosts *agg_costs,
-						   double dNumGroups);
-#endif
-=======
 								   double path_rows,
 								   grouping_sets_data *gd,
 								   List *target_list);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static RelOptInfo *create_grouping_paths(PlannerInfo *root,
 										 RelOptInfo *input_rel,
 										 PathTarget *target,
@@ -271,16 +234,6 @@ static PathTarget *make_window_input_target(PlannerInfo *root,
 static List *make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
 									  List *tlist);
 static PathTarget *make_sort_input_target(PlannerInfo *root,
-<<<<<<< HEAD
-					   PathTarget *final_target,
-					   bool *have_postponed_srfs);
-static int	common_prefix_cmp(const void *a, const void *b);
-static Path *create_preliminary_limit_path(PlannerInfo *root, RelOptInfo *rel,
-										   Path *subpath,
-										   Node *limitOffset, Node *limitCount,
-										   int64 offset_est, int64 count_est);
-static Path *create_scatter_path(PlannerInfo *root, List *scatterClause, Path *path);
-=======
 										  PathTarget *final_target,
 										  bool *have_postponed_srfs);
 static void adjust_paths_for_srfs(PlannerInfo *root, RelOptInfo *rel,
@@ -319,7 +272,12 @@ static bool group_by_has_partkey(RelOptInfo *input_rel,
 								 List *targetList,
 								 List *groupClause);
 static int	common_prefix_cmp(const void *a, const void *b);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+static Path *create_preliminary_limit_path(PlannerInfo *root, RelOptInfo *rel,
+										   Path *subpath,
+										   Node *limitOffset, Node *limitCount,
+										   int64 offset_est, int64 count_est);
+static Path *create_scatter_path(PlannerInfo *root, List *scatterClause, Path *path);
 
 static bool isSimplyUpdatableQuery(Query *query);
 
@@ -434,7 +392,12 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	START_MEMORY_ACCOUNT(curMemoryAccountId);
 	{
 
-<<<<<<< HEAD
+	/*
+	 * GPDB_12_MERGE_FIXME: This was removed in upstream commit ab1f0c8225.
+	 * But we had added the CURSOR_OPT_UPDATABLE part in GPDB. Where does it
+	 * belong now?
+	 */
+#if 0
 	/* Cursor options may come from caller or from DECLARE CURSOR stmt */
 	if (parse->utilityStmt &&
 		IsA(parse->utilityStmt, DeclareCursorStmt))
@@ -444,9 +407,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		/* Also try to make any cursor declared with DECLARE CURSOR updatable. */
 		cursorOptions |= CURSOR_OPT_UPDATABLE;
 	}
+#endif
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Set up global state for this planner invocation.  This data is needed
 	 * across all levels of sub-Query that might exist in the given command,
@@ -508,18 +470,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 * restriction, but for now it seems best not to have parallel workers
 	 * trying to create their own parallel workers.
 	 */
-<<<<<<< HEAD
 	/* GPDB_96_MERGE_FIXME: disable parallel workers for now */
 	glob->parallelModeOK = false;
-	/*
-	 * glob->parallelModeOK = (cursorOptions & CURSOR_OPT_PARALLEL_OK) != 0 &&
-	 *         IsUnderPostmaster && dynamic_shared_memory_type != DSM_IMPL_NONE &&
-	 *         parse->commandType == CMD_SELECT && !parse->hasModifyingCTE &&
-	 *         parse->utilityStmt == NULL && max_parallel_workers_per_gather > 0 &&
-	 *         !IsParallelWorker() && !IsolationIsSerializable() &&
-	 *         !has_parallel_hazard((Node *) parse, true);
-	 */
-=======
+#if 0
 	if ((cursorOptions & CURSOR_OPT_PARALLEL_OK) != 0 &&
 		IsUnderPostmaster &&
 		parse->commandType == CMD_SELECT &&
@@ -537,7 +490,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		glob->maxParallelHazard = PROPARALLEL_UNSAFE;
 		glob->parallelModeOK = false;
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#endif
 
 	/*
 	 * glob->parallelModeNeeded is normally set to false here and changed to
@@ -626,25 +579,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	if (cursorOptions & CURSOR_OPT_SCROLL)
 	{
 		if (!ExecSupportsBackwardScan(top_plan))
-<<<<<<< HEAD
-		{
-			Plan	   *sub_plan = top_plan;
-
-			top_plan = materialize_finished_plan(root, sub_plan);
-
-			/*
-			 * XXX horrid kluge: if there are any initPlans attached to the
-			 * formerly-top plan node, move them up to the Material node. This
-			 * prevents failure in SS_finalize_plan, which see for comments.
-			 * We don't bother adjusting the sub_plan's cost estimate for
-			 * this.
-			 */
-			top_plan->initPlan = sub_plan->initPlan;
-			sub_plan->initPlan = NIL;
-		}
-=======
 			top_plan = materialize_finished_plan(top_plan);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 #endif
 
@@ -738,8 +673,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	Assert(glob->finalrtable == NIL);
 	Assert(glob->finalrowmarks == NIL);
 	Assert(glob->resultRelations == NIL);
-<<<<<<< HEAD
 	Assert(parse == root->parse);
+	Assert(glob->rootResultRelations == NIL);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -753,9 +688,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 			motion_sanity_check(root, top_plan);
 	}
 
-=======
-	Assert(glob->rootResultRelations == NIL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	top_plan = set_plan_references(root, top_plan);
 	/* ... and the subplans (both regular subplans and initplans) */
 	Assert(list_length(glob->subplans) == list_length(glob->subroots));
@@ -963,40 +895,29 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->processed_tlist = NIL;
 	root->grouping_map = NULL;
 	root->minmax_aggs = NIL;
-<<<<<<< HEAD
-	root->hasInheritedTarget = false;
+	root->qual_security_level = 0;
+	root->inhTargetKind = INHKIND_NONE;
 	root->upd_del_replicated_table = 0;
 
 	Assert(config);
 	root->config = config;
 
-=======
-	root->qual_security_level = 0;
-	root->inhTargetKind = INHKIND_NONE;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	root->hasRecursion = hasRecursion;
 	if (hasRecursion)
 		root->wt_param_id = assign_special_exec_param(root);
 	else
 		root->wt_param_id = -1;
 	root->non_recursive_path = NULL;
-<<<<<<< HEAD
-	root->is_correlated_subplan = false;
-
-	/*
-	 * If there is a WITH list, process each WITH query and build an initplan
-	 * SubPlan structure for it.
-	 *
-	 * Unlike upstream, we do not use initplan + CteScan, so SS_process_ctes
-	 * will generate unused initplans. Commenting out the following two
-	 * lines.
-=======
 	root->partColsUpdated = false;
+	root->is_correlated_subplan = false;
 
 	/*
 	 * If there is a WITH list, process each WITH query and either convert it
 	 * to RTE_SUBQUERY RTE(s) or build an initplan SubPlan structure for it.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	 *
+	 * GPDB: Unlike upstream, we do not use initplan + CteScan, so SS_process_ctes
+	 * will generate unused initplans. Commenting out the following two
+	 * lines.
 	 */
 #if 0
 	if (parse->cteList)
@@ -1515,11 +1436,7 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 */
 	if (kind == EXPRKIND_QUAL)
 	{
-<<<<<<< HEAD
-		expr = (Node *) canonicalize_qual_ext((Expr *) expr, false);
-=======
 		expr = (Node *) canonicalize_qual((Expr *) expr, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #ifdef OPTIMIZER_DEBUG
 		printf("After canonicalize_qual()\n");
@@ -1660,15 +1577,12 @@ inheritance_planner(PlannerInfo *root)
 	Bitmapset  *parent_relids;
 	Query	  **parent_parses;
 
-<<<<<<< HEAD
 	GpPolicy   *parentPolicy = NULL;
 	Oid			parentOid = InvalidOid;
-	Assert(parse->commandType != CMD_INSERT);
-=======
+
 	/* Should only get here for UPDATE or DELETE */
 	Assert(parse->commandType == CMD_UPDATE ||
 		   parse->commandType == CMD_DELETE);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* MPP */
 	CdbLocusType append_locustype = CdbLocusType_Null;
@@ -1689,32 +1603,6 @@ inheritance_planner(PlannerInfo *root)
 	 * at least O(N^3) work expended here; and (2) would greatly complicate
 	 * management of the rowMarks list.
 	 *
-<<<<<<< HEAD
-	 * Note that any RTEs with security barrier quals will be turned into
-	 * subqueries during planning, and so we must create copies of them too,
-	 * except where they are target relations, which will each only be used in
-	 * a single plan.
-	 *
-	 * To begin with, we'll need a bitmapset of the target relation relids.
-	 */
-	resultRTindexes = bms_make_singleton(parentRTindex);
-	foreach(lc, root->append_rel_list)
-	{
-		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
-
-		if (appinfo->parent_relid == parentRTindex)
-			resultRTindexes = bms_add_member(resultRTindexes,
-											 appinfo->child_relid);
-	}
-
-	/*
-	 * Now, generate a bitmapset of the relids of the subquery RTEs, including
-	 * security-barrier RTEs that will become subqueries, as just explained.
-	*/
-
-	/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * To begin with, generate a bitmapset of the relids of the subquery RTEs.
 	 */
 	subqueryRTindexes = NULL;
@@ -1723,14 +1611,8 @@ inheritance_planner(PlannerInfo *root)
 	{
 		RangeTblEntry *rte = lfirst_node(RangeTblEntry, lc);
 
-<<<<<<< HEAD
 		if (rte->rtekind == RTE_SUBQUERY ||
-			rte->rtekind == RTE_CTE ||
-			(rte->securityQuals != NIL &&
-			 !bms_is_member(rti, resultRTindexes)))
-=======
-		if (rte->rtekind == RTE_SUBQUERY)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			rte->rtekind == RTE_CTE)
 			subqueryRTindexes = bms_add_member(subqueryRTindexes, rti);
 		rti++;
 	}
@@ -2018,67 +1900,9 @@ inheritance_planner(PlannerInfo *root)
 		 */
 		if (child_rte->inh)
 		{
-<<<<<<< HEAD
-			ListCell   *lr;
-
-			rti = 1;
-			foreach(lr, parse->rtable)
-			{
-				RangeTblEntry *rte = (RangeTblEntry *) lfirst(lr);
-
-				/*
-				 * In GPDB CTEs are treated much more like subqueries than in
-				 * upstream. As a result, we will generally plan a separate
-				 * SubqueryScan for each CTE. Unlike in upstream, we will insert
-				 * the plan for a subquery scan into the RelOptInfo for the
-				 * CTE. As of b3aaf9081a1a95c245fd605dcf02c91b3a5c3a29, we
-				 * expect that every SubqueryScan node that references the
-				 * global RangeTable will match the corresponding entry in the
-				 * rte.
-				 * GPDB_92_MERGE_FIXME: Is treating CTE references like
-				 * SubQueries sufficient here? Do we lose an opportunity to use
-				 * shared scan here? Is there a way to treat it similarly with
-				 * gp_cte_sharing turned on?
-				 */
-				if (bms_is_member(rti, subqueryRTindexes))
-				{
-					Index		newrti;
-
-					/*
-					 * The RTE can't contain any references to its own RT
-					 * index, except in the security barrier quals, so we can
-					 * save a few cycles by applying ChangeVarNodes before we
-					 * append the RTE to the rangetable.
-					 */
-					newrti = list_length(subroot->parse->rtable) + 1;
-					ChangeVarNodes((Node *) subroot->parse, rti, newrti, 0);
-					ChangeVarNodes((Node *) subroot->rowMarks, rti, newrti, 0);
-					/* Skip processing unchanging parts of append_rel_list */
-					if (modifiableARIindexes != NULL)
-					{
-						ListCell   *lc2;
-
-						foreach(lc2, subroot->append_rel_list)
-						{
-							AppendRelInfo *appinfo2 = (AppendRelInfo *) lfirst(lc2);
-
-							if (bms_is_member(appinfo2->child_relid,
-											  modifiableARIindexes))
-								ChangeVarNodes((Node *) appinfo2, rti, newrti, 0);
-						}
-					}
-					rte = copyObject(rte);
-					ChangeVarNodes((Node *) rte->securityQuals, rti, newrti, 0);
-					subroot->parse->rtable = lappend(subroot->parse->rtable,
-													 rte);
-				}
-				rti++;
-			}
-=======
 			Assert(child_rte->relkind == RELKIND_PARTITIONED_TABLE);
 			parent_parses[appinfo->child_relid] = subroot->parse;
 			continue;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		/*
@@ -2308,10 +2132,6 @@ inheritance_planner(PlannerInfo *root)
 
 	if (subpaths == NIL)
 	{
-<<<<<<< HEAD
-		set_dummy_rel_pathlist(root, final_rel);
-		return;
-=======
 		/*
 		 * We managed to exclude every child rel, so generate a dummy path
 		 * representing the empty set.  Although it's clear that no data will
@@ -2341,7 +2161,6 @@ inheritance_planner(PlannerInfo *root)
 			returningLists = list_make1(parse->returningList);
 		/* Disable tuple routing, too, just to be safe */
 		root->partColsUpdated = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 	{
@@ -2602,19 +2421,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 				parse->groupClause = preprocess_groupclause(root, NIL);
 		}
 
-<<<<<<< HEAD
-		/* Preprocess targetlist */
-		tlist = preprocess_targetlist(root, tlist);
-
-		if (parse->onConflict)
-			parse->onConflict->onConflictSet =
-				preprocess_onconflict_targetlist(root,
-												 parse->onConflict->onConflictSet,
-												 parse->resultRelation,
-												 parse->rtable);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		/*
 		 * Preprocess targetlist.  Note that much of the remaining planning
 		 * work will be done with the PathTarget representation of tlists, but
@@ -3003,7 +2809,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 		 */
 		if (parse->rowMarks)
 		{
-<<<<<<< HEAD
 			ListCell   *lc;
 			List   *newmarks = NIL;
 
@@ -3021,8 +2826,8 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 			if (newmarks)
 			{
 				path = (Path *) create_lockrows_path(root, final_rel, path,
-									root->rowMarks,
-									SS_assign_special_param(root));
+													 root->rowMarks,
+													 assign_special_param(root));
 			}
 		}
 
@@ -3060,11 +2865,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 
 			CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
 			path = cdbpath_create_motion_path(root, path, pathkeys, false, locus);
-=======
-			path = (Path *) create_lockrows_path(root, final_rel, path,
-												 root->rowMarks,
-												 assign_special_exec_param(root));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		/*
@@ -3192,43 +2992,6 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 }
 
 /*
-<<<<<<< HEAD
- * Create a bitmapset of the RT indexes of live base relations
- *
- * Helper for preprocess_rowmarks ... at this point in the proceedings,
- * the only good way to distinguish baserels from appendrel children
- * is to see what is in the join tree.
- */
-static Bitmapset *
-get_base_rel_indexes(Node *jtnode)
-{
-	Bitmapset  *result;
-
-	if (jtnode == NULL)
-		return NULL;
-	if (IsA(jtnode, RangeTblRef))
-	{
-		int			varno = ((RangeTblRef *) jtnode)->rtindex;
-
-		result = bms_make_singleton(varno);
-	}
-	else if (IsA(jtnode, FromExpr))
-	{
-		FromExpr   *f = (FromExpr *) jtnode;
-		ListCell   *l;
-
-		result = NULL;
-		foreach(l, f->fromlist)
-			result = bms_join(result,
-							  get_base_rel_indexes(lfirst(l)));
-	}
-	else if (IsA(jtnode, JoinExpr))
-	{
-		JoinExpr   *j = (JoinExpr *) jtnode;
-
-		result = bms_join(get_base_rel_indexes(j->larg),
-						  get_base_rel_indexes(j->rarg));
-=======
  * Do preprocessing for groupingSets clause and related data.  This handles the
  * preliminary steps of expanding the grouping sets, organizing them into lists
  * of rollups, and preparing annotations which will later be filled in with
@@ -3317,7 +3080,6 @@ preprocess_grouping_sets(PlannerInfo *root)
 			sets = extract_rollup_sets(sortable_sets);
 		else
 			sets = NIL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 		sets = extract_rollup_sets(parse->groupingSets);
@@ -4589,38 +4351,6 @@ get_number_of_groups(PlannerInfo *root,
 }
 
 /*
-<<<<<<< HEAD
- * estimate_hashagg_tablesize
- *	  estimate the number of bytes that a hash aggregate hashtable will
- *	  require based on the agg_costs, path width and dNumGroups.
- *
- * In Greenplum, Hash Aggregate has been modified quite heavily, to
- * make it spill to disk. calcHashAggTableSizes() handles the estimation,
- * and this function is not used.
- */
-#if 0
-static Size
-estimate_hashagg_tablesize(Path *path, const AggClauseCosts *agg_costs,
-						   double dNumGroups)
-{
-	Size		hashentrysize;
-
-	/* Estimate per-hash-entry space at tuple width... */
-	hashentrysize = MAXALIGN(path->pathtarget->width) +
-		MAXALIGN(SizeofMinimalTupleHeader);
-
-	/* plus space for pass-by-ref transition values... */
-	hashentrysize += agg_costs->transitionSpace;
-	/* plus the per-hash-entry overhead */
-	hashentrysize += hash_agg_entry_size(agg_costs->numAggs);
-
-	return hashentrysize * dNumGroups;
-}
-#endif
-
-/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * create_grouping_paths
  *
  * Build a new upperrel containing Paths for grouping and/or aggregation.
@@ -4865,19 +4595,10 @@ create_degenerate_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 		while (--nrows >= 0)
 		{
 			path = (Path *)
-<<<<<<< HEAD
-				create_append_path(root,
-								   grouped_rel,
-								   paths,
-								   NULL,
-								   0);
-			path->pathtarget = target;
-=======
 				create_group_result_path(root, grouped_rel,
 										 grouped_rel->reltarget,
 										 (List *) parse->havingQual);
 			paths = lappend(paths, path);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		path = (Path *)
 			create_append_path(root,
@@ -7275,17 +6996,8 @@ common_prefix_cmp(const void *a, const void *b)
 
 	forboth(item_a, wcsa->uniqueOrder, item_b, wcsb->uniqueOrder)
 	{
-<<<<<<< HEAD
-		/*
-		 * GPDB_100_MERGE_FIXME: replace with lfirst_node() calls when commit
-		 * 8f0530f58061b185dc385df42e62d78a18d4ae3e is merged.
-		 */
-		SortGroupClause *sca = (SortGroupClause *) lfirst(item_a);
-		SortGroupClause *scb = (SortGroupClause *) lfirst(item_b);
-=======
 		SortGroupClause *sca = lfirst_node(SortGroupClause, item_a);
 		SortGroupClause *scb = lfirst_node(SortGroupClause, item_b);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		if (sca->tleSortGroupRef > scb->tleSortGroupRef)
 			return -1;
@@ -8092,7 +7804,6 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 }
 
 /*
-<<<<<<< HEAD
  * In any plan where we are doing multi-phase limit, the first phase needs
  * to take the offset into account.
  */
@@ -8172,7 +7883,9 @@ isSimplyUpdatableQuery(Query *query)
 			return true;
 	}
 	return false;
-=======
+}
+
+/*
  * plan_create_index_workers
  *		Use the planner to decide how many parallel worker processes
  *		CREATE INDEX should request for use
@@ -9351,5 +9064,4 @@ group_by_has_partkey(RelOptInfo *input_rel,
 	}
 
 	return true;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

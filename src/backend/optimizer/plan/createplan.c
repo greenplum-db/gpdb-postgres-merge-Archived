@@ -819,15 +819,16 @@ create_scan_plan(PlannerInfo *root, Path *best_path, int flags)
 													 scan_clauses);
 			break;
 
-<<<<<<< HEAD
 		case T_TableFunctionScan:
 			plan = (Plan *) create_tablefunction_plan(root,
 													  (TableFunctionScanPath *) best_path,
-=======
+													  tlist,
+													  scan_clauses);
+			break;
+
 		case T_TableFuncScan:
 			plan = (Plan *) create_tablefuncscan_plan(root,
 													  best_path,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 													  tlist,
 													  scan_clauses);
 			break;
@@ -6391,7 +6392,6 @@ make_functionscan(List *qptlist,
 	return node;
 }
 
-<<<<<<< HEAD
 static TableFunctionScan *
 make_tablefunction(List *qptlist, List *qpqual, Plan *subplan,
 				   Index scanrelid, RangeTblFunction *function)
@@ -6414,7 +6414,10 @@ make_tablefunction(List *qptlist, List *qpqual, Plan *subplan,
 	plan->lefttree		 = subplan;
 	node->scan.scanrelid = scanrelid;
 	node->function = function;
-=======
+
+	return node;
+}
+
 static TableFuncScan *
 make_tablefuncscan(List *qptlist,
 				   List *qpqual,
@@ -6430,7 +6433,6 @@ make_tablefuncscan(List *qptlist,
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
 	node->tablefunc = tablefunc;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return node;
 }
@@ -7418,12 +7420,8 @@ materialize_finished_plan(PlannerInfo *root, Plan *subplan)
 Agg *
 make_agg(List *tlist, List *qual,
 		 AggStrategy aggstrategy, AggSplit aggsplit,
-<<<<<<< HEAD
 		 bool streaming,
-		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-=======
 		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators, Oid *grpCollations,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 List *groupingSets, List *chain,
 		 double dNumGroups, Plan *lefttree)
 {
@@ -7439,11 +7437,8 @@ make_agg(List *tlist, List *qual,
 	node->numCols = numGroupCols;
 	node->grpColIdx = grpColIdx;
 	node->grpOperators = grpOperators;
-<<<<<<< HEAD
-	node->groupingSets = groupingSets;
-=======
 	node->grpCollations = grpCollations;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	node->groupingSets = groupingSets;
 	node->numGroups = numGroups;
 	node->aggParams = NULL;		/* SS_finalize_plan() will fill this */
 	node->groupingSets = groupingSets;
@@ -7539,34 +7534,6 @@ make_windowagg(List *tlist, Index winref,
 	return node;
 }
 
-<<<<<<< HEAD
-=======
-static Group *
-make_group(List *tlist,
-		   List *qual,
-		   int numGroupCols,
-		   AttrNumber *grpColIdx,
-		   Oid *grpOperators,
-		   Oid *grpCollations,
-		   Plan *lefttree)
-{
-	Group	   *node = makeNode(Group);
-	Plan	   *plan = &node->plan;
-
-	node->numCols = numGroupCols;
-	node->grpColIdx = grpColIdx;
-	node->grpOperators = grpOperators;
-	node->grpCollations = grpCollations;
-
-	plan->qual = qual;
-	plan->targetlist = tlist;
-	plan->lefttree = lefttree;
-	plan->righttree = NULL;
-
-	return node;
-}
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * distinctList is a list of SortGroupClauses, identifying the targetlist items
  * that should be considered by the Unique filter.  The input path must

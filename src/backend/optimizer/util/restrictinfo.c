@@ -473,11 +473,6 @@ extract_actual_join_clauses(List *restrictinfo_list,
 	{
 		RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
 
-<<<<<<< HEAD
-		Assert(IsA(rinfo, RestrictInfo));
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (RINFO_IS_PUSHED_DOWN(rinfo, joinrelids))
 		{
 			if (!rinfo->pseudoconstant)

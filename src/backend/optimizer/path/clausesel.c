@@ -47,8 +47,9 @@ typedef struct RangeQueryClause
 } RangeQueryClause;
 
 static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
-<<<<<<< HEAD
-			   bool varonleft, bool isLTsel, Selectivity s2);
+						   bool varonleft, bool isLTsel, Selectivity s2);
+static RelOptInfo *find_single_rel_for_clauses(PlannerInfo *root,
+											   List *clauses);
 
 /* cmpSelectivity
  * comparison function for using qsort on an array of Selectivity entries
@@ -70,11 +71,6 @@ cmpSelectivity
 
 	return 0;
 }
-=======
-						   bool varonleft, bool isLTsel, Selectivity s2);
-static RelOptInfo *find_single_rel_for_clauses(PlannerInfo *root,
-											   List *clauses);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /****************************************************************************
  *		ROUTINES TO COMPUTE SELECTIVITIES
@@ -178,21 +174,13 @@ clauselist_selectivity(PlannerInfo *root,
  * selectivity functions; perhaps some day we can generalize the approach.
  */
 Selectivity
-<<<<<<< HEAD
-clauselist_selectivity(PlannerInfo *root,
-					   List *clauses,
-					   int varRelid,
-					   JoinType jointype,
-					   SpecialJoinInfo *sjinfo,
-					   bool use_damping)
-=======
 clauselist_selectivity_simple(PlannerInfo *root,
 							  List *clauses,
 							  int varRelid,
 							  JoinType jointype,
 							  SpecialJoinInfo *sjinfo,
-							  Bitmapset *estimatedclauses)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+							  Bitmapset *estimatedclauses,
+							  bool use_damping)
 {
 	Selectivity s1 = 1.0;
 	Selectivity *rgsel = NULL;
@@ -217,15 +205,9 @@ clauselist_selectivity_simple(PlannerInfo *root,
 								  varRelid, jointype, sjinfo, use_damping);
 
 	/*
-<<<<<<< HEAD
-	 * Initial scan over clauses.  Anything that doesn't look like a potential
-	 * rangequery clause gets directly added as selectivity factor. Anything that
-	 * does gets inserted into an rqlist entry.
-=======
 	 * Anything that doesn't look like a potential rangequery clause gets
 	 * multiplied into s1 and forgotten. Anything that does gets inserted into
 	 * an rqlist entry.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	listidx = -1;
 	foreach(l, clauses)

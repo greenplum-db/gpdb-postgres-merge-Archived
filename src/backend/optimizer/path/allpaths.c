@@ -446,13 +446,11 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			case RTE_FUNCTION:
 				set_function_size_estimates(root, rel);
 				break;
-<<<<<<< HEAD
 			case RTE_TABLEFUNCTION:
 				set_tablefunction_pathlist(root, rel, rte);
-=======
+				break;
 			case RTE_TABLEFUNC:
 				set_tablefunc_size_estimates(root, rel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 			case RTE_VALUES:
 				set_values_size_estimates(root, rel);
@@ -596,14 +594,12 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				/* RangeFunction */
 				set_function_pathlist(root, rel, rte);
 				break;
-<<<<<<< HEAD
 			case RTE_TABLEFUNCTION:
 				/* RangeFunction --- fully handled during set_rel_size */
-=======
+				break;
 			case RTE_TABLEFUNC:
 				/* Table Function */
 				set_tablefunc_pathlist(root, rel, rte);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 			case RTE_VALUES:
 				/* Values list */
@@ -633,10 +629,9 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	if (set_rel_pathlist_hook)
 		(*set_rel_pathlist_hook) (root, rel, rti, rte);
 
-<<<<<<< HEAD
 	if (rel->upperrestrictinfo)
 		bring_to_outer_query(root, rel, rel->upperrestrictinfo);
-=======
+
 	/*
 	 * If this is a baserel, we should normally consider gathering any partial
 	 * paths we may have created for it.  We have to do this after calling the
@@ -655,7 +650,6 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	if (rel->reloptkind == RELOPT_BASEREL &&
 		bms_membership(root->all_baserels) != BMS_SINGLETON)
 		generate_gather_paths(root, rel, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Now find the cheapest of the paths for this rel */
 	set_cheapest(rel);
@@ -800,7 +794,6 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 				return;
 			break;
 
-<<<<<<< HEAD
 		case RTE_TABLEFUNCTION:
 			/* Check for parallel-restricted functions. */
 			if (!function_rte_parallel_ok(rte))
@@ -808,11 +801,10 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 
 			/* GPDB_96_MERGE_FIXME: other than the function itself, I guess this is like RTE_SUBQUERY... */
 			break;
-=======
+
 		case RTE_TABLEFUNC:
 			/* not parallel safe */
 			return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		case RTE_VALUES:
 			/* Check for parallel-restricted functions. */
@@ -1093,10 +1085,6 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 	int			nattrs;
 	ListCell   *l;
 
-<<<<<<< HEAD
-	/* Mark rel with estimated output rows, width, etc */
-	set_baserel_size_estimates(root, rel);
-=======
 	/* Guard against stack overflow due to overly deep inheritance tree. */
 	check_stack_depth();
 
@@ -1123,7 +1111,6 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		rte->relkind == RELKIND_PARTITIONED_TABLE &&
 		rel->attr_needed[InvalidAttrNumber - rel->min_attr] == NULL)
 		rel->consider_partitionwise_join = true;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Initialize to compute size estimates for whole append relation.
@@ -1180,31 +1167,6 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * child RelOptInfo was built.  So we don't need any additional setup
 		 * before applying constraint exclusion.
 		 */
-<<<<<<< HEAD
-		childquals = get_all_actual_clauses(rel->baserestrictinfo);
-		childquals = (List *) adjust_appendrel_attrs(root,
-													 (Node *) childquals,
-													 appinfo);
-		childqual = eval_const_expressions(root, (Node *)
-										   make_ands_explicit(childquals));
-		if (childqual && IsA(childqual, Const) &&
-			(((Const *) childqual)->constisnull ||
-			 !DatumGetBool(((Const *) childqual)->constvalue)))
-		{
-			/*
-			 * Restriction reduces to constant FALSE or constant NULL after
-			 * substitution, so this child need not be scanned.
-			 */
-			set_dummy_rel_pathlist(root, childrel);
-			continue;
-		}
-		childquals = make_ands_implicit((Expr *) childqual);
-		childquals = make_restrictinfos_from_actual_clauses(root,
-															childquals);
-		childrel->baserestrictinfo = childquals;
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (relation_excluded_by_constraints(root, childrel, childRTE))
 		{
 			/*
@@ -2413,20 +2375,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 */
 	required_outer = rel->lateral_relids;
 
-<<<<<<< HEAD
 	forceDistRand = rte->forceDistRandom;
-=======
-	/*
-	 * Zero out result area for subquery_is_pushdown_safe, so that it can set
-	 * flags as needed while recursing.  In particular, we need a workspace
-	 * for keeping track of unsafe-to-reference columns.  unsafeColumns[i]
-	 * will be set true if we find that output column i of the subquery is
-	 * unsafe to use in a pushed-down qual.
-	 */
-	memset(&safetyInfo, 0, sizeof(safetyInfo));
-	safetyInfo.unsafeColumns = (bool *)
-		palloc0((list_length(subquery->targetList) + 1) * sizeof(bool));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* CDB: Could be a preplanned subquery from window_planner. */
 	if (rte->subquery_root == NULL)
@@ -2462,12 +2411,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				DatumGetInt64(cnst->constvalue) <= 1)
 				rel->onerow = true;
 		}
-<<<<<<< HEAD
-=======
-		rel->baserestrictinfo = upperrestrictlist;
-		/* We don't bother recomputing baserestrict_min_security */
-	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * The upper query might not use all the subquery's output columns; if
@@ -3465,7 +3408,7 @@ push_down_restrict(PlannerInfo *root, RelOptInfo *rel,
 	 * Zero out result area for subquery_is_pushdown_safe, so that it can set
 	 * flags as needed while recursing.  In particular, we need a workspace
 	 * for keeping track of unsafe-to-reference columns.  unsafeColumns[i]
-	 * will be set TRUE if we find that output column i of the subquery is
+	 * will be set true if we find that output column i of the subquery is
 	 * unsafe to use in a pushed-down qual.
 	 */
 	memset(&safetyInfo, 0, sizeof(safetyInfo));
@@ -3505,6 +3448,7 @@ push_down_restrict(PlannerInfo *root, RelOptInfo *rel,
 			}
 		}
 		rel->baserestrictinfo = upperrestrictlist;
+		/* We don't bother recomputing baserestrict_min_security */
 	}
 
 	pfree(safetyInfo.unsafeColumns);
@@ -4303,7 +4247,7 @@ generate_partitionwise_join_paths(PlannerInfo *root, RelOptInfo *rel)
 	/* If all child-joins are dummy, parent join is also dummy. */
 	if (!live_children)
 	{
-		mark_dummy_rel(rel);
+		mark_dummy_rel(root, rel);
 		return;
 	}
 
@@ -4514,25 +4458,10 @@ print_path(PlannerInfo *root, Path *path, int indent)
 			ptype = "Limit";
 			subpath = ((LimitPath *) path)->subpath;
 			break;
-<<<<<<< HEAD
-		case T_NestPath:
-			ptype = "NestLoop";
-			join = true;
-			break;
-		case T_MergePath:
-			ptype = "MergeJoin";
-			join = true;
-			break;
-		case T_HashPath:
-			ptype = "HashJoin";
-			join = true;
-			break;
 		case T_CdbMotionPath:
 			ptype = "Motion";
 			subpath = ((CdbMotionPath *) path)->subpath;
 			break;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		default:
 			ptype = "???Path";
 			break;

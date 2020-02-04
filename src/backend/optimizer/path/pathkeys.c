@@ -28,20 +28,15 @@
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
-<<<<<<< HEAD
-#include "optimizer/planmain.h"
-#include "optimizer/tlist.h"
-#include "optimizer/var.h"
-#include "optimizer/restrictinfo.h"
-#include "parser/parsetree.h"
-#include "parser/parse_oper.h" /* for compatible_oper_opid() */
-=======
 #include "partitioning/partbounds.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/lsyscache.h"
 
 #include "cdb/cdbhash.h"
 #include "cdb/cdbpullup.h"		/* cdbpullup_expr(), cdbpullup_make_var() */
+#include "optimizer/planmain.h"
+#include "optimizer/var.h"
+#include "optimizer/restrictinfo.h"
+#include "parser/parsetree.h"
 
 static bool pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys);
 static bool matches_boolean_partition_clause(RestrictInfo *rinfo,

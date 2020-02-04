@@ -2165,11 +2165,6 @@ add_child_rel_equivalences(PlannerInfo *root,
 				Relids		new_relids;
 				Relids		new_nullable_relids;
 
-<<<<<<< HEAD
-				child_expr = (Expr *)
-					adjust_appendrel_attrs(root, (Node *) cur_em->em_expr,
-										   appinfo);
-=======
 				if (parent_rel->reloptkind == RELOPT_BASEREL)
 				{
 					/* Simple single-level transformation */
@@ -2187,7 +2182,6 @@ add_child_rel_equivalences(PlannerInfo *root,
 														  child_rel->relids,
 														  child_rel->top_parent_relids);
 				}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 				/*
 				 * Transform em_relids to match.  Note we do *not* do

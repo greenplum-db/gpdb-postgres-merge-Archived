@@ -6677,8 +6677,8 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 		if (!ExecTargetList(projInfo->pi_targetlist,
 							slot->tts_tupleDescriptor,
 							econtext,
-							slot_get_values(slot),
-							slot_get_isnull(slot),
+							slot->tts_values,
+							slot->isnull,
 							projInfo->pi_itemIsDone,
 							isDone))
 			return slot;		/* no more result rows, return empty slot */

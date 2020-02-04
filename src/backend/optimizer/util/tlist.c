@@ -18,12 +18,8 @@
 
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
-#include "optimizer/planmain.h"
-=======
 #include "optimizer/cost.h"
 #include "optimizer/optimizer.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "optimizer/tlist.h"
 #include "utils/lsyscache.h" /* get_typavgwidth() */
 

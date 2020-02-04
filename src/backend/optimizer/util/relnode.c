@@ -48,11 +48,8 @@ typedef struct JoinHashEntry
 	RelOptInfo *join_rel;
 } JoinHashEntry;
 
-<<<<<<< HEAD
-=======
 static void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 								RelOptInfo *input_rel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static List *build_joinrel_restrictlist(PlannerInfo *root,
 										RelOptInfo *joinrel,
 										RelOptInfo *outer_rel,
@@ -338,11 +335,8 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 			break;
 		case RTE_SUBQUERY:
 		case RTE_FUNCTION:
-<<<<<<< HEAD
 		case RTE_TABLEFUNCTION:
-=======
 		case RTE_TABLEFUNC:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		case RTE_VALUES:
 		case RTE_CTE:
 		case RTE_NAMEDTUPLESTORE:
@@ -391,7 +385,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 			 * Some restriction clause reduced to constant FALSE or NULL after
 			 * substitution, so this child need not be scanned.
 			 */
-			mark_dummy_rel(rel);
+			mark_dummy_rel(root, rel);
 		}
 	}
 
@@ -532,13 +526,16 @@ find_join_rel(PlannerInfo *root, Relids relids)
  * Otherwise these fields are left invalid, so GetForeignJoinPaths will not be
  * called for the join relation.
  *
+ * GPDB: Also, EXECUTE ON must match. (Perhaps we shouldn't allow EXECUTE
+ * ON on individual tables? Then it would be enough to compare server id)
  */
 static void
 set_foreign_rel_properties(RelOptInfo *joinrel, RelOptInfo *outer_rel,
 						   RelOptInfo *inner_rel)
 {
 	if (OidIsValid(outer_rel->serverid) &&
-		inner_rel->serverid == outer_rel->serverid)
+		inner_rel->serverid == outer_rel->serverid &&
+		inner_rel->exec_location == outer_rel->exec_location)
 	{
 		if (inner_rel->userid == outer_rel->userid)
 		{
@@ -546,6 +543,7 @@ set_foreign_rel_properties(RelOptInfo *joinrel, RelOptInfo *outer_rel,
 			joinrel->userid = outer_rel->userid;
 			joinrel->useridiscurrent = outer_rel->useridiscurrent || inner_rel->useridiscurrent;
 			joinrel->fdwroutine = outer_rel->fdwroutine;
+			joinrel->exec_location = outer_rel->exec_location;
 		}
 		else if (!OidIsValid(inner_rel->userid) &&
 				 outer_rel->userid == GetUserId())
@@ -554,6 +552,7 @@ set_foreign_rel_properties(RelOptInfo *joinrel, RelOptInfo *outer_rel,
 			joinrel->userid = outer_rel->userid;
 			joinrel->useridiscurrent = true;
 			joinrel->fdwroutine = outer_rel->fdwroutine;
+			joinrel->exec_location = outer_rel->exec_location;
 		}
 		else if (!OidIsValid(outer_rel->userid) &&
 				 inner_rel->userid == GetUserId())
@@ -562,6 +561,7 @@ set_foreign_rel_properties(RelOptInfo *joinrel, RelOptInfo *outer_rel,
 			joinrel->userid = inner_rel->userid;
 			joinrel->useridiscurrent = true;
 			joinrel->fdwroutine = outer_rel->fdwroutine;
+			joinrel->exec_location = outer_rel->exec_location;
 		}
 	}
 }
@@ -712,62 +712,12 @@ build_join_rel(PlannerInfo *root,
 	joinrel->nullable_partexprs = NULL;
 	joinrel->partitioned_child_rels = NIL;
 
-<<<<<<< HEAD
 	/* CDB: Join between single-row inputs produces a single-row joinrel. */
 	if (outer_rel->onerow && inner_rel->onerow)
 		joinrel->onerow = true;
 
-	/*
-	 * Set up foreign-join fields if outer and inner relation are foreign
-	 * tables (or joins) belonging to the same server and assigned to the same
-	 * user to check access permissions as.  In addition to an exact match of
-	 * userid, we allow the case where one side has zero userid (implying
-	 * current user) and the other side has explicit userid that happens to
-	 * equal the current user; but in that case, pushdown of the join is only
-	 * valid for the current user.  The useridiscurrent field records whether
-	 * we had to make such an assumption for this join or any sub-join.
-	 *
-	 * Otherwise these fields are left invalid, so GetForeignJoinPaths will
-	 * not be called for the join relation.
-	 *
-	 * GPDB: Also, EXECUTE ON must match. (Perhaps we shouldn't allow EXECUTE
-	 * ON on individual tables? Then it would be enough to compare server id)
-	 */
-	if (OidIsValid(outer_rel->serverid) &&
-		inner_rel->serverid == outer_rel->serverid &&
-		inner_rel->exec_location == outer_rel->exec_location)
-	{
-		if (inner_rel->userid == outer_rel->userid)
-		{
-			joinrel->serverid = outer_rel->serverid;
-			joinrel->userid = outer_rel->userid;
-			joinrel->useridiscurrent = outer_rel->useridiscurrent || inner_rel->useridiscurrent;
-			joinrel->fdwroutine = outer_rel->fdwroutine;
-			joinrel->exec_location = outer_rel->exec_location;
-		}
-		else if (!OidIsValid(inner_rel->userid) &&
-				 outer_rel->userid == GetUserId())
-		{
-			joinrel->serverid = outer_rel->serverid;
-			joinrel->userid = outer_rel->userid;
-			joinrel->useridiscurrent = true;
-			joinrel->fdwroutine = outer_rel->fdwroutine;
-			joinrel->exec_location = outer_rel->exec_location;
-		}
-		else if (!OidIsValid(outer_rel->userid) &&
-				 inner_rel->userid == GetUserId())
-		{
-			joinrel->serverid = outer_rel->serverid;
-			joinrel->userid = inner_rel->userid;
-			joinrel->useridiscurrent = true;
-			joinrel->fdwroutine = outer_rel->fdwroutine;
-			joinrel->exec_location = outer_rel->exec_location;
-		}
-	}
-=======
 	/* Compute information relevant to the foreign relations. */
 	set_foreign_rel_properties(joinrel, outer_rel, inner_rel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Create a new tlist containing just the vars that need to be output from

@@ -28,14 +28,10 @@
  * the tlists for child tables to keep expand_targetlist happy.  We do it like
  * that because it's faster in typical non-inherited cases.
  *
-<<<<<<< HEAD
+ *
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
- *
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -275,21 +271,6 @@ preprocess_targetlist(PlannerInfo *root)
 	return tlist;
 }
 
-<<<<<<< HEAD
-/*
- * preprocess_onconflict_targetlist
- *	  Process ON CONFLICT SET targetlist.
- *
- *	  Returns the new targetlist.
- */
-List *
-preprocess_onconflict_targetlist(PlannerInfo *root, List *tlist, int result_relation, List *range_table)
-{
-	return expand_targetlist(root, tlist, CMD_UPDATE, result_relation, range_table);
-}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*****************************************************************************
  *

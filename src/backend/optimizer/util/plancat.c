@@ -132,12 +132,8 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	 * the rewriter or when expand_inherited_rtentry() added it to the query's
 	 * rangetable.
 	 */
-<<<<<<< HEAD
-	relation = heap_open(relationObjectId, NoLock);
-	needs_longlock = rel_needs_long_lock(relationObjectId);
-=======
 	relation = table_open(relationObjectId, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	needs_longlock = rel_needs_long_lock(relationObjectId);
 
 	/* Temporary and unlogged relations are inaccessible during recovery. */
 	if (!RelationNeedsWAL(relation) && RecoveryInProgress())
@@ -1196,31 +1192,9 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 		case RELKIND_RELATION:
 		case RELKIND_MATVIEW:
 		case RELKIND_TOASTVALUE:
-<<<<<<< HEAD
 		case RELKIND_AOSEGMENTS:
 		case RELKIND_AOBLOCKDIR:
 		case RELKIND_AOVISIMAP:
-			
-			if (RelationIsAoRows(rel))
-			{
-				int64		totalbytes;
-
-				totalbytes = GetAOTotalBytes(rel, GetActiveSnapshot());
-				curpages = RelationGuessNumberOfBlocks(totalbytes);
-			}
-			else if (RelationIsAoCols(rel))
-			{
-				int64		totalbytes;
-
-				totalbytes = GetAOCSTotalBytes(rel, GetActiveSnapshot(), false);
-				curpages = RelationGuessNumberOfBlocks(totalbytes);
-			}
-			else
-			{
-				/* it has storage, ok to call the smgr */
-				curpages = RelationGetNumberOfBlocks(rel);
-			}
-=======
 			table_relation_estimate_size(rel, attr_widths, pages, tuples,
 										 allvisfrac);
 			break;
@@ -1234,7 +1208,6 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 
 			/* it has storage, ok to call the smgr */
 			curpages = RelationGetNumberOfBlocks(rel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/* coerce values in pg_class to more desirable types */
 			relpages = (BlockNumber) rel->rd_rel->relpages;
@@ -1481,11 +1454,7 @@ get_relation_constraints(PlannerInfo *root,
 			 */
 			cexpr = eval_const_expressions(root, cexpr);
 
-<<<<<<< HEAD
-			cexpr = (Node *) canonicalize_qual_ext((Expr *) cexpr, true);
-=======
 			cexpr = (Node *) canonicalize_qual((Expr *) cexpr, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/* Fix Vars to have the desired varno */
 			if (varno != 1)
@@ -1771,7 +1740,6 @@ relation_excluded_by_constraints(PlannerInfo *root,
 	}
 
 	/*
-<<<<<<< HEAD
 	 * GPDB: Check if there's a constant False condition. That's unlikely
 	 * to help much in most cases, as we'll create a Result node with
 	 * a False one-time filter anyway, so the underlying plan will not
@@ -1794,13 +1762,11 @@ relation_excluded_by_constraints(PlannerInfo *root,
 		}
 	}
 
-	if (predicate_refuted_by(safe_restrictions, safe_restrictions))
-=======
+	/*
 	 * We can use weak refutation here, since we're comparing restriction
 	 * clauses with restriction clauses.
 	 */
 	if (predicate_refuted_by(safe_restrictions, safe_restrictions, true))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 
 	/*

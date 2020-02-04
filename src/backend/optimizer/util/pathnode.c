@@ -1358,17 +1358,13 @@ create_index_path(PlannerInfo *root,
 	pathnode->indexorderbycols = indexorderbycols;
 	pathnode->indexscandir = indexscandir;
 
-<<<<<<< HEAD
 	/* Distribution is same as the base table. */
 	pathnode->path.locus = cdbpathlocus_from_baserel(root, rel);
 	pathnode->path.motionHazard = false;
 	pathnode->path.rescannable = true;
 	pathnode->path.sameslice_relids = rel->relids;
 
-	cost_index(pathnode, root, loop_count);
-=======
 	cost_index(pathnode, root, loop_count, partial_path);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return pathnode;
 }
@@ -1798,7 +1794,6 @@ create_merge_append_path(PlannerInfo *root,
 }
 
 /*
-<<<<<<< HEAD
  * Set the locus of an Append or MergeAppend path.
  *
  * This modifies the 'subpaths', costs fields, and locus of 'pathnode'.
@@ -2070,10 +2065,7 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 }
 
 /*
- * create_result_path
-=======
  * create_group_result_path
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *	  Creates a path representing a Result-and-nothing-else plan.
  *
  * This is only used for degenerate grouping cases, in which we know we
@@ -2403,12 +2395,8 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		else
 			cost_agg(&agg_path, root,
 					 AGG_HASHED, NULL,
-<<<<<<< HEAD
 					 numCols, pathnode->path.rows / planner_segment_count(NULL),
-=======
-					 numCols, pathnode->path.rows,
 					 NIL,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					 subpath->startup_cost,
 					 subpath->total_cost,
 					 rel->rows,
@@ -2477,7 +2465,6 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 }
 
 /*
-<<<<<<< HEAD
  * create_unique_rowid_path (GPDB)
  *
  * Create a UniquePath to deduplicate based on the ctid and gp_segment_id,
@@ -2741,7 +2728,8 @@ create_unique_rowid_path(PlannerInfo *root,
 
 	return pathnode;
 }                               /* create_unique_rowid_path */
-=======
+
+/*
  * create_gather_merge_path
  *
  *	  Creates a path corresponding to a gather merge scan, returning
@@ -2800,7 +2788,6 @@ create_gather_merge_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 
 	return pathnode;
 }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * translate_sub_tlist - get subquery column numbers represented by tlist
@@ -3070,7 +3057,6 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 }
 
 /*
-<<<<<<< HEAD
  * create_tablefunction_path
  *	  Creates a path corresponding to a sequential scan of a table function,
  *	  returning the pathnode.
@@ -3114,7 +3100,9 @@ create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->path.sameslice_relids = NULL;
 
 	cost_tablefunction(pathnode, root, rel, pathnode->path.param_info);
-=======
+}
+
+/*
  * create_tablefuncscan_path
  *	  Creates a path corresponding to a sequential scan of a table function,
  *	  returning the pathnode.
@@ -3136,7 +3124,6 @@ create_tablefuncscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->pathkeys = NIL;	/* result is always unordered */
 
 	cost_tablefuncscan(pathnode, root, rel, pathnode->param_info);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return pathnode;
 }
@@ -3715,7 +3702,6 @@ create_nestloop_path(PlannerInfo *root,
 	pathnode->innerjoinpath = inner_path;
 	pathnode->joinrestrictinfo = restrict_clauses;
 
-<<<<<<< HEAD
 	pathnode->path.locus = join_locus;
 	pathnode->path.motionHazard = outer_path->motionHazard || inner_path->motionHazard;
 
@@ -3730,12 +3716,9 @@ create_nestloop_path(PlannerInfo *root,
 	 */
 	initial_cost_nestloop(root, workspace, jointype,
 						  outer_path, inner_path,
-						  sjinfo, semifactors);
+						  extra, semifactors);
 
-	final_cost_nestloop(root, pathnode, workspace, sjinfo, semifactors);
-=======
 	final_cost_nestloop(root, pathnode, workspace, extra);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return pathnode;
 }
@@ -3887,7 +3870,6 @@ create_mergejoin_path(PlannerInfo *root,
 	/* pathnode->skip_mark_restore will be set by final_cost_mergejoin */
 	/* pathnode->materialize_inner will be set by final_cost_mergejoin */
 
-<<<<<<< HEAD
 	/*
 	 * inner_path & outer_path are possibly modified above. Let's recalculate
 	 * the initial cost.
@@ -3895,12 +3877,9 @@ create_mergejoin_path(PlannerInfo *root,
 	initial_cost_mergejoin(root, workspace, jointype, mergeclauses,
 						   outer_path, inner_path,
 						   outersortkeys, innersortkeys,
-						   sjinfo);
+						   extra);
 
-	final_cost_mergejoin(root, pathnode, workspace, sjinfo);
-=======
 	final_cost_mergejoin(root, pathnode, workspace, extra);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return pathnode;
 }
@@ -4018,7 +3997,6 @@ create_hashjoin_path(PlannerInfo *root,
 	pathnode->path_hashclauses = hashclauses;
 	/* final_cost_hashjoin will fill in pathnode->num_batches */
 
-<<<<<<< HEAD
 	/*
 	 * If hash table overflows to disk, and an ancestor node requests rescan
 	 * (e.g. because the HJ is in the inner subtree of a NJ), then the HJ has
@@ -4040,12 +4018,9 @@ create_hashjoin_path(PlannerInfo *root,
 	 */
 	initial_cost_hashjoin(root, workspace, jointype, hashclauses,
 						  outer_path, inner_path,
-						  sjinfo, semifactors);
+						  extra, semifactors);
 
-	final_cost_hashjoin(root, pathnode, workspace, sjinfo, semifactors);
-=======
 	final_cost_hashjoin(root, pathnode, workspace, extra);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return pathnode;
 }
@@ -4613,11 +4588,7 @@ GroupingSetsPath *
 create_groupingsets_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 Path *subpath,
-<<<<<<< HEAD
-						 PathTarget *target,
 						 AggSplit aggsplit,
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						 List *having_qual,
 						 AggStrategy aggstrategy,
 						 List *rollups,
@@ -4664,44 +4635,16 @@ create_groupingsets_path(PlannerInfo *root,
 	else
 		pathnode->path.pathkeys = NIL;
 
-<<<<<<< HEAD
 	pathnode->aggsplit = aggsplit;
-	pathnode->rollup_groupclauses = rollup_groupclauses;
-	pathnode->rollup_lists = rollup_lists;
-=======
 	pathnode->aggstrategy = aggstrategy;
 	pathnode->rollups = rollups;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	pathnode->qual = having_qual;
 
 	Assert(rollups != NIL);
 	Assert(aggstrategy != AGG_PLAIN || list_length(rollups) == 1);
 	Assert(aggstrategy != AGG_MIXED || list_length(rollups) > 1);
 
-<<<<<<< HEAD
-	/* Account for cost of the topmost Agg node */
-	numGroupCols = list_length((List *) linitial((List *) llast(rollup_lists)));
-
-	cost_agg(&pathnode->path, root,
-			 (numGroupCols > 0) ? AGG_SORTED : AGG_PLAIN,
-			 agg_costs,
-			 numGroupCols,
-			 numGroups,
-			 subpath->startup_cost,
-			 subpath->total_cost,
-			 subpath->rows,
-			 NULL, /* hash_info */
-			 false /* streaming */);
-
-	/*
-	 * Add in the costs and output rows of the additional sorting/aggregation
-	 * steps, if any.  Only total costs count, since the extra sorts aren't
-	 * run on startup.
-	 */
-	if (list_length(rollup_lists) > 1)
-=======
 	foreach(lc, rollups)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		RollupData *rollup = lfirst(lc);
 		List	   *gsets = rollup->gsets;
@@ -4723,19 +4666,13 @@ create_groupingsets_path(PlannerInfo *root,
 					 aggstrategy,
 					 agg_costs,
 					 numGroupCols,
-<<<<<<< HEAD
-					 numGroups, /* XXX surely not right for all steps? */
-					 sort_path.startup_cost,
-					 sort_path.total_cost,
-					 sort_path.rows,
-					 NULL, /* hash_info */
-					 false /* streaming */);
-=======
 					 rollup->numGroups,
 					 having_qual,
 					 subpath->startup_cost,
 					 subpath->total_cost,
-					 subpath->rows);
+					 subpath->rows,
+					 NULL, /* hash_info */
+					 false /* streaming */);
 			is_first = false;
 			if (!rollup->is_hashed)
 				is_first_sort = false;
@@ -4785,7 +4722,6 @@ create_groupingsets_path(PlannerInfo *root,
 						 sort_path.total_cost,
 						 sort_path.rows);
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			pathnode->path.total_cost += agg_path.total_cost;
 			pathnode->path.rows += agg_path.rows;
@@ -5597,30 +5533,21 @@ reparameterize_path(PlannerInfo *root, Path *path,
 														 spath->path.locus,
 														 required_outer);
 			}
-<<<<<<< HEAD
-=======
 		case T_Result:
 			/* Supported only for RTE_RESULT scan paths */
 			if (IsA(path, Path))
 				return create_resultscan_path(root, rel, required_outer);
 			break;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		case T_Append:
 			{
 				AppendPath *apath = (AppendPath *) path;
 				List	   *childpaths = NIL;
-<<<<<<< HEAD
-				ListCell   *lc;
-
-				/* Reparameterize the children */
-=======
 				List	   *partialpaths = NIL;
 				int			i;
 				ListCell   *lc;
 
 				/* Reparameterize the children */
 				i = 0;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				foreach(lc, apath->subpaths)
 				{
 					Path	   *spath = (Path *) lfirst(lc);
@@ -5630,14 +5557,6 @@ reparameterize_path(PlannerInfo *root, Path *path,
 												loop_count);
 					if (spath == NULL)
 						return NULL;
-<<<<<<< HEAD
-					childpaths = lappend(childpaths, spath);
-				}
-				return (Path *)
-					create_append_path(root, rel, childpaths,
-									   required_outer,
-									   apath->path.parallel_workers);
-=======
 					/* We have to re-split the regular and partial paths */
 					if (i < apath->first_partial_path)
 						childpaths = lappend(childpaths, spath);
@@ -5652,7 +5571,6 @@ reparameterize_path(PlannerInfo *root, Path *path,
 									   apath->path.parallel_aware,
 									   apath->partitioned_rels,
 									   -1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 		default:
 			break;

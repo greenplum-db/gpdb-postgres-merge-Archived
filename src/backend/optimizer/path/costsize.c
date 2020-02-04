@@ -60,13 +60,9 @@
  * values.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -109,8 +105,6 @@
 
 #define LOG2(x)  (log(x) / 0.693147180559945)
 
-<<<<<<< HEAD
-=======
 /*
  * Append and MergeAppend nodes are less expensive than some other operations
  * which use cpu_tuple_cost; instead of adding a separate GUC, estimate the
@@ -119,7 +113,6 @@
 #define APPEND_CPU_COST_MULTIPLIER 0.5
 
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 double		seq_page_cost = DEFAULT_SEQ_PAGE_COST;
 double		random_page_cost = DEFAULT_RANDOM_PAGE_COST;
 double		cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
@@ -173,27 +166,6 @@ static bool has_indexed_join_quals(NestPath *joinpath);
 static double approx_tuple_count(PlannerInfo *root, JoinPath *path,
 								 List *quals);
 static double calc_joinrel_size_estimate(PlannerInfo *root,
-<<<<<<< HEAD
-						   RelOptInfo *joinrel,
-						   RelOptInfo *outer_rel,
-						   RelOptInfo *inner_rel,
-						   double outer_rows,
-						   double inner_rows,
-						   SpecialJoinInfo *sjinfo,
-						   List *restrictlist);
-static Selectivity get_foreign_key_join_selectivity(PlannerInfo *root,
-								 Relids outer_relids,
-								 Relids inner_relids,
-								 SpecialJoinInfo *sjinfo,
-								 List **restrictlist);
-static double relation_byte_size(double tuples, int width);
-static double page_size(double tuples, int width);
-static Selectivity adjust_selectivity_for_nulltest(Selectivity selec,
-												Selectivity pselec,
-												List *pushed_quals,
-												JoinType jointype);
-static double spilledTupleNumber(double hashTableCapacity, double numGroups, double rows);
-=======
 										 RelOptInfo *joinrel,
 										 RelOptInfo *outer_rel,
 										 RelOptInfo *inner_rel,
@@ -208,12 +180,15 @@ static Selectivity get_foreign_key_join_selectivity(PlannerInfo *root,
 													List **restrictlist);
 static Cost append_nonpartial_cost(List *subpaths, int numpaths,
 								   int parallel_workers);
-static void set_rel_width(PlannerInfo *root, RelOptInfo *rel);
 static double relation_byte_size(double tuples, int width);
 static double page_size(double tuples, int width);
 static double get_parallel_divisor(Path *path);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
+static Selectivity adjust_selectivity_for_nulltest(Selectivity selec,
+												Selectivity pselec,
+												List *pushed_quals,
+												JoinType jointype);
+static double spilledTupleNumber(double hashTableCapacity, double numGroups, double rows);
 /* CDB: The clamp_row_est() function definition has been moved to cost.h */
 
 /*
@@ -499,18 +474,11 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count,
 	List	   *qpquals;
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
-<<<<<<< HEAD
+	Cost		cpu_run_cost = 0;
 	Cost		indexStartupCost = 0.0;
 	Cost		indexTotalCost = 0.0;
 	Selectivity indexSelectivity = 0.0;
 	double		indexCorrelation = 0.0,
-=======
-	Cost		cpu_run_cost = 0;
-	Cost		indexStartupCost;
-	Cost		indexTotalCost;
-	Selectivity indexSelectivity;
-	double		indexCorrelation,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				csquared;
 	double		spc_seq_page_cost,
 				spc_random_page_cost;
@@ -1563,7 +1531,6 @@ cost_functionscan(Path *path, PlannerInfo *root,
 }
 
 /*
-<<<<<<< HEAD
  * cost_tablefunction
  *	  Determines and returns the cost of scanning a table function RTE.
  */
@@ -1607,7 +1574,9 @@ cost_tablefunction(TableFunctionScanPath *path, PlannerInfo *root, RelOptInfo *b
 	/* Add in the additional cost */
 	path->path.startup_cost += startup_cost;
 	path->path.total_cost   += startup_cost + run_cost;
-=======
+}
+
+/*
  * cost_tablefuncscan
  *	  Determines and returns the cost of scanning a table function.
  *
@@ -1661,7 +1630,6 @@ cost_tablefuncscan(Path *path, PlannerInfo *root,
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -4309,13 +4277,8 @@ cost_rescan(PlannerInfo *root, Path *path,
 				 * the run_cost charge in cost_sort, and also see comments in
 				 * cost_material before you change it.)
 				 */
-<<<<<<< HEAD
-				Cost		run_cost = cpu_operator_cost * path->parent->rows;
-				double		nbytes = relation_byte_size(path->parent->rows,
-=======
 				Cost		run_cost = cpu_operator_cost * path->rows;
 				double		nbytes = relation_byte_size(path->rows,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 														path->pathtarget->width);
 				long		work_mem_bytes = work_mem * 1024L;
 
@@ -4714,12 +4677,7 @@ compute_semi_anti_join_factors(PlannerInfo *root,
 		{
 			RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
 
-<<<<<<< HEAD
-			Assert(IsA(rinfo, RestrictInfo));
-			if (!RINFO_IS_PUSHED_DOWN(rinfo, joinrelids))
-=======
 			if (!RINFO_IS_PUSHED_DOWN(rinfo, joinrel->relids))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				joinquals = lappend(joinquals, rinfo);
 		}
 	}
@@ -4732,14 +4690,9 @@ compute_semi_anti_join_factors(PlannerInfo *root,
 	jselec = clauselist_selectivity(root,
 									joinquals,
 									0,
-<<<<<<< HEAD
-									jointype,
+									(jointype == JOIN_ANTI) ? JOIN_ANTI : JOIN_SEMI,
 									sjinfo,
 									gp_selectivity_damping_for_scans);
-=======
-									(jointype == JOIN_ANTI) ? JOIN_ANTI : JOIN_SEMI,
-									sjinfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Also get the normal inner-join selectivity of the join clauses.
@@ -5249,10 +5202,6 @@ calc_joinrel_size_estimate(PlannerInfo *root,
 		{
 			RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
 
-<<<<<<< HEAD
-			Assert(IsA(rinfo, RestrictInfo));
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			if (RINFO_IS_PUSHED_DOWN(rinfo, joinrel->relids))
 				pushedquals = lappend(pushedquals, rinfo);
 			else
@@ -6229,7 +6178,6 @@ page_size(double tuples, int width)
 	return ceil(relation_byte_size(tuples, width) / BLCKSZ);
 }
 
-<<<<<<< HEAD
 /**
  * Determine the number of segments the planner should use.  The result of this
  * calculation is ordinarily saved in root->cdbpath_segments.  Functions that 
@@ -6387,7 +6335,8 @@ Cost incremental_mergejoin_cost(double rows, List *mergeclauses, PlannerInfo *ro
 	run_cost += (cpu_tuple_cost + per_tuple_cost) * rows;
 	
 	return startup_cost + run_cost;
-=======
+}
+
 /*
  * Estimate the fraction of the work that each worker will do given the
  * number of workers budgeted for the path.
@@ -6523,5 +6472,4 @@ compute_bitmap_pages(PlannerInfo *root, RelOptInfo *baserel, Path *bitmapqual,
 		*tuple = tuples_fetched;
 
 	return pages_fetched;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

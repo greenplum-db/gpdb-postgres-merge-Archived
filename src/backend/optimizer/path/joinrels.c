@@ -34,13 +34,6 @@ static void make_rels_by_clauseless_joins(PlannerInfo *root,
 										  ListCell *other_rels);
 static bool has_join_restriction(PlannerInfo *root, RelOptInfo *rel);
 static bool has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel);
-<<<<<<< HEAD
-static bool is_dummy_rel(RelOptInfo *rel);
-static void mark_dummy_rel(PlannerInfo *root, RelOptInfo *rel);
-static bool restriction_is_constant_false(List *restrictlist,
-							  RelOptInfo *joinrel,
-							  bool only_pushed_down);
-=======
 static bool restriction_is_constant_false(List *restrictlist,
 										  RelOptInfo *joinrel,
 										  bool only_pushed_down);
@@ -56,7 +49,6 @@ static SpecialJoinInfo *build_child_join_sjinfo(PlannerInfo *root,
 												Relids left_relids, Relids right_relids);
 static int	match_expr_to_partition_keys(Expr *expr, RelOptInfo *rel,
 										 bool strict_op);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /*
@@ -1285,13 +1277,8 @@ is_dummy_rel(RelOptInfo *rel)
  * is that the best solution is to explicitly make the dummy path in the same
  * context the given RelOptInfo is in.
  */
-<<<<<<< HEAD
-static void
-mark_dummy_rel(PlannerInfo *root, RelOptInfo *rel)
-=======
 void
-mark_dummy_rel(RelOptInfo *rel)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+mark_dummy_rel(PlannerInfo *root, RelOptInfo *rel)
 {
 	MemoryContext oldcontext;
 
@@ -1310,13 +1297,9 @@ mark_dummy_rel(RelOptInfo *rel)
 	rel->partial_pathlist = NIL;
 
 	/* Set up the dummy path */
-<<<<<<< HEAD
-	add_path(rel, (Path *) create_append_path(root, rel, NIL, NULL, 0));
-=======
-	add_path(rel, (Path *) create_append_path(NULL, rel, NIL, NIL,
+	add_path(rel, (Path *) create_append_path(root, NULL, rel, NIL, NIL,
 											  NIL, rel->lateral_relids,
 											  0, false, NIL, -1));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Set or update cheapest_total_path */
 	set_cheapest(rel);
@@ -1354,10 +1337,6 @@ restriction_is_constant_false(List *restrictlist,
 	{
 		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
 
-<<<<<<< HEAD
-		Assert(IsA(rinfo, RestrictInfo));
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (only_pushed_down && !RINFO_IS_PUSHED_DOWN(rinfo, joinrel->relids))
 			continue;
 

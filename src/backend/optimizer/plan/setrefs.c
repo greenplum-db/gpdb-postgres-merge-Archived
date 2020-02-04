@@ -152,22 +152,18 @@ static List *fix_join_expr(PlannerInfo *root,
 						   indexed_tlist *inner_itlist,
 						   Index acceptable_rel, int rtoffset);
 static Node *fix_join_expr_mutator(Node *node,
-<<<<<<< HEAD
-					  fix_join_expr_context *context);
-static List *fix_hashclauses(PlannerInfo *root,
-				List *clauses,
-				indexed_tlist *outer_itlist,
-				indexed_tlist *inner_itlist,
-				Index acceptable_rel, int rtoffset);
-static List *fix_child_hashclauses(PlannerInfo *root,
-					  List *clauses,
-					  indexed_tlist *outer_itlist,
-					  indexed_tlist *inner_itlist,
-					  Index acceptable_rel, int rtoffset,
-					  Index child);
-=======
 								   fix_join_expr_context *context);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static List *fix_hashclauses(PlannerInfo *root,
+							 List *clauses,
+							 indexed_tlist *outer_itlist,
+							 indexed_tlist *inner_itlist,
+							 Index acceptable_rel, int rtoffset);
+static List *fix_child_hashclauses(PlannerInfo *root,
+								   List *clauses,
+								   indexed_tlist *outer_itlist,
+								   indexed_tlist *inner_itlist,
+								   Index acceptable_rel, int rtoffset,
+								   Index child);
 static Node *fix_upper_expr(PlannerInfo *root,
 							Node *node,
 							indexed_tlist *subplan_itlist,
@@ -176,11 +172,10 @@ static Node *fix_upper_expr(PlannerInfo *root,
 static Node *fix_upper_expr_mutator(Node *node,
 									fix_upper_expr_context *context);
 static List *set_returning_clause_references(PlannerInfo *root,
-<<<<<<< HEAD
-								List *rlist,
-								Plan *topplan,
-								Index resultRelation,
-								int rtoffset);
+											 List *rlist,
+											 Plan *topplan,
+											 Index resultRelation,
+											 int rtoffset);
 static  bool cdb_expr_requires_full_eval(Node *node);
 static Plan *cdb_insert_result_node(PlannerInfo *root,
 									Plan *plan, 
@@ -292,13 +287,6 @@ static void set_plan_references_output_asserts(PlannerGlobal *glob, Plan *plan)
 
 /* End of debug code */
 #endif
-=======
-											 List *rlist,
-											 Plan *topplan,
-											 Index resultRelation,
-											 int rtoffset);
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*****************************************************************************
  *
@@ -1117,11 +1105,10 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					fix_scan_expr(root, splan->resconstantqual, rtoffset);
 			}
 			break;
-<<<<<<< HEAD
 		case T_Repeat:
-=======
+			set_upper_references(root, plan, rtoffset);
+			break;
 		case T_ProjectSet:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			set_upper_references(root, plan, rtoffset);
 			break;
 		case T_ModifyTable:
@@ -1411,37 +1398,7 @@ set_subqueryscan_references(PlannerInfo *root,
 		/*
 		 * We can omit the SubqueryScan node and just pull up the subplan.
 		 */
-<<<<<<< HEAD
-		ListCell   *lp,
-				   *lc;
-
-		result = plan->subplan;
-
-		/* We have to be sure we don't lose any initplans */
-		result->initPlan = list_concat(plan->scan.plan.initPlan,
-									   result->initPlan);
-
-		/*
-		 * We also have to transfer the SubqueryScan's result-column names
-		 * into the subplan, else columns sent to client will be improperly
-		 * labeled if this is the topmost plan level.  Copy the "source
-		 * column" information too.
-		 */
-		forboth(lp, plan->scan.plan.targetlist, lc, result->targetlist)
-		{
-			TargetEntry *ptle = (TargetEntry *) lfirst(lp);
-			TargetEntry *ctle = (TargetEntry *) lfirst(lc);
-
-			ctle->resname = ptle->resname;
-			ctle->resorigtbl = ptle->resorigtbl;
-			ctle->resorigcol = ptle->resorigcol;
-		}
-
-		/* Honor the flow of the SubqueryScan, by copying it to the subplan. */
-		result->flow = plan->scan.plan.flow;
-=======
 		result = clean_up_removed_plan_level((Plan *) plan, plan->subplan);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 	{
@@ -1544,6 +1501,9 @@ clean_up_removed_plan_level(Plan *parent, Plan *child)
 	 * is the topmost plan level.  resjunk and so on may be important too.
 	 */
 	apply_tlist_labeling(child->targetlist, parent->targetlist);
+
+	/* Honor the flow of the parent, by copying it to the child. */
+	child->flow = parent->flow;
 
 	return child;
 }
@@ -2285,17 +2245,10 @@ set_upper_references(PlannerInfo *root, Plan *plan, int rtoffset)
 		if (tle->ressortgroupref != 0)
 		{
 			newexpr = (Node *)
-<<<<<<< HEAD
-					search_indexed_tlist_for_sortgroupref((Node *) tle->expr,
-														  tle->ressortgroupref,
-														  subplan_itlist,
-														  OUTER_VAR);
-=======
 				search_indexed_tlist_for_sortgroupref(tle->expr,
 													  tle->ressortgroupref,
 													  subplan_itlist,
 													  OUTER_VAR);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			if (!newexpr)
 				newexpr = fix_upper_expr(root,
 										 (Node *) tle->expr,

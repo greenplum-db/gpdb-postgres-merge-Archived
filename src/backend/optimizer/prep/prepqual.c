@@ -270,22 +270,6 @@ negate_clause(Node *node)
  * canonicalize_qual
  *	  Convert a qualification expression to the most useful form.
  *
-<<<<<<< HEAD
- * Backwards-compatibility wrapper for use by external code that hasn't
- * been updated.
- */
-Expr *
-canonicalize_qual(Expr *qual)
-{
-	return canonicalize_qual_ext(qual, false);
-}
-
-/*
- * canonicalize_qual_ext
- *	  Convert a qualification expression to the most useful form.
- *
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * This is primarily intended to be used on top-level WHERE (or JOIN/ON)
  * clauses.  It can also be used on top-level CHECK constraints, for which
  * pass is_check = true.  DO NOT call it on any expression that is not known
@@ -305,11 +289,7 @@ canonicalize_qual(Expr *qual)
  * Returns the modified qualification.
  */
 Expr *
-<<<<<<< HEAD
-canonicalize_qual_ext(Expr *qual, bool is_check)
-=======
 canonicalize_qual(Expr *qual, bool is_check)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	Expr	   *newqual;
 
