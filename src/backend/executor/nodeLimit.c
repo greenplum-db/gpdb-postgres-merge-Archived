@@ -40,13 +40,8 @@ static int64 compute_tuples_needed(LimitState *node);
  *		filtering on the stream of tuples returned by a subplan.
  * ----------------------------------------------------------------
  */
-<<<<<<< HEAD
 static TupleTableSlot *				/* return: a tuple or NULL */
-ExecLimit_guts(LimitState *node)
-=======
-static TupleTableSlot *			/* return: a tuple or NULL */
-ExecLimit(PlanState *pstate)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+ExecLimit_guts(PlanState *pstate)
 {
 	LimitState *node = castNode(LimitState, pstate);
 	ScanDirection direction;

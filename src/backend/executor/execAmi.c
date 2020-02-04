@@ -29,12 +29,9 @@
 #include "executor/nodeForeignscan.h"
 #include "executor/nodeFunctionscan.h"
 #include "executor/nodeGather.h"
-<<<<<<< HEAD
-=======
 #include "executor/nodeGatherMerge.h"
 #include "executor/nodeGroup.h"
 #include "executor/nodeGroup.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeIndexonlyscan.h"
@@ -63,7 +60,6 @@
 #include "executor/nodeValuesscan.h"
 #include "executor/nodeWindowAgg.h"
 #include "executor/nodeWorktablescan.h"
-<<<<<<< HEAD
 #include "executor/nodeAssertOp.h"
 #include "executor/nodeDynamicSeqscan.h"
 #include "executor/nodeDynamicIndexscan.h"
@@ -72,15 +68,15 @@
 #include "executor/nodeTableFunction.h"
 #include "executor/nodePartitionSelector.h"
 #include "executor/nodeShareInputScan.h"
-=======
 #include "nodes/extensible.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "nodes/nodeFuncs.h"
 #include "nodes/pathnodes.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
 
+static bool
+TargetListSupportsBackwardScan(List *targetlist)
 static bool IndexSupportsBackwardScan(Oid indexid);
 
 
@@ -621,7 +617,6 @@ ExecSupportsBackwardScan(Plan *node)
 				return true;
 			}
 
-<<<<<<< HEAD
 		case T_SeqScan:
 		case T_TidScan:
 		case T_FunctionScan:
@@ -630,8 +625,6 @@ ExecSupportsBackwardScan(Plan *node)
 		case T_WorkTableScan:
 			return TargetListSupportsBackwardScan(node->targetlist);
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		case T_SampleScan:
 			/* Simplify life for tablesample methods by disallowing this */
 			return false;
@@ -659,11 +652,6 @@ ExecSupportsBackwardScan(Plan *node)
 			}
 			return false;
 
-		case T_SeqScan:
-		case T_TidScan:
-		case T_FunctionScan:
-		case T_ValuesScan:
-		case T_CteScan:
 		case T_Material:
 		case T_Sort:
 			return true;
@@ -678,7 +666,6 @@ ExecSupportsBackwardScan(Plan *node)
 }
 
 /*
-<<<<<<< HEAD
  * ExecSquelchNode
  *
  * When a node decides that it will not consume any more input tuples from a
@@ -866,8 +853,6 @@ TargetListSupportsBackwardScan(List *targetlist)
 }
 
 /*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * An IndexScan or IndexOnlyScan node supports backward scan only if the
  * index's AM does.
  */

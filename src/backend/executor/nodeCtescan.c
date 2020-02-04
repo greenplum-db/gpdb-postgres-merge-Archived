@@ -239,10 +239,7 @@ ExecInitCteScan(CteScan *node, EState *estate, int eflags)
 	else
 	{
 		/* Not the leader */
-<<<<<<< HEAD
 		Assert(IsA(scanstate->leader, CteScanState));
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		/* Create my own read pointer, and ensure it is at start */
 		scanstate->readptr =
 			tuplestore_alloc_read_pointer(scanstate->leader->cte_table,
@@ -273,15 +270,12 @@ ExecInitCteScan(CteScan *node, EState *estate, int eflags)
 	ExecInitResultTypeTL(&scanstate->ss.ps);
 	ExecAssignScanProjectionInfo(&scanstate->ss);
 
-<<<<<<< HEAD
-=======
 	/*
 	 * initialize child expressions
 	 */
 	scanstate->ss.ps.qual =
 		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	return scanstate;
 }
 
