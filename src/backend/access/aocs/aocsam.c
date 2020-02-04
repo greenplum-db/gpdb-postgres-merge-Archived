@@ -617,8 +617,8 @@ bool
 aocs_getnext(AOCSScanDesc scan, ScanDirection direction, TupleTableSlot *slot)
 {
 	int			ncol;
-	Datum	   *d = slot_get_values(slot);
-	bool	   *null = slot_get_isnull(slot);
+	Datum	   *d = slot->tts_values;
+	bool	   *null = slot->tts_isnull;
 	AOTupleId	aoTupleId;
 	int64		rowNum = INT64CONST(-1);
 	int			err = 0;
@@ -1611,7 +1611,7 @@ aocs_update(AOCSUpdateDesc desc, TupleTableSlot *slot,
 
 	slot_getallattrs(slot);
 	oid = aocs_insert_values(desc->insertDesc,
-							 slot_get_values(slot), slot_get_isnull(slot),
+							 slot->tts_values, slot_tts_isnull,
 							 newTupleId);
 	(void) oid;					/* ignore the oid value */
 

@@ -6629,8 +6629,8 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	numSimpleVars = projInfo->pi_numSimpleVars;
 	if (numSimpleVars > 0)
 	{
-		Datum	   *values = slot_get_values(slot);
-		bool	   *isnull = slot_get_isnull(slot);
+		Datum	   *values = slot->tts_values;
+		bool	   *isnull = slot->tts_isnull;
 		int		   *varSlotOffsets = projInfo->pi_varSlotOffsets;
 		int		   *varNumbers = projInfo->pi_varNumbers;
 		int			i;
@@ -6644,8 +6644,8 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 				TupleTableSlot *varSlot = *((TupleTableSlot **) slotptr);
 				int			varNumber = varNumbers[i] - 1;
 
-				values[i] = slot_get_values(varSlot)[varNumber];
-				isnull[i] = slot_get_isnull(varSlot)[varNumber];
+				values[i] = varSlot->tts_values[varNumber];
+				isnull[i] = varSlot->tts_isnull[varNumber];
 			}
 		}
 		else
@@ -6660,8 +6660,8 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 				int			varNumber = varNumbers[i] - 1;
 				int			varOutputCol = varOutputCols[i] - 1;
 
-				values[varOutputCol] = slot_get_values(varSlot)[varNumber];
-				isnull[varOutputCol] = slot_get_isnull(varSlot)[varNumber];
+				values[varOutputCol] = varSlot->tts_values[varNumber];
+				isnull[varOutputCol] = varSlot->tts_isnull[varNumber];
 			}
 		}
 	}

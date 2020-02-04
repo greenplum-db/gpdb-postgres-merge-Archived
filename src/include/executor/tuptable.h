@@ -20,8 +20,6 @@
 #include "access/htup_details.h"
 #include "storage/buf.h"
 
-#include "access/memtup.h"
-
 /*----------
  * The executor stores tuples in a "tuple table" which is a List of
  * independent TupleTableSlots.
@@ -38,6 +36,7 @@
  *    (TTSOpsMinimalTuple)
  * 4. "virtual" tuple consisting of Datum/isnull arrays (TTSOpsVirtual)
  *
+ * GPDB_12_MERGE_FIXME: there will be another tuple table slot type fore MemTuples
  *
  * The first two cases are similar in that they both deal with "materialized"
  * tuples, but resource management is different.  For a tuple in a disk page
@@ -94,213 +93,6 @@
  *----------
  */
 
-<<<<<<< HEAD
-/* tts_flags */
-#define         TTS_ISEMPTY     1
-#define         TTS_SHOULDFREE 	2
-#define         TTS_SHOULDFREE_MEM 	4	/* should pfree tts_memtuple? */
-#define         TTS_VIRTUAL     8
-
-typedef struct TupleTableSlot
-{
-	NodeTag		type;
-	int         PRIVATE_tts_flags;      /* TTS_xxx flags */
-
-	/* Heap tuple stuff */
-	HeapTuple PRIVATE_tts_heaptuple;
-	void    *PRIVATE_tts_htup_buf;
-	uint32   PRIVATE_tts_htup_buf_len;
-
-	/* Mem tuple stuff */
-	MemTuple PRIVATE_tts_memtuple;
-	void 	*PRIVATE_tts_mtup_buf;
-	uint32  PRIVATE_tts_mtup_buf_len;
-	ItemPointerData PRIVATE_tts_synthetic_ctid;	/* needed if memtuple is stored on disk */
-	
-	/* Virtual tuple stuff */
-	int 	PRIVATE_tts_nvalid;		/* number of valid virtual tup entries */
-	long    PRIVATE_tts_off; 		/* hack to remember state of last decoding. */
-	bool    PRIVATE_tts_slow; 		/* hack to remember state of last decoding. */
-	Datum 	*PRIVATE_tts_values;		/* virtual tuple values */
-	bool 	*PRIVATE_tts_isnull;		/* virtual tuple nulls */
-
-	TupleDesc	tts_tupleDescriptor;	/* slot's tuple descriptor */
-	MemTupleBinding *tts_mt_bind;		/* mem tuple's binding */ 
-	MemoryContext 	tts_mcxt;		/* slot itself is in this context */
-	Buffer		tts_buffer;		/* tuple's buffer, or InvalidBuffer */
-
-    /* System attributes */
-    Oid         tts_tableOid;
-} TupleTableSlot;
-
-#ifndef FRONTEND
-
-static inline bool TupIsNull(TupleTableSlot *slot)
-{
-	return (slot == NULL || (slot->PRIVATE_tts_flags & TTS_ISEMPTY) != 0);
-}
-static inline void TupClearIsEmpty(TupleTableSlot *slot)
-{
-	slot->PRIVATE_tts_flags &= (~TTS_ISEMPTY);
-}
-static inline bool TupShouldFree(TupleTableSlot *slot)
-{
-	Assert(slot);
-	return ((slot->PRIVATE_tts_flags & TTS_SHOULDFREE) != 0); 
-}
-static inline void TupSetShouldFree(TupleTableSlot *slot)
-{
-	slot->PRIVATE_tts_flags |= TTS_SHOULDFREE; 
-}
-static inline void TupClearShouldFree(TupleTableSlot *slot)
-{
-	slot->PRIVATE_tts_flags &= (~TTS_SHOULDFREE);
-}
-static inline bool TupHasHeapTuple(TupleTableSlot *slot)
-{
-	Assert(slot);
-	return slot->PRIVATE_tts_heaptuple != NULL;
-}
-static inline bool TupHasMemTuple(TupleTableSlot *slot)
-{
-	Assert(slot);
-	return slot->PRIVATE_tts_memtuple != NULL;
-}
-static inline bool TupHasVirtualTuple(TupleTableSlot *slot)
-{
-	Assert(slot);
-    return (slot->PRIVATE_tts_flags & TTS_VIRTUAL) ? true : false;
-}
-static inline HeapTuple TupGetHeapTuple(TupleTableSlot *slot)
-{
-	Assert(TupHasHeapTuple(slot));
-	return slot->PRIVATE_tts_heaptuple; 
-}
-static inline MemTuple TupGetMemTuple(TupleTableSlot *slot)
-{
-	Assert(TupHasMemTuple(slot));
-	return slot->PRIVATE_tts_memtuple;
-}
-
-static inline void free_heaptuple_memtuple(TupleTableSlot *slot)
-{
-	if(TupShouldFree(slot))
-	{
-		if(slot->PRIVATE_tts_heaptuple && slot->PRIVATE_tts_heaptuple != slot->PRIVATE_tts_htup_buf)
-			pfree(slot->PRIVATE_tts_heaptuple);
-		
-		if(slot->PRIVATE_tts_memtuple && slot->PRIVATE_tts_memtuple != slot->PRIVATE_tts_mtup_buf)
-			pfree(slot->PRIVATE_tts_memtuple);
-	}
-
-	slot->PRIVATE_tts_heaptuple = NULL;
-	slot->PRIVATE_tts_memtuple = NULL;
-}
-
-static inline void TupSetVirtualTuple(TupleTableSlot *slot)
-{
-	Assert(slot);
-	slot->PRIVATE_tts_flags |= TTS_VIRTUAL;
-}
-
-static inline void TupSetVirtualTupleNValid(TupleTableSlot *slot, int nvalid)
-{
-        free_heaptuple_memtuple(slot);
-        slot->PRIVATE_tts_flags = TTS_VIRTUAL;
-        slot->PRIVATE_tts_nvalid = nvalid;
-}
-
-static inline Datum *slot_get_values(TupleTableSlot *slot)
-{
-	return slot->PRIVATE_tts_values;
-}
-
-static inline bool *slot_get_isnull(TupleTableSlot *slot)
-{
-	return slot->PRIVATE_tts_isnull;
-}
-
-extern void _slot_getsomeattrs(TupleTableSlot *slot, int attnum);
-static inline void slot_getsomeattrs(TupleTableSlot *slot, int attnum)
-{
-
-	if(TupHasVirtualTuple(slot))
-	{
-		if(slot->PRIVATE_tts_nvalid >= attnum)
-			return;
-	}
-
-	if(TupHasMemTuple(slot))
-	{
-		int i; 
-		for(i=0; i<attnum; ++i)
-			slot->PRIVATE_tts_values[i] = memtuple_getattr(
-					slot->PRIVATE_tts_memtuple, slot->tts_mt_bind, 
-					i+1, &(slot->PRIVATE_tts_isnull[i]));
-
-		TupSetVirtualTuple(slot);
-		slot->PRIVATE_tts_nvalid = attnum;
-		return;
-	}
-
-	_slot_getsomeattrs(slot, attnum); 
-	TupSetVirtualTuple(slot);
-}
-
-static inline void
-slot_getallattrs(TupleTableSlot *slot)
-{
-	slot_getsomeattrs(slot, slot->tts_tupleDescriptor->natts);
-}
-
-extern bool slot_getsysattr(TupleTableSlot *slot, int attnum,
-				Datum *value, bool *isnull);
-
-/*
- * Set the synthetic ctid to a given ctid value.
- *
- * If the slot contains a memtuple or a virtual tuple, the PRIVATE_tts_synthetic_ctid
- * is set to the given ctid value. If the slot contains a heap tuple, then t_self
- * in the heap tuple is set to the given ctid value.
- *
- * This function will set both PRIVATE_tts_synthetic_ctid and heaptuple->t_self when
- * both heap tuple and memtuple or virtual tuple are presented.
- */
-static inline void slot_set_ctid(TupleTableSlot *slot, ItemPointer new_ctid)
-{
-	Assert(slot);
-
-	if (TupHasHeapTuple(slot))
-	{
-		HeapTuple tuple = TupGetHeapTuple(slot);
-		tuple->t_self = *new_ctid;
-	}
-	
-	if (TupHasMemTuple(slot) || TupHasVirtualTuple(slot))
-		slot->PRIVATE_tts_synthetic_ctid = *new_ctid;
-}
-
-extern void slot_set_ctid_from_fake(TupleTableSlot *slot, ItemPointerData *fake_ctid);
-
-/*
- * Retrieve the synthetic ctid value from the slot.
- *
- * This function assumes that the PRIVATE_tts_synthetic_ctid and heaptuple->t_self
- * are in sync if both of them are presented in the slot.
- */
-static inline ItemPointer slot_get_ctid(TupleTableSlot *slot)
-{
-	if (TupHasHeapTuple(slot))
-	{
-		Assert(ItemPointerIsValid(&(slot->PRIVATE_tts_heaptuple->t_self)));
-		return &(slot->PRIVATE_tts_heaptuple->t_self);
-	}
-	
-	return &(slot->PRIVATE_tts_synthetic_ctid);
-}
-
-/* GPDB_94_MERGE_FIXME: We really should move some large functions out of header files. */
-=======
 /* true = slot is empty */
 #define			TTS_FLAG_EMPTY			(1 << 1)
 #define TTS_EMPTY(slot)	(((slot)->tts_flags & TTS_FLAG_EMPTY) != 0)
@@ -495,71 +287,10 @@ typedef struct MinimalTupleTableSlot
 #define FIELDNO_MINIMALTUPLETABLESLOT_OFF 4
 	uint32		off;			/* saved state for slot_deform_heap_tuple */
 } MinimalTupleTableSlot;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
- * Get an attribute from the tuple table slot.
+ * TupIsNull -- is a TupleTableSlot empty?
  */
-<<<<<<< HEAD
-static inline Datum slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull)
-{
-	Datum value;
-
-	Assert(!TupIsNull(slot));
-	Assert(attnum <= slot->tts_tupleDescriptor->natts);
-
-	/* System attribute */
-	if(attnum <= 0)
-	{
-		if (slot_getsysattr(slot, attnum, &value, isnull) == false)
-			elog(ERROR, "Fail to get system attribute with attnum: %d", attnum);
-		return value;
-	}
-
-	/* fast path for virtual tuple */
-	if(TupHasVirtualTuple(slot) && slot->PRIVATE_tts_nvalid >= attnum)
-	{
-		*isnull = slot->PRIVATE_tts_isnull[attnum-1];
-		return slot->PRIVATE_tts_values[attnum-1];
-	}
-
-	/* Mem tuple: We do not even populate virtual tuple */
-	if(TupHasMemTuple(slot))
-	{
-		Assert(slot->tts_mt_bind);
-		return memtuple_getattr(slot->PRIVATE_tts_memtuple, slot->tts_mt_bind, attnum, isnull);
-	}
-
-	/* Slow: heap tuple */
-	Assert(TupHasHeapTuple(slot));
-
-	_slot_getsomeattrs(slot, attnum);
-	Assert(TupHasVirtualTuple(slot) && slot->PRIVATE_tts_nvalid >= attnum);
-	*isnull = slot->PRIVATE_tts_isnull[attnum-1];
-	return slot->PRIVATE_tts_values[attnum-1];
-}
-
-static inline bool slot_attisnull(TupleTableSlot *slot, int attnum)
-{
-	if(attnum <= 0)
-		return false;
-
-	if(TupHasHeapTuple(slot))
-		return heap_attisnull_normalattr(slot->PRIVATE_tts_heaptuple, attnum);
-		
-	if(TupHasVirtualTuple(slot) && slot->PRIVATE_tts_nvalid >= attnum)
-		return slot->PRIVATE_tts_isnull[attnum-1];
-
-	Assert(TupHasMemTuple(slot));
-	return memtuple_attisnull(slot->PRIVATE_tts_memtuple, slot->tts_mt_bind, attnum);
-}
-
-/* in executor/execTuples.c */
-extern void init_slot(TupleTableSlot *slot, TupleDesc tupdesc);
-
-extern TupleTableSlot *MakeTupleTableSlot(void);
-extern TupleTableSlot *ExecAllocTableSlot(List **tupleTable);
-=======
 #define TupIsNull(slot) \
 	((slot) == NULL || TTS_EMPTY(slot))
 
@@ -568,72 +299,10 @@ extern TupleTableSlot *MakeTupleTableSlot(TupleDesc tupleDesc,
 										  const TupleTableSlotOps *tts_ops);
 extern TupleTableSlot *ExecAllocTableSlot(List **tupleTable, TupleDesc desc,
 										  const TupleTableSlotOps *tts_ops);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void ExecResetTupleTable(List *tupleTable, bool shouldFree);
 extern TupleTableSlot *MakeSingleTupleTableSlot(TupleDesc tupdesc,
 												const TupleTableSlotOps *tts_ops);
 extern void ExecDropSingleTupleTableSlot(TupleTableSlot *slot);
-<<<<<<< HEAD
-extern void ExecSetSlotDescriptor(TupleTableSlot *slot, TupleDesc tupdesc); 
-
-extern TupleTableSlot *ExecStoreHeapTuple(HeapTuple tuple,
-			   TupleTableSlot *slot,
-			   Buffer buffer,
-			   bool shouldFree);
-extern TupleTableSlot *ExecStoreMinimalTuple(MemTuple mtup,
-					  TupleTableSlot *slot,
-					  bool shouldFree);
-
-extern TupleTableSlot *ExecClearTuple(TupleTableSlot *slot);
-extern TupleTableSlot *ExecStoreVirtualTuple(TupleTableSlot *slot);
-extern TupleTableSlot *ExecStoreAllNullTuple(TupleTableSlot *slot);
-
-extern HeapTuple ExecCopySlotHeapTuple(TupleTableSlot *slot);
-extern MemTuple ExecCopySlotMemTuple(TupleTableSlot *slot);
-extern MemTuple ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt, char *dest, unsigned int *len);
-
-extern HeapTuple ExecFetchSlotHeapTuple(TupleTableSlot *slot);
-extern MemTuple ExecFetchSlotMemTuple(TupleTableSlot *slot);
-extern Datum ExecFetchSlotTupleDatum(TupleTableSlot *slot);
-
-static inline GenericTuple
-ExecFetchSlotGenericTuple(TupleTableSlot *slot)
-{
-	Assert(!TupIsNull(slot));
-	if (slot->PRIVATE_tts_memtuple == NULL && slot->PRIVATE_tts_heaptuple != NULL)
-		return (GenericTuple) slot->PRIVATE_tts_heaptuple;
-
-	return (GenericTuple) ExecFetchSlotMemTuple(slot);
-}
-
-static inline TupleTableSlot *
-ExecStoreGenericTuple(GenericTuple tup, TupleTableSlot *slot, bool shouldFree)
-{
-	if (is_memtuple(tup))
-		return ExecStoreMinimalTuple((MemTuple) tup, slot, shouldFree);
-
-	return ExecStoreHeapTuple((HeapTuple) tup, slot, InvalidBuffer, shouldFree);
-}
-
-static inline GenericTuple
-ExecCopyGenericTuple(TupleTableSlot *slot)
-{
-	Assert(!TupIsNull(slot));
-	if(slot->PRIVATE_tts_heaptuple != NULL && slot->PRIVATE_tts_memtuple == NULL)
-		return (GenericTuple) ExecCopySlotHeapTuple(slot);
-	return (GenericTuple) ExecCopySlotMemTuple(slot);
-}
-
-extern HeapTuple ExecMaterializeSlot(TupleTableSlot *slot);
-extern TupleTableSlot *ExecCopySlot(TupleTableSlot *dstslot,
-			 TupleTableSlot *srcslot);
-
-extern void ExecModifyMemTuple(TupleTableSlot *slot, Datum *values, bool *isnull, bool *doRepl);
-
-#endif /* !FRONTEND */
-
-#endif   /* TUPTABLE_H */
-=======
 extern void ExecSetSlotDescriptor(TupleTableSlot *slot, TupleDesc tupdesc);
 extern TupleTableSlot *ExecStoreHeapTuple(HeapTuple tuple,
 										  TupleTableSlot *slot,
@@ -817,4 +486,3 @@ ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 #endif							/* FRONTEND */
 
 #endif							/* TUPTABLE_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

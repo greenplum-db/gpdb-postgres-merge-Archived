@@ -93,19 +93,15 @@ tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)
 		TupleRemapInfo **remapinfo = tqueue->field_remapinfo;
 		int			i;
 		MemoryContext oldcontext = NULL;
-		Datum	   *slot_values;
-		bool	   *slot_isnull;
 
 		/* Deform the tuple so we can examine fields, if not done already. */
 		slot_getallattrs(slot);
-		slot_values = slot_get_values(slot);
-		slot_isnull = slot_get_isnull(slot);
 
 		/* Iterate over each attribute and search it for transient typmods. */
 		for (i = 0; i < tupledesc->natts; i++)
 		{
 			/* Ignore nulls and types that don't need special handling. */
-			if (slot_isnull[i] || remapinfo[i] == NULL)
+			if (slot->tts_isnull[i] || remapinfo[i] == NULL)
 				continue;
 
 			/* Switch to temporary memory context to avoid leaking. */
@@ -122,7 +118,7 @@ tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)
 			}
 
 			/* Examine the value. */
-			TQExamine(tqueue, remapinfo[i], slot_values[i]);
+			TQExamine(tqueue, remapinfo[i], slot->tts_values[i]);
 		}
 
 		/* If we used the temp context, reset it and restore prior context. */

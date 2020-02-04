@@ -295,8 +295,8 @@ makeHashAggEntryForInput(AggState *aggstate, TupleTableSlot *inputslot, uint32 h
 	MemoryContext oldcxt;
 	HashAggTable *hashtable = aggstate->hhashtable;
 	TupleTableSlot *hashslot = aggstate->hashslot;
-	Datum *values = slot_get_values(aggstate->hashslot); 
-	bool *isnull = slot_get_isnull(aggstate->hashslot); 
+	Datum *values = aggstate->hashslot->tts_values; 
+	bool *isnull = aggstate->hashslot->tts_isnull;
 	ListCell *lc;
 	uint32 tup_len;
 	uint32 aggs_len;

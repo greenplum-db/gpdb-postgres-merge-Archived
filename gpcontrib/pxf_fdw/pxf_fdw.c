@@ -485,8 +485,8 @@ pxfIterateForeignScan(ForeignScanState *node)
 
 	found = NextCopyFrom(pxfsstate->cstate,
 						 NULL,
-						 slot_get_values(slot),
-						 slot_get_isnull(slot),
+						 slot->tts_values,
+						 slot->tts_isnull,
 						 NULL);
 	if (found)
 	{

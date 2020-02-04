@@ -262,8 +262,8 @@ AOCSMoveTuple(TupleTableSlot *slot,
 	slot_getallattrs(slot);
 
 	(void) aocs_insert_values(insertDesc,
-							  slot_get_values(slot),
-							  slot_get_isnull(slot),
+							  slot->tts_values,
+							  slot->tts_isnull,
 							  &newAoTupleId);
 
 	/* insert index' tuples if needed */

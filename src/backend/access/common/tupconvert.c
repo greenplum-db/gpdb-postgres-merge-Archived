@@ -210,11 +210,7 @@ convert_tuples_by_name(TupleDesc indesc,
 	int			n = outdesc->natts;
 
 	/* Verify compatibility and prepare attribute-number map */
-<<<<<<< HEAD
-	attrMap = convert_tuples_by_name_map_if_req(indesc, outdesc);
-=======
 	attrMap = convert_tuples_by_name_map_if_req(indesc, outdesc, msg);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (attrMap == NULL)
 	{
@@ -247,12 +243,8 @@ convert_tuples_by_name(TupleDesc indesc,
  */
 AttrNumber *
 convert_tuples_by_name_map(TupleDesc indesc,
-<<<<<<< HEAD
-						   TupleDesc outdesc)
-=======
 						   TupleDesc outdesc,
 						   const char *msg)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	AttrNumber *attrMap;
 	int			outnatts;
@@ -334,12 +326,8 @@ convert_tuples_by_name_map(TupleDesc indesc,
  */
 AttrNumber *
 convert_tuples_by_name_map_if_req(TupleDesc indesc,
-<<<<<<< HEAD
-								  TupleDesc outdesc)
-=======
 								  TupleDesc outdesc,
 								  const char *msg)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	AttrNumber *attrMap;
 	int			n = outdesc->natts;
@@ -347,11 +335,7 @@ convert_tuples_by_name_map_if_req(TupleDesc indesc,
 	bool		same;
 
 	/* Verify compatibility and prepare attribute-number map */
-<<<<<<< HEAD
-	attrMap = convert_tuples_by_name_map(indesc, outdesc);
-=======
 	attrMap = convert_tuples_by_name_map(indesc, outdesc, msg);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Check to see if the map is one-to-one, in which case we need not do a
@@ -454,11 +438,7 @@ execute_attr_map_slot(AttrNumber *attrMap,
 	/* Sanity checks */
 	Assert(in_slot->tts_tupleDescriptor != NULL &&
 		   out_slot->tts_tupleDescriptor != NULL);
-<<<<<<< HEAD
-	Assert(in_slot->PRIVATE_tts_values != NULL && out_slot->PRIVATE_tts_values != NULL);
-=======
 	Assert(in_slot->tts_values != NULL && out_slot->tts_values != NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	outnatts = out_slot->tts_tupleDescriptor->natts;
 
@@ -468,17 +448,10 @@ execute_attr_map_slot(AttrNumber *attrMap,
 	/* Before doing the mapping, clear any old contents from the out slot */
 	ExecClearTuple(out_slot);
 
-<<<<<<< HEAD
-	invalues = slot_get_values(in_slot);
-	inisnull = slot_get_isnull(in_slot);
-	outvalues = slot_get_values(out_slot);
-	outisnull = slot_get_isnull(out_slot);
-=======
 	invalues = in_slot->tts_values;
 	inisnull = in_slot->tts_isnull;
 	outvalues = out_slot->tts_values;
 	outisnull = out_slot->tts_isnull;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Transpose into proper fields of the out slot. */
 	for (i = 0; i < outnatts; i++)

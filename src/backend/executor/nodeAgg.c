@@ -968,7 +968,7 @@ advance_aggregates(AggState *aggstate)
 		if (aggstate->AggExprId_AttrNum > 0)
 		{
 			AttrNumber exprid;
-			Datum *input_vtup = slot_get_values(aggstate->tmpcontext->ecxt_outertuple);
+			Datum *input_vtup = aggstate->tmpcontext->ecxt_outertuple->tts_values;
 
 			exprid = input_vtup[aggstate->AggExprId_AttrNum - 1];
 

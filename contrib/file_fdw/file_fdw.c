@@ -760,12 +760,7 @@ fileIterateForeignScan(ForeignScanState *node)
 	 */
 	ExecClearTuple(slot);
 	found = NextCopyFrom(festate->cstate, NULL,
-<<<<<<< HEAD
-						 slot_get_values(slot), slot_get_isnull(slot),
-						 NULL);
-=======
 						 slot->tts_values, slot->tts_isnull);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (found)
 		ExecStoreVirtualTuple(slot);
 

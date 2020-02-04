@@ -1954,8 +1954,8 @@ cdbpathtoplan_create_sri_plan(RangeTblEntry *rte, PlannerInfo *subroot, Path *su
 		 */
 		slot = MakeSingleTupleTableSlot(RelationGetDescr(rel));
 		ExecClearTuple(slot);
-		values = slot_get_values(slot);
-		nulls = slot_get_isnull(slot);
+		values = slot->tts_values;
+		nulls = slot->tts_isnull;
 
 		foreach(lc, partatts)
 		{
