@@ -107,7 +107,6 @@ ExecSort(PlanState *pstate)
 		outerNode = outerPlanState(node);
 		tupDesc = ExecGetResultType(outerNode);
 
-<<<<<<< HEAD
 		if(plannode->share_type == SHARE_SORT_XSLICE)
 		{
 			char rwfile_prefix[100];
@@ -145,16 +144,6 @@ ExecSort(PlanState *pstate)
 												  node->randomAccess);
 		}
 
-=======
-		tuplesortstate = tuplesort_begin_heap(tupDesc,
-											  plannode->numCols,
-											  plannode->sortColIdx,
-											  plannode->sortOperators,
-											  plannode->collations,
-											  plannode->nullsFirst,
-											  work_mem,
-											  NULL, node->randomAccess);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (node->bounded)
 			tuplesort_set_bound(tuplesortstate, node->bound);
 		node->tuplesortstate->sortstore = tuplesortstate;
@@ -342,15 +331,6 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	 */
 
 	/*
-<<<<<<< HEAD
-	 * tuple table initialization
-	 *
-	 * sort nodes only return scan tuples from their sorted relation.
-	 */
-	ExecInitResultTupleSlot(estate, &sortstate->ss.ps);
-	sortstate->ss.ss_ScanTupleSlot = ExecInitExtraTupleSlot(estate);
-
-	/* 
 	 * CDB: Offer extra info for EXPLAIN ANALYZE.
 	 */
 	if (estate->es_instrument && (estate->es_instrument & INSTRUMENT_CDB))
@@ -370,8 +350,6 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 		((eflags & (EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)) != 0);
 
 	/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * initialize child nodes
 	 *
 	 * We shield the child node from the need to support BACKWARD, or
@@ -395,7 +373,6 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	outerPlanState(sortstate) = ExecInitNode(outerPlan(node), estate, eflags);
 
 	/*
-<<<<<<< HEAD
 	 * If the child node of a Material is a Motion, then this Material node is
 	 * not eager free safe.
 	 */
@@ -405,11 +382,7 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	}
 
 	/*
-	 * initialize tuple type.  no need to initialize projection info because
-	 * this node doesn't do projections.
-=======
 	 * Initialize scan slot and type.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	ExecCreateScanSlotFromOuterPlan(estate, &sortstate->ss, &TTSOpsVirtual);
 
