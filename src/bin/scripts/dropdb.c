@@ -169,9 +169,5 @@ help(const char *progname)
 	printf(_("  -w, --no-password         never prompt for password\n"));
 	printf(_("  -W, --password            force password prompt\n"));
 	printf(_("  --maintenance-db=DBNAME   alternate maintenance database\n"));
-<<<<<<< HEAD
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("\nReport bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

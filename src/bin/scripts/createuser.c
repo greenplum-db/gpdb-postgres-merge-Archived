@@ -371,9 +371,5 @@ help(const char *progname)
 	printf(_("  -U, --username=USERNAME   user name to connect as (not the one to create)\n"));
 	printf(_("  -w, --no-password         never prompt for password\n"));
 	printf(_("  -W, --password            force password prompt\n"));
-<<<<<<< HEAD
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("\nReport bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

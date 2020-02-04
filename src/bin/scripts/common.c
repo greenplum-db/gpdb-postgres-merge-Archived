@@ -18,15 +18,9 @@
 #include <unistd.h>
 
 #include "common.h"
-<<<<<<< HEAD
-#include "fe_utils/connect.h"
-#include "fe_utils/string_utils.h"
-=======
 #include "common/logging.h"
 #include "fe_utils/connect.h"
 #include "fe_utils/string_utils.h"
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static PGcancel *volatile cancelConn = NULL;
 bool		CancelRequested = false;
@@ -151,14 +145,8 @@ connectDatabase(const char *dbname, const char *pghost,
 		exit(1);
 	}
 
-<<<<<<< HEAD
-	if (PQserverVersion(conn) >= 70300)
-		PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL,
-							 progname, echo));
-=======
 	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL,
 						 progname, echo));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return conn;
 }
@@ -272,15 +260,9 @@ executeMaintenanceCommand(PGconn *conn, const char *query, bool echo)
  * finish using them, pg_free(*table).  *columns is a pointer into "spec",
  * possibly to its NUL terminator.
  */
-<<<<<<< HEAD
-static void
-split_table_columns_spec(const char *spec, int encoding,
-						 char **table, const char **columns)
-=======
 void
 splitTableColumnsSpec(const char *spec, int encoding,
 					  char **table, const char **columns)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	bool		inquotes = false;
 	const char *cp = spec;
@@ -324,18 +306,7 @@ appendQualifiedRelation(PQExpBuffer buf, const char *spec,
 	PGresult   *res;
 	int			ntups;
 
-<<<<<<< HEAD
-	/* Before 7.3, the concept of qualifying a name did not exist. */
-	if (PQserverVersion(conn) < 70300)
-	{
-		appendPQExpBufferStr(&sql, spec);
-		return;
-	}
-
-	split_table_columns_spec(spec, PQclientEncoding(conn), &table, &columns);
-=======
 	splitTableColumnsSpec(spec, PQclientEncoding(conn), &table, &columns);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Query must remain ABSOLUTELY devoid of unqualified names.  This would
@@ -352,11 +323,7 @@ appendQualifiedRelation(PQExpBuffer buf, const char *spec,
 	appendStringLiteralConn(&sql, table, conn);
 	appendPQExpBufferStr(&sql, "::pg_catalog.regclass;");
 
-<<<<<<< HEAD
-	executeCommand(conn, "RESET search_path", progname, echo);
-=======
 	executeCommand(conn, "RESET search_path;", progname, echo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * One row is a typical result, as is a nonexistent relation ERROR.
@@ -368,28 +335,15 @@ appendQualifiedRelation(PQExpBuffer buf, const char *spec,
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-<<<<<<< HEAD
-		fprintf(stderr,
-				ngettext("%s: query returned %d row instead of one: %s\n",
-						 "%s: query returned %d rows instead of one: %s\n",
-						 ntups),
-				progname, ntups, sql.data);
-=======
 		pg_log_error(ngettext("query returned %d row instead of one: %s",
 							  "query returned %d rows instead of one: %s",
 							  ntups),
 					 ntups, sql.data);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		PQfinish(conn);
 		exit(1);
 	}
 	appendPQExpBufferStr(buf,
-<<<<<<< HEAD
-						 fmtQualifiedId(PQserverVersion(conn),
-										PQgetvalue(res, 0, 1),
-=======
 						 fmtQualifiedId(PQgetvalue(res, 0, 1),
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 										PQgetvalue(res, 0, 0)));
 	appendPQExpBufferStr(buf, columns);
 	PQclear(res);
