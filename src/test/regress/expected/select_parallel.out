@@ -272,7 +272,7 @@ select sp_parallel_restricted(unique1) from tenk1
 >>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
                Filter: (tenk1.stringu1 = 'GRAAAA'::name)
  Optimizer: Postgres query optimizer
- Settings: min_parallel_relation_size=0, optimizer=off, parallel_setup_cost=0, parallel_tuple_cost=0
+ Settings: optimizer=off, parallel_setup_cost=0, parallel_tuple_cost=0
 (11 rows)
 
 -- test parallel plan when group by expression is in target list.

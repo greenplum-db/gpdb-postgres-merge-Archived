@@ -335,15 +335,11 @@ ExecReScanRecursiveUnion(RecursiveUnionState *node)
 	if (node->tableContext)
 		MemoryContextResetAndDeleteChildren(node->tableContext);
 
-<<<<<<< HEAD
 	/* And rebuild empty hashtable if needed */
 	/*
 	 * RECURSIVE_CTE_FIXME: It suppose plan->numCols should be 0 if we don't
 	 * support recursive union. QP should fix this later.
 	 */
-=======
-	/* Empty hashtable if needed */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (plan->numCols > 0)
 		ResetTupleHashTable(node->hashtable);
 

@@ -13,7 +13,6 @@ begin isolation level repeatable read;
 -- encourage use of parallel plans
 set parallel_setup_cost=0;
 set parallel_tuple_cost=0;
-set min_parallel_relation_size=0;
 set max_parallel_workers_per_gather=4;
 explain (costs off)
   select count(*) from a_star;
@@ -55,7 +54,7 @@ select parallel_restricted(unique1) from tenk1
                Output: parallel_restricted(unique1)
                Filter: (tenk1.stringu1 = 'GRAAAA'::name)
  Optimizer: Pivotal Optimizer (GPORCA) version 3.83.0
- Settings: min_parallel_relation_size=0, optimizer=on, parallel_setup_cost=0, parallel_tuple_cost=0
+ Settings: optimizer=on, parallel_setup_cost=0, parallel_tuple_cost=0
 (11 rows)
 
 -- test parallel plan when group by expression is in target list.

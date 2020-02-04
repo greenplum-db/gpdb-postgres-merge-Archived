@@ -90,7 +90,6 @@
 		"memory_profiler_dataset_size",
 		"memory_profiler_query_id",
 		"memory_profiler_run_id",
-		"min_parallel_relation_size",
 		"optimizer_cte_inlining_bound",
 		"optimizer_mdcache_size",
 		"optimizer_partition_selection_log",

@@ -35,12 +35,8 @@
 #include "optimizer/appendinfo.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
-<<<<<<< HEAD
-=======
-#include "optimizer/geqo.h"
 #include "optimizer/inherit.h"
 #include "optimizer/optimizer.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
@@ -48,11 +44,8 @@
 #include "optimizer/planner.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
-<<<<<<< HEAD
 #include "optimizer/var.h"
 #include "optimizer/planshare.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "parser/parse_clause.h"
 #include "parser/parsetree.h"
 #include "partitioning/partbounds.h"
@@ -78,14 +71,10 @@ typedef struct pushdown_safety_info
 } pushdown_safety_info;
 
 /* These parameters are set by GUC */
-<<<<<<< HEAD
-int			min_parallel_relation_size;
-=======
 bool		enable_geqo = false;	/* just in case GUC doesn't set it */
 int			geqo_threshold;
 int			min_parallel_table_scan_size;
 int			min_parallel_index_scan_size;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* Hook for plugins to get control in set_rel_pathlist() */
 set_rel_pathlist_hook_type set_rel_pathlist_hook = NULL;
@@ -119,19 +108,12 @@ static void set_foreign_pathlist(PlannerInfo *root, RelOptInfo *rel,
 static void set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 								Index rti, RangeTblEntry *rte);
 static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
-<<<<<<< HEAD
-						Index rti, RangeTblEntry *rte);
+                                    Index rti, RangeTblEntry *rte);
 static bool has_multiple_baserels(PlannerInfo *root);
-static void generate_mergeappend_paths(PlannerInfo *root, RelOptInfo *rel,
-						   List *live_childrels,
-						   List *all_child_pathkeys);
-=======
-									Index rti, RangeTblEntry *rte);
 static void generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 										 List *live_childrels,
 										 List *all_child_pathkeys,
 										 List *partitioned_rels);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static Path *get_cheapest_parameterized_child_path(PlannerInfo *root,
 												   RelOptInfo *rel,
 												   Relids required_outer);
@@ -142,13 +124,9 @@ static void set_dummy_rel_pathlist(RelOptInfo *rel);
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 								  Index rti, RangeTblEntry *rte);
 static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
-<<<<<<< HEAD
-					  RangeTblEntry *rte);
+                                  RangeTblEntry *rte);
 static void set_tablefunction_pathlist(PlannerInfo *root, RelOptInfo *rel,
 						   RangeTblEntry *rte);
-=======
-								  RangeTblEntry *rte);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void set_values_pathlist(PlannerInfo *root, RelOptInfo *rel,
 								RangeTblEntry *rte);
 static void set_tablefunc_pathlist(PlannerInfo *root, RelOptInfo *rel,
