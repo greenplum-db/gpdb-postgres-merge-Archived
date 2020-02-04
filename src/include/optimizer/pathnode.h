@@ -82,23 +82,6 @@ extern AppendPath *create_append_path(PlannerInfo *root, RelOptInfo *rel,
                                       List *pathkeys, Relids required_outer,
                                       int parallel_workers, bool parallel_aware,
                                       List *partitioned_rels, double rows);
-<<<<<<< HEAD
-extern MergeAppendPath *create_merge_append_path(PlannerInfo *root,
-						 RelOptInfo *rel,
-						 List *subpaths,
-						 List *pathkeys,
-						 Relids required_outer);
-extern ResultPath *create_result_path(PlannerInfo *root, RelOptInfo *rel,
-				   PathTarget *target, List *resconstantqual);
-extern MaterialPath *create_material_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath);
-extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
-				   Path *subpath, SpecialJoinInfo *sjinfo);
-extern UniquePath *create_unique_rowid_path(PlannerInfo *root,
-						 RelOptInfo *rel,
-                         Path        *subpath,
-                         Relids       distinct_relids,
-						 Relids       required_outer);
-=======
 extern MergeAppendPath *create_merge_append_path(PlannerInfo *root,
 												 RelOptInfo *rel,
 												 List *subpaths,
@@ -109,10 +92,14 @@ extern GroupResultPath *create_group_result_path(PlannerInfo *root,
 												 RelOptInfo *rel,
 												 PathTarget *target,
 												 List *havingqual);
-extern MaterialPath *create_material_path(RelOptInfo *rel, Path *subpath);
+extern MaterialPath *create_material_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath);
 extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
 									  Path *subpath, SpecialJoinInfo *sjinfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern UniquePath *create_unique_rowid_path(PlannerInfo *root,
+											RelOptInfo *rel,
+											Path *subpath,
+											Relids distinct_relids,
+											Relids required_outer);
 extern GatherPath *create_gather_path(PlannerInfo *root,
 									  RelOptInfo *rel, Path *subpath, PathTarget *target,
 									  Relids required_outer, double *rows);
@@ -124,43 +111,31 @@ extern GatherMergePath *create_gather_merge_path(PlannerInfo *root,
 												 Relids required_outer,
 												 double *rows);
 extern SubqueryScanPath *create_subqueryscan_path(PlannerInfo *root,
-<<<<<<< HEAD
-						 RelOptInfo *rel, Path *subpath,
-						 List *pathkeys, CdbPathLocus locus, Relids required_outer);
+												  RelOptInfo *rel, Path *subpath,
+												  List *pathkeys, CdbPathLocus locus,
+												  Relids required_outer);
 extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
-						 RangeTblEntry *rte,
-						 List *pathkeys, Relids required_outer);
+									  RangeTblEntry *rte,
+									  List *pathkeys, Relids required_outer);
 extern TableFunctionScanPath *create_tablefunction_path(PlannerInfo *root,
 						  RelOptInfo *rel, Path *subpath,
 						  List *pathkeys, Relids required_outer);
 extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
-					   RangeTblEntry *rte,
-					   Relids required_outer);
-extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel,
-					Path *subpath, CdbPathLocus locus,
-					List *pathkeys,
-					Relids required_outer);
-extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
-						  CdbPathLocus ctelocus,
-						  Relids required_outer);
-=======
-												  RelOptInfo *rel, Path *subpath,
-												  List *pathkeys, Relids required_outer);
-extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
-									  List *pathkeys, Relids required_outer);
-extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
+									RangeTblEntry *rte,
 									Relids required_outer);
 extern Path *create_tablefuncscan_path(PlannerInfo *root, RelOptInfo *rel,
 									   Relids required_outer);
 extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel,
+								 Path *subpath, CdbPathLocus locus,
+								 List *pathkeys,
 								 Relids required_outer);
 extern Path *create_namedtuplestorescan_path(PlannerInfo *root, RelOptInfo *rel,
 											 Relids required_outer);
 extern Path *create_resultscan_path(PlannerInfo *root, RelOptInfo *rel,
 									Relids required_outer);
 extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
+									   CdbPathLocus ctelocus,
 									   Relids required_outer);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 											PathTarget *target,
 											double rows, Cost startup_cost, Cost total_cost,
@@ -190,57 +165,6 @@ extern Relids calc_non_nestloop_required_outer(Path *outer_path, Path *inner_pat
 
 extern bool path_contains_inner_index(Path *path);
 extern NestPath *create_nestloop_path(PlannerInfo *root,
-<<<<<<< HEAD
-					 RelOptInfo *joinrel,
-					 JoinType jointype,
-					 JoinCostWorkspace *workspace,
-					 SpecialJoinInfo *sjinfo,
-					 SemiAntiJoinFactors *semifactors,
-					 Path *outer_path,
-					 Path *inner_path,
-					 List *restrict_clauses,
-					 List *redistribution_clauses,    /*CDB*/
-					 List *pathkeys,
-					 Relids required_outer);
-
-extern MergePath *create_mergejoin_path(PlannerInfo *root,
-					  RelOptInfo *joinrel,
-					  JoinType jointype,
-					  JoinCostWorkspace *workspace,
-					  SpecialJoinInfo *sjinfo,
-					  Path *outer_path,
-					  Path *inner_path,
-					  List *restrict_clauses,
-					  List *pathkeys,
-					  Relids required_outer,
-					  List *mergeclauses,
-                      List *redistribution_clauses,    /*CDB*/
-					  List *outersortkeys,
-					  List *innersortkeys);
-
-extern HashPath *create_hashjoin_path(PlannerInfo *root,
-					 RelOptInfo *joinrel,
-					 JoinType jointype,
-					 JoinCostWorkspace *workspace,
-					 SpecialJoinInfo *sjinfo,
-					 SemiAntiJoinFactors *semifactors,
-					 Path *outer_path,
-					 Path *inner_path,
-					 List *restrict_clauses,
-					 Relids required_outer,
-                     List *redistribution_clauses,    /*CDB*/
-					 List *hashclauses);
-
-extern ProjectionPath *create_projection_path(PlannerInfo *root,
-					   RelOptInfo *rel,
-					   Path *subpath,
-					   PathTarget *target);
-extern ProjectionPath *create_projection_path_with_quals(PlannerInfo *root,
-					   RelOptInfo *rel,
-					   Path *subpath,
-					   PathTarget *target,
-					   List *restrict_clauses);
-=======
 									  RelOptInfo *joinrel,
 									  JoinType jointype,
 									  JoinCostWorkspace *workspace,
@@ -248,6 +172,7 @@ extern ProjectionPath *create_projection_path_with_quals(PlannerInfo *root,
 									  Path *outer_path,
 									  Path *inner_path,
 									  List *restrict_clauses,
+									  List *redistribution_clauses,    /*CDB*/
 									  List *pathkeys,
 									  Relids required_outer);
 
@@ -262,6 +187,7 @@ extern MergePath *create_mergejoin_path(PlannerInfo *root,
 										List *pathkeys,
 										Relids required_outer,
 										List *mergeclauses,
+										List *redistribution_clauses,    /*CDB*/
 										List *outersortkeys,
 										List *innersortkeys);
 
@@ -272,16 +198,20 @@ extern HashPath *create_hashjoin_path(PlannerInfo *root,
 									  JoinPathExtraData *extra,
 									  Path *outer_path,
 									  Path *inner_path,
-									  bool parallel_hash,
 									  List *restrict_clauses,
 									  Relids required_outer,
+									  List *redistribution_clauses,    /*CDB*/
 									  List *hashclauses);
 
 extern ProjectionPath *create_projection_path(PlannerInfo *root,
 											  RelOptInfo *rel,
 											  Path *subpath,
 											  PathTarget *target);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern ProjectionPath *create_projection_path_with_quals(PlannerInfo *root,
+														 RelOptInfo *rel,
+														 Path *subpath,
+														 PathTarget *target,
+														 List *restrict_clauses);
 extern Path *apply_projection_to_path(PlannerInfo *root,
 									  RelOptInfo *rel,
 									  Path *path,

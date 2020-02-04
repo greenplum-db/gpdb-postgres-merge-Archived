@@ -20,11 +20,7 @@
 
 #include "nodes/pathnodes.h"
 #include "nodes/plannodes.h"
-<<<<<<< HEAD
-#include "nodes/relation.h"
 #include "optimizer/clauses.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /* Hook for plugins to get control in planner() */
@@ -46,10 +42,9 @@ extern PlannedStmt *standard_planner(Query *parse, int cursorOptions,
 									 ParamListInfo boundParams);
 
 extern PlannerInfo *subquery_planner(PlannerGlobal *glob, Query *parse,
-<<<<<<< HEAD
-				 PlannerInfo *parent_root,
-				 bool hasRecursion, double tuple_fraction,
-				 PlannerConfig *config);
+									 PlannerInfo *parent_root,
+									 bool hasRecursion, double tuple_fraction,
+									 PlannerConfig *config);
 
 extern bool choose_hashed_grouping(PlannerInfo *root,
 								   double tuple_fraction, double limit_tuples,
@@ -58,10 +53,6 @@ extern bool choose_hashed_grouping(PlannerInfo *root,
 								   Path *sorted_path,
 								   double dNumGroups,
 								   AggClauseCosts *agg_costs);
-=======
-									 PlannerInfo *parent_root,
-									 bool hasRecursion, double tuple_fraction);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern RowMarkType select_rowmark_type(RangeTblEntry *rte,
 									   LockClauseStrength strength);

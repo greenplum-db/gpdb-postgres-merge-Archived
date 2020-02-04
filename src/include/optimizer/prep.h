@@ -38,14 +38,7 @@ extern List *init_list_cteplaninfo(int numCtes);
 /*
  * prototypes for preptlist.c
  */
-<<<<<<< HEAD
-extern List *preprocess_targetlist(PlannerInfo *root, List *tlist);
-
-extern List *preprocess_onconflict_targetlist(PlannerInfo *root, List *tlist,
-								 int result_relation, List *range_table);
-=======
 extern List *preprocess_targetlist(PlannerInfo *root);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern PlanRowMark *get_plan_rowmark(List *rowmarks, Index rtindex);
 
