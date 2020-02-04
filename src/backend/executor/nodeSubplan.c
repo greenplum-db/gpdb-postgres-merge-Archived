@@ -48,13 +48,6 @@
 #include "cdb/ml_ipc.h"
 
 
-<<<<<<< HEAD
-static Datum ExecSubPlan(SubPlanState *node,
-			ExprContext *econtext,
-			bool *isNull,
-			ExprDoneCond *isDone);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static Datum ExecHashSubPlan(SubPlanState *node,
 							 ExprContext *econtext,
 							 bool *isNull);
@@ -79,11 +72,7 @@ ExecSubPlan(SubPlanState *node,
 			ExprContext *econtext,
 			bool *isNull)
 {
-<<<<<<< HEAD
-	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
-=======
 	SubPlan    *subplan = node->subplan;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	EState	   *estate = node->planstate->state;
 	ScanDirection dir = estate->es_direction;
 	Datum		retval;
@@ -344,6 +333,7 @@ ExecScanSubPlan(SubPlanState *node,
 		 !TupIsNull(slot);
 		 slot = ExecProcNode(planstate))
 	{
+        TupleDesc   tdesc = slot->tts_tupleDescriptor;
 		Datum		rowresult;
 		bool		rownull;
 		int			col;
@@ -381,13 +371,8 @@ ExecScanSubPlan(SubPlanState *node,
 			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 
 			if (node->curTuple)
-<<<<<<< HEAD
-				pfree(node->curTuple);
+                heap_freetuple(node->curTuple);
 			node->curTuple = ExecCopySlotMemTuple(slot);
-=======
-				heap_freetuple(node->curTuple);
-			node->curTuple = ExecCopySlotHeapTuple(slot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 
@@ -403,11 +388,7 @@ ExecScanSubPlan(SubPlanState *node,
 
 			found = true;
 			/* stash away current value */
-<<<<<<< HEAD
-			Assert(subplan->firstColType == slot->tts_tupleDescriptor->attrs[0]->atttypid);
-=======
 			Assert(subplan->firstColType == TupleDescAttr(tdesc, 0)->atttypid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			dvalue = slot_getattr(slot, 1, &disnull);
 			astate = accumArrayResultAny(astate, dvalue, disnull,
 										 subplan->firstColType, oldcontext);
@@ -1222,6 +1203,7 @@ PG_TRY();
 		 !TupIsNull(slot);
 		 slot = ExecProcNode(planstate))
 	{
+        TupleDesc   tdesc = slot->tts_tupleDescriptor;
 		int			i = 1;
 
 		if (subLinkType == EXISTS_SUBLINK || subLinkType == NOT_EXISTS_SUBLINK)
@@ -1248,11 +1230,7 @@ PG_TRY();
 
 			found = true;
 			/* stash away current value */
-<<<<<<< HEAD
-			Assert(subplan->firstColType == slot->tts_tupleDescriptor->attrs[0]->atttypid);
-=======
 			Assert(subplan->firstColType == TupleDescAttr(tdesc, 0)->atttypid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			dvalue = slot_getattr(slot, 1, &disnull);
 			astate = accumArrayResultAny(astate, dvalue, disnull,
 										 subplan->firstColType, oldcontext);
@@ -1277,13 +1255,8 @@ PG_TRY();
 		 * keeps track of the copied tuple for eventual freeing.
 		 */
 		if (node->curTuple)
-<<<<<<< HEAD
-			pfree(node->curTuple);
+            heap_freetuple(node->curTuple);
 		node->curTuple = ExecCopySlotMemTuple(slot);
-=======
-			heap_freetuple(node->curTuple);
-		node->curTuple = ExecCopySlotHeapTuple(slot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * Now set all the setParam params from the columns of the tuple
@@ -1469,11 +1442,7 @@ PG_END_TRY();
  * longer-lived one.
  */
 void
-<<<<<<< HEAD
 ExecSetParamPlanMulti(const Bitmapset *params, ExprContext *econtext, QueryDesc *queryDesc)
-=======
-ExecSetParamPlanMulti(const Bitmapset *params, ExprContext *econtext)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	int			paramid;
 
@@ -1485,11 +1454,7 @@ ExecSetParamPlanMulti(const Bitmapset *params, ExprContext *econtext)
 		if (prm->execPlan != NULL)
 		{
 			/* Parameter not evaluated yet, so go do it */
-<<<<<<< HEAD
 			ExecSetParamPlan(prm->execPlan, econtext, queryDesc);
-=======
-			ExecSetParamPlan(prm->execPlan, econtext);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			/* ExecSetParamPlan should have processed this param... */
 			Assert(prm->execPlan == NULL);
 		}
