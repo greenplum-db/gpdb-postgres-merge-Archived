@@ -120,7 +120,7 @@ static Path *get_cheapest_parameterized_child_path(PlannerInfo *root,
 static void accumulate_append_subpath(Path *path,
 									  List **subpaths, List **special_subpaths);
 static Path *get_singleton_append_subpath(Path *path);
-static void set_dummy_rel_pathlist(RelOptInfo *rel);
+static void set_dummy_rel_pathlist(PlannerInfo *root, RelOptInfo *rel);
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 								  Index rti, RangeTblEntry *rte);
 static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -421,7 +421,7 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
 					 * with ONLY.  In that case we shouldn't scan any of the
 					 * partitions, so mark it as a dummy rel.
 					 */
-					set_dummy_rel_pathlist(rel);
+					set_dummy_rel_pathlist(root, rel);
 				}
 				else if (rte->tablesample != NULL)
 				{
@@ -831,14 +831,12 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 			 */
 			return;
 
-<<<<<<< HEAD
 		case RTE_VOID:
 
 			/*
 			 * Not sure if parallelizing a "no-op" void RTE makes sense, but
 			 * it's no reason to disable parallelization.
 			 */
-=======
 		case RTE_NAMEDTUPLESTORE:
 
 			/*
@@ -849,7 +847,6 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 
 		case RTE_RESULT:
 			/* RESULT RTEs, in themselves, are no problem. */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 	}
 
@@ -1731,13 +1728,9 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 	 * if we have zero or one live subpath due to constraint exclusion.)
 	 */
 	if (subpaths_valid)
-<<<<<<< HEAD
-		add_path(rel, (Path *) create_append_path(root, rel, subpaths, NULL, 0));
-=======
 		add_path(rel, (Path *) create_append_path(root, rel, subpaths, NIL,
 												  NIL, NULL, 0, false,
 												  partitioned_rels, -1));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Consider an append of unordered, unparameterized partial paths.  Make
@@ -1777,10 +1770,6 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		Assert(parallel_workers > 0);
 
 		/* Generate a partial append path. */
-<<<<<<< HEAD
-		appendpath = create_append_path(root, rel, partial_subpaths, NULL,
-										parallel_workers);
-=======
 		appendpath = create_append_path(root, rel, NIL, partial_subpaths,
 										NIL, NULL, parallel_workers,
 										enable_parallel_append,
@@ -1834,7 +1823,6 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 										pa_partial_subpaths,
 										NIL, NULL, parallel_workers, true,
 										partitioned_rels, partial_rows);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		add_partial_path(rel, (Path *) appendpath);
 	}
 
@@ -1894,9 +1882,6 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 
 		if (subpaths_valid)
 			add_path(rel, (Path *)
-<<<<<<< HEAD
-					 create_append_path(root, rel, subpaths, required_outer, 0));
-=======
 					 create_append_path(root, rel, subpaths, NIL,
 										NIL, required_outer, 0, false,
 										partitioned_rels, -1));
@@ -1932,7 +1917,6 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 											partitioned_rels, partial_rows);
 			add_partial_path(rel, (Path *) appendpath);
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 }
 
@@ -2344,13 +2328,8 @@ get_singleton_append_subpath(Path *path)
  * typically used to change a rel into dummy state after we already made
  * paths for it.)
  */
-<<<<<<< HEAD
-void
-set_dummy_rel_pathlist(PlannerInfo *root, RelOptInfo *rel)
-=======
 static void
-set_dummy_rel_pathlist(RelOptInfo *rel)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+set_dummy_rel_pathlist(PlannerInfo *root, RelOptInfo *rel)
 {
 	/* Set dummy size estimates --- we leave attr_widths[] as zeroes */
 	rel->rows = 0;
@@ -2360,14 +2339,10 @@ set_dummy_rel_pathlist(RelOptInfo *rel)
 	rel->pathlist = NIL;
 	rel->partial_pathlist = NIL;
 
-<<<<<<< HEAD
-	add_path(rel, (Path *) create_append_path(root, rel, NIL, NULL, 0));
-=======
 	/* Set up the dummy path */
-	add_path(rel, (Path *) create_append_path(NULL, rel, NIL, NIL,
+	add_path(rel, (Path *) create_append_path(root, rel, NIL, NIL,
 											  NIL, rel->lateral_relids,
 											  0, false, NIL, -1));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * We set the cheapest-path fields immediately, just in case they were

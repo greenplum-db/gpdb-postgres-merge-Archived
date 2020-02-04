@@ -16,34 +16,23 @@
 #ifndef PATHNODE_H
 #define PATHNODE_H
 
-<<<<<<< HEAD
-#include "nodes/relation.h"
 #include "cdb/cdbdef.h"                 /* CdbVisitOpt */
-=======
 #include "nodes/bitmapset.h"
 #include "nodes/pathnodes.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /*
  * prototypes for pathnode.c
  */
-<<<<<<< HEAD
 
 extern CdbVisitOpt pathnode_walk_node(Path *path,
 			       CdbVisitOpt (*walker)(Path *path, void *context),
 			       void *context);
 
-extern int compare_path_costs(Path *path1, Path *path2,
-				   CostSelector criterion);
-extern int compare_fractional_path_costs(Path *path1, Path *path2,
-							  double fraction);
-=======
 extern int	compare_path_costs(Path *path1, Path *path2,
 							   CostSelector criterion);
 extern int	compare_fractional_path_costs(Path *path1, Path *path2,
 										  double fraction);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void set_cheapest(RelOptInfo *parent_rel);
 extern void add_path(RelOptInfo *parent_rel, Path *new_path);
 extern void cdb_add_join_path(PlannerInfo *root, RelOptInfo *parent_rel, JoinType orig_jointype,
@@ -61,11 +50,6 @@ extern void add_partial_path(RelOptInfo *parent_rel, Path *new_path);
 extern bool add_partial_path_precheck(RelOptInfo *parent_rel,
 									  Cost total_cost, List *pathkeys);
 
-<<<<<<< HEAD
-=======
-extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel,
-								 Relids required_outer, int parallel_workers);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern Path *create_samplescan_path(PlannerInfo *root, RelOptInfo *rel,
 									Relids required_outer);
 extern IndexPath *create_index_path(PlannerInfo *root,
@@ -92,11 +76,13 @@ extern BitmapOrPath *create_bitmap_or_path(PlannerInfo *root,
 										   RelOptInfo *rel,
 										   List *bitmapquals);
 extern TidPath *create_tidscan_path(PlannerInfo *root, RelOptInfo *rel,
-<<<<<<< HEAD
-					List *tidquals, Relids required_outer);
+                                    List *tidquals, Relids required_outer);
 extern AppendPath *create_append_path(PlannerInfo *root, RelOptInfo *rel,
-				   List *subpaths,
-				   Relids required_outer, int parallel_workers);
+                                      List *subpaths, List *partial_subpaths,
+                                      List *pathkeys, Relids required_outer,
+                                      int parallel_workers, bool parallel_aware,
+                                      List *partitioned_rels, double rows);
+<<<<<<< HEAD
 extern MergeAppendPath *create_merge_append_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 List *subpaths,
@@ -113,12 +99,6 @@ extern UniquePath *create_unique_rowid_path(PlannerInfo *root,
                          Relids       distinct_relids,
 						 Relids       required_outer);
 =======
-									List *tidquals, Relids required_outer);
-extern AppendPath *create_append_path(PlannerInfo *root, RelOptInfo *rel,
-									  List *subpaths, List *partial_subpaths,
-									  List *pathkeys, Relids required_outer,
-									  int parallel_workers, bool parallel_aware,
-									  List *partitioned_rels, double rows);
 extern MergeAppendPath *create_merge_append_path(PlannerInfo *root,
 												 RelOptInfo *rel,
 												 List *subpaths,
@@ -322,11 +302,10 @@ extern GroupPath *create_group_path(PlannerInfo *root,
 									List *qual,
 									double numGroups);
 extern UpperUniquePath *create_upper_unique_path(PlannerInfo *root,
-<<<<<<< HEAD
-						 RelOptInfo *rel,
-						 Path *subpath,
-						 int numCols,
-						 double numGroups);
+                                                 RelOptInfo *rel,
+                                                 Path *subpath,
+                                                 int numCols,
+                                                 double numGroups);
 struct HashAggTableSizes; /* defined in execHHashagg.h */
 extern AggPath *create_agg_path(PlannerInfo *root,
 				RelOptInfo *rel,
@@ -340,23 +319,13 @@ extern AggPath *create_agg_path(PlannerInfo *root,
 				const AggClauseCosts *aggcosts,
 				double numGroups,
 				struct HashAggTableSizes *hash_info);
-
 extern TupleSplitPath *create_tup_split_path(PlannerInfo *root,
-											 RelOptInfo *rel,
-											 Path *subpath,
-											 PathTarget *target,
-											 List *groupClause,
-											 Bitmapset **bitmapset,
-											 int numDisDQAs);
-
-extern AggPath *create_shadow_eliminate_path(PlannerInfo *root,
-											 RelOptInfo *rel,
-											 Path *subpath,
-											 PathTarget *target,
-											 double numGroups,
-											 int mapSz,
-											 int *shadow_mapping);
-
+                                             RelOptInfo *rel,
+                                             Path *subpath,
+                                             PathTarget *target,
+                                             List *groupClause,
+                                             Bitmapset **bitmapset,
+                                             int numDisDQAs);
 extern GroupingSetsPath *create_groupingsets_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 Path *subpath,
@@ -367,30 +336,6 @@ extern GroupingSetsPath *create_groupingsets_path(PlannerInfo *root,
 						 List *rollup_groupclauses,
 						 const AggClauseCosts *agg_costs,
 						 double numGroups);
-=======
-												 RelOptInfo *rel,
-												 Path *subpath,
-												 int numCols,
-												 double numGroups);
-extern AggPath *create_agg_path(PlannerInfo *root,
-								RelOptInfo *rel,
-								Path *subpath,
-								PathTarget *target,
-								AggStrategy aggstrategy,
-								AggSplit aggsplit,
-								List *groupClause,
-								List *qual,
-								const AggClauseCosts *aggcosts,
-								double numGroups);
-extern GroupingSetsPath *create_groupingsets_path(PlannerInfo *root,
-												  RelOptInfo *rel,
-												  Path *subpath,
-												  List *having_qual,
-												  AggStrategy aggstrategy,
-												  List *rollups,
-												  const AggClauseCosts *agg_costs,
-												  double numGroups);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern MinMaxAggPath *create_minmaxagg_path(PlannerInfo *root,
 											RelOptInfo *rel,
 											PathTarget *target,

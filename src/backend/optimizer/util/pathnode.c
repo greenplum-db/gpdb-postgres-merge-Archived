@@ -1535,17 +1535,12 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals,
  * Also, there are callers that pass root = NULL.
  */
 AppendPath *
-<<<<<<< HEAD
-create_append_path(PlannerInfo *root, RelOptInfo *rel, List *subpaths, Relids required_outer,
-				   int parallel_workers)
-=======
 create_append_path(PlannerInfo *root,
 				   RelOptInfo *rel,
 				   List *subpaths, List *partial_subpaths,
 				   List *pathkeys, Relids required_outer,
 				   int parallel_workers, bool parallel_aware,
 				   List *partitioned_rels, double rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	AppendPath *pathnode = makeNode(AppendPath);
 	ListCell   *l;
@@ -1592,15 +1587,6 @@ create_append_path(PlannerInfo *root,
 	 * expensive ones first, whereas the leader should choose the cheapest
 	 * startup plan.
 	 */
-<<<<<<< HEAD
-	pathnode->path.rows = 0;
-	pathnode->path.startup_cost = 0;
-	pathnode->path.total_cost = 0;
-
-	set_append_path_locus(root, (Path *) pathnode, rel, NIL);
-
-	foreach(l, subpaths)
-=======
 	if (pathnode->path.parallel_aware)
 	{
 		/*
@@ -1626,8 +1612,9 @@ create_append_path(PlannerInfo *root,
 	else
 		pathnode->limit_tuples = -1.0;
 
+    set_append_path_locus(root, (Path *) pathnode, rel, NIL);
+
 	foreach(l, pathnode->subpaths)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		Path	   *subpath = (Path *) lfirst(l);
 
@@ -1638,15 +1625,6 @@ create_append_path(PlannerInfo *root,
 		Assert(bms_equal(PATH_REQ_OUTER(subpath), required_outer));
 	}
 
-<<<<<<< HEAD
-	/*
-	 * CDB: If there is exactly one subpath, its ordering is preserved.
-	 * Child rel's pathkey exprs are already expressed in terms of the
-	 * columns of the parent appendrel.  See find_usable_indexes().
-	 */
-	if (list_length(subpaths) == 1)
-		pathnode->path.pathkeys = ((Path *) linitial(subpaths))->pathkeys;
-=======
 	Assert(!parallel_aware || pathnode->path.parallel_safe);
 
 	/*
@@ -1671,7 +1649,6 @@ create_append_path(PlannerInfo *root,
 	/* If the caller provided a row estimate, override the computed value. */
 	if (rows >= 0)
 		pathnode->path.rows = rows;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return pathnode;
 }
