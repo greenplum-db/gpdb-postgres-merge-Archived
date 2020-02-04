@@ -60,84 +60,44 @@ typedef struct CookedConstraint
 } CookedConstraint;
 
 extern Relation heap_create(const char *relname,
-<<<<<<< HEAD
-			Oid relnamespace,
-			Oid reltablespace,
-			Oid relid,
-			Oid relfilenode,
-			TupleDesc tupDesc,
-			char relkind,
-			char relpersistence,
-			char relstorage,
-			bool shared_relation,
-			bool mapped_relation,
-			bool allow_system_table_mods);
-
-extern Oid heap_create_with_catalog(const char *relname,
-						 Oid relnamespace,
-						 Oid reltablespace,
-						 Oid relid,
-						 Oid reltypeid,
-						 Oid reloftypeid,
-						 Oid ownerid,
-						 TupleDesc tupdesc,
-						 List *cooked_constraints,
-						 char relkind,
-						 char relpersistence,
-						 char relstorage,
-						 bool shared_relation,
-						 bool mapped_relation,
-						 bool oidislocal,
-						 int oidinhcount,
-						 OnCommitAction oncommit,
-						 const struct GpPolicy *policy,    /* MPP */
-						 Datum reloptions,
-						 bool use_user_acl,
-						 bool allow_system_table_mods,
-						 bool is_internal,
-						 ObjectAddress *typaddress,
-						 bool valid_opts,
-						 bool is_part_child,
-						 bool is_part_parent);
-
-extern void heap_create_init_fork(Relation rel);
-=======
 							Oid relnamespace,
 							Oid reltablespace,
 							Oid relid,
 							Oid relfilenode,
-							Oid accessmtd,
 							TupleDesc tupDesc,
 							char relkind,
 							char relpersistence,
+							char relstorage,
 							bool shared_relation,
 							bool mapped_relation,
 							bool allow_system_table_mods,
 							TransactionId *relfrozenxid,
 							MultiXactId *relminmxid);
 
-extern Oid	heap_create_with_catalog(const char *relname,
-									 Oid relnamespace,
-									 Oid reltablespace,
-									 Oid relid,
-									 Oid reltypeid,
-									 Oid reloftypeid,
-									 Oid ownerid,
-									 Oid accessmtd,
-									 TupleDesc tupdesc,
-									 List *cooked_constraints,
-									 char relkind,
-									 char relpersistence,
-									 bool shared_relation,
-									 bool mapped_relation,
-									 OnCommitAction oncommit,
-									 Datum reloptions,
-									 bool use_user_acl,
-									 bool allow_system_table_mods,
-									 bool is_internal,
-									 Oid relrewrite,
-									 ObjectAddress *typaddress);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern Oid heap_create_with_catalog(const char *relname,
+									Oid relnamespace,
+									Oid reltablespace,
+									Oid relid,
+									Oid reltypeid,
+									Oid reloftypeid,
+									Oid ownerid,
+									Oid accessmtd,
+									TupleDesc tupdesc,
+									List *cooked_constraints,
+									char relkind,
+									char relpersistence,
+									char relstorage,
+									bool shared_relation,
+									bool mapped_relation,
+									OnCommitAction oncommit,
+									const struct GpPolicy *policy,    /* MPP */
+									Datum reloptions,
+									bool use_user_acl,
+									bool allow_system_table_mods,
+									bool is_internal,
+									Oid relrewrite,
+									ObjectAddress *typaddress,
+									bool valid_opts);
 
 extern void heap_drop_with_catalog(Oid relid);
 
@@ -201,11 +161,22 @@ extern void CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 									 int flags);
 
 extern void CheckAttributeType(const char *attname,
-<<<<<<< HEAD
-				   Oid atttypid, Oid attcollation,
-				   List *containing_rowtypes,
-				   bool allow_system_table_mods);
+							   Oid atttypid, Oid attcollation,
+							   List *containing_rowtypes,
+							   int flags);
 extern void SetRelationNumChecks(Relation rel, int numchecks);
+
+/* pg_partitioned_table catalog manipulation functions */
+extern void StorePartitionKey(Relation rel,
+							  char strategy,
+							  int16 partnatts,
+							  AttrNumber *partattrs,
+							  List *partexprs,
+							  Oid *partopclass,
+							  Oid *partcollation);
+extern void RemovePartitionKeyByRelId(Oid relid);
+extern void StorePartitionBound(Relation rel, Relation parent,
+								PartitionBoundSpec *bound);
 
 /* MPP-6929: metadata tracking */
 extern void MetaTrackAddObject(Oid		classid, 
@@ -230,23 +201,5 @@ extern void MetaTrackDropObject(Oid		classid,
 extern bool should_have_valid_relfrozenxid(char relkind,
 										   char relstorage,
 										   bool is_partition_parent);
-#endif   /* HEAP_H */
-=======
-							   Oid atttypid, Oid attcollation,
-							   List *containing_rowtypes,
-							   int flags);
-
-/* pg_partitioned_table catalog manipulation functions */
-extern void StorePartitionKey(Relation rel,
-							  char strategy,
-							  int16 partnatts,
-							  AttrNumber *partattrs,
-							  List *partexprs,
-							  Oid *partopclass,
-							  Oid *partcollation);
-extern void RemovePartitionKeyByRelId(Oid relid);
-extern void StorePartitionBound(Relation rel, Relation parent,
-								PartitionBoundSpec *bound);
 
 #endif							/* HEAP_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

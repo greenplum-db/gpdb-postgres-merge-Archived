@@ -17,19 +17,15 @@
 #define HASHJOIN_H
 
 #include "nodes/execnodes.h"
-<<<<<<< HEAD
-#include "cdb/cdbexplain.h"			/* CdbExplain_Agg */
-#include "storage/buffile.h"
-#include "utils/workfile_mgr.h"
-
-struct StringInfoData;                  /* #include "lib/stringinfo.h" */
-
-=======
 #include "port/atomics.h"
 #include "storage/barrier.h"
 #include "storage/buffile.h"
 #include "storage/lwlock.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+#include "cdb/cdbexplain.h"			/* CdbExplain_Agg */
+#include "utils/workfile_mgr.h"
+
+struct StringInfoData;                  /* #include "lib/stringinfo.h" */
 
 /* ----------------------------------------------------------------
  *				hash-join hash table structures

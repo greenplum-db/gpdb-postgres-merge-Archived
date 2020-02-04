@@ -244,7 +244,10 @@ typedef struct FdwRoutine
 	InitializeDSMForeignScan_function InitializeDSMForeignScan;
 	ReInitializeDSMForeignScan_function ReInitializeDSMForeignScan;
 	InitializeWorkerForeignScan_function InitializeWorkerForeignScan;
-<<<<<<< HEAD
+	ShutdownForeignScan_function ShutdownForeignScan;
+
+	/* Support functions for path reparameterization. */
+	ReparameterizeForeignPathByChild_function ReparameterizeForeignPathByChild;
 
 	/*
 	 * These two callbacks are MPP interface for analyze and
@@ -256,13 +259,6 @@ typedef struct FdwRoutine
 	 */
 	AcquireSampleRowsFunc AcquireSampleRowsOnSegment;
 	ForeignTableSize_function GetRelationSizeOnSegment;
-
-=======
-	ShutdownForeignScan_function ShutdownForeignScan;
-
-	/* Support functions for path reparameterization. */
-	ReparameterizeForeignPathByChild_function ReparameterizeForeignPathByChild;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } FdwRoutine;
 
 

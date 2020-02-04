@@ -138,7 +138,7 @@ do { \
  * toast_insert_or_update -
  *
  *	Called by heap_insert() and heap_update().
- *	 
+ *
  *	'isFrozen' is normally marked false. it is only true
  *	when we are interested in inserting it with FrozenTxnId
  *	such a scenario is when we insert into an error table.
@@ -147,19 +147,14 @@ do { \
  * ----------
  */
 extern HeapTuple toast_insert_or_update(Relation rel,
-<<<<<<< HEAD
-					   HeapTuple newtup, HeapTuple oldtup, 
-					   int toast_tuple_target,
-					   bool isFrozen, int options);
+										HeapTuple newtup, HeapTuple oldtup,
+										int toast_tuple_target,
+										bool isFrozen, int options);
 
 extern MemTuple toast_insert_or_update_memtup(Relation rel,
-							  MemTuple newtup, MemTuple oldtup, 
-							  MemTupleBinding *pbind, int toast_tuple_target,
-							  bool isFrozen, int options);
-=======
-										HeapTuple newtup, HeapTuple oldtup,
-										int options);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+											  MemTuple newtup, MemTuple oldtup,
+											  MemTupleBinding *pbind, int toast_tuple_target,
+											  bool isFrozen, int options);
 
 /* ----------
  * toast_delete -

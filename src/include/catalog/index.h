@@ -50,46 +50,6 @@ extern void index_check_primary_key(Relation heapRel,
 									bool is_alter_table,
 									IndexStmt *stmt);
 
-<<<<<<< HEAD
-extern Oid index_create(Relation heapRelation,
-			 const char *indexRelationName,
-			 Oid indexRelationId,
-			 Oid parentIndexRelid,
-			 Oid parentConstraintId,
-			 Oid relFileNode,
-			 IndexInfo *indexInfo,
-			 List *indexColNames,
-			 Oid accessMethodObjectId,
-			 Oid tableSpaceId,
-			 Oid *collationObjectId,
-			 Oid *classObjectId,
-			 int16 *coloptions,
-			 Datum reloptions,
-			 bool isprimary,
-			 bool isconstraint,
-			 bool deferrable,
-			 bool initdeferred,
-			 bool allow_system_table_mods,
-			 bool skip_build,
-			 bool concurrent,
-			 bool is_internal,
-			 bool if_not_exists,
-			 Oid *constraintId);
-
-extern ObjectAddress index_constraint_create(Relation heapRelation,
-						Oid indexRelationId,
-						Oid parentConstraintId,
-						IndexInfo *indexInfo,
-						const char *constraintName,
-						char constraintType,
-						bool deferrable,
-						bool initdeferred,
-						bool mark_as_primary,
-						bool update_pgindex,
-						bool remove_old_dependencies,
-						bool allow_system_table_mods,
-						bool is_internal);
-=======
 #define	INDEX_CREATE_IS_PRIMARY				(1 << 0)
 #define	INDEX_CREATE_ADD_CONSTRAINT			(1 << 1)
 #define	INDEX_CREATE_SKIP_BUILD				(1 << 2)
@@ -98,25 +58,25 @@ extern ObjectAddress index_constraint_create(Relation heapRelation,
 #define	INDEX_CREATE_PARTITIONED			(1 << 5)
 #define INDEX_CREATE_INVALID				(1 << 6)
 
-extern Oid	index_create(Relation heapRelation,
-						 const char *indexRelationName,
-						 Oid indexRelationId,
-						 Oid parentIndexRelid,
-						 Oid parentConstraintId,
-						 Oid relFileNode,
-						 IndexInfo *indexInfo,
-						 List *indexColNames,
-						 Oid accessMethodObjectId,
-						 Oid tableSpaceId,
-						 Oid *collationObjectId,
-						 Oid *classObjectId,
-						 int16 *coloptions,
-						 Datum reloptions,
-						 bits16 flags,
-						 bits16 constr_flags,
-						 bool allow_system_table_mods,
-						 bool is_internal,
-						 Oid *constraintId);
+extern Oid index_create(Relation heapRelation,
+						const char *indexRelationName,
+						Oid indexRelationId,
+						Oid parentIndexRelid,
+						Oid parentConstraintId,
+						Oid relFileNode,
+						IndexInfo *indexInfo,
+						List *indexColNames,
+						Oid accessMethodObjectId,
+						Oid tableSpaceId,
+						Oid *collationObjectId,
+						Oid *classObjectId,
+						int16 *coloptions,
+						Datum reloptions,
+						bits16 flags,
+						bits16 constr_flags,
+						bool allow_system_table_mods,
+						bool is_internal,
+						Oid *constraintId);
 
 #define	INDEX_CONSTR_CREATE_MARK_AS_PRIMARY	(1 << 0)
 #define	INDEX_CONSTR_CREATE_DEFERRABLE		(1 << 1)
@@ -147,72 +107,30 @@ extern ObjectAddress index_constraint_create(Relation heapRelation,
 											 bits16 constr_flags,
 											 bool allow_system_table_mods,
 											 bool is_internal);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern void index_drop(Oid indexId, bool concurrent, bool concurrent_lock_mode);
 
 extern IndexInfo *BuildIndexInfo(Relation index);
 
 extern bool CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
-<<<<<<< HEAD
-				 Oid *collations1, Oid *collations2,
-				 Oid *opfamilies1, Oid *opfamilies2,
-				 AttrNumber *attmap, int maplen);
-extern void BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii);
-
-extern void FormIndexDatum(IndexInfo *indexInfo,
-			   TupleTableSlot *slot,
-			   struct EState *estate,
-			   Datum *values,
-			   bool *isnull);
-=======
 							 Oid *collations1, Oid *collations2,
 							 Oid *opfamilies1, Oid *opfamilies2,
 							 AttrNumber *attmap, int maplen);
-
 extern void BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii);
-
 extern void FormIndexDatum(IndexInfo *indexInfo,
 						   TupleTableSlot *slot,
 						   EState *estate,
 						   Datum *values,
 						   bool *isnull);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern Oid setNewRelfilenodeToOid(Relation relation, TransactionId freezeXid,
 					   Oid newrelfilenode);
 
 extern void index_build(Relation heapRelation,
-<<<<<<< HEAD
-			Relation indexRelation,
-			IndexInfo *indexInfo,
-			bool isprimary,
-			bool isreindex);
-
-extern double IndexBuildScan(Relation parentRelation,
-					Relation indexRelation,
-					IndexInfo *indexInfo,
-					bool allow_sync,
-					IndexBuildCallback callback,
-					void *callback_state);
-extern double IndexBuildHeapRangeScan(Relation heapRelation,
-						Relation indexRelation,
-						IndexInfo *indexInfo,
-						bool allow_sync,
-						bool anyvisible,
-						BlockNumber start_blockno,
-						BlockNumber end_blockno,
-						IndexBuildCallback callback,
-						void *callback_state,
-						EState *estate,
-						Snapshot snapshot,
-						TransactionId OldestXmin);
-=======
 						Relation indexRelation,
 						IndexInfo *indexInfo,
 						bool isreindex,
 						bool parallel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern void validate_index(Oid heapId, Oid indexId, Snapshot snapshot);
 
@@ -234,11 +152,6 @@ extern bool ReindexIsProcessingHeap(Oid heapOid);
 extern bool ReindexIsProcessingIndex(Oid indexOid);
 extern Oid	IndexGetRelation(Oid indexId, bool missing_ok);
 
-<<<<<<< HEAD
-extern void IndexSetParentIndex(Relation idx, Oid parentOid);
-
-#endif   /* INDEX_H */
-=======
 extern Size EstimateReindexStateSpace(void);
 extern void SerializeReindexState(Size maxsize, char *start_address);
 extern void RestoreReindexState(void *reindexstate);
@@ -287,4 +200,3 @@ itemptr_decode(ItemPointer itemptr, int64 encoded)
 }
 
 #endif							/* INDEX_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

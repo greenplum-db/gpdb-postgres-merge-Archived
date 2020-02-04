@@ -60,8 +60,6 @@ extern PGDLLIMPORT TransactionId TransactionXmin;
 extern PGDLLIMPORT TransactionId RecentXmin;
 extern PGDLLIMPORT TransactionId RecentGlobalXmin;
 extern PGDLLIMPORT TransactionId RecentGlobalDataXmin;
-<<<<<<< HEAD
-=======
 
 /* Variables representing various special snapshot semantics */
 extern PGDLLIMPORT SnapshotData SnapshotSelfData;
@@ -100,8 +98,6 @@ extern PGDLLIMPORT SnapshotData CatalogSnapshotData;
 #define IsMVCCSnapshot(snapshot)  \
 	((snapshot)->snapshot_type == SNAPSHOT_MVCC || \
 	 (snapshot)->snapshot_type == SNAPSHOT_HISTORIC_MVCC)
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern Snapshot GetTransactionSnapshot(void);
 extern Snapshot GetLatestSnapshot(void);

@@ -11,7 +11,6 @@
  * algorithm.  Parallel sorts use a variant of this external sort
  * algorithm, and are typically only used for large amounts of data.
  *
-<<<<<<< HEAD
  * GPDB has two implementations of sorting. One is inherited from PostgreSQL,
  * and lives in tuplesort.c. The other one lives in tuplesort_mk.c. Both
  * provide the same API, and have the same set of functions, just with a
@@ -32,10 +31,7 @@
  *
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/tuplesort.h

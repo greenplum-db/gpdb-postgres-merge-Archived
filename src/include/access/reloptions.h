@@ -66,15 +66,13 @@ typedef enum relopt_kind
 	RELOPT_KIND_TABLESPACE = (1 << 7),
 	RELOPT_KIND_SPGIST = (1 << 8),
 	RELOPT_KIND_VIEW = (1 << 9),
-<<<<<<< HEAD
-	RELOPT_KIND_BITMAP = (1 << 10),
-	RELOPT_KIND_BRIN = (1 << 11),
-=======
 	RELOPT_KIND_BRIN = (1 << 10),
 	RELOPT_KIND_PARTITIONED = (1 << 11),
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	RELOPT_KIND_BITMAP = (1 << 10),
+
 	/* if you add a new kind, make sure you update "last_default" too */
-	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_PARTITIONED,
+	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_BITMAP,
 	/* some compilers treat enums as signed ints, so we can't use 1 << 31 */
 	RELOPT_KIND_MAX = (1 << 30)
 } relopt_kind;
@@ -306,7 +304,6 @@ extern bytea *attribute_reloptions(Datum reloptions, bool validate);
 extern bytea *tablespace_reloptions(Datum reloptions, bool validate);
 extern LOCKMODE AlterTableGetRelOptionsLockLevel(List *defList);
 
-<<<<<<< HEAD
 extern void validateAppendOnlyRelOptions(bool ao, int blocksize, int writesize,
 										 int complevel, char* comptype, 
 										 bool checksum, char relkind, bool co);
@@ -330,7 +327,4 @@ extern void validate_and_refill_options(StdRdOptions *result, relopt_value *opti
 extern void validate_and_adjust_options(StdRdOptions *result, relopt_value *options,
 										int num_options, relopt_kind kind, bool validate);
 
-#endif   /* RELOPTIONS_H */
-=======
 #endif							/* RELOPTIONS_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

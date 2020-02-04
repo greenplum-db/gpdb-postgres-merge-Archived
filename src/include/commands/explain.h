@@ -47,8 +47,7 @@ typedef struct ExplainState
 	List	   *rtable;			/* range table */
 	List	   *rtable_names;	/* alias names for RTEs */
 	List	   *deparse_cxt;	/* context list for deparsing expressions */
-<<<<<<< HEAD
-	Bitmapset  *printed_subplans;		/* ids of SubPlans we've printed */
+	Bitmapset  *printed_subplans;	/* ids of SubPlans we've printed */
 
     /* CDB */
     struct CdbExplain_ShowStatCtx  *showstatctx;    /* EXPLAIN ANALYZE info */
@@ -56,9 +55,6 @@ typedef struct ExplainState
 	bool		subplanDispatchedSeparately;
 
 	PlanState  *parentPlanState;
-=======
-	Bitmapset  *printed_subplans;	/* ids of SubPlans we've printed */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } ExplainState;
 
 /* Hook for plugins to get control in ExplainOneQuery() */
