@@ -54,11 +54,8 @@
 #include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
 #include "port/atomics.h"
-=======
 #include "pgstat.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/spin.h"
@@ -70,16 +67,13 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 
-<<<<<<< HEAD
 #include "access/xact.h"		/* setting the shared xid */
-
 #include "cdb/cdbtm.h"
 #include "cdb/cdbvars.h"
 #include "utils/faultinjector.h"
 #include "utils/sharedsnapshot.h"
-=======
+
 #define UINT32_ACCESS_ONCE(var)		 ((uint32)(*((volatile uint32 *)&(var))))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* Our shared memory area */
 typedef struct ProcArrayStruct
@@ -484,7 +478,6 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 			ProcArrayGroupClearXid(proc, latestXid);
 	}
 
-<<<<<<< HEAD
 	/*
 	 * If we have no XID, we don't need to lock, since we won't affect
 	 * anyone else's calculation of a snapshot.  We might change their
@@ -496,14 +489,6 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 	 */
 	Assert(!TransactionIdIsValid(allPgXact[proc->pgprocno].xid));
 	Assert(!TransactionIdIsValid(allTmGxact[proc->pgprocno].gxid));
-=======
-		proc->lxid = InvalidLocalTransactionId;
-		pgxact->xmin = InvalidTransactionId;
-		/* must be cleared with xid/xmin: */
-		pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		pgxact->delayChkpt = false; /* be sure this is cleared in abort */
-		proc->recoveryConflictPending = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	proc->lxid = InvalidLocalTransactionId;
 	pgxact->xmin = InvalidTransactionId;
@@ -2496,16 +2481,12 @@ GetSnapshotData(Snapshot snapshot, DtxContext distributedTransactionContext)
 			suboverflowed = true;
 	}
 
-<<<<<<< HEAD
-	/* fetch into volatile var while ProcArrayLock is held */
-=======
 
 	/*
 	 * Fetch into local variable while ProcArrayLock is held - the
 	 * LWLockRelease below is a barrier, ensuring this happens inside the
 	 * lock.
 	 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	replication_slot_xmin = procArray->replication_slot_xmin;
 	replication_slot_catalog_xmin = procArray->replication_slot_catalog_xmin;
 
@@ -3077,11 +3058,7 @@ GetOldestSafeDecodingTransactionId(bool catalogOnly)
 	 * that value, it's guaranteed to be safe since it's computed by this
 	 * routine initially and has been enforced since.  We can always use the
 	 * slot's general xmin horizon, but the catalog horizon is only usable
-<<<<<<< HEAD
-	 * when we only catalog data is going to be looked at.
-=======
 	 * when only catalog data is going to be looked at.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	if (TransactionIdIsValid(procArray->replication_slot_xmin) &&
 		TransactionIdPrecedes(procArray->replication_slot_xmin,

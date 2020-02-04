@@ -34,11 +34,8 @@
 #include "postmaster/bgworker_internals.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/postmaster.h"
-<<<<<<< HEAD
 #include "postmaster/fts.h"
-=======
 #include "replication/logicallauncher.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "replication/slot.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
@@ -61,7 +58,6 @@
 #include "utils/gpexpand.h"
 #include "utils/snapmgr.h"
 
-<<<<<<< HEAD
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "cdb/cdbfts.h"
@@ -73,10 +69,9 @@
 #include "executor/spi.h"
 #include "utils/workfile_mgr.h"
 #include "utils/session_state.h"
-=======
+
 /* GUCs */
 int			shared_memory_type = DEFAULT_SHARED_MEMORY_TYPE;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 shmem_startup_hook_type shmem_startup_hook = NULL;
 
@@ -134,6 +129,7 @@ CreateSharedMemoryAndSemaphores(int port)
 		numSemas = ProcGlobalSemas();
 		numSemas += SpinlockSemas();
 
+        elog(DEBUG3,"reserving %d semaphores",numSemas);
 		/*
 		 * Size of the Postgres shared-memory block is estimated via
 		 * moderately-accurate estimates for the big hogs, plus 100K for the
@@ -143,12 +139,8 @@ CreateSharedMemoryAndSemaphores(int port)
 		 * request doesn't overflow size_t.  If this gets through, we don't
 		 * need to be so careful during the actual allocation phase.
 		 */
-<<<<<<< HEAD
 		size = 150000;
-=======
-		size = 100000;
 		size = add_size(size, PGSemaphoreShmemSize(numSemas));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		size = add_size(size, SpinlockSemaSize());
 		size = add_size(size, hash_estimate_size(SHMEM_INDEX_SIZE,
 												 sizeof(ShmemIndexEnt)));
@@ -239,13 +231,6 @@ CreateSharedMemoryAndSemaphores(int port)
 		/*
 		 * Create semaphores
 		 */
-<<<<<<< HEAD
-		numSemas = ProcGlobalSemas();
-		numSemas += SpinlockSemas();
-
-		elog(DEBUG3,"reserving %d semaphores",numSemas);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		PGReserveSemaphores(numSemas, port);
 
 		/*

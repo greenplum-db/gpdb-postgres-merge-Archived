@@ -73,13 +73,8 @@
 
 #ifdef USE_DSM_POSIX
 static bool dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
-<<<<<<< HEAD
-			   void **impl_private, void **mapped_address,
-			   Size *mapped_size, int elevel);
-=======
 						   void **impl_private, void **mapped_address,
 						   Size *mapped_size, int elevel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static int	dsm_impl_posix_resize(int fd, off_t size);
 #endif
 #ifdef USE_DSM_SYSV
@@ -694,13 +689,8 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 			_dosmaperr(errcode);
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
-<<<<<<< HEAD
-				  errmsg("could not create shared memory segment \"%s\": %m",
-						 name)));
-=======
 					 errmsg("could not create shared memory segment \"%s\": %m",
 							name)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			return false;
 		}
 	}
