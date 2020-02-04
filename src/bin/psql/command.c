@@ -1013,11 +1013,6 @@ exec_command_ef_ev(PsqlScanState scan_state, bool active_branch,
 		{
 			char		sverbuf[32];
 
-<<<<<<< HEAD
-			psql_error("The server (version %s) does not support editing function source.\n",
-					   formatPGVersionNumber(pset.sversion, false,
-											 sverbuf, sizeof(sverbuf)));
-=======
 			formatPGVersionNumber(pset.sversion, false,
 								  sverbuf, sizeof(sverbuf));
 			if (is_func)
@@ -1026,7 +1021,6 @@ exec_command_ef_ev(PsqlScanState scan_state, bool active_branch,
 			else
 				pg_log_error("The server (version %s) does not support editing view definitions.",
 							 sverbuf);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			status = PSQL_CMD_ERROR;
 		}
 		else if (!query_buf)
@@ -2210,11 +2204,6 @@ exec_command_sf_sv(PsqlScanState scan_state, bool active_branch,
 		{
 			char		sverbuf[32];
 
-<<<<<<< HEAD
-			psql_error("The server (version %s) does not support showing function source.\n",
-					   formatPGVersionNumber(pset.sversion, false,
-											 sverbuf, sizeof(sverbuf)));
-=======
 			formatPGVersionNumber(pset.sversion, false,
 								  sverbuf, sizeof(sverbuf));
 			if (is_func)
@@ -2223,7 +2212,6 @@ exec_command_sf_sv(PsqlScanState scan_state, bool active_branch,
 			else
 				pg_log_error("The server (version %s) does not support showing view definitions.",
 							 sverbuf);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			status = PSQL_CMD_ERROR;
 		}
 		else if (!obj_desc)

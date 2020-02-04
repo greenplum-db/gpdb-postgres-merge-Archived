@@ -1,13 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2000-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * src/bin/psql/tab-complete.c
  */
@@ -2822,7 +2818,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("GROUP", "ROLE");
 
 /* CREATE/DROP RESOURCE GROUP/QUEUE */
-	else if (Matches2("CREATE|DROP", "RESOURCE"))
+	else if (Matches("CREATE|DROP", "RESOURCE"))
 	 {
 		static const char *const list_CREATERESOURCEGROUP[] =
 		{"GROUP", "QUEUE", NULL};
@@ -2830,12 +2826,12 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_CREATERESOURCEGROUP);
 	 }
 	/* CREATE/DROP RESOURCE GROUP */
-	else if (TailMatches3("CREATE|DROP", "RESOURCE", "GROUP"))
+	else if (TailMatches("CREATE|DROP", "RESOURCE", "GROUP"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_resgroups);
 	/* CREATE RESOURCE GROUP <name> */
-	else if (TailMatches4("CREATE|DROP", "RESOURCE", "GROUP", MatchAny))
-		COMPLETE_WITH_CONST("WITH (");
-	else if (TailMatches5("RESOURCE", "GROUP", MatchAny, "WITH", "("))
+	else if (TailMatches("CREATE|DROP", "RESOURCE", "GROUP", MatchAny))
+		COMPLETE_WITH("WITH (");
+	else if (TailMatches("RESOURCE", "GROUP", MatchAny, "WITH", "("))
 	{
 		static const char *const list_CREATERESOURCEGROUP[] =
 		{"CONCURRENCY", "CPU_RATE_LIMIT", "MEMORY_LIMIT", "MEMORY_REDZONE_LIMIT", NULL};
@@ -3351,16 +3347,8 @@ psql_completion(const char *text, int start, int end)
 					  "UPDATE EXCLUSIVE MODE");
 
 /* NOTIFY --- can be inside EXPLAIN, RULE, etc */
-<<<<<<< HEAD
-	else if (TailMatches1("NOTIFY"))
-	   if (pset.sversion >= 80210 && pset.sversion < 80220)
-		   COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(relname) FROM pg_catalog.pg_listener WHERE substring(pg_catalog.quote_ident(relname),1,%d)='%s'");
-	   else
-	       COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(channel) FROM pg_catalog.pg_listening_channels() AS channel WHERE substring(pg_catalog.quote_ident(channel),1,%d)='%s'");
-=======
 	else if (TailMatches("NOTIFY"))
 		COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(channel) FROM pg_catalog.pg_listening_channels() AS channel WHERE substring(pg_catalog.quote_ident(channel),1,%d)='%s'");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* OPTIONS */
 	else if (TailMatches("OPTIONS"))
@@ -3587,16 +3575,8 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
 
 /* UNLISTEN */
-<<<<<<< HEAD
-	else if (Matches1("UNLISTEN"))
-	    if (pset.sversion >= 80210 && pset.sversion < 80220)
-			COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(relname) FROM pg_catalog.pg_listener WHERE substring(pg_catalog.quote_ident(relname),1,%d)='%s'");
-		else
-			COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(channel) FROM pg_catalog.pg_listening_channels() AS channel WHERE substring(pg_catalog.quote_ident(channel),1,%d)='%s' UNION SELECT '*'");
-=======
 	else if (Matches("UNLISTEN"))
 		COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(channel) FROM pg_catalog.pg_listening_channels() AS channel WHERE substring(pg_catalog.quote_ident(channel),1,%d)='%s' UNION SELECT '*'");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* UPDATE --- can be inside EXPLAIN, RULE, etc */
 	/* If prev. word is UPDATE suggest a list of tables */

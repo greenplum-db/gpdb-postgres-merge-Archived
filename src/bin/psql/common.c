@@ -27,12 +27,7 @@
 #include "common.h"
 #include "copy.h"
 #include "crosstabview.h"
-<<<<<<< HEAD
-#include "fe_utils/mbprint.h"
-#include "fe_utils/string_utils.h"
-=======
 #include "settings.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 static bool DescribeQuery(const char *query, double *elapsed_msec);
@@ -1382,15 +1377,9 @@ SendQuery(const char *query)
 		{
 			char		sverbuf[32];
 
-<<<<<<< HEAD
-			psql_error("The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK.\n",
-					   formatPGVersionNumber(pset.sversion, false,
-											 sverbuf, sizeof(sverbuf)));
-=======
 			pg_log_warning("The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK.",
 						   formatPGVersionNumber(pset.sversion, false,
 												 sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			on_error_rollback_warning = true;
 		}
 		else
