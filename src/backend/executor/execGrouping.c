@@ -18,12 +18,9 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include <limits.h>
 
-=======
 #include "access/parallel.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "utils/lsyscache.h"
@@ -172,7 +169,6 @@ BuildTupleHashTableExt(PlanState *parent,
 	Size		entrysize = sizeof(TupleHashEntryData) + additionalsize;
 	MemoryContext oldcontext;
 
-<<<<<<< HEAD
 	/*
 	 * Many callers pass "long" values for nbuckets, which means that we can
 	 * receive a bogus value on 64-bit machines.  It seems unwise to change
@@ -182,10 +178,7 @@ BuildTupleHashTableExt(PlanState *parent,
 	if (nbuckets <= 0)
 		nbuckets = INT_MAX;
 
-	Assert(entrysize >= sizeof(TupleHashEntryData));
-=======
 	Assert(nbuckets > 0);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Limit initial table size request to not more than work_mem */
 	nbuckets = Min(nbuckets, (long) ((work_mem * 1024L) / entrysize));
@@ -338,14 +331,8 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 			/* zero caller data */
 			entry->additional = NULL;
 			MemoryContextSwitchTo(hashtable->tablecxt);
-<<<<<<< HEAD
-			entry->firstTuple = ExecCopySlotMemTuple(slot);
-
-			*isnew = true;
-=======
 			/* Copy the first tuple into the table context */
 			entry->firstTuple = ExecCopySlotMinimalTuple(slot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 	else
@@ -408,13 +395,7 @@ FindTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 static uint32
 TupleHashTableHash(struct tuplehash_hash *tb, const MinimalTuple tuple)
 {
-<<<<<<< HEAD
-	MemTuple tuple = ((const TupleHashEntryData *) key)->firstTuple;
-	TupleTableSlot *slot;
-	TupleHashTable hashtable = CurTupleHashTable;
-=======
 	TupleHashTable hashtable = (TupleHashTable) tb->private_data;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			numCols = hashtable->numCols;
 	AttrNumber *keyColIdx = hashtable->keyColIdx;
 	uint32		hashkey = hashtable->hash_iv;
@@ -480,14 +461,6 @@ TupleHashTableHash(struct tuplehash_hash *tb, const MinimalTuple tuple)
 static int
 TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tuple1, const MinimalTuple tuple2)
 {
-<<<<<<< HEAD
-	MemTuple tuple1 = ((const TupleHashEntryData *) key1)->firstTuple;
-
-#ifdef USE_ASSERT_CHECKING
-	MemTuple tuple2 = ((const TupleHashEntryData *) key2)->firstTuple;
-#endif
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	TupleTableSlot *slot1;
 	TupleTableSlot *slot2;
 	TupleHashTable hashtable = (TupleHashTable) tb->private_data;

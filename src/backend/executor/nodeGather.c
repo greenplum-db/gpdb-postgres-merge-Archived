@@ -91,11 +91,6 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	outerPlanState(gatherstate) = ExecInitNode(outerNode, estate, eflags);
 	tupDesc = ExecGetResultType(outerPlanState(gatherstate));
 
-<<<<<<< HEAD
-#if 0
-	gatherstate->ps.ps_TupFromTlist = false;
-#endif
-=======
 	/*
 	 * Leader may access ExecProcNode result directly (if
 	 * need_to_scan_locally), or from workers via tuple queue.  So we can't
@@ -110,7 +105,6 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	 */
 	ExecInitResultTypeTL(&gatherstate->ps);
 	ExecConditionalAssignProjectionInfo(&gatherstate->ps, tupDesc, OUTER_VAR);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Without projections result slot type is not trivially known, see
@@ -220,25 +214,6 @@ ExecGather(PlanState *pstate)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Check to see if we're still projecting out tuples from a previous scan
-	 * tuple (because there is a function-returning-set in the projection
-	 * expressions).  If so, try to project another one.
-	 */
-#if 0
-	if (node->ps.ps_TupFromTlist)
-	{
-		resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
-		if (isDone == ExprMultipleResult)
-			return resultSlot;
-		/* Done with that source tuple... */
-		node->ps.ps_TupFromTlist = false;
-	}
-#endif
-
-	/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * Reset per-tuple memory context to free any expression evaluation
 	 * storage allocated in the previous tuple cycle.
 	 */
@@ -257,26 +232,11 @@ ExecGather(PlanState *pstate)
 	if (node->ps.ps_ProjInfo == NULL)
 		return slot;
 
-<<<<<<< HEAD
-		if (isDone != ExprEndResult)
-		{
-			if (isDone == ExprMultipleResult)
-				elog(ERROR, "targetlist SRF not supported in Gather node");
-#if 0
-			node->ps.ps_TupFromTlist = (isDone == ExprMultipleResult);
-#endif
-			return resultSlot;
-		}
-	}
-
-	return slot;
-=======
 	/*
 	 * Form the result tuple using ExecProject(), and return it.
 	 */
 	econtext->ecxt_outertuple = slot;
 	return ExecProject(node->ps.ps_ProjInfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* ----------------------------------------------------------------
@@ -318,17 +278,9 @@ gather_getnext(GatherState *gatherstate)
 
 			if (HeapTupleIsValid(tup))
 			{
-<<<<<<< HEAD
-				ExecStoreHeapTuple(tup,		/* tuple to store */
-							   fslot,	/* slot in which to store the tuple */
-							   InvalidBuffer,	/* buffer associated with this
-												 * tuple */
-							   false);	/* slot should not pfree tuple */
-=======
 				ExecStoreHeapTuple(tup, /* tuple to store */
 								   fslot,	/* slot to store the tuple */
 								   true);	/* pfree tuple when done with it */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				return fslot;
 			}
 		}

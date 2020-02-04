@@ -39,11 +39,8 @@
 
 #include "access/heapam.h"
 #include "access/htup_details.h"
-<<<<<<< HEAD
-#include "access/tupconvert.h"
-=======
 #include "access/tableam.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#include "access/tupconvert.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "commands/trigger.h"
@@ -204,23 +201,6 @@ ExecProcessReturning(ProjectionInfo *projectReturning,
 	/* Make tuple and any needed join variables available to ExecProject */
 	if (tupleSlot)
 		econtext->ecxt_scantuple = tupleSlot;
-<<<<<<< HEAD
-	else
-	{
-		HeapTuple	tuple;
-
-		/*
-		 * RETURNING expressions might reference the tableoid column, so
-		 * initialize t_tableOid before evaluating them.
-		 */
-		Assert(!TupIsNull(econtext->ecxt_scantuple));
-		tuple = ExecMaterializeSlot(econtext->ecxt_scantuple);
-#if 0
-		tuple->t_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
-#endif
-	}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	econtext->ecxt_outertuple = planSlot;
 
 	/*
@@ -243,26 +223,13 @@ ExecProcessReturning(ProjectionInfo *projectReturning,
  * Check for the need to raise a serialization failure, and do so as necessary.
  */
 static void
-<<<<<<< HEAD
-ExecCheckHeapTupleVisible(Relation rel,
-						  EState *estate,
-						  HeapTuple tuple,
-						  Buffer buffer)
-=======
 ExecCheckTupleVisible(EState *estate,
 					  Relation rel,
 					  TupleTableSlot *slot)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	if (!IsolationUsesXactSnapshot())
 		return;
 
-<<<<<<< HEAD
-	if (!HeapTupleSatisfiesVisibility(rel, tuple, estate->es_snapshot, buffer))
-		ereport(ERROR,
-				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-			 errmsg("could not serialize access due to concurrent update")));
-=======
 	if (!table_tuple_satisfies_snapshot(rel, slot, estate->es_snapshot))
 	{
 		Datum		xminDatum;
@@ -284,7 +251,6 @@ ExecCheckTupleVisible(EState *estate,
 					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 					 errmsg("could not serialize access due to concurrent update")));
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -304,10 +270,6 @@ ExecCheckTIDVisible(EState *estate,
 
 	if (!table_tuple_fetch_row_version(rel, tid, SnapshotAny, tempSlot))
 		elog(ERROR, "failed to fetch conflicting tuple for ON CONFLICT");
-<<<<<<< HEAD
-	ExecCheckHeapTupleVisible(rel, estate, &tuple, buffer);
-	ReleaseBuffer(buffer);
-=======
 	ExecCheckTupleVisible(estate, rel, tempSlot);
 	ExecClearTuple(tempSlot);
 }
@@ -398,7 +360,6 @@ ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot)
 	ExecMaterializeSlot(slot);
 
 	MemoryContextSwitchTo(oldContext);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* ----------------------------------------------------------------
@@ -435,136 +396,11 @@ ExecInsert(ModifyTableState *mtstate,
 	ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
 	OnConflictAction onconflict = node->onConflictAction;
 
-<<<<<<< HEAD
-	ItemPointerData lastTid;
-	Oid			tuple_oid = tupleOid;
-	ProjectionInfo *projectReturning;
-	TupleTableSlot *slot;
-
-	/*
-	 * RETURNING is only present in the parent ResultRelInfo, so stash
-	 * that before looking up the ResultRelInfo of the target partition.
-	 */
-	projectReturning = estate->es_result_relation_info->ri_projectReturning;
-=======
 	ExecMaterializeSlot(slot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-
-	/*
-	 * get information on the (current) result relation
-	 */
-	if (estate->es_result_partitions)
-	{
-		resultRelInfo = slot_get_partition(parentslot, estate, true);
-
-		/*
-		 * Check whether the user provided the correct leaf part only if required.
-		 * For isUpdate, the check for resultRelInfo equals to target partitioned relation id
-		 * has been done by checkPartitionUpdate before. So we don't need to check again here.
-		 */
-		if (!dml_ignore_target_partition_check && !isUpdate)
-		{
-			Assert(NULL != estate->es_result_partitions->part &&
-					NULL != resultRelInfo->ri_RelationDesc);
-
-			List *resultRelations = estate->es_plannedstmt->resultRelations;
-			/*
-			 * Only inheritance can generate multiple result relations and inheritance
-			 * is not compatible with partitions. As we are in inserting in partitioned
-			 * table, we should not have more than one resultRelation
-			 */
-			Assert(list_length(resultRelations) == 1);
-			/* We only have one resultRelations entry where the user originally intended to insert */
-			int rteIdxForUserRel = linitial_int(resultRelations);
-			Assert (rteIdxForUserRel > 0);
-			Oid userProvidedRel = InvalidOid;
-
-			if (1 == rteIdxForUserRel)
-			{
-				/* Optimization for typical case */
-				userProvidedRel = ((RangeTblEntry *) estate->es_plannedstmt->rtable->head->data.ptr_value)->relid;
-			}
-			else
-			{
-				userProvidedRel = getrelid(rteIdxForUserRel, estate->es_plannedstmt->rtable);
-			}
-
-			/* Error out if user provides a leaf partition that does not match with our calculated partition */
-			if (userProvidedRel != estate->es_result_partitions->part->parrelid &&
-				userProvidedRel != resultRelInfo->ri_RelationDesc->rd_id)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_CHECK_VIOLATION),
-						 errmsg("trying to insert row into wrong partition"),
-						 errdetail("Expected partition: %s, provided partition: %s.",
-							resultRelInfo->ri_RelationDesc->rd_rel->relname.data,
-							estate->es_result_relation_info->ri_RelationDesc->rd_rel->relname.data)));
-			}
-		}
-		estate->es_result_relation_info = resultRelInfo;
-	}
-	else
-	{
-		resultRelInfo = estate->es_result_relation_info;
-	}
 
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
 	/*
-<<<<<<< HEAD
-	 * If the result relation has OIDs, force the tuple's OID to zero so that
-	 * heap_insert will assign a fresh OID.  Usually the OID already will be
-	 * zero at this point, but there are corner cases where the plan tree can
-	 * return a tuple extracted literally from some table with the same
-	 * rowtype.
-	 *
-	 * XXX if we ever wanted to allow users to assign their own OIDs to new
-	 * rows, this'd be the place to do it.  For the moment, we make a point of
-	 * doing this before calling triggers, so that a user-supplied trigger
-	 * could hack the OID if desired.
-	 *
-	 * GPDB: In PostgreSQL, here we set the Oid in the HeapTuple, which is a
-	 * local copy at this point. But in GPDB, we don't materialize the tuple
-	 * yet, because we might need a MemTuple or a HeapTuple depending on
-	 * what kind of a table this is (or neither for an AOCS table, since
-	 * aocs_insert() works directly off the slot). So we keep the Oid in a
-	 * local variable for now, and only set it in the tuple just before the
-	 * call to heap/appendonly_insert().
-	 */
-	if (resultRelationDesc->rd_rel->relhasoids)
-	{
-		/*
-		 * But if this is really an UPDATE, try to preserve the old OID.
-		 */
-		if (isUpdate && tuple_oid == InvalidOid)
-		{
-			GenericTuple gtuple;
-
-			gtuple = ExecFetchSlotGenericTuple(parentslot);
-
-			if (!is_memtuple(gtuple))
-				tuple_oid = HeapTupleGetOid((HeapTuple) gtuple);
-			else
-				tuple_oid = MemTupleGetOidDirect((MemTuple) gtuple);
-		}
-	}
-
-	slot = reconstructPartitionTupleSlot(parentslot, resultRelInfo);
-
-	if (resultRelationDesc->rd_rel->relkind == RELKIND_FOREIGN_TABLE &&
-		estate->es_result_partitions &&
-		estate->es_result_partitions->part->parrelid != 0)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("insert into foreign partitions not supported")));
-	}
-
-	Assert(slot != NULL);
-
-	/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * BEFORE ROW INSERT Triggers.
 	 *
 	 * Note: We fire BEFORE ROW TRIGGERS for every attempted insertion in an
@@ -577,43 +413,16 @@ ExecInsert(ModifyTableState *mtstate,
 		resultRelInfo->ri_TrigDesc->trig_insert_before_row &&
 		!isUpdate)
 	{
-<<<<<<< HEAD
-		slot = ExecBRInsertTriggers(estate, resultRelInfo, slot);
-
-		if (slot == NULL)		/* "do nothing" */
-			return NULL;
-
-		/* trigger might have changed tuple */
-		if (resultRelationDesc->rd_rel->relhasoids)
-		{
-			if (TupHasHeapTuple(slot))
-			{
-				HeapTuple trigtup = TupGetHeapTuple(slot);
-
-				tuple_oid = HeapTupleGetOid(trigtup);
-			}
-		}
-=======
 		if (!ExecBRInsertTriggers(estate, resultRelInfo, slot))
 			return NULL;		/* "do nothing" */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/* INSTEAD OF ROW INSERT Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_insert_instead_row)
 	{
-<<<<<<< HEAD
-		slot = ExecIRInsertTriggers(estate, resultRelInfo, slot);
-
-		if (slot == NULL)		/* "do nothing" */
-			return NULL;
-
-		newId = InvalidOid;
-=======
 		if (!ExecIRInsertTriggers(estate, resultRelInfo, slot))
 			return NULL;		/* "do nothing" */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else if (resultRelInfo->ri_FdwRoutine)
 	{
@@ -635,28 +444,12 @@ ExecInsert(ModifyTableState *mtstate,
 		if (slot == NULL)		/* "do nothing" */
 			return NULL;
 
-<<<<<<< HEAD
-#if 0
-		/* FDW might have changed tuple */
-		/*
-		 * GPDB: Greenplum does not allow triggers/contraints to reference
-		 * system columns which makes the t_tableOid initialization reduntant.
-		 */
-		tuple = ExecMaterializeSlot(slot);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		/*
 		 * AFTER ROW Triggers or RETURNING expressions might reference the
 		 * tableoid column, so (re-)initialize tts_tableOid before evaluating
 		 * them.
 		 */
-<<<<<<< HEAD
-		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
-#endif
-=======
 		slot->tts_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	}
 	else
@@ -672,19 +465,9 @@ ExecInsert(ModifyTableState *mtstate,
 		/*
 		 * Compute stored generated columns
 		 */
-<<<<<<< HEAD
-#if 0
-		/*
-		 * GPDB: Greenplum does not allow triggers/contraints to reference
-		 * system columns which makes the t_tableOid initialization reduntant.
-		 */
-		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
-#endif
-=======
 		if (resultRelationDesc->rd_att->constr &&
 			resultRelationDesc->rd_att->constr->has_generated_stored)
 			ExecComputeStoredGenerated(estate, slot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * Check any RLS WITH CHECK policies.
@@ -717,12 +500,6 @@ ExecInsert(ModifyTableState *mtstate,
 			ExecConstraints(resultRelInfo, slot, estate);
 
 		/*
-<<<<<<< HEAD
-		 * GPDB_95_MERGE_FIXME: enable speculative insertion in heaptable only.
-		 */
-		if (onconflict != ONCONFLICT_NONE && resultRelInfo->ri_NumIndices > 0 &&
-			RelationIsHeap(resultRelationDesc))
-=======
 		 * Also check the tuple against the partition constraint, if there is
 		 * one; except that if we got here via tuple-routing, we don't need to
 		 * if there's no BR trigger defined on the partition.
@@ -734,7 +511,6 @@ ExecInsert(ModifyTableState *mtstate,
 			ExecPartitionCheck(resultRelInfo, slot, estate, true);
 
 		if (onconflict != ONCONFLICT_NONE && resultRelInfo->ri_NumIndices > 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			/* Perform a speculative insertion. */
 			HeapTuple tuple;
@@ -817,17 +593,6 @@ ExecInsert(ModifyTableState *mtstate,
 			specToken = SpeculativeInsertionLockAcquire(GetCurrentTransactionId());
 
 			/* insert the tuple, with the speculative token */
-<<<<<<< HEAD
-			newId = heap_insert(resultRelationDesc,
-								tuple,
-								estate->es_output_cid, 0, NULL,
-								GetCurrentTransactionId());
-			lastTid = tuple->t_self;
-
-			/* insert index entries for tuple */
-			recheckIndexes = ExecInsertIndexTuples(slot, &lastTid,
-												   estate, true, &specConflict,
-=======
 			table_tuple_insert_speculative(resultRelationDesc, slot,
 										   estate->es_output_cid,
 										   0,
@@ -837,7 +602,6 @@ ExecInsert(ModifyTableState *mtstate,
 			/* insert index entries for tuple */
 			recheckIndexes = ExecInsertIndexTuples(slot, estate, true,
 												   &specConflict,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 												   arbiterIndexes);
 
 			/* adjust the tuple's state accordingly */
@@ -868,19 +632,6 @@ ExecInsert(ModifyTableState *mtstate,
 		}
 		else
 		{
-<<<<<<< HEAD
-			/*
-			 * insert the tuple normally.
-			 */
-			newId = table_insert(resultRelInfo, estate, slot, tuple_oid, &lastTid,
-								 estate->es_output_cid);
-
-			/* insert index entries for tuple */
-			if (resultRelInfo->ri_NumIndices > 0)
-				recheckIndexes = ExecInsertIndexTuples(slot, &lastTid,
-													   estate, false, NULL,
-													   arbiterIndexes);
-=======
 			/* insert the tuple normally */
 			table_tuple_insert(resultRelationDesc, slot,
 							   estate->es_output_cid,
@@ -890,16 +641,11 @@ ExecInsert(ModifyTableState *mtstate,
 			if (resultRelInfo->ri_NumIndices > 0)
 				recheckIndexes = ExecInsertIndexTuples(slot, estate, false, NULL,
 													   NIL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 	if (canSetTag)
 	{
 		(estate->es_processed)++;
-<<<<<<< HEAD
-		estate->es_lastoid = newId;
-		setLastTid(&lastTid);
-=======
 		setLastTid(&slot->tts_tid);
 	}
 
@@ -924,24 +670,13 @@ ExecInsert(ModifyTableState *mtstate,
 		 * INSERT trigger fired below doesn't capture it again.
 		 */
 		ar_insert_trig_tcs = NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
 
 	/* AFTER ROW INSERT Triggers */
-<<<<<<< HEAD
-	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->trig_insert_after_row &&
-		!isUpdate)
-	{
-		HeapTuple tuple = ExecMaterializeSlot(slot);
-		ExecARInsertTriggers(estate, resultRelInfo, tuple, recheckIndexes);
-	}
-=======
 	ExecARInsertTriggers(estate, resultRelInfo, slot, recheckIndexes,
 						 ar_insert_trig_tcs);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	list_free(recheckIndexes);
 
@@ -961,13 +696,8 @@ ExecInsert(ModifyTableState *mtstate,
 		ExecWithCheckOptions(WCO_VIEW_CHECK, resultRelInfo, slot, estate);
 
 	/* Process RETURNING if present */
-<<<<<<< HEAD
-	if (projectReturning)
-		return ExecProcessReturning(projectReturning, parentslot, planSlot);
-=======
 	if (resultRelInfo->ri_projectReturning)
 		result = ExecProcessReturning(resultRelInfo, slot, planSlot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return result;
 }
@@ -992,33 +722,25 @@ ExecInsert(ModifyTableState *mtstate,
  *		EvalPlanQual() is passed back using output parameter epqslot.
  *
  *		In GPDB, DELETE can be part of an update operation when
- *		there is a preceding SplitUpdate node.
+ *		there is a preceding SplitUpdate node. 'changingPart' is set to
+ *		true in that case, too.
  *
  *		Returns RETURNING result if any, otherwise NULL.
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
-<<<<<<< HEAD
-ExecDelete(ItemPointer tupleid,
-		   int32 segid,
-=======
 ExecDelete(ModifyTableState *mtstate,
 		   ItemPointer tupleid,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		   int32 segid,
 		   HeapTuple oldtuple,
 		   TupleTableSlot *planSlot,
 		   EPQState *epqstate,
 		   EState *estate,
-<<<<<<< HEAD
-		   bool canSetTag,
-		   bool isUpdate)
-=======
 		   bool processReturning,
 		   bool canSetTag,
 		   bool changingPart,
 		   bool *tupleDeleted,
 		   TupleTableSlot **epqreturnslot)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	PlanGenerator planGen = estate->es_plannedstmt->planGen;
 	ResultRelInfo *resultRelInfo;
@@ -1077,13 +799,8 @@ ExecDelete(ModifyTableState *mtstate,
 		{
 			bool		dodelete;
 
-<<<<<<< HEAD
 			dodelete = ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
-											tupleid, oldtuple);
-=======
-		dodelete = ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
-										tupleid, oldtuple, epqreturnslot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+											tupleid, oldtuple, epqreturnslot);
 
 			if (!dodelete)			/* "do nothing" */
 				return NULL;
@@ -1114,14 +831,6 @@ ExecDelete(ModifyTableState *mtstate,
 	}
 	else if (resultRelInfo->ri_FdwRoutine)
 	{
-<<<<<<< HEAD
-#if 0
-		/* See comment regarding t_tableOid bellow */
-		HeapTuple	tuple;
-#endif
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		/*
 		 * delete from foreign table: let the FDW do it
 		 *
@@ -1141,24 +850,10 @@ ExecDelete(ModifyTableState *mtstate,
 		 * RETURNING expressions might reference the tableoid column, so
 		 * (re)initialize tts_tableOid before evaluating them.
 		 */
-<<<<<<< HEAD
-		if (slot->PRIVATE_tts_flags & TTS_ISEMPTY)
-			ExecStoreAllNullTuple(slot);
-
-#if 0
-		/*
-		 * GPDB: Greenplum does not allow triggers/contraints to reference
-		 * system columns which makes the t_tableOid initialization reduntant.
-		 */
-		tuple = ExecMaterializeSlot(slot);
-		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
-#endif
-=======
 		if (TTS_EMPTY(slot))
 			ExecStoreAllNullTuple(slot);
 
 		slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 	{
@@ -1172,13 +867,6 @@ ExecDelete(ModifyTableState *mtstate,
 		 * mode transactions.
 		 */
 ldelete:;
-<<<<<<< HEAD
-		result = table_delete(resultRelInfo, estate, isUpdate, tupleid,
-							  estate->es_output_cid,
-							  estate->es_crosscheck_snapshot,
-							  true /* wait for commit */ ,
-							  &hufd);
-=======
 		result = table_tuple_delete(resultRelationDesc, tupleid,
 									estate->es_output_cid,
 									estate->es_snapshot,
@@ -1187,7 +875,6 @@ ldelete:;
 									&tmfd,
 									changingPart);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		switch (result)
 		{
 			case TM_SelfModified:
@@ -1221,12 +908,12 @@ ldelete:;
 				 * list checking. Also, hufd is not initialized and can't be for
 				 * AO case, as visimap update within same command happens at end
 				 * of command.
+				 * GPDB_12_MERGE_FIXME: Is the above comment and the commented out
+				 * check for RelationIsAppendOptimized still relevant? Shouldn't
+				 * all that be hidden behind the table AM API?
 				 */
-<<<<<<< HEAD
-				if (!RelationIsAppendOptimized(resultRelationDesc) && hufd.cmax != estate->es_output_cid)
-=======
+				//if (!RelationIsAppendOptimized(resultRelationDesc) && hufd.cmax != estate->es_output_cid)
 				if (tmfd.cmax != estate->es_output_cid)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					ereport(ERROR,
 							(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),
 							 errmsg("tuple to be deleted was already modified by an operation triggered by the current command"),
@@ -1497,41 +1184,33 @@ ldelete:;
 		}
 		else
 		{
-<<<<<<< HEAD
-			/*
-			 * If it's an AO table, we cannot fetch the old tuple. Punt.
-			 *
-			 * We could use the same AO fetcher mechanism that we use for
-			 * (bitmap) index scans on AO tables, but that only works if
-			 * the AO table has a block directory, which it might not have,
-			 * if there are no indexes on it.
-			 */
-			if (!RelationIsHeap(resultRelationDesc))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("DELETE RETURNING is not supported on appendonly tables")));
-
-			slot = estate->es_trig_tuple_slot;
-=======
 			slot = ExecGetReturningSlot(estate, resultRelInfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			if (oldtuple != NULL)
 			{
 				ExecForceStoreHeapTuple(oldtuple, slot, false);
 			}
 			else
 			{
+#if 0
+				// GPDB_12_MERGE_FIXME: Move this ereport() to the AO implementation
+				// of table_tuple_fetch_row_version() function
+				/*
+				 * If it's an AO table, we cannot fetch the old tuple. Punt.
+				 *
+				 * We could use the same AO fetcher mechanism that we use for
+				 * (bitmap) index scans on AO tables, but that only works if
+				 * the AO table has a block directory, which it might not have,
+				 * if there are no indexes on it.
+				 */
+				if (!RelationIsHeap(resultRelationDesc))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("DELETE RETURNING is not supported on appendonly tables")));
+#endif
 				if (!table_tuple_fetch_row_version(resultRelationDesc, tupleid,
 												   SnapshotAny, slot))
 					elog(ERROR, "failed to fetch deleted tuple for DELETE RETURNING");
 			}
-<<<<<<< HEAD
-
-			if (slot->tts_tupleDescriptor != RelationGetDescr(resultRelationDesc))
-				ExecSetSlotDescriptor(slot, RelationGetDescr(resultRelationDesc));
-			ExecStoreHeapTuple(&deltuple, slot, InvalidBuffer, false);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		rslot = ExecProcessReturning(resultRelInfo->ri_projectReturning, slot, planSlot);
@@ -1789,36 +1468,18 @@ ExecUpdate(ModifyTableState *mtstate,
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_update_before_row)
 	{
-<<<<<<< HEAD
-		slot = ExecBRUpdateTriggers(estate, epqstate, resultRelInfo,
-									tupleid, oldtuple, slot);
-
-		if (slot == NULL)		/* "do nothing" */
-			return NULL;
-=======
 		if (!ExecBRUpdateTriggers(estate, epqstate, resultRelInfo,
 								  tupleid, oldtuple, slot))
 			return NULL;		/* "do nothing" */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/* INSTEAD OF ROW UPDATE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_update_instead_row)
 	{
-<<<<<<< HEAD
-		slot = ExecIRUpdateTriggers(estate, resultRelInfo,
-									oldtuple, slot);
-
-		if (slot == NULL)		/* "do nothing" */
-			return NULL;
-
-		/* trigger might have changed tuple */
-=======
 		if (!ExecIRUpdateTriggers(estate, resultRelInfo,
 								  oldtuple, slot))
 			return NULL;		/* "do nothing" */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else if (resultRelInfo->ri_FdwRoutine)
 	{
@@ -1840,28 +1501,12 @@ ExecUpdate(ModifyTableState *mtstate,
 		if (slot == NULL)		/* "do nothing" */
 			return NULL;
 
-<<<<<<< HEAD
-#if 0
-		/* FDW might have changed tuple */
-		/*
-		 * GPDB: Greenplum does not allow triggers/contraints to reference
-		 * system columns which makes the t_tableOid initialization reduntant.
-		 */
-		tuple = ExecMaterializeSlot(slot);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		/*
 		 * AFTER ROW Triggers or RETURNING expressions might reference the
 		 * tableoid column, so (re-)initialize tts_tableOid before evaluating
 		 * them.
 		 */
-<<<<<<< HEAD
-		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
-#endif
-=======
 		slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 	{
@@ -1873,15 +1518,6 @@ ExecUpdate(ModifyTableState *mtstate,
 		 * Constraints might reference the tableoid column, so (re-)initialize
 		 * tts_tableOid before evaluating them.
 		 */
-<<<<<<< HEAD
-#if 0
-		/*
-		 * GPDB: Greenplum does not allow triggers/contraints to reference
-		 * system columns which makes the t_tableOid initialization reduntant.
-		 */
-		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
-#endif
-=======
 		slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
 
 		/*
@@ -1890,7 +1526,6 @@ ExecUpdate(ModifyTableState *mtstate,
 		if (resultRelationDesc->rd_att->constr &&
 			resultRelationDesc->rd_att->constr->has_generated_stored)
 			ExecComputeStoredGenerated(estate, slot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * Check any RLS UPDATE WITH CHECK policies
@@ -1901,10 +1536,6 @@ ExecUpdate(ModifyTableState *mtstate,
 		 * triggers then trigger.c will have done table_tuple_lock to lock the
 		 * correct tuple, so there's no need to do them again.)
 		 */
-<<<<<<< HEAD
-		lreplace:;
-		if (resultRelInfo->ri_WithCheckOptions != NIL)
-=======
 lreplace:;
 
 		/* ensure slot is independent, consider e.g. EPQ */
@@ -1928,7 +1559,6 @@ lreplace:;
 			 * ExecWithCheckOptions() will skip any WCOs which are not of the
 			 * kind we are looking for at this point.
 			 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			ExecWithCheckOptions(WCO_RLS_UPDATE_CHECK,
 								 resultRelInfo, slot, estate);
 		}
@@ -2078,21 +1708,12 @@ lreplace:;
 		 * needed for referential integrity updates in transaction-snapshot
 		 * mode transactions.
 		 */
-<<<<<<< HEAD
-		lastTid = *tupleid;
-		result = table_update(resultRelInfo, estate, &lastTid, slot,
-							  estate->es_output_cid,
-							  estate->es_crosscheck_snapshot,
-							  true /* wait for commit */ ,
-							  &hufd, &lockmode, &wasHotUpdate);
-=======
 		result = table_tuple_update(resultRelationDesc, tupleid, slot,
 									estate->es_output_cid,
 									estate->es_snapshot,
 									estate->es_crosscheck_snapshot,
 									true /* wait for commit */ ,
 									&tmfd, &lockmode, &update_indexes);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		switch (result)
 		{
@@ -2126,12 +1747,12 @@ lreplace:;
 				 * list checking. Also, hufd is not initialized and can't be for
 				 * AO case, as visimap update within same command happens at end
 				 * of command.
+				 * GPDB_12_MERGE_FIXME: Is the above comment and the commented out
+				 * check for RelationIsAppendOptimized still relevant? Shouldn't
+				 * all that be hidden behind the table AM API?
 				 */
-<<<<<<< HEAD
-				if (!RelationIsAppendOptimized(resultRelationDesc) && hufd.cmax != estate->es_output_cid)
-=======
+				//if (!RelationIsAppendOptimized(resultRelationDesc) && hufd.cmax != estate->es_output_cid)
 				if (tmfd.cmax != estate->es_output_cid)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					ereport(ERROR,
 							(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),
 									errmsg("tuple to be updated was already modified by an operation triggered by the current command"),
@@ -2248,53 +1869,19 @@ lreplace:;
 				return NULL;
 		}
 
-<<<<<<< HEAD
-		/*
-		 * Note: instead of having to update the old index tuples associated
-		 * with the heap tuple, all we do is form and insert new index tuples.
-		 * This is because UPDATEs are actually DELETEs and INSERTs, and index
-		 * tuple deletion is done later by VACUUM (see notes in ExecDelete).
-		 * All we do here is insert new index tuples.  -cim 9/27/89
-		 */
-
-		/*
-		 * insert index entries for tuple
-		 *
-		 * Note: heap_update returns the tid (location) of the new tuple in
-		 * the t_self field.
-		 *
-		 * If it's a HOT update, we mustn't insert new index entries.
-		 */
-		if (resultRelInfo->ri_NumIndices > 0 && !wasHotUpdate)
-			recheckIndexes = ExecInsertIndexTuples(slot, &lastTid,
-												   estate, false, NULL, NIL);
-=======
 		/* insert index entries for tuple if necessary */
 		if (resultRelInfo->ri_NumIndices > 0 && update_indexes)
 			recheckIndexes = ExecInsertIndexTuples(slot, estate, false, NULL, NIL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	if (canSetTag)
 		(estate->es_processed)++;
 
 	/* AFTER ROW UPDATE Triggers */
-<<<<<<< HEAD
-	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->trig_update_after_row &&
-		RelationIsHeap(resultRelationDesc))
-	{
-		HeapTuple tuple = ExecMaterializeSlot(slot);
-
-		ExecARUpdateTriggers(estate, resultRelInfo, tupleid, oldtuple, tuple,
-						 recheckIndexes);
-	}
-=======
 	ExecARUpdateTriggers(estate, resultRelInfo, tupleid, oldtuple, slot,
 						 recheckIndexes,
 						 mtstate->operation == CMD_INSERT ?
 						 mtstate->mt_oc_transition_capture :
 						 mtstate->mt_transition_capture);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	list_free(recheckIndexes);
 
@@ -2467,14 +2054,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 	 * snapshot.  This is in line with the way UPDATE deals with newer tuple
 	 * versions.
 	 */
-<<<<<<< HEAD
-	ExecCheckHeapTupleVisible(resultRelInfo->ri_RelationDesc, estate, &tuple, buffer);
-
-	/* Store target's existing tuple in the state's dedicated slot */
-	ExecStoreHeapTuple(&tuple, mtstate->mt_existing, buffer, false);
-=======
 	ExecCheckTupleVisible(estate, relation, existing);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Make tuple and any needed join variables available to ExecQual and
@@ -2529,15 +2109,10 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 	 */
 
 	/* Execute UPDATE with projection */
-<<<<<<< HEAD
-	*returning = ExecUpdate(&tuple.t_self, NULL,
-							mtstate->mt_conflproj, planSlot,
-							GpIdentity.segindex,
-=======
 	*returning = ExecUpdate(mtstate, conflictTid, NULL,
 							resultRelInfo->ri_onConflict->oc_ProjSlot,
 							planSlot,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+							GpIdentity.segindex,
 							&mtstate->mt_epqstate, mtstate->ps.state,
 							canSetTag);
 
@@ -2999,14 +2574,10 @@ ExecModifyTable(PlanState *pstate)
 		EvalPlanQualSetSlot(&node->mt_epqstate, planSlot);
 		slot = planSlot;
 
-<<<<<<< HEAD
 		int32 segid = GpIdentity.segindex;
 		int action = -1;
-		Oid tupleoid = InvalidOid;;
 
-=======
 		tupleid = NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		oldtuple = NULL;
 		if (junkfilter != NULL)
 		{
@@ -3125,18 +2696,18 @@ ExecModifyTable(PlanState *pstate)
 					slot = ExecPrepareTupleRouting(node, estate, proute,
 												   resultRelInfo, slot);
 				slot = ExecInsert(node, slot, planSlot,
-<<<<<<< HEAD
-								node->mt_arbiterindexes, node->mt_onconflict,
-								  estate, node->canSetTag,
-								  false /* isUpdate */, InvalidOid /* tupleOid */);
+								  estate, node->canSetTag);
+				/* Revert ExecPrepareTupleRouting's state change. */
+				if (proute)
+					estate->es_result_relation_info = resultRelInfo;
 				break;
 			case CMD_UPDATE:
 				if (!AttributeNumberIsValid(action_attno))
 				{
 					/* normal non-split UPDATE */
-					slot = ExecUpdate(tupleid, oldtuple, slot, planSlot, segid,
-									  &node->mt_epqstate, estate,
-									  node->canSetTag);
+					slot = ExecUpdate(node, tupleid, oldtuple, slot, planSlot,
+									  segid,
+									  &node->mt_epqstate, estate, node->canSetTag);
 				}
 				else if (DML_INSERT == action)
 				{
@@ -3155,25 +2726,10 @@ ExecModifyTable(PlanState *pstate)
 				}
 				break;
 			case CMD_DELETE:
-				slot = ExecDelete(tupleid, segid, oldtuple, planSlot,
-								  &node->mt_epqstate, estate, node->canSetTag,
-								  false /* isUpdate */);
-=======
-								  estate, node->canSetTag);
-				/* Revert ExecPrepareTupleRouting's state change. */
-				if (proute)
-					estate->es_result_relation_info = resultRelInfo;
-				break;
-			case CMD_UPDATE:
-				slot = ExecUpdate(node, tupleid, oldtuple, slot, planSlot,
-								  &node->mt_epqstate, estate, node->canSetTag);
-				break;
-			case CMD_DELETE:
 				slot = ExecDelete(node, tupleid, oldtuple, planSlot,
 								  &node->mt_epqstate, estate,
 								  true, node->canSetTag,
 								  false /* changingPart */ , NULL, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 			default:
 				elog(ERROR, "unknown operation");

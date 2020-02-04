@@ -754,10 +754,6 @@ retry:
 		 * Extract the index column values and isnull flags from the existing
 		 * tuple.
 		 */
-<<<<<<< HEAD
-		ExecStoreHeapTuple(tup, existing_slot, InvalidBuffer, false);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		FormIndexDatum(indexInfo, existing_slot, estate,
 					   existing_values, existing_isnull);
 

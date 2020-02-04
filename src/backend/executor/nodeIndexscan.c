@@ -133,19 +133,7 @@ IndexNext(IndexScanState *node)
 	 */
 	while (index_getnext_slot(scandesc, direction, slot))
 	{
-<<<<<<< HEAD
-		/*
-		 * Store the scanned tuple in the scan tuple slot of the scan state.
-		 * Note: we pass 'false' because tuples returned by amgetnext are
-		 * pointers onto disk pages and must not be pfree()'d.
-		 */
-		ExecStoreHeapTuple(tuple,	/* tuple to store */
-					   slot,	/* slot to store in */
-					   scandesc->xs_cbuf,		/* buffer containing tuple */
-					   false);	/* don't pfree */
-=======
 		CHECK_FOR_INTERRUPTS();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * If the index was lossy, we have to recheck the index quals using
@@ -260,11 +248,7 @@ IndexNextWithReorder(IndexScanState *node)
 				tuple = reorderqueue_pop(node);
 
 				/* Pass 'true', as the tuple in the queue is a palloc'd copy */
-<<<<<<< HEAD
-				ExecStoreHeapTuple(tuple, slot, InvalidBuffer, true);
-=======
 				ExecForceStoreHeapTuple(tuple, slot, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				return slot;
 			}
 		}
@@ -289,19 +273,6 @@ next_indextuple:
 		}
 
 		/*
-<<<<<<< HEAD
-		 * Store the scanned tuple in the scan tuple slot of the scan state.
-		 * Note: we pass 'false' because tuples returned by amgetnext are
-		 * pointers onto disk pages and must not be pfree()'d.
-		 */
-		ExecStoreHeapTuple(tuple,	/* tuple to store */
-						   slot,	/* slot to store in */
-						   scandesc->xs_cbuf,		/* buffer containing tuple */
-						   false);	/* don't pfree */
-
-		/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 * If the index was lossy, we have to recheck the index quals and
 		 * ORDER BY expressions using the fetched tuple.
 		 */
@@ -850,16 +821,8 @@ ExecEndIndexScan(IndexScanState *node)
 		index_endscan(node->iss_ScanDesc);
 	if (indexRelationDesc)
 		index_close(indexRelationDesc, NoLock);
-<<<<<<< HEAD
-
-	/*
-	 * close the heap relation.
-	 */
-	ExecCloseScanRelation(relation);
 
 	EndPlanStateGpmonPkt(&node->ss.ps);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* ----------------------------------------------------------------

@@ -28,11 +28,7 @@
 #include "cdb/cdbvars.h"
 #include "executor/executor.h"
 #include "executor/nodeValuesscan.h"
-<<<<<<< HEAD
-#include "optimizer/var.h"              /* CDB: contain_var_reference() */
-=======
 #include "jit/jit.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/expandeddatum.h"
 
 
@@ -137,9 +133,6 @@ ValuesNext(ValuesScanState *node)
 		oldsubplans = node->ss.ps.subPlan;
 		node->ss.ps.subPlan = NIL;
 
-<<<<<<< HEAD
-		exprstatelist = (List *) ExecInitExpr((Expr *) exprlist, &node->ss.ps);
-=======
 		/*
 		 * As the expressions are only ever used once, disable JIT for them.
 		 * This is worthwhile because it's common to insert significant
@@ -149,7 +142,6 @@ ValuesNext(ValuesScanState *node)
 		econtext->ecxt_estate->es_jit_flags = PGJIT_NONE;
 		exprstatelist = ExecInitExprList(exprlist, &node->ss.ps);
 		econtext->ecxt_estate->es_jit_flags = saved_jit_flags;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		node->ss.ps.subPlan = oldsubplans;
 
@@ -160,15 +152,8 @@ ValuesNext(ValuesScanState *node)
 		 * Compute the expressions and build a virtual result tuple. We
 		 * already did ExecClearTuple(slot).
 		 */
-<<<<<<< HEAD
-		ExecClearTuple(slot); 
-		values = slot_get_values(slot); 
-		isnull = slot_get_isnull(slot);
-		att = slot->tts_tupleDescriptor->attrs;
-=======
 		values = slot->tts_values;
 		isnull = slot->tts_isnull;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		resind = 0;
 		foreach(lc, exprstatelist)
@@ -284,31 +269,11 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	scanstate->rowcontext = planstate->ps_ExprContext;
 	ExecAssignExprContext(estate, planstate);
 
-	/*
-<<<<<<< HEAD
-	 * tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &scanstate->ss.ps);
-	ExecInitScanTupleSlot(estate, &scanstate->ss);
-
-	/*
-	 * initialize child expressions
-	 */
-	scanstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) scanstate);
-	scanstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) scanstate);
-
 	/* Check if targetlist or qual contains a var node referencing the ctid column */
 	scanstate->cdb_want_ctid = contain_ctid_var_reference(&node->scan);
 
 	/*
-	 * get info about values list
-=======
 	 * Get info about values list, initialize scan slot with it.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	tupdesc = ExecTypeFromExprList((List *) linitial(node->values_lists));
 	ExecInitScanTupleSlot(estate, &scanstate->ss, tupdesc, &TTSOpsVirtual);
@@ -340,15 +305,6 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 		scanstate->exprlists[i++] = (List *) lfirst(vtl);
 	}
 
-<<<<<<< HEAD
-	/*
-	 * Initialize result tuple type and projection info.
-	 */
-	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
-	ExecAssignScanProjectionInfo(&scanstate->ss);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	return scanstate;
 }
 

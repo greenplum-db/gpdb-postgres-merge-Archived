@@ -61,11 +61,8 @@ ForeignNext(ForeignScanState *node)
 	 * column.
 	 */
 	if (plan->fsSystemCol && !TupIsNull(slot))
-<<<<<<< HEAD
 	{
-		(void) ExecMaterializeSlot(slot);
-
-		//tup->t_tableOid = RelationGetRelid(node->ss.ss_currentRelation);
+		slot->tts_tableOid = RelationGetRelid(node->ss.ss_currentRelation);
 
 		/*
 		 * CDB: Label each row with a synthetic ctid if needed for subquery dedup.
@@ -76,9 +73,6 @@ ForeignNext(ForeignScanState *node)
 			slot_set_ctid_from_fake(slot, &node->cdb_fake_ctid);
 		}
 	}
-=======
-		slot->tts_tableOid = RelationGetRelid(node->ss.ss_currentRelation);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return slot;
 }
@@ -168,46 +162,13 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &scanstate->ss.ps);
 
-<<<<<<< HEAD
-	//scanstate->ss.ps.ps_TupFromTlist = false;
-
-	/*
-	 * initialize child expressions
-	 */
-	scanstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) scanstate);
-	scanstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) scanstate);
-	scanstate->fdw_recheck_quals = (List *)
-		ExecInitExpr((Expr *) node->fdw_recheck_quals,
-					 (PlanState *) scanstate);
-
 	/* Check if targetlist or qual contains a var node referencing the ctid column */
 	scanstate->cdb_want_ctid = contain_ctid_var_reference(&node->scan);
 	ItemPointerSetInvalid(&scanstate->cdb_fake_ctid);
 
 	/*
-	 * tuple table initialization
-	 *
-	 * In GPDB, cannot use ExecInitScanTupleSlot() on foreign scans of join
-	 * relations.
-	 */
-	ExecInitResultTupleSlot(estate, &scanstate->ss.ps);
-	if (scanrelid > 0)
-		ExecInitScanTupleSlot(estate, &scanstate->ss);
-	else
-		scanstate->ss.ss_ScanTupleSlot = ExecAllocTableSlot(&estate->es_tupleTable);
-
-	/*
-	 * open the base relation, if any, and acquire an appropriate lock on it;
-	 * also acquire function pointers from the FDW's handler
-=======
-	/*
 	 * open the scan relation, if any; also acquire function pointers from the
 	 * FDW's handler
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	if (scanrelid > 0)
 	{
@@ -430,28 +391,6 @@ ExecForeignScanInitializeWorker(ForeignScanState *node,
 	}
 }
 
-<<<<<<< HEAD
-
-
-/* ----------------------------------------------------------------
-*		ExecSquelchForeignScan
-*
-*		Performs identically to ExecEndForeignScan except that
-*		closure errors are ignored.  This function is called for
-*		normal termination when the external data source is NOT
-*		exhausted (such as for a LIMIT clause).
-* ----------------------------------------------------------------
-*/
-void
-ExecSquelchForeignScan(ForeignScanState *node)
-{
-	ForeignScan *plan = (ForeignScan *) node->ss.ps.plan;
-
-	node->is_squelched = true;
-
-	if (plan->operation == CMD_SELECT)
-		node->fdwroutine->EndForeignScan(node);
-=======
 /* ----------------------------------------------------------------
  *		ExecShutdownForeignScan
  *
@@ -466,5 +405,4 @@ ExecShutdownForeignScan(ForeignScanState *node)
 
 	if (fdwroutine->ShutdownForeignScan)
 		fdwroutine->ShutdownForeignScan(node);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

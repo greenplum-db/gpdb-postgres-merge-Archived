@@ -31,6 +31,4 @@ extern void ExecForeignScanInitializeWorker(ForeignScanState *node,
 											ParallelWorkerContext *pwcxt);
 extern void ExecShutdownForeignScan(ForeignScanState *node);
 
-extern void ExecSquelchForeignScan(ForeignScanState *node);
-
 #endif							/* NODEFOREIGNSCAN_H */

@@ -247,13 +247,12 @@ ExecReScan(PlanState *node)
 			ExecReScanFunctionScan((FunctionScanState *) node);
 			break;
 
-<<<<<<< HEAD
 		case T_TableFunctionState:
 			ExecReScanTableFunction((TableFunctionState *) node);
-=======
+			break;
+
 		case T_TableFuncScanState:
 			ExecReScanTableFuncScan((TableFuncScanState *) node);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 
 		case T_ValuesScanState:
@@ -779,7 +778,11 @@ ExecSquelchNode(PlanState *node)
 			break;
 
 		case T_ForeignScanState:
-			ExecSquelchForeignScan((ForeignScanState *) node);
+			/*
+			 * For ForeignScans, PostgreSQL's shutdown function does exactly
+			 * what we want.
+			 */
+			ExecShutdownForeignScan((ForeignScanState *) node);
 			break;
 
 		case T_BitmapHeapScanState:

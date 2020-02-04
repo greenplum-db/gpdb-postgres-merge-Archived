@@ -3,13 +3,9 @@
  * nodeFunctionscan.c
  *	  Support routines for scanning RangeFunctions (functions in rangetable).
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -109,7 +105,6 @@ FunctionNext_guts(FunctionScanState *node)
 											node->ss.ps.ps_ExprContext,
 											node->argcontext,
 											node->funcstates[0].tupdesc,
-<<<<<<< HEAD
 											node->eflags & EXEC_FLAG_BACKWARD,
 											PlanStateOperatorMemKB( (PlanState *) node));
 
@@ -122,9 +117,6 @@ FunctionNext_guts(FunctionScanState *node)
 				/* Request a callback at end of query. */
 				node->ss.ps.cdbexplainfun = ExecFunctionScanExplainEnd;
 			}
-=======
-											node->eflags & EXEC_FLAG_BACKWARD);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * paranoia - cope if the function, which may have constructed the
@@ -193,7 +185,6 @@ FunctionNext_guts(FunctionScanState *node)
 											node->ss.ps.ps_ExprContext,
 											node->argcontext,
 											fs->tupdesc,
-<<<<<<< HEAD
 											node->eflags & EXEC_FLAG_BACKWARD,
 											PlanStateOperatorMemKB( (PlanState *) node));
 
@@ -206,9 +197,6 @@ FunctionNext_guts(FunctionScanState *node)
 				/* Request a callback at end of query. */
 				node->ss.ps.cdbexplainfun = ExecFunctionScanExplainEnd;
 			}
-=======
-											node->eflags & EXEC_FLAG_BACKWARD);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * paranoia - cope if the function, which may have constructed the
@@ -414,25 +402,6 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &scanstate->ss.ps);
 
-<<<<<<< HEAD
-	/*
-	 * tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &scanstate->ss.ps);
-	ExecInitScanTupleSlot(estate, &scanstate->ss);
-
-	/*
-	 * initialize child expressions
-	 */
-	scanstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) scanstate);
-	scanstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) scanstate);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	scanstate->funcstates = palloc(nfuncs * sizeof(FunctionScanPerFuncState));
 
 	natts = 0;

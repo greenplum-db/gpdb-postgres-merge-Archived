@@ -344,13 +344,8 @@ MJEvalOuterValues(MergeJoinState *mergestate)
 		MergeJoinClause clause = &mergestate->mj_Clauses[i];
 
 		clause->ldatum = ExecEvalExpr(clause->lexpr, econtext,
-<<<<<<< HEAD
-									  &clause->lisnull, NULL);
-		if (clause->lisnull && !clause->notdistinct)
-=======
 									  &clause->lisnull);
-		if (clause->lisnull)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		if (clause->lisnull && !clause->notdistinct)
 		{
 			/* match is impossible; can we end the join early? */
 			if (i == 0 && !clause->ssup.ssup_nulls_first &&
@@ -396,13 +391,8 @@ MJEvalInnerValues(MergeJoinState *mergestate, TupleTableSlot *innerslot)
 		MergeJoinClause clause = &mergestate->mj_Clauses[i];
 
 		clause->rdatum = ExecEvalExpr(clause->rexpr, econtext,
-<<<<<<< HEAD
-									  &clause->risnull, NULL);
-		if (clause->risnull && !clause->notdistinct)
-=======
 									  &clause->risnull);
-		if (clause->risnull)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		if (clause->risnull && !clause->notdistinct)
 		{
 			/* match is impossible; can we end the join early? */
 			if (i == 0 && !clause->ssup.ssup_nulls_first &&
@@ -500,14 +490,10 @@ MJFillOuter(MergeJoinState *node)
 	econtext->ecxt_outertuple = node->mj_OuterTupleSlot;
 	econtext->ecxt_innertuple = node->mj_NullInnerTupleSlot;
 
-<<<<<<< HEAD
 	if (TupIsNull(node->mj_OuterTupleSlot))
 		return NULL;
 
-	if (ExecQual(otherqual, econtext, false))
-=======
 	if (ExecQual(otherqual, econtext))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		/*
 		 * qualification succeeded.  now form the desired projection tuple and
@@ -515,11 +501,7 @@ MJFillOuter(MergeJoinState *node)
 		 */
 		MJ_printf("ExecMergeJoin: returning outer fill tuple\n");
 
-<<<<<<< HEAD
-		return ExecProject(node->js.ps.ps_ProjInfo, NULL);
-=======
 		return ExecProject(node->js.ps.ps_ProjInfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 		InstrCountFiltered2(node, 1);
@@ -554,11 +536,7 @@ MJFillInner(MergeJoinState *node)
 		 */
 		MJ_printf("ExecMergeJoin: returning inner fill tuple\n");
 
-<<<<<<< HEAD
-		return ExecProject(node->js.ps.ps_ProjInfo, NULL);
-=======
 		return ExecProject(node->js.ps.ps_ProjInfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 		InstrCountFiltered2(node, 1);
@@ -920,11 +898,7 @@ ExecMergeJoin(PlanState *pstate)
 						 */
 						MJ_printf("ExecMergeJoin: returning tuple\n");
 
-<<<<<<< HEAD
-						return ExecProject(node->js.ps.ps_ProjInfo, NULL);
-=======
 						return ExecProject(node->js.ps.ps_ProjInfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					}
 					else
 						InstrCountFiltered2(node, 1);

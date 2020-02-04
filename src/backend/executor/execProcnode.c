@@ -87,12 +87,8 @@
 #include "executor/nodeCustom.h"
 #include "executor/nodeForeignscan.h"
 #include "executor/nodeFunctionscan.h"
-<<<<<<< HEAD
-=======
 #include "executor/nodeGather.h"
 #include "executor/nodeGatherMerge.h"
-#include "executor/nodeGroup.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeIndexonlyscan.h"
@@ -236,16 +232,12 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 	if (node == NULL)
 		return NULL;
 
-<<<<<<< HEAD
-	Assert(estate != NULL);
-=======
 	/*
 	 * Make sure there's enough stack available. Need to check here, in
 	 * addition to ExecProcNode() (via ExecProcNodeFirst()), to ensure the
 	 * stack isn't overrun while initializing the node tree.
 	 */
 	check_stack_depth();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	switch (nodeTag(node))
 	{
@@ -1324,18 +1316,12 @@ ExecEndNode(PlanState *node)
 	if (node == NULL)
 		return;
 
-<<<<<<< HEAD
-	EState	   *estate = node->state;
-
-	Assert(estate != NULL);
-=======
 	/*
 	 * Make sure there's enough stack available. Need to check here, in
 	 * addition to ExecProcNode() (via ExecProcNodeFirst()), because it's not
 	 * guaranteed that ExecProcNode() is reached for all nodes.
 	 */
 	check_stack_depth();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (node->chgParam != NULL)
 	{
@@ -1455,13 +1441,12 @@ ExecEndNode(PlanState *node)
 			ExecEndFunctionScan((FunctionScanState *) node);
 			break;
 
-<<<<<<< HEAD
 		case T_TableFunctionState:
 			ExecEndTableFunction((TableFunctionState *) node);
-=======
+			break;
+
 		case T_TableFuncScanState:
 			ExecEndTableFuncScan((TableFuncScanState *) node);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 
 		case T_ValuesScanState:

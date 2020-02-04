@@ -270,14 +270,6 @@ IndexOnlyNext(IndexOnlyScanState *node)
 static void
 StoreIndexTuple(TupleTableSlot *slot, IndexTuple itup, TupleDesc itupdesc)
 {
-<<<<<<< HEAD
-	int			nindexatts = itupdesc->natts;
-	Datum	   *values = slot->PRIVATE_tts_values;
-	bool	   *isnull = slot->PRIVATE_tts_isnull;
-	int			i;
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Note: we must use the tupdesc supplied by the AM in index_deform_tuple,
 	 * not the slot's tupdesc, in case the latter has different datatypes
@@ -516,11 +508,6 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &indexstate->ss.ps);
 
-<<<<<<< HEAD
-	/* indexstate->ss.ps.ps_TupFromTlist = false; */
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * open the scan relation
 	 */

@@ -55,25 +55,6 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	/* create expression context for node */
 	ExecAssignExprContext(estate, &css->ss.ps);
 
-<<<<<<< HEAD
-	/* initialize child expressions */
-	css->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) cscan->scan.plan.targetlist,
-					 (PlanState *) css);
-	css->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) cscan->scan.plan.qual,
-					 (PlanState *) css);
-
-	/* 
-	 * tuple table initialization
-	 * CustomScan could be any executor node, hence ss_ScanTupleSlot should be
-	 * initialized using ExecInitExtraTupleSlot instead of ExecInitScanTupleSlot
-	 */
-	css->ss.ss_ScanTupleSlot = ExecInitExtraTupleSlot(estate);
-	ExecInitResultTupleSlot(estate, &css->ss.ps);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * open the scan relation, if any
 	 */

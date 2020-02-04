@@ -42,12 +42,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
-#include "optimizer/clauses.h"
 #include "optimizer/var.h"
-=======
-#include "optimizer/optimizer.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_oper.h"
@@ -193,17 +188,12 @@ static void advance_windowaggregate(WindowAggState *winstate,
 									WindowStatePerFunc perfuncstate,
 									WindowStatePerAgg peraggstate);
 static bool advance_windowaggregate_base(WindowAggState *winstate,
-<<<<<<< HEAD
-							 WindowStatePerFunc perfuncstate,
-							 WindowStatePerAgg peraggstate);
-static void call_transfunc(WindowAggState *winstate,
-			   WindowStatePerFunc perfuncstate,
-			   WindowStatePerAgg peraggstate,
-			   FunctionCallInfo fcinfo);
-=======
 										 WindowStatePerFunc perfuncstate,
 										 WindowStatePerAgg peraggstate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static void call_transfunc(WindowAggState *winstate,
+						   WindowStatePerFunc perfuncstate,
+						   WindowStatePerAgg peraggstate,
+						   FunctionCallInfo fcinfo);
 static void finalize_windowaggregate(WindowAggState *winstate,
 									 WindowStatePerFunc perfuncstate,
 									 WindowStatePerAgg peraggstate,
@@ -302,13 +292,8 @@ advance_windowaggregate(WindowAggState *winstate,
 {
 	LOCAL_FCINFO(fcinfo, FUNC_MAX_ARGS);
 	WindowFuncExprState *wfuncstate = perfuncstate->wfuncstate;
-<<<<<<< HEAD
-	FunctionCallInfoData fcinfodata;
-	FunctionCallInfo fcinfo = &fcinfodata;
-=======
 	int			numArguments = perfuncstate->numArguments;
 	Datum		newVal;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	ListCell   *arg;
 	int			i;
 	MemoryContext oldContext;
@@ -935,14 +920,9 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * only allows constant offsets, but we're more flexible. The code below
 	 * does actually cope with it just fine.
 	 */
-<<<<<<< HEAD
-	update_frameheadpos(agg_winobj, temp_slot);
+	update_frameheadpos(winstate);
 	if (winstate->start_offset_var_free &&
 		winstate->frameheadpos < winstate->aggregatedbase)
-=======
-	update_frameheadpos(winstate);
-	if (winstate->frameheadpos < winstate->aggregatedbase)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		elog(ERROR, "window frame head moved backward");
 
 	/*
@@ -3338,11 +3318,6 @@ ExecReScanWindowAgg(WindowAggState *node)
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 
 	node->all_done = false;
-<<<<<<< HEAD
-
-	node->ps_TupFromTlist = false;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	node->all_first = true;
 
 	/* release tuplestore et al */

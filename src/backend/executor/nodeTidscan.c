@@ -383,31 +383,7 @@ TidNext(TidScanState *node)
 		 * current according to our snapshot.
 		 */
 		if (node->tss_isCurrentOf)
-<<<<<<< HEAD
-			heap_get_latest_tid(heapRelation, snapshot, &tuple->t_self);
-
-		if (heap_fetch(heapRelation, snapshot, tuple, &buffer, false, NULL))
-		{
-			/*
-			 * store the scanned tuple in the scan tuple slot of the scan
-			 * state.  Eventually we will only do this and not return a tuple.
-			 * Note: we pass 'false' because tuples returned by amgetnext are
-			 * pointers onto disk pages and were not created with palloc() and
-			 * so should not be pfree()'d.
-			 */
-			ExecStoreHeapTuple(tuple,		/* tuple to store */
-						   slot,	/* slot to store in */
-						   buffer,		/* buffer associated with tuple  */
-						   false);		/* don't pfree */
-
-			/*
-			 * At this point we have an extra pin on the buffer, because
-			 * ExecStoreTuple incremented the pin count. Drop our local pin.
-			 */
-			ReleaseBuffer(buffer);
-=======
 			table_tuple_get_latest_tid(scan, &tid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		if (table_tuple_fetch_row_version(heapRelation, &tid, snapshot, slot))
 			return slot;
@@ -515,16 +491,8 @@ ExecEndTidScan(TidScanState *node)
 	if (node->ss.ps.ps_ResultTupleSlot)
 		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-<<<<<<< HEAD
-
-	/*
-	 * close the heap relation.
-	 */
-	ExecCloseScanRelation(node->ss.ss_currentRelation);
 
 	EndPlanStateGpmonPkt(&node->ss.ps);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* ----------------------------------------------------------------
@@ -559,31 +527,6 @@ ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &tidstate->ss.ps);
 
-<<<<<<< HEAD
-	/*tidstate->ss.ps.ps_TupFromTlist = false;*/
-
-	/*
-	 * initialize child expressions
-	 */
-	tidstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) tidstate);
-	tidstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) tidstate);
-
-	tidstate->tss_tidquals = (List *)
-		ExecInitExpr((Expr *) node->tidquals,
-					 (PlanState *) tidstate);
-
-	/*
-	 * tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &tidstate->ss.ps);
-	ExecInitScanTupleSlot(estate, &tidstate->ss);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * mark tid list as not computed yet
 	 */
@@ -597,10 +540,7 @@ ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
 
 	tidstate->ss.ss_currentRelation = currentRelation;
-<<<<<<< HEAD
-=======
 	tidstate->ss.ss_currentScanDesc = NULL; /* no heap scan here */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * get the scan type from the relation descriptor.

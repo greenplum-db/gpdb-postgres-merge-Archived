@@ -58,11 +58,7 @@ static void InitAOCSScanOpaque(SeqScanState *scanState, Relation currentRelation
 static TupleTableSlot *
 SeqNext(SeqScanState *node)
 {
-<<<<<<< HEAD
-	HeapTuple	tuple;
-=======
 	TableScanDesc scandesc;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	EState	   *estate;
 	ScanDirection direction;
 	TupleTableSlot *slot;
@@ -145,45 +141,9 @@ SeqNext(SeqScanState *node)
 	/*
 	 * get the next tuple from the table
 	 */
-<<<<<<< HEAD
-	if (node->ss_currentScanDesc_ao)
-	{
-		appendonly_getnext(node->ss_currentScanDesc_ao, direction, slot);
-	}
-	else if (node->ss_currentScanDesc_aocs)
-	{
-		aocs_getnext(node->ss_currentScanDesc_aocs, direction, slot);
-	}
-	else
-	{
-		HeapScanDesc scandesc = node->ss_currentScanDesc_heap;
-
-		tuple = heap_getnext(scandesc, direction);
-
-		/*
-		 * save the tuple and the buffer returned to us by the access methods in
-		 * our scan tuple slot and return the slot.  Note: we pass 'false' because
-		 * tuples returned by heap_getnext() are pointers onto disk pages and were
-		 * not created with palloc() and so should not be pfree()'d.  Note also
-		 * that ExecStoreTuple will increment the refcount of the buffer; the
-		 * refcount will not be dropped until the tuple table slot is cleared.
-		 */
-		if (tuple)
-			ExecStoreHeapTuple(tuple,	/* tuple to store */
-						   slot,	/* slot to store in */
-						   scandesc->rs_cbuf,		/* buffer associated with this
-													 * tuple */
-						   false);	/* don't pfree this pointer */
-		else
-			ExecClearTuple(slot);
-	}
-
-	return slot;
-=======
 	if (table_scan_getnextslot(scandesc, direction, slot))
 		return slot;
 	return NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -333,20 +293,12 @@ ExecInitSeqScanForPartition(SeqScan *node, EState *estate, int eflags,
 void
 ExecEndSeqScan(SeqScanState *node)
 {
-<<<<<<< HEAD
-	Relation	relation;
-=======
 	TableScanDesc scanDesc;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * get information from node
 	 */
-<<<<<<< HEAD
-	relation = node->ss.ss_currentRelation;
-=======
 	scanDesc = node->ss.ss_currentScanDesc;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Free the exprcontext
@@ -363,31 +315,8 @@ ExecEndSeqScan(SeqScanState *node)
 	/*
 	 * close heap scan
 	 */
-<<<<<<< HEAD
-	if (node->ss_currentScanDesc_heap)
-	{
-		heap_endscan(node->ss_currentScanDesc_heap);
-		node->ss_currentScanDesc_heap = NULL;
-	}
-	if (node->ss_currentScanDesc_ao)
-	{
-		appendonly_endscan(node->ss_currentScanDesc_ao);
-		node->ss_currentScanDesc_ao = NULL;
-	}
-	if (node->ss_currentScanDesc_aocs)
-	{
-		aocs_endscan(node->ss_currentScanDesc_aocs);
-		node->ss_currentScanDesc_aocs = NULL;
-	}
-
-	/*
-	 * close the heap relation.
-	 */
-	ExecCloseScanRelation(relation);
-=======
 	if (scanDesc != NULL)
 		table_endscan(scanDesc);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* ----------------------------------------------------------------
@@ -404,26 +333,6 @@ ExecEndSeqScan(SeqScanState *node)
 void
 ExecReScanSeqScan(SeqScanState *node)
 {
-<<<<<<< HEAD
-	if (node->ss_currentScanDesc_ao)
-	{
-		appendonly_rescan(node->ss_currentScanDesc_ao,
-						  NULL);			/* new scan keys */
-	}
-	else if (node->ss_currentScanDesc_aocs)
-	{
-		aocs_rescan(node->ss_currentScanDesc_aocs);
-	}
-	else if (node->ss_currentScanDesc_heap)
-	{
-		heap_rescan(node->ss_currentScanDesc_heap, /* scan desc */
-					NULL);		/* new scan keys */
-	}
-	else
-	{
-		/* scan not started yet, nothing to do. */
-	}
-=======
 	TableScanDesc scan;
 
 	scan = node->ss.ss_currentScanDesc;
@@ -431,7 +340,6 @@ ExecReScanSeqScan(SeqScanState *node)
 	if (scan != NULL)
 		table_rescan(scan,		/* scan desc */
 					 NULL);		/* new scan keys */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	ExecScanReScan((ScanState *) node);
 }
@@ -513,10 +421,6 @@ ExecSeqScanInitializeDSM(SeqScanState *node,
 								  pscan,
 								  estate->es_snapshot);
 	shm_toc_insert(pcxt->toc, node->ss.ps.plan->plan_node_id, pscan);
-<<<<<<< HEAD
-	node->ss_currentScanDesc_heap =
-		heap_beginscan_parallel(node->ss.ss_currentRelation, pscan);
-=======
 	node->ss.ss_currentScanDesc =
 		table_beginscan_parallel(node->ss.ss_currentRelation, pscan);
 }
@@ -535,7 +439,6 @@ ExecSeqScanReInitializeDSM(SeqScanState *node,
 
 	pscan = node->ss.ss_currentScanDesc->rs_parallel;
 	table_parallelscan_reinitialize(node->ss.ss_currentRelation, pscan);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* ----------------------------------------------------------------
@@ -550,16 +453,7 @@ ExecSeqScanInitializeWorker(SeqScanState *node,
 {
 	ParallelTableScanDesc pscan;
 
-<<<<<<< HEAD
-	if (!RelationIsHeap(node->ss.ss_currentRelation))
-		elog(ERROR, "parallel SeqScan not implemented for AO or AOCO tables");
-
-	pscan = shm_toc_lookup(toc, node->ss.ps.plan->plan_node_id);
-	node->ss_currentScanDesc_heap =
-		heap_beginscan_parallel(node->ss.ss_currentRelation, pscan);
-=======
 	pscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
 	node->ss.ss_currentScanDesc =
 		table_beginscan_parallel(node->ss.ss_currentRelation, pscan);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
