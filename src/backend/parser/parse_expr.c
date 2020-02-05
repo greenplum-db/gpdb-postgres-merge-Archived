@@ -21,13 +21,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
-#include "optimizer/clauses.h"
-#include "optimizer/tlist.h"
-#include "optimizer/var.h"
-=======
 #include "optimizer/optimizer.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "parser/analyze.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
@@ -115,14 +109,9 @@ static Node *transformMultiAssignRef(ParseState *pstate, MultiAssignRef *maref);
 static Node *transformCaseExpr(ParseState *pstate, CaseExpr *c);
 static Node *transformSubLink(ParseState *pstate, SubLink *sublink);
 static Node *transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
-<<<<<<< HEAD
-				   Oid array_type, Oid element_type, int32 typmod);
-static Node *transformRowExpr(ParseState *pstate, RowExpr *r);
-static Node *transformTableValueExpr(ParseState *pstate, TableValueExpr *t);
-=======
 								Oid array_type, Oid element_type, int32 typmod);
 static Node *transformRowExpr(ParseState *pstate, RowExpr *r, bool allowDefault);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static Node *transformTableValueExpr(ParseState *pstate, TableValueExpr *t);
 static Node *transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c);
 static Node *transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m);
 static Node *transformSQLValueFunction(ParseState *pstate,
@@ -147,16 +136,10 @@ static Node *make_nulltest_from_distinct(ParseState *pstate,
 										 A_Expr *distincta, Node *arg);
 static int	operator_precedence_group(Node *node, const char **nodename);
 static void emit_precedence_warnings(ParseState *pstate,
-<<<<<<< HEAD
-						 int opgroup, const char *opname,
-						 Node *lchild, Node *rchild,
-						 int location);
-static bool isWhenIsNotDistinctFromExpr(Node *warg);
-=======
 									 int opgroup, const char *opname,
 									 Node *lchild, Node *rchild,
 									 int location);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static bool isWhenIsNotDistinctFromExpr(Node *warg);
 
 
 /*
@@ -459,8 +442,6 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			 * references, which seems expensively pointless.  So allow it.
 			 */
 		case T_CaseTestExpr:
-<<<<<<< HEAD
-		case T_SetToDefault:
 		/*
 		 * AlterPartitionCmd still transform a already-transformed expression
 		 * and re-transform expressions in many places, better to keep T_Const here. 
@@ -472,8 +453,6 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 		 */
 		case T_CoerceToDomain:
 		case T_CoerceToDomainValue:
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		case T_Var:
 			{
 				result = (Node *) expr;
@@ -2076,14 +2055,9 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		case EXPR_KIND_TRIGGER_WHEN:
 			err = _("cannot use subquery in trigger WHEN condition");
 			break;
-<<<<<<< HEAD
-		case EXPR_KIND_PARTITION_EXPRESSION:
-			err = _("cannot use subquery in partition key expression");
-			break;
-
 		case EXPR_KIND_SCATTER_BY:
 			/* okay */
-=======
+			break;
 		case EXPR_KIND_PARTITION_BOUND:
 			err = _("cannot use subquery in partition bound");
 			break;
@@ -2098,7 +2072,6 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			break;
 		case EXPR_KIND_GENERATED_COLUMN:
 			err = _("cannot use subquery in column generation expression");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 
 			/*
@@ -2120,11 +2093,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 	/*
 	 * OK, let's transform the sub-SELECT.
 	 */
-<<<<<<< HEAD
-	qtree = parse_sub_analyze(sublink->subselect, pstate, NULL, NULL);
-=======
-	qtree = parse_sub_analyze(sublink->subselect, pstate, NULL, false, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	qtree = parse_sub_analyze(sublink->subselect, pstate, NULL, NULL, true);
 
 	/*
 	 * Check that we got a SELECT.  Anything else should be impossible given
@@ -3787,13 +3756,6 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "EXECUTE";
 		case EXPR_KIND_TRIGGER_WHEN:
 			return "WHEN";
-<<<<<<< HEAD
-		case EXPR_KIND_PARTITION_EXPRESSION:
-			return "PARTITION BY";
-
-		case EXPR_KIND_SCATTER_BY:
-			return "SCATTER BY";
-=======
 		case EXPR_KIND_PARTITION_BOUND:
 			return "partition bound";
 		case EXPR_KIND_PARTITION_EXPRESSION:
@@ -3804,7 +3766,8 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "WHERE";
 		case EXPR_KIND_GENERATED_COLUMN:
 			return "GENERATED AS";
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		case EXPR_KIND_SCATTER_BY:
+			return "SCATTER BY";
 
 			/*
 			 * There is intentionally no default: case here, so that the

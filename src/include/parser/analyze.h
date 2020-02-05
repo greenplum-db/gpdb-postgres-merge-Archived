@@ -29,7 +29,7 @@ extern Query *parse_analyze_varparams(RawStmt *parseTree, const char *sourceText
 
 extern Query *parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
 								CommonTableExpr *parentCTE,
-								bool locked_from_parent,
+								LockingClause *lockclause_from_parent,
 								bool resolve_unknowns);
 
 extern Query *transformTopLevelStmt(ParseState *pstate, RawStmt *parseTree);
@@ -42,36 +42,6 @@ extern void CheckSelectLocking(Query *qry, LockClauseStrength strength);
 extern void applyLockingClause(Query *qry, Index rtindex,
 							   LockClauseStrength strength,
 							   LockWaitPolicy waitPolicy, bool pushedDown);
-
-/* State shared by transformCreateStmt and its subroutines */
-typedef struct
-{
-	ParseState *pstate;			/* overall parser state */
-	const char *stmtType;		/* "CREATE [FOREIGN] TABLE" or "ALTER TABLE" */
-	RangeVar   *relation;		/* relation to create */
-	Relation	rel;			/* opened/locked rel, if ALTER */
-	List	   *inhRelations;	/* relations to inherit from */
-	bool		hasoids;		/* does relation have an OID column? */
-	bool		isforeign;		/* true if CREATE/ALTER FOREIGN TABLE */
-	bool		isalter;		/* true if altering existing table */
-	bool		iscreatepart;	/* true if create in service of creating a part */
-	bool		issplitpart;
-	List	   *columns;		/* ColumnDef items */
-	List	   *ckconstraints;	/* CHECK constraints */
-	List	   *fkconstraints;	/* FOREIGN KEY constraints */
-	List	   *ixconstraints;	/* index-creating constraints */
-	List	   *inh_indexes;	/* cloned indexes from INCLUDING INDEXES */
-	List	   *blist;			/* "before list" of things to do before
-								 * creating the table */
-	List	   *alist;			/* "after list" of things to do after creating
-								 * the table */
-	List	   *dlist;			/* "deferred list" of utility statements to 
-								 * transfer to the list CreateStmt->deferredStmts
-								 * for later parse_analyze and dispatch */
-	IndexStmt  *pkey;			/* PRIMARY KEY index, if any */
-
-	MemoryContext tempCtx;
-} CreateStmtContext;
 
 /* GDPB_12_MERGE_FIXME: legacy partitioning stuff */
 #if 0

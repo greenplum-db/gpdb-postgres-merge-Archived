@@ -71,7 +71,6 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
-<<<<<<< HEAD
 #include "catalog/pg_compression.h"
 #include "catalog/pg_type_encoding.h"
 #include "cdb/cdbhash.h"
@@ -82,7 +81,6 @@
 #include "parser/parse_partition.h"
 #include "utils/fmgroids.h"
 #include "utils/memutils.h"
-=======
 
 /* State shared by transformCreateStmt and its subroutines */
 typedef struct
@@ -109,7 +107,6 @@ typedef struct
 	PartitionBoundSpec *partbound;	/* transformed FOR VALUES */
 	bool		ofType;			/* true if statement contains OF typename */
 } CreateStmtContext;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* State shared by transformCreateSchemaStmt and its subroutines */
 typedef struct
@@ -131,12 +128,8 @@ static void transformColumnDefinition(CreateStmtContext *cxt,
 static void transformTableConstraint(CreateStmtContext *cxt,
 									 Constraint *constraint);
 static void transformTableLikeClause(CreateStmtContext *cxt,
-<<<<<<< HEAD
-						 TableLikeClause *table_like_clause,
-						 bool forceBareCol, CreateStmt *stmt, List **stenc);
-=======
-									 TableLikeClause *table_like_clause);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+									 TableLikeClause *table_like_clause,
+									 bool forceBareCol, CreateStmt *stmt, List **stenc);
 static void transformOfType(CreateStmtContext *cxt,
 							TypeName *ofTypename);
 static CreateStatsStmt *generateClonedExtStatsStmt(RangeVar *heapRel,
@@ -193,7 +186,7 @@ static AlterTableCmd *transformAlterTable_all_PartitionStmt(ParseState *pstate,
  *	  - thomas 1997-12-02
  */
 List *
-transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartition)
+transformCreateStmt(CreateStmt *stmt, const char *queryString)
 {
 	ParseState *pstate;
 	CreateStmtContext cxt;
@@ -290,7 +283,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	cxt.rel = NULL;
 	cxt.inhRelations = stmt->inhRelations;
 	cxt.isalter = false;
-	cxt.iscreatepart = createPartition;
 	cxt.issplitpart = stmt->is_split_part;
 	cxt.columns = NIL;
 	cxt.ckconstraints = NIL;
@@ -311,38 +303,12 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	if (stmt->ofTypename)
 		transformOfType(&cxt, stmt->ofTypename);
 
-<<<<<<< HEAD
-	/* Disallow inheritance in combination with partitioning. */
-	if (stmt->inhRelations && (stmt->partitionBy || stmt->is_part_child))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("cannot mix inheritance with partitioning")));
-
 	/* Disallow inheritance for CO table */
 	if (stmt->inhRelations && is_aocs(stmt->options))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("INHERITS clause cannot be used with column oriented tables")));
 
-	/*
-	 * GPDB_91_MERGE_FIXME: Previous gpdb does not allow create
-	 * partition on temp table. Let's follow this at this moment
-	 * although we do do not understand why even we know temp
-	 * partition table seems to be not practical. Previous gpdb
-	 * does not have this issue since in make_child_node()
-	 * child_tab_name->istemp is not assigned and it's default
-	 * value is false.
-	 */
-	if ((stmt->partitionBy || stmt->is_part_child) &&
-	    stmt->relation->relpersistence == RELPERSISTENCE_TEMP)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("cannot create partition inherited from temporary relation")));
-
-	/* Only on top-most partitioned tables. */
-	if (stmt->partitionBy && !stmt->is_part_child)
-		fixCreateStmtForPartitionedTable(stmt);
-=======
 	if (stmt->partspec)
 	{
 		if (stmt->inhRelations && !stmt->partbound)
@@ -350,7 +316,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("cannot create partitioned table as inheritance child")));
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Run through each primary element in the table creation clause. Separate
@@ -390,14 +355,11 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 				break;
 			}
 
-<<<<<<< HEAD
 			case T_ColumnReferenceStorageDirective:
 				/* processed below in transformAttributeEncoding() */
 				stenc = lappend(stenc, element);
 				break;
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			default:
 				elog(ERROR, "unrecognized node type: %d",
 					 (int) nodeTag(element));
@@ -405,23 +367,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 		}
 	}
 
-<<<<<<< HEAD
-	/*
-	 * If we had any LIKE tables, they may require creation of an OID column
-	 * even though the command's own WITH clause didn't ask for one (or,
-	 * perhaps, even specifically rejected having one).  Insert a WITH option
-	 * to ensure that happens.  We prepend to the list because the first oid
-	 * option will be honored, and we want to override anything already there.
-	 * (But note that DefineRelation will override this again to add an OID
-	 * column if one appears in an inheritance parent table.)
-	 */
-	if (like_found && cxt.hasoids)
-		stmt->options = lcons(makeDefElem("oids",
-										  (Node *) makeInteger(true)),
-							  stmt->options);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Transfer anything we already have in cxt.alist into save_alist, to keep
 	 * it separate from the output of transformIndexConstraints.  (This may
@@ -1378,12 +1323,6 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		}
 	}
 
-<<<<<<< HEAD
-	/* We use oids if at least one LIKE'ed table has oids. */
-	cxt->hasoids |= relation->rd_rel->relhasoids;
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Copy CHECK constraints if requested, being careful to adjust attribute
 	 * numbers so they match the child.
@@ -1492,7 +1431,6 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	}
 
 	/*
-<<<<<<< HEAD
 	 * If STORAGE is included, we need to copy over the table storage params
 	 * as well as the attribute encodings.
 	 */
@@ -1522,7 +1460,9 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		 */
 		*stenc = list_union(*stenc, rel_get_column_encodings(relation));
 		MemoryContextSwitchTo(oldcontext);
-=======
+	}
+
+	/*
 	 * Likewise, copy extended statistics if requested
 	 */
 	if (table_like_clause->options & CREATE_TABLE_LIKE_STATISTICS)
@@ -1557,7 +1497,6 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		}
 
 		list_free(parent_extstats);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*
@@ -1801,16 +1740,6 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 	}
 	else
 		index->isconstraint = false;
-
-	/*
-	 * GPDB: If we are splitting a partition, or creating a new child
-	 * partition, set the parents of the relation in the index statement.
-	 */
-	if (cxt->issplitpart || cxt->iscreatepart)
-	{
-		index->parentIndexId = source_relid;
-		index->parentConstraintId = constraintId;
-	}
 
 	/* Get the index expressions, if any */
 	datum = SysCacheGetAttr(INDEXRELID, ht_idx,
@@ -2181,7 +2110,6 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 	cxt.inhRelations = NIL;
 	cxt.hasoids = false;
 	cxt.isalter = false;
-	cxt.iscreatepart = false;
 	cxt.columns = NIL;
 	cxt.ckconstraints = NIL;
 	cxt.fkconstraints = NIL;
@@ -4374,11 +4302,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	cxt.rel = rel;
 	cxt.inhRelations = NIL;
 	cxt.isalter = true;
-<<<<<<< HEAD
-	cxt.iscreatepart = false;
-	cxt.hasoids = false;		/* need not be right */
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	cxt.columns = NIL;
 	cxt.ckconstraints = NIL;
 	cxt.fkconstraints = NIL;
@@ -5050,7 +4973,6 @@ setSchemaName(char *context_schema, char **stmt_schema_name)
 }
 
 /*
-<<<<<<< HEAD
  * getLikeDistributionPolicy
  *
  * For Greenplum Database distributed tables, default to
@@ -5620,6 +5542,7 @@ encodings_overlap(List *a, List *b, bool test_conflicts)
 	return false;
 }
 
+// GPDB_12_MERGE_FIXME: legacy GPDB partitioning code. Remove?
 /*
  * transformAlterTable_all_PartitionStmt -
  *	transform an Alter Table Statement for some Partition operation
@@ -5764,7 +5687,8 @@ transformAlterTable_all_PartitionStmt(
 	/* transform boundary specifications at execute time */
 	return cmd;
 } /* end transformAlterTable_all_PartitionStmt */
-=======
+
+/*
  * transformPartitionCmd
  *		Analyze the ATTACH/DETACH PARTITION command
  *
@@ -6188,4 +6112,3 @@ transformPartitionBoundValue(ParseState *pstate, Node *val,
 
 	return (Const *) value;
 }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -99,15 +99,9 @@ static void checkExprIsVarFree(ParseState *pstate, Node *n,
 static TargetEntry *findTargetlistEntrySQL92(ParseState *pstate, Node *node,
 											 List **tlist, ParseExprKind exprKind);
 static TargetEntry *findTargetlistEntrySQL99(ParseState *pstate, Node *node,
-<<<<<<< HEAD
-					List **tlist, ParseExprKind exprKind);
-static int get_matching_location(int sortgroupref,
-					  List *sortgrouprefs, List *exprs);
-=======
 											 List **tlist, ParseExprKind exprKind);
 static int	get_matching_location(int sortgroupref,
 								  List *sortgrouprefs, List *exprs);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static List *resolve_unique_index_expr(ParseState *pstate, InferClause *infer,
 									   Relation heapRel);
 static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
@@ -587,12 +581,8 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	 * Analyze and transform the subquery.
 	 */
 	query = parse_sub_analyze(r->subquery, pstate, NULL,
-<<<<<<< HEAD
-							  getLockedRefname(pstate, r->alias->aliasname));
-=======
-							  isLockedRefname(pstate, r->alias->aliasname),
+							  getLockedRefname(pstate, r->alias->aliasname),
 							  true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Restore state */
 	pstate->p_lateral_active = false;

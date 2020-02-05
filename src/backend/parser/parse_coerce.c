@@ -48,21 +48,14 @@ static Node *build_coercion_expression(Node *node,
 									   CoercionContext ccontext, CoercionForm cformat,
 									   int location);
 static Node *coerce_record_to_complex(ParseState *pstate, Node *node,
-<<<<<<< HEAD
-						 Oid targetTypeId,
-						 CoercionContext ccontext,
-						 CoercionForm cformat,
-						 int location);
-static Var *coerce_unknown_var(ParseState *pstate, Var *var,
-							   Oid targetTypeId, int32 targetTypeMod,
-							   CoercionContext ccontext, CoercionForm cformat,
-							   int levelsup);
-=======
 									  Oid targetTypeId,
 									  CoercionContext ccontext,
 									  CoercionForm cformat,
 									  int location);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static Var *coerce_unknown_var(ParseState *pstate, Var *var,
+							   Oid targetTypeId, int32 targetTypeMod,
+							   CoercionContext ccontext, CoercionForm cformat,
+							   int levelsup);
 static bool is_complex_array(Oid typid);
 static bool typeIsOfTypedTable(Oid reltypeId, Oid reloftypeId);
 
@@ -124,15 +117,8 @@ coerce_to_target_type(ParseState *pstate, Node *expr, Oid exprtype,
 	 */
 	result = coerce_type_typmod(result,
 								targettype, targettypmod,
-<<<<<<< HEAD
-								cformat, location,
-								(cformat != COERCE_IMPLICIT_CAST),
-								(result != expr && !IsA(result, Const)
-								 && !IsA(result, Var)));
-=======
 								ccontext, cformat, location,
 								(result != expr && !IsA(result, Const)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (expr != origexpr)
 	{

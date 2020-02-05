@@ -186,16 +186,10 @@ AcquireRewriteLocks(Query *parsetree,
 				needLockUpgrade = false;
 				if (!forExecute)
 					lockmode = AccessShareLock;
-<<<<<<< HEAD
-				else if (rt_index == parsetree->resultRelation)
+				else if (forUpdatePushedDown)
 				{
-					lockmode = RowExclusiveLock;
-					needLockUpgrade = (parsetree->commandType == CMD_UPDATE ||
-									   parsetree->commandType == CMD_DELETE);
-				}
-				else if (forUpdatePushedDown ||
-						 get_parse_rowmark(parsetree, rt_index) != NULL)
-				{
+#if 0
+					/* GPDB_12_MERGE_FIXME: Where should this go now? */
 					/*
 					 * Greenplum specific behavior:
 					 * The implementation of select statement with locking clause
@@ -211,17 +205,22 @@ AcquireRewriteLocks(Query *parsetree,
 					 * make the behavior just the same as Postgres.
 					 */
 					lockmode = parsetree->canOptSelectLockingClause ? RowShareLock : ExclusiveLock;
-=======
-				else if (forUpdatePushedDown)
-				{
+
+
+#endif
 					/* Upgrade RTE's lock mode to reflect pushed-down lock */
 					if (rte->rellockmode == AccessShareLock)
 						rte->rellockmode = RowShareLock;
 					lockmode = rte->rellockmode;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				}
 				else
 					lockmode = rte->rellockmode;
+
+#if 0
+				/* GPDB_12_MERGE_FIXME: Where should this go now? */
+					needLockUpgrade = (parsetree->commandType == CMD_UPDATE ||
+									   parsetree->commandType == CMD_DELETE);
+#endi
 
 				/* Take a lock either using CDB lock promotion or not */
 				if (needLockUpgrade)
@@ -1571,42 +1570,20 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 								  false);
 
 			attrname = "wholerow";
+
+			/*
+			 * GPDB also needs gp_segment_id. ctid is only unique in the same
+			 * segment.
+			 */
+			get_atttypetypmodcoll(reloid, GpSegmentIdAttributeNumber, &vartypeid, &type_mod, &type_coll);
+			varSegid = makeVar(parsetree->resultRelation,
+							   GpSegmentIdAttributeNumber,
+							   vartypeid,
+							   type_mod,
+							   type_coll,
+							   0);
 		}
 	}
-<<<<<<< HEAD
-	else
-	{
-		/*
-		 * Emit whole-row Var so that executor will have the "old" view row to
-		 * pass to the INSTEAD OF trigger.
-		 */
-		var = makeWholeRowVar(target_rte,
-							  parsetree->resultRelation,
-							  0,
-							  false);
-
-		/*
-		 * GPDB also needs gp_segment_id. ctid is only unique in the same
-		 * segment.
-		 */
-		Oid			reloid;
-		Oid			vartypeid;
-		int32		type_mod;
-		Oid			type_coll;
-
-		reloid = RelationGetRelid(target_relation);
-		get_atttypetypmodcoll(reloid, GpSegmentIdAttributeNumber, &vartypeid, &type_mod, &type_coll);
-		varSegid = makeVar(parsetree->resultRelation,
-						   GpSegmentIdAttributeNumber,
-						   vartypeid,
-						   type_mod,
-						   type_coll,
-						   0);
-
-		attrname = "wholerow";
-	}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (var != NULL)
 	{

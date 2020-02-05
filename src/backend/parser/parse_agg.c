@@ -51,22 +51,15 @@ typedef struct
 	bool		in_agg_direct_args;
 } check_ungrouped_columns_context;
 
-<<<<<<< HEAD
 typedef struct
 {
 	int sublevels_up;
 } checkHasGroupExtFuncs_context;
 
-static int check_agg_arguments(ParseState *pstate,
-					List *directargs,
-					List *args,
-					Expr *filter);
-=======
 static int	check_agg_arguments(ParseState *pstate,
 								List *directargs,
 								List *args,
 								Expr *filter);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static bool check_agg_arguments_walker(Node *node,
 									   check_agg_arguments_context *context);
 static void check_ungrouped_columns(Node *node, ParseState *pstate, Query *qry,
@@ -74,12 +67,7 @@ static void check_ungrouped_columns(Node *node, ParseState *pstate, Query *qry,
 									bool have_non_var_grouping,
 									List **func_grouped_rels);
 static bool check_ungrouped_columns_walker(Node *node,
-<<<<<<< HEAD
-							   check_ungrouped_columns_context *context);
-
-=======
 										   check_ungrouped_columns_context *context);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void finalize_grouping_exprs(Node *node, ParseState *pstate, Query *qry,
 									List *groupClauses, bool hasJoinRTEs,
 									bool have_non_var_grouping);
@@ -549,13 +537,9 @@ check_agglevels_and_constraints(ParseState *pstate, Node *expr)
 				err = _("grouping operations are not allowed in trigger WHEN conditions");
 
 			break;
-<<<<<<< HEAD
-		case EXPR_KIND_PARTITION_EXPRESSION:
-			err = _("aggregate functions are not allowed in partition key expression");
-
 		case EXPR_KIND_SCATTER_BY:
 			/* okay */
-=======
+			break;
 		case EXPR_KIND_PARTITION_BOUND:
 			if (isAgg)
 				err = _("aggregate functions are not allowed in partition bound");
@@ -593,7 +577,6 @@ check_agglevels_and_constraints(ParseState *pstate, Node *expr)
 			else
 				err = _("grouping operations are not allowed in COPY FROM WHERE conditions");
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 
 			/*
@@ -793,7 +776,6 @@ check_agg_arguments_walker(Node *node,
 		}
 		/* Continue and descend into subtree */
 	}
-<<<<<<< HEAD
 	if (IsA(node, GroupId))
 	{
 		int			agglevelsup = ((GroupId *) node)->agglevelsup;
@@ -809,15 +791,6 @@ check_agg_arguments_walker(Node *node,
 		}
 		/* Continue and descend into subtree */
 	}
-	/* We can throw error on sight for a window function */
-	if (IsA(node, WindowFunc) && context->sublevels_up == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("aggregate function calls cannot contain window function calls"),
-				 parser_errposition(context->pstate,
-									((WindowFunc *) node)->location)));
-=======
-
 	/*
 	 * SRFs and window functions can be rejected immediately, unless we are
 	 * within a sub-select within the aggregate's arguments; in that case
@@ -839,7 +812,6 @@ check_agg_arguments_walker(Node *node,
 					 parser_errposition(context->pstate,
 										((WindowFunc *) node)->location)));
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
@@ -995,14 +967,9 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 		case EXPR_KIND_TRIGGER_WHEN:
 			err = _("window functions are not allowed in trigger WHEN conditions");
 			break;
-<<<<<<< HEAD
-		case EXPR_KIND_PARTITION_EXPRESSION:
-			err = _("window functions are not allowed in partition key expression");
-			break;
-
 		case EXPR_KIND_SCATTER_BY:
 			/* okay */
-=======
+			break;
 		case EXPR_KIND_PARTITION_BOUND:
 			err = _("window functions are not allowed in partition bound");
 			break;
@@ -1017,7 +984,6 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 			break;
 		case EXPR_KIND_GENERATED_COLUMN:
 			err = _("window functions are not allowed in column generation expressions");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 
 			/*

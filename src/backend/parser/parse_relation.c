@@ -3,13 +3,9 @@
  * parse_relation.c
  *	  parser support routines dealing with relations
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -34,26 +30,21 @@
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "nodes/relation.h"                 /* CdbRelColumnInfo */
-#include "optimizer/pathnode.h"             /* cdb_rte_find_pseudo_column() */
 #include "parser/parsetree.h"
 #include "parser/parse_enr.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
-<<<<<<< HEAD
-#include "parser/parse_coerce.h"
-=======
 #include "storage/lmgr.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
-#include "cdb/cdbvars.h"
-=======
 #include "utils/varlena.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+#include "cdb/cdbvars.h"
+#include "nodes/relation.h"                 /* CdbRelColumnInfo */
+#include "optimizer/pathnode.h"             /* cdb_rte_find_pseudo_column() */
+#include "parser/parse_coerce.h"
 
 
 #define MAX_FUZZY_DISTANCE				3
@@ -71,18 +62,10 @@ static void expandRelation(Oid relid, Alias *eref,
 						   int location, bool include_dropped,
 						   List **colnames, List **colvars);
 static void expandTupleDesc(TupleDesc tupdesc, Alias *eref,
-<<<<<<< HEAD
-				int count, int offset,
-				int rtindex, int sublevels_up,
-				int location, bool include_dropped,
-				List **colnames, List **colvars);
-static int32 *getValuesTypmods(RangeTblEntry *rte);
-=======
 							int count, int offset,
 							int rtindex, int sublevels_up,
 							int location, bool include_dropped,
 							List **colnames, List **colvars);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static int	specialAttNum(const char *attname);
 static bool isQueryUsingTempRelation_walker(Node *node, void *context);
 
@@ -388,18 +371,14 @@ searchRangeTableForRel(ParseState *pstate, RangeVar *relation)
 				rte->ctelevelsup + levelsup == ctelevelsup &&
 				strcmp(rte->ctename, refname) == 0)
 				return rte;
-<<<<<<< HEAD
-
-			if (rte->eref != NULL &&
-                rte->eref->aliasname != NULL &&
-                strcmp(rte->eref->aliasname, refname) == 0)
-=======
 			if (rte->rtekind == RTE_NAMEDTUPLESTORE &&
 				isenr &&
 				strcmp(rte->enrname, refname) == 0)
 				return rte;
-			if (strcmp(rte->eref->aliasname, refname) == 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+			if (rte->eref != NULL &&
+                rte->eref->aliasname != NULL &&
+                strcmp(rte->eref->aliasname, refname) == 0)
 				return rte;
 		}
 	}
@@ -1359,13 +1338,7 @@ addRangeTableEntry(ParseState *pstate,
 	 * relcache entry for the rel.  Since this is typically the first access
 	 * to a rel in a statement, we must open the rel with the proper lockmode.
 	 */
-<<<<<<< HEAD
-	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
-	rel = parserOpenTable(pstate, relation, lockmode, nowait, NULL);
-	cancel_parser_errposition_callback(&pcbstate);
-=======
 	rel = parserOpenTable(pstate, relation, lockmode);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	rte->relid = RelationGetRelid(rel);
 	rte->relkind = rel->rd_rel->relkind;
 	rte->rellockmode = lockmode;
@@ -2124,14 +2097,10 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	rte->joinaliasvars = aliasvars;
 	rte->alias = alias;
 
-<<<<<<< HEAD
 	/* transform any Vars of type UNKNOWNOID if we can */
 	fixup_unknown_vars_in_exprlist(pstate, rte->joinaliasvars);
 
-	eref = alias ? (Alias *) copyObject(alias) : makeAlias("unnamed_join", NIL);
-=======
 	eref = alias ? copyObject(alias) : makeAlias("unnamed_join", NIL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	numaliases = list_length(eref->colnames);
 
 	/* fill in any unspecified alias columns */
@@ -2795,64 +2764,6 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 				}
 			}
 			break;
-<<<<<<< HEAD
-		case RTE_VALUES:
-			{
-				/* Values RTE */
-				ListCell   *aliasp_item = list_head(rte->eref->colnames);
-				int32	   *coltypmods;
-				ListCell   *lcv;
-				ListCell   *lcc;
-
-				/*
-				 * It's okay to extract column types from the expressions in
-				 * the first row, since all rows will have been coerced to the
-				 * same types.  Their typmods might not be the same though, so
-				 * we potentially need to examine all rows to compute those.
-				 * Column collations are pre-computed in values_collations.
-				 */
-				if (colvars)
-					coltypmods = getValuesTypmods(rte);
-				else
-					coltypmods = NULL;
-
-				varattno = 0;
-				forboth(lcv, (List *) linitial(rte->values_lists),
-						lcc, rte->values_collations)
-				{
-					Node	   *col = (Node *) lfirst(lcv);
-					Oid			colcollation = lfirst_oid(lcc);
-
-					varattno++;
-					if (colnames)
-					{
-						/* Assume there is one alias per column */
-						char	   *label = strVal(lfirst(aliasp_item));
-
-						*colnames = lappend(*colnames,
-											makeString(pstrdup(label)));
-						aliasp_item = lnext(aliasp_item);
-					}
-
-					if (colvars)
-					{
-						Var		   *varnode;
-
-						varnode = makeVar(rtindex, varattno,
-										  exprType(col),
-										  coltypmods[varattno - 1],
-										  colcollation,
-										  sublevels_up);
-						varnode->location = location;
-						*colvars = lappend(*colvars, varnode);
-					}
-				}
-				if (coltypmods)
-					pfree(coltypmods);
-			}
-			break;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		case RTE_JOIN:
 			{
 				/* Join RTE */
@@ -2967,14 +2878,6 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 						{
 							Var		   *varnode;
 
-<<<<<<< HEAD
-						varnode = makeVar(rtindex, varattno,
-										  coltype, coltypmod, colcoll,
-										  sublevels_up);
-						varnode->location = location;
-
-						*colvars = lappend(*colvars, varnode);
-=======
 							varnode = makeVar(rtindex, varattno,
 											  coltype, coltypmod, colcoll,
 											  sublevels_up);
@@ -2992,7 +2895,6 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 											   makeNullConst(INT4OID, -1,
 															 InvalidOid));
 						}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					}
 				}
 			}
@@ -3109,74 +3011,6 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref, int count, int offset,
 			*colvars = lappend(*colvars, varnode);
 		}
 	}
-}
-
-/*
- * getValuesTypmods -- expandRTE subroutine
- *
- * Identify per-column typmods for the given VALUES RTE.  Returns a
- * palloc'd array.
- */
-static int32 *
-getValuesTypmods(RangeTblEntry *rte)
-{
-	int32	   *coltypmods;
-	List	   *firstrow;
-	int			ncolumns,
-				nvalid,
-				i;
-	ListCell   *lc;
-
-	Assert(rte->values_lists != NIL);
-	firstrow = (List *) linitial(rte->values_lists);
-	ncolumns = list_length(firstrow);
-	coltypmods = (int32 *) palloc(ncolumns * sizeof(int32));
-	nvalid = 0;
-
-	/* Collect the typmods from the first VALUES row */
-	i = 0;
-	foreach(lc, firstrow)
-	{
-		Node	   *col = (Node *) lfirst(lc);
-
-		coltypmods[i] = exprTypmod(col);
-		if (coltypmods[i] >= 0)
-			nvalid++;
-		i++;
-	}
-
-	/*
-	 * Scan remaining rows; as soon as we have a non-matching typmod for a
-	 * column, reset that typmod to -1.  We can bail out early if all typmods
-	 * become -1.
-	 */
-	if (nvalid > 0)
-	{
-		for_each_cell(lc, lnext(list_head(rte->values_lists)))
-		{
-			List	   *thisrow = (List *) lfirst(lc);
-			ListCell   *lc2;
-
-			Assert(list_length(thisrow) == ncolumns);
-			i = 0;
-			foreach(lc2, thisrow)
-			{
-				Node	   *col = (Node *) lfirst(lc2);
-
-				if (coltypmods[i] >= 0 && coltypmods[i] != exprTypmod(col))
-				{
-					coltypmods[i] = -1;
-					nvalid--;
-				}
-				i++;
-			}
-
-			if (nvalid <= 0)
-				break;
-		}
-	}
-
-	return coltypmods;
 }
 
 /*
@@ -3453,32 +3287,6 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 								rte->eref->aliasname)));
 			}
 			break;
-<<<<<<< HEAD
-		case RTE_VALUES:
-			{
-				/*
-				 * Values RTE --- we can get type info from first sublist, but
-				 * typmod may require scanning all sublists, and collation is
-				 * stored separately.  Using getValuesTypmods() is overkill,
-				 * but this path is taken so seldom for VALUES that it's not
-				 * worth writing extra code.
-				 */
-				List	   *collist = (List *) linitial(rte->values_lists);
-				Node	   *col;
-				int32	   *coltypmods = getValuesTypmods(rte);
-
-				if (attnum < 1 || attnum > list_length(collist))
-					elog(ERROR, "values list %s does not have attribute %d",
-						 rte->eref->aliasname, attnum);
-				col = (Node *) list_nth(collist, attnum - 1);
-				*vartype = exprType(col);
-				*vartypmod = coltypmods[attnum - 1];
-				*varcollid = list_nth_oid(rte->values_collations, attnum - 1);
-				pfree(coltypmods);
-			}
-			break;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		case RTE_JOIN:
 			{
 				/*

@@ -239,23 +239,15 @@ parse_analyze_varparams(RawStmt *parseTree, const char *sourceText,
 Query *
 parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
 				  CommonTableExpr *parentCTE,
-<<<<<<< HEAD
-				  LockingClause *lockclause_from_parent)
-=======
-				  bool locked_from_parent,
+				  LockingClause *lockclause_from_parent,
 				  bool resolve_unknowns)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	ParseState *pstate = make_parsestate(parentParseState);
 	Query	   *query;
 
 	pstate->p_parent_cte = parentCTE;
-<<<<<<< HEAD
 	pstate->p_lockclause_from_parent = lockclause_from_parent;
-=======
-	pstate->p_locked_from_parent = locked_from_parent;
 	pstate->p_resolve_unknowns = resolve_unknowns;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	query = transformStmt(pstate, parseTree);
 
@@ -2922,12 +2914,7 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 		 * of this sub-query, because they are not in the toplevel pstate's
 		 * namespace list.
 		 */
-<<<<<<< HEAD
-		selectQuery = parse_sub_analyze((Node *) stmt, pstate, NULL, NULL);
-=======
-		selectQuery = parse_sub_analyze((Node *) stmt, pstate,
-										NULL, false, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		selectQuery = parse_sub_analyze((Node *) stmt, pstate, NULL, NULL, false);
 
 		/*
 		 * Check for bogus references to Vars on the current query level (but
@@ -4230,8 +4217,7 @@ test_raw_expression_coverage(Node *node, void *context)
 									  context);
 }
 
-<<<<<<< HEAD
-#endif   /* RAW_EXPRESSION_COVERAGE_TEST */
+#endif							/* RAW_EXPRESSION_COVERAGE_TEST */
 
 /* GPDB statics follow */
 /*
@@ -4451,6 +4437,3 @@ sanity_check_on_conflict_update_set_distkey(Oid relid, List *onconflict_set)
 				 errmsg("modification of distribution columns in OnConflictUpdate is not supported")));
 	}
 }
-=======
-#endif							/* RAW_EXPRESSION_COVERAGE_TEST */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

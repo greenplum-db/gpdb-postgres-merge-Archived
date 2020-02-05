@@ -336,15 +336,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("DISTINCT specified, but %s is not an aggregate function",
 							NameListToString(funcname)),
-<<<<<<< HEAD
-					 parser_errposition(pstate, location)));
-		if (agg_within_group)
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("WITHIN GROUP specified, but %s is not an aggregate function",
-							NameListToString(funcname)),
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					 parser_errposition(pstate, location)));
 		if (agg_within_group)
 			ereport(ERROR,
@@ -863,7 +854,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		 * GPDB: We have implemented this in GPDB, with some limitations.
 		 */
 		if (agg_distinct)
-<<<<<<< HEAD
 		{
 			if (fdresult == FUNCDETAIL_WINDOWFUNC)
 				ereport(ERROR,
@@ -876,12 +866,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("DISTINCT is supported only for single-argument window aggregates")));
 		}
-=======
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("DISTINCT is not implemented for window functions"),
-					 parser_errposition(pstate, location)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * Reject attempt to call a parameterless aggregate without (*)
@@ -939,7 +923,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		retval = (Node *) wfunc;
 	}
 
-<<<<<<< HEAD
 	/*
 	 * Mark the context if this is a dynamic typed function, if so we mustn't
 	 * allow views to be created from this statement because we cannot 
@@ -965,11 +948,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 */
 	if (func_exec_location(funcid) != PROEXECLOCATION_ANY)
 		pstate->p_hasFuncsWithExecRestrictions = true;
-=======
+
 	/* if it returns a set, remember it for error checks at higher levels */
 	if (retset)
 		pstate->p_last_srf = retval;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return retval;
 }

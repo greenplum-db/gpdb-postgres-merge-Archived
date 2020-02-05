@@ -398,13 +398,10 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 		case RTE_TABLEFUNCTION:
 		case RTE_FUNCTION:
 		case RTE_VALUES:
-<<<<<<< HEAD
-		case RTE_VOID:
-=======
 		case RTE_TABLEFUNC:
 		case RTE_NAMEDTUPLESTORE:
 		case RTE_RESULT:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		case RTE_VOID:
 			/* not a simple relation, leave it unmarked */
 			break;
 		case RTE_CTE:
