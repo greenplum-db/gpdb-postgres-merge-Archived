@@ -74,13 +74,8 @@ struct pg_tz
 extern int	pg_open_tzfile(const char *name, char *canonname);
 
 /* in localtime.c */
-<<<<<<< HEAD
-extern int tzload(const char *name, char *canonname, struct state *sp,
-	   bool doextend);
-=======
 extern int	tzload(const char *name, char *canonname, struct state *sp,
 				   bool doextend);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern bool tzparse(const char *name, struct state *sp, bool lastditch);
 
 #endif							/* _PGTZ_H */

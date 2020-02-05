@@ -4887,24 +4887,23 @@ error_severity(int elevel)
 
 	switch (elevel)
 	{
+		/* GPDB_12_MERGE_FIXME: In PostgreSQL, DEBUG1-DEBUG5 are all mashed together into just
+		 * DEBUG here. Why are we doing it differently? Revert to upstream version?
+		 */
 		case DEBUG1:
-			prefix = _("DEBUG1");
+			prefix = gettext_noop("DEBUG1");
 			break;
 		case DEBUG2:
-			prefix = _("DEBUG2");
+			prefix = gettext_noop("DEBUG2");
 			break;
 		case DEBUG3:
-			prefix = _("DEBUG3");
+			prefix = gettext_noop("DEBUG3");
 			break;
 		case DEBUG4:
-			prefix = _("DEBUG4");
+			prefix = gettext_noop("DEBUG4");
 			break;
 		case DEBUG5:
-<<<<<<< HEAD
-			prefix = _("DEBUG5");
-=======
-			prefix = gettext_noop("DEBUG");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			prefix = gettext_noop("DEBUG5");
 			break;
 		case LOG:
 		case LOG_SERVER_ONLY:
