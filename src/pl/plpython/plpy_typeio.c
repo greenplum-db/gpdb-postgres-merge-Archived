@@ -39,26 +39,6 @@ static PyObject *PLyString_FromScalar(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyObject_FromTransform(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyList_FromArray(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
-<<<<<<< HEAD
-						  char **dataptr_p, bits8 **bitmap_p, int *bitmask_p);
-
-/* conversion from Python objects to Datums */
-static Datum PLyObject_ToBool(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
-static Datum PLyObject_ToBytea(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
-static Datum PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
-static Datum PLyObject_ToDatum(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
-static Datum PLyObject_ToTransform(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
-static Datum PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray);
-static void PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
-							int *dims, int ndim, int dim,
-							Datum *elems, bool *nulls, int *currelem);
-
-/* conversion from Python objects to composite Datums (used by triggers and SRFs) */
-static Datum PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string, bool inarray);
-static Datum PLyMapping_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *mapping);
-static Datum PLySequence_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *sequence);
-static Datum PLyGenericObject_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *object, bool inarray);
-=======
 										   char **dataptr_p, bits8 **bitmap_p, int *bitmask_p);
 static PyObject *PLyDict_FromComposite(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyDict_FromTuple(PLyDatumToOb *arg, HeapTuple tuple, TupleDesc desc, bool include_generated);
@@ -87,7 +67,6 @@ static Datum PLyString_ToComposite(PLyObToDatum *arg, PyObject *string, bool ina
 static Datum PLyMapping_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *mapping);
 static Datum PLySequence_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *sequence);
 static Datum PLyGenericObject_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *object, bool inarray);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /*
@@ -141,46 +120,6 @@ PLy_input_convert(PLyDatumToOb *arg, Datum val)
  * current memory context.  Caller is responsible for cleanup.
  */
 Datum
-<<<<<<< HEAD
-PLyObject_ToCompositeDatum(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv, bool inarray)
-{
-	Datum		datum;
-
-	if (PyString_Check(plrv) || PyUnicode_Check(plrv))
-		datum = PLyString_ToComposite(info, desc, plrv, inarray);
-	else if (PySequence_Check(plrv))
-		/* composite type as sequence (tuple, list etc) */
-		datum = PLySequence_ToComposite(info, desc, plrv);
-	else if (PyMapping_Check(plrv))
-		/* composite type as mapping (currently only dict) */
-		datum = PLyMapping_ToComposite(info, desc, plrv);
-	else
-		/* returned as smth, must provide method __getattr__(name) */
-		datum = PLyGenericObject_ToComposite(info, desc, plrv, inarray);
-
-	return datum;
-}
-
-static void
-PLy_output_datum_func2(PLyObToDatum *arg, MemoryContext arg_mcxt, HeapTuple typeTup, Oid langid, List *trftypes)
-{
-	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-	Oid			element_type;
-	Oid			base_type;
-	Oid			funcid;
-	MemoryContext oldcxt;
-
-	oldcxt = MemoryContextSwitchTo(arg_mcxt);
-
-	fmgr_info_cxt(typeStruct->typinput, &arg->typfunc, arg_mcxt);
-	arg->typoid = HeapTupleGetOid(typeTup);
-	arg->typmod = -1;
-	arg->typioparam = getTypeIOParam(typeTup);
-	arg->typbyval = typeStruct->typbyval;
-
-	element_type = get_base_element_type(arg->typoid);
-	base_type = getBaseType(element_type ? element_type : arg->typoid);
-=======
 PLy_output_convert(PLyObToDatum *arg, PyObject *val, bool *isnull)
 {
 	/* at outer level, we are not considering an array element */
@@ -395,7 +334,6 @@ PLy_output_setup_func(PLyObToDatum *arg, MemoryContext arg_mcxt,
 		arg->typlen = -1;
 		arg->typalign = 'd';
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Choose conversion method.  Note that transform functions are checked
@@ -732,11 +670,7 @@ static PyObject *
 PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 {
 	ArrayType  *array = DatumGetArrayTypeP(d);
-<<<<<<< HEAD
-	PLyDatumToOb *elm = arg->elm;
-=======
 	PLyDatumToOb *elm = arg->u.array.elm;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			ndim;
 	int		   *dims;
 	char	   *dataptr;
@@ -753,16 +687,10 @@ PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 
 	/*
 	 * We iterate the SQL array in the physical order it's stored in the
-<<<<<<< HEAD
-	 * datum. For example, for a 3-dimensional array the order of iteration would
-	 * be the following: [0,0,0] elements through [0,0,k], then [0,1,0] through
-	 * [0,1,k] till [0,m,k], then [1,0,0] through [1,0,k] till [1,m,k], and so on.
-=======
 	 * datum. For example, for a 3-dimensional array the order of iteration
 	 * would be the following: [0,0,0] elements through [0,0,k], then [0,1,0]
 	 * through [0,1,k] till [0,m,k], then [1,0,0] through [1,0,k] till
 	 * [1,m,k], and so on.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 *
 	 * In Python, there are no multi-dimensional lists as such, but they are
 	 * represented as a list of lists. So a 3-d array of [n,m,k] elements is a
@@ -786,11 +714,8 @@ PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
 	PyObject   *list;
 
 	list = PyList_New(dims[dim]);
-<<<<<<< HEAD
-=======
 	if (!list)
 		return NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (dim < ndim - 1)
 	{
@@ -800,11 +725,7 @@ PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
 			PyObject   *sublist;
 
 			sublist = PLyList_FromArray_recurse(elm, dims, ndim, dim + 1,
-<<<<<<< HEAD
-											 dataptr_p, bitmap_p, bitmask_p);
-=======
 												dataptr_p, bitmap_p, bitmask_p);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			PyList_SET_ITEM(list, i, sublist);
 		}
 	}
@@ -958,12 +879,8 @@ PLyDict_FromTuple(PLyDatumToOb *arg, HeapTuple tuple, TupleDesc desc, bool inclu
  * type can parse.
  */
 static Datum
-<<<<<<< HEAD
-PLyObject_ToBool(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
-=======
 PLyObject_ToBool(PLyObToDatum *arg, PyObject *plrv,
 				 bool *isnull, bool inarray)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	if (plrv == Py_None)
 	{
@@ -980,12 +897,8 @@ PLyObject_ToBool(PLyObToDatum *arg, PyObject *plrv,
  * with embedded nulls.  And it's faster this way.
  */
 static Datum
-<<<<<<< HEAD
-PLyObject_ToBytea(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
-=======
 PLyObject_ToBytea(PLyObToDatum *arg, PyObject *plrv,
 				  bool *isnull, bool inarray)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	PyObject   *volatile plrv_so = NULL;
 	Datum		rv;
@@ -1031,12 +944,8 @@ PLyObject_ToBytea(PLyObToDatum *arg, PyObject *plrv,
  * for obtaining PostgreSQL tuples.
  */
 static Datum
-<<<<<<< HEAD
-PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
-=======
 PLyObject_ToComposite(PLyObToDatum *arg, PyObject *plrv,
 					  bool *isnull, bool inarray)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	Datum		rv;
 	TupleDesc	desc;
@@ -1096,9 +1005,6 @@ PLyObject_ToComposite(PLyObToDatum *arg, PyObject *plrv,
 	 * Convert, using the appropriate method depending on the type of the
 	 * supplied Python object.
 	 */
-<<<<<<< HEAD
-	rv = PLyObject_ToCompositeDatum(&info, desc, plrv, inarray);
-=======
 	if (PySequence_Check(plrv))
 		/* composite type as sequence (tuple, list etc) */
 		rv = PLySequence_ToComposite(arg, desc, plrv);
@@ -1108,7 +1014,6 @@ PLyObject_ToComposite(PLyObToDatum *arg, PyObject *plrv,
 	else
 		/* returned as smth, must provide method __getattr__(name) */
 		rv = PLyGenericObject_ToComposite(arg, desc, plrv, inarray);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	ReleaseTupleDesc(desc);
 
@@ -1174,73 +1079,8 @@ PLyObject_AsString(PyObject *plrv)
 	return plrv_sc;
 }
 
+
 /*
-<<<<<<< HEAD
- * Convert Python object to C string in server encoding.
- */
-static Datum
-PLyObject_ToDatum(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
-{
-	char	   *str;
-	Datum		rv;
-
-	Assert(plrv != Py_None);
-
-	str = PLyObject_AsString(plrv);
-
-	/*
-	 * If we are parsing a composite type within an array, and the string
-	 * isn't a valid record literal, there's a high chance that the function
-	 * did something like:
-	 *
-	 * CREATE FUNCTION .. RETURNS comptype[] AS $$ return [['foo', 'bar']] $$
-	 * LANGUAGE plpython;
-	 *
-	 * Before PostgreSQL 10, that was interpreted as a single-dimensional
-	 * array, containing record ('foo', 'bar'). PostgreSQL 10 added support
-	 * for multi-dimensional arrays, and it is now interpreted as a
-	 * two-dimensional array, containing two records, 'foo', and 'bar'.
-	 * record_in() will throw an error, because "foo" is not a valid record
-	 * literal.
-	 *
-	 * To make that less confusing to users who are upgrading from older
-	 * versions, try to give a hint in the typical instances of that. If we are
-	 * parsing an array of composite types, and we see a string literal that
-	 * is not a valid record literal, give a hint. We only want to give the
-	 * hint in the narrow case of a malformed string literal, not any error
-	 * from record_in(), so check for that case here specifically.
-	 *
-	 * This check better match the one in record_in(), so that we don't forbid
-	 * literals that are actually valid!
-	 */
-	if (inarray && arg->typfunc.fn_oid == F_RECORD_IN)
-	{
-		char	   *ptr = str;
-
-		/* Allow leading whitespace */
-		while (*ptr && isspace((unsigned char) *ptr))
-			ptr++;
-		if (*ptr++ != '(')
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("malformed record literal: \"%s\"", str),
-					 errdetail("Missing left parenthesis."),
-					 errhint("To return a composite type in an array, return the composite type as a Python tuple, e.g. \"[('foo')]\"")));
-	}
-
-	rv = InputFunctionCall(&arg->typfunc,
-							 str,
-							 arg->typioparam,
-							 typmod);
-
-	pfree(str);
-
-	return rv;
-}
-
-static Datum
-PLyObject_ToTransform(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
-=======
  * Generic output conversion function: convert PyObject to cstring and
  * cstring into PostgreSQL type.
  */
@@ -1289,7 +1129,6 @@ PLyObject_ToDomain(PLyObToDatum *arg, PyObject *plrv,
 static Datum
 PLyObject_ToTransform(PLyObToDatum *arg, PyObject *plrv,
 					  bool *isnull, bool inarray)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	if (plrv == Py_None)
 	{
@@ -1305,12 +1144,8 @@ PLyObject_ToTransform(PLyObToDatum *arg, PyObject *plrv,
  * Convert Python sequence to SQL array.
  */
 static Datum
-<<<<<<< HEAD
-PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
-=======
 PLySequence_ToArray(PLyObToDatum *arg, PyObject *plrv,
 					bool *isnull, bool inarray)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	ArrayType  *array;
 	int			i;
@@ -1324,16 +1159,12 @@ PLySequence_ToArray(PLyObToDatum *arg, PyObject *plrv,
 	PyObject   *pyptr = plrv;
 	PyObject   *next;
 
-<<<<<<< HEAD
-	Assert(plrv != Py_None);
-=======
 	if (plrv == Py_None)
 	{
 		*isnull = true;
 		return (Datum) 0;
 	}
 	*isnull = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Determine the number of dimensions, and their sizes.
@@ -1353,11 +1184,7 @@ PLySequence_ToArray(PLyObToDatum *arg, PyObject *plrv,
 
 		dims[ndim] = PySequence_Length(pyptr);
 		if (dims[ndim] < 0)
-<<<<<<< HEAD
-			PLy_elog(ERROR, "cannot determine sequence length for function return value");
-=======
 			PLy_elog(ERROR, "could not determine sequence length for function return value");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		if (dims[ndim] > MaxAllocSize)
 			PLy_elog(ERROR, "array size exceeds the maximum allowed");
@@ -1379,7 +1206,6 @@ PLySequence_ToArray(PLyObToDatum *arg, PyObject *plrv,
 		pyptr = next;
 	}
 	Py_XDECREF(pyptr);
-<<<<<<< HEAD
 
 	/*
 	 * Check for zero dimensions. This happens if the object is a tuple or a
@@ -1396,48 +1222,6 @@ PLySequence_ToArray(PLyObToDatum *arg, PyObject *plrv,
 		ndim = 1;
 		len = dims[0] = PySequence_Length(plrv);
 	}
-
-	/*
-	 * Traverse the Python lists, in depth-first order, and collect all the
-	 * elements at the bottom level into 'elems'/'nulls' arrays.
-	 */
-	elems = palloc(sizeof(Datum) * len);
-	nulls = palloc(sizeof(bool) * len);
-	currelem = 0;
-	PLySequence_ToArray_recurse(arg->elm, plrv,
-								dims, ndim, 0,
-								elems, nulls, &currelem);
-
-	for (i = 0; i < ndim; i++)
-		lbs[i] = 1;
-
-	array = construct_md_array(elems,
-							   nulls,
-							   ndim,
-							   dims,
-							   lbs,
-							   get_base_element_type(arg->typoid),
-							   arg->elm->typlen,
-							   arg->elm->typbyval,
-							   arg->elm->typalign);
-=======
-
-	/*
-	 * Check for zero dimensions. This happens if the object is a tuple or a
-	 * string, rather than a list, or is not a sequence at all. We don't map
-	 * tuples or strings to arrays in general, but in the first level, be
-	 * lenient, for historical reasons. So if the object is a sequence of any
-	 * kind, treat it as a one-dimensional array.
-	 */
-	if (ndim == 0)
-	{
-		if (!PySequence_Check(plrv))
-			PLy_elog(ERROR, "return value of function with array return type is not a Python sequence");
-
-		ndim = 1;
-		len = dims[0] = PySequence_Length(plrv);
-	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Traverse the Python lists, in depth-first order, and collect all the
@@ -1474,54 +1258,6 @@ static void
 PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
 							int *dims, int ndim, int dim,
 							Datum *elems, bool *nulls, int *currelem)
-<<<<<<< HEAD
-{
-	int			i;
-
-	if (PySequence_Length(list) != dims[dim])
-		PLy_elog(ERROR,
-				 "multidimensional arrays must have array expressions with matching dimensions. "
-				 "PL/Python function return value has sequence length %d while expected %d",
-				 (int) PySequence_Length(list), dims[dim]);
-
-	if (dim < ndim - 1)
-	{
-		for (i = 0; i < dims[dim]; i++)
-		{
-			PyObject   *sublist = PySequence_GetItem(list, i);
-
-			PLySequence_ToArray_recurse(elm, sublist, dims, ndim, dim + 1,
-										elems, nulls, currelem);
-			Py_XDECREF(sublist);
-		}
-	}
-	else
-	{
-		for (i = 0; i < dims[dim]; i++)
-		{
-			PyObject   *obj = PySequence_GetItem(list, i);
-
-			if (obj == Py_None)
-			{
-				nulls[*currelem] = true;
-				elems[*currelem] = (Datum) 0;
-			}
-			else
-			{
-				nulls[*currelem] = false;
-				elems[*currelem] = elm->func(elm, -1, obj, true);
-			}
-			Py_XDECREF(obj);
-			(*currelem)++;
-		}
-	}
-}
-
-
-static Datum
-PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string, bool inarray)
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	int			i;
 
@@ -1556,9 +1292,6 @@ PLyString_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *string, bool 
 }
 
 
-<<<<<<< HEAD
-	result = PLyObject_ToDatum(&locinfo.out.d, desc->tdtypmod, string, inarray);
-=======
 /*
  * Convert a Python string to composite, using record_in.
  */
@@ -1575,7 +1308,6 @@ PLyString_ToComposite(PLyObToDatum *arg, PyObject *string, bool inarray)
 		fmgr_info_cxt(F_RECORD_IN, &arg->u.tuple.recinfunc, arg->mcxt);
 
 	str = PLyObject_AsString(string);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * If we are parsing a composite type within an array, and the string
@@ -1658,21 +1390,7 @@ PLyMapping_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *mapping)
 		PG_TRY();
 		{
 			value = PyMapping_GetItemString(mapping, key);
-<<<<<<< HEAD
-			if (value == Py_None)
-			{
-				values[i] = (Datum) NULL;
-				nulls[i] = true;
-			}
-			else if (value)
-			{
-				values[i] = (att->func) (att, -1, value, false);
-				nulls[i] = false;
-			}
-			else
-=======
 			if (!value)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("key \"%s\" not found in mapping", key),
@@ -1753,21 +1471,8 @@ PLySequence_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *sequence)
 		{
 			value = PySequence_GetItem(sequence, idx);
 			Assert(value);
-<<<<<<< HEAD
-			if (value == Py_None)
-			{
-				values[i] = (Datum) NULL;
-				nulls[i] = true;
-			}
-			else if (value)
-			{
-				values[i] = (att->func) (att, -1, value, false);
-				nulls[i] = false;
-			}
-=======
 
 			values[i] = att->func(att, value, &nulls[i], false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			Py_XDECREF(value);
 			value = NULL;
@@ -1794,11 +1499,7 @@ PLySequence_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *sequence)
 
 
 static Datum
-<<<<<<< HEAD
-PLyGenericObject_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *object, bool inarray)
-=======
 PLyGenericObject_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *object, bool inarray)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	Datum		result;
 	HeapTuple	tuple;
@@ -1831,19 +1532,6 @@ PLyGenericObject_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *object
 			value = PyObject_GetAttrString(object, key);
 			if (!value)
 			{
-<<<<<<< HEAD
-				values[i] = (Datum) NULL;
-				nulls[i] = true;
-			}
-			else if (value)
-			{
-				values[i] = (att->func) (att, -1, value, false);
-				nulls[i] = false;
-			}
-			else
-			{
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				/*
 				 * No attribute for this column in the object.
 				 *
@@ -1853,27 +1541,17 @@ PLyGenericObject_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *object
 				 * array, with a composite type (123, 'foo') in it. But now
 				 * it's interpreted as a two-dimensional array, and we try to
 				 * interpret "123" as the composite type. See also similar
-<<<<<<< HEAD
-				 * heuristic in PLyObject_ToDatum().
-=======
 				 * heuristic in PLyObject_ToScalar().
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("attribute \"%s\" does not exist in Python object", key),
 						 inarray ?
-<<<<<<< HEAD
-						 errhint("To return a composite type in an array, return the composite type as a Python tuple, e.g. \"[('foo')]\"") :
-						 errhint("To return null in a column, let the returned object have an attribute named after column with value None.")));
-			}
-=======
 						 errhint("To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\".") :
 						 errhint("To return null in a column, let the returned object have an attribute named after column with value None.")));
 			}
 
 			values[i] = att->func(att, value, &nulls[i], false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			Py_XDECREF(value);
 			value = NULL;

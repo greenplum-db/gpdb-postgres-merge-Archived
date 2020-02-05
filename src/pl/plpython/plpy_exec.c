@@ -230,41 +230,6 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			 * value; don't pass it through the input function, which might
 			 * complain.
 			 */
-<<<<<<< HEAD
-			if (srfstate && srfstate->iter == NULL)
-				rv = (Datum) 0;
-			else if (proc->result.is_rowtype < 1)
-				rv = InputFunctionCall(&proc->result.out.d.typfunc,
-									   NULL,
-									   proc->result.out.d.typioparam,
-									   -1);
-			else
-				/* Tuple as None */
-				rv = (Datum) 0;
-		}
-		else if (proc->result.is_rowtype >= 1)
-		{
-			TupleDesc	desc;
-
-			/* make sure it's not an unnamed record */
-			Assert((proc->result.out.d.typoid == RECORDOID &&
-					proc->result.out.d.typmod != -1) ||
-				   (proc->result.out.d.typoid != RECORDOID &&
-					proc->result.out.d.typmod == -1));
-
-			desc = lookup_rowtype_tupdesc(proc->result.out.d.typoid,
-										  proc->result.out.d.typmod);
-
-			rv = PLyObject_ToCompositeDatum(&proc->result, desc, plrv, false);
-			fcinfo->isnull = (rv == (Datum) NULL);
-
-			ReleaseTupleDesc(desc);
-		}
-		else
-		{
-			fcinfo->isnull = false;
-			rv = (proc->result.out.d.func) (&proc->result.out.d, -1, plrv, false);
-=======
 			fcinfo->isnull = true;
 			rv = (Datum) 0;
 		}
@@ -273,7 +238,6 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			/* Normal conversion of result */
 			rv = PLy_output_convert(&proc->result, plrv,
 									&fcinfo->isnull);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 	PG_CATCH();
@@ -1013,37 +977,10 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 			/* We assume proc->result is set up to convert tuples properly */
 			att = &proc->result.u.tuple.atts[attn - 1];
 
-<<<<<<< HEAD
-			if (tupdesc->attrs[atti]->attisdropped)
-			{
-				modvalues[i] = (Datum) 0;
-				modnulls[i] = 'n';
-			}
-			else if (plval != Py_None)
-			{
-				PLyObToDatum *att = &proc->result.out.r.atts[atti];
-
-				modvalues[i] = (att->func) (att,
-											tupdesc->attrs[atti]->atttypmod,
-											plval,
-											false);
-				modnulls[i] = ' ';
-			}
-			else
-			{
-				modvalues[i] =
-					InputFunctionCall(&proc->result.out.r.atts[atti].typfunc,
-									  NULL,
-									proc->result.out.r.atts[atti].typioparam,
-									  tupdesc->attrs[atti]->atttypmod);
-				modnulls[i] = 'n';
-			}
-=======
 			modvalues[attn - 1] = PLy_output_convert(att,
 													 plval,
 													 &modnulls[attn - 1]);
 			modrepls[attn - 1] = true;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			Py_DECREF(plval);
 			plval = NULL;

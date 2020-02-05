@@ -223,24 +223,7 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 			elem = PySequence_GetItem(args, j);
 			PG_TRY();
 			{
-<<<<<<< HEAD
-				PG_TRY();
-				{
-					plan->values[j] =
-						plan->args[j].out.d.func(&(plan->args[j].out.d),
-												 -1,
-												 elem,
-												 false);
-				}
-				PG_CATCH();
-				{
-					Py_DECREF(elem);
-					PG_RE_THROW();
-				}
-				PG_END_TRY();
-=======
 				bool		isnull;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 				plan->values[j] = PLy_output_convert(arg, elem, &isnull);
 				nulls[j] = isnull ? 'n' : ' ';

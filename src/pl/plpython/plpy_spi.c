@@ -52,24 +52,16 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	volatile ResourceOwner oldowner;
 	volatile int nargs;
 
-<<<<<<< HEAD
 	PLy_enter_python_intepreter = false;
 
-	if (!PyArg_ParseTuple(args, "s|O", &query, &list))
-=======
 	if (!PyArg_ParseTuple(args, "s|O:prepare", &query, &list))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return NULL;
 
 	if (list && (!PySequence_Check(list)))
 	{
 		PLy_exception_set(PyExc_TypeError,
-<<<<<<< HEAD
-					   "second argument of plpy.prepare must be a sequence");
-		PLy_enter_python_intepreter = true;
-=======
 						  "second argument of plpy.prepare must be a sequence");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		PLy_enter_python_intepreter = true;
 		return NULL;
 	}
 
@@ -204,13 +196,8 @@ PLy_spi_execute(PyObject *self, PyObject *args)
 	return NULL;
 }
 
-<<<<<<< HEAD
-static PyObject *
-PLy_spi_execute_plan(PyObject *ob, PyObject *list, int64 limit)
-=======
 PyObject *
-PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+PLy_spi_execute_plan(PyObject *ob, PyObject *list, int64 limit)
 {
 	volatile int nargs;
 	int			i,
@@ -276,24 +263,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 			elem = PySequence_GetItem(list, j);
 			PG_TRY();
 			{
-<<<<<<< HEAD
-				PG_TRY();
-				{
-					plan->values[j] =
-						plan->args[j].out.d.func(&(plan->args[j].out.d),
-												 -1,
-												 elem,
-												 false);
-				}
-				PG_CATCH();
-				{
-					Py_DECREF(elem);
-					PG_RE_THROW();
-				}
-				PG_END_TRY();
-=======
 				bool		isnull;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 				plan->values[j] = PLy_output_convert(arg, elem, &isnull);
 				nulls[j] = isnull ? 'n' : ' ';
@@ -476,22 +446,12 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 							 errmsg("query result has too many rows to fit in a Python list")));
 
 				Py_DECREF(result->rows);
-<<<<<<< HEAD
-				result->rows = PyList_New((Py_ssize_t)rows);
-
-				PLy_input_tuple_funcs(&args, tuptable->tupdesc);
-				for (i = 0; i < rows; i++)
-=======
 				result->rows = PyList_New(rows);
 				if (result->rows)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				{
 					PLy_input_setup_tuple(&ininfo, tuptable->tupdesc,
 										  exec_ctx->curr_proc);
 
-<<<<<<< HEAD
-					PyList_SetItem(result->rows, (Py_ssize_t)i, row);
-=======
 					for (i = 0; i < rows; i++)
 					{
 						PyObject   *row = PLy_input_from_tuple(&ininfo,
@@ -501,7 +461,6 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 
 						PyList_SetItem(result->rows, i, row);
 					}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				}
 			}
 

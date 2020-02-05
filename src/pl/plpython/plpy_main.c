@@ -290,11 +290,7 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 	 * popped again, so avoid putting anything that could throw error between
 	 * here and the PG_TRY.
 	 */
-<<<<<<< HEAD
-	exec_ctx = PLy_push_execution_context();
-=======
 	exec_ctx = PLy_push_execution_context(!nonatomic);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	PG_TRY();
 	{
@@ -391,11 +387,7 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	 * popped again, so avoid putting anything that could throw error between
 	 * here and the PG_TRY.
 	 */
-<<<<<<< HEAD
-	exec_ctx = PLy_push_execution_context();
-=======
 	exec_ctx = PLy_push_execution_context(codeblock->atomic);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	PG_TRY();
 	{

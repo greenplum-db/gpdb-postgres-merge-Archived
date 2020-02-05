@@ -9,12 +9,7 @@
 #include "fmgr.h"
 #include "utils/typcache.h"
 
-<<<<<<< HEAD
-struct PLyDatumToOb;
-typedef PyObject *(*PLyDatumToObFunc) (struct PLyDatumToOb *arg, Datum val);
-=======
 #include "plpython.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 struct PLyProcedure;			/* avoid requiring plpy_procedure.h here */
 
@@ -60,17 +55,7 @@ typedef struct PLyTransformToOb
 	FmgrInfo	typtransform;	/* lookup info for from-SQL transform func */
 } PLyTransformToOb;
 
-<<<<<<< HEAD
-/* convert PyObject to a Postgresql Datum or tuple.
- * output from Python
- */
-struct PLyObToDatum;
-typedef Datum (*PLyObToDatumFunc) (struct PLyObToDatum *arg, int32 typmod, PyObject *val, bool inarray);
-
-typedef struct PLyObToDatum
-=======
 struct PLyDatumToOb
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	PLyDatumToObFunc func;		/* conversion control function */
 	Oid			typoid;			/* OID of the source type */
@@ -134,49 +119,6 @@ typedef struct PLyObToTuple
 
 typedef struct PLyObToDomain
 {
-<<<<<<< HEAD
-	PLyObToDatum d;
-	PLyObToTuple r;
-} PLyTypeOutput;
-
-/* all we need to move PostgreSQL data to Python objects,
- * and vice versa
- */
-typedef struct PLyTypeInfo
-{
-	PLyTypeInput in;
-	PLyTypeOutput out;
-
-	/*
-	 * is_rowtype can be: -1 = not known yet (initial state); 0 = scalar
-	 * datatype; 1 = rowtype; 2 = rowtype, but I/O functions not set up yet
-	 */
-	int			is_rowtype;
-	/* used to check if the type has been modified */
-	Oid			typ_relid;
-	TransactionId typrel_xmin;
-	ItemPointerData typrel_tid;
-
-	/* context for subsidiary data (doesn't belong to this struct though) */
-	MemoryContext mcxt;
-} PLyTypeInfo;
-
-extern void PLy_typeinfo_init(PLyTypeInfo *arg, MemoryContext mcxt);
-
-extern void PLy_input_datum_func(PLyTypeInfo *arg, Oid typeOid, HeapTuple typeTup, Oid langid, List *trftypes);
-extern void PLy_output_datum_func(PLyTypeInfo *arg, HeapTuple typeTup, Oid langid, List *trftypes);
-
-extern void PLy_input_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc);
-extern void PLy_output_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc);
-
-extern void PLy_output_record_funcs(PLyTypeInfo *arg, TupleDesc desc);
-
-/* conversion from Python objects to composite Datums */
-extern Datum PLyObject_ToCompositeDatum(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv, bool isarray);
-
-/* conversion from heap tuples to Python dictionaries */
-extern PyObject *PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc);
-=======
 	PLyObToDatum *base;			/* conversion info for domain's base type */
 	void	   *domain_info;	/* cache space for domain_check() */
 } PLyObToDomain;
@@ -185,7 +127,6 @@ typedef struct PLyObToTransform
 {
 	FmgrInfo	typtransform;	/* lookup info for to-SQL transform function */
 } PLyObToTransform;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 struct PLyObToDatum
 {

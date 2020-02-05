@@ -30,13 +30,8 @@ HTAB	   *PLy_spi_exceptions = NULL;
 
 static void PLy_add_exceptions(PyObject *plpy);
 static PyObject *PLy_create_exception(char *name,
-<<<<<<< HEAD
-					 PyObject *base, PyObject *dict,
-					 const char *modname, PyObject *mod);
-=======
 									  PyObject *base, PyObject *dict,
 									  const char *modname, PyObject *mod);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void PLy_generate_spi_exceptions(PyObject *mod, PyObject *base);
 
 /* module functions */
@@ -244,11 +239,7 @@ PLy_create_exception(char *name, PyObject *base, PyObject *dict,
 
 	exc = PyErr_NewException(name, base, dict);
 	if (exc == NULL)
-<<<<<<< HEAD
-		PLy_elog(ERROR, "could not create exception \"%s\"", name);
-=======
 		PLy_elog(ERROR, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * PyModule_AddObject does not add a refcount to the object, for some odd
@@ -591,11 +582,6 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 	/*
 	 * return a legal object so the interpreter will continue on its merry way
 	 */
-<<<<<<< HEAD
-	Py_INCREF(Py_None);
-	PLy_enter_python_intepreter = true;
-	return Py_None;
-=======
 	Py_RETURN_NONE;
 }
 
@@ -625,5 +611,4 @@ PLy_rollback(PyObject *self, PyObject *args)
 	exec_ctx->scratch_ctx = NULL;
 
 	Py_RETURN_NONE;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
