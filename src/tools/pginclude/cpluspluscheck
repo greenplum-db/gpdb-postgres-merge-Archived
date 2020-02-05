@@ -47,32 +47,8 @@ tmp=`mktemp -d /tmp/$me.XXXXXX`
 
 trap 'rm -rf $tmp' 0 1 2 3 15
 
-<<<<<<< HEAD
-# Omit src/include/port/, because it's platform specific, and c.h includes
-# the relevant file anyway.
-# rusagestub.h is also platform-specific, and will be included by
-# utils/pg_rusage.h if necessary.
-# access/rmgrlist.h is not meant to be included standalone.
-# common/int128.h uses static assertions, which are not supported
-# under C++.
-# regex/regerrs.h is not meant to be included standalone.
-# parser/gram.h will be included by parser/gramparse.h.
-# parser/kwlist.h is not meant to be included standalone.
-# pg_trace.h and utils/probes.h can include sys/sdt.h from SystemTap,
-# which itself contains C++ code and so won't compile with a C++
-# compiler under extern "C" linkage.
-
-for f in `find src/include src/interfaces/libpq/libpq-fe.h src/interfaces/libpq/libpq-events.h -name '*.h' -print | \
-    grep -v -e ^src/include/port/ \
-	-e ^src/include/rusagestub.h -e ^src/include/regex/regerrs.h \
-	-e ^src/include/access/rmgrlist.h \
-	-e ^src/include/common/int128.h \
-	-e ^src/include/parser/gram.h -e ^src/include/parser/kwlist.h \
-	-e ^src/include/pg_trace.h -e ^src/include/utils/probes.h`
-=======
 # Scan all of src/ and contrib/ for header files.
 for f in `cd "$srcdir" && find src contrib -name '*.h' -print`
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 do
 	# Ignore files that are unportable or intentionally not standalone.
 

@@ -35,15 +35,10 @@ do "./src/tools/msvc/config_default.pl";
 do "./src/tools/msvc/config.pl" if (-f "src/tools/msvc/config.pl");
 
 # check what sort of build we are doing
-<<<<<<< HEAD
-my $bconf     = $ENV{CONFIG} || "Release";
-my $buildwhat = $ARGV[1]     || "";
-=======
 
 my $bconf     = $ENV{CONFIG}   || "Release";
 my $msbflags  = $ENV{MSBFLAGS} || "";
 my $buildwhat = $ARGV[1]       || "";
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 if (uc($ARGV[0]) eq 'DEBUG')
 {
 	$bconf = "Debug";

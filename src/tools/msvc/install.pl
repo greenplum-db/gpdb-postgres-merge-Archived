@@ -8,11 +8,7 @@ use warnings;
 
 use File::Basename;
 use File::Spec;
-<<<<<<< HEAD
-BEGIN  { use lib File::Spec->rel2abs(dirname(__FILE__)); }
-=======
 BEGIN { use lib File::Spec->rel2abs(dirname(__FILE__)); }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 use Install qw(Install);
 

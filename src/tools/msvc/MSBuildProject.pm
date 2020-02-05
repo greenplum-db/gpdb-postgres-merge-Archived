@@ -73,12 +73,8 @@ EOF
 
 	$self->WriteItemDefinitionGroup(
 		$f, 'Debug',
-<<<<<<< HEAD
-		{   defs    => "_DEBUG;DEBUG=1",
-=======
 		{
 			defs    => "_DEBUG;DEBUG=1",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			opt     => 'Disabled',
 			strpool => 'false',
 			runtime => 'MultiThreadedDebugDLL'
@@ -86,12 +82,8 @@ EOF
 	$self->WriteItemDefinitionGroup(
 		$f,
 		'Release',
-<<<<<<< HEAD
-		{   defs    => "",
-=======
 		{
 			defs    => "",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			opt     => 'Full',
 			strpool => 'true',
 			runtime => 'MultiThreadedDLL'
@@ -464,13 +456,9 @@ package VC2017Project;
 
 use strict;
 use warnings;
-<<<<<<< HEAD
-use base qw(VC2012Project);
-=======
 use base qw(MSBuildProject);
 
 no warnings qw(redefine);    ## no critic
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 sub new
 {

@@ -10,14 +10,9 @@ use Cwd;
 use File::Basename;
 use File::Copy;
 use File::Find ();
-<<<<<<< HEAD
-use File::Spec;
-BEGIN  { use lib File::Spec->rel2abs(dirname(__FILE__)); }
-=======
 use File::Path qw(rmtree);
 use File::Spec;
 BEGIN { use lib File::Spec->rel2abs(dirname(__FILE__)); }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 use Install qw(Install);
 
@@ -42,11 +37,7 @@ if (-e "src/tools/msvc/buildenv.pl")
 
 my $what = shift || "";
 if ($what =~
-<<<<<<< HEAD
-/^(check|installcheck|plcheck|contribcheck|modulescheck|ecpgcheck|isolationcheck|upgradecheck|bincheck|recoverycheck|taptest)$/i
-=======
 	/^(check|installcheck|plcheck|contribcheck|modulescheck|ecpgcheck|isolationcheck|upgradecheck|bincheck|recoverycheck|taptest)$/i
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
   )
 {
 	$what = uc $what;
@@ -110,11 +101,7 @@ exit 0;
 
 sub installcheck_internal
 {
-<<<<<<< HEAD
-	my $schedule = shift || 'serial';
-=======
 	my ($schedule, @EXTRA_REGRESS_OPTS) = @_;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	my @args = (
 		"../../../$Config/pg_regress/pg_regress",
 		"--dlpath=.",
@@ -170,10 +157,7 @@ sub ecpgcheck
 	InstallTemp();
 	chdir "$topdir/src/interfaces/ecpg/test";
 	my $schedule = "ecpg";
-<<<<<<< HEAD
-=======
 	my @args     = (
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		"../../../../$Config/pg_regress_ecpg/pg_regress_ecpg",
 		"--bindir=",
 		"--dbname=ecpg1_regression,ecpg2_regression",
@@ -216,11 +200,7 @@ sub tap_check
 	{
 		next unless $_[$arg] =~ /^PROVE_FLAGS=(.*)/;
 		@flags = split(/\s+/, $1);
-<<<<<<< HEAD
-		splice(@_,$arg,1);
-=======
 		splice(@_, $arg, 1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		last;
 	}
 
@@ -231,14 +211,9 @@ sub tap_check
 
 	# adjust the environment for just this test
 	local %ENV = %ENV;
-<<<<<<< HEAD
-	$ENV{PERL5LIB} = "$topdir/src/test/perl;$ENV{PERL5LIB}";
-	$ENV{PG_REGRESS} = "$topdir/$Config/pg_regress/pg_regress";
-=======
 	$ENV{PERL5LIB}      = "$topdir/src/test/perl;$ENV{PERL5LIB}";
 	$ENV{PG_REGRESS}    = "$topdir/$Config/pg_regress/pg_regress";
 	$ENV{REGRESS_SHLIB} = "$topdir/src/test/regress/regress.dll";
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	$ENV{TESTDIR} = "$dir";
 
@@ -340,72 +315,6 @@ sub mangle_plpython3
 	return @$tests;
 }
 
-sub taptest
-{
-	my $dir = shift;
-	my @args;
-
-	if ($dir =~ /^PROVE_FLAGS=/)
-	{
-		push(@args, $dir);
-		$dir = shift;
-	}
-
-	die "no tests found!" unless -d "$topdir/$dir/t";
-
-	push(@args,"$topdir/$dir");
-
-	InstallTemp();
-	my $status = tap_check(@args);
-	exit $status if $status;
-}
-
-sub mangle_plpython3
-{
-	my $tests = shift;
-	mkdir "results" unless -d "results";
-	mkdir "sql/python3";
-	mkdir "results/python3";
-	mkdir "expected/python3";
-
-	foreach my $test (@$tests)
-	{
-		local $/ = undef;
-		foreach my $dir ('sql','expected')
-		{
-			my $extension = ($dir eq 'sql' ? 'sql' : 'out');
-
-			my @files = glob("$dir/$test.$extension $dir/${test}_[0-9].$extension");
-			foreach my $file (@files)
-			{
-				open(my $handle, '<', $file) || die "test file $file not found";
-				my $contents = <$handle>;
-				close($handle);
-				do
-				{
-					s/except ([[:alpha:]][[:alpha:].]*), *([[:alpha:]][[:alpha:]]*):/except $1 as $2:/g;
-					s/<type 'exceptions\.([[:alpha:]]*)'>/<class '$1'>/g;
-					s/<type 'long'>/<class 'int'>/g;
-					s/([0-9][0-9]*)L/$1/g;
-					s/([ [{])u"/$1"/g;
-					s/([ [{])u'/$1'/g;
-					s/def next/def __next__/g;
-					s/LANGUAGE plpython2?u/LANGUAGE plpython3u/g;
-					s/EXTENSION ([^ ]*_)*plpython2?u/EXTENSION $1plpython3u/g;
-					s/installing required extension "plpython2u"/installing required extension "plpython3u"/g;
-				} for ($contents);
-				my $base = basename $file;
-				open($handle, '>', "$dir/python3/$base") ||
-				  die "opening python 3 file for $file";
-				print $handle $contents;
-				close($handle);
-			}
-		}
-	}
-	do { s!^!python3/!; } foreach(@$tests);
-	return @$tests;
-}
-
 sub plcheck
 {
 	chdir "$topdir/src/pl";
@@ -428,14 +337,9 @@ sub plcheck
 		}
 		if ($lang eq 'plpython')
 		{
-<<<<<<< HEAD
-			next unless -d "$topdir/$Config/plpython2" ||
-				-d "$topdir/$Config/plpython3";
-=======
 			next
 			  unless -d "$topdir/$Config/plpython2"
 			  || -d "$topdir/$Config/plpython3";
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			$lang = 'plpythonu';
 		}
 		else
@@ -446,11 +350,7 @@ sub plcheck
 		chdir $dir;
 		my @tests = fetchTests();
 		@tests = mangle_plpython3(\@tests)
-<<<<<<< HEAD
-			if $lang eq 'plpythonu' && -d "$topdir/$Config/plpython3";
-=======
 		  if $lang eq 'plpythonu' && -d "$topdir/$Config/plpython3";
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if ($lang eq 'plperl')
 		{
 
@@ -470,13 +370,10 @@ sub plcheck
 		{
 			@lang_args = ();
 		}
-<<<<<<< HEAD
-=======
 
 		# Move on if no tests are listed.
 		next if (scalar @tests == 0);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		print
 		  "============================================================\n";
 		print "Checking $lang\n";

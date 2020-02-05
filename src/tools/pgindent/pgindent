@@ -337,23 +337,6 @@ sub run_build
 
 	$ENV{PGTYPEDEFS} = abs_path('tmp_typedefs.list');
 
-<<<<<<< HEAD
-	my $pg_bsd_indent_url =
-	    "https://ftp.postgresql.org/pub/dev/pg_bsd_indent-"
-	  . $INDENT_VERSION
-	  . ".tar.gz";
-
-	$rv = getstore($pg_bsd_indent_url, "pg_bsd_indent.tgz");
-
-	die "cannot fetch BSD indent tarfile from $pg_bsd_indent_url\n"
-	  unless is_success($rv);
-
-	# XXX add error checking here
-
-	system("tar -z -xf pg_bsd_indent.tgz");
-	chdir "pg_bsd_indent";
-	system("make > $devnull 2>&1");
-=======
 	my $indentrepo = "https://git.postgresql.org/git/pg_bsd_indent.git";
 	system("git clone $indentrepo >$devnull 2>&1");
 	die "could not fetch pg_bsd_indent sources from $indentrepo\n"
@@ -363,7 +346,6 @@ sub run_build
 	system("make all check >$devnull");
 	die "could not build pg_bsd_indent from source\n"
 	  unless $? == 0;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	$ENV{PGINDENT} = abs_path('pg_bsd_indent');
 

@@ -20,21 +20,12 @@ our (@ISA, @EXPORT_OK);
 my $insttype;
 my @client_contribs = ('oid2name', 'pgbench', 'vacuumlo');
 my @client_program_files = (
-<<<<<<< HEAD
-	'clusterdb',     'createdb',       'createlang', 'createuser',
-	'dropdb',        'droplang',       'dropuser',   'ecpg',
-	'libecpg',       'libecpg_compat', 'libpgtypes', 'libpq',
-	'pg_basebackup', 'pg_config',      'pg_dump',    'pg_dumpall',
-	'pg_isready',    'pg_receivexlog', 'pg_recvlogical', 'pg_restore',
-	'psql', 'reindexdb',     'vacuumdb',       @client_contribs);
-=======
 	'clusterdb',      'createdb',   'createuser',    'dropdb',
 	'dropuser',       'ecpg',       'libecpg',       'libecpg_compat',
 	'libpgtypes',     'libpq',      'pg_basebackup', 'pg_config',
 	'pg_dump',        'pg_dumpall', 'pg_isready',    'pg_receivewal',
 	'pg_recvlogical', 'pg_restore', 'psql',          'reindexdb',
 	'vacuumdb',       @client_contribs);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 sub lcopy
 {
@@ -387,13 +378,8 @@ sub GenerateTimezoneFiles
 
 	print "Generating timezone files...";
 
-<<<<<<< HEAD
-	my @args = ("$conf/zic/zic", '-d', "$target/share/timezone",
-				'-p', "$posixrules");
-=======
 	my @args =
 	  ("$conf/zic/zic", '-d', "$target/share/timezone", '-p', "$posixrules");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	foreach (@tzfiles)
 	{
 		my $tzfile = $_;
@@ -720,11 +706,8 @@ sub CopyIncludeFiles
 		$target . '/include/informix/esql/',
 		'src/interfaces/ecpg/include/',
 		split /\s+/, $1);
-<<<<<<< HEAD
 	}
-=======
 	return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 sub GenerateNLSFiles

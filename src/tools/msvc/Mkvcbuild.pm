@@ -99,17 +99,11 @@ sub mkvcbuild
 	  chklocale.c crypt.c fls.c fseeko.c getrusage.c inet_aton.c random.c
 	  srandom.c getaddrinfo.c gettimeofday.c inet_net_ntop.c kill.c open.c
 	  erand48.c snprintf.c strlcat.c strlcpy.c dirmod.c noblock.c path.c
-<<<<<<< HEAD
-	  pg_strong_random.c pgcheckdir.c pgmkdirp.c pgsleep.c pgstrcasecmp.c
-	  pqsignal.c mkdtemp.c qsort.c qsort_arg.c quotes.c system.c
-	  sprompt.c tar.c thread.c getopt.c getopt_long.c dirent.c
-=======
 	  dirent.c dlopen.c getopt.c getopt_long.c
 	  pread.c pwrite.c pg_bitutils.c
 	  pg_strong_random.c pgcheckdir.c pgmkdirp.c pgsleep.c pgstrcasecmp.c
 	  pqsignal.c mkdtemp.c qsort.c qsort_arg.c quotes.c system.c
 	  sprompt.c strerror.c tar.c thread.c
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	  win32env.c win32error.c win32security.c win32setlocale.c);
 
 	push(@pgportfiles, 'rint.c') if ($vsVersion < '12.00');
@@ -238,11 +232,7 @@ sub mkvcbuild
 
 		for my $tclver (qw(86t 86 85 84))
 		{
-<<<<<<< HEAD
-			my $tcllib = $solution->{options}->{tcl} . "\\lib\\tcl$tclver.lib";
-=======
 			my $tcllib = $solution->{options}->{tcl} . "/lib/tcl$tclver.lib";
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			if (-e $tcllib)
 			{
 				$pltcl->AddLibrary($tcllib);
@@ -250,13 +240,8 @@ sub mkvcbuild
 				last;
 			}
 		}
-<<<<<<< HEAD
-		die "Unable to find $solution->{options}->{tcl}\\lib\\tcl<version>.lib"
-			unless $found;
-=======
 		die "Unable to find $solution->{options}->{tcl}/lib/tcl<version>.lib"
 		  unless $found;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	} # buildclient
 
@@ -577,38 +562,24 @@ sub mkvcbuild
 		my $perl_path = $solution->{options}->{perl} . '\lib\CORE\*perl*';
 
 		# ActivePerl 5.16 provided perl516.lib; 5.18 provided libperl518.a
-<<<<<<< HEAD
-		my @perl_libs =
-		  grep { /perl\d+\.lib$|libperl\d+\.a$/ } glob($perl_path);
-		if (@perl_libs == 1)
-=======
 		# Starting with ActivePerl 5.24, both  perlnn.lib and libperlnn.a are provided.
 		# In this case, prefer .lib.
 		my @perl_libs =
 		  reverse sort grep { /perl\d+\.lib$|libperl\d+\.a$/ }
 		  glob($perl_path);
 		if (@perl_libs > 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			$plperl->AddLibrary($perl_libs[0]);
 		}
 		else
 		{
 			die
-<<<<<<< HEAD
-"could not identify perl library version matching pattern $perl_path\n";
-=======
 			  "could not identify perl library version matching pattern $perl_path\n";
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		# Add defines from Perl's ccflags; see PGAC_CHECK_PERL_EMBED_CCFLAGS
 		my @perl_embed_ccflags;
-<<<<<<< HEAD
-		foreach my $f (split(" ",$Config{ccflags}))
-=======
 		foreach my $f (split(" ", $Config{ccflags}))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			if ($f =~ /^-D[^_]/)
 			{
@@ -693,11 +664,7 @@ sub mkvcbuild
 				{
 
 					# Some builds exhibit runtime failure through Perl warning
-<<<<<<< HEAD
-					# 'Can't spawn "conftest.exe"'; supress that.
-=======
 					# 'Can't spawn "conftest.exe"'; suppress that.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					no warnings;
 
 					# Disable error dialog boxes like we do in the postmaster.
@@ -751,11 +718,7 @@ sub mkvcbuild
 			(my $xsc = $xs) =~ s/\.xs/.c/;
 			if (Solution::IsNewer("$plperlsrc$xsc", "$plperlsrc$xs"))
 			{
-<<<<<<< HEAD
-				my $xsubppdir = first { -e "$_\\ExtUtils\\xsubpp" } @INC;
-=======
 				my $xsubppdir = first { -e "$_/ExtUtils/xsubpp" } (@INC);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				print "Building $plperlsrc$xsc...\n";
 				system( $solution->{options}->{perl}
 					  . '/bin/perl '
@@ -814,8 +777,6 @@ sub mkvcbuild
 				die 'Failed to create plperl_opmask.h' . "\n";
 			}
 		}
-<<<<<<< HEAD
-=======
 
 		# Add transform modules dependent on plperl
 		my $hstore_plperl = AddTransformModule(
@@ -831,7 +792,6 @@ sub mkvcbuild
 			$hstore_plperl->AddDefine($f);
 			$jsonb_plperl->AddDefine($f);
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	$mf =

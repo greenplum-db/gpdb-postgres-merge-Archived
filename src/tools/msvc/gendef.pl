@@ -21,13 +21,8 @@ my @def;
 sub extract_syms
 {
 	my ($symfile, $def) = @_;
-<<<<<<< HEAD
-	open(F, "<$symfile") || die "Could not open $symfile for $_: $!\n";
-	while (<F>)
-=======
 	open(my $f, '<', $symfile) || die "Could not open $symfile for $_: $!\n";
 	while (<$f>)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 
 		# Expected symbol lines look like:

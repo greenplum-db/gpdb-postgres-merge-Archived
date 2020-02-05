@@ -195,15 +195,10 @@ sub GenerateFiles
 			s{PG_VERSION_STR "[^"]+"}{PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, compiled by Visual C++ build " CppAsString2(_MSC_VER) ", $bits-bit"};
 			print $o $_;
 		}
-<<<<<<< HEAD
-		print O "#define GP_VERSION \"$self->{gpdbver}\"\n";
-		print O "#define GP_MAJORVERSION \"$self->{gpdbmajorver}\"\n";
-		print O "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
-		print O "#define LOCALEDIR \"/share/locale\"\n"
-=======
+		print $o "#define GP_VERSION \"$self->{gpdbver}\"\n";
+		print $o "#define GP_MAJORVERSION \"$self->{gpdbmajorver}\"\n";
 		print $o "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
 		print $o "#define LOCALEDIR \"/share/locale\"\n"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		  if ($self->{options}->{nls});
 		print $o "/* defines added by config steps */\n";
 		print $o "#ifndef IGNORE_CONFIGURED_SETTINGS\n";
@@ -529,13 +524,7 @@ sub GenerateFiles
 #endif
 #define ENABLE_THREAD_SAFETY 1
 EOF
-<<<<<<< HEAD
-		print O "#define USE_INTEGER_DATETIMES 1\n"
-		  if ($self->{options}->{integer_datetimes});
-		close(O);
-=======
 		close($o);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	unless (-f "src/port/pg_config_paths.h")
@@ -585,8 +574,6 @@ EOF
 			last;
 		}
 	}
-<<<<<<< HEAD
-=======
 	$need_genbki = 1
 	  if IsNewer('src/backend/catalog/bki-stamp',
 		'src/backend/catalog/genbki.pl');
@@ -604,7 +591,6 @@ EOF
 		  || confess "Could not touch bki-stamp";
 		close($f);
 		chdir('../../..');
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	if (IsNewer(
@@ -629,6 +615,7 @@ EOF
 		  || confess "Could not touch header-stamp";
 		close($chs);
 	}
+	} # buildclient
 
 	open(my $o, '>', "doc/src/sgml/version.sgml")
 	  || croak "Could not write to version.sgml\n";
@@ -679,23 +666,6 @@ sub AddProject
 	if ($self->{options}->{openssl})
 	{
 		$proj->AddIncludeDir($self->{options}->{openssl} . '\include');
-<<<<<<< HEAD
-		if (-e "$self->{options}->{openssl}/lib/VC/ssleay32MD.lib")
-		{
-			$proj->AddLibrary(
-				$self->{options}->{openssl} . '\lib\VC\ssleay32.lib', 1);
-			$proj->AddLibrary(
-				$self->{options}->{openssl} . '\lib\VC\libeay32.lib', 1);
-		}
-		else
-		{
-			# We don't expect the config-specific library to be here,
-			# so don't ask for it in last parameter
-			$proj->AddLibrary(
-				$self->{options}->{openssl} . '\lib\ssleay32.lib', 0);
-			$proj->AddLibrary(
-				$self->{options}->{openssl} . '\lib\libeay32.lib', 0);
-=======
 		my ($digit1, $digit2, $digit3) = $self->GetOpenSSLVersion();
 
 		# Starting at version 1.1.0 the OpenSSL installers have
@@ -760,7 +730,6 @@ sub AddProject
 				$proj->AddLibrary(
 					$self->{options}->{openssl} . '\lib\libeay32.lib', 0);
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 	if ($self->{options}->{nls})
@@ -1004,11 +973,8 @@ use strict;
 use warnings;
 use base qw(Solution);
 
-<<<<<<< HEAD
-=======
 no warnings qw(redefine);    ## no critic
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 sub new
 {
 	my $classname = shift;
