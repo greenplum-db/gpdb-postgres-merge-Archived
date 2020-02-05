@@ -828,15 +828,9 @@ XLogReaderValidatePageHeader(XLogReaderState *state, XLogRecPtr recptr,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Check that the address on the page agrees with what we expected.
-	 * This check typically fails when an old WAL segment is recycled,
-	 * and hasn't yet been overwritten with new data yet.
-=======
 	 * Check that the address on the page agrees with what we expected. This
 	 * check typically fails when an old WAL segment is recycled, and hasn't
 	 * yet been overwritten with new data yet.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	if (hdr->xlp_pageaddr != recaddr)
 	{
@@ -933,13 +927,8 @@ XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr)
 		 * that, except when caller has explicitly specified the offset that
 		 * falls somewhere there or when we are skipping multi-page
 		 * continuation record. It doesn't matter though because
-<<<<<<< HEAD
-		 * ReadPageInternal() is prepared to handle that and will read at least
-		 * short page-header worth of data
-=======
 		 * ReadPageInternal() is prepared to handle that and will read at
 		 * least short page-header worth of data
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 */
 		targetRecOff = tmpRecPtr % XLOG_BLCKSZ;
 

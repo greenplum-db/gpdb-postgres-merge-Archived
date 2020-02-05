@@ -76,13 +76,8 @@ static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
  * This function is transactional. The creation is WAL-logged, and if the
  * transaction aborts later on, the storage will be destroyed.
  */
-<<<<<<< HEAD
-void
-RelationCreateStorage(RelFileNode rnode, char relpersistence, char relstorage)
-=======
 SMgrRelation
-RelationCreateStorage(RelFileNode rnode, char relpersistence)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+RelationCreateStorage(RelFileNode rnode, char relpersistence, char relstorage)
 {
 	PendingRelDelete *pending;
 	SMgrRelation srel;

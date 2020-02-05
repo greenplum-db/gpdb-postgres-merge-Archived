@@ -1979,10 +1979,7 @@ do_autovacuum(void)
 	int			effective_multixact_freeze_max_age;
 	bool		did_vacuum = false;
 	bool		found_concurrent_worker = false;
-<<<<<<< HEAD
-=======
 	int			i;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * StartTransactionCommand and CommitTransactionCommand will automatically

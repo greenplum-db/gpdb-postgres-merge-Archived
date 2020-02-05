@@ -28,11 +28,8 @@
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
-<<<<<<< HEAD
 #include "utils/lsyscache.h"
-=======
 #include "utils/memutils.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/syscache.h"
 
 /*
@@ -316,22 +313,14 @@ has_superclass(Oid relationId)
 	ScanKeyData skey;
 	bool		result;
 
-<<<<<<< HEAD
-	catalog = heap_open(InheritsRelationId, AccessShareLock);
-=======
 	catalog = table_open(InheritsRelationId, AccessShareLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	ScanKeyInit(&skey, Anum_pg_inherits_inhrelid, BTEqualStrategyNumber,
 				F_OIDEQ, ObjectIdGetDatum(relationId));
 	scan = systable_beginscan(catalog, InheritsRelidSeqnoIndexId, true,
 							  NULL, 1, &skey);
 	result = HeapTupleIsValid(systable_getnext(scan));
 	systable_endscan(scan);
-<<<<<<< HEAD
-	heap_close(catalog, AccessShareLock);
-=======
 	table_close(catalog, AccessShareLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return result;
 }
@@ -455,11 +444,7 @@ StoreSingleInheritance(Oid relationId, Oid parentOid, int32 seqNumber)
 	HeapTuple	tuple;
 	Relation	inhRelation;
 
-<<<<<<< HEAD
-	inhRelation = heap_open(InheritsRelationId, RowExclusiveLock);
-=======
 	inhRelation = table_open(InheritsRelationId, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Make the pg_inherits entry
@@ -472,68 +457,9 @@ StoreSingleInheritance(Oid relationId, Oid parentOid, int32 seqNumber)
 
 	tuple = heap_form_tuple(RelationGetDescr(inhRelation), values, nulls);
 
-<<<<<<< HEAD
-	simple_heap_insert(inhRelation, tuple);
-	CatalogUpdateIndexes(inhRelation, tuple);
-
-	heap_freetuple(tuple);
-
-	heap_close(inhRelation, RowExclusiveLock);
-}
-
-/*
- * DeleteInheritsTuple
- *
- * Delete pg_inherits tuples with the given inhrelid.  inhparent may be given
- * as InvalidOid, in which case all tuples matching inhrelid are deleted;
- * otherwise only delete tuples with the specified inhparent.
- *
- * Returns whether at least one row was deleted.
- */
-bool
-DeleteInheritsTuple(Oid inhrelid, Oid inhparent)
-{
-	bool	found = false;
-	Relation	catalogRelation;
-	ScanKeyData key;
-	SysScanDesc scan;
-	HeapTuple	inheritsTuple;
-
-	/*
-	 * Find pg_inherits entries by inhrelid.
-	 */
-	catalogRelation = heap_open(InheritsRelationId, RowExclusiveLock);
-	ScanKeyInit(&key,
-				Anum_pg_inherits_inhrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(inhrelid));
-	scan = systable_beginscan(catalogRelation, InheritsRelidSeqnoIndexId,
-							  true, NULL, 1, &key);
-
-	while (HeapTupleIsValid(inheritsTuple = systable_getnext(scan)))
-	{
-		Oid			parent;
-
-		/* Compare inhparent if it was given, and do the actual deletion. */
-		parent = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhparent;
-		if (!OidIsValid(inhparent) || parent == inhparent)
-		{
-			simple_heap_delete(catalogRelation, &inheritsTuple->t_self);
-			found = true;
-		}
-	}
-
-	/* Done */
-	systable_endscan(scan);
-	heap_close(catalogRelation, RowExclusiveLock);
-
-	return found;
-}
-=======
 	CatalogTupleInsert(inhRelation, tuple);
 
 	heap_freetuple(tuple);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	table_close(inhRelation, RowExclusiveLock);
 }

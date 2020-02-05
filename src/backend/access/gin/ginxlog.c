@@ -13,15 +13,9 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
-#include "access/gin.h"
-#include "access/gin_private.h"
-#include "access/bufmask.h"
-=======
 #include "access/bufmask.h"
 #include "access/gin_private.h"
 #include "access/ginxlog.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/xlogutils.h"
 #include "utils/memutils.h"
 
@@ -211,13 +205,8 @@ ginRedoRecompress(Page page, ginxlogRecompressDataLeaf *data)
 		while (segno < a_segno)
 		{
 			/*
-<<<<<<< HEAD
-			 * Once modification is started and page tail is copied, we've
-			 * to copy unmodified segments.
-=======
 			 * Once modification is started and page tail is copied, we've to
 			 * copy unmodified segments.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			 */
 			segsize = SizeOfGinPostingList(oldseg);
 			if (tailCopy)
@@ -268,21 +257,12 @@ ginRedoRecompress(Page page, ginxlogRecompressDataLeaf *data)
 		}
 
 		/*
-<<<<<<< HEAD
-		 * We're about to start modification of the page.  So, copy tail of the
-		 * page if it's not done already.
-		 */
-		if (!tailCopy && segptr != segmentend)
-		{
-			int tailSize = segmentend - segptr;
-=======
 		 * We're about to start modification of the page.  So, copy tail of
 		 * the page if it's not done already.
 		 */
 		if (!tailCopy && segptr != segmentend)
 		{
 			int			tailSize = segmentend - segptr;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			tailCopy = (Pointer) palloc(tailSize);
 			memcpy(tailCopy, segptr, tailSize);
@@ -324,11 +304,7 @@ ginRedoRecompress(Page page, ginxlogRecompressDataLeaf *data)
 	segptr = (Pointer) oldseg;
 	if (segptr != segmentend && tailCopy)
 	{
-<<<<<<< HEAD
-		int restSize = segmentend - segptr;
-=======
 		int			restSize = segmentend - segptr;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		Assert(writePtr + restSize <= PageGetSpecialPointer(page));
 		memcpy(writePtr, segptr, restSize);

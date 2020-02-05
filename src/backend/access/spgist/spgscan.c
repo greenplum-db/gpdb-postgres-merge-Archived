@@ -388,10 +388,7 @@ spgendscan(IndexScanDesc scan)
 	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
 
 	MemoryContextDelete(so->tempCxt);
-<<<<<<< HEAD
-=======
 	MemoryContextDelete(so->traversalCxt);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (so->keyData)
 		pfree(so->keyData);
@@ -399,9 +396,6 @@ spgendscan(IndexScanDesc scan)
 	if (so->state.deadTupleStorage)
 		pfree(so->state.deadTupleStorage);
 
-<<<<<<< HEAD
-	pfree(so);
-=======
 	if (scan->numberOfOrderBys > 0)
 	{
 		pfree(so->orderByTypes);
@@ -436,7 +430,6 @@ spgNewHeapItem(SpGistScanOpaque so, int level, ItemPointer heapPtr,
 	item->recheckDistances = recheckDistances;
 
 	return item;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*

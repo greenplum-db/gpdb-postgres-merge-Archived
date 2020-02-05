@@ -616,16 +616,10 @@ AggregateCreate(const char *aggName,
 							 replace,	/* maybe replacement */
 							 false, /* doesn't return a set */
 							 finaltype, /* returnType */
-<<<<<<< HEAD
-							 GetUserId(),		/* proowner */
-							 INTERNALlanguageId,		/* languageObjectId */
-							 InvalidOid,		/* no validator */
-							 InvalidOid,		/* no describe function */
-=======
 							 GetUserId(),	/* proowner */
 							 INTERNALlanguageId,	/* languageObjectId */
 							 InvalidOid,	/* no validator */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+							 InvalidOid,		/* no describe function */
 							 "aggregate_dummy", /* placeholder proc */
 							 NULL,	/* probin */
 							 PROKIND_AGGREGATE,

@@ -16,10 +16,6 @@
 #include "postgres.h"
 
 #include "access/genam.h"
-<<<<<<< HEAD
-#include "access/heapam.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/htup_details.h"
 #include "access/relation.h"
 #include "access/sysattr.h"
@@ -56,13 +52,10 @@
 #include "catalog/pg_publication.h"
 #include "catalog/pg_publication_rel.h"
 #include "catalog/pg_rewrite.h"
-<<<<<<< HEAD
 #include "catalog/pg_resgroup.h"
 #include "catalog/pg_resqueue.h"
-=======
 #include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_subscription.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_transform.h"
 #include "catalog/pg_trigger.h"
@@ -1055,7 +1048,6 @@ get_object_address(ObjectType objtype, Node *object,
 				address = get_object_address_defacl(castNode(List, object),
 													missing_ok);
 				break;
-<<<<<<< HEAD
 		   case OBJECT_RESQUEUE:
 				address.classId = ResQueueRelationId;
 				address.objectId = get_resqueue_oid(NameListToString(objname), false);
@@ -1064,12 +1056,12 @@ get_object_address(ObjectType objtype, Node *object,
 			case OBJECT_RESGROUP:
 				address.classId = ResGroupRelationId;
 				address.objectId = GetResGroupIdForName(NameListToString(objname));
-=======
+				address.objectSubId = 0;
+				break;
 			case OBJECT_STATISTIC_EXT:
 				address.classId = StatisticExtRelationId;
 				address.objectId = get_statistics_object_oid(castNode(List, object),
 															 missing_ok);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				address.objectSubId = 0;
 				break;
 			default:
@@ -1193,64 +1185,7 @@ get_object_address_unqualified(ObjectType objtype,
 	const char *name;
 	ObjectAddress address;
 
-<<<<<<< HEAD
-	/*
-	 * The types of names handled by this function are not permitted to be
-	 * schema-qualified or catalog-qualified.
-	 */
-	if (list_length(qualname) != 1)
-	{
-		const char *msg;
-
-		switch (objtype)
-		{
-			case OBJECT_ACCESS_METHOD:
-				msg = gettext_noop("access method name cannot be qualified");
-				break;
-			case OBJECT_DATABASE:
-				msg = gettext_noop("database name cannot be qualified");
-				break;
-			case OBJECT_EXTENSION:
-				msg = gettext_noop("extension name cannot be qualified");
-				break;
-			case OBJECT_TABLESPACE:
-				msg = gettext_noop("tablespace name cannot be qualified");
-				break;
-			case OBJECT_ROLE:
-				msg = gettext_noop("role name cannot be qualified");
-				break;
-			case OBJECT_SCHEMA:
-				msg = gettext_noop("schema name cannot be qualified");
-				break;
-			case OBJECT_LANGUAGE:
-				msg = gettext_noop("language name cannot be qualified");
-				break;
-			case OBJECT_FDW:
-				msg = gettext_noop("foreign-data wrapper name cannot be qualified");
-				break;
-			case OBJECT_FOREIGN_SERVER:
-				msg = gettext_noop("server name cannot be qualified");
-				break;
-			case OBJECT_EVENT_TRIGGER:
-				msg = gettext_noop("event trigger name cannot be qualified");
-				break;
-			case OBJECT_EXTPROTOCOL:
-				msg = gettext_noop("protocol name cannot be qualified");
-				break;
-			default:
-				elog(ERROR, "unrecognized objtype: %d", (int) objtype);
-				msg = NULL;		/* placate compiler */
-		}
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("%s", _(msg))));
-	}
-
-	/* Format is valid, extract the actual name. */
-	name = strVal(linitial(qualname));
-=======
 	name = strVal(strval);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Translate name to OID. */
 	switch (objtype)
@@ -1305,11 +1240,6 @@ get_object_address_unqualified(ObjectType objtype,
 			address.objectId = get_event_trigger_oid(name, missing_ok);
 			address.objectSubId = 0;
 			break;
-<<<<<<< HEAD
-		case OBJECT_EXTPROTOCOL:
-			address.classId = ExtprotocolRelationId;
-			address.objectId = get_extprotocol_oid(name, missing_ok);
-=======
 		case OBJECT_PUBLICATION:
 			address.classId = PublicationRelationId;
 			address.objectId = get_publication_oid(name, missing_ok);
@@ -1318,7 +1248,11 @@ get_object_address_unqualified(ObjectType objtype,
 		case OBJECT_SUBSCRIPTION:
 			address.classId = SubscriptionRelationId;
 			address.objectId = get_subscription_oid(name, missing_ok);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			address.objectSubId = 0;
+			break;
+		case OBJECT_EXTPROTOCOL:
+			address.classId = ExtprotocolRelationId;
+			address.objectId = get_extprotocol_oid(name, missing_ok);
 			address.objectSubId = 0;
 			break;
 		default:
@@ -1347,14 +1281,9 @@ get_relation_by_qualified_name(ObjectType objtype, List *object,
 	address.objectId = InvalidOid;
 	address.objectSubId = 0;
 
-<<<<<<< HEAD
-	relation = relation_openrv_extended(makeRangeVarFromNameList(objname),
+	relation = relation_openrv_extended(makeRangeVarFromNameList(object),
 										lockmode, missing_ok,
 										false);
-=======
-	relation = relation_openrv_extended(makeRangeVarFromNameList(object),
-										lockmode, missing_ok);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (!relation)
 		return address;
 
@@ -2241,11 +2170,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("name list length must be at least %d", 3)));
 			/* fall through to check args length */
-<<<<<<< HEAD
-			/* fallthrough */
-=======
 			/* FALLTHROUGH */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		case OBJECT_OPERATOR:
 			if (list_length(args) != 2)
 				ereport(ERROR,
@@ -3730,27 +3655,6 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
-<<<<<<< HEAD
-		case OCLASS_EXTPROTOCOL:
-			{
-				appendStringInfo(&buffer, _("protocol %s"),
-								 ExtProtocolGetNameByOid(object->objectId));
-				break;
-			}
-
-		case OCLASS_COMPRESSION:
-			{
-				elog(NOTICE, "NOT YET IMPLEMENTED");
-				break;
-			}
-
-		default:
-			appendStringInfo(&buffer, "unrecognized object %u %u %d",
-							 object->classId,
-							 object->objectId,
-							 object->objectSubId);
-			break;
-=======
 		case OCLASS_SUBSCRIPTION:
 			{
 				appendStringInfo(&buffer, _("subscription %s"),
@@ -3780,11 +3684,23 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
+		case OCLASS_EXTPROTOCOL:
+			{
+				appendStringInfo(&buffer, _("protocol %s"),
+								 ExtProtocolGetNameByOid(object->objectId));
+				break;
+			}
+
+		case OCLASS_COMPRESSION:
+			{
+				elog(NOTICE, "NOT YET IMPLEMENTED");
+				break;
+			}
+
 			/*
 			 * There's intentionally no default: case here; we want the
 			 * compiler to warn if a new OCLASS hasn't been handled above.
 			 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	return buffer.data;
@@ -3835,18 +3751,9 @@ getRelationDescription(StringInfo buffer, Oid relid)
 	switch (relForm->relkind)
 	{
 		case RELKIND_RELATION:
-<<<<<<< HEAD
-			if (relForm->relstorage == RELSTORAGE_AOROWS)
-				appendStringInfo(buffer, _("append only table %s"), relname);
-			else if (relForm->relstorage == RELSTORAGE_AOCOLS)
-				appendStringInfo(buffer, _("append only columnar table %s"), relname);
-			else
-				appendStringInfo(buffer, _("table %s"), relname);
-=======
 		case RELKIND_PARTITIONED_TABLE:
 			appendStringInfo(buffer, _("table %s"),
 							 relname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 		case RELKIND_INDEX:
 		case RELKIND_PARTITIONED_INDEX:

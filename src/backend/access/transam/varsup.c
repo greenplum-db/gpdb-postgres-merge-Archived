@@ -71,12 +71,8 @@ GetNewTransactionId(bool isSubXact)
 	if (IsBootstrapProcessingMode())
 	{
 		Assert(!isSubXact);
-<<<<<<< HEAD
-		return BootstrapTransactionId;
-=======
 		MyPgXact->xid = BootstrapTransactionId;
 		return FullTransactionIdFromEpochAndXid(0, BootstrapTransactionId);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/* safety check, we should never get this far in a HS standby */

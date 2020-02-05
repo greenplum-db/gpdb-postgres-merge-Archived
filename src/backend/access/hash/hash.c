@@ -45,19 +45,11 @@ typedef struct
 /* GPDB: This takes an ItemPointer, rather than HeapTuple, because this is also
  * used with AO/AOCO tables */
 static void hashbuildCallback(Relation index,
-<<<<<<< HEAD
-				  ItemPointer tupleId,
-				  Datum *values,
-				  bool *isnull,
-				  bool tupleIsAlive,
-				  void *state);
-=======
-							  HeapTuple htup,
+							  ItemPointer tupleId,
 							  Datum *values,
 							  bool *isnull,
 							  bool tupleIsAlive,
 							  void *state);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /*
@@ -173,16 +165,11 @@ hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	buildstate.heapRel = heap;
 
 	/* do the heap scan */
-<<<<<<< HEAD
-	reltuples = IndexBuildScan(heap, index, indexInfo, true,
-							   hashbuildCallback, (void *) &buildstate);
-=======
 	reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
 									   hashbuildCallback,
 									   (void *) &buildstate, NULL);
 	pgstat_progress_update_param(PROGRESS_CREATEIDX_TUPLES_TOTAL,
 								 buildstate.indtuples);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (buildstate.spool)
 	{
@@ -242,13 +229,8 @@ hashbuildCallback(Relation index,
 		/* form an index tuple and point it at the heap tuple */
 		itup = index_form_tuple(RelationGetDescr(index),
 								index_values, index_isnull);
-<<<<<<< HEAD
-		itup->t_tid = *tupleId;
-		_hash_doinsert(index, itup);
-=======
 		itup->t_tid = htup->t_self;
 		_hash_doinsert(index, itup, buildstate->heapRel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		pfree(itup);
 	}
 

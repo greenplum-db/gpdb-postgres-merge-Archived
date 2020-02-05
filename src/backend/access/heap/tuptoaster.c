@@ -70,11 +70,7 @@ typedef struct toast_compress_header
 
 static void toast_delete_datum(Relation rel, Datum value, bool is_speculative);
 static Datum toast_save_datum(Relation rel, Datum value,
-<<<<<<< HEAD
-				 struct varlena * oldexternal, bool isFrozen, int options);
-=======
-							  struct varlena *oldexternal, int options);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+							  struct varlena *oldexternal, bool isFrozen, int options);
 static bool toastrel_valueid_exists(Relation toastrel, Oid valueid);
 static bool toastid_valueid_exists(Oid toastrelid, Oid valueid);
 static struct varlena *toast_fetch_datum(struct varlena *attr);
@@ -579,11 +575,7 @@ toast_datum_size(Datum value)
  * ----------
  */
 void
-<<<<<<< HEAD
-toast_delete(Relation rel, GenericTuple oldtup, MemTupleBinding *pbind)
-=======
 toast_delete(Relation rel, HeapTuple oldtup, bool is_speculative)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	TupleDesc	tupleDesc;
 	int			numAttrs;
@@ -1718,11 +1710,7 @@ toast_get_valid_index(Oid toastoid, LOCKMODE lock)
  */
 static Datum
 toast_save_datum(Relation rel, Datum value,
-<<<<<<< HEAD
-				 struct varlena * oldexternal, bool isFrozen, int options)
-=======
-				 struct varlena *oldexternal, int options)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				 struct varlena *oldexternal, bool isFrozen, int options)
 {
 	Relation	toastrel;
 	Relation   *toastidxs;
@@ -2029,11 +2017,7 @@ toast_save_datum(Relation rel, Datum value,
  * ----------
  */
 static void
-<<<<<<< HEAD
-toast_delete_datum(Relation rel pg_attribute_unused(), Datum value)
-=======
 toast_delete_datum(Relation rel, Datum value, bool is_speculative)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	struct varlena *attr = (struct varlena *) DatumGetPointer(value);
 	struct varatt_external toast_pointer;
@@ -2104,11 +2088,7 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
  *
  *	Test whether a toast value with the given ID exists in the toast relation.
  *	For safety, we consider a value to exist if there are either live or dead
-<<<<<<< HEAD
- *	toast rows with that ID; see notes for GetNewOid().
-=======
  *	toast rows with that ID; see notes for GetNewOidWithIndex().
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * ----------
  */
 static bool

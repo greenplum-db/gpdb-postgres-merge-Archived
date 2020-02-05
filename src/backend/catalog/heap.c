@@ -50,13 +50,8 @@
 #include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
-<<<<<<< HEAD
-#include "catalog/oid_dispatch.h"
-#include "catalog/pg_appendonly_fn.h"
-=======
 #include "catalog/partition.h"
 #include "catalog/pg_am.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_attribute_encoding.h"
 #include "catalog/pg_authid.h"
@@ -109,25 +104,22 @@
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
-<<<<<<< HEAD
-#include "utils/memutils.h"             /* CDB: GetMemoryChunkContext */
-#include "utils/relcache.h"
-=======
 #include "utils/partcache.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/rel.h"
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
-#include "utils/timestamp.h"
 
 #include "catalog/aocatalog.h"
+#include "catalog/oid_dispatch.h"
+#include "catalog/pg_appendonly_fn.h"
 #include "cdb/cdbpartition.h"
 #include "cdb/cdbsreh.h"
 #include "cdb/cdbvars.h"
-
 #include "utils/guc.h"
+#include "utils/memutils.h"             /* CDB: GetMemoryChunkContext */
+#include "utils/relcache.h"
+#include "utils/timestamp.h"
 
 
 static void MetaTrackAddUpdInternal(Oid			classid,
@@ -138,8 +130,6 @@ static void MetaTrackAddUpdInternal(Oid			classid,
 									Relation	rel,
 									HeapTuple	old_tuple);
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /* Potentially set by pg_upgrade_support functions */
@@ -147,18 +137,6 @@ Oid			binary_upgrade_next_heap_pg_class_oid = InvalidOid;
 Oid			binary_upgrade_next_toast_pg_class_oid = InvalidOid;
 
 static void AddNewRelationTuple(Relation pg_class_desc,
-<<<<<<< HEAD
-					Relation new_rel_desc,
-					Oid new_rel_oid,
-					Oid new_type_oid,
-					Oid reloftype,
-					Oid relowner,
-					char relkind,
-					char relstorage,
-					Datum relacl,
-					Datum reloptions,
-					bool is_part_parent);
-=======
 								Relation new_rel_desc,
 								Oid new_rel_oid,
 								Oid new_type_oid,
@@ -169,7 +147,6 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 								TransactionId relminmxid,
 								Datum relacl,
 								Datum reloptions);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static ObjectAddress AddNewRelationType(const char *typeName,
 										Oid typeNamespace,
 										Oid new_rel_oid,
@@ -182,20 +159,12 @@ static Oid	StoreRelCheck(Relation rel, const char *ccname, Node *expr,
 						  bool is_validated, bool is_local, int inhcount,
 						  bool is_no_inherit, bool is_internal);
 static void StoreConstraints(Relation rel, List *cooked_constraints,
-<<<<<<< HEAD
-				 bool is_internal);
-static bool MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
-							bool allow_merge, bool is_local,
-							bool is_initially_valid,
-							bool is_no_inherit);
-=======
 							 bool is_internal);
 static bool MergeWithExistingConstraint(Relation rel, const char *ccname, Node *expr,
 										bool allow_merge, bool is_local,
 										bool is_initially_valid,
 										bool is_no_inherit);
 static void SetRelationNumChecks(Relation rel, int numchecks);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static Node *cookConstraint(ParseState *pstate,
 							Node *raw_constraint,
 							char *relname);
@@ -314,7 +283,6 @@ static const FormData_pg_attribute a6 = {
 	.attislocal = true,
 };
 
-<<<<<<< HEAD
 /*CDB*/
 static FormData_pg_attribute a8 = {
 	0, {"gp_segment_id"}, INT4OID, 0, sizeof(gpsegmentId),
@@ -322,10 +290,7 @@ static FormData_pg_attribute a8 = {
 	true, 'p', 'i', true, false, false, true, 0
 };
 
-static const Form_pg_attribute SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7, &a8};
-=======
-static const FormData_pg_attribute *SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6};
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static const FormData_pg_attribute *SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a8};
 
 /*
  * This function returns a Form_pg_attribute pointer for a system attribute.
@@ -1318,12 +1283,9 @@ AddNewRelationTuple(Relation pg_class_desc,
 					Oid reloftype,
 					Oid relowner,
 					char relkind,
-<<<<<<< HEAD
 					char relstorage,
-=======
 					TransactionId relfrozenxid,
 					TransactionId relminmxid,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					Datum relacl,
 					Datum reloptions,
 					bool is_part_parent)
@@ -1863,12 +1825,9 @@ heap_create_with_catalog(const char *relname,
 						reloftypeid,
 						ownerid,
 						relkind,
-<<<<<<< HEAD
 						relstorage,
-=======
 						relfrozenxid,
 						relminmxid,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						PointerGetDatum(relacl),
 						reloptions,
 						is_part_parent);

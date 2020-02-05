@@ -29,12 +29,9 @@
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
-<<<<<<< HEAD
 #include "catalog/oid_dispatch.h"
-=======
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_am.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_collation.h"
@@ -296,19 +293,15 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 		case OBJECT_FOREIGN_SERVER:
 			whole_mask = ACL_ALL_RIGHTS_FOREIGN_SERVER;
 			break;
-<<<<<<< HEAD
-		case ACL_KIND_EXTPROTOCOL:
-			whole_mask = ACL_ALL_RIGHTS_EXTPROTOCOL;
-			break;
-		case ACL_KIND_EVENT_TRIGGER:
-=======
 		case OBJECT_EVENT_TRIGGER:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			elog(ERROR, "grantable rights not supported for event triggers");
 			/* not reached, but keep compiler quiet */
 			return ACL_NO_RIGHTS;
 		case OBJECT_TYPE:
 			whole_mask = ACL_ALL_RIGHTS_TYPE;
+			break;
+		case ACL_KIND_EXTPROTOCOL:
+			whole_mask = ACL_ALL_RIGHTS_EXTPROTOCOL;
 			break;
 		default:
 			elog(ERROR, "unrecognized object type: %d", objtype);
@@ -804,17 +797,11 @@ objectNamesToOids(ObjectType objtype, List *objnames)
 				objects = lappend_oid(objects, oid);
 			}
 			break;
-<<<<<<< HEAD
-		case ACL_OBJECT_LARGEOBJECT:
+		case OBJECT_LARGEOBJECT:
 			ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("large objects are not supported")));
 
-			if (Gp_role == GP_ROLE_EXECUTE)
-				break;
-=======
-		case OBJECT_LARGEOBJECT:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			foreach(cell, objnames)
 			{
 				Oid			lobjOid = oidparse(lfirst(cell));
@@ -3901,107 +3888,6 @@ privilege_to_string(AclMode privilege)
  * Note: we do not double-quote the %s's below, because many callers
  * supply strings that might be already quoted.
  */
-<<<<<<< HEAD
-
-static const char *const no_priv_msg[MAX_ACL_KIND] =
-{
-	/* ACL_KIND_COLUMN */
-	gettext_noop("permission denied for column %s"),
-	/* ACL_KIND_CLASS */
-	gettext_noop("permission denied for relation %s"),
-	/* ACL_KIND_SEQUENCE */
-	gettext_noop("permission denied for sequence %s"),
-	/* ACL_KIND_DATABASE */
-	gettext_noop("permission denied for database %s"),
-	/* ACL_KIND_PROC */
-	gettext_noop("permission denied for function %s"),
-	/* ACL_KIND_OPER */
-	gettext_noop("permission denied for operator %s"),
-	/* ACL_KIND_TYPE */
-	gettext_noop("permission denied for type %s"),
-	/* ACL_KIND_LANGUAGE */
-	gettext_noop("permission denied for language %s"),
-	/* ACL_KIND_LARGEOBJECT */
-	gettext_noop("permission denied for large object %s"),
-	/* ACL_KIND_NAMESPACE */
-	gettext_noop("permission denied for schema %s"),
-	/* ACL_KIND_OPCLASS */
-	gettext_noop("permission denied for operator class %s"),
-	/* ACL_KIND_OPFAMILY */
-	gettext_noop("permission denied for operator family %s"),
-	/* ACL_KIND_COLLATION */
-	gettext_noop("permission denied for collation %s"),
-	/* ACL_KIND_CONVERSION */
-	gettext_noop("permission denied for conversion %s"),
-	/* ACL_KIND_TABLESPACE */
-	gettext_noop("permission denied for tablespace %s"),
-	/* ACL_KIND_TSDICTIONARY */
-	gettext_noop("permission denied for text search dictionary %s"),
-	/* ACL_KIND_TSCONFIGURATION */
-	gettext_noop("permission denied for text search configuration %s"),
-	/* ACL_KIND_FDW */
-	gettext_noop("permission denied for foreign-data wrapper %s"),
-	/* ACL_KIND_FOREIGN_SERVER */
-	gettext_noop("permission denied for foreign server %s"),
-	/* ACL_KIND_EVENT_TRIGGER */
-	gettext_noop("permission denied for event trigger %s"),
-	/* ACL_KIND_EXTENSION */
-	gettext_noop("permission denied for extension %s"),
-	/* ACL_KIND_EXTPROTOCOL */
-	gettext_noop("permission denied for external protocol %s")	
-};
-
-static const char *const not_owner_msg[MAX_ACL_KIND] =
-{
-	/* ACL_KIND_COLUMN */
-	gettext_noop("must be owner of relation %s"),
-	/* ACL_KIND_CLASS */
-	gettext_noop("must be owner of relation %s"),
-	/* ACL_KIND_SEQUENCE */
-	gettext_noop("must be owner of sequence %s"),
-	/* ACL_KIND_DATABASE */
-	gettext_noop("must be owner of database %s"),
-	/* ACL_KIND_PROC */
-	gettext_noop("must be owner of function %s"),
-	/* ACL_KIND_OPER */
-	gettext_noop("must be owner of operator %s"),
-	/* ACL_KIND_TYPE */
-	gettext_noop("must be owner of type %s"),
-	/* ACL_KIND_LANGUAGE */
-	gettext_noop("must be owner of language %s"),
-	/* ACL_KIND_LARGEOBJECT */
-	gettext_noop("must be owner of large object %s"),
-	/* ACL_KIND_NAMESPACE */
-	gettext_noop("must be owner of schema %s"),
-	/* ACL_KIND_OPCLASS */
-	gettext_noop("must be owner of operator class %s"),
-	/* ACL_KIND_OPFAMILY */
-	gettext_noop("must be owner of operator family %s"),
-	/* ACL_KIND_COLLATION */
-	gettext_noop("must be owner of collation %s"),
-	/* ACL_KIND_CONVERSION */
-	gettext_noop("must be owner of conversion %s"),
-	/* ACL_KIND_TABLESPACE */
-	gettext_noop("must be owner of tablespace %s"),
-	/* ACL_KIND_TSDICTIONARY */
-	gettext_noop("must be owner of text search dictionary %s"),
-	/* ACL_KIND_TSCONFIGURATION */
-	gettext_noop("must be owner of text search configuration %s"),
-	/* ACL_KIND_FDW */
-	gettext_noop("must be owner of foreign-data wrapper %s"),
-	/* ACL_KIND_FOREIGN_SERVER */
-	gettext_noop("must be owner of foreign server %s"),
-	/* ACL_KIND_EVENT_TRIGGER */
-	gettext_noop("must be owner of event trigger %s"),
-	/* ACL_KIND_EXTENSION */
-	gettext_noop("must be owner of extension %s"),
-	/* ACL_KIND_EXTPROTOCOL */
-	gettext_noop("must be owner of external protocol %s")
-};
-
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 void
 aclcheck_error(AclResult aclerr, ObjectType objtype,
 			   const char *objectname)
@@ -4115,6 +4001,9 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 						break;
 					case OBJECT_VIEW:
 						msg = gettext_noop("permission denied for view %s");
+						break;
+					case OBJECT_EXTPROTOCOL:
+						msg = gettext_noop("permission denied for external protocol %s");
 						break;
 						/* these currently aren't used */
 					case OBJECT_ACCESS_METHOD:
@@ -4241,6 +4130,9 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 					case OBJECT_TSDICTIONARY:
 						msg = gettext_noop("must be owner of text search dictionary %s");
 						break;
+					case OBJECT_EXTPROTOCOL:
+						msg = gettext_noop("must be owner of external protocol %s");
+						break;
 
 						/*
 						 * Special cases: For these, the error message talks
@@ -4361,18 +4253,14 @@ pg_aclmask(ObjectType objtype, Oid table_oid, AttrNumber attnum, Oid roleid,
 			return pg_foreign_data_wrapper_aclmask(table_oid, roleid, mask, how);
 		case OBJECT_FOREIGN_SERVER:
 			return pg_foreign_server_aclmask(table_oid, roleid, mask, how);
-<<<<<<< HEAD
-		case ACL_KIND_EXTPROTOCOL:
-			return pg_extprotocol_aclmask(table_oid, roleid, mask, how);
-		case ACL_KIND_EVENT_TRIGGER:
-=======
 		case OBJECT_EVENT_TRIGGER:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			elog(ERROR, "grantable rights not supported for event triggers");
 			/* not reached, but keep compiler quiet */
 			return ACL_NO_RIGHTS;
 		case OBJECT_TYPE:
 			return pg_type_aclmask(table_oid, roleid, mask, how);
+		case ACL_KIND_EXTPROTOCOL:
+			return pg_extprotocol_aclmask(table_oid, roleid, mask, how);
 		default:
 			elog(ERROR, "unrecognized objtype: %d",
 				 (int) objtype);

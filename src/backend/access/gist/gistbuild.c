@@ -80,19 +80,11 @@ typedef struct
 static void gistInitBuffering(GISTBuildState *buildstate);
 static int	calculatePagesPerBuffer(GISTBuildState *buildstate, int levelStep);
 static void gistBuildCallback(Relation index,
-<<<<<<< HEAD
-				  ItemPointer tupleId,
-				  Datum *values,
-				  bool *isnull,
-				  bool tupleIsAlive,
-				  void *state);
-=======
 							  HeapTuple htup,
 							  Datum *values,
 							  bool *isnull,
 							  bool tupleIsAlive,
 							  void *state);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void gistBufferingBuildInsert(GISTBuildState *buildstate,
 									 IndexTuple itup);
 static bool gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
@@ -201,14 +193,9 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	/*
 	 * Do the heap scan.
 	 */
-<<<<<<< HEAD
-	reltuples = IndexBuildScan(heap, index, indexInfo, true,
-								   gistBuildCallback, (void *) &buildstate);
-=======
 	reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
 									   gistBuildCallback,
 									   (void *) &buildstate, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * If buffering was used, flush out all the tuples that are still in the

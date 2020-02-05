@@ -20,11 +20,7 @@
 #include "storage/predicate.h"
 #include "utils/datum.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
-#include "nodes/tidbitmap.h"
-=======
 #include "utils/rel.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* GUC parameter */
 int			GinFuzzySearchLimit = 0;

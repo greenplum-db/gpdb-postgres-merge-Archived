@@ -2557,21 +2557,12 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 		return false;
 	if (info1->ii_Expressions != NIL)
 	{
-<<<<<<< HEAD
-		bool	found_whole_row;
-		Node   *mapped;
-
-		mapped = map_variable_attnos((Node *) info2->ii_Expressions,
-									 1, 0, attmap, maplen,
-									 &found_whole_row);
-=======
 		bool		found_whole_row;
 		Node	   *mapped;
 
 		mapped = map_variable_attnos((Node *) info2->ii_Expressions,
 									 1, 0, attmap, maplen,
 									 InvalidOid, &found_whole_row);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (found_whole_row)
 		{
 			/*
@@ -2590,21 +2581,12 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 		return false;
 	if (info1->ii_Predicate != NULL)
 	{
-<<<<<<< HEAD
-		bool	found_whole_row;
-		Node   *mapped;
-
-		mapped = map_variable_attnos((Node *) info2->ii_Predicate,
-									 1, 0, attmap, maplen,
-									 &found_whole_row);
-=======
 		bool		found_whole_row;
 		Node	   *mapped;
 
 		mapped = map_variable_attnos((Node *) info2->ii_Predicate,
 									 1, 0, attmap, maplen,
 									 InvalidOid, &found_whole_row);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (found_whole_row)
 		{
 			/*
@@ -4033,14 +4015,6 @@ IndexCheckExclusion(Relation heapRelation,
 	{
 		CHECK_FOR_INTERRUPTS();
 
-<<<<<<< HEAD
-		MemoryContextReset(econtext->ecxt_per_tuple_memory);
-
-		/* Set up for predicate or expression evaluation */
-		ExecStoreHeapTuple(heapTuple, slot, InvalidBuffer, false);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		/*
 		 * In a partial index, ignore tuples that don't satisfy the predicate.
 		 */

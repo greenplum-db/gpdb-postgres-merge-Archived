@@ -2390,11 +2390,7 @@ pipeThread(void *arg)
 	_endthread();
 	return 0;
 }
-<<<<<<< HEAD
-#endif   /* WIN32 */
-=======
 #endif							/* WIN32 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Open a new logfile with proper permissions and buffering options.

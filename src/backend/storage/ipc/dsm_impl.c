@@ -288,12 +288,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 		}
 		request_size = st.st_size;
 	}
-<<<<<<< HEAD
-	else if (*mapped_size != request_size &&
-			 dsm_impl_posix_resize(fd, request_size) != 0)
-=======
 	else if (dsm_impl_posix_resize(fd, request_size) != 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		int			save_errno;
 
@@ -848,28 +843,7 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 		}
 		request_size = st.st_size;
 	}
-<<<<<<< HEAD
-	else if (*mapped_size > request_size && ftruncate(fd, request_size))
-	{
-		int			save_errno;
-
-		/* Back out what's already been done. */
-		save_errno = errno;
-		CloseTransientFile(fd);
-		if (op == DSM_OP_CREATE)
-			unlink(name);
-		errno = save_errno;
-
-		ereport(elevel,
-				(errcode_for_dynamic_shared_memory(),
-				 errmsg("could not resize shared memory segment \"%s\" to %zu bytes: %m",
-						name, request_size)));
-		return false;
-	}
-	else if (*mapped_size < request_size)
-=======
 	else
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		/*
 		 * Allocate a buffer full of zeros.

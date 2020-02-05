@@ -367,12 +367,6 @@ ExecScanReScan(ScanState *node)
 {
 	EState	   *estate = node->ps.state;
 
-<<<<<<< HEAD
-	/* Stop projecting any tuples from SRFs in the targetlist */
-	/* node->ps.ps_TupFromTlist = false; */
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * We must clear the scan tuple so that observers (e.g., execCurrent.c)
 	 * can tell that this plan node is not positioned on a tuple.

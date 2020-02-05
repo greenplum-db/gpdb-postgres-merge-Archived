@@ -1439,28 +1439,6 @@ ExecInitBitmapHeapScanForPartition(BitmapHeapScan *node, EState *estate, int efl
 	 */
 	ExecAssignExprContext(estate, &scanstate->ss.ps);
 
-<<<<<<< HEAD
-	/* scanstate->ss.ps.ps_TupFromTlist = false; */
-
-	/*
-	 * initialize child expressions
-	 */
-	scanstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) scanstate);
-	scanstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) scanstate);
-	scanstate->bitmapqualorig = (List *)
-		ExecInitExpr((Expr *) node->bitmapqualorig,
-					 (PlanState *) scanstate);
-
-	/*
-	 * tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &scanstate->ss.ps);
-	ExecInitScanTupleSlot(estate, &scanstate->ss);
-=======
 	/*
 	 * open the scan relation
 	 */
@@ -1491,7 +1469,6 @@ ExecInitBitmapHeapScanForPartition(BitmapHeapScan *node, EState *estate, int efl
 		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
 	scanstate->bitmapqualorig =
 		ExecInitQual(node->bitmapqualorig, (PlanState *) scanstate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Determine the maximum for prefetch_target.  If the tablespace has a

@@ -652,27 +652,12 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 	}
 	else if (HeapTupleHasExternal(tup) || tup->t_len > TOAST_TUPLE_THRESHOLD)
 	{
-<<<<<<< HEAD
-		int options = HEAP_INSERT_SKIP_FSM;
-=======
 		int			options = HEAP_INSERT_SKIP_FSM;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		if (!state->rs_use_wal)
 			options |= HEAP_INSERT_SKIP_WAL;
 
 		/*
-<<<<<<< HEAD
-		 * The new relfilenode's relcache entrye doesn't have the necessary
-		 * information to determine whether a relation should emit data for
-		 * logical decoding.  Force it to off if necessary.
-		 */
-		if (!RelationIsLogicallyLogged(state->rs_old_rel))
-			options |= HEAP_INSERT_NO_LOGICAL;
-
-		heaptup = toast_insert_or_update(state->rs_new_rel, tup, NULL,
-										 TOAST_TUPLE_TARGET, false,
-=======
 		 * While rewriting the heap for VACUUM FULL / CLUSTER, make sure data
 		 * for the TOAST table are not logically decoded.  The main heap is
 		 * WAL-logged as XLOG FPI records, which are not logically decoded.
@@ -680,7 +665,6 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 		options |= HEAP_INSERT_NO_LOGICAL;
 
 		heaptup = toast_insert_or_update(state->rs_new_rel, tup, NULL,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 										 options);
 	}
 	else
@@ -1197,10 +1181,7 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 
 	/* write out tail end of mapping file (again) */
 	errno = 0;
-<<<<<<< HEAD
-=======
 	pgstat_report_wait_start(WAIT_EVENT_LOGICAL_REWRITE_MAPPING_WRITE);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (write(fd, data, len) != len)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
@@ -1210,10 +1191,7 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m", path)));
 	}
-<<<<<<< HEAD
-=======
 	pgstat_report_wait_end();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Now fsync all previously written data. We could improve things and only

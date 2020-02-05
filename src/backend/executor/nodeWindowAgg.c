@@ -2745,20 +2745,7 @@ ExecWindowAgg(PlanState *pstate)
 	 */
 	econtext->ecxt_outertuple = winstate->ss.ss_ScanTupleSlot;
 
-<<<<<<< HEAD
-	if (isDone == ExprEndResult)
-	{
-		/* SRF in tlist returned no rows, so advance to next input tuple */
-		goto restart;
-	}
-
-	winstate->ps_TupFromTlist =
-		(isDone == ExprMultipleResult);
-
-	return result;
-=======
 	return ExecProject(winstate->ss.ps.ps_ProjInfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* -----------------
@@ -2908,11 +2895,6 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	ExecInitResultTupleSlotTL(&winstate->ss.ps, &TTSOpsVirtual);
 	ExecAssignProjectionInfo(&winstate->ss.ps, NULL);
 
-<<<<<<< HEAD
-	winstate->ps_TupFromTlist = false;
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* Set up data for comparing tuples */
 	if (node->partNumCols > 0)
 		winstate->partEqfunction =

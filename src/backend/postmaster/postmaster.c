@@ -6584,18 +6584,10 @@ assign_backendlist_entry(RegisteredBgWorker *rw)
 /*
  * If the time is right, start background worker(s).
  *
-<<<<<<< HEAD
- * As a side effect, the bgworker control variables are set or reset whenever
- * there are more workers to start after this one, and whenever the overall
- * system state requires it.
- *
- * The reason we start at most one worker per call is to avoid consuming the
-=======
  * As a side effect, the bgworker control variables are set or reset
  * depending on whether more workers may need to be started.
  *
  * We limit the number of workers started per call, to avoid consuming the
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * postmaster's attention for too long when many such requests are pending.
  * As long as StartWorkerNeeded is true, ServerLoop will not block and will
  * call this function again after dealing with any other issues.

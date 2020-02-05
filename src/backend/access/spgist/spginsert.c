@@ -123,14 +123,9 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 											  "SP-GiST build temporary context",
 											  ALLOCSET_DEFAULT_SIZES);
 
-<<<<<<< HEAD
-	reltuples = IndexBuildScan(heap, index, indexInfo, true,
-								   spgistBuildCallback, (void *) &buildstate);
-=======
 	reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
 									   spgistBuildCallback, (void *) &buildstate,
 									   NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	MemoryContextDelete(buildstate.tmpCtx);
 
@@ -168,17 +163,10 @@ spgbuildempty(Relation index)
 
 	/*
 	 * Write the page and log it unconditionally.  This is important
-<<<<<<< HEAD
-	 * particularly for indexes created on tablespaces and databases
-	 * whose creation happened after the last redo pointer as recovery
-	 * removes any of their existing content when the corresponding
-	 * create records are replayed.
-=======
 	 * particularly for indexes created on tablespaces and databases whose
 	 * creation happened after the last redo pointer as recovery removes any
 	 * of their existing content when the corresponding create records are
 	 * replayed.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	PageSetChecksumInplace(page, SPGIST_METAPAGE_BLKNO);
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_METAPAGE_BLKNO,

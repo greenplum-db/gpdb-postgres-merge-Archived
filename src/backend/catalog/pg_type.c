@@ -27,11 +27,6 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
-#include "catalog/pg_type_encoding.h"
-#include "catalog/pg_type_fn.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "commands/typecmds.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
@@ -42,6 +37,7 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
+#include "catalog/pg_type_encoding.h"
 #include "cdb/cdbvars.h"
 
 /*
@@ -617,17 +613,12 @@ GenerateTypeDependencies(Oid typeObjectId,
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
-<<<<<<< HEAD
-		recordDependencyOnOwner(TypeRelationId, typeObjectId, owner);
-		/* dependency on extension */
-=======
 		recordDependencyOnOwner(TypeRelationId, typeObjectId,
 								typeForm->typowner);
 
 		recordDependencyOnNewAcl(TypeRelationId, typeObjectId, 0,
 								 typeForm->typowner, typacl);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		recordDependencyOnCurrentExtension(&myself, rebuild);
 	}
 
@@ -779,11 +770,7 @@ RenameTypeInternal(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 	arrayOid = typ->typarray;
 
 	/* Check for a conflicting type name. */
-<<<<<<< HEAD
-	oldTypeOid = GetSysCacheOid2(TYPENAMENSP,
-=======
 	oldTypeOid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 								 CStringGetDatum(newTypeName),
 								 ObjectIdGetDatum(typeNamespace));
 

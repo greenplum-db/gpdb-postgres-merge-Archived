@@ -86,18 +86,14 @@ itemptr_to_uint64(const ItemPointer iptr)
 	uint64		val;
 
 	Assert(ItemPointerIsValid(iptr));
-<<<<<<< HEAD
 	/*
 	 * Greenplum allow 16 bits for the offsetnumber, which turns the below
 	 * upstream assertion into an always-true comparison which generates a
 	 * compiler warning; thus we need to keep this commented out.
 	 */
 #if 0
-	Assert(iptr->ip_posid < (1 << MaxHeapTuplesPerPageBits));
-#endif
-=======
 	Assert(GinItemPointerGetOffsetNumber(iptr) < (1 << MaxHeapTuplesPerPageBits));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#endif
 
 	val = GinItemPointerGetBlockNumber(iptr);
 	val <<= MaxHeapTuplesPerPageBits;

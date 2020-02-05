@@ -33,10 +33,7 @@
 #include "postgres.h"
 
 #include "access/bufmask.h"
-<<<<<<< HEAD
-=======
 #include "access/genam.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/heapam.h"
 #include "access/heapam_xlog.h"
 #include "access/hio.h"
@@ -456,13 +453,7 @@ heapgetpage(TableScanDesc sscan, BlockNumber page)
 			bool		valid;
 			HeapTupleHeader theader = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
 
-<<<<<<< HEAD
-#if 0
-			loctup.t_tableOid = RelationGetRelid(scan->rs_rd);
-#endif
-=======
 			loctup.t_tableOid = RelationGetRelid(scan->rs_base.rs_rd);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			loctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
 			loctup.t_len = ItemIdGetLength(lpp);
 			ItemPointerSet(&(loctup.t_self), page, lineoff);
@@ -3806,29 +3797,12 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	oldtup.t_len = ItemIdGetLength(lp);
 	oldtup.t_self = *otid;
 
-<<<<<<< HEAD
-	/* Fill in OID for newtup */
-	if (relation->rd_rel->relhasoids)
-	{
-#ifdef NOT_USED
-		/* this is redundant with an Assert in HeapTupleSetOid */
-		Assert(newtup->t_data->t_infomask & HEAP_HASOID);
-#endif
-		HeapTupleSetOid(newtup, HeapTupleGetOid(&oldtup));
-	}
-	else
-	{
-		/* check there is not space for an OID */
-		Assert(!(newtup->t_data->t_infomask & HEAP_HASOID));
-	}
-=======
 	/* the new tuple is ready, except for this: */
 	newtup->t_tableOid = RelationGetRelid(relation);
 
 	/* Determine columns modified by the update. */
 	modified_attrs = HeapDetermineModifiedColumns(relation, interesting_attrs,
 												  &oldtup, newtup);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * If we're not updating any "key" column, we can grab a weaker lock type.
@@ -5835,18 +5809,10 @@ l5:
  * Given a hypothetical multixact status held by the transaction identified
  * with the given xid, does the current transaction need to wait, fail, or can
  * it continue if it wanted to acquire a lock of the given mode?  "needwait"
-<<<<<<< HEAD
- * is set to true if waiting is necessary; if it can continue, then
- * HeapTupleMayBeUpdated is returned.  If the lock is already held by the
- * current transaction, return HeapTupleSelfUpdated.  In case of a conflict
- * with another transaction, a different HeapTupleSatisfiesUpdate return code
- * is returned.
-=======
  * is set to true if waiting is necessary; if it can continue, then TM_Ok is
  * returned.  If the lock is already held by the current transaction, return
  * TM_SelfModified.  In case of a conflict with another transaction, a
  * different HeapTupleSatisfiesUpdate return code is returned.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * The held status is said to be hypothetical because it might correspond to a
  * lock held by a single Xid, i.e. not a real MultiXactId; we express it this
@@ -6191,11 +6157,7 @@ l4:
 				}
 
 				result = test_lockmode_for_conflict(status, rawxmax, mode,
-<<<<<<< HEAD
-													&needwait);
-=======
 													&mytup, &needwait);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 				/*
 				 * If the tuple was already locked by ourselves in a previous
@@ -6206,11 +6168,7 @@ l4:
 				 * either.  We just need to skip this tuple and continue
 				 * locking the next version in the update chain.
 				 */
-<<<<<<< HEAD
-				if (result == HeapTupleSelfUpdated)
-=======
 				if (result == TM_SelfModified)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					goto next;
 
 				if (needwait)
@@ -6570,14 +6528,10 @@ heap_abort_speculative(Relation relation, ItemPointer tid)
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 	if (HeapTupleHasExternal(&tp))
-<<<<<<< HEAD
-		toast_delete(relation, (GenericTuple) &tp, NULL);
-=======
 	{
 		Assert(!IsToastRelation(relation));
 		toast_delete(relation, &tp, true);
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Never need to mark tuple for invalidation, since catalogs don't support
@@ -6756,13 +6710,8 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 		/*
 		 * This old multi cannot possibly have members still running, but
 		 * verify just in case.  If it was a locker only, it can be removed
-<<<<<<< HEAD
-		 * without any further consideration; but if it contained an update, we
-		 * might need to preserve it.
-=======
 		 * without any further consideration; but if it contained an update,
 		 * we might need to preserve it.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 */
 		if (MultiXactIdIsRunning(multi,
 								 HEAP_XMAX_IS_LOCKED_ONLY(t_infomask)))
@@ -7138,11 +7087,7 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 			if (flags & FRM_MARK_COMMITTED)
 				frz->t_infomask |= HEAP_XMAX_COMMITTED;
 			changed = true;
-<<<<<<< HEAD
-			}
-=======
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		else if (flags & FRM_RETURN_IS_MULTI)
 		{
 			uint16		newbits;

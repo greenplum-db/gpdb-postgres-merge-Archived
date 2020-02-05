@@ -270,7 +270,6 @@ IsToastClass(Form_pg_class reltuple)
 }
 
 /*
-<<<<<<< HEAD
  * IsAoSegmentClass
  *		Like the above, but takes a Form_pg_class as argument.
  *		Used when we do not want to open the relation and have to
@@ -285,10 +284,7 @@ IsAoSegmentClass(Form_pg_class reltuple)
 }
 
 /*
- * IsSystemNamespace
-=======
  * IsCatalogNamespace
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *		True iff namespace is pg_catalog.
  *
  *		Does not perform any catalog accesses.

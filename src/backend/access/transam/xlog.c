@@ -8621,14 +8621,6 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 						(errmsg("invalid primary checkpoint record at location %X/%X",
 								(uint32) (RecPtr >> 32), (uint32) RecPtr)));
 				break;
-<<<<<<< HEAD
-			case 2:
-				ereport(LOG,
-						(errmsg("invalid secondary checkpoint record at location %X/%X",
-								(uint32) (RecPtr >> 32), (uint32) RecPtr)));
-				break;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			default:
 				ereport(LOG,
 						(errmsg("invalid checkpoint record at location %X/%X",
@@ -8646,21 +8638,9 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 						(errmsg("invalid resource manager ID in primary checkpoint record at location %X/%X",
 								(uint32) (RecPtr >> 32), (uint32) RecPtr)));
 				break;
-<<<<<<< HEAD
-			case 2:
-				ereport(LOG,
-						(errmsg("invalid resource manager ID in secondary checkpoint record at location %X/%X",
-								(uint32) (RecPtr >> 32), (uint32) RecPtr)));
-				break;
-			default:
-				ereport(LOG,
-				(errmsg("invalid resource manager ID in checkpoint record at location %X/%X",
-						(uint32) (RecPtr >> 32), (uint32) RecPtr)));
-=======
 			default:
 				ereport(LOG,
 						(errmsg("invalid resource manager ID in checkpoint record")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 		}
 		return NULL;
@@ -8673,17 +8653,7 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 		{
 			case 1:
 				ereport(LOG,
-<<<<<<< HEAD
-				   (errmsg("invalid xl_info in primary checkpoint record at location %X/%X",
-						   (uint32) (RecPtr >> 32), (uint32) RecPtr)));
-				break;
-			case 2:
-				ereport(LOG,
-				 (errmsg("invalid xl_info in secondary checkpoint record at location %X/%X",
-						 (uint32) (RecPtr >> 32), (uint32) RecPtr)));
-=======
 						(errmsg("invalid xl_info in primary checkpoint record")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 			default:
 				ereport(LOG,
@@ -8715,17 +8685,7 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 		{
 			case 1:
 				ereport(LOG,
-<<<<<<< HEAD
-					(errmsg("invalid length of primary checkpoint at location %X/%X",
-							(uint32) (RecPtr >> 32), (uint32) RecPtr)));
-				break;
-			case 2:
-				ereport(LOG,
-				  (errmsg("invalid length of secondary checkpoint record at location %X/%X",
-						  (uint32) (RecPtr >> 32), (uint32) RecPtr)));
-=======
 						(errmsg("invalid length of primary checkpoint record")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 			default:
 				ereport(LOG,

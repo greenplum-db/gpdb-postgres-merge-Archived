@@ -1261,17 +1261,10 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 								 option->values.real_val > optreal->max))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-<<<<<<< HEAD
-							 errmsg("invalid value for floating point option \"%s\": %s",
-								  value, option->gen->name),
-					 errdetail("Valid values are between \"%f\" and \"%f\".",
-							   optreal->min, optreal->max)));
-=======
 							 errmsg("value %s out of bounds for option \"%s\"",
 									value, option->gen->name),
 							 errdetail("Valid values are between \"%f\" and \"%f\".",
 									   optreal->min, optreal->max)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 			break;
 		case RELOPT_TYPE_STRING:

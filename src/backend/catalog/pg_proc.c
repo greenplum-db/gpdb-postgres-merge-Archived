@@ -393,26 +393,16 @@ ProcedureCreate(const char *procedureName,
 		Form_pg_proc oldproc = (Form_pg_proc) GETSTRUCT(oldtup);
 		Datum		proargnames;
 		bool		isnull;
-<<<<<<< HEAD
 		Oid oldOid = HeapTupleGetOid(oldtup);
-=======
 		const char *dropcmd;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		if (!replace)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_FUNCTION),
-<<<<<<< HEAD
-			errmsg("function \"%s\" already exists with same argument types",
-				   procedureName)));
-		if (!pg_proc_ownercheck(oldOid, proowner))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
-=======
 					 errmsg("function \"%s\" already exists with same argument types",
 							procedureName)));
 		if (!pg_proc_ownercheck(oldproc->oid, proowner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						   procedureName);
 
 		/* Not okay to change routine kind */
@@ -587,7 +577,6 @@ ProcedureCreate(const char *procedureName,
 			}
 		}
 
-<<<<<<< HEAD
 		/*
 		 * Cannot add a describe callback to a function that has views defined
 		 * on it.  This restriction is for the same set of reasons that we 
@@ -635,36 +624,6 @@ ProcedureCreate(const char *procedureName,
 			heap_close(depRel, AccessShareLock);
 		}
 
-		/* Can't change aggregate or window status, either */
-		if (oldproc->proisagg != isAgg)
-		{
-			if (oldproc->proisagg)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("function \"%s\" is an aggregate function",
-								procedureName)));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					   errmsg("function \"%s\" is not an aggregate function",
-							  procedureName)));
-		}
-		if (oldproc->proiswindow != isWindowFunc)
-		{
-			if (oldproc->proiswindow)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("function \"%s\" is a window function",
-								procedureName)));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("function \"%s\" is not a window function",
-								procedureName)));
-		}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		/*
 		 * Do not change existing oid, ownership or permissions, either.  Note
 		 * dependency-update code below has to agree with this decision.

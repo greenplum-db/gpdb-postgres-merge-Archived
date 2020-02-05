@@ -33,11 +33,7 @@
 #include "access/xact_storage_tablespace.h"
 #include "access/xlogutils.h"
 #include "catalog/namespace.h"
-<<<<<<< HEAD
-#include "catalog/oid_dispatch.h"
-=======
 #include "catalog/pg_enum.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/storage.h"
 #include "catalog/storage_tablespace.h"
 #include "catalog/storage_database.h"
@@ -84,6 +80,7 @@
 #include "pg_trace.h"
 
 #include "access/distributedlog.h"
+#include "catalog/oid_dispatch.h"
 #include "cdb/cdbdistributedsnapshot.h"
 #include "cdb/cdbgang.h"
 #include "cdb/cdblocaldistribxact.h"

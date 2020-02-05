@@ -49,10 +49,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 				bool collisdeterministic,
 				int32 collencoding,
 				const char *collcollate, const char *collctype,
-<<<<<<< HEAD
-=======
 				const char *collversion,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				bool if_not_exists,
 				bool quiet)
 {
@@ -110,11 +107,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 	}
 
 	/* open pg_collation; see below about the lock level */
-<<<<<<< HEAD
-	rel = heap_open(CollationRelationId, ShareRowExclusiveLock);
-=======
 	rel = table_open(CollationRelationId, ShareRowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Also forbid a specific-encoding collation shadowing an any-encoding
@@ -136,20 +129,12 @@ CollationCreate(const char *collname, Oid collnamespace,
 	{
 		if (quiet)
 		{
-<<<<<<< HEAD
-			heap_close(rel, NoLock);
-=======
 			table_close(rel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			return InvalidOid;
 		}
 		else if (if_not_exists)
 		{
-<<<<<<< HEAD
-			heap_close(rel, NoLock);
-=======
 			table_close(rel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			ereport(NOTICE,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("collation \"%s\" already exists, skipping",
@@ -214,11 +199,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 	InvokeObjectPostCreateHook(CollationRelationId, oid, 0);
 
 	heap_freetuple(tup);
-<<<<<<< HEAD
-	heap_close(rel, NoLock);
-=======
 	table_close(rel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return oid;
 }

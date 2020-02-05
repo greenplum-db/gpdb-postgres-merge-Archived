@@ -82,18 +82,10 @@ InitRecoveryTransactionEnvironment(void)
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(TransactionId);
 	hash_ctl.entrysize = sizeof(RecoveryLockListsEntry);
-<<<<<<< HEAD
-	hash_ctl.hash = tag_hash;
-	RecoveryLockLists = hash_create("RecoveryLockLists",
-									64,
-									&hash_ctl,
-									HASH_ELEM | HASH_FUNCTION);
-=======
 	RecoveryLockLists = hash_create("RecoveryLockLists",
 									64,
 									&hash_ctl,
 									HASH_ELEM | HASH_BLOBS);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Initialize shared invalidation management for Startup process, being
