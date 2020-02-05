@@ -17,16 +17,6 @@
 /* stop perl headers from hijacking stdio and other stuff on Windows */
 #ifdef WIN32
 #define WIN32IO_IS_STDIO
-<<<<<<< HEAD
-/*
- * isnan is defined in both the perl and mingw headers. We don't use it,
- * so this just clears up the compile warning.
- */
-#ifdef isnan
-#undef isnan
-#endif
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #endif							/* WIN32 */
 
 /*
@@ -86,10 +76,6 @@
 #define __inline__ inline
 #endif
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * Get the basic Perl API.  We use PERL_NO_GET_CONTEXT mode so that our code
  * can compile against MULTIPLICITY Perl builds without including XSUB.h.
@@ -104,15 +90,6 @@
  * before ppport.h, so use a #define flag to control inclusion here.
  */
 #ifdef PG_NEED_PERL_XSUB_H
-<<<<<<< HEAD
-#include "XSUB.h"
-#endif
-
-/* put back our snprintf and vsnprintf */
-#ifdef USE_REPL_SNPRINTF
-#ifdef snprintf
-#undef snprintf
-=======
 /*
  * On Windows, win32_port.h defines macros for a lot of these same functions.
  * To avoid compiler warnings when XSUB.h redefines them, #undef our versions.
@@ -138,7 +115,6 @@
 #endif
 
 #include "XSUB.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #endif
 
 /* put back our *printf macros ... this must match src/include/port.h */

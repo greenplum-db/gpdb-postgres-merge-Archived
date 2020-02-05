@@ -6,12 +6,6 @@
  **********************************************************************/
 
 #include "postgres.h"
-<<<<<<< HEAD
-
-/* Defined by Perl */
-#undef _
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* system stuff */
 #include <ctype.h>
@@ -1367,25 +1361,12 @@ plperl_sv_to_datum(SV *sv, Oid typid, int32 typmod,
 			if (!type_is_rowtype(typid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-<<<<<<< HEAD
-					errmsg("cannot convert Perl hash to non-composite type %s",
-=======
 						 errmsg("cannot convert Perl hash to non-composite type %s",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 								format_type_be(typid))));
 
 			td = lookup_rowtype_tupdesc_domain(typid, typmod, true);
 			if (td != NULL)
 			{
-<<<<<<< HEAD
-				/* Try to look it up based on our result type */
-				if (fcinfo == NULL ||
-					get_call_result_type(fcinfo, NULL, &td) != TYPEFUNC_COMPOSITE)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("function returning record called in context "
-									"that cannot accept type record")));
-=======
 				/* Did we look through a domain? */
 				isdomain = (typid != td->tdtypeid);
 			}
@@ -1406,7 +1387,6 @@ plperl_sv_to_datum(SV *sv, Oid typid, int32 typmod,
 									"that cannot accept type record")));
 				Assert(td);
 				isdomain = (funcclass == TYPEFUNC_COMPOSITE_DOMAIN);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 
 			ret = plperl_hash_to_datum(sv, td);
@@ -3311,11 +3291,7 @@ plperl_return_next_internal(SV *sv)
 
 		/*
 		 * This is the first call to return_next in the current PL/Perl
-<<<<<<< HEAD
-		 * function call, so identify the output tuple descriptor and create a
-=======
 		 * function call, so identify the output tuple type and create a
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 * tuplestore to hold the result rows.
 		 */
 		if (prodesc->fn_retistuple)
