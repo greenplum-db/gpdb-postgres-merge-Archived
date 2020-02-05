@@ -1842,14 +1842,9 @@ makeRangeConstructors(const char *name, Oid namespace,
 								 rangeOid,	/* return type */
 								 BOOTSTRAP_SUPERUSERID, /* proowner */
 								 INTERNALlanguageId,	/* language */
-<<<<<<< HEAD
-								 F_FMGR_INTERNAL_VALIDATOR,		/* language validator */
-								 InvalidOid,
-								 prosrc[i],		/* prosrc */
-=======
 								 F_FMGR_INTERNAL_VALIDATOR, /* language validator */
+								 InvalidOid,
 								 prosrc[i], /* prosrc */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 								 NULL,	/* probin */
 								 PROKIND_FUNCTION,
 								 false, /* security_definer */

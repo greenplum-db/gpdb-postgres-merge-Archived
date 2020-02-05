@@ -1231,11 +1231,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 										  relstorage,
 										  tablespaceId==GLOBALTABLESPACE_OID,
 										  false,
-<<<<<<< HEAD
-										  localHasOids,
-										  stmt->parentOidCount,
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 										  stmt->oncommit,
                                           policy,  /*CDB*/
                                           reloptions,
@@ -2179,8 +2174,8 @@ ExecuteTruncate(TruncateStmt *stmt)
 					continue;
 
 				/* find_all_inheritors already got lock */
-<<<<<<< HEAD
-				rel = heap_open(childrelid, NoLock);
+				rel = table_open(childrelid, NoLock);
+
 				/*
 				 * This check is performed outside truncate_check_rel() in
 				 * order to provide a more reasonable error message.
@@ -2190,9 +2185,6 @@ ExecuteTruncate(TruncateStmt *stmt)
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 							 errmsg("cannot truncate table having external partition: \"%s\"",
 								    RelationGetRelationName(rel))));
-				truncate_check_rel(rel);
-=======
-				rel = table_open(childrelid, NoLock);
 
 				/*
 				 * It is possible that the parent table has children that are
@@ -2212,7 +2204,6 @@ ExecuteTruncate(TruncateStmt *stmt)
 				truncate_check_rel(RelationGetRelid(rel), rel->rd_rel);
 				truncate_check_activity(rel);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				rels = lappend(rels, rel);
 				relids = lappend_oid(relids, childrelid);
 				/* Log this relation only if needed for logical decoding */
@@ -2588,7 +2579,6 @@ ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
 	{
 		Relation	rel = (Relation) lfirst(cell);
 
-<<<<<<< HEAD
 		if (RelationIsAppendOptimized(rel) && IS_QUERY_DISPATCHER())
 		{
 			/*
@@ -2604,10 +2594,7 @@ ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
 			LWLockRelease(AOSegFileLock);
 		}
 
-		heap_close(rel, NoLock);
-=======
 		table_close(rel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 }
 
@@ -2711,20 +2698,13 @@ storage_name(char c)
  * 'supers' is a list of OIDs of parent relations, already locked by caller.
  * 'relpersistence' is a persistence type of the table.
  * 'is_partition' tells if the table is a partition
-<<<<<<< HEAD
  * 'GpPolicy *' is NULL if the distribution policy is not to be updated
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * Output arguments:
  * 'supconstr' receives a list of constraints belonging to the parents,
  *		updated as necessary to be valid for the child.
-<<<<<<< HEAD
- * 'supOidCount' is set to the number of parents that have OID columns.
  * 'GpPolicy' is updated with the offsets of the distribution
  *      attributes in the new schema
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * Return value:
  * Completed schema list.
@@ -2770,12 +2750,7 @@ storage_name(char c)
  */
 List *
 MergeAttributes(List *schema, List *supers, char relpersistence,
-<<<<<<< HEAD
-				bool is_partition, List **supOids, List **supconstr,
-				int *supOidCount)
-=======
 				bool is_partition, List **supconstr)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	ListCell   *entry;
 	List	   *inhSchema = NIL;
@@ -3245,15 +3220,9 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				 * have the same type, typmod, and collation.
 				 */
 				if (exist_attno == schema_attno)
-<<<<<<< HEAD
 					ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
-					(errmsg("merging column \"%s\" with inherited definition",
-							attributeName)));
-=======
-					ereport(NOTICE,
 							(errmsg("merging column \"%s\" with inherited definition",
 									attributeName)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				else
 					ereport(NOTICE,
 							(errmsg("moving and merging column \"%s\" with inherited definition", attributeName),
@@ -3491,11 +3460,7 @@ StoreCatalogInheritance(Oid relationId, List *supers,
 		Oid			parentOid = lfirst_oid(entry);
 
 		StoreCatalogInheritance1(relationId, parentOid, seqNumber, relation,
-<<<<<<< HEAD
-								 false);
-=======
 								 child_is_partition);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		seqNumber++;
 	}
 
@@ -3508,37 +3473,14 @@ StoreCatalogInheritance(Oid relationId, List *supers,
  */
 static void
 StoreCatalogInheritance1(Oid relationId, Oid parentOid,
-<<<<<<< HEAD
-						 int16 seqNumber, Relation inhRelation,
-=======
 						 int32 seqNumber, Relation inhRelation,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						 bool child_is_partition)
 {
 	ObjectAddress childobject,
 				parentobject;
 
-<<<<<<< HEAD
-	/*
-	 * Make the pg_inherits entry
-	 */
-	values[Anum_pg_inherits_inhrelid - 1] = ObjectIdGetDatum(relationId);
-	values[Anum_pg_inherits_inhparent - 1] = ObjectIdGetDatum(parentOid);
-	values[Anum_pg_inherits_inhseqno - 1] = Int32GetDatum(seqNumber);
-
-	memset(nulls, 0, sizeof(nulls));
-
-	tuple = heap_form_tuple(desc, values, nulls);
-
-	simple_heap_insert(inhRelation, tuple);
-
-	CatalogUpdateIndexes(inhRelation, tuple);
-
-	heap_freetuple(tuple);
-=======
 	/* store the pg_inherits row */
 	StoreSingleInheritance(relationId, parentOid, seqNumber);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Store a dependency too
@@ -3825,7 +3767,6 @@ renameatt_internal(Oid myrelid,
 
 	table_close(attrelation, RowExclusiveLock);
 
-<<<<<<< HEAD
 	/* MPP-6929, MPP-7600: metadata tracking */
 	if ((Gp_role == GP_ROLE_DISPATCH)
 		&& MetaTrackValidKindNsp(targetrelation->rd_rel))
@@ -3836,10 +3777,7 @@ renameatt_internal(Oid myrelid,
 				);
 
 
-	relation_close(targetrelation, NoLock);		/* close rel but keep lock */
-=======
 	relation_close(targetrelation, NoLock); /* close rel but keep lock */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return attnum;
 }
@@ -4584,9 +4522,7 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 	CheckTableNotInUse(rel, "ALTER TABLE");
 
 <<<<<<< HEAD
-	ATController(stmt,
-				 rel, stmt->cmds, interpretInhOption(stmt->relation->inhOpt),
-				 lockmode);
+	ATController(stmt, rel, stmt->cmds, stmt->relation->inh, lockmode);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -4601,9 +4537,6 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
-	ATController(stmt, rel, stmt->cmds, stmt->relation->inh, lockmode);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*

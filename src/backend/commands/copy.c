@@ -592,7 +592,6 @@ typedef struct
 	 * this will be included as Datums in the rows that follow.
 	 */
 	int16		first_qe_processed_field;
-	bool		file_has_oids;
 } copy_from_dispatch_header;
 
 typedef struct
@@ -617,8 +616,6 @@ typedef struct
 									 * of its processing */
 	uint16		fld_count;			/* # of fields that were processed in the
 									 * QD. */
-
-	/* If 'file_has_oids' was true, a tuple OID follows. */
 
 	/* The input line follows. */
 
@@ -3688,11 +3685,6 @@ CopyTo(CopyState cstate)
 				int nvp = tupDesc->natts;
 				int i;
 
-				if (tupDesc->tdhasoid)
-				{
-				    elog(ERROR, "OIDS=TRUE is not allowed on tables that use column-oriented storage. Use OIDS=FALSE");
-				}
-
 				proj = palloc(sizeof(bool) * nvp);
 				for(i = 0; i < nvp; ++i)
 				    proj[i] = true;
@@ -4928,8 +4920,6 @@ CopyFrom(CopyState cstate)
 		int			first_qe_processed_field;
 
 		first_qe_processed_field = cstate->first_qe_processed_field;
-		if (cstate->file_has_oids)
-			first_qe_processed_field--;
 
 		foreach(lc, cstate->attnumlist)
 		{
@@ -5524,8 +5514,6 @@ CopyFrom(CopyState cstate)
 					HeapTuple tuple;
 					tuple = ExecFetchSlotHeapTuple(slot);
 
-					if (cstate->file_has_oids)
-						HeapTupleSetOid(tuple, loaded_oid);
 					/* OK, store the tuple and create index entries for it */
 					heap_insert(resultRelInfo->ri_RelationDesc, tuple, mycid, hi_options,
 								resultRelInfo->biState,
@@ -6283,18 +6271,9 @@ BeginCopyFrom(ParseState *pstate,
 					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 					errmsg("invalid QD->QD COPY communication header")));
 
-		cstate->file_has_oids = header_frame.file_has_oids;
 		cstate->first_qe_processed_field = header_frame.first_qe_processed_field;
 	}
-	else if (!cstate->binary)
-	{
-		/* must rely on user to tell us... */
-		cstate->file_has_oids = cstate->oids;
-	}
-	else
-=======
-	if (cstate->binary)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	else if (cstate->binary)
 	{
 		/* Read and verify binary header */
 		char		readSig[11];
@@ -6310,16 +6289,11 @@ BeginCopyFrom(ParseState *pstate,
 		if (!CopyGetInt32(cstate, &tmp))
 			ereport(ERROR,
 					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-<<<<<<< HEAD
-					errmsg("invalid COPY file header (missing flags)")));
-		cstate->file_has_oids = (tmp & (1 << 16)) != 0;
-=======
 					 errmsg("invalid COPY file header (missing flags)")));
 		if ((tmp & (1 << 16)) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 					 errmsg("invalid COPY file header (WITH OIDS)")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		tmp &= ~(1 << 16);
 		if ((tmp >> 16) != 0)
 			ereport(ERROR,
@@ -6580,7 +6554,6 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 	int		   *defmap = cstate->defmap;
 	ExprState **defexprs = cstate->defexprs;
 	List	   *attnumlist;
-	bool		file_has_oids;
 	int			stop_processing_at_field;
 
 	/*
@@ -6594,19 +6567,16 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 		case COPY_DIRECT:
 			stop_processing_at_field = -1;
 			attnumlist = cstate->attnumlist;
-			file_has_oids = cstate->file_has_oids;
 			break;
 
 		case COPY_DISPATCH:
 			stop_processing_at_field = cstate->first_qe_processed_field;
 			attnumlist = cstate->qd_attnumlist;
-			file_has_oids = cstate->file_has_oids;
 			break;
 
 		case COPY_EXECUTOR:
 			stop_processing_at_field = -1;
 			attnumlist = cstate->qe_attnumlist;
-			file_has_oids = false;	/* already handled in QD. */
 			break;
 
 		default:
@@ -6615,12 +6585,7 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 
 	tupDesc = RelationGetDescr(cstate->rel);
 	num_phys_attrs = tupDesc->natts;
-<<<<<<< HEAD
-	attr_count = list_length(attnumlist);
-	nfields = file_has_oids ? (attr_count + 1) : attr_count;
-=======
 	attr_count = list_length(cstate->attnumlist);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Initialize all values for row to NULL */
 	MemSet(values, 0, num_phys_attrs * sizeof(Datum));
@@ -6669,33 +6634,6 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 		fieldno = 0;
 
 <<<<<<< HEAD
-		/* Read the OID field if present */
-		if (file_has_oids)
-		{
-			if (fieldno >= fldct)
-				ereport(ERROR,
-						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("missing data for OID column")));
-			string = field_strings[fieldno++];
-
-			if (string == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("null OID in COPY data")));
-			else if (cstate->oids && tupleOid != NULL)
-			{
-				cstate->cur_attname = "oid";
-				cstate->cur_attval = string;
-				*tupleOid = DatumGetObjectId(DirectFunctionCall1(oidin,
-												   CStringGetDatum(string)));
-				if (*tupleOid == InvalidOid)
-					ereport(ERROR,
-							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-							 errmsg("invalid OID in COPY data")));
-				cstate->cur_attname = NULL;
-				cstate->cur_attval = NULL;
-			}
-		}
 
 		/*
 		 * A completely empty line is not allowed with FILL MISSING FIELDS. Without
@@ -6833,31 +6771,6 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 					 errmsg("row field count is %d, expected %d",
 							(int) fld_count, attr_count)));
 
-<<<<<<< HEAD
-		if (file_has_oids)
-		{
-			Oid			loaded_oid;
-
-			cstate->cur_attname = "oid";
-			loaded_oid =
-				DatumGetObjectId(CopyReadBinaryAttribute(cstate,
-														 0,
-													&cstate->oid_in_function,
-													  cstate->oid_typioparam,
-														 -1,
-														 &isnull,
-														 false));
-			if (isnull || loaded_oid == InvalidOid)
-				ereport(ERROR,
-						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("invalid OID in COPY data")));
-			cstate->cur_attname = NULL;
-			if (cstate->oids && tupleOid != NULL)
-				*tupleOid = loaded_oid;
-		}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		i = 0;
 		foreach(cur, attnumlist)
 		{
@@ -6871,14 +6784,8 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 												i,
 												&in_functions[m],
 												typioparams[m],
-<<<<<<< HEAD
-												attr[m]->atttypmod,
-												&nulls[m],
-												false);
-=======
 												att->atttypmod,
 												&nulls[m]);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			cstate->cur_attname = NULL;
 		}
 	}
@@ -6939,7 +6846,6 @@ NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
 {
 	TupleDesc	tupDesc;
 	Form_pg_attribute *attr;
-	bool		file_has_oids = cstate->file_has_oids;
 	int			i;
 	AttrNumber	num_phys_attrs;
 	copy_from_dispatch_row frame;
@@ -7002,26 +6908,6 @@ retry:
 		ereport(ERROR,
 				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 				 errmsg("extra data after last expected column")));
-
-	/* Read the OID field, if present */
-	if (file_has_oids)
-	{
-		Oid			loaded_oid;
-
-		if (CopyGetData(cstate, &loaded_oid, sizeof(Oid)) != sizeof(Oid))
-			ereport(ERROR,
-					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-					 errmsg("unexpected EOF in COPY data")));
-
-		if (loaded_oid == InvalidOid)
-		{
-			cstate->cur_attname = "oid";
-			ereport(ERROR,
-					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-					 errmsg("invalid OID in COPY data")));
-		}
-		*tupleOid = loaded_oid;
-	}
 
 	/*
 	 * Read the input line into 'line_buf'.
@@ -7341,12 +7227,6 @@ SendCopyFromForwardedTuple(CopyState cstate,
 	msgbuf->len = SizeOfCopyFromDispatchRow;
 
 	/*
-	 * After the header, the OID from the input row, if any.
-	 */
-	if (cstate->file_has_oids)
-		APPEND_MSGBUF_NOCHECK(msgbuf, &tuple_oid, sizeof(Oid));
-
-	/*
 	 * Next, any residual text that we didn't process in the QD.
 	 */
 	APPEND_MSGBUF_NOCHECK(msgbuf, cstate->line_buf.data, cstate->line_buf.len);
@@ -7460,7 +7340,6 @@ SendCopyFromForwardedHeader(CopyState cstate, CdbCopy *cdbCopy)
 	cdbCopySendDataToAll(cdbCopy, QDtoQESignature, sizeof(QDtoQESignature));
 
 	memset(&header_frame, 0, sizeof(header_frame));
-	header_frame.file_has_oids = cstate->file_has_oids;
 	header_frame.first_qe_processed_field = cstate->first_qe_processed_field;
 
 	cdbCopySendDataToAll(cdbCopy, (char *) &header_frame, sizeof(header_frame));
@@ -9215,16 +9094,11 @@ InitCopyFromDispatchSplit(CopyState cstate, GpDistributionData *distData,
 		}
 	}
 
-	/* If the file contains OIDs, it's the first field. */
-	if (cstate->file_has_oids)
-		first_qe_processed_field++;
-
 	cstate->first_qe_processed_field = first_qe_processed_field;
 
 	if (Test_copy_qd_qe_split)
 	{
-		if (first_qe_processed_field ==
-			list_length(cstate->attnumlist) + (cstate->file_has_oids ? 1 : 0))
+		if (first_qe_processed_field == list_length(cstate->attnumlist))
 			elog(INFO, "all fields will be processed in the QD");
 		else
 			elog(INFO, "first field processed in the QE: %d", first_qe_processed_field);
