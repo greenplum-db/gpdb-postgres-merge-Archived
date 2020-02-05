@@ -108,8 +108,6 @@ static Bitmapset *finalize_plan(PlannerInfo *root,
 								Bitmapset *scan_params);
 static bool finalize_primnode(Node *node, finalize_primnode_context *context);
 static bool finalize_agg_primnode(Node *node, finalize_primnode_context *context);
-static Node *remove_useless_EXISTS_sublink(PlannerInfo *root,
-						Query *subselect, bool under_not);
 
 extern	double global_work_mem(PlannerInfo *root);
 
@@ -1526,7 +1524,7 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
  * except that we also support the case where the caller has found NOT EXISTS,
  * so we need an additional input parameter "under_not".
  */
-Node *
+JoinExpr *
 convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 							   bool under_not, Relids available_rels)
 {
@@ -1558,13 +1556,6 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * make_subplan).
 	 */
 	subselect = copyObject(subselect);
-
-	/*
-	 * Check if the EXISTS sublink doesn't actually need to be executed at all,
-	 * and return TRUE/FALSE directly for it in that case.
-	 */
-	if ((boolConst = remove_useless_EXISTS_sublink(root, subselect, under_not)))
-		return boolConst;
 
 	/*
 	 * See if the subquery can be simplified based on the knowledge that it's
@@ -1821,9 +1812,26 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
  * 		and return TRUE/FALSE directly for it in that case. Otherwise return
  * 		NULL.
  */
-static Node *
+Node *
 remove_useless_EXISTS_sublink(PlannerInfo *root, Query *subselect, bool under_not)
 {
+    /*
+     * Can't flatten if it contains WITH.  (We could arrange to pull up the
+     * WITH into the parent query's cteList, but that risks changing the
+     * semantics, since a WITH ought to be executed once per associated query
+     * call.)  Note that convert_ANY_sublink_to_join doesn't have to reject
+     * this case, since it just produces a subquery RTE that doesn't have to
+     * get flattened into the parent query.
+     */
+    if (subselect->cteList)
+        return NULL;
+
+    /*
+     * Copy the subquery so we can modify it safely (see comments in
+     * make_subplan).
+     */
+    subselect = copyObject(subselect);
+
 	/*
 	 * 'LIMIT n' makes EXISTS false when n <= 0, and doesn't affect the
 	 * outcome when n > 0.
