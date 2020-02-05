@@ -64,24 +64,6 @@
  *
  * In addition, we support some extensions over C99:
  *
-<<<<<<< HEAD
- * Historically the result values of sprintf/snprintf varied across platforms.
- * This implementation now follows the C99 standard:
- *
- * 1. -1 is returned if an error is detected in the format string, or if
- * a write to the target stream fails (as reported by fwrite).  Note that
- * overrunning snprintf's target buffer is *not* an error.
- *
- * 2. For successful writes to streams, the actual number of bytes written
- * to the stream is returned.
- *
- * 3. For successful sprintf/snprintf, the number of bytes that would have
- * been written to an infinite-size buffer (excluding the trailing '\0')
- * is returned.  snprintf will truncate its output to fit in the buffer
- * (ensuring a trailing '\0' unless count == 0), but this is not reflected
- * in the function result.
- *
-=======
  * 1. Argument order control through "%n$" and "*n$", as required by POSIX.
  *
  * 2. "%m" expands to the value of strerror(errno), where errno is the
@@ -105,7 +87,6 @@
  * (ensuring a trailing '\0' unless count == 0), but this is not reflected
  * in the function result.
  *
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * snprintf buffer overrun can be detected by checking for function result
  * greater than or equal to the supplied count.
  */
@@ -414,11 +395,6 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 	long long	numvalue;
 	double		fvalue;
 	char	   *strvalue;
-<<<<<<< HEAD
-	int			i;
-	PrintfArgType argtypes[PG_NL_ARGMAX + 1];
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	PrintfArgValue argvalues[PG_NL_ARGMAX + 1];
 
 	/*
@@ -434,85 +410,8 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 		/* Locate next conversion specifier */
 		if (*format != '%')
 		{
-<<<<<<< HEAD
-			case '-':
-			case '+':
-				goto nextch1;
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-				accum = accum * 10 + (ch - '0');
-				goto nextch1;
-			case '.':
-				pointflag = 1;
-				accum = 0;
-				goto nextch1;
-			case '*':
-				if (afterstar)
-					have_non_dollar = true;		/* multiple stars */
-				afterstar = true;
-				accum = 0;
-				goto nextch1;
-			case '$':
-				have_dollar = true;
-				if (accum <= 0 || accum > PG_NL_ARGMAX)
-					goto bad_format;
-				if (afterstar)
-				{
-					if (argtypes[accum] &&
-						argtypes[accum] != ATYPE_INT)
-						goto bad_format;
-					argtypes[accum] = ATYPE_INT;
-					last_dollar = Max(last_dollar, accum);
-					afterstar = false;
-				}
-				else
-					fmtpos = accum;
-				accum = 0;
-				goto nextch1;
-			case 'l':
-				if (longflag)
-					longlongflag = 1;
-				else
-					longflag = 1;
-				goto nextch1;
-			case 'z':
-#if SIZEOF_SIZE_T == 8
-#ifdef HAVE_LONG_INT_64
-				longflag = 1;
-#elif defined(HAVE_LONG_LONG_INT_64)
-				longlongflag = 1;
-#else
-#error "Don't know how to print 64bit integers"
-#endif
-#else
-				/* assume size_t is same size as int */
-#endif
-				goto nextch1;
-			case 'h':
-			case '\'':
-				/* ignore these */
-				goto nextch1;
-			case 'd':
-			case 'i':
-			case 'o':
-			case 'u':
-			case 'x':
-			case 'X':
-				if (fmtpos)
-				{
-					PrintfArgType atype;
-=======
 			/* Scan to next '%' or end of string */
 			const char *next_pct = strchrnul(format + 1, '%');
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/* Dump literal data we just scanned over */
 			dostr(format, next_pct - format, target);

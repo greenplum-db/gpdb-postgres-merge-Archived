@@ -413,12 +413,7 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 #else
 		ereport(WARNING,
 				(errmsg("could not determine encoding for locale \"%s\": codeset is \"%s\"",
-<<<<<<< HEAD
-						ctype, sys),
-		   errdetail("Please report this to <bugs@greenplum.org>.")));
-=======
 						ctype, sys)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #endif
 	}
 

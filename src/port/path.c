@@ -37,6 +37,7 @@
 
 #include "pg_config_paths.h"
 
+
 #ifndef WIN32
 #define IS_PATH_VAR_SEP(ch) ((ch) == ':')
 #else
@@ -81,9 +82,6 @@ skip_drive(const char *path)
  *	has_drive_prefix
  *
  * Return true if the given pathname has a drive prefix.
- *
- * GPDB_92_MERGE_FIXEME: To keep compiler happy, return
- * false directly if not WIN32.
  */
 bool
 has_drive_prefix(const char *path)
@@ -173,8 +171,6 @@ make_native_path(char *filename)
 	for (p = filename; *p; p++)
 		if (*p == '/')
 			*p = '\\';
-#else
-	UnusedArg(filename);
 #endif
 }
 
