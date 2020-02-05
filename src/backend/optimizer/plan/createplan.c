@@ -2569,23 +2569,9 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 	 * column for RANGE OFFSET cases, as the executor needs that for in_range
 	 * tests even if it's known to be equal to some partitioning column.)
 	 */
-<<<<<<< HEAD
-	subplan = prepare_sort_from_pathkeys(subplan,
-										 best_path->winpathkeys,
-										 NULL,
-										 NULL,
-										 false,
-										 &numsortkeys,
-										 &sortColIdx,
-										 &sortOperators,
-										 &collations,
-										 &nullsFirst,
-										 true);
-=======
 	partColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numPart);
 	partOperators = (Oid *) palloc(sizeof(Oid) * numPart);
 	partCollations = (Oid *) palloc(sizeof(Oid) * numPart);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	partNumCols = 0;
 	foreach(lc, wc->partitionClause)
@@ -3900,10 +3886,19 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 	 * we will certainly not have pointer equality to any scan clause.  So
 	 * convert the tidquals list to an explicit OR clause and see if we can
 	 * match it via equal() to any scan clause.
+	 *
+	 * In the case of CURRENT OF, however, we do want the CurrentOfExpr to
+	 * reside in both the tidlist and the qual, as CurrentOfExpr is effectively
+	 * a ctid, gp_segment_id, and tableoid qual. Constant folding will
+	 * finish up this qual rewriting to ensure what we dispatch is a sane interpretation
+	 * of CURRENT OF behavior.
 	 */
-	if (list_length(tidquals) > 1)
-		scan_clauses = list_difference(scan_clauses,
-									   list_make1(make_orclause(tidquals)));
+    if (!(list_length(scan_clauses) == 1 && IsA(linitial(scan_clauses), CurrentOfExpr)))
+    {
+        if (list_length(tidquals) > 1)
+            scan_clauses = list_difference(scan_clauses,
+                                           list_make1(make_orclause(tidquals)));
+    }
 
 	/* Replace any outer-relation variables with nestloop params */
 	if (best_path->path.param_info)
@@ -3914,27 +3909,6 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 			replace_nestloop_params(root, (Node *) scan_clauses);
 	}
 
-<<<<<<< HEAD
-	/*
-	 * Remove any clauses that are TID quals.  This is a bit tricky since the
-	 * tidquals list has implicit OR semantics.
-	 *
-	 * In the case of CURRENT OF, however, we do want the CurrentOfExpr to
-	 * reside in both the tidlist and the qual, as CurrentOfExpr is effectively
-	 * a ctid, gp_segment_id, and tableoid qual. Constant folding will
-	 * finish up this qual rewriting to ensure what we dispatch is a sane interpretation
-	 * of CURRENT OF behavior.
-	 */
-	if (!(list_length(scan_clauses) == 1 && IsA(linitial(scan_clauses), CurrentOfExpr)))
-	{
-		ortidquals = tidquals;
-		if (list_length(ortidquals) > 1)
-			ortidquals = list_make1(make_orclause(ortidquals));
-		scan_clauses = list_difference(scan_clauses, ortidquals);
-	}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	scan_plan = make_tidscan(tlist,
 							 scan_clauses,
 							 scan_relid,

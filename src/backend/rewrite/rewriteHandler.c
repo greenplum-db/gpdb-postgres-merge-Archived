@@ -169,9 +169,8 @@ AcquireRewriteLocks(Query *parsetree,
 				 * rewriter, planner, and executor against schema changes
 				 * mid-query.
 				 *
-<<<<<<< HEAD
-				 * Assuming forExecute is true, this logic must match what the
-				 * executor will do, else we risk lock-upgrade deadlocks.
+				 * If forExecute is false, ignore rellockmode and just use
+				 * AccessShareLock.
 				 *
 				 * CDB: The proper lock mode depends on whether the relation is
 				 * local or distributed, which is discovered by heap_open().
@@ -183,10 +182,6 @@ AcquireRewriteLocks(Query *parsetree,
 				 * Update|DELETE may have to upgrade the locks to avoid global
 				 * deadlock and CdbOpenRelation will do more check for AO table
 				 * and GDD's status.
-=======
-				 * If forExecute is false, ignore rellockmode and just use
-				 * AccessShareLock.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				 */
 				needLockUpgrade = false;
 				if (!forExecute)
@@ -1038,17 +1033,6 @@ process_matched_tle(TargetEntry *src_tle,
 	 *
 	 * For FieldStore, instead of nesting we can generate a single
 	 * FieldStore with multiple target fields.  We must nest when
-<<<<<<< HEAD
-	 * ArrayRefs are involved though.
-	 *
-	 * As a further complication, the destination column might be a domain,
-	 * resulting in each assignment containing a CoerceToDomain node over a
-	 * FieldStore or ArrayRef.  These should have matching target domains,
-	 * so we strip them and reconstitute a single CoerceToDomain over the
-	 * combined FieldStore/ArrayRef nodes.  (Notice that this has the result
-	 * that the domain's checks are applied only after we do all the field or
-	 * element updates, not after each one.  This is arguably desirable.)
-=======
 	 * SubscriptingRefs are involved though.
 	 *
 	 * As a further complication, the destination column might be a domain,
@@ -1058,7 +1042,6 @@ process_matched_tle(TargetEntry *src_tle,
 	 * the combined FieldStore/SubscriptingRef nodes.  (Notice that this has the
 	 * result that the domain's checks are applied only after we do all the
 	 * field or element updates, not after each one.  This is arguably desirable.)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 *----------
 	 */
 	src_expr = (Node *) src_tle->expr;
@@ -2795,13 +2778,9 @@ relation_is_updatable(Oid reloid,
 		return 0;
 
 	/* If the relation is a table, it is always updatable */
-<<<<<<< HEAD
 	/* GPDB: except if it's an external table, which we checked above */
-	if (rel->rd_rel->relkind == RELKIND_RELATION)
-=======
 	if (rel->rd_rel->relkind == RELKIND_RELATION ||
 		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		relation_close(rel, AccessShareLock);
 		return ALL_EVENTS;
@@ -3286,7 +3265,6 @@ rewriteTargetView(Query *parsetree, Relation view)
 	view_rte->securityQuals = NIL;
 
 	/*
-<<<<<<< HEAD
 	 * For UPDATE/DELETE, rewriteTargetListUD will have added a wholerow junk
 	 * TLE for the view to the end of the targetlist, which we no longer need.
 	 * Remove it to avoid unnecessary work when we process the targetlist.
@@ -3316,8 +3294,6 @@ rewriteTargetView(Query *parsetree, Relation view)
 	}
 
 	/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * Now update all Vars in the outer query that reference the view to
 	 * reference the appropriate column of the base relation instead.
 	 */

@@ -3,13 +3,9 @@
  * rewriteDefine.c
  *	  routines for defining a rewrite rule
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -668,12 +664,7 @@ DefineQueryRewrite(const char *rulename,
 		classForm->reltoastrelid = InvalidOid;
 		classForm->relhasindex = false;
 		classForm->relkind = RELKIND_VIEW;
-<<<<<<< HEAD
 		classForm->relstorage = RELSTORAGE_VIRTUAL;
-		classForm->relhasoids = false;
-		classForm->relhaspkey = false;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		classForm->relfrozenxid = InvalidTransactionId;
 		classForm->relminmxid = InvalidMultiXactId;
 		classForm->relreplident = REPLICA_IDENTITY_NOTHING;
