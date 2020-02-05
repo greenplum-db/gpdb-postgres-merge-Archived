@@ -733,12 +733,8 @@ Oid
 GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 {
 	RelFileNodeBackend rnode;
-<<<<<<< HEAD
-	bool		collides = true;
-=======
 	char	   *rpath;
 	bool		collides;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	BackendId	backend;
 
 	/*

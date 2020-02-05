@@ -3017,7 +3017,6 @@ CommitTransaction(void)
 	smgrDoPendingDeletes(true);
 	DoPendingDbDeletes(true);
 
-<<<<<<< HEAD
 	/*
 	 * Only QD holds the session level lock this long for a movedb operation.
 	 * This is to prevent another transaction from moving database objects into
@@ -3031,8 +3030,6 @@ CommitTransaction(void)
 	AtCommit_TablespaceStorage();
 
 	AtEOXact_AppendOnly();
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	AtCommit_Notify();
 	AtEOXact_GUC(true, 1);
 	AtEOXact_SPI(true);
@@ -3056,7 +3053,6 @@ CommitTransaction(void)
 
 	AtCommit_Memory();
 
-<<<<<<< HEAD
 	finishDistributedTransactionContext("CommitTransaction", false);
 
 	if (gp_local_distributed_cache_stats)
@@ -3064,10 +3060,7 @@ CommitTransaction(void)
 		LocalDistribXactCache_ShowStats("CommitTransaction");
 	}
 
-	s->transactionId = InvalidTransactionId;
-=======
 	s->fullTransactionId = InvalidFullTransactionId;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	s->subTransactionId = InvalidSubTransactionId;
 	s->nestingLevel = 0;
 	s->gucNestLevel = 0;
@@ -3393,16 +3386,12 @@ PrepareTransaction(void)
 
 	AtCommit_Memory();
 
-<<<<<<< HEAD
 	if (gp_local_distributed_cache_stats)
 	{
 		LocalDistribXactCache_ShowStats("PrepareTransaction");
 	}
 
-	s->transactionId = InvalidTransactionId;
-=======
 	s->fullTransactionId = InvalidFullTransactionId;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	s->subTransactionId = InvalidSubTransactionId;
 	s->nestingLevel = 0;
 	s->gucNestLevel = 0;
@@ -3696,10 +3685,7 @@ CleanupTransaction(void)
 	 * do abort cleanup processing
 	 */
 	AtCleanup_Portals();		/* now safe to release portal memory */
-<<<<<<< HEAD
-=======
 	AtEOXact_Snapshot(false, true); /* and release the transaction's snapshots */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	CurrentResourceOwner = NULL;	/* and resource owner */
 	if (TopTransactionResourceOwner)

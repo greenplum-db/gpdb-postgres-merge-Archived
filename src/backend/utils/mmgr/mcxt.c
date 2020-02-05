@@ -1002,11 +1002,7 @@ MemoryContextCheck(MemoryContext context)
 
 	AssertArg(MemoryContextIsValid(context));
 
-<<<<<<< HEAD
-	(*context->methods.check) (context);
-=======
-	context->methods->check(context);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	context->methods.check(context);
 	for (child = context->firstchild; child != NULL; child = child->nextchild)
 		MemoryContextCheck(child);
 }
@@ -1162,16 +1158,9 @@ MemoryContextCreate(MemoryContext node,
 					MemoryContext parent,
 					const char *name)
 {
-<<<<<<< HEAD
-	MemoryContext node;
-	Size		needed = size + strlen(name) + 1;
-
 	// GPDB_94_MERGE_FIXME: same as AssertNotInCriticalSection
 #if 0
-	/* creating new memory contexts is not allowed in a critical section */
-=======
 	/* Creating new memory contexts is not allowed in a critical section */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	Assert(CritSectionCount == 0);
 #endif
 
@@ -1547,13 +1536,8 @@ palloc0(Size size)
 
 	context->isReset = false;
 
-<<<<<<< HEAD
-	ret = (*CurrentMemoryContext->methods.alloc) (CurrentMemoryContext, size);
-	if (ret == NULL)
-=======
-	ret = context->methods->alloc(context, size);
+	ret = context->methods.alloc(context, size);
 	if (unlikely(ret == NULL))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		MemoryContextStats(TopMemoryContext);
 		ereport(ERROR,
@@ -1586,13 +1570,8 @@ palloc_extended(Size size, int flags)
 
 	context->isReset = false;
 
-<<<<<<< HEAD
-	ret = (*CurrentMemoryContext->methods.alloc) (CurrentMemoryContext, size);
-	if (ret == NULL)
-=======
-	ret = context->methods->alloc(context, size);
+	ret = context->methods.alloc(context, size);
 	if (unlikely(ret == NULL))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
 		{
@@ -1912,42 +1891,6 @@ pnstrdup(const char *in, Size len)
 	return out;
 }
 
-<<<<<<< HEAD
-#if defined(WIN32) || defined(__CYGWIN__)
-/*
- *	Memory support routines for libpgport on Win32
- *
- *	Win32 can't load a library that PGDLLIMPORTs a variable
- *	if the link object files also PGDLLIMPORT the same variable.
- *	For this reason, libpgport can't reference CurrentMemoryContext
- *	in the palloc macro calls.
- *
- *	To fix this, we create several functions here that allow us to
- *	manage memory without doing the inline in libpgport.
- */
-void *
-pgport_palloc(Size sz)
-{
-	return palloc(sz);
-}
-
-
-char *
-pgport_pstrdup(const char *str)
-{
-	return pstrdup(str);
-}
-
-
-/* Doesn't reference a PGDLLIMPORT variable, but here for completeness. */
-void
-pgport_pfree(void *pointer)
-{
-	pfree(pointer);
-}
-
-#endif
-=======
 /*
  * Make copy of string with all trailing newline characters removed.
  */
@@ -1961,4 +1904,3 @@ pchomp(const char *in)
 		n--;
 	return pnstrdup(in, n);
 }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

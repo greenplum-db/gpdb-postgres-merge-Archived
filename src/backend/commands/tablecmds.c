@@ -88,7 +88,7 @@
 #include "nodes/nodeFuncs.h"
 #include "nodes/parsenodes.h"
 <<<<<<< HEAD
-#include "optimizer/clauses.h"
+o#include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"

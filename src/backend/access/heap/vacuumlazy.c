@@ -405,13 +405,8 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 	 * tuple density") unless there's some actual evidence for the latter.
 	 *
 	 * It's important that we use tupcount_pages and not scanned_pages for the
-<<<<<<< HEAD:src/backend/commands/vacuumlazy.c
-	 * check described above; scanned_pages counts pages where we could not get
-	 * cleanup lock, and which were processed only for frozenxid purposes.
-=======
 	 * check described above; scanned_pages counts pages where we could not
 	 * get cleanup lock, and which were processed only for frozenxid purposes.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/vacuumlazy.c
 	 *
 	 * We do update relallvisible even in the corner case, since if the table
 	 * is all-visible we'd definitely like to know that.  But clamp the value
@@ -1241,15 +1236,10 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 
 			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			tuple.t_len = ItemIdGetLength(itemid);
-#if 0
 			tuple.t_tableOid = RelationGetRelid(onerel);
-#endif
 
 			tupgone = false;
 
-<<<<<<< HEAD:src/backend/commands/vacuumlazy.c
-			switch (HeapTupleSatisfiesVacuum(onerel, &tuple, OldestXmin, buf))
-=======
 			/*
 			 * The criteria for counting a tuple as live in this block need to
 			 * match what analyze.c's acquire_sample_rows() does, otherwise
@@ -1261,8 +1251,7 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 			 * cases impossible (e.g. in-progress insert from the same
 			 * transaction).
 			 */
-			switch (HeapTupleSatisfiesVacuum(&tuple, OldestXmin, buf))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/vacuumlazy.c
+			switch (HeapTupleSatisfiesVacuum(onerel, &tuple, OldestXmin, buf))
 			{
 				case HEAPTUPLE_DEAD:
 
@@ -1279,15 +1268,11 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 					 * it were RECENTLY_DEAD.  Also, if it's a heap-only
 					 * tuple, we choose to keep it, because it'll be a lot
 					 * cheaper to get rid of it in the next pruning pass than
-<<<<<<< HEAD:src/backend/commands/vacuumlazy.c
-					 * to treat it like an indexed tuple.
-=======
 					 * to treat it like an indexed tuple. Finally, if index
 					 * cleanup is disabled, the second heap pass will not
 					 * execute, and the tuple will not get removed, so we must
 					 * treat it like any other dead tuple that we choose to
 					 * keep.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/vacuumlazy.c
 					 *
 					 * If this were to happen for a tuple that actually needed
 					 * to be deleted, we'd be in trouble, because it'd
@@ -2011,10 +1996,7 @@ lazy_cleanup_index(Relation indrel,
 
 	ivinfo.index = indrel;
 	ivinfo.analyze_only = false;
-<<<<<<< HEAD:src/backend/commands/vacuumlazy.c
-=======
 	ivinfo.report_progress = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/vacuumlazy.c
 	ivinfo.estimated_count = (vacrelstats->tupcount_pages < vacrelstats->rel_pages);
 	ivinfo.message_level = elevel;
 

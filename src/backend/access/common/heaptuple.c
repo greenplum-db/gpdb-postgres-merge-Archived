@@ -1162,9 +1162,6 @@ heaptuple_form_to(TupleDesc tupleDescriptor, Datum *values, bool *isnull, HeapTu
 	td->t_hoff = hoff;
 
 <<<<<<< HEAD
-	if (tupleDescriptor->tdhasoid)		/* else leave infomask = 0 */
-		td->t_infomask = HEAP_HASOID;
-
 	actual_len = heap_fill_tuple(tupleDescriptor,
 								 values,
 								 isnull,

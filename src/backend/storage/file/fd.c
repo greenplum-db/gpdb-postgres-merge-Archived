@@ -185,15 +185,6 @@ bool		data_sync_retry = false;
 
 #define FileIsNotOpen(file) (VfdCache[file].fd == VFD_CLOSED)
 
-/*
- * Note: a VFD's seekPos is normally always valid, but if for some reason
- * an lseek() fails, it might become set to FileUnknownPos.  We can struggle
- * along without knowing the seek position in many cases, but in some places
- * we have to fail if we don't have it.
- */
-#define FileUnknownPos ((off_t) -1)
-#define FilePosIsUnknown(pos) ((pos) < 0)
-
 /* these are the assigned bits in fdstate below: */
 #define FD_DELETE_AT_CLOSE	(1 << 0)	/* T = delete when closed */
 #define FD_CLOSE_AT_EOXACT	(1 << 1)	/* T = close at eoXact */
@@ -209,10 +200,6 @@ typedef struct vfd
 	File		nextFree;		/* link to next free VFD, if in freelist */
 	File		lruMoreRecently;	/* doubly linked recency-of-use list */
 	File		lruLessRecently;
-<<<<<<< HEAD
-	off_t		seekPos;		/* current logical file position, or -1 */
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	off_t		fileSize;		/* current size of file (0 if not temporary) */
 	char	   *fileName;		/* name of file, or NULL for unused VFD */
 	/* NB: fileName is malloc'd, and must be free'd when closing the VFD */
@@ -342,15 +329,9 @@ static bool reserveAllocatedDesc(void);
 static int	FreeDesc(AllocateDesc *desc);
 
 static void AtProcExit_Files(int code, Datum arg);
-<<<<<<< HEAD
-static void CleanupTempFiles(bool isProcExit);
-static void RemovePgTempFilesInDir(const char *tmpdirname, bool missing_ok,
-					   bool unlink_all);
-=======
 static void CleanupTempFiles(bool isCommit, bool isProcExit);
 static void RemovePgTempFilesInDir(const char *tmpdirname, bool missing_ok,
 								   bool unlink_all);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void RemovePgTempRelationFiles(const char *tsdirname);
 static void RemovePgTempRelationFilesInDbspace(const char *dbspacedirname);
 
@@ -1100,25 +1081,6 @@ LruDelete(File file)
 	vfdP = &VfdCache[file];
 
 	/*
-<<<<<<< HEAD
-	 * Normally we should know the seek position, but if for some reason we
-	 * have lost track of it, try again to get it.  If we still can't get it,
-	 * we have a problem: we will be unable to restore the file seek position
-	 * when and if the file is re-opened.  But we can't really throw an error
-	 * and refuse to close the file, or activities such as transaction cleanup
-	 * will be broken.
-	 */
-	if (FilePosIsUnknown(vfdP->seekPos))
-	{
-		vfdP->seekPos = lseek(vfdP->fd, (off_t) 0, SEEK_CUR);
-		if (FilePosIsUnknown(vfdP->seekPos))
-			elog(LOG, "could not seek file \"%s\" before closing: %m",
-				 vfdP->fileName);
-	}
-
-	/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * Close the file.  We aren't expecting this to fail; if it does, better
 	 * to leak the FD than to mess up our internal state.
 	 */
@@ -1187,36 +1149,6 @@ LruInsert(File file)
 		{
 			++nfile;
 		}
-<<<<<<< HEAD
-
-		/*
-		 * Seek to the right position.  We need no special case for seekPos
-		 * equal to FileUnknownPos, as lseek() will certainly reject that
-		 * (thus completing the logic noted in LruDelete() that we will fail
-		 * to re-open a file if we couldn't get its seek position before
-		 * closing).
-		 */
-		if (vfdP->seekPos != (off_t) 0)
-		{
-			if (lseek(vfdP->fd, vfdP->seekPos, SEEK_SET) < 0)
-			{
-				/*
-				 * If we fail to restore the seek position, treat it like an
-				 * open() failure.
-				 */
-				int			save_errno = errno;
-
-				elog(LOG, "could not seek file \"%s\" after re-opening: %m",
-					 vfdP->fileName);
-				(void) close(vfdP->fd);
-				vfdP->fd = VFD_CLOSED;
-				--nfile;
-				errno = save_errno;
-				return -1;
-			}
-		}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*
@@ -1491,7 +1423,6 @@ PathNameOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode)
 }
 
 /*
-<<<<<<< HEAD
  * Open a temporary file that will (optionally) disappear when we close it.
  *
  * 'fileName' identify a new or existing temporary file which other processes
@@ -1561,7 +1492,7 @@ OpenNamedTemporaryFile(const char *fileName,
 	return file;
 }
 
-=======
+/*
  * Create directory 'directory'.  If necessary, create 'basedir', which must
  * be the directory above it.  This is designed for creating the top-level
  * temporary directory on demand before creating a directory underneath it.
@@ -1621,7 +1552,6 @@ PathNameDeleteTemporaryDir(const char *dirname)
 	 */
 	walkdir(dirname, unlink_if_exists_fname, false, LOG);
 }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Open a temporary file that will disappear when we close it.
@@ -1853,12 +1783,7 @@ OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError,
 	if (create)
 		flags |= O_CREAT | O_TRUNC;
 	file = PathNameOpenFile(tempfilepath,
-<<<<<<< HEAD
-							flags,
-							0600);
-=======
-							O_RDWR | O_CREAT | O_TRUNC | PG_BINARY);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+							flags);
 	if (file <= 0)
 	{
 		/*
@@ -1872,12 +1797,7 @@ OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError,
 		(void) MakePGDirectory(tempdirpath);
 
 		file = PathNameOpenFile(tempfilepath,
-<<<<<<< HEAD
-								flags,
-								0600);
-=======
-								O_RDWR | O_CREAT | O_TRUNC | PG_BINARY);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+								flags);
 		if (file <= 0 && rejectError)
 		{
 			if (create)
@@ -2034,11 +1954,7 @@ FileClose(File file)
 	if (!FileIsNotOpen(file))
 	{
 		/* close the file */
-<<<<<<< HEAD
 		if (gp_retry_close(vfdP->fd))
-			elog(LOG, "could not close file \"%s\": %m", vfdP->fileName);
-=======
-		if (close(vfdP->fd))
 		{
 			/*
 			 * We may need to panic on failure to close non-temporary files;
@@ -2047,15 +1963,12 @@ FileClose(File file)
 			elog(vfdP->fdstate & FD_TEMP_FILE_LIMIT ? LOG : data_sync_elevel(LOG),
 				 "could not close file \"%s\": %m", vfdP->fileName);
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		--nfile;
 		vfdP->fd = VFD_CLOSED;
 
 		/* remove the file from the lru ring */
 		Delete(file);
-<<<<<<< HEAD
-=======
 	}
 
 	if (vfdP->fdstate & FD_TEMP_FILE_LIMIT)
@@ -2063,7 +1976,6 @@ FileClose(File file)
 		/* Subtract its size from current usage (do first in case of error) */
 		temporary_files_size -= vfdP->fileSize;
 		vfdP->fileSize = 0;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*
@@ -2198,23 +2110,11 @@ FileRead(File file, char *buffer, int amount, off_t offset,
 	vfdP = &VfdCache[file];
 
 retry:
-<<<<<<< HEAD
-	returnCode = read(vfdP->fd, buffer, amount);
-
-	if (returnCode >= 0)
-	{
-		/* if seekPos is unknown, leave it that way */
-		if (!FilePosIsUnknown(vfdP->seekPos))
-			vfdP->seekPos += returnCode;
-	}
-	else
-=======
 	pgstat_report_wait_start(wait_event_info);
 	returnCode = pg_pread(vfdP->fd, buffer, amount, offset);
 	pgstat_report_wait_end();
 
 	if (returnCode < 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		/*
 		 * Windows may run out of kernel buffers and return "Insufficient
@@ -2240,12 +2140,6 @@ retry:
 		/* OK to retry if interrupted */
 		if (errno == EINTR)
 			goto retry;
-<<<<<<< HEAD
-
-		/* Trouble, so assume we don't know the file position anymore */
-		vfdP->seekPos = FileUnknownPos;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	return returnCode;
@@ -2279,30 +2173,6 @@ FileWrite(File file, char *buffer, int amount, off_t offset,
 	 * message if we do that.  All current callers would just throw error
 	 * immediately anyway, so this is safe at present.
 	 */
-<<<<<<< HEAD
-	if (temp_file_limit >= 0 && (vfdP->fdstate & FD_TEMPORARY))
-	{
-		off_t		newPos;
-
-		/*
-		 * Normally we should know the seek position, but if for some reason
-		 * we have lost track of it, try again to get it.  Here, it's fine to
-		 * throw an error if we still can't get it.
-		 */
-		if (FilePosIsUnknown(vfdP->seekPos))
-		{
-			vfdP->seekPos = lseek(vfdP->fd, (off_t) 0, SEEK_CUR);
-			if (FilePosIsUnknown(vfdP->seekPos))
-				elog(ERROR, "could not seek file \"%s\": %m", vfdP->fileName);
-		}
-
-		newPos = vfdP->seekPos + amount;
-		if (newPos > vfdP->fileSize)
-		{
-			uint64		newTotal = temporary_files_size;
-
-			newTotal += newPos - vfdP->fileSize;
-=======
 	if (temp_file_limit >= 0 && (vfdP->fdstate & FD_TEMP_FILE_LIMIT))
 	{
 		off_t		past_write = offset + amount;
@@ -2312,7 +2182,6 @@ FileWrite(File file, char *buffer, int amount, off_t offset,
 			uint64		newTotal = temporary_files_size;
 
 			newTotal += past_write - vfdP->fileSize;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			if (newTotal > (uint64) temp_file_limit * (uint64) 1024)
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
@@ -2340,13 +2209,9 @@ FileWrite(File file, char *buffer, int amount, off_t offset,
 
 retry:
 	errno = 0;
-<<<<<<< HEAD
-	returnCode = write(vfdP->fd, buffer, amount);
-=======
 	pgstat_report_wait_start(wait_event_info);
 	returnCode = pg_pwrite(VfdCache[file].fd, buffer, amount, offset);
 	pgstat_report_wait_end();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* if write didn't set errno, assume problem is no disk space */
 	if (returnCode != amount && errno == 0)
@@ -2354,13 +2219,6 @@ retry:
 
 	if (returnCode >= 0)
 	{
-<<<<<<< HEAD
-		/* if seekPos is unknown, leave it that way */
-		if (!FilePosIsUnknown(vfdP->seekPos))
-			vfdP->seekPos += returnCode;
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		/*
 		 * Maintain fileSize and temporary_files_size if it's a temp file.
 		 *
@@ -2368,16 +2226,6 @@ retry:
 		 * get here in that state if we're not enforcing temporary_files_size,
 		 * so we don't care.
 		 */
-<<<<<<< HEAD
-		if (vfdP->fdstate & FD_TEMPORARY)
-		{
-			off_t		newPos = vfdP->seekPos;
-
-			if (newPos > vfdP->fileSize)
-			{
-				temporary_files_size += newPos - vfdP->fileSize;
-				vfdP->fileSize = newPos;
-=======
 		if (vfdP->fdstate & FD_TEMP_FILE_LIMIT)
 		{
 			off_t		past_write = offset + amount;
@@ -2386,7 +2234,6 @@ retry:
 			{
 				temporary_files_size += past_write - vfdP->fileSize;
 				vfdP->fileSize = past_write;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 		}
 	}
@@ -2412,12 +2259,6 @@ retry:
 		/* OK to retry if interrupted */
 		if (errno == EINTR)
 			goto retry;
-<<<<<<< HEAD
-
-		/* Trouble, so assume we don't know the file position anymore */
-		vfdP->seekPos = FileUnknownPos;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	return returnCode;
@@ -2436,8 +2277,9 @@ FileSync(File file, uint32 wait_event_info)
 	if (returnCode < 0)
 		return returnCode;
 
-<<<<<<< HEAD
-	returnCode =  pg_fsync(VfdCache[file].fd);
+	pgstat_report_wait_start(wait_event_info);
+	returnCode = pg_fsync(VfdCache[file].fd);
+	pgstat_report_wait_end();
 
 	return returnCode;
 }
@@ -2556,23 +2398,8 @@ FileNonVirtualCurSeek(File file)
 	return pg_lseek64(VfdCache[file].fd, 0, SEEK_CUR);
 }
 
-/*
- * XXX not actually used but here for completeness
- */
-#ifdef NOT_USED
-int64
-FileTell(File file)
-=======
-	pgstat_report_wait_start(wait_event_info);
-	returnCode = pg_fsync(VfdCache[file].fd);
-	pgstat_report_wait_end();
-
-	return returnCode;
-}
-
 off_t
 FileSize(File file)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	Assert(FileIsValid(file));
 
@@ -2589,11 +2416,7 @@ FileSize(File file)
 }
 
 int
-<<<<<<< HEAD
-FileTruncate(File file, int64 offset)
-=======
-FileTruncate(File file, off_t offset, uint32 wait_event_info)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+FileTruncate(File file, int64 offset, uint32 wait_event_info)
 {
 	int			returnCode;
 
@@ -2606,7 +2429,6 @@ FileTruncate(File file, off_t offset, uint32 wait_event_info)
 	if (returnCode < 0)
 		return returnCode;
 
-<<<<<<< HEAD
 	/*
 	 * Call ftruncate with a int64 value.
 	 *
@@ -2614,9 +2436,7 @@ FileTruncate(File file, off_t offset, uint32 wait_event_info)
 	 * append-only vacuum full adjustment of the eof will erroneously remove
 	 * table data.
 	 */
-=======
 	pgstat_report_wait_start(wait_event_info);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	returnCode = ftruncate(VfdCache[file].fd, offset);
 	pgstat_report_wait_end();
 
@@ -3457,11 +3277,7 @@ CleanupTempFiles(bool isCommit, bool isProcExit)
 void
 RemovePgTempFiles(void)
 {
-<<<<<<< HEAD
-	char		temp_path[MAXPGPATH + 11 + get_dbid_string_length() + 1 + sizeof(GP_TABLESPACE_VERSION_DIRECTORY) + sizeof(PG_TEMP_FILES_DIR)];
-=======
 	char		temp_path[MAXPGPATH + 10 + sizeof(TABLESPACE_VERSION_DIRECTORY) + sizeof(PG_TEMP_FILES_DIR)];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	DIR		   *spc_dir;
 	struct dirent *spc_de;
 
@@ -3484,11 +3300,7 @@ RemovePgTempFiles(void)
 			continue;
 
 		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s/%s",
-<<<<<<< HEAD
 				 spc_de->d_name, GP_TABLESPACE_VERSION_DIRECTORY, PG_TEMP_FILES_DIR);
-=======
-				 spc_de->d_name, TABLESPACE_VERSION_DIRECTORY, PG_TEMP_FILES_DIR);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		RemovePgTempFilesInDir(temp_path, true, false);
 
 		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s",
@@ -3643,7 +3455,6 @@ RemovePgTempRelationFilesInDbspace(const char *dbspacedirname)
 	FreeDir(dbspace_dir);
 }
 
-<<<<<<< HEAD
 /*
  * In PostgreSQL, the pattern is:
  *
@@ -3656,11 +3467,7 @@ RemovePgTempRelationFilesInDbspace(const char *dbspacedirname)
  *
  * t_<digits>, or t<digits>_<digits>_<forkname>
  */
-static bool
-=======
-/* t<digits>_<digits>, or t<digits>_<digits>_<forkname> */
 bool
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 looks_like_temp_rel_name(const char *name)
 {
 	int			pos;
@@ -4035,7 +3842,6 @@ fsync_parent_path(const char *fname, int elevel)
 	return 0;
 }
 
-<<<<<<< HEAD
 const char *
 FileGetFilename(File file)
 {
@@ -4057,7 +3863,8 @@ void
 FileSetIsWorkfile(File file)
 {
 	VfdCache[file].fdstate |= FD_WORKFILE;
-=======
+}
+
 /*
  * Create a PostgreSQL data sub-directory
  *
@@ -4103,5 +3910,4 @@ int
 data_sync_elevel(int elevel)
 {
 	return data_sync_retry ? elevel : PANIC;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

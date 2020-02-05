@@ -180,8 +180,8 @@ static void compute_index_stats(Relation onerel, double totalrows,
 								HeapTuple *rows, int numrows,
 								MemoryContext col_context);
 static VacAttrStats *examine_attribute(Relation onerel, int attnum,
+									   Node *index_expr);
 <<<<<<< HEAD
-				  Node *index_expr, int elevel);
 static int acquire_sample_rows_dispatcher(Relation onerel, bool inh, int elevel,
 										  HeapTuple *rows, int targrows,
 										  double *totalrows, double *totaldeadrows);
@@ -190,7 +190,6 @@ static BlockNumber acquire_index_number_of_blocks(Relation indexrel, Relation ta
 
 static int	compare_rows(const void *a, const void *b);
 =======
-									   Node *index_expr);
 static int	acquire_sample_rows(Relation onerel, int elevel,
 								HeapTuple *rows, int targrows,
 								double *totalrows, double *totaldeadrows);

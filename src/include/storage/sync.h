@@ -48,6 +48,7 @@ typedef struct FileTag
 	int16		forknum;		/* ForkNumber, saving space */
 	RelFileNode rnode;
 	uint32		segno;
+	/* GPDB_12_MERGE_FIXME: Should the "is this AO table?" flag be put here? */
 } FileTag;
 
 extern void InitSync(void);

@@ -905,7 +905,8 @@ BufFileWrite(BufFile *file, const void *ptr, size_t size)
 	size_t		nwritten = 0;
 	size_t		nthistime;
 
-<<<<<<< HEAD
+	Assert(!file->readOnly);
+
 	SIMPLE_FAULT_INJECTOR("workfile_write_failure");
 
 	switch (file->state)
@@ -922,9 +923,6 @@ BufFileWrite(BufFile *file, const void *ptr, size_t size)
 		case BFS_COMPRESSED_READING:
 			elog(ERROR, "cannot write to sequential BufFile after reading");
 	}
-=======
-	Assert(!file->readOnly);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	while (size > 0)
 	{

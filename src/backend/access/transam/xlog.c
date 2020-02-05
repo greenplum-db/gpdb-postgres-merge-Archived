@@ -10983,13 +10983,8 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 	if (exclusive)
 	{
 		/*
-<<<<<<< HEAD
-		 * At first, mark that we're now starting an exclusive backup,
-		 * to ensure that there are no other sessions currently running
-=======
 		 * At first, mark that we're now starting an exclusive backup, to
 		 * ensure that there are no other sessions currently running
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 * pg_start_backup() or pg_stop_backup().
 		 */
 		if (XLogCtl->Insert.exclusiveBackupState != EXCLUSIVE_BACKUP_NONE)
@@ -11260,14 +11255,9 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		{
 			/*
 			 * Check for existing backup label --- implies a backup is already
-<<<<<<< HEAD
-			 * running.  (XXX given that we checked exclusiveBackupState above,
-			 * maybe it would be OK to just unlink any such label file?)
-=======
 			 * running.  (XXX given that we checked exclusiveBackupState
 			 * above, maybe it would be OK to just unlink any such label
 			 * file?)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			 */
 			if (stat(BACKUP_LABEL_FILE, &stat_buf) != 0)
 			{
@@ -11349,23 +11339,16 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 
 	/*
 	 * Mark that start phase has correctly finished for an exclusive backup.
-<<<<<<< HEAD
-=======
 	 * Session-level locks are updated as well to reflect that state.
 	 *
 	 * Note that CHECK_FOR_INTERRUPTS() must not occur while updating backup
 	 * counters and session-level lock. Otherwise they can be updated
 	 * inconsistently, and which might cause do_pg_abort_backup() to fail.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	if (exclusive)
 	{
 		WALInsertLockAcquireExclusive();
 		XLogCtl->Insert.exclusiveBackupState = EXCLUSIVE_BACKUP_IN_PROGRESS;
-<<<<<<< HEAD
-		WALInsertLockRelease();
-	}
-=======
 
 		/* Set session-level lock */
 		sessionBackupState = SESSION_BACKUP_EXCLUSIVE;
@@ -11373,7 +11356,6 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 	}
 	else
 		sessionBackupState = SESSION_BACKUP_NON_EXCLUSIVE;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * We're done.  As a convenience, return the starting WAL location.

@@ -110,21 +110,14 @@
  */
 typedef struct
 {
-<<<<<<< HEAD
-	RelFileNode rnode;
-	ForkNumber	forknum;
-	BlockNumber segno;			/* see md.c for special values */
+	SyncRequestType type;		/* request type */
+	FileTag		ftag;			/* file identifier */
 	/*
 	 * Is segno a real ao segno but not specially ones like
 	 * FORGET_RELATION_FSYNC. For example for a real relfile like
 	 * /base/16384/50237.129, it should be true and segno should be 129.
 	 */
 	bool		is_ao_segno;
-	/* might add a real request-type field later; not needed yet */
-=======
-	SyncRequestType type;		/* request type */
-	FileTag		ftag;			/* file identifier */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } CheckpointerRequest;
 
 typedef struct
@@ -1108,21 +1101,9 @@ RequestCheckpoint(int flags)
  * is dirty and must be fsync'd before next checkpoint.  We also use this
  * opportunity to count such writes for statistical purposes.
  *
-<<<<<<< HEAD
- * This functionality is only supported for regular (not backend-local)
- * relations, so the rnode argument is intentionally RelFileNode not
- * RelFileNodeBackend.
- *
- * segno specifies which segment (not block!) of the relation needs to be
- * fsync'd.  (Since the valid range is much less than BlockNumber, we can
- * use high values for special flags; that's all internal to md.c, which
- * see for details.)
- *
  * is_ao_segno means the segno is a real segno (i.e. not FORGET_RELATION_FSYNC,
  * etc) of ao relation.
  *
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * To avoid holding the lock for longer than necessary, we normally write
  * to the requests[] queue without checking for duplicates.  The checkpointer
  * will have to eliminate dups internally anyway.  However, if we discover
@@ -1134,12 +1115,7 @@ RequestCheckpoint(int flags)
  * let the backend know by returning false.
  */
 bool
-<<<<<<< HEAD
-ForwardFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno,
-					bool is_ao_segno)
-=======
-ForwardSyncRequest(const FileTag *ftag, SyncRequestType type)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+ForwardSyncRequest(const FileTag *ftag, SyncRequestType type, bool is_ao_segno)
 {
 	CheckpointerRequest *request;
 	bool		too_full;
@@ -1191,15 +1167,9 @@ ForwardSyncRequest(const FileTag *ftag, SyncRequestType type)
 
 	/* OK, insert request */
 	request = &CheckpointerShmem->requests[CheckpointerShmem->num_requests++];
-<<<<<<< HEAD
-	request->rnode = rnode;
-	request->forknum = forknum;
-	request->segno = segno;
-	request->is_ao_segno = is_ao_segno;
-=======
 	request->ftag = *ftag;
 	request->type = type;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	request->is_ao_segno = is_ao_segno;
 
 	/* If queue is more than half full, nudge the checkpointer to empty it */
 	too_full = (CheckpointerShmem->num_requests >=
@@ -1381,11 +1351,7 @@ AbsorbSyncRequests(void)
 	LWLockRelease(CheckpointerCommLock);
 
 	for (request = requests; n > 0; request++, n--)
-<<<<<<< HEAD
-		RememberFsyncRequest(request->rnode, request->forknum, request->segno, request->is_ao_segno);
-=======
-		RememberSyncRequest(&request->ftag, request->type);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		RememberFsyncRequest(&request->ftag, request->type, requset->is_ao_segno);
 
 	END_CRIT_SECTION();
 
