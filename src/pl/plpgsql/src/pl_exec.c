@@ -23,12 +23,8 @@
 #include "access/tuptoaster.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
-#include "cdb/cdbvars.h"
-=======
 #include "commands/defrem.h"
 #include "executor/execExpr.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "executor/spi.h"
 #include "executor/spi_priv.h"
 #include "funcapi.h"
@@ -51,12 +47,9 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
-<<<<<<< HEAD
-#define PG_INT32_MIN	(-0x7FFFFFFF-1)
-#define PG_INT32_MAX	(0x7FFFFFFF)
-=======
+#include "cdb/cdbvars.h"
+
 #include "plpgsql.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 typedef struct
@@ -362,26 +355,14 @@ static bool exec_eval_boolean(PLpgSQL_execstate *estate,
 							  PLpgSQL_expr *expr,
 							  bool *isNull);
 static Datum exec_eval_expr(PLpgSQL_execstate *estate,
-<<<<<<< HEAD
-			   PLpgSQL_expr *expr,
-			   bool *isNull,
-			   Oid *rettype,
-			   int32 *rettypmod);
-static int exec_run_select(PLpgSQL_execstate *estate,
-				PLpgSQL_expr *expr, int64 maxtuples, Portal *portalP,
-				bool parallelOK);
-static int exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
-			   Portal portal, bool prefetch_ok);
-=======
 							PLpgSQL_expr *expr,
 							bool *isNull,
 							Oid *rettype,
 							int32 *rettypmod);
 static int	exec_run_select(PLpgSQL_execstate *estate,
-							PLpgSQL_expr *expr, long maxtuples, Portal *portalP);
+							PLpgSQL_expr *expr, int64 maxtuples, Portal *portalP);
 static int	exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 						   Portal portal, bool prefetch_ok);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static ParamListInfo setup_param_list(PLpgSQL_execstate *estate,
 									  PLpgSQL_expr *expr);
 static ParamExternData *plpgsql_param_fetch(ParamListInfo params,
@@ -673,19 +654,6 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 			}
 			else
 			{
-<<<<<<< HEAD
-				case TYPEFUNC_COMPOSITE:
-					/* got the expected result rowtype, now check it */
-					tupmap = convert_tuples_by_position(estate.rettupdesc,
-														tupdesc,
-														gettext_noop("returned record type does not match expected record type"));
-					/* it might need conversion */
-					if (tupmap)
-						rettup = execute_attr_map_tuple(rettup, tupmap);
-					/* no need to free map, we're about to return anyway */
-					break;
-				case TYPEFUNC_RECORD:
-=======
 				/*
 				 * Need to look up the expected result type.  XXX would be
 				 * better to cache the tupdesc instead of repeating
@@ -712,7 +680,6 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 									 NULL, NULL);
 						break;
 					case TYPEFUNC_RECORD:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 						/*
 						 * Failed to determine actual type of RECORD.  We
@@ -1045,20 +1012,6 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 		TupleDesc	retdesc;
 		TupleConversionMap *tupmap;
 
-<<<<<<< HEAD
-		rettup = (HeapTuple) DatumGetPointer(estate.retval);
-		/* check rowtype compatibility */
-		tupmap = convert_tuples_by_position(estate.rettupdesc,
-											trigdata->tg_relation->rd_att,
-											gettext_noop("returned row structure does not match the structure of the triggering table"));
-		/* it might need conversion */
-		if (tupmap)
-			rettup = execute_attr_map_tuple(rettup, tupmap);
-		/* no need to free map, we're about to return anyway */
-
-		/* Copy tuple to upper executor memory */
-		rettup = SPI_copytuple(rettup);
-=======
 		/* We assume exec_stmt_return verified that result is composite */
 		Assert(type_is_rowtype(estate.rettype));
 
@@ -1118,7 +1071,6 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 			/* Copy tuple to upper executor memory */
 			rettup = SPI_copytuple(rettup);
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*
@@ -2904,11 +2856,7 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 	Assert(query);
 
 	if (query->plan == NULL)
-<<<<<<< HEAD
-		exec_prepare_plan(estate, query, curvar->cursor_options | CURSOR_OPT_UPDATABLE);
-=======
-		exec_prepare_plan(estate, query, curvar->cursor_options, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		exec_prepare_plan(estate, query, curvar->cursor_options | CURSOR_OPT_UPDATABLE, true);
 
 	/*
 	 * Set up ParamListInfo for this query
@@ -3391,17 +3339,9 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 														gettext_noop("wrong record type supplied in RETURN NEXT"));
 					tuple = expanded_record_get_tuple(rec->erh);
 					if (tupmap)
-<<<<<<< HEAD
-					{
-						tuple = execute_attr_map_tuple(tuple, tupmap);
-						free_conversion_map(tupmap);
-						free_tuple = true;
-					}
-=======
 						tuple = execute_attr_map_tuple(tuple, tupmap);
 					tuplestore_puttuple(estate->tuple_store, tuple);
 					MemoryContextSwitchTo(oldcontext);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				}
 				break;
 
@@ -3462,19 +3402,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 				tupmap = convert_tuples_by_position(retvaldesc, tupdesc,
 													gettext_noop("returned record type does not match expected record type"));
 				if (tupmap)
-<<<<<<< HEAD
-				{
-					HeapTuple	newtuple;
-
-					newtuple = execute_attr_map_tuple(tuple, tupmap);
-					free_conversion_map(tupmap);
-					heap_freetuple(tuple);
-					tuple = newtuple;
-				}
-=======
 					tuple = execute_attr_map_tuple(tuple, tupmap);
 				tuplestore_puttuple(estate->tuple_store, tuple);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				ReleaseTupleDesc(retvaldesc);
 				MemoryContextSwitchTo(oldcontext);
 			}
@@ -4103,35 +4032,10 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 							  (void *) expr,
 							  cursorOptions);
 	if (plan == NULL)
-<<<<<<< HEAD
-	{
-		/* Some SPI errors deserve specific error messages */
-		switch (SPI_result)
-		{
-			case SPI_ERROR_COPY:
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot COPY to/from client in PL/pgSQL")));
-				break;
-			case SPI_ERROR_TRANSACTION:
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot begin/end transactions in PL/pgSQL"),
-						 errhint("Use a BEGIN block with an EXCEPTION clause instead.")));
-				break;
-			default:
-				elog(ERROR, "SPI_prepare_params failed for \"%s\": %s",
-					 expr->query, SPI_result_code_string(SPI_result));
-				break;
-		}
-	}
-	SPI_keepplan(plan);
-=======
 		elog(ERROR, "SPI_prepare_params failed for \"%s\": %s",
 			 expr->query, SPI_result_code_string(SPI_result));
 	if (keepplan)
 		SPI_keepplan(plan);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	expr->plan = plan;
 
 	/* Check to see if it's a simple expression */
@@ -4280,19 +4184,11 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot COPY to/from client in PL/pgSQL")));
 			break;
-<<<<<<< HEAD
-		case SPI_ERROR_TRANSACTION:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot begin/end transactions in PL/pgSQL"),
-			errhint("Use a BEGIN block with an EXCEPTION clause instead.")));
-=======
 
 		case SPI_ERROR_TRANSACTION:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("unsupported transaction command in PL/pgSQL")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 
 		default:
@@ -4478,19 +4374,11 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot COPY to/from client in PL/pgSQL")));
 			break;
-<<<<<<< HEAD
-		case SPI_ERROR_TRANSACTION:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot begin/end transactions in PL/pgSQL"),
-			errhint("Use a BEGIN block with an EXCEPTION clause instead.")));
-=======
 
 		case SPI_ERROR_TRANSACTION:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("EXECUTE of transaction commands is not implemented")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 
 		default:
@@ -4663,11 +4551,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		 */
 		query = stmt->query;
 		if (query->plan == NULL)
-<<<<<<< HEAD
-			exec_prepare_plan(estate, query, stmt->cursor_options | CURSOR_OPT_UPDATABLE);
-=======
-			exec_prepare_plan(estate, query, stmt->cursor_options, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			exec_prepare_plan(estate, query, stmt->cursor_options | CURSOR_OPT_UPDATABLE, true);
 	}
 	else if (stmt->dynquery != NULL)
 	{
@@ -4738,11 +4622,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 
 		query = curvar->cursor_explicit_expr;
 		if (query->plan == NULL)
-<<<<<<< HEAD
-			exec_prepare_plan(estate, query, curvar->cursor_options | CURSOR_OPT_UPDATABLE);
-=======
-			exec_prepare_plan(estate, query, curvar->cursor_options, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			exec_prepare_plan(estate, query, curvar->cursor_options | CURSOR_OPT_UPDATABLE, true);
 	}
 
 	/*
@@ -5939,12 +5819,7 @@ exec_eval_expr(PLpgSQL_execstate *estate,
  */
 static int
 exec_run_select(PLpgSQL_execstate *estate,
-<<<<<<< HEAD
-				PLpgSQL_expr *expr, int64 maxtuples, Portal *portalP,
-				bool parallelOK)
-=======
-				PLpgSQL_expr *expr, long maxtuples, Portal *portalP)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				PLpgSQL_expr *expr, int64 maxtuples, Portal *portalP)
 {
 	ParamListInfo paramLI;
 	int			rc;
@@ -7379,32 +7254,7 @@ make_tuple_from_row(PLpgSQL_execstate *estate,
  * value outlive that variable, caller would need to apply heap_copytuple...
  * but current callers only need a short-lived tuple value anyway.
  *
-<<<<<<< HEAD
- * Note: it's caller's responsibility to be sure value is of composite type.
- * ----------
- */
-static HeapTuple
-get_tuple_from_datum(Datum value)
-{
-	HeapTupleHeader td = DatumGetHeapTupleHeader(value);
-	HeapTupleData tmptup;
-
-	/* Build a temporary HeapTuple control structure */
-	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
-	ItemPointerSetInvalid(&(tmptup.t_self));
-	tmptup.t_data = td;
-
-	/* Build a copy and return it */
-	return heap_copytuple(&tmptup);
-}
-
-/* ----------
- * get_tupdesc_from_datum	get a tuple descriptor for a composite Datum
- *
- * Returns a pointer to the TupleDesc of the tuple's rowtype.
-=======
  * Returns a pointer to the TupleDesc of the datum's rowtype.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Caller is responsible for calling ReleaseTupleDesc when done with it.
  *
  * Note: it's caller's responsibility to be sure value is of composite type.
@@ -7446,29 +7296,6 @@ exec_move_row_from_datum(PLpgSQL_execstate *estate,
 						 PLpgSQL_variable *target,
 						 Datum value)
 {
-<<<<<<< HEAD
-	HeapTupleHeader td = DatumGetHeapTupleHeader(value);
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc;
-	HeapTupleData tmptup;
-
-	/* Extract rowtype info and find a tupdesc */
-	tupType = HeapTupleHeaderGetTypeId(td);
-	tupTypmod = HeapTupleHeaderGetTypMod(td);
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-
-	/* Build a temporary HeapTuple control structure */
-	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
-	ItemPointerSetInvalid(&(tmptup.t_self));
-	tmptup.t_data = td;
-
-	/* Do the move */
-	exec_move_row(estate, rec, row, &tmptup, tupdesc);
-
-	/* Release tupdesc usage count */
-	ReleaseTupleDesc(tupdesc);
-=======
 	/* Check to see if source is an expanded record */
 	if (VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(value)))
 	{
@@ -7707,7 +7534,6 @@ instantiate_empty_record_variable(PLpgSQL_execstate *estate, PLpgSQL_rec *rec)
 	/* OK, do it */
 	rec->erh = make_expanded_record_from_typeid(rec->rectypeid, -1,
 												estate->datum_context);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* ----------

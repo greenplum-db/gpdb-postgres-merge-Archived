@@ -21,14 +21,9 @@
 #include "plpgsql.h"
 #include "pl_gram.h"			/* must be after parser/scanner.h */
 
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "parser/parser.h"
 
-#define PG_KEYWORD(a,b,c) {a,b,c},
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* Klugy flag to tell scanner how to look up identifiers */
 IdentifierLookup plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
@@ -593,7 +588,6 @@ plpgsql_latest_lineno(void)
 void
 plpgsql_scanner_init(const char *str)
 {
-<<<<<<< HEAD
 	/*
 	 * In GPDB, temporarily disable escape_string_warning, if we're in a QE
 	 * node. When we're parsing a PL/pgSQL function, e.g. in a CREATE FUNCTION
@@ -610,7 +604,7 @@ plpgsql_scanner_init(const char *str)
 
 		/* Start up the core scanner */
 		yyscanner = scanner_init(str, &core_yy,
-								 reserved_keywords, num_reserved_keywords);
+								 &ReservedPLKeywords, ReservedPLKeywordTokens);
 
 		if (Gp_role == GP_ROLE_EXECUTE)
 			escape_string_warning = save_escape_string_warning;
@@ -622,11 +616,6 @@ plpgsql_scanner_init(const char *str)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
-=======
-	/* Start up the core scanner */
-	yyscanner = scanner_init(str, &core_yy,
-							 &ReservedPLKeywords, ReservedPLKeywordTokens);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * scanorig points to the original string, which unlike the scanner's

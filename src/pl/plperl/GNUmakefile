@@ -56,12 +56,8 @@ endif # win32
 SHLIB_LINK = $(perl_embed_ldflags)
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-extension=plperl  --load-extension=plperlu
-<<<<<<< HEAD
 REGRESS_OPTS += --init-file=init_file
-REGRESS = plperl plperl_lc plperl_trigger plperl_shared plperl_elog plperl_util plperl_init plperlu plperl_array
-=======
 REGRESS = plperl plperl_lc plperl_trigger plperl_shared plperl_elog plperl_util plperl_init plperlu plperl_array plperl_call plperl_transaction
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 # if Perl can support two interpreters in one backend,
 # test plperl-and-plperlu cases
 ifneq ($(PERL),)

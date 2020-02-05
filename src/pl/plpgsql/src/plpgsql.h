@@ -226,12 +226,7 @@ typedef struct PLpgSQL_expr
 	struct PLpgSQL_nsitem *ns;
 
 	/* fields for "simple expression" fast-path execution: */
-<<<<<<< HEAD
-	Expr	   *expr_simple_expr;		/* NULL means not a simple expr */
-	TransactionId	transaction_id;	/* used for clearing cached plan */
-=======
 	Expr	   *expr_simple_expr;	/* NULL means not a simple expr */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			expr_simple_generation; /* plancache generation we checked */
 	Oid			expr_simple_type;	/* result type Oid, if simple */
 	int32		expr_simple_typmod; /* result typmod, if simple */

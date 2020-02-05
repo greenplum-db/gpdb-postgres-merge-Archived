@@ -16,12 +16,9 @@
 #include "fmgr.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"       /* for byteain & byteaout */
-<<<<<<< HEAD
 
 /* Defined by Perl */
 #undef _
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* perl stuff */
 #define PG_NEED_PERL_XSUB_H
