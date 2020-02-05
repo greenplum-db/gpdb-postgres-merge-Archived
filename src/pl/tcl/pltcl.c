@@ -15,11 +15,7 @@
 
 #include "access/htup_details.h"
 #include "access/xact.h"
-<<<<<<< HEAD
-#include "catalog/namespace.h"
-=======
 #include "catalog/objectaccess.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/event_trigger.h"
@@ -605,40 +601,12 @@ call_pltcl_start_proc(Oid prolang, bool pltrusted)
 	FmgrInfo	finfo;
 	PgStat_FunctionCallUsage fcusage;
 
-<<<<<<< HEAD
-	/************************************************************
-	 * Check if table pltcl_modules exists
-	 *
-	 * We allow the table to be found anywhere in the search_path.
-	 * This is for backwards compatibility.  To ensure that the table
-	 * is trustworthy, we require it to be owned by a superuser.
-	 *
-	 * this next bit of code is the same as try_relation_openrv(),
-	 * which only exists in 8.4 and up.
-	 ************************************************************/
-	pmrel = relation_openrv_extended(makeRangeVar(NULL, "pltcl_modules", -1), AccessShareLock, true, true);
-	if (pmrel == NULL)
-		return;
-	/* sanity-check the relation kind */
-	if (!(pmrel->rd_rel->relkind == RELKIND_RELATION ||
-		  pmrel->rd_rel->relkind == RELKIND_MATVIEW ||
-		  pmrel->rd_rel->relkind == RELKIND_VIEW))
-	{
-		relation_close(pmrel, AccessShareLock);
-		return;
-	}
-	/* must be owned by superuser, else ignore */
-	if (!superuser_arg(pmrel->rd_rel->relowner))
-	{
-		relation_close(pmrel, AccessShareLock);
-=======
 	/* select appropriate GUC */
 	start_proc = pltrusted ? pltcl_start_proc : pltclu_start_proc;
 	gucname = pltrusted ? "pltcl.start_proc" : "pltclu.start_proc";
 
 	/* Nothing to do if it's empty or unset */
 	if (start_proc == NULL || start_proc[0] == '\0')
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return;
 
 	/* Set up errcontext callback to make errors more helpful */
@@ -1332,104 +1300,9 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 				 errmsg("could not split return value from trigger: %s",
 						utf_u2e(Tcl_GetStringResult(interp)))));
 
-<<<<<<< HEAD
-	/* Use a TRY to ensure ret_values will get freed */
-	PG_TRY();
-	{
-		if (ret_numvals % 2 != 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-					 errmsg("trigger's return list must have even number of elements")));
-
-		modattrs = (int *) palloc(tupdesc->natts * sizeof(int));
-		modvalues = (Datum *) palloc(tupdesc->natts * sizeof(Datum));
-		for (i = 0; i < tupdesc->natts; i++)
-		{
-			modattrs[i] = i + 1;
-			modvalues[i] = (Datum) NULL;
-		}
-
-		modnulls = palloc(tupdesc->natts);
-		memset(modnulls, 'n', tupdesc->natts);
-
-		for (i = 0; i < ret_numvals; i += 2)
-		{
-			char	   *ret_name = utf_u2e(ret_values[i]);
-			char	   *ret_value = utf_u2e(ret_values[i + 1]);
-			int			attnum;
-			Oid			typinput;
-			Oid			typioparam;
-			FmgrInfo	finfo;
-
-			/************************************************************
-			 * Get the attribute number
-			 *
-			 * We silently ignore ".tupno", if it's present but doesn't match
-			 * any actual output column.  This allows direct use of a row
-			 * returned by pltcl_set_tuple_values().
-			 ************************************************************/
-			attnum = SPI_fnumber(tupdesc, ret_name);
-			if (attnum == SPI_ERROR_NOATTRIBUTE)
-			{
-				if (strcmp(ret_name, ".tupno") == 0)
-					continue;
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("unrecognized attribute \"%s\"",
-								ret_name)));
-			}
-			if (attnum <= 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot set system attribute \"%s\"",
-								ret_name)));
-
-			/************************************************************
-			 * Ignore dropped columns
-			 ************************************************************/
-			if (tupdesc->attrs[attnum - 1]->attisdropped)
-				continue;
-
-			/************************************************************
-			 * Lookup the attribute type in the syscache
-			 * for the input function
-			 ************************************************************/
-			getTypeInputInfo(tupdesc->attrs[attnum - 1]->atttypid,
-							 &typinput, &typioparam);
-			fmgr_info(typinput, &finfo);
-
-			/************************************************************
-			 * Set the attribute to NOT NULL and convert the contents
-			 ************************************************************/
-			modvalues[attnum - 1] = InputFunctionCall(&finfo,
-													  ret_value,
-													  typioparam,
-									  tupdesc->attrs[attnum - 1]->atttypmod);
-			modnulls[attnum - 1] = ' ';
-		}
-
-		rettup = SPI_modifytuple(trigdata->tg_relation, rettup, tupdesc->natts,
-								 modattrs, modvalues, modnulls);
-
-		pfree(modattrs);
-		pfree(modvalues);
-		pfree(modnulls);
-
-		if (rettup == NULL)
-			elog(ERROR, "SPI_modifytuple() failed - RC = %d", SPI_result);
-	}
-	PG_CATCH();
-	{
-		ckfree((char *) ret_values);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-	ckfree((char *) ret_values);
-=======
 	/* Convert function result to tuple */
 	rettup = pltcl_build_tuple_result(interp, result_Objv, result_Objc,
 									  call_state);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return rettup;
 }
