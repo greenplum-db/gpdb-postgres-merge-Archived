@@ -555,7 +555,6 @@ check_XactIsoLevel(int *newval, void **extra, GucSource source)
 	return true;
 }
 
-<<<<<<< HEAD
 void
 assign_XactIsoLevel(const char *newval, void *extra)
 {
@@ -615,8 +614,7 @@ check_DefaultXactIsoLevel(int *newval, void **extra, GucSource source)
 
 	return true;
 }
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
 /*
  * SET TRANSACTION [NOT] DEFERRABLE
  */

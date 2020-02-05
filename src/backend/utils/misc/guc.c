@@ -264,12 +264,8 @@ static const struct config_enum_entry client_message_level_options[] = {
 	{NULL, 0, false}
 };
 
-<<<<<<< HEAD
 const struct config_enum_entry server_message_level_options[] = {
 	{"debug", DEBUG2, true},
-=======
-static const struct config_enum_entry server_message_level_options[] = {
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{"debug5", DEBUG5, false},
 	{"debug4", DEBUG4, false},
 	{"debug3", DEBUG3, false},
@@ -589,11 +585,8 @@ static int	block_size;
 static int	segment_size;
 static int	wal_block_size;
 static bool data_checksums;
-<<<<<<< HEAD
 static int	wal_segment_size;
 static bool	data_checksums;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static bool integer_datetimes;
 static bool assert_enabled;
 static char *recovery_target_timeline_string;
@@ -660,19 +653,14 @@ const char *const config_group_names[] =
 	gettext_noop("Connections and Authentication"),
 	/* CONN_AUTH_SETTINGS */
 	gettext_noop("Connections and Authentication / Connection Settings"),
-<<<<<<< HEAD
-	/* CONN_AUTH_SECURITY */
-	gettext_noop("Connections and Authentication / Security and Authentication"),
+    /* CONN_AUTH_AUTH */
+    gettext_noop("Connections and Authentication / Authentication"),
+    /* CONN_AUTH_SSL */
+    gettext_noop("Connections and Authentication / SSL"),
 	/* EXTERNAL_TABLES */
 	gettext_noop("External Tables"),
 	/* APPENDONLY_TABLES */
 	gettext_noop("Append-Only Tables"),
-=======
-	/* CONN_AUTH_AUTH */
-	gettext_noop("Connections and Authentication / Authentication"),
-	/* CONN_AUTH_SSL */
-	gettext_noop("Connections and Authentication / SSL"),
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* RESOURCES */
 	gettext_noop("Resource Usage"),
 	/* RESOURCES_MEM */
@@ -1579,7 +1567,6 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-<<<<<<< HEAD
 		{"sql_inheritance", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("Causes subtables to be included by default in various commands."),
 			NULL,
@@ -1590,7 +1577,7 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"password_encryption", PGC_USERSET, CONN_AUTH_SECURITY,
+		{"password_encryption", PGC_USERSET, CONN_AUTH_SSL,
 			gettext_noop("Encrypt passwords."),
 			gettext_noop("When a password is specified in CREATE USER or "
 			   "ALTER USER without writing either ENCRYPTED or UNENCRYPTED, "
@@ -1601,8 +1588,6 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{"transform_null_equals", PGC_USERSET, COMPAT_OPTIONS_CLIENT,
 			gettext_noop("Treats \"expr=NULL\" as \"expr IS NULL\"."),
 			gettext_noop("When turned on, expressions of the form expr = NULL "
@@ -1699,11 +1684,7 @@ static struct config_bool ConfigureNamesBool[] =
 	 */
 	{
 		{"default_with_oids", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-<<<<<<< HEAD
-			gettext_noop("Create new tables with OIDs by default."),
-=======
 			gettext_noop("WITH OIDS is no longer supported; this can only be false."),
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
@@ -2115,34 +2096,20 @@ static struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 	{
-<<<<<<< HEAD
 		{"geqo_threshold", PGC_USERSET, DEFUNCT_OPTIONS,
 			gettext_noop("Unused. Syntax check only for PostgreSQL compatibility."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-=======
-		{"geqo_threshold", PGC_USERSET, QUERY_TUNING_GEQO,
-			gettext_noop("Sets the threshold of FROM items beyond which GEQO is used."),
-			NULL,
-			GUC_EXPLAIN
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		},
 		&defunct_int,
 		12, 2, INT_MAX,
 		NULL, NULL, NULL
 	},
 	{
-<<<<<<< HEAD
 		{"geqo_effort", PGC_USERSET, DEFUNCT_OPTIONS,
 			gettext_noop("Unused. Syntax check only for PostgreSQL compatibility."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-=======
-		{"geqo_effort", PGC_USERSET, QUERY_TUNING_GEQO,
-			gettext_noop("GEQO: effort is used to set the default for other GEQO parameters."),
-			NULL,
-			GUC_EXPLAIN
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		},
 		&defunct_int,
 		//DEFAULT_GEQO_EFFORT, MIN_GEQO_EFFORT, MAX_GEQO_EFFORT,
@@ -2150,34 +2117,20 @@ static struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 	{
-<<<<<<< HEAD
 		{"geqo_pool_size", PGC_USERSET, DEFUNCT_OPTIONS,
 			gettext_noop("Unused. Syntax check only for PostgreSQL compatibility."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-=======
-		{"geqo_pool_size", PGC_USERSET, QUERY_TUNING_GEQO,
-			gettext_noop("GEQO: number of individuals in the population."),
-			gettext_noop("Zero selects a suitable default value."),
-			GUC_EXPLAIN
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		},
 		&defunct_int,
 		0, 0, INT_MAX,
 		NULL, NULL, NULL
 	},
 	{
-<<<<<<< HEAD
 		{"geqo_generations", PGC_USERSET, DEFUNCT_OPTIONS,
 			gettext_noop("Unused. Syntax check only for PostgreSQL compatibility."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-=======
-		{"geqo_generations", PGC_USERSET, QUERY_TUNING_GEQO,
-			gettext_noop("GEQO: number of iterations of the algorithm."),
-			gettext_noop("Zero selects a suitable default value."),
-			GUC_EXPLAIN
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		},
 		&defunct_int,
 		0, 0, INT_MAX,
@@ -2445,7 +2398,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-<<<<<<< HEAD
 		{"vacuum_cost_delay", PGC_USERSET, RESOURCES_VACUUM_DELAY,
 			gettext_noop("Vacuum cost delay in milliseconds."),
 			NULL,
@@ -2468,10 +2420,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"autovacuum_vacuum_cost_limit", PGC_SIGHUP, DEFUNCT_OPTIONS,
-=======
 		{"autovacuum_vacuum_cost_limit", PGC_SIGHUP, AUTOVACUUM,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			gettext_noop("Vacuum cost amount available before napping, for autovacuum."),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
@@ -2790,7 +2739,6 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&max_wal_senders,
-<<<<<<< HEAD
 		/*
 		 * GPDB doesn't support 1:n replication yet.  In normal operation,
 		 * when primary and mirror are streaming WAL, only 1 WalSnd should be
@@ -2799,11 +2747,7 @@ static struct config_int ConfigureNamesInt[] =
 		 * pg_basebackup.
 		 */
 		10, 0, MAX_BACKENDS,
-		NULL, NULL, NULL
-=======
-		10, 0, MAX_BACKENDS,
 		check_max_wal_senders, NULL, NULL
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	},
 
 	{
@@ -2813,11 +2757,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&max_replication_slots,
-<<<<<<< HEAD
 		10, 1, MAX_BACKENDS /* XXX? */ ,
-=======
-		10, 0, MAX_BACKENDS /* XXX? */ ,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		NULL, NULL, NULL
 	},
 
@@ -3280,17 +3220,10 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"effective_cache_size", PGC_USERSET, QUERY_TUNING_COST,
-<<<<<<< HEAD
-			gettext_noop("Sets the planner's assumption about the size of the data cache."),
-			gettext_noop("That is, the size of the cache used for PostgreSQL data files. "
-						 "This is measured in disk pages, which are normally 8 kB each."),
-			GUC_UNIT_BLOCKS,
-=======
 			gettext_noop("Sets the planner's assumption about the total size of the data caches."),
 			gettext_noop("That is, the total size of the caches (kernel cache and shared buffers) used for PostgreSQL data files. "
 						 "This is measured in disk pages, which are normally 8 kB each."),
 			GUC_UNIT_BLOCKS | GUC_EXPLAIN,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		},
 		&effective_cache_size,
 		DEFAULT_EFFECTIVE_CACHE_SIZE, 1, INT_MAX,
@@ -3345,17 +3278,8 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"track_activity_query_size", PGC_POSTMASTER, RESOURCES_MEM,
 			gettext_noop("Sets the size reserved for pg_stat_activity.query, in bytes."),
-<<<<<<< HEAD
-			NULL
-
-			/*
-			 * There is no _bytes_ unit, so the user can't supply units for
-			 * this.
-			 */
-=======
 			NULL,
 			GUC_UNIT_BYTE
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		},
 		&pgstat_track_activity_query_size,
 		1024, 100, 102400,
@@ -3517,33 +3441,19 @@ static struct config_real ConfigureNamesReal[] =
 	},
 
 	{
-<<<<<<< HEAD
 		{"geqo_selection_bias", PGC_USERSET, DEFUNCT_OPTIONS,
 			gettext_noop("Unused. Syntax check only for PostgreSQL compatibility."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-=======
-		{"geqo_selection_bias", PGC_USERSET, QUERY_TUNING_GEQO,
-			gettext_noop("GEQO: selective pressure within the population."),
-			NULL,
-			GUC_EXPLAIN
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		},
 		&defunct_double,
 		1.0, 0.0, 100.0,
 		NULL, NULL, NULL
 	},
 	{
-<<<<<<< HEAD
 		{"geqo_seed", PGC_USERSET, DEFUNCT_OPTIONS,
 			gettext_noop("Unused. Syntax check only for PostgreSQL compatibility."),
 			NULL
-=======
-		{"geqo_seed", PGC_USERSET, QUERY_TUNING_GEQO,
-			gettext_noop("GEQO: seed for random path selection."),
-			NULL,
-			GUC_EXPLAIN
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		},
 		&defunct_double,
 		0.0, 0.0, 1.0,
@@ -3573,9 +3483,6 @@ static struct config_real ConfigureNamesReal[] =
 	},
 
 	{
-<<<<<<< HEAD
-		{"autovacuum_vacuum_scale_factor", PGC_SIGHUP, DEFUNCT_OPTIONS,
-=======
 		{"vacuum_cost_delay", PGC_USERSET, RESOURCES_VACUUM_DELAY,
 			gettext_noop("Vacuum cost delay in milliseconds."),
 			NULL,
@@ -3599,7 +3506,6 @@ static struct config_real ConfigureNamesReal[] =
 
 	{
 		{"autovacuum_vacuum_scale_factor", PGC_SIGHUP, AUTOVACUUM,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			gettext_noop("Number of tuple updates or deletes prior to vacuum as a fraction of reltuples."),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
@@ -4471,11 +4377,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Enables the planner to use constraints to optimize queries."),
 			gettext_noop("Table scans will be skipped if their constraints"
 						 " guarantee that no rows match the query."),
-<<<<<<< HEAD
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-=======
 			GUC_EXPLAIN
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		},
 		&constraint_exclusion,
 		CONSTRAINT_EXCLUSION_ON, constraint_exclusion_options,
@@ -7275,13 +7177,8 @@ set_config_option(const char *name, const char *value,
 								name)));
 				return 0;
 			}
-<<<<<<< HEAD
-			/* FALL THRU to process the same as PGC_BACKEND */
-			/* fall through */
-=======
 			/* fall through to process the same as PGC_BACKEND */
 			/* FALLTHROUGH */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		case PGC_BACKEND:
 			if (context == PGC_SIGHUP)
 			{
