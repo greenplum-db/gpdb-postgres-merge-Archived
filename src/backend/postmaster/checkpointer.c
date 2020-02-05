@@ -112,12 +112,6 @@ typedef struct
 {
 	SyncRequestType type;		/* request type */
 	FileTag		ftag;			/* file identifier */
-	/*
-	 * Is segno a real ao segno but not specially ones like
-	 * FORGET_RELATION_FSYNC. For example for a real relfile like
-	 * /base/16384/50237.129, it should be true and segno should be 129.
-	 */
-	bool		is_ao_segno;
 } CheckpointerRequest;
 
 typedef struct

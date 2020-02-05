@@ -49,6 +49,12 @@ typedef struct FileTag
 	RelFileNode rnode;
 	uint32		segno;
 	/* GPDB_12_MERGE_FIXME: Should the "is this AO table?" flag be put here? */
+	/*
+	 * Is segno a real ao segno but not specially ones like
+	 * FORGET_RELATION_FSYNC. For example for a real relfile like
+	 * /base/16384/50237.129, it should be true and segno should be 129.
+	 */
+	bool		is_ao_segno;
 } FileTag;
 
 extern void InitSync(void);

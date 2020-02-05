@@ -33,15 +33,10 @@ extern void CheckpointerMain(void) pg_attribute_noreturn();
 extern void RequestCheckpoint(int flags);
 extern void CheckpointWriteDelay(int flags, double progress);
 
-<<<<<<< HEAD
-extern bool ForwardFsyncRequest(RelFileNode rnode, ForkNumber forknum,
-					BlockNumber segno, bool is_ao_segno);
-extern void AbsorbFsyncRequests(void);
-=======
-extern bool ForwardSyncRequest(const FileTag *ftag, SyncRequestType type);
+extern bool ForwardSyncRequest(const FileTag *ftag, SyncRequestType type,
+							   bool is_ao_segno);
 
 extern void AbsorbSyncRequests(void);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern Size CheckpointerShmemSize(void);
 extern void CheckpointerShmemInit(void);
