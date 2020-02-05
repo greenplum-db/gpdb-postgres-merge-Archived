@@ -2349,20 +2349,9 @@ auth_peer(hbaPort *port)
  */
 
 
-#if defined(_AIX)
 static int
-pam_passwd_conv_proc(int num_msg, struct pam_message **msg,
-					struct pam_response **resp, void *appdata_ptr)
-#else
-static int
-<<<<<<< HEAD
-pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
-					 struct pam_response ** resp, void *appdata_ptr)
-#endif
-=======
 pam_passwd_conv_proc(int num_msg, const struct pam_message **msg,
 					 struct pam_response **resp, void *appdata_ptr)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	const char *passwd;
 	struct pam_response *reply;
@@ -3025,15 +3014,11 @@ CheckLDAPAuth(Port *port)
 			ereport(LOG,
 					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": %s",
 							port->hba->ldapbinddn ? port->hba->ldapbinddn : "",
-<<<<<<< HEAD
-							port->hba->ldapserver, ldap_err2string(r))));
-=======
 							server_name,
 							ldap_err2string(r)),
 					 errdetail_for_ldap(ldap)));
 			ldap_unbind(ldap);
 			pfree(passwd);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			return STATUS_ERROR;
 		}
 
@@ -3310,9 +3295,6 @@ static int
 CheckRADIUSAuth(Port *port)
 {
 	char	   *passwd;
-<<<<<<< HEAD
-	char	   *identifier = "postgresql";
-=======
 	ListCell   *server,
 			   *secrets,
 			   *radiusports,
@@ -3405,7 +3387,6 @@ CheckRADIUSAuth(Port *port)
 static int
 PerformRadiusTransaction(const char *server, const char *secret, const char *portstr, const char *identifier, const char *user_name, const char *passwd)
 {
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	radius_packet radius_send_pack;
 	radius_packet radius_recv_pack;
 	radius_packet *packet = &radius_send_pack;

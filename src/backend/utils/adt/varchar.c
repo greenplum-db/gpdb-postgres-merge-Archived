@@ -718,8 +718,6 @@ bpcharoctetlen(PG_FUNCTION_ARGS)
  * be careful to free working copies of toasted datums.  Most places don't
  * need to be so careful.
  *****************************************************************************/
-<<<<<<< HEAD
-=======
 
 static void
 check_collation_set(Oid collid)
@@ -737,7 +735,6 @@ check_collation_set(Oid collid)
 	}
 }
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 Datum
 bpchareq(PG_FUNCTION_ARGS)
 {

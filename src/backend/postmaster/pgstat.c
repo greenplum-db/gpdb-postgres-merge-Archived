@@ -315,14 +315,9 @@ static void pgstat_sighup_handler(SIGNAL_ARGS);
 
 static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid, bool create);
 static PgStat_StatTabEntry *pgstat_get_tab_entry(PgStat_StatDBEntry *dbentry,
-<<<<<<< HEAD
-					 Oid tableoid, bool create);
-
+												 Oid tableoid, bool create);
 static PgStat_StatQueueEntry *pgstat_get_queue_entry(Oid queueid, bool create); /*GPDB*/
 
-=======
-												 Oid tableoid, bool create);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void pgstat_write_statsfiles(bool permanent, bool allDbs);
 static void pgstat_write_db_statsfile(PgStat_StatDBEntry *dbentry, bool permanent);
 static HTAB *pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep);
@@ -3507,17 +3502,10 @@ pgstat_read_current_status(void)
 						   sizeof(LocalPgBackendStatus) * NumBackendStatSlots);
 	localappname = (char *)
 		MemoryContextAlloc(pgStatLocalContext,
-<<<<<<< HEAD
-						   NAMEDATALEN * MaxBackends);
-	localclienthostname = (char *)
-		MemoryContextAlloc(pgStatLocalContext,
-						   NAMEDATALEN * MaxBackends);
-=======
 						   NAMEDATALEN * NumBackendStatSlots);
 	localclienthostname = (char *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   NAMEDATALEN * NumBackendStatSlots);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	localactivity = (char *)
 		MemoryContextAllocHuge(pgStatLocalContext,
 							   pgstat_track_activity_query_size * NumBackendStatSlots);

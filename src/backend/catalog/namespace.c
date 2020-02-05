@@ -205,37 +205,13 @@ char	   *namespace_search_path = NULL;
 
 /* Local functions */
 static void recomputeNamespacePath(void);
-<<<<<<< HEAD
-=======
 static void AccessTempTableNamespace(bool force);
-static void InitTempTableNamespace(void);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void RemoveTempRelations(Oid tempNamespaceId);
 static void RemoveTempRelationsCallback(int code, Datum arg);
 static void NamespaceCallback(Datum arg, int cacheid, uint32 hashvalue);
 static bool MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
-<<<<<<< HEAD
-			   int **argnumbers);
-static bool TempNamespaceValid(bool error_if_removed);
-
-/* These don't really need to appear in any header file */
-Datum		pg_table_is_visible(PG_FUNCTION_ARGS);
-Datum		pg_type_is_visible(PG_FUNCTION_ARGS);
-Datum		pg_function_is_visible(PG_FUNCTION_ARGS);
-Datum		pg_operator_is_visible(PG_FUNCTION_ARGS);
-Datum		pg_opclass_is_visible(PG_FUNCTION_ARGS);
-Datum		pg_opfamily_is_visible(PG_FUNCTION_ARGS);
-Datum		pg_collation_is_visible(PG_FUNCTION_ARGS);
-Datum		pg_conversion_is_visible(PG_FUNCTION_ARGS);
-Datum		pg_ts_parser_is_visible(PG_FUNCTION_ARGS);
-Datum		pg_ts_dict_is_visible(PG_FUNCTION_ARGS);
-Datum		pg_ts_template_is_visible(PG_FUNCTION_ARGS);
-Datum		pg_ts_config_is_visible(PG_FUNCTION_ARGS);
-Datum		pg_my_temp_schema(PG_FUNCTION_ARGS);
-Datum		pg_is_other_temp_schema(PG_FUNCTION_ARGS);
-=======
 						   int **argnumbers);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static bool TempNamespaceValid(bool error_if_removed);
 
 
 /*
@@ -497,14 +473,8 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 		/* check for pg_temp alias */
 		if (strcmp(newRelation->schemaname, "pg_temp") == 0)
 		{
-<<<<<<< HEAD
-			/* Initialize temp namespace if first time through */
-			if (!TempNamespaceValid(false))
-				InitTempTableNamespace();
-=======
 			/* Initialize temp namespace */
 			AccessTempTableNamespace(false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			return myTempNamespace;
 		}
 		/* use exact schema given */
@@ -3013,14 +2983,8 @@ LookupCreationNamespace(const char *nspname)
 	/* check for pg_temp alias */
 	if (strcmp(nspname, "pg_temp") == 0)
 	{
-<<<<<<< HEAD
-		/* Initialize temp namespace if first time through */
-		if (!TempNamespaceValid(false))
-			InitTempTableNamespace();
-=======
 		/* Initialize temp namespace */
 		AccessTempTableNamespace(false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return myTempNamespace;
 	}
 
@@ -3952,7 +3916,6 @@ recomputeNamespacePath(void)
 }
 
 /*
-<<<<<<< HEAD
  * In PostgreSQL, the backend's backend ID is used as part of the filenames
  * of temporary tables. However, in GPDB, temporary tables are shared across
  * backends, if you have a query with multiple QE reader processes. Because
@@ -3967,7 +3930,8 @@ recomputeNamespacePath(void)
  */
 #define MyTempSessionId() \
 	((Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_EXECUTE) ? gp_session_id : MyBackendId)
-=======
+
+/*
  * AccessTempTableNamespace
  *		Provide access to a temporary namespace, potentially creating it
  *		if not present yet.  This routine registers if the namespace gets
@@ -4000,7 +3964,6 @@ AccessTempTableNamespace(bool force)
 	 */
 	InitTempTableNamespace();
 }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * InitTempTableNamespace
@@ -4033,7 +3996,6 @@ InitTempTableNamespace(void)
 						get_database_name(MyDatabaseId))));
 
 	/*
-<<<<<<< HEAD
 	 * TempNamespace name creation rules are different depending on the
 	 * nature of the current connection role.
 	 */
@@ -4074,12 +4036,8 @@ InitTempTableNamespace(void)
 	}
 
 	/*
-	 * Do not allow a Hot Standby slave session to make temp tables.  Aside
-	 * from problems with modifying the system catalogs, there is a naming
-=======
 	 * Do not allow a Hot Standby session to make temp tables.  Aside from
 	 * problems with modifying the system catalogs, there is a naming
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * conflict: pg_temp_N belongs to the session with BackendId N on the
 	 * master, not to a hot standby session with the same BackendId.  We
 	 * should not be able to get here anyway due to XactReadOnly checks, but

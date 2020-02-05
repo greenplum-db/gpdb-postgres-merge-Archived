@@ -1818,19 +1818,15 @@ DefineIndex(Oid relationId,
 	if (!stmt->concurrent)
 	{
 		/* Close the heap and we're done, in the non-concurrent case */
-<<<<<<< HEAD
 		if (need_longlock)
-			heap_close(rel, NoLock);
+			table_close(rel, NoLock);
 		else
-			heap_close(rel, lockmode);
-=======
-		table_close(rel, NoLock);
+			table_close(rel, lockmode);
 
 		/* If this is the top-level index, we're done. */
 		if (!OidIsValid(parentIndexId))
 			pgstat_progress_end_command();
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return address;
 	}
 
@@ -1848,14 +1844,10 @@ DefineIndex(Oid relationId,
 	/* save lockrelid and locktag for below, then close rel */
 	heaprelid = rel->rd_lockInfo.lockRelId;
 	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
-<<<<<<< HEAD
 	if (need_longlock)
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 	else
-		heap_close(rel, lockmode);
-=======
-	table_close(rel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		table_close(rel, lockmode);
 
 	/*
 	 * For a concurrent build, it's important to make the catalog entries
@@ -3036,8 +3028,10 @@ ReindexIndex(RangeVar *indexRelation, int options, bool concurrent)
 	persistence = irel->rd_rel->relpersistence;
 	index_close(irel, NoLock);
 
-<<<<<<< HEAD
-	reindex_index(indOid, false, persistence, options);
+	if (concurrent)
+		ReindexRelationConcurrently(indOid, options);
+	else
+		reindex_index(indOid, false, persistence, options);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -3049,12 +3043,6 @@ ReindexIndex(RangeVar *indexRelation, int options, bool concurrent)
 	}
 
 	return indOid;
-=======
-	if (concurrent)
-		ReindexRelationConcurrently(indOid, options);
-	else
-		reindex_index(indOid, false, persistence, options);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*

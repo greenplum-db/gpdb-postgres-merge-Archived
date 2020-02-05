@@ -535,14 +535,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			{
 				ereport(LOG,
 						(errcode_for_socket_access(),
-<<<<<<< HEAD
-						 errmsg("setsockopt(%s) failed: %m",
-								"SO_REUSEADDR")));
-=======
 				/* translator: first %s is IPv4, IPv6, or Unix */
 						 errmsg("setsockopt(SO_REUSEADDR) failed for %s address \"%s\": %m",
 								familyDesc, addrDesc)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				closesocket(fd);
 				continue;
 			}
@@ -557,14 +552,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			{
 				ereport(LOG,
 						(errcode_for_socket_access(),
-<<<<<<< HEAD
-						 errmsg("setsockopt(%s) failed: %m",
-								"IPV6_V6ONLY")));
-=======
 				/* translator: first %s is IPv4, IPv6, or Unix */
 						 errmsg("setsockopt(IPV6_V6ONLY) failed for %s address \"%s\": %m",
 								familyDesc, addrDesc)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				closesocket(fd);
 				continue;
 			}
@@ -1931,11 +1921,7 @@ pq_getkeepalivesinterval(Port *port)
 					   &size) < 0)
 		{
 			elog(LOG, "getsockopt(%s) failed: %m", "TCP_KEEPINTVL");
-<<<<<<< HEAD
-			port->default_keepalives_interval = -1;		/* don't know */
-=======
 			port->default_keepalives_interval = -1; /* don't know */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 #else
 		/* We can't get the defaults on Windows, so return "don't know" */
@@ -2015,11 +2001,7 @@ pq_getkeepalivescount(Port *port)
 					   &size) < 0)
 		{
 			elog(LOG, "getsockopt(%s) failed: %m", "TCP_KEEPCNT");
-<<<<<<< HEAD
-			port->default_keepalives_count = -1;		/* don't know */
-=======
 			port->default_keepalives_count = -1;	/* don't know */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 
@@ -2065,8 +2047,6 @@ pq_setkeepalivescount(int count, Port *port)
 	if (count != 0)
 	{
 		elog(LOG, "setsockopt(%s) not supported", "TCP_KEEPCNT");
-<<<<<<< HEAD
-=======
 		return STATUS_ERROR;
 	}
 #endif
@@ -2139,7 +2119,6 @@ pq_settcpusertimeout(int timeout, Port *port)
 	if (timeout != 0)
 	{
 		elog(LOG, "setsockopt(%s) not supported", "TCP_USER_TIMEOUT");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return STATUS_ERROR;
 	}
 #endif

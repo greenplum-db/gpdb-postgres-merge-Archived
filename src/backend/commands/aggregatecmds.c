@@ -455,15 +455,10 @@ DefineAggregate(ParseState *pstate,
 	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
 	 */
-<<<<<<< HEAD
 	ObjectAddress objAddr;
-	objAddr = AggregateCreate(aggName,		/* aggregate name */
-						   aggNamespace,		/* namespace */
-=======
-	return AggregateCreate(aggName, /* aggregate name */
+	objAddr = AggregateCreate(aggName, /* aggregate name */
 						   aggNamespace,	/* namespace */
 						   replace,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						   aggKind,
 						   numArgs,
 						   numDirectArgs,
@@ -492,8 +487,7 @@ DefineAggregate(ParseState *pstate,
 						   mtransSpace, /* transition space */
 						   initval, /* initial condition */
 						   minitval,	/* initial condition */
-<<<<<<< HEAD
-						   proparallel);		/* parallel safe? */
+						   proparallel);	/* parallel safe? */
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -512,8 +506,6 @@ DefineAggregate(ParseState *pstate,
 	}
 
 	return objAddr;
-=======
-						   proparallel);	/* parallel safe? */
 }
 
 /*
@@ -535,5 +527,4 @@ extractModify(DefElem *defel)
 			 errmsg("parameter \"%s\" must be READ_ONLY, SHAREABLE, or READ_WRITE",
 					defel->defname)));
 	return 0;					/* keep compiler quiet */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

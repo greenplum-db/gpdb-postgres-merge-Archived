@@ -490,12 +490,9 @@ _equalSubPlan(const SubPlan *a, const SubPlan *b)
 	COMPARE_SCALAR_FIELD(firstColCollation);
 	COMPARE_SCALAR_FIELD(useHashTable);
 	COMPARE_SCALAR_FIELD(unknownEqFalse);
-<<<<<<< HEAD
 	/* CDB: Ignore value of is_initplan */
 	COMPARE_SCALAR_FIELD(is_multirow); /*CDB*/
-=======
 	COMPARE_SCALAR_FIELD(parallel_safe);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	COMPARE_NODE_FIELD(setParam);
 	COMPARE_NODE_FIELD(parParam);
 	COMPARE_NODE_FIELD(args);
@@ -4097,10 +4094,9 @@ equal(const void *a, const void *b)
 		case T_RoleSpec:
 			retval = _equalRoleSpec(a, b);
 			break;
-<<<<<<< HEAD
 		case T_AggExprId:
 			retval = true;
-=======
+			break;
 		case T_TriggerTransition:
 			retval = _equalTriggerTransition(a, b);
 			break;
@@ -4118,7 +4114,6 @@ equal(const void *a, const void *b)
 			break;
 		case T_PartitionCmd:
 			retval = _equalPartitionCmd(a, b);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 
 		default:

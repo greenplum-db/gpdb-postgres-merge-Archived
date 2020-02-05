@@ -295,13 +295,8 @@ pg_signal_thread(LPVOID param)
 			 * window of time where we will miss incoming requests.
 			 */
 			newpipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
-<<<<<<< HEAD
-									   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-									   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
-=======
 									  PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
 									  PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			if (newpipe == INVALID_HANDLE_VALUE)
 			{
 				/*

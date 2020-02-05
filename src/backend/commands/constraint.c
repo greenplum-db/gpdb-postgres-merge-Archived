@@ -135,16 +135,6 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	indexInfo = BuildIndexInfo(indexRel);
 
 	/*
-<<<<<<< HEAD
-	 * The heap tuple must be put into a slot for FormIndexDatum.
-	 */
-	slot = MakeSingleTupleTableSlot(RelationGetDescr(trigdata->tg_relation));
-
-	ExecStoreHeapTuple(new_row, slot, InvalidBuffer, false);
-
-	/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * Typically the index won't have expressions, but if it does we need an
 	 * EState to evaluate them.  We need it for exclusion constraints too,
 	 * even if they are just on simple columns.

@@ -27,11 +27,7 @@
 #include "miscadmin.h"
 #include "storage/ipc.h"
 #include "storage/pg_sema.h"
-<<<<<<< HEAD
-#include "utils/guc.h"
-=======
 #include "storage/shmem.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 typedef struct PGSemaphoreData

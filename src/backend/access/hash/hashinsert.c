@@ -94,11 +94,7 @@ restart_insert:
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("index row size %zu exceeds hash maximum %zu",
 						itemsz, HashMaxItemSize(metapage)),
-<<<<<<< HEAD
-			errhint("Values larger than a buffer page cannot be indexed.")));
-=======
 				 errhint("Values larger than a buffer page cannot be indexed.")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Lock the primary bucket page for the target bucket. */
 	buf = _hash_getbucketbuf_from_hashkey(rel, hashkey, HASH_WRITE,

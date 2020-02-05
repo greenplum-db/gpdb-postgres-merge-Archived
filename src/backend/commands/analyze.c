@@ -2715,13 +2715,10 @@ static void compute_distinct_stats(VacAttrStatsP stats,
 								   int samplerows,
 								   double totalrows);
 static void compute_scalar_stats(VacAttrStatsP stats,
-<<<<<<< HEAD
-					 AnalyzeAttrFetchFunc fetchfunc,
-					 int samplerows,
-					 double totalrows);
+								 AnalyzeAttrFetchFunc fetchfunc,
+								 int samplerows,
+								 double totalrows);
 static void merge_leaf_stats(VacAttrStatsP stats,
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 								 AnalyzeAttrFetchFunc fetchfunc,
 								 int samplerows,
 								 double totalrows);

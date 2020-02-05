@@ -132,13 +132,9 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("unacceptable schema name \"%s\"", schemaName),
-<<<<<<< HEAD
 				 errdetail("The prefix \"%s\" is reserved for system schemas.",
 						   GetReservedPrefix(schemaName))));
 	}
-=======
-				 errdetail("The prefix \"pg_\" is reserved for system schemas.")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * If if_not_exists was given and the schema already exists, bail out.
@@ -333,11 +329,7 @@ RenameSchema(const char *oldname, const char *newname)
 
 	/* must be owner */
 	if (!pg_namespace_ownercheck(nspOid, GetUserId()))
-<<<<<<< HEAD
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
-=======
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SCHEMA,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					   oldname);
 
 	/* must have CREATE privilege on database */
@@ -359,20 +351,14 @@ RenameSchema(const char *oldname, const char *newname)
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("unacceptable schema name \"%s\"", newname),
-<<<<<<< HEAD
 				 errdetail("The prefix \"%s\" is reserved for system schemas.",
 						   GetReservedPrefix(newname))));
 	}
-
-=======
-				 errdetail("The prefix \"pg_\" is reserved for system schemas.")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* rename */
 	namestrcpy(&nspform->nspname, newname);
 	CatalogTupleUpdate(rel, &tup->t_self, tup);
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		MetaTrackUpdObject(NamespaceRelationId,
@@ -381,10 +367,7 @@ RenameSchema(const char *oldname, const char *newname)
 						   "ALTER", "RENAME"
 				);
 
-	InvokeObjectPostAlterHook(NamespaceRelationId, HeapTupleGetOid(tup), 0);
-=======
 	InvokeObjectPostAlterHook(NamespaceRelationId, nspOid, 0);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	ObjectAddressSet(address, NamespaceRelationId, nspOid);
 
@@ -434,7 +417,6 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
 				 errmsg("schema \"%s\" does not exist", name)));
 
-<<<<<<< HEAD
 	if (!allowSystemTableMods && IsReservedName(name))
 	{
 		ereport(ERROR,
@@ -443,11 +425,8 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 				 errdetail("Schema %s is reserved for system use.", name)));
 	}
 
-	nspOid = HeapTupleGetOid(tup);
-=======
 	nspform = (Form_pg_namespace) GETSTRUCT(tup);
 	nspOid = nspform->oid;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	AlterSchemaOwner_internal(tup, rel, newOwnerId);
 
@@ -486,14 +465,8 @@ AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		Oid			nsoid;
 
 		/* Otherwise, must be owner of the existing object */
-<<<<<<< HEAD
-		nsoid = HeapTupleGetOid(tup);
-		if (!pg_namespace_ownercheck(nsoid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
-=======
 		if (!pg_namespace_ownercheck(nspForm->oid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SCHEMA,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						   NameStr(nspForm->nspname));
 
 		/* Must be able to become new owner */

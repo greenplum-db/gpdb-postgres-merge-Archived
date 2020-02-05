@@ -518,29 +518,6 @@ systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup)
 											sysscan->slot,
 											freshsnap);
 
-<<<<<<< HEAD
-		Assert(IsMVCCSnapshot(scan->xs_snapshot));
-		Assert(tup == &scan->xs_ctup);
-		Assert(BufferIsValid(scan->xs_cbuf));
-		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
-		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
-		result = HeapTupleSatisfiesVisibility(sysscan->heap_rel, tup, freshsnap, scan->xs_cbuf);
-		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
-	}
-	else
-	{
-		HeapScanDesc scan = sysscan->scan;
-
-		Assert(IsMVCCSnapshot(scan->rs_snapshot));
-		Assert(tup == &scan->rs_ctup);
-		Assert(BufferIsValid(scan->rs_cbuf));
-		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
-		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
-		result = HeapTupleSatisfiesVisibility(NULL, tup, freshsnap, scan->rs_cbuf);
-		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
-	}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	return result;
 }
 

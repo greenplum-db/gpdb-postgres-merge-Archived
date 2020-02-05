@@ -172,11 +172,7 @@ spgbuildempty(Relation index)
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_METAPAGE_BLKNO,
 			  (char *) page, true);
 	log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-<<<<<<< HEAD
-				SPGIST_METAPAGE_BLKNO, page, false);
-=======
 				SPGIST_METAPAGE_BLKNO, page, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Likewise for the root page. */
 	SpGistInitPage(page, SPGIST_LEAF);

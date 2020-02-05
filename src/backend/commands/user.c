@@ -1745,9 +1745,8 @@ DropRole(DropRoleStmt *stmt)
 	/*
 	 * Now we can clean up; but keep locks until commit.
 	 */
-<<<<<<< HEAD
-	heap_close(pg_auth_members_rel, NoLock);
-	heap_close(pg_authid_rel, NoLock);
+	table_close(pg_auth_members_rel, NoLock);
+	table_close(pg_authid_rel, NoLock);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -1759,10 +1758,6 @@ DropRole(DropRoleStmt *stmt)
 									NULL);
 
 	}
-=======
-	table_close(pg_auth_members_rel, NoLock);
-	table_close(pg_authid_rel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -1978,8 +1973,7 @@ GrantRole(GrantRoleStmt *stmt)
 	/*
 	 * Close pg_authid, but keep lock till commit.
 	 */
-<<<<<<< HEAD
-	heap_close(pg_authid_rel, NoLock);
+	table_close(pg_authid_rel, NoLock);
 
     if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -1988,9 +1982,6 @@ GrantRole(GrantRoleStmt *stmt)
 									DF_NEED_TWO_PHASE,
 									NIL,
 									NULL);
-=======
-	table_close(pg_authid_rel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -2241,9 +2232,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 	/*
 	 * Close pg_authmem, but keep lock till commit.
 	 */
-<<<<<<< HEAD
-	heap_close(pg_authmem_rel, NoLock);
-
+	table_close(pg_authmem_rel, NoLock);
 }
 
 /*
@@ -2534,9 +2523,6 @@ static void SetCreateExtTableForRole(List* allow,
 
 	}
 
-=======
-	table_close(pg_authmem_rel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*

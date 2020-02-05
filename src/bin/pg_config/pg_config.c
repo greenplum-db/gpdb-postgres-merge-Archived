@@ -102,11 +102,7 @@ help(void)
 	printf(_("  --version             show the PostgreSQL version\n"));
 	printf(_("  -?, --help            show this help, then exit\n"));
 	printf(_("\nWith no arguments, all known items are shown.\n\n"));
-<<<<<<< HEAD
 	printf(_("Report bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 static void

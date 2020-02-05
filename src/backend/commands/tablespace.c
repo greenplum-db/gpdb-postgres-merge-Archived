@@ -1323,12 +1323,7 @@ RenameTableSpace(const char *oldname, const char *newname)
 	Oid			tspId;
 	Relation	rel;
 	ScanKeyData entry[1];
-<<<<<<< HEAD
-	HeapScanDesc scan;
-	Oid			tablespaceoid;
-=======
 	TableScanDesc scan;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	HeapTuple	tup;
 	HeapTuple	newtuple;
 	Form_pg_tablespace newform;
@@ -1356,14 +1351,8 @@ RenameTableSpace(const char *oldname, const char *newname)
 	table_endscan(scan);
 
 	/* Must be owner */
-<<<<<<< HEAD
-	tablespaceoid = HeapTupleGetOid(newtuple);
-	if (!pg_tablespace_ownercheck(tablespaceoid, GetUserId()))
-		aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_TABLESPACE, oldname);
-=======
 	if (!pg_tablespace_ownercheck(tspId, GetUserId()))
 		aclcheck_error(ACLCHECK_NO_PRIV, OBJECT_TABLESPACE, oldname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Validate new name */
 	if (!allowSystemTableMods && IsReservedName(newname))
@@ -1371,12 +1360,9 @@ RenameTableSpace(const char *oldname, const char *newname)
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("unacceptable tablespace name \"%s\"", newname),
-<<<<<<< HEAD
 				 errdetail("The prefix \"%s\" is reserved for system tablespaces.",
 						   GetReservedPrefix(newname))));
 	}
-=======
-				 errdetail("The prefix \"pg_\" is reserved for system tablespaces.")));
 
 	/*
 	 * If built with appropriate switch, whine when regression-testing
@@ -1386,7 +1372,6 @@ RenameTableSpace(const char *oldname, const char *newname)
 	if (strncmp(newname, "regress_", 8) != 0)
 		elog(WARNING, "tablespaces created by regression test cases should have names starting with \"regress_\"");
 #endif
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Make sure the new name doesn't exist */
 	ScanKeyInit(&entry[0],
@@ -1411,7 +1396,7 @@ RenameTableSpace(const char *oldname, const char *newname)
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		MetaTrackUpdObject(TableSpaceRelationId,
-						   tablespaceoid,
+						   tspId,
 						   GetUserId(),
 						   "ALTER", "RENAME"
 				);

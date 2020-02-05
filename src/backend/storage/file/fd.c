@@ -1123,12 +1123,8 @@ LruDelete(File file)
 	 * to leak the FD than to mess up our internal state.
 	 */
 	if (close(vfdP->fd))
-<<<<<<< HEAD
-		elog(LOG, "could not close file \"%s\": %m", vfdP->fileName);
-=======
 		elog(vfdP->fdstate & FD_TEMP_FILE_LIMIT ? LOG : data_sync_elevel(LOG),
 			 "could not close file \"%s\": %m", vfdP->fileName);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	vfdP->fd = VFD_CLOSED;
 	--nfile;
 

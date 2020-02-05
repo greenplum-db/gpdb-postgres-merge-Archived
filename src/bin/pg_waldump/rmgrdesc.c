@@ -32,15 +32,11 @@
 #include "storage/standbydefs.h"
 #include "utils/relmapper.h"
 
-<<<<<<< HEAD:src/bin/pg_xlogdump/rmgrdesc.c
 #include "access/bitmap.h"
 #include "access/distributedlog.h"
 #include "cdb/cdbappendonlyxlog.h"
 
-#define PG_RMGR(symname,name,redo,desc,identify,startup,cleanup) \
-=======
 #define PG_RMGR(symname,name,redo,desc,identify,startup,cleanup,mask) \
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/bin/pg_waldump/rmgrdesc.c
 	{ name, desc, identify},
 
 const RmgrDescData RmgrDescTable[RM_MAX_ID + 1] = {

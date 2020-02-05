@@ -1514,12 +1514,8 @@ extract_variadic_args(FunctionCallInfo fcinfo, int variadic_start,
 	Datum	   *args_res;
 	bool	   *nulls_res;
 	Oid		   *types_res;
-<<<<<<< HEAD
-	int			nargs, i;
-=======
 	int			nargs,
 				i;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	*args = NULL;
 	*types = NULL;
@@ -1555,11 +1551,7 @@ extract_variadic_args(FunctionCallInfo fcinfo, int variadic_start,
 	else
 	{
 		nargs = PG_NARGS() - variadic_start;
-<<<<<<< HEAD
-		Assert (nargs > 0);
-=======
 		Assert(nargs > 0);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		nulls_res = (bool *) palloc0(nargs * sizeof(bool));
 		args_res = (Datum *) palloc0(nargs * sizeof(Datum));
 		types_res = (Oid *) palloc0(nargs * sizeof(Oid));
@@ -1572,18 +1564,10 @@ extract_variadic_args(FunctionCallInfo fcinfo, int variadic_start,
 
 			/*
 			 * Turn a constant (more or less literal) value that's of unknown
-<<<<<<< HEAD
-			 * type into text if required . Unknowns come in as a cstring
-			 * pointer.
-			 * Note: for functions declared as taking type "any", the parser
-			 * will not do any type conversion on unknown-type literals (that
-			 * is, undecorated strings or NULLs).
-=======
 			 * type into text if required. Unknowns come in as a cstring
 			 * pointer. Note: for functions declared as taking type "any", the
 			 * parser will not do any type conversion on unknown-type literals
 			 * (that is, undecorated strings or NULLs).
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			 */
 			if (convert_unknown &&
 				types_res[i] == UNKNOWNOID &&

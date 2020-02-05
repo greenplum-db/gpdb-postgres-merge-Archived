@@ -14,12 +14,9 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/appendonlywriter.h"
-=======
 #include "access/genam.h"
 #include "access/heapam.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/tableam.h"
@@ -79,19 +76,11 @@ static void transientrel_startup(DestReceiver *self, int operation, TupleDesc ty
 static bool transientrel_receive(TupleTableSlot *slot, DestReceiver *self);
 static void transientrel_shutdown(DestReceiver *self);
 static void transientrel_destroy(DestReceiver *self);
-<<<<<<< HEAD
-static void refresh_matview_datafill(DestReceiver *dest, Query *query,
-						 const char *queryString,RefreshClause *refreshClause);
-static char *make_temptable_name_n(char *tempname, int n);
-static void refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
-						 int save_sec_context);
-=======
 static uint64 refresh_matview_datafill(DestReceiver *dest, Query *query,
-									   const char *queryString);
+									   const char *queryString, RefreshClause *refreshClause);
 static char *make_temptable_name_n(char *tempname, int n);
 static void refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 								   int save_sec_context);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void refresh_by_heap_swap(Oid matviewOid, Oid OIDNewHeap, char relpersistence);
 static bool is_usable_unique_index(Relation indexRel);
 static void OpenMatViewIncrementalMaintenance(void);
@@ -287,15 +276,6 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	}
 
 	/*
-<<<<<<< HEAD
-=======
-	 * The stored query was rewritten at the time of the MV definition, but
-	 * has not been scribbled on by the planner.
-	 */
-	dataQuery = linitial_node(Query, actions);
-
-	/*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * Check for active uses of the relation in the current transaction, such
 	 * as open scans.
 	 *
@@ -321,7 +301,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	 * is not equal to newRel->rule(parentStmtType = PARENTSTMTTYPE_NONE),
 	 * caused oldRel->rule(dataQuery) to be released
 	 */
-	dataQuery = copyObject((Query *) linitial(actions));
+	dataQuery = copyObject(linitial_node(Query, actions));
 	Assert(IsA(dataQuery, Query));
 
 	dataQuery->parentStmtType = PARENTSTMTTYPE_REFRESH_MATVIEW;
@@ -372,14 +352,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 
 	dataQuery->intoPolicy = matviewRel->rd_cdbpolicy;
 	/* Generate the data, if wanted. */
-<<<<<<< HEAD
-	refresh_matview_datafill(dest, dataQuery, queryString, refreshClause);
-
-	heap_close(matviewRel, NoLock);
-=======
 	if (!stmt->skipData)
 		processed = refresh_matview_datafill(dest, dataQuery, queryString);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Make the matview match the newly generated data. */
 	if (concurrent)
@@ -582,14 +556,10 @@ transientrel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	DR_transientrel *myState = (DR_transientrel *) self;
 	Relation	transientrel;
 
-<<<<<<< HEAD
 	if (myState->skipData)
 		return;
 
-	transientrel = heap_open(myState->transientoid, NoLock);
-=======
 	transientrel = table_open(myState->transientoid, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Fill private fields of myState for use by later routines
@@ -617,12 +587,9 @@ static bool
 transientrel_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_transientrel *myState = (DR_transientrel *) self;
-<<<<<<< HEAD
 
 	if (myState->skipData)
 		return true;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Note that the input slot might not be of the type of the target
@@ -633,59 +600,11 @@ transientrel_receive(TupleTableSlot *slot, DestReceiver *self)
 	 * tuple's xmin), but since we don't do that here...
 	 */
 
-<<<<<<< HEAD
-	if (RelationIsAoRows(myState->transientrel))
-	{
-		AOTupleId	aoTupleId;
-		MemTuple	tuple;
-
-		tuple = ExecCopySlotMemTuple(slot);
-		if (myState->ao_insertDesc == NULL)
-			myState->ao_insertDesc = appendonly_insert_init(myState->transientrel, RESERVED_SEGNO, false);
-
-		appendonly_insert(myState->ao_insertDesc, tuple, InvalidOid, &aoTupleId);
-		pfree(tuple);
-	}
-	else if (RelationIsAoCols(myState->transientrel))
-	{
-		if(myState->aocs_insertDes == NULL)
-			myState->aocs_insertDes = aocs_insert_init(myState->transientrel, RESERVED_SEGNO, false);
-
-		aocs_insert(myState->aocs_insertDes, slot);
-	}
-	else
-	{
-		HeapTuple	tuple;
-
-		/*
-		 * get the heap tuple out of the tuple table slot, making sure we have a
-		 * writable copy
-		 */
-		tuple = ExecMaterializeSlot(slot);
-
-		/*
-		 * force assignment of new OID (see comments in ExecInsert)
-		 */
-		if (myState->transientrel->rd_rel->relhasoids)
-			HeapTupleSetOid(tuple, InvalidOid);
-
-		heap_insert(myState->transientrel,
-					tuple,
-					myState->output_cid,
-					myState->hi_options,
-					myState->bistate,
-					GetCurrentTransactionId());
-
-		/* We know this is a newly created relation, so there are no indexes */
-	}
-
-=======
 	table_tuple_insert(myState->transientrel,
 					   slot,
 					   myState->output_cid,
 					   myState->ti_options,
 					   myState->bistate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* We know this is a newly created relation, so there are no indexes */
 
@@ -713,12 +632,7 @@ transientrel_shutdown(DestReceiver *self)
 		aocs_insert_finish(myState->aocs_insertDes);
 
 	/* close transientrel, but keep lock until commit */
-<<<<<<< HEAD
-	heap_close(myState->transientrel, NoLock);
-
-=======
 	table_close(myState->transientrel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	myState->transientrel = NULL;
 	if (Gp_role == GP_ROLE_EXECUTE && !myState->concurrent)
 		refresh_by_heap_swap(myState->oldreloid, myState->transientoid, myState->relpersistence);
@@ -800,10 +714,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	ListCell   *indexoidscan;
 	int16		relnatts;
 	Oid		   *opUsedForQual;
-<<<<<<< HEAD
 	char 	   *distributed;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	initStringInfo(&querybuf);
 	matviewRel = table_open(matviewOid, NoLock);
@@ -814,11 +725,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 										  RelationGetRelationName(tempRel));
 	diffname = make_temptable_name_n(tempname, 2);
 
-<<<<<<< HEAD
-	relnatts = matviewRel->rd_rel->relnatts;
-=======
 	relnatts = RelationGetNumberOfAttributes(matviewRel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Open SPI context. */
 	if (SPI_connect() != SPI_OK_CONNECT)
@@ -843,12 +750,8 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 					 "(SELECT 1 FROM %s newdata2 WHERE newdata2 IS NOT NULL "
 					 "AND newdata2 OPERATOR(pg_catalog.*=) newdata "
 					 "AND newdata2.ctid OPERATOR(pg_catalog.<>) "
-<<<<<<< HEAD
 					 "newdata.ctid and newdata2.gp_segment_id = "
 					 "newdata.gp_segment_id)",
-=======
-					 "newdata.ctid)",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					 tempname, tempname);
 	if (SPI_execute(querybuf.data, false, 1) != SPI_OK_SELECT)
 		elog(ERROR, "SPI_exec failed: %s", querybuf.data);
@@ -906,11 +809,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 		if (is_usable_unique_index(indexRel))
 		{
 			Form_pg_index indexStruct = indexRel->rd_index;
-<<<<<<< HEAD
-			int			numatts = indexStruct->indnatts;
-=======
 			int			indnkeyatts = indexStruct->indnkeyatts;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			oidvector  *indclass;
 			Datum		indclassDatum;
 			bool		isnull;
@@ -1039,11 +938,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	/* Deletes must come before inserts; do them first. */
 	resetStringInfo(&querybuf);
 	appendStringInfo(&querybuf,
-<<<<<<< HEAD
-					 "DELETE FROM %s mv WHERE exists "
-=======
 					 "DELETE FROM %s mv WHERE ctid OPERATOR(pg_catalog.=) ANY "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					 "(SELECT diff.tid FROM %s diff "
 					 "WHERE diff.tid = mv.ctid and diff.sid = mv.gp_segment_id and"
 	 				 " diff.tid IS NOT NULL)",

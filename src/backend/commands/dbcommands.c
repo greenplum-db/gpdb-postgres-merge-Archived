@@ -733,16 +733,11 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 								  XLOG_DBASE_CREATE | XLR_SPECIAL_REL_UPDATE);
 			}
 		}
-<<<<<<< HEAD
 
 		SIMPLE_FAULT_INJECTOR("after_xlog_create_database");
 
-		heap_endscan(scan);
-		heap_close(rel, AccessShareLock);
-=======
 		table_endscan(scan);
 		table_close(rel, AccessShareLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * We force a checkpoint before committing.  This effectively means
@@ -1665,9 +1660,9 @@ AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTopLevel)
 		if (list_length(stmt->options) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-<<<<<<< HEAD
-			   errmsg("option \"%s\" cannot be specified with other options",
-					  dtablespace->defname)));
+					 errmsg("option \"%s\" cannot be specified with other options",
+							dtablespace->defname),
+					 parser_errposition(pstate, dtablespace->location)));
 
 		if (Gp_role != GP_ROLE_EXECUTE)
 		{
@@ -1679,13 +1674,6 @@ AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTopLevel)
 			/* this case isn't allowed within a transaction block */
 			PreventTransactionChain(isTopLevel, "ALTER DATABASE SET TABLESPACE");
 		}
-=======
-					 errmsg("option \"%s\" cannot be specified with other options",
-							dtablespace->defname),
-					 parser_errposition(pstate, dtablespace->location)));
-		/* this case isn't allowed within a transaction block */
-		PreventInTransactionBlock(isTopLevel, "ALTER DATABASE SET TABLESPACE");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		movedb(stmt->dbname, defGetString(dtablespace));
 
 		if (Gp_role == GP_ROLE_DISPATCH)
@@ -1940,21 +1928,15 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 		heap_freetuple(newtuple);
 
 		/* Update owner dependency reference */
-<<<<<<< HEAD
-		changeDependencyOnOwner(DatabaseRelationId, HeapTupleGetOid(tuple),
-								newOwnerId);
+		changeDependencyOnOwner(DatabaseRelationId, db_id, newOwnerId);
 
 		/* MPP-6929: metadata tracking */
 		if (Gp_role == GP_ROLE_DISPATCH)
 			MetaTrackUpdObject(DatabaseRelationId,
-							   HeapTupleGetOid(tuple),
+							   db_id,
 							   GetUserId(),
 							   "ALTER", "OWNER"
 					);
-
-=======
-		changeDependencyOnOwner(DatabaseRelationId, db_id, newOwnerId);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	InvokeObjectPostAlterHook(DatabaseRelationId, db_id, 0);
@@ -1994,13 +1976,9 @@ get_db_info(const char *name, LOCKMODE lockmode,
 	AssertArg(name);
 
 	/* Caller may wish to grab a better lock on pg_database beforehand... */
-<<<<<<< HEAD
-	relation = heap_open(DatabaseRelationId, AccessShareLock);
+	relation = table_open(DatabaseRelationId, AccessShareLock);
 	/* XXX XXX: should this be RowExclusive, depending on lockmode? We
 	 * try to get a lock later... */
-=======
-	relation = table_open(DatabaseRelationId, AccessShareLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Loop covers the rare case where the database is renamed before we can
