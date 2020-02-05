@@ -37,18 +37,11 @@
 #include "catalog/gp_policy.h"
 
 static bool describeOneTableDetails(const char *schemaname,
-<<<<<<< HEAD
-						const char *relationname,
-						const char *oid,
-						bool verbose);
-static void add_external_table_footer(printTableContent *const cont, const char *oid);
-static void add_distributed_by_footer(printTableContent *const cont, const char *oid);
-static void add_partition_by_footer(printTableContent *const cont, const char *oid);
-=======
 									const char *relationname,
 									const char *oid,
 									bool verbose);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static void add_external_table_footer(printTableContent *const cont, const char *oid);
+static void add_distributed_by_footer(printTableContent *const cont, const char *oid);
 static void add_tablespace_footer(printTableContent *const cont, char relkind,
 								  Oid tablespace, const bool newline);
 static void add_role_attribute(PQExpBuffer buf, const char *const str);
@@ -360,15 +353,9 @@ describeTablespaces(const char *pattern, bool verbose)
 	{
 		char		sverbuf[32];
 
-<<<<<<< HEAD
-		psql_error("The server (version %s) does not support tablespaces.\n",
-				   formatPGVersionNumber(pset.sversion, false,
-										 sverbuf, sizeof(sverbuf)));
-=======
 		pg_log_info("The server (version %s) does not support tablespaces.",
 					formatPGVersionNumber(pset.sversion, false,
 										  sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 	}
 
@@ -488,16 +475,10 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 	{
 		char		sverbuf[32];
 
-<<<<<<< HEAD
-		psql_error("\\df does not take a \"w\" option with server version %s\n",
-				   formatPGVersionNumber(pset.sversion, false,
-										 sverbuf, sizeof(sverbuf)));
-=======
 		pg_log_error("\\df does not take a \"%c\" option with server version %s",
 					 'w',
 					 formatPGVersionNumber(pset.sversion, false,
 										   sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 	}
 
@@ -919,13 +900,9 @@ describeTypes(const char *pattern, bool verbose, bool showSystem)
 					  gettext_noop("Description"));
 
 	appendPQExpBufferStr(&buf, "FROM pg_catalog.pg_type t\n"
-<<<<<<< HEAD
-	 "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n");
+						 "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n");
 	if (verbose && isGE42 == true)
 		appendPQExpBuffer(&buf, "\n   LEFT OUTER JOIN pg_catalog.pg_type_encoding te ON te.typid = t.oid ");
-=======
-						 "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * do not include complex types (typrelid!=0) unless they are standalone
@@ -1298,15 +1275,9 @@ listDefaultACLs(const char *pattern)
 	{
 		char		sverbuf[32];
 
-<<<<<<< HEAD
-		psql_error("The server (version %s) does not support altering default privileges.\n",
-				   formatPGVersionNumber(pset.sversion, false,
-										 sverbuf, sizeof(sverbuf)));
-=======
 		pg_log_error("The server (version %s) does not support altering default privileges.",
 					 formatPGVersionNumber(pset.sversion, false,
 										   sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 	}
 
@@ -5589,15 +5560,9 @@ listCollations(const char *pattern, bool verbose, bool showSystem)
 	{
 		char		sverbuf[32];
 
-<<<<<<< HEAD
-		psql_error("The server (version %s) does not support collations.\n",
-				   formatPGVersionNumber(pset.sversion, false,
-										 sverbuf, sizeof(sverbuf)));
-=======
 		pg_log_error("The server (version %s) does not support collations.",
 					 formatPGVersionNumber(pset.sversion, false,
 										   sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 	}
 
@@ -5750,15 +5715,9 @@ listTSParsers(const char *pattern, bool verbose)
 	{
 		char		sverbuf[32];
 
-<<<<<<< HEAD
-		psql_error("The server (version %s) does not support full text search.\n",
-				   formatPGVersionNumber(pset.sversion, false,
-										 sverbuf, sizeof(sverbuf)));
-=======
 		pg_log_error("The server (version %s) does not support full text search.",
 					 formatPGVersionNumber(pset.sversion, false,
 										   sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 	}
 
@@ -6003,15 +5962,9 @@ listTSDictionaries(const char *pattern, bool verbose)
 	{
 		char		sverbuf[32];
 
-<<<<<<< HEAD
-		psql_error("The server (version %s) does not support full text search.\n",
-				   formatPGVersionNumber(pset.sversion, false,
-										 sverbuf, sizeof(sverbuf)));
-=======
 		pg_log_error("The server (version %s) does not support full text search.",
 					 formatPGVersionNumber(pset.sversion, false,
 										   sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 	}
 
@@ -6080,15 +6033,9 @@ listTSTemplates(const char *pattern, bool verbose)
 	{
 		char		sverbuf[32];
 
-<<<<<<< HEAD
-		psql_error("The server (version %s) does not support full text search.\n",
-				   formatPGVersionNumber(pset.sversion, false,
-										 sverbuf, sizeof(sverbuf)));
-=======
 		pg_log_error("The server (version %s) does not support full text search.",
 					 formatPGVersionNumber(pset.sversion, false,
 										   sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 	}
 
@@ -6157,15 +6104,9 @@ listTSConfigs(const char *pattern, bool verbose)
 	{
 		char		sverbuf[32];
 
-<<<<<<< HEAD
-		psql_error("The server (version %s) does not support full text search.\n",
-				   formatPGVersionNumber(pset.sversion, false,
-										 sverbuf, sizeof(sverbuf)));
-=======
 		pg_log_error("The server (version %s) does not support full text search.",
 					 formatPGVersionNumber(pset.sversion, false,
 										   sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 	}
 
@@ -6369,15 +6310,9 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 	{
 		char		sverbuf[32];
 
-<<<<<<< HEAD
-		psql_error("The server (version %s) does not support foreign-data wrappers.\n",
-				   formatPGVersionNumber(pset.sversion, false,
-										 sverbuf, sizeof(sverbuf)));
-=======
 		pg_log_error("The server (version %s) does not support foreign-data wrappers.",
 					 formatPGVersionNumber(pset.sversion, false,
 										   sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 	}
 
@@ -6458,15 +6393,9 @@ listForeignServers(const char *pattern, bool verbose)
 	{
 		char		sverbuf[32];
 
-<<<<<<< HEAD
-		psql_error("The server (version %s) does not support foreign servers.\n",
-				   formatPGVersionNumber(pset.sversion, false,
-										 sverbuf, sizeof(sverbuf)));
-=======
 		pg_log_error("The server (version %s) does not support foreign servers.",
 					 formatPGVersionNumber(pset.sversion, false,
 										   sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 	}
 
@@ -6507,11 +6436,7 @@ listForeignServers(const char *pattern, bool verbose)
 	if (verbose)
 		appendPQExpBufferStr(&buf,
 							 "LEFT JOIN pg_catalog.pg_description d\n       "
-<<<<<<< HEAD
-						   "ON d.classoid = s.tableoid AND d.objoid = s.oid "
-=======
 							 "ON d.classoid = s.tableoid AND d.objoid = s.oid "
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							 "AND d.objsubid = 0\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, false, false,
@@ -6550,15 +6475,9 @@ listUserMappings(const char *pattern, bool verbose)
 	{
 		char		sverbuf[32];
 
-<<<<<<< HEAD
-		psql_error("The server (version %s) does not support user mappings.\n",
-				   formatPGVersionNumber(pset.sversion, false,
-										 sverbuf, sizeof(sverbuf)));
-=======
 		pg_log_error("The server (version %s) does not support user mappings.",
 					 formatPGVersionNumber(pset.sversion, false,
 										   sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 	}
 
@@ -6617,15 +6536,9 @@ listForeignTables(const char *pattern, bool verbose)
 	{
 		char		sverbuf[32];
 
-<<<<<<< HEAD
-		psql_error("The server (version %s) does not support foreign tables.\n",
-				   formatPGVersionNumber(pset.sversion, false,
-										 sverbuf, sizeof(sverbuf)));
-=======
 		pg_log_error("The server (version %s) does not support foreign tables.",
 					 formatPGVersionNumber(pset.sversion, false,
 										   sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 	}
 
@@ -6701,15 +6614,9 @@ listExtensions(const char *pattern)
 	{
 		char		sverbuf[32];
 
-<<<<<<< HEAD
-		psql_error("The server (version %s) does not support extensions.\n",
-				   formatPGVersionNumber(pset.sversion, false,
-										 sverbuf, sizeof(sverbuf)));
-=======
 		pg_log_error("The server (version %s) does not support extensions.",
 					 formatPGVersionNumber(pset.sversion, false,
 										   sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 	}
 
@@ -6768,15 +6675,9 @@ listExtensionContents(const char *pattern)
 	{
 		char		sverbuf[32];
 
-<<<<<<< HEAD
-		psql_error("The server (version %s) does not support extensions.\n",
-				   formatPGVersionNumber(pset.sversion, false,
-										 sverbuf, sizeof(sverbuf)));
-=======
 		pg_log_error("The server (version %s) does not support extensions.",
 					 formatPGVersionNumber(pset.sversion, false,
 										   sverbuf, sizeof(sverbuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return true;
 	}
 
@@ -6857,17 +6758,10 @@ listOneExtensionContents(const char *extname, const char *oid)
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
 					  "SELECT pg_catalog.pg_describe_object(classid, objid, 0) AS \"%s\"\n"
-<<<<<<< HEAD
-							  "FROM pg_catalog.pg_depend\n"
-							  "WHERE refclassid = 'pg_catalog.pg_extension'::pg_catalog.regclass AND refobjid = '%s' AND deptype = 'e'\n"
-							  "ORDER BY 1;",
-					  gettext_noop("Object Description"),
-=======
 					  "FROM pg_catalog.pg_depend\n"
 					  "WHERE refclassid = 'pg_catalog.pg_extension'::pg_catalog.regclass AND refobjid = '%s' AND deptype = 'e'\n"
 					  "ORDER BY 1;",
 					  gettext_noop("Object description"),
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					  oid);
 
 	res = PSQLexec(buf.data);

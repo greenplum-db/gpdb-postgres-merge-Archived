@@ -344,15 +344,8 @@ ProcessQuery(Portal portal,
 						 queryDesc->es_processed);
 				break;
 			case CMD_INSERT:
-<<<<<<< HEAD
-				if (queryDesc->es_processed == 1)
-					lastOid = queryDesc->es_lastoid;
-				else
-					lastOid = InvalidOid;
-=======
 				/* lastoid doesn't exist anymore */
 				lastOid = InvalidOid;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
 						 "INSERT %u " UINT64_FORMAT,
 						 lastOid, queryDesc->es_processed);
@@ -695,11 +688,7 @@ PortalStart(Portal portal, ParamListInfo params,
 			CurrentResourceOwner = portal->resowner;
 		PortalContext = portal->portalContext;
 
-<<<<<<< HEAD
-		MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-=======
 		oldContext = MemoryContextSwitchTo(PortalContext);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/* Must remember portal param list, if any */
 		portal->portalParams = params;
@@ -983,11 +972,7 @@ PortalSetResultFormat(Portal portal, int nFormats, int16 *formats)
  * suspended due to exhaustion of the count parameter.
  */
 bool
-<<<<<<< HEAD
-PortalRun(Portal portal, int64 count, bool isTopLevel,
-=======
-PortalRun(Portal portal, long count, bool isTopLevel, bool run_once,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+PortalRun(Portal portal, int64 count, bool isTopLevel, bool run_once,
 		  DestReceiver *dest, DestReceiver *altdest,
 		  char *completionTag)
 {
@@ -1479,19 +1464,13 @@ PortalRunUtility(Portal portal, PlannedStmt *pstmt,
 	else
 		snapshot = NULL;
 
-<<<<<<< HEAD
 	/* check if this utility statement need to be involved into resource queue
 	 * mgmt */
 	ResHandleUtilityStmt(portal, utilityStmt);
 
-	ProcessUtility(utilityStmt,
-				   portal->sourceText ? portal->sourceText : "(Source text for portal is not available)",
-			   isTopLevel ? PROCESS_UTILITY_TOPLEVEL : PROCESS_UTILITY_QUERY,
-=======
 	ProcessUtility(pstmt,
-				   portal->sourceText,
+				   portal->sourceText ? portal->sourceText : "(Source text for portal is not available)",
 				   isTopLevel ? PROCESS_UTILITY_TOPLEVEL : PROCESS_UTILITY_QUERY,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				   portal->portalParams,
 				   portal->queryEnv,
 				   dest,

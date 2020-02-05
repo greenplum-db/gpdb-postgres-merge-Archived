@@ -759,52 +759,6 @@ static bool
 intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_intorel *myState = (DR_intorel *) self;
-<<<<<<< HEAD
-	Relation    into_rel = myState->rel;
-
-	if (RelationIsAoRows(into_rel))
-	{
-		AOTupleId	aoTupleId;
-		MemTuple	tuple;
-
-		tuple = ExecCopySlotMemTuple(slot);
-		if (myState->ao_insertDesc == NULL)
-			myState->ao_insertDesc = appendonly_insert_init(into_rel, RESERVED_SEGNO, false);
-
-		appendonly_insert(myState->ao_insertDesc, tuple, InvalidOid, &aoTupleId);
-		pfree(tuple);
-	}
-	else if (RelationIsAoCols(into_rel))
-	{
-		if(myState->aocs_insertDes == NULL)
-			myState->aocs_insertDes = aocs_insert_init(into_rel, RESERVED_SEGNO, false);
-
-		aocs_insert(myState->aocs_insertDes, slot);
-	}
-	else
-	{
-		HeapTuple	tuple;
-
-		/*
-		 * get the heap tuple out of the tuple table slot, making sure we have a
-		 * writable copy
-		 */
-		tuple = ExecMaterializeSlot(slot);
-
-		/*
-		 * force assignment of new OID (see comments in ExecInsert)
-		 */
-		if (myState->rel->rd_rel->relhasoids)
-			HeapTupleSetOid(tuple, InvalidOid);
-
-		heap_insert(myState->rel,
-					tuple,
-					myState->output_cid,
-					myState->hi_options,
-					myState->bistate,
-					GetCurrentTransactionId());
-	}
-=======
 
 	/*
 	 * Note that the input slot might not be of the type of the target
@@ -820,7 +774,6 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 					   myState->output_cid,
 					   myState->ti_options,
 					   myState->bistate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* We know this is a newly created relation, so there are no indexes */
 
@@ -849,11 +802,7 @@ intorel_shutdown(DestReceiver *self)
 		aocs_insert_finish(myState->aocs_insertDes);
 
 	/* close rel, but keep lock until commit */
-<<<<<<< HEAD
-	heap_close(into_rel, NoLock);
-=======
 	table_close(myState->rel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	myState->rel = NULL;
 }
 

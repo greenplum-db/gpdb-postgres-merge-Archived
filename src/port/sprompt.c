@@ -47,13 +47,6 @@ simple_prompt(const char *prompt, char *destination, size_t destlen, bool echo)
 	HANDLE		t = NULL;
 	DWORD		t_orig = 0;
 #endif
-<<<<<<< HEAD
-
-	destination = (char *) malloc(maxlen + 1);
-	if (!destination)
-		return NULL;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #ifdef WIN32
 

@@ -138,16 +138,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				if (p == NULL || strlen(p) <= 1)
 					pg_fatal("%d: database cluster state problem\n", __LINE__);
 
-<<<<<<< HEAD
-				p++;				/* remove ':' char */
-
-				/*
-				 * We checked earlier for a postmaster lock file, and if we found
-				 * one, we tried to start/stop the server to replay the WAL.  However,
-				 * pg_ctl -m immediate doesn't leave a lock file, but does require
-				 * WAL replay, so we check here that the server was shut down cleanly,
-				 * from the controldata perspective.
-=======
 				p++;			/* remove ':' char */
 
 				/*
@@ -157,7 +147,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				 * file, but does require WAL replay, so we check here that
 				 * the server was shut down cleanly, from the controldata
 				 * perspective.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				 */
 				/* remove leading spaces */
 				while (*p == ' ')
@@ -191,14 +180,11 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		}
 	}
 
-<<<<<<< HEAD
-=======
 	/* pg_resetxlog has been renamed to pg_resetwal in version 10 */
 	if (GET_MAJOR_VERSION(cluster->bin_version) < 1000)
 		resetwal_bin = "pg_resetxlog\" -n";
 	else
 		resetwal_bin = "pg_resetwal\" -n";
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	snprintf(cmd, sizeof(cmd), "\"%s/%s \"%s\"",
 			 cluster->bindir,
 			 live_check ? "pg_controldata\"" : resetwal_bin,

@@ -333,19 +333,15 @@ be_lo_unlink(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId = PG_GETARG_OID(0);
 
-<<<<<<< HEAD
 	ereport(ERROR,
 		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		 errmsg("large objects are not supported")));
 
-	/* Must be owner of the largeobject */
-=======
 	/*
 	 * Must be owner of the large object.  It would be cleaner to check this
 	 * in inv_drop(), but we want to throw the error before not after closing
 	 * relevant FDs.
 	 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (!lo_compat_privileges &&
 		!pg_largeobject_ownercheck(lobjId, GetUserId()))
 		ereport(ERROR,
@@ -410,17 +406,12 @@ be_lowrite(PG_FUNCTION_ARGS)
 	int			bytestowrite;
 	int			totalwritten;
 
-<<<<<<< HEAD
 	ereport(ERROR,
 		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		 errmsg("large objects are not supported")));
 
-	bytestowrite = VARSIZE(wbuf) - VARHDRSZ;
-	totalwritten = lo_write(fd, VARDATA(wbuf), bytestowrite);
-=======
 	bytestowrite = VARSIZE_ANY_EXHDR(wbuf);
 	totalwritten = lo_write(fd, VARDATA_ANY(wbuf), bytestowrite);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	PG_RETURN_INT32(totalwritten);
 }
 
@@ -540,13 +531,8 @@ lo_export(PG_FUNCTION_ARGS)
  * lo_export -
  *	  exports an (inversion) large object.
  */
-<<<<<<< HEAD
-static pg_attribute_unused() Datum
-lo_export_pg(PG_FUNCTION_ARGS)
-=======
 Datum
 be_lo_export(PG_FUNCTION_ARGS)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	Oid			lobjId = PG_GETARG_OID(0);
 	text	   *filename = PG_GETARG_TEXT_PP(1);
@@ -576,13 +562,8 @@ be_lo_export(PG_FUNCTION_ARGS)
 	oumask = umask(S_IWGRP | S_IWOTH);
 	PG_TRY();
 	{
-<<<<<<< HEAD
-		fd = OpenTransientFile(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY,
-							   S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-=======
 		fd = OpenTransientFilePerm(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY,
 								   S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	PG_CATCH();
 	{

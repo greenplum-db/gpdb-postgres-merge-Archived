@@ -2491,9 +2491,6 @@ get_rel_relkind(Oid relid)
 }
 
 /*
-<<<<<<< HEAD
- * get_rel_relstorage
-=======
  * get_rel_relispartition
  *
  *		Returns the relispartition flag associated with a given relation.
@@ -2518,8 +2515,7 @@ get_rel_relispartition(Oid relid)
 }
 
 /*
- * get_rel_tablespace
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+ * get_rel_relstorage
  *
  *		Returns the relstorage associated with a given relation.
  */
@@ -3790,23 +3786,14 @@ get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 							  &isnull);
 		if (isnull)
 			elog(ERROR, "stanumbers is null");
-<<<<<<< HEAD
-=======
 
 		/*
 		 * Detoast the array if needed, and in any case make a copy that's
 		 * under control of this AttStatsSlot.
 		 */
 		statarray = DatumGetArrayTypePCopy(val);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
-		/*
-		 * Detoast the array if needed, and in any case make a copy that's
-		 * under control of this AttStatsSlot.
-		 */
 <<<<<<< HEAD
-		statarray = DatumGetArrayTypePCopy(val);
-
 		/**
 		 * Could be an empty array.
 		 */
@@ -3873,7 +3860,6 @@ free_attstatsslot(AttStatsSlot *sslot)
 		pfree(sslot->values_arr);
 	if (sslot->numbers_arr)
 		pfree(sslot->numbers_arr);
-<<<<<<< HEAD
 }
 
 /*
@@ -3903,8 +3889,6 @@ get_att_stats(Oid relid, AttrNumber attrnum)
 									 BoolGetDatum(false));
 
 	return result;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*				---------- PG_NAMESPACE CACHE ----------				 */
@@ -3975,7 +3959,6 @@ get_range_subtype(Oid rangeOid)
 		return InvalidOid;
 }
 
-<<<<<<< HEAD
 /*
  * relation_exists
  *	  Is there a relation with the given oid
@@ -4674,7 +4657,8 @@ child_triggers(Oid relationId, int32 triggerType)
 	
 	/* no child triggers matching the given type */
 	return found;
-=======
+}
+
 /*				---------- PG_INDEX CACHE ----------				 */
 
 /*
@@ -4715,5 +4699,4 @@ get_index_column_opclass(Oid index_oid, int attno)
 	ReleaseSysCache(tuple);
 
 	return opclass;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

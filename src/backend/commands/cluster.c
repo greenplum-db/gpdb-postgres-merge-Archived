@@ -1399,11 +1399,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	Oid			swaptemp;
 	char		swapchar;
 	char		swptmpchr;
-<<<<<<< HEAD
-	CatalogIndexState indstate;
 	bool		isAO1, isAO2;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* We need writable copies of both pg_class tuples. */
 	relRelation = table_open(RelationRelationId, RowExclusiveLock);

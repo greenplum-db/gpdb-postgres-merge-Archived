@@ -103,11 +103,11 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
 
 	/*
-<<<<<<< HEAD
 	 * Check for various Greenplum failure cases
 	 */
 	check_greenplum();
-=======
+
+	/*
 	 * Pre-PG 12 allowed tables to be declared WITH OIDS, which is not
 	 * supported anymore. Verify there are none, iff applicable.
 	 */
@@ -124,7 +124,6 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 		if (user_opts.check)
 			old_9_6_invalidate_hash_indexes(&old_cluster, true);
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* 9.5 and below should not have roles starting with pg_ */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 905)
@@ -304,13 +303,10 @@ issue_warnings_and_set_wal_level(void)
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
 		new_9_0_populate_pg_largeobject_metadata(&new_cluster, false);
 
-<<<<<<< HEAD
-=======
 	/* Reindex hash indexes for old < 10.0 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 906)
 		old_9_6_invalidate_hash_indexes(&new_cluster, false);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	stop_postmaster(false);
 }
 

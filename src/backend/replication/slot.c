@@ -1296,10 +1296,7 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	FIN_CRC32C(cp.checksum);
 
 	errno = 0;
-<<<<<<< HEAD
-=======
 	pgstat_report_wait_start(WAIT_EVENT_REPLICATION_SLOT_WRITE);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if ((write(fd, &cp, sizeof(cp))) != sizeof(cp))
 	{
 		int			save_errno = errno;
@@ -1422,14 +1419,6 @@ RestoreSlotFromDisk(const char *name)
 	 */
 	pgstat_report_wait_start(WAIT_EVENT_REPLICATION_SLOT_RESTORE_SYNC);
 	if (pg_fsync(fd) != 0)
-<<<<<<< HEAD
-	{
-		int			save_errno = errno;
-
-		CloseTransientFile(fd);
-		errno = save_errno;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m",
@@ -1525,13 +1514,8 @@ RestoreSlotFromDisk(const char *name)
 		if (!rmtree(slotdir, true))
 		{
 			ereport(WARNING,
-<<<<<<< HEAD
-					(errcode_for_file_access(),
-					 errmsg("could not remove directory \"%s\"", slotdir)));
-=======
 					(errmsg("could not remove directory \"%s\"",
 							slotdir)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		fsync_fname("pg_replslot", true);
 		return;

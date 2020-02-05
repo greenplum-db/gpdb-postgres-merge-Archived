@@ -96,17 +96,12 @@ pg_create_physical_replication_slot(PG_FUNCTION_ARGS)
 
 	CheckSlotRequirements();
 
-<<<<<<< HEAD
 	warn_slot_only_created_on_segment(NameStr(*name));
 
-	/* acquire replication slot, this will check for conflicting names */
-	ReplicationSlotCreate(NameStr(*name), false, RS_PERSISTENT);
-=======
 	create_physical_replication_slot(NameStr(*name),
 									 immediately_reserve,
 									 temporary,
 									 InvalidXLogRecPtr);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	values[0] = NameGetDatum(&MyReplicationSlot->data.name);
 	nulls[0] = false;
@@ -155,17 +150,11 @@ create_logical_replication_slot(char *name, char *plugin,
 	/*
 	 * Create logical decoding context, to build the initial snapshot.
 	 */
-<<<<<<< HEAD
-	ctx = CreateInitDecodingContext(NameStr(*plugin), NIL,
-									false, /* do not build snapshot */
-									logical_read_local_xlog_page, NULL, NULL);
-=======
 	ctx = CreateInitDecodingContext(plugin, NIL,
 									false,	/* do not build snapshot */
 									restart_lsn,
 									logical_read_local_xlog_page, NULL, NULL,
 									NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* build initial snapshot, might take a while */
 	DecodingContextFindStartpoint(ctx);

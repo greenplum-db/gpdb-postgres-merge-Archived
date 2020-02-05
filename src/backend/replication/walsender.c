@@ -1598,8 +1598,6 @@ exec_replication_command(const char *cmd_string)
 	cmd_node = replication_parse_result;
 
 	/*
-<<<<<<< HEAD
-=======
 	 * Log replication command if log_replication_commands is enabled. Even
 	 * when it's disabled, log the command with DEBUG1 level for backward
 	 * compatibility. Note that SQL commands are not logged here, and will be
@@ -1629,7 +1627,6 @@ exec_replication_command(const char *cmd_string)
 	CHECK_FOR_INTERRUPTS();
 
 	/*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * Allocate buffers that will be used for each outgoing and incoming
 	 * message.  We do this just once per command to reduce palloc overhead.
 	 */
@@ -1637,12 +1634,9 @@ exec_replication_command(const char *cmd_string)
 	initStringInfo(&reply_message);
 	initStringInfo(&tmpbuf);
 
-<<<<<<< HEAD
-=======
 	/* Report to pgstat that this process is running */
 	pgstat_report_activity(STATE_RUNNING, NULL);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	switch (cmd_node->type)
 	{
 		case T_IdentifySystemCmd:
@@ -2304,18 +2298,8 @@ WalSndLoop(WalSndSendDataCallback send_data)
 	 */
 	for (;;)
 	{
-<<<<<<< HEAD
 		SIMPLE_FAULT_INJECTOR("wal_sender_loop");
 
-		/*
-		 * Emergency bailout if postmaster has died.  This is to avoid the
-		 * necessity for manual cleanup of all postmaster children.
-		 */
-		if (!PostmasterIsAlive())
-			exit(1);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		/* Clear any already-pending wakeups */
 		ResetLatch(MyLatch);
 
@@ -3052,14 +3036,11 @@ XLogSendLogical(void)
 		/* XXX: Note that logical decoding cannot be used while in recovery */
 		XLogRecPtr	flushPtr = GetFlushRecPtr();
 
-<<<<<<< HEAD
-=======
 		/*
 		 * Note the lack of any call to LagTrackerWrite() which is handled by
 		 * WalSndUpdateProgress which is called by output plugin through
 		 * logical decoding write api.
 		 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		LogicalDecodingProcessRecord(logical_decoding_ctx, logical_decoding_ctx->reader);
 
 		sentPtr = logical_decoding_ctx->reader->EndRecPtr;
@@ -3216,14 +3197,7 @@ HandleWalSndInitStopping(void)
 	if (!replication_active)
 		kill(MyProcPid, SIGTERM);
 	else
-<<<<<<< HEAD
-	{
 		got_STOPPING = true;
-		SetLatch(MyLatch);
-	}
-=======
-		got_STOPPING = true;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*

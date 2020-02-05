@@ -28,14 +28,13 @@
 
 ProtocolVersion FrontendProtocol;
 
-<<<<<<< HEAD
-volatile bool InterruptPending = false;
-volatile bool QueryCancelPending = false;
-volatile bool QueryCancelCleanup = false;
-volatile bool QueryFinishPending = false;
-volatile bool ProcDiePending = false;
-volatile bool ClientConnectionLost = false;
-volatile bool IdleInTransactionSessionTimeoutPending = false;
+volatile sig_atomic_t InterruptPending = false;
+volatile sig_atomic_t QueryCancelPending = false;
+volatile sig_atomic_t QueryCancelCleanup = false;
+volatile sig_atomic_t QueryFinishPending = false;
+volatile sig_atomic_t ProcDiePending = false;
+volatile sig_atomic_t ClientConnectionLost = false;
+volatile sig_atomic_t IdleInTransactionSessionTimeoutPending = false;
 volatile sig_atomic_t ConfigReloadPending = false;
 /*
  * GPDB: Make these signed integers (instead of uint32) to detect garbage
@@ -44,17 +43,6 @@ volatile sig_atomic_t ConfigReloadPending = false;
 volatile int32 InterruptHoldoffCount = 0;
 volatile int32 QueryCancelHoldoffCount = 0;
 volatile int32 CritSectionCount = 0;
-=======
-volatile sig_atomic_t InterruptPending = false;
-volatile sig_atomic_t QueryCancelPending = false;
-volatile sig_atomic_t ProcDiePending = false;
-volatile sig_atomic_t ClientConnectionLost = false;
-volatile sig_atomic_t IdleInTransactionSessionTimeoutPending = false;
-volatile sig_atomic_t ConfigReloadPending = false;
-volatile uint32 InterruptHoldoffCount = 0;
-volatile uint32 QueryCancelHoldoffCount = 0;
-volatile uint32 CritSectionCount = 0;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 int			MyProcPid;
 pg_time_t	MyStartTime;
@@ -144,7 +132,6 @@ int			IntervalStyle = INTSTYLE_POSTGRES;
 
 bool		enableFsync = true;
 bool		allowSystemTableMods = false;
-<<<<<<< HEAD
 int			planner_work_mem = 32768;
 int			work_mem = 32768;
 int			statement_mem = 256000;
@@ -155,12 +142,7 @@ int			max_statement_mem = 2048000;
  */
 int			gp_vmem_limit_per_query = 0;
 int			maintenance_work_mem = 65536;
-int			replacement_sort_tuples = 150000;
-=======
-int			work_mem = 1024;
-int			maintenance_work_mem = 16384;
 int			max_parallel_maintenance_workers = 2;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Primary determinants of sizes of shared-memory structures.
@@ -170,12 +152,8 @@ int			max_parallel_maintenance_workers = 2;
  */
 int			NBuffers = 4096;
 int			MaxConnections = 90;
-<<<<<<< HEAD
 int			max_worker_processes = 8 + MaxPMAuxProc;
-=======
-int			max_worker_processes = 8;
 int			max_parallel_workers = 8;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 int			MaxBackends = 0;
 
 int			VacuumCostPageHit = 1;	/* GUC parameters for vacuum */
@@ -191,7 +169,8 @@ int			VacuumPageDirty = 0;
 int			VacuumCostBalance = 0;	/* working state for vacuum */
 bool		VacuumCostActive = false;
 
-<<<<<<< HEAD
+double		vacuum_cleanup_index_scale_factor;
+
 /* gpperfmon port number */
 int 	gpperfmon_port = 8888;
 
@@ -207,6 +186,3 @@ bool	pljava_classpath_insecure = false;
 /* Memory protection GUCs*/
 int gp_vmem_protect_limit = 8192;
 int gp_vmem_protect_gang_cache_limit = 500;
-=======
-double		vacuum_cleanup_index_scale_factor;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

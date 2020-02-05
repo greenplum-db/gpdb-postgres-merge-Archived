@@ -3412,11 +3412,7 @@ PerformRadiusTransaction(const char *server, const char *secret, const char *por
 	radius_packet *receivepacket = &radius_recv_pack;
 	char	   *radius_buffer = (char *) &radius_send_pack;
 	char	   *receive_buffer = (char *) &radius_recv_pack;
-<<<<<<< HEAD
-	int32		service = htonl(RADIUS_AUTHENTICATE_ONLY);
-=======
 	int32		service = pg_hton32(RADIUS_AUTHENTICATE_ONLY);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	uint8	   *cryptvector;
 	int			encryptedpasswordlen;
 	uint8		encryptedpassword[RADIUS_MAX_PASSWORD_LENGTH];

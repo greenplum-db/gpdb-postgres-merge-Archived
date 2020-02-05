@@ -482,13 +482,9 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 	{
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
-<<<<<<< HEAD
 		case RELKIND_AOSEGMENTS:
 		case RELKIND_AOBLOCKDIR:
 		case RELKIND_AOVISIMAP:
-		case RELKIND_INDEX:
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		case RELKIND_VIEW:
 		case RELKIND_MATVIEW:
 		case RELKIND_PARTITIONED_TABLE:
@@ -1932,16 +1928,9 @@ formrdesc(const char *relationName, Oid relationReltype,
 	relation->rd_rel->reltuples = 0;
 	relation->rd_rel->relallvisible = 0;
 	relation->rd_rel->relkind = RELKIND_RELATION;
-<<<<<<< HEAD
-	relation->rd_rel->relstorage = RELSTORAGE_HEAP;
-	relation->rd_rel->relhasoids = hasoids;
-	relation->rd_rel->relnatts = (int16) natts;
-	
-=======
 	relation->rd_rel->relnatts = (int16) natts;
 	relation->rd_rel->relam = HEAP_TABLE_AM_OID;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * initialize attribute tuple form
 	 *
@@ -5201,10 +5190,7 @@ restart:
 	 */
 	newindexoidlist = RelationGetIndexList(relation);
 	if (equal(indexoidlist, newindexoidlist) &&
-<<<<<<< HEAD
-=======
 		relpkindex == relation->rd_pkindex &&
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		relreplindex == relation->rd_replidindex)
 	{
 		/* Still the same index set, so proceed */
@@ -5217,10 +5203,7 @@ restart:
 		list_free(newindexoidlist);
 		list_free(indexoidlist);
 		bms_free(uindexattrs);
-<<<<<<< HEAD
-=======
 		bms_free(pkindexattrs);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		bms_free(idindexattrs);
 		bms_free(indexattrs);
 
@@ -6215,15 +6198,10 @@ write_item(const void *data, Size len, FILE *fp)
 bool
 RelationIdIsInInitFile(Oid relationId)
 {
-<<<<<<< HEAD
-	if (relationId == TriggerRelidNameIndexId ||
-		relationId == DatabaseNameIndexId)
-=======
 	if (relationId == SharedSecLabelRelationId ||
 		relationId == TriggerRelidNameIndexId ||
 		relationId == DatabaseNameIndexId ||
 		relationId == SharedSecLabelObjectIndexId)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		/*
 		 * If this Assert fails, we don't need the applicable special case
@@ -6345,11 +6323,7 @@ RelationCacheInitFileRemove(void)
 	const char *tblspcdir = "pg_tblspc";
 	DIR		   *dir;
 	struct dirent *de;
-<<<<<<< HEAD
-	char		path[MAXPGPATH + 11 + get_dbid_string_length() + 1 + sizeof(GP_TABLESPACE_VERSION_DIRECTORY)];
-=======
 	char		path[MAXPGPATH + 10 + sizeof(TABLESPACE_VERSION_DIRECTORY)];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	snprintf(path, sizeof(path), "global/%s",
 			 RELCACHE_INIT_FILENAME);

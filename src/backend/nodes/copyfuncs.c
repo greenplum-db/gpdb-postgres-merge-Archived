@@ -6060,13 +6060,11 @@ copyObjectImpl(const void *from)
 		case T_Result:
 			retval = _copyResult(from);
 			break;
-<<<<<<< HEAD
 		case T_Repeat:
 			retval = _copyRepeat(from);
-=======
+			break;
 		case T_ProjectSet:
 			retval = _copyProjectSet(from);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 		case T_ModifyTable:
 			retval = _copyModifyTable(from);

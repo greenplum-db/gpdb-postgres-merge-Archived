@@ -925,11 +925,9 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * The last few connections slots are reserved for superusers. Although
-	 * replication connections currently require superuser privileges, we
-	 * don't allow them to consume the reserved slots, which are intended for
-	 * interactive use.
+	 * The last few connection slots are reserved for superusers.  Replication
+	 * connections are drawn from slots reserved with max_wal_senders and not
+	 * limited by max_connections or superuser_reserved_connections.
 	 *
 	 * In Greenplum, there is a concept of restricted mode where
 	 * superuser_reserved_connections is set equal to max_connections making
@@ -939,13 +937,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 * need to be reviewed later when we start supporting multiple mirrors.
 	 */
 	if ((!am_superuser /* || am_walsender */) &&
-=======
-	 * The last few connection slots are reserved for superusers.  Replication
-	 * connections are drawn from slots reserved with max_wal_senders and not
-	 * limited by max_connections or superuser_reserved_connections.
-	 */
-	if (!am_superuser && !am_walsender &&
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ReservedBackends > 0 &&
 		!HaveNFreeProcs(ReservedBackends))
 		ereport(FATAL,

@@ -12,11 +12,7 @@
 #include "pg_upgrade.h"
 
 #include "access/transam.h"
-<<<<<<< HEAD
-#include "catalog/pg_class.h"
-=======
 #include "catalog/pg_class_d.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #include "greenplum/pg_upgrade_greenplum.h"
 
@@ -238,7 +234,6 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	/* new_relfilenode will match old and new pg_class.oid */
 	map->new_relfilenode = new_rel->relfilenode;
 
-<<<<<<< HEAD
 	/* GPDB additions to map data */
 	map->has_numerics = old_rel->has_numerics;
 	map->atts = old_rel->atts;
@@ -249,10 +244,7 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	/* An AO table doesn't necessarily have segment 0 at all. */
 	map->missing_seg0_ok = relstorage_is_ao(old_rel->relstorage);
 
-	/* used only for logging and error reporing, old/new are identical */
-=======
 	/* used only for logging and error reporting, old/new are identical */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	map->nspname = old_rel->nspname;
 	map->relname = old_rel->relname;
 }

@@ -126,11 +126,8 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
 #include "utils/metrics_utils.h"
-=======
 #include "utils/partcache.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/relcache.h"
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
@@ -17819,10 +17816,6 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
 static ObjectAddress
 ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 {
-<<<<<<< HEAD
-	Relation	parent_rel;
-	ObjectAddress address;
-=======
 	ObjectAddress address;
 	Relation	parent_rel;
 
@@ -17830,18 +17823,13 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot change inheritance of a partition")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * AccessShareLock on the parent is probably enough, seeing that DROP
 	 * TABLE doesn't lock parent tables at all.  We need some lock since we'll
 	 * be inspecting the parent's schema.
 	 */
-<<<<<<< HEAD
-	parent_rel = heap_openrv(parent, AccessShareLock);
-=======
 	parent_rel = table_openrv(parent, AccessShareLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * We don't bother to check ownership of the parent table --- ownership of
@@ -17849,14 +17837,13 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 	 */
 
 	/* Off to RemoveInheritance() where most of the work happens */
-<<<<<<< HEAD
-	RemoveInheritance(rel, parent_rel, false);
+	RemoveInheritance(rel, parent_rel);
 
 	ObjectAddressSet(address, RelationRelationId,
-								 RelationGetRelid(parent_rel));
+					 RelationGetRelid(parent_rel));
 
 	/* keep our lock on the parent relation until commit */
-	heap_close(parent_rel, NoLock);
+	table_close(parent_rel, NoLock);
 
 	/* MPP-6929: metadata tracking */
 	if ((Gp_role == GP_ROLE_DISPATCH)
@@ -17866,15 +17853,6 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 						   GetUserId(),
 						   "ALTER", "NO INHERIT"
 		);
-=======
-	RemoveInheritance(rel, parent_rel);
-
-	ObjectAddressSet(address, RelationRelationId,
-					 RelationGetRelid(parent_rel));
-
-	/* keep our lock on the parent relation until commit */
-	table_close(parent_rel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return address;
 }
@@ -17896,17 +17874,9 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
  * exactly the same way.
  *
  * Common to ATExecDropInherit() and ATExecDetachPartition().
-<<<<<<< HEAD
- *
- * Return value is the address of the relation that is no longer parent.
- */
-static void
-RemoveInheritance(Relation child_rel, Relation parent_rel, bool child_is_partition)
-=======
  */
 static void
 RemoveInheritance(Relation child_rel, Relation parent_rel)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	Relation	catalogRelation;
 	SysScanDesc scan;
@@ -17915,15 +17885,11 @@ RemoveInheritance(Relation child_rel, Relation parent_rel)
 				constraintTuple;
 	List	   *connames;
 	bool		found;
-<<<<<<< HEAD
-
-=======
 	bool		child_is_partition = false;
 
 	/* If parent_rel is a partitioned table, child_rel must be a partition */
 	if (parent_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 		child_is_partition = true;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	found = DeleteInheritsTuple(RelationGetRelid(child_rel),
 								RelationGetRelid(parent_rel));
@@ -18012,11 +17978,7 @@ RemoveInheritance(Relation child_rel, Relation parent_rel)
 				Anum_pg_constraint_conrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(child_rel)));
-<<<<<<< HEAD
-	scan = systable_beginscan(catalogRelation, ConstraintRelidIndexId,
-=======
 	scan = systable_beginscan(catalogRelation, ConstraintRelidTypidNameIndexId,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							  true, NULL, 1, key);
 
 	while (HeapTupleIsValid(constraintTuple = systable_getnext(scan)))
@@ -18073,10 +18035,6 @@ RemoveInheritance(Relation child_rel, Relation parent_rel)
 	InvokeObjectPostAlterHookArg(InheritsRelationId,
 								 RelationGetRelid(child_rel), 0,
 								 RelationGetRelid(parent_rel), false);
-<<<<<<< HEAD
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -18121,11 +18079,7 @@ drop_parent_dependency(Oid relid, Oid refclassid, Oid refobjid,
 			dep->refobjid == refobjid &&
 			dep->refobjsubid == 0 &&
 			dep->deptype == deptype)
-<<<<<<< HEAD
-			simple_heap_delete(catalogRelation, &depTuple->t_self);
-=======
 			CatalogTupleDelete(catalogRelation, &depTuple->t_self);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	systable_endscan(scan);
@@ -24317,8 +24271,6 @@ RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid, Oid oldrelid,
 
 	ReleaseSysCache(tuple);
 }
-<<<<<<< HEAD
-=======
 
 /*
  * Transform any expressions present in the partition key
@@ -25114,7 +25066,6 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	return address;
 }
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * AttachPartitionEnsureIndexes
  *		subroutine for ATExecAttachPartition to create/match indexes
@@ -25157,8 +25108,6 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 	}
 
 	/*
-<<<<<<< HEAD
-=======
 	 * If we're attaching a foreign table, we must fail if any of the indexes
 	 * is a constraint index; otherwise, there's nothing to do here.  Do this
 	 * before starting work, to avoid wasting the effort of building a few
@@ -25187,18 +25136,13 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 	}
 
 	/*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * For each index on the partitioned table, find a matching one in the
 	 * partition-to-be; if one is not found, create one.
 	 */
 	foreach(cell, idxes)
 	{
 		Oid			idx = lfirst_oid(cell);
-<<<<<<< HEAD
-		Relation	idxRel;
-=======
 		Relation	idxRel = index_open(idx, AccessShareLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		IndexInfo  *info;
 		AttrNumber *attmap;
 		bool		found = false;
@@ -25208,19 +25152,6 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 		 * Ignore indexes in the partitioned table other than partitioned
 		 * indexes.
 		 */
-<<<<<<< HEAD
-		if (!has_subclass(idx))
-		{
-			continue;
-		}
-
-		idxRel = index_open(idx, AccessShareLock);
-
-		/* construct an indexinfo to compare existing indexes against */
-		info = BuildIndexInfo(idxRel);
-		attmap = convert_tuples_by_name_map(RelationGetDescr(attachrel),
-											RelationGetDescr(rel));
-=======
 		if (idxRel->rd_rel->relkind != RELKIND_PARTITIONED_INDEX)
 		{
 			index_close(idxRel, AccessShareLock);
@@ -25232,7 +25163,6 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 		attmap = convert_tuples_by_name_map(RelationGetDescr(attachrel),
 											RelationGetDescr(rel),
 											gettext_noop("could not convert row type"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		constraintOid = get_relation_idx_constraint_oid(RelationGetRelid(rel), idx);
 
 		/*
@@ -25246,11 +25176,7 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 			Oid			cldConstrOid = InvalidOid;
 
 			/* does this index have a parent?  if so, can't use it */
-<<<<<<< HEAD
-			if (has_superclass(cldIdxId))
-=======
 			if (attachrelIdxRels[i]->rd_rel->relispartition)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				continue;
 
 			if (CompareIndexInfo(attachInfos[i], info,
@@ -25280,32 +25206,16 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 				/* bingo. */
 				IndexSetParentIndex(attachrelIdxRels[i], idx);
 				if (OidIsValid(constraintOid))
-<<<<<<< HEAD
-					ConstraintSetParentConstraint(cldConstrOid, constraintOid);
-				found = true;
-=======
 					ConstraintSetParentConstraint(cldConstrOid, constraintOid,
 												  RelationGetRelid(attachrel));
 				found = true;
 
 				CommandCounterIncrement();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 			}
 		}
 
 		/*
-<<<<<<< HEAD
-		 * If no suitable index was found in the partition-to-be, throw an error.
-		 */
-		if (!found)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-						errmsg("index like \"%s\" does not exist on \"%s\"",
-							RelationGetRelationName(idxRel),
-							RelationGetRelationName(attachrel))));
-=======
 		 * If no suitable index was found in the partition-to-be, create one
 		 * now.
 		 */
@@ -25322,16 +25232,12 @@ AttachPartitionEnsureIndexes(Relation rel, Relation attachrel)
 						RelationGetRelid(idxRel),
 						constraintOid,
 						true, false, false, false, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		index_close(idxRel, AccessShareLock);
 	}
 
-<<<<<<< HEAD
-=======
 out:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* Clean up. */
 	for (i = 0; i < list_length(attachRelIdxs); i++)
 		index_close(attachrelIdxRels[i], AccessShareLock);
@@ -25578,11 +25484,7 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 		if (!has_superclass(idxid))
 			continue;
 
-<<<<<<< HEAD
-		Assert((IndexGetRelation(rel_partition_get_root(idxid), false) ==
-=======
 		Assert((IndexGetRelation(get_partition_parent(idxid), false) ==
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				RelationGetRelid(rel)));
 
 		idx = index_open(idxid, AccessExclusiveLock);
@@ -25592,12 +25494,6 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 		constrOid = get_relation_idx_constraint_oid(RelationGetRelid(partRel),
 													idxid);
 		if (OidIsValid(constrOid))
-<<<<<<< HEAD
-			ConstraintSetParentConstraint(constrOid, InvalidOid);
-
-		index_close(idx, NoLock);
-	}
-=======
 			ConstraintSetParentConstraint(constrOid, InvalidOid, InvalidOid);
 
 		index_close(idx, NoLock);
@@ -25673,7 +25569,6 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 		performDeletion(&constraint, DROP_RESTRICT, 0);
 	}
 	CommandCounterIncrement();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Invalidate the parent's relcache so that the partition is no longer
@@ -25681,17 +25576,12 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 	 */
 	CacheInvalidateRelcache(rel);
 
-<<<<<<< HEAD
-	/* keep our lock until commit */
-	heap_close(partRel, NoLock);
-=======
 	ObjectAddressSet(address, RelationRelationId, RelationGetRelid(partRel));
 
 	/* keep our lock until commit */
 	table_close(partRel, NoLock);
 
 	return address;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -25741,12 +25631,8 @@ RangeVarCallbackForAttachIndex(const RangeVar *rv, Oid relOid, Oid oldRelOid,
 	if (!HeapTupleIsValid(tuple))
 		return;					/* concurrently dropped, so nothing to do */
 	classform = (Form_pg_class) GETSTRUCT(tuple);
-<<<<<<< HEAD
-	if (classform->relkind != RELKIND_INDEX)
-=======
 	if (classform->relkind != RELKIND_PARTITIONED_INDEX &&
 		classform->relkind != RELKIND_INDEX)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("\"%s\" is not an index", rv->relname)));
@@ -25762,41 +25648,18 @@ RangeVarCallbackForAttachIndex(const RangeVar *rv, Oid relOid, Oid oldRelOid,
 
 /*
  * ALTER INDEX i1 ATTACH PARTITION i2
-<<<<<<< HEAD
- *
- * GPDB: This is only being used internally in DefineIndex. The DDL has not
- * been exposed to the end user.  This is the workhorse of ALTER INDEX ...
- * ATTACH PARTITION in upstream, which attaches parent indexes to their
- * children.
- */
-static void
-ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, AlterPartitionId *alterpartId)
-=======
  */
 static ObjectAddress
 ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	Relation	partIdx;
 	Relation	partTbl;
 	Relation	parentTbl;
-<<<<<<< HEAD
-	RangeVar	*name;
-=======
 	ObjectAddress address;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	Oid			partIdxId;
 	Oid			currParent;
 	struct AttachIndexCallbackState state;
 
-<<<<<<< HEAD
-	Assert(alterpartId->idtype == AT_AP_IDRangeVar);
-	Assert(IsA(alterpartId->partiddef, RangeVar));
-
-	name = (RangeVar *) alterpartId->partiddef;
-	
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * We need to obtain lock on the index 'name' to modify it, but we also
 	 * need to read its owning table's tuple descriptor -- so we need to lock
@@ -25808,11 +25671,7 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 	state.parentTblOid = parentIdx->rd_index->indrelid;
 	state.lockedParentTbl = false;
 	partIdxId =
-<<<<<<< HEAD
-		RangeVarGetRelidExtended(name, AccessExclusiveLock, false, false,
-=======
 		RangeVarGetRelidExtended(name, AccessExclusiveLock, 0,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 								 RangeVarCallbackForAttachIndex,
 								 (void *) &state);
 	/* Not there? */
@@ -25828,28 +25687,19 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 	parentTbl = relation_open(parentIdx->rd_index->indrelid, AccessShareLock);
 	partTbl = relation_open(partIdx->rd_index->indrelid, NoLock);
 
-<<<<<<< HEAD
-	/* Silently do nothing if already in the right state */
-	currParent = rel_partition_get_root(partIdxId);
-=======
 	ObjectAddressSet(address, RelationRelationId, RelationGetRelid(partIdx));
 
 	/* Silently do nothing if already in the right state */
 	currParent = partIdx->rd_rel->relispartition ?
 		get_partition_parent(partIdxId) : InvalidOid;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (currParent != RelationGetRelid(parentIdx))
 	{
 		IndexInfo  *childInfo;
 		IndexInfo  *parentInfo;
 		AttrNumber *attmap;
 		bool		found;
-<<<<<<< HEAD
-		List *childPartitions;
-=======
 		int			i;
 		PartitionDesc partDesc;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		Oid			constraintOid,
 					cldConstrId = InvalidOid;
 
@@ -25869,22 +25719,11 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 							   RelationGetRelationName(partIdx))));
 
 		/* Make sure it indexes a partition of the other index's table */
-<<<<<<< HEAD
-		childPartitions = find_inheritance_children(RelationGetRelid(parentTbl), NoLock);
-		found = false;
-
-		ListCell *lc;
-		foreach(lc, childPartitions)
-		{
-			Oid			childRelid = lfirst_oid(lc);
-			if (childRelid == state.partitionOid)
-=======
 		partDesc = RelationGetPartitionDesc(parentTbl);
 		found = false;
 		for (i = 0; i < partDesc->nparts; i++)
 		{
 			if (partDesc->oids[i] == state.partitionOid)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			{
 				found = true;
 				break;
@@ -25903,23 +25742,15 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 		childInfo = BuildIndexInfo(partIdx);
 		parentInfo = BuildIndexInfo(parentIdx);
 		attmap = convert_tuples_by_name_map(RelationGetDescr(partTbl),
-<<<<<<< HEAD
-											RelationGetDescr(parentTbl));
-=======
 											RelationGetDescr(parentTbl),
 											gettext_noop("could not convert row type"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (!CompareIndexInfo(childInfo, parentInfo,
 							  partIdx->rd_indcollation,
 							  parentIdx->rd_indcollation,
 							  partIdx->rd_opfamily,
 							  parentIdx->rd_opfamily,
 							  attmap,
-<<<<<<< HEAD
-							  RelationGetDescr(partTbl)->natts))
-=======
 							  RelationGetDescr(parentTbl)->natts))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("cannot attach index \"%s\" as a partition of index \"%s\"",
@@ -25953,18 +25784,12 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 		/* All good -- do it */
 		IndexSetParentIndex(partIdx, RelationGetRelid(parentIdx));
 		if (OidIsValid(constraintOid))
-<<<<<<< HEAD
-			ConstraintSetParentConstraint(cldConstrId, constraintOid);
-
-		pfree(attmap);
-=======
 			ConstraintSetParentConstraint(cldConstrId, constraintOid,
 										  RelationGetRelid(partTbl));
 
 		pfree(attmap);
 
 		validatePartitionedIndex(parentIdx, parentTbl);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	relation_close(parentTbl, AccessShareLock);
@@ -25972,10 +25797,7 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 	relation_close(partTbl, NoLock);
 	relation_close(partIdx, NoLock);
 
-<<<<<<< HEAD
-=======
 	return address;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*

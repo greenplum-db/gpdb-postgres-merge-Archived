@@ -242,12 +242,9 @@ WalReceiverMain(void)
 	/* Initialise to a sanish value */
 	walrcv->lastMsgSendTime =
 		walrcv->lastMsgReceiptTime = walrcv->latestWalEndTime = now;
-<<<<<<< HEAD
-=======
 
 	/* Report the latch to use to awaken this process */
 	walrcv->latch = &MyProc->procLatch;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	SpinLockRelease(&walrcv->mutex);
 
@@ -271,38 +268,18 @@ WalReceiverMain(void)
 	sigdelset(&BlockSig, SIGQUIT);
 
 	/* Load the libpq-specific functions */
-<<<<<<< HEAD
 	libpqwalreceiver_PG_init();
-	if (walrcv_connect == NULL ||
-		walrcv_get_conninfo == NULL ||
-		walrcv_startstreaming == NULL ||
-		walrcv_endstreaming == NULL ||
-		walrcv_identify_system == NULL ||
-		walrcv_readtimelinehistoryfile == NULL ||
-		walrcv_receive == NULL || walrcv_send == NULL ||
-		walrcv_disconnect == NULL)
-=======
-	load_file("libpqwalreceiver", false);
 	if (WalReceiverFunctions == NULL)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		elog(ERROR, "libpqwalreceiver didn't initialize correctly");
 
 	/* Unblock signals (they were blocked when the postmaster forked us) */
 	PG_SETMASK(&UnBlockSig);
 
 	/* Establish the connection to the primary for XLOG streaming */
-<<<<<<< HEAD
-	walrcv_connect(conninfo);
-
-	/* Initialize LogstreamResult, reply_message */
-	LogstreamResult.Write = LogstreamResult.Flush = GetXLogReplayRecPtr(NULL);
-	MemSet(&reply_message, 0, sizeof(reply_message));
-=======
 	wrconn = walrcv_connect(conninfo, false, cluster_name[0] ? cluster_name : "walreceiver", &err);
 	if (!wrconn)
 		ereport(ERROR,
 				(errmsg("could not connect to the primary server: %s", err)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Save user-visible connection string.  This clobbers the original
@@ -341,9 +318,6 @@ WalReceiverMain(void)
 		 * Check that we're connected to a valid server using the
 		 * IDENTIFY_SYSTEM replication command.
 		 */
-<<<<<<< HEAD
-		walrcv_identify_system(&primaryTLI);
-=======
 		primary_sysid = walrcv_identify_system(wrconn, &primaryTLI);
 
 		snprintf(standby_sysid, sizeof(standby_sysid), UINT64_FORMAT,
@@ -355,7 +329,6 @@ WalReceiverMain(void)
 					 errdetail("The primary's identifier is %s, the standby's identifier is %s.",
 							   primary_sysid, standby_sysid)));
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * Confirm that the current timeline of the primary is the same or
@@ -586,11 +559,7 @@ WalReceiverMain(void)
 			 * The backend finished streaming. Exit streaming COPY-mode from
 			 * our side, too.
 			 */
-<<<<<<< HEAD
-			walrcv_endstreaming(&primaryTLI);
-=======
 			walrcv_endstreaming(wrconn, &primaryTLI);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * If the server had switched to a new timeline that we didn't
@@ -737,11 +706,7 @@ WalRcvFetchTimeLineHistoryFiles(TimeLineID first, TimeLineID last)
 					(errmsg("fetching timeline history file for timeline %u from primary server",
 							tli)));
 
-<<<<<<< HEAD
-			walrcv_readtimelinehistoryfile(tli, &fname, &content, &len);
-=======
 			walrcv_readtimelinehistoryfile(wrconn, tli, &fname, &content, &len);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * Check that the filename on the master matches what we
@@ -792,12 +757,8 @@ WalRcvDie(int code, Datum arg)
 	SpinLockRelease(&walrcv->mutex);
 
 	/* Terminate the connection gracefully. */
-<<<<<<< HEAD
-	walrcv_disconnect();
-=======
 	if (wrconn != NULL)
 		walrcv_disconnect(wrconn);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Wake up the startup process to notice promptly that we're gone */
 	WakeupRecovery();
@@ -830,12 +791,8 @@ WalRcvShutdownHandler(SIGNAL_ARGS)
 
 	got_SIGTERM = true;
 
-<<<<<<< HEAD
-	SetLatch(&WalRcv->latch);
-=======
 	if (WalRcv->latch)
 		SetLatch(WalRcv->latch);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	errno = save_errno;
 }

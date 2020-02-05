@@ -27,12 +27,9 @@
 #include "catalog/index.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "catalog/storage_tablespace.h"
 #include "commands/tablespace.h"
-=======
 #include "common/link-canary.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"

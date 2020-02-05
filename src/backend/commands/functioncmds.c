@@ -231,12 +231,7 @@ interpret_function_parameter_list(ParseState *pstate,
 	ListCell   *x;
 	int			i;
 
-<<<<<<< HEAD
-	/* default results */
-	*variadicArgType = InvalidOid;		/* default result */
-=======
 	*variadicArgType = InvalidOid;	/* default result */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	*requiredResultType = InvalidOid;	/* default result */
 	*parameterNames		= NULL;
 	*allParameterTypes	= NULL;
@@ -343,18 +338,14 @@ interpret_function_parameter_list(ParseState *pstate,
 		/* handle output parameters */
 		if (fp->mode != FUNC_PARAM_IN && fp->mode != FUNC_PARAM_VARIADIC)
 		{
-<<<<<<< HEAD
 			if (toid == ANYTABLEOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("functions cannot return \"anytable\" arguments")));
 
-			if (outCount == 0)	/* save first output param's type */
-=======
 			if (objtype == OBJECT_PROCEDURE)
 				*requiredResultType = RECORDOID;
 			else if (outCount == 0) /* save first output param's type */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				*requiredResultType = toid;
 			outCount++;
 		}
@@ -2040,11 +2031,6 @@ SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType)
 
 	table_close(pg_proc_rel, RowExclusiveLock);
 
-<<<<<<< HEAD
-	heap_close(pg_proc_rel, RowExclusiveLock);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Also update the dependency to the new type. Opaque is a pinned type, so
 	 * there is no old dependency record for it that we would need to remove.

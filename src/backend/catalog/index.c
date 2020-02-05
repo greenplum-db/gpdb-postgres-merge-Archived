@@ -350,22 +350,10 @@ index_check_primary_key(Relation heapRel,
 		attform = (Form_pg_attribute) GETSTRUCT(atttuple);
 
 		if (!attform->attnotnull)
-<<<<<<< HEAD
-		{
-			/* Add a subcommand to make this one NOT NULL */
-			AlterTableCmd *cmd = makeNode(AlterTableCmd);
-
-			cmd->subtype = AT_SetNotNull;
-			cmd->name = pstrdup(NameStr(attform->attname));
-			cmd->part_expanded = true;
-			cmds = lappend(cmds, cmd);
-		}
-=======
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					 errmsg("primary key column \"%s\" is not marked NOT NULL",
 							NameStr(attform->attname))));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		ReleaseSysCache(atttuple);
 	}
@@ -820,10 +808,6 @@ index_create(Relation heapRelation,
 			 bits16 constr_flags,
 			 bool allow_system_table_mods,
 			 bool is_internal,
-<<<<<<< HEAD
-			 bool if_not_exists,
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			 Oid *constraintId)
 {
 	Oid			heapRelationId = RelationGetRelid(heapRelation);
@@ -1137,24 +1121,6 @@ index_create(Relation heapRelation,
 		{
 			char		constraintType;
 			ObjectAddress localaddr;
-<<<<<<< HEAD
-
-
-			/*
-			 * Let's make sure that the constraint name is unique
-			 * for this relation.
-			 */
-			Assert(indexRelationName);
-			if (ConstraintNameIsUsed(CONSTRAINT_RELATION,
-									 RelationGetRelid(heapRelation),
-									 RelationGetNamespace(heapRelation),
-									 indexRelationName))
-				ereport(ERROR,
-						(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("constraint \"%s\" for relation \"%s\" already exists",
-								indexRelationName, RelationGetRelationName(heapRelation))));
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			if (isprimary)
 				constraintType = CONSTRAINT_PRIMARY;
@@ -1169,20 +1135,6 @@ index_create(Relation heapRelation,
 			}
 
 			localaddr = index_constraint_create(heapRelation,
-<<<<<<< HEAD
-									indexRelationId,
-									parentConstraintId,
-									indexInfo,
-									indexRelationName,
-									constraintType,
-									deferrable,
-									initdeferred,
-									false,		/* already marked primary */
-									false,		/* pg_index entry is OK */
-									false,		/* no old dependencies */
-									allow_system_table_mods,
-									is_internal);
-=======
 												indexRelationId,
 												parentConstraintId,
 												indexInfo,
@@ -1191,7 +1143,6 @@ index_create(Relation heapRelation,
 												constr_flags,
 												allow_system_table_mods,
 												is_internal);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			if (constraintId)
 				*constraintId = localaddr.objectId;
 		}
@@ -2352,13 +2303,10 @@ index_drop(Oid indexId, bool concurrent, bool concurrent_lock_mode)
 	 * fix INHERITS relation
 	 */
 	DeleteInheritsTuple(indexId, InvalidOid);
-<<<<<<< HEAD
 	
 	/* MPP-6929: metadata tracking */
 	MetaTrackDropObject(RelationRelationId, 
 						indexId);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * We are presently too lazy to attempt to compute the new correct value
@@ -2373,12 +2321,7 @@ index_drop(Oid indexId, bool concurrent, bool concurrent_lock_mode)
 	/*
 	 * Close owning rel, but keep lock
 	 */
-<<<<<<< HEAD
-	heap_close(userHeapRelation, need_long_lock ? NoLock : AccessExclusiveLock);
-
-=======
-	table_close(userHeapRelation, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	table_close(userHeapRelation, need_long_lock ? NoLock : AccessExclusiveLock);
 
 	/*
 	 * Release the session locks before we go.
@@ -2488,11 +2431,7 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 				 Oid *opfamilies1, Oid *opfamilies2,
 				 AttrNumber *attmap, int maplen)
 {
-<<<<<<< HEAD
-	int		i;
-=======
 	int			i;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (info1->ii_Unique != info2->ii_Unique)
 		return false;
@@ -2505,13 +2444,10 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 	if (info1->ii_NumIndexAttrs != info2->ii_NumIndexAttrs)
 		return false;
 
-<<<<<<< HEAD
-=======
 	/* and same number of key attributes */
 	if (info1->ii_NumIndexKeyAttrs != info2->ii_NumIndexKeyAttrs)
 		return false;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * and columns match through the attribute map (actual attribute numbers
 	 * might differ!)  Note that this implies that index columns that are
@@ -2520,15 +2456,6 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 	 */
 	for (i = 0; i < info1->ii_NumIndexAttrs; i++)
 	{
-<<<<<<< HEAD
-		if (maplen < info2->ii_KeyAttrNumbers[i])
-			elog(ERROR, "incorrect attribute map");
-
-		if (attmap[info2->ii_KeyAttrNumbers[i] - 1] !=
-			info1->ii_KeyAttrNumbers[i])
-			return false;
-
-=======
 		if (maplen < info2->ii_IndexAttrNumbers[i])
 			elog(ERROR, "incorrect attribute map");
 
@@ -2542,7 +2469,6 @@ CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 		if (i >= info1->ii_NumIndexKeyAttrs)
 			continue;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (collations1[i] != collations2[i])
 			return false;
 		if (opfamilies1[i] != opfamilies2[i])
@@ -4915,11 +4841,8 @@ reindex_relation(Oid relid, int flags, int options)
 	Oid         aovisimap_relid = InvalidOid;
 	List	   *indexIds;
 	bool		result;
-<<<<<<< HEAD
 	bool relIsAO = false;
-=======
 	int			i;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Open and lock the relation.  ShareLock is sufficient since we only need

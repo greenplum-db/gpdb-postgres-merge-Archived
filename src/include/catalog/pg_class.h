@@ -81,9 +81,6 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 	/* see RELKIND_xxx constants below */
 	char		relkind;
 
-	/* see RELSTORAGE_xxx constants below (GPDB-specific) */
-	char		relstorage BKI_DEFAULT(h);
-	
 	/* number of user attributes */
 	int16		relnatts;
 

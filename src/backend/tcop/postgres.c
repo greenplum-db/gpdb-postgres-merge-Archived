@@ -220,14 +220,11 @@ static bool RecoveryConflictPending = false;
 static bool RecoveryConflictRetryable = true;
 static ProcSignalReason RecoveryConflictReason;
 
-<<<<<<< HEAD
-static DtxContextInfo TempDtxContextInfo = DtxContextInfo_StaticInit;
-
-=======
 /* reused buffer to pass to SendRowDescriptionMessage() */
 static MemoryContext row_description_context = NULL;
 static StringInfoData row_description_buf;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+static DtxContextInfo TempDtxContextInfo = DtxContextInfo_StaticInit;
 
 /* ----------------------------------------------------------------
  *		decls for routines only used in this file
@@ -1085,13 +1082,8 @@ pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams)
 
 	foreach(query_list, querytrees)
 	{
-<<<<<<< HEAD
-		Query	   *query = castNode(Query, lfirst(query_list));
-		Node	   *stmt;
-=======
 		Query	   *query = lfirst_node(Query, query_list);
 		PlannedStmt *stmt;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		if (query->commandType == CMD_UTILITY)
 		{
@@ -1689,12 +1681,9 @@ exec_simple_query(const char *query_string)
 	bool		use_implicit_block;
 	char		msec_str[32];
 
-<<<<<<< HEAD
 	if (Gp_role != GP_ROLE_EXECUTE)
 		increment_command_count();
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Report query to various monitoring facilities.
 	 */
@@ -5056,13 +5045,9 @@ PostgresMain(int argc, char *argv[],
 		 * forgetting a timeout cancel.
 		 */
 		disable_all_timeouts(false);
-<<<<<<< HEAD
-		QueryCancelPending = false;		/* second to avoid race condition */
-		QueryFinishPending = false;
-=======
 		QueryCancelPending = false; /* second to avoid race condition */
+		QueryFinishPending = false;
 		stmt_timeout_active = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/* Not reading from the client anymore. */
 		DoingCommandRead = false;

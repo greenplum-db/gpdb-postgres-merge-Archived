@@ -6,15 +6,11 @@
  * Our definition of "strong" is that it's suitable for generating random
  * salts and query cancellation keys, during authentication.
  *
-<<<<<<< HEAD
- * Copyright (c) 1996-2018, PostgreSQL Global Development Group
-=======
  * Note: this code is run quite early in postmaster and backend startup;
  * therefore, even when built for backend, it cannot rely on backend
  * infrastructure such as elog() or palloc().
  *
  * Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * IDENTIFICATION
  *	  src/port/pg_strong_random.c
@@ -22,15 +18,7 @@
  *-------------------------------------------------------------------------
  */
 
-<<<<<<< HEAD
-#ifndef FRONTEND
-#include "postgres.h"
-#else
-#include "postgres_fe.h"
-#endif
-=======
 #include "c.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -56,11 +44,7 @@ static HCRYPTPROV hProvider = 0;
  * Read (random) bytes from a file.
  */
 static bool
-<<<<<<< HEAD
-random_from_file(char *filename, void *buf, size_t len)
-=======
 random_from_file(const char *filename, void *buf, size_t len)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	int			f;
 	char	   *p = buf;

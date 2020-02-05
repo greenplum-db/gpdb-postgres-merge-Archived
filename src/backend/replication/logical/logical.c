@@ -122,10 +122,7 @@ StartupDecodingContext(List *output_plugin_options,
 					   XLogRecPtr start_lsn,
 					   TransactionId xmin_horizon,
 					   bool need_full_snapshot,
-<<<<<<< HEAD
-=======
 					   bool fast_forward,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					   XLogPageReadCB read_page,
 					   LogicalOutputPluginWriterPrepareWrite prepare_write,
 					   LogicalOutputPluginWriterWrite do_write,
@@ -233,10 +230,7 @@ LogicalDecodingContext *
 CreateInitDecodingContext(char *plugin,
 						  List *output_plugin_options,
 						  bool need_full_snapshot,
-<<<<<<< HEAD
-=======
 						  XLogRecPtr restart_lsn,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  XLogPageReadCB read_page,
 						  LogicalOutputPluginWriterPrepareWrite prepare_write,
 						  LogicalOutputPluginWriterWrite do_write,
@@ -318,18 +312,12 @@ CreateInitDecodingContext(char *plugin,
 
 	xmin_horizon = GetOldestSafeDecodingTransactionId(!need_full_snapshot);
 
-<<<<<<< HEAD
-=======
 	SpinLockAcquire(&slot->mutex);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	slot->effective_catalog_xmin = xmin_horizon;
 	slot->data.catalog_xmin = xmin_horizon;
 	if (need_full_snapshot)
 		slot->effective_xmin = xmin_horizon;
-<<<<<<< HEAD
-=======
 	SpinLockRelease(&slot->mutex);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	ReplicationSlotsComputeRequiredXmin(true);
 
@@ -338,16 +326,10 @@ CreateInitDecodingContext(char *plugin,
 	ReplicationSlotMarkDirty();
 	ReplicationSlotSave();
 
-<<<<<<< HEAD
-	ctx = StartupDecodingContext(NIL, InvalidXLogRecPtr, xmin_horizon,
-								 need_full_snapshot, read_page, prepare_write,
-								 do_write);
-=======
 	ctx = StartupDecodingContext(NIL, restart_lsn, xmin_horizon,
 								 need_full_snapshot, false,
 								 read_page, prepare_write, do_write,
 								 update_progress);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* call output plugin initialization callback */
 	old_context = MemoryContextSwitchTo(ctx->context);
@@ -444,12 +426,8 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 
 	ctx = StartupDecodingContext(output_plugin_options,
 								 start_lsn, InvalidTransactionId, false,
-<<<<<<< HEAD
-								 read_page, prepare_write, do_write);
-=======
 								 fast_forward, read_page, prepare_write,
 								 do_write, update_progress);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* call output plugin initialization callback */
 	old_context = MemoryContextSwitchTo(ctx->context);

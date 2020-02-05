@@ -53,12 +53,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
-<<<<<<< HEAD
-#include "catalog/pg_partition.h"
-#include "catalog/pg_partition_rule.h"
-=======
 #include "catalog/pg_partitioned_table.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/pg_proc.h"
 #include "catalog/pg_publication.h"
 #include "catalog/pg_publication_rel.h"
@@ -328,11 +323,7 @@ static const struct cachedesc cacheinfo[] = {
 			Anum_pg_conversion_connamespace,
 			Anum_pg_conversion_conforencoding,
 			Anum_pg_conversion_contoencoding,
-<<<<<<< HEAD
-			ObjectIdAttributeNumber
-=======
 			Anum_pg_conversion_oid
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		},
 		8
 	},
@@ -435,12 +426,11 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		8
 	},
-<<<<<<< HEAD
 	{ExtprotocolRelationId,		/* EXTPROTOCOLOID */
 		ExtprotocolOidIndexId,
 		1,
 		{
-			ObjectIdAttributeNumber,
+			Anum_pg_extprotocol_oid,
 			0,
 			0,
 			0
@@ -458,10 +448,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		128
 	},
-	{ForeignDataWrapperRelationId,		/* FOREIGNDATAWRAPPERNAME */
-=======
 	{ForeignDataWrapperRelationId,	/* FOREIGNDATAWRAPPERNAME */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ForeignDataWrapperNameIndexId,
 		1,
 		{
@@ -626,39 +613,16 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		8
 	},
-<<<<<<< HEAD
-	{PartitionRelationId,		/* PARTOID */
-		PartitionOidIndexId,
-		1,
-		{
-			ObjectIdAttributeNumber,
-=======
 	{PartitionedRelationId,		/* PARTRELID */
 		PartitionedRelidIndexId,
 		1,
 		{
 			Anum_pg_partitioned_table_partrelid,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			0,
 			0,
 			0
 		},
-<<<<<<< HEAD
-		1024
-	},
-	{PartitionRuleRelationId,	/* PARTRULEOID */
-		PartitionRuleOidIndexId,
-		1,
-		{
-			ObjectIdAttributeNumber,
-			0,
-			0,
-			0
-		},
-		256
-=======
 		32
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	},
 	{ProcedureRelationId,		/* PROCNAMEARGSNSP */
 		ProcedureNameArgsNspIndexId,

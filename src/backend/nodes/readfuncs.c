@@ -2324,12 +2324,11 @@ _readRangeTblEntry(void)
 			READ_NODE_FIELD(functions);
 			READ_BOOL_FIELD(funcordinality);
 			break;
-<<<<<<< HEAD
 		case RTE_TABLEFUNCTION:
 			READ_NODE_FIELD(subquery);
 			READ_NODE_FIELD(functions);
 			READ_BOOL_FIELD(funcordinality);
-=======
+			break;
 		case RTE_TABLEFUNC:
 			READ_NODE_FIELD(tablefunc);
 			/* The RTE must have a copy of the column type info, if any */
@@ -2341,7 +2340,6 @@ _readRangeTblEntry(void)
 				local_node->coltypmods = tf->coltypmods;
 				local_node->colcollations = tf->colcollations;
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 		case RTE_VALUES:
 			READ_NODE_FIELD(values_lists);

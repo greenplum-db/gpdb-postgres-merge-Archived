@@ -2974,11 +2974,7 @@ usage(const char *progname)
 	printf(_("  -?, --help                show this help, then exit\n"));
 	printf(_("\nIf the data directory is not specified, the environment variable PGDATA\n"
 			 "is used.\n"));
-<<<<<<< HEAD
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("\nReport bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 static void

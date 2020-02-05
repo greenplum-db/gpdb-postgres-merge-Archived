@@ -608,8 +608,6 @@ findDependentObjects(const ObjectAddress *object,
 			case DEPENDENCY_EXTENSION:
 
 				/*
-<<<<<<< HEAD
-=======
 				 * If told to, ignore EXTENSION dependencies altogether.  This
 				 * flag is normally used to prevent dropping extensions during
 				 * temporary-object cleanup, even if a temp object was created
@@ -619,7 +617,6 @@ findDependentObjects(const ObjectAddress *object,
 					break;
 
 				/*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				 * If the other object is the extension currently being
 				 * created/altered, ignore this dependency and continue with
 				 * the deletion.  This allows dropping of an extension's
@@ -646,19 +643,6 @@ findDependentObjects(const ObjectAddress *object,
 				 * another object, or is part of the extension that is the
 				 * other object.  We have three cases:
 				 *
-<<<<<<< HEAD
-				 * 1. At the outermost recursion level, disallow the DROP. (We
-				 * just ereport here, rather than proceeding, since no other
-				 * dependencies are likely to be interesting.)	However, if
-				 * the owning object is listed in pendingObjects, just release
-				 * the caller's lock and return; we'll eventually complete the
-				 * DROP when we reach that entry in the pending list.
-				 */
-				if (stack == NULL)
-				{
-					char	   *otherObjDesc;
-
-=======
 				 * 1. At the outermost recursion level, we must disallow the
 				 * DROP.  However, if the owning object is listed in
 				 * pendingObjects, just release the caller's lock and return;
@@ -673,7 +657,6 @@ findDependentObjects(const ObjectAddress *object,
 				 */
 				if (stack == NULL)
 				{
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					if (pendingObjects &&
 						object_address_present(&otherObject, pendingObjects))
 					{
@@ -2045,11 +2028,7 @@ find_expr_references_walker(Node *node,
 	else if (IsA(node, FieldSelect))
 	{
 		FieldSelect *fselect = (FieldSelect *) node;
-<<<<<<< HEAD
-		Oid			argtype = exprType((Node *) fselect->arg);
-=======
 		Oid			argtype = getBaseType(exprType((Node *) fselect->arg));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		Oid			reltype = get_typ_typrelid(argtype);
 
 		/*

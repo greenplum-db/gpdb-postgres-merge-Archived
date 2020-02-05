@@ -617,11 +617,7 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 	}
 
 	/* adjust remaining snapshot fields as needed */
-<<<<<<< HEAD
-	snap->satisfies = HeapTupleSatisfiesMVCC;
-=======
 	snap->snapshot_type = SNAPSHOT_MVCC;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	snap->xcnt = newxcnt;
 	snap->xip = newxip;
 
@@ -684,11 +680,7 @@ SnapBuildGetOrBuildSnapshot(SnapBuild *builder, TransactionId xid)
 	/* only build a new snapshot if we don't have a prebuilt one */
 	if (builder->snapshot == NULL)
 	{
-<<<<<<< HEAD
-		builder->snapshot = SnapBuildBuildSnapshot(builder, xid);
-=======
 		builder->snapshot = SnapBuildBuildSnapshot(builder);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		/* increase refcount for the snapshot builder */
 		SnapBuildSnapIncRefcount(builder->snapshot);
 	}
@@ -752,11 +744,7 @@ SnapBuildProcessChange(SnapBuild *builder, TransactionId xid, XLogRecPtr lsn)
 		/* only build a new snapshot if we don't have a prebuilt one */
 		if (builder->snapshot == NULL)
 		{
-<<<<<<< HEAD
-			builder->snapshot = SnapBuildBuildSnapshot(builder, xid);
-=======
 			builder->snapshot = SnapBuildBuildSnapshot(builder);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			/* increase refcount for the snapshot builder */
 			SnapBuildSnapIncRefcount(builder->snapshot);
 		}
@@ -1321,55 +1309,6 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		Assert(TransactionIdIsNormal(builder->xmin));
 		Assert(TransactionIdIsNormal(builder->xmax));
 
-<<<<<<< HEAD
-		ereport(LOG,
-			(errmsg("logical decoding found initial starting point at %X/%X",
-					(uint32) (lsn >> 32), (uint32) lsn),
-			 errdetail("Waiting for transactions (approximately %d) older than %u to end.",
-					   running->xcnt, running->nextXid)));
-
-		SnapBuildWaitSnapshot(running, running->nextXid);
-	}
-	/*
-	 * c) transition from BUILDING_SNAPSHOT to FULL_SNAPSHOT.
-	 *
-	 * In BUILDING_SNAPSHOT state, and this xl_running_xacts' oldestRunningXid
-	 * is >= than nextXid from when we switched to BUILDING_SNAPSHOT.  This
-	 * means all transactions starting afterwards have enough information to
-	 * be decoded.  Switch to FULL_SNAPSHOT.
-	 */
-	else if (builder->state == SNAPBUILD_BUILDING_SNAPSHOT &&
-			 TransactionIdPrecedesOrEquals(SnapBuildNextPhaseAt(builder),
-										   running->oldestRunningXid))
-	{
-		builder->state = SNAPBUILD_FULL_SNAPSHOT;
-		SnapBuildStartNextPhaseAt(builder, running->nextXid);
-
-		ereport(LOG,
-				(errmsg("logical decoding found initial consistent point at %X/%X",
-						(uint32) (lsn >> 32), (uint32) lsn),
-				 errdetail("Waiting for transactions (approximately %d) older than %u to end.",
-						   running->xcnt, running->nextXid)));
-
-		SnapBuildWaitSnapshot(running, running->nextXid);
-	}
-	/*
-	 * c) transition from FULL_SNAPSHOT to CONSISTENT.
-	 *
-	 * In FULL_SNAPSHOT state (see d) ), and this xl_running_xacts'
-	 * oldestRunningXid is >= than nextXid from when we switched to
-	 * FULL_SNAPSHOT.  This means all transactions that are currently in
-	 * progress have a catalog snapshot, and all their changes have been
-	 * collected.  Switch to CONSISTENT.
-	 */
-	else if (builder->state == SNAPBUILD_FULL_SNAPSHOT &&
-			 TransactionIdPrecedesOrEquals(SnapBuildNextPhaseAt(builder),
-										   running->oldestRunningXid))
-	{
-		builder->state = SNAPBUILD_CONSISTENT;
-		SnapBuildStartNextPhaseAt(builder, InvalidTransactionId);
-
-=======
 		ereport(LOG,
 				(errmsg("logical decoding found initial starting point at %X/%X",
 						(uint32) (lsn >> 32), (uint32) lsn),
@@ -1419,7 +1358,6 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		builder->state = SNAPBUILD_CONSISTENT;
 		SnapBuildStartNextPhaseAt(builder, InvalidTransactionId);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ereport(LOG,
 				(errmsg("logical decoding found consistent point at %X/%X",
 						(uint32) (lsn >> 32), (uint32) lsn),
@@ -1674,10 +1612,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 				 errmsg("could not open file \"%s\": %m", tmppath)));
 
 	errno = 0;
-<<<<<<< HEAD
-=======
 	pgstat_report_wait_start(WAIT_EVENT_SNAPBUILD_WRITE);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if ((write(fd, ondisk, needed_length)) != needed_length)
 	{
 		int			save_errno = errno;
@@ -1801,13 +1736,6 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 		int			save_errno = errno;
 
 		CloseTransientFile(fd);
-<<<<<<< HEAD
-		errno = save_errno;
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\", read %d of %d: %m",
-						path, readBytes, (int) SnapBuildOnDiskConstantSize)));
-=======
 
 		if (readBytes < 0)
 		{
@@ -1822,7 +1750,6 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 					 errmsg("could not read file \"%s\": read %d of %zu",
 							path, readBytes,
 							(Size) SnapBuildOnDiskConstantSize)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	if (ondisk.magic != SNAPBUILD_MAGIC)
@@ -1851,13 +1778,6 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 		int			save_errno = errno;
 
 		CloseTransientFile(fd);
-<<<<<<< HEAD
-		errno = save_errno;
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\", read %d of %d: %m",
-						path, readBytes, (int) sizeof(SnapBuild))));
-=======
 
 		if (readBytes < 0)
 		{
@@ -1871,7 +1791,6 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 					(errcode(ERRCODE_DATA_CORRUPTED),
 					 errmsg("could not read file \"%s\": read %d of %zu",
 							path, readBytes, sizeof(SnapBuild))));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	COMP_CRC32C(checksum, &ondisk.builder, sizeof(SnapBuild));
 
@@ -1879,25 +1798,14 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	sz = sizeof(TransactionId) * ondisk.builder.was_running.was_xcnt_space;
 	ondisk.builder.was_running.was_xip =
 		MemoryContextAllocZero(builder->context, sz);
-<<<<<<< HEAD
-	readBytes = read(fd, ondisk.builder.was_running.was_xip, sz);
-=======
 	pgstat_report_wait_start(WAIT_EVENT_SNAPBUILD_READ);
 	readBytes = read(fd, ondisk.builder.was_running.was_xip, sz);
 	pgstat_report_wait_end();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (readBytes != sz)
 	{
 		int			save_errno = errno;
 
 		CloseTransientFile(fd);
-<<<<<<< HEAD
-		errno = save_errno;
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\", read %d of %d: %m",
-						path, readBytes, (int) sz)));
-=======
 
 		if (readBytes < 0)
 		{
@@ -1911,7 +1819,6 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 					(errcode(ERRCODE_DATA_CORRUPTED),
 					 errmsg("could not read file \"%s\": read %d of %zu",
 							path, readBytes, sz)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	COMP_CRC32C(checksum, ondisk.builder.was_running.was_xip, sz);
 
@@ -1926,13 +1833,6 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 		int			save_errno = errno;
 
 		CloseTransientFile(fd);
-<<<<<<< HEAD
-		errno = save_errno;
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\", read %d of %d: %m",
-						path, readBytes, (int) sz)));
-=======
 
 		if (readBytes < 0)
 		{
@@ -1946,7 +1846,6 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 					(errcode(ERRCODE_DATA_CORRUPTED),
 					 errmsg("could not read file \"%s\": read %d of %zu",
 							path, readBytes, sz)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	COMP_CRC32C(checksum, ondisk.builder.committed.xip, sz);
 

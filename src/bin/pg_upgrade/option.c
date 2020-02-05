@@ -31,13 +31,8 @@
 
 static void usage(void);
 static void check_required_directory(char **dirpath,
-<<<<<<< HEAD
-						 const char *envVarName, bool useCwd,
-						 const char *cmdLineOption, const char *description);
-=======
 									 const char *envVarName, bool useCwd,
 									 const char *cmdLineOption, const char *description);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #define FIX_DEFAULT_READ_ONLY "-c default_transaction_read_only=false"
 
 
@@ -431,11 +426,7 @@ or\n"), old_cluster.port, new_cluster.port, os_info.user, GREENPLUM_USAGE);
 			 "  C:\\> set PGBINNEW=newCluster/bin\n"
 			 "  C:\\> pg_upgrade\n"));
 #endif
-<<<<<<< HEAD
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("\nReport bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 

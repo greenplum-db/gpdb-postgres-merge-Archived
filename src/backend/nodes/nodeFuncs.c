@@ -2507,13 +2507,6 @@ range_table_walker(List *rtable,
 				if (walker(rte->tablesample, context))
 					return true;
 				break;
-<<<<<<< HEAD
-			case RTE_VOID:
-			case RTE_CTE:
-				/* nothing to do */
-				break;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			case RTE_SUBQUERY:
 				if (!(flags & QTW_IGNORE_RT_SUBQUERIES))
 					if (walker(rte->subquery, context))
@@ -2528,15 +2521,14 @@ range_table_walker(List *rtable,
 				if (walker(rte->functions, context))
 					return true;
 				break;
-<<<<<<< HEAD
 			case RTE_TABLEFUNCTION:
 				if (walker(rte->subquery, context))
 					return true;
 				if (walker(rte->functions, context))
-=======
+					return true;
+				break;
 			case RTE_TABLEFUNC:
 				if (walker(rte->tablefunc, context))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					return true;
 				break;
 			case RTE_VALUES:
@@ -2546,6 +2538,7 @@ range_table_walker(List *rtable,
 			case RTE_CTE:
 			case RTE_NAMEDTUPLESTORE:
 			case RTE_RESULT:
+			case RTE_VOID:
 				/* nothing to do */
 				break;
 		}
@@ -3351,14 +3344,15 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
-<<<<<<< HEAD
 		case T_AggExprId:
 			{
 				AggExprId *exprId = (AggExprId *)node;
 				AggExprId *new_exprId;
 				FLATCOPY(new_exprId, exprId, AggExprId);
 				return (Node *)new_exprId;
-=======
+			}
+			break;
+
 		case T_TableFunc:
 			{
 				TableFunc  *tf = (TableFunc *) node;
@@ -3371,7 +3365,6 @@ expression_tree_mutator(Node *node,
 				MUTATE(newnode->colexprs, tf->colexprs, List *);
 				MUTATE(newnode->coldefexprs, tf->coldefexprs, List *);
 				return (Node *) newnode;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 			break;
 		default:
@@ -3467,13 +3460,6 @@ range_table_mutator(List *rtable,
 					   TableSampleClause *);
 				/* we don't bother to copy eref, aliases, etc; OK? */
 				break;
-<<<<<<< HEAD
-			case RTE_VOID:
-			case RTE_CTE:
-				/* nothing to do */
-				break;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			case RTE_SUBQUERY:
 				if (!(flags & QTW_IGNORE_RT_SUBQUERIES))
 				{
@@ -3498,14 +3484,12 @@ range_table_mutator(List *rtable,
 			case RTE_FUNCTION:
 				MUTATE(newrte->functions, rte->functions, List *);
 				break;
-<<<<<<< HEAD
 			case RTE_TABLEFUNCTION:
 				MUTATE(newrte->functions, rte->functions, List *);
 				MUTATE(newrte->subquery, rte->subquery, Query *);
-=======
+				break;
 			case RTE_TABLEFUNC:
 				MUTATE(newrte->tablefunc, rte->tablefunc, TableFunc *);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 			case RTE_VALUES:
 				MUTATE(newrte->values_lists, rte->values_lists, List *);
@@ -3513,6 +3497,7 @@ range_table_mutator(List *rtable,
 			case RTE_CTE:
 			case RTE_NAMEDTUPLESTORE:
 			case RTE_RESULT:
+			case RTE_VOID:
 				/* nothing to do */
 				break;
 		}

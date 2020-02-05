@@ -28,15 +28,6 @@
 
 #include "regex/regexport.h"
 
-<<<<<<< HEAD
-#include "miscadmin.h"
-
-static void scancolormap(struct colormap * cm, int co,
-			 union tree * t, int level, chr partial,
-			 pg_wchar **chars, int *chars_len);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Get total number of NFA states.

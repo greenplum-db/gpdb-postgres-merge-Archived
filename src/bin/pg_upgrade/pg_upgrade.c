@@ -3,12 +3,8 @@
  *
  *	main source file
  *
-<<<<<<< HEAD
  *	Portions Copyright (c) 2016-Present, Pivotal Software Inc
- *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
-=======
  *	Copyright (c) 2010-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *	src/bin/pg_upgrade/pg_upgrade.c
  */
 
@@ -410,11 +406,7 @@ setup(char *argv0, bool *live_check)
 		 * start, assume the server is running.  If the pid file is left over
 		 * from a server crash, this also allows any committed transactions
 		 * stored in the WAL to be replayed so they are not lost, because WAL
-<<<<<<< HEAD
-		 * files are not transfered from old to new servers.  We later check
-=======
 		 * files are not transferred from old to new servers.  We later check
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 * for a clean shutdown.
 		 */
 		if (start_postmaster(&old_cluster, false))

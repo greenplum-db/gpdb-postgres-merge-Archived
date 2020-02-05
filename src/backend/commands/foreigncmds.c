@@ -1561,18 +1561,12 @@ CreateForeignTable(CreateForeignTableStmt *stmt, Oid relid, bool skip_permission
 	 * get the actual FDW for option validation etc.
 	 */
 	server = GetForeignServerByName(stmt->servername, false);
-<<<<<<< HEAD
 	if (!skip_permission_check)
 	{
 		aclresult = pg_foreign_server_aclcheck(server->serverid, ownerId, ACL_USAGE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_FOREIGN_SERVER, server->servername);
+			aclcheck_error(aclresult, OBJECT_FOREIGN_SERVER, server->servername);
 	}
-=======
-	aclresult = pg_foreign_server_aclcheck(server->serverid, ownerId, ACL_USAGE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, OBJECT_FOREIGN_SERVER, server->servername);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	fdw = GetForeignDataWrapper(server->fdwid);
 

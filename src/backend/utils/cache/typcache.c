@@ -300,10 +300,7 @@ static bool record_fields_have_equality(TypeCacheEntry *typentry);
 static bool record_fields_have_compare(TypeCacheEntry *typentry);
 static void cache_record_field_properties(TypeCacheEntry *typentry);
 static bool range_element_has_hashing(TypeCacheEntry *typentry);
-<<<<<<< HEAD
-=======
 static bool range_element_has_extended_hashing(TypeCacheEntry *typentry);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void cache_range_element_properties(TypeCacheEntry *typentry);
 static void TypeCacheRelCallback(Datum arg, Oid relid);
 static void TypeCacheOpcCallback(Datum arg, int cacheid, uint32 hashvalue);
@@ -1495,8 +1492,6 @@ range_element_has_hashing(TypeCacheEntry *typentry)
 	return (typentry->flags & TCFLAGS_HAVE_ELEM_HASHING) != 0;
 }
 
-<<<<<<< HEAD
-=======
 static bool
 range_element_has_extended_hashing(TypeCacheEntry *typentry)
 {
@@ -1505,7 +1500,6 @@ range_element_has_extended_hashing(TypeCacheEntry *typentry)
 	return (typentry->flags & TCFLAGS_HAVE_ELEM_EXTENDED_HASHING) != 0;
 }
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void
 cache_range_element_properties(TypeCacheEntry *typentry)
 {
@@ -1520,24 +1514,16 @@ cache_range_element_properties(TypeCacheEntry *typentry)
 
 		/* might need to calculate subtype's hash function properties */
 		elementry = lookup_type_cache(typentry->rngelemtype->type_id,
-<<<<<<< HEAD
-									  TYPECACHE_HASH_PROC);
-		if (OidIsValid(elementry->hash_proc))
-			typentry->flags |= TCFLAGS_HAVE_ELEM_HASHING;
-=======
 									  TYPECACHE_HASH_PROC |
 									  TYPECACHE_HASH_EXTENDED_PROC);
 		if (OidIsValid(elementry->hash_proc))
 			typentry->flags |= TCFLAGS_HAVE_ELEM_HASHING;
 		if (OidIsValid(elementry->hash_extended_proc))
 			typentry->flags |= TCFLAGS_HAVE_ELEM_EXTENDED_HASHING;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	typentry->flags |= TCFLAGS_CHECKED_ELEM_PROPERTIES;
 }
 
-<<<<<<< HEAD
-=======
 /*
  * Make sure that RecordCacheArray and RecordIdentifierArray are large enough
  * to store 'typmod'.
@@ -1572,7 +1558,6 @@ ensure_record_cache_typmod_slot_exists(int32 typmod)
 		RecordCacheArrayLen = newlen;
 	}
 }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * lookup_rowtype_tupdesc_internal --- internal routine to lookup a rowtype

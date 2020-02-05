@@ -61,79 +61,6 @@
 #endif
 #include <openssl/x509v3.h>
 
-<<<<<<< HEAD
-/*
- * Macros to handle disabling and then restoring the state of SIGPIPE handling.
- * On Windows, these are all no-ops since there's no SIGPIPEs.
- */
-
-#ifndef WIN32
-
-#define SIGPIPE_MASKED(conn)	((conn)->sigpipe_so || (conn)->sigpipe_flag)
-
-#ifdef ENABLE_THREAD_SAFETY
-
-struct sigpipe_info
-{
-	sigset_t	oldsigmask;
-	bool		sigpipe_pending;
-	bool		got_epipe;
-};
-
-#define DECLARE_SIGPIPE_INFO(spinfo) struct sigpipe_info spinfo
-
-#define DISABLE_SIGPIPE(conn, spinfo, failaction) \
-	do { \
-		(spinfo).got_epipe = false; \
-		if (!SIGPIPE_MASKED(conn)) \
-		{ \
-			if (pq_block_sigpipe(&(spinfo).oldsigmask, \
-								 &(spinfo).sigpipe_pending) < 0) \
-				failaction; \
-		} \
-	} while (0)
-
-#define REMEMBER_EPIPE(spinfo, cond) \
-	do { \
-		if (cond) \
-			(spinfo).got_epipe = true; \
-	} while (0)
-
-#define RESTORE_SIGPIPE(conn, spinfo) \
-	do { \
-		if (!SIGPIPE_MASKED(conn)) \
-			pq_reset_sigpipe(&(spinfo).oldsigmask, (spinfo).sigpipe_pending, \
-							 (spinfo).got_epipe); \
-	} while (0)
-#else							/* !ENABLE_THREAD_SAFETY */
-
-#define DECLARE_SIGPIPE_INFO(spinfo) pqsigfunc spinfo = NULL
-
-#define DISABLE_SIGPIPE(conn, spinfo, failaction) \
-	do { \
-		if (!SIGPIPE_MASKED(conn)) \
-			spinfo = pqsignal(SIGPIPE, SIG_IGN); \
-	} while (0)
-
-#define REMEMBER_EPIPE(spinfo, cond)
-
-#define RESTORE_SIGPIPE(conn, spinfo) \
-	do { \
-		if (!SIGPIPE_MASKED(conn)) \
-			pqsignal(SIGPIPE, spinfo); \
-	} while (0)
-#endif   /* ENABLE_THREAD_SAFETY */
-#else							/* WIN32 */
-
-#define DECLARE_SIGPIPE_INFO(spinfo)
-#define DISABLE_SIGPIPE(conn, spinfo, failaction)
-#define REMEMBER_EPIPE(spinfo, cond)
-#define RESTORE_SIGPIPE(conn, spinfo)
-#endif   /* WIN32 */
-
-static bool verify_peer_name_matches_certificate(PGconn *);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
 static int	openssl_verify_peer_name_matches_certificate_name(PGconn *conn,
 															  ASN1_STRING *name,
@@ -195,13 +122,8 @@ pgtls_open_client(PGconn *conn)
 	if (conn->ssl == NULL)
 	{
 		/*
-<<<<<<< HEAD
-		 * Create a connection-specific SSL object, and load client certificate,
-		 * private key, and trusted CA certs.
-=======
 		 * Create a connection-specific SSL object, and load client
 		 * certificate, private key, and trusted CA certs.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 */
 		if (initialize_SSL(conn) != 0)
 		{
@@ -220,12 +142,7 @@ pgtls_read(PGconn *conn, void *ptr, size_t len)
 {
 	ssize_t		n;
 	int			result_errno = 0;
-<<<<<<< HEAD
-	char		sebuf[256];
-
-=======
 	char		sebuf[PG_STRERROR_R_BUFLEN];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			err;
 	unsigned long ecode;
 
@@ -319,9 +236,9 @@ rloop:
 		case SSL_ERROR_ZERO_RETURN:
 
 			/*
-			 * Per OpenSSL documentation, this error code is only returned
-			 * for a clean connection closure, so we should not report it
-			 * as a server crash.
+			 * Per OpenSSL documentation, this error code is only returned for
+			 * a clean connection closure, so we should not report it as a
+			 * server crash.
 			 */
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("SSL connection has been closed unexpectedly\n"));
@@ -355,12 +272,7 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 {
 	ssize_t		n;
 	int			result_errno = 0;
-<<<<<<< HEAD
-	char		sebuf[256];
-
-=======
 	char		sebuf[PG_STRERROR_R_BUFLEN];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			err;
 	unsigned long ecode;
 
@@ -384,9 +296,8 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 		case SSL_ERROR_WANT_READ:
 
 			/*
-			 * Returning 0 here causes caller to wait for write-ready,
-			 * which is not really the right thing, but it's the best we
-			 * can do.
+			 * Returning 0 here causes caller to wait for write-ready, which
+			 * is not really the right thing, but it's the best we can do.
 			 */
 			n = 0;
 			break;
@@ -397,8 +308,7 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 			if (n < 0)
 			{
 				result_errno = SOCK_ERRNO;
-				if (result_errno == EPIPE ||
-					result_errno == ECONNRESET)
+				if (result_errno == EPIPE || result_errno == ECONNRESET)
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
 													"server closed the connection unexpectedly\n"
@@ -434,9 +344,9 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 		case SSL_ERROR_ZERO_RETURN:
 
 			/*
-			 * Per OpenSSL documentation, this error code is only returned
-			 * for a clean connection closure, so we should not report it
-			 * as a server crash.
+			 * Per OpenSSL documentation, this error code is only returned for
+			 * a clean connection closure, so we should not report it as a
+			 * server crash.
 			 */
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("SSL connection has been closed unexpectedly\n"));
@@ -563,72 +473,11 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
  * into a plain C string.
  */
 static int
-<<<<<<< HEAD
-wildcard_certificate_match(const char *pattern, const char *string)
-{
-	int			lenpat = strlen(pattern);
-	int			lenstr = strlen(string);
-
-	/* If we don't start with a wildcard, it's not a match (rule 1 & 2) */
-	if (lenpat < 3 ||
-		pattern[0] != '*' ||
-		pattern[1] != '.')
-		return 0;
-
-	if (lenpat > lenstr)
-		/* If pattern is longer than the string, we can never match */
-		return 0;
-
-	if (pg_strcasecmp(pattern + 1, string + lenstr - lenpat + 1) != 0)
-
-		/*
-		 * If string does not end in pattern (minus the wildcard), we don't
-		 * match
-		 */
-		return 0;
-
-	if (strchr(string, '.') < string + lenstr - lenpat)
-
-		/*
-		 * If there is a dot left of where the pattern started to match, we
-		 * don't match (rule 3)
-		 */
-		return 0;
-
-	/* String ended with pattern, and didn't have a dot before, so we match */
-	return 1;
-}
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-#define ASN1_STRING_get0_data ASN1_STRING_data
-#endif
-
-/*
- * Check if a name from a server's certificate matches the peer's hostname.
- *
- * Returns 1 if the name matches, and 0 if it does not. On error, returns
- * -1, and sets the libpq error message.
- *
- * The name extracted from the certificate is returned in *store_name. The
- * caller is responsible for freeing it.
- */
-static int
-verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
-										  char **store_name)
-{
-	int			len;
-	char	   *name;
-	const unsigned char *namedata;
-	int			result;
-
-	*store_name = NULL;
-=======
 openssl_verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *name_entry,
 												  char **store_name)
 {
 	int			len;
 	const unsigned char *namedata;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Should not happen... */
 	if (name_entry == NULL)
@@ -641,15 +490,11 @@ openssl_verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *nam
 	/*
 	 * GEN_DNS can be only IA5String, equivalent to US ASCII.
 	 */
-<<<<<<< HEAD
-	namedata = ASN1_STRING_get0_data(name_entry);
-=======
 #ifdef HAVE_ASN1_STRING_GET0_DATA
 	namedata = ASN1_STRING_get0_data(name_entry);
 #else
 	namedata = ASN1_STRING_data(name_entry);
 #endif
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	len = ASN1_STRING_length(name_entry);
 
 	/* OK to cast from unsigned to plain char, since it's all ASCII. */
@@ -741,12 +586,6 @@ pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
 	return rc;
 }
 
-<<<<<<< HEAD
-#if defined(ENABLE_THREAD_SAFETY) && OPENSSL_VERSION_NUMBER < 0x10100000L
-/*
- *	Callback functions for OpenSSL internal locking. (OpenSSL 1.1.0
- *	does its own locking, and doesn't need these anymore.)
-=======
 #if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_CRYPTO_LOCK)
 /*
  *	Callback functions for OpenSSL internal locking.  (OpenSSL 1.1.0
@@ -754,7 +593,6 @@ pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
  *	CRYPTO_lock() function was removed in 1.1.0, when the callbacks
  *	were made obsolete, so we assume that if CRYPTO_lock() exists,
  *	the callbacks are still required.)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 
 static unsigned long
@@ -784,11 +622,7 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
 			PGTHREAD_ERROR("failed to unlock mutex");
 	}
 }
-<<<<<<< HEAD
-#endif   /* ENABLE_THREAD_SAFETY && OPENSSL_VERSION_NUMBER < 0x10100000L */
-=======
 #endif							/* ENABLE_THREAD_SAFETY && HAVE_CRYPTO_LOCK */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Initialize SSL library.
@@ -862,13 +696,8 @@ pgtls_init(PGconn *conn)
 				CRYPTO_set_locking_callback(pq_lockingcallback);
 		}
 	}
-<<<<<<< HEAD
-#endif   /* HAVE_CRYPTO_LOCK */
-#endif   /* ENABLE_THREAD_SAFETY */
-=======
 #endif							/* HAVE_CRYPTO_LOCK */
 #endif							/* ENABLE_THREAD_SAFETY */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (!ssl_lib_initialized)
 	{
@@ -876,13 +705,7 @@ pgtls_init(PGconn *conn)
 		{
 #ifdef HAVE_OPENSSL_INIT_SSL
 			OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
-<<<<<<< HEAD
-
 #else
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-=======
-#else
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			OPENSSL_config(NULL);
 			SSL_library_init();
 			SSL_load_error_strings();
@@ -913,11 +736,7 @@ static void
 destroy_ssl_system(void)
 {
 #if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_CRYPTO_LOCK)
-<<<<<<< HEAD
-	/* Mutex is created in initialize_ssl_system() */
-=======
 	/* Mutex is created in pgtls_init() */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (pthread_mutex_lock(&ssl_config_mutex))
 		return;
 
@@ -936,13 +755,8 @@ destroy_ssl_system(void)
 			CRYPTO_set_id_callback(NULL);
 
 		/*
-<<<<<<< HEAD
-		 * We don't free the lock array. If we get another connection in
-		 * this process, we will just re-use them with the existing mutexes.
-=======
 		 * We don't free the lock array. If we get another connection in this
 		 * process, we will just re-use them with the existing mutexes.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 *
 		 * This means we leak a little memory on repeated load/unload of the
 		 * library.
@@ -962,11 +776,7 @@ destroy_ssl_system(void)
 static int
 initialize_SSL(PGconn *conn)
 {
-<<<<<<< HEAD
-	SSL_CTX	   *SSL_context;
-=======
 	SSL_CTX    *SSL_context;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	struct stat buf;
 	char		homedir[MAXPGPATH];
 	char		fnbuf[MAXPGPATH];
@@ -993,13 +803,8 @@ initialize_SSL(PGconn *conn)
 	 * Create a new SSL_CTX object.
 	 *
 	 * We used to share a single SSL_CTX between all connections, but it was
-<<<<<<< HEAD
-	 * complicated if connections used different certificates. So now we create
-	 * a separate context for each connection, and accept the overhead.
-=======
 	 * complicated if connections used different certificates. So now we
 	 * create a separate context for each connection, and accept the overhead.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	SSL_context = SSL_CTX_new(SSLv23_method());
 	if (!SSL_context)
@@ -1007,13 +812,8 @@ initialize_SSL(PGconn *conn)
 		char	   *err = SSLerrmessage(ERR_get_error());
 
 		printfPQExpBuffer(&conn->errorMessage,
-<<<<<<< HEAD
-						 libpq_gettext("could not create SSL context: %s\n"),
-							  err);
-=======
 						  libpq_gettext("could not create SSL context: %s\n"),
 						  err);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		SSLerrfree(err);
 		return -1;
 	}
@@ -1022,13 +822,8 @@ initialize_SSL(PGconn *conn)
 	SSL_CTX_set_options(SSL_context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
 	/*
-<<<<<<< HEAD
-	 * Disable OpenSSL's moving-write-buffer sanity check, because it
-	 * causes unnecessary failures in nonblocking send cases.
-=======
 	 * Disable OpenSSL's moving-write-buffer sanity check, because it causes
 	 * unnecessary failures in nonblocking send cases.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	SSL_CTX_set_mode(SSL_context, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
@@ -1077,11 +872,7 @@ initialize_SSL(PGconn *conn)
 				/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
 #ifdef X509_V_FLAG_CRL_CHECK
 				X509_STORE_set_flags(cvstore,
-<<<<<<< HEAD
-						  X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
-=======
 									 X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #else
 				char	   *err = SSLerrmessage(ERR_get_error());
 
@@ -1118,13 +909,8 @@ initialize_SSL(PGconn *conn)
 												"Either provide the file or change sslmode to disable server certificate verification.\n"));
 			else
 				printfPQExpBuffer(&conn->errorMessage,
-<<<<<<< HEAD
-				libpq_gettext("root certificate file \"%s\" does not exist\n"
-							  "Either provide the file or change sslmode to disable server certificate verification.\n"), fnbuf);
-=======
 								  libpq_gettext("root certificate file \"%s\" does not exist\n"
 												"Either provide the file or change sslmode to disable server certificate verification.\n"), fnbuf);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			SSL_CTX_free(SSL_context);
 			return -1;
 		}
@@ -1154,13 +940,8 @@ initialize_SSL(PGconn *conn)
 		if (errno != ENOENT && errno != ENOTDIR)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-<<<<<<< HEAD
-			   libpq_gettext("could not open certificate file \"%s\": %s\n"),
-							  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
-=======
 							  libpq_gettext("could not open certificate file \"%s\": %s\n"),
 							  fnbuf, strerror_r(errno, sebuf, sizeof(sebuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			SSL_CTX_free(SSL_context);
 			return -1;
 		}
@@ -1170,13 +951,8 @@ initialize_SSL(PGconn *conn)
 	{
 		/*
 		 * Cert file exists, so load it. Since OpenSSL doesn't provide the
-<<<<<<< HEAD
-		 * equivalent of "SSL_use_certificate_chain_file", we have to load
-		 * it into the SSL context, rather than the SSL object.
-=======
 		 * equivalent of "SSL_use_certificate_chain_file", we have to load it
 		 * into the SSL context, rather than the SSL object.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 */
 		if (SSL_CTX_use_certificate_chain_file(SSL_context, fnbuf) != 1)
 		{
@@ -1195,18 +971,11 @@ initialize_SSL(PGconn *conn)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * The SSL context is now loaded with the correct root and client certificates.
-	 * Create a connection-specific SSL object. The private key is loaded directly
-	 * into the SSL object. (We could load the private key into the context, too, but
-	 * we have done it this way historically, and it doesn't really matter.)
-=======
 	 * The SSL context is now loaded with the correct root and client
 	 * certificates. Create a connection-specific SSL object. The private key
 	 * is loaded directly into the SSL object. (We could load the private key
 	 * into the context, too, but we have done it this way historically, and
 	 * it doesn't really matter.)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	if (!(conn->ssl = SSL_new(SSL_context)) ||
 		!SSL_set_app_data(conn->ssl, conn) ||
@@ -1215,11 +984,7 @@ initialize_SSL(PGconn *conn)
 		char	   *err = SSLerrmessage(ERR_get_error());
 
 		printfPQExpBuffer(&conn->errorMessage,
-<<<<<<< HEAD
-				   libpq_gettext("could not establish SSL connection: %s\n"),
-=======
 						  libpq_gettext("could not establish SSL connection: %s\n"),
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  err);
 		SSLerrfree(err);
 		SSL_CTX_free(SSL_context);
@@ -1228,23 +993,9 @@ initialize_SSL(PGconn *conn)
 	conn->ssl_in_use = true;
 
 	/*
-<<<<<<< HEAD
-	 * SSL contexts are reference counted by OpenSSL. We can free it as soon as we
-	 * have created the SSL object, and it will stick around for as long as it's
-	 * actually needed.
-	 */
-	SSL_CTX_free(SSL_context);
-	SSL_context = NULL;
-
-	/*
-	 * SSL contexts are reference counted by OpenSSL. We can free it as soon as we
-	 * have created the SSL object, and it will stick around for as long as it's
-	 * actually needed.
-=======
 	 * SSL contexts are reference counted by OpenSSL. We can free it as soon
 	 * as we have created the SSL object, and it will stick around for as long
 	 * as it's actually needed.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	SSL_CTX_free(SSL_context);
 	SSL_context = NULL;
@@ -1406,12 +1157,8 @@ initialize_SSL(PGconn *conn)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * If a root cert was loaded, also set our certificate verification callback.
-=======
 	 * If a root cert was loaded, also set our certificate verification
 	 * callback.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	if (have_rootcert)
 		SSL_set_verify(conn->ssl, SSL_VERIFY_PEER, verify_cb);
@@ -1536,8 +1283,6 @@ pgtls_close(PGconn *conn)
 
 	if (conn->ssl)
 	{
-		DECLARE_SIGPIPE_INFO(spinfo);
-
 		/*
 		 * We can't destroy everything SSL-related here due to the possible
 		 * later calls to OpenSSL routines which may need our thread
@@ -1545,14 +1290,10 @@ pgtls_close(PGconn *conn)
 		 */
 		destroy_needed = true;
 
-		DISABLE_SIGPIPE(conn, spinfo, (void) 0);
 		SSL_shutdown(conn->ssl);
 		SSL_free(conn->ssl);
 		conn->ssl = NULL;
 		conn->ssl_in_use = false;
-		/* We have to assume we got EPIPE */
-		REMEMBER_EPIPE(spinfo, true);
-		RESTORE_SIGPIPE(conn, spinfo);
 	}
 
 	if (conn->peer)
@@ -1711,11 +1452,7 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
  * to retry; do we need to adopt their logic for that?
  */
 
-<<<<<<< HEAD
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-=======
 #ifndef HAVE_BIO_GET_DATA
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #define BIO_get_data(bio) (bio->ptr)
 #define BIO_set_data(bio, data) (bio->ptr = data)
 #endif
@@ -1788,11 +1525,7 @@ my_BIO_s_socket(void)
 	if (!my_bio_methods)
 	{
 		BIO_METHOD *biom = (BIO_METHOD *) BIO_s_socket();
-<<<<<<< HEAD
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-=======
 #ifdef HAVE_BIO_METH_NEW
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		int			my_bio_index;
 
 		my_bio_index = BIO_get_new_index();
@@ -1801,16 +1534,10 @@ my_BIO_s_socket(void)
 		my_bio_methods = BIO_meth_new(my_bio_index, "libpq socket");
 		if (!my_bio_methods)
 			return NULL;
-<<<<<<< HEAD
-		/*
-		 * As of this writing, these functions never fail. But check anyway, like
-		 * OpenSSL's own examples do.
-=======
 
 		/*
 		 * As of this writing, these functions never fail. But check anyway,
 		 * like OpenSSL's own examples do.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 */
 		if (!BIO_meth_set_write(my_bio_methods, my_sock_write) ||
 			!BIO_meth_set_read(my_bio_methods, my_sock_read) ||

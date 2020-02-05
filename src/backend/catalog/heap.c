@@ -375,14 +375,9 @@ heap_create(const char *relname,
 	 * user defined relation, not a system one.
 	 */
 	if (!allow_system_table_mods &&
-<<<<<<< HEAD
 		((IsSystemNamespace(relnamespace) && relkind != RELKIND_INDEX) ||
 		 IsToastNamespace(relnamespace) ||
 		 IsAoSegmentNamespace(relnamespace)) &&
-=======
-		((IsCatalogNamespace(relnamespace) && relkind != RELKIND_INDEX) ||
-		 IsToastNamespace(relnamespace)) &&
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		IsNormalProcessingMode())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -661,7 +656,6 @@ CheckAttributeType(const char *attname,
 	char		att_typtype = get_typtype(atttypid);
 	Oid			att_typelem;
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_EXECUTE)
 	{
 		/*
@@ -671,10 +665,7 @@ CheckAttributeType(const char *attname,
 		return;
 	}
 
-	if (atttypid == UNKNOWNOID)
-=======
 	if (att_typtype == TYPTYPE_PSEUDO)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		/*
 		 * We disallow pseudo-type columns, with the exception of ANYARRAY,

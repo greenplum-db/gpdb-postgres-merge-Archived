@@ -26,12 +26,7 @@
 #include <linux/fs.h>
 #endif
 
-<<<<<<< HEAD
 #include "greenplum/pg_upgrade_greenplum.h"
-
-#define BITS_PER_HEAPBLOCK_OLD 1
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #ifdef WIN32
 static int	win32_pghardlink(const char *src, const char *dst);
