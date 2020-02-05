@@ -78,17 +78,8 @@ ExecScanFetch(ScanState *node,
 			slot = estate->es_epqTupleSlot[scanrelid - 1];
 
 			/* Return empty slot if we haven't got a test tuple */
-<<<<<<< HEAD
-			if (estate->es_epqTuple[scanrelid - 1] == NULL)
-				return ExecClearTuple(slot);
-
-			/* Store test tuple in the plan node's scan slot */
-			ExecStoreHeapTuple(estate->es_epqTuple[scanrelid - 1],
-						   slot, InvalidBuffer, false);
-=======
 			if (TupIsNull(slot))
 				return NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/* Check if it meets the access-method conditions */
 			if (!(*recheckMtd) (node, slot))
@@ -169,14 +160,9 @@ ExecScan(ScanState *node,
 	{
 		TupleTableSlot *slot;
 
-<<<<<<< HEAD
-		CHECK_FOR_INTERRUPTS();
-
 		if (QueryFinishPending)
 			return NULL;
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		slot = ExecScanFetch(node, accessMtd, recheckMtd);
 
 		/*
@@ -216,11 +202,7 @@ ExecScan(ScanState *node,
 				 * Form a projection tuple, store it in the result tuple slot
 				 * and return it.
 				 */
-<<<<<<< HEAD
-				return ExecProject(projInfo, NULL);
-=======
 				return ExecProject(projInfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 			else
 			{
@@ -271,89 +253,7 @@ ExecAssignScanProjectionInfoWithVarno(ScanState *node, Index varno)
 {
 	TupleDesc	tupdesc = node->ss_ScanTupleSlot->tts_tupleDescriptor;
 
-<<<<<<< HEAD
-	if (tlist_matches_tupdesc(&node->ps,
-							  scan->plan.targetlist,
-							  varno,
-							  node->ss_ScanTupleSlot->tts_tupleDescriptor))
-		node->ps.ps_ProjInfo = NULL;
-	else
-		ExecAssignProjectionInfo(&node->ps,
-								 node->ss_ScanTupleSlot->tts_tupleDescriptor);
-}
-
-static bool
-tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc)
-{
-	int			numattrs = tupdesc->natts;
-	int			attrno;
-	bool		hasoid;
-	ListCell   *tlist_item = list_head(tlist);
-
-	/* Check the tlist attributes */
-	for (attrno = 1; attrno <= numattrs; attrno++)
-	{
-		Form_pg_attribute att_tup = tupdesc->attrs[attrno - 1];
-		Var		   *var;
-
-		if (tlist_item == NULL)
-			return false;		/* tlist too short */
-		var = (Var *) ((TargetEntry *) lfirst(tlist_item))->expr;
-		if (!var || !IsA(var, Var))
-			return false;		/* tlist item not a Var */
-
-		/* if these Asserts fail, planner messed up */
-		Assert(var->varlevelsup == 0);
-		if (var->varattno != attrno)
-			return false;		/* out of order */
-		if (att_tup->attisdropped)
-			return false;		/* table contains dropped columns */
-
-		/*
-		 * Note: usually the Var's type should match the tupdesc exactly, but
-		 * in situations involving unions of columns that have different
-		 * typmods, the Var may have come from above the union and hence have
-		 * typmod -1.  This is a legitimate situation since the Var still
-		 * describes the column, just not as exactly as the tupdesc does. We
-		 * could change the planner to prevent it, but it'd then insert
-		 * projection steps just to convert from specific typmod to typmod -1,
-		 * which is pretty silly.
-		 */
-		if (var->vartype != att_tup->atttypid ||
-			(var->vartypmod != att_tup->atttypmod &&
-			 var->vartypmod != -1))
-			return false;		/* type mismatch */
-
-		tlist_item = lnext(tlist_item);
-	}
-
-	if (tlist_item)
-		return false;			/* tlist too long */
-
-	/*
-	 * If the plan context requires a particular hasoid setting, then that has
-	 * to match, too.
-	 */
-	{
-		bool forceOids = ExecContextForcesOids(ps, &hasoid);
-
-		/* If Oid matters, and there are different requirement, then does not match */
-		if (forceOids && hasoid != tupdesc->tdhasoid)
-			return false;
-
-		/*
-		 * If Oid does not matter, but old tupdesc has oids, does not match either.
-		 * XXX: Memtuple: tupleformat is different depends on if has oid, so we cannot
-		 * mismatch.
-		 */
-		if (!forceOids && tupdesc->tdhasoid)
-			return false;
-	}
-
-	return true;
-=======
 	ExecConditionalAssignProjectionInfo(&node->ps, tupdesc, varno);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*

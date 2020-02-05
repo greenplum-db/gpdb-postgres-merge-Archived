@@ -388,11 +388,7 @@ getCurrentOf(CurrentOfExpr *cexpr,
 			 */
 			IndexScanDesc scan = ((IndexOnlyScanState *) scanstate)->ioss_ScanDesc;
 
-<<<<<<< HEAD
-			*current_tid = scan->xs_ctup.t_self;
-=======
 			*current_tid = scan->xs_heaptid;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		else
 		{
@@ -407,31 +403,14 @@ getCurrentOf(CurrentOfExpr *cexpr,
 			ItemPointer tuple_tid;
 
 #ifdef USE_ASSERT_CHECKING
-<<<<<<< HEAD
-			if (!slot_getsysattr(scanstate->ss_ScanTupleSlot,
-								 TableOidAttributeNumber,
-								 &ldatum,
-								 &lisnull))
-=======
 			ldatum = slot_getsysattr(scanstate->ss_ScanTupleSlot,
 									 TableOidAttributeNumber,
 									 &lisnull);
 			if (lisnull)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_CURSOR_STATE),
 						 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
 								cursor_name, table_name)));
-<<<<<<< HEAD
-			Assert(!lisnull);
-			Assert(DatumGetObjectId(ldatum) == table_oid);
-#endif
-
-			if (!slot_getsysattr(scanstate->ss_ScanTupleSlot,
-								 SelfItemPointerAttributeNumber,
-								 &ldatum,
-								 &lisnull))
-=======
 			Assert(DatumGetObjectId(ldatum) == table_oid);
 #endif
 
@@ -439,15 +418,10 @@ getCurrentOf(CurrentOfExpr *cexpr,
 									 SelfItemPointerAttributeNumber,
 									 &lisnull);
 			if (lisnull)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_CURSOR_STATE),
 						 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
 								cursor_name, table_name)));
-<<<<<<< HEAD
-			Assert(!lisnull);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			tuple_tid = (ItemPointer) DatumGetPointer(ldatum);
 
 			*current_tid = *tuple_tid;
@@ -715,18 +689,13 @@ search_plan_tree(PlanState *node, Oid table_oid,
 			 * SubqueryScan too, but it keeps the child in a different place
 			 */
 		case T_SubqueryScanState:
-<<<<<<< HEAD
-			return search_plan_tree(((SubqueryScanState *) node)->subplan,
-			                        table_oid);
-
-		case T_MotionState:
-			return search_plan_tree(node->lefttree, table_oid);
-=======
 			result = search_plan_tree(((SubqueryScanState *) node)->subplan,
 									  table_oid,
 									  pending_rescan);
 			break;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+		case T_MotionState:
+			return search_plan_tree(node->lefttree, table_oid);
 
 		default:
 			/* Otherwise, assume we can't descend through it */

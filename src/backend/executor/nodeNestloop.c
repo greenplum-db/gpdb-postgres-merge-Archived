@@ -271,11 +271,7 @@ ExecNestLoop(PlanState *pstate)
 					 */
 					ENL1_printf("qualification succeeded, projecting tuple");
 
-<<<<<<< HEAD
-					return ExecProject(node->js.ps.ps_ProjInfo, NULL);
-=======
 					return ExecProject(node->js.ps.ps_ProjInfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				}
 				else
 					InstrCountFiltered2(node, 1);
@@ -340,19 +336,9 @@ ExecNestLoop(PlanState *pstate)
 				 * qualification was satisfied so we project and return the
 				 * slot containing the result tuple using ExecProject().
 				 */
-<<<<<<< HEAD
-				TupleTableSlot *result;
-
-				ENL1_printf("qualification succeeded, projecting tuple");
-
-				result = ExecProject(node->js.ps.ps_ProjInfo, NULL);
-
-				return result;
-=======
 				ENL1_printf("qualification succeeded, projecting tuple");
 
 				return ExecProject(node->js.ps.ps_ProjInfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 			else
 				InstrCountFiltered2(node, 1);

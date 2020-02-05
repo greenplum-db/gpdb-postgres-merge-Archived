@@ -189,7 +189,7 @@ ExecPartitionSelector(PartitionSelectorState *node)
 
 	if (NULL != inputSlot)
 	{
-		candidateOutputSlot = ExecProject(node->ps.ps_ProjInfo, NULL);
+		candidateOutputSlot = ExecProject(node->ps.ps_ProjInfo);
 	}
 
 	/*
@@ -204,7 +204,7 @@ ExecPartitionSelector(PartitionSelectorState *node)
 		List	   *oids;
 		ListCell   *lc;
 
-		slot = ExecProject(node->partTabProj, NULL);
+		slot = ExecProject(node->partTabProj);
 		slot_getallattrs(slot);
 
 		oids = selectPartitionMulti(node->rootPartitionNode,

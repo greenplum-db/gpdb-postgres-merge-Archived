@@ -107,7 +107,7 @@ ExecAssertOp(AssertOpState *node)
 
 	CheckForAssertViolations(node, slot);
 
-	return ExecProject(node->ps.ps_ProjInfo, NULL);
+	return ExecProject(node->ps.ps_ProjInfo);
 }
 
 /**

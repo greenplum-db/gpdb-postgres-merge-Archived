@@ -270,16 +270,9 @@ setop_retrieve_direct(SetOpState *setopstate)
 		 * slot.
 		 */
 		ExecStoreHeapTuple(setopstate->grp_firstTuple,
-<<<<<<< HEAD
-					   resultTupleSlot,
-					   InvalidBuffer,
-					   true);
-		setopstate->grp_firstTuple = NULL;		/* don't keep two pointers */
-=======
 						   resultTupleSlot,
 						   true);
 		setopstate->grp_firstTuple = NULL;	/* don't keep two pointers */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/* Initialize working state for a new input tuple group */
 		initialize_counts(pergroup);

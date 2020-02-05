@@ -608,11 +608,7 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 		{
 			fprintf(stdout, "failed to send query for step %s: %s\n",
 					step->name, PQerrorMessage(conn));
-<<<<<<< HEAD
-			exit_nicely();
-=======
 			exit(1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		/* Try to complete this step without blocking.  */
@@ -761,11 +757,7 @@ try_complete_step(Step *step, int flags)
 				{
 					fprintf(stderr, "lock wait query failed: %s",
 							PQerrorMessage(conns[0]));
-<<<<<<< HEAD
-					exit_nicely();
-=======
 					exit(1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				}
 				waiting = ((PQgetvalue(res, 0, 0))[0] == 't');
 				PQclear(res);

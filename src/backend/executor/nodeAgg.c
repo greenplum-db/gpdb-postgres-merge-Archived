@@ -2241,32 +2241,8 @@ ExecAgg(PlanState *pstate)
 	AggState   *node = castNode(AggState, pstate);
 	TupleTableSlot *result = NULL;
 
-<<<<<<< HEAD
-	/*
-	 * Check to see if we're still projecting out tuples from a previous agg
-	 * tuple (because there is a function-returning-set in the projection
-	 * expressions).  If so, try to project another one.
-	 */
-	if (node->ps_TupFromTlist)
-	{
-		ExprDoneCond isDone;
-
-		result = ExecProject(node->ss.ps.ps_ProjInfo, &isDone);
-		if (isDone == ExprMultipleResult)
-			return result;
-		/* Done with that source tuple... */
-		node->ps_TupFromTlist = false;
-	}
-
-	/*
-	 * (We must do the ps_TupFromTlist check first, because in some cases
-	 * agg_done gets set before we emit the final aggregate tuple, and we have
-	 * to finish running SRFs for it.)
-	 */
-=======
 	CHECK_FOR_INTERRUPTS();
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (!node->agg_done)
 	{
 		/* Dispatch based on strategy */
@@ -2477,11 +2453,7 @@ agg_retrieve_direct(AggState *aggstate)
 					 * Make a copy of the first input tuple; we will use this
 					 * for comparisons (in group mode) and for projection.
 					 */
-<<<<<<< HEAD
-					aggstate->grp_firstTuple = ExecCopySlotMemTuple(outerslot);
-=======
 					aggstate->grp_firstTuple = ExecCopySlotHeapTuple(outerslot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				}
 				else
 				{
@@ -2540,14 +2512,8 @@ agg_retrieve_direct(AggState *aggstate)
 				 * reserved for it.  The tuple will be deleted when it is
 				 * cleared from the slot.
 				 */
-<<<<<<< HEAD
-				ExecStoreMinimalTuple(aggstate->grp_firstTuple,
-							   firstSlot,
-							   true);
-=======
 				ExecForceStoreHeapTuple(aggstate->grp_firstTuple,
 										firstSlot, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				aggstate->grp_firstTuple = NULL;	/* don't keep two pointers */
 
 				/* set up for first advance_aggregates call */

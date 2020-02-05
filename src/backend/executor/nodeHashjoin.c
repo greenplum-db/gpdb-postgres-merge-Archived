@@ -708,20 +708,8 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 				 */
 				econtext->ecxt_outertuple = node->hj_NullOuterTupleSlot;
 
-<<<<<<< HEAD
-				if (otherqual == NIL ||
-					ExecQual(otherqual, econtext, false))
-				{
-					TupleTableSlot *result;
-
-					result = ExecProject(node->js.ps.ps_ProjInfo, NULL);
-
-					return result;
-				}
-=======
 				if (otherqual == NULL || ExecQual(otherqual, econtext))
 					return ExecProject(node->js.ps.ps_ProjInfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				else
 					InstrCountFiltered2(node, 1);
 				break;
@@ -731,11 +719,6 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 				/*
 				 * Try to advance to next batch.  Done if there are no more.
 				 */
-<<<<<<< HEAD
-				if (!ExecHashJoinNewBatch(node))
-					return NULL;	/* end of join */
-
-=======
 				if (parallel)
 				{
 					if (!ExecParallelHashJoinNewBatch(node))
@@ -746,7 +729,6 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 					if (!ExecHashJoinNewBatch(node))
 						return NULL;	/* end of parallel-oblivious join */
 				}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				node->hj_JoinState = HJ_NEED_NEW_OUTER;
 				break;
 

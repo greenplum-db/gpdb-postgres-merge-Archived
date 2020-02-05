@@ -135,36 +135,15 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &subquerystate->ss.ps);
 
-	/*
-<<<<<<< HEAD
-	 * initialize child expressions
-	 */
-	subquerystate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) subquerystate);
-	subquerystate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) subquerystate);
-
 	/* Check if targetlist or qual contains a var node referencing the ctid column */
 	subquerystate->cdb_want_ctid = contain_ctid_var_reference(&node->scan);
 	ItemPointerSetInvalid(&subquerystate->cdb_fake_ctid);
 
 	/*
-	 * tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &subquerystate->ss.ps);
-	ExecInitScanTupleSlot(estate, &subquerystate->ss);
-
-	/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * initialize subquery
 	 */
 	subquerystate->subplan = ExecInitNode(node->subplan, estate, eflags);
 
-<<<<<<< HEAD
-=======
 	/*
 	 * Initialize scan slot and type (needed by ExecAssignScanProjectionInfo)
 	 */
@@ -172,7 +151,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 						  ExecGetResultType(subquerystate->subplan),
 						  ExecGetResultSlotOps(subquerystate->subplan, NULL));
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
 	/*
 	 * The slot used as the scantuple isn't the slot above (outside of EPQ),
 	 * but the one from the node below.
@@ -216,20 +195,12 @@ ExecEndSubqueryScan(SubqueryScanState *node)
 	/*
 	 * clean out the upper tuple table
 	 */
-<<<<<<< HEAD
-	if (node->ss.ss_ScanTupleSlot != NULL)
-	{
-		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-		ExecClearTuple(node->ss.ss_ScanTupleSlot);
-	}
-
-	/* gpmon */
-	EndPlanStateGpmonPkt(&node->ss.ps);
-=======
 	if (node->ss.ps.ps_ResultTupleSlot)
 		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	/* gpmon */
+	EndPlanStateGpmonPkt(&node->ss.ps);
 
 	/*
 	 * close down subquery

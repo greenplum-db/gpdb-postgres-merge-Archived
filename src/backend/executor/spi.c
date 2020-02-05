@@ -2604,11 +2604,6 @@ fail:
 
 	/* Save results for caller */
 	SPI_processed = my_processed;
-<<<<<<< HEAD
-
-	SPI_lastoid = my_lastoid;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	SPI_tuptable = my_tuptable;
 
 	/* tuptable now is caller's responsibility, not SPI's */

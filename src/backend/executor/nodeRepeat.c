@@ -66,7 +66,7 @@ ExecRepeat(RepeatState *repeatstate)
 				/* Check the qual until we find one output tuple. */
 				if (ExecQual(repeatstate->ps.qual, econtext, false))
 				{
-					return ExecProject(repeatstate->ps.ps_ProjInfo, NULL);
+					return ExecProject(repeatstate->ps.ps_ProjInfo);
 				}
 			} while (repeatstate->repeat_count > 0);
 		}
@@ -112,7 +112,7 @@ ExecRepeat(RepeatState *repeatstate)
 			/* Check the qual until we find one output tuple. */
 			if (ExecQual(repeatstate->ps.qual, econtext, false))
 			{
-				return ExecProject(repeatstate->ps.ps_ProjInfo, NULL);
+				return ExecProject(repeatstate->ps.ps_ProjInfo);
 			}
 		} while (repeatstate->repeat_count > 0);
 	}

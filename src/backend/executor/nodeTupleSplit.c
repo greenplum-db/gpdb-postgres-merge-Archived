@@ -165,7 +165,7 @@ struct TupleTableSlot *ExecTupleSplit(TupleSplitState *node)
 
 	/* project the tuple */
 	econtext->ecxt_outertuple = node->outerslot;
-	result = ExecProject(node->ss.ps.ps_ProjInfo, &isDone);
+	result = ExecProject(node->ss.ps.ps_ProjInfo);
 
 	/* the next DQA to process */
 	node->currentExprId = (node->currentExprId + 1) % plan->numDisDQAs;

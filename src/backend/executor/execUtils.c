@@ -796,30 +796,8 @@ ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags)
 }
 
 /*
-<<<<<<< HEAD
- * same as above, but for external table scans
- */
-Relation
-ExecOpenScanExternalRelation(EState *estate, Index scanrelid)
-{
-	RangeTblEntry *rtentry;
-	Oid			reloid;
-	LOCKMODE	lockmode;
-
-	lockmode = NoLock;
-
-	rtentry = rt_fetch(scanrelid, estate->es_range_table);
-	reloid = rtentry->relid;
-
-	return relation_open(reloid, NoLock);
-}
-
-/* ----------------------------------------------------------------
- *		ExecCloseScanRelation
-=======
  * ExecInitRangeTable
  *		Set up executor's range-table-related data
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * We build an array from the range table list to allow faster lookup by RTI.
  * (The es_range_table field is now somewhat redundant, but we keep it to
@@ -1107,7 +1085,6 @@ ShutdownExprContext(ExprContext *econtext, bool isCommit)
 	MemoryContextSwitchTo(oldcontext);
 }
 
-<<<<<<< HEAD
 
 /* ---------------------------------------------------------------
  * 		Share Input utilities
@@ -2321,7 +2298,7 @@ void AssertSliceTableIsValid(SliceTable *st)
 	}
 }
 #endif
-=======
+
 /*
  *		GetAttributeByName
  *		GetAttributeByNum
@@ -2538,4 +2515,3 @@ ExecGetReturningSlot(EState *estate, ResultRelInfo *relInfo)
 
 	return relInfo->ri_ReturningSlot;
 }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
