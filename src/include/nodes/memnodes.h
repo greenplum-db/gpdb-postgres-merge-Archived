@@ -66,15 +66,10 @@ typedef struct MemoryContextMethods
 	void		(*delete_context) (MemoryContext context);
 	Size		(*get_chunk_space) (MemoryContext context, void *pointer);
 	bool		(*is_empty) (MemoryContext context);
-<<<<<<< HEAD
-	void		(*stats) (MemoryContext context, int level, bool print,
-									  MemoryContextCounters *totals);
-	void		(*release_accounting)(MemoryContext context);
-=======
 	void		(*stats) (MemoryContext context,
 						  MemoryStatsPrintFunc printfunc, void *passthru,
 						  MemoryContextCounters *totals);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	void		(*release_accounting)(MemoryContext context);
 #ifdef MEMORY_CONTEXT_CHECKING
 	void		(*check) (MemoryContext context);
 #endif
@@ -86,19 +81,15 @@ typedef struct MemoryContextData
 	NodeTag		type;			/* identifies exact kind of context */
 	/* these two fields are placed here to minimize alignment wastage: */
 	bool		isReset;		/* T = no space alloced since last reset */
-<<<<<<< HEAD
-	bool		allowInCritSection;		/* allow palloc in critical section */
-	MemoryContextMethods methods;		/* virtual function table */
-=======
 	bool		allowInCritSection; /* allow palloc in critical section */
 	const MemoryContextMethods *methods;	/* virtual function table */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	MemoryContext parent;		/* NULL if no parent (toplevel context) */
 	MemoryContext firstchild;	/* head of linked list of children */
 	MemoryContext prevchild;	/* previous child of same parent */
 	MemoryContext nextchild;	/* next child of same parent */
-<<<<<<< HEAD
-	char	   *name;			/* context name (just for debugging) */
+	const char *name;			/* context name (just for debugging) */
+	const char *ident;			/* context ID if any (just for debugging) */
+
     /* CDB: Lifetime cumulative stats for this context and all descendants */
     uint64      allBytesAlloc;  /* bytes allocated from lower level mem mgr */
     uint64      allBytesFreed;  /* bytes returned to lower level mem mgr */
@@ -108,10 +99,6 @@ typedef struct MemoryContextData
     const char *callerFile;     /* __FILE__ of most recent caller */
     int         callerLine;     /* __LINE__ of most recent caller */
 #endif
-=======
-	const char *name;			/* context name (just for debugging) */
-	const char *ident;			/* context ID if any (just for debugging) */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	MemoryContextCallback *reset_cbs;	/* list of reset/delete callbacks */
 } MemoryContextData;
 

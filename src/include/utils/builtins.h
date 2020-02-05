@@ -89,8 +89,6 @@ extern void generate_operator_clause(fmStringInfo buf,
 						 const char *leftop, Oid leftoptype,
 						 Oid opoid,
 						 const char *rightop, Oid rightoptype);
-extern List *set_deparse_context_planstate(List *dpcontext,
-							  Node *planstate, List *ancestors);
 
 extern const char *quote_identifier(const char *ident);
 extern char *quote_qualified_identifier(const char *qualifier,

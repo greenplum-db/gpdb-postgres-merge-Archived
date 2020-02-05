@@ -22,12 +22,7 @@
 #include "access/nbtxlog.h"
 #include "access/relscan.h"
 #include "access/xlog.h"
-<<<<<<< HEAD
-#include "catalog/index.h"
-#include "catalog/pg_namespace.h"
-=======
 #include "commands/progress.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
@@ -100,15 +95,6 @@ typedef struct BTParallelScanDescData
 typedef struct BTParallelScanDescData *BTParallelScanDesc;
 
 
-<<<<<<< HEAD
-static void btbuildCallback(Relation index,
-				ItemPointer tupleId,
-				Datum *values,
-				bool *isnull,
-				bool tupleIsAlive,
-				void *state);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 						 IndexBulkDeleteCallback callback, void *callback_state,
 						 BTCycleId cycleid, TransactionId *oldestBtpoXact);
@@ -168,118 +154,6 @@ bthandler(PG_FUNCTION_ARGS)
 }
 
 /*
-<<<<<<< HEAD
- *	btbuild() -- build a new btree index.
- */
-IndexBuildResult *
-btbuild(Relation heap, Relation index, IndexInfo *indexInfo)
-{
-	IndexBuildResult *result;
-	double		reltuples;
-	BTBuildState buildstate;
-
-	buildstate.isUnique = indexInfo->ii_Unique;
-	buildstate.haveDead = false;
-	buildstate.heapRel = heap;
-	buildstate.spool = NULL;
-	buildstate.spool2 = NULL;
-	buildstate.indtuples = 0;
-
-#ifdef BTREE_BUILD_STATS
-	if (log_btree_build_stats)
-		ResetUsage();
-#endif   /* BTREE_BUILD_STATS */
-
-	/*
-	 * We expect to be called exactly once for any index relation. If that's
-	 * not the case, big trouble's what we have.
-	 */
-	if (RelationGetNumberOfBlocks(index) != 0)
-		elog(ERROR, "index \"%s\" already contains data",
-			 RelationGetRelationName(index));
-
-	buildstate.spool = _bt_spoolinit(heap, index, indexInfo->ii_Unique, false);
-
-	/*
-	 * If building a unique index, put dead tuples in a second spool to keep
-	 * them out of the uniqueness check.
-	 */
-	if (indexInfo->ii_Unique)
-		buildstate.spool2 = _bt_spoolinit(heap, index, false, true);
-
-	/* do the heap scan */
-	reltuples = IndexBuildScan(heap, index, indexInfo, true,
-								   btbuildCallback, (void *) &buildstate);
-
-	/* okay, all heap tuples are indexed */
-	if (buildstate.spool2 && !buildstate.haveDead)
-	{
-		/* spool2 turns out to be unnecessary */
-		_bt_spooldestroy(buildstate.spool2);
-		buildstate.spool2 = NULL;
-	}
-
-	/*
-	 * Finish the build by (1) completing the sort of the spool file, (2)
-	 * inserting the sorted tuples into btree pages and (3) building the upper
-	 * levels.
-	 */
-	_bt_leafbuild(buildstate.spool, buildstate.spool2);
-	_bt_spooldestroy(buildstate.spool);
-	if (buildstate.spool2)
-		_bt_spooldestroy(buildstate.spool2);
-
-#ifdef BTREE_BUILD_STATS
-	if (log_btree_build_stats)
-	{
-		ShowUsage("BTREE BUILD STATS");
-		ResetUsage();
-	}
-#endif   /* BTREE_BUILD_STATS */
-
-	/*
-	 * Return statistics
-	 */
-	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
-
-	result->heap_tuples = reltuples;
-	result->index_tuples = buildstate.indtuples;
-
-	return result;
-}
-
-/*
- * Per-tuple callback from IndexBuildHeapScan
- */
-static void
-btbuildCallback(Relation index,
-				ItemPointer tupleId,
-				Datum *values,
-				bool *isnull,
-				bool tupleIsAlive,
-				void *state)
-{
-	BTBuildState *buildstate = (BTBuildState *) state;
-
-	/*
-	 * insert the index tuple into the appropriate spool file for subsequent
-	 * processing
-	 */
-	if (tupleIsAlive || buildstate->spool2 == NULL)
-		_bt_spool(buildstate->spool, tupleId, values, isnull);
-	else
-	{
-		/* dead tuples are put into spool2 */
-		buildstate->haveDead = true;
-		_bt_spool(buildstate->spool2, tupleId, values, isnull);
-	}
-
-	buildstate->indtuples += 1;
-}
-
-/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *	btbuildempty() -- build an empty btree index in the initialization fork
  */
 void
@@ -292,29 +166,17 @@ btbuildempty(Relation index)
 	_bt_initmetapage(metapage, P_NONE, 0);
 
 	/*
-<<<<<<< HEAD
-	 * Write the page and log it.  It might seem that an immediate sync
-	 * would be sufficient to guarantee that the file exists on disk, but
-	 * recovery itself might remove it while replaying, for example, an
-	 * XLOG_DBASE_CREATE or XLOG_TBLSPC_CREATE record.  Therefore, we
-	 * need this even when wal_level=minimal.
-=======
 	 * Write the page and log it.  It might seem that an immediate sync would
 	 * be sufficient to guarantee that the file exists on disk, but recovery
 	 * itself might remove it while replaying, for example, an
 	 * XLOG_DBASE_CREATE or XLOG_TBLSPC_CREATE record.  Therefore, we need
 	 * this even when wal_level=minimal.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	PageSetChecksumInplace(metapage, BTREE_METAPAGE);
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, BTREE_METAPAGE,
 			  (char *) metapage, true);
 	log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-<<<<<<< HEAD
-				BTREE_METAPAGE, metapage, false);
-=======
 				BTREE_METAPAGE, metapage, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * An immediate sync is required even if we xlog'd the page, because the

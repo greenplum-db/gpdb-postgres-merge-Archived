@@ -146,36 +146,6 @@ typedef struct AllocChunkData *AllocChunk;
 typedef void *AllocPointer;
 
 /*
-<<<<<<< HEAD
-=======
- * AllocSetContext is our standard implementation of MemoryContext.
- *
- * Note: header.isReset means there is nothing for AllocSetReset to do.
- * This is different from the aset being physically empty (empty blocks list)
- * because we will still have a keeper block.  It's also different from the set
- * being logically empty, because we don't attempt to detect pfree'ing the
- * last active chunk.
- */
-typedef struct AllocSetContext
-{
-	MemoryContextData header;	/* Standard memory-context fields */
-	/* Info about storage allocated in this context: */
-	AllocBlock	blocks;			/* head of list of blocks in this set */
-	AllocChunk	freelist[ALLOCSET_NUM_FREELISTS];	/* free chunk lists */
-	/* Allocation parameters for this context: */
-	Size		initBlockSize;	/* initial block size */
-	Size		maxBlockSize;	/* maximum block size */
-	Size		nextBlockSize;	/* next block size to allocate */
-	Size		allocChunkLimit;	/* effective chunk size limit */
-	AllocBlock	keeper;			/* keep this block over resets */
-	/* freelist this context could be put in, or -1 if not a candidate: */
-	int			freeListIndex;	/* index in context_freelists[], or -1 */
-} AllocSetContext;
-
-typedef AllocSetContext *AllocSet;
-
-/*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * AllocBlock
  *		An AllocBlock is the unit of memory that is obtained by aset.c
  *		from malloc().  It contains one or more AllocChunks, which are
@@ -193,12 +163,8 @@ typedef struct AllocBlockData
 	AllocBlock	prev;			/* prev block in aset's blocks list, if any */
 	AllocBlock	next;			/* next block in aset's blocks list, if any */
 	char	   *freeptr;		/* start of free space in this block */
-<<<<<<< HEAD
-}	AllocBlockData;
-=======
 	char	   *endptr;			/* end of space in this block */
 }			AllocBlockData;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * AllocChunk
@@ -214,7 +180,6 @@ typedef struct AllocBlockData
  */
 typedef struct AllocChunkData
 {
-<<<<<<< HEAD
 	/*
 	 * SharedChunkHeader stores all the "shared" details among multiple chunks,
 	 * such as memoryAccount to charge, generation of memory account, memory
@@ -223,7 +188,8 @@ typedef struct AllocChunkData
 	 */
 	struct SharedChunkHeader* sharedHeader;
 
-	Size		size;			/* size of data space allocated in chunk */
+	/* size is always the size of the usable space in the chunk */
+	Size		size;
 
 	/*
 	 * The "requested size" of the chunk. This is the intended allocation
@@ -231,10 +197,6 @@ typedef struct AllocChunkData
 	 * because of AllocSet overhead, optimistic reuse of chunks
 	 * and alignment of chunk size at the power of 2
 	 */
-=======
-	/* size is always the size of the usable space in the chunk */
-	Size		size;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* when debugging memory usage, also store actual requested size */
 	/* this is zero in a free chunk */
@@ -2183,11 +2145,7 @@ static void
 AllocSetCheck(MemoryContext context)
 {
 	AllocSet	set = (AllocSet) context;
-<<<<<<< HEAD
-	char	   *name = set->header.name;
-=======
 	const char *name = set->header.name;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	AllocBlock	prevblock;
 	AllocBlock	block;
 

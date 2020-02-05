@@ -117,14 +117,8 @@ btree_or_bitmap_validate(Oid opclassoid, const char *amname)
 			default:
 				ereport(INFO,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-<<<<<<< HEAD
-						 errmsg("%s operator family \"%s\" contains function %s with invalid support number %d",
-								amname,
-								opfamilyname,
-=======
 						 errmsg("operator family \"%s\" of access method %s contains function %s with invalid support number %d",
-								opfamilyname, "btree",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+								opfamilyname, amname,
 								format_procedure(procform->amproc),
 								procform->amprocnum)));
 				result = false;
@@ -135,14 +129,8 @@ btree_or_bitmap_validate(Oid opclassoid, const char *amname)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-<<<<<<< HEAD
-					 errmsg("%s operator family \"%s\" contains function %s with wrong signature for support number %d",
-							amname,
-							opfamilyname,
-=======
 					 errmsg("operator family \"%s\" of access method %s contains function %s with wrong signature for support number %d",
-							opfamilyname, "btree",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+							opfamilyname, amname,
 							format_procedure(procform->amproc),
 							procform->amprocnum)));
 			result = false;
@@ -161,14 +149,8 @@ btree_or_bitmap_validate(Oid opclassoid, const char *amname)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-<<<<<<< HEAD
-					 errmsg("%s operator family \"%s\" contains operator %s with invalid strategy number %d",
-							amname,
-							opfamilyname,
-=======
 					 errmsg("operator family \"%s\" of access method %s contains operator %s with invalid strategy number %d",
-							opfamilyname, "btree",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+							opfamilyname, opfamilyname,
 							format_operator(oprform->amopopr),
 							oprform->amopstrategy)));
 			result = false;
@@ -180,14 +162,8 @@ btree_or_bitmap_validate(Oid opclassoid, const char *amname)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-<<<<<<< HEAD
-					 errmsg("%s operator family \"%s\" contains invalid ORDER BY specification for operator %s",
-							amname,
-							opfamilyname,
-=======
 					 errmsg("operator family \"%s\" of access method %s contains invalid ORDER BY specification for operator %s",
-							opfamilyname, "btree",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+							opfamilyname, opfamilyname,
 							format_operator(oprform->amopopr))));
 			result = false;
 		}
@@ -199,14 +175,8 @@ btree_or_bitmap_validate(Oid opclassoid, const char *amname)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-<<<<<<< HEAD
-					 errmsg("%soperator family \"%s\" contains operator %s with wrong signature",
-							amname,
-							opfamilyname,
-=======
 					 errmsg("operator family \"%s\" of access method %s contains operator %s with wrong signature",
-							opfamilyname, "btree",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+							opfamilyname, opfamilyname,
 							format_operator(oprform->amopopr))));
 			result = false;
 		}
@@ -263,14 +233,8 @@ btree_or_bitmap_validate(Oid opclassoid, const char *amname)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-<<<<<<< HEAD
-					 errmsg("%s operator family \"%s\" is missing operator(s) for types %s and %s",
-							amname,
-							opfamilyname,
-=======
 					 errmsg("operator family \"%s\" of access method %s is missing operator(s) for types %s and %s",
-							opfamilyname, "btree",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+							opfamilyname, opfamilyname,
 							format_type_be(thisgroup->lefttype),
 							format_type_be(thisgroup->righttype))));
 			result = false;
@@ -279,14 +243,8 @@ btree_or_bitmap_validate(Oid opclassoid, const char *amname)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-<<<<<<< HEAD
-					 errmsg("%s operator family \"%s\" is missing support function for types %s and %s",
-							amname,
-							opfamilyname,
-=======
 					 errmsg("operator family \"%s\" of access method %s is missing support function for types %s and %s",
-							opfamilyname, "btree",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+							opfamilyname, amname,
 							format_type_be(thisgroup->lefttype),
 							format_type_be(thisgroup->righttype))));
 			result = false;
@@ -299,14 +257,8 @@ btree_or_bitmap_validate(Oid opclassoid, const char *amname)
 	{
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-<<<<<<< HEAD
-				 errmsg("%s operator class \"%s\" is missing operator(s)",
-						amname,
-						opclassname)));
-=======
 				 errmsg("operator class \"%s\" of access method %s is missing operator(s)",
-						opclassname, "btree")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						opclassname, amname)));
 		result = false;
 	}
 
@@ -321,14 +273,8 @@ btree_or_bitmap_validate(Oid opclassoid, const char *amname)
 	{
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-<<<<<<< HEAD
-				 errmsg("%s operator family \"%s\" is missing cross-type operator(s)",
-						amname,
-						opfamilyname)));
-=======
-				 errmsg("operator family \"%s\" of access method %s is missing cross-type operator(s)",
-						opfamilyname, "btree")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				 errmsg("operator family \"%as\" of access method %s is missing cross-type operator(s)",
+						opfamilyname, amname)));
 		result = false;
 	}
 

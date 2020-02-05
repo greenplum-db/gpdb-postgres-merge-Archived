@@ -25,34 +25,12 @@
 #include "storage/predicate.h"
 #include "storage/smgr.h"
 
-<<<<<<< HEAD
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbaocsam.h"
 
 
-typedef struct
-{
-	/* context data for _bt_checksplitloc */
-	Size		newitemsz;		/* size of new item to be inserted */
-	int			fillfactor;		/* needed when splitting rightmost page */
-	bool		is_leaf;		/* T if splitting a leaf page */
-	bool		is_rightmost;	/* T if splitting a rightmost page */
-	OffsetNumber newitemoff;	/* where the new item is to be inserted */
-	int			leftspace;		/* space available for items on left page */
-	int			rightspace;		/* space available for items on right page */
-	int			olddataitemstotal;		/* space taken by old items */
-
-	bool		have_split;		/* found a valid split? */
-
-	/* these fields valid only if have_split is true */
-	bool		newitemonleft;	/* new item on left or right of best split */
-	OffsetNumber firstright;	/* best split point */
-	int			best_delta;		/* best size delta so far */
-} FindSplitData;
-=======
 /* Minimum tree height for application of fastpath optimization */
 #define BTREE_FASTPATH_MIN_LEVEL	2
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 static Buffer _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
@@ -539,20 +517,16 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 
 				/* okay, we gotta fetch the heap tuple ... */
 				curitup = (IndexTuple) PageGetItem(page, curitemid);
+				htid = curitup->t_tid;
 
 				/*
-				 * If the parent relation is an AO/CO table, we have to find out
-				 * if this tuple is actually in the table.
+				 * If we are doing a recheck, we expect to find the tuple we
+				 * are rechecking.  It's not a duplicate, but we have to keep
+				 * scanning.
 				 */
-				if (RelationIsAppendOptimized(heapRel))
+				if (checkUnique == UNIQUE_CHECK_EXISTING &&
+					ItemPointerCompare(&htid, &itup->t_tid) == 0)
 				{
-<<<<<<< HEAD
-					TransactionId xwait =
-						_bt_ao_check_unique(rel, heapRel, &curitup->t_tid);
-
-					if (TransactionIdIsValid(xwait))
-						return xwait;
-=======
 					found = true;
 				}
 
@@ -677,162 +651,25 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 								 errtableconstraint(heapRel,
 													RelationGetRelationName(rel))));
 					}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				}
-				else
+				else if (all_dead)
 				{
-					htid = curitup->t_tid;
+					/*
+					 * The conflicting tuple (or whole HOT chain) is dead to
+					 * everyone, so we may as well mark the index entry
+					 * killed.
+					 */
+					ItemIdMarkDead(curitemid);
+					opaque->btpo_flags |= BTP_HAS_GARBAGE;
 
 					/*
-					 * If we are doing a recheck, we expect to find the tuple we
-					 * are rechecking.  It's not a duplicate, but we have to keep
-					 * scanning.
+					 * Mark buffer with a dirty hint, since state is not
+					 * crucial. Be sure to mark the proper buffer dirty.
 					 */
-					if (checkUnique == UNIQUE_CHECK_EXISTING &&
-						ItemPointerCompare(&htid, &itup->t_tid) == 0)
-					{
-						found = true;
-					}
-
-					/*
-					 * We check the whole HOT-chain to see if there is any tuple
-					 * that satisfies SnapshotDirty.  This is necessary because we
-					 * have just a single index entry for the entire chain.
-					 */
-<<<<<<< HEAD
-					else if (heap_hot_search(&htid, heapRel, &SnapshotDirty, &all_dead))
-					{
-						TransactionId xwait;
-
-						/*
-						 * It is a duplicate. If we are only doing a partial
-						 * check, then don't bother checking if the tuple is being
-						 * updated in another transaction. Just return the fact
-						 * that it is a potential conflict and leave the full
-						 * check till later.
-						 */
-						if (checkUnique == UNIQUE_CHECK_PARTIAL)
-						{
-							if (nbuf != InvalidBuffer)
-								_bt_relbuf(rel, nbuf);
-							*is_unique = false;
-							return InvalidTransactionId;
-						}
-
-						/*
-						 * If this tuple is being updated by other transaction
-						 * then we have to wait for its commit/abort.
-						 */
-						xwait = (TransactionIdIsValid(SnapshotDirty.xmin)) ?
-							SnapshotDirty.xmin : SnapshotDirty.xmax;
-
-						if (TransactionIdIsValid(xwait))
-						{
-							if (nbuf != InvalidBuffer)
-								_bt_relbuf(rel, nbuf);
-							/* Tell _bt_doinsert to wait... */
-							*speculativeToken = SnapshotDirty.speculativeToken;
-							return xwait;
-						}
-						
-						/*
-						 * Otherwise we have a definite conflict.  But before
-						 * complaining, look to see if the tuple we want to insert
-						 * is itself now committed dead --- if so, don't complain.
-						 * This is a waste of time in normal scenarios but we must
-						 * do it to support CREATE INDEX CONCURRENTLY.
-						 *
-						 * We must follow HOT-chains here because during
-						 * concurrent index build, we insert the root TID though
-						 * the actual tuple may be somewhere in the HOT-chain.
-						 * While following the chain we might not stop at the
-						 * exact tuple which triggered the insert, but that's OK
-						 * because if we find a live tuple anywhere in this chain,
-						 * we have a unique key conflict.  The other live tuple is
-						 * not part of this chain because it had a different index
-						 * entry.
-						 */
-						htid = itup->t_tid;
-						if (heap_hot_search(&htid, heapRel, SnapshotSelf, NULL))
-						{
-							/* Normal case --- it's still live */
-						}
-						else
-						{
-							/*
-							 * It's been deleted, so no error, and no need to
-							 * continue searching.
-							 */
-							break;
-						}
-
-						/*
-						 * Check for a conflict-in as we would if we were going to
-						 * write to this page.  We aren't actually going to write,
-						 * but we want a chance to report SSI conflicts that would
-						 * otherwise be masked by this unique constraint
-						 * violation.
-						 */
-						CheckForSerializableConflictIn(rel, NULL, buf);
-
-						/*
-						 * This is a definite conflict.  Break the tuple down into
-						 * datums and report the error.  But first, make sure we
-						 * release the buffer locks we're holding ---
-						 * BuildIndexValueDescription could make catalog accesses,
-						 * which in the worst case might touch this same index and
-						 * cause deadlocks.
-						 */
-						if (nbuf != InvalidBuffer)
-							_bt_relbuf(rel, nbuf);
-						_bt_relbuf(rel, buf);
-	
-						{
-							Datum	values[INDEX_MAX_KEYS];
-							bool	isnull[INDEX_MAX_KEYS];
-							char	   *key_desc;
-	
-							index_deform_tuple(itup, RelationGetDescr(rel),
-											   values, isnull);
-
-							key_desc = BuildIndexValueDescription(rel, values,
-																  isnull);
-
-							ereport(ERROR,
-									(errcode(ERRCODE_UNIQUE_VIOLATION),
-									 errmsg("duplicate key value violates unique constraint \"%s\"",
-											RelationGetRelationName(rel)),
-									 key_desc ? errdetail("Key %s already exists.",
-											key_desc) : 0,
-									 errtableconstraint(heapRel,
-											RelationGetRelationName(rel))));
-						}
-					}
-					else if (all_dead)
-					{
-						/*
-						 * The conflicting tuple (or whole HOT chain) is dead to
-						 * everyone, so we may as well mark the index entry
-						 * killed.
-						 */
-						ItemIdMarkDead(curitemid);
-						opaque->btpo_flags |= BTP_HAS_GARBAGE;
-
-						/*
-						 * Mark buffer with a dirty hint, since state is not
-						 * crucial. Be sure to mark the proper buffer dirty.
-						 */
-						if (nbuf != InvalidBuffer)
-							MarkBufferDirtyHint(nbuf, true);
-						else
-							MarkBufferDirtyHint(buf, true);
-					}
-=======
 					if (nbuf != InvalidBuffer)
 						MarkBufferDirtyHint(nbuf, true);
 					else
 						MarkBufferDirtyHint(insertstate->buf, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				}
 			}
 		}
@@ -1968,271 +1805,7 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 }
 
 /*
-<<<<<<< HEAD
- *	_bt_findsplitloc() -- find an appropriate place to split a page.
- *
- * The idea here is to equalize the free space that will be on each split
- * page, *after accounting for the inserted tuple*.  (If we fail to account
- * for it, we might find ourselves with too little room on the page that
- * it needs to go into!)
- *
- * If the page is the rightmost page on its level, we instead try to arrange
- * to leave the left split page fillfactor% full.  In this way, when we are
- * inserting successively increasing keys (consider sequences, timestamps,
- * etc) we will end up with a tree whose pages are about fillfactor% full,
- * instead of the 50% full result that we'd get without this special case.
- * This is the same as nbtsort.c produces for a newly-created tree.  Note
- * that leaf and nonleaf pages use different fillfactors.
- *
- * We are passed the intended insert position of the new tuple, expressed as
- * the offsetnumber of the tuple it must go in front of.  (This could be
- * maxoff+1 if the tuple is to go at the end.)
- *
- * We return the index of the first existing tuple that should go on the
- * righthand page, plus a boolean indicating whether the new tuple goes on
- * the left or right page.  The bool is necessary to disambiguate the case
- * where firstright == newitemoff.
- */
-static OffsetNumber
-_bt_findsplitloc(Relation rel,
-				 Page page,
-				 OffsetNumber newitemoff,
-				 Size newitemsz,
-				 bool *newitemonleft)
-{
-	BTPageOpaque opaque;
-	OffsetNumber offnum;
-	OffsetNumber maxoff;
-	ItemId		itemid;
-	FindSplitData state;
-	int			leftspace,
-				rightspace,
-				goodenough,
-				olddataitemstotal,
-				olddataitemstoleft;
-	bool		goodenoughfound;
-
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-
-	/* Passed-in newitemsz is MAXALIGNED but does not include line pointer */
-	newitemsz += sizeof(ItemIdData);
-
-	/* Total free space available on a btree page, after fixed overhead */
-	leftspace = rightspace =
-		PageGetPageSize(page) - SizeOfPageHeaderData -
-		MAXALIGN(sizeof(BTPageOpaqueData));
-
-	/* The right page will have the same high key as the old page */
-	if (!P_RIGHTMOST(opaque))
-	{
-		itemid = PageGetItemId(page, P_HIKEY);
-		rightspace -= (int) (MAXALIGN(ItemIdGetLength(itemid)) +
-							 sizeof(ItemIdData));
-	}
-
-	/* Count up total space in data items without actually scanning 'em */
-	olddataitemstotal = rightspace - (int) PageGetExactFreeSpace(page);
-
-	state.newitemsz = newitemsz;
-	state.is_leaf = P_ISLEAF(opaque);
-	state.is_rightmost = P_RIGHTMOST(opaque);
-	state.have_split = false;
-	if (state.is_leaf)
-		state.fillfactor = RelationGetFillFactor(rel,
-												 BTREE_DEFAULT_FILLFACTOR);
-	else
-		state.fillfactor = BTREE_NONLEAF_FILLFACTOR;
-	state.newitemonleft = false;	/* these just to keep compiler quiet */
-	state.firstright = 0;
-	state.best_delta = 0;
-	state.leftspace = leftspace;
-	state.rightspace = rightspace;
-	state.olddataitemstotal = olddataitemstotal;
-	state.newitemoff = newitemoff;
-
-	/*
-	 * Finding the best possible split would require checking all the possible
-	 * split points, because of the high-key and left-key special cases.
-	 * That's probably more work than it's worth; instead, stop as soon as we
-	 * find a "good-enough" split, where good-enough is defined as an
-	 * imbalance in free space of no more than pagesize/16 (arbitrary...) This
-	 * should let us stop near the middle on most pages, instead of plowing to
-	 * the end.
-	 */
-	goodenough = leftspace / 16;
-
-	/*
-	 * Scan through the data items and calculate space usage for a split at
-	 * each possible position.
-	 */
-	olddataitemstoleft = 0;
-	goodenoughfound = false;
-	maxoff = PageGetMaxOffsetNumber(page);
-
-	for (offnum = P_FIRSTDATAKEY(opaque);
-		 offnum <= maxoff;
-		 offnum = OffsetNumberNext(offnum))
-	{
-		Size		itemsz;
-
-		itemid = PageGetItemId(page, offnum);
-		itemsz = MAXALIGN(ItemIdGetLength(itemid)) + sizeof(ItemIdData);
-
-		/*
-		 * Will the new item go to left or right of split?
-		 */
-		if (offnum > newitemoff)
-			_bt_checksplitloc(&state, offnum, true,
-							  olddataitemstoleft, itemsz);
-
-		else if (offnum < newitemoff)
-			_bt_checksplitloc(&state, offnum, false,
-							  olddataitemstoleft, itemsz);
-		else
-		{
-			/* need to try it both ways! */
-			_bt_checksplitloc(&state, offnum, true,
-							  olddataitemstoleft, itemsz);
-
-			_bt_checksplitloc(&state, offnum, false,
-							  olddataitemstoleft, itemsz);
-		}
-
-		/* Abort scan once we find a good-enough choice */
-		if (state.have_split && state.best_delta <= goodenough)
-		{
-			goodenoughfound = true;
-			break;
-		}
-
-		olddataitemstoleft += itemsz;
-	}
-
-	/* If the new item goes as the last item, check for splitting so that
-	 * all the old items go to the left page and the new item goes to the
-	 * right page.
-	 */
-	if (newitemoff > maxoff && !goodenoughfound)
-		_bt_checksplitloc(&state, newitemoff, false, olddataitemstotal, 0);
-
-	/*
-	 * If the new item goes as the last item, check for splitting so that all
-	 * the old items go to the left page and the new item goes to the right
-	 * page.
-	 */
-	if (newitemoff > maxoff && !goodenoughfound)
-		_bt_checksplitloc(&state, newitemoff, false, olddataitemstotal, 0);
-
-	/*
-	 * I believe it is not possible to fail to find a feasible split, but just
-	 * in case ...
-	 */
-	if (!state.have_split)
-		elog(ERROR, "could not find a feasible split point for index \"%s\"",
-			 RelationGetRelationName(rel));
-
-	*newitemonleft = state.newitemonleft;
-	return state.firstright;
-}
-
-/*
- * Subroutine to analyze a particular possible split choice (ie, firstright
- * and newitemonleft settings), and record the best split so far in *state.
- *
- * firstoldonright is the offset of the first item on the original page
- * that goes to the right page, and firstoldonrightsz is the size of that
- * tuple. firstoldonright can be > max offset, which means that all the old
- * items go to the left page and only the new item goes to the right page.
- * In that case, firstoldonrightsz is not used.
- *
- * olddataitemstoleft is the total size of all old items to the left of
- * firstoldonright.
- */
-static void
-_bt_checksplitloc(FindSplitData *state,
-				  OffsetNumber firstoldonright,
-				  bool newitemonleft,
-				  int olddataitemstoleft,
-				  Size firstoldonrightsz)
-{
-	int			leftfree,
-				rightfree;
-	Size		firstrightitemsz;
-	bool		newitemisfirstonright;
-
-	/* Is the new item going to be the first item on the right page? */
-	newitemisfirstonright = (firstoldonright == state->newitemoff
-							 && !newitemonleft);
-
-	if (newitemisfirstonright)
-		firstrightitemsz = state->newitemsz;
-	else
-		firstrightitemsz = firstoldonrightsz;
-
-	/* Account for all the old tuples */
-	leftfree = state->leftspace - olddataitemstoleft;
-	rightfree = state->rightspace -
-		(state->olddataitemstotal - olddataitemstoleft);
-
-	/*
-	 * The first item on the right page becomes the high key of the left page;
-	 * therefore it counts against left space as well as right space.
-	 */
-	leftfree -= firstrightitemsz;
-
-	/* account for the new item */
-	if (newitemonleft)
-		leftfree -= (int) state->newitemsz;
-	else
-		rightfree -= (int) state->newitemsz;
-
-	/*
-	 * If we are not on the leaf level, we will be able to discard the key
-	 * data from the first item that winds up on the right page.
-	 */
-	if (!state->is_leaf)
-		rightfree += (int) firstrightitemsz -
-			(int) (MAXALIGN(sizeof(IndexTupleData)) + sizeof(ItemIdData));
-
-	/*
-	 * If feasible split point, remember best delta.
-	 */
-	if (leftfree >= 0 && rightfree >= 0)
-	{
-		int			delta;
-
-		if (state->is_rightmost)
-		{
-			/*
-			 * If splitting a rightmost page, try to put (100-fillfactor)% of
-			 * free space on left page. See comments for _bt_findsplitloc.
-			 */
-			delta = (state->fillfactor * leftfree)
-				- ((100 - state->fillfactor) * rightfree);
-		}
-		else
-		{
-			/* Otherwise, aim for equal free space on both sides */
-			delta = leftfree - rightfree;
-		}
-
-		if (delta < 0)
-			delta = -delta;
-		if (!state->have_split || delta < state->best_delta)
-		{
-			state->have_split = true;
-			state->newitemonleft = newitemonleft;
-			state->firstright = firstoldonright;
-			state->best_delta = delta;
-		}
-	}
-}
-
-/*
- * _bt_insert_parent() -- Insert downlink into parent after a page split.
-=======
  * _bt_insert_parent() -- Insert downlink into parent, completing split.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * On entry, buf and rbuf are the left and right split pages, which we
  * still hold write locks on.  Both locks will be released here.  We

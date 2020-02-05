@@ -48,7 +48,6 @@
 
 #define AllocHugeSizeIsValid(size)	((Size) (size) <= MaxAllocHugeSize)
 
-<<<<<<< HEAD
 /*
  * Multiple chunks can share a SharedChunkHeader if their shared information
  * such as owning memory context, memoryAccount, memory account generation etc.
@@ -153,7 +152,9 @@ typedef struct AllocSetContext
 	Size		maxBlockSize;	/* maximum block size */
 	Size		nextBlockSize;	/* next block size to allocate */
 	Size		allocChunkLimit; /* effective chunk size limit */
-	AllocBlock	keeper;			/* if not NULL, keep this block over resets */
+	AllocBlock	keeper;			/* keep this block over resets */
+	/* freelist this context could be put in, or -1 if not a candidate: */
+	int			freeListIndex;	/* index in context_freelists[], or -1 */
 
 	/* Points to the head of the sharedHeaderList */
 	SharedChunkHeader *sharedHeaderList;
@@ -170,8 +171,6 @@ typedef struct AllocSetContext
 } AllocSetContext;
 
 typedef AllocSetContext *AllocSet;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Standard top-level memory contexts.

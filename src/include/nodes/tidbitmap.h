@@ -25,16 +25,12 @@
 #define TIDBITMAP_H
 
 #include "c.h"
+#include "access/appendonlytid.h"
 #include "access/htup.h"
 #include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "storage/itemptr.h"
-<<<<<<< HEAD
-#include "storage/bufpage.h"
-#include "access/appendonlytid.h"
-=======
 #include "utils/dsa.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 struct Instrumentation;                 /* #include "executor/instrument.h" */
 
