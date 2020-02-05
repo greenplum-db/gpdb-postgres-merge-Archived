@@ -874,14 +874,10 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 		ereport(DEBUG1,
 				(errmsg("registering background worker \"%s\"", worker->bgw_name)));
 
-<<<<<<< HEAD
 	auxworker = isAuxiliaryBgWorker(worker);
 
-	if (!process_shared_preload_libraries_in_progress && !auxworker)
-=======
-	if (!process_shared_preload_libraries_in_progress &&
-		strcmp(worker->bgw_library_name, "postgres") != 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	if (!process_shared_preload_libraries_in_progress && !auxworker
+        && strcmp(worker->bgw_library_name, "postgres") != 0)
 	{
 		if (!IsUnderPostmaster)
 			ereport(LOG,

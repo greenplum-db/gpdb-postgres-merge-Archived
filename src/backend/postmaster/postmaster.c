@@ -32,13 +32,9 @@
  *	  clients.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -130,13 +126,10 @@
 #include "postmaster/fts.h"
 #include "postmaster/perfmon.h"
 #include "postmaster/syslogger.h"
-<<<<<<< HEAD
 #include "postmaster/backoff.h"
 #include "postmaster/perfmon_segmentinfo.h"
 #include "postmaster/bgworker.h"
-=======
 #include "replication/logicallauncher.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "replication/walsender.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -147,12 +140,8 @@
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
-<<<<<<< HEAD
-#include "utils/dynamic_loader.h"
 #include "utils/faultinjector.h"
 #include "utils/gdd.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/memutils.h"
 #include "utils/pidfile.h"
 #include "utils/ps_status.h"
