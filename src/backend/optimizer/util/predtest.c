@@ -252,16 +252,12 @@ predicate_refuted_by(List *predicate_list, List *clause_list,
 		c = (Node *) clause_list;
 
 	/* And away we go ... */
-<<<<<<< HEAD
-	if ( predicate_refuted_by_recurse(r, p))
+	if ( predicate_refuted_by_recurse(c, p, weak))
         return true;
 
     if ( ! kUseFnEvaluationForPredicates )
         return false;
-    return simple_equality_predicate_refuted((Node*)restrictinfo_list, (Node*)predicate_list);
-=======
-	return predicate_refuted_by_recurse(c, p, weak);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+    return simple_equality_predicate_refuted((Node*)clause_list, (Node*)predicate_list);
 }
 
 /*----------

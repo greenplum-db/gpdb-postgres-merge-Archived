@@ -118,15 +118,12 @@ static Query *transformValuesClause(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 									   bool isTopLevel, List **targetlist);
-<<<<<<< HEAD
 static Node *transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 												bool isTopLevel, setop_types_ctx *setop_types);
 static void coerceSetOpTypes(ParseState *pstate, Node *sop,
 							 List *preselected_coltypes, List *preselected_coltypmods,
 							 List **targetlist);
 static void select_setop_types(ParseState *pstate, setop_types_ctx *ctx, SetOperation op, List **selected_types, List **selected_typmods);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void determineRecursiveColTypes(ParseState *pstate,
 									   Node *larg, List *nrtargetlist);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
