@@ -16,19 +16,7 @@
 #include <unistd.h>
 #include <time.h>
 
-<<<<<<< HEAD
-#include "miscadmin.h"
-#include "access/genam.h"
-#include "access/xact.h"
-#include "access/xlog_internal.h"		/* for pg_start/stop_backup */
-#include "cdb/cdbvars.h"
-#include "catalog/catalog.h"
-#include "catalog/indexing.h"
-#include "catalog/pg_database.h"
-#include "catalog/pg_tablespace.h"
-=======
 #include "access/xlog_internal.h"	/* for pg_start/stop_backup */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/pg_type.h"
 #include "common/file_perm.h"
 #include "lib/stringinfo.h"
@@ -43,21 +31,6 @@
 #include "replication/basebackup.h"
 #include "replication/walsender.h"
 #include "replication/walsender_private.h"
-<<<<<<< HEAD
-#include "storage/dsm_impl.h"
-#include "storage/fd.h"
-#include "storage/ipc.h"
-#include "storage/lmgr.h"
-#include "storage/proc.h"
-#include "utils/builtins.h"
-#include "utils/elog.h"
-#include "utils/fmgroids.h"
-#include "utils/faultinjector.h"
-#include "utils/guc.h"
-#include "utils/ps_status.h"
-#include "utils/snapmgr.h"
-#include "utils/tarrable.h"
-=======
 #include "storage/bufpage.h"
 #include "storage/checksum.h"
 #include "storage/dsm_impl.h"
@@ -67,8 +40,23 @@
 #include "utils/builtins.h"
 #include "utils/ps_status.h"
 #include "utils/relcache.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/timestamp.h"
+
+#include "access/genam.h"
+#include "access/xact.h"
+#include "cdb/cdbvars.h"
+#include "catalog/catalog.h"
+#include "catalog/indexing.h"
+#include "catalog/pg_database.h"
+#include "catalog/pg_tablespace.h"
+#include "storage/lmgr.h"
+#include "storage/proc.h"
+#include "utils/elog.h"
+#include "utils/fmgroids.h"
+#include "utils/faultinjector.h"
+#include "utils/guc.h"
+#include "utils/snapmgr.h"
+#include "utils/tarrable.h"
 
 
 typedef struct
@@ -84,21 +72,10 @@ typedef struct
 } basebackup_options;
 
 
-<<<<<<< HEAD
 static bool match_exclude_list(char *path, List *exclude);
 
-static int64 sendDir(char *path, int basepathlen, bool sizeonly,
-		List *tablespaces, bool sendtblspclinks, List *exclude);
-static bool sendFile(char *readfilename, char *tarfilename,
-		 struct stat * statbuf, bool missing_ok);
-static void sendFileWithContent(const char *filename, const char *content);
-static void _tarWriteHeader(const char *filename, const char *linktarget,
-				struct stat * statbuf);
-static int64 _tarWriteDir(const char *pathbuf, int basepathlen, struct stat * statbuf,
-			 bool sizeonly);
-=======
 static int64 sendDir(const char *path, int basepathlen, bool sizeonly,
-					 List *tablespaces, bool sendtblspclinks);
+					 List *tablespaces, bool sendtblspclinks, List *exclude);
 static bool sendFile(const char *readfilename, const char *tarfilename,
 					 struct stat *statbuf, bool missing_ok, Oid dboid);
 static void sendFileWithContent(const char *filename, const char *content);
@@ -106,7 +83,6 @@ static int64 _tarWriteHeader(const char *filename, const char *linktarget,
 							 struct stat *statbuf, bool sizeonly);
 static int64 _tarWriteDir(const char *pathbuf, int basepathlen, struct stat *statbuf,
 						  bool sizeonly);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void send_int8_string(StringInfoData *buf, int64 intval);
 static void SendBackupHeader(List *tablespaces);
 static void base_backup_cleanup(int code, Datum arg);
@@ -689,14 +665,10 @@ perform_base_backup(basebackup_options *opt)
 						 errmsg("unexpected WAL file size \"%s\"", walFiles[i])));
 			}
 
-<<<<<<< HEAD
 			elogif(debug_basebackup, LOG,
 				   "basebackup perform -- Sent xlog file %s", walFiles[i]);
 
-			/* XLogSegSize is a multiple of 512, so no need for padding */
-=======
 			/* wal_segment_size is a multiple of 512, so no need for padding */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			FreeFile(fp);
 
@@ -1001,7 +973,6 @@ SendBackupHeader(List *tablespaces)
 			pq_sendint32(&buf, len);
 			pq_sendbytes(&buf, ti->oid, len);
 
-<<<<<<< HEAD
 			if(ti->rpath == NULL)
 			{
 				/* Lop off the dbid before sending the link target. */
@@ -1014,13 +985,8 @@ SendBackupHeader(List *tablespaces)
 			else
 				link_path_to_be_sent = ti->path;
 			len = strlen(link_path_to_be_sent);
-			pq_sendint(&buf, len, 4);
-			pq_sendbytes(&buf, link_path_to_be_sent, len);
-=======
-			len = strlen(ti->path);
 			pq_sendint32(&buf, len);
-			pq_sendbytes(&buf, ti->path, len);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			pq_sendbytes(&buf, link_path_to_be_sent, len);
 		}
 		if (ti->size >= 0)
 			send_int8_string(&buf, ti->size / 1024);
@@ -1177,15 +1143,9 @@ sendTablespace(char *path, bool sizeonly)
 		/* If the tablespace went away while scanning, it's no error. */
 		return 0;
 	}
-<<<<<<< HEAD
-	if (!sizeonly)
-		_tarWriteHeader(GP_TABLESPACE_VERSION_DIRECTORY, NULL, &statbuf);
-	size = 512;					/* Size of the header just added */
-=======
 
-	size = _tarWriteHeader(TABLESPACE_VERSION_DIRECTORY, NULL, &statbuf,
+	size = _tarWriteHeader(GP_TABLESPACE_VERSION_DIRECTORY, NULL, &statbuf,
 						   sizeonly);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Send all the files in the tablespace version directory */
 	size += sendDir(pathbuf, strlen(path), sizeonly, NIL, true, NIL);
@@ -1229,13 +1189,8 @@ match_exclude_list(char *path, List *exclude)
  * GPDB: Also omit any files in the 'exclude' list.
  */
 static int64
-<<<<<<< HEAD
-sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
-		bool sendtblspclinks, List *exclude)
-=======
 sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
-		bool sendtblspclinks)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		bool sendtblspclinks, List *exclude)
 {
 	DIR		   *dir;
 	struct dirent *de;
@@ -1278,11 +1233,8 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 	{
 		int			excludeIdx;
 		bool		excludeFound;
-<<<<<<< HEAD
-=======
 		ForkNumber	relForkNum; /* Type of fork if file is a relation */
 		int			relOidChars;	/* Chars in filename that are the rel oid */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/* Skip special stuff */
 		if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
@@ -1322,14 +1274,6 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 				break;
 			}
 		}
-<<<<<<< HEAD
-
-		if (excludeFound)
-			continue;
-
-		snprintf(pathbuf, MAXPGPATH, "%s/%s", path, de->d_name);
-
-=======
 
 		if (excludeFound)
 			continue;
@@ -1377,7 +1321,6 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 
 		snprintf(pathbuf, sizeof(pathbuf), "%s/%s", path, de->d_name);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		/* Skip pg_control here to back up it last */
 		if (strcmp(pathbuf, "./global/pg_control") == 0)
 			continue;
@@ -1401,11 +1344,7 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 			if (strcmp(de->d_name, excludeDirContents[excludeIdx]) == 0)
 			{
 				elog(DEBUG1, "contents of directory \"%s\" excluded from backup", de->d_name);
-<<<<<<< HEAD
-				size += _tarWriteDir(pathbuf, basepathlen, &statbuf,  sizeonly);
-=======
 				size += _tarWriteDir(pathbuf, basepathlen, &statbuf, sizeonly);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				excludeFound = true;
 				break;
 			}
@@ -1420,10 +1359,7 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		 */
 		if (statrelpath != NULL && strcmp(pathbuf, statrelpath) == 0)
 		{
-<<<<<<< HEAD
-=======
 			elog(DEBUG1, "contents of directory \"%s\" excluded from backup", statrelpath);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			size += _tarWriteDir(pathbuf, basepathlen, &statbuf, sizeonly);
 			continue;
 		}
@@ -1435,11 +1371,7 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		 */
 		if (strcmp(pathbuf, "./pg_wal") == 0)
 		{
-<<<<<<< HEAD
-			/* If pg_xlog is a symlink, write it as a directory anyway */
-=======
 			/* If pg_wal is a symlink, write it as a directory anyway */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			size += _tarWriteDir(pathbuf, basepathlen, &statbuf, sizeonly);
 
 			/*
@@ -1481,20 +1413,13 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 						 errmsg("symbolic link \"%s\" target is too long and will not be added to the backup",
 								pathbuf),
 						 errdetail("The symbolic link with target \"%s\" is too long. Symlink targets with length greater than %d characters would be truncated.", pathbuf, MAX_TARABLE_SYMLINK_PATH_LENGTH)));
-			linkpath[rllen] = '\0';
 
-<<<<<<< HEAD
 			/* Lop off the dbid before sending the link target. */
 			char *file_sep_before_dbid_in_link_path = strrchr(linkpath, '/');
 			*file_sep_before_dbid_in_link_path = '\0';
 
-			if (!sizeonly)
-				_tarWriteHeader(pathbuf + basepathlen + 1, linkpath, &statbuf);
-			size += 512;		/* Size of the header just added */
-=======
 			size += _tarWriteHeader(pathbuf + basepathlen + 1, linkpath,
 									&statbuf, sizeonly);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #else
 
 			/*
@@ -2004,9 +1929,5 @@ throttle(size_t increment)
 	 * Time interval for the remaining amount and possible next increments
 	 * starts now.
 	 */
-<<<<<<< HEAD
-	throttled_last = GetCurrentIntegerTimestamp();
-=======
 	throttled_last = GetCurrentTimestamp();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
