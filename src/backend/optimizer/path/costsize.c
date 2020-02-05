@@ -2484,7 +2484,6 @@ cost_agg(Path *path, PlannerInfo *root,
 		startup_cost += aggcosts->transCost.startup;
 		startup_cost += aggcosts->transCost.per_tuple * input_tuples;
 		startup_cost += (cpu_operator_cost * numGroupCols) * input_tuples;
-<<<<<<< HEAD
 
 		/* account for some disk I/O if we expect to spill */
 		if (hash_info && hash_info->nbatches > 0)
@@ -2519,7 +2518,7 @@ cost_agg(Path *path, PlannerInfo *root,
 		}
 
 		total_cost = startup_cost;
-		total_cost += aggcosts->finalCost * output_tuples;
+		total_cost += aggcosts->finalCost.per_tuple * output_tuples;
 		total_cost += cpu_tuple_cost * output_tuples;
 
 		if (hash_info && hash_info->nbatches > 2 && !hash_streaming)
@@ -2527,13 +2526,6 @@ cost_agg(Path *path, PlannerInfo *root,
 			/* total gets charged the read-cost */
 			total_cost += seq_page_cost * (spilled_bytes / BLCKSZ);
 		}
-=======
-		startup_cost += aggcosts->finalCost.startup;
-		total_cost = startup_cost;
-		total_cost += aggcosts->finalCost.per_tuple * numGroups;
-		total_cost += cpu_tuple_cost * numGroups;
-		output_tuples = numGroups;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*

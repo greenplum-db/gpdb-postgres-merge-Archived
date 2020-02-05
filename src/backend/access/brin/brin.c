@@ -739,13 +739,8 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 * Now scan the relation.  No syncscan allowed here because we want the
 	 * heap blocks in physical order.
 	 */
-<<<<<<< HEAD
-	reltuples = IndexBuildScan(heap, index, indexInfo, false,
-								   brinbuildCallback, (void *) state);
-=======
 	reltuples = table_index_build_scan(heap, index, indexInfo, false, true,
 									   brinbuildCallback, (void *) state, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* process the final batch */
 	form_and_insert_tuple(state);
@@ -1295,18 +1290,9 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 	 * cases.
 	 */
 	state->bs_currRangeStart = heapBlk;
-<<<<<<< HEAD
-	scanNumBlks = heapBlk + state->bs_pagesPerRange <= heapNumBlks ?
-		state->bs_pagesPerRange : heapNumBlks - heapBlk;
-	IndexBuildHeapRangeScan(heapRel, state->bs_irel, indexInfo, false, true,
-							heapBlk, scanNumBlks,
-							brinbuildCallback, (void *) state,
-							estate, snapshot, OldestXmin);
-=======
 	table_index_build_range_scan(heapRel, state->bs_irel, indexInfo, false, true, false,
 								 heapBlk, scanNumBlks,
 								 brinbuildCallback, (void *) state, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Now we update the values obtained by the scan with the placeholder

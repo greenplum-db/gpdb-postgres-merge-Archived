@@ -48,11 +48,7 @@ t_isdigit(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[WC_BUF_LEN];
-<<<<<<< HEAD
-	Oid			collation = DEFAULT_COLLATION_OID;		/* TODO */
-=======
 	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	pg_locale_t mylocale = 0;	/* TODO */
 
 	if (clen == 1 || lc_ctype_is_c(collation))
@@ -68,11 +64,7 @@ t_isspace(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[WC_BUF_LEN];
-<<<<<<< HEAD
-	Oid			collation = DEFAULT_COLLATION_OID;		/* TODO */
-=======
 	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	pg_locale_t mylocale = 0;	/* TODO */
 
 	if (clen == 1 || lc_ctype_is_c(collation))
@@ -88,11 +80,7 @@ t_isalpha(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[WC_BUF_LEN];
-<<<<<<< HEAD
-	Oid			collation = DEFAULT_COLLATION_OID;		/* TODO */
-=======
 	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	pg_locale_t mylocale = 0;	/* TODO */
 
 	if (clen == 1 || lc_ctype_is_c(collation))
@@ -108,11 +96,7 @@ t_isprint(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[WC_BUF_LEN];
-<<<<<<< HEAD
-	Oid			collation = DEFAULT_COLLATION_OID;		/* TODO */
-=======
 	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	pg_locale_t mylocale = 0;	/* TODO */
 
 	if (clen == 1 || lc_ctype_is_c(collation))

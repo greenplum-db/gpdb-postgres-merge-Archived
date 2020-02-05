@@ -56,19 +56,7 @@ static const datetkn *datebsearch(const char *key, const datetkn *base, int nel)
 static int	DecodeDate(char *str, int fmask, int *tmask, bool *is2digits,
 					   struct pg_tm *tm);
 static char *AppendSeconds(char *cp, int sec, fsec_t fsec,
-<<<<<<< HEAD
-			  int precision, bool fillzeros);
-static void AdjustFractSeconds(double frac, struct pg_tm * tm, fsec_t *fsec,
-				   int scale);
-static void AdjustFractDays(double frac, struct pg_tm * tm, fsec_t *fsec,
-				int scale);
-static int DetermineTimeZoneOffsetInternal(struct pg_tm * tm, pg_tz *tzp,
-								pg_time_t *tp);
-static bool DetermineTimeZoneAbbrevOffsetInternal(pg_time_t t,
-									  const char *abbr, pg_tz *tzp,
-									  int *offset, int *isdst);
-=======
-						   int precision, bool fillzeros);
+                           int precision, bool fillzeros);
 static void AdjustFractSeconds(double frac, struct pg_tm *tm, fsec_t *fsec,
 							   int scale);
 static void AdjustFractDays(double frac, struct pg_tm *tm, fsec_t *fsec,
@@ -78,7 +66,6 @@ static int	DetermineTimeZoneOffsetInternal(struct pg_tm *tm, pg_tz *tzp,
 static bool DetermineTimeZoneAbbrevOffsetInternal(pg_time_t t,
 												  const char *abbr, pg_tz *tzp,
 												  int *offset, int *isdst);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static pg_tz *FetchDynamicTimeZone(TimeZoneAbbrevTable *tbl, const datetkn *tp);
 
 
@@ -415,7 +402,6 @@ AppendSeconds(char *cp, int sec, fsec_t fsec, int precision, bool fillzeros)
 {
 	Assert(precision >= 0);
 
-<<<<<<< HEAD
 	/* GPDB_96_MERGE_FIXME: We had this faster version in GPDB. PostgreSQL
 	 * also added faster versions in commit aa2387e2fd. Performance test is
 	 * the old GPDB variants are even faster, or if we could drop the diff
@@ -443,8 +429,6 @@ AppendSeconds(char *cp, int sec, fsec_t fsec, int precision, bool fillzeros)
 #ifdef HAVE_INT64_TIMESTAMP
 	/* fsec_t is just an int32 */
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (fillzeros)
 		cp = pg_ltostr_zeropad(cp, Abs(sec), 2);
 	else
@@ -3619,11 +3603,7 @@ DecodeISO8601Interval(char *str,
 						continue;
 					}
 					/* Else fall through to extended alternative format */
-<<<<<<< HEAD
-					/* FALL THROUGH */
-=======
 					/* FALLTHROUGH */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				case '-':		/* ISO 8601 4.4.3.3 Alternative Format,
 								 * Extended */
 					if (havefield)
@@ -3702,11 +3682,7 @@ DecodeISO8601Interval(char *str,
 						return 0;
 					}
 					/* Else fall through to extended alternative format */
-<<<<<<< HEAD
-					/* FALL THROUGH */
-=======
 					/* FALLTHROUGH */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				case ':':		/* ISO 8601 4.4.3.3 Alternative Format,
 								 * Extended */
 					if (havefield)
@@ -4985,11 +4961,7 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 		 * reasonably omit from the pg_timezone_names view.
 		 */
 		if (tzn && (strcmp(tzn, "-00") == 0 ||
-<<<<<<< HEAD
-		strcmp(tzn, "Local time zone must be set--see zic manual page") == 0))
-=======
 					strcmp(tzn, "Local time zone must be set--see zic manual page") == 0))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			continue;
 
 		/* Found a displayable zone */

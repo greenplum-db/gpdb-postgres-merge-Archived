@@ -153,10 +153,7 @@ int			max_prepared_xacts = 0;
  * typedef struct GlobalTransactionData *GlobalTransaction appears in
  * twophase.h
  */
-<<<<<<< HEAD
-=======
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 typedef struct GlobalTransactionData
 {
 	GlobalTransaction next;		/* list link for free list */
@@ -663,7 +660,6 @@ LockGXact(const char *gid, Oid user, bool raiseErrorIfNotFound)
 
 	LWLockRelease(TwoPhaseStateLock);
 
-<<<<<<< HEAD
 	if (raiseErrorIfNotFound)
 	{
 		ereport(ERROR,
@@ -671,12 +667,6 @@ LockGXact(const char *gid, Oid user, bool raiseErrorIfNotFound)
 				 errmsg("prepared transaction with identifier \"%s\" does not exist",
 					 gid)));
 	}
-=======
-	ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_OBJECT),
-			 errmsg("prepared transaction with identifier \"%s\" does not exist",
-					gid)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return NULL;
 }
@@ -1578,11 +1568,8 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	DbDirNode *deldbs;
 	int			ndeldbs;
 	SharedInvalidationMessage *invalmsgs;
-<<<<<<< HEAD
 
 	SIMPLE_FAULT_INJECTOR("finish_prepared_start_of_function");
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Validate the GID, and lock the GXACT to ensure that two backends do not
@@ -1726,14 +1713,11 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 
 	/* Make sure files supposed to be dropped are dropped */
 	DropRelationFiles(delrels, ndelrels, false);
-<<<<<<< HEAD
 
 	/* Make sure database folders to be dropped are dropped */
 	DropDatabaseDirectories(deldbs, ndeldbs, false);
 
 	finish_prepared_transaction_tablespace_storage(isCommit);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Handle cache invalidation messages.
@@ -1783,11 +1767,8 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 
 	MyLockedGxact = NULL;
 
-<<<<<<< HEAD
 	SIMPLE_FAULT_INJECTOR("finish_prepared_after_record_commit_prepared");
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	RESUME_INTERRUPTS();
 
 	pfree(buf);
@@ -2746,7 +2727,6 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	/* Flush XLOG to disk */
 	XLogFlush(recptr);
 
-<<<<<<< HEAD
 	/* UNDONE: What are the locking issues here? */
 	/*
 	 * Mark the distributed transaction committed.
@@ -2756,10 +2736,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 									distribXid,
 									/* isRedo */ false);
 
-	/* Mark the transaction committed in pg_clog */
-=======
 	/* Mark the transaction committed in pg_xact */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	TransactionIdCommitTree(xid, nchildren, children);
 
 	/* Checkpoint can proceed now */
