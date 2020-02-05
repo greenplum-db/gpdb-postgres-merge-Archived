@@ -182,14 +182,10 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 	scanstate->ss.ps.qual =
 		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
 
-<<<<<<< HEAD
-	/* scanstate->ss.ps.ps_TupFromTlist = false; */
-=======
 	/*
 	 * Do not yet initialize projection info, see ExecWorkTableScan() for
 	 * details.
 	 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return scanstate;
 }
