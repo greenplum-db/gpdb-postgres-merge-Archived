@@ -27,11 +27,8 @@
 #include "access/xloginsert.h"
 #include "access/xlogutils.h"
 #include "catalog/dependency.h"
-<<<<<<< HEAD
 #include "catalog/heap.h"
-=======
 #include "catalog/indexing.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_sequence.h"
@@ -110,12 +107,7 @@ static HTAB *seqhashtab = NULL; /* hash table for SeqTable items */
 static SeqTableData *last_used_seq = NULL;
 
 static void fill_seq_with_data(Relation rel, HeapTuple tuple);
-<<<<<<< HEAD
-static int64 nextval_internal(Oid relid, bool is_direct_request);
-static Relation open_share_lock(SeqTable seq);
-=======
 static Relation lock_and_open_sequence(SeqTable seq);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void create_seq_hashtable(void);
 static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence_data read_seq_tuple(Relation rel,
@@ -127,12 +119,8 @@ static void init_params(ParseState *pstate, List *options, bool for_identity,
 						bool *need_seq_rewrite,
 						List **owned_by);
 static void do_setval(Oid relid, int64 next, bool iscalled);
-<<<<<<< HEAD
-static void process_owned_by(Relation seqrel, List *owned_by);
 static void mask_seq_values(Page page);
-=======
 static void process_owned_by(Relation seqrel, List *owned_by, bool for_identity);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static void
 cdb_sequence_nextval_qe(Relation seqrel,
@@ -495,16 +483,13 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 	bool		need_seq_rewrite;
 	List	   *owned_by;
 	ObjectAddress address;
-<<<<<<< HEAD
 	bool        bSeqIsTemp = false;
 	int			numopts;
 	char	   *alter_subtype = "";		/* metadata tracking: kind of
 										   redundant to say "role" */
-=======
 	Relation	rel;
 	HeapTuple	seqtuple;
 	HeapTuple	newdatatuple;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Open and lock sequence, and check for ownership along the way. */
 	relid = RangeVarGetRelidExtended(stmt->sequence,
@@ -677,11 +662,7 @@ nextval(PG_FUNCTION_ARGS)
 	 */
 	relid = RangeVarGetRelid(sequence, NoLock, false);
 
-<<<<<<< HEAD
-	PG_RETURN_INT64(nextval_internal(relid, false));
-=======
-	PG_RETURN_INT64(nextval_internal(relid, true));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	PG_RETURN_INT64(nextval_internal(relid, true, false));
 }
 
 Datum
@@ -689,8 +670,7 @@ nextval_oid(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 
-<<<<<<< HEAD
-	PG_RETURN_INT64(nextval_internal(relid, false));
+	PG_RETURN_INT64(nextval_internal(relid, true, false));
 }
 
 void
@@ -704,15 +684,8 @@ nextval_qd(Oid relid, int64 *plast, int64 *pcached, int64  *pincrement, bool *po
 	*poverflow = !last_used_seq->last_valid;
 }
 
-static int64
-nextval_internal(Oid relid, bool called_from_dispatcher)
-=======
-	PG_RETURN_INT64(nextval_internal(relid, true));
-}
-
 int64
-nextval_internal(Oid relid, bool check_permissions)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+nextval_internal(Oid relid, bool check_permissions, bool called_from_dispatcher)
 {
 	SeqTable	elm;
 	Relation	seqrel;
@@ -732,12 +705,8 @@ nextval_internal(Oid relid, bool check_permissions)
 	int64		result,
 				next,
 				rescnt = 0;
-<<<<<<< HEAD
-	bool            logit = false;
-=======
 	bool		cycle;
 	bool		logit = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* open and lock sequence */
 	init_sequence(relid, &elm, &seqrel);
@@ -761,12 +730,8 @@ nextval_internal(Oid relid, bool check_permissions)
 	 */
 	PreventCommandIfParallelMode("nextval()");
 
-<<<<<<< HEAD
-	if (elm->last != elm->cached 		/* some numbers were cached */
+	if (elm->last != elm->cached	/* some numbers were cached */
 		&& !called_from_dispatcher)
-=======
-	if (elm->last != elm->cached)	/* some numbers were cached */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		Assert(elm->last_valid);
 		Assert(elm->increment != 0);
@@ -776,7 +741,6 @@ nextval_internal(Oid relid, bool check_permissions)
 		return elm->last;
 	}
 
-<<<<<<< HEAD
 	/* Update the sequence object. */
 	if (Gp_role == GP_ROLE_EXECUTE)
 	{
@@ -791,7 +755,6 @@ nextval_internal(Oid relid, bool check_permissions)
 
 		return elm->last;
 	}
-=======
 	pgstuple = SearchSysCache1(SEQRELID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(pgstuple))
 		elog(ERROR, "cache lookup failed for sequence %u", relid);
@@ -802,7 +765,6 @@ nextval_internal(Oid relid, bool check_permissions)
 	cache = pgsform->seqcache;
 	cycle = pgsform->seqcycle;
 	ReleaseSysCache(pgstuple);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* lock page' buffer and read tuple */
 	seq = read_seq_tuple(seqrel, &buf, &seqdatatuple);
@@ -997,7 +959,6 @@ currval_oid(PG_FUNCTION_ARGS)
 	SeqTable	elm;
 	Relation	seqrel;
 
-<<<<<<< HEAD
 	/* For now, strictly forbidden on MPP. */
 	if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_EXECUTE)
 	{
@@ -1006,10 +967,7 @@ currval_oid(PG_FUNCTION_ARGS)
 				 errmsg("currval() not supported")));
 	}
 
-	/* open and AccessShareLock sequence */
-=======
 	/* open and lock sequence */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	init_sequence(relid, &elm, &seqrel);
 
 	if (pg_class_aclcheck(elm->relid, GetUserId(),
@@ -1101,7 +1059,6 @@ do_setval(Oid relid, int64 next, bool iscalled)
 	int64		maxv,
 				minv;
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_EXECUTE)
 	{
 		ereport(ERROR,
@@ -1109,10 +1066,7 @@ do_setval(Oid relid, int64 next, bool iscalled)
 				 errmsg("setval() not supported in this context")));
 	}
 
-	/* open and AccessShareLock sequence */
-=======
 	/* open and lock sequence */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	init_sequence(relid, &elm, &seqrel);
 
 	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
@@ -2139,7 +2093,6 @@ ResetSequenceCaches(void)
 }
 
 /*
-<<<<<<< HEAD
  * Mask last_value and log_cnt for consistency checking
  *
  * To avoid logging every fetch from a sequence, SEQ_LOG_VALS are pre-logged
@@ -2170,8 +2123,6 @@ mask_seq_values(Page page)
 }
 
 /*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Mask a Sequence page before performing consistency checks on it.
  */
 void
@@ -2179,7 +2130,6 @@ seq_mask(char *page, BlockNumber blkno)
 {
 	mask_page_lsn_and_checksum(page);
 
-<<<<<<< HEAD
 	/*
 	 * last_value and log_cnt need to be masked to account for SEQ_LOG_VALS
 	 * skipped loggings of fetching
@@ -2310,7 +2260,3 @@ cdb_sequence_nextval_qe(Relation	seqrel,
 	*pincrement = increment;
 	*pvalid = true;
 }
-=======
-	mask_unused_space(page);
-}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
