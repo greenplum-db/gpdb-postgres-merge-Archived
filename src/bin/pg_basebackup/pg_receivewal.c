@@ -104,11 +104,7 @@ usage(void)
 	printf(_("\nOptional actions:\n"));
 	printf(_("      --create-slot      create a new replication slot (for the slot's name see --slot)\n"));
 	printf(_("      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"));
-<<<<<<< HEAD:src/bin/pg_basebackup/pg_receivexlog.c
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("\nReport bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/bin/pg_basebackup/pg_receivewal.c
 }
 
 static bool

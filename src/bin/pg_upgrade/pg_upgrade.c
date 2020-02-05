@@ -971,14 +971,8 @@ set_frozenxids(bool minmxid_only)
 		if (strcmp(datallowconn, "f") == 0)
 		{
 			PQclear(executeQueryOrDie(conn_template1,
-<<<<<<< HEAD
-							   "ALTER DATABASE %s ALLOW_CONNECTIONS = false", escaped_datname));
-			pg_free(escaped_datname);
-		}
-=======
 									  "ALTER DATABASE %s ALLOW_CONNECTIONS = false",
 									  quote_identifier(datname)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	PQclear(dbres);

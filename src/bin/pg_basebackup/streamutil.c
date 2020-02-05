@@ -27,11 +27,8 @@
 #include "common/logging.h"
 #include "datatype/timestamp.h"
 #include "fe_utils/connect.h"
-<<<<<<< HEAD
-=======
 #include "port/pg_bswap.h"
 #include "pqexpbuffer.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #define ERRCODE_DUPLICATE_OBJECT  "42710"
 
@@ -222,15 +219,9 @@ GetConnection(void)
 
 	/*
 	 * Set always-secure search path, so malicious users can't get control.
-<<<<<<< HEAD
-	 * The capacity to run normal SQL queries was added in PostgreSQL
-	 * 10, so the search path cannot be changed (by us or attackers) on
-	 * earlier versions.
-=======
 	 * The capacity to run normal SQL queries was added in PostgreSQL 10, so
 	 * the search path cannot be changed (by us or attackers) on earlier
 	 * versions.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	if (dbname != NULL && PQserverVersion(tmpconn) >= 100000)
 	{
@@ -239,13 +230,8 @@ GetConnection(void)
 		res = PQexec(tmpconn, ALWAYS_SECURE_SEARCH_PATH_SQL);
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
-<<<<<<< HEAD
-			fprintf(stderr, _("%s: could not clear search_path: %s"),
-					progname, PQerrorMessage(tmpconn));
-=======
 			pg_log_error("could not clear search_path: %s",
 						 PQerrorMessage(tmpconn));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			PQclear(res);
 			PQfinish(tmpconn);
 			exit(1);
@@ -254,13 +240,8 @@ GetConnection(void)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Ensure we have the same value of integer timestamps as the server we
-	 * are connecting to.
-=======
 	 * Ensure we have the same value of integer_datetimes (now always "on") as
 	 * the server we are connecting to.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	tmpparam = PQparameterStatus(tmpconn, "integer_datetimes");
 	if (!tmpparam)

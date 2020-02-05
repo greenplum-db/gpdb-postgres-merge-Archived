@@ -1259,13 +1259,8 @@ check_for_jsonb_9_4_usage(ClusterInfo *cluster)
 								"		a.atttypid = 'pg_catalog.jsonb'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
 		/* exclude possible orphaned temp tables */
-<<<<<<< HEAD
-								"  		n.nspname !~ '^pg_temp_' AND "
-							  "		n.nspname NOT IN ('pg_catalog', 'information_schema')");
-=======
 								"		n.nspname !~ '^pg_temp_' AND "
 								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -1342,37 +1337,6 @@ check_for_pg_role_prefix(ClusterInfo *cluster)
 	check_ok();
 }
 
-<<<<<<< HEAD
-static void
-get_bin_version(ClusterInfo *cluster)
-{
-	char		cmd[MAXPGPATH],
-				cmd_output[MAX_STRING];
-	FILE	   *output;
-	int			pre_dot,
-				post_dot;
-
-	snprintf(cmd, sizeof(cmd), "\"%s/pg_ctl\" --version", cluster->bindir);
-
-	if ((output = popen(cmd, "r")) == NULL ||
-		fgets(cmd_output, sizeof(cmd_output), output) == NULL)
-		pg_fatal("Could not get pg_ctl version data using %s: %s\n",
-				 cmd, getErrorText());
-
-	pclose(output);
-
-	/* Remove trailing newline */
-	if (strchr(cmd_output, '\n') != NULL)
-		*strchr(cmd_output, '\n') = '\0';
-
-	if (sscanf(cmd_output, "%*s %*s %*s %d.%d", &pre_dot, &post_dot) != 2)
-		pg_fatal("could not get version from %s\n", cmd);
-
-	cluster->bin_version = (pre_dot * 100 + post_dot) * 100;
-}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * get_canonical_locale_name
