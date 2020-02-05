@@ -3,12 +3,8 @@
  * fe-exec.c
  *	  functions related to sending a query down to the backend
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -64,24 +60,9 @@ static int	static_client_encoding = PG_SQL_ASCII;
 static bool static_std_strings = false;
 
 
-<<<<<<< HEAD
-static PGEvent *dupEvents(PGEvent *events, int count);
-static bool pqAddTuple(PGresult *res, PGresAttValue *tup,
-		   const char **errmsgp);
-static int PQsendQueryGuts(PGconn *conn,
-				const char *command,
-				const char *stmtName,
-				int nParams,
-				const Oid *paramTypes,
-				const char *const * paramValues,
-				const int *paramLengths,
-				const int *paramFormats,
-				int resultFormat);
-=======
 static PGEvent *dupEvents(PGEvent *events, int count, size_t *memSize);
 static bool pqAddTuple(PGresult *res, PGresAttValue *tup,
 					   const char **errmsgp);
-static bool PQsendQueryStart(PGconn *conn);
 static int	PQsendQueryGuts(PGconn *conn,
 							const char *command,
 							const char *stmtName,
@@ -91,7 +72,6 @@ static int	PQsendQueryGuts(PGconn *conn,
 							const int *paramLengths,
 							const int *paramFormats,
 							int resultFormat);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void parseInput(PGconn *conn);
 static PGresult *getCopyResult(PGconn *conn, ExecStatusType copytype);
 static bool PQexecStart(PGconn *conn);
@@ -194,7 +174,8 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 	result->curBlock = NULL;
 	result->curOffset = 0;
 	result->spaceLeft = 0;
-<<<<<<< HEAD
+	result->memorySize = sizeof(PGresult);
+
 	result->cdbstats = NULL;            /*CDB*/
 
 	result->extras = NULL;
@@ -204,9 +185,6 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 	result->numCompleted = 0;
 	result->naotupcounts = 0;
 	result->aotupcounts = NULL;
-=======
-	result->memorySize = sizeof(PGresult);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (conn)
 	{
@@ -484,11 +462,7 @@ PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len)
 		pqInternalNotice(&res->noticeHooks,
 						 "row number %d is out of range 0..%d",
 						 tup_num, res->ntups);
-<<<<<<< HEAD
-		return FALSE;
-=======
 		return false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/* need to allocate a new tuple? */
@@ -539,11 +513,7 @@ PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len)
 		attval->value[len] = '\0';
 	}
 
-<<<<<<< HEAD
-	return TRUE;
-=======
 	return true;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Report failure via pqInternalNotice.  If preceding code didn't provide
@@ -554,11 +524,7 @@ fail:
 		errmsg = libpq_gettext("out of memory");
 	pqInternalNotice(&res->noticeHooks, "%s", errmsg);
 
-<<<<<<< HEAD
-	return FALSE;
-=======
 	return false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -979,11 +945,7 @@ pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
 /*
  * pqAddTuple
  *	  add a row pointer to the PGresult structure, growing it if necessary
-<<<<<<< HEAD
- *	  Returns TRUE if OK, FALSE if an error prevented adding the row
-=======
  *	  Returns true if OK, false if an error prevented adding the row
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * On error, *errmsgp can be set to an error string to be returned.
  * If it is left NULL, the error is presumed to be "out of memory".
@@ -1018,11 +980,7 @@ pqAddTuple(PGresult *res, PGresAttValue *tup, const char **errmsgp)
 		else
 		{
 			*errmsgp = libpq_gettext("PGresult cannot support more than INT_MAX tuples");
-<<<<<<< HEAD
-			return FALSE;
-=======
 			return false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		/*
@@ -1034,11 +992,7 @@ pqAddTuple(PGresult *res, PGresAttValue *tup, const char **errmsgp)
 		if (newSize > SIZE_MAX / sizeof(PGresAttValue *))
 		{
 			*errmsgp = libpq_gettext("size_t overflow");
-<<<<<<< HEAD
-			return FALSE;
-=======
 			return false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 #endif
 
@@ -1236,11 +1190,7 @@ pqRowProcessor(PGconn *conn, const char **errmsgp)
 	 * memory for gettext() to do anything.
 	 */
 	tup = (PGresAttValue *)
-<<<<<<< HEAD
-			pqResultAlloc(res, nfields * sizeof(PGresAttValue), TRUE);
-=======
 		pqResultAlloc(res, nfields * sizeof(PGresAttValue), true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (tup == NULL)
 		goto fail;
 

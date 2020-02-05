@@ -381,16 +381,10 @@ retry_masked:
 			case EPIPE:
 				/* Set flag for EPIPE */
 				REMEMBER_EPIPE(spinfo, true);
-<<<<<<< HEAD
-
-#ifdef ECONNRESET
-				/* fallthrough */
-=======
 
 #ifdef ECONNRESET
 				/* FALL THRU */
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			case ECONNRESET:
 #endif
 				printfPQExpBuffer(&conn->errorMessage,

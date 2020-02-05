@@ -3,12 +3,8 @@
  * fe-protocol3.c
  *	  functions that are specific to frontend/backend protocol version 3
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1084,7 +1080,6 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	{
 		if (res)
 			res->errMsg = pqResultStrdup(res, workBuf.data);
-<<<<<<< HEAD
 
 		/* CDB: Transfer statistical messages on to the new result. */
 		if (conn->result &&
@@ -1108,10 +1103,7 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 			res->cdbstats = prev;
 		}
 
-		pqClearAsyncResult(conn);
-=======
 		pqClearAsyncResult(conn);	/* redundant, but be safe */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		conn->result = res;
 		if (PQExpBufferDataBroken(workBuf))
 			printfPQExpBuffer(&conn->errorMessage,

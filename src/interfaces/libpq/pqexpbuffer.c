@@ -15,12 +15,8 @@
  * a usable vsnprintf(), then a copy of our own implementation of it will
  * be linked into libpq.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/libpq/pqexpbuffer.c
@@ -49,15 +45,11 @@
 /* All "broken" PQExpBuffers point to this string. */
 static const char oom_buffer[1] = "";
 
-<<<<<<< HEAD
-=======
 /* Need a char * for unconstify() compatibility */
 static const char *oom_buffer_ptr = oom_buffer;
 
-static bool appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args) pg_attribute_printf(2, 0);
 
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * markPQExpBufferBroken
  *

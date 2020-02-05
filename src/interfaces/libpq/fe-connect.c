@@ -3,12 +3,8 @@
  * fe-connect.c
  *	  functions related to setting up a connection to the backend
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -90,18 +86,7 @@ static int	ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #include "common/link-canary.h"
 #include "common/scram-common.h"
 #include "mb/pg_wchar.h"
-<<<<<<< HEAD
-
-#if defined(_AIX)
-int     getpeereid(int, uid_t *__restrict__, gid_t *__restrict__);
-#endif
-
-#ifndef FD_CLOEXEC
-#define FD_CLOEXEC 1
-#endif
-=======
 #include "port/pg_bswap.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 #ifndef WIN32
@@ -397,7 +382,11 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"Replication", "D", 5,
 	offsetof(struct pg_conn, replication)},
 
-<<<<<<< HEAD
+	{"target_session_attrs", "PGTARGETSESSIONATTRS",
+		DefaultTargetSessionAttrs, NULL,
+		"Target-Session-Attrs", "", 11, /* sizeof("read-write") = 11 */
+	offsetof(struct pg_conn, target_session_attrs)},
+
     /* CDB: qExec wants some info from qDisp before GUCs are processed */
 	{"gpqeid", NULL, "", NULL,
 		"gp-debug-qeid", "D", 40,
@@ -406,12 +395,6 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{GPCONN_TYPE, NULL, NULL, NULL,
 		"connection type", "D", 10,
 	offsetof(struct pg_conn, gpconntype)},
-=======
-	{"target_session_attrs", "PGTARGETSESSIONATTRS",
-		DefaultTargetSessionAttrs, NULL,
-		"Target-Session-Attrs", "", 11, /* sizeof("read-write") = 11 */
-	offsetof(struct pg_conn, target_session_attrs)},
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Terminating entry --- MUST BE LAST */
 	{NULL, NULL, NULL, NULL,
@@ -545,22 +528,6 @@ pqDropConnection(PGconn *conn, bool flushInput)
 			gss_delete_sec_context(&min_s, &conn->gctx, GSS_C_NO_BUFFER);
 		if (conn->gtarg_nam)
 			gss_release_name(&min_s, &conn->gtarg_nam);
-<<<<<<< HEAD
-		if (conn->ginbuf.length)
-			gss_release_buffer(&min_s, &conn->ginbuf);
-		if (conn->goutbuf.length)
-			gss_release_buffer(&min_s, &conn->goutbuf);
-	}
-#endif
-#ifdef ENABLE_SSPI
-	if (conn->ginbuf.length)
-		free(conn->ginbuf.value);
-	conn->ginbuf.length = 0;
-	conn->ginbuf.value = NULL;
-	if (conn->sspitarget)
-		free(conn->sspitarget);
-	conn->sspitarget = NULL;
-=======
 	}
 #endif
 #ifdef ENABLE_SSPI
@@ -569,7 +536,6 @@ pqDropConnection(PGconn *conn, bool flushInput)
 		free(conn->sspitarget);
 		conn->sspitarget = NULL;
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (conn->sspicred)
 	{
 		FreeCredentialsHandle(conn->sspicred);
@@ -584,8 +550,6 @@ pqDropConnection(PGconn *conn, bool flushInput)
 	}
 	conn->usesspi = 0;
 #endif
-<<<<<<< HEAD
-=======
 	if (conn->sasl_state)
 	{
 		/*
@@ -595,7 +559,6 @@ pqDropConnection(PGconn *conn, bool flushInput)
 		pg_fe_scram_free(conn->sasl_state);
 		conn->sasl_state = NULL;
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 
@@ -652,13 +615,10 @@ pqDropServerData(PGconn *conn)
 	conn->last_sqlstate[0] = '\0';
 	conn->auth_req_received = false;
 	conn->password_needed = false;
-<<<<<<< HEAD
-=======
 	conn->write_failed = false;
 	if (conn->write_err_msg)
 		free(conn->write_err_msg);
 	conn->write_err_msg = NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	conn->be_pid = 0;
 	conn->be_key = 0;
 }
@@ -2011,98 +1971,6 @@ connectDBStart(PGconn *conn)
 	 */
 	resetPQExpBuffer(&conn->errorMessage);
 
-<<<<<<< HEAD
-	/* Initialize hint structure */
-	MemSet(&hint, 0, sizeof(hint));
-	hint.ai_socktype = SOCK_STREAM;
-	hint.ai_family = AF_UNSPEC;
-
-	/* Set up port number as a string */
-	if (conn->pgport != NULL && conn->pgport[0] != '\0')
-	{
-		portnum = atoi(conn->pgport);
-		if (portnum < 1 || portnum > 65535)
-		{
-			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("invalid port number: \"%s\"\n"),
-							  conn->pgport);
-			conn->options_valid = false;
-			goto connect_errReturn;
-		}
-	}
-	else
-		portnum = DEF_PGPORT;
-	snprintf(portstr, sizeof(portstr), "%d", portnum);
-
-	if (conn->pghostaddr != NULL && conn->pghostaddr[0] != '\0')
-	{
-		/* Using pghostaddr avoids a hostname lookup */
-		node = conn->pghostaddr;
-		hint.ai_family = AF_UNSPEC;
-		hint.ai_flags = AI_NUMERICHOST;
-	}
-	else if (conn->pghost != NULL && conn->pghost[0] != '\0')
-	{
-		/* Using pghost, so we have to look-up the hostname */
-		node = conn->pghost;
-		hint.ai_family = AF_UNSPEC;
-	}
-	else
-	{
-#ifdef HAVE_UNIX_SOCKETS
-		/* pghostaddr and pghost are NULL, so use Unix domain socket */
-		node = NULL;
-		hint.ai_family = AF_UNIX;
-		UNIXSOCK_PATH(portstr, portnum, conn->pgunixsocket);
-		if (strlen(portstr) >= UNIXSOCK_PATH_BUFLEN)
-		{
-			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("Unix-domain socket path \"%s\" is too long (maximum %d bytes)\n"),
-							  portstr,
-							  (int) (UNIXSOCK_PATH_BUFLEN - 1));
-			conn->options_valid = false;
-			goto connect_errReturn;
-		}
-#else
-		/* Without Unix sockets, default to localhost instead */
-		node = DefaultHost;
-		hint.ai_family = AF_UNSPEC;
-#endif   /* HAVE_UNIX_SOCKETS */
-	}
-
-	/* Use pg_getaddrinfo_all() to resolve the address */
-	ret = pg_getaddrinfo_all(node, portstr, &hint, &addrs);
-	if (ret || !addrs)
-	{
-		if (node)
-			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not translate host name \"%s\" to address: %s\n"),
-							  node, gai_strerror(ret));
-		else
-			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not translate Unix-domain socket path \"%s\" to address: %s\n"),
-							  portstr, gai_strerror(ret));
-		if (addrs)
-			pg_freeaddrinfo_all(hint.ai_family, addrs);
-		conn->options_valid = false;
-		goto connect_errReturn;
-	}
-
-	/*
-	 * Set up to try to connect to the first address.
-	 */
-	conn->addrlist = addrs;
-	conn->addr_cur = addrs;
-	conn->addrlist_family = hint.ai_family;
-#ifndef FRONTEND
-	// GPDB uses the high bits of the major version to indicate special internal communications
-	conn->pversion = GPDB_INTERNAL_PROTOCOL(3, 0);
-#else
-	conn->pversion = PG_PROTOCOL(3, 0);
-#endif
-	conn->try_next_addr = false;
-	conn->is_new_addr = true;
-=======
 #ifdef ENABLE_GSS
 	if (conn->gssencmode[0] == 'd') /* "disable" */
 		conn->try_gss = false;
@@ -2116,7 +1984,6 @@ connectDBStart(PGconn *conn)
 	conn->whichhost = -1;
 	conn->try_next_addr = false;
 	conn->try_next_host = true;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	conn->status = CONNECTION_NEEDED;
 
 	/*
@@ -2330,10 +2197,7 @@ restoreErrorMessage(PGconn *conn, PQExpBuffer savedMessage)
 PostgresPollingStatusType
 PQconnectPoll(PGconn *conn)
 {
-<<<<<<< HEAD
-=======
 	bool		reset_connection_state_machine = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	bool		need_new_connection = false;
 	PGresult   *res;
 	char		sebuf[PG_STRERROR_R_BUFLEN];
@@ -2400,33 +2264,12 @@ PQconnectPoll(PGconn *conn)
 keep_going:						/* We will come back to here until there is
 								 * nothing left to do. */
 
-<<<<<<< HEAD
-	/* Time to advance to next address? */
-=======
 	/* Time to advance to next address, or next host if no more addresses? */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (conn->try_next_addr)
 	{
 		if (conn->addr_cur && conn->addr_cur->ai_next)
 		{
 			conn->addr_cur = conn->addr_cur->ai_next;
-<<<<<<< HEAD
-			conn->is_new_addr = true;
-		}
-		else
-		{
-			/*
-			 * Oops, no more addresses.  An appropriate error message is
-			 * already set up, so just set the right status.
-			 */
-			goto error_return;
-		}
-		conn->try_next_addr = false;
-	}
-
-	/* Reset connection state machine? */
-	if (conn->is_new_addr)
-=======
 			reset_connection_state_machine = true;
 		}
 		else
@@ -2554,15 +2397,12 @@ keep_going:						/* We will come back to here until there is
 
 	/* Reset connection state machine? */
 	if (reset_connection_state_machine)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		/*
 		 * (Re) initialize our connection control variables for a set of
 		 * connection attempts to a single server address.  These variables
 		 * must persist across individual connection attempts, but we must
-<<<<<<< HEAD
-		 * reset them when we start to consider a new address (since it might
-		 * not be the same server).
+		 * reset them when we start to consider a new server.
 		 */
 #ifndef FRONTEND
 		// GPDB uses the high bits of the major version to indicate special internal communications
@@ -2573,24 +2413,11 @@ keep_going:						/* We will come back to here until there is
 		conn->send_appname = true;
 #ifdef USE_SSL
 		/* initialize these values based on SSL mode */
-		conn->allow_ssl_try = (conn->sslmode[0] != 'd');		/* "disable" */
-		conn->wait_ssl_try = (conn->sslmode[0] == 'a'); /* "allow" */
-#endif
-
-		conn->is_new_addr = false;
-=======
-		 * reset them when we start to consider a new server.
-		 */
-		conn->pversion = PG_PROTOCOL(3, 0);
-		conn->send_appname = true;
-#ifdef USE_SSL
-		/* initialize these values based on SSL mode */
 		conn->allow_ssl_try = (conn->sslmode[0] != 'd');	/* "disable" */
 		conn->wait_ssl_try = (conn->sslmode[0] == 'a'); /* "allow" */
 #endif
 
 		reset_connection_state_machine = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		need_new_connection = true;
 	}
 
@@ -2688,13 +2515,8 @@ keep_going:						/* We will come back to here until there is
 							goto keep_going;
 						}
 						appendPQExpBuffer(&conn->errorMessage,
-<<<<<<< HEAD
-							  libpq_gettext("could not create socket: %s\n"),
-							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-=======
 										  libpq_gettext("could not create socket: %s\n"),
 										  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						goto error_return;
 					}
 
@@ -2716,11 +2538,7 @@ keep_going:						/* We will come back to here until there is
 					{
 						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not set socket to nonblocking mode: %s\n"),
-<<<<<<< HEAD
-							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-=======
 										  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						conn->try_next_addr = true;
 						goto keep_going;
 					}
@@ -2730,11 +2548,7 @@ keep_going:						/* We will come back to here until there is
 					{
 						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not set socket to close-on-exec mode: %s\n"),
-<<<<<<< HEAD
-							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-=======
 										  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						conn->try_next_addr = true;
 						goto keep_going;
 					}
@@ -2766,11 +2580,7 @@ keep_going:						/* We will come back to here until there is
 							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("setsockopt(%s) failed: %s\n"),
 											  "SO_KEEPALIVE",
-<<<<<<< HEAD
-							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-=======
 											  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							err = 1;
 						}
 						else if (!setKeepalivesIdle(conn)
@@ -3485,9 +3295,6 @@ keep_going:						/* We will come back to here until there is
 					conn->inStart = conn->inCursor;
 
 					/* Check to see if we should mention pgpassfile */
-<<<<<<< HEAD
-					dot_pg_pass_warning(conn);
-=======
 					pgpassfileWarning(conn);
 
 #ifdef ENABLE_GSS
@@ -3509,7 +3316,6 @@ keep_going:						/* We will come back to here until there is
 						goto keep_going;
 					}
 #endif
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #ifdef USE_SSL
 
@@ -3533,11 +3339,7 @@ keep_going:						/* We will come back to here until there is
 					 * then do a non-SSL retry
 					 */
 					if (conn->sslmode[0] == 'p' /* "prefer" */
-<<<<<<< HEAD
-						&& conn->ssl != NULL
-=======
 						&& conn->ssl_in_use
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						&& conn->allow_ssl_try	/* redundant? */
 						&& !conn->wait_ssl_try) /* redundant? */
 					{
@@ -4085,13 +3887,9 @@ makeEmptyPGconn(void)
 	conn->verbosity = PQERRORS_DEFAULT;
 	conn->show_context = PQSHOW_CONTEXT_ERRORS;
 	conn->sock = PGINVALID_SOCKET;
-<<<<<<< HEAD
-	conn->dot_pgpass_used = false;
-=======
 #ifdef ENABLE_GSS
 	conn->try_gss = true;
 #endif
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * We try to send at least 8K at a time, which is the usual size of pipe
@@ -4140,7 +3938,6 @@ static void
 freePGconn(PGconn *conn)
 {
 	int			i;
-	pgParameterStatus *pstatus;
 
 	if (!conn)
 		return;
@@ -4267,24 +4064,8 @@ freePGconn(PGconn *conn)
 	/* Note that conn->Pfdebug is not ours to close or free */
 	if (conn->last_query)
 		free(conn->last_query);
-<<<<<<< HEAD
-	pg_freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
-
-	pstatus = conn->pstatus;
-	while (pstatus != NULL)
-	{
-		pgParameterStatus *prev = pstatus;
-
-		pstatus = pstatus->next;
-		free(prev);
-	}
-
-	if (conn->lobjfuncs)
-		free(conn->lobjfuncs);
-=======
 	if (conn->write_err_msg)
 		free(conn->write_err_msg);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (conn->inBuffer)
 		free(conn->inBuffer);
 	if (conn->outBuffer && !conn->outBuffer_shared)
@@ -4310,8 +4091,6 @@ freePGconn(PGconn *conn)
 static void
 release_conn_addrinfo(PGconn *conn)
 {
-<<<<<<< HEAD
-=======
 	if (conn->addrlist)
 	{
 		pg_freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
@@ -4327,7 +4106,6 @@ release_conn_addrinfo(PGconn *conn)
 static void
 sendTerminateConn(PGconn *conn)
 {
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * If possible, send Terminate message to close the connection politely.
 	 *
@@ -4379,13 +4157,7 @@ closePGconn(PGconn *conn)
 	conn->xactStatus = PQTRANS_IDLE;
 	pqClearAsyncResult(conn);	/* deallocate result */
 	resetPQExpBuffer(&conn->errorMessage);
-<<<<<<< HEAD
-	pg_freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
-	conn->addrlist = NULL;
-	conn->addr_cur = NULL;
-=======
 	release_conn_addrinfo(conn);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Reset all state obtained from server, too */
 	pqDropServerData(conn);
@@ -4613,20 +4385,13 @@ retry3:
 
 	/* Create and send the cancel request packet. */
 
-<<<<<<< HEAD
-	crp.packetlen = htonl((uint32) sizeof(crp));
-	if (requestFinish)
-		crp.cp.cancelRequestCode = (MsgType) htonl(FINISH_REQUEST_CODE);
-	else
-		crp.cp.cancelRequestCode = (MsgType) htonl(CANCEL_REQUEST_CODE);
-	crp.cp.backendPID = htonl(be_pid);
-	crp.cp.cancelAuthCode = htonl(be_key);
-=======
 	crp.packetlen = pg_hton32((uint32) sizeof(crp));
-	crp.cp.cancelRequestCode = (MsgType) pg_hton32(CANCEL_REQUEST_CODE);
+	if (requestFinish)
+		crp.cp.cancelRequestCode = (MsgType) pg_hton32(FINISH_REQUEST_CODE);
+	else
+		crp.cp.cancelRequestCode = (MsgType) pg_hton32(CANCEL_REQUEST_CODE);
 	crp.cp.backendPID = pg_hton32(be_pid);
 	crp.cp.cancelAuthCode = pg_hton32(be_key);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 retry4:
 	if (send(tmpsock, (char *) &crp, sizeof(crp), 0) != (int) sizeof(crp))
@@ -4744,7 +4509,7 @@ PQrequestFinish(PGcancel *cancel, char *errbuf, int errbufsize)
 	{
 		strlcpy(errbuf, "PQrequestFinish() -- no cancel object supplied",
 				errbufsize);
-		return FALSE;
+		return false;
 	}
 
 	return internal_cancel(&cancel->raddr, cancel->be_pid, cancel->be_key,

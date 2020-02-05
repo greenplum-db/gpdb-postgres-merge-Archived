@@ -9,12 +9,8 @@
  *	  more likely to break across PostgreSQL releases than code that uses
  *	  only the official API.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/libpq/libpq-int.h
@@ -26,10 +22,6 @@
 #define LIBPQ_INT_H
 
 /* We assume libpq-fe.h has already been included. */
-<<<<<<< HEAD
-#include "c.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "libpq-events.h"
 
 #include <time.h>
@@ -84,11 +76,7 @@ typedef struct
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-<<<<<<< HEAD
-#if (OPENSSL_VERSION_NUMBER >= 0x00907000L) && !defined(OPENSSL_NO_ENGINE)
-=======
 #ifndef OPENSSL_NO_ENGINE
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #define USE_SSL_ENGINE
 #endif
 #endif							/* USE_OPENSSL */
@@ -241,7 +229,8 @@ struct pg_result
 	int			curOffset;		/* start offset of free space in block */
 	int			spaceLeft;		/* number of free bytes remaining in block */
 
-<<<<<<< HEAD
+	size_t		memorySize;		/* total space allocated for this PGresult */
+
     /* CDB: List of statistical response messages ('Y') from qExec. */
     pgCdbStatCell  *cdbstats;   /* ordered from newest to oldest */
 
@@ -259,9 +248,6 @@ struct pg_result
 	/* GPDB: number of processed tuples for each AO partition */
 	int			naotupcounts;   /* number of aotupcounts, the count in it is an int64 */
 	PQaoRelTupCount *aotupcounts;
-=======
-	size_t		memorySize;		/* total space allocated for this PGresult */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 };
 
 /* PGAsyncStatusType defines the state of the query-execution state machine */
@@ -469,15 +455,9 @@ struct pg_conn
 	char	   *write_err_msg;	/* write error message, or NULL if OOM */
 
 	/* Transient state needed while establishing connection */
-<<<<<<< HEAD
-	bool		try_next_addr;	/* time to advance to next address? */
-	bool		is_new_addr;	/* need to (re)initialize for new address? */
-	struct addrinfo *addrlist;	/* list of possible backend addresses */
-=======
 	bool		try_next_addr;	/* time to advance to next address/host? */
 	bool		try_next_host;	/* time to advance to next connhost[]? */
 	struct addrinfo *addrlist;	/* list of addresses for current connhost */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	struct addrinfo *addr_cur;	/* the one currently being tried */
 	int			addrlist_family;	/* needed to know how to free addrlist */
 	PGSetenvStatusType setenv_state;	/* for 2.0 protocol only */
@@ -487,13 +467,9 @@ struct pg_conn
 	/* Miscellaneous stuff */
 	int			be_pid;			/* PID of backend --- needed for cancels */
 	int			be_key;			/* key of backend --- needed for cancels */
-<<<<<<< HEAD
 
     int64      mop_high_watermark;   /* highwater mark for mop */
 
-	char		md5Salt[4];		/* password salt received from backend */
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	pgParameterStatus *pstatus; /* ParameterStatus data */
 	int			client_encoding;	/* encoding id */
 	bool		std_strings;	/* standard_conforming_strings */
@@ -529,17 +505,13 @@ struct pg_conn
 	PGresult   *result;			/* result being constructed */
 	PGresult   *next_result;	/* next result (used in single-row mode) */
 
-<<<<<<< HEAD
 	char		wrote_xlog;
 
-	/* Assorted state for SSL, GSS, etc */
-=======
 	/* Assorted state for SASL, SSL, GSS, etc */
 	void	   *sasl_state;
 
 	/* SSL structures */
 	bool		ssl_in_use;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #ifdef USE_SSL
 	bool		allow_ssl_try;	/* Allowed to try SSL negotiation */
@@ -670,11 +642,8 @@ extern void pqSaveMessageField(PGresult *res, char code,
 extern void pqSaveParameterStatus(PGconn *conn, const char *name,
 								  const char *value);
 extern int	pqRowProcessor(PGconn *conn, const char **errmsgp);
-<<<<<<< HEAD
 extern void pqHandleSendFailure(PGconn *conn);
 extern bool PQsendQueryStart(PGconn *conn);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* === in fe-protocol2.c === */
 
@@ -736,15 +705,10 @@ extern int	pqReadData(PGconn *conn);
 extern int	pqFlush(PGconn *conn);
 extern int	pqFlushNonBlocking(PGconn *conn);
 extern int	pqWait(int forRead, int forWrite, PGconn *conn);
-<<<<<<< HEAD
-extern int pqWaitTimed(int forRead, int forWrite, PGconn *conn,
-			time_t finish_time);
-extern int pqWaitTimeout(int forRead, int forWrite, PGconn *conn,
-			time_t finish_time);
-=======
 extern int	pqWaitTimed(int forRead, int forWrite, PGconn *conn,
 						time_t finish_time);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern int	pqWaitTimeout(int forRead, int forWrite, PGconn *conn,
+						  time_t finish_time);
 extern int	pqReadReady(PGconn *conn);
 extern int	pqWriteReady(PGconn *conn);
 

@@ -56,56 +56,7 @@
  * GSSAPI authentication system.
  */
 
-<<<<<<< HEAD
-#if defined(WIN32) && !defined(WIN32_ONLY_COMPILER)
-/*
- * MIT Kerberos GSSAPI DLL doesn't properly export the symbols for MingW
- * that contain the OIDs required. Redefine here, values copied
- * from src/athena/auth/krb5/src/lib/gssapi/generic/gssapi_generic.c
- */
-const gss_OID_desc GSS_C_NT_HOSTBASED_SERVICE_desc =
-{10, (void *) "\x2a\x86\x48\x86\xf7\x12\x01\x02\x01\x04"};
-GSS_DLLIMP gss_OID GSS_C_NT_HOSTBASED_SERVICE = &GSS_C_NT_HOSTBASED_SERVICE_desc;
-#endif
-
-/*
- * Fetch all errors of a specific type and append to "str".
- */
-static void
-pg_GSS_error_int(PQExpBuffer str, const char *mprefix,
-				 OM_uint32 stat, int type)
-{
-	OM_uint32	lmin_s;
-	gss_buffer_desc lmsg;
-	OM_uint32	msg_ctx = 0;
-
-	do
-	{
-		gss_display_status(&lmin_s, stat, type,
-						   GSS_C_NO_OID, &msg_ctx, &lmsg);
-		appendPQExpBuffer(str, "%s: %s\n", mprefix, (char *) lmsg.value);
-		gss_release_buffer(&lmin_s, &lmsg);
-	} while (msg_ctx);
-}
-
-/*
- * GSSAPI errors contain two parts; put both into conn->errorMessage.
- */
-static void
-pg_GSS_error(const char *mprefix, PGconn *conn,
-			 OM_uint32 maj_stat, OM_uint32 min_stat)
-{
-	resetPQExpBuffer(&conn->errorMessage);
-
-	/* Fetch major error codes */
-	pg_GSS_error_int(&conn->errorMessage, mprefix, maj_stat, GSS_C_GSS_CODE);
-
-	/* Add the minor codes as well */
-	pg_GSS_error_int(&conn->errorMessage, mprefix, min_stat, GSS_C_MECH_CODE);
-}
-=======
 #include "fe-gssapi-common.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Continue GSS authentication with next token as needed.
@@ -403,11 +354,7 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate, int payloadlen)
 	if (conn->sspictx)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-<<<<<<< HEAD
-					libpq_gettext("duplicate SSPI authentication request\n"));
-=======
 						  libpq_gettext("duplicate SSPI authentication request\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return STATUS_ERROR;
 	}
 
@@ -1034,19 +981,6 @@ pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn)
 			if (pg_local_sendauth(conn) != STATUS_OK)
 				return STATUS_ERROR;
 			break;
-
-			/*
-			 * SASL authentication was introduced in version 10. Older
-			 * versions recognize the request only to give a nicer error
-			 * message. We call it "SCRAM authentication" in the error, rather
-			 * than SASL, because SCRAM is more familiar to users, and it's
-			 * the only SASL authentication mechanism that has been
-			 * implemented as of this writing, anyway.
-			 */
-		case AUTH_REQ_SASL:
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("SCRAM authentication requires libpq version 10 or above\n"));
-			return STATUS_ERROR;
 
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
