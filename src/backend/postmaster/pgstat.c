@@ -254,13 +254,10 @@ typedef struct TwoPhasePgStatRecord
 static MemoryContext pgStatLocalContext = NULL;
 static HTAB *pgStatDBHash = NULL;
 
-<<<<<<< HEAD
 static HTAB *pgStatQueueHash = NULL;		/* GPDB */
 static HTAB *localStatPortalHash = NULL;	/* GPDB. per backend portal queue stats.*/
 
-=======
 /* Status for backends including auxiliary */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static LocalPgBackendStatus *localBackendStatusTable = NULL;
 
 /* Total number of backends including auxiliary */

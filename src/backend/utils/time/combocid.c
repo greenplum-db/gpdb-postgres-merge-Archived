@@ -159,16 +159,11 @@ HeapTupleHeaderGetCmax(HeapTupleHeader tup)
 	 * weakens the check, but not using GetCmax() inside one would complicate
 	 * things too much.
 	 */
-<<<<<<< HEAD
 	/*
 	 * MPP-8317: cursors can't always *tell* that this is the current transaction.
 	 */
 	Assert(QEDtxContextInfo.cursorContext || CritSectionCount > 0 ||
-	  TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(tup)));
-=======
-	Assert(CritSectionCount > 0 ||
 		   TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(tup)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (tup->t_infomask & HEAP_COMBOCID)
 		return GetRealCmax(HeapTupleHeaderGetXmin(tup), cid);

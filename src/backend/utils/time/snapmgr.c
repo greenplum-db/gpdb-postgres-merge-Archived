@@ -1709,17 +1709,11 @@ DeleteAllExportedSnapshotFiles(void)
 			continue;
 
 		snprintf(buf, sizeof(buf), SNAPSHOT_EXPORT_DIR "/%s", s_de->d_name);
-<<<<<<< HEAD
-		/* Again, unlink failure is not worthy of FATAL */
-		if (unlink(buf))
-			elog(LOG, "could not unlink file \"%s\": %m", buf);
-=======
 
 		if (unlink(buf) != 0)
 			ereport(LOG,
 					(errcode_for_file_access(),
 					 errmsg("could not remove file \"%s\": %m", buf)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	FreeDir(s_dir);
