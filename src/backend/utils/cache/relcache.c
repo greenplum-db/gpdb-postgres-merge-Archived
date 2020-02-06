@@ -43,11 +43,6 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
-<<<<<<< HEAD
-#include "catalog/heap.h"
-#include "catalog/index.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/partition.h"
@@ -100,22 +95,15 @@
 
 #include "access/transam.h"         /* GpPolicy */
 #include "catalog/gp_policy.h"         /* GpPolicy */
+#include "catalog/heap.h"
+#include "catalog/index.h"
 #include "cdb/cdbtm.h"
 #include "cdb/cdbvars.h"        /* Gp_role */
 #include "cdb/cdbsreh.h"
 #include "utils/visibility_summary.h"
 
 
-<<<<<<< HEAD
-/*
- *		name of relcache init file(s), used to speed up backend startup
- */
-#define RELCACHE_INIT_FILENAME	"pg_internal.init"
-
 #define RELCACHE_INIT_FILEMAGIC		0x773266	/* version ID value */
-=======
-#define RELCACHE_INIT_FILEMAGIC		0x573266	/* version ID value */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Default policy for whether to apply RECOVER_RELATION_BUILD_MEMORY:
@@ -1845,16 +1833,7 @@ RelationInitTableAccessMethod(Relation relation)
  *		quite a lot since we only need to work for a few basic system
  *		catalogs.
  *
-<<<<<<< HEAD
- * formrdesc is currently used for: pg_database, pg_authid, pg_auth_members,
- * pg_shseclabel, pg_class, pg_attribute, pg_proc, and pg_type
- * In GPDB, also: pg_auth_time_constraint.
- * (see RelationCacheInitializePhase2/3).
- *
- * Note that these catalogs can't have constraints (except attnotnull),
-=======
  * The catalogs this is used for can't have constraints (except attnotnull),
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * default values, rules, or triggers, since we don't cope with any of that.
  * (Well, actually, this only matters for properties that need to be valid
  * during bootstrap or before RelationCacheInitializePhase3 runs, and none of
@@ -3627,22 +3606,6 @@ RelationSetNewRelfilenode(Relation relation, char persistence)
 	classform = (Form_pg_class) GETSTRUCT(tuple);
 
 	/*
-<<<<<<< HEAD
-	 * Create storage for the main fork of the new relfilenode.
-	 *
-	 * NOTE: any conflict in relfilenode value will be caught here, if
-	 * GetNewRelFileNode messes up for any reason.
-	 */
-	newrnode.node = relation->rd_node;
-	newrnode.node.relNode = newrelfilenode;
-	newrnode.backend = relation->rd_backend;
-	RelationCreateStorage(newrnode.node, persistence,
-						  relation->rd_rel->relstorage);
-	smgrclosenode(newrnode);
-
-	/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * Schedule unlinking of the old storage at transaction commit.
 	 */
 	RelationDropStorage(relation);
@@ -3727,29 +3690,6 @@ RelationSetNewRelfilenode(Relation relation, char persistence)
 		/* Normal case, update the pg_class entry */
 		classform->relfilenode = newrelfilenode;
 
-<<<<<<< HEAD
-	/* These changes are safe even for a mapped relation */
-	if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
-	{
-		classform->relpages = 0;	/* it's empty until further notice */
-		classform->reltuples = 0;
-		classform->relallvisible = 0;
-	}
-
-	if (TransactionIdIsValid(classform->relfrozenxid))
-	{
-		Assert(TransactionIdIsNormal(freezeXid));
-		classform->relfrozenxid = freezeXid;
-		/*
-		 * Don't know partition parent or not here but passing false is perfect
-		 * for assertion, as valid relfrozenxid means it shouldn't be parent.
-		 */
-		Assert(should_have_valid_relfrozenxid(classform->relkind,
-											  classform->relstorage, false));
-	}
-	classform->relminmxid = minmulti;
-	classform->relpersistence = persistence;
-=======
 		/* relpages etc. never change for sequences */
 		if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
 		{
@@ -3760,7 +3700,6 @@ RelationSetNewRelfilenode(Relation relation, char persistence)
 		classform->relfrozenxid = freezeXid;
 		classform->relminmxid = minmulti;
 		classform->relpersistence = persistence;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		CatalogTupleUpdate(pg_class, &tuple->t_self, tuple);
 	}
@@ -3873,17 +3812,13 @@ RelationCacheInitializePhase2(void)
 		formrdesc("pg_auth_members", AuthMemRelation_Rowtype_Id, true,
 				  Natts_pg_auth_members, Desc_pg_auth_members);
 		formrdesc("pg_shseclabel", SharedSecLabelRelation_Rowtype_Id, true,
-<<<<<<< HEAD
-				  false, Natts_pg_shseclabel, Desc_pg_shseclabel);
-		formrdesc("pg_auth_time_constraint", AuthTimeConstraint_Rowtype_Id, true,
-				  false, Natts_pg_auth_time_constraint, Desc_pg_auth_time_constraint_members);
-=======
 				  Natts_pg_shseclabel, Desc_pg_shseclabel);
 		formrdesc("pg_subscription", SubscriptionRelation_Rowtype_Id, true,
 				  Natts_pg_subscription, Desc_pg_subscription);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		formrdesc("pg_auth_time_constraint", AuthTimeConstraint_Rowtype_Id, true,
+				  Natts_pg_auth_time_constraint, Desc_pg_auth_time_constraint_members);
 
-#define NUM_CRITICAL_SHARED_RELS	5	/* fix if you change list above */
+#define NUM_CRITICAL_SHARED_RELS	6	/* fix if you change list above */
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -4968,11 +4903,7 @@ RelationGetIndexPredicate(Relation relation)
 	 */
 	result = (List *) eval_const_expressions(NULL, (Node *) result);
 
-<<<<<<< HEAD
-	result = (List *) canonicalize_qual_ext((Expr *) result, false);
-=======
 	result = (List *) canonicalize_qual((Expr *) result, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Also convert to implicit-AND format */
 	result = make_ands_implicit((Expr *) result);
@@ -5021,10 +4952,7 @@ RelationGetIndexAttrBitmap(Relation relation, IndexAttrBitmapKind attrKind)
 	Bitmapset  *idindexattrs;	/* columns in the replica identity */
 	List	   *indexoidlist;
 	List	   *newindexoidlist;
-<<<<<<< HEAD
-=======
 	Oid			relpkindex;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	Oid			relreplindex;
 	ListCell   *l;
 	MemoryContext oldcxt;
@@ -5062,18 +4990,11 @@ restart:
 		return NULL;
 
 	/*
-<<<<<<< HEAD
-	 * Copy the rd_replidindex value computed by RelationGetIndexList before
-	 * proceeding.  This is needed because a relcache flush could occur inside
-	 * index_open below, resetting the fields managed by RelationGetIndexList.
-	 * We need to do the work with a stable value for relreplindex.
-=======
 	 * Copy the rd_pkindex and rd_replidindex values computed by
 	 * RelationGetIndexList before proceeding.  This is needed because a
 	 * relcache flush could occur inside index_open below, resetting the
 	 * fields managed by RelationGetIndexList.  We need to do the work with
 	 * stable values of these fields.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	relpkindex = relation->rd_pkindex;
 	relreplindex = relation->rd_replidindex;

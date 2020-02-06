@@ -1238,21 +1238,16 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	/* initialize client encoding */
 	InitializeClientEncoding();
 
-<<<<<<< HEAD
+	/* Initialize this backend's session state. */
+	InitializeSession();
+
 	/*
 	 * report this backend in the PgBackendStatus array, meanwhile, we do not
 	 * want users to see auxiliary background worker like fts in pg_stat_* views.
 	 */
 	if (!bootstrap && !amAuxiliaryBgWorker())
-=======
-	/* Initialize this backend's session state. */
-	InitializeSession();
-
-	/* report this backend in the PgBackendStatus array */
-	if (!bootstrap)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		pgstat_bestart();
-		
+
 	/* 
      * MPP package setup 
      *

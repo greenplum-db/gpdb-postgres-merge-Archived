@@ -14,22 +14,11 @@
 #include <sys/stat.h>
 #include <glob.h>
 
-<<<<<<< HEAD
-#include "access/heapam.h"
-#include "access/appendonlywriter.h"
-#include "access/aocssegfiles.h"
-#include "access/heapam.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/htup_details.h"
 #include "access/relation.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
-<<<<<<< HEAD
-#include "catalog/pg_appendonly_fn.h"
-=======
 #include "catalog/pg_authid.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
@@ -49,6 +38,9 @@
 #include "utils/relmapper.h"
 #include "utils/syscache.h"
 
+#include "access/appendonlywriter.h"
+#include "access/aocssegfiles.h"
+#include "catalog/pg_appendonly_fn.h"
 #include "libpq-fe.h"
 #include "foreign/fdwapi.h"
 #include "cdb/cdbdisp_query.h"
@@ -460,12 +452,8 @@ Datum
 pg_relation_size(PG_FUNCTION_ARGS)
 {
 	Oid			relOid = PG_GETARG_OID(0);
-<<<<<<< HEAD
-	text	   *forkName = PG_GETARG_TEXT_P(1);
-	ForkNumber	forkNumber;
-=======
 	text	   *forkName = PG_GETARG_TEXT_PP(1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	ForkNumber	forkNumber;
 	Relation	rel;
 	int64		size = 0;
 
@@ -489,7 +477,7 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	if (rel == NULL)
 		PG_RETURN_NULL();
 
-<<<<<<< HEAD
+	/* GPDB_12_MERGE_FIXME: Is this still needed? */
 	if(RelationIsForeign(rel))
 	{
 		FdwRoutine *fdwroutine;
@@ -513,6 +501,7 @@ pg_relation_size(PG_FUNCTION_ARGS)
 
 	forkNumber = forkname_to_number(text_to_cstring(forkName));
 
+	/* GPDB_12_MERGE_FIXME: Are these checks for 0 still needed? */
 	if (relOid == 0 || rel->rd_node.relNode == 0)
 		size = 0;
 	else
@@ -527,10 +516,6 @@ pg_relation_size(PG_FUNCTION_ARGS)
 
 		size += get_size_from_segDBs(sql);
 	}
-=======
-	size = calculate_relation_size(&(rel->rd_node), rel->rd_backend,
-								   forkname_to_number(text_to_cstring(forkName)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	relation_close(rel, AccessShareLock);
 
