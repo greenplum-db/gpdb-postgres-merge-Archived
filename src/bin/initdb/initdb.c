@@ -183,16 +183,10 @@ static int	output_errno = 0;
 static char *pgdata_native;
 
 /* defaults */
-<<<<<<< HEAD
 static int	n_connections = 0;
 static int	n_buffers = 0;
 static char *dynamic_shared_memory_type = NULL;
-=======
-static int	n_connections = 10;
-static int	n_buffers = 50;
-static const char *dynamic_shared_memory_type = NULL;
 static const char *default_timezone = NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Warning messages for authentication methods
@@ -267,13 +261,8 @@ static char *get_id(void);
 static int	get_encoding_id(const char *encoding_name);
 static void set_input(char **dest, const char *filename);
 static void check_input(char *path);
-<<<<<<< HEAD
-static void write_version_file(char *extrapath);
-static void set_null_conf(const char*);
-=======
 static void write_version_file(const char *extrapath);
 static void set_null_conf(void);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void test_config_settings(void);
 static void setup_config(void);
 static void bootstrap_template1(void);
@@ -284,11 +273,8 @@ static void setup_sysviews(FILE *cmdfd);
 static void setup_description(FILE *cmdfd);
 #if 0
 static void setup_collation(FILE *cmdfd);
-<<<<<<< HEAD
 #endif
 static void setup_conversion(FILE *cmdfd);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void setup_dictionary(FILE *cmdfd);
 static void setup_privileges(FILE *cmdfd);
 static void set_info_version(void);
@@ -1257,11 +1243,7 @@ test_config_settings(void)
 #define MIN_BUFS_FOR_CONNS(nconns)	((nconns) * 10)
 
 	static const int trial_conns[] = {
-<<<<<<< HEAD
 		200, 100, 50, 40, 30, 20, 10
-=======
-		100, 50, 40, 30, 20
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	};
 	static const int trial_bufs[] = {
 		16384, 8192, 4096, 3584, 3072, 2560, 2048, 1536,
@@ -1313,12 +1295,8 @@ test_config_settings(void)
 				 "< \"%s\" > \"%s\" 2>&1",
 				 backend_exec, boot_options,
 				 test_conns, test_buffs,
-<<<<<<< HEAD
-				 DEVNULL, backend_output);
-=======
 				 dynamic_shared_memory_type,
 				 DEVNULL, DEVNULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		status = system(cmd);
 		if (status == 0)
 		{
@@ -1356,12 +1334,8 @@ test_config_settings(void)
 				 "< \"%s\" > \"%s\" 2>&1",
 				 backend_exec, boot_options,
 				 n_connections, test_buffs,
-<<<<<<< HEAD
-				 DEVNULL, backend_output);
-=======
 				 dynamic_shared_memory_type,
 				 DEVNULL, DEVNULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		status = system(cmd);
 		if (status == 0)
 		{
@@ -1447,10 +1421,6 @@ setup_config(void)
 		conflines = replace_token(conflines, "#port = 5432", repltok);
 	}
 
-<<<<<<< HEAD
-	conflines = add_assignment(conflines, "lc_messages", "'%s'",
-							   escape_quotes(lc_messages));
-=======
 	/* set default max_wal_size and min_wal_size */
 	snprintf(repltok, sizeof(repltok), "min_wal_size = %s",
 			 pretty_wal_size(DEFAULT_MIN_WAL_SEGS));
@@ -1463,7 +1433,6 @@ setup_config(void)
 	snprintf(repltok, sizeof(repltok), "lc_messages = '%s'",
 			 escape_quotes(lc_messages));
 	conflines = replace_token(conflines, "#lc_messages = 'C'", repltok);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	conflines = add_assignment(conflines, "lc_monetary", "'%s'",
 							   escape_quotes(lc_monetary));
@@ -1645,22 +1614,14 @@ setup_config(void)
 			getaddrinfo("::1", NULL, &hints, &gai_result) != 0)
 		{
 			conflines = replace_token(conflines,
-<<<<<<< HEAD
-							   "host    all             all             ::1",
-							 "#host    all             all             ::1");
-		if (err != 0 ||
-			getaddrinfo("fe80::1", NULL, &hints, &gai_result) != 0)
-			conflines = replace_token(conflines,
-							   "host    all             all             fe80::1",
-							 "#host    all             all             fe80::1");
-=======
 									  "host    all             all             ::1",
 									  "#host    all             all             ::1");
-			conflines = replace_token(conflines,
-									  "host    replication     all             ::1",
-									  "#host    replication     all             ::1");
+            if (err != 0 ||
+                    getaddrinfo("fe80::1", NULL, &hints, &gai_result) != 0)
+                conflines = replace_token(conflines,
+                                          "host    all             all             fe80::1",
+                                          "#host    all             all             fe80::1");
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 #else							/* !HAVE_IPV6 */
 	/* If we didn't compile IPV6 support at all, always comment it out */
@@ -3082,19 +3043,10 @@ setup_bin_paths(const char *argv0)
 			strlcpy(full_path, progname, sizeof(full_path));
 
 		if (ret == -1)
-<<<<<<< HEAD
-			fprintf(stderr,
-					_("The program \"postgres\" is needed by %s "
-					  "but was either not found in the "
-					  "same directory as \"%s\" or failed unexpectedly.\n"
-					  "Check your installation; \"postgres -V\" may have more information.\n"),
-					progname, full_path);
-=======
 			pg_log_error("The program \"postgres\" is needed by %s but was not found in the\n"
 						 "same directory as \"%s\".\n"
 						 "Check your installation.",
 						 full_path, progname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		else
 			pg_log_error("The program \"postgres\" was found by \"%s\"\n"
 						 "but was not the same version as %s.\n"
@@ -3721,13 +3673,10 @@ main(int argc, char *argv[])
 		{"waldir", required_argument, NULL, 'X'},
 		{"wal-segsize", required_argument, NULL, 12},
 		{"data-checksums", no_argument, NULL, 'k'},
-<<<<<<< HEAD
         {"max_connections", required_argument, NULL, 1001},     /*CDB*/
         {"shared_buffers", required_argument, NULL, 1003},      /*CDB*/
         {"backend_output", optional_argument, NULL, 1005},      /*CDB*/
-=======
 		{"allow-group-access", no_argument, NULL, 'g'},
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{NULL, 0, NULL, 0}
 	};
 
@@ -3887,7 +3836,6 @@ main(int argc, char *argv[])
 			case 'X':
 				xlog_dir = pg_strdup(optarg);
 				break;
-<<<<<<< HEAD
 			case 1001:
                 n_connections = parse_long(optarg, false, optname);
 				break;
@@ -3896,13 +3844,11 @@ main(int argc, char *argv[])
 				break;
 			case 1005:
 				backend_output = pg_strdup(optarg);
-=======
 			case 12:
 				str_wal_segment_size_mb = pg_strdup(optarg);
 				break;
 			case 'g':
 				SetDataDirectoryCreatePerm(PG_DIR_MODE_GROUP);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
