@@ -1303,7 +1303,7 @@ addRangeTableEntry(ParseState *pstate,
 
 		relid = RangeVarGetRelid(relation, lockmode, false);
 
-		rel = try_heap_open(relid, NoLock, true);
+		rel = try_table_open(relid, NoLock, true);
 		if (!rel)
 			elog(ERROR, "open relation(%u) fail", relid);
 

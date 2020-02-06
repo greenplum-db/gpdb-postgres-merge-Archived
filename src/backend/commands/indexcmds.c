@@ -3081,7 +3081,7 @@ ReindexRelationList(List *relids, int options, bool multiple)
 		 * (reindexing) it. This should be tolerable. Move on to the next
 		 * one.
 		 */
-		rel = try_heap_open(relid, ShareLock, false);
+		rel = try_table_open(relid, ShareLock, false);
 
 		if (rel != NULL)
 		{

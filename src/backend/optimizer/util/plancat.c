@@ -655,7 +655,7 @@ cdb_estimate_partitioned_numtuples(Relation rel, bool *stats_missing)
 		double		childtuples;
 
 		if (childid != RelationGetRelid(rel))
-			childrel = try_heap_open(childid, NoLock, false);
+			childrel = try_table_open(childid, NoLock, false);
 		else
 			childrel = rel;
 

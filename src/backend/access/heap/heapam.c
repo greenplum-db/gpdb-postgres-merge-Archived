@@ -78,11 +78,7 @@
 
 
 static HeapTuple heap_prepare_insert(Relation relation, HeapTuple tup,
-<<<<<<< HEAD
-					TransactionId xid, CommandId cid, int options, bool isFrozen);
-=======
-									 TransactionId xid, CommandId cid, int options);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+									 TransactionId xid, CommandId cid, int options, bool isFrozen);
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
 								  Buffer newbuf, HeapTuple oldtup,
 								  HeapTuple newtup, HeapTuple old_key_tup,
@@ -1185,515 +1181,7 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
  * ----------------------------------------------------------------
  */
 
-
-<<<<<<< HEAD
-	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
-
-	/* Get the lock before trying to open the relcache entry */
-	if (lockmode != NoLock)
-		LockRelationOid(relationId, lockmode);
-
-	/* The relcache does all the real work... */
-	r = RelationIdGetRelation(relationId);
-
-	if (!RelationIsValid(r))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation not found (OID %u)", relationId),
-				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
-	}
-
-	/* Disabled in GPDB as per comment in PrepareTransaction(). */
-#if 0
-	/* Make note that we've accessed a temporary relation */
-	if (RelationUsesLocalBuffers(r))
-		MyXactAccessedTempRel = true;
-#endif
-
-	pgstat_initstats(r);
-
-	return r;
-}
-
-/* ----------------
- *		try_relation_open - open any relation by relation OID
- *
- *		Same as relation_open, except return NULL instead of failing
- *		if the relation does not exist.
- * ----------------
- */
-Relation
-try_relation_open(Oid relationId, LOCKMODE lockmode, bool noWait)
-{
-	Relation	r;
-
-	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
-
-	/* Get the lock first */
-	if (lockmode != NoLock)
-	{
-		if (!noWait)
-			LockRelationOid(relationId, lockmode);
-		else
-		{
-			/*
-			 * noWait is a Greenplum addition to the open_relation code
-			 * basically to support INSERT ... FOR UPDATE NOWAIT.  Our NoWait
-			 * handling needs to be more tolerant of failed locks than standard
-			 * postgres largely due to the fact that we have to promote certain
-			 * update locks in order to handle distributed updates.
-			 */
-			if (!ConditionalLockRelationOid(relationId, lockmode))
-				return NULL;
-		}
-	}
-
-	/*
-	 * Now that we have the lock, probe to see if the relation really exists
-	 * or not.
-	 */
-	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(relationId)))
-	{
-		/* Release useless lock */
-		if (lockmode != NoLock)
-			UnlockRelationOid(relationId, lockmode);
-
-		return NULL;
-	}
-
-	/* Should be safe to do a relcache load */
-	r = RelationIdGetRelation(relationId);
-
-	if (!RelationIsValid(r))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation not found (OID %u)", relationId),
-				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
-	}
-
-	/* Disabled in GPDB as per comment in PrepareTransaction(). */
-#if 0
-	/* Make note that we've accessed a temporary relation */
-	if (RelationUsesLocalBuffers(r))
-		MyXactAccessedTempRel = true;
-#endif
-
-	pgstat_initstats(r);
-
-	return r;
-}
-
-
-
-/*
- * CdbTryOpenRelation -- Opens a relation with a specified lock mode.
- *
- * CDB: Like try_relation_open, except that it will upgrade the lock when needed
- * for distributed tables.
- */
-Relation
-CdbTryOpenRelation(Oid relid, LOCKMODE reqmode, bool noWait, bool *lockUpgraded)
-{
-    LOCKMODE    lockmode = reqmode;
-	Relation    rel;
-
-	if (lockUpgraded != NULL)
-		*lockUpgraded = false;
-
-    /*
-	 * Since we have introduced GDD(global deadlock detector), for heap table
-	 * we do not need to upgrade the requested lock. For ao table, because of
-	 * the design of ao table's visibilitymap, we have to upgrade the lock
-	 * (More details please refer https://groups.google.com/a/greenplum.org/forum/#!topic/gpdb-dev/iDj8WkLus4g)
-	 *
-	 * And we select for update statement's lock is upgraded at addRangeTableEntry.
-	 *
-	 * Note: This code could be improved substantially after we redesign ao table
-	 * and select for update.
-	 */
-	if (lockmode == RowExclusiveLock)
-	{
-		if (Gp_role == GP_ROLE_DISPATCH &&
-			CondUpgradeRelLock(relid, noWait))
-		{
-			lockmode = ExclusiveLock;
-			if (lockUpgraded != NULL)
-				*lockUpgraded = true;
-		}
-    }
-
-	rel = try_heap_open(relid, lockmode, noWait);
-	if (!RelationIsValid(rel))
-		return NULL;
-
-	/* 
-	 * There is a slim chance that ALTER TABLE SET DISTRIBUTED BY may
-	 * have altered the distribution policy between the time that we
-	 * decided to upgrade the lock and the time we opened the relation
-	 * with the lock.  Double check that our chosen lock mode is still
-	 * okay.
-	 */
-	if (lockmode == RowExclusiveLock &&
-		Gp_role == GP_ROLE_DISPATCH && RelationIsAppendOptimized(rel))
-	{
-		elog(ERROR, "relation \"%s\" concurrently updated", 
-			 RelationGetRelationName(rel));
-	}
-
-	/* inject fault after holding the lock */
-	SIMPLE_FAULT_INJECTOR("upgrade_row_lock");
-
-	return rel;
-}                                       /* CdbOpenRelation */
-
-/*
- * CdbOpenRelation -- Opens a relation with a specified lock mode.
- *
- * CDB: Like CdbTryOpenRelation, except that it guarantees either
- * an error or a valid opened relation returned.
- */
-Relation
-CdbOpenRelation(Oid relid, LOCKMODE reqmode, bool noWait, bool *lockUpgraded)
-{
-	Relation rel;
-
-	rel = CdbTryOpenRelation(relid, reqmode, noWait, lockUpgraded);
-
-	if (!RelationIsValid(rel))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation not found (OID %u)", relid),
-				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
-	}
-
-	return rel;
-
-}                                       /* CdbOpenRelation */
-
-/*
- * CdbOpenRelationRv -- Opens a relation with a specified lock mode.
- *
- * CDB: Like CdbTryOpenRelation, except that it guarantees either
- * an error or a valid opened relation returned.
- */
-Relation
-CdbOpenRelationRv(const RangeVar *relation, LOCKMODE reqmode, bool noWait, 
-				  bool *lockUpgraded)
-{
-	Oid			relid;
-	Relation	rel;
-
-	/* Look up the appropriate relation using namespace search */
-	relid = RangeVarGetRelid(relation, NoLock, false);
-	rel = CdbTryOpenRelation(relid, reqmode, noWait, lockUpgraded);
-
-	if (!RelationIsValid(rel))
-	{
-		if (relation->schemaname)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("relation \"%s.%s\" does not exist",
-							relation->schemaname, relation->relname)));
-		}
-		else
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("relation \"%s\" does not exist",
-							relation->relname)));
-		}
-	}
-
-	return rel;
-
-}                                       /* CdbOpenRelation */
-
-
-
-/* ----------------
- *		relation_openrv - open any relation specified by a RangeVar
- *
- *		Same as relation_open, but the relation is specified by a RangeVar.
- * ----------------
- */
-Relation
-relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
-{
-	Oid			relOid;
-	Relation    rel;
-
-	/*
-	 * Check for shared-cache-inval messages before trying to open the
-	 * relation.  This is needed even if we already hold a lock on the
-	 * relation, because GRANT/REVOKE are executed without taking any lock on
-	 * the target relation, and we want to be sure we see current ACL
-	 * information.  We can skip this if asked for NoLock, on the assumption
-	 * that such a call is not the first one in the current command, and so we
-	 * should be reasonably up-to-date already.  (XXX this all could stand to
-	 * be redesigned, but for the moment we'll keep doing this like it's been
-	 * done historically.)
-	 */
-	if (lockmode != NoLock)
-		AcceptInvalidationMessages();
-
-	/* Look up and lock the appropriate relation using namespace search */
-	relOid = RangeVarGetRelid(relation, lockmode, false);
-
-	/* 
-	 * use try_relation_open instead of relation_open so that we can
-	 * throw a more graceful error message if the relation was dropped
-	 * between the RangeVarGetRelid and when we try to open the relation.
-	 */
-	rel = try_relation_open(relOid, NoLock, false);
-
-	if (!RelationIsValid(rel))
-	{
-		if (relation->schemaname)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("relation \"%s.%s\" does not exist",
-							relation->schemaname, relation->relname)));
-		}
-		else
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("relation \"%s\" does not exist",
-							relation->relname)));
-		}
-	}
-
-	return rel;
-}
-
-/* ----------------
- *		relation_openrv_extended - open any relation specified by a RangeVar
- *
- *		Same as relation_openrv, but with an additional missing_ok argument
- *		allowing a NULL return rather than an error if the relation is not
- *		found.  (Note that some other causes, such as permissions problems,
- *		will still result in an ereport.)
- * ----------------
- */
-Relation
-relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
-						 bool missing_ok, bool noWait)
-{
-	Oid			relOid;
-
-	/*
-	 * Check for shared-cache-inval messages before trying to open the
-	 * relation.  See comments in relation_openrv().
-	 */
-	if (lockmode != NoLock)
-		AcceptInvalidationMessages();
-
-	/* Look up and lock the appropriate relation using namespace search */
-	relOid = RangeVarGetRelid(relation, lockmode, missing_ok);
-
-	/* Return NULL on not-found */
-	if (!OidIsValid(relOid))
-		return NULL;
-
-	/* Let try_relation_open do the rest */
-	return try_relation_open(relOid, lockmode, noWait);
-}
-
-/* ----------------
- *		relation_close - close any relation
- *
- *		If lockmode is not "NoLock", we then release the specified lock.
- *
- *		Note that it is often sensible to hold a lock beyond relation_close;
- *		in that case, the lock is released automatically at xact end.
- * ----------------
- */
-void
-relation_close(Relation relation, LOCKMODE lockmode)
-{
-	LockRelId	relid = relation->rd_lockInfo.lockRelId;
-
-	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
-
-	/* The relcache does the real work... */
-	RelationClose(relation);
-
-	if (lockmode != NoLock)
-		UnlockRelationId(&relid, lockmode);
-	else
-	{
-		LOCKTAG		tag;
-
-		SET_LOCKTAG_RELATION(tag, relid.dbId, relid.relId);
-
-		/*
-		 * Closing with NoLock is a sufficient condition for a relation lock
-		 * to be transaction-level(means the lock can only be released after
-		 * the holding transaction is over).
-		 * This is because the difference betwwen the ref counts in the
-		 * relation and the lock tag can not be removed.
-		 * So this is a good time to set the holdTillEndXact flag for the lock.
-		 */
-		LockSetHoldTillEndXact(&tag);
-	}
-}
-
-
-/* ----------------
- *		heap_open - open a heap relation by relation OID
- *
- *		This is essentially relation_open plus check that the relation
- *		is not an index nor a composite type.  (The caller should also
- *		check that it's not a view or foreign table before assuming it has
- *		storage.)
- * ----------------
- */
-Relation
-heap_open(Oid relationId, LOCKMODE lockmode)
-{
-	Relation	r;
-
-	r = relation_open(relationId, lockmode);
-
-	if (r->rd_rel->relkind == RELKIND_INDEX)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is an index",
-						RelationGetRelationName(r))));
-	else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is a composite type",
-						RelationGetRelationName(r))));
-
-	return r;
-}
-
-/* ----------------
- *		try_heap_open - open a heap relation by relation OID
- *
- *		As above, but relation return NULL for relation-not-found
- * ----------------
- */
-Relation
-try_heap_open(Oid relationId, LOCKMODE lockmode, bool noWait)
-{
-	Relation	r;
-
-	r = try_relation_open(relationId, lockmode, noWait);
-
-	if (!RelationIsValid(r))
-		return NULL;
-
-	if (r->rd_rel->relkind == RELKIND_INDEX)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is an index",
-						RelationGetRelationName(r))));
-	else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is a composite type",
-						RelationGetRelationName(r))));
-
-	return r;
-}
-
-/* ----------------
- *		heap_openrv - open a heap relation specified
- *		by a RangeVar node
- *
- *		As above, but relation is specified by a RangeVar.
- * ----------------
- */
-Relation
-heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
-{
-	Relation	r;
-
-	r = relation_openrv(relation, lockmode);
-
-	if (r->rd_rel->relkind == RELKIND_INDEX)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is an index",
-						RelationGetRelationName(r))));
-	else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is a composite type",
-						RelationGetRelationName(r))));
-
-	return r;
-}
-
-/* ----------------
- *		heap_openrv_extended - open a heap relation specified
- *		by a RangeVar node
- *
- *		As above, but optionally return NULL instead of failing for
- *		relation-not-found.
- * ----------------
- */
-Relation
-heap_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
-					 bool missing_ok)
-{
-	Relation	r;
-
-	r = relation_openrv_extended(relation, lockmode, missing_ok, false);
-
-	if (r)
-	{
-		if (r->rd_rel->relkind == RELKIND_INDEX)
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is an index",
-							RelationGetRelationName(r))));
-		else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is a composite type",
-							RelationGetRelationName(r))));
-	}
-
-	return r;
-}
-
-
-/* ----------------
- *		heap_beginscan	- begin relation scan
- *
- * heap_beginscan is the "standard" case.
- *
- * heap_beginscan_catalog differs in setting up its own temporary snapshot.
- *
- * heap_beginscan_strat offers an extended API that lets the caller control
- * whether a nondefault buffer access strategy can be used, and whether
- * syncscan can be chosen (possibly resulting in the scan not starting from
- * block zero).  Both of these default to TRUE with plain heap_beginscan.
- *
- * heap_beginscan_bm is an alternative entry point for setting up a
- * HeapScanDesc for a bitmap heap scan.  Although that scan technology is
- * really quite unlike a standard seqscan, there is just enough commonality
- * to make it worth using the same data structure.
- *
- * heap_beginscan_sampling is an alternative entry point for setting up a
- * HeapScanDesc for a TABLESAMPLE scan.  As with bitmap scans, it's worth
- * using the same data structure although the behavior is rather different.
- * In addition to the options offered by heap_beginscan_strat, this call
- * also allows control of whether page-mode visibility checking is used.
- * ----------------
- */
-HeapScanDesc
-=======
 TableScanDesc
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key,
 			   ParallelTableScanDesc parallel_scan,
@@ -2438,44 +1926,10 @@ ReleaseBulkInsertStatePin(BulkInsertState bistate)
  * options, and there additionally is HEAP_INSERT_SPECULATIVE which is used to
  * implement table_tuple_insert_speculative().
  *
-<<<<<<< HEAD
- * HEAP_INSERT_FROZEN should only be specified for inserts into
- * relfilenodes created during the current subtransaction and when
- * there are no prior snapshots or pre-existing portals open.
- * This causes rows to be frozen, which is an MVCC violation and
- * requires explicit options chosen by user.
- *
- * HEAP_INSERT_IS_SPECULATIVE is used on so-called "speculative insertions",
- * which can be backed out afterwards without aborting the whole transaction.
- * Other sessions can wait for the speculative insertion to be confirmed,
- * turning it into a regular tuple, or aborted, as if it never existed.
- * Speculatively inserted tuples behave as "value locks" of short duration,
- * used to implement INSERT .. ON CONFLICT.
- *
- * HEAP_INSERT_NO_LOGICAL force-disables the emitting of logical decoding
- * information for the tuple. This should solely be used during table rewrites
- * where RelationIsLogicallyLogged(relation) is not yet accurate for the new
- * relation.
- *
- * Note that most of these options will be applied when inserting into the
- * heap's TOAST table, too, if the tuple requires any out-of-line data.  Only
- * HEAP_INSERT_IS_SPECULATIVE is explicitly ignored, as the toast data does
- * not partake in speculative insertion.
- *
- * The BulkInsertState object (if any; bistate can be NULL for default
- * behavior) is also just passed through to RelationGetBufferForTuple.
- *
- * The return value is the OID assigned to the tuple (either here or by the
- * caller), or InvalidOid if no OID.  The header fields of *tup are updated
- * to match the stored tuple; in particular tup->t_self receives the actual
- * TID where the tuple was stored.  But note that any toasting of fields
- * within the tuple data is NOT reflected into *tup.
-=======
  * On return the header fields of *tup are updated to match the stored tuple;
  * in particular tup->t_self receives the actual TID where the tuple was
  * stored.  But note that any toasting of fields within the tuple data is NOT
  * reflected into *tup.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 void
 heap_insert(Relation relation, HeapTuple tup, CommandId cid,
@@ -2672,14 +2126,9 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		tup->t_self = heaptup->t_self;
 		heap_freetuple(heaptup);
 	}
-<<<<<<< HEAD
 
 	if (needwal)
 		wait_to_avoid_large_repl_lag();
-
-	return HeapTupleGetOid(tup);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -2751,13 +2200,8 @@ heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
  * temporary context before calling this, if that's a problem.
  */
 void
-<<<<<<< HEAD
-heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
-				  CommandId cid, int options, BulkInsertState bistate, TransactionId xid)
-=======
 heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
-				  CommandId cid, int options, BulkInsertState bistate)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				  CommandId cid, int options, BulkInsertState bistate, TransactionId xid)
 {
 	bool        isFrozen = (xid == FrozenTransactionId);
 	HeapTuple  *heaptuples;
@@ -2780,10 +2224,6 @@ heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 	/* Toast and set header data in all the slots */
 	heaptuples = palloc(ntuples * sizeof(HeapTuple));
 	for (i = 0; i < ntuples; i++)
-<<<<<<< HEAD
-		heaptuples[i] = heap_prepare_insert(relation, tuples[i],
-											xid, cid, options, isFrozen);
-=======
 	{
 		HeapTuple	tuple;
 
@@ -2791,9 +2231,8 @@ heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 		slots[i]->tts_tableOid = RelationGetRelid(relation);
 		tuple->t_tableOid = slots[i]->tts_tableOid;
 		heaptuples[i] = heap_prepare_insert(relation, tuple, xid, cid,
-											options);
+											options, isFrozen);
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * We're about to do the actual inserts -- but check for conflict first,
@@ -3045,13 +2484,8 @@ heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 void
 simple_heap_insert(Relation relation, HeapTuple tup)
 {
-<<<<<<< HEAD
-	Oid result;
-
-	result = heap_insert(relation, tup, GetCurrentCommandId(true),
-						 0, NULL, GetCurrentTransactionId());
-
-	return result;
+	heap_insert(relation, tup, GetCurrentCommandId(true), 0, NULL,
+				GetCurrentTransactionId());
 }
 
 /*
@@ -3063,15 +2497,11 @@ simple_heap_insert(Relation relation, HeapTuple tup)
  * goes into error tables and need to stay there even if transaction
  * aborts.
  */
-Oid
+void
 frozen_heap_insert(Relation relation, HeapTuple tup)
 {
-	Oid result;
-
-	result = heap_insert(relation, tup, GetCurrentCommandId(true),
-						 0, NULL, FrozenTransactionId);
-
-	return result;
+	return heap_insert(relation, tup, GetCurrentCommandId(true),
+					   0, NULL, FrozenTransactionId);
 }
 
 /*
@@ -3093,9 +2523,6 @@ heap_trace_current_tuple(char *caller, HeapTuple tuple)
 		 caller, summary);
 
 	pfree(summary);
-=======
-	heap_insert(relation, tup, GetCurrentCommandId(true), 0, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -4000,18 +3427,12 @@ l2:
 		if (result == TM_SelfModified)
 			tmfd->cmax = HeapTupleHeaderGetCmax(oldtup.t_data);
 		else
-<<<<<<< HEAD
-			hufd->cmax = InvalidCommandId;
-
+			tmfd->cmax = InvalidCommandId;
 		if (simple)
 		{
 			/* GPDB: Trace current tuple information before we unlock the buffer */
 			heap_trace_current_tuple("heap_update", &oldtup);
 		}
-
-=======
-			tmfd->cmax = InvalidCommandId;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		UnlockReleaseBuffer(buffer);
 		if (have_tuple_lock)
 			UnlockTupleTuplock(relation, &(oldtup.t_self), *lockmode);
@@ -4020,11 +3441,8 @@ l2:
 		bms_free(hot_attrs);
 		bms_free(key_attrs);
 		bms_free(id_attrs);
-<<<<<<< HEAD
-=======
 		bms_free(modified_attrs);
 		bms_free(interesting_attrs);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return result;
 	}
 
@@ -4497,11 +3915,8 @@ l2:
 	bms_free(hot_attrs);
 	bms_free(key_attrs);
 	bms_free(id_attrs);
-<<<<<<< HEAD
-=======
 	bms_free(modified_attrs);
 	bms_free(interesting_attrs);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return TM_Ok;
 }
@@ -4645,12 +4060,8 @@ simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
 	result = heap_update_internal(relation, otid, tup,
 						 GetCurrentCommandId(true), InvalidSnapshot,
 						 true /* wait for commit */ ,
-<<<<<<< HEAD
-						 &hufd, &lockmode,
+						 &tmfd, &lockmode,
 						 /* simple */ true);
-=======
-						 &tmfd, &lockmode);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	switch (result)
 	{
 		case TM_SelfModified:
@@ -6789,35 +6200,10 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 			else
 			{
 				/*
-<<<<<<< HEAD
-				 * Not in progress, not committed -- must be aborted or crashed;
-				 * we can ignore it.
-				 */
-			}
-
-			/*
-			 * Since the tuple wasn't marked HEAPTUPLE_DEAD by vacuum, the
-			 * update Xid cannot possibly be older than the xid cutoff. The
-			 * presence of such a tuple would cause corruption, so be paranoid
-			 * and check.
-			 */
-			if (TransactionIdIsValid(update_xid) &&
-				TransactionIdPrecedes(update_xid, cutoff_xid))
-				ereport(ERROR,
-						(errcode(ERRCODE_DATA_CORRUPTED),
-						 errmsg_internal("found update xid %u from before xid cutoff %u",
-										 update_xid, cutoff_xid)));
-
-			/*
-			 * Not in progress, not committed -- must be aborted or crashed;
-			 * we can ignore it.
-			 */
-=======
 				 * Not in progress, not committed -- must be aborted or
 				 * crashed; we can ignore it.
 				 */
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * Since the tuple wasn't marked HEAPTUPLE_DEAD by vacuum, the
