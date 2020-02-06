@@ -315,7 +315,8 @@ extern AggState *ExecInitAgg(Agg *node, EState *estate, int eflags);
 extern void ExecEndAgg(AggState *node);
 extern void ExecReScanAgg(AggState *node);
 
-extern Size hash_agg_entry_size(int numAggs);
+extern Size hash_agg_entry_size(int numAggs, Size tupleWidth,
+								Size transitionSpace);
 
 extern Datum aggregate_dummy(PG_FUNCTION_ARGS);
 
