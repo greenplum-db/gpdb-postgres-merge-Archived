@@ -189,12 +189,8 @@ output_get_descr(char *desc_name, char *index)
 				break;
 		}
 		fprintf(base_yyout, "%s,", get_dtype(results->value));
-<<<<<<< HEAD
-		ECPGdump_a_type(base_yyout, v->name, v->type, v->brace_level, NULL, NULL, -1, NULL, NULL, str_zero, NULL, NULL);
-=======
 		ECPGdump_a_type(base_yyout, v->name, v->type, v->brace_level,
 						NULL, NULL, -1, NULL, NULL, str_zero, NULL, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		free(str_zero);
 	}
 	drop_assignments();
@@ -303,12 +299,8 @@ output_set_descr(char *desc_name, char *index)
 					char	   *str_zero = mm_strdup("0");
 
 					fprintf(base_yyout, "%s,", get_dtype(results->value));
-<<<<<<< HEAD
-					ECPGdump_a_type(base_yyout, v->name, v->type, v->brace_level, NULL, NULL, -1, NULL, NULL, str_zero, NULL, NULL);
-=======
 					ECPGdump_a_type(base_yyout, v->name, v->type, v->brace_level,
 									NULL, NULL, -1, NULL, NULL, str_zero, NULL, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					free(str_zero);
 				}
 				break;

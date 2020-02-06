@@ -1221,11 +1221,7 @@ ecpg_build_params(struct statement *stmt)
 	struct variable *var;
 	int			desc_counter = 0;
 	int			position = 0;
-<<<<<<< HEAD
-	const char	   *value;
-=======
 	const char *value;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	bool		std_strings = false;
 
 	/* Get standard_conforming_strings setting. */
@@ -1557,17 +1553,12 @@ ecpg_build_params(struct statement *stmt)
 			var = var->next;
 	}
 
-<<<<<<< HEAD
-	/* Check if there are unmatched things left. */
-	if (next_insert(stmt->command, position, stmt->questionmarks, std_strings) >= 0)
-=======
 	/*
 	 * Check if there are unmatched things left. PREPARE AS has no parameter.
 	 * Check other statement.
 	 */
 	if (stmt->statement_type != ECPGst_prepare &&
 		next_insert(stmt->command, position, stmt->questionmarks, std_strings) >= 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		ecpg_raise(stmt->lineno, ECPG_TOO_FEW_ARGUMENTS,
 				   ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS, NULL);

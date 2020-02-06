@@ -301,11 +301,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype *type, const int brac
 					break;
 				default:
 					if (!IS_SIMPLE_TYPE(type->u.element->type))
-<<<<<<< HEAD
 						base_yyerror("internal error: unknown datatype, please report this to <bugs@greenplum.org>");
-=======
-						base_yyerror("internal error: unknown datatype, please report this to <pgsql-bugs@lists.postgresql.org>");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 					ECPGdump_a_simple(o, name,
 									  type->u.element->type,
@@ -624,24 +620,16 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsize
 		if (ind_p != NULL && ind_p != &struct_no_indicator)
 		{
 			ind_p = ind_p->next;
-<<<<<<< HEAD
-			if (ind_p == NULL && p->next != NULL) {
-=======
 			if (ind_p == NULL && p->next != NULL)
 			{
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				mmerror(PARSE_ERROR, ET_WARNING, "indicator struct \"%s\" has too few members", ind_name);
 				ind_p = &struct_no_indicator;
 			}
 		}
 	}
 
-<<<<<<< HEAD
-	if (ind_type != NULL && ind_p != NULL && ind_p != &struct_no_indicator) {
-=======
 	if (ind_type != NULL && ind_p != NULL && ind_p != &struct_no_indicator)
 	{
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		mmerror(PARSE_ERROR, ET_WARNING, "indicator struct \"%s\" has too many members", ind_name);
 	}
 
@@ -684,11 +672,7 @@ ECPGfree_type(struct ECPGtype *type)
 						break;
 					default:
 						if (!IS_SIMPLE_TYPE(type->u.element->type))
-<<<<<<< HEAD
 							base_yyerror("internal error: unknown datatype, please report this to <bugs@greenplum.org>");
-=======
-							base_yyerror("internal error: unknown datatype, please report this to <pgsql-bugs@lists.postgresql.org>");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 						free(type->u.element);
 				}

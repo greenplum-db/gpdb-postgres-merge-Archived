@@ -59,11 +59,7 @@ help(const char *progname)
 	printf(_("  -?, --help     show this help, then exit\n"));
 	printf(_("\nIf no output file is specified, the name is formed by adding .c to the\n"
 			 "input file name, after stripping off .pgc if present.\n"));
-<<<<<<< HEAD
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("\nReport bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 static void
@@ -116,8 +112,6 @@ add_preprocessor_define(char *define)
 	defines->next = pd;
 }
 
-<<<<<<< HEAD
-=======
 static void
 free_argument(struct arguments *arg)
 {
@@ -160,7 +154,6 @@ free_declared_stmt(struct declared_name_st *st)
 	free(st);
 }
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #define ECPG_GETOPT_LONG_REGRESSION		1
 int
 main(int argc, char *const argv[])
@@ -254,14 +247,8 @@ main(int argc, char *const argv[])
 				break;
 			case 'h':
 				header_mode = true;
-<<<<<<< HEAD
-				/* this must include "-c" to make sense */
-				/* so do not place a "break;" here */
-				/* fallthrough */
-=======
 				/* this must include "-c" to make sense, so fall through */
 				/* FALLTHROUGH */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			case 'c':
 				auto_create_c = true;
 				break;
@@ -495,11 +482,7 @@ main(int argc, char *const argv[])
 				if (regression_mode)
 					fprintf(base_yyout, "/* Processed by ecpg (regression mode) */\n");
 				else
-<<<<<<< HEAD
 					fprintf(base_yyout, "/* Processed by ecpg (%d.%d.%d) */\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
-=======
-					fprintf(base_yyout, "/* Processed by ecpg (%s) */\n", PG_VERSION);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 				if (header_mode == false)
 				{
@@ -543,12 +526,8 @@ main(int argc, char *const argv[])
 				}
 			}
 
-<<<<<<< HEAD
-			if (output_filename && out_option == 0) {
-=======
 			if (output_filename && out_option == 0)
 			{
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				free(output_filename);
 				output_filename = NULL;
 			}

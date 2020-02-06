@@ -72,14 +72,7 @@ static timestamp
 SetEpochTimestamp(void)
 {
 	int64		noresult = 0;
-<<<<<<< HEAD
-#else
-	double		noresult = 0.0;
-#endif
-	timestamp	dt = 0;
-=======
 	timestamp	dt;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	struct tm	tt,
 			   *tm = &tt;
 

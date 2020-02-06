@@ -27,12 +27,9 @@
 }
 
 %{
-<<<<<<< HEAD
-=======
 
 /* LCOV_EXCL_START */
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern YYSTYPE base_yylval;
 
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
@@ -93,11 +90,6 @@ static struct _if_value
 %option noinput
 %option noyywrap
 %option warn
-<<<<<<< HEAD
-%option prefix="base_yy"
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 %option yylineno
 %option prefix="base_yy"
 
@@ -516,21 +508,12 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					addlitchar('x');
 				}
 <xh>{quotestop}	|
-<<<<<<< HEAD
-<xh>{quotefail}	{
-				yyless(1);
-				BEGIN(SQL);
-				base_yylval.str = mm_strdup(literalbuf);
-				return XCONST;
-			}
-=======
 <xh>{quotefail} {
 					yyless(1);
 					BEGIN(SQL);
 					base_yylval.str = mm_strdup(literalbuf);
 					return XCONST;
 				}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 <xh><<EOF>>		{ mmfatal(PARSE_ERROR, "unterminated hexadecimal string literal"); }
 
@@ -575,33 +558,6 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 
 <xq,xqc>{quotestop} |
 <xq,xqc>{quotefail} {
-<<<<<<< HEAD
-				yyless(1);
-				BEGIN(state_before);
-				base_yylval.str = mm_strdup(literalbuf);
-				return SCONST;
-			}
-<xe>{quotestop} |
-<xe>{quotefail} {
-				yyless(1);
-				BEGIN(state_before);
-				base_yylval.str = mm_strdup(literalbuf);
-				return ECONST;
-			}
-<xn>{quotestop} |
-<xn>{quotefail} {
-				yyless(1);
-				BEGIN(state_before);
-				base_yylval.str = mm_strdup(literalbuf);
-				return NCONST;
-			}
-<xus>{xusstop} {
-				addlit(yytext, yyleng);
-				BEGIN(state_before);
-				base_yylval.str = mm_strdup(literalbuf);
-				return UCONST;
-			}
-=======
 					yyless(1);
 					BEGIN(state_before);
 					base_yylval.str = mm_strdup(literalbuf);
@@ -627,7 +583,6 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					base_yylval.str = mm_strdup(literalbuf);
 					return UCONST;
 				}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 <xq,xe,xn,xus>{xqdouble}	{ addlitchar('\''); }
 <xqc>{xqcquote}	{
 					addlitchar('\\');
@@ -1198,11 +1153,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						else
 						{
 							base_yylval.str = mm_strdup(yytext);
-<<<<<<< HEAD
-							return(CPP_LINE);
-=======
 							return CPP_LINE;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						}
 					}
 <C>{cppinclude_next}		{
@@ -1214,20 +1165,12 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						else
 						{
 							base_yylval.str = mm_strdup(yytext);
-<<<<<<< HEAD
-							return(CPP_LINE);
-=======
 							return CPP_LINE;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						}
 					}
 <C,SQL>{cppline}	{
 						base_yylval.str = mm_strdup(yytext);
-<<<<<<< HEAD
-						return(CPP_LINE);
-=======
 						return CPP_LINE;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					}
 <C>{identifier}		{
 						/*
@@ -1629,13 +1572,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 
 					}
 				}
-<<<<<<< HEAD
 <INITIAL>{other}|\n	{ mmfatal(PARSE_ERROR, "internal error: unreachable state; please report this to <bugs@greenplum.org>"); }
-=======
-
-<INITIAL>{other}|\n	{ mmfatal(PARSE_ERROR, "internal error: unreachable state; please report this to <pgsql-bugs@lists.postgresql.org>"); }
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 %%
 
 /* LCOV_EXCL_STOP */

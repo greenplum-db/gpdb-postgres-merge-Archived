@@ -53,12 +53,9 @@ print_action(struct when *w)
 			break;
 		case W_BREAK:
 			fprintf(base_yyout, "break;");
-<<<<<<< HEAD
-=======
 			break;
 		case W_CONTINUE:
 			fprintf(base_yyout, "continue;");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 		default:
 			fprintf(base_yyout, "{/* %d not implemented yet */}", w->code);
@@ -140,19 +137,6 @@ void
 output_statement(char *stmt, int whenever_mode, enum ECPG_statement_type st)
 {
 	fprintf(base_yyout, "{ ECPGdo(__LINE__, %d, %d, %s, %d, ", compat, force_indicator, connection ? connection : "NULL", questionmarks);
-<<<<<<< HEAD
-	if (st == ECPGst_execute || st == ECPGst_exec_immediate)
-	{
-		fprintf(base_yyout, "%s, %s, ", ecpg_statement_type_name[st], stmt);
-	}
-	else
-	{
-		if (st == ECPGst_prepnormal && auto_prepare)
-			fputs("ECPGst_prepnormal, \"", base_yyout);
-		else
-			fputs("ECPGst_normal, \"", base_yyout);
-
-=======
 
 	if (st == ECPGst_prepnormal && !auto_prepare)
 		st = ECPGst_normal;
@@ -168,7 +152,6 @@ output_statement(char *stmt, int whenever_mode, enum ECPG_statement_type st)
 	else
 	{
 		fputs("\"", base_yyout);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		output_escaped_str(stmt, false);
 		fputs("\", ", base_yyout);
 	}
@@ -269,13 +252,8 @@ output_escaped_str(char *str, bool quoted)
 				j++;
 			} while (str[j] == ' ' || str[j] == '\t');
 
-<<<<<<< HEAD
-			if ((str[j] != '\n') && (str[j] != '\r' || str[j + 1] != '\n'))		/* not followed by a
-																				 * newline */
-=======
 			if ((str[j] != '\n') && (str[j] != '\r' || str[j + 1] != '\n')) /* not followed by a
 																			 * newline */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				fputs("\\\\", base_yyout);
 		}
 		else if (str[i] == '\r' && str[i + 1] == '\n')
@@ -289,8 +267,6 @@ output_escaped_str(char *str, bool quoted)
 
 	if (quoted && str[0] == '"' && str[len] == '"')
 		fputs("\"", base_yyout);
-<<<<<<< HEAD
-=======
 }
 
 /*
@@ -436,5 +412,4 @@ output_cursor_statement(int cursor_stmt, char *cursor_name, char *prepared_name,
 	free(stmt);
 	if (connection != NULL)
 		free(connection);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
