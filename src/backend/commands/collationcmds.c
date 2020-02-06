@@ -40,6 +40,7 @@
 #include "cdb/cdbdisp_query.h"
 #include "storage/fd.h"
 
+
 typedef struct
 {
 	char	   *localename;		/* name of locale, as per "locale -a" */
@@ -47,20 +48,12 @@ typedef struct
 	int			enc;			/* encoding */
 } CollAliasData;
 
-<<<<<<< HEAD
-Datum pg_import_system_collations(PG_FUNCTION_ARGS);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * CREATE COLLATION
  */
 ObjectAddress
-<<<<<<< HEAD
-DefineCollation(List *names, List *parameters, bool if_not_exists)
-=======
 DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_exists)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	char	   *collName;
 	Oid			collNamespace;
@@ -237,17 +230,9 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 							 collencoding,
 							 collcollate,
 							 collctype,
-<<<<<<< HEAD
-							 if_not_exists,
-							 false);	/* not quiet */
-
-	if (!OidIsValid(newoid))
-		return InvalidObjectAddress;
-=======
 							 collversion,
 							 if_not_exists,
 							 false);	/* not quiet */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (!OidIsValid(newoid))
 		return InvalidObjectAddress;
@@ -313,8 +298,6 @@ IsThereCollationInNamespace(const char *collname, Oid nspOid)
 						collname, get_namespace_name(nspOid))));
 }
 
-<<<<<<< HEAD
-=======
 /*
  * ALTER COLLATION
  */
@@ -417,18 +400,12 @@ pg_collation_actual_version(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 }
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* will we use "locale -a" in pg_import_system_collations? */
 #if defined(HAVE_LOCALE_T) && !defined(WIN32)
 #define READ_LOCALE_A_OUTPUT
 #endif
 
-<<<<<<< HEAD
-#ifdef READ_LOCALE_A_OUTPUT
-/*
- * "Normalize" a locale name, stripping off encoding tags such as
-=======
 #if defined(READ_LOCALE_A_OUTPUT) || defined(USE_ICU)
 /*
  * Check a string to see if it is pure ASCII
@@ -449,17 +426,12 @@ is_all_ascii(const char *str)
 #ifdef READ_LOCALE_A_OUTPUT
 /*
  * "Normalize" a libc locale name, stripping off encoding tags such as
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * ".utf8" (e.g., "en_US.utf8" -> "en_US", but "br_FR.iso885915@euro"
  * -> "br_FR@euro").  Return true if a new, different name was
  * generated.
  */
 static bool
-<<<<<<< HEAD
-normalize_locale_name(char *new, const char *old)
-=======
 normalize_libc_locale_name(char *new, const char *old)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	char	   *n = new;
 	const char *o = old;
@@ -500,7 +472,6 @@ cmpaliases(const void *a, const void *b)
 }
 #endif							/* READ_LOCALE_A_OUTPUT */
 
-<<<<<<< HEAD
 static void
 DispatchCollationCreate(char *alias, char *locale, Oid nspid, int encoding)
 {
@@ -537,8 +508,6 @@ DispatchCollationCreate(char *alias, char *locale, Oid nspid, int encoding)
 	                            NULL);
 }
 
-/*
-=======
 
 #ifdef USE_ICU
 /*
@@ -619,13 +588,10 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to import system collations"))));
 
-<<<<<<< HEAD
 	if (Gp_role != GP_ROLE_DISPATCH)
 		ereport(ERROR,
 					(errmsg("must be dispatcher to import system collations")));
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* Load collations known to libc, using "locale -a" to enumerate them */
 #ifdef READ_LOCALE_A_OUTPUT
 	{
@@ -654,10 +620,6 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		{
 			size_t		len;
 			int			enc;
-<<<<<<< HEAD
-			bool		skip;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			char		alias[NAMEDATALEN];
 
 			len = strlen(localebuf);
@@ -676,20 +638,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			 * interpret the non-ASCII characters. We can't do much with
 			 * those, so we filter them out.
 			 */
-<<<<<<< HEAD
-			skip = false;
-			for (i = 0; i < len; i++)
-			{
-				if (IS_HIGHBIT_SET(localebuf[i]))
-				{
-					skip = true;
-					break;
-				}
-			}
-			if (skip)
-=======
 			if (!is_all_ascii(localebuf))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			{
 				elog(DEBUG1, "locale name has non-ASCII characters, skipped: \"%s\"", localebuf);
 				continue;
@@ -705,11 +654,10 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 				continue;		/* ignore locales for client-only encodings */
 			if (enc == PG_SQL_ASCII)
 				continue;		/* C/POSIX are already in the catalog */
-<<<<<<< HEAD
+
+			/* GPDB_12_MERGE_FIXME: Why do we have this extra condition in GPDB? */
 			if (enc != GetDatabaseEncoding())
 				continue;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/* count valid locales found in operating system */
 			nvalid++;
@@ -724,22 +672,13 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			 * about existing ones.
 			 */
 			collid = CollationCreate(localebuf, nspid, GetUserId(),
-<<<<<<< HEAD
-									 enc, localebuf, localebuf,
-									 true, true);
-
-			if (OidIsValid(collid))
-			{
-				DispatchCollationCreate(localebuf, localebuf, nspid, enc);
-
-=======
 									 COLLPROVIDER_LIBC, true, enc,
 									 localebuf, localebuf,
 									 get_collation_actual_version(COLLPROVIDER_LIBC, localebuf),
 									 true, true);
 			if (OidIsValid(collid))
 			{
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				DispatchCollationCreate(localebuf, localebuf, nspid, enc);
 				ncreated++;
 
 				/* Must do CCI between inserts to handle duplicates correctly */
@@ -756,11 +695,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			 * "locale -a" output.  So save up the aliases and try to add them
 			 * after we've read all the output.
 			 */
-<<<<<<< HEAD
-			if (normalize_locale_name(alias, localebuf))
-=======
 			if (normalize_libc_locale_name(alias, localebuf))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			{
 				if (naliases >= maxaliases)
 				{
@@ -799,22 +734,13 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			int			enc = aliases[i].enc;
 
 			collid = CollationCreate(alias, nspid, GetUserId(),
-<<<<<<< HEAD
-									 enc, locale, locale,
-									 true, true);
-
-			if (OidIsValid(collid))
-			{
-				DispatchCollationCreate(alias, locale, nspid, enc);
-
-=======
 									 COLLPROVIDER_LIBC, true, enc,
 									 locale, locale,
 									 get_collation_actual_version(COLLPROVIDER_LIBC, locale),
 									 true, true);
 			if (OidIsValid(collid))
 			{
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				DispatchCollationCreate(alias, locale, nspid, enc);
 				ncreated++;
 
 				CommandCounterIncrement();
@@ -828,11 +754,6 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 	}
 #endif							/* READ_LOCALE_A_OUTPUT */
 
-<<<<<<< HEAD
-	PG_RETURN_INT32(ncreated);
-}
-
-=======
 	/*
 	 * Load collations known to ICU
 	 *
@@ -897,4 +818,3 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(ncreated);
 }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
