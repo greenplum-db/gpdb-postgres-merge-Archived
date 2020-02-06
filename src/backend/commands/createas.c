@@ -149,8 +149,7 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	else
 		create->tablespacename = into->tableSpaceName;
 	create->if_not_exists = false;
-<<<<<<< HEAD
-	
+
 	/* Parse and validate any reloptions */
 	reloptions = transformRelOptions((Datum) 0,
 									 into->options,
@@ -182,9 +181,7 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	create->relKind = relkind;
 	create->relStorage = relstorage;
 	create->ownerid = GetUserId();
-=======
 	create->accessMethod = into->accessMethod;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Create the relation.  (This will error out if there's an existing view,
@@ -195,18 +192,14 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	 *
 	 * Pass the policy that was computed by the planner.
 	 */
-<<<<<<< HEAD
-	intoRelationAddr = DefineRelation(create,
-									  relkind,
-									  InvalidOid,
-									  NULL,
-									  relstorage,
-									  false,
-									  queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true,
-									  queryDesc->plannedstmt->intoPolicy);
-=======
-	intoRelationAddr = DefineRelation(create, relkind, InvalidOid, NULL, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+    intoRelationAddr = DefineRelation(create,
+                                      relkind,
+                                      InvalidOid,
+                                      NULL,
+                                      NULL,
+                                      false,
+                                      queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true,
+                                      queryDesc->plannedstmt->intoPolicy);
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that
@@ -462,14 +455,12 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		PushCopiedSnapshot(GetActiveSnapshot());
 		UpdateActiveSnapshotCommandId();
 
-<<<<<<< HEAD
-		queryDesc->plannedstmt->query_mem = ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
-=======
 		/* Create a QueryDesc, redirecting output to our tuple receiver */
 		queryDesc = CreateQueryDesc(plan, queryString,
 									GetActiveSnapshot(), InvalidSnapshot,
 									dest, params, queryEnv, 0);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+        queryDesc->plannedstmt->query_mem = ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
 
 		/* call ExecutorStart to prepare the plan for execution */
 		ExecutorStart(queryDesc, GetIntoRelEFlags(into));
