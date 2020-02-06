@@ -497,31 +497,23 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 						break;
 
 					case TRANS_STMT_COMMIT_PREPARED:
-<<<<<<< HEAD
 						if (Gp_role == GP_ROLE_DISPATCH)
 						{
 							ereport(ERROR, (errcode(ERRCODE_GP_COMMAND_ERROR),
 									errmsg("COMMIT PREPARED is not yet supported in Greenplum Database")));
 						}
-						PreventTransactionChain(isTopLevel, "COMMIT PREPARED");
-=======
 						PreventInTransactionBlock(isTopLevel, "COMMIT PREPARED");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						PreventCommandDuringRecovery("COMMIT PREPARED");
 						FinishPreparedTransaction(stmt->gid, /* isCommit */ true, /* raiseErrorIfNotFound */ true);
 						break;
 
 					case TRANS_STMT_ROLLBACK_PREPARED:
-<<<<<<< HEAD
 						if (Gp_role == GP_ROLE_DISPATCH)
 						{
 							ereport(ERROR, (errcode(ERRCODE_GP_COMMAND_ERROR),
 									errmsg("ROLLBACK PREPARED is not yet supported in Greenplum Database")));
 						}
-						PreventTransactionChain(isTopLevel, "ROLLBACK PREPARED");
-=======
 						PreventInTransactionBlock(isTopLevel, "ROLLBACK PREPARED");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						PreventCommandDuringRecovery("ROLLBACK PREPARED");
 						FinishPreparedTransaction(stmt->gid, /* isCommit */ false, /* raiseErrorIfNotFound */ true);
 						break;
@@ -531,37 +523,15 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 						break;
 
 					case TRANS_STMT_SAVEPOINT:
-<<<<<<< HEAD
-						{
-							ListCell   *cell;
-							char	   *name = NULL;
-
-							RequireTransactionChain(isTopLevel, "SAVEPOINT");
-
-							foreach(cell, stmt->options)
-							{
-								DefElem    *elem = lfirst(cell);
-
-								if (strcmp(elem->defname, "savepoint_name") == 0)
-									name = strVal(elem->arg);
-							}
-
-							Assert(PointerIsValid(name));
-
-							/* We already checked that we're in a
-							 * transaction; need to make certain
-							 * that the BEGIN has been dispatched
-							 * before we start dispatching our savepoint.
-							 */
-							sendDtxExplicitBegin();
-
-							DefineDispatchSavepoint(
-									name);
-						}
-=======
 						RequireTransactionBlock(isTopLevel, "SAVEPOINT");
-						DefineSavepoint(stmt->savepoint_name);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						/* We already checked that we're in a
+						 * transaction; need to make certain
+						 * that the BEGIN has been dispatched
+						 * before we start dispatching our savepoint.
+						 */
+						sendDtxExplicitBegin();
+
+						DefineDispatchSavepoint(stmt->savepoint_name);
 						break;
 
 					case TRANS_STMT_RELEASE:
@@ -610,35 +580,27 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_CreateTableSpaceStmt:
 			/* no event triggers for global objects */
-<<<<<<< HEAD
 			if (Gp_role != GP_ROLE_EXECUTE)
 			{
 				/*
 				 * Don't allow master to call this in a transaction block. Segments
 				 * are ok as distributed transaction participants.
 				 */
-				PreventTransactionChain(isTopLevel, "CREATE TABLESPACE");
+				PreventInTransactionBlock(isTopLevel, "CREATE TABLESPACE");
 			}
-=======
-			PreventInTransactionBlock(isTopLevel, "CREATE TABLESPACE");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			CreateTableSpace((CreateTableSpaceStmt *) parsetree);
 			break;
 
 		case T_DropTableSpaceStmt:
 			/* no event triggers for global objects */
-<<<<<<< HEAD
 			if (Gp_role != GP_ROLE_EXECUTE)
 			{
 				/*
 				 * Don't allow master to call this in a transaction block.  Segments are ok as
 				 * distributed transaction participants.
 				 */
-				PreventTransactionChain(isTopLevel, "DROP TABLESPACE");
+				PreventInTransactionBlock(isTopLevel, "DROP TABLESPACE");
 			}
-=======
-			PreventInTransactionBlock(isTopLevel, "DROP TABLESPACE");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			DropTableSpace((DropTableSpaceStmt *) parsetree);
 			break;
 
@@ -688,20 +650,15 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_CreatedbStmt:
 			/* no event triggers for global objects */
-<<<<<<< HEAD
 			if (Gp_role != GP_ROLE_EXECUTE)
 			{
 				/*
 				 * Don't allow master to call this in a transaction block. Segments
 				 * are ok as distributed transaction participants.
 				 */
-				PreventTransactionChain(isTopLevel, "CREATE DATABASE");
+				PreventInTransactionBlock(isTopLevel, "CREATE DATABASE");
 			}
-			createdb((CreatedbStmt *) parsetree);
-=======
-			PreventInTransactionBlock(isTopLevel, "CREATE DATABASE");
 			createdb(pstate, (CreatedbStmt *) parsetree);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 
 		case T_AlterDatabaseStmt:
@@ -719,18 +676,14 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 				DropdbStmt *stmt = (DropdbStmt *) parsetree;
 
 				/* no event triggers for global objects */
-<<<<<<< HEAD
 				if (Gp_role != GP_ROLE_EXECUTE)
 				{
 					/*
 					 * Don't allow master to call this in a transaction block.  Segments are ok as
 					 * distributed transaction participants. 
 					 */
-					PreventTransactionChain(isTopLevel, "DROP DATABASE");
+					PreventInTransactionBlock(isTopLevel, "DROP DATABASE");
 				}
-=======
-				PreventInTransactionBlock(isTopLevel, "DROP DATABASE");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				dropdb(stmt->dbname, stmt->missing_ok);
 			}
 			break;
@@ -767,15 +720,11 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			{
 				UnlistenStmt *stmt = (UnlistenStmt *) parsetree;
 
-<<<<<<< HEAD
 				if (Gp_role == GP_ROLE_EXECUTE)
 					ereport(ERROR, (errcode(ERRCODE_GP_COMMAND_ERROR),
 							errmsg("unlisten command cannot run in a function running on a segDB")));
 
-				PreventCommandDuringRecovery("UNLISTEN");
-=======
 				/* we allow UNLISTEN during recovery, as it's a noop */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				CheckRestrictedOperation("UNLISTEN");
 				if (stmt->conditionname)
 					Async_Unlisten(stmt->conditionname);
@@ -997,17 +946,10 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 				switch (stmt->kind)
 				{
 					case REINDEX_OBJECT_INDEX:
-<<<<<<< HEAD
 						ReindexIndex(stmt);
 						break;
 					case REINDEX_OBJECT_TABLE:
 						ReindexTable(stmt);
-=======
-						ReindexIndex(stmt->relation, stmt->options, stmt->concurrent);
-						break;
-					case REINDEX_OBJECT_TABLE:
-						ReindexTable(stmt->relation, stmt->options, stmt->concurrent);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						break;
 					case REINDEX_OBJECT_SCHEMA:
 					case REINDEX_OBJECT_SYSTEM:
@@ -1019,20 +961,12 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 						 * start-transaction-command calls would not have the
 						 * intended effect!
 						 */
-<<<<<<< HEAD
 						if (Gp_role == GP_ROLE_DISPATCH)
-							PreventTransactionChain(isTopLevel,
-													(stmt->kind == REINDEX_OBJECT_SCHEMA) ? "REINDEX SCHEMA" :
-													(stmt->kind == REINDEX_OBJECT_SYSTEM) ? "REINDEX SYSTEM" :
-													"REINDEX DATABASE");
-						ReindexMultipleTables(stmt->name, stmt->kind, stmt->options);
-=======
-						PreventInTransactionBlock(isTopLevel,
+							PreventInTransactionBlock(isTopLevel,
 												  (stmt->kind == REINDEX_OBJECT_SCHEMA) ? "REINDEX SCHEMA" :
 												  (stmt->kind == REINDEX_OBJECT_SYSTEM) ? "REINDEX SYSTEM" :
 												  "REINDEX DATABASE");
 						ReindexMultipleTables(stmt->name, stmt->kind, stmt->options, stmt->concurrent);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						break;
 					default:
 						elog(ERROR, "unrecognized object type: %d",
@@ -2194,15 +2128,9 @@ ExecDropStmt(DropStmt *stmt, bool isTopLevel)
 	switch (stmt->removeType)
 	{
 		case OBJECT_INDEX:
-<<<<<<< HEAD
 			if (stmt->concurrent && Gp_role != GP_ROLE_EXECUTE)
-				PreventTransactionChain(isTopLevel,
-										"DROP INDEX CONCURRENTLY");
-=======
-			if (stmt->concurrent)
 				PreventInTransactionBlock(isTopLevel,
 										  "DROP INDEX CONCURRENTLY");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			/* fall through */
 
 		case OBJECT_TABLE:
