@@ -107,12 +107,8 @@ static size_t last_status_len;	/* use to minimize length of clobber */
 
 static size_t ps_buffer_cur_len;	/* nominal strlen(ps_buffer) */
 
-<<<<<<< HEAD
-static size_t ps_buffer_fixed_size;		/* size of the constant prefix */
-static char     ps_username[NAMEDATALEN];        /*CDB*/
-=======
 static size_t ps_buffer_fixed_size; /* size of the constant prefix */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static char     ps_username[NAMEDATALEN];        /*CDB*/
 
 /* save the original argv[] location here */
 static int	save_argc;

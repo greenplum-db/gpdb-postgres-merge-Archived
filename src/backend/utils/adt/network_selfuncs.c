@@ -146,11 +146,7 @@ networksel(PG_FUNCTION_ARGS)
 	 * non-MCV population that satisfies the clause.  If we don't, apply the
 	 * default selectivity to that population.
 	 */
-<<<<<<< HEAD
-	if (get_attstatsslot(&sslot, vardata.statsTuple,
-=======
 	if (get_attstatsslot(&hslot, vardata.statsTuple,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
 						 ATTSTATSSLOT_VALUES))
 	{
@@ -159,17 +155,10 @@ networksel(PG_FUNCTION_ARGS)
 		/* Commute if needed, so we can consider histogram to be on the left */
 		if (!varonleft)
 			opr_codenum = -opr_codenum;
-<<<<<<< HEAD
-		non_mcv_selec = inet_hist_value_sel(sslot.values, sslot.nvalues,
-											constvalue, opr_codenum);
-
-		free_attstatsslot(&sslot);
-=======
 		non_mcv_selec = inet_hist_value_sel(hslot.values, hslot.nvalues,
 											constvalue, opr_codenum);
 
 		free_attstatsslot(&hslot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 		non_mcv_selec = DEFAULT_SEL(operator);

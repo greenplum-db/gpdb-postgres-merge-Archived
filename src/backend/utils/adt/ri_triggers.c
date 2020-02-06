@@ -256,14 +256,7 @@ RI_FKey_check(TriggerData *trigdata)
 	 * and lock on the buffer to call HeapTupleSatisfiesVisibility.  Caller
 	 * should be holding pin, but not lock.
 	 */
-<<<<<<< HEAD
-	LockBuffer(new_row_buf, BUFFER_LOCK_SHARE);
-	if (!HeapTupleSatisfiesVisibility(NULL, new_row, SnapshotSelf, new_row_buf))
-	{
-		LockBuffer(new_row_buf, BUFFER_LOCK_UNLOCK);
-=======
 	if (!table_tuple_satisfies_snapshot(trigdata->tg_relation, newslot, SnapshotSelf))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return PointerGetDatum(NULL);
 	}
 	LockBuffer(new_row_buf, BUFFER_LOCK_UNLOCK);
@@ -2429,16 +2422,11 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 		for (int idx = 0; idx < riinfo->nkeys; idx++)
 		{
 			int			fnum = attnums[idx];
-<<<<<<< HEAD
-			char		*name,
-						*val;
-=======
 			Form_pg_attribute att = TupleDescAttr(tupdesc, fnum - 1);
 			char	   *name,
 					   *val;
 			Datum		datum;
 			bool		isnull;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			name = NameStr(att->attname);
 

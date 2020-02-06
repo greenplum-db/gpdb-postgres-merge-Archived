@@ -1129,7 +1129,6 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 }
 
 /*
-<<<<<<< HEAD
  * This function performs checks for certain system tables to validate tuple
  * fetched from table has the key, using which it was fetched from index.
  */
@@ -1178,10 +1177,7 @@ CrossCheckTuple(int cacheId,
 }
 
 /*
- *	SearchCatCache
-=======
  *	SearchCatCacheInternal
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  *		This call searches a system cache for a tuple, opening the relation
  *		if necessary (on the first access to a particular cache).
@@ -1420,7 +1416,6 @@ SearchCatCacheMiss(CatCache *cache,
 
 	while (HeapTupleIsValid(ntp = systable_getnext(scandesc)))
 	{
-<<<<<<< HEAD
 		/*
 		 * Good place to sanity check the tuple, before adding it to cache.
 		 * So if its fetched using index, lets cross verify tuple intended is the tuple
@@ -1432,10 +1427,7 @@ SearchCatCacheMiss(CatCache *cache,
 			CrossCheckTuple(cache->id, v1, v2, v3, v4, ntp);
 		}
 
-		ct = CatalogCacheCreateEntry(cache, ntp,
-=======
 		ct = CatalogCacheCreateEntry(cache, ntp, arguments,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 									 hashValue, hashIndex,
 									 false);
 		/* immediately set the refcount to 1 */

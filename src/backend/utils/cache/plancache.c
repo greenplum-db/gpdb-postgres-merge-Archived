@@ -98,23 +98,17 @@ static dlist_head saved_plan_list = DLIST_STATIC_INIT(saved_plan_list);
 static dlist_head cached_expression_list = DLIST_STATIC_INIT(cached_expression_list);
 
 static void ReleaseGenericPlan(CachedPlanSource *plansource);
-<<<<<<< HEAD
-static List *RevalidateCachedQuery(CachedPlanSource *plansource, IntoClause *intoClause);
+static List *RevalidateCachedQuery(CachedPlanSource *plansource,
+								   QueryEnvironment *queryEnv,
+								   IntoClause *intoClause);
 static bool CheckCachedPlan(CachedPlanSource *plansource);
 static CachedPlan *BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
-				ParamListInfo boundParams, IntoClause *intoClause);
+								   ParamListInfo boundParams,
+								   QueryEnvironment *queryEnv,
+								   IntoClause *intoClause);
 static bool choose_custom_plan(CachedPlanSource *plansource,
 				   ParamListInfo boundParams,
 				   IntoClause *intoClause);
-=======
-static List *RevalidateCachedQuery(CachedPlanSource *plansource,
-								   QueryEnvironment *queryEnv);
-static bool CheckCachedPlan(CachedPlanSource *plansource);
-static CachedPlan *BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
-								   ParamListInfo boundParams, QueryEnvironment *queryEnv);
-static bool choose_custom_plan(CachedPlanSource *plansource,
-							   ParamListInfo boundParams);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static double cached_plan_cost(CachedPlan *plan, bool include_planner);
 static Query *QueryListGetPrimaryStmt(List *stmts);
 static void AcquireExecutorLocks(List *stmt_list, bool acquire);
@@ -127,12 +121,9 @@ static void PlanCacheRelCallback(Datum arg, Oid relid);
 static void PlanCacheObjectCallback(Datum arg, int cacheid, uint32 hashvalue);
 static void PlanCacheSysCallback(Datum arg, int cacheid, uint32 hashvalue);
 
-<<<<<<< HEAD
-=======
 /* GUC parameter */
 int			plan_cache_mode;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * InitPlanCache: initialize module during InitPostgres.
  *
@@ -208,11 +199,8 @@ CreateCachedPlan(RawStmt *raw_parse_tree,
 	plansource->magic = CACHEDPLANSOURCE_MAGIC;
 	plansource->raw_parse_tree = copyObject(raw_parse_tree);
 	plansource->query_string = pstrdup(query_string);
-<<<<<<< HEAD
 	/* sourceTag is filled in CompleteCachedPlan(). */
-=======
 	MemoryContextSetIdentifier(source_context, plansource->query_string);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	plansource->commandTag = commandTag;
 	plansource->param_types = NULL;
 	plansource->num_params = 0;
@@ -574,12 +562,9 @@ ReleaseGenericPlan(CachedPlanSource *plansource)
  * GPDB: See GetCachedPlan() for why intoClause is added here.
  */
 static List *
-<<<<<<< HEAD
-RevalidateCachedQuery(CachedPlanSource *plansource, IntoClause *intoClause)
-=======
 RevalidateCachedQuery(CachedPlanSource *plansource,
-					  QueryEnvironment *queryEnv)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+					  QueryEnvironment *queryEnv,
+					  IntoClause *intoClause)
 {
 	bool		snapshot_set;
 	RawStmt    *rawtree;
@@ -922,11 +907,9 @@ CheckCachedPlan(CachedPlanSource *plansource)
  */
 static CachedPlan *
 BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
-<<<<<<< HEAD
-				ParamListInfo boundParams, IntoClause *intoClause)
-=======
-				ParamListInfo boundParams, QueryEnvironment *queryEnv)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				ParamListInfo boundParams,
+				QueryEnvironment *queryEnv,
+				IntoClause *intoClause)
 {
 	CachedPlan *plan;
 	List	   *plist;
@@ -950,11 +933,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	 * safety, let's treat it as real and redo the RevalidateCachedQuery call.
 	 */
 	if (!plansource->is_valid)
-<<<<<<< HEAD
-		qlist = RevalidateCachedQuery(plansource, intoClause);
-=======
-		qlist = RevalidateCachedQuery(plansource, queryEnv);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		qlist = RevalidateCachedQuery(plansource, queryEnv, intoClause);
 
 	/*
 	 * If we don't already have a copy of the querytree list that can be
@@ -1266,11 +1245,7 @@ cached_plan_cost(CachedPlan *plan, bool include_planner)
  */
 CachedPlan *
 GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
-<<<<<<< HEAD
-			  bool useResOwner, IntoClause *intoClause)
-=======
-			  bool useResOwner, QueryEnvironment *queryEnv)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			  bool useResOwner, QueryEnvironment *queryEnv, IntoClause *intoClause)
 {
 	CachedPlan *plan = NULL;
 	List	   *qlist;
@@ -1284,11 +1259,7 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 		elog(ERROR, "cannot apply ResourceOwner to non-saved cached plan");
 
 	/* Make sure the querytree list is valid and we have parse-time locks */
-<<<<<<< HEAD
-	qlist = RevalidateCachedQuery(plansource, intoClause);
-=======
-	qlist = RevalidateCachedQuery(plansource, queryEnv);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	qlist = RevalidateCachedQuery(plansource, queryEnv, intoClause);
 
 	/* Decide whether to use a custom plan */
 	customplan = choose_custom_plan(plansource, boundParams, intoClause);
@@ -1304,11 +1275,7 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 		else
 		{
 			/* Build a new generic plan */
-<<<<<<< HEAD
-			plan = BuildCachedPlan(plansource, qlist, NULL, NULL);
-=======
-			plan = BuildCachedPlan(plansource, qlist, NULL, queryEnv);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			plan = BuildCachedPlan(plansource, qlist, NULL, queryEnv, NULL);
 			/* Just make real sure plansource->gplan is clear */
 			ReleaseGenericPlan(plansource);
 			/* Link the new generic plan into the plansource */
@@ -1353,11 +1320,7 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 	if (customplan)
 	{
 		/* Build a custom plan */
-<<<<<<< HEAD
-		plan = BuildCachedPlan(plansource, qlist, boundParams, intoClause);
-=======
-		plan = BuildCachedPlan(plansource, qlist, boundParams, queryEnv);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		plan = BuildCachedPlan(plansource, qlist, boundParams, queryEnv, intoClause);
 		/* Accumulate total costs of custom plans, but 'ware overflow */
 		if (plansource->num_custom_plans < INT_MAX)
 		{
@@ -1495,11 +1458,8 @@ CopyCachedPlan(CachedPlanSource *plansource)
 	newsource->magic = CACHEDPLANSOURCE_MAGIC;
 	newsource->raw_parse_tree = copyObject(plansource->raw_parse_tree);
 	newsource->query_string = pstrdup(plansource->query_string);
-<<<<<<< HEAD
 	newsource->sourceTag = plansource->sourceTag;
-=======
 	MemoryContextSetIdentifier(source_context, newsource->query_string);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	newsource->commandTag = plansource->commandTag;
 	if (plansource->num_params > 0)
 	{
@@ -1592,11 +1552,7 @@ CachedPlanGetTargetList(CachedPlanSource *plansource,
 		return NIL;
 
 	/* Make sure the querytree list is valid and we have parse-time locks */
-<<<<<<< HEAD
-	RevalidateCachedQuery(plansource, NULL);
-=======
-	RevalidateCachedQuery(plansource, queryEnv);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	RevalidateCachedQuery(plansource, queryEnv, NULL);
 
 	/* Get the primary statement and find out what it returns */
 	pstmt = QueryListGetPrimaryStmt(plansource->query_list);
@@ -1749,7 +1705,8 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 			 * fail if it's been dropped entirely --- we'll just transiently
 			 * acquire a non-conflicting lock.
 			 */
-<<<<<<< HEAD
+/* GPDB_12_MERGE_FIXME: Where does this GPDB-specific logic belong now? */
+#if 0
 			if (list_member_int(plannedstmt->resultRelations, rt_index))
 			{
 				/*
@@ -1789,9 +1746,7 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 				else
 					lockmode = AccessShareLock;
 			}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#endif
 			if (acquire)
 				LockRelationOid(rte->relid, rte->rellockmode);
 			else
@@ -1852,7 +1807,8 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 		{
 			case RTE_RELATION:
 				/* Acquire or release the appropriate type of lock */
-<<<<<<< HEAD
+/* GPDB_12_MERGE_FIXME: Where does this GPDB-specific logic belong now? */
+#if 0
 				if (rt_index == parsetree->resultRelation)
 				{
 					/*
@@ -1895,9 +1851,7 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 					else
 						lockmode = AccessShareLock;
 				}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#endif
 				if (acquire)
 					LockRelationOid(rte->relid, rte->rellockmode);
 				else
