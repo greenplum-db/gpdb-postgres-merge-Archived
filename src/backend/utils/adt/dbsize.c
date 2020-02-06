@@ -155,11 +155,7 @@ calculate_database_size(Oid dbOid)
 	DIR		   *dirdesc;
 	struct dirent *direntry;
 	char		dirpath[MAXPGPATH];
-<<<<<<< HEAD
 	char		pathname[MAXPGPATH + 13 + get_dbid_string_length() + 1 + sizeof(GP_TABLESPACE_VERSION_DIRECTORY)];
-=======
-	char		pathname[MAXPGPATH + 21 + sizeof(TABLESPACE_VERSION_DIRECTORY)];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	AclResult	aclresult;
 
 	/*
@@ -193,11 +189,7 @@ calculate_database_size(Oid dbOid)
 			continue;
 
 		snprintf(pathname, sizeof(pathname), "pg_tblspc/%s/%s/%u",
-<<<<<<< HEAD
 				 direntry->d_name, GP_TABLESPACE_VERSION_DIRECTORY, dbOid);
-=======
-				 direntry->d_name, TABLESPACE_VERSION_DIRECTORY, dbOid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		totalsize += db_dir_size(pathname);
 	}
 

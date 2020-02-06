@@ -34,11 +34,8 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
 #include "nodes/execnodes.h"
-=======
 #include "nodes/supportnodes.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/float.h"
