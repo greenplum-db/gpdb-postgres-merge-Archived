@@ -53,7 +53,5 @@ CATALOG(gp_id,5101,GpIdRelationId) BKI_SHARED_RELATION
  * The contract of the gp_id table is that it must have exactly one row on
  * every segment.  The contents of the row do not matter.
  */
-// GPDB_12_MERGE_FIXME: move this to gp_id.dat
-//DATA(insert (Greenplum -1 -1 -1));
 
 #endif /*_GP_ID_H_*/
