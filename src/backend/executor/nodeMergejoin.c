@@ -634,11 +634,7 @@ ExecMergeTupleDump(MergeJoinState *mergestate)
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
-<<<<<<< HEAD
-ExecMergeJoin_guts(MergeJoinState *node)
-=======
-ExecMergeJoin(PlanState *pstate)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+ExecMergeJoin_guts(PlanState *pstate)
 {
 	MergeJoinState *node = castNode(MergeJoinState, pstate);
 	ExprState  *joinqual;
@@ -1273,12 +1269,7 @@ ExecMergeJoin(PlanState *pstate)
 
 				if (compareResult == 0)
 				{
-<<<<<<< HEAD
-					if (!((MergeJoin*)node->js.ps.plan)->unique_outer)
-					{
-=======
 					if (!node->mj_SkipMarkRestore)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						ExecMarkPos(innerPlan);
 
 						MarkInnerTuple(node->mj_InnerTupleSlot, node);
@@ -1552,14 +1543,10 @@ MergeJoinState *
 ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 {
 	MergeJoinState *mergestate;
-<<<<<<< HEAD
-	int markflag;
 	int rewindflag;
-=======
 	TupleDesc	outerDesc,
 				innerDesc;
 	const TupleTableSlotOps *innerOps;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -1592,58 +1579,29 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	mergestate->mj_OuterEContext = CreateExprContext(estate);
 	mergestate->mj_InnerEContext = CreateExprContext(estate);
 
-	/*
-<<<<<<< HEAD
-	 * initialize child expressions
-	 */
-	mergestate->js.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->join.plan.targetlist,
-					 (PlanState *) mergestate);
-	mergestate->js.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->join.plan.qual,
-					 (PlanState *) mergestate);
-	mergestate->js.jointype = node->join.jointype;
-	mergestate->js.joinqual = (List *)
-		ExecInitExpr((Expr *) node->join.joinqual,
-					 (PlanState *) mergestate);
-	mergestate->mj_ConstFalseJoin = false;
 
 	mergestate->prefetch_inner = node->join.prefetch_inner;
 	mergestate->prefetch_joinqual = ShouldPrefetchJoinQual(estate, &node->join);
 	/* Prepare inner operators for rewind after the prefetch */
 	rewindflag = mergestate->prefetch_inner ? EXEC_FLAG_REWIND : 0;
 
-	/* mergeclauses are handled below */
-
-	/*
-	 * initialize child nodes
-	 *
-	 * inner child must support MARK/RESTORE unless the outer plan is
-	 * known to have no duplicate merge keys.
-	 */
-	markflag = node->unique_outer ? 0 : EXEC_FLAG_MARK;
-=======
-	 * initialize child nodes
-	 *
-	 * inner child must support MARK/RESTORE, unless we have detected that we
-	 * don't need that.  Note that skip_mark_restore must never be set if
-	 * there are non-mergeclause joinquals, since the logic wouldn't work.
-	 */
+    /*
+     * initialize child nodes
+     *
+     * inner child must support MARK/RESTORE, unless we have detected that we
+     * don't need that.  Note that skip_mark_restore must never be set if
+     * there are non-mergeclause joinquals, since the logic wouldn't work.
+     */
 	Assert(node->join.joinqual == NIL || !node->skip_mark_restore);
 	mergestate->mj_SkipMarkRestore = node->skip_mark_restore;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	outerPlanState(mergestate) = ExecInitNode(outerPlan(node), estate, eflags);
 	outerDesc = ExecGetResultType(outerPlanState(mergestate));
 	innerPlanState(mergestate) = ExecInitNode(innerPlan(node), estate,
-<<<<<<< HEAD
-											  eflags | markflag | rewindflag);
-=======
 											  mergestate->mj_SkipMarkRestore ?
-											  eflags :
-											  (eflags | EXEC_FLAG_MARK));
+											  eflags | rewindflag:
+											  (eflags | EXEC_FLAG_MARK | rewindflag));
 	innerDesc = ExecGetResultType(innerPlanState(mergestate));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * For certain types of inner child nodes, it is advantageous to issue

@@ -47,13 +47,10 @@
 
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/appendonlywriter.h"
-=======
 #include "access/parallel.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/relscan.h"
 #include "access/table.h"
 #include "access/tableam.h"
@@ -265,10 +262,9 @@ FreeExecutorState(EState *estate)
 		/* FreeExprContext removed the list link for us */
 	}
 
-<<<<<<< HEAD
 	estate->dispatcherState = NULL;
 	estate->dynamicTableScanInfo = NULL;
-=======
+
 	/* release JIT context, if allocated */
 	if (estate->es_jit)
 	{
@@ -282,7 +278,6 @@ FreeExecutorState(EState *estate)
 		DestroyPartitionDirectory(estate->es_partition_directory);
 		estate->es_partition_directory = NULL;
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Free the per-query memory context, thereby releasing all working
