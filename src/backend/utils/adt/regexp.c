@@ -36,10 +36,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
-=======
 #include "utils/varlena.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #define PG_GETARG_TEXT_PP_IF_EXISTS(_n) \
 	(PG_NARGS() > (_n) ? PG_GETARG_TEXT_PP(_n) : NULL)
@@ -115,22 +112,12 @@ static cached_re_str re_array[MAX_CACHED_RES];	/* cached re's */
 
 /* Local functions */
 static regexp_matches_ctx *setup_regexp_matches(text *orig_str, text *pattern,
-<<<<<<< HEAD
-					 text *flags,
-					 Oid collation,
-					 bool force_glob,
-					 bool use_subpatterns,
-					 bool ignore_degenerate,
-					 bool fetching_unmatched);
-static ArrayType *build_regexp_matches_result(regexp_matches_ctx *matchctx);
-=======
 												pg_re_flags *flags,
 												Oid collation,
 												bool use_subpatterns,
 												bool ignore_degenerate,
 												bool fetching_unmatched);
 static ArrayType *build_regexp_match_result(regexp_matches_ctx *matchctx);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static Datum build_regexp_split_result(regexp_matches_ctx *splitctx);
 
 
@@ -987,11 +974,7 @@ regexp_matches(PG_FUNCTION_ARGS)
 		matchctx = setup_regexp_matches(PG_GETARG_TEXT_P_COPY(0), pattern,
 										&re_flags,
 										PG_GET_COLLATION(),
-<<<<<<< HEAD
-										false, true, false, false);
-=======
 										true, false, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/* Pre-create workspace that build_regexp_match_result needs */
 		matchctx->elems = (Datum *) palloc(sizeof(Datum) * matchctx->npatterns);
@@ -1031,11 +1014,7 @@ regexp_matches_no_flags(PG_FUNCTION_ARGS)
  * all the matching in one swoop.  The returned regexp_matches_ctx contains
  * the locations of all the substrings matching the pattern.
  *
-<<<<<<< HEAD
- * The four bool parameters have only two patterns (one for matching, one for
-=======
  * The three bool parameters have only two patterns (one for matching, one for
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * splitting) but it seems clearer to distinguish the functionality this way
  * than to key it all off one "is_split" flag. We don't currently assume that
  * fetching_unmatched is exclusive of fetching the matched text too; if it's
@@ -1047,10 +1026,6 @@ regexp_matches_no_flags(PG_FUNCTION_ARGS)
 static regexp_matches_ctx *
 setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 					 Oid collation,
-<<<<<<< HEAD
-					 bool force_glob,
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					 bool use_subpatterns,
 					 bool ignore_degenerate,
 					 bool fetching_unmatched)
@@ -1103,11 +1078,7 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 	 * use values 2^n-1, not 2^n, so that we hit the limit at 2^28-1 rather
 	 * than at 2^27
 	 */
-<<<<<<< HEAD
-	array_len = re_flags.glob ? 255 : 31;
-=======
 	array_len = re_flags->glob ? 255 : 31;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	matchctx->match_locs = (int *) palloc(sizeof(int) * array_len);
 	array_idx = 0;
 
@@ -1130,13 +1101,8 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 			/* enlarge output space if needed */
 			while (array_idx + matchctx->npatterns * 2 + 1 > array_len)
 			{
-<<<<<<< HEAD
-				array_len += array_len + 1;		/* 2^n-1 => 2^(n+1)-1 */
-				if (array_len > MaxAllocSize/sizeof(int))
-=======
 				array_len += array_len + 1; /* 2^n-1 => 2^(n+1)-1 */
 				if (array_len > MaxAllocSize / sizeof(int))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					ereport(ERROR,
 							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 							 errmsg("too many regular expression matches")));
@@ -1151,14 +1117,9 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 
 				for (i = 1; i <= matchctx->npatterns; i++)
 				{
-<<<<<<< HEAD
-					int		so = pmatch[i].rm_so;
-					int		eo = pmatch[i].rm_eo;
-=======
 					int			so = pmatch[i].rm_so;
 					int			eo = pmatch[i].rm_eo;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					matchctx->match_locs[array_idx++] = so;
 					matchctx->match_locs[array_idx++] = eo;
 					if (so >= 0 && eo >= 0 && (eo - so) > maxlen)
@@ -1167,14 +1128,9 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 			}
 			else
 			{
-<<<<<<< HEAD
-				int		so = pmatch[0].rm_so;
-				int		eo = pmatch[0].rm_eo;
-=======
 				int			so = pmatch[0].rm_so;
 				int			eo = pmatch[0].rm_eo;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				matchctx->match_locs[array_idx++] = so;
 				matchctx->match_locs[array_idx++] = eo;
 				if (so >= 0 && eo >= 0 && (eo - so) > maxlen)
@@ -1236,17 +1192,10 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 		 * interest.
 		 *
 		 * Worst case: assume we need the maximum size (maxlen*eml), but take
-<<<<<<< HEAD
-		 * advantage of the fact that the original string length in bytes is an
-		 * upper bound on the byte length of any fetched substring (and we know
-		 * that len+1 is safe to allocate because the varlena header is longer
-		 * than 1 byte).
-=======
 		 * advantage of the fact that the original string length in bytes is
 		 * an upper bound on the byte length of any fetched substring (and we
 		 * know that len+1 is safe to allocate because the varlena header is
 		 * longer than 1 byte).
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 */
 		if (maxsiz > orig_len)
 			conv_bufsiz = orig_len + 1;
@@ -1273,11 +1222,7 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 }
 
 /*
-<<<<<<< HEAD
- * build_regexp_matches_result - build output array for current match
-=======
  * build_regexp_match_result - build output array for current match
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 static ArrayType *
 build_regexp_match_result(regexp_matches_ctx *matchctx)
@@ -1305,16 +1250,10 @@ build_regexp_match_result(regexp_matches_ctx *matchctx)
 		}
 		else if (buf)
 		{
-<<<<<<< HEAD
-			int		len = pg_wchar2mb_with_len(matchctx->wide_str + so,
-											   buf,
-											   eo - so);
-=======
 			int			len = pg_wchar2mb_with_len(matchctx->wide_str + so,
 												   buf,
 												   eo - so);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			Assert(len < bufsiz);
 			elems[i] = PointerGetDatum(cstring_to_text_with_len(buf, len));
 			nulls[i] = false;
@@ -1374,11 +1313,7 @@ regexp_split_to_table(PG_FUNCTION_ARGS)
 		splitctx = setup_regexp_matches(PG_GETARG_TEXT_P_COPY(0), pattern,
 										&re_flags,
 										PG_GET_COLLATION(),
-<<<<<<< HEAD
-										true, false, true, true);
-=======
 										false, true, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		MemoryContextSwitchTo(oldcontext);
 		funcctx->user_fctx = (void *) splitctx;
@@ -1433,11 +1368,7 @@ regexp_split_to_array(PG_FUNCTION_ARGS)
 									PG_GETARG_TEXT_PP(1),
 									&re_flags,
 									PG_GET_COLLATION(),
-<<<<<<< HEAD
-									true, false, true, true);
-=======
 									false, true, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	while (splitctx->next_match <= splitctx->nmatches)
 	{
@@ -1449,11 +1380,7 @@ regexp_split_to_array(PG_FUNCTION_ARGS)
 		splitctx->next_match++;
 	}
 
-<<<<<<< HEAD
-	PG_RETURN_DATUM(makeArrayResult(astate, CurrentMemoryContext));
-=======
 	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* This is separate to keep the opr_sanity regression test from complaining */
@@ -1485,24 +1412,15 @@ build_regexp_split_result(regexp_matches_ctx *splitctx)
 
 	if (buf)
 	{
-<<<<<<< HEAD
-		int		bufsiz PG_USED_FOR_ASSERTS_ONLY = splitctx->conv_bufsiz;
-		int		len;
-=======
 		int			bufsiz PG_USED_FOR_ASSERTS_ONLY = splitctx->conv_bufsiz;
 		int			len;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		endpos = splitctx->match_locs[splitctx->next_match * 2];
 		if (endpos < startpos)
 			elog(ERROR, "invalid match starting position");
 		len = pg_wchar2mb_with_len(splitctx->wide_str + startpos,
 								   buf,
-<<<<<<< HEAD
-								   endpos-startpos);
-=======
 								   endpos - startpos);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		Assert(len < bufsiz);
 		return PointerGetDatum(cstring_to_text_with_len(buf, len));
 	}

@@ -225,13 +225,13 @@ struct RecordIOData
 	ColumnIOData columns[FLEXIBLE_ARRAY_MEMBER];
 };
 
-/* per-query cache for populate_recordset */
-typedef struct PopulateRecordsetCache
+/* per-query cache for populate_record_worker and populate_recordset_worker */
+typedef struct PopulateRecordCache
 {
 	Oid			argtype;		/* declared type of the record argument */
 	ColumnIOData c;				/* metadata cache for populate_composite() */
 	MemoryContext fn_mcxt;		/* where this is stored */
-} PopulateRecordsetCache;
+} PopulateRecordCache;
 
 /* per-call state for populate_recordset */
 typedef struct PopulateRecordsetState
@@ -244,15 +244,8 @@ typedef struct PopulateRecordsetState
 	JsonTokenType saved_token_type;
 	Tuplestorestate *tuple_store;
 	HeapTupleHeader rec;
-	PopulateRecordsetCache *cache;
+	PopulateRecordCache *cache;
 } PopulateRecordsetState;
-
-/* structure to cache metadata needed for populate_record_worker() */
-typedef struct PopulateRecordCache
-{
-	Oid			argtype;		/* declared type of the record argument */
-	ColumnIOData c;				/* metadata cache for populate_composite() */
-} PopulateRecordCache;
 
 /* common data for populate_array_json() and populate_array_dim_jsonb() */
 typedef struct PopulateArrayContext
@@ -429,6 +422,12 @@ static Datum populate_record_worker(FunctionCallInfo fcinfo, const char *funcnam
 static HeapTupleHeader populate_record(TupleDesc tupdesc, RecordIOData **record_p,
 									   HeapTupleHeader defaultval, MemoryContext mcxt,
 									   JsObject *obj);
+static void get_record_type_from_argument(FunctionCallInfo fcinfo,
+										  const char *funcname,
+										  PopulateRecordCache *cache);
+static void get_record_type_from_query(FunctionCallInfo fcinfo,
+									   const char *funcname,
+									   PopulateRecordCache *cache);
 static void JsValueToJsObject(JsValue *jsv, JsObject *jso);
 static Datum populate_composite(CompositeIOData *io, Oid typid,
 								const char *colname, MemoryContext mcxt,
@@ -3203,6 +3202,70 @@ populate_record(TupleDesc tupdesc,
 }
 
 /*
+ * Setup for json{b}_populate_record{set}: result type will be same as first
+ * argument's type --- unless first argument is "null::record", which we can't
+ * extract type info from; we handle that later.
+ */
+static void
+get_record_type_from_argument(FunctionCallInfo fcinfo,
+							  const char *funcname,
+							  PopulateRecordCache *cache)
+{
+	cache->argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	prepare_column_cache(&cache->c,
+						 cache->argtype, -1,
+						 cache->fn_mcxt, false);
+	if (cache->c.typcat != TYPECAT_COMPOSITE &&
+		cache->c.typcat != TYPECAT_COMPOSITE_DOMAIN)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+		/* translator: %s is a function name, eg json_to_record */
+				 errmsg("first argument of %s must be a row type",
+						funcname)));
+}
+
+/*
+ * Setup for json{b}_to_record{set}: result type is specified by calling
+ * query.  We'll also use this code for json{b}_populate_record{set},
+ * if we discover that the first argument is a null of type RECORD.
+ *
+ * Here it is syntactically impossible to specify the target type
+ * as domain-over-composite.
+ */
+static void
+get_record_type_from_query(FunctionCallInfo fcinfo,
+						   const char *funcname,
+						   PopulateRecordCache *cache)
+{
+	TupleDesc	tupdesc;
+	MemoryContext old_cxt;
+
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		/* translator: %s is a function name, eg json_to_record */
+				 errmsg("could not determine row type for result of %s",
+						funcname),
+				 errhint("Provide a non-null record argument, "
+						 "or call the function in the FROM clause "
+						 "using a column definition list.")));
+
+	Assert(tupdesc);
+	cache->argtype = tupdesc->tdtypeid;
+
+	/* If we go through this more than once, avoid memory leak */
+	if (cache->c.io.composite.tupdesc)
+		FreeTupleDesc(cache->c.io.composite.tupdesc);
+
+	/* Save identified tupdesc */
+	old_cxt = MemoryContextSwitchTo(cache->fn_mcxt);
+	cache->c.io.composite.tupdesc = CreateTupleDescCopy(tupdesc);
+	cache->c.io.composite.base_typid = tupdesc->tdtypeid;
+	cache->c.io.composite.base_typmod = tupdesc->tdtypmod;
+	MemoryContextSwitchTo(old_cxt);
+}
+
+/*
  * common worker for json{b}_populate_record() and json{b}_to_record()
  * is_json and have_record_arg identify the specific function
  */
@@ -3211,125 +3274,12 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 					   bool is_json, bool have_record_arg)
 {
 	int			json_arg_num = have_record_arg ? 1 : 0;
-<<<<<<< HEAD
-	Oid			jtype = get_fn_expr_argtype(fcinfo->flinfo, json_arg_num);
-	text	   *json;
-	Jsonb	   *jb = NULL;
-	HTAB	   *json_hash = NULL;
-	HeapTupleHeader rec = NULL;
-	Oid			tupType = InvalidOid;
-	int32		tupTypmod = -1;
-	TupleDesc	tupdesc;
-	HeapTupleData tuple;
-	HeapTuple	rettuple;
-	RecordIOData *my_extra;
-	int			ncolumns;
-	int			i;
-	Datum	   *values;
-	bool	   *nulls;
-
-	Assert(jtype == JSONOID || jtype == JSONBOID);
-
-	if (have_record_arg)
-	{
-		Oid			argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
-
-		if (!type_is_rowtype(argtype))
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("first argument of %s must be a row type",
-							funcname)));
-
-		if (PG_ARGISNULL(0))
-		{
-			if (PG_ARGISNULL(1))
-				PG_RETURN_NULL();
-
-			/*
-			 * have no tuple to look at, so the only source of type info is
-			 * the argtype. The lookup_rowtype_tupdesc call below will error
-			 * out if we don't have a known composite type oid here.
-			 */
-			tupType = argtype;
-			tupTypmod = -1;
-		}
-		else
-		{
-			rec = PG_GETARG_HEAPTUPLEHEADER(0);
-
-			if (PG_ARGISNULL(1))
-				PG_RETURN_POINTER(rec);
-
-			/* Extract type info from the tuple itself */
-			tupType = HeapTupleHeaderGetTypeId(rec);
-			tupTypmod = HeapTupleHeaderGetTypMod(rec);
-		}
-
-		tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-	}
-	else
-	{
-		/* json{b}_to_record case */
-		if (PG_ARGISNULL(0))
-			PG_RETURN_NULL();
-
-		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("function returning record called in context "
-							"that cannot accept type record"),
-					 errhint("Try calling the function in the FROM clause "
-							 "using a column definition list.")));
-	}
-
-	if (jtype == JSONOID)
-	{
-		/* just get the text */
-		json = PG_GETARG_TEXT_P(json_arg_num);
-
-		json_hash = get_json_object_as_hash(json, funcname);
-
-		/*
-		 * if the input json is empty, we can only skip the rest if we were
-		 * passed in a non-null record, since otherwise there may be issues
-		 * with domain nulls.
-		 */
-		if (hash_get_num_entries(json_hash) == 0 && rec)
-		{
-			hash_destroy(json_hash);
-			ReleaseTupleDesc(tupdesc);
-			PG_RETURN_POINTER(rec);
-		}
-	}
-	else
-	{
-		jb = PG_GETARG_JSONB(json_arg_num);
-
-		/* same logic as for json */
-		if (JB_ROOT_COUNT(jb) == 0 && rec)
-		{
-			ReleaseTupleDesc(tupdesc);
-			PG_RETURN_POINTER(rec);
-		}
-	}
-
-	ncolumns = tupdesc->natts;
-
-	if (rec)
-	{
-		/* Build a temporary HeapTuple control structure */
-		tuple.t_len = HeapTupleHeaderGetDatumLength(rec);
-		ItemPointerSetInvalid(&(tuple.t_self));
-		tuple.t_data = rec;
-	}
-=======
 	JsValue		jsv = {0};
 	HeapTupleHeader rec;
 	Datum		rettuple;
 	JsonbValue	jbv;
 	MemoryContext fnmcxt = fcinfo->flinfo->fn_mcxt;
 	PopulateRecordCache *cache = fcinfo->flinfo->fn_extra;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * If first time through, identify input/result record type.  Note that
@@ -3340,63 +3290,24 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 	{
 		fcinfo->flinfo->fn_extra = cache =
 			MemoryContextAllocZero(fnmcxt, sizeof(*cache));
+		cache->fn_mcxt = fnmcxt;
 
 		if (have_record_arg)
-		{
-			/*
-			 * json{b}_populate_record case: result type will be same as first
-			 * argument's.
-			 */
-			cache->argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
-			prepare_column_cache(&cache->c,
-								 cache->argtype, -1,
-								 fnmcxt, false);
-			if (cache->c.typcat != TYPECAT_COMPOSITE &&
-				cache->c.typcat != TYPECAT_COMPOSITE_DOMAIN)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("first argument of %s must be a row type",
-								funcname)));
-		}
+			get_record_type_from_argument(fcinfo, funcname, cache);
 		else
-		{
-			/*
-			 * json{b}_to_record case: result type is specified by calling
-			 * query.  Here it is syntactically impossible to specify the
-			 * target type as domain-over-composite.
-			 */
-			TupleDesc	tupdesc;
-			MemoryContext old_cxt;
-
-			if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("function returning record called in context "
-								"that cannot accept type record"),
-						 errhint("Try calling the function in the FROM clause "
-								 "using a column definition list.")));
-
-			Assert(tupdesc);
-			cache->argtype = tupdesc->tdtypeid;
-
-			/* Save identified tupdesc */
-			old_cxt = MemoryContextSwitchTo(fnmcxt);
-			cache->c.io.composite.tupdesc = CreateTupleDescCopy(tupdesc);
-			cache->c.io.composite.base_typid = tupdesc->tdtypeid;
-			cache->c.io.composite.base_typmod = tupdesc->tdtypmod;
-			MemoryContextSwitchTo(old_cxt);
-		}
+			get_record_type_from_query(fcinfo, funcname, cache);
 	}
 
 	/* Collect record arg if we have one */
-	if (have_record_arg && !PG_ARGISNULL(0))
+	if (!have_record_arg)
+		rec = NULL;				/* it's json{b}_to_record() */
+	else if (!PG_ARGISNULL(0))
 	{
 		rec = PG_GETARG_HEAPTUPLEHEADER(0);
 
 		/*
 		 * When declared arg type is RECORD, identify actual record type from
-		 * the tuple itself.  Note the lookup_rowtype_tupdesc call in
-		 * update_cached_tupdesc will fail if we're unable to do this.
+		 * the tuple itself.
 		 */
 		if (cache->argtype == RECORDOID)
 		{
@@ -3405,7 +3316,20 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 		}
 	}
 	else
+	{
 		rec = NULL;
+
+		/*
+		 * When declared arg type is RECORD, identify actual record type from
+		 * calling query, or fail if we can't.
+		 */
+		if (cache->argtype == RECORDOID)
+		{
+			get_record_type_from_query(fcinfo, funcname, cache);
+			/* This can't change argtype, which is important for next time */
+			Assert(cache->argtype == RECORDOID);
+		}
+	}
 
 	/* If no JSON argument, just return the record (if any) unchanged */
 	if (PG_ARGISNULL(json_arg_num))
@@ -3630,124 +3554,7 @@ json_to_recordset(PG_FUNCTION_ARGS)
 static void
 populate_recordset_record(PopulateRecordsetState *state, JsObject *obj)
 {
-<<<<<<< HEAD
-	Datum	   *values;
-	bool	   *nulls;
-	int			i;
-	RecordIOData *my_extra = state->my_extra;
-	int			ncolumns = my_extra->ncolumns;
-	TupleDesc	tupdesc = state->ret_tdesc;
-	HeapTupleHeader rec = state->rec;
-	HeapTuple	rettuple;
-
-	values = (Datum *) palloc(ncolumns * sizeof(Datum));
-	nulls = (bool *) palloc(ncolumns * sizeof(bool));
-
-	if (state->rec)
-	{
-		HeapTupleData tuple;
-
-		/* Build a temporary HeapTuple control structure */
-		tuple.t_len = HeapTupleHeaderGetDatumLength(state->rec);
-		ItemPointerSetInvalid(&(tuple.t_self));
-#if 0
-		tuple.t_tableOid = InvalidOid;
-#endif
-		tuple.t_data = state->rec;
-
-		/* Break down the tuple into fields */
-		heap_deform_tuple(&tuple, tupdesc, values, nulls);
-	}
-	else
-	{
-		for (i = 0; i < ncolumns; ++i)
-		{
-			values[i] = (Datum) 0;
-			nulls[i] = true;
-		}
-	}
-
-	for (i = 0; i < ncolumns; ++i)
-	{
-		ColumnIOData *column_info = &my_extra->columns[i];
-		Oid			column_type = tupdesc->attrs[i]->atttypid;
-		JsonbValue *v = NULL;
-		char	   *key;
-
-		/* Ignore dropped columns in datatype */
-		if (tupdesc->attrs[i]->attisdropped)
-		{
-			nulls[i] = true;
-			continue;
-		}
-
-		key = NameStr(tupdesc->attrs[i]->attname);
-
-		v = findJsonbValueFromContainerLen(&element->root, JB_FOBJECT,
-										   key, strlen(key));
-
-		/*
-		 * We can't just skip here if the key wasn't found since we might have
-		 * a domain to deal with. If we were passed in a non-null record
-		 * datum, we assume that the existing values are valid (if they're
-		 * not, then it's not our fault), but if we were passed in a null,
-		 * then every field which we don't populate needs to be run through
-		 * the input function just in case it's a domain type.
-		 */
-		if (v == NULL && rec)
-			continue;
-
-		/*
-		 * Prepare to convert the column value from text
-		 */
-		if (column_info->column_type != column_type)
-		{
-			getTypeInputInfo(column_type,
-							 &column_info->typiofunc,
-							 &column_info->typioparam);
-			fmgr_info_cxt(column_info->typiofunc, &column_info->proc,
-						  state->fn_mcxt);
-			column_info->column_type = column_type;
-		}
-		if (v == NULL || v->type == jbvNull)
-		{
-			/*
-			 * Need InputFunctionCall to happen even for nulls, so that domain
-			 * checks are done
-			 */
-			values[i] = InputFunctionCall(&column_info->proc, NULL,
-										  column_info->typioparam,
-										  tupdesc->attrs[i]->atttypmod);
-			nulls[i] = true;
-		}
-		else
-		{
-			char	   *s = NULL;
-
-			if (v->type == jbvString)
-				s = pnstrdup(v->val.string.val, v->val.string.len);
-			else if (v->type == jbvBool)
-				s = pnstrdup((v->val.boolean) ? "t" : "f", 1);
-			else if (v->type == jbvNumeric)
-				s = DatumGetCString(DirectFunctionCall1(numeric_out,
-										   PointerGetDatum(v->val.numeric)));
-			else if (v->type == jbvBinary)
-				s = JsonbToCString(NULL, (JsonbContainer *) v->val.binary.data, v->val.binary.len);
-			else
-				elog(ERROR, "unrecognized jsonb type: %d", (int) v->type);
-
-			values[i] = InputFunctionCall(&column_info->proc, s,
-										  column_info->typioparam,
-										  tupdesc->attrs[i]->atttypmod);
-			nulls[i] = false;
-		}
-	}
-
-	rettuple = heap_form_tuple(tupdesc, values, nulls);
-
-	tuplestore_puttuple(state->tuple_store, rettuple);
-=======
-	PopulateRecordsetCache *cache = state->cache;
+	PopulateRecordCache *cache = state->cache;
 	HeapTupleHeader tuphead;
 	HeapTupleData tuple;
 
@@ -3775,7 +3582,6 @@ populate_recordset_record(PopulateRecordsetState *state, JsObject *obj)
 	tuple.t_data = tuphead;
 
 	tuplestore_puttuple(state->tuple_store, &tuple);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -3790,7 +3596,7 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 	ReturnSetInfo *rsi;
 	MemoryContext old_cxt;
 	HeapTupleHeader rec;
-	PopulateRecordsetCache *cache = fcinfo->flinfo->fn_extra;
+	PopulateRecordCache *cache = fcinfo->flinfo->fn_extra;
 	PopulateRecordsetState *state;
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
@@ -3804,8 +3610,6 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 
 	rsi->returnMode = SFRM_Materialize;
 
-<<<<<<< HEAD
-=======
 	/*
 	 * If first time through, identify input/result record type.  Note that
 	 * this stanza looks only at fcinfo context, which can't change during the
@@ -3818,60 +3622,21 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 		cache->fn_mcxt = fcinfo->flinfo->fn_mcxt;
 
 		if (have_record_arg)
-		{
-			/*
-			 * json{b}_populate_recordset case: result type will be same as
-			 * first argument's.
-			 */
-			cache->argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
-			prepare_column_cache(&cache->c,
-								 cache->argtype, -1,
-								 cache->fn_mcxt, false);
-			if (cache->c.typcat != TYPECAT_COMPOSITE &&
-				cache->c.typcat != TYPECAT_COMPOSITE_DOMAIN)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("first argument of %s must be a row type",
-								funcname)));
-		}
+			get_record_type_from_argument(fcinfo, funcname, cache);
 		else
-		{
-			/*
-			 * json{b}_to_recordset case: result type is specified by calling
-			 * query.  Here it is syntactically impossible to specify the
-			 * target type as domain-over-composite.
-			 */
-			TupleDesc	tupdesc;
-
-			if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("function returning record called in context "
-								"that cannot accept type record"),
-						 errhint("Try calling the function in the FROM clause "
-								 "using a column definition list.")));
-
-			Assert(tupdesc);
-			cache->argtype = tupdesc->tdtypeid;
-
-			/* Save identified tupdesc */
-			old_cxt = MemoryContextSwitchTo(cache->fn_mcxt);
-			cache->c.io.composite.tupdesc = CreateTupleDescCopy(tupdesc);
-			cache->c.io.composite.base_typid = tupdesc->tdtypeid;
-			cache->c.io.composite.base_typmod = tupdesc->tdtypmod;
-			MemoryContextSwitchTo(old_cxt);
-		}
+			get_record_type_from_query(fcinfo, funcname, cache);
 	}
 
 	/* Collect record arg if we have one */
-	if (have_record_arg && !PG_ARGISNULL(0))
+	if (!have_record_arg)
+		rec = NULL;				/* it's json{b}_to_recordset() */
+	else if (!PG_ARGISNULL(0))
 	{
 		rec = PG_GETARG_HEAPTUPLEHEADER(0);
 
 		/*
 		 * When declared arg type is RECORD, identify actual record type from
-		 * the tuple itself.  Note the lookup_rowtype_tupdesc call in
-		 * update_cached_tupdesc will fail if we're unable to do this.
+		 * the tuple itself.
 		 */
 		if (cache->argtype == RECORDOID)
 		{
@@ -3880,47 +3645,25 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 		}
 	}
 	else
+	{
 		rec = NULL;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		/*
+		 * When declared arg type is RECORD, identify actual record type from
+		 * calling query, or fail if we can't.
+		 */
+		if (cache->argtype == RECORDOID)
+		{
+			get_record_type_from_query(fcinfo, funcname, cache);
+			/* This can't change argtype, which is important for next time */
+			Assert(cache->argtype == RECORDOID);
+		}
+	}
+
 	/* if the json is null send back an empty set */
 	if (PG_ARGISNULL(json_arg_num))
 		PG_RETURN_NULL();
 
-<<<<<<< HEAD
-	if (!have_record_arg || PG_ARGISNULL(0))
-	{
-		rec = NULL;
-
-		/*
-		 * get the tupdesc from the result set info - it must be a record type
-		 * because we already checked that arg1 is a record type, or we're in
-		 * a to_record function which returns a setof record.
-		 */
-		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("function returning record called in context "
-							"that cannot accept type record")));
-	}
-	else
-	{
-		rec = PG_GETARG_HEAPTUPLEHEADER(0);
-
-		/*
-		 * use the input record's own type marking to find a tupdesc for it.
-		 */
-		tupType = HeapTupleHeaderGetTypeId(rec);
-		tupTypmod = HeapTupleHeaderGetTypMod(rec);
-		tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-	}
-
-	tupType = tupdesc->tdtypeid;
-	tupTypmod = tupdesc->tdtypmod;
-	ncolumns = tupdesc->natts;
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Forcibly update the cached tupdesc, to ensure we have the right tupdesc
 	 * to return even if the JSON contains no rows.
@@ -3935,9 +3678,6 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 											   SFRM_Materialize_Random,
 											   false, work_mem);
 	MemoryContextSwitchTo(old_cxt);
-
-	/* unnecessary, but harmless, if tupdesc came from get_call_result_type: */
-	ReleaseTupleDesc(tupdesc);
 
 	state->function_name = funcname;
 	state->cache = cache;
@@ -4059,99 +3799,7 @@ populate_recordset_object_end(void *state)
 	obj.val.json_hash = _state->json_hash;
 
 	/* Otherwise, construct and return a tuple based on this level-1 object */
-<<<<<<< HEAD
-	values = (Datum *) palloc(ncolumns * sizeof(Datum));
-	nulls = (bool *) palloc(ncolumns * sizeof(bool));
-
-	if (_state->rec)
-	{
-		HeapTupleData tuple;
-
-		/* Build a temporary HeapTuple control structure */
-		tuple.t_len = HeapTupleHeaderGetDatumLength(_state->rec);
-		ItemPointerSetInvalid(&(tuple.t_self));
-		tuple.t_data = _state->rec;
-
-		/* Break down the tuple into fields */
-		heap_deform_tuple(&tuple, tupdesc, values, nulls);
-	}
-	else
-	{
-		for (i = 0; i < ncolumns; ++i)
-		{
-			values[i] = (Datum) 0;
-			nulls[i] = true;
-		}
-	}
-
-	for (i = 0; i < ncolumns; ++i)
-	{
-		ColumnIOData *column_info = &my_extra->columns[i];
-		Oid			column_type = tupdesc->attrs[i]->atttypid;
-		char	   *value;
-
-		/* Ignore dropped columns in datatype */
-		if (tupdesc->attrs[i]->attisdropped)
-		{
-			nulls[i] = true;
-			continue;
-		}
-
-		hashentry = hash_search(json_hash,
-								NameStr(tupdesc->attrs[i]->attname),
-								HASH_FIND, NULL);
-
-		/*
-		 * we can't just skip here if the key wasn't found since we might have
-		 * a domain to deal with. If we were passed in a non-null record
-		 * datum, we assume that the existing values are valid (if they're
-		 * not, then it's not our fault), but if we were passed in a null,
-		 * then every field which we don't populate needs to be run through
-		 * the input function just in case it's a domain type.
-		 */
-		if (hashentry == NULL && rec)
-			continue;
-
-		/*
-		 * Prepare to convert the column value from text
-		 */
-		if (column_info->column_type != column_type)
-		{
-			getTypeInputInfo(column_type,
-							 &column_info->typiofunc,
-							 &column_info->typioparam);
-			fmgr_info_cxt(column_info->typiofunc, &column_info->proc,
-						  _state->fn_mcxt);
-			column_info->column_type = column_type;
-		}
-		if (hashentry == NULL || hashentry->isnull)
-		{
-			/*
-			 * need InputFunctionCall to happen even for nulls, so that domain
-			 * checks are done
-			 */
-			values[i] = InputFunctionCall(&column_info->proc, NULL,
-										  column_info->typioparam,
-										  tupdesc->attrs[i]->atttypmod);
-			nulls[i] = true;
-		}
-		else
-		{
-			value = hashentry->val;
-
-			values[i] = InputFunctionCall(&column_info->proc, value,
-										  column_info->typioparam,
-										  tupdesc->attrs[i]->atttypmod);
-			nulls[i] = false;
-		}
-	}
-
-	rettuple = heap_form_tuple(tupdesc, values, nulls);
-
-	tuplestore_puttuple(_state->tuple_store, rettuple);
-=======
 	populate_recordset_record(_state, &obj);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Done with hash for this object */
 	hash_destroy(_state->json_hash);
