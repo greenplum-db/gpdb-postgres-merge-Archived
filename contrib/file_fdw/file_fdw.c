@@ -315,11 +315,7 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 	/*
 	 * Now apply the core COPY code's validation logic for more checks.
 	 */
-<<<<<<< HEAD
-	ProcessCopyOptions(NULL, true, other_options, 0, true);
-=======
-	ProcessCopyOptions(NULL, NULL, true, other_options);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	ProcessCopyOptions(NULL, NULL, true, other_options, 0, true);
 
 	/*
 	 * Either filename or program option is required for file_fdw foreign
@@ -700,19 +696,11 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 	cstate = BeginCopyFrom(NULL,
 						   node->ss.ss_currentRelation,
 						   filename,
-<<<<<<< HEAD
-						   false, /* is_program */
-						   NULL,  /* data_source_cb */
-						   NULL,  /* data_source_cb_extra */
-						   NIL,   /* attnamelist */
-						   options,
-						   NIL);  /* ao_segnos */
-=======
 						   is_program,
 						   NULL,
 						   NIL,
-						   options);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						   options,
+						   NIL);  /* ao_segnos */
 
 	/*
 	 * Save state in node->fdw_state.  We must save enough information to call
@@ -784,19 +772,11 @@ fileReScanForeignScan(ForeignScanState *node)
 	festate->cstate = BeginCopyFrom(NULL,
 									node->ss.ss_currentRelation,
 									festate->filename,
-<<<<<<< HEAD
-									false, /* is_program */
-									NULL,  /* data_source_cb */
-									NULL,  /* data_source_cb_extra */
-									NIL,   /* attnamelist */
-									festate->options,
-									NIL);  /* ao_segnos */
-=======
 									festate->is_program,
 									NULL,
 									NIL,
-									festate->options);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+									festate->options,
+                                    NIL);  /* ao_segnos */
 }
 
 /*
@@ -1166,12 +1146,8 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	/*
 	 * Create CopyState from FDW options.
 	 */
-<<<<<<< HEAD
-	cstate = BeginCopyFrom(onerel, filename, false, NULL, NULL, NIL, options, NIL);
-=======
 	cstate = BeginCopyFrom(NULL, onerel, filename, is_program, NULL, NIL,
-						   options);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						   options, NIL);
 
 	/*
 	 * Use per-tuple memory context to prevent leak of memory used to read
