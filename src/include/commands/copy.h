@@ -34,9 +34,6 @@ typedef enum CopyDest
 	COPY_CALLBACK				/* to/from callback function (used for external tables) */
 } CopyDest;
 
-/* CopyStateData is private in commands/copy.c */
-typedef int (*copy_data_source_cb) (void *outbuf, int datasize, void *extra);
-
 /*
  *	Represents the end-of-line terminator type of the input
  */
@@ -47,16 +44,6 @@ typedef enum EolType
 	EOL_CR,
 	EOL_CRNL
 } EolType;
-
-/*
- * The error handling mode for this data load.
- */
-typedef enum CopyErrMode
-{
-	ALL_OR_NOTHING,	/* Either all rows or no rows get loaded (the default) */
-	SREH_IGNORE,	/* Sreh - ignore errors (REJECT, but don't log errors) */
-	SREH_LOG		/* Sreh - log errors */
-} CopyErrMode;
 
 typedef struct ProgramPipes
 {
@@ -104,7 +91,7 @@ typedef enum
  * characters, else we might find a false match to a trailing byte. In
  * supported server encodings, there is no possibility of a false match, and
  * it's faster to make useless comparisons to trailing bytes than it is to
- * invoke pg_encoding_mblen() to skip over them. encoding_embeds_ascii is TRUE
+ * invoke pg_encoding_mblen() to skip over them. encoding_embeds_ascii is true
  * when we have to do it the hard way.
  */
 typedef struct CopyStateData
@@ -114,52 +101,46 @@ typedef struct CopyStateData
 	FILE	   *copy_file;		/* used if copy_dest == COPY_FILE */
 	StringInfo	fe_msgbuf;		/* used for all dests during COPY TO, only for
 								 * dest == COPY_NEW_FE in COPY FROM */
-	bool		fe_eof;			/* true if detected end of copy data */
+	bool		is_copy_from;	/* COPY TO, or COPY FROM? */
+	bool		reached_eof;	/* true if we read to end of copy data (not
+								 * all copy_dest types maintain this) */
 	EolType		eol_type;		/* EOL type of input */
-	char	   *eol_str;		/* optional NEWLINE from command. before eol_type is defined */
 	int			file_encoding;	/* file or remote side's character encoding */
-	bool		need_transcoding;		/* file encoding diff from server? */
+	bool		need_transcoding;	/* file encoding diff from server? */
 	bool		encoding_embeds_ascii;	/* ASCII can be non-first byte? */
-	FmgrInfo   *enc_conversion_proc; /* conv proc from exttbl encoding to 
-										server or the other way around */
 
 	/* parameters from the COPY command */
 	Relation	rel;			/* relation to copy to or from */
 	QueryDesc  *queryDesc;		/* executable query to copy from */
 	List	   *attnumlist;		/* integer list of attnums to copy */
-	List	   *attnamelist;	/* list of attributes by name */
 	char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
 	bool		is_program;		/* is 'filename' a program to popen? */
-	bool		binary;			/* binary format? */
 	copy_data_source_cb data_source_cb; /* function for reading data */
-	void	   *data_source_cb_extra;
-	bool		oids;			/* include OIDs? */
+	bool		binary;			/* binary format? */
 	bool		freeze;			/* freeze rows on loading? */
 	bool		csv_mode;		/* Comma Separated Value format? */
 	bool		header_line;	/* CSV header line? */
 	char	   *null_print;		/* NULL marker string (server encoding!) */
 	int			null_print_len; /* length of same */
-	char	   *null_print_client;		/* same converted to file encoding */
+	char	   *null_print_client;	/* same converted to file encoding */
 	char	   *delim;			/* column delimiter (must be 1 byte) */
 	char	   *quote;			/* CSV quote char (must be 1 byte) */
 	char	   *escape;			/* CSV escape char (must be 1 byte) */
 	List	   *force_quote;	/* list of column names */
 	bool		force_quote_all;	/* FORCE_QUOTE *? */
-	bool	   *force_quote_flags;		/* per-column CSV FQ flags */
+	bool	   *force_quote_flags;	/* per-column CSV FQ flags */
 	List	   *force_notnull;	/* list of column names */
 	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
 	List	   *force_null;		/* list of column names */
-	bool	   *force_null_flags;		/* per-column CSV FN flags */
+	bool	   *force_null_flags;	/* per-column CSV FN flags */
 	bool		convert_selectively;	/* do selective binary conversion? */
 	List	   *convert_select; /* list of column names (can be NIL) */
 	bool	   *convert_select_flags;	/* per-column CSV/TEXT CS flags */
-	bool		fill_missing;	/* missing attrs at end of line are NULL */
-
-	SingleRowErrorDesc *sreh;
+	Node	   *whereClause;	/* WHERE condition (or NULL) */
 
 	/* these are just for error messages, see CopyFromErrorCallback */
 	const char *cur_relname;	/* table name for error messages */
-	int64		cur_lineno;		/* line number for error messages.  Negative means it isn't available. */
+	uint64		cur_lineno;		/* line number for error messages */
 	const char *cur_attname;	/* current att for error messages */
 	const char *cur_attval;		/* current att value for error messages */
 
@@ -180,21 +161,15 @@ typedef struct CopyStateData
 	 */
 	AttrNumber	num_defaults;
 	FmgrInfo	oid_in_function;
-	Oid			oid_typioparam;
 	FmgrInfo   *in_functions;	/* array of input functions for each attrs */
 	Oid		   *typioparams;	/* array of element types for in_functions */
 	int		   *defmap;			/* array of default att numbers */
 	ExprState **defexprs;		/* array of default att expressions */
-	bool		volatile_defexprs;		/* is any of defexprs volatile? */
+	bool		volatile_defexprs;	/* is any of defexprs volatile? */
 	List	   *range_table;
+	ExprState  *qualexpr;
 
-	StringInfo	dispatch_msgbuf; /* used in COPY_DISPATCH mode, to construct message
-								  * to send to QE. */
-	
-	/* Error handling options */
-	CopyErrMode	errMode;
-	struct CdbSreh *cdbsreh; /* single row error handler */
-	int			lastsegid;
+	TransitionCaptureState *transition_capture;
 
 	/*
 	 * These variables are used to reduce overhead in textual COPY FROM.
@@ -219,7 +194,7 @@ typedef struct CopyStateData
 	 * can display it in error messages if appropriate.
 	 */
 	StringInfoData line_buf;
-	bool		line_buf_converted;		/* converted to server encoding? */
+	bool		line_buf_converted; /* converted to server encoding? */
 	bool		line_buf_valid; /* contains the row being processed? */
 
 	/*
@@ -259,8 +234,6 @@ typedef struct CopyStateData
 
 typedef struct CopyStateData *CopyState;
 typedef int (*copy_data_source_cb) (void *outbuf, int minread, int maxread);
-
-<<<<<<< HEAD
 /* DestReceiver for COPY (query) TO */
 typedef struct
 {
@@ -281,26 +254,6 @@ typedef struct
 #define ntohll(x) ((1==ntohl(1)) ? (x) : ((uint64_t)ntohl((x) & 0xFFFFFFFF) << 32) | ntohl((x) >> 32))
 #endif
 
-extern Oid DoCopy(const CopyStmt *stmt, const char *queryString,
-	   uint64 *processed);
-
-extern void ProcessCopyOptions(CopyState cstate, bool is_from, List *options,
-				   int num_columns, bool is_copy);
-extern CopyState BeginCopyFrom(Relation rel, const char *filename,
-			  bool is_program, copy_data_source_cb data_source_cb,
-			  void *data_source_cb_extra,
-			  List *attnamelist, List *options, List *ao_segnos);
-extern CopyState BeginCopy(bool is_from, Relation rel, Node *raw_query,
-						   const char *queryString, const Oid queryRelId, List *attnamelist, List *options,
-						   TupleDesc tupDesc);
-extern CopyState
-BeginCopyToOnSegment(QueryDesc *queryDesc);
-extern void EndCopyToOnSegment(CopyState cstate);
-extern CopyState BeginCopyToForExternalTable(Relation extrel, List *options);
-extern void EndCopyFrom(CopyState cstate);
-extern bool NextCopyFrom(CopyState cstate, ExprContext *econtext,
-						 Datum *values, bool *nulls, Oid *tupleOid);
-=======
 extern void DoCopy(ParseState *state, const CopyStmt *stmt,
 				   int stmt_location, int stmt_len,
 				   uint64 *processed);
@@ -308,10 +261,15 @@ extern void DoCopy(ParseState *state, const CopyStmt *stmt,
 extern void ProcessCopyOptions(ParseState *pstate, CopyState cstate, bool is_from, List *options);
 extern CopyState BeginCopyFrom(ParseState *pstate, Relation rel, const char *filename,
 							   bool is_program, copy_data_source_cb data_source_cb, List *attnamelist, List *options);
+extern CopyState BeginCopy(bool is_from, Relation rel, Node *raw_query,
+						   const char *queryString, const Oid queryRelId, List *attnamelist, List *options,
+						   TupleDesc tupDesc);
+extern CopyState BeginCopyToOnSegment(QueryDesc *queryDesc);
+extern void EndCopyToOnSegment(CopyState cstate);
+extern CopyState BeginCopyToForExternalTable(Relation extrel, List *options);
 extern void EndCopyFrom(CopyState cstate);
 extern bool NextCopyFrom(CopyState cstate, ExprContext *econtext,
 						 Datum *values, bool *nulls);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern bool NextCopyFromRawFields(CopyState cstate,
 								  char ***fields, int *nfields);
 extern void CopyFromErrorCallback(void *arg);
@@ -320,11 +278,9 @@ extern uint64 CopyFrom(CopyState cstate);
 
 extern DestReceiver *CreateCopyDestReceiver(void);
 
-<<<<<<< HEAD
 extern List *CopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist);
 
-extern void CopyOneRowTo(CopyState cstate, Oid tupleOid,
-						 Datum *values, bool *nulls);
+extern void CopyOneRowTo(CopyState cstate, TupleTableSlot *slot);
 extern void CopyOneCustomRowTo(CopyState cstate, bytea *value);
 extern void CopySendEndOfRow(CopyState cstate);
 extern char *limit_printout_length(const char *str);
@@ -354,7 +310,4 @@ typedef struct GpDistributionData
 	HTAB	   *hashmap;
 } GpDistributionData;
 
-#endif /* COPY_H */
-=======
 #endif							/* COPY_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
