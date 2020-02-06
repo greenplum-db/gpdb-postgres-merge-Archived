@@ -104,8 +104,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 						 checkpoint->oldestCommitTsXid,
 						 checkpoint->newestCommitTsXid,
 						 checkpoint->oldestActiveXid,
-<<<<<<< HEAD
-				 (info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
+						 (info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
 
 		UnpackCheckPointRecord(record, &ckptExtended);
 
@@ -117,9 +116,6 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 							 ckptExtended.dtxCheckpoint->committedCount,
 							 ckptExtended.dtxCheckpointLen);
 		}
-=======
-						 (info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else if (info == XLOG_NEXTOID)
 	{

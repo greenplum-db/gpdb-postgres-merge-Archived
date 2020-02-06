@@ -750,11 +750,7 @@ execute_sql_string(const char *sql)
 				qdesc = CreateQueryDesc(stmt,
 										sql,
 										GetActiveSnapshot(), NULL,
-<<<<<<< HEAD
-										dest, NULL, GP_INSTRUMENT_OPTS);
-=======
-										dest, NULL, NULL, 0);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+										dest, NULL, NULL, GP_INSTRUMENT_OPTS);
 
 				ExecutorStart(qdesc, 0);
 				ExecutorRun(qdesc, ForwardScanDirection, 0, true);
