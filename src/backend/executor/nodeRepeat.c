@@ -64,7 +64,7 @@ ExecRepeat(RepeatState *repeatstate)
 			{
 				repeatstate->repeat_count--;
 				/* Check the qual until we find one output tuple. */
-				if (ExecQual(repeatstate->ps.qual, econtext, false))
+				if (ExecQual(repeatstate->ps.qual, econtext))
 				{
 					return ExecProject(repeatstate->ps.ps_ProjInfo);
 				}
@@ -110,7 +110,7 @@ ExecRepeat(RepeatState *repeatstate)
 			repeatstate->repeat_count--;
 
 			/* Check the qual until we find one output tuple. */
-			if (ExecQual(repeatstate->ps.qual, econtext, false))
+			if (ExecQual(repeatstate->ps.qual, econtext))
 			{
 				return ExecProject(repeatstate->ps.ps_ProjInfo);
 			}

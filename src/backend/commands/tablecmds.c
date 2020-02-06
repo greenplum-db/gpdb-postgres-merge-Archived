@@ -7093,7 +7093,7 @@ ATAocsWriteNewColumns(
 					switch(con->contype)
 					{
 						case CONSTR_CHECK:
-							if(!ExecQual(con->qualstate, econtext, true))
+							if(!ExecCheck(con->qualstate, econtext))
 								ereport(ERROR,
 										(errcode(ERRCODE_CHECK_VIOLATION),
 										 errmsg("check constraint \"%s\" is "
@@ -7676,7 +7676,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 					switch (con->contype)
 					{
 						case CONSTR_CHECK:
-							if (!ExecQual(con->qualstate, econtext, true))
+							if (!ExecCheck(con->qualstate, econtext))
 							{
 								if (OidIsValid(tab->exchange_relid))
 									ereport(ERROR,
@@ -7859,7 +7859,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 					switch (con->contype)
 					{
 						case CONSTR_CHECK:
-							if (!ExecQual(con->qualstate, econtext, true))
+							if (!ExecCheck(con->qualstate, econtext))
 								ereport(ERROR,
 										(errcode(ERRCODE_CHECK_VIOLATION),
 										 errmsg("check constraint \"%s\" is violated by some row",
@@ -8018,7 +8018,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 					switch(con->contype)
 					{
 						case CONSTR_CHECK:
-							if (!ExecQual(con->qualstate, econtext, true))
+							if (!ExecCheck(con->qualstate, econtext))
 								ereport(ERROR,
 										(errcode(ERRCODE_CHECK_VIOLATION),
 										 errmsg("check constraint \"%s\" is violated by some row",
@@ -13185,13 +13185,9 @@ validateCheckConstraint(Relation rel, HeapTuple constrtup)
 
 	while (table_scan_getnextslot(scan, ForwardScanDirection, slot))
 	{
-<<<<<<< HEAD
 		ExecStoreHeapTuple(tuple, slot, InvalidBuffer, false);
 
-		if (!ExecQual(exprstate, econtext, true))
-=======
 		if (!ExecCheck(exprstate, econtext))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			ereport(ERROR,
 					(errcode(ERRCODE_CHECK_VIOLATION),
 					 errmsg("check constraint \"%s\" is violated by some row",
@@ -21242,14 +21238,14 @@ split_rows(Relation intoa, Relation intob, Relation temprel)
 		/* determine if we are inserting into a or b */
 		if (achk)
 		{
-			targetIsA = ExecQual((List *)achk, econtext, false);
+			targetIsA = ExecQual((List *)achk, econtext);
 
 			if (!targetIsA)
 				targetSlot = reconstructPartitionTupleSlot(slotT, rrib);
 		}
 		else
 		{
-			targetIsA = !ExecQual((List *)bchk, econtext, false);
+			targetIsA = !ExecQual((List *)bchk, econtext);
 
 			if (targetIsA)
 				targetSlot = reconstructPartitionTupleSlot(slotT, rria);

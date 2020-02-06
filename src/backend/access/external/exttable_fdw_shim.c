@@ -372,7 +372,7 @@ ExternalConstraintCheck(TupleTableSlot *slot, FileScanDesc scandesc, EState *est
 	{
 		qual = scandesc->fs_constraintExprs[i];
 
-		if (!ExecQual(qual, econtext, true))
+		if (!ExecCheck(qual, econtext))
 			return false;
 	}
 

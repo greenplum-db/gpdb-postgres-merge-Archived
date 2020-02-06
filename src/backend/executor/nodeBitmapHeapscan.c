@@ -1132,7 +1132,7 @@ BitmapAppendOnlyNext(BitmapHeapScanState *node)
 			econtext->ecxt_scantuple = slot;
 			ResetExprContext(econtext);
 
-			if (!ExecQual(node->bitmapqualorig, econtext, false))
+			if (!ExecQual(node->bitmapqualorig, econtext))
 			{
 				/* Fails recheck, so drop it and loop back for another */
 				ExecClearTuple(slot);

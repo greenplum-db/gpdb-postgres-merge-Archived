@@ -26,12 +26,6 @@
  *	  incorrect. Instead a new state should be created in the correct aggregate
  *	  memory context and the 2nd state should be copied over.
  *
- *	  The 'serialStates' option can be used to allow multi-stage aggregation
- *	  for aggregates with an INTERNAL state type. When this mode is disabled
- *	  only a pointer to the INTERNAL aggregate states are passed around the
- *	  executor.  When enabled, INTERNAL states are serialized and deserialized
- *	  as required; this is useful when data must be passed between processes.
- *
  *	  Other behaviors can be selected by the "aggsplit" mode, which exists
  *	  to support partial aggregation.  It is possible to:
  *	  * Skip running the finalfunc, so that the output is always the
@@ -174,11 +168,6 @@
  *
  *	  Plan structure:
  *
-<<<<<<< HEAD
- * Portions Copyright (c) 2007-2008, Greenplum inc
- * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  *	  What we get from the planner is actually one "real" Agg node which is
  *	  part of the plan tree proper, but which optionally has an additional list
  *	  of Agg nodes hung off the side via the "chain" field.  This is because an
@@ -236,8 +225,9 @@
  *    to filter expressions having to be evaluated early, and allows to JIT
  *    the entire expression into one native function.
  *
+ * Portions Copyright (c) 2007-2008, Greenplum inc
+ * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION

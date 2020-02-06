@@ -3581,7 +3581,7 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 		 */
 		if (predicate != NIL)
 		{
-			if (!ExecQual(predicate, econtext, false))
+			if (!ExecQual(predicate, econtext))
 				continue;
 		}
 
@@ -3707,7 +3707,7 @@ IndexBuildAppendOnlyRowScan(Relation parentRelation,
 		
 		if (predicate != NIL)
 		{
-			if (!ExecQual(predicate, econtext, false))
+			if (!ExecQual(predicate, econtext))
 				continue;
 		}
 		
@@ -3845,7 +3845,7 @@ IndexBuildAppendOnlyColScan(Relation parentRelation,
 
 		if (predicate != NIL)
 		{
-			if (!ExecQual(predicate, econtext, false))
+			if (!ExecQual(predicate, econtext))
 				continue;
 		}
 
@@ -4367,7 +4367,7 @@ validate_index_heapscan(Relation heapRelation,
 			 */
 			if (predicate != NIL)
 			{
-				if (!ExecQual(predicate, econtext, false))
+				if (!ExecQual(predicate, econtext))
 					continue;
 			}
 

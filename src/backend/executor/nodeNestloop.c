@@ -25,12 +25,9 @@
 
 #include "executor/execdebug.h"
 #include "executor/nodeNestloop.h"
-<<<<<<< HEAD
 #include "optimizer/clauses.h"
 #include "utils/lsyscache.h"
-=======
 #include "miscadmin.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/memutils.h"
 
 static void splitJoinQualExpr(NestLoopState *nlstate);
@@ -67,11 +64,7 @@ static void extractFuncExprArgs(FuncExprState *fstate, List **lclauses, List **r
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
-<<<<<<< HEAD
-ExecNestLoop_guts(NestLoopState *node)
-=======
-ExecNestLoop(PlanState *pstate)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+ExecNestLoop_guts(PlanState *pstate)
 {
 	NestLoopState *node = castNode(NestLoopState, pstate);
 	NestLoop   *nl;
@@ -307,11 +300,8 @@ ExecNestLoop(PlanState *pstate)
 		 */
 		ENL1_printf("testing qualification");
 
-<<<<<<< HEAD
-		if (ExecQual(joinqual, econtext, node->nl_qualResultForNull))
-=======
-		if (ExecQual(joinqual, econtext))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+        if((node->nl_qualResultForNull && ExecCheck(joinqual, econtext))
+                ||(!node->nl_qualResultForNull && ExecQual(joinqual, econtext)))
 		{
 			node->nl_MatchedOuter = true;
 

@@ -1166,7 +1166,7 @@ ExecPrefetchJoinQual(JoinState *node)
 													  ExecGetResultType(outer));
 
 	/* Fetch subplan with the fake inner & outer tuples */
-	ExecQual(joinqual, econtext, false);
+	ExecQual(joinqual, econtext);
 
 	/* Restore previous state */
 	econtext->ecxt_innertuple = innertuple;

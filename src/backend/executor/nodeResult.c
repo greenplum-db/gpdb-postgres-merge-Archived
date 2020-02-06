@@ -102,7 +102,7 @@ static TupleTableSlot *NextInputSlot(ResultState *node)
 		 * Extract out qual in case result node is also performing filtering.
 		 */
 		List *qual = node->ps.qual;
-		bool passesFilter = !qual || ExecQual(qual, econtext, false);
+		bool passesFilter = !qual || ExecQual(qual, econtext);
 
 		if (passesFilter)
 		{

@@ -630,20 +630,8 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 					if (node->js.single_match)
 						node->hj_JoinState = HJ_NEED_NEW_OUTER;
 
-<<<<<<< HEAD
-					if (otherqual == NIL ||
-						ExecQual(otherqual, econtext, false))
-					{
-						TupleTableSlot *result;
-
-						result = ExecProject(node->js.ps.ps_ProjInfo, NULL);
-
-						return result;
-					}
-=======
 					if (otherqual == NULL || ExecQual(otherqual, econtext))
 						return ExecProject(node->js.ps.ps_ProjInfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					else
 						InstrCountFiltered2(node, 1);
 				}
@@ -669,20 +657,8 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 					 */
 					econtext->ecxt_innertuple = node->hj_NullInnerTupleSlot;
 
-<<<<<<< HEAD
-					if (otherqual == NIL ||
-						ExecQual(otherqual, econtext, false))
-					{
-						TupleTableSlot *result;
-
-						result = ExecProject(node->js.ps.ps_ProjInfo, NULL);
-
-						return result;
-					}
-=======
 					if (otherqual == NULL || ExecQual(otherqual, econtext))
 						return ExecProject(node->js.ps.ps_ProjInfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					else
 						InstrCountFiltered2(node, 1);
 				}
