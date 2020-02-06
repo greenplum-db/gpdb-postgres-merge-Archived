@@ -134,14 +134,8 @@ typedef struct LVRelStats
 	BlockNumber scanned_pages;	/* number of pages we examined */
 	BlockNumber pinskipped_pages;	/* # of pages we skipped due to a pin */
 	BlockNumber frozenskipped_pages;	/* # of frozen pages we skipped */
-<<<<<<< HEAD:src/backend/commands/vacuumlazy.c
-	BlockNumber	tupcount_pages;	/* pages whose tuples we counted */
-	double		scanned_tuples; /* counts only tuples on tupcount_pages */
-	double		old_rel_tuples; /* previous value of pg_class.reltuples */
-=======
 	BlockNumber tupcount_pages; /* pages whose tuples we counted */
 	double		old_live_tuples;	/* previous value of pg_class.reltuples */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/vacuumlazy.c
 	double		new_rel_tuples; /* new estimated total # of tuples */
 	double		new_live_tuples;	/* new estimated total # of live tuples */
 	double		new_dead_tuples;	/* new estimated total # of dead tuples */
@@ -170,16 +164,9 @@ static BufferAccessStrategy vac_strategy;
 
 
 /* non-export function prototypes */
-<<<<<<< HEAD:src/backend/commands/vacuumlazy.c
-static void lazy_vacuum_aorel(Relation onerel, int options, AOVacuumPhaseConfig *ao_vacuum_phase_config);
-static void lazy_scan_heap(Relation onerel, int options,
-			   LVRelStats *vacrelstats, Relation *Irel, int nindexes,
-			   bool aggressive);
-=======
 static void lazy_scan_heap(Relation onerel, VacuumParams *params,
 						   LVRelStats *vacrelstats, Relation *Irel, int nindexes,
 						   bool aggressive);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/vacuumlazy.c
 static void lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats);
 static bool lazy_check_needs_freeze(Buffer buf, bool *hastup);
 static void lazy_vacuum_index(Relation indrel,
@@ -214,14 +201,8 @@ static bool heap_page_is_all_visible(Relation rel, Buffer buf,
  *		and locked the relation.
  */
 void
-<<<<<<< HEAD:src/backend/commands/vacuumlazy.c
-lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
-				BufferAccessStrategy bstrategy,
-				AOVacuumPhaseConfig *ao_vacuum_phase_config)
-=======
 heap_vacuum_rel(Relation onerel, VacuumParams *params,
 				BufferAccessStrategy bstrategy)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/vacuumlazy.c
 {
 	LVRelStats *vacrelstats;
 	Relation   *Irel;
@@ -319,19 +300,6 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 		aggressive = true;
 
 	/*
-<<<<<<< HEAD:src/backend/commands/vacuumlazy.c
-	 * Execute the various vacuum operations. Appendonly tables are treated
-	 * differently.
-	 */
-	if (RelationIsAppendOptimized(onerel))
-	{
-		lazy_vacuum_aorel(onerel, options, ao_vacuum_phase_config);
-		return;
-	}
-
-	/* heap relation */
-
-=======
 	 * Normally the relfrozenxid for an anti-wraparound vacuum will be old
 	 * enough to force an aggressive vacuum.  However, a concurrent vacuum
 	 * might have already done this work that the relfrozenxid in relcache has
@@ -348,7 +316,6 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 		return;
 	}
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/vacuumlazy.c
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 
 	vacrelstats->old_rel_pages = onerel->rd_rel->relpages;
@@ -416,11 +383,7 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 	 * since then we don't know for certain that all tuples have a newer xmin.
 	 */
 	new_rel_pages = vacrelstats->rel_pages;
-<<<<<<< HEAD:src/backend/commands/vacuumlazy.c
-	new_rel_tuples = vacrelstats->new_rel_tuples;
-=======
 	new_live_tuples = vacrelstats->new_live_tuples;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/vacuumlazy.c
 	if (vacrelstats->tupcount_pages == 0 && new_rel_pages > 0)
 	{
 		new_rel_pages = vacrelstats->old_rel_pages;
@@ -1604,13 +1567,8 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 	vacrelstats->new_dead_tuples = nkeep;
 
 	/* now we can compute the new value for pg_class.reltuples */
-<<<<<<< HEAD:src/backend/commands/vacuumlazy.c
-	vacrelstats->new_rel_tuples = vac_estimate_reltuples(onerel, false,
-														 nblocks,
-												  vacrelstats->tupcount_pages,
-														 num_tuples);
-=======
 	vacrelstats->new_live_tuples = vac_estimate_reltuples(onerel,
+														  false,
 														  nblocks,
 														  vacrelstats->tupcount_pages,
 														  live_tuples);
@@ -1618,7 +1576,6 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 	/* also compute total number of surviving heap entries */
 	vacrelstats->new_rel_tuples =
 		vacrelstats->new_live_tuples + vacrelstats->new_dead_tuples;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/vacuumlazy.c
 
 	/*
 	 * Release any remaining pin on visibility map page.

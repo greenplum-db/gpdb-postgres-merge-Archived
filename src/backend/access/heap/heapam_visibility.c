@@ -83,11 +83,6 @@
 
 #include "access/clog.h"
 
-<<<<<<< HEAD:src/backend/utils/time/tqual.c
-/* Static variables representing various special snapshot semantics */
-SnapshotData SnapshotSelfData = {HeapTupleSatisfiesSelf};
-SnapshotData SnapshotAnyData = {HeapTupleSatisfiesAny};
-
 /*
  * Set the buffer dirty after setting t_infomask
  */
@@ -144,8 +139,6 @@ markDirty(Buffer buffer, Relation relation, HeapTupleHeader tuple, bool isXmin)
 	}
 }
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/heapam_visibility.c
 /*
  * SetHintBits()
  *
@@ -250,13 +243,8 @@ HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer, Relation rel,
  *			(Xmax != my-transaction &&			the row was deleted by another transaction
  *			 Xmax is not committed)))			that has not been committed
  */
-<<<<<<< HEAD:src/backend/utils/time/tqual.c
-bool
-HeapTupleSatisfiesSelf(Relation relation, HeapTuple htup, Snapshot snapshot, Buffer buffer)
-=======
 static bool
-HeapTupleSatisfiesSelf(HeapTuple htup, Snapshot snapshot, Buffer buffer)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/heapam_visibility.c
+HeapTupleSatisfiesSelf(Relation relation, HeapTuple htup, Snapshot snapshot, Buffer buffer)
 {
 	HeapTupleHeader tuple = htup->t_data;
 
@@ -427,13 +415,8 @@ HeapTupleSatisfiesSelf(HeapTuple htup, Snapshot snapshot, Buffer buffer)
  * HeapTupleSatisfiesAny
  *		Dummy "satisfies" routine: any tuple satisfies SnapshotAny.
  */
-<<<<<<< HEAD:src/backend/utils/time/tqual.c
-bool
-HeapTupleSatisfiesAny(Relation relation, HeapTuple htup, Snapshot snapshot, Buffer buffer)
-=======
 static bool
-HeapTupleSatisfiesAny(HeapTuple htup, Snapshot snapshot, Buffer buffer)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/heapam_visibility.c
+HeapTupleSatisfiesAny(Relation relation, HeapTuple htup, Snapshot snapshot, Buffer buffer)
 {
 	return true;
 }
@@ -454,13 +437,8 @@ HeapTupleSatisfiesAny(HeapTuple htup, Snapshot snapshot, Buffer buffer)
  * Among other things, this means you can't do UPDATEs of rows in a TOAST
  * table.
  */
-<<<<<<< HEAD:src/backend/utils/time/tqual.c
-bool
-HeapTupleSatisfiesToast(Relation relation, HeapTuple htup, Snapshot snapshot,
-=======
 static bool
-HeapTupleSatisfiesToast(HeapTuple htup, Snapshot snapshot,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/heapam_visibility.c
+HeapTupleSatisfiesToast(Relation relation, HeapTuple htup, Snapshot snapshot,
 						Buffer buffer)
 {
 	HeapTupleHeader tuple = htup->t_data;
@@ -557,13 +535,8 @@ HeapTupleSatisfiesToast(HeapTuple htup, Snapshot snapshot,
  *	the current transaction.  Callers that want to distinguish that case must
  *	test for it themselves.)
  */
-<<<<<<< HEAD:src/backend/utils/time/tqual.c
-HTSU_Result
-HeapTupleSatisfiesUpdate(Relation relation, HeapTuple htup, CommandId curcid,
-=======
 TM_Result
-HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/heapam_visibility.c
+HeapTupleSatisfiesUpdate(Relation relation, HeapTuple htup, CommandId curcid,
 						 Buffer buffer)
 {
 	HeapTupleHeader tuple = htup->t_data;
@@ -738,13 +711,8 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 			if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple), true))
 				return TM_BeingModified;
 
-<<<<<<< HEAD:src/backend/utils/time/tqual.c
 			SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
-			return HeapTupleMayBeUpdated;
-=======
-			SetHintBits(tuple, buffer, HEAP_XMAX_INVALID, InvalidTransactionId);
 			return TM_Ok;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/heapam_visibility.c
 		}
 
 		xmax = HeapTupleGetUpdateXid(tuple);
@@ -858,13 +826,8 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
  * on the insertion without aborting the whole transaction, the associated
  * token is also returned in snapshot->speculativeToken.
  */
-<<<<<<< HEAD:src/backend/utils/time/tqual.c
-bool
-HeapTupleSatisfiesDirty(Relation relation, HeapTuple htup, Snapshot snapshot,
-=======
 static bool
-HeapTupleSatisfiesDirty(HeapTuple htup, Snapshot snapshot,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/heapam_visibility.c
+HeapTupleSatisfiesDirty(Relation relation, HeapTuple htup, Snapshot snapshot,
 						Buffer buffer)
 {
 	HeapTupleHeader tuple = htup->t_data;
@@ -1082,13 +1045,8 @@ HeapTupleSatisfiesDirty(HeapTuple htup, Snapshot snapshot,
  * inserting/deleting transaction was still running --- which was more cycles
  * and more contention on the PGXACT array.
  */
-<<<<<<< HEAD:src/backend/utils/time/tqual.c
-bool
-HeapTupleSatisfiesMVCC(Relation relation, HeapTuple htup, Snapshot snapshot,
-=======
 static bool
-HeapTupleSatisfiesMVCC(HeapTuple htup, Snapshot snapshot,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/heapam_visibility.c
+HeapTupleSatisfiesMVCC(Relation relation, HeapTuple htup, Snapshot snapshot,
 					   Buffer buffer)
 {
 	HeapTupleHeader tuple = htup->t_data;
@@ -1539,20 +1497,9 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTuple htup, TransactionId Oldest
 			 * Not in Progress, Not Committed, so either Aborted or crashed.
 			 * Mark the Xmax as invalid.
 			 */
-<<<<<<< HEAD:src/backend/utils/time/tqual.c
 			SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
 		}
 
-		/*
-		 * Not in Progress, Not Committed, so either Aborted or crashed.
-		 * Remove the Xmax.
-		 */
-		SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
-=======
-			SetHintBits(tuple, buffer, HEAP_XMAX_INVALID, InvalidTransactionId);
-		}
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/heapam_visibility.c
 		return HEAPTUPLE_LIVE;
 	}
 
@@ -1674,218 +1621,6 @@ HeapTupleIsSurelyDead(HeapTuple htup, TransactionId OldestXmin)
 }
 
 /*
-<<<<<<< HEAD:src/backend/utils/time/tqual.c
- * XidInMVCCSnapshot
- *		Is the given XID still-in-progress according to the distributed
- *      and local snapshots?
- *      GPDB: We have extended the return values to accommodate the case where
- *      we know for sure that the passed in xid has surely committed. This is
- *      to reduce subsequent calls to TransactionIdDidCommit()
- */
-XidInMVCCSnapshotCheckResult
-XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
-				  bool distributedSnapshotIgnore, bool *setDistributedSnapshotIgnore)
-{
-	Assert (setDistributedSnapshotIgnore != NULL);
-	*setDistributedSnapshotIgnore = false;
-
-	/*
-	 * If we have a distributed snapshot, it takes precedence over the local
-	 * snapshot since it covers the correct past view of in-progress distributed
-	 * transactions and also the correct future view of in-progress distributed
-	 * transactions that may yet arrive.
-	 *
-	 * In the QD, the distributed transactions become visible at the same time
-	 * as the corresponding local ones, so we can rely on the local XIDs.
-	 */
-	if (snapshot->haveDistribSnapshot && !distributedSnapshotIgnore &&
-		!IS_QUERY_DISPATCHER())
-	{
-		DistributedSnapshotCommitted	distributedSnapshotCommitted;
-
-		/* Special XIDs don't belong to snapshots, distributed or not. */
-		if (!TransactionIdIsNormal(xid))
-			return XID_NOT_IN_SNAPSHOT;
-
-		/*
-		 * A transaction's distributed snapshot always "lags behind" its local
-		 * snapshot. So if the local snapshot still sees a transaction as
-		 * in-progress, it must be in-progress for the distributed snapshot,
-		 * too. Perform this quick xmax check first to avoid the more
-		 * expensive distributed snapshot check, if possible.
-		 */
-		if (TransactionIdFollowsOrEquals(xid, snapshot->xmax))
-			return XID_IN_SNAPSHOT;
-
-		/*
-		 * Check if this committed transaction is a distributed committed
-		 * transaction and evaluate it against the distributed snapshot if
-		 * it is.
-		 */
-		distributedSnapshotCommitted =
-			DistributedSnapshotWithLocalMapping_CommittedTest(
-				&snapshot->distribSnapshotWithLocalMapping,
-				xid, false);
-
-		switch (distributedSnapshotCommitted)
-		{
-			case DISTRIBUTEDSNAPSHOT_COMMITTED_INPROGRESS:
-				return XID_IN_SNAPSHOT;
-
-			case DISTRIBUTEDSNAPSHOT_COMMITTED_VISIBLE:
-				return XID_SURELY_COMMITTED;
-
-			case DISTRIBUTEDSNAPSHOT_COMMITTED_IGNORE:
-				/*
-				 * We can safely skip both of these in the future for distributed
-				 * snapshots.
-				 */
-				*setDistributedSnapshotIgnore = true;
-				break;
-
-			case DISTRIBUTEDSNAPSHOT_COMMITTED_UNKNOWN:
-				/*
-				 * The distributed log doesn't know anything about this XID. It may
-				 * be a local-only transaction, or still in-progress. Proceed to
-				 * perform a local visibility check.
-				 */
-				break;
-
-			default:
-				elog(FATAL, "Unrecognized distributed committed test result: %d",
-					 (int) distributedSnapshotCommitted);
-				break;
-		}
-	}
-
-	return XidInMVCCSnapshot_Local(xid, snapshot) ? XID_IN_SNAPSHOT : XID_NOT_IN_SNAPSHOT;
-}
-
-/*
- * XidInMVCCSnapshot_Local
- *		Is the given XID still-in-progress according to the local snapshot?
- *
- * Note: GetSnapshotData never stores either top xid or subxids of our own
- * backend into a snapshot, so these xids will not be reported as "running"
- * by this function.  This is OK for current uses, because we always check
- * TransactionIdIsCurrentTransactionId first, except for known-committed
- * XIDs which could not be ours anyway.
- */
-bool
-XidInMVCCSnapshot_Local(TransactionId xid, Snapshot snapshot)
-{
-	uint32		i;
-
-	/*
-	 * Make a quick range check to eliminate most XIDs without looking at the
-	 * xip arrays.  Note that this is OK even if we convert a subxact XID to
-	 * its parent below, because a subxact with XID < xmin has surely also got
-	 * a parent with XID < xmin, while one with XID >= xmax must belong to a
-	 * parent that was not yet committed at the time of this snapshot.
-	 */
-
-	/* Any xid < xmin is not in-progress */
-	if (TransactionIdPrecedes(xid, snapshot->xmin))
-		return false;
-	/* Any xid >= xmax is in-progress */
-	if (TransactionIdFollowsOrEquals(xid, snapshot->xmax))
-		return true;
-
-	/*
-	 * Snapshot information is stored slightly differently in snapshots taken
-	 * during recovery.
-	 */
-	if (!snapshot->takenDuringRecovery)
-	{
-		/*
-		 * If the snapshot contains full subxact data, the fastest way to
-		 * check things is just to compare the given XID against both subxact
-		 * XIDs and top-level XIDs.  If the snapshot overflowed, we have to
-		 * use pg_subtrans to convert a subxact XID to its parent XID, but
-		 * then we need only look at top-level XIDs not subxacts.
-		 */
-		if (!snapshot->suboverflowed)
-		{
-			/* we have full data, so search subxip */
-			int32		j;
-
-			for (j = 0; j < snapshot->subxcnt; j++)
-			{
-				if (TransactionIdEquals(xid, snapshot->subxip[j]))
-					return true;
-			}
-
-			/* not there, fall through to search xip[] */
-		}
-		else
-		{
-			/*
-			 * Snapshot overflowed, so convert xid to top-level.  This is safe
-			 * because we eliminated too-old XIDs above.
-			 */
-			xid = SubTransGetTopmostTransaction(xid);
-
-			/*
-			 * If xid was indeed a subxact, we might now have an xid < xmin,
-			 * so recheck to avoid an array scan.  No point in rechecking
-			 * xmax.
-			 */
-			if (TransactionIdPrecedes(xid, snapshot->xmin))
-				return false;
-		}
-
-		for (i = 0; i < snapshot->xcnt; i++)
-		{
-			if (TransactionIdEquals(xid, snapshot->xip[i]))
-				return true;
-		}
-	}
-	else
-	{
-		int32		j;
-
-		/*
-		 * In recovery we store all xids in the subxact array because it is by
-		 * far the bigger array, and we mostly don't know which xids are
-		 * top-level and which are subxacts. The xip array is empty.
-		 *
-		 * We start by searching subtrans, if we overflowed.
-		 */
-		if (snapshot->suboverflowed)
-		{
-			/*
-			 * Snapshot overflowed, so convert xid to top-level.  This is safe
-			 * because we eliminated too-old XIDs above.
-			 */
-			xid = SubTransGetTopmostTransaction(xid);
-
-			/*
-			 * If xid was indeed a subxact, we might now have an xid < xmin,
-			 * so recheck to avoid an array scan.  No point in rechecking
-			 * xmax.
-			 */
-			if (TransactionIdPrecedes(xid, snapshot->xmin))
-				return false;
-		}
-
-		/*
-		 * We now have either a top-level xid higher than xmin or an
-		 * indeterminate xid. We don't know whether it's top level or subxact
-		 * but it doesn't matter. If it's present, the xid is visible.
-		 */
-		for (j = 0; j < snapshot->subxcnt; j++)
-		{
-			if (TransactionIdEquals(xid, snapshot->subxip[j]))
-				return true;
-		}
-	}
-
-	return false;
-}
-
-/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/heapam_visibility.c
  * Is the tuple really only locked?  That is, is it not updated?
  *
  * It's easy to check just infomask bits if the locker is not a multi; but
@@ -1961,13 +1696,8 @@ TransactionIdInArray(TransactionId xid, TransactionId *xip, Size num)
  * dangerous to do so as the semantics of doing so during timetravel are more
  * complicated than when dealing "only" with the present.
  */
-<<<<<<< HEAD:src/backend/utils/time/tqual.c
-bool
-HeapTupleSatisfiesHistoricMVCC(Relation relation, HeapTuple htup, Snapshot snapshot,
-=======
 static bool
-HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/backend/access/heap/heapam_visibility.c
+HeapTupleSatisfiesHistoricMVCC(Relation relation, HeapTuple htup, Snapshot snapshot,
 							   Buffer buffer)
 {
 	HeapTupleHeader tuple = htup->t_data;

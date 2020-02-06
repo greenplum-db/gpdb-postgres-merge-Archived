@@ -2273,6 +2273,93 @@ RestoreTransactionSnapshot(Snapshot snapshot, void *master_pgproc)
  * XidInMVCCSnapshot
  *		Is the given XID still-in-progress according to the snapshot?
  *
+ * GPDB: We have extended the return values to accommodate the case where
+ * we know for sure that the passed in xid has surely committed. This is
+ * to reduce subsequent calls to TransactionIdDidCommit()
+ */
+XidInMVCCSnapshotCheckResult
+XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
+				  bool distributedSnapshotIgnore, bool *setDistributedSnapshotIgnore)
+{
+	Assert (setDistributedSnapshotIgnore != NULL);
+	*setDistributedSnapshotIgnore = false;
+
+	/*
+	 * If we have a distributed snapshot, it takes precedence over the local
+	 * snapshot since it covers the correct past view of in-progress distributed
+	 * transactions and also the correct future view of in-progress distributed
+	 * transactions that may yet arrive.
+	 *
+	 * In the QD, the distributed transactions become visible at the same time
+	 * as the corresponding local ones, so we can rely on the local XIDs.
+	 */
+	if (snapshot->haveDistribSnapshot && !distributedSnapshotIgnore &&
+		!IS_QUERY_DISPATCHER())
+	{
+		DistributedSnapshotCommitted	distributedSnapshotCommitted;
+
+		/* Special XIDs don't belong to snapshots, distributed or not. */
+		if (!TransactionIdIsNormal(xid))
+			return XID_NOT_IN_SNAPSHOT;
+
+		/*
+		 * A transaction's distributed snapshot always "lags behind" its local
+		 * snapshot. So if the local snapshot still sees a transaction as
+		 * in-progress, it must be in-progress for the distributed snapshot,
+		 * too. Perform this quick xmax check first to avoid the more
+		 * expensive distributed snapshot check, if possible.
+		 */
+		if (TransactionIdFollowsOrEquals(xid, snapshot->xmax))
+			return XID_IN_SNAPSHOT;
+
+		/*
+		 * Check if this committed transaction is a distributed committed
+		 * transaction and evaluate it against the distributed snapshot if
+		 * it is.
+		 */
+		distributedSnapshotCommitted =
+			DistributedSnapshotWithLocalMapping_CommittedTest(
+				&snapshot->distribSnapshotWithLocalMapping,
+				xid, false);
+
+		switch (distributedSnapshotCommitted)
+		{
+			case DISTRIBUTEDSNAPSHOT_COMMITTED_INPROGRESS:
+				return XID_IN_SNAPSHOT;
+
+			case DISTRIBUTEDSNAPSHOT_COMMITTED_VISIBLE:
+				return XID_SURELY_COMMITTED;
+
+			case DISTRIBUTEDSNAPSHOT_COMMITTED_IGNORE:
+				/*
+				 * We can safely skip both of these in the future for distributed
+				 * snapshots.
+				 */
+				*setDistributedSnapshotIgnore = true;
+				break;
+
+			case DISTRIBUTEDSNAPSHOT_COMMITTED_UNKNOWN:
+				/*
+				 * The distributed log doesn't know anything about this XID. It may
+				 * be a local-only transaction, or still in-progress. Proceed to
+				 * perform a local visibility check.
+				 */
+				break;
+
+			default:
+				elog(FATAL, "Unrecognized distributed committed test result: %d",
+					 (int) distributedSnapshotCommitted);
+				break;
+		}
+	}
+
+	return XidInMVCCSnapshot_Local(xid, snapshot) ? XID_IN_SNAPSHOT : XID_NOT_IN_SNAPSHOT;
+}
+
+/*
+ * XidInMVCCSnapshot
+ *		Is the given XID still-in-progress according to the local snapshot?
+ *
  * Note: GetSnapshotData never stores either top xid or subxids of our own
  * backend into a snapshot, so these xids will not be reported as "running"
  * by this function.  This is OK for current uses, because we always check
@@ -2280,7 +2367,7 @@ RestoreTransactionSnapshot(Snapshot snapshot, void *master_pgproc)
  * XID could not be ours anyway.
  */
 bool
-XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
+XidInMVCCSnapshot_Local(TransactionId xid, Snapshot snapshot)
 {
 	uint32		i;
 

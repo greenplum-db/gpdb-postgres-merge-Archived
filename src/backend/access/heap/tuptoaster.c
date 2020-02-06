@@ -1177,14 +1177,6 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 		if(ismemtuple)
 		{
 			result_gtuple = (GenericTuple) memtuple_form_to(pbind, toast_values, toast_isnull, NULL, NULL, false);
-			if (mtbind_has_oid(pbind))
-			{
-				Oid			oid;
-
-<<<<<<< HEAD
-				oid = MemTupleGetOid((MemTuple) newtup, pbind);
-				MemTupleSetOid((MemTuple) result_gtuple, pbind, oid);
-			}
 		}
 		else
 		{
@@ -1194,25 +1186,6 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 			int32		new_data_len;
 			int32		new_tuple_len;
 			HeapTuple	result_tuple;
-=======
-		/*
-		 * Calculate the new size of the tuple.
-		 *
-		 * Note: we used to assume here that the old tuple's t_hoff must equal
-		 * the new_header_len value, but that was incorrect.  The old tuple
-		 * might have a smaller-than-current natts, if there's been an ALTER
-		 * TABLE ADD COLUMN since it was stored; and that would lead to a
-		 * different conclusion about the size of the null bitmap, or even
-		 * whether there needs to be one at all.
-		 */
-		new_header_len = SizeofHeapTupleHeader;
-		if (has_nulls)
-			new_header_len += BITMAPLEN(numAttrs);
-		new_header_len = MAXALIGN(new_header_len);
-		new_data_len = heap_compute_data_size(tupleDesc,
-											  toast_values, toast_isnull);
-		new_tuple_len = new_header_len + new_data_len;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * Calculate the new size of the tuple.
@@ -1227,14 +1200,11 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 			new_header_len = SizeofHeapTupleHeader;
 			if (has_nulls)
 				new_header_len += BITMAPLEN(numAttrs);
-			if (olddata->t_infomask & HEAP_HASOID)
-				new_header_len += sizeof(Oid);
 			new_header_len = MAXALIGN(new_header_len);
 			new_data_len = heap_compute_data_size(tupleDesc,
 												  toast_values, toast_isnull);
 			new_tuple_len = new_header_len + new_data_len;
 
-<<<<<<< HEAD
 			/*
 			 * Allocate and zero the space needed, and fill HeapTupleData fields.
 			 */
@@ -1243,14 +1213,6 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 			result_tuple->t_self = ((HeapTuple) newtup)->t_self;
 			new_data = (HeapTupleHeader) ((char *) result_tuple + HEAPTUPLESIZE);
 			result_tuple->t_data = new_data;
-=======
-		/*
-		 * Copy the existing tuple header, but adjust natts and t_hoff.
-		 */
-		memcpy(new_data, olddata, SizeofHeapTupleHeader);
-		HeapTupleHeaderSetNatts(new_data, numAttrs);
-		new_data->t_hoff = new_header_len;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * Copy the existing tuple header, but adjust natts and t_hoff.
@@ -1258,8 +1220,6 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 			memcpy(new_data, olddata, SizeofHeapTupleHeader);
 			HeapTupleHeaderSetNatts(new_data, numAttrs);
 			new_data->t_hoff = new_header_len;
-			if (olddata->t_infomask & HEAP_HASOID)
-				HeapTupleHeaderSetOid(new_data, HeapTupleHeaderGetOid(olddata));
 
 			/* Copy over the data, and fill the null bitmap if needed */
 			heap_fill_tuple(tupleDesc,
