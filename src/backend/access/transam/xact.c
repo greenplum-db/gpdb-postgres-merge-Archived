@@ -1747,7 +1747,7 @@ RecordTransactionCommit(void)
 									   ""); // tableName
 	}
 #endif
-	
+
 	/*
 	 * If we entered a commit critical section, leave it now, and let
 	 * checkpoints proceed.
@@ -1994,7 +1994,7 @@ RecordTransactionAbort(bool isSubXact)
 	 * Transaction Manager will take care of completing the transaction for us.
 	 *
 	 * If the distributed transaction has started rolling back, it means we already
-	 * wrote the abort record, skip it. 
+	 * wrote the abort record, skip it.
 	 */
 	if (isQEReader ||
 		getCurrentDtxState() == DTX_STATE_NOTIFYING_COMMIT_PREPARED ||
@@ -2581,12 +2581,12 @@ StartTransaction(void)
 							  SharedSnapshotDump())));
 		}
 		break;
-	
+
 		case DTX_CONTEXT_QE_PREPARED:
 			elog(FATAL, "Unexpected segment distribute transaction context: '%s'",
 				 DtxContextToString(DistributedTransactionContext));
 			break;
-	
+
 		default:
 			elog(PANIC, "Unrecognized DTX transaction context: %d",
 				 (int) DistributedTransactionContext);
@@ -2824,7 +2824,7 @@ CommitTransaction(void)
 									   "",	// databaseName
 									   ""); // tableName
 	}
-#endif	
+#endif
 
 	if (Debug_abort_after_distributed_prepared &&
 		isPreparedDtxTransaction())
@@ -3470,7 +3470,7 @@ AbortTransaction(void)
 	/* Perform any Resource Scheduler abort procesing. */
 	if (Gp_role == GP_ROLE_DISPATCH && IsResQueueEnabled())
 		AtAbort_ResScheduler();
-		
+
 	/* Perform any AO table abort processing */
 	AtAbort_AppendOnly();
 
@@ -3828,14 +3828,12 @@ CommitTransactionCommand(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_EXECUTE && !Gp_is_writer)
 		elog(DEBUG1,"CommitTransactionCommand: called as segment Reader in state %s",
 		     BlockStateAsString(s->blockState));
-=======
+
 	if (s->chain)
 		SaveTransactionCharacteristics();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	switch (s->blockState)
 	{
@@ -4110,9 +4108,9 @@ void
 AbortCurrentTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
-	
-	elog(DEBUG5, "AbortCurrentTransaction for %d in state: %d", 
-		s->transactionId, 
+
+	elog(DEBUG5, "AbortCurrentTransaction for %d in state: %d",
+		s->transactionId,
 		s->blockState);
 
 	switch (s->blockState)
@@ -4203,7 +4201,7 @@ AbortCurrentTransaction(void)
 		case TBLOCK_ABORT_END:
 			CleanupTransaction();
 			s->blockState = TBLOCK_DEFAULT;
-			
+
 			Assert(DistributedTransactionContext == DTX_CONTEXT_LOCAL_ONLY);
 			break;
 
@@ -4215,7 +4213,7 @@ AbortCurrentTransaction(void)
 			AbortTransaction();
 			CleanupTransaction();
 			s->blockState = TBLOCK_DEFAULT;
-			
+
 			Assert(DistributedTransactionContext == DTX_CONTEXT_LOCAL_ONLY);
 			break;
 
@@ -4228,7 +4226,7 @@ AbortCurrentTransaction(void)
 			AbortTransaction();
 			CleanupTransaction();
 			s->blockState = TBLOCK_DEFAULT;
-			
+
 			Assert(DistributedTransactionContext == DTX_CONTEXT_LOCAL_ONLY);
 			break;
 
@@ -4739,13 +4737,21 @@ EndTransactionBlock(bool chain)
 			break;
 
 			/*
-			 * In an implicit transaction block, commit, but issue a warning
+			 * We are in an implicit transaction block.  If AND CHAIN was
+			 * specified, error.  Otherwise commit, but issue a warning
 			 * because there was no explicit BEGIN before this.
 			 */
 		case TBLOCK_IMPLICIT_INPROGRESS:
-			ereport(WARNING,
-					(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
-					 errmsg("there is no transaction in progress")));
+			if (chain)
+				ereport(ERROR,
+						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+						 /* translator: %s represents an SQL statement name */
+						 errmsg("%s can only be used in transaction blocks",
+								"COMMIT AND CHAIN")));
+			else
+				ereport(WARNING,
+						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+						 errmsg("there is no transaction in progress")));
 			s->blockState = TBLOCK_END;
 			result = true;
 			break;
@@ -4807,20 +4813,22 @@ EndTransactionBlock(bool chain)
 			break;
 
 			/*
-			 * The user issued COMMIT when not inside a transaction.  Issue a
-			 * WARNING, staying in TBLOCK_STARTED state.  The upcoming call to
+			 * The user issued COMMIT when not inside a transaction.  For
+			 * COMMIT without CHAIN, issue a WARNING, staying in
+			 * TBLOCK_STARTED state.  The upcoming call to
 			 * CommitTransactionCommand() will then close the transaction and
-			 * put us back into the default state.
+			 * put us back into the default state.  For COMMIT AND CHAIN,
+			 * error.
 			 */
 		case TBLOCK_STARTED:
-			if (Gp_role == GP_ROLE_EXECUTE)
-			{
-				ereport(DEBUG2,
+			if (chain)
+				ereport(ERROR,
 						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
-						 errmsg("there is no transaction in progress")));
-			}
+						 /* translator: %s represents an SQL statement name */
+						 errmsg("%s can only be used in transaction blocks",
+								"COMMIT AND CHAIN")));
 			else
-				ereport(WARNING,
+				ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG2 : WARNING,
 						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
 						 errmsg("there is no transaction in progress")));
 			result = true;
@@ -4924,10 +4932,10 @@ UserAbortTransactionBlock(bool chain)
 			break;
 
 			/*
-			 * The user issued ABORT when not inside a transaction. Issue a
-			 * WARNING and go to abort state.  The upcoming call to
-			 * CommitTransactionCommand() will then put us back into the
-			 * default state.
+			 * The user issued ABORT when not inside a transaction.  For
+			 * ROLLBACK without CHAIN, issue a WARNING and go to abort state.
+			 * The upcoming call to CommitTransactionCommand() will then put
+			 * us back into the default state.  For ROLLBACK AND CHAIN, error.
 			 *
 			 * We do the same thing with ABORT inside an implicit transaction,
 			 * although in this case we might be rolling back actual database
@@ -4935,14 +4943,17 @@ UserAbortTransactionBlock(bool chain)
 			 * WARNING in this case, but we have done so historically.)
 			 */
 		case TBLOCK_STARTED:
-<<<<<<< HEAD
-			ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG2 : WARNING,
-=======
 		case TBLOCK_IMPLICIT_INPROGRESS:
-			ereport(WARNING,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-					(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
-					 errmsg("there is no transaction in progress")));
+			if (chain)
+				ereport(ERROR,
+						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+						 /* translator: %s represents an SQL statement name */
+						 errmsg("%s can only be used in transaction blocks",
+								"ROLLBACK AND CHAIN")));
+			else
+				ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG2 : WARNING,
+						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+						 errmsg("there is no transaction in progress")));
 			s->blockState = TBLOCK_ABORT_PENDING;
 			break;
 
@@ -5043,7 +5054,7 @@ DefineDispatchSavepoint(char *name)
 	{
 		elog(FATAL, "DefineSavepoint: unexpected state %s",
 			    BlockStateAsString(s->blockState));
-	}	
+	}
 
 	/* First we attempt to create on the QEs */
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -5437,7 +5448,7 @@ BeginInternalSubTransaction(const char *name)
 		if (!doDispatchSubtransactionInternalCmd(
 			DTX_PROTOCOL_COMMAND_SUBTRANSACTION_BEGIN_INTERNAL))
 		{
-			elog(ERROR, 
+			elog(ERROR,
 				"Could not BeginInternalSubTransaction dispatch failed");
 		}
 	}
@@ -5535,7 +5546,7 @@ ReleaseCurrentSubTransaction(void)
 		if (!doDispatchSubtransactionInternalCmd(
 			DTX_PROTOCOL_COMMAND_SUBTRANSACTION_RELEASE_INTERNAL))
 		{
-			elog(ERROR, 
+			elog(ERROR,
 				"Could not ReleaseCurrentSubTransaction dispatch failed");
 		}
 	}
@@ -5775,7 +5786,7 @@ ExecutorMarkTransactionUsesSequences(void)
 	ForceSyncCommit();
 }
 
-void 
+void
 ExecutorMarkTransactionDoesWrites(void)
 {
 	// UNDONE: Verify we are in transaction...
@@ -6766,7 +6777,7 @@ XactLogCommitRecord(TimestampTz commit_time,
 
 	if (ndeldbs > 0)
 	{
-		xl_xinfo.xinfo |= XACT_XINFO_HAS_DELDBS;	
+		xl_xinfo.xinfo |= XACT_XINFO_HAS_DELDBS;
 		xl_deldbs.ndeldbs = ndeldbs;
 	}
 

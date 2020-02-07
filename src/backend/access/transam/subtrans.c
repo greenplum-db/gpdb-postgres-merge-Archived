@@ -138,18 +138,6 @@ SubTransSetParent(TransactionId xid, TransactionId parent)
 	ptr = (SubTransData *) SubTransCtl->shared->page_buffer[slotno];
 	ptr += entryno;
 
-<<<<<<< HEAD
-	/* Current state should be 0 */
-	Assert(ptr->parent == InvalidTransactionId ||
-		   (ptr->parent == parent && overwriteOK));
-	Assert(ptr->topMostParent == InvalidTransactionId ||
-		   (ptr->topMostParent == subData.topMostParent && overwriteOK));
-
-	ptr->parent = parent;
-	ptr->topMostParent = subData.topMostParent;
-
-	SubTransCtl->shared->page_dirty[slotno] = true;
-=======
 	/*
 	 * It's possible we'll try to set the parent xid multiple times but we
 	 * shouldn't ever be changing the xid from one valid xid to another valid
@@ -159,9 +147,9 @@ SubTransSetParent(TransactionId xid, TransactionId parent)
 	{
 		Assert(*ptr == InvalidTransactionId);
 		*ptr = parent;
+		ptr->topMostParent = subData.topMostParent;
 		SubTransCtl->shared->page_dirty[slotno] = true;
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	LWLockRelease(SubtransControlLock);
 }
@@ -190,34 +178,8 @@ SubTransGetTopmostTransaction(TransactionId xid)
 	SubTransData subData;
 	SubTransGetData(xid, &subData);
 
-<<<<<<< HEAD
 	Assert(TransactionIdIsValid(subData.topMostParent));
 	return subData.topMostParent;
-=======
-	/* Can't ask about stuff that might not be around anymore */
-	Assert(TransactionIdFollowsOrEquals(xid, TransactionXmin));
-
-	while (TransactionIdIsValid(parentXid))
-	{
-		previousXid = parentXid;
-		if (TransactionIdPrecedes(parentXid, TransactionXmin))
-			break;
-		parentXid = SubTransGetParent(parentXid);
-
-		/*
-		 * By convention the parent xid gets allocated first, so should always
-		 * precede the child xid. Anything else points to a corrupted data
-		 * structure that could lead to an infinite loop, so exit.
-		 */
-		if (!TransactionIdPrecedes(parentXid, previousXid))
-			elog(ERROR, "pg_subtrans contains invalid entry: xid %u points to parent xid %u",
-				 previousXid, parentXid);
-	}
-
-	Assert(TransactionIdIsValid(previousXid));
-
-	return previousXid;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*

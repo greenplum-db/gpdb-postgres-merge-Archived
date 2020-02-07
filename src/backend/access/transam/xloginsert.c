@@ -107,19 +107,12 @@ static bool begininsert_called = false;
 static MemoryContext xloginsert_cxt;
 
 static XLogRecData *XLogRecordAssemble(RmgrId rmid, uint8 info,
-<<<<<<< HEAD
-				   XLogRecPtr RedoRecPtr, bool doPageWrites,
-				   XLogRecPtr *fpw_lsn, TransactionId overrideXid);
-static bool XLogCompressBackupBlock(char *page, uint16 hole_offset,
-						uint16 hole_length, char *dest, uint16 *dlen);
-static XLogRecPtr XLogInsert_Internal(RmgrId rmid, uint8 info, TransactionId
-							headerXid);
-=======
 									   XLogRecPtr RedoRecPtr, bool doPageWrites,
-									   XLogRecPtr *fpw_lsn);
+									   XLogRecPtr *fpw_lsn, TransactionId overrideXid);
 static bool XLogCompressBackupBlock(char *page, uint16 hole_offset,
 									uint16 hole_length, char *dest, uint16 *dlen);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static XLogRecPtr XLogInsert_Internal(RmgrId rmid, uint8 info, TransactionId
+									  headerXid);
 
 /*
  * Begin constructing a WAL record. This must be called before the

@@ -209,29 +209,12 @@ static GlobalTransaction MyLockedGxact = NULL;
 static bool twophaseExitRegistered = false;
 
 static void RecordTransactionCommitPrepared(TransactionId xid,
-<<<<<<< HEAD
-								const char *gid,
-								int nchildren,
-								TransactionId *children,
-								int nrels,
-								RelFileNodePendingDelete *rels,
-								int ndeldbs,
-								DbDirNode *deldbs,
-								int ninvalmsgs,
-								SharedInvalidationMessage *invalmsgs,
-								bool initfileinval);
-static void RecordTransactionAbortPrepared(TransactionId xid,
-							   int nchildren,
-							   TransactionId *children,
-							   int nrels,
-							   RelFileNodePendingDelete *rels,
-							   int ndeldbs,
-							   DbDirNode *deldbs);
-=======
 											int nchildren,
 											TransactionId *children,
 											int nrels,
-											RelFileNode *rels,
+											RelFileNodePendingDelete *rels,
+											int ndeldbs,
+											DbDirNode *deldbs,
 											int ninvalmsgs,
 											SharedInvalidationMessage *invalmsgs,
 											bool initfileinval,
@@ -240,9 +223,10 @@ static void RecordTransactionAbortPrepared(TransactionId xid,
 										   int nchildren,
 										   TransactionId *children,
 										   int nrels,
-										   RelFileNode *rels,
+										   RelFileNodePendingDelete *rels,
+										   int ndeldbs,
+										   DbDirNode *deldbs,
 										   const char *gid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void ProcessRecords(char *bufptr, TransactionId xid,
 						   const TwoPhaseCallback callbacks[]);
 static void RemoveGXact(GlobalTransaction gxact);
@@ -252,7 +236,9 @@ static char *ProcessTwoPhaseBuffer(TransactionId xid,
 								   XLogRecPtr prepare_start_lsn,
 								   bool fromdisk, bool setParent, bool setNextXid);
 static void MarkAsPreparingGuts(GlobalTransaction gxact, TransactionId xid,
-								const char *gid, TimestampTz prepared_at, Oid owner,
+								const char *gid,
+								LocalDistribXactData *localDistribXactRef,
+								TimestampTz prepared_at, Oid owner,
 								Oid databaseid);
 static void RemoveTwoPhaseFile(TransactionId xid, bool giveWarning);
 static void RecreateTwoPhaseFile(TransactionId xid, void *content, int len);
@@ -474,6 +460,7 @@ MarkAsPreparing(TransactionId xid,
  */
 static void
 MarkAsPreparingGuts(GlobalTransaction gxact, TransactionId xid, const char *gid,
+					LocalDistribXactData *localDistribXactRef,
 					TimestampTz prepared_at, Oid owner, Oid databaseid)
 {
 	PGPROC	   *proc;
@@ -1404,6 +1391,8 @@ ParsePrepareRecord(uint8 info, char *xlrec, xl_xact_parsed_prepare *parsed)
 	parsed->nrels = hdr->ncommitrels;
 	parsed->nabortrels = hdr->nabortrels;
 	parsed->nmsgs = hdr->ninvalmsgs;
+	parsed->distribTimeStamp = hdr->distribTimeStamp;
+	parsed->distribXid = hdr->distribXid;
 
 	strncpy(parsed->twophase_gid, bufptr, hdr->gidlen);
 	bufptr += MAXALIGN(hdr->gidlen);
@@ -2063,70 +2052,7 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 		{
 			if (nxids == allocsize)
 			{
-<<<<<<< HEAD
-				ereport(WARNING,
-						(errmsg("removing future two-phase state file \"%s\"",
-								clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				continue;
-			}
-
-			/*
-			 * Note: we can't check if already processed because clog
-			 * subsystem isn't up yet.
-			 */
-
-			/* Read and validate file */
-			buf = ReadTwoPhaseFile(xid, true);
-			if (buf == NULL)
-			{
-				ereport(WARNING,
-					  (errmsg("removing corrupt two-phase state file \"%s\"",
-							  clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				continue;
-			}
-
-			/* Deconstruct header */
-			hdr = (TwoPhaseFileHeader *) buf;
-			if (!TransactionIdEquals(hdr->xid, xid))
-			{
-				ereport(WARNING,
-					  (errmsg("removing corrupt two-phase state file \"%s\"",
-							  clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				pfree(buf);
-				continue;
-			}
-
-			/*
-			 * OK, we think this file is valid.  Incorporate xid into the
-			 * running-minimum result.
-			 */
-			if (TransactionIdPrecedes(xid, result))
-				result = xid;
-
-			/*
-			 * Examine subtransaction XIDs ... they should all follow main
-			 * XID, and they may force us to advance nextXid.
-			 *
-			 * We don't expect anyone else to modify nextXid, hence we don't
-			 * need to hold a lock while examining it.  We still acquire the
-			 * lock to modify it, though.
-			 */
-			subxids = (TransactionId *) (buf +
-								MAXALIGN(sizeof(TwoPhaseFileHeader)) +
-								MAXALIGN(hdr->gidlen));
-			for (i = 0; i < hdr->nsubxacts; i++)
-			{
-				TransactionId subxid = subxids[i];
-
-				Assert(TransactionIdFollows(subxid, xid));
-				if (TransactionIdFollowsOrEquals(subxid,
-												 ShmemVariableCache->nextXid))
-=======
 				if (nxids == 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				{
 					allocsize = 10;
 					xids = palloc(allocsize * sizeof(TransactionId));
@@ -2183,54 +2109,11 @@ StandbyRecoverPreparedTransactions(void)
 
 		xid = gxact->xid;
 
-<<<<<<< HEAD
-			/* Read and validate file */
-			buf = ReadTwoPhaseFile(xid, true);
-			if (buf == NULL)
-			{
-				ereport(WARNING,
-					  (errmsg("removing corrupt two-phase state file \"%s\"",
-							  clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				continue;
-			}
-
-			/* Deconstruct header */
-			hdr = (TwoPhaseFileHeader *) buf;
-			if (!TransactionIdEquals(hdr->xid, xid))
-			{
-				ereport(WARNING,
-					  (errmsg("removing corrupt two-phase state file \"%s\"",
-							  clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				pfree(buf);
-				continue;
-			}
-
-			/*
-			 * Examine subtransaction XIDs ... they should all follow main
-			 * XID.
-			 */
-			subxids = (TransactionId *) (buf +
-								MAXALIGN(sizeof(TwoPhaseFileHeader)) +
-								MAXALIGN(hdr->gidlen));
-			for (i = 0; i < hdr->nsubxacts; i++)
-			{
-				TransactionId subxid = subxids[i];
-
-				Assert(TransactionIdFollows(subxid, xid));
-				SubTransSetParent(subxid, xid, overwriteOK);
-			}
-
-			pfree(buf);
-		}
-=======
 		buf = ProcessTwoPhaseBuffer(xid,
 									gxact->prepare_start_lsn,
 									gxact->ondisk, false, false);
 		if (buf != NULL)
 			pfree(buf);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	LWLockRelease(TwoPhaseStateLock);
 }
@@ -2266,6 +2149,9 @@ RecoverPreparedTransactions(void)
 		TwoPhaseFileHeader *hdr;
 		TransactionId *subxids;
 		const char *gid;
+		DistributedTransactionTimeStamp distribTimeStamp;
+		DistributedTransactionId distribXid;
+		LocalDistribXactData localDistribXactData;
 
 		xid = gxact->xid;
 
@@ -2294,15 +2180,27 @@ RecoverPreparedTransactions(void)
 		bufptr += MAXALIGN(hdr->gidlen);
 		subxids = (TransactionId *) bufptr;
 		bufptr += MAXALIGN(hdr->nsubxacts * sizeof(TransactionId));
-		bufptr += MAXALIGN(hdr->ncommitrels * sizeof(RelFileNode));
-		bufptr += MAXALIGN(hdr->nabortrels * sizeof(RelFileNode));
+		bufptr += MAXALIGN(hdr->ncommitrels * sizeof(RelFileNodePendingDelete));
+		bufptr += MAXALIGN(hdr->nabortrels * sizeof(RelFileNodePendingDelete));
+		bufptr += MAXALIGN(hdr->ncommitdbs * sizeof(DbDirNode));
+		bufptr += MAXALIGN(hdr->nabortdbs * sizeof(DbDirNode));
 		bufptr += MAXALIGN(hdr->ninvalmsgs * sizeof(SharedInvalidationMessage));
+
+		/*
+		 * Crack open the gid to get the DTM start time and distributed
+		 * transaction id.
+		 */
+		dtxCrackOpenGid(gid, &distribTimeStamp, &distribXid);
 
 		/*
 		 * Recreate its GXACT and dummy PGPROC. But, check whether it was
 		 * added in redo and already has a shmem entry for it.
 		 */
+		localDistribXactData.state = LOCALDISTRIBXACT_STATE_ACTIVE;
+		localDistribXactData.distribTimeStamp = distribTimeStamp;
+		localDistribXactData.distribXid = distribXid;
 		MarkAsPreparingGuts(gxact, xid, gid,
+							&localDistribXactData,
 							hdr->prepared_at,
 							hdr->owner, hdr->database);
 
@@ -2375,126 +2273,10 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 	{
 		if (fromdisk)
 		{
-<<<<<<< HEAD
-			TransactionId xid;
-			char	   *buf;
-			char	   *bufptr;
-			TwoPhaseFileHeader *hdr;
-			TransactionId *subxids;
-			GlobalTransaction gxact;
-			const char *gid;
-			DistributedTransactionTimeStamp distribTimeStamp;
-			DistributedTransactionId distribXid;
-			LocalDistribXactData localDistribXactData;
-			int			i;
-
-			xid = (TransactionId) strtoul(clde->d_name, NULL, 16);
-
-			/* Already processed? */
-			if (TransactionIdDidCommit(xid) || TransactionIdDidAbort(xid))
-			{
-				ereport(WARNING,
-						(errmsg("removing stale two-phase state file \"%s\"",
-								clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				continue;
-			}
-
-			/* Read and validate file */
-			buf = ReadTwoPhaseFile(xid, true);
-			if (buf == NULL)
-			{
-				ereport(WARNING,
-					  (errmsg("removing corrupt two-phase state file \"%s\"",
-							  clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				continue;
-			}
-
-			ereport(LOG,
-					(errmsg("recovering prepared transaction %u", xid)));
-
-			/* Deconstruct header */
-			hdr = (TwoPhaseFileHeader *) buf;
-			Assert(TransactionIdEquals(hdr->xid, xid));
-			bufptr = buf + MAXALIGN(sizeof(TwoPhaseFileHeader));
-			gid = (const char *) bufptr;
-			bufptr += MAXALIGN(hdr->gidlen);
-			subxids = (TransactionId *) bufptr;
-			bufptr += MAXALIGN(hdr->nsubxacts * sizeof(TransactionId));
-			bufptr += MAXALIGN(hdr->ncommitrels * sizeof(RelFileNodePendingDelete));
-			bufptr += MAXALIGN(hdr->nabortrels * sizeof(RelFileNodePendingDelete));
-			bufptr += MAXALIGN(hdr->ncommitdbs * sizeof(DbDirNode));
-			bufptr += MAXALIGN(hdr->nabortdbs * sizeof(DbDirNode));
-			bufptr += MAXALIGN(hdr->ninvalmsgs * sizeof(SharedInvalidationMessage));
-
-			/*
-			 * It's possible that SubTransSetParent has been set before, if
-			 * the prepared transaction generated xid assignment records. Test
-			 * here must match one used in AssignTransactionId().
-			 */
-			if (InHotStandby && (hdr->nsubxacts >= PGPROC_MAX_CACHED_SUBXIDS ||
-								 XLogLogicalInfoActive()))
-				overwriteOK = true;
-
-			/*
-			 * Reconstruct subtrans state for the transaction --- needed
-			 * because pg_subtrans is not preserved over a restart.  Note that
-			 * we are linking all the subtransactions directly to the
-			 * top-level XID; there may originally have been a more complex
-			 * hierarchy, but there's no need to restore that exactly.
-			 */
-			for (i = 0; i < hdr->nsubxacts; i++)
-				SubTransSetParent(subxids[i], xid, overwriteOK);
-
-			/*
-			 * Crack open the gid to get the DTM start time and distributed
-			 * transaction id.
-			 */
-			dtxCrackOpenGid(gid, &distribTimeStamp, &distribXid);
-
-			/*
-			 * Recreate its GXACT and dummy PGPROC
-			 */
-			localDistribXactData.state = LOCALDISTRIBXACT_STATE_ACTIVE;
-			localDistribXactData.distribTimeStamp = distribTimeStamp;
-			localDistribXactData.distribXid = distribXid;
-			gxact = MarkAsPreparing(xid,
-									&localDistribXactData,
-									gid,
-									hdr->prepared_at,
-									hdr->owner, hdr->database);
-			gxact->ondisk = true;
-			GXactLoadSubxactData(gxact, hdr->nsubxacts, subxids);
-			MarkAsPrepared(gxact);
-
-			/*
-			 * Recover other state (notably locks) using resource managers
-			 */
-			ProcessRecords(bufptr, xid, twophase_recover_callbacks);
-
-			/*
-			 * Release locks held by the standby process after we process each
-			 * prepared transaction. As a result, we don't need too many
-			 * additional locks at any one time.
-			 */
-			if (InHotStandby)
-				StandbyReleaseLockTree(xid, hdr->nsubxacts, subxids);
-
-			/*
-			 * We're done with recovering this transaction. Clear
-			 * MyLockedGxact, like we do in PrepareTransaction() during normal
-			 * operation.
-			 */
-			PostPrepare_Twophase();
-
-			pfree(buf);
-=======
 			ereport(WARNING,
 					(errmsg("removing stale two-phase state file for transaction %u",
 							xid)));
 			RemoveTwoPhaseFile(xid, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		else
 		{
@@ -2590,7 +2372,6 @@ ProcessTwoPhaseBuffer(TransactionId xid,
  */
 static void
 RecordTransactionCommitPrepared(TransactionId xid,
-								const char *gid,
 								int nchildren,
 								TransactionId *children,
 								int nrels,
@@ -2711,14 +2492,10 @@ RecordTransactionAbortPrepared(TransactionId xid,
 							   int nchildren,
 							   TransactionId *children,
 							   int nrels,
-<<<<<<< HEAD
 							   RelFileNodePendingDelete *rels,
 							   int ndeldbs,
-							   DbDirNode *deldbs)
-=======
-							   RelFileNode *rels,
+							   DbDirNode *deldbs,
 							   const char *gid)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	XLogRecPtr	recptr;
 

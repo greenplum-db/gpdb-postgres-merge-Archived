@@ -145,17 +145,13 @@ pg_start_backup(PG_FUNCTION_ARGS)
 Datum
 pg_stop_backup(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
 	XLogRecPtr	stoppoint = InvalidXLogRecPtr;
+	SessionBackupState status = get_backup_status();
 
 	ereport(NOTICE,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("pg_stop_backup() is not supported in Greenplum Database"),
 			 errhint("Contact support to get more information and resolve the issue")));
-=======
-	XLogRecPtr	stoppoint;
-	SessionBackupState status = get_backup_status();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (status == SESSION_BACKUP_NON_EXCLUSIVE)
 		ereport(ERROR,
@@ -163,8 +159,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 				 errmsg("non-exclusive backup in progress"),
 				 errhint("Did you mean to use pg_stop_backup('f')?")));
 
-<<<<<<< HEAD
-=======
+#if 0
 	/*
 	 * Exclusive backups were typically started in a different connection, so
 	 * don't try to verify that status of backup is set to
@@ -173,8 +168,8 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	 * do_pg_stop_backup.
 	 */
 	stoppoint = do_pg_stop_backup(NULL, true, NULL);
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#endif
+	
 	PG_RETURN_LSN(stoppoint);
 }
 
