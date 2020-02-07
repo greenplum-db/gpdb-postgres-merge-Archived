@@ -22,4 +22,16 @@
   descr => 'standard public schema',
   nspname => 'public', nspowner => 'PGUID', nspacl => '_null_' },
 
+# GPDB-specific built-in namespaces.
+# NOTE: pg_dump has BM_BITMAPINDEX_NAMESPACE's value hard-coded in the
+# getTables() query.
+{ oid => '6104', oid_symbol => 'PG_AOSEGMENT_NAMESPACE',
+  descr => 'Reserved schema for Append Only segment list and eof tables',
+  nspname => 'pg_aoseg', nspowner => 'PGUID', nspacl => '_null_' },
+{ oid => '7012', oid_symbol => 'PG_BITMAPINDEX_NAMESPACE',
+  descr => 'Reserved schema for internal relations of bitmap indexes',
+  nspname => 'pg_bitmapindex', nspowner => 'PGUID', nspacl => '_null_' },
+
+# prototypes for functions in pg_namespace.c
+
 ]

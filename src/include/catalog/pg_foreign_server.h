@@ -47,27 +47,8 @@ CATALOG(pg_foreign_server,1417,ForeignServerRelationId)
  */
 typedef FormData_pg_foreign_server *Form_pg_foreign_server;
 
-<<<<<<< HEAD
-/* ----------------
- *		compiler constants for pg_foreign_server
- * ----------------
- */
-
-#define Natts_pg_foreign_server					7
-#define Anum_pg_foreign_server_srvname			1
-#define Anum_pg_foreign_server_srvowner			2
-#define Anum_pg_foreign_server_srvfdw			3
-#define Anum_pg_foreign_server_srvtype			4
-#define Anum_pg_foreign_server_srvversion		5
-#define Anum_pg_foreign_server_srvacl			6
-#define Anum_pg_foreign_server_srvoptions		7
-
-DATA(insert OID = 5105 ( pg_exttable_server	PGUID	5104	_null_ _null_ _null_ _null_ ));
-DESCR("special foreign server to mark external tables");
+/* GPDB_12_MERGE_FIXME: does genbki.pl need modifications to handle these macros? */
 #define PG_EXTTABLE_SERVER_OID 5105
 #define PG_EXTTABLE_SERVER_NAME "pg_exttable_server"
 
-#endif   /* PG_FOREIGN_SERVER_H */
-=======
 #endif							/* PG_FOREIGN_SERVER_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

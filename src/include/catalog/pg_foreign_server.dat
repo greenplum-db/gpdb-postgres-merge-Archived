@@ -1,0 +1,21 @@
+#----------------------------------------------------------------------
+#
+# pg_foreign_server.dat
+#    Initial contents of the pg_foreign_server system relation.
+#
+# Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
+#
+# src/include/catalog/pg_foreign_server.dat
+#
+#----------------------------------------------------------------------
+
+[
+
+{ oid => '5105', oid_symbol => 'PG_EXTTABLE_SERVER_OID',
+  descr => 'special foreign server to mark external tables',
+  srvname => 'pg_exttable_server', srvowner => 'PGUID', srvfdw => '5104',
+  srvtype => '_null_', srvversion => '_null_', srvacl => '_null_',
+  srvoptions => '_null_' },
+
+]

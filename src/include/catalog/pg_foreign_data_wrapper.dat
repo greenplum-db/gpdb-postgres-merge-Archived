@@ -1,0 +1,19 @@
+#----------------------------------------------------------------------
+#
+# pg_foreign_data_wrapper.dat
+#    Initial contents of the pg_foreign_data_wrapper system relation.
+#
+# Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
+#
+# src/include/catalog/pg_foreign_data_wrapper.dat
+#
+#----------------------------------------------------------------------
+
+[
+
+{ oid => '5104', descr => 'special FDW to mark external tables',
+  fdwname => 'pg_exttable_fdw', fdwowner => 'PGUID', fdwhandler => '5107',
+  fdwvalidator => '0', fdwacl => '_null_', fdwoptions => '_null_' },
+
+]

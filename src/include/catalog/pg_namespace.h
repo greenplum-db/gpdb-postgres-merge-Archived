@@ -53,46 +53,6 @@ FOREIGN_KEY(nspowner REFERENCES pg_authid(oid));
  */
 typedef FormData_pg_namespace *Form_pg_namespace;
 
-<<<<<<< HEAD
-/* ----------------
- *		compiler constants for pg_namespace
- * ----------------
- */
-
-#define Natts_pg_namespace				3
-#define Anum_pg_namespace_nspname		1
-#define Anum_pg_namespace_nspowner		2
-#define Anum_pg_namespace_nspacl		3
-
-
-/* ----------------
- * initial contents of pg_namespace
- * ---------------
- */
-
-DATA(insert OID = 11 ( "pg_catalog" PGUID _null_ ));
-DESCR("system catalog schema");
-#define PG_CATALOG_NAMESPACE 11
-DATA(insert OID = 99 ( "pg_toast" PGUID _null_ ));
-DESCR("reserved schema for TOAST tables");
-#define PG_TOAST_NAMESPACE 99
-DATA(insert OID = 2200 ( "public" PGUID _null_ ));
-DESCR("standard public schema");
-#define PG_PUBLIC_NAMESPACE 2200
-
-/*
- * GPDB-specific built-in namespaces.
- *
- * NOTE: pg_dump has BM_BITMAPINDEX_NAMESPACE's value hard-coded in the
- * getTables() query.
- */
-DATA(insert OID = 6104 ( "pg_aoseg" PGUID _null_ ));
-DESCR("Reserved schema for Append Only segment list and eof tables");
-#define PG_AOSEGMENT_NAMESPACE 6104
-DATA(insert OID = 7012  ( "pg_bitmapindex" PGUID _null_ ));
-DESCR("Reserved schema for internal relations of bitmap indexes");
-#define PG_BITMAPINDEX_NAMESPACE 7012
-
 #define IsBuiltInNameSpace(namespaceId) \
 	(namespaceId == PG_CATALOG_NAMESPACE || \
 	 namespaceId == PG_TOAST_NAMESPACE || \
@@ -100,8 +60,6 @@ DESCR("Reserved schema for internal relations of bitmap indexes");
 	 namespaceId == PG_PUBLIC_NAMESPACE || \
 	 namespaceId == PG_AOSEGMENT_NAMESPACE)
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * prototypes for functions in pg_namespace.c
  */
