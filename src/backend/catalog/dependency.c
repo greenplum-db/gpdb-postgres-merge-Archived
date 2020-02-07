@@ -75,11 +75,7 @@
 #include "commands/publicationcmds.h"
 #include "commands/schemacmds.h"
 #include "commands/seclabel.h"
-<<<<<<< HEAD
-#include "commands/tablespace.h"
-=======
 #include "commands/sequence.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "commands/trigger.h"
 #include "commands/typecmds.h"
 #include "foreign/foreign.h"
@@ -96,6 +92,7 @@
 #include "catalog/pg_compression.h"
 #include "catalog/pg_extprotocol.h"
 #include "catalog/pg_partition_encoding.h"
+#include "commands/tablespace.h"
 #include "cdb/cdbvars.h"
 #include "commands/extprotocolcmds.h"
 #include "commands/tablecmds.h"
@@ -633,11 +630,7 @@ findDependentObjects(const ObjectAddress *object,
 				/* FALL THRU */
 
 			case DEPENDENCY_INTERNAL:
-<<<<<<< HEAD
-			case DEPENDENCY_INTERNAL_AUTO:
-=======
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				/*
 				 * This object is part of the internal implementation of
 				 * another object, or is part of the extension that is the
@@ -665,16 +658,6 @@ findDependentObjects(const ObjectAddress *object,
 						ReleaseDeletionLock(object);
 						return;
 					}
-<<<<<<< HEAD
-					otherObjDesc = getObjectDescription(&otherObject);
-					ereport(ERROR,
-							(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-							 errmsg("cannot drop %s because %s requires it",
-									getObjectDescription(object),
-									otherObjDesc),
-							 errhint("You can drop %s instead.",
-									 otherObjDesc)));
-=======
 
 					/*
 					 * We postpone actually issuing the error message until
@@ -690,7 +673,6 @@ findDependentObjects(const ObjectAddress *object,
 						foundDep->deptype == DEPENDENCY_EXTENSION)
 						owningObject = otherObject;
 					break;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				}
 
 				/*

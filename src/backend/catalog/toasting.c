@@ -40,17 +40,9 @@
 Oid			binary_upgrade_next_toast_pg_type_oid = InvalidOid;
 
 static void CheckAndCreateToastTable(Oid relOid, Datum reloptions,
-<<<<<<< HEAD
-						 LOCKMODE lockmode, bool check,
-						 bool is_part_child, bool is_part_parent);
-static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
-				   Datum reloptions, LOCKMODE lockmode, bool check,
-				   bool is_part_child, bool is_part_parent);
-=======
 									 LOCKMODE lockmode, bool check);
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 							   Datum reloptions, LOCKMODE lockmode, bool check);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static bool needs_toast_table(Relation rel);
 
 
@@ -334,15 +326,9 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   false,
 										   true,
 										   true,
-<<<<<<< HEAD
-										   NULL,
-										   /* valid_opts */ false,
-										   /* is_part_child */ false,
-										   is_part_parent);
-=======
 										   InvalidOid,
-										   NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+										   NULL,
+										   /* valid_opts */ false);
 	Assert(toast_relid != InvalidOid);
 
 	/* make the toast relation visible, else table_open will fail */
@@ -393,26 +379,17 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	coloptions[0] = 0;
 	coloptions[1] = 0;
 
-<<<<<<< HEAD
 	if (IsBinaryUpgrade)
 		toastIndexOid = GetPreassignedOidForRelation(namespaceid, toast_idxname);
 
 	toast_idxid = index_create(toast_rel, toast_idxname, toastIndexOid, InvalidOid,
-=======
-	index_create(toast_rel, toast_idxname, toastIndexOid, InvalidOid,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				 InvalidOid, InvalidOid,
 				 indexInfo,
 				 list_make2("chunk_id", "chunk_seq"),
 				 BTREE_AM_OID,
 				 rel->rd_rel->reltablespace,
 				 collationObjectId, classObjectId, coloptions, (Datum) 0,
-<<<<<<< HEAD
-				 true, false, false, false,
-				 true, false, false, true, false, NULL);
-=======
 				 INDEX_CREATE_IS_PRIMARY, 0, true, true, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	table_close(toast_rel, NoLock);
 

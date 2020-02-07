@@ -1477,15 +1477,9 @@ heap_create_with_catalog(const char *relname,
 						 bool use_user_acl,
 						 bool allow_system_table_mods,
 						 bool is_internal,
-<<<<<<< HEAD
-						 ObjectAddress *typaddress,
-						 bool valid_opts,
-						 bool is_part_child,
-						 bool is_part_parent)
-=======
 						 Oid relrewrite,
-						 ObjectAddress *typaddress)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						 ObjectAddress *typaddress,
+						 bool valid_opts)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
