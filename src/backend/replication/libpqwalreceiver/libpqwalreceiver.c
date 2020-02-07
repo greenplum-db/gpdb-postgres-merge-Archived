@@ -103,18 +103,9 @@ static WalReceiverFunctionsType PQWalReceiverFunctions = {
 };
 
 /* Prototypes for private functions */
-<<<<<<< HEAD
-#ifdef NOT_USED
-/* GPDB: see comment in function definition */
-static bool libpq_select(int timeout_ms);
-#endif
-static PGresult *libpqrcv_PQexec(const char *query);
-static PGresult *libpqrcv_PQgetResult(PGconn *streamConn);
-=======
 static PGresult *libpqrcv_PQexec(PGconn *streamConn, const char *query);
 static PGresult *libpqrcv_PQgetResult(PGconn *streamConn);
 static char *stringlist_to_identifierstr(PGconn *conn, List *strings);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Module initialization function
@@ -491,11 +482,7 @@ libpqrcv_endstreaming(WalReceiverConn *conn, TimeLineID *next_tli)
 	 * If we had not yet received CopyDone from the backend, PGRES_COPY_OUT is
 	 * also possible in case we aborted the copy in mid-stream.
 	 */
-<<<<<<< HEAD
-	res = libpqrcv_PQgetResult(streamConn);
-=======
 	res = libpqrcv_PQgetResult(conn->streamConn);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (PQresultStatus(res) == PGRES_TUPLES_OK)
 	{
 		/*
@@ -509,9 +496,6 @@ libpqrcv_endstreaming(WalReceiverConn *conn, TimeLineID *next_tli)
 		PQclear(res);
 
 		/* the result set should be followed by CommandComplete */
-<<<<<<< HEAD
-		res = libpqrcv_PQgetResult(streamConn);
-=======
 		res = libpqrcv_PQgetResult(conn->streamConn);
 	}
 	else if (PQresultStatus(res) == PGRES_COPY_OUT)
@@ -526,7 +510,6 @@ libpqrcv_endstreaming(WalReceiverConn *conn, TimeLineID *next_tli)
 
 		/* CommandComplete should follow */
 		res = libpqrcv_PQgetResult(conn->streamConn);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -536,11 +519,7 @@ libpqrcv_endstreaming(WalReceiverConn *conn, TimeLineID *next_tli)
 	PQclear(res);
 
 	/* Verify that there are no more results */
-<<<<<<< HEAD
-	res = libpqrcv_PQgetResult(streamConn);
-=======
 	res = libpqrcv_PQgetResult(conn->streamConn);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (res != NULL)
 		ereport(ERROR,
 				(errmsg("unexpected result after CommandComplete: %s",
@@ -592,79 +571,7 @@ libpqrcv_readtimelinehistoryfile(WalReceiverConn *conn,
 	PQclear(res);
 }
 
-#ifdef NOT_USED
-/* GPDB: The patch that introduced synchronous_commit = 'remote_apply'
- * (314cbfc5da) removed the final use of libpq_select() in our side. We had
- * backported upstream a1a789eb5a which had refactored other places of its use.
- * However in upstream, commit 597a87ccc9a in v10 removes the function
- * completely. Disable until we incomporate that upstream commit.
- */
 /*
-<<<<<<< HEAD
- * Wait until we can read WAL stream, or timeout.
- *
- * Returns true if data has become available for reading, false if timed out
- * or interrupted by signal.
- *
- * This is based on pqSocketCheck.
- */
-static bool
-libpq_select(int timeout_ms)
-{
-	int			ret;
-
-	Assert(streamConn != NULL);
-	if (PQsocket(streamConn) < 0)
-		ereport(ERROR,
-				(errcode_for_socket_access(),
-				 errmsg("invalid socket: %s", PQerrorMessage(streamConn))));
-
-	/* We use poll(2) if available, otherwise select(2) */
-	{
-#ifdef HAVE_POLL
-		struct pollfd input_fd;
-
-		input_fd.fd = PQsocket(streamConn);
-		input_fd.events = POLLIN | POLLERR;
-		input_fd.revents = 0;
-
-		ret = poll(&input_fd, 1, timeout_ms);
-#else							/* !HAVE_POLL */
-
-		fd_set		input_mask;
-		struct timeval timeout;
-		struct timeval *ptr_timeout;
-
-		FD_ZERO(&input_mask);
-		FD_SET(PQsocket(streamConn), &input_mask);
-
-		if (timeout_ms < 0)
-			ptr_timeout = NULL;
-		else
-		{
-			timeout.tv_sec = timeout_ms / 1000;
-			timeout.tv_usec = (timeout_ms % 1000) * 1000;
-			ptr_timeout = &timeout;
-		}
-
-		ret = select(PQsocket(streamConn) + 1, &input_mask,
-					 NULL, NULL, ptr_timeout);
-#endif   /* HAVE_POLL */
-	}
-
-	if (ret == 0 || (ret < 0 && errno == EINTR))
-		return false;
-	if (ret < 0)
-		ereport(ERROR,
-				(errcode_for_socket_access(),
-				 errmsg("select() failed: %m")));
-	return true;
-}
-#endif /* NOT_USED */
-
-/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Send a query and wait for the results by using the asynchronous libpq
  * functions and socket readiness events.
  *
@@ -701,22 +608,14 @@ libpqrcv_PQexec(PGconn *streamConn, const char *query)
 	{
 		/* Wait for, and collect, the next PGresult. */
 		PGresult   *result;
-<<<<<<< HEAD
-=======
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		result = libpqrcv_PQgetResult(streamConn);
 		if (result == NULL)
 			break;				/* query is complete, or failure */
 
 		/*
 		 * Emulate PQexec()'s behavior of returning the last result when there
-<<<<<<< HEAD
-		 * are many.  Since walsender will never generate multiple results, we
-		 * skip the concatenation of error messages.
-=======
 		 * are many.  We are fine with returning just last error message.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 */
 		PQclear(lastResult);
 		lastResult = result;
@@ -750,29 +649,17 @@ libpqrcv_PQgetResult(PGconn *streamConn)
 		 * since we'll get interrupted by signals and can handle any
 		 * interrupts here.
 		 */
-<<<<<<< HEAD
-		rc = WaitLatchOrSocket(&MyProc->procLatch,
-							   WL_POSTMASTER_DEATH | WL_SOCKET_READABLE |
-							   WL_LATCH_SET,
-							   PQsocket(streamConn),
-							   0);
-=======
 		rc = WaitLatchOrSocket(MyLatch,
 							   WL_EXIT_ON_PM_DEATH | WL_SOCKET_READABLE |
 							   WL_LATCH_SET,
 							   PQsocket(streamConn),
 							   0,
 							   WAIT_EVENT_LIBPQWALRECEIVER_RECEIVE);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/* Interrupted? */
 		if (rc & WL_LATCH_SET)
 		{
-<<<<<<< HEAD
-			ResetLatch(&MyProc->procLatch);
-=======
 			ResetLatch(MyLatch);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			ProcessWalRcvInterrupts();
 		}
 
@@ -849,11 +736,6 @@ libpqrcv_receive(WalReceiverConn *conn, char **buffer,
 	{
 		PGresult   *res;
 
-<<<<<<< HEAD
-		res = libpqrcv_PQgetResult(streamConn);
-		if (PQresultStatus(res) == PGRES_COMMAND_OK ||
-			PQresultStatus(res) == PGRES_COPY_IN)
-=======
 		res = libpqrcv_PQgetResult(conn->streamConn);
 		if (PQresultStatus(res) == PGRES_COMMAND_OK)
 		{
@@ -881,7 +763,6 @@ libpqrcv_receive(WalReceiverConn *conn, char **buffer,
 			return -1;
 		}
 		else if (PQresultStatus(res) == PGRES_COPY_IN)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			PQclear(res);
 			return -1;
