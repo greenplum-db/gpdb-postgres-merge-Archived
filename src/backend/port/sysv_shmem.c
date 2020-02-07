@@ -69,33 +69,6 @@
  */
 
 
-/*
- * As of PostgreSQL 9.3, we normally allocate only a very small amount of
- * System V shared memory, and only for the purposes of providing an
- * interlock to protect the data directory.  The real shared memory block
- * is allocated using mmap().  This works around the problem that many
- * systems have very low limits on the amount of System V shared memory
- * that can be allocated.  Even a limit of a few megabytes will be enough
- * to run many copies of PostgreSQL without needing to adjust system settings.
- *
- * We assume that no one will attempt to run PostgreSQL 9.3 or later on
- * systems that are ancient enough that anonymous shared memory is not
- * supported, such as pre-2.4 versions of Linux.  If that turns out to be
- * false, we might need to add compile and/or run-time tests here and do this
- * only if the running kernel supports it.
- *
- * However, we must always disable this logic in the EXEC_BACKEND case, and
- * fall back to the old method of allocating the entire segment using System V
- * shared memory, because there's no way to attach an anonymous mmap'd segment
- * to a process after exec().  Since EXEC_BACKEND is intended only for
- * developer use, this shouldn't be a big problem.  Because of this, we do
- * not worry about supporting anonymous shmem in the EXEC_BACKEND cases below.
- */
-#ifndef EXEC_BACKEND
-#define USE_ANONYMOUS_SHMEM
-#endif
-
-
 typedef key_t IpcMemoryKey;		/* shared memory key passed to shmget(2) */
 typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 
@@ -123,13 +96,8 @@ typedef enum
 unsigned long UsedShmemSegID = 0;
 void	   *UsedShmemSegAddr = NULL;
 
-<<<<<<< HEAD
-#ifdef USE_ANONYMOUS_SHMEM
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static Size AnonymousShmemSize;
 static void *AnonymousShmem = NULL;
-#endif
 
 static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size);
 static void IpcMemoryDetach(int status, Datum shmaddr);
@@ -548,85 +516,7 @@ GetHugePageSize(Size *hugepagesize, int *mmap_flags)
 #endif							/* __linux__ */
 }
 
-<<<<<<< HEAD
-#ifdef USE_ANONYMOUS_SHMEM
-
-#ifdef MAP_HUGETLB
-
-/*
- * Identify the huge page size to use.
- *
- * Some Linux kernel versions have a bug causing mmap() to fail on requests
- * that are not a multiple of the hugepage size.  Versions without that bug
- * instead silently round the request up to the next hugepage multiple ---
- * and then munmap() fails when we give it a size different from that.
- * So we have to round our request up to a multiple of the actual hugepage
- * size to avoid trouble.
- *
- * Doing the round-up ourselves also lets us make use of the extra memory,
- * rather than just wasting it.  Currently, we just increase the available
- * space recorded in the shmem header, which will make the extra usable for
- * purposes such as additional locktable entries.  Someday, for very large
- * hugepage sizes, we might want to think about more invasive strategies,
- * such as increasing shared_buffers to absorb the extra space.
- *
- * Returns the (real or assumed) page size into *hugepagesize,
- * and the hugepage-related mmap flags to use into *mmap_flags.
- *
- * Currently *mmap_flags is always just MAP_HUGETLB.  Someday, on systems
- * that support it, we might OR in additional bits to specify a particular
- * non-default huge page size.
- */
-static void
-GetHugePageSize(Size *hugepagesize, int *mmap_flags)
-{
-	/*
-	 * If we fail to find out the system's default huge page size, assume it
-	 * is 2MB.  This will work fine when the actual size is less.  If it's
-	 * more, we might get mmap() or munmap() failures due to unaligned
-	 * requests; but at this writing, there are no reports of any non-Linux
-	 * systems being picky about that.
-	 */
-	*hugepagesize = 2 * 1024 * 1024;
-	*mmap_flags = MAP_HUGETLB;
-
-	/*
-	 * System-dependent code to find out the default huge page size.
-	 *
-	 * On Linux, read /proc/meminfo looking for a line like "Hugepagesize:
-	 * nnnn kB".  Ignore any failures, falling back to the preset default.
-	 */
-#ifdef __linux__
-	{
-		FILE	   *fp = AllocateFile("/proc/meminfo", "r");
-		char		buf[128];
-		unsigned int sz;
-		char		ch;
-
-		if (fp)
-		{
-			while (fgets(buf, sizeof(buf), fp))
-			{
-				if (sscanf(buf, "Hugepagesize: %u %c", &sz, &ch) == 2)
-				{
-					if (ch == 'k')
-					{
-						*hugepagesize = sz * (Size) 1024;
-						break;
-					}
-					/* We could accept other units besides kB, if needed */
-				}
-			}
-			FreeFile(fp);
-		}
-	}
-#endif   /* __linux__ */
-}
-
-#endif   /* MAP_HUGETLB */
-=======
 #endif							/* MAP_HUGETLB */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Creates an anonymous mmap()ed shared memory segment.
@@ -715,11 +605,6 @@ AnonymousShmemDetach(int status, Datum arg)
 		AnonymousShmem = NULL;
 	}
 }
-<<<<<<< HEAD
-
-#endif   /* USE_ANONYMOUS_SHMEM */
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * PGSharedMemoryCreate
@@ -747,11 +632,7 @@ PGSharedMemoryCreate(Size size, int port,
 	Size		sysvsize;
 
 	/* Complain if hugepages demanded but we can't possibly support them */
-<<<<<<< HEAD
-#if !defined(USE_ANONYMOUS_SHMEM) || !defined(MAP_HUGETLB)
-=======
 #if !defined(MAP_HUGETLB)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (huge_pages == HUGE_PAGES_ON)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -761,28 +642,6 @@ PGSharedMemoryCreate(Size size, int port,
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
 
-<<<<<<< HEAD
-#ifdef USE_ANONYMOUS_SHMEM
-	AnonymousShmem = CreateAnonymousSegment(&size);
-	AnonymousShmemSize = size;
-
-	/* Register on-exit routine to unmap the anonymous segment */
-	on_shmem_exit(AnonymousShmemDetach, (Datum) 0);
-
-	/* Now we need only allocate a minimal-sized SysV shmem block. */
-	sysvsize = sizeof(PGShmemHeader);
-#else
-	sysvsize = size;
-#endif
-
-	/* Make sure PGSharedMemoryAttach doesn't fail without need */
-	UsedShmemSegAddr = NULL;
-
-	/* Loop till we find a free IPC key */
-	NextShmemSegID = port * 1000;
-
-	for (NextShmemSegID++;; NextShmemSegID++)
-=======
 	if (shared_memory_type == SHMEM_TYPE_MMAP)
 	{
 		AnonymousShmem = CreateAnonymousSegment(&size);
@@ -806,7 +665,6 @@ PGSharedMemoryCreate(Size size, int port,
 	NextShmemSegID = 1 + port * 1000;
 
 	for (;;)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		IpcMemoryId shmid;
 		PGShmemHeader *oldhdr;
@@ -915,14 +773,10 @@ PGSharedMemoryCreate(Size size, int port,
 	 * block. Otherwise, the System V shared memory block is only a shim, and
 	 * we must return a pointer to the real block.
 	 */
-#ifdef USE_ANONYMOUS_SHMEM
 	if (AnonymousShmem == NULL)
 		return hdr;
 	memcpy(AnonymousShmem, hdr, sizeof(PGShmemHeader));
 	return (PGShmemHeader *) AnonymousShmem;
-#else
-	return hdr;
-#endif
 }
 
 #ifdef EXEC_BACKEND
@@ -1034,41 +888,7 @@ PGSharedMemoryDetach(void)
 		UsedShmemSegAddr = NULL;
 	}
 
-<<<<<<< HEAD
-#ifdef USE_ANONYMOUS_SHMEM
 	if (AnonymousShmem != NULL)
-	{
-		if (munmap(AnonymousShmem, AnonymousShmemSize) < 0)
-			elog(LOG, "munmap(%p, %zu) failed: %m",
-				 AnonymousShmem, AnonymousShmemSize);
-		AnonymousShmem = NULL;
-	}
-#endif
-}
-
-
-/*
- * Attach to shared memory and make sure it has a Postgres header
- *
- * Returns attach address if OK, else NULL
- */
-static PGShmemHeader *
-PGSharedMemoryAttach(IpcMemoryKey key, IpcMemoryId *shmid)
-{
-	PGShmemHeader *hdr;
-
-	if ((*shmid = shmget(key, sizeof(PGShmemHeader), 0)) < 0)
-		return NULL;
-
-	hdr = (PGShmemHeader *) shmat(*shmid, UsedShmemSegAddr, PG_SHMAT_FLAGS);
-
-	if (hdr == (PGShmemHeader *) -1)
-		return NULL;			/* failed: must be some other app's */
-
-	if (hdr->magic != PGShmemMagic)
-=======
-	if (AnonymousShmem != NULL)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		if (munmap(AnonymousShmem, AnonymousShmemSize) < 0)
 			elog(LOG, "munmap(%p, %zu) failed: %m",
