@@ -3709,44 +3709,6 @@ limit_printout_length(const char *str)
 }
 
 /*
- * GPDB_12_MERGE_FIXME, we need a new wrapper
- *
- * Wrapper function of CopyFromInsertBatch
- *
- * Flush all relations have buffered tuples
- */
-static void
-cdbFlushInsertBatches(List *resultRels,
-					  CopyState cstate,
-					  EState *estate,
-					  CommandId mycid,
-					  int hi_options,
-					  TupleTableSlot *baseSlot,
-					  int firstBufferedLineNo)
-{
-	ListCell *cell;
-	ResultRelInfo *oldRelInfo;
-	oldRelInfo = estate->es_result_relation_info;
-	foreach (cell, resultRels)
-	{
-		ResultRelInfo *relInfo = (ResultRelInfo *)lfirst(cell);
-		if (relInfo->nBufferedTuples > 0)
-		{
-			estate->es_result_relation_info = relInfo;
-			CopyFromInsertBatch(cstate, estate, mycid, hi_options,
-								relInfo,
-								baseSlot,
-								relInfo->biState,
-								relInfo->nBufferedTuples,
-								relInfo->bufferedTuples,
-								firstBufferedLineNo);
-		}
-		relInfo->nBufferedTuples = 0;
-		relInfo->bufferedTuplesSize = 0;
-	}
-	estate->es_result_relation_info = oldRelInfo;
-
-/*
  * Allocate memory and initialize a new CopyMultiInsertBuffer for this
  * ResultRelInfo.
  */
@@ -5477,85 +5439,6 @@ CopyFrom(CopyState cstate)
 	return processed;
 }
 
-// GPDB_12_MERGE_FIXME, remove this function
-/*
- * A subroutine of CopyFrom, to write the current batch of buffered heap
- * tuples to the heap. Also updates indexes and runs AFTER ROW INSERT
- * triggers.
- */
-static void
-CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
-					int hi_options, ResultRelInfo *resultRelInfo,
-					TupleTableSlot *myslot, BulkInsertState bistate,
-					int nBufferedTuples, HeapTuple *bufferedTuples,
-					uint64 firstBufferedLineNo)
-{
-	MemoryContext oldcontext;
-	int			i;
-	uint64		save_cur_lineno;
-
-	/*
-	 * Print error context information correctly, if one of the operations
-	 * below fail.
-	 */
-	cstate->line_buf_valid = false;
-	save_cur_lineno = cstate->cur_lineno;
-
-	/*
-	 * heap_multi_insert leaks memory, so switch to short-lived memory context
-	 * before calling it.
-	 */
-	oldcontext = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
-	heap_multi_insert(resultRelInfo->ri_RelationDesc,
-					  bufferedTuples,
-					  nBufferedTuples,
-					  mycid,
-					  hi_options,
-					  bistate,
-					  GetCurrentTransactionId());
-	MemoryContextSwitchTo(oldcontext);
-
-	/*
-	 * If there are any indexes, update them for all the inserted tuples, and
-	 * run AFTER ROW INSERT triggers.
-	 */
-	if (resultRelInfo->ri_NumIndices > 0)
-	{
-		for (i = 0; i < nBufferedTuples; i++)
-		{
-			List	   *recheckIndexes;
-
-			cstate->cur_lineno = firstBufferedLineNo + i;
-			ExecStoreHeapTuple(bufferedTuples[i], myslot, InvalidBuffer, false);
-			recheckIndexes =
-				ExecInsertIndexTuples(myslot, &(bufferedTuples[i]->t_self),
-									  estate, false, NULL, NIL);
-			ExecARInsertTriggers(estate, resultRelInfo,
-								 bufferedTuples[i],
-								 recheckIndexes);
-			list_free(recheckIndexes);
-		}
-	}
-
-	/*
-	 * There's no indexes, but see if we need to run AFTER ROW INSERT triggers
-	 * anyway.
-	 */
-	else if (resultRelInfo->ri_TrigDesc != NULL &&
-			 resultRelInfo->ri_TrigDesc->trig_insert_after_row)
-	{
-		for (i = 0; i < nBufferedTuples; i++)
-		{
-			cstate->cur_lineno = firstBufferedLineNo + i;
-			ExecARInsertTriggers(estate, resultRelInfo,
-								 bufferedTuples[i],
-								 NIL);
-		}
-	}
-
-	/* reset cur_lineno to where we were */
-	cstate->cur_lineno = save_cur_lineno;
-}
 /*
  * Setup to read tuples from a file for COPY FROM.
  *
