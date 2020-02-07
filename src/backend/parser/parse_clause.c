@@ -105,24 +105,14 @@ static int	get_matching_location(int sortgroupref,
 static List *resolve_unique_index_expr(ParseState *pstate, InferClause *infer,
 									   Relation heapRel);
 static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
-<<<<<<< HEAD
-					 List *grouplist, List *targetlist, int location,
-					 bool resolveUnknown);
-static TargetEntry *getTargetBySortGroupRef(Index ref, List *tl);
-static WindowClause *findWindowClause(List *wclist, const char *name);
-static Node *transformFrameOffset(ParseState *pstate, int frameOptions,
-								  Node *clause,
-								  List *orderClause, List *targetlist, bool isFollowing,
-								  int location);
-static SortGroupClause *make_group_clause(TargetEntry *tle, List *targetlist,
-				  Oid eqop, Oid sortop, bool nulls_first, bool hashable);
-=======
 								  List *grouplist, List *targetlist, int location);
+static TargetEntry *getTargetBySortGroupRef(Index ref, List *tl);
 static WindowClause *findWindowClause(List *wclist, const char *name);
 static Node *transformFrameOffset(ParseState *pstate, int frameOptions,
 								  Oid rangeopfamily, Oid rangeopcintype, Oid *inRangeFunc,
 								  Node *clause);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static SortGroupClause *make_group_clause(TargetEntry *tle, List *targetlist,
+				  Oid eqop, Oid sortop, bool nulls_first, bool hashable);
 
 typedef struct grouping_rewrite_ctx
 {
@@ -3068,25 +3058,6 @@ transformWindowDefinitions(ParseState *pstate,
 		 */
 
 		wc->frameOptions = windef->frameOptions;
-<<<<<<< HEAD
-		wc->winref = winref;
-		/* Process frame offset expressions */
-		wc->startOffset = transformFrameOffset(pstate, wc->frameOptions,
-											   windef->startOffset, wc->orderClause,
-											   *targetlist,
-											   (windef->frameOptions & FRAMEOPTION_START_VALUE_FOLLOWING) != 0,
-											   windef->location);
-		wc->endOffset = transformFrameOffset(pstate, wc->frameOptions,
-											 windef->endOffset, wc->orderClause,
-											 *targetlist,
-											 (windef->frameOptions & FRAMEOPTION_END_VALUE_FOLLOWING) != 0,
-											 windef->location);
-
-		/* finally, check function restriction with this spec. */
-		winref_checkspec(pstate, *targetlist, winref,
-						 PointerIsValid(wc->orderClause),
-						 wc->frameOptions != FRAMEOPTION_DEFAULTS);
-=======
 
 		/*
 		 * RANGE offset PRECEDING/FOLLOWING requires exactly one ORDER BY
@@ -3140,7 +3111,6 @@ transformWindowDefinitions(ParseState *pstate,
 											 &wc->endInRangeFunc,
 											 windef->endOffset);
 		wc->winref = winref;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		result = lappend(result, wc);
 	}
@@ -4007,15 +3977,9 @@ findWindowClause(List *wclist, const char *name)
  * We'll return the OID of the in_range function to *inRangeFunc.
  */
 static Node *
-<<<<<<< HEAD
-transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause,
-					 List *orderClause, List *targetlist, bool isFollowing,
-					 int location)
-=======
 transformFrameOffset(ParseState *pstate, int frameOptions,
 					 Oid rangeopfamily, Oid rangeopcintype, Oid *inRangeFunc,
 					 Node *clause)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	const char *constructName = NULL;
 	Node	   *node;
@@ -4039,17 +4003,6 @@ transformFrameOffset(ParseState *pstate, int frameOptions,
 	}
 	else if (frameOptions & FRAMEOPTION_RANGE)
 	{
-<<<<<<< HEAD
-		TargetEntry *te;
-		Oid			otype;
-		Oid			rtype;
-		Oid			newrtype;
-		SortGroupClause *sort;
-		Oid			oprresult;
-		List	   *oprname;
-		Operator	tup;
-		int32		typmod;
-=======
 		/*
 		 * We must look up the in_range support function that's to be used,
 		 * possibly choosing one of several, and coerce the "offset" value to
@@ -4063,7 +4016,6 @@ transformFrameOffset(ParseState *pstate, int frameOptions,
 		Oid			selectedFunc = InvalidOid;
 		CatCList   *proclist;
 		int			i;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/* Transform the raw expression tree */
 		node = transformExpr(pstate, clause, EXPR_KIND_WINDOW_FRAME_RANGE);
@@ -4136,151 +4088,6 @@ transformFrameOffset(ParseState *pstate, int frameOptions,
 
 		/* OK, coerce the offset to the right type */
 		constructName = "RANGE";
-<<<<<<< HEAD
-
-		/* caller should've checked this already, but better safe than sorry */
-		if (list_length(orderClause) == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("window specifications with a framing clause must have an ORDER BY clause"),
-					 parser_errposition(pstate, location)));
-		if (list_length(orderClause) > 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("only one ORDER BY column may be specified when RANGE is used in a window specification"),
-					 parser_errposition(pstate, location)));
-
-		typmod = exprTypmod(node);
-
-		if (IsA(node, Const))
-		{
-			Const *con = (Const *) node;
-
-			if (con->constisnull)
-				ereport(ERROR,
-						(errcode(ERRCODE_WINDOWING_ERROR),
-						 errmsg("RANGE parameter cannot be NULL"),
-						 parser_errposition(pstate, con->location)));
-		}
-
-		sort = (SortGroupClause *) linitial(orderClause);
-		te = getTargetBySortGroupRef(sort->tleSortGroupRef,
-									 targetlist);
-		otype = exprType((Node *)te->expr);
-		rtype = exprType(node);
-
-		/* XXX: Reverse these if user specified DESC */
-		if (isFollowing)
-			oprname = lappend(NIL, makeString("+"));
-		else
-			oprname = lappend(NIL, makeString("-"));
-
-		tup = oper(pstate, oprname, otype, rtype, true, 0);
-
-		if (!HeapTupleIsValid(tup))
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("window specification RANGE parameter type must be coercible to ORDER BY column type")));
-
-		oprresult = ((Form_pg_operator)GETSTRUCT(tup))->oprresult;
-		newrtype = ((Form_pg_operator)GETSTRUCT(tup))->oprright;
-		ReleaseSysCache(tup);
-		list_free_deep(oprname);
-
-		if (rtype != newrtype)
-		{
-			/*
-			 * We have to coerce the RHS to the new type so that we'll be
-			 * able to trivially find an operator later on.
-			 */
-
-			/* XXX: we assume that the typmod for the new RHS type
-			 * is the same as before... is that safe?
-			 */
-			Expr *expr =
-				(Expr *)coerce_to_target_type(NULL,
-											  node,
-											  rtype,
-											  newrtype, typmod,
-											  COERCION_EXPLICIT,
-											  COERCE_IMPLICIT_CAST,
-											  -1);
-			if (!PointerIsValid(expr))
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("type mismatch between ORDER BY and RANGE parameter in window specification"),
-						 errhint("Operations between window specification "
-								 "the ORDER BY column and RANGE parameter "
-								 "must result in a data type which can be "
-								 "cast back to the ORDER BY column type."),
-						 parser_errposition(pstate, exprLocation((Node *) expr))));
-			}
-
-			node = (Node *) expr;
-		}
-
-		if (oprresult != otype)
-		{
-			/*
-			 * See if it can be coerced. The point of this is to just
-			 * throw an error if the coercion is not possible. The
-			 * actual coercion will be done later, in the executor.
-			 *
-			 * XXX: Why not do it here?
-			 */
-			if (!can_coerce_type(1, &oprresult, &otype, COERCION_EXPLICIT))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("invalid RANGE parameter"),
-						 errhint("Operations between window specification "
-								 "the ORDER BY column and RANGE parameter "
-								 "must result in a data type which can be "
-								 "cast back to the ORDER BY column type.")));
-		}
-
-		if (IsA(node, Const))
-		{
-			/*
-			 * see if RANGE parameter is negative
-			 *
-			 * Note: There's a similar check in nodeWindowAgg.c, for the
-			 * case that the parameter is not a Const. Make sure it uses
-			 * the same logic!
-			 */
-			Const *con = (Const *) node;
-			Oid			sortop;
-
-			get_sort_group_operators(newrtype,
-									 false, false, false,
-									 &sortop, NULL, NULL, NULL);
-
-			if (OidIsValid(sortop))
-			{
-				Type typ = typeidType(newrtype);
-				Oid funcoid = get_opcode(sortop);
-				Datum zero;
-				Datum result;
-
-				zero = stringTypeDatum(typ, "0", exprTypmod(node));
-
-				/*
-				 * As we know the value is a const and since transformExpr()
-				 * will have parsed the type into its internal format, we can
-				 * just poke directly into the Const structure.
-				 */
-				result = OidFunctionCall2(funcoid, con->constvalue, zero);
-
-				if (result)
-					ereport(ERROR,
-							(errcode(ERRCODE_WINDOWING_ERROR),
-							 errmsg("RANGE parameter cannot be negative"),
-							 parser_errposition(pstate, con->location)));
-
-				ReleaseSysCache(typ);
-			}
-		}
-=======
 		node = coerce_to_specific_type(pstate, node,
 									   selectedType, constructName);
 		*inRangeFunc = selectedFunc;
@@ -4295,7 +4102,6 @@ transformFrameOffset(ParseState *pstate, int frameOptions,
 		 */
 		constructName = "GROUPS";
 		node = coerce_to_specific_type(pstate, node, INT8OID, constructName);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 	{

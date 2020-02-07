@@ -3641,13 +3641,6 @@ initial_cost_hashjoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 		* inner_path_rows;
 	run_cost += cpu_operator_cost * num_hashclauses * outer_path_rows;
 
-<<<<<<< HEAD
-	/* Get hash table size that executor would use for inner relation */
-	ExecChooseHashTableSize(inner_path_rows,
-							inner_path->pathtarget->width,
-							true,		/* useskew */
-							global_work_mem(root) / 1024L,
-=======
 	/*
 	 * If this is a parallel hash build, then the value we have for
 	 * inner_rows_total currently refers only to the rows returned by each
@@ -3657,23 +3650,14 @@ initial_cost_hashjoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 	if (parallel_hash)
 		inner_path_rows_total *= get_parallel_divisor(inner_path);
 
-	/*
-	 * Get hash table size that executor would use for inner relation.
-	 *
-	 * XXX for the moment, always assume that skew optimization will be
-	 * performed.  As long as SKEW_WORK_MEM_PERCENT is small, it's not worth
-	 * trying to determine that for sure.
-	 *
-	 * XXX at some point it might be interesting to try to account for skew
-	 * optimization in the cost estimate, but for now, we don't.
-	 */
+	/* Get hash table size that executor would use for inner relation */
 	ExecChooseHashTableSize(inner_path_rows_total,
 							inner_path->pathtarget->width,
 							true,	/* useskew */
 							parallel_hash,	/* try_combined_work_mem */
 							outer_path->parallel_workers,
 							&space_allowed,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+							global_work_mem(root) / 1024L,
 							&numbuckets,
 							&numbatches,
 							&num_skew_mcvs);
@@ -3739,13 +3723,10 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	double		hashjointuples;
 	double		virtualbuckets;
 	Selectivity innerbucketsize;
-<<<<<<< HEAD
+	Selectivity innermcvfreq;
 	double		outerndistinct;
 	double		innerndistinct;
 	Selectivity outer_match_nonempty_frac;
-=======
-	Selectivity innermcvfreq;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	ListCell   *hcl;
 
 	/* Mark the path with the correct row estimate */
@@ -3795,16 +3776,13 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	if (IsA(inner_path, UniquePath))
 	{
 		innerbucketsize = 1.0 / virtualbuckets;
-<<<<<<< HEAD
-		innerndistinct = inner_path_rows;
-=======
 		innermcvfreq = 0.0;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		innerndistinct = inner_path_rows;
 	}
 	else
 	{
 		innerbucketsize = 1.0;
-<<<<<<< HEAD
+		innermcvfreq = 1.0;
 		innerndistinct = 1.0;
 
 		foreach(hcl, hashclauses)
@@ -3819,14 +3797,6 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 			bool isdefault;
 
 			Assert(IsA(restrictinfo, RestrictInfo));
-=======
-		innermcvfreq = 1.0;
-		foreach(hcl, hashclauses)
-		{
-			RestrictInfo *restrictinfo = lfirst_node(RestrictInfo, hcl);
-			Selectivity thisbucketsize;
-			Selectivity thismcvfreq;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/**
 			 * If this is a IS NOT FALSE boolean test, we can peek underneath.
@@ -3857,14 +3827,14 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 				if (thisbucketsize < 0)
 				{
 					/* not cached yet */
-<<<<<<< HEAD
-					thisbucketsize =
-						estimate_hash_bucketsize(root,
-												 get_rightop(clause),
-												 virtualbuckets,
-												 inner_path);
-					restrictinfo->right_bucketsize = thisbucketsize;
+					estimate_hash_bucket_stats(root,
+											   get_rightop(restrictinfo->clause),
+											   virtualbuckets,
+											   &restrictinfo->right_mcvfreq,
+											   &restrictinfo->right_bucketsize);
+					thisbucketsize = restrictinfo->right_bucketsize;
 				}
+				thismcvfreq = restrictinfo->right_mcvfreq;
 
 				examine_variable(root, get_rightop(clause), 0, &vardatainner);
 				thisinnerndistinct = get_variable_numdistinct(&vardatainner, &isdefault);
@@ -3884,16 +3854,6 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 					thisinnerndistinct = clamp_row_est(thisinnerndistinct);
 				}
 				ReleaseVariableStats(vardataouter);
-=======
-					estimate_hash_bucket_stats(root,
-											   get_rightop(restrictinfo->clause),
-											   virtualbuckets,
-											   &restrictinfo->right_mcvfreq,
-											   &restrictinfo->right_bucketsize);
-					thisbucketsize = restrictinfo->right_bucketsize;
-				}
-				thismcvfreq = restrictinfo->right_mcvfreq;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 			else
 			{
@@ -3904,14 +3864,14 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 				if (thisbucketsize < 0)
 				{
 					/* not cached yet */
-<<<<<<< HEAD
-					thisbucketsize =
-						estimate_hash_bucketsize(root,
-												 get_leftop(clause),
-												 virtualbuckets,
-												 inner_path);
-					restrictinfo->left_bucketsize = thisbucketsize;
+					estimate_hash_bucket_stats(root,
+											   get_leftop(restrictinfo->clause),
+											   virtualbuckets,
+											   &restrictinfo->left_mcvfreq,
+											   &restrictinfo->left_bucketsize);
+					thisbucketsize = restrictinfo->left_bucketsize;
 				}
+				thismcvfreq = restrictinfo->left_mcvfreq;
 
 				examine_variable(root, get_leftop(clause), 0, &vardatainner);
 				thisinnerndistinct = get_variable_numdistinct(&vardatainner, &isdefault);
@@ -3931,29 +3891,16 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 					thisinnerndistinct = clamp_row_est(thisinnerndistinct);
 				}
 				ReleaseVariableStats(vardataouter);
-=======
-					estimate_hash_bucket_stats(root,
-											   get_leftop(restrictinfo->clause),
-											   virtualbuckets,
-											   &restrictinfo->left_mcvfreq,
-											   &restrictinfo->left_bucketsize);
-					thisbucketsize = restrictinfo->left_bucketsize;
-				}
-				thismcvfreq = restrictinfo->left_mcvfreq;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 
 			if (innerbucketsize > thisbucketsize)
 				innerbucketsize = thisbucketsize;
-<<<<<<< HEAD
+			if (innermcvfreq > thismcvfreq)
+				innermcvfreq = thismcvfreq;
 			if (outerndistinct < thisouterndistinct)
 				outerndistinct = thisouterndistinct;
 			if (innerndistinct < thisinnerndistinct)
 				innerndistinct =  thisinnerndistinct;
-=======
-			if (innermcvfreq > thismcvfreq)
-				innermcvfreq = thismcvfreq;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 
@@ -3981,7 +3928,6 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 
 	/* CPU costs */
 
-<<<<<<< HEAD
 	/*
 	 * If virtualbuckets is much larger than innerndistinct, and
 	 * outerndistinct is much larger than innerndistinct. Then most
@@ -3997,12 +3943,9 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 									 ((virtualbuckets - innerndistinct)/virtualbuckets));
 	}
 
-	if (path->jpath.jointype == JOIN_SEMI || path->jpath.jointype == JOIN_ANTI)
-=======
 	if (path->jpath.jointype == JOIN_SEMI ||
 		path->jpath.jointype == JOIN_ANTI ||
 		extra->inner_unique)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		double		outer_matched_rows;
 		Selectivity inner_scan_frac;
@@ -5498,31 +5441,7 @@ get_foreign_key_join_selectivity(PlannerInfo *root,
 			RelOptInfo *ref_rel = find_base_rel(root, fkinfo->ref_relid);
 			double		ref_tuples = Max(ref_rel->tuples, 1.0);
 
-<<<<<<< HEAD
-			foreach(cell, removedlist)
-			{
-				RestrictInfo *rinfo = (RestrictInfo *) lfirst(cell);
-				Selectivity csel;
-
-				csel = clause_selectivity(root, (Node *) rinfo,
-										  0, jointype, sjinfo,
-										  false /* use_damping */);
-				thisfksel = Min(thisfksel, csel);
-			}
-			fkselec *= thisfksel;
-		}
-		else if (jointype == JOIN_SEMI || jointype == JOIN_ANTI)
-		{
-			/*
-			 * For JOIN_SEMI and JOIN_ANTI, the selectivity is defined as the
-			 * fraction of LHS rows that have matches.  If the referenced
-			 * table is on the inner side, that means the selectivity is 1.0
-			 * (modulo nulls, which we're ignoring for now).  We already
-			 * covered the other case, so no work here.
-			 */
-=======
 			fkselec *= ref_rel->rows / ref_tuples;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		else
 		{

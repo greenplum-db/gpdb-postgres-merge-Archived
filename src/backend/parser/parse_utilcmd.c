@@ -336,10 +336,8 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 				break;
 
 			case T_TableLikeClause:
-<<<<<<< HEAD
 			{
 				bool            isBeginning = (cxt.columns == NIL);
-				like_found = true;
 
 				transformTableLikeClause(&cxt, (TableLikeClause *) element, false, stmt, &stenc);
 
@@ -349,9 +347,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 				{
 					likeDistributedBy = getLikeDistributionPolicy((TableLikeClause*) element);
 				}
-=======
-				transformTableLikeClause(&cxt, (TableLikeClause *) element);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 			}
 
@@ -3113,29 +3108,7 @@ transformIndexConstraints(CreateStmtContext *cxt, bool mayDefer)
 		}
 
 		if (keep)
-<<<<<<< HEAD
-		{
-			if (defer && mayDefer)
-			{
-				/* An index on an expression with a WHERE clause or for an 
-				 * inheritance child will cause a trip through parse_analyze.  
-				 * If we do that before creating the table, it will fail, so 
-				 * we put it on a list for later.
-				 */
-			
-				ereport(DEBUG1,
-						(errmsg("deferring index creation for table \"%s\"",
-								cxt->relation->relname)));
-				cxt->dlist = lappend(cxt->dlist, index);
-			}
-			else
-			{
-				cxt->alist = lappend(cxt->alist, index);
-			}
-		}
-=======
 			finalindexlist = lappend(finalindexlist, index);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*
@@ -3834,14 +3807,10 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 	 * to its fields without qualification.  Caller is responsible for locking
 	 * relation, but we still need to open it.
 	 */
-<<<<<<< HEAD
-	rte = addRangeTableEntryForRelation(pstate, rel, NULL, false, true);
-=======
 	rel = relation_open(relid, NoLock);
 	rte = addRangeTableEntryForRelation(pstate, rel,
 										AccessShareLock,
 										NULL, false, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* no to join list, yes to namespaces */
 	addRTEtoQuery(pstate, rte, false, true, true);
@@ -3896,7 +3865,8 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 
 	free_parsestate(pstate);
 
-<<<<<<< HEAD
+	/* GPDB_12_MERGE_FIXME: Where does this logic belong now? Remove? */
+#if 0
 	/*
 	 * Close relation. Unless this is a CREATE INDEX
 	 * for a partitioned table, and we're processing a partition. In that
@@ -3909,10 +3879,10 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 		heap_close(rel, lockmode);
 	else
 		heap_close(rel, NoLock);
-=======
+#endif
+	
 	/* Close relation */
 	table_close(rel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Mark statement as successfully transformed */
 	stmt->transformed = true;
@@ -4333,9 +4303,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				{
 					ColumnDef  *def = castNode(ColumnDef, cmd->def);
 
-<<<<<<< HEAD
-					Assert(IsA(def, ColumnDef));
-
 					/*
 					 * Adding a column with a primary key or unique constraint
 					 * is not supported in GPDB.
@@ -4356,8 +4323,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 										 errmsg("cannot add column with unique constraint")));
 						}
 					}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					transformColumnDefinition(&cxt, def);
 
 					/*
@@ -4641,9 +4606,11 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 		newcmds = lappend(newcmds, newcmd);
 	}
 
-<<<<<<< HEAD
-	/*
-	 * Close rel
+	/* Append extended statistic objects */
+	transformExtendedStatistics(&cxt);
+
+#if 0
+	/* GPDB_12_MERGE_FIXME: Where does this logic go now?
 	 *
 	 * If this is part of a CREATE TABLE of a partitioned table, creating
 	 * the partitions, we release the lock immediately, however. We hold
@@ -4656,13 +4623,10 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 		relation_close(rel, AccessExclusiveLock);
 	else
 		relation_close(rel, NoLock);
-=======
-	/* Append extended statistic objects */
-	transformExtendedStatistics(&cxt);
+#endif
 
 	/* Close rel */
 	relation_close(rel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Output results.

@@ -1184,10 +1184,6 @@ chooseScalarFunctionAlias(Node *funcexpr, char *funcname,
 /*
  * Open a table during parse analysis
  *
-<<<<<<< HEAD
- * This is essentially the same as CdbOpenRelationRv, except that it caters
- * to some parser-specific error reporting needs.
-=======
  * This is essentially just the same as table_openrv(), except that it caters
  * to some parser-specific error reporting needs, notably that it arranges
  * to include the RangeVar's parse location in any resulting error.
@@ -1195,7 +1191,6 @@ chooseScalarFunctionAlias(Node *funcexpr, char *funcname,
  * Note: properly, lockmode should be declared LOCKMODE not int, but that
  * would require importing storage/lock.h into parse_relation.h.  Since
  * LOCKMODE is typedef'd as int anyway, that seems like overkill.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 Relation
 parserOpenTable(ParseState *pstate, const RangeVar *relation,

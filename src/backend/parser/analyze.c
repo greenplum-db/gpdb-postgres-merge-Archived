@@ -567,13 +567,10 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
 	qry->hasTargetSRFs = pstate->p_hasTargetSRFs;
 	qry->hasAggs = pstate->p_hasAggs;
-<<<<<<< HEAD
 	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
 
 	if (pstate->p_hasTblValueExpr)
 		parseCheckTableFunctions(pstate, qry);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	assign_query_collations(pstate, qry);
 
@@ -1121,7 +1118,6 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 }
 
 /*
-<<<<<<< HEAD
  * If an input query (Q) mixes window functions with aggregate
  * functions or grouping, then (per SQL:2003) we need to divide
  * it into an outer query, Q', that contains no aggregate calls
@@ -1781,10 +1777,7 @@ generate_alternate_vars(Var *invar, grouped_window_ctx *ctx)
 }
 
 /*
- * transformSelectStmt -
-=======
  * transformOnConflictClause -
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *	  transforms an OnConflictClause in an INSERT
  */
 static OnConflictExpr *
@@ -2141,16 +2134,12 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
-<<<<<<< HEAD
-	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
+	qry->hasTargetSRFs = pstate->p_hasTargetSRFs;
 	qry->hasAggs = pstate->p_hasAggs;
+	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
 
 	if (pstate->p_hasTblValueExpr)
 		parseCheckTableFunctions(pstate, qry);
-=======
-	qry->hasTargetSRFs = pstate->p_hasTargetSRFs;
-	qry->hasAggs = pstate->p_hasAggs;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	foreach(l, stmt->lockingClause)
 	{
@@ -2164,7 +2153,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	if (pstate->p_hasAggs || qry->groupClause || qry->groupingSets || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
 
-<<<<<<< HEAD
+	/* GPDB_12_MERGE_FIXME: Do we still need to do this? Or did the refactoring of cdbgroup.c
+	 * in the 9.6 merge make this unnecessary? */
 	/*
 	 * If the query mixes window functions and aggregates, we need to
 	 * transform it such that the grouped query appears as a subquery
@@ -2179,8 +2169,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	if (qry->hasWindowFuncs && (qry->groupClause || qry->hasAggs))
 		transformGroupedWindows(pstate, qry);
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	return qry;
 }
 
@@ -2648,16 +2636,12 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
-<<<<<<< HEAD
-	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
+	qry->hasTargetSRFs = pstate->p_hasTargetSRFs;
 	qry->hasAggs = pstate->p_hasAggs;
+	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
 
 	if (pstate->p_hasTblValueExpr)
 		parseCheckTableFunctions(pstate, qry);
-=======
-	qry->hasTargetSRFs = pstate->p_hasTargetSRFs;
-	qry->hasAggs = pstate->p_hasAggs;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	foreach(l, lockingClause)
 	{
