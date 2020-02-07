@@ -159,7 +159,6 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 		mode = Min(SyncRepWaitMode, SYNC_REP_WAIT_FLUSH);
 
 	/*
-<<<<<<< HEAD
 	 * SIGUSR1 is used to wake us up, cannot wait from inside SIGUSR1 handler
 	 * as its non-reentrant, so check for the same and avoid waiting.
 	 */
@@ -172,11 +171,9 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 			"syncrep wait -- This backend's commit LSN for syncrep is %X/%X.",
 		   (uint32) (lsn >> 32), (uint32) lsn);
 
-	/* Fast exit if user has not requested sync replication. */
-=======
+	/*
 	 * Fast exit if user has not requested sync replication.
 	 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (!SyncRepRequested())
 		return;
 
@@ -360,29 +357,10 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 			SIMPLE_FAULT_INJECTOR("sync_rep_query_cancel");
 		}
 
-		/*
-<<<<<<< HEAD
-		 * If the postmaster dies, we'll probably never get an
-		 * acknowledgement, because all the wal sender processes will exit. So
-		 * just bail out.
-		 */
-		if (!PostmasterIsAlive())
-		{
-			ProcDiePending = true;
-			ereport(WARNING,
-				(errcode(ERRCODE_ADMIN_SHUTDOWN),
-				 errmsg("canceling the wait for synchronous replication and terminating connection due to postmaster death")));
-			whereToSendOutput = DestNone;
-			SyncRepCancelWait();
-			break;
-		}
-
 		elogif(debug_walrepl_syncrep, LOG,
 				"syncrep wait -- This backend's syncrep state is still 'waiting'. "
 				"Hence it will wait on a latch until awakend.")
 		/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 * Wait on latch.  Any condition that should wake us up will set the
 		 * latch, so no need for timeout.
 		 */
@@ -802,25 +780,14 @@ cmp_lsn(const void *a, const void *b)
 List *
 SyncRepGetSyncStandbys(bool *am_sync)
 {
-<<<<<<< HEAD
-	List	   *result = NIL;
-	List	   *pending = NIL;
-	int			lowest_priority;
-	int			next_highest_priority;
-	int			this_priority;
-	int			priority;
-	int			i;
-	bool		am_in_pending = false;
 	bool		syncStandbyPresent;
-	volatile WalSnd *walsnd;	/* Use volatile pointer to prevent code
-								 * rearrangement */
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* Set default result */
 	if (am_sync != NULL)
 		*am_sync = false;
 
+	/* GPDB_12_MERGE_FIXME: Should this be in SyncRepGetSyncStandbysQuorum()
+	 * instead? */
 	if (IS_QUERY_DISPATCHER())
 	{
 		for (i = 0; i < max_wal_senders; i++)
@@ -1111,45 +1078,8 @@ SyncRepGetSyncStandbysPriority(bool *am_sync)
 static int
 SyncRepGetStandbyPriority(void)
 {
-<<<<<<< HEAD
 	/* Currently set the priority to 1 */
 	return 1;
-=======
-	const char *standby_name;
-	int			priority;
-	bool		found = false;
-
-	/*
-	 * Since synchronous cascade replication is not allowed, we always set the
-	 * priority of cascading walsender to zero.
-	 */
-	if (am_cascading_walsender)
-		return 0;
-
-	if (!SyncStandbysDefined() || SyncRepConfig == NULL)
-		return 0;
-
-	standby_name = SyncRepConfig->member_names;
-	for (priority = 1; priority <= SyncRepConfig->nmembers; priority++)
-	{
-		if (pg_strcasecmp(standby_name, application_name) == 0 ||
-			strcmp(standby_name, "*") == 0)
-		{
-			found = true;
-			break;
-		}
-		standby_name += strlen(standby_name) + 1;
-	}
-
-	if (!found)
-		return 0;
-
-	/*
-	 * In quorum-based sync replication, all the standbys in the list have the
-	 * same priority, one.
-	 */
-	return (SyncRepConfig->syncrep_method == SYNC_REP_PRIORITY) ? priority : 1;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -1198,8 +1128,6 @@ SyncRepWakeQueue(bool all, int mode)
 		SHMQueueDelete(&(thisproc->syncRepLinks));
 
 		/*
-<<<<<<< HEAD
-=======
 		 * SyncRepWaitForLSN() reads syncRepState without holding the lock, so
 		 * make sure that it sees the queue link being removed before the
 		 * syncRepState change.
@@ -1207,7 +1135,6 @@ SyncRepWakeQueue(bool all, int mode)
 		pg_write_barrier();
 
 		/*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 * Set state to complete; see SyncRepWaitForLSN() for discussion of
 		 * the various states.
 		 */
