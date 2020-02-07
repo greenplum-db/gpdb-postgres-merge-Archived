@@ -486,12 +486,7 @@ ExecInsert(ModifyTableState *mtstate,
 		 * we are looking for at this point.
 		 */
 		if (resultRelInfo->ri_WithCheckOptions != NIL)
-<<<<<<< HEAD
-			ExecWithCheckOptions(isUpdate ? WCO_RLS_UPDATE_CHECK : WCO_RLS_INSERT_CHECK,
-								 resultRelInfo, slot, estate);
-=======
 			ExecWithCheckOptions(wco_kind, resultRelInfo, slot, estate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * Check the constraints of the tuple.
@@ -1391,12 +1386,7 @@ ExecUpdate(ModifyTableState *mtstate,
 	TM_Result	result;
 	TM_FailureData tmfd;
 	List	   *recheckIndexes = NIL;
-<<<<<<< HEAD
-	ItemPointerData lastTid;
-	bool		wasHotUpdate;
-=======
 	TupleConversionMap *saved_tcs_map = NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * abort the operation if not running transactions
@@ -1404,7 +1394,6 @@ ExecUpdate(ModifyTableState *mtstate,
 	if (IsBootstrapProcessingMode())
 		elog(ERROR, "cannot UPDATE during bootstrap");
 
-<<<<<<< HEAD
 	/*
 	 * Sanity check the distribution of the tuple to prevent
 	 * potential data corruption in case users manipulate data
@@ -1414,9 +1403,8 @@ ExecUpdate(ModifyTableState *mtstate,
 	if (segid != GpIdentity.segindex)
 		elog(ERROR, "distribution key of the tuple doesn't belong to "
 			 "current segment (actually from seg%d)", segid);
-=======
+
 	ExecMaterializeSlot(slot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * get information on the (current) result relation
