@@ -213,13 +213,15 @@ typedef struct CopyStateData
 	int			raw_buf_len;	/* total # of bytes stored */
 
 	/* Greenplum Database specific variables */
+	/* GPDB_12_MERGE_FIXME: cleanup the not used variables */
+	FmgrInfo   *enc_conversion_proc; /* conv proc from exttbl encoding to
+										server or the other way around */
 	bool		escape_off;		/* treat backslashes as non-special? */
 	int			first_qe_processed_field;
 	List	   *qd_attnumlist;
 	List	   *qe_attnumlist;
 	bool		stopped_processing_at_delim;
 
-	PartitionNode *partitions; /* partitioning meta data from dispatcher */
 	List		  *ao_segnos;  /* AO table meta data from dispatcher */
 	bool          skip_ext_partition;  /* skip external partition */
 

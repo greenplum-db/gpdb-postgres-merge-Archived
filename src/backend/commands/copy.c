@@ -3157,31 +3157,18 @@ CopyTo(CopyState cstate)
 	cstate->rowcontext = AllocSetContextCreate(CurrentMemoryContext,
 											   "COPY TO",
 											   ALLOCSET_DEFAULT_SIZES);
-
-	if (cstate->binary)
-	{
-		/* Generate header for a binary copy */
-		int32		tmp;
-
-		/* Signature */
-		CopySendData(cstate, BinarySignature, 11);
-		/* Flags field */
-		tmp = 0;
-		CopySendInt32(cstate, tmp);
-		/* No header extension */
-		tmp = 0;
-		CopySendInt32(cstate, tmp);
-	}
-	else
+	if (!cstate->binary)
 	{
 		/*
 		 * For non-binary copy, we need to convert null_print to file
 		 * encoding, because it will be sent directly with CopySendString.
 		 */
 		if (cstate->need_transcoding)
-			cstate->null_print_client = pg_server_to_any(cstate->null_print,
-														 cstate->null_print_len,
-														 cstate->file_encoding);
+			cstate->null_print_client = pg_server_to_custom(cstate->null_print,
+															cstate->null_print_len,
+															cstate->file_encoding,
+															cstate->enc_conversion_proc);
+	}
 
 	if (Gp_role == GP_ROLE_EXECUTE && !cstate->on_segment)
 	{
@@ -3196,8 +3183,6 @@ CopyTo(CopyState cstate)
 		CopySendData(cstate, BinarySignature, 11);
 		/* Flags field */
 		tmp = 0;
-		if (cstate->oids)
-			tmp |= (1 << 16);
 		CopySendInt32(cstate, tmp);
 		/* No header extension */
 		tmp = 0;
@@ -3229,36 +3214,11 @@ CopyTo(CopyState cstate)
 		}
 	}
 
-	if (cstate->partitions)
-	{
-		List	   *relids = all_partition_relids(cstate->partitions);
-
-		target_rels = NIL;
-		foreach(lc, relids)
-		{
-			Oid relid = lfirst_oid(lc);
-			Relation rel = heap_open(relid, AccessShareLock);
-
-			target_rels = lappend(target_rels, rel);
-		}
-	}
-	else
-		target_rels = list_make1(cstate->rel);
-
 	if (cstate->rel)
 	{
+		/* GPDB_12_MERGE_FIXME: leave it here waiting for we settled the partitioning */
 <<<<<<< HEAD
 		foreach(lc, target_rels)
-=======
-		TupleTableSlot *slot;
-		TableScanDesc scandesc;
-
-		scandesc = table_beginscan(cstate->rel, GetActiveSnapshot(), 0, NULL);
-		slot = table_slot_create(cstate->rel, NULL);
-
-		processed = 0;
-		while (table_scan_getnextslot(scandesc, ForwardScanDirection, slot))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			Relation rel = lfirst(lc);
 			Datum	   *values;
@@ -3266,7 +3226,6 @@ CopyTo(CopyState cstate)
 			HeapScanDesc scandesc = NULL;			/* used if heap table */
 			AppendOnlyScanDesc aoscandesc = NULL;	/* append only table */
 
-<<<<<<< HEAD
 			tupDesc = RelationGetDescr(rel);
 			attr = tupDesc->attrs;
 			num_phys_attrs = tupDesc->natts;
@@ -3406,6 +3365,17 @@ CopyTo(CopyState cstate)
 				heap_close(rel, NoLock);
 		}
 =======
+		TupleTableSlot *slot;
+		TableScanDesc scandesc;
+
+		scandesc = table_beginscan(cstate->rel, GetActiveSnapshot(), 0, NULL);
+		slot = table_slot_create(cstate->rel, NULL);
+
+		processed = 0;
+		while (table_scan_getnextslot(scandesc, ForwardScanDirection, slot))
+		{
+			CHECK_FOR_INTERRUPTS();
+
 			/* Deconstruct the tuple ... */
 			slot_getallattrs(slot);
 
