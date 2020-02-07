@@ -216,7 +216,7 @@ static void EndCopy(CopyState cstate);
 static CopyState BeginCopyTo(ParseState *pstate, Relation rel, RawStmt *query,
 							 Oid queryRelId, const char *filename, bool is_program,
 							 List *attnamelist, List *options);
-static void EndCopyTo(CopyState cstate);
+static void EndCopyTo(CopyState cstate, uint64 *processed);
 static uint64 DoCopyTo(CopyState cstate);
 static uint64 CopyToDispatch(CopyState cstate);
 static uint64 CopyTo(CopyState cstate);
@@ -7790,17 +7790,16 @@ endfield:
 }
 
 /*
- * Read a binary attribute.
- * skip_parsing is a hack for CopyFromDispatch (so we don't parse unneeded fields)
+ * Read a binary attribute
  */
 static Datum
 CopyReadBinaryAttribute(CopyState cstate,
 						int column_no, FmgrInfo *flinfo,
 						Oid typioparam, int32 typmod,
-						bool *isnull, bool skip_parsing)
+						bool *isnull)
 {
 	int32		fld_size;
-	Datum		result = 0;
+	Datum		result;
 
 	if (!CopyGetInt32(cstate, &fld_size))
 		ereport(ERROR,
@@ -7821,7 +7820,7 @@ CopyReadBinaryAttribute(CopyState cstate,
 
 	enlargeStringInfo(&cstate->attribute_buf, fld_size);
 	if (CopyGetData(cstate, cstate->attribute_buf.data,
-					fld_size) != fld_size)
+					fld_size, fld_size) != fld_size)
 		ereport(ERROR,
 				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 				 errmsg("unexpected EOF in COPY data")));
@@ -7829,18 +7828,15 @@ CopyReadBinaryAttribute(CopyState cstate,
 	cstate->attribute_buf.len = fld_size;
 	cstate->attribute_buf.data[fld_size] = '\0';
 
-	if (!skip_parsing)
-	{
-		/* Call the column type's binary input converter */
-		result = ReceiveFunctionCall(flinfo, &cstate->attribute_buf,
-									 typioparam, typmod);
+	/* Call the column type's binary input converter */
+	result = ReceiveFunctionCall(flinfo, &cstate->attribute_buf,
+								 typioparam, typmod);
 
-		/* Trouble if it didn't eat the whole buffer */
-		if (cstate->attribute_buf.cursor != cstate->attribute_buf.len)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-					 errmsg("incorrect binary data format")));
-	}
+	/* Trouble if it didn't eat the whole buffer */
+	if (cstate->attribute_buf.cursor != cstate->attribute_buf.len)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("incorrect binary data format")));
 
 	*isnull = false;
 	return result;
