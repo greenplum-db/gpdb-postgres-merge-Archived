@@ -105,8 +105,6 @@
 
 #include "access/brin.h"
 #include "access/gin.h"
-#include "access/htup_details.h"
-#include "access/sysattr.h"
 #include "access/table.h"
 #include "access/tableam.h"
 #include "catalog/index.h"
@@ -115,17 +113,9 @@
 #include "catalog/pg_constraint_fn.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
-<<<<<<< HEAD
-#include "catalog/pg_type.h"
-#include "catalog/pg_constraint.h"
-#include "cdb/cdbgroup.h" /* cdbpathlocus_collocates_expressions */
-#include "executor/executor.h"
-#include "mb/pg_wchar.h"
-=======
 #include "catalog/pg_statistic_ext.h"
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -137,11 +127,7 @@
 #include "optimizer/plancat.h"
 #include "parser/parse_clause.h"
 #include "parser/parsetree.h"
-<<<<<<< HEAD
-#include "utils/acl.h"
-=======
 #include "statistics/statistics.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datum.h"
@@ -157,6 +143,7 @@
 #include "utils/timestamp.h"
 #include "utils/typcache.h"
 
+#include "cdb/cdbgroup.h" /* cdbpathlocus_collocates_expressions */
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
 
@@ -164,35 +151,6 @@
 get_relation_stats_hook_type get_relation_stats_hook = NULL;
 get_index_stats_hook_type get_index_stats_hook = NULL;
 
-<<<<<<< HEAD
-static double var_eq_const(VariableStatData *vardata, Oid operator,
-			 Datum constval, bool constisnull,
-			 bool varonleft);
-static double var_eq_non_const(VariableStatData *vardata, Oid operator,
-				 Node *other,
-				 bool varonleft);
-static double ineq_histogram_selectivity(PlannerInfo *root,
-						   VariableStatData *vardata,
-						   FmgrInfo *opproc, bool isgt,
-						   Datum constval, Oid consttype);
-static double eqjoinsel_inner(Oid operator,
-				VariableStatData *vardata1, VariableStatData *vardata2);
-static double eqjoinsel_semi(Oid operator,
-			   VariableStatData *vardata1, VariableStatData *vardata2,
-			   RelOptInfo *inner_rel);
-static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
-				  Datum lobound, Datum hibound, Oid boundstypid,
-				  double *scaledlobound, double *scaledhibound, bool isgt);
-static double convert_numeric_to_scalar(Datum value, Oid typid, bool *failure);
-static void convert_bytea_to_scalar(Datum value,
-						double *scaledvalue,
-						Datum lobound,
-						double *scaledlobound,
-						Datum hibound,
-						double *scaledhibound);
-static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
-							int rangelo, int rangehi);
-=======
 static double eqsel_internal(PG_FUNCTION_ARGS, bool negate);
 static double eqjoinsel_inner(Oid opfuncoid,
 							  VariableStatData *vardata1, VariableStatData *vardata2,
@@ -236,7 +194,6 @@ static char *convert_string_datum(Datum value, Oid typid, Oid collid,
 								  bool *failure);
 static double convert_timevalue_to_scalar(Datum value, Oid typid,
 										  bool *failure);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void examine_simple_variable(PlannerInfo *root, Var *var,
 									VariableStatData *vardata);
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
@@ -246,26 +203,9 @@ static bool get_actual_variable_range(PlannerInfo *root,
 									  Oid sortop,
 									  Datum *min, Datum *max);
 static RelOptInfo *find_join_input_rel(PlannerInfo *root, Relids relids);
-<<<<<<< HEAD
-static Selectivity prefix_selectivity(PlannerInfo *root,
-				   VariableStatData *vardata,
-				   Oid vartype, Oid opfamily, Const *prefixcon);
-static Selectivity like_selectivity(const char *patt, int pattlen,
-				 bool case_insensitive);
-static Selectivity regex_selectivity(const char *patt, int pattlen,
-				  bool case_insensitive,
-				  int fixed_prefix_len);
-static Datum string_to_datum(const char *str, Oid datatype);
-static Const *string_to_const(const char *str, Oid datatype);
-static Const *string_to_bytea_const(const char *str, size_t str_len);
-static List *add_predicate_to_quals(IndexOptInfo *index, List *indexQuals);
-static void try_fetch_rel_stats(RangeTblEntry *rte, const char *attname,
-								VariableStatData* vardata);
 static void try_fetch_largest_child_stats(PlannerInfo *root, Index parent_rti,
 										  const char *attname, VariableStatData* vardata);
-=======
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  *		eqsel			- Selectivity of "=" for any data types.
@@ -379,15 +319,6 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 	 * ignoring the information.)
 	 */
 	if (vardata->isunique && vardata->rel && vardata->rel->tuples >= 1.0)
-<<<<<<< HEAD
-		return 1.0 / vardata->rel->tuples;
-
-	if (HeapTupleIsValid(vardata->statsTuple) &&
-		statistic_proc_security_check(vardata,
-									  (opfuncoid = get_opcode(operator))))
-	{
-		Form_pg_statistic stats;
-=======
 	{
 		selec = 1.0 / vardata->rel->tuples;
 	}
@@ -395,7 +326,6 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 			 statistic_proc_security_check(vardata,
 										   (opfuncoid = get_opcode(operator))))
 	{
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		AttStatsSlot sslot;
 		bool		match = false;
 		int			i;
@@ -458,11 +388,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 
 			for (i = 0; i < sslot.nnumbers; i++)
 				sumcommon += sslot.numbers[i];
-<<<<<<< HEAD
-			selec = 1.0 - sumcommon - stats->stanullfrac;
-=======
 			selec = 1.0 - sumcommon - nullfrac;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			CLAMP_PROBABILITY(selec);
 
 			/*
@@ -470,12 +396,8 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 			 * all the not-common values share this remaining fraction
 			 * equally, so we divide by the number of other distinct values.
 			 */
-<<<<<<< HEAD
-			otherdistinct = get_variable_numdistinct(vardata, &isdefault) - sslot.nnumbers;
-=======
 			otherdistinct = get_variable_numdistinct(vardata, &isdefault) -
 				sslot.nnumbers;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			if (otherdistinct > 1)
 				selec /= otherdistinct;
 
@@ -549,11 +471,6 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 	{
 		double		ndistinct;
 		AttStatsSlot sslot;
-<<<<<<< HEAD
-
-		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * Search is for a value that we do not know a priori, but we will
@@ -643,9 +560,8 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt, bool iseq,
 				hist_selec,
 				sumcommon;
 	double		selec;
-	HeapTuple	tp = getStatsTuple(vardata);
 
-	if (!HeapTupleIsValid(getStatsTuple(vardata)))
+	if (!HeapTupleIsValid(vardata->statsTuple))
 	{
 		/*
 		 * No stats are available.  Typically this means we have to fall back
@@ -725,7 +641,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt, bool iseq,
 		/* no stats available, so default result */
 		return DEFAULT_INEQ_SEL;
 	}
-	stats = (Form_pg_statistic) GETSTRUCT(tp);
+	stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 
 	fmgr_info(get_opcode(operator), &opproc);
 
@@ -793,20 +709,13 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 				sumcommon;
 	AttStatsSlot sslot;
 	int			i;
-	HeapTuple	tp = getStatsTuple(vardata);
 
 	mcv_selec = 0.0;
 	sumcommon = 0.0;
 
-<<<<<<< HEAD
-	if (HeapTupleIsValid(tp) &&
-		statistic_proc_security_check(vardata, opproc->fn_oid) &&
-		get_attstatsslot(&sslot, tp,
-=======
 	if (HeapTupleIsValid(vardata->statsTuple) &&
 		statistic_proc_security_check(vardata, opproc->fn_oid) &&
 		get_attstatsslot(&sslot, vardata->statsTuple,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						 STATISTIC_KIND_MCV, InvalidOid,
 						 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS))
 	{
@@ -870,25 +779,15 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 					  int *hist_size)
 {
 	double		result;
-<<<<<<< HEAD
-	HeapTuple	tp = getStatsTuple(vardata);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	AttStatsSlot sslot;
 
 	/* check sanity of parameters */
 	Assert(n_skip >= 0);
 	Assert(min_hist_size > 2 * n_skip);
 
-<<<<<<< HEAD
-	if (HeapTupleIsValid(tp) &&
-		statistic_proc_security_check(vardata, opproc->fn_oid) &&
-		get_attstatsslot(&sslot, tp,
-=======
 	if (HeapTupleIsValid(vardata->statsTuple) &&
 		statistic_proc_security_check(vardata, opproc->fn_oid) &&
 		get_attstatsslot(&sslot, vardata->statsTuple,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
 						 ATTSTATSSLOT_VALUES))
 	{
@@ -948,10 +847,6 @@ ineq_histogram_selectivity(PlannerInfo *root,
 						   Datum constval, Oid consttype)
 {
 	double		hist_selec;
-<<<<<<< HEAD
-	HeapTuple	tp = getStatsTuple(vardata);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	AttStatsSlot sslot;
 
 	hist_selec = -1.0;
@@ -966,15 +861,9 @@ ineq_histogram_selectivity(PlannerInfo *root,
 	 * appears in pg_statistic is sorted the same way our operator sorts, or
 	 * the reverse way if isgt is true.
 	 */
-<<<<<<< HEAD
-	if (HeapTupleIsValid(tp) &&
-		statistic_proc_security_check(vardata, opproc->fn_oid) &&
-		get_attstatsslot(&sslot, tp,
-=======
 	if (HeapTupleIsValid(vardata->statsTuple) &&
 		statistic_proc_security_check(vardata, opproc->fn_oid) &&
 		get_attstatsslot(&sslot, vardata->statsTuple,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
 						 ATTSTATSSLOT_VALUES))
 	{
@@ -1178,8 +1067,6 @@ ineq_histogram_selectivity(PlannerInfo *root,
 				 */
 				histfrac = (double) (i - 1) + binfrac;
 				histfrac /= (double) (sslot.nvalues - 1);
-<<<<<<< HEAD
-=======
 
 				/*
 				 * At this point, histfrac is an estimate of the fraction of
@@ -1223,7 +1110,6 @@ ineq_histogram_selectivity(PlannerInfo *root,
 				 */
 				if (isgt == iseq)
 					histfrac -= eq_selec;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 
 			/*
@@ -1337,76 +1223,8 @@ scalarineqsel_wrapper(PG_FUNCTION_ARGS, bool isgt, bool iseq)
 Datum
 scalarltsel(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	Oid			operator = PG_GETARG_OID(1);
-	List	   *args = (List *) PG_GETARG_POINTER(2);
-	int			varRelid = PG_GETARG_INT32(3);
-	VariableStatData vardata;
-	Node	   *other = NULL;
-	bool		varonleft = false;
-	Datum		constval;
-	Oid			consttype;
-	bool		isgt;
-	double		selec;
-
-	/*
-	 * If expression is not variable op something or something op variable,
-	 * then punt and return a default estimate.
-	 */
-	if (!get_restriction_variable(root, args, varRelid,
-								  &vardata, &other, &varonleft))
-		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
-
-	/*
-	 * Can't do anything useful if the something is not a constant, either.
-	 */
-	if (!IsA(other, Const))
-	{
-		ReleaseVariableStats(vardata);
-		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
-	}
-
-	/*
-	 * If the constant is NULL, assume operator is strict and return zero, ie,
-	 * operator will never return TRUE.
-	 */
-	if (((Const *) other)->constisnull)
-	{
-		ReleaseVariableStats(vardata);
-		PG_RETURN_FLOAT8(0.0);
-	}
-	constval = ((Const *) other)->constvalue;
-	consttype = ((Const *) other)->consttype;
-
-	/*
-	 * Force the var to be on the left to simplify logic in scalarineqsel.
-	 */
-	if (varonleft)
-	{
-		/* we have var < other */
-		isgt = false;
-	}
-	else
-	{
-		/* we have other < var, commute to make var > other */
-		operator = get_commutator(operator);
-		if (!operator)
-		{
-			/* Use default selectivity (should we raise an error instead?) */
-			ReleaseVariableStats(vardata);
-			PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
-		}
-		isgt = true;
-	}
-
-	selec = scalarineqsel(root, operator, isgt, &vardata, constval, consttype);
-
-	ReleaseVariableStats(vardata);
-=======
 	return scalarineqsel_wrapper(fcinfo, false, false);
 }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  *		scalarlesel		- Selectivity of "<=" for scalars.
@@ -1423,408 +1241,7 @@ scalarlesel(PG_FUNCTION_ARGS)
 Datum
 scalargtsel(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	Oid			operator = PG_GETARG_OID(1);
-	List	   *args = (List *) PG_GETARG_POINTER(2);
-	int			varRelid = PG_GETARG_INT32(3);
-	VariableStatData vardata;
-	Node	   *other = NULL;
-	bool		varonleft = false;
-	Datum		constval;
-	Oid			consttype;
-	bool		isgt;
-	double		selec;
-
-	/*
-	 * If expression is not variable op something or something op variable,
-	 * then punt and return a default estimate.
-	 */
-	if (!get_restriction_variable(root, args, varRelid,
-								  &vardata, &other, &varonleft))
-		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
-
-	/*
-	 * Can't do anything useful if the something is not a constant, either.
-	 */
-	if (!IsA(other, Const))
-	{
-		ReleaseVariableStats(vardata);
-		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
-	}
-
-	/*
-	 * If the constant is NULL, assume operator is strict and return zero, ie,
-	 * operator will never return TRUE.
-	 */
-	if (((Const *) other)->constisnull)
-	{
-		ReleaseVariableStats(vardata);
-		PG_RETURN_FLOAT8(0.0);
-	}
-	constval = ((Const *) other)->constvalue;
-	consttype = ((Const *) other)->consttype;
-
-	/*
-	 * Force the var to be on the left to simplify logic in scalarineqsel.
-	 */
-	if (varonleft)
-	{
-		/* we have var > other */
-		isgt = true;
-	}
-	else
-	{
-		/* we have other > var, commute to make var < other */
-		operator = get_commutator(operator);
-		if (!operator)
-		{
-			/* Use default selectivity (should we raise an error instead?) */
-			ReleaseVariableStats(vardata);
-			PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
-		}
-		isgt = false;
-	}
-
-	selec = scalarineqsel(root, operator, isgt, &vardata, constval, consttype);
-
-	ReleaseVariableStats(vardata);
-
-	PG_RETURN_FLOAT8((float8) selec);
-}
-
-/*
- * patternsel			- Generic code for pattern-match selectivity.
- */
-static double
-patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
-{
-	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	Oid			operator = PG_GETARG_OID(1);
-	List	   *args = (List *) PG_GETARG_POINTER(2);
-	int			varRelid = PG_GETARG_INT32(3);
-	Oid			collation = PG_GET_COLLATION();
-	VariableStatData vardata;
-	Node	   *other=NULL;
-	bool		varonleft=false;
-	Datum		constval;
-	Oid			consttype;
-	Oid			vartype;
-	Oid			opfamily;
-	Pattern_Prefix_Status pstatus;
-	Const	   *patt;
-	Const	   *prefix = NULL;
-	Selectivity rest_selec = 0;
-	double		result;
-
-	/*
-	 * If this is for a NOT LIKE or similar operator, get the corresponding
-	 * positive-match operator and work with that.  Set result to the correct
-	 * default estimate, too.
-	 */
-	if (negate)
-	{
-		operator = get_negator(operator);
-		if (!OidIsValid(operator))
-			elog(ERROR, "patternsel called for operator without a negator");
-		result = 1.0 - DEFAULT_MATCH_SEL;
-	}
-	else
-	{
-		result = DEFAULT_MATCH_SEL;
-	}
-
-	/*
-	 * If expression is not variable op constant, then punt and return a
-	 * default estimate.
-	 */
-	if (!get_restriction_variable(root, args, varRelid,
-								  &vardata, &other, &varonleft))
-		return result;
-	if (!varonleft || !IsA(other, Const))
-	{
-		ReleaseVariableStats(vardata);
-		return result;
-	}
-
-	/*
-	 * If the constant is NULL, assume operator is strict and return zero, ie,
-	 * operator will never return TRUE.  (It's zero even for a negator op.)
-	 */
-	if (((Const *) other)->constisnull)
-	{
-		ReleaseVariableStats(vardata);
-		return 0.0;
-	}
-	constval = ((Const *) other)->constvalue;
-	consttype = ((Const *) other)->consttype;
-
-	/*
-	 * The right-hand const is type text or bytea for all supported operators.
-	 * We do not expect to see binary-compatible types here, since
-	 * const-folding should have relabeled the const to exactly match the
-	 * operator's declared type.
-	 */
-	if (consttype != TEXTOID && consttype != BYTEAOID)
-	{
-		ReleaseVariableStats(vardata);
-		return result;
-	}
-
-	/*
-	 * Similarly, the exposed type of the left-hand side should be one of
-	 * those we know.  (Do not look at vardata.atttype, which might be
-	 * something binary-compatible but different.)	We can use it to choose
-	 * the index opfamily from which we must draw the comparison operators.
-	 *
-	 * NOTE: It would be more correct to use the PATTERN opfamilies than the
-	 * simple ones, but at the moment ANALYZE will not generate statistics for
-	 * the PATTERN operators.  But our results are so approximate anyway that
-	 * it probably hardly matters.
-	 */
-	vartype = vardata.vartype;
-
-	switch (vartype)
-	{
-		case TEXTOID:
-			opfamily = TEXT_BTREE_FAM_OID;
-			break;
-		case BPCHAROID:
-			opfamily = BPCHAR_BTREE_FAM_OID;
-			break;
-		case NAMEOID:
-			opfamily = NAME_BTREE_FAM_OID;
-			break;
-		case BYTEAOID:
-			opfamily = BYTEA_BTREE_FAM_OID;
-			break;
-		default:
-			ReleaseVariableStats(vardata);
-			return result;
-	}
-
-	/*
-	 * Pull out any fixed prefix implied by the pattern, and estimate the
-	 * fractional selectivity of the remainder of the pattern.  Unlike many of
-	 * the other functions in this file, we use the pattern operator's actual
-	 * collation for this step.  This is not because we expect the collation
-	 * to make a big difference in the selectivity estimate (it seldom would),
-	 * but because we want to be sure we cache compiled regexps under the
-	 * right cache key, so that they can be re-used at runtime.
-	 */
-	patt = (Const *) other;
-	pstatus = pattern_fixed_prefix(patt, ptype, collation,
-								   &prefix, &rest_selec);
-
-	/*
-	 * If necessary, coerce the prefix constant to the right type.
-	 */
-	if (prefix && prefix->consttype != vartype)
-	{
-		char	   *prefixstr;
-
-		switch (prefix->consttype)
-		{
-			case TEXTOID:
-				prefixstr = TextDatumGetCString(prefix->constvalue);
-				break;
-			case BYTEAOID:
-				prefixstr = DatumGetCString(DirectFunctionCall1(byteaout,
-														prefix->constvalue));
-				break;
-			default:
-				elog(ERROR, "unrecognized consttype: %u",
-					 prefix->consttype);
-				ReleaseVariableStats(vardata);
-				return result;
-		}
-		prefix = string_to_const(prefixstr, vartype);
-		pfree(prefixstr);
-	}
-
-	if (pstatus == Pattern_Prefix_Exact)
-	{
-		/*
-		 * Pattern specifies an exact match, so pretend operator is '='
-		 */
-		Oid			eqopr = get_opfamily_member(opfamily, vartype, vartype,
-												BTEqualStrategyNumber);
-
-		if (eqopr == InvalidOid)
-			elog(ERROR, "no = operator for opfamily %u", opfamily);
-		result = var_eq_const(&vardata, eqopr, prefix->constvalue,
-							  false, true);
-	}
-	else
-	{
-		/*
-		 * Not exact-match pattern.  If we have a sufficiently large
-		 * histogram, estimate selectivity for the histogram part of the
-		 * population by counting matches in the histogram.  If not, estimate
-		 * selectivity of the fixed prefix and remainder of pattern
-		 * separately, then combine the two to get an estimate of the
-		 * selectivity for the part of the column population represented by
-		 * the histogram.  (For small histograms, we combine these
-		 * approaches.)
-		 *
-		 * We then add up data for any most-common-values values; these are
-		 * not in the histogram population, and we can get exact answers for
-		 * them by applying the pattern operator, so there's no reason to
-		 * approximate.  (If the MCVs cover a significant part of the total
-		 * population, this gives us a big leg up in accuracy.)
-		 */
-		Selectivity selec;
-		int			hist_size;
-		FmgrInfo	opproc;
-		double		nullfrac,
-					mcv_selec,
-					sumcommon;
-
-		/* Try to use the histogram entries to get selectivity */
-		fmgr_info(get_opcode(operator), &opproc);
-
-		selec = histogram_selectivity(&vardata, &opproc, constval, true,
-									  10, 1, &hist_size);
-
-		/* If not at least 100 entries, use the heuristic method */
-		if (hist_size < 100)
-		{
-			Selectivity heursel;
-			Selectivity prefixsel;
-
-			if (pstatus == Pattern_Prefix_Partial)
-				prefixsel = prefix_selectivity(root, &vardata, vartype,
-											   opfamily, prefix);
-			else
-				prefixsel = 1.0;
-			heursel = prefixsel * rest_selec;
-
-			if (selec < 0)		/* fewer than 10 histogram entries? */
-				selec = heursel;
-			else
-			{
-				/*
-				 * For histogram sizes from 10 to 100, we combine the
-				 * histogram and heuristic selectivities, putting increasingly
-				 * more trust in the histogram for larger sizes.
-				 */
-				double		hist_weight = hist_size / 100.0;
-
-				selec = selec * hist_weight + heursel * (1.0 - hist_weight);
-			}
-		}
-
-		/* In any case, don't believe extremely small or large estimates. */
-		if (selec < 0.0001)
-			selec = 0.0001;
-		else if (selec > 0.9999)
-			selec = 0.9999;
-
-		/*
-		 * If we have most-common-values info, add up the fractions of the MCV
-		 * entries that satisfy MCV OP PATTERN.  These fractions contribute
-		 * directly to the result selectivity.  Also add up the total fraction
-		 * represented by MCV entries.
-		 */
-		mcv_selec = mcv_selectivity(&vardata, &opproc, constval, true,
-									&sumcommon);
-
-		if (HeapTupleIsValid(getStatsTuple(&vardata)))
-		{
-			HeapTuple tp = getStatsTuple(&vardata);
-			nullfrac = ((Form_pg_statistic) GETSTRUCT(tp))->stanullfrac;
-		}
-		else
-			nullfrac = 0.0;
-
-		/*
-		 * Now merge the results from the MCV and histogram calculations,
-		 * realizing that the histogram covers only the non-null values that
-		 * are not listed in MCV.
-		 */
-		selec *= 1.0 - nullfrac - sumcommon;
-		selec += mcv_selec;
-
-		/* result should be in range, but make sure... */
-		CLAMP_PROBABILITY(selec);
-		result = selec;
-	}
-
-	if (prefix)
-	{
-		pfree(DatumGetPointer(prefix->constvalue));
-		pfree(prefix);
-	}
-
-	ReleaseVariableStats(vardata);
-
-	return negate ? (1.0 - result) : result;
-}
-
-/*
- *		regexeqsel		- Selectivity of regular-expression pattern match.
- */
-Datum
-regexeqsel(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Regex, false));
-}
-
-/*
- *		icregexeqsel	- Selectivity of case-insensitive regex match.
- */
-Datum
-icregexeqsel(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Regex_IC, false));
-}
-
-/*
- *		likesel			- Selectivity of LIKE pattern match.
- */
-Datum
-likesel(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Like, false));
-}
-
-/*
- *		iclikesel			- Selectivity of ILIKE pattern match.
- */
-Datum
-iclikesel(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Like_IC, false));
-}
-
-/*
- *		regexnesel		- Selectivity of regular-expression pattern non-match.
- */
-Datum
-regexnesel(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Regex, true));
-}
-
-/*
- *		icregexnesel	- Selectivity of case-insensitive regex non-match.
- */
-Datum
-icregexnesel(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Regex_IC, true));
-}
-
-/*
- *		nlikesel		- Selectivity of LIKE pattern non-match.
- */
-Datum
-nlikesel(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Like, true));
-=======
 	return scalarineqsel_wrapper(fcinfo, true, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -1892,11 +1309,7 @@ booltestsel(PlannerInfo *root, BoolTestType booltesttype, Node *arg,
 		stats = (Form_pg_statistic) GETSTRUCT(tp);
 		freq_null = stats->stanullfrac;
 
-<<<<<<< HEAD
-		if (get_attstatsslot(&sslot, tp,
-=======
 		if (get_attstatsslot(&sslot, vardata.statsTuple,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							 STATISTIC_KIND_MCV, InvalidOid,
 							 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS)
 			&& sslot.nnumbers > 0)
@@ -2756,50 +2169,6 @@ eqjoinsel_inner(Oid opfuncoid,
 				bool have_mcvs1, bool have_mcvs2)
 {
 	double		selec;
-<<<<<<< HEAD
-	double		nd1;
-	double		nd2;
-	bool		isdefault1;
-	bool		isdefault2;
-	Oid			opfuncoid;
-	Form_pg_statistic stats1 = NULL;
-	Form_pg_statistic stats2 = NULL;
-	bool		have_mcvs1 = false;
-	bool		have_mcvs2 = false;
-	AttStatsSlot sslot1;
-	AttStatsSlot sslot2;
-
-	nd1 = get_variable_numdistinct(vardata1, &isdefault1);
-	nd2 = get_variable_numdistinct(vardata2, &isdefault2);
-
-	memset(&sslot1, 0, sizeof(sslot1));
-	memset(&sslot2, 0, sizeof(sslot2));
-
-	opfuncoid = get_opcode(operator);
-	if (HeapTupleIsValid(getStatsTuple(vardata1)))
-	{
-		HeapTuple tp = getStatsTuple(vardata1);
-		stats1 = (Form_pg_statistic) GETSTRUCT(tp);
-		if (statistic_proc_security_check(vardata1, opfuncoid))
-			have_mcvs1 = get_attstatsslot(&sslot1, tp,
-										  STATISTIC_KIND_MCV, InvalidOid,
-										  ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
-
-
-
-	}
-
-	if (HeapTupleIsValid(getStatsTuple(vardata2)))
-	{
-		HeapTuple tp = getStatsTuple(vardata2);
-		stats2 = (Form_pg_statistic) GETSTRUCT(tp);
-		if (statistic_proc_security_check(vardata2, opfuncoid))
-			have_mcvs2 = get_attstatsslot(&sslot2, tp,
-										  STATISTIC_KIND_MCV, InvalidOid,
-										  ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
-	}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (have_mcvs1 && have_mcvs2)
 	{
@@ -2832,15 +2201,9 @@ eqjoinsel_inner(Oid opfuncoid,
 		int			i,
 					nmatches;
 
-<<<<<<< HEAD
-		fmgr_info(get_opcode(operator), &eqproc);
-		hasmatch1 = (bool *) palloc0(sslot1.nvalues * sizeof(bool));
-		hasmatch2 = (bool *) palloc0(sslot2.nvalues * sizeof(bool));
-=======
 		fmgr_info(opfuncoid, &eqproc);
 		hasmatch1 = (bool *) palloc0(sslot1->nvalues * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(sslot2->nvalues * sizeof(bool));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * Note we assume that each MCV will match at most one member of the
@@ -2850,38 +2213,21 @@ eqjoinsel_inner(Oid opfuncoid,
 		 */
 		matchprodfreq = 0.0;
 		nmatches = 0;
-<<<<<<< HEAD
-		for (i = 0; i < sslot1.nvalues; i++)
-		{
-			int			j;
-
-			for (j = 0; j < sslot2.nvalues; j++)
-=======
 		for (i = 0; i < sslot1->nvalues; i++)
 		{
 			int			j;
 
 			for (j = 0; j < sslot2->nvalues; j++)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			{
 				if (hasmatch2[j])
 					continue;
 				if (DatumGetBool(FunctionCall2Coll(&eqproc,
-<<<<<<< HEAD
-												   DEFAULT_COLLATION_OID,
-												   sslot1.values[i],
-												   sslot2.values[j])))
-				{
-					hasmatch1[i] = hasmatch2[j] = true;
-					matchprodfreq += sslot1.numbers[i] * sslot2.numbers[j];
-=======
 												   sslot1->stacoll,
 												   sslot1->values[i],
 												   sslot2->values[j])))
 				{
 					hasmatch1[i] = hasmatch2[j] = true;
 					matchprodfreq += sslot1->numbers[i] * sslot2->numbers[j];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					nmatches++;
 					break;
 				}
@@ -2890,40 +2236,22 @@ eqjoinsel_inner(Oid opfuncoid,
 		CLAMP_PROBABILITY(matchprodfreq);
 		/* Sum up frequencies of matched and unmatched MCVs */
 		matchfreq1 = unmatchfreq1 = 0.0;
-<<<<<<< HEAD
-		for (i = 0; i < sslot1.nvalues; i++)
-		{
-			if (hasmatch1[i])
-				matchfreq1 += sslot1.numbers[i];
-			else
-				unmatchfreq1 += sslot1.numbers[i];
-=======
 		for (i = 0; i < sslot1->nvalues; i++)
 		{
 			if (hasmatch1[i])
 				matchfreq1 += sslot1->numbers[i];
 			else
 				unmatchfreq1 += sslot1->numbers[i];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		CLAMP_PROBABILITY(matchfreq1);
 		CLAMP_PROBABILITY(unmatchfreq1);
 		matchfreq2 = unmatchfreq2 = 0.0;
-<<<<<<< HEAD
-		for (i = 0; i < sslot2.nvalues; i++)
-		{
-			if (hasmatch2[i])
-				matchfreq2 += sslot2.numbers[i];
-			else
-				unmatchfreq2 += sslot2.numbers[i];
-=======
 		for (i = 0; i < sslot2->nvalues; i++)
 		{
 			if (hasmatch2[i])
 				matchfreq2 += sslot2->numbers[i];
 			else
 				unmatchfreq2 += sslot2->numbers[i];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		CLAMP_PROBABILITY(matchfreq2);
 		CLAMP_PROBABILITY(unmatchfreq2);
@@ -2948,25 +2276,15 @@ eqjoinsel_inner(Oid opfuncoid,
 		 * MCVs plus non-MCV values.
 		 */
 		totalsel1 = matchprodfreq;
-<<<<<<< HEAD
-		if (nd2 > sslot2.nvalues)
-			totalsel1 += unmatchfreq1 * otherfreq2 / (nd2 - sslot2.nvalues);
-=======
 		if (nd2 > sslot2->nvalues)
 			totalsel1 += unmatchfreq1 * otherfreq2 / (nd2 - sslot2->nvalues);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (nd2 > nmatches)
 			totalsel1 += otherfreq1 * (otherfreq2 + unmatchfreq2) /
 				(nd2 - nmatches);
 		/* Same estimate from the point of view of relation 2. */
 		totalsel2 = matchprodfreq;
-<<<<<<< HEAD
-		if (nd1 > sslot1.nvalues)
-			totalsel2 += unmatchfreq2 * otherfreq1 / (nd1 - sslot1.nvalues);
-=======
 		if (nd1 > sslot1->nvalues)
 			totalsel2 += unmatchfreq2 * otherfreq1 / (nd1 - sslot1->nvalues);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (nd1 > nmatches)
 			totalsel2 += otherfreq2 * (otherfreq1 + unmatchfreq1) /
 				(nd1 - nmatches);
@@ -3011,12 +2329,6 @@ eqjoinsel_inner(Oid opfuncoid,
 			selec /= nd2;
 	}
 
-<<<<<<< HEAD
-	free_attstatsslot(&sslot1);
-	free_attstatsslot(&sslot2);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	return selec;
 }
 
@@ -3038,24 +2350,6 @@ eqjoinsel_semi(Oid opfuncoid,
 			   RelOptInfo *inner_rel)
 {
 	double		selec;
-<<<<<<< HEAD
-	double		nd1;
-	double		nd2;
-	bool		isdefault1;
-	bool		isdefault2;
-	Oid			opfuncoid;
-	Form_pg_statistic stats1 = NULL;
-	bool		have_mcvs1 = false;
-	bool		have_mcvs2 = false;
-	AttStatsSlot sslot1;
-	AttStatsSlot sslot2;
-
-	nd1 = get_variable_numdistinct(vardata1, &isdefault1);
-	nd2 = get_variable_numdistinct(vardata2, &isdefault2);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-
-	opfuncoid = OidIsValid(operator) ? get_opcode(operator) : InvalidOid;
 
 	/*
 	 * We clamp nd2 to be not more than what we estimate the inner relation's
@@ -3077,31 +2371,6 @@ eqjoinsel_semi(Oid opfuncoid,
 	 * helpful when the inner relation is empty and consequently has no stats.
 	 */
 	if (vardata2->rel)
-<<<<<<< HEAD
-		nd2 = Min(nd2, vardata2->rel->rows);
-	nd2 = Min(nd2, inner_rel->rows);
-
-	memset(&sslot1, 0, sizeof(sslot1));
-	memset(&sslot2, 0, sizeof(sslot2));
-
-	if (HeapTupleIsValid(vardata1->statsTuple))
-	{
-		/* note we allow use of nullfrac regardless of security check */
-		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1->statsTuple);
-		if (statistic_proc_security_check(vardata1, opfuncoid))
-			have_mcvs1 = get_attstatsslot(&sslot1, vardata1->statsTuple,
-										  STATISTIC_KIND_MCV, InvalidOid,
-										  ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
-	}
-
-	if (HeapTupleIsValid(vardata2->statsTuple) &&
-		statistic_proc_security_check(vardata2, opfuncoid))
-	{
-		have_mcvs2 = get_attstatsslot(&sslot2, vardata2->statsTuple,
-									  STATISTIC_KIND_MCV, InvalidOid,
-									  ATTSTATSSLOT_VALUES);
-		/* note: currently don't need stanumbers from RHS */
-=======
 	{
 		if (nd2 >= vardata2->rel->rows)
 		{
@@ -3113,7 +2382,6 @@ eqjoinsel_semi(Oid opfuncoid,
 	{
 		nd2 = inner_rel->rows;
 		isdefault2 = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	if (have_mcvs1 && have_mcvs2 && OidIsValid(opfuncoid))
@@ -3144,19 +2412,11 @@ eqjoinsel_semi(Oid opfuncoid,
 		 * and so compare to only the first nd2 members of the MCV list.  Of
 		 * course this is frequently wrong, but it's the best bet we can make.
 		 */
-<<<<<<< HEAD
-		clamped_nvalues2 = Min(sslot2.nvalues, nd2);
-
-		fmgr_info(get_opcode(operator), &eqproc);
-		hasmatch1 = (bool *) palloc0(sslot1.nvalues * sizeof(bool));
-		hasmatch2 = (bool *) palloc0(sslot2.nvalues * sizeof(bool));
-=======
 		clamped_nvalues2 = Min(sslot2->nvalues, nd2);
 
 		fmgr_info(opfuncoid, &eqproc);
 		hasmatch1 = (bool *) palloc0(sslot1->nvalues * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(clamped_nvalues2 * sizeof(bool));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * Note we assume that each MCV will match at most one member of the
@@ -3165,11 +2425,7 @@ eqjoinsel_semi(Oid opfuncoid,
 		 * and because the math wouldn't add up...
 		 */
 		nmatches = 0;
-<<<<<<< HEAD
-		for (i = 0; i < sslot1.nvalues; i++)
-=======
 		for (i = 0; i < sslot1->nvalues; i++)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			int			j;
 
@@ -3178,15 +2434,9 @@ eqjoinsel_semi(Oid opfuncoid,
 				if (hasmatch2[j])
 					continue;
 				if (DatumGetBool(FunctionCall2Coll(&eqproc,
-<<<<<<< HEAD
-												   DEFAULT_COLLATION_OID,
-												   sslot1.values[i],
-												   sslot2.values[j])))
-=======
 												   sslot1->stacoll,
 												   sslot1->values[i],
 												   sslot2->values[j])))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				{
 					hasmatch1[i] = hasmatch2[j] = true;
 					nmatches++;
@@ -3196,17 +2446,10 @@ eqjoinsel_semi(Oid opfuncoid,
 		}
 		/* Sum up frequencies of matched MCVs */
 		matchfreq1 = 0.0;
-<<<<<<< HEAD
-		for (i = 0; i < sslot1.nvalues; i++)
-		{
-			if (hasmatch1[i])
-				matchfreq1 += sslot1.numbers[i];
-=======
 		for (i = 0; i < sslot1->nvalues; i++)
 		{
 			if (hasmatch1[i])
 				matchfreq1 += sslot1->numbers[i];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		CLAMP_PROBABILITY(matchfreq1);
 		pfree(hasmatch1);
@@ -3261,12 +2504,6 @@ eqjoinsel_semi(Oid opfuncoid,
 			selec = 0.5 * (1.0 - nullfrac1);
 	}
 
-<<<<<<< HEAD
-	free_attstatsslot(&sslot1);
-	free_attstatsslot(&sslot2);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	return selec;
 }
 
@@ -4054,13 +3291,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 		/*
 		 * Sanity check --- don't divide by zero if empty relation.
 		 */
-<<<<<<< HEAD
-		Assert(rel->reloptkind == RELOPT_BASEREL ||
-			   (rel->reloptkind == RELOPT_OTHER_MEMBER_REL &&
-				rel->rtekind == RTE_RELATION));
-=======
 		Assert(IS_SIMPLE_REL(rel));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (rel->tuples > 0)
 		{
 			/*
@@ -4194,27 +3425,22 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
  * which is what we want.  We do not want to hash unless we know that the
  * inner rel is well-dispersed (or the alternatives seem much worse).
  *
-<<<<<<< HEAD
- * NB: Greenplum add an extra parameter path for this function, since
- * Greenplum is MPP database consist of many segments, we have to use
- * it to correct the estimation. For details, please refer the comments
- * in the code.
- */
-Selectivity
-estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets,
-						 Path *path)
-=======
  * The caller should also check that the mcv_freq is not so large that the
  * most common value would by itself require an impractically large bucket.
  * In a hash join, the executor can split buckets if they get too big, but
  * obviously that doesn't help for a bucket that contains many duplicates of
  * the same value.
+ *
+ * NB: Greenplum add an extra parameter path for this function, since
+ * Greenplum is MPP database consist of many segments, we have to use
+ * it to correct the estimation. For details, please refer the comments
+ * in the code.
  */
 void
 estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
 						   Selectivity *mcv_freq,
-						   Selectivity *bucketsize_frac)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						   Selectivity *bucketsize_frac,
+						   Path *path)
 {
 	VariableStatData vardata;
 	double		estfract,
@@ -4223,11 +3449,8 @@ estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
 				avgfreq;
 	AttStatsSlot sslot;
 	bool		isdefault;
-<<<<<<< HEAD
 	int         numsegments = path->locus.numsegments;
-=======
 	AttStatsSlot sslot;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	examine_variable(root, hashkey, 0, &vardata);
 
@@ -4253,7 +3476,6 @@ estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
 	ndistinct = get_variable_numdistinct(&vardata, &isdefault);
 
 	/*
-<<<<<<< HEAD
 	 * Greenplum specific behavior: the above ndistinct is from
 	 * a global view. When estimating hash_bucketsize, we should
 	 * shift to a local view. For this function, rows is seen from
@@ -4294,12 +3516,10 @@ estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
 		}
 	}
 
-	/* If ndistinct isn't real, punt and return 0.1, per comments above */
-=======
+	/*
 	 * If ndistinct isn't real, punt.  We normally return 0.1, but if the
 	 * mcv_freq is known to be even higher than that, use it instead.
 	 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (isdefault)
 	{
 		*bucketsize_frac = (Selectivity) Max(0.1, *mcv_freq);
@@ -4346,30 +3566,6 @@ estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
 		estfract = 1.0 / ndistinct;
 
 	/*
-<<<<<<< HEAD
-	 * Look up the frequency of the most common value, if available.
-	 */
-	mcvfreq = 0.0;
-
-	if (HeapTupleIsValid(getStatsTuple(&vardata)))
-	{
-		HeapTuple tp = getStatsTuple(&vardata);
-		if (get_attstatsslot(&sslot, tp,
-							 STATISTIC_KIND_MCV, InvalidOid,
-							 ATTSTATSSLOT_NUMBERS))
-		{
-			/*
-			 * The first MCV stat is for the most common value.
-			 */
-			if (sslot.nnumbers > 0)
-				mcvfreq = sslot.numbers[0];
-			free_attstatsslot(&sslot);
-		}
-	}
-
-	/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * Adjust estimated bucketsize upward to account for skewed distribution.
 	 */
 	if (avgfreq > 0.0 && *mcv_freq > avgfreq)
@@ -4663,11 +3859,6 @@ convert_to_scalar(Datum value, Oid valuetypid, Oid collid, double *scaledvalue,
 		case TEXTOID:
 		case NAMEOID:
 			{
-<<<<<<< HEAD
-			    *scaledlobound = 1;
-			    *scaledhibound = 2;
-			    *scaledvalue = isgt ? 1 : 2;
-=======
 				char	   *valstr = convert_string_datum(value, valuetypid,
 														  collid, &failure);
 				char	   *lostr = convert_string_datum(lobound, boundstypid,
@@ -4689,7 +3880,6 @@ convert_to_scalar(Datum value, Oid valuetypid, Oid collid, double *scaledvalue,
 				pfree(valstr);
 				pfree(lostr);
 				pfree(histr);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				return true;
 			}
 
@@ -4730,10 +3920,7 @@ convert_to_scalar(Datum value, Oid valuetypid, Oid collid, double *scaledvalue,
 		case INETOID:
 		case CIDROID:
 		case MACADDROID:
-<<<<<<< HEAD
-=======
 		case MACADDR8OID:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			*scaledvalue = convert_network_to_scalar(value, valuetypid,
 													 &failure);
 			*scaledlobound = convert_network_to_scalar(lobound, boundstypid,
@@ -4951,11 +4138,7 @@ convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
  * before continuing, so as to generate correct locale-specific results.
  */
 static char *
-<<<<<<< HEAD
-convert_string_datum(Datum value, Oid typid, bool *failure)
-=======
 convert_string_datum(Datum value, Oid typid, Oid collid, bool *failure)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	char	   *val;
 
@@ -5140,11 +4323,7 @@ convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
  * On failure (e.g., unsupported typid), set *failure to true;
  * otherwise, that variable is not changed.
  */
-<<<<<<< HEAD
 double
-=======
-static double
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 convert_timevalue_to_scalar(Datum value, Oid typid, bool *failure)
 {
 	switch (typid)
@@ -5434,11 +4613,7 @@ static void inline adjust_partition_table_statistic_for_parent(HeapTuple statsTu
  *		this query.  (Caution: this should be trusted for statistical
  *		purposes only, since we do not check indimmediate nor verify that
  *		the exact same definition of equality applies.)
-<<<<<<< HEAD
- *	acl_ok: TRUE if current user has permission to read the column(s)
-=======
  *	acl_ok: true if current user has permission to read the column(s)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *		underlying the pg_statistic entry.  This is consulted by
  *		statistic_proc_security_check().
  *
@@ -5621,25 +4796,12 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 							{
 								/* Get index's table for permission check */
 								RangeTblEntry *rte;
-<<<<<<< HEAD
-=======
 								Oid			userid;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 								rte = planner_rt_fetch(index->rel->relid, root);
 								Assert(rte->rtekind == RTE_RELATION);
 
 								/*
-<<<<<<< HEAD
-								 * For simplicity, we insist on the whole
-								 * table being selectable, rather than trying
-								 * to identify which column(s) the index
-								 * depends on.
-								 */
-								vardata->acl_ok =
-									(pg_class_aclcheck(rte->relid, GetUserId(),
-												 ACL_SELECT) == ACLCHECK_OK);
-=======
 								 * Use checkAsUser if it's set, in case we're
 								 * accessing the table via a view.
 								 */
@@ -5658,7 +4820,6 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 									rte->securityQuals == NIL &&
 									(pg_class_aclcheck(rte->relid, userid,
 													   ACL_SELECT) == ACLCHECK_OK);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							}
 							else
 							{
@@ -5781,14 +4942,6 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 
 		if (HeapTupleIsValid(vardata->statsTuple))
 		{
-<<<<<<< HEAD
-			/* check if user has permission to read this column */
-			vardata->acl_ok =
-				(pg_class_aclcheck(rte->relid, GetUserId(),
-								   ACL_SELECT) == ACLCHECK_OK) ||
-				(pg_attribute_aclcheck(rte->relid, var->varattno, GetUserId(),
-									   ACL_SELECT) == ACLCHECK_OK);
-=======
 			Oid			userid;
 
 			/*
@@ -5805,7 +4958,6 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 									ACL_SELECT) == ACLCHECK_OK) ||
 				 (pg_attribute_aclcheck(rte->relid, var->varattno, userid,
 										ACL_SELECT) == ACLCHECK_OK));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		else
 		{
@@ -6117,13 +5269,8 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 	bool		have_data = false;
 	int16		typLen;
 	bool		typByVal;
-<<<<<<< HEAD
-	AttStatsSlot sslot;
-	Oid			opfuncoid;
-=======
 	Oid			opfuncoid;
 	AttStatsSlot sslot;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			i;
 	HeapTuple	tp = getStatsTuple(vardata);
 
@@ -6165,8 +5312,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 	 * the one we want, fail --- this suggests that there is data we can't
 	 * use.
 	 */
-<<<<<<< HEAD
-	if (get_attstatsslot(&sslot, tp,
+	if (get_attstatsslot(&sslot, vardata->statsTuple,
 						 STATISTIC_KIND_HISTOGRAM, sortop,
 						 ATTSTATSSLOT_VALUES))
 	{
@@ -6184,12 +5330,6 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 			elog(ERROR, "invalid histogram of type %s, for attribute of type %s",
 				 format_type_be(sslot.valuetype), format_type_be(vardata->atttype));
 
-=======
-	if (get_attstatsslot(&sslot, vardata->statsTuple,
-						 STATISTIC_KIND_HISTOGRAM, sortop,
-						 ATTSTATSSLOT_VALUES))
-	{
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (sslot.nvalues > 0)
 		{
 			tmin = datumCopy(sslot.values[0], typByVal, typLen);
@@ -6198,11 +5338,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 		}
 		free_attstatsslot(&sslot);
 	}
-<<<<<<< HEAD
-	else if (get_attstatsslot(&sslot, tp,
-=======
 	else if (get_attstatsslot(&sslot, vardata->statsTuple,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							  STATISTIC_KIND_HISTOGRAM, InvalidOid,
 							  0))
 	{
@@ -6216,11 +5352,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 	 * the MCVs.  However, usually the MCVs will not be the extreme values, so
 	 * avoid unnecessary data copying.
 	 */
-<<<<<<< HEAD
-	if (get_attstatsslot(&sslot, tp,
-=======
 	if (get_attstatsslot(&sslot, vardata->statsTuple,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						 STATISTIC_KIND_MCV, InvalidOid,
 						 ATTSTATSSLOT_VALUES))
 	{
@@ -6230,7 +5362,6 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 
 		fmgr_info(opfuncoid, &opproc);
 
-<<<<<<< HEAD
 		/*
 		 * GPDB: See the identical check, above, for histogram data.
 		 */
@@ -6238,8 +5369,6 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 			elog(ERROR, "invalid MCV array of type %s, for attribute of type %s",
 				 format_type_be(sslot.valuetype), format_type_be(vardata->atttype));
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		for (i = 0; i < sslot.nvalues; i++)
 		{
 			if (!have_data)
@@ -6249,22 +5378,14 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 				continue;
 			}
 			if (DatumGetBool(FunctionCall2Coll(&opproc,
-<<<<<<< HEAD
-											   DEFAULT_COLLATION_OID,
-=======
 											   sslot.stacoll,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 											   sslot.values[i], tmin)))
 			{
 				tmin = sslot.values[i];
 				tmin_is_mcv = true;
 			}
 			if (DatumGetBool(FunctionCall2Coll(&opproc,
-<<<<<<< HEAD
-											   DEFAULT_COLLATION_OID,
-=======
 											   sslot.stacoll,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 											   tmax, sslot.values[i])))
 			{
 				tmax = sslot.values[i];
@@ -6453,12 +5574,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 				/* Fetch first tuple in sortop's direction */
 				if (index_getnext_slot(index_scan, indexscandir, slot))
 				{
-<<<<<<< HEAD
-					/* Extract the index column values from the heap tuple */
-					ExecStoreHeapTuple(tup, slot, InvalidBuffer, false);
-=======
 					/* Extract the index column values from the slot */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					FormIndexDatum(indexInfo, slot, estate,
 								   values, isnull);
 
@@ -6489,12 +5605,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 				/* Fetch first tuple in reverse direction */
 				if (index_getnext_slot(index_scan, -indexscandir, slot))
 				{
-<<<<<<< HEAD
-					/* Extract the index column values from the heap tuple */
-					ExecStoreHeapTuple(tup, slot, InvalidBuffer, false);
-=======
 					/* Extract the index column values from the slot */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					FormIndexDatum(indexInfo, slot, estate,
 								   values, isnull);
 
@@ -6565,838 +5676,6 @@ find_join_input_rel(PlannerInfo *root, Relids relids)
 
 /*-------------------------------------------------------------------------
  *
-<<<<<<< HEAD
- * Pattern analysis functions
- *
- * These routines support analysis of LIKE and regular-expression patterns
- * by the planner/optimizer.  It's important that they agree with the
- * regular-expression code in backend/regex/ and the LIKE code in
- * backend/utils/adt/like.c.  Also, the computation of the fixed prefix
- * must be conservative: if we report a string longer than the true fixed
- * prefix, the query may produce actually wrong answers, rather than just
- * getting a bad selectivity estimate!
- *
- * Note that the prefix-analysis functions are called from
- * backend/optimizer/path/indxpath.c as well as from routines in this file.
- *
- *-------------------------------------------------------------------------
- */
-
-/*
- * Check whether char is a letter (and, hence, subject to case-folding)
- *
- * In multibyte character sets, we can't use isalpha, and it does not seem
- * worth trying to convert to wchar_t to use iswalpha.  Instead, just assume
- * any multibyte char is potentially case-varying.
- */
-static int
-pattern_char_isalpha(char c, bool is_multibyte,
-					 pg_locale_t locale, bool locale_is_c)
-{
-	if (locale_is_c)
-		return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
-	else if (is_multibyte && IS_HIGHBIT_SET(c))
-		return true;
-#ifdef HAVE_LOCALE_T
-	else if (locale)
-		return isalpha_l((unsigned char) c, locale);
-#endif
-	else
-		return isalpha((unsigned char) c);
-}
-
-/*
- * Extract the fixed prefix, if any, for a pattern.
- *
- * *prefix is set to a palloc'd prefix string (in the form of a Const node),
- *	or to NULL if no fixed prefix exists for the pattern.
- * If rest_selec is not NULL, *rest_selec is set to an estimate of the
- *	selectivity of the remainder of the pattern (without any fixed prefix).
- * The prefix Const has the same type (TEXT or BYTEA) as the input pattern.
- *
- * The return value distinguishes no fixed prefix, a partial prefix,
- * or an exact-match-only pattern.
- */
-
-static Pattern_Prefix_Status
-like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
-				  Const **prefix_const, Selectivity *rest_selec)
-{
-	char	   *match;
-	char	   *patt;
-	int			pattlen;
-	Oid			typeid = patt_const->consttype;
-	int			pos,
-				match_pos;
-	bool		is_multibyte = (pg_database_encoding_max_length() > 1);
-	pg_locale_t locale = 0;
-	bool		locale_is_c = false;
-
-	/* the right-hand const is type text or bytea */
-	Assert(typeid == BYTEAOID || typeid == TEXTOID);
-
-	if (case_insensitive)
-	{
-		if (typeid == BYTEAOID)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("case insensitive matching not supported on type bytea")));
-
-		/* If case-insensitive, we need locale info */
-		if (lc_ctype_is_c(collation))
-			locale_is_c = true;
-		else if (collation != DEFAULT_COLLATION_OID)
-		{
-			if (!OidIsValid(collation))
-			{
-				/*
-				 * This typically means that the parser could not resolve a
-				 * conflict of implicit collations, so report it that way.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("could not determine which collation to use for ILIKE"),
-						 errhint("Use the COLLATE clause to set the collation explicitly.")));
-			}
-			locale = pg_newlocale_from_collation(collation);
-		}
-	}
-
-	if (typeid != BYTEAOID)
-	{
-		patt = TextDatumGetCString(patt_const->constvalue);
-		pattlen = strlen(patt);
-	}
-	else
-	{
-		bytea	   *bstr = DatumGetByteaP(patt_const->constvalue);
-
-		pattlen = VARSIZE(bstr) - VARHDRSZ;
-		patt = (char *) palloc(pattlen);
-		memcpy(patt, VARDATA(bstr), pattlen);
-		if ((Pointer) bstr != DatumGetPointer(patt_const->constvalue))
-			pfree(bstr);
-	}
-
-	match = palloc(pattlen + 1);
-	match_pos = 0;
-	for (pos = 0; pos < pattlen; pos++)
-	{
-		/* % and _ are wildcard characters in LIKE */
-		if (patt[pos] == '%' ||
-			patt[pos] == '_')
-			break;
-
-		/* Backslash escapes the next character */
-		if (patt[pos] == '\\')
-		{
-			pos++;
-			if (pos >= pattlen)
-				break;
-		}
-
-		/* Stop if case-varying character (it's sort of a wildcard) */
-		if (case_insensitive &&
-		  pattern_char_isalpha(patt[pos], is_multibyte, locale, locale_is_c))
-			break;
-
-		match[match_pos++] = patt[pos];
-	}
-
-	match[match_pos] = '\0';
-
-	if (typeid != BYTEAOID)
-		*prefix_const = string_to_const(match, typeid);
-	else
-		*prefix_const = string_to_bytea_const(match, match_pos);
-
-	if (rest_selec != NULL)
-		*rest_selec = like_selectivity(&patt[pos], pattlen - pos,
-									   case_insensitive);
-
-	pfree(patt);
-	pfree(match);
-
-	/* in LIKE, an empty pattern is an exact match! */
-	if (pos == pattlen)
-		return Pattern_Prefix_Exact;	/* reached end of pattern, so exact */
-
-	if (match_pos > 0)
-		return Pattern_Prefix_Partial;
-
-	return Pattern_Prefix_None;
-}
-
-static Pattern_Prefix_Status
-regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
-				   Const **prefix_const, Selectivity *rest_selec)
-{
-	Oid			typeid = patt_const->consttype;
-	char	   *prefix;
-	bool		exact;
-
-	/*
-	 * Should be unnecessary, there are no bytea regex operators defined. As
-	 * such, it should be noted that the rest of this function has *not* been
-	 * made safe for binary (possibly NULL containing) strings.
-	 */
-	if (typeid == BYTEAOID)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		 errmsg("regular-expression matching not supported on type bytea")));
-
-	/* Use the regexp machinery to extract the prefix, if any */
-	prefix = regexp_fixed_prefix(DatumGetTextPP(patt_const->constvalue),
-								 case_insensitive, collation,
-								 &exact);
-
-	if (prefix == NULL)
-	{
-		*prefix_const = NULL;
-
-		if (rest_selec != NULL)
-		{
-			char	   *patt = TextDatumGetCString(patt_const->constvalue);
-
-			*rest_selec = regex_selectivity(patt, strlen(patt),
-											case_insensitive,
-											0);
-			pfree(patt);
-		}
-
-		return Pattern_Prefix_None;
-	}
-
-	*prefix_const = string_to_const(prefix, typeid);
-
-	if (rest_selec != NULL)
-	{
-		if (exact)
-		{
-			/* Exact match, so there's no additional selectivity */
-			*rest_selec = 1.0;
-		}
-		else
-		{
-			char	   *patt = TextDatumGetCString(patt_const->constvalue);
-
-			*rest_selec = regex_selectivity(patt, strlen(patt),
-											case_insensitive,
-											strlen(prefix));
-			pfree(patt);
-		}
-	}
-
-	pfree(prefix);
-
-	if (exact)
-		return Pattern_Prefix_Exact;	/* pattern specifies exact match */
-	else
-		return Pattern_Prefix_Partial;
-}
-
-Pattern_Prefix_Status
-pattern_fixed_prefix(Const *patt, Pattern_Type ptype, Oid collation,
-					 Const **prefix, Selectivity *rest_selec)
-{
-	Pattern_Prefix_Status result;
-
-	switch (ptype)
-	{
-		case Pattern_Type_Like:
-			result = like_fixed_prefix(patt, false, collation,
-									   prefix, rest_selec);
-			break;
-		case Pattern_Type_Like_IC:
-			result = like_fixed_prefix(patt, true, collation,
-									   prefix, rest_selec);
-			break;
-		case Pattern_Type_Regex:
-			result = regex_fixed_prefix(patt, false, collation,
-										prefix, rest_selec);
-			break;
-		case Pattern_Type_Regex_IC:
-			result = regex_fixed_prefix(patt, true, collation,
-										prefix, rest_selec);
-			break;
-		default:
-			elog(ERROR, "unrecognized ptype: %d", (int) ptype);
-			result = Pattern_Prefix_None;		/* keep compiler quiet */
-			break;
-	}
-	return result;
-}
-
-/*
- * Estimate the selectivity of a fixed prefix for a pattern match.
- *
- * A fixed prefix "foo" is estimated as the selectivity of the expression
- * "variable >= 'foo' AND variable < 'fop'" (see also indxpath.c).
- *
- * The selectivity estimate is with respect to the portion of the column
- * population represented by the histogram --- the caller must fold this
- * together with info about MCVs and NULLs.
- *
- * We use the >= and < operators from the specified btree opfamily to do the
- * estimation.  The given variable and Const must be of the associated
- * datatype.
- *
- * XXX Note: we make use of the upper bound to estimate operator selectivity
- * even if the locale is such that we cannot rely on the upper-bound string.
- * The selectivity only needs to be approximately right anyway, so it seems
- * more useful to use the upper-bound code than not.
- */
-static Selectivity
-prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
-				   Oid vartype, Oid opfamily, Const *prefixcon)
-{
-	Selectivity prefixsel;
-	Oid			cmpopr;
-	FmgrInfo	opproc;
-	Const	   *greaterstrcon;
-	Selectivity eq_sel;
-
-	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
-								 BTGreaterEqualStrategyNumber);
-	if (cmpopr == InvalidOid)
-		elog(ERROR, "no >= operator for opfamily %u", opfamily);
-	fmgr_info(get_opcode(cmpopr), &opproc);
-
-	prefixsel = ineq_histogram_selectivity(root, vardata, &opproc, true,
-										   prefixcon->constvalue,
-										   prefixcon->consttype);
-
-	if (prefixsel < 0.0)
-	{
-		/* No histogram is present ... return a suitable default estimate */
-		return DEFAULT_MATCH_SEL;
-	}
-
-	/*-------
-	 * If we can create a string larger than the prefix, say
-	 *	"x < greaterstr".
-	 *-------
-	 */
-	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
-								 BTLessStrategyNumber);
-	if (cmpopr == InvalidOid)
-		elog(ERROR, "no < operator for opfamily %u", opfamily);
-	fmgr_info(get_opcode(cmpopr), &opproc);
-	greaterstrcon = make_greater_string(prefixcon, &opproc,
-										DEFAULT_COLLATION_OID);
-	if (greaterstrcon)
-	{
-		Selectivity topsel;
-
-		topsel = ineq_histogram_selectivity(root, vardata, &opproc, false,
-											greaterstrcon->constvalue,
-											greaterstrcon->consttype);
-
-		/* ineq_histogram_selectivity worked before, it shouldn't fail now */
-		Assert(topsel >= 0.0);
-
-		/*
-		 * Merge the two selectivities in the same way as for a range query
-		 * (see clauselist_selectivity()).  Note that we don't need to worry
-		 * about double-exclusion of nulls, since ineq_histogram_selectivity
-		 * doesn't count those anyway.
-		 */
-		prefixsel = topsel + prefixsel - 1.0;
-	}
-
-	/*
-	 * If the prefix is long then the two bounding values might be too close
-	 * together for the histogram to distinguish them usefully, resulting in a
-	 * zero estimate (plus or minus roundoff error). To avoid returning a
-	 * ridiculously small estimate, compute the estimated selectivity for
-	 * "variable = 'foo'", and clamp to that. (Obviously, the resultant
-	 * estimate should be at least that.)
-	 *
-	 * We apply this even if we couldn't make a greater string.  That case
-	 * suggests that the prefix is near the maximum possible, and thus
-	 * probably off the end of the histogram, and thus we probably got a very
-	 * small estimate from the >= condition; so we still need to clamp.
-	 */
-	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
-								 BTEqualStrategyNumber);
-	if (cmpopr == InvalidOid)
-		elog(ERROR, "no = operator for opfamily %u", opfamily);
-	eq_sel = var_eq_const(vardata, cmpopr, prefixcon->constvalue,
-						  false, true);
-
-	prefixsel = Max(prefixsel, eq_sel);
-
-	return prefixsel;
-}
-
-
-/*
- * Estimate the selectivity of a pattern of the specified type.
- * Note that any fixed prefix of the pattern will have been removed already,
- * so actually we may be looking at just a fragment of the pattern.
- *
- * For now, we use a very simplistic approach: fixed characters reduce the
- * selectivity a good deal, character ranges reduce it a little,
- * wildcards (such as % for LIKE or .* for regex) increase it.
- *
- * CDB: There is a gradual lessening of the change in selectivity as more
- * fixed characters or character ranges are added.
- */
-
-#define FIXED_CHAR_SEL	0.20	/* about 1/5 */
-#define CHAR_RANGE_SEL	0.25
-#define ANY_CHAR_SEL	0.99	/* not 1, since it won't match end-of-string */
-#define FULL_WILDCARD_SEL 5.0
-#define CDB_RANCHOR_SEL 0.95
-#define CDB_ROLLOFF_SEL 0.14
-
-static Selectivity
-like_selectivity(const char *patt, int pattlen, bool case_insensitive)
-{
-	Selectivity sel = 1.0;
-    Selectivity fixed_char_sel = FIXED_CHAR_SEL;
-	int			pos;
-
-	/* Skip any leading wildcard; it's already factored into initial sel */
-	for (pos = 0; pos < pattlen; pos++)
-	{
-		if (patt[pos] != '%' && patt[pos] != '_')
-			break;
-	}
-
-	for (; pos < pattlen; pos++)
-	{
-		/* % and _ are wildcard characters in LIKE */
-		if (patt[pos] == '%')
-        {}
-		else if (patt[pos] == '_')
-			sel *= ANY_CHAR_SEL;
-		else
-        {
-            if (patt[pos] == '\\')
-		    {
-			    /* Backslash quotes the next character */
-			    pos++;
-			    if (pos >= pattlen)
-				    break;
-		    }
-
-			sel *= fixed_char_sel;
-            fixed_char_sel += (1.0 - fixed_char_sel) * CDB_ROLLOFF_SEL;
-        }
-	}
-
-	/* CDB: If no trailing wildcard, reduce selectivity slightly. */
-	if (pos > 0 && patt[pos-1] != '%')
-		sel *= CDB_RANCHOR_SEL;
-	else if (pos >= 2 && patt[pos-2] == '\\')
-		sel *= CDB_RANCHOR_SEL;
-
-	return sel;
-}
-
-static Selectivity
-regex_selectivity_sub(const char *patt, int pattlen, bool case_insensitive)
-{
-	Selectivity sel = 1.0;
-    Selectivity fixed_char_sel = FIXED_CHAR_SEL;
-    Selectivity csel;
-    int			paren_depth = 0;
-	int			paren_pos = 0;	/* dummy init to keep compiler quiet */
-	int			pos;
-
-	for (pos = 0; pos < pattlen; pos++)
-	{
-		if (patt[pos] == '(')
-		{
-			if (paren_depth == 0)
-				paren_pos = pos;	/* remember start of parenthesized item */
-			paren_depth++;
-		}
-		else if (patt[pos] == ')' && paren_depth > 0)
-		{
-			paren_depth--;
-			if (paren_depth == 0)
-				sel *= regex_selectivity_sub(patt + (paren_pos + 1),
-											 pos - (paren_pos + 1),
-											 case_insensitive);
-		}
-		else if (patt[pos] == '|' && paren_depth == 0)
-		{
-			/*
-			 * If unquoted | is present at paren level 0 in pattern, we have
-			 * multiple alternatives; sum their probabilities.
-			 */
-			sel += regex_selectivity_sub(patt + (pos + 1),
-										 pattlen - (pos + 1),
-										 case_insensitive);
-			break;				/* rest of pattern is now processed */
-		}
-		else if (patt[pos] == '[')
-		{
-			bool		negclass = false;
-
-			if (patt[++pos] == '^')
-			{
-				negclass = true;
-				pos++;
-			}
-			if (patt[pos] == ']')		/* ']' at start of class is not
-										 * special */
-				pos++;
-			while (pos < pattlen && patt[pos] != ']')
-				pos++;
-			if (paren_depth == 0)
-            {
-                csel = CHAR_RANGE_SEL / FIXED_CHAR_SEL * fixed_char_sel;
-                sel *= (negclass ? (1.0 - csel) : csel);
-                fixed_char_sel += (1.0 - fixed_char_sel) * CDB_ROLLOFF_SEL;
-            }
-		}
-		else if (patt[pos] == '.')
-		{
-			if (paren_depth == 0)
-                sel *= Max(ANY_CHAR_SEL, fixed_char_sel);
-		}
-		else if (patt[pos] == '*' ||
-				 patt[pos] == '?' ||
-				 patt[pos] == '+')
-        {}
-		else if (patt[pos] == '{')
-		{
-			while (pos < pattlen && patt[pos] != '}')
-				pos++;
-		}
-		else
-		{
-			/* backslash quotes the next character */
-            if (patt[pos] == '\\')
-            {
-                pos++;
-                if (pos >= pattlen)
-                    break;
-            }
-			if (paren_depth == 0)
-            {
-                sel *= fixed_char_sel;
-                fixed_char_sel += (1.0 - fixed_char_sel) * CDB_ROLLOFF_SEL;
-            }
-		}
-	}
-	if (sel > 1.0)
-		sel = 1.0;
-	return sel;
-}
-
-static Selectivity
-regex_selectivity(const char *patt, int pattlen, bool case_insensitive,
-				  int fixed_prefix_len)
-{
-	Selectivity sel;
-
-	/* If patt doesn't end with $, consider it to have a trailing wildcard */
-	if (pattlen > 0 && patt[pattlen - 1] == '$' &&
-		(pattlen == 1 || patt[pattlen - 2] != '\\'))
-	{
-		/* has trailing $ */
-		sel = regex_selectivity_sub(patt, pattlen - 1, case_insensitive);
-        sel *= CDB_RANCHOR_SEL;
-    }
-	else
-	{
-		/* no trailing $ */
-		sel = regex_selectivity_sub(patt, pattlen, case_insensitive);
-		sel *= FULL_WILDCARD_SEL;
-	}
-
-	/* If there's a fixed prefix, discount its selectivity */
-	if (fixed_prefix_len > 0)
-		sel /= pow(FIXED_CHAR_SEL, fixed_prefix_len);
-
-	/* Make sure result stays in range */
-	CLAMP_PROBABILITY(sel);
-	return sel;
-}
-
-
-/*
- * For bytea, the increment function need only increment the current byte
- * (there are no multibyte characters to worry about).
- */
-static bool
-byte_increment(unsigned char *ptr, int len)
-{
-	if (*ptr >= 255)
-		return false;
-	(*ptr)++;
-	return true;
-}
-
-/*
- * Try to generate a string greater than the given string or any
- * string it is a prefix of.  If successful, return a palloc'd string
- * in the form of a Const node; else return NULL.
- *
- * The caller must provide the appropriate "less than" comparison function
- * for testing the strings, along with the collation to use.
- *
- * The key requirement here is that given a prefix string, say "foo",
- * we must be able to generate another string "fop" that is greater than
- * all strings "foobar" starting with "foo".  We can test that we have
- * generated a string greater than the prefix string, but in non-C collations
- * that is not a bulletproof guarantee that an extension of the string might
- * not sort after it; an example is that "foo " is less than "foo!", but it
- * is not clear that a "dictionary" sort ordering will consider "foo!" less
- * than "foo bar".  CAUTION: Therefore, this function should be used only for
- * estimation purposes when working in a non-C collation.
- *
- * To try to catch most cases where an extended string might otherwise sort
- * before the result value, we determine which of the strings "Z", "z", "y",
- * and "9" is seen as largest by the collation, and append that to the given
- * prefix before trying to find a string that compares as larger.
- *
- * To search for a greater string, we repeatedly "increment" the rightmost
- * character, using an encoding-specific character incrementer function.
- * When it's no longer possible to increment the last character, we truncate
- * off that character and start incrementing the next-to-rightmost.
- * For example, if "z" were the last character in the sort order, then we
- * could produce "foo" as a string greater than "fonz".
- *
- * This could be rather slow in the worst case, but in most cases we
- * won't have to try more than one or two strings before succeeding.
- *
- * Note that it's important for the character incrementer not to be too anal
- * about producing every possible character code, since in some cases the only
- * way to get a larger string is to increment a previous character position.
- * So we don't want to spend too much time trying every possible character
- * code at the last position.  A good rule of thumb is to be sure that we
- * don't try more than 256*K values for a K-byte character (and definitely
- * not 256^K, which is what an exhaustive search would approach).
- */
-Const *
-make_greater_string(const Const *str_const, FmgrInfo *ltproc, Oid collation)
-{
-	Oid			datatype = str_const->consttype;
-	char	   *workstr;
-	int			len;
-	Datum		cmpstr;
-	text	   *cmptxt = NULL;
-	mbcharacter_incrementer charinc;
-
-	/*
-	 * Get a modifiable copy of the prefix string in C-string format, and set
-	 * up the string we will compare to as a Datum.  In C locale this can just
-	 * be the given prefix string, otherwise we need to add a suffix.  Types
-	 * NAME and BYTEA sort bytewise so they don't need a suffix either.
-	 */
-	if (datatype == NAMEOID)
-	{
-		workstr = DatumGetCString(DirectFunctionCall1(nameout,
-													  str_const->constvalue));
-		len = strlen(workstr);
-		cmpstr = str_const->constvalue;
-	}
-	else if (datatype == BYTEAOID)
-	{
-		bytea	   *bstr = DatumGetByteaP(str_const->constvalue);
-
-		len = VARSIZE(bstr) - VARHDRSZ;
-		workstr = (char *) palloc(len);
-		memcpy(workstr, VARDATA(bstr), len);
-		if ((Pointer) bstr != DatumGetPointer(str_const->constvalue))
-			pfree(bstr);
-		cmpstr = str_const->constvalue;
-	}
-	else
-	{
-		workstr = TextDatumGetCString(str_const->constvalue);
-		len = strlen(workstr);
-		if (lc_collate_is_c(collation) || len == 0)
-			cmpstr = str_const->constvalue;
-		else
-		{
-			/* If first time through, determine the suffix to use */
-			static char suffixchar = 0;
-			static Oid	suffixcollation = 0;
-
-			if (!suffixchar || suffixcollation != collation)
-			{
-				char	   *best;
-
-				best = "Z";
-				if (varstr_cmp(best, 1, "z", 1, collation) < 0)
-					best = "z";
-				if (varstr_cmp(best, 1, "y", 1, collation) < 0)
-					best = "y";
-				if (varstr_cmp(best, 1, "9", 1, collation) < 0)
-					best = "9";
-				suffixchar = *best;
-				suffixcollation = collation;
-			}
-
-			/* And build the string to compare to */
-			cmptxt = (text *) palloc(VARHDRSZ + len + 1);
-			SET_VARSIZE(cmptxt, VARHDRSZ + len + 1);
-			memcpy(VARDATA(cmptxt), workstr, len);
-			*(VARDATA(cmptxt) + len) = suffixchar;
-			cmpstr = PointerGetDatum(cmptxt);
-		}
-	}
-
-	/* Select appropriate character-incrementer function */
-	if (datatype == BYTEAOID)
-		charinc = byte_increment;
-	else
-		charinc = pg_database_encoding_character_incrementer();
-
-	/* And search ... */
-	while (len > 0)
-	{
-		int			charlen;
-		unsigned char *lastchar;
-
-		/* Identify the last character --- for bytea, just the last byte */
-		if (datatype == BYTEAOID)
-			charlen = 1;
-		else
-			charlen = len - pg_mbcliplen(workstr, len, len - 1);
-		lastchar = (unsigned char *) (workstr + len - charlen);
-
-		/*
-		 * Try to generate a larger string by incrementing the last character
-		 * (for BYTEA, we treat each byte as a character).
-		 *
-		 * Note: the incrementer function is expected to return true if it's
-		 * generated a valid-per-the-encoding new character, otherwise false.
-		 * The contents of the character on false return are unspecified.
-		 */
-		while (charinc(lastchar, charlen))
-		{
-			Const	   *workstr_const;
-
-			if (datatype == BYTEAOID)
-				workstr_const = string_to_bytea_const(workstr, len);
-			else
-				workstr_const = string_to_const(workstr, datatype);
-
-			if (DatumGetBool(FunctionCall2Coll(ltproc,
-											   collation,
-											   cmpstr,
-											   workstr_const->constvalue)))
-			{
-				/* Successfully made a string larger than cmpstr */
-				if (cmptxt)
-					pfree(cmptxt);
-				pfree(workstr);
-				return workstr_const;
-			}
-
-			/* No good, release unusable value and try again */
-			pfree(DatumGetPointer(workstr_const->constvalue));
-			pfree(workstr_const);
-		}
-
-		/*
-		 * No luck here, so truncate off the last character and try to
-		 * increment the next one.
-		 */
-		len -= charlen;
-		workstr[len] = '\0';
-	}
-
-	/* Failed... */
-	if (cmptxt)
-		pfree(cmptxt);
-	pfree(workstr);
-
-	return NULL;
-}
-
-/*
- * Generate a Datum of the appropriate type from a C string.
- * Note that all of the supported types are pass-by-ref, so the
- * returned value should be pfree'd if no longer needed.
- */
-static Datum
-string_to_datum(const char *str, Oid datatype)
-{
-	Assert(str != NULL);
-
-	/*
-	 * We cheat a little by assuming that CStringGetTextDatum() will do for
-	 * bpchar and varchar constants too...
-	 */
-	if (datatype == NAMEOID)
-		return DirectFunctionCall1(namein, CStringGetDatum((char *) str));
-	else if (datatype == BYTEAOID)
-		return DirectFunctionCall1(byteain, CStringGetDatum((char *) str));
-	else
-		return CStringGetTextDatum(str);
-}
-
-/*
- * Generate a Const node of the appropriate type from a C string.
- */
-static Const *
-string_to_const(const char *str, Oid datatype)
-{
-	Datum		conval = string_to_datum(str, datatype);
-	Oid			collation;
-	int			constlen;
-
-	/*
-	 * We only need to support a few datatypes here, so hard-wire properties
-	 * instead of incurring the expense of catalog lookups.
-	 */
-	switch (datatype)
-	{
-		case TEXTOID:
-		case VARCHAROID:
-		case BPCHAROID:
-			collation = DEFAULT_COLLATION_OID;
-			constlen = -1;
-			break;
-
-		case NAMEOID:
-			collation = InvalidOid;
-			constlen = NAMEDATALEN;
-			break;
-
-		case BYTEAOID:
-			collation = InvalidOid;
-			constlen = -1;
-			break;
-
-		default:
-			elog(ERROR, "unexpected datatype in string_to_const: %u",
-				 datatype);
-			return NULL;
-	}
-
-	return makeConst(datatype, -1, collation, constlen,
-					 conval, false, false);
-}
-
-/*
- * Generate a Const node of bytea type from a binary C string and a length.
- */
-static Const *
-string_to_bytea_const(const char *str, size_t str_len)
-{
-	bytea	   *bstr = palloc(VARHDRSZ + str_len);
-	Datum		conval;
-
-	memcpy(VARDATA(bstr), str, str_len);
-	SET_VARSIZE(bstr, VARHDRSZ + str_len);
-	conval = PointerGetDatum(bstr);
-
-	return makeConst(BYTEAOID, -1, InvalidOid, -1, conval, false, false);
-}
-
-/*-------------------------------------------------------------------------
- *
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Index cost estimation functions
  *
  *-------------------------------------------------------------------------
@@ -7751,10 +6030,6 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	double		num_sa_scans;
 	ListCell   *lc;
 
-<<<<<<< HEAD
-	/* Do preliminary analysis of indexquals */
-	qinfos = deconstruct_indexquals(path);
-
     /*
      * CDB: Tell caller how many leading indexcols are matched by '=' quals.
      *
@@ -7764,8 +6039,6 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
      */
     index->num_leading_eq = 0;
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * For a btree scan, only leading '=' quals plus inequality quals for the
 	 * immediately next attribute contribute to index selectivity (these are
@@ -7821,17 +6094,9 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			}
 			else if (IsA(clause, RowCompareExpr))
 			{
-<<<<<<< HEAD
-				found_is_null_op = true;
-				/* IS NULL is like = for selectivity determination purposes */
-				eqQualHere = true;
-				/* CDB: Count leading indexcols having '=' quals. */
-				index->num_leading_eq = indexcol + 1;
-=======
 				RowCompareExpr *rc = (RowCompareExpr *) clause;
 
 				clause_op = linitial_oid(rc->opnos);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 			else if (IsA(clause, ScalarArrayOpExpr))
 			{
@@ -7854,29 +6119,15 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 					found_is_null_op = true;
 					/* IS NULL is like = for selectivity purposes */
 					eqQualHere = true;
+
+					/* CDB: Count leading indexcols having '=' quals. */
+					index->num_leading_eq = indexcol + 1;
 				}
 			}
 			else
 				elog(ERROR, "unsupported indexqual type: %d",
 					 (int) nodeTag(clause));
 
-<<<<<<< HEAD
-		/* check for equality operator */
-		if (OidIsValid(clause_op))
-		{
-			op_strategy = get_op_opfamily_strategy(clause_op,
-												   index->opfamily[indexcol]);
-			Assert(op_strategy != 0);	/* not a member of opfamily?? */
-			if (op_strategy == BTEqualStrategyNumber)
-			{
-				eqQualHere = true;
-
-				/* CDB: Count leading indexcols having '=' quals. */
-				if (!IsA(clause, ScalarArrayOpExpr))
-					index->num_leading_eq = indexcol + 1;
-			}
-		}
-=======
 			/* check for equality operator */
 			if (OidIsValid(clause_op))
 			{
@@ -7884,9 +6135,14 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 													   index->opfamily[indexcol]);
 				Assert(op_strategy != 0);	/* not a member of opfamily?? */
 				if (op_strategy == BTEqualStrategyNumber)
+				{
 					eqQualHere = true;
+
+					/* CDB: Count leading indexcols having '=' quals. */
+					if (!IsA(clause, ScalarArrayOpExpr))
+						index->num_leading_eq = indexcol + 1;
+				}
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			indexBoundQuals = lappend(indexBoundQuals, rinfo);
 		}
@@ -7899,11 +6155,7 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 * NullTest invalidates that theory, even though it sets eqQualHere.
 	 */
 	if (index->unique &&
-<<<<<<< HEAD
-        index->num_leading_eq == index->ncolumns &&
-=======
-		indexcol == index->nkeycolumns - 1 &&
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		index->num_leading_eq == index->nkeycolumns &&
 		eqQualHere &&
 		!found_saop &&
 		!found_is_null_op)
@@ -9122,18 +7374,8 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 * regular pages, as revmap might point to them out of sequential order;
 	 * calculate the total cost as reading the whole index in random order.
 	 */
-<<<<<<< HEAD
-	*indexTotalCost = spc_random_page_cost * numPages * loop_count;
-
-	*indexSelectivity =
-		clauselist_selectivity(root, indexQuals,
-							   path->indexinfo->rel->relid,
-							   JOIN_INNER, NULL, false);
-	*indexCorrelation = 1;
-=======
 	*indexTotalCost = *indexStartupCost +
 		spc_random_page_cost * (numPages - statsData.revmapNumPages) * loop_count;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Charge a small amount per range tuple which we expect to match to. This
