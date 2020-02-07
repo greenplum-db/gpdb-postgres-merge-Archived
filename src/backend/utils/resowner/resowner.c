@@ -1365,23 +1365,6 @@ PrintDSMLeakWarning(dsm_segment *seg)
 }
 
 /*
-<<<<<<< HEAD
- * Cdb: walk through a resource owner and it's childrens
- */
-void
-CdbResourceOwnerWalker(ResourceOwner owner, ResourceWalkerCallback callback)
-{
-	ResourceOwner child;
-
-	if (!owner)
-		return;
-
-	(*callback)(owner);
-
-	/* Recurse to handle descendants */
-	for (child = owner->firstchild; child != NULL; child = child->nextchild)
-		CdbResourceOwnerWalker(child, callback);
-=======
  * Make sure there is room for at least one more entry in a ResourceOwner's
  * JIT context reference array.
  *
@@ -1414,5 +1397,22 @@ ResourceOwnerForgetJIT(ResourceOwner owner, Datum handle)
 	if (!ResourceArrayRemove(&(owner->jitarr), handle))
 		elog(ERROR, "JIT context %p is not owned by resource owner %s",
 			 DatumGetPointer(handle), owner->name);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+}
+
+/*
+ * Cdb: walk through a resource owner and it's childrens
+ */
+void
+CdbResourceOwnerWalker(ResourceOwner owner, ResourceWalkerCallback callback)
+{
+	ResourceOwner child;
+
+	if (!owner)
+		return;
+
+	(*callback)(owner);
+
+	/* Recurse to handle descendants */
+	for (child = owner->firstchild; child != NULL; child = child->nextchild)
+		CdbResourceOwnerWalker(child, callback);
 }

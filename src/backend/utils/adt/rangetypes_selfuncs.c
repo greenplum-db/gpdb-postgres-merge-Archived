@@ -413,11 +413,7 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 	hist_upper = (RangeBound *) palloc(sizeof(RangeBound) * nhist);
 	for (i = 0; i < nhist; i++)
 	{
-<<<<<<< HEAD
-		range_deserialize(typcache, DatumGetRangeType(hslot.values[i]),
-=======
 		range_deserialize(typcache, DatumGetRangeTypeP(hslot.values[i]),
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  &hist_lower[i], &hist_upper[i], &empty);
 		/* The histogram should not contain any empty ranges */
 		if (empty)

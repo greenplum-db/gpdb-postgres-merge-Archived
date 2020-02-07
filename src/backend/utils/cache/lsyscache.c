@@ -2227,17 +2227,6 @@ get_func_leakproof(Oid funcid)
 }
 
 /*
-<<<<<<< HEAD
- * func_data_access
- *		Given procedure id, return the function's data access flag.
- */
-char
-func_data_access(Oid funcid)
-{
-	HeapTuple	tp;
-	char		result;
-	bool		isnull;
-=======
  * get_func_support
  *
  *		Returns the support function OID associated with a given function,
@@ -2247,7 +2236,6 @@ RegProcedure
 get_func_support(Oid funcid)
 {
 	HeapTuple	tp;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (HeapTupleIsValid(tp))
@@ -2255,7 +2243,29 @@ get_func_support(Oid funcid)
 		Form_pg_proc functup = (Form_pg_proc) GETSTRUCT(tp);
 		RegProcedure result;
 
-<<<<<<< HEAD
+		result = functup->prosupport;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return (RegProcedure) InvalidOid;
+}
+
+/*
+ * func_data_access
+ *		Given procedure id, return the function's data access flag.
+ */
+char
+func_data_access(Oid funcid)
+{
+	HeapTuple	tp;
+	char		result;
+	bool		isnull;
+
+	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+
 	result = DatumGetChar(
 		SysCacheGetAttr(PROCOID, tp, Anum_pg_proc_prodataaccess, &isnull));
 	ReleaseSysCache(tp);
@@ -2285,14 +2295,6 @@ func_exec_location(Oid funcid)
 
 	Assert(!isnull);
 	return result;
-=======
-		result = functup->prosupport;
-		ReleaseSysCache(tp);
-		return result;
-	}
-	else
-		return (RegProcedure) InvalidOid;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*				---------- RELATION CACHE ----------					 */
@@ -3605,14 +3607,9 @@ get_attnullfrac(Oid relid, AttrNumber attnum)
  * reqop: STAOP value wanted, or InvalidOid if don't care.
  * flags: bitmask of ATTSTATSSLOT_VALUES and/or ATTSTATSSLOT_NUMBERS.
  *
-<<<<<<< HEAD
- * If a matching slot is found, TRUE is returned, and *sslot is filled thus:
- * staop: receives the actual STAOP value.
-=======
  * If a matching slot is found, true is returned, and *sslot is filled thus:
  * staop: receives the actual STAOP value.
  * stacoll: receives the actual STACOLL value.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * valuetype: receives actual datatype of the elements of stavalues.
  * values: receives pointer to an array of the slot's stavalues.
  * nvalues: receives number of stavalues.
@@ -3623,15 +3620,11 @@ get_attnullfrac(Oid relid, AttrNumber attnum)
  * wasn't specified.  Likewise, numbers/nnumbers are NULL/0 if
  * ATTSTATSSLOT_NUMBERS wasn't specified.
  *
-<<<<<<< HEAD
- * If no matching slot is found, FALSE is returned, and *sslot is zeroed.
-=======
  * If no matching slot is found, false is returned, and *sslot is zeroed.
  *
  * Note that the current API doesn't allow for searching for a slot with
  * a particular collation.  If we ever actually support recording more than
  * one collation, we'll have to extend the API, but for now simple is good.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * The data referred to by the fields of sslot is locally palloc'd and
  * is independent of the original pg_statistic tuple.  When the caller
@@ -3667,9 +3660,6 @@ get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 		return false;			/* not there */
 
 	sslot->staop = (&stats->staop1)[i];
-<<<<<<< HEAD
-
-=======
 	sslot->stacoll = (&stats->stacoll1)[i];
 
 	/*
@@ -3685,7 +3675,6 @@ get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 	if (sslot->stacoll == InvalidOid)
 		sslot->stacoll = DEFAULT_COLLATION_OID;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (flags & ATTSTATSSLOT_VALUES)
 	{
 		val = SysCacheGetAttr(STATRELATTINH, statstuple,

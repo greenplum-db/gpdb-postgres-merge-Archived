@@ -59,23 +59,7 @@ SampleNext(SampleScanState *node)
 	/*
 	 * get the next tuple, and store it in our result slot
 	 */
-<<<<<<< HEAD
-	tuple = tablesample_getnext(node);
-
-	slot = node->ss.ss_ScanTupleSlot;
-
-	if (tuple)
-		ExecStoreHeapTuple(tuple,	/* tuple to store */
-					   slot,	/* slot to store in */
-					   node->ss_currentScanDesc_heap->rs_cbuf,	/* tuple's buffer */
-					   false);	/* don't pfree this pointer */
-	else
-		ExecClearTuple(slot);
-
-	return slot;
-=======
 	return tablesample_getnext(node);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -290,18 +274,14 @@ ExecEndSampleScan(SampleScanState *node)
 	/*
 	 * close heap scan
 	 */
+	if (node->ss.ss_currentScanDesc)
+		table_endscan(node->ss.ss_currentScanDesc);
 <<<<<<< HEAD
-	if (node->ss_currentScanDesc_heap)
-		heap_endscan(node->ss_currentScanDesc_heap);
 
 	/*
 	 * close the heap relation.
 	 */
 	ExecCloseScanRelation(node->ss.ss_currentRelation);
-=======
-	if (node->ss.ss_currentScanDesc)
-		table_endscan(node->ss.ss_currentScanDesc);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* ----------------------------------------------------------------

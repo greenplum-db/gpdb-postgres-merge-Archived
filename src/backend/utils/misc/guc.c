@@ -3723,11 +3723,9 @@ static struct config_string ConfigureNamesString[] =
 			GUC_NO_SHOW_ALL
 		},
 		&Log_line_prefix,
-<<<<<<< HEAD
+		/* GPDB_12_MERGE_FIXME: Could we adopt the upstream's default? Is there some
+		 * reason for this particular prefix in GPDB? */
 		"%m|%u|%d|%p|%I|%X|:-",
-=======
-		"%m [%p] ",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		NULL, NULL, NULL
 	},
 
@@ -8494,18 +8492,13 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 	{
 		case VAR_SET_VALUE:
 		case VAR_SET_CURRENT:
-<<<<<<< HEAD
 			if (stmt->is_local &&
 				Gp_role != GP_ROLE_EXECUTE && !IsBootstrapProcessingMode())
 			{
-				WarnNoTransactionChain(isTopLevel, "SET LOCAL");
+				WarnNoTransactionBlock(isTopLevel, "SET LOCAL");
 			}
 
 			SIMPLE_FAULT_INJECTOR("set_variable_fault");
-=======
-			if (stmt->is_local)
-				WarnNoTransactionBlock(isTopLevel, "SET LOCAL");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			(void) set_config_option(stmt->name,
 									 ExtractSetVariableArgs(stmt),
 									 (superuser() ? PGC_SUSET : PGC_USERSET),
