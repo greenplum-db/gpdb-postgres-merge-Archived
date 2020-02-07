@@ -10733,18 +10733,734 @@
   proname => 'pg_partition_root', prorettype => 'regclass',
   proargtypes => 'regclass', prosrc => 'pg_partition_root' },
 
-# GPDB additions
+#
+# GPDB ADDITIONS START HERE
+#
 
-#MPP -- array_sum/add -- special for prospective customer 
-{ oid => '7111', descr => 'itemwise add two integer arrays',
-  proname => 'array_add', proisstrict => 't',
-  provolatile => 'i', proparallel => 's', prorettype => '_int4',
-  prorettype => '_int4', proargtypes => '_int4 _int4',
-  prosrc => 'array_int4_add' },
+{ oid => 6115, descr => 'implementation of / operator', 
+   proname => 'interval_interval_div', prorettype => 'float8', proargtypes => '[0:1]={interval,interval}', prosrc => 'interval_interval_div', },
 
-{ oid => '7112', descr => 'array sum aggregate',
-  proname => 'array_sum', prokind => 'a', proisstrict => 'f',
-  prorettype => '_int4', proargtypes => '_int4',
-  prosrc => 'aggregate_dummy' },
+{ oid => 6116, descr => 'implementation of % operator', 
+   proname => 'interval_interval_mod', prorettype => 'interval', proargtypes => '[0:1]={interval,interval}', prosrc => 'interval_interval_mod', },
 
-]
+# GPDB_12_MERGE_FIXME: Shouldn't the description be "*decrement* by one"?
+{ oid => 6997, descr => 'increment by one', 
+   proname => 'numeric_dec', prorettype => 'numeric', proargtypes => '[0:0]={numeric}', prosrc => 'numeric_dec', },
+
+
+# Sequences and time series
+{ oid => 7082, descr => 'boundary of the interval containing the given value', 
+   proname => 'interval_bound', prorettype => 'numeric', proargtypes => '[0:1]={numeric,numeric}', prosrc => 'numeric_interval_bound', },
+
+{ oid => 7083, descr => 'boundary of the interval containing the given value', 
+   proname => 'interval_bound', proisstrict => 'f', prorettype => 'numeric', proargtypes => '[0:2]={numeric,numeric,integer}', prosrc => 'numeric_interval_bound_shift', },
+
+{ oid => 7084, descr => 'boundary of the interval containing the given value', 
+   proname => 'interval_bound', proisstrict => 'f', prorettype => 'numeric', proargtypes => '[0:3]={numeric,numeric,integer,numeric}', prosrc => 'numeric_interval_bound_shift_rbound', },
+
+{ oid => 7085, descr => 'boundary of the interval containing the given value', 
+   proname => 'interval_bound', prorettype => 'timestamp', proargtypes => '[0:1]={"timestamp without time zone",interval}', prosrc => 'timestamp_interval_bound', },
+
+{ oid => 7086, descr => 'boundary of the interval containing the given value', 
+   proname => 'interval_bound', proisstrict => 'f', prorettype => 'timestamp', proargtypes => '[0:2]={"timestamp without time zone",interval,integer}', prosrc => 'timestamp_interval_bound_shift', },
+
+{ oid => 7087, descr => 'boundary of the interval containing the given value', 
+   proname => 'interval_bound', proisstrict => 'f', prorettype => 'timestamp', proargtypes => '[0:3]={"timestamp without time zone",interval,integer,"timestamp without time zone"}', prosrc => 'timestamp_interval_bound_shift_reg', },
+
+{ oid => 7088, descr => 'boundary of the interval containing the given value', 
+   proname => 'interval_bound', prorettype => 'timestamptz', proargtypes => '[0:1]={"timestamp with time zone",interval}', prosrc => 'timestamptz_interval_bound', },
+
+{ oid => 7089, descr => 'boundary of the interval containing the given value', 
+   proname => 'interval_bound', proisstrict => 'f', prorettype => 'timestamptz', proargtypes => '[0:2]={"timestamp with time zone",interval,integer}', prosrc => 'timestamptz_interval_bound_shift', },
+
+{ oid => 7090, descr => 'boundary of the interval containing the given value', 
+   proname => 'interval_bound', proisstrict => 'f', prorettype => 'timestamptz', proargtypes => '[0:3]={"timestamp with time zone",interval,integer,"timestamp with time zone"}', prosrc => 'timestamptz_interval_bound_shift_reg', },
+
+# Aggregate-related functions
+{ oid => 6031, descr => 'Statistics: Number of queries that executed in queue', 
+   proname => 'pg_stat_get_queue_num_exec', provolatile => 's', proparallel => 'r', prorettype => 'int8', proargtypes => '[0:0]={oid}', prosrc => 'pg_stat_get_queue_num_exec', },
+
+{ oid => 6032, descr => 'Statistics: Number of queries that waited in queue', 
+   proname => 'pg_stat_get_queue_num_wait', provolatile => 's', proparallel => 'r', prorettype => 'int8', proargtypes => '[0:0]={oid}', prosrc => 'pg_stat_get_queue_num_wait', },
+
+{ oid => 6033, descr => 'Statistics: Elapsed seconds for queries that executed in queue', 
+   proname => 'pg_stat_get_queue_elapsed_exec', provolatile => 's', proparallel => 'r', prorettype => 'int8', proargtypes => '[0:0]={oid}', prosrc => 'pg_stat_get_queue_elapsed_exec', },
+
+{ oid => 6034, descr => 'Statistics: Elapsed seconds for queries that waited in queue', 
+   proname => 'pg_stat_get_queue_elapsed_wait', provolatile => 's', proparallel => 'r', prorettype => 'int8', proargtypes => '[0:0]={oid}', prosrc => 'pg_stat_get_queue_elapsed_wait', },
+
+{ oid => 6039, descr => 'Statistics: Greenplum session id of backend', 
+   proname => 'pg_stat_get_backend_session_id', provolatile => 's', proparallel => 'r', prorettype => 'int4', proargtypes => '[0:0]={integer}', prosrc => 'pg_stat_get_backend_session_id', },
+
+{ oid => 6042, descr => 'change priority of all the backends for a given session id', 
+   proname => 'pg_renice_session', provolatile => 'v', proparallel => 'r', prorettype => 'int4', proargtypes => '[0:1]={integer,integer}', prosrc => 'pg_renice_session', },
+
+{ oid => 7098, descr => 'get replication error', 
+   proname => 'gp_replication_error', provolatile => 'v', proparallel => 'r', prorettype => 'text', proargtypes => '{}', prosrc => 'gp_replication_error', },
+
+{ oid => 7154, descr => 'terminate a server process', 
+   proname => 'pg_terminate_backend', provolatile => 'v', prorettype => 'bool', proargtypes => '[0:1]={integer,text}', prosrc => 'pg_terminate_backend_msg', },
+
+{ oid => 6065, descr => 'statistics: information about resource groups in key-value style', 
+   proname => 'pg_resgroup_get_status_kv', prorows => '1000', proisstrict => 'f', proretset => 't', provolatile => 'v', proparallel => 'r', prorettype => 'record', proargtypes => '[0:0]={text}', proallargtypes => '[0:0]={text}', proargmodes => '{i,o,o,o}', proargnames => '{prop_in,rsgid,prop,value}', prosrc => 'pg_resgroup_get_status_kv', },
+
+{ oid => 6066, descr => 'statistics: information about resource groups', 
+   proname => 'pg_resgroup_get_status', prorows => '1000', proisstrict => 'f', proretset => 't', provolatile => 'v', proparallel => 'r', prorettype => 'record', proargtypes => '[0:0]={oid}', proallargtypes => '[0:0]={oid}', proargmodes => '{i,o,o,o,o,o,o,o,o}', proargnames => '{groupid,groupid,num_running,num_queueing,num_queued,num_executed,total_queue_duration,cpu_usage,memory_usage}', prosrc => 'pg_resgroup_get_status', },
+
+{ oid => 6036, descr => 'waiting relation information', 
+   proname => 'gp_dist_wait_status', prorows => '1000', proisstrict => 'f', proretset => 't', provolatile => 'v', proparallel => 'r', prorettype => 'record', proargtypes => '{}', proallargtypes => '{}', proargmodes => '{o,o,o,o,o,o,o,o,o,o}', proargnames => '{segid,waiter_dxid,holder_dxid,holdTillEndXact,waiter_lpid,holder_lpid,waiter_lockmode,waiter_locktype,waiter_sessionid,holder_sessionid}', prosrc => 'gp_dist_wait_status', },
+
+{ oid => 6030, descr => 'Return resource queue information', 
+   proname => 'pg_resqueue_status', prorows => '1000', proretset => 't', provolatile => 'v', proparallel => 'r', prorettype => 'record', proargtypes => '{}', prosrc => 'pg_resqueue_status', },
+
+{ oid => 6069, descr => 'Return resource queue information', 
+   proname => 'pg_resqueue_status_kv', prorows => '1000', proretset => 't', provolatile => 'v', proparallel => 'r', prorettype => 'record', proargtypes => '{}', prosrc => 'pg_resqueue_status_kv', },
+
+
+# contrib/adminpack functions, brought to core in GPDB.
+# GPDB_12_MERGE_FIXME: Why?
+{ oid => 6045, descr => 'Read text from a file', 
+   proname => 'pg_file_read', provolatile => 'v', prorettype => 'text', proargtypes => '[0:2]={text,bigint,bigint}', prosrc => 'pg_read_file', },
+
+{ oid => 6046, descr => 'Rotate log file', 
+   proname => 'pg_logfile_rotate', provolatile => 'v', prorettype => 'bool', proargtypes => '{}', prosrc => 'pg_rotate_logfile', },
+
+{ oid => 6047, descr => 'Write text to a file', 
+   proname => 'pg_file_write', provolatile => 'v', prorettype => 'int8', proargtypes => '[0:2]={text,text,boolean}', prosrc => 'pg_file_write', },
+
+{ oid => 6048, descr => 'Rename a file', 
+   proname => 'pg_file_rename', proisstrict => 'f', provolatile => 'v', prorettype => 'bool', proargtypes => '[0:2]={text,text,text}', prosrc => 'pg_file_rename', },
+
+{ oid => 6049, descr => 'Delete (unlink) a file', 
+   proname => 'pg_file_unlink', provolatile => 'v', prorettype => 'bool', proargtypes => '[0:0]={text}', prosrc => 'pg_file_unlink', },
+
+{ oid => 6050, descr => 'ls the log dir', 
+   proname => 'pg_logdir_ls', prorows => '1000', proretset => 't', provolatile => 'v', prorettype => 'record', proargtypes => '{}', prosrc => 'pg_logdir_ls', },
+
+{ oid => 6051, descr => 'Get the length of a file (via stat)', 
+   proname => 'pg_file_length', provolatile => 'v', prorettype => 'int8', proargtypes => '[0:0]={text}', prosrc => 'pg_file_length', },
+
+
+# MPP Aggregate -- array_sum -- special for prospective customer. 
+{ oid => 5067, descr => 'array sum aggregate', 
+   proname => 'array_sum', proisstrict => 'f', prorettype => '_int4', proargtypes => '[0:0]={integer[]}', prosrc => 'aggregate_dummy', },
+
+# Greenplum Analytic functions
+{ oid => 6212, descr => 'perform matrix addition on two conformable matrices', 
+   proname => 'int2_matrix_accum', proisstrict => 'f', prorettype => '_int8', proargtypes => '[0:1]={bigint[],smallint[]}', prosrc => 'matrix_add', },
+
+{ oid => 6213, descr => 'perform matrix addition on two conformable matrices', 
+   proname => 'int4_matrix_accum', proisstrict => 'f', prorettype => '_int8', proargtypes => '[0:1]={bigint[],integer[]}', prosrc => 'matrix_add', },
+
+{ oid => 6214, descr => 'perform matrix addition on two conformable matrices', 
+   proname => 'int8_matrix_accum', prorettype => '_int8', proargtypes => '[0:1]={bigint[],bigint[]}', prosrc => 'matrix_add', },
+
+{ oid => 6215, descr => 'perform matrix addition on two conformable matrices', 
+   proname => 'float8_matrix_accum', prorettype => '_float8', proargtypes => '[0:1]={"double precision[]","double precision[]"}', prosrc => 'matrix_add', },
+
+{ oid => 6216, descr => 'sum of matrixes', 
+   proname => 'sum', proisstrict => 'f', prorettype => '_int8', proargtypes => '[0:0]={smallint[]}', prosrc => 'aggregate_dummy', },
+
+{ oid => 6217, descr => 'sum of matrixes', 
+   proname => 'sum', proisstrict => 'f', prorettype => '_int8', proargtypes => '[0:0]={integer[]}', prosrc => 'aggregate_dummy', },
+
+{ oid => 6218, descr => 'sum of matrixes', 
+   proname => 'sum', proisstrict => 'f', prorettype => '_int8', proargtypes => '[0:0]={bigint[]}', prosrc => 'aggregate_dummy', },
+
+{ oid => 6219, descr => 'sum of matrixes', 
+   proname => 'sum', proisstrict => 'f', prorettype => '_float8', proargtypes => '[0:0]={"double precision[]"}', prosrc => 'aggregate_dummy', },
+
+# 3220 - reserved for sum(numeric[]) 
+{ oid => 6225, descr => 'aggregate transition function', 
+   proname => 'int4_pivot_accum', proisstrict => 'f', prorettype => '_int4', proargtypes => '[0:3]={integer[],text[],text,integer}', prosrc => 'int4_pivot_accum', },
+
+{ oid => 6226, descr => 'pivot sum aggregate', 
+   proname => 'pivot_sum', proisstrict => 'f', prorettype => '_int4', proargtypes => '[0:2]={text[],text,integer}', prosrc => 'aggregate_dummy', },
+
+{ oid => 6227, descr => 'aggregate transition function', 
+   proname => 'int8_pivot_accum', proisstrict => 'f', prorettype => '_int8', proargtypes => '[0:3]={bigint[],text[],text,bigint}', prosrc => 'int8_pivot_accum', },
+
+{ oid => 6228, descr => 'pivot sum aggregate', 
+   proname => 'pivot_sum', proisstrict => 'f', prorettype => '_int8', proargtypes => '[0:2]={text[],text,bigint}', prosrc => 'aggregate_dummy', },
+
+{ oid => 6229, descr => 'aggregate transition function', 
+   proname => 'float8_pivot_accum', proisstrict => 'f', prorettype => '_float8', proargtypes => '[0:3]={"double precision[]",text[],text,"double precision"}', prosrc => 'float8_pivot_accum', },
+
+{ oid => 6230, descr => 'pivot sum aggregate', 
+   proname => 'pivot_sum', proisstrict => 'f', prorettype => '_float8', proargtypes => '[0:2]={text[],text,"double precision"}', prosrc => 'aggregate_dummy', },
+
+# 3241-324? reserved for unpivot, see pivot.c 
+
+# Greenplum MPP exposed internally-defined functions. 
+{ oid => 5065, descr => 'view mpp pgdatabase state', 
+   proname => 'gp_pgdatabase', prorows => '1000', proisstrict => 'f', proretset => 't', provolatile => 'v', prorettype => 'record', proargtypes => '{}', prosrc => 'gp_pgdatabase__', },
+
+{ oid => 6022, descr => 'segment executing function', 
+   proname => 'gp_execution_segment', prorows => '1000', proisstrict => 'f', proretset => 't', provolatile => 'v', prorettype => 'int4', proargtypes => '{}', prosrc => 'mpp_execution_segment', },
+
+{ oid => 6023, descr => 'Highest oid used so far', 
+   proname => 'pg_highest_oid', provolatile => 'v', proparallel => 'u', prorettype => 'oid', proargtypes => '{}', prosrc => 'pg_highest_oid', prodataaccess => 'r', },
+
+{ oid => 6035, descr => 'view mpp distributed transaction state', 
+   proname => 'gp_distributed_xacts', prorows => '1000', proisstrict => 'f', proretset => 't', provolatile => 'v', proparallel => 'u', prorettype => 'record', proargtypes => '{}', prosrc => 'gp_distributed_xacts__', },
+
+{ oid => 6037, descr => 'Current distributed transaction id', 
+   proname => 'gp_distributed_xid', provolatile => 'v', proparallel => 'u', prorettype => 'xid', proargtypes => '{}', prosrc => 'gp_distributed_xid', },
+
+{ oid => 6043, descr => 'view logged local transaction status', 
+   proname => 'gp_transaction_log', prorows => '1000', proisstrict => 'f', proretset => 't', provolatile => 'v', proparallel => 'u', prorettype => 'record', proargtypes => '{}', prosrc => 'gp_transaction_log', },
+
+{ oid => 6044, descr => 'view logged distributed transaction status', 
+   proname => 'gp_distributed_log', prorows => '1000', proisstrict => 'f', proretset => 't', provolatile => 'v', proparallel => 'u', prorettype => 'record', proargtypes => '{}', prosrc => 'gp_distributed_log', },
+
+{ oid => 6068, descr => 'dbid executing function', 
+   proname => 'gp_execution_dbid', proisstrict => 'f', provolatile => 'v', proparallel => 'u', prorettype => 'int4', proargtypes => '{}', prosrc => 'gp_execution_dbid', },
+
+{ oid => 7169, descr => 'show append only table tuple distribution across segment databases', 
+   proname => 'get_ao_distribution', prorows => '1000', proisstrict => 'f', proretset => 't', provolatile => 'v', proparallel => 'u', prorettype => 'record', proargtypes => '[0:0]={regclass}', proallargtypes => '[0:0]={regclass}', proargmodes => '{i,o,o}', proargnames => '{rel,segmentid,tupcount}', prosrc => 'get_ao_distribution', prodataaccess => 'r', },
+
+{ oid => 7171, descr => 'show append only table compression ratio', 
+   proname => 'get_ao_compression_ratio', provolatile => 'v', proparallel => 'u', prorettype => 'float8', proargtypes => '[0:0]={regclass}', prosrc => 'get_ao_compression_ratio', prodataaccess => 'r', },
+
+{ oid => 7173, descr => 'append only tables utility function', 
+   proname => 'gp_update_ao_master_stats', proisstrict => 'f', provolatile => 'v', proparallel => 'u', prorettype => 'int8', proargtypes => '[0:0]={regclass}', prosrc => 'gp_update_ao_master_stats', prodataaccess => 'm', },
+
+{ oid => 7050, descr => 'bitmap(internal)', 
+   proname => 'bmhandler', provolatile => 'v', prorettype => 'index_am_handler', proargtypes => '[0:0]={internal}', prosrc => 'bmhandler', },
+
+
+# AOCS functions.
+{ oid => 9900, descr => 'decode internal AOCSVPInfo struct', 
+   proname => 'aocsvpinfo_decode', proparallel => 'u', prorettype => 'int8', proargtypes => '[0:2]={bytea,integer,integer}', prosrc => 'aocsvpinfo_decode', },
+
+# raises deprecation error
+{ oid => 9997, descr => 'raises function deprecation error', 
+   proname => 'gp_deprecated', proisstrict => 'f', prorettype => 'void', proargtypes => '{}', prosrc => 'gp_deprecated', },
+
+# Analyze related
+{ oid => 6038, descr => 'Collect a random sample of rows from table', 
+   proname => 'gp_acquire_sample_rows', prorows => '1000', proretset => 't', provolatile => 'v', proparallel => 'u', prorettype => 'record', proargtypes => '[0:2]={oid,integer,boolean}', prosrc => 'gp_acquire_sample_rows', proexeclocation = 's', },
+
+# Backoff related
+{ oid => 5040, descr => 'change weight of all the backends for a given session id', 
+   proname => 'gp_adjust_priority', provolatile => 'v', proparallel => 'u', prorettype => 'int4', proargtypes => '[0:2]={integer,integer,integer}', prosrc => 'gp_adjust_priority_int', },
+
+{ oid => 5041, descr => 'change weight of all the backends for a given session id', 
+   proname => 'gp_adjust_priority', provolatile => 'v', proparallel => 'u', prorettype => 'int4', proargtypes => '[0:2]={integer,integer,text}', prosrc => 'gp_adjust_priority_value', },
+
+{ oid => 5042, descr => 'list priorities of backends', 
+   proname => 'gp_list_backend_priorities', prorows => '1000', proisstrict => 'f', proretset => 't', provolatile => 'v', proparallel => 'u', prorettype => 'record', proargtypes => '{}', prosrc => 'gp_list_backend_priorities', },
+
+# Functions to deal with SREH error logs
+{ oid => 7076, descr => 'read the error log for the specified external table', 
+   proname => 'gp_read_error_log', prorows => '1000', proretset => 't', provolatile => 'v', prorettype => 'record', proargtypes => '[0:0]={text}', proallargtypes => '[0:0]={text}', proargmodes => '{i,o,o,o,o,o,o,o,o}', proargnames => '{exttable,cmdtime,relname,filename,linenum,bytenum,errmsg,rawdata,rawbytes}', prosrc => 'gp_read_error_log', proexeclocation = 's', },
+
+{ oid => 7069, descr => 'truncate the error log for the specified external table', 
+   proname => 'gp_truncate_error_log', provolatile => 'v', prorettype => 'bool', proargtypes => '[0:0]={text}', prosrc => 'gp_truncate_error_log', },
+
+# elog related
+{ oid => 5044, descr => 'Insert text into the error log', 
+   proname => 'gp_elog', prorettype => 'void', proargtypes => '[0:0]={text}', prosrc => 'gp_elog', },
+
+{ oid => 5045, descr => 'Insert text into the error log', 
+   proname => 'gp_elog', prorettype => 'void', proargtypes => '[0:1]={text,boolean}', prosrc => 'gp_elog', },
+
+
+# Segment and master administration functions, see utils/gp/segadmin.c
+{ oid => 5046, descr => 'Perform the catalog operations necessary for adding a new standby', 
+   proname => 'gp_add_master_standby', proisstrict => 'f', provolatile => 'v', proparallel => 'r', prorettype => 'int2', proargtypes => '[0:2]={text,text,text}', prosrc => 'gp_add_master_standby', },
+
+{ oid => 5038, descr => 'Perform the catalog operations necessary for adding a new standby', 
+   proname => 'gp_add_master_standby', proisstrict => 'f', provolatile => 'v', proparallel => 'r', prorettype => 'int2', proargtypes => '[0:3]={text,text,text,integer}', prosrc => 'gp_add_master_standby_port', },
+
+{ oid => 5047, descr => 'Remove a master standby from the system catalog', 
+   proname => 'gp_remove_master_standby', proisstrict => 'f', provolatile => 'v', proparallel => 'r', prorettype => 'bool', proargtypes => '{}', prosrc => 'gp_remove_master_standby', },
+
+{ oid => 5039, descr => 'Perform the catalog operations necessary for adding a new primary segment', 
+   proname => 'gp_add_segment_primary', proisstrict => 'f', provolatile => 'v', proparallel => 'r', prorettype => 'int2', proargtypes => '[0:3]={text,text,integer,text}', prosrc => 'gp_add_segment_primary', },
+
+{ oid => 5048, descr => 'Perform the catalog operations necessary for adding a new segment mirror', 
+   proname => 'gp_add_segment_mirror', proisstrict => 'f', provolatile => 'v', proparallel => 'r', prorettype => 'int2', proargtypes => '[0:4]={smallint,text,text,integer,text}', prosrc => 'gp_add_segment_mirror', },
+
+{ oid => 5049, descr => 'Remove a segment mirror from the system catalog', 
+   proname => 'gp_remove_segment_mirror', proisstrict => 'f', provolatile => 'v', proparallel => 'r', prorettype => 'bool', proargtypes => '[0:0]={smallint}', prosrc => 'gp_remove_segment_mirror', },
+
+{ oid => 5050, descr => 'Perform the catalog operations necessary for adding a new segment', 
+   proname => 'gp_add_segment', proisstrict => 'f', provolatile => 'v', proparallel => 'r', prorettype => 'int2', proargtypes => '[0:9]={smallint,smallint,"\"char\"","\"char\"","\"char\"","\"char\"",integer,text,text,text}', prosrc => 'gp_add_segment', },
+
+{ oid => 5080, descr => 'Lock catalog changes for gpexpand', 
+   proname => 'gp_expand_lock_catalog', proisstrict => 'f', provolatile => 'v', proparallel => 'r', prorettype => 'void', proargtypes => '{}', prosrc => 'gp_expand_lock_catalog', },
+
+{ oid => 5081, descr => 'bump gpexpand version', 
+   proname => 'gp_expand_bump_version', proisstrict => 'f', provolatile => 'v', proparallel => 'r', prorettype => 'void', proargtypes => '{}', prosrc => 'gp_expand_bump_version', },
+
+{ oid => 5051, descr => 'Remove a primary segment from the system catalog', 
+   proname => 'gp_remove_segment', proisstrict => 'f', provolatile => 'v', proparallel => 'r', prorettype => 'bool', proargtypes => '[0:0]={smallint}', prosrc => 'gp_remove_segment', },
+
+{ oid => 5035, descr => 'Request a FTS probe scan and wait for response', 
+   proname => 'gp_request_fts_probe_scan', proisstrict => 'f', provolatile => 'v', prorettype => 'bool', proargtypes => '{}', prosrc => 'gp_request_fts_probe_scan', proexeclocation = 'm', },
+
+
+# Hyperbolic trigonometric functions
+{ oid => 7539, descr => 'Hyperbolic cosine function', 
+   proname => 'cosh', proisstrict => 'f', prorettype => 'float8', proargtypes => '[0:0]={"double precision"}', prosrc => 'dcosh', },
+
+{ oid => 7540, descr => 'Hyperbolic sine function', 
+   proname => 'sinh', proisstrict => 'f', prorettype => 'float8', proargtypes => '[0:0]={"double precision"}', prosrc => 'dsinh', },
+
+{ oid => 7541, descr => 'Hyperbolic tangent function', 
+   proname => 'tanh', proisstrict => 'f', prorettype => 'float8', proargtypes => '[0:0]={"double precision"}', prosrc => 'dtanh', },
+
+
+
+{ oid => 7054, descr => 'anytable type serialization input function', 
+   proname => 'anytable_in', prorettype => 'anytable', proargtypes => '[0:0]={cstring}', prosrc => 'anytable_in', },
+
+{ oid => 7055, descr => 'anytable type serialization output function', 
+   proname => 'anytable_out', prorettype => 'cstring', proargtypes => '[0:0]={anytable}', prosrc => 'anytable_out', },
+
+{ oid => 9910, descr => 'zlib constructor', 
+   proname => 'gp_zlib_constructor', proisstrict => 'f', provolatile => 'v', prorettype => 'internal', proargtypes => '[0:2]={internal,internal,boolean}', prosrc => 'zlib_constructor', },
+
+{ oid => 9911, descr => 'zlib destructor', 
+   proname => 'gp_zlib_destructor', proisstrict => 'f', provolatile => 'v', prorettype => 'void', proargtypes => '[0:0]={internal}', prosrc => 'zlib_destructor', },
+
+{ oid => 9912, descr => 'zlib compressor', 
+   proname => 'gp_zlib_compress', proisstrict => 'f', prorettype => 'void', proargtypes => '[0:5]={internal,integer,internal,integer,internal,internal}', prosrc => 'zlib_compress', },
+
+{ oid => 9913, descr => 'zlib decompressor', 
+   proname => 'gp_zlib_decompress', proisstrict => 'f', prorettype => 'void', proargtypes => '[0:5]={internal,integer,internal,integer,internal,internal}', prosrc => 'zlib_decompress', },
+
+{ oid => 9924, descr => 'zlib compression validator', 
+   proname => 'gp_zlib_validator', proisstrict => 'f', prorettype => 'void', proargtypes => '[0:0]={internal}', prosrc => 'zlib_validator', },
+
+{ oid => 9914, descr => 'Type specific RLE constructor', 
+   proname => 'gp_rle_type_constructor', proisstrict => 'f', provolatile => 'v', prorettype => 'internal', proargtypes => '[0:2]={internal,internal,boolean}', prosrc => 'rle_type_constructor', },
+
+{ oid => 9915, descr => 'Type specific RLE destructor', 
+   proname => 'gp_rle_type_destructor', proisstrict => 'f', provolatile => 'v', prorettype => 'void', proargtypes => '[0:0]={internal}', prosrc => 'rle_type_destructor', },
+
+{ oid => 9916, descr => 'Type specific RLE compressor', 
+   proname => 'gp_rle_type_compress', proisstrict => 'f', prorettype => 'void', proargtypes => '[0:5]={internal,integer,internal,integer,internal,internal}', prosrc => 'rle_type_compress', },
+
+{ oid => 9917, descr => 'Type specific RLE decompressor', 
+   proname => 'gp_rle_type_decompress', proisstrict => 'f', prorettype => 'void', proargtypes => '[0:5]={internal,integer,internal,integer,internal,internal}', prosrc => 'rle_type_decompress', },
+
+{ oid => 9923, descr => 'Type specific RLE compression validator', 
+   proname => 'gp_rle_type_validator', proisstrict => 'f', prorettype => 'void', proargtypes => '[0:0]={internal}', prosrc => 'rle_type_validator', },
+
+{ oid => 7064, descr => 'Dummy compression destructor', 
+   proname => 'gp_dummy_compression_constructor', proisstrict => 'f', provolatile => 'v', prorettype => 'internal', proargtypes => '[0:2]={internal,internal,boolean}', prosrc => 'dummy_compression_constructor', },
+
+{ oid => 7065, descr => 'Dummy compression destructor', 
+   proname => 'gp_dummy_compression_destructor', proisstrict => 'f', provolatile => 'v', prorettype => 'internal', proargtypes => '[0:0]={internal}', prosrc => 'dummy_compression_destructor', },
+
+{ oid => 7066, descr => 'Dummy compression compressor', 
+   proname => 'gp_dummy_compression_compress', proisstrict => 'f', provolatile => 'v', prorettype => 'internal', proargtypes => '[0:5]={internal,integer,internal,integer,internal,internal}', prosrc => 'dummy_compression_compress', },
+
+{ oid => 7067, descr => 'Dummy compression decompressor', 
+   proname => 'gp_dummy_compression_decompress', proisstrict => 'f', provolatile => 'v', prorettype => 'internal', proargtypes => '[0:5]={internal,integer,internal,integer,internal,internal}', prosrc => 'dummy_compression_decompress', },
+
+{ oid => 7068, descr => 'Dummy compression validator', 
+   proname => 'gp_dummy_compression_validator', proisstrict => 'f', provolatile => 'v', prorettype => 'internal', proargtypes => '[0:0]={internal}', prosrc => 'dummy_compression_validator', },
+
+
+# Overloaded linear_interpolate variants
+{ oid => 6072, descr => 'linear interpolation: x, x0,y0, x1,y1', 
+   proname => 'linear_interpolate', prorettype => 'int8', proargtypes => '[0:4]={anyelement,anyelement,bigint,anyelement,bigint}', prosrc => 'linterp_int64', },
+
+{ oid => 6073, descr => 'linear interpolation: x, x0,y0, x1,y1', 
+   proname => 'linear_interpolate', prorettype => 'int4', proargtypes => '[0:4]={anyelement,anyelement,integer,anyelement,integer}', prosrc => 'linterp_int32', },
+
+{ oid => 6074, descr => 'linear interpolation: x, x0,y0, x1,y1', 
+   proname => 'linear_interpolate', prorettype => 'int2', proargtypes => '[0:4]={anyelement,anyelement,smallint,anyelement,smallint}', prosrc => 'linterp_int16', },
+
+{ oid => 6075, descr => 'linear interpolation: x, x0,y0, x1,y1', 
+   proname => 'linear_interpolate', prorettype => 'float8', proargtypes => '[0:4]={anyelement,anyelement,"double precision",anyelement,"double precision"}', prosrc => 'linterp_float8', },
+
+{ oid => 6076, descr => 'linear interpolation: x, x0,y0, x1,y1', 
+   proname => 'linear_interpolate', prorettype => 'float4', proargtypes => '[0:4]={anyelement,anyelement,real,anyelement,real}', prosrc => 'linterp_float4', },
+
+{ oid => 6077, descr => 'linear interpolation: x, x0,y0, x1,y1', 
+   proname => 'linear_interpolate', prorettype => 'date', proargtypes => '[0:4]={anyelement,anyelement,date,anyelement,date}', prosrc => 'linterp_DateADT', },
+
+{ oid => 6078, descr => 'linear interpolation: x, x0,y0, x1,y1', 
+   proname => 'linear_interpolate', prorettype => 'time', proargtypes => '[0:4]={anyelement,anyelement,"time without time zone",anyelement,"time without time zone"}', prosrc => 'linterp_TimeADT', },
+
+{ oid => 6079, descr => 'linear interpolation: x, x0,y0, x1,y1', 
+   proname => 'linear_interpolate', prorettype => 'timestamp', proargtypes => '[0:4]={anyelement,anyelement,"timestamp without time zone",anyelement,"timestamp without time zone"}', prosrc => 'linterp_Timestamp', },
+
+{ oid => 6080, descr => 'linear interpolation: x, x0,y0, x1,y1', 
+   proname => 'linear_interpolate', prorettype => 'timestamptz', proargtypes => '[0:4]={anyelement,anyelement,"timestamp with time zone",anyelement,"timestamp with time zone"}', prosrc => 'linterp_TimestampTz', },
+
+{ oid => 6081, descr => 'linear interpolation: x, x0,y0, x1,y1', 
+   proname => 'linear_interpolate', prorettype => 'interval', proargtypes => '[0:4]={anyelement,anyelement,interval,anyelement,interval}', prosrc => 'linterp_Interval', },
+
+{ oid => 6082, descr => 'linear interpolation: x, x0,y0, x1,y1', 
+   proname => 'linear_interpolate', prorettype => 'numeric', proargtypes => '[0:4]={anyelement,anyelement,numeric,anyelement,numeric}', prosrc => 'linterp_Numeric', },
+
+
+
+{ oid => 6086, descr => 'List function and relation OIDs that a query depends on, as a JSON object', 
+   proname => 'gp_dump_query_oids', provolatile => 'v', proparallel => 'r', prorettype => 'text', proargtypes => '[0:0]={text}', prosrc => 'gp_dump_query_oids', },
+
+{ oid => 6087, descr => 'disables transformations in the optimizer', 
+   proname => 'disable_xform', proparallel => 'r', prorettype => 'text', proargtypes => '[0:0]={text}', prosrc => 'disable_xform', },
+
+{ oid => 6088, descr => 'enables transformations in the optimizer', 
+   proname => 'enable_xform', proparallel => 'r', prorettype => 'text', proargtypes => '[0:0]={text}', prosrc => 'enable_xform', },
+
+{ oid => 6089, descr => 'Returns the optimizer and gpos library versions', 
+   proname => 'gp_opt_version', prorettype => 'text', proargtypes => '{}', prosrc => 'gp_opt_version', },
+
+
+# functions for the complex data type
+{ oid => 6460, descr => 'I/O', 
+   proname => 'complex_in', prorettype => 'complex', proargtypes => '[0:0]={cstring}', prosrc => 'complex_in', },
+
+{ oid => 6548, descr => 'I/O', 
+   proname => 'complex_out', prorettype => 'cstring', proargtypes => '[0:0]={complex}', prosrc => 'complex_out', },
+
+{ oid => 6549, descr => 'I/O', 
+   proname => 'complex_recv', prorettype => 'complex', proargtypes => '[0:0]={internal}', prosrc => 'complex_recv', },
+
+{ oid => 6550, descr => 'I/O', 
+   proname => 'complex_send', prorettype => 'bytea', proargtypes => '[0:0]={complex}', prosrc => 'complex_send', },
+
+{ oid => 6551, descr => 'constructs a complex number with given real part and imaginary part', 
+   proname => 'complex', prorettype => 'complex', proargtypes => '[0:1]={"double precision","double precision"}', prosrc => 'construct_complex', },
+
+{ oid => 6552, descr => 'constructs a complex number with given magnitude and phase', 
+   proname => 'complex_trig', prorettype => 'complex', proargtypes => '[0:1]={"double precision","double precision"}', prosrc => 'construct_complex_trig', },
+
+{ oid => 6553, descr => 'returns the real part of the argument', 
+   proname => 're', prorettype => 'float8', proargtypes => '[0:0]={complex}', prosrc => 'complex_re', },
+
+{ oid => 6554, descr => 'returns the imaginary part of the argument', 
+   proname => 'im', prorettype => 'float8', proargtypes => '[0:0]={complex}', prosrc => 'complex_im', },
+
+{ oid => 6555, descr => 'returns the phase of the argument', 
+   proname => 'radians', prorettype => 'float8', proargtypes => '[0:0]={complex}', prosrc => 'complex_arg', },
+
+{ oid => 6556, descr => 'implementation of @ operator', 
+   proname => 'complexabs', prorettype => 'float8', proargtypes => '[0:0]={complex}', prosrc => 'complex_mag', },
+
+{ oid => 6557, descr => 'returns the magnitude of the argument', 
+   proname => 'abs', prorettype => 'float8', proargtypes => '[0:0]={complex}', prosrc => 'complex_mag', },
+
+{ oid => 6558, descr => 'returns the conjunction of the argument', 
+   proname => 'conj', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_conj', },
+
+{ oid => 6559, descr => 'hash', 
+   proname => 'hashcomplex', prorettype => 'int4', proargtypes => '[0:0]={complex}', prosrc => 'complex_hash', },
+
+{ oid => 6560, descr => 'implementation of = operator', 
+   proname => 'complex_eq', prorettype => 'bool', proargtypes => '[0:1]={complex,complex}', prosrc => 'complex_eq', },
+
+{ oid => 6561, descr => 'implementation of <> operator', 
+   proname => 'complex_ne', prorettype => 'bool', proargtypes => '[0:1]={complex,complex}', prosrc => 'complex_ne', },
+
+{ oid => 6562, descr => 'implementation of + operator', 
+   proname => 'complex_pl', prorettype => 'complex', proargtypes => '[0:1]={complex,complex}', prosrc => 'complex_pl', },
+
+{ oid => 6563, descr => 'implementation of + operator', 
+   proname => 'complex_up', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_up', },
+
+{ oid => 6564, descr => 'implementation of - operator', 
+   proname => 'complex_mi', prorettype => 'complex', proargtypes => '[0:1]={complex,complex}', prosrc => 'complex_mi', },
+
+{ oid => 6565, descr => 'implementation of - operator', 
+   proname => 'complex_um', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_um', },
+
+{ oid => 6566, descr => 'implementation of * operator', 
+   proname => 'complex_mul', prorettype => 'complex', proargtypes => '[0:1]={complex,complex}', prosrc => 'complex_mul', },
+
+{ oid => 6567, descr => 'implementation of / operator', 
+   proname => 'complex_div', prorettype => 'complex', proargtypes => '[0:1]={complex,complex}', prosrc => 'complex_div', },
+
+{ oid => 6568, descr => 'implementation of ^ operator', 
+   proname => 'complex_power', prorettype => 'complex', proargtypes => '[0:1]={complex,complex}', prosrc => 'complex_pow', },
+
+{ oid => 6569, descr => 'implementation of |/ operator', 
+   proname => 'complex_sqrt', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_sqrt', },
+
+{ oid => 6570, descr => 'implementation of ||/ operator', 
+   proname => 'complex_cbrt', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_cbrt', },
+
+{ oid => 6571, descr => 'phase to degrees', 
+   proname => 'degrees', prorettype => 'float8', proargtypes => '[0:0]={complex}', prosrc => 'complex_degrees', },
+
+{ oid => 6572, descr => 'natural exponential (e^x)', 
+   proname => 'exp', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_exp', },
+
+{ oid => 5031, descr => 'natural logarithm', 
+   proname => 'ln', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_ln', },
+
+{ oid => 5032, descr => 'base 10 logarithm', 
+   proname => 'log', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_log10', },
+
+{ oid => 5033, descr => 'logarithm base arg1 of arg2', 
+   proname => 'log', prorettype => 'complex', proargtypes => '[0:1]={complex,complex}', prosrc => 'complex_log', },
+
+{ oid => 5053, descr => 'acos', 
+   proname => 'acos', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_acos', },
+
+{ oid => 5082, descr => 'asin', 
+   proname => 'asin', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_asin', },
+
+{ oid => 5083, descr => 'atan', 
+   proname => 'atan', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_atan', },
+
+{ oid => 5084, descr => 'cos', 
+   proname => 'cos', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_cos', },
+
+{ oid => 5052, descr => 'cot', 
+   proname => 'cot', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_cot', },
+
+{ oid => 5054, descr => 'sin', 
+   proname => 'sin', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_sin', },
+
+{ oid => 5055, descr => 'tan', 
+   proname => 'tan', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_tan', },
+
+{ oid => 5056, descr => 'dot product', 
+   proname => 'dotproduct', prorettype => 'complex', proargtypes => '[0:1]={complex[],complex[]}', prosrc => 'complex_dot_product', },
+
+{ oid => 5057, descr => '(internal) type cast from float8 to complex', 
+   proname => 'float82complex', prorettype => 'complex', proargtypes => '[0:0]={"double precision"}', prosrc => 'float82complex', },
+
+{ oid => 5058, descr => '(internal) type cast from float4 to complex', 
+   proname => 'float42complex', prorettype => 'complex', proargtypes => '[0:0]={real}', prosrc => 'float42complex', },
+
+{ oid => 5059, descr => '(internal) type cast from int8 to complex', 
+   proname => 'int82complex', prorettype => 'complex', proargtypes => '[0:0]={bigint}', prosrc => 'int82complex', },
+
+{ oid => 5060, descr => '(internal) type cast from int4 to complex', 
+   proname => 'int42complex', prorettype => 'complex', proargtypes => '[0:0]={integer}', prosrc => 'int42complex', },
+
+{ oid => 5061, descr => '(internal) type cast from int2 to complex', 
+   proname => 'int22complex', prorettype => 'complex', proargtypes => '[0:0]={smallint}', prosrc => 'int22complex', },
+
+{ oid => 5062, descr => 'exponentiation (x^y)', 
+   proname => 'power', prorettype => 'complex', proargtypes => '[0:1]={complex,complex}', prosrc => 'complex_pow', },
+
+{ oid => 5063, descr => 'squre root', 
+   proname => 'sqrt', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_sqrt', },
+
+{ oid => 5064, descr => 'cube root', 
+   proname => 'cbrt', prorettype => 'complex', proargtypes => '[0:0]={complex}', prosrc => 'complex_cbrt', },
+
+{ oid => 7597, descr => '(internal) type cast from numeric to complex', 
+   proname => 'numeric2point', prorettype => 'complex', proargtypes => '[0:0]={numeric}', prosrc => 'numeric2complex', },
+
+{ oid => 7598, descr => 'implementation of << operator', 
+   proname => 'complex_lt', prorettype => 'bool', proargtypes => '[0:1]={complex,complex}', prosrc => 'complex_lt', },
+
+{ oid => 6594, descr => 'implementation of >> operator', 
+   proname => 'complex_gt', prorettype => 'bool', proargtypes => '[0:1]={complex,complex}', prosrc => 'complex_gt', },
+
+{ oid => 6595, descr => 'implementation of <<= operator', 
+   proname => 'complex_lte', prorettype => 'bool', proargtypes => '[0:1]={complex,complex}', prosrc => 'complex_lte', },
+
+{ oid => 7596, descr => 'implementation of >>= operator', 
+   proname => 'complex_gte', prorettype => 'bool', proargtypes => '[0:1]={complex,complex}', prosrc => 'complex_gte', },
+
+
+{ oid => 7158, descr => 'Decode a bytea into gp_hyperloglog counter', 
+   proname => 'gp_hyperloglog_in', prorettype => 'gp_hyperloglog_estimator', proargtypes => '[0:0]={cstring}', proargnames => '{value}', prosrc => 'gp_hyperloglog_in', },
+
+{ oid => 7159, descr => 'Encode a gp_hyperloglog counter into a bytea', 
+   proname => 'gp_hyperloglog_out', prorettype => 'cstring', proargtypes => '[0:0]={gp_hyperloglog_estimator}', proargnames => '{counter}', prosrc => 'gp_hyperloglog_out', },
+
+{ oid => 7160, descr => 'Compress a gp_hyperloglog counter', 
+   proname => 'gp_hyperloglog_comp', prorettype => 'gp_hyperloglog_estimator', proargtypes => '[0:0]={gp_hyperloglog_estimator}', proargnames => '{counter}', prosrc => 'gp_hyperloglog_comp', },
+
+{ oid => 7161, descr => 'Merge two gp_hyperloglog counters into one', 
+   proname => 'gp_hyperloglog_merge', proisstrict => 'f', prorettype => 'gp_hyperloglog_estimator', proargtypes => '[0:1]={gp_hyperloglog_estimator,gp_hyperloglog_estimator}', proargnames => '{estimator1,estimator2}', prosrc => 'gp_hyperloglog_merge', },
+
+{ oid => 7162, descr => 'Estimates the number of distinct values stored in a gp_hyperloglog counter', 
+   proname => 'gp_hyperloglog_get_estimate', prorettype => 'float8', proargtypes => '[0:0]={gp_hyperloglog_estimator}', proargnames => '{counter}', prosrc => 'gp_hyperloglog_get_estimate', },
+
+{ oid => 7163, descr => 'Includes a data value into a gp_hyperloglog counter', 
+   proname => 'gp_hyperloglog_add_item_agg_default', proisstrict => 'f', prorettype => 'gp_hyperloglog_estimator', proargtypes => '[0:1]={gp_hyperloglog_estimator,anyelement}', proargnames => '{counter,item}', prosrc => 'gp_hyperloglog_add_item_agg_default', },
+
+{ oid => 7164, descr => 'Adds every data value to a gp_hyperloglog counter and returns the counter', 
+   proname => 'gp_hyperloglog_accum', proisstrict => 'f', prorettype => 'gp_hyperloglog_estimator', proargtypes => '[0:0]={anyelement}', prosrc => 'aggregate_dummy', },
+
+{ oid => 6232, descr => 'deparse DISTRIBUTED BY clause for a given relation', 
+   proname => 'pg_get_table_distributedby', provolatile => 's', prorettype => 'text', proargtypes => '[0:0]={oid}', prosrc => 'pg_get_table_distributedby', },
+
+
+# hash functions for a few built-in datatypes that are missing hash support
+# in upstream for some reason.
+
+
+{ oid => 6114, descr => 'hash function for tid', 
+   proname => 'hashtid', prorettype => 'int4', proargtypes => '[0:0]={tid}', prosrc => 'hashtid', },
+
+{ oid => 6117, descr => 'hash function for bit', 
+   proname => 'bithash', prorettype => 'int4', proargtypes => '[0:0]={bit}', prosrc => 'bithash', },
+
+{ oid => 6118, descr => 'hash function for bit varbit', 
+   proname => 'bithash', prorettype => 'int4', proargtypes => '[0:0]={"bit varying"}', prosrc => 'bithash', },
+
+
+# Legacy cdbhash functions.
+
+{ oid => 6140, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_int2', prorettype => 'int4', proargtypes => '[0:0]={smallint}', prosrc => 'cdblegacyhash_int2', },
+
+{ oid => 6141, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_int4', prorettype => 'int4', proargtypes => '[0:0]={integer}', prosrc => 'cdblegacyhash_int4', },
+
+{ oid => 6142, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_int8', prorettype => 'int4', proargtypes => '[0:0]={bigint}', prosrc => 'cdblegacyhash_int8', },
+
+{ oid => 6143, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_float4', prorettype => 'int4', proargtypes => '[0:0]={real}', prosrc => 'cdblegacyhash_float4', },
+
+{ oid => 6144, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_float8', prorettype => 'int4', proargtypes => '[0:0]={"double precision"}', prosrc => 'cdblegacyhash_float8', },
+
+{ oid => 6145, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_numeric', prorettype => 'int4', proargtypes => '[0:0]={numeric}', prosrc => 'cdblegacyhash_numeric', },
+
+{ oid => 6146, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_char', prorettype => 'int4', proargtypes => '[0:0]={"\"char\""}', prosrc => 'cdblegacyhash_char', },
+
+{ oid => 6147, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_text', prorettype => 'int4', proargtypes => '[0:0]={text}', prosrc => 'cdblegacyhash_text', },
+
+{ oid => 6148, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_bpchar', prorettype => 'int4', proargtypes => '[0:0]={character}', prosrc => 'cdblegacyhash_text', },
+
+{ oid => 6149, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_bytea', prorettype => 'int4', proargtypes => '[0:0]={bytea}', prosrc => 'cdblegacyhash_bytea', },
+
+{ oid => 6150, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_name', prorettype => 'int4', proargtypes => '[0:0]={name}', prosrc => 'cdblegacyhash_name', },
+
+{ oid => 6151, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_oid', prorettype => 'int4', proargtypes => '[0:0]={oid}', prosrc => 'cdblegacyhash_oid', },
+
+{ oid => 6152, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_tid', prorettype => 'int4', proargtypes => '[0:0]={tid}', prosrc => 'cdblegacyhash_tid', },
+
+{ oid => 6153, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_timestamp', prorettype => 'int4', proargtypes => '[0:0]={"timestamp without time zone"}', prosrc => 'cdblegacyhash_timestamp', },
+
+{ oid => 6154, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_timestamptz', prorettype => 'int4', proargtypes => '[0:0]={"timestamp with time zone"}', prosrc => 'cdblegacyhash_timestamptz', },
+
+{ oid => 6155, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_date', prorettype => 'int4', proargtypes => '[0:0]={date}', prosrc => 'cdblegacyhash_date', },
+
+{ oid => 6156, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_time', prorettype => 'int4', proargtypes => '[0:0]={"time without time zone"}', prosrc => 'cdblegacyhash_time', },
+
+{ oid => 6157, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_timetz', prorettype => 'int4', proargtypes => '[0:0]={"time with time zone"}', prosrc => 'cdblegacyhash_timetz', },
+
+{ oid => 6158, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_interval', prorettype => 'int4', proargtypes => '[0:0]={interval}', prosrc => 'cdblegacyhash_interval', },
+
+{ oid => 6159, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_abstime', prorettype => 'int4', proargtypes => '[0:0]={abstime}', prosrc => 'cdblegacyhash_abstime', },
+
+{ oid => 6160, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_reltime', prorettype => 'int4', proargtypes => '[0:0]={reltime}', prosrc => 'cdblegacyhash_reltime', },
+
+{ oid => 6161, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_tinterval', prorettype => 'int4', proargtypes => '[0:0]={tinterval}', prosrc => 'cdblegacyhash_tinterval', },
+
+{ oid => 6162, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_inet', prorettype => 'int4', proargtypes => '[0:0]={inet}', prosrc => 'cdblegacyhash_inet', },
+
+{ oid => 6163, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_macaddr', prorettype => 'int4', proargtypes => '[0:0]={macaddr}', prosrc => 'cdblegacyhash_macaddr', },
+
+{ oid => 6164, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_bit', prorettype => 'int4', proargtypes => '[0:0]={bit}', prosrc => 'cdblegacyhash_bit', },
+
+{ oid => 6165, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_bool', prorettype => 'int4', proargtypes => '[0:0]={boolean}', prosrc => 'cdblegacyhash_bool', },
+
+{ oid => 6166, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_array', prorettype => 'int4', proargtypes => '[0:0]={anyarray}', prosrc => 'cdblegacyhash_array', },
+
+{ oid => 6167, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_oidvector', prorettype => 'int4', proargtypes => '[0:0]={oidvector}', prosrc => 'cdblegacyhash_oidvector', },
+
+{ oid => 6168, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_cash', prorettype => 'int4', proargtypes => '[0:0]={money}', prosrc => 'cdblegacyhash_cash', },
+
+{ oid => 6169, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_complex', prorettype => 'int4', proargtypes => '[0:0]={complex}', prosrc => 'cdblegacyhash_complex', },
+
+{ oid => 6170, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_uuid', prorettype => 'int4', proargtypes => '[0:0]={uuid}', prosrc => 'cdblegacyhash_uuid', },
+
+{ oid => 6171, descr => 'Legacy cdbhash function', 
+   proname => 'cdblegacyhash_anyenum', prorettype => 'int4', proargtypes => '[0:0]={anyenum}', prosrc => 'cdblegacyhash_anyenum', },
+
+
+{ oid => 6998, descr => 'Create a named restore point on all segments', 
+   proname => 'gp_create_restore_point', prorows => '1000', proretset => 't', proparallel => 'u', prorettype => 'record', proargtypes => '[0:0]={text}', prosrc => 'gp_create_restore_point', },
+
+{ oid => 5107, descr => 'handler for internal external table FDW', 
+   proname => 'gp_exttable_fdw_handler', proparallel => 'u', prorettype => 'internal', proargtypes => '[0:0]={internal}', prosrc => 'exttable_fdw_handler', },
+
+
+{ oid => 7057, descr => 'compare two complex numbers', 
+   proname => 'complex_cmp', prorettype => 'int4', proargtypes => '[0:1]={complex,complex}', prosrc => 'complex_cmp', },
+
+{ oid => 7155, descr => 'cancel a server process' current query', 
+   proname => 'pg_cancel_backend', provolatile => 'v', prorettype => 'bool', proargtypes => '[0:1]={integer,text}', prosrc => 'pg_cancel_backend_msg', },
+
+{ oid => 6119, descr => 'continuous distribution percentile', 
+   proname => 'percentile_cont', proisstrict => 'f', prorettype => 'timestamp', proargtypes => '[0:1]={"double precision","timestamp without time zone"}', prosrc => 'aggregate_dummy', },
+
+{ oid => 6120, descr => 'aggregate final function', 
+   proname => 'percentile_cont_timestamp_final', proisstrict => 'f', prorettype => 'timestamp', proargtypes => '[0:1]={internal,"double precision"}', prosrc => 'percentile_cont_timestamp_final', },
+
+{ oid => 6121, descr => 'multiple continuous percentiles', 
+   proname => 'percentile_cont', proisstrict => 'f', prorettype => '_timestamp', proargtypes => '[0:1]={"double precision[]","timestamp without time zone"}', prosrc => 'aggregate_dummy', },
+
+{ oid => 6122, descr => 'aggregate final function', 
+   proname => 'percentile_cont_timestamp_multi_final', proisstrict => 'f', prorettype => '_timestamp', proargtypes => '[0:1]={internal,"double precision[]"}', prosrc => 'percentile_cont_timestamp_multi_final', },
+
+{ oid => 6123, descr => 'continuous distribution percentile', 
+   proname => 'percentile_cont', proisstrict => 'f', prorettype => 'timestamptz', proargtypes => '[0:1]={"double precision","timestamp with time zone"}', prosrc => 'aggregate_dummy', },
+
+{ oid => 6124, descr => 'aggregate final function', 
+   proname => 'percentile_cont_timestamptz_final', proisstrict => 'f', prorettype => 'timestamptz', proargtypes => '[0:1]={internal,"double precision"}', prosrc => 'percentile_cont_timestamptz_final', },
+
+{ oid => 6125, descr => 'multiple continuous percentiles', 
+   proname => 'percentile_cont', proisstrict => 'f', prorettype => '_timestamptz', proargtypes => '[0:1]={"double precision[]","timestamp with time zone"}', prosrc => 'aggregate_dummy', },
+
+{ oid => 6126, descr => 'aggregate final function', 
+   proname => 'percentile_cont_timestamptz_multi_final', proisstrict => 'f', prorettype => '_timestamptz', proargtypes => '[0:1]={internal,"double precision[]"}', prosrc => 'percentile_cont_timestamptz_multi_final', },
+
+{ oid => 6127, descr => 'median', 
+   proname => 'median', proisstrict => 'f', prorettype => 'float8', proargtypes => '[0:1]={"double precision","double precision"}', prosrc => 'aggregate_dummy', },
+
+{ oid => 6128, descr => 'median', 
+   proname => 'median', proisstrict => 'f', prorettype => 'interval', proargtypes => '[0:1]={"double precision",interval}', prosrc => 'aggregate_dummy', },
+
+{ oid => 6129, descr => 'median', 
+   proname => 'median', proisstrict => 'f', prorettype => 'timestamp', proargtypes => '[0:1]={"double precision","timestamp without time zone"}', prosrc => 'aggregate_dummy', },
+
+{ oid => 6130, descr => 'median', 
+   proname => 'median', proisstrict => 'f', prorettype => 'timestamptz', proargtypes => '[0:1]={"double precision","timestamp with time zone"}', prosrc => 'aggregate_dummy', },
+
+{ oid => 3997, descr => 'for use by pg_upgrade', 
+   proname => 'binary_upgrade_set_next_pg_namespace_oid', proisstrict => 'f', provolatile => 'v', proparallel => 'r', prorettype => 'void', proargtypes => '[0:1]={oid,text}', prosrc => 'binary_upgrade_set_next_pg_namespace_oid', },
+
+{ oid => 3998, descr => 'for use by pg_upgrade', 
+   proname => 'binary_upgrade_set_preassigned_oids', proisstrict => 'f', provolatile => 'v', proparallel => 'r', prorettype => 'void', proargtypes => '[0:0]={oid[]}', prosrc => 'binary_upgrade_set_preassigned_oids', },
+
+{ oid => 3445, descr => 'import collations from operating system', 
+   proname => 'pg_import_system_collations', provolatile => 'v', prorettype => 'int4', proargtypes => '[0:0]={oid}', prosrc => 'pg_import_system_collations', },
+
+{ oid => 5066, descr => 'itemwise add two integer arrays', 
+   proname => 'array_add', prorettype => '_int4', proargtypes => '[0:1]={integer[],integer[]}', prosrc => 'array_int4_add', },
