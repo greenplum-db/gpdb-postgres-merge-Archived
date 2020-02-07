@@ -223,7 +223,6 @@ static uint64 CopyTo(CopyState cstate);
 static uint64 CopyFrom(CopyState cstate);
 static uint64 CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt);
 static uint64 CopyToQueryOnSegment(CopyState cstate);
-static void CopyOneRowTo(CopyState cstate, TupleTableSlot *slot);
 static bool CopyReadLine(CopyState cstate);
 static bool CopyReadLineText(CopyState cstate);
 static int	CopyReadAttributesText(CopyState cstate, int stop_processing_at_field);
@@ -235,9 +234,6 @@ static Datum CopyReadBinaryAttribute(CopyState cstate,
 static void CopyAttributeOutText(CopyState cstate, char *string);
 static void CopyAttributeOutCSV(CopyState cstate, char *string,
 								bool use_quote, bool single_attr);
-static List *CopyGetAttnums(TupleDesc tupDesc, Relation rel,
-							List *attnamelist);
-static char *limit_printout_length(const char *str);
 
 /* Low-level communications functions */
 static void SendCopyBegin(CopyState cstate);

@@ -34,6 +34,9 @@ typedef enum CopyDest
 	COPY_CALLBACK				/* to/from callback function (used for external tables) */
 } CopyDest;
 
+/* CopyStateData is private in commands/copy.c */
+typedef int (*copy_data_source_cb) (void *outbuf, int datasize, void *extra);
+
 /*
  *	Represents the end-of-line terminator type of the input
  */
@@ -233,7 +236,7 @@ typedef struct CopyStateData
 } CopyStateData;
 
 typedef struct CopyStateData *CopyState;
-typedef int (*copy_data_source_cb) (void *outbuf, int minread, int maxread);
+
 /* DestReceiver for COPY (query) TO */
 typedef struct
 {
@@ -276,8 +279,6 @@ extern bool NextCopyFrom(CopyState cstate, ExprContext *econtext,
 extern bool NextCopyFromRawFields(CopyState cstate,
 								  char ***fields, int *nfields);
 extern void CopyFromErrorCallback(void *arg);
-
-extern uint64 CopyFrom(CopyState cstate);
 
 extern DestReceiver *CreateCopyDestReceiver(void);
 
