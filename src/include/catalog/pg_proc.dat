@@ -11250,6 +11250,7 @@
 { oid => 5064, descr => 'cube root',
    proname => 'cbrt', prorettype => 'complex', proargtypes => 'complex', prosrc => 'complex_cbrt' },
 
+# GPDB_12_MERGE_FIXME: Why is this function called "numeric2point" ?
 { oid => 7597, descr => '(internal) type cast from numeric to complex',
    proname => 'numeric2point', prorettype => 'complex', proargtypes => 'numeric', prosrc => 'numeric2complex' },
 
