@@ -9241,27 +9241,20 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
-<<<<<<< HEAD
+		case T_TableFunc:
+			get_tablefunc((TableFunc *) node, context, showimplicit);
+			break;
+
 		case T_PartSelectedExpr:
-			{
-				appendStringInfo(buf, "PartSelected");
-			}
+			appendStringInfo(buf, "PartSelected");
 			break;
 
 		case T_DMLActionExpr:
-			{
-				appendStringInfo(buf, "DMLAction");
-			}
+			appendStringInfo(buf, "DMLAction");
 			break;
 
 		case T_AggExprId:
-			{
-				appendStringInfo(buf, "AggExprId");
-			}
-=======
-		case T_TableFunc:
-			get_tablefunc((TableFunc *) node, context, showimplicit);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			appendStringInfo(buf, "AggExprId");
 			break;
 
 		default:
@@ -9339,10 +9332,7 @@ looks_like_function(Node *node)
 		case T_NullIfExpr:
 		case T_CoalesceExpr:
 		case T_MinMaxExpr:
-<<<<<<< HEAD
-=======
 		case T_SQLValueFunction:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		case T_XmlExpr:
 			/* these are all accepted by func_expr_common_subexpr */
 			return true;
@@ -9351,10 +9341,7 @@ looks_like_function(Node *node)
 	}
 	return false;
 }
-<<<<<<< HEAD
-=======
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * get_oper_expr			- Parse back an OpExpr node
@@ -9879,14 +9866,6 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 			}
 			break;
 
-<<<<<<< HEAD
-		case BITOID:
-		case VARBITOID:
-			appendStringInfo(buf, "'%s'", extval);
-			break;
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		case BOOLOID:
 			if (strcmp(extval, "t") == 0)
 				appendStringInfoString(buf, "true");
@@ -11479,8 +11458,6 @@ add_cast_to(StringInfo buf, Oid typid)
 }
 
 /*
-<<<<<<< HEAD
-=======
  * generate_qualified_type_name
  *		Compute the name to display for a type specified by OID
  *
@@ -11517,7 +11494,6 @@ generate_qualified_type_name(Oid typid)
 }
 
 /*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * generate_collation_name
  *		Compute the name to display for a collation specified by OID
  *

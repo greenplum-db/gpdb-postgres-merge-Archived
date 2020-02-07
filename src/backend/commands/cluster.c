@@ -314,13 +314,8 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
  * this function errors out when the relation is an AO table. Otherwise, this
  * functions prints out a warning message when the relation is an AO table.
  */
-<<<<<<< HEAD
 bool
-cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose, bool printError)
-=======
-void
-cluster_rel(Oid tableOid, Oid indexOid, int options)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+cluster_rel(Oid tableOid, Oid indexOid, int options, bool printError)
 {
 	Relation	OldHeap;
 	bool		verbose = ((options & CLUOPT_VERBOSE) != 0);
@@ -347,14 +342,10 @@ cluster_rel(Oid tableOid, Oid indexOid, int options)
 
 	/* If the table has gone away, we can skip processing it */
 	if (!OldHeap)
-<<<<<<< HEAD
-		return false;
-=======
 	{
 		pgstat_progress_end_command();
-		return;
+		return false;
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * We don't support cluster on an AO table. We print out a warning/error to
@@ -366,11 +357,11 @@ cluster_rel(Oid tableOid, Oid indexOid, int options)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot cluster append-only table \"%s\": not supported",
 						RelationGetRelationName(OldHeap))));
-		
+
 		relation_close(OldHeap, AccessExclusiveLock);
 		return false;
 	}
-	
+
 	/*
 	 * Since we may open a new transaction for each relation, we have to check
 	 * that the relation still is what we think it is.
@@ -388,12 +379,8 @@ cluster_rel(Oid tableOid, Oid indexOid, int options)
 		if (!pg_class_ownercheck(tableOid, GetUserId()))
 		{
 			relation_close(OldHeap, AccessExclusiveLock);
-<<<<<<< HEAD
-			return false;
-=======
 			pgstat_progress_end_command();
-			return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			return false;
 		}
 
 		/*
@@ -407,12 +394,8 @@ cluster_rel(Oid tableOid, Oid indexOid, int options)
 		if (RELATION_IS_OTHER_TEMP(OldHeap))
 		{
 			relation_close(OldHeap, AccessExclusiveLock);
-<<<<<<< HEAD
-			return false;		
-=======
 			pgstat_progress_end_command();
-			return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			return false;
 		}
 
 		if (OidIsValid(indexOid))
@@ -423,12 +406,8 @@ cluster_rel(Oid tableOid, Oid indexOid, int options)
 			if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(indexOid)))
 			{
 				relation_close(OldHeap, AccessExclusiveLock);
-<<<<<<< HEAD
-				return false;
-=======
 				pgstat_progress_end_command();
-				return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				return false;
 			}
 
 			/*
@@ -438,24 +417,16 @@ cluster_rel(Oid tableOid, Oid indexOid, int options)
 			if (!HeapTupleIsValid(tuple))	/* probably can't happen */
 			{
 				relation_close(OldHeap, AccessExclusiveLock);
-<<<<<<< HEAD
-				return false;
-=======
 				pgstat_progress_end_command();
-				return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				return false;
 			}
 			indexForm = (Form_pg_index) GETSTRUCT(tuple);
 			if (!indexForm->indisclustered)
 			{
 				ReleaseSysCache(tuple);
 				relation_close(OldHeap, AccessExclusiveLock);
-<<<<<<< HEAD
-				return false;
-=======
 				pgstat_progress_end_command();
-				return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				return false;
 			}
 			ReleaseSysCache(tuple);
 		}
@@ -509,12 +480,8 @@ cluster_rel(Oid tableOid, Oid indexOid, int options)
 		!RelationIsPopulated(OldHeap))
 	{
 		relation_close(OldHeap, AccessExclusiveLock);
-<<<<<<< HEAD
-		return false;
-=======
 		pgstat_progress_end_command();
-		return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		return false;
 	}
 
 	/*
@@ -528,14 +495,10 @@ cluster_rel(Oid tableOid, Oid indexOid, int options)
 	/* rebuild_relation does all the dirty work */
 	rebuild_relation(OldHeap, indexOid, verbose);
 
-<<<<<<< HEAD
-	/* NB: rebuild_relation does heap_close() on OldHeap */
-	return true;
-=======
 	/* NB: rebuild_relation does table_close() on OldHeap */
 
 	pgstat_progress_end_command();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	return true;
 }
 
 /*
@@ -715,13 +678,9 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	/* Create the transient table that will receive the re-ordered data */
 	OIDNewHeap = make_new_heap(tableOid, tableSpace,
 							   relpersistence,
-<<<<<<< HEAD
 							   AccessExclusiveLock,
 							   true /* createAoBlockDirectory */,
 							   false);
-=======
-							   AccessExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Copy the heap data into the new table in the desired order */
 	copy_table_data(OIDNewHeap, tableOid, indexOid, verbose,
