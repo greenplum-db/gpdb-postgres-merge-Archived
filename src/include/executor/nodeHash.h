@@ -28,49 +28,17 @@ extern Node *MultiExecHash(HashState *node);
 extern void ExecEndHash(HashState *node);
 extern void ExecReScanHash(HashState *node);
 
-<<<<<<< HEAD
-extern HashJoinTable ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate,
-					List *hashOperators, bool keepNulls,
-					uint64 operatorMemKB);
-extern void ExecHashTableDestroy(HashState *hashState, HashJoinTable hashtable);
-extern bool ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
-					struct TupleTableSlot *slot,
-					uint32 hashvalue);
-extern bool ExecHashGetHashValue(HashState *hashState, HashJoinTable hashtable,
-					 ExprContext *econtext,
-					 List *hashkeys,
-					 bool outer_tuple,
-					 bool keep_nulls,
-					 uint32 *hashvalue,
-					 bool *hashkeys_null);
-extern void ExecHashGetBucketAndBatch(HashJoinTable hashtable,
-						  uint32 hashvalue,
-						  int *bucketno,
-						  int *batchno);
-extern bool ExecScanHashBucket(HashState *hashState, HashJoinState *hjstate,
-				   ExprContext *econtext);
-extern void ExecPrepHashTableForUnmatched(HashJoinState *hjstate);
-extern bool ExecScanHashTableForUnmatched(HashJoinState *hjstate,
-							  ExprContext *econtext);
-extern void ExecHashTableReset(HashState *hashState, HashJoinTable hashtable);
-extern void ExecHashTableResetMatchFlags(HashJoinTable hashtable);
-extern void ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
-						uint64 operatorMemKB,
-						int *numbuckets,
-						int *numbatches,
-						int *num_skew_mcvs);
-=======
 extern HashJoinTable ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
-										 bool keepNulls);
+										 bool keepNulls, uint64 operatorMemKB);
 extern void ExecParallelHashTableAlloc(HashJoinTable hashtable,
 									   int batchno);
-extern void ExecHashTableDestroy(HashJoinTable hashtable);
+extern void ExecHashTableDestroy(HashState *hashState, HashJoinTable hashtable);
 extern void ExecHashTableDetach(HashJoinTable hashtable);
 extern void ExecHashTableDetachBatch(HashJoinTable hashtable);
 extern void ExecParallelHashTableSetCurrentBatch(HashJoinTable hashtable,
 												 int batchno);
 
-extern void ExecHashTableInsert(HashJoinTable hashtable,
+extern bool ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
 								TupleTableSlot *slot,
 								uint32 hashvalue);
 extern void ExecParallelHashTableInsert(HashJoinTable hashtable,
@@ -79,31 +47,33 @@ extern void ExecParallelHashTableInsert(HashJoinTable hashtable,
 extern void ExecParallelHashTableInsertCurrentBatch(HashJoinTable hashtable,
 													TupleTableSlot *slot,
 													uint32 hashvalue);
-extern bool ExecHashGetHashValue(HashJoinTable hashtable,
+extern bool ExecHashGetHashValue(HashState *hashState, HashJoinTable hashtable,
 								 ExprContext *econtext,
 								 List *hashkeys,
 								 bool outer_tuple,
 								 bool keep_nulls,
-								 uint32 *hashvalue);
+								 uint32 *hashvalue,
+								 bool *hashkeys_null);
 extern void ExecHashGetBucketAndBatch(HashJoinTable hashtable,
 									  uint32 hashvalue,
 									  int *bucketno,
 									  int *batchno);
-extern bool ExecScanHashBucket(HashJoinState *hjstate, ExprContext *econtext);
+extern bool ExecScanHashBucket(HashState *hashState, HashJoinState *hjstate,
+                               ExprContext *econtext);
 extern bool ExecParallelScanHashBucket(HashJoinState *hjstate, ExprContext *econtext);
 extern void ExecPrepHashTableForUnmatched(HashJoinState *hjstate);
 extern bool ExecScanHashTableForUnmatched(HashJoinState *hjstate,
 										  ExprContext *econtext);
-extern void ExecHashTableReset(HashJoinTable hashtable);
+extern void ExecHashTableReset(HashState *hashState, HashJoinTable hashtable);
 extern void ExecHashTableResetMatchFlags(HashJoinTable hashtable);
 extern void ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
-									bool try_combined_work_mem,
-									int parallel_workers,
-									size_t *space_allowed,
-									int *numbuckets,
-									int *numbatches,
-									int *num_skew_mcvs);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+                                    uint64 operatorMemKB,
+                                    bool try_combined_work_mem,
+                                    int parallel_workers,
+                                    size_t *space_allowed,
+                                    int *numbuckets,
+                                    int *numbatches,
+                                    int *num_skew_mcvs);
 extern int	ExecHashGetSkewBucket(HashJoinTable hashtable, uint32 hashvalue);
 extern void ExecHashEstimate(HashState *node, ParallelContext *pcxt);
 extern void ExecHashInitializeDSM(HashState *node, ParallelContext *pcxt);
@@ -113,7 +83,6 @@ extern void ExecShutdownHash(HashState *node);
 extern void ExecHashGetInstrumentation(HashInstrumentation *instrument,
 									   HashJoinTable hashtable);
 
-<<<<<<< HEAD
 extern void ExecHashTableExplainInit(HashState *hashState, HashJoinState *hjstate,
                                      HashJoinTable  hashtable);
 extern void ExecHashTableExplainBatchEnd(HashState *hashState, HashJoinTable hashtable);
@@ -125,7 +94,4 @@ ExecHashRowSize(int tupwidth)
 		MAXALIGN(sizeof(MemTupleData)) +
 		MAXALIGN(tupwidth);
 }                               /* ExecHashRowSize */
-#endif   /* NODEHASH_H */
-=======
 #endif							/* NODEHASH_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -27,6 +27,7 @@
 
 #include <math.h>
 #include <limits.h>
+#include <executor/hashjoin.h>
 
 #include "access/hash.h"
 #include "access/htup_details.h"
@@ -56,11 +57,12 @@ static void ExecParallelHashIncreaseNumBatches(HashJoinTable hashtable);
 static void ExecParallelHashIncreaseNumBuckets(HashJoinTable hashtable);
 static void ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node,
 								  int mcvsToUse);
-static void ExecHashSkewTableInsert(HashJoinTable hashtable,
-									TupleTableSlot *slot,
-									uint32 hashvalue,
-									int bucketNumber);
-static void ExecHashRemoveNextSkewBucket(HashJoinTable hashtable);
+static void ExecHashSkewTableInsert(HashState *hashState,
+                                    HashJoinTable hashtable,
+                                    TupleTableSlot *slot,
+                                    uint32 hashvalue,
+                                    int bucketNumber);
+static void ExecHashRemoveNextSkewBucket(HashState *hashState, HashJoinTable hashtable);
 
 static void ExecHashTableExplainEnd(PlanState *planstate, struct StringInfoData *buf);
 static void
@@ -459,12 +461,8 @@ ExecEndHash(HashState *node)
  * ----------------------------------------------------------------
  */
 HashJoinTable
-<<<<<<< HEAD
-ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOperators, bool keepNulls,
-					uint64 operatorMemKB)
-=======
-ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations, bool keepNulls)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
+                                                 bool keepNulls, uint64 operatorMemKB)
 {
 	Hash	   *node;
 	HashJoinTable hashtable;
@@ -481,10 +479,8 @@ ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
 	ListCell   *hc;
 	MemoryContext oldcxt;
 
-	START_MEMORY_ACCOUNT(hashState->ps.memoryAccountId);
+	START_MEMORY_ACCOUNT(state->ps.memoryAccountId);
 	{
-	Hash *node = (Hash *) hashState->ps.plan;
-
 	/*
 	 * Get information about the size of the relation to be hashed (it's the
 	 * "outer" subtree of this node, but the inner relation of the hashjoin).
@@ -502,14 +498,11 @@ ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
 
 	ExecChooseHashTableSize(rows, outerNode->plan_width,
 							OidIsValid(node->skewTable),
-<<<<<<< HEAD
 							operatorMemKB,
-=======
 							state->parallel_state != NULL,
 							state->parallel_state != NULL ?
 							state->parallel_state->nparticipants - 1 : 0,
 							&space_allowed,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							&nbuckets, &nbatch, &num_skew_mcvs);
 
 	/* nbuckets must be a power of 2 */
@@ -550,10 +543,7 @@ ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
 	hashtable->spaceUsed = 0;
 	hashtable->spaceAllowed = operatorMemKB * 1024L;
 	hashtable->spacePeak = 0;
-<<<<<<< HEAD
-=======
 	hashtable->spaceAllowed = space_allowed;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	hashtable->spaceUsedSkew = 0;
 	hashtable->spaceAllowedSkew =
 		hashtable->spaceAllowed * SKEW_WORK_MEM_PERCENT / 100;
@@ -643,11 +633,7 @@ ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
 		i++;
 	}
 
-<<<<<<< HEAD
-	if (nbatch > 1)
-=======
 	if (nbatch > 1 && hashtable->parallel_state == NULL)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		/*
 		 * allocate and initialize the file arrays in hashCxt (not needed for
@@ -750,13 +736,10 @@ ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
 
 void
 ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
-<<<<<<< HEAD
-						uint64 operatorMemKB,
-=======
+                        uint64 operatorMemKB,
 						bool try_combined_work_mem,
 						int parallel_workers,
 						size_t *space_allowed,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						int *numbuckets,
 						int *numbatches,
 						int *num_skew_mcvs)
@@ -851,11 +834,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	 * Note that both nbuckets and nbatch must be powers of 2 to make
 	 * ExecHashGetBucketAndBatch fast.
 	 */
-<<<<<<< HEAD
-	max_pointers = (operatorMemKB * 1024L) / sizeof(HashJoinTuple);
-=======
 	max_pointers = *space_allowed / sizeof(HashJoinTuple);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	max_pointers = Min(max_pointers, MaxAllocSize / sizeof(HashJoinTuple));
 	/* If max_pointers isn't a power of 2, must round it down to one */
 	mppow2 = 1L << my_log2(max_pointers);
@@ -894,6 +873,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		if (try_combined_work_mem)
 		{
 			ExecChooseHashTableSize(ntuples, tupwidth, useskew,
+                                    operatorMemKB,
 									false, parallel_workers,
 									space_allowed,
 									numbuckets,
@@ -1032,39 +1012,27 @@ ExecHashTableDestroy(HashState *hashState, HashJoinTable hashtable)
 	{
 
 	/*
-<<<<<<< HEAD
-	 * Make sure all the temp files are closed.
-	 */
-	if (hashtable->innerBatchFile)
-	{
-		for (i = 0; i < hashtable->nbatch; i++)
-=======
 	 * Make sure all the temp files are closed.  We skip batch 0, since it
 	 * can't have any temp files (and the arrays might not even exist if
 	 * nbatch is only 1).  Parallel hash joins don't use these files.
 	 */
-	if (hashtable->innerBatchFile != NULL)
-	{
-		for (i = 1; i < hashtable->nbatch; i++)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-		{
-			if (hashtable->innerBatchFile[i])
-				BufFileClose(hashtable->innerBatchFile[i]);
-			if (hashtable->outerBatchFile[i])
-				BufFileClose(hashtable->outerBatchFile[i]);
-<<<<<<< HEAD
-			hashtable->innerBatchFile[i] = NULL;
-			hashtable->outerBatchFile[i] = NULL;
-		}
+        if (hashtable->innerBatchFile != NULL)
+        {
+            for (i = 1; i < hashtable->nbatch; i++)
+            {
+                if (hashtable->innerBatchFile[i])
+                    BufFileClose(hashtable->innerBatchFile[i]);
+                if (hashtable->outerBatchFile[i])
+                    BufFileClose(hashtable->outerBatchFile[i]);
+                hashtable->innerBatchFile[i] = NULL;
+                hashtable->outerBatchFile[i] = NULL;
+            }
 	}
 
 	if (hashtable->work_set != NULL)
 	{
 		workfile_mgr_close_set(hashtable->work_set);
 		hashtable->work_set = NULL;
-=======
-		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/* Release working memory (batchCxt is a child, so it goes away too) */
@@ -1189,15 +1157,9 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 		/* process all tuples stored in this chunk (and then free it) */
 		while (idx < oldchunks->used)
 		{
-<<<<<<< HEAD
-			HashJoinTuple hashTuple = (HashJoinTuple) (oldchunks->data + idx);
-			MemTuple tuple = HJTUPLE_MINTUPLE(hashTuple);
-			int			hashTupleSize = (HJTUPLE_OVERHEAD + memtuple_get_size(tuple));
-=======
 			HashJoinTuple hashTuple = (HashJoinTuple) (HASH_CHUNK_DATA(oldchunks) + idx);
 			MinimalTuple tuple = HJTUPLE_MINTUPLE(hashTuple);
 			int			hashTupleSize = (HJTUPLE_OVERHEAD + tuple->t_len);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			int			bucketno;
 			int			batchno;
 
@@ -1829,12 +1791,7 @@ ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
 					TupleTableSlot *slot,
 					uint32 hashvalue)
 {
-<<<<<<< HEAD
 	MemTuple tuple = ExecFetchSlotMemTuple(slot);
-=======
-	bool		shouldFree;
-	MinimalTuple tuple = ExecFetchSlotMinimalTuple(slot, &shouldFree);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			bucketno;
 	int			batchno;
 
@@ -1927,15 +1884,10 @@ ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
 							  &hashtable->innerBatchFile[batchno],
 							  hashtable->bfCxt);
 	}
-<<<<<<< HEAD
 	}
 	END_MEMORY_ACCOUNT();
 
 	return (batchno == hashtable->curbatch);
-=======
-
-	if (shouldFree)
-		heap_free_minimal_tuple(tuple);
 }
 
 /*
@@ -2032,7 +1984,6 @@ ExecParallelHashTableInsertCurrentBatch(HashJoinTable hashtable,
 
 	if (shouldFree)
 		heap_free_minimal_tuple(tuple);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -2046,12 +1997,8 @@ ExecParallelHashTableInsertCurrentBatch(HashJoinTable hashtable,
  * A true result means the tuple's hash value has been successfully computed
  * and stored at *hashvalue.  A false result means the tuple cannot match
  * because it contains a null attribute, and hence it should be discarded
-<<<<<<< HEAD
  * immediately.  (If keep_nulls is true then FALSE is never returned.)
  * hashkeys_null indicates all the hashkeys are null.
-=======
- * immediately.  (If keep_nulls is true then false is never returned.)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 bool
 ExecHashGetHashValue(HashState *hashState, HashJoinTable hashtable,
@@ -2208,11 +2155,7 @@ bool
 ExecScanHashBucket(HashState *hashState, HashJoinState *hjstate,
 				   ExprContext *econtext)
 {
-<<<<<<< HEAD
-	List	   *hjclauses = hjstate->hashqualclauses;
-=======
 	ExprState  *hjclauses = hjstate->hashclauses;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	HashJoinTable hashtable = hjstate->hj_HashTable;
 	HashJoinTuple hashTuple = hjstate->hj_CurTuple;
 	uint32		hashvalue = hjstate->hj_CurHashValue;
@@ -2464,14 +2407,9 @@ ExecHashTableResetMatchFlags(HashJoinTable hashtable)
 	/* Reset all flags in the main table ... */
 	for (i = 0; i < hashtable->nbuckets; i++)
 	{
-<<<<<<< HEAD
-		for (tuple = hashtable->buckets[i]; tuple != NULL; tuple = tuple->next)
-			MemTupleClearMatch(HJTUPLE_MINTUPLE(tuple));
-=======
-		for (tuple = hashtable->buckets.unshared[i]; tuple != NULL;
-			 tuple = tuple->next.unshared)
-			HeapTupleHeaderClearMatch(HJTUPLE_MINTUPLE(tuple));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+        for (tuple = hashtable->buckets.unshared[i]; tuple != NULL;
+             tuple = tuple->next.unshared)
+            MemTupleClearMatch(HJTUPLE_MINTUPLE(tuple));
 	}
 
 	/* ... and the same for the skew buckets, if any */
@@ -2480,13 +2418,8 @@ ExecHashTableResetMatchFlags(HashJoinTable hashtable)
 		int			j = hashtable->skewBucketNums[i];
 		HashSkewBucket *skewBucket = hashtable->skewBucket[j];
 
-<<<<<<< HEAD
-		for (tuple = skewBucket->tuples; tuple != NULL; tuple = tuple->next)
+        for (tuple = skewBucket->tuples; tuple != NULL; tuple = tuple->next.unshared)
 			MemTupleClearMatch(HJTUPLE_MINTUPLE(tuple));
-=======
-		for (tuple = skewBucket->tuples; tuple != NULL; tuple = tuple->next.unshared)
-			HeapTupleHeaderClearMatch(HJTUPLE_MINTUPLE(tuple));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 }
 
@@ -2997,14 +2930,9 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 			uint32		hashvalue;
 			int			bucket;
 
-<<<<<<< HEAD
-			hashvalue = DatumGetUInt32(FunctionCall1(&hashfunctions[0],
-													 sslot.values[i]));
-=======
 			hashvalue = DatumGetUInt32(FunctionCall1Coll(&hashfunctions[0],
 														 hashtable->collations[0],
 														 sslot.values[i]));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * While we have not hit a hole in the hashtable and have not hit
@@ -3104,12 +3032,7 @@ ExecHashSkewTableInsert(HashState *hashState,
 						uint32 hashvalue,
 						int bucketNumber)
 {
-<<<<<<< HEAD
 	MemTuple tuple = ExecFetchSlotMemTuple(slot);
-=======
-	bool		shouldFree;
-	MinimalTuple tuple = ExecFetchSlotMinimalTuple(slot, &shouldFree);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	HashJoinTuple hashTuple;
 	int			hashTupleSize;
 
@@ -3176,13 +3099,8 @@ ExecHashRemoveNextSkewBucket(HashState *hashState, HashJoinTable hashtable)
 	hashTuple = bucket->tuples;
 	while (hashTuple != NULL)
 	{
-<<<<<<< HEAD
-		HashJoinTuple nextHashTuple = hashTuple->next;
-		MemTuple	tuple;
-=======
 		HashJoinTuple nextHashTuple = hashTuple->next.unshared;
-		MinimalTuple tuple;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		MemTuple	tuple;
 		Size		tupleSize;
 
 		/*
