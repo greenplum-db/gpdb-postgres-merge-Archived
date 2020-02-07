@@ -959,27 +959,6 @@ TwoPhaseGetDummyProc(TransactionId xid, bool lock_held)
  */
 #define TWOPHASE_MAGIC	0x57F94534	/* format identifier */
 
-<<<<<<< HEAD
-=======
-typedef struct TwoPhaseFileHeader
-{
-	uint32		magic;			/* format identifier */
-	uint32		total_len;		/* actual file length */
-	TransactionId xid;			/* original transaction XID */
-	Oid			database;		/* OID of database it was in */
-	TimestampTz prepared_at;	/* time of preparation */
-	Oid			owner;			/* user running the transaction */
-	int32		nsubxacts;		/* number of following subxact XIDs */
-	int32		ncommitrels;	/* number of delete-on-commit rels */
-	int32		nabortrels;		/* number of delete-on-abort rels */
-	int32		ninvalmsgs;		/* number of cache invalidation messages */
-	bool		initfileinval;	/* does relcache init file need invalidation? */
-	uint16		gidlen;			/* length of the GID - GID follows the header */
-	XLogRecPtr	origin_lsn;		/* lsn of this record at origin node */
-	TimestampTz origin_timestamp;	/* time of prepare at origin node */
-} TwoPhaseFileHeader;
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * Header for each record in a state file
  *
@@ -1644,13 +1623,10 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
 
-<<<<<<< HEAD
 	repopulate_tablespace_storage(
 		hdr->tablespace_oid_to_delete_on_commit,
 		hdr->tablespace_oid_to_delete_on_abort);
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * The order of operations here is critical: make the XLOG entry for
 	 * commit or abort, then mark the transaction committed or aborted in
@@ -1671,11 +1647,8 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 		RecordTransactionAbortPrepared(xid,
 									   hdr->nsubxacts, children,
 									   hdr->nabortrels, abortrels,
-<<<<<<< HEAD
 									   hdr->nabortdbs, abortdbs);
-=======
 									   gid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	ProcArrayRemove(proc, latestXid);
 
@@ -1849,41 +1822,21 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 
 	/* Write content and CRC */
 	errno = 0;
-<<<<<<< HEAD
-	if (write(fd, content, len) != len)
-	{
-		int			save_errno = errno;
-
-		CloseTransientFile(fd);
-
-		/* if write didn't set errno, assume problem is no disk space */
-		errno = save_errno ? save_errno : ENOSPC;
-=======
 	pgstat_report_wait_start(WAIT_EVENT_TWOPHASE_FILE_WRITE);
 	if (write(fd, content, len) != len)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write file \"%s\": %m", path)));
 	}
 	if (write(fd, &statefile_crc, sizeof(pg_crc32c)) != sizeof(pg_crc32c))
 	{
-<<<<<<< HEAD
-		int			save_errno = errno;
-
-		CloseTransientFile(fd);
-
-		/* if write didn't set errno, assume problem is no disk space */
-		errno = save_errno ? save_errno : ENOSPC;
-=======
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write file \"%s\": %m", path)));
@@ -1896,14 +1849,6 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 	 */
 	pgstat_report_wait_start(WAIT_EVENT_TWOPHASE_FILE_SYNC);
 	if (pg_fsync(fd) != 0)
-<<<<<<< HEAD
-	{
-		int			save_errno = errno;
-
-		CloseTransientFile(fd);
-		errno = save_errno;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", path)));

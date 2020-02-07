@@ -53,6 +53,8 @@ typedef struct TwoPhaseFileHeader
 	Oid			tablespace_oid_to_delete_on_abort;
 	Oid			tablespace_oid_to_delete_on_commit;
 	uint16		gidlen;			/* length of the GID - GID follows the header */
+	XLogRecPtr	origin_lsn;		/* lsn of this record at origin node */
+	TimestampTz origin_timestamp;	/* time of prepare at origin node */
 } TwoPhaseFileHeader;
 
 /* GPDB-specific end */

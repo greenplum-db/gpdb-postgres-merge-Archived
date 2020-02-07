@@ -46,22 +46,12 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
-#include "optimizer/clauses.h"
-#include "optimizer/planner.h"
-#include "optimizer/var.h"
-#include "parser/parse_clause.h"
-#include "parser/parse_coerce.h"
-#include "parser/parse_func.h"
-#include "parser/parse_oper.h"
-=======
 #include "optimizer/optimizer.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "partitioning/partdesc.h"
 #include "pgstat.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "rewrite/rewriteManip.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
@@ -95,7 +85,6 @@
 /* non-export function prototypes */
 static void CheckPredicate(Expr *predicate);
 static void ComputeIndexAttrs(IndexInfo *indexInfo,
-<<<<<<< HEAD
 				  Oid *typeOidP,
 				  Oid *collationOidP,
 				  Oid *classOidP,
@@ -103,24 +92,9 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 				  List *attList,
 				  List *exclusionOpNames,
 				  Oid relId,
-				  char *accessMethodName, Oid accessMethodId,
+				  const char *accessMethodName, Oid accessMethodId,
 				  bool amcanorder,
 				  bool isconstraint);
-=======
-							  Oid *typeOidP,
-							  Oid *collationOidP,
-							  Oid *classOidP,
-							  int16 *colOptionP,
-							  List *attList,
-							  List *exclusionOpNames,
-							  Oid relId,
-							  const char *accessMethodName, Oid accessMethodId,
-							  bool amcanorder,
-							  bool isconstraint);
-static char *ChooseIndexName(const char *tabname, Oid namespaceId,
-							 List *colnames, List *exclusionOpNames,
-							 bool primary, bool isconstraint);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static char *ChooseIndexNameAddition(List *colnames);
 static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
 											Oid relId, Oid oldRelId, void *arg);
@@ -337,11 +311,8 @@ CheckIndexCompatible(Oid oldId,
 	indexInfo->ii_ExclusionProcs = NULL;
 	indexInfo->ii_ExclusionStrats = NULL;
 	indexInfo->ii_Am = accessMethodId;
-<<<<<<< HEAD
-=======
 	indexInfo->ii_AmCache = NULL;
 	indexInfo->ii_Context = CurrentMemoryContext;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	typeObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	collationObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
@@ -554,12 +525,9 @@ WaitForOlderSnapshots(TransactionId limitXmin, bool progress)
  * 'is_alter_table': this is due to an ALTER rather than a CREATE operation.
  * 'check_rights': check for CREATE rights in namespace and tablespace.  (This
  *		should be true except when ALTER is deleting/recreating an index.)
-<<<<<<< HEAD
-=======
  * 'check_not_in_use': check for table not already in use in current session.
  *		This should be true unless caller is holding the table open, in which
  *		case the caller had better have checked it earlier.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * 'skip_build': make the catalog entries but don't create the index files
  * 'quiet': suppress the NOTICE chatter ordinarily provided for constraints.
  *
@@ -1018,14 +986,10 @@ DefineIndex(Oid relationId,
 	indexInfo->ii_ReadyForInserts = !stmt->concurrent;
 	indexInfo->ii_Concurrent = stmt->concurrent;
 	indexInfo->ii_BrokenHotChain = false;
-<<<<<<< HEAD
-	indexInfo->ii_Am = accessMethodId;
-=======
 	indexInfo->ii_ParallelWorkers = 0;
 	indexInfo->ii_Am = accessMethodId;
 	indexInfo->ii_AmCache = NULL;
 	indexInfo->ii_Context = CurrentMemoryContext;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	typeObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	collationObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
@@ -1708,10 +1672,7 @@ DefineIndex(Oid relationId,
 							ielem->expr =
 								map_variable_attnos((Node *) ielem->expr,
 													1, 0, attmap, maplen,
-<<<<<<< HEAD
-=======
 													InvalidOid,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 													&found_whole_row);
 							if (found_whole_row)
 								elog(ERROR, "cannot convert whole-row table reference");
@@ -2450,13 +2411,8 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
  * partition key definitions.
  */
 Oid
-<<<<<<< HEAD
-GetIndexOpClass(List *opclass, Oid attrType,
-				char *accessMethodName, Oid accessMethodId)
-=======
 ResolveOpClass(List *opclass, Oid attrType,
 			   const char *accessMethodName, Oid accessMethodId)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	char	   *schemaname;
 	char	   *opcname;
