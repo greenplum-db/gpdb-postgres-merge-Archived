@@ -1350,8 +1350,6 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 			cstate = BeginCopyTo(rel, query, queryString, relid,
 								 stmt->filename, stmt->is_program,
 								 stmt->attlist, options);
-								 // GPDB_12_MERGE_FIXME: skip_ext_partition moved to 'options'
-								 // stmt->skip_ext_partition);
 
 			cstate->partitions = stmt->partitions;
 
@@ -1439,6 +1437,8 @@ ProcessCopyOptions(ParseState *pstate,
 		cstate = (CopyStateData *) palloc0(sizeof(CopyStateData));
 
 	cstate->escape_off = false;
+	cstate->skip_ext_partition = false;
+
 	cstate->is_copy_from = is_from;
 
 	cstate->file_encoding = -1;
@@ -1659,6 +1659,14 @@ ProcessCopyOptions(ParseState *pstate,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			cstate->on_segment = TRUE;
+		}
+		else if (strcmp(defel->defname, "skip_ext_partition") == 0)
+		{
+			if (cstate->skip_ext_partition)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			cstate->skip_ext_partition = TRUE;
 		}
 		else
 			ereport(ERROR,
@@ -2346,8 +2354,6 @@ CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt)
 		dispatchStmt->ao_segnos = assignPerRelSegno(all_relids);
 	}
 
-	dispatchStmt->skip_ext_partition = cstate->skip_ext_partition;
-
 	CdbDispatchUtilityStatement((Node *) dispatchStmt,
 								DF_NEED_TWO_PHASE |
 								DF_WITH_SNAPSHOT |
@@ -2619,8 +2625,7 @@ BeginCopyTo(ParseState *pstate,
 			const char *filename,
 			bool is_program,
 			List *attnamelist,
-			List *options,
-			bool skip_ext_partition)
+			List *options)
 {
 	CopyState	cstate;
 	MemoryContext oldcontext;
@@ -2666,8 +2671,6 @@ BeginCopyTo(ParseState *pstate,
 	cstate = BeginCopy(pstate, false, rel, query, queryRelId, attnamelist,
 					   options);
 	oldcontext = MemoryContextSwitchTo(cstate->copycontext);
-
-	cstate->skip_ext_partition = skip_ext_partition;
 
 	/* Determine the mode */
 	if (Gp_role == GP_ROLE_DISPATCH && !cstate->on_segment &&

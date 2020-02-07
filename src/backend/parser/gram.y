@@ -4302,7 +4302,6 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list
 					n->options = $9;
 					n->partitions = NULL;
 					n->ao_segnos = NIL;
-					n->skip_ext_partition = false;
 
 					if (n->is_program && n->filename == NULL)
 						ereport(ERROR,
@@ -4421,7 +4420,7 @@ copy_opt_item:
 				}
 			| IGNORE_P EXTERNAL PARTITIONS
 				{
-					$$ = makeDefElem("skip_external_partitions", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("skip_ext_partition", (Node *)makeInteger(TRUE));
 				}
 		;
 
