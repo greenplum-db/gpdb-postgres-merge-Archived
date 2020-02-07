@@ -223,18 +223,13 @@ typedef struct TransactionStateData
 	bool		prevXactReadOnly;	/* entry-time xact r/o state */
 	bool		startedInRecovery;	/* did we start in recovery? */
 	bool		didLogXid;		/* has xid been included in WAL record? */
-<<<<<<< HEAD
-	int			parallelModeLevel;		/* Enter/ExitParallelMode counter */
-	bool		executorSaysXactDoesWrites;	/* GP executor says xact does writes */
-	bool		executorDidWriteXLog;	/* QE has wrote xlog */
-	struct TransactionStateData *parent;		/* back link to parent */
-
-	struct TransactionStateData *fastLink;        /* back link to jump to parent for efficient search */
-=======
 	int			parallelModeLevel;	/* Enter/ExitParallelMode counter */
 	bool		chain;			/* start a new block after this one */
+	bool		executorSaysXactDoesWrites;	/* GP executor says xact does writes */
+	bool		executorDidWriteXLog;	/* QE has wrote xlog */
+
 	struct TransactionStateData *parent;	/* back link to parent */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	struct TransactionStateData *fastLink;	/* back link to jump to parent for efficient search */
 } TransactionStateData;
 
 typedef TransactionStateData *TransactionState;
@@ -268,34 +263,8 @@ typedef struct SerializedTransactionState
  * transaction at all, or when in a top-level transaction.
  */
 static TransactionStateData TopTransactionStateData = {
-<<<<<<< HEAD
-	0,							/* transaction id */
-	0,							/* subtransaction id */
-	NULL,						/* savepoint name */
-	0,							/* savepoint level */
-	TRANS_DEFAULT,				/* transaction state */
-	TBLOCK_DEFAULT,				/* transaction block state from the client
-								 * perspective */
-	0,							/* transaction nesting depth */
-	0,							/* GUC context nesting depth */
-	NULL,						/* cur transaction context */
-	NULL,						/* cur transaction resource owner */
-	NULL,						/* subcommitted child Xids */
-	0,							/* # of subcommitted child Xids */
-	0,							/* allocated size of childXids[] */
-	InvalidOid,					/* previous CurrentUserId setting */
-	0,							/* previous SecurityRestrictionContext */
-	false,						/* entry-time xact r/o state */
-	false,						/* startedInRecovery */
-	false,						/* didLogXid */
-	0,							/* parallelMode */
-	false,						/* executorSaysXactDoesWrites */
-	false,						/* executorDidWriteXLog */
-	NULL						/* link to parent state block */
-=======
 	.state = TRANS_DEFAULT,
 	.blockState = TBLOCK_DEFAULT,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 };
 
 /*
@@ -763,29 +732,21 @@ AssignTransactionId(TransactionState s)
 	 * PG_PROC, the subtrans entry is needed to ensure that other backends see
 	 * the Xid as "running".  See GetNewTransactionId.
 	 */
-<<<<<<< HEAD
-	s->transactionId = GetNewTransactionId(isSubXact);
+	s->fullTransactionId = GetNewTransactionId(isSubXact);
 
 	ereportif(Debug_print_full_dtm, LOG,
-			  (errmsg("AssignTransactionId(): assigned xid %u",
-					  s->transactionId)));
+			  (errmsg("AssignTransactionId(): assigned xid " UINT64_FORMAT,
+					  s->fullTransactionId)));
 
-=======
-	s->fullTransactionId = GetNewTransactionId(isSubXact);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (!isSubXact)
 		XactTopFullTransactionId = s->fullTransactionId;
 
 	if (isSubXact)
-<<<<<<< HEAD
 	{
 		Assert(TransactionIdPrecedes(s->parent->transactionId, s->transactionId));
-		SubTransSetParent(s->transactionId, s->parent->transactionId, false);
-	}
-=======
 		SubTransSetParent(XidFromFullTransactionId(s->fullTransactionId),
 						  XidFromFullTransactionId(s->parent->fullTransactionId));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	}
 
 	/*
 	 * If it's a top-level transaction, the predicate locking system needs to
@@ -1024,13 +985,13 @@ TransactionIdIsCurrentTransactionIdInternal(TransactionId xid)
 
 	while (s != NULL)
 	{
-		if ((s->state != TRANS_ABORT) &&
-				(TransactionIdIsValid(s->transactionId)))
+		if (s->state != TRANS_ABORT &&
+			FullTransactionIdIsValid(s->fullTransactionId))
 		{
 			int			low,
 						high;
 
-			if (TransactionIdEquals(xid, s->transactionId))
+			if (TransactionIdEquals(xid, XidFromFullTransactionId(s->fullTransactionId)))
 				return true;
 
 			/* As the childXids array is ordered, we can use binary search */
@@ -1052,18 +1013,18 @@ TransactionIdIsCurrentTransactionIdInternal(TransactionId xid)
 			}
 
 			/*
-			 * If not found in childXID list and greater than s->transactionId
+			 * If not found in childXID list and greater than s->fullTransactionId
 			 * it cannot be on stack below this node,
 			 * as stack is in decreasing order of XIDs
 			 * So, can safely breakout.
 			 */
-			 if (TransactionIdFollows(xid, s->transactionId))
+			if (TransactionIdFollows(xid, XidFromFullTransactionId(s->fullTransactionId))
 				break;
 		}
 
 		if (s->fastLink)
 		{
-			if (TransactionIdPrecedesOrEquals(xid, s->fastLink->transactionId))
+			if (TransactionIdPrecedesOrEquals(xid, XidFromFullTransactionId(s->fastLink->fullTransactionId)))
 			{
 				s = s->fastLink;
 				continue;
@@ -1235,25 +1196,9 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 	{
 		isCurrentTransactionId = IsCurrentTransactionIdForReader(xid);
 
-<<<<<<< HEAD
 		ereportif(Debug_print_full_dtm, LOG,
 				  (errmsg("qExec Reader xid = %u, is current = %s",
 						  xid, (isCurrentTransactionId ? "true" : "false"))));
-=======
-		if (s->state == TRANS_ABORT)
-			continue;
-		if (!FullTransactionIdIsValid(s->fullTransactionId))
-			continue;			/* it can't have any child XIDs either */
-		if (TransactionIdEquals(xid, XidFromFullTransactionId(s->fullTransactionId)))
-			return true;
-		/* As the childXids array is ordered, we can use binary search */
-		low = 0;
-		high = s->nChildXids - 1;
-		while (low <= high)
-		{
-			int			middle;
-			TransactionId probe;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		return isCurrentTransactionId;
 	}
@@ -5278,17 +5223,6 @@ ReleaseSavepoint(const char *name)
 			break;
 	}
 
-<<<<<<< HEAD
-	foreach(cell, options)
-	{
-		DefElem    *elem = lfirst(cell);
-
-		if (strcmp(elem->defname, "savepoint_name") == 0)
-			name = strVal(elem->arg);
-	}
-
-	Assert(PointerIsValid(name));
-
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		char	   *cmd;
@@ -5305,8 +5239,6 @@ ReleaseSavepoint(const char *name)
 		pfree(cmd);
 	}
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	for (target = s; PointerIsValid(target); target = target->parent)
 	{
 		if (PointerIsValid(target->name) && strcmp(target->name, name) == 0)
@@ -6955,13 +6887,10 @@ XactLogAbortRecord(TimestampTz abort_time,
 	xl_xact_xinfo xl_xinfo;
 	xl_xact_subxacts xl_subxacts;
 	xl_xact_relfilenodes xl_relfilenodes;
-	xl_xact_twophase xl_twophase;
-<<<<<<< HEAD
 	xl_xact_deldbs xl_deldbs;
-=======
+	xl_xact_twophase xl_twophase;
 	xl_xact_dbinfo xl_dbinfo;
 	xl_xact_origin xl_origin;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	uint8		info;
 
@@ -7104,30 +7033,12 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 
 	max_xid = TransactionIdLatest(xid, parsed->nsubxacts, parsed->subxacts);
 
-<<<<<<< HEAD
 	ereportif(OidIsValid(tablespace_oid_to_delete), DEBUG5,
 		(errmsg("in xact_redo_commit_internal with tablespace oid to delete: %u",
 			tablespace_oid_to_delete)));
 
-	/*
-	 * Make sure nextXid is beyond any XID mentioned in the record.
-	 *
-	 * We don't expect anyone else to modify nextXid, hence we don't need to
-	 * hold a lock while checking this. We still acquire the lock to modify
-	 * it, though.
-	 */
-	if (TransactionIdFollowsOrEquals(max_xid,
-									 ShmemVariableCache->nextXid))
-	{
-		LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
-		ShmemVariableCache->nextXid = max_xid;
-		TransactionIdAdvance(ShmemVariableCache->nextXid);
-		LWLockRelease(XidGenLock);
-	}
-=======
 	/* Make sure nextFullXid is beyond any XID mentioned in the record. */
 	AdvanceNextFullTransactionIdPastXid(max_xid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* also update distributed commit log */
 	if (parsed->distribXid != 0 && parsed->distribTimeStamp != 0)
@@ -7235,15 +7146,12 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 
 		/* Make sure files supposed to be dropped are dropped */
 		DropRelationFiles(parsed->xnodes, parsed->nrels, true);
-<<<<<<< HEAD
 	}
 
 	if (parsed->ndeldbs > 0)
 	{
 		XLogFlush(lsn);
 		DropDatabaseDirectories(parsed->deldbs, parsed->ndeldbs, true);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	DoTablespaceDeletionForRedoXlog(tablespace_oid_to_delete);
@@ -7415,7 +7323,6 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 
 	/* Make sure files supposed to be dropped are dropped */
 	DropRelationFiles(parsed->xnodes, parsed->nrels, true);
-<<<<<<< HEAD
 	DropDatabaseDirectories(parsed->deldbs, parsed->ndeldbs, true);
 	DoTablespaceDeletionForRedoXlog(parsed->tablespace_oid_to_delete_on_abort);
 }
@@ -7424,8 +7331,6 @@ static void
 xact_redo_distributed_forget(xl_xact_distributed_forget *xlrec, TransactionId xid pg_attribute_unused() )
 {
 	redoDistributedForgetCommitRecord(&xlrec->gxact_log);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 
@@ -7483,10 +7388,16 @@ xact_redo(XLogReaderState *record)
 	}
 	else if (info == XLOG_XACT_PREPARE)
 	{
-<<<<<<< HEAD
-		/* the record contents are exactly the 2PC file */
-		RecreateTwoPhaseFile(XLogRecGetXid(record),
-							 XLogRecGetData(record), XLogRecGetDataLen(record));
+		/*
+		 * Store xid and start/end pointers of the WAL record in TwoPhaseState
+		 * gxact entry.
+		 */
+		LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
+		PrepareRedoAdd(XLogRecGetData(record),
+					   record->ReadRecPtr,
+					   record->EndRecPtr,
+					   XLogRecGetOrigin(record));
+		LWLockRelease(TwoPhaseStateLock);
 	}
 	else if (info == XLOG_XACT_DISTRIBUTED_COMMIT)
 	{
@@ -7499,18 +7410,6 @@ xact_redo(XLogReaderState *record)
 		xl_xact_distributed_forget *xlrec = (xl_xact_distributed_forget *) XLogRecGetData(record);
 
 		xact_redo_distributed_forget(xlrec, XLogRecGetXid(record));
-=======
-		/*
-		 * Store xid and start/end pointers of the WAL record in TwoPhaseState
-		 * gxact entry.
-		 */
-		LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
-		PrepareRedoAdd(XLogRecGetData(record),
-					   record->ReadRecPtr,
-					   record->EndRecPtr,
-					   XLogRecGetOrigin(record));
-		LWLockRelease(TwoPhaseStateLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else if (info == XLOG_XACT_ASSIGNMENT)
 	{
