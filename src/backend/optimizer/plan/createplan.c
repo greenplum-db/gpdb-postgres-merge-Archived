@@ -1974,13 +1974,8 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path, int flags)
 	 * of the sortcolumn setup logic into Path creation, but that would add
 	 * expense to creating Paths we might end up not using.)
 	 */
-<<<<<<< HEAD
-	if (!best_path->cdb_restrict_clauses &&
-		(is_projection_capable_path(best_path->subpath) ||
-		 tlist_same_exprs(tlist, subplan->targetlist)))
-=======
-	if (!needs_result_node)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+    if (!best_path->cdb_restrict_clauses &&
+            !needs_result_node)
 	{
 		/* Don't need a separate Result, just assign tlist to subplan */
 		plan = subplan;
@@ -4013,24 +4008,58 @@ create_functionscan_plan(PlannerInfo *root, Path *best_path,
 }
 
 /*
-<<<<<<< HEAD
  * create_tablefunction_plan
  *	 Returns a TableFunction plan for the base relation scanned by 'best_path'
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
 static TableFunctionScan *
 create_tablefunction_plan(PlannerInfo *root,
-						  TableFunctionScanPath *best_path,
-						  List *tlist,
-						  List *scan_clauses)
+                          TableFunctionScanPath *best_path,
+                          List *tlist,
+                          List *scan_clauses)
 {
-	TableFunctionScan *tablefunc;
-	RelOptInfo *rel = best_path->path.parent;
-	Plan	   *subplan;
-	Index		scan_relid = rel->relid;
-	RangeTblEntry *rte;
-	RangeTblFunction *rtf;
-=======
+    TableFunctionScan *tablefunc;
+    RelOptInfo *rel = best_path->path.parent;
+    Plan *subplan;
+    Index scan_relid = rel->relid;
+    RangeTblEntry *rte;
+    RangeTblFunction *rtf;
+
+    /* it should be a function base rel... */
+    Assert(scan_relid > 0);
+    rte = planner_rt_fetch(scan_relid, root);
+    Assert(rel->rtekind == RTE_TABLEFUNCTION);
+    Assert(list_length(rte->functions) == 1);
+    rtf = linitial(rte->functions);
+
+    /*
+     * Recursively create Plan from Path for subquery.  Since we are entering
+     * a different planner context (subroot), recurse to create_plan not
+     * create_plan_recurse.
+     */
+    subplan = create_plan(rel->subroot, best_path->subpath, root->curSlice);
+
+    /* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+    scan_clauses = extract_actual_clauses(scan_clauses, false);
+
+    /* Replace any outer-relation variables with nestloop params */
+    if (best_path->path.param_info) {
+        scan_clauses = (List *)
+                replace_nestloop_params(root, (Node *) scan_clauses);
+        process_subquery_nestloop_params(root,
+                                         rel->subplan_params);
+    }
+
+    /* Create the TableFunctionScan plan */
+    tablefunc = make_tablefunction(tlist, scan_clauses, subplan, scan_relid, rtf);
+
+    /* Cost is determined largely by the cost of the underlying subplan */
+    copy_generic_path_info(&tablefunc->scan.plan, &best_path->path);
+
+    return tablefunc;
+}
+
+/*
  * create_tablefuncscan_plan
  *	 Returns a tablefuncscan plan for the base relation scanned by 'best_path'
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
@@ -4043,51 +4072,20 @@ create_tablefuncscan_plan(PlannerInfo *root, Path *best_path,
 	Index		scan_relid = best_path->parent->relid;
 	RangeTblEntry *rte;
 	TableFunc  *tablefunc;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* it should be a function base rel... */
 	Assert(scan_relid > 0);
 	rte = planner_rt_fetch(scan_relid, root);
-<<<<<<< HEAD
-	Assert(rel->rtekind == RTE_TABLEFUNCTION);
-	Assert(list_length(rte->functions) == 1);
-	rtf = linitial(rte->functions);
-
-	/*
-	 * Recursively create Plan from Path for subquery.  Since we are entering
-	 * a different planner context (subroot), recurse to create_plan not
-	 * create_plan_recurse.
-	 */
-	subplan = create_plan(rel->subroot, best_path->subpath, root->curSlice);
-=======
 	Assert(rte->rtekind == RTE_TABLEFUNC);
 	tablefunc = rte->tablefunc;
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
 	/* Replace any outer-relation variables with nestloop params */
-<<<<<<< HEAD
-	if (best_path->path.param_info)
-	{
-		scan_clauses = (List *)
-			replace_nestloop_params(root, (Node *) scan_clauses);
-		process_subquery_nestloop_params(root,
-										 rel->subplan_params);
-	}
-
-	/* Create the TableFunctionScan plan */
-	tablefunc = make_tablefunction(tlist, scan_clauses, subplan, scan_relid, rtf);
-
-	/* Cost is determined largely by the cost of the underlying subplan */
-	copy_generic_path_info(&tablefunc->scan.plan, &best_path->path);
-
-	return tablefunc;
-=======
 	if (best_path->param_info)
 	{
 		scan_clauses = (List *)
@@ -4102,7 +4100,6 @@ create_tablefuncscan_plan(PlannerInfo *root, Path *best_path,
 	copy_generic_path_info(&scan_plan->scan.plan, best_path);
 
 	return scan_plan;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
