@@ -69,7 +69,6 @@ LockTableCommand(LockStmt *lockstmt)
 										  RangeVarCallbackForLockTable,
 										  (void *) &lockstmt->mode);
 
-<<<<<<< HEAD
 		/*
 		 * CDB: LOCK TABLE will not release the lock until end of transaction,
 		 * set the holdTillEndXact flag for GDD to know about this.
@@ -82,14 +81,10 @@ LockTableCommand(LockStmt *lockstmt)
 			LockSetHoldTillEndXact(&tag);
 		}
 
-		if (recurse)
-			LockTableRecurse(reloid, lockstmt->mode, lockstmt->nowait);
-=======
 		if (get_rel_relkind(reloid) == RELKIND_VIEW)
 			LockViewRecurse(reloid, lockstmt->mode, lockstmt->nowait, NIL);
 		else if (recurse)
 			LockTableRecurse(reloid, lockstmt->mode, lockstmt->nowait, GetUserId());
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	if (Gp_role == GP_ROLE_DISPATCH)

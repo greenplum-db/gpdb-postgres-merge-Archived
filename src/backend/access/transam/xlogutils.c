@@ -698,11 +698,7 @@ XLogRead(char *buf, int segsize, TimeLineID tli, XLogRecPtr startptr,
 		startoff = XLogSegmentOffset(recptr, segsize);
 
 		/* Do we need to switch to a different xlog segment? */
-<<<<<<< HEAD
-		if (sendFile < 0 || !XLByteInSeg(recptr, sendSegNo) ||
-=======
 		if (sendFile < 0 || !XLByteInSeg(recptr, sendSegNo, segsize) ||
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			sendTLI != tli)
 		{
 			char		path[MAXPGPATH];
