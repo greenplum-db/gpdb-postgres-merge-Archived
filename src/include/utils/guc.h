@@ -752,8 +752,6 @@ extern struct config_generic *find_option(const char *name,
 
 extern void set_gp_replication_config(const char *name, const char *value);
 
-extern bool parse_real(const char *value, double *result);
-
 #ifdef EXEC_BACKEND
 extern void write_nondefault_variables(GucContext context);
 extern void read_nondefault_variables(void);

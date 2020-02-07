@@ -11,7 +11,6 @@
 #include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/nodeFuncs.h"
-#include "nodes/relation.h"
 
 /* The plan associated with a SubPlan is found in a list.  During planning this is in
  * the global structure found through the root PlannerInfo.  After planning this is in

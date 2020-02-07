@@ -150,7 +150,7 @@ static void setQryDistributionPolicy(IntoClause *into, Query *qry);
 
 static Query *transformGroupedWindows(ParseState *pstate, Query *qry);
 static void init_grouped_window_context(grouped_window_ctx *ctx, Query *qry);
-static Var *var_for_gw_expr(grouped_window_ctx *ctx, Node *expr, bool force);
+static Var *var_for_gw_expr(grouped_window_ctx *ctx, Expr *expr, bool force);
 static void discard_grouped_window_context(grouped_window_ctx *ctx);
 static Node *map_sgr_mutator(Node *node, void *context);
 static Node *grouped_window_mutator(Node *node, void *context);
@@ -1374,7 +1374,7 @@ discard_grouped_window_context(grouped_window_ctx *ctx)
  * was found/added.
  */
 static Var *
-var_for_gw_expr(grouped_window_ctx *ctx, Node *expr, bool force)
+var_for_gw_expr(grouped_window_ctx *ctx, Expr *expr, bool force)
 {
 	Var *var = NULL;
 	TargetEntry *tle = tlist_member(expr, ctx->subtlist);
@@ -1383,7 +1383,7 @@ var_for_gw_expr(grouped_window_ctx *ctx, Node *expr, bool force)
 	{
 		tle = makeNode(TargetEntry);
 		ctx->subtlist = lappend(ctx->subtlist, tle);
-		tle->expr = (Expr*)expr;
+		tle->expr = expr;
 		tle->resno = list_length(ctx->subtlist);
 		/* See comment in grouped_window_mutator for why level 3 is appropriate. */
 		if ( ctx->call_depth == 3 && ctx->tle != NULL && ctx->tle->resname != NULL )
@@ -1567,7 +1567,7 @@ static Node* grouped_window_mutator(Node *node, void *context)
 	else if (IsA(node, Aggref))
 	{
 		/* Aggregation expression */
-		result = (Node*) var_for_gw_expr(ctx, node, true);
+		result = (Node*) var_for_gw_expr(ctx, (Expr *) node, true);
 	}
 	else if (IsA(node, GroupingFunc))
 	{
@@ -1578,7 +1578,7 @@ static Node* grouped_window_mutator(Node *node, void *context)
 
 		newgfunc->refs = (List *) map_sgr_mutator((Node *) newgfunc->refs, ctx);
 
-		result = (Node *) var_for_gw_expr(ctx, (Node *) newgfunc, true);
+		result = (Node *) var_for_gw_expr(ctx, (Expr *) newgfunc, true);
 	}
 	else if (IsA(node, Var))
 	{
@@ -1587,7 +1587,7 @@ static Node* grouped_window_mutator(Node *node, void *context)
 		/* Since this is a Var (leaf node), we must be able to mutate it,
 		 * else we can't finish the transformation and must give up.
 		 */
-		result = (Node*) var_for_gw_expr(ctx, node, false);
+		result = (Node*) var_for_gw_expr(ctx, (Expr *) node, false);
 
 		if ( !result )
 		{
@@ -1610,7 +1610,7 @@ static Node* grouped_window_mutator(Node *node, void *context)
 	else
 	{
 		/* Grouping expression; may not find one. */
-		result = (Node*) var_for_gw_expr(ctx, node, false);
+		result = (Node*) var_for_gw_expr(ctx, (Expr *) node, false);
 	}
 
 
@@ -4319,7 +4319,7 @@ setQryDistributionPolicy(IntoClause *into, Query *qry)
 			tle = list_nth(qry->targetList, keyindex - 1);
 
 			keytype = exprType((Node *) tle->expr);
-			keyopclass = GetIndexOpClass(ielem->opclass, keytype, "hash", HASH_AM_OID);
+			keyopclass = ResolveOpClass(ielem->opclass, keytype, "hash", HASH_AM_OID);
 
 			policykeys = lappend_int(policykeys, keyindex);
 			policyopclasses = lappend_oid(policyopclasses, keyopclass);
