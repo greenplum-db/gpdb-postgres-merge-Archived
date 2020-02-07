@@ -695,7 +695,7 @@ GetNewOrPreassignedOid(Relation relation, Oid indexId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForAccessMethod(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForAccessMethod(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						 char *amname)
 {
 	OidAssignment key;
@@ -711,7 +711,7 @@ GetNewOidForAccessMethod(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForAccessMethodOperator(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForAccessMethodOperator(Relation relation, Oid indexId, AttrNumber oidcolumn,
 								 Oid amopfamily, Oid amoplefttype, Oid amoprighttype,
 								 Oid amopstrategy)
 {
@@ -730,7 +730,7 @@ GetNewOidForAccessMethodOperator(Relation relation, Oid indexiId, AttrNumber oid
 }
 
 Oid
-GetNewOidForAttrDefault(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForAttrDefault(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						Oid adrelid, int16 adnum)
 {
 	Assert(RelationGetRelid(relation) == AttrDefaultRelationId);
@@ -744,7 +744,7 @@ GetNewOidForAttrDefault(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForAuthId(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForAuthId(Relation relation, Oid indexId, AttrNumber oidcolumn,
 				   char *rolname)
 {
 	Assert(RelationGetRelid(relation) == AuthIdRelationId);
@@ -757,7 +757,7 @@ GetNewOidForAuthId(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForCast(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForCast(Relation relation, Oid indexId, AttrNumber oidcolumn,
 				 Oid castsource, Oid casttarget)
 {
 	Assert(RelationGetRelid(relation) == CastRelationId);
@@ -771,7 +771,7 @@ GetNewOidForCast(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForCollation(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForCollation(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					  Oid collnamespace, char *collname)
 {
 	Assert(RelationGetRelid(relation) == CollationRelationId);
@@ -785,7 +785,7 @@ GetNewOidForCollation(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForConstraint(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForConstraint(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					   Oid conrelid, Oid contypid, char *conname)
 {
 	Assert(RelationGetRelid(relation) == ConstraintRelationId);
@@ -800,7 +800,7 @@ GetNewOidForConstraint(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForConversion(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForConversion(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					   Oid connamespace, char *conname)
 {
 	Assert(RelationGetRelid(relation) == ConversionRelationId);
@@ -814,7 +814,7 @@ GetNewOidForConversion(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForDatabase(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForDatabase(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *datname)
 {
 	Assert(RelationGetRelid(relation) == DatabaseRelationId);
@@ -827,7 +827,7 @@ GetNewOidForDatabase(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForDefaultAcl(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForDefaultAcl(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					   Oid defaclrole, Oid defaclnamespace, char defaclobjtype)
 {
 	Assert(RelationGetRelid(relation) == DefaultAclRelationId);
@@ -842,7 +842,7 @@ GetNewOidForDefaultAcl(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForEnum(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForEnum(Relation relation, Oid indexId, AttrNumber oidcolumn,
 				 Oid enumtypid, char *enumlabel)
 {
 	Assert(RelationGetRelid(relation) == EnumRelationId);
@@ -856,7 +856,7 @@ GetNewOidForEnum(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForExtension(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForExtension(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					  char *extname)
 {
 	Assert(RelationGetRelid(relation) == ExtensionRelationId);
@@ -874,7 +874,7 @@ GetNewOidForExtension(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForExtprotocol(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForExtprotocol(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						char *ptcname)
 {
 	Assert(RelationGetRelid(relation) == ExtprotocolRelationId);
@@ -887,7 +887,7 @@ GetNewOidForExtprotocol(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForForeignDataWrapper(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForForeignDataWrapper(Relation relation, Oid indexId, AttrNumber oidcolumn,
 							   char *fdwname)
 {
 	Assert(RelationGetRelid(relation) == ForeignDataWrapperRelationId);
@@ -900,7 +900,7 @@ GetNewOidForForeignDataWrapper(Relation relation, Oid indexiId, AttrNumber oidco
 }
 
 Oid
-GetNewOidForForeignServer(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForForeignServer(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						  char *srvname)
 {
 	Assert(RelationGetRelid(relation) == ForeignServerRelationId);
@@ -914,7 +914,7 @@ GetNewOidForForeignServer(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForLanguage(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForLanguage(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *lanname)
 {
 	Assert(RelationGetRelid(relation) == LanguageRelationId);
@@ -927,7 +927,7 @@ GetNewOidForLanguage(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 
 }
 Oid
-GetNewOidForNamespace(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForNamespace(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					  char *nspname)
 {
 	Assert(RelationGetRelid(relation) == NamespaceRelationId);
@@ -940,7 +940,7 @@ GetNewOidForNamespace(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForOperator(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForOperator(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *oprname, Oid oprleft, Oid oprright, Oid oprnamespace)
 {
 	Assert(RelationGetRelid(relation) == OperatorRelationId);
@@ -956,7 +956,7 @@ GetNewOidForOperator(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForOperatorClass(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForOperatorClass(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						  Oid opcmethod, char *opcname, Oid opcnamespace)
 {
 	Assert(RelationGetRelid(relation) == OperatorClassRelationId);
@@ -971,7 +971,7 @@ GetNewOidForOperatorClass(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForOperatorFamily(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForOperatorFamily(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						   Oid opfmethod, char *opfname, Oid opfnamespace)
 {
 	Assert(RelationGetRelid(relation) == OperatorFamilyRelationId);
@@ -986,7 +986,7 @@ GetNewOidForOperatorFamily(Relation relation, Oid indexiId, AttrNumber oidcolumn
 }
 
 Oid
-GetNewOidForPolicy(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForPolicy(Relation relation, Oid indexId, AttrNumber oidcolumn,
 				   Oid polrelid, char *polname)
 {
 	Assert(RelationGetRelid(relation) == PolicyRelationId);
@@ -1000,7 +1000,7 @@ GetNewOidForPolicy(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForProcedure(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForProcedure(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					  char *proname, oidvector proargtypes, Oid pronamespace)
 {
 	Assert(RelationGetRelid(relation) == ProcedureRelationId);
@@ -1020,7 +1020,7 @@ GetNewOidForProcedure(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForRelation(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForRelation(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *relname, Oid relnamespace)
 {
 	Assert(RelationGetRelid(relation) == RelationRelationId);
@@ -1034,7 +1034,7 @@ GetNewOidForRelation(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForResQueue(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForResQueue(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *rsqname)
 {
 	Assert(RelationGetRelid(relation) == ResQueueRelationId);
@@ -1047,7 +1047,7 @@ GetNewOidForResQueue(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForRewrite(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForRewrite(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					Oid ev_class, char *rulename)
 {
 	Assert(RelationGetRelid(relation) == RewriteRelationId);
@@ -1061,7 +1061,7 @@ GetNewOidForRewrite(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForTableSpace(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForTableSpace(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					   char *spcname)
 {
 	Assert(RelationGetRelid(relation) == TableSpaceRelationId);
@@ -1074,7 +1074,7 @@ GetNewOidForTableSpace(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForTransform(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForTransform(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					  Oid trftype, Oid trflang)
 {
 	Assert(RelationGetRelid(relation) == TransformRelationId);
@@ -1088,7 +1088,7 @@ GetNewOidForTransform(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForTSParser(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForTSParser(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *prsname, Oid prsnamespace)
 {
 	Assert(RelationGetRelid(relation) == TSParserRelationId);
@@ -1102,7 +1102,7 @@ GetNewOidForTSParser(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForTSDictionary(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForTSDictionary(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						 char *dictname, Oid dictnamespace)
 {
 	Assert(RelationGetRelid(relation) == TSDictionaryRelationId);
@@ -1116,7 +1116,7 @@ GetNewOidForTSDictionary(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForTSTemplate(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForTSTemplate(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					   char *tmplname, Oid tmplnamespace)
 {
 	Assert(RelationGetRelid(relation) == TSTemplateRelationId);
@@ -1130,7 +1130,7 @@ GetNewOidForTSTemplate(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForTSConfig(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForTSConfig(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *cfgname, Oid cfgnamespace)
 {
 	Assert(RelationGetRelid(relation) == TSConfigRelationId);
@@ -1145,7 +1145,7 @@ GetNewOidForTSConfig(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForType(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForType(Relation relation, Oid indexId, AttrNumber oidcolumn,
 				 char *typname, Oid typnamespace)
 {
 	Assert(RelationGetRelid(relation) == TypeRelationId);
@@ -1160,7 +1160,7 @@ GetNewOidForType(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForResGroup(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForResGroup(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *rsgname)
 {
 	Assert(RelationGetRelid(relation) == ResGroupRelationId);
@@ -1173,7 +1173,7 @@ GetNewOidForResGroup(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 
 }
 Oid
-GetNewOidForUserMapping(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForUserMapping(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						Oid umuser, Oid umserver)
 {
 	Assert(RelationGetRelid(relation) == UserMappingRelationId);
@@ -1187,7 +1187,7 @@ GetNewOidForUserMapping(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForPublication(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForPublication(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						char *pubname)
 {
 	Assert(RelationGetRelid(relation) == PublicationRelationId);
@@ -1200,7 +1200,7 @@ GetNewOidForPublication(Relation relation, Oid indexiId, AttrNumber oidcolumn,
 }
 
 Oid
-GetNewOidForPublicationRel(Relation relation, Oid indexiId, AttrNumber oidcolumn,
+GetNewOidForPublicationRel(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						   Oid prrelid, Oid prpubid)
 {
 	Assert(RelationGetRelid(relation) == PublicationRelationId);

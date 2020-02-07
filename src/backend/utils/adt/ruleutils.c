@@ -78,7 +78,6 @@
 #include "utils/xml.h"
 
 #include "cdb/cdbhash.h"
-#include "cdb/cdbpartition.h"
 
 /* ----------
  * Pretty formatting constants
