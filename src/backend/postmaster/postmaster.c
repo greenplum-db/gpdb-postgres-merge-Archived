@@ -373,7 +373,6 @@ static time_t AbortStartTime = 0;
 /* Length of said timeout */
 #define SIGKILL_CHILDREN_AFTER_SECS		5
 
-<<<<<<< HEAD
 /* Set at database system is ready to accept connections */
 pg_time_t PMAcceptingConnectionsStartTime = 0;
 
@@ -422,10 +421,7 @@ static BackgroundWorker PMAuxProcList[MaxPMAuxProc] =
 	 PerfmonStartRule},
 };
 
-static bool ReachedNormalRunning = false;		/* T if we've reached PM_RUN */
-=======
 static bool ReachedNormalRunning = false;	/* T if we've reached PM_RUN */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 bool		ClientAuthInProgress = false;	/* T during new-client
 											 * authentication */
@@ -465,12 +461,8 @@ static DNSServiceRef bonjour_sdref = NULL;
 static void CloseServerPorts(int status, Datum arg);
 static void unlink_external_pid_file(int status, Datum arg);
 static void getInstallationPaths(const char *argv0);
-<<<<<<< HEAD
-static void checkDataDir(void);
-static void checkPgDir(const char *dir);
-=======
 static void checkControlFile(void);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static void checkPgDir(const char *dir);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
 
@@ -496,15 +488,9 @@ static void BackendRun(Port *port) pg_attribute_noreturn();
 static void ExitPostmaster(int status) pg_attribute_noreturn();
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
-<<<<<<< HEAD
-static int	ProcessStartupPacket(Port *port, bool SSLdone);
-static void SendNegotiateProtocolVersion(List *unrecognized_protocol_options);
-static void processCancelRequest(Port *port, void *pkt, MsgType code);
-=======
 static int	ProcessStartupPacket(Port *port, bool secure_done);
 static void SendNegotiateProtocolVersion(List *unrecognized_protocol_options);
-static void processCancelRequest(Port *port, void *pkt);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static void processCancelRequest(Port *port, void *pkt, MsgType code);
 static int	initMasks(fd_set *rmask);
 static void report_fork_failure_to_client(Port *port, int errnum);
 static CAC_state canAcceptConnections(void);
@@ -517,11 +503,7 @@ static void TerminateChildren(int signal);
 
 static int	CountChildren(int target);
 static bool assign_backendlist_entry(RegisteredBgWorker *rw);
-<<<<<<< HEAD
-static void maybe_start_bgworker(void);
-=======
 static void maybe_start_bgworkers(void);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
 static pid_t StartChildProcess(AuxProcType type);
 static void StartAutovacuumWorker(void);
@@ -1166,12 +1148,12 @@ PostmasterMain(int argc, char *argv[])
 	CreateDataDirLockFile(true);
 
 	/*
-<<<<<<< HEAD
 	 * Remember postmaster startup time
      * CDB: Moved this code up from below for use in error message headers.
 	 */
 	PgStartTime = GetCurrentTimestamp();
-=======
+
+	/*
 	 * Read the control file (for error checking and config info).
 	 *
 	 * Since we verify the control file's CRC, this has a useful side effect
@@ -1181,7 +1163,6 @@ PostmasterMain(int argc, char *argv[])
 	 * repeat the test.
 	 */
 	LocalProcessControlFile(false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Initialize SSL library, if specified.
@@ -1195,20 +1176,19 @@ PostmasterMain(int argc, char *argv[])
 #endif
 
 	/*
-<<<<<<< HEAD
 	 * CDB: gpdb auxilary process like fts probe, dtx recovery process is
 	 * essential, we need to load them ahead of custom shared preload libraries
 	 * to avoid exceeding max_worker_processes.
 	 */
 	load_auxiliary_libraries();
-=======
+
+	/*
 	 * Register the apply launcher.  Since it registers a background worker,
 	 * it needs to be called before InitializeMaxBackends(), and it's probably
 	 * a good idea to call it before any modules had chance to take the
 	 * background worker slots.
 	 */
 	ApplyLauncherRegister();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * process any libraries that should be preloaded at postmaster start
@@ -1721,83 +1701,21 @@ getInstallationPaths(const char *argv0)
 static void
 checkControlFile(void)
 {
-<<<<<<< HEAD
-	struct stat stat_buf;
-
-	Assert(DataDir);
-
-	if (stat(DataDir, &stat_buf) != 0)
-	{
-		if (errno == ENOENT)
-			ereport(FATAL,
-					(errcode_for_file_access(),
-					 errmsg("data directory \"%s\" does not exist",
-							DataDir)));
-		else
-			ereport(FATAL,
-					(errcode_for_file_access(),
-				 errmsg("could not read permissions of directory \"%s\": %m",
-						DataDir)));
-	}
-
-	/* eventual chdir would fail anyway, but let's test ... */
-	if (!S_ISDIR(stat_buf.st_mode))
-		ereport(FATAL,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("specified data directory \"%s\" is not a directory",
-						DataDir)));
-
-	/*
-	 * Check that the directory belongs to my userid; if not, reject.
-	 *
-	 * This check is an essential part of the interlock that prevents two
-	 * postmasters from starting in the same directory (see CreateLockFile()).
-	 * Do not remove or weaken it.
-	 *
-	 * XXX can we safely enable this check on Windows?
-	 */
-#if !defined(WIN32) && !defined(__CYGWIN__)
-	if (stat_buf.st_uid != geteuid())
-		ereport(FATAL,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("data directory \"%s\" has wrong ownership",
-						DataDir),
-				 errhint("The server must be started by the user that owns the data directory.")));
-#endif
-
-	/*
-	 * Check if the directory has group or world access.  If so, reject.
-	 *
-	 * It would be possible to allow weaker constraints (for example, allow
-	 * group access) but we cannot make a general assumption that that is
-	 * okay; for example there are platforms where nearly all users
-	 * customarily belong to the same group.  Perhaps this test should be
-	 * configurable.
-	 *
-	 * XXX temporarily suppress check when on Windows, because there may not
-	 * be proper support for Unix-y file permissions.  Need to think of a
-	 * reasonable check to apply on Windows.
-	 */
-#if !defined(WIN32) && !defined(__CYGWIN__)
-	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
-		ereport(FATAL,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("data directory \"%s\" has group or world access",
-						DataDir),
-				 errdetail("Permissions should be u=rwx (0700).")));
-#endif
-
-	/* Look for PG_VERSION before looking for pg_control */
-	ValidatePgVersion(DataDir);
-=======
 	char		path[MAXPGPATH];
 	FILE	   *fp;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
-    /* for mirroring, the check for pg_control was removed.  a mirror must be able to start
-     *  without a pg_control file.  The  check for pg_control will be done
-     *  when the control file is read by xlog initialization.
-     */
+	snprintf(path, sizeof(path), "%s/global/pg_control", DataDir);
+
+	fp = AllocateFile(path, PG_BINARY_R);
+	if (fp == NULL)
+	{
+		write_stderr("%s: could not find the database system\n"
+					 "Expected to find it in the directory \"%s\",\n"
+					 "but could not open file \"%s\": %s\n",
+					 progname, DataDir, path, strerror(errno));
+		ExitPostmaster(2);
+	}
+	FreeFile(fp);
 }
 
 
@@ -2345,13 +2263,7 @@ ProcessStartupPacket(Port *port, bool secure_done)
 		return STATUS_ERROR;
 	}
 
-<<<<<<< HEAD
-	/* Otherwise this is probably a normal postgres-message */
-
-	if (proto == NEGOTIATE_SSL_CODE && !SSLdone)
-=======
 	if (proto == NEGOTIATE_SSL_CODE && !secure_done)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		char		SSLok;
 
@@ -2505,7 +2417,6 @@ retry1:
 				unrecognized_protocol_options =
 					lappend(unrecognized_protocol_options, pstrdup(nameptr));
 			}
-<<<<<<< HEAD
 			else if (strcmp(nameptr, GPCONN_TYPE) == 0)
 			{
 				am_mirror = IsRoleMirror();
@@ -2561,8 +2472,6 @@ retry1:
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("invalid value for option: \"%s\"", GPCONN_TYPE)));
 			}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			else
 			{
 				/* Assume it's a generic GUC option */
@@ -2601,13 +2510,8 @@ retry1:
 		/*
 		 * If the client requested a newer protocol version or if the client
 		 * requested any protocol options we didn't recognize, let them know
-<<<<<<< HEAD
-		 * the newest minor protocol version we do support and the names of any
-		 * unrecognized options.
-=======
 		 * the newest minor protocol version we do support and the names of
 		 * any unrecognized options.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 */
 		if (PG_PROTOCOL_MINOR(proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST) ||
 			unrecognized_protocol_options != NIL)
@@ -2796,13 +2700,8 @@ SendNegotiateProtocolVersion(List *unrecognized_protocol_options)
 	ListCell   *lc;
 
 	pq_beginmessage(&buf, 'v'); /* NegotiateProtocolVersion */
-<<<<<<< HEAD
-	pq_sendint(&buf, PG_PROTOCOL_LATEST, 4);
-	pq_sendint(&buf, list_length(unrecognized_protocol_options), 4);
-=======
 	pq_sendint32(&buf, PG_PROTOCOL_LATEST);
 	pq_sendint32(&buf, list_length(unrecognized_protocol_options));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	foreach(lc, unrecognized_protocol_options)
 		pq_sendstring(&buf, lfirst(lc));
 	pq_endmessage(&buf);
@@ -3514,7 +3413,6 @@ reaper(SIGNAL_ARGS)
 			maybe_start_bgworkers();
 
 			/* at this point we are really open for business */
-<<<<<<< HEAD
 			{
 				char version[512];
 
@@ -3532,10 +3430,6 @@ reaper(SIGNAL_ARGS)
 
 				PMAcceptingConnectionsStartTime = (pg_time_t) time(NULL);
 			}
-=======
-			ereport(LOG,
-					(errmsg("database system is ready to accept connections")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/* Report status */
 			AddToDataDirLockFile(LOCK_FILE_LINE_PM_STATUS, PM_STATUS_READY);
@@ -5456,13 +5350,13 @@ SubPostmasterMain(int argc, char *argv[])
 	read_nondefault_variables();
 
 	/*
-<<<<<<< HEAD
 	 * CDB: gpdb auxilary process like fts probe, dtx recovery process is
 	 * essential, we need to load them ahead of custom shared preload libraries
 	 * to avoid exceeding max_worker_processes.
 	 */
 	load_auxiliary_libraries();
-=======
+
+	/*
 	 * Check that the data directory looks valid, which will also check the
 	 * privileges on the data directory and update our umask and file/group
 	 * variables for creating files later.  Note: this should really be done
@@ -5475,7 +5369,6 @@ SubPostmasterMain(int argc, char *argv[])
 	 * already have read this, but this process doesn't know about that.
 	 */
 	LocalProcessControlFile(false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Reload any libraries that were preloaded by the postmaster.  Since we
@@ -5531,11 +5424,7 @@ SubPostmasterMain(int argc, char *argv[])
 		InitProcess();
 
 		/* Attach process to shared data structures */
-<<<<<<< HEAD
-		CreateSharedMemoryAndSemaphores(false, 0);
-=======
 		CreateSharedMemoryAndSemaphores(0);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/* And run the backend */
 		BackendRun(&port);		/* does not return */
@@ -5810,14 +5699,11 @@ sigusr1_handler(SIGNAL_ARGS)
 		/* Start immediately if possible, else remember request for later. */
 		WalReceiverRequested = true;
 		MaybeStartWalReceiver();
-<<<<<<< HEAD
 	}
 
 	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_FTS) && FtsProbePID() != 0)
 	{
 		signal_child(FtsProbePID(), SIGINT);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*
@@ -5895,64 +5781,7 @@ StartupPacketTimeoutHandler(void)
 static bool
 RandomCancelKey(int32 *cancel_key)
 {
-<<<<<<< HEAD
-	long		rand;
-
-	/*
-	 * We use % 255, sacrificing one possible byte value, so as to ensure that
-	 * all bits of the random() value participate in the result. While at it,
-	 * add one to avoid generating any null bytes.
-	 */
-	rand = PostmasterRandom();
-	md5Salt[0] = (rand % 255) + 1;
-	rand = PostmasterRandom();
-	md5Salt[1] = (rand % 255) + 1;
-	rand = PostmasterRandom();
-	md5Salt[2] = (rand % 255) + 1;
-	rand = PostmasterRandom();
-	md5Salt[3] = (rand % 255) + 1;
-}
-
-/*
- * PostmasterRandom
- *
- * Caution: use this only for values needed during connection-request
- * processing.  Otherwise, the intended property of having an unpredictable
- * delay between random_start_time and random_stop_time will be broken.
- */
-static long
-PostmasterRandom(void)
-{
-	/*
-	 * Select a random seed at the time of first receiving a request.
-	 */
-	if (random_seed == 0)
-	{
-		do
-		{
-			struct timeval random_stop_time;
-
-			gettimeofday(&random_stop_time, NULL);
-
-			/*
-			 * We are not sure how much precision is in tv_usec, so we swap
-			 * the high and low 16 bits of 'random_stop_time' and XOR them
-			 * with 'random_start_time'. On the off chance that the result is
-			 * 0, we loop until it isn't.
-			 */
-			random_seed = random_start_time.tv_usec ^
-				((random_stop_time.tv_usec << 16) |
-				 ((random_stop_time.tv_usec >> 16) & 0xffff));
-		}
-		while (random_seed == 0);
-
-		srandom(random_seed);
-	}
-
-	return random();
-=======
 	return pg_strong_random(cancel_key, sizeof(int32));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -6191,8 +6020,6 @@ StartAutovacuumWorker(void)
 /*
  * MaybeStartWalReceiver
  *		Start the WAL receiver process, if not running and our state allows.
-<<<<<<< HEAD
-=======
  *
  * Note: if WalReceiverPID is already nonzero, it might seem that we should
  * clear WalReceiverRequested.  However, there's a race condition if the
@@ -6201,7 +6028,6 @@ StartAutovacuumWorker(void)
  * the dead walreceiver process.  Better to risk launching an extra
  * walreceiver than to miss launching one we need.  (The walreceiver code
  * has logic to recognize that it should go away if not needed.)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 static void
 MaybeStartWalReceiver(void)
@@ -6212,16 +6038,14 @@ MaybeStartWalReceiver(void)
 		Shutdown == NoShutdown)
 	{
 		WalReceiverPID = StartWalReceiver();
-<<<<<<< HEAD
-		WalReceiverRequested = false;
-
-		/* wal receiver has been launched */
-		SetMirrorReadyFlag();
-=======
 		if (WalReceiverPID != 0)
+		{
 			WalReceiverRequested = false;
+
+			/* wal receiver has been launched */
+			SetMirrorReadyFlag();
+		}
 		/* else leave the flag set, so we'll try again later */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 }
 
@@ -6532,19 +6356,7 @@ bgworker_should_start_mpp(BackgroundWorker *worker)
 static bool
 assign_backendlist_entry(RegisteredBgWorker *rw)
 {
-<<<<<<< HEAD
-	Backend    *bn = malloc(sizeof(Backend));
-
-	if (bn == NULL)
-	{
-		ereport(LOG,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-		return false;
-	}
-=======
 	Backend    *bn;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Compute the cancel key that will be assigned to this session. We
@@ -6672,12 +6484,9 @@ maybe_start_bgworkers(void)
 
 		if (bgworker_should_start_now(rw->rw_worker.bgw_start_time))
 		{
-<<<<<<< HEAD
 			if (!bgworker_should_start_mpp(&rw->rw_worker))
 				continue;
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			/* reset crash time before trying to start worker */
 			rw->rw_crashed_at = 0;
 
@@ -6699,16 +6508,10 @@ maybe_start_bgworkers(void)
 			}
 
 			/*
-<<<<<<< HEAD
-			 * Quit, but have ServerLoop call us again to look for additional
-			 * ready-to-run workers.  There might not be any, but we'll find
-			 * out the next time we run.
-=======
 			 * If we've launched as many workers as allowed, quit, but have
 			 * ServerLoop call us again to look for additional ready-to-run
 			 * workers.  There might not be any, but we'll find out the next
 			 * time we run.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			 */
 			if (++num_launched >= MAX_BGWORKERS_TO_LAUNCH)
 			{
