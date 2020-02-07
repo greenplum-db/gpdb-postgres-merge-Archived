@@ -2103,16 +2103,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * buffer.
 	 */
 	if (IsSystemRelation(relation))
-	{
-		/*
-		 * Also make note of the OID we used, so that it is dispatched to the
-		 * segments, when this CREATE statement is dispatched.
-		 */
-		if (Gp_role == GP_ROLE_DISPATCH && relation->rd_rel->relhasoids)
-			AddDispatchOidFromTuple(relation, heaptup);
-
 		CacheInvalidateHeapTuple(relation, heaptup, NULL);
-	}
 
 	/* Note: speculative insertions are counted too, even if aborted later */
 	pgstat_count_heap_insert(relation, 1);

@@ -166,8 +166,9 @@ CreateConstraintEntry(const char *constraintName,
 		values[i] = (Datum) NULL;
 	}
 
-	conOid = GetNewOidWithIndex(conDesc, ConstraintOidIndexId,
-								Anum_pg_constraint_oid);
+	conOid = GetNewOidForConstraint(conDesc, ConstraintOidIndexId,
+									Anum_pg_constraint_oid,
+									relId, constraintType, NameStr(&cname));
 	values[Anum_pg_constraint_oid - 1] = ObjectIdGetDatum(conOid);
 	values[Anum_pg_constraint_conname - 1] = NameGetDatum(&cname);
 	values[Anum_pg_constraint_connamespace - 1] = ObjectIdGetDatum(constraintNamespace);

@@ -95,8 +95,9 @@ ConversionCreate(const char *conname, Oid connamespace,
 
 	/* form a tuple */
 	namestrcpy(&cname, conname);
-	oid = GetNewOidWithIndex(rel, ConversionOidIndexId,
-							 Anum_pg_conversion_oid);
+	oid = GetNewOidForConversion(rel, ConversionOidIndexId,
+								 Anum_pg_conversion_oid,
+								 connamespace, NameStr(&cname));
 	values[Anum_pg_conversion_oid - 1] = ObjectIdGetDatum(oid);
 	values[Anum_pg_conversion_conname - 1] = NameGetDatum(&cname);
 	values[Anum_pg_conversion_connamespace - 1] = ObjectIdGetDatum(connamespace);

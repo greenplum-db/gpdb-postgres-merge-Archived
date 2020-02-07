@@ -1480,8 +1480,9 @@ SetDefaultACL(InternalDefaultACL *iacls)
 		if (isNew)
 		{
 			/* insert new entry */
-			defAclOid = GetNewOidWithIndex(rel, DefaultAclOidIndexId,
-										   Anum_pg_default_acl_oid);
+			defAclOid = GetNewOidForDefaultAcl(rel, DefaultAclOidIndexId,
+											   Anum_pg_default_acl_oid,
+											   iacls->roleid, iacls->nspid, objtype);
 			values[Anum_pg_default_acl_oid - 1] = ObjectIdGetDatum(defAclOid);
 			values[Anum_pg_default_acl_defaclrole - 1] = ObjectIdGetDatum(iacls->roleid);
 			values[Anum_pg_default_acl_defaclnamespace - 1] = ObjectIdGetDatum(iacls->nspid);

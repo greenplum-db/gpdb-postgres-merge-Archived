@@ -238,8 +238,10 @@ OperatorShellMake(const char *operatorName,
 	 * initialize values[] with the operator name and input data types. Note
 	 * that oprcode is set to InvalidOid, indicating it's a shell.
 	 */
-	operatorObjectId = GetNewOidWithIndex(pg_operator_desc, OperatorOidIndexId,
-										  Anum_pg_operator_oid);
+	operatorObjectId = GetNewOidForOperator(pg_operator_desc, OperatorOidIndexId,
+											Anum_pg_operator_oid,
+											NameStr(&oname), leftTypeId, rightTypeId,
+											operatorNamespace)
 	values[Anum_pg_operator_oid - 1] = ObjectIdGetDatum(operatorObjectId);
 	namestrcpy(&oname, operatorName);
 	values[Anum_pg_operator_oprname - 1] = NameGetDatum(&oname);
@@ -534,9 +536,11 @@ OperatorCreate(const char *operatorName,
 	{
 		isUpdate = false;
 
-		operatorObjectId = GetNewOidWithIndex(pg_operator_desc,
-											  OperatorOidIndexId,
-											  Anum_pg_operator_oid);
+		operatorObjectId = GetNewOidForOperator(pg_operator_desc,
+												OperatorOidIndexId,
+												Anum_pg_operator_oid,
+												nameStr(&oname), leftTypeId,
+												rightTypeId, operatorNamespace);
 		values[Anum_pg_operator_oid - 1] = ObjectIdGetDatum(operatorObjectId);
 
 		tup = heap_form_tuple(RelationGetDescr(pg_operator_desc),

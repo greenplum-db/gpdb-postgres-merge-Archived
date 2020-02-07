@@ -490,8 +490,14 @@ RelationNeedsSynchronizedOIDs(Relation relation)
 			/*
 			 * pg_largeobject is more like a user table, and has
 			 * different contents in each segment and master.
+			 *
+			 * Large objects don't work very consistently in GPDB. They are not
+			 * distributed in the segments, but rather stored in the master node.
+			 * Or actually, it depends on which node the lo_create() function
+			 * happens to run, which isn't very deterministic.
 			 */
 			case LargeObjectRelationId:
+			case LargeObjectMetadataRelationId:
 				return false;
 
 			/*
@@ -505,6 +511,10 @@ RelationNeedsSynchronizedOIDs(Relation relation)
 			case TriggerRelationId:
 			case AccessMethodOperatorRelationId:
 			case AccessMethodProcedureRelationId:
+				return false;
+
+			/* Event triggers are only stored and fired in the QD. */
+			case EventTriggerRelationId:
 				return false;
 		}
 

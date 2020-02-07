@@ -98,25 +98,20 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 		 */
 		Oid			new_oid;
 
-		/*
-		 * In QE node, however, use the OIDs assigned by the master (they are delivered
-		 * out-of-band, see oid_dispatch.c.
-		 */
-		if (Gp_role == GP_ROLE_EXECUTE)
-			new_oid = InvalidOid;
-		else
+		do
 		{
-<<<<<<< HEAD
-			do
-			{
-				new_oid = GetNewOid(pg_enum);
-			} while (new_oid & 1);
-		}
-=======
-			new_oid = GetNewOidWithIndex(pg_enum, EnumOidIndexId,
-										 Anum_pg_enum_oid);
+			new_oid = GetNewOidForEnum(pg_enum, EnumOidIndexId,
+									   Anum_pg_enum_oid,
+									   enumtypid, enumlabel);
+
+			/*
+			 * In QE node, however, use the OIDs assigned by the master (they are delivered
+			 * out-of-band, see oid_dispatch.c.
+			 */
+			if (Gp_role == GP_ROLE_EXECUTE)
+				break;
+
 		} while (new_oid & 1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		oids[elemno] = new_oid;
 	}
 
@@ -385,22 +380,14 @@ restart:
 	}
 
 	/* Get a new OID for the new label */
+	/*
+	 * In QE, the dispatcher has alrady allocated the OID for us.
+	 */
 	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
 	{
-<<<<<<< HEAD
-=======
-		if (!OidIsValid(binary_upgrade_next_pg_enum_oid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("pg_enum OID value not set when in binary upgrade mode")));
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-		/*
-		 * In QE, the dispatcher has alrady allocated the OID for us. Like in
-		 * EnumValuesCreate(), it is delivered out-of-band, and set on the tuple by
-		 * heap_insert().
-		 */
-		newOid = InvalidOid;
+		newOid = GetNewOidForEnum(pg_enum, EnumOidIndexId,
+								  Anum_pg_enum_oid,
+								  enumtypeid, enumlabel);
 	}
 	else
 	{
@@ -416,8 +403,9 @@ restart:
 			bool		sorts_ok;
 
 			/* Get a new OID (different from all existing pg_enum tuples) */
-			newOid = GetNewOidWithIndex(pg_enum, EnumOidIndexId,
-										Anum_pg_enum_oid);
+			newOid = GetNewOidForEnum(pg_enum, EnumOidIndexId,
+									  Anum_pg_enum_oid,
+									  enumtypeid, enumlabel);
 
 			/*
 			 * Detect whether it sorts correctly relative to existing

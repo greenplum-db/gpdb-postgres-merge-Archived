@@ -156,28 +156,12 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	nulls[Anum_pg_type_typdefault - 1] = true;
 	nulls[Anum_pg_type_typacl - 1] = true;
 
-<<<<<<< HEAD
-=======
-	/* Use binary-upgrade override for pg_type.oid? */
-	if (IsBinaryUpgrade)
-	{
-		if (!OidIsValid(binary_upgrade_next_pg_type_oid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("pg_type OID value not set when in binary upgrade mode")));
-
-		typoid = binary_upgrade_next_pg_type_oid;
-		binary_upgrade_next_pg_type_oid = InvalidOid;
-	}
-	else
-	{
-		typoid = GetNewOidWithIndex(pg_type_desc, TypeOidIndexId,
-									Anum_pg_type_oid);
-	}
+	typoid = GetNewOidForType(pg_type_desc, TypeOidIndexId,
+							  Anum_pg_type_oid,
+							  NameStr(&name), typeNamespace);
 
 	values[Anum_pg_type_oid - 1] = ObjectIdGetDatum(typoid);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * create a new type tuple
 	 */
@@ -495,28 +479,13 @@ TypeCreate(Oid newTypeOid,
 	{
 		/* Force the OID if requested by caller */
 		if (OidIsValid(newTypeOid))
-<<<<<<< HEAD
-			HeapTupleSetOid(tup, newTypeOid);
-		/* else allow system to assign oid */
-=======
 			typeObjectId = newTypeOid;
-		/* Use binary-upgrade override for pg_type.oid, if supplied. */
-		else if (IsBinaryUpgrade)
-		{
-			if (!OidIsValid(binary_upgrade_next_pg_type_oid))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("pg_type OID value not set when in binary upgrade mode")));
-
-			typeObjectId = binary_upgrade_next_pg_type_oid;
-			binary_upgrade_next_pg_type_oid = InvalidOid;
-		}
 		else
 		{
-			typeObjectId = GetNewOidWithIndex(pg_type_desc, TypeOidIndexId,
-											  Anum_pg_type_oid);
+			typeObjectId = GetNewOidForType(pg_type_desc, TypeOidIndexId,
+											Anum_pg_type_oid,
+											NameStr(&name), typNamespace);
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		values[Anum_pg_type_oid - 1] = ObjectIdGetDatum(typeObjectId);
 

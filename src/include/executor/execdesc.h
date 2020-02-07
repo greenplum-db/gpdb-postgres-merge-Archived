@@ -194,6 +194,8 @@ typedef struct
 	char	   *objname;		/* object name (e.g. relation name) */
 	Oid			keyOid1;		/* generic OID field, meaning depends on object type */
 	Oid			keyOid2;		/* 2nd generic OID field, meaning depends on object type */
+	Oid			keyOid3;		/* 3rd generic OID field, meaning depends on object type */
+	Oid			keyOid4;		/* 4th generic OID field, meaning depends on object type */
 
 	Oid			oid;			/* OID to assign */
 
