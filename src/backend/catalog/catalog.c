@@ -50,21 +50,7 @@
 #include "catalog/pg_shseclabel.h"
 #include "catalog/pg_subscription.h"
 #include "catalog/pg_tablespace.h"
-<<<<<<< HEAD
-#include "catalog/pg_rewrite.h"
-#include "catalog/pg_statistic.h"
-#include "catalog/pg_trigger.h"
-
-#include "catalog/gp_configuration_history.h"
-#include "catalog/gp_segment_config.h"
-#include "catalog/pg_stat_last_operation.h"
-#include "catalog/pg_stat_last_shoperation.h"
-
-#include "catalog/gp_id.h"
-#include "catalog/gp_version.h"
-=======
 #include "catalog/pg_type.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/toasting.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
@@ -74,6 +60,15 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
+#include "catalog/pg_rewrite.h"
+#include "catalog/pg_statistic.h"
+#include "catalog/pg_trigger.h"
+#include "catalog/gp_configuration_history.h"
+#include "catalog/gp_segment_config.h"
+#include "catalog/pg_stat_last_operation.h"
+#include "catalog/pg_stat_last_shoperation.h"
+#include "catalog/gp_id.h"
+#include "catalog/gp_version.h"
 #include "cdb/cdbvars.h"
 
 static bool IsAoSegmentClass(Form_pg_class reltuple);
@@ -163,13 +158,9 @@ IsSystemRelation(Relation relation)
 bool
 IsSystemClass(Oid relid, Form_pg_class reltuple)
 {
-<<<<<<< HEAD
-	return IsToastClass(reltuple) || IsCatalogClass(relid, reltuple) ||
-		IsAoSegmentClass(reltuple);
-=======
 	/* IsCatalogRelationOid is a bit faster, so test that first */
-	return (IsCatalogRelationOid(relid) || IsToastClass(reltuple));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	return (IsCatalogRelationOid(relid) || IsToastClass(reltuple) ||
+			IsAoSegmentClass(reltuple));
 }
 
 /*
@@ -204,21 +195,6 @@ bool
 IsCatalogRelationOid(Oid relid)
 {
 	/*
-<<<<<<< HEAD
-	 * Never consider relations outside pg_catalog/pg_toast to be catalog
-	 * relations.
-	 */
-	if (!IsSystemNamespace(relnamespace) && !IsToastNamespace(relnamespace) &&
-		!IsAoSegmentNamespace(relnamespace))
-		return false;
-
-	/* ----
-	 * Check whether the oid was assigned during initdb, when creating the
-	 * initial template database. Minus the relations in information_schema
-	 * excluded above, these are integral part of the system.
-	 * We could instead check whether the relation is pinned in pg_depend, but
-	 * this is noticeably cheaper and doesn't require catalog access.
-=======
 	 * We consider a relation to be a system catalog if it has an OID that was
 	 * manually assigned or assigned by genbki.pl.  This includes all the
 	 * defined catalogs, their indexes, and their TOAST tables and indexes.
@@ -227,7 +203,6 @@ IsCatalogRelationOid(Oid relid)
 	 * integral to the system and can be treated the same as user relations.
 	 * (Since it's valid to drop and recreate information_schema, any rule
 	 * that did not act this way would be wrong.)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 *
 	 * This test is reliable since an OID wraparound will skip this range of
 	 * OIDs; see GetNewObjectId().
@@ -557,69 +532,11 @@ RelationNeedsSynchronizedOIDs(Relation relation)
  * of transient conflicts for as long as our own MVCC snapshots think a
  * recently-deleted row is live.  The risk is far higher when selecting TOAST
  * OIDs, because SnapshotToast considers dead rows as active indefinitely.)
-<<<<<<< HEAD
- */
-Oid
-GetNewOid(Relation relation)
-{
-	Oid			newOid;
-	Oid			oidIndex;
-
-	/* If relation doesn't have OIDs at all, caller is confused */
-	Assert(relation->rd_rel->relhasoids);
-
-	/* In bootstrap mode, we don't have any indexes to use */
-	if (IsBootstrapProcessingMode())
-		return GetNewObjectId();
-
-	/* The relcache will cache the identity of the OID index for us */
-	oidIndex = RelationGetOidIndex(relation);
-
-	/* If no OID index, just hand back the next OID counter value */
-	if (!OidIsValid(oidIndex))
-	{
-		/*
-		 * System catalogs that have OIDs should *always* have a unique OID
-		 * index; we should only take this path for user tables. Give a
-		 * warning if it looks like somebody forgot an index.
-		 */
-		if (IsSystemRelation(relation))
-			elog(WARNING, "generating possibly-non-unique OID for \"%s\"",
-				 RelationGetRelationName(relation));
-
-		return GetNewObjectId();
-	}
-
-	/* Otherwise, use the index to find a nonconflicting OID */
-	do {
-		newOid = GetNewOidWithIndex(relation, oidIndex, ObjectIdAttributeNumber);
-	} while(!IsOidAcceptable(newOid));
-
-	/*
-	 * Most catalog objects need to have the same OID in the master and all
-	 * segments. When creating a new object, the master should allocate the
-	 * OID and tell the segments to use the same, so segments should have no
-	 * need to ever allocate OIDs on their own. Therefore, give a WARNING if
-	 * GetNewOid() is called in a segment. (There are a few exceptions, see
-	 * RelationNeedsSynchronizedOIDs()).
-	 */
-	if (Gp_role == GP_ROLE_EXECUTE && RelationNeedsSynchronizedOIDs(relation))
-		elog(PANIC, "allocated OID %u for relation \"%s\" in segment",
-			 newOid, RelationGetRelationName(relation));
-
-	return newOid;
-}
-
-/*
- * GetNewOidWithIndex
- *		Guts of GetNewOid: use the supplied index
-=======
  *
  * Note that we are effectively assuming that the table has a relatively small
  * number of entries (much less than 2^32) and there aren't very long runs of
  * consecutive existing OIDs.  This is a mostly reasonable assumption for
  * system catalogs.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * This is exported separately because there are cases where we want to use
  * an index that will not be recognized by RelationGetOidIndex: TOAST tables
@@ -638,8 +555,6 @@ GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
 	ScanKeyData key;
 	bool		collides;
 
-<<<<<<< HEAD
-=======
 	/* Only system relations are supported */
 	Assert(IsSystemRelation(relation));
 
@@ -655,7 +570,6 @@ GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
 	 */
 	Assert(!IsBinaryUpgrade || RelationGetRelid(relation) != TypeRelationId);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* Generate new OIDs until we find one not in the table */
 	do
 	{
@@ -674,8 +588,24 @@ GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
 
 		collides = HeapTupleIsValid(systable_getnext(scan));
 
+		/* GPDB: Also check that this OID hasn't been preallocated */
+		if (!collids && IsOidAcceptable(newOid))
+			collides = true;
+
 		systable_endscan(scan);
 	} while (collides);
+
+	/*
+	 * Most catalog objects need to have the same OID in the master and all
+	 * segments. When creating a new object, the master should allocate the
+	 * OID and tell the segments to use the same, so segments should have no
+	 * need to ever allocate OIDs on their own. Therefore, give a WARNING if
+	 * GetNewOid() is called in a segment. (There are a few exceptions, see
+	 * RelationNeedsSynchronizedOIDs()).
+	 */
+	if (Gp_role == GP_ROLE_EXECUTE && RelationNeedsSynchronizedOIDs(relation))
+		elog(PANIC, "allocated OID %u for relation \"%s\" in segment",
+			 newOid, RelationGetRelationName(relation));
 
 	return newOid;
 }
@@ -695,13 +625,9 @@ GpCheckRelFileCollision(RelFileNodeBackend rnode)
 		/*
 		 * Here we have a little bit of a dilemma: if errno is something
 		 * other than ENOENT, should we declare a collision and loop? In
-		 * particular one might think this advisable for, say, EPERM.
-		 * However there really shouldn't be any unreadable files in a
-		 * tablespace directory, and if the EPERM is actually complaining
-		 * that we can't read the directory itself, we'd be in an infinite
-		 * loop.  In practice it seems best to go ahead regardless of the
-		 * errno.  If there is a colliding file we will get an smgr
-		 * failure when we attempt to create the new relation file.
+		 * practice it seems best to go ahead regardless of the errno.  If
+		 * there is a colliding file we will get an smgr failure when we
+		 * attempt to create the new relation file.
 		 */
 		collides = false;
 	}
@@ -773,7 +699,6 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 	{
 		CHECK_FOR_INTERRUPTS();
 
-<<<<<<< HEAD
 		/* Generate the Relfilenode */
 		rnode.node.relNode = GetNewSegRelfilenode();
 
@@ -794,31 +719,6 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 			 * trivially true in upstream because temp tables don't use shared
 			 * buffers at all. We have to make this additional check to make
 			 * sure of that.
-=======
-		/* Generate the OID */
-		if (pg_class)
-			rnode.node.relNode = GetNewOidWithIndex(pg_class, ClassOidIndexId,
-													Anum_pg_class_oid);
-		else
-			rnode.node.relNode = GetNewObjectId();
-
-		/* Check for existing file of same name */
-		rpath = relpath(rnode, MAIN_FORKNUM);
-
-		if (access(rpath, F_OK) == 0)
-		{
-			/* definite collision */
-			collides = true;
-		}
-		else
-		{
-			/*
-			 * Here we have a little bit of a dilemma: if errno is something
-			 * other than ENOENT, should we declare a collision and loop? In
-			 * practice it seems best to go ahead regardless of the errno.  If
-			 * there is a colliding file we will get an smgr failure when we
-			 * attempt to create the new relation file.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			 */
 			rnode.backend = (backend == InvalidBackendId) ? TempRelBackendId
 														  : InvalidBackendId;
