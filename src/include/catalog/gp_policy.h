@@ -25,7 +25,7 @@
 /*
  * Defines for gp_policy
  */
-CATALOG(gp_distribution_policy,7110,GpPolicyRelationId)
+CATALOG(gp_distribution_policy,7142,GpPolicyRelationId)
 {
 	Oid			localoid;
 	char		policytype; /* distribution policy type */

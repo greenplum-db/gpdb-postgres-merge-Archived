@@ -33,21 +33,12 @@ generated-header-symlinks: $(top_builddir)/src/include/utils/header-stamp $(top_
 $(SUBDIRS:%=%-recursive): fmgr-stamp errcodes.h
 
 
-# In Greenplum, contents of the pg_proc catalog is in two files, pg_proc.h
-# and pg_proc_gp.h. Combine them into a single file, so that Gen_fmgrtab.pl can
-# process it.
-#
-# We do the same in src/backend/catalog/Makefile. It's duplicative, but a little
-# duplication does no harm.
-pg_proc_combined.dat: $(top_srcdir)/src/include/catalog/pg_proc.dat $(top_srcdir)/src/include/catalog/pg_proc_gp.dat
-	cat $^ > $@
-
 # fmgr-stamp records the last time we ran Gen_fmgrtab.pl.  We don't rely on
 # the timestamps of the individual output files, because the Perl script
 # won't update them if they didn't change (to avoid unnecessary recompiles).
 
-fmgr-stamp: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm pg_proc_combined.dat $(top_srcdir)/src/include/access/transam.h
-	$(PERL) -I $(catalogdir) $< --include-path=$(top_srcdir)/src/include/ pg_proc_combined.dat
+fmgr-stamp: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm pg_proc.dat $(top_srcdir)/src/include/access/transam.h
+	$(PERL) -I $(catalogdir) $< --include-path=$(top_srcdir)/src/include/ pg_proc.dat
 	touch $@
 
 errcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errcodes.pl
