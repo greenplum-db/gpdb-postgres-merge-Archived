@@ -327,14 +327,11 @@ extern bool tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples,
 
 extern void tuplesort_end(Tuplesortstate *state);
 
-<<<<<<< HEAD
-=======
 extern void tuplesort_get_stats(Tuplesortstate *state,
 								TuplesortInstrumentation *stats);
 extern const char *tuplesort_method_name(TuplesortMethod m);
 extern const char *tuplesort_space_type_name(TuplesortSpaceType t);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern int	tuplesort_merge_order(int64 allowedMem);
 
 extern Size tuplesort_estimate_shared(int nworkers);
@@ -353,7 +350,6 @@ extern void tuplesort_rescan(Tuplesortstate *state);
 extern void tuplesort_markpos(Tuplesortstate *state);
 extern void tuplesort_restorepos(Tuplesortstate *state);
 
-<<<<<<< HEAD
 
 /*
  * We have now declared the protoypes for all the *_pg functions. If we're
@@ -849,7 +845,4 @@ switcheroo_tuplesort_set_gpmon(switcheroo_Tuplesortstate *state,
 #endif
 
 
-#endif   /* TUPLESORT_H */
-=======
 #endif							/* TUPLESORT_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

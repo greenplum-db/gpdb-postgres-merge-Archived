@@ -21,13 +21,10 @@
 #include "commands/createas.h"
 #include "commands/defrem.h"
 #include "commands/prepare.h"
-<<<<<<< HEAD
 #include "commands/queue.h"
 #include "executor/execUtils.h"
 #include "executor/hashjoin.h"
-=======
 #include "executor/nodeHash.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "foreign/fdwapi.h"
 #include "jit/jit.h"
 #include "nodes/extensible.h"
@@ -986,18 +983,18 @@ ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc)
 	int			nr;
 	ListCell   *l;
 
-<<<<<<< HEAD
 	/*
+	 * GPDB_12_MERGE_FIXME: partitioned table is replaced to upstream
+	 * maybe we can rid of this comments. Validation after conflicts
+	 * removed.
 	 * GPDB_91_MERGE_FIXME: If the target is a partitioned table, we
 	 * should also report information on the triggers in the partitions.
 	 * I.e. we should scan the the 'ri_partition_hash' of each
 	 * ResultRelInfo as well. This is somewhat academic, though, as long
 	 * as we don't support triggers in GPDB in general..
 	 */
-=======
 	routerels = queryDesc->estate->es_tuple_routing_result_relations;
 	targrels = queryDesc->estate->es_trig_target_relations;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	ExplainOpenGroup("Triggers", "Triggers", false, es);
 
@@ -1846,11 +1843,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_TidScan:
 		case T_SubqueryScan:
 		case T_FunctionScan:
-<<<<<<< HEAD
 		case T_TableFunctionScan:
-=======
 		case T_TableFuncScan:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		case T_ValuesScan:
 		case T_CteScan:
 		case T_WorkTableScan:
@@ -3929,7 +3923,6 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 				objecttag = "Function Name";
 			}
 			break;
-<<<<<<< HEAD
 		case T_TableFunctionScan:
 			{
 				TableFunctionScan *fscan = (TableFunctionScan *) plan;
@@ -3960,12 +3953,10 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 
 				/* might be nice to add order by and scatter by info, if it's a TableFunctionScan */
 			}
-=======
 		case T_TableFuncScan:
 			Assert(rte->rtekind == RTE_TABLEFUNC);
 			objectname = "xmltable";
 			objecttag = "Table Function Name";
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 		case T_ValuesScan:
 			Assert(rte->rtekind == RTE_VALUES);
@@ -4231,17 +4222,13 @@ ExplainSubPlans(List *plans, List *ancestors,
 	foreach(lst, plans)
 	{
 		SubPlanState *sps = (SubPlanState *) lfirst(lst);
-<<<<<<< HEAD
-		SubPlan    *sp = (SubPlan *) sps->xprstate.expr;
+        SubPlan    *sp = sps->subplan;
 		int			qDispSliceId;
 
 		if (es->pstmt->subplan_sliceIds)
 			qDispSliceId = es->pstmt->subplan_sliceIds[sp->plan_id - 1];
 		else
 			qDispSliceId = -1;
-=======
-		SubPlan    *sp = sps->subplan;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * There can be multiple SubPlan nodes referencing the same physical
