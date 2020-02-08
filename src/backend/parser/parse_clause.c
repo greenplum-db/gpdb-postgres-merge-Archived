@@ -106,7 +106,6 @@ static List *resolve_unique_index_expr(ParseState *pstate, InferClause *infer,
 									   Relation heapRel);
 static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 								  List *grouplist, List *targetlist, int location);
-static TargetEntry *getTargetBySortGroupRef(Index ref, List *tl);
 static WindowClause *findWindowClause(List *wclist, const char *name);
 static Node *transformFrameOffset(ParseState *pstate, int frameOptions,
 								  Oid rangeopfamily, Oid rangeopcintype, Oid *inRangeFunc,
@@ -180,70 +179,6 @@ transformFromClause(ParseState *pstate, List *frmList)
 	 * but those should have been that way already.
 	 */
 	setNamespaceLateralState(pstate->p_namespace, false, true);
-}
-
-/*
- * winref_checkspec_walker
- */
-static bool
-winref_checkspec_walker(Node *node, void *ctx)
-{
-	winref_check_ctx *ref = (winref_check_ctx *)ctx;
-
-	if (!node)
-		return false;
-	else if (IsA(node, WindowFunc))
-	{
-		WindowFunc *winref = (WindowFunc *) node;
-
-		/*
-		 * Look at functions pointing to the interesting spec only.
-		 */
-		if (winref->winref != ref->winref)
-			return false;
-
-		if (winref->windistinct)
-		{
-			if (ref->has_order)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("DISTINCT cannot be used with window specification containing an ORDER BY clause"),
-						 parser_errposition(ref->pstate, winref->location)));
-
-			if (ref->has_frame)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("DISTINCT cannot be used with window specification containing a framing clause"),
-						 parser_errposition(ref->pstate, winref->location)));
-		}
-	}
-
-	return expression_tree_walker(node, winref_checkspec_walker, ctx);
-}
-
-/*
- * winref_checkspec
- *
- * See if any WindowFuncss using this spec are DISTINCT qualified.
- *
- * In addition, we're going to check winrequireorder / winallowframe.
- * You might want to do it in ParseFuncOrColumn,
- * but we need to do this here after all the transformations
- * (especially parent inheritance) was done.
- */
-static bool
-winref_checkspec(ParseState *pstate, List *targetlist, Index winref,
-				 bool has_order, bool has_frame)
-{
-	winref_check_ctx ctx;
-
-	ctx.pstate = pstate;
-	ctx.winref = winref;
-	ctx.has_order = has_order;
-	ctx.has_frame = has_frame;
-
-	return expression_tree_walker((Node *) targetlist,
-								  winref_checkspec_walker, (void *) &ctx);
 }
 
 /*
@@ -3928,25 +3863,6 @@ targetIsInSortList(TargetEntry *tle, Oid sortop, List *sortList)
 			return true;
 	}
 	return false;
-}
-
-/*
- * Given a sort group reference, find the TargetEntry for it.
- */
-
-static TargetEntry *
-getTargetBySortGroupRef(Index ref, List *tl)
-{
-	ListCell *tmp;
-
-	foreach(tmp, tl)
-	{
-		TargetEntry *te = (TargetEntry *)lfirst(tmp);
-
-		if (te->ressortgroupref == ref)
-			return te;
-	}
-	return NULL;
 }
 
 /*
