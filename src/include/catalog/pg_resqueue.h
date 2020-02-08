@@ -36,6 +36,7 @@
 
 CATALOG(pg_resqueue,6026,ResQueueRelationId) BKI_SHARED_RELATION
 {
+	Oid			oid;				/* oid */
 	NameData	rsqname;			/* name of resource queue */
 	float4		rsqcountlimit;		/* max active count limit */
 	float4		rsqcostlimit;		/* max cost limit */

@@ -25,9 +25,11 @@
 
 CATALOG(pg_resgroup,6436,ResGroupRelationId) BKI_SHARED_RELATION
 {
+	Oid			oid;			/* oid */
+
 	NameData	rsgname;		/* name of resource group */
 
-	Oid		parent;			/* parent resource group */
+	Oid			parent;			/* parent resource group */
 } FormData_pg_resgroup;
 
 /* no foreign keys */

@@ -63,6 +63,7 @@
 
 CATALOG(pg_resourcetype,6059,ResourceTypeRelationId) BKI_SHARED_RELATION
 {
+	Oid			oid;				/* oid */
 	NameData	resname;			/* name of resource type  */
 	int16		restypid;			/* resource type id  */
 	bool		resrequired;		/* if required, user must specify during CREATE */

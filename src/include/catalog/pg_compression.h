@@ -30,6 +30,7 @@
 
 CATALOG(pg_compression,7056,CompressionRelationId)
 {
+	Oid			oid;			/* oid */
 	NameData	compname;			
 	regproc		compconstructor;	
 	regproc		compdestructor;		
