@@ -25,17 +25,9 @@
 extern void NewRelationCreateToastTable(Oid relOid, Datum reloptions,
 									   bool is_part_child, bool is_part_parent);
 extern void NewHeapCreateToastTable(Oid relOid, Datum reloptions,
-<<<<<<< HEAD
-									LOCKMODE lockmode,
-									bool is_part_child, bool is_part_parent);
-extern void AlterTableCreateToastTable(Oid relOid, Datum reloptions,
-									   LOCKMODE lockmode,
-									   bool is_part_child, bool is_part_parent);
-=======
 									LOCKMODE lockmode);
 extern void AlterTableCreateToastTable(Oid relOid, Datum reloptions,
 									   LOCKMODE lockmode);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void BootstrapToastTable(char *relName,
 								Oid toastOid, Oid toastIndexOid);
 
@@ -57,11 +49,7 @@ extern void BootstrapToastTable(char *relName,
  */
 
 /* normal catalogs */
-<<<<<<< HEAD
-DECLARE_TOAST(pg_extension, 5510, 5511);
-=======
 DECLARE_TOAST(pg_aggregate, 4159, 4160);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 DECLARE_TOAST(pg_attrdef, 2830, 2831);
 DECLARE_TOAST(pg_collation, 4161, 4162);
 DECLARE_TOAST(pg_constraint, 2832, 2833);

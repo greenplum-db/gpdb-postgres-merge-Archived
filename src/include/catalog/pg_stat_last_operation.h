@@ -19,6 +19,7 @@
 #define PG_STAT_LAST_OPERATION_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_stat_last_operation_d.h"
 
 /*
  * The CATALOG definition has to refer to the type of log_time as

@@ -18,7 +18,7 @@
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 
-#include "catalog/gp_segment_config.h"
+#include "catalog/gp_segment_configuration.h"
 #include "catalog/pg_proc.h"
 #include "catalog/indexing.h"
 #include "cdb/cdbdisp_query.h"

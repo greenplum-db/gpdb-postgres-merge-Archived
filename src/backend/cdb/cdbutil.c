@@ -24,13 +24,12 @@
 
 #include <sys/param.h>			/* for MAXHOSTNAMELEN */
 #include "access/genam.h"
-#include "catalog/gp_segment_config.h"
+#include "catalog/gp_segment_configuration.h"
 #include "nodes/makefuncs.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/memutils.h"
 #include "catalog/gp_id.h"
-#include "catalog/gp_segment_config.h"
 #include "catalog/indexing.h"
 #include "cdb/cdbhash.h"
 #include "cdb/cdbutil.h"

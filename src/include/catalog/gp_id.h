@@ -34,11 +34,11 @@
 
 
 #include "catalog/genbki.h"
+#include "catalog/gp_id_d.h"
+
 /*
  * Defines for gp_id table
  */
-#define GpIdRelationName			"gp_id"
-
 CATALOG(gp_id,5101,GpIdRelationId) BKI_SHARED_RELATION
 {
 	NameData	gpname;

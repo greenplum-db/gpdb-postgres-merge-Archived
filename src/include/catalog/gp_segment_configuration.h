@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * gp_segment_config.h
+ * gp_segment_configuration.h
  *    a segment configuration table
  *
  * Portions Copyright (c) 2006-2011, Greenplum Inc.
@@ -8,20 +8,19 @@
  *
  *
  * IDENTIFICATION
- *	    src/include/catalog/gp_segment_config.h
+ *	    src/include/catalog/gp_segment_configuration.h
  *
  *-------------------------------------------------------------------------
  */
-#ifndef _GP_SEGMENT_CONFIG_H_
-#define _GP_SEGMENT_CONFIG_H_
+#ifndef GP_SEGMENT_CONFIGURATION_H
+#define GP_SEGMENT_CONFIGURATION_H
 
 #include "catalog/genbki.h"
+#include "catalog/gp_segment_configuration_d.h"
 
 /*
- * Defines for gp_segment_config table
+ * Defines for gp_segment_configuration table
  */
-#define GpSegmentConfigRelationName		"gp_segment_configuration"
-
 #define MASTER_DBID 1
 #define MASTER_CONTENT_ID (-1)
 #define InvalidDbid 0
@@ -70,4 +69,4 @@ typedef FormData_gp_segment_configuration *Form_gp_segment_configuration;
 
 extern bool gp_segment_config_has_mirrors(void);
 
-#endif /*_GP_SEGMENT_CONFIG_H_*/
+#endif /*_GP_SEGMENT_CONFIGURATION_H_*/

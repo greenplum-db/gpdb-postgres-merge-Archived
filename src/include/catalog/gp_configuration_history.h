@@ -21,6 +21,7 @@
 #define _GP_CONFIGURATION_HISTORY_H_
 
 #include "catalog/genbki.h"
+#include "catalog/gp_configuration_history_d.h"
 
 /*
  * Defines for gp_configuration_history table
@@ -28,8 +29,6 @@
  * Used by fault-management components to record a "change history" description
  * with timestamp.
  */
-
-#define GpConfigHistoryRelName		"gp_configuration_history"
 
 /*
  * The CATALOG definition has to refer to the type of "time" as

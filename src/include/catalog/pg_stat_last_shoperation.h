@@ -19,6 +19,7 @@
 #define PG_STAT_LAST_SHOPERATION_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_stat_last_shoperation_d.h"
 
 /* here is the "shared" version */
 
