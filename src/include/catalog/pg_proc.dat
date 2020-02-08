@@ -6177,7 +6177,6 @@
   prosrc => 'aggregate_dummy' },
 
 { oid => '2107', descr => 'sum as numeric across all bigint input values',
-  oid_symbol => 'AGGFNOID_COUNT_ANY',
   proname => 'sum', prokind => 'a', proisstrict => 'f', prorettype => 'numeric',
   proargtypes => 'int8', prosrc => 'aggregate_dummy' },
 { oid => '2108', descr => 'sum as bigint across all integer input values',
