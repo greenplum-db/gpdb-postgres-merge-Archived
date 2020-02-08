@@ -94,45 +94,6 @@ free_parsestate(ParseState *pstate)
 }
 
 /*
- * parser_get_namecache()
- *
- * Returns the allocated object name hash table associated with the given parse
- * state.  This cache is used by parse routines that need to allocate multiple
- * ChooseRelationName() values that need to be distinct from each other.
- *
- * The cache is allocated by the first caller of this function.
- */
-struct HTAB *
-parser_get_namecache(ParseState *pstate)
-{
-	/*
-	 * The cache is always stored in the TOP level parse state, so if this is
-	 * a substate start by walking up the pstate tree.
-	 */
-	while (pstate->parentParseState != NULL)
-		pstate = pstate->parentParseState;
-
-	/* The first caller allocates the cache */
-	if (!pstate->p_namecache)
-	{
-		HASHCTL  cacheInfo;
-		int      cacheFlags;
-
-		memset(&cacheInfo, 0, sizeof(cacheInfo));
-		cacheInfo.keysize = NAMEDATALEN;
-		cacheInfo.entrysize = NAMEDATALEN;
-		cacheInfo.hcxt = CurrentMemoryContext;
-		cacheFlags = HASH_ELEM | HASH_CONTEXT;
-
-		pstate->p_namecache = hash_create("parse state object name cache",
-										   256, &cacheInfo, cacheFlags);
-	}
-
-	/* Return the cache */
-	return pstate->p_namecache;
-}
-
-/*
  * parser_errposition
  *		Report a parse-analysis-time cursor position, if possible.
  *

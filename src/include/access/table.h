@@ -26,6 +26,14 @@ extern Relation table_openrv_extended(const RangeVar *relation,
 extern Relation try_table_open(Oid relationId, LOCKMODE lockmode, bool noWait);
 extern void table_close(Relation relation, LOCKMODE lockmode);
 
+/* CDB */
+extern Relation CdbOpenTable(Oid relid, LOCKMODE reqmode, bool noWait, 
+							 bool *lockUpgraded);
+extern Relation CdbTryOpenTable(Oid relid, LOCKMODE reqmode,
+								bool noWait, bool *lockUpgraded);
+extern Relation CdbOpenTableRv(const RangeVar *relation, LOCKMODE reqmode, 
+							   bool noWait, bool *lockUpgraded);
+
 /*
  * heap_ used to be the prefix for these routines, and a lot of code will just
  * continue to work without adaptions after the introduction of pluggable

@@ -42,7 +42,6 @@
 #include "utils/varlena.h"
 
 #include "cdb/cdbvars.h"
-#include "nodes/relation.h"                 /* CdbRelColumnInfo */
 #include "optimizer/pathnode.h"             /* cdb_rte_find_pseudo_column() */
 #include "parser/parse_coerce.h"
 
@@ -1201,22 +1200,17 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation,
 	Oid			relid;
 
 	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
-<<<<<<< HEAD
 
 	/* Look up the appropriate relation using namespace search */
 	relid = RangeVarGetRelid(relation, NoLock, true);
 	/*
-	 * CdbTryOpenRelation might return NULL (for example, if the table
+	 * CdbTryOpenTable might return NULL (for example, if the table
 	 * is dropped by another transaction). Every time we invoke function
-	 * CdbTryOpenRelation, we should check if the return value is NULL.
+	 * CdbTryOpenTable, we should check if the return value is NULL.
 	 */
-	rel = CdbTryOpenRelation(relid, lockmode, nowait, lockUpgraded);
+	rel = CdbTryOpenTable(relid, lockmode, nowait, lockUpgraded);
 
 	if (!RelationIsValid(rel))
-=======
-	rel = table_openrv_extended(relation, lockmode, true);
-	if (rel == NULL)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		if (relation->schemaname)
 			ereport(ERROR,

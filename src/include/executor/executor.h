@@ -242,12 +242,8 @@ extern Node *attrMapExpr(TupleConversionMap *map, Node *expr);
  * functions in execProcnode.c
  */
 extern PlanState *ExecInitNode(Plan *node, EState *estate, int eflags);
-<<<<<<< HEAD
 extern void ExecSliceDependencyNode(PlanState *node);
-extern TupleTableSlot *ExecProcNode(PlanState *node);
-=======
 extern void ExecSetExecProcNode(PlanState *node, ExecProcNodeMtd function);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern Node *MultiExecProcNode(PlanState *node);
 extern void ExecEndNode(PlanState *node);
 extern bool ExecShutdownNode(PlanState *node);
@@ -289,26 +285,11 @@ planstate_walk_node(PlanState      *planstate,
 /*
  * prototypes from functions in execExpr.c
  */
-<<<<<<< HEAD
-extern Datum GetAttributeByNum(HeapTupleHeader tuple, AttrNumber attrno,
-				  bool *isNull);
-extern Datum GetAttributeByName(HeapTupleHeader tuple, const char *attname,
-				   bool *isNull);
 extern void init_fcache(Oid foid, Oid input_collation, FuncExprState *fcache,
 			MemoryContext fcacheCxt, bool needDescForSets);
 extern ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 									 List *argList, 
 									 ExprContext *econtext);
-extern Tuplestorestate *ExecMakeTableFunctionResult(ExprState *funcexpr,
-							ExprContext *econtext,
-							MemoryContext argContext,
-							TupleDesc expectedDesc,
-							bool randomAccess,
-							uint64 operatorMemKB);
-extern Datum ExecEvalExprSwitchContext(ExprState *expression, ExprContext *econtext,
-						  bool *isNull, ExprDoneCond *isDone);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern ExprState *ExecInitExpr(Expr *node, PlanState *parent);
 extern ExprState *ExecInitExprWithParams(Expr *node, ParamListInfo ext_params);
 extern ExprState *ExecInitQual(List *qual, PlanState *parent);
@@ -329,18 +310,12 @@ extern ProjectionInfo *ExecBuildProjectionInfo(List *targetList,
 											   PlanState *parent,
 											   TupleDesc inputDesc);
 extern ExprState *ExecPrepareExpr(Expr *node, EState *estate);
-<<<<<<< HEAD
-extern int	ExecTargetListLength(List *targetlist);
-extern int	ExecCleanTargetListLength(List *targetlist);
-extern TupleTableSlot *ExecProject(ProjectionInfo *projInfo,
-			ExprDoneCond *isDone);
-extern Datum ExecEvalFunctionArgToConst(FuncExpr *fexpr, int argno, bool *isnull);
-extern void GetNeededColumnsForScan(Node *expr, bool *mask, int n);
-extern bool isJoinExprNull(List *joinExpr, ExprContext *econtext);
-=======
 extern ExprState *ExecPrepareQual(List *qual, EState *estate);
 extern ExprState *ExecPrepareCheck(List *qual, EState *estate);
 extern List *ExecPrepareExprList(List *nodes, EState *estate);
+extern Datum ExecEvalFunctionArgToConst(FuncExpr *fexpr, int argno, bool *isnull);
+extern void GetNeededColumnsForScan(Node *expr, bool *mask, int n);
+extern bool isJoinExprNull(List *joinExpr, ExprContext *econtext);
 
 /*
  * ExecEvalExpr
@@ -492,7 +467,6 @@ extern Datum ExecMakeFunctionResultSet(SetExprState *fcache,
 									   MemoryContext argContext,
 									   bool *isNull,
 									   ExprDoneCond *isDone);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * prototypes from functions in execScan.c

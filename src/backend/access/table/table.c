@@ -164,3 +164,130 @@ table_close(Relation relation, LOCKMODE lockmode)
 {
 	relation_close(relation, lockmode);
 }
+
+
+
+/*
+ * CdbTryOpenTable -- Opens a table with a specified lock mode.
+ *
+ * CDB: Like try_table_open, except that it will upgrade the lock when needed
+ * for distributed tables.
+ */
+Relation
+CdbTryOpenTable(Oid relid, LOCKMODE reqmode, bool noWait, bool *lockUpgraded)
+{
+    LOCKMODE    lockmode = reqmode;
+	Relation    rel;
+
+	if (lockUpgraded != NULL)
+		*lockUpgraded = false;
+
+    /*
+	 * Since we have introduced GDD(global deadlock detector), for heap table
+	 * we do not need to upgrade the requested lock. For ao table, because of
+	 * the design of ao table's visibilitymap, we have to upgrade the lock
+	 * (More details please refer https://groups.google.com/a/greenplum.org/forum/#!topic/gpdb-dev/iDj8WkLus4g)
+	 *
+	 * And we select for update statement's lock is upgraded at addRangeTableEntry.
+	 *
+	 * Note: This code could be improved substantially after we redesign ao table
+	 * and select for update.
+	 */
+	if (lockmode == RowExclusiveLock)
+	{
+		if (Gp_role == GP_ROLE_DISPATCH &&
+			CondUpgradeRelLock(relid, noWait))
+		{
+			lockmode = ExclusiveLock;
+			if (lockUpgraded != NULL)
+				*lockUpgraded = true;
+		}
+    }
+
+	rel = try_table_open(relid, lockmode, noWait);
+	if (!RelationIsValid(rel))
+		return NULL;
+
+	/* 
+	 * There is a slim chance that ALTER TABLE SET DISTRIBUTED BY may
+	 * have altered the distribution policy between the time that we
+	 * decided to upgrade the lock and the time we opened the table
+	 * with the lock.  Double check that our chosen lock mode is still
+	 * okay.
+	 */
+	if (lockmode == RowExclusiveLock &&
+		Gp_role == GP_ROLE_DISPATCH && RelationIsAppendOptimized(rel))
+	{
+		elog(ERROR, "table \"%s\" concurrently updated", 
+			 RelationGetRelationName(rel));
+	}
+
+	/* inject fault after holding the lock */
+	SIMPLE_FAULT_INJECTOR("upgrade_row_lock");
+
+	return rel;
+}                                       /* CdbOpenTable */
+
+/*
+ * CdbOpenTable -- Opens a table with a specified lock mode.
+ *
+ * CDB: Like CdbTryOpenTable, except that it guarantees either
+ * an error or a valid opened table returned.
+ */
+Relation
+CdbOpenTable(Oid relid, LOCKMODE reqmode, bool noWait, bool *lockUpgraded)
+{
+	Relation rel;
+
+	rel = CdbTryOpenTable(relid, reqmode, noWait, lockUpgraded);
+
+	if (!RelationIsValid(rel))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("table not found (OID %u)", relid),
+				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
+	}
+
+	return rel;
+
+}                                       /* CdbOpenTable */
+
+/*
+ * CdbOpenTableRv -- Opens a table with a specified lock mode.
+ *
+ * CDB: Like CdbTryOpenTable, except that it guarantees either
+ * an error or a valid opened table returned.
+ */
+Relation
+CdbOpenTableRv(const RangeVar *table, LOCKMODE reqmode, bool noWait, 
+			   bool *lockUpgraded)
+{
+	Oid			relid;
+	Relation	rel;
+
+	/* Look up the appropriate table using namespace search */
+	relid = RangeVarGetRelid(relation, NoLock, false);
+	rel = CdbTryOpenTable(relid, reqmode, noWait, lockUpgraded);
+
+	if (!RelationIsValid(rel))
+	{
+		if (relation->schemaname)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("table \"%s.%s\" does not exist",
+							relation->schemaname, relation->relname)));
+		}
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("table \"%s\" does not exist",
+							relation->relname)));
+		}
+	}
+
+	return rel;
+
+}                                       /* CdbOpenTable */
