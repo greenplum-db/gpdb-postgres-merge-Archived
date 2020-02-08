@@ -58,6 +58,7 @@
 #include "catalog/pg_operator.h"
 #include "cdb/cdbvars.h"
 #include "utils/builtins.h"
+#include "utils/regproc.h"
 #include "utils/syscache.h"
 
 /* Convenience macro for the most common makeNamespaceItem() case */
@@ -347,7 +348,10 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("permission denied: \"%s\" is a system catalog",
 						 RelationGetRelationName(pstate->p_target_relation))));
-	
+
+	// GPDB_12_MERGE_FIXME: We don't need to forbid this anymore, right? Look up MPP-21035
+	// and check if it's something we still need to worry about.
+#if 0
     /* MPP-21035: Directly modify a part of a partitioned table is disallowed */
     PartStatus targetRelPartStatus = rel_part_status(RelationGetRelid(pstate->p_target_relation));
     if(PART_STATUS_INTERIOR == targetRelPartStatus)
@@ -357,6 +361,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 				 errmsg("directly modifying intermediate part of a partitioned table is disallowed"),
 				 errhint("Modify either the root or a leaf partition instead.")));
     }
+#endif
 
 	/*
 	 * Override addRangeTableEntry's default ACL_SELECT permissions check, and
@@ -3165,7 +3170,7 @@ transformDistinctToGroupBy(ParseState *pstate, List **targetlist,
 				sortby.node = (Node *) tle->expr;
 				group_clause_list = addTargetToSortList(pstate, tle,
 														group_clause_list, *targetlist,
-														&sortby, true);
+														&sortby);
 			}
 		}
 	}
