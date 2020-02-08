@@ -26,12 +26,9 @@
 #include "utils/builtins.h"
 #include "utils/rel.h"
 
-<<<<<<< HEAD
 #include "parser/parsetree.h"
 
 static void InitScanRelation(SampleScanState *node, EState *estate, int eflags);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static TupleTableSlot *SampleNext(SampleScanState *node);
 static void tablesample_init(SampleScanState *scanstate);
 static TupleTableSlot *tablesample_getnext(SampleScanState *scanstate);
@@ -95,7 +92,6 @@ ExecSampleScan(PlanState *pstate)
 }
 
 /* ----------------------------------------------------------------
-<<<<<<< HEAD
  *		InitScanRelation
  *
  *		Set up to access the scan relation.
@@ -137,8 +133,6 @@ InitScanRelation(SampleScanState *node, EState *estate, int eflags)
 
 
 /* ----------------------------------------------------------------
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *		ExecInitSampleScan
  * ----------------------------------------------------------------
  */

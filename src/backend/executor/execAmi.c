@@ -73,8 +73,7 @@
 #include "utils/syscache.h"
 
 
-static bool
-TargetListSupportsBackwardScan(List *targetlist)
+static bool TargetListSupportsBackwardScan(List *targetlist);
 static bool IndexSupportsBackwardScan(Oid indexid);
 
 

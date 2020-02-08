@@ -1211,7 +1211,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_CURRENTOFEXPR)
 		{
 			/* error invocation uses space, and shouldn't ever occur */
-			ExecEvalCurrentOfExpr(state, op);
+			ExecEvalCurrentOfExpr(state, op, econtext);
 
 			EEO_NEXT();
 		}
@@ -2272,7 +2272,7 @@ ExecEvalParamExec(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 	if (unlikely(prm->execPlan != NULL))
 	{
 		/* Parameter not evaluated yet, so go do it */
-		ExecSetParamPlan(prm->execPlan, econtext);
+		ExecSetParamPlan(prm->execPlan, econtext, NULL);
 		/* ExecSetParamPlan should have processed this param... */
 		Assert(prm->execPlan == NULL);
 	}
@@ -2394,15 +2394,11 @@ ExecEvalSQLValueFunction(ExprState *state, ExprEvalStep *op)
  * consumption.
   */
 void
-ExecEvalCurrentOfExpr(ExprState *state, ExprEvalStep *op)
+ExecEvalCurrentOfExpr(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 {
-	CurrentOfExpr *cexpr = (CurrentOfExpr *) exprstate->expr;
+	CurrentOfExpr *cexpr = (CurrentOfExpr *) state->expr;
 	bool		result = false;
 	TupleTableSlot *slot;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
-	*isNull = false;
 
 	Assert(cexpr->cvarno != INNER_VAR);
 	Assert(cexpr->cvarno != OUTER_VAR);
@@ -2418,7 +2414,8 @@ ExecEvalCurrentOfExpr(ExprState *state, ExprEvalStep *op)
 	 * CURRENT OF invocation uses an unpruned scan of the partition table, yielding
 	 * tuples from the AO parts before the desired heap tuple.
 	 */
-	if (TupHasHeapTuple(slot))
+	if (slot->tts_ops == &TTSOpsHeapTuple ||
+		slot->tts_ops == &TTSOpsBufferHeapTuple)
 	{
 		ItemPointerData cursor_tid;
 
@@ -2430,8 +2427,8 @@ ExecEvalCurrentOfExpr(ExprState *state, ExprEvalStep *op)
 				result = true;
 		}
 	}
-
-	return BoolGetDatum(result);
+	*op->resvalue = result;
+	*op->resnull = false;
 }
 
 /*

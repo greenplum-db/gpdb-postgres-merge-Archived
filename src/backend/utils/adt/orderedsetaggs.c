@@ -397,14 +397,14 @@ ordered_set_transition_multi(PG_FUNCTION_ARGS)
 	nargs = PG_NARGS() - 1;
 	for (i = 0; i < nargs; i++)
 	{
-		slot->PRIVATE_tts_values[i] = PG_GETARG_DATUM(i + 1);
-		slot->PRIVATE_tts_isnull[i] = PG_ARGISNULL(i + 1);
+		slot->tts_values[i] = PG_GETARG_DATUM(i + 1);
+		slot->tts_isnull[i] = PG_ARGISNULL(i + 1);
 	}
 	if (osastate->qstate->aggref->aggkind == AGGKIND_HYPOTHETICAL)
 	{
 		/* Add a zero flag value to mark this row as a normal input row */
-		slot->PRIVATE_tts_values[i] = Int32GetDatum(0);
-		slot->PRIVATE_tts_isnull[i] = false;
+		slot->tts_values[i] = Int32GetDatum(0);
+		slot->tts_isnull[i] = false;
 		i++;
 	}
 	Assert(i == slot->tts_tupleDescriptor->natts);
@@ -1279,11 +1279,11 @@ hypothetical_rank_common(FunctionCallInfo fcinfo, int flag,
 	ExecClearTuple(slot);
 	for (i = 0; i < nargs; i++)
 	{
-		slot->PRIVATE_tts_values[i] = PG_GETARG_DATUM(i + 1);
-		slot->PRIVATE_tts_isnull[i] = PG_ARGISNULL(i + 1);
+		slot->tts_values[i] = PG_GETARG_DATUM(i + 1);
+		slot->tts_isnull[i] = PG_ARGISNULL(i + 1);
 	}
-	slot->PRIVATE_tts_values[i] = Int32GetDatum(flag);
-	slot->PRIVATE_tts_isnull[i] = false;
+	slot->tts_values[i] = Int32GetDatum(flag);
+	slot->tts_isnull[i] = false;
 	ExecStoreVirtualTuple(slot);
 
 	tuplesort_puttupleslot(osastate->sortstate, slot);
@@ -1441,11 +1441,11 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 	ExecClearTuple(slot);
 	for (i = 0; i < nargs; i++)
 	{
-		slot->PRIVATE_tts_values[i] = PG_GETARG_DATUM(i + 1);
-		slot->PRIVATE_tts_isnull[i] = PG_ARGISNULL(i + 1);
+		slot->tts_values[i] = PG_GETARG_DATUM(i + 1);
+		slot->tts_isnull[i] = PG_ARGISNULL(i + 1);
 	}
-	slot->PRIVATE_tts_values[i] = Int32GetDatum(-1);
-	slot->PRIVATE_tts_isnull[i] = false;
+	slot->tts_values[i] = Int32GetDatum(-1);
+	slot->tts_isnull[i] = false;
 	ExecStoreVirtualTuple(slot);
 
 	tuplesort_puttupleslot(osastate->sortstate, slot);

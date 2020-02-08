@@ -404,12 +404,8 @@ static Node *get_rule_sortgroupclause(Index ref, List *tlist,
 static void get_rule_groupingset(GroupingSet *gset, List *targetlist,
 								 bool omit_parens, deparse_context *context);
 static void get_rule_orderby(List *orderList, List *targetList,
-<<<<<<< HEAD
-				 bool force_colno, deparse_context *context);
-=======
 							 bool force_colno, deparse_context *context);
 static void get_rule_windowclause(Query *query, deparse_context *context);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void get_rule_windowspec(WindowClause *wc, List *targetList,
 								deparse_context *context);
 static char *get_variable(Var *var, int levelsup, bool istoplevel,
@@ -430,15 +426,9 @@ static void removeStringInfoSpaces(StringInfo str);
 static void get_rule_expr(Node *node, deparse_context *context,
 						  bool showimplicit);
 static void get_rule_expr_toplevel(Node *node, deparse_context *context,
-<<<<<<< HEAD
-					   bool showimplicit);
-static void get_rule_expr_funccall(Node *node, deparse_context *context,
-					   bool showimplicit);
-=======
 								   bool showimplicit);
 static void get_rule_expr_funccall(Node *node, deparse_context *context,
 								   bool showimplicit);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static bool looks_like_function(Node *node);
 static void get_oper_expr(OpExpr *expr, deparse_context *context);
 static void get_func_expr(FuncExpr *expr, deparse_context *context,
@@ -1173,13 +1163,9 @@ pg_get_indexdef_columns(Oid indexrelid, bool pretty)
 
 	prettyFlags = pretty ? (PRETTYFLAG_PAREN | PRETTYFLAG_INDENT | PRETTYFLAG_SCHEMA) : PRETTYFLAG_INDENT;
 
-<<<<<<< HEAD
-	return pg_get_indexdef_worker(indexrelid, 0, NULL, true, false,
-=======
 	return pg_get_indexdef_worker(indexrelid, 0, NULL,
 								  true, true,
 								  false, false,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 								  prettyFlags, false);
 }
 
@@ -1309,11 +1295,8 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			appendStringInfo(&buf, "CREATE %sINDEX %s ON %s%s USING %s (",
 							 idxrec->indisunique ? "UNIQUE " : "",
 							 quote_identifier(NameStr(idxrelrec->relname)),
-<<<<<<< HEAD
-=======
 							 idxrelrec->relkind == RELKIND_PARTITIONED_INDEX
 							 && !inherits ? "ONLY " : "",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							 (prettyFlags & PRETTYFLAG_SCHEMA) ?
 							 generate_relation_name(indrelid, NIL) :
 							 generate_qualified_relation_name(indrelid),
@@ -4962,11 +4945,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	if (ev_action != NULL)
 		actions = (List *) stringToNode(ev_action);
 
-<<<<<<< HEAD
-	ev_relation = heap_open(ev_class, AccessShareLock);
-=======
 	ev_relation = table_open(ev_class, AccessShareLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Build the rules definition text
@@ -5101,11 +5080,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		appendStringInfoChar(buf, ';');
 	}
 
-<<<<<<< HEAD
-	heap_close(ev_relation, AccessShareLock);
-=======
 	table_close(ev_relation, AccessShareLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 
@@ -7798,11 +7773,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				}
 				/* else do the same stuff as for T_SubLink et al. */
 			}
-<<<<<<< HEAD
-			/* fallthrough */
-=======
 			/* FALLTHROUGH */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		case T_SubLink:
 		case T_NullTest:
@@ -7829,12 +7800,8 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_XmlExpr: /* own parentheses */
 				case T_NullIfExpr:	/* other separators */
 				case T_Aggref:	/* own parentheses */
-<<<<<<< HEAD
-				case T_CaseExpr:		/* other separators */
-=======
 				case T_WindowFunc:	/* own parentheses */
 				case T_CaseExpr:	/* other separators */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					return true;
 				default:
 					return false;
@@ -7883,12 +7850,8 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_XmlExpr: /* own parentheses */
 				case T_NullIfExpr:	/* other separators */
 				case T_Aggref:	/* own parentheses */
-<<<<<<< HEAD
-				case T_CaseExpr:		/* other separators */
-=======
 				case T_WindowFunc:	/* own parentheses */
 				case T_CaseExpr:	/* other separators */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					return true;
 				default:
 					return false;

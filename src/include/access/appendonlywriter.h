@@ -19,7 +19,6 @@
 
 #include "access/aosegfiles.h"
 #include "nodes/plannodes.h"
-#include "nodes/relation.h"
 #include "storage/lock.h"
 #include "tcop/dest.h"
 

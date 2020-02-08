@@ -130,6 +130,6 @@ extern int	check_usermap(const char *usermap_name,
 						  const char *pg_role, const char *auth_user,
 						  bool case_sensitive);
 extern bool check_same_host_or_net(SockAddr *raddr, IPCompareMethod method);
-oextern bool pg_isblank(const char c);
+extern bool pg_isblank(const char c);
 
 #endif							/* HBA_H */

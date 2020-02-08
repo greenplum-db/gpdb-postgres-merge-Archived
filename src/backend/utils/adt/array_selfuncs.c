@@ -137,11 +137,7 @@ scalararraysel_containment(PlannerInfo *root,
 	{
 		Form_pg_statistic stats;
 		AttStatsSlot sslot;
-<<<<<<< HEAD
-		AttStatsSlot sslot_hist;
-=======
 		AttStatsSlot hslot;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
 
@@ -152,20 +148,10 @@ scalararraysel_containment(PlannerInfo *root,
 		{
 			/* For ALL case, also get histogram of distinct-element counts */
 			if (useOr ||
-<<<<<<< HEAD
-				!get_attstatsslot(&sslot_hist, vardata.statsTuple,
-								  STATISTIC_KIND_DECHIST, InvalidOid,
-								  ATTSTATSSLOT_NUMBERS))
-			{
-				sslot_hist.numbers = NULL;
-				sslot_hist.nnumbers = 0;
-			}
-=======
 				!get_attstatsslot(&hslot, vardata.statsTuple,
 								  STATISTIC_KIND_DECHIST, InvalidOid,
 								  ATTSTATSSLOT_NUMBERS))
 				memset(&hslot, 0, sizeof(hslot));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * For = ANY, estimate as var @> ARRAY[const].
@@ -177,37 +163,21 @@ scalararraysel_containment(PlannerInfo *root,
 														   sslot.nvalues,
 														   sslot.numbers,
 														   sslot.nnumbers,
-<<<<<<< HEAD
-														   &constval,
-														   1,
-														   OID_ARRAY_CONTAINS_OP,
-														   cmpfunc);
-=======
 														   &constval, 1,
 														   OID_ARRAY_CONTAINS_OP,
 														   typentry);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			else
 				selec = mcelem_array_contained_selec(sslot.values,
 													 sslot.nvalues,
 													 sslot.numbers,
 													 sslot.nnumbers,
 													 &constval, 1,
-<<<<<<< HEAD
-													 sslot_hist.numbers,
-													 sslot_hist.nnumbers,
-													 OID_ARRAY_CONTAINED_OP,
-													 cmpfunc);
-			if (sslot_hist.numbers)
-				free_attstatsslot(&sslot_hist);
-=======
 													 hslot.numbers,
 													 hslot.nnumbers,
 													 OID_ARRAY_CONTAINED_OP,
 													 typentry);
 
 			free_attstatsslot(&hslot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			free_attstatsslot(&sslot);
 		}
 		else
@@ -390,11 +360,7 @@ calc_arraycontsel(VariableStatData *vardata, Datum constval,
 	{
 		Form_pg_statistic stats;
 		AttStatsSlot sslot;
-<<<<<<< HEAD
-		AttStatsSlot sslot_hist;
-=======
 		AttStatsSlot hslot;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 
@@ -408,37 +374,19 @@ calc_arraycontsel(VariableStatData *vardata, Datum constval,
 			 * element counts.
 			 */
 			if (operator != OID_ARRAY_CONTAINED_OP ||
-<<<<<<< HEAD
-				!get_attstatsslot(&sslot_hist, vardata->statsTuple,
-								  STATISTIC_KIND_DECHIST, InvalidOid,
-								  ATTSTATSSLOT_NUMBERS))
-			{
-				sslot_hist.numbers = NULL;
-				sslot_hist.nnumbers = 0;
-			}
-=======
 				!get_attstatsslot(&hslot, vardata->statsTuple,
 								  STATISTIC_KIND_DECHIST, InvalidOid,
 								  ATTSTATSSLOT_NUMBERS))
 				memset(&hslot, 0, sizeof(hslot));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/* Use the most-common-elements slot for the array Var. */
 			selec = mcelem_array_selec(array, typentry,
 									   sslot.values, sslot.nvalues,
 									   sslot.numbers, sslot.nnumbers,
-<<<<<<< HEAD
-									   sslot_hist.numbers, sslot_hist.nnumbers,
-									   operator, cmpfunc);
-
-			if (sslot_hist.numbers)
-				free_attstatsslot(&sslot_hist);
-=======
 									   hslot.numbers, hslot.nnumbers,
 									   operator);
 
 			free_attstatsslot(&hslot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			free_attstatsslot(&sslot);
 		}
 		else

@@ -23,12 +23,8 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
-#include "utils/builtins.h"
-=======
 #include "utils/float.h"
 #include "utils/fmgrprotos.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/lsyscache.h"
 #include "utils/rangetypes.h"
 #include "utils/selfuncs.h"

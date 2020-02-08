@@ -227,14 +227,13 @@ extern int	vacuum_multixact_freeze_table_age;
 
 
 /* in commands/vacuum.c */
+extern void ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel);
 <<<<<<< HEAD
-extern void ExecVacuum(VacuumStmt *vacstmt, bool isTopLevel);
 extern void vacuum(int options, RangeVar *relation, Oid relid,
 	   VacuumParams *params, List *va_cols,
 	   BufferAccessStrategy bstrategy, bool isTopLevel,
 	   bool skip_twophase, AOVacuumPhaseConfig *ao_vacuum_phase_config);
 =======
-extern void ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel);
 extern void vacuum(List *relations, VacuumParams *params,
 				   BufferAccessStrategy bstrategy, bool isTopLevel);
 >>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

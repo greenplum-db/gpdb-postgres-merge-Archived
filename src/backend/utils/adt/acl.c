@@ -908,7 +908,7 @@ acldefault_sql(PG_FUNCTION_ARGS)
 			objtype = OBJECT_TYPE;
 			break;
 		case 'E':
-			objtype = ACL_OBJECT_EXTPROTOCOL;
+			objtype = OBJECT_EXTPROTOCOL;
 			break;
 		default:
 			elog(ERROR, "unrecognized objtype abbreviation: %c", objtypec);

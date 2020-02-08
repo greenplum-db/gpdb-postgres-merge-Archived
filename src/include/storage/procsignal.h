@@ -42,7 +42,6 @@ typedef enum
 	PROCSIG_RECOVERY_CONFLICT_BUFFERPIN,
 	PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK,
 
-	PROCSIG_WALSND_INIT_STOPPING,	/* ask walsenders to prepare for shutdown  */
 	PROCSIG_QUERY_FINISH,		/* query finish */
 
 	NUM_PROCSIGNALS				/* Must be last! */

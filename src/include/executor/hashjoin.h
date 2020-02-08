@@ -149,7 +149,6 @@ typedef struct HashMemoryChunkData *HashMemoryChunk;
 /* tuples exceeding HASH_CHUNK_THRESHOLD bytes are put in their own chunk */
 #define HASH_CHUNK_THRESHOLD	(HASH_CHUNK_SIZE / 4)
 
-<<<<<<< HEAD
 /* Statistics collection workareas for EXPLAIN ANALYZE */
 typedef struct HashJoinBatchStats
 {
@@ -179,10 +178,6 @@ typedef struct HashJoinTableStats
 } HashJoinTableStats;
 
 
-/*
- * HashJoinTableData
- */
-=======
 /*
  * For each batch of a Parallel Hash Join, we have a ParallelHashJoinBatch
  * object in shared memory to coordinate access to it.  Since they are
@@ -322,7 +317,6 @@ typedef struct ParallelHashJoinState
 #define PHJ_GROW_BUCKETS_REINSERTING	2
 #define PHJ_GROW_BUCKETS_PHASE(n)		((n) % 3)	/* circular phases */
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 typedef struct HashJoinTableData
 {
 	int			nbuckets;		/* # buckets in the in-memory hash table */

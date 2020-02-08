@@ -409,7 +409,6 @@ AppendSeconds(char *cp, int sec, fsec_t fsec, int precision, bool fillzeros)
 	 * and we use the upstream code.
 	 */
 #if 0
-//#ifdef HAVE_INT64_TIMESTAMP
 		int			j = 0;
 
 		if (fillzeros || abs(sec)  > 9)
@@ -426,7 +425,6 @@ AppendSeconds(char *cp, int sec, fsec_t fsec, int precision, bool fillzeros)
 
 #endif
 
-#ifdef HAVE_INT64_TIMESTAMP
 	/* fsec_t is just an int32 */
 
 	if (fillzeros)

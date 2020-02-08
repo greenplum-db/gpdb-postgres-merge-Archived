@@ -16,7 +16,6 @@
 #define PARTITIONSELECTION_H
 
 #include "executor/tuptable.h"
-#include "nodes/relation.h"
 #include "nodes/execnodes.h"
 
 /* ----------------

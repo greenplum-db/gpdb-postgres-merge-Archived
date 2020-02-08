@@ -220,7 +220,7 @@ static inline Oid aocs_insert(AOCSInsertDesc idesc, TupleTableSlot *slot)
 	AOTupleId aotid;
 
 	slot_getallattrs(slot);
-	oid = aocs_insert_values(idesc, slot_get_values(slot), slot_get_isnull(slot), &aotid);
+	oid = aocs_insert_values(idesc, slot->tts_values, slot->tts_isnull, &aotid);
 	slot_set_ctid(slot, (ItemPointer)&aotid);
 
 	return oid;

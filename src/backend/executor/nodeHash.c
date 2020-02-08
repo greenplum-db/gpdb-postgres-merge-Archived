@@ -215,7 +215,7 @@ MultiExecPrivateHash(HashState *node)
 			if (node->hs_quit_if_hashkeys_null)
 			{
 				ExecSquelchNode(outerNode);
-				return NULL;
+				return;
 			}
 		}
 	}
@@ -317,7 +317,7 @@ MultiExecParallelHash(HashState *node)
 				if (TupIsNull(slot))
 					break;
 				econtext->ecxt_innertuple = slot;
-				if (ExecHashGetHashValue(hashtable, econtext, hashkeys,
+				if (ExecHashGetHashValue(node, hashtable, econtext, hashkeys,
 										 false, hashtable->keepNulls,
 										 &hashvalue))
 					ExecParallelHashTableInsert(hashtable, slot, hashvalue);

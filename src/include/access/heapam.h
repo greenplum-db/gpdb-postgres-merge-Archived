@@ -100,29 +100,6 @@ typedef enum
  * ----------------
  */
 
-<<<<<<< HEAD
-/* in heap/heapam.c */
-extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
-extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode, 
-								  bool noWait);
-extern Relation relation_openrv(const RangeVar *relation, LOCKMODE lockmode);
-extern Relation relation_openrv_extended(const RangeVar *relation,
-						 LOCKMODE lockmode, bool missing_ok, bool noWait);
-extern void relation_close(Relation relation, LOCKMODE lockmode);
-
-extern Relation heap_open(Oid relationId, LOCKMODE lockmode);
-extern Relation heap_openrv(const RangeVar *relation, LOCKMODE lockmode);
-extern Relation try_heap_open(Oid relationId, LOCKMODE lockmode, bool noWait);
-extern Relation heap_openrv_extended(const RangeVar *relation,
-					 LOCKMODE lockmode, bool missing_ok);
-
-#define heap_close(r,l)  relation_close(r,l)
-
-/* struct definitions appear in relscan.h */
-typedef struct HeapScanDescData *HeapScanDesc;
-typedef struct ParallelHeapScanDescData *ParallelHeapScanDesc;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * HeapScanIsValid
@@ -158,10 +135,10 @@ extern void FreeBulkInsertState(BulkInsertState);
 extern void ReleaseBulkInsertStatePin(BulkInsertState bistate);
 
 extern void heap_insert(Relation relation, HeapTuple tup, CommandId cid,
-						int options, BulkInsertState bistate);
+						int options, BulkInsertState bistate, TransactionId xid);
 extern void heap_multi_insert(Relation relation, struct TupleTableSlot **slots,
 							  int ntuples, CommandId cid, int options,
-							  BulkInsertState bistate);
+							  BulkInsertState bistate, TransactionId xid);
 extern TM_Result heap_delete(Relation relation, ItemPointer tid,
 							 CommandId cid, Snapshot crosscheck, bool wait,
 							 struct TM_FailureData *tmfd, bool changingPart);
@@ -176,34 +153,10 @@ extern TM_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
 								 bool follow_update,
 								 Buffer *buffer, struct TM_FailureData *tmfd);
 
-<<<<<<< HEAD
-extern Oid heap_insert(Relation relation, HeapTuple tup, CommandId cid,
-					   int options, BulkInsertState bistate, TransactionId xid);
-extern void heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
-				  CommandId cid, int options, BulkInsertState bistate, TransactionId xid);
-extern HTSU_Result heap_delete(Relation relation, ItemPointer tid,
-			CommandId cid, Snapshot crosscheck, bool wait,
-			HeapUpdateFailureData *hufd);
-extern void heap_finish_speculative(Relation relation, HeapTuple tuple);
-extern void heap_abort_speculative(Relation relation, HeapTuple tuple);
-extern HTSU_Result heap_update(Relation relation, ItemPointer otid,
-			HeapTuple newtup,
-			CommandId cid, Snapshot crosscheck, bool wait,
-			HeapUpdateFailureData *hufd, LockTupleMode *lockmode);
-extern HTSU_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
-				CommandId cid, LockTupleMode mode, LockWaitPolicy wait_policy,
-				bool follow_update,
-				Buffer *buffer, HeapUpdateFailureData *hufd);
-extern void heap_inplace_update(Relation relation, HeapTuple tuple);
-extern bool heap_freeze_tuple(HeapTupleHeader tuple,
-				  TransactionId relfrozenxid, TransactionId relminmxid,
-				  TransactionId cutoff_xid, TransactionId cutoff_multi);
-=======
 extern void heap_inplace_update(Relation relation, HeapTuple tuple);
 extern bool heap_freeze_tuple(HeapTupleHeader tuple,
 							  TransactionId relfrozenxid, TransactionId relminmxid,
 							  TransactionId cutoff_xid, TransactionId cutoff_multi);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern bool heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
 									MultiXactId cutoff_multi, Buffer buf);
 extern bool heap_tuple_needs_eventual_freeze(HeapTupleHeader tuple);
@@ -252,7 +205,6 @@ extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTuple stup, TransactionId Oldest
 extern void HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer,
 								 uint16 infomask, TransactionId xid);
 extern bool HeapTupleHeaderIsOnlyLocked(HeapTupleHeader tuple);
-extern bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot);
 extern bool HeapTupleIsSurelyDead(HeapTuple htup, TransactionId OldestXmin);
 
 /*

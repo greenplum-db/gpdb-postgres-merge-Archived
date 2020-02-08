@@ -29,7 +29,7 @@ OBJS = execAmi.o execCurrent.o execExpr.o execExprInterp.o \
        nodeSamplescan.o nodeSeqscan.o nodeSetOp.o nodeSort.o nodeUnique.o \
        nodeValuesscan.o \
        nodeCtescan.o nodeNamedtuplestorescan.o nodeWorktablescan.o \
-       nodeGroup.o nodeSubplan.o nodeSubqueryscan.o nodeTidscan.o \
+       nodeSubplan.o nodeSubqueryscan.o nodeTidscan.o \
        nodeForeignscan.o nodeWindowAgg.o tstoreReceiver.o tqueue.o spi.o \
        nodeTableFuncscan.o
 
@@ -46,7 +46,6 @@ OBJS += nodeDynamicIndexscan.o \
        nodeAssertOp.o \
        nodeSplitUpdate.o \
        nodeTupleSplit.o \
-       execDML.o \
        nodePartitionSelector.o \
        execDynamicScan.o \
        execHHashagg.o execGpmon.o

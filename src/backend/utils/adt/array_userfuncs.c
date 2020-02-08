@@ -647,7 +647,7 @@ array_int4_add(PG_FUNCTION_ARGS)
 	ndims = ndims1;
 	dims = (int *) palloc(ndims * sizeof(int));
 	lbs = (int *) palloc(ndims * sizeof(int));
-	bigenuf1 = bigenuf2 = TRUE;
+	bigenuf1 = bigenuf2 = true;
 	nelem = 1; /* Neither is empty. */
 
 	for (i = 0; i < ndims; i++)
@@ -658,12 +658,12 @@ array_int4_add(PG_FUNCTION_ARGS)
 		}
 		else if ( dims1[i] < dims2[i] )
 		{
-			bigenuf1 = FALSE;
+			bigenuf1 = false;
 			dims[i] = dims2[i];
 		}
 		else /* dims1[i] > dims2[i] */
 		{
-			bigenuf2 = FALSE;
+			bigenuf2 = false;
 			dims[i] = dims1[i];
 		}
 		nelem *= dims[i];
