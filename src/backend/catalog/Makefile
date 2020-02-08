@@ -55,7 +55,7 @@ CATALOG_HEADERS := \
 	pg_foreign_data_wrapper.h pg_foreign_server.h pg_user_mapping.h \
 	pg_resqueue.h pg_resqueuecapability.h pg_resourcetype.h \
 	pg_resgroup.h pg_resgroupcapability.h \
-	gp_configuration_history.h gp_id.h gp_distribution_policy.h gp_version.h \
+	gp_configuration_history.h gp_id.h gp_distribution_policy.h gp_version_at_initdb.h \
 	gp_segment_config.h \
 	pg_exttable.h pg_appendonly.h \
 	gp_fastsequence.h pg_extprotocol.h \
@@ -90,6 +90,7 @@ POSTGRES_BKI_DATA = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_pltemplate.dat pg_proc.dat pg_range.dat pg_tablespace.dat \
 	pg_ts_config.dat pg_ts_config_map.dat pg_ts_dict.dat pg_ts_parser.dat \
 	pg_ts_template.dat pg_type.dat \
+	gp_version_at_initdb.dat \
 	)
 
 all: distprep generated-header-symlinks

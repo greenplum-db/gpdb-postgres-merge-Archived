@@ -114,7 +114,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
-#include "catalog/gp_policy.h"
+#include "catalog/gp_distribution_policy.h"
 #include "cdb/cdbvars.h"
 
 

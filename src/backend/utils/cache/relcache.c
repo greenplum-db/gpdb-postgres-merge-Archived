@@ -93,8 +93,8 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
-#include "access/transam.h"         /* GpPolicy */
-#include "catalog/gp_policy.h"         /* GpPolicy */
+#include "access/transam.h"
+#include "catalog/gp_distribution_policy.h"         /* GpPolicy */
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "cdb/cdbtm.h"

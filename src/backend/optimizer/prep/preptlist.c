@@ -54,7 +54,7 @@
 #include "rewrite/rewriteHandler.h"
 #include "utils/rel.h"
 
-#include "catalog/gp_policy.h"     /* CDB: POLICYTYPE_PARTITIONED */
+#include "catalog/gp_distribution_policy.h"     /* CDB: POLICYTYPE_PARTITIONED */
 #include "catalog/pg_inherits_fn.h"
 #include "optimizer/plancat.h"
 

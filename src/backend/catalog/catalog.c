@@ -68,7 +68,7 @@
 #include "catalog/pg_stat_last_operation.h"
 #include "catalog/pg_stat_last_shoperation.h"
 #include "catalog/gp_id.h"
-#include "catalog/gp_version.h"
+#include "catalog/gp_version_at_initdb.h"
 #include "cdb/cdbvars.h"
 
 static bool IsAoSegmentClass(Form_pg_class reltuple);

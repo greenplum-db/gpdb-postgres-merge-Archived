@@ -22,7 +22,7 @@
 #include "libpq-fe.h"
 #include "access/transam.h"
 #include "access/xact.h"
-#include "catalog/gp_policy.h"
+#include "catalog/gp_distribution_policy.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_exttable.h"
