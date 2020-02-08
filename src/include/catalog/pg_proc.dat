@@ -11410,7 +11410,7 @@
    proname => 'percentile_cont', proisstrict => 'f', prorettype => 'timestamp', proargtypes => 'float8 timestamp', prosrc => 'aggregate_dummy' },
 
 { oid => 7137, descr => 'aggregate final function',
-   proname => 'percentile_cont_timestamp_final', proisstrict => 'f', prorettype => 'timestamp', proargtypes => 'internal, float8', prosrc => 'percentile_cont_timestamp_final' },
+   proname => 'percentile_cont_timestamp_final', proisstrict => 'f', prorettype => 'timestamp', proargtypes => 'internal float8', prosrc => 'percentile_cont_timestamp_final' },
 
 { oid => 7138, descr => 'multiple continuous percentiles',
    proname => 'percentile_cont', proisstrict => 'f', prorettype => '_timestamp', proargtypes => 'float8 timestamp', prosrc => 'aggregate_dummy' },
