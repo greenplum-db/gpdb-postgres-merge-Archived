@@ -55,7 +55,7 @@ add_type_encoding(Oid typid, Datum typoptions)
 	/*
 	 * open pg_type
 	 */
-	pg_type_encoding_desc = heap_open(TypeEncodingRelationId, RowExclusiveLock);
+	pg_type_encoding_desc = table_open(TypeEncodingRelationId, RowExclusiveLock);
 	tupDesc = pg_type_encoding_desc->rd_att;
 
 	MemSet(nulls, false, sizeof(nulls));
@@ -66,11 +66,9 @@ add_type_encoding(Oid typid, Datum typoptions)
 	tuple = heap_form_tuple(tupDesc, values, nulls);
 
 	/* Insert tuple into the relation */
-	simple_heap_insert(pg_type_encoding_desc, tuple);
+	CatalogTupleInsert(pg_type_encoding_desc, tuple);
 
-	CatalogUpdateIndexes(pg_type_encoding_desc, tuple);
-
-	heap_close(pg_type_encoding_desc, RowExclusiveLock);
+	table_close(pg_type_encoding_desc, RowExclusiveLock);
 }
 
 /* ----------------------------------------------------------------

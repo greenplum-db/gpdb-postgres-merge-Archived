@@ -39,9 +39,9 @@ AlterTableCreateAoSegTable(Oid relOid, bool is_part_child, bool is_part_parent)
 	 * uses...)
 	 */
 	if (is_part_child)
-		rel = heap_open(relOid, NoLock);
+		rel = table_open(relOid, NoLock);
 	else
-		rel = heap_open(relOid, AccessExclusiveLock);
+		rel = table_open(relOid, AccessExclusiveLock);
 
 	if(RelationIsAoRows(rel))
 	{
@@ -149,7 +149,7 @@ AlterTableCreateAoSegTable(Oid relOid, bool is_part_child, bool is_part_parent)
 	}
 	else
 	{
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 		return;
 	}
 
@@ -157,5 +157,5 @@ AlterTableCreateAoSegTable(Oid relOid, bool is_part_child, bool is_part_parent)
 								  tupdesc,
 								  NULL, NIL, NULL, NULL, is_part_parent);
 
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 }

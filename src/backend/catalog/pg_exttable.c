@@ -71,7 +71,7 @@ InsertExtTableEntry(Oid 	tbloid,
 	/*
 	 * Open and lock the pg_exttable catalog.
 	 */
-	pg_exttable_rel = heap_open(ExtTableRelationId, RowExclusiveLock);
+	pg_exttable_rel = table_open(ExtTableRelationId, RowExclusiveLock);
 
 	values[Anum_pg_exttable_reloid - 1] = ObjectIdGetDatum(tbloid);
 	values[Anum_pg_exttable_fmttype - 1] = CharGetDatum(formattype);
@@ -117,16 +117,14 @@ InsertExtTableEntry(Oid 	tbloid,
 	pg_exttable_tuple = heap_form_tuple(RelationGetDescr(pg_exttable_rel), values, nulls);
 
 	/* insert a new tuple */
-	simple_heap_insert(pg_exttable_rel, pg_exttable_tuple);
-
-	CatalogUpdateIndexes(pg_exttable_rel, pg_exttable_tuple);
+	CatalogTupleInsert(pg_exttable_rel, pg_exttable_tuple);
 
 	/*
      * Close the pg_exttable relcache entry without unlocking.
      * We have updated the catalog: consequently the lock must be held until
      * end of transaction.
      */
-    heap_close(pg_exttable_rel, NoLock);
+    table_close(pg_exttable_rel, NoLock);
 
 	/*
 	 * Add the dependency of custom external table
@@ -215,7 +213,7 @@ GetExtTableEntryIfExists(Oid relid)
 	bool		isNull;
 	bool		locationNull = false;
 
-	pg_exttable_rel = heap_open(ExtTableRelationId, RowExclusiveLock);
+	pg_exttable_rel = table_open(ExtTableRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&skey,
 				Anum_pg_exttable_reloid,
@@ -229,7 +227,7 @@ GetExtTableEntryIfExists(Oid relid)
 	if (!HeapTupleIsValid(tuple))
 	{
 		systable_endscan(scan);
-		heap_close(pg_exttable_rel, RowExclusiveLock);
+		table_close(pg_exttable_rel, RowExclusiveLock);
 		return NULL;
 	}
 
@@ -418,7 +416,7 @@ GetExtTableEntryIfExists(Oid relid)
 
 	/* Finish up scan and close pg_exttable catalog. */
 	systable_endscan(scan);
-	heap_close(pg_exttable_rel, RowExclusiveLock);
+	table_close(pg_exttable_rel, RowExclusiveLock);
 
 	return extentry;
 }
@@ -440,7 +438,7 @@ RemoveExtTableEntry(Oid relid)
 	/*
 	 * now remove the pg_exttable entry
 	 */
-	pg_exttable_rel = heap_open(ExtTableRelationId, RowExclusiveLock);
+	pg_exttable_rel = table_open(ExtTableRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&skey,
 				Anum_pg_exttable_reloid,
@@ -461,11 +459,11 @@ RemoveExtTableEntry(Oid relid)
 	 */
 	do
 	{
-		simple_heap_delete(pg_exttable_rel, &tuple->t_self);
+		CatalogTupleDelete(pg_exttable_rel, &tuple->t_self);
 	}
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)));
 
 	/* Finish up scan and close exttable catalog. */
 	systable_endscan(scan);
-	heap_close(pg_exttable_rel, NoLock);
+	table_close(pg_exttable_rel, NoLock);
 }

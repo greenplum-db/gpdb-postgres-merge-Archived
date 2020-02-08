@@ -20,6 +20,7 @@
 #define PG_PROC_CALLBACK_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_proc_callback_d.h"
 
 /* ----------------
  *		pg_proc_callback definition.  cpp turns this into

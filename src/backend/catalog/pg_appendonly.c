@@ -24,6 +24,7 @@
 #include "catalog/gp_fastsequence.h"
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/table.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "utils/builtins.h"
@@ -62,7 +63,7 @@ InsertAppendOnlyEntry(Oid relid,
     /*
      * Open and lock the pg_appendonly catalog.
      */
-	pg_appendonly_rel = heap_open(AppendOnlyRelationId, RowExclusiveLock);
+	pg_appendonly_rel = table_open(AppendOnlyRelationId, RowExclusiveLock);
 
 	natts = Natts_pg_appendonly;
 	values = palloc0(sizeof(Datum) * natts);
@@ -91,15 +92,14 @@ InsertAppendOnlyEntry(Oid relid,
 	pg_appendonly_tuple = heap_form_tuple(RelationGetDescr(pg_appendonly_rel), values, nulls);
 
 	/* insert a new tuple */
-	simple_heap_insert(pg_appendonly_rel, pg_appendonly_tuple);
-	CatalogUpdateIndexes(pg_appendonly_rel, pg_appendonly_tuple);
+	CatalogTupleInsert(pg_appendonly_rel, pg_appendonly_tuple);
 
 	/*
      * Close the pg_appendonly_rel relcache entry without unlocking.
      * We have updated the catalog: consequently the lock must be 
 	 * held until end of transaction.
      */
-    heap_close(pg_appendonly_rel, NoLock);
+    table_close(pg_appendonly_rel, NoLock);
 
 	pfree(values);
 	pfree(nulls);
@@ -137,7 +137,7 @@ GetAppendOnlyEntryAuxOids(Oid relid,
 	 * Check the pg_appendonly relation to be certain the ao table 
 	 * is there. 
 	 */
-	pg_appendonly = heap_open(AppendOnlyRelationId, AccessShareLock);
+	pg_appendonly = table_open(AppendOnlyRelationId, AccessShareLock);
 	tupDesc = RelationGetDescr(pg_appendonly);
 
 	ScanKeyInit(&key[0],
@@ -230,7 +230,7 @@ GetAppendOnlyEntryAuxOids(Oid relid,
 	}
 	/* Finish up scan and close pg_appendonly catalog. */
 	systable_endscan(scan);
-	heap_close(pg_appendonly, AccessShareLock);
+	table_close(pg_appendonly, AccessShareLock);
 }
 
 /*
@@ -257,7 +257,7 @@ UpdateAppendOnlyEntryAuxOids(Oid relid,
 	 * Check the pg_appendonly relation to be certain the ao table 
 	 * is there. 
 	 */
-	pg_appendonly = heap_open(AppendOnlyRelationId, RowExclusiveLock);
+	pg_appendonly = table_open(AppendOnlyRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_appendonly_relid,
@@ -308,14 +308,13 @@ UpdateAppendOnlyEntryAuxOids(Oid relid,
 	}
 	newTuple = heap_modify_tuple(tuple, RelationGetDescr(pg_appendonly),
 								 newValues, newNulls, replace);
-	simple_heap_update(pg_appendonly, &newTuple->t_self, newTuple);
-	CatalogUpdateIndexes(pg_appendonly, newTuple);
+	CatalogTupleUpdate(pg_appendonly, &newTuple->t_self, newTuple);
 
 	heap_freetuple(newTuple);
 
 	/* Finish up scan and close appendonly catalog. */
 	systable_endscan(scan);
-	heap_close(pg_appendonly, RowExclusiveLock);
+	table_close(pg_appendonly, RowExclusiveLock);
 
 	/* Also cause flush the relcache entry for the parent relation. */
 	CacheInvalidateRelcacheByRelid(relid);
@@ -340,7 +339,7 @@ RemoveAppendonlyEntry(Oid relid)
 	/*
 	 * now remove the pg_appendonly entry 
 	 */
-	pg_appendonly_rel = heap_open(AppendOnlyRelationId, RowExclusiveLock);
+	pg_appendonly_rel = table_open(AppendOnlyRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_appendonly_relid,
@@ -378,7 +377,7 @@ RemoveAppendonlyEntry(Oid relid)
 	
 	/* Finish up scan and close appendonly catalog. */
 	systable_endscan(scan);
-	heap_close(pg_appendonly_rel, NoLock);
+	table_close(pg_appendonly_rel, NoLock);
 }
 
 static void
@@ -499,7 +498,7 @@ TransferAppendonlyEntry(Oid sourceRelId, Oid targetRelId)
 	/*
 	 * Fetch the pg_appendonly entry 
 	 */
-	pg_appendonly_rel = heap_open(AppendOnlyRelationId, RowExclusiveLock);
+	pg_appendonly_rel = table_open(AppendOnlyRelationId, RowExclusiveLock);
 	pg_appendonly_dsc = RelationGetDescr(pg_appendonly_rel);
 	
 	tuple = GetAppendEntryForMove(
@@ -528,12 +527,11 @@ TransferAppendonlyEntry(Oid sourceRelId, Oid targetRelId)
 	tupleCopy = heap_modify_tuple(tupleCopy, pg_appendonly_dsc,
 								  newValues, newNulls, replace);
 
-	simple_heap_insert(pg_appendonly_rel, tupleCopy);
-	CatalogUpdateIndexes(pg_appendonly_rel, tupleCopy);
+	CatalogTupleInsert(pg_appendonly_rel, tupleCopy);
 
 	heap_freetuple(tupleCopy);
 
-	heap_close(pg_appendonly_rel, NoLock);
+	table_close(pg_appendonly_rel, NoLock);
 
 	pfree(newValues);
 	pfree(newNulls);
@@ -574,7 +572,7 @@ SwapAppendonlyEntries(Oid entryRelId1, Oid entryRelId2)
 	Oid			aoblkdirrelid2;
 	Oid			aovisimaprelid2;
 
-	pg_appendonly_rel = heap_open(AppendOnlyRelationId, RowExclusiveLock);
+	pg_appendonly_rel = table_open(AppendOnlyRelationId, RowExclusiveLock);
 	pg_appendonly_dsc = RelationGetDescr(pg_appendonly_rel);
 	
 	tuple = GetAppendEntryForMove(
@@ -622,8 +620,7 @@ SwapAppendonlyEntries(Oid entryRelId1, Oid entryRelId2)
 	tupleCopy1 = heap_modify_tuple(tupleCopy1, pg_appendonly_dsc,
 								  newValues, newNulls, replace);
 
-	simple_heap_insert(pg_appendonly_rel, tupleCopy1);
-	CatalogUpdateIndexes(pg_appendonly_rel, tupleCopy1);
+	CatalogTupleInsert(pg_appendonly_rel, tupleCopy1);
 
 	heap_freetuple(tupleCopy1);
 
@@ -632,12 +629,11 @@ SwapAppendonlyEntries(Oid entryRelId1, Oid entryRelId2)
 	tupleCopy2 = heap_modify_tuple(tupleCopy2, pg_appendonly_dsc,
 								  newValues, newNulls, replace);
 
-	simple_heap_insert(pg_appendonly_rel, tupleCopy2);
-	CatalogUpdateIndexes(pg_appendonly_rel, tupleCopy2);
+	CatalogTupleInsert(pg_appendonly_rel, tupleCopy2);
 
 	heap_freetuple(tupleCopy2);
 
-	heap_close(pg_appendonly_rel, NoLock);
+	table_close(pg_appendonly_rel, NoLock);
 
 	pfree(newValues);
 	pfree(newNulls);

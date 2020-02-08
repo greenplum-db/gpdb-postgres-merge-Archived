@@ -15,6 +15,7 @@
  */
 #include "postgres.h"
 
+#include "access/table.h"
 #include "catalog/aovisimap.h"
 #include "catalog/aocatalog.h"
 #include "catalog/pg_opclass.h"
@@ -42,13 +43,13 @@ AlterTableCreateAoVisimapTable(Oid relOid, bool is_part_child, bool is_part_pare
 	 * uses...)
 	 */
 	if (is_part_child)
-		rel = heap_open(relOid, NoLock);
+		rel = table_open(relOid, NoLock);
 	else
-		rel = heap_open(relOid, AccessExclusiveLock);
+		rel = table_open(relOid, AccessExclusiveLock);
 
 	if (!RelationIsAppendOptimized(rel))
 	{
-		heap_close(rel, NoLock);
+		table_close(rel, NoLock);
 		return;
 	}
 
@@ -104,5 +105,5 @@ AlterTableCreateAoVisimapTable(Oid relOid, bool is_part_child, bool is_part_pare
 								  classObjectId, coloptions,
 								  is_part_parent);
 
-	heap_close(rel, NoLock);
+	table_close(rel, NoLock);
 }

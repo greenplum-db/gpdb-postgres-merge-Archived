@@ -17,7 +17,7 @@
 #define GP_FASTSEQUENCE_H
 
 #include "catalog/genbki.h"
-#include "storage/itemptr.h"
+#include "catalog/gp_fastsequence_d.h"
 
 /*
  * gp_fastsequence definition

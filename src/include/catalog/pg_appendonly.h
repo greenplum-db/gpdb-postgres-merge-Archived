@@ -16,6 +16,7 @@
 #define PG_APPENDONLY_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_appendonly_d.h"
 
 /*
  * pg_appendonly definition.

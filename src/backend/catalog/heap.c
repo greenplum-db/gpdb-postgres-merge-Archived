@@ -364,7 +364,7 @@ heap_create(const char *relname,
 	 * user defined relation, not a system one.
 	 */
 	if (!allow_system_table_mods &&
-		((IsSystemNamespace(relnamespace) && relkind != RELKIND_INDEX) ||
+		((IsCatalogNamespace(relnamespace) && relkind != RELKIND_INDEX) ||
 		 IsToastNamespace(relnamespace) ||
 		 IsAoSegmentNamespace(relnamespace)) &&
 		IsNormalProcessingMode())
@@ -767,26 +767,26 @@ static void MetaTrackAddUpdInternal(Oid			classid,
 									HeapTuple	old_tuple)
 {
 	HeapTuple	new_tuple;
-	Datum		values[Natts_pg_statlastop];
-	bool		isnull[Natts_pg_statlastop];
-	bool		new_record_repl[Natts_pg_statlastop];
+	Datum		values[Natts_pg_stat_last_operation];
+	bool		isnull[Natts_pg_stat_last_operation];
+	bool		new_record_repl[Natts_pg_stat_last_operation];
 	NameData	uname;
 	NameData	aname;
 	HeapTuple	roletup;
 
-	MemSet(isnull, 0, sizeof(bool) * Natts_pg_statlastop);
-	MemSet(new_record_repl, 0, sizeof(bool) * Natts_pg_statlastop);
+	MemSet(isnull, 0, sizeof(bool) * Natts_pg_stat_last_operation);
+	MemSet(new_record_repl, 0, sizeof(bool) * Natts_pg_stat_last_operation);
 
-	values[Anum_pg_statlastop_classid - 1] = ObjectIdGetDatum(classid);
-	values[Anum_pg_statlastop_objid - 1] = ObjectIdGetDatum(objoid);
+	values[Anum_pg_stat_last_operation_classid - 1] = ObjectIdGetDatum(classid);
+	values[Anum_pg_stat_last_operation_objid - 1] = ObjectIdGetDatum(objoid);
 
 	aname.data[0] = '\0';
 	namestrcpy(&aname, actionname);
-	values[Anum_pg_statlastop_staactionname - 1] = NameGetDatum(&aname);
+	values[Anum_pg_stat_last_operation_staactionname - 1] = NameGetDatum(&aname);
 
-	values[Anum_pg_statlastop_stasysid - 1] = ObjectIdGetDatum(relowner);
+	values[Anum_pg_stat_last_operation_stasysid - 1] = ObjectIdGetDatum(relowner);
 	/* set this column to update */
-	new_record_repl[Anum_pg_statlastop_stasysid - 1] = true;
+	new_record_repl[Anum_pg_stat_last_operation_stasysid - 1] = true;
 
 	uname.data[0] = '\0';
 
@@ -806,32 +806,30 @@ static void MetaTrackAddUpdInternal(Oid			classid,
 		sprintf(NameStr(uname), "%u", relowner);
 	}
 
-	values[Anum_pg_statlastop_stausename - 1] = NameGetDatum(&uname);
+	values[Anum_pg_stat_last_operation_stausename - 1] = NameGetDatum(&uname);
 	/* set this column to update */
-	new_record_repl[Anum_pg_statlastop_stausename - 1] = true;
+	new_record_repl[Anum_pg_stat_last_operation_stausename - 1] = true;
 
-	values[Anum_pg_statlastop_stasubtype - 1] = CStringGetTextDatum(subtype);
+	values[Anum_pg_stat_last_operation_stasubtype - 1] = CStringGetTextDatum(subtype);
 	/* set this column to update */
-	new_record_repl[Anum_pg_statlastop_stasubtype - 1] = true;
+	new_record_repl[Anum_pg_stat_last_operation_stasubtype - 1] = true;
 
-	values[Anum_pg_statlastop_statime - 1] = GetCurrentTimestamp();
+	values[Anum_pg_stat_last_operation_statime - 1] = GetCurrentTimestamp();
 	/* set this column to update */
-	new_record_repl[Anum_pg_statlastop_statime - 1] = true;
+	new_record_repl[Anum_pg_stat_last_operation_statime - 1] = true;
 
 	if (HeapTupleIsValid(old_tuple))
 	{
 		new_tuple = heap_modify_tuple(old_tuple, RelationGetDescr(rel),
 									  values,
 									  isnull, new_record_repl);
-		simple_heap_update(rel, &old_tuple->t_self, new_tuple);
-		CatalogUpdateIndexes(rel, new_tuple);
+		CatalogTupleUpdate(rel, &old_tuple->t_self, new_tuple);
 	}
 	else
 	{
 		new_tuple = heap_form_tuple(RelationGetDescr(rel), values, isnull);
 
-		simple_heap_insert(rel, new_tuple);
-		CatalogUpdateIndexes(rel, new_tuple);
+		CatalogTupleInsert(rel, new_tuple);
 	}
 
 	if (HeapTupleIsValid(old_tuple))
@@ -853,18 +851,18 @@ void MetaTrackAddObject(Oid		classid,
 
 	if (IsSharedRelation(classid))
 	{
-		rel = heap_open(StatLastShOpRelationId, RowExclusiveLock);
+		rel = table_open(StatLastShOpRelationId, RowExclusiveLock);
 	}
 	else
 	{
-		rel = heap_open(StatLastOpRelationId, RowExclusiveLock);
+		rel = table_open(StatLastOpRelationId, RowExclusiveLock);
 	}
 
 	MetaTrackAddUpdInternal(classid, objoid, relowner,
 							actionname, subtype,
 							rel, NULL);
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 
 /*	CommandCounterIncrement(); */
 
@@ -887,18 +885,18 @@ void MetaTrackUpdObject(Oid		classid,
 
 	if (IsSharedRelation(classid))
 	{
-		rel = heap_open(StatLastShOpRelationId, RowExclusiveLock);
+		rel = table_open(StatLastShOpRelationId, RowExclusiveLock);
 
 		ScanKeyInit(&key[0],
-					Anum_pg_statlastshop_classid,
+					Anum_pg_stat_last_shoperation_classid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(classid));
 		ScanKeyInit(&key[1],
-					Anum_pg_statlastshop_objid,
+					Anum_pg_stat_last_shoperation_objid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(objoid));
 		ScanKeyInit(&key[2],
-					Anum_pg_statlastshop_staactionname,
+					Anum_pg_stat_last_shoperation_staactionname,
 					BTEqualStrategyNumber, F_NAMEEQ,
 					CStringGetDatum(actionname));
 
@@ -909,18 +907,18 @@ void MetaTrackUpdObject(Oid		classid,
 	}
 	else
 	{
-		rel = heap_open(StatLastOpRelationId, RowExclusiveLock);
+		rel = table_open(StatLastOpRelationId, RowExclusiveLock);
 
 		ScanKeyInit(&key[0],
-					Anum_pg_statlastop_classid,
+					Anum_pg_stat_last_operation_classid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(classid));
 		ScanKeyInit(&key[1],
-					Anum_pg_statlastop_objid,
+					Anum_pg_stat_last_operation_objid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(objoid));
 		ScanKeyInit(&key[2],
-					Anum_pg_statlastop_staactionname,
+					Anum_pg_stat_last_operation_staactionname,
 					BTEqualStrategyNumber, F_NAMEEQ,
 					CStringGetDatum(actionname));
 
@@ -962,14 +960,14 @@ void MetaTrackDropObject(Oid		classid,
 	{
 		/* DELETE FROM pg_stat_last_shoperation WHERE classid = :1 AND objid = :2 */
 
-		rel = heap_open(StatLastShOpRelationId, RowExclusiveLock);
+		rel = table_open(StatLastShOpRelationId, RowExclusiveLock);
 
 		ScanKeyInit(&key[0],
-					Anum_pg_statlastshop_classid,
+					Anum_pg_stat_last_shoperation_classid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(classid));
 		ScanKeyInit(&key[1],
-					Anum_pg_statlastshop_objid,
+					Anum_pg_stat_last_shoperation_objid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(objoid));
 
@@ -981,14 +979,14 @@ void MetaTrackDropObject(Oid		classid,
 	else
 	{
 		/* DELETE FROM pg_stat_last_operation WHERE classid = :1 AND objid = :2 */
-		rel = heap_open(StatLastOpRelationId, RowExclusiveLock);
+		rel = table_open(StatLastOpRelationId, RowExclusiveLock);
 
 		ScanKeyInit(&key[0],
-					Anum_pg_statlastop_classid,
+					Anum_pg_stat_last_operation_classid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(classid));
 		ScanKeyInit(&key[1],
-					Anum_pg_statlastop_objid,
+					Anum_pg_stat_last_operation_objid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(objoid));
 
@@ -999,10 +997,10 @@ void MetaTrackDropObject(Oid		classid,
 	}
 
 	while (HeapTupleIsValid(tuple = systable_getnext(desc)))
-		simple_heap_delete(rel, &tuple->t_self);
+		CatalogTupleDelete(rel, &tuple->t_self);
 
 	systable_endscan(desc);
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 
 } /* end MetaTrackDropObject */
 
@@ -3748,7 +3746,7 @@ heap_truncate_one_relid(Oid relid)
 	{
 		Relation rel = relation_open(relid, AccessExclusiveLock);
 		heap_truncate_one_rel(rel);
-		heap_close(rel, NoLock);
+		relation_close(rel, NoLock);
 	}
 }
 

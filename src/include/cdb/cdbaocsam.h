@@ -17,6 +17,7 @@
 
 #include "access/relscan.h"
 #include "access/sdir.h"
+#include "access/tableam.h"
 #include "access/tupmacs.h"
 #include "access/xlogutils.h"
 #include "access/appendonlytid.h"
@@ -237,11 +238,11 @@ extern void aocs_fetch_finish(AOCSFetchDesc aocsFetchDesc);
 
 extern AOCSUpdateDesc aocs_update_init(Relation rel, int segno);
 extern void aocs_update_finish(AOCSUpdateDesc desc);
-extern HTSU_Result aocs_update(AOCSUpdateDesc desc, TupleTableSlot *slot,
+extern TM_Result aocs_update(AOCSUpdateDesc desc, TupleTableSlot *slot,
 			AOTupleId *oldTupleId, AOTupleId *newTupleId);
 
 extern AOCSDeleteDesc aocs_delete_init(Relation rel);
-extern HTSU_Result aocs_delete(AOCSDeleteDesc desc, 
+extern TM_Result aocs_delete(AOCSDeleteDesc desc, 
 		AOTupleId *aoTupleId);
 extern void aocs_delete_finish(AOCSDeleteDesc desc);
 

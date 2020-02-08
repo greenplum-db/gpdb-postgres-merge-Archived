@@ -21,6 +21,7 @@
 
 #include "access/genam.h"
 #include "access/reloptions.h"
+#include "access/table.h"
 #include "access/tupdesc.h"
 #include "access/tupmacs.h"
 #include "catalog/indexing.h"
@@ -120,9 +121,9 @@ GetCompressionImplementation(char *comptype)
 
 	/*
 	 * Many callers pass RelationData->rd_appendonly->compresstype as
-	 * the argument. That can become invalid, if heap_open below causes
+	 * the argument. That can become invalid, if table_open below causes
 	 * a relcache invalidation. Call comptype_to_name() on the argument
-	 * first, to make a copy of it before we call heap_open().
+	 * first, to make a copy of it before we call table_open().
 	 *
 	 * This is hazardous to the callers, too, if they try to use the
 	 * string after the call for something else, but there isn't much
@@ -130,9 +131,9 @@ GetCompressionImplementation(char *comptype)
 	 */
 	compname = comptype_to_name(comptype);
 
-	comprel = heap_open(CompressionRelationId, AccessShareLock);
+	comprel = table_open(CompressionRelationId, AccessShareLock);
 
-	comptype = NULL;	/* heap_open might have invalidated this */
+	comptype = NULL;	/* table_open might have invalidated this */
 
 	/* SELECT * FROM pg_compression WHERE compname = :1 */
 	ScanKeyInit(&scankey,
@@ -174,7 +175,7 @@ GetCompressionImplementation(char *comptype)
 	funcs[COMPRESSION_VALIDATOR] = finfo.fn_addr;
 
 	systable_endscan(scan);
-	heap_close(comprel, AccessShareLock);
+	table_close(comprel, AccessShareLock);
 
 	return funcs;
 }
@@ -540,16 +541,16 @@ default_column_encoding_clause(void)
 	if (ao_opts->compresstype[0])
 	{
 		e1 = makeDefElem("compresstype",
-						 (Node *)makeString(pstrdup(ao_opts->compresstype)));
+						 (Node *)makeString(pstrdup(ao_opts->compresstype)), -1);
 	}
 	else
 	{
-		e1 = makeDefElem("compresstype", (Node *)makeString("none"));
+		e1 = makeDefElem("compresstype", (Node *)makeString("none"), -1);
 	}
 	e2 = makeDefElem("blocksize",
-					 (Node *)makeInteger(ao_opts->blocksize));
+					 (Node *)makeInteger(ao_opts->blocksize), -1);
 	e3 = makeDefElem("compresslevel",
-					 (Node *)makeInteger(ao_opts->compresslevel));
+					 (Node *)makeInteger(ao_opts->compresslevel), -1);
 	return list_make3(e1, e2, e3);
 }
 

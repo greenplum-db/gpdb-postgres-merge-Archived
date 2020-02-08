@@ -64,7 +64,7 @@ InsertInitialFastSequenceEntries(Oid objid)
 	/*
 	 * Open and lock the gp_fastsequence catalog table.
 	 */
-	gp_fastsequence_rel = heap_open(FastSequenceRelationId, RowExclusiveLock);
+	gp_fastsequence_rel = table_open(FastSequenceRelationId, RowExclusiveLock);
 	tupleDesc = RelationGetDescr(gp_fastsequence_rel);
 
 	values = palloc0(sizeof(Datum) * tupleDesc->natts);
@@ -76,18 +76,16 @@ InsertInitialFastSequenceEntries(Oid objid)
 	/* Insert enrty for segfile 0 */
 	values[Anum_gp_fastsequence_objmod - 1] = Int64GetDatum(RESERVED_SEGNO);
 	tuple = heaptuple_form_to(tupleDesc, values, nulls, NULL, NULL);
-	simple_heap_insert(gp_fastsequence_rel, tuple);
-	CatalogUpdateIndexes(gp_fastsequence_rel, tuple);
+	CatalogTupleInsert(gp_fastsequence_rel, tuple);
 	heap_freetuple(tuple);
 
 	/* Insert entry for segfile 1 */
 	values[Anum_gp_fastsequence_objmod - 1] = Int64GetDatum(1);
 	tuple = heaptuple_form_to(tupleDesc, values, nulls, NULL, NULL);
-	simple_heap_insert(gp_fastsequence_rel, tuple);
-	CatalogUpdateIndexes(gp_fastsequence_rel, tuple);
+	CatalogTupleInsert(gp_fastsequence_rel, tuple);
 	heap_freetuple(tuple);
 
-	heap_close(gp_fastsequence_rel, RowExclusiveLock);
+	table_close(gp_fastsequence_rel, RowExclusiveLock);
 }
 
 /*
@@ -109,7 +107,7 @@ InsertFastSequenceEntry(Oid objid, int64 objmod, int64 lastSequence)
 	/*
 	 * Open and lock the gp_fastsequence catalog table.
 	 */
-	gp_fastsequence_rel = heap_open(FastSequenceRelationId, RowExclusiveLock);
+	gp_fastsequence_rel = table_open(FastSequenceRelationId, RowExclusiveLock);
 	tupleDesc = RelationGetDescr(gp_fastsequence_rel);
 	
 	/* SELECT * FROM gp_fastsequence WHERE objid = :1 AND objmod = :2 FOR UPDATE */
@@ -144,7 +142,7 @@ InsertFastSequenceEntry(Oid objid, int64 objmod, int64 lastSequence)
 	 * is an insert operation has acquired a lock first on segment and is
 	 * trying to acquire a lock on the Master. Deadlock!
 	 */
-	heap_close(gp_fastsequence_rel, RowExclusiveLock);
+	table_close(gp_fastsequence_rel, RowExclusiveLock);
 }
 
 /*
@@ -206,8 +204,6 @@ insert_or_update_fastsequence(Relation gp_fastsequence_rel,
 		newTuple = heap_form_tuple(tupleDesc, values, nulls);
 		newTuple->t_data->t_ctid = oldTuple->t_data->t_ctid;
 		newTuple->t_self = oldTuple->t_self;
-		if (tupleDesc->tdhasoid)
-			HeapTupleSetOid(newTuple, HeapTupleGetOid(oldTuple));
 		heap_inplace_update(gp_fastsequence_rel, newTuple);
 
 		heap_freetuple(newTuple);
@@ -242,7 +238,7 @@ int64 GetFastSequences(Oid objid, int64 objmod,
 	Datum lastSequenceDatum;
 	int64 newLastSequence;
 
-	gp_fastsequence_rel = heap_open(FastSequenceRelationId, RowExclusiveLock);
+	gp_fastsequence_rel = table_open(FastSequenceRelationId, RowExclusiveLock);
 	tupleDesc = RelationGetDescr(gp_fastsequence_rel);
 
 	/*
@@ -289,7 +285,7 @@ int64 GetFastSequences(Oid objid, int64 objmod,
 	systable_endscan(scan);
 		
 	/* Refer to the comment at the end of InsertFastSequenceEntry. */
-	heap_close(gp_fastsequence_rel, RowExclusiveLock);
+	table_close(gp_fastsequence_rel, RowExclusiveLock);
 
 	return firstSequence;
 }
@@ -316,7 +312,7 @@ RemoveFastSequenceEntry(Oid objid)
 	if (!OidIsValid(objid))
 		return;
 
-	rel = heap_open(FastSequenceRelationId, RowExclusiveLock);
+	rel = table_open(FastSequenceRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&scankey,
 				Anum_gp_fastsequence_objid,
@@ -328,9 +324,9 @@ RemoveFastSequenceEntry(Oid objid)
 
 	while ((tuple = systable_getnext(sscan)) != NULL)
 	{
-		simple_heap_delete(rel, &tuple->t_self);
+		CatalogTupleDelete(rel, &tuple->t_self);
 	}
 
 	systable_endscan(sscan);
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 }

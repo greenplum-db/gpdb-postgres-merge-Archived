@@ -534,7 +534,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 			all_privileges = ACL_ALL_RIGHTS_FOREIGN_SERVER;
 			errormsg = gettext_noop("invalid privilege type %s for foreign server");
 			break;
-		case ACL_OBJECT_EXTPROTOCOL:
+		case OBJECT_EXTPROTOCOL:
 			all_privileges = ACL_ALL_RIGHTS_EXTPROTOCOL;
 			errormsg = gettext_noop("invalid privilege type %s for external protocol");
 			break;
@@ -706,7 +706,7 @@ ExecGrantStmt_oids(InternalGrant *istmt)
 		case OBJECT_TABLESPACE:
 			ExecGrant_Tablespace(istmt);
 			break;
-		case ACL_OBJECT_EXTPROTOCOL:
+		case OBJECT_EXTPROTOCOL:
 			ExecGrant_ExtProtocol(istmt);
 			break;
 		default:
@@ -872,7 +872,7 @@ objectNamesToOids(ObjectType objtype, List *objnames)
 				objects = lappend_oid(objects, srvid);
 			}
 			break;
-		case ACL_OBJECT_EXTPROTOCOL:
+		case OBJECT_EXTPROTOCOL:
 			foreach(cell, objnames)
 			{
 				char	   *ptcname = strVal(lfirst(cell));
@@ -3679,7 +3679,7 @@ ExecGrant_ExtProtocol(InternalGrant *istmt)
                                 &isNull);
 
         if (isNull)
-            old_acl = acldefault(ACL_OBJECT_EXTPROTOCOL, ownerId);
+            old_acl = acldefault(OBJECT_EXTPROTOCOL, ownerId);
         else
             old_acl = DatumGetAclPCopy(aclDatum);
 
@@ -5071,7 +5071,7 @@ pg_extprotocol_aclmask(Oid ptcOid, Oid roleid,
     if (isNull)
     {
         /* No ACL, so build default ACL */
-        acl = acldefault(ACL_OBJECT_EXTPROTOCOL, ownerId);
+        acl = acldefault(OBJECT_EXTPROTOCOL, ownerId);
         aclDatum = (Datum) 0;
     }
     else

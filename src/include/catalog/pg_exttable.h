@@ -17,6 +17,7 @@
 #define PG_EXTTABLE_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_exttable_d.h"
 #include "nodes/pg_list.h"
 
 /*

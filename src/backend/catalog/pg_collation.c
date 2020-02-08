@@ -31,6 +31,8 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
+#include "catalog/oid_dispatch.h"
+
 
 /*
  * CollationCreate
@@ -154,8 +156,8 @@ CollationCreate(const char *collname, Oid collnamespace,
 	memset(nulls, 0, sizeof(nulls));
 
 	namestrcpy(&name_name, collname);
-	oid = GetNewOidForCollation(rel, CollationOidIndexId,
-								collnamespace, NameStr(&name_name));
+	oid = GetNewOidForCollation(rel, CollationOidIndexId, Anum_pg_collation_oid,
+								collnamespace, NameStr(name_name));
 	values[Anum_pg_collation_oid - 1] = ObjectIdGetDatum(oid);
 	values[Anum_pg_collation_collname - 1] = NameGetDatum(&name_name);
 	values[Anum_pg_collation_collnamespace - 1] = ObjectIdGetDatum(collnamespace);

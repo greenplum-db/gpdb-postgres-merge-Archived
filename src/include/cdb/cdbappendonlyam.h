@@ -19,8 +19,10 @@
 #define CDBAPPENDONLYAM_H
 
 #include "access/htup.h"
+#include "access/memtup.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
+#include "access/tableam.h"
 #include "access/tupmacs.h"
 #include "access/xlogutils.h"
 #include "access/xlog.h"
@@ -359,13 +361,13 @@ extern void appendonly_insert_finish(AppendOnlyInsertDesc aoInsertDesc);
 extern BlockNumber RelationGuessNumberOfBlocks(double totalbytes);
 
 extern AppendOnlyDeleteDesc appendonly_delete_init(Relation rel, Snapshot appendOnlyMetaDataSnapshot);
-extern HTSU_Result appendonly_delete(
+extern TM_Result appendonly_delete(
 		AppendOnlyDeleteDesc aoDeleteDesc,
 		AOTupleId* aoTupleId);
 extern void appendonly_delete_finish(AppendOnlyDeleteDesc aoDeleteDesc);
 
 extern AppendOnlyUpdateDesc appendonly_update_init(Relation rel, Snapshot appendOnlyMetaDataSnapshot, int segno);
-extern HTSU_Result appendonly_update(
+extern TM_Result appendonly_update(
 		AppendOnlyUpdateDesc aoUpdateDesc,
 		MemTuple memTuple,
 		AOTupleId* aoTupleId,
