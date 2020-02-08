@@ -250,8 +250,6 @@
 		"gp_session_id",
 		"gp_session_role",
 		"gp_set_proc_affinity",
-		"gp_sort_flags",
-		"gp_sort_max_distinct",
 		"gp_statistics_pullup_from_child_partition",
 		"gp_statistics_use_fkeys",
 		"gp_subtrans_warn_limit",

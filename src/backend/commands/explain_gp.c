@@ -362,8 +362,7 @@ gpexplain_formatSlicesOutput(struct CdbExplain_ShowStatCtx *showstatctx,
  * Convert the sort method in string to corresponding
  * enum ExplainSortMethod.
  *
- * If you change please update tuplesort_get_stats / tuplesort_get_stats_mk
- * in tuplesort.c / tuplesort_mk.c
+ * If you change please update tuplesort_get_stats in tuplesort.c.
  */
 static ExplainSortMethod
 String2ExplainSortMethod(const char *sortMethod)

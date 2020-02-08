@@ -671,30 +671,12 @@ extern bool gp_enable_sort_limit;
  *
  * The code does not currently use planner estimates for this.  If enabled,
  * the tactic is used whenever possible.
+ *
+ * GPDB_12_MERGE_FIXME: Resurrect this
  */
 extern bool gp_enable_sort_distinct;
 
-/* Greenplum MK Sort */
-extern bool gp_enable_mk_sort;
-
-#ifdef USE_ASSERT_CHECKING
-extern bool gp_mk_sort_check;
-#endif
-
 extern bool trace_sort;
-
-/* Generic Greenplum sort flag for testing.
- *
- *
- */
-extern int gp_sort_flags;
-
-/* If Greenplum is discarding duplicate rows in sort, switch back to
- * standard sort if the number of distinct values exceeds max_distinct.
- * (If the number of distinct values is too large the behavior of the
- * insertion sort is inferior to the heapsort)
- */
-extern int gp_sort_max_distinct;
 
 /**
  * Enable dynamic pruning of partitions based on join condition.

@@ -245,12 +245,6 @@ bool		gp_enable_explain_allstat = FALSE;
 bool		gp_enable_motion_deadlock_sanity = FALSE;	/* planning time sanity
 														 * check */
 
-#ifdef USE_ASSERT_CHECKING
-bool		gp_mk_sort_check = false;
-#endif
-int			gp_sort_flags = 0;
-int			gp_sort_max_distinct = 20000;
-
 bool		gp_enable_tablespace_auto_mkdir = FALSE;
 
 /* Enable check for compatibility of encoding and locale in createdb */

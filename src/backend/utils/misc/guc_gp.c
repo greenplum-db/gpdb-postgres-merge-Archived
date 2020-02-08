@@ -438,9 +438,6 @@ int			writable_external_table_bufsize = 64;
 
 bool		gp_external_enable_filter_pushdown = true;
 
-/* Executor */
-bool		gp_enable_mk_sort = true;
-
 /* Enable GDD */
 bool		gp_enable_global_deadlock_detector = false;
 
@@ -830,32 +827,6 @@ struct config_bool ConfigureNamesBool_gp[] =
 		true,
 		NULL, NULL, NULL
 	},
-
-	{
-		{"gp_enable_mk_sort", PGC_USERSET, QUERY_TUNING_METHOD,
-			gettext_noop("Enable multi-key sort."),
-			gettext_noop("A faster sort."),
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-
-		},
-		&gp_enable_mk_sort,
-		true,
-		NULL, NULL, NULL
-	},
-
-
-#ifdef USE_ASSERT_CHECKING
-	{
-		{"gp_mk_sort_check", PGC_USERSET, QUERY_TUNING_METHOD,
-			gettext_noop("Extensive check mk_sort"),
-			gettext_noop("Expensive debug checking"),
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&gp_mk_sort_check,
-		false,
-		NULL, NULL, NULL
-	},
-#endif
 
 	{
 		{"gp_hashagg_streambottom", PGC_USERSET, QUERY_TUNING_METHOD,
@@ -3535,29 +3506,6 @@ struct config_int ConfigureNamesInt_gp[] =
 		},
 		&qdPostmasterPort,
 		0, INT_MIN, INT_MAX,
-		NULL, NULL, NULL
-	},
-
-
-	{
-		{"gp_sort_flags", PGC_USERSET, QUERY_TUNING_OTHER,
-			gettext_noop("Experimental feature: Generic sort flags."),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&gp_sort_flags,
-		10000, 0, INT_MAX,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"gp_sort_max_distinct", PGC_USERSET, QUERY_TUNING_OTHER,
-			gettext_noop("Experimental feature: max number of distinct values for sort."),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&gp_sort_max_distinct,
-		20000, 0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
