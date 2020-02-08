@@ -407,6 +407,10 @@ typedef struct ViewOptions
 
 #define InvalidRelation ((Relation) NULL)
 
+/* GPDB_12_MERGE_FIXME: I hope we don't need these macros anymore, now that
+ * everything should go through the table access method API.
+ */
+#if 0
 /*
  * RelationIsHeap
  * 		True iff relation has heap storage
@@ -441,6 +445,7 @@ typedef struct ViewOptions
  */
 #define RelationIsForeign(relation) \
 	((bool)((relation)->rd_rel->relstorage == RELSTORAGE_FOREIGN))
+#endif
 
 /*
  * RelationIsBitmapIndex

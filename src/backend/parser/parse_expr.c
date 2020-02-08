@@ -2379,7 +2379,7 @@ transformTableValueExpr(ParseState *pstate, TableValueExpr *t)
 	pstate->p_hasTblValueExpr = true;
 
 	/* Analyze and transform the subquery */
-	query = parse_sub_analyze(t->subquery, pstate, NULL, NULL);
+	query = parse_sub_analyze(t->subquery, pstate, NULL, NULL, true);
 
 	query->isTableValueSelect = true;
 

@@ -299,6 +299,10 @@ typedef FormData_pg_type *Form_pg_type;
 	 (typid) == ANYENUMOID || \
 	 (typid) == ANYRANGEOID)
 
+/* Is a type OID suitable for describe callback functions? */
+#define TypeSupportsDescribe(typid)  \
+	((typid) == RECORDOID)
+
 #endif							/* EXPOSE_TO_CLIENT_CODE */
 
 
