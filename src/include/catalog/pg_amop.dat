@@ -2581,8 +2581,8 @@
 { amopfamily => 'hash/cdbhash_uuid_ops', amoplefttype => 'uuid',
   amoprighttype => 'uuid', amopstrategy => '1', amopopr => '=(uuid,uuid)',
   amopmethod => 'hash' },
-{ amopfamily => 'hash/cdbhash_enum_ops', amoplefttype => 'enum',
-  amoprighttype => 'enum', amopstrategy => '1', amopopr => '=(enum,enum)',
+{ amopfamily => 'hash/cdbhash_enum_ops', amoplefttype => 'anyenum',
+  amoprighttype => 'anyenum', amopstrategy => '1', amopopr => '=(anyenum,anyenum)',
   amopmethod => 'hash' },
 
 ]
