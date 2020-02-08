@@ -3113,7 +3113,7 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
     if (attnum < 0 &&
         attnum > FirstLowInvalidHeapAttributeNumber)
     {
-		Form_pg_attribute att_tup = SystemAttributeDefinition(attnum, true);
+		const FormData_pg_attribute *att_tup = SystemAttributeDefinition(attnum, true);
 
 		return NameStr(att_tup->attname);
     }

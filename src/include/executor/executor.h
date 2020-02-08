@@ -285,11 +285,6 @@ planstate_walk_node(PlanState      *planstate,
 /*
  * prototypes from functions in execExpr.c
  */
-extern void init_fcache(Oid foid, Oid input_collation, FuncExprState *fcache,
-			MemoryContext fcacheCxt, bool needDescForSets);
-extern ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
-									 List *argList, 
-									 ExprContext *econtext);
 extern ExprState *ExecInitExpr(Expr *node, PlanState *parent);
 extern ExprState *ExecInitExprWithParams(Expr *node, ParamListInfo ext_params);
 extern ExprState *ExecInitQual(List *qual, PlanState *parent);

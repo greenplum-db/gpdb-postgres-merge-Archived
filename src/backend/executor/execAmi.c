@@ -30,8 +30,6 @@
 #include "executor/nodeFunctionscan.h"
 #include "executor/nodeGather.h"
 #include "executor/nodeGatherMerge.h"
-#include "executor/nodeGroup.h"
-#include "executor/nodeGroup.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeIndexonlyscan.h"

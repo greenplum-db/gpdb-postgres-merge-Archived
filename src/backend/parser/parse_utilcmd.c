@@ -74,10 +74,8 @@
 #include "catalog/pg_compression.h"
 #include "catalog/pg_type_encoding.h"
 #include "cdb/cdbhash.h"
-#include "cdb/partitionselection.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
-#include "parser/parse_partition.h"
 #include "utils/fmgroids.h"
 #include "utils/memutils.h"
 

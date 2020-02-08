@@ -24,7 +24,6 @@
 #include "catalog/dependency.h"
 #include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
-#include "nodes/relation.h"
 #include "parser/parse_node.h"
 #include "storage/lock.h"
 #include "utils/relcache.h"

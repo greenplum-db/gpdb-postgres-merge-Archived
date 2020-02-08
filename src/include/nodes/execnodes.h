@@ -2630,31 +2630,6 @@ typedef struct SortState
  * ---------------------
  */
 
-/*
- * AggStatePerPhaseData - per-grouping-set-phase state
- *
- * Grouping sets are divided into "phases", where a single phase can be
- * processed in one pass over the input. If there is more than one phase, then
- * at the end of input from the current phase, state is reset and another pass
- * taken over the data which has been re-sorted in the mean time.
- *
- * Accordingly, each phase specifies a list of grouping sets and group clause
- * information, plus each phase after the first also has a sort order.
- */
-typedef struct AggStatePerPhaseData
-{
-	int			numsets;		/* number of grouping sets (or 0) */
-	int		   *gset_lengths;	/* lengths of grouping sets */
-	Bitmapset **grouped_cols;	/* column groupings for rollup */
-	FmgrInfo   *eqfunctions;	/* per-grouping-field equality fns */
-	Agg		   *aggnode;		/* Agg node for phase data */
-	Sort	   *sortnode;		/* Sort node for input ordering for phase */
-
-	int		   *group_id;		/* on per gset */
-	int		   *gset_id;		/* on per gset */
-}	AggStatePerPhaseData;
-
-
 /* these structs are private in nodeAgg.c: */
 typedef struct AggStatePerAggData *AggStatePerAgg;
 typedef struct AggStatePerTransData *AggStatePerTrans;
