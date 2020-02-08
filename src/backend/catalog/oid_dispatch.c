@@ -69,6 +69,8 @@
 
 #include "postgres.h"
 
+#include "catalog/catalog.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
@@ -94,6 +96,8 @@
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_policy.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_publication.h"
+#include "catalog/pg_publication_rel.h"
 #include "catalog/pg_resqueue.h"
 #include "catalog/pg_resqueuecapability.h"
 #include "catalog/pg_resgroup.h"
@@ -115,6 +119,7 @@
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 
 /* #define OID_DISPATCH_DEBUG */
 
@@ -151,357 +156,11 @@ static List *dispatch_oids = NIL;
  */
 typedef struct
 {
-	RBNode		rbnode;
+	RBTNode		rbnode;
 	Oid			oid;
 } OidPreassignment;
 
 static RBTree *binary_upgrade_preassigned_oids;
-
-/*
- * Create an OidAssignment struct, for a catalog table tuple.
- *
- * When a new tuple is inserted in the master, this is used to construct the
- * OidAssignment struct to dispatch to the QEs. In the QEs, this is used to
- * construct a search key, in the GetPreassignedOidForXXX() functions.
- *
- * On return, those "key" fields in the returned OidAssignment struct are
- * filled in that are applicable for this type of object. Others are reset to
- * 0. If the catalog table does not require OID synchronization, *exempt is
- * set to true. If the catalog table is not recognized, *recognized is set to
- * false.
- */
-static OidAssignment
-CreateKeyFromCatalogTuple(Relation catalogrel, HeapTuple tuple,
-						  bool *recognized, bool *exempt)
-{
-	OidAssignment key;
-
-	*recognized = true;
-	*exempt = false;
-
-	memset(&key, 0, sizeof(OidAssignment));
-	key.type = T_OidAssignment;
-	key.catalog = catalogrel->rd_id;
-
-	switch(catalogrel->rd_id)
-	{
-		case AccessMethodRelationId:
-			{
-				Form_pg_am amForm = (Form_pg_am) GETSTRUCT(tuple);
-
-				key.objname = NameStr(amForm->amname);
-				break;
-			}
-		case AccessMethodOperatorRelationId:
-			{
-				Form_pg_amop amopForm = (Form_pg_amop) GETSTRUCT(tuple);
-
-				key.keyOid1 = amopForm->amopmethod;
-				break;
-			}
-		case AttrDefaultRelationId:
-			{
-				Form_pg_attrdef adForm = (Form_pg_attrdef) GETSTRUCT(tuple);
-
-				key.keyOid1 = adForm->adrelid;
-				key.keyOid2 = (Oid) adForm->adnum;
-				break;
-			}
-		case AuthIdRelationId:
-			{
-				Form_pg_authid rolForm = (Form_pg_authid) GETSTRUCT(tuple);
-
-				key.objname = (char *) NameStr(rolForm->rolname);
-				break;
-			}
-		case CastRelationId:
-			{
-				Form_pg_cast castForm = (Form_pg_cast) GETSTRUCT(tuple);
-
-				key.keyOid1 = castForm->castsource;
-				key.keyOid2 = castForm->casttarget;
-				break;
-			}
-		case CollationRelationId:
-			{
-				Form_pg_collation collationForm = (Form_pg_collation) GETSTRUCT(tuple);
-
-				key.namespaceOid = collationForm->collnamespace;
-				key.objname = NameStr(collationForm->collname);
-				break;
-			}
-		case ConstraintRelationId:
-			{
-				Form_pg_constraint conForm = (Form_pg_constraint) GETSTRUCT(tuple);
-
-				key.namespaceOid = conForm->connamespace;
-				key.objname = NameStr(conForm->conname);
-				key.keyOid1 = conForm->conrelid;
-				key.keyOid2 = conForm->contypid;
-				break;
-			}
-		case ConversionRelationId:
-			{
-				Form_pg_conversion conForm = (Form_pg_conversion) GETSTRUCT(tuple);
-
-				key.namespaceOid = conForm->connamespace;
-				key.objname = NameStr(conForm->conname);
-				break;
-			}
-		case DatabaseRelationId:
-			{
-				Form_pg_database datForm = (Form_pg_database) GETSTRUCT(tuple);
-
-				key.objname = (char *) NameStr(datForm->datname);
-				break;
-			}
-		case DefaultAclRelationId:
-			{
-				Form_pg_default_acl daclForm = (Form_pg_default_acl) GETSTRUCT(tuple);
-
-				key.keyOid1 = daclForm->defaclrole;
-				key.namespaceOid = daclForm->defaclnamespace;
-				key.keyOid2 = (Oid) daclForm->defaclobjtype;
-				break;
-			}
-		case EnumRelationId:
-			{
-				Form_pg_enum enumForm = (Form_pg_enum) GETSTRUCT(tuple);
-
-				key.keyOid1 = enumForm->enumtypid;
-				key.objname = NameStr(enumForm->enumlabel);
-				break;
-			}
-		case ExtensionRelationId:
-			{
-				Form_pg_extension extForm = (Form_pg_extension) GETSTRUCT(tuple);
-
-				/*
-				 * Note that unlike most catalogs with a "namespace" column,
-				 * extnamespace is not meant to imply that the extension
-				 * belongs to that schema.
-				 */
-				key.objname = NameStr(extForm->extname);
-				break;
-			}
-		case ExtprotocolRelationId:
-			{
-				Form_pg_extprotocol protForm = (Form_pg_extprotocol) GETSTRUCT(tuple);
-
-				key.objname = NameStr(protForm->ptcname);
-				break;
-			}
-		case ForeignDataWrapperRelationId:
-			{
-				Form_pg_foreign_data_wrapper fdwForm = (Form_pg_foreign_data_wrapper) GETSTRUCT(tuple);
-
-				key.keyOid1 = fdwForm->fdwowner;
-				key.objname = NameStr(fdwForm->fdwname);
-				break;
-			}
-		case ForeignServerRelationId:
-			{
-				Form_pg_foreign_server fsrvForm = (Form_pg_foreign_server) GETSTRUCT(tuple);
-
-				key.keyOid1 = fsrvForm->srvfdw;
-				key.objname = NameStr(fsrvForm->srvname);
-				break;
-			}
-		case LanguageRelationId:
-			{
-				Form_pg_language lanForm = (Form_pg_language) GETSTRUCT(tuple);
-
-				key.objname = NameStr(lanForm->lanname);
-				break;
-			}
-		case NamespaceRelationId:
-			{
-				Form_pg_namespace nspForm = (Form_pg_namespace) GETSTRUCT(tuple);
-
-				key.objname = NameStr(nspForm->nspname);
-				break;
-			}
-
-		case OperatorRelationId:
-			{
-				Form_pg_operator oprForm = (Form_pg_operator) GETSTRUCT(tuple);
-
-				key.namespaceOid = oprForm->oprnamespace;
-				key.objname = NameStr(oprForm->oprname);
-				break;
-			}
-		case OperatorClassRelationId:
-			{
-				Form_pg_opclass opcForm = (Form_pg_opclass) GETSTRUCT(tuple);
-
-				key.namespaceOid = opcForm->opcnamespace;
-				key.objname = NameStr(opcForm->opcname);
-				break;
-			}
-		case OperatorFamilyRelationId:
-			{
-				Form_pg_opfamily opfForm = (Form_pg_opfamily) GETSTRUCT(tuple);
-
-				key.namespaceOid = opfForm->opfnamespace;
-				key.objname = NameStr(opfForm->opfname);
-				break;
-			}
-		case PolicyRelationId:
-			{
-				Form_pg_policy polForm = (Form_pg_policy) GETSTRUCT(tuple);
-
-				key.objname = NameStr(polForm->polname);
-				break;
-			}
-		case ProcedureRelationId:
-			{
-				Form_pg_proc proForm = (Form_pg_proc) GETSTRUCT(tuple);
-
-				key.namespaceOid = proForm->pronamespace;
-				key.objname = NameStr(proForm->proname);
-				break;
-			}
-		case RelationRelationId:
-			{
-				Form_pg_class relForm = (Form_pg_class) GETSTRUCT(tuple);
-
-				key.namespaceOid = relForm->relnamespace;
-				key.objname = NameStr(relForm->relname);
-				break;
-			}
-		case ResQueueRelationId:
-			{
-				Form_pg_resqueue rsqForm = (Form_pg_resqueue) GETSTRUCT(tuple);
-
-				key.objname = NameStr(rsqForm->rsqname);
-				break;
-			}
-		case ResQueueCapabilityRelationId:
-			{
-				Form_pg_resqueuecapability rqcForm = (Form_pg_resqueuecapability) GETSTRUCT(tuple);
-
-				key.keyOid1 = rqcForm->resqueueid;
-				key.keyOid2 = (Oid) rqcForm->restypid;
-				break;
-			}
-		case RewriteRelationId:
-			{
-				Form_pg_rewrite rewriteForm = (Form_pg_rewrite) GETSTRUCT(tuple);
-
-				key.keyOid1 = rewriteForm->ev_class;
-				key.objname = NameStr(rewriteForm->rulename);
-				break;
-			}
-		case TableSpaceRelationId:
-			{
-				Form_pg_tablespace spcForm = (Form_pg_tablespace) GETSTRUCT(tuple);
-
-				key.objname = NameStr(spcForm->spcname);
-				break;
-			}
-		case TransformRelationId:
-			{
-				break;
-			}
-		case TSParserRelationId:
-			{
-				Form_pg_ts_parser prsForm = (Form_pg_ts_parser) GETSTRUCT(tuple);
-
-				key.namespaceOid = prsForm->prsnamespace;
-				key.objname = NameStr(prsForm->prsname);
-				break;
-			}
-		case TSDictionaryRelationId:
-			{
-				Form_pg_ts_dict dictForm = (Form_pg_ts_dict) GETSTRUCT(tuple);
-
-				key.namespaceOid = dictForm->dictnamespace;
-				key.objname = NameStr(dictForm->dictname);
-				break;
-			}
-		case TSTemplateRelationId:
-			{
-				Form_pg_ts_template tmplForm = (Form_pg_ts_template) GETSTRUCT(tuple);
-
-				key.namespaceOid = tmplForm->tmplnamespace;
-				key.objname = NameStr(tmplForm->tmplname);
-				break;
-			}
-		case TSConfigRelationId:
-			{
-				Form_pg_ts_config cfgForm = (Form_pg_ts_config) GETSTRUCT(tuple);
-
-				key.namespaceOid = cfgForm->cfgnamespace;
-				key.objname = NameStr(cfgForm->cfgname);
-				break;
-			}
-		case TypeRelationId:
-			{
-				Form_pg_type typForm = (Form_pg_type) GETSTRUCT(tuple);
-
-				key.namespaceOid = typForm->typnamespace;
-				key.objname = NameStr(typForm->typname);
-				break;
-			}
-
-		case ResGroupRelationId:
-			{
-				Form_pg_resgroup rsgForm = (Form_pg_resgroup) GETSTRUCT(tuple);
-
-				key.objname = NameStr(rsgForm->rsgname);
-				break;
-			}
-		case ResGroupCapabilityRelationId:
-			{
-				Form_pg_resgroupcapability rsgCapForm = (Form_pg_resgroupcapability) GETSTRUCT(tuple);
-
-				key.keyOid1 = rsgCapForm->resgroupid;
-				key.keyOid2 = (Oid) rsgCapForm->reslimittype;
-				break;
-			}
-		case UserMappingRelationId:
-			{
-				Form_pg_user_mapping usermapForm = (Form_pg_user_mapping) GETSTRUCT(tuple);
-
-				key.keyOid1 = usermapForm->umuser;
-				key.keyOid2 = usermapForm->umserver;
-				break;
-			}
-
-		/* These tables don't need to have their OIDs synchronized. */
-		case AccessMethodProcedureRelationId:
-			*exempt = true;
-			 break;
-
-		/* Event triggers are only stored and fired in the QD. */
-		case EventTriggerRelationId:
-			*exempt = true;
-			break;
-
-		/*
-		 * Large objects don't work very consistently in GPDB. They are not
-		 * distributed in the segments, but rather stored in the master node.
-		 * Or actually, it depends on which node the lo_create() function
-		 * happens to run, which isn't very deterministic.
-		 */
-		case LargeObjectMetadataRelationId:
-			*exempt = true;
-			break;
-
-		 /*
-		  * These objects need to have their OIDs synchronized, but there is
-		  * bespoken code to deal with it.
-		  */
-		case TriggerRelationId:
-			*exempt = true;
-			break;
-
-		default:
-			*recognized = false;
-			break;
-	}
-	return key;
-}
 
 /* ----------------------------------------------------------------
  * Functions for use in QE.
@@ -645,7 +304,7 @@ GetNewOrPreassignedOid(Relation relation, Oid indexId, AttrNumber oidcolumn,
 {
 	Oid			oid;
 
-	if (Gp_role == GP_EXECUTE)
+	if (Gp_role == GP_ROLE_EXECUTE)
 	{
 		oid = GetPreassignedOid(searchkey);
 
@@ -658,10 +317,10 @@ GetNewOrPreassignedOid(Relation relation, Oid indexId, AttrNumber oidcolumn,
 		 */
 		if (!IsBinaryUpgrade)
 			elog(ERROR, "no pre-assigned OID for %s tuple \"%s\" (namespace:%u keyOid1:%u keyOid2:%u)",
-				 RelationGetRelationName(catalogrel), searchkey.objname ? searchkey.objname : "",
-				 searchkey.namespaceOid, searchkey.keyOid1, searchkey.keyOid2);
+				 RelationGetRelationName(relation), searchkey->objname ? searchkey->objname : "",
+				 searchkey->namespaceOid, searchkey->keyOid1, searchkey->keyOid2);
 	}
-	else if (Gp_role == GP_DISPATCH)
+	else if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		MemoryContext oldcontext;
 
@@ -669,17 +328,17 @@ GetNewOrPreassignedOid(Relation relation, Oid indexId, AttrNumber oidcolumn,
 
 		oldcontext = MemoryContextSwitchTo(TopTransactionContext);
 
-		assignment.oid = oid;
-		dispatch_oids = lappend(dispatch_oids, copyObject(&assignment));
+		searchkey->oid = oid;
+		dispatch_oids = lappend(dispatch_oids, copyObject(searchkey));
 
 		MemoryContextSwitchTo(oldcontext);
 
 #ifdef OID_DISPATCH_DEBUG
 		elog(NOTICE, "adding OID assignment: catalog \"%s\", namespace: %u, name: \"%s\": %u",
-			 RelationGetRelationName(catalogrel),
-			 assignment.namespaceOid,
-			 assignment.objname ? assignment.objname : "",
-			 assignment.oid);
+			 RelationGetRelationName(relation),
+			 assignment->namespaceOid,
+			 assignment->objname ? assignment->objname : "",
+			 assignment->oid);
 #endif
 	}
 	else
@@ -696,9 +355,9 @@ GetNewOidForAccessMethod(Relation relation, Oid indexId, AttrNumber oidcolumn,
 {
 	OidAssignment key;
 
-	Assert(RelationGetRelid(relation) == AccessMethodId);
-	Assert(indexId == AmOidIndex);
-	Assert(oidolumn == Anum_pg_am_oid);
+	Assert(RelationGetRelid(relation) == AccessMethodRelationId);
+	Assert(indexId == AmOidIndexId);
+	Assert(oidcolumn == Anum_pg_am_oid);
 	
 	memset(&key, 0, sizeof(OidAssignment));
 	key.catalog = RelationGetRelid(relation);
@@ -713,15 +372,15 @@ GetNewOidForAccessMethodOperator(Relation relation, Oid indexId, AttrNumber oidc
 {
 	OidAssignment key;
 
-	Assert(RelationGetRelid(relation) == AccessMethodOperatorId);
+	Assert(RelationGetRelid(relation) == AccessMethodOperatorRelationId);
 	Assert(indexId == AccessMethodOperatorIndexId);
-	Assert(oidolumn == Anum_pg_amop_oid);
+	Assert(oidcolumn == Anum_pg_amop_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
-	key.keyOid1 = amopForm->amopmethod;
-	key.keyOid2 = amopForm->amoplefttype;
-	key.keyOid3 = amopForm->amoprighttype;
-	key.keyOid4 = amopForm->amopstrategy;
+	key.keyOid1 = amopfamily;
+	key.keyOid2 = amoplefttype;
+	key.keyOid3 = amoprighttype;
+	key.keyOid4 = amopstrategy;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
 
@@ -729,9 +388,11 @@ Oid
 GetNewOidForAttrDefault(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						Oid adrelid, int16 adnum)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == AttrDefaultRelationId);
 	Assert(indexId == AttrDefaultOidIndexId);
-	Assert(oidolumn == Anum_pg_attrdef_oid);
+	Assert(oidcolumn == Anum_pg_attrdef_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.keyOid1 = adrelid;
@@ -743,9 +404,11 @@ Oid
 GetNewOidForAuthId(Relation relation, Oid indexId, AttrNumber oidcolumn,
 				   char *rolname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == AuthIdRelationId);
 	Assert(indexId == AuthIdOidIndexId);
-	Assert(oidolumn == Anum_pg_authid_oid);
+	Assert(oidcolumn == Anum_pg_authid_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = rolname;
@@ -756,13 +419,15 @@ Oid
 GetNewOidForCast(Relation relation, Oid indexId, AttrNumber oidcolumn,
 				 Oid castsource, Oid casttarget)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == CastRelationId);
-	Assert(indexId == CatOidIndexId);
-	Assert(oidolumn == Anum_pg_cast_oid);
+	Assert(indexId == CastOidIndexId);
+	Assert(oidcolumn == Anum_pg_cast_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
-	key.keyOid1 = castForm->castsource;
-	key.keyOid2 = castForm->casttarget;
+	key.keyOid1 = castsource;
+	key.keyOid2 = casttarget;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
 
@@ -770,9 +435,11 @@ Oid
 GetNewOidForCollation(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					  Oid collnamespace, char *collname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == CollationRelationId);
 	Assert(indexId == CollationOidIndexId);
-	Assert(oidolumn == Anum_pg_collation_oid);
+	Assert(oidcolumn == Anum_pg_collation_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.namespaceOid = collnamespace;
@@ -784,12 +451,14 @@ Oid
 GetNewOidForConstraint(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					   Oid conrelid, Oid contypid, char *conname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == ConstraintRelationId);
 	Assert(indexId == ConstraintOidIndexId);
-	Assert(oidolumn == Anum_pg_constraint_oid);
+	Assert(oidcolumn == Anum_pg_constraint_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
-	key.objname = conForm->conname;
+	key.objname = conname;
 	key.keyOid1 = conrelid;
 	key.keyOid2 = contypid;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -799,9 +468,11 @@ Oid
 GetNewOidForConversion(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					   Oid connamespace, char *conname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == ConversionRelationId);
 	Assert(indexId == ConversionOidIndexId);
-	Assert(oidolumn == Anum_pg_conversion_oid);
+	Assert(oidcolumn == Anum_pg_conversion_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.namespaceOid = connamespace;
@@ -813,9 +484,11 @@ Oid
 GetNewOidForDatabase(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *datname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == DatabaseRelationId);
 	Assert(indexId == DatabaseOidIndexId);
-	Assert(oidolumn == Anum_pg_database_oid);
+	Assert(oidcolumn == Anum_pg_database_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = datname;
@@ -826,9 +499,11 @@ Oid
 GetNewOidForDefaultAcl(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					   Oid defaclrole, Oid defaclnamespace, char defaclobjtype)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == DefaultAclRelationId);
 	Assert(indexId == DefaultAclOidIndexId);
-	Assert(oidolumn == Anum_pg_defaultacl_oid);
+	Assert(oidcolumn == Anum_pg_default_acl_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.keyOid1 = defaclrole;
@@ -841,13 +516,15 @@ Oid
 GetNewOidForEnum(Relation relation, Oid indexId, AttrNumber oidcolumn,
 				 Oid enumtypid, char *enumlabel)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == EnumRelationId);
 	Assert(indexId == EnumOidIndexId);
-	Assert(oidolumn == Anum_pg_enum_oid);
+	Assert(oidcolumn == Anum_pg_enum_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
-	key.keyOid1 = enumForm->enumtypid;
-	key.objname = NameStr(enumForm->enumlabel);
+	key.keyOid1 = enumtypid;
+	key.objname = enumlabel;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
 
@@ -855,9 +532,11 @@ Oid
 GetNewOidForExtension(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					  char *extname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == ExtensionRelationId);
 	Assert(indexId == ExtensionOidIndexId);
-	Assert(oidolumn == Anum_pg_extension_oid);
+	Assert(oidcolumn == Anum_pg_extension_oid);
 
 	/*
 	 * Note that unlike most catalogs with a "namespace" column,
@@ -873,12 +552,14 @@ Oid
 GetNewOidForExtprotocol(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						char *ptcname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == ExtprotocolRelationId);
 	Assert(indexId == ExtprotocolOidIndexId);
-	Assert(oidolumn == Anum_pg_extprotocol_oid);
+	Assert(oidcolumn == Anum_pg_extprotocol_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
-	key.objname = NameStr(protForm->ptcname);
+	key.objname = ptcname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
 
@@ -886,9 +567,11 @@ Oid
 GetNewOidForForeignDataWrapper(Relation relation, Oid indexId, AttrNumber oidcolumn,
 							   char *fdwname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == ForeignDataWrapperRelationId);
 	Assert(indexId == ForeignDataWrapperOidIndexId);
-	Assert(oidolumn == Anum_pg_foreign_data_wrapper_oid);
+	Assert(oidcolumn == Anum_pg_foreign_data_wrapper_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = fdwname;
@@ -899,9 +582,11 @@ Oid
 GetNewOidForForeignServer(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						  char *srvname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == ForeignServerRelationId);
 	Assert(indexId == ForeignServerOidIndexId);
-	Assert(oidolumn == Anum_pg_foreign_server_oid);
+	Assert(oidcolumn == Anum_pg_foreign_server_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = srvname;
@@ -913,9 +598,11 @@ Oid
 GetNewOidForLanguage(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *lanname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == LanguageRelationId);
 	Assert(indexId == LanguageOidIndexId);
-	Assert(oidolumn == Anum_pg_language_oid);
+	Assert(oidcolumn == Anum_pg_language_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = lanname;
@@ -926,9 +613,11 @@ Oid
 GetNewOidForNamespace(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					  char *nspname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == NamespaceRelationId);
 	Assert(indexId == NamespaceOidIndexId);
-	Assert(oidolumn == Anum_pg_namespace_oid);
+	Assert(oidcolumn == Anum_pg_namespace_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = nspname;
@@ -939,9 +628,11 @@ Oid
 GetNewOidForOperator(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *oprname, Oid oprleft, Oid oprright, Oid oprnamespace)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == OperatorRelationId);
 	Assert(indexId == OperatorOidIndexId);
-	Assert(oidolumn == Anum_pg_operator_oid);
+	Assert(oidcolumn == Anum_pg_operator_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = oprname;
@@ -955,14 +646,16 @@ Oid
 GetNewOidForOperatorClass(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						  Oid opcmethod, char *opcname, Oid opcnamespace)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == OperatorClassRelationId);
 	Assert(indexId == OpclassOidIndexId);
-	Assert(oidolumn == Anum_pg_opclass_oid);
+	Assert(oidcolumn == Anum_pg_opclass_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.keyOid1 = opcmethod;
 	key.objname = opcname;
-	key.namespaceOid = opcForm->opcnamespace;
+	key.namespaceOid = opcnamespace;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
 
@@ -970,9 +663,11 @@ Oid
 GetNewOidForOperatorFamily(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						   Oid opfmethod, char *opfname, Oid opfnamespace)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == OperatorFamilyRelationId);
 	Assert(indexId == OpfamilyOidIndexId);
-	Assert(oidolumn == Anum_pg_opfamily_oid);
+	Assert(oidcolumn == Anum_pg_opfamily_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.keyOid1 = opfmethod;
@@ -985,23 +680,27 @@ Oid
 GetNewOidForPolicy(Relation relation, Oid indexId, AttrNumber oidcolumn,
 				   Oid polrelid, char *polname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == PolicyRelationId);
 	Assert(indexId == PolicyOidIndexId);
-	Assert(oidolumn == Anum_pg_policy_oid);
+	Assert(oidcolumn == Anum_pg_policy_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.keyOid1 = polrelid;
-	key.polname = polname;
+	key.objname = polname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
 
 Oid
 GetNewOidForProcedure(Relation relation, Oid indexId, AttrNumber oidcolumn,
-					  char *proname, oidvector proargtypes, Oid pronamespace)
+					  char *proname, oidvector *proargtypes, Oid pronamespace)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == ProcedureRelationId);
 	Assert(indexId == ProcedureOidIndexId);
-	Assert(oidolumn == Anum_pg_proc_oid);
+	Assert(oidcolumn == Anum_pg_proc_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = proname;
@@ -1019,9 +718,11 @@ Oid
 GetNewOidForRelation(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *relname, Oid relnamespace)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == RelationRelationId);
 	Assert(indexId == ClassOidIndexId);
-	Assert(oidolumn == Anum_pg_class_oid);
+	Assert(oidcolumn == Anum_pg_class_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = relname;
@@ -1033,9 +734,11 @@ Oid
 GetNewOidForResQueue(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *rsqname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == ResQueueRelationId);
 	Assert(indexId == ResQueueOidIndexId);
-	Assert(oidolumn == Anum_pg_resqueue_oid);
+	Assert(oidcolumn == Anum_pg_resqueue_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = rsqname;
@@ -1046,9 +749,11 @@ Oid
 GetNewOidForRewrite(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					Oid ev_class, char *rulename)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == RewriteRelationId);
 	Assert(indexId == RewriteOidIndexId);
-	Assert(oidolumn == Anum_pg_rewrite_oid);
+	Assert(oidcolumn == Anum_pg_rewrite_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.keyOid1 = ev_class;
@@ -1060,9 +765,11 @@ Oid
 GetNewOidForTableSpace(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					   char *spcname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == TableSpaceRelationId);
 	Assert(indexId == TablespaceOidIndexId);
-	Assert(oidolumn == Anum_pg_tablespace_oid);
+	Assert(oidcolumn == Anum_pg_tablespace_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = spcname;
@@ -1073,9 +780,11 @@ Oid
 GetNewOidForTransform(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					  Oid trftype, Oid trflang)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == TransformRelationId);
 	Assert(indexId == TransformOidIndexId);
-	Assert(oidolumn == Anum_pg_transform_oid);
+	Assert(oidcolumn == Anum_pg_transform_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.keyOid1 = trftype;
@@ -1087,9 +796,11 @@ Oid
 GetNewOidForTSParser(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *prsname, Oid prsnamespace)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == TSParserRelationId);
 	Assert(indexId == TSParserOidIndexId);
-	Assert(oidolumn == Anum_pg_ts_parser_oid);
+	Assert(oidcolumn == Anum_pg_ts_parser_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = prsname;
@@ -1101,9 +812,11 @@ Oid
 GetNewOidForTSDictionary(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						 char *dictname, Oid dictnamespace)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == TSDictionaryRelationId);
 	Assert(indexId == TSDictionaryOidIndexId);
-	Assert(oidolumn == Anum_pg_ts_dict_oid);
+	Assert(oidcolumn == Anum_pg_ts_dict_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = dictname;
@@ -1115,9 +828,11 @@ Oid
 GetNewOidForTSTemplate(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					   char *tmplname, Oid tmplnamespace)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == TSTemplateRelationId);
 	Assert(indexId == TSTemplateOidIndexId);
-	Assert(oidolumn == Anum_pg_ts_template_oid);
+	Assert(oidcolumn == Anum_pg_ts_template_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.namespaceOid = tmplnamespace;
@@ -1129,9 +844,11 @@ Oid
 GetNewOidForTSConfig(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *cfgname, Oid cfgnamespace)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == TSConfigRelationId);
 	Assert(indexId == TSConfigOidIndexId);
-	Assert(oidolumn == Anum_pg_ts_config_oid);
+	Assert(oidcolumn == Anum_pg_ts_config_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = cfgname;
@@ -1144,9 +861,11 @@ Oid
 GetNewOidForType(Relation relation, Oid indexId, AttrNumber oidcolumn,
 				 char *typname, Oid typnamespace)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == TypeRelationId);
 	Assert(indexId == TypeOidIndexId);
-	Assert(oidolumn == Anum_pg_type_oid);
+	Assert(oidcolumn == Anum_pg_type_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = typname;
@@ -1159,9 +878,11 @@ Oid
 GetNewOidForResGroup(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					 char *rsgname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == ResGroupRelationId);
 	Assert(indexId == ResGroupOidIndexId);
-	Assert(oidolumn == Anum_pg_resgroup_oid);
+	Assert(oidcolumn == Anum_pg_resgroup_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = rsgname;
@@ -1172,9 +893,11 @@ Oid
 GetNewOidForUserMapping(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						Oid umuser, Oid umserver)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == UserMappingRelationId);
 	Assert(indexId == UserMappingOidIndexId);
-	Assert(oidolumn == Anum_pg_user_mapping_oid);
+	Assert(oidcolumn == Anum_pg_user_mapping_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.keyOid1 = umuser;
@@ -1186,9 +909,11 @@ Oid
 GetNewOidForPublication(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						char *pubname)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == PublicationRelationId);
-	Assert(indexId == PublicationOidIndexId);
-	Assert(oidolumn == Anum_pg_publication_oid);
+	Assert(indexId == PublicationObjectIndexId);
+	Assert(oidcolumn == Anum_pg_publication_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
 	key.objname = pubname;
@@ -1199,13 +924,15 @@ Oid
 GetNewOidForPublicationRel(Relation relation, Oid indexId, AttrNumber oidcolumn,
 						   Oid prrelid, Oid prpubid)
 {
+	OidAssignment key;
+
 	Assert(RelationGetRelid(relation) == PublicationRelationId);
 	Assert(indexId == PublicationRelObjectIndexId);
-	Assert(oidolumn == Anum_pg_publication_rel_oid);
+	Assert(oidcolumn == Anum_pg_publication_rel_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
-	key.keyObj1 = prrelid;
-	key.keyObj2 = prpubid;
+	key.keyOid1 = prrelid;
+	key.keyOid2 = prpubid;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
 
@@ -1219,7 +946,7 @@ GetNewOidForPublicationRel(Relation relation, Oid indexId, AttrNumber oidcolumn,
  * preassignments from the schema restore process during binary upgrade.
  */
 static int
-rbtree_cmp(const RBNode *a, const RBNode *b, void *arg)
+rbtree_cmp(const RBTNode *a, const RBTNode *b, void *arg)
 {
 	const OidPreassignment *prea = (const OidPreassignment *) a;
 	const OidPreassignment *preb = (const OidPreassignment *) b;
@@ -1227,14 +954,14 @@ rbtree_cmp(const RBNode *a, const RBNode *b, void *arg)
 	return prea->oid - preb->oid;
 }
 
-static RBNode *
+static RBTNode *
 rbtree_alloc(void *arg)
 {
-	return (RBNode *) palloc(sizeof(OidPreassignment));
+	return (RBTNode *) palloc(sizeof(OidPreassignment));
 }
 
 static void
-rbtree_free(RBNode *node, void *arg)
+rbtree_free(RBTNode *node, void *arg)
 {
 	pfree(node);
 }
@@ -1245,7 +972,7 @@ rbtree_free(RBNode *node, void *arg)
  * particular usecase the only value we have is the key, so make it a no-op.
  */
 static void
-rbtree_combine(RBNode *existing pg_attribute_unused(), const RBNode *new pg_attribute_unused(), void *arg)
+rbtree_combine(RBTNode *existing pg_attribute_unused(), const RBTNode *new pg_attribute_unused(), void *arg)
 {
 	return;
 }
@@ -1272,16 +999,16 @@ MarkOidPreassignedFromBinaryUpgrade(Oid oid)
 
 	if (!binary_upgrade_preassigned_oids)
 	{
-		binary_upgrade_preassigned_oids = rb_create(sizeof(OidPreassignment),
-													rbtree_cmp,
-													rbtree_combine,
-													rbtree_alloc,
-													rbtree_free,
-													NULL);
+		binary_upgrade_preassigned_oids = rbt_create(sizeof(OidPreassignment),
+													 rbtree_cmp,
+													 rbtree_combine,
+													 rbtree_alloc,
+													 rbtree_free,
+													 NULL);
 	}
 
 	node.oid = oid;
-	rb_insert(binary_upgrade_preassigned_oids, (RBNode *) &node, &isnew);
+	rbt_insert(binary_upgrade_preassigned_oids, (RBTNode *) &node, &isnew);
 
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -1453,5 +1180,5 @@ IsOidAcceptable(Oid oid)
 		return true;
 
 	pre.oid = oid;
-	return (rb_find(binary_upgrade_preassigned_oids, (RBNode *) &pre) == NULL);
+	return (rbt_find(binary_upgrade_preassigned_oids, (RBTNode *) &pre) == NULL);
 }

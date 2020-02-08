@@ -60,6 +60,8 @@
 #include "catalog/gp_id.h"
 #include "catalog/gp_segment_configuration.h"
 #include "catalog/gp_version_at_initdb.h"
+#include "catalog/pg_event_trigger.h"
+#include "catalog/pg_largeobject_metadata.h"
 #include "catalog/pg_resourcetype.h"
 #include "catalog/pg_resqueue.h"
 #include "catalog/pg_resqueuecapability.h"
@@ -484,7 +486,7 @@ IsSharedRelation(Oid relationId)
 static bool
 RelationNeedsSynchronizedOIDs(Relation relation)
 {
-	if (IsSystemNamespace(RelationGetNamespace(relation)))
+	if (IsCatalogNamespace(RelationGetNamespace(relation)))
 	{
 		switch(RelationGetRelid(relation))
 		{
@@ -600,7 +602,7 @@ GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
 		collides = HeapTupleIsValid(systable_getnext(scan));
 
 		/* GPDB: Also check that this OID hasn't been preallocated */
-		if (!collids && IsOidAcceptable(newOid))
+		if (!collides && IsOidAcceptable(newOid))
 			collides = true;
 
 		systable_endscan(scan);
@@ -670,7 +672,6 @@ Oid
 GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 {
 	RelFileNodeBackend rnode;
-	char	   *rpath;
 	bool		collides;
 	BackendId	backend;
 

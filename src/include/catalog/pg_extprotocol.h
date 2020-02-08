@@ -16,6 +16,7 @@
 #define PG_EXTPROTOCOL_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_extprotocol_d.h"
 #include "nodes/pg_list.h"
 #include "utils/acl.h"
 

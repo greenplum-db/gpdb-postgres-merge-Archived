@@ -1535,8 +1535,8 @@ heap_create_with_catalog(const char *relname,
 	 */
 	if (!OidIsValid(relid))
 	{
-		relid = GetNewOidForRelation(RelationRelationId, ClassOidIndexId, Anum_pg_class_oid,
-									 relnamespace, relname);
+		relid = GetNewOidForRelation(pg_class_desc, ClassOidIndexId, Anum_pg_class_oid,
+									 relname, relnamespace);
 	}
 
 	/*

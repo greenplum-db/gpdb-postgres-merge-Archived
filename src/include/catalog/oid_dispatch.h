@@ -25,75 +25,75 @@ extern void AddPreassignedOidFromBinaryUpgrade(Oid oid, Oid catalog,
 			char *objname, Oid namespaceOid, Oid keyOid1, Oid keyOid2);
 
 /* Wrapper functions for GetNewOidWithIndex(), used in QD and QE nodes */
-extern Oid GetNewOidForAccessMethodRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-											  char *amname);
-extern Oid GetNewOidForAccessMethodOperatorRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-													  Oid amopfamily, Oid amoplefttype, Oid amoprighttype,
-													  Oid amopstrategy);
-extern Oid GetNewOidForAttrDefaultRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-											 Oid adrelid, int16 adnum);
-extern Oid GetNewOidForAuthIdRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										char *rolname);
-extern Oid GetNewOidForCastRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-									  Oid castsource, Oid casttarget);
-extern Oid GetNewOidForCollationRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										   Oid collnamespace, char *collname);
-extern Oid GetNewOidForConstraintRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-											Oid conrelid, Oid contypid, char *conname);
-extern Oid GetNewOidForConversionRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-											Oid connamespace, char *conname);
-extern Oid GetNewOidForDatabaseRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										  char *datname);
-extern Oid GetNewOidForDefaultAclRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-											Oid defaclrole, Oid defaclnamespace, char defaclobjtype);
-extern Oid GetNewOidForEnumRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-									  Oid enumtypid, char *enumlabel);
-extern Oid GetNewOidForExtensionRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										   char *extname);
-extern Oid GetNewOidForExtprotocolRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-											 char *ptcname);
-extern Oid GetNewOidForForeignDataWrapperRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-													char *fdwname);
-extern Oid GetNewOidForForeignServerRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-											   char *srvname);
-extern Oid GetNewOidForLanguageRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										  char *lanname);
-extern Oid GetNewOidForNamespaceRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										   char *nspname);
-extern Oid GetNewOidForOperatorRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										  char *oprname, Oid oprleft, Oid oprright, Oid oprnamespace);
-extern Oid GetNewOidForOperatorClassRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-											   Oid opcmethod, char *opcname, Oid opcnamespace);
-extern Oid GetNewOidForOperatorFamilyRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-												Oid opfmethod, char *opfname, Oid opfnamespace);
-extern Oid GetNewOidForPolicyRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										Oid polrelid, char *polname);
-extern Oid GetNewOidForProcedureRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										   char *proname, oidvector proargtypes, Oid pronamespace);
-extern Oid GetNewOidForRelationRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										  char *relname, Oid relnamespace);
-extern Oid GetNewOidForResQueueRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										  char *rsqname);
-extern Oid GetNewOidForRewriteRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										 Oid ev_class, char *rulename);
-extern Oid GetNewOidForTableSpaceRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-											char *spcname);
-extern Oid GetNewOidForTransformRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										   Oid trftype, Oid trflang);
-extern Oid GetNewOidForTSParserRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										  char *prsname, Oid prsnamespace);
-extern Oid GetNewOidForTSDictionaryRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-											  char *dictname, Oid dictnamespace);
-extern Oid GetNewOidForTSTemplateRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-											char *tmplname, Oid tmplnamespace);
-extern Oid GetNewOidForTSConfigRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										  char *cfgname, Oid cfgnamespace);
-extern Oid GetNewOidForTypeRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-									  char *typname, Oid typnamespace);
-extern Oid GetNewOidForResGroupRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-										  char *rsgname);
-extern Oid GetNewOidForUserMappingRelationId(Relation relation, Oid indexId, AttrNumber oidcolumn,
-											 Oid umuser, Oid umserver);
+extern Oid GetNewOidForAccessMethod(Relation relation, Oid indexId, AttrNumber oidcolumn,
+									char *amname);
+extern Oid GetNewOidForAccessMethodOperator(Relation relation, Oid indexId, AttrNumber oidcolumn,
+											Oid amopfamily, Oid amoplefttype, Oid amoprighttype,
+											Oid amopstrategy);
+extern Oid GetNewOidForAttrDefault(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								   Oid adrelid, int16 adnum);
+extern Oid GetNewOidForAuthId(Relation relation, Oid indexId, AttrNumber oidcolumn,
+							  char *rolname);
+extern Oid GetNewOidForCast(Relation relation, Oid indexId, AttrNumber oidcolumn,
+							Oid castsource, Oid casttarget);
+extern Oid GetNewOidForCollation(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								 Oid collnamespace, char *collname);
+extern Oid GetNewOidForConstraint(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								  Oid conrelid, Oid contypid, char *conname);
+extern Oid GetNewOidForConversion(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								  Oid connamespace, char *conname);
+extern Oid GetNewOidForDatabase(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								char *datname);
+extern Oid GetNewOidForDefaultAcl(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								  Oid defaclrole, Oid defaclnamespace, char defaclobjtype);
+extern Oid GetNewOidForEnum(Relation relation, Oid indexId, AttrNumber oidcolumn,
+							Oid enumtypid, char *enumlabel);
+extern Oid GetNewOidForExtension(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								 char *extname);
+extern Oid GetNewOidForExtprotocol(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								   char *ptcname);
+extern Oid GetNewOidForForeignDataWrapper(Relation relation, Oid indexId, AttrNumber oidcolumn,
+										  char *fdwname);
+extern Oid GetNewOidForForeignServer(Relation relation, Oid indexId, AttrNumber oidcolumn,
+									 char *srvname);
+extern Oid GetNewOidForLanguage(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								char *lanname);
+extern Oid GetNewOidForNamespace(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								 char *nspname);
+extern Oid GetNewOidForOperator(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								char *oprname, Oid oprleft, Oid oprright, Oid oprnamespace);
+extern Oid GetNewOidForOperatorClass(Relation relation, Oid indexId, AttrNumber oidcolumn,
+									 Oid opcmethod, char *opcname, Oid opcnamespace);
+extern Oid GetNewOidForOperatorFamily(Relation relation, Oid indexId, AttrNumber oidcolumn,
+									  Oid opfmethod, char *opfname, Oid opfnamespace);
+extern Oid GetNewOidForPolicy(Relation relation, Oid indexId, AttrNumber oidcolumn,
+							  Oid polrelid, char *polname);
+extern Oid GetNewOidForProcedure(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								 char *proname, oidvector *proargtypes, Oid pronamespace);
+extern Oid GetNewOidForRelation(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								char *relname, Oid relnamespace);
+extern Oid GetNewOidForResQueue(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								char *rsqname);
+extern Oid GetNewOidForRewrite(Relation relation, Oid indexId, AttrNumber oidcolumn,
+							   Oid ev_class, char *rulename);
+extern Oid GetNewOidForTableSpace(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								  char *spcname);
+extern Oid GetNewOidForTransform(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								 Oid trftype, Oid trflang);
+extern Oid GetNewOidForTSParser(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								char *prsname, Oid prsnamespace);
+extern Oid GetNewOidForTSDictionary(Relation relation, Oid indexId, AttrNumber oidcolumn,
+									char *dictname, Oid dictnamespace);
+extern Oid GetNewOidForTSTemplate(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								  char *tmplname, Oid tmplnamespace);
+extern Oid GetNewOidForTSConfig(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								char *cfgname, Oid cfgnamespace);
+extern Oid GetNewOidForType(Relation relation, Oid indexId, AttrNumber oidcolumn,
+							char *typname, Oid typnamespace);
+extern Oid GetNewOidForResGroup(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								char *rsgname);
+extern Oid GetNewOidForUserMapping(Relation relation, Oid indexId, AttrNumber oidcolumn,
+								   Oid umuser, Oid umserver);
 extern Oid GetNewOidForPublication(Relation relation, Oid indexId, AttrNumber oidcolumn,
 								   char *pubname);
 extern Oid GetNewOidForPublicationRel(Relation relation, Oid indexId, AttrNumber oidcolumn,

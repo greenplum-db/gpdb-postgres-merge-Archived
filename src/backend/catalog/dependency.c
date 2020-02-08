@@ -690,14 +690,6 @@ findDependentObjects(const ObjectAddress *object,
 				 * transform this deletion request into a delete of this
 				 * owning object.
 				 *
-				 * For INTERNAL_AUTO dependencies, we don't enforce this;
-				 * in other words, we don't follow the links back to the
-				 * owning object.
-				 */
-				if (foundDep->deptype == DEPENDENCY_INTERNAL_AUTO)
-					break;
-
-				/*
 				 * First, release caller's lock on this object and get
 				 * deletion lock on the owning object.  (We must release
 				 * caller's lock to avoid deadlock against a concurrent
@@ -921,7 +913,6 @@ findDependentObjects(const ObjectAddress *object,
 			case DEPENDENCY_AUTO_EXTENSION:
 				subflags = DEPFLAG_AUTO;
 				break;
-			case DEPENDENCY_INTERNAL_AUTO:
 			case DEPENDENCY_INTERNAL:
 				subflags = DEPFLAG_INTERNAL;
 				break;
