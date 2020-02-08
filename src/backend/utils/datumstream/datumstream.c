@@ -532,7 +532,7 @@ create_datumstreamwrite(
 		compressionFunctions = get_funcs_for_compression(acc->ao_attr.compressType);
 		if (compressionFunctions != NULL)
 		{
-			TupleDesc	td = CreateTupleDesc(1, false, &attr);
+			TupleDesc	td = CreateTupleDesc(1, &attr);
 			StorageAttributes sa;
 
 			sa.comptype = acc->ao_attr.compressType;

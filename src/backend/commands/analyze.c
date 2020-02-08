@@ -2006,12 +2006,8 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 					TupleConversionMap *map;
 
 					map = convert_tuples_by_name(RelationGetDescr(childrel),
-<<<<<<< HEAD
-												 RelationGetDescr(onerel));
-=======
 												 RelationGetDescr(onerel),
 												 gettext_noop("could not convert row type"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					if (map != NULL)
 					{
 						int			j;

@@ -59,8 +59,8 @@
 #include "cdb/cdbutil.h"
 
 // TODO: these planner gucs need to be refactored into PlannerConfig.
-bool		gp_enable_sort_limit = FALSE;
-bool		gp_enable_sort_distinct = FALSE;
+bool		gp_enable_sort_limit = false;
+bool		gp_enable_sort_distinct = false;
 
 /* results of subquery_is_pushdown_safe */
 typedef struct pushdown_safety_info
@@ -796,7 +796,7 @@ set_rel_consider_parallel(PlannerInfo *root, RelOptInfo *rel,
 
 		case RTE_TABLEFUNCTION:
 			/* Check for parallel-restricted functions. */
-			if (!function_rte_parallel_ok(rte))
+			if (!is_parallel_safe(root, (Node *) rte->functions))
 				return;
 
 			/* GPDB_96_MERGE_FIXME: other than the function itself, I guess this is like RTE_SUBQUERY... */

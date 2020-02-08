@@ -1825,7 +1825,7 @@ _readTupleDescNode(void)
 
 	READ_INT_FIELD(natts);
 
-	local_node->tuple = CreateTemplateTupleDesc(local_node->natts, false);
+	local_node->tuple = CreateTemplateTupleDesc(local_node->natts);
 
 	READ_INT_FIELD(tuple->natts);
 	if (local_node->tuple->natts > 0)

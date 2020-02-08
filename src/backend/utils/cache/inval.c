@@ -1244,7 +1244,7 @@ CacheInvalidateHeapTuple(Relation relation,
 	}
 	else if (tupleRelId == GpPolicyRelationId)
 	{
-		FormData_gp_policy *gptup = (FormData_gp_policy *) GETSTRUCT(tuple);
+		FormData_gp_distribution_policy *gptup = (FormData_gp_distribution_policy *) GETSTRUCT(tuple);
 
 		relationId = gptup->localoid;
 		databaseId = MyDatabaseId;

@@ -21,6 +21,7 @@
 #include "access/hash.h"
 #include "access/htup_details.h"
 #include "access/nbtree.h"
+#include "access/table.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_am.h"
@@ -1547,10 +1548,10 @@ get_trigger_name(Oid triggerid)
 	ScanKeyData	scankey;
 	SysScanDesc sscan;
 
-	ScanKeyInit(&scankey, ObjectIdAttributeNumber,
+	ScanKeyInit(&scankey, Anum_pg_trigger_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(triggerid));
-	rel = heap_open(TriggerRelationId, AccessShareLock);
+	rel = table_open(TriggerRelationId, AccessShareLock);
 	sscan = systable_beginscan(rel, TriggerOidIndexId, true,
 							   NULL, 1, &scankey);
 
@@ -1562,7 +1563,7 @@ get_trigger_name(Oid triggerid)
 		result = pstrdup(NameStr(trigtup->tgname));
 	}
 	systable_endscan(sscan);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return result;
 }
@@ -1580,10 +1581,10 @@ get_trigger_relid(Oid triggerid)
 	ScanKeyData	scankey;
 	SysScanDesc sscan;
 
-	ScanKeyInit(&scankey, ObjectIdAttributeNumber,
+	ScanKeyInit(&scankey, Anum_pg_trigger_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(triggerid));
-	rel = heap_open(TriggerRelationId, AccessShareLock);
+	rel = table_open(TriggerRelationId, AccessShareLock);
 	sscan = systable_beginscan(rel, TriggerOidIndexId, true,
 							   NULL, 1, &scankey);
 
@@ -1591,7 +1592,7 @@ get_trigger_relid(Oid triggerid)
 	if (HeapTupleIsValid(tp))
 		result = ((Form_pg_trigger) GETSTRUCT(tp))->tgrelid;
 	systable_endscan(sscan);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return result;
 }
@@ -1609,10 +1610,10 @@ get_trigger_funcid(Oid triggerid)
 	ScanKeyData	scankey;
 	SysScanDesc sscan;
 
-	ScanKeyInit(&scankey, ObjectIdAttributeNumber,
+	ScanKeyInit(&scankey, Anum_pg_trigger_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(triggerid));
-	rel = heap_open(TriggerRelationId, AccessShareLock);
+	rel = table_open(TriggerRelationId, AccessShareLock);
 	sscan = systable_beginscan(rel, TriggerOidIndexId, true,
 							   NULL, 1, &scankey);
 
@@ -1621,7 +1622,7 @@ get_trigger_funcid(Oid triggerid)
 		result = ((Form_pg_trigger) GETSTRUCT(tp))->tgfoid;
 
 	systable_endscan(sscan);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return result;
 }
@@ -1639,10 +1640,10 @@ get_trigger_type(Oid triggerid)
 	ScanKeyData	scankey;
 	SysScanDesc sscan;
 
-	ScanKeyInit(&scankey, ObjectIdAttributeNumber,
+	ScanKeyInit(&scankey, Anum_pg_trigger_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(triggerid));
-	rel = heap_open(TriggerRelationId, AccessShareLock);
+	rel = table_open(TriggerRelationId, AccessShareLock);
 	sscan = systable_beginscan(rel, TriggerOidIndexId, true,
 							   NULL, 1, &scankey);
 
@@ -1653,7 +1654,7 @@ get_trigger_type(Oid triggerid)
 	result = ((Form_pg_trigger) GETSTRUCT(tp))->tgtype;
 
 	systable_endscan(sscan);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return result;
 }
@@ -1671,10 +1672,10 @@ trigger_enabled(Oid triggerid)
 	ScanKeyData	scankey;
 	SysScanDesc sscan;
 
-	ScanKeyInit(&scankey, ObjectIdAttributeNumber,
+	ScanKeyInit(&scankey, Anum_pg_trigger_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(triggerid));
-	rel = heap_open(TriggerRelationId, AccessShareLock);
+	rel = table_open(TriggerRelationId, AccessShareLock);
 	sscan = systable_beginscan(rel, TriggerOidIndexId, true,
 							   NULL, 1, &scankey);
 
@@ -1685,7 +1686,7 @@ trigger_enabled(Oid triggerid)
 	result = ((Form_pg_trigger) GETSTRUCT(tp))->tgenabled;
 
 	systable_endscan(sscan);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return result;
 }
@@ -1766,48 +1767,6 @@ get_func_namespace(Oid funcid)
 	}
 	else
 		return InvalidOid;
-}
-
-/*
- * get_func_cost
- *		Given procedure id, return the function's procost field.
- */
-float4
-get_func_cost(Oid funcid)
-{
-	HeapTuple	tp;
-	float4		result;
-
-	tp = SearchSysCache(PROCOID,
-						ObjectIdGetDatum(funcid),
-						0, 0, 0);
-	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "cache lookup failed for function %u", funcid);
-
-	result = ((Form_pg_proc) GETSTRUCT(tp))->procost;
-	ReleaseSysCache(tp);
-	return result;
-}
-
-/*
- * get_func_rows
- *		Given procedure id, return the function's prorows field.
- */
-float4
-get_func_rows(Oid funcid)
-{
-	HeapTuple	tp;
-	float4		result;
-
-	tp = SearchSysCache(PROCOID,
-						ObjectIdGetDatum(funcid),
-						0, 0, 0);
-	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "cache lookup failed for function %u", funcid);
-
-	result = ((Form_pg_proc) GETSTRUCT(tp))->prorows;
-	ReleaseSysCache(tp);
-	return result;
 }
 
 /*				---------- RELATION CACHE ----------					 */
@@ -2513,30 +2472,6 @@ get_rel_relispartition(Oid relid)
 	}
 	else
 		return false;
-}
-
-/*
- * get_rel_relstorage
- *
- *		Returns the relstorage associated with a given relation.
- */
-char
-get_rel_relstorage(Oid relid)
-{
-	HeapTuple	tp;
-
-	tp = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
-	if (HeapTupleIsValid(tp))
-	{
-		Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
-		char		result;
-
-		result = reltup->relstorage;
-		ReleaseSysCache(tp);
-		return result;
-	}
-	else
-		return '\0';
 }
 
 /*
@@ -4050,11 +3985,11 @@ trigger_exists(Oid oid)
 	SysScanDesc sscan;
 	bool		result;
 
-	ScanKeyInit(&scankey, ObjectIdAttributeNumber,
+	ScanKeyInit(&scankey, Anum_pg_trigger_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(oid));
 
-	rel = heap_open(TriggerRelationId, AccessShareLock);
+	rel = table_open(TriggerRelationId, AccessShareLock);
 	sscan = systable_beginscan(rel, TriggerOidIndexId, true,
 							   NULL, 1, &scankey);
 
@@ -4062,7 +3997,7 @@ trigger_exists(Oid oid)
 
 	systable_endscan(sscan);
 
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return result;
 }
@@ -4453,9 +4388,8 @@ get_operator_opfamilies(Oid opno)
 	opfam_oids = NIL;
 
 	/* SELECT * FROM pg_amop WHERE amopopr = :1 */
-	catlist = SearchSysCacheList(AMOPOPID, 1,
-								 ObjectIdGetDatum(opno),
-								 0, 0, 0);
+	catlist = SearchSysCacheList1(AMOPOPID, 1,
+								  ObjectIdGetDatum(opno));
 	for (i = 0; i < catlist->n_members; i++)
 	{
 		HeapTuple	htup = &catlist->members[i]->tuple;

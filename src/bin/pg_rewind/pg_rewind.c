@@ -22,13 +22,10 @@
 #include "access/xlog_internal.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
-<<<<<<< HEAD
-=======
 #include "common/controldata_utils.h"
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/restricted_token.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "getopt_long.h"
 #include "common/restricted_token.h"
 #include "utils/palloc.h"
@@ -359,8 +356,7 @@ main(int argc, char **argv)
 
 	if (!rewind_needed)
 	{
-<<<<<<< HEAD
-		printf(_("no rewind required\n"));
+		pg_log_info("no rewind required");
 
 		if (writerecoveryconf && connstr_source)
 		{
@@ -368,9 +364,6 @@ main(int argc, char **argv)
 			WriteRecoveryConf();
 		}
 
-=======
-		pg_log_info("no rewind required");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		exit(0);
 	}
 
@@ -468,17 +461,13 @@ main(int argc, char **argv)
 		pg_log_info("syncing target data directory");
 	syncTargetDirectory();
 
-<<<<<<< HEAD
 	if (writerecoveryconf && connstr_source)
 	{
 		GenerateRecoveryConf(replication_slot);
 		WriteRecoveryConf();
 	}
 
-	printf(_("Done!\n"));
-=======
 	pg_log_info("Done!");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return 0;
 }

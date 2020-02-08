@@ -5427,7 +5427,7 @@ validateRecoveryParameters(void)
 	 */
 	if (StandbyModeRequested)
 	{
-		if ((PrimaryConnInfo == NULL || strcmp(PrimaryConnInfo, "") == 0))
+		if ((PrimaryConnInfo == NULL || strcmp(PrimaryConnInfo, "") == 0) ||
 			(recoveryRestoreCommand == NULL || strcmp(recoveryRestoreCommand, "") == 0))
 			ereport(WARNING,
 					(errmsg("primary_conninfo not specified"),

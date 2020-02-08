@@ -18,6 +18,7 @@
 #include "access/xact.h"
 #include "datatype/timestamp.h"
 #include "storage/backendid.h"
+#include "storage/procarray.h"
 
 #include "cdb/cdblocaldistribxact.h"
 

@@ -744,9 +744,8 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	 */
 	LWLockRelease(TablespaceCreateLock);
 
-<<<<<<< HEAD
-	/* We keep the lock on the row in pg_tablespace until commit */
-	heap_close(rel, NoLock);
+	/* We keep the lock on pg_tablespace until commit */
+	table_close(rel, NoLock);
 	SIMPLE_FAULT_INJECTOR("AfterTablespaceCreateLockRelease");
 
 	/*
@@ -762,10 +761,6 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 									NULL);
 	}
 
-=======
-	/* We keep the lock on pg_tablespace until commit */
-	table_close(rel, NoLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #else							/* !HAVE_SYMLINK */
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

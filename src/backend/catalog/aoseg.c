@@ -48,7 +48,7 @@ AlterTableCreateAoSegTable(Oid relOid, bool is_part_child, bool is_part_parent)
 		prefix = "pg_aoseg";
 
 		/* this is pretty painful...  need a tuple descriptor */
-		tupdesc = CreateTemplateTupleDesc(8, false);
+		tupdesc = CreateTemplateTupleDesc(8);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 						"segno",
 						INT4OID,
@@ -116,7 +116,7 @@ AlterTableCreateAoSegTable(Oid relOid, bool is_part_child, bool is_part_parent)
 		 * state (smallint)         -- state of the segment file
 		 */
 
-		tupdesc = CreateTemplateTupleDesc(7, false);
+		tupdesc = CreateTemplateTupleDesc(7);
 
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 						   "segno",

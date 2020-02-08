@@ -51,18 +51,6 @@
 
 #include "postgres_fe.h"
 
-<<<<<<< HEAD
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
-
-#include "pg_backup_utils.h"
-#include "parallel.h"
-#include "pg_backup_utils.h"
-#include "fe_utils/string_utils.h"
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #ifndef WIN32
 #include <sys/wait.h>
 #include <signal.h>

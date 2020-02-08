@@ -1464,7 +1464,7 @@ GppcCheckForInterrupts(void)
 GppcTupleDesc
 GppcCreateTemplateTupleDesc(int natts)
 {
-	return (GppcTupleDesc) CreateTemplateTupleDesc(natts, false);
+	return (GppcTupleDesc) CreateTemplateTupleDesc(natts);
 }
 
 /*

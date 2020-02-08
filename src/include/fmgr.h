@@ -452,7 +452,6 @@ typedef struct
 	int			float4byval;	/* FLOAT4PASSBYVAL */
 	int			float8byval;	/* FLOAT8PASSBYVAL */
 	int         product;        /* magic product code */
-	int         headerversion;/* header version number to force recompilation of libraries */
 } Pg_magic_struct;
 
 /*
@@ -469,9 +468,6 @@ typedef enum {
 	PgMagicProductGreenplum	   = 2180,     /* 'GPDB' cast to an integer */
 } Pg_magic_product_code;
 
-/* The header version to force recompilation of third party libraries */
-#define GP_HEADER_VERSION_NUM 1
-
 /* The actual data block contents */
 #define PG_MODULE_MAGIC_DATA \
 { \
@@ -482,8 +478,7 @@ typedef enum {
 	NAMEDATALEN, \
 	FLOAT4PASSBYVAL, \
 	FLOAT8PASSBYVAL, \
-	PgMagicProductGreenplum, \
-	GP_HEADER_VERSION_NUM, \
+	PgMagicProductGreenplum \
 }
 
 #ifndef FLOAT4PASSBYVAL

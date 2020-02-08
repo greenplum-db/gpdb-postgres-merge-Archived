@@ -762,7 +762,7 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 		fctx = palloc(sizeof(directory_fctx));
 
 <<<<<<< HEAD
-		tupdesc = CreateTemplateTupleDesc(2, false);
+		tupdesc = CreateTemplateTupleDesc(2);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "starttime",
 						   TIMESTAMPOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "filename",

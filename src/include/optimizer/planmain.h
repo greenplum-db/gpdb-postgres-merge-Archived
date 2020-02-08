@@ -59,8 +59,6 @@ extern bool contain_group_id(Node *node);
 extern Plan *create_plan(PlannerInfo *root, Path *best_path, PlanSlice *curSlice);
 extern Plan *create_plan_recurse(PlannerInfo *root, Path *best_path,
 					int flags);
-extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
-				  Index scanrelid, Plan *subplan);
 extern ForeignScan *make_foreignscan(List *qptlist, List *qpqual,
 									 Index scanrelid, List *fdw_exprs, List *fdw_private,
 									 List *fdw_scan_tlist, List *fdw_recheck_quals,
@@ -88,8 +86,6 @@ extern Plan *plan_pushdown_tlist(PlannerInfo *root, Plan *plan, List *tlist);   
 extern Sort *make_sort_from_pathkeys(Plan *lefttree, List *pathkeys, bool add_keys_to_targetlist);
 extern Sort *make_sort_from_sortclauses(List *sortcls,
 						   Plan *lefttree);
-extern Sort *make_sort_from_groupcols(List *groupcls, AttrNumber *grpColIdx,
-									  Plan *lefttree);
 extern Agg *make_agg(List *tlist, List *qual,
 					 AggStrategy aggstrategy, AggSplit aggsplit,
 					 bool streaming,

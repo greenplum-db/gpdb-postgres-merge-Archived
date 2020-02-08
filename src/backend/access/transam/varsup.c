@@ -212,22 +212,22 @@ GetNewTransactionId(bool isSubXact)
 	 */
 	if (Debug_burn_xids)
 	{
-		TransactionId xx;
+		uint64 xx;
 		uint32		r;
 
 		/*
 		 * Based on the minimum of ENTRIES_PER_PAGE (DistributedLog),
 		 * SUBTRANS_XACTS_PER_PAGE, CLOG_XACTS_PER_PAGE.
 		 */
-		const uint32      page_extend_limit = 4 * 1024;
+		const uint64      page_extend_limit = 4 * 1024;
 
-		xx = ShmemVariableCache->nextXid;
+		xx = U64FromFullTransactionId(ShmemVariableCache->nextFullXid);
 
 		r = xx % page_extend_limit;
 		if (r > 1 && r < (page_extend_limit - 1))
 		{
 			xx += page_extend_limit - r - 1;
-			ShmemVariableCache->nextXid = xx;
+			ShmemVariableCache->nextFullXid.value = xx;
 		}
 	}
 

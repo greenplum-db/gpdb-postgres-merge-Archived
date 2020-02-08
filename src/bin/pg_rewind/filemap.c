@@ -52,11 +52,7 @@ static const char *excludeDirContents[] =
 	 * when stats_temp_directory is set because PGSS_TEXT_FILE is always
 	 * created there.
 	 */
-<<<<<<< HEAD
-	"pg_stat_tmp",	/* defined as PG_STAT_TMP_DIR */
-=======
 	"pg_stat_tmp",				/* defined as PG_STAT_TMP_DIR */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * It is generally not useful to backup the contents of this directory
@@ -66,11 +62,7 @@ static const char *excludeDirContents[] =
 	"pg_replslot",
 
 	/* Contents removed on startup, see dsm_cleanup_for_mmap(). */
-<<<<<<< HEAD
-	"pg_dynshmem",	/* defined as PG_DYNSHMEM_DIR */
-=======
 	"pg_dynshmem",				/* defined as PG_DYNSHMEM_DIR */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Contents removed on startup, see AsyncShmemInit(). */
 	"pg_notify",
@@ -122,11 +114,8 @@ static const char *excludeFiles[] =
 	"postmaster.pid",
 	"postmaster.opts",
 
-<<<<<<< HEAD
 	GP_INTERNAL_AUTO_CONF_FILE_NAME,
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* end of list */
 	NULL
 };
@@ -435,15 +424,6 @@ process_target_file(const char *path, file_type_t type, size_t oldsize,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Like in process_source_file, pretend that xlog is always a  directory.
-	 */
-	if (strcmp(path, "pg_xlog") == 0 && type == FILE_TYPE_SYMLINK)
-		type = FILE_TYPE_DIRECTORY;
-
-	/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * Like in process_source_file, pretend that xlog is always a  directory.
 	 */
 	if (strcmp(path, "pg_wal") == 0 && type == FILE_TYPE_SYMLINK)
@@ -938,13 +918,8 @@ isRelDataFile(const char *path)
 	/*
 	 * The sscanf tests above can match files that have extra characters at
 	 * the end. To eliminate such cases, cross-check that GetRelationPath
-<<<<<<< HEAD
-	 * creates the exact same filename, when passed the RelFileNode information
-	 * we extracted from the filename.
-=======
 	 * creates the exact same filename, when passed the RelFileNode
 	 * information we extracted from the filename.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	if (matched)
 	{

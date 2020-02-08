@@ -1157,7 +1157,7 @@ gp_aocsseg_internal(PG_FUNCTION_ARGS, Oid aocsRelOid)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* build tupdesc for result tuples */
-		tupdesc = CreateTemplateTupleDesc(10, false);
+		tupdesc = CreateTemplateTupleDesc(10);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "gp_tid",
 						   TIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "segno",
@@ -1347,7 +1347,7 @@ gp_aocsseg_history(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* build tupdesc for result tuples */
-		tupdesc = CreateTemplateTupleDesc(20, false);
+		tupdesc = CreateTemplateTupleDesc(20);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "gp_tid",
 						   TIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "gp_xmin",

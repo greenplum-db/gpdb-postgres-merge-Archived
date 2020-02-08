@@ -181,8 +181,6 @@ static Plan *cdb_insert_result_node(PlannerInfo *root,
 									Plan *plan, 
 									int rtoffset);
 
-static bool extract_query_dependencies_walker(Node *node,
-								  PlannerInfo *context);
 static bool cdb_extract_plan_dependencies_walker(Node *node,
 									 cdb_extract_plan_dependencies_context *context);
 
@@ -657,13 +655,6 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					return cdb_insert_result_node(root, plan, rtoffset);
 
 				splan->scan.scanrelid += rtoffset;
-
-#ifdef USE_ASSERT_CHECKING
-				RangeTblEntry *rte = rt_fetch(splan->scan.scanrelid, root->glob->finalrtable);
-				char relstorage = get_rel_relstorage(rte->relid);
-				Assert(relstorage != RELSTORAGE_AOROWS &&
-					   relstorage != RELSTORAGE_AOCOLS);
-#endif
 
 				splan->scan.plan.targetlist =
 					fix_scan_list(root, splan->scan.plan.targetlist, rtoffset);

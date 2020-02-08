@@ -2,13 +2,9 @@
  *
  * pg_dumpall.c
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * pg_dumpall forces all pg_dump output to be text, since it also outputs
@@ -28,11 +24,8 @@
 
 #include "dumputils.h"
 #include "pg_backup.h"
-<<<<<<< HEAD
-=======
 #include "common/file_utils.h"
 #include "common/logging.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "fe_utils/connect.h"
 #include "fe_utils/string_utils.h"
 
@@ -55,20 +48,11 @@ static void dropDBs(PGconn *conn);
 static void dumpUserConfig(PGconn *conn, const char *username);
 static void dumpDatabases(PGconn *conn);
 static void dumpTimestamp(const char *msg);
-<<<<<<< HEAD
-
-static int	runPgDump(const char *dbname);
-static void buildShSecLabels(PGconn *conn,
-				 const char *catalog_name, Oid objectId,
-				 const char *objtype, const char *objname,
-				 PQExpBuffer buffer);
-=======
 static int	runPgDump(const char *dbname, const char *create_opts);
 static void buildShSecLabels(PGconn *conn,
 							 const char *catalog_name, Oid objectId,
 							 const char *objtype, const char *objname,
 							 PQExpBuffer buffer);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static PGconn *connectDatabase(const char *dbname, const char *connstr, const char *pghost, const char *pgport,
 							   const char *pguser, trivalue prompt_password, bool fail_on_error);
 static char *constructConnStr(const char **keywords, const char **values);
@@ -789,11 +773,7 @@ help(void)
 
 	printf(_("\nIf -f/--file is not used, then the SQL script will be written to the standard\n"
 			 "output.\n\n"));
-<<<<<<< HEAD
 	printf(_("Report bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 
@@ -2816,11 +2796,7 @@ connectDatabase(const char *dbname, const char *connection_string,
 	 * our own major version.  (See also version check in pg_dump.c.)
 	 */
 	if (my_version != server_version
-<<<<<<< HEAD
 		&& (server_version < 80200 ||		/* we can handle back to 8.2 */
-=======
-		&& (server_version < 80000 ||
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			(server_version / 100) > (my_version / 100)))
 	{
 		pg_log_error("server version: %s; %s version: %s",
@@ -2829,13 +2805,6 @@ connectDatabase(const char *dbname, const char *connection_string,
 		exit_nicely(1);
 	}
 
-<<<<<<< HEAD
-	/*
-	 * On 7.3 and later, make sure we are not fooled by non-system schemas in
-	 * the search path.
-	 */
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL));
 
 	return conn;

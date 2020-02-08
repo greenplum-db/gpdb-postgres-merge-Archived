@@ -1888,28 +1888,20 @@ ProcessUtilitySlow(ParseState *pstate,
 				break;
 
 			case T_CreateTrigStmt:
-<<<<<<< HEAD
-				{
-					address = CreateTrigger((CreateTrigStmt *) parsetree, queryString,
-											InvalidOid, InvalidOid, InvalidOid,
-											InvalidOid, false);
-					if (Gp_role == GP_ROLE_DISPATCH)
-					{
-						((CreateTrigStmt *) parsetree)->trigOid = address.objectId;
-						CdbDispatchUtilityStatement((Node *) parsetree,
-													DF_CANCEL_ON_ERROR|
-													DF_WITH_SNAPSHOT|
-													DF_NEED_TWO_PHASE,
-													GetAssignedOidsForDispatch(),
-													NULL);
-					}
-				}
-=======
 				address = CreateTrigger((CreateTrigStmt *) parsetree,
 										queryString, InvalidOid, InvalidOid,
 										InvalidOid, InvalidOid, InvalidOid,
 										InvalidOid, NULL, false, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				if (Gp_role == GP_ROLE_DISPATCH)
+				{
+					((CreateTrigStmt *) parsetree)->trigOid = address.objectId;
+					CdbDispatchUtilityStatement((Node *) parsetree,
+												DF_CANCEL_ON_ERROR|
+												DF_WITH_SNAPSHOT|
+												DF_NEED_TWO_PHASE,
+												GetAssignedOidsForDispatch(),
+												NULL);
+				}
 				break;
 
 			case T_CreatePLangStmt:

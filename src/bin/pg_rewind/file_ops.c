@@ -194,13 +194,8 @@ remove_target_file(const char *path, bool missing_ok)
 		if (errno == ENOENT && missing_ok)
 			return;
 
-<<<<<<< HEAD
-		pg_fatal("could not remove file \"%s\": %s\n",
-				 dstpath, strerror(errno));
-=======
 		pg_fatal("could not remove file \"%s\": %m",
 				 dstpath);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 }
 

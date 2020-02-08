@@ -84,8 +84,6 @@ extern PGDLLIMPORT double parallel_tuple_cost;
 extern PGDLLIMPORT double parallel_setup_cost;
 extern PGDLLIMPORT int effective_cache_size;
 
-extern double clamp_row_est(double nrows);
-
 /* in path/indxpath.c: */
 
 extern bool is_pseudo_constant_for_index(Node *expr, IndexOptInfo *index);

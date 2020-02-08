@@ -125,13 +125,10 @@ gp_expand_protect_catalog_changes(Relation relation)
 		case GpSegmentConfigRelationId:
 		case GpConfigHistoryRelationId:
 		case DescriptionRelationId:
-		case PartitionRelationId:
-		case PartitionRuleRelationId:
 		case SharedDescriptionRelationId:
 		case StatLastOpRelationId:
 		case StatLastShOpRelationId:
 		case StatisticRelationId:
-		case PartitionEncodingRelationId:
 		case AuthTimeConstraintRelationId:
 			/* these catalog tables are only meaningful on qd */
 			return;

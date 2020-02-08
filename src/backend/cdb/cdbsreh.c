@@ -173,7 +173,7 @@ GetErrorTupleDesc(void)
 		TupleDesc	tmp;
 		MemoryContext oldcontext = MemoryContextSwitchTo(CacheMemoryContext);
 
-		tmp = CreateTemplateTupleDesc(NUM_ERRORTABLE_ATTR, false);
+		tmp = CreateTemplateTupleDesc(NUM_ERRORTABLE_ATTR);
 		TupleDescInitEntry(tmp, 1, "cmdtime", TIMESTAMPTZOID, -1, 0);
 		TupleDescInitEntry(tmp, 2, "relname", TEXTOID, -1, 0);
 		TupleDescInitEntry(tmp, 3, "filename", TEXTOID, -1, 0);

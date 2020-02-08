@@ -347,36 +347,17 @@ incompatible_module_error(const char *libname,
 	int lib_internal_version = 0;
 
 	/* module_magic_data is recent enough to provide its own header version */
-	if (module_magic_data->len > offsetof(Pg_magic_struct, headerversion))
+	if (module_magic_data->len > offsetof(Pg_magic_struct, product))
 	{
-		lib_internal_version = module_magic_data->headerversion;
+		lib_internal_version = module_magic_data->product;
 	}
 
 	/*
 	 * If the version doesn't match, just report that, because the rest of the
 	 * block might not even have the fields we expect.
 	 */
-<<<<<<< HEAD
 	if (magic_data.version != module_magic_data->version ||
-		magic_data.product != module_magic_data->product ||
-		magic_data.headerversion != lib_internal_version)
-	{
-		ereport(ERROR,
-				(errmsg("incompatible library \"%s\": version mismatch",
-						libname),
-			  errdetail("Server version is %s %d.%d (header version: %d), library is %s %d.%d (header version: %d).",
-						magic_product,
-						magic_data.version / 100,
-						magic_data.version % 100,
-						magic_data.headerversion,
-						mod_magic_product,
-						module_magic_data->version / 100,
-						module_magic_data->version % 100,
-						lib_internal_version)
-				)
-		);
-=======
-	if (magic_data.version != module_magic_data->version)
+		magic_data.product != module_magic_data->product)
 	{
 		char		library_version[32];
 
@@ -390,9 +371,11 @@ incompatible_module_error(const char *libname,
 		ereport(ERROR,
 				(errmsg("incompatible library \"%s\": version mismatch",
 						libname),
-				 errdetail("Server is version %d, library is version %s.",
-						   magic_data.version / 100, library_version)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				 errdetail("Server is version %s %d, library is version %s %s.",
+						   magic_product,
+						   magic_data.version / 100,
+						   mod_magic_product,
+						   library_version)));
 	}
 
 	/*

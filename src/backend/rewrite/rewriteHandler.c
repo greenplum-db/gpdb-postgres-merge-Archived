@@ -220,12 +220,12 @@ AcquireRewriteLocks(Query *parsetree,
 				/* GPDB_12_MERGE_FIXME: Where should this go now? */
 					needLockUpgrade = (parsetree->commandType == CMD_UPDATE ||
 									   parsetree->commandType == CMD_DELETE);
-#endi
+#endif
 
 				/* Take a lock either using CDB lock promotion or not */
 				if (needLockUpgrade)
 				{
-					rel = CdbOpenRelation(rte->relid, lockmode, false, NULL);
+					rel = CdbOpenTable(rte->relid, lockmode, false, NULL);
 				}
 				else
 				{
@@ -1524,19 +1524,21 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 		 * GPDB also needs gp_segment_id. ctid is only unique in the same
 		 * segment.
 		 */
-		Oid			reloid;
-		Oid			vartypeid;
-		int32		type_mod;
-		Oid			type_coll;
+		{
+			Oid			reloid;
+			Oid			vartypeid;
+			int32		type_mod;
+			Oid			type_coll;
 
-		reloid = RelationGetRelid(target_relation);
-		get_atttypetypmodcoll(reloid, GpSegmentIdAttributeNumber, &vartypeid, &type_mod, &type_coll);
-		varSegid = makeVar(parsetree->resultRelation,
-						   GpSegmentIdAttributeNumber,
-						   vartypeid,
-						   type_mod,
-						   type_coll,
-						   0);
+			reloid = RelationGetRelid(target_relation);
+			get_atttypetypmodcoll(reloid, GpSegmentIdAttributeNumber, &vartypeid, &type_mod, &type_coll);
+			varSegid = makeVar(parsetree->resultRelation,
+							   GpSegmentIdAttributeNumber,
+							   vartypeid,
+							   type_mod,
+							   type_coll,
+							   0);
+		}
 	}
 	else if (target_relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 	{
@@ -1575,13 +1577,21 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 			 * GPDB also needs gp_segment_id. ctid is only unique in the same
 			 * segment.
 			 */
-			get_atttypetypmodcoll(reloid, GpSegmentIdAttributeNumber, &vartypeid, &type_mod, &type_coll);
-			varSegid = makeVar(parsetree->resultRelation,
-							   GpSegmentIdAttributeNumber,
-							   vartypeid,
-							   type_mod,
-							   type_coll,
-							   0);
+			{
+				Oid			reloid;
+				Oid			vartypeid;
+				int32		type_mod;
+				Oid			type_coll;
+
+				reloid = RelationGetRelid(target_relation);
+				get_atttypetypmodcoll(reloid, GpSegmentIdAttributeNumber, &vartypeid, &type_mod, &type_coll);
+				varSegid = makeVar(parsetree->resultRelation,
+								   GpSegmentIdAttributeNumber,
+								   vartypeid,
+								   type_mod,
+								   type_coll,
+								   0);
+			}
 		}
 	}
 

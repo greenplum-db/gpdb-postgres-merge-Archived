@@ -126,7 +126,7 @@ FindMyDatabase(const char *dbname, Oid *db_id, Oid *db_tablespace)
 
 	/* Return oids to the caller */
 	dbform = (Form_pg_database) GETSTRUCT(tuple);
-	*db_id = HeapTupleGetOid(tuple);
+	*db_id = dbform->oid;
 	*db_tablespace = dbform->dattablespace;
 
 	/* Be tidy */

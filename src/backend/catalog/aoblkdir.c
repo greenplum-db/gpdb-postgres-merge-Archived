@@ -53,7 +53,7 @@ AlterTableCreateAoBlkdirTable(Oid relOid, bool is_part_child, bool is_part_paren
 	}
 
 	/* Create a tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(4, false);
+	tupdesc = CreateTemplateTupleDesc(4);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 					   "segno",
 					   INT4OID,

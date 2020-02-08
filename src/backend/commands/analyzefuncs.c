@@ -151,7 +151,7 @@ gp_acquire_sample_rows(PG_FUNCTION_ARGS)
 			live_natts++;
 		}
 
-		outDesc = CreateTemplateTupleDesc(NUM_SAMPLE_FIXED_COLS + live_natts, false);
+		outDesc = CreateTemplateTupleDesc(NUM_SAMPLE_FIXED_COLS + live_natts);
 
 		/* First, some special cols: */
 

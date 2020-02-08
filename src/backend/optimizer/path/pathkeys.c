@@ -33,6 +33,7 @@
 
 #include "cdb/cdbhash.h"
 #include "cdb/cdbpullup.h"		/* cdbpullup_expr(), cdbpullup_make_var() */
+#include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/var.h"
 #include "optimizer/restrictinfo.h"

@@ -61,7 +61,7 @@ gp_create_restore_point(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* create tupdesc for result */
-		tupdesc = CreateTemplateTupleDesc(2, false);
+		tupdesc = CreateTemplateTupleDesc(2);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "segment_id",
 						   INT2OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "restore_lsn",

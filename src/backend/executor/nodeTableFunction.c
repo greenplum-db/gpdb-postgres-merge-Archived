@@ -387,7 +387,7 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 			else
 				attname = NULL;
 
-			resultdesc = CreateTemplateTupleDesc(1, false);
+			resultdesc = CreateTemplateTupleDesc(1);
 			TupleDescInitEntry(resultdesc,
 							   (AttrNumber) 1,
 							   attname,

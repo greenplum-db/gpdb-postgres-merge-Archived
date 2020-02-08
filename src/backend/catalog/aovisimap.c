@@ -54,7 +54,7 @@ AlterTableCreateAoVisimapTable(Oid relOid, bool is_part_child, bool is_part_pare
 	}
 
 	/* Create a tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(Natts_pg_aovisimap, false);
+	tupdesc = CreateTemplateTupleDesc(Natts_pg_aovisimap);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 					   "segno",
 					   INT4OID,

@@ -572,7 +572,7 @@ FaultInjector_InsertHashEntry(
 												  &foundPtr);
 
 	if (entry == NULL) {
-		*exists = FALSE;
+		*exists = false;
 		return entry;
 	} 
 	
@@ -580,9 +580,9 @@ FaultInjector_InsertHashEntry(
 		 entry->faultName);
 	
 	if (foundPtr) {
-		*exists = TRUE;
+		*exists = true;
 	} else {
-		*exists = FALSE;
+		*exists = false;
 	}
 
 	return entry;
@@ -597,7 +597,7 @@ FaultInjector_RemoveHashEntry(
 {	
 	
 	FaultInjectorEntry_s	*entry;
-	bool					isRemoved = FALSE;
+	bool					isRemoved = false;
 	
 	Assert(faultInjectorShmem->hash != NULL);
 	entry = (FaultInjectorEntry_s *) hash_search(
@@ -611,9 +611,9 @@ FaultInjector_RemoveHashEntry(
 		ereport(LOG, 
 				(errmsg("fault removed, fault name:'%s' fault type:'%s' ",
 						entry->faultName,
-						FaultInjectorTypeEnumToString[entry->faultInjectorType])));							
-		
-		isRemoved = TRUE;
+						FaultInjectorTypeEnumToString[entry->faultInjectorType])));
+
+		isRemoved = true;
 	}
 	
 	return isRemoved;			
@@ -760,7 +760,7 @@ FaultInjector_SetFaultInjection(
 						   FaultInjectorEntry_s	*entry)
 {
 	int		status = STATUS_OK;
-	bool	isRemoved = FALSE;
+	bool	isRemoved = false;
 	
 	switch (entry->faultInjectorType) {
 		case FaultInjectorTypeReset:
@@ -776,7 +776,7 @@ FaultInjector_SetFaultInjection(
 				
 				while ((entryLocal = (FaultInjectorEntry_s *) hash_seq_search(&hash_status)) != NULL) {
 					isRemoved = FaultInjector_RemoveHashEntry(entryLocal->faultName);
-					if (isRemoved == TRUE) {
+					if (isRemoved == true) {
 						faultInjectorShmem->faultInjectorSlots--;
 					}					
 				}
@@ -787,13 +787,13 @@ FaultInjector_SetFaultInjection(
 			{
 				FiLockAcquire();
 				isRemoved = FaultInjector_RemoveHashEntry(entry->faultName);
-				if (isRemoved == TRUE) {
+				if (isRemoved == true) {
 					faultInjectorShmem->faultInjectorSlots--;
 				}
 				FiLockRelease();
 			}
 				
-			if (isRemoved == FALSE)
+			if (isRemoved == false)
 				ereport(DEBUG1,
 						(errmsg("LOG(fault injector): could not remove fault injection from hash identifier:'%s'",
 								entry->faultName)));

@@ -54,17 +54,6 @@ extern char *pg_ltostr_zeropad(char *str, int32 value, int32 minwidth);
 extern char *pg_ltostr(char *str, int32 value);
 extern uint64 pg_strtouint64(const char *str, char **endptr, int base);
 
-extern double get_float8_infinity(void);
-extern float get_float4_infinity(void);
-extern double get_float8_nan(void);
-extern float get_float4_nan(void);
-extern int	is_infinite(double val);
-extern double float8in_internal(char *num, char **endptr_p,
-				  const char *type_name, const char *orig_string);
-extern char *float8out_internal(double num);
-extern int	float4_cmp_internal(float4 a, float4 b);
-extern int	float8_cmp_internal(float8 a, float8 b);
-
 /* dbsize.c */
 extern int64 get_size_from_segDBs(const char *cmd);
 
@@ -150,5 +139,8 @@ extern void dumpDynamicTableScanPidIndex(struct EState *estate, int index);
 
 /* query_metrics.c */
 extern Datum gp_instrument_shmem_summary(PG_FUNCTION_ARGS);
+
+/* utils/gp/segadmin.c */
+extern bool gp_activate_standby(void);
 
 #endif							/* BUILTINS_H */

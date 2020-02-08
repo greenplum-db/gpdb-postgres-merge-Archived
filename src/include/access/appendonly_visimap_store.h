@@ -14,6 +14,7 @@
 #ifndef APPENDONLY_VISIMAP_STORE_H
 #define APPENDONLY_VISIMAP_STORE_H
 
+#include "access/genam.h"
 #include "access/skey.h"
 #include "access/relscan.h"
 #include "access/sdir.h"

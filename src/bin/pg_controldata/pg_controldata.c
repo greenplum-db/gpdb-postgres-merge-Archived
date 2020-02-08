@@ -37,22 +37,13 @@ usage(const char *progname)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION] [DATADIR]\n"), progname);
 	printf(_("\nOptions:\n"));
-<<<<<<< HEAD
-	printf(_(" [-D] DATADIR    data directory\n"));
-	printf(_("  -V, --version  output version information, then exit\n"));
-	printf(_("  -?, --help     show this help, then exit\n"));
+	printf(_(" [-D, --pgdata=]DATADIR  data directory\n"));
+	printf(_("  -V, --version          output version information, then exit\n"));
+	printf(_("  -?, --help             show this help, then exit\n"));
 	printf(_("  --gp-version   output Greenplum version information, then exit\n"));
 	printf(_("\nIf no data directory (DATADIR) is specified, "
 			 "the environment variable PGDATA\nis used.\n\n"));
 	printf(_("Report bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_(" [-D, --pgdata=]DATADIR  data directory\n"));
-	printf(_("  -V, --version          output version information, then exit\n"));
-	printf(_("  -?, --help             show this help, then exit\n"));
-	printf(_("\nIf no data directory (DATADIR) is specified, "
-			 "the environment variable PGDATA\nis used.\n\n"));
-	printf(_("Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 

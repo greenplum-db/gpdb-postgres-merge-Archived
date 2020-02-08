@@ -94,7 +94,6 @@ networksel(PG_FUNCTION_ARGS)
 	double		sumcommon,
 				nullfrac;
 	FmgrInfo	proc;
-	AttStatsSlot sslot;
 
 	/*
 	 * If expression is not (variable op something) or (something op

@@ -347,13 +347,8 @@ _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 	lclContext *ctx = (lclContext *) AH->formatData;
 
 	if (dLen > 0 && cfwrite(data, dLen, ctx->dataFH) != dLen)
-<<<<<<< HEAD
-		exit_horribly(modulename, "could not write to output file: %s\n",
-					  get_cfp_error(ctx->dataFH));
-=======
 		fatal("could not write to output file: %s",
 			  get_cfp_error(ctx->dataFH));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 	return;
@@ -490,13 +485,8 @@ _WriteByte(ArchiveHandle *AH, const int i)
 	lclContext *ctx = (lclContext *) AH->formatData;
 
 	if (cfwrite(&c, 1, ctx->dataFH) != 1)
-<<<<<<< HEAD
-		exit_horribly(modulename, "could not write to output file: %s\n",
-					  get_cfp_error(ctx->dataFH));
-=======
 		fatal("could not write to output file: %s",
 			  get_cfp_error(ctx->dataFH));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return 1;
 }
@@ -525,13 +515,8 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 	lclContext *ctx = (lclContext *) AH->formatData;
 
 	if (cfwrite(buf, len, ctx->dataFH) != len)
-<<<<<<< HEAD
-		exit_horribly(modulename, "could not write to output file: %s\n",
-					  get_cfp_error(ctx->dataFH));
-=======
 		fatal("could not write to output file: %s",
 			  get_cfp_error(ctx->dataFH));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return;
 }

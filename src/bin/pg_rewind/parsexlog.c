@@ -3,23 +3,12 @@
  * parsexlog.c
  *	  Functions for reading Write-Ahead-Log
  *
-<<<<<<< HEAD
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
- * Portions Copyright (c) 2013-2014 VMware, Inc. All Rights Reserved.
- * Portions Copyright (c) 1996-2008, Nippon Telegraph and Telephone Corporation
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *-------------------------------------------------------------------------
  */
 
-#define FRONTEND 1
-#include "c.h"
-#undef FRONTEND
-
-#include "postgres.h"
 #include "postgres_fe.h"
 
 #include <unistd.h>
@@ -102,8 +91,7 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, int tliIndex,
 						 errormsg);
 			else
 				pg_fatal("could not read WAL record at %X/%X",
-						 (uint32) (startpoint >> 32),
-						 (uint32) (startpoint));
+						 (uint32) (errptr >> 32), (uint32) (errptr));
 		}
 
 		extractPageInfo(xlogreader);
@@ -419,12 +407,12 @@ extractPageInfo(XLogReaderState *record)
 			 */
 		}
 
-		/* 
+		/*
 		 * GPDB_95_MERGE_FIXME: should we just return here? there seems be no buffer
 		 * registered when xlog is inserted.
 		 */
 	}
-	/* 
+	/*
 	 * GPDB_95_MERGE_FIXME:
 	 * 1. should RM_DISTRIBUTEDLOG_ID be taken care of
 	 * 2. we used to have a special treat towards RM_BITMAP_ID, now we hope the

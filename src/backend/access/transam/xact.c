@@ -481,7 +481,8 @@ GetAllTransactionXids(
 	TransactionState s = CurrentTransactionState;
 
 	*distribXid = getDistributedTransactionId();
-	*localXid = s->transactionId;
+	/* GPDB_12_MERGE_FIXME: Should we change this to return FullTransactionId? */
+	*localXid = XidFromFullTransactionId(s->fullTransactionId);
 	*subXid = s->subTransactionId;
 }
 
@@ -736,14 +737,15 @@ AssignTransactionId(TransactionState s)
 
 	ereportif(Debug_print_full_dtm, LOG,
 			  (errmsg("AssignTransactionId(): assigned xid " UINT64_FORMAT,
-					  s->fullTransactionId)));
+					  U64FromFullTransactionId(s->fullTransactionId))));
 
 	if (!isSubXact)
 		XactTopFullTransactionId = s->fullTransactionId;
 
 	if (isSubXact)
 	{
-		Assert(TransactionIdPrecedes(s->parent->transactionId, s->transactionId));
+		Assert(TransactionIdPrecedes(U64FromFullTransactionId(s->parent->fullTransactionId),
+									 U64FromFullTransactionId(s->fullTransactionId)));
 		SubTransSetParent(XidFromFullTransactionId(s->fullTransactionId),
 						  XidFromFullTransactionId(s->parent->fullTransactionId));
 	}
@@ -1018,7 +1020,7 @@ TransactionIdIsCurrentTransactionIdInternal(TransactionId xid)
 			 * as stack is in decreasing order of XIDs
 			 * So, can safely breakout.
 			 */
-			if (TransactionIdFollows(xid, XidFromFullTransactionId(s->fullTransactionId))
+			if (TransactionIdFollows(xid, XidFromFullTransactionId(s->fullTransactionId)))
 				break;
 		}
 
@@ -2286,15 +2288,15 @@ SetSharedTransactionId_writer(DtxContext distributedTransactionContext)
 		   distributedTransactionContext == DTX_CONTEXT_QE_AUTO_COMMIT_IMPLICIT);
 
 	ereportif(Debug_print_full_dtm, LOG,
-			  (errmsg("%s setting shared xid %u -> %u",
+			  (errmsg("%s setting shared xid " UINT64_FORMAT " -> " UINT64_FORMAT,
 					  DtxContextToString(distributedTransactionContext),
-					  SharedLocalSnapshotSlot->xid,
-					  TopTransactionStateData.transactionId)));
-	SharedLocalSnapshotSlot->xid = TopTransactionStateData.transactionId;
+					  U64FromFullTransactionId(SharedLocalSnapshotSlot->xid),
+					  U64FromFullTransactionId(TopTransactionStateData.fullTransactionId))));
+	SharedLocalSnapshotSlot->xid = TopTransactionStateData.fullTransactionId;
 }
 
 void
-SetSharedTransactionId_reader(TransactionId xid, CommandId cid, DtxContext distributedTransactionContext)
+SetSharedTransactionId_reader(FullTransactionId xid, CommandId cid, DtxContext distributedTransactionContext)
 {
 	Assert(distributedTransactionContext == DTX_CONTEXT_QE_READER ||
 		   distributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON);
@@ -2306,12 +2308,12 @@ SetSharedTransactionId_reader(TransactionId xid, CommandId cid, DtxContext distr
 	 * SharedLocalSnapshot slot. Since, then QE writer could have moved-on and
 	 * hence we reset the same to update to correct value here.
 	 */
-	TopTransactionStateData.transactionId = xid;
+	TopTransactionStateData.fullTransactionId = xid;
 	currentCommandId = cid;
 	ereportif(Debug_print_full_dtm, LOG,
-			  (errmsg("qExec READER setting local xid=%u, cid=%u "
+			  (errmsg("qExec READER setting local xid= " UINT64_FORMAT ", cid=%u "
 					  "(distributedXid %u/%u)",
-					  TopTransactionStateData.transactionId, currentCommandId,
+					  U64FromFullTransactionId(TopTransactionStateData.fullTransactionId), currentCommandId,
 					  QEDtxContextInfo.distributedXid,
 					  QEDtxContextInfo.segmateSync)));
 }
@@ -2525,7 +2527,7 @@ StartTransaction(void)
 				LWLockAcquire(SharedLocalSnapshotSlot->slotLock, LW_EXCLUSIVE);
 
 				SharedLocalSnapshotSlot->ready = false;
-				SharedLocalSnapshotSlot->xid = s->transactionId;
+				SharedLocalSnapshotSlot->xid = s->fullTransactionId;
 				SharedLocalSnapshotSlot->startTimestamp = stmtStartTimestamp;
 				SharedLocalSnapshotSlot->QDxid = QEDtxContextInfo.distributedXid;
 				SharedLocalSnapshotSlot->writer_proc = MyProc;
@@ -2534,13 +2536,13 @@ StartTransaction(void)
 				ereportif(Debug_print_full_dtm, LOG,
 						  (errmsg(
 							  "qExec writer setting distributedXid: %d "
-							  "sharedQDxid %d (shared xid %u -> %u) ready %s"
+							  "sharedQDxid %d (shared xid " UINT64_FORMAT " -> " UINT64_FORMAT ") ready %s"
 							  " (shared timeStamp = " INT64_FORMAT " -> "
 							  INT64_FORMAT ")",
 							  QEDtxContextInfo.distributedXid,
 							  SharedLocalSnapshotSlot->QDxid,
-							  SharedLocalSnapshotSlot->xid,
-							  s->transactionId,
+							  U64FromFullTransactionId(SharedLocalSnapshotSlot->xid),
+							  U64FromFullTransactionId(s->fullTransactionId),
 							  SharedLocalSnapshotSlot->ready ? "true" : "false",
 							  SharedLocalSnapshotSlot->startTimestamp,
 							  xactStartTimestamp)));
@@ -2595,12 +2597,12 @@ StartTransaction(void)
 
 	ereportif(Debug_print_snapshot_dtm, LOG,
 			  (errmsg("[Distributed Snapshot #%u] *StartTransaction* "
-					  "(gxid = %u, xid = %u, '%s')",
+					  "(gxid = %u, xid = " UINT64_FORMAT ", '%s')",
 					  (!FirstSnapshotSet ? 0 :
 					   GetTransactionSnapshot()->
 					   distribSnapshotWithLocalMapping.ds.distribSnapshotId),
 					  getDistributedTransactionId(),
-					  s->transactionId,
+					  U64FromFullTransactionId(s->fullTransactionId),
 					  DtxContextToString(DistributedTransactionContext))));
 
 	/*
@@ -3574,7 +3576,7 @@ AbortTransaction(void)
 	 * needed, exported snapshots are cleared and transaction ID is reset
 	 * later in CleanupTransaction().  We must perform both the actions here.
 	 */
-	AtEOXact_Snapshot(false);	/* and release the transaction's snapshots */
+	AtEOXact_Snapshot(false, true);	/* and release the transaction's snapshots */
 
 	/*
 	 * If something goes wrong after this, we might recurse back to
@@ -3584,7 +3586,7 @@ AbortTransaction(void)
 	 * of the fields in TransactionState will be cleared later, in
 	 * CleanupTransaction().
 	 */
-	TopTransactionStateData.transactionId = InvalidTransactionId;
+	TopTransactionStateData.fullTransactionId = InvalidFullTransactionId;
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
 
 	/*
@@ -3722,7 +3724,7 @@ StartTransactionCommand(void)
 			{
 				LWLockAcquire(SharedLocalSnapshotSlot->slotLock, LW_EXCLUSIVE);
 
-				TransactionId oldXid = SharedLocalSnapshotSlot->xid;
+				FullTransactionId oldXid = SharedLocalSnapshotSlot->xid;
 				TimestampTz oldStartTimestamp = SharedLocalSnapshotSlot->startTimestamp;
 
 				/*
@@ -3731,9 +3733,9 @@ StartTransactionCommand(void)
 				 * shared copy to InvalidTransactionId (the unassigned
 				 * value) since the reader may *need* it).
 				 */
-				if (TransactionIdIsValid(s->transactionId))
+				if (FullTransactionIdIsValid(s->fullTransactionId))
 				{
-					SharedLocalSnapshotSlot->xid = s->transactionId;
+					SharedLocalSnapshotSlot->xid = s->fullTransactionId;
 				}
 
 				SharedLocalSnapshotSlot->startTimestamp = xactStartTimestamp;
@@ -3742,10 +3744,11 @@ StartTransactionCommand(void)
 				LWLockRelease(SharedLocalSnapshotSlot->slotLock);
 
 				ereportif(Debug_print_full_dtm, LOG,
-						  (errmsg("qExec WRITER updating shared xid: %u -> %u "
+						  (errmsg("qExec WRITER updating shared xid: " UINT64_FORMAT " -> " UINT64_FORMAT " "
 								  "(StartTransactionCommand) timestamp: "
 								  INT64_FORMAT " -> " INT64_FORMAT ")",
-								  oldXid, s->transactionId,
+								  U64FromFullTransactionId(oldXid),
+								  U64FromFullTransactionId(s->fullTransactionId),
 								  oldStartTimestamp, xactStartTimestamp)));
 			}
 			break;
@@ -4109,9 +4112,9 @@ AbortCurrentTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-	elog(DEBUG5, "AbortCurrentTransaction for %d in state: %d",
-		s->transactionId,
-		s->blockState);
+	elog(DEBUG5, "AbortCurrentTransaction for " UINT64_FORMAT " in state: %d",
+		 U64FromFullTransactionId(s->fullTransactionId),
+		 s->blockState);
 
 	switch (s->blockState)
 	{

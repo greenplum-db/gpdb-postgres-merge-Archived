@@ -3,13 +3,9 @@
  * pg_dump.h
  *	  Common header file for the pg_dump utility
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pg_dump/pg_dump.h

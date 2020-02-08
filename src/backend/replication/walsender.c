@@ -122,21 +122,15 @@ bool		am_cascading_walsender = false; /* Am I cascading WAL to another
 bool		am_db_walsender = false;	/* Connected to a database? */
 
 /* User-settable parameters for walsender */
-<<<<<<< HEAD
-int			max_wal_senders = 0;	/* the maximum number of concurrent walsenders */
-int			wal_sender_timeout = 60 * 1000;		/* maximum time to send one
-												 * WAL data message */
 // GPDB_93_MERGE_FIXME: This was XLogSegsPerFile. But I don't understand why.
 // What was so special about crossing the xlogid boundary? I kept the old
 // value, and maybe it's a suitable one, but it should probably be just a
 // constant like '64' or something.
 int			repl_catchup_within_range = ((uint32) 0xffffffff) / XLogSegSize;
-=======
 int			max_wal_senders = 0;	/* the maximum number of concurrent
 									 * walsenders */
 int			wal_sender_timeout = 60 * 1000; /* maximum time to send one WAL
 											 * data message */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 bool		log_replication_commands = false;
 
 /*
@@ -1292,11 +1286,6 @@ WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 
 		if (!pq_is_send_pending())
 			break;
-<<<<<<< HEAD
-
-		sleeptime = WalSndComputeSleeptime(GetCurrentTimestamp());
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		sleeptime = WalSndComputeSleeptime(GetCurrentTimestamp());
 
@@ -1304,21 +1293,9 @@ WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 			WL_SOCKET_WRITEABLE | WL_SOCKET_READABLE | WL_TIMEOUT;
 
 		/* Sleep until something happens or we time out */
-<<<<<<< HEAD
-		WaitLatchOrSocket(MyLatch, wakeEvents,
-						  MyProcPort->sock, sleeptime);
-
-		/*
-		 * Emergency bailout if postmaster has died.  This is to avoid the
-		 * necessity for manual cleanup of all postmaster children.
-		 */
-		if (!PostmasterIsAlive())
-			exit(1);
-=======
 		(void) WaitLatchOrSocket(MyLatch, wakeEvents,
 								 MyProcPort->sock, sleeptime,
 								 WAIT_EVENT_WAL_SENDER_WRITE_DATA);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/* Clear any already-pending wakeups */
 		ResetLatch(MyLatch);
@@ -1343,8 +1320,6 @@ WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 }
 
 /*
-<<<<<<< HEAD
-=======
  * LogicalDecodingContext 'update_progress' callback.
  *
  * Write the current position to the lag tracker (see XLogSendPhysical).
@@ -1369,7 +1344,6 @@ WalSndUpdateProgress(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId 
 }
 
 /*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Wait till WAL < loc is flushed to disk so it can be safely sent to client.
  *
  * Returns end LSN of flushed WAL.  Normally this will be >= loc, but
@@ -1509,14 +1483,9 @@ WalSndWaitForWal(XLogRecPtr loc)
 		if (pq_is_send_pending())
 			wakeEvents |= WL_SOCKET_WRITEABLE;
 
-<<<<<<< HEAD
-		WaitLatchOrSocket(MyLatch, wakeEvents,
-						  MyProcPort->sock, sleeptime);
-=======
 		(void) WaitLatchOrSocket(MyLatch, wakeEvents,
 								 MyProcPort->sock, sleeptime,
 								 WAIT_EVENT_WAL_SENDER_WAIT_WAL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/* reactivate latch so WalSndLoop knows to continue */
@@ -1541,26 +1510,6 @@ exec_replication_command(const char *cmd_string)
 	/*
 	 * If WAL sender has been told that shutdown is getting close, switch its
 	 * status accordingly to handle the next replication commands correctly.
-<<<<<<< HEAD
-	 */
-	if (got_STOPPING)
-		WalSndSetState(WALSNDSTATE_STOPPING);
-
-	/*
-	 * Throw error if in stopping mode.  We need prevent commands that could
-	 * generate WAL while the shutdown checkpoint is being written.  To be
-	 * safe, we just prohibit all new commands.
-	 */
-	if (MyWalSnd->state == WALSNDSTATE_STOPPING)
-		ereport(ERROR,
-				(errmsg("cannot execute new commands while WAL sender is in stopping mode")));
-
-	/*
-	 * Log replication command if log_replication_commands is enabled. Even
-	 * when it's disabled, log the command with DEBUG1 level for backward
-	 * compatibility.
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	if (got_STOPPING)
 		WalSndSetState(WALSNDSTATE_STOPPING);
@@ -3372,10 +3321,6 @@ WalSndWaitStopping(void)
 
 		for (i = 0; i < max_wal_senders; i++)
 		{
-<<<<<<< HEAD
-			WalSndState state;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			WalSnd	   *walsnd = &WalSndCtl->walsnds[i];
 
 			SpinLockAcquire(&walsnd->mutex);
@@ -3386,16 +3331,6 @@ WalSndWaitStopping(void)
 				continue;
 			}
 
-<<<<<<< HEAD
-			state = walsnd->state;
-			SpinLockRelease(&walsnd->mutex);
-
-			if (state != WALSNDSTATE_STOPPING)
-			{
-				all_stopped = false;
-				break;
-			}
-=======
 			if (walsnd->state != WALSNDSTATE_STOPPING)
 			{
 				all_stopped = false;
@@ -3403,7 +3338,6 @@ WalSndWaitStopping(void)
 				break;
 			}
 			SpinLockRelease(&walsnd->mutex);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		/* safe to leave if confirmation is done for all WAL senders */

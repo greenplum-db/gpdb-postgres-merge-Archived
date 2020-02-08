@@ -14,6 +14,7 @@
 #ifndef COPY_H
 #define COPY_H
 
+#include "commands/trigger.h"
 #include "nodes/execnodes.h"
 #include "nodes/parsenodes.h"
 #include "parser/parse_node.h"

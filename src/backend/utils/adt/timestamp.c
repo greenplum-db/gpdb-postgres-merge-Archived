@@ -1946,22 +1946,10 @@ make_interval(PG_FUNCTION_ARGS)
 	result->month = years * MONTHS_PER_YEAR + months;
 	result->day = weeks * 7 + days;
 
-<<<<<<< HEAD
-#ifdef HAVE_INT64_TIMESTAMP
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	secs = rint(secs * USECS_PER_SEC);
 	result->time = hours * ((int64) SECS_PER_HOUR * USECS_PER_SEC) +
 		mins * ((int64) SECS_PER_MINUTE * USECS_PER_SEC) +
 		(int64) secs;
-<<<<<<< HEAD
-#else
-	result->time = hours * (double) SECS_PER_HOUR +
-		mins * (double) SECS_PER_MINUTE +
-		secs;
-#endif
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	PG_RETURN_INTERVAL_P(result);
 }

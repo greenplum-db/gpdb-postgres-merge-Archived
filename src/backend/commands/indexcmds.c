@@ -892,19 +892,8 @@ DefineIndex(Oid relationId,
 	accessMethodId = accessMethodForm->oid;
 	amRoutine = GetIndexAmRoutine(accessMethodForm->amhandler);
 
-<<<<<<< HEAD
-	if (accessMethodId == HASH_AM_OID)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("hash indexes are not supported")));
-	if (strcmp(accessMethodName, "hash") == 0 &&
-		RelationNeedsWAL(rel))
-		ereport(WARNING,
-				(errmsg("hash indexes are not WAL-logged and their use is discouraged")));
-=======
 	pgstat_progress_update_param(PROGRESS_CREATEIDX_ACCESS_METHOD_OID,
 								 accessMethodId);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (stmt->unique && !amRoutine->amcanunique)
 		ereport(ERROR,
@@ -924,9 +913,9 @@ DefineIndex(Oid relationId,
 	if (stmt->excludeOpNames && amRoutine->amgettuple == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-<<<<<<< HEAD
-		errmsg("access method \"%s\" does not support exclusion constraints",
-			   accessMethodName)));
+				 errmsg("access method \"%s\" does not support exclusion constraints",
+						accessMethodName)));
+
 	/*
 	 * GPDB_95_MERGE_FIXME: In order to support brin indexes on AO/AOCO tables
 	 * there needs to be a way to expose block range metadata. In AO/AOCO what
@@ -941,10 +930,6 @@ DefineIndex(Oid relationId,
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                  errmsg("append-only tables do not support unique indexes")));
-=======
-				 errmsg("access method \"%s\" does not support exclusion constraints",
-						accessMethodName)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	amcanorder = amRoutine->amcanorder;
 	amoptions = amRoutine->amoptions;
@@ -1209,19 +1194,12 @@ DefineIndex(Oid relationId,
 		}
 	}
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_EXECUTE && stmt)
 		quiet = true;
 
 	/*
-	 * We disallow indexes on system columns other than OID.  They would not
-	 * necessarily get updated correctly, and they don't seem useful anyway.
-=======
-
-	/*
 	 * We disallow indexes on system columns.  They would not necessarily get
 	 * updated correctly, and they don't seem useful anyway.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 	{

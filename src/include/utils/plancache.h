@@ -18,6 +18,7 @@
 #include "access/tupdesc.h"
 #include "lib/ilist.h"
 #include "nodes/params.h"
+#include "nodes/primnodes.h"
 #include "utils/queryenvironment.h"
 
 /* Forward declaration, to avoid including parsenodes.h here */

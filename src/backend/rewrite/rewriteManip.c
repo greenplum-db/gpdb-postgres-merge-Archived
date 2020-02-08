@@ -813,7 +813,7 @@ IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 	query_or_expression_tree_walker(node,
 									IncrementVarSublevelsUp_walker,
 									(void *) &context,
-									QTW_EXAMINE_RTES);
+									QTW_EXAMINE_RTES_BEFORE);
 }
 
 void

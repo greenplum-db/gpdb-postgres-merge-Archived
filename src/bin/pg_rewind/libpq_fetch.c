@@ -329,19 +329,11 @@ receiveFileChunks(const char *sql)
 		}
 
 		if (PQgetlength(res, 0, 1) != sizeof(int64))
-<<<<<<< HEAD
-			pg_fatal("unexpected result length while fetching remote files\n");
-
-		/* Read result set to local variables */
-		memcpy(&chunkoff, PQgetvalue(res, 0, 1), sizeof(int64));
-		chunkoff = pg_recvint64(chunkoff);
-=======
 			pg_fatal("unexpected result length while fetching remote files");
 
 		/* Read result set to local variables */
 		memcpy(&chunkoff, PQgetvalue(res, 0, 1), sizeof(int64));
 		chunkoff = pg_ntoh64(chunkoff);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		chunksize = PQgetlength(res, 0, 2);
 
 		filenamelen = PQgetlength(res, 0, 0);
@@ -361,14 +353,8 @@ receiveFileChunks(const char *sql)
 		 */
 		if (PQgetisnull(res, 0, 2))
 		{
-<<<<<<< HEAD
-			pg_log(PG_DEBUG,
-				   "received null value for chunk for file \"%s\", file has been deleted\n",
-				   filename);
-=======
 			pg_log_debug("received null value for chunk for file \"%s\", file has been deleted",
 						 filename);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			remove_target_file(filename, true);
 			pg_free(filename);
 			PQclear(res);
@@ -380,13 +366,8 @@ receiveFileChunks(const char *sql)
 		 * translatable strings.
 		 */
 		snprintf(chunkoff_str, sizeof(chunkoff_str), INT64_FORMAT, chunkoff);
-<<<<<<< HEAD
-		pg_log(PG_DEBUG, "received chunk for file \"%s\", offset %s, size %d\n",
-			   filename, chunkoff_str, chunksize);
-=======
 		pg_log_debug("received chunk for file \"%s\", offset %s, size %d",
 					 filename, chunkoff_str, chunksize);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		open_target_file(filename, false);
 

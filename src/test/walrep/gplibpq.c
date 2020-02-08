@@ -324,7 +324,7 @@ test_xlog_ao(PG_FUNCTION_ARGS)
 		*/
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		tupdesc = CreateTemplateTupleDesc(nattr, false);
+		tupdesc = CreateTemplateTupleDesc(nattr);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "recordlen", INT4OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "record_type", TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "recordlen", INT4OID, -1, 0);

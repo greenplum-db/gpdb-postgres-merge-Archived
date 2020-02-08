@@ -17,6 +17,7 @@
  */
 #include "postgres.h"
 
+#include <math.h>
 #include <time.h>
 
 #include "pgstat.h"
@@ -671,7 +672,7 @@ ResLockCheckLimit(LOCK *lock, PROCLOCK *proclock, ResPortalIncrement *incrementS
 	Cost		increment_amt;
 	int			i;
 
-	Assert(LWLockHeldExclusiveByMe(ResQueueLock));
+	Assert(LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
 
 	/* Get the queue for this lock. */
 	queue = GetResQueueFromLock(lock);
@@ -815,8 +816,8 @@ ResLockUpdateLimit(LOCK *lock, PROCLOCK *proclock, ResPortalIncrement *increment
 	Cost		increment_amt;
 	int			i;
 
-	Assert(LWLockHeldExclusiveByMe(ResQueueLock));
-
+	Assert(LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
+o
 	/* Get the queue for this lock. */
 	queue = GetResQueueFromLock(lock);
 	limits = queue->limits;
@@ -1045,7 +1046,7 @@ ResWaitOnLock(LOCALLOCK *locallock, ResourceOwner owner, ResPortalIncrement *inc
 		set_ps_display(new_status, false);		/* truncate off " queuing" */
 		new_status[len] = '\0';
 	}
-	pgstat_report_wait_start(WAIT_RESOURCE_QUEUE, 0);
+	pgstat_report_wait_start(PG_WAIT_RESOURCE_QUEUE, 0);
 
 	awaitedLock = locallock;
 	awaitedOwner = owner;
@@ -1691,7 +1692,7 @@ pg_resqueue_status(PG_FUNCTION_ARGS)
 		funcctx->user_fctx = fctx;
 
 		/* Construct a tuple descriptor for the result rows. */
-		TupleDesc	tupledesc = CreateTemplateTupleDesc(PG_RESQUEUE_STATUS_COLUMNS, false);
+		TupleDesc	tupledesc = CreateTemplateTupleDesc(PG_RESQUEUE_STATUS_COLUMNS);
 
 		TupleDescInitEntry(tupledesc, (AttrNumber) 1, "queueid", OIDOID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 2, "queuecountvalue", FLOAT4OID, -1, 0);
@@ -1922,7 +1923,7 @@ pg_resqueue_status_kv(PG_FUNCTION_ARGS)
 		funcctx->user_fctx = fctx;
 
 		/* Construct a tuple descriptor for the result rows. */
-		TupleDesc	tupledesc = CreateTemplateTupleDesc(PG_RESQUEUE_STATUS_KV_COLUMNS, false);
+		TupleDesc	tupledesc = CreateTemplateTupleDesc(PG_RESQUEUE_STATUS_KV_COLUMNS);
 
 		TupleDescInitEntry(tupledesc, (AttrNumber) 1, "queueid", OIDOID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 2, "key", TEXTOID, -1, 0);

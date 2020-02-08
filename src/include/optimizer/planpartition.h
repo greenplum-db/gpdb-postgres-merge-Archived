@@ -16,8 +16,8 @@
 #ifndef PLANPARTITION_H
 #define PLANPARTITION_H
 
+#include "nodes/pathnodes.h"
 #include "nodes/plannodes.h"
-#include "nodes/relation.h"
 
 extern bool inject_partition_selectors_for_join(PlannerInfo *root,
 									JoinPath *join_path,

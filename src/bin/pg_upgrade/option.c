@@ -64,13 +64,10 @@ parseCommandLine(int argc, char *argv[])
 		{"jobs", required_argument, NULL, 'j'},
 		{"socketdir", required_argument, NULL, 's'},
 		{"verbose", no_argument, NULL, 'v'},
-<<<<<<< HEAD
+		{"clone", no_argument, NULL, 1},
 
 		/* Greenplum specific parameters */
 		GREENPLUM_OPTIONS
-=======
-		{"clone", no_argument, NULL, 1},
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		{NULL, 0, NULL, 0}
 	};

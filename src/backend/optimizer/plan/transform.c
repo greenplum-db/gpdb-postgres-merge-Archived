@@ -18,6 +18,7 @@
 #include "nodes/parsenodes.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/transform.h"
 #include "optimizer/var.h"
 #include "utils/lsyscache.h"
@@ -480,7 +481,7 @@ make_sirvf_subquery(FuncExpr *fe)
 
 		for (attno = 1; attno <= resultTupleDesc->natts; attno++)
 		{
-			Form_pg_attribute attr = resultTupleDesc->attrs[attno - 1];
+			Form_pg_attribute attr = TupleDescAttr(resultTupleDesc, attno - 1);
 			FieldSelect *fs;
 
 			fs = (FieldSelect *) makeNode(FieldSelect);

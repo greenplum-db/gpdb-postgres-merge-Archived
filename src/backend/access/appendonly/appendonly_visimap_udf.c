@@ -60,7 +60,7 @@ gp_aovisimap(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* build tupdesc for result tuples */
-		tupdesc = CreateTemplateTupleDesc(3, false);
+		tupdesc = CreateTemplateTupleDesc(3);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "tid",
 						   TIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "segno",
@@ -168,7 +168,7 @@ gp_aovisimap_hidden_info(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* build tupdesc for result tuples */
-		tupdesc = CreateTemplateTupleDesc(3, false);
+		tupdesc = CreateTemplateTupleDesc(3);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "segno",
 						   INT4OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "hidden_tupcount",
@@ -340,7 +340,7 @@ gp_aovisimap_entry(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* build tupdesc for result tuples */
-		tupdesc = CreateTemplateTupleDesc(4, false);
+		tupdesc = CreateTemplateTupleDesc(4);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "segno",
 						   INT4OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "first_row_num",

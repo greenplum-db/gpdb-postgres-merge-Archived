@@ -57,12 +57,8 @@
  * (v) make sure the lock level is set correctly for that operation
  * (vi) don't forget to document the option
  *
-<<<<<<< HEAD
- * Note that we don't handle "oids" in relOpts because it is handled by
- * interpretOidsOption().
- *
  * To add an GPDB option, please touch reloptions_gp.c rather than this file.
-=======
+ *
  * The default choice for any new option should be AccessExclusiveLock.
  * In some cases the lock level can be reduced from there, but the lock
  * level chosen should always conflict with itself to ensure that multiple

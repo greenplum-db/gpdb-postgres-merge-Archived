@@ -13,8 +13,9 @@
 
 #include "access/rmgr.h"
 #include "access/xlogdefs.h"
-#include "access/xlogreader.h"
 #include "access/xloginsert.h"
+#include "access/xlogreader.h"
+#include "datatype/timestamp.h"
 #include "access/xlog_internal.h"
 #include "catalog/gp_segment_configuration.h"
 #include "catalog/pg_control.h"
@@ -24,7 +25,6 @@
 #include "utils/pg_crc.h"
 #include "utils/relcache.h"
 #include "cdb/cdbpublic.h"
-#include "datatype/timestamp.h"
 #include "nodes/pg_list.h"
 
 

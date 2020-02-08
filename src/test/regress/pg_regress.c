@@ -2771,11 +2771,7 @@ help(void)
 	printf(_("The exit status is 0 if all tests passed, 1 if some tests failed, and 2\n"));
 	printf(_("if the tests could not be run for some reason.\n"));
 	printf(_("\n"));
-<<<<<<< HEAD
 	printf(_("Report bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 int

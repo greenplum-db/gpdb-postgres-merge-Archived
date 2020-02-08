@@ -99,27 +99,7 @@
  * dlfcn.h on OSX only has dladdr visible if _DARWIN_C_SOURCE is defined.
  */
 #define _DARWIN_C_SOURCE 1
-#define _STDBOOL_H_
 #include <dlfcn.h>
-/*
- * Argh... dlfcn.h on OSX pulls in stdbool.h, changing the type of bool from our
- * definition (char) to gcc's definition (unsigned char if C99, int if not).
- * For some reason the #define _STDBOOL_H_ isn't preventing this.  So, we need to undef bool
- * to get back to our bool type.
- */
-#undef bool
-
-
-#undef _
-#define _(x) err_gettext(x)
-
-static const char *err_gettext(const char *str)
-/* This extension allows gcc to check the format string for consistency with
-   the supplied arguments. */
-pg_attribute_format_arg(1);
-
-#undef _
-#define _(x) err_gettext(x)
 
 /* In this module, access gettext() via err_gettext() */
 #undef _
@@ -232,15 +212,12 @@ static char formatted_log_time[FORMATTED_TS_LEN];
 	} while (0)
 
 
-<<<<<<< HEAD
 static void cdb_tidy_message(ErrorData *edata);
-=======
 static const char *err_gettext(const char *str) pg_attribute_format_arg(1);
 static void set_errdata_field(MemoryContextData *cxt, char **ptr, const char *str);
 static void write_console(const char *line, int len);
 static void setup_formatted_log_time(void);
 static void setup_formatted_start_time(void);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static const char *process_log_prefix_padding(const char *p, int *padding);
 static void log_line_prefix(StringInfo buf, ErrorData *edata);
 static void write_csvlog(ErrorData *edata);
@@ -250,7 +227,6 @@ static void send_message_to_frontend(ErrorData *edata);
 static const char *error_severity(int elevel);
 static void append_with_tabs(StringInfo buf, const char *str);
 static bool is_log_level_output(int elevel, int log_min_level);
-<<<<<<< HEAD
 static void write_pipe_chunks(char *data, int len, int dest);
 static void write_csvlog(ErrorData *edata);
 static void elog_debug_linger(ErrorData *edata);
@@ -276,8 +252,6 @@ static void verify_and_replace_mbstr(char **str, int len)
 
 static void setup_formatted_log_time(void);
 static void setup_formatted_start_time(void);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /*
@@ -4038,7 +4012,7 @@ write_syslogger_in_csv(ErrorData *edata, bool amsyslogger)
 
 	/* session start timestamp */
 	syslogger_append_timestamp((MyProcPort != NULL ?
-								(pg_time_t) timestamptz_to_time_t(MyProcPort->SessionStartTime): 0),
+								(pg_time_t) timestamptz_to_time_t(MyStartTimestamp): 0),
 							   amsyslogger, true);
 
 	/* transaction id */
@@ -4177,7 +4151,7 @@ write_message_to_server_log(int elevel,
     /* Serialize edata in the order defined in GpErrorData. */
 
 	fix_fields.session_start_time =
-		(MyProcPort == NULL) ? 0 : (pg_time_t) timestamptz_to_time_t(MyProcPort->SessionStartTime);
+		(MyProcPort == NULL) ? 0 : (pg_time_t) timestamptz_to_time_t(MyStartTimestamp);
 	fix_fields.omit_location = omit_location ? 't' : 'f';
 	fix_fields.gp_is_primary = 't';
 	fix_fields.gp_session_id = gp_session_id;
@@ -4333,12 +4307,8 @@ send_message_to_server_log(ErrorData *edata)
 	formatted_log_time[0] = '\0';
 
 	log_line_prefix(&buf, edata);
-<<<<<<< HEAD
 	nc = buf.len;
-	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
-=======
 	appendStringInfo(&buf, "%s:  ", _(error_severity(edata->elevel)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Save copy of prefix for subsequent lines of multi-line message. */
 	initStringInfo(&prefix);
@@ -5408,7 +5378,7 @@ StandardHandlerForSigillSigsegvSigbus_OnMainThread(char *processName, SIGNAL_ARG
 	if (MyProcPort)
 	{
 		errorData->session_start_time =
-			(pg_time_t)timestamptz_to_time_t(MyProcPort->SessionStartTime);
+			(pg_time_t)timestamptz_to_time_t(MyStartTimestamp);
 	}
 
 	errorData->gp_session_id = gp_session_id;

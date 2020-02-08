@@ -52,7 +52,7 @@ gp_build_logical_index_info(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* build tupdesc for result tuples */
-		tupdesc = CreateTemplateTupleDesc(NUM_COLS, false);
+		tupdesc = CreateTemplateTupleDesc(NUM_COLS);
 
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "logicalIndexId",
 					OIDOID, -1, 0);

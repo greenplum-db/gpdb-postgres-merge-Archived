@@ -51,7 +51,7 @@ gp_transaction_log(PG_FUNCTION_ARGS)
 
 		/* build tupdesc for result tuples */
 		/* this had better match gp_distributed_xacts view in system_views.sql */
-		tupdesc = CreateTemplateTupleDesc(4, false);
+		tupdesc = CreateTemplateTupleDesc(4);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "segment_id",
 						   INT2OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "dbid",

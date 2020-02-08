@@ -507,7 +507,7 @@ static const struct cachedesc cacheinfo[] = {
 		GpPolicyLocalOidIndexId,
 		1,
 		{
-			Anum_gp_policy_localoid,
+			Anum_gp_distribution_policy_localoid,
 			0,
 			0,
 			0
@@ -749,7 +749,7 @@ static const struct cachedesc cacheinfo[] = {
 		ResGroupOidIndexId,
 		1,
 		{
-			ObjectIdAttributeNumber,
+			Anum_pg_resgroup_oid,
 			0,
 			0,
 			0

@@ -544,7 +544,7 @@ assign_new_record(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		TupleDesc	tupdesc;
 
-		tupdesc = CreateTemplateTupleDesc(1, false);
+		tupdesc = CreateTemplateTupleDesc(1);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "c", INT4OID, -1, 0);
 
 		BlessTupleDesc(tupdesc);
@@ -568,8 +568,7 @@ assign_new_record(PG_FUNCTION_ARGS)
 		bool		dummy_nulls[1];
 		int			i;
 
-		tupdesc = CreateTemplateTupleDesc(funcctx->call_cntr, false);
-
+		tupdesc = CreateTemplateTupleDesc(funcctx->call_cntr);
 		dummy_values[0] = Int32GetDatum(1);
 		dummy_nulls[0] = false;
 
@@ -857,7 +856,7 @@ describe(PG_FUNCTION_ARGS)
 		ereport(ERROR, (errmsg("invalid parameters for describe")));
 
 	/* Build a result tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(3, false);
+	tupdesc = CreateTemplateTupleDesc(3);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "id", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "time", TIMESTAMPOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "sessionnum", INT4OID, -1, 0);
@@ -883,7 +882,7 @@ gp_fts_probe_stats(PG_FUNCTION_ARGS)
 	SpinLockRelease(&ftsProbeInfo->lock);
 
 	/* Build a result tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(3, false);
+	tupdesc = CreateTemplateTupleDesc(3);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "start_count", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "end_count", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "status_version", INT2OID, -1, 0);
@@ -1068,7 +1067,7 @@ project_describe(PG_FUNCTION_ARGS)
 				 errmsg("invalid column position %d", avalue)));
 
 	/* Build an output tuple a single column based on the column number above */
-	odesc = CreateTemplateTupleDesc(1, false);
+	odesc = CreateTemplateTupleDesc(1);
 	TupleDescInitEntry(odesc, 1,
 					   NameStr(tdesc->attrs[avalue-1]->attname),
 					   tdesc->attrs[avalue-1]->atttypid,
@@ -1154,7 +1153,7 @@ userdata_describe(PG_FUNCTION_ARGS)
 		ereport(ERROR, (errmsg("invalid parameters for userdata_describe")));
 
 	/* Build a result tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(1, false);
+	tupdesc = CreateTemplateTupleDesc(1);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "message", TEXTOID, -1, 0);
 
 	/* Prepare user data */

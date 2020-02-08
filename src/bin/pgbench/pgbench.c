@@ -673,11 +673,7 @@ usage(void)
 		   "  -V, --version            output version information, then exit\n"
 		   "  -?, --help               show this help, then exit\n"
 		   "\n"
-<<<<<<< HEAD
 		   "Report bugs to <bugs@greenplum.org>.\n",
-=======
-		   "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		   progname, progname);
 }
 
@@ -4129,11 +4125,7 @@ parseQuery(Command *cmd)
 	p = sql = pg_strdup(cmd->lines.data);
 	while ((p = strchr(p, ':')) != NULL)
 	{
-<<<<<<< HEAD
-		char		var[12 + 1];
-=======
 		char		var[13];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		char	   *name;
 		int			eaten;
 

@@ -101,12 +101,8 @@ extern void process_source_file(const char *path, file_type_t type,
 extern void process_target_file(const char *path, file_type_t type,
 								size_t newsize, const char *link_target);
 extern void process_block_change(ForkNumber forknum, RelFileNode rnode,
-<<<<<<< HEAD
-					 BlockNumber blkno);
-extern void process_aofile_change(RelFileNode rnode, int segno, int64 offset);
-=======
 								 BlockNumber blkno);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern void process_aofile_change(RelFileNode rnode, int segno, int64 offset);
 extern void filemap_finalize(void);
 
 #endif							/* FILEMAP_H */

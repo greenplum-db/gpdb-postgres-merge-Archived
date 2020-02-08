@@ -57,6 +57,7 @@
 #include "catalog/gp_distribution_policy.h"     /* CDB: POLICYTYPE_PARTITIONED */
 #include "catalog/pg_inherits_fn.h"
 #include "optimizer/plancat.h"
+#include "utils/lsyscache.h"
 
 static List *expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 							   Index result_relation, Relation rel);
@@ -437,6 +438,9 @@ expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 	 * GPDB_96_MERGE_FIXME: we used to copy all old distribution key columns,
 	 * but we only need this for the OID now. Can we desupport Split Updates
 	 * on tables with OIDs, and get rid of this?
+	 *
+	 * GPDB_12_MERGE_FIXME: Tables with special OIDS is now gone. We can
+	 * definitely get rid of this now.
 	 */
 	if (command_type == CMD_UPDATE)
 	{
@@ -461,31 +465,6 @@ expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 
 		if (key_col_updated)
 		{
-			/*
-			 * Yes, this is a split update.
-			 * Updating a hash column is a split update, of course.
-			 *
-			 * Add the old OID to the tlist, if the table has OIDs.
-			 */
-			if (rel->rd_rel->relhasoids)
-			{
-				TargetEntry *new_tle;
-				Var		   *oidvar;
-
-				oidvar = makeVar(result_relation,
-								 ObjectIdAttributeNumber,
-								 OIDOID,
-								 -1,
-								 InvalidOid,
-								 0);
-				new_tle = makeTargetEntry((Expr *) oidvar,
-										  attrno,
-										  "oid",
-										  true);
-				new_tlist = lappend(new_tlist, new_tle);
-				attrno++;
-			}
-
 			/*
 			 * Since we just went through a lot of work to determine whether a
 			 * Split Update is needed, memorize that in the PlannerInfo, so that

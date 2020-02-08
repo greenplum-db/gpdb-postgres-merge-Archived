@@ -283,7 +283,6 @@ static EquivalenceMember *find_ec_member_for_tle(EquivalenceClass *ec,
 static Sort *make_sort_from_groupcols(List *groupcls,
 									  AttrNumber *grpColIdx,
 									  Plan *lefttree);
-static Material *make_material(Plan *lefttree);
 static WindowAgg *make_windowagg(List *tlist, Index winref,
 								 int partNumCols, AttrNumber *partColIdx, Oid *partOperators, Oid *partCollations,
 								 int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators, Oid *ordCollations,
@@ -301,7 +300,6 @@ static SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 						 List *distinctList, AttrNumber flagColIdx, int firstFlag,
 						 long numGroups);
 static LockRows *make_lockrows(Plan *lefttree, List *rowMarks, int epqParam);
-static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 static ProjectSet *make_project_set(List *tlist, Plan *subplan);
 static ModifyTable *make_modifytable(PlannerInfo *root,
 									 CmdType operation, bool canSetTag,

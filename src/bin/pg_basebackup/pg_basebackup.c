@@ -2126,11 +2126,7 @@ BaseBackup(void)
 	strlcpy(xlogstart, PQgetvalue(res, 0, 0), sizeof(xlogstart));
 
 	if (verbose)
-<<<<<<< HEAD
-		fprintf(stderr, _("%s: checkpoint completed\n"), progname);
-=======
 		pg_log_info("checkpoint completed");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * 9.3 and later sends the TLI of the starting point. With older servers,

@@ -67,13 +67,4 @@ extern void ParallelBackupEnd(ArchiveHandle *AH, ParallelState *pstate);
 
 extern void set_archive_cancel_info(ArchiveHandle *AH, PGconn *conn);
 
-<<<<<<< HEAD
-extern void
-exit_horribly(const char *modulename, const char *fmt,...)
-pg_attribute_printf(2, 3) pg_attribute_noreturn();
-extern void checkAborting(ArchiveHandle *AH);
-
-#endif   /* PG_DUMP_PARALLEL_H */
-=======
 #endif							/* PG_DUMP_PARALLEL_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

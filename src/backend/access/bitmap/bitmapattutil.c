@@ -277,7 +277,7 @@ _bitmap_create_lov_heapTupleDesc(Relation rel)
 	oldTupDesc = RelationGetDescr(rel);
 	natts = oldTupDesc->natts + 2;
 
-	tupDesc = CreateTemplateTupleDesc(natts, false);
+	tupDesc = CreateTemplateTupleDesc(natts);
 
 	for (attno = 1; attno <= oldTupDesc->natts; attno++)
 	{

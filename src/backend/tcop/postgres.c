@@ -413,13 +413,9 @@ interactive_getc(void)
 
 	c = getc(stdin);
 
-<<<<<<< HEAD
 	disable_client_wait_timeout_interrupt();
 
-	ProcessClientReadInterrupt(true);
-=======
 	ProcessClientReadInterrupt(false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return c;
 }

@@ -11597,7 +11597,7 @@ pg_get_table_distributedby(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	HeapTuple	gp_policy_tuple;
-	Form_gp_policy policyform;
+	Form_gp_distribution_policy policyform;
 	StringInfoData buf;
 
 	/*
@@ -11609,7 +11609,7 @@ pg_get_table_distributedby(PG_FUNCTION_ARGS)
 		/* not distributed */
 		PG_RETURN_TEXT_P(cstring_to_text(""));
 	}
-	policyform = (Form_gp_policy) GETSTRUCT(gp_policy_tuple);
+	policyform = (Form_gp_distribution_policy) GETSTRUCT(gp_policy_tuple);
 
 	initStringInfo(&buf);
 
@@ -11629,7 +11629,7 @@ pg_get_table_distributedby(PG_FUNCTION_ARGS)
 		 */
 		distkey = (int2vector *) DatumGetPointer(
 			SysCacheGetAttr(GPPOLICYID, gp_policy_tuple,
-							Anum_gp_policy_distkey,
+							Anum_gp_distribution_policy_distkey,
 							&isNull));
 
 		nkeys = isNull ? 0 : distkey->dim1;
@@ -11643,7 +11643,7 @@ pg_get_table_distributedby(PG_FUNCTION_ARGS)
 
 			distclass = (oidvector *) DatumGetPointer(
 				SysCacheGetAttr(GPPOLICYID, gp_policy_tuple,
-								Anum_gp_policy_distclass,
+								Anum_gp_distribution_policy_distclass,
 								&isNull));
 			Assert(!isNull);
 			Assert(distclass->dim1 == nkeys);

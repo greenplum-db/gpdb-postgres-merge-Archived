@@ -470,12 +470,16 @@ DefineQueryRewrite(const char *rulename,
 						 errmsg("cannot convert partition \"%s\" to a view",
 								RelationGetRelationName(event_relation))));
 
+			/* GPDB_12_MERGE_FIXME: Is still restriction still needed? */
+#if 0
 			/* In GPDB, also forbid turning AO tables or external tables into views. */
 			if (!RelationIsHeap(event_relation))
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("cannot convert non-heap table \"%s\" to a view",
 								RelationGetRelationName(event_relation))));
+#endif
+
 			snapshot = RegisterSnapshot(GetLatestSnapshot());
 			scanDesc = table_beginscan(event_relation, snapshot, 0, NULL);
 			slot = table_slot_create(event_relation, NULL);
@@ -664,7 +668,6 @@ DefineQueryRewrite(const char *rulename,
 		classForm->reltoastrelid = InvalidOid;
 		classForm->relhasindex = false;
 		classForm->relkind = RELKIND_VIEW;
-		classForm->relstorage = RELSTORAGE_VIRTUAL;
 		classForm->relfrozenxid = InvalidTransactionId;
 		classForm->relminmxid = InvalidMultiXactId;
 		classForm->relreplident = REPLICA_IDENTITY_NOTHING;

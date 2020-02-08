@@ -455,13 +455,11 @@ void		check_new_cluster(void);
 void		report_clusters_compatible(void);
 <<<<<<< HEAD
 void		issue_warnings_and_set_wal_level(char *sequence_script_file_name);
-void output_completion_banner(char *analyze_script_file_name,
-						 char *deletion_script_file_name);
 =======
 void		issue_warnings_and_set_wal_level(void);
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 void		output_completion_banner(char *analyze_script_file_name,
 									 char *deletion_script_file_name);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 void		check_cluster_versions(void);
 void		check_cluster_compatibility(bool live_check);
 void		create_script_for_old_cluster_deletion(char **deletion_script_file_name);

@@ -58,18 +58,8 @@ timestamptz_to_str(TimestampTz dt)
 	strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", ltime);
 	strftime(zone, sizeof(zone), "%Z", ltime);
 
-<<<<<<< HEAD:src/bin/pg_xlogdump/compat.c
-#ifdef HAVE_INT64_TIMESTAMP
-	snprintf(buf, sizeof(buf),
-			 "%s.%06d %s", ts, (int) (dt % USECS_PER_SEC), zone);
-#else
-	snprintf(buf, sizeof(buf),
-			 "%s.%.6f %s", ts, fabs(dt - floor(dt)), zone);
-#endif
-=======
 	snprintf(buf, sizeof(buf), "%s.%06d %s",
 			 ts, (int) (dt % USECS_PER_SEC), zone);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/bin/pg_waldump/compat.c
 
 	return buf;
 }

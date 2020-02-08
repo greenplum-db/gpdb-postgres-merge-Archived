@@ -2978,11 +2978,7 @@ GetOldestActiveTransactionId(void)
 	 * have already completed), when we spin over it.
 	 */
 	LWLockAcquire(XidGenLock, LW_SHARED);
-<<<<<<< HEAD
-	oldestRunningXid = ShmemVariableCache->nextXid;
-=======
 	oldestRunningXid = XidFromFullTransactionId(ShmemVariableCache->nextFullXid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	LWLockRelease(XidGenLock);
 
 	/*

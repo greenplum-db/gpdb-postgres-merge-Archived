@@ -162,19 +162,10 @@ pgwin32_is_service(void)
 
 	if (!CheckTokenMembership(NULL, ServiceSid, &IsMember))
 	{
-<<<<<<< HEAD
-		if (EqualSid(ServiceSid, Groups->Groups[x].Sid) &&
-			(Groups->Groups[x].Attributes & SE_GROUP_ENABLED))
-		{
-			_is_service = 1;
-			break;
-		}
-=======
 		fprintf(stderr, "could not check access token membership: error code %lu\n",
 				GetLastError());
 		FreeSid(ServiceSid);
 		return -1;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	FreeSid(ServiceSid);
 
