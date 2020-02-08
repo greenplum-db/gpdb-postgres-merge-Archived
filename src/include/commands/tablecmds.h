@@ -35,6 +35,8 @@
  * Also note: This structure is shared only to allow collaboration with
  * partitioning-related functions in cdbpartition.c.  Most items like this
  * are local to tablecmds.c.
+ *
+ * GPDB_12_MERGE_FIXME: cdbpartition.c is gone. Move back now?
  */
 typedef struct NewConstraint
 {

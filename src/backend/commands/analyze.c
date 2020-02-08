@@ -131,7 +131,6 @@
 #include "cdb/cdbaocsam.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdispatchresult.h"
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbtm.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"

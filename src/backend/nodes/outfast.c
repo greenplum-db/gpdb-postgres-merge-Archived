@@ -1678,18 +1678,6 @@ _outNode(StringInfo str, void *obj)
 			case T_ExpandStmtSpec:
 				_outExpandStmtSpec(str, obj);
 				break;
-			case T_Partition:
-				_outPartition(str, obj);
-				break;
-			case T_PartitionRule:
-				_outPartitionRule(str, obj);
-				break;
-			case T_PartitionNode:
-				_outPartitionNode(str, obj);
-				break;
-			case T_PgPartRule:
-				_outPgPartRule(str, obj);
-				break;
 
 			case T_SegfileMapNode:
 				_outSegfileMapNode(str, obj);

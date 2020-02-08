@@ -21,7 +21,6 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/restrictinfo.h"
 #include "cdb/cdbllize.h"
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbplan.h"
 #include "nodes/makefuncs.h"
 #include "utils/lsyscache.h"

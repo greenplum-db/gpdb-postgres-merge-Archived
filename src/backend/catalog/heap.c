@@ -103,7 +103,6 @@
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_stat_last_operation.h"
 #include "catalog/pg_stat_last_shoperation.h"
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbsreh.h"
 #include "cdb/cdbvars.h"
 #include "utils/guc.h"
@@ -1942,73 +1941,6 @@ RelationRemoveInheritance(Oid relid)
 	table_close(catalogRelation, RowExclusiveLock);
 }
 
-static void
-RemovePartitioning(Oid relid)
-{
-	Relation rel;
-	SysScanDesc scan;
-	ScanKeyData key;
-	HeapTuple tuple;
-	Relation pgrule;
-
-	if (Gp_role == GP_ROLE_EXECUTE)
-		return;
-
-	RemovePartitionEncodingByRelid(relid);
-
-	/* loop through all matches in pg_partition */
-	rel = heap_open(PartitionRelationId, RowExclusiveLock);
-	pgrule = heap_open(PartitionRuleRelationId,
-					   RowExclusiveLock);
-
-	ScanKeyInit(&key,
-				Anum_pg_partition_parrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(relid));
-
-	scan = systable_beginscan(rel, PartitionParrelidIndexId, true,
-							  NULL, 1, &key);
-	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
-	{
-		Oid			paroid = HeapTupleGetOid(tuple);
-		SysScanDesc rule_scan;
-		ScanKeyData rule_key;
-		HeapTuple	rule_tuple;
-
-		/* remove all rows for pg_partition_rule */
-		ScanKeyInit(&rule_key,
-					Anum_pg_partition_rule_paroid,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(paroid));
-		rule_scan = systable_beginscan(pgrule, PartitionRuleParoidParparentruleParruleordIndexId, true,
-									   NULL, 1, &rule_key);
-		while (HeapTupleIsValid(rule_tuple = systable_getnext(rule_scan)))
-			simple_heap_delete(pgrule, &rule_tuple->t_self);
-		systable_endscan(rule_scan);
-
-		/* remove ourself */
-		simple_heap_delete(rel, &tuple->t_self);
-	}
-	systable_endscan(scan);
-	heap_close(rel, NoLock);
-
-	/* we might be a leaf partition: delete any records */
-
-	ScanKeyInit(&key,
-				Anum_pg_partition_rule_parchildrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(relid));
-
-	scan = systable_beginscan(pgrule, PartitionRuleParchildrelidIndexId, true,
-							  NULL, 1, &key);
-	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
-		simple_heap_delete(pgrule, &tuple->t_self);
-	systable_endscan(scan);
-	heap_close(pgrule, NoLock);
-
-	CommandCounterIncrement();
-}
-
 /*
  *		DeleteRelationTuple
  *
@@ -2528,11 +2460,6 @@ heap_drop_with_catalog(Oid relid)
 	 * remove inheritance information
 	 */
 	RelationRemoveInheritance(relid);
-
-	/*
-	 * remove partitioning configuration
-	 */
-	RemovePartitioning(relid);
 
 	/*
 	 * delete statistics

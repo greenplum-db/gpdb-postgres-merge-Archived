@@ -69,7 +69,6 @@
 #include "utils/xml.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
-#include "cdb/cdbpartition.h"
 
 #include "utils/guc.h"
 

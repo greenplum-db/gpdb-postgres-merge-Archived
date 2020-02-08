@@ -3873,80 +3873,6 @@ _outExpandStmtSpec(StringInfo str, const ExpandStmtSpec *node)
 	WRITE_OID_FIELD(backendId);
 }
 
-
-static void
-_outPartition(StringInfo str, const Partition *node)
-{
-	WRITE_NODE_TYPE("PARTITION");
-
-	WRITE_OID_FIELD(partid);
-	WRITE_OID_FIELD(parrelid);
-	WRITE_CHAR_FIELD(parkind);
-	WRITE_INT_FIELD(parlevel);
-	WRITE_BOOL_FIELD(paristemplate);
-	WRITE_INT_FIELD(parnatts);
-#ifndef COMPILING_BINARY_FUNCS
-	appendStringInfoLiteral(str, " :paratts");
-	for (int i = 0; i < node->parnatts; i++)
-		appendStringInfo(str, " %i", node->paratts[i]);
-
-	appendStringInfoLiteral(str, " :parclass");
-	for (int i = 0; i < node->parnatts; i++)
-		appendStringInfo(str, " %d", node->parclass[i]);
-#else
-	WRITE_INT_ARRAY(paratts, node->parnatts, int16);
-	WRITE_OID_ARRAY(parclass, node->parnatts);
-#endif /* COMPILING_BINARY_FUNCS */
-}
-
-static void
-_outPartitionRule(StringInfo str, const PartitionRule *node)
-{
-	WRITE_NODE_TYPE("PARTITIONRULE");
-
-	WRITE_OID_FIELD(parruleid);
-	WRITE_OID_FIELD(paroid);
-	WRITE_OID_FIELD(parchildrelid);
-	WRITE_OID_FIELD(parparentoid);
-	WRITE_BOOL_FIELD(parisdefault);
-	WRITE_STRING_FIELD(parname);
-	WRITE_NODE_FIELD(parrangestart);
-	WRITE_BOOL_FIELD(parrangestartincl);
-	WRITE_NODE_FIELD(parrangeend);
-	WRITE_BOOL_FIELD(parrangeendincl);
-	WRITE_NODE_FIELD(parrangeevery);
-	WRITE_NODE_FIELD(parlistvalues);
-	WRITE_INT_FIELD(parruleord);
-	WRITE_NODE_FIELD(parreloptions);
-	WRITE_OID_FIELD(partemplatespaceId);
-	WRITE_NODE_FIELD(children);
-}
-
-static void
-_outPartitionNode(StringInfo str, const PartitionNode *node)
-{
-	WRITE_NODE_TYPE("PARTITIONNODE");
-
-	WRITE_NODE_FIELD(part);
-	WRITE_NODE_FIELD(default_part);
-	WRITE_INT_FIELD(num_rules);
-	for (int i = 0; i < node->num_rules; i++)
-		WRITE_NODE_FIELD(rules[i]);
-}
-
-static void
-_outPgPartRule(StringInfo str, const PgPartRule *node)
-{
-	WRITE_NODE_TYPE("PGPARTRULE");
-
-	WRITE_NODE_FIELD(pNode);
-	WRITE_NODE_FIELD(topRule);
-	WRITE_STRING_FIELD(partIdStr);
-	WRITE_BOOL_FIELD(isName);
-	WRITE_INT_FIELD(topRuleRank);
-	WRITE_STRING_FIELD(relname);
-}
-
 static void
 _outSegfileMapNode(StringInfo str, const SegfileMapNode *node)
 {
@@ -6302,33 +6228,6 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_ColumnReferenceStorageDirective:
 				_outColumnReferenceStorageDirective(str, obj);
-				break;
-			case T_PartitionElem:
-				_outPartitionElem(str, obj);
-				break;
-			case T_PartitionRangeItem:
-				_outPartitionRangeItem(str, obj);
-				break;
-			case T_PartitionBoundSpec:
-				_outPartitionBoundSpec(str, obj);
-				break;
-			case T_PartitionSpec:
-				_outPartitionSpec(str, obj);
-				break;
-			case T_Partition:
-				_outPartition(str, obj);
-				break;
-			case T_PartitionRule:
-				_outPartitionRule(str, obj);
-				break;
-			case T_PartitionNode:
-				_outPartitionNode(str, obj);
-				break;
-			case T_PgPartRule:
-				_outPgPartRule(str, obj);
-				break;
-			case T_PartitionValuesSpec:
-				_outPartitionValuesSpec(str, obj);
 				break;
 			case T_ExpandStmtSpec:
 				_outExpandStmtSpec(str, obj);

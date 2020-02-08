@@ -62,7 +62,6 @@
 #include "access/transam.h"
 #include "cdb/cdbaocsam.h"
 #include "cdb/cdbappendonlyam.h"
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbvars.h"
 #include "executor/execDML.h"
 #include "parser/parsetree.h"

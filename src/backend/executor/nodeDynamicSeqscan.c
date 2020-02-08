@@ -28,7 +28,6 @@
 #include "utils/hsearch.h"
 #include "parser/parsetree.h"
 #include "utils/memutils.h"
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbvars.h"
 #include "cdb/partitionselection.h"
 

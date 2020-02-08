@@ -314,7 +314,6 @@ struct PlannerInfo
 
 	List	   *canon_pathkeys; /* list of "canonical" PathKeys */
 
-	PartitionNode *result_partitions;
 	List	   *result_aosegnos;
 
 	List       *list_cteplaninfo; /* list of CtePlannerInfo, one for each CTE */
@@ -2725,77 +2724,6 @@ typedef struct PlannerParamItem
 	Node	   *item;			/* the Var, PlaceHolderVar, or Aggref */
 	int			paramId;		/* its assigned PARAM_EXEC slot number */
 } PlannerParamItem;
-
-/*
- * Partitioning meta data
- *
- * GPDB_12_MERGE_FIXME: legacy GPDB partitioning stuff. Remove?
- */
-
-/*
- * convenient representation of a row of pg_partition -- a partitioning level of
- * a partitioned table or a template for all the partitioning branches at a level.
- */
-typedef struct Partition
-{
-	NodeTag type;
-	Oid partid;			/* OID of row in pg_partition. */
-	Oid parrelid;		/* OID in pg_class of top-level partitioned relation */
-	char parkind;		/* 'r', 'l', or (unsupported) 'h' */
-	int16 parlevel;		/* depth below parent partitioned table */
-	bool paristemplate;	/* just a template, or really a part? */
-	int16 parnatts;		/* number of partitioning attributes */
-	AttrNumber *paratts;/* attribute number vector */ 
-	Oid *parclass;		/* operator class vector */
-} Partition;
-
-struct PartitionNode
-{
-	NodeTag type;
-	Partition *part;
-
-	/* rules for this level */
-	struct PartitionRule *default_part;
-	struct PartitionRule **rules;
-	int			num_rules;		/* excluding default rule */
-};
-
-/* Individual partitioning rule */
-typedef struct PartitionRule
-{
-	NodeTag		 type;
-	Oid			 parruleid;
-	Oid			 paroid;
-	Oid			 parchildrelid;
-	Oid			 parparentoid;
-	bool		 parisdefault;
-	char		*parname;
-	Node		*parrangestart;
-	bool		 parrangestartincl;
-	Node		*parrangeend;
-	bool		 parrangeendincl;
-	Node		*parrangeevery;
-	List		*parlistvalues;
-	int16		 parruleord;
-	List		*parreloptions;
-	Oid			 partemplatespaceId; 	/* the tablespace id for the
-										 * template (or InvalidOid for 
-										 * non-template rules */
-	struct PartitionNode *children; /* sub partition */
-} PartitionRule;
-
-typedef struct PgPartRule
-{
-	NodeTag type;
-	PartitionNode 		*pNode;
-	PartitionRule 		*topRule;	/* the rule for the specified partition */
-
-	/* a textual representation of the partition id (for error msgs) */
-	char		*partIdStr;
-	bool         isName;		/* true if partid is name */
-	int          topRuleRank;	/* rank of topRule */
-	char        *relname; 		/* the error msg formatted "relname" */
-} PgPartRule;
 
 /*
  * A Mapping created by the QD during data loading that maps a

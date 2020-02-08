@@ -20,7 +20,6 @@
 
 #include "catalog/catalog.h"
 #include "cdb/cdbvars.h"
-#include "cdb/cdbpartition.h"
 #include "commands/vacuum.h"
 #include "executor/execdesc.h"
 #include "executor/executor.h"

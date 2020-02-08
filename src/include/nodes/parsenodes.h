@@ -31,9 +31,6 @@
 
 #include "catalog/gp_policy.h"
 
-// GPDB_12_MERGE_FIXME: this belongs to the GPDB legacy partitioning. Can remove now?
-typedef struct PartitionNode PartitionNode; /* see relation.h */
-
 typedef enum OverridingKind
 {
 	OVERRIDING_NOT_SET = 0,
@@ -2206,7 +2203,6 @@ typedef struct CopyStmt
 
 	Node	   *sreh;			/* Single row error handling info */
 	/* Convenient location for dispatch of misc meta data */
-	PartitionNode *partitions;
 	List		*ao_segnos;		/* AO segno map */
 } CopyStmt;
 

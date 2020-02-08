@@ -3742,78 +3742,6 @@ _readCreateStmt(void)
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
-static Partition *
-_readPartition(void)
-{
-	READ_LOCALS(Partition);
-
-	READ_OID_FIELD(partid);
-	READ_OID_FIELD(parrelid);
-	READ_CHAR_FIELD(parkind);
-	READ_INT_FIELD(parlevel);
-	READ_BOOL_FIELD(paristemplate);
-	READ_INT_FIELD(parnatts);
-	READ_ATTRNUMBER_ARRAY(paratts, local_node->parnatts);
-	READ_OID_ARRAY(parclass, local_node->parnatts);
-
-	READ_DONE();
-}
-
-static PartitionRule *
-_readPartitionRule(void)
-{
-	READ_LOCALS(PartitionRule);
-
-	READ_OID_FIELD(parruleid);
-	READ_OID_FIELD(paroid);
-	READ_OID_FIELD(parchildrelid);
-	READ_OID_FIELD(parparentoid);
-	READ_BOOL_FIELD(parisdefault);
-	READ_STRING_FIELD(parname);
-	READ_NODE_FIELD(parrangestart);
-	READ_BOOL_FIELD(parrangestartincl);
-	READ_NODE_FIELD(parrangeend);
-	READ_BOOL_FIELD(parrangeendincl);
-	READ_NODE_FIELD(parrangeevery);
-	READ_NODE_FIELD(parlistvalues);
-	READ_INT_FIELD(parruleord);
-	READ_NODE_FIELD(parreloptions);
-	READ_OID_FIELD(partemplatespaceId);
-	READ_NODE_FIELD(children);
-
-	READ_DONE();
-}
-
-static PartitionNode *
-_readPartitionNode(void)
-{
-	READ_LOCALS(PartitionNode);
-
-	READ_NODE_FIELD(part);
-	READ_NODE_FIELD(default_part);
-	READ_INT_FIELD(num_rules);
-	local_node->rules = palloc(local_node->num_rules * sizeof(PartitionRule *));
-	for (int i = 0; i < local_node->num_rules; i++)
-		READ_NODE_FIELD(rules[i]);
-
-	READ_DONE();
-}
-
-static PgPartRule *
-_readPgPartRule(void)
-{
-	READ_LOCALS(PgPartRule);
-
-	READ_NODE_FIELD(pNode);
-	READ_NODE_FIELD(topRule);
-	READ_STRING_FIELD(partIdStr);
-	READ_BOOL_FIELD(isName);
-	READ_INT_FIELD(topRuleRank);
-	READ_STRING_FIELD(relname);
-
-	READ_DONE();
-}
-
 static SegfileMapNode *
 _readSegfileMapNode(void)
 {
@@ -4803,14 +4731,6 @@ parseNodeString(void)
 		return_value = _readInheritPartitionCmd();
 	else if (MATCHX("LOCKSTMT"))
 		return_value = _readLockStmt();
-	else if (MATCHX("PARTITION"))
-		return_value = _readPartition();
-	else if (MATCHX("PARTITIONNODE"))
-		return_value = _readPartitionNode();
-	else if (MATCHX("PGPARTRULE"))
-		return_value = _readPgPartRule();
-	else if (MATCHX("PARTITIONRULE"))
-		return_value = _readPartitionRule();
 	else if (MATCHX("REINDEXSTMT"))
 		return_value = _readReindexStmt();
 	else if (MATCHX("RENAMESTMT"))

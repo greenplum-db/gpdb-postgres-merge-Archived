@@ -21,7 +21,6 @@
 #include "miscadmin.h"
 
 #include "catalog/pg_trigger.h"
-#include "cdb/cdbpartition.h"
 #include "commands/tablecmds.h"
 #include "executor/nodeRowTrigger.h"
 #include "executor/instrument.h"

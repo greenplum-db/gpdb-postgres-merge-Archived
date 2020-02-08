@@ -144,14 +144,11 @@ makeCdbCopy(CopyState cstate, bool is_copy_in)
  */
 void
 cdbCopyStart(CdbCopy *c, CopyStmt *stmt,
-			 PartitionNode *partitions, List *ao_segnos, int file_encoding)
+			 List *ao_segnos, int file_encoding)
 {
 	int			flags;
 
 	stmt = copyObject(stmt);
-
-	/* add in partitions for dispatch */
-	stmt->partitions = partitions;
 
 	/* add in AO segno map for dispatch */
 	stmt->ao_segnos = ao_segnos;

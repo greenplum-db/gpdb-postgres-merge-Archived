@@ -17,7 +17,6 @@
 
 #include "access/xact.h"
 #include "catalog/pg_type.h"
-#include "cdb/cdbpartition.h"
 #include "commands/createas.h"
 #include "commands/defrem.h"
 #include "commands/prepare.h"

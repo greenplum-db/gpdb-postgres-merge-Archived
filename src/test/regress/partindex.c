@@ -1,7 +1,6 @@
 #include "postgres.h"
 
 #include "funcapi.h"
-#include "cdb/cdbpartition.h"
 #include "executor/nodeDynamicIndexscan.h"
 #include "executor/spi.h"
 #include "optimizer/prep.h"

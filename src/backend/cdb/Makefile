@@ -30,8 +30,6 @@ OBJS = cdbappendonlystorageformat.o \
 	   cdbappendonlyxlog.o \
 	   cdbmutate.o \
 	   cdboidsync.o \
-	   cdbpartindex.o \
-	   cdbpartition.o \
 	   cdbpath.o cdbpathlocus.o cdbpathtoplan.o \
 	   cdbpgdatabase.o \
 	   cdbplan.o cdbpullup.o \

@@ -45,7 +45,7 @@ typedef struct CdbCopy
 /* global function declarations */
 extern CdbCopy *makeCdbCopy(struct CopyStateData *cstate, bool copy_in);
 extern void cdbCopyStart(CdbCopy *cdbCopy, CopyStmt *stmt,
-			 PartitionNode *partitions, List *ao_segnos, int file_encoding);
+			 List *ao_segnos, int file_encoding);
 extern void cdbCopySendDataToAll(CdbCopy *c, const char *buffer, int nbytes);
 extern void cdbCopySendData(CdbCopy *c, int target_seg, const char *buffer, int nbytes);
 extern bool cdbCopyGetData(CdbCopy *c, bool cancel, uint64 *rows_processed);

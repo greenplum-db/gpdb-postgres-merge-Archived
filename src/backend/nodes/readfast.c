@@ -2610,18 +2610,6 @@ readNodeBinary(void)
 			case T_ExpandStmtSpec:
 				return_value = _readExpandStmtSpec();
 				break;
-			case T_Partition:
-				return_value = _readPartition();
-				break;
-			case T_PartitionNode:
-				return_value = _readPartitionNode();
-				break;
-			case T_PgPartRule:
-				return_value = _readPgPartRule();
-				break;
-			case T_PartitionRule:
-				return_value = _readPartitionRule();
-				break;
 			case T_SegfileMapNode:
 				return_value = _readSegfileMapNode();
 				break;

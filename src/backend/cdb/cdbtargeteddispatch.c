@@ -32,7 +32,6 @@
 #include "cdb/cdbhash.h"
 #include "cdb/cdbllize.h"
 #include "cdb/cdbmutate.h"
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbplan.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbutil.h"

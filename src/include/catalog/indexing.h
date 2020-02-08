@@ -388,22 +388,6 @@ DECLARE_UNIQUE_INDEX(pg_resgroupcapability_resgroupid_reslimittype_index, 6445, 
 DECLARE_INDEX(pg_resgroupcapability_resgroupid_index, 6446, on pg_resgroupcapability using btree(resgroupid oid_ops));
 #define ResGroupCapabilityResgroupidIndexId	6446
 
-DECLARE_UNIQUE_INDEX(pg_partition_oid_index, 5112, on pg_partition using btree(oid oid_ops));
-#define PartitionOidIndexId	5112
-DECLARE_INDEX(pg_partition_parrelid_index, 5113, on pg_partition using btree(parrelid oid_ops));
-#define PartitionParrelidIndexId	5113
-DECLARE_INDEX(pg_partition_parrelid_parlevel_istemplate_index, 5117, on pg_partition using btree(parrelid oid_ops, parlevel int2_ops, paristemplate bool_ops));
-#define PartitionParrelidParlevelParistemplateIndexId	5117
-
-DECLARE_UNIQUE_INDEX(pg_partition_rule_oid_index, 5114, on pg_partition_rule using btree(oid oid_ops));
-#define PartitionRuleOidIndexId	5114
-DECLARE_INDEX(pg_partition_rule_parchildrelid_index, 5116, on pg_partition_rule using btree(parchildrelid oid_ops));
-#define PartitionRuleParchildrelidIndexId	5116
-DECLARE_INDEX(pg_partition_rule_parchildrelid_parparentrule_parruleord_index, 5115, on pg_partition_rule using btree(parchildrelid oid_ops, parparentrule oid_ops, parruleord int2_ops));
-#define PartitionRuleParchildrelidParparentruleParruleordIndexId	5115
-DECLARE_INDEX(pg_partition_rule_paroid_parentrule_ruleord_index, 5126, on pg_partition_rule using btree(paroid oid_ops, parparentrule oid_ops, parruleord int2_ops));
-#define PartitionRuleParoidParparentruleParruleordIndexId	5126
-
 DECLARE_UNIQUE_INDEX(pg_exttable_reloid_index, 6041, on pg_exttable using btree(reloid oid_ops));
 #define ExtTableReloidIndexId	6041
 

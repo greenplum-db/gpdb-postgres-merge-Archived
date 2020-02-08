@@ -16,7 +16,6 @@
 #include "postgres.h"
 #include "miscadmin.h"
 
-#include "cdb/cdbpartition.h"
 #include "commands/tablecmds.h"
 #include "executor/nodeAssertOp.h"
 #include "executor/instrument.h"

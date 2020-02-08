@@ -17,7 +17,6 @@
 #include "postgres.h"
 #include "miscadmin.h"
 
-#include "cdb/cdbpartition.h"
 #include "cdb/partitionselection.h"
 #include "commands/tablecmds.h"
 #include "executor/executor.h"

@@ -76,7 +76,6 @@
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdispatchresult.h"
 #include "cdb/cdboidsync.h"
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbrelsize.h"
 #include "cdb/cdbvars.h"
 #include "libpq-fe.h"

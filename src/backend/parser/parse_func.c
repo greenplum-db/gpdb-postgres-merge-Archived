@@ -18,7 +18,6 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_constraint.h"
-#include "catalog/pg_partition_rule.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_proc_callback.h"
 #include "catalog/pg_type.h"

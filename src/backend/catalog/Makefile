@@ -59,7 +59,6 @@ CATALOG_HEADERS := \
 	gp_segment_config.h \
 	pg_exttable.h pg_appendonly.h \
 	gp_fastsequence.h pg_extprotocol.h \
-	pg_partition.h pg_partition_rule.h \
 	pg_attribute_encoding.h \
 	pg_auth_time_constraint.h \
 	pg_compression.h \

@@ -24,11 +24,6 @@
 #include "postgres.h"
 
 #include "access/genam.h"
-<<<<<<< HEAD
-#include "cdb/cdbvars.h"
-#include "cdb/cdbpartition.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "executor/execdebug.h"
 #include "executor/nodeBitmapIndexscan.h"
 #include "executor/nodeIndexscan.h"
@@ -36,6 +31,8 @@
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
 #include "nodes/tidbitmap.h"
+
+#include "cdb/cdbvars.h"
 
 
 /* ----------------------------------------------------------------

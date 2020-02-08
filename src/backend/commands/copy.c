@@ -71,7 +71,6 @@
 #include "cdb/cdbcopy.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdispatchresult.h"
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbsreh.h"
 #include "cdb/cdbvars.h"
 #include "commands/queue.h"
@@ -279,10 +278,6 @@ static void setEncodingConversionProc(CopyState cstate, int encoding, bool iswri
 static GpDistributionData *InitDistributionData(CopyState cstate, EState *estate);
 static void FreeDistributionData(GpDistributionData *distData);
 static void InitCopyFromDispatchSplit(CopyState cstate, GpDistributionData *distData, EState *estate);
-static Bitmapset *GetTargetKeyCols(Oid relid, PartitionNode *children, Bitmapset *needed_cols, bool distkeys, EState *estate);
-static GpDistributionData *GetDistributionPolicyForPartition(GpDistributionData *mainDistData,
-															 ResultRelInfo *resultRelInfo,
-															 MemoryContext context);
 static unsigned int
 GetTargetSeg(GpDistributionData *distData, Datum *baseValues, bool *baseNulls);
 static ProgramPipes *open_program_pipes(char *command, bool forwrite);
@@ -8452,15 +8447,6 @@ InitCopyFromDispatchSplit(CopyState cstate, GpDistributionData *distData,
 				needed_cols = bms_add_member(needed_cols, distData->policy->attrs[i]);
 		}
 
-		/*
-		 * If the target is partitioned, get the columns needed for partitioning
-		 * keys, and for distribution keys of each partition.
-		 */
-		if (estate->es_result_partitions)
-			needed_cols = GetTargetKeyCols(RelationGetRelid(estate->es_result_relation_info->ri_RelationDesc),
-										   estate->es_result_partitions, needed_cols,
-										   distData->policy == NULL, estate);
-
 		/* Get the max fieldno that contains one of the needed attributes. */
 		fieldno = 0;
 		foreach(lc, cstate->attnumlist)
@@ -8482,130 +8468,6 @@ InitCopyFromDispatchSplit(CopyState cstate, GpDistributionData *distData,
 		else
 			elog(INFO, "first field processed in the QE: %d", first_qe_processed_field);
 	}
-}
-
-/*
- * Recursive helper function for InitCopyFromDispatchSplit(), to get
- * the columns needed in QD for a partition and its subpartitions.
- */
-static Bitmapset *
-GetTargetKeyCols(Oid relid, PartitionNode *children, Bitmapset *needed_cols,
-				 bool distkeys, EState *estate)
-{
-	int			i;
-
-	/*
-	 * Partition key columns.
-	 *
-	 * Note: paratts[] stores the attribute numbers, in terms of the root
-	 * partition. That's exactly what we want.
-	 */
-	if (children)
-	{
-		for (i = 0; i < children->part->parnatts; i++)
-			needed_cols = bms_add_member(needed_cols, children->part->paratts[i]);
-	}
-
-	/*
-	 * Distribution key columns
-	 *
-	 * These are in terms of the partition itself! We need to map them to
-	 * the root partition's attribute numbers.
-	 *
-	 * (At the moment, this is more complicated than necessary, because GPDB
-	 * doesn't support partitions that have differing distribution policies,
-	 * except that child partitions can be randomly distributed, even though
-	 * the parent is hash distributed.)
-	 */
-	if (distkeys)
-	{
-		ResultRelInfo *partrr;
-		GpPolicy *partPolicy;
-		TupleConversionMap *map;
-
-		partrr = targetid_get_partition(relid, estate, false);
-		map = partrr->ri_partInsertMap;
-		partPolicy = partrr->ri_RelationDesc->rd_cdbpolicy;
-
-		if (partPolicy)
-		{
-			for (i = 0; i < partPolicy->nattrs; i++)
-			{
-				AttrNumber	partAttNum = partPolicy->attrs[i];
-				AttrNumber	parentAttNum;
-
-				/* Map this partition's attribute number to the parent's. */
-				if (map)
-				{
-					parentAttNum = map->attrMap[partAttNum - 1];
-					if (parentAttNum > map->indesc->natts)
-						elog(ERROR, "could not find mapping partition distribution key column %d in parent relation",
-							 partAttNum);
-				}
-				else
-					parentAttNum = partAttNum;
-
-				needed_cols = bms_add_member(needed_cols, parentAttNum);
-			}
-		}
-	}
-
-	/* Recurse to subpartitions */
-	if (children)
-	{
-		for (i = 0; i < children->num_rules; i++)
-		{
-			PartitionRule *pr = children->rules[i];
-
-			needed_cols = GetTargetKeyCols(pr->parchildrelid, pr->children,
-										   needed_cols, distkeys, estate);
-		}
-	}
-
-	return needed_cols;
-}
-
-/* Get distribution policy for specific part */
-static GpDistributionData *
-GetDistributionPolicyForPartition(GpDistributionData *mainDistData,
-								  ResultRelInfo *resultRelInfo,
-								  MemoryContext context)
-{
-
-	/*
-	 * If we are copying into a partitioned table whose partitions have
-	 * differing distribution policies, get the policy for this particular
-	 * child partition.
-	 */
-	if (mainDistData->hashmap)
-	{
-		Oid			relid;
-		GpDistributionData *d;
-		bool		found;
-
-		relid = resultRelInfo->ri_RelationDesc->rd_id;
-
-		d = hash_search(mainDistData->hashmap, &(relid), HASH_ENTER, &found);
-		if (!found)
-		{
-			Relation	rel = resultRelInfo->ri_RelationDesc;
-			MemoryContext oldcontext;
-
-			/*
-			 * Make sure this all persists the current iteration.
-			 */
-			oldcontext = MemoryContextSwitchTo(context);
-
-			d->cdbHash = makeCdbHashForRelation(rel);
-			d->policy = GpPolicyCopy(rel->rd_cdbpolicy);
-
-			MemoryContextSwitchTo(oldcontext);
-		}
-
-		return d;
-	}
-	else
-		return mainDistData;
 }
 
 static unsigned int

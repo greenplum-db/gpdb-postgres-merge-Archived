@@ -25,7 +25,6 @@
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "cdb/cdbvars.h"
-#include "cdb/cdbpartition.h"
 
 
 static char *fetch_cursor_param_value(ExprContext *econtext, int paramId);

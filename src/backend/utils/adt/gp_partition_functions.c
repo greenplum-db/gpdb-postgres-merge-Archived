@@ -7,7 +7,6 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "cdb/cdbpartition.h"
 #include "funcapi.h"
 #include "nodes/execnodes.h"
 #include "utils/array.h"

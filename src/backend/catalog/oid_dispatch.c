@@ -92,8 +92,6 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
-#include "catalog/pg_partition.h"
-#include "catalog/pg_partition_rule.h"
 #include "catalog/pg_policy.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_resqueue.h"
@@ -472,8 +470,6 @@ CreateKeyFromCatalogTuple(Relation catalogrel, HeapTuple tuple,
 
 		/* These tables don't need to have their OIDs synchronized. */
 		case AccessMethodProcedureRelationId:
-		case PartitionRelationId:
-		case PartitionRuleRelationId:
 			*exempt = true;
 			 break;
 

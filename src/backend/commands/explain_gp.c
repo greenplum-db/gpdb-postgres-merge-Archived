@@ -21,7 +21,6 @@
 #include "cdb/cdbdisp.h"                /* CheckDispatchResult() */
 #include "cdb/cdbdispatchresult.h"	/* CdbDispatchResults */
 #include "cdb/cdbexplain.h"		/* me */
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbpathlocus.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"		/* GpIdentity.segindex */

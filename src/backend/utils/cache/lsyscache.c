@@ -37,7 +37,6 @@
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_transform.h"
 #include "catalog/pg_type.h"
-#include "cdb/cdbpartition.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"

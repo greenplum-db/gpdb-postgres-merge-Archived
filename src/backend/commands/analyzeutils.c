@@ -14,7 +14,6 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_statistic.h"
 #include "cdb/cdbhash.h"
-#include "cdb/cdbpartition.h"
 #include "commands/analyzeutils.h"
 #include "commands/vacuum.h"
 #include "lib/binaryheap.h"

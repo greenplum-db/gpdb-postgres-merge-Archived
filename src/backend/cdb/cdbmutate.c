@@ -39,7 +39,6 @@
 #include "cdb/cdbhash.h"
 #include "cdb/cdbllize.h"
 #include "cdb/cdbmutate.h"
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbplan.h"
 #include "cdb/cdbpullup.h"
 #include "cdb/cdbvars.h"
@@ -1899,7 +1898,6 @@ cdbpathtoplan_create_sri_plan(RangeTblEntry *rte, PlannerInfo *subroot, Path *su
 	ResultPath *resultpath;
 	Result	   *resultplan;
 	Relation	rel;
-	PartitionNode *pn;
 	GpPolicy   *targetPolicy;
 	List	   *hashExprs;
 	List	   *hashOpfamilies;

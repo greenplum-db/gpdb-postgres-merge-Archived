@@ -61,7 +61,6 @@
 #include "catalog/oid_dispatch.h"
 #include "catalog/pg_attribute_encoding.h"
 #include "catalog/pg_type.h"
-#include "cdb/cdbpartition.h"
 #include "commands/copy.h"
 #include "commands/createas.h"
 =======
@@ -167,8 +166,6 @@ static char *ExecBuildSlotValueDescription(Oid reloid,
 static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 							  Plan *planTree);
 
-static PartitionNode *BuildPartitionNodeFromRoot(Oid relid);
-static void InitializeQueryPartsMetadata(PlannedStmt *plannedstmt, EState *estate);
 static void AdjustReplicatedTableCounts(EState *estate);
 
 /*
@@ -4878,132 +4875,6 @@ map_part_attrs(Relation base, Relation part, TupleConversionMap **map_ptr, bool 
 	*map_ptr = convert_tuples_by_name(RelationGetDescr(base),
 									  RelationGetDescr(part));
 	return TRUE;
-}
-
-/*
- * BuildPartitionNodeFromRoot
- *   Build PartitionNode for the root partition of a given partition oid.
- */
-static PartitionNode *
-BuildPartitionNodeFromRoot(Oid relid)
-{
-	PartitionNode *partitionNode;
-
-	if (rel_is_child_partition(relid))
-	{
-		relid = rel_partition_get_master(relid);
-	}
-
-	partitionNode = RelationBuildPartitionDescByOid(relid, false /* inctemplate */);
-
-	return partitionNode;
-}
-
-/*
- * createPartitionAccessMethods
- *   Create a PartitionAccessMethods object.
- *
- * Note that the memory context for the access method is not set at this point. It will
- * be set during execution.
- */
-static PartitionAccessMethods *
-createPartitionAccessMethods(int numLevels)
-{
-	PartitionAccessMethods *accessMethods = palloc(sizeof(PartitionAccessMethods));;
-	accessMethods->partLevels = numLevels;
-	accessMethods->cmpfuncs = (FmgrInfo **) palloc0(numLevels * sizeof(FmgrInfo *));
-	accessMethods->part_cxt = NULL;
-
-	return accessMethods;
-}
-
-/*
- * createPartitionState
- *   Create a PartitionState object.
- *
- * Note that the memory context for the access method is not set at this point. It will
- * be set during execution.
- */
-PartitionState *
-createPartitionState(PartitionNode *partsAndRules,
-					 int resultPartSize)
-{
-	Assert(partsAndRules != NULL);
-
-	PartitionState *partitionState = makeNode(PartitionState);
-	partitionState->accessMethods = createPartitionAccessMethods(num_partition_levels(partsAndRules));
-	partitionState->max_partition_attr = max_partition_attr(partsAndRules);
-
-	return partitionState;
-}
-
-/*
- * InitializeQueryPartsMetadata
- *   Initialize partitioning metadata for all partitions involved in the query.
- */
-static void
-InitializeQueryPartsMetadata(PlannedStmt *plannedstmt, EState *estate)
-{
-	Assert(plannedstmt != NULL && estate != NULL);
-
-	if (plannedstmt->queryPartOids == NIL)
-	{
-		plannedstmt->queryPartsMetadata = NIL;
-		return;
-	}
-
-	if (Gp_role != GP_ROLE_EXECUTE)
-	{
-		/*
-		 * Non-QEs populate the partitioning metadata for all
-		 * relevant partitions in the query.
-		 */
-		plannedstmt->queryPartsMetadata = NIL;
-		ListCell *lc = NULL;
-		foreach (lc, plannedstmt->queryPartOids)
-		{
-			Oid relid = (Oid)lfirst_oid(lc);
-			PartitionNode *partitionNode = BuildPartitionNodeFromRoot(relid);
-			Assert(partitionNode != NULL);
-			plannedstmt->queryPartsMetadata =
-				lappend(plannedstmt->queryPartsMetadata, partitionNode);
-		}
-	}
-
-	/* Populate the partitioning metadata to EState */
-	Assert(estate->dynamicTableScanInfo != NULL);
-
-	MemoryContext oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
-
-	ListCell *lc = NULL;
-	foreach(lc, plannedstmt->queryPartsMetadata)
-	{
-		PartitionNode *partsAndRules = (PartitionNode *)lfirst(lc);
-
-		PartitionMetadata *metadata = palloc(sizeof(PartitionMetadata));
-		metadata->partsAndRules = partsAndRules;
-		Assert(metadata->partsAndRules != NULL);
-		metadata->accessMethods = createPartitionAccessMethods(num_partition_levels(metadata->partsAndRules));
-		estate->dynamicTableScanInfo->partsMetadata =
-			lappend(estate->dynamicTableScanInfo->partsMetadata, metadata);
-	}
-
-	MemoryContextSwitchTo(oldContext);
-}
-
-/*
- * InitializePartsMetadata
- *   Initialize partitioning metadata for the given partitioned table oid
- */
-List *
-InitializePartsMetadata(Oid rootOid)
-{
-	PartitionMetadata *metadata = palloc(sizeof(PartitionMetadata));
-	metadata->partsAndRules = BuildPartitionNodeFromRoot(rootOid);
-	Assert(metadata->partsAndRules != NULL);
-
-	metadata->accessMethods = createPartitionAccessMethods(num_partition_levels(metadata->partsAndRules));
-	return list_make1(metadata);
 }
 
 /*

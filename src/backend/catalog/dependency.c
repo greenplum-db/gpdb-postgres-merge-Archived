@@ -64,7 +64,6 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_type_encoding.h"
 #include "catalog/pg_user_mapping.h"
-#include "cdb/cdbpartition.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"

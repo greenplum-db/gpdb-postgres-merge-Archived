@@ -541,43 +541,6 @@ typedef struct ShareNodeEntry
 } ShareNodeEntry;
 
 /*
- * PartitionAccessMethods
- *    Defines the lookup access methods for partitions, one for each level.
- */
-typedef struct PartitionAccessMethods
-{
-	/* Number of partition levels */
-	int			partLevels;
-
-	/*
-	 * Cache of comparison functions for partition bounds/values, one array
-	 * of FmgrInfos for each level
-	 */
-	FmgrInfo  **cmpfuncs;
-
-	/* Memory context for access methods */
-	MemoryContext part_cxt;
-} PartitionAccessMethods;
-
-typedef struct PartitionState
-{
-	NodeTag		type;
-
-	AttrNumber	max_partition_attr;
-	PartitionAccessMethods *accessMethods;
-} PartitionState;
-
-/*
- * PartitionMetadata
- *   Defines the metadata for partitions.
- */
-typedef struct PartitionMetadata
-{
-	PartitionNode *partsAndRules;
-	PartitionAccessMethods *accessMethods;
-} PartitionMetadata;
-
-/*
  * PartOidEntry
  *   Defines an entry in the shared partOid hash table.
  */

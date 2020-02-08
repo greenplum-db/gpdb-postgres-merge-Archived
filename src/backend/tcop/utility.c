@@ -79,7 +79,6 @@
 
 #include "catalog/oid_dispatch.h"
 #include "cdb/cdbdisp_query.h"
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbvars.h"
 
 

@@ -50,7 +50,6 @@
 #include "cdb/cdbhash.h"
 #include "cdb/cdbllize.h"		/* cdbllize_adjust_init_plan_path() */
 #include "cdb/cdbmutate.h"
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbpath.h"		/* cdbpath_rows() */
 #include "cdb/cdbpathtoplan.h"	/* cdbpathtoplan_create_flow() etc. */
 #include "cdb/cdbpullup.h"		/* cdbpullup_targetlist() */

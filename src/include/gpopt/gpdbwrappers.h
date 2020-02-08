@@ -27,7 +27,6 @@ typedef int LOCKMODE;
 struct TypeCacheEntry;
 typedef struct NumericData *Numeric;
 typedef struct HeapTupleData *HeapTuple;
-struct PartitionNode;
 typedef struct RelationData *Relation;
 struct Value;
 typedef struct tupleDesc *TupleDesc;

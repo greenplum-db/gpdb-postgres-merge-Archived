@@ -52,7 +52,6 @@
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
 
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbpath.h"
 #include "cdb/cdbsetop.h"
 #include "cdb/cdbvars.h"

@@ -16,7 +16,6 @@
 #include "postgres.h"
 #include "miscadmin.h"
 
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbhash.h"
 #include "cdb/cdbutil.h"
 #include "commands/tablecmds.h"

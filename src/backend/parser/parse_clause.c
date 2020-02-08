@@ -57,7 +57,6 @@
 #include "catalog/pg_exttable.h"
 #include "catalog/pg_operator.h"
 #include "cdb/cdbvars.h"
-#include "cdb/cdbpartition.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 

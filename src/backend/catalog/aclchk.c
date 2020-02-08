@@ -83,7 +83,6 @@
 
 #include "catalog/pg_inherits_fn.h"
 #include "cdb/cdbdisp_query.h"
-#include "cdb/cdbpartition.h"
 #include "cdb/cdbvars.h"
 
 /*
@@ -885,41 +884,6 @@ objectNamesToOids(ObjectType objtype, List *objnames)
 		default:
 			elog(ERROR, "unrecognized GrantStmt.objtype: %d",
 				 (int) objtype);
-	}
-
-	/*
-	 * GPDB: If we are the DISPATCH node and the object is a partitioned
-	 * relation, then we need to populate the partition references because the
-	 * information is not present in the cataloge tables on the segment nodes.
-	 */
-	if (Gp_role == GP_ROLE_DISPATCH && objtype == ACL_OBJECT_RELATION)
-	{
-		List *expanded = NIL;
-
-		foreach(cell, objects)
-		{
-			Oid relOid = lfirst_oid(cell);
-			List *partOids;
-
-			if (rel_is_partitioned(relOid))
-			{
-				PartitionNode *pn = RelationBuildPartitionDescByOid(relOid, false);
-				partOids = all_partition_relids(pn);
-
-				expanded = list_concat(expanded, partOids);
-				expanded = lappend_oid(expanded, relOid);
-			}
-			else if (rel_is_child_partition(relOid))
-			{
-				partOids = find_all_inheritors(relOid, NoLock, NULL);
-
-				/* partOids contains relOid so concat is enough */
-				expanded = list_concat(expanded, partOids);
-			}
-		}
-
-		if (expanded != NIL)
-			objects = expanded;
 	}
 
 	return objects;
