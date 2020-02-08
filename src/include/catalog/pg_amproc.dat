@@ -1245,9 +1245,9 @@
 { amprocfamily => 'hash/tid_ops', amproclefttype => 'tid',
   amprocrighttype => 'tid', amprocnum => '1', amproc => 'hashtid' },
 { amprocfamily => 'hash/bit_ops', amproclefttype => 'bit',
-  amprocrighttype => 'bit', amprocnum => '1', amproc => 'bithash' },
+  amprocrighttype => 'bit', amprocnum => '1', amproc => 'bithash(bit)' },
 { amprocfamily => 'hash/varbit_ops', amproclefttype => 'varbit',
-  amprocrighttype => 'varbit', amprocnum => '1', amproc => 'bithash' },
+  amprocrighttype => 'varbit', amprocnum => '1', amproc => 'bithash(varbit)' },
 
 # legacy cdbhash ops
 { amprocfamily => 'hash/cdbhash_integer_ops', amproclefttype => 'int2',
