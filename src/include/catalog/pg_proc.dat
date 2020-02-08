@@ -11404,40 +11404,40 @@
    proname => 'pg_cancel_backend', provolatile => 'v', prorettype => 'bool', proargtypes => 'int4 text', prosrc => 'pg_cancel_backend_msg' },
 
 { oid => 7136, descr => 'continuous distribution percentile',
-   proname => 'percentile_cont', proisstrict => 'f', prorettype => 'timestamp', proargtypes => 'float8 timestamp', prosrc => 'aggregate_dummy' },
+   proname => 'percentile_cont', prokind => 'a', proisstrict => 'f', prorettype => 'timestamp', proargtypes => 'float8 timestamp', prosrc => 'aggregate_dummy' },
 
 { oid => 7137, descr => 'aggregate final function',
    proname => 'percentile_cont_timestamp_final', proisstrict => 'f', prorettype => 'timestamp', proargtypes => 'internal float8', prosrc => 'percentile_cont_timestamp_final' },
 
 { oid => 7138, descr => 'multiple continuous percentiles',
-   proname => 'percentile_cont', proisstrict => 'f', prorettype => '_timestamp', proargtypes => 'float8 timestamp', prosrc => 'aggregate_dummy' },
+   proname => 'percentile_cont', prokind => 'a', proisstrict => 'f', prorettype => '_timestamp', proargtypes => '_float8 timestamp', prosrc => 'aggregate_dummy' },
 
 { oid => 6122, descr => 'aggregate final function',
    proname => 'percentile_cont_timestamp_multi_final', proisstrict => 'f', prorettype => '_timestamp', proargtypes => 'internal _float8', prosrc => 'percentile_cont_timestamp_multi_final' },
 
 { oid => 6123, descr => 'continuous distribution percentile',
-   proname => 'percentile_cont', proisstrict => 'f', prorettype => 'timestamptz', proargtypes => 'float8 timestamptz', prosrc => 'aggregate_dummy' },
+   proname => 'percentile_cont', prokind => 'a', proisstrict => 'f', prorettype => 'timestamptz', proargtypes => 'float8 timestamptz', prosrc => 'aggregate_dummy' },
 
 { oid => 6124, descr => 'aggregate final function',
    proname => 'percentile_cont_timestamptz_final', proisstrict => 'f', prorettype => 'timestamptz', proargtypes => 'internal float8', prosrc => 'percentile_cont_timestamptz_final' },
 
 { oid => 6125, descr => 'multiple continuous percentiles',
-   proname => 'percentile_cont', proisstrict => 'f', prorettype => '_timestamptz', proargtypes => '_float8 timestamptz', prosrc => 'aggregate_dummy' },
+   proname => 'percentile_cont', prokind => 'a', proisstrict => 'f', prorettype => '_timestamptz', proargtypes => '_float8 timestamptz', prosrc => 'aggregate_dummy' },
 
 { oid => 6126, descr => 'aggregate final function',
    proname => 'percentile_cont_timestamptz_multi_final', proisstrict => 'f', prorettype => '_timestamptz', proargtypes => 'internal _float8', prosrc => 'percentile_cont_timestamptz_multi_final' },
 
 { oid => 6127, descr => 'median',
-   proname => 'median', proisstrict => 'f', prorettype => 'float8', proargtypes => 'float8 float8', prosrc => 'aggregate_dummy' },
+   proname => 'median', prokind => 'a', proisstrict => 'f', prorettype => 'float8', proargtypes => 'float8 float8', prosrc => 'aggregate_dummy' },
 
 { oid => 6128, descr => 'median',
-   proname => 'median', proisstrict => 'f', prorettype => 'interval', proargtypes => 'float8 interval', prosrc => 'aggregate_dummy' },
+   proname => 'median', prokind => 'a', proisstrict => 'f', prorettype => 'interval', proargtypes => 'float8 interval', prosrc => 'aggregate_dummy' },
 
 { oid => 6129, descr => 'median',
-   proname => 'median', proisstrict => 'f', prorettype => 'timestamp', proargtypes => 'float8 timestamp', prosrc => 'aggregate_dummy' },
+   proname => 'median', prokind => 'a', proisstrict => 'f', prorettype => 'timestamp', proargtypes => 'float8 timestamp', prosrc => 'aggregate_dummy' },
 
 { oid => 6130, descr => 'median',
-   proname => 'median', proisstrict => 'f', prorettype => 'timestamptz', proargtypes => 'float8 timestamptz', prosrc => 'aggregate_dummy' },
+   proname => 'median', prokind => 'a', proisstrict => 'f', prorettype => 'timestamptz', proargtypes => 'float8 timestamptz', prosrc => 'aggregate_dummy' },
 
 { oid => 5066, descr => 'itemwise add two integer arrays',
    proname => 'array_add', prorettype => '_int4', proargtypes => '_int4 _int4', prosrc => 'array_int4_add' },
