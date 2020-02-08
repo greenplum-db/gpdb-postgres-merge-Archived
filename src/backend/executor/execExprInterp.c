@@ -2388,18 +2388,50 @@ ExecEvalSQLValueFunction(ExprState *state, ExprEvalStep *op)
 /*
  * Raise error if a CURRENT OF expression is evaluated.
  *
- * The planner should convert CURRENT OF into a TidScan qualification, or some
- * other special handling in a ForeignScan node.  So we have to be able to do
- * ExecInitExpr on a CurrentOfExpr, but we shouldn't ever actually execute it.
- * If we get here, we suppose we must be dealing with CURRENT OF on a foreign
- * table whose FDW doesn't handle it, and complain accordingly.
- */
+ * GPDB:
+ * Constant folding must have bound observed values of gp_segment_id,
+ * ctid, and tableoid into the CurrentOfExpr for this function's
+ * consumption.
+  */
 void
 ExecEvalCurrentOfExpr(ExprState *state, ExprEvalStep *op)
 {
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("WHERE CURRENT OF is not supported for this table type")));
+	CurrentOfExpr *cexpr = (CurrentOfExpr *) exprstate->expr;
+	bool		result = false;
+	TupleTableSlot *slot;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+	*isNull = false;
+
+	Assert(cexpr->cvarno != INNER_VAR);
+	Assert(cexpr->cvarno != OUTER_VAR);
+
+	slot = econtext->ecxt_scantuple;
+	Assert(!TupIsNull(slot));
+
+	/*
+	 * The currently scanned tuple must use heap storage for it to possibly
+	 * satisfy the CURRENT OF qualification. Despite our grand attempts during
+	 * parsing and constant folding to demand heap storage, the scanning of an
+	 * AO part is still possible, when the current row uses heap storage, but the
+	 * CURRENT OF invocation uses an unpruned scan of the partition table, yielding
+	 * tuples from the AO parts before the desired heap tuple.
+	 */
+	if (TupHasHeapTuple(slot))
+	{
+		ItemPointerData cursor_tid;
+
+		if (execCurrentOf(cexpr, econtext,
+						  slot->tts_tableOid,
+						  &cursor_tid))
+		{
+			if (ItemPointerEquals(&cursor_tid, slot_get_ctid(slot)))
+				result = true;
+		}
+	}
+
+	return BoolGetDatum(result);
 }
 
 /*
