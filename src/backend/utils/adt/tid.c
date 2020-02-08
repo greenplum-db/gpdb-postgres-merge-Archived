@@ -268,14 +268,6 @@ hashtidextended(PG_FUNCTION_ARGS)
 }
 
 
-Datum
-hashtid(PG_FUNCTION_ARGS)
-{
-	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
-
-	return hash_any((unsigned char *) arg1, sizeof(ItemPointerData));
-}
-
 /*
  *	Functions to get latest tid of a specified tuple.
  *

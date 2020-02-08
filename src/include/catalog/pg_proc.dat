@@ -11294,9 +11294,6 @@
 
 # hash functions for a few built-in datatypes that are missing hash support
 # in upstream for some reason.
-{ oid => 7131, descr => 'hash function for tid',
-   proname => 'hashtid', prorettype => 'int4', proargtypes => 'tid', prosrc => 'hashtid' },
-
 { oid => 7132, descr => 'hash function for bit',
    proname => 'bithash', prorettype => 'int4', proargtypes => 'bit', prosrc => 'bithash' },
 
