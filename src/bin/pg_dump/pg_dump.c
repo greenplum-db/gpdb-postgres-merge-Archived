@@ -62,7 +62,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
-#include "catalog/gp_policy.h"
+#include "catalog/gp_distribution_policy.h"
 =======
 #include "catalog/pg_aggregate_d.h"
 #include "catalog/pg_am_d.h"

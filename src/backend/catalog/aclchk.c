@@ -3647,7 +3647,7 @@ ExecGrant_ExtProtocol(InternalGrant *istmt)
 
         /* There's no syscache for pg_extprotocol, so must look the hard way */
         ScanKeyInit(&entry[0],
-                    ObjectIdAttributeNumber,
+                    Anum_pg_extprotocol_oid,
                     BTEqualStrategyNumber, F_OIDEQ,
                     ObjectIdGetDatum(ptcid));
         scan = systable_beginscan(relation, ExtprotocolOidIndexId, true,

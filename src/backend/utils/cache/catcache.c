@@ -1141,16 +1141,18 @@ CrossCheckTuple(int cacheId,
 		HeapTuple tuple)
 {
 	Form_pg_class rd_rel;
+	Form_pg_type rd_type;
 
 	switch (cacheId)
 	{
 		case RELOID:
-			if (HeapTupleGetOid(tuple) != DatumGetObjectId(key1))
+			rd_rel = (Form_pg_class) GETSTRUCT(tuple);
+			if (rd_rel->oid != DatumGetObjectId(key1))
 			{
 				elog(ERROR, "pg_class_oid_index is broken, oid=%d is pointing to tuple with oid=%d (xmin:%u xmax:%u)",
-					DatumGetObjectId(key1), HeapTupleGetOid(tuple),
-					HeapTupleHeaderGetXmin((tuple)->t_data),
-					HeapTupleHeaderGetRawXmax((tuple)->t_data));
+					 DatumGetObjectId(key1), rd_rel->oid,
+					 HeapTupleHeaderGetXmin((tuple)->t_data),
+					 HeapTupleHeaderGetRawXmax((tuple)->t_data));
 			}
 			break;
 		case RELNAMENSP:
@@ -1158,19 +1160,20 @@ CrossCheckTuple(int cacheId,
 			if (strncmp(rd_rel->relname.data, DatumGetCString(key1), NAMEDATALEN) != 0)
 			{
 				elog(ERROR, "pg_class_relname_nsp_index is broken, intended tuple with name \"%s\" fetched \"%s\""
-					" (xmin:%u xmax:%u)",
-					DatumGetCString(key1), rd_rel->relname.data,
-					HeapTupleHeaderGetXmin((tuple)->t_data),
-					HeapTupleHeaderGetRawXmax((tuple)->t_data));
+					 " (xmin:%u xmax:%u)",
+					 DatumGetCString(key1), rd_rel->relname.data,
+					 HeapTupleHeaderGetXmin((tuple)->t_data),
+					 HeapTupleHeaderGetRawXmax((tuple)->t_data));
 			}
 			break;
 		case TYPEOID:
-			if (HeapTupleGetOid(tuple) != DatumGetObjectId(key1))
+			rd_type = (Form_pg_type) GETSTRUCT(tuple);
+			if (rd_type->oid != DatumGetObjectId(key1))
 			{
 				elog(ERROR, "pg_type_oid_index is broken, oid=%d is pointing to tuple with oid=%d (xmin:%u xmax:%u)",
-					DatumGetObjectId(key1), HeapTupleGetOid(tuple),
-					HeapTupleHeaderGetXmin((tuple)->t_data),
-					HeapTupleHeaderGetRawXmax((tuple)->t_data));
+					 DatumGetObjectId(key1), rd_type->oid,
+					 HeapTupleHeaderGetXmin((tuple)->t_data),
+					 HeapTupleHeaderGetRawXmax((tuple)->t_data));
 			}
 			break;
 	}
@@ -2137,11 +2140,10 @@ PrintCatCacheLeakWarning(HeapTuple tuple, const char *resOwnerName)
 	/* Safety check to ensure we were handed a cache entry */
 	Assert(ct->ct_magic == CT_MAGIC);
 
-	elog(WARNING, "cache reference leak: cache %s (%d), tuple %u/%u (oid %d) has count %d, resowner '%s'",
+	elog(WARNING, "cache reference leak: cache %s (%d), tuple %u/%u has count %d, resowner '%s'",
 		 ct->my_cache->cc_relname, ct->my_cache->id,
 		 ItemPointerGetBlockNumber(&(tuple->t_self)),
 		 ItemPointerGetOffsetNumber(&(tuple->t_self)),
-         tuple->t_data ? HeapTupleGetOid(tuple) : 0,
 		 ct->refcount,
          resOwnerName);
 }

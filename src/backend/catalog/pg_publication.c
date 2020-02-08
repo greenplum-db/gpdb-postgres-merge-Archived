@@ -43,6 +43,8 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
+#include "catalog/oid_dispatch.h"
+
 /*
  * Check if relation can be in given publication and throws appropriate
  * error if not.

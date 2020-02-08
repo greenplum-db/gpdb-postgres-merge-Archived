@@ -336,7 +336,7 @@ DECLARE_UNIQUE_INDEX(pg_extension_oid_index, 3080, on pg_extension using btree(o
 DECLARE_UNIQUE_INDEX(pg_extension_name_index, 3081, on pg_extension using btree(extname name_ops));
 #define ExtensionNameIndexId 3081
 
-DECLARE_UNIQUE_INDEX(gp_policy_localoid_index, 6103, on gp_distribution_policy using btree(localoid oid_ops));
+DECLARE_UNIQUE_INDEX(gp_distribution_policy_localoid_index, 6103, on gp_distribution_policy using btree(localoid oid_ops));
 #define GpPolicyLocalOidIndexId  6103
 
 DECLARE_UNIQUE_INDEX(pg_appendonly_relid_index, 7141, on pg_appendonly using btree(relid oid_ops));

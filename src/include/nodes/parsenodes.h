@@ -29,7 +29,7 @@
 #include "nodes/value.h"
 #include "partitioning/partdefs.h"
 
-#include "catalog/gp_policy.h"
+#include "catalog/gp_distribution_policy.h"
 
 typedef enum OverridingKind
 {

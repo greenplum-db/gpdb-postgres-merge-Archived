@@ -22,7 +22,7 @@
 #include "c.h"
 #include "postgres.h"
 #include "access/tupdesc.h"
-#include "catalog/gp_policy.h"
+#include "catalog/gp_distribution_policy.h"
 
 #include "naucrates/dxl/gpdb_types.h"
 #include "naucrates/dxl/operators/CDXLColDescr.h"
