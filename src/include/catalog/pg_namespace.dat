@@ -25,7 +25,7 @@
 # GPDB-specific built-in namespaces.
 # NOTE: pg_dump has BM_BITMAPINDEX_NAMESPACE's value hard-coded in the
 # getTables() query.
-{ oid => '6104', oid_symbol => 'PG_AOSEGMENT_NAMESPACE',
+{ oid => '7014', oid_symbol => 'PG_AOSEGMENT_NAMESPACE',
   descr => 'Reserved schema for Append Only segment list and eof tables',
   nspname => 'pg_aoseg', nspowner => 'PGUID', nspacl => '_null_' },
 { oid => '7012', oid_symbol => 'PG_BITMAPINDEX_NAMESPACE',

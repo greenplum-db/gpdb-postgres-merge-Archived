@@ -11362,15 +11362,6 @@
 { oid => 6158, descr => 'Legacy cdbhash function',
    proname => 'cdblegacyhash_interval', prorettype => 'int4', proargtypes => 'interval', prosrc => 'cdblegacyhash_interval' },
 
-{ oid => 6159, descr => 'Legacy cdbhash function',
-   proname => 'cdblegacyhash_abstime', prorettype => 'int4', proargtypes => 'abstime', prosrc => 'cdblegacyhash_abstime' },
-
-{ oid => 6160, descr => 'Legacy cdbhash function',
-   proname => 'cdblegacyhash_reltime', prorettype => 'int4', proargtypes => 'reltime', prosrc => 'cdblegacyhash_reltime' },
-
-{ oid => 6161, descr => 'Legacy cdbhash function',
-   proname => 'cdblegacyhash_tinterval', prorettype => 'int4', proargtypes => 'tinterval', prosrc => 'cdblegacyhash_tinterval' },
-
 { oid => 6162, descr => 'Legacy cdbhash function',
    proname => 'cdblegacyhash_inet', prorettype => 'int4', proargtypes => 'inet', prosrc => 'cdblegacyhash_inet' },
 
