@@ -489,7 +489,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 %type <boolean> opt_instead
 %type <boolean> opt_unique opt_concurrently opt_verbose opt_full
-%type <boolean> opt_freeze opt_analyze opt_default opt_ordered opt_recheck
+%type <boolean> opt_freeze opt_analyze opt_default opt_recheck
 %type <boolean> opt_rootonly_all
 %type <boolean> opt_dxl
 %type <defelt>	opt_binary copy_delimiter
@@ -1404,9 +1404,10 @@ CreateQueueStmt:
 			CREATE RESOURCE QUEUE QueueId OptQueueList
 				{
 					CreateQueueStmt *n = makeNode(CreateQueueStmt);
+					// GPDB_12_MERGE_FIXME: what is the purpose of this? Seems iffy...
 					DefElem         *def1 = /* mark start of WITH items */
 						makeDefElem("withliststart", 
-									(Node *)makeInteger(TRUE));
+									(Node *)makeInteger(true), @5);
 					n->queue = $4;
 					n->options = list_concat(lappend($5, def1), NULL); 
 					$$ = (Node *)n;
@@ -1416,7 +1417,7 @@ CreateQueueStmt:
 					CreateQueueStmt *n    = makeNode(CreateQueueStmt);
 					DefElem         *def1 = /* mark start of WITH items */
 						makeDefElem("withliststart", 
-									(Node *)makeInteger(TRUE));
+									(Node *)makeInteger(true), @5);
 					n->queue = $4;
 					n->options = list_concat(lappend($5, def1), $7); 
 					$$ = (Node *)n;
@@ -1435,27 +1436,27 @@ OptQueueElem:
 			ACTIVE THRESHOLD NumericOnly
 				{
 					/* was "activelimit" */
-					$$ = makeDefElem("active_statements", (Node *)$3);
+					$$ = makeDefElem("active_statements", (Node *) $3, @1);
 				}
 			| COST THRESHOLD NumericOnly /* enforce float type in queue.c */
 				{
 					/* was "costlimit" */
-					$$ = makeDefElem("max_cost", (Node *)$3);
+					$$ = makeDefElem("max_cost", (Node *) $3, @1);
 				}
 			| IGNORE_P THRESHOLD NumericOnly /* enforce float type in queue.c */
 				{
 					/* was "ignorecostlimit" */
-					$$ = makeDefElem("min_cost", (Node *)$3);
+					$$ = makeDefElem("min_cost", (Node *) $3, @1);
 				}
 			| OVERCOMMIT
 				{
 					/* was "overcommit" */
-					$$ = makeDefElem("cost_overcommit", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("cost_overcommit", (Node *) makeInteger(true), @1);
 				}
 			| NOOVERCOMMIT
 				{
 					/* was "overcommit" */
-					$$ = makeDefElem("cost_overcommit", (Node *)makeInteger(FALSE));
+					$$ = makeDefElem("cost_overcommit", (Node *) makeInteger(false), @1);
 				}
 		;
 
@@ -1478,10 +1479,10 @@ AlterQueueStmt:
 					AlterQueueStmt *n    = makeNode(AlterQueueStmt);
 					DefElem        *def1 = /* mark start of WITH items */
 						makeDefElem("withliststart", 
-									(Node *)makeInteger(TRUE));
+									(Node *) makeInteger(true), @6);
 					DefElem        *def2 = /* mark start of WITHOUT items */
 						makeDefElem("withoutliststart", 
-									(Node *)makeInteger(TRUE));
+									(Node *) makeInteger(true), @6);
 					n->queue = $4;
 					n->options = list_concat(lappend($5, def1), $7); 
 					n->options = lappend(n->options, def2); 
@@ -1492,10 +1493,10 @@ AlterQueueStmt:
 					AlterQueueStmt *n    = makeNode(AlterQueueStmt);
 					DefElem        *def1 = /* mark start of WITH items */
 						makeDefElem("withliststart", 
-									(Node *)makeInteger(TRUE));
+									(Node *) makeInteger(true), @6);
 					DefElem        *def2 = /* mark start of WITHOUT items */
 						makeDefElem("withoutliststart", 
-									(Node *)makeInteger(TRUE));
+									(Node *) makeInteger(true), @6);
 					n->queue = $4;
 					n->options = lappend($5, def1); 
 					n->options = list_concat(lappend(n->options, def2), $7); 
@@ -1507,10 +1508,10 @@ AlterQueueStmt:
 					AlterQueueStmt *n    = makeNode(AlterQueueStmt);
 					DefElem        *def1 = /* mark start of WITH items */
 						makeDefElem("withliststart", 
-									(Node *)makeInteger(TRUE));
+									(Node *) makeInteger(true), @6);
 					DefElem        *def2 = /* mark start of WITHOUT items */
 						makeDefElem("withoutliststart", 
-									(Node *)makeInteger(TRUE));
+									(Node *) makeInteger(true), @6);
 					n->queue = $4;
 					n->options = list_concat(lappend($5, def1), $7); 
 					n->options = list_concat(lappend(n->options, def2), $9);
@@ -1589,27 +1590,27 @@ OptResourceGroupElem:
 			CONCURRENCY SignedIconst
 				{
 					/* was "concurrency" */
-					$$ = makeDefElem("concurrency", (Node *) makeInteger($2));
+					$$ = makeDefElem("concurrency", (Node *) makeInteger($2), @1);
 				}
 			| CPU_RATE_LIMIT SignedIconst
 				{
-					$$ = makeDefElem("cpu_rate_limit", (Node *) makeInteger($2));
+					$$ = makeDefElem("cpu_rate_limit", (Node *) makeInteger($2), @1);
 				}
 			| CPUSET Sconst
 				{
-					$$ = makeDefElem("cpuset", (Node *) makeString($2));
+					$$ = makeDefElem("cpuset", (Node *) makeString($2), @1);
 				}
 			| MEMORY_SHARED_QUOTA SignedIconst
 				{
-					$$ = makeDefElem("memory_shared_quota", (Node *) makeInteger($2));
+					$$ = makeDefElem("memory_shared_quota", (Node *) makeInteger($2), @1);
 				}
 			| MEMORY_LIMIT SignedIconst
 				{
-					$$ = makeDefElem("memory_limit", (Node *) makeInteger($2));
+					$$ = makeDefElem("memory_limit", (Node *) makeInteger($2), @1);
 				}
 			| MEMORY_SPILL_RATIO SignedIconst
 				{
-					$$ = makeDefElem("memory_spill_ratio", (Node *) makeInteger($2));
+					$$ = makeDefElem("memory_spill_ratio", (Node *) makeInteger($2), @1);
 				}
 		;
 
@@ -1673,7 +1674,7 @@ AlterOptRoleList:
  */
 AlterOnlyOptRoleElem:
 			AlterOptRoleElem			{ $$ = $1; }
-			| DROP DENY FOR deny_point	{ $$ = makeDefElem("drop_deny", $4); }
+			| DROP DENY FOR deny_point	{ $$ = makeDefElem("drop_deny", $4, @1); }
 		;
 
 AlterOptRoleElem:
@@ -1718,28 +1719,28 @@ AlterOptRoleElem:
 				}
 			| RESOURCE QUEUE any_name
 				{
-					$$ = makeDefElem("resourceQueue", (Node *)$3);
+					$$ = makeDefElem("resourceQueue", (Node *) $3, @1);
 				}
 			| RESOURCE GROUP_P any_name
 				{
-					$$ = makeDefElem("resourceGroup", (Node *)$3);
+					$$ = makeDefElem("resourceGroup", (Node *) $3, @1);
 				}
 			| CREATEEXTTABLE exttab_auth_list
 				{
-					$$ = makeDefElem("exttabauth", (Node *)$2);
+					$$ = makeDefElem("exttabauth", (Node *) $2, @1);
 				}
 			| NOCREATEEXTTABLE exttab_auth_list
 				{
-					$$ = makeDefElem("exttabnoauth", (Node *)$2);
+					$$ = makeDefElem("exttabnoauth", (Node *) $2, @1);
 				}
 		/*	Supported but not documented for roles, for use by ALTER GROUP. */
 			| USER role_list
 				{
-					$$ = makeDefElem("rolemembers", (Node *)$2, @1);
+					$$ = makeDefElem("rolemembers", (Node *) $2, @1);
 				}
 			| deny_login_role
 				{
-					$$ = makeDefElem("deny", (Node *)$1);
+					$$ = makeDefElem("deny", (Node *) $1, @1);
 				}
 			| IDENT
 				{
@@ -1856,7 +1857,7 @@ keyvalue_list:
 keyvalue_pair:
 		ColLabel '=' Sconst
 		{
-			$$ = makeDefElem($1, (Node *)makeString($3));
+			$$ = makeDefElem($1, (Node *) makeString($3), @1);
 		}
 		;
 
@@ -3735,6 +3736,8 @@ alter_table_partition_cmd:
 
                     pc->partid = (Node *) pid;
 
+					// GPDB_12_MERGE_FIXME: Upstream PartitionElem doesn't contain these
+#if 0
                     pelem->partName  = NULL;
                     pelem->boundSpec = $3;
                     pelem->subSpec   = $5;
@@ -3742,8 +3745,9 @@ alter_table_partition_cmd:
                     pelem->isDefault = false; /* not default */
                     pelem->storeAttr = $4;
                     pelem->AddPartDesc = NULL;
+#endif
 					pc->arg1 = (Node *) pelem;
-
+					
                     pc->location = @3;
 
 					n->subtype = AT_PartAdd;
@@ -3768,6 +3772,8 @@ alter_table_partition_cmd:
 
                     pc->partid = (Node *) pid;
 
+					// GPDB_12_MERGE_FIXME: Upstream PartitionElem doesn't contain these
+#if 0
                     pelem->partName  = NULL;
                     pelem->boundSpec = $5;
                     pelem->subSpec   = $7;
@@ -3775,6 +3781,7 @@ alter_table_partition_cmd:
                     pelem->isDefault = true;
                     pelem->storeAttr = $6;
                     pelem->AddPartDesc = NULL;
+#endif
 					pc->arg1 = (Node *) pelem;
                     pc->location = @5;
 
@@ -3800,6 +3807,8 @@ alter_table_partition_cmd:
 
                     pc->partid = (Node *) pid;
 
+					// GPDB_12_MERGE_FIXME: Upstream PartitionElem doesn't contain these
+#if 0
                     pelem->partName  = NULL;
                     pelem->boundSpec = $4;
                     pelem->subSpec   = $6;
@@ -3807,6 +3816,7 @@ alter_table_partition_cmd:
                     pelem->isDefault = false;
                     pelem->storeAttr = $5;
                     pelem->AddPartDesc = NULL;
+#endif
                     pc->arg1 = (Node *) pelem;
 
                     pc->location = @4;
@@ -3843,7 +3853,7 @@ alter_table_partition_cmd:
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					DropStmt *ds = makeNode(DropStmt);
 
-					ds->missing_ok = TRUE;
+					ds->missing_ok = true;
 					ds->behavior = $6;
 
                     /* 
@@ -3873,7 +3883,7 @@ alter_table_partition_cmd:
                     pid->partiddef = NULL;
                     pid->location  = @2;
 
-					ds->missing_ok = TRUE;
+					ds->missing_ok = true;
 					ds->behavior = $6;
 
                     /* 
@@ -3899,7 +3909,7 @@ alter_table_partition_cmd:
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					DropStmt *ds = makeNode(DropStmt);
 
-					ds->missing_ok = FALSE;
+					ds->missing_ok = false;
 					ds->behavior = $3;
 
                     /* 
@@ -3924,7 +3934,7 @@ alter_table_partition_cmd:
 					DropStmt *ds = makeNode(DropStmt);
 					AlterPartitionId *pid = makeNode(AlterPartitionId);
 
-					ds->missing_ok = FALSE;
+					ds->missing_ok = false;
 					ds->behavior = DROP_RESTRICT; /* default */ 
 
                     /* 
@@ -3987,7 +3997,7 @@ alter_table_partition_cmd:
 					AlterPartitionCmd *pc    = makeNode(AlterPartitionCmd);
 					AlterTableCmd     *n     = makeNode(AlterTableCmd);
                     PartitionElem     *pelem = makeNode(PartitionElem); 
-					PartitionSpec	  *ps    = makeNode(PartitionSpec); 
+					//PartitionSpec	  *ps    = makeNode(PartitionSpec); 
 
 					/* treat this case as similar to ADD PARTITION */
 
@@ -3999,11 +4009,13 @@ alter_table_partition_cmd:
                     pc->partid = (Node *) pid;
 
 					/* build a subpartition spec and add it to CREATE TABLE */
+					// GPDB_12_MERGE_FIXME: Upstream PartitionSpec doesn't contain these
+#if 0
 					ps->partElem   = $5; 
 					ps->subSpec	   = NULL;
 					ps->istemplate = true;
 					ps->location   = @4;
-
+					
                     pelem->partName  = NULL;
                     pelem->boundSpec = NULL;
                     pelem->subSpec   = (Node *)ps;
@@ -4011,8 +4023,12 @@ alter_table_partition_cmd:
                     pelem->isDefault = true;
                     pelem->storeAttr = NULL;
                     pelem->AddPartDesc = NULL;
+#endif
 					pc->arg1 = (Node *) pelem;
 
+					/* build a subpartition spec and add it to CREATE TABLE */
+					// GPDB_12_MERGE_FIXME: Upstream PartitionSpec doesn't contain these
+#if 0
 					/* a little (temporary?) syntax check on templates */
 					if (ps->partElem)
 					{
@@ -4034,7 +4050,7 @@ alter_table_partition_cmd:
 										 errmsg("template cannot contain specification for child partition")));
 						}
 					}
-
+#endif
                     pc->location = @5;
 
 					n->subtype = AT_PartSetTemplate;
@@ -4263,7 +4279,6 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list
 					n->filename = $7;
 					n->whereClause = $11;
 					n->sreh = $12;
-					n->partitions = NULL;
 					n->ao_segnos = NIL;
 
 					if (n->is_program && n->filename == NULL)
@@ -4299,7 +4314,6 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list
 					n->is_program = $6;
 					n->filename = $7;
 					n->options = $9;
-					n->partitions = NULL;
 					n->ao_segnos = NIL;
 
 					if (n->is_program && n->filename == NULL)
@@ -4407,19 +4421,19 @@ copy_opt_item:
 				}
 			| FILL MISSING FIELDS
 				{
-					$$ = makeDefElem("fill_missing_fields", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("fill_missing_fields", (Node *)makeInteger(true), @1);
 				}
 			| NEWLINE opt_as Sconst
 				{
-					$$ = makeDefElem("newline", (Node *)makeString($3));
+					$$ = makeDefElem("newline", (Node *)makeString($3), @1);
 				}	
 			| ON SEGMENT
 				{
-					$$ = makeDefElem("on_segment", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("on_segment", (Node *)makeInteger(true), @1);
 				}
 			| IGNORE_P EXTERNAL PARTITIONS
 				{
-					$$ = makeDefElem("skip_ext_partition", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("skip_ext_partition", (Node *)makeInteger(true), @1);
 				}
 		;
 
@@ -4497,10 +4511,13 @@ copy_generic_opt_arg_list_item:
  *
  *****************************************************************************/
 
+/* GPDB_12_MERGE_FIXME: In GPDB, these took OptTabPartitionBy at the end. Need
+ * to re-implement a variable like that. In upstream syntax PARTITION BY must come
+ * before WITH */
 CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 			OptInherit OptPartitionSpec table_access_method_clause OptWith
 			OnCommitOption OptTableSpace
-			OptDistributedBy OptTabPartitionBy				
+			OptDistributedBy
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->relpersistence = $2;
@@ -4516,14 +4533,13 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->tablespacename = $13;
 					n->if_not_exists = false;
 					n->distributedBy = (DistributedBy *) $12;
-					n->partitionBy = $13;
 					n->relKind = RELKIND_RELATION;
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name '('
 			OptTableElementList ')' OptInherit OptPartitionSpec table_access_method_clause
 			OptWith OnCommitOption OptTableSpace
-			OptDistributedBy OptTabPartitionBy				
+			OptDistributedBy
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$7->relpersistence = $2;
@@ -4539,14 +4555,13 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->tablespacename = $16;
 					n->if_not_exists = true;
 					n->distributedBy = (DistributedBy *) $15;
-					n->partitionBy = $16;
 					n->relKind = RELKIND_RELATION;
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE qualified_name OF any_name
 			OptTypedTableElementList OptPartitionSpec table_access_method_clause
 			OptWith OnCommitOption OptTableSpace
-			OptDistributedBy OptTabPartitionBy
+			OptDistributedBy
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->relpersistence = $2;
@@ -4563,14 +4578,13 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->tablespacename = $12;
 					n->if_not_exists = false;
 					n->distributedBy = (DistributedBy *) $11;
-					n->partitionBy = $12;
 					n->relKind = RELKIND_RELATION;
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name OF any_name
 			OptTypedTableElementList OptPartitionSpec table_access_method_clause
 			OptWith OnCommitOption OptTableSpace
-			OptDistributedBy OptTabPartitionBy
+			OptDistributedBy
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$7->relpersistence = $2;
@@ -4591,6 +4605,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 		| CREATE OptTemp TABLE qualified_name PARTITION OF qualified_name
 			OptTypedTableElementList PartitionBoundSpec OptPartitionSpec
 			table_access_method_clause OptWith OnCommitOption OptTableSpace
+			OptDistributedBy
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->relpersistence = $2;
@@ -4606,11 +4621,13 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $13;
 					n->tablespacename = $14;
 					n->if_not_exists = false;
+					n->distributedBy = (DistributedBy *) $15;
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name PARTITION OF
 			qualified_name OptTypedTableElementList PartitionBoundSpec OptPartitionSpec
 			table_access_method_clause OptWith OnCommitOption OptTableSpace
+			OptDistributedBy
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$7->relpersistence = $2;
@@ -4626,8 +4643,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $16;
 					n->tablespacename = $17;
 					n->if_not_exists = true;
-					n->distributedBy = (DistributedBy *) $14;
-					n->partitionBy = $15;
+					n->distributedBy = (DistributedBy *) $18;
 					n->relKind = RELKIND_RELATION;
 					$$ = (Node *)n;
 				}
@@ -5468,11 +5484,15 @@ OptTabPartitionStorageAttr: WITH definition TABLESPACE name
 
 OptTabPartitionSpec: '(' TabPartitionElemList ')'
 				{
+/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
+ * the old GPDB one. */
+#if 0
                         PartitionSpec *n = makeNode(PartitionSpec); 
                         n->partElem  = $2;
                         n->subSpec   = NULL;
                         n->location  = @2;
                         $$ = (Node *)n;
+#endif
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -5480,11 +5500,15 @@ OptTabPartitionSpec: '(' TabPartitionElemList ')'
 OptTabSubPartitionSpec: 
             '(' TabSubPartitionElemList ')' 
 				{
+/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
+ * the old GPDB one. */
+#if 0
                         PartitionSpec *n = makeNode(PartitionSpec); 
                         n->partElem  = $2;
                         n->subSpec   = NULL;
                         n->location  = @2;
                         $$ = (Node *)n;
+#endif
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -5526,10 +5550,12 @@ TabPartitionBoundarySpecValList:
               tab_part_val				{ $$ = lappend($1, $3); }
 		;
 
+/* GPDB_12_MERGE_FIXME: We don't have these PART_EDGE_* constants anymore */
+
 OptTabPartitionRangeInclusive:
-			INCLUSIVE			{ $$ = PART_EDGE_INCLUSIVE; }
-			| EXCLUSIVE			{ $$ = PART_EDGE_EXCLUSIVE; }
-			| /*EMPTY*/			{ $$ = PART_EDGE_UNSPECIFIED; }
+			INCLUSIVE			{ /* $$ = PART_EDGE_INCLUSIVE; */ }
+			| EXCLUSIVE			{ /* $$ = PART_EDGE_EXCLUSIVE; */ }
+			| /*EMPTY*/			{ /* $$ = PART_EDGE_UNSPECIFIED; */ }
 		;
 
 TabPartitionBoundarySpecStart:
@@ -5537,6 +5563,9 @@ TabPartitionBoundarySpecStart:
             '(' TabPartitionBoundarySpecValList ')'
 			OptTabPartitionRangeInclusive
 				{
+/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
+ * the old GPDB one. */
+#if 0
                         PartitionRangeItem *n = makeNode(PartitionRangeItem); 
                         n->partRangeVal  = $3;
                         if (!($5))
@@ -5545,6 +5574,7 @@ TabPartitionBoundarySpecStart:
                             n->partedge = $5;
                         n->location  = @1;
                         $$ = (Node *)n;
+#endif
 				}
             ;
 
@@ -5553,6 +5583,9 @@ TabPartitionBoundarySpecEnd:
             '(' TabPartitionBoundarySpecValList ')'
 			OptTabPartitionRangeInclusive
 				{
+/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
+ * the old GPDB one. */
+#if 0
                         PartitionRangeItem *n = makeNode(PartitionRangeItem); 
                         n->partRangeVal  = $3;
                         if (!($5))
@@ -5561,17 +5594,22 @@ TabPartitionBoundarySpecEnd:
                             n->partedge = $5;
                         n->location  = @1;
                         $$ = (Node *)n;
+#endif
 				}
             ;
 
 OptTabPartitionBoundarySpecEvery:
             EVERY '(' TabPartitionBoundarySpecValList ')' 
 				{
+/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
+ * the old GPDB one. */
+#if 0
                         PartitionRangeItem *n = makeNode(PartitionRangeItem); 
                         n->partRangeVal  = $3;
                         n->location  = @1;
 
                         $$ = (Node *)n;
+#endif
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
             ;
@@ -5585,16 +5623,23 @@ OptTabPartitionBoundarySpecEnd:
 TabPartitionBoundarySpec:
 			part_values_clause
 				{
+/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
+ * the old GPDB one. */
+#if 0
                         PartitionValuesSpec *n = makeNode(PartitionValuesSpec); 
 
                         n->partValues = $1;
                         n->location  = @1;
                         $$ = (Node *)n;
+#endif
 				}
 			| TabPartitionBoundarySpecStart
               OptTabPartitionBoundarySpecEnd
               OptTabPartitionBoundarySpecEvery  
 				{
+/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
+ * the old GPDB one. */
+#if 0
                         PartitionBoundSpec *n = makeNode(PartitionBoundSpec); 
                         n->partStart = $1;
                         n->partEnd   = $2;
@@ -5603,10 +5648,14 @@ TabPartitionBoundarySpec:
 						n->pWithTnameStr = NULL;
                         n->location  = @1;
                         $$ = (Node *)n;
+#endif
 				}
 			| TabPartitionBoundarySpecEnd
               OptTabPartitionBoundarySpecEvery	
 				{
+/* GPDB_12_MERGE_FIXME: Upstream PartitionSpec struct looks completely different from
+ * the old GPDB one. */
+#if 0
                         PartitionBoundSpec *n = makeNode(PartitionBoundSpec); 
                         n->partStart = NULL;
                         n->partEnd   = $1;
@@ -5615,6 +5664,7 @@ TabPartitionBoundarySpec:
 						n->pWithTnameStr = NULL;
                         n->location  = @1;
                         $$ = (Node *)n;
+#endif
 				}
             ;
 
@@ -5677,6 +5727,9 @@ TabPartitionElem:
 			OptTabPartitionColumnEncList
 			OptTabSubPartitionSpec 
 				{
+/* GPDB_12_MERGE_FIXME: Upstream PartitionElem struct looks different from
+ * the old GPDB one. */
+#if 0
                         PartitionElem *n = makeNode(PartitionElem); 
                         n->partName  = $1;
                         n->boundSpec = $2;
@@ -5687,6 +5740,7 @@ TabPartitionElem:
                         n->colencs   = $4;
                         n->AddPartDesc = NULL;
                         $$ = (Node *)n;
+#endif
 				}
 
 /* allow boundary spec for default partition in parser, but complain later */
@@ -5696,6 +5750,9 @@ TabPartitionElem:
 			  OptTabPartitionColumnEncList
 			  OptTabSubPartitionSpec 
 				{
+/* GPDB_12_MERGE_FIXME: Upstream PartitionElem struct looks different from
+ * the old GPDB one. */
+#if 0
                         PartitionElem *n = makeNode(PartitionElem); 
                         n->partName  = $1;
                         n->boundSpec = $2;
@@ -5705,12 +5762,16 @@ TabPartitionElem:
                         n->storeAttr = $3;
                         n->colencs   = $4;
                         $$ = (Node *)n;
+#endif
 				}
 			| TabPartitionBoundarySpec 
               OptTabPartitionStorageAttr
 			  OptTabPartitionColumnEncList
 			  OptTabSubPartitionSpec 
 				{
+/* GPDB_12_MERGE_FIXME: Upstream PartitionElem struct looks different from
+ * the old GPDB one. */
+#if 0
                         PartitionElem *n = makeNode(PartitionElem); 
                         n->partName  = NULL;
                         n->boundSpec = $1;
@@ -5721,6 +5782,7 @@ TabPartitionElem:
                         n->colencs   = $3;
                         n->AddPartDesc = NULL;
                         $$ = (Node *)n;
+#endif
 				}
 			| column_reference_storage_directive
 				{
@@ -5734,6 +5796,9 @@ TabSubPartitionElem:
 			OptTabPartitionColumnEncList
             OptTabSubPartitionSpec
 				{
+/* GPDB_12_MERGE_FIXME: Upstream PartitionElem struct looks different from
+ * the old GPDB one. */
+#if 0
                         PartitionElem *n = makeNode(PartitionElem); 
                         n->partName  = $1;
                         n->boundSpec = $2;
@@ -5744,6 +5809,7 @@ TabSubPartitionElem:
                         n->colencs   = $4;
                         n->AddPartDesc = NULL;
                         $$ = (Node *)n;
+#endif
 				}
 /* allow boundary spec for default partition in parser, but complain later */
 			| TabSubPartitionDefaultNameDecl OptTabPartitionBoundarySpec	
@@ -5751,6 +5817,9 @@ TabSubPartitionElem:
 			  OptTabPartitionColumnEncList
               OptTabSubPartitionSpec
 				{
+/* GPDB_12_MERGE_FIXME: Upstream PartitionElem struct looks different from
+ * the old GPDB one. */
+#if 0
                         PartitionElem *n = makeNode(PartitionElem); 
                         n->partName  = $1;
                         n->boundSpec = $2;
@@ -5761,12 +5830,16 @@ TabSubPartitionElem:
                         n->colencs   = $4;
                         n->AddPartDesc = NULL;
                         $$ = (Node *)n;
+#endif
 				}
 			| TabPartitionBoundarySpec
               OptTabPartitionStorageAttr
 			  OptTabPartitionColumnEncList
  			  OptTabSubPartitionSpec	
 				{
+/* GPDB_12_MERGE_FIXME: Upstream PartitionElem struct looks different from
+ * the old GPDB one. */
+#if 0
                         PartitionElem *n = makeNode(PartitionElem); 
                         n->partName  = NULL;
                         n->boundSpec = $1;
@@ -5777,6 +5850,7 @@ TabSubPartitionElem:
                         n->storeAttr = $2;
                         n->AddPartDesc = NULL;
                         $$ = (Node *)n;
+#endif
 				}
 			| column_reference_storage_directive
 				{
@@ -5808,11 +5882,11 @@ TabSubPartitionDefaultNameDecl: DEFAULT SUBPARTITION PartitionColId
 		;
 
 TabPartitionByType:
-			RANGE 				{ $$ = PARTTYP_RANGE; }
-			| LIST				{ $$ = PARTTYP_LIST; }
+			RANGE 				{ $$ = PARTITION_STRATEGY_RANGE; }
+			| LIST				{ $$ = PARTITION_STRATEGY_LIST; }
 			| /*EMPTY*/
 				{
-					$$ = PARTTYP_RANGE; 
+					$$ = PARTITION_STRATEGY_RANGE; 
 
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
@@ -5826,6 +5900,9 @@ OptTabPartitionBy:
 			opt_list_subparts
             OptTabPartitionSpec						
 				{
+/* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
+ * the old GPDB one. */
+#if 0
 					PartitionBy *n = makeNode(PartitionBy); 
 						
 					n->partType = $3;
@@ -5841,6 +5918,7 @@ OptTabPartitionBy:
 					n->location  = @3;
 					n->partDefault = NULL;
 					$$ = (Node *)n;
+#endif
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -5849,6 +5927,9 @@ TabSubPartitionTemplate:
 			SUBPARTITION TEMPLATE
 			'(' TabSubPartitionElemList ')'
 				{
+/* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
+ * the old GPDB one. */
+#if 0
 					PartitionSpec *n = makeNode(PartitionSpec); 
 					n->partElem  = $4;
 					n->subSpec   = NULL;
@@ -5877,6 +5958,7 @@ TabSubPartitionTemplate:
 						}
 
 					}
+#endif
 				}
 		;
 
@@ -5888,6 +5970,9 @@ opt_list_subparts: TabSubPartition { $$ = $1; }
 TabSubPartitionBy: SUBPARTITION BY
 			TabPartitionByType '(' columnList ')'
 				{
+/* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
+ * the old GPDB one. */
+#if 0
 					PartitionBy *n = makeNode(PartitionBy);
 					n->partType = $3;
 					n->keys = $5;
@@ -5898,31 +5983,44 @@ TabSubPartitionBy: SUBPARTITION BY
 					n->location  = @3;
 					n->partDefault = NULL;
 					$$ = (Node *)n;
+#endif
 				}
 			;
 
 TabSubPartition:
 			TabSubPartitionBy TabSubPartitionTemplate
 				{
+/* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
+ * the old GPDB one. */
+#if 0
 					PartitionBy *pby = (PartitionBy *)$1;
 
 					((PartitionBy *)pby)->partSpec = $2;
 
 					$$ = $1;
+#endif
 				}
 			| TabSubPartitionBy { $$ = $1; }
 			|  TabSubPartitionBy TabSubPartition
 				{
+/* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
+ * the old GPDB one. */
+#if 0
 					PartitionBy *pby = (PartitionBy *)$1;
 					pby->subPart = $2;
 					$$ = (Node *)pby;
+#endif
 				}
 			| TabSubPartitionBy TabSubPartitionTemplate TabSubPartition
 				{
+/* GPDB_12_MERGE_FIXME: Upstream structs for partitioning syntax look different from
+ * the old GPDB one. */
+#if 0
 					PartitionBy *pby = (PartitionBy *)$1;
 					pby->partSpec = $2;
 					pby->subPart = $3;
 					$$ = (Node *)pby;
+#endif
 				}
 		;
 /* END GPDB LEGACY PARTITION SYNTAX RULES */
@@ -6076,7 +6174,7 @@ CreateExternalStmt:	CREATE OptWritable EXTERNAL OptWeb OptTemp TABLE qualified_n
 								if(extdesc->on_clause == NIL)
 								{									
 									extdesc->on_clause = lappend(extdesc->on_clause, 
-										   				   		 makeDefElem("all", (Node *)makeInteger(TRUE)));
+										   				   		 makeDefElem("all", (Node *)makeInteger(true), @1));
 								}
 								else if(n->iswritable)
 								{
@@ -6095,13 +6193,13 @@ CreateExternalStmt:	CREATE OptWritable EXTERNAL OptWeb OptTemp TABLE qualified_n
 						}
 						;
 
-OptWritable:	WRITABLE				{ $$ = TRUE; }
-				| READABLE				{ $$ = FALSE; }
-				| /*EMPTY*/				{ $$ = FALSE; }
+OptWritable:	WRITABLE				{ $$ = true; }
+				| READABLE				{ $$ = false; }
+				| /*EMPTY*/				{ $$ = false; }
 				;
 
-OptWeb:		WEB						{ $$ = TRUE; }
-			| /*EMPTY*/				{ $$ = FALSE; }
+OptWeb:		WEB						{ $$ = true; }
+			| /*EMPTY*/				{ $$ = false; }
 			;
 
 ExtTypedesc:
@@ -6135,27 +6233,27 @@ ext_on_clause_list:
 ext_on_clause_item:
 			ON ALL	
 			{
-				$$ = makeDefElem("all", (Node *)makeInteger(TRUE));
+				$$ = makeDefElem("all", (Node *)makeInteger(true), @1);
 			}
 			| ON HOST Sconst
 			{
-				$$ = makeDefElem("hostname", (Node *)makeString($3));
+				$$ = makeDefElem("hostname", (Node *)makeString($3), @1);
 			}
 			| ON HOST
 			{
-				$$ = makeDefElem("eachhost", (Node *)makeInteger(TRUE));
+				$$ = makeDefElem("eachhost", (Node *)makeInteger(true), @1);
 			}
 			| ON MASTER
 			{
-				$$ = makeDefElem("master", (Node *)makeInteger(TRUE));
+				$$ = makeDefElem("master", (Node *)makeInteger(true), @1);
 			}
 			| ON SEGMENT Iconst
 			{
-				$$ = makeDefElem("segment", (Node *)makeInteger($3));
+				$$ = makeDefElem("segment", (Node *)makeInteger($3), @1);
 			}
 			| ON Iconst
 			{
-				$$ = makeDefElem("random", (Node *)makeInteger($2));
+				$$ = makeDefElem("random", (Node *)makeInteger($2), @1);
 			}
 			;
 
@@ -6190,58 +6288,58 @@ format_def_list:
 format_def_item:
     		ColLabel '=' def_arg
 			{
-				$$ = makeDefElem($1, $3);
+				$$ = makeDefElem($1, $3, @1);
 			}
 			| ColLabel '=' '(' columnList ')'
 			{
-				$$ = makeDefElem($1, (Node *) $4);
+				$$ = makeDefElem($1, (Node *) $4, @1);
 			}
 
 
 format_opt_item:
 			DELIMITER opt_as Sconst
 			{
-				$$ = makeDefElem("delimiter", (Node *)makeString($3));
+				$$ = makeDefElem("delimiter", (Node *)makeString($3), @1);
 			}
 			| NULL_P opt_as Sconst
 			{
-				$$ = makeDefElem("null", (Node *)makeString($3));
+				$$ = makeDefElem("null", (Node *)makeString($3), @1);
 			}
 			| CSV
 			{
-				$$ = makeDefElem("csv", (Node *)makeInteger(TRUE));
+				$$ = makeDefElem("csv", (Node *)makeInteger(true), @1);
 			}
 			| HEADER_P
 			{
-				$$ = makeDefElem("header", (Node *)makeInteger(TRUE));
+				$$ = makeDefElem("header", (Node *)makeInteger(true), @1);
 			}
 			| QUOTE opt_as Sconst
 			{
-				$$ = makeDefElem("quote", (Node *)makeString($3));
+				$$ = makeDefElem("quote", (Node *)makeString($3), @1);
 			}
 			| ESCAPE opt_as Sconst
 			{
-				$$ = makeDefElem("escape", (Node *)makeString($3));
+				$$ = makeDefElem("escape", (Node *)makeString($3), @1);
 			}
 			| FORCE NOT NULL_P columnList
 			{
-				$$ = makeDefElem("force_not_null", (Node *)$4);
+				$$ = makeDefElem("force_not_null", (Node *)$4, @1);
 			}
 			| FORCE QUOTE columnList
 			{
-				$$ = makeDefElem("force_quote", (Node *)$3);
+				$$ = makeDefElem("force_quote", (Node *)$3, @1);
 			}
 			| FORCE QUOTE '*'
 			{
-				$$ = makeDefElem("force_quote", (Node *)makeNode(A_Star));
+				$$ = makeDefElem("force_quote", (Node *)makeNode(A_Star), @1);
 			}
 			| FILL MISSING FIELDS
 			{
-				$$ = makeDefElem("fill_missing_fields", (Node *)makeInteger(TRUE));
+				$$ = makeDefElem("fill_missing_fields", (Node *)makeInteger(true), @1);
 			}
 			| NEWLINE opt_as Sconst
 			{
-				$$ = makeDefElem("newline", (Node *)makeString($3));
+				$$ = makeDefElem("newline", (Node *)makeString($3), @1);
 			}
 			;
 
@@ -6269,7 +6367,7 @@ ext_options_list:
 ext_options_item:
 			ColLabel Sconst
 			{
-				$$ = makeDefElem($1, (Node *)makeString($2));
+				$$ = makeDefElem($1, (Node *)makeString($2), @1);
 			}
 			;
 
@@ -6353,16 +6451,16 @@ OptLogErrorTable:
 					 errhint("Set gp_ignore_error_table to ignore the [INTO error-table] clause for backward compatibility."),
 					 parser_errposition(@3)));
 			}
-			$$ = TRUE;
+			$$ = true;
 		}
-		| LOG_P ERRORS                        { $$ = TRUE; }
-		| /*EMPTY*/							{ $$ = FALSE; }
+		| LOG_P ERRORS                        { $$ = true; }
+		| /*EMPTY*/							{ $$ = false; }
 		;
 	
 OptSrehLimitType:		
-		ROWS					{ $$ = TRUE; }
-		| PERCENT				{ $$ = FALSE; }
-		| /* default is ROWS */	{ $$ = TRUE; }
+		ROWS					{ $$ = true; }
+		| PERCENT				{ $$ = false; }
+		| /* default is ROWS */	{ $$ = true; }
 		;
 
 /*
@@ -6376,11 +6474,11 @@ ext_opt_encoding_list:
 ext_opt_encoding_item:
 		ENCODING opt_equal Sconst
 		{
-			$$ = makeDefElem("encoding", (Node *)makeString($3));
+			$$ = makeDefElem("encoding", (Node *)makeString($3), @1);
 		}
 		| ENCODING opt_equal Iconst
 		{
-			$$ = makeDefElem("encoding", (Node *)makeInteger($3));
+			$$ = makeDefElem("encoding", (Node *)makeInteger($3), @1);
 		}
 		;
 
@@ -8158,8 +8256,8 @@ DefineStmt:
 				}
 		;
 
-opt_ordered:	ORDERED	{ $$ = TRUE; }
-			| /*EMPTY*/	{ $$ = FALSE; }
+opt_ordered:	ORDERED
+			| /*EMPTY*/
 		;
 
 definition: '(' def_list ')'						{ $$ = $2; }
@@ -9505,7 +9603,7 @@ privilege_target:
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
-					n->objtype = ACL_OBJECT_EXTPROTOCOL;
+					n->objtype = OBJECT_EXTPROTOCOL;
 					n->objs = $2;
 					$$ = n;
 				}			
@@ -10308,31 +10406,31 @@ common_func_opt_item:
 				}
 			| NO SQL_P
 				{
-					$$ = makeDefElem("data_access", (Node *)makeString("none"));
+					$$ = makeDefElem("data_access", (Node *)makeString("none"), @1);
 				}
 			| CONTAINS SQL_P
 				{
-					$$ = makeDefElem("data_access", (Node *)makeString("contains"));
+					$$ = makeDefElem("data_access", (Node *)makeString("contains"), @1);
 				}
 			| READS SQL_P DATA_P
 				{
-					$$ = makeDefElem("data_access", (Node *)makeString("reads"));
+					$$ = makeDefElem("data_access", (Node *)makeString("reads"), @1);
 				}
 			| MODIFIES SQL_P DATA_P
 				{
-					$$ = makeDefElem("data_access", (Node *)makeString("modifies"));
+					$$ = makeDefElem("data_access", (Node *)makeString("modifies"), @1);
 				}
 			| EXECUTE ON ANY
 				{
-					$$ = makeDefElem("exec_location", (Node *)makeString("any"));
+					$$ = makeDefElem("exec_location", (Node *)makeString("any"), @1);
 				}
 			| EXECUTE ON MASTER
 				{
-					$$ = makeDefElem("exec_location", (Node *)makeString("master"));
+					$$ = makeDefElem("exec_location", (Node *)makeString("master"), @1);
 				}
 			| EXECUTE ON ALL SEGMENTS
 				{
-					$$ = makeDefElem("exec_location", (Node *)makeString("all_segments"));
+					$$ = makeDefElem("exec_location", (Node *)makeString("all_segments"), @1);
 				}
 		;
 
@@ -11380,7 +11478,7 @@ RenameStmt: ALTER AGGREGATE aggregate_with_argtypes RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_EXTPROTOCOL;
-					n->object = $3;
+					n->object = (Node *) $3;
 					n->newname = $6;
 					$$ = (Node *)n;
 				}
@@ -11885,7 +11983,7 @@ AlterOwnerStmt: ALTER AGGREGATE aggregate_with_argtypes OWNER TO RoleSpec
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_EXTPROTOCOL;
-					n->object = list_make1(makeString($3));
+					n->object = (Node *) makeString($3);
 					n->newowner = $6;
 					$$ = (Node *)n;
 				}
@@ -13191,8 +13289,8 @@ ExplainableStmt:
 				}
 		;
 
-opt_dxl:	DXL										{ $$ = TRUE; }
-			| /*EMPTY*/								{ $$ = FALSE; }
+opt_dxl:	DXL										{ $$ = true; }
+			| /*EMPTY*/								{ $$ = false; }
 		;
 
 explain_option_list:
@@ -16193,7 +16291,7 @@ func_application: func_name '(' ')'
 					 * "must be an aggregate", but there's no provision
 					 * for that in FuncCall at the moment.
 					 */
-					n->func_variadic = FALSE;
+					n->func_variadic = false;
 					n->location = @1;
 					n->over = NULL;
 					$$ = (Node *)n;
@@ -16463,7 +16561,7 @@ func_expr_common_subexpr:
 					sortby->location = -1;		/* no operator */
 					n->agg_order = list_make1(sortby);
 
-					n->agg_within_group = TRUE;
+					n->agg_within_group = true;
 					n->agg_filter = NULL;
 					n->over = NULL;
 					n->location = @1;
@@ -16475,9 +16573,9 @@ func_expr_common_subexpr:
 					n->funcname = list_make1(makeString("decode"));
 					n->args = list_make2($3, $5);
                     n->agg_order = NIL;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->func_variadic = FALSE;
+					n->agg_star = false;
+					n->agg_distinct = false;
+					n->func_variadic = false;
 					n->agg_filter = NULL;
 					n->location = @1;
 					n->over = NULL;
@@ -16523,9 +16621,9 @@ func_expr_common_subexpr:
 					n->funcname = SystemFuncName("xmlexists");
 					n->args = list_make2($3, $5);
 					n->agg_order = NIL;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->func_variadic = FALSE;
+					n->agg_star = false;
+					n->agg_distinct = false;
+					n->func_variadic = false;
 					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;

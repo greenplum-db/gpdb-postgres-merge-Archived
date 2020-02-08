@@ -741,9 +741,6 @@ typedef struct EState
 	/* CDB: EXPLAIN ANALYZE statistics */
 	struct CdbExplain_ShowStatCtx  *showstatctx;
 
-	/* CDB: partitioning state info */
-	PartitionState *es_partition_state;
-
 	/*
 	 * The slice number for the current node that is being processed.
 	 * During the tree traversal in ExecInitPlan stage, this field is set
@@ -1224,6 +1221,9 @@ typedef struct PlanState
 
 	Instrumentation *instrument;	/* Optional runtime stats for this node */
 	WorkerInstrumentation *worker_instrument;	/* per-worker instrumentation */
+	struct StringInfoData  *cdbexplainbuf;  /* EXPLAIN ANALYZE report buf */
+	void      (*cdbexplainfun)(struct PlanState *planstate, struct StringInfoData *buf);
+	/* callback before ExecutorEnd */
 
 	bool		fHadSentGpmon;
 
@@ -1298,15 +1298,6 @@ typedef struct PlanState
 	bool		outeropsset;
 	bool		inneropsset;
 	bool		resultopsset;
-
-	/*
-	 * EXPLAIN ANALYZE statistics collection
-	 */
-	Instrumentation *instrument;	/* Optional runtime stats for this node */
-	WorkerInstrumentation *worker_instrument;	/* per-worker instrumentation */
-	struct StringInfoData  *cdbexplainbuf;  /* EXPLAIN ANALYZE report buf */
-	void      (*cdbexplainfun)(struct PlanState *planstate, struct StringInfoData *buf);
-	/* callback before ExecutorEnd */
 
 	/*
 	 * GpMon packet
@@ -2136,8 +2127,9 @@ typedef struct TableFunctionState
 	struct AnyTableData *inputscan;		/* subquery scan data */
 	TupleDesc	resultdesc;		/* Function Result descriptor */
 	HeapTupleData tuple;		/* Returned tuple */
-	FuncExprState *fcache;		/* Function Call Cache */
-	FunctionCallInfoData fcinfo;	/* Function Call Context */
+	// GPDB_12_MERGE_FIXME: what happened to these?
+	//FuncExprState *fcache;		/* Function Call Cache */
+	//FunctionCallInfoData fcinfo;	/* Function Call Context */
 	ReturnSetInfo rsinfo;		/* Resultset Context */
 	bool		is_rowtype;		/* Function returns records */
 	bool		is_firstcall;
@@ -3196,26 +3188,5 @@ typedef struct MotionState
 
 	int			numInputSegs;	/* the number of segments on the sending slice */
 } MotionState;
-
-/*
- * ExecNode for PartitionSelector.
- * This operator contains a Plannode in PlanState.
- */
-// GPDB_12_MERGE_FIXME: This belongs to legacy GPDB partitioning. Can we remove it?
-typedef struct PartitionSelectorState
-{
-	PlanState ps;                                       /* its first field is NodeTag */
-	PartitionNode *rootPartitionNode;                   /* PartitionNode for root table */
-	PartitionAccessMethods *accessMethods;              /* Access method for partition */
-	struct PartitionRule **levelPartRules; 				/* accepted partitions for all levels */
-	List *levelEqExprStates;                            /* ExprState for equality expressions for all levels */
-	List *levelExprStateLists;                          /* ExprState list for general expressions for all levels */
-	List *residualPredicateExprStateList;               /* ExprState list for evaluating residual predicate */
-	ExprState *propagationExprState;                    /* ExprState for evaluating propagation expression */
-
-	TupleDesc	partTabDesc;
-	TupleTableSlot *partTabSlot;
-	ProjectionInfo *partTabProj;
-} PartitionSelectorState;
 
 #endif							/* EXECNODES_H */
