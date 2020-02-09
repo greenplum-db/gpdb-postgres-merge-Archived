@@ -1663,14 +1663,8 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 	{
 		case 0:
 			ereport(ERROR,
-<<<<<<< HEAD
-				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
-				 errmsg("lower bound cannot equal upper bound")));
-			/* make compiler happy */
-=======
 					(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
 					 errmsg("lower bound cannot equal upper bound")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 
 			/* bound1 < bound2 */
@@ -3805,11 +3799,6 @@ float8_numeric(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot convert infinity to numeric")));
-<<<<<<< HEAD
-=======
-
-	snprintf(buf, sizeof(buf), "%.*g", DBL_DIG, val);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	snprintf(buf, sizeof(buf), "%.*g", DBL_DIG, val);
 
@@ -3879,11 +3868,6 @@ float4_numeric(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot convert infinity to numeric")));
-<<<<<<< HEAD
-=======
-
-	snprintf(buf, sizeof(buf), "%.*g", FLT_DIG, val);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	snprintf(buf, sizeof(buf), "%.*g", FLT_DIG, val);
 

@@ -989,12 +989,7 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 		 */
 		mtuple->t_data->t_ctid = tuple->t_data->t_ctid;
 		mtuple->t_self = tuple->t_self;
-<<<<<<< HEAD
-		if (rel->rd_att->tdhasoid)
-			HeapTupleSetOid(mtuple, HeapTupleGetOid(tuple));
-=======
 		mtuple->t_tableOid = tuple->t_tableOid;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 	{

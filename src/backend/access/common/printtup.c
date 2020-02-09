@@ -412,13 +412,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 		
 		if (isnull)
 		{
-<<<<<<< HEAD
-			/* -1 is the same in both byte orders.  This is the same as pg_sendint */
-			int32 n32 = -1;
-			appendBinaryStringInfo(&buf, (char *) &n32, 4);
-=======
 			pq_sendint32(buf, -1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			continue;
 		}
 

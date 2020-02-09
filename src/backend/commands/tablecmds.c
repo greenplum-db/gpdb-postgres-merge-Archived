@@ -7460,49 +7460,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		 * checking all the constraints.
 		 */
 		snapshot = RegisterSnapshot(GetLatestSnapshot());
-<<<<<<< HEAD
-		if (relstorage == RELSTORAGE_HEAP)
-		{
-			heapscan = heap_beginscan(oldrel, snapshot, 0, NULL);
-
-			/*
-			 * Switch to per-tuple memory context and reset it for each tuple
-			 * produced, so we don't leak memory.
-			 */
-			oldCxt = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
-
-			while ((htuple = heap_getnext(heapscan, ForwardScanDirection)) != NULL)
-			{
-				if (tab->rewrite > 0)
-				{
-					Oid			tupOid = InvalidOid;
-
-					/* Extract data from old tuple */
-					heap_deform_tuple(htuple, oldTupDesc, values, isnull);
-					if (oldTupDesc->tdhasoid)
-						tupOid = HeapTupleGetOid(htuple);
-
-					/* Set dropped attributes to null in new tuple */
-					foreach(lc, dropped_attrs)
-						isnull[lfirst_int(lc)] = true;
-
-					/*
-					 * Process supplied expressions to replace selected columns.
-					 * Expression inputs come from the old tuple.
-					 */
-					ExecStoreHeapTuple(htuple, oldslot, InvalidBuffer, false);
-					econtext->ecxt_scantuple = oldslot;
-
-					foreach(l, tab->newvals)
-					{
-						NewColumnValue *ex = lfirst(l);
-
-						values[ex->attnum - 1] = ExecEvalExpr(ex->exprstate,
-															  econtext,
-															  &isnull[ex->attnum - 1],
-															  NULL);
-					}
-=======
 		scan = table_beginscan(oldrel, snapshot, 0, NULL);
 
 		/*
@@ -7536,65 +7493,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 				 * Expression inputs come from the old tuple.
 				 */
 				econtext->ecxt_scantuple = oldslot;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-
-					/*
-					 * Form the new tuple. Note that we don't explicitly pfree it,
-					 * since the per-tuple memory context will be reset shortly.
-					 */
-					htuple = heap_form_tuple(newTupDesc, values, isnull);
-
-					/* Preserve OID, if any */
-					if (newTupDesc->tdhasoid)
-						HeapTupleSetOid(htuple, tupOid);
-				}
-
-				/* Now check any constraints on the possibly-changed tuple */
-				ExecStoreHeapTuple(htuple, newslot, InvalidBuffer, false);
-				econtext->ecxt_scantuple = newslot;
-
-				foreach(l, notnull_attrs)
-				{
-					int			attn = lfirst_int(l);
-
-<<<<<<< HEAD
-					if (heap_attisnull(htuple, attn + 1))
-						ereport(ERROR,
-								(errcode(ERRCODE_NOT_NULL_VIOLATION),
-								 errmsg("column \"%s\" contains null values",
-										NameStr(newTupDesc->attrs[attn]->attname))));
-				}
-
-				foreach(l, tab->constraints)
-				{
-					NewConstraint *con = lfirst(l);
-
-					switch (con->contype)
-					{
-						case CONSTR_CHECK:
-							if (!ExecCheck(con->qualstate, econtext))
-							{
-								if (OidIsValid(tab->exchange_relid))
-									ereport(ERROR,
-											(errcode(ERRCODE_CHECK_VIOLATION),
-											 errmsg("exchange table contains a row which violates the partitioning specification of \"%s\"",
-													get_rel_name(tab->relid))));
-								else
-									ereport(ERROR,
-											(errcode(ERRCODE_CHECK_VIOLATION),
-											 errmsg("check constraint \"%s\" is violated by some row",
-												con->name)));
-							}
-							break;
-						case CONSTR_FOREIGN:
-							/* Nothing to do here */
-							break;
-						default:
-							elog(ERROR, "unrecognized constraint type: %d",
-								 (int) con->contype);
-					}
-				}
-=======
 					newslot->tts_values[ex->attnum - 1]
 						= ExecEvalExpr(ex->exprstate,
 									   econtext,
@@ -7602,26 +7500,11 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 				}
 
 				ExecStoreVirtualTuple(newslot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 				/*
 				 * Constraints might reference the tableoid column, so
 				 * initialize t_tableOid before evaluating them.
 				 */
-<<<<<<< HEAD
-#if 0
-				tuple->t_tableOid = RelationGetRelid(oldrel);
-#endif
-
-				/* Write the tuple out to the new relation */
-				if (newrel)
-					heap_insert(newrel, htuple, mycid, hi_options, bistate,
-								GetCurrentTransactionId());
-
-				ResetExprContext(econtext);
-
-				CHECK_FOR_INTERRUPTS();
-=======
 				newslot->tts_tableOid = RelationGetRelid(oldrel);
 				insertslot = newslot;
 			}
@@ -7652,7 +7535,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 									NameStr(attr->attname)),
 							 errtablecol(oldrel, attn + 1)));
 				}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 
 			MemoryContextSwitchTo(oldCxt);
@@ -8653,15 +8535,9 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			heap_freetuple(tuple);
 
 			/* Inform the user about the merge */
-<<<<<<< HEAD
 			ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG1 : NOTICE,
-			  (errmsg("merging definition of column \"%s\" for child \"%s\"",
-					  colDef->colname, RelationGetRelationName(rel))));
-=======
-			ereport(NOTICE,
 					(errmsg("merging definition of column \"%s\" for child \"%s\"",
 							colDef->colname, RelationGetRelationName(rel))));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			table_close(attrdesc, RowExclusiveLock);
 			return InvalidObjectAddress;
@@ -10231,11 +10107,7 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 	AttrNumber	attnum;
 	List	   *children;
 	ObjectAddress object;
-<<<<<<< HEAD
-	PartitionNode *pn;
-=======
 	bool		is_expr;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
@@ -10280,28 +10152,6 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 				 errmsg("cannot drop inherited column \"%s\"",
 						colName)));
 
-<<<<<<< HEAD
-	/*
-	 * Don't drop columns used in the partition key, either.  (If we let this
-	 * go through, the key column's dependencies would cause a cascaded drop
-	 * of the whole table, which is surely not what the user expected.)
-	 */
-	pn = RelationBuildPartitionDesc(rel, false);
-	if (pn)
-	{
-		List *patts = get_partition_attrs(pn);
-
-		if (list_member_int(patts, attnum))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot drop partitioning column \"%s\"",
-							colName)));
-
-		/*
-		 * Remove any partition encoding entry
-		 */
-		RemovePartitionEncodingByRelidAttribute(RelationGetRelid(rel), attnum);
-=======
 	/* Don't drop columns used in the partition key */
 	if (has_partition_attrs(rel,
 							bms_make_singleton(attnum - FirstLowInvalidHeapAttributeNumber),
@@ -10315,7 +10165,6 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					 errmsg("cannot drop column referenced in partition key expression")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	ReleaseSysCache(tuple);
@@ -10455,51 +10304,12 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 
 	performDeletion(&object, behavior, 0);
 
-<<<<<<< HEAD
-	/*
-	 * If we dropped the OID column, must adjust pg_class.relhasoids and tell
-	 * Phase 3 to physically get rid of the column.  We formerly left the
-	 * column in place physically, but this caused subtle problems.  See
-	 * http://archives.postgresql.org/pgsql-hackers/2009-02/msg00363.php
-	 */
-	if (attnum == ObjectIdAttributeNumber)
-	{
-		Relation	class_rel;
-		Form_pg_class tuple_class;
-		AlteredTableInfo *tab;
-
-		class_rel = heap_open(RelationRelationId, RowExclusiveLock);
-
-		tuple = SearchSysCacheCopy1(RELOID,
-									ObjectIdGetDatum(RelationGetRelid(rel)));
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for relation %u",
-				 RelationGetRelid(rel));
-		tuple_class = (Form_pg_class) GETSTRUCT(tuple);
-
-		tuple_class->relhasoids = false;
-		simple_heap_update(class_rel, &tuple->t_self, tuple);
-
-		/* Keep the catalog indexes up to date */
-		CatalogUpdateIndexes(class_rel, tuple);
-
-		heap_close(class_rel, RowExclusiveLock);
-
-		/* Find or create work queue entry for this table */
-		tab = ATGetQueueEntry(wqueue, rel);
-
-		/* Tell Phase 3 to physically remove the OID column */
-		tab->rewrite |= AT_REWRITE_ALTER_OID;
-	}
-
 	/* MPP-6929: metadata tracking */
 	if ((Gp_role == GP_ROLE_DISPATCH) && MetaTrackValidKindNsp(rel->rd_rel))
 		MetaTrackUpdObject(RelationRelationId,
 						   RelationGetRelid(rel),
 						   GetUserId(),
 						   "ALTER", "DROP COLUMN");
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	return object;
 }
 
@@ -10599,14 +10409,7 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 	 * Doing this on partitioned tables is not a simple feature to implement,
 	 * so let's punt for now.
 	 */
-<<<<<<< HEAD
-	Oid rel_id = RelationGetRelid(rel);
-	bool is_root_or_interior_partition = rel_is_partitioned(rel_id)
-		|| rel_is_interior_partition(rel_id);
-	if (Gp_role != GP_ROLE_EXECUTE && is_root_or_interior_partition)
-=======
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("ALTER TABLE / ADD CONSTRAINT USING INDEX is not supported on partitioned tables")));
@@ -11003,14 +10806,6 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * Validity checks (permission checks wait till we have the column
 	 * numbers)
 	 */
-<<<<<<< HEAD
-	if (rel_is_child_partition(RelationGetRelid(pkrel)))
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot reference just part of a partitioned table")));
-
-	if (pkrel->rd_rel->relkind != RELKIND_RELATION)
-=======
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
 		if (!recurse)
@@ -11030,7 +10825,6 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 	if (pkrel->rd_rel->relkind != RELKIND_RELATION &&
 		pkrel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("referenced relation \"%s\" is not a table",
@@ -12456,13 +12250,8 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 			/*
 			 * Update deferrability of RI_FKey_noaction_del,
 			 * RI_FKey_noaction_upd, RI_FKey_check_ins and RI_FKey_check_upd
-<<<<<<< HEAD
-			 * triggers, but not others; see createForeignKeyTriggers and
-			 * CreateFKCheckTrigger.
-=======
 			 * triggers, but not others; see createForeignKeyActionTriggers
 			 * and CreateFKCheckTrigger.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			 */
 			if (tgform->tgfoid != F_RI_FKEY_NOACTION_DEL &&
 				tgform->tgfoid != F_RI_FKEY_NOACTION_UPD &&
@@ -13268,16 +13057,9 @@ CreateFKCheckTrigger(Oid myRelOid, Oid refRelOid, Constraint *fkconstraint,
 }
 
 /*
-<<<<<<< HEAD
- * Create the triggers that implement an FK constraint.
- *
- * NB: if you change any trigger properties here, see also
- * ATExecAlterConstraint.
-=======
  * createForeignKeyActionTriggers
  *		Create the referenced-side "action" triggers that implement a foreign
  *		key.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 static void
 createForeignKeyActionTriggers(Relation rel, Oid refRelOid, Constraint *fkconstraint,
@@ -13701,7 +13483,6 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 		table_close(childrel, NoLock);
 	}
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if ((Gp_role == GP_ROLE_DISPATCH) && MetaTrackValidKindNsp(rel->rd_rel))
 		MetaTrackUpdObject(RelationRelationId,
@@ -13709,10 +13490,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 						   GetUserId(),
 						   "ALTER", "DROP CONSTRAINT");
 
-	heap_close(conrel, RowExclusiveLock);
-=======
 	table_close(conrel, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -13805,7 +13583,6 @@ ATPrepAlterColumnType(List **wqueue,
 					   list_make1_oid(rel->rd_rel->reltype),
 					   0);
 
-<<<<<<< HEAD
 	/*
 	 * If the column is part of the distribution key, look up the new operator
 	 * class
@@ -13853,11 +13630,8 @@ ATPrepAlterColumnType(List **wqueue,
 		}
 	}
 
-	if (tab->relkind == RELKIND_RELATION)
-=======
 	if (tab->relkind == RELKIND_RELATION ||
 		tab->relkind == RELKIND_PARTITIONED_TABLE)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		/*
 		 * Set up an expression to transform the old data value to the new
@@ -16253,8 +16027,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 		table_close(toastrel, NoLock);
 	}
 
-<<<<<<< HEAD
-	heap_close(pgclass, RowExclusiveLock);
+	table_close(pgclass, RowExclusiveLock);
 
 	/* MPP-6929: metadata tracking */
 	if ((Gp_role == GP_ROLE_DISPATCH)
@@ -16265,9 +16038,6 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 						   "ALTER",
 						   operation == AT_ResetRelOptions ? "RESET" : "SET"
 				);
-=======
-	table_close(pgclass, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -16882,8 +16652,7 @@ static void
 ATExecEnableDisableTrigger(Relation rel, const char *trigname,
 						   char fires_when, bool skip_system, LOCKMODE lockmode)
 {
-<<<<<<< HEAD
-	EnableDisableTrigger(rel, trigname, fires_when, skip_system);
+	EnableDisableTrigger(rel, trigname, fires_when, skip_system, lockmode);
 
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH && MetaTrackValidKindNsp(rel->rd_rel))
@@ -16913,9 +16682,6 @@ ATExecEnableDisableTrigger(Relation rel, const char *trigname,
 						   "ALTER", 
 						   subtype);
 	}
-=======
-	EnableDisableTrigger(rel, trigname, fires_when, skip_system, lockmode);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -17222,19 +16988,12 @@ CreateInheritance(Relation child_rel, Relation parent_rel)
 	StoreCatalogInheritance1(RelationGetRelid(child_rel),
 							 RelationGetRelid(parent_rel),
 							 inhseqno + 1,
-<<<<<<< HEAD
-							 catalogRelation, is_partition);
-
-	/* Now we're done with pg_inherits */
-	heap_close(catalogRelation, RowExclusiveLock);
-=======
 							 catalogRelation,
 							 parent_rel->rd_rel->relkind ==
 							 RELKIND_PARTITIONED_TABLE);
 
 	/* Now we're done with pg_inherits */
 	table_close(catalogRelation, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -17451,44 +17210,7 @@ MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel, List *inhAt
 		}
 	}
 
-<<<<<<< HEAD
-	/*
-	 * If the parent has an OID column, so must the child, and we'd better
-	 * update the child's attinhcount and attislocal the same as for normal
-	 * columns.  We needn't check data type or not-nullness though.
-	 */
-	if (tupleDesc->tdhasoid)
-	{
-		/*
-		 * Here we match by column number not name; the match *must* be the
-		 * system column, not some random column named "oid".
-		 */
-		tuple = SearchSysCacheCopy2(ATTNUM,
-							   ObjectIdGetDatum(RelationGetRelid(child_rel)),
-									Int16GetDatum(ObjectIdAttributeNumber));
-		if (HeapTupleIsValid(tuple))
-		{
-			Form_pg_attribute childatt = (Form_pg_attribute) GETSTRUCT(tuple);
-
-			/* See comments above; these changes should be the same */
-			childatt->attinhcount++;
-			simple_heap_update(attrrel, &tuple->t_self, tuple);
-			CatalogUpdateIndexes(attrrel, tuple);
-			heap_freetuple(tuple);
-		}
-		else
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("child table is missing column \"%s\"",
-							"oid")));
-		}
-	}
-
-	heap_close(attrrel, RowExclusiveLock);
-=======
 	table_close(attrrel, RowExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
