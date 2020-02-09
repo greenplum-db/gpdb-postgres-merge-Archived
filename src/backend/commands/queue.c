@@ -80,7 +80,7 @@ GetResourceTypeByName(char *pNameIn, int *pTypeOut, Oid *pOidOut)
 	 * XXX XXX: maybe should be share lock, ie remove FOR UPDATE ?
 	 * XXX XXX: only one
 	 */
-	pg_resourcetype = heap_open(ResourceTypeRelationId, RowExclusiveLock);
+	pg_resourcetype = table_open(ResourceTypeRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&scankey,
 				Anum_pg_resourcetype_resname,
@@ -92,13 +92,14 @@ GetResourceTypeByName(char *pNameIn, int *pTypeOut, Oid *pOidOut)
 	tuple = systable_getnext(sscan);
 	if (HeapTupleIsValid(tuple))
 	{
-		*pOidOut = HeapTupleGetOid(tuple);
-		*pTypeOut =
-				((Form_pg_resourcetype) GETSTRUCT(tuple))->restypid;
+		Form_pg_resourcetype rtype = (Form_pg_resourcetype) GETSTRUCT(tuple);
+
+		*pOidOut = rtype->oid;
+		*pTypeOut = rtype->restypid;
 		bStat = true;
 	}
 	systable_endscan(sscan);
-	heap_close(pg_resourcetype, RowExclusiveLock);
+	table_close(pg_resourcetype, RowExclusiveLock);
 
 	return (bStat);
 } /* end GetResourceTypeByName */
@@ -258,15 +259,13 @@ AddUpdResqueueCapabilityEntryInternal(
 									  RelationGetDescr(resqueuecap_rel),
 									  values, isnull, new_record_repl);
 
-		simple_heap_update(resqueuecap_rel, &old_tuple->t_self, new_tuple);
-		CatalogUpdateIndexes(resqueuecap_rel, new_tuple);
+		CatalogTupleUpdate(resqueuecap_rel, &old_tuple->t_self, new_tuple);
 	}
 	else
 	{
 		new_tuple = heap_form_tuple(RelationGetDescr(resqueuecap_rel), values, isnull);
 
-		simple_heap_insert(resqueuecap_rel, new_tuple);
-		CatalogUpdateIndexes(resqueuecap_rel, new_tuple);
+		CatalogTupleInsert(resqueuecap_rel, new_tuple);
 	}
 
 	if (HeapTupleIsValid(old_tuple))
@@ -1052,7 +1051,8 @@ AlterQueue(AlterQueueStmt *stmt)
 				dactivelimit = 
 						makeDefElem("active_statements", 
 									(Node *)
-									makeFloat(INVALID_RES_LIMIT_STRING));
+									makeFloat(INVALID_RES_LIMIT_STRING),
+									-1);
 
 			numopts++; alter_subtype = defel->defname;
 		}
@@ -1068,7 +1068,8 @@ AlterQueue(AlterQueueStmt *stmt)
 				dcostlimit = 
 						makeDefElem("max_cost", 
 									(Node *)
-									makeInteger(costlimit));
+									makeInteger(costlimit),
+									-1);
 
 			numopts++; alter_subtype = defel->defname;
 		}
@@ -1084,7 +1085,8 @@ AlterQueue(AlterQueueStmt *stmt)
 				dovercommit = 
 						makeDefElem("cost_overcommit", 
 									(Node *)
-									makeInteger(overcommit));
+									makeInteger(overcommit),
+									-1);
 
 			numopts++; alter_subtype = defel->defname;
 		}
@@ -1100,7 +1102,8 @@ AlterQueue(AlterQueueStmt *stmt)
 				dignorelimit = 
 						makeDefElem("min_cost", 
 									(Node *)
-									makeFloat("0")); /* MPP-7817 */
+									makeFloat("0"), /* MPP-7817 */
+									-1);
 
 			numopts++; alter_subtype = defel->defname;
 
@@ -1612,9 +1615,9 @@ GetResqueueName(Oid resqueueOid)
 		return pstrdup("Unknown");
 
 	/* SELECT rsqname FROM pg_resqueue WHERE oid = :1 */
-	rel = heap_open(ResQueueRelationId, AccessShareLock);
+	rel = table_open(ResQueueRelationId, AccessShareLock);
 
-	ScanKeyInit(&scankey, ObjectIdAttributeNumber,
+	ScanKeyInit(&scankey, Anum_pg_resqueue_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(resqueueOid));
 
@@ -1633,7 +1636,7 @@ GetResqueueName(Oid resqueueOid)
 	}
 
 	systable_endscan(sscan);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return result;
 }

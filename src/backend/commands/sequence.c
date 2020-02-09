@@ -238,27 +238,11 @@ DefineSequence(ParseState *pstate, CreateSeqStmt *seq)
 	stmt->relKind = RELKIND_SEQUENCE;
 	stmt->ownerid = GetUserId();
 
-<<<<<<< HEAD
-	address = DefineRelation(stmt, RELKIND_SEQUENCE, seq->ownerId, NULL, RELSTORAGE_HEAP, false, true, NULL);
-	seqoid = address.objectId;
-	Assert(seqoid != InvalidOid);
-
-	/*
-	 * Open and lock the new sequence.  (This lock is redundant; an
-	 * AccessExclusiveLock was acquired above by DefineRelation and
-	 * won't be released until end of transaction.)
-	 *
-	 * CDB: Acquire lock on qDisp before dispatching to qExecs, so
-	 * qDisp can detect and resolve any deadlocks.
-	 */
-	rel = heap_open(seqoid, AccessExclusiveLock);
-=======
-	address = DefineRelation(stmt, RELKIND_SEQUENCE, seq->ownerId, NULL, NULL);
+	address = DefineRelation(stmt, RELKIND_SEQUENCE, seq->ownerId, NULL, false, true, NULL);
 	seqoid = address.objectId;
 	Assert(seqoid != InvalidOid);
 
 	rel = table_open(seqoid, AccessExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	tupDesc = RelationGetDescr(rel);
 
 	/* now initialize the sequence's data */

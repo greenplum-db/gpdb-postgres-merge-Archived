@@ -947,13 +947,13 @@ ExplainPrintSliceTable(ExplainState *es, QueryDesc *queryDesc)
 		else
 		{
 			ExplainOpenGroup("Slice", NULL, true, es);
-			ExplainPropertyInteger("Slice ID", i, es);
+			ExplainPropertyInteger("Slice ID", NULL, i, es);
 			ExplainPropertyText("Gang Type", gangType, es);
-			ExplainPropertyInteger("Root", slice->rootIndex, es);
-			ExplainPropertyInteger("Parent", slice->parentIndex, es);
-			ExplainPropertyInteger("Gang Size", list_length(slice->segments), es);
+			ExplainPropertyInteger("Root", NULL, slice->rootIndex, es);
+			ExplainPropertyInteger("Parent", NULL, slice->parentIndex, es);
+			ExplainPropertyInteger("Gang Size", NULL, list_length(slice->segments), es);
 			if (slice->gangType == GANGTYPE_SINGLETON_READER)
-				ExplainPropertyInteger("Segment", linitial_int(slice->segments), es);
+				ExplainPropertyInteger("Segment", NULL, linitial_int(slice->segments), es);
 			ExplainCloseGroup("Slice", NULL, true, es);
 		}
 	}
@@ -1299,10 +1299,10 @@ show_dispatch_info(ExecSlice *slice, ExplainState *es, Plan *plan)
 	}
 	else
 	{
-		ExplainPropertyInteger("Slice", slice->sliceIndex, es);
+		ExplainPropertyInteger("Slice", NULL, slice->sliceIndex, es);
 		if (slice->primaryGang && gp_log_gang >= GPVARS_VERBOSITY_DEBUG)
-			ExplainPropertyInteger("Gang", slice->primaryGang->db_descriptors[0]->identifier, es);
-		ExplainPropertyInteger("Segments", segments, es);
+			ExplainPropertyInteger("Gang", NULL, slice->primaryGang->db_descriptors[0]->identifier, es);
+		ExplainPropertyInteger("Segments", NULL, segments, es);
 		ExplainPropertyText("Gang Type", gangTypeToString(slice->gangType), es);
 	}
 }
@@ -1811,8 +1811,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		ExplainPropertyText("Node Type", sname, es);
 		if (nodeTag(plan) == T_Motion)
 		{
-			ExplainPropertyInteger("Senders", motion_snd, es);
-			ExplainPropertyInteger("Receivers", motion_recv, es);
+			ExplainPropertyInteger("Senders", NULL, motion_snd, es);
+			ExplainPropertyInteger("Receivers", NULL, motion_recv, es);
 		}
 		if (strategy)
 			ExplainPropertyText("Strategy", strategy, es);
@@ -1998,8 +1998,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 									 slice_id, sisc->share_id);
 				else
 				{
-					ExplainPropertyInteger("Share ID", sisc->share_id, es);
-					ExplainPropertyInteger("Slice ID", slice_id, es);
+					ExplainPropertyInteger("Share ID", NULL, sisc->share_id, es);
+					ExplainPropertyInteger("Slice ID", NULL, slice_id, es);
 				}
 			}
 			break;
@@ -2021,7 +2021,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				{
 					ExplainPropertyText("Relation", relname, es);
 					if (ps->scanId != 0)
-						ExplainPropertyInteger("Dynamic Scan Id", ps->scanId, es);
+						ExplainPropertyInteger("Dynamic Scan Id", NULL, ps->scanId, es);
 				}
 			}
 			break;
@@ -2054,7 +2054,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 
 	if (ResManagerPrintOperatorMemoryLimits())
 	{
-		ExplainPropertyInteger("operatorMem", PlanStateOperatorMemKB(planstate), es);
+		ExplainPropertyInteger("operatorMem", "kB", PlanStateOperatorMemKB(planstate), es);
 	}
 	/*
 	 * We have to forcibly clean up the instrumentation state because we
@@ -2074,15 +2074,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	if (es->analyze &&
 		planstate->instrument && planstate->instrument->nloops > 0)
 	{
-<<<<<<< HEAD
- 		double		nloops = planstate->instrument->nloops;
-		double		startup_sec = 1000.0 * planstate->instrument->startup / nloops;
-		double		total_sec = 1000.0 * planstate->instrument->total / nloops;
-=======
 		double		nloops = planstate->instrument->nloops;
 		double		startup_ms = 1000.0 * planstate->instrument->startup / nloops;
 		double		total_ms = 1000.0 * planstate->instrument->total / nloops;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		double		rows = planstate->instrument->ntuples / nloops;
 
 		if (es->format == EXPLAIN_FORMAT_TEXT)
@@ -3367,11 +3361,7 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 		else
 		{
 			ExplainPropertyText("Sort Method", sortMethod, es);
-<<<<<<< HEAD
-			ExplainPropertyLong("Sort Space Used", (long) agg->vsum, es);
-=======
-			ExplainPropertyInteger("Sort Space Used", "kB", spaceUsed, es);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			ExplainPropertyInteger("Sort Space Used", "kB", agg->vsum, es);
 			ExplainPropertyText("Sort Space Type", spaceType, es);
 			if (es->verbose)
 			{
@@ -4007,7 +3997,7 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 		ExplainPropertyText("Alias", refname, es);
 
 		if (dynamicScanId != 0)
-			ExplainPropertyInteger("Dynamic Scan Id", dynamicScanId, es);
+			ExplainPropertyInteger("Dynamic Scan Id", NULL, dynamicScanId, es);
 	}
 }
 

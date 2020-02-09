@@ -365,13 +365,8 @@ static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel
 static void StoreCatalogInheritance(Oid relationId, List *supers,
 									bool child_is_partition);
 static void StoreCatalogInheritance1(Oid relationId, Oid parentOid,
-<<<<<<< HEAD
-						 int16 seqNumber, Relation inhRelation,
-						 bool is_partition);
-=======
 									 int32 seqNumber, Relation inhRelation,
 									 bool child_is_partition);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static int	findAttrByName(const char *attributeName, List *schema);
 static void AlterIndexNamespaces(Relation classRel, Relation rel,
 								 Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved);
@@ -381,15 +376,6 @@ static void AlterSeqNamespaces(Relation classRel, Relation rel,
 static ObjectAddress ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 										   bool recurse, bool recursing, LOCKMODE lockmode);
 static ObjectAddress ATExecValidateConstraint(Relation rel, char *constrName,
-<<<<<<< HEAD
-						 bool recurse, bool recursing, LOCKMODE lockmode);
-static int transformColumnNameList(Oid relId, List *colList,
-						int16 *attnums, Oid *atttypids);
-static int transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
-						   List **attnamelist,
-						   int16 *attnums, Oid *atttypids,
-						   Oid *opclasses);
-=======
 											  bool recurse, bool recursing, LOCKMODE lockmode);
 static int	transformColumnNameList(Oid relId, List *colList,
 									int16 *attnums, Oid *atttypids);
@@ -400,7 +386,6 @@ static int	transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 static Oid	transformFkeyCheckAttrs(Relation pkrel,
 									int numattrs, int16 *attnums,
 									Oid *opclasses);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void checkFkeyPermissions(Relation rel, int16 *attnums, int natts);
 static CoercionPathType findFkeyCast(Oid targetTypeId, Oid sourceTypeId,
 									 Oid *funcid);
@@ -409,23 +394,14 @@ static void validateForeignKeyConstraint(char *conname,
 										 Relation rel, Relation pkrel,
 										 Oid pkindOid, Oid constraintOid);
 static void ATController(AlterTableStmt *parsetree,
-<<<<<<< HEAD
-			 Relation rel, List *cmds, bool recurse, LOCKMODE lockmode);
-static void prepSplitCmd(Relation rel, PgPartRule *prule, bool is_at);
-=======
 						 Relation rel, List *cmds, bool recurse, LOCKMODE lockmode);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static void prepSplitCmd(Relation rel, PgPartRule *prule, bool is_at);
 static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 					  bool recurse, bool recursing, LOCKMODE lockmode);
 static void ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode);
-<<<<<<< HEAD
 static void ATAddToastIfNeeded(List **wqueue, LOCKMODE lockmode);
 static void ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation *rel_p,
-		  AlterTableCmd *cmd, LOCKMODE lockmode);
-=======
-static void ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 					  AlterTableCmd *cmd, LOCKMODE lockmode);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void ATRewriteTables(AlterTableStmt *parsetree,
 							List **wqueue, LOCKMODE lockmode);
 static void ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode);
@@ -568,13 +544,9 @@ static ObjectAddress ATExecClusterOn(Relation rel, const char *indexName,
 static void ATExecDropCluster(Relation rel, LOCKMODE lockmode);
 static bool ATPrepChangePersistence(Relation rel, bool toLogged);
 static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
-<<<<<<< HEAD
-					char *tablespacename, LOCKMODE lockmode);
+								const char *tablespacename, LOCKMODE lockmode);
 static void ATPartsPrepSetTableSpace(List **wqueue, Relation rel, AlterTableCmd *cmd, 
 									 List *oids);
-=======
-								const char *tablespacename, LOCKMODE lockmode);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode);
 static void ATExecSetTableSpaceNoStorage(Relation rel, Oid newTableSpace);
 static void ATExecSetRelOptions(Relation rel, List *defList,
@@ -588,11 +560,7 @@ static void ATPrepAddInherit(Relation child_rel);
 static ObjectAddress ATExecAddInherit(Relation child_rel, Node *node, LOCKMODE lockmode);
 static ObjectAddress ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode);
 static void drop_parent_dependency(Oid relid, Oid refclassid, Oid refobjid,
-<<<<<<< HEAD
-					   DependencyType deptype);
-=======
 								   DependencyType deptype);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static ObjectAddress ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode);
 static void ATExecDropOf(Relation rel, LOCKMODE lockmode);
 static void ATExecReplicaIdentity(Relation rel, ReplicaIdentityStmt *stmt, LOCKMODE lockmode);
@@ -697,37 +665,29 @@ static void ATDetachCheckNoForeignKeyRefs(Relation partition);
  */
 ObjectAddress
 DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
-<<<<<<< HEAD
-			   ObjectAddress *typaddress, char relstorage, bool dispatch,
+			   ObjectAddress *typaddress, bool dispatch,
 			   bool useChangedOpts, GpPolicy *intoPolicy)
 {
 	char		relname[NAMEDATALEN];
 	Oid			namespaceId;
-	List	   *schema;
 	GpPolicy   *policy;
 	Oid			relationId = InvalidOid;
-=======
-			   ObjectAddress *typaddress, const char *queryString)
-{
-	char		relname[NAMEDATALEN];
-	Oid			namespaceId;
-	Oid			relationId;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	Oid			tablespaceId;
 	Relation	rel;
 	TupleDesc	descriptor;
 	List	   *old_constraints;
-<<<<<<< HEAD
-	bool		localHasOids;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	List	   *rawDefaults;
 	List	   *cookedDefaults;
 	Datum		reloptions;
 	ListCell   *listptr;
 	AttrNumber	attnum;
-<<<<<<< HEAD
-	bool		isPartitioned;
+	bool		partitioned;
+	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
+	Oid			ofTypeId;
+	ObjectAddress address;
+	LOCKMODE	parentLockmode;
+	const char *accessMethod = NULL;
+	Oid			accessMethodId = InvalidOid;
 	List	   *cooked_constraints;
 	bool		shouldDispatch = dispatch &&
 								 Gp_role == GP_ROLE_DISPATCH &&
@@ -750,15 +710,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 			schema = lappend(schema, node);
 	}
 	Assert(cooked_constraints == NIL || Gp_role == GP_ROLE_EXECUTE);
-=======
-	bool		partitioned;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
-	Oid			ofTypeId;
-	ObjectAddress address;
-	LOCKMODE	parentLockmode;
-	const char *accessMethod = NULL;
-	Oid			accessMethodId = InvalidOid;
 
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time, as
@@ -807,12 +758,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 				 errmsg("cannot create temporary table within security-restricted operation")));
 
 	/*
-<<<<<<< HEAD
-	 * Select tablespace to use.  If not specified, use default tablespace
-	 * (which may in turn default to database's default).
-	 *
-	 * Note: This code duplicates code in indexcmds.c
-=======
 	 * Determine the lockmode to use when scanning parents.  A self-exclusive
 	 * lock is needed here.
 	 *
@@ -855,7 +800,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	/*
 	 * Select tablespace to use: an explicitly indicated one, or (in the case
 	 * of a partitioned table) the parent's, if it has one.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	if (relkind == RELKIND_SEQUENCE || 
 		relkind == RELKIND_VIEW ||
@@ -889,28 +833,17 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	else if (stmt->partbound)
 	{
 		/*
-<<<<<<< HEAD
-		 * Get the default tablespace specified via default_tablespace, or fall
-		 * back on the database tablespace.
+		 * For partitions, when no other tablespace is specified, we default
+		 * the tablespace to the parent partitioned table's.
 		 */
-		tablespaceId = GetDefaultTablespace(stmt->relation->relpersistence);
-
-		/* Need the real tablespace id for dispatch */
-		if (!OidIsValid(tablespaceId)) 
-			tablespaceId = MyDatabaseTableSpace;
+		Assert(list_length(inheritOids) == 1);
+		tablespaceId = get_rel_tablespace(linitial_oid(inheritOids));
 
 		/* 
 		 * MPP-8238 : inconsistent tablespaces between segments and master 
 		 */
 		if (shouldDispatch)
 			stmt->tablespacename = get_tablespace_name(tablespaceId);
-=======
-		 * For partitions, when no other tablespace is specified, we default
-		 * the tablespace to the parent partitioned table's.
-		 */
-		Assert(list_length(inheritOids) == 1);
-		tablespaceId = get_rel_tablespace(linitial_oid(inheritOids));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 		tablespaceId = InvalidOid;
@@ -2582,22 +2515,12 @@ truncate_check_rel(Oid relid, Form_pg_class reltuple)
 	char	   *relname = NameStr(reltuple->relname);
 
 	/*
-<<<<<<< HEAD
-	 * Only allow truncate on regular or append-only tables.
-	 *
-	 * In binary upgrade mode, we additionally allow TRUNCATE on AO auxiliary
-	 * tables so that they can be wiped and recreated by the upgrade machinery.
-	 */
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		!(IsBinaryUpgrade && IsAppendonlyMetadataRelkind(rel->rd_rel->relkind)))
-=======
 	 * Only allow truncate on regular tables and partitioned tables (although,
 	 * the latter are only being included here for the following checks; no
 	 * physical truncation will occur in their case.)
 	 */
 	if (reltuple->relkind != RELKIND_RELATION &&
 		reltuple->relkind != RELKIND_PARTITIONED_TABLE)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table", relname)));

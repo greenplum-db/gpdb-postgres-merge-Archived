@@ -198,8 +198,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		table_close(rel, NoLock);
 
 		/* Do the job. */
-<<<<<<< HEAD
-		cluster_rel(tableOid, indexOid, false, stmt->verbose, true /* printError */);
+		cluster_rel(tableOid, indexOid, stmt->options, true /* printError */);
 
 		if (Gp_role == GP_ROLE_DISPATCH)
 		{
@@ -210,9 +209,6 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 										GetAssignedOidsForDispatch(),
 										NULL);
 		}
-=======
-		cluster_rel(tableOid, indexOid, stmt->options);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 	{
@@ -261,8 +257,8 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			/* functions in indexes may want a snapshot set */
 			PushActiveSnapshot(GetTransactionSnapshot());
 			/* Do the job. */
-<<<<<<< HEAD
-			dispatch = cluster_rel(rvtc->tableOid, rvtc->indexOid, true, stmt->verbose,
+			dispatch = cluster_rel(rvtc->tableOid, rvtc->indexOid,
+								   stmt->options | CLUOPT_RECHECK,
 								   false /* printError */);
 
 			if (Gp_role == GP_ROLE_DISPATCH && dispatch)
@@ -277,10 +273,6 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 											NULL);
 			}
 
-=======
-			cluster_rel(rvtc->tableOid, rvtc->indexOid,
-						stmt->options | CLUOPT_RECHECK);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			PopActiveSnapshot();
 			CommitTransactionCommand();
 		}
@@ -738,8 +730,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 	 * should have valid relfrozenxid based on relkind and relstorage.
 	 */
 	if (should_have_valid_relfrozenxid(OldHeap->rd_rel->relkind,
-									   OldHeap->rd_rel->relstorage,
-									   false))
+									   OldHeap->rd_rel->relstorage))
 		is_part_parent = !TransactionIdIsValid(OldHeap->rd_rel->relfrozenxid);
 	else
 		is_part_parent = rel_is_parent(OIDOldHeap);
@@ -885,22 +876,9 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 				OldIndex;
 	Relation	relRelation;
 	HeapTuple	reltup;
-<<<<<<< HEAD
-	Form_pg_class	relform;
-	TupleDesc	oldTupDesc;
-	TupleDesc	newTupDesc;
-	int			natts;
-	Datum	   *values;
-	bool	   *isnull;
-	IndexScanDesc indexScan;
-	HeapScanDesc heapScan;
-	bool		use_wal;
-	bool		is_system_catalog;
-=======
 	Form_pg_class relform;
 	TupleDesc	oldTupDesc PG_USED_FOR_ASSERTS_ONLY;
 	TupleDesc	newTupDesc PG_USED_FOR_ASSERTS_ONLY;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	TransactionId OldestXmin;
 	TransactionId FreezeXid;
 	MultiXactId MultiXactCutoff;
@@ -1042,151 +1020,6 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	 * routine is allowed to set FreezeXid / MultiXactCutoff to different
 	 * values (e.g. because the AM doesn't use freezing).
 	 */
-<<<<<<< HEAD
-	for (;;)
-	{
-		HeapTuple	tuple;
-		Buffer		buf;
-		bool		isdead;
-
-		CHECK_FOR_INTERRUPTS();
-
-		if (indexScan != NULL)
-		{
-			tuple = index_getnext(indexScan, ForwardScanDirection);
-			if (tuple == NULL)
-				break;
-
-			/* Since we used no scan keys, should never need to recheck */
-			if (indexScan->xs_recheck)
-				elog(ERROR, "CLUSTER does not support lossy index conditions");
-
-			buf = indexScan->xs_cbuf;
-		}
-		else
-		{
-			tuple = heap_getnext(heapScan, ForwardScanDirection);
-			if (tuple == NULL)
-				break;
-
-			buf = heapScan->rs_cbuf;
-		}
-
-		LockBuffer(buf, BUFFER_LOCK_SHARE);
-
-		switch (HeapTupleSatisfiesVacuum(OldHeap, tuple, OldestXmin, buf))
-		{
-			case HEAPTUPLE_DEAD:
-				/* Definitely dead */
-				isdead = true;
-				break;
-			case HEAPTUPLE_RECENTLY_DEAD:
-				tups_recently_dead += 1;
-				/* fall through */
-			case HEAPTUPLE_LIVE:
-				/* Live or recently dead, must copy it */
-				isdead = false;
-				break;
-			case HEAPTUPLE_INSERT_IN_PROGRESS:
-
-				/*
-				 * Since we hold exclusive lock on the relation, normally the
-				 * only way to see this is if it was inserted earlier in our
-				 * own transaction.  However, it can happen in system
-				 * catalogs, since we tend to release write lock before commit
-				 * there.  Give a warning if neither case applies; but in any
-				 * case we had better copy it.
-				 */
-				if (!is_system_catalog &&
-					!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tuple->t_data)))
-					elog(WARNING, "concurrent insert in progress within table \"%s\"",
-						 RelationGetRelationName(OldHeap));
-				/* treat as live */
-				isdead = false;
-				break;
-			case HEAPTUPLE_DELETE_IN_PROGRESS:
-
-				/*
-				 * Similar situation to INSERT_IN_PROGRESS case.
-				 */
-				if (!is_system_catalog &&
-					!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(tuple->t_data)))
-					elog(WARNING, "concurrent delete in progress within table \"%s\"",
-						 RelationGetRelationName(OldHeap));
-				/* treat as recently dead */
-				tups_recently_dead += 1;
-				isdead = false;
-				break;
-			default:
-				elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
-				isdead = false; /* keep compiler quiet */
-				break;
-		}
-
-		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-
-		if (isdead)
-		{
-			tups_vacuumed += 1;
-			/* heap rewrite module still needs to see it... */
-			if (rewrite_heap_dead_tuple(rwstate, tuple))
-			{
-				/* A previous recently-dead tuple is now known dead */
-				tups_vacuumed += 1;
-				tups_recently_dead -= 1;
-			}
-			continue;
-		}
-
-		num_tuples += 1;
-		if (tuplesort != NULL)
-			tuplesort_putheaptuple(tuplesort, tuple);
-		else
-			reform_and_rewrite_tuple(tuple,
-									 oldTupDesc, newTupDesc,
-									 values, isnull,
-									 NewHeap->rd_rel->relhasoids, rwstate);
-	}
-
-	if (indexScan != NULL)
-		index_endscan(indexScan);
-	if (heapScan != NULL)
-		heap_endscan(heapScan);
-
-	/*
-	 * In scan-and-sort mode, complete the sort, then read out all live tuples
-	 * from the tuplestore and write them to the new relation.
-	 */
-	if (tuplesort != NULL)
-	{
-		tuplesort_performsort(tuplesort);
-
-		for (;;)
-		{
-			HeapTuple	tuple;
-			bool		shouldfree;
-
-			CHECK_FOR_INTERRUPTS();
-
-			tuple = tuplesort_getheaptuple(tuplesort, true, &shouldfree);
-			if (tuple == NULL)
-				break;
-
-			reform_and_rewrite_tuple(tuple,
-									 oldTupDesc, newTupDesc,
-									 values, isnull,
-									 NewHeap->rd_rel->relhasoids, rwstate);
-
-			if (shouldfree)
-				heap_freetuple(tuple);
-		}
-
-		tuplesort_end(tuplesort);
-	}
-
-	/* Write out any remaining tuples, and fsync if needed */
-	end_heap_rewrite(rwstate);
-=======
 	table_relation_copy_for_cluster(OldHeap, NewHeap, OldIndex, use_sort,
 									OldestXmin, &FreezeXid, &MultiXactCutoff,
 									&num_tuples, &tups_vacuumed,
@@ -1195,7 +1028,6 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	/* return selected values to caller, get set as relfrozenxid/minmxid */
 	*pFreezeXid = FreezeXid;
 	*pCutoffMulti = MultiXactCutoff;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Reset rd_toastoid just to be tidy --- it shouldn't be looked at again */
 	NewHeap->rd_toastoid = InvalidOid;
@@ -1231,23 +1063,13 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 
 	/* Don't update the stats for pg_class.  See swap_relation_files. */
 	if (OIDOldHeap != RelationRelationId)
-<<<<<<< HEAD
-	{
-		simple_heap_update(relRelation, &reltup->t_self, reltup);
-
-		/* keep the catalog indexes up to date */
-		CatalogUpdateIndexes(relRelation, reltup);
-	}
-=======
 		CatalogTupleUpdate(relRelation, &reltup->t_self, reltup);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	else
 		CacheInvalidateRelcacheByTuple(reltup);
 
 	/* Clean up. */
 	heap_freetuple(reltup);
-<<<<<<< HEAD
-	heap_close(relRelation, RowExclusiveLock);
+	table_close(relRelation, RowExclusiveLock);
 
 	/* Make the update visible */
 	CommandCounterIncrement();
@@ -1302,12 +1124,6 @@ changeDependencyLinks(Oid baseOid1, Oid baseOid2, Oid oid1, Oid oid2,
 		newobject.objectId = oid2;
 		recordDependencyOn(&newobject, &baseobject, DEPENDENCY_INTERNAL);
 	}
-=======
-	table_close(relRelation, RowExclusiveLock);
-
-	/* Make the update visible */
-	CommandCounterIncrement();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -1356,7 +1172,6 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	Oid			relfilenode1,
 				relfilenode2;
 	Oid			swaptemp;
-	char		swapchar;
 	char		swptmpchr;
 	bool		isAO1, isAO2;
 
@@ -1485,18 +1300,16 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	 * and then fail to commit the pg_class update.
 	 */
 
-<<<<<<< HEAD
-=======
 	/* set rel1's frozen Xid and minimum MultiXid */
 	if (relform1->relkind != RELKIND_INDEX)
 	{
-		Assert(!TransactionIdIsValid(frozenXid) ||
-			   TransactionIdIsNormal(frozenXid));
+		Assert(TransactionIdIsNormal(frozenXid));
 		relform1->relfrozenxid = frozenXid;
+		Assert(MultiXactIdIsValid(cutoffMulti));
 		relform1->relminmxid = cutoffMulti;
+		Assert(should_have_valid_relfrozenxid(relform1->relkind,
+											  relform1->relstorage));
 	}
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* swap size statistics too, since new rel has freshly-updated stats */
 	if (swap_stats)
 	{
@@ -1515,32 +1328,6 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		swap_allvisible = relform1->relallvisible;
 		relform1->relallvisible = relform2->relallvisible;
 		relform2->relallvisible = swap_allvisible;
-	}
-
-	/*
-	 * Swap relstorage so we will later know how to drop the temporary table with
-	 * the right Storage Manager (i.e. Buffer Pool or Append-Only).
-	 */
-	swapchar = relform1->relstorage;
-	relform1->relstorage = relform2->relstorage;
-	relform2->relstorage = swapchar;
-
-	/*
-	 * This needs to be performed after the relkind and relstorage has been
-	 * swapped to correctly reflect the relfrozenxid.
-	 */
-	if (TransactionIdIsValid(relform1->relfrozenxid))
-	{
-		Assert(TransactionIdIsNormal(frozenXid));
-		relform1->relfrozenxid = frozenXid;
-		Assert(MultiXactIdIsValid(cutoffMulti));
-		relform1->relminmxid = cutoffMulti;
-		/*
-		 * Don't know partition parent or not here but passing false is perfect
-		 * for assertion, as valid relfrozenxid means it shouldn't be parent.
-		 */
-		Assert(should_have_valid_relfrozenxid(relform1->relkind,
-											  relform1->relstorage, false));
 	}
 
 	/*

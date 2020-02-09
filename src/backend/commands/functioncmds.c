@@ -46,11 +46,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
-<<<<<<< HEAD
 #include "catalog/pg_proc_callback.h"
-#include "catalog/pg_proc_fn.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "catalog/pg_transform.h"
 #include "catalog/pg_type.h"
 #include "commands/alter.h"
@@ -472,9 +468,6 @@ interpret_function_parameter_list(ParseState *pstate,
 		i++;
 	}
 
-<<<<<<< HEAD
-	free_parsestate(pstate);
-
 	/* Currently only support single multiset input parameters */
 	if (multisetCount > 1)
 	{
@@ -483,8 +476,6 @@ interpret_function_parameter_list(ParseState *pstate,
 				 errmsg("functions cannot have multiple \"anytable\" arguments")));
 	}
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* Now construct the proper outputs as needed */
 	*parameterTypes = buildoidvector(inTypes, inCount);
 
@@ -532,14 +523,10 @@ compute_common_attribute(ParseState *pstate,
 						 List **set_items,
 						 DefElem **cost_item,
 						 DefElem **rows_item,
-<<<<<<< HEAD
+						 DefElem **support_item,
 						 DefElem **parallel_item,
 						 DefElem **data_access_item,
 						 DefElem **exec_location_item)
-=======
-						 DefElem **support_item,
-						 DefElem **parallel_item)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	if (strcmp(defel->defname, "volatility") == 0)
 	{
@@ -870,23 +857,6 @@ interpret_func_support(DefElem *defel)
  * attributes.
  */
 static void
-<<<<<<< HEAD
-compute_attributes_sql_style(List *options,
-							 List **as,
-							 char **language,
-							 Node **transform,
-							 bool *windowfunc_p,
-							 char *volatility_p,
-							 bool *strict_p,
-							 bool *security_definer,
-							 bool *leakproof_p,
-							 ArrayType **proconfig,
-							 float4 *procost,
-							 float4 *prorows,
-							 char *parallel_p,
-							 char *data_access,
-							 char *exec_location)
-=======
 compute_function_attributes(ParseState *pstate,
 							bool is_procedure,
 							List *options,
@@ -902,8 +872,9 @@ compute_function_attributes(ParseState *pstate,
 							float4 *procost,
 							float4 *prorows,
 							Oid *prosupport,
-							char *parallel_p)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+							char *parallel_p,
+							char *data_access_p,
+							char *exec_location_p)
 {
 	ListCell   *option;
 	DefElem    *as_item = NULL;
@@ -977,14 +948,10 @@ compute_function_attributes(ParseState *pstate,
 										  &set_items,
 										  &cost_item,
 										  &rows_item,
-<<<<<<< HEAD
+										  &support_item,
 										  &parallel_item,
 										  &data_access_item,
 										  &exec_location_item))
-=======
-										  &support_item,
-										  &parallel_item))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			/* recognized common option */
 			continue;
@@ -1051,67 +1018,12 @@ compute_function_attributes(ParseState *pstate,
 	if (parallel_item)
 		*parallel_p = interpret_func_parallel(parallel_item);
 	if (data_access_item)
-		*data_access = interpret_data_access(data_access_item);
+		*data_access_p = interpret_data_access(data_access_item);
 	if (exec_location_item)
-		*exec_location = interpret_exec_location(exec_location_item);
+		*exec_location_p = interpret_exec_location(exec_location_item);
 }
 
 
-<<<<<<< HEAD
-/*-------------
- *	 Interpret the parameters *parameters and return their contents via
- *	 *isStrict_p, *volatility_p and *oid_p.
- *
- *	These parameters supply optional information about a function.
- *	All have defaults if not specified. Parameters:
- *
- *	 * isStrict means the function should not be called when any NULL
- *	   inputs are present; instead a NULL result value should be assumed.
- *
- *	 * volatility tells the optimizer whether the function's result can
- *	   be assumed to be repeatable over multiple evaluations.
- *
- *   * describeQualName is the qualified name of a describe callback function
- *     to handle dynamic type resolution.
- *------------
- */
-static void
-compute_attributes_with_style(List *parameters, 
-							  bool *isStrict_p, 
-							  char *volatility_p, 
-							  List **describeQualName_p)
-{
-	ListCell   *pl;
-
-	foreach(pl, parameters)
-	{
-		DefElem    *param = (DefElem *) lfirst(pl);
-
-		if (pg_strcasecmp(param->defname, "isstrict") == 0)
-			*isStrict_p = defGetBoolean(param);
-		else if (pg_strcasecmp(param->defname, "iscachable") == 0)
-		{
-			/* obsolete spelling of isImmutable */
-			if (defGetBoolean(param))
-				*volatility_p = PROVOLATILE_IMMUTABLE;
-		}
-		else if (pg_strcasecmp(param->defname, "describe") == 0)
-		{
-			*describeQualName_p = defGetQualifiedName(param);
-		}
-		else
-		{
-			ereport(WARNING,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized function attribute \"%s\" ignored",
-							param->defname)));
-		}
-	}
-}
-
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * For a dynamically linked C language object, the form of the clause is
  *
@@ -1307,7 +1219,7 @@ validate_describe_callback(List *describeQualName,
 	/* Check that the creator has permission to call the function */
 	aclresult = pg_proc_aclcheck(describeFuncOid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_PROC, get_func_name(describeFuncOid));
+		aclcheck_error(aclresult, OBJECT_PROCEDURE, get_func_name(describeFuncOid));
 
 	/* Looks reasonable */
 	return describeFuncOid;
@@ -1384,15 +1296,6 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 	dataAccess = '\0';			/* indicates not set */
 	execLocation = '\0';		/* indicates not set */
 
-<<<<<<< HEAD
-	/* override attributes from explicit list */
-	compute_attributes_sql_style(stmt->options,
-								 &as_clause, &language, &transformDefElem,
-								 &isWindowFunc, &volatility,
-								 &isStrict, &security, &isLeakProof,
-								 &proconfig, &procost, &prorows, &parallel,
-								 &dataAccess, &execLocation);
-=======
 	/* Extract non-default attributes from stmt->options list */
 	compute_function_attributes(pstate,
 								stmt->is_procedure,
@@ -1401,8 +1304,8 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 								&isWindowFunc, &volatility,
 								&isStrict, &security, &isLeakProof,
 								&proconfig, &procost, &prorows,
-								&prosupport, &parallel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+								&prosupport, &parallel,
+								&dataAccess, &execLocation);
 
 	/* Look up the language and validate permissions */
 	languageTuple = SearchSysCache1(LANGNAME, PointerGetDatum(language));
@@ -1547,12 +1450,6 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 		trftypes = NULL;
 	}
 
-<<<<<<< HEAD
-	compute_attributes_with_style(stmt->withClause, &isStrict, &volatility,
-								  &describeQualName);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	interpret_AS_clause(languageOid, language, funcname, as_clause,
 						&prosrc_str, &probin_str);
 	
@@ -1738,14 +1635,10 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, stmt->objtype,
 					   NameListToString(stmt->func->objname));
 
-<<<<<<< HEAD
 	/* check bootstrap object */
-	CheckForModifySystemFunc(funcOid, stmt->func->funcname);
+	CheckForModifySystemFunc(funcOid, stmt->func->objname);
 
-	if (procForm->proisagg)
-=======
 	if (procForm->prokind == PROKIND_AGGREGATE)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is an aggregate function",
@@ -1768,14 +1661,10 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 									 &set_items,
 									 &cost_item,
 									 &rows_item,
-<<<<<<< HEAD
+									 &support_item,
 									 &parallel_item,
 									 &data_access_item,
 									 &exec_location_item) == false)
-=======
-									 &support_item,
-									 &parallel_item) == false)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			elog(ERROR, "option \"%s\" not recognized", defel->defname);
 	}
 
@@ -1972,28 +1861,12 @@ SetFunctionReturnType(Oid funcOid, Oid newRetType)
 
 	table_close(pg_proc_rel, RowExclusiveLock);
 
-<<<<<<< HEAD
-	heap_close(pg_proc_rel, RowExclusiveLock);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Also update the dependency to the new type. Opaque is a pinned type, so
 	 * there is no old dependency record for it that we would need to remove.
 	 */
-<<<<<<< HEAD
-	type_address.classId = TypeRelationId;
-	type_address.objectId = newRetType;
-	type_address.objectSubId = 0;
-
-	func_address.classId = ProcedureRelationId;
-	func_address.objectId = funcOid;
-	func_address.objectSubId = 0;
-
-=======
 	ObjectAddressSet(type_address, TypeRelationId, newRetType);
 	ObjectAddressSet(func_address, ProcedureRelationId, funcOid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	recordDependencyOn(&func_address, &type_address, DEPENDENCY_NORMAL);
 }
 
@@ -2035,19 +1908,8 @@ SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType)
 	 * Also update the dependency to the new type. Opaque is a pinned type, so
 	 * there is no old dependency record for it that we would need to remove.
 	 */
-<<<<<<< HEAD
-	type_address.classId = TypeRelationId;
-	type_address.objectId = newArgType;
-	type_address.objectSubId = 0;
-
-	func_address.classId = ProcedureRelationId;
-	func_address.objectId = funcOid;
-	func_address.objectSubId = 0;
-
-=======
 	ObjectAddressSet(type_address, TypeRelationId, newArgType);
 	ObjectAddressSet(func_address, ProcedureRelationId, funcOid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	recordDependencyOn(&func_address, &type_address, DEPENDENCY_NORMAL);
 }
 
@@ -2861,7 +2723,6 @@ ExecuteDoStmt(DoStmt *stmt, bool atomic)
 	OidFunctionCall1(laninline, PointerGetDatum(codeblock));
 }
 
-<<<<<<< HEAD
 static void
 CheckForModifySystemFunc(Oid funcOid, List *funcName)
 {
@@ -2870,7 +2731,8 @@ CheckForModifySystemFunc(Oid funcOid, List *funcName)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission defined: \"%s\" is a system function",
 						NameListToString(funcName))));
-=======
+}
+
 /*
  * Execute CALL statement
  *
@@ -3084,5 +2946,4 @@ CallStmtResultDesc(CallStmt *stmt)
 	ReleaseSysCache(tuple);
 
 	return tupdesc;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

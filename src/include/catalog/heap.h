@@ -196,7 +196,6 @@ extern void MetaTrackDropObject(Oid		classid,
 		|| ((relkind) == RELKIND_SEQUENCE) \
 		|| ((relkind) == RELKIND_VIEW)) 
 
-extern bool should_have_valid_relfrozenxid(char relkind,
-										   bool is_partition_parent);
+extern bool should_have_valid_relfrozenxid(char relkind);
 
 #endif							/* HEAP_H */

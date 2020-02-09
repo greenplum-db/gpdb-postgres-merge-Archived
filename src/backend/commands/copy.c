@@ -64,6 +64,7 @@
 
 #include "access/appendonlywriter.h"
 #include "access/fileam.h"
+#include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbaocsam.h"
@@ -986,9 +987,8 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 	bool		pipe = (stmt->filename == NULL || Gp_role == GP_ROLE_EXECUTE);
 	Relation	rel;
 	Oid			relid;
-<<<<<<< HEAD
-	Node	   *query = NULL;
-	List	   *range_table = NIL;
+	RawStmt    *query = NULL;
+	Node	   *whereClause = NULL;
 	List	   *attnamelist = stmt->attlist;
 	List	   *options;
 
@@ -1009,12 +1009,8 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		SingleRowErrorDesc *sreh = (SingleRowErrorDesc *) stmt->sreh;
 
 		options = list_copy(options);
-		options = lappend(options, makeDefElem("sreh", (Node *) sreh));
+		options = lappend(options, makeDefElem("sreh", (Node *) sreh), -1);
 	}
-=======
-	RawStmt    *query = NULL;
-	Node	   *whereClause = NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Disallow COPY to/from file or program except to users with the
@@ -1653,7 +1649,7 @@ ProcessCopyOptions(ParseState *pstate,
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			cstate->on_segment = TRUE;
+			cstate->on_segment = true;
 		}
 		else if (strcmp(defel->defname, "skip_ext_partition") == 0)
 		{
@@ -1661,7 +1657,7 @@ ProcessCopyOptions(ParseState *pstate,
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			cstate->skip_ext_partition = TRUE;
+			cstate->skip_ext_partition = true;
 		}
 		else
 			ereport(ERROR,
@@ -4166,8 +4162,6 @@ CopyFrom(CopyState cstate)
 	if (cstate->freeze)
 	{
 		/*
-<<<<<<< HEAD
-=======
 		 * We currently disallow COPY FREEZE on partitioned tables.  The
 		 * reason for this is that we've simply not yet opened the partitions
 		 * to determine if the optimization can be applied to them.  We could
@@ -4184,7 +4178,6 @@ CopyFrom(CopyState cstate)
 		}
 
 		/*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 * Tolerate one registration for the benefit of FirstXactSnapshot.
 		 * Scan-bearing queries generally create at least two registrations,
 		 * though relying on that is fragile, as is ignoring ActiveSnapshot.

@@ -13,6 +13,8 @@
  */
 #include "postgres.h"
 
+#include <math.h>
+
 #include "funcapi.h"
 #include "libpq-fe.h"
 #include "access/genam.h"
@@ -137,8 +139,8 @@ CreateResourceGroup(CreateResourceGroupStmt *stmt)
 	 * acquire AccessExclusiveLock lock on pg_resgroupcapability at the beginning
 	 * of CREATE and ALTER
 	 */
-	pg_resgroupcapability_rel = heap_open(ResGroupCapabilityRelationId, AccessExclusiveLock);
-	pg_resgroup_rel = heap_open(ResGroupRelationId, RowExclusiveLock);
+	pg_resgroupcapability_rel = table_open(ResGroupCapabilityRelationId, AccessExclusiveLock);
+	pg_resgroup_rel = table_open(ResGroupRelationId, RowExclusiveLock);
 
 	/* Check if MaxResourceGroups limit is reached */
 	sscan = systable_beginscan(pg_resgroup_rel, ResGroupRsgnameIndexId, false,
@@ -184,14 +186,18 @@ CreateResourceGroup(CreateResourceGroupStmt *stmt)
 
 	new_record[Anum_pg_resgroup_parent - 1] = ObjectIdGetDatum(0);
 
+	groupid = GetNewOidForResGroup(pg_resgroup_rel, ResGroupOidIndexId,
+								   Anum_pg_resgroup_oid,
+								   stmt->name);
+	new_record[Anum_pg_resgroup_oid - 1] = groupid;
+
 	pg_resgroup_dsc = RelationGetDescr(pg_resgroup_rel);
 	tuple = heap_form_tuple(pg_resgroup_dsc, new_record, new_record_nulls);
 
 	/*
 	 * Insert new record in the pg_resgroup table
 	 */
-	groupid = simple_heap_insert(pg_resgroup_rel, tuple);
-	CatalogUpdateIndexes(pg_resgroup_rel, tuple);
+	CatalogTupleInsert(pg_resgroup_rel, tuple);
 
 	/* process the WITH (...) list items */
 	validateCapabilities(pg_resgroupcapability_rel, groupid, &caps, true);
@@ -212,8 +218,8 @@ CreateResourceGroup(CreateResourceGroupStmt *stmt)
 						   "CREATE", "RESOURCE GROUP");
 	}
 
-	heap_close(pg_resgroup_rel, NoLock);
-	heap_close(pg_resgroupcapability_rel, NoLock);
+	table_close(pg_resgroup_rel, NoLock);
+	table_close(pg_resgroupcapability_rel, NoLock);
 
 	/* Add this group into shared memory */
 	if (IsResGroupActivated())
@@ -303,7 +309,7 @@ DropResourceGroup(DropResourceGroupStmt *stmt)
 	 * Remember the Oid, for destroying the in-memory
 	 * resource group later.
 	 */
-	groupid = HeapTupleGetOid(tuple);
+	groupid = ((Form_pg_resgroup) GETSTRUCT(tuple))->oid;
 
 	/* cannot DROP default resource groups  */
 	if (groupid == DEFAULTRESGROUP_OID || groupid == ADMINRESGROUP_OID)
@@ -662,10 +668,10 @@ GetResGroupIdForRole(Oid roleid)
 	ScanKeyData	key;
 	SysScanDesc	 sscan;
 
-	rel = heap_open(AuthIdRelationId, AccessShareLock);
+	rel = table_open(AuthIdRelationId, AccessShareLock);
 
 	ScanKeyInit(&key,
-				ObjectIdAttributeNumber,
+				Anum_pg_authid_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(roleid));
 
@@ -675,7 +681,7 @@ GetResGroupIdForRole(Oid roleid)
 	if (!HeapTupleIsValid(tuple))
 	{
 		systable_endscan(sscan);
-		heap_close(rel, AccessShareLock);
+		table_close(rel, AccessShareLock);
 
 		/*
 		 * Role should have been dropped by other backends in this case, so this
@@ -697,7 +703,7 @@ GetResGroupIdForRole(Oid roleid)
 	 * release lock here to guarantee we have no lock held when acquiring
 	 * resource group slot
 	 */
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	if (!OidIsValid(groupId))
 		groupId = InvalidOid;
@@ -715,27 +721,8 @@ GetResGroupIdForRole(Oid roleid)
 Oid
 GetResGroupIdForName(const char *name)
 {
-	HeapTuple	tuple;
-	Oid			rsgid;
-
-	tuple = SearchSysCache1(RESGROUPNAME,
-							CStringGetDatum(name));
-
-	if (HeapTupleIsValid(tuple))
-	{
-		bool isnull;
-		Datum oidDatum = SysCacheGetAttr(RESGROUPNAME, tuple,
-										  ObjectIdAttributeNumber,
-										  &isnull);
-		Assert (!isnull);
-		rsgid = DatumGetObjectId(oidDatum);
-	}
-	else
-		return InvalidOid;
-
-	ReleaseSysCache(tuple);
-
-	return rsgid;
+	return GetSysCacheOid1(RESGROUPNAME, Anum_pg_resgroup_oid,
+						   CStringGetDatum(name));
 }
 
 /*
@@ -745,19 +732,21 @@ char *
 GetResGroupNameForId(Oid oid)
 {
 	HeapTuple	tuple;
-	char		*name = NULL;
+	char		*name;
 
 	tuple = SearchSysCache1(RESGROUPOID,
 							ObjectIdGetDatum(oid));
-
 	if (HeapTupleIsValid(tuple))
 	{
-		bool isnull;
-		Datum nameDatum = SysCacheGetAttr(RESGROUPOID, tuple,
-										  Anum_pg_resgroup_rsgname,
-										  &isnull);
-		Assert (!isnull);
-		Name resGroupName = DatumGetName(nameDatum);
+		bool		isnull;
+		Datum		nameDatum;
+		Name		resGroupName;
+
+		nameDatum = SysCacheGetAttr(RESGROUPOID, tuple,
+									Anum_pg_resgroup_rsgname,
+									&isnull);
+		Assert(!isnull);
+		resGroupName = DatumGetName(nameDatum);
 		name = pstrdup(NameStr(*resGroupName));
 	}
 	else
@@ -1261,8 +1250,7 @@ updateResgroupCapabilityEntry(Relation rel,
 	newTuple = heap_modify_tuple(oldTuple, RelationGetDescr(rel),
 								 values, isnull, repl);
 
-	simple_heap_update(rel, &oldTuple->t_self, newTuple);
-	CatalogUpdateIndexes(rel, newTuple);
+	CatalogTupleUpdate(rel, &oldTuple->t_self, newTuple);
 
 	systable_endscan(sscan);
 }
@@ -1458,8 +1446,7 @@ insertResgroupCapabilityEntry(Relation rel,
 	new_record[Anum_pg_resgroupcapability_value - 1] = CStringGetTextDatum(value);
 
 	tuple = heap_form_tuple(tupleDesc, new_record, new_record_nulls);
-	simple_heap_insert(rel, tuple);
-	CatalogUpdateIndexes(rel, tuple);
+	CatalogTupleInsert(rel, tuple);
 }
 
 /*

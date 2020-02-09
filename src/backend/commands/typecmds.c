@@ -60,12 +60,8 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-<<<<<<< HEAD
-#include "optimizer/var.h"
-#include "parser/analyze.h"
-=======
 #include "optimizer/optimizer.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#include "parser/analyze.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
@@ -1424,36 +1420,6 @@ AlterEnum(AlterEnumStmt *stmt)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for type %u", enum_type_oid);
 
-<<<<<<< HEAD
-	/*
-	 * Ordinarily we disallow adding values within transaction blocks, because
-	 * we can't cope with enum OID values getting into indexes and then having
-	 * their defining pg_enum entries go away.  However, it's okay if the enum
-	 * type was created in the current transaction, since then there can be no
-	 * such indexes that wouldn't themselves go away on rollback.  (We support
-	 * this case because pg_dump --binary-upgrade needs it.)  We test this by
-	 * seeing if the pg_type row has xmin == current XID and is not
-	 * HEAP_UPDATED.  If it is HEAP_UPDATED, we can't be sure whether the type
-	 * was created or only modified in this xact.  So we are disallowing some
-	 * cases that could theoretically be safe; but fortunately pg_dump only
-	 * needs the simplest case.
-	 */
-	if (HeapTupleHeaderGetXmin(tup->t_data) == GetCurrentTransactionId() &&
-		!(tup->t_data->t_infomask & HEAP_UPDATED))
-		 /* safe to do inside transaction block */ ;
-	else if (Gp_role == GP_ROLE_EXECUTE)
-	{
-		/*
-		 * GPDB: allow this in query executor, as distributed transaction
-		 * participants. The QD already checked this, and should've prevented
-		 * running this in any genuine transaction block.
-		 */
-	}
-	else
-		PreventTransactionChain(isTopLevel, "ALTER TYPE ... ADD");
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/* Check it's an enum and check user has permission to ALTER the enum */
 	checkEnumOwner(tup);
 
@@ -1476,9 +1442,6 @@ AlterEnum(AlterEnumStmt *stmt)
 
 	ObjectAddressSet(address, TypeRelationId, enum_type_oid);
 
-<<<<<<< HEAD
-	ReleaseSysCache(tup);
-
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR|
@@ -1487,8 +1450,6 @@ AlterEnum(AlterEnumStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	return address;
 }
 
@@ -2361,11 +2322,7 @@ DefineCompositeType(RangeVar *typevar, List *coldeflist)
 	 * Finally create the relation.  This also creates the type.
 	 */
 	DefineRelation(createStmt, RELKIND_COMPOSITE_TYPE, InvalidOid, &address,
-<<<<<<< HEAD
-				   RELSTORAGE_VIRTUAL, true, true, NULL);
-=======
-				   NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				   true, true, NULL);
 
 	return address;
 }

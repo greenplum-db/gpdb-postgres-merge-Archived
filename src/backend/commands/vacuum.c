@@ -2525,12 +2525,8 @@ vac_update_datfrozenxid(void)
 
 		Assert(TransactionIdIsNormal(classForm->relfrozenxid));
 		Assert(MultiXactIdIsValid(classForm->relminmxid));
-		/*
-		 * Don't know partition parent or not here but passing false is perfect
-		 * for assertion, as valid relfrozenxid means it shouldn't be parent.
-		 */
 		Assert(should_have_valid_relfrozenxid(classForm->relkind,
-											  classForm->relstorage, false));
+											  classForm->relstorage));
 
 		/*
 		 * If things are working properly, no relation should have a

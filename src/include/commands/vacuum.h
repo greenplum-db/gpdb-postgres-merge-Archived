@@ -87,7 +87,6 @@ typedef struct VacAttrStats
 	int32		attrtypmod;		/* typmod of data being analyzed */
 	Form_pg_type attrtype;		/* copy of pg_type row for attrtypid */
 	Oid			attrcollid;		/* collation of data being analyzed */
-	char		relstorage;		/* pg_class.relstorage for table */
 	MemoryContext anl_context;	/* where to save long-lived data */
 	int16		elevel;			/* set to LOG for ANALYZE VERBOSE */
 

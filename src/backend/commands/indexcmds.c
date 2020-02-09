@@ -189,8 +189,7 @@ cdb_sync_indcheckxmin_with_segments(Oid indexRelationId)
 		if (!indexForm->indcheckxmin)
 		{
 			indexForm->indcheckxmin = true;
-			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
-			CatalogUpdateIndexes(pg_index, indexTuple);
+			CatalogTupleUpdate(pg_index, &indexTuple->t_self, indexTuple);
 		}
 
 		heap_freetuple(indexTuple);
@@ -575,12 +574,9 @@ DefineIndex(Oid relationId,
 	LOCKTAG		heaplocktag;
 	LOCKMODE	lockmode;
 	Snapshot	snapshot;
-<<<<<<< HEAD
+	int			save_nestlevel = -1;
 	bool		need_longlock = true;
 	bool		shouldDispatch;
-=======
-	int			save_nestlevel = -1;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			i;
 
 	if (Gp_role == GP_ROLE_DISPATCH && !IsBootstrapProcessingMode())
@@ -730,29 +726,6 @@ DefineIndex(Oid relationId,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot create exclusion constraints on partitioned table \"%s\"",
-							RelationGetRelationName(rel))));
-	}
-
-	/*
-	 * Establish behavior for partitioned tables, and verify sanity of
-	 * parameters.
-	 *
-	 * We do not build an actual index in this case; we only create a few
-	 * catalog entries.  The actual indexes are built by recursing for each
-	 * partition.
-	 */
-	partitioned = (rel_part_status(relationId) != PART_STATUS_NONE);
-	if (partitioned)
-	{
-		if (stmt->concurrent)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot create index on partitioned table \"%s\" concurrently",
-							RelationGetRelationName(rel))));
-		if (stmt->excludeOpNames)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot create exclusion constraint on partitioned table \"%s\"",
 							RelationGetRelationName(rel))));
 	}
 
@@ -1030,7 +1003,7 @@ DefineIndex(Oid relationId,
 			bool		compatible;
 
 			/* Don't allow indexes on system attributes. Except OIDs. */
-			for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+			for (int i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 			{
 				if (indexInfo->ii_KeyAttrNumbers[i] < 0 &&
 					indexInfo->ii_KeyAttrNumbers[i] != ObjectIdAttributeNumber)

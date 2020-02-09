@@ -3998,15 +3998,8 @@ insert_ordered_unique_oid(List *list, Oid datum)
  * and after upgrade.
  */
 bool
-should_have_valid_relfrozenxid(char relkind, bool is_partition_parent)
+should_have_valid_relfrozenxid(char relkind)
 {
-	/*
-	 * Parent tables in partition hierarchy (top or internal one) contains no
-	 * data and hence no reason to have valid relfrozenxid.
-	 */
-	if (is_partition_parent)
-		return false;
-
 	switch (relkind)
 	{
 		case RELKIND_RELATION:

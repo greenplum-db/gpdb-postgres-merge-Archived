@@ -551,17 +551,12 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		dboid = GetPreassignedOidForDatabase(dbname);
 	else
 	{
-<<<<<<< HEAD
 		do
 		{
-			dboid = GetNewOid(pg_database_rel);
+			dboid = GetNewOidWithIndex(pg_database_rel, DatabaseOidIndexId,
+									   Anum_pg_database_oid);
 		} while (check_db_file_conflict(dboid));
 	}
-=======
-		dboid = GetNewOidWithIndex(pg_database_rel, DatabaseOidIndexId,
-								   Anum_pg_database_oid);
-	} while (check_db_file_conflict(dboid));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Insert a new tuple into pg_database.  This establishes our ownership of

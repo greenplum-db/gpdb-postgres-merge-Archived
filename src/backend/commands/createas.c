@@ -109,7 +109,6 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	ObjectAddress intoRelationAddr;
 
 	Datum       reloptions;
-	int         relstorage;
 	StdRdOptions *stdRdOptions;
 
 	/* This code supports both CREATE TABLE AS and CREATE MATERIALIZED VIEW */
@@ -161,10 +160,6 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION,
 												   reloptions,
 												   queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true);
-	if(stdRdOptions->appendonly)
-		relstorage = stdRdOptions->columnstore ? RELSTORAGE_AOCOLS : RELSTORAGE_AOROWS;
-	else
-		relstorage = RELSTORAGE_HEAP;
 
 	create->distributedBy = NULL; /* We will pass a pre-made intoPolicy instead */
 	create->partitionBy = NULL; /* CTAS does not not support partition. */
@@ -179,7 +174,6 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 
 	/* Save them in CreateStmt for dispatching. */
 	create->relKind = relkind;
-	create->relStorage = relstorage;
 	create->ownerid = GetUserId();
 	create->accessMethod = into->accessMethod;
 

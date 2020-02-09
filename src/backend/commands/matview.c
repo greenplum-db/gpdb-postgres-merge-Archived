@@ -353,7 +353,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	dataQuery->intoPolicy = matviewRel->rd_cdbpolicy;
 	/* Generate the data, if wanted. */
 	if (!stmt->skipData)
-		processed = refresh_matview_datafill(dest, dataQuery, queryString);
+		processed = refresh_matview_datafill(dest, dataQuery, queryString, stmt);
 
 	/* Make the matview match the newly generated data. */
 	if (concurrent)

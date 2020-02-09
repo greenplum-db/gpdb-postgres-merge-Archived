@@ -179,7 +179,7 @@ static void compute_index_stats(Relation onerel, double totalrows,
 								HeapTuple *rows, int numrows,
 								MemoryContext col_context);
 static VacAttrStats *examine_attribute(Relation onerel, int attnum,
-									   Node *index_expr);
+									   Node *index_expr, int elevel);
 <<<<<<< HEAD
 static int acquire_sample_rows_dispatcher(Relation onerel, bool inh, int elevel,
 										  HeapTuple *rows, int targrows,
@@ -403,24 +403,12 @@ analyze_rel_internal(Oid relid, RangeVar *relation, int options,
 	LWLockRelease(ProcArrayLock);
 
 	/*
-<<<<<<< HEAD
-	 * Do the normal non-recursive ANALYZE.
-	 *
-	 * Skip this for partitioned tables. A partitioned table, i.e. the
-	 * "root partition", doesn't contain any rows.
-	 */
-	PartStatus ps = rel_part_status(relid);
-	if (!(ps == PART_STATUS_ROOT || ps == PART_STATUS_INTERIOR))
-		do_analyze_rel(onerel, options, params, va_cols, acquirefunc, relpages,
-					   false, in_outer_xact, elevel);
-=======
 	 * Do the normal non-recursive ANALYZE.  We can skip this for partitioned
 	 * tables, which don't contain any rows.
 	 */
 	if (onerel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 		do_analyze_rel(onerel, params, va_cols, acquirefunc,
 					   relpages, false, in_outer_xact, elevel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
@@ -569,11 +557,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 								col, RelationGetRelationName(onerel))));
 			unique_cols = bms_add_member(unique_cols, i);
 
-<<<<<<< HEAD
 			vacattrstats[tcnt] = examine_attribute(onerel, i, NULL, elevel);
-=======
-			vacattrstats[tcnt] = examine_attribute(onerel, i, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			if (vacattrstats[tcnt] != NULL)
 				tcnt++;
 		}
@@ -1122,11 +1106,7 @@ compute_index_stats(Relation onerel, double totalrows,
 			ResetExprContext(econtext);
 
 			/* Set up for predicate or expression evaluation */
-<<<<<<< HEAD
-			ExecStoreHeapTuple(heapTuple, slot, InvalidBuffer, false);
-=======
 			ExecStoreHeapTuple(heapTuple, slot, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/* If index is partial, check predicate */
 			if (predicate != NULL)
@@ -1297,7 +1277,6 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr, int elevel)
 	if (!HeapTupleIsValid(typtuple))
 		elog(ERROR, "cache lookup failed for type %u", stats->attrtypid);
 	stats->attrtype = (Form_pg_type) GETSTRUCT(typtuple);
-	stats->relstorage = RelationGetForm(onerel)->relstorage;
 	stats->anl_context = anl_context;
 	stats->tupattnum = attnum;
 
@@ -2286,7 +2265,7 @@ acquire_sample_rows_dispatcher(Relation onerel, bool inh, int elevel,
 	numLiveColumns = 0;
 	for (i = 0; i < relDesc->natts; i++)
 	{
-		Form_pg_attribute attr = relDesc->attrs[i];
+		Form_pg_attribute attr = TupleDescAttr(relDesc, i);
 
 		if (attr->attisdropped)
 			continue;
@@ -2312,7 +2291,7 @@ acquire_sample_rows_dispatcher(Relation onerel, bool inh, int elevel,
 	/* table columns */
 	for (i = 0; i < relDesc->natts; i++)
 	{
-		Form_pg_attribute attr = relDesc->attrs[i];
+		Form_pg_attribute attr = TupleDescAttr(relDesc, i);
 		Oid			typid = gp_acquire_sample_rows_col_type(attr->atttypid);
 
 		if (attr->attisdropped)
@@ -2340,10 +2319,10 @@ acquire_sample_rows_dispatcher(Relation onerel, bool inh, int elevel,
 	newDesc = CreateTupleDescCopy(relDesc);
 	for (i = 0; i < relDesc->natts; i++)
 	{
-		Form_pg_attribute attr = relDesc->attrs[i];
+		Form_pg_attribute attr = TupleDescAttr(relDesc, i);
 		Oid			typid = gp_acquire_sample_rows_col_type(attr->atttypid);
 
-		newDesc->attrs[i]->atttypid = typid;
+		TupleDescAttr(newDesc, i)->atttypid = typid;
 	}
 	attinmeta = TupleDescGetAttInMetadata(newDesc);
 
@@ -2417,7 +2396,7 @@ acquire_sample_rows_dispatcher(Relation onerel, bool inh, int elevel,
 					index = 0;
 					for (i = 0; i < relDesc->natts; i++)
 					{
-						Form_pg_attribute attr = relDesc->attrs[i];
+						Form_pg_attribute attr = TupleDescAttr(relDesc, i);
 
 						if (attr->attisdropped)
 							continue;
@@ -2432,7 +2411,7 @@ acquire_sample_rows_dispatcher(Relation onerel, bool inh, int elevel,
 				index = 0;
 				for (i = 0; i < relDesc->natts; i++)
 				{
-					Form_pg_attribute attr = relDesc->attrs[i];
+					Form_pg_attribute attr = TupleDescAttr(relDesc, i);
 
 					if (attr->attisdropped)
 						continue;

@@ -13,6 +13,8 @@
  *-------------------------------------------------------------------------
  */
 
+#include <math.h>
+
 #include "portability/instr_time.h"
 
 #include "libpq-fe.h"
@@ -1544,8 +1546,8 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 			else
 			{
 				ExplainOpenGroup("MemoryAccounting", NULL, false, es);
-				ExplainPropertyInteger("Slice", curSliceId, es);
-				ExplainPropertyInteger("Segment", iWorker, es);
+				ExplainPropertyInteger("Slice", NULL, curSliceId, es);
+				ExplainPropertyInteger("Segment", NULL, iWorker, es);
 			}
 
 			MemoryAccounting_CombinedAccountArrayToExplain(ctx->slices[curSliceId].memoryAccounts[iWorker],
@@ -1573,9 +1575,9 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 		}
 		else
 		{
-			ExplainPropertyLong("Executor Memory", (long) kb(ns->execmemused.vsum), es);
+			ExplainPropertyLong("Executor Memory", "kB", (long) kb(ns->execmemused.vsum), es);
 			ExplainPropertyInteger("Executor Memory Segments", ns->execmemused.vcnt, es);
-			ExplainPropertyLong("Executor Max Memory", (long) kb(ns->execmemused.vmax), es);
+			ExplainPropertyLong("Executor Max Memory", "kB", (long) kb(ns->execmemused.vmax), es);
 			ExplainPropertyInteger("Executor Max Memory Segment", ns->execmemused.imax, es);
 		}
 	}
@@ -1631,7 +1633,7 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 		{
 			ExplainOpenGroup("work_mem", "work_mem", true, es);
 			ExplainPropertyLong("Used", (long) kb(ns->workmemused.vsum), es);
-			ExplainPropertyInteger("Segments", ns->workmemused.vcnt, es);
+			ExplainPropertyInteger("Segments", NULL, ns->workmemused.vcnt, es);
 			ExplainPropertyLong("Max Memory", (long) kb(ns->workmemused.vmax), es);
 			ExplainPropertyLong("Max Memory Segment", ns->workmemused.imax, es);
 
@@ -1640,7 +1642,7 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 			 * creates workfiles.
 			 */
 			if (nodeSupportWorkfileCaching(planstate))
-				ExplainPropertyInteger("Workfile Spilling", ns->totalWorkfileCreated.vcnt, es);
+				ExplainPropertyInteger("Workfile Spilling", NULL, ns->totalWorkfileCreated.vcnt, es);
 
 			if (ns->workmemwanted.vcnt > 0)
 			{
@@ -1650,7 +1652,7 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 				{
 					ExplainPropertyInteger("Max Memory Wanted Segment", ns->workmemwanted.imax, es);
 					ExplainPropertyLong("Avg Memory Wanted", (long) kb(cdbexplain_agg_avg(&ns->workmemwanted)), es);
-					ExplainPropertyInteger("Segments Affected", ns->ninst, es);
+					ExplainPropertyInteger("Segments Affected", NULL, ns->ninst, es);
 				}
 			}
 
@@ -1862,7 +1864,7 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 										 nsi->total, false);
 
 				ExplainOpenGroup("Segment", NULL, false, es);
-				ExplainPropertyInteger("Segment index", ns->segindex0 + i, es);
+				ExplainPropertyInteger("Segment index", NULL, ns->segindex0 + i, es);
 				ExplainPropertyText("Time To First Result", startbuf, es);
 				ExplainPropertyText("Time To Total Result", totalbuf, es);
 				ExplainPropertyFloat("Tuples", nsi->ntuples, 1, es);
@@ -1987,7 +1989,7 @@ gpexplain_formatSlicesOutput(struct CdbExplain_ShowStatCtx *showstatctx,
         else 
         {
             ExplainOpenGroup("Slice", NULL, true, es);
-            ExplainPropertyInteger("Slice", sliceIndex, es);
+            ExplainPropertyInteger("Slice", NULL, sliceIndex, es);
         }
 
         /* Worker counts */
@@ -2025,7 +2027,7 @@ gpexplain_formatSlicesOutput(struct CdbExplain_ShowStatCtx *showstatctx,
             {
                 ExplainOpenGroup("Workers", "Workers", true, es);
                 if (ds->nError > 0)
-                    ExplainPropertyInteger("Errors", ds->nError, es);
+                    ExplainPropertyInteger("Errors", NULL, ds->nError, es);
             }
 
             if (ds->nCanceled > 0)
@@ -2038,7 +2040,7 @@ gpexplain_formatSlicesOutput(struct CdbExplain_ShowStatCtx *showstatctx,
                 }
                 else
                 {
-                    ExplainPropertyInteger("Canceled", ds->nCanceled, es);
+                    ExplainPropertyInteger("Canceled", NULL, ds->nCanceled, es);
                 }
             }
 
@@ -2052,7 +2054,7 @@ gpexplain_formatSlicesOutput(struct CdbExplain_ShowStatCtx *showstatctx,
                 }
                 else
                 {
-                    ExplainPropertyInteger("Not Dispatched", nNotDispatched, es);
+                    ExplainPropertyInteger("Not Dispatched", NULL, nNotDispatched, es);
                 }
             }
 
@@ -2066,7 +2068,7 @@ gpexplain_formatSlicesOutput(struct CdbExplain_ShowStatCtx *showstatctx,
                 }
                 else
                 {
-                    ExplainPropertyInteger("Aborted", ds->nIgnorableError, es);
+                    ExplainPropertyInteger("Aborted", NULL, ds->nIgnorableError, es);
                 }
             }
 
