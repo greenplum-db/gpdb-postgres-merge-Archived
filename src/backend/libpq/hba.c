@@ -1584,6 +1584,9 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 			return NULL;
 		}
 
+		/* GPDB_12_MERGE_FIXME: Is this still relevant? Is there some additional GPDB 
+		 * features in LDAP authentication, or has PostgreSQL gotten them all by now? */
+#if 0
 		if ((parsedline->ldaptls || parsedline->ldapport != 0) && strncmp(parsedline->ldapserver, "ldaps://", 8) == 0)
 		{
 			ereport(LOG,
@@ -1594,12 +1597,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 			return NULL;
 
 		}
-	}
-
-	if (parsedline->auth_method == uaRADIUS)
-	{
-		MANDATORY_AUTH_ARG(parsedline->radiusserver, "radiusserver", "radius");
-		MANDATORY_AUTH_ARG(parsedline->radiussecret, "radiussecret", "radius");
+#endif
 	}
 
 	if (parsedline->auth_method == uaRADIUS)

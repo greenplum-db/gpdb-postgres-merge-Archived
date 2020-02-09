@@ -50,18 +50,10 @@ static int	my_sock_write(BIO *h, const char *buf, int size);
 static BIO_METHOD *my_BIO_s_socket(void);
 static int	my_SSL_set_fd(Port *port, int fd);
 
-<<<<<<< HEAD
-static DH  *generate_dh_parameters(int prime_len, int generator);
-static DH  *load_dh_file(int keylength);
-static DH  *load_dh_buffer(const char *, size_t);
-static DH  *generate_dh_parameters(int prime_len, int generator);
-static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
-=======
 static DH  *load_dh_file(char *filename, bool isServerStart);
 static DH  *load_dh_buffer(const char *, size_t);
 static int	ssl_external_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 static int	dummy_ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static int	verify_cb(int, X509_STORE_CTX *);
 static void info_cb(const SSL *ssl, int type, int args);
 static bool initialize_dh(SSL_CTX *context, bool isServerStart);
@@ -71,74 +63,6 @@ static const char *SSLerrmessage(unsigned long ecode);
 static char *X509_NAME_to_cstring(X509_NAME *name);
 
 static SSL_CTX *SSL_context = NULL;
-<<<<<<< HEAD
-
-
-/* ------------------------------------------------------------ */
-/*						 Hardcoded values						*/
-/* ------------------------------------------------------------ */
-
-/*
- *	Hardcoded DH parameters, used in ephemeral DH keying.
- *	As discussed above, EDH protects the confidentiality of
- *	sessions even if the static private key is compromised,
- *	so we are *highly* motivated to ensure that we can use
- *	EDH even if the DBA... or an attacker... deletes the
- *	$DataDir/dh*.pem files.
- *
- *	We could refuse SSL connections unless a good DH parameter
- *	file exists, but some clients may quietly renegotiate an
- *	unsecured connection without fully informing the user.
- *	Very uncool.
- *
- *	Alternatively, the backend could attempt to load these files
- *	on startup if SSL is enabled - and refuse to start if any
- *	do not exist - but this would tend to piss off DBAs.
- *
- *	If you want to create your own hardcoded DH parameters
- *	for fun and profit, review "Assigned Number for SKIP
- *	Protocols" (http://www.skip-vpn.org/spec/numbers.html)
- *	for suggestions.
- */
-
-static const char file_dh512[] =
-"-----BEGIN DH PARAMETERS-----\n\
-MEYCQQD1Kv884bEpQBgRjXyEpwpy1obEAxnIByl6ypUM2Zafq9AKUJsCRtMIPWak\n\
-XUGfnHy9iUsiGSa6q6Jew1XpKgVfAgEC\n\
------END DH PARAMETERS-----\n";
-
-static const char file_dh1024[] =
-"-----BEGIN DH PARAMETERS-----\n\
-MIGHAoGBAPSI/VhOSdvNILSd5JEHNmszbDgNRR0PfIizHHxbLY7288kjwEPwpVsY\n\
-jY67VYy4XTjTNP18F1dDox0YbN4zISy1Kv884bEpQBgRjXyEpwpy1obEAxnIByl6\n\
-ypUM2Zafq9AKUJsCRtMIPWakXUGfnHy9iUsiGSa6q6Jew1XpL3jHAgEC\n\
------END DH PARAMETERS-----\n";
-
-static const char file_dh2048[] =
-"-----BEGIN DH PARAMETERS-----\n\
-MIIBCAKCAQEA9kJXtwh/CBdyorrWqULzBej5UxE5T7bxbrlLOCDaAadWoxTpj0BV\n\
-89AHxstDqZSt90xkhkn4DIO9ZekX1KHTUPj1WV/cdlJPPT2N286Z4VeSWc39uK50\n\
-T8X8dryDxUcwYc58yWb/Ffm7/ZFexwGq01uejaClcjrUGvC/RgBYK+X0iP1YTknb\n\
-zSC0neSRBzZrM2w4DUUdD3yIsxx8Wy2O9vPJI8BD8KVbGI2Ou1WMuF040zT9fBdX\n\
-Q6MdGGzeMyEstSr/POGxKUAYEY18hKcKctaGxAMZyAcpesqVDNmWn6vQClCbAkbT\n\
-CD1mpF1Bn5x8vYlLIhkmuquiXsNV6TILOwIBAg==\n\
------END DH PARAMETERS-----\n";
-
-static const char file_dh4096[] =
-"-----BEGIN DH PARAMETERS-----\n\
-MIICCAKCAgEA+hRyUsFN4VpJ1O8JLcCo/VWr19k3BCgJ4uk+d+KhehjdRqNDNyOQ\n\
-l/MOyQNQfWXPeGKmOmIig6Ev/nm6Nf9Z2B1h3R4hExf+zTiHnvVPeRBhjdQi81rt\n\
-Xeoh6TNrSBIKIHfUJWBh3va0TxxjQIs6IZOLeVNRLMqzeylWqMf49HsIXqbcokUS\n\
-Vt1BkvLdW48j8PPv5DsKRN3tloTxqDJGo9tKvj1Fuk74A+Xda1kNhB7KFlqMyN98\n\
-VETEJ6c7KpfOo30mnK30wqw3S8OtaIR/maYX72tGOno2ehFDkq3pnPtEbD2CScxc\n\
-alJC+EL7RPk5c/tgeTvCngvc1KZn92Y//EI7G9tPZtylj2b56sHtMftIoYJ9+ODM\n\
-sccD5Piz/rejE3Ome8EOOceUSCYAhXn8b3qvxVI1ddd1pED6FHRhFvLrZxFvBEM9\n\
-ERRMp5QqOaHJkM+Dxv8Cj6MqrCbfC4u+ZErxodzuusgDgvZiLF22uxMZbobFWyte\n\
-OvOzKGtwcTqO/1wV5gKkzu1ZVswVUQd5Gg8lJicwqRWyyNRczDDoG9jVDxmogKTH\n\
-AaqLulO7R8Ifa1SwF2DteSGVtgWEN8gDpN3RBmmPTDngyF2DHb5qmpnznwtFKdTL\n\
-KWbuHn491xNO25CQWMtem80uKw+pTnisBRF/454n1Jnhub144YRBoN8CAQI=\n\
------END DH PARAMETERS-----\n";
-=======
 static bool SSL_initialized = false;
 static bool dummy_ssl_passwd_cb_called = false;
 static bool ssl_is_server_start;
@@ -149,7 +73,6 @@ static int	ssl_protocol_version_to_openssl(int v, const char *guc_name,
 static int	SSL_CTX_set_min_proto_version(SSL_CTX *ctx, int version);
 static int	SSL_CTX_set_max_proto_version(SSL_CTX *ctx, int version);
 #endif
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /* ------------------------------------------------------------ */
@@ -166,17 +89,6 @@ be_tls_init(bool isServerStart)
 	if (!SSL_initialized)
 	{
 #ifdef HAVE_OPENSSL_INIT_SSL
-<<<<<<< HEAD
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-		OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
-#else
-		OPENSSL_config(NULL);
-#endif
-#else
-		SSL_library_init();
-		SSL_load_error_strings();
-#endif
-=======
 		OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
 #else
 		OPENSSL_config(NULL);
@@ -185,7 +97,6 @@ be_tls_init(bool isServerStart)
 #endif
 		SSL_initialized = true;
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * We use SSLv23_method() because it can negotiate use of the highest
@@ -309,24 +220,11 @@ be_tls_init(bool isServerStart)
 	/* disallow SSL session caching, too */
 	SSL_CTX_set_session_cache_mode(context, SSL_SESS_CACHE_OFF);
 
-<<<<<<< HEAD
-	/* disallow SSL session tickets */
-#ifdef SSL_OP_NO_TICKET			/* added in openssl 0.9.8f */
-	SSL_CTX_set_options(SSL_context, SSL_OP_NO_TICKET);
-#endif
-
-	/* disallow SSL session caching, too */
-	SSL_CTX_set_session_cache_mode(SSL_context, SSL_SESS_CACHE_OFF);
-
-	/* set up ephemeral ECDH keys */
-	initialize_ecdh();
-=======
 	/* set up ephemeral DH and ECDH keys */
 	if (!initialize_dh(context, isServerStart))
 		goto error;
 	if (!initialize_ecdh(context, isServerStart))
 		goto error;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* set up the allowed cipher list */
 	if (SSL_CTX_set_cipher_list(context, SSLCipherSuites) != 1)
@@ -762,32 +660,6 @@ be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
 /*						Internal functions						*/
 /* ------------------------------------------------------------ */
 
-
-/*
- *	Generate DH parameters.
- *
- *	Last resort if we can't load precomputed nor hardcoded
- *	parameters.
- */
-static DH  *
-generate_dh_parameters(int prime_len, int generator)
-{
-#if (OPENSSL_VERSION_NUMBER >= 0x0090800fL)
-	DH		   *dh;
-
-	if ((dh = DH_new()) == NULL)
-		return NULL;
-
-	if (DH_generate_parameters_ex(dh, prime_len, generator, NULL))
-		return dh;
-
-	DH_free(dh);
-	return NULL;
-#else
-	return DH_generate_parameters(prime_len, generator, NULL, NULL);
-#endif
-}
-
 /*
  * Private substitute BIO: this does the sending and receiving using send() and
  * recv() instead. This is so that we can enable and disable interrupts
@@ -802,11 +674,7 @@ generate_dh_parameters(int prime_len, int generator)
  * to retry; do we need to adopt their logic for that?
  */
 
-<<<<<<< HEAD
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-=======
 #ifndef HAVE_BIO_GET_DATA
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #define BIO_get_data(bio) (bio->ptr)
 #define BIO_set_data(bio, data) (bio->ptr = data)
 #endif
@@ -860,11 +728,7 @@ my_BIO_s_socket(void)
 	if (!my_bio_methods)
 	{
 		BIO_METHOD *biom = (BIO_METHOD *) BIO_s_socket();
-<<<<<<< HEAD
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-=======
 #ifdef HAVE_BIO_METH_NEW
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		int			my_bio_index;
 
 		my_bio_index = BIO_get_new_index();
@@ -1031,18 +895,6 @@ ssl_external_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 	return run_ssl_passphrase_command(prompt, ssl_is_server_start, buf, size);
 }
 
-<<<<<<< HEAD
-	/* this may take a long time, but it may be necessary... */
-	if (r == NULL || 8 * DH_size(r) < keylength)
-	{
-		ereport(DEBUG2,
-				(errmsg_internal("DH: generating parameters (%d bits)",
-								 keylength)));
-		r = generate_dh_parameters(keylength, DH_GENERATOR_2);
-	}
-
-	return r;
-=======
 /*
  * Dummy passphrase callback
  *
@@ -1061,7 +913,6 @@ dummy_ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 	Assert(size > 0);
 	buf[0] = '\0';
 	return 0;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
