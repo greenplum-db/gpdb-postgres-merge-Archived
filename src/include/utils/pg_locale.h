@@ -71,7 +71,6 @@ extern void check_strxfrm_bug(void);
 
 extern bool lc_collate_is_c(Oid collation);
 extern bool lc_ctype_is_c(Oid collation);
-extern void lc_guess_strxfrm_scaling_factor(int *scaleFactorOut, int *constantFactorOut);
 
 /*
  * Return the POSIX lconv struct (contains number/money formatting
