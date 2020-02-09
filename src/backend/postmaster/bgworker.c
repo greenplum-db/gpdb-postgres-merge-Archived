@@ -37,6 +37,12 @@
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
 
+#include "postmaster/backoff.h"
+#include "postmaster/fts.h"
+#include "postmaster/perfmon.h"
+#include "postmaster/perfmon_segmentinfo.h"
+#include "utils/gdd.h"
+
 extern bool isAuxiliaryBgWorker(BackgroundWorker *worker);
 
 /*
@@ -132,6 +138,28 @@ static const struct
 	{
 		"ApplyWorkerMain", ApplyWorkerMain
 	}
+
+	/* GPDB additions */
+	,
+	{
+		"FtsProbeMain", FtsProbeMain
+	},
+	{
+		"GlobalDeadLockDetectorMain", GlobalDeadLockDetectorMain
+	},
+	{
+		"DtxRecoveryMain", DtxRecoveryMain
+	},
+	{
+		"SegmentInfoSenderMain", SegmentInfoSenderMain
+	},
+	{
+		"BackoffSweeperMain", BackoffSweeperMain
+	},
+	{
+		"PerfmonMain", PerfmonMain
+	},
+
 };
 
 /* Private functions. */

@@ -378,46 +378,46 @@ pg_time_t PMAcceptingConnectionsStartTime = 0;
 
 static BackgroundWorker PMAuxProcList[MaxPMAuxProc] =
 {
-	{"ftsprobe process",
+	{"ftsprobe process", "ftsprobe process",
 	 BGWORKER_SHMEM_ACCESS | BGWORKER_BACKEND_DATABASE_CONNECTION,
 	 BgWorkerStart_DtxRecovering, /* no need to wait dtx recovery */
 	 0, /* restart immediately if ftsprobe exits with non-zero code */
-	 FtsProbeMain, {0}, {0}, 0, {0}, 0,
+	 "postgres", "FtsProbeMain", 0, {0}, 0,
 	 FtsProbeStartRule},
 
-	{"global deadlock detector process",
+	{"global deadlock detector process", "global deadlock detector process",
 	 BGWORKER_SHMEM_ACCESS | BGWORKER_BACKEND_DATABASE_CONNECTION,
 	 BgWorkerStart_RecoveryFinished,
 	 0, /* restart immediately if gdd exits with non-zero code */
-	 GlobalDeadLockDetectorMain, {0}, {0}, 0, {0}, 0,
+	 "postgres", "GlobalDeadLockDetectorMain", 0, {0}, 0,
 	 GlobalDeadLockDetectorStartRule},
 
-	{"dtx recovery process",
+	{"dtx recovery process", "dtx recovery process",
 	 BGWORKER_SHMEM_ACCESS | BGWORKER_BACKEND_DATABASE_CONNECTION,
 	 BgWorkerStart_DtxRecovering, /* no need to wait dtx recovery */
 	 0, /* restart immediately if dtx recovery process exits with non-zero code */
-	 DtxRecoveryMain, {0}, {0}, 0, {0}, 0,
+	 "postgres", "DtxRecoveryMain", 0, {0}, 0,
 	 DtxRecoveryStartRule},
 
-	{"stats sender process",
+	{"stats sender process", "stats sender process",
 	 BGWORKER_SHMEM_ACCESS,
 	 BgWorkerStart_RecoveryFinished,
 	 0, /* restart immediately if stats sender exits with non-zero code */
-	 SegmentInfoSenderMain, {0}, {0}, 0, {0}, 0,
+	 "postgres", "SegmentInfoSenderMain", 0, {0}, 0,
 	 SegmentInfoSenderStartRule},
 
-	{"sweeper process",
+	{"sweeper process", "sweeper process",
 	 BGWORKER_SHMEM_ACCESS,
 	 BgWorkerStart_RecoveryFinished,
 	 0, /* restart immediately if sweeper process exits with non-zero code */
-	 BackoffSweeperMain, {0}, {0}, 0, {0}, 0,
+	 "postgres", "BackoffSweeperMain", 0, {0}, 0,
 	 BackoffSweeperStartRule},
 
-	{"perfmon process",
+	{"perfmon process", "perfmon process",
 	 BGWORKER_SHMEM_ACCESS,
 	 BgWorkerStart_RecoveryFinished,
 	 0, /* restart immediately if perfmon process exits with non-zero code */
-	 PerfmonMain, {0}, {0}, 0, {0}, 0,
+	 "postgres", "PerfmonMain", 0, {0}, 0,
 	 PerfmonStartRule},
 };
 
@@ -7121,7 +7121,8 @@ load_auxiliary_libraries(void)
 			rw = slist_container(RegisteredBgWorker, rw_lnode, iter.cur);
 
 			if (!strcmp(rw->rw_worker.bgw_name, worker->bgw_name) &&
-				rw->rw_worker.bgw_main == worker->bgw_main &&
+				strcmp(rw->rw_worker.bgw_library_name, worker->bgw_library_name) == 0 &&
+				strcmp(rw->rw_worker.bgw_function_name, worker->bgw_function_name) == 0 &&
 				rw->rw_worker.bgw_start_rule == worker->bgw_start_rule)
 				registered = true;
 		}
@@ -7145,7 +7146,8 @@ isAuxiliaryBgWorker(BackgroundWorker *worker)
 		aux_worker = &PMAuxProcList[i];
 
 		if (!strcmp(aux_worker->bgw_name, worker->bgw_name) &&
-			aux_worker->bgw_main == worker->bgw_main &&
+			strcmp(aux_worker->bgw_library_name, worker->bgw_library_name) == 0 &&
+			strcmp(aux_worker->bgw_function_name, worker->bgw_function_name) == 0 &&
 			aux_worker->bgw_start_rule == worker->bgw_start_rule)
 			return true;
 	}
