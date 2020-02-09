@@ -3857,7 +3857,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 						 errmsg("hour \"%d\" is invalid for the 12-hour clock",
 								tm->tm_hour),
 						 errhint("Use the 24-hour clock, or give an hour between 1 and 12.")));
-				tmfc.pm = TRUE;
+				tmfc.pm = true;
 				tm->tm_hour = tm->tm_hour - HOURS_PER_DAY / 2;
 			}
 			else

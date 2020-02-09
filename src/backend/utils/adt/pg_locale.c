@@ -93,13 +93,6 @@ char	   *locale_messages;
 char	   *locale_monetary;
 char	   *locale_numeric;
 char	   *locale_time;
-char       *locale_collate;
-
-/* lc_time localization cache */
-char	   *localized_abbrev_days[7];
-char	   *localized_full_days[7];
-char	   *localized_abbrev_months[12];
-char	   *localized_full_months[12];
 
 /* lc_time localization cache */
 char	   *localized_abbrev_days[7];
@@ -433,11 +426,7 @@ free_struct_lconv(struct lconv *s)
  * about) are non-NULL.  The field list must match free_struct_lconv().
  */
 static bool
-<<<<<<< HEAD
-struct_lconv_is_valid(struct lconv * s)
-=======
 struct_lconv_is_valid(struct lconv *s)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	if (s->decimal_point == NULL)
 		return false;
@@ -504,10 +493,6 @@ PGLC_localeconv(void)
 	static bool CurrentLocaleConvAllocated = false;
 	struct lconv *extlconv;
 	struct lconv worklconv;
-<<<<<<< HEAD
-	bool		trouble = false;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	char	   *save_lc_monetary;
 	char	   *save_lc_numeric;
 #ifdef WIN32
@@ -539,11 +524,7 @@ PGLC_localeconv(void)
 	 */
 	memset(&worklconv, 0, sizeof(worklconv));
 
-<<<<<<< HEAD
-	/* Save user's values of monetary and numeric locales */
-=======
 	/* Save prevailing values of monetary and numeric locales */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	save_lc_monetary = setlocale(LC_MONETARY, NULL);
 	if (!save_lc_monetary)
 		elog(ERROR, "setlocale(NULL) failed");
@@ -557,26 +538,6 @@ PGLC_localeconv(void)
 #ifdef WIN32
 
 	/*
-<<<<<<< HEAD
-	 * Ideally, monetary and numeric local symbols could be returned in any
-	 * server encoding.  Unfortunately, the WIN32 API does not allow
-	 * setlocale() to return values in a codepage/CTYPE that uses more than
-	 * two bytes per character, such as UTF-8:
-	 *
-	 * http://msdn.microsoft.com/en-us/library/x99tb11d.aspx
-	 *
-	 * Evidently, LC_CTYPE allows us to control the encoding used for strings
-	 * returned by localeconv().  The Open Group standard, mentioned at the
-	 * top of this C file, doesn't explicitly state this.
-	 *
-	 * Therefore, we set LC_CTYPE to match LC_NUMERIC or LC_MONETARY (which
-	 * cannot be UTF8), call localeconv(), and then convert from the
-	 * numeric/monetary LC_CTYPE to the server encoding.  One example use of
-	 * this is for the Euro symbol.
-	 *
-	 * Perhaps someday we will use GetLocaleInfoW() which returns values in
-	 * UTF16 and convert from that.
-=======
 	 * The POSIX standard explicitly says that it is undefined what happens if
 	 * LC_MONETARY or LC_NUMERIC imply an encoding (codeset) different from
 	 * that implied by LC_CTYPE.  In practice, all Unix-ish platforms seem to
@@ -588,7 +549,6 @@ PGLC_localeconv(void)
 	 * Windows, of course, resolutely does things its own way; on that
 	 * platform LC_CTYPE has to match LC_MONETARY/LC_NUMERIC to get sane
 	 * results.  Hence, we must temporarily set that category as well.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 
 	/* Save prevailing value of ctype locale */
@@ -596,8 +556,6 @@ PGLC_localeconv(void)
 	if (!save_lc_ctype)
 		elog(ERROR, "setlocale(NULL) failed");
 	save_lc_ctype = pstrdup(save_lc_ctype);
-
-	/* Here begins the critical section where we must not throw error */
 
 	/* Here begins the critical section where we must not throw error */
 
@@ -622,26 +580,6 @@ PGLC_localeconv(void)
 	/* Get formatting information for monetary */
 	setlocale(LC_MONETARY, locale_monetary);
 	extlconv = localeconv();
-<<<<<<< HEAD
-
-	/* Must copy data now in case setlocale() overwrites it */
-	worklconv.int_curr_symbol = strdup(extlconv->int_curr_symbol);
-	worklconv.currency_symbol = strdup(extlconv->currency_symbol);
-	worklconv.mon_decimal_point = strdup(extlconv->mon_decimal_point);
-	worklconv.mon_thousands_sep = strdup(extlconv->mon_thousands_sep);
-	worklconv.mon_grouping = strdup(extlconv->mon_grouping);
-	worklconv.positive_sign = strdup(extlconv->positive_sign);
-	worklconv.negative_sign = strdup(extlconv->negative_sign);
-	/* Copy scalar fields as well */
-	worklconv.int_frac_digits = extlconv->int_frac_digits;
-	worklconv.frac_digits = extlconv->frac_digits;
-	worklconv.p_cs_precedes = extlconv->p_cs_precedes;
-	worklconv.p_sep_by_space = extlconv->p_sep_by_space;
-	worklconv.n_cs_precedes = extlconv->n_cs_precedes;
-	worklconv.n_sep_by_space = extlconv->n_sep_by_space;
-	worklconv.p_sign_posn = extlconv->p_sign_posn;
-	worklconv.n_sign_posn = extlconv->n_sign_posn;
-=======
 
 	/* Must copy data now in case setlocale() overwrites it */
 	worklconv.int_curr_symbol = strdup(extlconv->int_curr_symbol);
@@ -677,7 +615,6 @@ PGLC_localeconv(void)
 		elog(FATAL, "failed to restore LC_MONETARY to \"%s\"", save_lc_monetary);
 	if (!setlocale(LC_NUMERIC, save_lc_numeric))
 		elog(FATAL, "failed to restore LC_NUMERIC to \"%s\"", save_lc_numeric);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * At this point we've done our best to clean up, and can call functions
@@ -686,51 +623,6 @@ PGLC_localeconv(void)
 	 */
 	PG_TRY();
 	{
-<<<<<<< HEAD
-		if (!setlocale(LC_MONETARY, save_lc_monetary))
-			trouble = true;
-	}
-
-	if (save_lc_numeric)
-	{
-		if (!setlocale(LC_NUMERIC, save_lc_numeric))
-			trouble = true;
-	}
-
-#ifdef WIN32
-	/* Try to restore internal ctype settings */
-	if (save_lc_ctype)
-	{
-		if (!setlocale(LC_CTYPE, save_lc_ctype))
-			trouble = true;
-	}
-#endif
-
-	/*
-	 * At this point we've done our best to clean up, and can call functions
-	 * that might possibly throw errors with a clean conscience.  But let's
-	 * make sure we don't leak any already-strdup'd fields in worklconv.
-	 */
-	PG_TRY();
-	{
-		int			encoding;
-
-		/*
-		 * Report it if we failed to restore anything.  Perhaps this should be
-		 * FATAL, rather than continuing with bad locale settings?
-		 */
-		if (trouble)
-			elog(WARNING, "failed to restore old locale");
-
-		/* Release the pstrdup'd locale names */
-		if (save_lc_monetary)
-			pfree(save_lc_monetary);
-		if (save_lc_numeric)
-			pfree(save_lc_numeric);
-#ifdef WIN32
-		if (save_lc_ctype)
-			pfree(save_lc_ctype);
-=======
 		int			encoding;
 
 		/* Release the pstrdup'd locale names */
@@ -738,7 +630,6 @@ PGLC_localeconv(void)
 		pfree(save_lc_numeric);
 #ifdef WIN32
 		pfree(save_lc_ctype);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #endif
 
 		/* If any of the preceding strdup calls failed, complain now. */
@@ -749,11 +640,6 @@ PGLC_localeconv(void)
 
 		/*
 		 * Now we must perform encoding conversion from whatever's associated
-<<<<<<< HEAD
-		 * with the locale into the database encoding.
-		 */
-		encoding = pg_get_encoding_from_locale(locale_numeric, true);
-=======
 		 * with the locales into the database encoding.  If we can't identify
 		 * the encoding implied by LC_NUMERIC or LC_MONETARY (ie we get -1),
 		 * use PG_SQL_ASCII, which will result in just validating that the
@@ -762,18 +648,14 @@ PGLC_localeconv(void)
 		encoding = pg_get_encoding_from_locale(locale_numeric, true);
 		if (encoding < 0)
 			encoding = PG_SQL_ASCII;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		db_encoding_convert(encoding, &worklconv.decimal_point);
 		db_encoding_convert(encoding, &worklconv.thousands_sep);
 		/* grouping is not text and does not require conversion */
 
 		encoding = pg_get_encoding_from_locale(locale_monetary, true);
-<<<<<<< HEAD
-=======
 		if (encoding < 0)
 			encoding = PG_SQL_ASCII;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		db_encoding_convert(encoding, &worklconv.int_curr_symbol);
 		db_encoding_convert(encoding, &worklconv.currency_symbol);
@@ -896,14 +778,7 @@ cache_locale_time(void)
 	bool		strftimefail = false;
 	int			encoding;
 	int			i;
-<<<<<<< HEAD
-#ifdef WIN32
-	char	   *save_lc_ctype;
-#endif
-
-=======
 	char	   *save_lc_time;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #ifdef WIN32
 	char	   *save_lc_ctype;
 #endif
@@ -2060,9 +1935,6 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen,
 
 	return result;
 }
-<<<<<<< HEAD
-
-#endif   /* USE_WIDE_UPPER_LOWER */
 
 
 /**
@@ -2179,5 +2051,3 @@ lc_guess_strxfrm_scaling_factor(int *scaleFactorOut, int *constantFactorOut)
 	*scaleFactorOut = scaleFactor;
 	*constantFactorOut = constantFactor;
 }
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

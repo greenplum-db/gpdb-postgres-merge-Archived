@@ -33,11 +33,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
-<<<<<<< HEAD
-#include "utils/timestamp.h"
-=======
 #include "utils/float.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * gcc's -ffast-math switch breaks routines that expect exact results from
@@ -77,7 +73,8 @@ static Timestamp dt2local(Timestamp dt, int timezone);
 static void AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
 static void AdjustIntervalForTypmod(Interval *interval, int32 typmod);
 static TimestampTz timestamp2timestamptz(Timestamp timestamp);
-<<<<<<< HEAD
+static Timestamp timestamptz2timestamp(TimestampTz timestamp);
+
 static inline Timestamp timestamp_offset_internal(Timestamp timestamp,
 						Interval *span);
 static inline Timestamp timestamp_offset_multiple(Timestamp base, Interval *unit,
@@ -88,10 +85,6 @@ static inline TimestampTz timestamptz_offset_multiple(TimestampTz base,
 							Interval *unit, int64 mul);
 /* Handy for comparisons. */
 static const Interval	IntervalZero = {0, 0, 0};
-
-=======
-static Timestamp timestamptz2timestamp(TimestampTz timestamp);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /* common code for timestamptypmodin and timestamptztypmodin */
@@ -1545,47 +1538,6 @@ intervaltypmodleastfield(int32 typmod)
 {
 	if (typmod < 0)
 		return 0;				/* SECOND */
-<<<<<<< HEAD
-
-	switch (INTERVAL_RANGE(typmod))
-	{
-		case INTERVAL_MASK(YEAR):
-			return 5;			/* YEAR */
-		case INTERVAL_MASK(MONTH):
-			return 4;			/* MONTH */
-		case INTERVAL_MASK(DAY):
-			return 3;			/* DAY */
-		case INTERVAL_MASK(HOUR):
-			return 2;			/* HOUR */
-		case INTERVAL_MASK(MINUTE):
-			return 1;			/* MINUTE */
-		case INTERVAL_MASK(SECOND):
-			return 0;			/* SECOND */
-		case INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH):
-			return 4;			/* MONTH */
-		case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR):
-			return 2;			/* HOUR */
-		case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE):
-			return 1;			/* MINUTE */
-		case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
-			return 0;			/* SECOND */
-		case INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE):
-			return 1;			/* MINUTE */
-		case INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
-			return 0;			/* SECOND */
-		case INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
-			return 0;			/* SECOND */
-		case INTERVAL_FULL_RANGE:
-			return 0;			/* SECOND */
-		default:
-			elog(ERROR, "invalid INTERVAL typmod: 0x%x", typmod);
-			break;
-	}
-	return 0;					/* can't get here, but keep compiler quiet */
-}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	switch (INTERVAL_RANGE(typmod))
 	{
@@ -1642,43 +1594,6 @@ interval_support(PG_FUNCTION_ARGS)
 
 	if (IsA(rawreq, SupportRequestSimplify))
 	{
-<<<<<<< HEAD
-		Node	   *source = (Node *) linitial(expr->args);
-		int32		new_typmod = DatumGetInt32(((Const *) typmod)->constvalue);
-		bool		noop;
-
-		if (new_typmod < 0)
-			noop = true;
-		else
-		{
-			int32		old_typmod = exprTypmod(source);
-			int			old_least_field;
-			int			new_least_field;
-			int			old_precis;
-			int			new_precis;
-
-			old_least_field = intervaltypmodleastfield(old_typmod);
-			new_least_field = intervaltypmodleastfield(new_typmod);
-			if (old_typmod < 0)
-				old_precis = INTERVAL_FULL_PRECISION;
-			else
-				old_precis = INTERVAL_PRECISION(old_typmod);
-			new_precis = INTERVAL_PRECISION(new_typmod);
-
-			/*
-			 * Cast is a no-op if least field stays the same or decreases
-			 * while precision stays the same or increases.  But precision,
-			 * which is to say, sub-second precision, only affects ranges that
-			 * include SECOND.
-			 */
-			noop = (new_least_field <= old_least_field) &&
-				(old_least_field > 0 /* SECOND */ ||
-				 new_precis >= MAX_INTERVAL_PRECISION ||
-				 new_precis >= old_precis);
-		}
-		if (noop)
-			ret = relabel_to_typmod(source, new_typmod);
-=======
 		SupportRequestSimplify *req = (SupportRequestSimplify *) rawreq;
 		FuncExpr   *expr = req->fcall;
 		Node	   *typmod;
@@ -1725,7 +1640,6 @@ interval_support(PG_FUNCTION_ARGS)
 			if (noop)
 				ret = relabel_to_typmod(source, new_typmod);
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	PG_RETURN_POINTER(ret);
@@ -2760,29 +2674,6 @@ timestamptz_cmp_timestamp(PG_FUNCTION_ARGS)
  * representation expressed in the units of the time field (microseconds,
  * in the case of integer timestamps) with days assumed to be always 24 hours
  * and months assumed to be always 30 days.  To avoid overflow, we need a
-<<<<<<< HEAD
- * wider-than-int64 datatype for the linear representation, so use INT128
- * with integer timestamps.
- *
- * In the float8 case, our problems are not with overflow but with precision;
- * but it's been like that since day one, so live with it.
- */
-#ifdef HAVE_INT64_TIMESTAMP
-typedef INT128 IntervalOffset;
-#else
-typedef TimeOffset IntervalOffset;
-#endif
-
-static inline IntervalOffset
-interval_cmp_value(const Interval *interval)
-{
-	IntervalOffset span;
-
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		dayfraction;
-	int64		days;
-
-=======
  * wider-than-int64 datatype for the linear representation, so use INT128.
  */
 
@@ -2793,7 +2684,6 @@ interval_cmp_value(const Interval *interval)
 	int64		dayfraction;
 	int64		days;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Separate time field into days and dayfraction, then add the month and
 	 * day fields to the days part.  We cannot overflow int64 days here.
@@ -2808,14 +2698,6 @@ interval_cmp_value(const Interval *interval)
 
 	/* Scale up days to microseconds, forming a 128-bit product */
 	int128_add_int64_mul_int64(&span, days, USECS_PER_DAY);
-<<<<<<< HEAD
-#else
-	span = interval->time;
-	span += interval->month * ((double) DAYS_PER_MONTH * SECS_PER_DAY);
-	span += interval->day * ((double) HOURS_PER_DAY * SECS_PER_HOUR);
-#endif
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return span;
 }
@@ -2823,14 +2705,10 @@ interval_cmp_value(const Interval *interval)
 int
 interval_cmp_internal(const Interval *interval1, const Interval *interval2)
 {
-	IntervalOffset span1 = interval_cmp_value(interval1);
-	IntervalOffset span2 = interval_cmp_value(interval2);
+	INT128		span1 = interval_cmp_value(interval1);
+	INT128		span2 = interval_cmp_value(interval2);
 
-#ifdef HAVE_INT64_TIMESTAMP
 	return int128_compare(span1, span2);
-#else
-	return ((span1 < span2) ? -1 : (span1 > span2) ? 1 : 0);
-#endif
 }
 
 /*
@@ -2849,7 +2727,6 @@ bool
 interval_div_internal(Interval *interval1, Interval *interval2,
 					  float8 *quo, Interval *rem)
 {
-<<<<<<< HEAD
 	TimeOffset	span1 = interval_cmp_value(interval1);
 	TimeOffset	span2 = interval_cmp_value(interval2);
 	float8 q;
@@ -2870,12 +2747,6 @@ interval_div_internal(Interval *interval1, Interval *interval2,
 	}
 
 	return true;
-=======
-	INT128		span1 = interval_cmp_value(interval1);
-	INT128		span2 = interval_cmp_value(interval2);
-
-	return int128_compare(span1, span2);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -3149,17 +3020,9 @@ Datum
 interval_hash(PG_FUNCTION_ARGS)
 {
 	Interval   *interval = PG_GETARG_INTERVAL_P(0);
-<<<<<<< HEAD
-	IntervalOffset span = interval_cmp_value(interval);
-
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		span64;
-
-=======
 	INT128		span = interval_cmp_value(interval);
 	int64		span64;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Use only the least significant 64 bits for hashing.  The upper 64 bits
 	 * seldom add any useful information, and besides we must do it like this
@@ -3169,11 +3032,6 @@ interval_hash(PG_FUNCTION_ARGS)
 	span64 = int128_to_int64(span);
 
 	return DirectFunctionCall1(hashint8, Int64GetDatumFast(span64));
-<<<<<<< HEAD
-#else
-	return DirectFunctionCall1(hashfloat8, Float8GetDatumFast(span));
-#endif
-=======
 }
 
 Datum
@@ -3188,7 +3046,6 @@ interval_hash_extended(PG_FUNCTION_ARGS)
 
 	return DirectFunctionCall2(hashint8extended, Int64GetDatumFast(span64),
 							   PG_GETARG_DATUM(1));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* overlaps_timestamp() --- implements the SQL OVERLAPS operator.
@@ -3534,8 +3391,7 @@ interval_justify_days(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(result);
 }
 
-/* 
- * timestamp_pl_interval()
+/* timestamp_pl_interval()
  * Add an interval to a timestamp data type.
  * Note that interval has provisions for qualitative year/month and day
  *	units, so try to do the right thing with them.
@@ -3938,7 +3794,6 @@ interval_div(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(result);
 }
 
-<<<<<<< HEAD
 Datum
 interval_interval_div(PG_FUNCTION_ARGS)
 {
@@ -3981,7 +3836,6 @@ interval_interval_mod(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(result);
 }
 
-=======
 
 /*
  * in_range support functions for timestamps and intervals.
@@ -4086,7 +3940,6 @@ in_range_interval_interval(PG_FUNCTION_ARGS)
 }
 
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * interval_accum, interval_accum_inv, and interval_avg implement the
  * AVG(interval) aggregate.
