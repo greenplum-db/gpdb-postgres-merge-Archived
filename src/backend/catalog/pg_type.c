@@ -452,9 +452,8 @@ TypeCreate(Oid newTypeOid,
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_TYPE, typeName);
 
 		/* trouble if caller wanted to force the OID */
-		if (OidIsValid(newTypeOid) &&
-			newTypeOid != HeapTupleHeaderGetOid((tup)->t_data))
-			elog(ERROR, "cannot assign new OID to existing shell type %u", HeapTupleHeaderGetOid((tup)->t_data));
+		if (OidIsValid(newTypeOid))
+			elog(ERROR, "cannot assign new OID to existing shell type");
 
 		replaces[Anum_pg_type_oid - 1] = false;
 
@@ -482,7 +481,7 @@ TypeCreate(Oid newTypeOid,
 		{
 			typeObjectId = GetNewOidForType(pg_type_desc, TypeOidIndexId,
 											Anum_pg_type_oid,
-											NameStr(&name), typNamespace);
+											NameStr(name), typNamespace);
 		}
 
 		values[Anum_pg_type_oid - 1] = ObjectIdGetDatum(typeObjectId);

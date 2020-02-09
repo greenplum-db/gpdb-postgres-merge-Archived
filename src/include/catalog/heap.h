@@ -64,10 +64,10 @@ extern Relation heap_create(const char *relname,
 							Oid reltablespace,
 							Oid relid,
 							Oid relfilenode,
+							Oid accessmtd,
 							TupleDesc tupDesc,
 							char relkind,
 							char relpersistence,
-							char relstorage,
 							bool shared_relation,
 							bool mapped_relation,
 							bool allow_system_table_mods,
@@ -86,7 +86,6 @@ extern Oid heap_create_with_catalog(const char *relname,
 									List *cooked_constraints,
 									char relkind,
 									char relpersistence,
-									char relstorage,
 									bool shared_relation,
 									bool mapped_relation,
 									OnCommitAction oncommit,
@@ -164,7 +163,6 @@ extern void CheckAttributeType(const char *attname,
 							   Oid atttypid, Oid attcollation,
 							   List *containing_rowtypes,
 							   int flags);
-extern void SetRelationNumChecks(Relation rel, int numchecks);
 
 /* pg_partitioned_table catalog manipulation functions */
 extern void StorePartitionKey(Relation rel,
@@ -199,7 +197,6 @@ extern void MetaTrackDropObject(Oid		classid,
 		|| ((relkind) == RELKIND_VIEW)) 
 
 extern bool should_have_valid_relfrozenxid(char relkind,
-										   char relstorage,
 										   bool is_partition_parent);
 
 #endif							/* HEAP_H */

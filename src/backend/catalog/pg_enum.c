@@ -33,6 +33,7 @@
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
+#include "catalog/oid_dispatch.h"
 
 
 /*
@@ -102,7 +103,7 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 		{
 			new_oid = GetNewOidForEnum(pg_enum, EnumOidIndexId,
 									   Anum_pg_enum_oid,
-									   enumtypid, enumlabel);
+									   enumTypeOid, enumlabel);
 
 			/*
 			 * In QE node, however, use the OIDs assigned by the master (they are delivered

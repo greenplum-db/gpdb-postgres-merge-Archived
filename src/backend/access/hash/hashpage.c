@@ -61,13 +61,9 @@ static void log_split_page(Relation rel, Buffer buf);
  *		requested buffer and its reference count has been incremented
  *		(ie, the buffer is "locked and pinned").
  *
- *		P_NEW is disallowed because this routine should only be used
+ *		P_NEW is disallowed because this routine can only be used
  *		to access pages that are known to be before the filesystem EOF.
  *		Extending the index should be done with _hash_getnewbuf.
- *
- *		All call sites should call either _hash_checkpage or _hash_pageinit
- *		on the returned page, depending on whether the block is expected
- *		to be valid or not.
  */
 Buffer
 _hash_getbuf(Relation rel, BlockNumber blkno, int access, int flags)
@@ -266,7 +262,7 @@ _hash_getbuf_with_strategy(Relation rel, BlockNumber blkno,
  * Lock and pin (refcount) are both dropped.
  */
 void
-_hash_relbuf(Relation rel pg_attribute_unused(), Buffer buf)
+_hash_relbuf(Relation rel, Buffer buf)
 {
 	UnlockReleaseBuffer(buf);
 }
@@ -277,7 +273,7 @@ _hash_relbuf(Relation rel pg_attribute_unused(), Buffer buf)
  * This is used to unpin a buffer on which we hold no lock.
  */
 void
-_hash_dropbuf(Relation rel pg_attribute_unused(), Buffer buf)
+_hash_dropbuf(Relation rel, Buffer buf)
 {
 	ReleaseBuffer(buf);
 }
@@ -289,11 +285,7 @@ _hash_dropbuf(Relation rel pg_attribute_unused(), Buffer buf)
  * hold no lock.
  */
 void
-<<<<<<< HEAD
-_hash_wrtbuf(Relation rel pg_attribute_unused(), Buffer buf)
-=======
 _hash_dropscanbuf(Relation rel, HashScanOpaque so)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	/* release pin we hold on primary bucket page */
 	if (BufferIsValid(so->hashso_bucket_buf) &&
@@ -301,32 +293,6 @@ _hash_dropscanbuf(Relation rel, HashScanOpaque so)
 		_hash_dropbuf(rel, so->hashso_bucket_buf);
 	so->hashso_bucket_buf = InvalidBuffer;
 
-<<<<<<< HEAD
-/*
- * _hash_chgbufaccess() -- Change the lock type on a buffer, without
- *			dropping our pin on it.
- *
- * from_access and to_access may be HASH_READ, HASH_WRITE, or HASH_NOLOCK,
- * the last indicating that no buffer-level lock is held or wanted.
- *
- * When from_access == HASH_WRITE, we assume the buffer is dirty and tell
- * bufmgr it must be written out.  If the caller wants to release a write
- * lock on a page that's not been modified, it's okay to pass from_access
- * as HASH_READ (a bit ugly, but handy in some places).
- */
-void
-_hash_chgbufaccess(Relation rel pg_attribute_unused(),
-				   Buffer buf,
-				   int from_access,
-				   int to_access)
-{
-	if (from_access == HASH_WRITE)
-		MarkBufferDirty(buf);
-	if (from_access != HASH_NOLOCK)
-		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-	if (to_access != HASH_NOLOCK)
-		LockBuffer(buf, to_access);
-=======
 	/* release pin we hold on primary bucket page  of bucket being split */
 	if (BufferIsValid(so->hashso_split_bucket_buf) &&
 		so->hashso_split_bucket_buf != so->currPos.buf)
@@ -341,7 +307,6 @@ _hash_chgbufaccess(Relation rel pg_attribute_unused(),
 	/* reset split scan */
 	so->hashso_buc_populated = false;
 	so->hashso_buc_split = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 
@@ -1026,11 +991,8 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 {
 	BlockNumber lastblock;
 	PGAlignedBlock zerobuf;
-<<<<<<< HEAD
-=======
 	Page		page;
 	HashPageOpaque ovflopaque;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	lastblock = firstblock + nblocks - 1;
 
@@ -1041,11 +1003,6 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 	if (lastblock < firstblock || lastblock == InvalidBlockNumber)
 		return false;
 
-<<<<<<< HEAD
-	MemSet(zerobuf.data, 0, sizeof(zerobuf));
-
-	RelationOpenSmgr(rel);
-=======
 	page = (Page) zerobuf.data;
 
 	/*
@@ -1072,7 +1029,6 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 
 	RelationOpenSmgr(rel);
 	PageSetChecksumInplace(page, lastblock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	smgrextend(rel->rd_smgr, MAIN_FORKNUM, lastblock, zerobuf.data, false);
 
 	return true;

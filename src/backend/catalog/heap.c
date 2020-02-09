@@ -341,7 +341,6 @@ heap_create(const char *relname,
 			TupleDesc tupDesc,
 			char relkind,
 			char relpersistence,
-			char relstorage,
 			bool shared_relation,
 			bool mapped_relation,
 			bool allow_system_table_mods,
@@ -1204,7 +1203,6 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_relisshared - 1] = BoolGetDatum(rd_rel->relisshared);
 	values[Anum_pg_class_relpersistence - 1] = CharGetDatum(rd_rel->relpersistence);
 	values[Anum_pg_class_relkind - 1] = CharGetDatum(rd_rel->relkind);
-	values[Anum_pg_class_relstorage - 1] = CharGetDatum(rd_rel->relstorage);
 	values[Anum_pg_class_relnatts - 1] = Int16GetDatum(rd_rel->relnatts);
 	values[Anum_pg_class_relchecks - 1] = Int16GetDatum(rd_rel->relchecks);
 	values[Anum_pg_class_relhasrules - 1] = BoolGetDatum(rd_rel->relhasrules);
@@ -1253,7 +1251,6 @@ AddNewRelationTuple(Relation pg_class_desc,
 					Oid reloftype,
 					Oid relowner,
 					char relkind,
-					char relstorage,
 					TransactionId relfrozenxid,
 					TransactionId relminmxid,
 					Datum relacl,
@@ -1302,7 +1299,6 @@ AddNewRelationTuple(Relation pg_class_desc,
 	new_rel_reltup->reltype = new_type_oid;
 	new_rel_reltup->reloftype = reloftype;
 	new_rel_reltup->relkind = relkind;
-	new_rel_reltup->relstorage = relstorage;
 
 	/* relispartition is always set by updating this tuple later */
 	new_rel_reltup->relispartition = false;
@@ -1412,7 +1408,6 @@ heap_create_with_catalog(const char *relname,
 						 List *cooked_constraints,
 						 char relkind,
 						 char relpersistence,
-						 char relstorage,
 						 bool shared_relation,
 						 bool mapped_relation,
 						 OnCommitAction oncommit,
@@ -1448,8 +1443,8 @@ heap_create_with_catalog(const char *relname,
 	Assert(IsNormalProcessingMode() || IsBootstrapProcessingMode());
 
 	/*
-	 * Was "appendonly" specified in the relopts? If yes, fix our relstorage.
-	 * Also, check for override (debug) GUCs.
+	 * Was "appendonly" specified in the relopts? If yes, check for
+	 * override (debug) GUCs.
 	 */
 	if (relkind == RELKIND_RELATION ||
 		relkind == RELKIND_PARTITIONED_TABLE ||
@@ -1468,10 +1463,6 @@ heap_create_with_catalog(const char *relname,
 									 stdRdOptions->columnstore);
 		if(appendOnlyRel)
 		{
-			if(stdRdOptions->columnstore)
-				relstorage = RELSTORAGE_AOCOLS;
-			else
-				relstorage = RELSTORAGE_AOROWS;
 			reloptions = transformAOStdRdOptions(stdRdOptions, reloptions);
 		}
 	}
@@ -1534,7 +1525,7 @@ heap_create_with_catalog(const char *relname,
 	if (!OidIsValid(relid))
 	{
 		relid = GetNewOidForRelation(pg_class_desc, ClassOidIndexId, Anum_pg_class_oid,
-									 relname, relnamespace);
+									 pstrdup(relname), relnamespace);
 	}
 
 	/*
@@ -1578,7 +1569,6 @@ heap_create_with_catalog(const char *relname,
 							   tupdesc,
 							   relkind,
 							   relpersistence,
-							   relstorage,
 							   shared_relation,
 							   mapped_relation,
 							   allow_system_table_mods,
@@ -1705,7 +1695,6 @@ heap_create_with_catalog(const char *relname,
 						reloftypeid,
 						ownerid,
 						relkind,
-						relstorage,
 						relfrozenxid,
 						relminmxid,
 						PointerGetDatum(relacl),
@@ -4009,8 +3998,7 @@ insert_ordered_unique_oid(List *list, Oid datum)
  * and after upgrade.
  */
 bool
-should_have_valid_relfrozenxid(char relkind, char relstorage,
-							   bool is_partition_parent)
+should_have_valid_relfrozenxid(char relkind, bool is_partition_parent)
 {
 	/*
 	 * Parent tables in partition hierarchy (top or internal one) contains no

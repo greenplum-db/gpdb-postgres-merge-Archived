@@ -2998,35 +2998,6 @@ pgstat_bestart(void)
 	else
 		MemSet(&lbeentry.st_clientaddr, 0, sizeof(lbeentry.st_clientaddr));
 
-<<<<<<< HEAD
-	/*
-	 * Initialize my status entry, following the protocol of bumping
-	 * st_changecount before and after; and make sure it's even afterwards. We
-	 * use a volatile pointer here to ensure the compiler doesn't try to get
-	 * cute.
-	 */
-	beentry = MyBEEntry;
-	do
-	{
-		pgstat_increment_changecount_before(beentry);
-	} while ((beentry->st_changecount & 1) == 0);
-
-	beentry->st_procpid = MyProcPid;
-	beentry->st_proc_start_timestamp = proc_start_timestamp;
-	beentry->st_activity_start_timestamp = 0;
-	beentry->st_state_start_timestamp = 0;
-	beentry->st_xact_start_timestamp = 0;
-	beentry->st_databaseid = MyDatabaseId;
-	beentry->st_userid = userid;
-	beentry->st_session_id = gp_session_id;  /* GPDB only */
-	beentry->st_clientaddr = clientaddr;
-	if (MyProcPort && MyProcPort->remote_hostname)
-		strlcpy(beentry->st_clienthostname, MyProcPort->remote_hostname,
-				NAMEDATALEN);
-	else
-		beentry->st_clienthostname[0] = '\0';
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #ifdef USE_SSL
 	if (MyProcPort && MyProcPort->ssl != NULL)
 	{
@@ -3046,18 +3017,6 @@ pgstat_bestart(void)
 #else
 	lbeentry.st_ssl = false;
 #endif
-<<<<<<< HEAD
-	beentry->st_state = STATE_UNDEFINED;
-	beentry->st_appname[0] = '\0';
-	beentry->st_activity[0] = '\0';
-	/* Also make sure the last byte in each string area is always 0 */
-	beentry->st_clienthostname[NAMEDATALEN - 1] = '\0';
-	beentry->st_appname[NAMEDATALEN - 1] = '\0';
-	beentry->st_activity[pgstat_track_activity_query_size - 1] = '\0';
-	beentry->st_rsgid = InvalidOid;
-	beentry->st_progress_command = PROGRESS_COMMAND_INVALID;
-	beentry->st_progress_command_target = InvalidOid;
-=======
 
 #ifdef ENABLE_GSS
 	if (MyProcPort && MyProcPort->gss != NULL)
@@ -3080,7 +3039,7 @@ pgstat_bestart(void)
 	lbeentry.st_state = STATE_UNDEFINED;
 	lbeentry.st_progress_command = PROGRESS_COMMAND_INVALID;
 	lbeentry.st_progress_command_target = InvalidOid;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	lbeentry.st_rsgid = InvalidOid;
 
 	/*
 	 * we don't zero st_progress_param here to save cycles; nobody should
@@ -3551,14 +3510,8 @@ pgstat_read_current_status(void)
 				localentry->backendStatus.st_appname = localappname;
 				strcpy(localclienthostname, (char *) beentry->st_clienthostname);
 				localentry->backendStatus.st_clienthostname = localclienthostname;
-<<<<<<< HEAD
-				strcpy(localactivity, (char *) beentry->st_activity);
-				localentry->backendStatus.st_activity = localactivity;
-				localentry->backendStatus.st_ssl = beentry->st_ssl;
-=======
 				strcpy(localactivity, (char *) beentry->st_activity_raw);
 				localentry->backendStatus.st_activity_raw = localactivity;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #ifdef USE_SSL
 				if (beentry->st_ssl)
 				{
@@ -3640,16 +3593,6 @@ pgstat_get_wait_event_type(uint32 wait_event_info)
 		case PG_WAIT_BUFFER_PIN:
 			event_type = "BufferPin";
 			break;
-<<<<<<< HEAD
-		case WAIT_RESOURCE_GROUP:
-			event_type = "ResourceGroup";
-			break;
-		case WAIT_RESOURCE_QUEUE:
-			event_type = "ResourceQueue";
-			break;
-		case WAIT_REPLICATION:
-			event_type = "Replication";
-=======
 		case PG_WAIT_ACTIVITY:
 			event_type = "Activity";
 			break;
@@ -3667,8 +3610,15 @@ pgstat_get_wait_event_type(uint32 wait_event_info)
 			break;
 		case PG_WAIT_IO:
 			event_type = "IO";
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
+		case PG_WAIT_RESOURCE_GROUP:
+			event_type = "ResourceGroup";
+			break;
+		case PG_WAIT_RESOURCE_QUEUE:
+			event_type = "ResourceQueue";
+			break;
+		case PG_WAIT_REPLICATION:
+			event_type = "Replication";
 		default:
 			event_type = "???";
 			break;
@@ -3708,24 +3658,6 @@ pgstat_get_wait_event(uint32 wait_event_info)
 		case PG_WAIT_BUFFER_PIN:
 			event_name = "BufferPin";
 			break;
-<<<<<<< HEAD
-		case WAIT_RESOURCE_GROUP:
-			/*
-			 * We don't pass details for resource groups via event id, since
-			 * it's an uint16 and resource group id is an Oid.
-			 *
-			 * Here should be never used, pg_stat_get_activity() will get the
-			 * information from backend entry.
-			 */
-			event_name = "ResourceGroup";
-			break;
-		case WAIT_RESOURCE_QUEUE:
-			event_name = "ResourceQueue";
-			break;
-		case WAIT_REPLICATION:
-			event_name = "Replication";
-			break;
-=======
 		case PG_WAIT_ACTIVITY:
 			{
 				WaitEventActivity w = (WaitEventActivity) wait_event_info;
@@ -3764,7 +3696,22 @@ pgstat_get_wait_event(uint32 wait_event_info)
 				event_name = pgstat_get_wait_io(w);
 				break;
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		case PG_WAIT_RESOURCE_GROUP:
+			/*
+			 * We don't pass details for resource groups via event id, since
+			 * it's an uint16 and resource group id is an Oid.
+			 *
+			 * Here should be never used, pg_stat_get_activity() will get the
+			 * information from backend entry.
+			 */
+			event_name = "ResourceGroup";
+			break;
+		case PG_WAIT_RESOURCE_QUEUE:
+			event_name = "ResourceQueue";
+			break;
+		case PG_WAIT_REPLICATION:
+			event_name = "Replication";
+			break;
 		default:
 			event_name = "unknown wait event";
 			break;

@@ -135,15 +135,13 @@ CreateAOAuxiliaryTable(
 												 InvalidOid,
 												 InvalidOid,
 											     rel->rd_rel->relowner,
+												 HEAP_TABLE_AM_OID,
 											     tupledesc,
 												 NIL,
 											     relkind,
 												 rel->rd_rel->relpersistence,
-											     RELSTORAGE_HEAP,
 											     shared_relation,
 												 mapped_relation,
-											     true,
-											     0,
 											     ONCOMMIT_NOOP,
 											     NULL, /* GP Policy */
 											     (Datum) 0,
@@ -151,9 +149,7 @@ CreateAOAuxiliaryTable(
 											     true,
 												 true,
 												 NULL, /* typeaddress */
-												 /* valid_opts */ false,
-												 /* is_part_child */ false,
-												 is_part_parent);
+												 /* valid_opts */ false);
 
 	/* Make this table visible, else index creation will fail */
 	CommandCounterIncrement();

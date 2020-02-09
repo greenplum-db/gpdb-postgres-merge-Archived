@@ -206,7 +206,7 @@ hashbuildCallback(Relation index,
 				  ItemPointer tupleId,
 				  Datum *values,
 				  bool *isnull,
-				  bool tupleIsAlive pg_attribute_unused(),
+				  bool tupleIsAlive,
 				  void *state)
 {
 	HashBuildState *buildstate = (HashBuildState *) state;
@@ -516,21 +516,11 @@ hashbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 * good enough.  (If not, we'll detect that further down and refresh the
 	 * cache as necessary.)
 	 */
-<<<<<<< HEAD
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	_hash_checkpage(rel, metabuf, LH_META_PAGE);
-	metap = HashPageGetMeta(BufferGetPage(metabuf));
-	orig_maxbucket = metap->hashm_maxbucket;
-	orig_ntuples = metap->hashm_ntuples;
-	memcpy(&local_metapage, metap, sizeof(local_metapage));
-	_hash_relbuf(rel, metabuf);
-=======
 	cachedmetap = _hash_getcachedmetap(rel, &metabuf, false);
 	Assert(cachedmetap != NULL);
 
 	orig_maxbucket = cachedmetap->hashm_maxbucket;
 	orig_ntuples = cachedmetap->hashm_ntuples;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Scan the buckets that we know exist */
 	cur_bucket = 0;

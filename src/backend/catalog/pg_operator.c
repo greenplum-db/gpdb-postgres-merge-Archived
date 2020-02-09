@@ -37,6 +37,8 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
+#include "catalog/oid_dispatch.h"
+
 
 static Oid	OperatorGet(const char *operatorName,
 						Oid operatorNamespace,
@@ -240,8 +242,8 @@ OperatorShellMake(const char *operatorName,
 	 */
 	operatorObjectId = GetNewOidForOperator(pg_operator_desc, OperatorOidIndexId,
 											Anum_pg_operator_oid,
-											NameStr(&oname), leftTypeId, rightTypeId,
-											operatorNamespace)
+											NameStr(oname), leftTypeId, rightTypeId,
+											operatorNamespace);
 	values[Anum_pg_operator_oid - 1] = ObjectIdGetDatum(operatorObjectId);
 	namestrcpy(&oname, operatorName);
 	values[Anum_pg_operator_oprname - 1] = NameGetDatum(&oname);
@@ -539,7 +541,7 @@ OperatorCreate(const char *operatorName,
 		operatorObjectId = GetNewOidForOperator(pg_operator_desc,
 												OperatorOidIndexId,
 												Anum_pg_operator_oid,
-												nameStr(&oname), leftTypeId,
+												NameStr(oname), leftTypeId,
 												rightTypeId, operatorNamespace);
 		values[Anum_pg_operator_oid - 1] = ObjectIdGetDatum(operatorObjectId);
 

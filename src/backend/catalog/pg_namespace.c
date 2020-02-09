@@ -25,6 +25,8 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
+#include "catalog/oid_dispatch.h"
+
 
 /* ----------------
  * NamespaceCreate

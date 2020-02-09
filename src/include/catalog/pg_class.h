@@ -195,9 +195,6 @@ typedef FormData_pg_class *Form_pg_class;
  * Relation kinds that have physical storage. These relations normally have
  * relfilenode set to non-zero, but it can also be zero if the relation is
  * mapped.
- *
- * GPDB: Note, this is not to be confused with the GPDB-specific 'relstorage'
- * field, or the RELSTORAGE_* values below!
  */
 #define RELKIND_HAS_STORAGE(relkind) \
 	((relkind) == RELKIND_RELATION || \
@@ -205,36 +202,6 @@ typedef FormData_pg_class *Form_pg_class;
 	 (relkind) == RELKIND_SEQUENCE || \
 	 (relkind) == RELKIND_TOASTVALUE || \
 	 (relkind) == RELKIND_MATVIEW)
-
-/*
- * relstorage describes how a relkind is physically stored in the database.
- *
- * RELSTORAGE_HEAP    - stored on disk using heap storage.
- * RELSTORAGE_AOROWS  - stored on disk using append only storage.
- * RELSTORAGE_AOCOLS  - stored on dist using append only column storage.
- * RELSTORAGE_VIRTUAL - has virtual storage, meaning, relation has no
- *						data directly stored forit  (right now this
- *						relates to views and comp types).
- * RELSTORAGE_FOREIGN - stored in another server.  
- *
- * GPDB 6.x and below used RELSTORAGE_EXTERNAL ('x') for external tables.
- * Now they look like foreign tables.
- */
-#define		  RELSTORAGE_HEAP	'h'
-#define		  RELSTORAGE_AOROWS	'a'
-#define 	  RELSTORAGE_AOCOLS	'c'
-#define		  RELSTORAGE_VIRTUAL	'v'
-#define		  RELSTORAGE_FOREIGN 'f'
-
-static inline bool relstorage_is_heap(char c)
-{
-	return (c == RELSTORAGE_HEAP);
-}
-
-static inline bool relstorage_is_ao(char c)
-{
-	return (c == RELSTORAGE_AOROWS || c == RELSTORAGE_AOCOLS);
-}
 
 #endif							/* EXPOSE_TO_CLIENT_CODE */
 

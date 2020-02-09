@@ -2504,7 +2504,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 			break;
 		case OBJECT_EXTPROTOCOL:
 			if (!pg_extprotocol_ownercheck(address.objectId, roleid))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_EXTPROTOCOL,
+				aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_EXTPROTOCOL,
 							   NameListToString(objname));
 			break;
 		case OBJECT_TSPARSER:

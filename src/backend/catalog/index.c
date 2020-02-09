@@ -52,6 +52,7 @@
 #include "catalog/pg_description.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_inherits.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_tablespace.h"

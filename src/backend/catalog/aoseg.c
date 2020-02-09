@@ -19,6 +19,7 @@
  */
 #include "postgres.h"
 
+#include "access/table.h"
 #include "catalog/aoseg.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/aocatalog.h"

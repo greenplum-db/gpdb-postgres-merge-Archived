@@ -1486,11 +1486,7 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 
 				chunk->size = availchunk;
 #ifdef MEMORY_CONTEXT_CHECKING
-<<<<<<< HEAD
 				chunk->requested_size = 0xFFFFFFFF;	/* mark it free */
-=======
-				chunk->requested_size = 0;	/* mark it free */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #endif
 				chunk->sharedHeader = (void *) set->freelist[a_fidx];
 				set->freelist[a_fidx] = chunk;

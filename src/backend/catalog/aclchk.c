@@ -5985,9 +5985,9 @@ pg_extprotocol_ownercheck(Oid protOid, Oid roleid)
 		return true;
 
 	/* There's no syscache on pg_extprotocol, so must look the hard way */
-	pg_extprotocol = heap_open(ExtprotocolRelationId, AccessShareLock);
+	pg_extprotocol = table_open(ExtprotocolRelationId, AccessShareLock);
 	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
+				Anum_pg_extprotocol_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(protOid));
 	scan = systable_beginscan(pg_extprotocol, ExtprotocolOidIndexId, true,
@@ -6003,7 +6003,7 @@ pg_extprotocol_ownercheck(Oid protOid, Oid roleid)
 	ownerId = ((Form_pg_extprotocol) GETSTRUCT(eptuple))->ptcowner;
 
 	systable_endscan(scan);
-	heap_close(pg_extprotocol, AccessShareLock);
+	table_close(pg_extprotocol, AccessShareLock);
 
 	return has_privs_of_role(roleid, ownerId);
 }

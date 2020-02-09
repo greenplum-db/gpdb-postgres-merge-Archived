@@ -4577,10 +4577,8 @@ TempNamespaceValid(bool error_if_removed)
 		 */
 		AcceptInvalidationMessages();  /* minimize race conditions */
 
-		/* XXX XXX: jic 20120430: is this correct - check if oid exists? */
-		myTempNamespace = GetSysCacheOid1(NAMESPACEOID,
-										  ObjectIdGetDatum(myTempNamespace));
-
+		myTempNamespace = SearchSysCacheExists1(NAMESPACEOID,
+												ObjectIdGetDatum(myTempNamespace));
 		if (OidIsValid(myTempNamespace))
 			return true;
 		else if (Gp_role != GP_ROLE_EXECUTE && error_if_removed) 

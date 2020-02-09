@@ -39,13 +39,7 @@ _hash_doinsert(Relation rel, IndexTuple itup, Relation heapRel)
 	Buffer		bucket_buf;
 	Buffer		metabuf;
 	HashMetaPage metap;
-<<<<<<< HEAD
-	BlockNumber blkno;
-	BlockNumber oldblkno = InvalidBlockNumber;
-	bool		retry = false;
-=======
 	HashMetaPage usedmetap = NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	Page		metapage;
 	Page		page;
 	HashPageOpaque pageopaque;
@@ -65,12 +59,6 @@ _hash_doinsert(Relation rel, IndexTuple itup, Relation heapRel)
 	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
 								 * need to be consistent */
 
-<<<<<<< HEAD
-	/* Read the metapage */
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	metapage = BufferGetPage(metabuf);
-	metap = HashPageGetMeta(metapage);
-=======
 restart_insert:
 
 	/*
@@ -80,7 +68,6 @@ restart_insert:
 	 */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_NOLOCK, LH_META_PAGE);
 	metapage = BufferGetPage(metabuf);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Check whether the item can fit on a hash page at all. (Eventually, we

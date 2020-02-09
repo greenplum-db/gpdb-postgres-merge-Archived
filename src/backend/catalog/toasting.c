@@ -57,40 +57,24 @@ static bool needs_toast_table(Relation rel);
  * We expect the caller to have verified that the relation is a table and have
  * already done any necessary permission checks.  Callers expect this function
  * to end with CommandCounterIncrement if it makes any changes.
- *
- * If 'is_create' is true, we are creating the toast table for a new table,
- * rather than adding it to an existing one. The difference is that the
- * caller is expected to already hold an AccessExclusiveLock, if we're
- * creating a new table.
- *
- * If 'is_part_child' is true, we are creating a toast table for a non-root
- * table in a partition hierarchy.  This determines if array type gets created
- * for the table or not.  If 'is_part_parent' is true, then we are creating a
- * toast table for a non-leaf table in a partition hierarchy.  This is used to
- * determine the value of relfrozenxid for the toast table.  Non-leaf tables do
- * not contain data, so their relfrozenxid need not interfere in database age
- * computation.
  */
 void
-AlterTableCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode,
-						   bool is_part_child, bool is_part_parent)
+AlterTableCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode)
 {
-	CheckAndCreateToastTable(relOid, reloptions, lockmode, true,
-							 is_part_child, is_part_parent);
+	CheckAndCreateToastTable(relOid, reloptions, lockmode, true);
 }
 
 void
-NewHeapCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode,
-							bool is_part_child, bool is_part_parent)
+NewHeapCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode)
 {
-	CheckAndCreateToastTable(relOid, reloptions, lockmode, false,
-							 is_part_child, is_part_parent);
+	CheckAndCreateToastTable(relOid, reloptions, lockmode, false);
 }
 
 void
-NewRelationCreateToastTable(Oid relOid, Datum reloptions,
-							bool is_part_child, bool is_part_parent)
+NewRelationCreateToastTable(Oid relOid, Datum reloptions)
 {
+	/* GPDB_12_MERGE_FIXME */
+#if 0
 	LOCKMODE	lockmode;
 
 	/*
@@ -107,22 +91,20 @@ NewRelationCreateToastTable(Oid relOid, Datum reloptions,
 		lockmode = NoLock;
 	else
 		lockmode = AccessExclusiveLock;
+#endif
 
-	CheckAndCreateToastTable(relOid, reloptions, AccessExclusiveLock, false,
-							 is_part_child, is_part_parent);
+	CheckAndCreateToastTable(relOid, reloptions, AccessExclusiveLock, false);
 }
 
 static void
-CheckAndCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode, bool check,
-							bool is_part_child, bool is_part_parent)
+CheckAndCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode, bool check)
 {
 	Relation	rel;
 
 	rel = table_open(relOid, lockmode);
 
 	/* create_toast_table does all the work */
-	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, lockmode, check,
-							  is_part_child, is_part_parent);
+	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, lockmode, check);
 
 	table_close(rel, NoLock);
 }
@@ -148,8 +130,7 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 
 	/* create_toast_table does all the work */
 	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0,
-							AccessExclusiveLock, false,
-							false, false))
+							AccessExclusiveLock, false))
 		elog(ERROR, "\"%s\" does not require a toast table",
 			 relName);
 
@@ -166,8 +147,7 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
  */
 static bool
 create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
-				   Datum reloptions, LOCKMODE lockmode, bool check,
-				   bool is_part_child, bool is_part_parent)
+				   Datum reloptions, LOCKMODE lockmode, bool check)
 {
 	Oid			relOid = RelationGetRelid(rel);
 	HeapTuple	reltup;
@@ -317,7 +297,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   NIL,
 										   RELKIND_TOASTVALUE,
 										   rel->rd_rel->relpersistence,
-										   RELSTORAGE_HEAP,
 										   shared_relation,
 										   mapped_relation,
 										   ONCOMMIT_NOOP,
@@ -393,6 +372,8 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 
 	table_close(toast_rel, NoLock);
 
+	/* GPDB_12_MERGE_FIXME: We don't want to take these shortcuts with partitions anymore, right? */
+#if 0
 	/*
 	 * If this is a partitioned child, we can unlock since the master is
 	 * already locked.
@@ -402,6 +383,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		UnlockRelationOid(toast_relid, ShareLock);
 		UnlockRelationOid(toast_idxid, AccessExclusiveLock);
 	}
+#endif
 
 	/*
 	 * Store the toast table's OID in the parent relation's pg_class row
