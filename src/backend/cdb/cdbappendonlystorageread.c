@@ -226,9 +226,6 @@ AppendOnlyStorageRead_DoOpenFile(AppendOnlyStorageRead *storageRead,
 								 char *filePathName)
 {
 	int			fileFlags = O_RDONLY | PG_BINARY;
-
-	/* File mode is S_IRUSR 00400 user has read permission */
-	int			fileMode = 0400;
 	File		file;
 
 	Assert(storageRead != NULL);
@@ -236,16 +233,15 @@ AppendOnlyStorageRead_DoOpenFile(AppendOnlyStorageRead *storageRead,
 	Assert(filePathName != NULL);
 
 	elogif(Debug_appendonly_print_read_block, LOG,
-		   "Append-Only storage read: opening table '%s', segment file '%s', fileFlags 0x%x, fileMode 0x%x",
+		   "Append-Only storage read: opening table '%s', segment file '%s', fileFlags 0x%x",
 		   storageRead->relationName,
 		   storageRead->segmentFileName,
-		   fileFlags,
-		   fileMode);
+		   fileFlags);
 
 	/*
 	 * Open the file for read.
 	 */
-	file = PathNameOpenFile(filePathName, fileFlags, fileMode);
+	file = PathNameOpenFile(filePathName, fileFlags);
 
 	return file;
 }

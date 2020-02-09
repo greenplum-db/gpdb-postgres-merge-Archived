@@ -153,7 +153,7 @@ OpenAOSegmentFile(Relation rel,
 
 	errno = 0;
 
-	fd = PathNameOpenFile(path, fileFlags, 0600);
+	fd = PathNameOpenFile(path, fileFlags);
 	if (fd < 0)
 	{
 		if (logicalEof == 0 && errno == ENOENT)
@@ -277,7 +277,7 @@ copy_file(char *srcsegpath, char *dstsegpath,
 	char       *buffer = palloc(BLCKSZ);
 	int dstflags;
 
-	srcFile = PathNameOpenFile(srcsegpath, O_RDONLY | PG_BINARY, 0600);
+	srcFile = PathNameOpenFile(srcsegpath, O_RDONLY | PG_BINARY);
 	if (srcFile < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -292,7 +292,7 @@ copy_file(char *srcsegpath, char *dstsegpath,
 	if (segfilenum)
 		dstflags |= O_CREAT;
 
-	dstFile = PathNameOpenFile(dstsegpath, dstflags, 0600);
+	dstFile = PathNameOpenFile(dstsegpath, dstflags);
 	if (dstFile < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),

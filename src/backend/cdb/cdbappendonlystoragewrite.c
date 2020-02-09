@@ -323,7 +323,7 @@ AppendOnlyStorageWrite_OpenFile(AppendOnlyStorageWrite *storageWrite,
 	errno = 0;
 
 	int			fileFlags = O_RDWR | PG_BINARY;
-	file = PathNameOpenFile(path, fileFlags, 0600);
+	file = PathNameOpenFile(path, fileFlags);
 	if (file < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),

@@ -323,7 +323,7 @@ retry:
 	 * Attempt to open both files.
 	 */
 	primaryFileExists = true;
-	primaryFile = PathNameOpenFile(primaryfilepath, O_RDONLY | PG_BINARY, S_IRUSR);
+	primaryFile = PathNameOpenFile(primaryfilepath, O_RDONLY | PG_BINARY);
 	if (primaryFile < 0)
 	{
 		if (errno == ENOENT)
@@ -333,7 +333,7 @@ retry:
 	}
 
 	mirrorFileExists = true;
-	mirrorFile = PathNameOpenFile(mirrorfilepath, O_RDONLY | PG_BINARY, S_IRUSR);
+	mirrorFile = PathNameOpenFile(mirrorfilepath, O_RDONLY | PG_BINARY);
 	if (mirrorFile < 0)
 	{
 		if (errno == ENOENT)
