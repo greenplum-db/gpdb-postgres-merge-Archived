@@ -53,7 +53,6 @@
 #include "utils/guc.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
 extern bool gp_reject_internal_tcp_conn;
 
@@ -154,8 +153,7 @@ static int	CheckBSDAuth(Port *port, char *user);
 
 /* Correct header from the Platform SDK */
 typedef
-ULONG		(*__ldap_start_tls_sA) (
-									IN PLDAP ExternalHandle,
+ULONG		(*__ldap_start_tls_sA) (IN PLDAP ExternalHandle,
 									OUT PULONG ServerReturnValue,
 									OUT LDAPMessage **result,
 									IN PLDAPControlA * ServerControls,
@@ -198,12 +196,8 @@ bool		pg_krb_caseins_users;
 
 static int	pg_GSS_checkauth(Port *port);
 static int	pg_GSS_recvauth(Port *port);
-<<<<<<< HEAD
 static int	check_valid_until_for_gssapi(Port *port);
-#endif   /* ENABLE_GSS */
-=======
 #endif							/* ENABLE_GSS */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /*----------------------------------------------------------------
@@ -680,7 +674,6 @@ ClientAuthentication(Port *port)
 
 		case uaGSS:
 #ifdef ENABLE_GSS
-<<<<<<< HEAD
 			if (check_valid_until_for_gssapi(port) == STATUS_ERROR)
 			{
 				ereport(FATAL,
@@ -689,9 +682,6 @@ ClientAuthentication(Port *port)
 							port->user_name)));
 			}
 
-			sendAuthRequest(port, AUTH_REQ_GSS);
-			status = pg_GSS_recvauth(port);
-=======
 			port->gss->auth = true;
 			if (port->gss->enc)
 				status = pg_GSS_checkauth(port);
@@ -700,7 +690,6 @@ ClientAuthentication(Port *port)
 				sendAuthRequest(port, AUTH_REQ_GSS, NULL, 0);
 				status = pg_GSS_recvauth(port);
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #else
 			Assert(false);
 #endif
@@ -787,20 +776,14 @@ ClientAuthentication(Port *port)
 		(*ClientAuthentication_hook) (port, status);
 
 	if (status == STATUS_OK)
-<<<<<<< HEAD
 	{
 		if (CheckAuthTimeConstraints(port->user_name) != STATUS_OK)
 			ereport(FATAL,
 					 (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 					  errmsg("authentication failed for user \"%s\": login not permitted at this time",
 							 port->user_name)));
-	}
-
-	if (status == STATUS_OK)
-		sendAuthRequest(port, AUTH_REQ_OK);
-=======
 		sendAuthRequest(port, AUTH_REQ_OK, NULL, 0);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	}
 	else
 		auth_failed(port, status, logdetail);
 }
@@ -808,7 +791,7 @@ ClientAuthentication(Port *port)
 void
 FakeClientAuthentication(Port *port)
 {
-	sendAuthRequest(port, AUTH_REQ_OK);
+	sendAuthRequest(port, AUTH_REQ_OK, NULL, 0);
 }
 
 /*
@@ -903,12 +886,6 @@ recv_password_packet(Port *port)
 	 * clients might, so allowing it would be confusing.
 	 *
 	 * Note that this only catches an empty password sent by the client in
-<<<<<<< HEAD
-	 * plaintext. There's another check in md5_crypt_verify to prevent an
-	 * empty password from being used with MD5 authentication.
-	 */
-	if (buf.data[0] == '\0')
-=======
 	 * plaintext. There's also a check in CREATE/ALTER USER that prevents an
 	 * empty string from being stored as a user's password in the first place.
 	 * We rely on that for MD5 and SCRAM authentication, but we still need
@@ -917,7 +894,6 @@ recv_password_packet(Port *port)
 	 * system, like PAM, LDAP and RADIUS.
 	 */
 	if (buf.len == 1)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PASSWORD),
 				 errmsg("empty password returned by client")));
@@ -1232,74 +1208,11 @@ CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail)
  *----------------------------------------------------------------
  */
 #ifdef ENABLE_GSS
-<<<<<<< HEAD
-
-#if defined(WIN32) && !defined(WIN32_ONLY_COMPILER)
-/*
- * MIT Kerberos GSSAPI DLL doesn't properly export the symbols for MingW
- * that contain the OIDs required. Redefine here, values copied
- * from src/athena/auth/krb5/src/lib/gssapi/generic/gssapi_generic.c
- */
-static const gss_OID_desc GSS_C_NT_USER_NAME_desc =
-{10, (void *) "\x2a\x86\x48\x86\xf7\x12\x01\x02\x01\x02"};
-static GSS_DLLIMP gss_OID GSS_C_NT_USER_NAME = &GSS_C_NT_USER_NAME_desc;
-#endif
-
-
-/*
- * Generate an error for GSSAPI authentication.  The caller should apply
- * _() to errmsg to make it translatable.
- */
-static void
-pg_GSS_error(int severity, char *errmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
-{
-	gss_buffer_desc gmsg;
-	OM_uint32	lmin_s,
-				msg_ctx;
-	char		msg_major[128],
-				msg_minor[128];
-
-	/* Fetch major status message */
-	msg_ctx = 0;
-	gss_display_status(&lmin_s, maj_stat, GSS_C_GSS_CODE,
-					   GSS_C_NO_OID, &msg_ctx, &gmsg);
-	strlcpy(msg_major, gmsg.value, sizeof(msg_major));
-	gss_release_buffer(&lmin_s, &gmsg);
-
-	if (msg_ctx)
-
-		/*
-		 * More than one message available. XXX: Should we loop and read all
-		 * messages? (same below)
-		 */
-		ereport(WARNING,
-				(errmsg_internal("incomplete GSS error report")));
-
-	/* Fetch mechanism minor status message */
-	msg_ctx = 0;
-	gss_display_status(&lmin_s, min_stat, GSS_C_MECH_CODE,
-					   GSS_C_NO_OID, &msg_ctx, &gmsg);
-	strlcpy(msg_minor, gmsg.value, sizeof(msg_minor));
-	gss_release_buffer(&lmin_s, &gmsg);
-
-	if (msg_ctx)
-		ereport(WARNING,
-				(errmsg_internal("incomplete GSS minor error report")));
-
-	/*
-	 * errmsg_internal, since translation of the first part must be done
-	 * before calling this function anyway.
-	 */
-	ereport(severity,
-			(errmsg_internal("%s", errmsg),
-			 errdetail_internal("%s: %s", msg_major, msg_minor)));
-}
-
 /*
  * Check to see if the password of a user is valid (using the validuntil
  * attribute associated with the pg_role) for GSSAPI based authentication.
  *
- * This logic is copied from hashed_passwd_verify(), so we need to ensure
+ * This logic is copied from get_role_password(), so we need to ensure
  * these functions don't fall out of sync.
  */
 static int
@@ -1323,8 +1236,6 @@ check_valid_until_for_gssapi(Port *port)
 
 	ReleaseSysCache(roleTup);
 
-	CHECK_FOR_INTERRUPTS();
-
 	/*
 	 * Now check to be sure we are not past rolvaliduntil
 	 */
@@ -1338,8 +1249,6 @@ check_valid_until_for_gssapi(Port *port)
 	return retval;
 }
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static int
 pg_GSS_recvauth(Port *port)
 {
@@ -2623,25 +2532,6 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 	int			ldapversion = LDAP_VERSION3;
 	int			r;
 
-<<<<<<< HEAD
-	if (strncmp(port->hba->ldapserver, "ldaps://", 8) == 0 ||
-		strncmp(port->hba->ldapserver, "ldap://",  7) == 0)
-	{
-		if ((r = ldap_initialize(ldap, port->hba->ldapserver)) != LDAP_SUCCESS)
-		{
-			ereport(LOG,
-					(errmsg("could not initialize LDAP: code: %d, msg: %s",
-							r, ldap_err2string(r))));
-			*ldap = NULL;
-			return STATUS_ERROR;
-		}
-	}
-	else
-	{
-		*ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
-	}
-
-=======
 	scheme = port->hba->ldapscheme;
 	if (scheme == NULL)
 		scheme = "ldap";
@@ -2650,7 +2540,6 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 		*ldap = ldap_sslinit(port->hba->ldapserver, port->hba->ldapport, 1);
 	else
 		*ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (!*ldap)
 	{
 		ereport(LOG,
@@ -2840,12 +2729,6 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 							ldap_err2string(r)),
 					 errdetail_for_ldap(*ldap)));
 			ldap_unbind(*ldap);
-<<<<<<< HEAD
-			ereport(LOG,
-			 (errmsg("could not start LDAP TLS session: %s, server: %s, port: %d",
-					 ldap_err2string(r), port->hba->ldapserver, port->hba->ldapport)));
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			return STATUS_ERROR;
 		}
 	}
@@ -3825,7 +3708,7 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 	}
 
 	isRoleSuperuser = ((Form_pg_authid) GETSTRUCT(roleTup))->rolsuper;
-	roleId = HeapTupleGetOid(roleTup);
+	roleId = ((Form_pg_authid) GETSTRUCT(roleTup))->oid;
 
 	ReleaseSysCache(roleTup);
 	/* Walk pg_auth_time_constraint for entries belonging to this user. */
