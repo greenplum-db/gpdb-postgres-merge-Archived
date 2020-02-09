@@ -175,10 +175,7 @@ NON_EXEC_STATIC void SysLoggerMain(int argc, char *argv[]) pg_attribute_noreturn
 #if 0
 static void process_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 static void flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static FILE *logfile_open(const char *filename, const char *mode,
 						  bool allow_errors);
 
@@ -288,14 +285,10 @@ SysLoggerMain(int argc, char *argv[])
 
 	am_syslogger = true;
 
-<<<<<<< HEAD
 	if (IsUnderMasterDispatchMode())
 		init_ps_display("master logger process", "", "", "");
 	else
 		init_ps_display("logger process", "", "", "");
-=======
-	init_ps_display("logger", "", "", "");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * If we restarted, our stderr is already redirected into our own input

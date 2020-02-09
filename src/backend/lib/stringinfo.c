@@ -227,7 +227,7 @@ appendStringInfoSpaces(StringInfo str, int count)
  * if necessary. Ensures that a trailing null byte is present.
  */
 void
-appendBinaryStringInfo(StringInfo str, const void *data, int datalen)
+appendBinaryStringInfo(StringInfo str, const char *data, int datalen)
 {
 	Assert(str != NULL);
 

@@ -91,9 +91,7 @@
 #include "storage/lmgr.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
-#include "storage/procarray.h"
 #include "storage/procsignal.h"
-#include "storage/sinval.h"
 #include "storage/sinvaladt.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
@@ -1142,7 +1140,7 @@ do_start_worker(void)
 	bool		for_xid_wrap;
 	bool		for_multi_wrap;
 	avw_dbase  *avdb;
-	TimestampTz	current_time;
+	TimestampTz current_time;
 	bool		skipit = false;
 	Oid			retval = InvalidOid;
 	MemoryContext tmpcxt,
@@ -2104,9 +2102,6 @@ do_autovacuum(void)
 		 */
 		if (classForm->relpersistence == RELPERSISTENCE_TEMP)
 		{
-<<<<<<< HEAD
-			int			backendID;
-
 			/*
 			 * GPDB_91_MERGE_FIXME: Autovacuum operates only on template0
 			 * database in Greenplum.  We expect no temp tables in template0.
@@ -2115,18 +2110,12 @@ do_autovacuum(void)
 			 * below.
 			 */
 			Assert(false);
-			
-			backendID = GetTempNamespaceBackendId(classForm->relnamespace);
 
-			/* We just ignore it if the owning backend is still active */
-			if (backendID == MyBackendId || BackendIdGetProc(backendID) == NULL)
-=======
 			/*
 			 * We just ignore it if the owning backend is still active and
 			 * using the temporary schema.
 			 */
 			if (!isTempNamespaceInUse(classForm->relnamespace))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			{
 				/*
 				 * The table seems to be orphaned -- although it might be that
@@ -2551,18 +2540,15 @@ do_autovacuum(void)
 		}
 		PG_END_TRY();
 
-<<<<<<< HEAD
-=======
 		/* Make sure we're back in AutovacMemCxt */
 		MemoryContextSwitchTo(AutovacMemCxt);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		did_vacuum = true;
 
 		/* the PGXACT flags are reset at the next end of transaction */
 
-deleted:
 		/* be tidy */
+deleted:
 		if (tab->at_datname != NULL)
 			pfree(tab->at_datname);
 		if (tab->at_nspname != NULL)
@@ -3153,42 +3139,19 @@ relation_needs_vacanalyze(Oid relid,
 static void
 autovacuum_do_vac_analyze(autovac_table *tab, BufferAccessStrategy bstrategy)
 {
-<<<<<<< HEAD
-	RangeVar	rangevar;
-
-	/* Set up command parameters --- use local variables instead of palloc */
-	MemSet(&rangevar, 0, sizeof(rangevar));
-
-	/*
-	 * In GPDB, vacuumStatement_Relation() is called to vacuum relation,
-	 * which will copy VacuumStmt as its first operation.
-	 * We need a valid NodeTag to make copyObject() work correctly.
-	 */
-	rangevar.type = T_RangeVar;
-
-	rangevar.schemaname = tab->at_nspname;
-	rangevar.relname = tab->at_relname;
-	rangevar.location = -1;
-=======
 	RangeVar   *rangevar;
 	VacuumRelation *rel;
 	List	   *rel_list;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Let pgstat know what we're doing */
 	autovac_report_activity(tab);
 
-<<<<<<< HEAD
-	vacuum(tab->at_vacoptions, &rangevar, tab->at_relid, &tab->at_params, NIL,
-		   bstrategy, true, false, NULL);
-=======
 	/* Set up one VacuumRelation target, identified by OID, for vacuum() */
 	rangevar = makeRangeVar(tab->at_nspname, tab->at_relname, -1);
 	rel = makeVacuumRelation(rangevar, tab->at_relid, NIL);
 	rel_list = list_make1(rel);
 
 	vacuum(rel_list, &tab->at_params, bstrategy, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*

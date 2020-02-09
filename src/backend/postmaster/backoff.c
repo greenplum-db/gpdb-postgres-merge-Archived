@@ -27,20 +27,22 @@
  */
 #include "postgres.h"
 
-#include "postmaster/backoff.h"
 #ifndef HAVE_GETRUSAGE
 #include "rusagestub.h"
 #else
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
+#include <sys/time.h>
+#include <signal.h>
+#include <math.h>
+
 #include "storage/ipc.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdispatchresult.h"
 #include "libpq-fe.h"
 
-#include <signal.h>
 #include "libpq/pqsignal.h"
 #include "tcop/tcopprot.h"
 #include "postmaster/bgworker.h"
@@ -52,6 +54,7 @@
 #include "funcapi.h"
 #include "access/xact.h"
 #include "port/atomics.h"
+#include "postmaster/backoff.h"
 #include "pg_trace.h"
 
 extern bool gp_debug_resqueue_priority;

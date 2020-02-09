@@ -3619,6 +3619,7 @@ pgstat_get_wait_event_type(uint32 wait_event_info)
 			break;
 		case PG_WAIT_REPLICATION:
 			event_type = "Replication";
+			break;
 		default:
 			event_type = "???";
 			break;

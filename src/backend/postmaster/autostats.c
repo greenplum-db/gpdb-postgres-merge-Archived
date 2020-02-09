@@ -23,6 +23,7 @@
 #include "commands/vacuum.h"
 #include "executor/execdesc.h"
 #include "executor/executor.h"
+#include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/plannodes.h"

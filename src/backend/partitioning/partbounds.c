@@ -2835,7 +2835,7 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 		int			j;
 
 		/* Open parent relation and fetch partition keyinfo */
-		parent = try_relation_open(parentId, AccessShareLock);
+		parent = try_relation_open(parentId, AccessShareLock, false);
 		if (parent == NULL)
 			PG_RETURN_NULL();
 		key = RelationGetPartitionKey(parent);
