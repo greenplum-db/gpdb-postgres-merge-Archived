@@ -1345,7 +1345,7 @@ AbsorbSyncRequests(void)
 	LWLockRelease(CheckpointerCommLock);
 
 	for (request = requests; n > 0; request++, n--)
-		RememberFsyncRequest(&request->ftag, request->type, requset->is_ao_segno);
+		RememberFsyncRequest(&request->ftag, request->type, request->is_ao_segno);
 
 	END_CRIT_SECTION();
 

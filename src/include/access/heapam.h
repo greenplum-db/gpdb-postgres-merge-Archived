@@ -200,7 +200,7 @@ extern bool HeapTupleSatisfiesVisibility(HeapTuple stup, Snapshot snapshot,
 										 Buffer buffer);
 extern TM_Result HeapTupleSatisfiesUpdate(HeapTuple stup, CommandId curcid,
 										  Buffer buffer);
-extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTuple stup, TransactionId OldestXmin,
+extern HTSV_Result HeapTupleSatisfiesVacuum(Relation relation, HeapTuple stup, TransactionId OldestXmin,
 											Buffer buffer);
 extern void HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer,
 								 uint16 infomask, TransactionId xid);

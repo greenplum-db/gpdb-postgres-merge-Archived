@@ -281,7 +281,7 @@ ResCreateQueue(Oid queueid, Cost limits[NUM_RES_LIMIT_TYPES], bool overcommit,
 	ResQueue		queue;
 	int				i;
 
-	Assert(LWLockHeldExclusiveByMe(ResQueueLock));
+	Assert(LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
 	
 	/* If the new queue pointer is NULL, then we are out of queues. */
 	if (ResScheduler->num_queues >= MaxResourceQueues)
@@ -1077,7 +1077,7 @@ ResHandleUtilityStmt(Portal portal, Node *stmt)
 		&& (!ResourceSelectOnly)
 		&& !superuser())
 	{
-		Assert(!LWLockHeldExclusiveByMe(ResQueueLock));
+		Assert(!LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
 		LWLockAcquire(ResQueueLock, LW_EXCLUSIVE);
 		ResQueue resQueue = ResQueueHashFind(portal->queueId);
 		LWLockRelease(ResQueueLock);

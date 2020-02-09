@@ -1747,7 +1747,7 @@ GetSerializableTransactionSnapshotInt(Snapshot snapshot,
 	} while (!sxact);
 
 	/* Get the snapshot, or check that it's safe to use */
-	if (!TransactionIdIsValid(sourcevxid))
+	if (!sourcevxid)
 		snapshot = GetSnapshotData(snapshot, DistributedTransactionContext);
 	else if (!ProcArrayInstallImportedXmin(snapshot->xmin, sourcevxid))
 	{

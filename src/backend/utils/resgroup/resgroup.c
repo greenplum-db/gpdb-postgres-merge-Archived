@@ -1289,7 +1289,7 @@ removeGroup(Oid groupId)
 {
 	ResGroupData *group;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(OidIsValid(groupId));
 
 	group = groupHashRemove(groupId);
@@ -1315,7 +1315,7 @@ createGroup(Oid groupId, const ResGroupCaps *caps)
 	ResGroupData	*group;
 	int32			chunks;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(OidIsValid(groupId));
 
 	group = groupHashNew(groupId);
@@ -1354,7 +1354,7 @@ createGroup(Oid groupId, const ResGroupCaps *caps)
 static void
 bindGroupOperation(ResGroupData *group)
 {
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	if (group->caps.memAuditor == RESGROUP_MEMORY_AUDITOR_VMTRACKER)
 		group->groupMemOps = &resgroup_memory_operations_vmtracker;
@@ -1492,7 +1492,7 @@ selfDetachResGroup(ResGroupData *group, ResGroupSlotData *slot)
 static void
 initSlot(ResGroupSlotData *slot, ResGroupData *group, int32 slotMemQuota)
 {
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(!slotIsInUse(slot));
 	Assert(group->groupId != InvalidOid);
 
@@ -1551,7 +1551,7 @@ slotpoolAllocSlot(void)
 {
 	ResGroupSlotData *slot;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(pResGroupControl->freeSlot != NULL);
 
 	slot = pResGroupControl->freeSlot;
@@ -1567,7 +1567,7 @@ slotpoolAllocSlot(void)
 static void
 slotpoolFreeSlot(ResGroupSlotData *slot)
 {
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(slotIsInUse(slot));
 	Assert(slot->nProcs == 0);
 
@@ -1598,7 +1598,7 @@ groupGetSlot(ResGroupData *group)
 	ResGroupCaps		*caps;
 	int32				slotMemQuota;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(Gp_role == GP_ROLE_DISPATCH);
 	Assert(groupIsNotDropped(group));
 
@@ -1634,7 +1634,7 @@ groupPutSlot(ResGroupData *group, ResGroupSlotData *slot)
 {
 	int32		released;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(group->memQuotaUsed >= 0);
 	Assert(slotIsInUse(slot));
 
@@ -1675,7 +1675,7 @@ groupReserveMemQuota(ResGroupData *group)
 	ResGroupCaps	*caps;
 	int32			slotMemQuota;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(Gp_role == GP_ROLE_DISPATCH);
 	Assert(pResGroupControl->segmentsOnMaster > 0);
 
@@ -1706,7 +1706,7 @@ groupReserveMemQuota(ResGroupData *group)
 static void
 groupReleaseMemQuota(ResGroupData *group, ResGroupSlotData *slot)
 {
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	group->memQuotaUsed -= slot->memQuota;
 	Assert(group->memQuotaUsed >= 0);
@@ -1890,7 +1890,7 @@ groupApplyMemCaps(ResGroupData *group)
 	int32				released;
 	const ResGroupCaps	*caps = &group->caps;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	group->memExpected = groupGetMemExpected(caps);
 
@@ -1929,7 +1929,7 @@ mempoolReserve(Oid groupId, int32 chunks)
 	int32 newFreeChunks;
 	int32 reserved = 0;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	/* Compare And Save to avoid concurrency problem without using lock */
 	while (true)
@@ -1967,7 +1967,7 @@ mempoolRelease(Oid groupId, int32 chunks)
 {
 	int32 newFreeChunks;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(chunks >= 0);
 
 	newFreeChunks = pg_atomic_add_fetch_u32(&pResGroupControl->freeChunks,
@@ -1994,7 +1994,7 @@ groupRebalanceQuota(ResGroupData *group, int32 chunks, const ResGroupCaps *caps)
 	int32 delta;
 	int32 memQuotaGranted = groupGetMemQuotaExpected(caps);
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	delta = memQuotaGranted - group->memQuotaGranted;
 	if (delta >= 0)
@@ -2153,7 +2153,7 @@ slotGetMemSpill(const ResGroupCaps *caps)
 static void
 wakeupSlots(ResGroupData *group, bool grant)
 {
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	while (!groupWaitQueueIsEmpty(group))
 	{
@@ -2190,7 +2190,7 @@ notifyGroupsOnMem(Oid skipGroupId)
 {
 	int				i;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	for (i = 0; i < MaxResourceGroups; i++)
 	{
@@ -2274,7 +2274,7 @@ mempoolAutoRelease(ResGroupData *group)
 	int32		nfreeSlots;
 	ResGroupCaps *caps = &group->caps;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	/* nfreeSlots is the number of free slots */
 	nfreeSlots = caps->concurrency - group->nRunning;
@@ -2333,7 +2333,7 @@ mempoolAutoReserve(ResGroupData *group, const ResGroupCaps *caps)
 static void
 addTotalQueueDuration(ResGroupData *group)
 {
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	if (group == NULL)
 		return;
 
@@ -2348,7 +2348,7 @@ addTotalQueueDuration(ResGroupData *group)
 static void
 groupReleaseSlot(ResGroupData *group, ResGroupSlotData *slot)
 {
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(!selfIsAssigned());
 
 	groupPutSlot(group, slot);
@@ -2759,7 +2759,7 @@ waitOnGroup(ResGroupData *group)
 {
 	PGPROC *proc = MyProc;
 
-	Assert(!LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(!LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(!selfIsAssigned());
 
 	/*
@@ -2823,7 +2823,7 @@ groupHashNew(Oid groupId)
 	bool		found;
 	ResGroupHashEntry *entry;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(groupId != InvalidOid);
 
 	for (i = 0; i < pResGroupControl->nGroups; i++)
@@ -2893,7 +2893,7 @@ groupHashRemove(Oid groupId)
 	ResGroupHashEntry	*entry;
 	ResGroupData		*group;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	entry = (ResGroupHashEntry*)hash_search(pResGroupControl->htbl,
 											(void *) &groupId,
@@ -3283,7 +3283,7 @@ slotGetId(const ResGroupSlotData *slot)
 static void
 lockResGroupForDrop(ResGroupData *group)
 {
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(Gp_role == GP_ROLE_DISPATCH);
 	Assert(group->nRunning == 0);
 	Assert(group->nRunningBypassed == 0);
@@ -3293,7 +3293,7 @@ lockResGroupForDrop(ResGroupData *group)
 static void
 unlockResGroupForDrop(ResGroupData *group)
 {
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(Gp_role == GP_ROLE_DISPATCH);
 	Assert(group->nRunning == 0);
 	Assert(group->nRunningBypassed == 0);
@@ -3328,7 +3328,7 @@ groupWaitQueueValidate(const ResGroupData *group)
 {
 	const PROC_QUEUE	*waitQueue;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	waitQueue = &group->waitProcs;
 
@@ -3346,7 +3346,7 @@ groupWaitQueuePush(ResGroupData *group, PGPROC *proc)
 	PROC_QUEUE			*waitQueue;
 	PGPROC				*headProc;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(!procIsWaiting(proc));
 	Assert(proc->resSlot == NULL);
 
@@ -3371,7 +3371,7 @@ groupWaitQueuePop(ResGroupData *group)
 	PROC_QUEUE			*waitQueue;
 	PGPROC				*proc;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(!groupWaitQueueIsEmpty(group));
 
 	groupWaitQueueValidate(group);
@@ -3397,7 +3397,7 @@ groupWaitQueueErase(ResGroupData *group, PGPROC *proc)
 {
 	PROC_QUEUE			*waitQueue;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(!groupWaitQueueIsEmpty(group));
 	Assert(groupWaitQueueFind(group, proc));
 	Assert(proc->resSlot == NULL);
@@ -3419,7 +3419,7 @@ groupWaitQueueIsEmpty(const ResGroupData *group)
 {
 	const PROC_QUEUE	*waitQueue;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	groupWaitQueueValidate(group);
 
@@ -3445,7 +3445,7 @@ groupWaitQueueFind(ResGroupData *group, const PGPROC *proc)
 	PGPROC				*iter;
 	Size				offset;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	groupWaitQueueValidate(group);
 
@@ -3737,7 +3737,7 @@ groupMemOnAlterForVmtracker(Oid groupId, ResGroupData *group)
 {
 	bool shouldNotify;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	shouldNotify = groupApplyMemCaps(group);
 
@@ -3753,7 +3753,7 @@ groupMemOnAlterForVmtracker(Oid groupId, ResGroupData *group)
 static void
 groupMemOnDropForVmtracker(Oid groupId, ResGroupData *group)
 {
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	mempoolRelease(groupId, group->memQuotaGranted + group->memSharedGranted);
 	group->memQuotaGranted = 0;
@@ -3769,7 +3769,7 @@ groupMemOnNotifyForVmtracker(ResGroupData *group)
 {
 	int32			delta;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	if (Gp_role != GP_ROLE_DISPATCH)
 		return;
@@ -3830,7 +3830,7 @@ groupMemOnDumpForVmtracker(ResGroupData *group, StringInfo str)
 static void
 groupMemOnAlterForCgroup(Oid groupId, ResGroupData *group)
 {
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	/*
 	 * If memGap is positive, it indicates this group should
@@ -3864,7 +3864,7 @@ groupApplyCgroupMemInc(ResGroupData *group)
 	int32 memory_inc;
 	int fd;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(group->memGap < 0);
 
 	memory_inc = mempoolReserve(group->groupId, group->memGap * -1);
@@ -3893,7 +3893,7 @@ groupApplyCgroupMemDec(ResGroupData *group)
 	int32 memory_dec;
 	int fd;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 	Assert(group->memGap > 0);
 
 	fd = ResGroupOps_LockGroup(group->groupId, comp, true);
@@ -3920,7 +3920,7 @@ groupMemOnDropForCgroup(Oid groupId, ResGroupData *group)
 {
 	int32 memory_expected;
 
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	memory_expected = groupGetMemExpected(&group->caps);
 
@@ -3934,7 +3934,7 @@ groupMemOnDropForCgroup(Oid groupId, ResGroupData *group)
 static void
 groupMemOnNotifyForCgroup(ResGroupData *group)
 {
-	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+	Assert(LWLockHeldByMeInMode(ResGroupLock, LW_EXCLUSIVE));
 
 	if (group->memGap < 0)
 		groupApplyCgroupMemInc(group);

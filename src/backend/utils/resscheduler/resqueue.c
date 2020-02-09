@@ -875,7 +875,7 @@ o
 ResQueue
 GetResQueueFromLock(LOCK *lock)
 {
-	Assert(LWLockHeldExclusiveByMe(ResQueueLock));
+	Assert(LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
 
 	ResQueue	queue = ResQueueHashFind(GET_RESOURCE_QUEUEID_FOR_LOCK(lock));
 
@@ -975,7 +975,7 @@ ResUnGrantLock(LOCK *lock, PROCLOCK *proclock)
 static void
 ResCleanUpLock(LOCK *lock, PROCLOCK *proclock, uint32 hashcode, bool wakeupNeeded)
 {
-	Assert(LWLockHeldExclusiveByMe(ResQueueLock));
+	Assert(LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
 
 	/*
 	 * If this was my last hold on this lock, delete my entry in the proclock
@@ -1098,7 +1098,7 @@ ResProcLockRemoveSelfAndWakeup(LOCK *lock)
 
 	int			status;
 
-	Assert(LWLockHeldExclusiveByMe(ResQueueLock));
+	Assert(LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
 
 	/*
 	 * XXX: This code is ugly and hard to read -- it should be a lot simpler,
@@ -1448,7 +1448,7 @@ ResIncrementAdd(ResPortalIncrement *incSet, PROCLOCK *proclock, ResourceOwner ow
 	int			i;
 	bool		found;
 
-	Assert(LWLockHeldExclusiveByMe(ResQueueLock));
+	Assert(LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
 
 	/* Set up the key. */
 	MemSet(&portaltag, 0, sizeof(ResPortalTag));
@@ -1504,7 +1504,7 @@ ResIncrementFind(ResPortalTag *portaltag)
 	ResPortalIncrement *incrementSet;
 	bool		found;
 
-	Assert(LWLockHeldExclusiveByMe(ResQueueLock));
+	Assert(LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
 
 	incrementSet = (ResPortalIncrement *)
 		hash_search(ResPortalIncrementHash, (void *) portaltag, HASH_FIND, &found);
@@ -1531,7 +1531,7 @@ ResIncrementRemove(ResPortalTag *portaltag)
 	ResPortalIncrement *incrementSet;
 	bool		found;
 
-	Assert(LWLockHeldExclusiveByMe(ResQueueLock));
+	Assert(LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
 
 	incrementSet = (ResPortalIncrement *)
 		hash_search(ResPortalIncrementHash, (void *) portaltag, HASH_REMOVE, &found);
@@ -1595,7 +1595,7 @@ ResQueueHashNew(Oid queueid)
 	bool		found;
 	ResQueueData *queue;
 
-	Assert(LWLockHeldExclusiveByMe(ResQueueLock));
+	Assert(LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
 
 	queue = (ResQueueData *)
 		hash_search(ResQueueHash, (void *) &queueid, HASH_ENTER_NULL, &found);
@@ -1622,7 +1622,7 @@ ResQueueHashFind(Oid queueid)
 	bool		found;
 	ResQueueData *queue;
 
-	Assert(LWLockHeldExclusiveByMe(ResQueueLock));
+	Assert(LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
 
 	queue = (ResQueueData *)
 		hash_search(ResQueueHash, (void *) &queueid, HASH_FIND, &found);
@@ -1647,7 +1647,7 @@ ResQueueHashRemove(Oid queueid)
 	bool		found;
 	void	   *queue;
 
-	Assert(LWLockHeldExclusiveByMe(ResQueueLock));
+	Assert(LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
 
 	queue = hash_search(ResQueueHash, (void *) &queueid, HASH_REMOVE, &found);
 	if (!queue)
@@ -2106,7 +2106,7 @@ uint64 ResourceQueueGetQueryMemoryLimit(PlannedStmt *stmt, Oid queueId)
 		return 0;
 
 	/** Assert that I do not hold lwlock */
-	Assert(!LWLockHeldExclusiveByMe(ResQueueLock));
+	Assert(!LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
 
 	int64 resqLimitBytes = ResourceQueueGetMemoryLimit(queueId);
 

@@ -76,26 +76,16 @@
  */
 #include "postgres.h"
 
-#include "access/clog.h"
-#include "access/commit_ts.h"
-#include "access/multixact.h"
-#include "access/distributedlog.h"
-#include "access/subtrans.h"
-#include "access/twophase.h"
-#include "commands/async.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "pg_trace.h"
 #include "postmaster/postmaster.h"
 #include "replication/slot.h"
-#include "storage/barrier.h"
 #include "storage/ipc.h"
 #include "storage/predicate.h"
 #include "storage/proc.h"
 #include "storage/proclist.h"
 #include "storage/spin.h"
-#include "utils/sharedsnapshot.h"
-#include "pg_trace.h"
 #include "utils/memutils.h"
 
 #ifdef LWLOCK_STATS
@@ -1895,26 +1885,6 @@ LWLockHeldByMe(LWLock *l)
 			return true;
 	}
 	return false;
-}
-
-/*
- * LWLockHeldExclusiveByMe - test whether my process currently holds an exclusive lock
- *
- * This is meant as debug support only.  We do not distinguish whether the
- * lock is held shared or exclusive.
- */
-bool
-LWLockHeldExclusiveByMe(LWLockId lockid)
-{
-    int                     i;
-
-    for (i = 0; i < num_held_lwlocks; i++)
-    {
-        if (held_lwlocks[i].lock == lockid &&
-                held_lwlocks[i].mode == LW_EXCLUSIVE)
-            return true;
-    }
-    return false;
 }
 
 /*

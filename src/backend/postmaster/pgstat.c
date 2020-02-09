@@ -42,12 +42,8 @@
 #include "access/xact.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_proc.h"
-<<<<<<< HEAD
 #include "executor/instrument.h"
-#include "libpq/ip.h"
-=======
 #include "common/ip.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "libpq/libpq.h"
 #include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"
