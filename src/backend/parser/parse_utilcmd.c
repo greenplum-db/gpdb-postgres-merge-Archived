@@ -1438,13 +1438,18 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		{
 			Form_pg_appendonly ao = relation->rd_appendonly;
 
-			stmt->options = lappend(stmt->options, makeDefElem("appendonly", (Node *) makeString(pstrdup("true"))));
+			stmt->options = lappend(stmt->options,
+									makeDefElem("appendonly", (Node *) makeString(pstrdup("true")), -1));
 			if (ao->columnstore)
-				stmt->options = lappend(stmt->options, makeDefElem("orientation", (Node *) makeString(pstrdup("column"))));
-			stmt->options = lappend(stmt->options, makeDefElem("checksum", (Node *) makeInteger(ao->checksum)));
-			stmt->options = lappend(stmt->options, makeDefElem("compresslevel", (Node *) makeInteger(ao->compresslevel)));
+				stmt->options = lappend(stmt->options,
+										makeDefElem("orientation", (Node *) makeString(pstrdup("column")), -1));
+			stmt->options = lappend(stmt->options,
+									makeDefElem("checksum", (Node *) makeInteger(ao->checksum), -1));
+			stmt->options = lappend(stmt->options,
+									makeDefElem("compresslevel", (Node *) makeInteger(ao->compresslevel), -1));
 			if (strlen(NameStr(ao->compresstype)) > 0)
-				stmt->options = lappend(stmt->options, makeDefElem("compresstype", (Node *) makeString(pstrdup(NameStr(ao->compresstype)))));
+				stmt->options = lappend(stmt->options,
+										makeDefElem("compresstype", (Node *) makeString(pstrdup(NameStr(ao->compresstype))), -1));
 		}
 
 		/*
@@ -2914,10 +2919,11 @@ fillin_encoding(List *list)
 		/* No compression option specified, use current defaults. */
 		arg = ao_opts->compresstype[0] ?
 				pstrdup(ao_opts->compresstype) : "none";
-		el = makeDefElem("compresstype", (Node *) makeString(arg));
+		el = makeDefElem("compresstype", (Node *) makeString(arg), -1);
 		retList = lappend(retList, el);
 		el = makeDefElem("compresslevel",
-						 (Node *) makeInteger(ao_opts->compresslevel));
+						 (Node *) makeInteger(ao_opts->compresslevel),
+						 -1);
 		retList = lappend(retList, el);
 	}
 	else if (foundCompressType == false && cmplevel)
@@ -2928,7 +2934,7 @@ fillin_encoding(List *list)
 			 * User wants to disable compression by specifying
 			 * compresslevel=0.
 			 */
-			el = makeDefElem("compresstype", (Node *) makeString("none"));
+			el = makeDefElem("compresstype", (Node *) makeString("none"), -1);
 			retList = lappend(retList, el);
 		}
 		else
@@ -2947,7 +2953,7 @@ fillin_encoding(List *list)
 			{
 				arg = AO_DEFAULT_COMPRESSTYPE;
 			}
-			el = makeDefElem("compresstype", (Node *) makeString(arg));
+			el = makeDefElem("compresstype", (Node *) makeString(arg), -1);
 			retList = lappend(retList, el);
 		}
 	}
@@ -2959,7 +2965,7 @@ fillin_encoding(List *list)
 			 * User wants to disable compression by specifying
 			 * compresstype=none.
 			 */
-			el = makeDefElem("compresslevel", (Node *) makeInteger(0));
+			el = makeDefElem("compresslevel", (Node *) makeInteger(0), -1);
 			retList = lappend(retList, el);
 		}
 		else
@@ -2970,13 +2976,14 @@ fillin_encoding(List *list)
 			 */
 			el = makeDefElem("compresslevel",
 							 (Node *) makeInteger(ao_opts->compresslevel > 0 ?
-												  ao_opts->compresslevel : 1));
+												  ao_opts->compresslevel : 1),
+							 -1);
 			retList = lappend(retList, el);
 		}
 	}
 	if (foundBlockSize == false)
 	{
-		el = makeDefElem("blocksize", (Node *) makeInteger(ao_opts->blocksize));
+		el = makeDefElem("blocksize", (Node *) makeInteger(ao_opts->blocksize), -1);
 		retList = lappend(retList, el);
 	}
 	return retList;
@@ -4982,9 +4989,11 @@ transformStorageEncodingClause(List *options)
 		}
 	}
 	List *extra = list_make2(makeDefElem("appendonly",
-										 (Node *)makeString("true")),
+										 (Node *)makeString("true"),
+										 -1),
 							 makeDefElem("orientation",
-										 (Node *)makeString("column")));
+										 (Node *)makeString("column"),
+										 -1));
 
 	/* add defaults for missing values */
 	options = fillin_encoding(options);

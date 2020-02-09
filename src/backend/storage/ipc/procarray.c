@@ -1428,7 +1428,7 @@ GetOldestXmin(Relation rel, int flags)
 {
 	TransactionId result;
 
-	result = GetLocalOldestXmin(rel, ignoreVacuum);
+	result = GetLocalOldestXmin(rel, flags);
 
 	/*
 	 * In QD node, all distributed transactions have an entry in the proc array,
@@ -1454,7 +1454,7 @@ GetOldestXmin(Relation rel, int flags)
  * distributed transactions into account.
  */
 TransactionId
-GetLocalOldestXmin(Relation rel, bool ignoreVacuum)
+GetLocalOldestXmin(Relation rel, int flags)
 {
 	ProcArrayStruct *arrayP = procArray;
 	TransactionId result;
@@ -1492,21 +1492,13 @@ GetLocalOldestXmin(Relation rel, bool ignoreVacuum)
 		PGPROC	   *proc = &allProcs[pgprocno];
 		PGXACT	   *pgxact = &allPgXact[pgprocno];
 
-<<<<<<< HEAD
-		/*
-		 * Backend is doing logical decoding which manages xmin separately,
-		 * check below.
+		/* GPDB_12_MERGE_FIXME: We used to ignore PROC_IN_VACUUM flag in GPDB.
+		 * Do we still need to? If so, refactor the ignorance to use the
+		 * new 'flags' bitmask.
+		 * See comment in vacuumStatement_Relation()
 		 */
-		if (pgxact->vacuumFlags & PROC_IN_LOGICAL_DECODING)
-			continue;
-
-#if 0
-		if (ignoreVacuum && (pgxact->vacuumFlags & PROC_IN_VACUUM))
-=======
 		if (pgxact->vacuumFlags & (flags & PROCARRAY_PROC_FLAGS_MASK))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			continue;
-#endif
 
 		if (allDbs ||
 			proc->databaseId == MyDatabaseId ||
@@ -1663,9 +1655,9 @@ updateSharedLocalSnapshot(DtxContextInfo *dtxContextInfo,
 	SharedLocalSnapshotSlot->ready = true;
 
 	ereport((Debug_print_full_dtm ? LOG : DEBUG5),
-			(errmsg("updateSharedLocalSnapshot for DistributedTransactionContext = '%s' setting shared local snapshot xid = %u (xmin: %u xmax: %u xcnt: %u) curcid: %d, QDxid = %u",
+			(errmsg("updateSharedLocalSnapshot for DistributedTransactionContext = '%s' setting shared local snapshot xid = " UINT64_FORMAT " (xmin: %u xmax: %u xcnt: %u) curcid: %d, QDxid = %u",
 					DtxContextToString(distributedTransactionContext),
-					SharedLocalSnapshotSlot->xid,
+					U64FromFullTransactionId(SharedLocalSnapshotSlot->fullXid),
 					SharedLocalSnapshotSlot->snapshot.xmin,
 					SharedLocalSnapshotSlot->snapshot.xmax,
 					SharedLocalSnapshotSlot->snapshot.xcnt,
@@ -1807,7 +1799,7 @@ readerFillLocalSnapshot(Snapshot snapshot, DtxContext distributedTransactionCont
 							"and the writer gang, expect %d but having %d",
 							QEDtxContextInfo.distributedXid, SharedLocalSnapshotSlot->QDxid);
 			copyLocalSnapshot(snapshot);
-			SetSharedTransactionId_reader(SharedLocalSnapshotSlot->xid, snapshot->curcid, distributedTransactionContext);
+			SetSharedTransactionId_reader(SharedLocalSnapshotSlot->fullXid, snapshot->curcid, distributedTransactionContext);
 			LWLockRelease(SharedLocalSnapshotSlot->slotLock);
 			return;
 		}
@@ -2359,19 +2351,14 @@ GetSnapshotData(Snapshot snapshot, DtxContext distributedTransactionContext)
 			 * Skip over backends doing logical decoding which manages xmin
 			 * separately (check below) and ones running LAZY VACUUM.
 			 */
-<<<<<<< HEAD
-			if (pgxact->vacuumFlags & PROC_IN_LOGICAL_DECODING)
-				continue;
-
-#if 0 /* Upstream code not applicable to GPDB, why explained in vacuumStatement_Relation */
-			/* Ignore procs running LAZY VACUUM */
-			if (pgxact->vacuumFlags & PROC_IN_VACUUM)
-=======
+			/* GPDB_12_MERGE_FIXME: We used to ignore PROC_IN_VACUUM flag in GPDB.
+			 * Do we still need to? If so, refactor the ignorance to use the
+			 * new 'flags' bitmask.
+			 * See comment in vacuumStatement_Relation()
+			 */
 			if (pgxact->vacuumFlags &
 				(PROC_IN_LOGICAL_DECODING | PROC_IN_VACUUM))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				continue;
-#endif
 
 			/* Update globalxmin to be the smallest valid xmin */
 			xid = UINT32_ACCESS_ONCE(pgxact->xmin);

@@ -624,13 +624,6 @@ StandbyLockTimeoutHandler(void)
  * RecoveryLockLists, so we can keep track of the various entries made by
  * the Startup process's virtual xid in the shared lock table.
  *
-<<<<<<< HEAD
- * We record the lock against the top-level xid, rather than individual
- * subtransaction xids. This means AccessExclusiveLocks held by aborted
- * subtransactions are not released as early as possible on standbys.
- *
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * List elements use type xl_standby_lock, since the WAL record type exactly
  * matches the information that we need to keep track of.
  *
@@ -770,40 +763,6 @@ StandbyReleaseOldLocks(TransactionId oldxid)
 	hash_seq_init(&status, RecoveryLockLists);
 	while ((entry = hash_seq_search(&status)))
 	{
-<<<<<<< HEAD
-		bool		remove = false;
-
-		Assert(TransactionIdIsValid(entry->xid));
-
-		if (StandbyTransactionIdIsPrepared(entry->xid))
-			remove = false;
-		else
-		{
-			int			i;
-			bool		found = false;
-
-			for (i = 0; i < nxids; i++)
-			{
-				if (entry->xid == xids[i])
-				{
-					found = true;
-					break;
-				}
-			}
-
-			/*
-			 * If its not a running transaction, remove it.
-			 */
-			if (!found)
-				remove = true;
-		}
-
-		if (remove)
-		{
-			StandbyReleaseLockList(entry->locks);
-			hash_search(RecoveryLockLists, entry, HASH_REMOVE, NULL);
-		}
-=======
 		Assert(TransactionIdIsValid(entry->xid));
 
 		/* Skip if prepared transaction. */
@@ -817,7 +776,6 @@ StandbyReleaseOldLocks(TransactionId oldxid)
 		/* Remove all locks and hash table entry. */
 		StandbyReleaseLockList(entry->locks);
 		hash_search(RecoveryLockLists, entry, HASH_REMOVE, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 }
 

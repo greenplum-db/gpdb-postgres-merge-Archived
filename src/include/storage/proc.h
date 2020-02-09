@@ -59,9 +59,7 @@ struct XidCache
  * to match and ignore processes with this flag set.
  */
 #define		PROC_IS_AUTOVACUUM	0x01	/* is it an autovac worker? */
-#if 0 /* Upstream code not applicable to GPDB */
 #define		PROC_IN_VACUUM		0x02	/* currently running lazy vacuum */
-#endif
 #define		PROC_IN_ANALYZE		0x04	/* currently running analyze */
 #define		PROC_VACUUM_FOR_WRAPAROUND	0x08	/* set by autovac only */
 #define		PROC_IN_LOGICAL_DECODING	0x10	/* currently doing logical
