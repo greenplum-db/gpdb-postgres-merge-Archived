@@ -23,26 +23,28 @@
 #include <sys/select.h>
 #endif
 
-<<<<<<< HEAD
-#include "access/genam.h"
-#include "access/heapam.h"
-#include "catalog/indexing.h"
-#include "catalog/pg_authid.h"
-#include "catalog/pg_auth_time_constraint.h"
-#include "cdb/cdbvars.h"
-=======
 #include "commands/user.h"
 #include "common/ip.h"
 #include "common/md5.h"
 #include "common/scram-common.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "libpq/auth.h"
 #include "libpq/crypt.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "libpq/scram.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
+#include "port/pg_bswap.h"
+#include "replication/walsender.h"
+#include "storage/ipc.h"
+#include "utils/memutils.h"
+#include "utils/timestamp.h"
+
+#include "access/genam.h"
+#include "access/heapam.h"
+#include "catalog/indexing.h"
+#include "catalog/pg_authid.h"
+#include "catalog/pg_auth_time_constraint.h"
+#include "cdb/cdbvars.h"
 #include "pgtime.h"
 #include "postmaster/postmaster.h"
 #include "utils/builtins.h"
@@ -51,14 +53,7 @@
 #include "utils/guc.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "utils/timestamp.h"
-=======
-#include "port/pg_bswap.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-#include "replication/walsender.h"
-#include "storage/ipc.h"
-#include "utils/memutils.h"
-#include "utils/timestamp.h"
+#include "utils/tqual.h"
 
 extern bool gp_reject_internal_tcp_conn;
 
@@ -940,11 +935,7 @@ recv_password_packet(Port *port)
 
 
 /*----------------------------------------------------------------
-<<<<<<< HEAD
- * hashed password (MD5, SHA-256) authentication
-=======
  * Password-based authentication mechanisms
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *----------------------------------------------------------------
  */
 
@@ -1065,15 +1056,11 @@ CheckMD5Auth(Port *port, char *shadow_pass, char **logdetail)
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
 
-<<<<<<< HEAD
-	result = hashed_passwd_verify(port, port->user_name, passwd, logdetail);
-=======
 	if (shadow_pass)
 		result = md5_crypt_verify(port->user_name, shadow_pass, passwd,
 								  md5Salt, 4, logdetail);
 	else
 		result = STATUS_ERROR;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	pfree(passwd);
 

@@ -22,35 +22,11 @@
 #include "common/md5.h"
 #include "common/scram-common.h"
 #include "libpq/crypt.h"
-<<<<<<< HEAD
-#include "libpq/md5.h"
-#include "libpq/password_hash.h"
-#include "libpq/pg_sha2.h"
-=======
 #include "libpq/scram.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
-
-bool
-hash_password(const char *passwd, char *salt, size_t salt_len, char *buf)
-{
-	switch (password_hash_algorithm)
-	{
-		case PASSWORD_HASH_MD5:
-			return pg_md5_encrypt(passwd, salt, salt_len, buf);
-		case PASSWORD_HASH_SHA_256:
-			return pg_sha256_encrypt(passwd, salt, salt_len, buf);
-			break;
-		default:
-			elog(ERROR,
-				 "unknown password hash algorithm number %d",
-				 password_hash_algorithm);
-	}
-	return false; /* we never get here */
-}
 
 
 /*
@@ -60,14 +36,8 @@ hash_password(const char *passwd, char *salt, size_t salt_len, char *buf)
  * for the postmaster log, in *logdetail.  The error reason should *not* be
  * sent to the client, to avoid giving away user information!
  */
-<<<<<<< HEAD
-int
-hashed_passwd_verify(const Port *port, const char *role, char *client_pass,
-				 char **logdetail)
-=======
 char *
 get_role_password(const char *role, char **logdetail)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	TimestampTz vuntil = 0;
 	HeapTuple	roleTup;
@@ -102,137 +72,14 @@ get_role_password(const char *role, char **logdetail)
 
 	ReleaseSysCache(roleTup);
 
-<<<<<<< HEAD
-	CHECK_FOR_INTERRUPTS();
-
-	/*
-	 * Don't allow an empty password. Libpq treats an empty password the same
-	 * as no password at all, and won't even try to authenticate. But other
-	 * clients might, so allowing it would be confusing.
-	 *
-	 * For a plaintext password, we can simply check that it's not an empty
-	 * string. For an encrypted password, check that it does not match the MD5
-	 * hash of an empty string.
-	 */
-	if (*shadow_pass == '\0')
-	{
-		*logdetail = psprintf(_("User \"%s\" has an empty password."),
-							  role);
-		return STATUS_ERROR;	/* empty password */
-	}
-	if (isMD5(shadow_pass))
-	{
-		char		crypt_empty[MD5_PASSWD_LEN + 1];
-
-		if (!pg_md5_encrypt("",
-							port->user_name,
-							strlen(port->user_name),
-							crypt_empty))
-			return STATUS_ERROR;
-		if (strcmp(shadow_pass, crypt_empty) == 0)
-		{
-			*logdetail = psprintf(_("User \"%s\" has an empty password."),
-								  role);
-			return STATUS_ERROR;	/* empty password */
-		}
-	}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Password OK, but check to be sure we are not past rolvaliduntil
 	 */
 	if (!isnull && vuntil < GetCurrentTimestamp())
 	{
-<<<<<<< HEAD
-		case uaMD5:
-			crypt_pwd = palloc(MD5_PASSWD_LEN + 1);
-			if (isMD5(shadow_pass))
-			{
-				/* stored password already encrypted, only do salt */
-				if (!pg_md5_encrypt(shadow_pass + strlen("md5"),
-									port->md5Salt,
-									sizeof(port->md5Salt), crypt_pwd))
-				{
-					pfree(crypt_pwd);
-					return STATUS_ERROR;
-				}
-			}
-			else if (isSHA256(shadow_pass))
-			{
-				/* 
-				 * Client supplied an MD5 hashed password but our password 
-				 * is stored as SHA256 so we cannot compare the two.
-				 */
-				ereport(FATAL,
-						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						 errmsg("MD5 authentication is not supported with "
-								"SHA256 hashed passwords"),
-						 errhint("Set an alternative authentication method "
-								 "for this role in pg_hba.conf")));
-
-
-			}
-			else
-			{
-				/* stored password is plain, double-encrypt */
-				char	   *crypt_pwd2 = palloc(MD5_PASSWD_LEN + 1);
-
-				if (!pg_md5_encrypt(shadow_pass,
-									port->user_name,
-									strlen(port->user_name),
-									crypt_pwd2))
-				{
-					pfree(crypt_pwd);
-					pfree(crypt_pwd2);
-					return STATUS_ERROR;
-				}
-				if (!pg_md5_encrypt(crypt_pwd2 + strlen("md5"),
-									port->md5Salt,
-									sizeof(port->md5Salt),
-									crypt_pwd))
-				{
-					pfree(crypt_pwd);
-					pfree(crypt_pwd2);
-					return STATUS_ERROR;
-				}
-				pfree(crypt_pwd2);
-			}
-			break;
-		default:
-			if (isMD5(shadow_pass))
-			{
-				/* Encrypt user-supplied password to match stored MD5 */
-				crypt_client_pass = palloc(MD5_PASSWD_LEN + 1);
-				if (!pg_md5_encrypt(client_pass,
-									port->user_name,
-									strlen(port->user_name),
-									crypt_client_pass))
-				{
-					pfree(crypt_client_pass);
-					return STATUS_ERROR;
-				}
-			}
-			else if (isSHA256(shadow_pass))
-			{
-				/* Encrypt user-supplied password to match the stored SHA-256 */
-				crypt_client_pass = palloc(SHA256_PASSWD_LEN + 1);
-				if (!pg_sha256_encrypt(client_pass,
-									   port->user_name,
-									   strlen(port->user_name),
-									   crypt_client_pass))
-				{
-					pfree(crypt_client_pass);
-					return STATUS_ERROR;
-				}
-			}
-			crypt_pwd = shadow_pass;
-			break;
-=======
 		*logdetail = psprintf(_("User \"%s\" has an expired password."),
 							  role);
 		return NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	return shadow_pass;

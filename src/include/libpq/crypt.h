@@ -42,9 +42,4 @@ extern int	md5_crypt_verify(const char *role, const char *shadow_pass,
 extern int	plain_crypt_verify(const char *role, const char *shadow_pass,
 							   const char *client_pass, char **logdetail);
 
-// GPDB_12_MERGE_FIXME: We had previously changed md5_crypt_verify to
-// hashed_crypt_verify, to support SHA hashes in place of md5. Do we still
-// need that? We have SCRAM now... If we need to keep it, refactor it to
-// fit the new PasswordType enum and stuff.
-
 #endif

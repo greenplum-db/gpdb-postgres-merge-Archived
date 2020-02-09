@@ -32,14 +32,8 @@
 #include "commands/dbcommands.h"
 #include "commands/seclabel.h"
 #include "commands/user.h"
-<<<<<<< HEAD
-#include "libpq/auth.h"
-#include "libpq/password_hash.h"
-#include "libpq/md5.h"
-#include "libpq/pg_sha2.h"
-=======
 #include "libpq/crypt.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#include "libpq/md5.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "utils/acl.h"
@@ -55,6 +49,7 @@
 #include "catalog/pg_resqueue.h"
 #include "commands/resgroupcmds.h"
 #include "executor/execdesc.h"
+#include "libpq/auth.h"
 #include "utils/resource_manager.h"
 
 #include "cdb/cdbdisp_query.h"
@@ -118,11 +113,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	ListCell   *item;
 	ListCell   *option;
 	char	   *password = NULL;	/* user password */
-<<<<<<< HEAD
-	bool		encrypt_password = Password_encryption; /* encrypt password? */
-	char		encrypted_password[MAX_PASSWD_HASH_LEN + 1];
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	char		encrypted_password[MD5_PASSWD_LEN + 1];
 	bool		issuper = false;	/* Make the user a superuser? */
 	bool		inherit = true; /* Auto inherit privileges? */
 	bool		createrole = false; /* Can this user create roles? */
@@ -513,19 +504,6 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 
 	if (password)
 	{
-<<<<<<< HEAD
-		if (!encrypt_password || isHashedPasswd(password))
-			new_record[Anum_pg_authid_rolpassword - 1] =
-				CStringGetTextDatum(password);
-		else
-		{
-			if (!hash_password(password, stmt->role, strlen(stmt->role),
-							   encrypted_password))
-			{
-				elog(ERROR, "password encryption failed");
-			}
-
-=======
 		char	   *shadow_pass;
 		char	   *logdetail;
 
@@ -553,7 +531,6 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 			/* Encrypt the password to the requested format. */
 			shadow_pass = encrypt_password(Password_encryption, stmt->role,
 										   password);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			new_record[Anum_pg_authid_rolpassword - 1] =
 				CStringGetTextDatum(shadow_pass);
 		}
@@ -657,8 +634,6 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	new_record[Anum_pg_authid_rolbypassrls - 1] = BoolGetDatum(bypassrls);
 
 	/*
-<<<<<<< HEAD
-=======
 	 * pg_largeobject_metadata contains pg_authid.oid's, so we use the
 	 * binary-upgrade override.
 	 */
@@ -683,7 +658,6 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	tuple = heap_form_tuple(pg_authid_dsc, new_record, new_record_nulls);
 
 	/*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * Insert new record in the pg_authid table
 	 */
 	CatalogTupleInsert(pg_authid_rel, tuple);
@@ -789,11 +763,7 @@ AlterRole(AlterRoleStmt *stmt)
 	ListCell   *option;
 	char	   *rolename = NULL;
 	char	   *password = NULL;	/* user password */
-<<<<<<< HEAD
-	bool		encrypt_password = Password_encryption; /* encrypt password? */
-	char		encrypted_password[MAX_PASSWD_HASH_LEN + 1];
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	char		encrypted_password[MD5_PASSWD_LEN + 1];
 	int			issuper = -1;	/* Make the user a superuser? */
 	int			inherit = -1;	/* Auto inherit privileges? */
 	int			createrole = -1;	/* Can this user create roles? */
@@ -871,15 +841,6 @@ AlterRole(AlterRoleStmt *stmt)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			dpassword = defel;
-<<<<<<< HEAD
-			if (strcmp(defel->defname, "encryptedPassword") == 0)
-				encrypt_password = true;
-			else if (strcmp(defel->defname, "unencryptedPassword") == 0)
-				encrypt_password = false;
-
-			if (1 == numopts) alter_subtype = "PASSWORD";
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		else if (strcmp(defel->defname, "superuser") == 0)
 		{
@@ -1208,21 +1169,6 @@ AlterRole(AlterRoleStmt *stmt)
 	/* password */
 	if (password)
 	{
-<<<<<<< HEAD
-		if (!encrypt_password || isHashedPasswd(password))
-			new_record[Anum_pg_authid_rolpassword - 1] =
-				CStringGetTextDatum(password);
-		else
-		{
-			/*
-			 * GPDB: hash_password() includes pg_md5_encrypt() along with a
-			 * SHA-256 and SHA-256-FIPS implementation which is controlled by
-			 * password_hash_algorithm Greenplum GUC.
-			 */
-			if (!hash_password(password, rolename, strlen(rolename),
-							   encrypted_password))
-				elog(ERROR, "password encryption failed");
-=======
 		char	   *shadow_pass;
 		char	   *logdetail;
 
@@ -1239,7 +1185,6 @@ AlterRole(AlterRoleStmt *stmt)
 			/* Encrypt the password to the requested format. */
 			shadow_pass = encrypt_password(Password_encryption, rolename,
 										   password);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			new_record[Anum_pg_authid_rolpassword - 1] =
 				CStringGetTextDatum(shadow_pass);
 		}
