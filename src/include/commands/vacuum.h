@@ -228,15 +228,8 @@ extern int	vacuum_multixact_freeze_table_age;
 
 /* in commands/vacuum.c */
 extern void ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel);
-<<<<<<< HEAD
-extern void vacuum(int options, RangeVar *relation, Oid relid,
-	   VacuumParams *params, List *va_cols,
-	   BufferAccessStrategy bstrategy, bool isTopLevel,
-	   bool skip_twophase, AOVacuumPhaseConfig *ao_vacuum_phase_config);
-=======
 extern void vacuum(List *relations, VacuumParams *params,
 				   BufferAccessStrategy bstrategy, bool isTopLevel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void vac_open_indexes(Relation relation, LOCKMODE lockmode,
 							 int *nindexes, Relation **Irel);
 extern void vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode);
@@ -245,16 +238,6 @@ extern double vac_estimate_reltuples(Relation relation,
 									 BlockNumber scanned_pages,
 									 double scanned_tuples);
 extern void vac_update_relstats(Relation relation,
-<<<<<<< HEAD
-					BlockNumber num_pages,
-					double num_tuples,
-					BlockNumber num_all_visible_pages,
-					bool hasindex,
-					TransactionId frozenxid,
-					MultiXactId minmulti,
-					bool in_outer_xact,
-					bool isvacuum);
-=======
 								BlockNumber num_pages,
 								double num_tuples,
 								BlockNumber num_all_visible_pages,
@@ -262,7 +245,6 @@ extern void vac_update_relstats(Relation relation,
 								TransactionId frozenxid,
 								MultiXactId minmulti,
 								bool in_outer_xact);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern void vacuum_set_xid_limits(Relation rel,
 								  int freeze_min_age, int freeze_table_age,
 								  int multixact_freeze_min_age,
@@ -274,29 +256,6 @@ extern void vacuum_set_xid_limits(Relation rel,
 								  MultiXactId *mxactFullScanLimit);
 extern void vac_update_datfrozenxid(void);
 extern void vacuum_delay_point(void);
-<<<<<<< HEAD
-
-extern bool vacuumStatement_IsTemporary(Relation onerel);
-
-/* in commands/vacuumlazy.c */
-extern void lazy_vacuum_rel(Relation onerel, int options,
-				VacuumParams *params, BufferAccessStrategy bstrategy,
-				AOVacuumPhaseConfig *ao_vacuum_phase_config);
-
-/* in commands/analyze.c */
-extern void analyze_rel(Oid relid, RangeVar *relation, int options,
-			VacuumParams *params, List *va_cols, bool in_outer_xact,
-			BufferAccessStrategy bstrategy);
-
-/* GPDB only */
-extern void vacuum_appendonly_rel(Relation aorel, int options,
-								  AOVacuumPhaseConfig *ao_vacuum_phase_config);
-extern void vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
-										 BlockNumber *rel_pages, double *rel_tuples,
-										 bool *relhasindex);
-extern int vacuum_appendonly_indexes(Relation aoRelation, int options);
-
-=======
 extern bool vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple,
 									 int options);
 extern Relation vacuum_open_relation(Oid relid, RangeVar *relation,
@@ -306,7 +265,6 @@ extern Relation vacuum_open_relation(Oid relid, RangeVar *relation,
 extern void analyze_rel(Oid relid, RangeVar *relation,
 						VacuumParams *params, List *va_cols, bool in_outer_xact,
 						BufferAccessStrategy bstrategy);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 extern bool std_typanalyze(VacAttrStats *stats);
 
 /* in utils/misc/sampling.c --- duplicate of declarations in utils/sampling.h */
