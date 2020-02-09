@@ -144,7 +144,7 @@ InitSerTupInfo(TupleDesc tupdesc, SerTupInfo *pSerInfo)
 		 * Get attribute's data-type Oid.  This lets us shortcut the comm
 		 * operations for some attribute-types.
 		 */
-		attrInfo->atttypid = tupdesc->attrs[i]->atttypid;
+		attrInfo->atttypid = TupleDescAttr(tupdesc, i)->atttypid;
 
 		/*
 		 * Serialization will be performed at a high level abstraction, we
@@ -447,8 +447,10 @@ SerializeTuple(TupleTableSlot *slot, SerTupInfo *pSerInfo, struct directTranspor
 			MemoryContext oldContext;
 			oldContext = MemoryContextSwitchTo(s_tupSerMemCtxt);
 			slot_getallattrs(slot);
-			tuple = memtuple_form_to(slot->tts_mt_bind, slot_get_values(slot), slot_get_isnull(slot),
-									  NULL, NULL, true);
+			tuple = memtuple_form_to(slot->tts_mt_bind,
+									 slot->tts_values,
+									 slot->tts_isnull,
+									 NULL, NULL, true);
 			MemoryContextSwitchTo(oldContext);
 		}
 
@@ -798,8 +800,6 @@ CvtChunksToTup(TupleChunkList tcList, SerTupInfo *pSerInfo, TupleRemapper *remap
 
 			/* determine overhead size of tuple (should match heap_form_tuple) */
 			hoff = offsetof(HeapTupleHeaderData, t_bits) + TYPEALIGN(TUPLE_CHUNK_ALIGN, nullslen);
-			if (tshp->infomask & HEAP_HASOID)
-				hoff += sizeof(Oid);
 			hoff = MAXALIGN(hoff);
 
 			/* Allocate the space in one chunk, like heap_form_tuple */
@@ -827,15 +827,6 @@ CvtChunksToTup(TupleChunkList tcList, SerTupInfo *pSerInfo, TupleRemapper *remap
 			{
 				memcpy((void *) t_data->t_bits, pos, nullslen);
 				pos += TYPEALIGN(TUPLE_CHUNK_ALIGN, nullslen);
-			}
-
-			/*
-			 * does the tuple descriptor expect an OID ? Note: we don't have
-			 * to set the oid itself, just the flag! (see heap_formtuple())
-			 */
-			if (pSerInfo->tupdesc->tdhasoid)	/* else leave infomask = 0 */
-			{
-				t_data->t_infomask |= HEAP_HASOID;
 			}
 
 			/*

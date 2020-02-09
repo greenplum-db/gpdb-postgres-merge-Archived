@@ -14,6 +14,7 @@
 
 #include "postgres.h"
 
+#include "access/relation.h"
 #include "cdb/cdbtargeteddispatch.h"
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"	/* for rt_fetch() */
@@ -124,7 +125,7 @@ GetContentIdsFromPlanForSingleRelation(PlannerInfo *root, Plan *plan, int rangeT
 			parts = (PartitionKeyInfo *) palloc(policy->nattrs * sizeof(PartitionKeyInfo));
 			for (i = 0; i < policy->nattrs; i++)
 			{
-				parts[i].attr = relation->rd_att->attrs[policy->attrs[i] - 1];
+				parts[i].attr = TupleDescAttr(relation->rd_att, policy->attrs[i] - 1);
 				parts[i].values = NULL;
 				parts[i].numValues = 0;
 				parts[i].counter = 0;

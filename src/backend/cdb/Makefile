@@ -40,7 +40,7 @@ OBJS = cdbappendonlystorageformat.o \
 	   cdbtm.o cdbtmutils.o \
 	   cdbutil.o \
 	   cdbvars.o cdbvarblock.o \
-	   partitionselection.o cdbdtxrecovery.o
+	   cdbdtxrecovery.o
 
 ifeq ($(PORTNAME),cygwin)
 .LIBPATTERNS := $(filter-out %.so,$(.LIBPATTERNS))

@@ -8495,7 +8495,7 @@ get_rule_expr(Node *node, deparse_context *context,
 										 0, 0, 0);
 
 					/* WHEN IS NOT DISTINCT FROM */
-					if (not_clause(w))
+					if (is_notclause(w))
 					{
 						Expr *arg = get_notclausearg((Expr *) w);
 

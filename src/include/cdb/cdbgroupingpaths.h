@@ -14,7 +14,7 @@
 #ifndef CDBGROUPINGPATHS_H
 #define CDBGROUPINGPATHS_H
 
-#include "nodes/relation.h"
+#include "nodes/pathnodes.h"
 
 extern void cdb_create_twostage_grouping_paths(PlannerInfo *root,
 											   RelOptInfo *input_rel,

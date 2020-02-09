@@ -196,7 +196,7 @@ cdbCopyStart(CdbCopy *c, CopyStmt *stmt,
 
 			stmt->options = lappend(stmt->options,
 									makeDefElem("encoding",
-												(Node *) makeString(pstrdup(encname))));
+												(Node *) makeString(pstrdup(encname)), -1));
 		}
 	}
 

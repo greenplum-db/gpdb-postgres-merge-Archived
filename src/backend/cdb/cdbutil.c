@@ -23,8 +23,10 @@
 #include "postgres.h"
 
 #include <sys/param.h>			/* for MAXHOSTNAMELEN */
+
 #include "access/genam.h"
 #include "catalog/gp_segment_configuration.h"
+#include "common/ip.h"
 #include "nodes/makefuncs.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -41,7 +43,6 @@
 #include "cdb/cdbtm.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
-#include "libpq/ip.h"
 #include "cdb/cdbconn.h"
 #include "cdb/cdbfts.h"
 #include "storage/ipc.h"
@@ -230,17 +231,17 @@ readGpSegConfigFromCatalog(int *total_dbs)
 	Datum				attr;
 	Relation			gp_seg_config_rel;
 	HeapTuple			gp_seg_config_tuple = NULL;
-	HeapScanDesc		gp_seg_config_scan;
+	TableScanDesc		gp_seg_config_scan;
 	GpSegConfigEntry	*configs;
 	GpSegConfigEntry	*config;
 
 	array_size = 500;
 	configs = palloc0(sizeof(GpSegConfigEntry) * array_size);
 
-	gp_seg_config_rel = heap_open(GpSegmentConfigRelationId, AccessShareLock);
-	gp_seg_config_scan = heap_beginscan_catalog(gp_seg_config_rel, 0, NULL);
+	gp_seg_config_rel = table_open(GpSegmentConfigRelationId, AccessShareLock);
+	gp_seg_config_scan = table_beginscan_catalog(gp_seg_config_rel, 0, NULL);
 
-	while (HeapTupleIsValid(gp_seg_config_tuple = heap_getnext(gp_seg_config_scan, ForwardScanDirection)))
+	while (HeapTupleIsValid(gp_seg_config_tuple = table_getnext(gp_seg_config_scan, ForwardScanDirection)))
 	{
 		config = &configs[idx];
 
@@ -309,8 +310,8 @@ readGpSegConfigFromCatalog(int *total_dbs)
 	 * We're done with the catalog config, clean them up, closing all the
 	 * relations we opened.
 	 */
-	heap_endscan(gp_seg_config_scan);
-	heap_close(gp_seg_config_rel, AccessShareLock);
+	table_endscan(gp_seg_config_scan);
+	table_close(gp_seg_config_rel, AccessShareLock);
 
 	*total_dbs = idx;
 	return configs;

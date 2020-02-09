@@ -228,7 +228,7 @@ int			gp_segments_for_planner = 0;
 
 int			gp_hashagg_default_nbatches = 32;
 
-bool		gp_adjust_selectivity_for_outerjoins = TRUE;
+bool		gp_adjust_selectivity_for_outerjoins = true;
 bool		gp_selectivity_damping_for_scans = false;
 bool		gp_selectivity_damping_for_joins = false;
 double		gp_selectivity_damping_factor = 1;
@@ -241,11 +241,11 @@ int			gp_hashagg_groups_per_bucket = 5;
 int			gp_motion_slice_noop = 0;
 
 /* Greenplum Database Experimental Feature GUCs */
-bool		gp_enable_explain_allstat = FALSE;
-bool		gp_enable_motion_deadlock_sanity = FALSE;	/* planning time sanity
+bool		gp_enable_explain_allstat = false;
+bool		gp_enable_motion_deadlock_sanity = false;	/* planning time sanity
 														 * check */
 
-bool		gp_enable_tablespace_auto_mkdir = FALSE;
+bool		gp_enable_tablespace_auto_mkdir = false;
 
 /* Enable check for compatibility of encoding and locale in createdb */
 bool		gp_encoding_check_locale_compatibility = true;

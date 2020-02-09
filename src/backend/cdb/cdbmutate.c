@@ -15,9 +15,9 @@
 
 #include "postgres.h"
 
+#include "access/relation.h"
 #include "access/xact.h"
 #include "parser/parsetree.h"	/* for rt_fetch() */
-#include "utils/relcache.h"		/* RelationGetPartitioningKey() */
 #include "optimizer/planmain.h"
 #include "optimizer/var.h"
 #include "parser/parse_relation.h"
@@ -27,6 +27,7 @@
 #include "utils/datum.h"
 #include "utils/syscache.h"
 #include "optimizer/clauses.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "nodes/makefuncs.h"
 
@@ -1752,7 +1753,7 @@ pre_dispatch_function_evaluation_mutator(Node *node,
 			 */
 			const_val = ExecEvalExprSwitchContext(exprstate,
 												  GetPerTupleExprContext(estate),
-												  &const_is_null, NULL);
+												  &const_is_null);
 
 			/* Get info needed about result datatype */
 			get_typlenbyval(expr->funcresulttype, &resultTypLen, &resultTypByVal);
@@ -1895,7 +1896,7 @@ cdbpathtoplan_create_sri_plan(RangeTblEntry *rte, PlannerInfo *subroot, Path *su
 							  int createplan_flags)
 {
 	CdbMotionPath *motionpath;
-	ResultPath *resultpath;
+	GroupResultPath *resultpath;
 	Result	   *resultplan;
 	Relation	rel;
 	GpPolicy   *targetPolicy;
@@ -1914,10 +1915,10 @@ cdbpathtoplan_create_sri_plan(RangeTblEntry *rte, PlannerInfo *subroot, Path *su
 		return NULL;
 	motionpath = (CdbMotionPath *) subpath;
 
-	if (!IsA(motionpath->subpath, ResultPath))
+	if (!IsA(motionpath->subpath, GroupResultPath))
 		return NULL;
 
-	resultpath = (ResultPath *) motionpath->subpath;
+	resultpath = (GroupResultPath *) motionpath->subpath;
 
 	if (contain_mutable_functions((Node *) resultpath->path.pathtarget->exprs))
 		return NULL;
@@ -1930,6 +1931,8 @@ cdbpathtoplan_create_sri_plan(RangeTblEntry *rte, PlannerInfo *subroot, Path *su
 	rel = relation_open(rte->relid, NoLock);
 	targetPolicy = rel->rd_cdbpolicy;
 
+	/* GPDB_12_MERGE_FIXME: Legacy partitioning stuff. Do we still need something like this? */
+#if 0
 	/* 1: See if it's partitioned */
 	pn = RelationBuildPartitionDesc(rel, false);
 
@@ -2011,9 +2014,10 @@ cdbpathtoplan_create_sri_plan(RangeTblEntry *rte, PlannerInfo *subroot, Path *su
 		if (targetPolicy->ptype != POLICYTYPE_PARTITIONED)
 			elog(ERROR, "policy must be partitioned");
 
-		heap_close(rri->ri_RelationDesc, NoLock);
+		relation_close(rri->ri_RelationDesc, NoLock);
 		FreeExecutorState(estate);
 	}
+#endif
 
 	hashExprs = getExprListFromTargetList(resultplan->plan.targetlist,
 										  targetPolicy->nattrs,

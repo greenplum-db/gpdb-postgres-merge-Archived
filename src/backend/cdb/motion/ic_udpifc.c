@@ -28,12 +28,12 @@
 
 #include "access/transam.h"
 #include "access/xact.h"
+#include "common/ip.h"
 #include "nodes/execnodes.h"
 #include "nodes/pg_list.h"
 #include "nodes/print.h"
 #include "miscadmin.h"
 #include "libpq/libpq-be.h"
-#include "libpq/ip.h"
 #include "port/atomics.h"
 #include "port/pg_crc32c.h"
 #include "storage/latch.h"
@@ -4543,6 +4543,8 @@ xmit_retry:
 			   (struct sockaddr *) &conn->peer, conn->peer_len);
 	if (n < 0)
 	{
+		int			save_errno = errno;
+
 		if (errno == EINTR)
 			goto xmit_retry;
 
@@ -4568,7 +4570,7 @@ xmit_retry:
 						errmsg("Interconnect error writing an outgoing packet: %m"),
 						errdetail("error during sendto() call (error:%d).\n"
 								  "For Remote Connection: contentId=%d at %s",
-								  errno, conn->remoteContentId,
+								  save_errno, conn->remoteContentId,
 								  conn->remoteHostAndPort)));
 		/* not reached */
 	}

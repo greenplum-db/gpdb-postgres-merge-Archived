@@ -2290,9 +2290,9 @@ SetSharedTransactionId_writer(DtxContext distributedTransactionContext)
 	ereportif(Debug_print_full_dtm, LOG,
 			  (errmsg("%s setting shared xid " UINT64_FORMAT " -> " UINT64_FORMAT,
 					  DtxContextToString(distributedTransactionContext),
-					  U64FromFullTransactionId(SharedLocalSnapshotSlot->xid),
+					  U64FromFullTransactionId(SharedLocalSnapshotSlot->fullXid),
 					  U64FromFullTransactionId(TopTransactionStateData.fullTransactionId))));
-	SharedLocalSnapshotSlot->xid = TopTransactionStateData.fullTransactionId;
+	SharedLocalSnapshotSlot->fullXid = TopTransactionStateData.fullTransactionId;
 }
 
 void
@@ -2527,7 +2527,7 @@ StartTransaction(void)
 				LWLockAcquire(SharedLocalSnapshotSlot->slotLock, LW_EXCLUSIVE);
 
 				SharedLocalSnapshotSlot->ready = false;
-				SharedLocalSnapshotSlot->xid = s->fullTransactionId;
+				SharedLocalSnapshotSlot->fullXid = s->fullTransactionId;
 				SharedLocalSnapshotSlot->startTimestamp = stmtStartTimestamp;
 				SharedLocalSnapshotSlot->QDxid = QEDtxContextInfo.distributedXid;
 				SharedLocalSnapshotSlot->writer_proc = MyProc;
@@ -2541,7 +2541,7 @@ StartTransaction(void)
 							  INT64_FORMAT ")",
 							  QEDtxContextInfo.distributedXid,
 							  SharedLocalSnapshotSlot->QDxid,
-							  U64FromFullTransactionId(SharedLocalSnapshotSlot->xid),
+							  U64FromFullTransactionId(SharedLocalSnapshotSlot->fullXid),
 							  U64FromFullTransactionId(s->fullTransactionId),
 							  SharedLocalSnapshotSlot->ready ? "true" : "false",
 							  SharedLocalSnapshotSlot->startTimestamp,
@@ -3724,7 +3724,7 @@ StartTransactionCommand(void)
 			{
 				LWLockAcquire(SharedLocalSnapshotSlot->slotLock, LW_EXCLUSIVE);
 
-				FullTransactionId oldXid = SharedLocalSnapshotSlot->xid;
+				FullTransactionId oldFullXid = SharedLocalSnapshotSlot->fullXid;
 				TimestampTz oldStartTimestamp = SharedLocalSnapshotSlot->startTimestamp;
 
 				/*
@@ -3735,7 +3735,7 @@ StartTransactionCommand(void)
 				 */
 				if (FullTransactionIdIsValid(s->fullTransactionId))
 				{
-					SharedLocalSnapshotSlot->xid = s->fullTransactionId;
+					SharedLocalSnapshotSlot->fullXid = s->fullTransactionId;
 				}
 
 				SharedLocalSnapshotSlot->startTimestamp = xactStartTimestamp;
@@ -3747,7 +3747,7 @@ StartTransactionCommand(void)
 						  (errmsg("qExec WRITER updating shared xid: " UINT64_FORMAT " -> " UINT64_FORMAT " "
 								  "(StartTransactionCommand) timestamp: "
 								  INT64_FORMAT " -> " INT64_FORMAT ")",
-								  U64FromFullTransactionId(oldXid),
+								  U64FromFullTransactionId(oldFullXid),
 								  U64FromFullTransactionId(s->fullTransactionId),
 								  oldStartTimestamp, xactStartTimestamp)));
 			}

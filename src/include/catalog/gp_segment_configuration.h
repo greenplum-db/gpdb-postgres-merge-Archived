@@ -21,6 +21,8 @@
 /*
  * Defines for gp_segment_configuration table
  */
+#define GpSegmentConfigRelationName		"gp_segment_configuration"
+
 #define MASTER_DBID 1
 #define MASTER_CONTENT_ID (-1)
 #define InvalidDbid 0

@@ -707,7 +707,7 @@ BuildFieldRemapInfo(TupleDesc tupledesc, MemoryContext mycontext)
 						   tupledesc->natts * sizeof(TupleRemapInfo *));
 	for (i = 0; i < tupledesc->natts; i++)
 	{
-		Form_pg_attribute attr = tupledesc->attrs[i];
+		Form_pg_attribute attr = TupleDescAttr(tupledesc, i);
 
 		if (attr->attisdropped)
 		{

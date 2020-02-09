@@ -18,9 +18,10 @@
 #include "cdb/cdbpullup.h"		/* cdbpullup_findDistributionKeyExprInTargetList() */
 #include "nodes/makefuncs.h"	/* makeVar() */
 #include "nodes/nodeFuncs.h"	/* exprType() and exprTypmod() */
+#include "nodes/pathnodes.h"	/* RelOptInfo */
 #include "nodes/plannodes.h"	/* Plan */
-#include "nodes/relation.h"		/* RelOptInfo */
 #include "optimizer/clauses.h"
+#include "optimizer/optimizer.h" /* contain_volatile_functions() */
 #include "optimizer/pathnode.h" /* Path */
 #include "optimizer/paths.h"	/* cdb_make_distkey_for_expr() */
 #include "optimizer/tlist.h"	/* tlist_member() */

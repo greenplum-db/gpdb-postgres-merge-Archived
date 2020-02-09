@@ -14,12 +14,12 @@
 
 #include "postgres.h"
 
+#include "common/ip.h"
 #include "nodes/execnodes.h"	/* ExecSlice, SliceTable */
 #include "nodes/pg_list.h"
 #include "nodes/print.h"
 #include "miscadmin.h"
 #include "libpq/libpq-be.h"
-#include "libpq/ip.h"
 #include "utils/builtins.h"
 
 #include "cdb/cdbselect.h"
@@ -2663,10 +2663,12 @@ flushBuffer(ChunkTransportState *transportStates,
 
 		if ((n = send(conn->sockfd, sendptr + sent, conn->msgSize - sent, 0)) < 0)
 		{
+			int			save_errno = errno;
+
 			ML_CHECK_FOR_INTERRUPTS(transportStates->teardownActive);
-			if (errno == EINTR)
+			if (save_errno == EINTR)
 				continue;
-			if (errno == EWOULDBLOCK)
+			if (save_errno == EWOULDBLOCK)
 			{
 				do
 				{
@@ -2700,7 +2702,7 @@ flushBuffer(ChunkTransportState *transportStates,
 								(errcode(ERRCODE_GP_INTERCONNECTION_ERROR),
 								 errmsg("interconnect error writing an outgoing packet: %m"),
 								 errdetail("Error during select() call (error: %d), for remote connection: contentId=%d at %s",
-										   errno, conn->remoteContentId,
+										   save_errno, conn->remoteContentId,
 										   conn->remoteHostAndPort)));
 					}
 
@@ -2737,7 +2739,7 @@ flushBuffer(ChunkTransportState *transportStates,
 						(errcode(ERRCODE_GP_INTERCONNECTION_ERROR),
 						 errmsg("interconnect error writing an outgoing packet"),
 						 errdetail("Error during send() call (error:%d) for remote connection: contentId=%d at %s",
-								   errno, conn->remoteContentId,
+								   save_errno, conn->remoteContentId,
 								   conn->remoteHostAndPort)));
 			}
 		}

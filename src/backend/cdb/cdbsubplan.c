@@ -69,6 +69,7 @@ static bool isParamExecutableNow(SubPlanState *spstate, ParamExecData *prmList);
 void
 preprocess_initplans(QueryDesc *queryDesc)
 {
+	int			nParamExec;
 	ParamListInfo originalPli,
 				augmentedPli;
 	int			i;
@@ -76,7 +77,8 @@ preprocess_initplans(QueryDesc *queryDesc)
 	int			originalSlice,
 				rootIndex;
 
-	if (queryDesc->plannedstmt->nParamExec == 0)
+	nParamExec = list_length(queryDesc->plannedstmt->paramExecTypes);
+	if (nParamExec == 0)
 		return;
 
 	originalPli = queryDesc->params;
@@ -91,7 +93,7 @@ preprocess_initplans(QueryDesc *queryDesc)
 	 * order, i.e. if a subplan x has a sublan y, then y will come before x in
 	 * the es_param_exec_vals array.
 	 */
-	for (i = 0; i < queryDesc->plannedstmt->nParamExec; i++)
+	for (i = 0; i < nParamExec; i++)
 	{
 		ParamExecData *prm;
 		SubPlanState *sps;

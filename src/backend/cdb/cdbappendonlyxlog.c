@@ -61,7 +61,6 @@ ao_insert_replay(XLogReaderState *record)
 	char	   *dbPath;
 	char		path[MAXPGPATH];
 	int			written_len;
-	int64		seek_offset;
 	File		file;
 	int			fileFlags;
 	xl_ao_insert *xlrec = (xl_ao_insert *) XLogRecGetData(record);
@@ -89,18 +88,7 @@ ao_insert_replay(XLogReaderState *record)
 		return;
 	}
 
-	seek_offset = FileSeek(file, xlrec->target.offset, SEEK_SET);
-	if (seek_offset != xlrec->target.offset)
-	{
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("seeked to position " INT64_FORMAT " but expected to seek to position " INT64_FORMAT " in file \"%s\": %m",
-						seek_offset,
-						xlrec->target.offset,
-						path)));
-	}
-
-	written_len = FileWrite(file, buffer, len);
+	written_len = FileWrite(file, buffer, len, xlrec->target.offset);
 	if (written_len < 0 || written_len != len)
 	{
 		ereport(ERROR,

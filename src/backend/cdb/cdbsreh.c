@@ -42,6 +42,7 @@
 #include "utils/builtins.h"
 #include "utils/bytea.h"
 #include "utils/timestamp.h"
+#include "utils/varlena.h"
 
 static void PreprocessByteaData(char *src);
 static void ErrorLogWrite(CdbSreh *cdbsreh);
@@ -672,7 +673,7 @@ gp_read_error_log(PG_FUNCTION_ARGS)
 			/* Requires SELECT priv to read error log. */
 			aclresult = pg_class_aclcheck(relid, GetUserId(), ACL_SELECT);
 			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, ACL_KIND_CLASS, relrv->relname);
+				aclcheck_error(aclresult, OBJECT_TABLE, relrv->relname);
 
 			ErrorLogFileName(context->filename, MyDatabaseId, relid);
 			context->fp = AllocateFile(context->filename, "r");
@@ -867,7 +868,7 @@ gp_truncate_error_log(PG_FUNCTION_ARGS)
 		 * Database owner can delete error log files.
 		 */
 		if (!pg_database_ownercheck(MyDatabaseId, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
 						   get_database_name(MyDatabaseId));
 
 		ErrorLogDelete(MyDatabaseId, InvalidOid);
@@ -888,7 +889,7 @@ gp_truncate_error_log(PG_FUNCTION_ARGS)
 		 */
 		aclresult = pg_class_aclcheck(relid, GetUserId(), ACL_TRUNCATE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_CLASS, relrv->relname);
+			aclcheck_error(aclresult, OBJECT_TABLE, relrv->relname);
 
 		/* We don't care if this fails or not. */
 		ErrorLogDelete(MyDatabaseId, relid);

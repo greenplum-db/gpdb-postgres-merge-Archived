@@ -33,7 +33,7 @@ typedef struct SharedSnapshotSlot
 	LWLock		   *slotLock;
 
 	/* for debugging only */
-	FullTransactionId	xid;
+	FullTransactionId	fullXid;
 	TimestampTz		startTimestamp;
 } SharedSnapshotSlot;
 
