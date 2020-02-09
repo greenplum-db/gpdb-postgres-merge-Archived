@@ -1795,19 +1795,10 @@ time_pl_interval_internal(TimeADT time, Interval *span)
 {
 	TimeADT		result;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	result = time + span->time;
 	result -= result / USECS_PER_DAY * USECS_PER_DAY;
 	if (result < INT64CONST(0))
 		result += USECS_PER_DAY;
-#else
-	TimeADT		time1;
-
-	result = time + span->time;
-	TMODULO(result, time1, (double) SECS_PER_DAY);
-	if (result < 0)
-		result += SECS_PER_DAY;
-#endif
 	
 	return result;
 }
@@ -1820,18 +1811,8 @@ time_pl_interval(PG_FUNCTION_ARGS)
 {
 	TimeADT		time = PG_GETARG_TIMEADT(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
-<<<<<<< HEAD
 	TimeADT		result = time_pl_interval_internal(time, span);
 	
-=======
-	TimeADT		result;
-
-	result = time + span->time;
-	result -= result / USECS_PER_DAY * USECS_PER_DAY;
-	if (result < INT64CONST(0))
-		result += USECS_PER_DAY;
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	PG_RETURN_TIMEADT(result);
 }
 
