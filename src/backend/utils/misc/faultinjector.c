@@ -25,6 +25,7 @@
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
+
 #include "access/xact.h"
 #include "cdb/cdbutil.h"
 #include "libpq/libpq.h"
@@ -374,9 +375,13 @@ FaultInjector_InjectFaultIfSet(
 			getrlimit(RLIMIT_CORE, &lim);
 			lim.rlim_cur = 0;
 			if (setrlimit(RLIMIT_CORE, &lim) != 0)
+			{
+				int			save_errno = errno;
+
 				elog(NOTICE,
 					 "setrlimit failed for RLIMIT_CORE soft limit to zero. errno: %d (%m).",
-					 errno);
+					 save_errno);
+			}
 #endif
 			ereport(PANIC, 
 					(errcode(ERRCODE_FAULT_INJECT),
@@ -474,9 +479,13 @@ FaultInjector_InjectFaultIfSet(
 			getrlimit(RLIMIT_CORE, &lim);
 			lim.rlim_cur = 0;
 			if (setrlimit(RLIMIT_CORE, &lim) != 0)
+			{
+				int			save_errno = errno;
+
 				elog(NOTICE,
 					 "setrlimit failed for RLIMIT_CORE soft limit to zero. errno: %d (%m).",
-					 errno);
+					 save_errno);
+			}
 #endif
 
 			*(volatile int *) 0 = 1234;

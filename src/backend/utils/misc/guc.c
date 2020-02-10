@@ -585,8 +585,6 @@ static int	block_size;
 static int	segment_size;
 static int	wal_block_size;
 static bool data_checksums;
-static int	wal_segment_size;
-static bool	data_checksums;
 static bool integer_datetimes;
 static bool assert_enabled;
 static char *recovery_target_timeline_string;
@@ -1567,27 +1565,6 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"sql_inheritance", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("Causes subtables to be included by default in various commands."),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&SQL_inheritance,
-		true,
-		NULL, NULL, NULL
-	},
-	{
-		{"password_encryption", PGC_USERSET, CONN_AUTH_SSL,
-			gettext_noop("Encrypt passwords."),
-			gettext_noop("When a password is specified in CREATE USER or "
-			   "ALTER USER without writing either ENCRYPTED or UNENCRYPTED, "
-						 "this parameter determines whether the password is to be encrypted.")
-		},
-		&Password_encryption,
-		true,
-		NULL, NULL, NULL
-	},
-	{
 		{"transform_null_equals", PGC_USERSET, COMPAT_OPTIONS_CLIENT,
 			gettext_noop("Treats \"expr=NULL\" as \"expr IS NULL\"."),
 			gettext_noop("When turned on, expressions of the form expr = NULL "
@@ -2394,28 +2371,6 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&VacuumCostLimit,
 		200, 1, 10000,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"vacuum_cost_delay", PGC_USERSET, RESOURCES_VACUUM_DELAY,
-			gettext_noop("Vacuum cost delay in milliseconds."),
-			NULL,
-			GUC_UNIT_MS
-		},
-		&VacuumCostDelay,
-		0, 0, 100,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"autovacuum_vacuum_cost_delay", PGC_SIGHUP, DEFUNCT_OPTIONS,
-			gettext_noop("Vacuum cost delay in milliseconds, for autovacuum."),
-			NULL,
-			GUC_UNIT_MS | GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
-		},
-		&autovacuum_vac_cost_delay,
-		20, -1, 100,
 		NULL, NULL, NULL
 	},
 
@@ -3494,10 +3449,10 @@ static struct config_real ConfigureNamesReal[] =
 	},
 
 	{
-		{"autovacuum_vacuum_cost_delay", PGC_SIGHUP, AUTOVACUUM,
+		{"autovacuum_vacuum_cost_delay", PGC_SIGHUP, DEFUNCT_OPTIONS,
 			gettext_noop("Vacuum cost delay in milliseconds, for autovacuum."),
 			NULL,
-			GUC_UNIT_MS
+			GUC_UNIT_MS | GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
 		},
 		&autovacuum_vac_cost_delay,
 		2, -1, 100,
@@ -8740,7 +8695,7 @@ DispatchSetPGVariable(const char *name, List *args, bool is_local)
 				switch (nodeTag(&con->val))
 				{
 					case T_Integer:
-						appendStringInfo(&buffer, "%ld", intVal(&con->val));
+						appendStringInfo(&buffer, "%d", intVal(&con->val));
 						break;
 					case T_Float:
 						/* represented as a string, so just copy it */
