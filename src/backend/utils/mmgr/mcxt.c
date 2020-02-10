@@ -201,9 +201,6 @@ MemoryContextResetOnly(MemoryContext context)
 	if (!context->isReset)
 	{
 		MemoryContextCallResetCallbacks(context);
-<<<<<<< HEAD
-		(*context->methods.reset) (context);
-=======
 
 		/*
 		 * If context->ident points into the context's memory, it will become
@@ -216,7 +213,6 @@ MemoryContextResetOnly(MemoryContext context)
 		 */
 
 		context->methods->reset(context);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		context->isReset = true;
 		VALGRIND_DESTROY_MEMPOOL(context);
 		VALGRIND_CREATE_MEMPOOL(context, 0, false);
@@ -261,18 +257,14 @@ MemoryContextDeleteImpl(MemoryContext context, const char* sfile, const char *fu
 	/* And not CurrentMemoryContext, either */
 	Assert(context != CurrentMemoryContext);
 
-<<<<<<< HEAD
 #ifdef CDB_PALLOC_CALLER_ID
 	context->callerFile = sfile;
 	context->callerLine = sline;
 #endif
 
-	MemoryContextDeleteChildren(context);
-=======
 	/* save a function call in common case where there are no children */
 	if (context->firstchild != NULL)
 		MemoryContextDeleteChildren(context);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * It's not entirely clear whether 'tis better to do this before or after
@@ -289,9 +281,6 @@ MemoryContextDeleteImpl(MemoryContext context, const char* sfile, const char *fu
 	 */
 	MemoryContextSetParent(context, NULL);
 
-<<<<<<< HEAD
-	(*context->methods.delete_context) (context);
-=======
 	/*
 	 * Also reset the context's ident pointer, in case it points into the
 	 * context.  This would only matter if someone tries to get stats on the
@@ -301,7 +290,6 @@ MemoryContextDeleteImpl(MemoryContext context, const char* sfile, const char *fu
 
 	context->methods->delete_context(context);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	VALGRIND_DESTROY_MEMPOOL(context);
 }
 
@@ -567,11 +555,7 @@ MemoryContextIsEmpty(MemoryContext context)
 	if (context->firstchild != NULL)
 		return false;
 	/* Otherwise use the type-specific inquiry */
-<<<<<<< HEAD
-	return (*context->methods.is_empty) (context);
-=======
 	return context->methods->is_empty(context);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 
@@ -869,14 +853,10 @@ MemoryContextStatsInternal(MemoryContext context, int level,
 	AssertArg(MemoryContextIsValid(context));
 
 	/* Examine the context itself */
-<<<<<<< HEAD
-	(*context->methods.stats) (context, level, print, totals);
-=======
 	context->methods->stats(context,
 							print ? MemoryContextStatsPrint : NULL,
 							(void *) &level,
 							totals);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Examine children.  If there are more than max_children of them, we do
@@ -1256,15 +1236,6 @@ MemoryContextAlloc(MemoryContext context, Size size)
 
 	context->isReset = false;
 
-<<<<<<< HEAD
-	ret = (*context->methods.alloc) (context, size);
-	if (ret == NULL)
-	{
-		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-						   context, CDB_MCXT_WHERE(context),
-						   "Out of memory.  Failed on request of size %zu bytes.",
-						   size);
-=======
 	ret = context->methods->alloc(context, size);
 	if (unlikely(ret == NULL))
 	{
@@ -1281,7 +1252,6 @@ MemoryContextAlloc(MemoryContext context, Size size)
 				 errmsg("out of memory"),
 				 errdetail("Failed on request of size %zu in memory context \"%s\".",
 						   size, context->name)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
@@ -1325,15 +1295,6 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 
 	context->isReset = false;
 
-<<<<<<< HEAD
-	ret = (*context->methods.alloc) (context, size);
-	if (ret == NULL)
-	{
-		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-						   context, CDB_MCXT_WHERE(context),
-						   "Out of memory.  Failed on request of size %zu bytes.",
-						   size);
-=======
 	ret = context->methods->alloc(context, size);
 	if (unlikely(ret == NULL))
 	{
@@ -1343,7 +1304,6 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 				 errmsg("out of memory"),
 				 errdetail("Failed on request of size %zu in memory context \"%s\".",
 						   size, context->name)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
@@ -1390,15 +1350,6 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 
 	context->isReset = false;
 
-<<<<<<< HEAD
-	ret = (*context->methods.alloc) (context, size);
-	if (ret == NULL)
-	{
-		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-						   context, CDB_MCXT_WHERE(context),
-						   "Out of memory.  Failed on request of size %zu bytes.",
-						   size);
-=======
 	ret = context->methods->alloc(context, size);
 	if (unlikely(ret == NULL))
 	{
@@ -1408,7 +1359,6 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 				 errmsg("out of memory"),
 				 errdetail("Failed on request of size %zu in memory context \"%s\".",
 						   size, context->name)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
@@ -1442,17 +1392,6 @@ MemoryContextAllocExtended(MemoryContext context, Size size, int flags)
 
 	context->isReset = false;
 
-<<<<<<< HEAD
-	ret = (*context->methods.alloc) (context, size);
-	if (ret == NULL)
-	{
-		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
-		{
-			MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-							   context, CDB_MCXT_WHERE(context),
-							   "Out of memory.  Failed on request of size %zu bytes.",
-							   size);
-=======
 	ret = context->methods->alloc(context, size);
 	if (unlikely(ret == NULL))
 	{
@@ -1464,7 +1403,6 @@ MemoryContextAllocExtended(MemoryContext context, Size size, int flags)
 					 errmsg("out of memory"),
 					 errdetail("Failed on request of size %zu in memory context \"%s\".",
 							   size, context->name)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		return NULL;
 	}
@@ -1484,25 +1422,16 @@ palloc(Size size)
 	void	   *ret;
 	MemoryContext context = CurrentMemoryContext;
 
-<<<<<<< HEAD
-	AssertArg(MemoryContextIsValid(CurrentMemoryContext));
-=======
 	AssertArg(MemoryContextIsValid(context));
 	AssertNotInCriticalSection(context);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (!AllocSizeIsValid(size))
 		elog(ERROR, "invalid memory alloc request size %zu", size);
 
 	context->isReset = false;
 
-<<<<<<< HEAD
-	ret = (*CurrentMemoryContext->methods.alloc) (CurrentMemoryContext, size);
-	if (ret == NULL)
-=======
 	ret = context->methods->alloc(context, size);
 	if (unlikely(ret == NULL))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		MemoryContextStats(TopMemoryContext);
 		ereport(ERROR,
@@ -1524,12 +1453,8 @@ palloc0(Size size)
 	void	   *ret;
 	MemoryContext context = CurrentMemoryContext;
 
-<<<<<<< HEAD
-	AssertArg(MemoryContextIsValid(CurrentMemoryContext));
-=======
 	AssertArg(MemoryContextIsValid(context));
 	AssertNotInCriticalSection(context);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (!AllocSizeIsValid(size))
 		elog(ERROR, "invalid memory alloc request size %zu", size);
@@ -1755,15 +1680,6 @@ MemoryContextAllocHuge(MemoryContext context, Size size)
 
 	context->isReset = false;
 
-<<<<<<< HEAD
-	ret = (*context->methods.alloc) (context, size);
-	if (ret == NULL)
-	{
-		MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-						   context, CDB_MCXT_WHERE(context),
-						   "Out of memory.  Failed on request of size %zu bytes.",
-						   size);
-=======
 	ret = context->methods->alloc(context, size);
 	if (unlikely(ret == NULL))
 	{
@@ -1773,7 +1689,6 @@ MemoryContextAllocHuge(MemoryContext context, Size size)
 				 errmsg("out of memory"),
 				 errdetail("Failed on request of size %zu in memory context \"%s\".",
 						   size, context->name)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
