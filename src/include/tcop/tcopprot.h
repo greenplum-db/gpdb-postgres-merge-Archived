@@ -62,7 +62,6 @@ extern void assign_max_stack_depth(int newval, void *extra);
 
 extern void die(SIGNAL_ARGS);
 extern void quickdie(SIGNAL_ARGS) pg_attribute_noreturn();
-extern void quickdie_impl(void) pg_attribute_noreturn();
 extern void StatementCancelHandler(SIGNAL_ARGS);
 extern void FloatExceptionHandler(SIGNAL_ARGS) pg_attribute_noreturn();
 extern void RecoveryConflictInterrupt(ProcSignalReason reason); /* called from SIGUSR1

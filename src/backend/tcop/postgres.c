@@ -248,15 +248,12 @@ static bool IsTransactionExitStmtList(List *pstmts);
 static bool IsTransactionStmtList(List *pstmts);
 static void drop_unnamed_stmt(void);
 static void log_disconnections(int code, Datum arg);
-<<<<<<< HEAD
+static void enable_statement_timeout(void);
+static void disable_statement_timeout(void);
 static bool CheckDebugDtmActionSqlCommandTag(const char *sqlCommandTag);
 static bool CheckDebugDtmActionProtocol(DtxProtocolCommand dtxProtocolCommand,
 					DtxContextInfo *contextInfo);
 static bool renice_current_process(int nice_level);
-=======
-static void enable_statement_timeout(void);
-static void disable_statement_timeout(void);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Change the priority of the current process to the specified level
@@ -2620,7 +2617,7 @@ exec_bind_message(StringInfo input_message)
 	 * will be generated in MessageContext.  The plan refcount will be
 	 * assigned to the Portal, so it will be released at portal destruction.
 	 */
-	cplan = GetCachedPlan(psrc, params, false, NULL);
+	cplan = GetCachedPlan(psrc, params, false, NULL, NULL);
 
 	/*
 	 * Now we can define the portal.
@@ -3335,23 +3332,8 @@ start_xact_command(void)
 {
 	if (!xact_started)
 	{
-<<<<<<< HEAD
-		/* Now commit the command */
-		ereport(DEBUG3,
-				(errmsg_internal("StartTransactionCommand")));
 		StartTransactionCommand();
 
-		/* Set statement timeout running, if any */
-		/* NB: this mustn't be enabled until we are within an xact */
-		if (StatementTimeout > 0 && Gp_role != GP_ROLE_EXECUTE)
-			enable_timeout_after(STATEMENT_TIMEOUT, StatementTimeout);
-		else
-			disable_timeout(STATEMENT_TIMEOUT, false);
-
-=======
-		StartTransactionCommand();
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		xact_started = true;
 	}
 
@@ -3481,20 +3463,7 @@ drop_unnamed_stmt(void)
 void
 quickdie(SIGNAL_ARGS)
 {
-<<<<<<< HEAD
-	quickdie_impl();
-}
-
-/**
- * implementation of quick-die that does take SIGNAL_ARGS parameter
- */
-void
-quickdie_impl()
-{
-	sigaddset(&BlockSig, SIGQUIT);		/* prevent nested calls */
-=======
 	sigaddset(&BlockSig, SIGQUIT);	/* prevent nested calls */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	PG_SETMASK(&BlockSig);
 
 	in_quickdie=true;
@@ -3516,8 +3485,6 @@ quickdie_impl()
 		whereToSendOutput = DestNone;
 
 	/*
-<<<<<<< HEAD
-=======
 	 * Notify the client before exiting, to give a clue on what happened.
 	 *
 	 * It's dubious to call ereport() from a signal handler.  It is certainly
@@ -3542,7 +3509,6 @@ quickdie_impl()
 					 " database and repeat your command.")));
 
 	/*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * We DO NOT want to run proc_exit() or atexit() callbacks -- we're here
 	 * because shared memory may be corrupted, so we don't want to try to
 	 * clean up our transaction.  Just nail the windows shut and get out of
@@ -3889,7 +3855,6 @@ ProcessInterrupts(const char* filename, int lineno)
 					 errdetail_recovery_conflict()));
 		}
 		else
-<<<<<<< HEAD
 		{
 			if (HasCancelMessage())
 			{
@@ -3906,11 +3871,6 @@ ProcessInterrupts(const char* filename, int lineno)
 						(errcode(ERRCODE_ADMIN_SHUTDOWN),
 						 errmsg("terminating connection due to administrator command")));
 		}
-=======
-			ereport(FATAL,
-					(errcode(ERRCODE_ADMIN_SHUTDOWN),
-					 errmsg("terminating connection due to administrator command")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	if (ClientConnectionLost)
 	{
@@ -3962,27 +3922,8 @@ ProcessInterrupts(const char* filename, int lineno)
 		bool		lock_timeout_occurred;
 		bool		stmt_timeout_occurred;
 
-<<<<<<< HEAD
 		elog(LOG,"Process interrupt for 'query cancel pending' (%s:%d)", filename, lineno);
 
-		/*
-		 * Don't allow query cancel interrupts while reading input from the
-		 * client, because we might lose sync in the FE/BE protocol.  (Die
-		 * interrupts are OK, because we won't read any further messages from
-		 * the client in that case.)
-		 */
-		if (QueryCancelHoldoffCount != 0)
-		{
-			/*
-			 * Re-arm InterruptPending so that we process the cancel request
-			 * as soon as we're done reading the message.
-			 */
-			InterruptPending = true;
-			return;
-		}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		QueryCancelPending = false;
 
 		/*
@@ -4817,9 +4758,8 @@ PostgresMain(int argc, char *argv[],
 		 * Reset some signals that are accepted by postmaster but not by
 		 * backend
 		 */
-<<<<<<< HEAD
-		pqsignal(SIGCHLD, SIG_DFL);		/* system() requires this on some
-										 * platforms */
+		pqsignal(SIGCHLD, SIG_DFL); /* system() requires this on some
+									 * platforms */
 #ifndef _WIN32
 #ifdef SIGILL
 		pqsignal(SIGILL, CdbProgramErrorHandler);
@@ -4831,10 +4771,6 @@ PostgresMain(int argc, char *argv[],
 		pqsignal(SIGBUS, CdbProgramErrorHandler);
 #endif
 #endif
-=======
-		pqsignal(SIGCHLD, SIG_DFL); /* system() requires this on some
-									 * platforms */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	pqinitmask();
@@ -5360,18 +5296,14 @@ PostgresMain(int argc, char *argv[],
 					elog((Debug_print_full_dtm ? LOG : DEBUG5), "Simple query stmt: %s.",query_string);
 
 					if (am_walsender)
-<<<<<<< HEAD
-						exec_replication_command(query_string);
-					else if (am_ftshandler)
-						HandleFtsMessage(query_string);
-					else if (IsFaultHandler)
-						HandleFaultMessage(query_string);
-=======
 					{
 						if (!exec_replication_command(query_string))
 							exec_simple_query(query_string);
 					}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+					else if (am_ftshandler)
+						HandleFtsMessage(query_string);
+					else if (IsFaultHandler)
+						HandleFaultMessage(query_string);
 					else
 						exec_simple_query(query_string);
 
@@ -6029,6 +5961,12 @@ log_disconnections(int code, Datum arg pg_attribute_unused())
 static void
 enable_statement_timeout(void)
 {
+	/*
+	 * GPDB_12_MERGE_FIXME: Postgres commit f8e5f156b30 changed
+	 * statement_timeout logic. GPDB had logic to ignore timeout on QE
+	 * (GPDB-historical commit 4e4abaed4c5). Does that logic need to be
+	 * reapplied here?
+	 */
 	/* must be within an xact */
 	Assert(xact_started);
 
