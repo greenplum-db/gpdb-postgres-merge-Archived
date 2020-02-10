@@ -262,12 +262,8 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		 * view, so we don't need more code to complain if "replace" is
 		 * false).
 		 */
-<<<<<<< HEAD
-		address = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid, NULL, RELSTORAGE_VIRTUAL, false, true, NULL);
-=======
 		address = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid, NULL,
 								 NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		Assert(address.objectId != InvalidOid);
 
 		/* Make the new view relation visible */
@@ -434,11 +430,8 @@ ObjectAddress
 DefineView(ViewStmt *stmt, const char *queryString,
 		   int stmt_location, int stmt_len)
 {
-<<<<<<< HEAD
-	Query	   *viewParse_orig;
-=======
 	RawStmt    *rawstmt;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	Query	   *viewParse_orig;
 	Query	   *viewParse;
 	RangeVar   *view;
 	ListCell   *cell;
@@ -455,21 +448,17 @@ DefineView(ViewStmt *stmt, const char *queryString,
 	 * GPDB: Parse analysis is only performed in the dispatcher, the segments
 	 * receive an already-analysed version from the dispatcher.
 	 */
-<<<<<<< HEAD
 	if (Gp_role != GP_ROLE_EXECUTE)
-		viewParse = parse_analyze((Node *) copyObject(stmt->query),
-								  queryString, NULL, 0);
+	{
+		rawstmt = makeNode(RawStmt);
+		rawstmt->stmt = (Node *) copyObject(stmt->query);
+		rawstmt->stmt_location = stmt_location;
+		rawstmt->stmt_len = stmt_len;
+
+		viewParse = parse_analyze(rawstmt, queryString, NULL, 0, NULL);
 	else
 		viewParse = (Query *) stmt->query;
 	viewParse_orig = copyObject(viewParse);
-=======
-	rawstmt = makeNode(RawStmt);
-	rawstmt->stmt = (Node *) copyObject(stmt->query);
-	rawstmt->stmt_location = stmt_location;
-	rawstmt->stmt_len = stmt_len;
-
-	viewParse = parse_analyze(rawstmt, queryString, NULL, 0, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * The grammar should ensure that the result is a single SELECT Query.

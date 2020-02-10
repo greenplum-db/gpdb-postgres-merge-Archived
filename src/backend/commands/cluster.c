@@ -729,8 +729,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 	 * (parent) in a partition hierarchy.  This can be avoided for tables that
 	 * should have valid relfrozenxid based on relkind and relstorage.
 	 */
-	if (should_have_valid_relfrozenxid(OldHeap->rd_rel->relkind,
-									   OldHeap->rd_rel->relstorage))
+	if (should_have_valid_relfrozenxid(OldHeap->rd_rel->relkind))
 		is_part_parent = !TransactionIdIsValid(OldHeap->rd_rel->relfrozenxid);
 	else
 		is_part_parent = rel_is_parent(OIDOldHeap);
@@ -784,7 +783,6 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 										  NIL,
 										  RELKIND_RELATION,
 										  relpersistence,
-										  OldHeap->rd_rel->relstorage,
 										  false,
 										  RelationIsMapped(OldHeap),
 										  ONCOMMIT_NOOP,
@@ -793,15 +791,8 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 										  false,
 										  true,
 										  true,
-<<<<<<< HEAD
-										  NULL,
-										  /* valid_opts */ true,
-										  is_part_child,
-										  is_part_parent);
-=======
 										  OIDOldHeap,
 										  NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	Assert(OIDNewHeap != InvalidOid);
 
 	ReleaseSysCache(tuple);
@@ -1462,8 +1453,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 							relform1->relhaspkey,
 							relform1->relfrozenxid,
 							relform1->relminmxid,
-							false,
-							true /* isvacuum */);
+							false);
 		relation_close(rel, AccessShareLock);
 	}
 	/* Clean up. */

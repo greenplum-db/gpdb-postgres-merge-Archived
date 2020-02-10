@@ -180,7 +180,6 @@ static void compute_index_stats(Relation onerel, double totalrows,
 								MemoryContext col_context);
 static VacAttrStats *examine_attribute(Relation onerel, int attnum,
 									   Node *index_expr, int elevel);
-<<<<<<< HEAD
 static int acquire_sample_rows_dispatcher(Relation onerel, bool inh, int elevel,
 										  HeapTuple *rows, int targrows,
 										  double *totalrows, double *totaldeadrows);
@@ -188,21 +187,12 @@ static BlockNumber acquire_number_of_blocks(Relation onerel);
 static BlockNumber acquire_index_number_of_blocks(Relation indexrel, Relation tablerel);
 
 static int	compare_rows(const void *a, const void *b);
-=======
-static int	acquire_sample_rows(Relation onerel, int elevel,
-								HeapTuple *rows, int targrows,
-								double *totalrows, double *totaldeadrows);
-static int	compare_rows(const void *a, const void *b);
-static int	acquire_inherited_sample_rows(Relation onerel, int elevel,
-										  HeapTuple *rows, int targrows,
-										  double *totalrows, double *totaldeadrows);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void update_attstats(Oid relid, bool inh,
 							int natts, VacAttrStats **vacattrstats);
 static Datum std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 
-static void analyze_rel_internal(Oid relid, RangeVar *relation, int options,
+static void analyze_rel_internal(Oid relid, RangeVar *relation,
 								 VacuumParams *params, List *va_cols,
 								 bool in_outer_xact, BufferAccessStrategy bstrategy);
 static void acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, int elevel);
@@ -231,7 +221,7 @@ analyze_rel(Oid relid, RangeVar *relation,
 
 	PG_TRY();
 	{
-		analyze_rel_internal(relid, relation, options, params, va_cols,
+		analyze_rel_internal(relid, relation, params, va_cols,
 				in_outer_xact, bstrategy);
 	}
 	/* Clean up in case of error. */
@@ -248,7 +238,7 @@ analyze_rel(Oid relid, RangeVar *relation,
 }
 
 static void
-analyze_rel_internal(Oid relid, RangeVar *relation, int options,
+analyze_rel_internal(Oid relid, RangeVar *relation,
 			VacuumParams *params, List *va_cols, bool in_outer_xact,
 			BufferAccessStrategy bstrategy)
 {
@@ -280,27 +270,11 @@ analyze_rel_internal(Oid relid, RangeVar *relation, int options,
 	 *
 	 * Make sure to generate only logs for ANALYZE in this case.
 	 */
-<<<<<<< HEAD
-	if (!(options & VACOPT_NOWAIT))
-		onerel = try_relation_open(relid, ShareUpdateExclusiveLock, false);
-	else if (ConditionalLockRelationOid(relid, ShareUpdateExclusiveLock))
-		onerel = try_relation_open(relid, NoLock, false);
-	else
-	{
-		onerel = NULL;
-		if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
-			ereport(LOG,
-					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-				  errmsg("skipping analyze of \"%s\" --- lock not available",
-						 relation->relname)));
-	}
-=======
 	onerel = vacuum_open_relation(relid, relation, params->options & ~(VACOPT_VACUUM),
 								  params->log_min_duration >= 0,
 								  ShareUpdateExclusiveLock);
 
 	/* leave if relation could not be opened or locked */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (!onerel)
 		return;
 
@@ -418,6 +392,8 @@ analyze_rel_internal(Oid relid, RangeVar *relation, int options,
 					   true, in_outer_xact, elevel);
 
 	/* MPP-6929: metadata tracking */
+	/* GPDB_12_MERGE_FIXME: vacuumStatement_IsTemporary function was lost? */
+#if 0
 	if (!vacuumStatement_IsTemporary(onerel) && (Gp_role == GP_ROLE_DISPATCH))
 	{
 		char *asubtype = "";
@@ -432,7 +408,8 @@ analyze_rel_internal(Oid relid, RangeVar *relation, int options,
 						   asubtype
 			);
 	}
-
+#endif
+	
 	/*
 	 * Close source relation now, but keep lock so that no one deletes it
 	 * before we commit.  (If someone did, they'd fail to clean up the entries
@@ -663,6 +640,9 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	 */
 	colLargeRowIndexes = (Bitmapset **) palloc0(sizeof(Bitmapset *) * onerel->rd_att->natts);
 
+	/* GPDB_12_MERGE_FIXME: How to check the option now? How to check 'partitioned' status now?
+	 * Do we still need any of this? */
+#if 0
 	if ((options & VACOPT_FULLSCAN) != 0)
 	{
 		if(rel_part_status(RelationGetRelid(onerel)) != PART_STATUS_ROOT)
@@ -672,7 +652,8 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 			ereport(elevel, (errmsg("HLL FULL SCAN")));
 		}
 	}
-
+#endif
+	
 	sample_needed = needs_sample(vacattrstats, attr_cnt);
 	if (sample_needed)
 	{
@@ -773,18 +754,19 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 			get_attribute_options(onerel->rd_id, stats->attr->attnum);
 
 			stats->tupDesc = onerel->rd_att;
-<<<<<<< HEAD
 
 			if (validRowsLength > 0)
 			{
-				(*stats->compute_stats) (stats,
-										 std_fetch_func,
-										 validRowsLength, // numbers of rows in sample excluding toowide if any.
-										 totalrows);
+				stats->compute_stats(stats,
+									 std_fetch_func,
+									 validRowsLength, // numbers of rows in sample excluding toowide if any.
+									 totalrows);
 				/*
 				 * Store HLL/HLL fullscan information for leaf partitions in
 				 * the stats object
 				 */
+				/* GPDB_12_MERGE_FIXME: how to do this with new partitioning implementation? */
+#if 0
 				if (rel_part_status(stats->attr->attrelid) == PART_STATUS_LEAF)
 				{
 					MemoryContext old_context;
@@ -818,6 +800,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 						stats->statyplen[STATISTIC_NUM_SLOTS-1] = hll_length;
 					}
 				}
+#endif
 			}
 			else
 			{
@@ -830,12 +813,6 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 				stats->stadistinct = 0.0;		/* "unknown" */
 			}
 			stats->rows = rows; // Reset to original rows
-=======
-			stats->compute_stats(stats,
-								 std_fetch_func,
-								 numrows,
-								 totalrows);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * If the appropriate flavor of the n_distinct option is
@@ -915,8 +892,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 							hasindex,
 							InvalidTransactionId,
 							InvalidMultiXactId,
-							in_outer_xact,
-							false /* isvacuum */);
+							in_outer_xact);
 	}
 
 	/*
@@ -963,8 +939,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 								false,
 								InvalidTransactionId,
 								InvalidMultiXactId,
-								in_outer_xact,
-								false /* isvacuum */);
+								in_outer_xact);
 		}
 	}
 
@@ -1416,95 +1391,9 @@ acquire_sample_rows_heap(Relation onerel, int elevel,
 			 * passed over so far, so when we fall off the end of the relation
 			 * we're done.
 			 */
-<<<<<<< HEAD
-			if (!ItemIdIsNormal(itemid))
-			{
-				if (ItemIdIsDead(itemid))
-					deadrows += 1;
-				continue;
-			}
-
-			ItemPointerSet(&targtuple.t_self, targblock, targoffset);
-
-#if 0
-			targtuple.t_tableOid = RelationGetRelid(onerel);
-#endif
-			targtuple.t_data = (HeapTupleHeader) PageGetItem(targpage, itemid);
-			targtuple.t_len = ItemIdGetLength(itemid);
-
-			switch (HeapTupleSatisfiesVacuum(onerel, &targtuple,
-											 OldestXmin,
-											 targbuffer))
-			{
-				case HEAPTUPLE_LIVE:
-					sample_it = true;
-					liverows += 1;
-					break;
-
-				case HEAPTUPLE_DEAD:
-				case HEAPTUPLE_RECENTLY_DEAD:
-					/* Count dead and recently-dead rows */
-					deadrows += 1;
-					break;
-
-				case HEAPTUPLE_INSERT_IN_PROGRESS:
-
-					/*
-					 * Insert-in-progress rows are not counted.  We assume
-					 * that when the inserting transaction commits or aborts,
-					 * it will send a stats message to increment the proper
-					 * count.  This works right only if that transaction ends
-					 * after we finish analyzing the table; if things happen
-					 * in the other order, its stats update will be
-					 * overwritten by ours.  However, the error will be large
-					 * only if the other transaction runs long enough to
-					 * insert many tuples, so assuming it will finish after us
-					 * is the safer option.
-					 *
-					 * A special case is that the inserting transaction might
-					 * be our own.  In this case we should count and sample
-					 * the row, to accommodate users who load a table and
-					 * analyze it in one transaction.  (pgstat_report_analyze
-					 * has to adjust the numbers we send to the stats
-					 * collector to make this come out right.)
-					 */
-					if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(targtuple.t_data)))
-					{
-						sample_it = true;
-						liverows += 1;
-					}
-					break;
-
-				case HEAPTUPLE_DELETE_IN_PROGRESS:
-
-					/*
-					 * We count delete-in-progress rows as still live, using
-					 * the same reasoning given above; but we don't bother to
-					 * include them in the sample.
-					 *
-					 * If the delete was done by our own transaction, however,
-					 * we must count the row as dead to make
-					 * pgstat_report_analyze's stats adjustments come out
-					 * right.  (Note: this works out properly when the row was
-					 * both inserted and deleted in our xact.)
-					 */
-					if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(targtuple.t_data)))
-						deadrows += 1;
-					else
-						liverows += 1;
-					break;
-
-				default:
-					elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
-					break;
-			}
-
-			if (sample_it)
-=======
 			if (numrows < targrows)
 				rows[numrows++] = ExecCopySlotHeapTuple(slot);
 			else
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			{
 				/*
 				 * t in Vitter's paper is the number of records already
@@ -1577,151 +1466,6 @@ acquire_sample_rows_heap(Relation onerel, int elevel,
 					bs.m, totalblocks,
 					liverows, deadrows,
 					numrows, *totalrows)));
-
-	return numrows;
-}
-
-/*
- * Collect a sample of rows from an AO or AOCS table.
- *
- * The block-sampling method used for heap tables doesn't work with
- * append-only tables. We could build a reasonably efficient block-sampling
- * method for AO tables, too, using the block directory, if it's available.
- * But for now, this scans the whole table.
- */
-static int
-acquire_sample_rows_ao(Relation onerel, int elevel,
-					   HeapTuple *rows, int targrows,
-					   double *totalrows, double *totaldeadrows)
-{
-	AppendOnlyScanDesc aoScanDesc = NULL;
-	AOCSScanDesc aocsScanDesc = NULL;
-	Snapshot	appendOnlyMetaDataSnapshot;
-	double		rstate;
-	TupleTableSlot *slot;
-	int			numrows = 0;	/* # rows now in reservoir */
-	double		samplerows = 0; /* total # rows collected */
-	double		rowstoskip = -1;	/* -1 means not set yet */
-
-	/*
-	 * the append-only meta data should never be fetched with
-	 * SnapshotAny as bogus results are returned.
-	 */
-	appendOnlyMetaDataSnapshot = GetTransactionSnapshot();
-
-	if (RelationIsAoRows(onerel))
-		aoScanDesc = appendonly_beginscan(onerel,
-										  SnapshotSelf,
-										  appendOnlyMetaDataSnapshot,
-										  0, NULL);
-	else
-	{
-		int			natts = RelationGetNumberOfAttributes(onerel);
-		bool	   *proj = (bool *) palloc(natts * sizeof(bool));
-		int			i;
-
-		for(i = 0; i < natts; i++)
-			proj[i] = true;
-
-		Assert(RelationIsAoCols(onerel));
-		aocsScanDesc = aocs_beginscan(onerel,
-									  SnapshotSelf,
-									  appendOnlyMetaDataSnapshot,
-									  RelationGetDescr(onerel), proj);
-	}
-	slot = MakeSingleTupleTableSlot(RelationGetDescr(onerel));
-
-	/* Prepare for sampling rows */
-	rstate = anl_init_selection_state(targrows);
-
-	for (;;)
-	{
-		if (aoScanDesc)
-			appendonly_getnext(aoScanDesc, ForwardScanDirection, slot);
-		else
-			aocs_getnext(aocsScanDesc, ForwardScanDirection, slot);
-
-		if (TupIsNull(slot))
-			break;
-
-		if (rowstoskip < 0)
-			rowstoskip = anl_get_next_S(samplerows, targrows,
-										&rstate);
-
-		/* XXX: this is copied from acquire_sample_rows_heap */
-
-		/*
-		 * The first targrows sample rows are simply copied into the
-		 * reservoir. Then we start replacing tuples in the sample
-		 * until we reach the end of the relation.	This algorithm is
-		 * from Jeff Vitter's paper (see full citation below). It
-		 * works by repeatedly computing the number of tuples to skip
-		 * before selecting a tuple, which replaces a randomly chosen
-		 * element of the reservoir (current set of tuples).  At all
-		 * times the reservoir is a true random sample of the tuples
-		 * we've passed over so far, so when we fall off the end of
-		 * the relation we're done.
-		 */
-		if (numrows < targrows)
-			rows[numrows++] = ExecCopySlotHeapTuple(slot);
-		else
-		{
-			/*
-			 * t in Vitter's paper is the number of records already
-			 * processed.  If we need to compute a new S value, we
-			 * must use the not-yet-incremented value of samplerows as
-			 * t.
-			 */
-			if (rowstoskip < 0)
-				rowstoskip = anl_get_next_S(samplerows, targrows,
-											&rstate);
-
-			if (rowstoskip <= 0)
-			{
-				/*
-				 * Found a suitable tuple, so save it, replacing one
-				 * old tuple at random
-				 */
-				int			k = (int) (targrows * anl_random_fract());
-
-				Assert(k >= 0 && k < targrows);
-				heap_freetuple(rows[k]);
-				rows[k] = ExecCopySlotHeapTuple(slot);
-			}
-
-			rowstoskip -= 1;
-		}
-
-		samplerows += 1;
-	}
-
-	/* Get the total tuple count in the table */
-	FileSegTotals *fstotal;
-	int64		hidden_tupcount = 0;
-
-	if (aoScanDesc)
-	{
-		fstotal = GetSegFilesTotals(onerel, SnapshotSelf);
-		hidden_tupcount = AppendOnlyVisimap_GetRelationHiddenTupleCount(&aoScanDesc->visibilityMap);
-	}
-	else
-	{
-		fstotal = GetAOCSSSegFilesTotals(onerel, SnapshotSelf);
-		hidden_tupcount = AppendOnlyVisimap_GetRelationHiddenTupleCount(&aocsScanDesc->visibilityMap);
-	}
-	*totalrows = (double) fstotal->totaltuples - hidden_tupcount;
-	/*
-	 * Currently, we always report 0 dead rows on an AO table. We could
-	 * perhaps get a better estimate using the AO visibility map. But this
-	 * will do for now.
-	 */
-	*totaldeadrows = 0;
-
-	ExecDropSingleTupleTableSlot(slot);
-	if (aoScanDesc)
-		appendonly_endscan(aoScanDesc);
-	if (aocsScanDesc)
-		aocs_endscan(aocsScanDesc);
 
 	return numrows;
 }
@@ -2930,7 +2674,7 @@ compute_distinct_stats(VacAttrStatsP stats,
 
 	ereport(DEBUG2,
 			(errmsg("Computing Minimal Stats for column %s",
-					get_attname(stats->attr->attrelid, stats->attr->attnum))));
+					get_attname(stats->attr->attrelid, stats->attr->attnum, false))));
 
 	for (i = 0; i < samplerows; i++)
 	{
@@ -3292,7 +3036,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 
 	ereport(DEBUG2,
 			(errmsg("Computing Scalar Stats for column %s",
-					get_attname(stats->attr->attrelid, stats->attr->attnum))));
+					get_attname(stats->attr->attrelid, stats->attr->attnum, false))));
 
 	/* Initial scan to find sortable values */
 	for (i = 0; i < samplerows; i++)
@@ -3842,7 +3586,7 @@ merge_leaf_stats(VacAttrStatsP stats,
 	Assert(pn);
 	ereport(DEBUG2,
 			(errmsg("Merging leaf partition stats to calculate root partition stats : column %s",
-					get_attname(stats->attr->attrelid, stats->attr->attnum))));
+					get_attname(stats->attr->attrelid, stats->attr->attnum, false))));
 
 	List *oid_list = all_leaf_partition_relids(pn); /* all leaves */
 	StdAnalyzeData *mystats = (StdAnalyzeData *) stats->extra_data;
