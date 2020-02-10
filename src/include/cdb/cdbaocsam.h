@@ -214,17 +214,11 @@ extern void aocs_endscan(AOCSScanDesc scan);
 
 extern bool aocs_getnext(AOCSScanDesc scan, ScanDirection direction, TupleTableSlot *slot);
 extern AOCSInsertDesc aocs_insert_init(Relation rel, int segno, bool update_mode);
-extern Oid aocs_insert_values(AOCSInsertDesc idesc, Datum *d, bool *null, AOTupleId *aoTupleId);
-static inline Oid aocs_insert(AOCSInsertDesc idesc, TupleTableSlot *slot)
+extern void aocs_insert_values(AOCSInsertDesc idesc, Datum *d, bool *null, AOTupleId *aoTupleId);
+static inline void aocs_insert(AOCSInsertDesc idesc, TupleTableSlot *slot)
 {
-	Oid oid;
-	AOTupleId aotid;
-
 	slot_getallattrs(slot);
-	oid = aocs_insert_values(idesc, slot->tts_values, slot->tts_isnull, &aotid);
-	slot_set_ctid(slot, (ItemPointer)&aotid);
-
-	return oid;
+	aocs_insert_values(idesc, slot->tts_values, slot->tts_isnull, (AOTupleId *) &slot->tts_tid);
 }
 extern void aocs_insert_finish(AOCSInsertDesc idesc);
 extern AOCSFetchDesc aocs_fetch_init(Relation relation,

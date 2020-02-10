@@ -890,11 +890,7 @@ dropdb(const char *dbname, bool missing_ok)
 	pgdbrel = table_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
-<<<<<<< HEAD
 					 &db_istemplate, NULL, NULL, NULL, NULL, &defaultTablespace, NULL, NULL))
-=======
-					 &db_istemplate, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		if (!missing_ok)
 		{
@@ -904,7 +900,6 @@ dropdb(const char *dbname, bool missing_ok)
 		}
 		else
 		{
-<<<<<<< HEAD
 			if ( missing_ok && Gp_role == GP_ROLE_EXECUTE )
 			{
 				/* This branch exists just to facilitate cleanup of a failed
@@ -914,26 +909,18 @@ dropdb(const char *dbname, bool missing_ok)
 				elog(DEBUG1, "ignored request to drop non-existent "
 					 "database \"%s\"", dbname);
 				
-				heap_close(pgdbrel, RowExclusiveLock);
+				table_close(pgdbrel, RowExclusiveLock);
 				return;
 			}
 			else
 			{
-				/* Release the lock, since we changed nothing */
-				heap_close(pgdbrel, RowExclusiveLock);
+				/* Close pg_database, release the lock, since we changed nothing */
+				table_close(pgdbrel, RowExclusiveLock);
 				ereport(NOTICE,
 						(errmsg("database \"%s\" does not exist, skipping",
 								dbname)));
 				return;
 			}
-=======
-			/* Close pg_database, release the lock, since we changed nothing */
-			table_close(pgdbrel, RowExclusiveLock);
-			ereport(NOTICE,
-					(errmsg("database \"%s\" does not exist, skipping",
-							dbname)));
-			return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 
@@ -995,9 +982,22 @@ dropdb(const char *dbname, bool missing_ok)
 				 errdetail_busy_db(notherbackends, npreparedxacts)));
 
 	/*
-<<<<<<< HEAD
-	 * Free the database on the segDBs
+	 * Check if there are subscriptions defined in the target database.
 	 *
+	 * We can't drop them automatically because they might be holding
+	 * resources in other databases/instances.
+	 */
+	if ((nsubscriptions = CountDBSubscriptions(db_id)) > 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("database \"%s\" is being used by logical replication subscription",
+						dbname),
+				 errdetail_plural("There is %d subscription.",
+								  "There are %d subscriptions.",
+								  nsubscriptions, nsubscriptions)));
+
+	/*
+	 * Free the database on the segDBs
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -1017,21 +1017,6 @@ dropdb(const char *dbname, bool missing_ok)
 							NULL);
 		pfree(buffer.data);
 	}
-=======
-	 * Check if there are subscriptions defined in the target database.
-	 *
-	 * We can't drop them automatically because they might be holding
-	 * resources in other databases/instances.
-	 */
-	if ((nsubscriptions = CountDBSubscriptions(db_id)) > 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("database \"%s\" is being used by logical replication subscription",
-						dbname),
-				 errdetail_plural("There is %d subscription.",
-								  "There are %d subscriptions.",
-								  nsubscriptions, nsubscriptions)));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Remove the database's tuple from pg_database.
@@ -1318,14 +1303,8 @@ movedb(const char *dbname, const char *tblspcname)
 	 */
 	if (src_tblspcoid == dst_tblspcoid)
 	{
-<<<<<<< HEAD
-		heap_close(pgdbrel, NoLock);
-		MoveDbSessionLockRelease();
-=======
 		table_close(pgdbrel, NoLock);
-		UnlockSharedObjectForSession(DatabaseRelationId, db_id, 0,
-									 AccessExclusiveLock);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		MoveDbSessionLockRelease();
 		return;
 	}
 

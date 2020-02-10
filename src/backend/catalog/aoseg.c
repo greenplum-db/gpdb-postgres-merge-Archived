@@ -28,7 +28,7 @@
 
 
 void
-AlterTableCreateAoSegTable(Oid relOid, bool is_part_child, bool is_part_parent)
+AlterTableCreateAoSegTable(Oid relOid)
 {
 	TupleDesc	tupdesc;
 	Relation	rel;
@@ -39,10 +39,7 @@ AlterTableCreateAoSegTable(Oid relOid, bool is_part_child, bool is_part_parent)
 	 * until end of transaction.  (This is probably redundant in all present
 	 * uses...)
 	 */
-	if (is_part_child)
-		rel = table_open(relOid, NoLock);
-	else
-		rel = table_open(relOid, AccessExclusiveLock);
+	rel = table_open(relOid, AccessExclusiveLock);
 
 	if(RelationIsAoRows(rel))
 	{

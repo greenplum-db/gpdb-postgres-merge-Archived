@@ -1163,7 +1163,6 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 
 		/* GPDB additions */
 		case OBJECT_EXTPROTOCOL:
-			return true;
 		case OBJECT_RESQUEUE:
 		case OBJECT_RESGROUP:
 			return false;
@@ -1230,7 +1229,6 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 		case OCLASS_TRANSFORM:
 			return true;
 		case OCLASS_EXTPROTOCOL:
-			return true;
 		case OCLASS_COMPRESSION:
 			return false;
 
@@ -1241,40 +1239,6 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 	}
 
 	return true;
-}
-
-bool
-EventTriggerSupportsGrantObjectType(GrantObjectType objtype)
-{
-	switch (objtype)
-	{
-		case ACL_OBJECT_DATABASE:
-		case ACL_OBJECT_TABLESPACE:
-			/* no support for global objects */
-			return false;
-
-		case ACL_OBJECT_COLUMN:
-		case ACL_OBJECT_RELATION:
-		case ACL_OBJECT_SEQUENCE:
-		case ACL_OBJECT_DOMAIN:
-		case ACL_OBJECT_FDW:
-		case ACL_OBJECT_FOREIGN_SERVER:
-		case ACL_OBJECT_FUNCTION:
-		case ACL_OBJECT_LANGUAGE:
-		case ACL_OBJECT_LARGEOBJECT:
-		case ACL_OBJECT_NAMESPACE:
-		case ACL_OBJECT_TYPE:
-		case ACL_OBJECT_EXTPROTOCOL:
-			return true;
-
-			/*
-			 * There's intentionally no default: case here; we want the
-			 * compiler to warn if a new ACL_OBJECT hasn't been handled above.
-			 */
-	}
-
-	/* Shouldn't get here, but if we do, say "no support" */
-	return false;
 }
 
 /*
@@ -2340,6 +2304,9 @@ stringify_grant_objtype(ObjectType objtype)
 		case OBJECT_TSTEMPLATE:
 		case OBJECT_USER_MAPPING:
 		case OBJECT_VIEW:
+		case OBJECT_EXTPROTOCOL:
+		case OBJECT_RESQUEUE:
+		case OBJECT_RESGROUP:
 			elog(ERROR, "unsupported object type: %d", (int) objtype);
 	}
 
@@ -2422,6 +2389,9 @@ stringify_adefprivs_objtype(ObjectType objtype)
 		case OBJECT_TSTEMPLATE:
 		case OBJECT_USER_MAPPING:
 		case OBJECT_VIEW:
+		case OBJECT_EXTPROTOCOL:
+		case OBJECT_RESQUEUE:
+		case OBJECT_RESGROUP:
 			elog(ERROR, "unsupported object type: %d", (int) objtype);
 	}
 

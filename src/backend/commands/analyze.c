@@ -2483,6 +2483,8 @@ std_typanalyze(VacAttrStats *stats)
 	 * Determine which standard statistics algorithm to use
 	 */
 	List *va_cols = list_make1_int(stats->attr->attnum);
+	/* GPDB_12_MERE_FIXME: mergings stats not yet implemented with new partitioning implementation */
+#if 0
 	if (rel_part_status(attr->attrelid) == PART_STATUS_ROOT &&
 		leaf_parts_analyzed(stats->attr->attrelid, InvalidOid, va_cols, stats->elevel) &&
 		op_hashjoinable(eqopr, stats->attrtypid))
@@ -2491,7 +2493,9 @@ std_typanalyze(VacAttrStats *stats)
 		stats->compute_stats = merge_leaf_stats;
 		stats->minrows = 300 * attr->attstattarget;
 	}
-	else if (OidIsValid(eqopr) && OidIsValid(ltopr))
+	else
+#endif
+		if (OidIsValid(eqopr) && OidIsValid(ltopr))
 	{
 		/* Seems to be a scalar datatype */
 		stats->compute_stats = compute_scalar_stats;

@@ -826,8 +826,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 									 &isNull);
 		if (isNull)
 			reloptions = (Datum) 0;
-		NewHeapCreateToastTable(OIDNewHeap, reloptions, lockmode,
-								is_part_child, is_part_parent);
+		NewHeapCreateToastTable(OIDNewHeap, reloptions, lockmode);
 
 		ReleaseSysCache(tuple);
 	}

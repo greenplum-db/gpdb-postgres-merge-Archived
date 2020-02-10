@@ -700,7 +700,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	ExplainOpenGroup("Settings", "Settings", true, es);
 	
 	if (queryDesc->plannedstmt->planGen == PLANGEN_PLANNER)
-		ExplainProperty("Optimizer", "Postgres query optimizer", false, es);
+		ExplainPropertyStringInfo("Optimizer", es, "Postgres query optimizer");
 #ifdef USE_ORCA
 	else
 		ExplainPropertyStringInfo("Optimizer", es, "Pivotal Optimizer (GPORCA) version %s", OptVersion());
@@ -2638,9 +2638,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 							   ancestors, es);
 			break;
 		case T_Sequence:
-			ExplainMemberNodes(((Sequence *) plan)->subplans,
-							   ((SequenceState *) planstate)->subplans,
-							   ancestors, es);
+			ExplainMemberNodes(((SequenceState *) plan)->subplans,
+							   ((SequenceState *) planstate)->numSubplans,
+							   list_length(((Sequence *) plan)->subplans),
+										   ancestors, es);
 			break;
 		case T_BitmapAnd:
 			ExplainMemberNodes(((BitmapAndState *) planstate)->bitmapplans,

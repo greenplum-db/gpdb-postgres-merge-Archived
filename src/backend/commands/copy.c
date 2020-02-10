@@ -1009,7 +1009,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		SingleRowErrorDesc *sreh = (SingleRowErrorDesc *) stmt->sreh;
 
 		options = list_copy(options);
-		options = lappend(options, makeDefElem("sreh", (Node *) sreh), -1);
+		options = lappend(options, makeDefElem("sreh", (Node *) sreh, -1));
 	}
 
 	/*
@@ -2327,9 +2327,6 @@ CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt)
 	uint64		rejected = 0;
 	dispatchStmt = copyObject((Node *) stmt);
 
-	/* add in partitions for dispatch */
-	dispatchStmt->partitions = RelationBuildPartitionDesc(cstate->rel, false);
-
 	all_relids = list_make1_oid(RelationGetRelid(cstate->rel));
 
 	/* add in AO segno map for dispatch */
@@ -2979,8 +2976,6 @@ CopyToDispatch(CopyState cstate)
 			CopySendData(cstate, (char *) BinarySignature, 11);
 			/* Flags field */
 			tmp = 0;
-			if (cstate->oids)
-				tmp |= (1 << 16);
 			CopySendInt32(cstate, tmp);
 			/* No header extension */
 			tmp = 0;

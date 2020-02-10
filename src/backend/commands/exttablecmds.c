@@ -243,7 +243,7 @@ DefineExternalRelation(CreateExternalStmt *createExtStmt)
 						aclresult = pg_extprotocol_aclcheck(ptcId, ownerId, mode);
 
 						if (aclresult != ACLCHECK_OK)
-							aclcheck_error(aclresult, ACL_KIND_EXTPROTOCOL, protname);
+							aclcheck_error(aclresult, OBJECT_EXTPROTOCOL, protname);
 					}
 				}
 				else
@@ -381,7 +381,6 @@ DefineExternalRelation(CreateExternalStmt *createExtStmt)
 							 RELKIND_FOREIGN_TABLE,
 							 InvalidOid,
 							 NULL,
-							 RELSTORAGE_FOREIGN,
 							 false, /* dispatch */
 							 true,
 							 NULL);
@@ -793,7 +792,7 @@ transformFormatOpts(char formattype, List *formatOpts, int numcols, bool iswrita
 		if (fmttype_is_csv(formattype))
 		{
 			formatOpts = list_copy(formatOpts);
-			formatOpts = lappend(formatOpts, makeDefElem("format", (Node *)makeString("csv")));
+			formatOpts = lappend(formatOpts, makeDefElem("format", (Node *)makeString("csv"), -1));
 		}
 
 		/* verify all user supplied control char combinations are legal */
@@ -933,7 +932,7 @@ InvokeProtocolValidation(Oid procOid, char *procName, bool iswritable, List *loc
 {
 	ExtProtocolValidatorData *validator_data;
 	FmgrInfo   *validator_udf;
-	FunctionCallInfoData fcinfo;
+	LOCAL_FCINFO(fcinfo, FUNC_MAX_ARGS);
 
 	validator_data = (ExtProtocolValidatorData *) palloc0(sizeof(ExtProtocolValidatorData));
 	validator_udf = palloc(sizeof(FmgrInfo));
@@ -945,7 +944,7 @@ InvokeProtocolValidation(Oid procOid, char *procName, bool iswritable, List *loc
 	validator_data->direction = (iswritable ? EXT_VALIDATE_WRITE :
 								 EXT_VALIDATE_READ);
 
-	InitFunctionCallInfoData( /* FunctionCallInfoData */ fcinfo,
+	InitFunctionCallInfoData( /* FunctionCallInfoData */ *fcinfo,
 							  /* FmgrInfo */ validator_udf,
 							  /* nArgs */ 0,
 							  /* Collation */ InvalidOid, 
@@ -953,12 +952,12 @@ InvokeProtocolValidation(Oid procOid, char *procName, bool iswritable, List *loc
 							  /* ResultSetInfo */ NULL);
 
 	/* invoke validator. if this function returns - validation passed */
-	FunctionCallInvoke(&fcinfo);
+	FunctionCallInvoke(fcinfo);
 
 	/* We do not expect a null result */
-	if (fcinfo.isnull)
+	if (fcinfo->isnull)
 		elog(ERROR, "validator function %u returned NULL",
-			 fcinfo.flinfo->fn_oid);
+			 fcinfo->flinfo->fn_oid);
 
 	pfree(validator_data);
 	pfree(validator_udf);

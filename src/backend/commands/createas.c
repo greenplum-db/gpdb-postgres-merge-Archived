@@ -211,7 +211,7 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 
 	(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options, true);
 
-	NewRelationCreateToastTable(intoRelationAddr.objectId, toast_options, false, false);
+	NewRelationCreateToastTable(intoRelationAddr.objectId, toast_options);
 	AlterTableCreateAoSegTable(intoRelationAddr.objectId, false, false);
 	/* don't create AO block directory here, it'll be created when needed. */
 	AlterTableCreateAoVisimapTable(intoRelationAddr.objectId, false, false);
@@ -424,7 +424,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		/* Create a QueryDesc, redirecting output to our tuple receiver */
 		queryDesc = CreateQueryDesc(plan, queryString,
 									GetActiveSnapshot(), InvalidSnapshot,
-									dest, params, 0);
+									dest, params, queryEnv, 0);
 	}
 
 	if (into->skipData && !is_matview)

@@ -912,14 +912,16 @@ CreateQueue(CreateQueueStmt *stmt)
 	new_record[Anum_pg_resqueue_rsqignorecostlimit - 1] = 
 		Float4GetDatum(ignorelimit);
 
+	queueid = GetNewOidForResQueue(pg_resqueue_rel, ResQueueOidIndexId, Anum_pg_resqueue_oid,
+								   stmt->queue);
+	new_record[Anum_pg_resqueue_oid - 1] = queueid;
 
 	tuple = heap_form_tuple(pg_resqueue_dsc, new_record, new_record_nulls);
 
 	/*
 	 * Insert new record in the pg_resqueue table
 	 */
-	queueid = simple_heap_insert(pg_resqueue_rel, tuple);
-	CatalogUpdateIndexes(pg_resqueue_rel, tuple);
+	CatalogTupleInsert(pg_resqueue_rel, tuple);
 
 	/* process the remainder of the WITH (...) list items */
 	if (bWith)
@@ -1250,8 +1252,7 @@ AlterQueue(AlterQueueStmt *stmt)
 	 * Remember the Oid and current thresholds, for updating the in-memory
 	 * queue later.
 	 */
-	queueid = HeapTupleGetOid(tuple);
-
+	queueid = ((Form_pg_resqueue) GETSTRUCT(tuple))->oid;
 	thresholds[RES_COUNT_LIMIT] = 
 		((Form_pg_resqueue) GETSTRUCT(tuple))->rsqcountlimit;
 	thresholds[RES_COST_LIMIT] = 
@@ -1325,8 +1326,7 @@ AlterQueue(AlterQueueStmt *stmt)
 	new_tuple = heap_modify_tuple(tuple, pg_resqueue_dsc, new_record,
 									new_record_nulls, new_record_repl);
 
-	simple_heap_update(pg_resqueue_rel, &tuple->t_self, new_tuple);
-	CatalogUpdateIndexes(pg_resqueue_rel, new_tuple);
+	CatalogTupleUpdate(pg_resqueue_rel, &tuple->t_self, new_tuple);
 
 	systable_endscan(sscan);
 
@@ -1463,7 +1463,7 @@ DropQueue(DropQueueStmt *stmt)
 	 * Remember the Oid, for destroying the in-memory
 	 * queue later.
 	 */
-	queueid = HeapTupleGetOid(tuple);
+	queueid = ((Form_pg_resqueue) GETSTRUCT(tuple))->oid;
 
 	/*
 	 * Check to see if any roles are in this queue.
@@ -1583,7 +1583,7 @@ get_resqueue_oid(const char *queuename, bool missing_ok)
 	tuple = systable_getnext(scan);
 
 	if (HeapTupleIsValid(tuple))
-		oid = HeapTupleGetOid(tuple);
+		oid = ((Form_pg_resqueue) GETSTRUCT(tuple))->oid;
 	else
 		oid = InvalidOid;
 
