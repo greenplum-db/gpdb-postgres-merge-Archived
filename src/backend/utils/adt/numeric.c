@@ -364,19 +364,6 @@ typedef struct NumericSumAccum
  * Some preinitialized constants
  * ----------
  */
-<<<<<<< HEAD
-static NumericDigit const_zero_data[1] = {0};
-static NumericVar const_zero =
-{0, 0, NUMERIC_POS, 0, const_zero.ndb, const_zero_data, {0}};
-
-static NumericDigit const_one_data[1] = {1};
-static NumericVar const_one =
-{1, 0, NUMERIC_POS, 0, const_one.ndb, const_one_data, {0}};
-
-static NumericDigit const_two_data[1] = {2};
-static NumericVar const_two =
-{1, 0, NUMERIC_POS, 0, const_two.ndb, const_two_data, {0}};
-=======
 static const NumericDigit const_zero_data[1] = {0};
 static const NumericVar const_zero =
 {0, 0, NUMERIC_POS, 0, NULL, (NumericDigit *) const_zero_data};
@@ -388,7 +375,6 @@ static const NumericVar const_one =
 static const NumericDigit const_two_data[1] = {2};
 static const NumericVar const_two =
 {1, 0, NUMERIC_POS, 0, NULL, (NumericDigit *) const_two_data};
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #if DEC_DIGITS == 4 || DEC_DIGITS == 2
 static const NumericDigit const_ten_data[1] = {10};
@@ -407,13 +393,8 @@ static const NumericDigit const_zero_point_five_data[1] = {50};
 #elif DEC_DIGITS == 1
 static const NumericDigit const_zero_point_five_data[1] = {5};
 #endif
-<<<<<<< HEAD
-static NumericVar const_zero_point_five =
-{1, -1, NUMERIC_POS, 1, const_zero_point_five.ndb, const_zero_point_five_data, {0}};
-=======
 static const NumericVar const_zero_point_five =
 {1, -1, NUMERIC_POS, 1, NULL, (NumericDigit *) const_zero_point_five_data};
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #if DEC_DIGITS == 4
 static const NumericDigit const_zero_point_nine_data[1] = {9000};
@@ -422,13 +403,8 @@ static const NumericDigit const_zero_point_nine_data[1] = {90};
 #elif DEC_DIGITS == 1
 static const NumericDigit const_zero_point_nine_data[1] = {9};
 #endif
-<<<<<<< HEAD
-static NumericVar const_zero_point_nine =
-{1, -1, NUMERIC_POS, 1, const_zero_point_nine.ndb, const_zero_point_nine_data, {0}};
-=======
 static const NumericVar const_zero_point_nine =
 {1, -1, NUMERIC_POS, 1, NULL, (NumericDigit *) const_zero_point_nine_data};
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #if DEC_DIGITS == 4
 static const NumericDigit const_one_point_one_data[2] = {1, 1000};
@@ -437,19 +413,11 @@ static const NumericDigit const_one_point_one_data[2] = {1, 10};
 #elif DEC_DIGITS == 1
 static const NumericDigit const_one_point_one_data[2] = {1, 1};
 #endif
-<<<<<<< HEAD
-static NumericVar const_one_point_one =
-{2, 0, NUMERIC_POS, 1, const_one_point_one.ndb, const_one_point_one_data, {0}};
-
-static NumericVar const_nan =
-{0, 0, NUMERIC_NAN, 0, const_nan.ndb, NULL, {0}};
-=======
 static const NumericVar const_one_point_one =
 {2, 0, NUMERIC_POS, 1, NULL, (NumericDigit *) const_one_point_one_data};
 
 static const NumericVar const_nan =
 {0, 0, NUMERIC_NAN, 0, NULL, NULL};
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #if DEC_DIGITS == 4
 static const int round_powers[4] = {0, 1000, 100, 10};
@@ -527,11 +495,12 @@ static void dump_var(const char *str, NumericVar *var);
 static void alloc_var(NumericVar *var, int ndigits);
 static void zero_var(NumericVar *var);
 
-<<<<<<< HEAD
 static const char *init_var_from_str(const char *str, const char *cp, NumericVar *dest);
 static void set_var_from_var(NumericVar *value, NumericVar *dest);
 static void init_var_from_var(NumericVar *value, NumericVar *dest);
 static void init_ro_var_from_var(NumericVar *value, NumericVar *dest);
+static const char *set_var_from_str(const char *str, const char *cp,
+                                    NumericVar *dest);
 static void set_var_from_num(Numeric value, NumericVar *dest);
 static void init_var_from_num(Numeric value, NumericVar *dest);
 static char *get_str_from_var(NumericVar *var);
@@ -541,21 +510,10 @@ static char *get_str_from_var_sci(NumericVar *var, int rscale);
  * CAUTION: These routines perform a  free_var(var)
  */
 static Numeric make_result(NumericVar *var);
+static Numeric make_result_opt_error(const NumericVar *var, bool *error);
 /*
  * ----------
  */
-=======
-static const char *set_var_from_str(const char *str, const char *cp,
-									NumericVar *dest);
-static void set_var_from_num(Numeric value, NumericVar *dest);
-static void init_var_from_num(Numeric num, NumericVar *dest);
-static void set_var_from_var(const NumericVar *value, NumericVar *dest);
-static char *get_str_from_var(const NumericVar *var);
-static char *get_str_from_var_sci(const NumericVar *var, int rscale);
-
-static Numeric make_result(const NumericVar *var);
-static Numeric make_result_opt_error(const NumericVar *var, bool *error);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static void apply_typmod(NumericVar *var, int32 typmod);
 
@@ -566,12 +524,7 @@ static void int64_to_numericvar(int64 val, NumericVar *var);
 static bool numericvar_to_int128(const NumericVar *var, int128 *result);
 static void int128_to_numericvar(int128 val, NumericVar *var);
 #endif
-<<<<<<< HEAD
-static double numericvar_to_double_no_overflow(NumericVar *var);
-=======
-static double numeric_to_double_no_overflow(Numeric num);
 static double numericvar_to_double_no_overflow(const NumericVar *var);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static Datum numeric_abbrev_convert(Datum original_datum, SortSupport ssup);
 static bool numeric_abbrev_abort(int memtupcount, SortSupport ssup);
@@ -581,25 +534,6 @@ static int	numeric_cmp_abbrev(Datum x, Datum y, SortSupport ssup);
 static Datum numeric_abbrev_convert_var(const NumericVar *var,
 										NumericSortSupport *nss);
 
-<<<<<<< HEAD
-static int	cmp_var(NumericVar *var1, NumericVar *var2);
-static int	cmp_var_common(const NumericDigit *var1digits, int var1ndigits,
-			   int var1weight, int var1sign,
-			   const NumericDigit *var2digits, int var2ndigits,
-			   int var2weight, int var2sign);
-static void add_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
-static void sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
-static void mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
-		int rscale);
-static void div_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
-		int rscale, bool round);
-static void div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
-			 int rscale, bool round);
-static int	select_div_scale(NumericVar *var1, NumericVar *var2);
-static void mod_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
-static void ceil_var(NumericVar *var, NumericVar *result);
-static void floor_var(NumericVar *var, NumericVar *result);
-=======
 static int	cmp_numerics(Numeric num1, Numeric num2);
 static int	cmp_var(const NumericVar *var1, const NumericVar *var2);
 static int	cmp_var_common(const NumericDigit *var1digits, int var1ndigits,
@@ -623,7 +557,6 @@ static void mod_var(const NumericVar *var1, const NumericVar *var2,
 					NumericVar *result);
 static void ceil_var(const NumericVar *var, NumericVar *result);
 static void floor_var(const NumericVar *var, NumericVar *result);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static void sqrt_var(const NumericVar *arg, NumericVar *result, int rscale);
 static void exp_var(const NumericVar *arg, NumericVar *result, int rscale);
@@ -636,15 +569,6 @@ static void power_var(const NumericVar *base, const NumericVar *exp,
 static void power_var_int(const NumericVar *base, int exp, NumericVar *result,
 						  int rscale);
 
-<<<<<<< HEAD
-static int	cmp_abs(NumericVar *var1, NumericVar *var2);
-static int	cmp_abs_common(const NumericDigit *var1digits, int var1ndigits,
-			   int var1weight,
-			   const NumericDigit *var2digits, int var2ndigits,
-			   int var2weight);
-static void add_abs(NumericVar *var1, NumericVar *var2, NumericVar *result);
-static void sub_abs(NumericVar *var1, NumericVar *var2, NumericVar *result);
-=======
 static int	cmp_abs(const NumericVar *var1, const NumericVar *var2);
 static int	cmp_abs_common(const NumericDigit *var1digits, int var1ndigits,
 						   int var1weight,
@@ -654,7 +578,6 @@ static void add_abs(const NumericVar *var1, const NumericVar *var2,
 					NumericVar *result);
 static void sub_abs(const NumericVar *var1, const NumericVar *var2,
 					NumericVar *result);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void round_var(NumericVar *var, int rscale);
 static void trunc_var(NumericVar *var, int rscale);
 static void strip_var(NumericVar *var);
@@ -3669,12 +3592,7 @@ numeric_int4(PG_FUNCTION_ARGS)
 static bool
 numericvar_to_int32(const NumericVar *var, int32 *result)
 {
-<<<<<<< HEAD
-	int32		result;
-	int64		val = 0;
-=======
 	int64		val;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (!numericvar_to_int64(var, &val))
 		return false;
@@ -4408,16 +4326,10 @@ numeric_avg_deserialize(PG_FUNCTION_ARGS)
 	/* sumX */
 	temp = DirectFunctionCall3(numeric_recv,
 							   PointerGetDatum(&buf),
-<<<<<<< HEAD
-							   InvalidOid,
-							   -1);
-	init_var_from_num(DatumGetNumeric(temp), &result->sumX);
-=======
 							   ObjectIdGetDatum(InvalidOid),
 							   Int32GetDatum(-1));
 	init_var_from_num(DatumGetNumeric(temp), &tmp_var);
 	accum_sum_add(&(result->sumX), &tmp_var);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* maxScale */
 	result->maxScale = pq_getmsgint(&buf, 4);
@@ -4546,30 +4458,18 @@ numeric_deserialize(PG_FUNCTION_ARGS)
 	/* sumX */
 	temp = DirectFunctionCall3(numeric_recv,
 							   PointerGetDatum(&buf),
-<<<<<<< HEAD
-							   InvalidOid,
-							   -1);
-	init_var_from_num(DatumGetNumeric(temp), &result->sumX);
-=======
 							   ObjectIdGetDatum(InvalidOid),
 							   Int32GetDatum(-1));
 	init_var_from_num(DatumGetNumeric(temp), &sumX_var);
 	accum_sum_add(&(result->sumX), &sumX_var);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* sumX2 */
 	temp = DirectFunctionCall3(numeric_recv,
 							   PointerGetDatum(&buf),
-<<<<<<< HEAD
-							   InvalidOid,
-							   -1);
-	init_var_from_num(DatumGetNumeric(temp), &result->sumX2);
-=======
 							   ObjectIdGetDatum(InvalidOid),
 							   Int32GetDatum(-1));
 	init_var_from_num(DatumGetNumeric(temp), &sumX2_var);
 	accum_sum_add(&(result->sumX2), &sumX2_var);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* maxScale */
 	result->maxScale = pq_getmsgint(&buf, 4);
@@ -4984,32 +4884,16 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 
 	init_var_from_num(DatumGetNumeric(sumX), &sumX_var);
 #ifdef HAVE_INT128
-<<<<<<< HEAD
-	{
-		NumericVar	num;
-
-		init_var_from_num(DatumGetNumeric(sumX), &num);
-		numericvar_to_int128(&num, &result->sumX);
-
-		set_var_from_num(DatumGetNumeric(sumX2), &num);
-		numericvar_to_int128(&num, &result->sumX2);
-=======
 	numericvar_to_int128(&sumX_var, &result->sumX);
 #else
 	accum_sum_add(&result->sumX, &sumX_var);
 #endif
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	init_var_from_num(DatumGetNumeric(sumX2), &sumX2_var);
 #ifdef HAVE_INT128
 	numericvar_to_int128(&sumX2_var, &result->sumX2);
 #else
-<<<<<<< HEAD
-	init_var_from_num(DatumGetNumeric(sumX), &result->sumX);
-	init_var_from_num(DatumGetNumeric(sumX2), &result->sumX2);
-=======
 	accum_sum_add(&result->sumX2, &sumX2_var);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #endif
 
 	pq_getmsgend(&buf);
@@ -6748,18 +6632,14 @@ get_str_from_var_sci(const NumericVar *var, int rscale)
  * make_result_opt_error() -
  *
  *	Create the packed db numeric format in palloc()'d memory from
-<<<<<<< HEAD
- *	a variable.
+ *	a variable.  If "*have_error" flag is provided, on error it's set to
+ *	true, NULL returned.  This is helpful when caller need to handle errors
+ *	by itself.
  *
  * We used to free_var(var) here. But that was not cool, at least with the
  * numeric_sum() window aggregate, we call numeric_sum() on the transition
  * value multiple time, and if we free_var() the "state->sumX", then it's
  * garbage on the subsequent calls.
-=======
- *	a variable.  If "*have_error" flag is provided, on error it's set to
- *	true, NULL returned.  This is helpful when caller need to handle errors
- *	by itself.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 static Numeric
 make_result_opt_error(const NumericVar *var, bool *have_error)
