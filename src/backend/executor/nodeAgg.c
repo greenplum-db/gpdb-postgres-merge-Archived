@@ -263,6 +263,7 @@
 
 #include "cdb/cdbexplain.h"
 #include "cdb/cdbvars.h" /* mpp_hybrid_hash_agg */
+#include "optimizer/walkers.h"
 
 #define IS_HASHAGG(aggstate) (((Agg *) (aggstate)->ss.ps.plan)->aggstrategy == AGG_HASHED)
 
@@ -299,13 +300,6 @@ static void prepare_projection_slot(AggState *aggstate,
 									int currentSet);
 static void finalize_aggregates(AggState *aggstate,
 								AggStatePerAgg peragg,
-<<<<<<< HEAD
-								AggStatePerGroup pergroup,
-								int currentSet);
-static TupleTableSlot *project_aggregates(AggState *aggstate);
-static Bitmapset *find_unaggregated_cols(AggState *aggstate);
-static bool find_unaggregated_cols_walker(Node *node, Bitmapset **colnos);
-=======
 								AggStatePerGroup pergroup);
 static TupleTableSlot *project_aggregates(AggState *aggstate);
 static Bitmapset *find_unaggregated_cols(AggState *aggstate);
@@ -313,7 +307,6 @@ static bool find_unaggregated_cols_walker(Node *node, Bitmapset **colnos);
 static void build_hash_table(AggState *aggstate);
 static TupleHashEntryData *lookup_hash_entry(AggState *aggstate);
 static void lookup_hash_entries(AggState *aggstate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static TupleTableSlot *agg_retrieve_direct(AggState *aggstate);
 static void agg_fill_hash_table(AggState *aggstate);
 static TupleTableSlot *agg_retrieve_hash_table(AggState *aggstate);
@@ -1668,14 +1661,6 @@ finalize_aggregates(AggState *aggstate,
 	int			aggno;
 	int			transno;
 
-<<<<<<< HEAD
-	Assert(currentSet == 0 ||
-		   ((Agg *) aggstate->ss.ps.plan)->aggstrategy != AGG_HASHED);
-
-	aggstate->current_set = currentSet;
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * If there were any DISTINCT and/or ORDER BY aggregates, sort their
 	 * inputs and run the transition functions.
@@ -1712,11 +1697,7 @@ finalize_aggregates(AggState *aggstate,
 		int			transno = peragg->transno;
 		AggStatePerGroup pergroupstate;
 
-<<<<<<< HEAD
-		pergroupstate = &pergroup[transno + (currentSet * (aggstate->numtrans))];
-=======
 		pergroupstate = &pergroup[transno];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		if (DO_AGGSPLIT_SKIPFINAL(aggstate->aggsplit))
 			finalize_partialaggregate(aggstate, peragg, pergroupstate,
@@ -1746,21 +1727,7 @@ project_aggregates(AggState *aggstate)
 		 * Form and return projection tuple using the aggregate results and
 		 * the representative input tuple.
 		 */
-<<<<<<< HEAD
-		ExprDoneCond isDone;
-		TupleTableSlot *result;
-
-		result = ExecProject(aggstate->ss.ps.ps_ProjInfo, &isDone);
-
-		if (isDone != ExprEndResult)
-		{
-			aggstate->ps_TupFromTlist =
-			 (isDone == ExprMultipleResult);
-			return result;
-		}
-=======
 		return ExecProject(aggstate->ss.ps.ps_ProjInfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 		InstrCountFiltered1(aggstate, 1);
@@ -2485,22 +2452,11 @@ agg_retrieve_direct(AggState *aggstate)
 					 */
 					if (node->aggstrategy != AGG_PLAIN)
 					{
-<<<<<<< HEAD
-						if (!execTuplesMatch(firstSlot,
-											 outerslot,
-											 node->numCols,
-											 node->grpColIdx,
-											 aggstate->phase->eqfunctions,
-											 tmpcontext->ecxt_per_tuple_memory))
-						{
-							aggstate->grp_firstTuple = ExecCopySlotMemTuple(outerslot);
-=======
 						tmpcontext->ecxt_innertuple = firstSlot;
 						if (!ExecQual(aggstate->phase->eqfunctions[node->numCols - 1],
 									  tmpcontext))
 						{
 							aggstate->grp_firstTuple = ExecCopySlotHeapTuple(outerslot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							break;
 						}
 					}
@@ -2549,17 +2505,14 @@ agg_retrieve_direct(AggState *aggstate)
 static void
 agg_fill_hash_table(AggState *aggstate)
 {
-<<<<<<< HEAD
 	bool		streaming = ((Agg *) aggstate->ss.ps.plan)->streaming;
 	bool		tupremain;
 
 	aggstate->hhashtable = create_agg_hash_table(aggstate);
 	aggstate->hashaggstatus = HASHAGG_BEFORE_FIRST_PASS;
 	tupremain = agg_hash_initial_pass(aggstate);
-=======
 	TupleTableSlot *outerslot;
 	ExprContext *tmpcontext = aggstate->tmpcontext;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (streaming)
 	{
@@ -3011,9 +2964,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	ExecInitResultTupleSlotTL(&aggstate->ss.ps, &TTSOpsVirtual);
 	ExecAssignProjectionInfo(&aggstate->ss.ps, NULL);
 
-<<<<<<< HEAD
-	aggstate->ps_TupFromTlist = false;
-=======
 	/*
 	 * initialize child expressions
 	 *
@@ -3029,7 +2979,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 */
 	aggstate->ss.ps.qual =
 		ExecInitQual(node->plan.qual, (PlanState *) aggstate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * We should now have found all Aggrefs in the targetlist and quals.
@@ -3262,9 +3211,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 	if (node->aggstrategy != AGG_HASHED)
 	{
-<<<<<<< HEAD
-		aggstate->hash_needed = find_hash_columns(aggstate);
-=======
 		for (i = 0; i < numGroupingSets; i++)
 		{
 			pergroups[i] = (AggStatePerGroup) palloc0(sizeof(AggStatePerGroupData)
@@ -3299,7 +3245,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		aggstate->current_phase = 0;
 		initialize_phase(aggstate, 0);
 		select_current_set(aggstate, 0, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 	{
@@ -4378,8 +4323,6 @@ ExecReScanAgg(AggState *node)
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 	int			numGroupingSets = Max(node->maxsets, 1);
 
-	node->ps_TupFromTlist = false;
-
 	ExecEagerFreeAgg(node);
 
 	/* Re-initialize some variables */
@@ -4452,9 +4395,6 @@ ExecReScanAgg(AggState *node)
 	MemSet(econtext->ecxt_aggvalues, 0, sizeof(Datum) * node->numaggs);
 	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * node->numaggs);
 
-<<<<<<< HEAD
-	if (!IS_HASHAGG(node))
-=======
 	/*
 	 * With AGG_HASHED/MIXED, the hash table is allocated in a sub-context of
 	 * the hashcontext. This used to be an issue, but now, resetting a context
@@ -4470,7 +4410,6 @@ ExecReScanAgg(AggState *node)
 	}
 
 	if (node->aggstrategy != AGG_HASHED)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		/*
 		 * Reset the per-group state (in particular, mark transvalues null)
