@@ -66,12 +66,14 @@ typedef MinimalTupleData *MinimalTuple;
  * should be explicitly set invalid in manufactured tuples.
  *
  * CDB: t_tableOid deleted.  Instead, use tts_tableOid in TupleTableSlot.
+ * GPDB_12_MERGE_FIXME: Are we going to keep carrying that diff?
  */
 typedef struct HeapTupleData
 {
 	uint32		t_len;			/* length of *t_data */
 	ItemPointerData t_self;		/* SelfItemPointer */
-#define FIELDNO_HEAPTUPLEDATA_DATA 2
+	Oid			t_tableOid;		/* table the tuple came from */
+#define FIELDNO_HEAPTUPLEDATA_DATA 3
 	HeapTupleHeader t_data;		/* -> tuple header and data */
 } HeapTupleData;
 

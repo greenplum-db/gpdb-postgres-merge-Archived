@@ -409,6 +409,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 		PrinttupAttrInfo *thisState = myState->myinfo + i;
 		bool 		isnull;
 		Datum		attr = slot_getattr(slot, i+1, &isnull);
+		Form_pg_attribute fatt = TupleDescAttr(typeinfo, i);
 		
 		if (isnull)
 		{
@@ -433,8 +434,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 			char str[256];
 			int32 n32;
 
-<<<<<<< HEAD
-			switch (typeinfo->attrs[i]->atttypid)
+			switch (fatt->atttypid)
 			{
 				case INT2OID: /* int2 */
 				case INT4OID: /* int4 */
@@ -451,7 +451,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 					unsigned long v;
 					long value;
 					bool sign;
-					if (typeinfo->attrs[i]->atttypid == INT2OID)
+					if (fatt->atttypid == INT2OID)
 						value =(long)DatumGetInt16(attr);
 					else
 						value =(long)DatumGetInt32(attr);
@@ -480,8 +480,8 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 #else
 #error BYTE_ORDER must be BIG_ENDIAN or LITTLE_ENDIAN
 #endif
-					appendBinaryStringInfo(&buf, (char *) &n32, 4);
-					appendBinaryStringInfo(&buf, str, strlen(str));
+					appendBinaryStringInfo(buf, (char *) &n32, 4);
+					appendBinaryStringInfo(buf, str, strlen(str));
 				}
 				break;
 			case INT8OID: /* int8 */
@@ -514,8 +514,8 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 #else
 					n32 = (uint32) (sp-str);
 #endif
-					appendBinaryStringInfo(&buf, (char *) &n32, 4);
-					appendBinaryStringInfo(&buf, str, strlen(str));
+					appendBinaryStringInfo(buf, (char *) &n32, 4);
+					appendBinaryStringInfo(buf, str, strlen(str));
 				}
 				break;
 
@@ -542,15 +542,15 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 					{
 						len = strlen(p);
 						n32 = htonl((uint32) len);
-						appendBinaryStringInfo(&buf, (char *) &n32, 4);
-						appendBinaryStringInfo(&buf, p, len);
+						appendBinaryStringInfo(buf, (char *) &n32, 4);
+						appendBinaryStringInfo(buf, p, len);
 						pfree(p);
 					}
 					else
 					{
 						n32 = htonl((uint32) len);
-						appendBinaryStringInfo(&buf, (char *) &n32, 4);
-						appendBinaryStringInfo(&buf, s, len);
+						appendBinaryStringInfo(buf, (char *) &n32, 4);
+						appendBinaryStringInfo(buf, s, len);
 					}
 				}
 				break;
@@ -559,21 +559,16 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 				{
 					char *outputstr;
 					outputstr = OutputFunctionCall(&thisState->finfo, attr);
-					pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
+					pq_sendcountedtext(buf, outputstr, strlen(outputstr), false);
 				}
 			}
-=======
-			outputstr = OutputFunctionCall(&thisState->finfo, attr);
-			pq_sendcountedtext(buf, outputstr, strlen(outputstr), false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		else
 		{
 			/* Binary output */
 			int32 n32;
 
-<<<<<<< HEAD
-			switch (typeinfo->attrs[i]->atttypid)
+			switch (fatt->atttypid)
 			{
 			case INT2OID: /* int2 */
 				{
@@ -584,8 +579,8 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 #else
 					n32 = (uint32) 2;
 #endif
-					appendBinaryStringInfo(&buf, (char *) &n32, 4);
-					appendBinaryStringInfo(&buf, &int2, 2);
+					appendBinaryStringInfo(buf, (char *) &n32, 4);
+					appendBinaryStringInfo(buf, (char *) &int2, 2);
 				}
 				break;
 			case INT4OID: /* int4 */
@@ -597,8 +592,8 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 #else
 					n32 = (uint32) 4;
 #endif
-					appendBinaryStringInfo(&buf, (char *) &n32, 4);
-					appendBinaryStringInfo(&buf, &int4, 4);
+					appendBinaryStringInfo(buf, (char *) &n32, 4);
+					appendBinaryStringInfo(buf, (char *) &int4, 4);
 				}
 				break;
 			case INT8OID: /* int8 */
@@ -612,8 +607,8 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 #else
 					n32 = (uint32) 8;
 #endif
-					appendBinaryStringInfo(&buf, (char *) &n32, 4);
-					appendBinaryStringInfo(&buf, &int8, 8);
+					appendBinaryStringInfo(buf, (char *) &n32, 4);
+					appendBinaryStringInfo(buf, (char *) &int8, 8);
 				}
 				break;
 
@@ -640,15 +635,15 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 					{
 						len = strlen(p);
 						n32 = htonl((uint32) len);
-						appendBinaryStringInfo(&buf, (char *) &n32, 4);
-						appendBinaryStringInfo(&buf, p, len);
+						appendBinaryStringInfo(buf, (char *) &n32, 4);
+						appendBinaryStringInfo(buf, p, len);
 						pfree(p);
 					}
 					else
 					{
 						n32 = htonl((uint32) len);
-						appendBinaryStringInfo(&buf, (char *) &n32, 4);
-						appendBinaryStringInfo(&buf, s, len);
+						appendBinaryStringInfo(buf, (char *) &n32, 4);
+						appendBinaryStringInfo(buf, s, len);
 					}
 				}
 				break;
@@ -657,17 +652,11 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 				{
 					bytea *outputbytes;
 					outputbytes = SendFunctionCall(&thisState->finfo, attr);
-					pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
-					pq_sendbytes(&buf, VARDATA(outputbytes),
+					pq_sendint32(buf, VARSIZE(outputbytes) - VARHDRSZ);
+					pq_sendbytes(buf, VARDATA(outputbytes),
 								 VARSIZE(outputbytes) - VARHDRSZ);
 				}
 			}
-=======
-			outputbytes = SendFunctionCall(&thisState->finfo, attr);
-			pq_sendint32(buf, VARSIZE(outputbytes) - VARHDRSZ);
-			pq_sendbytes(buf, VARDATA(outputbytes),
-						 VARSIZE(outputbytes) - VARHDRSZ);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 

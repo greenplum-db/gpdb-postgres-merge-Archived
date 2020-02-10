@@ -179,10 +179,6 @@ static BlockNumber
 system_nextsampleblock(SampleScanState *node, BlockNumber nblocks)
 {
 	SystemSamplerData *sampler = (SystemSamplerData *) node->tsm_state;
-<<<<<<< HEAD
-	HeapScanDesc scan = node->ss_currentScanDesc_heap;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	BlockNumber nextblock = sampler->nextblock;
 	uint32		hashinput[2];
 

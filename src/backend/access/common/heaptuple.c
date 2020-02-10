@@ -326,13 +326,10 @@ heap_fill_tuple(TupleDesc tupleDesc,
 	int			bitmask;
 	int			i;
 	int			numberOfAttributes = tupleDesc->natts;
-<<<<<<< HEAD
-	Form_pg_attribute *att = tupleDesc->attrs;
-=======
 
 #ifdef USE_ASSERT_CHECKING
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	char	   *start = data;
+#endif
 
 	if (bit != NULL)
 	{
@@ -378,16 +375,13 @@ heap_fill_tuple(TupleDesc tupleDesc,
 bool
 heap_attisnull(HeapTuple tup, int attnum, TupleDesc tupleDesc)
 {
-<<<<<<< HEAD
 	Assert(!is_memtuple((GenericTuple) tup));
 
-=======
 	/*
 	 * We allow a NULL tupledesc for relations not expected to have missing
 	 * values, such as catalog relations and indexes.
 	 */
 	Assert(!tupleDesc || attnum <= tupleDesc->natts);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (attnum > (int) HeapTupleHeaderGetNatts(tup->t_data))
 	{
 		if (tupleDesc && TupleDescAttr(tupleDesc, attnum - 1)->atthasmissing)
@@ -420,14 +414,6 @@ heap_attisnull(HeapTuple tup, int attnum, TupleDesc tupleDesc)
 	}
 
 	return false;
-}
-bool
-heap_attisnull_normalattr(HeapTuple tup, int attnum)
-{
-	Assert(attnum > 0);
-	if (HeapTupleNoNulls(tup))
-		return false;
-	return att_isnull(attnum - 1, tup->t_data->t_bits);
 }
 
 /* ----------------
@@ -586,9 +572,6 @@ nocachegetattr(HeapTuple tuple,
 		bool		usecache = true;
 		int			i;
 
-		/* this is always true */
-		att[0]->attcacheoff = 0;
-
 		/*
 		 * Now we know that we have to walk the tuple CAREFULLY.  But we still
 		 * might be able to cache some offsets for next time.
@@ -697,6 +680,7 @@ heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 			result = CommandIdGetDatum(HeapTupleHeaderGetRawCommandId(tup->t_data));
 			break;
 		case TableOidAttributeNumber:
+			/* GPDB_12_MERGE_FIXME: Revert this? */
             /* CDB: Must now use a TupleTableSlot to access the 'tableoid'. */
 			result = ObjectIdGetDatum(InvalidOid);
 			elog(ERROR, "Invalid reference to \"tableoid\" system attribute");
@@ -1083,7 +1067,6 @@ heaptuple_form_to(TupleDesc tupleDescriptor, Datum *values, bool *isnull, HeapTu
 {
 	HeapTuple	tuple;			/* return tuple */
 	HeapTupleHeader td;			/* tuple data */
-	Size		actual_len;
 	Size		len,
 				data_len;
 	int			hoff;
@@ -1161,18 +1144,6 @@ heaptuple_form_to(TupleDesc tupleDescriptor, Datum *values, bool *isnull, HeapTu
 	HeapTupleHeaderSetNatts(td, numberOfAttributes);
 	td->t_hoff = hoff;
 
-<<<<<<< HEAD
-	actual_len = heap_fill_tuple(tupleDescriptor,
-								 values,
-								 isnull,
-								 (char *) td + hoff,
-								 data_len,
-								 &td->t_infomask,
-								 (hasnull ? td->t_bits : NULL));
-
-	Assert(data_len == actual_len);
-	Assert(!is_memtuple((GenericTuple) tuple));
-=======
 	heap_fill_tuple(tupleDescriptor,
 					values,
 					isnull,
@@ -1180,7 +1151,6 @@ heaptuple_form_to(TupleDesc tupleDescriptor, Datum *values, bool *isnull, HeapTu
 					data_len,
 					&td->t_infomask,
 					(hasnull ? td->t_bits : NULL));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return tuple;
 }
@@ -1312,12 +1282,7 @@ heap_modify_tuple_by_cols(HeapTuple tuple,
 	 */
 	newTuple->t_data->t_ctid = tuple->t_data->t_ctid;
 	newTuple->t_self = tuple->t_self;
-<<<<<<< HEAD
-	if (tupleDesc->tdhasoid)
-		HeapTupleSetOid(newTuple, HeapTupleGetOid(tuple));
-=======
 	newTuple->t_tableOid = tuple->t_tableOid;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return newTuple;
 }
@@ -1423,200 +1388,8 @@ heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 	 * rest as nulls or missing values as appropriate.
 	 */
 	for (; attnum < tdesc_natts; attnum++)
-<<<<<<< HEAD
-	{
-		values[attnum] = (Datum) 0;
-		isnull[attnum] = true;
-	}
-}
-
-/*
- * slot_deform_tuple
- *		Given a TupleTableSlot, extract data from the slot's physical tuple
- *		into its Datum/isnull arrays.  Data is extracted up through the
- *		natts'th column (caller must ensure this is a legal column number).
- *
- *		This is essentially an incremental version of heap_deform_tuple:
- *		on each call we extract attributes up to the one needed, without
- *		re-computing information about previously extracted attributes.
- *		slot->tts_nvalid is the number of attributes already extracted.
- */
-static void
-slot_deform_tuple(TupleTableSlot *slot, int natts)
-{
-	HeapTuple	tuple = TupGetHeapTuple(slot); 
-	TupleDesc	tupleDesc = slot->tts_tupleDescriptor;
-	Datum	   *values = slot->PRIVATE_tts_values;
-	bool	   *isnull = slot->PRIVATE_tts_isnull;
-	HeapTupleHeader tup = tuple->t_data;
-	bool		hasnulls = HeapTupleHasNulls(tuple);
-	Form_pg_attribute *att = tupleDesc->attrs;
-	int			attnum;
-	char	   *tp;				/* ptr to tuple data */
-	long		off;			/* offset in tuple data */
-	bits8	   *bp = tup->t_bits;		/* ptr to null bitmap in tuple */
-	bool		slow;			/* can we use/set attcacheoff? */
-
-	/*
-	 * Check whether the first call for this tuple, and initialize or restore
-	 * loop state.
-	 */
-	attnum = slot->PRIVATE_tts_nvalid;
-	if (attnum == 0)
-	{
-		/* Start from the first attribute */
-		off = 0;
-		slow = false;
-	}
-	else
-	{
-		/* Restore state from previous execution */
-		off = slot->PRIVATE_tts_off;
-		slow = slot->PRIVATE_tts_slow;
-	}
-
-	tp = (char *) tup + tup->t_hoff;
-
-	for (; attnum < natts; attnum++)
-	{
-		Form_pg_attribute thisatt = att[attnum];
-
-		if (hasnulls && att_isnull(attnum, bp))
-		{
-			values[attnum] = (Datum) 0;
-			isnull[attnum] = true;
-			slow = true;		/* can't use attcacheoff anymore */
-			continue;
-		}
-
-		isnull[attnum] = false;
-
-		if (!slow && thisatt->attcacheoff >= 0)
-			off = thisatt->attcacheoff;
-		else if (thisatt->attlen == -1)
-		{
-			/*
-			 * We can only cache the offset for a varlena attribute if the
-			 * offset is already suitably aligned, so that there would be no
-			 * pad bytes in any case: then the offset will be valid for either
-			 * an aligned or unaligned value.
-			 */
-			if (!slow &&
-				off == att_align_nominal(off, thisatt->attalign))
-				thisatt->attcacheoff = off;
-			else
-			{
-				off = att_align_pointer(off, thisatt->attalign, -1,
-										tp + off);
-				slow = true;
-			}
-		}
-		else
-		{
-			/* not varlena, so safe to use att_align_nominal */
-			off = att_align_nominal(off, thisatt->attalign);
-
-			if (!slow)
-				thisatt->attcacheoff = off;
-		}
-		if (!slow && thisatt->attlen < 0)
-			slow = true;
-
-		values[attnum] = fetchatt(thisatt, tp + off);
-
-		off = att_addlength_pointer(off, thisatt->attlen, tp + off);
-
-		if (thisatt->attlen <= 0)
-			slow = true;		/* can't use attcacheoff anymore */
-	}
-
-	/*
-	 * Save state for next execution
-	 */
-	slot->PRIVATE_tts_nvalid = attnum;
-	slot->PRIVATE_tts_off = off;
-	slot->PRIVATE_tts_slow = slow;
-}
-
-/*
- * slot_getsomeattrs
- *		This function forces the entries of the slot's Datum/isnull
- *		arrays to be valid at least up through the attnum'th entry.
- */
-void
-_slot_getsomeattrs(TupleTableSlot *slot, int attnum)
-{
-	HeapTuple	tuple;
-	int			attno;
-
-	/* Quick out if we have 'em all already */
-	if (slot->PRIVATE_tts_nvalid >= attnum)
-		return;
-
-	/* Check for caller error */
-	if (attnum <= 0 || attnum > slot->tts_tupleDescriptor->natts)
-		elog(ERROR, "invalid attribute number %d", attnum);
-
-	/*
-	 * otherwise we had better have a physical tuple (tts_nvalid should equal
-	 * natts in all virtual-tuple cases)
-	 */
-	tuple = TupGetHeapTuple(slot); 
-	if (tuple == NULL)			/* internal error */
-		elog(ERROR, "cannot extract attribute from empty tuple slot");
-
-	/*
-	 * load up any slots available from physical tuple
-	 */
-	attno = HeapTupleHeaderGetNatts(tuple->t_data);
-	attno = Min(attno, attnum);
-
-	slot_deform_tuple(slot, attno);
-
-
-	/*
-	 * If tuple doesn't have all the atts indicated by tupleDesc, read the
-	 * rest as null
-	 */
-	for (; attno < attnum; attno++)
-	{
-		slot->PRIVATE_tts_values[attno] = (Datum) 0;
-		slot->PRIVATE_tts_isnull[attno] = true;
-	}
-	slot->PRIVATE_tts_nvalid = attnum;
-	TupSetVirtualTuple(slot);
-}
-
-#if 0
-/*
- * slot_getsysattr
- *		This function fetches a system attribute of the slot's current tuple.
- *		Unlike slot_getattr, if the slot does not contain system attributes,
- *		this will return false (with a NULL attribute value) instead of
- *		throwing an error.
- */
-bool
-slot_getsysattr(TupleTableSlot *slot, int attnum,
-				Datum *value, bool *isnull)
-{
-	HeapTuple	tuple = slot->tts_tuple;
-
-	Assert(attnum < 0);			/* else caller error */
-	if (tuple == NULL ||
-		tuple == &(slot->tts_minhdr))
-	{
-		/* No physical tuple, or minimal tuple, so fail */
-		*value = (Datum) 0;
-		*isnull = true;
-		return false;
-	}
-	*value = heap_getsysattr(tuple, attnum, slot->tts_tupleDescriptor, isnull);
-	return true;
-=======
 		values[attnum] = getmissingattr(tupleDesc, attnum + 1, &isnull[attnum]);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
-#endif
 
 /*
  * heap_freetuple

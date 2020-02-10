@@ -100,26 +100,12 @@ gistbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 IndexBulkDeleteResult *
 gistvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 {
-<<<<<<< HEAD
-	Relation	rel = info->index;
-	BlockNumber npages,
-				blkno;
-	BlockNumber totFreePages;
-	double		tuplesCount;
-	bool		needLock;
-=======
 	GistBulkDeleteResult *gist_stats = (GistBulkDeleteResult *) stats;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* No-op in ANALYZE ONLY mode */
 	if (info->analyze_only)
 		return stats;
 
-<<<<<<< HEAD
-	/* Set up all-zero stats if gistbulkdelete wasn't called */
-	if (stats == NULL)
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
-=======
 	/*
 	 * If gistbulkdelete was called, we need not do anything, just return the
 	 * stats from the latest gistbulkdelete call.  If it wasn't called, we
@@ -130,7 +116,6 @@ gistvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 		gist_stats = create_GistBulkDeleteResult();
 		gistvacuumscan(info, gist_stats, NULL, NULL);
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * If we saw any empty pages, try to unlink them from the tree so that
@@ -144,49 +129,6 @@ gistvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	gist_stats->internal_page_set = NULL;
 	gist_stats->empty_leaf_set = NULL;
 
-<<<<<<< HEAD
-	totFreePages = 0;
-	tuplesCount = 0;
-	for (blkno = GIST_ROOT_BLKNO + 1; blkno < npages; blkno++)
-	{
-		Buffer		buffer;
-		Page		page;
-
-		vacuum_delay_point();
-
-		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
-									info->strategy);
-		LockBuffer(buffer, GIST_SHARE);
-		page = (Page) BufferGetPage(buffer);
-
-		if (PageIsNew(page) || GistPageIsDeleted(page))
-		{
-			totFreePages++;
-			RecordFreeIndexPage(rel, blkno);
-		}
-		else if (GistPageIsLeaf(page))
-		{
-			/* count tuples in index (considering only leaf tuples) */
-			tuplesCount += PageGetMaxOffsetNumber(page);
-		}
-		UnlockReleaseBuffer(buffer);
-	}
-
-	/* Finally, vacuum the FSM */
-	IndexFreeSpaceMapVacuum(info->index);
-
-	/* return statistics */
-	stats->pages_free = totFreePages;
-	if (needLock)
-		LockRelationForExtension(rel, ExclusiveLock);
-	stats->num_pages = RelationGetNumberOfBlocks(rel);
-	if (needLock)
-		UnlockRelationForExtension(rel, ExclusiveLock);
-	stats->num_index_tuples = tuplesCount;
-	stats->estimated_count = false;
-
-	return stats;
-=======
 	/*
 	 * It's quite possible for us to be fooled by concurrent page splits into
 	 * double-counting some index tuples, so disbelieve any total that exceeds
@@ -200,7 +142,6 @@ gistvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	}
 
 	return (IndexBulkDeleteResult *) gist_stats;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -621,38 +562,8 @@ gistvacuum_delete_empty_pages(IndexVacuumInfo *info, GistBulkDeleteResult *stats
 
 		ReleaseBuffer(buffer);
 
-<<<<<<< HEAD
-		}
-		else
-		{
-			/* check for split proceeded after look at parent */
-			pushStackIfSplited(page, stack);
-
-			maxoff = PageGetMaxOffsetNumber(page);
-
-			for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
-			{
-				iid = PageGetItemId(page, i);
-				idxtuple = (IndexTuple) PageGetItem(page, iid);
-
-				ptr = (GistBDItem *) palloc(sizeof(GistBDItem));
-				ptr->blkno = ItemPointerGetBlockNumber(&(idxtuple->t_tid));
-				ptr->parentlsn = BufferGetLSNAtomic(buffer);
-				ptr->next = stack->next;
-				stack->next = ptr;
-
-				if (GistTupleIsInvalid(idxtuple))
-					ereport(LOG,
-							(errmsg("index \"%s\" contains an inner tuple marked as invalid",
-									RelationGetRelationName(rel)),
-							 errdetail("This is caused by an incomplete page split at crash recovery before upgrading to PostgreSQL 9.1."),
-							 errhint("Please REINDEX it.")));
-			}
-		}
-=======
 		/* update stats */
 		stats->stats.pages_removed += deleted;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * We can stop the scan as soon as we have seen the downlinks, even if

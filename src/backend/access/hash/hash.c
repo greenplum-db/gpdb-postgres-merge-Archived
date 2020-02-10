@@ -42,10 +42,8 @@ typedef struct
 	Relation	heapRel;		/* heap relation descriptor */
 } HashBuildState;
 
-/* GPDB: This takes an ItemPointer, rather than HeapTuple, because this is also
- * used with AO/AOCO tables */
 static void hashbuildCallback(Relation index,
-							  ItemPointer tupleId,
+							  HeapTuple htup,
 							  Datum *values,
 							  bool *isnull,
 							  bool tupleIsAlive,
@@ -203,7 +201,7 @@ hashbuildempty(Relation index)
  */
 static void
 hashbuildCallback(Relation index,
-				  ItemPointer tupleId,
+				  HeapTuple htup,
 				  Datum *values,
 				  bool *isnull,
 				  bool tupleIsAlive,
@@ -222,7 +220,7 @@ hashbuildCallback(Relation index,
 
 	/* Either spool the tuple for sorting, or just put it into the index */
 	if (buildstate->spool)
-		_h_spool(buildstate->spool, tupleId,
+		_h_spool(buildstate->spool, &htup->t_self,
 				 index_values, index_isnull);
 	else
 	{
@@ -324,7 +322,7 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 
 
 /*
- * hashgetbitmap() -- get all tuples at once
+ *	hashgetbitmap() -- get all tuples at once
  */
 Node *
 hashgetbitmap(IndexScanDesc scan, Node *n)
@@ -332,12 +330,12 @@ hashgetbitmap(IndexScanDesc scan, Node *n)
 	TIDBitmap  *tbm;
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	bool		res;
-<<<<<<< HEAD
+	HashScanPosItem *currItem;
 
 	if (n == NULL)
 	{
 		/* XXX should we use less than work_mem for this? */
-		tbm = tbm_create(work_mem * 1024L);
+		tbm = tbm_create(work_mem * 1024L, NULL);
 	}
 	else if (!IsA(n, TIDBitmap))
 	{
@@ -347,10 +345,6 @@ hashgetbitmap(IndexScanDesc scan, Node *n)
 	{
 		tbm = (TIDBitmap *)n;
 	}
-=======
-	int64		ntids = 0;
-	HashScanPosItem *currItem;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	res = _hash_first(scan, ForwardScanDirection);
 
@@ -363,29 +357,7 @@ hashgetbitmap(IndexScanDesc scan, Node *n)
 		 * whenever scan->ignore_killed_tuples is true.  Therefore, there's
 		 * nothing to do here except add the results to the TIDBitmap.
 		 */
-<<<<<<< HEAD
-		if (scan->ignore_killed_tuples)
-		{
-			Page		page;
-			OffsetNumber offnum;
-
-			offnum = ItemPointerGetOffsetNumber(&(so->hashso_curpos));
-			page = BufferGetPage(so->hashso_curbuf);
-			add_tuple = !ItemIdIsDead(PageGetItemId(page, offnum));
-		}
-		else
-			add_tuple = true;
-
-		/* Save tuple ID, and continue scanning */
-		if (add_tuple)
-		{
-			/* Note we mark the tuple ID as requiring recheck */
-			tbm_add_tuples(tbm, &(so->hashso_heappos), 1, true);
-		}
-=======
 		tbm_add_tuples(tbm, &(currItem->heapTid), 1, true);
-		ntids++;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		res = _hash_next(scan, ForwardScanDirection);
 	}

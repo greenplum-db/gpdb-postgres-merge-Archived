@@ -203,7 +203,8 @@ convert_tuples_by_position(TupleDesc indesc,
  */
 TupleConversionMap *
 convert_tuples_by_name(TupleDesc indesc,
-					   TupleDesc outdesc)
+					   TupleDesc outdesc,
+					   const char *msg)
 {
 	TupleConversionMap *map;
 	AttrNumber *attrMap;

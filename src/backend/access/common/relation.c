@@ -166,6 +166,7 @@ Relation
 relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 {
 	Oid			relOid;
+	Relation	rel;
 
 	/*
 	 * Check for shared-cache-inval messages before trying to open the
@@ -188,6 +189,9 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 	 * use try_relation_open instead of relation_open so that we can
 	 * throw a more graceful error message if the relation was dropped
 	 * between the RangeVarGetRelid and when we try to open the relation.
+	 *
+	 * GPDB_12_MERGE_FIXME: Is this still relevant? RangeVarGetRelid()
+	 * acquires the lock these days.
 	 */
 	rel = try_relation_open(relOid, NoLock, false);
 
@@ -223,7 +227,7 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
  */
 Relation
 relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
-						 bool missing_ok, bool noWait)
+						 bool missing_ok)
 {
 	Oid			relOid;
 
@@ -241,12 +245,8 @@ relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 	if (!OidIsValid(relOid))
 		return NULL;
 
-	/* GPDB_12_MERGE_FIXME: In PostgreSQL, we use NoLock here, becaue
-	 * RangeVarGetRelid() locks the relation already. Is 'noWait' actually
-	 * accomplishing anything here?
-	 */
 	/* Let try_relation_open do the rest */
-	return try_relation_open(relOid, lockmode, noWait);
+	return relation_open(relOid, NoLock);
 }
 
 /* ----------------
