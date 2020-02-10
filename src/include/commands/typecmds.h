@@ -55,8 +55,6 @@ extern Oid AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 									  bool isImplicitArray,
 									  bool errorOnTableType,
 									  ObjectAddresses *objsMoved);
-extern void AlterTypeArray(Oid typeOid, Oid arrayOid);
-
 extern void AlterType(AlterTypeStmt *stmt);
 
 #endif							/* TYPECMDS_H */

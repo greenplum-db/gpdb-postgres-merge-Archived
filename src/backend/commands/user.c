@@ -112,28 +112,17 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	ListCell   *item;
 	ListCell   *option;
 	char	   *password = NULL;	/* user password */
-	char		encrypted_password[MD5_PASSWD_LEN + 1];
 	bool		issuper = false;	/* Make the user a superuser? */
 	bool		inherit = true; /* Auto inherit privileges? */
 	bool		createrole = false; /* Can this user create roles? */
 	bool		createdb = false;	/* Can the user create databases? */
 	bool		canlogin = false;	/* Can this user login? */
 	bool		isreplication = false;	/* Is this a replication role? */
-<<<<<<< HEAD
 	bool		createrextgpfd = false; /* Can create readable gpfdist exttab? */
 	bool		createrexthttp = false; /* Can create readable http exttab? */
 	bool		createwextgpfd = false; /* Can create writable gpfdist exttab? */
-	bool		bypassrls = false;		/* Is this a row security enabled
-										 * role? */
-	int			connlimit = -1; /* maximum connections allowed */
-	List	   *addroleto = NIL;	/* roles to make this a member of */
-	List	   *rolemembers = NIL;		/* roles to be members of this role */
-	List	   *adminmembers = NIL;		/* roles to be admins of this role */
 	List	   *exttabcreate = NIL;		/* external table create privileges being added  */
 	List	   *exttabnocreate = NIL;	/* external table create privileges being removed */
-	char	   *validUntil = NULL;		/* time the login is valid until */
-	Datum		validUntil_datum;		/* same, as timestamptz Datum */
-=======
 	bool		bypassrls = false;	/* Is this a row security enabled role? */
 	int			connlimit = -1; /* maximum connections allowed */
 	List	   *addroleto = NIL;	/* roles to make this a member of */
@@ -141,7 +130,6 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	List	   *adminmembers = NIL; /* roles to be admins of this role */
 	char	   *validUntil = NULL;	/* time the login is valid until */
 	Datum		validUntil_datum;	/* same, as timestamptz Datum */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	bool		validUntil_null;
 	char	   *resqueue = NULL;		/* resource queue for this role */
 	char	   *resgroup = NULL;		/* resource group for this role */
@@ -762,7 +750,6 @@ AlterRole(AlterRoleStmt *stmt)
 	ListCell   *option;
 	char	   *rolename = NULL;
 	char	   *password = NULL;	/* user password */
-	char		encrypted_password[MD5_PASSWD_LEN + 1];
 	int			issuper = -1;	/* Make the user a superuser? */
 	int			inherit = -1;	/* Auto inherit privileges? */
 	int			createrole = -1;	/* Can this user create roles? */
@@ -770,19 +757,13 @@ AlterRole(AlterRoleStmt *stmt)
 	int			canlogin = -1;	/* Can this user login? */
 	int			isreplication = -1; /* Is this a replication role? */
 	int			connlimit = -1; /* maximum connections allowed */
-<<<<<<< HEAD
 	char	   *resqueue = NULL;	/* resource queue for this role */
 	char	   *resgroup = NULL;	/* resource group for this role */
-	List	   *rolemembers = NIL;	/* roles to be added/removed */
 	List	   *exttabcreate = NIL;	/* external table create privileges being added  */
 	List	   *exttabnocreate = NIL;	/* external table create privileges being removed */
-	char	   *validUntil = NULL;		/* time the login is valid until */
-	Datum		validUntil_datum;		/* same, as timestamptz Datum */
-=======
 	List	   *rolemembers = NIL;	/* roles to be added/removed */
 	char	   *validUntil = NULL;	/* time the login is valid until */
 	Datum		validUntil_datum;	/* same, as timestamptz Datum */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	bool		validUntil_null;
 	int			bypassrls = -1;
 	DefElem    *dpassword = NULL;
@@ -2665,7 +2646,7 @@ AddRoleDenials(const char *rolename, Oid roleid, List *addintervals)
 	TupleDesc	pg_auth_time_dsc;
 	ListCell   *intervalitem;
 
-	pg_auth_time_rel = heap_open(AuthTimeConstraintRelationId, RowExclusiveLock);
+	pg_auth_time_rel = table_open(AuthTimeConstraintRelationId, RowExclusiveLock);
 	pg_auth_time_dsc = RelationGetDescr(pg_auth_time_rel);
 
 	foreach(intervalitem, addintervals)
@@ -2688,8 +2669,7 @@ AddRoleDenials(const char *rolename, Oid roleid, List *addintervals)
 		tuple = heap_form_tuple(pg_auth_time_dsc, new_record, new_record_nulls);
 
 		/* Insert tuple into the relation */
-		simple_heap_insert(pg_auth_time_rel, tuple);
-		CatalogUpdateIndexes(pg_auth_time_rel, tuple);
+		CatalogTupleInsert(pg_auth_time_rel, tuple);
 	}
 
 	CommandCounterIncrement();
@@ -2698,7 +2678,7 @@ AddRoleDenials(const char *rolename, Oid roleid, List *addintervals)
 	 * Close pg_auth_time_constraint, but keep lock till commit (this is important to
 	 * prevent any risk of deadlock failure while updating flat file)
 	 */
-	heap_close(pg_auth_time_rel, NoLock);
+	table_close(pg_auth_time_rel, NoLock);
 }
 
 /*

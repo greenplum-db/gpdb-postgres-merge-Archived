@@ -2524,13 +2524,17 @@ ChooseRelationName(const char *name1, const char *name2,
 				   const char *label, Oid namespaceid,
 				   bool isconstraint)
 {
-	return ChooseRelationNameWithCache(name1, name2, label, namespaceid, NULL);
+	return ChooseRelationNameWithCache(name1, name2, label, namespaceid, isconstraint,
+									   NULL);
 }
 
+/* GPDB_12_MERGE_FIXME: this cache seems to be unused now. I guess we reverted
+ * the stuff that used it. Is this still needed? */
 char *
 ChooseRelationNameWithCache(const char *name1, const char *name2,
-				   const char *label, Oid namespaceid,
-				   HTAB *cache)
+							const char *label, Oid namespaceid,
+							bool isconstraint,
+							HTAB *cache)
 {
 	int			pass = 0;
 	char	   *relname = NULL;
@@ -2999,6 +3003,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	MemoryContext private_context;
 	MemoryContext old;
 	List	   *relids = NIL;
+	ListCell   *l;
 	int			num_keys;
 	bool		concurrent_warning = false;
 
@@ -4008,148 +4013,4 @@ update_relispartition(Oid relationId, bool newval)
 	CatalogTupleUpdate(classRel, &tup->t_self, tup);
 	heap_freetuple(tup);
 	table_close(classRel, RowExclusiveLock);
-}
-
-/*
- * Insert or delete an appropriate pg_inherits tuple to make the given index
- * be a partition of the indicated parent index.
- *
- * This also corrects the pg_depend information for the affected index.
- */
-void
-IndexSetParentIndex(Relation partitionIdx, Oid parentOid)
-{
-	Relation	pg_inherits;
-	ScanKeyData	key[2];
-	SysScanDesc	scan;
-	Oid			partRelid = RelationGetRelid(partitionIdx);
-	HeapTuple	tuple;
-	bool		fix_dependencies;
-
-	/* Make sure this is an index */
-	Assert(partitionIdx->rd_rel->relkind == RELKIND_INDEX);
-	/*
-	 * Scan pg_inherits for rows linking our index to some parent.
-	 */
-	pg_inherits = relation_open(InheritsRelationId, RowExclusiveLock);
-	ScanKeyInit(&key[0],
-				Anum_pg_inherits_inhrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(partRelid));
-	ScanKeyInit(&key[1],
-				Anum_pg_inherits_inhseqno,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(1));
-	scan = systable_beginscan(pg_inherits, InheritsRelidSeqnoIndexId, true,
-							  NULL, 2, key);
-	tuple = systable_getnext(scan);
-
-	if (!HeapTupleIsValid(tuple))
-	{
-		if (parentOid == InvalidOid)
-		{
-			/*
-			 * No pg_inherits row, and no parent wanted: nothing to do in
-			 * this case.
-			 */
-			fix_dependencies = false;
-		}
-		else
-		{
-			Datum	values[Natts_pg_inherits];
-			bool	isnull[Natts_pg_inherits];
-
-			/*
-			 * No pg_inherits row exists, and we want a parent for this index,
-			 * so insert it.
-			 */
-			values[Anum_pg_inherits_inhrelid - 1] = ObjectIdGetDatum(partRelid);
-			values[Anum_pg_inherits_inhparent - 1] =
-					ObjectIdGetDatum(parentOid);
-			values[Anum_pg_inherits_inhseqno - 1] = Int32GetDatum(1);
-			memset(isnull, false, sizeof(isnull));
-
-			tuple = heap_form_tuple(RelationGetDescr(pg_inherits),
-									values, isnull);
-
-			simple_heap_insert(pg_inherits, tuple);
-			CatalogUpdateIndexes(pg_inherits, tuple);
-
-			fix_dependencies = true;
-		}
-	}
-	else
-	{
-		Form_pg_inherits	inhForm = (Form_pg_inherits) GETSTRUCT(tuple);
-
-		if (parentOid == InvalidOid)
-		{
-			/*
-			 * There exists a pg_inherits row, which we want to clear; do so.
-			 */
-			simple_heap_delete(pg_inherits, &tuple->t_self);
-			fix_dependencies = true;
-		}
-		else
-		{
-			/*
-			 * A pg_inherits row exists.  If it's the same we want, then we're
-			 * good; if it differs, that amounts to a corrupt catalog and
-			 * should not happen.
-			 */
-			if (inhForm->inhparent != parentOid)
-			{
-				/* unexpected: we should not get called in this case */
-				elog(ERROR, "bogus pg_inherit row: inhrelid %u inhparent %u",
-					 inhForm->inhrelid, inhForm->inhparent);
-			}
-
-			/* already in the right state */
-			fix_dependencies = false;
-		}
-	}
-
-	/* done with pg_inherits */
-	systable_endscan(scan);
-	relation_close(pg_inherits, RowExclusiveLock);
-
-	/* set relhassubclass if an index partition has been added to the parent */
-	if (OidIsValid(parentOid))
-		SetRelationHasSubclass(parentOid, true);
-
-	if (fix_dependencies)
-	{
-		/*
-		 * Insert/delete pg_depend rows.  If setting a parent, add PARTITION
-		 * dependencies on the parent index and the table; if removing a
-		 * parent, delete PARTITION dependencies.
-		 */
-		if (OidIsValid(parentOid))
-		{
-			ObjectAddress partIdx;
-			ObjectAddress parentIdx;
-			ObjectAddress partitionTbl;
-
-			ObjectAddressSet(partIdx, RelationRelationId, partRelid);
-			ObjectAddressSet(parentIdx, RelationRelationId, parentOid);
-			ObjectAddressSet(partitionTbl, RelationRelationId,
-							 partitionIdx->rd_index->indrelid);
-			recordDependencyOn(&partIdx, &parentIdx,
-							   DEPENDENCY_PARTITION_PRI);
-			recordDependencyOn(&partIdx, &partitionTbl,
-							   DEPENDENCY_PARTITION_SEC);
-		}
-		else
-		{
-			deleteDependencyRecordsForClass(RelationRelationId, partRelid,
-											RelationRelationId,
-											DEPENDENCY_PARTITION_PRI);
-			deleteDependencyRecordsForClass(RelationRelationId, partRelid,
-											RelationRelationId,
-											DEPENDENCY_PARTITION_SEC);
-		}
-
-		/* make our updates visible */
-		CommandCounterIncrement();
-	}
 }

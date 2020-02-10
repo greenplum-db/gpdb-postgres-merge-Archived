@@ -610,8 +610,7 @@ static bool prebuild_temp_table(Relation rel, RangeVar *tmpname, DistributedBy *
 ObjectAddress
 DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 			   ObjectAddress *typaddress, const char *queryString,
-			   bool dispatch,
-			   bool useChangedOpts, GpPolicy *intoPolicy)
+			   bool dispatch, bool useChangedOpts, GpPolicy *intoPolicy)
 {
 	char		relname[NAMEDATALEN];
 	Oid			namespaceId;

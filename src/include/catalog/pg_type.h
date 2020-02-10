@@ -360,4 +360,6 @@ extern char *makeArrayTypeName(const char *typeName, Oid typeNamespace);
 extern bool moveArrayTypeName(Oid typeOid, const char *typeName,
 							  Oid typeNamespace);
 
+extern void add_type_encoding(Oid typid, Datum typoptions);
+
 #endif							/* PG_TYPE_H */

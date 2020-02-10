@@ -92,12 +92,7 @@ static bool GetTupleForTrigger(EState *estate,
 							   LockTupleMode lockmode,
 							   TupleTableSlot *oldslot,
 							   TupleTableSlot **newSlot);
-static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
-									 int tgindx,
-									 FmgrInfo *finfo,
-									 Instrumentation *instr,
-									 MemoryContext per_tuple_context);
-ostatic void AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
+static void AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 								  int event, bool row_trigger,
 								  TupleTableSlot *oldtup, TupleTableSlot *newtup,
 								  List *recheckIndexes, Bitmapset *modifiedCols,
@@ -809,7 +804,6 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	 */
 	tgrel = table_open(TriggerRelationId, RowExclusiveLock);
 
-<<<<<<< HEAD
 	/*
 	 * For RI constraint triggers, the trigger's name is derived from the
 	 * trigger OID. That creates a chicken-and-egg problem with the usual
@@ -821,11 +815,8 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	if (OidIsValid(stmt->trigOid))
 		trigoid = stmt->trigOid;
 	else
-		trigoid = GetNewOid(tgrel);
-=======
-	trigoid = GetNewOidWithIndex(tgrel, TriggerOidIndexId,
-								 Anum_pg_trigger_oid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		trigoid = GetNewOidWithIndex(tgrel, TriggerOidIndexId,
+									 Anum_pg_trigger_oid);
 
 	/*
 	 * If trigger is internally generated, modify the provided trigger name to
@@ -891,7 +882,6 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 															 CStringGetDatum(trigname));
 	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(funcoid);
 	values[Anum_pg_trigger_tgtype - 1] = Int16GetDatum(tgtype);
-<<<<<<< HEAD
 	
 	/*
 	 * Special for Greenplum Database: Ignore foreign keys for now. Create
@@ -915,11 +905,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 			elog(WARNING, "unrecognized internal trigger function %u", funcoid);
 	}
 	values[Anum_pg_trigger_tgenabled - 1] = CharGetDatum(tgenabled);
-	values[Anum_pg_trigger_tgisinternal - 1] = BoolGetDatum(isInternal);
-=======
-	values[Anum_pg_trigger_tgenabled - 1] = CharGetDatum(TRIGGER_FIRES_ON_ORIGIN);
 	values[Anum_pg_trigger_tgisinternal - 1] = BoolGetDatum(isInternal || in_partition);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	values[Anum_pg_trigger_tgconstrrelid - 1] = ObjectIdGetDatum(constrrelid);
 	values[Anum_pg_trigger_tgconstrindid - 1] = ObjectIdGetDatum(indexOid);
 	values[Anum_pg_trigger_tgconstraint - 1] = ObjectIdGetDatum(constraintOid);
