@@ -28,17 +28,8 @@
 
 
 static char *fetch_cursor_param_value(ExprContext *econtext, int paramId);
-<<<<<<< HEAD
-static ScanState *search_plan_tree(PlanState *node, Oid table_oid);
-#ifdef NOT_USED
-static ScanState *search_plan_tree(PlanState *node, Oid table_oid,
-				 bool *pending_rescan);
-#endif /* NOT_USED */
-=======
 static ScanState *search_plan_tree(PlanState *node, Oid table_oid,
 								   bool *pending_rescan);
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * execCurrentOf
@@ -197,9 +188,14 @@ getCurrentOf(CurrentOfExpr *cexpr,
 	 * gpdb partition table routine is different with upstream
 	 * so we hold private updatable check method.
 	 */
-	if(rel_is_partitioned(table_oid)
+	if(
+		/* GPDB_12_MERGE_FIXME: how to do this now that we use upstream partitioning? */
+#if 0
+		rel_is_partitioned(table_oid)
 	|| rel_is_leaf_partition(table_oid)
-	|| get_rel_persistence(table_oid) == RELPERSISTENCE_TEMP)
+	||
+#endif
+		get_rel_persistence(table_oid) == RELPERSISTENCE_TEMP)
 	{
 		/*
 		 * The referenced cursor must be simply updatable. This has already
@@ -221,7 +217,7 @@ getCurrentOf(CurrentOfExpr *cexpr,
 		 * simply error out cleanly.
 		 */
 		Index varno = extractSimplyUpdatableRTEIndex(queryDesc->plannedstmt->rtable);
-		Oid cursor_relid = getrelid(varno, queryDesc->plannedstmt->rtable);
+		Oid cursor_relid = rt_fetch(varno, queryDesc->plannedstmt->rtable)->relid;
 		if (table_oid != cursor_relid)
 			ereport(ERROR,
 			        (errcode(ERRCODE_INVALID_CURSOR_STATE),
@@ -231,12 +227,15 @@ getCurrentOf(CurrentOfExpr *cexpr,
 	else
 	{
 		ScanState  *scanstate;
+		bool		pending_rescan = false;
+
 		/*
 		 * Without FOR UPDATE, we dig through the cursor's plan to find the
 		 * scan node.  Fail if it's not there or buried underneath
 		 * aggregation.
 		 */
-		scanstate = search_plan_tree(queryDesc->planstate, table_oid);
+		scanstate = search_plan_tree(queryDesc->planstate, table_oid,
+									 &pending_rescan);
 		if (!scanstate)
 			ereport(ERROR,
 			        (errcode(ERRCODE_INVALID_CURSOR_STATE),
@@ -270,12 +269,8 @@ getCurrentOf(CurrentOfExpr *cexpr,
 	 * has been received by a Motion node higher up in the tree instead. So
 	 * we use a different approach.
 	 */
-<<<<<<< HEAD
 #if 0
-	if (queryDesc->estate->es_rowMarks)
-=======
 	if (queryDesc->estate->es_rowmarks)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		ExecRowMark *erm;
 		Index		i;
@@ -487,7 +482,7 @@ getCurrentOf(CurrentOfExpr *cexpr,
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("%s is not updatable",
-								get_rel_name_partition(*current_table_oid))));
+								get_rel_name(*current_table_oid))));
 		}
 
 		if (p_cursor_name)
@@ -573,43 +568,20 @@ search_plan_tree(PlanState *node, Oid table_oid,
 		case T_TidScanState:
 		case T_ForeignScanState:
 		case T_CustomScanState:
-		{
-			ScanState  *sstate = (ScanState *) node;
+			{
+				ScanState  *sstate = (ScanState *) node;
 
-<<<<<<< HEAD
-			if (RelationGetRelid(sstate->ss_currentRelation) == table_oid)
-				return sstate;
-			break;
-		}
-=======
 				if (RelationGetRelid(sstate->ss_currentRelation) == table_oid)
 					result = sstate;
 				break;
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * For Append, we must look through the members; watch out for
 			 * multiple matches (possible if it was from UNION ALL)
 			 */
 		case T_AppendState:
-		{
-			AppendState *astate = (AppendState *) node;
-			ScanState  *result = NULL;
-			int			i;
-
-			for (i = 0; i < astate->as_nplans; i++)
 			{
-<<<<<<< HEAD
-				ScanState  *elem = search_plan_tree(astate->appendplans[i],
-				                                    table_oid);
-
-				if (!elem)
-					continue;
-				if (result)
-					return NULL;	/* multiple matches */
-				result = elem;
-=======
 				AppendState *astate = (AppendState *) node;
 				int			i;
 
@@ -626,32 +598,13 @@ search_plan_tree(PlanState *node, Oid table_oid,
 					result = elem;
 				}
 				break;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
-			return result;
-		}
 
 			/*
 			 * Similarly for MergeAppend
 			 */
 		case T_MergeAppendState:
-		{
-			MergeAppendState *mstate = (MergeAppendState *) node;
-			ScanState  *result = NULL;
-			int			i;
-
-			for (i = 0; i < mstate->ms_nplans; i++)
 			{
-<<<<<<< HEAD
-				ScanState  *elem = search_plan_tree(mstate->mergeplans[i],
-				                                    table_oid);
-
-				if (!elem)
-					continue;
-				if (result)
-					return NULL;	/* multiple matches */
-				result = elem;
-=======
 				MergeAppendState *mstate = (MergeAppendState *) node;
 				int			i;
 
@@ -668,10 +621,7 @@ search_plan_tree(PlanState *node, Oid table_oid,
 					result = elem;
 				}
 				break;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
-			return result;
-		}
 
 			/*
 			 * Result and Limit can be descended through (these are safe
@@ -694,7 +644,8 @@ search_plan_tree(PlanState *node, Oid table_oid,
 			break;
 
 		case T_MotionState:
-			return search_plan_tree(node->lefttree, table_oid);
+			result = search_plan_tree(node->lefttree, table_oid, pending_rescan);
+			break;
 
 		default:
 			/* Otherwise, assume we can't descend through it */
