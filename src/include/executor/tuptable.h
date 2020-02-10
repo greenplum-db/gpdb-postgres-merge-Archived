@@ -37,8 +37,6 @@
  *    (TTSOpsMinimalTuple)
  * 4. "virtual" tuple consisting of Datum/isnull arrays (TTSOpsVirtual)
  *
- * GPDB_12_MERGE_FIXME: there will be another tuple table slot type fore MemTuples
- *
  * The first two cases are similar in that they both deal with "materialized"
  * tuples, but resource management is different.  For a tuple in a disk page
  * we need to hold a pin on the buffer until the TupleTableSlot's reference
@@ -227,6 +225,7 @@ extern PGDLLIMPORT const TupleTableSlotOps TTSOpsHeapTuple;
 extern PGDLLIMPORT const TupleTableSlotOps TTSOpsMinimalTuple;
 extern PGDLLIMPORT const TupleTableSlotOps TTSOpsBufferHeapTuple;
 
+/* GPDB: slot type to hold MemTuples */
 extern PGDLLIMPORT const TupleTableSlotOps TTSOpsMemTuple;
 
 #define TTS_IS_VIRTUAL(slot) ((slot)->tts_ops == &TTSOpsVirtual)
@@ -341,6 +340,8 @@ extern MemTuple ExecFetchSlotMemTuple(TupleTableSlot *slot, bool materialize, bo
 extern TupleTableSlot *ExecStoreMemTuple(MemTuple tuple,
 										 TupleTableSlot *slot,
 										 bool shouldFree);
+extern MemTuple ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt,
+									   char *dest, unsigned int *len);
 
 #ifndef FRONTEND
 

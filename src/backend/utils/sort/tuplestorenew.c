@@ -1223,11 +1223,11 @@ bool ntuplestore_acc_current_tupleslot(NTupleStoreAccessor *tsa, TupleTableSlot 
 
 		Assert(len == plobref->size);
 
-		ExecStoreMinimalTuple(tuple, slot, true);
+		ExecStoreMemTuple(tuple, slot, true);
 		return true;
 	}
 
-	ExecStoreMinimalTuple(tuple, slot, false);
+	ExecStoreMemTuple(tuple, slot, false);
 	return true;
 }
 
