@@ -18,6 +18,8 @@
 
 #include "postgres.h"
 
+#include <math.h>
+
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "access/heapam.h"
@@ -26,6 +28,7 @@
 #include "access/aosegfiles.h"
 #include "access/appendonlytid.h"
 #include "access/appendonlywriter.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_proc.h"
@@ -47,6 +50,18 @@
 #include "utils/fmgroids.h"
 #include "utils/numeric.h"
 #include "utils/visibility_summary.h"
+
+/*
+ * GPDB_12_MERGE_FIXME: These used to be in utils/rel.h. But I wanted to remove
+ * them, so that we find all the places that used them, that probably shouldn't
+ * anymore. In this file, these are used quite reasonably.
+ */
+#define RelationIsAoRows(relation) \
+	((bool)(((relation)->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID)))
+#define RelationIsAoCols(relation) \
+	((bool)(((relation)->rd_rel->relam == AOCO_TABLE_AM_OID)))
+#define RelationIsAppendOptimized(relation) \
+	(RelationIsAoRows(relation) || RelationIsAoCols(relation))
 
 static float8 aorow_compression_ratio_internal(Relation parentrel);
 static void UpdateFileSegInfo_internal(Relation parentrel,
@@ -145,7 +160,7 @@ InsertInitialSegnoEntry(Relation parentrel, int segno)
 
 	heap_freetuple(pg_aoseg_tuple);
 
-	heap_close(pg_aoseg_rel, RowExclusiveLock);
+	table_close(pg_aoseg_rel, RowExclusiveLock);
 }
 
 /*
@@ -166,7 +181,7 @@ GetFileSegInfo(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot, int segn
 {
 	Relation	pg_aoseg_rel;
 	TupleDesc	pg_aoseg_dsc;
-	HeapScanDesc aoscan;
+	SysScanDesc aoscan;
 	HeapTuple	tuple = NULL;
 	HeapTuple	fstuple = NULL;
 	int			tuple_segno = InvalidFileSegNumber;
@@ -177,12 +192,12 @@ GetFileSegInfo(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot, int segn
 	 * Check the pg_aoseg relation to be certain the ao table segment file is
 	 * there.
 	 */
-	pg_aoseg_rel = heap_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
+	pg_aoseg_rel = table_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
 	/* Do heap scan on pg_aoseg relation */
-	aoscan = heap_beginscan(pg_aoseg_rel, appendOnlyMetaDataSnapshot, 0, NULL);
-	while ((tuple = heap_getnext(aoscan, ForwardScanDirection)) != NULL)
+	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true, appendOnlyMetaDataSnapshot, 0, NULL);
+	while ((tuple = systable_getnext(aoscan)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(tuple, Anum_pg_aoseg_segno, pg_aoseg_dsc, &isNull));
 		if (isNull)
@@ -215,8 +230,8 @@ GetFileSegInfo(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot, int segn
 	if (!HeapTupleIsValid(fstuple))
 	{
 		/* This segment file does not have an entry. */
-		heap_endscan(aoscan);
-		heap_close(pg_aoseg_rel, AccessShareLock);
+		systable_endscan(aoscan);
+		table_close(pg_aoseg_rel, AccessShareLock);
 		return NULL;
 	}
 
@@ -300,8 +315,8 @@ GetFileSegInfo(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot, int segn
 
 	/* Finish up scan and close appendonly catalog. */
 	heap_freetuple(fstuple);
-	heap_endscan(aoscan);
-	heap_close(pg_aoseg_rel, AccessShareLock);
+	systable_endscan(aoscan);
+	table_close(pg_aoseg_rel, AccessShareLock);
 
 	return fsinfo;
 }
@@ -325,15 +340,14 @@ GetAllFileSegInfo(Relation parentrel,
 
 	Assert(RelationIsAoRows(parentrel));
 
-	pg_aoseg_rel = heap_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
+	pg_aoseg_rel = table_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
 
-	result = GetAllFileSegInfo_pg_aoseg_rel(
-											RelationGetRelationName(parentrel),
+	result = GetAllFileSegInfo_pg_aoseg_rel(RelationGetRelationName(parentrel),
 											pg_aoseg_rel,
 											appendOnlyMetaDataSnapshot,
 											totalsegs);
 
-	heap_close(pg_aoseg_rel, AccessShareLock);
+	table_close(pg_aoseg_rel, AccessShareLock);
 
 	return result;
 }
@@ -365,7 +379,7 @@ GetAllFileSegInfo_pg_aoseg_rel(char *relationName,
 {
 	TupleDesc	pg_aoseg_dsc;
 	HeapTuple	tuple;
-	HeapScanDesc aoscan;
+	SysScanDesc aoscan;
 	FileSegInfo **allseginfo;
 	int			seginfo_no;
 	int			seginfo_slot_no = AO_FILESEGINFO_ARRAY_SIZE;
@@ -392,8 +406,8 @@ GetAllFileSegInfo_pg_aoseg_rel(char *relationName,
 	/*
 	 * Now get the actual segfile information
 	 */
-	aoscan = heap_beginscan(pg_aoseg_rel, appendOnlyMetaDataSnapshot, 0, NULL);
-	while ((tuple = heap_getnext(aoscan, ForwardScanDirection)) != NULL)
+	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true, appendOnlyMetaDataSnapshot, 0, NULL);
+	while ((tuple = systable_getnext(aoscan)) != NULL)
 	{
 		/* dynamically expand space for FileSegInfo* array */
 		if (seginfo_no >= seginfo_slot_no)
@@ -493,7 +507,7 @@ GetAllFileSegInfo_pg_aoseg_rel(char *relationName,
 
 		CHECK_FOR_INTERRUPTS();
 	}
-	heap_endscan(aoscan);
+	systable_endscan(aoscan);
 
 	*totalsegs = seginfo_no;
 
@@ -545,7 +559,7 @@ ClearFileSegInfo(Relation parentrel,
 
 	Relation	pg_aoseg_rel;
 	TupleDesc	pg_aoseg_dsc;
-	HeapScanDesc aoscan;
+	TableScanDesc aoscan;
 	HeapTuple	tuple = NULL;
 	HeapTuple	new_tuple;
 	int			tuple_segno = InvalidFileSegNumber;
@@ -579,10 +593,10 @@ ClearFileSegInfo(Relation parentrel,
 	/*
 	 * Open the aoseg relation and scan for tuple.
 	 */
-	pg_aoseg_rel = heap_open(parentrel->rd_appendonly->segrelid, RowExclusiveLock);
+	pg_aoseg_rel = table_open(parentrel->rd_appendonly->segrelid, RowExclusiveLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
-	aoscan = heap_beginscan_catalog(pg_aoseg_rel, 0, NULL);
+	aoscan = table_beginscan_catalog(pg_aoseg_rel, 0, NULL);
 	while (segno != tuple_segno && (tuple = heap_getnext(aoscan, ForwardScanDirection)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(tuple, Anum_pg_aoseg_segno, pg_aoseg_dsc, &isNull));
@@ -631,7 +645,7 @@ ClearFileSegInfo(Relation parentrel,
 	heap_freetuple(new_tuple);
 
 	heap_endscan(aoscan);
-	heap_close(pg_aoseg_rel, RowExclusiveLock);
+	table_close(pg_aoseg_rel, RowExclusiveLock);
 
 	pfree(new_record);
 	pfree(new_record_nulls);
@@ -692,7 +706,7 @@ UpdateFileSegInfo_internal(Relation parentrel,
 
 	Relation	pg_aoseg_rel;
 	TupleDesc	pg_aoseg_dsc;
-	HeapScanDesc aoscan;
+	TableScanDesc aoscan;
 	HeapTuple	tuple = NULL;
 	HeapTuple	new_tuple;
 	int			tuple_segno = InvalidFileSegNumber;
@@ -729,10 +743,10 @@ UpdateFileSegInfo_internal(Relation parentrel,
 	/*
 	 * Open the aoseg relation and scan for tuple.
 	 */
-	pg_aoseg_rel = heap_open(parentrel->rd_appendonly->segrelid, RowExclusiveLock);
+	pg_aoseg_rel = table_open(parentrel->rd_appendonly->segrelid, RowExclusiveLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
-	aoscan = heap_beginscan_catalog(pg_aoseg_rel, 0, NULL);
+	aoscan = table_beginscan_catalog(pg_aoseg_rel, 0, NULL);
 	while (segno != tuple_segno && (tuple = heap_getnext(aoscan, ForwardScanDirection)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(tuple, Anum_pg_aoseg_segno, pg_aoseg_dsc, &isNull));
@@ -882,7 +896,7 @@ UpdateFileSegInfo_internal(Relation parentrel,
 
 	/* Finish up scan */
 	heap_endscan(aoscan);
-	heap_close(pg_aoseg_rel, RowExclusiveLock);
+	table_close(pg_aoseg_rel, RowExclusiveLock);
 
 	pfree(new_record);
 	pfree(new_record_nulls);
@@ -902,7 +916,7 @@ GetSegFilesTotals(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 	Relation	pg_aoseg_rel;
 	TupleDesc	pg_aoseg_dsc;
 	HeapTuple	tuple;
-	HeapScanDesc aoscan;
+	SysScanDesc aoscan;
 	FileSegTotals *result;
 	Datum		eof,
 				eof_uncompressed,
@@ -917,12 +931,13 @@ GetSegFilesTotals(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 
 	result = (FileSegTotals *) palloc0(sizeof(FileSegTotals));
 
-	pg_aoseg_rel = heap_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
+	pg_aoseg_rel = table_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
-	aoscan = heap_beginscan(pg_aoseg_rel, appendOnlyMetaDataSnapshot, 0, NULL);
+	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true,
+								appendOnlyMetaDataSnapshot, 0, NULL);
 
-	while ((tuple = heap_getnext(aoscan, ForwardScanDirection)) != NULL)
+	while ((tuple = systable_getnext(aoscan)) != NULL)
 	{
 		eof = fastgetattr(tuple, Anum_pg_aoseg_eof, pg_aoseg_dsc, &isNull);
 		tupcount = fastgetattr(tuple, Anum_pg_aoseg_tupcount, pg_aoseg_dsc, &isNull);
@@ -947,8 +962,8 @@ GetSegFilesTotals(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 		CHECK_FOR_INTERRUPTS();
 	}
 
-	heap_endscan(aoscan);
-	heap_close(pg_aoseg_rel, AccessShareLock);
+	systable_endscan(aoscan);
+	table_close(pg_aoseg_rel, AccessShareLock);
 
 	return result;
 }
@@ -958,6 +973,9 @@ GetSegFilesTotals(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
  *
  * Get the total bytes for a specific AO table from the pg_aoseg table on this local segdb.
  * (A version of GetSegFilesTotals that just gets the total bytes.)
+ *
+ * GPDB_12_MERGE_FIXME: logic was copied to appendonly_relation_size(). Can this be removed
+ * now?
  */
 int64
 GetAOTotalBytes(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
@@ -966,7 +984,7 @@ GetAOTotalBytes(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 	Relation	pg_aoseg_rel;
 	TupleDesc	pg_aoseg_dsc;
 	HeapTuple	tuple;
-	HeapScanDesc aoscan;
+	SysScanDesc aoscan;
 	int64		result;
 	Datum		eof;
 	bool		isNull;
@@ -975,12 +993,13 @@ GetAOTotalBytes(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 
 	result = 0;
 
-	pg_aoseg_rel = heap_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
+	pg_aoseg_rel = table_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
-	aoscan = heap_beginscan(pg_aoseg_rel, appendOnlyMetaDataSnapshot, 0, NULL);
+	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true,
+								appendOnlyMetaDataSnapshot, 0, NULL);
 
-	while ((tuple = heap_getnext(aoscan, ForwardScanDirection)) != NULL)
+	while ((tuple = systable_getnext(aoscan)) != NULL)
 	{
 		eof = fastgetattr(tuple, Anum_pg_aoseg_eof, pg_aoseg_dsc, &isNull);
 		Assert(!isNull);
@@ -990,8 +1009,8 @@ GetAOTotalBytes(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 		CHECK_FOR_INTERRUPTS();
 	}
 
-	heap_endscan(aoscan);
-	heap_close(pg_aoseg_rel, AccessShareLock);
+	systable_endscan(aoscan);
+	table_close(pg_aoseg_rel, AccessShareLock);
 
 	return result;
 }
@@ -1084,14 +1103,14 @@ gp_aoseg_history(PG_FUNCTION_ARGS)
 
 		context->aoRelOid = aoRelOid;
 
-		aocsRel = heap_open(aoRelOid, NoLock);
+		aocsRel = table_open(aoRelOid, NoLock);
 		if (!RelationIsAoRows(aocsRel))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("'%s' is not an append-only row relation",
 							RelationGetRelationName(aocsRel))));
 
-		pg_aoseg_rel = heap_open(aocsRel->rd_appendonly->segrelid, NoLock);
+		pg_aoseg_rel = table_open(aocsRel->rd_appendonly->segrelid, NoLock);
 
 		context->aoSegfileArray =
 			GetAllFileSegInfo_pg_aoseg_rel(
@@ -1100,8 +1119,8 @@ gp_aoseg_history(PG_FUNCTION_ARGS)
 										   SnapshotAny, //Get ALL tuples from pg_aoseg_ % including aborted and in - progress ones.
 										   & context->totalAoSegFiles);
 
-		heap_close(pg_aoseg_rel, NoLock);
-		heap_close(aocsRel, NoLock);
+		table_close(pg_aoseg_rel, NoLock);
+		table_close(aocsRel, NoLock);
 
 		/* Iteration position. */
 		context->segfileArrayIndex = 0;
@@ -1180,7 +1199,7 @@ gp_update_aorow_master_stats_internal(Relation parentrel, Snapshot appendOnlyMet
 	/*
 	 * assemble our query string
 	 */
-	aosegrel = heap_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
+	aosegrel = table_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
 
 	initStringInfo(&sqlstmt);
 	appendStringInfo(&sqlstmt, "select segno,sum(tupcount) "
@@ -1189,7 +1208,7 @@ gp_update_aorow_master_stats_internal(Relation parentrel, Snapshot appendOnlyMet
 					 get_namespace_name(RelationGetNamespace(aosegrel)),
 					 RelationGetRelationName(aosegrel));
 
-	heap_close(aosegrel, AccessShareLock);
+	table_close(aosegrel, AccessShareLock);
 
 	PG_TRY();
 	{
@@ -1398,14 +1417,14 @@ gp_aoseg(PG_FUNCTION_ARGS)
 
 		context->aoRelOid = aoRelOid;
 
-		aocsRel = heap_open(aoRelOid, NoLock);
+		aocsRel = table_open(aoRelOid, NoLock);
 		if (!RelationIsAoRows(aocsRel))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("'%s' is not an append-only row relation",
 							RelationGetRelationName(aocsRel))));
 
-		pg_aoseg_rel = heap_open(aocsRel->rd_appendonly->segrelid, NoLock);
+		pg_aoseg_rel = table_open(aocsRel->rd_appendonly->segrelid, NoLock);
 
 		Snapshot	snapshot;
 		snapshot = RegisterSnapshot(GetLatestSnapshot());
@@ -1416,8 +1435,8 @@ gp_aoseg(PG_FUNCTION_ARGS)
 										   &context->totalAoSegFiles);
 		UnregisterSnapshot(snapshot);
 
-		heap_close(pg_aoseg_rel, NoLock);
-		heap_close(aocsRel, NoLock);
+		table_close(pg_aoseg_rel, NoLock);
+		table_close(aocsRel, NoLock);
 
 		/* Iteration position. */
 		context->segfileArrayIndex = 0;
@@ -1506,7 +1525,7 @@ gp_update_ao_master_stats(PG_FUNCTION_ARGS)
 	Assert(Gp_role == GP_ROLE_DISPATCH);
 
 	/* open the parent (main) relation */
-	parentrel = heap_open(relid, RowExclusiveLock);
+	parentrel = table_open(relid, RowExclusiveLock);
 
 	if (!RelationIsAppendOptimized(parentrel))
 		ereport(ERROR,
@@ -1523,7 +1542,7 @@ gp_update_ao_master_stats(PG_FUNCTION_ARGS)
 	}
 	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 
-	heap_close(parentrel, RowExclusiveLock);
+	table_close(parentrel, RowExclusiveLock);
 
 	PG_RETURN_INT64(result);
 }
@@ -1571,7 +1590,7 @@ get_ao_distribution(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/* open the parent (main) relation */
-		parentrel = heap_open(relid, AccessShareLock);
+		parentrel = table_open(relid, AccessShareLock);
 
 		/*
 		 * check permission to SELECT from this table (this function is
@@ -1582,7 +1601,7 @@ get_ao_distribution(PG_FUNCTION_ARGS)
 
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult,
-						   ACL_KIND_CLASS,
+						   OBJECT_TABLE,
 						   RelationGetRelationName(parentrel));
 
 		/*
@@ -1601,7 +1620,7 @@ get_ao_distribution(PG_FUNCTION_ARGS)
 		/*
 		 * assemble our query string
 		 */
-		aosegrel = heap_open(segrelid, AccessShareLock);
+		aosegrel = table_open(segrelid, AccessShareLock);
 
 		/*
 		 * NOTE: we don't need quoting here. The aux AO segment heap table's name
@@ -1613,7 +1632,7 @@ get_ao_distribution(PG_FUNCTION_ARGS)
 						   get_namespace_name(RelationGetNamespace(aosegrel)),
 						   RelationGetRelationName(aosegrel));
 
-		heap_close(aosegrel, AccessShareLock);
+		table_close(aosegrel, AccessShareLock);
 
 		PG_TRY();
 		{
@@ -1667,7 +1686,7 @@ get_ao_distribution(PG_FUNCTION_ARGS)
 		PG_END_TRY();
 
 		pfree(sqlstmt);
-		heap_close(parentrel, AccessShareLock);
+		table_close(parentrel, AccessShareLock);
 	}
 
 	/*
@@ -1737,7 +1756,7 @@ get_ao_compression_ratio(PG_FUNCTION_ARGS)
 	Assert(Gp_role == GP_ROLE_DISPATCH);
 
 	/* open the parent (main) relation */
-	parentrel = heap_open(relid, AccessShareLock);
+	parentrel = table_open(relid, AccessShareLock);
 
 	if (!RelationIsAppendOptimized(parentrel))
 		ereport(ERROR,
@@ -1750,7 +1769,7 @@ get_ao_compression_ratio(PG_FUNCTION_ARGS)
 	else
 		result = aocol_compression_ratio_internal(parentrel);
 
-	heap_close(parentrel, AccessShareLock);
+	table_close(parentrel, AccessShareLock);
 
 	PG_RETURN_FLOAT8(result);
 }
@@ -1777,14 +1796,15 @@ aorow_compression_ratio_internal(Relation parentrel)
 	/*
 	 * assemble our query string
 	 */
-	aosegrel = heap_open(segrelid, AccessShareLock);
+	// GPDB_12_MERGE_FIXME: quoting and escaping?
+	aosegrel = table_open(segrelid, AccessShareLock);
 	initStringInfo(&sqlstmt);
 	appendStringInfo(&sqlstmt, "select sum(eof), sum(eofuncompressed) "
 					 "from gp_dist_random('%s.%s')",
 					 get_namespace_name(RelationGetNamespace(aosegrel)),
 					 RelationGetRelationName(aosegrel));
 
-	heap_close(aosegrel, AccessShareLock);
+	table_close(aosegrel, AccessShareLock);
 
 	PG_TRY();
 	{

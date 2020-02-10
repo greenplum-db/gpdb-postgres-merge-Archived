@@ -15,6 +15,7 @@
 #define TUPTABLE_H
 
 #include "access/htup.h"
+#include "access/memtup.h"
 #include "access/sysattr.h"
 #include "access/tupdesc.h"
 #include "access/htup_details.h"
@@ -226,10 +227,14 @@ extern PGDLLIMPORT const TupleTableSlotOps TTSOpsHeapTuple;
 extern PGDLLIMPORT const TupleTableSlotOps TTSOpsMinimalTuple;
 extern PGDLLIMPORT const TupleTableSlotOps TTSOpsBufferHeapTuple;
 
+extern PGDLLIMPORT const TupleTableSlotOps TTSOpsMemTuple;
+
 #define TTS_IS_VIRTUAL(slot) ((slot)->tts_ops == &TTSOpsVirtual)
 #define TTS_IS_HEAPTUPLE(slot) ((slot)->tts_ops == &TTSOpsHeapTuple)
 #define TTS_IS_MINIMALTUPLE(slot) ((slot)->tts_ops == &TTSOpsMinimalTuple)
 #define TTS_IS_BUFFERTUPLE(slot) ((slot)->tts_ops == &TTSOpsBufferHeapTuple)
+
+#define TTS_IS_MEMTUPLE(slot) ((slot)->tts_ops == &TTSOpsMemTuple)
 
 
 /*
@@ -332,6 +337,10 @@ extern void slot_getmissingattrs(TupleTableSlot *slot, int startAttNum,
 								 int lastAttNum);
 extern void slot_getsomeattrs_int(TupleTableSlot *slot, int attnum);
 
+extern MemTuple ExecFetchSlotMemTuple(TupleTableSlot *slot, bool materialize, bool *shouldFree);
+extern TupleTableSlot *ExecStoreMemTuple(MemTuple tuple,
+										 TupleTableSlot *slot,
+										 bool shouldFree);
 
 #ifndef FRONTEND
 

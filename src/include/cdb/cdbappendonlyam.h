@@ -157,10 +157,14 @@ typedef struct AppendOnlyExecutorReadBlock
 } AppendOnlyExecutorReadBlock;
 
 /*
- * used for scan of append only relations using BufferedRead and VarBlocks
+ * Descriptor for append-only table scans.
+ *
+ * Used for scan of append only relations using BufferedRead and VarBlocks
  */
 typedef struct AppendOnlyScanDescData
 {
+	TableScanDescData rs_base;	/* AM independent part of the descriptor */
+
 	/* scan parameters */
 	Relation	aos_rd;				/* target relation descriptor */
 	Snapshot	appendOnlyMetaDataSnapshot;
@@ -321,27 +325,39 @@ typedef AppendOnlyFetchDescData *AppendOnlyFetchDesc;
 typedef struct AppendOnlyUpdateDescData *AppendOnlyUpdateDesc;
 typedef struct AppendOnlyDeleteDescData *AppendOnlyDeleteDesc;
 
+/*
+ * Descriptor for fetches from table via an index.
+ */
+typedef struct IndexFetchAppendOnlyData
+{
+	IndexFetchTableData xs_base;	/* AM independent part of the descriptor */
+
+	AppendOnlyFetchDesc aofetch;
+} IndexFetchAppendOnlyData;
 
 /* ----------------
  *		function prototypes for appendonly access method
  * ----------------
  */
 
-extern AppendOnlyScanDesc appendonly_beginscan(Relation relation,
-											   Snapshot snapshot,
-											   Snapshot appendOnlyMetaDataSnapshot,
-											   int nkeys, 
-											   ScanKey key);
 extern AppendOnlyScanDesc appendonly_beginrangescan(Relation relation, 
 		Snapshot snapshot,
 		Snapshot appendOnlyMetaDataSnapshot, 
 		int *segfile_no_arr, int segfile_count,
 		int nkeys, ScanKey keys);
-extern void appendonly_rescan(AppendOnlyScanDesc scan, ScanKey key);
-extern void appendonly_endscan(AppendOnlyScanDesc scan);
-extern bool appendonly_getnext(AppendOnlyScanDesc scan,
-							   ScanDirection direction,
-							   TupleTableSlot *slot);
+
+extern TableScanDesc appendonly_beginscan(Relation relation,
+										  Snapshot snapshot,
+										  int nkeys, struct ScanKeyData *key,
+										  ParallelTableScanDesc pscan,
+										  uint32 flags);
+extern void appendonly_rescan(TableScanDesc scan, ScanKey key,
+								bool set_params, bool allow_strat,
+								bool allow_sync, bool allow_pagemode);
+extern void appendonly_endscan(TableScanDesc scan);
+extern bool appendonly_getnextslot(TableScanDesc scan,
+								   ScanDirection direction,
+								   TupleTableSlot *slot);
 extern AppendOnlyFetchDesc appendonly_fetch_init(
 	Relation 	relation,
 	Snapshot    snapshot,
@@ -352,10 +368,9 @@ extern bool appendonly_fetch(
 	TupleTableSlot *slot);
 extern void appendonly_fetch_finish(AppendOnlyFetchDesc aoFetchDesc);
 extern AppendOnlyInsertDesc appendonly_insert_init(Relation rel, int segno, bool update_mode);
-extern Oid appendonly_insert(
+extern void appendonly_insert(
 		AppendOnlyInsertDesc aoInsertDesc, 
 		MemTuple instup, 
-		Oid tupleOid,
 		AOTupleId *aoTupleId);
 extern void appendonly_insert_finish(AppendOnlyInsertDesc aoInsertDesc);
 extern BlockNumber RelationGuessNumberOfBlocks(double totalbytes);
@@ -374,5 +389,9 @@ extern TM_Result appendonly_update(
 		AOTupleId* newAoTupleId);
 
 extern void appendonly_update_finish(AppendOnlyUpdateDesc aoUpdateDesc);
+
+struct VacuumParams;
+extern void appendonly_vacuum_rel(Relation onerel, struct VacuumParams *params,
+								  BufferAccessStrategy bstrategy);
 
 #endif   /* CDBAPPENDONLYAM_H */

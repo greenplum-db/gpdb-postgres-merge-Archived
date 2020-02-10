@@ -26,7 +26,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/file.h>
-#include <access/aomd.h>
 
 #include "access/aomd.h"
 #include "access/appendonlytid.h"
@@ -35,6 +34,7 @@
 #include "cdb/cdbappendonlystorage.h"
 #include "cdb/cdbappendonlyxlog.h"
 #include "common/relpath.h"
+#include "pgstat.h"
 #include "utils/guc.h"
 
 static bool mdunlink_ao_perFile(const int segno, void *ctx);
@@ -194,7 +194,7 @@ TruncateAOSegmentFile(File fd, Relation rel, int32 segFileNum, int64 offset)
 	 * Call the 'fd' module with a 64-bit length since AO segment files
 	 * can be multi-gigabyte to the terabytes...
 	 */
-	if (FileTruncate(fd, offset) != 0)
+	if (FileTruncate(fd, offset, WAIT_EVENT_DATA_FILE_TRUNCATE) != 0)
 		ereport(ERROR,
 				(errmsg("\"%s\": failed to truncate data after eof: %m",
 					    relname)));
@@ -298,16 +298,11 @@ copy_file(char *srcsegpath, char *dstsegpath,
 				(errcode_for_file_access(),
 				 (errmsg("could not create destination file %s: %m", dstsegpath))));
 
-	left = FileSeek(srcFile, 0, SEEK_END);
+	left = FileSize(srcFile);
 	if (left < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 (errmsg("could not seek to end of file %s: %m", srcsegpath))));
-
-	if (FileSeek(srcFile, 0, SEEK_SET) < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 (errmsg("could not seek to beginning of file %s: %m", srcsegpath))));
 
 	offset = 0;
 	while(left > 0)
@@ -317,13 +312,13 @@ copy_file(char *srcsegpath, char *dstsegpath,
 		CHECK_FOR_INTERRUPTS();
 
 		len = Min(left, BLCKSZ);
-		if (FileRead(srcFile, buffer, len) != len)
+		if (FileRead(srcFile, buffer, offset, len, WAIT_EVENT_DATA_FILE_READ) != len)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not read %d bytes from file \"%s\": %m",
 							len, srcsegpath)));
 
-		if (FileWrite(dstFile, buffer, len) != len)
+		if (FileWrite(dstFile, buffer, offset, len, WAIT_EVENT_DATA_FILE_WRITE) != len)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not write %d bytes to file \"%s\": %m",
@@ -336,7 +331,7 @@ copy_file(char *srcsegpath, char *dstsegpath,
 		left -= len;
 	}
 
-	if (FileSync(dstFile) != 0)
+	if (FileSync(dstFile, WAIT_EVENT_DATA_FILE_IMMEDIATE_SYNC) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m",

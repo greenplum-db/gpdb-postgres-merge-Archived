@@ -12,10 +12,13 @@
  *------------------------------------------------------------------------------
 */
 #include "postgres.h"
+
 #include "access/appendonly_visimap.h"
 #include "access/appendonly_visimap_entry.h"
 #include "access/appendonly_visimap_store.h"
+#include "access/table.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "cdb/cdbappendonlyblockdirectory.h"
 #include "utils/guc.h"
@@ -76,8 +79,9 @@ gp_aovisimap(PG_FUNCTION_ARGS)
 		 */
 		context = (Context *) palloc0(sizeof(Context));
 
-		context->aorel = heap_open(aoRelOid, AccessShareLock);
-		if (!RelationIsAppendOptimized(context->aorel))
+		context->aorel = table_open(aoRelOid, AccessShareLock);
+		if (context->aorel->rd_rel->relam != APPENDOPTIMIZED_TABLE_AM_OID &&
+			context->aorel->rd_rel->relam != AOCO_TABLE_AM_OID)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -120,7 +124,7 @@ gp_aovisimap(PG_FUNCTION_ARGS)
 	}
 
 	AppendOnlyVisimapScan_Finish(&context->visiMapScan, AccessShareLock);
-	heap_close(context->aorel, AccessShareLock);
+	table_close(context->aorel, AccessShareLock);
 	pfree(context);
 	funcctx->user_fctx = NULL;
 	SRF_RETURN_DONE(funcctx);
@@ -184,8 +188,9 @@ gp_aovisimap_hidden_info(PG_FUNCTION_ARGS)
 		 */
 		context = (Context *) palloc0(sizeof(Context));
 
-		context->parentRelation = heap_open(aoRelOid, AccessShareLock);
-		if (!RelationIsAppendOptimized(context->parentRelation))
+		context->parentRelation = table_open(aoRelOid, AccessShareLock);
+		if (context->parentRelation->rd_rel->relam != APPENDOPTIMIZED_TABLE_AM_OID &&
+			context->parentRelation->rd_rel->relam != AOCO_TABLE_AM_OID)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -199,7 +204,7 @@ gp_aovisimap_hidden_info(PG_FUNCTION_ARGS)
 							   AccessShareLock,
 							   snapshot);
 
-		if (RelationIsAoRows(context->parentRelation))
+		if (context->parentRelation->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID)
 		{
 			context->appendonlySegfileInfo = GetAllFileSegInfo(context->parentRelation,
 															   snapshot,
@@ -207,7 +212,7 @@ gp_aovisimap_hidden_info(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			Assert(RelationIsAoCols(context->parentRelation));
+			Assert(context->parentRelation->rd_rel->relam == AOCO_TABLE_AM_OID);
 			context->aocsSegfileInfo = GetAllAOCSFileSegInfo(context->parentRelation,
 															 snapshot, &context->segfile_info_total);
 		}
@@ -273,7 +278,7 @@ gp_aovisimap_hidden_info(PG_FUNCTION_ARGS)
 		context->aocsSegfileInfo = NULL;
 
 	}
-	heap_close(context->parentRelation, AccessShareLock);
+	table_close(context->parentRelation, AccessShareLock);
 	pfree(context);
 	funcctx->user_fctx = NULL;
 
@@ -358,8 +363,9 @@ gp_aovisimap_entry(PG_FUNCTION_ARGS)
 		 */
 		context = (Context *) palloc0(sizeof(Context));
 
-		context->parentRelation = heap_open(aoRelOid, AccessShareLock);
-		if (!RelationIsAppendOptimized(context->parentRelation))
+		context->parentRelation = table_open(aoRelOid, AccessShareLock);
+		if (context->parentRelation->rd_rel->relam != APPENDOPTIMIZED_TABLE_AM_OID &&
+			context->parentRelation->rd_rel->relam != AOCO_TABLE_AM_OID)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -414,7 +420,7 @@ gp_aovisimap_entry(PG_FUNCTION_ARGS)
 	AppendOnlyVisimapStore_EndScan(&context->visiMap.visimapStore,
 								   context->indexScan);
 	AppendOnlyVisimap_Finish(&context->visiMap, AccessShareLock);
-	heap_close(context->parentRelation, AccessShareLock);
+	table_close(context->parentRelation, AccessShareLock);
 
 	pfree(context->bitmapBuffer);
 	pfree(context);

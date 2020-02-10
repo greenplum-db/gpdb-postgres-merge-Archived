@@ -3,8 +3,6 @@
  * nodeSeqscan.c
  *	  Support routines for sequential scans of relations.
  *
- * In GPDB, this also deals with AppendOnly and AOCS tables.
- *
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -35,14 +33,8 @@
 #include "executor/nodeSeqscan.h"
 #include "utils/rel.h"
 
-#include "cdb/cdbappendonlyam.h"
-#include "cdb/cdbaocsam.h"
-#include "utils/snapmgr.h"
-
 static void InitScanRelation(SeqScanState *node, EState *estate, int eflags, Relation currentRelation);
 static TupleTableSlot *SeqNext(SeqScanState *node);
-
-static void InitAOCSScanOpaque(SeqScanState *scanState, Relation currentRelation);
 
 /* ----------------------------------------------------------------
  *						Scan Support

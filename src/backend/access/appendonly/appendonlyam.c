@@ -906,7 +906,7 @@ upgrade_tuple(AppendOnlyExecutorReadBlock *executorReadBlock,
 			{
 				Oid			typeoid;
 
-				typeoid = getBaseType(tupdesc->attrs[i]->atttypid);
+				typeoid = getBaseType(TupleDescAttr(tupdesc, i)->atttypid);
 				if (typeoid == NUMERICOID)
 					executorReadBlock->numericAtts[n++] = i;
 			}
@@ -1018,12 +1018,15 @@ AppendOnlyExecutorReadBlock_ProcessTuple(AppendOnlyExecutorReadBlock *executorRe
 		bool		shouldFree = false;
 
 		/* If the tuple is not in the latest format, convert it */
+		// GPDB_12_MERGE_FIXME: Is pg_upgrade from old versions still a thing? Can we drop this?
+#if 0
 		if (formatVersion < AORelationVersion_GetLatest())
 			tuple = upgrade_tuple(executorReadBlock, tuple, slot->tts_mt_bind, formatVersion, &shouldFree);
-		ExecStoreMinimalTuple(tuple, slot, shouldFree);
-		slot_set_ctid(slot, &fake_ctid);
-	}
+#endif
 
+		ExecStoreMemTuple(tuple, slot, shouldFree);
+		slot->tts_tid = fake_ctid;
+	}
 
 	/* skip visibility test, all tuples are visible */
 
@@ -1339,7 +1342,7 @@ appendonlygettup(AppendOnlyScanDesc scan,
 			/*
 			 * Need to get the Block Directory entry that covers the TID.
 			 */
-			AOTupleId  *aoTupleId = (AOTupleId *) slot_get_ctid(slot);
+			AOTupleId  *aoTupleId = (AOTupleId *) &slot->tts_tid;
 
 			if (!isSnapshotAny && !AppendOnlyVisimap_IsVisible(&scan->visibilityMap, aoTupleId))
 			{
@@ -1552,12 +1555,12 @@ appendonly_beginrangescan_internal(Relation relation,
 								   FileSegInfo **seginfo,
 								   int segfile_count,
 								   int nkeys,
-								   ScanKey key)
+								   ScanKey key,
+								   ParallelTableScanDesc parallel_scan,
+								   uint32 flags)
 {
 	AppendOnlyScanDesc scan;
-
 	AppendOnlyStorageAttributes *attr;
-
 	StringInfoData titleBuf;
 
 	/*
@@ -1574,9 +1577,12 @@ appendonly_beginrangescan_internal(Relation relation,
 	 */
 	scan = (AppendOnlyScanDesc) palloc0(sizeof(AppendOnlyScanDescData));
 
-	/*
-	 * initialize the scan descriptor
-	 */
+	scan->rs_base.rs_rd = relation;
+	scan->rs_base.rs_snapshot = snapshot;
+	scan->rs_base.rs_nkeys = nkeys;
+	scan->rs_base.rs_flags = flags;
+	scan->rs_base.rs_parallel = parallel_scan;
+
 	scan->aos_filenamepath_maxlen = AOSegmentFilePathNameLen(relation) + 1;
 	scan->aos_filenamepath = (char *) palloc(scan->aos_filenamepath_maxlen);
 	scan->aos_filenamepath[0] = '\0';
@@ -1682,35 +1688,53 @@ appendonly_beginrangescan(Relation relation,
 											  seginfo,
 											  segfile_count,
 											  nkeys,
-											  keys);
+											  keys,
+											  NULL,
+											  0);
 }
 
 /* ----------------
  *		appendonly_beginscan	- begin relation scan
  * ----------------
  */
-AppendOnlyScanDesc
+TableScanDesc
 appendonly_beginscan(Relation relation,
 					 Snapshot snapshot,
-					 Snapshot appendOnlyMetaDataSnapshot,
-					 int nkeys, ScanKey keys)
+					 int nkeys, struct ScanKeyData *key,
+					 ParallelTableScanDesc pscan,
+					 uint32 flags)
 {
+	Snapshot	appendOnlyMetaDataSnapshot;
+	int			segfile_count;
+	FileSegInfo **seginfo;
+	AppendOnlyScanDesc aoscan;
+
+	appendOnlyMetaDataSnapshot = snapshot;
+	if (appendOnlyMetaDataSnapshot == SnapshotAny)
+	{
+		/*
+		 * the append-only meta data should never be fetched with
+		 * SnapshotAny as bogus results are returned.
+		 */
+		appendOnlyMetaDataSnapshot = GetTransactionSnapshot();
+	}
+
 	/*
 	 * Get the pg_appendonly information for this table
 	 */
-	int			segfile_count;
-	FileSegInfo **seginfo;
-
 	seginfo = GetAllFileSegInfo(relation,
 								appendOnlyMetaDataSnapshot, &segfile_count);
 
-	return appendonly_beginrangescan_internal(relation,
-											  snapshot,
-											  appendOnlyMetaDataSnapshot,
-											  seginfo,
-											  segfile_count,
-											  nkeys,
-											  keys);
+	aoscan = appendonly_beginrangescan_internal(relation,
+												snapshot,
+												appendOnlyMetaDataSnapshot,
+												seginfo,
+												segfile_count,
+												nkeys,
+												key,
+												pscan,
+												flags);
+	return (TableScanDesc) aoscan;
 }
 
 /* ----------------
@@ -1720,26 +1744,31 @@ appendonly_beginscan(Relation relation,
  * TODO: instead of freeing resources here and reallocating them in initscan
  * over and over see which of them can be refactored into appendonly_beginscan
  * and persist there until endscan is finally reached. For now this will do.
+ *
+ * GPDB_12_MERGE_FIXME: what to do with the new flags?
  * ----------------
  */
 void
-appendonly_rescan(AppendOnlyScanDesc scan,
-				  ScanKey key)
+appendonly_rescan(TableScanDesc scan, ScanKey key,
+				  bool set_params, bool allow_strat,
+				  bool allow_sync, bool allow_pagemode)
 {
-	CloseScannedFileSeg(scan);
+	AppendOnlyScanDesc aoscan = (AppendOnlyScanDesc) scan;
 
-	AppendOnlyStorageRead_FinishSession(&scan->storageRead);
+	CloseScannedFileSeg(aoscan);
 
-	scan->initedStorageRoutines = false;
+	AppendOnlyStorageRead_FinishSession(&aoscan->storageRead);
 
-	AppendOnlyExecutorReadBlock_Finish(&scan->executorReadBlock);
+	aoscan->initedStorageRoutines = false;
 
-	scan->aos_need_new_segfile = true;
+	AppendOnlyExecutorReadBlock_Finish(&aoscan->executorReadBlock);
+
+	aoscan->aos_need_new_segfile = true;
 
 	/*
 	 * reinitialize scan descriptor
 	 */
-	initscan(scan, key);
+	initscan(aoscan, key);
 }
 
 /* ----------------
@@ -1747,49 +1776,53 @@ appendonly_rescan(AppendOnlyScanDesc scan,
  * ----------------
  */
 void
-appendonly_endscan(AppendOnlyScanDesc scan)
+appendonly_endscan(TableScanDesc scan)
 {
-	RelationDecrementReferenceCount(scan->aos_rd);
+	AppendOnlyScanDesc aoscan = (AppendOnlyScanDesc) scan;
 
-	if (scan->aos_key)
-		pfree(scan->aos_key);
+	RelationDecrementReferenceCount(aoscan->aos_rd);
 
-	if (scan->aos_segfile_arr)
+	if (aoscan->aos_key)
+		pfree(aoscan->aos_key);
+
+	if (aoscan->aos_segfile_arr)
 	{
-		for (int seginfo_no = 0; seginfo_no < scan->aos_total_segfiles; seginfo_no++)
+		for (int seginfo_no = 0; seginfo_no < aoscan->aos_total_segfiles; seginfo_no++)
 		{
-			pfree(scan->aos_segfile_arr[seginfo_no]);
+			pfree(aoscan->aos_segfile_arr[seginfo_no]);
 		}
 
-		pfree(scan->aos_segfile_arr);
+		pfree(aoscan->aos_segfile_arr);
 	}
 
-	CloseScannedFileSeg(scan);
+	CloseScannedFileSeg(aoscan);
 
-	AppendOnlyStorageRead_FinishSession(&scan->storageRead);
+	AppendOnlyStorageRead_FinishSession(&aoscan->storageRead);
 
-	scan->initedStorageRoutines = false;
+	aoscan->initedStorageRoutines = false;
 
-	AppendOnlyExecutorReadBlock_Finish(&scan->executorReadBlock);
+	AppendOnlyExecutorReadBlock_Finish(&aoscan->executorReadBlock);
 
-	AppendOnlyVisimap_Finish(&scan->visibilityMap, AccessShareLock);
-	pfree(scan->aos_filenamepath);
+	AppendOnlyVisimap_Finish(&aoscan->visibilityMap, AccessShareLock);
+	pfree(aoscan->aos_filenamepath);
 
-	pfree(scan->title);
+	pfree(aoscan->title);
 
-	pfree(scan);
+	pfree(aoscan);
 }
 
 /* ----------------
- *		appendonly_getnext	- retrieve next tuple in scan
+ *		appendonly_getnextslot - retrieve next tuple in scan
  * ----------------
  */
 bool
-appendonly_getnext(AppendOnlyScanDesc scan, ScanDirection direction, TupleTableSlot *slot)
+appendonly_getnextslot(TableScanDesc scan, ScanDirection direction, TupleTableSlot *slot)
 {
-	if (appendonlygettup(scan, direction, scan->aos_nkeys, scan->aos_key, slot))
+	AppendOnlyScanDesc aoscan = (AppendOnlyScanDesc) scan;
+
+	if (appendonlygettup(aoscan, direction, aoscan->rs_base.rs_nkeys, aoscan->aos_key, slot))
 	{
-		pgstat_count_heap_getnext(scan->aos_rd);
+		pgstat_count_heap_getnext(aoscan->aos_rd);
 
 		return true;
 	}
@@ -2433,7 +2466,6 @@ appendonly_fetch_finish(AppendOnlyFetchDesc aoFetchDesc)
 AppendOnlyDeleteDesc
 appendonly_delete_init(Relation rel, Snapshot appendOnlyMetaDataSnapshot)
 {
-	Assert(RelationIsAoRows(rel));
 	Assert(!IsolationUsesXactSnapshot());
 
 	AppendOnlyDeleteDesc aoDeleteDesc = palloc0(sizeof(AppendOnlyDeleteDescData));
@@ -2465,7 +2497,7 @@ appendonly_delete_finish(AppendOnlyDeleteDesc aoDeleteDesc)
 	pfree(aoDeleteDesc);
 }
 
-HTSU_Result
+TM_Result
 appendonly_delete(AppendOnlyDeleteDesc aoDeleteDesc,
 				  AOTupleId *aoTupleId)
 {
@@ -2499,7 +2531,6 @@ appendonly_delete(AppendOnlyDeleteDesc aoDeleteDesc,
 AppendOnlyUpdateDesc
 appendonly_update_init(Relation rel, Snapshot appendOnlyMetaDataSnapshot, int segno)
 {
-	Assert(RelationIsAoRows(rel));
 	Assert(!IsolationUsesXactSnapshot());
 
 	/*
@@ -2537,13 +2568,13 @@ appendonly_update_finish(AppendOnlyUpdateDesc aoUpdateDesc)
 	pfree(aoUpdateDesc);
 }
 
-HTSU_Result
+TM_Result
 appendonly_update(AppendOnlyUpdateDesc aoUpdateDesc,
 				  MemTuple memTuple,
 				  AOTupleId *aoTupleId,
 				  AOTupleId *newAoTupleId)
 {
-	HTSU_Result result;
+	TM_Result result;
 
 	Assert(aoUpdateDesc);
 	Assert(aoTupleId);
@@ -2558,12 +2589,11 @@ appendonly_update(AppendOnlyUpdateDesc aoUpdateDesc,
 #endif
 
 	result = AppendOnlyVisimapDelete_Hide(&aoUpdateDesc->visiMapDelete, aoTupleId);
-	if (result != HeapTupleMayBeUpdated)
+	if (result != TM_Ok)
 		return result;
 
 	appendonly_insert(aoUpdateDesc->aoInsertDesc,
 					  memTuple,
-					  InvalidOid,	/* new oid should be old oid */
 					  newAoTupleId);
 
 	return result;
@@ -2825,8 +2855,6 @@ appendonly_insert(AppendOnlyInsertDesc aoInsertDesc,
 	/* tableName */
 #endif
 
-	Assert(RelationIsAoRows(relation));
-
 	if (aoInsertDesc->useNoToast)
 		need_toast = false;
 	else
@@ -3052,21 +3080,4 @@ appendonly_insert_finish(AppendOnlyInsertDesc aoInsertDesc)
 
 	pfree(aoInsertDesc->title);
 	pfree(aoInsertDesc);
-}
-
-/*
- * RelationGuessNumberOfBlocks
- *
- * Has the same meaning as RelationGetNumberOfBlocks for heap relations
- * however uses an estimation since AO relations use variable len blocks
- * which are meaningless to the optimizer.
- *
- * This function, in other words, answers the following question - "If
- * I were a heap relation, about how many blocks would I have had?"
- */
-BlockNumber
-RelationGuessNumberOfBlocks(double totalbytes)
-{
-	/* for now it's very simple */
-	return (BlockNumber) ceil(totalbytes / BLCKSZ);
 }

@@ -582,10 +582,6 @@ toast_delete(Relation rel, HeapTuple oldtup, bool is_speculative)
 	int			i;
 	Datum		toast_values[MaxHeapAttributeNumber];
 	bool		toast_isnull[MaxHeapAttributeNumber];
-	bool 		ismemtuple = is_memtuple(oldtup);
-	
-	AssertImply(ismemtuple, pbind);
-	AssertImply(!ismemtuple, !pbind);
 
 	/*
 	 * We should only ever be called for tuples of plain relations ---
@@ -616,10 +612,7 @@ toast_delete(Relation rel, HeapTuple oldtup, bool is_speculative)
 
 	Assert(numAttrs <= MaxHeapAttributeNumber);
 
-	if (ismemtuple)
-		memtuple_deform((MemTuple) oldtup, pbind, toast_values, toast_isnull);
-	else
-		heap_deform_tuple((HeapTuple) oldtup, tupleDesc, toast_values, toast_isnull);
+	heap_deform_tuple((HeapTuple) oldtup, tupleDesc, toast_values, toast_isnull);
 
 	/*
 	 * Check for external stored attributes and delete them from the secondary

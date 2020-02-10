@@ -82,33 +82,6 @@ typedef HeapTupleData *HeapTuple;
 #define HEAPTUPLESIZE	MAXALIGN(sizeof(HeapTupleData))
 
 /*
- * GenericTuple is a pointer that can point to either a HeapTuple or a
- * MemTuple. Use is_memtuple() to check which one it is.
- *
- * GenericTupleData has no definition; this is a fake "supertype".
- */
-struct GenericTupleData;
-typedef struct GenericTupleData *GenericTuple;
-
-/* XXX Hack Hack Hack 
- * heaptuple, or memtuple, cannot be more than 2G, so, if
- * the first bit is ever set, it is really a memtuple
- */
-static inline bool is_memtuple(GenericTuple tup)
-{
-	return ((((HeapTuple) tup)->t_len & 0x80000000) != 0);
-}
-
-static inline bool is_heaptuple_splitter(HeapTuple htup)
-{
-	return ((char *) htup->t_data) != ((char *) htup + HEAPTUPLESIZE);
-}
-static inline uint32 heaptuple_get_size(HeapTuple htup)
-{
-	return htup->t_len + HEAPTUPLESIZE;
-}
-
-/*
  * Accessor macros to be used with HeapTuple pointers.
  */
 #define HeapTupleIsValid(tuple) PointerIsValid(tuple)

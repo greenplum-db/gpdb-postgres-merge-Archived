@@ -32,6 +32,7 @@
 #include "access/tuptoaster.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbvars.h"
@@ -46,6 +47,20 @@
 #include "utils/guc.h"
 #include "utils/snapmgr.h"
 #include "miscadmin.h"
+
+/*
+ * GPDB_12_MERGE_FIXME: These used to be in utils/rel.h. But I wanted to remove
+ * them, so that we find all the places that used them, that probably shouldn't
+ * anymore. In this file, these are used in assertions, which are quite reasonable
+ * and act as documentation, on which functions are also used with AOCO tables.
+ */
+#define RelationIsAoRows(relation) \
+	((bool)(((relation)->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID)))
+#define RelationIsAoCols(relation) \
+	((bool)(((relation)->rd_rel->relam == AOCO_TABLE_AM_OID)))
+#define RelationIsAppendOptimized(relation) \
+	(RelationIsAoRows(relation) || RelationIsAoCols(relation))
+
 
 /*
  * Drops a segment file.
@@ -274,6 +289,7 @@ AppendOnlyMoveTuple(TupleTableSlot *slot,
 					EState *estate)
 {
 	MemTuple	tuple;
+	bool		shouldFree;
 	AOTupleId  *oldAoTupleId;
 	AOTupleId	newAoTupleId;
 
@@ -282,11 +298,11 @@ AppendOnlyMoveTuple(TupleTableSlot *slot,
 	Assert(mt_bind);
 	Assert(estate);
 
-	oldAoTupleId = (AOTupleId *) slot_get_ctid(slot);
+	oldAoTupleId = (AOTupleId *) &slot->tts_tid;
 	/* Extract all the values of the tuple */
 	slot_getallattrs(slot);
 
-	tuple = TupGetMemTuple(slot);
+	tuple = ExecFetchSlotMemTuple(slot, true, &shouldFree);
 	appendonly_insert(insertDesc,
 					  tuple,
 					  &newAoTupleId);
@@ -294,10 +310,16 @@ AppendOnlyMoveTuple(TupleTableSlot *slot,
 	/* insert index' tuples if needed */
 	if (resultRelInfo->ri_NumIndices > 0)
 	{
-		ExecInsertIndexTuples(slot, (ItemPointer) &newAoTupleId, estate,
-							  false, NULL, NIL);
+		ExecInsertIndexTuples(slot,
+							  estate,
+							  false, /* noDupError */
+							  NULL, /* specConflict */
+							  NIL /* arbiterIndexes */);
 		ResetPerTupleExprContext(estate);
 	}
+
+	if (shouldFree)
+		pfree(tuple);
 
 	elogif(Debug_appendonly_print_compaction, DEBUG5,
 		   "Compaction: Moved tuple (%d," INT64_FORMAT ") -> (%d," INT64_FORMAT ")",
@@ -306,26 +328,26 @@ AppendOnlyMoveTuple(TupleTableSlot *slot,
 }
 
 void
-AppendOnlyThrowAwayTuple(Relation rel,
-						 TupleTableSlot *slot,
-						 MemTupleBinding *mt_bind)
+AppendOnlyThrowAwayTuple(Relation rel, TupleTableSlot *slot)
 {
-	MemTuple	tuple;
 	AOTupleId  *oldAoTupleId;
 
 	Assert(slot);
-	Assert(mt_bind);
 
-	oldAoTupleId = (AOTupleId *) slot_get_ctid(slot);
+	oldAoTupleId = (AOTupleId *) &slot->tts_tid;
 	/* Extract all the values of the tuple */
 	slot_getallattrs(slot);
 
+	/* GPDB_12_MERGE_FIXME: loop through all attributes, call toast_delete_datum()
+	 * on any toasted datums, like toast_delete does for heap tuples */
+#if 0
 	tuple = TupGetMemTuple(slot);
 	if (MemTupleHasExternal(tuple, mt_bind))
 	{
 		toast_delete(rel, (GenericTuple) tuple, mt_bind);
 	}
-
+#endif
+	
 	elogif(Debug_appendonly_print_compaction, DEBUG5,
 		   "Compaction: Throw away tuple (%d," INT64_FORMAT ")",
 		   AOTupleIdGet_segmentFileNum(oldAoTupleId), AOTupleIdGet_rowNum(oldAoTupleId));
@@ -388,7 +410,7 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 										 &compact_segno, 1, 0, NULL);
 
 	tupDesc = RelationGetDescr(aorel);
-	slot = MakeSingleTupleTableSlot(tupDesc);
+	slot = MakeSingleTupleTableSlot(tupDesc, &TTSOpsMemTuple);
 	mt_bind = create_memtuple_binding(tupDesc);
 
 	/*
@@ -408,12 +430,12 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 	/*
 	 * Go through all visible tuples and move them to a new segfile.
 	 */
-	while (appendonly_getnext(scanDesc, ForwardScanDirection, slot))
+	while (appendonly_getnextslot(&scanDesc->rs_base, ForwardScanDirection, slot))
 	{
 		/* Check interrupts as this may take time. */
 		CHECK_FOR_INTERRUPTS();
 
-		aoTupleId = (AOTupleId *) slot_get_ctid(slot);
+		aoTupleId = (AOTupleId *) &slot->tts_tid;
 		if (AppendOnlyVisimap_IsVisible(&scanDesc->visibilityMap, aoTupleId))
 		{
 			AppendOnlyMoveTuple(slot,
@@ -426,9 +448,7 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 		else
 		{
 			/* Tuple is invisible and needs to be dropped */
-			AppendOnlyThrowAwayTuple(aorel,
-									 slot,
-									 mt_bind);
+			AppendOnlyThrowAwayTuple(aorel, slot);
 		}
 
 		/*
@@ -467,7 +487,7 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 	ExecDropSingleTupleTableSlot(slot);
 	destroy_memtuple_binding(mt_bind);
 
-	appendonly_endscan(scanDesc);
+	appendonly_endscan(&scanDesc->rs_base);
 }
 
 /*
@@ -771,17 +791,17 @@ AppendOnlyCompaction_IsRelationEmpty(Relation aorel)
 	Relation	pg_aoseg_rel;
 	TupleDesc	pg_aoseg_dsc;
 	HeapTuple	tuple;
-	HeapScanDesc aoscan;
+	SysScanDesc aoscan;
 	int			Anum_tupcount;
 	bool		empty = true;
 
 	Assert(RelationIsAppendOptimized(aorel));
 
-	pg_aoseg_rel = heap_open(aorel->rd_appendonly->segrelid, AccessShareLock);
+	pg_aoseg_rel = table_open(aorel->rd_appendonly->segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
-	aoscan = heap_beginscan_catalog(pg_aoseg_rel, 0, NULL);
+	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true, NULL, 0, NULL);
 	Anum_tupcount = RelationIsAoRows(aorel) ? Anum_pg_aoseg_tupcount : Anum_pg_aocs_tupcount;
-	while ((tuple = heap_getnext(aoscan, ForwardScanDirection)) != NULL &&
+	while ((tuple = systable_getnext(aoscan)) != NULL &&
 		   empty)
 	{
 		bool		isNull;
@@ -790,7 +810,7 @@ AppendOnlyCompaction_IsRelationEmpty(Relation aorel)
 			empty = false;
 		Assert(!isNull);
 	}
-	heap_endscan(aoscan);
-	heap_close(pg_aoseg_rel, AccessShareLock);
+	systable_endscan(aoscan);
+	table_close(pg_aoseg_rel, AccessShareLock);
 	return empty;
 }

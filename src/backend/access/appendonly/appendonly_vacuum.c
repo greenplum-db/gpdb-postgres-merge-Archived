@@ -19,6 +19,445 @@ typedef struct AppendOnlyIndexVacuumState
 	AppendOnlyBlockDirectoryEntry blockDirectoryEntry;
 } AppendOnlyIndexVacuumState;
 
+
+
+
+
+
+
+
+
+
+
+/*
+ *	appendonly_vacuum_rel() -- perform VACUUM for one appendonly relation
+ *
+ *		This routine vacuums a single AO table, cleans out its indexes, and
+ *		updates its relpages and reltuples statistics.
+ *
+ *		At entry, we have already established a transaction and opened
+ *		and locked the relation.
+ */
+void
+appendonly_vacuum_rel(Relation onerel, VacuumParams *params,
+					  BufferAccessStrategy bstrategy)
+{
+	LVRelStats *vacrelstats;
+	Relation   *Irel;
+	int			nindexes;
+	PGRUsage	ru0;
+	TimestampTz starttime = 0;
+	long		secs;
+	int			usecs;
+	double		read_rate,
+				write_rate;
+	bool		aggressive;		/* should we scan all unfrozen pages? */
+	bool		scanned_all_unfrozen;	/* actually scanned all such pages? */
+	TransactionId xidFullScanLimit;
+	MultiXactId mxactFullScanLimit;
+	BlockNumber new_rel_pages;
+	BlockNumber new_rel_allvisible;
+	double		new_live_tuples;
+	TransactionId new_frozen_xid;
+	MultiXactId new_min_multi;
+
+	Assert(params != NULL);
+	Assert(params->index_cleanup != VACOPT_TERNARY_DEFAULT);
+	Assert(params->truncate != VACOPT_TERNARY_DEFAULT);
+
+	/* not every AM requires these to be valid, but heap does */
+	Assert(TransactionIdIsNormal(onerel->rd_rel->relfrozenxid));
+	Assert(MultiXactIdIsValid(onerel->rd_rel->relminmxid));
+
+	/* measure elapsed time iff autovacuum logging requires it */
+	if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
+	{
+		pg_rusage_init(&ru0);
+		starttime = GetCurrentTimestamp();
+	}
+
+	if (params->options & VACOPT_VERBOSE)
+		elevel = INFO;
+	else
+		elevel = DEBUG2;
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+		elevel = DEBUG2; /* vacuum and analyze messages aren't interesting from the QD */
+
+#ifdef FAULT_INJECTOR
+	if (ao_vacuum_phase_config != NULL &&
+		ao_vacuum_phase_config->appendonly_phase == AOVAC_DROP)
+	{
+			FaultInjector_InjectFaultIfSet(
+				"compaction_before_segmentfile_drop",
+				DDLNotSpecified,
+				"",	// databaseName
+				RelationGetRelationName(onerel)); // tableName
+	}
+	if (ao_vacuum_phase_config != NULL &&
+		ao_vacuum_phase_config->appendonly_phase == AOVAC_CLEANUP)
+	{
+			FaultInjector_InjectFaultIfSet(
+				"compaction_before_cleanup_phase",
+				DDLNotSpecified,
+				"",	// databaseName
+				RelationGetRelationName(onerel)); // tableName
+	}
+#endif
+
+	pgstat_progress_start_command(PROGRESS_COMMAND_VACUUM,
+								  RelationGetRelid(onerel));
+
+	vac_strategy = bstrategy;
+
+	/*
+	 * MPP-23647.  Update xid limits for heap as well as appendonly
+	 * relations.  This allows setting relfrozenxid to correct value
+	 * for an appendonly (AO/CO) table.
+	 */
+
+	vacuum_set_xid_limits(onerel,
+						  params->freeze_min_age,
+						  params->freeze_table_age,
+						  params->multixact_freeze_min_age,
+						  params->multixact_freeze_table_age,
+						  &OldestXmin, &FreezeLimit, &xidFullScanLimit,
+						  &MultiXactCutoff, &mxactFullScanLimit);
+
+	/*
+	 * We request an aggressive scan if the table's frozen Xid is now older
+	 * than or equal to the requested Xid full-table scan limit; or if the
+	 * table's minimum MultiXactId is older than or equal to the requested
+	 * mxid full-table scan limit; or if DISABLE_PAGE_SKIPPING was specified.
+	 */
+	aggressive = TransactionIdPrecedesOrEquals(onerel->rd_rel->relfrozenxid,
+											   xidFullScanLimit);
+	aggressive |= MultiXactIdPrecedesOrEquals(onerel->rd_rel->relminmxid,
+											  mxactFullScanLimit);
+	if (params->options & VACOPT_DISABLE_PAGE_SKIPPING)
+		aggressive = true;
+
+	/*
+	 * Normally the relfrozenxid for an anti-wraparound vacuum will be old
+	 * enough to force an aggressive vacuum.  However, a concurrent vacuum
+	 * might have already done this work that the relfrozenxid in relcache has
+	 * been updated.  If that happens this vacuum is redundant, so skip it.
+	 */
+	if (params->is_wraparound && !aggressive)
+	{
+		ereport(DEBUG1,
+				(errmsg("skipping redundant vacuum to prevent wraparound of table \"%s.%s.%s\"",
+						get_database_name(MyDatabaseId),
+						get_namespace_name(RelationGetNamespace(onerel)),
+						RelationGetRelationName(onerel))));
+		pgstat_progress_end_command();
+		return;
+	}
+
+	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
+
+	vacrelstats->old_rel_pages = onerel->rd_rel->relpages;
+	vacrelstats->old_live_tuples = onerel->rd_rel->reltuples;
+	vacrelstats->num_index_scans = 0;
+	vacrelstats->pages_removed = 0;
+	vacrelstats->lock_waiter_detected = false;
+
+	/* Open all indexes of the relation */
+	vac_open_indexes(onerel, RowExclusiveLock, &nindexes, &Irel);
+	vacrelstats->useindex = (nindexes > 0 &&
+							 params->index_cleanup == VACOPT_TERNARY_ENABLED);
+
+	/* Do the vacuuming */
+	lazy_scan_heap(onerel, params, vacrelstats, Irel, nindexes, aggressive);
+
+	/* Done with indexes */
+	vac_close_indexes(nindexes, Irel, NoLock);
+
+	/*
+	 * Compute whether we actually scanned the all unfrozen pages. If we did,
+	 * we can adjust relfrozenxid and relminmxid.
+	 *
+	 * NB: We need to check this before truncating the relation, because that
+	 * will change ->rel_pages.
+	 */
+	if ((vacrelstats->scanned_pages + vacrelstats->frozenskipped_pages)
+		< vacrelstats->rel_pages)
+	{
+		Assert(!aggressive);
+		scanned_all_unfrozen = false;
+	}
+	else
+		scanned_all_unfrozen = true;
+
+	/*
+	 * Optionally truncate the relation.
+	 */
+	if (should_attempt_truncation(params, vacrelstats))
+		lazy_truncate_heap(onerel, vacrelstats);
+
+	/* Report that we are now doing final cleanup */
+	pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
+								 PROGRESS_VACUUM_PHASE_FINAL_CLEANUP);
+
+	/*
+	 * Update statistics in pg_class.
+	 *
+	 * A corner case here is that if we scanned no pages at all because every
+	 * page is all-visible, we should not update relpages/reltuples, because
+	 * we have no new information to contribute.  In particular this keeps us
+	 * from replacing relpages=reltuples=0 (which means "unknown tuple
+	 * density") with nonzero relpages and reltuples=0 (which means "zero
+	 * tuple density") unless there's some actual evidence for the latter.
+	 *
+	 * It's important that we use tupcount_pages and not scanned_pages for the
+	 * check described above; scanned_pages counts pages where we could not
+	 * get cleanup lock, and which were processed only for frozenxid purposes.
+	 *
+	 * We do update relallvisible even in the corner case, since if the table
+	 * is all-visible we'd definitely like to know that.  But clamp the value
+	 * to be not more than what we're setting relpages to.
+	 *
+	 * Also, don't change relfrozenxid/relminmxid if we skipped any pages,
+	 * since then we don't know for certain that all tuples have a newer xmin.
+	 */
+	new_rel_pages = vacrelstats->rel_pages;
+	new_live_tuples = vacrelstats->new_live_tuples;
+	if (vacrelstats->tupcount_pages == 0 && new_rel_pages > 0)
+	{
+		new_rel_pages = vacrelstats->old_rel_pages;
+		new_live_tuples = vacrelstats->old_live_tuples;
+	}
+
+	visibilitymap_count(onerel, &new_rel_allvisible, NULL);
+	if (new_rel_allvisible > new_rel_pages)
+		new_rel_allvisible = new_rel_pages;
+
+	new_frozen_xid = scanned_all_unfrozen ? FreezeLimit : InvalidTransactionId;
+	new_min_multi = scanned_all_unfrozen ? MultiXactCutoff : InvalidMultiXactId;
+
+	vac_update_relstats(onerel,
+						new_rel_pages,
+						new_live_tuples,
+						new_rel_allvisible,
+						nindexes > 0,
+						new_frozen_xid,
+						new_min_multi,
+						false,
+						true /* isvacuum */);
+
+	/* report results to the stats collector, too */
+	pgstat_report_vacuum(RelationGetRelid(onerel),
+						 onerel->rd_rel->relisshared,
+						 new_live_tuples,
+						 vacrelstats->new_dead_tuples);
+	pgstat_progress_end_command();
+
+	if (gp_indexcheck_vacuum == INDEX_CHECK_ALL ||
+		(gp_indexcheck_vacuum == INDEX_CHECK_SYSTEM &&
+		 PG_CATALOG_NAMESPACE == RelationGetNamespace(onerel)))
+	{
+		int			i;
+
+		for (i = 0; i < nindexes; i++)
+		{
+			if (Irel[i]->rd_rel->relam == BTREE_AM_OID)
+				_bt_validate_vacuum(Irel[i], onerel, OldestXmin);
+		}
+	}
+
+	/* and log the action if appropriate */
+	if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
+	{
+		TimestampTz endtime = GetCurrentTimestamp();
+
+		if (params->log_min_duration == 0 ||
+			TimestampDifferenceExceeds(starttime, endtime,
+									   params->log_min_duration))
+		{
+			StringInfoData buf;
+			char	   *msgfmt;
+
+			TimestampDifference(starttime, endtime, &secs, &usecs);
+
+			read_rate = 0;
+			write_rate = 0;
+			if ((secs > 0) || (usecs > 0))
+			{
+				read_rate = (double) BLCKSZ * VacuumPageMiss / (1024 * 1024) /
+					(secs + usecs / 1000000.0);
+				write_rate = (double) BLCKSZ * VacuumPageDirty / (1024 * 1024) /
+					(secs + usecs / 1000000.0);
+			}
+
+			/*
+			 * This is pretty messy, but we split it up so that we can skip
+			 * emitting individual parts of the message when not applicable.
+			 */
+			initStringInfo(&buf);
+			if (params->is_wraparound)
+			{
+				/* an anti-wraparound vacuum has to be aggressive */
+				Assert(aggressive);
+				msgfmt = _("automatic aggressive vacuum to prevent wraparound of table \"%s.%s.%s\": index scans: %d\n");
+			}
+			else
+			{
+				if (aggressive)
+					msgfmt = _("automatic aggressive vacuum of table \"%s.%s.%s\": index scans: %d\n");
+				else
+					msgfmt = _("automatic vacuum of table \"%s.%s.%s\": index scans: %d\n");
+			}
+			appendStringInfo(&buf, msgfmt,
+							 get_database_name(MyDatabaseId),
+							 get_namespace_name(RelationGetNamespace(onerel)),
+							 RelationGetRelationName(onerel),
+							 vacrelstats->num_index_scans);
+			appendStringInfo(&buf, _("pages: %u removed, %u remain, %u skipped due to pins, %u skipped frozen\n"),
+							 vacrelstats->pages_removed,
+							 vacrelstats->rel_pages,
+							 vacrelstats->pinskipped_pages,
+							 vacrelstats->frozenskipped_pages);
+			appendStringInfo(&buf,
+							 _("tuples: %.0f removed, %.0f remain, %.0f are dead but not yet removable, oldest xmin: %u\n"),
+							 vacrelstats->tuples_deleted,
+							 vacrelstats->new_rel_tuples,
+							 vacrelstats->new_dead_tuples,
+							 OldestXmin);
+			appendStringInfo(&buf,
+							 _("buffer usage: %d hits, %d misses, %d dirtied\n"),
+							 VacuumPageHit,
+							 VacuumPageMiss,
+							 VacuumPageDirty);
+			appendStringInfo(&buf, _("avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"),
+							 read_rate, write_rate);
+			appendStringInfo(&buf, _("system usage: %s"), pg_rusage_show(&ru0));
+
+			ereport(LOG,
+					(errmsg_internal("%s", buf.data)));
+			pfree(buf.data);
+		}
+	}
+}
+
+/*
+ * lazy_vacuum_aorel -- perform LAZY VACUUM for one Append-only relation.
+ */
+static void
+lazy_vacuum_aorel(Relation onerel, int options, AOVacuumPhaseConfig *ao_vacuum_phase_config)
+{
+	LVRelStats *vacrelstats;
+	bool		update_relstats = true;
+
+	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
+
+	switch (ao_vacuum_phase_config->appendonly_phase)
+	{
+		case AOVAC_PREPARE:
+			elogif(Debug_appendonly_print_compaction, LOG,
+				   "Vacuum prepare phase %s", RelationGetRelationName(onerel));
+
+			vacuum_appendonly_indexes(onerel, options);
+			if (RelationIsAoRows(onerel))
+				AppendOnlyTruncateToEOF(onerel);
+			else
+				AOCSTruncateToEOF(onerel);
+
+			/*
+			 * MPP-23647.  For empty tables, we skip compaction phase
+			 * and cleanup phase.  Therefore, we update the stats
+			 * (specifically, relfrozenxid) in prepare phase if the
+			 * table is empty.  Otherwise, the stats will be updated in
+			 * the cleanup phase, when we would have computed the
+			 * correct values for stats.
+			 */
+			if (ao_vacuum_phase_config->appendonly_relation_empty)
+			{
+				update_relstats = true;
+				/*
+				 * For an empty relation, the only stats we care about
+				 * is relfrozenxid and relhasindex.  We need to be
+				 * mindful of correctly setting relhasindex here.
+				 * relfrozenxid is already taken care of above by
+				 * calling vacuum_set_xid_limits().
+				 */
+				vacrelstats->hasindex = onerel->rd_rel->relhasindex;
+			}
+			else
+			{
+				/*
+				 * For a non-empty relation, follow the usual
+				 * compaction phases and do not update stats in
+				 * prepare phase.
+				 */
+				update_relstats = false;
+			}
+			break;
+
+		case AOVAC_COMPACT:
+		case AOVAC_DROP:
+			vacuum_appendonly_rel(onerel, options, ao_vacuum_phase_config);
+			update_relstats = false;
+			break;
+
+		case AOVAC_CLEANUP:
+			elogif(Debug_appendonly_print_compaction, LOG,
+				   "Vacuum cleanup phase %s", RelationGetRelationName(onerel));
+
+			vacuum_appendonly_fill_stats(onerel, GetActiveSnapshot(),
+										 &vacrelstats->rel_pages,
+										 &vacrelstats->new_rel_tuples,
+										 &vacrelstats->hasindex);
+			/* reset the remaining LVRelStats values */
+			vacrelstats->nonempty_pages = 0;
+			vacrelstats->num_dead_tuples = 0;
+			vacrelstats->max_dead_tuples = 0;
+			vacrelstats->tuples_deleted = 0;
+			vacrelstats->pages_removed = 0;
+			break;
+
+		default:
+			elog(ERROR, "invalid AO vacuum phase %d", ao_vacuum_phase_config->appendonly_phase);
+	}
+
+	if (update_relstats)
+	{
+		/* Update statistics in pg_class */
+		vac_update_relstats(onerel,
+							vacrelstats->rel_pages,
+							vacrelstats->new_rel_tuples,
+							0, /* AO does not currently have an equivalent to
+							      Heap's 'all visible pages' */
+							vacrelstats->hasindex,
+							FreezeLimit,
+							MultiXactCutoff,
+							false,
+							true /* isvacuum */);
+
+		/*
+		 * Report results to the stats collector.
+		 * Explicitly pass 0 as num_dead_tuples. AO tables use hidden
+		 * tuples in a conceptually similar way that regular tables
+		 * use dead tuples. However with regards to pgstat these are
+		 * semantically distinct thus exposing them will be ambiguous.
+		 */
+		pgstat_report_vacuum(RelationGetRelid(onerel),
+							 onerel->rd_rel->relisshared,
+							 vacrelstats->new_rel_tuples,
+							 0 /* num_dead_tuples */);
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
 /*
  * Assigns the compaction segment information.
  *

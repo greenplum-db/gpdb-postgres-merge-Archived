@@ -67,7 +67,7 @@ typedef struct AppendOnlyVisimapScan
 {
 	AppendOnlyVisimap visimap;
 
-	IndexScanDesc indexScan;
+	SysScanDesc indexScan;
 
 	bool		isFinished;
 } AppendOnlyVisimapScan;

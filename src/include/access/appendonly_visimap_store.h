@@ -90,20 +90,16 @@ int64 AppendOnlyVisimapStore_GetRelationHiddenTupleCount(
 
 /* Scan related functions */
 
-IndexScanDesc AppendOnlyVisimapStore_BeginScan(
-								 AppendOnlyVisimapStore *visiMapStore,
-								 int nkeys,
-								 ScanKey keys);
+extern SysScanDesc AppendOnlyVisimapStore_BeginScan(AppendOnlyVisimapStore *visiMapStore,
+													int nkeys, ScanKey keys);
 
-void AppendOnlyVisimapStore_EndScan(
-							   AppendOnlyVisimapStore *visiMapStore,
-							   IndexScanDesc indexScan);
+extern void AppendOnlyVisimapStore_EndScan(AppendOnlyVisimapStore *visiMapStore,
+							   SysScanDesc indexScan);
 
-bool AppendOnlyVisimapStore_GetNext(
-							   AppendOnlyVisimapStore *visiMapStore,
-							   IndexScanDesc indexScan,
-							   ScanDirection scanDirection,
-							   AppendOnlyVisimapEntry *visiMapEntry,
-							   ItemPointerData *tupleTid);
+extern bool AppendOnlyVisimapStore_GetNext(AppendOnlyVisimapStore *visiMapStore,
+										   SysScanDesc indexScan,
+										   ScanDirection scanDirection,
+										   AppendOnlyVisimapEntry *visiMapEntry,
+										   ItemPointerData *tupleTid);
 
 #endif

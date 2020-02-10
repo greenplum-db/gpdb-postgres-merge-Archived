@@ -85,15 +85,6 @@ static int	MyTriggerDepth = 0;
 /* Local function prototypes */
 static void ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid);
 static void SetTriggerFlags(TriggerDesc *trigdesc, Trigger *trigger);
-<<<<<<< HEAD
-static HeapTuple GetTupleForTrigger(EState *estate,
-				   EPQState *epqstate,
-				   ResultRelInfo *relinfo,
-				   ItemPointer tid,
-				   LockTupleMode lockmode,
-				   TupleTableSlot **newSlot);
-
-=======
 static bool GetTupleForTrigger(EState *estate,
 							   EPQState *epqstate,
 							   ResultRelInfo *relinfo,
@@ -110,7 +101,6 @@ static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
 									 FmgrInfo *finfo,
 									 Instrumentation *instr,
 									 MemoryContext per_tuple_context);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 								  int event, bool row_trigger,
 								  TupleTableSlot *oldtup, TupleTableSlot *newtup,
@@ -2677,16 +2667,9 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 			if (should_free)
 				heap_freetuple(oldtuple);
 
-<<<<<<< HEAD
-		if (newslot->tts_tupleDescriptor != tupdesc)
-			ExecSetSlotDescriptor(newslot, tupdesc);
-		ExecStoreHeapTuple(newtuple, newslot, InvalidBuffer, false);
-		slot = newslot;
-=======
 			/* signal tuple should be re-fetched if used */
 			newtuple = NULL;
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	return true;
@@ -2699,23 +2682,17 @@ ExecARInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
-<<<<<<< HEAD
-	if (trigdesc && trigdesc->trig_insert_after_row)
+	if ((trigdesc && trigdesc->trig_insert_after_row) ||
+		(transition_capture && transition_capture->tcs_insert_new_table))
 	{
 		if(RelationIsAoCols(relinfo->ri_RelationDesc))
 			elog(ERROR, "Trigger is not supported on AOCS yet");
 
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_INSERT,
-							  true, NULL, trigtuple, recheckIndexes, NULL);
-	}
-=======
-	if ((trigdesc && trigdesc->trig_insert_after_row) ||
-		(transition_capture && transition_capture->tcs_insert_new_table))
-		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_INSERT,
 							  true, NULL, slot,
 							  recheckIndexes, NULL,
 							  transition_capture);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	}
 }
 
 bool
@@ -2777,16 +2754,9 @@ ExecIRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 			if (should_free)
 				heap_freetuple(oldtuple);
 
-<<<<<<< HEAD
-		if (newslot->tts_tupleDescriptor != tupdesc)
-			ExecSetSlotDescriptor(newslot, tupdesc);
-		ExecStoreHeapTuple(newtuple, newslot, InvalidBuffer, false);
-		slot = newslot;
-=======
 			/* signal tuple should be re-fetched if used */
 			newtuple = NULL;
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	return true;
@@ -3134,14 +3104,8 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 					 TupleTableSlot *newslot)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
-<<<<<<< HEAD
-	HeapTuple	slottuple = ExecFetchSlotHeapTuple(slot);
-	HeapTuple	newtuple = slottuple;
-	TriggerData LocTriggerData;
-=======
 	TupleTableSlot *oldslot = ExecGetTriggerOldSlot(estate, relinfo);
 	HeapTuple	newtuple = NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	HeapTuple	trigtuple;
 	bool		should_free_trig = false;
 	bool		should_free_new = false;
@@ -3190,28 +3154,6 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 		trigtuple = fdw_trigtuple;
 	}
 
-<<<<<<< HEAD
-	/*
-	 * In READ COMMITTED isolation level it's possible that target tuple was
-	 * changed due to concurrent update.  In that case we have a raw subplan
-	 * output tuple in newSlot, and need to run it through the junk filter to
-	 * produce an insertable tuple.
-	 *
-	 * Caution: more than likely, the passed-in slot is the same as the
-	 * junkfilter's output slot, so we are clobbering the original value of
-	 * slottuple by doing the filtering.  This is OK since neither we nor our
-	 * caller have any more interest in the prior contents of that slot.
-	 */
-	if (newSlot != NULL)
-	{
-		slot = ExecFilterJunk(estate->es_junkFilter, newSlot);
-		slottuple = ExecFetchSlotHeapTuple(slot);
-		newtuple = slottuple;
-	}
-
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
 		TRIGGER_EVENT_ROW |
@@ -3276,33 +3218,10 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 			newtuple = NULL;
 		}
 	}
-<<<<<<< HEAD
-	if (trigtuple != fdw_trigtuple && trigtuple != newtuple)
-		heap_freetuple(trigtuple);
-
-	if (newtuple != slottuple)
-	{
-		/*
-		 * Return the modified tuple using the es_trig_tuple_slot.  We assume
-		 * the tuple was allocated in per-tuple memory context, and therefore
-		 * will go away by itself. The tuple table slot should not try to
-		 * clear it.
-		 */
-		TupleTableSlot *newslot = estate->es_trig_tuple_slot;
-		TupleDesc	tupdesc = RelationGetDescr(relinfo->ri_RelationDesc);
-
-		if (newslot->tts_tupleDescriptor != tupdesc)
-			ExecSetSlotDescriptor(newslot, tupdesc);
-		ExecStoreHeapTuple(newtuple, newslot, InvalidBuffer, false);
-		slot = newslot;
-	}
-	return slot;
-=======
 	if (should_free_trig)
 		heap_freetuple(trigtuple);
 
 	return true;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 void
@@ -3407,16 +3326,9 @@ ExecIRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 			if (should_free)
 				heap_freetuple(oldtuple);
 
-<<<<<<< HEAD
-		if (newslot->tts_tupleDescriptor != tupdesc)
-			ExecSetSlotDescriptor(newslot, tupdesc);
-		ExecStoreHeapTuple(newtuple, newslot, InvalidBuffer, false);
-		slot = newslot;
-=======
 			/* signal tuple should be re-fetched if used */
 			newtuple = NULL;
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	return true;
@@ -3605,24 +3517,9 @@ GetTupleForTrigger(EState *estate,
 		 * We expect the tuple to be present, thus very simple error handling
 		 * suffices.
 		 */
-<<<<<<< HEAD
-		LockBuffer(buffer, BUFFER_LOCK_SHARE);
-
-		page = BufferGetPage(buffer);
-		lp = PageGetItemId(page, ItemPointerGetOffsetNumber(tid));
-
-		Assert(ItemIdIsNormal(lp));
-
-		tuple.t_data = (HeapTupleHeader) PageGetItem(page, lp);
-		tuple.t_len = ItemIdGetLength(lp);
-		tuple.t_self = *tid;
-
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-=======
 		if (!table_tuple_fetch_row_version(relation, tid, SnapshotAny,
 										   oldslot))
 			elog(ERROR, "failed to fetch tuple for trigger");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	return true;
@@ -3718,41 +3615,6 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 		econtext = GetPerTupleExprContext(estate);
 
 		/*
-<<<<<<< HEAD
-		 * Put OLD and NEW tuples into tupleslots for expression evaluation.
-		 * These slots can be shared across the whole estate, but be careful
-		 * that they have the current resultrel's tupdesc.
-		 */
-		if (HeapTupleIsValid(oldtup))
-		{
-			if (estate->es_trig_oldtup_slot == NULL)
-			{
-				oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
-				estate->es_trig_oldtup_slot = ExecInitExtraTupleSlot(estate);
-				MemoryContextSwitchTo(oldContext);
-			}
-			oldslot = estate->es_trig_oldtup_slot;
-			if (oldslot->tts_tupleDescriptor != tupdesc)
-				ExecSetSlotDescriptor(oldslot, tupdesc);
-			ExecStoreHeapTuple(oldtup, oldslot, InvalidBuffer, false);
-		}
-		if (HeapTupleIsValid(newtup))
-		{
-			if (estate->es_trig_newtup_slot == NULL)
-			{
-				oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
-				estate->es_trig_newtup_slot = ExecInitExtraTupleSlot(estate);
-				MemoryContextSwitchTo(oldContext);
-			}
-			newslot = estate->es_trig_newtup_slot;
-			if (newslot->tts_tupleDescriptor != tupdesc)
-				ExecSetSlotDescriptor(newslot, tupdesc);
-			ExecStoreHeapTuple(newtup, newslot, InvalidBuffer, false);
-		}
-
-		/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		 * Finally evaluate the expression, making the old and/or new tuples
 		 * available as INNER_VAR/OUTER_VAR respectively.
 		 */
@@ -4363,19 +4225,6 @@ afterTriggerRestoreEventList(AfterTriggerEventList *events,
 /* ----------
  * afterTriggerDeleteHeadEventChunk()
  *
-<<<<<<< HEAD
- *	Remove the first chunk of events from the given event list.
- * ----------
- */
-static void
-afterTriggerDeleteHeadEventChunk(AfterTriggerEventList *events)
-{
-	AfterTriggerEventChunk *target = events->head;
-
-	Assert(target && target->next);
-
-	events->head = target->next;
-=======
  *	Remove the first chunk of events from the query level's event list.
  *	Keep any event list pointers elsewhere in the query level's data
  *	structures in sync.
@@ -4409,7 +4258,6 @@ afterTriggerDeleteHeadEventChunk(AfterTriggersQueryData *qs)
 
 	/* Now we can flush the head chunk */
 	qs->events.head = target->next;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	pfree(target);
 }
 
@@ -5098,18 +4946,6 @@ AfterTriggerEndQuery(EState *estate)
 	 * If we find no firable events, we don't have to increment
 	 * firing_counter.
 	 */
-<<<<<<< HEAD
-	events = &afterTriggers.query_stack[afterTriggers.query_depth];
-
-	for (;;)
-	{
-		if (afterTriggerMarkEvents(events, &afterTriggers.events, true))
-		{
-			CommandId	firing_id = afterTriggers.firing_counter++;
-			AfterTriggerEventChunk *oldtail = events->tail;
-
-			if (afterTriggerInvokeEvents(events, firing_id, estate, false))
-=======
 	qs = &afterTriggers.query_stack[afterTriggers.query_depth];
 
 	for (;;)
@@ -5120,26 +4956,16 @@ AfterTriggerEndQuery(EState *estate)
 			AfterTriggerEventChunk *oldtail = qs->events.tail;
 
 			if (afterTriggerInvokeEvents(&qs->events, firing_id, estate, false))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;			/* all fired */
 
 			/*
 			 * Firing a trigger could result in query_stack being repalloc'd,
-<<<<<<< HEAD
-			 * so we must recalculate ptr after each afterTriggerInvokeEvents
-			 * call.  Furthermore, it's unsafe to pass delete_ok = true here,
-			 * because that could cause afterTriggerInvokeEvents to try to
-			 * access *events after the stack has been repalloc'd.
-			 */
-			events = &afterTriggers.query_stack[afterTriggers.query_depth];
-=======
 			 * so we must recalculate qs after each afterTriggerInvokeEvents
 			 * call.  Furthermore, it's unsafe to pass delete_ok = true here,
 			 * because that could cause afterTriggerInvokeEvents to try to
 			 * access qs->events after the stack has been repalloc'd.
 			 */
 			qs = &afterTriggers.query_stack[afterTriggers.query_depth];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * We'll need to scan the events list again.  To reduce the cost
@@ -5152,13 +4978,8 @@ AfterTriggerEndQuery(EState *estate)
 			 * events we would have gotten rid of by passing delete_ok = true.
 			 */
 			Assert(oldtail != NULL);
-<<<<<<< HEAD
-			while (events->head != oldtail)
-				afterTriggerDeleteHeadEventChunk(events);
-=======
 			while (qs->events.head != oldtail)
 				afterTriggerDeleteHeadEventChunk(qs);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		else
 			break;

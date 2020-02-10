@@ -99,12 +99,12 @@ int BitmapDecompress_HasError(
 
 void BitmapDecompress_Decompress(
 		BitmapDecompressState *state,
-		uint32* bitmapData,
+		uint64 *bitmapData,
 		int bitmapDataSize);
 
 int Bitmap_Compress(
 		BitmapCompressionType compressionType,
-		uint32* bitmapData,
+		uint64 *bitmapData,
 		int bitmapDataSize,
 		unsigned char *outData,
 		int maxOutDataSize);

@@ -677,9 +677,8 @@ AppendOnlyVisimapDelete_Stash(
  * a single tuple is deleted.
  * In all other cases, AppendOnlyVisimapDelete_Hide needs to be used.
  */
-HTSU_Result
-AppendOnlyVisimapDelete_Hide(
-							 AppendOnlyVisimapDelete *visiMapDelete, AOTupleId *aoTupleId)
+TM_Result
+AppendOnlyVisimapDelete_Hide(AppendOnlyVisimapDelete *visiMapDelete, AOTupleId *aoTupleId)
 {
 	AppendOnlyVisimap *visiMap;
 

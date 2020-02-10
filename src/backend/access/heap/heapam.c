@@ -2192,7 +2192,7 @@ heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
  */
 void
 heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
-				  CommandId cid, int options, BulkInsertState bistate, TransactionId xid)
+				  CommandId cid, int options, BulkInsertState bistate)
 {
 	bool        isFrozen = (xid == FrozenTransactionId);
 	HeapTuple  *heaptuples;

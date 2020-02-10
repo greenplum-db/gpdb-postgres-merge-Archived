@@ -24,10 +24,12 @@
 #include "access/heapam.h"		/* heap_open            */
 #include "access/transam.h"		/* InvalidTransactionId */
 #include "access/xact.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_authid.h"
 #include "libpq-fe.h"
 #include "miscadmin.h"
+#include "nodes/pathnodes.h"
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/faultinjector.h"
@@ -41,6 +43,19 @@
 #include "cdb/cdbdispatchresult.h"
 #include "cdb/cdbtm.h"
 #include "cdb/cdbutil.h"
+
+
+/*
+ * GPDB_12_MERGE_FIXME: These used to be in utils/rel.h. But I wanted to remove
+ * them, so that we find all the places that used them, that probably shouldn't
+ * anymore. In this file, these are used quite reasonably.
+ */
+#define RelationIsAoRows(relation) \
+	((bool)(((relation)->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID)))
+#define RelationIsAoCols(relation) \
+	((bool)(((relation)->rd_rel->relam == AOCO_TABLE_AM_OID)))
+#define RelationIsAppendOptimized(relation) \
+	(RelationIsAoRows(relation) || RelationIsAoCols(relation))
 
 /*
  * GUC variables
@@ -214,7 +229,7 @@ AORelCreateHashEntry(Oid relid)
 	 * Now get all the segment files information for this relation from the QD
 	 * aoseg table. then update our segment file array in this hash entry.
 	 */
-	aorel = heap_open(relid, RowExclusiveLock);
+	aorel = table_open(relid, RowExclusiveLock);
 
 	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 	if (RelationIsAoRows(aorel))
