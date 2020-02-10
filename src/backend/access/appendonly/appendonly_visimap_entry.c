@@ -26,8 +26,7 @@
  * after this function has been called.
  */
 void
-AppendOnlyVisimapEntry_Finish(
-							  AppendOnlyVisimapEntry *visiMapEntry)
+AppendOnlyVisimapEntry_Finish(AppendOnlyVisimapEntry *visiMapEntry)
 {
 	Assert(visiMapEntry);
 
@@ -71,8 +70,7 @@ AppendOnlyVisimapEntry_Init(
  * call to AppendOnlyVisimapEntry_Init.
  */
 void
-AppendOnlyVisimapEntry_Reset(
-							 AppendOnlyVisimapEntry *visiMapEntry)
+AppendOnlyVisimapEntry_Reset(AppendOnlyVisimapEntry *visiMapEntry)
 {
 	Assert(visiMapEntry);
 
@@ -91,8 +89,7 @@ AppendOnlyVisimapEntry_Reset(
  * Note that the firstRowNum is not the rowNum of the tuple id.
  */
 void
-AppendOnlyVisimapEntry_New(
-						   AppendOnlyVisimapEntry *visiMapEntry,
+AppendOnlyVisimapEntry_New(AppendOnlyVisimapEntry *visiMapEntry,
 						   AOTupleId *tupleId)
 {
 	Assert(visiMapEntry);
@@ -130,8 +127,7 @@ AppendOnlyVisimap_GetAttrNotNull(HeapTuple t, TupleDesc td, int attr)
 }
 
 void
-AppendOnlyVisiMapEnty_ReadData(
-							   AppendOnlyVisimapEntry *visiMapEntry, size_t dataSize)
+AppendOnlyVisiMapEnty_ReadData(AppendOnlyVisimapEntry *visiMapEntry, size_t dataSize)
 {
 	int			newWordCount;
 
@@ -261,8 +257,7 @@ AppendOnlyVisimapEntry_GetHiddenTupleCount(
 }
 
 void
-AppendOnlyVisimapEntry_WriteData(
-								 AppendOnlyVisimapEntry *visiMapEntry)
+AppendOnlyVisimapEntry_WriteData(AppendOnlyVisimapEntry *visiMapEntry)
 {
 	int			bitmapSize,
 				compressedBitmapSize;
