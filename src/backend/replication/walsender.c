@@ -525,28 +525,20 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 		PGAlignedBlock rbuf;
 		int			nread;
 
-<<<<<<< HEAD
-		nread = read(fd, rbuf.data, sizeof(rbuf));
-		if (nread <= 0)
-=======
 		pgstat_report_wait_start(WAIT_EVENT_WALSENDER_TIMELINE_HISTORY_READ);
 		nread = read(fd, rbuf.data, sizeof(rbuf));
 		pgstat_report_wait_end();
 		if (nread < 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not read file \"%s\": %m",
 							path)));
-<<<<<<< HEAD
-=======
 		else if (nread == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
 					 errmsg("could not read file \"%s\": read %d of %zu",
 							path, nread, (Size) bytesleft)));
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		pq_sendbytes(&buf, rbuf.data, nread);
 		bytesleft -= nread;
 	}
@@ -924,10 +916,6 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 		LogicalDecodingContext *ctx;
 		bool		need_full_snapshot = false;
 
-<<<<<<< HEAD
-		ctx = CreateInitDecodingContext(cmd->plugin, NIL,
-										true, /* build snapshot */
-=======
 		/*
 		 * Do options check early so that we can bail before calling the
 		 * DecodingContextFindStartpoint which can take long time.
@@ -973,7 +961,6 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 
 		ctx = CreateInitDecodingContext(cmd->plugin, NIL, need_full_snapshot,
 										InvalidXLogRecPtr,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 										logical_read_xlog_page,
 										WalSndPrepareWrite, WalSndWriteData,
 										WalSndUpdateProgress);
@@ -1140,17 +1127,6 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 	pq_endmessage(&buf);
 	pq_flush();
 
-<<<<<<< HEAD
-	/*
-	 * Initialize position to the last ack'ed one, then the xlog records begin
-	 * to be shipped from that position.
-	 */
-	logical_decoding_ctx = CreateDecodingContext(
-											   cmd->startpoint, cmd->options,
-												 logical_read_xlog_page,
-										WalSndPrepareWrite, WalSndWriteData);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Start reading WAL from the oldest required WAL. */
 	logical_startptr = MyReplicationSlot->data.restart_lsn;
@@ -1224,12 +1200,7 @@ static void
 WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 				bool last_write)
 {
-<<<<<<< HEAD
-	TimestampTz	now;
-	int64 now_int;
-=======
 	TimestampTz now;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* output previously gathered data in a CopyData packet */
 	pq_putmessage_noblock('d', ctx->out->data, ctx->out->len);
@@ -1240,14 +1211,8 @@ WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
 	 * several releases by streaming physical replication.
 	 */
 	resetStringInfo(&tmpbuf);
-<<<<<<< HEAD
-	now_int = GetCurrentIntegerTimestamp();
-	now = IntegerTimestampToTimestampTz(now_int);
-	pq_sendint64(&tmpbuf, now_int);
-=======
 	now = GetCurrentTimestamp();
 	pq_sendint64(&tmpbuf, now);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	memcpy(&ctx->out->data[1 + sizeof(int64) + sizeof(int64)],
 		   tmpbuf.data, sizeof(int64));
 
@@ -1371,16 +1336,6 @@ WalSndWaitForWal(XLogRecPtr loc)
 	for (;;)
 	{
 		long		sleeptime;
-<<<<<<< HEAD
-
-		/*
-		 * Emergency bailout if postmaster has died.  This is to avoid the
-		 * necessity for manual cleanup of all postmaster children.
-		 */
-		if (!PostmasterIsAlive())
-			exit(1);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/* Clear any already-pending wakeups */
 		ResetLatch(MyLatch);
@@ -3186,11 +3141,6 @@ WalSndSignals(void)
 
 	/* Reset some signals that are accepted by postmaster but not here */
 	pqsignal(SIGCHLD, SIG_DFL);
-<<<<<<< HEAD
-	pqsignal(SIGTTIN, SIG_DFL);
-	pqsignal(SIGTTOU, SIG_DFL);
-	pqsignal(SIGCONT, SIG_DFL);
-	pqsignal(SIGWINCH, SIG_DFL);
 
 #ifdef SIGILL
 	pqsignal(SIGILL, WalSndCrashHandler);
@@ -3202,8 +3152,6 @@ WalSndSignals(void)
 	pqsignal(SIGBUS, WalSndCrashHandler);
 #endif
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* Report shared-memory space needed by WalSndShmemInit */
@@ -3391,7 +3339,6 @@ WalSndGetStateString(WalSndState state)
 	return "UNKNOWN";
 }
 
-<<<<<<< HEAD
 /* Set the caught_within_range value for this WAL sender */
 static void
 WalSndSetCaughtupWithinRange(bool caughtup_within_range)
@@ -3537,7 +3484,8 @@ WalSndIsCatchupWithinRange(XLogRecPtr currRecPtr, XLogRecPtr catchupRecPtr)
 		return true;
 
 	return false;
-=======
+}
+
 static Interval *
 offset_to_interval(TimeOffset offset)
 {
@@ -3548,7 +3496,6 @@ offset_to_interval(TimeOffset offset)
 	result->time = offset;
 
 	return result;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
