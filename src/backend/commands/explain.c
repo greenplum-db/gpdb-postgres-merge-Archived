@@ -48,6 +48,7 @@
 #include "cdb/cdbgang.h"
 #include "executor/execDynamicScan.h"
 #include "optimizer/tlist.h"
+#include "optimizer/optimizer.h"
 
 #ifdef USE_ORCA
 extern char *SerializeDXLPlan(Query *parse);
@@ -1888,6 +1889,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			break;
 		case T_DynamicBitmapIndexScan:
 			{
+			/* GDPB_12_MERGE_FIXME */
+#if 0
 				BitmapIndexScan *bitmapindexscan = (BitmapIndexScan *) plan;
 				Oid indexoid = bitmapindexscan->indexid;
 				Oid parentOid = rel_partition_get_root(indexoid);
@@ -1904,6 +1907,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 					appendStringInfo(es->str, " on %s", indexname);
 				else
 					ExplainPropertyText("Index Name", indexname, es);
+#endif
 			}
 			break;
 		case T_ModifyTable:
@@ -3292,7 +3296,6 @@ show_tablesample(TableSampleClause *tsc, PlanState *planstate,
 static void
 show_sort_info(SortState *sortstate, ExplainState *es)
 {
-<<<<<<< HEAD
 	CdbExplain_NodeSummary *ns;
 	int			i;
 
@@ -3303,19 +3306,9 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 	for (i = 0; i < NUM_SORT_METHOD; i++)
 	{
 		CdbExplain_Agg	*agg;
-=======
-	if (!es->analyze)
-		return;
-
-	if (sortstate->sort_Done && sortstate->tuplesortstate != NULL)
-	{
-		Tuplesortstate *state = (Tuplesortstate *) sortstate->tuplesortstate;
-		TuplesortInstrumentation stats;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		const char *sortMethod;
 		const char *spaceType;
 
-<<<<<<< HEAD
 		sortMethod = sort_method_enum_str[i];
 
 		/*
@@ -3338,12 +3331,6 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 		 */
 		if (agg->vcnt  == 0)
 			continue;
-=======
-		tuplesort_get_stats(state, &stats);
-		sortMethod = tuplesort_method_name(stats.sortMethod);
-		spaceType = tuplesort_space_type_name(stats.spaceType);
-		spaceUsed = stats.spaceUsed;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 		{
@@ -3366,9 +3353,9 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 			ExplainPropertyText("Sort Space Type", spaceType, es);
 			if (es->verbose)
 			{
-				ExplainPropertyLong("Sort Max Segment Memory", (long) agg->vmax, es);
-				ExplainPropertyLong("Sort Avg Segment Memory", (long) (agg->vsum / agg->vcnt), es);
-				ExplainPropertyInteger("Sort Segments", agg->vcnt, es);
+				ExplainPropertyInteger("Sort Max Segment Memory", "kB", agg->vmax, es);
+				ExplainPropertyInteger("Sort Avg Segment Memory", "kB", (agg->vsum / agg->vcnt), es);
+				ExplainPropertyInteger("Sort Segments", NULL, agg->vcnt, es);
 			}
 		}
 	}
@@ -3943,6 +3930,7 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 
 				/* might be nice to add order by and scatter by info, if it's a TableFunctionScan */
 			}
+			break;
 		case T_TableFuncScan:
 			Assert(rte->rtekind == RTE_TABLEFUNC);
 			objectname = "xmltable";

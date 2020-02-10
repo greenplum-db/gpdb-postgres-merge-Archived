@@ -91,6 +91,8 @@ typedef struct timespec instr_time;
 
 #define INSTR_TIME_SET_CURRENT(t)	((void) clock_gettime(PG_INSTR_CLOCK, &(t)))
 
+#define INSTR_TIME_ASSIGN(x,y) ((x).tv_sec = (y).tv_sec, (x).tv_nsec = (y).tv_nsec)
+
 #define INSTR_TIME_ADD(x,y) \
 	do { \
 		(x).tv_sec += (y).tv_sec; \
