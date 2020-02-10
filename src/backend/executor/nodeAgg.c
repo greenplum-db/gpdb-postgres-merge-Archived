@@ -266,7 +266,6 @@
 
 #define IS_HASHAGG(aggstate) (((Agg *) (aggstate)->ss.ps.plan)->aggstrategy == AGG_HASHED)
 
-<<<<<<< HEAD
 /*
  * AggStatePerTransData - per aggregate state value information
  * AggStatePerAggData -- per-aggregate working state
@@ -276,37 +275,11 @@
  * Definition moved to nodeAgg.h to provide visibility to execHHashagg.c
  */
 
-/*
- * To implement hashed aggregation, we need a hashtable that stores a
- * representative tuple and an array of AggStatePerGroup structs for each
- * distinct set of GROUP BY column values.  We compute the hash key from
- * the GROUP BY columns.
- */
-typedef struct AggHashEntryData *AggHashEntry;
-
-typedef struct AggHashEntryData
-{
-	TupleHashEntryData shared;	/* common header for hash table entries */
-	/* per-aggregate transition status array */
-	AggStatePerGroupData pergroup[FLEXIBLE_ARRAY_MEMBER];
-}	AggHashEntryData;
-
-static void initialize_phase(AggState *aggstate, int newphase);
-static void advance_transition_function(AggState *aggstate,
-							AggStatePerTrans pertrans,
-							AggStatePerGroup pergroupstate);
-=======
 static void select_current_set(AggState *aggstate, int setno, bool is_hash);
 static void initialize_phase(AggState *aggstate, int newphase);
-static TupleTableSlot *fetch_input_tuple(AggState *aggstate);
-static void initialize_aggregates(AggState *aggstate,
-								  AggStatePerGroup *pergroups,
-								  int numReset);
 static void advance_transition_function(AggState *aggstate,
 										AggStatePerTrans pertrans,
 										AggStatePerGroup pergroupstate);
-static void advance_aggregates(AggState *aggstate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void process_ordered_aggregate_single(AggState *aggstate,
 											 AggStatePerTrans pertrans,
 											 AggStatePerGroup pergroupstate);
@@ -620,22 +593,21 @@ initialize_aggregate(AggState *aggstate, AggStatePerTrans pertrans,
 			Form_pg_attribute attr = TupleDescAttr(pertrans->sortdesc, 0);
 
 			pertrans->sortstates[aggstate->current_set] =
-<<<<<<< HEAD
-					tuplesort_begin_datum(&aggstate->ss,
-										  pertrans->evaldesc->attrs[0]->atttypid,
-										  pertrans->sortOperators[0],
-										  pertrans->sortCollations[0],
-										  pertrans->sortNullsFirst[0],
-										  PlanStateOperatorMemKB((PlanState *) aggstate), false);
-		else
-			pertrans->sortstates[aggstate->current_set] =
-					tuplesort_begin_heap(&aggstate->ss,
-										 pertrans->evaldesc,
-										 pertrans->numSortCols, pertrans->sortColIdx,
-										 pertrans->sortOperators,
-										 pertrans->sortCollations,
-										 pertrans->sortNullsFirst,
-										 PlanStateOperatorMemKB((PlanState *) aggstate), false);
+                    tuplesort_begin_datum(attr->atttypid,
+                                          pertrans->sortOperators[0],
+                                          pertrans->sortCollations[0],
+                                          pertrans->sortNullsFirst[0],
+                                          work_mem, NULL, false);
+        }
+        else
+            pertrans->sortstates[aggstate->current_set] =
+                    tuplesort_begin_heap(pertrans->sortdesc,
+                                         pertrans->numSortCols,
+                                         pertrans->sortColIdx,
+                                         pertrans->sortOperators,
+                                         pertrans->sortCollations,
+                                         pertrans->sortNullsFirst,
+                                         work_mem, NULL, false);
 
 		/*
 		 * CDB: If EXPLAIN ANALYZE, let all of our tuplesort operations
@@ -657,23 +629,6 @@ initialize_aggregate(AggState *aggstate, AggStatePerTrans pertrans,
 							   unique,
 							   sort_flags, maxdistinct);
 		}
-=======
-				tuplesort_begin_datum(attr->atttypid,
-									  pertrans->sortOperators[0],
-									  pertrans->sortCollations[0],
-									  pertrans->sortNullsFirst[0],
-									  work_mem, NULL, false);
-		}
-		else
-			pertrans->sortstates[aggstate->current_set] =
-				tuplesort_begin_heap(pertrans->sortdesc,
-									 pertrans->numSortCols,
-									 pertrans->sortColIdx,
-									 pertrans->sortOperators,
-									 pertrans->sortCollations,
-									 pertrans->sortNullsFirst,
-									 work_mem, NULL, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*
@@ -687,23 +642,17 @@ initialize_aggregate(AggState *aggstate, AggStatePerTrans pertrans,
 		pergroupstate->transValue = pertrans->initValue;
 	else
 	{
-<<<<<<< HEAD
-		pergroupstate->transValue =
-			datumCopyWithMemManager(0,
-									pertrans->initValue,
-									pertrans->transtypeByVal,
-									pertrans->transtypeLen,
-									mem_manager);
-=======
 		MemoryContext oldContext;
 
 		oldContext = MemoryContextSwitchTo(
 										   aggstate->curaggcontext->ecxt_per_tuple_memory);
-		pergroupstate->transValue = datumCopy(pertrans->initValue,
-											  pertrans->transtypeByVal,
-											  pertrans->transtypeLen);
+        pergroupstate->transValue =
+                datumCopyWithMemManager(0,
+                                        pertrans->initValue,
+                                        pertrans->transtypeByVal,
+                                        pertrans->transtypeLen,
+                                        mem_manager);
 		MemoryContextSwitchTo(oldContext);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	pergroupstate->transValueIsNull = pertrans->initValueIsNull;
 
@@ -776,12 +725,8 @@ advance_transition_function(AggState *aggstate,
 							AggStatePerTrans pertrans,
 							AggStatePerGroup pergroupstate)
 {
-<<<<<<< HEAD
 	MemoryManagerContainer *mem_manager = &aggstate->mem_manager;
 	FunctionCallInfo fcinfo = &pertrans->transfn_fcinfo;
-=======
-	FunctionCallInfo fcinfo = pertrans->transfn_fcinfo;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	MemoryContext oldContext;
 	Datum		newVal;
 
@@ -810,20 +755,17 @@ advance_transition_function(AggState *aggstate,
 			 * We must copy the datum into aggcontext if it is pass-by-ref.
 			 * We do not need to pfree the old transValue, since it's NULL.
 			 */
-<<<<<<< HEAD
-			pergroupstate->transValue =
-				datumCopyWithMemManager(pergroupstate->transValue,
-										fcinfo->arg[1],
-										pertrans->transtypeByVal,
-										pertrans->transtypeLen,
-										mem_manager);
-=======
 			oldContext = MemoryContextSwitchTo(
 											   aggstate->curaggcontext->ecxt_per_tuple_memory);
+            pergroupstate->transValue =
+                    datumCopyWithMemManager(pergroupstate->transValue,
+                                            fcinfo->args[1].value,
+                                            pertrans->transtypeByVal,
+                                            pertrans->transtypeLen,
+                                            mem_manager);
 			pergroupstate->transValue = datumCopy(fcinfo->args[1].value,
 												  pertrans->transtypeByVal,
 												  pertrans->transtypeLen);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			pergroupstate->transValueIsNull = false;
 			pergroupstate->noTransValue = false;
 			return;
@@ -869,14 +811,6 @@ advance_transition_function(AggState *aggstate,
 	{
 		if (!fcinfo->isnull)
 		{
-<<<<<<< HEAD
-			newVal = datumCopyWithMemManager(pergroupstate->transValue,
-											 newVal,
-											 pertrans->transtypeByVal,
-											 pertrans->transtypeLen,
-											 mem_manager);
-		}
-=======
 			MemoryContextSwitchTo(aggstate->curaggcontext->ecxt_per_tuple_memory);
 			if (DatumIsReadWriteExpandedObject(newVal,
 											   false,
@@ -884,9 +818,11 @@ advance_transition_function(AggState *aggstate,
 				MemoryContextGetParent(DatumGetEOHP(newVal)->eoh_context) == CurrentMemoryContext)
 				 /* do nothing */ ;
 			else
-				newVal = datumCopy(newVal,
-								   pertrans->transtypeByVal,
-								   pertrans->transtypeLen);
+                newVal = datumCopyWithMemManager(pergroupstate->transValue,
+                                                 newVal,
+                                                 pertrans->transtypeByVal,
+                                                 pertrans->transtypeLen,
+                                                 mem_manager);
 		}
 		if (!pergroupstate->transValueIsNull)
 		{
@@ -897,7 +833,6 @@ advance_transition_function(AggState *aggstate,
 			else
 				pfree(DatumGetPointer(pergroupstate->transValue));
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	pergroupstate->transValue = newVal;
@@ -1415,13 +1350,8 @@ process_ordered_aggregate_multi(AggState *aggstate,
 			/* Start from 1, since the 0th arg will be the transition value */
 			for (i = 0; i < numTransInputs; i++)
 			{
-<<<<<<< HEAD
-				fcinfo->arg[i + 1] = slot_get_values(slot1)[i];
-				fcinfo->argnull[i + 1] = slot_get_isnull(slot1)[i];
-=======
 				fcinfo->args[i + 1].value = slot1->tts_values[i];
 				fcinfo->args[i + 1].isnull = slot1->tts_isnull[i];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 
 			advance_transition_function(aggstate, pertrans, pergroupstate);
@@ -1690,11 +1620,7 @@ prepare_projection_slot(AggState *aggstate, TupleTableSlot *slot, int currentSet
 		aggstate->group_id = aggstate->phase->group_id[currentSet];
 		aggstate->gset_id = aggstate->phase->gset_id[currentSet];
 
-<<<<<<< HEAD
-		if (TupIsNull(slot))
-=======
 		if (TTS_EMPTY(slot))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			/*
 			 * Force all values to be NULL if working on an empty input tuple
@@ -2268,13 +2194,8 @@ agg_retrieve_direct(AggState *aggstate)
 	ExprContext *econtext;
 	ExprContext *tmpcontext;
 	AggStatePerAgg peragg;
-<<<<<<< HEAD
-	AggStatePerGroup pergroup;
-	TupleTableSlot *outerslot = NULL;
-=======
 	AggStatePerGroup *pergroups;
 	TupleTableSlot *outerslot;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	TupleTableSlot *firstSlot;
 	TupleTableSlot *result;
 	bool		hasGroupingSets = aggstate->phase->numsets > 0;
@@ -2938,11 +2859,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	aggstate->aggs = NIL;
 	aggstate->numaggs = 0;
 	aggstate->numtrans = 0;
-<<<<<<< HEAD
 	aggstate->numgsets = 0;
-=======
 	aggstate->aggstrategy = node->aggstrategy;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	aggstate->aggsplit = node->aggsplit;
 	aggstate->maxsets = 0;
 	aggstate->projected_set = -1;
@@ -3445,11 +3363,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		AclResult	aclresult;
 		Oid			transfn_oid,
 					finalfn_oid;
-<<<<<<< HEAD
 		Oid			combinefn_oid;
-=======
 		bool		shareable;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		Oid			serialfn_oid,
 					deserialfn_oid;
 		Expr	   *finalfnexpr;
@@ -3701,14 +3616,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		existing_transno = find_compatible_pertrans(aggstate, aggref,
 													shareable,
 													transfn_oid, aggtranstype,
-<<<<<<< HEAD
-													DO_AGGSPLIT_SERIALIZE(aggstate->aggsplit) ? serialfn_oid : InvalidOid,
-													DO_AGGSPLIT_DESERIALIZE(aggstate->aggsplit) ? deserialfn_oid : InvalidOid,
-												  initValue, initValueIsNull,
-=======
 													serialfn_oid, deserialfn_oid,
 													initValue, initValueIsNull,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 													same_input_transnos);
 		if (existing_transno != -1)
 		{
@@ -4476,8 +4385,6 @@ ExecReScanAgg(AggState *node)
 	/* Re-initialize some variables */
 	node->agg_done = false;
 
-<<<<<<< HEAD
-=======
 	if (node->aggstrategy == AGG_HASHED)
 	{
 		/*
@@ -4539,7 +4446,6 @@ ExecReScanAgg(AggState *node)
 		heap_freetuple(node->grp_firstTuple);
 		node->grp_firstTuple = NULL;
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/* Forget current agg values */
