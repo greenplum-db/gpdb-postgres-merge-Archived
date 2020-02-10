@@ -1008,6 +1008,9 @@ appendonly_index_validate_scan(Relation heapRelation,
  * ------------------------------------------------------------------------
  */
 
+/*
+ * This pretends that the all the space is taken by the main fork.
+ */
 static uint64
 appendonly_relation_size(Relation rel, ForkNumber forkNumber)
 {
@@ -1018,6 +1021,9 @@ appendonly_relation_size(Relation rel, ForkNumber forkNumber)
 	int64		result;
 	Datum		eof;
 	bool		isNull;
+
+	if (forkNumber != MAIN_FORKNUM)
+		return 0;
 
 	result = 0;
 

@@ -127,6 +127,7 @@
 #include "utils/timestamp.h"
 
 #include "catalog/heap.h"
+#include "catalog/pg_am.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbaocsam.h"
 #include "cdb/cdbdisp_query.h"
@@ -195,7 +196,9 @@ static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 static void analyze_rel_internal(Oid relid, RangeVar *relation,
 								 VacuumParams *params, List *va_cols,
 								 bool in_outer_xact, BufferAccessStrategy bstrategy);
+#if 0
 static void acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, int elevel);
+#endif
 
 /*
  *	analyze_rel() -- analyze one relation
@@ -880,7 +883,8 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	{
 		BlockNumber relallvisible;
 
-		if (RelationIsAppendOptimized(onerel))
+		if (onerel->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
+			onerel->rd_rel->relam == AOCO_TABLE_AM_OID)
 			relallvisible = 0;
 		else
 			visibilitymap_count(onerel, &relallvisible, NULL);
@@ -1490,14 +1494,13 @@ acquire_sample_rows(Relation onerel, int elevel,
 											  totalrows, totaldeadrows);
 	}
 	/* Gather sample on this server. */
-	else if (RelationIsHeap(onerel))
-		return acquire_sample_rows_heap(onerel, elevel, rows, targrows,
-										totalrows, totaldeadrows);
-	else if (RelationIsAppendOptimized(onerel))
+	if (onerel->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
+		onerel->rd_rel->relam == AOCO_TABLE_AM_OID)
 		return acquire_sample_rows_ao(onerel, elevel, rows, targrows,
 									  totalrows, totaldeadrows);
 	else
-		elog(ERROR, "unsupported table type");
+		return acquire_sample_rows_heap(onerel, elevel, rows, targrows,
+										totalrows, totaldeadrows);
 }
 
 /*
@@ -1774,6 +1777,7 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
  * distinguish it from the HLL for sampled data. This functions scans
  * the full table only once.
  */
+#if 0
 static void
 acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, int elevel)
 {
@@ -1856,6 +1860,7 @@ acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, int 
 
 	SPI_finish();
 }
+#endif
 
 /*
  * Compute relation size.
@@ -1892,23 +1897,10 @@ acquire_number_of_blocks(Relation onerel)
 		return RelationGuessNumberOfBlocks(totalbytes);
 	}
 	/* Check size on this server. */
-	else if (RelationIsHeap(onerel))
+	else
 	{
-		/* NOTE: This covers indexes, too */
 		return RelationGetNumberOfBlocks(onerel);
 	}
-	else if (RelationIsAoRows(onerel))
-	{
-		totalbytes = GetAOTotalBytes(onerel, GetActiveSnapshot());
-		return RelationGuessNumberOfBlocks(totalbytes);
-	}
-	else if (RelationIsAoCols(onerel))
-	{
-		totalbytes = GetAOCSTotalBytes(onerel, GetActiveSnapshot(), true);
-		return RelationGuessNumberOfBlocks(totalbytes);
-	}
-	else
-		elog(ERROR, "unsupported table type");
 }
 
 /*
@@ -1949,7 +1941,6 @@ acquire_index_number_of_blocks(Relation indexrel, Relation tablerel)
 	/* Check size on this server. */
 	else
 	{
-		Assert(RelationIsHeap(indexrel));
 		return RelationGetNumberOfBlocks(indexrel);
 	}
 }
@@ -2435,10 +2426,12 @@ static void compute_scalar_stats(VacAttrStatsP stats,
 								 AnalyzeAttrFetchFunc fetchfunc,
 								 int samplerows,
 								 double totalrows);
+#if 0
 static void merge_leaf_stats(VacAttrStatsP stats,
 								 AnalyzeAttrFetchFunc fetchfunc,
 								 int samplerows,
 								 double totalrows);
+#endif
 static int	compare_scalars(const void *a, const void *b, void *arg);
 static int	compare_mcvs(const void *a, const void *b);
 static int	analyze_mcv_list(int *mcv_counts,
@@ -2483,7 +2476,7 @@ std_typanalyze(VacAttrStats *stats)
 	 * Determine which standard statistics algorithm to use
 	 */
 	List *va_cols = list_make1_int(stats->attr->attnum);
-	/* GPDB_12_MERE_FIXME: mergings stats not yet implemented with new partitioning implementation */
+	/* GPDB_12_MERGE_FIXME: mergings stats not yet implemented with new partitioning implementation */
 #if 0
 	if (rel_part_status(attr->attrelid) == PART_STATUS_ROOT &&
 		leaf_parts_analyzed(stats->attr->attrelid, InvalidOid, va_cols, stats->elevel) &&
@@ -3480,8 +3473,12 @@ compute_scalar_stats(VacAttrStatsP stats,
 		 * GPDB: Don't calculate correlation for AO-tables, however.
 		 * The rows are not necessarily in the order that our sampling
 		 * query returned them, for an append-only table.
+		 *
+		 * GPDB_12_MERGE_FIXME: Removed the check for AO tables. So
+		 * we now collect correlation for AO tables too. Is that really
+		 * such a bad idea?
 		 */
-		if (values_cnt > 1 && stats->relstorage == RELSTORAGE_HEAP)
+		if (values_cnt > 1)
 		{
 			MemoryContext old_context;
 			float4	   *corrs;
@@ -3578,6 +3575,7 @@ compute_scalar_stats(VacAttrStatsP stats,
  *	most common values, the (estimated) number of distinct values, the
  *	distribution histogram.
  */
+#if 0
 static void
 merge_leaf_stats(VacAttrStatsP stats,
 				 AnalyzeAttrFetchFunc fetchfunc,
@@ -4020,6 +4018,8 @@ merge_leaf_stats(VacAttrStatsP stats,
 	pfree(heaptupleStats);
 	pfree(relTuples);
 }
+#endif
+
 /*
  * qsort_arg comparator for sorting ScalarItems
  *

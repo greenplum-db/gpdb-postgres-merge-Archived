@@ -1682,7 +1682,7 @@ appendonly_tid_reaped(ItemPointer itemptr, void *state)
  * method for AO tables, too, using the block directory, if it's available.
  * But for now, this scans the whole table.
  */
-static int
+int
 acquire_sample_rows_ao(Relation onerel, int elevel,
 					   HeapTuple *rows, int targrows,
 					   double *totalrows, double *totaldeadrows)

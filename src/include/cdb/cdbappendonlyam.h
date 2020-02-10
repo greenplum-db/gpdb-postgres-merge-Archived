@@ -394,4 +394,8 @@ struct VacuumParams;
 extern void appendonly_vacuum_rel(Relation onerel, struct VacuumParams *params,
 								  BufferAccessStrategy bstrategy);
 
+extern int acquire_sample_rows_ao(Relation onerel, int elevel,
+								  HeapTuple *rows, int targrows,
+								  double *totalrows, double *totaldeadrows);
+
 #endif   /* CDBAPPENDONLYAM_H */

@@ -343,7 +343,8 @@ cluster_rel(Oid tableOid, Oid indexOid, int options, bool printError)
 	 * We don't support cluster on an AO table. We print out a warning/error to
 	 * the user, and simply return.
 	 */
-	if (RelationIsAppendOptimized(OldHeap))
+	if (OldHeap->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
+		OldHeap->rd_rel->relam == AOCO_TABLE_AM_OID)
 	{
 		ereport((printError ? ERROR : WARNING),
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -792,7 +793,8 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 										  true,
 										  true,
 										  OIDOldHeap,
-										  NULL);
+										  NULL,
+										  /* valid_opts */ true);
 	Assert(OIDNewHeap != InvalidOid);
 
 	ReleaseSysCache(tuple);
@@ -1178,10 +1180,10 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		elog(ERROR, "cache lookup failed for relation %u", r2);
 	relform2 = (Form_pg_class) GETSTRUCT(reltup2);
 
-	isAO1 = (relform1->relstorage == RELSTORAGE_AOROWS ||
-			 relform1->relstorage == RELSTORAGE_AOCOLS);
-	isAO2 = (relform2->relstorage == RELSTORAGE_AOROWS ||
-			 relform2->relstorage == RELSTORAGE_AOCOLS);
+	isAO1 = (relform1->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
+			 relform1->relam == AOCO_TABLE_AM_OID);
+	isAO2 = (relform2->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
+			 relform2->relam == AOCO_TABLE_AM_OID);
 
 	relfilenode1 = relform1->relfilenode;
 	relfilenode2 = relform2->relfilenode;
@@ -1297,8 +1299,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		relform1->relfrozenxid = frozenXid;
 		Assert(MultiXactIdIsValid(cutoffMulti));
 		relform1->relminmxid = cutoffMulti;
-		Assert(should_have_valid_relfrozenxid(relform1->relkind,
-											  relform1->relstorage));
+		Assert(should_have_valid_relfrozenxid(relform1->relkind));
 	}
 	/* swap size statistics too, since new rel has freshly-updated stats */
 	if (swap_stats)
@@ -1449,7 +1450,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 
 		vac_update_relstats(rel, relform1->relpages, relform1->reltuples,
 							relform1->relallvisible,
-							relform1->relhaspkey,
+							relform1->relhasindex,
 							relform1->relfrozenxid,
 							relform1->relminmxid,
 							false);
