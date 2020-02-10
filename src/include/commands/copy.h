@@ -49,6 +49,16 @@ typedef enum EolType
 	EOL_CRNL
 } EolType;
 
+/*
+ * The error handling mode for this data load.
+ */
+typedef enum CopyErrMode
+{
+	ALL_OR_NOTHING,	/* Either all rows or no rows get loaded (the default) */
+	SREH_IGNORE,	/* Sreh - ignore errors (REJECT, but don't log errors) */
+	SREH_LOG		/* Sreh - log errors */
+} CopyErrMode;
+
 typedef struct ProgramPipes
 {
 	char *shexec;
@@ -109,6 +119,7 @@ typedef struct CopyStateData
 	bool		reached_eof;	/* true if we read to end of copy data (not
 								 * all copy_dest types maintain this) */
 	EolType		eol_type;		/* EOL type of input */
+	char	   *eol_str;		/* optional NEWLINE from command. before eol_type is defined */
 	int			file_encoding;	/* file or remote side's character encoding */
 	bool		need_transcoding;	/* file encoding diff from server? */
 	bool		encoding_embeds_ascii;	/* ASCII can be non-first byte? */
@@ -117,9 +128,11 @@ typedef struct CopyStateData
 	Relation	rel;			/* relation to copy to or from */
 	QueryDesc  *queryDesc;		/* executable query to copy from */
 	List	   *attnumlist;		/* integer list of attnums to copy */
+	List	   *attnamelist;	/* list of attributes by name */
 	char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
 	bool		is_program;		/* is 'filename' a program to popen? */
 	copy_data_source_cb data_source_cb; /* function for reading data */
+	void	   *data_source_cb_extra;
 	bool		binary;			/* binary format? */
 	bool		freeze;			/* freeze rows on loading? */
 	bool		csv_mode;		/* Comma Separated Value format? */
@@ -141,6 +154,9 @@ typedef struct CopyStateData
 	List	   *convert_select; /* list of column names (can be NIL) */
 	bool	   *convert_select_flags;	/* per-column CSV/TEXT CS flags */
 	Node	   *whereClause;	/* WHERE condition (or NULL) */
+	bool		fill_missing;	/* missing attrs at end of line are NULL */
+
+	SingleRowErrorDesc *sreh;
 
 	/* these are just for error messages, see CopyFromErrorCallback */
 	const char *cur_relname;	/* table name for error messages */
@@ -174,6 +190,14 @@ typedef struct CopyStateData
 	ExprState  *qualexpr;
 
 	TransitionCaptureState *transition_capture;
+
+	StringInfo	dispatch_msgbuf; /* used in COPY_DISPATCH mode, to construct message
+								  * to send to QE. */
+	
+	/* Error handling options */
+	CopyErrMode	errMode;
+	struct CdbSreh *cdbsreh; /* single row error handler */
+	int			lastsegid;
 
 	/*
 	 * These variables are used to reduce overhead in textual COPY FROM.
@@ -270,8 +294,9 @@ extern void ProcessCopyOptions(ParseState *pstate, CopyState cstate, bool is_fro
 extern CopyState BeginCopyFrom(ParseState *pstate, Relation rel, const char *filename,
 							   bool is_program, copy_data_source_cb data_source_cb, List *attnamelist, List *options,
 							   List *ao_segnos);
-extern CopyState BeginCopy(bool is_from, Relation rel, Node *raw_query,
-						   const char *queryString, const Oid queryRelId, List *attnamelist, List *options,
+extern CopyState BeginCopy(ParseState *pstate, bool is_from, Relation rel,
+						   RawStmt *raw_query, Oid queryRelId,
+						   List *attnamelist, List *options,
 						   TupleDesc tupDesc);
 extern CopyState BeginCopyToOnSegment(QueryDesc *queryDesc);
 extern void EndCopyToOnSegment(CopyState cstate);

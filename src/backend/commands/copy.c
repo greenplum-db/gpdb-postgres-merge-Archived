@@ -75,7 +75,6 @@
 #include "cdb/cdbsreh.h"
 #include "cdb/cdbvars.h"
 #include "commands/queue.h"
-#include "executor/execDML.h"
 #include "nodes/makefuncs.h"
 #include "postmaster/autostats.h"
 #include "utils/metrics_utils.h"
@@ -242,8 +241,7 @@ static void SendCopyEnd(CopyState cstate);
 static void CopySendData(CopyState cstate, const void *databuf, int datasize);
 static void CopySendString(CopyState cstate, const char *str);
 static void CopySendChar(CopyState cstate, char c);
-static int	CopyGetData(CopyState cstate, void *databuf,
-						int minread, int maxread);
+static int	CopyGetData(CopyState cstate, void *databuf, int datasize);
 static void CopySendInt32(CopyState cstate, int32 val);
 static bool CopyGetInt32(CopyState cstate, int32 *val);
 static void CopySendInt16(CopyState cstate, int16 val);
@@ -257,19 +255,18 @@ static void SendCopyFromForwardedTuple(CopyState cstate,
 						   int64 lineno,
 						   char *line,
 						   int line_len,
-						   Oid tuple_oid,
 						   Datum *values,
 						   bool *nulls);
 static void SendCopyFromForwardedHeader(CopyState cstate, CdbCopy *cdbCopy);
 static void SendCopyFromForwardedError(CopyState cstate, CdbCopy *cdbCopy, char *errmsg);
 
 static bool NextCopyFromDispatch(CopyState cstate, ExprContext *econtext,
-								 Datum *values, bool *nulls, Oid *tupleOid);
-static TupleTableSlot *NextCopyFromExecute(CopyState cstate, ExprContext *econtext, EState *estate,
-								Oid *tupleOid);
-static bool NextCopyFromRawFieldsX(CopyState cstate, char ***fields, int *nfields, int stop_processing_at_field);
+								 Datum *values, bool *nulls);
+static bool NextCopyFromExecute(CopyState cstate, ExprContext *econtext, Datum *values, bool *nulls);
+static bool NextCopyFromRawFieldsX(CopyState cstate, char ***fields, int *nfields,
+								   int stop_processing_at_field);
 static bool NextCopyFromX(CopyState cstate, ExprContext *econtext,
-			  Datum *values, bool *nulls, Oid *tupleOid);
+						  Datum *values, bool *nulls);
 static void HandleCopyError(CopyState cstate);
 static void HandleQDErrorFrame(CopyState cstate, char *p, int len);
 
@@ -279,17 +276,12 @@ static void setEncodingConversionProc(CopyState cstate, int encoding, bool iswri
 static GpDistributionData *InitDistributionData(CopyState cstate, EState *estate);
 static void FreeDistributionData(GpDistributionData *distData);
 static void InitCopyFromDispatchSplit(CopyState cstate, GpDistributionData *distData, EState *estate);
-static unsigned int
-GetTargetSeg(GpDistributionData *distData, Datum *baseValues, bool *baseNulls);
+static GpDistributionData *GetDistributionPolicyForPartition(GpDistributionData *mainDistData,
+															 ResultRelInfo *resultRelInfo,
+															 MemoryContext context);
+static unsigned int GetTargetSeg(GpDistributionData *distData, Datum *baseValues, bool *baseNulls);
 static ProgramPipes *open_program_pipes(char *command, bool forwrite);
 static void close_program_pipes(CopyState cstate, bool ifThrow);
-static void cdbFlushInsertBatches(List *resultRels,
-					  CopyState cstate,
-					  EState *estate,
-					  CommandId mycid,
-					  int hi_options,
-					  TupleTableSlot *baseSlot,
-					  int firstBufferedLineNo);
 CopyIntoClause*
 MakeCopyIntoClause(CopyStmt *stmt);
 
@@ -784,7 +776,7 @@ CopyGetData(CopyState cstate, void *databuf, int datasize)
 										 * read so far */
 			break;
 		case COPY_NEW_FE:
-			while (maxread > 0 && bytesread < minread && !cstate->reached_eof)
+			while (datasize > 0 && !cstate->reached_eof)
 			{
 				int			avail;
 
@@ -849,7 +841,7 @@ CopyGetData(CopyState cstate, void *databuf, int datasize)
 			}
 			break;
 		case COPY_CALLBACK:
-			bytesread = cstate->data_source_cb(databuf, minread, maxread);
+			bytesread = cstate->data_source_cb(databuf, datasize, cstate->data_source_cb_extra);
 			break;
 	}
 
@@ -1249,11 +1241,12 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 			PreventCommandIfReadOnly("COPY FROM");
 		PreventCommandIfParallelMode("COPY FROM");
 
-<<<<<<< HEAD
-		cstate = BeginCopyFrom(rel, stmt->filename, stmt->is_program,
-							   NULL, NULL, stmt->attlist, options,
+		cstate = BeginCopyFrom(pstate, rel, stmt->filename, stmt->is_program,
+							   NULL, stmt->attlist, options,
 							   stmt->ao_segnos);
-		cstate->range_table = range_table;
+		cstate->whereClause = whereClause;
+		// GPDB_12_MERGE_FIXME
+		//cstate->range_table = range_table;
 
 		/*
 		 * Error handling setup
@@ -1288,13 +1281,6 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 			cstate->errMode = ALL_OR_NOTHING; /* default */
 		}
 
-		/* We must be a QE if we received the partitioning config */
-		if (stmt->partitions)
-		{
-			Assert(Gp_role == GP_ROLE_EXECUTE);
-			cstate->partitions = stmt->partitions;
-		}
-
 		PG_TRY();
 		{
 			if (Gp_role == GP_ROLE_DISPATCH && cstate->on_segment)
@@ -1315,17 +1301,10 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
-=======
-		cstate = BeginCopyFrom(pstate, rel, stmt->filename, stmt->is_program,
-							   NULL, stmt->attlist, stmt->options);
-		cstate->whereClause = whereClause;
-		*processed = CopyFrom(cstate);	/* copy from file to database */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		EndCopyFrom(cstate);
 	}
 	else
 	{
-<<<<<<< HEAD
 		/*
 		 * GPDB_91_MERGE_FIXME: ExecutorStart() is called in BeginCopyTo,
 		 * but the TRY-CATCH block only starts here. If an error is
@@ -1338,11 +1317,9 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		 */
 		PG_TRY();
 		{
-			cstate = BeginCopyTo(rel, query, queryString, relid,
+			cstate = BeginCopyTo(pstate, rel, query, relid,
 								 stmt->filename, stmt->is_program,
 								 stmt->attlist, options);
-
-			cstate->partitions = stmt->partitions;
 
 			/*
 			 * "copy t to file on segment"					CopyDispatchOnSegment
@@ -1371,13 +1348,6 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		PG_END_TRY();
 
 		EndCopyTo(cstate, processed);
-=======
-		cstate = BeginCopyTo(pstate, rel, query, relid,
-							 stmt->filename, stmt->is_program,
-							 stmt->attlist, stmt->options);
-		*processed = DoCopyTo(cstate);	/* copy from database to file */
-		EndCopyTo(cstate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	/*
 	 * Close the relation.  If reading, we can release the AccessShareLock we
@@ -1390,8 +1360,6 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 	/* Issue automatic ANALYZE if conditions are satisfied (MPP-4082). */
 	if (Gp_role == GP_ROLE_DISPATCH && is_from)
 		auto_stats(AUTOSTATS_CMDTYPE_COPY, relid, *processed, false /* inFunction */);
-
-	return relid;
 }
 
 /*
@@ -2149,9 +2117,10 @@ BeginCopy(ParseState *pstate,
 			cstate->queryDesc->plannedstmt->copyIntoClause =
 					MakeCopyIntoClause(glob_copystmt);
 
+		// GPDB_12_MERGE_FIXME: gpmon is going away soon anyway...
+#if 0
 		if (gp_enable_gpperfmon && Gp_role == GP_ROLE_DISPATCH)
 		{
-			Assert(queryString);
 			gpmon_qlog_query_submit(cstate->queryDesc->gpmon_pkt);
 			gpmon_qlog_query_text(cstate->queryDesc->gpmon_pkt,
 					queryString,
@@ -2159,7 +2128,8 @@ BeginCopy(ParseState *pstate,
 					GetResqueueName(GetResQueueId()),
 					GetResqueuePriority(GetResQueueId()));
 		}
-
+#endif
+		
 		/* GPDB hook for collecting query info */
 		if (query_info_collect_hook)
 			(*query_info_collect_hook)(METRICS_QUERY_SUBMIT, cstate->queryDesc);
@@ -2325,20 +2295,24 @@ CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt)
 	int			i;
 	uint64		processed = 0;
 	uint64		rejected = 0;
-	dispatchStmt = copyObject((Node *) stmt);
+
+	dispatchStmt = copyObject((CopyStmt *) stmt);
 
 	all_relids = list_make1_oid(RelationGetRelid(cstate->rel));
 
 	/* add in AO segno map for dispatch */
 	if (dispatchStmt->is_from)
 	{
+		// GPDB_12_MERGE_FIXME: How are we going to do this with new partitioning implementation?
+#if 0
 		if (rel_is_partitioned(RelationGetRelid(cstate->rel)))
 		{
 			PartitionNode *pn = RelationBuildPartitionDesc(cstate->rel, false);
 
 			all_relids = list_concat(all_relids, all_partition_relids(pn));
 		}
-
+#endif
+		
 		dispatchStmt->ao_segnos = assignPerRelSegno(all_relids);
 	}
 
@@ -2457,7 +2431,7 @@ BeginCopyToOnSegment(QueryDesc *queryDesc)
 
 	TupleDesc	tupDesc;
 	int			num_phys_attrs;
-	Form_pg_attribute *attr;
+	FormData_pg_attribute *attr;
 	char	   *filename;
 	CopyIntoClause *copyIntoClause;
 
@@ -2534,11 +2508,11 @@ BeginCopyToOnSegment(QueryDesc *queryDesc)
 		bool		isvarlena;
 
 		if (cstate->binary)
-			getTypeBinaryOutputInfo(attr[attnum - 1]->atttypid,
+			getTypeBinaryOutputInfo(attr[attnum - 1].atttypid,
 									&out_func_oid,
 									&isvarlena);
 		else
-			getTypeOutputInfo(attr[attnum - 1]->atttypid,
+			getTypeOutputInfo(attr[attnum - 1].atttypid,
 							  &out_func_oid,
 							  &isvarlena);
 		fmgr_info(out_func_oid, &cstate->out_functions[attnum - 1]);
@@ -2565,8 +2539,6 @@ BeginCopyToOnSegment(QueryDesc *queryDesc)
 		CopySendData(cstate, BinarySignature, 11);
 		/* Flags field */
 		tmp = 0;
-		if (cstate->oids)
-			tmp |= (1 << 16);
 		CopySendInt32(cstate, tmp);
 		/* No header extension */
 		tmp = 0;
@@ -2588,7 +2560,7 @@ BeginCopyToOnSegment(QueryDesc *queryDesc)
 					CopySendChar(cstate, cstate->delim[0]);
 				hdr_delim = true;
 
-				colname = NameStr(attr[attnum - 1]->attname);
+				colname = NameStr(attr[attnum - 1].attname);
 
 				CopyAttributeOutCSV(cstate, colname, false,
 									list_length(cstate->attnumlist) == 1);
@@ -2657,7 +2629,7 @@ BeginCopyTo(ParseState *pstate,
 	}
 
 	cstate = BeginCopy(pstate, false, rel, query, queryRelId, attnamelist,
-					   options);
+					   options, NULL);
 	oldcontext = MemoryContextSwitchTo(cstate->copycontext);
 
 	/* Determine the mode */
@@ -2669,6 +2641,8 @@ BeginCopyTo(ParseState *pstate,
 	else
 		cstate->dispatch_mode = COPY_DIRECT;
 
+	// GPDB_12_MERGE_FIXME
+#if 0
 	if (rel != NULL && rel_has_external_partition(rel->rd_id))
 	{
 		if (!cstate->skip_ext_partition)
@@ -2686,7 +2660,8 @@ BeginCopyTo(ParseState *pstate,
 					 errmsg("COPY ignores external partition(s)")));
 		}
 	}
-
+#endif
+	
 	bool		pipe = (filename == NULL || (Gp_role == GP_ROLE_EXECUTE && !cstate->on_segment));
 
 	if (cstate->on_segment && Gp_role == GP_ROLE_DISPATCH)
@@ -2931,7 +2906,7 @@ CopyToDispatch(CopyState cstate)
 	TupleDesc	tupDesc;
 	int			num_phys_attrs;
 	int			attr_count;
-	Form_pg_attribute *attr;
+	FormData_pg_attribute *attr;
 	CdbCopy    *cdbCopy;
 	uint64		processed = 0;
 
@@ -2963,7 +2938,6 @@ CopyToDispatch(CopyState cstate)
 		bool		done;
 
 		cdbCopyStart(cdbCopy, stmt,
-					 RelationBuildPartitionDesc(cstate->rel, false),
 					 NIL,
 					 cstate->file_encoding);
 
@@ -3012,7 +2986,7 @@ CopyToDispatch(CopyState cstate)
 					CopySendChar(cstate, cstate->delim[0]);
 				hdr_delim = true;
 
-				colname = NameStr(attr[attnum - 1]->attname);
+				colname = NameStr(attr[attnum - 1].attname);
 
 				CopyAttributeOutCSV(cstate, colname, false,
 									list_length(cstate->attnumlist) == 1);
@@ -3087,7 +3061,7 @@ CopyToQueryOnSegment(CopyState cstate)
 	Assert(Gp_role != GP_ROLE_EXECUTE);
 
 	/* run the plan --- the dest receiver will send tuples */
-	ExecutorRun(cstate->queryDesc, ForwardScanDirection, 0L);
+	ExecutorRun(cstate->queryDesc, ForwardScanDirection, 0L, true);
 	return 0;
 }
 
@@ -3101,8 +3075,6 @@ CopyTo(CopyState cstate)
 	int			num_phys_attrs;
 	ListCell   *cur;
 	uint64		processed = 0;
-	List	   *target_rels;
-	ListCell *lc;
 
 	if (cstate->rel)
 		tupDesc = RelationGetDescr(cstate->rel);
@@ -3203,7 +3175,7 @@ CopyTo(CopyState cstate)
 	if (cstate->rel)
 	{
 		/* GPDB_12_MERGE_FIXME: leave it here waiting for we settled the partitioning */
-<<<<<<< HEAD
+#if 0
 		foreach(lc, target_rels)
 		{
 			Relation rel = lfirst(lc);
@@ -3280,7 +3252,6 @@ CopyTo(CopyState cstate)
 				while (appendonly_getnext(aoscandesc, ForwardScanDirection, slot))
 				{
 					MemTuple	tuple;
-					Oid			tupleOid = InvalidOid;
 
 					CHECK_FOR_INTERRUPTS();
 
@@ -3290,7 +3261,7 @@ CopyTo(CopyState cstate)
 					nulls = slot_get_isnull(slot);
 
 					/* Format and send the data */
-					CopyOneRowTo(cstate, tupleOid, values, nulls);
+					CopyOneRowTo(cstate, values, nulls);
 					processed++;
 				}
 
@@ -3350,7 +3321,7 @@ CopyTo(CopyState cstate)
 			if (cstate->partitions)
 				heap_close(rel, NoLock);
 		}
-=======
+#else /* GPDB_12_MERGE_FIXME */
 		TupleTableSlot *slot;
 		TableScanDesc scandesc;
 
@@ -3372,7 +3343,7 @@ CopyTo(CopyState cstate)
 
 		ExecDropSingleTupleTableSlot(slot);
 		table_endscan(scandesc);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#endif /* GPDB_12_MERGE_FIXME */
 	}
 	else
 	{
@@ -3976,17 +3947,6 @@ CopyMultiInsertInfoStore(CopyMultiInsertInfo *miinfo, ResultRelInfo *rri,
 static uint64
 CopyFrom(CopyState cstate)
 {
-<<<<<<< HEAD
-	TupleDesc	tupDesc;
-	AttrNumber	num_phys_attrs,
-				attr_count;
-	ResultRelInfo *resultRelInfo;
-	ResultRelInfo *parentResultRelInfo;
-	List *resultRelInfoList = NULL;
-	EState	   *estate = CreateExecutorState(); /* for ExecConstraints() */
-	TupleTableSlot *baseSlot;
-	ExprContext *econtext;		/* used for ExecEvalExpr for default atts */
-=======
 	ResultRelInfo *resultRelInfo;
 	ResultRelInfo *target_resultRelInfo;
 	ResultRelInfo *prevResultRelInfo = NULL;
@@ -3994,35 +3954,11 @@ CopyFrom(CopyState cstate)
 	ModifyTableState *mtstate;
 	ExprContext *econtext;
 	TupleTableSlot *singleslot = NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	MemoryContext oldcontext = CurrentMemoryContext;
 
 	PartitionTupleRouting *proute = NULL;
 	ErrorContextCallback errcallback;
 	CommandId	mycid = GetCurrentCommandId(true);
-<<<<<<< HEAD
-	int			hi_options = 0; /* start with default heap_insert options */
-	CdbCopy    *cdbCopy = NULL;
-	bool		is_check_distkey;
-	GpDistributionData	*distData = NULL; /* distribution data used to compute target seg */
-	uint64		processed = 0;
-	bool		useHeapMultiInsert;
-#define MAX_BUFFERED_TUPLES 1000
-	int			nTotalBufferedTuples = 0;
-	Size		totalBufferedTuplesSize = 0;
-	int			i;
-	Datum	   *baseValues;
-	bool	   *baseNulls;
-	GpDistributionData *part_distData = NULL;
-	int			firstBufferedLineNo = 0;
-	bool		is_external_table;
-
-	Assert(cstate->rel);
-
-	is_external_table = (cstate->rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE &&
-						 rel_is_external_table(RelationGetRelid(cstate->rel)));
-	if (cstate->rel->rd_rel->relkind != RELKIND_RELATION && !is_external_table)
-=======
 	int			ti_options = 0; /* start with default options for insert */
 	BulkInsertState bistate = NULL;
 	CopyInsertMethod insertMethod;
@@ -4031,6 +3967,10 @@ CopyFrom(CopyState cstate)
 	bool		has_before_insert_row_trig;
 	bool		has_instead_insert_row_trig;
 	bool		leafpart_use_multi_insert = false;
+
+	CdbCopy	   *cdbCopy = NULL;
+	bool		is_check_distkey;
+	GpDistributionData *distData = NULL; /* distribution data used to compute target seg */
 
 	Assert(cstate->rel);
 
@@ -4044,7 +3984,6 @@ CopyFrom(CopyState cstate)
 		cstate->rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE &&
 		!(cstate->rel->trigdesc &&
 		  cstate->rel->trigdesc->trig_insert_instead_row))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		if (cstate->rel->rd_rel->relkind == RELKIND_VIEW)
 			ereport(ERROR,
@@ -4069,13 +4008,6 @@ CopyFrom(CopyState cstate)
 							RelationGetRelationName(cstate->rel))));
 	}
 
-<<<<<<< HEAD
-	tupDesc = RelationGetDescr(cstate->rel);
-	num_phys_attrs = tupDesc->natts;
-	attr_count = list_length(cstate->attnumlist);
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*----------
 	 * Check to see if we can avoid writing WAL
 	 *
@@ -4141,8 +4073,6 @@ CopyFrom(CopyState cstate)
 #endif
 	}
 
-	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
-
 	/*
 	 * Optimize if new relfilenode was created in this subxact or one of its
 	 * committed children and we won't see those rows later as part of an
@@ -4206,66 +4136,25 @@ CopyFrom(CopyState cstate)
 					  1,		/* must match rel's position in range_table */
 					  NULL,
 					  0);
-<<<<<<< HEAD
 	ResultRelInfoSetSegno(resultRelInfo, cstate->ao_segnos);
 
-	parentResultRelInfo = resultRelInfo;
-=======
 	target_resultRelInfo = resultRelInfo;
 
 	/* Verify the named relation is a valid target for INSERT */
 	CheckValidResultRel(resultRelInfo, CMD_INSERT);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	ExecOpenIndices(resultRelInfo, false);
-
-	resultRelInfo->ri_resultSlot = MakeSingleTupleTableSlot(resultRelInfo->ri_RelationDesc->rd_att);
 
 	estate->es_result_relations = resultRelInfo;
 	estate->es_num_result_relations = 1;
 	estate->es_result_relation_info = resultRelInfo;
 
-<<<<<<< HEAD
-	/*
-	 * Look up partition hierarchy of the target table.
-	 *
-	 * In the QE, this is received from the QD, as part of the CopyStmt.
-	 */
-	if (cstate->dispatch_mode == COPY_DISPATCH)
-		estate->es_result_partitions = RelationBuildPartitionDesc(cstate->rel, false);
-	else
-		estate->es_result_partitions = cstate->partitions;
-	if (estate->es_result_partitions)
-		estate->es_partition_state =
-			createPartitionState(estate->es_result_partitions,
-								 estate->es_num_result_relations);
-
-	/* Set up a tuple slot too */
-	baseSlot = ExecInitExtraTupleSlot(estate);
-	ExecSetSlotDescriptor(baseSlot, tupDesc);
-	/* Triggers might need a slot as well */
-	estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate);
-=======
 	ExecInitRangeTable(estate, cstate->range_table);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Set up a ModifyTableState so we can let FDW(s) init themselves for
 	 * foreign-table result relation(s).
 	 */
-<<<<<<< HEAD
-	if ((resultRelInfo->ri_TrigDesc != NULL &&
-		 (resultRelInfo->ri_TrigDesc->trig_insert_before_row ||
-		  resultRelInfo->ri_TrigDesc->trig_insert_instead_row)) ||
-		cstate->volatile_defexprs || cstate->oids)
-	{
-		useHeapMultiInsert = false;
-	}
-	else
-	{
-		useHeapMultiInsert = true;
-	}
-=======
 	mtstate = makeNode(ModifyTableState);
 	mtstate->ps.plan = NULL;
 	mtstate->ps.state = estate;
@@ -4276,7 +4165,6 @@ CopyFrom(CopyState cstate)
 		resultRelInfo->ri_FdwRoutine->BeginForeignInsert != NULL)
 		resultRelInfo->ri_FdwRoutine->BeginForeignInsert(mtstate,
 														 resultRelInfo);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Prepare to catch AFTER triggers. */
 	AfterTriggerBeginQuery();
@@ -4521,7 +4409,7 @@ CopyFrom(CopyState cstate)
 		elog(DEBUG5, "COPY command sent to segdbs");
 
 		cdbCopyStart(cdbCopy, glob_copystmt,
-					 estate->es_result_partitions, cstate->ao_segnos, cstate->file_encoding);
+					 cstate->ao_segnos, cstate->file_encoding);
 
 		/*
 		 * Skip header processing if dummy file get from master for COPY FROM ON
@@ -4544,14 +4432,7 @@ CopyFrom(CopyState cstate)
 	{
 		TupleTableSlot *myslot;
 		bool		skip_tuple;
-<<<<<<< HEAD
-		Oid			loaded_oid = InvalidOid;
 		unsigned int target_seg = 0;	/* result segment of cdbhash */
-
-		CHECK_FOR_INTERRUPTS();
-
-		if (nTotalBufferedTuples == 0)
-=======
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -4568,7 +4449,6 @@ CopyFrom(CopyState cstate)
 			Assert(myslot != NULL);
 		}
 		else
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			Assert(resultRelInfo == target_resultRelInfo);
 			Assert(insertMethod == CIM_MULTI);
@@ -4583,22 +4463,11 @@ CopyFrom(CopyState cstate)
 		 */
 		MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 
-<<<<<<< HEAD
-		/* Initialize all values for row to NULL */
-		ExecClearTuple(baseSlot);
-		baseValues = slot_get_values(baseSlot);
-		baseNulls = slot_get_isnull(baseSlot);
-
-		/*
-		 * At this stage, we're dealing with tuples in the format of the parent
-		 * table.
-		 */
-		estate->es_result_relation_info = parentResultRelInfo;
+		ExecClearTuple(myslot);
 
 		if (cstate->dispatch_mode == COPY_EXECUTOR)
 		{
-			slot = NextCopyFromExecute(cstate, econtext, estate, &loaded_oid);
-			if (slot == NULL)
+			if (!NextCopyFromExecute(cstate, econtext, myslot->tts_values, myslot->tts_isnull))
 				break;
 
 			/*
@@ -4609,112 +4478,18 @@ CopyFrom(CopyState cstate)
 		}
 		else
 		{
+			/* Directly store the values/nulls array in the slot */
 			if (cstate->dispatch_mode == COPY_DISPATCH)
 			{
-				if (!NextCopyFromDispatch(cstate, econtext, baseValues, baseNulls, &loaded_oid))
+				if (!NextCopyFromDispatch(cstate, econtext, myslot->tts_values, myslot->tts_isnull))
 					break;
 			}
 			else
 			{
-				if (!NextCopyFrom(cstate, econtext, baseValues, baseNulls, &loaded_oid))
+				if (!NextCopyFrom(cstate, econtext, myslot->tts_values, myslot->tts_isnull))
 					break;
 			}
-
-			ExecStoreVirtualTuple(baseSlot);
-
-			if (estate->es_result_partitions)
-			{
-				/*
-				 * We might create a ResultRelInfo which needs to persist
-				 * the per tuple context.
-				 */
-				bool		success;
-
-				MemoryContextSwitchTo(estate->es_query_cxt);
-
-				PG_TRY();
-				{
-					resultRelInfo = slot_get_partition(baseSlot,  estate, true);
-					success = true;
-				}
-				PG_CATCH();
-				{
-					/* after all the prep work let cdbsreh do the real work */
-					HandleCopyError(cstate);
-					success = false;
-				}
-				PG_END_TRY();
-
-				if (!success)
-					continue;
-
-				estate->es_result_relation_info = resultRelInfo;
-			}
-
-			/*
-			 * And now we can form the input tuple.
-			 *
-			 * The resulting tuple is stored in 'slot'
-			 */
-			MemoryContextSwitchTo(estate->es_query_cxt);
-			slot = reconstructPartitionTupleSlot(baseSlot, resultRelInfo);
-			MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
-
-			if (cstate->dispatch_mode == COPY_DISPATCH)
-			{
-				/* In QD, compute the target segment to send this row to. */
-				part_distData = GetDistributionPolicyForPartition(
-																  distData,
-																  resultRelInfo,
-																  cstate->copycontext);
-
-				target_seg = GetTargetSeg(part_distData, slot_get_values(slot), slot_get_isnull(slot));
-			}
-			else if (is_check_distkey)
-			{
-				/*
-				 * In COPY FROM ON SEGMENT, check the distribution key in the
-				 * QE.
-				 */
-				part_distData = GetDistributionPolicyForPartition(
-																  distData,
-																  resultRelInfo,
-																  cstate->copycontext);
-
-				if (part_distData->policy->nattrs != 0)
-				{
-					target_seg = GetTargetSeg(part_distData, slot_get_values(slot), slot_get_isnull(slot));
-
-					if (GpIdentity.segindex != target_seg)
-					{
-						PG_TRY();
-						{
-							ereport(ERROR,
-									(errcode(ERRCODE_INTEGRITY_CONSTRAINT_VIOLATION),
-									 errmsg("value of distribution key doesn't belong to segment with ID %d, it belongs to segment with ID %d",
-											GpIdentity.segindex, target_seg)));
-						}
-						PG_CATCH();
-						{
-							HandleCopyError(cstate);
-						}
-						PG_END_TRY();
-					}
-				}
-			}
 		}
-
-		/*
-		 * Triggers and stuff need to be invoked in query context.
-		 */
-		MemoryContextSwitchTo(estate->es_query_cxt);
-=======
-		ExecClearTuple(myslot);
-
-		/* Directly store the values/nulls array in the slot */
-		if (!NextCopyFrom(cstate, econtext, myslot->tts_values, myslot->tts_isnull))
-			break;
-
 		ExecStoreVirtualTuple(myslot);
 
 		/*
@@ -4722,15 +4497,10 @@ CopyFrom(CopyState cstate)
 		 * so (re-)initialize tts_tableOid before evaluating them.
 		 */
 		myslot->tts_tableOid = RelationGetRelid(target_resultRelInfo->ri_RelationDesc);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
-		/* 'slot' was set above already */
+		/* Triggers and stuff need to be invoked in query context. */
+		MemoryContextSwitchTo(oldcontext);
 
-<<<<<<< HEAD
-		/* Partitions don't support triggers yet */
-		Assert(!(estate->es_result_partitions &&
-				 resultRelInfo->ri_TrigDesc));
-=======
 		if (cstate->whereClause)
 		{
 			econtext->ecxt_scantuple = myslot;
@@ -4875,10 +4645,56 @@ CopyFrom(CopyState cstate)
 			/* ensure that triggers etc see the right relation  */
 			myslot->tts_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		skip_tuple = false;
 
+		/*
+		 * Compute which segment this row belongs to.
+		 */
+		GpDistributionData *part_distData = NULL;
+		if (cstate->dispatch_mode == COPY_DISPATCH)
+		{
+			/* In QD, compute the target segment to send this row to. */
+			part_distData = GetDistributionPolicyForPartition(distData,
+															  resultRelInfo,
+															  cstate->copycontext);
+
+			target_seg = GetTargetSeg(part_distData, myslot->tts_values, myslot->tts_isnull);
+		}
+		else if (is_check_distkey)
+		{
+			/*
+			 * In COPY FROM ON SEGMENT, check the distribution key in the
+			 * QE.
+			 */
+			part_distData = GetDistributionPolicyForPartition(distData,
+															  resultRelInfo,
+															  cstate->copycontext);
+
+			if (part_distData->policy->nattrs != 0)
+			{
+				target_seg = GetTargetSeg(part_distData, myslot->tts_values, myslot->tts_isnull);
+
+				if (GpIdentity.segindex != target_seg)
+				{
+					PG_TRY();
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTEGRITY_CONSTRAINT_VIOLATION),
+								 errmsg("value of distribution key doesn't belong to segment with ID %d, it belongs to segment with ID %d",
+										GpIdentity.segindex, target_seg)));
+					}
+					PG_CATCH();
+					{
+						HandleCopyError(cstate);
+					}
+					PG_END_TRY();
+				}
+			}
+		}
+
+		/* GPDB_12_MERGE_FIXME: Where does this go now? Behind the table AM API? */
+#if 0
 		/*
 		 * Initialize "insertion desc" if the target requires that. Note that
 		 * we do this (also) in the QD, even though all the data will be
@@ -4912,7 +4728,8 @@ CopyFrom(CopyState cstate)
 					external_insert_init(resultRelInfo->ri_RelationDesc);
 			}
 		}
-
+#endif
+		
 		if (cstate->dispatch_mode == COPY_DISPATCH)
 		{
 			bool send_to_all = part_distData &&
@@ -4925,91 +4742,21 @@ CopyFrom(CopyState cstate)
 									   cstate->cur_lineno,
 									   cstate->line_buf.data,
 									   cstate->line_buf.len,
-									   loaded_oid,
-									   slot_get_values(slot),
-									   slot_get_isnull(slot));
+									   myslot->tts_values,
+									   myslot->tts_isnull);
 			skip_tuple = true;
 			processed++;
 		}
 
 		/* BEFORE ROW INSERT Triggers */
-<<<<<<< HEAD
-		if (!skip_tuple &&
-			resultRelInfo->ri_TrigDesc &&
-			resultRelInfo->ri_TrigDesc->trig_insert_before_row)
-		{
-			slot = ExecBRInsertTriggers(estate, resultRelInfo, slot);
-
-			if (slot == NULL)	/* "do nothing" */
-				skip_tuple = true;
-			else	/* trigger might have changed tuple */
-			{
-				/*
-				 * nothing to do in GPDB, since we extract the right kind of
-				 * tuple from the slot only later.
-				 */
-			}
-=======
 		if (has_before_insert_row_trig)
 		{
 			if (!ExecBRInsertTriggers(estate, resultRelInfo, myslot))
 				skip_tuple = true;	/* "do nothing" */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		if (!skip_tuple)
 		{
-<<<<<<< HEAD
-			char		relstorage = RelinfoGetStorage(resultRelInfo);
-			ItemPointerData insertedTid;
-
-			/* Check the constraints of the tuple */
-			if (resultRelInfo->ri_RelationDesc->rd_att->constr)
-				ExecConstraints(resultRelInfo, slot, estate);
-
-			/* OK, store the tuple and create index entries for it */
-			if (useHeapMultiInsert && relstorage == RELSTORAGE_HEAP)
-			{
-				HeapTuple	tuple;
-				if (resultRelInfo->nBufferedTuples == 0)
-					firstBufferedLineNo = cstate->cur_lineno;
-
-				resultRelInfoList = list_append_unique_ptr(resultRelInfoList, resultRelInfo);
-				if (resultRelInfo->bufferedTuples == NULL)
-				{
-					resultRelInfo->bufferedTuples = palloc(MAX_BUFFERED_TUPLES * sizeof(HeapTuple));
-					resultRelInfo->nBufferedTuples = 0;
-					resultRelInfo->bufferedTuplesSize = 0;
-				}
-
-				MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
-				/* Add this tuple to the tuple buffer */
-				tuple = ExecCopySlotHeapTuple(slot);
-				resultRelInfo->bufferedTuples[resultRelInfo->nBufferedTuples++] = tuple;
-				resultRelInfo->bufferedTuplesSize += tuple->t_len;
-				nTotalBufferedTuples++;
-				totalBufferedTuplesSize += tuple->t_len;
-				MemoryContextSwitchTo(estate->es_query_cxt);
-
-				/*
-				 * If the buffer filled up, flush it. Also flush if the total
-				 * size of all the tuples in the buffer becomes large, to
-				 * avoid using large amounts of memory for the buffers when
-				 * the tuples are exceptionally wide.
-				 */
-				/*
-				 * GPDB_92_MERGE_FIXME: MAX_BUFFERED_TUPLES and 65535 might not be
-				 * the best value for partition table
-				 */
-				if (nTotalBufferedTuples == MAX_BUFFERED_TUPLES ||
-					totalBufferedTuplesSize > 65535)
-				{
-					cdbFlushInsertBatches(resultRelInfoList, cstate, estate, mycid, hi_options,
-										  slot, firstBufferedLineNo);
-					nTotalBufferedTuples = 0;
-					totalBufferedTuplesSize = 0;
-				}
-=======
 			/*
 			 * If there is an INSTEAD OF INSERT ROW trigger, let it handle the
 			 * tuple.  Otherwise, proceed with inserting the tuple into the
@@ -5018,7 +4765,6 @@ CopyFrom(CopyState cstate)
 			if (has_instead_insert_row_trig)
 			{
 				ExecIRInsertTriggers(estate, resultRelInfo, myslot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 			else
 			{
@@ -5027,58 +4773,6 @@ CopyFrom(CopyState cstate)
 					resultRelInfo->ri_RelationDesc->rd_att->constr->has_generated_stored)
 					ExecComputeStoredGenerated(estate, myslot);
 
-<<<<<<< HEAD
-				if (relstorage == RELSTORAGE_AOROWS)
-				{
-					MemTuple	mtuple;
-
-					mtuple = ExecFetchSlotMemTuple(slot);
-
-					/* inserting into an append only relation */
-					appendonly_insert(resultRelInfo->ri_aoInsertDesc, mtuple, loaded_oid,
-									  (AOTupleId *) &insertedTid);
-				}
-				else if (relstorage == RELSTORAGE_AOCOLS)
-				{
-					aocs_insert(resultRelInfo->ri_aocsInsertDesc, slot);
-					insertedTid = *slot_get_ctid(slot);
-				}
-				else if (is_external_table)
-				{
-					HeapTuple tuple;
-
-					tuple = ExecFetchSlotHeapTuple(slot);
-					external_insert(resultRelInfo->ri_extInsertDesc, tuple);
-					ItemPointerSetInvalid(&insertedTid);
-				}
-				else
-				{
-					HeapTuple tuple;
-					tuple = ExecFetchSlotHeapTuple(slot);
-
-					/* OK, store the tuple and create index entries for it */
-					heap_insert(resultRelInfo->ri_RelationDesc, tuple, mycid, hi_options,
-								resultRelInfo->biState,
-								GetCurrentTransactionId());
-					insertedTid = tuple->t_self;
-				}
-
-				if (resultRelInfo->ri_NumIndices > 0)
-					recheckIndexes = ExecInsertIndexTuples(slot, &insertedTid,
-														 estate, false, NULL,
-														   NIL);
-
-				/* AFTER ROW INSERT Triggers */
-				if (resultRelInfo->ri_TrigDesc &&
-					resultRelInfo->ri_TrigDesc->trig_insert_after_row)
-				{
-					HeapTuple tuple;
-
-					tuple = ExecFetchSlotHeapTuple(slot);
-					ExecARInsertTriggers(estate, resultRelInfo, tuple,
-										 recheckIndexes);
-				}
-=======
 				/*
 				 * If the target is a plain table, check the constraints of
 				 * the tuple.
@@ -5105,7 +4799,6 @@ CopyFrom(CopyState cstate)
 					 * context. For batching it needs to be longer lived.
 					 */
 					ExecMaterializeSlot(myslot);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 					/* Add this tuple to the tuple buffer */
 					CopyMultiInsertInfoStore(&multiInsertInfo,
@@ -5192,11 +4885,6 @@ CopyFrom(CopyState cstate)
 	}
 	elog(DEBUG1, "Segment %u, Copied %lu rows.", GpIdentity.segindex, processed);
 	/* Flush any remaining buffered tuples */
-<<<<<<< HEAD
-	if (useHeapMultiInsert)
-		cdbFlushInsertBatches(resultRelInfoList, cstate, estate, mycid, hi_options,
-							  baseSlot, firstBufferedLineNo);
-=======
 	if (insertMethod != CIM_SINGLE)
 	{
 		if (!CopyMultiInsertInfoIsEmpty(&multiInsertInfo))
@@ -5205,17 +4893,12 @@ CopyFrom(CopyState cstate)
 		/* Tear down the multi-insert buffer data */
 		CopyMultiInsertInfoCleanup(&multiInsertInfo);
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Done, clean up */
 	error_context_stack = errcallback.previous;
 
-<<<<<<< HEAD
-	MemoryContextSwitchTo(estate->es_query_cxt);
-=======
 	if (bistate != NULL)
 		FreeBulkInsertState(bistate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Done reading input data and sending it off to the segment
@@ -5271,7 +4954,6 @@ CopyFrom(CopyState cstate)
 	/* Handle queued AFTER triggers */
 	AfterTriggerEndQuery(estate);
 
-<<<<<<< HEAD
 	/*
 	 * If SREH and in executor mode send the number of rejected
 	 * rows to the client (QD COPY).
@@ -5289,6 +4971,8 @@ CopyFrom(CopyState cstate)
 		SendAOTupCounts(estate);
 
 	/* update AO tuple counts */
+	// GPDB_12_MERGE_FIXME
+#if 0
 	if (cstate->dispatch_mode == COPY_DISPATCH)
 	{
 		for (i = estate->es_num_result_relations - 1; i >= 0; i--)
@@ -5330,43 +5014,8 @@ CopyFrom(CopyState cstate)
 			}
 		}
 	}
-
-	/* NB: do not pfree baseValues/baseNulls and partValues/partNulls here, since
-	 * there may be duplicate free in ExecDropSingleTupleTableSlot; if not, they
-	 * would be freed by FreeExecutorState anyhow */
-	ExecResetTupleTable(estate->es_tupleTable, false);
-
-	/*
-	 * Finalize appends and close relations we opened.
-	 *
-	 * The main target relation is included in the array, but we want to keep
-	 * that open, and let the caller close it. Increment the refcount so
-	 * that it's still open, even though we close it in the loop.
-	 */
-	RelationIncrementReferenceCount(cstate->rel);
-	resultRelInfo = estate->es_result_relations;
-	for (i = estate->es_num_result_relations; i > 0; i--)
-	{
-		CloseResultRelInfo(resultRelInfo);
-		resultRelInfo++;
-	}
-
-	MemoryContextSwitchTo(oldcontext);
-
-	FreeDistributionData(distData);
-
-	FreeExecutorState(estate);
-
-	/*
-	 * If we skipped writing WAL, then we need to sync the heap (but not
-	 * indexes since those use WAL anyway)
-	 */
-	if (hi_options & HEAP_INSERT_SKIP_WAL)
-	{
-		/* disabled in GPDB. */
-		elog(ERROR, "unexpected SKIP-WAL flag set");
-	}
-=======
+#endif
+	
 	ExecResetTupleTable(estate->es_tupleTable, false);
 
 	/* Allow the FDW to shut down */
@@ -5384,10 +5033,11 @@ CopyFrom(CopyState cstate)
 	/* Close any trigger target relations */
 	ExecCleanUpTriggerState(estate);
 
+	FreeDistributionData(distData);
+
 	FreeExecutorState(estate);
 
 	table_finish_bulk_insert(cstate->rel, ti_options);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return processed;
 }
@@ -5425,7 +5075,7 @@ BeginCopyFrom(ParseState *pstate,
 	MemoryContext oldcontext;
 	bool		volatile_defexprs;
 
-	cstate = BeginCopy(pstate, true, rel, NULL, InvalidOid, attnamelist, options);
+	cstate = BeginCopy(pstate, true, rel, NULL, InvalidOid, attnamelist, options, NULL);
 	oldcontext = MemoryContextSwitchTo(cstate->copycontext);
 
 	/*
@@ -5643,11 +5293,14 @@ BeginCopyFrom(ParseState *pstate,
 
 		all_relids = lappend_oid(all_relids, relid);
 
+		// GPDB_12_MERGE_FIXME: How are we going to do this with new partitioning implementation?
+#if 0
 		if (rel_is_partitioned(relid))
 		{
 			PartitionNode *pn = RelationBuildPartitionDesc(cstate->rel, false);
 			all_relids = list_concat(all_relids, all_partition_relids(pn));
 		}
+#endif
 
 		cstate->ao_segnos = assignPerRelSegno(all_relids);
 	}
@@ -5683,7 +5336,7 @@ BeginCopyFrom(ParseState *pstate,
 	{
 		/* Read special header from QD */
 		static const size_t sigsize = sizeof(QDtoQESignature);
-		char		readSig[sigsize];
+		char		readSig[sizeof(QDtoQESignature)];
 		copy_from_dispatch_header header_frame;
 
 		if (CopyGetData(cstate, &readSig, sigsize) != sigsize ||
@@ -5816,10 +5469,10 @@ NextCopyFromRawFieldsX(CopyState cstate, char ***fields, int *nfields,
 
 bool
 NextCopyFrom(CopyState cstate, ExprContext *econtext,
-			   Datum *values, bool *nulls, Oid *tupleOid)
+			   Datum *values, bool *nulls)
 {
 	if (!cstate->cdbsreh)
-		return NextCopyFromX(cstate, econtext, values, nulls, tupleOid);
+		return NextCopyFromX(cstate, econtext, values, nulls);
 	else
 	{
 		MemoryContext oldcontext = CurrentMemoryContext;
@@ -5831,7 +5484,7 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 
 			PG_TRY();
 			{
-				result = NextCopyFromX(cstate, econtext, values, nulls, tupleOid);
+				result = NextCopyFromX(cstate, econtext, values, nulls);
 			}
 			PG_CATCH();
 			{
@@ -5953,10 +5606,9 @@ HandleCopyError(CopyState cstate)
  *
  * 'values' and 'nulls' arrays must be the same length as columns of the
  * relation passed to BeginCopyFrom. This function fills the arrays.
- * Oid of the tuple is returned with 'tupleOid' separately.
  */
 bool
-NextCopyFrom(CopyState cstate, ExprContext *econtext,
+NextCopyFromX(CopyState cstate, ExprContext *econtext,
 			 Datum *values, bool *nulls)
 {
 	TupleDesc	tupDesc;
@@ -6066,7 +5718,11 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 						 errmsg("missing data for column \"%s\"",
 								NameStr(att->attname))));
-			string = field_strings[fieldno++];
+				fieldno++;
+				string = NULL;
+			}
+			else
+				string = field_strings[fieldno++];
 
 			if (cstate->convert_select_flags &&
 				!cstate->convert_select_flags[m])
@@ -6112,7 +5768,7 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 		}
 
 		Assert(fieldno == attr_count);
-	}
+ 	}
 	else if (attr_count)
 	{
 		/* binary */
@@ -6217,21 +5873,20 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
  */
 static bool
 NextCopyFromDispatch(CopyState cstate, ExprContext *econtext,
-					 Datum *values, bool *nulls, Oid *tupleOid)
+					 Datum *values, bool *nulls)
 {
-	return NextCopyFrom(cstate, econtext, values, nulls, tupleOid);
+	return NextCopyFrom(cstate, econtext, values, nulls);
 }
 
 /*
  * Like NextCopyFrom(), but used in the QE, when we're reading pre-processed
  * rows from the QD.
  */
-static TupleTableSlot *
-NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
-					EState *estate, Oid *tupleOid)
+static bool
+NextCopyFromExecute(CopyState cstate, ExprContext *econtext, Datum *values, bool *nulls)
 {
 	TupleDesc	tupDesc;
-	Form_pg_attribute *attr;
+	FormData_pg_attribute *attr;
 	int			i;
 	AttrNumber	num_phys_attrs;
 	copy_from_dispatch_row frame;
@@ -6239,10 +5894,6 @@ NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
 	ResultRelInfo *resultRelInfo;
 	TupleTableSlot *baseSlot;
 	TupleTableSlot *slot;
-	Datum	   *baseValues;
-	bool	   *baseNulls;
-	Datum	   *values;
-	bool	   *nulls;
 	bool		got_error;
 
 	/*
@@ -6276,18 +5927,15 @@ retry:
 	}
 
 	/* Prepare for parsing the input line */
-	resultRelInfo = estate->es_result_relation_info;
-	baseSlot = resultRelInfo->ri_resultSlot;
+//	resultRelInfo = estate->es_result_relation_info;
+//	baseSlot = resultRelInfo->ri_resultSlot;
 	tupDesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
 	attr = tupDesc->attrs;
 	num_phys_attrs = tupDesc->natts;
 
 	/* Initialize all values for row to NULL */
-	ExecClearTuple(baseSlot);
-	baseValues = slot_get_values(baseSlot);
-	baseNulls = slot_get_isnull(baseSlot);
-	MemSet(baseValues, 0, num_phys_attrs * sizeof(Datum));
-	MemSet(baseNulls, true, num_phys_attrs * sizeof(bool));
+	MemSet(values, 0, num_phys_attrs * sizeof(Datum));
+	MemSet(nulls, true, num_phys_attrs * sizeof(bool));
 
 	/* check for overflowing fields */
 	if (frame.fld_count < 0 || frame.fld_count > num_phys_attrs)
@@ -6318,7 +5966,7 @@ retry:
 	 */
 	if (!cstate->cdbsreh)
 	{
-		if (!NextCopyFromX(cstate, econtext, baseValues, baseNulls, NULL))
+		if (!NextCopyFromX(cstate, econtext, values, nulls))
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
@@ -6332,8 +5980,7 @@ retry:
 
 		PG_TRY();
 		{
-			result = NextCopyFromX(cstate, econtext,
-								   baseValues, baseNulls, tupleOid);
+			result = NextCopyFromX(cstate, econtext, values, nulls);
 
 			if (!result)
 				ereport(ERROR,
@@ -6351,6 +5998,8 @@ retry:
 
 	ExecStoreVirtualTuple(baseSlot);
 
+	// GPDB_12_MERGE_FIXME
+#if 0	
 	/*
 	 * Remap the values to the form expected by the target partition.
 	 */
@@ -6371,14 +6020,13 @@ retry:
 	}
 	else
 		slot = baseSlot;
-
+#endif
+	
 	/*
 	 * Read any attributes that were processed in the QD already. The attribute
 	 * numbers in the message are already in terms of the target partition, so
 	 * we do this after remapping and switching to the partition slot.
 	 */
-	values = slot_get_values(slot);
-	nulls = slot_get_isnull(slot);
 	for (i = 0; i < frame.fld_count; i++)
 	{
 		int16		attnum;
@@ -6396,9 +6044,9 @@ retry:
 				 attnum, num_phys_attrs);
 		m = attnum - 1;
 
-		cstate->cur_attname = NameStr(attr[m]->attname);
+		cstate->cur_attname = NameStr(attr[m].attname);
 
-		if (attr[attnum - 1]->attbyval)
+		if (attr[attnum - 1].attbyval)
 		{
 			if (CopyGetData(cstate, &value, sizeof(Datum)) != sizeof(Datum))
 				ereport(ERROR,
@@ -6409,9 +6057,9 @@ retry:
 		{
 			char	   *p;
 
-			if (attr[attnum - 1]->attlen > 0)
+			if (attr[attnum - 1].attlen > 0)
 			{
-				len = attr[attnum - 1]->attlen;
+				len = attr[attnum - 1].attlen;
 
 				p = palloc(len);
 				if (CopyGetData(cstate, p, len) != len)
@@ -6419,7 +6067,7 @@ retry:
 							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 							 errmsg("unexpected EOF in COPY data")));
 			}
-			else if (attr[attnum - 1]->attlen == -1)
+			else if (attr[attnum - 1].attlen == -1)
 			{
 				/* For simplicity, varlen's are always transmitted in "long" format */
 				if (CopyGetData(cstate, &len, sizeof(len)) != sizeof(len))
@@ -6435,7 +6083,7 @@ retry:
 							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 							 errmsg("unexpected EOF in COPY data")));
 			}
-			else if (attr[attnum - 1]->attlen == -2)
+			else if (attr[attnum - 1].attlen == -2)
 			{
 				/*
 				 * Like the varlen case above, cstrings are sent with a length
@@ -6456,7 +6104,7 @@ retry:
 			else
 			{
 				elog(ERROR, "attribute %d has invalid length %d",
-					 attnum, attr[attnum - 1]->attlen);
+					 attnum, attr[attnum - 1].attlen);
 			}
 			value = PointerGetDatum(p);
 		}
@@ -6583,12 +6231,11 @@ SendCopyFromForwardedTuple(CopyState cstate,
 						   int64 lineno,
 						   char *line,
 						   int line_len,
-						   Oid tuple_oid,
 						   Datum *values,
 						   bool *nulls)
 {
 	TupleDesc	tupDesc;
-	Form_pg_attribute *attr;
+	FormData_pg_attribute *attr;
 	copy_from_dispatch_row *frame;
 	StringInfo	msgbuf;
 	int			num_sent_fields;
@@ -6640,18 +6287,18 @@ SendCopyFromForwardedTuple(CopyState cstate,
 		/* attribute number comes first */
 		APPEND_MSGBUF_NOCHECK(msgbuf, &attnum, sizeof(int16));
 
-		if (attr[i]->attbyval)
+		if (attr[i].attbyval)
 		{
 			/* we already reserved space for this above, so we can just memcpy */
 			APPEND_MSGBUF_NOCHECK(msgbuf, &values[i], sizeof(Datum));
 		}
 		else
 		{
-			if (attr[i]->attlen > 0)
+			if (attr[i].attlen > 0)
 			{
-				APPEND_MSGBUF(msgbuf, DatumGetPointer(values[i]), attr[i]->attlen);
+				APPEND_MSGBUF(msgbuf, DatumGetPointer(values[i]), attr[i].attlen);
 			}
-			else if (attr[attnum - 1]->attlen == -1)
+			else if (attr[i].attlen == -1)
 			{
 				int32		len;
 				char	   *ptr;
@@ -6665,7 +6312,7 @@ SendCopyFromForwardedTuple(CopyState cstate,
 				APPEND_MSGBUF_NOCHECK(msgbuf, &len, sizeof(int32));
 				APPEND_MSGBUF(msgbuf, ptr, len - VARHDRSZ);
 			}
-			else if (attr[attnum - 1]->attlen == -2)
+			else if (attr[i].attlen == -2)
 			{
 				/*
 				 * These attrs are NULL-terminated in memory, but we send
@@ -6693,7 +6340,7 @@ SendCopyFromForwardedTuple(CopyState cstate,
 			else
 			{
 				elog(ERROR, "attribute %d has invalid length %d",
-					 attnum, attr[attnum - 1]->attlen);
+					 attnum, attr[i].attlen);
 			}
 		}
 
@@ -7773,7 +7420,7 @@ CopyReadBinaryAttribute(CopyState cstate,
 
 	enlargeStringInfo(&cstate->attribute_buf, fld_size);
 	if (CopyGetData(cstate, cstate->attribute_buf.data,
-					fld_size, fld_size) != fld_size)
+					fld_size) != fld_size)
 		ereport(ERROR,
 				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 				 errmsg("unexpected EOF in COPY data")));
@@ -8276,7 +7923,7 @@ CreateCopyDestReceiver(void)
  */
 static void CopyInitDataParser(CopyState cstate)
 {
-	cstate->fe_eof = false;
+	cstate->reached_eof = false;
 	cstate->cur_relname = RelationGetRelationName(cstate->rel);
 	cstate->cur_lineno = 0;
 	cstate->cur_attname = NULL;
@@ -8332,12 +7979,16 @@ InitDistributionData(CopyState cstate, EState *estate)
 	GpPolicy   *policy;
 	HTAB	   *hashmap;
 	CdbHash	   *cdbHash;
+
+	// GPDB_12_MERGE_FIXME
+#if 0
 	bool		multi_dist_policy;
 
 	multi_dist_policy = estate->es_result_partitions
 		&& !partition_policies_equal(cstate->rel->rd_cdbpolicy,
 									 estate->es_result_partitions);
 	if (!multi_dist_policy)
+#endif
 	{
 		/*
 		 * A non-partitioned table, or all the partitions have identical
@@ -8347,6 +7998,8 @@ InitDistributionData(CopyState cstate, EState *estate)
 		cdbHash = makeCdbHashForRelation(cstate->rel);
 		hashmap = NULL;
 	}
+	// GPDB_12_MERGE_FIXME
+#if 0
 	else
 	{
 		/*
@@ -8378,6 +8031,7 @@ InitDistributionData(CopyState cstate, EState *estate)
 		policy = NULL;
 		cdbHash = NULL;
 	}
+#endif
 
 	distData = palloc(sizeof(GpDistributionData));
 	distData->policy = policy;
@@ -8456,6 +8110,49 @@ InitCopyFromDispatchSplit(CopyState cstate, GpDistributionData *distData,
 		else
 			elog(INFO, "first field processed in the QE: %d", first_qe_processed_field);
 	}
+}
+
+/* Get distribution policy for specific part */
+static GpDistributionData *
+GetDistributionPolicyForPartition(GpDistributionData *mainDistData,
+								  ResultRelInfo *resultRelInfo,
+								  MemoryContext context)
+{
+
+	/*
+	 * If we are copying into a partitioned table whose partitions have
+	 * differing distribution policies, get the policy for this particular
+	 * child partition.
+	 */
+	if (mainDistData->hashmap)
+	{
+		Oid			relid;
+		GpDistributionData *d;
+		bool		found;
+
+		relid = resultRelInfo->ri_RelationDesc->rd_id;
+
+		d = hash_search(mainDistData->hashmap, &(relid), HASH_ENTER, &found);
+		if (!found)
+		{
+			Relation	rel = resultRelInfo->ri_RelationDesc;
+			MemoryContext oldcontext;
+
+			/*
+			 * Make sure this all persists the current iteration.
+			 */
+			oldcontext = MemoryContextSwitchTo(context);
+
+			d->cdbHash = makeCdbHashForRelation(rel);
+			d->policy = GpPolicyCopy(rel->rd_cdbpolicy);
+
+			MemoryContextSwitchTo(oldcontext);
+		}
+
+		return d;
+	}
+	else
+		return mainDistData;
 }
 
 static unsigned int
