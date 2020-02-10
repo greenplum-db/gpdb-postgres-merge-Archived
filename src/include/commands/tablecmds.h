@@ -28,31 +28,9 @@
 #include "storage/lock.h"
 #include "utils/relcache.h"
 
-/* Struct describing one new constraint to check in ALTER Phase 3 scan.
- *
- * Note: new NOT NULL constraints are handled differently.
- * Also note: This structure is shared only to allow collaboration with
- * partitioning-related functions in cdbpartition.c.  Most items like this
- * are local to tablecmds.c.
- *
- * GPDB_12_MERGE_FIXME: cdbpartition.c is gone. Move back now?
- */
-typedef struct NewConstraint
-{
-	char	   *name;			/* Constraint name, or NULL if none */
-	ConstrType	contype;		/* CHECK or FOREIGN */
-	Oid			refrelid;		/* PK rel, if FOREIGN */
-	Oid			refindid;		/* OID of PK's index, if FOREIGN */
-	Oid			conid;			/* OID of pg_constraint entry, if FOREIGN */
-	Node	   *qual;			/* Check expr or FkConstraint struct */
-	List	   *qualstate;		/* Execution state for CHECK */
-} NewConstraint;
-
 extern const char *synthetic_sql;
 
 extern void	DefineExternalRelation(CreateExternalStmt *stmt);
-
-extern void EvaluateDeferredStatements(List *deferredStmts);
 
 extern ObjectAddress DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 									ObjectAddress *typaddress, const char *queryString, bool dispatch,
@@ -121,23 +99,13 @@ extern void AtEOSubXact_on_commit_actions(bool isCommit,
 										  SubTransactionId mySubid,
 										  SubTransactionId parentSubid);
 
-extern bool rel_is_parent(Oid relid);
 extern bool rel_needs_long_lock(Oid relid);
-extern Oid  rel_partition_get_master(Oid relid);
 
 extern Oid get_settable_tablespace_oid(char *tablespacename);
-
-extern List *MergeAttributes(List *schema, List *supers, char relpersistence,
-				bool is_partition, List **supOids, List **supconstr,
-				int *supOidCount);
 
 extern void SetSchemaAndConstraints(RangeVar *rangeVar, List **schema, List **constraints);
 
 extern DistributedBy *make_distributedby_for_rel(Relation rel);
-
-extern Oid transformFkeyCheckAttrs(Relation pkrel,
-								   int numattrs, int16 *attnums,
-								   Oid *opclasses);
 
 extern void RangeVarCallbackOwnsTable(const RangeVar *relation,
 									  Oid relId, Oid oldRelId, void *arg);

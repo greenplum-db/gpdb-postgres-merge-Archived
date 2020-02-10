@@ -1887,7 +1887,6 @@ typedef enum AlterTableType
 	AT_AddColumnRecurse,		/* internal to commands/tablecmds.c */
 	AT_AddColumnToView,			/* implicitly via CREATE OR REPLACE VIEW */
 	AT_ColumnDefault,			/* alter column default */
-	AT_ColumnDefaultRecurse,	/* internal to commands/tablecmds.c */
 	AT_DropNotNull,				/* alter column drop not null */
 	AT_SetNotNull,				/* alter column set not null */
 	AT_CheckNotNull,			/* check column is already marked not null */

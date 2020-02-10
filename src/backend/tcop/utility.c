@@ -1296,9 +1296,6 @@ ProcessUtilitySlow(ParseState *pstate,
 							 * segment information yet and operations like create_index
 							 * in the deferred statements cannot see the relfile.
 							 */
-<<<<<<< HEAD
-							EvaluateDeferredStatements(cstmt->deferredStmts);
-=======
 							toast_options = transformRelOptions((Datum) 0,
 																((CreateStmt *) stmt)->options,
 																"toast",
@@ -1311,7 +1308,6 @@ ProcessUtilitySlow(ParseState *pstate,
 
 							NewRelationCreateToastTable(address.objectId,
 														toast_options);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						}
 						else if (IsA(stmt, CreateForeignTableStmt))
 						{
@@ -1659,7 +1655,6 @@ ProcessUtilitySlow(ParseState *pstate,
 					 */
 					lockmode = stmt->concurrent ? ShareUpdateExclusiveLock
 						: ShareLock;
-<<<<<<< HEAD
 
 					/*
 					 * The QD might have looked up the OID of the base table
@@ -1670,12 +1665,7 @@ ProcessUtilitySlow(ParseState *pstate,
 					else
 						relid =
 							RangeVarGetRelidExtended(stmt->relation, lockmode,
-												 false, false,
-=======
-					relid =
-						RangeVarGetRelidExtended(stmt->relation, lockmode,
 												 0,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 												 RangeVarCallbackOwnsRelation,
 												 NULL);
 
