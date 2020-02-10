@@ -974,102 +974,96 @@ DefineIndex(Oid relationId,
 	 * CREATE TABLE clause, but we have no way of knowing whether it was
 	 * specified explicitly or not.
 	 */
-	if (rel->rd_cdbpolicy)
+	if (rel->rd_cdbpolicy && (stmt->primary || stmt->unique || stmt->excludeOpNames))
 	{
-		if (stmt->primary ||
-			stmt->unique ||
-			stmt->excludeOpNames)
+		bool		compatible;
+
+		/* Don't allow indexes on system attributes. */
+		for (int i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 		{
-			bool		compatible;
+			if (indexInfo->ii_IndexAttrNumbers[i] < 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						 errmsg("cannot create constraint or unique index on system column")));
+		}
 
-			/* Don't allow indexes on system attributes. Except OIDs. */
-			for (int i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
-			{
-				if (indexInfo->ii_KeyAttrNumbers[i] < 0 &&
-					indexInfo->ii_KeyAttrNumbers[i] != ObjectIdAttributeNumber)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-							 errmsg("cannot create constraint or unique index on system column")));
-			}
+		compatible =
+			index_check_policy_compatible(rel->rd_cdbpolicy,
+										  RelationGetDescr(rel),
+										  indexInfo->ii_IndexAttrNumbers,
+										  classObjectId,
+										  indexInfo->ii_ExclusionOps,
+										  indexInfo->ii_NumIndexAttrs,
+										  false, /* report_error */
+										  NULL);
 
+		/*
+		 * If the constraint isn't compatible with the current distribution policy,
+		 * try to change the distribution policy to match the constraint.
+		 *
+		 * The table must be empty, and it mustn't have any other constraints,
+		 * and the index mustn't contain expressions.
+		 */
+		if (!compatible &&
+			!GpPolicyIsRandomPartitioned(rel->rd_cdbpolicy) &&
+			(Gp_role == GP_ROLE_EXECUTE || cdbRelMaxSegSize(rel) == 0) &&
+			!relationHasPrimaryKey(rel) &&
+			!relationHasUniqueIndex(rel) &&
+			list_length(indexInfo->ii_Expressions) == 0)
+		{
 			compatible =
-				index_check_policy_compatible(rel->rd_cdbpolicy,
-											  RelationGetDescr(rel),
-											  indexInfo->ii_KeyAttrNumbers,
-											  classObjectId,
-											  indexInfo->ii_ExclusionOps,
-											  indexInfo->ii_NumIndexAttrs,
-											  false, /* report_error */
-											  NULL);
-
-			/*
-			 * If the constraint isn't compatible with the current distribution policy,
-			 * try to change the distribution policy to match the constraint.
-			 *
-			 * The table must be empty, and it mustn't have any other constraints,
-			 * and the index mustn't contain expressions.
-			 */
-			if (!compatible &&
-				!GpPolicyIsRandomPartitioned(rel->rd_cdbpolicy) &&
-				(Gp_role == GP_ROLE_EXECUTE || cdbRelMaxSegSize(rel) == 0) &&
-				!relationHasPrimaryKey(rel) &&
-				!relationHasUniqueIndex(rel) &&
-				list_length(indexInfo->ii_Expressions) == 0)
+				change_policy_to_match_index(rel,
+											 indexInfo->ii_IndexAttrNumbers,
+											 classObjectId,
+											 indexInfo->ii_ExclusionOps,
+											 indexInfo->ii_NumIndexAttrs);
+			if (compatible && Gp_role == GP_ROLE_DISPATCH)
 			{
-				compatible =
-					change_policy_to_match_index(rel,
-												 indexInfo->ii_KeyAttrNumbers,
-												 classObjectId,
-												 indexInfo->ii_ExclusionOps,
-												 indexInfo->ii_NumIndexAttrs);
-				if (compatible && Gp_role == GP_ROLE_DISPATCH)
+				if (stmt->primary)
+					elog(NOTICE, "updating distribution policy to match new PRIMARY KEY");
+				else if (stmt->excludeOpNames)
+					elog(NOTICE, "updating distribution policy to match new exclusion constraint");
+				else
 				{
-					if (stmt->primary)
-						elog(NOTICE, "updating distribution policy to match new PRIMARY KEY");
-					else if (stmt->excludeOpNames)
-						elog(NOTICE, "updating distribution policy to match new exclusion constraint");
+					Assert(stmt->unique);
+					if (stmt->isconstraint)
+						elog(NOTICE, "updating distribution policy to match new UNIQUE constraint");
 					else
-					{
-						Assert(stmt->unique);
-						if (stmt->isconstraint)
-							elog(NOTICE, "updating distribution policy to match new UNIQUE constraint");
-						else
-							elog(NOTICE, "updating distribution policy to match new UNIQUE index");
-					}
+						elog(NOTICE, "updating distribution policy to match new UNIQUE index");
 				}
 			}
+		}
 
-			if (!compatible)
-			{
-				/*
-				 * Not compatible, and couldn't change the distribution policy to match.
-				 * Report the error to the user. Do that by calling
-				 * index_check_policy_compatible() again, but pass report_error=true so
-				 * that it will throw an error. index_check_policy_compatible() can
-				 * give a better error message than we could here.
-				 */
-				index_check_policy_compatible_context ctx;
+		if (!compatible)
+		{
+			/*
+			 * Not compatible, and couldn't change the distribution policy to match.
+			 * Report the error to the user. Do that by calling
+			 * index_check_policy_compatible() again, but pass report_error=true so
+			 * that it will throw an error. index_check_policy_compatible() can
+			 * give a better error message than we could here.
+			 */
+			index_check_policy_compatible_context ctx;
 
-				memset(&ctx, 0, sizeof(ctx));
-				ctx.for_alter_dist_policy = false;
-				ctx.is_constraint = stmt->isconstraint;
-				ctx.is_unique = stmt->unique;
-				ctx.is_primarykey = stmt->primary;
-				ctx.constraint_name = indexRelationName;
-				(void) index_check_policy_compatible(rel->rd_cdbpolicy,
-													 RelationGetDescr(rel),
-													 indexInfo->ii_KeyAttrNumbers,
-													 classObjectId,
-													 indexInfo->ii_ExclusionOps,
-													 indexInfo->ii_NumIndexAttrs,
-													 true, /* report_error */
-													 &ctx);
-				/*
-				 * index_check_policy_compatible() should not return, because the earlier
-				 * call already determined that it's incompatible. But just in case..
-				 */
-				elog(ERROR, "constraint is not compatible with distribution key");
-			}
+			memset(&ctx, 0, sizeof(ctx));
+			ctx.for_alter_dist_policy = false;
+			ctx.is_constraint = stmt->isconstraint;
+			ctx.is_unique = stmt->unique;
+			ctx.is_primarykey = stmt->primary;
+			ctx.constraint_name = indexRelationName;
+			(void) index_check_policy_compatible(rel->rd_cdbpolicy,
+												 RelationGetDescr(rel),
+												 indexInfo->ii_IndexAttrNumbers,
+												 classObjectId,
+												 indexInfo->ii_ExclusionOps,
+												 indexInfo->ii_NumIndexAttrs,
+												 true, /* report_error */
+												 &ctx);
+			/*
+			 * index_check_policy_compatible() should not return, because the earlier
+			 * call already determined that it's incompatible. But just in case..
+			 */
+			elog(ERROR, "constraint is not compatible with distribution key");
 		}
 	}
 
@@ -2737,7 +2731,6 @@ ReindexIndex(RangeVar *indexRelation, int options, bool concurrent)
 	Oid			indOid;
 	Relation	irel;
 	char		persistence;
-	int 		options = stmt->options;
 
 	/*
 	 * Find and lock index, and check permissions on table; use callback to
@@ -2780,8 +2773,6 @@ ReindexIndex(RangeVar *indexRelation, int options, bool concurrent)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-
-	return indOid;
 }
 
 /*
@@ -2946,11 +2937,6 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 Oid
 ReindexTable(RangeVar *relation, int options, bool concurrent)
 {
-	MemoryContext	private_context, oldcontext;
-	List	   *prels = NIL, *relids = NIL;
-	ListCell   *lc;
-	int options = stmt->options;
-
 	Oid			heapOid;
 	bool		result;
 
@@ -4133,35 +4119,34 @@ IndexSetParentIndex(Relation partitionIdx, Oid parentOid)
 
 	if (fix_dependencies)
 	{
-		ObjectAddress partIdx;
-
 		/*
-		 * Insert/delete pg_depend rows.  If setting a parent, add an
-		 * INTERNAL_AUTO dependency to the parent index; if making standalone,
-		 * remove all existing rows and put back the regular dependency on the
-		 * table.
+		 * Insert/delete pg_depend rows.  If setting a parent, add PARTITION
+		 * dependencies on the parent index and the table; if removing a
+		 * parent, delete PARTITION dependencies.
 		 */
-		ObjectAddressSet(partIdx, RelationRelationId, partRelid);
-
 		if (OidIsValid(parentOid))
 		{
-			ObjectAddress	parentIdx;
+			ObjectAddress partIdx;
+			ObjectAddress parentIdx;
+			ObjectAddress partitionTbl;
 
+			ObjectAddressSet(partIdx, RelationRelationId, partRelid);
 			ObjectAddressSet(parentIdx, RelationRelationId, parentOid);
-			recordDependencyOn(&partIdx, &parentIdx, DEPENDENCY_INTERNAL_AUTO);
+			ObjectAddressSet(partitionTbl, RelationRelationId,
+							 partitionIdx->rd_index->indrelid);
+			recordDependencyOn(&partIdx, &parentIdx,
+							   DEPENDENCY_PARTITION_PRI);
+			recordDependencyOn(&partIdx, &partitionTbl,
+							   DEPENDENCY_PARTITION_SEC);
 		}
 		else
 		{
-			ObjectAddress	partitionTbl;
-
-			ObjectAddressSet(partitionTbl, RelationRelationId,
-							 partitionIdx->rd_index->indrelid);
-
 			deleteDependencyRecordsForClass(RelationRelationId, partRelid,
 											RelationRelationId,
-											DEPENDENCY_INTERNAL_AUTO);
-
-			recordDependencyOn(&partIdx, &partitionTbl, DEPENDENCY_AUTO);
+											DEPENDENCY_PARTITION_PRI);
+			deleteDependencyRecordsForClass(RelationRelationId, partRelid,
+											RelationRelationId,
+											DEPENDENCY_PARTITION_SEC);
 		}
 
 		/* make our updates visible */

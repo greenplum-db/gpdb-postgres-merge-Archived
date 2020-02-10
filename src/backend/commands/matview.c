@@ -353,7 +353,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	dataQuery->intoPolicy = matviewRel->rd_cdbpolicy;
 	/* Generate the data, if wanted. */
 	if (!stmt->skipData)
-		processed = refresh_matview_datafill(dest, dataQuery, queryString, stmt);
+		processed = refresh_matview_datafill(dest, dataQuery, queryString, refreshClause);
 
 	/* Make the matview match the newly generated data. */
 	if (concurrent)
@@ -511,7 +511,7 @@ transientrel_init(QueryDesc *queryDesc)
 	 * Get a lock until end of transaction.
 	 */
 	matviewOid = RangeVarGetRelidExtended(refreshClause->relation,
-										  lockmode, false, false,
+										  lockmode, 0,
 										  RangeVarCallbackOwnsTable, NULL);
 	matviewRel = heap_open(matviewOid, NoLock);
 
@@ -524,7 +524,7 @@ transientrel_init(QueryDesc *queryDesc)
 	/* Concurrent refresh builds new data in temp tablespace, and does diff. */
 	if (concurrent)
 	{
-		tableSpace = GetDefaultTablespace(RELPERSISTENCE_TEMP);
+		tableSpace = GetDefaultTablespace(RELPERSISTENCE_TEMP, false);
 		relpersistence = RELPERSISTENCE_TEMP;
 	}
 	else
@@ -995,51 +995,6 @@ refresh_by_heap_swap(Oid matviewOid, Oid OIDNewHeap, char relpersistence)
 					 true, /* is_internal */
 					 RecentXmin, ReadNextMultiXactId(),
 					 relpersistence);
-}
-
-/*
- * Check whether specified index is usable for match merge.
- */
-static bool
-is_usable_unique_index(Relation indexRel)
-{
-	Form_pg_index indexStruct = indexRel->rd_index;
-
-	/*
-	 * Must be unique, valid, immediate, non-partial, and be defined over
-	 * plain user columns (not expressions).  We also require it to be a
-	 * btree.  Even if we had any other unique index kinds, we'd not know how
-	 * to identify the corresponding equality operator, nor could we be sure
-	 * that the planner could implement the required FULL JOIN with non-btree
-	 * operators.
-	 */
-	if (indexStruct->indisunique &&
-		indexStruct->indimmediate &&
-		indexRel->rd_rel->relam == BTREE_AM_OID &&
-		IndexIsValid(indexStruct) &&
-		RelationGetIndexPredicate(indexRel) == NIL &&
-		indexStruct->indnatts > 0)
-	{
-		/*
-		 * The point of groveling through the index columns individually is to
-		 * reject both index expressions and system columns.  Currently,
-		 * matviews couldn't have OID columns so there's no way to create an
-		 * index on a system column; but maybe someday that wouldn't be true,
-		 * so let's be safe.
-		 */
-		int			numatts = indexStruct->indnatts;
-		int			i;
-
-		for (i = 0; i < numatts; i++)
-		{
-			int			attnum = indexStruct->indkey.values[i];
-
-			if (attnum <= 0)
-				return false;
-		}
-		return true;
-	}
-	return false;
 }
 
 /*

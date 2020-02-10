@@ -413,9 +413,6 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 	/* This can recurse, so check for excessive recursion */
 	check_stack_depth();
 
-	/* This can recurse, so check for excessive recursion */
-	check_stack_depth();
-
 	check_xact_readonly(parsetree);
 
 	if (completionTag)

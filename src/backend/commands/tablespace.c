@@ -193,10 +193,6 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 					 * than a symlink.
 					 */
 
-<<<<<<< HEAD
-					/* Create database directory */
-					if (pg_mkdir_p(dir, S_IRWXU) < 0)
-=======
 					/* create two parents up if not exist */
 					parentdir = pstrdup(dir);
 					get_parent_directory(parentdir);
@@ -222,7 +218,6 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 
 					/* Create database directory */
 					if (MakePGDirectory(dir) < 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						ereport(ERROR,
 								(errcode_for_file_access(),
 								 errmsg("could not create directory \"%s\": %m",
@@ -348,24 +343,19 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	/*
 	 * Check that location isn't too long. Remember that we're going to append
-<<<<<<< HEAD
-	 * '<dbid>/<GP_TABLESPACE_VERSION_DIRECTORY>/<dboid>/<relid>_<fork>.<nnn>'.  FYI, we never actually
-	 * reference the whole path here, but mkdir() uses the first two parts.
-	 */
-	if (strlen(location) + 1 + get_dbid_string_length() + 1 + strlen(GP_TABLESPACE_VERSION_DIRECTORY) + 1 +
-	  OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1 + OIDCHARS > MAXPGPATH)
-=======
-	 * 'PG_XXX/<dboid>/<relid>_<fork>.<nnn>'.  FYI, we never actually
+	 * '<dbid>/<GP_TABLESPACE_VERSION_DIRECTORY>/<dboid>/<relid>_<fork>.<nnn>'.
+	 * FYI, we never actually
 	 * reference the whole path here, but MakePGDirectory() uses the first two
 	 * parts.
 	 */
-	if (strlen(location) + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) + 1 +
+	if (strlen(location) + 1 + get_dbid_string_length() + 1 + strlen(GP_TABLESPACE_VERSION_DIRECTORY) + 1 +
 		OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1 + OIDCHARS > MAXPGPATH)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("tablespace location \"%s\" is too long",
 						location)));
+	}
 
 	if ((strlen(location) + 1 + get_dbid_string_length() + 1) > MAX_TARABLE_SYMLINK_PATH_LENGTH)
 		ereport(WARNING, (errmsg("tablespace location \"%s\" is too long for TAR", location),
@@ -1976,28 +1966,6 @@ tblspc_redo(XLogReaderState *record)
 		 *
 		 * See UnlinkTablespaceDirectory().
 		 */
-<<<<<<< HEAD
-=======
-		if (!destroy_tablespace_directories(xlrec->ts_id, true))
-		{
-			ResolveRecoveryConflictWithTablespace(xlrec->ts_id);
-
-			/*
-			 * If we did recovery processing then hopefully the backends who
-			 * wrote temp files should have cleaned up and exited by now.  So
-			 * retry before complaining.  If we fail again, this is just a LOG
-			 * condition, because it's not worth throwing an ERROR for (as
-			 * that would crash the database and require manual intervention
-			 * before we could get past this WAL record on restart).
-			 */
-			if (!destroy_tablespace_directories(xlrec->ts_id, true))
-				ereport(LOG,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("directories for tablespace %u could not be removed",
-								xlrec->ts_id),
-						 errhint("You can remove the directories manually if necessary.")));
-		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	else
 		elog(PANIC, "tblspc_redo: unknown op code %u", info);

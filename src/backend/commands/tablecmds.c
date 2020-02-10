@@ -84,20 +84,12 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/parsenodes.h"
-<<<<<<< HEAD
-o#include "optimizer/clauses.h"
-#include "optimizer/plancat.h"
-#include "optimizer/planner.h"
-#include "optimizer/prep.h"
-=======
 #include "optimizer/optimizer.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
-#include "parser/parse_partition.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"

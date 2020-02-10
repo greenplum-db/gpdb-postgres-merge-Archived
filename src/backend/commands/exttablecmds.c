@@ -381,6 +381,7 @@ DefineExternalRelation(CreateExternalStmt *createExtStmt)
 							 RELKIND_FOREIGN_TABLE,
 							 InvalidOid,
 							 NULL,
+							 NULL,
 							 false, /* dispatch */
 							 true,
 							 NULL);
@@ -751,8 +752,12 @@ transformFormatOpts(char formattype, List *formatOpts, int numcols, bool iswrita
 	char	   *format_str;
 	char	   *formatter = NULL;
 	StringInfoData cfbuf;
+	ParseState *pstate;
 
 	CopyState cstate = palloc0(sizeof(CopyStateData));
+
+	pstate = make_parsestate(NULL);
+	pstate->p_sourcetext = NULL; // GPDB_12_MERGE_FIXME is NULL ok here?
 
 	Assert(fmttype_is_custom(formattype) ||
 		   fmttype_is_text(formattype) ||
@@ -796,7 +801,8 @@ transformFormatOpts(char formattype, List *formatOpts, int numcols, bool iswrita
 		}
 
 		/* verify all user supplied control char combinations are legal */
-		ProcessCopyOptions(cstate,
+		ProcessCopyOptions(pstate,
+						   cstate,
 						   !iswritable, /* is_from */
 						   formatOpts,
 						   numcols,

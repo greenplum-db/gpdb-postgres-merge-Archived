@@ -462,7 +462,6 @@ AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		bool		isNull;
 		HeapTuple	newtuple;
 		AclResult	aclresult;
-		Oid			nsoid;
 
 		/* Otherwise, must be owner of the existing object */
 		if (!pg_namespace_ownercheck(nspForm->oid, GetUserId()))
@@ -515,7 +514,7 @@ AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		/* MPP-6929: metadata tracking */
 		if (Gp_role == GP_ROLE_DISPATCH)
 			MetaTrackUpdObject(NamespaceRelationId,
-							   nsoid,
+							   nspForm->oid,
 							   GetUserId(),
 							   "ALTER", "OWNER"
 					);
