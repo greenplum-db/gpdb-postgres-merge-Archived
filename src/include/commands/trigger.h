@@ -179,9 +179,9 @@ extern void EnableDisableTrigger(Relation rel, const char *tgname,
 #define GetUpdatedColumns(relinfo, estate) \
 	(rt_fetch((relinfo)->ri_RangeTableIndex, (estate)->es_range_table)->updatedCols)
 extern bool TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
-			   Trigger *trigger, TriggerEvent event,
-			   Bitmapset *modifiedCols,
-			   HeapTuple oldtup, HeapTuple newtup);
+						   Trigger *trigger, TriggerEvent event,
+						   Bitmapset *modifiedCols,
+						   TupleTableSlot *oldslot, TupleTableSlot *newslot);
 
 extern void RelationBuildTriggers(Relation relation);
 
@@ -287,9 +287,9 @@ extern void RI_PartitionRemove_Check(Trigger *trigger, Relation fk_rel,
 extern int	RI_FKey_trigger_type(Oid tgfoid);
 
 extern HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
- 					int tgindx,
- 					FmgrInfo *finfo,
- 					Instrumentation *instr,
- 					MemoryContext per_tuple_context);
+									 int tgindx,
+									 FmgrInfo *finfo,
+									 Instrumentation *instr,
+									 MemoryContext per_tuple_context);
  
 #endif							/* TRIGGER_H */

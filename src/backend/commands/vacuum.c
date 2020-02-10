@@ -55,7 +55,8 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
-#include "catalog/pg_appendonly.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_appendonly_fn.h"
 #include "cdb/cdbvars.h"
 #include "utils/faultinjector.h"
 
@@ -1749,7 +1750,6 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
-	bool		dispatch;
 
 	Assert(params != NULL);
 

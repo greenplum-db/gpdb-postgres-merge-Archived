@@ -717,23 +717,9 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 	Datum		reloptions;
 	bool		isNull;
 	Oid			namespaceid;
-	bool		is_part_child;
-	bool		is_part_parent;
 
 	OldHeap = table_open(OIDOldHeap, lockmode);
 	OldHeapDesc = RelationGetDescr(OldHeap);
-
-	is_part_child = !rel_needs_long_lock(OIDOldHeap);
-
-	/*
-	 * Check pg_inherits to determine if the OldHeap relation is a non-leaf
-	 * (parent) in a partition hierarchy.  This can be avoided for tables that
-	 * should have valid relfrozenxid based on relkind and relstorage.
-	 */
-	if (should_have_valid_relfrozenxid(OldHeap->rd_rel->relkind))
-		is_part_parent = !TransactionIdIsValid(OldHeap->rd_rel->relfrozenxid);
-	else
-		is_part_parent = rel_is_parent(OIDOldHeap);
 
 	/*
 	 * Note that the NewHeap will not receive any of the defaults or
@@ -833,11 +819,11 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 		ReleaseSysCache(tuple);
 	}
 	/* GPDB_94_MERGE_FIXME: should we have NewHeap* versions of these functions, too? */
-	AlterTableCreateAoSegTable(OIDNewHeap, is_part_child, is_part_parent);
-	AlterTableCreateAoVisimapTable(OIDNewHeap, is_part_child, is_part_parent);
+	AlterTableCreateAoSegTable(OIDNewHeap);
+	AlterTableCreateAoVisimapTable(OIDNewHeap);
 
     if (createAoBlockDirectory)
-		AlterTableCreateAoBlkdirTable(OIDNewHeap, is_part_child, is_part_parent);
+		AlterTableCreateAoBlkdirTable(OIDNewHeap);
 
 	CacheInvalidateRelcacheByRelid(OIDNewHeap);
 

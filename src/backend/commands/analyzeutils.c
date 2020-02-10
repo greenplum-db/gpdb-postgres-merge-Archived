@@ -148,6 +148,7 @@ addLeafPartitionMCVsToHashTable (HTAB *datumHash, HeapTuple heaptupleStats,
  * Output:
  * 	- result: two dimensional arrays of MCVs and Freqs
  */
+#if 0
 MCVFreqPair **
 aggregate_leaf_partition_MCVs(Oid relationOid,
 							  AttrNumber attnum,
@@ -228,6 +229,7 @@ aggregate_leaf_partition_MCVs(Oid relationOid,
 	*rem_mcv -= *num_mcv;
 	return mcvpairArray;
 }
+#endif
 
 /*
  * Return an array of MCVs from the resultant MCVFreqPair array
@@ -815,6 +817,7 @@ datumCompare(Datum d1, Datum d2, Oid opFuncOid)
 	hist(agg) = {0,22,40,62}
  *
  */
+#if 0
 int
 aggregate_leaf_partition_histograms(Oid relationOid,
 									AttrNumber attnum,
@@ -958,6 +961,7 @@ aggregate_leaf_partition_histograms(Oid relationOid,
 
 	return num_hist;
 }
+#endif
 
 static float4
 getBucketSizes(const HeapTuple *heaptupleStats, const float4 *relTuples, int nParts,
@@ -1064,6 +1068,8 @@ needs_sample(VacAttrStats **vacattrstats, int attr_cnt)
  *  for different columns might be different due to the dropped columns and
  *  split partitions.
  */
+/* GPDB_12_MERGE_FIXME */
+#if 0
 bool
 leaf_parts_analyzed(Oid attrelid, Oid relid_exclude, List *va_cols, int elevel)
 {
@@ -1127,3 +1133,4 @@ leaf_parts_analyzed(Oid attrelid, Oid relid_exclude, List *va_cols, int elevel)
 
 	return !all_parts_empty;
 }
+#endif

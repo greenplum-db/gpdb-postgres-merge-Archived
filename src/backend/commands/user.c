@@ -2723,7 +2723,7 @@ DelRoleDenials(const char *rolename, Oid roleid, List *dropintervals)
 
 	HeapTuple 	tmp_tuple;
 
-	pg_auth_time_rel = heap_open(AuthTimeConstraintRelationId, RowExclusiveLock);
+	pg_auth_time_rel = table_open(AuthTimeConstraintRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&scankey,
 				Anum_pg_auth_time_constraint_authid,
@@ -2755,14 +2755,14 @@ DelRoleDenials(const char *rolename, Oid roleid, List *dropintervals)
 										DatumGetCString(DirectFunctionCall1(time_out, TimeADTGetDatum(existing->start.time))),
 										daysofweek[existing->end.day],
 										DatumGetCString(DirectFunctionCall1(time_out, TimeADTGetDatum(existing->end.time))))));
-					simple_heap_delete(pg_auth_time_rel, &tmp_tuple->t_self);
+					CatalogTupleDelete(pg_auth_time_rel, &tmp_tuple->t_self);
 					dropped_matching_interval = true;
 					break;
 				}
 			}
 		}
 		else
-			simple_heap_delete(pg_auth_time_rel, &tmp_tuple->t_self);
+			CatalogTupleDelete(pg_auth_time_rel, &tmp_tuple->t_self);
 	}
 
 	/* if intervals were specified and none was found, raise error */
@@ -2777,5 +2777,5 @@ DelRoleDenials(const char *rolename, Oid roleid, List *dropintervals)
 	 * Close pg_auth_time_constraint, but keep lock till commit (this is important to
 	 * prevent any risk of deadlock failure while updating flat file)
 	 */
-	heap_close(pg_auth_time_rel, NoLock);
+	table_close(pg_auth_time_rel, NoLock);
 }

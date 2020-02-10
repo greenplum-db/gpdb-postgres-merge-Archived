@@ -180,6 +180,8 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 				/* Directory creation failed? */
 				if (MakePGDirectory(dir) < 0)
 				{
+					char	   *parentdir;
+
 					/* Failure other than not exists or not in WAL replay? */
 					if (errno != ENOENT || !isRedo)
 						ereport(ERROR,
@@ -1491,7 +1493,7 @@ check_tablespace(const char *tablespacename)
 {
 	bool		result;
 	Relation	rel;
-	HeapScanDesc scandesc;
+	TableScanDesc scandesc;
 	HeapTuple	tuple;
 	ScanKeyData entry[1];
 
@@ -1500,13 +1502,13 @@ check_tablespace(const char *tablespacename)
 	 * index on name, on the theory that pg_tablespace will usually have just
 	 * a few entries and so an indexed lookup is a waste of effort.
 	 */
-	rel = heap_open(TableSpaceRelationId, AccessShareLock);
+	rel = table_open(TableSpaceRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_spcname,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(tablespacename));
-	scandesc = heap_beginscan_catalog(rel, 1, entry);
+	scandesc = table_beginscan_catalog(rel, 1, entry);
 	tuple = heap_getnext(scandesc, ForwardScanDirection);
 
 	/* If nothing matches then the tablespace doesn't exist */
@@ -1515,8 +1517,8 @@ check_tablespace(const char *tablespacename)
 	else
 		result = false;
 
-	heap_endscan(scandesc);
-	heap_close(rel, AccessShareLock);
+	table_endscan(scandesc);
+	table_close(rel, AccessShareLock);
 
 	return result;
 }

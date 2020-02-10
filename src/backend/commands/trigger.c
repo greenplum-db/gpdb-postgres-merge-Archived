@@ -92,16 +92,12 @@ static bool GetTupleForTrigger(EState *estate,
 							   LockTupleMode lockmode,
 							   TupleTableSlot *oldslot,
 							   TupleTableSlot **newSlot);
-static bool TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
-						   Trigger *trigger, TriggerEvent event,
-						   Bitmapset *modifiedCols,
-						   TupleTableSlot *oldslot, TupleTableSlot *newslot);
 static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
 									 int tgindx,
 									 FmgrInfo *finfo,
 									 Instrumentation *instr,
 									 MemoryContext per_tuple_context);
-static void AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
+ostatic void AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 								  int event, bool row_trigger,
 								  TupleTableSlot *oldtup, TupleTableSlot *newtup,
 								  List *recheckIndexes, Bitmapset *modifiedCols,

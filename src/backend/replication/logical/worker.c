@@ -928,7 +928,8 @@ apply_handle_truncate(StringInfo s)
 	 * replaying changes without further cascading. This might be later
 	 * changeable with a user specified option.
 	 */
-	ExecuteTruncateGuts(rels, relids, relids_logged, DROP_RESTRICT, restart_seqs);
+	ExecuteTruncateGuts(rels, relids, relids_logged, DROP_RESTRICT, restart_seqs,
+						NULL);
 
 	foreach(lc, remote_rels)
 	{

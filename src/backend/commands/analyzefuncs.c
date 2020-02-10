@@ -1,6 +1,7 @@
 #include "postgres.h"
 
 #include "access/aocssegfiles.h"
+#include "access/table.h"
 #include "access/tuptoaster.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_type.h"
@@ -22,8 +23,8 @@
  * Statistics related parameters.
  */
 
-bool			gp_statistics_pullup_from_child_partition = FALSE;
-bool			gp_statistics_use_fkeys = FALSE;
+bool			gp_statistics_pullup_from_child_partition = false;
+bool			gp_statistics_use_fkeys = false;
 
 typedef struct
 {
@@ -134,17 +135,17 @@ gp_acquire_sample_rows(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		if (!pg_class_ownercheck(relOid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_TABLE,
 						   get_rel_name(relOid));
 
-		onerel = relation_open(relOid, AccessShareLock);
+		onerel = table_open(relOid, AccessShareLock);
 		relDesc = RelationGetDescr(onerel);
 
 		/* Count the number of non-dropped cols */
 		live_natts = 0;
 		for (attno = 1; attno <= relDesc->natts; attno++)
 		{
-			Form_pg_attribute relatt = (Form_pg_attribute) relDesc->attrs[attno - 1];
+			Form_pg_attribute relatt = TupleDescAttr(relDesc, attno - 1);
 
 			if (relatt->attisdropped)
 				continue;
@@ -180,7 +181,7 @@ gp_acquire_sample_rows(PG_FUNCTION_ARGS)
 		outattno = NUM_SAMPLE_FIXED_COLS + 1;
 		for (attno = 1; attno <= relDesc->natts; attno++)
 		{
-			Form_pg_attribute relatt = (Form_pg_attribute) relDesc->attrs[attno - 1];
+			Form_pg_attribute relatt = TupleDescAttr(relDesc, attno - 1);
 			Oid			typid;
 
 			if (relatt->attisdropped)
@@ -208,7 +209,7 @@ gp_acquire_sample_rows(PG_FUNCTION_ARGS)
 		 */
 		sample_rows = (HeapTuple *) palloc0(targrows * sizeof(HeapTuple));
 
-		if(RelationIsForeign(onerel))
+		if (onerel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 		{
 			FdwRoutine *fdwroutine;
 			fdwroutine = GetFdwRoutineForRelation(onerel, false);
@@ -274,7 +275,7 @@ gp_acquire_sample_rows(PG_FUNCTION_ARGS)
 		outattno = NUM_SAMPLE_FIXED_COLS + 1;
 		for (attno = 1; attno <= relDesc->natts; attno++)
 		{
-			Form_pg_attribute relatt = (Form_pg_attribute) relDesc->attrs[attno - 1];
+			Form_pg_attribute relatt = TupleDescAttr(relDesc, attno - 1);
 			bool		is_toolarge = false;
 			Datum		relvalue;
 			bool		relnull;
@@ -285,7 +286,7 @@ gp_acquire_sample_rows(PG_FUNCTION_ARGS)
 			relnull = relnulls[attno - 1];
 
 			/* Is this attribute "too large" to return? */
-			if (relDesc->attrs[attno - 1]->attlen == -1 && !relnull)
+			if (relatt->attlen == -1 && !relnull)
 			{
 				Size		toasted_size = toast_datum_size(relvalue);
 
@@ -361,7 +362,7 @@ gp_acquire_sample_rows(PG_FUNCTION_ARGS)
 		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(res));
 	}
 
-	relation_close(ctx->onerel, AccessShareLock);
+	table_close(ctx->onerel, AccessShareLock);
 
 	pfree(ctx);
 	funcctx->user_fctx = NULL;

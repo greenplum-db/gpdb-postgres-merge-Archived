@@ -332,38 +332,18 @@ PortalCleanup(Portal portal)
 
 			/* We must make the portal's resource owner current */
 			saveResourceOwner = CurrentResourceOwner;
-<<<<<<< HEAD
-			PG_TRY();
-			{
-				if (portal->resowner)
-					CurrentResourceOwner = portal->resowner;
-				CurrentResourceOwner = portal->resowner;
-
-				/*
-				 * If we still have an estate -- then we need to cancel unfinished work.
-				 */
-				queryDesc->estate->cancelUnfinished = true;
-
-				ExecutorFinish(queryDesc);
-				ExecutorEnd(queryDesc);
-				FreeQueryDesc(queryDesc);
-			}
-			PG_CATCH();
-			{
-				/* Ensure CurrentResourceOwner is restored on error */
-				CurrentResourceOwner = saveResourceOwner;
-				PG_RE_THROW();
-			}
-			PG_END_TRY();
-=======
 			if (portal->resowner)
 				CurrentResourceOwner = portal->resowner;
+
+			/*
+			 * If we still have an estate -- then we need to cancel unfinished work.
+			 */
+			queryDesc->estate->cancelUnfinished = true;
 
 			ExecutorFinish(queryDesc);
 			ExecutorEnd(queryDesc);
 			FreeQueryDesc(queryDesc);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			CurrentResourceOwner = saveResourceOwner;
 		}
 	}
@@ -473,11 +453,7 @@ PersistHoldablePortal(Portal portal)
 										true);
 
 		/* Fetch the result set into the tuplestore */
-<<<<<<< HEAD
-		ExecutorRun(queryDesc, ForwardScanDirection, 0);
-=======
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		queryDesc->dest->rDestroy(queryDesc->dest);
 		queryDesc->dest = NULL;

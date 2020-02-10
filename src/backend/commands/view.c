@@ -263,7 +263,8 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		 * false).
 		 */
 		address = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid, NULL,
-								 NULL);
+								 NULL,
+								 false, true, NULL);
 		Assert(address.objectId != InvalidOid);
 
 		/* Make the new view relation visible */
@@ -456,6 +457,7 @@ DefineView(ViewStmt *stmt, const char *queryString,
 		rawstmt->stmt_len = stmt_len;
 
 		viewParse = parse_analyze(rawstmt, queryString, NULL, 0, NULL);
+	}
 	else
 		viewParse = (Query *) stmt->query;
 	viewParse_orig = copyObject(viewParse);
