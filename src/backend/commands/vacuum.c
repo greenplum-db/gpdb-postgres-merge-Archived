@@ -1178,7 +1178,8 @@ vac_update_relstats(Relation relation,
 					BlockNumber num_all_visible_pages,
 					bool hasindex, TransactionId frozenxid,
 					MultiXactId minmulti,
-					bool in_outer_xact)
+					bool in_outer_xact,
+					bool isvacuum)
 {
 	Oid			relid = RelationGetRelid(relation);
 	Relation	rd;

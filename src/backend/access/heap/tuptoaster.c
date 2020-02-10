@@ -664,12 +664,12 @@ compute_dest_tuplen(TupleDesc tupdesc, MemTupleBinding *pbind, bool hasnull, Dat
 }
 
 
-static GenericTuple
-toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple oldtup,
-					   MemTupleBinding *pbind, int toast_tuple_target,
-					   bool isFrozen, int options)
+static void *
+toast_insert_or_update_generic(Relation rel, void *newtup, void *oldtup,
+							   MemTupleBinding *pbind, int toast_tuple_target,
+							   bool isFrozen, int options, bool ismemtuple)
 {
-	GenericTuple result_gtuple;
+	void	   *result_gtuple;
 	TupleDesc	tupleDesc;
 	int			numAttrs;
 	int			i;
@@ -692,11 +692,8 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 	bool		toast_free[MaxHeapAttributeNumber];
 	bool		toast_delold[MaxHeapAttributeNumber];
 
-	bool 		ismemtuple = is_memtuple(newtup);
-
 	AssertImply(ismemtuple, pbind);
 	AssertImply(!ismemtuple, !pbind);
-	AssertImply(ismemtuple && oldtup, is_memtuple(oldtup));
 	Assert(toast_tuple_target > 0);
 
 	/*
@@ -1169,7 +1166,7 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 	{
 		if(ismemtuple)
 		{
-			result_gtuple = (GenericTuple) memtuple_form_to(pbind, toast_values, toast_isnull, NULL, NULL, false);
+			result_gtuple = (void *) memtuple_form_to(pbind, toast_values, toast_isnull, NULL, NULL, false);
 		}
 		else
 		{
@@ -1222,7 +1219,7 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 							new_data_len,
 							&(new_data->t_infomask),
 							has_nulls ? new_data->t_bits : NULL);
-			result_gtuple = (GenericTuple) result_tuple;
+			result_gtuple = (void *) result_tuple;
 		}
 	}
 	else
@@ -1253,12 +1250,13 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 					   bool isFrozen, int options)
 {
 	return (HeapTuple) toast_insert_or_update_generic(rel,
-													  (GenericTuple) newtup,
-													  (GenericTuple) oldtup,
+													  (void *) newtup,
+													  (void *) oldtup,
 													  NULL,
 													  toast_tuple_target,
 													  isFrozen,
-													  options);
+													  options,
+													  false);
 }
 
 MemTuple
@@ -1267,12 +1265,13 @@ toast_insert_or_update_memtup(Relation rel, MemTuple newtup, MemTuple oldtup,
 					   bool isFrozen, int options)
 {
 	return (MemTuple) toast_insert_or_update_generic(rel,
-													 (GenericTuple) newtup,
-													 (GenericTuple) oldtup,
+													 (void *) newtup,
+													 (void *) oldtup,
 													 pbind,
 													 toast_tuple_target,
 													 isFrozen,
-													 options);
+													 options,
+													 true);
 }
 
 /* ----------

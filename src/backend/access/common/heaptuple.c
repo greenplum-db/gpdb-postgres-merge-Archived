@@ -375,8 +375,6 @@ heap_fill_tuple(TupleDesc tupleDesc,
 bool
 heap_attisnull(HeapTuple tup, int attnum, TupleDesc tupleDesc)
 {
-	Assert(!is_memtuple((GenericTuple) tup));
-
 	/*
 	 * We allow a NULL tupledesc for relations not expected to have missing
 	 * values, such as catalog relations and indexes.
@@ -449,8 +447,6 @@ nocachegetattr(HeapTuple tuple,
 	bits8	   *bp = tup->t_bits;	/* ptr to null bitmap in tuple */
 	bool		slow = false;	/* do we have to walk attrs? */
 	int			off;			/* current offset within data */
-
-	Assert(!is_memtuple((GenericTuple) tuple));
 
 	/* ----------------
 	 *	 Three cases:
@@ -651,7 +647,6 @@ heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 	Datum		result;
 
 	Assert(tup);
-	Assert(!is_memtuple((GenericTuple) tup));
 
 	/* Currently, no sys attribute ever reads as NULL. */
 	*isnull = false;
@@ -714,8 +709,6 @@ heaptuple_copy_to(HeapTuple tuple, HeapTuple dest, uint32 *destlen)
 	if (!HeapTupleIsValid(tuple) || tuple->t_data == NULL)
 		return NULL;
 
-	Assert(!is_memtuple((GenericTuple) tuple));
-
 	len = HEAPTUPLESIZE + tuple->t_len;
 	if(destlen && *destlen < len)
 	{
@@ -755,8 +748,6 @@ heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest)
 		dest->t_data = NULL;
 		return;
 	}
-
-	Assert(!is_memtuple((GenericTuple) src));
 
 	dest->t_len = src->t_len;
 	dest->t_self = src->t_self;
@@ -1179,8 +1170,6 @@ heap_modify_tuple(HeapTuple tuple,
 	bool	   *isnull;
 	HeapTuple	newTuple;
 
-	Assert(!is_memtuple((GenericTuple) tuple));
-
 	/*
 	 * allocate and fill values and isnull arrays from either the tuple or the
 	 * repl information, as appropriate.
@@ -1318,7 +1307,6 @@ heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 	bits8	   *bp = tup->t_bits;	/* ptr to null bitmap in tuple */
 	bool		slow = false;	/* can we use/set attcacheoff? */
 
-	Assert(!is_memtuple((GenericTuple) tuple));
 	natts = HeapTupleHeaderGetNatts(tup);
 
 	/*

@@ -138,7 +138,7 @@ extern void heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 						int options, BulkInsertState bistate, TransactionId xid);
 extern void heap_multi_insert(Relation relation, struct TupleTableSlot **slots,
 							  int ntuples, CommandId cid, int options,
-							  BulkInsertState bistate, TransactionId xid);
+							  BulkInsertState bistate);
 extern TM_Result heap_delete(Relation relation, ItemPointer tid,
 							 CommandId cid, Snapshot crosscheck, bool wait,
 							 struct TM_FailureData *tmfd, bool changingPart);
@@ -196,13 +196,13 @@ extern void heap_vacuum_rel(Relation onerel,
 							struct VacuumParams *params, BufferAccessStrategy bstrategy);
 
 /* in heap/heapam_visibility.c */
-extern bool HeapTupleSatisfiesVisibility(HeapTuple stup, Snapshot snapshot,
+extern bool HeapTupleSatisfiesVisibility(Relation relation, HeapTuple stup, Snapshot snapshot,
 										 Buffer buffer);
-extern TM_Result HeapTupleSatisfiesUpdate(HeapTuple stup, CommandId curcid,
+extern TM_Result HeapTupleSatisfiesUpdate(Relation relation, HeapTuple stup, CommandId curcid,
 										  Buffer buffer);
 extern HTSV_Result HeapTupleSatisfiesVacuum(Relation relation, HeapTuple stup, TransactionId OldestXmin,
 											Buffer buffer);
-extern void HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer,
+extern void HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer, Relation rel,
 								 uint16 infomask, TransactionId xid);
 extern bool HeapTupleHeaderIsOnlyLocked(HeapTupleHeader tuple);
 extern bool HeapTupleIsSurelyDead(HeapTuple htup, TransactionId OldestXmin);

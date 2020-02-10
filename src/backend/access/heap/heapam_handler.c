@@ -229,7 +229,7 @@ heapam_tuple_satisfies_snapshot(Relation rel, TupleTableSlot *slot,
 	 * Caller should be holding pin, but not lock.
 	 */
 	LockBuffer(bslot->buffer, BUFFER_LOCK_SHARE);
-	res = HeapTupleSatisfiesVisibility(bslot->base.tuple, snapshot,
+	res = HeapTupleSatisfiesVisibility(rel, bslot->base.tuple, snapshot,
 									   bslot->buffer);
 	LockBuffer(bslot->buffer, BUFFER_LOCK_UNLOCK);
 
@@ -248,13 +248,14 @@ heapam_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 {
 	bool		shouldFree = true;
 	HeapTuple	tuple = ExecFetchSlotHeapTuple(slot, true, &shouldFree);
+	TransactionId xid = GetCurrentTransactionId();
 
 	/* Update the tuple with table oid */
 	slot->tts_tableOid = RelationGetRelid(relation);
 	tuple->t_tableOid = slot->tts_tableOid;
 
 	/* Perform the insertion, and copy the resulting ItemPointer */
-	heap_insert(relation, tuple, cid, options, bistate);
+	heap_insert(relation, tuple, cid, options, bistate, xid);
 	ItemPointerCopy(&tuple->t_self, &slot->tts_tid);
 
 	if (shouldFree)
@@ -268,6 +269,7 @@ heapam_tuple_insert_speculative(Relation relation, TupleTableSlot *slot,
 {
 	bool		shouldFree = true;
 	HeapTuple	tuple = ExecFetchSlotHeapTuple(slot, true, &shouldFree);
+	TransactionId xid = GetCurrentTransactionId();
 
 	/* Update the tuple with table oid */
 	slot->tts_tableOid = RelationGetRelid(relation);
@@ -277,7 +279,7 @@ heapam_tuple_insert_speculative(Relation relation, TupleTableSlot *slot,
 	options |= HEAP_INSERT_SPECULATIVE;
 
 	/* Perform the insertion, and copy the resulting ItemPointer */
-	heap_insert(relation, tuple, cid, options, bistate);
+	heap_insert(relation, tuple, cid, options, bistate, xid);
 	ItemPointerCopy(&tuple->t_self, &slot->tts_tid);
 
 	if (shouldFree)
@@ -825,7 +827,7 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 
 		LockBuffer(buf, BUFFER_LOCK_SHARE);
 
-		switch (HeapTupleSatisfiesVacuum(tuple, OldestXmin, buf))
+		switch (HeapTupleSatisfiesVacuum(OldHeap, tuple, OldestXmin, buf))
 		{
 			case HEAPTUPLE_DEAD:
 				/* Definitely dead */
@@ -1047,7 +1049,8 @@ heapam_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 		targtuple->t_data = (HeapTupleHeader) PageGetItem(targpage, itemid);
 		targtuple->t_len = ItemIdGetLength(itemid);
 
-		switch (HeapTupleSatisfiesVacuum(targtuple, OldestXmin,
+		switch (HeapTupleSatisfiesVacuum(hscan->rs_base.rs_rd,
+										 targtuple, OldestXmin,
 										 hscan->rs_cbuf))
 		{
 			case HEAPTUPLE_LIVE:
@@ -1384,7 +1387,8 @@ heapam_index_build_range_scan(Relation heapRelation,
 			 * reltuples values, e.g. when there are many recently-dead
 			 * tuples.
 			 */
-			switch (HeapTupleSatisfiesVacuum(heapTuple, OldestXmin,
+			switch (HeapTupleSatisfiesVacuum(heapRelation,
+											 heapTuple, OldestXmin,
 											 hscan->rs_cbuf))
 			{
 				case HEAPTUPLE_DEAD:
@@ -2269,7 +2273,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 			loctup.t_len = ItemIdGetLength(lp);
 			loctup.t_tableOid = scan->rs_rd->rd_id;
 			ItemPointerSet(&loctup.t_self, page, offnum);
-			valid = HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer);
+			valid = HeapTupleSatisfiesVisibility(scan->rs_rd, &loctup, snapshot, buffer);
 			if (valid)
 			{
 				hscan->rs_vistuples[ntup++] = offnum;
@@ -2589,7 +2593,8 @@ SampleHeapTupleVisible(TableScanDesc scan, Buffer buffer,
 	else
 	{
 		/* Otherwise, we have to check the tuple individually. */
-		return HeapTupleSatisfiesVisibility(tuple, scan->rs_snapshot,
+		return HeapTupleSatisfiesVisibility(scan->rs_rd,
+											tuple, scan->rs_snapshot,
 											buffer);
 	}
 }

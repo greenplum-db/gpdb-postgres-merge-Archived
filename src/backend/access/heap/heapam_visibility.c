@@ -1552,10 +1552,11 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTuple htup, TransactionId Oldest
  *	snapshot->xmin must have been set up with the xmin horizon to use.
  */
 static bool
-HeapTupleSatisfiesNonVacuumable(HeapTuple htup, Snapshot snapshot,
+HeapTupleSatisfiesNonVacuumable(Relation relation,
+								HeapTuple htup, Snapshot snapshot,
 								Buffer buffer)
 {
-	return HeapTupleSatisfiesVacuum(htup, snapshot->xmin, buffer)
+	return HeapTupleSatisfiesVacuum(relation, htup, snapshot->xmin, buffer)
 		!= HEAPTUPLE_DEAD;
 }
 
@@ -1847,30 +1848,30 @@ HeapTupleSatisfiesHistoricMVCC(Relation relation, HeapTuple htup, Snapshot snaps
  *	if so, the indicated buffer is marked dirty.
  */
 bool
-HeapTupleSatisfiesVisibility(HeapTuple tup, Snapshot snapshot, Buffer buffer)
+HeapTupleSatisfiesVisibility(Relation relation, HeapTuple tup, Snapshot snapshot, Buffer buffer)
 {
 	switch (snapshot->snapshot_type)
 	{
 		case SNAPSHOT_MVCC:
-			return HeapTupleSatisfiesMVCC(tup, snapshot, buffer);
+			return HeapTupleSatisfiesMVCC(relation, tup, snapshot, buffer);
 			break;
 		case SNAPSHOT_SELF:
-			return HeapTupleSatisfiesSelf(tup, snapshot, buffer);
+			return HeapTupleSatisfiesSelf(relation, tup, snapshot, buffer);
 			break;
 		case SNAPSHOT_ANY:
-			return HeapTupleSatisfiesAny(tup, snapshot, buffer);
+			return HeapTupleSatisfiesAny(relation, tup, snapshot, buffer);
 			break;
 		case SNAPSHOT_TOAST:
-			return HeapTupleSatisfiesToast(tup, snapshot, buffer);
+			return HeapTupleSatisfiesToast(relation, tup, snapshot, buffer);
 			break;
 		case SNAPSHOT_DIRTY:
-			return HeapTupleSatisfiesDirty(tup, snapshot, buffer);
+			return HeapTupleSatisfiesDirty(relation, tup, snapshot, buffer);
 			break;
 		case SNAPSHOT_HISTORIC_MVCC:
-			return HeapTupleSatisfiesHistoricMVCC(tup, snapshot, buffer);
+			return HeapTupleSatisfiesHistoricMVCC(relation, tup, snapshot, buffer);
 			break;
 		case SNAPSHOT_NON_VACUUMABLE:
-			return HeapTupleSatisfiesNonVacuumable(tup, snapshot, buffer);
+			return HeapTupleSatisfiesNonVacuumable(relation, tup, snapshot, buffer);
 			break;
 	}
 
