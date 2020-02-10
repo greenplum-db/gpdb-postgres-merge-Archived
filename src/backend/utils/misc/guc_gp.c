@@ -16,6 +16,7 @@
  */
 #include "postgres.h"
 
+#include <float.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
 
@@ -268,14 +269,14 @@ bool		gp_enable_hashjoin_size_heuristic = false;
 bool		gp_enable_predicate_propagation = false;
 bool		gp_enable_minmax_optimization = true;
 bool		gp_enable_multiphase_agg = true;
-bool		gp_enable_preunique = TRUE;
-bool		gp_eager_preunique = FALSE;
+bool		gp_enable_preunique = true;
+bool		gp_eager_preunique = false;
 bool		gp_hashagg_streambottom = true;
 bool		gp_enable_agg_distinct = true;
 bool		gp_enable_dqa_pruning = true;
-bool		gp_eager_dqa_pruning = FALSE;
-bool		gp_eager_one_phase_agg = FALSE;
-bool		gp_eager_two_phase_agg = FALSE;
+bool		gp_eager_dqa_pruning = false;
+bool		gp_eager_one_phase_agg = false;
+bool		gp_eager_two_phase_agg = false;
 bool		gp_dynamic_partition_pruning = true;
 bool		gp_log_dynamic_partition_pruning = false;
 bool		gp_cte_sharing = false;
@@ -4010,7 +4011,7 @@ struct config_int ConfigureNamesInt_gp[] =
 			GUC_SUPERUSER_ONLY
 		},
 		&repl_catchup_within_range,
-		1, 0, UINT_MAX / XLogSegSize,
+		1, 0, UINT_MAX / WalSegMaxSize,
 		NULL, NULL, NULL
 	},
 
