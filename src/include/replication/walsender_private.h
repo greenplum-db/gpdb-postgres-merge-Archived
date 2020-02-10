@@ -56,7 +56,6 @@ typedef struct WalSnd
 	XLogRecPtr	flush;
 	XLogRecPtr	apply;
 
-<<<<<<< HEAD
 	/*
 	 * This boolean indicates if this WAL sender has caught up within the
 	 * range defined by user (guc). This helps the backends to decide if they
@@ -81,12 +80,11 @@ typedef struct WalSnd
 	 * This helps to detect time passed since mirror didn't connect.
 	 */
 	pg_time_t   replica_disconnected_at;
-=======
+
 	/* Measured lag times, or -1 for unknown/none. */
 	TimeOffset	writeLag;
 	TimeOffset	flushLag;
 	TimeOffset	applyLag;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Protects shared variables shown above. */
 	slock_t		mutex;
@@ -105,16 +103,15 @@ typedef struct WalSnd
 	int			sync_standby_priority;
 
 	/*
-<<<<<<< HEAD
+	 * Timestamp of the last message received from standby.
+	 */
+	TimestampTz replyTime;
+
+	/*
 	 * Indicates whether the WalSnd represents a connection with a Greenplum
 	 * mirror in streaming mode
 	 */
 	bool 		is_for_gp_walreceiver;
-=======
-	 * Timestamp of the last message received from standby.
-	 */
-	TimestampTz replyTime;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 } WalSnd;
 
 extern WalSnd *MyWalSnd;
