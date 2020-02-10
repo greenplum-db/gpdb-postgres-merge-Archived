@@ -4377,7 +4377,10 @@ create_grouping_paths(PlannerInfo *root,
 {
 	Query	   *parse = root->parse;
 	RelOptInfo *grouped_rel;
-<<<<<<< HEAD
+#if 0
+    GPDB_12_MERGE_FIXME: This bulk of codes is related to gpdb mpp agg,
+    hard to handle in conflict resolve stage. will fix it after cluster
+    start successful.
 	PathTarget *partial_grouping_target = NULL;
 	AggClauseCosts agg_partial_costs;	/* parallel only */
 	AggClauseCosts agg_final_costs;		/* parallel only */
@@ -4394,7 +4397,7 @@ create_grouping_paths(PlannerInfo *root,
 
 	/* For now, do all work in the (GROUP_AGG, NULL) upperrel */
 	grouped_rel = fetch_upper_rel(root, UPPERREL_GROUP_AGG, NULL);
-=======
+#endif
 	RelOptInfo *partially_grouped_rel;
 
 	/*
@@ -4520,7 +4523,6 @@ make_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 
 	/* Set target. */
 	grouped_rel->reltarget = target;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * If the input relation is not parallel-safe, then the grouped relation
@@ -4734,7 +4736,17 @@ create_ordinary_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	 */
 	dNumGroups = get_number_of_groups(root,
 									  cheapest_path->rows,
-<<<<<<< HEAD
+                                      gd,
+                                      extra->targetList);
+
+    /* Build final grouping paths */
+    add_paths_to_grouping_rel(root, input_rel, grouped_rel,
+                              partially_grouped_rel, agg_costs, gd,
+                              dNumGroups, extra);
+#if 0
+    GPDB_12_MERGE_FIXME: This bulk of codes is related to gpdb mpp agg,
+    hard to handle in conflict resolve stage. will fix it after cluster
+    start successful.
 									  rollup_lists,
 									  rollup_groupclauses);
 
@@ -5287,15 +5299,7 @@ create_ordinary_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 			}
 		}
 	}
-=======
-									  gd,
-									  extra->targetList);
-
-	/* Build final grouping paths */
-	add_paths_to_grouping_rel(root, input_rel, grouped_rel,
-							  partially_grouped_rel, agg_costs, gd,
-							  dNumGroups, extra);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#endif
 
 	/* Give a helpful error if we failed to find any implementation */
 	if (grouped_rel->pathlist == NIL)
