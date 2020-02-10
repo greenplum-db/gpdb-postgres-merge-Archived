@@ -1020,10 +1020,12 @@ get_atttypetypmodcoll(Oid relid, AttrNumber attnum,
 	if (attnum < 0 &&
 		attnum > FirstLowInvalidHeapAttributeNumber)
 	{
-		att_tup = SystemAttributeDefinition(attnum, true);
-		*typid = att_tup->atttypid;
-		*typmod = att_tup->atttypmod;
-		*collid = att_tup->attcollation;
+		const FormData_pg_attribute *sysatt_tup;
+
+		sysatt_tup = SystemAttributeDefinition(attnum);
+		*typid = sysatt_tup->atttypid;
+		*typmod = sysatt_tup->atttypmod;
+		*collid = sysatt_tup->attcollation;
 		return;
 	}
 
@@ -2325,56 +2327,6 @@ get_rel_name(Oid relid)
 		return NULL;
 }
 
-
-/*
- * get_rel_name_partition
- *		Returns the name of a given relation plus its parent name, if it is a partition table.
- *		If it not a partition table, it returns the relation name only.
- *
- *	Returns a palloc'd copy of the string, or NULL if no such relation.
- *	The caller is responsible for releasing the palloc'd memory.
- */
-char *
-get_rel_name_partition(Oid relid)
-{
-	char *rel_name = get_rel_name(relid);
-
-	if (rel_name == NULL) return NULL;
-
-	if (rel_is_child_partition(relid))
-	{
-		char *result;
-
-		Oid parent_oid = rel_partition_get_master(relid);
-		Assert(parent_oid != InvalidOid);
-
-		char *parent_name = get_rel_name(parent_oid);
-		Assert(parent_name);
-
-		char *partition_name = "";
-
-		StringInfo buffer = makeStringInfo();
-		Assert(buffer);
-
-		appendStringInfo(buffer, "\"%s\" (partition%s of relation \"%s\")",
-							     rel_name, partition_name, parent_name);
-
-		result = pstrdup(buffer->data);
-
-		pfree(rel_name);
-		pfree(parent_name);
-		pfree(buffer);
-
-		rel_name = NULL;
-		parent_name = NULL;
-		buffer = NULL;
-
-		return result;
-	}
-	return rel_name;
-}
-
-
 /*
  * get_rel_namespace
  *
@@ -3622,50 +3574,6 @@ get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 		 * under control of this AttStatsSlot.
 		 */
 		statarray = DatumGetArrayTypePCopy(val);
-<<<<<<< HEAD
-
-		/**
-		 * Could be an empty array.
-		 */
-		if (ARR_NDIM(statarray) > 0)
-		{
-			/*
-			 * Extract the actual array element type, and pass it back in case the
-			 * caller needs it.
-			 */
-			sslot->valuetype = arrayelemtype = ARR_ELEMTYPE(statarray);
-
-			/* Need info about element type */
-			typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(arrayelemtype));
-			if (!HeapTupleIsValid(typeTuple))
-				elog(ERROR, "cache lookup failed for type %u", arrayelemtype);
-			typeForm = (Form_pg_type) GETSTRUCT(typeTuple);
-
-			/* Deconstruct array into Datum elements; NULLs not expected */
-			deconstruct_array(statarray,
-							  arrayelemtype,
-							  typeForm->typlen,
-							  typeForm->typbyval,
-							  typeForm->typalign,
-							  &sslot->values, NULL, &sslot->nvalues);
-
-			/*
-			 * If the element type is pass-by-reference, we now have a bunch of
-			 * Datums that are pointers into the statarray, so we need to keep
-			 * that until free_attstatsslot.  Otherwise, all the useful info is in
-			 * sslot->values[], so we can free the array object immediately.
-			 */
-			if (!typeForm->typbyval)
-				sslot->values_arr = statarray;
-			else
-				pfree(statarray);
-
-			ReleaseSysCache(typeTuple);
-		}
-		else
-			pfree(statarray);
-
-=======
 
 		/*
 		 * Extract the actual array element type, and pass it back in case the
@@ -3699,7 +3607,6 @@ get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 			pfree(statarray);
 
 		ReleaseSysCache(typeTuple);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	if (flags & ATTSTATSSLOT_NUMBERS)
@@ -3716,33 +3623,6 @@ get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 		 */
 		statarray = DatumGetArrayTypePCopy(val);
 
-<<<<<<< HEAD
-		/**
-		 * Could be an empty array.
-		 */
-		if (ARR_NDIM(statarray) > 0)
-		{
-			/*
-			 * We expect the array to be a 1-D float4 array; verify that. We don't
-			 * need to use deconstruct_array() since the array data is just going
-			 * to look like a C array of float4 values.
-			 */
-			narrayelem = ARR_DIMS(statarray)[0];
-			if (ARR_NDIM(statarray) != 1 || narrayelem <= 0 ||
-					ARR_HASNULL(statarray) ||
-					ARR_ELEMTYPE(statarray) != FLOAT4OID)
-				elog(ERROR, "stanumbers is not a 1-D float4 array");
-
-			/* Give caller a pointer directly into the statarray */
-			sslot->numbers = (float4 *) ARR_DATA_PTR(statarray);
-			sslot->nnumbers = narrayelem;
-
-			/* We'll free the statarray in free_attstatsslot */
-			sslot->numbers_arr = statarray;
-		}
-		else
-			pfree(statarray);
-=======
 		narrayelem = ARR_DIMS(statarray)[0];
 		if (ARR_NDIM(statarray) != 1 || narrayelem <= 0 ||
 			ARR_HASNULL(statarray) ||
@@ -3755,7 +3635,6 @@ get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 
 		/* We'll free the statarray in free_attstatsslot */
 		sslot->numbers_arr = statarray;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	return true;
@@ -3952,8 +3831,8 @@ get_aggregate(const char *aggname, Oid oidType)
 	for (i = 0; i < catlist->n_members; i++)
 	{
 		HeapTuple htup = &catlist->members[i]->tuple;
-		Oid oidProc = HeapTupleGetOid(htup);
 		Form_pg_proc proctuple = (Form_pg_proc) GETSTRUCT(htup);
+		Oid oidProc = proctuple->oid;
 
 		// skip functions with the wrong number of type of arguments
 		if (1 != proctuple->pronargs || oidType != proctuple->proargtypes.values[0])
@@ -4014,12 +3893,12 @@ get_relation_keys(Oid relid)
 	// lookup unique constraints for relation from the catalog table
 	ScanKeyData skey[1];
 
-	Relation rel = heap_open(ConstraintRelationId, AccessShareLock);
+	Relation rel = table_open(ConstraintRelationId, AccessShareLock);
 	SysScanDesc scan;
 	HeapTuple	htup;
 
 	ScanKeyInit(&skey[0], Anum_pg_constraint_conrelid, BTEqualStrategyNumber, F_OIDEQ, relid);
-	scan = systable_beginscan(rel, ConstraintRelidIndexId, true,
+	scan = systable_beginscan(rel, ConstraintRelidTypidNameIndexId, true,
 							  NULL, 1, skey);
 
 	while (HeapTupleIsValid(htup = systable_getnext(scan)))
@@ -4056,7 +3935,7 @@ get_relation_keys(Oid relid)
 	}
 
 	systable_endscan(scan);
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return keys;
 }
@@ -4114,13 +3993,13 @@ get_check_constraint_oids(Oid oidRel)
 	 *
 	 * SELECT * FROM pg_constraint WHERE conrelid = :1
 	 */
-	conrel = heap_open(ConstraintRelationId, AccessShareLock);
+	conrel = table_open(ConstraintRelationId, AccessShareLock);
 
 	ScanKeyInit(&scankey,
 				Anum_pg_constraint_conrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(oidRel));
-	sscan = systable_beginscan(conrel, ConstraintRelidIndexId, true,
+	sscan = systable_beginscan(conrel, ConstraintRelidTypidNameIndexId, true,
 							   NULL, 1, &scankey);
 
 	while (HeapTupleIsValid(htup = systable_getnext(sscan)))
@@ -4133,11 +4012,11 @@ get_check_constraint_oids(Oid oidRel)
 			continue;
 		}
 
-		plConstraints = lappend_oid(plConstraints, HeapTupleGetOid(htup));
+		plConstraints = lappend_oid(plConstraints, contuple->oid);
 	}
 
 	systable_endscan(sscan);
-	heap_close(conrel, AccessShareLock);
+	table_close(conrel, AccessShareLock);
 
 	return plConstraints;
 }
@@ -4388,8 +4267,7 @@ get_operator_opfamilies(Oid opno)
 	opfam_oids = NIL;
 
 	/* SELECT * FROM pg_amop WHERE amopopr = :1 */
-	catlist = SearchSysCacheList1(AMOPOPID, 1,
-								  ObjectIdGetDatum(opno));
+	catlist = SearchSysCacheList1(AMOPOPID, ObjectIdGetDatum(opno));
 	for (i = 0; i < catlist->n_members; i++)
 	{
 		HeapTuple	htup = &catlist->members[i]->tuple;
@@ -4466,6 +4344,8 @@ relation_policy(Relation rel)
  *  different distribution policy. The only allowed mismatch is for the parent
  *  to be hash distributed, and its child part to be randomly distributed.
  */
+/* GPDB_12_MERGE_FIXME */
+#if 0
 bool
 child_distribution_mismatch(Relation rel)
 {
@@ -4517,12 +4397,15 @@ child_distribution_mismatch(Relation rel)
 	/* all children match the root's distribution policy */
 	return false;
 }
+#endif
 
 /*
  *  child_triggers
  *  Return true if the table is partitioned and any of the child partitions
  *  have a trigger of the given type.
  */
+/* GPDB_12_MERGE_FIXME */
+#if 0
 bool
 child_triggers(Oid relationId, int32 triggerType)
 {
@@ -4574,6 +4457,7 @@ child_triggers(Oid relationId, int32 triggerType)
 	/* no child triggers matching the given type */
 	return found;
 }
+#endif
 
 /*				---------- PG_INDEX CACHE ----------				 */
 

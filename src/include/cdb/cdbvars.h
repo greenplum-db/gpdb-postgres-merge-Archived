@@ -802,7 +802,11 @@ typedef struct GpId
  * Global variable declaration for the data for the single row of gp_id table
  */
 extern GpId GpIdentity;
-extern int get_dbid_string_length(void);
+
+/* GPDB_12_MERGE_FIXME: We used to compute the length of 'dbid' as a string.
+ * But then it couldn't be used to size a stack variable. Use max length instead. */
+#define get_dbid_string_length()  11
+
 #define UNINITIALIZED_GP_IDENTITY_VALUE (-10000)
 #define IS_QUERY_DISPATCHER() (GpIdentity.segindex == MASTER_CONTENT_ID)
 

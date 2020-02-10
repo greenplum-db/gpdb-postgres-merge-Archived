@@ -206,8 +206,9 @@ typedef struct RelationData
 	/*
 	 * AO table support info (used only for AO and AOCS relations)
 	 */
-	Form_pg_appendonly rd_appendonly;
-	struct HeapTupleData *rd_aotuple;		/* all of pg_appendonly tuple */
+	/* GPDB_12_MERGE_FIXME: Do we still need these in the relcache? */
+	//Form_pg_appendonly rd_appendonly;
+	//struct HeapTupleData *rd_aotuple;		/* all of pg_appendonly tuple */
 
 	/* use "struct" here to avoid needing to include pgstat.h: */
 	struct PgStat_TableStatus *pgstat_info; /* statistics collection area */

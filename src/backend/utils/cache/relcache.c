@@ -292,7 +292,7 @@ static void RelationParseRelOptions(Relation relation, HeapTuple tuple);
 static void RelationBuildTupleDesc(Relation relation);
 static Relation RelationBuildDesc(Oid targetRelId, bool insertIt);
 static void RelationInitPhysicalAddr(Relation relation);
-static void RelationInitAppendOnlyInfo(Relation relation);
+//static void RelationInitAppendOnlyInfo(Relation relation);
 static void load_critical_index(Oid indexoid, Oid heapoid);
 static TupleDesc GetPgClassDescriptor(void);
 static TupleDesc GetPgIndexDescriptor(void);
@@ -1234,11 +1234,14 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	/*
 	 * if it's an append-only table, get information from pg_appendonly
 	 */
+	/* GPDB_12_MERGE_FIXME */
+#if 0	
 	if (relation->rd_rel->relstorage == RELSTORAGE_AOROWS ||
 		relation->rd_rel->relstorage == RELSTORAGE_AOCOLS)
 	{
 		RelationInitAppendOnlyInfo(relation);
 	}
+#endif
 
 	/* extract reloptions if any */
 	RelationParseRelOptions(relation, pg_class_tuple);
@@ -2006,6 +2009,8 @@ formrdesc(const char *relationName, Oid relationReltype,
 }
 
 
+/* GPDB_12_MERGE_FIXME */
+#if 0	
 static void
 RelationInitAppendOnlyInfo(Relation relation)
 {
@@ -2047,6 +2052,7 @@ RelationInitAppendOnlyInfo(Relation relation)
 	heap_close(pg_appendonly_rel, AccessShareLock);
 
 }
+#endif
 
 
 /* ----------------------------------------------------------------
@@ -2458,8 +2464,11 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 		pfree(relation->rd_options);
 	if (relation->rd_indextuple)
 		pfree(relation->rd_indextuple);
+	/* GPDB_12_MERGE_FIXME */
+#if 0	
 	if (relation->rd_aotuple)
 		pfree(relation->rd_aotuple);
+#endif
 	if (relation->rd_indexcxt)
 		MemoryContextDelete(relation->rd_indexcxt);
 	if (relation->rd_rulescxt)
@@ -3428,7 +3437,6 @@ RelationBuildLocalRelation(const char *relname,
 	namestrcpy(&rel->rd_rel->relname, relname);
 	rel->rd_rel->relnamespace = relnamespace;
 
-	rel->rd_rel->relstorage = RELSTORAGE_HEAP;
 	rel->rd_rel->relkind = relkind;
 	rel->rd_rel->relnatts = natts;
 	rel->rd_rel->reltype = InvalidOid;
@@ -6244,7 +6252,7 @@ RelationCacheInitFileRemove(void)
 	const char *tblspcdir = "pg_tblspc";
 	DIR		   *dir;
 	struct dirent *de;
-	char		path[MAXPGPATH + 10 + sizeof(TABLESPACE_VERSION_DIRECTORY)];
+	char		path[MAXPGPATH + 11 + get_dbid_string_length() + 1 + sizeof(GP_TABLESPACE_VERSION_DIRECTORY)];
 
 	snprintf(path, sizeof(path), "global/%s",
 			 RELCACHE_INIT_FILENAME);

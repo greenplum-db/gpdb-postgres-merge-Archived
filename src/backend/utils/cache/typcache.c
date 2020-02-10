@@ -222,7 +222,7 @@ shared_record_table_compare(const void *a, const void *b, size_t size,
 	else
 		t2 = k2->u.local_tupdesc;
 
-	return equalTupleDescs(t1, t2) ? 0 : 1;
+	return equalTupleDescs(t1, t2, true) ? 0 : 1;
 }
 
 /*
@@ -266,15 +266,9 @@ static HTAB *RecordCacheHash = NULL;
 
 /* arrays of info about registered record types, indexed by assigned typmod */
 static TupleDesc *RecordCacheArray = NULL;
-<<<<<<< HEAD
-static int32 RecordCacheArrayLen = 0;	/* allocated length of array */
-int32 NextRecordTypmod = 0;		/* number of entries used */
-
-static void TypeCacheRelCallback(Datum arg, Oid relid);
-=======
 static uint64 *RecordIdentifierArray = NULL;
 static int32 RecordCacheArrayLen = 0;	/* allocated length of above arrays */
-static int32 NextRecordTypmod = 0;	/* number of entries used */
+int32 NextRecordTypmod = 0;	/* number of entries used */
 
 /*
  * Process-wide counter for generating unique tupledesc identifiers.
@@ -282,7 +276,6 @@ static int32 NextRecordTypmod = 0;	/* number of entries used */
  * as identifiers, so we start the counter at INVALID_TUPLEDESC_IDENTIFIER.
  */
 static uint64 tupledesc_id_counter = INVALID_TUPLEDESC_IDENTIFIER;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static void load_typcache_tupdesc(TypeCacheEntry *typentry);
 static void load_rangetype_info(TypeCacheEntry *typentry);
@@ -1766,7 +1759,7 @@ record_type_typmod_compare(const void *a, const void *b, size_t size)
 	RecordCacheEntry *left = (RecordCacheEntry *) a;
 	RecordCacheEntry *right = (RecordCacheEntry *) b;
 
-	return equalTupleDescs(left->tupdesc, right->tupdesc) ? 0 : 1;
+	return equalTupleDescs(left->tupdesc, right->tupdesc, true) ? 0 : 1;
 }
 
 /*
@@ -1811,25 +1804,8 @@ assign_record_type_typmod(TupleDesc tupDesc)
 												HASH_ENTER, &found);
 	if (found && recentry->tupdesc != NULL)
 	{
-<<<<<<< HEAD
-		/* New entry ... hash_search initialized only the hash key */
-		recentry->tupdescs = NIL;
-	}
-
-	/* Look for existing record cache entry */
-	foreach(l, recentry->tupdescs)
-	{
-		entDesc = (TupleDesc) lfirst(l);
-		if (equalTupleDescs(tupDesc, entDesc, true))
-		{
-			tupDesc->tdtypmod = entDesc->tdtypmod;
-
-			return;
-		}
-=======
 		tupDesc->tdtypmod = recentry->tupdesc->tdtypmod;
 		return;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/* Not present, so need to manufacture an entry */
