@@ -39,48 +39,21 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
-#include "access/aosegfiles.h"
-#include "access/appendonlywriter.h"
-#include "access/fileam.h"
-=======
 #include "access/heapam.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/tableam.h"
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
-<<<<<<< HEAD
-#include "catalog/pg_tablespace.h"
-#include "catalog/aoseg.h"
-#include "catalog/aoblkdir.h"
-#include "catalog/aovisimap.h"
-#include "catalog/catalog.h"
-#include "catalog/oid_dispatch.h"
-#include "catalog/pg_attribute_encoding.h"
-#include "catalog/pg_type.h"
-#include "commands/copy.h"
-#include "commands/createas.h"
-=======
 #include "catalog/pg_publication.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "commands/matview.h"
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "executor/execdebug.h"
-<<<<<<< HEAD
-#include "executor/execUtils.h"
-#include "executor/instrument.h"
-#include "executor/nodeSubplan.h"
-#include "foreign/fdwapi.h"
-#include "libpq/pqformat.h"
-=======
 #include "executor/nodeSubplan.h"
 #include "foreign/fdwapi.h"
 #include "jit/jit.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "parser/parsetree.h"
@@ -95,7 +68,6 @@
 #include "utils/rls.h"
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
-<<<<<<< HEAD
 #include "utils/metrics_utils.h"
 
 #include "utils/ps_status.h"
@@ -111,6 +83,24 @@
 
 #include "tcop/tcopprot.h"
 
+#include "access/aosegfiles.h"
+#include "access/appendonlywriter.h"
+#include "access/fileam.h"
+#include "catalog/pg_tablespace.h"
+#include "catalog/aoseg.h"
+#include "catalog/aoblkdir.h"
+#include "catalog/aovisimap.h"
+#include "catalog/catalog.h"
+#include "catalog/oid_dispatch.h"
+#include "catalog/pg_attribute_encoding.h"
+#include "catalog/pg_type.h"
+#include "commands/copy.h"
+#include "commands/createas.h"
+#include "executor/execUtils.h"
+#include "executor/instrument.h"
+#include "executor/nodeSubplan.h"
+#include "foreign/fdwapi.h"
+#include "libpq/pqformat.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbaocsam.h"
 #include "cdb/cdbdisp_query.h"
@@ -127,8 +117,6 @@
 #include "cdb/memquota.h"
 #include "cdb/cdbtargeteddispatch.h"
 #include "cdb/cdbutil.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
@@ -1245,7 +1233,6 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 	MemoryContextSwitchTo(oldcontext);
 
 	queryDesc->es_processed = estate->es_processed;
-	queryDesc->es_lastoid = estate->es_lastoid;
 
 	/*
 	 * Release EState and per-query memory context

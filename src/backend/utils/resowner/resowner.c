@@ -20,26 +20,20 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
-#include "access/hash.h"
-#include "cdb/cdbvars.h"
-#include "storage/bufmgr.h"
-#include "storage/predicate.h"
-#include "storage/proc.h"
-#include "utils/guc.h"
-=======
 #include "jit/jit.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/predicate.h"
 #include "storage/proc.h"
 #include "utils/hashutils.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/memutils.h"
 #include "utils/rel.h"
-#include "utils/resource_manager.h"
 #include "utils/resowner_private.h"
 #include "utils/snapmgr.h"
+
+#include "cdb/cdbvars.h"
+#include "utils/guc.h"
+#include "utils/resource_manager.h"
 
 
 /*
@@ -490,10 +484,6 @@ ResourceOwnerRelease(ResourceOwner owner,
 					 bool isCommit,
 					 bool isTopLevel)
 {
-<<<<<<< HEAD
-	/* Rather than PG_TRY at every level of recursion, set it up once */
-	ResourceOwner save;
-
 	/*
 	 * Greenplum: For some reason we've been calling this when the owner is NULL.
 	 */
@@ -503,22 +493,8 @@ ResourceOwnerRelease(ResourceOwner owner,
 		return;
 	}
 
-	save = CurrentResourceOwner;
-	PG_TRY();
-	{
-		ResourceOwnerReleaseInternal(owner, phase, isCommit, isTopLevel);
-	}
-	PG_CATCH();
-	{
-		CurrentResourceOwner = save;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-	CurrentResourceOwner = save;
-=======
 	/* There's not currently any setup needed before recursing */
 	ResourceOwnerReleaseInternal(owner, phase, isCommit, isTopLevel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 static void
@@ -603,14 +579,10 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 			if (owner == TopTransactionResourceOwner)
 			{
 				ProcReleaseLocks(isCommit);
-<<<<<<< HEAD
-				ReleasePredicateLocks(isCommit);
-				
-				if (Gp_role == GP_ROLE_DISPATCH && IsResQueueEnabled())
- 					ResLockWaitCancel();
-=======
 				ReleasePredicateLocks(isCommit, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+				if (Gp_role == GP_ROLE_DISPATCH && IsResQueueEnabled())
+					ResLockWaitCancel();
 			}
 		}
 		else
@@ -716,16 +688,11 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 	}
 
 	/* Let add-on modules get a chance too */
-<<<<<<< HEAD
 	for (item = ResourceRelease_callbacks; item; item = next)
 	{
 		next = item->next;
-		(*item->callback) (phase, isCommit, isTopLevel, item->arg);
-	}
-=======
-	for (item = ResourceRelease_callbacks; item; item = item->next)
 		item->callback(phase, isCommit, isTopLevel, item->arg);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	}
 
 	CurrentResourceOwner = save;
 }

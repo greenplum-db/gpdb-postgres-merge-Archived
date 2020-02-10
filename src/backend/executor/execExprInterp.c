@@ -2423,7 +2423,7 @@ ExecEvalCurrentOfExpr(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 						  slot->tts_tableOid,
 						  &cursor_tid))
 		{
-			if (ItemPointerEquals(&cursor_tid, slot_get_ctid(slot)))
+			if (ItemPointerEquals(&cursor_tid, &slot->tts_tid))
 				result = true;
 		}
 	}
