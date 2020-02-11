@@ -1447,6 +1447,7 @@ exec_mpp_query(const char *query_string,
 		(void) PortalRun(portal,
 						 FETCH_ALL,
 						 true, /* Effectively always top level. */
+						 portal->run_once,
 						 receiver,
 						 receiver,
 						 completionTag);
