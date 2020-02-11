@@ -24,6 +24,7 @@
 #include "access/amvalidate.h"
 #include "access/genam.h"
 #include "access/bitmap.h"
+#include "access/bitmap_private.h"
 #include "access/nbtree.h"		/* for btree_or_bitmap_validate() */
 #include "access/xact.h"
 #include "catalog/index.h"

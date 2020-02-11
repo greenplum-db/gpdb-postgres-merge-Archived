@@ -339,16 +339,6 @@ XLogDumpXLogRead(const char *directory, TimeLineID timeline_id,
 			XLogFileName(fname, timeline_id, sendSegNo, WalSegSz);
 
 			/*
-<<<<<<< HEAD:src/bin/pg_xlogdump/pg_xlogdump.c
-			 * In follow mode there is a short period of time after the
-			 * server has written the end of the previous file before the
-			 * new file is available. So we loop for 5 seconds looking
-			 * for the file to appear before giving up.
-			 */
-			for (tries = 0; tries < 10; tries++)
-			{
-				sendFile = fuzzy_open_file(directory, fname);
-=======
 			 * In follow mode there is a short period of time after the server
 			 * has written the end of the previous file before the new file is
 			 * available. So we loop for 5 seconds looking for the file to
@@ -357,7 +347,6 @@ XLogDumpXLogRead(const char *directory, TimeLineID timeline_id,
 			for (tries = 0; tries < 10; tries++)
 			{
 				sendFile = open_file_in_directory(directory, fname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/bin/pg_waldump/pg_waldump.c
 				if (sendFile >= 0)
 					break;
 				if (errno == ENOENT)

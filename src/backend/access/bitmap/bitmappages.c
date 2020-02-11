@@ -16,12 +16,14 @@
  */
 
 #include "postgres.h"
-#include "miscadmin.h"
 
 #include "access/genam.h"
 #include "access/tupdesc.h"
 #include "access/bitmap.h"
+#include "access/bitmap_private.h"
+#include "miscadmin.h"
 #include "parser/parse_oper.h"
+#include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
@@ -192,7 +194,7 @@ _bitmap_init_buildstate(Relation index, BMBuildState *bmstate)
 
 	for (i = 0; i < bmstate->bm_tupDesc->natts; i++)
 	{
-		Oid			typid = bmstate->bm_tupDesc->attrs[i]->atttypid;
+		Oid			typid = TupleDescAttr(bmstate->bm_tupDesc,  i)->atttypid;
 		Oid			eq_opr;
 		Oid			eq_function;
 		Oid			left_hash_function;
@@ -271,7 +273,7 @@ _bitmap_init_buildstate(Relation index, BMBuildState *bmstate)
 			RegProcedure opfuncid;
 			Oid			atttypid;
 
-			atttypid = bmstate->bm_tupDesc->attrs[attno]->atttypid;
+			atttypid = TupleDescAttr(bmstate->bm_tupDesc,  attno)->atttypid;
 
 			get_sort_group_operators(atttypid,
 									 false, true, false,
