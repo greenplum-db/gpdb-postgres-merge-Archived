@@ -1220,15 +1220,9 @@ ProcessUtilitySlow(ParseState *pstate,
 							 */
 							/* Create the table itself */
 							address = DefineRelation((CreateStmt *) stmt,
-<<<<<<< HEAD
 													 relKind,
 													 ((CreateStmt *) stmt)->ownerid, NULL,
-													 relStorage, false, true, NULL);
-=======
-													 RELKIND_RELATION,
-													 InvalidOid, NULL,
-													 queryString);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+													 queryString, false, true, NULL);
 							EventTriggerCollectSimpleCommand(address,
 															 secondaryObject,
 															 stmt);
@@ -1315,14 +1309,10 @@ ProcessUtilitySlow(ParseState *pstate,
 							address = DefineRelation((CreateStmt *) stmt,
 													 RELKIND_FOREIGN_TABLE,
 													 InvalidOid, NULL,
-<<<<<<< HEAD
-													 RELSTORAGE_FOREIGN,
+													 queryString,
 													 true,
 													 true,
 													 NULL);
-=======
-													 queryString);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							CreateForeignTable((CreateForeignTableStmt *) stmt,
 											   address.objectId,
 											   false /* skip_permission_checks */);
@@ -1717,12 +1707,6 @@ ProcessUtilitySlow(ParseState *pstate,
 						DefineIndex(relid,	/* OID of heap relation */
 									stmt,
 									InvalidOid, /* no predefined OID */
-<<<<<<< HEAD
-									false,		/* is_alter_table */
-									true,		/* check_rights */
-									false,		/* skip_build */
-									stmt->is_split_part);		/* quiet */
-=======
 									InvalidOid, /* no parent index */
 									InvalidOid, /* no parent constraint */
 									false,	/* is_alter_table */
@@ -1730,7 +1714,6 @@ ProcessUtilitySlow(ParseState *pstate,
 									true,	/* check_not_in_use */
 									false,	/* skip_build */
 									false); /* quiet */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 					/*
 					 * Add the CREATE INDEX node itself to stash right away;
