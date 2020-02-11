@@ -252,19 +252,6 @@ appendonly_vacuum_rel(Relation onerel, VacuumParams *params,
 						 vacrelstats->new_dead_tuples);
 	pgstat_progress_end_command();
 
-	if (gp_indexcheck_vacuum == INDEX_CHECK_ALL ||
-		(gp_indexcheck_vacuum == INDEX_CHECK_SYSTEM &&
-		 PG_CATALOG_NAMESPACE == RelationGetNamespace(onerel)))
-	{
-		int			i;
-
-		for (i = 0; i < nindexes; i++)
-		{
-			if (Irel[i]->rd_rel->relam == BTREE_AM_OID)
-				_bt_validate_vacuum(Irel[i], onerel, OldestXmin);
-		}
-	}
-
 	/* and log the action if appropriate */
 	if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 	{

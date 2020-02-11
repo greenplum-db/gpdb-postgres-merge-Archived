@@ -558,7 +558,6 @@ static const struct config_enum_entry optimizer_join_order_options[] = {
 };
 
 IndexCheckType gp_indexcheck_insert = INDEX_CHECK_NONE;
-IndexCheckType gp_indexcheck_vacuum = INDEX_CHECK_NONE;
 
 struct config_bool ConfigureNamesBool_gp[] =
 {
@@ -4045,17 +4044,6 @@ struct config_int ConfigureNamesInt_gp[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		(int *) &gp_indexcheck_insert,
-		INDEX_CHECK_NONE, 0, INDEX_CHECK_ALL,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"gp_indexcheck_vacuum", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("Validate index after lazy vacuum."),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		(int *) &gp_indexcheck_vacuum,
 		INDEX_CHECK_NONE, 0, INDEX_CHECK_ALL,
 		NULL, NULL, NULL
 	},

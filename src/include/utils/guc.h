@@ -614,7 +614,6 @@ typedef enum
 } IndexCheckType;
 
 extern IndexCheckType gp_indexcheck_insert;
-extern IndexCheckType gp_indexcheck_vacuum;
 
 /* Storage option names */
 #define SOPT_FILLFACTOR    "fillfactor"

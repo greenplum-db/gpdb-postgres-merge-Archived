@@ -24,7 +24,6 @@
 		"gp_hashjoin_tuples_per_bucket",
 		"gp_ignore_error_table",
 		"gp_indexcheck_insert",
-		"gp_indexcheck_vacuum",
 		"gp_initial_bad_row_limit",
 		"gp_interconnect_debug_retry_interval",
 		"gp_interconnect_default_rtt",
