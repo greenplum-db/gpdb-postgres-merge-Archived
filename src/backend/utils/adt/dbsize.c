@@ -470,7 +470,7 @@ pg_relation_size(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	/* GPDB_12_MERGE_FIXME: Is this still needed? */
-	if(RelationIsForeign(rel))
+	if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 	{
 		FdwRoutine *fdwroutine;
 		bool        ok = false;

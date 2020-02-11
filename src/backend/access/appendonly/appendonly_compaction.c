@@ -48,19 +48,6 @@
 #include "utils/snapmgr.h"
 #include "miscadmin.h"
 
-/*
- * GPDB_12_MERGE_FIXME: These used to be in utils/rel.h. But I wanted to remove
- * them, so that we find all the places that used them, that probably shouldn't
- * anymore. In this file, these are used in assertions, which are quite reasonable
- * and act as documentation, on which functions are also used with AOCO tables.
- */
-#define RelationIsAoRows(relation) \
-	((bool)(((relation)->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID)))
-#define RelationIsAoCols(relation) \
-	((bool)(((relation)->rd_rel->relam == AOCO_TABLE_AM_OID)))
-#define RelationIsAppendOptimized(relation) \
-	(RelationIsAoRows(relation) || RelationIsAoCols(relation))
-
 
 /*
  * Drops a segment file.

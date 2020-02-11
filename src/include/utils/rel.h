@@ -30,6 +30,8 @@
 #include "utils/relcache.h"
 #include "utils/reltrigger.h"
 
+#include "catalog/pg_am.h"
+
 
 /*
  * LockRelId and LockInfo really belong to lmgr.h, but it's more convenient
@@ -411,27 +413,23 @@ typedef struct ViewOptions
 /* GPDB_12_MERGE_FIXME: I hope we don't need these macros anymore, now that
  * everything should go through the table access method API.
  */
-#if 0
-/*
- * RelationIsHeap
- * 		True iff relation has heap storage
- */
+
 #define RelationIsHeap(relation) \
-	((bool)((relation)->rd_rel->relstorage == RELSTORAGE_HEAP))
+	((relation)->rd_rel->relam == HEAP_TABLE_AM_OID)
 
 /*
  * RelationIsAoRows
  * 		True iff relation has append only storage with row orientation
  */
 #define RelationIsAoRows(relation) \
-	((bool)(((relation)->rd_rel->relstorage == RELSTORAGE_AOROWS)))
+	((relation)->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID)
 
 /*
  * RelationIsAoCols
  * 		True iff relation has append only storage with column orientation
  */
 #define RelationIsAoCols(relation) \
-	((bool)(((relation)->rd_rel->relstorage == RELSTORAGE_AOCOLS)))
+	((relation)->rd_rel->relam == AOCO_TABLE_AM_OID)
 
 /*
  * RelationIsAppendOptimized
@@ -439,14 +437,6 @@ typedef struct ViewOptions
  */
 #define RelationIsAppendOptimized(relation) \
 	(RelationIsAoRows(relation) || RelationIsAoCols(relation))
-
-/*
- * RelationIsForeign
- * 		True iff relation has foreign storage
- */
-#define RelationIsForeign(relation) \
-	((bool)((relation)->rd_rel->relstorage == RELSTORAGE_FOREIGN))
-#endif
 
 /*
  * RelationIsBitmapIndex

@@ -46,18 +46,6 @@
 
 
 /*
- * GPDB_12_MERGE_FIXME: These used to be in utils/rel.h. But I wanted to remove
- * them, so that we find all the places that used them, that probably shouldn't
- * anymore. In this file, these are used quite reasonably.
- */
-#define RelationIsAoRows(relation) \
-	((bool)(((relation)->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID)))
-#define RelationIsAoCols(relation) \
-	((bool)(((relation)->rd_rel->relam == AOCO_TABLE_AM_OID)))
-#define RelationIsAppendOptimized(relation) \
-	(RelationIsAoRows(relation) || RelationIsAoCols(relation))
-
-/*
  * GUC variables
  */
 int			MaxAppendOnlyTables;	/* Max # of tables */
