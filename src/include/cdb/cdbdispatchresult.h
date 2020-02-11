@@ -274,12 +274,6 @@ HTAB *
 cdbdisp_sumAoPartTupCount(CdbDispatchResults *results);
 
 /*
- * max of the lastOid values returned from the QEs
- */
-Oid
-cdbdisp_maxLastOid(CdbDispatchResults *results, int sliceIndex);
-
-/*
  * Return ptr to first resultArray entry for a given sliceIndex.
  */
 CdbDispatchResult *

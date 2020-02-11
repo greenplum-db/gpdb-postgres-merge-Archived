@@ -201,7 +201,10 @@ MemoryAccounting_CreateExecutorAccountWithType(Plan *node,
 }
 
 static TupleTableSlot *ExecProcNodeFirst(PlanState *node);
+#if 0
 static TupleTableSlot *ExecProcNodeInstr(PlanState *node);
+#endif
+static TupleTableSlot *ExecProcNodeGPDB(PlanState *node);
 
 
 /* ------------------------------------------------------------------------
@@ -935,32 +938,28 @@ ExecProcNodeFirst(PlanState *node)
 	 * If instrumentation is required, change the wrapper to one that just
 	 * does instrumentation.  Otherwise we can dispense with all wrappers and
 	 * have ExecProcNode() directly call the relevant function from now on.
+	 *
+	 * GPDB: Unfortunately, GPDB has a bunch of extra stuff that we need
+	 * to do on every node, so we cannot make use of this upstream optimization.
+	 * ExecProcNodeGPDB() is a wrapper that does all the Greenplum-specific
+	 * extra stuff.
 	 */
+#if 0
 	if (node->instrument)
 		node->ExecProcNode = ExecProcNodeInstr;
 	else
 		node->ExecProcNode = node->ExecProcNodeReal;
+#endif
+	node->ExecProcNode = ExecProcNodeGPDB;
 
 	return node->ExecProcNode(node);
 }
 
-
-/*
- * ExecProcNode wrapper that performs instrumentation calls.  By keeping
- * this a separate function, we avoid overhead in the normal case where
- * no instrumentation is wanted.
- */
 static TupleTableSlot *
-ExecProcNodeInstr(PlanState *node)
+ExecProcNodeGPDB(PlanState *node)
 {
-	TupleTableSlot *result = NULL;
+	TupleTableSlot *result;
 
-	START_MEMORY_ACCOUNT(node->memoryAccountId);
-	{
-
-	InstrStartNode(node->instrument);
-
-<<<<<<< HEAD
 	/*
 	 * Even if we are requested to finish query, Motion has to do its work
 	 * to tell End of Stream message to upper slice.  He will probably get
@@ -970,254 +969,68 @@ ExecProcNodeInstr(PlanState *node)
 	if (QueryFinishPending && !IsA(node, MotionState))
 		return NULL;
 
-	if (node->plan)
-		TRACE_POSTGRESQL_EXECPROCNODE_ENTER(GpIdentity.segindex, currentSliceId, nodeTag(node), node->plan->plan_node_id);
-
-	if (node->chgParam != NULL) /* something changed */
-		ExecReScan(node);		/* let ReScan handle this */
-
-	if (node->squelched)
-		elog(ERROR, "cannot execute squelched plan node of type: %d",
-			 (int) nodeTag(node));
-
-	if (node->instrument)
-		InstrStartNode(node->instrument);
-
-	if(!node->fHadSentGpmon)
-		CheckSendPlanStateGpmonPkt(node);
-
-	if(!node->fHadSentNodeStart)
+	START_MEMORY_ACCOUNT(node->memoryAccountId);
 	{
-		/* GPDB hook for collecting query info */
-		if (query_info_collect_hook)
-			(*query_info_collect_hook)(METRICS_PLAN_NODE_EXECUTING, node);
-		node->fHadSentNodeStart = true;
-	}
+		if (node->plan)
+			TRACE_POSTGRESQL_EXECPROCNODE_ENTER(GpIdentity.segindex, currentSliceId, nodeTag(node), node->plan->plan_node_id);
 
-	switch (nodeTag(node))
-	{
-			/*
-			 * control nodes
-			 */
-		case T_ResultState:
-			result = ExecResult((ResultState *) node);
-			break;
+		if (node->squelched)
+			elog(ERROR, "cannot execute squelched plan node of type: %d",
+				 (int) nodeTag(node));
 
-		case T_ModifyTableState:
-			result = ExecModifyTable((ModifyTableState *) node);
-			break;
+		if(!node->fHadSentGpmon)
+			CheckSendPlanStateGpmonPkt(node);
 
-		case T_AppendState:
-			result = ExecAppend((AppendState *) node);
-			break;
+		if(!node->fHadSentNodeStart)
+		{
+			/* GPDB hook for collecting query info */
+			if (query_info_collect_hook)
+				(*query_info_collect_hook)(METRICS_PLAN_NODE_EXECUTING, node);
+			node->fHadSentNodeStart = true;
+		}
 
-		case T_MergeAppendState:
-			result = ExecMergeAppend((MergeAppendState *) node);
-			break;
+		if (node->instrument)
+			InstrStartNode(node->instrument);
 
-		case T_RecursiveUnionState:
-			result = ExecRecursiveUnion((RecursiveUnionState *) node);
-			break;
+		result = node->ExecProcNodeReal(node);
 
-		case T_SequenceState:
-			result = ExecSequence((SequenceState *) node);
-			break;
+		if (node->instrument)
+			InstrStopNode(node->instrument, TupIsNull(result) ? 0.0 : 1.0);
 
-			/* BitmapAndState does not yield tuples */
+		if (!TupIsNull(result))
+		{
+			Gpmon_Incr_Rows_Out(&node->gpmon_pkt);
+			CheckSendPlanStateGpmonPkt(node);
+		}
 
-			/* BitmapOrState does not yield tuples */
-
-			/*
-			 * scan nodes
-			 */
-		case T_SeqScanState:
-			result = ExecSeqScan((SeqScanState *)node);
-			break;
-
-			/*GPDB_95_MERGE_FIXME: Do we need DynamicSampleScan here?*/
-		case T_DynamicSeqScanState:
-			result = ExecDynamicSeqScan((DynamicSeqScanState *) node);
-			break;
-
-		case T_SampleScanState:
-			result = ExecSampleScan((SampleScanState *) node);
-			break;
-
-		case T_IndexScanState:
-			result = ExecIndexScan((IndexScanState *) node);
-			break;
-
-		case T_DynamicIndexScanState:
-			result = ExecDynamicIndexScan((DynamicIndexScanState *) node);
-			break;
-
-		case T_IndexOnlyScanState:
-			result = ExecIndexOnlyScan((IndexOnlyScanState *) node);
-			break;
-
-			/* BitmapIndexScanState does not yield tuples */
-
-		case T_BitmapHeapScanState:
-			result = ExecBitmapHeapScan((BitmapHeapScanState *) node);
-			break;
-
-		case T_DynamicBitmapHeapScanState:
-			result = ExecDynamicBitmapHeapScan((DynamicBitmapHeapScanState *) node);
-			break;
-
-		case T_TidScanState:
-			result = ExecTidScan((TidScanState *) node);
-			break;
-
-		case T_SubqueryScanState:
-			result = ExecSubqueryScan((SubqueryScanState *) node);
-			break;
-
-		case T_FunctionScanState:
-			result = ExecFunctionScan((FunctionScanState *) node);
-			break;
-
-		case T_TableFunctionState:
-			result = ExecTableFunction((TableFunctionState *) node);
-			break;
-
-		case T_ValuesScanState:
-			result = ExecValuesScan((ValuesScanState *) node);
-			break;
-
-		case T_CteScanState:
-			result = ExecCteScan((CteScanState *) node);
-			break;
-
-		case T_WorkTableScanState:
-			result = ExecWorkTableScan((WorkTableScanState *) node);
-			break;
-
-		case T_ForeignScanState:
-			result = ExecForeignScan((ForeignScanState *) node);
-			break;
-
-		case T_CustomScanState:
-			result = ExecCustomScan((CustomScanState *) node);
-			break;
-
-			/*
-			 * join nodes
-			 */
-		case T_NestLoopState:
-			result = ExecNestLoop((NestLoopState *) node);
-			break;
-
-		case T_MergeJoinState:
-			result = ExecMergeJoin((MergeJoinState *) node);
-			break;
-
-		case T_HashJoinState:
-			result = ExecHashJoin((HashJoinState *) node);
-			break;
-
-			/*
-			 * materialization nodes
-			 */
-		case T_MaterialState:
-			result = ExecMaterial((MaterialState *) node);
-			break;
-
-		case T_SortState:
-			result = ExecSort((SortState *) node);
-			break;
-
-		case T_AggState:
-			result = ExecAgg((AggState *) node);
-			break;
-
-		case T_TupleSplitState:
-			result = ExecTupleSplit((TupleSplitState *) node);
-			break;
-
-		case T_WindowAggState:
-			result = ExecWindowAgg((WindowAggState *) node);
-			break;
-
-		case T_UniqueState:
-			result = ExecUnique((UniqueState *) node);
-			break;
-
-		case T_GatherState:
-			result = ExecGather((GatherState *) node);
-			break;
-
-		case T_HashState:
-			result = ExecHash((HashState *) node);
-			break;
-
-		case T_SetOpState:
-			result = ExecSetOp((SetOpState *) node);
-			break;
-
-		case T_LockRowsState:
-			result = ExecLockRows((LockRowsState *) node);
-			break;
-
-		case T_LimitState:
-			result = ExecLimit((LimitState *) node);
-			break;
-
-		case T_MotionState:
-			result = ExecMotion((MotionState *) node);
-			break;
-
-		case T_ShareInputScanState:
-			result = ExecShareInputScan((ShareInputScanState *) node);
-			break;
-
-		case T_RepeatState:
-			result = ExecRepeat((RepeatState *) node);
-			break;
-
-		case T_SplitUpdateState:
-			result = ExecSplitUpdate((SplitUpdateState *) node);
-			break;
-
-		case T_RowTriggerState:
-			result = ExecRowTrigger((RowTriggerState *) node);
-			break;
-
-		case T_AssertOpState:
-			result = ExecAssertOp((AssertOpState *) node);
-			break;
-
-		case T_PartitionSelectorState:
-			result = ExecPartitionSelector((PartitionSelectorState *) node);
-			break;
-
-		default:
-			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
-			result = NULL;
-			break;
-	}
-
-	if (!TupIsNull(result))
-	{
-		Gpmon_Incr_Rows_Out(&node->gpmon_pkt);
-		CheckSendPlanStateGpmonPkt(node);
-	}
-
-	if (node->instrument)
-		InstrStopNode(node->instrument, TupIsNull(result) ? 0 : 1);
-=======
-	result = node->ExecProcNodeReal(node);
-
-	InstrStopNode(node->instrument, TupIsNull(result) ? 0.0 : 1.0);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-
-	if (node->plan)
-		TRACE_POSTGRESQL_EXECPROCNODE_EXIT(GpIdentity.segindex, currentSliceId, nodeTag(node), node->plan->plan_node_id);
+		if (node->plan)
+			TRACE_POSTGRESQL_EXECPROCNODE_EXIT(GpIdentity.segindex, currentSliceId, nodeTag(node), node->plan->plan_node_id);
 	}
 	END_MEMORY_ACCOUNT();
+
 	return result;
 }
 
+/*
+ * ExecProcNode wrapper that performs instrumentation calls.  By keeping
+ * this a separate function, we avoid overhead in the normal case where
+ * no instrumentation is wanted.
+ */
+#if 0
+static TupleTableSlot *
+ExecProcNodeInstr(PlanState *node)
+{
+	TupleTableSlot *result;
+
+	InstrStartNode(node->instrument);
+
+	result = node->ExecProcNodeReal(node);
+
+	InstrStopNode(node->instrument, TupIsNull(result) ? 0.0 : 1.0);
+
+	return result;
+}
+#endif
 
 /* ----------------------------------------------------------------
  *		MultiExecProcNode

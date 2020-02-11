@@ -235,7 +235,6 @@ typedef struct QueryDesc
 
 	/* This field is set by ExecutorEnd after collecting cdbdisp results */
 	uint64		es_processed;	/* # of tuples processed */
-	Oid			es_lastoid;		/* oid of row inserted */
 	bool		extended_query;   /* simple or extended query protocol? */
 	char		*portal_name;	/* NULL for unnamed portal */
 

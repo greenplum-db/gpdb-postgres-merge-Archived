@@ -1613,8 +1613,6 @@ void mppExecutorFinishup(QueryDesc *queryDesc)
 		{
 			estate->es_processed +=
 				cdbdisp_sumCmdTuples(pr, primaryWriterSliceIndex);
-			estate->es_lastoid =
-				cdbdisp_maxLastOid(pr, primaryWriterSliceIndex);
 
 			if (estate->es_result_partitions)
 				aopartcounts = cdbdisp_sumAoPartTupCount(pr);

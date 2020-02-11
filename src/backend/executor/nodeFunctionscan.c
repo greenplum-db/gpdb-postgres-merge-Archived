@@ -34,7 +34,7 @@
 #include "cdb/cdbvars.h"
 #include "cdb/memquota.h"
 #include "executor/spi.h"
-#include "optimizer/var.h"              /* CDB: contain_ctid_var_reference() */
+#include "optimizer/optimizer.h"              /* CDB: contain_ctid_var_reference() */
 
 
 /*

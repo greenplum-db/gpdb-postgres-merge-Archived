@@ -708,33 +708,6 @@ cdbdisp_sumAoPartTupCount(CdbDispatchResults *results)
 }
 
 /*
- * Find the max of the lastOid values returned from the QEs
- */
-Oid
-cdbdisp_maxLastOid(CdbDispatchResults *results, int sliceIndex)
-{
-	CdbDispatchResult *dispatchResult;
-	CdbDispatchResult *resultEnd = cdbdisp_resultEnd(results, sliceIndex);
-	PGresult   *pgresult;
-	Oid oid = InvalidOid;
-
-	for (dispatchResult = cdbdisp_resultBegin(results, sliceIndex);
-		 dispatchResult < resultEnd; ++dispatchResult)
-	{
-		pgresult = cdbdisp_getPGresult(dispatchResult, dispatchResult->okindex);
-		if (pgresult && !dispatchResult->errcode)
-		{
-			Oid			tmpoid = PQoidValue(pgresult);
-
-			if (tmpoid > oid)
-				oid = tmpoid;
-		}
-	}
-
-	return oid;
-}
-
-/*
  * Return ptr to first resultArray entry for a given sliceIndex.
  */
 CdbDispatchResult *
