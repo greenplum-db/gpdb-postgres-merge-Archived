@@ -272,16 +272,18 @@ static bool renice_current_process(int nice_level)
 	if (prio_out == -1)
 	{
 		int save_errno = errno;
-		switch (errno)
+		switch (save_errno)
 		{
 		case EACCES:
-			elog(DEBUG1, "Could not change priority of the query process, errno: %s.", strerror(save_errno));
+			elog(DEBUG1, "Could not change priority of the query process, errno: %d (%m).",
+				 save_errno);
 			break;
 		case ESRCH:
 			/* ignore this, the backend went away when we weren't looking */
 			break;
 		default:
-			elog(DEBUG1, "Could not change priority of the query process, errno: %s.", strerror(save_errno));
+			elog(DEBUG1, "Could not change priority of the query process, errno: %d (%m).",
+				 save_errno);
 		}
 		return false;
 	}
@@ -1575,10 +1577,11 @@ exec_mpp_dtx_protocol_command(DtxProtocolCommand dtxProtocolCommand,
 			lim.rlim_cur = 0;
 			if (setrlimit(RLIMIT_CORE, &lim) != 0)
 			{
-				int save_errno = errno;
+				int			save_errno = errno;
+
 				elog(NOTICE,
-					 "setrlimit failed for RLIMIT_CORE soft limit to zero. errno: %s.",
-					 strerror(save_errno));
+					 "setrlimit failed for RLIMIT_CORE soft limit to zero. errno: %d (%m).",
+					 save_errno);
 			}
 #endif
 		elog(PANIC,"PANIC for debug_dtm_action = %d, debug_dtm_action_protocol = %s",

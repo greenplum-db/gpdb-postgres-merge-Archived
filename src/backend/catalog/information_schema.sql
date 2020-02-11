@@ -1905,11 +1905,7 @@ CREATE VIEW table_privileges AS
          ) AS grantee (oid, rolname)
 
     WHERE c.relnamespace = nc.oid
-<<<<<<< HEAD
-          AND c.relkind IN ('r', 'v', 'f')
-=======
           AND c.relkind IN ('r', 'v', 'f', 'p')
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
           AND c.grantee = grantee.oid
           AND c.grantor = u_grantor.oid
           AND c.prtype IN ('INSERT', 'SELECT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER')
@@ -1966,13 +1962,8 @@ CREATE VIEW tables AS
            CAST(nt.nspname AS sql_identifier) AS user_defined_type_schema,
            CAST(t.typname AS sql_identifier) AS user_defined_type_name,
 
-<<<<<<< HEAD
-           CAST(CASE WHEN (c.relkind = 'r' AND c.relstorage <> 'x') OR
-                          (c.relkind IN ('v', 'f', 'r') AND
-=======
            CAST(CASE WHEN c.relkind IN ('r', 'p') OR
                           (c.relkind IN ('v', 'f') AND
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
                            -- 1 << CMD_INSERT
                            pg_relation_is_updatable(c.oid, false) & 8 = 8)
                 THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_insertable_into,

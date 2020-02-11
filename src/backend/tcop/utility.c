@@ -942,10 +942,10 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 				switch (stmt->kind)
 				{
 					case REINDEX_OBJECT_INDEX:
-						ReindexIndex(stmt);
+						ReindexIndex(stmt->relation, stmt->options, stmt->concurrent);
 						break;
 					case REINDEX_OBJECT_TABLE:
-						ReindexTable(stmt);
+						ReindexTable(stmt->relation, stmt->options, stmt->concurrent);
 						break;
 					case REINDEX_OBJECT_SCHEMA:
 					case REINDEX_OBJECT_SYSTEM:
@@ -1182,7 +1182,6 @@ ProcessUtilitySlow(ParseState *pstate,
 						{
 							CreateStmt *cstmt = (CreateStmt *) stmt;
 							char		relKind = RELKIND_RELATION;
-							char		relStorage = RELSTORAGE_HEAP;
 							Datum		toast_options;
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
@@ -1195,22 +1194,6 @@ ProcessUtilitySlow(ParseState *pstate,
 							{
 								if (cstmt->relKind != 0)
 									relKind = cstmt->relKind;
-
-								if (cstmt->relStorage != 0)
-									relStorage = cstmt->relStorage;
-
-								/* sanity check */
-								switch(relKind)
-								{
-									case RELKIND_VIEW:
-									case RELKIND_COMPOSITE_TYPE:
-										Assert(relStorage == RELSTORAGE_VIRTUAL);
-										break;
-									default:
-										Assert(relStorage == RELSTORAGE_HEAP ||
-											   relStorage == RELSTORAGE_AOROWS ||
-											   relStorage == RELSTORAGE_AOCOLS);
-								}
 							}
 
 							/*
@@ -1250,9 +1233,7 @@ ProcessUtilitySlow(ParseState *pstate,
 													   true);
 
 								NewRelationCreateToastTable(address.objectId,
-														   toast_options,
-														   cstmt->is_part_child,
-														   cstmt->is_part_parent);
+														   toast_options);
 
 								/*
 								 * If the master relation is a non-leaf relation in
@@ -1263,18 +1244,12 @@ ProcessUtilitySlow(ParseState *pstate,
 								 * database age calculation, by passing master
 								 * relation's is_part_parent flag.
 								 */
-								AlterTableCreateAoSegTable(address.objectId,
-															cstmt->is_part_child,
-															cstmt->is_part_parent);
+								AlterTableCreateAoSegTable(address.objectId);
 
 								if (cstmt->buildAoBlkdir)
-									AlterTableCreateAoBlkdirTable(address.objectId,
-																   cstmt->is_part_child,
-																   cstmt->is_part_parent);
+									AlterTableCreateAoBlkdirTable(address.objectId);
 
-								AlterTableCreateAoVisimapTable(address.objectId,
-																cstmt->is_part_child,
-																cstmt->is_part_parent);
+								AlterTableCreateAoVisimapTable(address.objectId);
 							}
 							if (Gp_role == GP_ROLE_DISPATCH)
 								CdbDispatchUtilityStatement((Node *) stmt,
@@ -1612,11 +1587,21 @@ ProcessUtilitySlow(ParseState *pstate,
 							DefineExternalRelation((CreateExternalStmt *) stmt);
 						else
 						{
+							PlannedStmt *wrapper;
+
+							wrapper = makeNode(PlannedStmt);
+							wrapper->commandType = CMD_UTILITY;
+							wrapper->canSetTag = false;
+							wrapper->utilityStmt = stmt;
+							wrapper->stmt_location = pstmt->stmt_location;
+							wrapper->stmt_len = pstmt->stmt_len;
+
 							/* Recurse for anything else */
-							ProcessUtility(stmt,
+							ProcessUtility(wrapper,
 										   queryString,
 										   PROCESS_UTILITY_SUBCOMMAND,
 										   params,
+										   NULL,
 										   None_Receiver,
 										   NULL);
 						}
