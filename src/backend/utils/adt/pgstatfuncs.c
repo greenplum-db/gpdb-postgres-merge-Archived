@@ -552,11 +552,7 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_activity(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-#define PG_STAT_GET_ACTIVITY_COLS	26
-=======
-#define PG_STAT_GET_ACTIVITY_COLS	29
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#define PG_STAT_GET_ACTIVITY_COLS	32
 	int			num_backends = pgstat_fetch_stat_numbackends();
 	int			curr_backend;
 	int			pid = PG_ARGISNULL(0) ? -1 : PG_GETARG_INT32(0);
@@ -837,21 +833,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					nulls[14] = true;
 				}
 			}
-<<<<<<< HEAD
-
-			values[23] = Int32GetDatum(beentry->st_session_id);  /* GPDB */
-
-			{
-				char *groupName = GetResGroupNameForId(beentry->st_rsgid);
-
-				values[24] = ObjectIdGetDatum(beentry->st_rsgid);
-
-				if (groupName != NULL)
-					values[25] = CStringGetTextDatum(groupName);
-				else
-					nulls[25] = true;
-			}
-=======
 			/* Add backend type */
 			if (beentry->st_backendType == B_BG_WORKER)
 			{
@@ -914,7 +895,19 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				values[28] = BoolGetDatum(false);	/* GSS Encryption not in
 													 * use */
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+			values[29] = Int32GetDatum(beentry->st_session_id);  /* GPDB */
+
+			{
+				char *groupName = GetResGroupNameForId(beentry->st_rsgid);
+
+				values[30] = ObjectIdGetDatum(beentry->st_rsgid);
+
+				if (groupName != NULL)
+					values[31] = CStringGetTextDatum(groupName);
+				else
+					nulls[31] = true;
+			}
 		}
 		else
 		{
@@ -930,13 +923,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[12] = true;
 			nulls[13] = true;
 			nulls[14] = true;
-<<<<<<< HEAD
-			nulls[15] = true;
-
-			values[23] = Int32GetDatum(beentry->st_session_id);
-			nulls[24] = true;
-			nulls[25] = true;
-=======
 			nulls[17] = true;
 			nulls[18] = true;
 			nulls[19] = true;
@@ -949,7 +935,10 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[26] = true;
 			nulls[27] = true;
 			nulls[28] = true;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+			values[29] = Int32GetDatum(beentry->st_session_id);
+			nulls[30] = true;
+			nulls[31] = true;
 		}
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
