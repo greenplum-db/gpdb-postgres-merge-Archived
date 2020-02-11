@@ -135,69 +135,6 @@ bms_equal(const Bitmapset *a, const Bitmapset *b)
 	return true;
 }
 
-
-/*
- * bms_compare -- for sort to find groups of equal bitmapsets.
- *
- * See bms_equal for note on logical vs physical.  Note that the
- * arguments are pointers to Bitmapset -- a variable length structure,
- * thus this function is not directly usable by, e.g, qsort.
- */
-int
-bms_compare(const Bitmapset *a, const Bitmapset *b)
-{
-	const Bitmapset *longer;
-	int			shortlen;
-	int			longlen;
-	int			sign;
-	int			i;
-
-	/* Handle cases where either input is NULL */
-	if (a == NULL)
-	{
-		if (b == NULL || bms_is_empty(b))
-			return 0;
-		return -1;
-	}
-	else if (b == NULL)
-	{
-		if (bms_is_empty(a))
-			return 0;
-		else
-			return 1;
-	}
-
-	/* Identify shorter and longer input */
-	if (a->nwords <= b->nwords)
-	{
-		shortlen = a->nwords;
-		longlen = b->nwords;
-		longer = b;
-		sign = -1;
-	}
-	else
-	{
-		shortlen = b->nwords;
-		longlen = a->nwords;
-		longer = a;
-		sign = 1;
-	}
-	/* And process */
-	for (i = 0; i < shortlen; i++)
-	{
-		if (a->words[i] < b->words[i])
-			return -1;
-		else if (a->words[i] > b->words[i])
-			return 1;
-	}
-	for (; i < longlen; i++)
-	{
-		if (longer->words[i] != 0)
-			return sign;
-	}
-	return 0;
-}
-
 /*
  * bms_compare - qsort-style comparator for bitmapsets
  *

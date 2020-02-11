@@ -54,12 +54,12 @@ struct Instrumentation;                 /* #include "executor/instrument.h" */
  * for that page in the page table.
  *
  * We actually store both exact pages and lossy chunks in the same hash
- * table, using identical data structures.	(This is because dynahash.c's
- * memory management doesn't allow space to be transferred easily from one
- * hashtable to another.)  Therefore it's best if PAGES_PER_CHUNK is the
- * same as MAX_TUPLES_PER_PAGE, or at least not too different.	But we
- * also want PAGES_PER_CHUNK to be a power of 2 to avoid expensive integer
- * remainder operations.  So, define it like this:
+ * table, using identical data structures.  (This is because the memory
+ * management for hashtables doesn't easily/efficiently allow space to be
+ * transferred easily from one hashtable to another.)  Therefore it's best
+ * if PAGES_PER_CHUNK is the same as MAX_TUPLES_PER_PAGE, or at least not
+ * too different.  But we also want PAGES_PER_CHUNK to be a power of 2 to
+ * avoid expensive integer remainder operations.  So, define it like this:
  */
 #define PAGES_PER_CHUNK  (BLCKSZ / 32)
 
@@ -100,6 +100,7 @@ typedef enum StreamType
 typedef struct PagetableEntry
 {
 	BlockNumber blockno;		/* page number (hashtable key) */
+	char		status;			/* hash entry status */
 	bool		ischunk;		/* T = lossy storage, F = exact */
 	bool		recheck;		/* should the tuples be rechecked? */
 	tbm_bitmapword	words[Max(WORDS_PER_PAGE, WORDS_PER_CHUNK)];
