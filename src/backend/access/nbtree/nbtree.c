@@ -39,6 +39,7 @@
 #include "utils/guc.h"
 
 #include "catalog/indexing.h"
+#include "catalog/pg_namespace.h"
 
 
 /* Working state needed by btvacuumpage */
@@ -230,7 +231,7 @@ _bt_validate_tid(Relation irel, ItemPointer h_tid)
 												PageGetItemId(page, offnum));
 				if (ItemPointerEquals(&itup->t_tid, h_tid))
 				{
-					Form_pg_attribute key_att = RelationGetDescr(irel)->attrs[0];
+					Form_pg_attribute key_att = TupleDescAttr(RelationGetDescr(irel), 0);
 					Oid key = InvalidOid;
 					bool isnull;
 					if (key_att->atttypid == OIDOID)
@@ -376,7 +377,7 @@ btgetbitmap(IndexScanDesc scan, Node *n)
 	if (n == NULL)
 	{
 		/* XXX should we use less than work_mem for this? */
-		tbm = tbm_create(work_mem * 1024L);
+		tbm = tbm_create(work_mem * 1024L, NULL);
 	}
 	else if (!IsA(n, TIDBitmap))
 	{
