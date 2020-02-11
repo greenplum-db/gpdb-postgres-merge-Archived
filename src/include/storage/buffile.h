@@ -41,6 +41,7 @@ struct workfile_set;
  */
 
 extern BufFile *BufFileCreateTemp(char *operation_name, bool interXact);
+extern BufFile *BufFileCreateTempInSet(struct workfile_set *work_set, bool interXact);
 extern void BufFileClose(BufFile *file);
 extern size_t BufFileRead(BufFile *file, void *ptr, size_t size);
 extern size_t BufFileWrite(BufFile *file, void *ptr, size_t size);
@@ -57,6 +58,8 @@ extern BufFile *BufFileOpenShared(SharedFileSet *fileset, const char *name);
 extern void BufFileDeleteShared(SharedFileSet *fileset, const char *name);
 
 extern void *BufFileReadFromBuffer(BufFile *file, size_t size);
+
+extern const char *BufFileGetFilename(BufFile *buffile);
 
 extern void BufFileSuspend(BufFile *buffile);
 extern void BufFileResume(BufFile *buffile);

@@ -3,7 +3,7 @@
 // to be in execTuples.c.
 
 MemTuple
-ExecFetchSlotMemTuple(TupleTableSlot *slot)
+ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree)
 {
 	MemTuple newTuple;
 	uint32 tuplen;

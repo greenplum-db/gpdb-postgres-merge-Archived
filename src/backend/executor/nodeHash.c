@@ -461,8 +461,9 @@ ExecEndHash(HashState *node)
  * ----------------------------------------------------------------
  */
 HashJoinTable
-ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
-                                                 bool keepNulls, uint64 operatorMemKB)
+ExecHashTableCreate(HashState *state, HashJoinState *hjstate,
+					List *hashOperators, List *hashCollations,
+					bool keepNulls, uint64 operatorMemKB)
 {
 	Hash	   *node;
 	HashJoinTable hashtable;

@@ -28,7 +28,8 @@ extern Node *MultiExecHash(HashState *node);
 extern void ExecEndHash(HashState *node);
 extern void ExecReScanHash(HashState *node);
 
-extern HashJoinTable ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
+extern HashJoinTable ExecHashTableCreate(HashState *state, HashJoinState *hjstate,
+										 List *hashOperators, List *hashCollations,
 										 bool keepNulls, uint64 operatorMemKB);
 extern void ExecParallelHashTableAlloc(HashJoinTable hashtable,
 									   int batchno);
@@ -60,7 +61,8 @@ extern void ExecHashGetBucketAndBatch(HashJoinTable hashtable,
 									  int *batchno);
 extern bool ExecScanHashBucket(HashState *hashState, HashJoinState *hjstate,
                                ExprContext *econtext);
-extern bool ExecParallelScanHashBucket(HashJoinState *hjstate, ExprContext *econtext);
+extern bool ExecParallelScanHashBucket(HashState *hashState, HashJoinState *hjstate,
+									   ExprContext *econtext);
 extern void ExecPrepHashTableForUnmatched(HashJoinState *hjstate);
 extern bool ExecScanHashTableForUnmatched(HashJoinState *hjstate,
 										  ExprContext *econtext);

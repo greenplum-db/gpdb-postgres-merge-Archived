@@ -2483,7 +2483,7 @@ typedef struct HashJoinState
 {
 	JoinState	js;				/* its first field is NodeTag */
 	ExprState  *hashclauses;
-	List	   *hashqualclauses;	/* CDB: list of ExprState nodes (match) */
+	ExprState  *hashqualclauses;	/* CDB: ExprState node (match) */
 	List	   *hj_OuterHashKeys;	/* list of ExprState nodes */
 	List	   *hj_InnerHashKeys;	/* list of ExprState nodes */
 	List	   *hj_HashOperators;	/* list of operator OIDs */

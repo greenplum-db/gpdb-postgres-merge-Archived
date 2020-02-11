@@ -231,7 +231,6 @@ Boot_CreateStmt:
 												   tupdesc,
 												   RELKIND_RELATION,
 												   RELPERSISTENCE_PERMANENT,
-												   RELSTORAGE_HEAP,
 												   shared_relation,
 												   mapped_relation,
 												   true,
@@ -255,7 +254,6 @@ Boot_CreateStmt:
 													  NIL,
 													  RELKIND_RELATION,
 													  RELPERSISTENCE_PERMANENT,
-													  RELSTORAGE_HEAP,
 													  shared_relation,
 													  mapped_relation,
 													  ONCOMMIT_NOOP,
@@ -264,15 +262,9 @@ Boot_CreateStmt:
 													  false,
 													  true,
 													  false,
-<<<<<<< HEAD
-													  NULL,
-													  /* valid_opts */ false,
-													  /* is_part_child */ false,
-													  /* is_part_parent */ false);
-=======
 													  InvalidOid,
-													  NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+													  NULL,
+													  /* valid_opts */ false);
 						elog(DEBUG4, "relation created with OID %u", id);
 					}
 					do_end();

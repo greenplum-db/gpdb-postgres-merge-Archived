@@ -336,12 +336,14 @@ extern void slot_getmissingattrs(TupleTableSlot *slot, int startAttNum,
 								 int lastAttNum);
 extern void slot_getsomeattrs_int(TupleTableSlot *slot, int attnum);
 
-extern MemTuple ExecFetchSlotMemTuple(TupleTableSlot *slot, bool materialize, bool *shouldFree);
+extern MemTuple ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree);
 extern TupleTableSlot *ExecStoreMemTuple(MemTuple tuple,
 										 TupleTableSlot *slot,
 										 bool shouldFree);
 extern MemTuple ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt,
 									   char *dest, unsigned int *len);
+extern void ExecForceStoreMemTuple(MemTuple mtup, TupleTableSlot *slot,
+								   bool shouldFree);
 
 extern void slot_set_ctid_from_fake(TupleTableSlot *slot, ItemPointerData *fake_ctid);
 
