@@ -58,13 +58,12 @@ SeqNext(SeqScanState *node)
 	/*
 	 * get information from the estate and scan state
 	 */
+	scandesc = node->ss.ss_currentScanDesc;
 	estate = node->ss.ps.state;
 	direction = estate->es_direction;
 	slot = node->ss.ss_ScanTupleSlot;
 
-	if (node->ss_currentScanDesc_ao == NULL &&
-		node->ss_currentScanDesc_aocs == NULL &&
-		node->ss_currentScanDesc_heap == NULL)
+	if (scandesc)
 	{
 		/*
 		 * We reach here if the scan is not parallel, or if we're serially

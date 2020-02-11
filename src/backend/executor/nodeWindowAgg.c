@@ -341,12 +341,12 @@ advance_windowaggregate(WindowAggState *winstate,
 		 * For a strict transfn, nothing happens when there's a NULL input; we
 		 * just keep the prior transValue.
 		 */
-		if (peraggstate->transfn.fn_strict && fcinfo->argnull[1])
+		if (peraggstate->transfn.fn_strict && fcinfo->args[1].null)
 		{
 			/* skip it */
 		}
 		else
-			tuplesort_putdatum(peraggstate->distinctSortState, fcinfo->arg[1], fcinfo->argnull[1]);
+			tuplesort_putdatum(peraggstate->distinctSortState, fcinfo->args[1].value, fcinfo->args.null[1]);
 	}
 	else
 		call_transfunc(winstate, perfuncstate, peraggstate, fcinfo);

@@ -495,7 +495,6 @@ ExecInsert(ModifyTableState *mtstate,
 		if (onconflict != ONCONFLICT_NONE && resultRelInfo->ri_NumIndices > 0)
 		{
 			/* Perform a speculative insertion. */
-			HeapTuple tuple;
 			uint32		specToken;
 			ItemPointerData conflictTid;
 			bool		specConflict;

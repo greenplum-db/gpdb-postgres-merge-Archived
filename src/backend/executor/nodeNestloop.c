@@ -345,12 +345,12 @@ ExecNestLoop_guts(PlanState *pstate)
 	}
 }
 
-TupleTableSlot *
-ExecNestLoop(NestLoopState *node)
+static TupleTableSlot *
+ExecNestLoop(PlanState *pstate)
 {
 	TupleTableSlot *result;
 
-	result = ExecNestLoop_guts(node);
+	result = ExecNestLoop_guts(pstate);
 
 	if (TupIsNull(result))
 	{
@@ -360,7 +360,7 @@ ExecNestLoop(NestLoopState *node)
 		 * clog up the pipeline with our never-to-be-consumed
 		 * data.
 		 */
-		ExecSquelchNode((PlanState *) node);
+		ExecSquelchNode(pstate);
 	}
 
 	return result;

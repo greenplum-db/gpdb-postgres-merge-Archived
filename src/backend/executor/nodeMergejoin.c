@@ -761,7 +761,6 @@ ExecMergeJoin_guts(PlanState *pstate)
 							node->mj_MatchedInner = true;
 							break;
 						}
-
 						/* Otherwise we're done. */
 						return NULL;
 				}
@@ -818,7 +817,6 @@ ExecMergeJoin_guts(PlanState *pstate)
 							node->mj_MatchedOuter = false;
 							break;
 						}
-
 						/* Otherwise we're done. */
 						return NULL;
 				}
@@ -980,9 +978,9 @@ ExecMergeJoin_guts(PlanState *pstate)
 					case MJEVAL_ENDOFJOIN:
 
 						/*
-						 * No more inner tuples.  However, this might be
-						 * only effective and not physical end of inner plan,
-						 * so force mj_InnerTupleSlot to null to make sure we
+						 * No more inner tuples.  However, this might be only
+						 * effective and not physical end of inner plan, so
+						 * force mj_InnerTupleSlot to null to make sure we
 						 * don't fetch more inner tuples.  (We need this hack
 						 * because we are not transiting to a state where the
 						 * inner plan is assumed to be exhausted.)
@@ -1220,7 +1218,6 @@ ExecMergeJoin_guts(PlanState *pstate)
 								node->mj_JoinState = EXEC_MJ_ENDINNER;
 								break;
 							}
-
 							/* Otherwise we're done. */
 							return NULL;
 					}
@@ -1272,8 +1269,7 @@ ExecMergeJoin_guts(PlanState *pstate)
 					if (!node->mj_SkipMarkRestore)
 						ExecMarkPos(innerPlan);
 
-						MarkInnerTuple(node->mj_InnerTupleSlot, node);
-					}
+					MarkInnerTuple(node->mj_InnerTupleSlot, node);
 
 					node->mj_JoinState = EXEC_MJ_JOINTUPLES;
 				}
@@ -1341,7 +1337,6 @@ ExecMergeJoin_guts(PlanState *pstate)
 							node->mj_JoinState = EXEC_MJ_ENDOUTER;
 							break;
 						}
-
 						/* Otherwise we're done. */
 						return NULL;
 				}
@@ -1515,12 +1510,12 @@ ExecMergeJoin_guts(PlanState *pstate)
 	}
 }
 
-TupleTableSlot *
-ExecMergeJoin(MergeJoinState *node)
+static TupleTableSlot *
+ExecMergeJoin(PlanState *pstate)
 {
 	TupleTableSlot *result;
 
-	result = ExecMergeJoin_guts(node);
+	result = ExecMergeJoin_guts(pstate);
 
 	if (TupIsNull(result))
 	{
@@ -1529,7 +1524,7 @@ ExecMergeJoin(MergeJoinState *node)
 		 * QEs from being starved, tell source QEs not to clog up the
 		 * pipeline with our never-to-be-consumed data.
 		 */
-		ExecSquelchNode((PlanState *) node);
+		ExecSquelchNode(pstate);
 	}
 
 	return result;

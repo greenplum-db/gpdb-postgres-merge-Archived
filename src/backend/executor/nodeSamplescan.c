@@ -26,9 +26,6 @@
 #include "utils/builtins.h"
 #include "utils/rel.h"
 
-#include "parser/parsetree.h"
-
-static void InitScanRelation(SampleScanState *node, EState *estate, int eflags);
 static TupleTableSlot *SampleNext(SampleScanState *node);
 static void tablesample_init(SampleScanState *scanstate);
 static TupleTableSlot *tablesample_getnext(SampleScanState *scanstate);
@@ -90,47 +87,6 @@ ExecSampleScan(PlanState *pstate)
 					(ExecScanAccessMtd) SampleNext,
 					(ExecScanRecheckMtd) SampleRecheck);
 }
-
-/* ----------------------------------------------------------------
- *		InitScanRelation
- *
- *		Set up to access the scan relation.
- * ----------------------------------------------------------------
- */
-static void
-InitScanRelation(SampleScanState *node, EState *estate, int eflags)
-{
-	Relation	currentRelation;
-
-	/*
-	 * get the relation object id from the relid'th entry in the range table,
-	 * open that relation and acquire appropriate lock on it.
-	 */
-	currentRelation = ExecOpenScanRelation(estate,
-						   ((SampleScan *) node->ss.ps.plan)->scan.scanrelid,
-										   eflags);
-
-	node->ss.ss_currentRelation = currentRelation;
-
-	/*
-	 * GPDB_95_MERGE_FIXME: Add support for AO tables, external tables
-	 * should not be supported
-	 */
-	if (!RelationIsHeap(currentRelation))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("invalid relation type"),
-				 errhint("Sampling is only supported in heap tables.")));
-
-	node->ss.ss_currentRelation = currentRelation;
-
-	/* we won't set up the HeapScanDesc till later */
-	node->ss_currentScanDesc_heap = NULL;
-
-	/* and report the scan tuple slot's rowtype */
-	ExecAssignScanType(&node->ss, RelationGetDescr(currentRelation));
-}
-
 
 /* ----------------------------------------------------------------
  *		ExecInitSampleScan
@@ -248,7 +204,6 @@ ExecEndSampleScan(SampleScanState *node)
 	 */
 	if (node->ss.ss_currentScanDesc)
 		table_endscan(node->ss.ss_currentScanDesc);
-
 }
 
 /* ----------------------------------------------------------------
@@ -349,7 +304,7 @@ tablesample_init(SampleScanState *scanstate)
 	allow_sync = (tsm->NextSampleBlock == NULL);
 
 	/* Now we can create or reset the HeapScanDesc */
-	if (scanstate->ss_currentScanDesc_heap == NULL)
+	if (scanstate->ss.ss_currentScanDesc == NULL)
 	{
 		scanstate->ss.ss_currentScanDesc =
 			table_beginscan_sampling(scanstate->ss.ss_currentRelation,

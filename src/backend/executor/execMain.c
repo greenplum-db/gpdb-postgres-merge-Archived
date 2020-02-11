@@ -395,7 +395,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	estate->es_crosscheck_snapshot = RegisterSnapshot(queryDesc->crosscheck_snapshot);
 	estate->es_top_eflags = eflags;
 	estate->es_instrument = queryDesc->instrument_options;
-<<<<<<< HEAD
+	estate->es_jit_flags = queryDesc->plannedstmt->jitFlags;
 	estate->showstatctx = queryDesc->showstatctx;
 
 	/*
@@ -546,8 +546,19 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 */
 	AssignParentMotionToPlanNodes(queryDesc->plannedstmt);
 
-	/* If the interconnect has been set up; we need to catch any
-	 * errors to shut it down -- so we have to wrap InitPlan in a PG_TRY() block. */
+	/*
+	 * Set up an AFTER-trigger statement context, unless told not to, or
+	 * unless it's EXPLAIN-only mode (when ExecutorFinish won't be called).
+	 */
+	if (!(eflags & (EXEC_FLAG_SKIP_TRIGGERS | EXEC_FLAG_EXPLAIN_ONLY)))
+		AfterTriggerBeginQuery();
+
+	/*
+	 * Initialize the plan state tree
+	 *
+	 * If the interconnect has been set up; we need to catch any
+	 * errors to shut it down -- so we have to wrap InitPlan in a PG_TRY() block.
+	 */
 	PG_TRY();
 	{
 		/*
@@ -738,21 +749,6 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	}
 
 	END_MEMORY_ACCOUNT();
-=======
-	estate->es_jit_flags = queryDesc->plannedstmt->jitFlags;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-
-	/*
-	 * Set up an AFTER-trigger statement context, unless told not to, or
-	 * unless it's EXPLAIN-only mode (when ExecutorFinish won't be called).
-	 */
-	if (!(eflags & (EXEC_FLAG_SKIP_TRIGGERS | EXEC_FLAG_EXPLAIN_ONLY)))
-		AfterTriggerBeginQuery();
-
-	/*
-	 * Initialize the plan state tree
-	 */
-	InitPlan(queryDesc, eflags);
 
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -866,13 +862,19 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	if (sendTuples)
 		dest->rStartup(dest, operation, queryDesc->tupDesc);
 
+	if (!ScanDirectionIsNoMovement(direction))
+	{
+		if (execute_once && queryDesc->already_executed)
+			elog(ERROR, "can't re-execute query flagged for single execution");
+		queryDesc->already_executed = true;
+	}
+
 	/*
 	 * Need a try/catch block here so that if an ereport is called from
 	 * within ExecutePlan, we can clean up by calling CdbCheckDispatchResult.
 	 * This cleans up the asynchronous commands running through the threads launched from
 	 * CdbDispatchCommand.
 	 */
-<<<<<<< HEAD
 	PG_TRY();
 	{
 		/*
@@ -921,7 +923,8 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 						sendTuples,
 						0,
 						ForwardScanDirection,
-						dest);
+						dest,
+						execute_once);
 		}
 		else if (exec_identity == GP_ROOT_SLICE)
 		{
@@ -939,7 +942,8 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 						sendTuples,
 						count,
 						direction,
-						dest);
+						dest,
+						execute_once);
 		}
 		else
 		{
@@ -1000,24 +1004,6 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 		}
 	}
 #endif /* FAULT_INJECTOR */
-=======
-	if (!ScanDirectionIsNoMovement(direction))
-	{
-		if (execute_once && queryDesc->already_executed)
-			elog(ERROR, "can't re-execute query flagged for single execution");
-		queryDesc->already_executed = true;
-
-		ExecutePlan(estate,
-					queryDesc->planstate,
-					queryDesc->plannedstmt->parallelModeNeeded,
-					operation,
-					sendTuples,
-					count,
-					direction,
-					dest,
-					execute_once);
-	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * shutdown tuple receiver, if we started it
@@ -1725,36 +1711,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			Index		resultRelationIndex = lfirst_int(l);
 			Relation	resultRelation;
 
-<<<<<<< HEAD
-			resultRelationOid = getrelid(resultRelationIndex, rangeTable);
-			if (operation == CMD_UPDATE || operation == CMD_DELETE ||
-				(operation == CMD_INSERT && is_conflict_update)) /* conflictUpdate should be treated as update */
-			{
-				/*
-				 * On QD, the lock on the table has already been taken during parsing, so if it's a child
-				 * partition, we don't need to take a lock. If there a a deadlock GDD will come in place
-				 * and resolve the deadlock. ORCA Update / Delete plans only contains the root relation, so
-				 * no locks on leaf partition are taken here. The below changes makes planner as well to not
-				 * take locks on leaf partitions with GDD on.
-				 * Note: With GDD off, ORCA and planner both will acquire locks on the leaf partitions.
-				 */
-				if (Gp_role == GP_ROLE_DISPATCH && rel_is_child_partition(resultRelationOid) && gp_enable_global_deadlock_detector)
-				{
-					lockmode = NoLock;
-				}
-				resultRelation = CdbOpenRelation(resultRelationOid,
-													 lockmode,
-													 false, /* noWait */
-													 NULL); /* lockUpgraded */
-			}
-			else
-			{
-				resultRelation = heap_open(resultRelationOid, lockmode);
-			}
-=======
 			resultRelation = ExecGetRangeTableRelation(estate,
 													   resultRelationIndex);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			InitResultRelInfo(resultRelInfo,
 							  resultRelation,
 							  resultRelationIndex,
@@ -3159,26 +3117,7 @@ ExecutePlan(EState *estate,
 		 * process so we just end the loop...
 		 */
 		if (TupIsNull(slot))
-		{
-			/*
-<<<<<<< HEAD
-			 * We got end-of-stream. We need to mark it since with a cursor
-			 * end-of-stream will only be received with the fetch that
-			 * returns the last tuple. ExecutorEnd needs to know if EOS was
-			 * received in order to do the right cleanup.
-			 */
-			estate->es_got_eos = true;
-			/* Allow nodes to release or shut down resources. */
-			(void) ExecShutdownNode(planstate);
-=======
-			 * If we know we won't need to back up, we can release resources
-			 * at this point.
-			 */
-			if (!(estate->es_top_eflags & EXEC_FLAG_BACKWARD))
-				(void) ExecShutdownNode(planstate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
-		}
 
 		/*
 		 * If we have a junk filter, then project a new tuple with the junk
@@ -3259,6 +3198,13 @@ ExecutePlan(EState *estate,
 			break;
 		}
 	}
+
+	/*
+	 * If we know we won't need to back up, we can release resources at this
+	 * point.
+	 */
+	if (!(estate->es_top_eflags & EXEC_FLAG_BACKWARD))
+		(void) ExecShutdownNode(planstate);
 
 	if (use_parallel_mode)
 		ExitParallelMode();
