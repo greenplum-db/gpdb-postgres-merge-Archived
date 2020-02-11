@@ -99,9 +99,6 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 	else
 		doscan = true;
 
-<<<<<<< HEAD
-	/* Get bitmap from index */
-=======
 	/*
 	 * Prepare the result bitmap.  Normally we just create a new one to pass
 	 * back; however, our parent node is allowed to store a pre-made one into
@@ -124,28 +121,15 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 	/*
 	 * Get TIDs from index and insert into bitmap
 	 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	while (doscan)
 	{
-		bitmap = index_getbitmap(scandesc, node->biss_result);
-
-		if ((NULL != bitmap) &&
-			!(IsA(bitmap, TIDBitmap) || IsA(bitmap, StreamBitmap)))
-		{
-			elog(ERROR, "unrecognized result from bitmap index scan");
-		}
+		nTuples += (double) index_getbitmap(scandesc, tbm);
 
 		CHECK_FOR_INTERRUPTS();
 
-		if (QueryFinishPending)
-			break;
-
 		/* CDB: If EXPLAIN ANALYZE, let bitmap share our Instrumentation. */
 		if (node->ss.ps.instrument && (node->ss.ps.instrument)->need_cdb)
-			tbm_generic_set_instrument(bitmap, node->ss.ps.instrument);
-
-		if (node->biss_result == NULL)
-			node->biss_result = (Node *) bitmap;
+			tbm_generic_set_instrument(tbm, node->ss.ps.instrument);
 
 		doscan = ExecIndexAdvanceArrayKeys(node->biss_ArrayKeys,
 										   node->biss_NumArrayKeys);
@@ -156,11 +140,10 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 	}
 
 	/* must provide our own instrumentation support */
-	/* GPDB: Report "1 tuple", actually meaning "1 bitmap" */
 	if (node->ss.ps.instrument)
-		InstrStopNode(node->ss.ps.instrument, 1 /* nTuples */);
+		InstrStopNode(node->ss.ps.instrument, nTuples);
 
-	return (Node *) bitmap;
+	return (Node *) tbm;
 }
 
 /* ----------------------------------------------------------------
