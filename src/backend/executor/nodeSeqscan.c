@@ -70,64 +70,10 @@ SeqNext(SeqScanState *node)
 		 * We reach here if the scan is not parallel, or if we're serially
 		 * executing a scan that was planned to be parallel.
 		 */
-<<<<<<< HEAD
-		Relation currentRelation = node->ss.ss_currentRelation;
-
-		if (RelationIsAoRows(currentRelation))
-		{
-			Snapshot appendOnlyMetaDataSnapshot;
-
-			appendOnlyMetaDataSnapshot = node->ss.ps.state->es_snapshot;
-			if (appendOnlyMetaDataSnapshot == SnapshotAny)
-			{
-				/*
-				 * the append-only meta data should never be fetched with
-				 * SnapshotAny as bogus results are returned.
-				 */
-				appendOnlyMetaDataSnapshot = GetTransactionSnapshot();
-			}
-
-			node->ss_currentScanDesc_ao = appendonly_beginscan(
-				currentRelation,
-				node->ss.ps.state->es_snapshot,
-				appendOnlyMetaDataSnapshot,
-				0, NULL);
-		}
-		else if (RelationIsAoCols(currentRelation))
-		{
-			Snapshot appendOnlyMetaDataSnapshot;
-
-			InitAOCSScanOpaque(node, currentRelation);
-
-			appendOnlyMetaDataSnapshot = node->ss.ps.state->es_snapshot;
-			if (appendOnlyMetaDataSnapshot == SnapshotAny)
-			{
-				/*
-				 * the append-only meta data should never be fetched with
-				 * SnapshotAny as bogus results are returned.
-				 */
-				appendOnlyMetaDataSnapshot = GetTransactionSnapshot();
-			}
-
-			node->ss_currentScanDesc_aocs =
-				aocs_beginscan(currentRelation,
-							   node->ss.ps.state->es_snapshot,
-							   appendOnlyMetaDataSnapshot,
-							   NULL /* relationTupleDesc */,
-							   node->ss_aocs_proj);
-		}
-		else
-		{
-			node->ss_currentScanDesc_heap = heap_beginscan(currentRelation,
-														   estate->es_snapshot,
-														   0, NULL);
-		}
-=======
 		scandesc = table_beginscan(node->ss.ss_currentRelation,
 								   estate->es_snapshot,
 								   0, NULL);
 		node->ss.ss_currentScanDesc = scandesc;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*
@@ -169,25 +115,6 @@ ExecSeqScan(PlanState *pstate)
 					(ExecScanAccessMtd) SeqNext,
 					(ExecScanRecheckMtd) SeqRecheck);
 }
-
-<<<<<<< HEAD
-/* ----------------------------------------------------------------
- *		InitScanRelation
- *
- *		Set up to access the scan relation.
- * ----------------------------------------------------------------
- */
-static void
-InitScanRelation(SeqScanState *node, EState *estate, int eflags, Relation currentRelation)
-{
-	node->ss.ss_currentRelation = currentRelation;
-
-	/* and report the scan tuple slot's rowtype */
-	ExecAssignScanType(&node->ss, RelationGetDescr(currentRelation));
-}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* ----------------------------------------------------------------
  *		ExecInitSeqScan
@@ -243,23 +170,10 @@ ExecInitSeqScanForPartition(SeqScan *node, EState *estate, int eflags,
 							 node->scanrelid,
 							 eflags);
 
-<<<<<<< HEAD
-	/*
-	 * tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &scanstate->ss.ps);
-	ExecInitScanTupleSlot(estate, &scanstate->ss);
-
-	/*
-	 * initialize scan relation
-	 */
-	InitScanRelation(scanstate, estate, eflags, currentRelation);
-=======
 	/* and create slot with the appropriate rowtype */
 	ExecInitScanTupleSlot(estate, &scanstate->ss,
 						  RelationGetDescr(scanstate->ss.ss_currentRelation),
 						  table_slot_callbacks(scanstate->ss.ss_currentRelation));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Initialize result type and projection.
