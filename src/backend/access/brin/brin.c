@@ -395,7 +395,7 @@ bringetbitmap(IndexScanDesc scan, Node *n)
 	if (n == NULL)
 	{
 		/* XXX should we use less than work_mem for this? */
-		tbm = tbm_create(work_mem * 1024L);
+		tbm = tbm_create(work_mem * 1024L, NULL);
 	}
 	else if (!IsA(n, TIDBitmap))
 	{
@@ -1210,40 +1210,6 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 	BlockNumber scanNumBlks;
 
 	/*
-	 * GPDB: We need to create our own estate, snapshot, and OldestXmin here
-	 * to pass to modified function IndexBuildHeapRangeScan.
-	 */
-	TupleTableSlot *slot;
-	EState	   *estate;
-	ExprContext *econtext;
-	Snapshot	snapshot;
-	bool		registered_snapshot = false;
-	TransactionId OldestXmin;
-
-	/*
-	 * Need an EState for evaluation of index expressions and partial-index
-	 * predicates.	Also a slot to hold the current tuple.
-	 */
-	estate = CreateExecutorState();
-	econtext = GetPerTupleExprContext(estate);
-	slot = MakeSingleTupleTableSlot(RelationGetDescr(heapRel));
-
-	/* Arrange for econtext's scan tuple to be the tuple under test */
-	econtext->ecxt_scantuple = slot;
-
-	if (IsBootstrapProcessingMode() || indexInfo->ii_Concurrent)
-	{
-		snapshot = RegisterSnapshot(GetTransactionSnapshot());
-		registered_snapshot = true;
-		OldestXmin = InvalidTransactionId;		/* not used */
-	}
-	else
-	{
-		snapshot = SnapshotAny;
-		OldestXmin = GetOldestXmin(heapRel, true);
-	}
-
-	/*
 	 * Insert the placeholder tuple
 	 */
 	phbuf = InvalidBuffer;
@@ -1345,12 +1311,6 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 		/* merge it into the tuple from the heap scan */
 		union_tuples(state->bs_bdesc, state->bs_dtuple, phtup);
 	}
-
-	ExecDropSingleTupleTableSlot(slot);
-
-	/* we can now forget our snapshot, if set */
-	if (registered_snapshot)
-		UnregisterSnapshot(snapshot);
 
 	ReleaseBuffer(phbuf);
 }
