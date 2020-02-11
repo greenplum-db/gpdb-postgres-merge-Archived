@@ -109,6 +109,7 @@
 #include "utils/timestamp.h"
 
 #include "access/twophase_storage_tablespace.h"
+#include "access/twophase_xlog.h"
 #include "catalog/storage_database.h"
 #include "catalog/storage_tablespace.h"
 #include "cdb/cdbvars.h"
@@ -436,7 +437,7 @@ MarkAsPreparing(TransactionId xid,
 	gxact = TwoPhaseState->freeGXacts;
 	TwoPhaseState->freeGXacts = gxact->next;
 
-	MarkAsPreparingGuts(gxact, xid, gid, prepared_at, owner, databaseid);
+	MarkAsPreparingGuts(gxact, xid, gid, localDistribXactRef, prepared_at, owner, databaseid);
 
 	gxact->ondisk = false;
 
@@ -1391,8 +1392,6 @@ ParsePrepareRecord(uint8 info, char *xlrec, xl_xact_parsed_prepare *parsed)
 	parsed->nrels = hdr->ncommitrels;
 	parsed->nabortrels = hdr->nabortrels;
 	parsed->nmsgs = hdr->ninvalmsgs;
-	parsed->distribTimeStamp = hdr->distribTimeStamp;
-	parsed->distribXid = hdr->distribXid;
 
 	strncpy(parsed->twophase_gid, bufptr, hdr->gidlen);
 	bufptr += MAXALIGN(hdr->gidlen);
@@ -1626,7 +1625,6 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	 */
 	if (isCommit)
 		RecordTransactionCommitPrepared(xid,
-										gid,
 										hdr->nsubxacts, children,
 										hdr->ncommitrels, commitrels,
 										hdr->ncommitdbs, commitdbs,
@@ -1636,7 +1634,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 		RecordTransactionAbortPrepared(xid,
 									   hdr->nsubxacts, children,
 									   hdr->nabortrels, abortrels,
-									   hdr->nabortdbs, abortdbs);
+									   hdr->nabortdbs, abortdbs,
 									   gid);
 
 	ProcArrayRemove(proc, latestXid);

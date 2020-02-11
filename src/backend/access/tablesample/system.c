@@ -33,6 +33,7 @@
 #include "utils/builtins.h"
 #include "utils/hashutils.h"
 
+#include "optimizer/cost.h"
 
 /* Private state */
 typedef struct

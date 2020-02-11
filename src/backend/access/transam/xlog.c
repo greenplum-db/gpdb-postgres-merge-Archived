@@ -7118,7 +7118,7 @@ StartupXLOG(void)
 			StartupCLOG();
 			StartupSUBTRANS(oldestActiveXID);
 			DistributedLog_Startup(oldestActiveXID,
-								   ShmemVariableCache->nextXid);
+								   XidFromFullTransactionId(ShmemVariableCache->nextFullXid));
 
 			/*
 			 * If we're beginning at a shutdown checkpoint, we know that
@@ -7969,7 +7969,7 @@ StartupXLOG(void)
 	if (IsNormalProcessingMode())
 		elog(LOG, "latest completed transaction id is %u and next transaction id is %u",
 			 ShmemVariableCache->latestCompletedXid,
-			 ShmemVariableCache->nextXid);
+			 XidFromFullTransactionId(ShmemVariableCache->nextFullXid));
 	LWLockRelease(ProcArrayLock);
 
 	/*
@@ -7981,7 +7981,7 @@ StartupXLOG(void)
 		StartupCLOG();
 		StartupSUBTRANS(oldestActiveXID);
 		DistributedLog_Startup(oldestActiveXID,
-							   ShmemVariableCache->nextXid);
+							   XidFromFullTransactionId(ShmemVariableCache->nextFullXid));
 	}
 
 	/*

@@ -657,11 +657,10 @@ index_getbitmap(IndexScanDesc scan, Node *bitmap)
 	/*
 	 * have the am's getbitmap proc do all the work.
 	 */
-	ntids = scan->indexRelation->rd_indam->amgetbitmap(scan, bitmap);
+	return scan->indexRelation->rd_indam->amgetbitmap(scan, bitmap);
 
-	pgstat_count_index_tuples(scan->indexRelation, ntids);
-
-	return ntids;
+	// GPDB_12_MERGE_FIXME
+	//pgstat_count_index_tuples(scan->indexRelation, ntids);
 }
 
 /* ----------------

@@ -732,7 +732,7 @@ gistgetbitmap(IndexScanDesc scan, Node *n)
 	GISTSearchItem fakeItem;
 
 	if (n == NULL)
-		tbm = tbm_create(work_mem * 1024L);
+		tbm = tbm_create(work_mem * 1024L, NULL);
 	else if (!IsA(n, TIDBitmap))
 		elog(ERROR, "non hash bitmap");
 	else

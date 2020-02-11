@@ -80,7 +80,7 @@ typedef struct
 static void gistInitBuffering(GISTBuildState *buildstate);
 static int	calculatePagesPerBuffer(GISTBuildState *buildstate, int levelStep);
 static void gistBuildCallback(Relation index,
-							  HeapTuple htup,
+							  ItemPointer tupleId,
 							  Datum *values,
 							  bool *isnull,
 							  bool tupleIsAlive,

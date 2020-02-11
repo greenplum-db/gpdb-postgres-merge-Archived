@@ -70,7 +70,7 @@ gp_transaction_log(PG_FUNCTION_ARGS)
 		context = (Context *) palloc(sizeof(Context));
 		funcctx->user_fctx = (void *) context;
 
-		context->indexXid = ShmemVariableCache->nextXid;
+		context->indexXid = XidFromFullTransactionId(ShmemVariableCache->nextFullXid);
 												// Start with last possible + 1.
 
 		funcctx->user_fctx = (void *) context;

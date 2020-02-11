@@ -811,34 +811,3 @@ gin_mask(char *pagedata, BlockNumber blkno)
 	else if (pagehdr->pd_lower > SizeOfPageHeaderData)
 		mask_unused_space(page);
 }
-
-/*
- * Mask a GIN page before running consistency checks on it.
- */
-void
-gin_mask(char *pagedata, BlockNumber blkno)
-{
-	Page		page = (Page) pagedata;
-	GinPageOpaque opaque;
-
-	mask_page_lsn_and_checksum(page);
-	opaque = GinPageGetOpaque(page);
-
-	mask_page_hint_bits(page);
-
-	/*
-	 * GIN metapage doesn't use pd_lower/pd_upper. Other page types do. Hence,
-	 * we need to apply masking for those pages.
-	 */
-	if (opaque->flags != GIN_META)
-	{
-		/*
-		 * For GIN_DELETED page, the page is initialized to empty. Hence, mask
-		 * the page content.
-		 */
-		if (opaque->flags & GIN_DELETED)
-			mask_page_content(page);
-		else
-			mask_unused_space(page);
-	}
-}

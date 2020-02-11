@@ -70,12 +70,13 @@ typedef MemTupleData *MemTuple;
 #define MEMTUP_HASEXTERNAL 	 4
 
 /* container to hold either a MemTuple or a HeapTuple */
+struct HeapTupleData;
 typedef struct
 {
 	bool		is_memtuple;
 	union
 	{
-		HeapTuple htup;
+		struct HeapTupleData *htup;
 		MemTuple mtup;
 	} tup;
 } HeapOrMemTuple;

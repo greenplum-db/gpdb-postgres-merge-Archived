@@ -25,6 +25,10 @@
 #include "access/table.h"
 #include "storage/lmgr.h"
 
+#include "catalog/namespace.h"
+#include "cdb/cdbvars.h"
+#include "utils/faultinjector.h"
+
 
 /* ----------------
  *		table_open - open a table relation by relation OID
@@ -267,24 +271,24 @@ CdbOpenTableRv(const RangeVar *table, LOCKMODE reqmode, bool noWait,
 	Relation	rel;
 
 	/* Look up the appropriate table using namespace search */
-	relid = RangeVarGetRelid(relation, NoLock, false);
+	relid = RangeVarGetRelid(table, NoLock, false);
 	rel = CdbTryOpenTable(relid, reqmode, noWait, lockUpgraded);
 
 	if (!RelationIsValid(rel))
 	{
-		if (relation->schemaname)
+		if (table->schemaname)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
 					 errmsg("table \"%s.%s\" does not exist",
-							relation->schemaname, relation->relname)));
+							table->schemaname, table->relname)));
 		}
 		else
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
 					 errmsg("table \"%s\" does not exist",
-							relation->relname)));
+							table->relname)));
 		}
 	}
 
