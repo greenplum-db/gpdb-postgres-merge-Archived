@@ -1124,12 +1124,6 @@ _bitmap_log_updatewords(Relation rel,
 	}
 }
 
-bytea *
-bmoptions(Datum reloptions, bool validate)
-{
-	return default_reloptions(reloptions, validate, RELOPT_KIND_BITMAP);
-}
-
 
 /*
  * WAL consistency checking helper.

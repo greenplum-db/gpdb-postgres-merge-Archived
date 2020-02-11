@@ -121,8 +121,10 @@ _bitmap_create_lov_heapandindex(Relation rel,
 		lovHeap = heap_open(heapid, AccessExclusiveLock);
 		lovIndex = index_open(idxid, AccessExclusiveLock);
 
-		RelationSetNewRelfilenode(lovHeap, lovHeap->rd_rel->relpersistence, RecentXmin, GetOldestMultiXactId());
-		RelationSetNewRelfilenode(lovIndex, lovIndex->rd_rel->relpersistence, InvalidTransactionId, InvalidMultiXactId);
+		RelationSetNewRelfilenode(lovHeap, lovHeap->rd_rel->relpersistence);
+		// GPDB_12_MERGE_FIXME: RecentXmin, GetOldestMultiXactId()); 
+		RelationSetNewRelfilenode(lovIndex, lovIndex->rd_rel->relpersistence);
+		// GPDB_12_MERGE_FIXME: InvalidTransactionId, InvalidMultiXactId);
 
 		/*
 		 * After creating the new relfilenode for a btee index, this is not
@@ -174,20 +176,18 @@ _bitmap_create_lov_heapandindex(Relation rel,
 								 InvalidOid,
 								 InvalidOid,
 								 rel->rd_rel->relowner,
+								 HEAP_TABLE_AM_OID,
 								 tupDesc, NIL,
 								 RELKIND_RELATION,
 								 rel->rd_rel->relpersistence,
-								 RELSTORAGE_HEAP,
 								 rel->rd_rel->relisshared,
 								 false, /* mapped_relation */
-								 false, 0,
 								 ONCOMMIT_NOOP, NULL /* GP Policy */,
 								 (Datum)0, false, true,
 								 true, /* is_internal */
+								 InvalidOid, /* relrewrite */
 								 NULL, /* typeaddress */
-								 /* valid_opts */ true,
-								 /* is_part_child */ false,
-								 /* is_part_parent */ false);
+								 /* valid_opts */ true);
 	*lovHeapOid = heapid;
 
 	/*
@@ -219,7 +219,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 	indexInfo->ii_Expressions = NIL;
 	indexInfo->ii_ExpressionsState = NIL;
 	indexInfo->ii_Predicate = make_ands_implicit(NULL);
-	indexInfo->ii_PredicateState = NIL;
+	indexInfo->ii_PredicateState = NULL;
 	indexInfo->ii_Unique = true;
 
 	classObjectId = (Oid *) palloc(indattrs * sizeof(Oid));
@@ -228,14 +228,14 @@ _bitmap_create_lov_heapandindex(Relation rel,
 	indexColNames = NIL;
 	for (i = 0; i < indattrs; i++)
 	{
-		Oid typid = tupDesc->attrs[i]->atttypid;
+		Form_pg_attribute attr = TupleDescAttr(tupDesc, i);
 
-		indexInfo->ii_KeyAttrNumbers[i] = i + 1;
-		classObjectId[i] = GetDefaultOpClass(typid, BTREE_AM_OID);
+		indexInfo->ii_IndexAttrNumbers[i] = i + 1;
+		classObjectId[i] = GetDefaultOpClass(attr->atttypid, BTREE_AM_OID);
 		coloptions[i] = 0;
 		colcollations[i] = rel->rd_indcollation[i];
 
-		indexColNames = lappend(indexColNames, NameStr(tupDesc->attrs[i]->attname));
+		indexColNames = lappend(indexColNames, NameStr(attr->attname));
 	}
 
 	idxid = index_create(lov_heap_rel, lovIndexName, InvalidOid,
@@ -248,15 +248,10 @@ _bitmap_create_lov_heapandindex(Relation rel,
 						 rel->rd_rel->reltablespace,
 						 colcollations,
 						 classObjectId, coloptions, (Datum) 0,
-						 /* isprimary */ false,
-						 /* isconstraint */ false,
-						 /* deferrable */ false,
-						 /* initdeferred */ false,
+						 INDEX_CREATE_IF_NOT_EXISTS, /* flags */
+						 0, /* constr_flags */
 						 /* allow_system_table_mods */ true,
-						 /* skip_build */ false,
-						 /* concurrent */ false,
 						 /* is_internal */ true,
-						 /* if_not_exists */ true,
 						 NULL);
 	*lovIndexOid = idxid;
 
@@ -335,7 +330,7 @@ _bitmap_insert_lov(Relation lovHeap, Relation lovIndex, Datum *datum,
 	memcpy(indexDatum, datum, (tupDesc->natts - 2) * sizeof(Datum));
 	memcpy(indexNulls, nulls, (tupDesc->natts - 2) * sizeof(bool));
 	result = index_insert(lovIndex, indexDatum, indexNulls,
-					 	  &(tuple->t_self), lovHeap, true);
+					 	  &(tuple->t_self), lovHeap, true, NULL);
 
 	pfree(indexDatum);
 	pfree(indexNulls);

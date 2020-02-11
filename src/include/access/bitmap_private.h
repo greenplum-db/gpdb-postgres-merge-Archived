@@ -20,6 +20,9 @@
 #include "access/htup.h"
 #include "utils/hsearch.h"
 
+/* This file can not and should not depend on execnodes.h */
+struct IndexInfo;
+
 /*
  * Data structure for used to buffer index creation during bmbuild().
  * Buffering provides three benefits: firstly, it makes for many fewer
@@ -239,8 +242,9 @@ extern IndexBuildResult *bmbuild(Relation heap, Relation index,
 		struct IndexInfo *indexInfo);
 extern void bmbuildempty(Relation index);
 extern bool bminsert(Relation rel, Datum *values, bool *isnull,
-		 ItemPointer ht_ctid, Relation heapRel,
-		 IndexUniqueCheck checkUnique);
+					 ItemPointer ht_ctid, Relation heapRel,
+					 IndexUniqueCheck checkUnique,
+					 struct IndexInfo *indexInfo);
 extern IndexScanDesc bmbeginscan(Relation rel, int nkeys, int norderbys);
 extern bool bmgettuple(IndexScanDesc scan, ScanDirection dir);
 extern Node *bmgetbitmap(IndexScanDesc scan, Node *tbm);

@@ -36,9 +36,6 @@ typedef uint64			BM_HRL_WORD;
 #define BITMAP_VERSION 2
 #define BITMAP_MAGIC 0x4249544D
 
-/* This file can not and should not depend on execnodes.h */
-struct IndexInfo;
-
 /*
  * Metapage, always the first page (page 0) in the index.
  *
