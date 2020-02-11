@@ -153,10 +153,6 @@ max_prepared_transactions = 250		# can be 0 or more
 					#   sysv
 					#   windows
 					#   mmap
-<<<<<<< HEAD
-					# use none to disable dynamic shared memory
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					# (change requires restart)
 
 # - Disk -
@@ -177,16 +173,6 @@ max_prepared_transactions = 250		# can be 0 or more
 #vacuum_cost_page_dirty = 20		# 0-10000 credits
 #vacuum_cost_limit = 200		# 1-10000 credits
 
-<<<<<<< HEAD
-=======
-# - Background Writer -
-
-#bgwriter_delay = 200ms			# 10-10000ms between rounds
-#bgwriter_lru_maxpages = 100		# max buffers written/round, 0 disables
-#bgwriter_lru_multiplier = 2.0		# 0-10.0 multiplier on buffers scanned/round
-#bgwriter_flush_after = 0		# measured in pages, 0 disables
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 # - Asynchronous Behavior -
 
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
@@ -367,22 +353,16 @@ max_prepared_transactions = 250		# can be 0 or more
 #enable_indexscan = on
 #enable_indexonlyscan = on
 #enable_material = on
-<<<<<<< HEAD
-=======
 #enable_mergejoin = on
 #enable_nestloop = on
 #enable_parallel_append = on
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #enable_seqscan = on
+#enable_sort = on
 #enable_tidscan = on
 #enable_partitionwise_join = off
 #enable_partitionwise_aggregate = off
 #enable_parallel_hash = on
 #enable_partition_pruning = on
-
-#enable_hashjoin = on
-#enable_mergejoin = off
-#enable_nestloop = off
 
 #gp_enable_multiphase_agg = on
 #gp_enable_preunique = on
@@ -393,7 +373,6 @@ max_prepared_transactions = 250		# can be 0 or more
 #gp_selectivity_damping_for_scans = on
 #gp_selectivity_damping_for_joins = off
 
-#enable_sort = on
 #gp_enable_sort_limit = on
 #gp_enable_sort_distinct = on
 
@@ -408,9 +387,6 @@ max_prepared_transactions = 250		# can be 0 or more
 # GPDB_96_MERGE_FIXME: figure out the appropriate values for the parallel gucs
 #parallel_tuple_cost = 0.1		# same scale as above
 #parallel_setup_cost = 1000.0	# same scale as above
-<<<<<<< HEAD
-#effective_cache_size = 16GB
-=======
 
 #jit_above_cost = 100000		# perform JIT compilation if available
 					# and query more expensive than this;
@@ -423,8 +399,7 @@ max_prepared_transactions = 250		# can be 0 or more
 
 #min_parallel_table_scan_size = 8MB
 #min_parallel_index_scan_size = 512kB
-#effective_cache_size = 4GB
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#effective_cache_size = 16GB
 
 #gp_motion_cost_per_row = 0.0  # (same) (if 0, 2*cpu_tuple_cost is used)
 
@@ -455,25 +430,6 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 
 # - Where to Log -
 
-<<<<<<< HEAD
-=======
-#log_destination = 'stderr'		# Valid values are combinations of
-					# stderr, csvlog, syslog, and eventlog,
-					# depending on platform.  csvlog
-					# requires logging_collector to be on.
-
-# This is used when logging to stderr:
-#logging_collector = off		# Enable capturing of stderr and csvlog
-					# into log files. Required to be on for
-					# csvlogs.
-					# (change requires restart)
-
-# These are only used if logging_collector is on:
-#log_directory = 'log'			# directory where log files are written,
-					# can be absolute or relative to PGDATA
-#log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'	# log file name pattern,
-					# can include strftime() escapes
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #log_file_mode = 0600			# creation mode for log files,
 					# begin with 0 to use octal notation
 #log_truncate_on_rotation = off		# If on, an existing log file with the
@@ -490,19 +446,6 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 					# happen after that much log output.
 					# 0 disables.
 
-<<<<<<< HEAD
-=======
-# These are relevant when logging to syslog:
-#syslog_facility = 'LOCAL0'
-#syslog_ident = 'postgres'
-#syslog_sequence_numbers = on
-#syslog_split_messages = on
-
-# This is only relevant when logging to eventlog (win32):
-# (change requires restart)
-#event_source = 'PostgreSQL'
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 # - When to Log -
 
 #log_min_messages = warning		# values in order of decreasing detail:
@@ -600,7 +543,6 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 
 
 #------------------------------------------------------------------------------
-<<<<<<< HEAD
 # PL/JAVA
 #------------------------------------------------------------------------------
 #pljava_classpath = ''                      # ':' separated list of installed jar files
@@ -615,24 +557,17 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 
 #gp_enable_gpperfmon=on		# Enable the performance monitor
 #gpperfmon_port=8888		# Port used by the performance monitor daemons
-
-										
+#
 #------------------------------------------------------------------------------
-# RUNTIME STATISTICS
+# STATISTICS
 #------------------------------------------------------------------------------
 
 # - ANALYZE Statistics on Database Contents -
 
 #default_statistics_target = 100	# range 1 - 10000 (target # of
 					# histogram bins)
-					
-# - Query/Index Statistics Collector -
-=======
-# STATISTICS
-#------------------------------------------------------------------------------
 
 # - Query and Index Statistics Collector -
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 #track_activities = on
 #track_counts = off
@@ -757,12 +692,7 @@ log_autostats=off	# print additional autostats information
 
 # - Shared Library Preloading -
 
-<<<<<<< HEAD
-#dynamic_library_path = '$libdir'
-#explain_pretty_print = on
-=======
 #shared_preload_libraries = ''	# (change requires restart)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #local_preload_libraries = ''
 #session_preload_libraries = ''
 #jit_provider = 'llvmjit'		# JIT library to use
