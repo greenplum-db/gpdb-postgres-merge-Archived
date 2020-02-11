@@ -4135,13 +4135,10 @@ CopyCreateStmtFields(const CreateStmt *from, CreateStmt *newnode)
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(tableElts);
 	COPY_NODE_FIELD(inhRelations);
-<<<<<<< HEAD
+    COPY_NODE_FIELD(partspec);
+    COPY_NODE_FIELD(partbound);
 	COPY_NODE_FIELD(inhOids);
 	COPY_SCALAR_FIELD(parentOidCount);
-=======
-	COPY_NODE_FIELD(partspec);
-	COPY_NODE_FIELD(partbound);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	COPY_NODE_FIELD(ofTypename);
 	COPY_NODE_FIELD(constraints);
 	COPY_NODE_FIELD(options);

@@ -726,16 +726,6 @@ _outPartitionBoundSpec(StringInfo str, PartitionBoundSpec *node)
 }
 
 static void
-_outAlterPartitionCmd(StringInfo str, AlterPartitionCmd *node)
-{
-	WRITE_NODE_TYPE("ALTERPARTITIONCMD");
-
-	WRITE_NODE_FIELD(partid);
-	WRITE_NODE_FIELD(arg1);
-	WRITE_NODE_FIELD(arg2);
-}
-
-static void
 _outCreateDomainStmt(StringInfo str, CreateDomainStmt *node)
 {
 	WRITE_NODE_TYPE("CREATEDOMAINSTMT");
@@ -1781,16 +1771,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_SetDistributionCmd:
 				_outSetDistributionCmd(str, obj);
-				break;
-			case T_InheritPartitionCmd:
-				_outInheritPartitionCmd(str, obj);
-				break;
-
-			case T_AlterPartitionCmd:
-				_outAlterPartitionCmd(str, obj);
-				break;
-			case T_AlterPartitionId:
-				_outAlterPartitionId(str, obj);
 				break;
 
 			case T_CreateRoleStmt:

@@ -2006,43 +2006,6 @@ typedef struct SetDistributionCmd
 	List	   *relids;            /* oid of relations(partitions) which have related temporary table */
 } SetDistributionCmd;
 
-
-typedef enum AlterPartitionIdType
-{
-	AT_AP_IDNone,				/* no ID */
-	AT_AP_IDName,				/* IDentify by Name */
-	AT_AP_IDValue,				/* IDentifier FOR Value */
-	AT_AP_IDRank,				/* IDentifier FOR Rank */
-	AT_AP_ID_oid,				/* IDentifier by oid (for internal use only) */
-	AT_AP_IDList,				/* List of IDentifier(for internal use only) */
-	AT_AP_IDRule,				/* partition rule (for internal use only) */
-	AT_AP_IDDefault,			/* IDentify DEFAULT partition */
-	AT_AP_IDRangeVar			/* IDentify Partition by RangeVar */
-} AlterPartitionIdType;
-
-typedef struct AlterPartitionId /* Identify a partition by name, val, pos */
-{
-	NodeTag		type;
-	AlterPartitionIdType idtype;/* Type of table alteration to apply */
-	Node	   *partiddef;		/* partition id definition */
-	int					location;	/* token location, or -1 if unknown */
-} AlterPartitionId;
-
-typedef struct AlterPartitionCmd/* one subcmd of an ALTER TABLE...PARTITION */
-{
-	NodeTag		type;
-	Node	   *partid;			/* partition id */
-	Node	   *arg1;			/* argument 1 */
-	Node	   *arg2;			/* argument 2 */
-	int					location;	/* token location, or -1 if unknown */
-} AlterPartitionCmd;
-
-typedef struct InheritPartitionCmd
-{
-	NodeTag		type;
-	RangeVar   *parent;
-} InheritPartitionCmd;
-
 /* ----------------------
  * Alter Collation
  * ----------------------

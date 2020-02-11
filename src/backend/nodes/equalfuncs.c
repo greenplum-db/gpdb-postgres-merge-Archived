@@ -1183,7 +1183,6 @@ _equalAlterTableCmd(const AlterTableCmd *a, const AlterTableCmd *b)
 }
 
 static bool
-<<<<<<< HEAD
 _equalSetDistributionCmd(const SetDistributionCmd *a, const SetDistributionCmd *b)
 {
 	COMPARE_SCALAR_FIELD(backendId);
@@ -1193,33 +1192,9 @@ _equalSetDistributionCmd(const SetDistributionCmd *a, const SetDistributionCmd *
 }
 
 static bool
-_equalInheritPartitionCmd(const InheritPartitionCmd *a, const InheritPartitionCmd *b)
-{
-	COMPARE_NODE_FIELD(parent);
-
-	return true;
-}
-
-static bool
-_equalAlterPartitionCmd(const AlterPartitionCmd *a, const AlterPartitionCmd *b)
-{
-	COMPARE_NODE_FIELD(partid);
-	COMPARE_NODE_FIELD(arg1);
-	COMPARE_NODE_FIELD(arg2);
-
-	return true;
-}
-
-static bool
-_equalAlterPartitionId(const AlterPartitionId *a, const AlterPartitionId *b)
-{
-	COMPARE_SCALAR_FIELD(idtype);
-	COMPARE_NODE_FIELD(partiddef);
-=======
 _equalAlterCollationStmt(const AlterCollationStmt *a, const AlterCollationStmt *b)
 {
 	COMPARE_NODE_FIELD(collname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return true;
 }
@@ -3579,22 +3554,11 @@ equal(const void *a, const void *b)
 		case T_AlterTableCmd:
 			retval = _equalAlterTableCmd(a, b);
 			break;
-<<<<<<< HEAD
 		case T_SetDistributionCmd:
 			retval = _equalSetDistributionCmd(a, b);
 			break;
-		case T_InheritPartitionCmd:
-			retval = _equalInheritPartitionCmd(a, b);
-			break;
-		case T_AlterPartitionCmd:
-			retval = _equalAlterPartitionCmd(a, b);
-			break;
-		case T_AlterPartitionId:
-			retval = _equalAlterPartitionId(a, b);
-=======
 		case T_AlterCollationStmt:
 			retval = _equalAlterCollationStmt(a, b);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			break;
 		case T_AlterDomainStmt:
 			retval = _equalAlterDomainStmt(a, b);

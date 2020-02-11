@@ -347,12 +347,8 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_NODE_TYPE("PLANNEDSTMT");
 
 	WRITE_ENUM_FIELD(commandType, CmdType);
-<<<<<<< HEAD
 	WRITE_ENUM_FIELD(planGen, PlanGenerator);
-	WRITE_UINT_FIELD(queryId);
-=======
 	WRITE_UINT64_FIELD(queryId);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	WRITE_BOOL_FIELD(hasReturning);
 	WRITE_BOOL_FIELD(hasModifyingCTE);
 	WRITE_BOOL_FIELD(canSetTag);
@@ -373,7 +369,8 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_NODE_FIELD(invalItems);
 	WRITE_NODE_FIELD(paramExecTypes);
 	WRITE_NODE_FIELD(utilityStmt);
-<<<<<<< HEAD
+    WRITE_LOCATION_FIELD(stmt_location);
+    WRITE_LOCATION_FIELD(stmt_len);
 	WRITE_NODE_FIELD(subplans);
 #ifdef COMPILING_BINARY_FUNCS
 	WRITE_INT_ARRAY(subplan_sliceIds, list_length(node->subplans), int);
@@ -445,10 +442,6 @@ _outOidAssignment(StringInfo str, const OidAssignment *node)
 	WRITE_OID_FIELD(keyOid1);
 	WRITE_OID_FIELD(keyOid2);
 	WRITE_OID_FIELD(oid);
-=======
-	WRITE_LOCATION_FIELD(stmt_location);
-	WRITE_LOCATION_FIELD(stmt_len);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -1029,30 +1022,11 @@ _outMergeJoin(StringInfo str, const MergeJoin *node)
 
 	numCols = list_length(node->mergeclauses);
 
-<<<<<<< HEAD
-	appendStringInfoString(str, " :mergeFamilies");
-	for (i = 0; i < numCols; i++)
-		appendStringInfo(str, " %u", node->mergeFamilies[i]);
-
-	appendStringInfoString(str, " :mergeCollations");
-	for (i = 0; i < numCols; i++)
-		appendStringInfo(str, " %u", node->mergeCollations[i]);
-
-	appendStringInfoString(str, " :mergeStrategies");
-	for (i = 0; i < numCols; i++)
-		appendStringInfo(str, " %d", node->mergeStrategies[i]);
-
-	appendStringInfoString(str, " :mergeNullsFirst");
-	for (i = 0; i < numCols; i++)
-		appendStringInfo(str, " %s", booltostr(node->mergeNullsFirst[i]));
-
-	WRITE_BOOL_FIELD(unique_outer);
-=======
 	WRITE_OID_ARRAY(mergeFamilies, numCols);
 	WRITE_OID_ARRAY(mergeCollations, numCols);
 	WRITE_INT_ARRAY(mergeStrategies, numCols);
 	WRITE_BOOL_ARRAY(mergeNullsFirst, numCols);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+    WRITE_BOOL_FIELD(unique_outer);
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -1215,23 +1189,10 @@ _outSort(StringInfo str, const Sort *node)
 	_outPlanInfo(str, (const Plan *) node);
 
 	WRITE_INT_FIELD(numCols);
-<<<<<<< HEAD
-
-	appendStringInfoString(str, " :sortColIdx");
-	for (i = 0; i < node->numCols; i++)
-		appendStringInfo(str, " %d", node->sortColIdx[i]);
-
-	appendStringInfoString(str, " :sortOperators");
-	for (i = 0; i < node->numCols; i++)
-		appendStringInfo(str, " %u", node->sortOperators[i]);
-
-	appendStringInfoString(str, " :collations");
-	for (i = 0; i < node->numCols; i++)
-		appendStringInfo(str, " %u", node->collations[i]);
-
-	appendStringInfoString(str, " :nullsFirst");
-	for (i = 0; i < node->numCols; i++)
-		appendStringInfo(str, " %s", booltostr(node->nullsFirst[i]));
+    WRITE_ATTRNUMBER_ARRAY(sortColIdx, node->numCols);
+    WRITE_OID_ARRAY(sortOperators, node->numCols);
+    WRITE_OID_ARRAY(collations, node->numCols);
+    WRITE_BOOL_ARRAY(nullsFirst, node->numCols);
 
 	/* CDB */
     WRITE_BOOL_FIELD(noduplicates);
@@ -1241,12 +1202,6 @@ _outSort(StringInfo str, const Sort *node)
 	WRITE_INT_FIELD(driver_slice);
 	WRITE_INT_FIELD(nsharer);
 	WRITE_INT_FIELD(nsharer_xslice);
-=======
-	WRITE_ATTRNUMBER_ARRAY(sortColIdx, node->numCols);
-	WRITE_OID_ARRAY(sortOperators, node->numCols);
-	WRITE_OID_ARRAY(collations, node->numCols);
-	WRITE_BOOL_ARRAY(nullsFirst, node->numCols);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -1271,18 +1226,12 @@ _outHash(StringInfo str, const Hash *node)
 	WRITE_NODE_TYPE("HASH");
 
 	_outPlanInfo(str, (const Plan *) node);
-
+	WRITE_BOOL_FIELD(rescannable);          /*CDB*/
 	WRITE_OID_FIELD(skewTable);
 	WRITE_INT_FIELD(skewColumn);
 	WRITE_BOOL_FIELD(skewInherit);
-<<<<<<< HEAD
-	WRITE_OID_FIELD(skewColType);
-	WRITE_INT_FIELD(skewColTypmod);
 
-	WRITE_BOOL_FIELD(rescannable);          /*CDB*/
-=======
 	WRITE_FLOAT_FIELD(rows_total, "%.0f");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 #ifndef COMPILING_BINARY_FUNCS
@@ -1905,12 +1854,9 @@ _outSubPlan(StringInfo str, const SubPlan *node)
 	WRITE_OID_FIELD(firstColCollation);
 	WRITE_BOOL_FIELD(useHashTable);
 	WRITE_BOOL_FIELD(unknownEqFalse);
-<<<<<<< HEAD
+    WRITE_BOOL_FIELD(parallel_safe);
 	WRITE_BOOL_FIELD(is_initplan); /*CDB*/
 	WRITE_BOOL_FIELD(is_multirow); /*CDB*/
-=======
-	WRITE_BOOL_FIELD(parallel_safe);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	WRITE_NODE_FIELD(setParam);
 	WRITE_NODE_FIELD(parParam);
 	WRITE_NODE_FIELD(args);
@@ -2516,7 +2462,6 @@ _outMergeAppendPath(StringInfo str, const MergeAppendPath *node)
 }
 
 static void
-<<<<<<< HEAD
 _outAppendOnlyPath(StringInfo str, const AppendOnlyPath *node)
 {
 	WRITE_NODE_TYPE("APPENDONLYPATH");
@@ -2533,10 +2478,7 @@ _outAOCSPath(StringInfo str, const AOCSPath *node)
 }
 
 static void
-_outResultPath(StringInfo str, const ResultPath *node)
-=======
 _outGroupResultPath(StringInfo str, const GroupResultPath *node)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	WRITE_NODE_TYPE("GROUPRESULTPATH");
 
@@ -3141,12 +3083,9 @@ _outRestrictInfo(StringInfo str, const RestrictInfo *node)
 	WRITE_BOOL_FIELD(outerjoin_delayed);
 	WRITE_BOOL_FIELD(can_join);
 	WRITE_BOOL_FIELD(pseudoconstant);
-<<<<<<< HEAD
+    WRITE_BOOL_FIELD(leakproof);
+    WRITE_UINT_FIELD(security_level);
 	WRITE_BOOL_FIELD(contain_outer_query_references);
-=======
-	WRITE_BOOL_FIELD(leakproof);
-	WRITE_UINT_FIELD(security_level);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	WRITE_BITMAPSET_FIELD(clause_relids);
 	WRITE_BITMAPSET_FIELD(required_relids);
 	WRITE_BITMAPSET_FIELD(outer_relids);
@@ -3297,13 +3236,10 @@ _outCreateStmtInfo(StringInfo str, const CreateStmt *node)
 	WRITE_NODE_FIELD(relation);
 	WRITE_NODE_FIELD(tableElts);
 	WRITE_NODE_FIELD(inhRelations);
-<<<<<<< HEAD
+    WRITE_NODE_FIELD(partspec);
+    WRITE_NODE_FIELD(partbound);
 	WRITE_NODE_FIELD(inhOids);
 	WRITE_INT_FIELD(parentOidCount);
-=======
-	WRITE_NODE_FIELD(partspec);
-	WRITE_NODE_FIELD(partbound);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	WRITE_NODE_FIELD(ofTypename);
 	WRITE_NODE_FIELD(constraints);
 	WRITE_NODE_FIELD(options);
@@ -3565,35 +3501,6 @@ _outSetDistributionCmd(StringInfo str, const SetDistributionCmd *node)
 
 	WRITE_INT_FIELD(backendId);
 	WRITE_NODE_FIELD(relids);
-}
-
-static void
-_outInheritPartitionCmd(StringInfo str, const InheritPartitionCmd *node)
-{
-	WRITE_NODE_TYPE("INHERITPARTITION");
-
-	WRITE_NODE_FIELD(parent);
-}
-
-#ifndef COMPILING_BINARY_FUNCS
-static void
-_outAlterPartitionCmd(StringInfo str, const AlterPartitionCmd *node)
-{
-	WRITE_NODE_TYPE("ALTERPARTITIONCMD");
-
-	WRITE_NODE_FIELD(partid);
-	WRITE_NODE_FIELD(arg1);
-	WRITE_NODE_FIELD(arg2);
-}
-#endif /* COMPILING_BINARY_FUNCS */
-
-static void
-_outAlterPartitionId(StringInfo str, const AlterPartitionId *node)
-{
-	WRITE_NODE_TYPE("ALTERPARTITIONID");
-
-	WRITE_ENUM_FIELD(idtype, AlterPartitionIdType);
-	WRITE_NODE_FIELD(partiddef);
 }
 
 static void
@@ -4281,12 +4188,12 @@ _outXmlSerialize(StringInfo str, const XmlSerialize *node)
 }
 
 static void
-<<<<<<< HEAD
 _outDMLActionExpr(StringInfo str, const DMLActionExpr *node)
 {
 	WRITE_NODE_TYPE("DMLACTIONEXPR");
 }
 
+<<<<<<< HEAD
 static void
 _outPartSelectedExpr(StringInfo str, const PartSelectedExpr *node)
 {
@@ -4350,6 +4257,8 @@ _outPartListNullTestExpr(StringInfo str, const PartListNullTestExpr *node)
 	WRITE_INT_FIELD(level);
 	WRITE_ENUM_FIELD(nulltesttype, NullTestType);
 =======
+>>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static void
 _outTriggerTransition(StringInfo str, const TriggerTransition *node)
 {
 	WRITE_NODE_TYPE("TRIGGERTRANSITION");
@@ -4357,7 +4266,6 @@ _outTriggerTransition(StringInfo str, const TriggerTransition *node)
 	WRITE_STRING_FIELD(name);
 	WRITE_BOOL_FIELD(isNew);
 	WRITE_BOOL_FIELD(isTable);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 static void
@@ -6054,19 +5962,14 @@ outNode(StringInfo str, const void *obj)
 			case T_MergeAppendPath:
 				_outMergeAppendPath(str, obj);
 				break;
-<<<<<<< HEAD
 			case T_AppendOnlyPath:
 				_outAppendOnlyPath(str, obj);
 				break;
 			case T_AOCSPath:
 				_outAOCSPath(str, obj);
 				break;
-			case T_ResultPath:
-				_outResultPath(str, obj);
-=======
 			case T_GroupResultPath:
 				_outGroupResultPath(str, obj);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 			case T_MaterialPath:
 				_outMaterialPath(str, obj);
@@ -6334,17 +6237,6 @@ outNode(StringInfo str, const void *obj)
 			case T_SetDistributionCmd:
 				_outSetDistributionCmd(str, obj);
 				break;
-			case T_InheritPartitionCmd:
-				_outInheritPartitionCmd(str, obj);
-				break;
-
-			case T_AlterPartitionCmd:
-				_outAlterPartitionCmd(str, obj);
-				break;
-			case T_AlterPartitionId:
-				_outAlterPartitionId(str, obj);
-				break;
-
 
 			case T_CreateRoleStmt:
 				_outCreateRoleStmt(str, obj);
@@ -6734,9 +6626,8 @@ nodeToString(const void *obj)
 	return str.data;
 }
 
-<<<<<<< HEAD
 #endif /* COMPILING_BINARY_FUNCS */
-=======
+
 /*
  * bmsToString -
  *	   returns the ascii representation of the Bitmapset as a palloc'd string
@@ -6751,4 +6642,3 @@ bmsToString(const Bitmapset *bms)
 	outBitmapset(&str, bms);
 	return str.data;
 }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

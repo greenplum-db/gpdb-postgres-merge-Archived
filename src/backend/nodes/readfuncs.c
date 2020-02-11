@@ -49,12 +49,8 @@
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/readfuncs.h"
-<<<<<<< HEAD
-#include "nodes/relation.h"
 #include "cdb/cdbgang.h"
-=======
 #include "utils/builtins.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * readfuncs.c is compiled normally into readfuncs.o, but it's also
@@ -152,14 +148,10 @@ inline static char extended_char(char* token, size_t length)
 
 /* Read a char field (ie, one ascii character) */
 #define READ_CHAR_FIELD(fldname) \
-<<<<<<< HEAD
-	READ_SCALAR_FIELD(fldname, extended_char(token, length))
-=======
 	token = pg_strtok(&length);		/* skip :fldname */ \
 	token = pg_strtok(&length);		/* get field value */ \
 	/* avoid overhead of calling debackslash() for one char */ \
 	local_node->fldname = (length == 0) ? '\0' : (token[0] == '\\' ? token[1] : token[0])
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /* Read an enumerated-type field that was written as an integer code */
 #define READ_ENUM_FIELD(fldname, enumtype)  READ_SCALAR_FIELD(fldname, (enumtype)atoi(token))
@@ -373,15 +365,11 @@ _readQuery(void)
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(setOperations);
 	READ_NODE_FIELD(constraintDeps);
-<<<<<<< HEAD
-	READ_BOOL_FIELD(parentStmtType);
-
-	local_node->intoPolicy = NULL;
-=======
-	READ_NODE_FIELD(withCheckOptions);
-	READ_LOCATION_FIELD(stmt_location);
-	READ_LOCATION_FIELD(stmt_len);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+    READ_NODE_FIELD(withCheckOptions);
+    local_node->intoPolicy = NULL;
+    READ_BOOL_FIELD(parentStmtType);
+    READ_LOCATION_FIELD(stmt_location);
+    READ_LOCATION_FIELD(stmt_len);
 
 	READ_DONE();
 }
@@ -624,11 +612,7 @@ _readRangeVar(void)
 	READ_STRING_FIELD(catalogname);
 	READ_STRING_FIELD(schemaname);
 	READ_STRING_FIELD(relname);
-<<<<<<< HEAD
-	READ_ENUM_FIELD(inhOpt, InhOption); Assert(local_node->inhOpt <= INH_DEFAULT);
-=======
 	READ_BOOL_FIELD(inh);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	READ_CHAR_FIELD(relpersistence);
 	READ_NODE_FIELD(alias);
 	READ_LOCATION_FIELD(location);
@@ -1040,41 +1024,6 @@ _readSetDistributionCmd(void)
 	READ_DONE();
 }
 #endif /* COMPILING_BINARY_FUNCS */
-
-static InheritPartitionCmd *
-_readInheritPartitionCmd(void)
-{
-	READ_LOCALS(InheritPartitionCmd);
-
-	READ_NODE_FIELD(parent);
-
-	READ_DONE();
-}
-
-#ifndef COMPILING_BINARY_FUNCS
-static AlterPartitionCmd *
-_readAlterPartitionCmd(void)
-{
-	READ_LOCALS(AlterPartitionCmd);
-
-	READ_NODE_FIELD(partid);
-	READ_NODE_FIELD(arg1);
-	READ_NODE_FIELD(arg2);
-
-	READ_DONE();
-}
-#endif /* COMPILING_BINARY_FUNCS */
-
-static AlterPartitionId *
-_readAlterPartitionId(void)
-{
-	READ_LOCALS(AlterPartitionId);
-
-	READ_ENUM_FIELD(idtype, AlterPartitionIdType);
-	READ_NODE_FIELD(partiddef);
-
-	READ_DONE();
-}
 
 static CreateRoleStmt *
 _readCreateRoleStmt(void)
@@ -2074,8 +2023,6 @@ _readSetToDefault(void)
 }
 
 /*
-<<<<<<< HEAD
-=======
  * _readCurrentOfExpr
  */
 static CurrentOfExpr *
@@ -2105,7 +2052,6 @@ _readNextValueExpr(void)
 }
 
 /*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * _readInferenceElem
  */
 static InferenceElem *
@@ -2465,12 +2411,8 @@ _readPlannedStmt(void)
 	READ_LOCALS(PlannedStmt);
 
 	READ_ENUM_FIELD(commandType, CmdType);
-<<<<<<< HEAD
 	READ_ENUM_FIELD(planGen, PlanGenerator);
-	READ_UINT_FIELD(queryId);
-=======
 	READ_UINT64_FIELD(queryId);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	READ_BOOL_FIELD(hasReturning);
 	READ_BOOL_FIELD(hasModifyingCTE);
 	READ_BOOL_FIELD(canSetTag);
@@ -3284,12 +3226,16 @@ _readSort(void)
     /* CDB */
 	READ_BOOL_FIELD(noduplicates);
 
-<<<<<<< HEAD
 	READ_ENUM_FIELD(share_type, ShareType);
 	READ_INT_FIELD(share_id);
 	READ_INT_FIELD(driver_slice);
 	READ_INT_FIELD(nsharer);
 	READ_INT_FIELD(nsharer_xslice);
+
+	READ_DONE();
+}
+
+<<<<<<< HEAD
 =======
 /*
  * _readGroup
@@ -3460,12 +3406,11 @@ _readHash(void)
 
 	ReadCommonPlan(&local_node->plan);
 
+    READ_BOOL_FIELD(rescannable);           /*CDB*/
 	READ_OID_FIELD(skewTable);
 	READ_INT_FIELD(skewColumn);
 	READ_BOOL_FIELD(skewInherit);
 	READ_FLOAT_FIELD(rows_total);
-
-    READ_BOOL_FIELD(rescannable);           /*CDB*/
 
 	READ_DONE();
 }
@@ -3647,12 +3592,9 @@ _readSubPlan(void)
 	READ_OID_FIELD(firstColCollation);
 	READ_BOOL_FIELD(useHashTable);
 	READ_BOOL_FIELD(unknownEqFalse);
-<<<<<<< HEAD
+    READ_BOOL_FIELD(parallel_safe);
 	READ_BOOL_FIELD(is_initplan); /*CDB*/
 	READ_BOOL_FIELD(is_multirow); /*CDB*/
-=======
-	READ_BOOL_FIELD(parallel_safe);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	READ_NODE_FIELD(setParam);
 	READ_NODE_FIELD(parParam);
 	READ_NODE_FIELD(args);
@@ -4379,15 +4321,12 @@ parseNodeString(void)
 		return_value = _readRangeVar();
 	else if (MATCH("INTOCLAUSE", 10))
 		return_value = _readIntoClause();
-<<<<<<< HEAD
 	else if (MATCH("COPYINTOCLAUSE", 14))
 		return_value = _readCopyIntoClause();
 	else if (MATCH("REFRESHCLAUSE", 13))
 		return_value = _readRefreshClause();
-=======
 	else if (MATCH("TABLEFUNC", 9))
 		return_value = _readTableFunc();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	else if (MATCH("VAR", 3))
 		return_value = _readVar();
 	else if (MATCH("CONST", 5))
@@ -4608,7 +4547,10 @@ parseNodeString(void)
 		return_value = _readAlternativeSubPlan();
 	else if (MATCH("EXTENSIBLENODE", 14))
 		return_value = _readExtensibleNode();
-<<<<<<< HEAD
+    else if (MATCH("PARTITIONBOUNDSPEC", 18))
+        return_value = _readPartitionBoundSpec();
+    else if (MATCH("PARTITIONRANGEDATUM", 19))
+        return_value = _readPartitionRangeDatum();
 
 	/* GPDB additions */
 	else if (MATCHX("A_ARRAYEXPR"))
@@ -4627,10 +4569,6 @@ parseNodeString(void)
 		return_value = _readAlterOwnerStmt();
 	else if (MATCHX("ALTEROPFAMILYSTMT"))
 		return_value = _readAlterOpFamilyStmt();
-	else if (MATCHX("ALTERPARTITIONCMD"))
-		return_value = _readAlterPartitionCmd();
-	else if (MATCHX("ALTERPARTITIONID"))
-		return_value = _readAlterPartitionId();
 	else if (MATCHX("ALTERPOLICYSTMT"))
 		return_value = _readAlterPolicyStmt();
 	else if (MATCHX("ALTERROLESETSTMT"))
@@ -4727,8 +4665,6 @@ parseNodeString(void)
 		return_value = _readIndexElem();
 	else if (MATCHX("INDEXSTMT"))
 		return_value = _readIndexStmt();
-	else if (MATCHX("INHERITPARTITION"))
-		return_value = _readInheritPartitionCmd();
 	else if (MATCHX("LOCKSTMT"))
 		return_value = _readLockStmt();
 	else if (MATCHX("REINDEXSTMT"))
@@ -4767,12 +4703,6 @@ parseNodeString(void)
 		return_value = _readViewStmt();
 	else if (MATCHX("WITHCLAUSE"))
 		return_value = _readWithClause();
-=======
-	else if (MATCH("PARTITIONBOUNDSPEC", 18))
-		return_value = _readPartitionBoundSpec();
-	else if (MATCH("PARTITIONRANGEDATUM", 19))
-		return_value = _readPartitionRangeDatum();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	else
 	{
         ereport(ERROR,
