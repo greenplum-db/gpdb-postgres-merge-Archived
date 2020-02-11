@@ -31,22 +31,20 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "parser/scansup.h"
-#include "postmaster/fts.h"
 #include "postmaster/syslogger.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/fd.h"
-<<<<<<< HEAD
-#include "storage/pmsignal.h"
-#include "storage/proc.h"
-#include "storage/procarray.h"
-#include "utils/backend_cancel.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/lsyscache.h"
 #include "utils/ruleutils.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/timestamp.h"
+
+#include "catalog/pg_authid.h"
+#include "postmaster/fts.h"
+#include "storage/pmsignal.h"
+#include "storage/procarray.h"
+#include "utils/backend_cancel.h"
 
 
 /*
@@ -201,7 +199,6 @@ current_query(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 }
 
-<<<<<<< HEAD
 /*
  * Send a signal to another backend.
  *
@@ -410,8 +407,6 @@ pg_rotate_logfile(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(true);
 }
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* Function to find out which databases make use of a tablespace */
 
 typedef struct

@@ -1434,14 +1434,6 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			Oid			tblspc;
 
 			tblspc = get_rel_tablespace(indexrelid);
-<<<<<<< HEAD
-			if (!OidIsValid(tblspc))
-				tblspc = MyDatabaseTableSpace;
-			if (isConstraint)
-				appendStringInfoString(&buf, " USING INDEX");
-			appendStringInfo(&buf, " TABLESPACE %s",
-							 quote_identifier(get_tablespace_name(tblspc)));
-=======
 			if (OidIsValid(tblspc))
 			{
 				if (isConstraint)
@@ -1449,7 +1441,6 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 				appendStringInfo(&buf, " TABLESPACE %s",
 								 quote_identifier(get_tablespace_name(tblspc)));
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		/*
