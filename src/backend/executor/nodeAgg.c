@@ -845,345 +845,27 @@ advance_transition_function(AggState *aggstate,
  *
  * When called, CurrentMemoryContext should be the per-query context.
  */
-<<<<<<< HEAD
-void
-advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
-=======
+/*
+ * GPDB_12_MERGE_FIXME: diff added in the following commits need to be
+ * incorporated into aggstate->phase->evaltrans (most likely in
+ * ExecBuildAggTrans)
+ *
+ * - commit 0138eed43680ea8c (Multiple Distinct-qualified
+ *   Aggregation(Multi-DQA) MPP execution method)
+ * - commit 652e34adaf2e00e8 (Make use of serial/deserial functions to enable
+ *   2-phase aggregates.)
+ */
 static void
 advance_aggregates(AggState *aggstate)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	bool		dummynull;
 
-<<<<<<< HEAD
-	for (transno = 0; transno < numTrans; transno++)
-	{
-		Datum value;
-		bool isnull;
-		AggStatePerTrans pertrans = &aggstate->pertrans[transno];
-		ExprState  *filter = pertrans->aggfilter;
-		int			numTransInputs = pertrans->numTransInputs;
-		int			i;
-		TupleTableSlot *slot;
-
-		/* Skip anything FILTERed out */
-		if (filter)
-		{
-			Datum		res;
-			bool		isnull;
-
-			res = ExecEvalExprSwitchContext(filter, aggstate->tmpcontext,
-											&isnull, NULL);
-			if (isnull || !DatumGetBool(res))
-				continue;
-		}
-
-		/* Evaluate the current input expressions for this aggregate */
-		slot = ExecProject(pertrans->evalproj, NULL);
-		slot_getallattrs(slot);
-
-		/* if AggExprId is in input, trans function bitmap should match */
-		if (aggstate->AggExprId_AttrNum > 0)
-		{
-			AttrNumber exprid;
-			Datum *input_vtup = aggstate->tmpcontext->ecxt_outertuple->tts_values;
-
-			exprid = input_vtup[aggstate->AggExprId_AttrNum - 1];
-
-			if (exprid != pertrans->agg_expr_id)
-				continue;
-		}
-
-		if (pertrans->numSortCols > 0)
-		{
-			/* DISTINCT and/or ORDER BY case */
-			Assert(slot->PRIVATE_tts_nvalid == pertrans->numInputs);
-
-			/*
-			 * If the transfn is strict, we want to check for nullity before
-			 * storing the row in the sorter, to save space if there are a lot
-			 * of nulls.  Note that we must only check numTransInputs columns,
-			 * not numInputs, since nullity in columns used only for sorting
-			 * is not relevant here.
-			 */
-			if (pertrans->transfn.fn_strict)
-			{
-				for (i = 0; i < numTransInputs; i++)
-				{
-					value = slot_getattr(slot, i+1, &isnull);
-
-					if (isnull)
-						break; /* arg loop */
-				}
-				if (i < numTransInputs)
-					continue;
-			}
-
-			for (setno = 0; setno < numGroupingSets; setno++)
-			{
-				/* OK, put the tuple into the tuplesort object */
-				if (pertrans->numInputs == 1)
-				{
-					value = slot_getattr(slot, 1, &isnull);
-
-					tuplesort_putdatum(pertrans->sortstates[setno],
-									   value, isnull);
-				}
-				else
-					tuplesort_puttupleslot(pertrans->sortstates[setno], slot);
-			}
-		}
-		else
-		{
-			/* We can apply the transition function immediately */
-			FunctionCallInfo fcinfo = &pertrans->transfn_fcinfo;
-
-			/* Load values into fcinfo */
-			/* Start from 1, since the 0th arg will be the transition value */
-			Assert(slot->PRIVATE_tts_nvalid >= numTransInputs);
-			for (i = 0; i < numTransInputs; i++)
-			{
-				fcinfo->arg[i + 1] = slot_getattr(slot, i+1, &isnull);
-				fcinfo->argnull[i + 1] = isnull;
-			}
-
-			/*
-			 * deserialfn_oid will be set if we must deserialize the input state
-			 * before calling the combine function
-			 */
-			if (OidIsValid(pertrans->deserialfn_oid))
-			{
-				Datum		serialized = fcinfo->arg[1];
-				bool		serializednull = fcinfo->argnull[1];
-
-				Assert(numTransInputs == 1);
-
-				/* Don't call a strict deserialization function with NULL input */
-				if (pertrans->deserialfn.fn_strict && serializednull)
-				{
-					fcinfo->arg[1] = serialized;
-					fcinfo->argnull[1] = serializednull;
-				}
-				else
-				{
-					FunctionCallInfoData _dsinfo;
-					FunctionCallInfo dsinfo = &_dsinfo;
-					MemoryContext oldContext;
-
-					InitFunctionCallInfoData(_dsinfo,
-											 &pertrans->deserialfn,
-											 2,
-											 InvalidOid,
-											 (void *) aggstate, NULL);
-
-					dsinfo->arg[0] = serialized;
-					dsinfo->argnull[0] = serializednull;
-					/* Dummy second argument for type-safety reasons */
-					dsinfo->arg[1] = PointerGetDatum(NULL);
-					dsinfo->argnull[1] = false;
-
-					/*
-					 * We run the deserialization functions in per-input-tuple
-					 * memory context.
-					 */
-					oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
-
-					fcinfo->arg[1] = FunctionCallInvoke(dsinfo);
-					fcinfo->argnull[1] = dsinfo->isnull;
-
-					MemoryContextSwitchTo(oldContext);
-				}
-			}
-
-			for (setno = 0; setno < numGroupingSets; setno++)
-			{
-				AggStatePerGroup pergroupstate = &pergroup[transno + (setno * numTrans)];
-
-				aggstate->current_set = setno;
-
-				advance_transition_function(aggstate, pertrans, pergroupstate);
-			}
-		}
-	}
-}
-
-/*
- * combine_aggregates replaces advance_aggregates in DO_AGGSPLIT_COMBINE
- * mode.  The principal difference is that here we may need to apply the
- * deserialization function before running the transfn (which, in this mode,
- * is actually the aggregate's combinefn).  Also, we know we don't need to
- * handle FILTER, DISTINCT, ORDER BY, or grouping sets.
- */
-void
-combine_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
-{
-	int			transno;
-	int			numTrans = aggstate->numtrans;
-
-	/* combine not supported with grouping sets */
-	Assert(aggstate->phase->numsets == 0);
-
-	for (transno = 0; transno < numTrans; transno++)
-	{
-		AggStatePerTrans pertrans = &aggstate->pertrans[transno];
-		AggStatePerGroup pergroupstate = &pergroup[transno];
-		TupleTableSlot *slot;
-		FunctionCallInfo fcinfo = &pertrans->transfn_fcinfo;
-
-		/* Evaluate the current input expressions for this aggregate */
-		slot = ExecProject(pertrans->evalproj, NULL);
-		Assert(slot->PRIVATE_tts_nvalid >= 1);
-
-		bool       *isnulls = slot_get_isnull(slot);
-		Datum       *values = slot_get_values(slot);
-
-		/*
-		 * deserialfn_oid will be set if we must deserialize the input state
-		 * before calling the combine function
-		 */
-		if (OidIsValid(pertrans->deserialfn_oid))
-		{
-			/* Don't call a strict deserialization function with NULL input */
-			if (pertrans->deserialfn.fn_strict && isnulls[0])
-			{
-				fcinfo->arg[1] = values[0];
-				fcinfo->argnull[1] = isnulls[0];
-			}
-			else
-			{
-				FunctionCallInfo dsinfo = &pertrans->deserialfn_fcinfo;
-				MemoryContext oldContext;
-
-				dsinfo->arg[0] = values[0];
-				dsinfo->argnull[0] = isnulls[0];
-				/* Dummy second argument for type-safety reasons */
-				dsinfo->arg[1] = PointerGetDatum(NULL);
-				dsinfo->argnull[1] = false;
-
-				/*
-				 * We run the deserialization functions in per-input-tuple
-				 * memory context.
-				 */
-				oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
-
-				fcinfo->arg[1] = FunctionCallInvoke(dsinfo);
-				fcinfo->argnull[1] = dsinfo->isnull;
-
-				MemoryContextSwitchTo(oldContext);
-			}
-		}
-		else
-		{
-			fcinfo->arg[1] = values[0];
-			fcinfo->argnull[1] = isnulls[0];
-		}
-
-		advance_combine_function(aggstate, pertrans, pergroupstate, fcinfo);
-	}
-}
-
-/*
- * Perform combination of states between 2 aggregate states. Effectively this
- * 'adds' two states together by whichever logic is defined in the aggregate
- * function's combine function.
- *
- * Note that in this case transfn is set to the combination function. This
- * perhaps should be changed to avoid confusion, but one field is ok for now
- * as they'll never be needed at the same time.
- * GPDB: we do need them at the same time. Caller must therefore pass 'fcinfo'.
- */
-void
-advance_combine_function(AggState *aggstate,
-						 AggStatePerTrans pertrans,
-						 AggStatePerGroup pergroupstate,
-						 FunctionCallInfo fcinfo)
-{
-	MemoryContext oldContext;
-	Datum		newVal;
-
-	if (pertrans->transfn.fn_strict)
-	{
-		/* if we're asked to merge to a NULL state, then do nothing */
-		if (fcinfo->argnull[1])
-			return;
-
-		if (pergroupstate->noTransValue)
-		{
-			/*
-			 * transValue has not yet been initialized.  If pass-by-ref
-			 * datatype we must copy the combining state value into
-			 * aggcontext.
-			 */
-			if (!pertrans->transtypeByVal)
-			{
-				oldContext = MemoryContextSwitchTo(
-												   aggstate->aggcontexts[aggstate->current_set]->ecxt_per_tuple_memory);
-				pergroupstate->transValue = datumCopy(fcinfo->arg[1],
-													pertrans->transtypeByVal,
-													  pertrans->transtypeLen);
-				MemoryContextSwitchTo(oldContext);
-			}
-			else
-				pergroupstate->transValue = fcinfo->arg[1];
-
-			pergroupstate->transValueIsNull = false;
-			pergroupstate->noTransValue = false;
-			return;
-		}
-	}
-
-	/* We run the combine functions in per-input-tuple memory context */
-	oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
-
-	/* set up aggstate->curpertrans for AggGetAggref() */
-	aggstate->curpertrans = pertrans;
-
-	/*
-	 * OK to call the combine function
-	 */
-	fcinfo->arg[0] = pergroupstate->transValue;
-	fcinfo->argnull[0] = pergroupstate->transValueIsNull;
-	fcinfo->isnull = false;		/* just in case combine func doesn't set it */
-
-	newVal = FunctionCallInvoke(fcinfo);
-
-	aggstate->curpertrans = NULL;
-
-	/*
-	 * If pass-by-ref datatype, must copy the new value into aggcontext and
-	 * pfree the prior transValue.  But if the combine function returned a
-	 * pointer to its first input, we don't need to do anything.
-	 */
-	if (!pertrans->transtypeByVal &&
-		DatumGetPointer(newVal) != DatumGetPointer(pergroupstate->transValue))
-	{
-		if (!fcinfo->isnull)
-		{
-			MemoryContextSwitchTo(aggstate->aggcontexts[aggstate->current_set]->ecxt_per_tuple_memory);
-			newVal = datumCopy(newVal,
-							   pertrans->transtypeByVal,
-							   pertrans->transtypeLen);
-		}
-		if (!pergroupstate->transValueIsNull)
-			pfree(DatumGetPointer(pergroupstate->transValue));
-	}
-
-	pergroupstate->transValue = newVal;
-	pergroupstate->transValueIsNull = fcinfo->isnull;
-
-	MemoryContextSwitchTo(oldContext);
-}
-
-
-/*
-=======
 	ExecEvalExprSwitchContext(aggstate->phase->evaltrans,
 							  aggstate->tmpcontext,
 							  &dummynull);
 }
 
 /*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Run the transition function for a DISTINCT or ORDER BY aggregate
  * with only one input.  This is called after we have completed
  * entering all the input values into the sort object.  We complete the
@@ -2403,14 +2085,8 @@ agg_retrieve_direct(AggState *aggstate)
 				 */
 				for (;;)
 				{
-<<<<<<< HEAD
 					slot_getallattrs(tmpcontext->ecxt_outertuple);
 
-					if (DO_AGGSPLIT_COMBINE(aggstate->aggsplit))
-						combine_aggregates(aggstate, pergroup);
-					else
-						advance_aggregates(aggstate, pergroup);
-=======
 					/*
 					 * During phase 1 only of a mixed agg, we need to update
 					 * hashtables as well in advance_aggregates.
@@ -2423,7 +2099,6 @@ agg_retrieve_direct(AggState *aggstate)
 
 					/* Advance the aggregates (or combine functions) */
 					advance_aggregates(aggstate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 					/* Reset per-input-tuple context after each tuple */
 					ResetExprContext(tmpcontext);
