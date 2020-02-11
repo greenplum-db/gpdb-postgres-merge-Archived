@@ -18,6 +18,8 @@
  */
 #include "postgres.h"
 
+#include <math.h>
+
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/xact.h"
@@ -231,7 +233,7 @@ InitResQueues(void)
 
 		queueform = (Form_pg_resqueue) GETSTRUCT(tuple);
 
-		queueid = HeapTupleGetOid(tuple);
+		queueid = queueform->oid;
 		queuename = NameStr(queueform->rsqname);
 		thresholds[RES_COUNT_LIMIT] = queueform->rsqcountlimit;
 		thresholds[RES_COST_LIMIT] = queueform->rsqcostlimit;
@@ -955,7 +957,7 @@ GetResQueueIdForName(char	*name)
 
 	tuple = systable_getnext(scan);
 	if (tuple)
-		queueid = HeapTupleGetOid(tuple);
+		queueid = ((Form_pg_resqueue) GETSTRUCT(tuple))->oid;
 	else
 		queueid = InvalidOid;
 

@@ -10,10 +10,11 @@
  */
 #include "postgres.h"
 
+#include "access/genam.h"
+#include "access/table.h"
 #include "funcapi.h"
 #include "libpq-fe.h"
 #include "miscadmin.h"
-#include "access/genam.h"
 #include "catalog/pg_resgroup.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdispatchresult.h"
@@ -245,13 +246,13 @@ pg_resgroup_get_status(PG_FUNCTION_ARGS)
 			 * block until creating/dropping finish to avoid inconsistent
 			 * resource group metadata
 			 */
-			pg_resgroup_rel = heap_open(ResGroupRelationId, ExclusiveLock);
+			pg_resgroup_rel = table_open(ResGroupRelationId, ExclusiveLock);
 
 			sscan = systable_beginscan(pg_resgroup_rel, InvalidOid, false,
 									   NULL, 0, NULL);
 			while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
 			{
-				Oid oid = ObjectIdGetDatum(HeapTupleGetOid(tuple));
+				Oid			oid = ((Form_pg_resgroup) GETSTRUCT(tuple))->oid;
 
 				if (inGroupId == InvalidOid || inGroupId == oid)
 				{
@@ -272,7 +273,7 @@ pg_resgroup_get_status(PG_FUNCTION_ARGS)
 			if (ctx->nGroups > 0)
 				getResUsage(ctx, inGroupId);
 
-			heap_close(pg_resgroup_rel, ExclusiveLock);
+			table_close(pg_resgroup_rel, ExclusiveLock);
 		}
 
 		MemoryContextSwitchTo(oldcontext);

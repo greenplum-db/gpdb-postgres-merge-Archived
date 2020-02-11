@@ -36,10 +36,14 @@
 
 #include "postgres.h"
 
-#include "tcop/tcopprot.h"
+#include <math.h>
+
 #include "access/genam.h"
+#include "access/table.h"
+#include "tcop/tcopprot.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_resgroup.h"
+#include "catalog/pg_resgroupcapability.h"
 #include "cdb/cdbgang.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
@@ -271,8 +275,8 @@ static ResGroupProcData *self = &__self;
 
 /* If we are waiting on a group, this points to the associated group */
 static ResGroupData *groupAwaited = NULL;
-static int64 groupWaitStart;
-static int64 groupWaitEnd;
+static TimestampTz groupWaitStart;
+static TimestampTz groupWaitEnd;
 
 /* the resource group self is running in bypass mode */
 static ResGroupData *bypassedGroup = NULL;
@@ -560,8 +564,8 @@ InitResGroups(void)
 	 * Serialization is done by LW_EXCLUSIVE ResGroupLock. However, we must obtain all DB
 	 * locks before obtaining LWlock to prevent deadlock.
 	 */
-	relResGroup = heap_open(ResGroupRelationId, AccessShareLock);
-	relResGroupCapability = heap_open(ResGroupCapabilityRelationId, AccessShareLock);
+	relResGroup = table_open(ResGroupRelationId, AccessShareLock);
+	relResGroupCapability = table_open(ResGroupCapabilityRelationId, AccessShareLock);
 	LWLockAcquire(ResGroupLock, LW_EXCLUSIVE);
 
 	if (pResGroupControl->loaded)
@@ -594,9 +598,9 @@ InitResGroups(void)
 	sscan = systable_beginscan(relResGroup, InvalidOid, false, NULL, 0, NULL);
 	while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
 	{
+		Oid			groupId = ((Form_pg_resgroup) GETSTRUCT(tuple))->oid;
 		ResGroupData	*group;
 		int cpuRateLimit;
-		Oid groupId = HeapTupleGetOid(tuple);
 
 		GetResGroupCapabilities(relResGroupCapability, groupId, &caps);
 		cpuRateLimit = caps.cpuRateLimit;
@@ -703,8 +707,8 @@ exit:
 	 * release lock here to guarantee we have no lock held when acquiring
 	 * resource group slot
 	 */
-	heap_close(relResGroup, AccessShareLock);
-	heap_close(relResGroupCapability, AccessShareLock);
+	table_close(relResGroup, AccessShareLock);
+	table_close(relResGroupCapability, AccessShareLock);
 }
 
 /*
@@ -2385,24 +2389,24 @@ SerializeResGroupInfo(StringInfo str)
 	}
 
 	itmp = htonl(self->groupId);
-	appendBinaryStringInfo(str, &itmp, sizeof(int32));
+	appendBinaryStringInfo(str, (char *) &itmp, sizeof(int32));
 
 	itmp = htonl(caps->concurrency);
-	appendBinaryStringInfo(str, &itmp, sizeof(int32));
+	appendBinaryStringInfo(str, (char *) &itmp, sizeof(int32));
 	itmp = htonl(caps->cpuRateLimit);
-	appendBinaryStringInfo(str, &itmp, sizeof(int32));
+	appendBinaryStringInfo(str, (char *) &itmp, sizeof(int32));
 	itmp = htonl(caps->memLimit);
-	appendBinaryStringInfo(str, &itmp, sizeof(int32));
+	appendBinaryStringInfo(str, (char *) &itmp, sizeof(int32));
 	itmp = htonl(caps->memSharedQuota);
-	appendBinaryStringInfo(str, &itmp, sizeof(int32));
+	appendBinaryStringInfo(str, (char *) &itmp, sizeof(int32));
 	itmp = htonl(caps->memSpillRatio);
-	appendBinaryStringInfo(str, &itmp, sizeof(int32));
+	appendBinaryStringInfo(str, (char *) &itmp, sizeof(int32));
 	itmp = htonl(caps->memAuditor);
-	appendBinaryStringInfo(str, &itmp, sizeof(int32));
+	appendBinaryStringInfo(str, (char *) &itmp, sizeof(int32));
 
 	cpuset_len = strlen(caps->cpuset);
 	itmp = htonl(cpuset_len);
-	appendBinaryStringInfo(str, &itmp, sizeof(int32));
+	appendBinaryStringInfo(str, (char *) &itmp, sizeof(int32));
 	appendBinaryStringInfo(str, caps->cpuset, cpuset_len);
 
 	itmp = htonl(bypassedSlot.groupId);
@@ -2775,7 +2779,7 @@ waitOnGroup(ResGroupData *group)
 	 * This is used for interrupt cleanup, similar to lockAwaited in ProcSleep
 	 */
 	groupAwaited = group;
-	groupWaitStart = GetCurrentIntegerTimestamp();
+	groupWaitStart = GetCurrentTimestamp();
 
 	/*
 	 * Make sure we have released all locks before going to sleep, to eliminate
@@ -2936,7 +2940,7 @@ groupWaitCancel(void)
 		return;
 
 	pgstat_report_wait_end();
-	groupWaitEnd = GetCurrentIntegerTimestamp();
+	groupWaitEnd = GetCurrentTimestamp();
 
 	Assert(!selfIsAssigned());
 
