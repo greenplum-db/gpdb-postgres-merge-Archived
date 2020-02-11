@@ -34,8 +34,6 @@ typedef struct ExternalInsertDescData
 								 * mirror seg) */
 
 	TupleDesc	ext_tupDesc;
-	Datum	   *ext_values;
-	bool	   *ext_nulls;
 
 	FmgrInfo   *ext_custom_formatter_func; /* function to convert to custom format */
 	List	   *ext_custom_formatter_params; /* list of defelems that hold user's format parameters */
@@ -82,7 +80,7 @@ external_getnext(FileScanDesc scan,
                  ScanDirection direction,
                  ExternalSelectDesc desc);
 extern ExternalInsertDesc external_insert_init(Relation rel);
-extern void external_insert(ExternalInsertDesc extInsertDesc, HeapTuple instup);
+extern void external_insert(ExternalInsertDesc extInsertDesc, TupleTableSlot *slot);
 extern void external_insert_finish(ExternalInsertDesc extInsertDesc);
 extern void external_set_env_vars(extvar_t *extvar, char *uri, bool csv, char *escape, char *quote, bool header, uint32 scancounter);
 extern char *linenumber_atoi(char *buffer, size_t bufsz, int64 linenumber);

@@ -5058,6 +5058,7 @@ BeginCopyFrom(ParseState *pstate,
 			  const char *filename,
 			  bool is_program,
 			  copy_data_source_cb data_source_cb,
+			  void *data_source_cb_extra,
 			  List *attnamelist,
 			  List *options,
 			  List *ao_segnos)
@@ -5207,6 +5208,7 @@ BeginCopyFrom(ParseState *pstate,
 	{
 		cstate->copy_dest = COPY_CALLBACK;
 		cstate->data_source_cb = data_source_cb;
+		cstate->data_source_cb_extra = data_source_cb_extra;
 	}
 	else if (pipe)
 	{

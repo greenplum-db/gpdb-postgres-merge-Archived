@@ -191,7 +191,6 @@ typedef struct FileScanDescData
 	/* current file parse state */
 	struct CopyStateData *fs_pstate;
 
-	Form_pg_attribute *attr;
 	AttrNumber	num_phys_attrs;
 	Datum	   *values;
 	bool	   *nulls;

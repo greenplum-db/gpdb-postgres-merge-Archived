@@ -71,7 +71,7 @@ static void InitParseState(CopyState pstate, Relation relation,
 			   char *uri, int rejectlimit,
 			   bool islimitinrows, bool logerrors);
 
-static void FunctionCallPrepareFormatter(FunctionCallInfoData *fcinfo,
+static void FunctionCallPrepareFormatter(FunctionCallInfoBaseData *fcinfo,
 							 int nArgs,
 							 CopyState pstate,
 							 FmgrInfo *formatter_func,
@@ -241,7 +241,7 @@ external_beginscan(Relation relation, uint32 scancounter,
 
 	tupDesc = RelationGetDescr(relation);
 	scan->fs_tupDesc = tupDesc;
-	scan->attr = tupDesc->attrs;
+	//scan->attr = tupDesc->attrs;
 	scan->num_phys_attrs = tupDesc->natts;
 
 	scan->values = (Datum *) palloc(scan->num_phys_attrs * sizeof(Datum));
@@ -258,10 +258,12 @@ external_beginscan(Relation relation, uint32 scancounter,
 	for (attnum = 1; attnum <= scan->num_phys_attrs; attnum++)
 	{
 		/* We don't need info for dropped attributes */
-		if (scan->attr[attnum - 1]->attisdropped)
+		Form_pg_attribute attr = TupleDescAttr(scan->fs_tupDesc, attnum - 1);
+
+		if (attr->attisdropped)
 			continue;
 
-		getTypeInputInfo(scan->attr[attnum - 1]->atttypid,
+		getTypeInputInfo(attr->atttypid,
 						 &scan->in_func_oid, &scan->typioparams[attnum - 1]);
 		fmgr_info(scan->in_func_oid, &scan->in_functions[attnum - 1]);
 	}
@@ -601,8 +603,6 @@ external_insert_init(Relation rel)
 	 */
 	extInsertDesc->ext_pstate = (CopyStateData *) palloc0(sizeof(CopyStateData));
 	extInsertDesc->ext_tupDesc = RelationGetDescr(rel);
-	extInsertDesc->ext_values = (Datum *) palloc(extInsertDesc->ext_tupDesc->natts * sizeof(Datum));
-	extInsertDesc->ext_nulls = (bool *) palloc(extInsertDesc->ext_tupDesc->natts * sizeof(bool));
 
 	/*
 	 * Writing to an external table is like COPY TO: we get tuples from the executor,
@@ -669,11 +669,9 @@ external_insert_init(Relation rel)
  * Like heap_insert(), this function can modify the input tuple!
  */
 void
-external_insert(ExternalInsertDesc extInsertDesc, HeapTuple instup)
+external_insert(ExternalInsertDesc extInsertDesc, TupleTableSlot *slot)
 {
 	TupleDesc	tupDesc = extInsertDesc->ext_tupDesc;
-	Datum	   *values = extInsertDesc->ext_values;
-	bool	   *nulls = extInsertDesc->ext_nulls;
 	CopyStateData *pstate = extInsertDesc->ext_pstate;
 	bool		customFormat = (extInsertDesc->ext_custom_formatter_func != NULL);
 
@@ -690,8 +688,7 @@ external_insert(ExternalInsertDesc extInsertDesc, HeapTuple instup)
 	if (!customFormat)
 	{
 		/* TEXT or CSV */
-		heap_deform_tuple(instup, tupDesc, values, nulls);
-		CopyOneRowTo(pstate, values, nulls);
+		CopyOneRowTo(pstate, slot);
 		CopySendEndOfRow(pstate);
 	}
 	else
@@ -699,7 +696,8 @@ external_insert(ExternalInsertDesc extInsertDesc, HeapTuple instup)
 		/* custom format. convert tuple using user formatter */
 		Datum		d;
 		bytea	   *b;
-		FunctionCallInfoData fcinfo;
+		LOCAL_FCINFO(fcinfo, 1);
+		HeapTuple instup;
 
 		/*
 		 * There is some redundancy between FormatterData and
@@ -712,7 +710,7 @@ external_insert(ExternalInsertDesc extInsertDesc, HeapTuple instup)
 		Assert(formatter);
 
 		/* per call formatter prep */
-		FunctionCallPrepareFormatter(&fcinfo,
+		FunctionCallPrepareFormatter(fcinfo,
 									 1,
 									 pstate,
 									 extInsertDesc->ext_custom_formatter_func,
@@ -724,23 +722,32 @@ external_insert(ExternalInsertDesc extInsertDesc, HeapTuple instup)
 									 NULL);
 
 		/* Mark the correct record type in the passed tuple */
+
+		/*
+		 * get the heap tuple out of the tuple table slot, making sure we have a
+		 * writable copy. (the function can scribble on the tuple)
+		 */
+		instup = ExecCopySlotHeapTuple(slot);
+
 		HeapTupleHeaderSetDatumLength(instup->t_data, instup->t_len);
 		HeapTupleHeaderSetTypeId(instup->t_data, tupDesc->tdtypeid);
 		HeapTupleHeaderSetTypMod(instup->t_data, tupDesc->tdtypmod);
 
-		fcinfo.args[0].value = HeapTupleGetDatum(instup);
-		fcinfo.args[0].isnull = false;
+		fcinfo->args[0].value = HeapTupleGetDatum(instup);
+		fcinfo->args[0].isnull = false;
 
-		d = FunctionCallInvoke(&fcinfo);
+		d = FunctionCallInvoke(fcinfo);
 		MemoryContextReset(formatter->fmt_perrow_ctx);
 
 		/* We do not expect a null result */
-		if (fcinfo.isnull)
-			elog(ERROR, "function %u returned NULL", fcinfo.flinfo->fn_oid);
+		if (fcinfo->isnull)
+			elog(ERROR, "function %u returned NULL", fcinfo->flinfo->fn_oid);
 
 		b = DatumGetByteaP(d);
 
 		CopyOneCustomRowTo(pstate, b);
+
+		heap_freetuple(instup);
 	}
 
 	/* Write the data into the external source */
@@ -857,7 +864,6 @@ externalgettup_defined(FileScanDesc scan)
 {
 	HeapTuple	tuple = NULL;
 	CopyState	pstate = scan->fs_pstate;
-	Oid			loaded_oid;
 	MemoryContext oldcontext;
 
 	MemoryContextReset(pstate->rowcontext);
@@ -867,8 +873,7 @@ externalgettup_defined(FileScanDesc scan)
 	if (!NextCopyFrom(pstate,
 					  NULL,
 					  scan->values,
-					  scan->nulls,
-					  &loaded_oid))
+					  scan->nulls))
 	{
 		MemoryContextSwitchTo(oldcontext);
 		return NULL;
@@ -929,10 +934,10 @@ externalgettup_custom(FileScanDesc scan)
 			 */
 			PG_TRY();
 			{
-				FunctionCallInfoData fcinfo;
+				LOCAL_FCINFO(fcinfo, 0);
 
 				/* per call formatter prep */
-				FunctionCallPrepareFormatter(&fcinfo,
+				FunctionCallPrepareFormatter(fcinfo,
 						0,
 						pstate,
 						scan->fs_custom_formatter_func,
@@ -942,7 +947,7 @@ externalgettup_custom(FileScanDesc scan)
 						scan->fs_tupDesc,
 						scan->in_functions,
 						scan->typioparams);
-				(void) FunctionCallInvoke(&fcinfo);
+				(void) FunctionCallInvoke(fcinfo);
 
 			}
 			PG_CATCH();
@@ -1186,22 +1191,22 @@ InitParseState(CopyState pstate, Relation relation,
 	/* Initialize 'out_functions', like CopyTo() would. */
 	CopyState cstate = pstate;
 	TupleDesc tupDesc = RelationGetDescr(cstate->rel);
-	Form_pg_attribute *attr = tupDesc->attrs;
 	int num_phys_attrs = tupDesc->natts;
 	cstate->out_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
 	ListCell *cur;
 	foreach(cur, cstate->attnumlist)
 	{
 		int			attnum = lfirst_int(cur);
+		Form_pg_attribute attr = TupleDescAttr(tupDesc, attnum - 1);
 		Oid			out_func_oid;
 		bool		isvarlena;
 
 		if (cstate->binary)
-			getTypeBinaryOutputInfo(attr[attnum - 1]->atttypid,
+			getTypeBinaryOutputInfo(attr->atttypid,
 									&out_func_oid,
 									&isvarlena);
 		else
-			getTypeOutputInfo(attr[attnum - 1]->atttypid,
+			getTypeOutputInfo(attr->atttypid,
 							  &out_func_oid,
 							  &isvarlena);
 		fmgr_info(out_func_oid, &cstate->out_functions[attnum - 1]);
@@ -1234,7 +1239,7 @@ InitParseState(CopyState pstate, Relation relation,
  * Also, set up the function call context.
  */
 static void
-FunctionCallPrepareFormatter(FunctionCallInfoData *fcinfo,
+FunctionCallPrepareFormatter(FunctionCallInfoBaseData *fcinfo,
 							 int nArgs,
 							 CopyState pstate,
 							 FmgrInfo *formatter_func,

@@ -494,7 +494,6 @@ exttable_ExecForeignInsert(EState *estate,
 						   TupleTableSlot *planSlot)
 {
 	ExternalInsertDescData *extInsertDesc;
-	HeapTuple	tuple;
 
 	/* Open the external resouce on first call. */
 	extInsertDesc = (ExternalInsertDescData *) rinfo->ri_FdwState;
@@ -505,13 +504,7 @@ exttable_ExecForeignInsert(EState *estate,
 		rinfo->ri_FdwState = extInsertDesc;
 	}
 
-	/*
-	 * get the heap tuple out of the tuple table slot, making sure we have a
-	 * writable copy. (external_insert() can scribble on the tuple)
-	 */
-	tuple = ExecCopySlotHeapTuple(slot);
-
-	(void) external_insert(extInsertDesc, tuple);
+	(void) external_insert(extInsertDesc, slot);
 
 	return slot;
 }
