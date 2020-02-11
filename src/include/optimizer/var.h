@@ -31,7 +31,6 @@ bool        cdb_walk_vars(Node                         *node,
 
 extern Relids pull_upper_varnos(Node *node);
 
-extern bool contain_ctid_var_reference(Scan *scan);
 bool contain_vars_of_level_or_above_cbPlaceHolderVar(PlaceHolderVar *placeholdervar, void *unused, int sublevelsup);
 
 #endif   /* VAR_H */

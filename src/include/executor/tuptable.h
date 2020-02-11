@@ -343,6 +343,8 @@ extern TupleTableSlot *ExecStoreMemTuple(MemTuple tuple,
 extern MemTuple ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt,
 									   char *dest, unsigned int *len);
 
+extern void slot_set_ctid_from_fake(TupleTableSlot *slot, ItemPointerData *fake_ctid);
+
 #ifndef FRONTEND
 
 /*

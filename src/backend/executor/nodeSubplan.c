@@ -368,15 +368,13 @@ ExecScanSubPlan(SubPlanState *node,
 			 * node->curTuple keeps track of the copied tuple for eventual
 			 * freeing.
 			 */
-			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-
 			if (node->curTuple)
                 heap_freetuple(node->curTuple);
-			node->curTuple = ExecCopySlotMemTuple(slot);
+			node->curTuple = ExecCopySlotHeapTuple(slot);
 
 			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 
-			result = memtuple_getattr(node->curTuple, slot->tts_mt_bind, 1, isNull);
+			result = heap_getattr(node->curTuple, 1, tdesc, isNull);
 			/* keep scanning subplan to make sure there's only one tuple */
 			continue;
 		}
@@ -1256,7 +1254,7 @@ PG_TRY();
 		 */
 		if (node->curTuple)
             heap_freetuple(node->curTuple);
-		node->curTuple = ExecCopySlotMemTuple(slot);
+		node->curTuple = ExecCopySlotHeapTuple(slot);
 
 		/*
 		 * Now set all the setParam params from the columns of the tuple
@@ -1267,7 +1265,8 @@ PG_TRY();
 			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
 			prm->execPlan = NULL;
-			prm->value = memtuple_getattr(node->curTuple, slot->tts_mt_bind, i, &(prm->isnull));
+			prm->value = heap_getattr(node->curTuple, i, tdesc,
+									  &(prm->isnull));
 			i++;
 		}
 	}

@@ -2193,7 +2193,6 @@ ExecModifyTable(PlanState *pstate)
 	ModifyTableState *node = castNode(ModifyTableState, pstate);
 	PartitionTupleRouting *proute = node->mt_partition_tuple_routing;
 	EState	   *estate = node->ps.state;
-	PlanGenerator planGen = estate->es_plannedstmt->planGen;
 	CmdType		operation = node->operation;
 	ResultRelInfo *saved_resultRelInfo;
 	ResultRelInfo *resultRelInfo;

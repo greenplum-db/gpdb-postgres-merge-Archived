@@ -187,4 +187,6 @@ extern int	locate_var_of_level(Node *node, int levelsup);
 extern List *pull_var_clause(Node *node, int flags);
 extern Node *flatten_join_alias_vars(Query *query, Node *node);
 
+extern bool contain_ctid_var_reference(Scan *scan);
+
 #endif							/* OPTIMIZER_H */

@@ -351,8 +351,8 @@ StoreTupleForTrigger(TupleTableSlot *slot, Datum *values, bool *nulls, ListCell 
 	ExecStoreAllNullTuple(slot);
 
 	slot_getallattrs(slot);
-	Datum *new_values = slot_get_values(slot);
-	bool *new_nulls = slot_get_isnull(slot);
+	Datum	   *new_values = slot->tts_values;
+	bool	   *new_nulls = slot->tts_isnull;
 
 	for (int attno = 0; attno < slot->tts_tupleDescriptor->natts; attno++)
 	{
@@ -362,15 +362,16 @@ StoreTupleForTrigger(TupleTableSlot *slot, Datum *values, bool *nulls, ListCell 
 		attr = attr->next;
 	}
 }
+
 /* Store results from trigger to output tuple */
 void
 ConstructNewTupleTableSlot(HeapTuple newtuple, TupleTableSlot *triggerTuple, ListCell *attr, Datum *values, bool *nulls)
 {
-	ExecStoreHeapTuple(newtuple , triggerTuple, InvalidBuffer, true);
+	oExecStoreHeapTuple(newtuple , triggerTuple, InvalidBuffer, true);
 	slot_getallattrs(triggerTuple);
 
-	Datum *new_values = slot_get_values(triggerTuple);
-	bool *new_nulls = slot_get_isnull(triggerTuple);
+	Datum	   *new_values = triggerTuple->tts_values;
+	bool	   *new_nulls = triggerTuple->tts_isnull;
 
 	for(int attno = 0; attno < triggerTuple->tts_tupleDescriptor->natts; attno++)
 	{
@@ -474,8 +475,8 @@ ExecRowTrigger(RowTriggerState *node)
 		}
 
 		slot_getallattrs(slot);
-		Datum *values = slot_get_values(slot);
-		bool *nulls = slot_get_isnull(slot);
+		Datum	   *values = slot->tts_values;
+		bool	   *nulls = slot->tts_isnull;
 
 		/* Build new TupleTableSlots */
 		if (plannode->newValuesColIdx != NIL)

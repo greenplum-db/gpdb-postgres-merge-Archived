@@ -226,7 +226,7 @@ querytree_safe_for_qe_walker(Node *expr, void *context)
 
 						Assert(namespaceId != InvalidOid);
 						
-						if (!(IsSystemNamespace(namespaceId) ||
+						if (!(IsCatalogNamespace(namespaceId) ||
 									IsToastNamespace(namespaceId) ||
 									IsAoSegmentNamespace(namespaceId) ||
 									IsReplicatedTable(rte->relid)))
@@ -600,30 +600,13 @@ init_execution_state(List *queryTree_list,
 									 CURSOR_OPT_PARALLEL_OK,
 									 NULL);
 
-<<<<<<< HEAD
 			if (IsA(stmt, PlannedStmt))
 				((PlannedStmt*)stmt)->metricsQueryType = FUNCTION_INNER_QUERY;
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			/*
 			 * Precheck all commands for validity in a function.  This should
 			 * generally match the restrictions spi.c applies.
 			 */
-<<<<<<< HEAD
-			if (IsA(stmt, CopyStmt) &&
-				((CopyStmt *) stmt)->filename == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("cannot COPY to/from client in a SQL function")));
-
-			if (IsA(stmt, TransactionStmt))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				/* translator: %s is a SQL statement name */
-						 errmsg("%s is not allowed in a SQL function",
-								CreateCommandTag(stmt))));
-=======
 			if (stmt->commandType == CMD_UTILITY)
 			{
 				if (IsA(stmt->utilityStmt, CopyStmt) &&
@@ -639,7 +622,6 @@ init_execution_state(List *queryTree_list,
 							 errmsg("%s is not allowed in a SQL function",
 									CreateCommandTag(stmt->utilityStmt))));
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			if (fcache->readonly_func && !CommandIsReadOnly(stmt))
 				ereport(ERROR,
@@ -943,48 +925,10 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	else
 		dest = None_Receiver;
 
-<<<<<<< HEAD
-	if (IsA(es->stmt, PlannedStmt))
-	{
-		es->qd = CreateQueryDesc((PlannedStmt *) es->stmt,
-								 fcache->src,
-								 GetActiveSnapshot(),
-								 InvalidSnapshot,
-								 dest,
-								 fcache->paramLI,
-								 INSTRUMENT_NONE);
+	/* GPDB hook for collecting query info */
+	if (query_info_collect_hook)
+		(*query_info_collect_hook)(METRICS_QUERY_SUBMIT, es->qd);
 
-		/* GPDB hook for collecting query info */
-		if (query_info_collect_hook)
-			(*query_info_collect_hook)(METRICS_QUERY_SUBMIT, es->qd);
-
-		if (gp_enable_gpperfmon 
-			&& Gp_role == GP_ROLE_DISPATCH 
-			&& log_min_messages < DEBUG4)
-		{
-			/* For log level of DEBUG4, gpmon is sent information about queries inside SQL functions as well */
-			Assert(fcache->src);
-			gpmon_qlog_query_submit(es->qd->gpmon_pkt);
-			gpmon_qlog_query_text(es->qd->gpmon_pkt,
-					fcache->src,
-					application_name,
-					NULL /* resqueue name */,
-					NULL /* priority */);
-
-		}
-		else
-		{
-			/* Otherwise, we do not record information about internal queries. */
-			es->qd->gpmon_pkt = NULL;
-		}
-	}
-	else
-		es->qd = CreateUtilityQueryDesc(es->stmt,
-										fcache->src,
-										GetActiveSnapshot(),
-										dest,
-										fcache->paramLI);
-=======
 	es->qd = CreateQueryDesc(es->stmt,
 							 fcache->src,
 							 GetActiveSnapshot(),
@@ -993,7 +937,6 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 							 fcache->paramLI,
 							 es->qd ? es->qd->queryEnv : NULL,
 							 0);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Utility commands don't need Executor. */
 	if (es->qd->operation != CMD_UTILITY)

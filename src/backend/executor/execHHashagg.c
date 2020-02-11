@@ -764,10 +764,6 @@ static Size est_hash_tuple_size(TupleTableSlot *hashslot, List *hash_needed)
 	
 	len = offsetof(HeapTupleHeaderData, t_bits);
 	len += BITMAPLEN(natts);
-	
-	if (tupleDescriptor->tdhasoid)
-		len += sizeof(Oid);
-	
 	len = MAXALIGN(len);
 	
 	/* Add data sizes to len. */

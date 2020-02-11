@@ -148,15 +148,10 @@ SPI_connect_ext(int options)
 	_SPI_current->procCxt = NULL;	/* in case we fail to create 'em */
 	_SPI_current->execCxt = NULL;
 	_SPI_current->connectSubid = GetCurrentSubTransactionId();
-<<<<<<< HEAD
-	_SPI_current->outer_processed = SPI_processed;
-	_SPI_current->outer_lastoid = SPI_lastoid;
-=======
 	_SPI_current->queryEnv = NULL;
 	_SPI_current->atomic = (options & SPI_OPT_NONATOMIC ? false : true);
 	_SPI_current->internal_xact = false;
 	_SPI_current->outer_processed = SPI_processed;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	_SPI_current->outer_tuptable = SPI_tuptable;
 	_SPI_current->outer_result = SPI_result;
 
@@ -186,10 +181,6 @@ SPI_connect_ext(int options)
 	 * depend on state of an outer caller.
 	 */
 	SPI_processed = 0;
-<<<<<<< HEAD
-	SPI_lastoid = InvalidOid;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	SPI_tuptable = NULL;
 	SPI_result = 0;
 
@@ -225,10 +216,6 @@ SPI_finish(void)
 	 * pointing at a just-deleted tuptable
 	 */
 	SPI_processed = _SPI_current->outer_processed;
-<<<<<<< HEAD
-	SPI_lastoid = _SPI_current->outer_lastoid;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	SPI_tuptable = _SPI_current->outer_tuptable;
 	SPI_result = _SPI_current->outer_result;
 
@@ -406,18 +393,7 @@ AtEOXact_SPI(bool isCommit)
 				 errmsg("transaction left non-empty SPI stack"),
 				 errhint("Check for missing \"SPI_finish\" calls.")));
 
-<<<<<<< HEAD
-	_SPI_current = _SPI_stack = NULL;
-	_SPI_stack_depth = 0;
-	_SPI_connected = _SPI_curid = -1;
-	/* Reset API global variables, too */
-	SPI_processed = 0;
-	SPI_lastoid = InvalidOid;
-	SPI_tuptable = NULL;
-	SPI_result = 0;
-=======
 	SPICleanup();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -463,10 +439,6 @@ AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid)
 		 * be already gone.
 		 */
 		SPI_processed = connection->outer_processed;
-<<<<<<< HEAD
-		SPI_lastoid = connection->outer_lastoid;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		SPI_tuptable = connection->outer_tuptable;
 		SPI_result = connection->outer_result;
 
@@ -1454,8 +1426,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	 */
 
 	/* Replan if needed, and increment plan refcount for portal */
-<<<<<<< HEAD
-	cplan = GetCachedPlan(plansource, paramLI, false, NULL);
+	cplan = GetCachedPlan(plansource, paramLI, false, _SPI_current->queryEnv, NULL);
 	stmt_list = cplan->stmt_list;
 
 	/* GPDB: Mark all queries as SPI inner queries for extension usage */
@@ -1466,14 +1437,6 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 			((PlannedStmt*)stmt)->metricsQueryType = SPI_INNER_QUERY;
 	}
 
-	/* Pop the error context stack */
-	error_context_stack = spierrcontext.previous;
-
-=======
-	cplan = GetCachedPlan(plansource, paramLI, false, _SPI_current->queryEnv);
-	stmt_list = cplan->stmt_list;
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (!plan->saved)
 	{
 		/*
@@ -1910,12 +1873,8 @@ SPI_plan_get_cached_plan(SPIPlanPtr plan)
 	error_context_stack = &spierrcontext;
 
 	/* Get the generic plan for the query */
-<<<<<<< HEAD
-	cplan = GetCachedPlan(plansource, NULL, plan->saved, NULL);
-=======
 	cplan = GetCachedPlan(plansource, NULL, plan->saved,
-						  _SPI_current->queryEnv);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						  _SPI_current->queryEnv, NULL);
 	Assert(cplan == plansource->gplan);
 
 	/* Pop the error context stack */
@@ -2344,11 +2303,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 		 * Replan if needed, and increment plan refcount.  If it's a saved
 		 * plan, the refcount must be backed by the CurrentResourceOwner.
 		 */
-<<<<<<< HEAD
-		cplan = GetCachedPlan(plansource, paramLI, plan->saved, NULL);
-=======
-		cplan = GetCachedPlan(plansource, paramLI, plan->saved, _SPI_current->queryEnv);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		cplan = GetCachedPlan(plansource, paramLI, plan->saved, _SPI_current->queryEnv, NULL);
 		stmt_list = cplan->stmt_list;
 
 		/*
@@ -2372,23 +2327,12 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 			_SPI_current->processed = 0;
 			_SPI_current->tuptable = NULL;
 
+			/* GPDB: Mark all queries as SPI inner query for extension usage */
+			stmt->metricsQueryType = SPI_INNER_QUERY;
+
 			if (stmt->utilityStmt)
 			{
-<<<<<<< HEAD
-				PlannedStmt* pstmt = (PlannedStmt *) stmt;
-				canSetTag = pstmt->canSetTag;
-				/* GPDB: Mark all queries as SPI inner query for extension usage */
-				((PlannedStmt*)pstmt)->metricsQueryType = SPI_INNER_QUERY;
-			}
-			else
-			{
-				/* utilities are canSetTag if only thing in list */
-				canSetTag = (list_length(stmt_list) == 1);
-
-				if (IsA(stmt, CopyStmt))
-=======
 				if (IsA(stmt->utilityStmt, CopyStmt))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				{
 					CopyStmt   *cstmt = (CopyStmt *) stmt->utilityStmt;
 
@@ -2441,8 +2385,8 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 										plansource->query_string,
 										snap, crosscheck_snapshot,
 										dest,
-<<<<<<< HEAD
-										paramLI, 0);
+										paramLI, _SPI_current->queryEnv,
+										0);
 
 				/* GPDB hook for collecting query info */
 				if (query_info_collect_hook)
@@ -2467,10 +2411,6 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 					qdesc->gpmon_pkt = NULL;
 				}
 
-=======
-										paramLI, _SPI_current->queryEnv,
-										0);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				res = _SPI_pquery(qdesc, fire_triggers,
 								  canSetTag ? tcount : 0);
 				FreeQueryDesc(qdesc);
@@ -2784,9 +2724,8 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount)
 
 		ExecutorStart(queryDesc, 0);
 
-		ExecutorRun(queryDesc, ForwardScanDirection, tcount);
+		ExecutorRun(queryDesc, ForwardScanDirection, tcount, true);
 
-<<<<<<< HEAD
 		/*
 		 * In GPDB, in a INSERT/UPDATE/DELETE ... RETURNING statement, the
 		 * es_processed counter is only updated in ExecutorEnd, when we
@@ -2803,11 +2742,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount)
 
 		if (Gp_role == GP_ROLE_DISPATCH)
 			autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
-=======
-	ExecutorRun(queryDesc, ForwardScanDirection, tcount, true);
-
-	_SPI_current->processed = queryDesc->estate->es_processed;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		ExecutorFinish(queryDesc);
 		ExecutorEnd(queryDesc);
@@ -2818,7 +2752,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount)
 		 * above) and call _SPI_checktuples()
 		 */
 		_SPI_current->processed = queryDesc->es_processed;
-		_SPI_current->lastoid = queryDesc->es_lastoid;
 		if (checkTuples)
 		{
 #ifdef FAULT_INJECTOR
@@ -2854,7 +2787,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount)
 	_SPI_current->processed = queryDesc->es_processed;	/* Mpp: Dispatched
 														 * queries fill in this
 														 * at Executor End */
-	_SPI_current->lastoid = queryDesc->es_lastoid;
 
 #ifdef SPI_EXECUTOR_STATS
 	if (ShowExecutorStats)
@@ -2996,14 +2928,6 @@ _SPI_begin_call(bool use_exec)
 static int
 _SPI_end_call(bool use_exec)
 {
-<<<<<<< HEAD
-	/*
-	 * We're returning to procedure where _SPI_curid == _SPI_connected - 1
-	 */
-	_SPI_curid--;
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (use_exec)
 	{
 		/* switch to the procedure memory context */
@@ -3175,7 +3099,6 @@ _SPI_save_plan(SPIPlanPtr plan)
 	return newplan;
 }
 
-<<<<<<< HEAD
 /**
  * Memory reserved for SPI cals
  */
@@ -3245,8 +3168,9 @@ bool SPI_IsMemoryReserved(void)
 bool
 SPI_context(void)
 { 
-	return (_SPI_connected != -1); 
-=======
+	return (_SPI_connected != -1);
+}
+
 /*
  * Internal lookup of ephemeral named relation by name.
  */
@@ -3375,5 +3299,4 @@ SPI_register_trigger_data(TriggerData *tdata)
 	}
 
 	return SPI_OK_TD_REGISTER;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

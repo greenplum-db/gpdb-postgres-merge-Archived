@@ -13,7 +13,7 @@
 
 #include "executor/executor.h"
 #include "executor/nodeTupleSplit.h"
-#include "optimizer/tlist.h"
+#include "optimizer/optimizer.h"
 
 /* -----------------
  * ExecInitTupleSplit
@@ -121,7 +121,6 @@ struct TupleTableSlot *ExecTupleSplit(TupleSplitState *node)
 	TupleTableSlot  *result;
 	ExprContext     *econtext;
 	TupleSplit      *plan;
-	ExprDoneCond     isDone;
 
 	econtext = node->ss.ps.ps_ExprContext;
 	plan = (TupleSplit *)node->ss.ps.plan;
@@ -137,15 +136,15 @@ struct TupleTableSlot *ExecTupleSplit(TupleSplitState *node)
 		slot_getsomeattrs(node->outerslot, node->maxAttrNum);
 
 		/* store original tupleslot isnull array */
-		memcpy(node->isnull_orig, slot_get_isnull(node->outerslot),
-			   node->outerslot->PRIVATE_tts_nvalid * sizeof(bool));
+		memcpy(node->isnull_orig, node->outerslot->tts_isnull,
+			   node->outerslot->tts_nvalid * sizeof(bool));
 	}
 
 	/* reset the isnull array to the original state */
-	bool *isnull = slot_get_isnull(node->outerslot);
-	memcpy(isnull, node->isnull_orig, node->outerslot->PRIVATE_tts_nvalid);
+	bool *isnull = node->outerslot->tts_isnull;
+	memcpy(isnull, node->isnull_orig, node->outerslot->tts_nvalid);
 
-	for (AttrNumber attno = 1; attno <= node->outerslot->PRIVATE_tts_nvalid; attno++)
+	for (AttrNumber attno = 1; attno <= node->outerslot->tts_nvalid; attno++)
 	{
 		/* If the column is in the group by, keep it */
 		if (bms_is_member(attno, node->grpbySet))

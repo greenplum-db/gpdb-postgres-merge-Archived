@@ -25,11 +25,13 @@
  */
 #include "postgres.h"
 
-#include "cdb/cdbvars.h"
 #include "executor/executor.h"
 #include "executor/nodeValuesscan.h"
 #include "jit/jit.h"
 #include "utils/expandeddatum.h"
+
+#include "cdb/cdbvars.h"
+#include "optimizer/optimizer.h"
 
 
 static TupleTableSlot *ValuesNext(ValuesScanState *node);
@@ -186,14 +188,12 @@ ValuesNext(ValuesScanState *node)
 		 */
 		ExecStoreVirtualTuple(slot);
 
-        /* CDB: Label each row with a synthetic ctid for subquery dedup. */
-        if (node->cdb_want_ctid)
+		/* CDB: Label each row with a synthetic ctid for subquery dedup. */
+		if (node->cdb_want_ctid)
         {
-            HeapTuple   tuple = ExecFetchSlotHeapTuple(slot); 
-
-            ItemPointerSet(&tuple->t_self, node->curr_idx >> 16,
-                           (OffsetNumber)node->curr_idx);
-        }
+			ItemPointerSet(&slot->tts_tid, node->curr_idx >> 16,
+						   (OffsetNumber)node->curr_idx);
+		}
 	}
 
 	return slot;

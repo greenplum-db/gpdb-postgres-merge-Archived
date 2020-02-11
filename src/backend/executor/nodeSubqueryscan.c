@@ -29,11 +29,12 @@
  */
 #include "postgres.h"
 
-#include "cdb/cdbvars.h"
 #include "executor/execdebug.h"
 #include "executor/nodeSubqueryscan.h"
-#include "optimizer/var.h"              /* CDB: contain_var_reference() */
 #include "parser/parsetree.h"
+
+#include "cdb/cdbvars.h"
+#include "optimizer/optimizer.h"		/* CDB: contain_ctid_var_reference() */
 
 static TupleTableSlot *SubqueryNext(SubqueryScanState *node);
 

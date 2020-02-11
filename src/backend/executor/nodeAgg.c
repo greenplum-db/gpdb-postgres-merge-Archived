@@ -1314,7 +1314,7 @@ prepare_projection_slot(AggState *aggstate, TupleTableSlot *slot, int currentSet
 			foreach(lc, aggstate->all_grouped_cols)
 			{
 				int attnum = lfirst_int(lc);
-				bool *isnulls = slot_get_isnull(slot);
+				bool *isnulls = slot->tts_isnull;
 
 				if (!bms_is_member(attnum, grouped_cols))
 					isnulls[attnum - 1] = true;

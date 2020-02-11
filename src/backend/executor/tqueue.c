@@ -389,7 +389,6 @@ TQSendRecordInfo(TQueueDestReceiver *tqueue, int32 typmod, TupleDesc tupledesc)
 	initStringInfo(&buf);
 	appendBinaryStringInfo(&buf, (char *) &typmod, sizeof(int32));
 	appendBinaryStringInfo(&buf, (char *) &tupledesc->natts, sizeof(int));
-	appendBinaryStringInfo(&buf, (char *) &tupledesc->tdhasoid, sizeof(bool));
 	for (i = 0; i < tupledesc->natts; i++)
 	{
 		appendBinaryStringInfo(&buf, (char *) tupledesc->attrs[i],
@@ -847,7 +846,6 @@ TupleQueueHandleControlMessage(TupleQueueReader *reader, Size nbytes,
 {
 	int32		remotetypmod;
 	int			natts;
-	bool		hasoid;
 	Size		offset = 0;
 	Form_pg_attribute *attrs;
 	TupleDesc	tupledesc;
@@ -863,10 +861,6 @@ TupleQueueHandleControlMessage(TupleQueueReader *reader, Size nbytes,
 	memcpy(&natts, &data[offset], sizeof(int));
 	offset += sizeof(int);
 
-	/* Extract hasoid flag. */
-	memcpy(&hasoid, &data[offset], sizeof(bool));
-	offset += sizeof(bool);
-
 	/* Extract attribute details. The tupledesc made here is just transient. */
 	attrs = palloc(natts * sizeof(Form_pg_attribute));
 	for (i = 0; i < natts; i++)
@@ -880,7 +874,7 @@ TupleQueueHandleControlMessage(TupleQueueReader *reader, Size nbytes,
 	Assert(offset == nbytes);
 
 	/* Construct TupleDesc, and assign a local typmod. */
-	tupledesc = CreateTupleDesc(natts, hasoid, attrs);
+	tupledesc = CreateTupleDesc(natts, attrs);
 	tupledesc = BlessTupleDesc(tupledesc);
 
 	/* Create mapping hashtable if it doesn't exist already. */
