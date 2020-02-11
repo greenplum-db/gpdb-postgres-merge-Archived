@@ -43,6 +43,7 @@ ExecTriggers(EState *estate, ResultRelInfo *relinfo,
 				HeapTuple originalTuple,
 				HeapTuple finalTuple, int eventFlags, bool *processTuple);
 
+#if 0
 /* Executes Before and After Update triggers. */
 static HeapTuple
 ExecUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
@@ -58,7 +59,7 @@ ExecInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 static bool
 ExecDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 				TriggerDesc *trigdesc, bool before,  HeapTuple	trigtuple, TriggerEvent eventFlags);
-
+#endif
 /* Stores the matching attribute values in a TupleTableSlot.
  * This is used to generate a TupleTableSlot for the new and old values. */
 static void
@@ -73,9 +74,11 @@ static void
 AssignTuplesForTriggers(void **newTuple, void **oldTuple,  RowTrigger *plannode,
 					RowTriggerState *node,  Relation relation);
 
+#if 0
 /* Initializes event trigger flags and relation to TriggerData struct */
 static void
 InitTriggerData(TriggerData *triggerData, TriggerEvent eventFlags, Relation relation);
+#endif
 
 
 /*
@@ -87,6 +90,11 @@ ExecRowTriggerExplainEnd(PlanState *planstate, struct StringInfoData *buf)
 	planstate->instrument->execmemused += ROWTRIGGER_MEM;
 }
 
+/*
+ * GPDB_12_MERGE_FIXME: RowTrigger nodes have been disabled. It needs to be conflict-fixed
+ * for the upstream changes to the Exec*Triggers() functions, to use slots more.
+ */
+#if 0
 /* Sets common initialization parameters across types of triggers. */
 static void
 InitTriggerData(TriggerData *triggerData, TriggerEvent eventFlags, Relation relation)
@@ -289,6 +297,7 @@ ExecDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 
 	return true;
 }
+#endif
 
 /*
  * This function executes the appropriate triggers determined by the given flags.
@@ -301,6 +310,9 @@ ExecTriggers(EState *estate, ResultRelInfo *relinfo,
 				HeapTuple originalTuple,
 				HeapTuple finalTuple, int eventFlags, bool *processTuple)
 {
+	/* GDPB_12_MERGE_FIXME */
+	elog(ERROR, "RowTrigger not supported");
+#if 0
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
 	Assert( NULL != trigdesc);
@@ -340,6 +352,7 @@ ExecTriggers(EState *estate, ResultRelInfo *relinfo,
 	}
 
 	return originalTuple;
+#endif
 }
 
 /* Build new TupleTableSlot given a List of attributes and a slot. */
@@ -367,7 +380,7 @@ StoreTupleForTrigger(TupleTableSlot *slot, Datum *values, bool *nulls, ListCell 
 void
 ConstructNewTupleTableSlot(HeapTuple newtuple, TupleTableSlot *triggerTuple, ListCell *attr, Datum *values, bool *nulls)
 {
-	ExecStoreHeapTuple(newtuple , triggerTuple, InvalidBuffer, true);
+	ExecStoreHeapTuple(newtuple , triggerTuple, true);
 	slot_getallattrs(triggerTuple);
 
 	Datum	   *new_values = triggerTuple->tts_values;
@@ -391,6 +404,8 @@ void
 AssignTuplesForTriggers(void **newTuple, void **oldTuple,  RowTrigger *plannode,
 					RowTriggerState *node,  Relation relation)
 {
+	/* GPDB_12_MERGE_FIXME */
+#if 0
 	/* Check for valid tuples. */
 	bool rel_is_heap = RelationIsHeap(relation);
 	bool rel_is_aorows = RelationIsAoCols(relation);
@@ -437,6 +452,7 @@ AssignTuplesForTriggers(void **newTuple, void **oldTuple,  RowTrigger *plannode,
 		*newTuple = *oldTuple;
 		*oldTuple = NULL;
 	}
+#endif
 }
 
 /*
@@ -560,7 +576,7 @@ ExecInitRowTrigger(RowTrigger *node, EState *estate, int eflags)
 	/*
 	 * RowTrigger nodes do not project.
 	 */
-	ExecInitResultTypeFromTL(&rowTriggerState->ps, &TTSOpsVirtual);
+	ExecInitResultTupleSlotTL(&rowTriggerState->ps, &TTSOpsVirtual);
 	ExecAssignProjectionInfo(&rowTriggerState->ps, NULL);
 
 	TupleDesc tupDesc =
