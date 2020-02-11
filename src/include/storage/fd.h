@@ -87,7 +87,6 @@ extern int	FilePrefetch(File file, off_t offset, int amount, uint32 wait_event_i
 extern int	FileRead(File file, char *buffer, int amount, off_t offset, uint32 wait_event_info);
 extern int	FileWrite(File file, char *buffer, int amount, off_t offset, uint32 wait_event_info);
 extern int	FileSync(File file, uint32 wait_event_info);
-//extern int64 FileNonVirtualCurSeek(File file); // GPDB_12_MERGE_FIXME
 extern off_t FileSize(File file);
 extern int	FileTruncate(File file, off_t offset, uint32 wait_event_info);
 extern void FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_event_info);

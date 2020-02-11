@@ -1474,20 +1474,11 @@ OpenNamedTemporaryFile(const char *fileName,
 
 	/* Mark it for deletion at close */
 	if (delOnClose)
-		VfdCache[file].fdstate |= FD_TEMPORARY;
+		VfdCache[file].fdstate |= FD_DELETE_AT_CLOSE;
 
 	/* Register it with the current resource owner */
 	if (!interXact)
-	{
-		VfdCache[file].fdstate |= FD_XACT_TEMPORARY;
-
-		ResourceOwnerEnlargeFiles(CurrentResourceOwner);
-		ResourceOwnerRememberFile(CurrentResourceOwner, file);
-		VfdCache[file].resowner = CurrentResourceOwner;
-
-		/* ensure cleanup happens at eoxact */
-		have_xact_temporary_files = true;
-	}
+		RegisterTemporaryFile(file);
 
 	return file;
 }
@@ -1644,20 +1635,9 @@ TempTablespacePath(char *path, Oid tablespace)
 		snprintf(path, MAXPGPATH, "base/%s", PG_TEMP_FILES_DIR);
 	else
 	{
-<<<<<<< HEAD
-		VfdCache[file].fdstate |= FD_XACT_TEMPORARY;
-
-		VfdCache[file].resowner = CurrentResourceOwner;
-		ResourceOwnerRememberFile(CurrentResourceOwner, file);
-
-		/* ensure cleanup happens at eoxact */
-		have_xact_temporary_files = true;
-=======
 		/* All other tablespaces are accessed via symlinks */
 		snprintf(path, MAXPGPATH, "pg_tblspc/%u/%s/%s",
-				 tablespace, TABLESPACE_VERSION_DIRECTORY,
-				 PG_TEMP_FILES_DIR);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+				 tablespace, GP_TABLESPACE_VERSION_DIRECTORY, PG_TEMP_FILES_DIR);
 	}
 }
 
@@ -1732,28 +1712,7 @@ OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError,
 	File		file;
 	int			flags;
 
-<<<<<<< HEAD
-	/*
-	 * Identify the tempfile directory for this tablespace.
-	 *
-	 * If someone tries to specify pg_global, use pg_default instead.
-	 */
-	if (tblspcOid == DEFAULTTABLESPACE_OID ||
-		tblspcOid == GLOBALTABLESPACE_OID)
-	{
-		/* The default tablespace is {datadir}/base */
-		snprintf(tempdirpath, sizeof(tempdirpath), "base/%s",
-				 PG_TEMP_FILES_DIR);
-	}
-	else
-	{
-		/* All other tablespaces are accessed via symlinks */
-		snprintf(tempdirpath, sizeof(tempdirpath), "pg_tblspc/%u/%s/%s",
-				 tblspcOid, GP_TABLESPACE_VERSION_DIRECTORY, PG_TEMP_FILES_DIR);
-	}
-=======
 	TempTablespacePath(tempdirpath, tblspcOid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Generate a tempfile name that should be unique within the current
@@ -2201,7 +2160,7 @@ FileWrite(File file, char *buffer, int amount, off_t offset,
 	 */
 	if ((VfdCache[file].fdstate & FD_WORKFILE) != 0)
 	{
-		off_t		newPos = VfdCache[file].seekPos + amount;
+		off_t		newPos = offset + amount;
 
 		if (newPos > VfdCache[file].fileSize)
 			UpdateWorkFileSize(file, newPos);
@@ -2284,80 +2243,6 @@ FileSync(File file, uint32 wait_event_info)
 	return returnCode;
 }
 
-int64
-FileSeek(File file, int64 offset, int whence)
-{
-	Vfd		   *vfdP;
-
-	Assert(FileIsValid(file));
-
-	DO_DB(elog(LOG, "FileSeek: %d (%s) " INT64_FORMAT " " INT64_FORMAT " %d",
-			   file, VfdCache[file].fileName,
-			   (int64) VfdCache[file].seekPos,
-			   (int64) offset, whence));
-
-	vfdP = &VfdCache[file];
-
-	if (FileIsNotOpen(file))
-	{
-		switch (whence)
-		{
-			case SEEK_SET:
-				if (offset < 0)
-				{
-					errno = EINVAL;
-					return (off_t) -1;
-				}
-				vfdP->seekPos = offset;
-				break;
-			case SEEK_CUR:
-				if (FilePosIsUnknown(vfdP->seekPos) ||
-					vfdP->seekPos + offset < 0)
-				{
-					errno = EINVAL;
-					return (off_t) -1;
-				}
-				vfdP->seekPos += offset;
-				break;
-			case SEEK_END:
-				if (FileAccess(file) < 0)
-					return (off_t) -1;
-				vfdP->seekPos = lseek(vfdP->fd, offset, whence);
-				break;
-			default:
-				elog(ERROR, "invalid whence: %d", whence);
-				break;
-		}
-	}
-	else
-	{
-		switch (whence)
-		{
-			case SEEK_SET:
-				if (offset < 0)
-				{
-					errno = EINVAL;
-					return (off_t) -1;
-				}
-				if (vfdP->seekPos != offset)
-					vfdP->seekPos = lseek(vfdP->fd, offset, whence);
-				break;
-			case SEEK_CUR:
-				if (offset != 0 || FilePosIsUnknown(vfdP->seekPos))
-					vfdP->seekPos = lseek(vfdP->fd, offset, whence);
-				break;
-			case SEEK_END:
-				vfdP->seekPos = lseek(vfdP->fd, offset, whence);
-				break;
-			default:
-				elog(ERROR, "invalid whence: %d", whence);
-				break;
-		}
-	}
-
-	return vfdP->seekPos;
-}
-
 /*
  * Get the size of a physical file by using fstat()
  *
@@ -2378,24 +2263,6 @@ FileDiskSize(File file)
 		return returnCode;
 
 	return (int64) buf.st_size;
-}
-
-int64
-FileNonVirtualCurSeek(File file)
-{
-	int			returnCode;
-
-	Assert(FileIsValid(file));
-
-	DO_DB(elog(LOG, "FileNonVirtualCurSeek: %d (%s) virtual position" INT64_FORMAT,
-			   file, VfdCache[file].fileName,
-			   VfdCache[file].seekPos));
-
-	returnCode = FileAccess(file);
-	if (returnCode < 0)
-		return returnCode;
-
-	return pg_lseek64(VfdCache[file].fd, 0, SEEK_CUR);
 }
 
 off_t
@@ -2439,9 +2306,6 @@ FileTruncate(File file, int64 offset, uint32 wait_event_info)
 	pgstat_report_wait_start(wait_event_info);
 	returnCode = ftruncate(VfdCache[file].fd, offset);
 	pgstat_report_wait_end();
-
-	/* Assume we don't know the file position anymore */
-	VfdCache[file].seekPos = FileUnknownPos;
 
 	if (returnCode == 0 && VfdCache[file].fileSize > offset)
 	{
@@ -3277,7 +3141,7 @@ CleanupTempFiles(bool isCommit, bool isProcExit)
 void
 RemovePgTempFiles(void)
 {
-	char		temp_path[MAXPGPATH + 10 + sizeof(TABLESPACE_VERSION_DIRECTORY) + sizeof(PG_TEMP_FILES_DIR)];
+	char		temp_path[MAXPGPATH + 11 + get_dbid_string_length() + 1 + sizeof(GP_TABLESPACE_VERSION_DIRECTORY) + sizeof(PG_TEMP_FILES_DIR)];
 	DIR		   *spc_dir;
 	struct dirent *spc_de;
 

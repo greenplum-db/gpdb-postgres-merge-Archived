@@ -167,29 +167,6 @@ BufferedReadIo(
 	Assert(bufferedRead->largeReadLen > 0);
 	largeReadMemory = bufferedRead->largeReadMemory;
 
-#ifdef USE_ASSERT_CHECKING
-	{
-		int64		currentReadPosition;
-
-		currentReadPosition = FileNonVirtualCurSeek(bufferedRead->file);
-		if (currentReadPosition < 0)
-			ereport(ERROR, (errcode_for_file_access(),
-							errmsg("unable to get current position for table \"%s\" in file \"%s\": %m",
-								   bufferedRead->relationName,
-								   bufferedRead->filePathName)));
-
-		if (currentReadPosition != bufferedRead->largeReadPosition)
-		{
-			ereport(ERROR, (errcode_for_file_access(),
-							errmsg("Current position mismatch actual "
-								   INT64_FORMAT ", expected " INT64_FORMAT " for table \"%s\" in file \"%s\"",
-								   currentReadPosition, bufferedRead->largeReadPosition,
-								   bufferedRead->relationName,
-								   bufferedRead->filePathName)));
-		}
-	}
-#endif
-
 	offset = 0;
 	while (largeReadLen > 0)
 	{

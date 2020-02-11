@@ -146,27 +146,6 @@ BufferedAppendWrite(BufferedAppend *bufferedAppend, bool needsWAL)
 	int32		bytestotal;
 	uint8	   *largeWriteMemory;
 
-#ifdef USE_ASSERT_CHECKING
-	{
-		int64		currentWritePosition;
-
-		currentWritePosition = FileNonVirtualCurSeek(bufferedAppend->file);
-		if (currentWritePosition < 0)
-			ereport(ERROR, (errcode_for_file_access(),
-							errmsg("unable to get current position in table \"%s\" for file \"%s\": %m",
-								   bufferedAppend->relationName,
-								   bufferedAppend->filePathName)));
-
-		if (currentWritePosition != bufferedAppend->largeWritePosition)
-			ereport(ERROR, (errcode_for_file_access(),
-							errmsg("Current position mismatch actual "
-								   INT64_FORMAT ", expected " INT64_FORMAT " in table \"%s\" for file \"%s\"",
-								   currentWritePosition, bufferedAppend->largeWritePosition,
-								   bufferedAppend->relationName,
-								   bufferedAppend->filePathName)));
-	}
-#endif
-
 	Assert(bufferedAppend->largeWriteLen > 0);
 	largeWriteMemory = bufferedAppend->largeWriteMemory;
 
