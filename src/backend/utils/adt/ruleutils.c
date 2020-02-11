@@ -405,7 +405,6 @@ static void get_rule_groupingset(GroupingSet *gset, List *targetlist,
 								 bool omit_parens, deparse_context *context);
 static void get_rule_orderby(List *orderList, List *targetList,
 							 bool force_colno, deparse_context *context);
-static void get_rule_windowclause(Query *query, deparse_context *context);
 static void get_rule_windowspec(WindowClause *wc, List *targetList,
 								deparse_context *context);
 static char *get_variable(Var *var, int levelsup, bool istoplevel,
@@ -2369,8 +2368,7 @@ decompile_column_index_array(Datum column_index_array, Oid relId,
 Datum
 pg_get_expr(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	text	*expr = pg_get_expr_internal(PG_GETARG_TEXT_P(0),
+	text	*expr = pg_get_expr_internal(PG_GETARG_TEXT_PP(0),
 										 PG_GETARG_INT32(1),
 										 false, false);
 	if (expr)
@@ -2378,17 +2376,11 @@ pg_get_expr(PG_FUNCTION_ARGS)
 	else
 		PG_RETURN_NULL();
 }
-=======
-	text	   *expr = PG_GETARG_TEXT_PP(0);
-	Oid			relid = PG_GETARG_OID(1);
-	int			prettyFlags;
-	char	   *relname;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 Datum
 pg_get_expr_ext(PG_FUNCTION_ARGS)
 {
-	text	*expr = pg_get_expr_internal(PG_GETARG_TEXT_P(0),
+	text	*expr = pg_get_expr_internal(PG_GETARG_TEXT_PP(0),
 										 PG_GETARG_INT32(1),
 										 PG_GETARG_BOOL(2),
 										 false);
@@ -2401,7 +2393,7 @@ pg_get_expr_ext(PG_FUNCTION_ARGS)
 Datum
 pg_get_expr_ext_lock(PG_FUNCTION_ARGS)
 {
-	text	*expr = pg_get_expr_internal(PG_GETARG_TEXT_P(0),
+	text	*expr = pg_get_expr_internal(PG_GETARG_TEXT_PP(0),
 										 PG_GETARG_INT32(1),
 										 PG_GETARG_BOOL(2),
 										 PG_GETARG_BOOL(3));
@@ -2436,7 +2428,6 @@ pg_get_expr_internal(text *expr, Oid relid, bool pretty, bool trylock)
 	else
 		relname = NULL;
 
-<<<<<<< HEAD
 	/*
 	 * CDB: hold the AccessShareLock in case some transactions drop it concurrently.
 	 *
@@ -2450,23 +2441,6 @@ pg_get_expr_internal(text *expr, Oid relid, bool pretty, bool trylock)
 	 * fragile, so GPDB holds a AccessShareLock here to make tests stable.
 	 */
 	if (trylock)
-=======
-	PG_RETURN_TEXT_P(pg_get_expr_worker(expr, relid, relname, prettyFlags));
-}
-
-Datum
-pg_get_expr_ext(PG_FUNCTION_ARGS)
-{
-	text	   *expr = PG_GETARG_TEXT_PP(0);
-	Oid			relid = PG_GETARG_OID(1);
-	bool		pretty = PG_GETARG_BOOL(2);
-	int			prettyFlags;
-	char	   *relname;
-
-	prettyFlags = pretty ? (PRETTYFLAG_PAREN | PRETTYFLAG_INDENT | PRETTYFLAG_SCHEMA) : PRETTYFLAG_INDENT;
-
-	if (OidIsValid(relid))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		rel = try_relation_open(relid, AccessShareLock, false);
 
@@ -5138,7 +5112,6 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		return;
 	}
 
-<<<<<<< HEAD
 	/*
 	 * MPP-25160: pg_rewrite was scanned using MVCC snapshot, someone
  	 * else might drop a view that was visible then. We return nothing
@@ -5149,10 +5122,7 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	{
 		return;
 	}
-=======
-	ev_relation = table_open(ev_class, AccessShareLock);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	get_query_def(query, buf, NIL, RelationGetDescr(ev_relation),
 				  prettyFlags, wrapColumn, 0);
 	appendStringInfoChar(buf, ';');
@@ -11480,26 +11450,6 @@ string_to_text(char *str)
 	return result;
 }
 
-static char *
-reloptions_to_string(Datum reloptions)
-{
-	char	   *result;
-	Datum		sep,
-				txt;
-
-	/*
-	 * We want to use array_to_text(reloptions, ', ') --- but
-	 * DirectFunctionCall2(array_to_text) does not work, because
-	 * array_to_text() relies on flinfo to be valid.  So use
-	 * OidFunctionCall2.
-	 */
-	sep = CStringGetTextDatum(", ");
-	txt = OidFunctionCall2(F_ARRAY_TO_TEXT, reloptions, sep);
-	result = TextDatumGetCString(txt);
-
-	return result;
-}
-
 /*
  * Generate a C string representing a relation's reloptions, or NULL if none.
  */
@@ -11652,7 +11602,7 @@ pg_get_table_distributedby(PG_FUNCTION_ARGS)
 				appendStringInfoString(&buf, sep);
 				sep = ", ";
 
-				attname = get_relid_attribute_name(relid, attnum);
+				attname = get_attname(relid, attnum, false);
 				appendStringInfoString(&buf, quote_identifier(attname));
 
 				/* Add the operator class name, if not default */

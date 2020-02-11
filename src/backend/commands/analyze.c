@@ -3647,7 +3647,7 @@ merge_leaf_stats(VacAttrStatsP stats,
 		nullCount = nullCount +
 					get_attnullfrac(relid, stats->attr->attnum) * relTuples[i];
 
-		const char *attname = get_relid_attribute_name(stats->attr->attrelid, stats->attr->attnum);
+		const char *attname = get_attname(stats->attr->attrelid, stats->attr->attnum, false);
 		AttrNumber child_attno = get_attnum(relid, attname);
 
 		heaptupleStats[i] = get_att_stats(relid, child_attno);

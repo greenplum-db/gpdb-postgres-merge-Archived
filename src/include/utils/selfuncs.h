@@ -151,7 +151,6 @@ extern double histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 									Datum constval, bool varonleft,
 									int min_hist_size, int n_skip,
 									int *hist_size);
-extern double convert_timevalue_to_scalar(Datum value, Oid typid, bool *failure);
 extern double ineq_histogram_selectivity(PlannerInfo *root,
 										 VariableStatData *vardata,
 										 FmgrInfo *opproc, bool isgt, bool iseq,

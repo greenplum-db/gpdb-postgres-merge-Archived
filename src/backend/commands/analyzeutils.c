@@ -1109,7 +1109,7 @@ leaf_parts_analyzed(Oid attrelid, Oid relid_exclude, List *va_cols, int elevel)
 			 * analyzed.
 			 */
 			AttrNumber	attnum = lfirst_int(lc_col);
-			const char *attname = get_relid_attribute_name(attrelid, attnum);
+			const char *attname = get_attname(attrelid, attnum, false);
 			AttrNumber	child_attno = get_attnum(partRelid, attname);
 
 			HeapTuple	heaptupleStats = get_att_stats(partRelid, child_attno);

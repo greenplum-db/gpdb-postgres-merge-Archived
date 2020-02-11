@@ -11437,17 +11437,22 @@
 { oid => 6126, descr => 'aggregate final function',
    proname => 'percentile_cont_timestamptz_multi_final', proisstrict => 'f', prorettype => '_timestamptz', proargtypes => 'internal _float8', prosrc => 'percentile_cont_timestamptz_multi_final' },
 
-{ oid => 6127, descr => 'median',
+{ oid => 6127, oid_symbol => 'MEDIAN_FLOAT8_OID', descr => 'median',
    proname => 'median', prokind => 'a', proisstrict => 'f', prorettype => 'float8', proargtypes => 'float8 float8', prosrc => 'aggregate_dummy' },
 
-{ oid => 6128, descr => 'median',
+{ oid => 6128, oid_symbol => 'MEDIAN_INTERVAL_OID', descr => 'median',
    proname => 'median', prokind => 'a', proisstrict => 'f', prorettype => 'interval', proargtypes => 'float8 interval', prosrc => 'aggregate_dummy' },
 
-{ oid => 6129, descr => 'median',
+{ oid => 6129, oid_symbol => 'MEDIAN_TIMESTAMP_OID', descr => 'median',
    proname => 'median', prokind => 'a', proisstrict => 'f', prorettype => 'timestamp', proargtypes => 'float8 timestamp', prosrc => 'aggregate_dummy' },
 
-{ oid => 6130, descr => 'median',
+{ oid => 6130, oid_symbol => 'MEDIAN_TIMESTAMPTZ_OID', descr => 'median',
    proname => 'median', prokind => 'a', proisstrict => 'f', prorettype => 'timestamptz', proargtypes => 'float8 timestamptz', prosrc => 'aggregate_dummy' },
 
 { oid => 5066, descr => 'itemwise add two integer arrays',
    proname => 'array_add', prorettype => '_int4', proargtypes => '_int4 _int4', prosrc => 'array_int4_add' },
+
+{ oid => '7021',
+  descr => 'deparse an encoded expression',
+  proname => 'pg_get_expr', provolatile => 's', prorettype => 'text',
+  proargtypes => 'pg_node_tree oid bool bool', prosrc => 'pg_get_expr_ext_lock' },

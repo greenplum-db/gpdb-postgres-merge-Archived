@@ -1021,7 +1021,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 									  &val,
 									  sslot.values[i - 1], sslot.values[i],
 									  vardata->vartype,
-									  &low, &high, isgt))
+									  &low, &high))
 				{
 					if (high <= low)
 					{
@@ -2429,7 +2429,7 @@ eqjoinsel_semi(Oid opfuncoid,
 		{
 			int			j;
 
-			for (j = 0; j < sslot2.nvalues; j++)
+			for (j = 0; j < sslot2->nvalues; j++)
 			{
 				if (hasmatch2[j])
 					continue;
@@ -3447,10 +3447,9 @@ estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
 				ndistinct,
 				stanullfrac,
 				avgfreq;
-	AttStatsSlot sslot;
 	bool		isdefault;
-	int         numsegments = path->locus.numsegments;
 	AttStatsSlot sslot;
+	int         numsegments = path->locus.numsegments;
 
 	examine_variable(root, hashkey, 0, &vardata);
 
@@ -3789,15 +3788,11 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
  * The several datatypes representing relative times (intervals) are all
  * converted to measurements expressed in seconds.
  *
- * isgt can be used by datatypes which cannot interpolate and instead must
- *   return an appropriate default
- *
  */
 static bool
 convert_to_scalar(Datum value, Oid valuetypid, Oid collid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
-				  double *scaledlobound, double *scaledhibound,
-				  bool isgt)
+				  double *scaledlobound, double *scaledhibound)
 {
 	bool		failure = false;
 
@@ -4900,7 +4895,7 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 	}
 	else if (rte->inh)
 	{
-		const char *attname  = get_relid_attribute_name(rte->relid, var->varattno);
+		const char *attname  = get_attname(rte->relid, var->varattno, false);
 
 		vardata->statsTuple = NULL;
 
@@ -7091,6 +7086,11 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	*indexPages = dataPagesFetched;
 }
 
+/*
+ * GPDB_12_MERGE_FIXME: indexPages is a new output param. Need to set it.
+ * This probably needs some updating in other ways too. Should be similar to
+ * btcostestimate()?
+ */
 void
 bmcostestimate(struct PlannerInfo *root,
 			   struct IndexPath *path,
@@ -7098,7 +7098,8 @@ bmcostestimate(struct PlannerInfo *root,
 			   Cost *indexStartupCost,
 			   Cost *indexTotalCost,
 			   Selectivity *indexSelectivity,
-			   double *indexCorrelation)
+			   double *indexCorrelation,
+			   double *indexPages)
 {
 	RelOptInfo *rel = path->indexinfo->rel;
 	Oid			reloid = getrelid(rel->relid, root->parse->rtable);
