@@ -339,6 +339,7 @@ ExecReScan(PlanState *node)
 		case T_ShareInputScanState:
 			ExecReScanShareInputScan((ShareInputScanState *) node);
 			break;
+
 		case T_PartitionSelectorState:
 			ExecReScanPartitionSelector((PartitionSelectorState *) node);
 			break;

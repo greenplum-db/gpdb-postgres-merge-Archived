@@ -172,18 +172,6 @@ static void AdjustReplicatedTableCounts(EState *estate);
 
 /* end of local decls */
 
-/*
- * For a partitioned insert target only:  
- * This type represents an entry in the per-part hash table stored at
- * estate->es_partition_state->result_partition_hash.   The table maps 
- * part OID -> ResultRelInfo and avoids repeated calculation of the
- * result information.
- */
-typedef struct ResultPartHashEntry 
-{
-	Oid			targetid; /* OID of part relation */
-	ResultRelInfo resultRelInfo;
-} ResultPartHashEntry;
 
 /* ----------------------------------------------------------------
  *		ExecutorStart
@@ -445,7 +433,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 				}
 				else
 				{
-					reltablespace = GetDefaultTablespace(intoClause->rel->relpersistence);
+					reltablespace = GetDefaultTablespace(intoClause->rel->relpersistence, false);
 
 					/* Need the real tablespace id for dispatch */
 					if (!OidIsValid(reltablespace))
@@ -637,7 +625,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			/*
 			 * First, see whether we need to pre-execute any initPlan subplans.
 			 */
-			if (queryDesc->plannedstmt->nParamExec > 0)
+			if (list_length(queryDesc->plannedstmt->paramExecTypes) > 0)
 			{
 				ParamListInfoData *pli = queryDesc->params;
 
@@ -1532,7 +1520,6 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 {
 	ListCell   *l;
 	int         rti;
-	char		relstorage;
 
 	/*
 	 * CREATE TABLE AS or SELECT INTO?
@@ -1570,8 +1557,7 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 		 * External and foreign tables don't need two phase commit which is for
 		 * local mpp tables
 		 */
-		relstorage = get_rel_relstorage(rte->relid);
-		if (relstorage == RELSTORAGE_FOREIGN)
+		if (get_rel_relkind(rte->relid) == RELKIND_FOREIGN_TABLE)
 			continue;
 
 		if (isTempNamespace(get_rel_namespace(rte->relid)))
@@ -1727,127 +1713,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		estate->es_result_relation_info = NULL;
 
 		/*
-<<<<<<< HEAD
-		 * In some occasions when inserting data into a target relations we
-		 * need to pass some specific information from the QD to the QEs.
-		 * we do this information exchange here, via the parseTree. For now
-		 * this is used for partitioned and append-only tables.
-		 */
-		if (Gp_role == GP_ROLE_EXECUTE)
-		{
-			estate->es_result_partitions = plannedstmt->result_partitions;
-			estate->es_result_aosegnos = plannedstmt->result_aosegnos;
-		}
-		else
-		{
-			List          *resultRelations = plannedstmt->resultRelations;
-			int            numResultRelations = list_length(resultRelations);
-			List          *all_relids = NIL;
-			Oid            relid = getrelid(linitial_int(resultRelations), rangeTable);
-			bool           containRoot = false;
-
-			if (rel_is_child_partition(relid))
-				relid = rel_partition_get_master(relid);
-			else
-			{
-				/*
-				 * If root partition is in result_partitions, it must be
-				 * the first element.
-				 */
-				containRoot = true;
-			}
-
-			estate->es_result_partitions = BuildPartitionNodeFromRoot(relid);
-
-			/*
-			 * List all the relids that may take part in this insert operation.
-			 * The logic here is that:
-			 *   - If root partition is in the resultRelations, all_relids
-			 *     contains the root and all its all_inheritors
-			 *   - Otherwise, all_relids is a map of result_partitions to
-			 *     get each element's relation oid.
-			 */
-
-			if (containRoot)
-			{
-				/*
-				 * For partition tables, if GDD is off, any DML statement on root
-				 * partition, must acquire locks on the leaf partitions to avoid
-				 * deadlocks.
-				 *
-				 * Without locking the partition relations on QD when INSERT
-				 * with Planner the following dead lock scenario may happen
-				 * between INSERT and AppendOnly VACUUM drop phase on the
-				 * partition table:
-				 *
-				 * 1. AO VACUUM drop on QD: acquired AccessExclusiveLock
-				 * 2. INSERT on QE: acquired RowExclusiveLock
-				 * 3. AO VACUUM drop on QE: waiting for AccessExclusiveLock
-				 * 4. INSERT on QD: waiting for AccessShareLock at ExecutorEnd()
-				 *
-				 * 2 blocks 3, 1 blocks 4, 1 and 2 will not release their locks
-				 * until 3 and 4 proceed. Hence INSERT needs to Lock the partition
-				 * tables on QD here (before 2) to prevent this dead lock.
-				 *
-				 * Deadlock can also occur in case of DELETE as below
-				 * Session1: BEGIN; delete from foo_1_prt_1 WHERE c = 999999; => Holds
-				 * Exclusive lock on foo_1_prt_1 on QD and marks the tuple c updated by the
-				 * current transaction;
-				 * Session2: BEGIN; delete from foo WHERE c = 1; => Holds Exclusive lock
-				 * on foo on QD and marks the tuple c = 1 updated by current transaction
-				 * Session1: DELETE FROM foo_1_prt_1 WHERE c = 1; => This wait, as Session
-				 * 2 has already taken the lock, Session1 will wait to acquire the
-				 * transaction lock.
-				 * Session2: DELETE FROM foo WHERE c = 999999; => This waits, as Session 1
-				 * has already taken the lock, Session 2 will wait to acquire the
-				 * transaction lock.
-				 * This will cause a deadlock.
-				 * Similar scenario apply for UPDATE as well.
-				 */
-				lockmode = NoLock;
-				if ((operation == CMD_DELETE || operation == CMD_INSERT || operation == CMD_UPDATE) &&
-					!gp_enable_global_deadlock_detector &&
-					rel_is_partitioned(relid))
-				{
-					if (operation == CMD_INSERT)
-						lockmode = RowExclusiveLock;
-					else
-						lockmode = ExclusiveLock;
-				}
-				all_relids = find_all_inheritors(relid, lockmode, NULL);
-			}
-			else
-			{
-				ListCell *lc;
-				int       idx;
-
-				foreach(lc, resultRelations)
-				{
-					idx = lfirst_int(lc);
-					all_relids = lappend_oid(all_relids,
-											 getrelid(idx, rangeTable));
-				}
-			}
-
-			/*
-			 * We also assign a segno for a deletion operation.
-			 * That segno will later be touched to ensure a correct
-			 * incremental backup.
-			 */
-			estate->es_result_aosegnos = assignPerRelSegno(all_relids);
-
-			plannedstmt->result_partitions = estate->es_result_partitions;
-			plannedstmt->result_aosegnos = estate->es_result_aosegnos;
-
-			/* Set any QD resultrels segno, just in case. The QEs set their own in ExecInsert(). */
-			int relno = 0;
-			ResultRelInfo* relinfo;
-			for (relno = 0; relno < numResultRelations; relno ++)
-			{
-				relinfo = &(resultRelInfos[relno]);
-				ResultRelInfoSetSegno(relinfo, estate->es_result_aosegnos);
-			}
-=======
 		 * In the partitioned result relation case, also build ResultRelInfos
 		 * for all the partitioned table roots, because we will need them to
 		 * fire statement-level triggers, if any.
@@ -1881,7 +1746,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		{
 			estate->es_root_result_relations = NULL;
 			estate->es_num_root_result_relations = 0;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 	else
@@ -1897,18 +1761,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		estate->es_num_root_result_relations = 0;
 	}
 
-	estate->es_partition_state = NULL;
-	if (estate->es_result_partitions)
-	{
-		estate->es_partition_state = createPartitionState(estate->es_result_partitions,
-														  estate->es_num_result_relations);
-	}
-
-	/*
-	 * If there are partitions involved in the query, initialize partitioning metadata.
-	 */
-	InitializeQueryPartsMetadata(plannedstmt, estate);
-
 	/*
 	 * set the number of partition selectors for every dynamic scan id
 	 */
@@ -1919,116 +1771,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	 */
 	if (plannedstmt->rowMarks)
 	{
-<<<<<<< HEAD
-		PlanRowMark *rc = (PlanRowMark *) lfirst(l);
-		Oid			relid;
-		Relation	relation;
-		ExecRowMark *erm;
-		LOCKMODE    lm;
-
-		/* ignore "parent" rowmarks; they are irrelevant at runtime */
-		if (rc->isParent)
-			continue;
-
-		/* get relation's OID (will produce InvalidOid if subquery) */
-		relid = getrelid(rc->rti, rangeTable);
-		lm = rc->canOptSelectLockingClause ? RowShareLock : ExclusiveLock;
-
-		/*
-		 * If you change the conditions under which rel locks are acquired
-		 * here, be sure to adjust ExecOpenScanRelation to match.
-		 */
-		switch (rc->markType)
-		{
-			/*
-			 * Greenplum specific behavior:
-			 * The implementation of select statement with locking clause
-			 * (for update | no key update | share | key share) in postgres
-			 * is to hold RowShareLock on tables during parsing stage, and
-			 * generate a LockRows plan node for executor to lock the tuples.
-			 * It is not easy to lock tuples in Greenplum database, since
-			 * tuples may be fetched through motion nodes.
-			 *
-			 * But when Global Deadlock Detector is enabled, and the select
-			 * statement with locking clause contains only one table, we are
-			 * sure that there are no motions. For such simple cases, we could
-			 * make the behavior just the same as Postgres.
-			 */
-			case ROW_MARK_EXCLUSIVE:
-			case ROW_MARK_NOKEYEXCLUSIVE:
-			case ROW_MARK_SHARE:
-			case ROW_MARK_KEYSHARE:
-			case ROW_MARK_REFERENCE:
-				relation = heap_open(relid, lm);
-				break;
-			case ROW_MARK_COPY:
-				/* no physical table access is required */
-				relation = NULL;
-				break;
-			default:
-				elog(ERROR, "unrecognized markType: %d", rc->markType);
-				relation = NULL;	/* keep compiler quiet */
-				break;
-		}
-
-		/*
-		 * Check that relation is a legal target for marking.
-		 *
-		 * In most cases parser and/or planner should have noticed this
-		 * already, but they don't cover all cases.
-		 */
-		if (relation)
-		{
-			switch (relation->rd_rel->relkind)
-			{
-				case RELKIND_RELATION:
-				case RELKIND_MATVIEW:
-					/* OK */
-					break;
-				case RELKIND_SEQUENCE:
-					/* Must disallow this because we don't vacuum sequences */
-					ereport(ERROR,
-							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("cannot lock rows in sequence \"%s\"",
-									RelationGetRelationName(relation))));
-					break;
-				case RELKIND_TOASTVALUE:
-					/* This will be disallowed in 9.1, but for now OK */
-					break;
-				case RELKIND_VIEW:
-					/* Should not get here */
-					ereport(ERROR,
-							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("cannot lock rows in view \"%s\"",
-									RelationGetRelationName(relation))));
-					break;
-				default:
-					ereport(ERROR,
-							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("cannot lock rows in relation \"%s\"",
-									RelationGetRelationName(relation))));
-					break;
-			}
-		}
-
-		/* Check that relation is a legal target for marking */
-		if (relation)
-			CheckValidRowMarkRel(relation, rc->markType);
-
-		erm = (ExecRowMark *) palloc(sizeof(ExecRowMark));
-		erm->relation = relation;
-		erm->relid = relid;
-		erm->rti = rc->rti;
-		erm->prti = rc->prti;
-		erm->rowmarkId = rc->rowmarkId;
-		erm->markType = rc->markType;
-		erm->strength = rc->strength;
-		erm->waitPolicy = rc->waitPolicy;
-		erm->ermActive = false;
-		ItemPointerSetInvalid(&(erm->curCtid));
-		erm->ermExtra = NULL;
-		estate->es_rowMarks = lappend(estate->es_rowMarks, erm);
-=======
 		estate->es_rowmarks = (ExecRowMark **)
 			palloc0(estate->es_range_table_size * sizeof(ExecRowMark *));
 		foreach(l, plannedstmt->rowMarks)
@@ -2048,6 +1790,24 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			/* open relation, if we need to access it for this mark type */
 			switch (rc->markType)
 			{
+				/*
+				 * GPDB_12_MERGE_FIXME: We lost the GPDB change that this comment
+				 * talks about in the merge. I'm not sure where it should go now.
+				 * In ExecGetRangeTableRelation maybe?
+				 *
+				 * Greenplum specific behavior:
+				 * The implementation of select statement with locking clause
+				 * (for update | no key update | share | key share) in postgres
+				 * is to hold RowShareLock on tables during parsing stage, and
+				 * generate a LockRows plan node for executor to lock the tuples.
+				 * It is not easy to lock tuples in Greenplum database, since
+				 * tuples may be fetched through motion nodes.
+				 *
+				 * But when Global Deadlock Detector is enabled, and the select
+				 * statement with locking clause contains only one table, we are
+				 * sure that there are no motions. For such simple cases, we could
+				 * make the behavior just the same as Postgres.
+				 */
 				case ROW_MARK_EXCLUSIVE:
 				case ROW_MARK_NOKEYEXCLUSIVE:
 				case ROW_MARK_SHARE:
@@ -2087,7 +1847,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 			estate->es_rowmarks[erm->rti - 1] = erm;
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*
@@ -2571,142 +2330,6 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_action_attno = InvalidAttrNumber;
 	resultRelInfo->ri_tupleoid_attno = InvalidAttrNumber;
 	resultRelInfo->ri_projectReturning = NULL;
-<<<<<<< HEAD
-	resultRelInfo->ri_aoInsertDesc = NULL;
-	resultRelInfo->ri_aocsInsertDesc = NULL;
-	resultRelInfo->ri_extInsertDesc = NULL;
-	resultRelInfo->ri_deleteDesc = NULL;
-	resultRelInfo->ri_updateDesc = NULL;
-	resultRelInfo->ri_aosegno = InvalidFileSegNumber;
-	resultRelInfo->bufferedTuplesSize = 0;
-	resultRelInfo->nBufferedTuples = 0;
-	resultRelInfo->bufferedTuples = NULL;
-	resultRelInfo->biState = GetBulkInsertState();
-}
-
-
-void
-CloseResultRelInfo(ResultRelInfo *resultRelInfo)
-{
-	/* end (flush) the INSERT operation in the access layer */
-	if (resultRelInfo->ri_aoInsertDesc)
-		appendonly_insert_finish(resultRelInfo->ri_aoInsertDesc);
-	if (resultRelInfo->ri_aocsInsertDesc)
-		aocs_insert_finish(resultRelInfo->ri_aocsInsertDesc);
-	if (resultRelInfo->ri_extInsertDesc)
-		external_insert_finish(resultRelInfo->ri_extInsertDesc);
-
-	if (resultRelInfo->ri_deleteDesc != NULL)
-	{
-		if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
-			appendonly_delete_finish(resultRelInfo->ri_deleteDesc);
-		else
-		{
-			Assert(RelationIsAoCols(resultRelInfo->ri_RelationDesc));
-			aocs_delete_finish(resultRelInfo->ri_deleteDesc);
-		}
-		resultRelInfo->ri_deleteDesc = NULL;
-	}
-	if (resultRelInfo->ri_updateDesc != NULL)
-	{
-		if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
-			appendonly_update_finish(resultRelInfo->ri_updateDesc);
-		else
-		{
-			Assert(RelationIsAoCols(resultRelInfo->ri_RelationDesc));
-			aocs_update_finish(resultRelInfo->ri_updateDesc);
-		}
-		resultRelInfo->ri_updateDesc = NULL;
-	}
-
-	if (resultRelInfo->ri_resultSlot)
-	{
-		ExecDropSingleTupleTableSlot(resultRelInfo->ri_resultSlot);
-		resultRelInfo->ri_resultSlot = NULL;
-	}
-
-	if (resultRelInfo->ri_PartitionParentSlot)
-	{
-		ExecDropSingleTupleTableSlot(resultRelInfo->ri_PartitionParentSlot);
-		resultRelInfo->ri_PartitionParentSlot = NULL;
-	}
-
-	/* Close indices and then the relation itself */
-	ExecCloseIndices(resultRelInfo);
-	heap_close(resultRelInfo->ri_RelationDesc, NoLock);
-
-	if (resultRelInfo->biState != NULL)
-	{
-		FreeBulkInsertState(resultRelInfo->biState);
-		resultRelInfo->biState = NULL;
-	}
-
-	/* Recurse into partitions */
-	/* Examine each hash table entry. */
-	if (resultRelInfo->ri_partition_hash)
-	{
-		HASH_SEQ_STATUS hash_seq_status;
-		ResultPartHashEntry *entry;
-
-		hash_freeze(resultRelInfo->ri_partition_hash);
-		hash_seq_init(&hash_seq_status, resultRelInfo->ri_partition_hash);
-		while ((entry = hash_seq_search(&hash_seq_status)) != NULL)
-		{
-			CloseResultRelInfo(&entry->resultRelInfo);
-		}
-		/* No need for hash_seq_term() since we iterated to end. */
-	}
-}
-
-/*
- * ResultRelInfoSetSegno
- *
- * based on a list of relid->segno mapping, look for our own resultRelInfo
- * relid in the mapping and find the segfile number that this resultrel should
- * use if it is inserting into an AO relation. for any non AO relation this is
- * irrelevant and will return early.
- *
- * Note that we rely on the fact that the caller has a well constructed mapping
- * and that it includes all the relids of *any* AO relation that may insert
- * data during this transaction. For non partitioned tables the mapping list
- * will have only one element - our table. for partitioning it may have
- * multiple (depending on how many partitions are AO).
- *
- */
-void
-ResultRelInfoSetSegno(ResultRelInfo *resultRelInfo, List *mapping)
-{
-   	ListCell *relid_to_segno;
-   	bool	  found = false;
-
-	/* only relevant for AO relations */
-	if(!relstorage_is_ao(RelinfoGetStorage(resultRelInfo)))
-		return;
-
-	Assert(mapping);
-	Assert(resultRelInfo->ri_RelationDesc);
-
-   	/* lookup the segfile # to write into, according to my relid */
-
-   	foreach(relid_to_segno, mapping)
-   	{
-		SegfileMapNode *n = (SegfileMapNode *)lfirst(relid_to_segno);
-		Oid myrelid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
-		if(n->relid == myrelid)
-		{
-			Assert(n->segno != InvalidFileSegNumber);
-			resultRelInfo->ri_aosegno = n->segno;
-
-			elogif(Debug_appendonly_print_insert, LOG,
-				"Appendonly: setting pre-assigned segno %d in result "
-				"relation with relid %d", n->segno, n->relid);
-
-			found = true;
-		}
-	}
-
-	Assert(found);
-=======
 	resultRelInfo->ri_onConflictArbiterIndexes = NIL;
 	resultRelInfo->ri_onConflict = NULL;
 	resultRelInfo->ri_ReturningSlot = NULL;
@@ -2732,7 +2355,6 @@ ResultRelInfoSetSegno(ResultRelInfo *resultRelInfo, List *mapping)
 	resultRelInfo->ri_PartitionRoot = partition_root;
 	resultRelInfo->ri_PartitionInfo = NULL; /* may be set later */
 	resultRelInfo->ri_CopyMultiInsertBuffer = NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -2867,6 +2489,10 @@ ExecCleanUpTriggerState(EState *estate)
 void
 SendAOTupCounts(EState *estate)
 {
+	/* GPDB_12_MERGE_FIXME: This will go away with
+	 * https://github.com/greenplum-db/gpdb/pull/9258
+	 */
+#if 0
 	StringInfoData buf;
 	ResultRelInfo *resultRelInfo;
 	int			i;
@@ -2927,6 +2553,7 @@ SendAOTupCounts(EState *estate)
 
 	}
 	pq_endmessage(&buf);
+#endif
 }
 
 /* ----------------------------------------------------------------
@@ -3762,7 +3389,7 @@ ExecBuildSlotValueDescription(Oid reloid,
 
 		if (table_perm || column_perm)
 		{
-			if (slot->PRIVATE_tts_isnull[i])
+			if (slot->tts_isnull[i])
 				val = "null";
 			else
 			{
@@ -3771,7 +3398,7 @@ ExecBuildSlotValueDescription(Oid reloid,
 
 				getTypeOutputInfo(att->atttypid,
 								  &foutoid, &typisvarlena);
-				val = OidOutputFunctionCall(foutoid, slot->PRIVATE_tts_values[i]);
+				val = OidOutputFunctionCall(foutoid, slot->tts_values[i]);
 			}
 
 			if (write_comma)
@@ -4462,110 +4089,6 @@ EvalPlanQualEnd(EPQState *epqstate)
 	epqstate->estate = NULL;
 	epqstate->planstate = NULL;
 	epqstate->origslot = NULL;
-}
-
-ResultRelInfo *
-targetid_get_partition(Oid targetid, EState *estate, bool openIndices)
-{
-	ResultRelInfo *parentInfo = estate->es_result_relations;
-	ResultRelInfo *childInfo = estate->es_result_relations;
-	ResultPartHashEntry *entry;
-	bool		found;
-
-	if (parentInfo->ri_partition_hash == NULL)
-	{
-		HASHCTL ctl;
-
-		ctl.keysize = sizeof(Oid);
-		ctl.entrysize = sizeof(*entry);
-		ctl.hash = oid_hash;
-
-		parentInfo->ri_partition_hash =
-			hash_create("Partition Result Relation Hash",
-						10,
-						&ctl,
-						HASH_ELEM | HASH_FUNCTION);
-	}
-
-	entry = hash_search(parentInfo->ri_partition_hash,
-						&targetid,
-						HASH_ENTER,
-						&found);
-
-	childInfo = &entry->resultRelInfo;
-	if (found)
-	{
-		Assert(RelationGetRelid(childInfo->ri_RelationDesc) == targetid);
-	}
-	else
-	{
-		int			natts;
-		Relation	resultRelation;
-
-		natts = parentInfo->ri_RelationDesc->rd_att->natts; /* in base relation */
-
-		resultRelation = heap_open(targetid, RowExclusiveLock);
-		InitResultRelInfo(childInfo,
-						  resultRelation,
-						  1,
-						  estate->es_instrument);
-
-		if (openIndices)
-			ExecOpenIndices(childInfo, false);
-
-		childInfo->ri_partInsertMap =
-			convert_tuples_by_name(RelationGetDescr(parentInfo->ri_RelationDesc),
-								   RelationGetDescr(childInfo->ri_RelationDesc));
-	}
-	return childInfo;
-}
-
-/*
- * Calculate the part to use for the given key, then find or calculate
- * and cache required information about that part in the hash table
- * anchored in estate.
- *
- * Return a ResultRelInfo for that partition, an entry in the table
- * estate->es_result_relations. The first entry in this table is for the
- * partitioned table itself.
- *
- * NB: The entire table may be reallocated, changing the addresses of its
- * entries. Thus, it is important to avoid holding long-lived pointers to
- * table entries, such as the pointer returned from this function!
- */
-ResultRelInfo *
-slot_get_partition(TupleTableSlot *slot, EState *estate, bool openIndices)
-{
-	AttrNumber	max_attr;
-	Datum	   *values;
-	bool	   *nulls;
-	Oid			targetid;
-
-	Assert(PointerIsValid(estate->es_result_partitions));
-
-	max_attr = estate->es_partition_state->max_partition_attr;
-
-	slot_getsomeattrs(slot, max_attr);
-	values = slot_get_values(slot);
-	nulls = slot_get_isnull(slot);
-
-	/* add a short term memory context if one wasn't assigned already */
-	Assert(estate->es_partition_state != NULL &&
-		estate->es_partition_state->accessMethods != NULL);
-	if (!estate->es_partition_state->accessMethods->part_cxt)
-		estate->es_partition_state->accessMethods->part_cxt =
-			GetPerTupleExprContext(estate)->ecxt_per_tuple_memory;
-
-	targetid = selectPartition(estate->es_result_partitions, values, nulls,
-							   slot->tts_tupleDescriptor,
-							   estate->es_partition_state->accessMethods);
-
-	if (!OidIsValid(targetid))
-		ereport(ERROR,
-				(errcode(ERRCODE_NO_PARTITION_FOR_PARTITIONING_KEY),
-				 errmsg("no partition for partitioning key")));
-
-	return targetid_get_partition(targetid, estate, openIndices);
 }
 
 

@@ -2759,7 +2759,7 @@ ExecHashTableExplainBatchEnd(HashState *hashState, HashJoinTable hashtable)
 		if (hashtable->outerBatchFile &&
 			hashtable->outerBatchFile[curbatch] != NULL)
 		{
-			batchstats->ordbytes = BufFileGetSize(hashtable->outerBatchFile[curbatch]);
+			batchstats->ordbytes = BufFileSize(hashtable->outerBatchFile[curbatch]);
 		}
 
 		/*

@@ -28,7 +28,7 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
-#include "optimizer/var.h"
+#include "optimizer/optimizer.h"
 
 static TupleTableSlot *ForeignNext(ForeignScanState *node);
 static bool ForeignRecheck(ForeignScanState *node, TupleTableSlot *slot);

@@ -116,13 +116,13 @@
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "miscadmin.h"
-#include "utils/faultinjector.h"
 #include "pgstat.h"
 #include "utils/memutils.h"
 #include "utils/sharedtuplestore.h"
 
 #include "cdb/cdbvars.h"
 #include "miscadmin.h"			/* work_mem */
+#include "utils/faultinjector.h"
 
 /*
  * States of the ExecHashJoin state machine
@@ -1417,7 +1417,7 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 		if (BufFileSeek(hashtable->outerBatchFile[curbatch], 0, 0, SEEK_SET) != 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not access temporary file")));
+					 errmsg("could not rewind hash-join temporary file: %m")));
 	}
 
 	return true;
@@ -1675,9 +1675,9 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 	if (nread != memtuple_size_from_uint32(header[1]) - sizeof(uint32))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read from hash-join temporary file")));
-    ExecForceStoreMinimalTuple(tuple, tupleSlot, true);
-    return tupleSlot;
+				 errmsg("could not read from hash-join temporary file: %m")));
+	ExecForceStoreMinimalTuple(tuple, tupleSlot, true);
+	return tupleSlot;
 }
 
 
@@ -1771,7 +1771,6 @@ ExecReScanHashJoin(HashJoinState *node)
 		ExecReScan(node->js.ps.lefttree);
 }
 
-<<<<<<< HEAD
 /**
  * This method releases the hash table's memory. It maintains some of the other
  * aspects of the hash table like memory usage statistics. These may be required
@@ -1942,7 +1941,7 @@ ExecHashJoinReloadHashTable(HashJoinState *hjstate)
 		{
 			Assert(hashtable->stats);
 			hashtable->stats->batchstats[curbatch].innerfilesize =
-				BufFileGetSize(hashtable->innerBatchFile[curbatch]);
+				BufFileSize(hashtable->innerBatchFile[curbatch]);
 		}
 
 		SIMPLE_FAULT_INJECTOR("workfile_hashjoin_failure");
@@ -1971,8 +1970,6 @@ ExecHashJoinReloadHashTable(HashJoinState *hjstate)
 	return true;
 }
 
-/* EOF */
-=======
 void
 ExecShutdownHashJoin(HashJoinState *node)
 {
@@ -2150,4 +2147,3 @@ ExecHashJoinInitializeWorker(HashJoinState *state,
 
 	ExecSetExecProcNode(&state->js.ps, ExecParallelHashJoin);
 }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
