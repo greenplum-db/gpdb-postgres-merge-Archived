@@ -494,6 +494,7 @@ SysLoggerMain(int argc, char *argv[])
 			{
 				currentLogRotationAge = Log_RotationAge;
 				set_next_rotation_time();
+				update_metainfo_datafile();
 			}
 
 			/*
@@ -596,6 +597,7 @@ SysLoggerMain(int argc, char *argv[])
 		if (all_rotations_occurred)
 		{
 			set_next_rotation_time();
+			update_metainfo_datafile();
 		}
 
 		/*
@@ -1070,10 +1072,7 @@ syslogger_forkexec(void)
 	char	   *av[10];
 	int			ac = 0;
 	char		filenobuf[32];
-<<<<<<< HEAD
 	char        alertFilenobuf[32];
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	char		csvfilenobuf[32];
 
 	av[ac++] = "postgres";
@@ -1146,11 +1145,7 @@ syslogger_parseArgs(int argc, char *argv[])
 	int			fd;
 	int         alertFd;
 
-<<<<<<< HEAD
-	Assert(argc == alert_log_level_opened ? 5 : 4);
-=======
-	Assert(argc == 5);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	Assert(argc == alert_log_level_opened ? 6 : 5);
 	argv += 3;
 
 	/*
@@ -1194,8 +1189,7 @@ syslogger_parseArgs(int argc, char *argv[])
 			setvbuf(csvlogFile, NULL, PG_IOLBF, 0);
 		}
 	}
-<<<<<<< HEAD
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
     if (alert_log_level_opened)
     {
@@ -1216,11 +1210,8 @@ syslogger_parseArgs(int argc, char *argv[])
                 setvbuf(alertLogFile, NULL, PG_IOLBF, 0);
             }
         }
-#endif   /* WIN32 */
-    }
-=======
 #endif							/* WIN32 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+    }
 }
 #endif							/* EXEC_BACKEND */
 
@@ -2253,38 +2244,7 @@ void write_syslogger_file_binary(const char *buffer, int count, int destination)
  */
 void write_syslogger_file(const char *buffer, int count, int destination)
 {
-<<<<<<< HEAD
     write_syslogger_file_binary(buffer,count, destination);
-=======
-	int			rc;
-	FILE	   *logfile;
-
-	/*
-	 * If we're told to write to csvlogFile, but it's not open, dump the data
-	 * to syslogFile (which is always open) instead.  This can happen if CSV
-	 * output is enabled after postmaster start and we've been unable to open
-	 * csvlogFile.  There are also race conditions during a parameter change
-	 * whereby backends might send us CSV output before we open csvlogFile or
-	 * after we close it.  Writing CSV-formatted output to the regular log
-	 * file isn't great, but it beats dropping log output on the floor.
-	 *
-	 * Think not to improve this by trying to open csvlogFile on-the-fly.  Any
-	 * failure in that would lead to recursion.
-	 */
-	logfile = (destination == LOG_DESTINATION_CSVLOG &&
-			   csvlogFile != NULL) ? csvlogFile : syslogFile;
-
-	rc = fwrite(buffer, 1, count, logfile);
-
-	/*
-	 * Try to report any failure.  We mustn't use ereport because it would
-	 * just recurse right back here, but write_stderr is OK: it will write
-	 * either to the postmaster's original stderr, or to /dev/null, but never
-	 * to our input pipe which would result in a different sort of looping.
-	 */
-	if (rc != count)
-		write_stderr("could not write to log file: %s\n", strerror(errno));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 #ifdef WIN32
@@ -2446,15 +2406,9 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 		fntime = next_rotation_time;
 	else
 		fntime = time(NULL);
-<<<<<<< HEAD
 	filename = logfile_getname(fntime, suffix, log_directory, log_filename);
 	if (Log_destination & LOG_DESTINATION_CSVLOG)
 		csvfilename = logfile_getname(fntime, ".csv", log_directory, log_filename);
-=======
-	filename = logfile_getname(fntime, NULL);
-	if (Log_destination & LOG_DESTINATION_CSVLOG)
-		csvfilename = logfile_getname(fntime, ".csv");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Decide whether to overwrite or append.  We can overwrite if (a)
@@ -2504,15 +2458,12 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 		filename = NULL;
 	}
 
-<<<<<<< HEAD
 /* GPDB_94_MERGE_FIXME: We earlier removed the code below. Why not keep them
  * even we might not call them (I'm not sure though)? Note the API for this
  * function is different. pg upstream has size_rotation_for however gpdb does
  * not have.
  */
 #if 0
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Same as above, but for csv file.  Note that if LOG_DESTINATION_CSVLOG
 	 * was just turned on, we might have to open csvlogFile here though it was
@@ -2573,21 +2524,12 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 			pfree(last_csv_file_name);
 		last_csv_file_name = NULL;
 	}
-<<<<<<< HEAD
 #endif
-=======
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (filename)
 		pfree(filename);
 
-<<<<<<< HEAD
 	return true;
-=======
-	update_metainfo_datafile();
-
-	set_next_rotation_time();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 

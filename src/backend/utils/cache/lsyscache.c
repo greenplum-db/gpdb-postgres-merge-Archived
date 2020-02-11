@@ -2387,7 +2387,6 @@ char
 get_rel_relkind(Oid relid)
 {
 	HeapTuple	tp;
-
 	tp = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (HeapTupleIsValid(tp))
 	{
