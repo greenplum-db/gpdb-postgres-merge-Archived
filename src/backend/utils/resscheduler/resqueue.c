@@ -817,7 +817,7 @@ ResLockUpdateLimit(LOCK *lock, PROCLOCK *proclock, ResPortalIncrement *increment
 	int			i;
 
 	Assert(LWLockHeldByMeInMode(ResQueueLock, LW_EXCLUSIVE));
-o
+
 	/* Get the queue for this lock. */
 	queue = GetResQueueFromLock(lock);
 	limits = queue->limits;
@@ -1046,7 +1046,7 @@ ResWaitOnLock(LOCALLOCK *locallock, ResourceOwner owner, ResPortalIncrement *inc
 		set_ps_display(new_status, false);		/* truncate off " queuing" */
 		new_status[len] = '\0';
 	}
-	pgstat_report_wait_start(PG_WAIT_RESOURCE_QUEUE, 0);
+	pgstat_report_wait_start(PG_WAIT_RESOURCE_QUEUE);
 
 	awaitedLock = locallock;
 	awaitedOwner = owner;

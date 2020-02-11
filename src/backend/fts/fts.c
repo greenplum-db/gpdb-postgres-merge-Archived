@@ -37,6 +37,7 @@
 #include "cdb/cdbvars.h"
 #include "libpq-int.h"
 #include "cdb/cdbfts.h"
+#include "pgstat.h"
 #include "postmaster/fts.h"
 #include "postmaster/ftsprobe.h"
 #include "postmaster/postmaster.h"
@@ -398,7 +399,8 @@ void FtsLoop()
 
 		rc = WaitLatch(&MyProc->procLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   timeout * 1000L);
+					   timeout * 1000L,
+					   WAIT_EVENT_FTS_PROBE_MAIN);
 
 		SIMPLE_FAULT_INJECTOR("ftsLoop_after_latch");
 

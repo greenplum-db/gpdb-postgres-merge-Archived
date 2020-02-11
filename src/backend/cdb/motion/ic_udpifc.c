@@ -25,6 +25,11 @@
 #include "postgres.h"
 
 #include <pthread.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include "access/transam.h"
 #include "access/xact.h"
@@ -36,6 +41,7 @@
 #include "libpq/libpq-be.h"
 #include "port/atomics.h"
 #include "port/pg_crc32c.h"
+#include "pgstat.h"
 #include "storage/latch.h"
 #include "storage/pmsignal.h"
 #include "utils/builtins.h"
@@ -49,12 +55,6 @@
 #include "cdb/cdbdisp.h"
 #include "cdb/cdbdispatchresult.h"
 #include "cdb/cdbicudpfaultinjection.h"
-
-#include <fcntl.h>
-#include <limits.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -3799,7 +3799,8 @@ receiveChunksUDPIFC(ChunkTransportState *pTransportStates, ChunkTransportStateEn
 		}
 		(void) WaitLatchOrSocket(&ic_control_info.latch,
 								 wakeEvents, waitFd,
-								 MAIN_THREAD_COND_TIMEOUT_MS);
+								 MAIN_THREAD_COND_TIMEOUT_MS,
+								 WAIT_EVENT_INTERCONNECT);
 
 		/* check the potential errors in rx thread. */
 		checkRxThreadError();

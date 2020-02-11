@@ -36,6 +36,7 @@
 #include "utils/faultinjector.h"
 #include "gdddetector.h"
 #include "gdddetectorpriv.h"
+#include "pgstat.h"
 
 #define RET_STATUS_OK 0
 #define RET_STATUS_ERROR 1
@@ -166,7 +167,8 @@ GlobalDeadLockDetectorLoop(void)
 
 		rc = WaitLatch(&MyProc->procLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   timeout * 1000L);
+					   timeout * 1000L,
+					   WAIT_EVENT_GLOBAL_DEADLOCK_DETECTOR_MAIN);
 
 		ResetLatch(&MyProc->procLatch);
 

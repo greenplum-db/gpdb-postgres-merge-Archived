@@ -3780,6 +3780,12 @@ pgstat_get_wait_activity(WaitEventActivity w)
 		case WAIT_EVENT_BACKOFF_MAIN:
 			event_name = "BackoffSweeperMain";
 			break;
+		case WAIT_EVENT_FTS_PROBE_MAIN:
+			event_name = "FtsProbeMain";
+			break;
+		case WAIT_EVENT_GLOBAL_DEADLOCK_DETECTOR_MAIN:
+			event_name = "GlobalDeadLockDetectorMain";
+			break;
 			/* no default case, so that compiler will warn */
 	}
 
@@ -3955,6 +3961,10 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 			break;
 		case WAIT_EVENT_SYNC_REP:
 			event_name = "SyncRep";
+			break;
+
+		case WAIT_EVENT_INTERCONNECT:
+			event_name = "Interconnect";
 			break;
 			/* no default case, so that compiler will warn */
 	}

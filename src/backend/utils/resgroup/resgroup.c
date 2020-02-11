@@ -2763,12 +2763,10 @@ waitOnGroup(ResGroupData *group)
 	Assert(!selfIsAssigned());
 
 	/*
-	 * The eventId is never used, because groupId is an Oid, but
-	 * pgstat_report_wait_start() wants an uint16 eventId.
-	 *
-	 * We set that information by the groupId via the backend entry.
+	 * The low bits of 'wait_event_info' argument to WaitLatch are
+	 * not enough to store a full Oid, so we set groupId out-of-band,
+	 * via the backend entry.
 	 */
-	pgstat_report_wait_start(WAIT_RESOURCE_GROUP, 0);
 	pgstat_report_resgroup(group->groupId);
 
 	/*
@@ -2793,20 +2791,18 @@ waitOnGroup(ResGroupData *group)
 
 			if (!procIsWaiting(proc))
 				break;
-			WaitLatch(&proc->procLatch, WL_LATCH_SET | WL_POSTMASTER_DEATH, -1);
+			WaitLatch(&proc->procLatch, WL_LATCH_SET | WL_POSTMASTER_DEATH, -1,
+					  PG_WAIT_RESOURCE_GROUP);
 		}
 	}
 	PG_CATCH();
 	{
-		pgstat_report_wait_end();
 		groupWaitCancel();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	groupAwaited = NULL;
-
-	pgstat_report_wait_end();
 }
 
 /*
