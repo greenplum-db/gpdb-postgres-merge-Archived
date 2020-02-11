@@ -904,27 +904,9 @@ ExecIndexRestrPos(IndexScanState *node)
 IndexScanState *
 ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 {
+    IndexScanState *indexstate;
 	Relation	currentRelation;
-<<<<<<< HEAD
-
-	/*
-	 * open the base relation and acquire appropriate lock on it.
-	 */
-	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
-
-	return ExecInitIndexScanForPartition(node, estate, eflags,
-										 currentRelation, node->indexid);
-}
-
-IndexScanState *
-ExecInitIndexScanForPartition(IndexScan *node, EState *estate, int eflags,
-							  Relation currentRelation, Oid indexid)
-{
-	IndexScanState *indexstate;
-	bool		relistarget;
-=======
-	LOCKMODE	lockmode;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+    LOCKMODE	lockmode;
 
 	/*
 	 * create state structure
@@ -941,9 +923,6 @@ ExecInitIndexScanForPartition(IndexScan *node, EState *estate, int eflags,
 	 */
 	ExecAssignExprContext(estate, &indexstate->ss.ps);
 
-<<<<<<< HEAD
-	/*indexstate->ss.ps.ps_TupFromTlist = false;*/
-=======
 	/*
 	 * open the scan relation
 	 */
@@ -964,7 +943,6 @@ ExecInitIndexScanForPartition(IndexScan *node, EState *estate, int eflags,
 	 */
 	ExecInitResultTypeTL(&indexstate->ss.ps);
 	ExecAssignScanProjectionInfo(&indexstate->ss);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * initialize child expressions
@@ -976,46 +954,12 @@ ExecInitIndexScanForPartition(IndexScan *node, EState *estate, int eflags,
 	 * would be nice to improve that.  (Problem is that any SubPlans present
 	 * in the expression must be found now...)
 	 */
-<<<<<<< HEAD
-	indexstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) indexstate);
-	indexstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) indexstate);
-	indexstate->indexqualorig = (List *)
-		ExecInitExpr((Expr *) node->indexqualorig,
-					 (PlanState *) indexstate);
-	indexstate->indexorderbyorig = (List *)
-		ExecInitExpr((Expr *) node->indexorderbyorig,
-					 (PlanState *) indexstate);
-
-	/*
-	 * tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &indexstate->ss.ps);
-	ExecInitScanTupleSlot(estate, &indexstate->ss);
-
-	indexstate->ss.ss_currentRelation = currentRelation;
-
-	/*
-	 * get the scan type from the relation descriptor.
-	 */
-	ExecAssignScanType(&indexstate->ss, RelationGetDescr(currentRelation));
-
-	/*
-	 * Initialize result tuple type and projection info.
-	 */
-	ExecAssignResultTypeFromTL(&indexstate->ss.ps);
-	ExecAssignScanProjectionInfo(&indexstate->ss);
-=======
 	indexstate->ss.ps.qual =
 		ExecInitQual(node->scan.plan.qual, (PlanState *) indexstate);
 	indexstate->indexqualorig =
 		ExecInitQual(node->indexqualorig, (PlanState *) indexstate);
 	indexstate->indexorderbyorig =
 		ExecInitExprList(node->indexorderbyorig, (PlanState *) indexstate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * If we are just doing EXPLAIN (ie, aren't going to run the plan), stop
@@ -1025,22 +969,9 @@ ExecInitIndexScanForPartition(IndexScan *node, EState *estate, int eflags,
 	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
 		return indexstate;
 
-<<<<<<< HEAD
-	/*
-	 * Open the index relation.
-	 *
-	 * If the parent table is one of the target relations of the query, then
-	 * InitPlan already opened and write-locked the index, so we can avoid
-	 * taking another lock here.  Otherwise we need a normal reader's lock.
-	 */
-	relistarget = ExecRelationIsTargetRelation(estate, node->scan.scanrelid);
-	indexstate->iss_RelationDesc = index_open(indexid,
-									 relistarget ? NoLock : AccessShareLock);
-=======
 	/* Open the index relation. */
 	lockmode = exec_rt_fetch(node->scan.scanrelid, estate)->rellockmode;
 	indexstate->iss_RelationDesc = index_open(node->indexid, lockmode);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Initialize index-specific scan state
