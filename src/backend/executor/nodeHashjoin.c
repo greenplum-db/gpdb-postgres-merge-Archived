@@ -116,11 +116,8 @@
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
 #include "utils/faultinjector.h"
-=======
 #include "pgstat.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/memutils.h"
 #include "utils/sharedtuplestore.h"
 
@@ -153,12 +150,9 @@ static TupleTableSlot *ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 												 uint32 *hashvalue,
 												 TupleTableSlot *tupleSlot);
 static bool ExecHashJoinNewBatch(HashJoinState *hjstate);
-<<<<<<< HEAD
 static bool isNotDistinctJoin(List *qualList);
-=======
 static bool ExecParallelHashJoinNewBatch(HashJoinState *hjstate);
 static void ExecParallelHashJoinPartitionOuter(HashJoinState *node);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static void ReleaseHashTable(HashJoinState *node);
 
@@ -211,10 +205,7 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 	outerNode = outerPlanState(node);
 	hashtable = node->hj_HashTable;
 	econtext = node->js.ps.ps_ExprContext;
-<<<<<<< HEAD
-=======
 	parallel_state = hashNode->parallel_state;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Reset per-tuple memory context to free any expression evaluation
@@ -227,10 +218,8 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 	 */
 	for (;;)
 	{
-<<<<<<< HEAD
 		/* We must never use an eagerly released hash table */
 		Assert(hashtable == NULL || !hashtable->eagerlyReleased);
-=======
 		/*
 		 * It's possible to iterate this loop many times before returning a
 		 * tuple, in some pathological cases such as needing to move much of
@@ -238,7 +227,6 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 		 * each time through.
 		 */
 		CHECK_FOR_INTERRUPTS();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		switch (node->hj_JoinState)
 		{
@@ -826,8 +814,8 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	else
 		hjstate->hj_nonequijoin = false;
 
-	/*
 <<<<<<< HEAD
+	/*
 	 * initialize child expressions
 	 */
 	hjstate->js.ps.targetlist = (List *)
@@ -862,9 +850,9 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	hjstate->prefetch_inner = node->join.prefetch_inner;
 	hjstate->prefetch_joinqual = ShouldPrefetchJoinQual(estate, &node->join);
 
-	/*
 =======
 >>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	/*
 	 * initialize child nodes
 	 *
 	 * Note: we could suppress the REWIND flag for the inner input, which
@@ -874,8 +862,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	hashNode = (Hash *) innerPlan(node);
 	outerNode = outerPlan(node);
 
-<<<<<<< HEAD
-	/* 
+	/*
 	 * XXX The following order are significant.  We init Hash first, then the outerNode
 	 * this is the same order as we execute (in the sense of the first exec called).
 	 * Until we have a better way to uncouple, share input needs this to be true.  If the
@@ -883,22 +870,18 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	 * a subquery node, share input will fail because the estate of the nodes can not be
 	 * set up correctly.
 	 */
-	innerPlanState(hjstate) = ExecInitNode((Plan *) hashNode, estate, eflags);
+    innerPlanState(hjstate) = ExecInitNode((Plan *) hashNode, estate, eflags);
+    innerDesc = ExecGetResultType(innerPlanState(hjstate));
 	((HashState *) innerPlanState(hjstate))->hs_keepnull = hjstate->hj_nonequijoin;
 
 	outerPlanState(hjstate) = ExecInitNode(outerNode, estate, eflags);
-=======
-	outerPlanState(hjstate) = ExecInitNode(outerNode, estate, eflags);
 	outerDesc = ExecGetResultType(outerPlanState(hjstate));
-	innerPlanState(hjstate) = ExecInitNode((Plan *) hashNode, estate, eflags);
-	innerDesc = ExecGetResultType(innerPlanState(hjstate));
 
 	/*
 	 * Initialize result slot, type and projection.
 	 */
 	ExecInitResultTupleSlotTL(&hjstate->js.ps, &TTSOpsVirtual);
 	ExecAssignProjectionInfo(&hjstate->js.ps, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * tuple table initialization
@@ -1434,11 +1417,7 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 		if (BufFileSeek(hashtable->outerBatchFile[curbatch], 0, 0, SEEK_SET) != 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-<<<<<<< HEAD
 					 errmsg("could not access temporary file")));
-=======
-					 errmsg("could not rewind hash-join temporary file: %m")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	return true;
@@ -1696,14 +1675,9 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 	if (nread != memtuple_size_from_uint32(header[1]) - sizeof(uint32))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-<<<<<<< HEAD
 				 errmsg("could not read from hash-join temporary file")));
-	return ExecStoreMinimalTuple(tuple, tupleSlot, true);
-=======
-				 errmsg("could not read from hash-join temporary file: %m")));
-	ExecForceStoreMinimalTuple(tuple, tupleSlot, true);
-	return tupleSlot;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+    ExecForceStoreMinimalTuple(tuple, tupleSlot, true);
+    return tupleSlot;
 }
 
 
