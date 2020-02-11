@@ -235,7 +235,6 @@ extern void EvalPlanQualEnd(EPQState *epqstate);
 
 extern Oid GetIntoRelOid(QueryDesc *queryDesc);
 
-extern bool map_part_attrs(Relation base, Relation part, TupleConversionMap **map_ptr, bool throwerror);
 extern Node *attrMapExpr(TupleConversionMap *map, Node *expr);
 
 /*

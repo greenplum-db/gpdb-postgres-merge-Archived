@@ -134,15 +134,6 @@ FunctionNext_guts(FunctionScanState *node)
 									   false,
 									   scanslot);
 
-		/*
-		 * CDB: Label each row with a synthetic ctid if needed for subquery dedup.
-		 */
-		if (node->cdb_want_ctid &&
-			!TupIsNull(scanslot))
-		{
-			slot_set_ctid_from_fake(scanslot, &node->cdb_fake_ctid);
-		}
-
 		return scanslot;
 	}
 
@@ -238,8 +229,8 @@ FunctionNext_guts(FunctionScanState *node)
 			 */
 			for (i = 0; i < fs->colcount; i++)
 			{
-				scanslot->PRIVATE_tts_values[att] = (Datum) 0;
-				scanslot->PRIVATE_tts_isnull[att] = true;
+				scanslot->tts_values[att] = (Datum) 0;
+				scanslot->tts_isnull[att] = true;
 				att++;
 			}
 		}
@@ -252,23 +243,21 @@ FunctionNext_guts(FunctionScanState *node)
 
 			for (i = 0; i < fs->colcount; i++)
 			{
-				scanslot->PRIVATE_tts_values[att] = slot_getattr(fs->func_slot, i + 1,
-														 &scanslot->PRIVATE_tts_isnull[att]);
+				scanslot->tts_values[att] = slot_getattr(fs->func_slot, i + 1,
+														 &scanslot->tts_isnull[att]);
 				att++;
 			}
 
 			/* CDB: Label each row with a synthetic ctid for subquery dedup. */
 			if (node->cdb_want_ctid)
 			{
-				HeapTuple   tuple = ExecFetchSlotHeapTuple(scanslot); 
-
 				/* Increment 48-bit row count */
 				node->cdb_fake_ctid.ip_posid++;
 				if (node->cdb_fake_ctid.ip_posid == 0)
 					ItemPointerSetBlockNumber(&node->cdb_fake_ctid,
 											  1 + ItemPointerGetBlockNumber(&node->cdb_fake_ctid));
 
-				tuple->t_self = node->cdb_fake_ctid;
+				scanslot->tts_tid = node->cdb_fake_ctid;
 			}
 
 			/*
@@ -284,8 +273,8 @@ FunctionNext_guts(FunctionScanState *node)
 	 */
 	if (node->ordinality)
 	{
-		scanslot->PRIVATE_tts_values[att] = Int64GetDatumFast(node->ordinal);
-		scanslot->PRIVATE_tts_isnull[att] = false;
+		scanslot->tts_values[att] = Int64GetDatumFast(node->ordinal);
+		scanslot->tts_isnull[att] = false;
 	}
 
 	/*

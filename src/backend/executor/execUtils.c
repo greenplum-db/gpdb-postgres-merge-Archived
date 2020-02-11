@@ -558,24 +558,6 @@ void
 ExecAssignProjectionInfo(PlanState *planstate,
 						 TupleDesc inputDesc)
 {
-	ProjectionInfo* pi = planstate->ps_ProjInfo;
-	if (NULL != pi)
-	{
-		/*
-		 * Note that pi->pi_varSlotOffsets, pi->pi_varNumbers, and
-		 * pi->pi_varOutputCols are all pointers into the same allocation.
-		 */
-		if (NULL != pi->pi_varSlotOffsets)
-		{
-			pfree(pi->pi_varSlotOffsets);
-		}
-		if (NULL != pi->pi_itemIsDone)
-		{
-			pfree(pi->pi_itemIsDone);
-		}
-		pfree(pi);
-	}
-
 	planstate->ps_ProjInfo =
 		ExecBuildProjectionInfo(planstate->plan->targetlist,
 								planstate->ps_ExprContext,
@@ -2020,7 +2002,7 @@ static void ExtractSubPlanParam(SubPlan *subplan, EState *estate)
 				 * To locate the value of this pre-evaluated parameter, we need to find
 				 * its location in the external parameter list.
 				 */
-				extParamIndex = paramInfo->numParams - estate->es_plannedstmt->nParamExec + paramid;
+				extParamIndex = paramInfo->numParams - list_length(estate->es_plannedstmt->paramExecTypes) + paramid;
 				prmExt = &paramInfo->params[extParamIndex];
 
 				/* Make sure the types are valid */

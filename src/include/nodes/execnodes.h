@@ -841,7 +841,7 @@ typedef struct TupleHashTableData *TupleHashTable;
 
 typedef struct TupleHashEntryData
 {
-	struct MemTupleData *firstTuple;	/* copy of first tuple in this group */
+	MinimalTuple firstTuple;	/* copy of first tuple in this group */
 	void	   *additional;		/* user data */
 	uint32		status;			/* hash status */
 	uint32		hash;			/* hash value (cached) */
@@ -1028,6 +1028,8 @@ typedef struct SetExprState
 	FunctionCallInfo fcinfo;
 } SetExprState;
 
+
+/* GPDB_12_MERGE_FIXME: These are legacy GPDB partitioning stuff. Can be removed? */
 /* ----------------
  *		PartSelectedExprState node
  * ----------------
@@ -1121,7 +1123,7 @@ typedef struct SubPlanState
 	struct PlanState *parent;	/* parent plan node's state tree */
 	ExprState  *testexpr;		/* state of combining expression */
 	List	   *args;			/* states of argument expression(s) */
-	struct MemTupleData *curTuple; /* copy of most recent tuple from subplan */
+	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
 	Datum		curArray;		/* most recent array from ARRAY() subplan */
 	/* these are used when hashing the subselect's output: */
 	TupleDesc	descRight;		/* subselect desc after projection */
@@ -1482,7 +1484,7 @@ struct AppendState
 {
 	PlanState	ps;				/* its first field is NodeTag */
 	PlanState **appendplans;	/* array of PlanStates for my inputs */
-	int			eflags;			/* used to initialize each subplan */
+	int			eflags;			/* used to initialize each subplan */ // GPDB_12_MERGE_FIXME: Is this still needed?
 	int			as_nplans;
 	int			as_whichplan;
 	int			as_first_partial_plan;	/* Index of 'appendplans' containing
@@ -1559,7 +1561,6 @@ typedef struct RecursiveUnionState
 	bool		intermediate_empty;
 	Tuplestorestate *working_table;
 	Tuplestorestate *intermediate_table;
-
 	/* Remaining fields are unused in UNION ALL case */
 	Oid		   *eqfuncoids;		/* per-grouping-field equality fns */
 	FmgrInfo   *hashfunctions;	/* per-grouping-field hash fns */
@@ -1626,6 +1627,7 @@ typedef enum
  *		retrieved from the subplan.
  *
  *		currentRelation    relation being scanned (NULL if none)
+ *		currentScanDesc    current scan descriptor for scan (NULL if none)
  *		ScanTupleSlot	   pointer to slot in tuple table holding scan tuple
  * ----------------
  */
@@ -1643,7 +1645,7 @@ typedef struct ScanState
  */
 typedef struct SeqScanState
 {
-	ScanState ss;
+	ScanState	ss;				/* its first field is NodeTag */
 	Size		pscan_len;		/* size of parallel heap scan descriptor */
 } SeqScanState;
 
@@ -1654,10 +1656,6 @@ typedef struct SeqScanState
 typedef struct SampleScanState
 {
 	ScanState	ss;
-	struct HeapScanDescData *ss_currentScanDesc_heap;
-	struct AppendOnlyScanDescData *ss_currentScanDesc_ao;
-	struct AOCSScanDescData *ss_currentScanDesc_aocs;
-
 	List	   *args;			/* expr states for TABLESAMPLE params */
 	ExprState  *repeatable;		/* expr state for REPEATABLE expr */
 	/* use struct pointer to avoid including tsmapi.h here */
@@ -2629,7 +2627,6 @@ typedef struct SortState
  *	expressions and run the aggregate transition functions.
  * ---------------------
  */
-
 /* these structs are private in nodeAgg.c: */
 typedef struct AggStatePerAggData *AggStatePerAgg;
 typedef struct AggStatePerTransData *AggStatePerTrans;
@@ -2686,8 +2683,8 @@ typedef struct AggState
 	/* These fields are for grouping set phase data */
 	int			maxsets;		/* The max number of sets in any phase */
 	AggStatePerPhase phases;	/* array of all phases */
-	struct switcheroo_Tuplesortstate *sort_in;	/* sorted input to phases > 1 */
-	struct switcheroo_Tuplesortstate *sort_out;	/* input is copied here for next phase */
+	Tuplesortstate *sort_in;	/* sorted input to phases > 1 */
+	Tuplesortstate *sort_out;	/* input is copied here for next phase */
 	TupleTableSlot *sort_slot;	/* slot for sort results */
 	/* these fields are used in AGG_PLAIN and AGG_SORTED modes: */
 	AggStatePerGroup *pergroups;	/* grouping set indexed array of per-group
@@ -2841,15 +2838,6 @@ typedef struct WindowAggState
 	TupleTableSlot *agg_row_slot;
 	TupleTableSlot *temp_slot_1;
 	TupleTableSlot *temp_slot_2;
-
-	/*
-	 * Most executor nodes in GPDB don't support SRFs in target lists, the
-	 * planner tries to insulate them from SRFs by adding Result nodes. But
-	 * WindowAgg needs to handle them, because a Result can't evaluate
-	 * WindowFunc, which an WindowAgg's target list usually has.
-	 * This is the same logic as for AggState.
-	 */
-	bool		ps_TupFromTlist;
 } WindowAggState;
 
 /* ----------------
