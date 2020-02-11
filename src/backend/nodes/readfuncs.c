@@ -104,12 +104,6 @@
 #define READ_UINT64_FIELD(fldname)  READ_SCALAR_FIELD(fldname, _atoi64(token))
 #endif
 
-/* Read an unsigned integer field (anything written using UINT64_FORMAT) */
-#define READ_UINT64_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	token = pg_strtok(&length);		/* get field value */ \
-	local_node->fldname = pg_strtouint64(token, NULL, 10)
-
 /* Read a long integer field (anything written as ":fldname %ld") */
 #define READ_LONG_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \
@@ -404,26 +398,6 @@ _readDeclareCursorStmt(void)
 	READ_DONE();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
-/*
- * _readCurrentOfExpr
- */
-static CurrentOfExpr *
-_readCurrentOfExpr(void)
-{
-	READ_LOCALS(CurrentOfExpr);
-
-	READ_INT_FIELD(cvarno);
-	READ_STRING_FIELD(cursor_name);
-	READ_INT_FIELD(cursor_param);
-	READ_OID_FIELD(target_relid);
-
-	/* some attributes omitted as they're bound only just before executor dispatch */
-
-	READ_DONE();
-}
-#endif /* COMPILING_BINARY_FUNCS */
-
 /*
  * _readSingleRowErrorDesc
  */
@@ -601,7 +575,6 @@ _readAlias(void)
 	READ_DONE();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static RangeVar *
 _readRangeVar(void)
 {
@@ -619,7 +592,6 @@ _readRangeVar(void)
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 /*
  * _readTableFunc
@@ -893,7 +865,6 @@ _readIndexElem(void)
 	READ_DONE();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static ReindexStmt *
 _readReindexStmt(void)
 {
@@ -906,7 +877,6 @@ _readReindexStmt(void)
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static ViewStmt *
 _readViewStmt(void)
@@ -937,26 +907,26 @@ _readRuleStmt(void)
 	READ_DONE();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static DropStmt *
 _readDropStmt(void)
 {
 	READ_LOCALS(DropStmt);
 
 	READ_NODE_FIELD(objects);
-	READ_NODE_FIELD(arguments);
 	READ_ENUM_FIELD(removeType,ObjectType);
 	READ_ENUM_FIELD(behavior,DropBehavior);
 	READ_BOOL_FIELD(missing_ok);
 	READ_BOOL_FIELD(bAllowPartn);
 	READ_BOOL_FIELD(concurrent);
+
+	/* Force 'missing_ok' in QEs */
+#ifdef COMPILING_BINARY_FUNCS
 	local_node->missing_ok=true;
+#endif /* COMPILING_BINARY_FUNCS */
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
-#ifndef COMPILING_BINARY_FUNCS
 static TruncateStmt *
 _readTruncateStmt(void)
 {
@@ -967,7 +937,6 @@ _readTruncateStmt(void)
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static ReplicaIdentityStmt *
 _readReplicaIdentityStmt(void)
@@ -992,7 +961,6 @@ _readAlterTableStmt(void)
 	READ_DONE();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static AlterTableCmd *
 _readAlterTableCmd(void)
 {
@@ -1010,9 +978,7 @@ _readAlterTableCmd(void)
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
-#ifndef COMPILING_BINARY_FUNCS
 static SetDistributionCmd *
 _readSetDistributionCmd(void)
 {
@@ -1023,7 +989,6 @@ _readSetDistributionCmd(void)
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static CreateRoleStmt *
 _readCreateRoleStmt(void)
@@ -1093,7 +1058,6 @@ _readAlterRoleSetStmt(void)
 	READ_DONE();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static AlterObjectSchemaStmt *
 _readAlterObjectSchemaStmt(void)
 {
@@ -1101,16 +1065,13 @@ _readAlterObjectSchemaStmt(void)
 
 	READ_NODE_FIELD(relation);
 	READ_NODE_FIELD(object);
-	READ_NODE_FIELD(objarg);
 	READ_STRING_FIELD(newschema);
 	READ_BOOL_FIELD(missing_ok);
 	READ_ENUM_FIELD(objectType,ObjectType);
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
-#ifndef COMPILING_BINARY_FUNCS
 static AlterOwnerStmt *
 _readAlterOwnerStmt(void)
 {
@@ -1119,12 +1080,10 @@ _readAlterOwnerStmt(void)
 	READ_ENUM_FIELD(objectType,ObjectType);
 	READ_NODE_FIELD(relation);
 	READ_NODE_FIELD(object);
-	READ_NODE_FIELD(objarg);
 	READ_NODE_FIELD(newowner);
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static RenameStmt *
 _readRenameStmt(void)
@@ -1136,7 +1095,6 @@ _readRenameStmt(void)
 	READ_NODE_FIELD(relation);
 	READ_OID_FIELD(objid);
 	READ_NODE_FIELD(object);
-	READ_NODE_FIELD(objarg);
 	READ_STRING_FIELD(subname);
 	READ_STRING_FIELD(newname);
 	READ_ENUM_FIELD(behavior,DropBehavior);
@@ -1529,7 +1487,6 @@ _readOpExpr(void)
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
-#ifndef COMPILING_BINARY_FUNCS
 /*
  * _readDistinctExpr
  */
@@ -1569,9 +1526,7 @@ _readNullIfExpr(void)
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
-#ifndef COMPILING_BINARY_FUNCS
 /*
  * _readScalarArrayOpExpr
  */
@@ -1589,7 +1544,6 @@ _readScalarArrayOpExpr(void)
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 #ifndef COMPILING_BINARY_FUNCS
 /*
@@ -2033,6 +1987,7 @@ _readCurrentOfExpr(void)
 	READ_UINT_FIELD(cvarno);
 	READ_STRING_FIELD(cursor_name);
 	READ_INT_FIELD(cursor_param);
+	READ_OID_FIELD(target_relid);
 
 	READ_DONE();
 }
@@ -2098,7 +2053,6 @@ _readRangeTblRef(void)
 	READ_DONE();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 /*
  * _readJoinExpr
  */
@@ -2118,7 +2072,6 @@ _readJoinExpr(void)
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 /*
  * _readFromExpr
@@ -2450,19 +2403,14 @@ _readPlannedStmt(void)
 	READ_NODE_FIELD(numSelectorsPerScanId);
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(relationOids);
-
-	/* invalItems not serialized in outfast.c */
+	/* invalItems not serialized in binary mode */
 #ifndef COMPILING_BINARY_FUNCS
 	READ_NODE_FIELD(invalItems);
-<<<<<<< HEAD
 #endif /* COMPILING_BINARY_FUNCS */
-	READ_INT_FIELD(nParamExec);
-=======
 	READ_NODE_FIELD(paramExecTypes);
 	READ_NODE_FIELD(utilityStmt);
 	READ_LOCATION_FIELD(stmt_location);
 	READ_LOCATION_FIELD(stmt_len);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	READ_NODE_FIELD(intoPolicy);
 
@@ -2826,6 +2774,7 @@ readBitmapIndexScanFields(BitmapIndexScan *local_node)
 	ReadCommonScan(&local_node->scan);
 
 	READ_OID_FIELD(indexid);
+	READ_BOOL_FIELD(isshared);
 	READ_NODE_FIELD(indexqual);
 	READ_NODE_FIELD(indexqualorig);
 }
@@ -2864,16 +2813,7 @@ readBitmapHeapScanFields(BitmapHeapScan *local_node)
 
 	ReadCommonScan(&local_node->scan);
 
-<<<<<<< HEAD
 	READ_NODE_FIELD(bitmapqualorig);
-=======
-	READ_OID_FIELD(indexid);
-	READ_BOOL_FIELD(isshared);
-	READ_NODE_FIELD(indexqual);
-	READ_NODE_FIELD(indexqualorig);
-
-	READ_DONE();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -3235,27 +3175,6 @@ _readSort(void)
 	READ_DONE();
 }
 
-<<<<<<< HEAD
-=======
-/*
- * _readGroup
- */
-static Group *
-_readGroup(void)
-{
-	READ_LOCALS(Group);
-
-	ReadCommonPlan(&local_node->plan);
-
-	READ_INT_FIELD(numCols);
-	READ_ATTRNUMBER_ARRAY(grpColIdx, local_node->numCols);
-	READ_OID_ARRAY(grpOperators, local_node->numCols);
-	READ_OID_ARRAY(grpCollations, local_node->numCols);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-
-	READ_DONE();
-}
-
 /*
  * _readAgg
  */
@@ -3318,13 +3237,10 @@ _readWindowAgg(void)
 	READ_INT_FIELD(ordNumCols);
 	READ_ATTRNUMBER_ARRAY(ordColIdx, local_node->ordNumCols);
 	READ_OID_ARRAY(ordOperators, local_node->ordNumCols);
-<<<<<<< HEAD
+	READ_OID_ARRAY(ordCollations, local_node->ordNumCols);
 	READ_INT_FIELD(firstOrderCol);
 	READ_OID_FIELD(firstOrderCmpOperator);
 	READ_BOOL_FIELD(firstOrderNullsFirst);
-=======
-	READ_OID_ARRAY(ordCollations, local_node->ordNumCols);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	READ_INT_FIELD(frameOptions);
 	READ_NODE_FIELD(startOffset);
 	READ_NODE_FIELD(endOffset);
@@ -3670,7 +3586,6 @@ _readCreateStmt(void)
 	READ_NODE_FIELD(distributedBy);
 	READ_NODE_FIELD(partitionBy);
 	READ_CHAR_FIELD(relKind);
-	READ_CHAR_FIELD(relStorage);
 	READ_NODE_FIELD(deferredStmts);
 	READ_BOOL_FIELD(is_part_child);
 	READ_BOOL_FIELD(is_part_parent);
@@ -3708,7 +3623,6 @@ _readExtTableTypeDesc(void)
 	READ_DONE();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static CreateExternalStmt *
 _readCreateExternalStmt(void)
 {
@@ -3728,7 +3642,6 @@ _readCreateExternalStmt(void)
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static CreateSchemaStmt *
 _readCreateSchemaStmt(void)
@@ -3847,12 +3760,12 @@ _readCreateFunctionStmt(void)
 {
 	READ_LOCALS(CreateFunctionStmt);
 
+	READ_BOOL_FIELD(is_procedure);
 	READ_BOOL_FIELD(replace);
 	READ_NODE_FIELD(funcname);
 	READ_NODE_FIELD(parameters);
 	READ_NODE_FIELD(returnType);
 	READ_NODE_FIELD(options);
-	READ_NODE_FIELD(withClause);
 
 	READ_DONE();
 }
@@ -3953,7 +3866,6 @@ _readCreateOpClassItem(void)
 	READ_LOCALS(CreateOpClassItem);
 	READ_INT_FIELD(itemtype);
 	READ_NODE_FIELD(name);
-	READ_NODE_FIELD(args);
 	READ_INT_FIELD(number);
 	READ_NODE_FIELD(order_family);
 	READ_NODE_FIELD(class_args);
@@ -4005,7 +3917,7 @@ _readGrantStmt(void)
 
 	READ_BOOL_FIELD(is_grant);
 	READ_ENUM_FIELD(targtype,GrantTargetType);
-	READ_ENUM_FIELD(objtype,GrantObjectType);
+	READ_ENUM_FIELD(objtype,ObjectType);
 	READ_NODE_FIELD(objects);
 	READ_NODE_FIELD(privileges);
 	READ_NODE_FIELD(grantees);
@@ -4015,13 +3927,14 @@ _readGrantStmt(void)
 	READ_DONE();
 }
 
-static FuncWithArgs *
-_readFuncWithArgs(void)
+static ObjectWithArgs *
+_readObjectWithArgs(void)
 {
-	READ_LOCALS(FuncWithArgs);
+	READ_LOCALS(ObjectWithArgs);
 
-	READ_NODE_FIELD(funcname);
-	READ_NODE_FIELD(funcargs);
+	READ_NODE_FIELD(objname);
+	READ_NODE_FIELD(objargs);
+	READ_BOOL_FIELD(args_unspecified);
 
 	READ_DONE();
 }
@@ -4087,12 +4000,21 @@ _readVacuumStmt(void)
 {
 	READ_LOCALS(VacuumStmt);
 
-	READ_INT_FIELD(options);
-	READ_NODE_FIELD(relation);
-	READ_NODE_FIELD(va_cols);
+	READ_NODE_FIELD(options);
+	READ_NODE_FIELD(rels);
+	READ_BOOL_FIELD(is_vacuumcmd);
 
-	READ_BOOL_FIELD(skip_twophase);
-	READ_NODE_FIELD(ao_vacuum_phase_config);
+	READ_DONE();
+}
+
+static VacuumRelation *
+_readVacuumRelation(void)
+{
+	READ_LOCALS(VacuumRelation);
+
+	READ_NODE_FIELD(relation);
+	READ_OID_FIELD(oid);
+	READ_NODE_FIELD(va_cols);
 
 	READ_DONE();
 }
@@ -4655,8 +4577,8 @@ parseNodeString(void)
 		return_value = _readFuncCall();
 	else if (MATCHX("FUNCTIONPARAMETER"))
 		return_value = _readFunctionParameter();
-	else if (MATCHX("FUNCWITHARGS"))
-		return_value = _readFuncWithArgs();
+	else if (MATCHX("OBJECTWITHARGS"))
+		return_value = _readObjectWithArgs();
 	else if (MATCHX("GRANTROLESTMT"))
 		return_value = _readGrantRoleStmt();
 	else if (MATCHX("GRANTSTMT"))
@@ -4695,6 +4617,8 @@ parseNodeString(void)
 		return_value = _readTypeName();
 	else if (MATCHX("VACUUMSTMT"))
 		return_value = _readVacuumStmt();
+	else if (MATCHX("VACUUMRELATION"))
+		return_value = _readVacuumRelation();
 	else if (MATCHX("AOVACUUMPHASECONFIG"))
 		return_value = _readAOVacuumPhaseConfig();
 	else if (MATCHX("VARIABLESETSTMT"))

@@ -30,17 +30,13 @@
 
 
 /* Static state for pg_strtok */
-<<<<<<< HEAD
-static char *pg_strtok_ptr = NULL;
-static char *pg_strtok_begin = NULL;                    /*CDB*/
-=======
 static const char *pg_strtok_ptr = NULL;
+static const char *pg_strtok_begin = NULL;                    /*CDB*/
 
 /* State flag that determines how readfuncs.c should treat location fields */
 #ifdef WRITE_READ_PARSE_PLAN_TREES
 bool		restore_location_fields = false;
 #endif
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static void nodeReadSkipThru(char closingDelimiter);    /*CDB*/
 
@@ -76,13 +72,9 @@ set_strtok_states(char *ptr, char *begin)
 static void *
 stringToNodeInternal(const char *str, bool restore_loc_fields)
 {
-<<<<<<< HEAD
-	char	   *save_strtok;
-    char       *save_begin = pg_strtok_begin;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	void	   *retval;
 	const char *save_strtok;
+    const char *save_begin = pg_strtok_begin;
 #ifdef WRITE_READ_PARSE_PLAN_TREES
 	bool		save_restore_location_fields;
 #endif
