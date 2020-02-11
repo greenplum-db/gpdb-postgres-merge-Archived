@@ -49,23 +49,8 @@
 Portal		ActivePortal = NULL;
 
 
-<<<<<<< HEAD
 static void ProcessQuery(Portal portal, /* Resource queueing need SQL, so we pass portal. */
-			 PlannedStmt *stmt,
-			 const char *sourceText,
-			 ParamListInfo params,
-			 DestReceiver *dest,
-			 char *completionTag);
-static void FillPortalStore(Portal portal, bool isTopLevel);
-static uint64 RunFromStore(Portal portal, ScanDirection direction, uint64 count,
-			 DestReceiver *dest);
-static uint64 PortalRunSelect(Portal portal, bool forward, int64 count,
-				DestReceiver *dest);
-static void PortalRunUtility(Portal portal, Node *utilityStmt,
-				 bool isTopLevel, bool setHoldSnapshot,
-				 DestReceiver *dest, char *completionTag);
-=======
-static void ProcessQuery(PlannedStmt *plan,
+						 PlannedStmt *stmt,
 						 const char *sourceText,
 						 ParamListInfo params,
 						 QueryEnvironment *queryEnv,
@@ -74,12 +59,11 @@ static void ProcessQuery(PlannedStmt *plan,
 static void FillPortalStore(Portal portal, bool isTopLevel);
 static uint64 RunFromStore(Portal portal, ScanDirection direction, uint64 count,
 						   DestReceiver *dest);
-static uint64 PortalRunSelect(Portal portal, bool forward, long count,
+static uint64 PortalRunSelect(Portal portal, bool forward, int64 count,
 							  DestReceiver *dest);
 static void PortalRunUtility(Portal portal, PlannedStmt *pstmt,
 							 bool isTopLevel, bool setHoldSnapshot,
 							 DestReceiver *dest, char *completionTag);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void PortalRunMulti(Portal portal,
 						   bool isTopLevel, bool setHoldSnapshot,
 						   DestReceiver *dest, DestReceiver *altdest,
@@ -128,7 +112,6 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->planstate = NULL;
 	qd->totaltime = NULL;
 
-<<<<<<< HEAD
 	qd->extended_query = false; /* default value */
 	qd->portal_name = NULL;
 
@@ -144,44 +127,6 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 		qd->gpmon_pkt = (gpmon_packet_t *) palloc0(sizeof(gpmon_packet_t));
 		gpmon_qlog_packet_init(qd->gpmon_pkt);
 	}
-
-	return qd;
-}
-
-/*
- * CreateUtilityQueryDesc
- */
-QueryDesc *
-CreateUtilityQueryDesc(Node *utilitystmt,
-					   const char *sourceText,
-					   Snapshot snapshot,
-					   DestReceiver *dest,
-					   ParamListInfo params)
-{
-	QueryDesc  *qd = (QueryDesc *) palloc(sizeof(QueryDesc));
-
-	qd->operation = CMD_UTILITY;	/* operation */
-	qd->plannedstmt = NULL;
-	qd->utilitystmt = utilitystmt;		/* utility command */
-	qd->sourceText = sourceText;	/* query text */
-	qd->snapshot = RegisterSnapshot(snapshot);	/* snapshot */
-	qd->crosscheck_snapshot = InvalidSnapshot;	/* RI check snapshot */
-	qd->dest = dest;			/* output dest */
-	qd->params = params;		/* parameter values passed into query */
-	qd->instrument_options = false;		/* uninteresting for utilities */
-
-	/* null these fields until set by ExecutorStart */
-	qd->tupDesc = NULL;
-	qd->estate = NULL;
-	qd->planstate = NULL;
-	qd->totaltime = NULL;
-=======
-	/* not yet executed */
-	qd->already_executed = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-
-	qd->extended_query = false; /* default value */
-	qd->portal_name = NULL;
 
 	return qd;
 }
@@ -241,18 +186,17 @@ ProcessQuery(Portal portal,
 	/*
 	 * Create the QueryDesc object
 	 */
-<<<<<<< HEAD
 	Assert(portal);
 
 	if (portal->sourceTag == T_SelectStmt && gp_select_invisible)
 		queryDesc = CreateQueryDesc(stmt, portal->sourceText,
 									SnapshotAny, InvalidSnapshot,
-									dest, params,
+									dest, params, queryEnv,
 									GP_INSTRUMENT_OPTS);
 	else
 		queryDesc = CreateQueryDesc(stmt, portal->sourceText,
 									GetActiveSnapshot(), InvalidSnapshot,
-									dest, params,
+									dest, params, queryEnv,
 									GP_INSTRUMENT_OPTS);
 	queryDesc->ddesc = portal->ddesc;
 
@@ -296,11 +240,6 @@ ProcessQuery(Portal portal,
 	}
 
 	portal->status = PORTAL_ACTIVE;
-=======
-	queryDesc = CreateQueryDesc(plan, sourceText,
-								GetActiveSnapshot(), InvalidSnapshot,
-								dest, params, queryEnv, 0);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Call ExecutorStart to prepare the plan for execution
@@ -315,8 +254,7 @@ ProcessQuery(Portal portal,
 	/*
 	 * Run the plan to completion.
 	 */
-<<<<<<< HEAD
-	ExecutorRun(queryDesc, ForwardScanDirection, 0);
+	ExecutorRun(queryDesc, ForwardScanDirection, 0L, true);
 
 	autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
 
@@ -325,9 +263,6 @@ ProcessQuery(Portal portal,
 	 */
 	ExecutorFinish(queryDesc);
 	ExecutorEnd(queryDesc);
-=======
-	ExecutorRun(queryDesc, ForwardScanDirection, 0L, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Build command completion status string, if caller wants one.
@@ -420,13 +355,8 @@ ChoosePortalStrategy(List *stmts)
 
 			if (query->canSetTag)
 			{
-<<<<<<< HEAD
 				if (query->commandType == CMD_SELECT &&
-					query->utilityStmt == NULL &&
 					query->parentStmtType == PARENTSTMTTYPE_NONE)
-=======
-				if (query->commandType == CMD_SELECT)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				{
 					if (query->hasModifyingCTE)
 						return PORTAL_ONE_MOD_WITH;
@@ -448,15 +378,10 @@ ChoosePortalStrategy(List *stmts)
 
 			if (pstmt->canSetTag)
 			{
-<<<<<<< HEAD
 				if (pstmt->commandType == CMD_SELECT &&
-					pstmt->utilityStmt == NULL &&
 					pstmt->intoClause == NULL &&
 					pstmt->copyIntoClause == NULL &&
 					pstmt->refreshClause == NULL)
-=======
-				if (pstmt->commandType == CMD_SELECT)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				{
 					if (pstmt->hasModifyingCTE)
 						return PORTAL_ONE_MOD_WITH;
@@ -569,13 +494,8 @@ FetchStatementTargetList(Node *stmt)
 		}
 		else
 		{
-<<<<<<< HEAD
 			if (query->commandType == CMD_SELECT &&
-				query->utilityStmt == NULL &&
 				query->parentStmtType == PARENTSTMTTYPE_NONE)
-=======
-			if (query->commandType == CMD_SELECT)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				return query->targetList;
 			if (query->returningList)
 				return query->returningList;
@@ -586,17 +506,6 @@ FetchStatementTargetList(Node *stmt)
 	{
 		PlannedStmt *pstmt = (PlannedStmt *) stmt;
 
-<<<<<<< HEAD
-		if (pstmt->commandType == CMD_SELECT &&
-			pstmt->utilityStmt == NULL &&
-			pstmt->intoClause == NULL &&
-			pstmt->copyIntoClause == NULL &&
-			pstmt->refreshClause == NULL)
-			return pstmt->planTree->targetlist;
-		if (pstmt->hasReturning)
-			return pstmt->planTree->targetlist;
-		return NIL;
-=======
 		if (pstmt->commandType == CMD_UTILITY)
 		{
 			/* transfer attention to utility statement */
@@ -604,13 +513,15 @@ FetchStatementTargetList(Node *stmt)
 		}
 		else
 		{
-			if (pstmt->commandType == CMD_SELECT)
+			if (pstmt->commandType == CMD_SELECT &&
+				pstmt->intoClause == NULL &&
+				pstmt->copyIntoClause == NULL &&
+				pstmt->refreshClause == NULL)
 				return pstmt->planTree->targetlist;
 			if (pstmt->hasReturning)
 				return pstmt->planTree->targetlist;
 			return NIL;
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	if (IsA(stmt, FetchStmt))
 	{
@@ -724,7 +635,7 @@ PortalStart(Portal portal, ParamListInfo params,
 											InvalidSnapshot,
 											None_Receiver,
 											params,
-<<<<<<< HEAD
+											portal->queryEnv,
 											GP_INSTRUMENT_OPTS);
 				queryDesc->ddesc = ddesc;
 				
@@ -782,10 +693,6 @@ PortalStart(Portal portal, ParamListInfo params,
 				}
 
 				portal->status = PORTAL_ACTIVE;
-=======
-											portal->queryEnv,
-											0);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 				/*
 				 * If it's a scrollable cursor, executor needs to support
