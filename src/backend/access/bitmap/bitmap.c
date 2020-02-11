@@ -26,6 +26,7 @@
 #include "access/bitmap.h"
 #include "access/bitmap_private.h"
 #include "access/nbtree.h"		/* for btree_or_bitmap_validate() */
+#include "access/tableam.h"
 #include "access/xact.h"
 #include "catalog/index.h"
 #include "catalog/pg_am.h"
@@ -142,8 +143,9 @@ bmbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	_bitmap_init_buildstate(index, &bmstate);
 
 	/* do the heap scan */
-	reltuples = IndexBuildScan(heap, index, indexInfo, false,
-							  bmbuildCallback, (void *)&bmstate);
+	reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
+									   bmbuildCallback, (void *) &bmstate,
+									   NULL);
 	/* clean up the build state */
 	_bitmap_cleanup_buildstate(index, &bmstate);
 	

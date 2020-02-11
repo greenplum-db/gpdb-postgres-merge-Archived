@@ -370,26 +370,30 @@ _bitmap_findvalue(Relation lovHeap, Relation lovIndex,
 				  OffsetNumber *lovOffset, bool *offsetNull)
 {
 	TupleDesc		tupDesc;
-	HeapTuple		tuple;
 	bool			found = false;
+	TupleTableSlot *slot;
 
 	tupDesc = RelationGetDescr(lovIndex);
 
-	tuple = index_getnext(scanDesc, ForwardScanDirection);
-
-	if (tuple != NULL)
+	/*
+	 * creating a new slot on every call is a bit expensive, but there's no
+	 * convenient place to keep it.
+	 */
+	slot = table_slot_create(lovHeap, NULL);
+	if (index_getnext_slot(scanDesc, ForwardScanDirection, slot))
 	{
-		TupleDesc 	heapTupDesc;
 		Datum 		d;
 
 		found = true;
-		heapTupDesc = RelationGetDescr(lovHeap);
 
-		d = heap_getattr(tuple, tupDesc->natts + 1, heapTupDesc, blockNull);
+		d = slot_getattr(slot, tupDesc->natts + 1, blockNull);
 		*lovBlock =	DatumGetInt32(d);
-		d = heap_getattr(tuple, tupDesc->natts + 2, heapTupDesc, offsetNull);
+		d = slot_getattr(slot, tupDesc->natts + 2, offsetNull);
 		*lovOffset = DatumGetInt16(d);
 	}
+
+	ExecDropSingleTupleTableSlot(slot);
+
 	return found;
 }
 
