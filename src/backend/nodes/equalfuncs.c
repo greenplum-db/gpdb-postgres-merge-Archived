@@ -1049,6 +1049,15 @@ _equalQuery(const Query *a, const Query *b)
 	COMPARE_LOCATION_FIELD(stmt_location);
 	COMPARE_LOCATION_FIELD(stmt_len);
 
+	/* Prior to 3.4 this test was
+	 *     COMPARE_SCALAR_FIELD(intoPolicy);
+	 * Maybe GpPolicy should be a Node?
+	 */
+	if (!GpPolicyEqual(a->intoPolicy, b->intoPolicy))
+		return false;
+
+	COMPARE_SCALAR_FIELD(parentStmtType);
+
 	return true;
 }
 
@@ -1058,15 +1067,6 @@ _equalRawStmt(const RawStmt *a, const RawStmt *b)
 	COMPARE_NODE_FIELD(stmt);
 	COMPARE_LOCATION_FIELD(stmt_location);
 	COMPARE_LOCATION_FIELD(stmt_len);
-
-	/* Prior to 3.4 this test was
-	 *     COMPARE_SCALAR_FIELD(intoPolicy);
-	 * Maybe GpPolicy should be a Node?
-	 */
-	if (!GpPolicyEqual(a->intoPolicy, b->intoPolicy))
-		return false;
-
-	COMPARE_SCALAR_FIELD(parentStmtType);
 
 	return true;
 }
@@ -1323,14 +1323,10 @@ _equalCopyStmt(const CopyStmt *a, const CopyStmt *b)
 	COMPARE_NODE_FIELD(attlist);
 	COMPARE_SCALAR_FIELD(is_from);
 	COMPARE_SCALAR_FIELD(is_program);
-	COMPARE_SCALAR_FIELD(skip_ext_partition);
 	COMPARE_STRING_FIELD(filename);
 	COMPARE_NODE_FIELD(options);
-<<<<<<< HEAD
-	COMPARE_NODE_FIELD(sreh);
-=======
 	COMPARE_NODE_FIELD(whereClause);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	COMPARE_NODE_FIELD(sreh);
 
 	return true;
 }
@@ -1341,13 +1337,8 @@ _equalCreateStmt(const CreateStmt *a, const CreateStmt *b)
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(tableElts);
 	COMPARE_NODE_FIELD(inhRelations);
-<<<<<<< HEAD
-	COMPARE_NODE_FIELD(inhOids);
-	COMPARE_SCALAR_FIELD(parentOidCount);
-=======
 	COMPARE_NODE_FIELD(partbound);
 	COMPARE_NODE_FIELD(partspec);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	COMPARE_NODE_FIELD(ofTypename);
 	COMPARE_NODE_FIELD(constraints);
 	COMPARE_NODE_FIELD(options);
@@ -1358,7 +1349,6 @@ _equalCreateStmt(const CreateStmt *a, const CreateStmt *b)
 
 	COMPARE_NODE_FIELD(distributedBy);
 	COMPARE_SCALAR_FIELD(relKind);
-	COMPARE_SCALAR_FIELD(relStorage);
 	/* deferredStmts omitted */
 	COMPARE_SCALAR_FIELD(is_part_child);
 	COMPARE_SCALAR_FIELD(is_add_part);
@@ -1377,16 +1367,6 @@ _equalColumnReferenceStorageDirective(const ColumnReferenceStorageDirective *a,
 	COMPARE_STRING_FIELD(column);
 	COMPARE_SCALAR_FIELD(deflt);
 	COMPARE_NODE_FIELD(encoding);
-
-	return true;
-}
-
-static bool
-_equalPartitionRangeItem(const PartitionRangeItem *a, const PartitionRangeItem *b)
-{
-	COMPARE_NODE_FIELD(partRangeVal);
-	COMPARE_SCALAR_FIELD(partedge);
-	COMPARE_SCALAR_FIELD(everycount);
 
 	return true;
 }
@@ -1437,12 +1417,9 @@ _equalDefineStmt(const DefineStmt *a, const DefineStmt *b)
 	COMPARE_NODE_FIELD(defnames);
 	COMPARE_NODE_FIELD(args);
 	COMPARE_NODE_FIELD(definition);
-<<<<<<< HEAD
-	COMPARE_SCALAR_FIELD(trusted);  /* CDB */
-=======
 	COMPARE_SCALAR_FIELD(if_not_exists);
 	COMPARE_SCALAR_FIELD(replace);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	COMPARE_SCALAR_FIELD(trusted);  /* CDB */
 
 	return true;
 }
@@ -1525,12 +1502,10 @@ _equalIndexStmt(const IndexStmt *a, const IndexStmt *b)
 	COMPARE_SCALAR_FIELD(transformed);
 	COMPARE_SCALAR_FIELD(concurrent);
 	COMPARE_SCALAR_FIELD(if_not_exists);
-<<<<<<< HEAD
+	COMPARE_SCALAR_FIELD(reset_default_tblspc);
 	COMPARE_SCALAR_FIELD(is_split_part);
 	COMPARE_SCALAR_FIELD(parentIndexId);
 	COMPARE_SCALAR_FIELD(parentConstraintId);
-=======
-	COMPARE_SCALAR_FIELD(reset_default_tblspc);
 
 	return true;
 }
@@ -1544,7 +1519,6 @@ _equalCreateStatsStmt(const CreateStatsStmt *a, const CreateStatsStmt *b)
 	COMPARE_NODE_FIELD(relations);
 	COMPARE_STRING_FIELD(stxcomment);
 	COMPARE_SCALAR_FIELD(if_not_exists);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	return true;
 }
@@ -2309,11 +2283,8 @@ _equalReindexStmt(const ReindexStmt *a, const ReindexStmt *b)
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_STRING_FIELD(name);
 	COMPARE_SCALAR_FIELD(options);
-<<<<<<< HEAD
-	COMPARE_SCALAR_FIELD(relid);
-=======
 	COMPARE_SCALAR_FIELD(concurrent);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	COMPARE_SCALAR_FIELD(relid);
 
 	return true;
 }
@@ -3595,9 +3566,6 @@ equal(const void *a, const void *b)
 			break;
 		case T_ColumnReferenceStorageDirective:
 			retval = _equalColumnReferenceStorageDirective(a, b);
-			break;
-		case T_PartitionRangeItem:
-			retval = _equalPartitionRangeItem(a, b);
 			break;
 		case T_ExtTableTypeDesc:
 			retval = _equalExtTableTypeDesc(a, b);
