@@ -850,6 +850,11 @@ typedef enum
 	WAIT_EVENT_WAL_RECEIVER_MAIN,
 	WAIT_EVENT_WAL_SENDER_MAIN,
 	WAIT_EVENT_WAL_WRITER_MAIN
+
+	/* GPDB additions */
+	,
+	WAIT_EVENT_BACKOFF_MAIN
+
 } WaitEventActivity;
 
 /* ----------

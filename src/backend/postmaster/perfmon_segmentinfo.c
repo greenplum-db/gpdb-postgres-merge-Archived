@@ -117,8 +117,8 @@ SegmentInfoSenderLoop(void)
 
 		/* Sleep a while. */
 		rc = WaitLatch(&MyProc->procLatch,
-				WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-				SEGMENT_INFO_LOOP_SLEEP_MS);
+					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+					   SEGMENT_INFO_LOOP_SLEEP_MS, 0);
 		ResetLatch(&MyProc->procLatch);
 
 		/* emergency bailout if postmaster has died */

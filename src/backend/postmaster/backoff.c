@@ -56,6 +56,7 @@
 #include "port/atomics.h"
 #include "postmaster/backoff.h"
 #include "pg_trace.h"
+#include "pgstat.h"
 
 extern bool gp_debug_resqueue_priority;
 
@@ -1211,7 +1212,8 @@ BackoffSweeperLoop(void)
 		/* Sleep a while. */
 		rc = WaitLatch(&MyProc->procLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   gp_resqueue_priority_sweeper_interval);
+					   gp_resqueue_priority_sweeper_interval,
+					   WAIT_EVENT_BACKOFF_MAIN);
 		ResetLatch(&MyProc->procLatch);
 
 		/* emergency bailout if postmaster has died */
