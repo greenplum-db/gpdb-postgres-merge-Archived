@@ -32,7 +32,6 @@
 #include "executor/execdebug.h"
 #include "executor/nodeBitmapOr.h"
 #include "miscadmin.h"
-#include "nodes/tidbitmap.h"
 
 
 /* ----------------------------------------------------------------
@@ -123,7 +122,13 @@ MultiExecBitmapOr(BitmapOrState *node)
 	PlanState **bitmapplans;
 	int			nplans;
 	int			i;
-	TIDBitmap  *hbm = NULL;
+	/*
+	 * Greenplum uses result for TIDBitmap result, and node->bitmap for
+	 * StreamBitmap result if there is any StreamBitmap.
+	 *
+	 * At last it will union them and return.
+	 */
+	TIDBitmap  *result = NULL;
 
 	/* must provide our own instrumentation support */
 	if (node->ps.instrument)
@@ -143,9 +148,6 @@ MultiExecBitmapOr(BitmapOrState *node)
 		PlanState  *subnode = bitmapplans[i];
 		Node	   *subresult = NULL;
 
-<<<<<<< HEAD
-		subresult = MultiExecProcNode(subnode);
-=======
 		/*
 		 * We can special-case BitmapIndexScan children to avoid an explicit
 		 * tbm_union step for each child: just pass down the current result
@@ -160,58 +162,62 @@ MultiExecBitmapOr(BitmapOrState *node)
 									((BitmapOr *) node->ps.plan)->isshared ?
 									node->ps.state->es_query_dsa : NULL);
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
-		if(subresult == NULL)
-			continue;
+			((BitmapIndexScanState *) subnode)->biss_result = result;
 
-		if (!(IsA(subresult, TIDBitmap) ||
-			  IsA(subresult, StreamBitmap)))
-			elog(ERROR, "unrecognized result from subplan");
+			subresult = (TIDBitmap *) MultiExecProcNode(subnode);
 
-		if (IsA(subresult, TIDBitmap))
-		{
-			if (hbm == NULL)
-				hbm = (TIDBitmap *)subresult;
-			else
-			{
-				tbm_union(hbm, (TIDBitmap *)subresult);
-			}
+			if (subresult != result)
+				elog(ERROR, "unrecognized result from subplan");
 		}
 		else
 		{
-<<<<<<< HEAD
-			if(node->bitmap)
-=======
 			/* standard implementation */
 			subresult = (TIDBitmap *) MultiExecProcNode(subnode);
 
-			if (!subresult || !IsA(subresult, TIDBitmap))
+			if (subresult == NULL)
+				continue;
+
+			if (!(IsA(subresult, TIDBitmap) ||
+				  IsA(subresult, StreamBitmap)))
 				elog(ERROR, "unrecognized result from subplan");
 
-			if (result == NULL)
-				result = subresult; /* first subplan */
-			else
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			if (IsA(subresult, TIDBitmap))
 			{
-				if(node->bitmap != subresult)
+				/* if it's a TIDBitmap, union into result */
+				if (result == NULL)
+					result = (TIDBitmap *)subresult;
+				else
 				{
-					StreamBitmap *s = (StreamBitmap *)subresult;
-					stream_move_node((StreamBitmap *)node->bitmap, s, BMS_OR);				}
+					tbm_union(result, (TIDBitmap *)subresult);
+					tbm_free(subresult);
+				}
 			}
 			else
-				node->bitmap = subresult;
+			{
+				/* if it's a StreamBitmap, union into node->bitmap */
+				if (node->bitmap)
+				{
+					if (node->bitmap != subresult)
+					{
+						StreamBitmap *s = (StreamBitmap *)subresult;
+						stream_move_node((StreamBitmap *)node->bitmap, s, BMS_OR);
+					}
+				}
+				else
+					node->bitmap = subresult;
+			}
 		}
 	}
 
-	/* check to see if we have any hash bitmaps */
-	if (hbm != NULL)
+	/* union the TIDBitmap and StreamBitmap into node->bitmap */
+	if (result != NULL)
 	{
-		if(node->bitmap && IsA(node->bitmap, StreamBitmap))
+		if (node->bitmap && IsA(node->bitmap, StreamBitmap))
 			stream_add_node((StreamBitmap *)node->bitmap, 
-						tbm_create_stream_node(hbm), BMS_OR);
+						tbm_create_stream_node(result), BMS_OR);
 		else
-			node->bitmap = (Node *)hbm;
+			node->bitmap = (Node *)result;
 	}
 
 	/* must provide our own instrumentation support */
