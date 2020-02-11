@@ -3467,7 +3467,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	 * check for that now, rather than let the COMMIT fail.
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH && RelationIsMapped(heapRelation))
-		PreventTransactionChain(true, "REINDEX of a catalog table");
+		PreventInTransactionBlock(true, "REINDEX of a catalog table");
 
 	/*
 	 * Also check for active uses of the index in the current transaction; we

@@ -826,7 +826,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			 */
 
 			if (Gp_role == GP_ROLE_DISPATCH)
-				PreventTransactionChain(isTopLevel, "CREATE RESOURCE QUEUE");
+				PreventInTransactionBlock(isTopLevel, "CREATE RESOURCE QUEUE");
 
 			CreateQueue((CreateQueueStmt *) parsetree);
 			break;
@@ -844,21 +844,21 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			 */
 		case T_CreateResourceGroupStmt:
 			if (Gp_role == GP_ROLE_DISPATCH)
-				PreventTransactionChain(isTopLevel, "CREATE RESOURCE GROUP");
+				PreventInTransactionBlock(isTopLevel, "CREATE RESOURCE GROUP");
 
 			CreateResourceGroup((CreateResourceGroupStmt *) parsetree);
 			break;
 
 		case T_AlterResourceGroupStmt:
 			if (Gp_role == GP_ROLE_DISPATCH)
-				PreventTransactionChain(isTopLevel, "ALTER RESOURCE GROUP");
+				PreventInTransactionBlock(isTopLevel, "ALTER RESOURCE GROUP");
 
 			AlterResourceGroup((AlterResourceGroupStmt *) parsetree);
 			break;
 
 		case T_DropResourceGroupStmt:
 			if (Gp_role == GP_ROLE_DISPATCH)
-				PreventTransactionChain(isTopLevel, "DROP RESOURCE GROUP");
+				PreventInTransactionBlock(isTopLevel, "DROP RESOURCE GROUP");
 
 			DropResourceGroup((DropResourceGroupStmt *) parsetree);
 			break;

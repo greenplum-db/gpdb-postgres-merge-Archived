@@ -1646,7 +1646,7 @@ AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTopLevel)
 			 * running this in any genuine transaction block.
 			 */
 			/* this case isn't allowed within a transaction block */
-			PreventTransactionChain(isTopLevel, "ALTER DATABASE SET TABLESPACE");
+			PreventInTransactionBlock(isTopLevel, "ALTER DATABASE SET TABLESPACE");
 		}
 		movedb(stmt->dbname, defGetString(dtablespace));
 
