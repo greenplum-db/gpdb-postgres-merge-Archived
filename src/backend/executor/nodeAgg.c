@@ -3952,44 +3952,6 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Get a tupledesc corresponding to the aggregated inputs (including sort
-	 * expressions) of the agg.
-	 */
-	pertrans->evaldesc = ExecTypeFromTL(aggref->args, false);
-
-	/* Create slot we're going to do argument evaluation in */
-	pertrans->evalslot = ExecInitExtraTupleSlot(estate);
-	ExecSetSlotDescriptor(pertrans->evalslot, pertrans->evaldesc);
-
-	/* Initialize the input and FILTER expressions */
-	naggs = aggstate->numaggs;
-	pertrans->aggfilter = ExecInitExpr(aggref->aggfilter,
-									   (PlanState *) aggstate);
-	pertrans->aggdirectargs = (List *) ExecInitExpr((Expr *) aggref->aggdirectargs,
-													(PlanState *) aggstate);
-	pertrans->args = (List *) ExecInitExpr((Expr *) aggref->args,
-										   (PlanState *) aggstate);
-
-	/*
-	 * Complain if the aggregate's arguments contain any aggregates; nested
-	 * agg functions are semantically nonsensical.  (This should have been
-	 * caught earlier, but we defend against it here anyway.)
-	 */
-	if (naggs != aggstate->numaggs)
-		ereport(WARNING,
-				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("aggregate function calls cannot be nested")));
-
-	/* Set up projection info for evaluation */
-	pertrans->evalproj = ExecBuildProjectionInfo(pertrans->args,
-												 aggstate->tmpcontext,
-												 pertrans->evalslot,
-												 NULL);
-
-	/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 * If we're doing either DISTINCT or ORDER BY for a plain agg, then we
 	 * have a list of SortGroupClause nodes; fish out the data in them and
 	 * stick them into arrays.  We ignore ORDER BY for an ordered-set agg,
