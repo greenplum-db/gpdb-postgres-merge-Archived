@@ -87,6 +87,6 @@ extern int SerializeTuple(TupleTableSlot *tuple, SerTupInfo *pSerInfo, struct di
 /* Convert a sequence of chunks containing serialized tuple data into a
  * HeapTuple or MemTuple.
  */
-extern GenericTuple CvtChunksToTup(TupleChunkList tclist, SerTupInfo * pSerInfo, TupleRemapper *remapper);
+extern HeapOrMemTuple CvtChunksToTup(TupleChunkList tclist, SerTupInfo *pSerInfo, TupleRemapper *remapper);
 
 #endif   /* TUPSER_H */

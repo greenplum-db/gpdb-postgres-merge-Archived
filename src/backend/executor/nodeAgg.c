@@ -2013,7 +2013,7 @@ agg_retrieve_direct(AggState *aggstate)
 					 * Make a copy of the first input tuple; we will use this
 					 * for comparisons (in group mode) and for projection.
 					 */
-					aggstate->grp_firstTuple = ExecCopySlotHeapTuple(outerslot);
+					aggstate->grp_firstTuple = ExecCopySlotMemTuple(outerslot);
 				}
 				else
 				{

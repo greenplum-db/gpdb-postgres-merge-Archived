@@ -99,8 +99,6 @@ ExecMaterial(PlanState *pstate)
 			 * Allocate a second read pointer to serve as the mark. We know it
 			 * must have index 1, so needn't store that.
 			 */
-			int			ptrno PG_USED_FOR_ASSERTS_ONLY;
-
 			shareinput_create_bufname_prefix(rwfile_prefix, sizeof(rwfile_prefix), ma->share_id);
 			elog(DEBUG1, "Material node creates shareinput rwfile %s", rwfile_prefix);
 

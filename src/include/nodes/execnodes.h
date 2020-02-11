@@ -482,14 +482,13 @@ typedef struct ResultRelInfo
 
 	/*
 	 * Extra GPDB junk columns. ri_segid_attno is used with DELETE, to indicate
-	 * the segment the target tuple came from. 'action' and 'tupleoid' are used with
+	 * the segment the target tuple came from. 'action' is used with
 	 * Split Updates.
 	 *
 	 * The target tuple's ctid is in ri_junkFilter->jf_junkAttNo, like in upstream.
 	 */
 	AttrNumber  ri_segid_attno;		/* gp_segment_id of old tuple */
 	AttrNumber	ri_action_attno;	/* is this an INSERT or DELETE ? */
-	AttrNumber	ri_tupleoid_attno;	/* old OID, when updating table with OIDs */
 
 	struct MemTupleBinding *mt_bind;
 

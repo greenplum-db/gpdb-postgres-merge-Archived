@@ -893,6 +893,7 @@ ExecGetRangeTableRelation(EState *estate, Index rti)
 	return rel;
 }
 
+#if 0
 /*
  * ExecUpdateAOtupCount
  *		Update the tuple count on the master for an append only relation segfile.
@@ -937,6 +938,7 @@ ExecUpdateAOtupCount(ResultRelInfo *result_rels,
 		result_rels++;
 	}
 }
+#endif
 
 /*
  * UpdateChangedParamSet
@@ -1155,7 +1157,7 @@ ExecPrefetchJoinQual(JoinState *node)
 	ExprContext *econtext = node->ps.ps_ExprContext;
 	PlanState  *inner = innerPlanState(node);
 	PlanState  *outer = outerPlanState(node);
-	List	   *joinqual = node->joinqual;
+	ExprState  *joinqual = node->joinqual;
 	TupleTableSlot *innertuple = econtext->ecxt_innertuple;
 
 	if (!joinqual)
@@ -1166,9 +1168,11 @@ ExecPrefetchJoinQual(JoinState *node)
 
 	/* Build fake inner & outer tuples */
 	econtext->ecxt_innertuple = ExecInitNullTupleSlot(estate,
-													  ExecGetResultType(inner));
+													  ExecGetResultType(inner),
+													  &TTSOpsVirtual);
 	econtext->ecxt_outertuple = ExecInitNullTupleSlot(estate,
-													  ExecGetResultType(outer));
+													  ExecGetResultType(outer),
+													  &TTSOpsVirtual);
 
 	/* Fetch subplan with the fake inner & outer tuples */
 	ExecQual(joinqual, econtext);
@@ -1575,7 +1579,6 @@ void mppExecutorFinishup(QueryDesc *queryDesc)
 		CdbDispatcherState *ds = estate->dispatcherState;
 		DispatchWaitMode waitMode = DISPATCH_WAIT_NONE;
 		ErrorData *qeError = NULL;
-		HTAB *aopartcounts = NULL;
 
 		/*
 		 * If we are finishing a query before all the tuples of the query
@@ -1614,13 +1617,18 @@ void mppExecutorFinishup(QueryDesc *queryDesc)
 			estate->es_processed +=
 				cdbdisp_sumCmdTuples(pr, primaryWriterSliceIndex);
 
+			/* GPDB_12_MERGE_FIXME */
+#if 0
 			if (estate->es_result_partitions)
 				aopartcounts = cdbdisp_sumAoPartTupCount(pr);
+#endif
 		}
 
 		/* sum up rejected rows if any (single row error handling only) */
 		cdbdisp_sumRejectedRows(pr);
 
+		/* GPDB_12_MERGE_FIXME: This should  happen behind the table AM interace now. */
+#if 0
 		/* sum up inserted rows into any AO relation */
 		if (aopartcounts)
 		{
@@ -1673,6 +1681,7 @@ void mppExecutorFinishup(QueryDesc *queryDesc)
 								 estate,
 								 estate->es_processed);
 		}
+#endif
 
 		/*
 		 * Check and free the results of all gangs. If any QE had an

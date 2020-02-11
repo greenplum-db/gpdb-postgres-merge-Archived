@@ -113,10 +113,10 @@ SendEndOfStream(MotionLayerState       *mlStates,
  *
  * Returns the next tuple, or NULL if end-of-stream was reached.
  */
-extern GenericTuple RecvTupleFrom(MotionLayerState *mlStates,
-								  ChunkTransportState *transportStates,
-								  int16 motNodeID,
-								  int16 srcRoute);
+extern HeapOrMemTuple RecvTupleFrom(MotionLayerState *mlStates,
+									ChunkTransportState *transportStates,
+									int16 motNodeID,
+									int16 srcRoute);
 
 extern void SendStopMessage(MotionLayerState *mlStates,
 							ChunkTransportState *transportStates,

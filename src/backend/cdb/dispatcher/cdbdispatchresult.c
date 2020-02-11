@@ -680,6 +680,8 @@ cdbdisp_sumRejectedRows(CdbDispatchResults *results)
 
 }
 
+/* GPDB_12_MERGE_FIXME: obsolete, I hope */
+#if 0
 /*
  * sum tuple counts that were added into a partitioned AO table
  */
@@ -706,6 +708,7 @@ cdbdisp_sumAoPartTupCount(CdbDispatchResults *results)
 
 	return ht;
 }
+#endif
 
 /*
  * Return ptr to first resultArray entry for a given sliceIndex.

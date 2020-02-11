@@ -27,7 +27,7 @@
 typedef struct htf_entry_data
 {
 	/* The tuple itself. */
-	GenericTuple tup;
+	HeapOrMemTuple tup;
 
 	/* The next entry in the FIFO. */
 	struct htf_entry_data *p_next;
@@ -50,7 +50,8 @@ typedef struct htup_fifo_state
 extern htup_fifo htfifo_create(void);
 extern void htfifo_destroy(htup_fifo htf);
 
-extern void htfifo_addtuple(htup_fifo htf, GenericTuple htup);
-extern GenericTuple htfifo_gettuple(htup_fifo htf);
+extern void htfifo_addheaptuple(htup_fifo htf, HeapTuple htup);
+extern void htfifo_addmemtuple(htup_fifo htf, MemTuple mtup);
+extern HeapOrMemTuple htfifo_gettuple(htup_fifo htf);
 
 #endif   /* HTUPFIFO_H */

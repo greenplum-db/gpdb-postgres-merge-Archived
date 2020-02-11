@@ -2199,7 +2199,6 @@ ExecModifyTable(PlanState *pstate)
 	JunkFilter *junkfilter;
 	AttrNumber  action_attno;
 	AttrNumber  segid_attno;
-	AttrNumber  tupleoid_attno;
 	TupleTableSlot *slot;
 	TupleTableSlot *planSlot;
 	ItemPointer tupleid;
@@ -2250,7 +2249,6 @@ ExecModifyTable(PlanState *pstate)
 	junkfilter = resultRelInfo->ri_junkFilter;
 	action_attno = resultRelInfo->ri_action_attno;
 	segid_attno = resultRelInfo->ri_segid_attno;
-	tupleoid_attno = resultRelInfo->ri_tupleoid_attno;
 
 	/*
 	 * es_result_relation_info must point to the currently active result
@@ -2299,7 +2297,6 @@ ExecModifyTable(PlanState *pstate)
 				junkfilter = estate->es_result_relation_info->ri_junkFilter;
 				action_attno = estate->es_result_relation_info->ri_action_attno;
 				segid_attno = estate->es_result_relation_info->ri_segid_attno;
-				tupleoid_attno = estate->es_result_relation_info->ri_tupleoid_attno;
 				EvalPlanQualSetPlan(&node->mt_epqstate, subplanstate->plan,
 									node->mt_arowmarks[node->mt_whichplan]);
 				/* Prepare to convert transition tuples from this child. */
@@ -2445,17 +2442,6 @@ ExecModifyTable(PlanState *pstate)
 
 					action = DatumGetInt32(datum);
 				}
-				if (AttributeNumberIsValid(tupleoid_attno))
-				{
-					datum = ExecGetJunkAttribute(slot,
-												 tupleoid_attno,
-												 &isNull);
-					/* shouldn't ever get a null result... */
-					if (isNull)
-						elog(ERROR, "tupleoid is NULL");
-
-					tupleoid = DatumGetInt32(datum);
-				}
 			}
 
 			/*
@@ -2490,7 +2476,7 @@ ExecModifyTable(PlanState *pstate)
 				{
 					slot = ExecInsert(node, slot, planSlot, node->mt_arbiterindexes,
 									  node->mt_onconflict, estate, node->canSetTag,
-									  true /* isUpdate */, tupleoid);
+									  true /* isUpdate */);
 				}
 				else /* DML_DELETE */
 				{
@@ -3019,13 +3005,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 							resultRelInfo->ri_action_attno = ExecFindJunkAttribute(j, "DMLAction");
 							if (!AttributeNumberIsValid(resultRelInfo->ri_action_attno))
 								elog(ERROR, "could not find junk action column");
-
-							if (resultRelInfo->ri_RelationDesc->rd_rel->relhasoids)
-							{
-								resultRelInfo->ri_tupleoid_attno = ExecFindJunkAttribute(j, "oid");
-								if (!AttributeNumberIsValid(resultRelInfo->ri_tupleoid_attno))
-									elog(ERROR, "could not find junk tupleoid column");
-							}
 						}
 					}
 					else if (relkind == RELKIND_FOREIGN_TABLE)

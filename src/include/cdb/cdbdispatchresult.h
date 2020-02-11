@@ -270,9 +270,6 @@ cdbdisp_sumCmdTuples(CdbDispatchResults *results, int sliceIndex);
 void
 cdbdisp_sumRejectedRows(CdbDispatchResults *results);
 
-HTAB *
-cdbdisp_sumAoPartTupCount(CdbDispatchResults *results);
-
 /*
  * Return ptr to first resultArray entry for a given sliceIndex.
  */
