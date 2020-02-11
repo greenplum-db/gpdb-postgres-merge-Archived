@@ -191,29 +191,7 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 
 	scanstate->args = ExecInitExprList(tsc->args, (PlanState *) scanstate);
 	scanstate->repeatable =
-<<<<<<< HEAD
-		ExecInitExpr(tsc->repeatable,
-					 (PlanState *) scanstate);
-
-	/*
-	 * tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &scanstate->ss.ps);
-	ExecInitScanTupleSlot(estate, &scanstate->ss);
-
-	/*
-	 * initialize scan relation
-	 */
-	InitScanRelation(scanstate, estate, eflags);
-
-	/*
-	 * Initialize result tuple type and projection info.
-	 */
-	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
-	ExecAssignScanProjectionInfo(&scanstate->ss);
-=======
 		ExecInitExpr(tsc->repeatable, (PlanState *) scanstate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * If we don't have a REPEATABLE clause, select a random seed.  We want to
@@ -270,12 +248,7 @@ ExecEndSampleScan(SampleScanState *node)
 	 */
 	if (node->ss.ss_currentScanDesc)
 		table_endscan(node->ss.ss_currentScanDesc);
-<<<<<<< HEAD
 
-	/*
-	 * close the heap relation.
-	 */
-	ExecCloseScanRelation(node->ss.ss_currentRelation);
 }
 
 /* ----------------------------------------------------------------
@@ -378,22 +351,6 @@ tablesample_init(SampleScanState *scanstate)
 	/* Now we can create or reset the HeapScanDesc */
 	if (scanstate->ss_currentScanDesc_heap == NULL)
 	{
-<<<<<<< HEAD
-		scanstate->ss_currentScanDesc_heap =
-			heap_beginscan_sampling(scanstate->ss.ss_currentRelation,
-									scanstate->ss.ps.state->es_snapshot,
-									0, NULL,
-									scanstate->use_bulkread,
-									allow_sync,
-									scanstate->use_pagemode);
-	}
-	else
-	{
-		heap_rescan_set_params(scanstate->ss_currentScanDesc_heap, NULL,
-							   scanstate->use_bulkread,
-							   allow_sync,
-							   scanstate->use_pagemode);
-=======
 		scanstate->ss.ss_currentScanDesc =
 			table_beginscan_sampling(scanstate->ss.ss_currentRelation,
 									 scanstate->ss.ps.state->es_snapshot,
@@ -408,7 +365,6 @@ tablesample_init(SampleScanState *scanstate)
 								scanstate->use_bulkread,
 								allow_sync,
 								scanstate->use_pagemode);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	pfree(params);
@@ -423,20 +379,8 @@ tablesample_init(SampleScanState *scanstate)
 static TupleTableSlot *
 tablesample_getnext(SampleScanState *scanstate)
 {
-<<<<<<< HEAD
-	TsmRoutine *tsm = scanstate->tsmroutine;
-	HeapScanDesc scan = scanstate->ss_currentScanDesc_heap;
-	HeapTuple	tuple = &(scan->rs_ctup);
-	Snapshot	snapshot = scan->rs_snapshot;
-	bool		pagemode = scan->rs_pageatatime;
-	BlockNumber blockno;
-	Page		page;
-	bool		all_visible;
-	OffsetNumber maxoffset;
-=======
 	TableScanDesc scan = scanstate->ss.ss_currentScanDesc;
 	TupleTableSlot *slot = scanstate->ss.ss_ScanTupleSlot;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	ExecClearTuple(slot);
 
@@ -475,50 +419,5 @@ tablesample_getnext(SampleScanState *scanstate)
 
 	scanstate->donetuples++;
 
-<<<<<<< HEAD
-/*
- * Check visibility of the tuple.
- */
-static bool
-SampleTupleVisible(HeapTuple tuple, OffsetNumber tupoffset, HeapScanDesc scan)
-{
-	if (scan->rs_pageatatime)
-	{
-		/*
-		 * In pageatatime mode, heapgetpage() already did visibility checks,
-		 * so just look at the info it left in rs_vistuples[].
-		 *
-		 * We use a binary search over the known-sorted array.  Note: we could
-		 * save some effort if we insisted that NextSampleTuple select tuples
-		 * in increasing order, but it's not clear that there would be enough
-		 * gain to justify the restriction.
-		 */
-		int			start = 0,
-					end = scan->rs_ntuples - 1;
-
-		while (start <= end)
-		{
-			int			mid = (start + end) / 2;
-			OffsetNumber curoffset = scan->rs_vistuples[mid];
-
-			if (tupoffset == curoffset)
-				return true;
-			else if (tupoffset < curoffset)
-				end = mid - 1;
-			else
-				start = mid + 1;
-		}
-
-		return false;
-	}
-	else
-	{
-		/* Otherwise, we have to check the tuple individually. */
-		return HeapTupleSatisfiesVisibility(scan->rs_rd, tuple,
-											scan->rs_snapshot,
-											scan->rs_cbuf);
-	}
-=======
 	return slot;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
