@@ -31,13 +31,16 @@
 #include "catalog/pg_foreign_server.h"
 #include "foreign/fdwapi.h"
 #include "nodes/execnodes.h"
-#include "nodes/relation.h"
+#include "nodes/makefuncs.h"
+#include "nodes/pathnodes.h"
 #include "optimizer/cost.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
 #include "utils/guc.h"
+#include "utils/uri.h"
 
 typedef struct
 {
@@ -330,8 +333,6 @@ ExternalConstraintCheck(TupleTableSlot *slot, FileScanDesc scandesc, EState *est
 	uint16			ncheck = constr->num_check;
 	ExprContext		*econtext = NULL;
 	MemoryContext	oldContext = NULL;
-	List	*qual = NULL;
-	int		i = 0;
 
 	/* No constraints */
 	if (ncheck == 0)
@@ -347,12 +348,13 @@ ExternalConstraintCheck(TupleTableSlot *slot, FileScanDesc scandesc, EState *est
 	{
 		oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
 		scandesc->fs_constraintExprs =
-			(List **) palloc(ncheck * sizeof(List *));
-		for (i = 0; i < ncheck; i++)
+			(ExprState **) palloc(ncheck * sizeof(ExprState *));
+		for (int i = 0; i < ncheck; i++)
 		{
 			/* ExecQual wants implicit-AND form */
-			qual = make_ands_implicit(stringToNode(check[i].ccbin));
-			scandesc->fs_constraintExprs[i] = (List *)
+			List	   *qual = make_ands_implicit(stringToNode(check[i].ccbin));
+
+			scandesc->fs_constraintExprs[i] =
 				ExecPrepareExpr((Expr *) qual, estate);
 		}
 		MemoryContextSwitchTo(oldContext);
@@ -368,9 +370,9 @@ ExternalConstraintCheck(TupleTableSlot *slot, FileScanDesc scandesc, EState *est
 	econtext->ecxt_scantuple = slot;
 
 	/* And evaluate the constraints */
-	for (i = 0; i < ncheck; i++)
+	for (int i = 0; i < ncheck; i++)
 	{
-		qual = scandesc->fs_constraintExprs[i];
+		ExprState *qual = scandesc->fs_constraintExprs[i];
 
 		if (!ExecCheck(qual, econtext))
 			return false;
@@ -409,7 +411,7 @@ exttable_IterateForeignScan(ForeignScanState *node)
 			break;
 		}
 
-		ExecStoreHeapTuple(tuple, slot, InvalidBuffer, true);
+		ExecStoreHeapTuple(tuple, slot, true);
 
 		if (fdw_state->ess_ScanDesc->fs_hasConstraints &&
 			!ExternalConstraintCheck(slot, fdw_state->ess_ScanDesc, estate))
@@ -507,7 +509,7 @@ exttable_ExecForeignInsert(EState *estate,
 	 * get the heap tuple out of the tuple table slot, making sure we have a
 	 * writable copy. (external_insert() can scribble on the tuple)
 	 */
-	tuple = ExecMaterializeSlot(slot);
+	tuple = ExecCopySlotHeapTuple(slot);
 
 	(void) external_insert(extInsertDesc, tuple);
 

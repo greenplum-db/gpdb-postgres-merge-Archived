@@ -23,6 +23,7 @@
 
 
 struct ParallelTableScanDescData;
+struct ExprState;
 
 /*
  * Generic descriptor for table scans. This is the base-class for table scans,
@@ -209,7 +210,7 @@ typedef struct FileScanDescData
 
 	/* external partition */
 	bool		fs_hasConstraints;
-	List		**fs_constraintExprs;	
+	struct ExprState **fs_constraintExprs;
 }	FileScanDescData;
 
 typedef FileScanDescData *FileScanDesc;

@@ -82,7 +82,7 @@ external_getnext(FileScanDesc scan,
                  ScanDirection direction,
                  ExternalSelectDesc desc);
 extern ExternalInsertDesc external_insert_init(Relation rel);
-extern Oid	external_insert(ExternalInsertDesc extInsertDesc, HeapTuple instup);
+extern void external_insert(ExternalInsertDesc extInsertDesc, HeapTuple instup);
 extern void external_insert_finish(ExternalInsertDesc extInsertDesc);
 extern void external_set_env_vars(extvar_t *extvar, char *uri, bool csv, char *escape, char *quote, bool header, uint32 scancounter);
 extern char *linenumber_atoi(char *buffer, size_t bufsz, int64 linenumber);

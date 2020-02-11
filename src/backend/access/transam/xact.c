@@ -7204,7 +7204,10 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
  * because subtransaction commit is never WAL logged.
  */
 static void
-xact_redo_distributed_commit(uint8 info, xl_xact_commit *xlrec, TransactionId xid)
+xact_redo_distributed_commit(xl_xact_parsed_commit *parsed,
+							 TransactionId xid,
+							 XLogRecPtr lsn,
+							 RepOriginId origin_id)
 {
 	TMGXACT_LOG gxact_log;
 	char gid[TMGIDSIZE];
@@ -7212,13 +7215,14 @@ xact_redo_distributed_commit(uint8 info, xl_xact_commit *xlrec, TransactionId xi
 	DistributedTransactionId 		distribXid;
 
 	TransactionId max_xid;
-	int			i;
-	xl_xact_parsed_commit parsed;
 
-	ParseCommitRecord(info, xlrec, &parsed);
+	max_xid = TransactionIdLatest(xid, parsed->nsubxacts, parsed->subxacts);
 
-	distribTimeStamp = parsed.distribTimeStamp;
-	distribXid = parsed.distribXid;
+	/* Make sure nextFullXid is beyond any XID mentioned in the record. */
+	AdvanceNextFullTransactionIdPastXid(max_xid);
+
+	distribTimeStamp = parsed->distribTimeStamp;
+	distribXid = parsed->distribXid;
 
 	/* Construct the global transaction log */
 	snprintf(gid, TMGIDSIZE, "%u-%.10u", distribTimeStamp, distribXid);
@@ -7231,15 +7235,9 @@ xact_redo_distributed_commit(uint8 info, xl_xact_commit *xlrec, TransactionId xi
 		 * Mark the distributed transaction committed before we
 		 * update the CLOG in xact_redo_commit.
 		 */
-		/*
-		 * Make room in the DistributedLog, if necessary.
-		 */
-		if (TransactionIdFollowsOrEquals(xid,
-										 ShmemVariableCache->nextXid))
-		{
-			ShmemVariableCache->nextXid = xid;
-			TransactionIdAdvance(ShmemVariableCache->nextXid);
-		}
+
+		/* Make sure nextFullXid is beyond any XID mentioned in the record. */
+		AdvanceNextFullTransactionIdPastXid(xid);
 
 		/*
 		 * Now update the CLOG and do local commit actions.
@@ -7252,30 +7250,16 @@ xact_redo_distributed_commit(uint8 info, xl_xact_commit *xlrec, TransactionId xi
 		/* Mark the transaction committed in pg_clog */
 
 		/* Add the committed subtransactions to the DistributedLog, too. */
-		DistributedLog_SetCommittedTree(xid, parsed.nsubxacts, parsed.subxacts,
+		DistributedLog_SetCommittedTree(xid, parsed->nsubxacts, parsed->subxacts,
 										distribTimeStamp,
 										gxact_log.gxid,
 										/* isRedo */ true);
 
-		TransactionIdCommitTree(xid, parsed.nsubxacts, parsed.subxacts);
+		TransactionIdCommitTree(xid, parsed->nsubxacts, parsed->subxacts);
 
-		/* Make sure nextXid is beyond any XID mentioned in the record */
-		max_xid = xid;
-		for (i = 0; i < parsed.nsubxacts; i++)
-		{
-			if (TransactionIdPrecedes(max_xid, parsed.subxacts[i]))
-				max_xid = parsed.subxacts[i];
-		}
-		if (TransactionIdFollowsOrEquals(max_xid,
-										 ShmemVariableCache->nextXid))
-		{
-			ShmemVariableCache->nextXid = max_xid;
-			TransactionIdAdvance(ShmemVariableCache->nextXid);
-		}
-
-		DropRelationFiles(parsed.xnodes, parsed.nrels, true);
-		DropDatabaseDirectories(parsed.deldbs, parsed.ndeldbs, true);
-		DoTablespaceDeletionForRedoXlog(parsed.tablespace_oid_to_delete_on_commit);
+		DropRelationFiles(parsed->xnodes, parsed->nrels, true);
+		DropDatabaseDirectories(parsed->deldbs, parsed->ndeldbs, true);
+		DoTablespaceDeletionForRedoXlog(parsed->tablespace_oid_to_delete_on_commit);
 	}
 
 	/*
@@ -7416,8 +7400,11 @@ xact_redo(XLogReaderState *record)
 	else if (info == XLOG_XACT_DISTRIBUTED_COMMIT)
 	{
 		xl_xact_commit *xlrec = (xl_xact_commit *) XLogRecGetData(record);
+		xl_xact_parsed_commit parsed;
 
-		xact_redo_distributed_commit(XLogRecGetInfo(record), xlrec, XLogRecGetXid(record));
+		ParseCommitRecord(XLogRecGetInfo(record), xlrec, &parsed);
+		xact_redo_distributed_commit(&parsed, parsed.twophase_xid,
+									 record->EndRecPtr, XLogRecGetOrigin(record));
 	}
 	else if (info == XLOG_XACT_DISTRIBUTED_FORGET)
 	{

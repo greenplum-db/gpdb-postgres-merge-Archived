@@ -283,7 +283,8 @@ external_beginscan(Relation relation, uint32 scancounter,
 	/*
 	 * Allocate and init our structure that keeps track of data parsing state
 	 */
-	scan->fs_pstate = BeginCopyFrom(relation, NULL, false,
+	scan->fs_pstate = BeginCopyFrom(NULL,
+									relation, NULL, false,
 									external_getdata_callback,
 									(void *) scan,
 									NIL,
@@ -334,7 +335,7 @@ external_rescan(FileScanDesc scan)
 	/* The first call to external_getnext will re-open the scan */
 
 	/* reset some parse state variables */
-	scan->fs_pstate->fe_eof = false;
+	scan->fs_pstate->reached_eof = false;
 	scan->fs_pstate->cur_lineno = 0;
 	scan->fs_pstate->cur_attname = NULL;
 	scan->fs_pstate->raw_buf_len = 0;
@@ -667,7 +668,7 @@ external_insert_init(Relation rel)
  *
  * Like heap_insert(), this function can modify the input tuple!
  */
-Oid
+void
 external_insert(ExternalInsertDesc extInsertDesc, HeapTuple instup)
 {
 	TupleDesc	tupDesc = extInsertDesc->ext_tupDesc;
@@ -677,7 +678,7 @@ external_insert(ExternalInsertDesc extInsertDesc, HeapTuple instup)
 	bool		customFormat = (extInsertDesc->ext_custom_formatter_func != NULL);
 
 	if (extInsertDesc->ext_noop)
-		return InvalidOid;
+		return;
 
 	/* Open our output file or output stream if not yet open */
 	if (!extInsertDesc->ext_file && !extInsertDesc->ext_noop)
@@ -690,7 +691,7 @@ external_insert(ExternalInsertDesc extInsertDesc, HeapTuple instup)
 	{
 		/* TEXT or CSV */
 		heap_deform_tuple(instup, tupDesc, values, nulls);
-		CopyOneRowTo(pstate, HeapTupleGetOid(instup), values, nulls);
+		CopyOneRowTo(pstate, values, nulls);
 		CopySendEndOfRow(pstate);
 	}
 	else
@@ -727,8 +728,8 @@ external_insert(ExternalInsertDesc extInsertDesc, HeapTuple instup)
 		HeapTupleHeaderSetTypeId(instup->t_data, tupDesc->tdtypeid);
 		HeapTupleHeaderSetTypMod(instup->t_data, tupDesc->tdtypmod);
 
-		fcinfo.arg[0] = HeapTupleGetDatum(instup);
-		fcinfo.argnull[0] = false;
+		fcinfo.args[0].value = HeapTupleGetDatum(instup);
+		fcinfo.args[0].isnull = false;
 
 		d = FunctionCallInvoke(&fcinfo);
 		MemoryContextReset(formatter->fmt_perrow_ctx);
@@ -748,8 +749,6 @@ external_insert(ExternalInsertDesc extInsertDesc, HeapTuple instup)
 	/* Reset our buffer to start clean next round */
 	pstate->fe_msgbuf->len = 0;
 	pstate->fe_msgbuf->data[0] = '\0';
-
-	return HeapTupleGetOid(instup);
 }
 
 /*
@@ -902,7 +901,7 @@ externalgettup_custom(FileScanDesc scan)
 
 	/* while didn't finish processing the entire file */
 	/* raw_buf_len was set to 0 in BeginCopyFrom() or external_rescan() */
-	while (pstate->raw_buf_len != 0 || !pstate->fe_eof)
+	while (pstate->raw_buf_len != 0 || !pstate->reached_eof)
 	{
 		/* need to fill our buffer with data? */
 		if (pstate->raw_buf_len == 0)
@@ -1254,7 +1253,7 @@ FunctionCallPrepareFormatter(FunctionCallInfoData *fcinfo,
 	formatter->fmt_badrow_num = 0;
 	formatter->fmt_args = formatter_params;
 	formatter->fmt_conv_funcs = convFuncs;
-	formatter->fmt_saw_eof = pstate->fe_eof;
+	formatter->fmt_saw_eof = pstate->reached_eof;
 	formatter->fmt_typioparams = typioparams;
 	formatter->fmt_perrow_ctx = pstate->rowcontext;
 	formatter->fmt_needs_transcoding = pstate->need_transcoding;
@@ -1359,14 +1358,14 @@ external_getdata(URL_FILE *extfile, CopyState pstate, void *outbuf, int maxread)
 	/*
 	 * CK: this code is very delicate. The caller expects this: - if url_fread
 	 * returns something, and the EOF is reached, it this call must return
-	 * with both the content and the fe_eof flag set. - failing to do so will
+	 * with both the content and the reached_eof flag set. - failing to do so will
 	 * result in skipping the last line.
 	 */
 	bytesread = url_fread((void *) outbuf, maxread, extfile, pstate);
 
 	if (url_feof(extfile, bytesread))
 	{
-		pstate->fe_eof = true;
+		pstate->reached_eof = true;
 	}
 
 	if (bytesread <= 0)
@@ -1879,7 +1878,7 @@ parseCopyFormatString(Relation rel, char *fmtstr, char fmttype)
 
 		if (pg_strcasecmp(token, "header") == 0)
 		{
-			item = makeDefElem("header", (Node *)makeInteger(TRUE));
+			item = makeDefElem("header", (Node *)makeInteger(true), -1);
 		}
 		else if (pg_strcasecmp(token, "delimiter") == 0)
 		{
@@ -1888,7 +1887,7 @@ parseCopyFormatString(Relation rel, char *fmtstr, char fmttype)
 			if (!token)
 				goto error;
 
-			item = makeDefElem("delimiter", (Node *)makeString(pstrdup(token)));
+			item = makeDefElem("delimiter", (Node *)makeString(pstrdup(token)), -1);
 		}
 		else if (pg_strcasecmp(token, "null") == 0)
 		{
@@ -1897,7 +1896,7 @@ parseCopyFormatString(Relation rel, char *fmtstr, char fmttype)
 			if (!token)
 				goto error;
 
-			item = makeDefElem("null", (Node *)makeString(pstrdup(token)));
+			item = makeDefElem("null", (Node *)makeString(pstrdup(token)), -1);
 		}
 		else if (pg_strcasecmp(token, "quote") == 0)
 		{
@@ -1906,7 +1905,7 @@ parseCopyFormatString(Relation rel, char *fmtstr, char fmttype)
 			if (!token)
 				goto error;
 
-			item = makeDefElem("quote", (Node *)makeString(pstrdup(token)));
+			item = makeDefElem("quote", (Node *)makeString(pstrdup(token)), -1);
 		}
 		else if (pg_strcasecmp(token, "escape") == 0)
 		{
@@ -1915,7 +1914,7 @@ parseCopyFormatString(Relation rel, char *fmtstr, char fmttype)
 			if (!token)
 				goto error;
 
-			item = makeDefElem("escape", (Node *)makeString(pstrdup(token)));
+			item = makeDefElem("escape", (Node *)makeString(pstrdup(token)), -1);
 		}
 		else if (pg_strcasecmp(token, "force") == 0)
 		{
@@ -1947,7 +1946,7 @@ parseCopyFormatString(Relation rel, char *fmtstr, char fmttype)
 						break;
 				}
 
-				item = makeDefElem("force_not_null", (Node *)cols);
+				item = makeDefElem("force_not_null", (Node *) cols, -1);
 			}
 			else if (pg_strcasecmp(token, "quote") == 0)
 			{
@@ -1971,7 +1970,7 @@ parseCopyFormatString(Relation rel, char *fmtstr, char fmttype)
 
 						for (i = 0; i < tupdesc->natts; i++)
 						{
-							Form_pg_attribute att = tupdesc->attrs[i];
+							Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 
 							if (att->attisdropped)
 								continue;
@@ -1994,7 +1993,7 @@ parseCopyFormatString(Relation rel, char *fmtstr, char fmttype)
 						break;
 				}
 
-				item = makeDefElem("force_quote", (Node *)cols);
+				item = makeDefElem("force_quote", (Node *) cols, -1);
 			}
 			else
 				goto error;
@@ -2011,7 +2010,7 @@ parseCopyFormatString(Relation rel, char *fmtstr, char fmttype)
 			if (pg_strcasecmp(token, "fields") != 0)
 				goto error;
 
-			item = makeDefElem("fill_missing_fields", (Node *)makeInteger(TRUE));
+			item = makeDefElem("fill_missing_fields", (Node *)makeInteger(true), -1);
 		}
 		else if (pg_strcasecmp(token, "newline") == 0)
 		{
@@ -2020,7 +2019,7 @@ parseCopyFormatString(Relation rel, char *fmtstr, char fmttype)
 			if (!token)
 				goto error;
 
-			item = makeDefElem("newline", (Node *)makeString(pstrdup(token)));
+			item = makeDefElem("newline", (Node *)makeString(pstrdup(token)), -1);
 		}
 		else
 			goto error;
@@ -2040,7 +2039,7 @@ parseCopyFormatString(Relation rel, char *fmtstr, char fmttype)
 	else if (fmttype_is_csv(fmttype))
 	{
 		/* Add FORMAT 'CSV' option to the beginning of the list */
-		l = lcons(makeDefElem("format", (Node *) makeString("csv")), l);
+		l = lcons(makeDefElem("format", (Node *) makeString("csv"), -1), l);
 	}
 	else
 		elog(ERROR, "unrecognized format type '%c'", fmttype);
@@ -2101,7 +2100,7 @@ parseCustomFormatString(char *fmtstr, char **formatter_name, List **formatter_pa
 				}
 				else
 					l = lappend(l, makeDefElem(pstrdup(key_modified.data),
-									 (Node *) makeString(pstrdup(val))));
+											   (Node *) makeString(pstrdup(val)), -1));
 			}
 			else
 				goto error;
@@ -2281,5 +2280,8 @@ external_set_env_vars_ext(extvar_t *extvar, char *uri, bool csv, char *escape, c
 List *
 appendCopyEncodingOption(List *copyFmtOpts, int encoding)
 {
-	return lappend(copyFmtOpts, makeDefElem("encoding", (Node *)makeString((char *)pg_encoding_to_char(encoding))));
+	return lappend(copyFmtOpts,
+				   makeDefElem("encoding",
+							   (Node *)makeString((char *)pg_encoding_to_char(encoding)),
+							   -1));
 }

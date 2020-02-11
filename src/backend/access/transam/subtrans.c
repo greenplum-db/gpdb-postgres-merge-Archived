@@ -143,10 +143,10 @@ SubTransSetParent(TransactionId xid, TransactionId parent)
 	 * shouldn't ever be changing the xid from one valid xid to another valid
 	 * xid, which would corrupt the data structure.
 	 */
-	if (*ptr != parent)
+	if (ptr->parent != parent)
 	{
-		Assert(*ptr == InvalidTransactionId);
-		*ptr = parent;
+		Assert(ptr->parent == InvalidTransactionId);
+		ptr->parent = parent;
 		ptr->topMostParent = subData.topMostParent;
 		SubTransCtl->shared->page_dirty[slotno] = true;
 	}
