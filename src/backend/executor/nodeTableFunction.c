@@ -253,7 +253,6 @@ TableFunctionNext(TableFunctionState *node)
 	Assert(tuple);
 	slot = ExecStoreHeapTuple(tuple, 
 							  node->ss.ss_ScanTupleSlot, 
-							  InvalidBuffer, 
 							  false /* shouldFree */);
 	Assert(!TupIsNull(slot));
 
@@ -324,17 +323,7 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 
 	/* Create expression context for the node. */
 	ExecAssignExprContext(estate, &scanstate->ss.ps);
-	ExecInitResultTupleSlot(estate, &scanstate->ss.ps);
-	ExecInitScanTupleSlot(estate, &scanstate->ss);
 	econtext = scanstate->ss.ps.ps_ExprContext;
-	
-	/* Initialize child expressions */
-	scanstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *)node->scan.plan.targetlist,
-					 (PlanState *)scanstate);
-	scanstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *)node->scan.plan.qual,
-					 (PlanState *)scanstate);
 
 	/* Initialize child nodes */
 	outerPlanState(scanstate) = ExecInitNode(outerPlan(node), estate, eflags);
@@ -415,8 +404,19 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 	 */
 	BlessTupleDesc(resultdesc);
 
+	/* Initialize scan slot and type */
+	/* GPDB_12_MERGE_FIXME: What's the right TTSOps for this? */
+	ExecInitScanTupleSlot(estate, &scanstate->ss, resultdesc,
+						  &TTSOpsMinimalTuple);
 	scanstate->resultdesc = resultdesc;
-	ExecAssignScanType(&scanstate->ss, resultdesc);
+
+	/* Initialize result tuple type and projection info */
+	ExecInitResultTypeTL(&scanstate->ss.ps);
+	ExecAssignScanProjectionInfo(&scanstate->ss);
+
+	/* Initialize child expressions */
+	scanstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
 
 	/*
 	 * Other node-specific setup
@@ -447,14 +447,9 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 	/* Determine projection information for subplan */
 	scanstate->inputscan->junkfilter =
 		ExecInitJunkFilter(subplan->plan->targetlist, 
-						   false,
 						   NULL  /* slot */);
 	BlessTupleDesc(scanstate->inputscan->junkfilter->jf_cleanTupType);
 
-	/* Initialize result tuple type and projection info */
-	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
-	ExecAssignScanProjectionInfo(&scanstate->ss);
-	
 	return scanstate;
 }
 

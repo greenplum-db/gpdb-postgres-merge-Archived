@@ -235,36 +235,19 @@ ExecInitShareInputScan(ShareInputScan *node, EState *estate, int eflags)
 	outerPlan = outerPlan(node);
 	outerPlanState(sisstate) = ExecInitNode(outerPlan, estate, eflags);
 
-	sisstate->ss.ps.targetlist = (List *) 
-		ExecInitExpr((Expr *) node->scan.plan.targetlist, (PlanState *) sisstate);
-	Assert(node->scan.plan.qual == NULL);
-	sisstate->ss.ps.qual = NULL;
-
 	/* Misc initialization 
 	 * 
 	 * Create expression context 
 	 */
 	ExecAssignExprContext(estate, &sisstate->ss.ps);
 
-	/* tuple table init */
-	ExecInitResultTupleSlot(estate, &sisstate->ss.ps);
-	sisstate->ss.ss_ScanTupleSlot = ExecInitExtraTupleSlot(estate);
-
 	/* 
-	 * init tuple type.
+	 * Initialize result slot and type.
+	 *
+	 * GPDB_12_MERGE_FIXME: What's the right TTSOps for this? The tuples
+	 * come from tuplesort or ntuplestore.
 	 */
-	ExecAssignResultTypeFromTL(&sisstate->ss.ps);
-
-	{
-		bool hasoid;
-		if (!ExecContextForcesOids(&sisstate->ss.ps, &hasoid))
-			hasoid = false;
-
-		tupDesc = ExecTypeFromTL(node->scan.plan.targetlist, hasoid);
-	}
-		
-	ExecAssignScanType(&sisstate->ss, tupDesc);
-
+	ExecInitResultTupleSlotTL(&sortstate->ss.ps, &TTSOpsMinimalTuple);
 	sisstate->ss.ps.ps_ProjInfo = NULL;
 
 	/*
@@ -306,7 +289,6 @@ ExecSliceDependencyShareInputScan(ShareInputScanState *node)
  */
 void ExecEndShareInputScan(ShareInputScanState *node)
 {
-
 	/* clean up tuple table */
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);

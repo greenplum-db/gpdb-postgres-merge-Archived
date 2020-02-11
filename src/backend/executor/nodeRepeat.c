@@ -95,7 +95,7 @@ ExecRepeat(RepeatState *repeatstate)
 		oldcxt = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 		repeatstate->repeat_count = 
 			DatumGetInt32(ExecEvalExpr(repeatstate->expr_state, econtext,
-									   &isNull, NULL));
+									   &isNull));
 		Assert(!isNull);
 		MemoryContextSwitchTo(oldcxt);
 
@@ -138,19 +138,6 @@ ExecInitRepeat(Repeat *node, EState *estate, int eflags)
 
 	/* Create expression context for the node. */
 	ExecAssignExprContext(estate, &repeatstate->ps);
-	
-	ExecInitResultTupleSlot(estate, &repeatstate->ps);
-	
-	/* Initialize child expressions */
-	repeatstate->ps.targetlist = (List *)
-		ExecInitExpr((Expr *)node->plan.targetlist,
-					 (PlanState *)repeatstate);
-	repeatstate->ps.qual = (List *)
-		ExecInitExpr((Expr *)node->plan.qual,
-					 (PlanState *)repeatstate);
-	repeatstate->expr_state =
-		ExecInitExpr(node->repeatCountExpr,
-					 (PlanState *)repeatstate);
 
 	/* Initialize child nodes */
 	outerPlanState(repeatstate) = ExecInitNode(outerPlan(node), estate, eflags);
@@ -158,9 +145,15 @@ ExecInitRepeat(Repeat *node, EState *estate, int eflags)
 	/* Inner plan is not used. */
 	Assert(innerPlan(node) == NULL);
 	
-	/* Initialize tuple type and projection info */
-	ExecAssignResultTypeFromTL(&repeatstate->ps);
+	/* Initialize type and projection info */
+	ExecInitResultTypeTL(&repeatstate->ps);
 	ExecAssignProjectionInfo(&repeatstate->ps, NULL);
+
+	/* Initialize child expressions */
+	repeatstate->ps.qual =
+		ExecInitQual(node->plan.qual, (PlanState *) repeatstate);
+	repeatstate->expr_state =
+		ExecInitQual(node->repeatCountExpr, (PlanState *) repeatstate);
 
 	init_RepeatState(repeatstate);
 

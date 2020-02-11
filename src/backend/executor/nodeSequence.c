@@ -26,14 +26,16 @@
 SequenceState *
 ExecInitSequence(Sequence *node, EState *estate, int eflags)
 {
+	SequenceState *sequenceState;
+	PlanState  *lastPlanState;
+
 	/* Check for unsupported flags */
 	Assert(!(eflags & EXEC_FLAG_MARK));
 
 	/* Sequence should not contain 'qual'. */
 	Assert(node->plan.qual == NIL);
 
-	SequenceState *sequenceState = makeNode(SequenceState);
-	
+	sequenceState = makeNode(SequenceState);
 	sequenceState->ps.plan = (Plan *)node;
 	sequenceState->ps.state = estate;
 
@@ -61,14 +63,13 @@ ExecInitSequence(Sequence *node, EState *estate, int eflags)
 	sequenceState->ps.ps_ProjInfo = NULL;
 
 	/*
-	 * tuple table initialization
-	 *
-	 * MPP-20528: Even though we don't actually use the result slot to
-	 * return tuples, we need it to have the correct tuple descriptor
-	 * for this node.
+	 * Initialize result type. We will pass through the last child slot.
 	 */
-	ExecInitResultTupleSlot(estate, &sequenceState->ps);
-	ExecAssignResultTypeFromTL(&sequenceState->ps);
+	lastPlanState = sequenceState->subplans[numSubplans - 1];
+	ExecInitResultTypeTL(&sequenceState->ps);
+	sequenceState->ps.resultopsset = true;
+	sequenceState->ps.resultops = ExecGetResultSlotOps(lastPlanState,
+													   &lastPlanState->resultopsfixed);
 
 	return sequenceState;
 }

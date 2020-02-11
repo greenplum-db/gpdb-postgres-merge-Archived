@@ -393,7 +393,7 @@ typedef struct Result
  */
 typedef struct Repeat
 {
-	Plan plan;
+	Plan		plan;
 
 	/*
 	 * An expression to represent the number of times an input tuple to
@@ -401,7 +401,7 @@ typedef struct Repeat
 	 *
 	 * Currently, this expression should result in an integer.
 	 */
-	Expr *repeatCountExpr;
+	List	   *repeatCountExpr;
 
 	/*
 	 * The GROUPING value. This is used for grouping extension
@@ -410,7 +410,7 @@ typedef struct Repeat
 	 * can not properly handle GROUPING values. We let the Repeat
 	 * node to handle this case.
 	 */
-	uint64 grouping;
+	uint64		grouping;
 } Repeat;
 
 /* ----------------

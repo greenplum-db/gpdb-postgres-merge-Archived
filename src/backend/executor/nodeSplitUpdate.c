@@ -229,12 +229,10 @@ ExecSplitUpdate(SplitUpdateState *node)
 SplitUpdateState*
 ExecInitSplitUpdate(SplitUpdate *node, EState *estate, int eflags)
 {
+	SplitUpdateState *splitupdatestate;
+
 	/* Check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK | EXEC_FLAG_REWIND)));
-
-	bool    has_oids = false;
-
-	SplitUpdateState *splitupdatestate;
 
 	splitupdatestate = makeNode(SplitUpdateState);
 	splitupdatestate->ps.plan = (Plan *)node;
@@ -249,15 +247,13 @@ ExecInitSplitUpdate(SplitUpdate *node, EState *estate, int eflags)
 
 	ExecAssignExprContext(estate, &splitupdatestate->ps);
 
-	ExecInitResultTupleSlot(estate, &splitupdatestate->ps);
-
-	splitupdatestate->insertTuple = ExecInitExtraTupleSlot(estate);
-	splitupdatestate->deleteTuple = ExecInitExtraTupleSlot(estate);
-
-	/* New TupleDescriptor for output TupleTableSlots (old_values + new_values, ctid, gp_segment, action).*/
-	TupleDesc tupDesc = ExecTypeFromTL(node->plan.targetlist, has_oids);
-	ExecSetSlotDescriptor(splitupdatestate->insertTuple, tupDesc);
-	ExecSetSlotDescriptor(splitupdatestate->deleteTuple, tupDesc);
+	/*
+	 * New TupleDescriptor for output TupleTableSlots (old_values + new_values, ctid,
+	 * gp_segment, action).
+	 */
+	TupleDesc tupDesc = ExecTypeFromTL(node->plan.targetlist);
+	splitupdatestate->insertTuple = ExecInitExtraTupleSlot(estate, tupDesc, &TTSOpsVirtual);
+	splitupdatestate->deleteTuple = ExecInitExtraTupleSlot(estate, tupDesc, &TTSOpsVirtual);
 
 	/*
 	 * Look up the positions of the gp_segment_id in the subplan's target
@@ -271,7 +267,7 @@ ExecInitSplitUpdate(SplitUpdate *node, EState *estate, int eflags)
 	/*
 	 * DML nodes do not project.
 	 */
-	ExecAssignResultTypeFromTL(&splitupdatestate->ps);
+	ExecInitResultTupleSlotTL(&splitupdatestate->ps, &TTSOpsVirtual);
 	ExecAssignProjectionInfo(&splitupdatestate->ps, NULL);
 
 	/*

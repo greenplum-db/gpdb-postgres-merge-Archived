@@ -22,7 +22,8 @@
  *	planner and initializes its outer subtree
  * -----------------
  */
-TupleSplitState *ExecInitTupleSplit(TupleSplit *node, EState *estate, int eflags)
+TupleSplitState *
+ExecInitTupleSplit(TupleSplit *node, EState *estate, int eflags)
 {
 	TupleSplitState     *tup_spl_state;
 	Plan                *outerPlan;
@@ -35,19 +36,6 @@ TupleSplitState *ExecInitTupleSplit(TupleSplit *node, EState *estate, int eflags
 	tup_spl_state->ss.ps.state = estate;
 
 	ExecAssignExprContext(estate, &tup_spl_state->ss.ps);
-
-	/*
-	 * tuple table initialization
-	 */
-	tup_spl_state->ss.ss_ScanTupleSlot = ExecInitExtraTupleSlot(estate);
-	ExecInitResultTupleSlot(estate, &tup_spl_state->ss.ps);
-
-	/*
-	 * initialize child expressions
-	 */
-	tup_spl_state->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->plan.targetlist,
-					 (PlanState *) tup_spl_state);
 
 	if (estate->es_instrument && (estate->es_instrument & INSTRUMENT_CDB))
 	{
@@ -64,9 +52,16 @@ TupleSplitState *ExecInitTupleSplit(TupleSplit *node, EState *estate, int eflags
 	/*
 	 * initialize source tuple type.
 	 */
-	ExecAssignScanTypeFromOuterPlan(&tup_spl_state->ss);
+	tup_spl_state->ss.ps.outerops =
+		ExecGetResultSlotOps(outerPlanState(&tup_spl_state->ss),
+							 &tup_spl_state->ss.ps.outeropsfixed);
+	tup_spl_state->ss.ps.outeropsset = true;
 
-	ExecAssignResultTypeFromTL(&tup_spl_state->ss.ps);
+	ExecCreateScanSlotFromOuterPlan(estate, &tup_spl_state->ss,
+									tup_spl_state->ss.ps.outerops);
+
+	/* initialize result type, slot and projection. */
+	ExecInitResultTupleSlotTL(&tup_spl_state->ss.ps, &TTSOpsVirtual);
 	ExecAssignProjectionInfo(&tup_spl_state->ss.ps, NULL);
 
 	/*

@@ -367,7 +367,7 @@ StoreTupleForTrigger(TupleTableSlot *slot, Datum *values, bool *nulls, ListCell 
 void
 ConstructNewTupleTableSlot(HeapTuple newtuple, TupleTableSlot *triggerTuple, ListCell *attr, Datum *values, bool *nulls)
 {
-	oExecStoreHeapTuple(newtuple , triggerTuple, InvalidBuffer, true);
+	ExecStoreHeapTuple(newtuple , triggerTuple, InvalidBuffer, true);
 	slot_getallattrs(triggerTuple);
 
 	Datum	   *new_values = triggerTuple->tts_values;
@@ -551,12 +551,6 @@ ExecInitRowTrigger(RowTrigger *node, EState *estate, int eflags)
 	rowTriggerState->ps.plan = (Plan *)node;
 	rowTriggerState->ps.state = estate;
 
-	ExecInitResultTupleSlot(estate, &rowTriggerState->ps);
-
-	rowTriggerState->ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->plan.targetlist,
-					 (PlanState *) rowTriggerState);
-
 	/*
 	 * then initialize outer plan
 	 */
@@ -566,19 +560,15 @@ ExecInitRowTrigger(RowTrigger *node, EState *estate, int eflags)
 	/*
 	 * RowTrigger nodes do not project.
 	 */
-	ExecAssignResultTypeFromTL(&rowTriggerState->ps);
+	ExecInitResultTypeFromTL(&rowTriggerState->ps, &TTSOpsVirtual);
 	ExecAssignProjectionInfo(&rowTriggerState->ps, NULL);
-
-	rowTriggerState->newTuple  = ExecInitExtraTupleSlot(estate);
-	rowTriggerState->oldTuple  = ExecInitExtraTupleSlot(estate);
-	rowTriggerState->triggerTuple = ExecInitExtraTupleSlot(estate);
 
 	TupleDesc tupDesc =
 			estate->es_result_relation_info->ri_RelationDesc->rd_att;
 
-	ExecSetSlotDescriptor(rowTriggerState->newTuple, tupDesc);
-	ExecSetSlotDescriptor(rowTriggerState->oldTuple, tupDesc);
-	ExecSetSlotDescriptor(rowTriggerState->triggerTuple, tupDesc);
+	rowTriggerState->newTuple  = ExecInitExtraTupleSlot(estate, tupDesc, &TTSOpsVirtual);
+	rowTriggerState->oldTuple  = ExecInitExtraTupleSlot(estate, tupDesc, &TTSOpsVirtual);
+	rowTriggerState->triggerTuple = ExecInitExtraTupleSlot(estate, tupDesc, &TTSOpsVirtual);
 
 	if (estate->es_instrument && (estate->es_instrument & INSTRUMENT_CDB))
 	{

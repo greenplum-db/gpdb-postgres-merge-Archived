@@ -705,7 +705,7 @@ ExecInitMotion(Motion *node, EState *estate, int eflags)
 	 * but there are no slice tables in the new EState and we can not AssignGangs
 	 * on the QE. In this case, we raise an error.
 	 */
-	if (estate->es_epqTuple)
+	if (estate->es_epqTupleSlot)
 		ereport(ERROR,
 				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 				 errmsg("EvalPlanQual can not handle subPlan with Motion node")));
@@ -802,11 +802,6 @@ ExecInitMotion(Motion *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &motionstate->ps);
 
 	/*
-	 * tuple table initialization
-	 */
-	ExecInitResultTupleSlot(estate, &motionstate->ps);
-
-	/*
 	 * Initializes child nodes. If alien elimination is on, we skip children
 	 * of receiver motion.
 	 */
@@ -822,32 +817,10 @@ ExecInitMotion(Motion *node, EState *estate, int eflags)
 	outerPlan = outerPlanState(motionstate);
 
 	/*
-	 * The advertised 'tdhasoid' flag in our result tuple desc must match what
-	 * the outer plan produces. Otherwise, the sender will send tuples that
-	 * have OIDs, but the receiver treats the tuples as if they doesn't have
-	 * OIDs, or vice versa. This isn't so important for HeapTuples, which have
-	 * an HAS_OIDS flag on every tuple, but for MemTuples it is critical,
-	 * because it affects the way the they are deformed.
-	 *
-	 * GPDB_95_MERGE_FIXME: Should we force ORCA to always use the TL for
-	 * motion nodes or modify ORCA to use the TL from the outer node?
+	 * Initialize result type and slot
 	 */
-	if (outerPlan && ExecGetResultType(outerPlan) && estate->es_plannedstmt->planGen == PLANGEN_PLANNER)
-	{
-		/*
-		 * This is like ExecAssignResultTypeFromTL(), but we copy the tdhasoid
-		 * flag from the subplan.
-		 */
-		bool		hasoid = ExecGetResultType(outerPlan)->tdhasoid;
-
-		tupDesc = ExecTypeFromTL(motionstate->ps.plan->targetlist, hasoid);
-		ExecAssignResultType(&motionstate->ps, tupDesc);
-	}
-	else
-	{
-		ExecAssignResultTypeFromTL(&motionstate->ps);
-		tupDesc = ExecGetResultType(&motionstate->ps);
-	}
+	ExecInitResultTupleSlotTL(&motionstate->ps, &TTSOpsVirtual);
+	tupDesc = ExecGetResultType(&motionstate->ps);
 
 	motionstate->ps.ps_ProjInfo = NULL;
 
@@ -1188,7 +1161,7 @@ evalHashKey(ExprContext *econtext, List *hashkeys, CdbHash * h)
 			/*
 			 * Get the attribute value of the tuple
 			 */
-			keyval = ExecEvalExpr(keyexpr, econtext, &isNull, NULL);
+			keyval = ExecEvalExpr(keyexpr, econtext, &isNull);
 
 			/*
 			 * Compute the hash function
