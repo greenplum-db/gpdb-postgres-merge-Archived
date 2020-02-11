@@ -1728,9 +1728,7 @@ get_required_extension(char *reqExtensionName,
 ObjectAddress
 CreateExtension(ParseState *pstate, CreateExtensionStmt *stmt)
 {
-<<<<<<< HEAD
 	ObjectAddress address;
-=======
 	DefElem    *d_schema = NULL;
 	DefElem    *d_new_version = NULL;
 	DefElem    *d_old_version = NULL;
@@ -1740,7 +1738,6 @@ CreateExtension(ParseState *pstate, CreateExtensionStmt *stmt)
 	char	   *oldVersionName = NULL;
 	bool		cascade = false;
 	ListCell   *lc;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Check extension name validity before any filesystem access */
 	check_valid_extension_name(stmt->extname);

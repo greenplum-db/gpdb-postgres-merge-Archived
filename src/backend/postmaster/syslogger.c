@@ -386,15 +386,9 @@ SysLoggerMain(int argc, char *argv[])
 	 * time because passing down just the pg_time_t is a lot cheaper than
 	 * passing a whole file path in the EXEC_BACKEND case.
 	 */
-<<<<<<< HEAD
 	last_file_name = logfile_getname(first_syslogger_file_time, NULL, Log_directory, Log_filename);
 	if (csvlogFile != NULL)
 		last_csv_file_name = logfile_getname(first_syslogger_file_time, ".csv", Log_directory, Log_filename);
-=======
-	last_file_name = logfile_getname(first_syslogger_file_time, NULL);
-	if (csvlogFile != NULL)
-		last_csv_file_name = logfile_getname(first_syslogger_file_time, ".csv");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* remember active logfile parameters */
 	currentLogDir = pstrdup(Log_directory);
@@ -931,11 +925,7 @@ SysLogger_Start(void)
 	 */
 	first_syslogger_file_time = time(NULL);
 
-<<<<<<< HEAD
 	filename = logfile_getname(first_syslogger_file_time, NULL, Log_directory, Log_filename);
-=======
-	filename = logfile_getname(first_syslogger_file_time, NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	syslogFile = logfile_open(filename, "a", false);
 
@@ -950,11 +940,7 @@ SysLogger_Start(void)
 	 */
 	if (Log_destination & LOG_DESTINATION_CSVLOG)
 	{
-<<<<<<< HEAD
 		filename = logfile_getname(first_syslogger_file_time, ".csv", Log_directory, Log_filename);
-=======
-		filename = logfile_getname(first_syslogger_file_time, ".csv");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		csvlogFile = logfile_open(filename, "a", false);
 
@@ -1053,14 +1039,11 @@ SysLogger_Start(void)
 			/* postmaster will never write the file(s); close 'em */
 			fclose(syslogFile);
 			syslogFile = NULL;
-<<<<<<< HEAD
 			if (alertLogFile != NULL)
 			{
 				fclose(alertLogFile);
 				alertLogFile = NULL;
 			}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			if (csvlogFile != NULL)
 			{
 				fclose(csvlogFile);
@@ -1113,7 +1096,6 @@ syslogger_forkexec(void)
 #endif							/* WIN32 */
 	av[ac++] = filenobuf;
 
-<<<<<<< HEAD
 	if (alert_log_level_opened)
 	{
 #ifndef WIN32
@@ -1132,8 +1114,6 @@ syslogger_forkexec(void)
 		av[ac++] = alertFilenobuf;
 	}
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #ifndef WIN32
 	if (csvlogFile != NULL)
 		snprintf(csvfilenobuf, sizeof(csvfilenobuf), "%d",

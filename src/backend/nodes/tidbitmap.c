@@ -157,18 +157,15 @@ struct TIDBitmap
 	/* these are valid when iterating is true: */
 	PagetableEntry **spages;	/* sorted exact-page list, or NULL */
 	PagetableEntry **schunks;	/* sorted lossy-chunk list, or NULL */
-<<<<<<< HEAD
+    dsa_pointer dsapagetable;	/* dsa_pointer to the element array */
+    dsa_pointer dsapagetableold;	/* dsa_pointer to the old element array */
+    dsa_pointer ptpages;		/* dsa_pointer to the page array */
+    dsa_pointer ptchunks;		/* dsa_pointer to the chunk array */
+    dsa_area   *dsa;			/* reference to per-query dsa area */
 
 	/* CDB: Statistics for EXPLAIN ANALYZE */
 	struct Instrumentation *instrument;
 	Size		bytesperentry;
-=======
-	dsa_pointer dsapagetable;	/* dsa_pointer to the element array */
-	dsa_pointer dsapagetableold;	/* dsa_pointer to the old element array */
-	dsa_pointer ptpages;		/* dsa_pointer to the page array */
-	dsa_pointer ptchunks;		/* dsa_pointer to the chunk array */
-	dsa_area   *dsa;			/* reference to per-query dsa area */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 };
 
 /*
