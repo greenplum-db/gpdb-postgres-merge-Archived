@@ -695,20 +695,20 @@ perform_distinct_windowaggregate(WindowAggState *winstate,
 
 	/* load the first tuple from spool */
 	if (tuplesort_getdatum(peraggstate->distinctSortState, true,
-						   &fcinfo->arg[1], &fcinfo->argnull[1], NULL))
+						   &fcinfo->args[1].value, &fcinfo->args[1].null, NULL))
 	{
 		call_transfunc(winstate, perfuncstate, peraggstate, fcinfo);
-		prevDatum = fcinfo->arg[1];
-		prevNull = fcinfo->argnull[1];
+		prevDatum = fcinfo->args[1].value;
+		prevNull = fcinfo->args[1].null;
 
 		/* continue loading more tuples */
 		while (tuplesort_getdatum(peraggstate->distinctSortState, true,
-								  &fcinfo->arg[1], &fcinfo->argnull[1], NULL))
+								  &fcinfo->args[1].value, &fcinfo->args[1].null, NULL))
 		{
 			int		cmp;
 
 			cmp = ApplySortComparator(prevDatum, prevNull,
-									  fcinfo->arg[1], fcinfo->argnull[1],
+									  fcinfo->args[1].value, fcinfo->args[1].null,
 									  &peraggstate->distinctComparator);
 			if (cmp < 0)
 			{
@@ -725,8 +725,8 @@ perform_distinct_windowaggregate(WindowAggState *winstate,
 			if (!peraggstate->distinctTypeByVal && !prevNull)
 				pfree(DatumGetPointer(prevDatum));
 
-			prevDatum = fcinfo->arg[1];
-			prevNull = fcinfo->argnull[1];
+			prevDatum = fcinfo->args[1].value;
+			prevNull = fcinfo->args[1].null;
 		}
 	}
 

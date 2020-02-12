@@ -1953,8 +1953,8 @@ agg_hash_reload(AggState *aggstate)
 				FunctionCallInfo fcinfo = &pertrans->combinefn_fcinfo;
 
 				/* Set the input aggregate values */
-				fcinfo->arg[1] = input_pergroupstate[aggno].transValue;
-				fcinfo->argnull[1] = input_pergroupstate[aggno].transValueIsNull;
+				fcinfo->args[1].value = input_pergroupstate[aggno].transValue;
+				fcinfo->args[1].null = input_pergroupstate[aggno].transValueIsNull;
 
 				/* Combine to the transition aggstate */
 				advance_combine_function(aggstate, pertrans, pergroupstate,
