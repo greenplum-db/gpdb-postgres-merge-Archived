@@ -546,7 +546,6 @@ pg_ls_dir_1arg(PG_FUNCTION_ARGS)
 	return pg_ls_dir(fcinfo);
 }
 
-<<<<<<< HEAD
 /* ------------------------------------
  * generic file handling functions
  */
@@ -721,17 +720,35 @@ pg_file_unlink(PG_FUNCTION_ARGS)
 
 
 Datum
+pg_file_length(PG_FUNCTION_ARGS)
+{
+	text	   *filename_t = PG_GETARG_TEXT_P(0);
+	char	   *filename;
+	struct stat fst;
+
+	requireSuperuser();
+
+	filename = convert_and_check_filename(filename_t);
+
+	if (stat(filename, &fst) < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not stat file \"%s\": %m", filename)));
+
+	PG_RETURN_INT64((int64) fst.st_size);
+}
+
+
+/*
+ * GPDB_12_MERGE_FIXME: Perhaps this function can call into generic function
+ * pg_ls_dir_files() rather than re-implmenting much of the same pattern.
+ */
+Datum
 pg_logdir_ls(PG_FUNCTION_ARGS)
-=======
-/* Generic function to return a directory listing of files */
-static Datum
-pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	FuncCallContext *funcctx;
 	struct dirent *de;
 	directory_fctx *fctx;
-<<<<<<< HEAD
     bool prefix_is_gpdb = true;
 
 	if (!superuser())
@@ -748,8 +765,6 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 
 	if (strncmp(Log_filename, "gpdb", 4) != 0)
 		prefix_is_gpdb = false;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (SRF_IS_FIRSTCALL())
 	{
@@ -761,7 +776,6 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 
 		fctx = palloc(sizeof(directory_fctx));
 
-<<<<<<< HEAD
 		tupdesc = CreateTemplateTupleDesc(2);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "starttime",
 						   TIMESTAMPOID, -1, 0);
@@ -778,33 +792,6 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 					(errcode_for_file_access(),
 					 errmsg("could not read directory \"%s\": %m",
 							fctx->location)));
-=======
-		tupdesc = CreateTemplateTupleDesc(3);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "size",
-						   INT8OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "modification",
-						   TIMESTAMPTZOID, -1, 0);
-		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
-
-		fctx->location = pstrdup(dir);
-		fctx->dirdesc = AllocateDir(fctx->location);
-
-		if (!fctx->dirdesc)
-		{
-			if (missing_ok && errno == ENOENT)
-			{
-				MemoryContextSwitchTo(oldcontext);
-				SRF_RETURN_DONE(funcctx);
-			}
-			else
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not open directory \"%s\": %m",
-								fctx->location)));
-		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		funcctx->user_fctx = fctx;
 		MemoryContextSwitchTo(oldcontext);
@@ -815,7 +802,6 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 
 	while ((de = ReadDir(fctx->dirdesc, fctx->location)) != NULL)
 	{
-<<<<<<< HEAD
 		char	   *values[2];
 		HeapTuple	tuple;
 		char		timestampbuf[32];
@@ -888,7 +874,67 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 
 		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
 
-=======
+		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
+	}
+
+	FreeDir(fctx->dirdesc);
+	SRF_RETURN_DONE(funcctx);
+}
+
+
+/* Generic function to return a directory listing of files */
+static Datum
+pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
+{
+	FuncCallContext *funcctx;
+	struct dirent *de;
+	directory_fctx *fctx;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		MemoryContext oldcontext;
+		TupleDesc	tupdesc;
+
+		funcctx = SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		fctx = palloc(sizeof(directory_fctx));
+
+		tupdesc = CreateTemplateTupleDesc(3);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "size",
+						   INT8OID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "modification",
+						   TIMESTAMPTZOID, -1, 0);
+		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
+
+		fctx->location = pstrdup(dir);
+		fctx->dirdesc = AllocateDir(fctx->location);
+
+		if (!fctx->dirdesc)
+		{
+			if (missing_ok && errno == ENOENT)
+			{
+				MemoryContextSwitchTo(oldcontext);
+				SRF_RETURN_DONE(funcctx);
+			}
+			else
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not open directory \"%s\": %m",
+								fctx->location)));
+		}
+
+		funcctx->user_fctx = fctx;
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	fctx = (directory_fctx *) funcctx->user_fctx;
+
+	while ((de = ReadDir(fctx->dirdesc, fctx->location)) != NULL)
+	{
 		Datum		values[3];
 		bool		nulls[3];
 		char		path[MAXPGPATH * 2];
@@ -916,7 +962,6 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 		memset(nulls, 0, sizeof(nulls));
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
 	}
 
@@ -924,25 +969,6 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 	SRF_RETURN_DONE(funcctx);
 }
 
-<<<<<<< HEAD
-Datum
-pg_file_length(PG_FUNCTION_ARGS)
-{
-	text	   *filename_t = PG_GETARG_TEXT_P(0);
-	char	   *filename;
-	struct stat fst;
-
-	requireSuperuser();
-
-	filename = convert_and_check_filename(filename_t);
-
-	if (stat(filename, &fst) < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not stat file \"%s\": %m", filename)));
-
-	PG_RETURN_INT64((int64) fst.st_size);
-=======
 /* Function to return the list of files in the log directory */
 Datum
 pg_ls_logdir(PG_FUNCTION_ARGS)
@@ -1002,5 +1028,4 @@ Datum
 pg_ls_archive_statusdir(PG_FUNCTION_ARGS)
 {
 	return pg_ls_dir_files(fcinfo, XLOGDIR "/archive_status", true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
