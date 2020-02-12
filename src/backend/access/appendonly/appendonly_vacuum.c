@@ -1029,7 +1029,7 @@ vacuumStatement_Relation(Oid relid, List *relations, BufferAccessStrategy bstrat
 }
 
 
-<<<<<<< HEAD
+/*
  * Dispatch a Vacuum command.
  */
 static void

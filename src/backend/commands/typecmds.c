@@ -1295,7 +1295,6 @@ DefineEnum(CreateEnumStmt *stmt)
 					 errmsg("type \"%s\" already exists", enumName)));
 	}
 
-<<<<<<< HEAD
 	enumArrayName = makeArrayTypeName(enumName, enumNamespace);
 
 	/* Preassign array type OID so we can insert it in pg_type.typarray */
@@ -1310,10 +1309,6 @@ DefineEnum(CreateEnumStmt *stmt)
 		enumTypeOid = InvalidOid;
 		enumArrayOid = AssignTypeArrayOid();
 	}
-=======
-	/* Allocate OID for array type */
-	enumArrayOid = AssignTypeArrayOid();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Create the pg_type entry */
 	enumTypeAddr =

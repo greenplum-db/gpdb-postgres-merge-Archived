@@ -45,33 +45,21 @@
 #include "access/attnum.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
-<<<<<<< HEAD
-#include "catalog/pg_am.h"
-#include "catalog/pg_cast.h"
-#include "catalog/pg_class.h"
-#include "catalog/pg_foreign_server.h"
-#include "catalog/pg_magic_oid.h"
-#include "catalog/pg_namespace.h"
-#include "catalog/pg_default_acl.h"
-#include "catalog/pg_largeobject.h"
-#include "catalog/pg_largeobject_metadata.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_trigger.h"
-#include "catalog/pg_type.h"
-#include "catalog/gp_distribution_policy.h"
-=======
 #include "catalog/pg_aggregate_d.h"
 #include "catalog/pg_am_d.h"
 #include "catalog/pg_attribute_d.h"
 #include "catalog/pg_cast_d.h"
 #include "catalog/pg_class_d.h"
 #include "catalog/pg_default_acl_d.h"
+#include "catalog/pg_foreign_server_d.h"
 #include "catalog/pg_largeobject_d.h"
 #include "catalog/pg_largeobject_metadata_d.h"
+#include "catalog/pg_magic_oid.h"
+#include "catalog/pg_namespace_d.h"
 #include "catalog/pg_proc_d.h"
 #include "catalog/pg_trigger_d.h"
 #include "catalog/pg_type_d.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+#include "catalog/gp_distribution_policy.h"
 #include "libpq/libpq-fs.h"
 #include "storage/block.h"
 
@@ -125,15 +113,12 @@ int			postDataSchemaOnly;
 /* subquery used to convert user ID (eg, datdba) to user name */
 static const char *username_subquery;
 
-<<<<<<< HEAD
-=======
 /*
  * For 8.0 and earlier servers, pulled from pg_database, for 8.1+ we use
  * FirstNormalObjectId - 1.
  */
 static Oid	g_last_builtin_oid; /* value of the last builtin oid */
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /* The specified names/patterns should to match at least one entity */
 static int	strict_names = 0;
 
@@ -227,18 +212,6 @@ static void dumpTableData(Archive *fout, TableDataInfo *tdinfo);
 static void refreshMatViewData(Archive *fout, TableDataInfo *tdinfo);
 static void guessConstraintInheritance(TableInfo *tblinfo, int numTables);
 static void dumpComment(Archive *fout, const char *type, const char *name,
-<<<<<<< HEAD
-			const char *namespace, const char *owner,
-			CatalogId catalogId, int subid, DumpId dumpId);
-static int findComments(Archive *fout, Oid classoid, Oid objoid,
-			 CommentItem **items);
-static int	collectComments(Archive *fout, CommentItem **items);
-static void dumpSecLabel(Archive *fout, const char *type, const char *name,
-			 const char *namespace, const char *owner,
-			 CatalogId catalogId, int subid, DumpId dumpId);
-static int findSecLabels(Archive *fout, Oid classoid, Oid objoid,
-			  SecLabelItem **items);
-=======
 						const char *namespace, const char *owner,
 						CatalogId catalogId, int subid, DumpId dumpId);
 static int	findComments(Archive *fout, Oid classoid, Oid objoid,
@@ -249,7 +222,6 @@ static void dumpSecLabel(Archive *fout, const char *type, const char *name,
 						 CatalogId catalogId, int subid, DumpId dumpId);
 static int	findSecLabels(Archive *fout, Oid classoid, Oid objoid,
 						  SecLabelItem **items);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static int	collectSecLabels(Archive *fout, SecLabelItem **items);
 static void dumpDumpableObject(Archive *fout, DumpableObject *dobj);
 static void dumpNamespace(Archive *fout, NamespaceInfo *nspinfo);
@@ -301,17 +273,10 @@ static void dumpUserMappings(Archive *fout,
 static void dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo);
 
 static void dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
-<<<<<<< HEAD
-		const char *type, const char *name, const char *subname,
-		const char *nspname, const char *owner,
-		const char *acls, const char *racls,
-		const char *initacls, const char *initracls);
-=======
 					const char *type, const char *name, const char *subname,
 					const char *nspname, const char *owner,
 					const char *acls, const char *racls,
 					const char *initacls, const char *initracls);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static void getDependencies(Archive *fout);
 static void BuildArchiveDependencies(Archive *fout);
@@ -337,16 +302,10 @@ static char *format_function_arguments_old(Archive *fout,
 static char *format_function_signature(Archive *fout,
 									   FuncInfo *finfo, bool honor_quotes);
 static char *convertRegProcReference(Archive *fout,
-<<<<<<< HEAD
-						const char *proc);
-static char *getFormattedOperatorName(Archive *fout, const char *oproid);
-static const char *convertTSFunction(Archive *fout, Oid funcOid);
-=======
 									 const char *proc);
 static char *getFormattedOperatorName(Archive *fout, const char *oproid);
 static char *convertTSFunction(Archive *fout, Oid funcOid);
 static Oid	findLastBuiltinOid_V71(Archive *fout);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static char *getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts);
 static void getBlobs(Archive *fout);
 static void dumpBlob(Archive *fout, BlobInfo *binfo);
@@ -705,11 +664,7 @@ main(int argc, char **argv)
 
 	InitDumpOptions(&dopt);
 
-<<<<<<< HEAD
-	while ((c = getopt_long(argc, argv, "abcCd:E:f:F:h:j:n:N:oOp:RsS:t:T:uU:vwWxZ:",
-=======
-	while ((c = getopt_long(argc, argv, "abBcCd:E:f:F:h:j:n:N:Op:RsS:t:T:U:vwWxZ:",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	while ((c = getopt_long(argc, argv, "abBcCd:E:f:F:h:j:n:N:oOp:RsS:t:T:uU:vwWxZ:",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -855,7 +810,45 @@ main(int argc, char **argv)
 				dumpsnapshot = pg_strdup(optarg);
 				break;
 
-<<<<<<< HEAD
+            case 7:				/* no-sync */
+                dosync = false;
+                break;
+
+            case 8:
+                have_extra_float_digits = true;
+                extra_float_digits = atoi(optarg);
+                if (extra_float_digits < -15 || extra_float_digits > 3)
+                {
+                    pg_log_error("extra_float_digits must be in range -15..3");
+                    exit_nicely(1);
+                }
+                break;
+
+            case 9:				/* inserts */
+
+                /*
+                 * dump_inserts also stores --rows-per-insert, careful not to
+                 * overwrite that.
+                 */
+                if (dopt.dump_inserts == 0)
+                    dopt.dump_inserts = DUMP_DEFAULT_ROWS_PER_INSERT;
+                break;
+
+            case 10:			/* rows per insert */
+                errno = 0;
+                rowsPerInsert = strtol(optarg, &endptr, 10);
+
+                if (endptr == optarg || *endptr != '\0' ||
+                        rowsPerInsert <= 0 || rowsPerInsert > INT_MAX ||
+                        errno == ERANGE)
+                {
+                    pg_log_error("rows-per-insert must be in range %d..%d",
+                                 1, INT_MAX);
+                    exit_nicely(1);
+                }
+                dopt.dump_inserts = (int) rowsPerInsert;
+                break;
+
 			case 1000:				/* gp-syntax */
 				if (gp_syntax_option != GPS_NOT_SPECIFIED)
 				{
@@ -882,45 +875,6 @@ main(int argc, char **argv)
 			case 1003:
 				simple_string_list_append(&relid_string_list, optarg);
 				dopt.include_everything = false;
-=======
-			case 7:				/* no-sync */
-				dosync = false;
-				break;
-
-			case 8:
-				have_extra_float_digits = true;
-				extra_float_digits = atoi(optarg);
-				if (extra_float_digits < -15 || extra_float_digits > 3)
-				{
-					pg_log_error("extra_float_digits must be in range -15..3");
-					exit_nicely(1);
-				}
-				break;
-
-			case 9:				/* inserts */
-
-				/*
-				 * dump_inserts also stores --rows-per-insert, careful not to
-				 * overwrite that.
-				 */
-				if (dopt.dump_inserts == 0)
-					dopt.dump_inserts = DUMP_DEFAULT_ROWS_PER_INSERT;
-				break;
-
-			case 10:			/* rows per insert */
-				errno = 0;
-				rowsPerInsert = strtol(optarg, &endptr, 10);
-
-				if (endptr == optarg || *endptr != '\0' ||
-					rowsPerInsert <= 0 || rowsPerInsert > INT_MAX ||
-					errno == ERANGE)
-				{
-					pg_log_error("rows-per-insert must be in range %d..%d",
-								 1, INT_MAX);
-					exit_nicely(1);
-				}
-				dopt.dump_inserts = (int) rowsPerInsert;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 
 			default:
@@ -1803,11 +1757,7 @@ expand_table_name_patterns(Archive *fout,
 						  "\n     LEFT JOIN pg_catalog.pg_namespace n"
 						  "\n     ON n.oid OPERATOR(pg_catalog.=) c.relnamespace"
 						  "\nWHERE c.relkind OPERATOR(pg_catalog.=) ANY"
-<<<<<<< HEAD
-						  "\n    (array['%c', '%c', '%c', '%c', '%c'])\n",
-=======
 						  "\n    (array['%c', '%c', '%c', '%c', '%c', '%c'])\n",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW,
 						  RELKIND_MATVIEW, RELKIND_FOREIGN_TABLE,
 						  RELKIND_PARTITIONED_TABLE);
@@ -1817,13 +1767,8 @@ expand_table_name_patterns(Archive *fout,
 
 		ExecuteSqlStatement(fout, "RESET search_path");
 		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-<<<<<<< HEAD
-		PQclear(ExecuteSqlQueryForSingleRow(fout, ALWAYS_SECURE_SEARCH_PATH_SQL));
-
-=======
 		PQclear(ExecuteSqlQueryForSingleRow(fout,
 											ALWAYS_SECURE_SEARCH_PATH_SQL));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (strict_names && PQntuples(res) == 0)
 			fatal("no matching tables were found for pattern \"%s\"", cell->val);
 
@@ -1965,14 +1910,10 @@ selectDumpableNamespace(NamespaceInfo *nsinfo, Archive *fout)
 		nsinfo->dobj.dump_contains = nsinfo->dobj.dump = DUMP_COMPONENT_ACL;
 	}
 	else if (strncmp(nsinfo->dobj.name, "pg_", 3) == 0 ||
-<<<<<<< HEAD
 			 strcmp(nsinfo->dobj.name, "information_schema") == 0 ||
 			 strcmp(nsinfo->dobj.name, "gp_toolkit") == 0)
-=======
-			 strcmp(nsinfo->dobj.name, "information_schema") == 0)
 	{
 		/* Other system schemas don't get dumped */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		nsinfo->dobj.dump_contains = nsinfo->dobj.dump = DUMP_COMPONENT_NONE;
 	}
 	else if (strcmp(nsinfo->dobj.name, "public") == 0)
@@ -2898,13 +2839,10 @@ makeTableDataInfo(DumpOptions *dopt, TableInfo *tbinfo)
 	/* Skip FOREIGN TABLEs (no data to dump) */
 	if (tbinfo->relkind == RELKIND_FOREIGN_TABLE)
 		return;
-<<<<<<< HEAD
 	/* Skip EXTERNAL TABLEs (like foreign tables in GPDB 6.x and below) */
 	if (tbinfo->relstorage == RELSTORAGE_EXTERNAL)
-=======
 	/* Skip partitioned tables (data in partitions) */
 	if (tbinfo->relkind == RELKIND_PARTITIONED_TABLE)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return;
 
 	/* Don't dump data in unlogged tables, if so requested */
