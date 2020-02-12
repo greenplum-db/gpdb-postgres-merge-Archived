@@ -28,6 +28,7 @@
 #include "access/tsmapi.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
+#include "catalog/pg_appendonly_fn.h"
 #include "catalog/catalog.h"
 #include "catalog/index.h"
 #include "catalog/storage.h"
@@ -209,8 +210,8 @@ appendonly_tuple_insert(Relation relation, TupleTableSlot *slot, CommandId cid,
 					int options, BulkInsertState bistate)
 {
 	bool		shouldFree = true;
-	MemTuple	mtuple = ExecFetchSlotMemTuple(slot, true, &shouldFree);
-	AppendOnlyInsertDesc insertDesc;
+	MemTuple	mtuple = ExecFetchSlotMemTuple(slot, &shouldFree);
+	AppendOnlyInsertDesc insertDesc = NULL;
 
 	// GPDB_12_MERGE_FIXME: Where to store this?
 #if 0
@@ -266,7 +267,7 @@ appendonly_tuple_delete(Relation relation, ItemPointer tid, CommandId cid,
 					Snapshot snapshot, Snapshot crosscheck, bool wait,
 					TM_FailureData *tmfd, bool changingPart)
 {
-	AppendOnlyDeleteDesc deleteDesc;
+	AppendOnlyDeleteDesc deleteDesc = NULL;
 
 	if (IsolationUsesXactSnapshot())
 	{
@@ -298,9 +299,9 @@ appendonly_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slo
 					bool wait, TM_FailureData *tmfd,
 					LockTupleMode *lockmode, bool *update_indexes)
 {
-	AppendOnlyUpdateDesc updateDesc;
+	AppendOnlyUpdateDesc updateDesc = NULL;
 	bool		shouldFree = true;
-	MemTuple	mtuple = ExecFetchSlotMemTuple(slot, true, &shouldFree);
+	MemTuple	mtuple = ExecFetchSlotMemTuple(slot, &shouldFree);
 	TM_Result	result;
 
 	if (IsolationUsesXactSnapshot())
@@ -735,7 +736,7 @@ appendonly_index_build_range_scan(Relation heapRelation,
 		 * to take just ItemPointer argument. */
 		heapTuple = ExecFetchSlotHeapTuple(slot, true, &shouldFree);
 
-		callback(indexRelation, heapTuple, values, isnull, tupleIsAlive,
+		callback(indexRelation, &heapTuple->t_self, values, isnull, tupleIsAlive,
 				 callback_state);
 
 		if (shouldFree)
@@ -1021,13 +1022,17 @@ appendonly_relation_size(Relation rel, ForkNumber forkNumber)
 	int64		result;
 	Datum		eof;
 	bool		isNull;
+	Oid segrelid = InvalidOid;
 
 	if (forkNumber != MAIN_FORKNUM)
 		return 0;
 
 	result = 0;
 
-	pg_aoseg_rel = table_open(rel->rd_appendonly->segrelid, AccessShareLock);
+	GetAppendOnlyEntryAuxOids(rel->rd_id, NULL, &segrelid, NULL,
+			NULL, NULL, NULL);
+
+	pg_aoseg_rel = table_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
 	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true, NULL, 0, NULL);
