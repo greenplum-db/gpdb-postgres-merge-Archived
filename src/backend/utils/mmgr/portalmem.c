@@ -825,7 +825,14 @@ AtAbort_Portals(void)
 			continue;
 
 		/*
-<<<<<<< HEAD
+		 * Do nothing to auto-held cursors.  This is similar to the case of a
+		 * cursor from a previous transaction, but it could also be that the
+		 * cursor was auto-held in this transaction, so it wants to live on.
+		 */
+		if (portal->autoHeld)
+			continue;
+
+		/*
 		 * GPDB_90_MERGE_FIXME: This was added in commit 7981c342, to prevent
 		 * ExecutorEnd from running in failed transactions. That's fine and dandy,
 		 * but unfortunately GPDB relies on ExecutorEnd to for some cleanup
@@ -835,15 +842,6 @@ AtAbort_Portals(void)
 		 * we cannot skip ExecutorEnd.
 		 */
 #if 0
-=======
-		 * Do nothing to auto-held cursors.  This is similar to the case of a
-		 * cursor from a previous transaction, but it could also be that the
-		 * cursor was auto-held in this transaction, so it wants to live on.
-		 */
-		if (portal->autoHeld)
-			continue;
-
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		/*
 		 * If it was created in the current transaction, we can't do normal
 		 * shutdown on a READY portal either; it might refer to objects
