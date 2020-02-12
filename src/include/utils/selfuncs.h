@@ -189,7 +189,8 @@ extern double estimate_num_groups(PlannerInfo *root, List *groupExprs,
 extern void estimate_hash_bucket_stats(PlannerInfo *root,
 									   Node *hashkey, double nbuckets,
 									   Selectivity *mcv_freq,
-									   Selectivity *bucketsize_frac);
+									   Selectivity *bucketsize_frac,
+									   Path *path);
 extern double estimate_hashagg_tablesize(Path *path,
 										 const AggClauseCosts *agg_costs,
 										 double dNumGroups);

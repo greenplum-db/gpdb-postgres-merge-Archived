@@ -146,6 +146,7 @@
 #include "cdb/cdbgroup.h" /* cdbpathlocus_collocates_expressions */
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
+#include "optimizer/restrictinfo.h"
 
 /* Hooks for plugins to get control when we ask for stats */
 get_relation_stats_hook_type get_relation_stats_hook = NULL;
@@ -203,6 +204,9 @@ static bool get_actual_variable_range(PlannerInfo *root,
 									  Oid sortop,
 									  Datum *min, Datum *max);
 static RelOptInfo *find_join_input_rel(PlannerInfo *root, Relids relids);
+
+static void try_fetch_rel_stats(RangeTblEntry *rte, const char *attname,
+								VariableStatData* vardata);
 static void try_fetch_largest_child_stats(PlannerInfo *root, Index parent_rti,
 										  const char *attname, VariableStatData* vardata);
 
@@ -3976,7 +3980,6 @@ convert_numeric_to_scalar(Datum value, Oid typid, bool *failure)
 	return 0;
 }
 
-#ifdef NOT_USED
 /*
  * Do convert_to_scalar()'s work for any character-string data type.
  *
@@ -4076,9 +4079,7 @@ convert_string_to_scalar(char *value,
 	*scaledlobound = convert_one_string_to_scalar(lobound, rangelo, rangehi);
 	*scaledhibound = convert_one_string_to_scalar(hibound, rangelo, rangehi);
 }
-#endif
 
-#ifdef NOT_USED
 static double
 convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
 {
@@ -4120,9 +4121,7 @@ convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
 
 	return num;
 }
-#endif
 
-#ifdef NOT_USED
 /*
  * Convert a string-type Datum into a palloc'd, null-terminated string.
  *
@@ -4214,7 +4213,6 @@ convert_string_datum(Datum value, Oid typid, Oid collid, bool *failure)
 
 	return val;
 }
-#endif
 
 /*
  * Do convert_to_scalar()'s work for any bytea data type.
@@ -7101,9 +7099,11 @@ bmcostestimate(struct PlannerInfo *root,
 			   double *indexCorrelation,
 			   double *indexPages)
 {
-	RelOptInfo *rel = path->indexinfo->rel;
-	Oid			reloid = getrelid(rel->relid, root->parse->rtable);
-	List	   *qinfos;
+	IndexOptInfo *index = path->indexinfo;
+	List	   *indexQuals = get_quals_from_indexclauses(path->indexclauses);
+	RelOptInfo *baserel = index->rel;
+	RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
+	Oid			reloid;
 	GenericCosts costs;
 	List *selectivityQuals;
 	double numIndexTuples;
@@ -7111,30 +7111,20 @@ bmcostestimate(struct PlannerInfo *root,
 	int i;
 	double numDistinctValues;
 
-	/*
-	 * Estimate the number of index tuples. This is basically the same
-	 * as the one in genericcostestimate(), except that
-	 * (1) We don't consider ScalarArrayOpExpr in the calculation, since
-	 *     each value has its own bit vector.
-	 * (2) since the bitmap index stores bit vectors, one for each distinct
-	 *     value, we adjust the number of index tuples by dividing the
-	 *     value with the number of distinct values.
-	 */
-	if (path->indexinfo->indpred != NIL)
-	{
-		List	   *strippedQuals;
-		List	   *predExtraQuals;
+	Assert(rte->rtekind == RTE_RELATION);
+	reloid = rte->relid;
+	Assert(reloid != InvalidOid);
 
-		strippedQuals = get_actual_clauses(path->indexquals);
-		predExtraQuals = list_difference(path->indexinfo->indpred, strippedQuals);
-		selectivityQuals = list_concat(predExtraQuals, path->indexquals);
-	}
-	else
-		selectivityQuals = path->indexquals;
+	/*
+	 * If the index is partial, AND the index predicate with the index-bound
+	 * quals to produce a more accurate idea of the number of rows covered by
+	 * the bound conditions.
+	 */
+	selectivityQuals = add_predicate_to_index_quals(index, indexQuals);
 
 	/* Estimate the fraction of main-table tuples that will be visited */
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
-											   rel->relid,
+											   baserel->relid,
 											   JOIN_INNER,
 											   NULL,
 											   false /* use_damping */);
@@ -7155,7 +7145,7 @@ bmcostestimate(struct PlannerInfo *root,
 			Oid			varcollid;
 
 			get_atttypetypmodcoll(reloid, attno, &vartypeid, &type_mod, &varcollid);
-			var = makeVar(rel->relid, attno, vartypeid, type_mod, varcollid, 0);
+			var = makeVar(baserel->relid, attno, vartypeid, type_mod, varcollid, 0);
 			groupExprs = lappend(groupExprs, var);
 		}
 	}
@@ -7163,16 +7153,13 @@ bmcostestimate(struct PlannerInfo *root,
 		groupExprs = list_concat_unique(groupExprs, path->indexinfo->indexprs);
 
 	Assert(groupExprs != NULL);
-	numDistinctValues = estimate_num_groups(root, groupExprs, path->indexinfo->rel->rows,
+	numDistinctValues = estimate_num_groups(root, groupExprs, baserel->rows,
 											NULL);
 	if (numDistinctValues == 0)
 		numDistinctValues = 1;
 
-	numIndexTuples = *indexSelectivity * path->indexinfo->rel->tuples;
+	numIndexTuples = *indexSelectivity * baserel->tuples;
 	numIndexTuples = rint(numIndexTuples / numDistinctValues);
-
-	/* Do preliminary analysis of indexquals */
-	qinfos = deconstruct_indexquals(path);
 
 	/*
 	 * Now do generic index cost estimation.
@@ -7180,7 +7167,7 @@ bmcostestimate(struct PlannerInfo *root,
 	MemSet(&costs, 0, sizeof(costs));
 	costs.numIndexTuples = numIndexTuples;
 
-	genericcostestimate(root, path, loop_count, qinfos, &costs);
+	genericcostestimate(root, path, loop_count, &costs);
 
 	*indexStartupCost = costs.indexStartupCost;
 	*indexTotalCost = costs.indexTotalCost;
@@ -7326,7 +7313,8 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 
 	qualSelectivity = clauselist_selectivity(root, indexQuals,
 											 baserel->relid,
-											 JOIN_INNER, NULL);
+											 JOIN_INNER, NULL,
+											 false /* use_damping */);
 
 	/* work out the actual number of ranges in the index */
 	indexRanges = Max(ceil((double) baserel->pages / statsData.pagesPerRange),

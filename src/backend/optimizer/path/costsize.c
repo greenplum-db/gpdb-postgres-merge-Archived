@@ -3831,7 +3831,8 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 											   get_rightop(restrictinfo->clause),
 											   virtualbuckets,
 											   &restrictinfo->right_mcvfreq,
-											   &restrictinfo->right_bucketsize);
+											   &restrictinfo->right_bucketsize,
+											   inner_path);
 					thisbucketsize = restrictinfo->right_bucketsize;
 				}
 				thismcvfreq = restrictinfo->right_mcvfreq;
@@ -3868,7 +3869,8 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 											   get_leftop(restrictinfo->clause),
 											   virtualbuckets,
 											   &restrictinfo->left_mcvfreq,
-											   &restrictinfo->left_bucketsize);
+											   &restrictinfo->left_bucketsize,
+											   inner_path);
 					thisbucketsize = restrictinfo->left_bucketsize;
 				}
 				thismcvfreq = restrictinfo->left_mcvfreq;
