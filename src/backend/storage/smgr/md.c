@@ -103,7 +103,7 @@ static MemoryContext MdCxt;		/* context for all MdfdVec objects */
 	(a).handler = SYNC_HANDLER_MD, \
 	(a).rnode = (xx_rnode), \
 	(a).forknum = (xx_forknum), \
-	(a).segno = (xx_segno) \
+	(a).segno = (xx_segno), \
 	(a).is_ao_segno = (xx_is_ao_segno) \
 )
 
@@ -237,7 +237,7 @@ mdcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
 
 	path = aorelpath(rnode, segmentFileNum);
 
-	fd = PathNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
+	fd = PathNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY);
 
 	if (fd < 0)
 	{
@@ -250,7 +250,7 @@ mdcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
 		 * already, even if isRedo is not set.	(See also mdopen)
 		 */
 		if (isRedo || IsBootstrapProcessingMode())
-			fd = PathNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
+			fd = PathNameOpenFile(path, O_RDWR | PG_BINARY);
 		if (fd < 0)
 		{
 			/* be sure to report the error reported by create, not open */
@@ -1377,18 +1377,18 @@ if (SIMPLE_FAULT_INJECTOR("fsync_counter") == FaultInjectorTypeSkip ||
 {
 	if (MyAuxProcType == CheckpointerProcess)
 	{
-		if (segno == 0)
+		if (ftag->segno == 0)
 			elog(LOG, "checkpoint performing fsync for %d/%d/%d",
 				 ftag->rnode.spcNode, ftag->rnode.dbNode,
 				 ftag->rnode.relNode);
 		else
 			elog(LOG, "checkpoint performing fsync for %d/%d/%d.%d",
 				 ftag->rnode.spcNode, ftag->rnode.dbNode,
-				 ftag->rnode.relNode, segno);
+				 ftag->rnode.relNode, ftag->segno);
 	}
 	else
 	{
-		if (segno == 0)
+		if (ftag->segno == 0)
 			elog(ERROR, "non checkpoint process trying to fsync "
 				 "%d/%d/%d when fsync_counter fault is set",
 				 ftag->rnode.spcNode, ftag->rnode.dbNode,
@@ -1397,7 +1397,7 @@ if (SIMPLE_FAULT_INJECTOR("fsync_counter") == FaultInjectorTypeSkip ||
 			elog(ERROR, "non checkpoint process trying to fsync "
 				 "%d/%d/%d.%d when fsync_counter fault is set",
 				 ftag->rnode.spcNode, ftag->rnode.dbNode,
-				 ftag->rnode.relNode, segno);
+				 ftag->rnode.relNode, ftag->segno);
 	}
 		}
 #endif
@@ -1412,6 +1412,7 @@ if (SIMPLE_FAULT_INJECTOR("fsync_counter") == FaultInjectorTypeSkip ||
 					 ftag->forknum,
 					 ftag->segno * (BlockNumber) RELSEG_SIZE,
 					 false,
+					 ftag->is_ao_segno,
 					 EXTENSION_RETURN_NULL | EXTENSION_DONT_CHECK_SIZE);
 	if (v == NULL)
 		return -1;
