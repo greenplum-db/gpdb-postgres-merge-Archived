@@ -314,26 +314,11 @@ static void ExecAggExplainEnd(PlanState *planstate, struct StringInfoData *buf);
 static void ExecEagerFreeAgg(AggState *node);
 static TupleTableSlot *agg_retrieve_hash_table_internal(AggState *aggstate);
 static void build_pertrans_for_aggref(AggStatePerTrans pertrans,
-<<<<<<< HEAD
-						  AggState *aggsate, EState *estate,
-						  Aggref *aggref, Oid aggtransfn, Oid aggtranstype,
-						  Oid aggcombinefn,
-						  Oid aggserialfn, Oid aggdeserialfn,
-						  Datum initValue, bool initValueIsNull,
-						  Oid *inputTypes, int numArguments);
-static int find_compatible_peragg(Aggref *newagg, AggState *aggstate,
-					   int lastaggno, List **same_input_transnos);
-static int find_compatible_pertrans(AggState *aggstate, Aggref *newagg,
-						 Oid aggtransfn, Oid aggtranstype,
-						 Oid aggserialfn, Oid aggdeserialfn,
-						 Datum initValue, bool initValueIsNull,
-						 List *transnos);
-=======
-									  AggState *aggstate, EState *estate,
-									  Aggref *aggref, Oid aggtransfn, Oid aggtranstype,
-									  Oid aggserialfn, Oid aggdeserialfn,
-									  Datum initValue, bool initValueIsNull,
-									  Oid *inputTypes, int numArguments);
+                                      AggState *aggstate, EState *estate,
+                                      Aggref *aggref, Oid aggtransfn, Oid aggtranstype,
+                                      Oid aggserialfn, Oid aggdeserialfn,
+                                      Datum initValue, bool initValueIsNull,
+                                      Oid *inputTypes, int numArguments);
 static int	find_compatible_peragg(Aggref *newagg, AggState *aggstate,
 								   int lastaggno, List **same_input_transnos);
 static int	find_compatible_pertrans(AggState *aggstate, Aggref *newagg,
@@ -342,7 +327,6 @@ static int	find_compatible_pertrans(AggState *aggstate, Aggref *newagg,
 									 Oid aggserialfn, Oid aggdeserialfn,
 									 Datum initValue, bool initValueIsNull,
 									 List *transnos);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 static void *
 cxt_alloc(void *manager, Size len)
@@ -1461,29 +1445,6 @@ find_unaggregated_cols_walker(Node *node, Bitmapset **colnos)
 }
 
 /*
-<<<<<<< HEAD
- * Create a list of the tuple columns that actually need to be stored in
- * hashtable entries.  The incoming tuples from the child plan node will
- * contain grouping columns, other columns referenced in our targetlist and
- * qual, columns used to compute the aggregate functions, and perhaps just
- * junk columns we don't use at all.  Only columns of the first two types
- * need to be stored in the hashtable, and getting rid of the others can
- * make the table entries significantly smaller.  To avoid messing up Var
- * numbering, we keep the same tuple descriptor for hashtable entries as the
- * incoming tuples have, but set unwanted columns to NULL in the tuples that
- * go into the table.
- *
- * To eliminate duplicates, we build a bitmapset of the needed columns, then
- * convert it to an integer list (cheaper to scan at runtime). The list is
- * in decreasing order so that the first entry is the largest;
- * lookup_hash_entry depends on this to use slot_getsomeattrs correctly.
- *
- * Note: at present, searching the tlist/qual is not really necessary since
- * the parser should disallow any unaggregated references to ungrouped
- * columns.  However, the search will be needed when we add support for
- * SQL99 semantics that allow use of "functionally dependent" columns that
- * haven't been explicitly grouped by.
-=======
  * (Re-)initialize the hash table(s) to empty.
  *
  * To implement hashed aggregation, we need a hashtable that stores a
@@ -1559,7 +1520,6 @@ build_hash_table(AggState *aggstate)
  *
  * Note that the array is preserved over ExecReScanAgg, so we allocate it in
  * the per-query context (unlike the hash table itself).
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 static void
 find_hash_columns(AggState *aggstate)
@@ -1695,8 +1655,6 @@ hash_agg_entry_size(int numAggs)
 }
 
 /*
-<<<<<<< HEAD
-=======
  * Find or create a hashtable entry for the tuple group containing the current
  * tuple (already set in tmpcontext's outertuple slot), in the current grouping
  * set (which the caller must have selected - note that initialize_aggregate
@@ -1777,7 +1735,6 @@ lookup_hash_entries(AggState *aggstate)
 }
 
 /*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * ExecAgg -
  *
  *	  ExecAgg receives tuples from its outer subplan and aggregates over
@@ -2191,7 +2148,6 @@ agg_fill_hash_table(AggState *aggstate)
 
 	if (streaming)
 	{
-<<<<<<< HEAD
 		if (tupremain)
 			aggstate->hashaggstatus = HASHAGG_STREAMING;
 		else
@@ -2199,33 +2155,6 @@ agg_fill_hash_table(AggState *aggstate)
 	}
 	else
 		aggstate->hashaggstatus = HASHAGG_BETWEEN_PASSES;
-=======
-		outerslot = fetch_input_tuple(aggstate);
-		if (TupIsNull(outerslot))
-			break;
-
-		/* set up for lookup_hash_entries and advance_aggregates */
-		tmpcontext->ecxt_outertuple = outerslot;
-
-		/* Find or build hashtable entries */
-		lookup_hash_entries(aggstate);
-
-		/* Advance the aggregates (or combine functions) */
-		advance_aggregates(aggstate);
-
-		/*
-		 * Reset per-input-tuple context after each tuple, but note that the
-		 * hash lookups do this too
-		 */
-		ResetExprContext(aggstate->tmpcontext);
-	}
-
-	aggstate->table_filled = true;
-	/* Initialize to walk the first hash table */
-	select_current_set(aggstate, 0, true);
-	ResetTupleHashIterator(aggstate->perhash[0].hashtable,
-						   &aggstate->perhash[0].hashiter);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -2305,10 +2234,7 @@ agg_retrieve_hash_table_internal(AggState *aggstate)
 	ExprContext *econtext;
 	AggStatePerAgg peragg;
 	AggStatePerGroup pergroup;
-<<<<<<< HEAD
-=======
 	TupleHashEntryData *entry;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	TupleTableSlot *firstSlot;
 	TupleTableSlot *result;
 	AggStatePerHash perhash;
@@ -2337,15 +2263,6 @@ agg_retrieve_hash_table_internal(AggState *aggstate)
 	 */
 	while (!aggstate->agg_done)
 	{
-<<<<<<< HEAD
-		HashAggEntry *entry = agg_hash_iter(aggstate);
-
-		if (entry == NULL)
-		{
-			aggstate->agg_done = TRUE;
-
-			return NULL;
-=======
 		TupleTableSlot *hashslot = perhash->hashslot;
 		int			i;
 
@@ -2379,7 +2296,6 @@ agg_retrieve_hash_table_internal(AggState *aggstate)
 				aggstate->agg_done = true;
 				return NULL;
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		/*
@@ -2395,18 +2311,12 @@ agg_retrieve_hash_table_internal(AggState *aggstate)
 		 * Transform representative tuple back into one with the right
 		 * columns.
 		 */
-<<<<<<< HEAD
-		ExecStoreMinimalTuple((MemTuple)entry->tuple_and_aggs, firstSlot, false);
-		pergroup = (AggStatePerGroup)((char *)entry->tuple_and_aggs +
-					      MAXALIGN(memtuple_get_size((MemTuple)entry->tuple_and_aggs)));
-=======
 		ExecStoreMinimalTuple(entry->firstTuple, hashslot, false);
 		slot_getallattrs(hashslot);
 
 		ExecClearTuple(firstSlot);
 		memset(firstSlot->tts_isnull, true,
 			   firstSlot->tts_tupleDescriptor->natts * sizeof(bool));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		for (i = 0; i < perhash->numhashGrpCols; i++)
 		{
@@ -2575,50 +2485,10 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &aggstate->ss.ps);
 
 	/*
-<<<<<<< HEAD
-	 * tuple table initialization
-	 */
-	aggstate->ss.ss_ScanTupleSlot = ExecInitExtraTupleSlot(estate);
-	ExecInitResultTupleSlot(estate, &aggstate->ss.ps);
-	aggstate->hashslot = ExecInitExtraTupleSlot(estate);
-	aggstate->sort_slot = ExecInitExtraTupleSlot(estate);
-
-	/*
-	 * initialize child expressions
-	 *
-	 * Note: ExecInitExpr finds Aggrefs for us, and also checks that no aggs
-	 * contain other agg calls in their arguments.  This would make no sense
-	 * under SQL semantics anyway (and it's forbidden by the spec). Because
-	 * that is true, we don't need to worry about evaluating the aggs in any
-	 * particular order.
-	 */
-	aggstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->plan.targetlist,
-					 (PlanState *) aggstate);
-	aggstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->plan.qual,
-					 (PlanState *) aggstate);
-
-	/*
-	 * CDB: Offer extra info for EXPLAIN ANALYZE.
-	 */
-	if (estate->es_instrument && (estate->es_instrument & INSTRUMENT_CDB))
-	{
-		/* Allocate string buffer. */
-		aggstate->ss.ps.cdbexplainbuf = makeStringInfo();
-
-		/* Request a callback at end of query. */
-		aggstate->ss.ps.cdbexplainfun = ExecAggExplainEnd;
-	}
-
-	/*
-	 * initialize child nodes
-=======
 	 * Initialize child nodes.
 	 *
 	 * If we are doing a hashed aggregation then the child plan does not need
 	 * to handle REWIND efficiently; see ExecReScanAgg.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	 */
 	outerPlan = outerPlan(node);
 	outerPlanState(aggstate) = ExecInitNode(outerPlan, estate, eflags);
@@ -2638,6 +2508,19 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 */
 	ExecInitResultTupleSlotTL(&aggstate->ss.ps, &TTSOpsVirtual);
 	ExecAssignProjectionInfo(&aggstate->ss.ps, NULL);
+
+    /*
+    /*
+     * CDB: Offer extra info for EXPLAIN ANALYZE.
+     */
+    if (estate->es_instrument && (estate->es_instrument & INSTRUMENT_CDB))
+    {
+        /* Allocate string buffer. */
+        aggstate->ss.ps.cdbexplainbuf = makeStringInfo();
+
+        /* Request a callback at end of query. */
+        aggstate->ss.ps.cdbexplainfun = ExecAggExplainEnd;
+    }
 
 	/*
 	 * initialize child expressions
@@ -2698,38 +2581,10 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		if (aggnode->aggstrategy == AGG_HASHED
 			|| aggnode->aggstrategy == AGG_MIXED)
 		{
-<<<<<<< HEAD
-			phasedata->gset_lengths = palloc(num_sets * sizeof(int));
-			phasedata->grouped_cols = palloc(num_sets * sizeof(Bitmapset *));
-			phasedata->gset_id 	= palloc(num_sets * sizeof(int));
-
-			i = 0;
-			foreach(l, aggnode->groupingSets)
-			{
-				int			current_length = list_length(lfirst(l));
-				Bitmapset  *cols = NULL;
-
-				/* planner forces this to be correct */
-				for (j = 0; j < current_length; ++j)
-					cols = bms_add_member(cols, aggnode->grpColIdx[j]);
-
-				phasedata->grouped_cols[i] = cols;
-				phasedata->gset_lengths[i] = current_length;
-				phasedata->gset_id[i] = aggstate->numgsets++;
-				++i;
-			}
-
-			all_grouped_cols = bms_add_members(all_grouped_cols,
-											   phasedata->grouped_cols[0]);
-		}
-		else
-		{
-=======
 			AggStatePerPhase phasedata = &aggstate->phases[0];
 			AggStatePerHash perhash;
 			Bitmapset  *cols = NULL;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			Assert(phase == 0);
 			i = phasedata->numsets++;
 			perhash = &aggstate->perhash[i];
@@ -2840,21 +2695,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			phasedata->aggstrategy = aggnode->aggstrategy;
 			phasedata->sortnode = sortnode;
 		}
-<<<<<<< HEAD
-
-		phasedata->aggnode = aggnode;
-		phasedata->sortnode = sortnode;
-
-		/* Compute group_ids */
-		phasedata->group_id = palloc0(numGroupingSets * sizeof(int));
-
-		for (int setno = 1; setno < num_sets; setno++)
-		{
-			if (bms_equal(phasedata->grouped_cols[setno], phasedata->grouped_cols[setno - 1]))
-				phasedata->group_id[setno] = phasedata->group_id[setno - 1] + 1;
-		}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*
@@ -3271,72 +3111,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	aggstate->numaggs = aggno + 1;
 	aggstate->numtrans = transno + 1;
 
-<<<<<<< HEAD
-	/* MPP */
-	aggstate->hhashtable = NULL;
-
-	/* Set the default memory manager */
-	aggstate->mem_manager.alloc = cxt_alloc;
-	aggstate->mem_manager.free = cxt_free;
-	aggstate->mem_manager.manager = aggstate;
-	aggstate->mem_manager.realloc_ratio = 1;
-
-	aggstate->AggExprId_AttrNum = node->agg_expr_id;
-
-	/* > 0: there is a TupleSplit node under agg */
-	if (aggstate->AggExprId_AttrNum > 0)
-	{
-		List *allTupleSplit = extract_nodes_plan((Plan*) node, T_TupleSplit, false);
-		Assert(list_length(allTupleSplit) == 1);
-
-		/* fetch TupleSplit provided bitmap sets for each trans function */
-		TupleSplit *tupleSplit = linitial(allTupleSplit);
-		Bitmapset **dqa_args_attr_num = palloc0(sizeof(Bitmapset *) * tupleSplit->numDisDQAs);
-
-		/* create bitmap set for each dqa's aggs */
-		for (i = 0; i < tupleSplit->numDisDQAs; i++)
-		{
-			Bitmapset *bms = tupleSplit->dqa_args_id_bms[i];
-
-			j = -1;
-			while ((j = bms_next_member(bms, j)) >= 0)
-			{
-				TargetEntry *te = get_sortgroupref_tle((Index)j, tupleSplit->plan.targetlist);
-				dqa_args_attr_num[i] = bms_add_member(dqa_args_attr_num[i], te->resno);
-			}
-		}
-
-		for (i = 0; i < aggstate->numtrans; i++)
-		{
-			AggStatePerTrans pertrans = &aggstate->pertrans[i];
-			Bitmapset *args_attr_num = NULL;
-
-			foreach(l, pertrans->args)
-			{
-				GenericExprState *gExpr = (GenericExprState *)lfirst(l);
-
-				/* All exprs should be calculated before TupleSplit */
-				Assert(IsA(gExpr->arg->expr,Var));
-
-				Var *var = (Var *)gExpr->arg->expr;
-
-				args_attr_num =
-					bms_add_member(args_attr_num, var->varattno);
-			}
-
-			for (j = 0; j < tupleSplit->numDisDQAs; j++)
-			{
-				/* set trans agg_expr_id if trans args bitmapset matched */
-				if (bms_equal(args_attr_num, dqa_args_attr_num[j]))
-				{
-					pertrans->agg_expr_id = j;
-					break;
-				}
-			}
-
-			bms_free(args_attr_num);
-		}
-=======
 	/*
 	 * Last, check whether any more aggregates got added onto the node while
 	 * we processed the expressions for the aggregate arguments (including not
@@ -3403,7 +3177,70 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		phase->evaltrans = ExecBuildAggTrans(aggstate, phase, dosort, dohash);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+        /* MPP */
+        aggstate->hhashtable = NULL;
+
+        /* Set the default memory manager */
+        aggstate->mem_manager.alloc = cxt_alloc;
+        aggstate->mem_manager.free = cxt_free;
+        aggstate->mem_manager.manager = aggstate;
+        aggstate->mem_manager.realloc_ratio = 1;
+
+        aggstate->AggExprId_AttrNum = node->agg_expr_id;
+
+        /* > 0: there is a TupleSplit node under agg */
+        if (aggstate->AggExprId_AttrNum > 0)
+        {
+            List *allTupleSplit = extract_nodes_plan((Plan*) node, T_TupleSplit, false);
+            Assert(list_length(allTupleSplit) == 1);
+
+            /* fetch TupleSplit provided bitmap sets for each trans function */
+            TupleSplit *tupleSplit = linitial(allTupleSplit);
+            Bitmapset **dqa_args_attr_num = palloc0(sizeof(Bitmapset *) * tupleSplit->numDisDQAs);
+
+            /* create bitmap set for each dqa's aggs */
+            for (i = 0; i < tupleSplit->numDisDQAs; i++)
+            {
+                Bitmapset *bms = tupleSplit->dqa_args_id_bms[i];
+
+                j = -1;
+                while ((j = bms_next_member(bms, j)) >= 0)
+                {
+                    TargetEntry *te = get_sortgroupref_tle((Index)j, tupleSplit->plan.targetlist);
+                    dqa_args_attr_num[i] = bms_add_member(dqa_args_attr_num[i], te->resno);
+                }
+            }
+
+            for (i = 0; i < aggstate->numtrans; i++)
+            {
+                AggStatePerTrans pertrans = &aggstate->pertrans[i];
+                Bitmapset *args_attr_num = NULL;
+
+                foreach(l, pertrans->aggref->args)
+                {
+                    GenericExprState *gExpr = (GenericExprState *)lfirst(l);
+
+                    /* All exprs should be calculated before TupleSplit */
+                    Assert(IsA(gExpr->arg->expr,Var));
+
+                    Var *var = (Var *)gExpr->arg->expr;
+
+                    args_attr_num =
+                            bms_add_member(args_attr_num, var->varattno);
+                }
+
+                for (j = 0; j < tupleSplit->numDisDQAs; j++)
+                {
+                    /* set trans agg_expr_id if trans args bitmapset matched */
+                    if (bms_equal(args_attr_num, dqa_args_attr_num[j]))
+                    {
+                        pertrans->agg_expr_id = j;
+                        break;
+                    }
+                }
+
+                bms_free(args_attr_num);
+            }
 	}
 
 	return aggstate;
@@ -3492,17 +3329,11 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 		fmgr_info(aggcombinefn, &pertrans->combinefn);
 		fmgr_info_set_expr((Node *) combinefnexpr, &pertrans->combinefn);
 
-<<<<<<< HEAD
-		InitFunctionCallInfoData(pertrans->combinefn_fcinfo,
-								 &pertrans->combinefn,
-								 2,
-=======
 		pertrans->transfn_fcinfo =
 			(FunctionCallInfo) palloc(SizeForFunctionCallInfo(2));
 		InitFunctionCallInfoData(*pertrans->transfn_fcinfo,
 								 &pertrans->transfn,
 								 numTransArgs,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 								 pertrans->aggCollation,
 								 (void *) aggstate, NULL);
 
@@ -3866,7 +3697,6 @@ find_compatible_pertrans(AggState *aggstate, Aggref *newagg, bool shareable,
 {
 	ListCell   *lc;
 
-<<<<<<< HEAD
 	/*
 	 * For the moment, never try to share transition states between different
 	 * ordered-set aggregates.  This is necessary because the finalfns of the
@@ -3875,10 +3705,9 @@ find_compatible_pertrans(AggState *aggstate, Aggref *newagg, bool shareable,
 	 * losing performance in the normal non-shared case will take some work.
 	 */
 	if (AGGKIND_IS_ORDERED_SET(newagg->aggkind))
-=======
+        return -1;
 	/* If this aggregate can't share transition states, give up */
 	if (!shareable)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return -1;
 
 	foreach(lc, transnos)
