@@ -28,24 +28,8 @@
 #include "utils/builtins.h"
 
 
-<<<<<<< HEAD
-Datum		binary_upgrade_set_next_pg_type_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_array_pg_type_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_toast_pg_type_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_heap_pg_class_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_index_pg_class_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_toast_pg_class_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_pg_enum_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_pg_authid_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_record_init_privs(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_pg_namespace_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_preassigned_oids(PG_FUNCTION_ARGS);
-
 #define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #define CHECK_IS_BINARY_UPGRADE									\
 do {															\
 	if (!IsBinaryUpgrade)										\
@@ -251,7 +235,6 @@ binary_upgrade_set_record_init_privs(PG_FUNCTION_ARGS)
 }
 
 Datum
-<<<<<<< HEAD
 binary_upgrade_set_next_pg_namespace_oid(PG_FUNCTION_ARGS)
 {
 	Oid			nspid = PG_GETARG_OID(0);
@@ -287,7 +270,9 @@ binary_upgrade_set_preassigned_oids(PG_FUNCTION_ARGS)
 
 		MarkOidPreassignedFromBinaryUpgrade(oid);
 	}
-=======
+}
+
+Datum
 binary_upgrade_set_missing_value(PG_FUNCTION_ARGS)
 {
 	Oid			table_id = PG_GETARG_OID(0);
@@ -298,7 +283,6 @@ binary_upgrade_set_missing_value(PG_FUNCTION_ARGS)
 
 	CHECK_IS_BINARY_UPGRADE;
 	SetAttrMissing(table_id, cattname, cvalue);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	PG_RETURN_VOID();
 }
