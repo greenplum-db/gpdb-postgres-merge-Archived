@@ -74,6 +74,8 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 
+#include "catalog/catalog.h"
+
 
 /* Ideally this would be in a .h file, but it hardly seems worth the trouble */
 extern const char *select_default_timezone(const char *share_path);
@@ -185,7 +187,7 @@ static char *pgdata_native;
 /* defaults */
 static int	n_connections = 0;
 static int	n_buffers = 0;
-static char *dynamic_shared_memory_type = NULL;
+static const char *dynamic_shared_memory_type = NULL;
 static const char *default_timezone = NULL;
 
 /*
@@ -262,19 +264,18 @@ static int	get_encoding_id(const char *encoding_name);
 static void set_input(char **dest, const char *filename);
 static void check_input(char *path);
 static void write_version_file(const char *extrapath);
-static void set_null_conf(void);
+static void set_null_conf(const char *);
 static void test_config_settings(void);
 static void setup_config(void);
 static void bootstrap_template1(void);
 static void setup_auth(FILE *cmdfd);
-static void get_su_pwd(void);
+static void get_su_pwd();
 static void setup_depend(FILE *cmdfd);
 static void setup_sysviews(FILE *cmdfd);
 static void setup_description(FILE *cmdfd);
 #if 0
 static void setup_collation(FILE *cmdfd);
 #endif
-static void setup_conversion(FILE *cmdfd);
 static void setup_dictionary(FILE *cmdfd);
 static void setup_privileges(FILE *cmdfd);
 static void set_info_version(void);
@@ -365,7 +366,6 @@ escape_quotes(const char *src)
 }
 
 /*
-<<<<<<< HEAD
  * add_assignment
  *
  * Returns a copy of the array of lines, with an additional line inserted:
@@ -456,7 +456,8 @@ add_assignment(char **lines, const char *varname, const char *fmt, ...)
 
     return result;
 }                               /* add_assignment */
-=======
+
+/*
  * Escape a field value to be inserted into the BKI data.
  * Here, we first run the value through escape_quotes (which
  * will be inverted by the backend's scanstr() function) and
@@ -501,7 +502,6 @@ escape_quotes_bki(const char *src)
 	free(data);
 	return result;
 }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * make a copy of the array of lines, with token replaced by replacement
@@ -682,180 +682,6 @@ writefile(char *path, char **lines)
 }
 
 /*
-<<<<<<< HEAD
- * walkdir: recursively walk a directory, applying the action to each
- * regular file and directory (including the named directory itself).
- *
- * If process_symlinks is true, the action and recursion are also applied
- * to regular files and directories that are pointed to by symlinks in the
- * given directory; otherwise symlinks are ignored.  Symlinks are always
- * ignored in subdirectories, ie we intentionally don't pass down the
- * process_symlinks flag to recursive calls.
- *
- * Errors are reported but not considered fatal.
- *
- * See also walkdir in fd.c, which is a backend version of this logic.
- */
-static void
-walkdir(const char *path,
-		void (*action) (const char *fname, bool isdir),
-		bool process_symlinks)
-{
-	DIR		   *dir;
-	struct dirent *de;
-
-	dir = opendir(path);
-	if (dir == NULL)
-	{
-		fprintf(stderr, _("%s: could not open directory \"%s\": %s\n"),
-				progname, path, strerror(errno));
-		return;
-	}
-
-	while (errno = 0, (de = readdir(dir)) != NULL)
-	{
-		char		subpath[MAXPGPATH * 2];
-		struct stat fst;
-		int			sret;
-
-		if (strcmp(de->d_name, ".") == 0 ||
-			strcmp(de->d_name, "..") == 0)
-			continue;
-
-		snprintf(subpath, sizeof(subpath), "%s/%s", path, de->d_name);
-
-		if (process_symlinks)
-			sret = stat(subpath, &fst);
-		else
-			sret = lstat(subpath, &fst);
-
-		if (sret < 0)
-		{
-			fprintf(stderr, _("%s: could not stat file \"%s\": %s\n"),
-					progname, subpath, strerror(errno));
-			continue;
-		}
-
-		if (S_ISREG(fst.st_mode))
-			(*action) (subpath, false);
-		else if (S_ISDIR(fst.st_mode))
-			walkdir(subpath, action, false);
-	}
-
-	if (errno)
-		fprintf(stderr, _("%s: could not read directory \"%s\": %s\n"),
-				progname, path, strerror(errno));
-
-	(void) closedir(dir);
-
-	/*
-	 * It's important to fsync the destination directory itself as individual
-	 * file fsyncs don't guarantee that the directory entry for the file is
-	 * synced.  Recent versions of ext4 have made the window much wider but
-	 * it's been an issue for ext3 and other filesystems in the past.
-	 */
-	(*action) (path, true);
-}
-
-/*
- * Hint to the OS that it should get ready to fsync() this file.
- *
- * Ignores errors trying to open unreadable files, and reports other errors
- * non-fatally.
- */
-#ifdef PG_FLUSH_DATA_WORKS
-
-static void
-pre_sync_fname(const char *fname, bool isdir)
-{
-	int			fd;
-
-	fd = open(fname, O_RDONLY | PG_BINARY);
-
-	if (fd < 0)
-	{
-		if (errno == EACCES || (isdir && errno == EISDIR))
-			return;
-		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
-				progname, fname, strerror(errno));
-		return;
-	}
-
-	/*
-	 * We do what pg_flush_data() would do in the backend: prefer to use
-	 * sync_file_range, but fall back to posix_fadvise.  We ignore errors
-	 * because this is only a hint.
-	 */
-#if defined(HAVE_SYNC_FILE_RANGE)
-	(void) sync_file_range(fd, 0, 0, SYNC_FILE_RANGE_WRITE);
-#elif defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
-	(void) posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED);
-#else
-#error PG_FLUSH_DATA_WORKS should not have been defined
-#endif
-
-	(void) close(fd);
-}
-
-#endif   /* PG_FLUSH_DATA_WORKS */
-
-/*
- * fsync_fname_ext -- Try to fsync a file or directory
- *
- * Ignores errors trying to open unreadable files, or trying to fsync
- * directories on systems where that isn't allowed/required.  Reports
- * other errors non-fatally.
- */
-static void
-fsync_fname_ext(const char *fname, bool isdir)
-{
-	int			fd;
-	int			flags;
-	int			returncode;
-
-	/*
-	 * Some OSs require directories to be opened read-only whereas other
-	 * systems don't allow us to fsync files opened read-only; so we need both
-	 * cases here.  Using O_RDWR will cause us to fail to fsync files that are
-	 * not writable by our userid, but we assume that's OK.
-	 */
-	flags = PG_BINARY;
-	if (!isdir)
-		flags |= O_RDWR;
-	else
-		flags |= O_RDONLY;
-
-	/*
-	 * Open the file, silently ignoring errors about unreadable files (or
-	 * unsupported operations, e.g. opening a directory under Windows), and
-	 * logging others.
-	 */
-	fd = open(fname, flags);
-	if (fd < 0)
-	{
-		if (errno == EACCES || (isdir && errno == EISDIR))
-			return;
-		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
-				progname, fname, strerror(errno));
-		return;
-	}
-
-	returncode = fsync(fd);
-
-	/*
-	 * Some OSes don't allow us to fsync directories at all, so we can ignore
-	 * those errors. Anything else needs to be reported.
-	 */
-	if (returncode != 0 && !(isdir && errno == EBADF))
-		fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
-				progname, fname, strerror(errno));
-
-	(void) close(fd);
-}
-
-/*
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Open a subcommand with suitable error messaging
  */
 static FILE *
@@ -1306,9 +1132,9 @@ test_config_settings(void)
 		}
 		if (n_connections > 0 || i == connslen - 1)
 		{
-			fprintf(stderr, _("%s: error %d from: %s\n"),
-					progname, status, cmd);
-			exit_nicely();
+			pg_log_error("%s: error %d from: %s\n",
+						 progname, status, cmd);
+			exit(1);
 		}
 	}
 	printf("%d\n", n_connections);
@@ -1345,9 +1171,9 @@ test_config_settings(void)
 	}
 	if (i == bufslen)
 	{
-		fprintf(stderr, _("%s: error %d from: %s\n"),
-				progname, status, cmd);
-		exit_nicely();
+		pg_log_error("%s: error %d from: %s",
+					 progname, status, cmd);
+		exit(1);
 	}
 
 	if ((n_buffers * (BLCKSZ / 1024)) % 1024 == 0)
@@ -1506,16 +1332,6 @@ setup_config(void)
 							  "#effective_io_concurrency = 0");
 #endif
 
-<<<<<<< HEAD
-	conflines = add_assignment(conflines, "include", "'%s'",
-							   GP_INTERNAL_AUTO_CONF_FILE_NAME);
-=======
-#ifdef WIN32
-	conflines = replace_token(conflines,
-							  "#update_process_title = on",
-							  "#update_process_title = off");
-#endif
-
 	if (strcmp(authmethodlocal, "scram-sha-256") == 0 ||
 		strcmp(authmethodhost, "scram-sha-256") == 0)
 	{
@@ -1536,7 +1352,9 @@ setup_config(void)
 								  "#log_file_mode = 0600",
 								  "log_file_mode = 0640");
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	conflines = add_assignment(conflines, "include", "'%s'",
+							   GP_INTERNAL_AUTO_CONF_FILE_NAME);
 
 	snprintf(path, sizeof(path), "%s/postgresql.conf", pg_data);
 
@@ -2019,18 +1837,12 @@ setup_description(FILE *cmdfd)
 				"  SELECT p_oid, 'pg_proc'::regclass, 0, "
 				"    'implementation of ' || oprname || ' operator' "
 				"  FROM funcdescs "
-<<<<<<< HEAD
-				"  WHERE opdesc NOT LIKE 'deprecated%' AND "
-				"  NOT EXISTS (SELECT 1 FROM pg_description "
-		"    WHERE objoid = p_oid AND classoid = 'pg_proc'::regclass);\n\n");
-=======
 				"  WHERE NOT EXISTS (SELECT 1 FROM pg_description "
 				"   WHERE objoid = p_oid AND classoid = 'pg_proc'::regclass) "
 				"  AND NOT EXISTS (SELECT 1 FROM pg_description "
 				"   WHERE objoid = o_oid AND classoid = 'pg_operator'::regclass"
 				"         AND description LIKE 'deprecated%');\n\n");
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Even though the tables are temp, drop them explicitly so they don't get
 	 * copied into template0/postgres databases.
@@ -2039,10 +1851,7 @@ setup_description(FILE *cmdfd)
 	PG_CMD_PUTS("DROP TABLE tmp_pg_shdescription;\n\n");
 }
 
-<<<<<<< HEAD
 #if 0
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * populate pg_collation
  *
@@ -2059,45 +1868,14 @@ setup_collation(FILE *cmdfd)
 	 * in pg_collation.h.  But add it before reading system collations, so
 	 * that it wins if libc defines a locale named ucs_basic.
 	 */
-<<<<<<< HEAD
-	PG_CMD_PUTS("DROP TABLE tmp_pg_collation;\n\n");
-
-	pclose(locale_a_handle);
-
-	if (count == 0 && !debug)
-	{
-		printf(_("No usable system locales were found.\n"));
-		printf(_("Use the option \"--debug\" to see details.\n"));
-	}
-#endif   /* not HAVE_LOCALE_T  && not WIN32 */
-}
-#endif
-
-/*
- * load conversion functions
- */
-static void
-setup_conversion(FILE *cmdfd)
-{
-	char	  **line;
-	char	  **conv_lines;
-
-	conv_lines = readfile(conversion_file);
-	for (line = conv_lines; *line != NULL; line++)
-	{
-		if (strstr(*line, "DROP CONVERSION") != *line)
-			PG_CMD_PUTS(*line);
-		free(*line);
-	}
-=======
 	PG_CMD_PRINTF3("INSERT INTO pg_collation (oid, collname, collnamespace, collowner, collprovider, collisdeterministic, collencoding, collcollate, collctype)"
 				   "VALUES (pg_nextoid('pg_catalog.pg_collation', 'oid', 'pg_catalog.pg_collation_oid_index'), 'ucs_basic', 'pg_catalog'::regnamespace, %u, '%c', true, %d, 'C', 'C');\n\n",
 				   BOOTSTRAP_SUPERUSERID, COLLPROVIDER_LIBC, PG_UTF8);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Now import all collations we can find in the operating system */
 	PG_CMD_PUTS("SELECT pg_import_system_collations('pg_catalog');\n\n");
 }
+#endif
 
 /*
  * load extra dictionaries (Snowball stemmers)
@@ -2375,10 +2153,8 @@ setup_cdb_schema(FILE *cmdfd)
 
 	if (!dir)
 	{
-		printf(_("could not open cdb_init.d directory: %s\n"),
-			   strerror(errno));
-		fflush(stdout);
-		exit_nicely();
+		pg_log_error("could not open cdb_init.d directory: %m");
+		exit(1);
 	}
 
 	/* Collect all files with .sql suffix in array. */
@@ -2410,10 +2186,8 @@ setup_cdb_schema(FILE *cmdfd)
 	if (errno != 0)
 	{
 		/* some kind of I/O error? */
-		printf(_("error while reading cdb_init.d directory: %s\n"),
-			   strerror(errno));
-		fflush(stdout);
-		exit_nicely();
+		pg_log_error("error while reading cdb_init.d directory: %m");
+		exit(1);
 	}
 
 	/*
@@ -2872,15 +2646,14 @@ parse_long(const char *value, bool blckszUnit, const char* optname)
     return val;
 
 err:
-    if (blckszUnit)
-        fprintf(stderr, _("%s: '%s=%s' invalid; requires an integer value, "
-                          "optionally followed by kB/MB/GB suffix\n"),
-                progname, optname, value);
-    else
-        fprintf(stderr, _("%s: '%s=%s' invalid; requires an integer value\n"),
-                progname, optname, value);
-    exit_nicely();
-    return 0;                   /* not reached */
+	if (blckszUnit)
+		pg_log_error("%s: '%s=%s' invalid; requires an integer value, "
+					 "optionally followed by kB/MB/GB suffix",
+					 progname, optname, value);
+	else
+		pg_log_error("%s: '%s=%s' invalid; requires an integer value",
+					 progname, optname, value);
+	exit(1);
 }                               /* parse_long */
 
 /*
@@ -2910,16 +2683,12 @@ usage(const char *progname)
 			 "                            default text search configuration\n"));
 	printf(_("  -U, --username=NAME       database superuser name\n"));
 	printf(_("  -W, --pwprompt            prompt for a password for the new superuser\n"));
-<<<<<<< HEAD
-	printf(_("  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"));
+	printf(_("  -X, --waldir=WALDIR       location for the write-ahead log directory\n"));
+	printf(_("      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"));
 	printf(_("\nShared memory allocation:\n"));
 	printf(_("  --max_connections=MAX-CONNECT  maximum number of allowed connections\n"));
 	printf(_("  --shared_buffers=NBUFFERS number of shared buffers; or, amount of memory for\n"
 			 "                            shared buffers if kB/MB/GB suffix is appended\n"));
-=======
-	printf(_("  -X, --waldir=WALDIR       location for the write-ahead log directory\n"));
-	printf(_("      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	printf(_("\nLess commonly used options:\n"));
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
 	printf(_("  -k, --data-checksums      use data page checksums\n"));
@@ -3407,12 +3176,7 @@ create_xlog_or_symlink(void)
 							_("If you want to store the WAL there, either remove or empty the directory\n"
 							  "\"%s\".\n"),
 							xlog_dir);
-<<<<<<< HEAD
-				exit_nicely();
-				break;
-=======
 				exit(1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			default:
 				/* Trouble accessing directory */
@@ -3519,7 +3283,6 @@ initialize_data_directory(void)
 	/* Now create all the text config files */
 	setup_config();
 
-<<<<<<< HEAD
 	if ( ! forMirrorOnly)
 	{
 		/* Bootstrap template1 */
@@ -3545,11 +3308,14 @@ initialize_data_directory(void)
 		PG_CMD_OPEN;
 	
 		setup_auth(cmdfd);
-		if (pwprompt || pwfilename)
-			get_set_pwd(cmdfd);
 	
 		setup_depend(cmdfd);
-	
+
+		/*
+		 * Note that no objects created after setup_depend() will be "pinned".
+		 * They are all droppable at the whim of the DBA.
+		 */
+
 		setup_sysviews(cmdfd);
 	
 		setup_description(cmdfd);
@@ -3557,8 +3323,6 @@ initialize_data_directory(void)
 #if 0
 		setup_collation(cmdfd);
 #endif
-
-		setup_conversion(cmdfd);
 	
 		setup_dictionary(cmdfd);
 
@@ -3581,62 +3345,6 @@ initialize_data_directory(void)
 	
 		check_ok();
 	}
-=======
-	/* Bootstrap template1 */
-	bootstrap_template1();
-
-	/*
-	 * Make the per-database PG_VERSION for template1 only after init'ing it
-	 */
-	write_version_file("base/1");
-
-	/*
-	 * Create the stuff we don't need to use bootstrap mode for, using a
-	 * backend running in simple standalone mode.
-	 */
-	fputs(_("performing post-bootstrap initialization ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
-
-	setup_auth(cmdfd);
-
-	setup_depend(cmdfd);
-
-	/*
-	 * Note that no objects created after setup_depend() will be "pinned".
-	 * They are all droppable at the whim of the DBA.
-	 */
-
-	setup_sysviews(cmdfd);
-
-	setup_description(cmdfd);
-
-	setup_collation(cmdfd);
-
-	setup_dictionary(cmdfd);
-
-	setup_privileges(cmdfd);
-
-	setup_schema(cmdfd);
-
-	load_plpgsql(cmdfd);
-
-	vacuum_db(cmdfd);
-
-	make_template0(cmdfd);
-
-	make_postgres(cmdfd);
-
-	PG_CMD_CLOSE;
-
-	check_ok();
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 
@@ -3844,6 +3552,7 @@ main(int argc, char *argv[])
 				break;
 			case 1005:
 				backend_output = pg_strdup(optarg);
+				break;
 			case 12:
 				str_wal_segment_size_mb = pg_strdup(optarg);
 				break;
