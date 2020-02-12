@@ -758,19 +758,13 @@ CREATE VIEW pg_stat_activity AS
             S.backend_xid,
             s.backend_xmin,
             S.query,
-<<<<<<< HEAD
+            S.backend_type,
 
             S.rsgid,
             S.rsgname
-    FROM pg_database D, pg_stat_get_activity(NULL) AS S, pg_authid U
-    WHERE S.datid = D.oid AND
-            S.usesysid = U.oid;
-=======
-            S.backend_type
     FROM pg_stat_get_activity(NULL) AS S
         LEFT JOIN pg_database AS D ON (S.datid = D.oid)
         LEFT JOIN pg_authid AS U ON (S.usesysid = U.oid);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 CREATE VIEW pg_stat_replication AS
     SELECT
