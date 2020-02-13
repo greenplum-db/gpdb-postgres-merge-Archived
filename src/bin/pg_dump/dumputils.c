@@ -195,11 +195,7 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 				if (privswgo->len > 0)
 				{
 					appendPQExpBuffer(firstsql,
-<<<<<<< HEAD
-							   "%sREVOKE GRANT OPTION FOR %s ON %s ",
-=======
 									  "%sREVOKE GRANT OPTION FOR %s ON %s ",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 									  prefix, privswgo->data, type);
 					if (nspname && *nspname)
 						appendPQExpBuffer(firstsql, "%s.", fmtId(nspname));
@@ -502,12 +498,7 @@ parseAclItem(const char *item, const char *type,
 		slpos = copyAclUserName(grantor, slpos);
 		if (*slpos != '\0')
 		{
-<<<<<<< HEAD
-			if (buf)
-				free(buf);
-=======
 			pg_free(buf);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			return false;
 		}
 	}

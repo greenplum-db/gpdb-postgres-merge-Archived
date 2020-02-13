@@ -72,15 +72,9 @@ static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 							   const int compression, bool dosync, ArchiveMode mode,
 							   SetupWorkerPtrType setupWorkerPtr);
 static void _getObjectDescription(PQExpBuffer buf, TocEntry *te,
-<<<<<<< HEAD
-					  ArchiveHandle *AH);
-static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData);
-static char *replace_line_endings(const char *str);
-=======
 								  ArchiveHandle *AH);
 static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData);
 static char *sanitize_line(const char *str, bool want_hyphen);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void _doSetFixedOutputState(ArchiveHandle *AH);
 static void _doSetSessionAuth(ArchiveHandle *AH, const char *user);
 static void _reconnectToDB(ArchiveHandle *AH, const char *dbname);
@@ -92,11 +86,7 @@ static void _selectTableAccessMethod(ArchiveHandle *AH, const char *tableam);
 static void processEncodingEntry(ArchiveHandle *AH, TocEntry *te);
 static void processStdStringsEntry(ArchiveHandle *AH, TocEntry *te);
 static void processSearchPathEntry(ArchiveHandle *AH, TocEntry *te);
-<<<<<<< HEAD
-static teReqs _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt);
-=======
 static teReqs _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static RestorePass _tocEntryRestorePass(TocEntry *te);
 static bool _tocEntryIsACL(TocEntry *te);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te);
@@ -112,24 +102,6 @@ static void SetOutput(ArchiveHandle *AH, const char *filename, int compression);
 static OutputContext SaveOutput(ArchiveHandle *AH);
 static void RestoreOutput(ArchiveHandle *AH, OutputContext savedContext);
 
-<<<<<<< HEAD
-static int restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel);
-static void restore_toc_entries_prefork(ArchiveHandle *AH, TocEntry *pending_list);
-static void restore_toc_entries_parallel(ArchiveHandle *AH, ParallelState *pstate,
-							 TocEntry *pending_list);
-static void restore_toc_entries_postfork(ArchiveHandle *AH, TocEntry *pending_list);
-static void par_list_header_init(TocEntry *l);
-static void par_list_append(TocEntry *l, TocEntry *te);
-static void par_list_remove(TocEntry *te);
-static void move_to_ready_list(TocEntry *pending_list, TocEntry *ready_list,
-				   RestorePass pass);
-static TocEntry *get_next_work_item(ArchiveHandle *AH,
-				   TocEntry *ready_list,
-				   ParallelState *pstate);
-static void mark_work_done(ArchiveHandle *AH, TocEntry *ready_list,
-			   int worker, int status,
-			   ParallelState *pstate);
-=======
 static int	restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel);
 static void restore_toc_entries_prefork(ArchiveHandle *AH,
 										TocEntry *pending_list);
@@ -161,7 +133,6 @@ static void mark_restore_job_done(ArchiveHandle *AH,
 								  TocEntry *te,
 								  int status,
 								  void *callback_data);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void fix_dependencies(ArchiveHandle *AH);
 static bool has_lock_conflicts(TocEntry *te1, TocEntry *te2);
 static void repoint_table_dependencies(ArchiveHandle *AH);
@@ -852,10 +823,6 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 			pg_log_info("creating %s \"%s\"",
 						te->desc, te->tag);
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		_printTocEntry(AH, te, false);
 		defnDumped = true;
 
@@ -987,13 +954,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 						ahprintf(AH, "TRUNCATE TABLE %s%s;\n\n",
 								 (PQserverVersion(AH->connection) >= 80400 ?
 								  "ONLY " : ""),
-<<<<<<< HEAD
-							  fmtQualifiedId(PQserverVersion(AH->connection),
-											 te->namespace,
-											 te->tag));
-=======
 								 fmtQualifiedId(te->namespace, te->tag));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					}
 
 					/*
@@ -1028,11 +989,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 		else if (!defnDumped)
 		{
 			/* If we haven't already dumped the defn part, do so now */
-<<<<<<< HEAD
-			ahlog(AH, 1, "executing %s %s\n", te->desc, te->tag);
-=======
 			pg_log_info("executing %s %s", te->desc, te->tag);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			_printTocEntry(AH, te, false);
 		}
 	}
@@ -1091,13 +1048,7 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te)
 	 * connection; and anyway we don't promise our output will load pre-7.3).
 	 */
 	ahprintf(AH, "ALTER TABLE %s DISABLE TRIGGER ALL;\n\n",
-<<<<<<< HEAD
-			 fmtQualifiedId(70300,
-							te->namespace,
-							te->tag));
-=======
 			 fmtQualifiedId(te->namespace, te->tag));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 static void
@@ -1123,13 +1074,7 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te)
 	 * Enable them.  As above, force schema qualification.
 	 */
 	ahprintf(AH, "ALTER TABLE %s ENABLE TRIGGER ALL;\n\n",
-<<<<<<< HEAD
-			 fmtQualifiedId(70300,
-							te->namespace,
-							te->tag));
-=======
 			 fmtQualifiedId(te->namespace, te->tag));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -1270,11 +1215,7 @@ PrintTOCSummary(Archive *AHX)
 
 	ahprintf(AH, ";\n; Archive created at %s\n", stamp_str);
 	ahprintf(AH, ";     dbname: %s\n;     TOC Entries: %d\n;     Compression: %d\n",
-<<<<<<< HEAD
-			 replace_line_endings(AH->archdbname),
-=======
 			 sanitize_line(AH->archdbname, false),
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			 AH->tocCount, AH->compression);
 
 	switch (AH->format)
@@ -1312,39 +1253,17 @@ PrintTOCSummary(Archive *AHX)
 		if (te->section != SECTION_NONE)
 			curSection = te->section;
 		if (ropt->verbose ||
-<<<<<<< HEAD
-			(_tocEntryRequired(te, curSection, ropt) & (REQ_SCHEMA | REQ_DATA)) != 0)
-=======
 			(_tocEntryRequired(te, curSection, AH) & (REQ_SCHEMA | REQ_DATA)) != 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			char	   *sanitized_name;
 			char	   *sanitized_schema;
 			char	   *sanitized_owner;
 
 			/*
-<<<<<<< HEAD
-			 * As in _printTocEntry(), sanitize strings that might contain
-			 * newlines, to ensure that each logical output line is in fact
-			 * one physical output line.  This prevents confusion when the
-			 * file is read by "pg_restore -L".  Note that we currently don't
-			 * bother to quote names, meaning that the name fields aren't
-			 * automatically parseable.  "pg_restore -L" doesn't care because
-			 * it only examines the dumpId field, but someday we might want to
-			 * try harder.
-			 */
-			sanitized_name = replace_line_endings(te->tag);
-			if (te->namespace)
-				sanitized_schema = replace_line_endings(te->namespace);
-			else
-				sanitized_schema = pg_strdup("-");
-			sanitized_owner = replace_line_endings(te->owner);
-=======
 			 */
 			sanitized_name = sanitize_line(te->tag, false);
 			sanitized_schema = sanitize_line(te->namespace, true);
 			sanitized_owner = sanitize_line(te->owner, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			ahprintf(AH, "%d; %u %u %s %s %s %s\n", te->dumpId,
 					 te->catalogId.tableoid, te->catalogId.oid,
@@ -3734,13 +3653,8 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te, ArchiveHandle *AH)
 		return;
 	}
 
-<<<<<<< HEAD
-	write_msg(modulename, "WARNING: don't know how to set owner for object type \"%s\"\n",
-			  type);
-=======
 	pg_log_warning("don't know how to set owner for object type \"%s\"",
 				   type);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -3976,13 +3890,8 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 		}
 		else
 		{
-<<<<<<< HEAD
-			write_msg(modulename, "WARNING: don't know how to set owner for object type \"%s\"\n",
-					  te->desc);
-=======
 			pg_log_warning("don't know how to set owner for object type \"%s\"",
 						   te->desc);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 
@@ -3999,11 +3908,6 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 }
 
 /*
-<<<<<<< HEAD
- * Sanitize a string to be included in an SQL comment or TOC listing,
- * by replacing any newlines with spaces.
- * The result is a freshly malloc'd string.
-=======
  * Sanitize a string to be included in an SQL comment or TOC listing, by
  * replacing any newlines with spaces.  This ensures each logical output line
  * is in fact one physical output line, to prevent corruption of the dump
@@ -4018,7 +3922,6 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
  * Note that we currently don't bother to quote names, meaning that the name
  * fields aren't automatically parseable.  "pg_restore -L" doesn't care because
  * it only examines the dumpId field, but someday we might want to try harder.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  */
 static char *
 sanitize_line(const char *str, bool want_hyphen)
@@ -4294,15 +4197,9 @@ restore_toc_entries_prefork(ArchiveHandle *AH, TocEntry *pending_list)
 		if (do_now)
 		{
 			/* OK, restore the item and update its dependencies */
-<<<<<<< HEAD
-			ahlog(AH, 1, "processing item %d %s %s\n",
-				  next_work_item->dumpId,
-				  next_work_item->desc, next_work_item->tag);
-=======
 			pg_log_info("processing item %d %s %s",
 						next_work_item->dumpId,
 						next_work_item->desc, next_work_item->tag);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			(void) restore_toc_entry(AH, next_work_item, false);
 
@@ -4312,11 +4209,7 @@ restore_toc_entries_prefork(ArchiveHandle *AH, TocEntry *pending_list)
 		else
 		{
 			/* Nope, so add it to pending_list */
-<<<<<<< HEAD
-			par_list_append(pending_list, next_work_item);
-=======
 			pending_list_append(pending_list, next_work_item);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 
@@ -4357,11 +4250,7 @@ static void
 restore_toc_entries_parallel(ArchiveHandle *AH, ParallelState *pstate,
 							 TocEntry *pending_list)
 {
-<<<<<<< HEAD
-	TocEntry	ready_list;
-=======
 	ParallelReadyList ready_list;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	TocEntry   *next_work_item;
 
 	pg_log_debug("entering restore_toc_entries_parallel");
@@ -4377,10 +4266,6 @@ restore_toc_entries_parallel(ArchiveHandle *AH, ParallelState *pstate,
 	 * contains items that have no remaining dependencies and are OK to
 	 * process in the current restore pass.
 	 */
-<<<<<<< HEAD
-	par_list_header_init(&ready_list);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	AH->restorePass = RESTORE_PASS_MAIN;
 	move_to_ready_list(pending_list, &ready_list, AH->restorePass);
 
@@ -4391,37 +4276,21 @@ restore_toc_entries_parallel(ArchiveHandle *AH, ParallelState *pstate,
 	 * left to be done.  Note invariant: at top of loop, there should always
 	 * be at least one worker available to dispatch a job to.
 	 */
-<<<<<<< HEAD
-	ahlog(AH, 1, "entering main parallel loop\n");
-=======
 	pg_log_info("entering main parallel loop");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	for (;;)
 	{
 		/* Look for an item ready to be dispatched to a worker */
-<<<<<<< HEAD
-		next_work_item = get_next_work_item(AH, &ready_list, pstate);
-=======
 		next_work_item = pop_next_work_item(AH, &ready_list, pstate);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (next_work_item != NULL)
 		{
 			/* If not to be restored, don't waste time launching a worker */
 			if ((next_work_item->reqs & (REQ_SCHEMA | REQ_DATA)) == 0)
 			{
-<<<<<<< HEAD
-				ahlog(AH, 1, "skipping item %d %s %s\n",
-					  next_work_item->dumpId,
-					  next_work_item->desc, next_work_item->tag);
-				/* Drop it from ready_list, and update its dependencies */
-				par_list_remove(next_work_item);
-=======
 				pg_log_info("skipping item %d %s %s",
 							next_work_item->dumpId,
 							next_work_item->desc, next_work_item->tag);
 				/* Update its dependencies as though we'd completed it */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				reduce_dependencies(AH, next_work_item, &ready_list);
 				/* Loop around to see if anything else can be dispatched */
 				continue;
@@ -4435,7 +4304,7 @@ restore_toc_entries_parallel(ArchiveHandle *AH, ParallelState *pstate,
 			/* Remove it from ready_list, and dispatch to some worker */
 			par_list_remove(next_work_item);
 =======
-			/* Dispatch to some worker */
+o			/* Dispatch to some worker */
 			DispatchJobForTocEntry(AH, pstate, next_work_item, ACT_RESTORE,
 								   mark_restore_job_done, &ready_list);
 		}
@@ -4544,17 +4413,11 @@ restore_toc_entries_parallel(ArchiveHandle *AH, ParallelState *pstate,
 	}
 
 	/* There should now be nothing in ready_list. */
-<<<<<<< HEAD
-	Assert(ready_list.par_next == &ready_list);
-
-	ahlog(AH, 1, "finished main parallel loop\n");
-=======
 	Assert(ready_list.first_te > ready_list.last_te);
 
 	ready_list_free(&ready_list);
 
 	pg_log_info("finished main parallel loop");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /*
@@ -4656,8 +4519,6 @@ pending_list_remove(TocEntry *te)
 
 
 /*
-<<<<<<< HEAD
-=======
  * Initialize the ready_list with enough room for up to tocCount entries.
  */
 static void
@@ -4752,7 +4613,6 @@ TocEntrySizeCompare(const void *p1, const void *p2)
 
 
 /*
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Move all immediately-ready items from pending_list to ready_list.
  *
  * Items are considered ready if they have no remaining dependencies and
@@ -4760,55 +4620,34 @@ TocEntrySizeCompare(const void *p1, const void *p2)
  * which applies the same logic one-at-a-time.)
  */
 static void
-<<<<<<< HEAD
-move_to_ready_list(TocEntry *pending_list, TocEntry *ready_list,
-=======
 move_to_ready_list(TocEntry *pending_list,
 				   ParallelReadyList *ready_list,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				   RestorePass pass)
 {
 	TocEntry   *te;
 	TocEntry   *next_te;
 
-<<<<<<< HEAD
-	for (te = pending_list->par_next; te != pending_list; te = next_te)
-	{
-		/* must save list link before possibly moving te to other list */
-		next_te = te->par_next;
-=======
 	for (te = pending_list->pending_next; te != pending_list; te = next_te)
 	{
 		/* must save list link before possibly removing te from list */
 		next_te = te->pending_next;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		if (te->depCount == 0 &&
 			_tocEntryRestorePass(te) == pass)
 		{
 			/* Remove it from pending_list ... */
-<<<<<<< HEAD
-			par_list_remove(te);
-			/* ... and add to ready_list */
-			par_list_append(ready_list, te);
-=======
 			pending_list_remove(te);
 			/* ... and add to ready_list */
 			ready_list_insert(ready_list, te);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 }
 
 /*
-<<<<<<< HEAD
- * Find the next work item (if any) that is capable of being run now.
-=======
  * Find the next work item (if any) that is capable of being run now,
  * and remove it from the ready_list.
  *
  * Returns the item, or NULL if nothing is runnable.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  *
  * To qualify, the item must have no remaining dependencies
  * and no requirements for locks that are incompatible with
@@ -5189,19 +5028,11 @@ reduce_dependencies(ArchiveHandle *AH, TocEntry *te,
 		 */
 		if (otherte->depCount == 0 &&
 			_tocEntryRestorePass(otherte) == AH->restorePass &&
-<<<<<<< HEAD
-			otherte->par_prev != NULL &&
-			ready_list != NULL)
-		{
-			/* Remove it from pending list ... */
-			par_list_remove(otherte);
-=======
 			otherte->pending_prev != NULL &&
 			ready_list != NULL)
 		{
 			/* Remove it from pending list ... */
 			pending_list_remove(otherte);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			/* ... and add to ready_list */
 			ready_list_insert(ready_list, otherte);
 		}
