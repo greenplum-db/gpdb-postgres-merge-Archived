@@ -402,7 +402,7 @@ void
 smgrdounlink(SMgrRelation reln, bool isRedo)
 {
 	RelFileNodeBackend rnode = reln->smgr_rnode;
-    int                which = reln->smgr_which;
+	int			which = reln->smgr_which;
 	ForkNumber	forknum;
 
 	/* Close the forks at smgr level */
@@ -417,8 +417,13 @@ smgrdounlink(SMgrRelation reln, bool isRedo)
 	 * expected to have buffers in shared memory ? Can check only for
 	 * RELSTORAGE_HEAP below.
 	 */
-	if (!rnode.is_ao_rel)
-		DropRelFileNodesAllBuffers(&rnode, 1);
+	/*
+	 * GPDB_12_MERGE_FIXME: Really we only need to DropRelFileNodesAllBuffers
+	 * when for a tableam that has relations in shared buffers. But for things
+	 * like AO, this doesn't seem to apply. Do we need a way to detect HEAP or
+	 * work this into the tableam interface?
+	 */
+	DropRelFileNodesAllBuffers(&rnode, 1);
 
 	/*
 	 * It'd be nice to tell the stats collector to forget it immediately, too.
@@ -467,7 +472,6 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	int			i = 0;
 	RelFileNodeBackend *rnodes;
 	ForkNumber	forknum;
-	bool		has_heaps = false;
 
 	if (nrels == 0)
 		return;
@@ -480,24 +484,20 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	for (i = 0; i < nrels; i++)
 	{
 		RelFileNodeBackend rnode = rels[i]->smgr_rnode;
-        int                which = rels[i]->smgr_which;
+		int			which = rels[i]->smgr_which;
 
 		rnodes[i] = rnode;
 
 		/* Close the forks at smgr level */
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-            smgrsw[which].smgr_close(rels[i], forknum);
-
-		if (!rnode.is_ao_rel)
-			has_heaps = true;
+			smgrsw[which].smgr_close(rels[i], forknum);
 	}
 
 	/*
 	 * Get rid of any remaining buffers for the relations.  bufmgr will just
 	 * drop them without bothering to write the contents.
 	 */
-	if (has_heaps)
-		DropRelFileNodesAllBuffers(rnodes, nrels);
+	DropRelFileNodesAllBuffers(rnodes, nrels);
 
 	/*
 	 * It'd be nice to tell the stats collector to forget them immediately,
@@ -710,7 +710,7 @@ smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 	/*
 	 * Do the truncation.
 	 */
-    smgrsw[reln->smgr_which].smgr_truncate(reln, forknum, nblocks);
+	smgrsw[reln->smgr_which].smgr_truncate(reln, forknum, nblocks);
 
 	if (file_truncate_hook)
 		(*file_truncate_hook)(reln->smgr_rnode);
@@ -742,7 +742,7 @@ smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 void
 smgrimmedsync(SMgrRelation reln, ForkNumber forknum)
 {
-    smgrsw[reln->smgr_which].smgr_immedsync(reln, forknum);
+	smgrsw[reln->smgr_which].smgr_immedsync(reln, forknum);
 }
 
 /*

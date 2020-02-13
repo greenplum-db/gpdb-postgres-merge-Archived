@@ -97,14 +97,13 @@ static MemoryContext MdCxt;		/* context for all MdfdVec objects */
 
 
 /* Populate a file tag describing an md.c segment file. */
-#define INIT_MD_FILETAG(a,xx_rnode,xx_forknum,xx_segno,xx_is_ao_segno) \
+#define INIT_MD_FILETAG(a,xx_rnode,xx_forknum,xx_segno) \
 ( \
 	memset(&(a), 0, sizeof(FileTag)), \
 	(a).handler = SYNC_HANDLER_MD, \
 	(a).rnode = (xx_rnode), \
 	(a).forknum = (xx_forknum), \
-	(a).segno = (xx_segno), \
-	(a).is_ao_segno = (xx_is_ao_segno) \
+	(a).segno = (xx_segno) \
 )
 
 
@@ -134,9 +133,9 @@ static MdfdVec *mdopen(SMgrRelation reln, ForkNumber forknum, int behavior);
 static void register_dirty_segment(SMgrRelation reln, ForkNumber forknum,
 								   MdfdVec *seg);
 static void register_unlink_segment(RelFileNodeBackend rnode, ForkNumber forknum,
-									BlockNumber segno, bool is_ao_segno);
+									BlockNumber segno);
 static void register_forget_request(RelFileNodeBackend rnode, ForkNumber forknum,
-									BlockNumber segno, bool is_ao_segno);
+									BlockNumber segno);
 static void _fdvec_resize(SMgrRelation reln,
 						  ForkNumber forknum,
 						  int nseg);
@@ -145,7 +144,7 @@ static char *_mdfd_segpath(SMgrRelation reln, ForkNumber forknum,
 static MdfdVec *_mdfd_openseg(SMgrRelation reln, ForkNumber forkno,
 							  BlockNumber segno, int oflags);
 static MdfdVec *_mdfd_getseg(SMgrRelation reln, ForkNumber forkno,
-							 BlockNumber blkno, bool skipFsync, bool is_appendoptimized, int behavior);
+							 BlockNumber blkno, bool skipFsync, int behavior);
 static BlockNumber _mdnblocks(SMgrRelation reln, ForkNumber forknum,
 							  MdfdVec *seg);
 
@@ -315,10 +314,6 @@ mdcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
 void
 mdunlink(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 {
-	/*
-	 * GPDB_12_MERGE_FIXME: Where does ForgetRelationFsyncRequests() from
-	 * commit 1223ffacbd7 need to be moved?
-	 */
 	/* Now do the per-fork work */
 	if (forkNum == InvalidForkNumber)
 	{
@@ -344,7 +339,7 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 	{
 		/* First, forget any pending sync requests for the first segment */
 		if (!RelFileNodeBackendIsTemp(rnode))
-			register_forget_request(rnode, forkNum, 0 /* first seg */, rnode.is_ao_rel);
+			register_forget_request(rnode, forkNum, 0 /* first seg */ );
 
 		/* Next unlink the file */
 		ret = unlink(path);
@@ -376,7 +371,7 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 					 errmsg("could not truncate file \"%s\": %m", path)));
 
 		/* Register request to unlink first segment later */
-		register_unlink_segment(rnode, forkNum, 0 /* first seg */, rnode.is_ao_rel);
+		register_unlink_segment(rnode, forkNum, 0 /* first seg */ );
 	}
 
 	/*
@@ -384,13 +379,6 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 	 */
 	if (ret >= 0)
 	{
-		if (rnode.is_ao_rel)
-		{
-			mdunlink_ao(path, forkNum);
-			pfree(path);
-			return;
-		}
-
 		char	   *segpath = (char *) palloc(strlen(path) + 12);
 		BlockNumber segno;
 
@@ -405,7 +393,7 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 			 * to unlink.
 			 */
 			if (!RelFileNodeBackendIsTemp(rnode))
-				register_forget_request(rnode, forkNum, segno, rnode.is_ao_rel);
+				register_forget_request(rnode, forkNum, segno);
 
 			sprintf(segpath, "%s.%u", path, segno);
 			if (unlink(segpath) < 0)
@@ -458,7 +446,7 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 						relpath(reln->smgr_rnode, forknum),
 						InvalidBlockNumber)));
 
-	v = _mdfd_getseg(reln, forknum, blocknum, skipFsync, false, EXTENSION_CREATE);
+	v = _mdfd_getseg(reln, forknum, blocknum, skipFsync, EXTENSION_CREATE);
 
 	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
@@ -578,7 +566,7 @@ mdprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
 	off_t		seekpos;
 	MdfdVec    *v;
 
-	v = _mdfd_getseg(reln, forknum, blocknum, false, false, EXTENSION_FAIL);
+	v = _mdfd_getseg(reln, forknum, blocknum, false, EXTENSION_FAIL);
 
 	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
@@ -610,7 +598,7 @@ mdwriteback(SMgrRelation reln, ForkNumber forknum,
 		int			segnum_start,
 					segnum_end;
 
-		v = _mdfd_getseg(reln, forknum, blocknum, true /* not used */ , false,
+		v = _mdfd_getseg(reln, forknum, blocknum, true /* not used */ ,
 						 EXTENSION_RETURN_NULL);
 
 		/*
@@ -657,7 +645,7 @@ mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 										reln->smgr_rnode.node.relNode,
 										reln->smgr_rnode.backend);
 
-	v = _mdfd_getseg(reln, forknum, blocknum, false, false,
+	v = _mdfd_getseg(reln, forknum, blocknum, false,
 					 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
 
 	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
@@ -727,7 +715,7 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 										 reln->smgr_rnode.node.relNode,
 										 reln->smgr_rnode.backend);
 
-	v = _mdfd_getseg(reln, forknum, blocknum, skipFsync, false,
+	v = _mdfd_getseg(reln, forknum, blocknum, skipFsync,
 					 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
 
 	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
@@ -966,7 +954,7 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 {
 	FileTag		tag;
 
-	INIT_MD_FILETAG(tag, reln->smgr_rnode.node, forknum, seg->mdfd_segno, false);
+	INIT_MD_FILETAG(tag, reln->smgr_rnode.node, forknum, seg->mdfd_segno);
 
 	/* Temp relations should never be fsync'd */
 	Assert(!SmgrIsTemp(reln));
@@ -997,7 +985,7 @@ register_dirty_segment_ao(RelFileNode rnode, int segno, File vfd)
 {
 	FileTag		tag;
 
-	INIT_MD_FILETAG(tag, rnode, MAIN_FORKNUM, segno, true);
+	INIT_MD_FILETAG(tag, rnode, MAIN_FORKNUM, segno);
 
 	if (!RegisterSyncRequest(&tag, SYNC_REQUEST, false /* retryOnError */ ))
 	{
@@ -1017,11 +1005,11 @@ register_dirty_segment_ao(RelFileNode rnode, int segno, File vfd)
  */
 static void
 register_unlink_segment(RelFileNodeBackend rnode, ForkNumber forknum,
-						BlockNumber segno, bool is_ao_segno)
+						BlockNumber segno)
 {
 	FileTag		tag;
 
-	INIT_MD_FILETAG(tag, rnode.node, forknum, segno, is_ao_segno);
+	INIT_MD_FILETAG(tag, rnode.node, forknum, segno);
 
 	/* Should never be used with temp relations */
 	Assert(!RelFileNodeBackendIsTemp(rnode));
@@ -1034,11 +1022,11 @@ register_unlink_segment(RelFileNodeBackend rnode, ForkNumber forknum,
  */
 static void
 register_forget_request(RelFileNodeBackend rnode, ForkNumber forknum,
-						BlockNumber segno, bool is_ao_segno)
+						BlockNumber segno)
 {
 	FileTag		tag;
 
-	INIT_MD_FILETAG(tag, rnode.node, forknum, segno, is_ao_segno);
+	INIT_MD_FILETAG(tag, rnode.node, forknum, segno);
 
 	RegisterSyncRequest(&tag, SYNC_FORGET_REQUEST, true /* retryOnError */ );
 }
@@ -1056,7 +1044,7 @@ ForgetDatabaseSyncRequests(Oid dbid)
 	rnode.spcNode = 0;
 	rnode.relNode = 0;
 
-	INIT_MD_FILETAG(tag, rnode, InvalidForkNumber, InvalidBlockNumber, false);
+	INIT_MD_FILETAG(tag, rnode, InvalidForkNumber, InvalidBlockNumber);
 
 	RegisterSyncRequest(&tag, SYNC_FILTER_REQUEST, true /* retryOnError */ );
 }
@@ -1086,7 +1074,6 @@ DropRelationFiles(RelFileNodePendingDelete *delrels, int ndelrels, bool isRedo)
 				XLogDropRelation(delrels[i].node, fork);
 		}
 		srels[i] = srel;
-		srels[i]->smgr_rnode.is_ao_rel = delrels[i].relstorage != 'h';
 	}
 
 	smgrdounlinkall(srels, ndelrels, isRedo);
@@ -1208,7 +1195,7 @@ _mdfd_openseg(SMgrRelation reln, ForkNumber forknum, BlockNumber segno,
  */
 static MdfdVec *
 _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
-			 bool skipFsync, bool is_ao_segno, int behavior)
+			 bool skipFsync, int behavior)
 {
 	MdfdVec    *v;
 	BlockNumber targetseg;
@@ -1243,12 +1230,7 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 			return NULL;		/* if behavior & EXTENSION_RETURN_NULL */
 	}
 
-	/*
-	 * Append-optimized segment files are not numbered consecutively on disk.
-	 * E.g. it is perfectly valid for .129 file to exist without .2 to .128
-	 * files.  Therefore, we need to run this loop exactly once for AO.
-	 */
-	for (nextsegno = is_ao_segno ? targetseg : reln->md_num_open_segs[forknum];
+	for (nextsegno = reln->md_num_open_segs[forknum];
 		 nextsegno <= targetseg; nextsegno++)
 	{
 		BlockNumber nblocks = _mdnblocks(reln, forknum, v);
@@ -1367,38 +1349,6 @@ mdsyncfiletag(const FileTag *ftag, char *path)
 	MdfdVec    *v;
 	char	   *p;
 
-#ifdef FAULT_INJECTOR
-if (SIMPLE_FAULT_INJECTOR("fsync_counter") == FaultInjectorTypeSkip ||
-	(ftag->is_ao_segno &&
-	 SIMPLE_FAULT_INJECTOR("ao_fsync_counter") == FaultInjectorTypeSkip))
-{
-	if (MyAuxProcType == CheckpointerProcess)
-	{
-		if (ftag->segno == 0)
-			elog(LOG, "checkpoint performing fsync for %d/%d/%d",
-				 ftag->rnode.spcNode, ftag->rnode.dbNode,
-				 ftag->rnode.relNode);
-		else
-			elog(LOG, "checkpoint performing fsync for %d/%d/%d.%d",
-				 ftag->rnode.spcNode, ftag->rnode.dbNode,
-				 ftag->rnode.relNode, ftag->segno);
-	}
-	else
-	{
-		if (ftag->segno == 0)
-			elog(ERROR, "non checkpoint process trying to fsync "
-				 "%d/%d/%d when fsync_counter fault is set",
-				 ftag->rnode.spcNode, ftag->rnode.dbNode,
-				 ftag->rnode.relNode);
-		else
-			elog(ERROR, "non checkpoint process trying to fsync "
-				 "%d/%d/%d.%d when fsync_counter fault is set",
-				 ftag->rnode.spcNode, ftag->rnode.dbNode,
-				 ftag->rnode.relNode, ftag->segno);
-	}
-		}
-#endif
-
 	/* Provide the path for informational messages. */
 	p = _mdfd_segpath(reln, ftag->forknum, ftag->segno);
 	strlcpy(path, p, MAXPGPATH);
@@ -1409,7 +1359,6 @@ if (SIMPLE_FAULT_INJECTOR("fsync_counter") == FaultInjectorTypeSkip ||
 					 ftag->forknum,
 					 ftag->segno * (BlockNumber) RELSEG_SIZE,
 					 false,
-					 ftag->is_ao_segno,
 					 EXTENSION_RETURN_NULL | EXTENSION_DONT_CHECK_SIZE);
 	if (v == NULL)
 		return -1;

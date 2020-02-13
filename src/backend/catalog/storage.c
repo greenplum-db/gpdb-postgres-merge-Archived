@@ -77,7 +77,7 @@ static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
  * transaction aborts later on, the storage will be destroyed.
  */
 SMgrRelation
-RelationCreateStorage(RelFileNode rnode, char relpersistence, char relstorage)
+RelationCreateStorage(RelFileNode rnode, char relpersistence)
 {
 	PendingRelDelete *pending;
 	SMgrRelation srel;
@@ -113,7 +113,6 @@ RelationCreateStorage(RelFileNode rnode, char relpersistence, char relstorage)
 	pending = (PendingRelDelete *)
 		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
 	pending->relnode.node = rnode;
-	pending->relnode.relstorage = relstorage;
 	pending->relnode.isTempRelation = backend == TempRelBackendId;
 	pending->atCommit = false;	/* delete if abort */
 	pending->nestLevel = GetCurrentTransactionNestLevel();
@@ -155,7 +154,6 @@ RelationDropStorage(Relation rel)
 	pending = (PendingRelDelete *)
 		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
 	pending->relnode.node = rel->rd_node;
-	pending->relnode.relstorage = rel->rd_rel->relstorage;
 	pending->relnode.isTempRelation = rel->rd_backend == TempRelBackendId;
 	pending->atCommit = true;	/* delete if commit */
 	pending->nestLevel = GetCurrentTransactionNestLevel();
@@ -449,7 +447,6 @@ smgrDoPendingDeletes(bool isCommit)
 					srels = repalloc(srels, sizeof(SMgrRelation) * maxrels);
 				}
 
-				srels[nrels].is_ao_rel = pending->relnode.relstorage != 'h';
 				srels[nrels++] = srel;
 			}
 			/* must explicitly free the list entry */

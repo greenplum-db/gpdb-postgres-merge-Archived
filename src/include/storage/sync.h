@@ -48,13 +48,24 @@ typedef struct FileTag
 	int16		forknum;		/* ForkNumber, saving space */
 	RelFileNode rnode;
 	uint32		segno;
-	/* GPDB_12_MERGE_FIXME: Should the "is this AO table?" flag be put here? */
 	/*
-	 * Is segno a real ao segno but not specially ones like
-	 * FORGET_RELATION_FSYNC. For example for a real relfile like
-	 * /base/16384/50237.129, it should be true and segno should be 129.
+	 * GPDB_12_MERGE_FIXME: Should the "is this AO table?" flag be put here?
+	 * Do we need to keep track of whether this file backs an AO table? GPDB 6
+	 * has logic in md/smgr layer to optimize operations on AO tables.
+	 *
+	 * For example:
+	 *   1. delaying fsync on AO tables
+	 *      (commit 6bd76f70450)
+	 *   2. skipping heap specific functions like ForgetRelationFsyncRequests()
+	 *      and DropRelFileNodeBuffers() when operating on AO tables
+	 *      (commit 85fee7365d2)
+	 *   3. efficient unlinking of AO tables
+	 *      (commit 8838ac983c6)
+	 *
+	 * Seems like these features should come through the tableam interface.
+	 * Let's try to do that and delete this diff from upstream.
 	 */
-	bool		is_ao_segno;
+	/*bool		is_ao_segno;*/
 } FileTag;
 
 extern void InitSync(void);

@@ -1095,9 +1095,6 @@ RequestCheckpoint(int flags)
  * is dirty and must be fsync'd before next checkpoint.  We also use this
  * opportunity to count such writes for statistical purposes.
  *
- * is_ao_segno means the segno is a real segno (i.e. not FORGET_RELATION_FSYNC,
- * etc) of ao relation.
- *
  * To avoid holding the lock for longer than necessary, we normally write
  * to the requests[] queue without checking for duplicates.  The checkpointer
  * will have to eliminate dups internally anyway.  However, if we discover
@@ -1116,20 +1113,6 @@ ForwardSyncRequest(const FileTag *ftag, SyncRequestType type)
 
 	if (!IsUnderPostmaster)
 		return false;			/* probably shouldn't even get here */
-
-	/*
-	 * Special values of segno are used to indicate that a fsync request
-	 * needs to be forgotten.  Fsync requests for append-optimized tables
-	 * carry no such special meaning.  The segno must identify a valid
-	 * append-optimized segment file on disk.
-	 */
-	AssertImply(ftag->is_ao_segno, segno <= MAX_AOREL_CONCURRENCY * MaxTupleAttributeNumber);
-
-	/*
-	 * Append-optimized tables do not use relation forks currently.
-	 * MAIN_FORKNUM is the only fork applicable.
-	 */
-	AssertImply(ftag->is_ao_segno, forknum == MAIN_FORKNUM);
 
 	if (AmCheckpointerProcess())
 		elog(ERROR, "ForwardSyncRequest must not be called in checkpointer");
@@ -1344,7 +1327,7 @@ AbsorbSyncRequests(void)
 	LWLockRelease(CheckpointerCommLock);
 
 	for (request = requests; n > 0; request++, n--)
-		RememberFsyncRequest(&request->ftag, request->type, request->is_ao_segno);
+		RememberSyncRequest(&request->ftag, request->type);
 
 	END_CRIT_SECTION();
 
