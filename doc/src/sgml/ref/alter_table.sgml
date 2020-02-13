@@ -1020,16 +1020,10 @@ Where column_reference_storage_directive is:
 
   <para>
    All the forms of ALTER TABLE that act on a single table, except
-<<<<<<< HEAD
-   <literal>RENAME</literal>, and <literal>SET SCHEMA</literal>
-   can be combined into a list of multiple alterations to applied together.
-   For example, it
-=======
    <literal>RENAME</literal>, <literal>SET SCHEMA</literal>,
    <literal>ATTACH PARTITION</literal>, and
    <literal>DETACH PARTITION</literal> can be combined into
    a list of multiple alterations to be applied together.  For example, it
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
    is possible to add several columns and/or alter the type of several
    columns in a single command.  This is particularly useful with large
    tables, since only one pass over the table need be made.

@@ -26,12 +26,9 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY alterOperatorClass SYSTEM "alter_opclass.sgml">
 <!ENTITY alterOperatorFamily SYSTEM "alter_opfamily.sgml">
 <!ENTITY alterPolicy        SYSTEM "alter_policy.sgml">
-<<<<<<< HEAD
-<!ENTITY alterResQueue      SYSTEM "alter_resource_queue.sgml">
-=======
 <!ENTITY alterProcedure     SYSTEM "alter_procedure.sgml">
 <!ENTITY alterPublication   SYSTEM "alter_publication.sgml">
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+<!ENTITY alterResQueue      SYSTEM "alter_resource_queue.sgml">
 <!ENTITY alterRole          SYSTEM "alter_role.sgml">
 <!ENTITY alterRoutine       SYSTEM "alter_routine.sgml">
 <!ENTITY alterRule          SYSTEM "alter_rule.sgml">
@@ -82,12 +79,9 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY createOperatorClass SYSTEM "create_opclass.sgml">
 <!ENTITY createOperatorFamily SYSTEM "create_opfamily.sgml">
 <!ENTITY createPolicy       SYSTEM "create_policy.sgml">
-<<<<<<< HEAD
-<!ENTITY createResQueue     SYSTEM "create_resource_queue.sgml">
-=======
 <!ENTITY createProcedure    SYSTEM "create_procedure.sgml">
 <!ENTITY createPublication  SYSTEM "create_publication.sgml">
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+<!ENTITY createResQueue     SYSTEM "create_resource_queue.sgml">
 <!ENTITY createRole         SYSTEM "create_role.sgml">
 <!ENTITY createRule         SYSTEM "create_rule.sgml">
 <!ENTITY createSchema       SYSTEM "create_schema.sgml">
@@ -134,12 +128,9 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY dropOperatorFamily  SYSTEM "drop_opfamily.sgml">
 <!ENTITY dropOwned          SYSTEM "drop_owned.sgml">
 <!ENTITY dropPolicy         SYSTEM "drop_policy.sgml">
-<<<<<<< HEAD
-<!ENTITY dropResQueue       SYSTEM "drop_resource_queue.sgml">
-=======
 <!ENTITY dropProcedure      SYSTEM "drop_procedure.sgml">
 <!ENTITY dropPublication    SYSTEM "drop_publication.sgml">
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+<!ENTITY dropResQueue       SYSTEM "drop_resource_queue.sgml">
 <!ENTITY dropRole           SYSTEM "drop_role.sgml">
 <!ENTITY dropRoutine        SYSTEM "drop_routine.sgml">
 <!ENTITY dropRule           SYSTEM "drop_rule.sgml">

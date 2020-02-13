@@ -52,11 +52,7 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
    parameter data types can optionally be specified. When a
    parameter's data type is not specified or is declared as
    <literal>unknown</literal>, the type is inferred from the context
-<<<<<<< HEAD
-   in which the parameter is first used (if possible). When executing the
-=======
    in which the parameter is first referenced (if possible). When executing the
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
    statement, specify the actual values for these parameters in the
    <command>EXECUTE</command> statement.  Refer to <xref
    linkend="sql-execute"/> for more
@@ -108,11 +104,7 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
       The data type of a parameter to the prepared statement.  If the
       data type of a particular parameter is unspecified or is
       specified as <literal>unknown</literal>, it will be inferred
-<<<<<<< HEAD
-      from the context in which the parameter is first used. To refer to the
-=======
       from the context in which the parameter is first referenced. To refer to the
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
       parameters in the prepared statement itself, use
       <literal>$1</literal>, <literal>$2</literal>, etc.
      </para>
