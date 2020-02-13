@@ -75,19 +75,11 @@ typedef enum
 
 #define DEFAULT_WAIT	60
 
-<<<<<<< HEAD
-static bool do_wait = false;
-static bool wait_set = false;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #define USEC_PER_SEC	1000000
 
 #define WAITS_PER_SEC	10		/* should divide USEC_PER_SEC evenly */
 
-<<<<<<< HEAD
-=======
-static bool do_wait = true;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+static bool do_wait = false;
 static int	wait_seconds = DEFAULT_WAIT;
 static bool wait_seconds_arg = false;
 static bool silent_mode = false;
@@ -102,13 +94,9 @@ static const char *progname;
 static char *log_file = NULL;
 static char *exec_path = NULL;
 static char *event_source = NULL;
-<<<<<<< HEAD
 static char *wrapper = NULL;
 static char *wrapper_args = NULL;
 static char *register_servicename = "PostgreSQL";		/* FIXME: + version ID? */
-=======
-static char *register_servicename = "PostgreSQL";	/* FIXME: + version ID? */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static char *register_username = NULL;
 static char *register_password = NULL;
 static char *argv0 = NULL;
@@ -170,14 +158,11 @@ static void WINAPI pgwin32_ServiceHandler(DWORD);
 static void WINAPI pgwin32_ServiceMain(DWORD, LPTSTR *);
 static void pgwin32_doRunAsService(void);
 static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_service);
-<<<<<<< HEAD
+static PTOKEN_PRIVILEGES GetPrivilegesToDelete(HANDLE hToken);
 static bool pgwin32_get_dynamic_tokeninfo(HANDLE token,
 							  TOKEN_INFORMATION_CLASS class,
 							  char **InfoBuffer, char *errbuf, int errsize);
 static int pgwin32_is_service(void);
-=======
-static PTOKEN_PRIVILEGES GetPrivilegesToDelete(HANDLE hToken);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #endif
 
 static pgpid_t get_pgpid(bool is_status_request);
@@ -592,17 +577,11 @@ static WaitPMResult
 wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 {
 	int			i;
-	static const char *backend_options = "'-c gp_session_role=utility'";
 
-<<<<<<< HEAD
 	/* if requested wait time is zero, return "still starting up" code */
 	if (wait_seconds <= 0)
 		return PQPING_REJECT;
 
-	connstr[0] = '\0';
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	for (i = 0; i < wait_seconds * WAITS_PER_SEC; i++)
 	{
 		char	  **optlines;
@@ -635,76 +614,6 @@ wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 			/* Windows can only reject standalone-backend PIDs */
 				pmpid > 0
 #endif
-<<<<<<< HEAD
-						)
-					{
-						/*
-						 * OK, seems to be a valid pidfile from our child.
-						 */
-						int			portnum;
-						char	   *sockdir;
-						char	   *hostaddr;
-						char		host_str[MAXPGPATH];
-
-						/*
-						 * Extract port number and host string to use. Prefer
-						 * using Unix socket if available.
-						 */
-						portnum = atoi(optlines[LOCK_FILE_LINE_PORT - 1]);
-						sockdir = optlines[LOCK_FILE_LINE_SOCKET_DIR - 1];
-						hostaddr = optlines[LOCK_FILE_LINE_LISTEN_ADDR - 1];
-
-						/*
-						 * While unix_socket_directories can accept relative
-						 * directories, libpq's host parameter must have a
-						 * leading slash to indicate a socket directory.  So,
-						 * ignore sockdir if it's relative, and try to use TCP
-						 * instead.
-						 */
-						if (sockdir[0] == '/')
-							strlcpy(host_str, sockdir, sizeof(host_str));
-						else
-							strlcpy(host_str, hostaddr, sizeof(host_str));
-
-						/* remove trailing newline */
-						if (strchr(host_str, '\n') != NULL)
-							*strchr(host_str, '\n') = '\0';
-
-						/* Fail if couldn't get either sockdir or host addr */
-						if (host_str[0] == '\0')
-						{
-							write_stderr(_("\n%s: -w option cannot use a relative socket directory specification\n"),
-										 progname);
-							return PQPING_NO_ATTEMPT;
-						}
-
-						/*
-						 * Map listen-only addresses to counterparts usable
-						 * for establishing a connection.  connect() to "::"
-						 * or "0.0.0.0" is not portable to OpenBSD 5.0 or to
-						 * Windows Server 2008, and connect() to "::" is
-						 * additionally not portable to NetBSD 6.0.  (Cygwin
-						 * does handle both addresses, though.)
-						 */
-						if (strcmp(host_str, "*") == 0)
-							strcpy(host_str, "localhost");
-#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(WIN32)
-						else if (strcmp(host_str, "0.0.0.0") == 0)
-							strcpy(host_str, "127.0.0.1");
-						else if (strcmp(host_str, "::") == 0)
-							strcpy(host_str, "::1");
-#endif
-
-						/*
-						 * We need to set connect_timeout otherwise on Windows
-						 * the Service Control Manager (SCM) will probably
-						 * timeout first.
-						 */
-						snprintf(connstr, sizeof(connstr),
-						"dbname=postgres port=%d host='%s' connect_timeout=5 options=%s",
-								 portnum, host_str, backend_options);
-					}
-=======
 				)
 			{
 				/*
@@ -719,28 +628,16 @@ wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 					/* postmaster is done starting up */
 					free_readfile(optlines);
 					return POSTMASTER_READY;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				}
 			}
 		}
 
-<<<<<<< HEAD
-		/* If we have a connection string, ping the server */
-		if (connstr[0] != '\0')
-		{
-			ret = PQping(connstr);
-			if (ret == PQPING_OK || ret == PQPING_NO_ATTEMPT ||
-				ret == PQPING_MIRROR_READY)
-				break;
-		}
-=======
 		/*
 		 * Free the results of readfile.
 		 *
 		 * This is safe to call even if optlines is NULL.
 		 */
 		free_readfile(optlines);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/*
 		 * Check whether the child postmaster process is still alive.  This
@@ -761,11 +658,7 @@ wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 			return POSTMASTER_FAILED;
 #endif
 
-<<<<<<< HEAD
-		/* No response, or startup still in process; wait */
-=======
 		/* Startup still in process; wait, printing a dot once per second */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (i % WAITS_PER_SEC == 0)
 		{
 #ifdef WIN32
@@ -1022,15 +915,7 @@ do_start(void)
 							 progname);
 				exit(1);
 				break;
-<<<<<<< HEAD
-			case PQPING_MIRROR_READY:
-				print_msg(_(" done\n"));
-				print_msg(_("server started in mirror mode\n"));
-				break;
-			case PQPING_NO_RESPONSE:
-=======
 			case POSTMASTER_FAILED:
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				print_msg(_(" stopped waiting\n"));
 				write_stderr(_("%s: could not start server\n"
 							   "Examine the log output.\n"),
@@ -2344,11 +2229,8 @@ do_help(void)
 	printf(_("  -w, --wait             wait until operation completes (default)\n"));
 	printf(_("  -W, --no-wait          do not wait until operation completes\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
-<<<<<<< HEAD
 	printf(_("  --gp-version           output Greenplum version information, then exit\n"));
 	printf(_("(The default is to wait for shutdown, but not for start or restart.)\n\n"));
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	printf(_("If the -D option is omitted, the environment variable PGDATA is used.\n"));
 
 	printf(_("\nOptions for start or restart:\n"));
@@ -2562,13 +2444,10 @@ main(int argc, char **argv)
 		{"silent", no_argument, NULL, 's'},
 		{"timeout", required_argument, NULL, 't'},
 		{"core-files", no_argument, NULL, 'c'},
-<<<<<<< HEAD
 		{"wrapper", optional_argument, NULL, 'q'},
 		{"wrapper-args", optional_argument, NULL, 'Q'},
-=======
 		{"wait", no_argument, NULL, 'w'},
 		{"no-wait", no_argument, NULL, 'W'},
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{NULL, 0, NULL, 0}
 	};
 
