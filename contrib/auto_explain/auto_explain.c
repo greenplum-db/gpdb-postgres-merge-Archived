@@ -407,13 +407,10 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			ExplainPrintPlan(es, queryDesc);
 			if (es->analyze && auto_explain_log_triggers)
 				ExplainPrintTriggers(es, queryDesc);
-<<<<<<< HEAD
-			if (es->analyze)
-				ExplainPrintExecStatsEnd(es, queryDesc);
-=======
 			if (es->costs)
 				ExplainPrintJITSummary(es, queryDesc);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			if (es->analyze)
+				ExplainPrintExecStatsEnd(es, queryDesc);
 			ExplainEndOutput(es);
 
 			/* Remove last line break */

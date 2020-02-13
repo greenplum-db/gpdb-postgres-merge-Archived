@@ -50,11 +50,7 @@ case $1 in
 	su -l $PGUSER -c "$PGCTL stop -D '$PGDATA' -s"
 	;;
     restart)
-<<<<<<< HEAD
-	su -l $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -m fast -w"
-=======
 	su -l $PGUSER -c "$PGCTL stop -D '$PGDATA' -s"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	su -l $PGUSER -c "$DAEMON -D '$PGDATA' >>$PGLOG 2>&1 &"
 	;;
     status)

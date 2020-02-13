@@ -22,10 +22,7 @@
 #include "tsearch/ts_public.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
-<<<<<<< HEAD
-=======
 #include "utils/regproc.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "utils/syscache.h"
 
 PG_MODULE_MAGIC;
@@ -389,11 +386,7 @@ unaccent_dict(PG_FUNCTION_ARGS)
 		Oid			procnspid = get_func_namespace(fcinfo->flinfo->fn_oid);
 		const char *dictname = "unaccent";
 
-<<<<<<< HEAD
-		dictOid = GetSysCacheOid2(TSDICTNAMENSP,
-=======
 		dictOid = GetSysCacheOid2(TSDICTNAMENSP, Anum_pg_ts_dict_oid,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 								  PointerGetDatum(dictname),
 								  ObjectIdGetDatum(procnspid));
 		if (!OidIsValid(dictOid))

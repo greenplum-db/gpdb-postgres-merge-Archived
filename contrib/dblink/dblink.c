@@ -114,11 +114,7 @@ static char *generate_relation_name(Relation rel);
 static char *dblink_connstr_check(const char *connstr);
 static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 static void dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
-<<<<<<< HEAD
-							 const char *dblink_context_msg, bool fail);
-=======
 							 bool fail, const char *fmt,...) pg_attribute_printf(5, 6);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static char *get_connect_string(const char *servername);
 static char *escape_param_str(const char *from);
 static void validate_pkattnums(Relation rel,
@@ -446,12 +442,8 @@ dblink_open(PG_FUNCTION_ARGS)
 	res = PQexec(conn, buf.data);
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-<<<<<<< HEAD
-		dblink_res_error(conn, conname, res, "could not open cursor", fail);
-=======
 		dblink_res_error(conn, conname, res, fail,
 						 "while opening cursor \"%s\"", curname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		PG_RETURN_TEXT_P(cstring_to_text("ERROR"));
 	}
 
@@ -519,12 +511,8 @@ dblink_close(PG_FUNCTION_ARGS)
 	res = PQexec(conn, buf.data);
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-<<<<<<< HEAD
-		dblink_res_error(conn, conname, res, "could not close cursor", fail);
-=======
 		dblink_res_error(conn, conname, res, fail,
 						 "while closing cursor \"%s\"", curname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		PG_RETURN_TEXT_P(cstring_to_text("ERROR"));
 	}
 
@@ -627,13 +615,8 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		(PQresultStatus(res) != PGRES_COMMAND_OK &&
 		 PQresultStatus(res) != PGRES_TUPLES_OK))
 	{
-<<<<<<< HEAD
-		dblink_res_error(conn, conname, res,
-						 "could not fetch from cursor", fail);
-=======
 		dblink_res_error(conn, conname, res, fail,
 						 "while fetching from cursor \"%s\"", curname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return (Datum) 0;
 	}
 	else if (PQresultStatus(res) == PGRES_COMMAND_OK)
@@ -783,13 +766,8 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async)
 				if (PQresultStatus(res) != PGRES_COMMAND_OK &&
 					PQresultStatus(res) != PGRES_TUPLES_OK)
 				{
-<<<<<<< HEAD
-					dblink_res_error(conn, conname, res,
-									 "could not execute query", fail);
-=======
 					dblink_res_error(conn, conname, res, fail,
 									 "while executing query");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					/* if fail isn't set, we'll return an empty query result */
 				}
 				else
@@ -1032,13 +1010,8 @@ materializeQueryResult(FunctionCallInfo fcinfo,
 			PGresult   *res1 = res;
 
 			res = NULL;
-<<<<<<< HEAD
-			dblink_res_error(conn, conname, res1,
-							 "could not execute query", fail);
-=======
 			dblink_res_error(conn, conname, res1, fail,
 							 "while executing query");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			/* if fail isn't set, we'll return an empty query result */
 		}
 		else if (PQresultStatus(res) == PGRES_COMMAND_OK)
@@ -1466,13 +1439,8 @@ dblink_exec(PG_FUNCTION_ARGS)
 			(PQresultStatus(res) != PGRES_COMMAND_OK &&
 			 PQresultStatus(res) != PGRES_TUPLES_OK))
 		{
-<<<<<<< HEAD
-			dblink_res_error(conn, conname, res,
-							 "could not execute command", fail);
-=======
 			dblink_res_error(conn, conname, res, fail,
 							 "while executing command");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * and save a copy of the command status string to return as our
@@ -2760,11 +2728,7 @@ dblink_connstr_check(const char *connstr)
  */
 static void
 dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
-<<<<<<< HEAD
-				 const char *dblink_context_msg, bool fail)
-=======
 				 bool fail, const char *fmt,...)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	int			level;
 	char	   *pg_diag_sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
@@ -2800,15 +2764,6 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 	message_context = xpstrdup(pg_diag_context);
 
 	/*
-<<<<<<< HEAD
-	 * If we don't get a message from the PGresult, try the PGconn.  This
-	 * is needed because for connection-level failures, PQexec may just
-	 * return NULL, not a PGresult at all.
-	 */
-	if (message_primary == NULL)
-		message_primary = PQerrorMessage(conn);
-
-=======
 	 * If we don't get a message from the PGresult, try the PGconn.  This is
 	 * needed because for connection-level failures, PQexec may just return
 	 * NULL, not a PGresult at all.
@@ -2822,7 +2777,6 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 	 * leaking all the strings too, but those are in palloc'd memory that will
 	 * get cleaned up eventually.
 	 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (res)
 		PQclear(res);
 
@@ -2867,11 +2821,8 @@ get_connect_string(const char *servername)
 
 	static const PQconninfoOption *options = NULL;
 
-<<<<<<< HEAD
-=======
 	initStringInfo(&buf);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Get list of valid libpq options.
 	 *
@@ -2886,11 +2837,7 @@ get_connect_string(const char *servername)
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_OUT_OF_MEMORY),
 					 errmsg("out of memory"),
-<<<<<<< HEAD
-			 errdetail("could not get libpq's default connection options")));
-=======
 					 errdetail("Could not get libpq's default connection options.")));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/* first gather the server connstr options */
@@ -2917,11 +2864,7 @@ get_connect_string(const char *servername)
 			DefElem    *def = lfirst(cell);
 
 			if (is_valid_dblink_option(options, def->defname, ForeignDataWrapperRelationId))
-<<<<<<< HEAD
-				appendStringInfo(buf, "%s='%s' ", def->defname,
-=======
 				appendStringInfo(&buf, "%s='%s' ", def->defname,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 								 escape_param_str(strVal(def->arg)));
 		}
 
@@ -2930,11 +2873,7 @@ get_connect_string(const char *servername)
 			DefElem    *def = lfirst(cell);
 
 			if (is_valid_dblink_option(options, def->defname, ForeignServerRelationId))
-<<<<<<< HEAD
-				appendStringInfo(buf, "%s='%s' ", def->defname,
-=======
 				appendStringInfo(&buf, "%s='%s' ", def->defname,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 								 escape_param_str(strVal(def->arg)));
 		}
 
@@ -2944,11 +2883,7 @@ get_connect_string(const char *servername)
 			DefElem    *def = lfirst(cell);
 
 			if (is_valid_dblink_option(options, def->defname, UserMappingRelationId))
-<<<<<<< HEAD
-				appendStringInfo(buf, "%s='%s' ", def->defname,
-=======
 				appendStringInfo(&buf, "%s='%s' ", def->defname,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 								 escape_param_str(strVal(def->arg)));
 		}
 

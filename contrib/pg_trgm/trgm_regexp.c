@@ -202,11 +202,7 @@
 /*
  * Uncomment (or use -DTRGM_REGEXP_DEBUG) to print debug info,
  * for exploring and debugging the algorithm implementation.
-<<<<<<< HEAD
- * This produces three graph files in /tmp, in Graphviz .dot format.
-=======
  * This produces three graph files in /tmp, in Graphviz .gv format.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
  * Some progress information is also printed to postmaster stderr.
  */
 /* #define TRGM_REGEXP_DEBUG */

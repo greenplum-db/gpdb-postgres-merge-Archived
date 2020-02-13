@@ -1536,10 +1536,6 @@ postgresIterateForeignScan(ForeignScanState *node)
 	 */
 	ExecStoreHeapTuple(fsstate->tuples[fsstate->next_tuple++],
 					   slot,
-<<<<<<< HEAD
-					   InvalidBuffer,
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					   false);
 
 	return slot;
@@ -3803,17 +3799,12 @@ store_returning_result(PgFdwModifyState *fmstate,
 											fmstate->retrieved_attrs,
 											NULL,
 											fmstate->temp_cxt);
-<<<<<<< HEAD
-		/* tuple will be deleted when it is cleared from the slot */
-		ExecStoreHeapTuple(newtup, slot, InvalidBuffer, true);
-=======
 
 		/*
 		 * The returning slot will not necessarily be suitable to store
 		 * heaptuples directly, so allow for conversion.
 		 */
 		ExecForceStoreHeapTuple(newtup, slot, true);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 	PG_CATCH();
 	{
@@ -4085,11 +4076,7 @@ get_returning_data(ForeignScanState *node)
 												dmstate->retrieved_attrs,
 												node,
 												dmstate->temp_cxt);
-<<<<<<< HEAD
-			ExecStoreHeapTuple(newtup, slot, InvalidBuffer, false);
-=======
 			ExecStoreHeapTuple(newtup, slot, false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		PG_CATCH();
 		{
@@ -4998,25 +4985,6 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	if (fpinfo_o->local_conds || fpinfo_i->local_conds)
 		return false;
 
-<<<<<<< HEAD
-	/* Separate restrict list into join quals and quals on join relation */
-	if (IS_OUTER_JOIN(jointype))
-		extract_actual_join_clauses(extra->restrictlist,
-									joinrel->relids,
-									&joinclauses, &otherclauses);
-	else
-	{
-		/*
-		 * Unlike an outer join, for inner join, the join result contains only
-		 * the rows which satisfy join clauses, similar to the other clause.
-		 * Hence all clauses can be treated as other quals. This helps to push
-		 * a join down to the foreign server even if some of its join quals
-		 * are not safe to pushdown.
-		 */
-		otherclauses = extract_actual_clauses(extra->restrictlist, false);
-		joinclauses = NIL;
-	}
-=======
 	/*
 	 * Merge FDW options.  We might be tempted to do this after we have deemed
 	 * the foreign join to be OK.  But we must do this beforehand so that we
@@ -5025,7 +4993,6 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	 */
 	fpinfo->server = fpinfo_o->server;
 	merge_fdw_options(fpinfo, fpinfo_o, fpinfo_i);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Separate restrict list into join quals and pushed-down (other) quals.

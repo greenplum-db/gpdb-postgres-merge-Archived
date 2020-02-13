@@ -12,18 +12,6 @@
 
 #include <selinux/label.h>
 
-<<<<<<< HEAD
-/*
- * <selinux/label.h> includes <stdbool.h>, which creates an incompatible
- * #define for bool.  Get rid of that so we can use our own typedef.
- * (We don't care if <stdbool.h> redefines "true"/"false"; those are close
- * enough.)
- */
-#undef bool
-
-#include "access/heapam.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/htup_details.h"
 #include "access/genam.h"
 #include "access/table.h"

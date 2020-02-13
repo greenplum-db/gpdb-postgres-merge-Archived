@@ -1,14 +1,6 @@
 -- money check
 
-<<<<<<< HEAD
--- In PostgreSQL, this test uses WITH OIDS, but in GPDB, OIDs are not unique
--- across segments, so use a 'serial' column instead.
--- start_ignore
-CREATE TABLE moneytmp (a money, oid serial);
--- end_ignore
-=======
 CREATE TABLE moneytmp (a money);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 \copy moneytmp (a) from 'data/cash.data'
 

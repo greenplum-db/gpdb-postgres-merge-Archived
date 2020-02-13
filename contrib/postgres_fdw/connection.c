@@ -15,25 +15,16 @@
 #include "postgres_fdw.h"
 
 #include "access/htup_details.h"
-<<<<<<< HEAD
-#include "catalog/pg_user_mapping.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "access/xact.h"
 #include "catalog/pg_user_mapping.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/latch.h"
-#include "storage/proc.h"
 #include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
-#include "utils/timestamp.h"
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /*
@@ -84,38 +75,22 @@ static bool xact_got_connection = false;
 /* prototypes of private functions */
 static PGconn *connect_pg_server(ForeignServer *server, UserMapping *user);
 static void disconnect_pg_server(ConnCacheEntry *entry);
-<<<<<<< HEAD
-static void check_conn_params(const char **keywords, const char **values);
-=======
 static void check_conn_params(const char **keywords, const char **values, UserMapping *user);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void configure_remote_session(PGconn *conn);
 static void do_sql_command(PGconn *conn, const char *sql);
 static void begin_remote_xact(ConnCacheEntry *entry);
 static void pgfdw_xact_callback(XactEvent event, void *arg);
 static void pgfdw_subxact_callback(SubXactEvent event,
-<<<<<<< HEAD
-					   SubTransactionId mySubid,
-					   SubTransactionId parentSubid,
-					   void *arg);
-=======
 								   SubTransactionId mySubid,
 								   SubTransactionId parentSubid,
 								   void *arg);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 static void pgfdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue);
 static void pgfdw_reject_incomplete_xact_state_change(ConnCacheEntry *entry);
 static bool pgfdw_cancel_query(PGconn *conn);
 static bool pgfdw_exec_cleanup_query(PGconn *conn, const char *query,
-<<<<<<< HEAD
-						 bool ignore_errors);
-static bool pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime,
-						 PGresult **result);
-=======
 									 bool ignore_errors);
 static bool pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime,
 									 PGresult **result);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /*
@@ -219,12 +194,8 @@ GetConnection(UserMapping *user, bool will_prep_stmt)
 			GetSysCacheHashValue1(FOREIGNSERVEROID,
 								  ObjectIdGetDatum(server->serverid));
 		entry->mapping_hashvalue =
-<<<<<<< HEAD
-			GetSysCacheHashValue1(USERMAPPINGOID, ObjectIdGetDatum(user->umid));
-=======
 			GetSysCacheHashValue1(USERMAPPINGOID,
 								  ObjectIdGetDatum(user->umid));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		/* Now try to make the connection */
 		entry->conn = connect_pg_server(server, user);
@@ -574,20 +545,12 @@ pgfdw_get_result(PGconn *conn, const char *query)
 				int			wc;
 
 				/* Sleep until there's something to do */
-<<<<<<< HEAD
-				wc = WaitLatchOrSocket(&MyProc->procLatch,
-									   WL_LATCH_SET | WL_SOCKET_READABLE,
-									   PQsocket(conn),
-									   -1L);
-				ResetLatch(&MyProc->procLatch);
-=======
 				wc = WaitLatchOrSocket(MyLatch,
 									   WL_LATCH_SET | WL_SOCKET_READABLE |
 									   WL_EXIT_ON_PM_DEATH,
 									   PQsocket(conn),
 									   -1L, PG_WAIT_EXTENSION);
 				ResetLatch(MyLatch);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 				CHECK_FOR_INTERRUPTS();
 
@@ -665,11 +628,7 @@ pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
 				(errcode(sqlstate),
 				 message_primary ? errmsg_internal("%s", message_primary) :
 				 errmsg("could not obtain message string for remote error"),
-<<<<<<< HEAD
-			   message_detail ? errdetail_internal("%s", message_detail) : 0,
-=======
 				 message_detail ? errdetail_internal("%s", message_detail) : 0,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				 message_hint ? errhint("%s", message_hint) : 0,
 				 message_context ? errcontext("%s", message_context) : 0,
 				 sql ? errcontext("remote SQL command: %s", sql) : 0));
@@ -1193,20 +1152,12 @@ pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime, PGresult **result)
 				cur_timeout = Min(60000, secs * USECS_PER_SEC + microsecs);
 
 				/* Sleep until there's something to do */
-<<<<<<< HEAD
-				wc = WaitLatchOrSocket(&MyProc->procLatch,
-							  WL_LATCH_SET | WL_SOCKET_READABLE | WL_TIMEOUT,
-									   PQsocket(conn),
-									   cur_timeout);
-				ResetLatch(&MyProc->procLatch);
-=======
 				wc = WaitLatchOrSocket(MyLatch,
 									   WL_LATCH_SET | WL_SOCKET_READABLE |
 									   WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 									   PQsocket(conn),
 									   cur_timeout, PG_WAIT_EXTENSION);
 				ResetLatch(MyLatch);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 				CHECK_FOR_INTERRUPTS();
 

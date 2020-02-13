@@ -142,14 +142,9 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	initCachedPage(&buildstate);
 
 	/* Do the heap scan */
-<<<<<<< HEAD
-	reltuples = IndexBuildScan(heap, index, indexInfo, true,
-								   bloomBuildCallback, (void *) &buildstate);
-=======
 	reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
 									   bloomBuildCallback, (void *) &buildstate,
 									   NULL);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Flush last page if needed (it will be, unless heap was empty) */
 	if (buildstate.count > 0)

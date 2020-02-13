@@ -206,22 +206,13 @@ pg_file_write_internal(text *file, text *data, bool replace)
 				 errmsg("could not open file \"%s\" for writing: %m",
 						filename)));
 
-<<<<<<< HEAD
-	count = fwrite(VARDATA(data), 1, VARSIZE(data) - VARHDRSZ, f);
-	if (count != VARSIZE(data) - VARHDRSZ || FreeFile(f))
-=======
 	count = fwrite(VARDATA_ANY(data), 1, VARSIZE_ANY_EXHDR(data), f);
 	if (count != VARSIZE_ANY_EXHDR(data) || FreeFile(f))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write file \"%s\": %m", filename)));
 
-<<<<<<< HEAD
-	PG_RETURN_INT64(count);
-=======
 	return (count);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }
 
 /* ------------------------------------
@@ -306,16 +297,7 @@ pg_file_rename_internal(text *file1, text *file2, text *file3)
 	fn1 = convert_and_check_filename(file1, false);
 	fn2 = convert_and_check_filename(file2, false);
 
-<<<<<<< HEAD
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
-		PG_RETURN_NULL();
-
-	fn1 = convert_and_check_filename(PG_GETARG_TEXT_P(0), false);
-	fn2 = convert_and_check_filename(PG_GETARG_TEXT_P(1), false);
-	if (PG_ARGISNULL(2))
-=======
 	if (file3 == NULL)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		fn3 = NULL;
 	else
 		fn3 = convert_and_check_filename(file3, false);

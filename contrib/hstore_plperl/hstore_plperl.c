@@ -66,11 +66,7 @@ Datum
 hstore_to_plperl(PG_FUNCTION_ARGS)
 {
 	dTHX;
-<<<<<<< HEAD
-	HStore	   *in = PG_GETARG_HS(0);
-=======
 	HStore	   *in = PG_GETARG_HSTORE_P(0);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			i;
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);

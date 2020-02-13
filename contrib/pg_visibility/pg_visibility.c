@@ -53,14 +53,9 @@ static vbits *collect_visibility_data(Oid relid, bool include_pd);
 static corrupt_items *collect_corrupt_items(Oid relid, bool all_visible,
 											bool all_frozen);
 static void record_corrupt_item(corrupt_items *items, ItemPointer tid);
-<<<<<<< HEAD
 static bool tuple_all_visible(Relation rel, HeapTuple tup, TransactionId OldestXmin,
-				  Buffer buffer);
-=======
-static bool tuple_all_visible(HeapTuple tup, TransactionId OldestXmin,
 							  Buffer buffer);
 static void check_relation_relkind(Relation rel);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 /*
  * Visibility map information for a single block of a relation.
@@ -688,13 +683,8 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 				else
 				{
 					OldestXmin = RecomputedOldestXmin;
-<<<<<<< HEAD
 					if (!tuple_all_visible(rel, &tuple, OldestXmin, buffer))
-						record_corrupt_item(items, &tuple.t_data->t_ctid);
-=======
-					if (!tuple_all_visible(&tuple, OldestXmin, buffer))
 						record_corrupt_item(items, &tuple.t_self);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				}
 			}
 

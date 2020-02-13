@@ -21,11 +21,8 @@
 #include <termios.h>
 #endif
 
-<<<<<<< HEAD
-=======
 #include "catalog/pg_class_d.h"
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "fe_utils/connect.h"
 #include "libpq-fe.h"
 #include "pg_getopt.h"
