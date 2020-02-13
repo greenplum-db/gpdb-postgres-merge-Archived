@@ -129,7 +129,7 @@ static MemoryContext MdCxt;		/* context for all MdfdVec objects */
 
 /* local routines */
 static void mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum,
-						 bool isRedo, char relstorage);
+						 bool isRedo);
 static MdfdVec *mdopen(SMgrRelation reln, ForkNumber forknum, int behavior);
 static void register_dirty_segment(SMgrRelation reln, ForkNumber forknum,
 								   MdfdVec *seg);
@@ -313,7 +313,7 @@ mdcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
  * we are usually not in a transaction anymore when this is called.
  */
 void
-mdunlink(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char relstorage)
+mdunlink(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 {
 	/*
 	 * GPDB_12_MERGE_FIXME: Where does ForgetRelationFsyncRequests() from
@@ -323,14 +323,14 @@ mdunlink(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char relstor
 	if (forkNum == InvalidForkNumber)
 	{
 		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-			mdunlinkfork(rnode, forkNum, isRedo, relstorage);
+			mdunlinkfork(rnode, forkNum, isRedo);
 	}
 	else
-		mdunlinkfork(rnode, forkNum, isRedo, relstorage);
+		mdunlinkfork(rnode, forkNum, isRedo);
 }
 
 static void
-mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char relstorage)
+mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 {
 	char	   *path;
 	int			ret;
@@ -344,7 +344,7 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char rel
 	{
 		/* First, forget any pending sync requests for the first segment */
 		if (!RelFileNodeBackendIsTemp(rnode))
-			register_forget_request(rnode, forkNum, 0 /* first seg */, relstorage_is_ao(relstorage));
+			register_forget_request(rnode, forkNum, 0 /* first seg */, rnode.is_ao_rel);
 
 		/* Next unlink the file */
 		ret = unlink(path);
@@ -376,7 +376,7 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char rel
 					 errmsg("could not truncate file \"%s\": %m", path)));
 
 		/* Register request to unlink first segment later */
-		register_unlink_segment(rnode, forkNum, 0 /* first seg */, relstorage_is_ao(relstorage));
+		register_unlink_segment(rnode, forkNum, 0 /* first seg */, rnode.is_ao_rel);
 	}
 
 	/*
@@ -384,7 +384,7 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char rel
 	 */
 	if (ret >= 0)
 	{
-		if (relstorage_is_ao(relstorage))
+		if (rnode.is_ao_rel)
 		{
 			mdunlink_ao(path, forkNum);
 			pfree(path);
@@ -405,7 +405,7 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char rel
 			 * to unlink.
 			 */
 			if (!RelFileNodeBackendIsTemp(rnode))
-				register_forget_request(rnode, forkNum, segno, relstorage_is_ao(relstorage));
+				register_forget_request(rnode, forkNum, segno, rnode.is_ao_rel);
 
 			sprintf(segpath, "%s.%u", path, segno);
 			if (unlink(segpath) < 0)
@@ -1068,11 +1068,9 @@ void
 DropRelationFiles(RelFileNodePendingDelete *delrels, int ndelrels, bool isRedo)
 {
 	SMgrRelation *srels;
-	char         *srelstorages;
 	int			i;
 
 	srels = palloc(sizeof(SMgrRelation) * ndelrels);
-	srelstorages = palloc(sizeof(char) * ndelrels);
 	for (i = 0; i < ndelrels; i++)
 	{
 		/* GPDB: backend can only be TempRelBackendId or InvalidBackendId for a
@@ -1088,10 +1086,10 @@ DropRelationFiles(RelFileNodePendingDelete *delrels, int ndelrels, bool isRedo)
 				XLogDropRelation(delrels[i].node, fork);
 		}
 		srels[i] = srel;
-		srelstorages[i] = delrels[i].relstorage;
+		srels[i]->smgr_rnode.is_ao_rel = delrels[i].relstorage != 'h';
 	}
 
-	smgrdounlinkall(srels, ndelrels, isRedo, srelstorages);
+	smgrdounlinkall(srels, ndelrels, isRedo);
 
 	/*
 	 * Call smgrclose() in reverse order as when smgropen() is called.
@@ -1101,7 +1099,6 @@ DropRelationFiles(RelFileNodePendingDelete *delrels, int ndelrels, bool isRedo)
 	 */
 	for (i = ndelrels - 1; i >= 0; i--)
 		smgrclose(srels[i]);
-	pfree(srelstorages);
 	pfree(srels);
 }
 

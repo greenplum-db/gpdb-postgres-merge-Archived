@@ -1,3 +1,4 @@
+/*-------------------------------------------------------------------------
  *
  * smgr.c
  *	  public interface routines to storage manager switch.
@@ -398,7 +399,7 @@ smgrcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
  *		already.
  */
 void
-smgrdounlink(SMgrRelation reln, bool isRedo, char relstorage)
+smgrdounlink(SMgrRelation reln, bool isRedo)
 {
 	RelFileNodeBackend rnode = reln->smgr_rnode;
     int                which = reln->smgr_which;
@@ -416,8 +417,7 @@ smgrdounlink(SMgrRelation reln, bool isRedo, char relstorage)
 	 * expected to have buffers in shared memory ? Can check only for
 	 * RELSTORAGE_HEAP below.
 	 */
-	if ((relstorage != RELSTORAGE_AOROWS) &&
-		(relstorage != RELSTORAGE_AOCOLS))
+	if (!rnode.is_ao_rel)
 		DropRelFileNodesAllBuffers(&rnode, 1);
 
 	/*
@@ -460,12 +460,9 @@ smgrdounlink(SMgrRelation reln, bool isRedo, char relstorage)
  *
  *		This is equivalent to calling smgrdounlink for each relation, but it's
  *		significantly quicker so should be preferred when possible.
- *
- * 'relstorages' is an array of pg_class.relstorage fields. It must have the
- * same size as 'rels'.
  */
 void
-smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo, char *relstorages)
+smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 {
 	int			i = 0;
 	RelFileNodeBackend *rnodes;
@@ -491,8 +488,7 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo, char *relstorages)
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
             smgrsw[which].smgr_close(rels[i], forknum);
 
-		if ((relstorages[i] != RELSTORAGE_AOROWS) &&
-			(relstorages[i] != RELSTORAGE_AOCOLS))
+		if (!rnode.is_ao_rel)
 			has_heaps = true;
 	}
 

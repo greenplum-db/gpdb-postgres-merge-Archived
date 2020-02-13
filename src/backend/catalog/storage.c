@@ -409,7 +409,6 @@ smgrDoPendingDeletes(bool isCommit)
 				i = 0,
 				maxrels = 0;
 	SMgrRelation *srels = NULL;
-	char	   *relstorages = NULL;
 
 	prev = NULL;
 	for (pending = pendingDeletes; pending != NULL; pending = next)
@@ -443,16 +442,14 @@ smgrDoPendingDeletes(bool isCommit)
 				{
 					maxrels = 8;
 					srels = palloc(sizeof(SMgrRelation) * maxrels);
-					relstorages = palloc(maxrels * sizeof(char));
 				}
 				else if (maxrels <= nrels)
 				{
 					maxrels *= 2;
 					srels = repalloc(srels, sizeof(SMgrRelation) * maxrels);
-					relstorages = repalloc(relstorages, sizeof(char) * maxrels);
 				}
 
-				relstorages[nrels] = pending->relnode.relstorage;
+				srels[nrels].is_ao_rel = pending->relnode.relstorage != 'h';
 				srels[nrels++] = srel;
 			}
 			/* must explicitly free the list entry */
@@ -463,13 +460,12 @@ smgrDoPendingDeletes(bool isCommit)
 
 	if (nrels > 0)
 	{
-		smgrdounlinkall(srels, nrels, false, relstorages);
+		smgrdounlinkall(srels, nrels, false);
 
 		for (i = 0; i < nrels; i++)
 			smgrclose(srels[i]);
 
 		pfree(srels);
-		pfree(relstorages);
 	}
 }
 

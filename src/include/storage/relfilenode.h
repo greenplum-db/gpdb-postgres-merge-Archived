@@ -73,6 +73,16 @@ typedef struct RelFileNodeBackend
 {
 	RelFileNode node;
 	BackendId	backend;
+	/*
+	 * GPDB_12_MERGE_FIXME: Where should this live? Do we even need it?
+	 *
+	 * It is currently here because md/smgr layer has logic based on whether
+	 * RelFileNode belongs to a heap or AO/AOCO. For AO/AOCO case we optimize
+	 * to delay fsync requests and skip heap specific operations like
+	 * ForgetRelationFsyncRequests() and DropRelFileNodeBuffers(). See commits
+	 * 6bd76f70450, 85fee7365d2, and 8838ac983c6 for more details.
+	*/
+	bool is_ao_rel;
 } RelFileNodeBackend;
 
 #define RelFileNodeBackendIsTemp(rnode) \

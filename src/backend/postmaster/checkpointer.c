@@ -1109,7 +1109,7 @@ RequestCheckpoint(int flags)
  * let the backend know by returning false.
  */
 bool
-ForwardSyncRequest(const FileTag *ftag, SyncRequestType type, bool is_ao_segno)
+ForwardSyncRequest(const FileTag *ftag, SyncRequestType type)
 {
 	CheckpointerRequest *request;
 	bool		too_full;
@@ -1123,13 +1123,13 @@ ForwardSyncRequest(const FileTag *ftag, SyncRequestType type, bool is_ao_segno)
 	 * carry no such special meaning.  The segno must identify a valid
 	 * append-optimized segment file on disk.
 	 */
-	AssertImply(is_ao_segno, segno <= MAX_AOREL_CONCURRENCY * MaxTupleAttributeNumber);
+	AssertImply(ftag->is_ao_segno, segno <= MAX_AOREL_CONCURRENCY * MaxTupleAttributeNumber);
 
 	/*
 	 * Append-optimized tables do not use relation forks currently.
 	 * MAIN_FORKNUM is the only fork applicable.
 	 */
-	AssertImply(is_ao_segno, forknum == MAIN_FORKNUM);
+	AssertImply(ftag->is_ao_segno, forknum == MAIN_FORKNUM);
 
 	if (AmCheckpointerProcess())
 		elog(ERROR, "ForwardSyncRequest must not be called in checkpointer");
@@ -1163,7 +1163,6 @@ ForwardSyncRequest(const FileTag *ftag, SyncRequestType type, bool is_ao_segno)
 	request = &CheckpointerShmem->requests[CheckpointerShmem->num_requests++];
 	request->ftag = *ftag;
 	request->type = type;
-	request->is_ao_segno = is_ao_segno;
 
 	/* If queue is more than half full, nudge the checkpointer to empty it */
 	too_full = (CheckpointerShmem->num_requests >=

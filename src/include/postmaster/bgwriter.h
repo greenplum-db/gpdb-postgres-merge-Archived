@@ -33,8 +33,7 @@ extern void CheckpointerMain(void) pg_attribute_noreturn();
 extern void RequestCheckpoint(int flags);
 extern void CheckpointWriteDelay(int flags, double progress);
 
-extern bool ForwardSyncRequest(const FileTag *ftag, SyncRequestType type,
-							   bool is_ao_segno);
+extern bool ForwardSyncRequest(const FileTag *ftag, SyncRequestType type);
 
 extern void AbsorbSyncRequests(void);
 
