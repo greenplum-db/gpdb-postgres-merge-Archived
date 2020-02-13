@@ -1308,7 +1308,6 @@ eval_windowfunction(WindowAggState *winstate, WindowStatePerFunc perfuncstate,
 	 * need this in case the function returns a pointer into some short-lived
 	 * tuple, as is entirely possible.)
 	 */
-<<<<<<< HEAD
 	// GPDB_84_MERGE_FIXME: In upstream, we know that the allocation
 	// was palloc in some memory context, but in GPDB, that is not true.
 	// So we have to use MemoryContextContainsGenericAllocation instead of
@@ -1316,15 +1315,10 @@ eval_windowfunction(WindowAggState *winstate, WindowStatePerFunc perfuncstate,
 	// a small chance MemoryContextContainsGenericAllocation() incorrectly
 	// says that the chunk is in the context, which could lead to a crash.
 	// nodeAgg.c has the same problem.
-	if (!perfuncstate->resulttypeByVal && !fcinfo.isnull &&
+	if (!perfuncstate->resulttypeByVal && !fcinfo->isnull &&
 		!MemoryContextContainsGenericAllocation(CurrentMemoryContext,
 							   DatumGetPointer(*result))
 		)
-=======
-	if (!perfuncstate->resulttypeByVal && !fcinfo->isnull &&
-		!MemoryContextContains(CurrentMemoryContext,
-							   DatumGetPointer(*result)))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		*result = datumCopy(*result,
 							perfuncstate->resulttypeByVal,
 							perfuncstate->resulttypeLen);
@@ -1348,12 +1342,7 @@ begin_partition(WindowAggState *winstate)
 	winstate->partition_spooled = false;
 	winstate->framehead_valid = false;
 	winstate->frametail_valid = false;
-<<<<<<< HEAD
-	winstate->start_offset_valid = false;
-	winstate->end_offset_valid = false;
-=======
 	winstate->grouptail_valid = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	winstate->spooled_rows = 0;
 	winstate->currentpos = 0;
 	winstate->frameheadpos = 0;
@@ -2510,22 +2499,6 @@ ExecWindowAgg(PlanState *pstate)
 		return NULL;
 
 	/*
-<<<<<<< HEAD
-	 * Check to see if we're still projecting out tuples from a previous
-	 * output tuple (because there is a function-returning-set in the
-	 * projection expressions).  If so, try to project another one.
-	 */
-	if (winstate->ps_TupFromTlist)
-	{
-		TupleTableSlot *result;
-		ExprDoneCond isDone;
-
-		result = ExecProject(winstate->ss.ps.ps_ProjInfo, &isDone);
-		if (isDone == ExprMultipleResult)
-			return result;
-		/* Done with that source tuple... */
-		winstate->ps_TupFromTlist = false;
-=======
 	 * Compute frame offset values, if any, during first call (or after a
 	 * rescan).  These are assumed to hold constant throughout the scan; if
 	 * user gives us a volatile expression, we'll only use its initial value.
@@ -2590,7 +2563,6 @@ ExecWindowAgg(PlanState *pstate)
 			}
 		}
 		winstate->all_first = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	if (winstate->buffer == NULL)
@@ -2606,23 +2578,7 @@ ExecWindowAgg(PlanState *pstate)
 		/* This might mean that the frame moves, too */
 		winstate->framehead_valid = false;
 		winstate->frametail_valid = false;
-<<<<<<< HEAD
-
-		if (winstate->frameOptions & FRAMEOPTION_RANGE)
-		{
-			winstate->start_offset_valid = false;
-			winstate->end_offset_valid = false;
-		}
-		else
-		{
-			if (!winstate->start_offset_var_free)
-				winstate->start_offset_valid = false;
-			if (!winstate->end_offset_var_free)
-				winstate->end_offset_valid = false;
-		}
-=======
 		/* we don't need to invalidate grouptail here; see below */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	/*
@@ -2807,29 +2763,8 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	 */
 	winstate->aggcontext =
 		AllocSetContextCreate(CurrentMemoryContext,
-<<<<<<< HEAD
-							  "WindowAgg_Aggregates",
-							  ALLOCSET_DEFAULT_MINSIZE,
-							  ALLOCSET_DEFAULT_INITSIZE,
-							  ALLOCSET_DEFAULT_MAXSIZE);
-
-	/*
-	 * tuple table initialization
-	 */
-	winstate->ss.ss_ScanTupleSlot = ExecInitExtraTupleSlot(estate);
-	ExecInitResultTupleSlot(estate, &winstate->ss.ps);
-	winstate->first_part_slot = ExecInitExtraTupleSlot(estate);
-	winstate->agg_row_slot = ExecInitExtraTupleSlot(estate);
-	winstate->temp_slot_1 = ExecInitExtraTupleSlot(estate);
-	winstate->temp_slot_2 = ExecInitExtraTupleSlot(estate);
-
-	winstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->plan.targetlist,
-					 (PlanState *) winstate);
-=======
-							  "WindowAgg Aggregates",
-							  ALLOCSET_DEFAULT_SIZES);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+                              "WindowAgg Aggregates",
+                              ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * WindowAgg nodes never have quals, since they can only occur at the
