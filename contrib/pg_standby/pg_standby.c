@@ -59,11 +59,7 @@ char	   *xlogFilePath;		/* where we are going to restore to */
 char	   *nextWALFileName;	/* the file we need to get from archive */
 char	   *restartWALFileName; /* the file from which we can restart restore */
 char	   *priorWALFileName;	/* the file we need to get from archive */
-<<<<<<< HEAD
-char		WALFilePath[MAXPGPATH * 2];		/* the file path including archive */
-=======
 char		WALFilePath[MAXPGPATH * 2]; /* the file path including archive */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 char		restoreCommand[MAXPGPATH];	/* run this to restore */
 char		exclusiveCleanupFileName[MAXFNAMELEN];	/* the file we need to get
 													 * from archive */

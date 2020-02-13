@@ -13,11 +13,7 @@ CREATE FUNCTION exec(text) returns void language plpgsql volatile
       EXECUTE $1;
     END;
 $f$;
-<<<<<<< HEAD
-CREATE ROLE justforcomments NOLOGIN;
-=======
 CREATE ROLE regress_justforcomments NOLOGIN;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 SELECT exec(
     format($outer$CREATE FUNCTION iamalongfunction() RETURNS TEXT IMMUTABLE LANGUAGE SQL AS $f$SELECT text %L$f$$outer$,
@@ -26,11 +22,7 @@ SELECT exec(
     format($outer$COMMENT ON FUNCTION iamalongfunction() IS %L$outer$,
            iamalongfunction()));
 SELECT exec(
-<<<<<<< HEAD
-    format($outer$COMMENT ON ROLE JUSTFORCOMMENTS IS %L$outer$,
-=======
     format($outer$COMMENT ON ROLE REGRESS_JUSTFORCOMMENTS IS %L$outer$,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
            iamalongfunction()));
 CREATE TABLE iamalargetable AS SELECT iamalongfunction() longfunctionoutput;
 
@@ -112,8 +104,4 @@ SELECT pg_drop_replication_slot('regression_slot');
 DROP TABLE IF EXISTS replication_example;
 DROP FUNCTION iamalongfunction();
 DROP FUNCTION exec(text);
-<<<<<<< HEAD
-DROP ROLE justforcomments;
-=======
 DROP ROLE regress_justforcomments;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
