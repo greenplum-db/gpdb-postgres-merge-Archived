@@ -71,17 +71,9 @@ static const int dbObjectTypePriority[] =
 	33,							/* DO_DEFAULT_ACL */
 	3,							/* DO_TRANSFORM */
 	21,							/* DO_BLOB */
-<<<<<<< HEAD
-	24,							/* DO_BLOB_DATA */
 	8,							/* DO_EXTPROTOCOL */
 	21,							/* DO_TYPE_STORAGE_OPTIONS */
-	22,							/* DO_PRE_DATA_BOUNDARY */
-	25,							/* DO_POST_DATA_BOUNDARY */
-	32,							/* DO_EVENT_TRIGGER */
-	33,							/* DO_REFRESH_MATVIEW */
 	1,							/* DO_BINARY_UPGRADE */
-	34							/* DO_POLICY */
-=======
 	25,							/* DO_BLOB_DATA */
 	22,							/* DO_PRE_DATA_BOUNDARY */
 	26,							/* DO_POST_DATA_BOUNDARY */
@@ -91,7 +83,6 @@ static const int dbObjectTypePriority[] =
 	36,							/* DO_PUBLICATION */
 	37,							/* DO_PUBLICATION_REL */
 	38							/* DO_SUBSCRIPTION */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 };
 
 static DumpId preDataBoundId;
@@ -140,13 +131,8 @@ DOTypeNameCompare(const void *p1, const void *p2)
 	int			cmpval;
 
 	/* Sort by type's priority */
-<<<<<<< HEAD
-	cmpval = newObjectTypePriority[obj1->objType] -
-		newObjectTypePriority[obj2->objType];
-=======
 	cmpval = dbObjectTypePriority[obj1->objType] -
 		dbObjectTypePriority[obj2->objType];
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (cmpval != 0)
 		return cmpval;
