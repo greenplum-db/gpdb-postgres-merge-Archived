@@ -99,37 +99,28 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 	else
 		doscan = true;
 
-	/*
-	 * Prepare the result bitmap.  Normally we just create a new one to pass
-	 * back; however, our parent node is allowed to store a pre-made one into
-	 * node->biss_result, in which case we just OR our tuple IDs into the
-	 * existing bitmap.  (This saves needing explicit UNION steps.)
-	 */
-	if (node->biss_result)
-	{
-		tbm = node->biss_result;
-		node->biss_result = NULL;	/* reset for next time */
-	}
-	else
-	{
-		/* XXX should we use less than work_mem for this? */
-		tbm = tbm_create(work_mem * 1024L,
-						 ((BitmapIndexScan *) node->ss.ps.plan)->isshared ?
-						 node->ss.ps.state->es_query_dsa : NULL);
-	}
-
-	/*
-	 * Get TIDs from index and insert into bitmap
-	 */
+	/* Get bitmap from index */
 	while (doscan)
 	{
-		nTuples += (double) index_getbitmap(scandesc, tbm);
+		bitmap = index_getbitmap(scandesc, node->biss_result);
+
+		if ((NULL != bitmap) &&
+			!(IsA(bitmap, TIDBitmap) || IsA(bitmap, StreamBitmap)))
+		{
+			elog(ERROR, "unrecognized result from bitmap index scan");
+		}
 
 		CHECK_FOR_INTERRUPTS();
 
+		if (QueryFinishPending)
+			break;
+
 		/* CDB: If EXPLAIN ANALYZE, let bitmap share our Instrumentation. */
 		if (node->ss.ps.instrument && (node->ss.ps.instrument)->need_cdb)
-			tbm_generic_set_instrument(tbm, node->ss.ps.instrument);
+			tbm_generic_set_instrument(bitmap, node->ss.ps.instrument);
+
+		if (node->biss_result == NULL)
+			node->biss_result = (Node *) bitmap;
 
 		doscan = ExecIndexAdvanceArrayKeys(node->biss_ArrayKeys,
 										   node->biss_NumArrayKeys);
@@ -140,10 +131,11 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 	}
 
 	/* must provide our own instrumentation support */
+	/* GPDB: Report "1 tuple", actually meaning "1 bitmap" */
 	if (node->ss.ps.instrument)
-		InstrStopNode(node->ss.ps.instrument, nTuples);
+		InstrStopNode(node->ss.ps.instrument, 1 /* nTuples */);
 
-	return (Node *) tbm;
+	return (Node *) bitmap;
 }
 
 /* ----------------------------------------------------------------
