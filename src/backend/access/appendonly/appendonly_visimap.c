@@ -630,7 +630,7 @@ AppendOnlyVisimapDelete_Stash(
 	oldContext = MemoryContextSwitchTo(visiMap->memoryContext);
 	AppendOnlyVisimapEntry_WriteData(&visiMap->visimapEntry);
 
-	offset = BufFileGetSize(visiMapDelete->workfile);
+	offset = BufFileSize(visiMapDelete->workfile);
 
 	elogif(Debug_appendonly_print_visimap, LOG,
 		   "Append-only visi map delete: Stash dirty visimap entry %d/" INT64_FORMAT,

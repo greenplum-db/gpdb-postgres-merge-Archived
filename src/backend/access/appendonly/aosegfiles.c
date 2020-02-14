@@ -110,17 +110,20 @@ InsertInitialSegnoEntry(Relation parentrel, int segno)
 	bool	   *nulls;
 	Datum	   *values;
 	int16		formatVersion;
+	Oid segrelid;
 
 	ValidateAppendonlySegmentDataBeforeStorage(segno);
 
 	/* New segments are always created in the latest format */
 	formatVersion = AORelationVersion_GetLatest();
 
-	InsertFastSequenceEntry(parentrel->rd_appendonly->segrelid,
+	GetAppendOnlyEntryAuxOids(parentrel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
+
+	InsertFastSequenceEntry(segrelid,
 							(int64) segno,
 							0);
 
-	pg_aoseg_rel = heap_open(parentrel->rd_appendonly->segrelid, RowExclusiveLock);
+	pg_aoseg_rel = heap_open(segrelid, RowExclusiveLock);
 
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 	natts = pg_aoseg_dsc->natts;
@@ -175,12 +178,15 @@ GetFileSegInfo(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot, int segn
 	int			tuple_segno = InvalidFileSegNumber;
 	bool		isNull;
 	FileSegInfo *fsinfo;
+	Oid segrelid;
+
+	GetAppendOnlyEntryAuxOids(parentrel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
 
 	/*
 	 * Check the pg_aoseg relation to be certain the ao table segment file is
 	 * there.
 	 */
-	pg_aoseg_rel = table_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
+	pg_aoseg_rel = table_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
 	/* Do heap scan on pg_aoseg relation */
@@ -325,10 +331,13 @@ GetAllFileSegInfo(Relation parentrel,
 {
 	Relation	pg_aoseg_rel;
 	FileSegInfo **result;
+	Oid segrelid;
+
+	GetAppendOnlyEntryAuxOids(parentrel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
 
 	Assert(RelationIsAoRows(parentrel));
 
-	pg_aoseg_rel = table_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
+	pg_aoseg_rel = table_open(segrelid, AccessShareLock);
 
 	result = GetAllFileSegInfo_pg_aoseg_rel(RelationGetRelationName(parentrel),
 											pg_aoseg_rel,
@@ -555,6 +564,9 @@ ClearFileSegInfo(Relation parentrel,
 	bool	   *new_record_nulls;
 	bool	   *new_record_repl;
 	bool		isNull;
+	Oid segrelid;
+
+	GetAppendOnlyEntryAuxOids(parentrel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
 
 	Assert(RelationIsAoRows(parentrel));
 	Assert(newState >= AOSEG_STATE_USECURRENT && newState <= AOSEG_STATE_AWAITING_DROP);
@@ -581,7 +593,7 @@ ClearFileSegInfo(Relation parentrel,
 	/*
 	 * Open the aoseg relation and scan for tuple.
 	 */
-	pg_aoseg_rel = table_open(parentrel->rd_appendonly->segrelid, RowExclusiveLock);
+	pg_aoseg_rel = table_open(segrelid, RowExclusiveLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
 	aoscan = table_beginscan_catalog(pg_aoseg_rel, 0, NULL);
@@ -710,6 +722,9 @@ UpdateFileSegInfo_internal(Relation parentrel,
 	bool	   *new_record_nulls;
 	bool	   *new_record_repl;
 	bool		isNull;
+	Oid segrelid;
+
+	GetAppendOnlyEntryAuxOids(parentrel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
 
 	Assert(RelationIsAoRows(parentrel));
 	Assert(newState >= AOSEG_STATE_USECURRENT && newState <= AOSEG_STATE_AWAITING_DROP);
@@ -731,7 +746,7 @@ UpdateFileSegInfo_internal(Relation parentrel,
 	/*
 	 * Open the aoseg relation and scan for tuple.
 	 */
-	pg_aoseg_rel = table_open(parentrel->rd_appendonly->segrelid, RowExclusiveLock);
+	pg_aoseg_rel = table_open(segrelid, RowExclusiveLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
 	aoscan = table_beginscan_catalog(pg_aoseg_rel, 0, NULL);
@@ -912,6 +927,9 @@ GetSegFilesTotals(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 				varblockcount,
 				state;
 	bool		isNull;
+	Oid segrelid;
+
+	GetAppendOnlyEntryAuxOids(parentrel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
 
 	Assert(RelationIsAoRows(parentrel));	/* doesn't fit for AO column
 											 * store. should implement same
@@ -919,7 +937,7 @@ GetSegFilesTotals(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 
 	result = (FileSegTotals *) palloc0(sizeof(FileSegTotals));
 
-	pg_aoseg_rel = table_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
+	pg_aoseg_rel = table_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
 	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true,
@@ -976,12 +994,15 @@ GetAOTotalBytes(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 	int64		result;
 	Datum		eof;
 	bool		isNull;
+	Oid segrelid;
+
+	GetAppendOnlyEntryAuxOids(parentrel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
 
 	Assert(RelationIsAoRows(parentrel));
 
 	result = 0;
 
-	pg_aoseg_rel = table_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
+	pg_aoseg_rel = table_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
 	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true,
@@ -1032,6 +1053,7 @@ gp_aoseg_history(PG_FUNCTION_ARGS)
 		MemoryContext oldcontext;
 		Relation	aocsRel;
 		Relation	pg_aoseg_rel;
+		Oid segrelid;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -1098,7 +1120,9 @@ gp_aoseg_history(PG_FUNCTION_ARGS)
 					 errmsg("'%s' is not an append-only row relation",
 							RelationGetRelationName(aocsRel))));
 
-		pg_aoseg_rel = table_open(aocsRel->rd_appendonly->segrelid, NoLock);
+		GetAppendOnlyEntryAuxOids(aocsRel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
+
+		pg_aoseg_rel = table_open(segrelid, NoLock);
 
 		context->aoSegfileArray =
 			GetAllFileSegInfo_pg_aoseg_rel(
@@ -1181,13 +1205,16 @@ gp_update_aorow_master_stats_internal(Relation parentrel, Snapshot appendOnlyMet
 	int			ret;
 	int64		total_count = 0;
 	MemoryContext oldcontext = CurrentMemoryContext;
+	Oid segrelid;
 
 	Assert(RelationIsAoRows(parentrel));
+
+	GetAppendOnlyEntryAuxOids(parentrel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
 
 	/*
 	 * assemble our query string
 	 */
-	aosegrel = table_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
+	aosegrel = table_open(segrelid, AccessShareLock);
 
 	initStringInfo(&sqlstmt);
 	appendStringInfo(&sqlstmt, "select segno,sum(tupcount) "
@@ -1366,6 +1393,7 @@ gp_aoseg(PG_FUNCTION_ARGS)
 		MemoryContext oldcontext;
 		Relation	aocsRel;
 		Relation	pg_aoseg_rel;
+		Oid			segrelid;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -1412,7 +1440,9 @@ gp_aoseg(PG_FUNCTION_ARGS)
 					 errmsg("'%s' is not an append-only row relation",
 							RelationGetRelationName(aocsRel))));
 
-		pg_aoseg_rel = table_open(aocsRel->rd_appendonly->segrelid, NoLock);
+		GetAppendOnlyEntryAuxOids(aocsRel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
+
+		pg_aoseg_rel = table_open(segrelid, NoLock);
 
 		Snapshot	snapshot;
 		snapshot = RegisterSnapshot(GetLatestSnapshot());

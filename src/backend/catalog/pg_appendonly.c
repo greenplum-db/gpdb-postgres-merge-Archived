@@ -106,6 +106,119 @@ InsertAppendOnlyEntry(Oid relid,
 
 }
 
+void
+GetAppendOnlyEntryAttributes(Oid relid,
+							 int32 *blocksize,
+							 int32 *safefswritesize,
+							 int16 *compresslevel,
+							 bool *checksum,
+							 NameData *compresstype)
+{
+	Relation	pg_appendonly;
+	TupleDesc	tupDesc;
+	ScanKeyData key[1];
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	bool isNull;
+	Datum dat;
+
+	pg_appendonly = table_open(AppendOnlyRelationId, AccessShareLock);
+	tupDesc = RelationGetDescr(pg_appendonly);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_appendonly_relid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
+
+	scan = systable_beginscan(pg_appendonly, AppendOnlyRelidIndexId, true,
+							  appendOnlyMetaDataSnapshot, 1, key);
+	tuple = systable_getnext(scan);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("missing pg_appendonly entry for relation \"%s\"",
+						get_rel_name(relid))));
+
+	if (blocksize != NULL)
+	{
+		dat = heap_getattr(tuple,
+							  Anum_pg_appendonly_blocksize,
+							  tupDesc,
+							  &isNull);
+		Assert(!isNull);
+		if(isNull)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("got invalid segrelid value: NULL")));
+
+		*blocksize = DatumGetInt32(dat);
+	}
+
+	if (safefswritesize != NULL)
+	{
+		dat = heap_getattr(tuple,
+							  Anum_pg_appendonly_safefswritesize,
+							  tupDesc,
+							  &isNull);
+		Assert(!isNull);
+		if(isNull)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("got invalid segrelid value: NULL")));
+
+		*safefswritesize = DatumGetInt32(dat);
+	}
+
+	if (compresslevel != NULL)
+	{
+		dat = heap_getattr(tuple,
+							  Anum_pg_appendonly_compresslevel,
+							  tupDesc,
+							  &isNull);
+		Assert(!isNull);
+		if(isNull)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("got invalid segrelid value: NULL")));
+
+		*compresslevel = DatumGetInt16(dat);
+	}
+
+	if (checksum != NULL)
+	{
+		dat = heap_getattr(tuple,
+							  Anum_pg_appendonly_checksum,
+							  tupDesc,
+							  &isNull);
+		Assert(!isNull);
+		if(isNull)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("got invalid segrelid value: NULL")));
+
+		*checksum = DatumGetBool(dat);
+	}
+
+	if (compresstype != NULL)
+	{
+		dat = heap_getattr(tuple,
+							  Anum_pg_appendonly_compresstype,
+							  tupDesc,
+							  &isNull);
+		Assert(!isNull);
+		if(isNull)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("got invalid segrelid value: NULL")));
+
+		*compresstype = DatumGetName(dat);
+	}
+
+	/* Finish up scan and close pg_appendonly catalog. */
+	systable_endscan(scan);
+	table_close(pg_appendonly, AccessShareLock);
+}
+
 /*
  * Get the OIDs of the auxiliary relations and their indexes for an appendonly
  * relation.

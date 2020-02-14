@@ -33,6 +33,14 @@ InsertAppendOnlyEntry(Oid relid,
 					  Oid visimaprelid,
 					  Oid visimapidxid);
 
+void
+GetAppendOnlyEntryAttributes(Oid relid,
+							 int32 *blocksize,
+							 int32 *safefswritesize,
+							 int16 *compresslevel,
+							 bool *checksum,
+							 NameData *compresstype);
+
 /*
  * Get the OIDs of the auxiliary relations and their indexes for an appendonly
  * relation.

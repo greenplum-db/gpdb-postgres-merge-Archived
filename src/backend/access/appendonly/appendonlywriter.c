@@ -1316,11 +1316,13 @@ GetTotalTupleCountFromSegments(Relation parentrel,
 	int64	   *total_tupcount = NULL;
 	Oid			save_userid;
 	bool		save_secdefcxt;
+	Oid segrelid;
 
 	/*
 	 * get the name of the aoseg relation
 	 */
-	aosegrel = heap_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
+	GetAppendOnlyEntryAuxOids(parentrel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
+	aosegrel = heap_open(segrelid, AccessShareLock);
 
 	/*
 	 * assemble our query string
@@ -1420,13 +1422,15 @@ get_awaiting_drop_status_from_segments(Relation parentrel)
 	bool	   *awaiting_drop;
 	Oid			save_userid;
 	bool		save_secdefcxt;
+	Oid segrelid;
 
 	Assert(RelationIsAppendOptimized(parentrel));
 
 	/*
 	 * get the name of the aoseg relation
 	 */
-	aosegrel = heap_open(parentrel->rd_appendonly->segrelid, AccessShareLock);
+	GetAppendOnlyEntryAuxOids(parentrel->rd_id, NULL, &segrelid, NULL, NULL, NULL, NULL);
+	aosegrel = heap_open(segrelid, AccessShareLock);
 
 	/*
 	 * assemble our query string
