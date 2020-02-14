@@ -149,64 +149,42 @@ MultiExecBitmapOr(BitmapOrState *node)
 		Node	   *subresult = NULL;
 
 		/*
-		 * We can special-case BitmapIndexScan children to avoid an explicit
-		 * tbm_union step for each child: just pass down the current result
-		 * bitmap and let the child OR directly into it.
+		 * Note for further merge iteration:
+		 *     Greenplum's BitmapIndexScan returns a StreamBitmap
 		 */
-		if (IsA(subnode, BitmapIndexScanState))
+		subresult = MultiExecProcNode(subnode);
+
+		if (subresult == NULL)
+			continue;
+
+		if (!(IsA(subresult, TIDBitmap) ||
+			  IsA(subresult, StreamBitmap)))
+			elog(ERROR, "unrecognized result from subplan");
+
+		if (IsA(subresult, TIDBitmap))
 		{
-			if (result == NULL) /* first subplan */
+			/* if it's a TIDBitmap, union into result */
+			if (result == NULL)
+				result = (TIDBitmap *)subresult;
+			else
 			{
-				/* XXX should we use less than work_mem for this? */
-				result = tbm_create(work_mem * 1024L,
-									((BitmapOr *) node->ps.plan)->isshared ?
-									node->ps.state->es_query_dsa : NULL);
+				tbm_union(result, (TIDBitmap *)subresult);
+				tbm_free(subresult);
 			}
-
-			((BitmapIndexScanState *) subnode)->biss_result = result;
-
-			subresult = (TIDBitmap *) MultiExecProcNode(subnode);
-
-			if (subresult != result)
-				elog(ERROR, "unrecognized result from subplan");
 		}
 		else
 		{
-			/* standard implementation */
-			subresult = (TIDBitmap *) MultiExecProcNode(subnode);
-
-			if (subresult == NULL)
-				continue;
-
-			if (!(IsA(subresult, TIDBitmap) ||
-				  IsA(subresult, StreamBitmap)))
-				elog(ERROR, "unrecognized result from subplan");
-
-			if (IsA(subresult, TIDBitmap))
+			/* if it's a StreamBitmap, union into node->bitmap */
+			if (node->bitmap)
 			{
-				/* if it's a TIDBitmap, union into result */
-				if (result == NULL)
-					result = (TIDBitmap *)subresult;
-				else
+				if (node->bitmap != subresult)
 				{
-					tbm_union(result, (TIDBitmap *)subresult);
-					tbm_free(subresult);
+					StreamBitmap *s = (StreamBitmap *)subresult;
+					stream_move_node((StreamBitmap *)node->bitmap, s, BMS_OR);
 				}
 			}
 			else
-			{
-				/* if it's a StreamBitmap, union into node->bitmap */
-				if (node->bitmap)
-				{
-					if (node->bitmap != subresult)
-					{
-						StreamBitmap *s = (StreamBitmap *)subresult;
-						stream_move_node((StreamBitmap *)node->bitmap, s, BMS_OR);
-					}
-				}
-				else
-					node->bitmap = subresult;
-			}
+				node->bitmap = subresult;
 		}
 	}
 
