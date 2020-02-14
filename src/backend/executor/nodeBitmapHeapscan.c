@@ -164,10 +164,14 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				node->prefetch_pages = 0;
 				node->prefetch_target = -1;
 			}
-#endif	/* USE_PREFETCH */
+#endif							/* USE_PREFETCH */
 		}
 		else
 		{
+			/*
+			 * GPDB_12_MERGE_FIXME the parallel StreamBitmap scan is not
+			 * implemented, it must be a TIDBitmap here
+			 */
 			/*
 			 * The leader will immediately come out of the function, but
 			 * others will be blocked until leader populates the TBM and wakes
@@ -176,8 +180,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			if (BitmapShouldInitializeSharedState(pstate))
 			{
 				tbm = (Node *) MultiExecProcNode(outerPlanState(node));
-
-				if (!tbm || !(IsA(tbm, TIDBitmap) || IsA(tbm, StreamBitmap)))
+				if (!tbm || !IsA(tbm, TIDBitmap))
 					elog(ERROR, "unrecognized result from subplan");
 
 				node->tbm = tbm;
@@ -187,17 +190,12 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				 * dsa_pointer of the iterator state which will be used by
 				 * multiple processes to iterate jointly.
 				 */
-				/*
-				 * GPDB_12_MERGE_FIXME: tbm could be a StreamBitmap, but the
-				 * latest merged BitmapHeapScanState indicated if it goes
-				 * parallel, it must be a TIDBitmap
-				 */
-				pstate->tbmiterator = tbm_prepare_shared_iterate(tbm);
+				pstate->tbmiterator = tbm_prepare_shared_iterate((TIDBitmap *)tbm);
 #ifdef USE_PREFETCH
 				if (node->prefetch_maximum > 0)
 				{
 					pstate->prefetch_iterator =
-						tbm_prepare_shared_iterate(tbm);
+						tbm_prepare_shared_iterate((TIDBitmap *)tbm);
 
 					/*
 					 * We don't need the mutex here as we haven't yet woke up

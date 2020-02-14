@@ -169,7 +169,7 @@ MultiExecBitmapOr(BitmapOrState *node)
 			else
 			{
 				tbm_union(result, (TIDBitmap *)subresult);
-				tbm_free(subresult);
+				tbm_generic_free(subresult);
 			}
 		}
 		else
