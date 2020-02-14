@@ -138,8 +138,6 @@ static Expr *simplify_function(Oid funcid,
 							   bool funcvariadic, bool process_args, bool allow_non_const,
 							   eval_const_expressions_context *context);
 static bool large_const(Expr *expr, Size max_size);
-static List *expand_function_arguments(List *args, Oid result_type,
-						  HeapTuple func_tuple);
 static List *reorder_function_arguments(List *args, HeapTuple func_tuple);
 static List *add_function_defaults(List *args, HeapTuple func_tuple);
 static List *fetch_function_defaults(HeapTuple func_tuple);
@@ -5524,49 +5522,6 @@ flatten_join_alias_var_optimizer(Query *query, int queryLevel)
 {
 	Query *queryNew = (Query *) copyObject(query);
 
-	/* Create a PlannerInfo data structure for this subquery */
-	PlannerInfo *root = makeNode(PlannerInfo);
-	root->parse = queryNew;
-	root->query_level = queryLevel;
-
-	root->glob = makeNode(PlannerGlobal);
-	root->glob->boundParams = NULL;
-	root->glob->subplans = NIL;
-	root->glob->subroots = NIL;
-	root->glob->finalrtable = NIL;
-	root->glob->relationOids = NIL;
-	root->glob->invalItems = NIL;
-	root->glob->nParamExec = 0;
-	root->glob->transientPlan = false;
-	root->glob->nParamExec = 0;
-
-	root->config = DefaultPlannerConfig();
-
-	root->parent_root = NULL;
-	root->planner_cxt = CurrentMemoryContext;
-	root->init_plans = NIL;
-
-	root->list_cteplaninfo = NIL;
-	root->join_info_list = NIL;
-	root->append_rel_list = NIL;
-
-	root->hasJoinRTEs = false;
-
-	ListCell *plc = NULL;
-	foreach(plc, queryNew->rtable)
-	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(plc);
-
-		if (rte->rtekind == RTE_JOIN)
-		{
-			root->hasJoinRTEs = true;
-			if (IS_OUTER_JOIN(rte->jointype))
-			{
-				break;
-			}
-		}
-	}
-
 	/*
 	 * Flatten join alias for expression in
 	 * 1. targetlist
@@ -5593,35 +5548,35 @@ flatten_join_alias_var_optimizer(Query *query, int queryLevel)
 	List *targetList = queryNew->targetList;
 	if (NIL != targetList)
 	{
-		queryNew->targetList = (List *) flatten_join_alias_vars(root, (Node *) targetList);
+		queryNew->targetList = (List *) flatten_join_alias_vars(queryNew, (Node *) targetList);
 		pfree(targetList);
 	}
 
 	List * returningList = queryNew->returningList;
 	if (NIL != returningList)
 	{
-		queryNew->returningList = (List *) flatten_join_alias_vars(root, (Node *) returningList);
+		queryNew->returningList = (List *) flatten_join_alias_vars(queryNew, (Node *) returningList);
 		pfree(returningList);
 	}
 
 	Node *havingQual = queryNew->havingQual;
 	if (NULL != havingQual)
 	{
-		queryNew->havingQual = flatten_join_alias_vars(root, havingQual);
+		queryNew->havingQual = flatten_join_alias_vars(queryNew, havingQual);
 		pfree(havingQual);
 	}
 
 	List *scatterClause = queryNew->scatterClause;
 	if (NIL != scatterClause)
 	{
-		queryNew->scatterClause = (List *) flatten_join_alias_vars(root, (Node *) scatterClause);
+		queryNew->scatterClause = (List *) flatten_join_alias_vars(queryNew, (Node *) scatterClause);
 		pfree(scatterClause);
 	}
 
 	Node *limitOffset = queryNew->limitOffset;
 	if (NULL != limitOffset)
 	{
-		queryNew->limitOffset = flatten_join_alias_vars(root, limitOffset);
+		queryNew->limitOffset = flatten_join_alias_vars(queryNew, limitOffset);
 		pfree(limitOffset);
 	}
 
@@ -5638,17 +5593,17 @@ flatten_join_alias_var_optimizer(Query *query, int queryLevel)
 				continue;
 
 			if (wc->startOffset)
-				wc->startOffset = flatten_join_alias_vars(root, wc->startOffset);
+				wc->startOffset = flatten_join_alias_vars(queryNew, wc->startOffset);
 
 			if (wc->endOffset)
-				wc->endOffset = flatten_join_alias_vars(root, wc->endOffset);
+				wc->endOffset = flatten_join_alias_vars(queryNew, wc->endOffset);
 		}
 	}
 
 	Node *limitCount = queryNew->limitCount;
 	if (NULL != limitCount)
 	{
-		queryNew->limitCount = flatten_join_alias_vars(root, limitCount);
+		queryNew->limitCount = flatten_join_alias_vars(queryNew, limitCount);
 		pfree(limitCount);
 	}
 
