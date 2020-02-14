@@ -2808,6 +2808,9 @@ typedef struct WindowAggState
 	bool		start_offset_var_free;
 	bool		end_offset_var_free;
 
+	bool		start_offset_valid;		/* is startOffsetValue valid for current row? */
+	bool		end_offset_valid;		/* is endOffsetValue valid for current row? */
+
 	/* these fields are used in GROUPS mode: */
 	int64		currentgroup;	/* peer group # of current row in partition */
 	int64		frameheadgroup; /* peer group # of frame head row */

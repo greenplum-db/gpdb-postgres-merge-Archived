@@ -42,7 +42,6 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "optimizer/var.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_oper.h"
@@ -56,6 +55,7 @@
 #include "utils/tuplesort.h"
 #include "windowapi.h"
 
+#include "optimizer/optimizer.h" // for exprType
 #include "parser/parse_expr.h" // for exprType
 
 /*
@@ -225,14 +225,6 @@ static bool window_gettupleslot(WindowObject winobj, int64 pos,
 								TupleTableSlot *slot);
 
 static void compute_start_end_offsets(WindowAggState *winstate);
-static void initialize_range_bound_exprs(WindowAggState *winstate);
-static bool is_within_range_start(WindowAggState *winstate, TupleTableSlot *slot);
-static bool is_within_range_end(WindowAggState *winstate, TupleTableSlot *slot);
-static Datum eval_bound_value(WindowAggState *winstate,
-							  ExprState *boundExpr,
-							  ExprState *offsetIsNegativeExpr,
-							  Datum offset,
-							  bool *isnull);
 
 
 /*
@@ -292,8 +284,6 @@ advance_windowaggregate(WindowAggState *winstate,
 {
 	LOCAL_FCINFO(fcinfo, FUNC_MAX_ARGS);
 	WindowFuncExprState *wfuncstate = perfuncstate->wfuncstate;
-	int			numArguments = perfuncstate->numArguments;
-	Datum		newVal;
 	ListCell   *arg;
 	int			i;
 	MemoryContext oldContext;
@@ -341,12 +331,14 @@ advance_windowaggregate(WindowAggState *winstate,
 		 * For a strict transfn, nothing happens when there's a NULL input; we
 		 * just keep the prior transValue.
 		 */
-		if (peraggstate->transfn.fn_strict && fcinfo->args[1].null)
+		if (peraggstate->transfn.fn_strict && fcinfo->args[1].isnull)
 		{
 			/* skip it */
 		}
 		else
-			tuplesort_putdatum(peraggstate->distinctSortState, fcinfo->args[1].value, fcinfo->args.null[1]);
+			tuplesort_putdatum(peraggstate->distinctSortState,
+							   fcinfo->args[1].value,
+							   fcinfo->args[1].isnull);
 	}
 	else
 		call_transfunc(winstate, perfuncstate, peraggstate, fcinfo);
@@ -683,8 +675,7 @@ perform_distinct_windowaggregate(WindowAggState *winstate,
 								 WindowStatePerFunc perfuncstate,
 								 WindowStatePerAgg peraggstate)
 {
-	FunctionCallInfoData fcinfodata;
-	FunctionCallInfo fcinfo = &fcinfodata;
+	LOCAL_FCINFO(fcinfo, FUNC_MAX_ARGS);
 	Datum		prevDatum = (Datum) 0;
 	bool		prevNull = true;
 	MemoryContext oldcontext;
@@ -695,20 +686,20 @@ perform_distinct_windowaggregate(WindowAggState *winstate,
 
 	/* load the first tuple from spool */
 	if (tuplesort_getdatum(peraggstate->distinctSortState, true,
-						   &fcinfo->args[1].value, &fcinfo->args[1].null, NULL))
+						   &fcinfo->args[1].value, &fcinfo->args[1].isnull, NULL))
 	{
 		call_transfunc(winstate, perfuncstate, peraggstate, fcinfo);
 		prevDatum = fcinfo->args[1].value;
-		prevNull = fcinfo->args[1].null;
+		prevNull = fcinfo->args[1].isnull;
 
 		/* continue loading more tuples */
 		while (tuplesort_getdatum(peraggstate->distinctSortState, true,
-								  &fcinfo->args[1].value, &fcinfo->args[1].null, NULL))
+								  &fcinfo->args[1].value, &fcinfo->args[1].isnull, NULL))
 		{
 			int		cmp;
 
 			cmp = ApplySortComparator(prevDatum, prevNull,
-									  fcinfo->args[1].value, fcinfo->args[1].null,
+									  fcinfo->args[1].value, fcinfo->args[1].isnull,
 									  &peraggstate->distinctComparator);
 			if (cmp < 0)
 			{
@@ -726,7 +717,7 @@ perform_distinct_windowaggregate(WindowAggState *winstate,
 				pfree(DatumGetPointer(prevDatum));
 
 			prevDatum = fcinfo->args[1].value;
-			prevNull = fcinfo->args[1].null;
+			prevNull = fcinfo->args[1].isnull;
 		}
 	}
 
@@ -1021,14 +1012,10 @@ eval_windowaggregates(WindowAggState *winstate)
 		if (winstate->currentpos == 0 ||
 			(winstate->aggregatedbase != winstate->frameheadpos &&
 			 !OidIsValid(peraggstate->invtransfn_oid)) ||
-<<<<<<< HEAD
+			(winstate->frameOptions & FRAMEOPTION_EXCLUSION) ||
 			winstate->aggregatedupto <= winstate->frameheadpos ||
 			frame_head_moved_backwards ||
 			frame_tail_moved_backwards)
-=======
-			(winstate->frameOptions & FRAMEOPTION_EXCLUSION) ||
-			winstate->aggregatedupto <= winstate->frameheadpos)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			peraggstate->restart = true;
 			numaggs_restart++;
@@ -1396,18 +1383,13 @@ begin_partition(WindowAggState *winstate)
 		WindowObject agg_winobj = winstate->agg_winobj;
 		int			readptr_flags = 0;
 
-<<<<<<< HEAD
-		/* If the frame head is potentially movable ... */
-		if (!(winstate->frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING) ||
-			!winstate->end_offset_var_free)
-=======
 		/*
 		 * If the frame head is potentially movable, or we have an EXCLUSION
 		 * clause, we might need to restart aggregation ...
 		 */
 		if (!(frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING) ||
-			(frameOptions & FRAMEOPTION_EXCLUSION))
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			(frameOptions & FRAMEOPTION_EXCLUSION) ||
+			!winstate->end_offset_var_free)
 		{
 			/* ... so create a mark pointer to track the frame head */
 			agg_winobj->markptr = tuplestore_alloc_read_pointer(winstate->buffer, 0);
@@ -1636,31 +1618,11 @@ row_is_in_frame(WindowAggState *winstate, int64 pos, TupleTableSlot *slot)
 	if (pos < winstate->frameheadpos)
 		return 0;
 
-<<<<<<< HEAD
-			/* rows before current row + offset are out of frame */
-			if (frameOptions & FRAMEOPTION_START_VALUE_PRECEDING)
-				offset = -offset;
-
-			if (pos < winstate->currentpos + offset)
-				return false;
-		}
-		else if (frameOptions & FRAMEOPTION_RANGE)
-		{
-			if (!is_within_range_start(winstate, slot))
-				return false;
-		}
-		else
-			Assert(false);
-	}
-
-	/* Okay so far, now check frame ending conditions */
-=======
 	/*
 	 * Okay so far, now check frame ending conditions.  Here, we avoid calling
 	 * update_frametailpos in simple cases, so as not to spool tuples further
 	 * ahead than necessary.
 	 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (frameOptions & FRAMEOPTION_END_CURRENT_ROW)
 	{
 		if (frameOptions & FRAMEOPTION_ROWS)
@@ -1694,15 +1656,10 @@ row_is_in_frame(WindowAggState *winstate, int64 pos, TupleTableSlot *slot)
 		}
 		else if (frameOptions & (FRAMEOPTION_RANGE | FRAMEOPTION_GROUPS))
 		{
-<<<<<<< HEAD
-			if (!is_within_range_end(winstate, slot))
-				return false;
-=======
 			/* hard cases, so delegate to update_frametailpos */
 			update_frametailpos(winstate);
 			if (pos >= winstate->frametailpos)
 				return -1;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		else
 			Assert(false);
@@ -1756,12 +1713,10 @@ update_frameheadpos(WindowAggState *winstate)
 	if (winstate->framehead_valid)
 		return;					/* already known for current row */
 
-<<<<<<< HEAD
-	compute_start_end_offsets(winstate);
-=======
 	/* We may be called in a short-lived context */
 	oldcontext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_query_memory);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	compute_start_end_offsets(winstate);
 
 	if (frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
 	{
@@ -1848,32 +1803,6 @@ update_frameheadpos(WindowAggState *winstate)
 		}
 		else if (frameOptions & FRAMEOPTION_RANGE)
 		{
-<<<<<<< HEAD
-			int64		fhp;
-
-			/*
-			 * Advance the frame head position, until we reach a row that's
-			 * greater than or equal to the boundary.
-			 */
-			if (winstate->start_offset_var_free)
-			{
-				/* the frame head can't go backwards */
-				fhp = winstate->frameheadpos;
-			}
-			else
-				fhp = 0;
-			for (;;)
-			{
-				if (!window_gettupleslot(winobj, fhp, slot))
-					break;
-
-				/* Stop at the first row that is within range */
-				if (is_within_range_start(winstate, slot))
-					break;
-				fhp++;
-			}
-			winstate->frameheadpos = fhp;
-=======
 			/*
 			 * In RANGE START_OFFSET mode, frame head is the first row that
 			 * satisfies the in_range constraint relative to the current row.
@@ -2006,7 +1935,6 @@ update_frameheadpos(WindowAggState *winstate)
 			}
 			ExecClearTuple(winstate->temp_slot_2);
 			winstate->framehead_valid = true;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 		else
 			Assert(false);
@@ -2037,12 +1965,10 @@ update_frametailpos(WindowAggState *winstate)
 	if (winstate->frametail_valid)
 		return;					/* already known for current row */
 
-<<<<<<< HEAD
-	compute_start_end_offsets(winstate);
-=======
 	/* We may be called in a short-lived context */
 	oldcontext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_query_memory);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	compute_start_end_offsets(winstate);
 
 	if (frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING)
 	{
@@ -2061,9 +1987,6 @@ update_frametailpos(WindowAggState *winstate)
 		}
 		else if (frameOptions & (FRAMEOPTION_RANGE | FRAMEOPTION_GROUPS))
 		{
-<<<<<<< HEAD
-			int64		ftnext;
-=======
 			/* If no ORDER BY, all rows are peers with each other */
 			if (node->ordNumCols == 0)
 			{
@@ -2073,7 +1996,6 @@ update_frametailpos(WindowAggState *winstate)
 				MemoryContextSwitchTo(oldcontext);
 				return;
 			}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/*
 			 * In RANGE or GROUPS END_CURRENT_ROW mode, frame end is the last
@@ -2137,40 +2059,6 @@ update_frametailpos(WindowAggState *winstate)
 		}
 		else if (frameOptions & FRAMEOPTION_RANGE)
 		{
-<<<<<<< HEAD
-			int64		ftnext;
-
-			/* If no ORDER BY, all rows are peers with each other */
-			if (node->ordNumCols == 0)
-			{
-				spool_tuples(winstate, -1);
-				winstate->frametailpos = winstate->spooled_rows - 1;
-				winstate->frametail_valid = true;
-				return;
-			}
-
-			/*
-			 * Else we have to search for the first row that's not within
-			 * the boundary. We assume the current value of frametailpos is a lower
-			 * bound on the possible frame tail location, ie, frame tail never
-			 * goes backward.
-			 */
-			if (winstate->end_offset_var_free)
-				ftnext = winstate->frametailpos + 1;
-			else
-				ftnext = 0;
-			for (;;)
-			{
-				if (!window_gettupleslot(winobj, ftnext, slot))
-					break;		/* end of partition */
-
-				if (!is_within_range_end(winstate, slot))
-					break;
-
-				ftnext++;
-			}
-			winstate->frametailpos = ftnext - 1;
-=======
 			/*
 			 * In RANGE END_OFFSET mode, frame end is the last row that
 			 * satisfies the in_range constraint relative to the current row,
@@ -2302,7 +2190,6 @@ update_frametailpos(WindowAggState *winstate)
 					winstate->frametailgroup++;
 			}
 			ExecClearTuple(winstate->temp_slot_2);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			winstate->frametail_valid = true;
 		}
 		else
@@ -2387,13 +2274,12 @@ compute_start_end_offsets(WindowAggState *winstate)
 	if (!winstate->start_offset_valid)
 	{
 		econtext->ecxt_outertuple = winstate->ss.ss_ScanTupleSlot;
-		if (frameOptions & FRAMEOPTION_START_VALUE)
+		if (frameOptions & FRAMEOPTION_START_OFFSET)
 		{
 			Assert(winstate->startOffset != NULL);
 			value = ExecEvalExprSwitchContext(winstate->startOffset,
 											  econtext,
-											  &isnull,
-											  NULL);
+											  &isnull);
 			if (isnull)
 				ereport(ERROR,
 						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -2402,29 +2288,15 @@ compute_start_end_offsets(WindowAggState *winstate)
 			get_typlenbyval(exprType((Node *) winstate->startOffset->expr),
 							&len, &byval);
 			winstate->startOffsetValue = datumCopy(value, byval, len);
-			if (frameOptions & FRAMEOPTION_ROWS)
+			if (frameOptions & (FRAMEOPTION_ROWS | FRAMEOPTION_GROUPS))
 			{
 				/* value is known to be int8 */
 				int64		offset = DatumGetInt64(value);
 
 				if (offset < 0)
 					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					  errmsg("frame starting offset must not be negative")));
-			}
-			else
-			{
-				/*
-				 * For RANGE, compute the boundary, by adding the offset to the
-				 * current row's value. eval_bound_value will also check for
-				 * a negative RANGE.
-				 */
-				winstate->startBoundValue =
-					eval_bound_value(winstate,
-									 winstate->startBound,
-									 winstate->startOffsetIsNegative,
-									 winstate->startOffsetValue,
-									 &winstate->startBoundIsNull);
+							(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
+							 errmsg("frame starting offset must not be negative")));
 			}
 		}
 		winstate->start_offset_valid = true;
@@ -2432,13 +2304,12 @@ compute_start_end_offsets(WindowAggState *winstate)
 	if (!winstate->end_offset_valid)
 	{
 		econtext->ecxt_outertuple = winstate->ss.ss_ScanTupleSlot;
-		if (frameOptions & FRAMEOPTION_END_VALUE)
+		if (frameOptions & FRAMEOPTION_END_OFFSET)
 		{
 			Assert(winstate->endOffset != NULL);
 			value = ExecEvalExprSwitchContext(winstate->endOffset,
 											  econtext,
-											  &isnull,
-											  NULL);
+											  &isnull);
 			if (isnull)
 				ereport(ERROR,
 						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -2447,29 +2318,15 @@ compute_start_end_offsets(WindowAggState *winstate)
 			get_typlenbyval(exprType((Node *) winstate->endOffset->expr),
 							&len, &byval);
 			winstate->endOffsetValue = datumCopy(value, byval, len);
-			if (frameOptions & FRAMEOPTION_ROWS)
+			if (frameOptions & (FRAMEOPTION_ROWS | FRAMEOPTION_GROUPS))
 			{
 				/* value is known to be int8 */
 				int64		offset = DatumGetInt64(value);
 
 				if (offset < 0)
 					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("frame ending offset must not be negative")));
-			}
-			else
-			{
-				/*
-				 * For RANGE, compute the boundary, by adding the offset to the
-				 * current row's value. eval_bound_value will also check for
-				 * a negative RANGE.
-				 */
-				winstate->endBoundValue =
-					eval_bound_value(winstate,
-									 winstate->endBound,
-									 winstate->endOffsetIsNegative,
-									 winstate->endOffsetValue,
-									 &winstate->endBoundIsNull);
+							(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
+							 errmsg("frame ending offset must not be negative")));
 			}
 		}
 		winstate->end_offset_valid = true;
@@ -2512,31 +2369,8 @@ ExecWindowAgg(PlanState *pstate)
 		int16		len;
 		bool		byval;
 
-		if (frameOptions & FRAMEOPTION_START_OFFSET)
-		{
-			Assert(winstate->startOffset != NULL);
-			value = ExecEvalExprSwitchContext(winstate->startOffset,
-											  econtext,
-											  &isnull);
-			if (isnull)
-				ereport(ERROR,
-						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						 errmsg("frame starting offset must not be null")));
-			/* copy value into query-lifespan context */
-			get_typlenbyval(exprType((Node *) winstate->startOffset->expr),
-							&len, &byval);
-			winstate->startOffsetValue = datumCopy(value, byval, len);
-			if (frameOptions & (FRAMEOPTION_ROWS | FRAMEOPTION_GROUPS))
-			{
-				/* value is known to be int8 */
-				int64		offset = DatumGetInt64(value);
+		compute_start_end_offsets(winstate);
 
-				if (offset < 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
-							 errmsg("frame starting offset must not be negative")));
-			}
-		}
 		if (frameOptions & FRAMEOPTION_END_OFFSET)
 		{
 			Assert(winstate->endOffset != NULL);
@@ -2975,17 +2809,6 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	winstate->endOffset = ExecInitExpr((Expr *) node->endOffset,
 									   (PlanState *) winstate);
 
-<<<<<<< HEAD
-	if (node->frameOptions & FRAMEOPTION_RANGE)
-		initialize_range_bound_exprs(winstate);
-
-	winstate->start_offset_var_free =
-		!contain_var_clause(node->startOffset) &&
-		!contain_volatile_functions(node->startOffset);
-	winstate->end_offset_var_free =
-		!contain_var_clause(node->endOffset) &&
-		!contain_volatile_functions(node->endOffset);
-=======
 	/* Lookup in_range support functions if needed */
 	if (OidIsValid(node->startInRangeFunc))
 		fmgr_info(node->startInRangeFunc, &winstate->startInRangeFunc);
@@ -2994,190 +2817,19 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	winstate->inRangeColl = node->inRangeColl;
 	winstate->inRangeAsc = node->inRangeAsc;
 	winstate->inRangeNullsFirst = node->inRangeNullsFirst;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	winstate->start_offset_var_free =
+		!contain_var_clause(node->startOffset) &&
+		!contain_volatile_functions(node->startOffset);
+	winstate->end_offset_var_free =
+		!contain_var_clause(node->endOffset) &&
+		!contain_volatile_functions(node->endOffset);
 
 	winstate->all_first = true;
 	winstate->partition_spooled = false;
 	winstate->more_partitions = false;
 
 	return winstate;
-}
-
-/*
- * Initialize expressions to compute the frame boundaries, for "RANGE
- * <value> PRECEDING/FOLLOWING".
- */
-static void
-initialize_range_bound_exprs(WindowAggState *winstate)
-{
-	WindowAgg  *node = (WindowAgg *) winstate->ss.ps.plan;
-	Oid			cmpFunc;
-	Var		   *cur_row_val;
-	Oid			opfamily;
-	int16		strategy;
-	Oid			typeId;
-	Expr	   *valExpr;
-	Expr	   *expr;
-	int			dir;
-	CaseTestExpr *offset;
-	Oid			inputFunctionOid;
-	uint32		typIOParam;
-	Datum		zero;
-	int16		len;
-	bool		byval;
-
-	if (!(node->frameOptions & (FRAMEOPTION_START_VALUE | FRAMEOPTION_END_VALUE)))
-		return;
-
-	/* the parser should've checked this already, but better safe than sorry */
-	if (node->ordNumCols > 1)
-		elog(ERROR, "RANGE with more than one ORDER BY column allowed");
-
-	/*
-	 * Initialize the ordering comparison function for the ORDER BY column.
-	 * This will be used to compare the computed boundary values against rows
-	 * in the window.
-	 */
-	get_compare_function_for_ordering_op(node->firstOrderCmpOperator,
-										 &cmpFunc,
-										 &winstate->ordReverse);
-	if (!OidIsValid(cmpFunc))
-		elog(ERROR, "could not find comparison function for ordering operator %u",
-			 node->firstOrderCmpOperator);
-	fmgr_info(cmpFunc, &winstate->ordCmpFunction);
-
-	/* Look up the column's datatype. */
-	if (!get_ordering_op_properties(node->firstOrderCmpOperator,
-									&opfamily,
-									&typeId,
-									&strategy))
-		elog(ERROR, "operator %u is not a valid ordering operator",
-			 node->firstOrderCmpOperator);
-
-	/*------
-	 * Build expressions for to compute the boundary values from the current
-	 * row and the offset. The expression is of the form:
-	 *
-	 * "<current row value> + <offset>", for "<value> FOLLOWING", and
-	 * "<current row value> - <offset>", for "<value> PRECEDING".
-	 *
-	 * (For DESC, they are reversed.)
-	 *
-	 * In the expression, we use a Var with OUTER_VAR to represent the current
-	 * row's value. The parser has stored the expression representing the
-	 * offset in node->start/endOffset, and we will store the expression for
-	 * the +/- in winstate->start/endOffset.
-	 *
-	 * In these expressions, we use CaseTestExpr to represent the <offset>. We
-	 * could use the start/endOffset expression directly, but we also want to
-	 * check that the offset is not negative. So at runtime, we first execute
-	 * the startOffset expression, to produce the offset value. Then we check
-	 * that it's not negative, stick it in the case-value, and execute the
-	 * start/endBound expression to produce the boundary value.
-	 *
-	 * At runtime, the boundary value is executed whenever the current row
-	 * changes, and the result is compared against other rows to determine
-	 * whether they are in the frame.
-	 *
-	 * The RANGE offset is not allowed to be negative. The code itself
-	 * could handle it, but it's forbidden by the spec, and GPDB has
-	 * historically rejected it, too. So we have to prepare an expression
-	 * to check that too. It is a bit hacky, because there is no datatype
-	 * agnostic way to determine what "negative" means. What we do is convert
-	 * the string "0" to the column's datatype, by calling the input function,
-	 * and then compare against that.
-	 *
-	 * There's a similar check in parse_clause.c, for the simple case
-	 * that the parameter is a Const. Make sure this matches!
-	 *------
-	 */
-	cur_row_val = makeVar(OUTER_VAR, node->firstOrderCol, typeId, -1, InvalidOid, 0);
-
-	if (node->frameOptions & FRAMEOPTION_START_VALUE)
-	{
-		dir = (node->frameOptions & FRAMEOPTION_START_VALUE_PRECEDING) ? -1 : 1;
-		if (strategy == BTGreaterStrategyNumber)
-			dir = -dir;
-
-		offset = makeNode(CaseTestExpr);
-		offset->typeId = exprType(node->startOffset);
-		offset->typeMod = exprTypmod(node->startOffset);
-
-		valExpr = make_op(NULL,
-						  list_make1(makeString(dir == 1 ? "+" : "-")),
-						  (Node *) cur_row_val,
-						  (Node *) offset,
-						  -1);
-
-		/* Coerce the expression to the same datatype as the column. */
-		valExpr = (Expr *) coerce_to_specific_type(NULL,
-												   (Node *) valExpr,
-												   typeId,
-												   "RANGE");
-
-		winstate->startBound = ExecInitExpr(valExpr,
-											(PlanState *) winstate);
-
-		/* Create a datum to represent 0 */
-		getTypeInputInfo(offset->typeId, &inputFunctionOid, &typIOParam);
-		zero = OidInputFunctionCall(inputFunctionOid, "0", typIOParam, -1);
-
-		get_typlenbyval(offset->typeId, &len, &byval);
-		expr = make_op(NULL,
-					   list_make1(makeString("<")),
-					   (Node *) offset,
-					   (Node *) makeConst(offset->typeId,
-										  offset->typeMod,
-										  exprCollation(node->startOffset),
-										  len,
-										  zero,
-										  false,
-										  byval),
-					   -1);
-		winstate->startOffsetIsNegative = ExecInitExpr(expr,
-													   (PlanState *) winstate);
-	}
-	if (node->frameOptions & FRAMEOPTION_END_VALUE)
-	{
-		dir = (node->frameOptions & FRAMEOPTION_END_VALUE_PRECEDING) ? -1 : 1;
-		if (strategy == BTGreaterStrategyNumber)
-			dir = -dir;
-
-		offset = makeNode(CaseTestExpr);
-		offset->typeId = exprType(node->endOffset);
-		offset->typeMod = exprTypmod(node->endOffset);
-
-		valExpr = make_op(NULL,
-						  list_make1(makeString(dir == 1 ? "+" : "-")),
-						  (Node *) cur_row_val,
-						  (Node *) offset,
-						  -1);
-		valExpr = (Expr *) coerce_to_specific_type(NULL,
-												   (Node *) valExpr,
-												   typeId,
-												   "RANGE");
-		winstate->endBound = ExecInitExpr(valExpr,
-										  (PlanState *) winstate);
-
-		/* Create a datum to represent 0 */
-		getTypeInputInfo(offset->typeId, &inputFunctionOid, &typIOParam);
-		zero = OidInputFunctionCall(inputFunctionOid, "0", typIOParam, -1);
-
-		get_typlenbyval(offset->typeId, &len, &byval);
-		expr = make_op(NULL,
-					   list_make1(makeString("<")),
-					   (Node *) offset,
-					   (Node *) makeConst(offset->typeId,
-										  offset->typeMod,
-										  exprCollation(node->endOffset),
-										  len,
-										  zero,
-										  false,
-										  byval),
-					   -1);
-		winstate->endOffsetIsNegative = ExecInitExpr(expr,
-													 (PlanState *) winstate);
-	}
 }
 
 /* -----------------
@@ -3610,152 +3262,6 @@ are_peers(WindowAggState *winstate, TupleTableSlot *slot1,
 	econtext->ecxt_innertuple = slot2;
 	return ExecQualAndReset(winstate->ordEqfunction, econtext);
 }
-
-/*
- * Compute new boundary value.
- *
- * The current row is assumed to be in ss_ScanTupleSlot.
- */
-static Datum
-eval_bound_value(WindowAggState *winstate,
-				 ExprState *boundExpr,
-				 ExprState *offsetIsNegativeExpr,
-				 Datum offset,
-				 bool *isnull_p)
-{
-	ExprContext *econtext = winstate->ss.ps.ps_ExprContext;
-	Datum		result;
-	Datum		save_datum;
-	bool		save_isNull;
-	Datum		neg_datum;
-	bool		neg_isnull;
-
-	save_datum = econtext->caseValue_datum;
-	save_isNull = econtext->caseValue_isNull;
-
-	econtext->caseValue_datum = offset;
-	econtext->caseValue_isNull = false;
-
-	/* First check that the offset was not negative. */
-	neg_datum = ExecEvalExpr(offsetIsNegativeExpr,
-							 econtext, &neg_isnull, NULL);
-	if (neg_isnull)
-		elog(ERROR, "comparison of RANGE offset against 0 returned NULL");
-	if (DatumGetBool(neg_datum))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("RANGE parameter cannot be negative")));
-
-	/* Evaluate the bound expression. */
-	result = ExecEvalExprSwitchContext(boundExpr,
-									   econtext,
-									   isnull_p,
-									   NULL);
-
-	econtext->caseValue_datum = save_datum;
-	econtext->caseValue_isNull = save_isNull;
-
-	return result;
-}
-
-static bool
-is_within_range_start(WindowAggState *winstate, TupleTableSlot *slot)
-{
-	WindowAgg  *node = (WindowAgg *) winstate->ss.ps.plan;
-	Datum		value;
-	bool		isnull;
-	int32		compare;
-
-	Assert(winstate->start_offset_valid);
-
-	/* We have a boundary value now. Compare the given tuple against it. */
-	value = slot_getattr(slot,
-						 node->firstOrderCol,
-						 &isnull);
-
-	if (winstate->startBoundIsNull)
-	{
-		/*
-		 * The SQL spec says:
-		 *
-		 * If VSK is the null value and if NULLS LAST is specified or implied, then
-		 * remove from WF all rows R2 such that the value of SK in row R2 is not the
-		 * null value.
-		 */
-		if (!isnull && !node->firstOrderNullsFirst)
-			return false;
-		else
-			return true;
-	}
-	else
-	{
-		if (isnull)
-		{
-			if (node->firstOrderNullsFirst)
-				return false;
-			else
-				return true;
-		}
-
-		compare = DatumGetInt32(FunctionCall2(&winstate->ordCmpFunction,
-											  winstate->startBoundValue,
-											  value));
-
-		if (winstate->ordReverse)
-			compare = -compare;
-
-		return (compare <= 0);
-	}
-}
-
-static bool
-is_within_range_end(WindowAggState *winstate, TupleTableSlot *slot)
-{
-	WindowAgg  *node = (WindowAgg *) winstate->ss.ps.plan;
-	Datum		value;
-	bool		isnull;
-	int32		compare;
-
-	Assert(winstate->end_offset_valid);
-
-	/* We have a boundary value now. Compare the given tuple against it. */
-	value = slot_getattr(slot,
-						 node->firstOrderCol,
-						 &isnull);
-	if (winstate->endBoundIsNull)
-	{
-		/*
-		 * The SQL spec says:
-		 *
-		 * If VSK is the null value and if NULLS FIRST is specified or implied, then
-		 * remove from WF all rows R2 such that the value of SK in row R2 is not the
-		 * null value.
-		 */
-		if (!isnull && node->firstOrderNullsFirst)
-			return false;
-		else
-			return true;
-	}
-	else
-	{
-		if (isnull)
-		{
-			if (!node->firstOrderNullsFirst)
-				return false;
-			else
-				return true;
-		}
-
-		compare = DatumGetInt32(FunctionCall2(&winstate->ordCmpFunction,
-											  winstate->endBoundValue,
-											  value));
-		if (winstate->ordReverse)
-			compare = -compare;
-
-		return (compare >= 0);
-	}
-}
-
 
 /*
  * window_gettupleslot
