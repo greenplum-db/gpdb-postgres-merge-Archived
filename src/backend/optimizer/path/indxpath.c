@@ -807,9 +807,10 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		 * only consider bitmap paths because they are processed in TID order.
 		 * The appendonlyam.c module will optimize fetches in TID order by keeping
 		 * the last decompressed block between fetch calls.
+		 *
+		 * GPDB_12_MERGE_FIXME: no relstorage in RelOptInfo anymore...
 		 */
-		if (index->amhasgettuple &&
-			rel->relstorage == RELSTORAGE_HEAP)
+		if (index->amhasgettuple /* && rel->relstorage == RELSTORAGE_HEAP */)
 			add_path(rel, (Path *) ipath);
 
 		if (index->amhasgetbitmap &&

@@ -758,6 +758,7 @@ try_partial_mergejoin_path(PlannerInfo *root,
 										   pathkeys,
 										   NULL,
 										   mergeclauses,
+										   extra->redistribution_clauses,
 										   outersortkeys,
 										   innersortkeys));
 }
@@ -1156,6 +1157,10 @@ generate_mergejoin_paths(PlannerInfo *root,
 	int			num_sortkeys;
 	int			sortkeycnt;
 
+	/* The merge join executor code doesn't support LASJ_NOTIN */
+	if (jointype == JOIN_LASJ_NOTIN)
+		return;
+
 	if (jointype == JOIN_UNIQUE_OUTER || jointype == JOIN_UNIQUE_INNER)
 		jointype = JOIN_INNER;
 
@@ -1185,10 +1190,6 @@ generate_mergejoin_paths(PlannerInfo *root,
 		list_length(mergeclauses) != list_length(extra->mergeclause_list))
 		return;
 
-	/* The merge join executor code doesn't support LASJ_NOTIN */
-	if (jointype == JOIN_LASJ_NOTIN)
-		continue;
-
 	/* Compute the required ordering of the inner path */
 	innersortkeys = make_inner_pathkeys_for_merge(root,
 												  mergeclauses,
@@ -1209,6 +1210,7 @@ generate_mergejoin_paths(PlannerInfo *root,
 					   NIL,
 					   innersortkeys,
 					   jointype,
+					   save_jointype,
 					   extra,
 					   is_partial);
 
@@ -1306,6 +1308,7 @@ generate_mergejoin_paths(PlannerInfo *root,
 							   NIL,
 							   NIL,
 							   jointype,
+							   save_jointype,
 							   extra,
 							   is_partial);
 			cheapest_total_inner = innerpath;
@@ -1753,7 +1756,6 @@ hash_inner_and_outer(PlannerInfo *root,
 	bool		isouterjoin = IS_OUTER_JOIN(jointype);
 	List	   *hashclauses;
 	ListCell   *l;
-	JoinType	save_jointype = jointype;
 
 	if (jointype == JOIN_DEDUP_SEMI || jointype == JOIN_DEDUP_SEMI_REVERSE)
 		jointype = JOIN_INNER;
