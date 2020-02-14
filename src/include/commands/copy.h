@@ -36,7 +36,7 @@ typedef enum CopyDest
 } CopyDest;
 
 /* CopyStateData is private in commands/copy.c */
-typedef int (*copy_data_source_cb) (void *outbuf, int datasize, void *extra);
+typedef int (*copy_data_source_cb) (void *outbuf, int minread, int maxread, void *extra);
 
 /*
  *	Represents the end-of-line terminator type of the input
@@ -294,8 +294,7 @@ extern void ProcessCopyOptions(ParseState *pstate, CopyState cstate, bool is_fro
 extern CopyState BeginCopyFrom(ParseState *pstate, Relation rel, const char *filename,
 							   bool is_program, copy_data_source_cb data_source_cb,
 							   void *data_source_cb_extra,
-							   List *attnamelist, List *options,
-							   List *ao_segnos);
+							   List *attnamelist, List *options);
 extern CopyState BeginCopy(ParseState *pstate, bool is_from, Relation rel,
 						   RawStmt *raw_query, Oid queryRelId,
 						   List *attnamelist, List *options,
@@ -309,6 +308,8 @@ extern bool NextCopyFrom(CopyState cstate, ExprContext *econtext,
 extern bool NextCopyFromRawFields(CopyState cstate,
 								  char ***fields, int *nfields);
 extern void CopyFromErrorCallback(void *arg);
+
+extern uint64 CopyFrom(CopyState cstate);
 
 extern DestReceiver *CreateCopyDestReceiver(void);
 

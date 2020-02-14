@@ -1439,7 +1439,8 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 							relform1->relhasindex,
 							relform1->relfrozenxid,
 							relform1->relminmxid,
-							false);
+							false,
+							true /* isvacuum */);
 		relation_close(rel, AccessShareLock);
 	}
 	/* Clean up. */

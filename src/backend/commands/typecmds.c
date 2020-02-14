@@ -53,7 +53,6 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_range.h"
 #include "catalog/pg_type.h"
-#include "catalog/pg_type_encoding.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "commands/typecmds.h"
@@ -78,6 +77,7 @@
 #include "utils/syscache.h"
 
 #include "catalog/oid_dispatch.h"
+#include "catalog/pg_type_encoding.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
 
@@ -3897,7 +3897,7 @@ AlterType(AlterTypeStmt *stmt)
 
 	/* check permissions on type */
 	if (!pg_type_ownercheck(typid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
+		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_TYPE,
 					   format_type_be(typid));
 
 	encoding = transformStorageEncodingClause(stmt->encoding);
@@ -3934,8 +3934,7 @@ AlterType(AlterTypeStmt *stmt)
 		newtuple = heap_modify_tuple(tup, RelationGetDescr(pgtypeenc),
 									 values, nulls, replaces);
 
-		simple_heap_update(pgtypeenc, &tup->t_self, newtuple);
-		CatalogUpdateIndexes(pgtypeenc, newtuple);
+		CatalogTupleUpdate(pgtypeenc, &tup->t_self, newtuple);
 	}
 	else
 	{

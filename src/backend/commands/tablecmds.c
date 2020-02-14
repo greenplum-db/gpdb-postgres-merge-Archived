@@ -16155,6 +16155,8 @@ ATExecExpandTableCTAS(AlterTableCmd *rootCmd, Relation rel, AlterTableCmd *cmd)
 		performDeletion(&object, DROP_RESTRICT, 0);
 	}
 
+	// GDPB_12_MERGE_FIXME: removed by PR 790, I hope that gets pushed.
+#if 0
 	if (relstorage_is_ao(relstorage) && IS_QUERY_DISPATCHER())
 	{
 		/*
@@ -16173,6 +16175,7 @@ ATExecExpandTableCTAS(AlterTableCmd *rootCmd, Relation rel, AlterTableCmd *cmd)
 		AORelRemoveHashEntry(relid);
 		LWLockRelease(AOSegFileLock);
 	}
+#endif
 }
 
 /*

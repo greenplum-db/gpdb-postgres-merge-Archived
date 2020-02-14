@@ -896,7 +896,8 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 							hasindex,
 							InvalidTransactionId,
 							InvalidMultiXactId,
-							in_outer_xact);
+							in_outer_xact,
+							false /* isVacuum */);
 	}
 
 	/*
@@ -943,7 +944,8 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 								false,
 								InvalidTransactionId,
 								InvalidMultiXactId,
-								in_outer_xact);
+								in_outer_xact,
+								false /* isVacuum */);
 		}
 	}
 

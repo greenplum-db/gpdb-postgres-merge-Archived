@@ -1460,6 +1460,8 @@ DefineIndex(Oid relationId,
 						if (!cldidx->rd_index->indisvalid)
 							invalidate_parent = true;
 
+						/* GPDB_12_MERGE_FIXME: legacy partitioning stuff. Can be removed? */
+#if 0
 						if (shouldDispatch)
 						{
 							AlterTableCmd *altertableCmd = makeNode(AlterTableCmd);
@@ -1489,6 +1491,7 @@ DefineIndex(Oid relationId,
 														GetAssignedOidsForDispatch(),
 														NULL);
 						}
+#endif
 
 						found = true;
 						/* keep lock till commit */

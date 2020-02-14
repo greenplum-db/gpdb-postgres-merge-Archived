@@ -16,6 +16,7 @@
 #define PG_TYPE_ENCODING_H
 
 #include "catalog/genbki.h"
+#include "catalog/pg_type_encoding_d.h"
 
 /* ----------------
  *		pg_type_encoding definition.  cpp turns this into

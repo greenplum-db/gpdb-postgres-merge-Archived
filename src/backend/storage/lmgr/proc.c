@@ -2143,7 +2143,7 @@ ResProcSleep(LOCKMODE lockmode, LOCALLOCK *locallock, void *incrementSet)
 	/*
 	 * Sleep on the semaphore.
 	 */
-	PGSemaphoreLock(&MyProc->sem);
+	PGSemaphoreLock(MyProc->sem);
 
 	if (LockTimeout > 0)
 	{
@@ -2208,7 +2208,7 @@ ResLockWaitCancel(void)
 	 * scenario where someone else granted us the lock we wanted before we
 	 * were able to remove ourselves from the wait-list.
 	 */
-	PGSemaphoreReset(&MyProc->sem);
+	PGSemaphoreReset(MyProc->sem);
 
 	return;
 }

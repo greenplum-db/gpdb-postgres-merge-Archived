@@ -219,7 +219,6 @@ static void EndCopyTo(CopyState cstate, uint64 *processed);
 static uint64 DoCopyTo(CopyState cstate);
 static uint64 CopyToDispatch(CopyState cstate);
 static uint64 CopyTo(CopyState cstate);
-static uint64 CopyFrom(CopyState cstate);
 static uint64 CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt);
 static uint64 CopyToQueryOnSegment(CopyState cstate);
 static bool CopyReadLine(CopyState cstate);
@@ -841,7 +840,8 @@ CopyGetData(CopyState cstate, void *databuf, int datasize)
 			}
 			break;
 		case COPY_CALLBACK:
-			bytesread = cstate->data_source_cb(databuf, datasize, cstate->data_source_cb_extra);
+			bytesread = cstate->data_source_cb(databuf, datasize, datasize,
+											   cstate->data_source_cb_extra);
 			break;
 	}
 
@@ -3944,7 +3944,7 @@ CopyMultiInsertInfoStore(CopyMultiInsertInfo *miinfo, ResultRelInfo *rri,
 /*
  * Copy FROM file to relation.
  */
-static uint64
+uint64
 CopyFrom(CopyState cstate)
 {
 	ResultRelInfo *resultRelInfo;
@@ -5060,8 +5060,7 @@ BeginCopyFrom(ParseState *pstate,
 			  copy_data_source_cb data_source_cb,
 			  void *data_source_cb_extra,
 			  List *attnamelist,
-			  List *options,
-			  List *ao_segnos)
+			  List *options)
 {
 	CopyState	cstate;
 	TupleDesc	tupDesc;
@@ -5268,65 +5267,6 @@ BeginCopyFrom(ParseState *pstate,
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is a directory", filename)));
-		}
-	}
-
-	/*
-	 * Append Only Tables.
-	 *
-	 * If QD, build a list of all the relations (relids) that may get data
-	 * inserted into them as a part of this operation. This includes
-	 * the relation specified in the COPY command, plus any partitions
-	 * that it may have. Then, call assignPerRelSegno to assign a segfile
-	 * number to insert into each of the Append Only relations that exists
-	 * in this global list. We generate the list now and save it in cstate.
-	 *
-	 * If QE - get the QD generated list from CopyStmt and each relation can
-	 * find it's assigned segno by looking at it (during CopyFrom).
-	 *
-	 * Utility mode always builds a one single mapping.
-	 */
-	bool		shouldDispatch = (Gp_role == GP_ROLE_DISPATCH &&
-								  rel->rd_cdbpolicy != NULL);
-	if (shouldDispatch)
-	{
-		Oid			relid = RelationGetRelid(cstate->rel);
-		List	   *all_relids = NIL;
-
-		all_relids = lappend_oid(all_relids, relid);
-
-		// GPDB_12_MERGE_FIXME: How are we going to do this with new partitioning implementation?
-#if 0
-		if (rel_is_partitioned(relid))
-		{
-			PartitionNode *pn = RelationBuildPartitionDesc(cstate->rel, false);
-			all_relids = list_concat(all_relids, all_partition_relids(pn));
-		}
-#endif
-
-		cstate->ao_segnos = assignPerRelSegno(all_relids);
-	}
-	else
-	{
-		if (ao_segnos)
-		{
-			/* We must be a QE if we received the aosegnos config */
-			Assert(Gp_role == GP_ROLE_EXECUTE);
-			cstate->ao_segnos = ao_segnos;
-		}
-		else
-		{
-			/*
-			 * utility mode (or dispatch mode for no policy table).
-			 * create a one entry map for our one and only relation
-			 */
-			if (RelationIsAoRows(cstate->rel) || RelationIsAoCols(cstate->rel))
-			{
-				SegfileMapNode *n = makeNode(SegfileMapNode);
-				n->relid = RelationGetRelid(cstate->rel);
-				n->segno = SetSegnoForWrite(cstate->rel, InvalidFileSegNumber);
-				cstate->ao_segnos = lappend(cstate->ao_segnos, n);
-			}
 		}
 	}
 

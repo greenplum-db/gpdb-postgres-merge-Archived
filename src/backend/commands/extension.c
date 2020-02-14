@@ -3317,7 +3317,10 @@ ApplyExtensionUpdates(Oid extensionOid,
 			{
 				AlterExtensionStmt *update_stmt = makeNode(AlterExtensionStmt);
 				update_stmt->extname = pcontrol->name;
-				update_stmt->options = lappend(NIL, makeDefElem("new_version", (Node*)makeString(versionName)));
+				update_stmt->options = lappend(NIL,
+											   makeDefElem("new_version",
+														   (Node *) makeString(versionName),
+														   -1));
 				update_stmt->update_ext_state = UPDATE_EXTENSION_BEGIN;
 				stmt = (Node*)update_stmt;
 				CdbDispatchUtilityStatement(stmt,
