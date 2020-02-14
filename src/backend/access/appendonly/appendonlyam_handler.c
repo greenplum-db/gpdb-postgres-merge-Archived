@@ -1270,7 +1270,7 @@ appendonly_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate
  *
  * 2. The tuple might not even be legal for the new table; this is
  * currently only known to happen as an after-effect of ALTER TABLE
- * SET WITHOUT OIDS.
+ * SET WITHOUT OIDS. GPDB_12_MERGE_FIXME: oids are not a thing anymore
  *
  * So, we must reconstruct the tuple from component Datums.
  */

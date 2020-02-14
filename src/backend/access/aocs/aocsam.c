@@ -128,7 +128,7 @@ open_ds_write(Relation rel, DatumStreamWrite **ds, TupleDesc relationTupleDesc,
 	/* open datum streams.  It will open segment file underneath */
 	for (int i = 0; i < nvp; ++i)
 	{
-		Form_pg_attribute attr = relationTupleDesc->attrs[i];
+		Form_pg_attribute attr = TupleDescAttr(relationTupleDesc, i);
 		char	   *ct;
 		int32		clvl;
 		int32		blksz;
@@ -188,7 +188,7 @@ open_ds_read(Relation rel, DatumStreamRead **ds, TupleDesc relationTupleDesc,
 	for (i = 0; i < num_proj_atts; i++)
 	{
 		int			attno = proj_atts[i];
-		Form_pg_attribute attr = relationTupleDesc->attrs[attno];
+		Form_pg_attribute attr = TupleDescAttr(relationTupleDesc, attno);
 		char	   *ct;
 		int32		clvl;
 		int32		blksz;
@@ -717,7 +717,7 @@ ReadNext:
 		scan->cdb_fake_ctid = *((ItemPointer) &aoTupleId);
 
 		TupSetVirtualTupleNValid(slot, ncol);
-		slot_set_ctid(slot, &(scan->cdb_fake_ctid));
+		slot->tts_tid = scan->cdb_fake_ctid;
 		return true;
 	}
 
@@ -884,16 +884,11 @@ aocs_insert_init(Relation rel, int segno, bool update_mode)
 }
 
 
-Oid
+void
 aocs_insert_values(AOCSInsertDesc idesc, Datum *d, bool *null, AOTupleId *aoTupleId)
 {
 	Relation	rel = idesc->aoi_rel;
 	int			i;
-
-	if (rel->rd_rel->relhasoids)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("append-only column-oriented tables do not support rows with OIDs")));
 
 #ifdef FAULT_INJECTOR
 	FaultInjector_InjectFaultIfSet(
@@ -988,8 +983,6 @@ aocs_insert_values(AOCSInsertDesc idesc, Datum *d, bool *null, AOTupleId *aoTupl
 		Assert(firstSequence == idesc->lastSequence + 1);
 		idesc->numSequences = NUM_FAST_SEQUENCES;
 	}
-
-	return InvalidOid;
 }
 
 void
@@ -1077,8 +1070,8 @@ fetchFromCurrentBlock(AOCSFetchDesc aocsFetchDesc,
 
 	if (slot != NULL)
 	{
-		Datum	   *values = slot_get_values(slot);
-		bool	   *nulls = slot_get_isnull(slot);
+		Datum	   *values = slot->tts_values;
+		bool	   *nulls = slot->ttts_isnull;
 		int			formatversion = datumStream->ao_read.formatVersion;
 
 		datumstreamread_get(datumStream, &(values[colno]), &(nulls[colno]));
@@ -1274,7 +1267,7 @@ aocs_fetch_init(Relation relation,
 			appendStringInfo(&titleBuf, "Fetch from Append-Only Column-Oriented relation '%s', column #%d '%s'",
 							 RelationGetRelationName(relation),
 							 colno + 1,
-							 NameStr(tupleDesc->attrs[colno]->attname));
+							 NameStr(TupleDescAttr(tupleDesc, colno)->attname));
 
 			aocsFetchDesc->datumStreamFetchDesc[colno] = (DatumStreamFetchDesc)
 				palloc0(sizeof(DatumStreamFetchDescData));
@@ -1287,7 +1280,7 @@ aocs_fetch_init(Relation relation,
 																		 * down pg_appendonly
 																		 * column */
 									   blksz,
-									   tupleDesc->attrs[colno],
+									   TupleDescAttr(tupleDesc, colno),
 									   relation->rd_rel->relname.data,
 									    /* title */ titleBuf.data);
 
@@ -1483,7 +1476,7 @@ aocs_fetch(AOCSFetchDesc aocsFetchDesc,
 		if (slot != NULL)
 		{
 			TupSetVirtualTupleNValid(slot, colno);
-			slot_set_ctid(slot, (ItemPointer) aoTupleId);
+			slot->tts_tid = *(ItemPointer) aoTupleId);
 		}
 	}
 	else
@@ -1585,12 +1578,11 @@ aocs_update_finish(AOCSUpdateDesc desc)
 	pfree(desc);
 }
 
-HTSU_Result
+TM_Result
 aocs_update(AOCSUpdateDesc desc, TupleTableSlot *slot,
 			AOTupleId *oldTupleId, AOTupleId *newTupleId)
 {
-	Oid oid;
-	HTSU_Result result;
+	TM_Result result;
 
 	Assert(desc);
 	Assert(oldTupleId);
@@ -1606,14 +1598,13 @@ aocs_update(AOCSUpdateDesc desc, TupleTableSlot *slot,
 #endif
 
 	result = AppendOnlyVisimapDelete_Hide(&desc->visiMapDelete, oldTupleId);
-	if (result != HeapTupleMayBeUpdated)
+	if (result != TM_Ok)
 		return result;
 
 	slot_getallattrs(slot);
-	oid = aocs_insert_values(desc->insertDesc,
-							 slot->tts_values, slot_tts_isnull,
-							 newTupleId);
-	(void) oid;					/* ignore the oid value */
+	aocs_insert_values(desc->insertDesc,
+					   slot->tts_values, slot->tts_isnull,
+					   newTupleId);
 
 	return result;
 }
@@ -1685,7 +1676,7 @@ aocs_delete_finish(AOCSDeleteDesc aoDeleteDesc)
 	pfree(aoDeleteDesc);
 }
 
-HTSU_Result
+TM_Result
 aocs_delete(AOCSDeleteDesc aoDeleteDesc,
 			AOTupleId *aoTupleId)
 {
@@ -1813,7 +1804,7 @@ aocs_addcol_init(Relation rel,
 	iattr = rel->rd_att->natts - num_newcols;
 	for (i = 0; i < num_newcols; ++i, ++iattr)
 	{
-		Form_pg_attribute attr = rel->rd_att->attrs[iattr];
+		Form_pg_attribute attr = TupleDescAttr(rel->rd_att, iattr);
 
 		initStringInfo(&titleBuf);
 		appendStringInfo(&titleBuf, "ALTER TABLE ADD COLUMN new segfile");

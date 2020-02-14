@@ -15,6 +15,8 @@
 
 #include "postgres.h"
 
+#include <math.h>
+
 #include "cdb/cdbappendonlystorage.h"
 #include "access/aomd.h"
 #include "access/heapam.h"

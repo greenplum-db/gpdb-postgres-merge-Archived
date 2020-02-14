@@ -257,7 +257,7 @@ AOCSMoveTuple(TupleTableSlot *slot,
 	Assert(slot);
 	Assert(estate);
 
-	oldAoTupleId = (AOTupleId *) slot_get_ctid(slot);
+	oldAoTupleId = (AOTupleId *) &slot->tts_tid;
 	/* Extract all the values of the tuple */
 	slot_getallattrs(slot);
 
@@ -337,7 +337,8 @@ AOCSSegmentFileFullCompaction(Relation aorel,
 								   &compact_segno, 1, NULL, proj);
 
 	tupDesc = RelationGetDescr(aorel);
-	slot = MakeSingleTupleTableSlot(tupDesc);
+	// GPDB_12_MERGE_FIXME: Or TTSOpsVirtual?
+	slot = MakeSingleTupleTableSlot(tupDesc, &TTSOpsMemTuple);
 	mt_bind = create_memtuple_binding(tupDesc);
 
 	/*
@@ -358,7 +359,7 @@ AOCSSegmentFileFullCompaction(Relation aorel,
 	{
 		CHECK_FOR_INTERRUPTS();
 
-		aoTupleId = (AOTupleId *) slot_get_ctid(slot);
+		aoTupleId = (AOTupleId *) &slot->tts_tid;
 		if (AppendOnlyVisimap_IsVisible(&scanDesc->visibilityMap, aoTupleId))
 		{
 			AOCSMoveTuple(slot,
@@ -370,9 +371,7 @@ AOCSSegmentFileFullCompaction(Relation aorel,
 		else
 		{
 			/* Tuple is invisible and needs to be dropped */
-			AppendOnlyThrowAwayTuple(aorel,
-									 slot,
-									 mt_bind);
+			AppendOnlyThrowAwayTuple(aorel, slot);
 		}
 
 		/*
