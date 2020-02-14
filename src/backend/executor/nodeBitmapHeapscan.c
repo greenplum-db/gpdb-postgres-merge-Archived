@@ -164,7 +164,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				node->prefetch_pages = 0;
 				node->prefetch_target = -1;
 			}
-#endif							/* USE_PREFETCH */
+#endif	/* USE_PREFETCH */
 		}
 		else
 		{
