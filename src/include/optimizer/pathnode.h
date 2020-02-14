@@ -258,15 +258,14 @@ extern TupleSplitPath *create_tup_split_path(PlannerInfo *root,
                                              Bitmapset **bitmapset,
                                              int numDisDQAs);
 extern GroupingSetsPath *create_groupingsets_path(PlannerInfo *root,
-						 RelOptInfo *rel,
-						 Path *subpath,
-						 PathTarget *target,
-						 AggSplit aggsplit,
-						 List *having_qual,
-						 List *rollup_lists,
-						 List *rollup_groupclauses,
-						 const AggClauseCosts *agg_costs,
-						 double numGroups);
+												  RelOptInfo *rel,
+												  Path *subpath,
+												  AggSplit aggsplit,
+												  List *having_qual,
+												  AggStrategy aggstrategy,
+												  List *rollups,
+												  const AggClauseCosts *agg_costs,
+												  double numGroups);
 extern MinMaxAggPath *create_minmaxagg_path(PlannerInfo *root,
 											RelOptInfo *rel,
 											PathTarget *target,
@@ -343,7 +342,8 @@ extern Relids min_join_parameterization(PlannerInfo *root,
 										Relids joinrelids,
 										RelOptInfo *outer_rel,
 										RelOptInfo *inner_rel);
-extern void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel, List *input_tlist);
+extern void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
+								RelOptInfo *input_rel);
 
 extern Var *cdb_define_pseudo_column(PlannerInfo   *root,
                          RelOptInfo    *rel,

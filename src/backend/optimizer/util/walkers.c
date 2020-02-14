@@ -545,7 +545,7 @@ plan_tree_walker(Node *node,
 		case T_CurrentOfExpr:
 		case T_RangeTblRef:
 		case T_Aggref:
-		case T_ArrayRef:
+		case T_SubscriptingRef:
 		case T_FuncExpr:
 		case T_OpExpr:
 		case T_DistinctExpr:
@@ -908,7 +908,7 @@ check_collation_walker(Node *node, check_collation_context *context)
 		case T_ArrayCoerceExpr:
 		case T_SubLink:
 		case T_ArrayExpr:
-		case T_ArrayRef:
+		case T_SubscriptingRef:
 		case T_RowExpr:
 		case T_RowCompareExpr:
 		case T_FieldSelect:
@@ -954,8 +954,7 @@ check_collation_walker(Node *node, check_collation_context *context)
 			}
 			break;
 		case T_RangeTblEntry:
-			check_collation_in_list(((RangeTblEntry *) node)->values_collations, context);
-			check_collation_in_list(((RangeTblEntry *) node)->ctecolcollations, context);
+			check_collation_in_list(((RangeTblEntry *) node)->colcollations, context);
 			break;
 		case T_RangeTblFunction:
 			check_collation_in_list(((RangeTblFunction *) node)->funccolcollations, context);

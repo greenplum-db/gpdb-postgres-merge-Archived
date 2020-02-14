@@ -156,7 +156,9 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
      */
     rel->cdbpolicy = RelationGetPartitioningKey(relation);
 
-	rel->relstorage = relation->rd_rel->relstorage;
+	// GPDB_12_MERGE_FIXME: relstorage is gone. But there are a couple of places
+	// still in the planner that maybe need to treat AO tables differently.
+	//rel->relstorage = relation->rd_rel->relstorage;
 
 	/*
 	 * Estimate relation size --- unless it's an inheritance parent, in which

@@ -31,7 +31,9 @@
 #include "nodes/makefuncs.h"
 
 #include "catalog/pg_operator.h"
+#include "optimizer/clauses.h"
 #include "optimizer/paths.h"
+#include "optimizer/predtest_valueset.h"
 
 static const bool kUseFnEvaluationForPredicates = true;
 

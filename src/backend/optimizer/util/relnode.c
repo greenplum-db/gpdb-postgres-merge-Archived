@@ -48,8 +48,6 @@ typedef struct JoinHashEntry
 	RelOptInfo *join_rel;
 } JoinHashEntry;
 
-static void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
-								RelOptInfo *input_rel);
 static List *build_joinrel_restrictlist(PlannerInfo *root,
 										RelOptInfo *joinrel,
 										RelOptInfo *outer_rel,
@@ -727,8 +725,8 @@ build_join_rel(PlannerInfo *root,
 	 * and inner rels we first try to build it from.  But the contents should
 	 * be the same regardless.
 	 */
-	build_joinrel_tlist(root, joinrel, outer_rel->reltarget->exprs);
-	build_joinrel_tlist(root, joinrel, inner_rel->reltarget->exprs);
+	build_joinrel_tlist(root, joinrel, outer_rel);
+	build_joinrel_tlist(root, joinrel, inner_rel);
 	add_placeholders_to_joinrel(root, joinrel, outer_rel, inner_rel);
 
 	/*
@@ -1006,12 +1004,12 @@ min_join_parameterization(PlannerInfo *root,
  */
 void
 build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
-					List *input_tlist)
+					RelOptInfo *input_rel)
 {
 	Relids		relids = joinrel->relids;
 	ListCell   *vars;
 
-	foreach(vars, input_tlist)
+	foreach(vars, input_rel->reltarget->exprs)
 	{
 		Var		   *var = (Var *) lfirst(vars);
 		RelOptInfo *baserel;

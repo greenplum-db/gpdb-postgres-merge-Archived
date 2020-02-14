@@ -2639,6 +2639,7 @@ create_unique_rowid_path(PlannerInfo *root,
 			cost_agg(&agg_path, root,
 					 AGG_HASHED, 0,
 					 numCols, ((Path*)pathnode)->rows / planner_segment_count(NULL),
+					 NIL, /* no quals */
 					 subpath->startup_cost,
 					 subpath->total_cost,
 					 rel->rows,
@@ -3100,6 +3101,8 @@ create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->path.sameslice_relids = NULL;
 
 	cost_tablefunction(pathnode, root, rel, pathnode->path.param_info);
+
+	return pathnode;
 }
 
 /*
@@ -3716,7 +3719,7 @@ create_nestloop_path(PlannerInfo *root,
 	 */
 	initial_cost_nestloop(root, workspace, jointype,
 						  outer_path, inner_path,
-						  extra, semifactors);
+						  extra);
 
 	final_cost_nestloop(root, pathnode, workspace, extra);
 
@@ -4018,7 +4021,7 @@ create_hashjoin_path(PlannerInfo *root,
 	 */
 	initial_cost_hashjoin(root, workspace, jointype, hashclauses,
 						  outer_path, inner_path,
-						  extra, semifactors);
+						  extra, parallel_hash);
 
 	final_cost_hashjoin(root, pathnode, workspace, extra);
 
@@ -4695,7 +4698,9 @@ create_groupingsets_path(PlannerInfo *root,
 						 rollup->numGroups,
 						 having_qual,
 						 0.0, 0.0,
-						 subpath->rows);
+						 subpath->rows,
+						 NULL, /* hash_info */
+						 false /* streaming */);
 				if (!rollup->is_hashed)
 					is_first_sort = false;
 			}
@@ -4720,7 +4725,9 @@ create_groupingsets_path(PlannerInfo *root,
 						 having_qual,
 						 sort_path.startup_cost,
 						 sort_path.total_cost,
-						 sort_path.rows);
+						 sort_path.rows,
+						 NULL, /* hash_info */
+						 false /* streaming */);
 			}
 
 			pathnode->path.total_cost += agg_path.total_cost;

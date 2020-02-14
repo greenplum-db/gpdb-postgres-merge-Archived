@@ -23,6 +23,7 @@
 #define OPTIMIZER_H
 
 #include "nodes/parsenodes.h"
+#include "nodes/plannodes.h"
 
 /*
  * We don't want to include nodes/pathnodes.h here, because non-planner

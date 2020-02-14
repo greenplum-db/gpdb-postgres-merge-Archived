@@ -318,6 +318,7 @@ replace_outer_group_id(PlannerInfo *root, GroupId *grp)
 	Param	   *retval;
 	PlannerParamItem *pitem;
 	Index		levelsup;
+	Oid			paramtype = exprType((Node *) grp);;
 
 	Assert(grp->agglevelsup > 0 && grp->agglevelsup < root->query_level);
 
@@ -335,14 +336,17 @@ replace_outer_group_id(PlannerInfo *root, GroupId *grp)
 
 	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) grp;
-	pitem->paramId = root->glob->nParamExec++;
+
+	pitem->paramId = list_length(root->glob->paramExecTypes);
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 paramtype);
 
 	root->plan_params = lappend(root->plan_params, pitem);
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
 	retval->paramid = pitem->paramId;
-	retval->paramtype = exprType((Node *) grp);
+	retval->paramtype = paramtype;
 	retval->paramtypmod = -1;
 	retval->paramcollid = InvalidOid;
 	retval->location = grp->location;

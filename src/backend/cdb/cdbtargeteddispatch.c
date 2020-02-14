@@ -20,7 +20,8 @@
 #include "parser/parsetree.h"	/* for rt_fetch() */
 #include "nodes/makefuncs.h"	/* for makeVar() */
 #include "utils/relcache.h"		/* RelationGetPartitioningKey() */
-#include "optimizer/predtest.h"
+#include "optimizer/optimizer.h"
+#include "optimizer/predtest_valueset.h"
 
 #include "catalog/gp_distribution_policy.h"
 #include "catalog/pg_type.h"
