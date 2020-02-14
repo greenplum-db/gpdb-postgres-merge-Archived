@@ -5639,7 +5639,6 @@ bool is_builtin_true_equality_between_same_type(int opno)
 	case NameEqualOperator:
 	case NumericEqualOperator:
 	case OidEqualOperator:
-	case RelTimeEqualOperator:
 	case TextEqualOperator:
 	case TIDEqualOperator:
 	case TimeEqualOperator:
@@ -5689,7 +5688,6 @@ is_builtin_greenplum_hashable_equality_between_same_type(int opno)
         case NameEqualOperator:
         case NumericEqualOperator:
         case OidEqualOperator:
-        case RelTimeEqualOperator:
         case TextEqualOperator:
         case TIDEqualOperator:
         case TimeEqualOperator:
@@ -5698,11 +5696,9 @@ is_builtin_greenplum_hashable_equality_between_same_type(int opno)
         case TimeTZEqualOperator:
 
         /* these new ones were added to list for MPP-7858 */
-        case AbsTimeEqualOperator:
         case ByteaEqualOperator:
         case InetEqualOperator: /* for inet and cidr */
         case MacAddrEqualOperator:
-        case TIntervalEqualOperator:
         case VarbitEqualOperator:
             return true;
 
