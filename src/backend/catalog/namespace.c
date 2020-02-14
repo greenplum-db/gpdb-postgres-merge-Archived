@@ -676,38 +676,6 @@ RangeVarAdjustRelationPersistence(RangeVar *newRelation, Oid nspid)
 	}
 }
 
-static char
-get_relation_storage_method(RangeVar *heapRelation)
-{
-	Oid       relOid;
-	HeapTuple tuple;
-	char      relstorage;
-
-	relOid = RangeVarGetRelid(heapRelation, NoLock, true);
-
-	if (!OidIsValid(relOid))
-		elog(ERROR, "Oid %u is invalid", relOid);
-
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
-
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for relation %u", relOid);
-
-	relstorage = ((Form_pg_class) GETSTRUCT(tuple))->relstorage;
-	ReleaseSysCache(tuple);
-	return relstorage;
-}
-
-/*
- * Determine from a RangeVar if the table it refers to is AppendOptimized
- */
-bool
-RangeVarIsAppendOptimizedTable(RangeVar *relation)
-{
-	return relstorage_is_ao(
-		get_relation_storage_method(relation));
-}
-
 /*
  * RelnameGetRelid
  *		Try to resolve an unqualified relation name.

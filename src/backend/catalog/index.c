@@ -925,7 +925,6 @@ index_create(Relation heapRelation,
 								indexTupDesc,
 								relkind,
 								relpersistence,
-								RELSTORAGE_HEAP,
 								shared_relation,
 								mapped_relation,
 								allow_system_table_mods,
@@ -1097,9 +1096,6 @@ index_create(Relation heapRelation,
 		else
 		{
 			bool		have_simple_col = false;
-			DependencyType	deptype;
-
-			deptype = OidIsValid(parentIndexRelid) ? DEPENDENCY_INTERNAL_AUTO : DEPENDENCY_AUTO;
 
 			/* Create auto dependencies on simply-referenced columns */
 			for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
@@ -1110,7 +1106,7 @@ index_create(Relation heapRelation,
 					referenced.objectId = heapRelationId;
 					referenced.objectSubId = indexInfo->ii_IndexAttrNumbers[i];
 
-					recordDependencyOn(&myself, &referenced, deptype);
+					recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 
 					have_simple_col = true;
 				}
@@ -1128,7 +1124,7 @@ index_create(Relation heapRelation,
 				referenced.objectId = heapRelationId;
 				referenced.objectSubId = 0;
 
-				recordDependencyOn(&myself, &referenced, deptype);
+				recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 			}
 		}
 
@@ -1151,16 +1147,6 @@ index_create(Relation heapRelation,
 			referenced.objectSubId = 0;
 
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_PARTITION_SEC);
-		}
-
-		/* Store dependency on parent index, if any */
-		if (OidIsValid(parentIndexRelid))
-		{
-			referenced.classId = RelationRelationId;
-			referenced.objectId = parentIndexRelid;
-			referenced.objectSubId = 0;
-
-			recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL_AUTO);
 		}
 
 		/* Store dependency on collations */
@@ -1896,18 +1882,6 @@ index_constraint_create(Relation heapRelation,
 		ObjectAddressSet(referenced, RelationRelationId,
 						 RelationGetRelid(heapRelation));
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_PARTITION_SEC);
-	}
-
-	/*
-	 * Also, if this is a constraint on a partition, mark it as depending
-	 * on the constraint in the parent.
-	 */
-	if (OidIsValid(parentConstraintId))
-	{
-		ObjectAddress	parentConstr;
-
-		ObjectAddressSet(parentConstr, ConstraintRelationId, parentConstraintId);
-		recordDependencyOn(&referenced, &parentConstr, DEPENDENCY_INTERNAL_AUTO);
 	}
 
 	/*

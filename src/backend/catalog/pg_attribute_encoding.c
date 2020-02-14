@@ -108,7 +108,7 @@ get_rel_attoptions(Oid relid, AttrNumber max_attno)
 									 AccessShareLock);
 
 	/* used for attbyval and len below */
-	attform = pgae->rd_att->attrs[Anum_pg_attribute_encoding_attoptions - 1];
+	attform = TupleDescAttr(pgae->rd_att, Anum_pg_attribute_encoding_attoptions - 1);
 
 	dats = palloc0(max_attno * sizeof(Datum));
 

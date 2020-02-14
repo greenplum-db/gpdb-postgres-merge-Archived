@@ -105,6 +105,7 @@
 #include "catalog/pg_stat_last_shoperation.h"
 #include "cdb/cdbsreh.h"
 #include "cdb/cdbvars.h"
+#include "foreign/foreign.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"             /* CDB: GetMemoryChunkContext */
 #include "utils/relcache.h"
@@ -455,11 +456,6 @@ heap_create(const char *relname,
 	 */
 	if (create_storage)
 	{
-		bool		isAppendOnly;
-
-		// WARNING: Do not use the rel structure -- it doesn't have relstorage set...
-		isAppendOnly = (relstorage == RELSTORAGE_AOROWS || relstorage == RELSTORAGE_AOCOLS);
-
 		RelationOpenSmgr(rel);
 
 		switch (rel->rd_rel->relkind)
@@ -490,7 +486,7 @@ heap_create(const char *relname,
 		 * AO tables don't use the buffer manager, better to not keep the
 		 * smgr open for it.
 		 */
-		if (isAppendOnly)
+		if (RelationIsAppendOptimized(rel))
 			RelationCloseSmgr(rel);
 	}
 
@@ -1254,8 +1250,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 					TransactionId relfrozenxid,
 					TransactionId relminmxid,
 					Datum relacl,
-					Datum reloptions,
-					bool is_part_parent)
+					Datum reloptions)
 {
 	Form_pg_class new_rel_reltup;
 
@@ -1601,8 +1596,7 @@ heap_create_with_catalog(const char *relname,
 							  relkind == RELKIND_FOREIGN_TABLE ||
 							  relkind == RELKIND_COMPOSITE_TYPE ||
 							  relkind == RELKIND_PARTITIONED_TABLE) &&
-		relnamespace != PG_BITMAPINDEX_NAMESPACE &&
-		!is_part_child)
+		relnamespace != PG_BITMAPINDEX_NAMESPACE)
 	{
 		/* OK, so pre-assign a type OID for the array type */
 		relarrayname = makeArrayTypeName(relname, relnamespace);
@@ -1698,8 +1692,7 @@ heap_create_with_catalog(const char *relname,
 						relfrozenxid,
 						relminmxid,
 						PointerGetDatum(relacl),
-						reloptions,
-						is_part_parent);
+						reloptions);
 
 	/*
 	 * if this is an append-only relation, add an entry in pg_appendonly.
@@ -2405,9 +2398,9 @@ heap_drop_with_catalog(Oid relid)
 	/*
 	 * Attribute encoding
 	 */
-	if (relkind == RELKIND_RELATION ||
-		relkind == RELKIND_MATVIEW ||
-		relkind == RELKIND_PARTITIONED_TABLE)
+	if (rel->rd_rel->relkind == RELKIND_RELATION ||
+		rel->rd_rel->relkind == RELKIND_MATVIEW ||
+		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
 		RemoveAttributeEncodingsByRelid(relid);
 	}
@@ -2440,7 +2433,6 @@ heap_drop_with_catalog(Oid relid)
 	 * matter, since we don't do CommandCounterIncrement here, but let's be
 	 * safe.)
 	 */
-	char relkind = rel->rd_rel->relkind;
 	RelationForgetRelation(relid);
 
 	/*
@@ -3997,6 +3989,8 @@ insert_ordered_unique_oid(List *list, Oid datum)
  * This is to keep consistent behavior for relfrozenxid before
  * and after upgrade.
  */
+/* GPDB_12_MERGE_FIXME: what was this for? Not needed anymore, I presume? */
+#if 0
 bool
 should_have_valid_relfrozenxid(char relkind)
 {
@@ -4022,6 +4016,7 @@ should_have_valid_relfrozenxid(char relkind)
 
 	return false;
 }
+#endif
 
 /*
  * StorePartitionKey

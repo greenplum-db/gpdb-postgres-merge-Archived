@@ -393,7 +393,7 @@ ProcedureCreate(const char *procedureName,
 		Form_pg_proc oldproc = (Form_pg_proc) GETSTRUCT(oldtup);
 		Datum		proargnames;
 		bool		isnull;
-		Oid oldOid = HeapTupleGetOid(oldtup);
+		Oid			oldOid = oldproc->oid;
 		const char *dropcmd;
 
 		if (!replace)

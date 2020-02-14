@@ -25,7 +25,7 @@
 #include "utils/faultinjector.h"
 
 void
-AlterTableCreateAoBlkdirTable(Oid relOid, bool is_part_child, bool is_part_parent)
+AlterTableCreateAoBlkdirTable(Oid relOid)
 {
 	Relation	rel;
 	TupleDesc	tupdesc;
@@ -41,10 +41,7 @@ AlterTableCreateAoBlkdirTable(Oid relOid, bool is_part_child, bool is_part_paren
 	 * until end of transaction.  (This is probably redundant in all present
 	 * uses...)
 	 */
-	if (is_part_child)
-		rel = table_open(relOid, NoLock);
-	else
-		rel = table_open(relOid, AccessExclusiveLock);
+	rel = table_open(relOid, AccessExclusiveLock);
 
 	if (!RelationIsAppendOptimized(rel))
 	{
@@ -70,23 +67,17 @@ AlterTableCreateAoBlkdirTable(Oid relOid, bool is_part_child, bool is_part_paren
 					   "minipage",
 					   BYTEAOID,
 					   -1, 0);
-
-	/*
-	 * We don't want any toast columns here.
-	 */
-	tupdesc->attrs[0]->attstorage = 'p';
-	tupdesc->attrs[1]->attstorage = 'p';
-	tupdesc->attrs[2]->attstorage = 'p';
-	tupdesc->attrs[3]->attstorage = 'p';
+	/* don't toast 'minipage' */
+	tupdesc->attrs[3].attstorage = 'p';
 
 	/*
 	 * Create index on segno, first_row_no.
 	 */
 	indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_NumIndexAttrs = 3;
-	indexInfo->ii_KeyAttrNumbers[0] = 1;
-	indexInfo->ii_KeyAttrNumbers[1] = 2;
-	indexInfo->ii_KeyAttrNumbers[2] = 3;
+	indexInfo->ii_IndexAttrNumbers[0] = 1;
+	indexInfo->ii_IndexAttrNumbers[1] = 2;
+	indexInfo->ii_IndexAttrNumbers[2] = 3;
 	indexInfo->ii_Expressions = NIL;
 	indexInfo->ii_ExpressionsState = NIL;
 	indexInfo->ii_Predicate = NIL;
@@ -109,7 +100,7 @@ AlterTableCreateAoBlkdirTable(Oid relOid, bool is_part_child, bool is_part_paren
 								  tupdesc,
 								  indexInfo, indexColNames,
 								  classObjectId,
-								  coloptions, is_part_parent);
+								  coloptions);
 
 	table_close(rel, NoLock);
 }

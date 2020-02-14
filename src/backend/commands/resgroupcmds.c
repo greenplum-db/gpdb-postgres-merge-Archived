@@ -415,12 +415,7 @@ AlterResourceGroup(AlterResourceGroupStmt *stmt)
 	 * Check the pg_resgroup relation to be certain the resource group already
 	 * exists.
 	 */
-	groupid = GetResGroupIdForName(stmt->name);
-	if (groupid == InvalidOid)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("resource group \"%s\" does not exist",
-						stmt->name)));
+	groupid = get_resroup_name(stmt->name, false);
 
 	if (limitType == RESGROUP_LIMIT_TYPE_CONCURRENCY &&
 		value == 0 &&
@@ -712,17 +707,30 @@ GetResGroupIdForRole(Oid roleid)
 }
 
 /*
- * GetResGroupIdForName -- Return the Oid for a resource group name
+ * get_resgroup_oid -- Return the Oid for a resource group name
+ *
+ * If missing_ok is false, throw an error if database name not found.  If
+ * true, just return InvalidOid.
  *
  * Notes:
  *	Used by the various admin commands to convert a user supplied group name
  *	to Oid.
  */
 Oid
-GetResGroupIdForName(const char *name)
+get_resgroup_oid(const char *name, bool missing_ok)
 {
-	return GetSysCacheOid1(RESGROUPNAME, Anum_pg_resgroup_oid,
-						   CStringGetDatum(name));
+	Oid			oid;
+
+	oid = GetSysCacheOid1(RESGROUPNAME, Anum_pg_resgroup_oid,
+						  CStringGetDatum(name));
+
+	if (!OidIsValid(oid) && !missing_ok)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("resource group \"%s\" does not exist",
+						name)));
+
+	return oid;
 }
 
 /*

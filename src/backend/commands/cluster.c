@@ -1285,7 +1285,8 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		relform1->relfrozenxid = frozenXid;
 		Assert(MultiXactIdIsValid(cutoffMulti));
 		relform1->relminmxid = cutoffMulti;
-		Assert(should_have_valid_relfrozenxid(relform1->relkind));
+		// GPDB_12_MERGE_FIXME
+		//Assert(should_have_valid_relfrozenxid(relform1->relkind));
 	}
 	/* swap size statistics too, since new rel has freshly-updated stats */
 	if (swap_stats)

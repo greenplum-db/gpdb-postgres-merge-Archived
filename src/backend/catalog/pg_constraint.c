@@ -168,7 +168,7 @@ CreateConstraintEntry(const char *constraintName,
 
 	conOid = GetNewOidForConstraint(conDesc, ConstraintOidIndexId,
 									Anum_pg_constraint_oid,
-									relId, constraintType, NameStr(&cname));
+									relId, constraintType, NameStr(cname));
 	values[Anum_pg_constraint_oid - 1] = ObjectIdGetDatum(conOid);
 	values[Anum_pg_constraint_conname - 1] = NameGetDatum(&cname);
 	values[Anum_pg_constraint_connamespace - 1] = ObjectIdGetDatum(constraintNamespace);
@@ -575,7 +575,6 @@ RemoveConstraintById(Oid conId)
 	if (OidIsValid(con->conrelid))
 	{
 		Relation	rel;
-		bool		is_part_child = false;
 
 		/*
 		 * If the constraint is for a relation, open and exclusive-lock the

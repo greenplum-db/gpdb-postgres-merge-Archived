@@ -574,15 +574,10 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 
 	if (resgroup)
 	{
-		Oid rsgid;
+		Oid			rsgid;
 
-		rsgid = GetResGroupIdForName(resgroup);
-		if (rsgid == InvalidOid)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("resource group \"%s\" does not exist",
-						 resgroup)));
-		else if (rsgid == ADMINRESGROUP_OID && !issuper)
+		rsgid = get_resgroup_name(resgroup, false);
+		if (rsgid == ADMINRESGROUP_OID && !issuper)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("only superuser can be assigned to admin resgroup")));
@@ -1275,13 +1270,8 @@ AlterRole(AlterRoleStmt *stmt)
 								resgroup)));
 		}
 
-		rsgid = GetResGroupIdForName(resgroup);
-		if (rsgid == InvalidOid)
-			ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("resource group \"%s\" does not exist",
-						resgroup)));
-		else if (rsgid == ADMINRESGROUP_OID && !bWas_super)
+		rsgid = get_resgroup_oid(resgroup, false);
+		if (rsgid == ADMINRESGROUP_OID && !bWas_super)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("only superuser can be assigned to admin resgroup")));

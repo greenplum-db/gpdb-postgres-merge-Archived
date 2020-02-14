@@ -67,21 +67,16 @@ AlterTableCreateAoVisimapTable(Oid relOid, bool is_part_child, bool is_part_pare
 					   "visimap",
 					   BYTEAOID,
 					   -1, 0);
-
-	/*
-	 * We don't want any toast columns here.
-	 */
-	tupdesc->attrs[0]->attstorage = 'p';
-	tupdesc->attrs[1]->attstorage = 'p';
-	tupdesc->attrs[2]->attstorage = 'p';
+	/* don't toast 'visibmap' */
+	tupdesc->attrs[2].attstorage = 'p';
 
 	/*
 	 * Create index on segno, first_row_no.
 	 */
 	indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_NumIndexAttrs = 2;
-	indexInfo->ii_KeyAttrNumbers[0] = 1;
-	indexInfo->ii_KeyAttrNumbers[1] = 2;
+	indexInfo->ii_IndexAttrNumbers[0] = 1;
+	indexInfo->ii_IndexAttrNumbers[1] = 2;
 	indexInfo->ii_Expressions = NIL;
 	indexInfo->ii_ExpressionsState = NIL;
 	indexInfo->ii_Predicate = NIL;

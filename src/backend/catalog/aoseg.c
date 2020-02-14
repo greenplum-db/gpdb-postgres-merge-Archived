@@ -153,7 +153,7 @@ AlterTableCreateAoSegTable(Oid relOid)
 
 	(void) CreateAOAuxiliaryTable(rel, prefix, RELKIND_AOSEGMENTS,
 								  tupdesc,
-								  NULL, NIL, NULL, NULL, is_part_parent);
+								  NULL, NIL, NULL, NULL);
 
 	table_close(rel, NoLock);
 }

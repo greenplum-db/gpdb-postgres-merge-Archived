@@ -544,7 +544,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		InvalidAttrNumber,
 		Anum_pg_extprotocol_ptcowner,
 		Anum_pg_extprotocol_ptcacl,
-		ACL_KIND_EXTPROTOCOL,
+		OBJECT_EXTPROTOCOL,
 		true
 	},
 };
@@ -936,6 +936,8 @@ get_object_address(ObjectType objtype, Node *object,
 			case OBJECT_ACCESS_METHOD:
 			case OBJECT_PUBLICATION:
 			case OBJECT_SUBSCRIPTION:
+			case OBJECT_RESQUEUE:
+			case OBJECT_RESGROUP:
 				address = get_object_address_unqualified(objtype,
 														 (Value *) object, missing_ok);
 				break;
@@ -1047,16 +1049,6 @@ get_object_address(ObjectType objtype, Node *object,
 			case OBJECT_DEFACL:
 				address = get_object_address_defacl(castNode(List, object),
 													missing_ok);
-				break;
-		   case OBJECT_RESQUEUE:
-				address.classId = ResQueueRelationId;
-				address.objectId = get_resqueue_oid(NameListToString(objname), false);
-				address.objectSubId = 0;
-				break;
-			case OBJECT_RESGROUP:
-				address.classId = ResGroupRelationId;
-				address.objectId = GetResGroupIdForName(NameListToString(objname));
-				address.objectSubId = 0;
 				break;
 			case OBJECT_STATISTIC_EXT:
 				address.classId = StatisticExtRelationId;
@@ -1255,6 +1247,16 @@ get_object_address_unqualified(ObjectType objtype,
 			address.objectId = get_extprotocol_oid(name, missing_ok);
 			address.objectSubId = 0;
 			break;
+		case OBJECT_RESQUEUE:
+			address.classId = ResQueueRelationId;
+			address.objectId = get_resqueue_oid(name, missing_ok);
+			address.objectSubId = 0;
+			break;
+		case OBJECT_RESGROUP:
+			address.classId = ResGroupRelationId;
+			address.objectId = get_resgroup_oid(name, missing_ok);
+			address.objectSubId = 0;
+			break;
 		default:
 			elog(ERROR, "unrecognized objtype: %d", (int) objtype);
 			/* placate compiler, which doesn't know elog won't return */
@@ -1282,8 +1284,7 @@ get_relation_by_qualified_name(ObjectType objtype, List *object,
 	address.objectSubId = 0;
 
 	relation = relation_openrv_extended(makeRangeVarFromNameList(object),
-										lockmode, missing_ok,
-										false);
+										lockmode, missing_ok);
 	if (!relation)
 		return address;
 
@@ -2223,6 +2224,9 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		case OBJECT_SCHEMA:
 		case OBJECT_SUBSCRIPTION:
 		case OBJECT_TABLESPACE:
+		case OBJECT_EXTPROTOCOL:
+		case OBJECT_RESGROUP:
+		case OBJECT_RESQUEUE:
 			if (list_length(name) != 1)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2505,7 +2509,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 		case OBJECT_EXTPROTOCOL:
 			if (!pg_extprotocol_ownercheck(address.objectId, roleid))
 				aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_EXTPROTOCOL,
-							   NameListToString(objname));
+							   NameListToString(castNode(List, object)));
 			break;
 		case OBJECT_TSPARSER:
 		case OBJECT_TSTEMPLATE:
@@ -4217,6 +4221,14 @@ getObjectTypeDescription(const ObjectAddress *object)
 			appendStringInfoString(&buffer, "transform");
 			break;
 
+		case OCLASS_EXTPROTOCOL:
+			appendStringInfoString(&buffer, "external protocol");
+			break;
+
+		case OCLASS_COMPRESSION:
+			appendStringInfoString(&buffer, "compression");
+			break;
+
 			/*
 			 * There's intentionally no default: case here; we want the
 			 * compiler to warn if a new OCLASS hasn't been handled above.
@@ -5275,6 +5287,24 @@ getObjectIdentityParts(const ObjectAddress *object,
 			}
 			break;
 
+		case OCLASS_EXTPROTOCOL:
+			{
+				char	   *extprotname;
+
+				extprotname = ExtProtocolGetNameByOid(object->objectId);
+				appendStringInfoString(&buffer,
+									   quote_identifier(extprotname));
+				if (objname)
+					*objname = list_make1(extprotname);
+			}
+			break;
+
+
+		case OCLASS_COMPRESSION:
+			// GPDB_12_MERGE_FIXME: do we really need OCLASS_COMPRESSION?
+			elog(ERROR, "not implemented for compression methods");
+			break;
+			
 			/*
 			 * There's intentionally no default: case here; we want the
 			 * compiler to warn if a new OCLASS hasn't been handled above.

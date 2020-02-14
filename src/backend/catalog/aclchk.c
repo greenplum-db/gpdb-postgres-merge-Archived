@@ -628,31 +628,6 @@ ExecuteGrantStmt(GrantStmt *stmt)
 	{
 		GrantStmt *tmpStmt = copyObject(stmt);
 
-		/*
-		 * GPDB: It is possible that objectNamesToOids has expanded references to
-		 * partitioned relations. It is needed to recostruct the GrantStmt objects
-		 * to include those references. We do it uncoditionally of partitioned
-		 * references now for Object Targets.
-		 */
-		if (tmpStmt->targtype == ACL_TARGET_OBJECT &&
-			tmpStmt->objtype == ACL_OBJECT_RELATION)
-		{
-			List *n = NIL;
-
-			foreach(cell, istmt.objects)
-			{
-				Oid rid = lfirst_oid(cell);
-				RangeVar *rv;
-				char *nspname = get_namespace_name(get_rel_namespace(rid));
-				char *relname = get_rel_name(rid);
-
-				rv = makeRangeVar(nspname, relname, -1);
-				n = lappend(n, rv);
-			}
-
-			tmpStmt->objects = n;
-		}
-
 		CdbDispatchUtilityStatement((Node *) tmpStmt,
 									DF_CANCEL_ON_ERROR|
 									DF_WITH_SNAPSHOT|
@@ -2348,10 +2323,7 @@ CopyRelationAcls(Oid srcId, Oid destId)
 	newTuple = heap_modify_tuple(destTuple, RelationGetDescr(pg_class_rel),
 								 values, nulls, replaces);
 
-	simple_heap_update(pg_class_rel, &newTuple->t_self, newTuple);
-
-	/* keep the catalog indexes up to date */
-	CatalogUpdateIndexes(pg_class_rel, newTuple);
+	CatalogTupleUpdate(pg_class_rel, &newTuple->t_self, newTuple);
 
 	/* Update the shared dependency ACL info */
 	ownerId = pg_class_tuple->relowner;
@@ -3722,7 +3694,7 @@ ExecGrant_ExtProtocol(InternalGrant *istmt)
         this_privileges =
                 restrict_and_check_grant(istmt->is_grant, avail_goptions,
                                          istmt->all_privs, istmt->privileges,
-                                         ptcid, grantorId, ACL_KIND_EXTPROTOCOL,
+                                         ptcid, grantorId, OBJECT_EXTPROTOCOL,
                                          NameStr(*ptcname),
                                          0, NULL);
 
@@ -5040,7 +5012,7 @@ pg_extprotocol_aclmask(Oid ptcOid, Oid roleid,
 
     rel = heap_open(ExtprotocolRelationId, AccessShareLock);
 
-    ScanKeyInit(&scankey, ObjectIdAttributeNumber,
+    ScanKeyInit(&scankey, Anum_pg_extprotocol_oid,
                 BTEqualStrategyNumber, F_OIDEQ,
                 ObjectIdGetDatum(ptcOid));
     sscan = systable_beginscan(rel, ExtprotocolOidIndexId, true,
