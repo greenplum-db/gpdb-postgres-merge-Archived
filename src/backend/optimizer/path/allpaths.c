@@ -873,7 +873,6 @@ static void
 set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
 	Relids		required_outer;
-	Path       *seqpath = NULL;
 
 	/*
 	 * We don't support pushing join clauses into the quals of a seqscan, but
@@ -883,34 +882,7 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	required_outer = rel->lateral_relids;
 
 	/* Consider sequential scan */
-
-	/*
-	 * Generate paths and add them to the rel's pathlist.
-	 *
-	 * Note: add_path() will discard any paths that are dominated by another
-	 * available path, keeping only those paths that are superior along at
-	 * least one dimension of cost or sortedness.
-	 */
-
-	/* Consider sequential scan */
-	switch (rel->relstorage)
-	{
-		case RELSTORAGE_AOROWS:
-		case RELSTORAGE_AOCOLS:
-		case RELSTORAGE_HEAP:
-			seqpath = create_seqscan_path(root, rel, required_outer, 0);
-			break;
-
-		default:
-
-			/*
-			 * Should not be feasible, usually indicates a failure to
-			 * correctly apply rewrite rules.
-			 */
-			elog(ERROR, "plan contains range table with relstorage='%c'",
-				 rel->relstorage);
-			return;
-	}
+	add_path(rel, create_seqscan_path(root, rel, required_outer, 0));
 
 	/* If appropriate, consider parallel sequential scan */
 	if (rel->consider_parallel && required_outer == NULL)
@@ -919,11 +891,9 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/* Consider index and bitmap scans */
 	create_index_paths(root, rel);
 
-	if (rel->relstorage == RELSTORAGE_HEAP)
-		create_tidscan_paths(root, rel);
-
-	/* we can add the seqscan path now */
-	add_path(rel, seqpath);
+	// FIXME: We used to not create tidscan paths on AO tables.
+	//if (rel->relstorage == RELSTORAGE_HEAP)
+	create_tidscan_paths(root, rel);
 }
 
 /*
@@ -2517,6 +2487,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		{
 			Path	   *subpath = (Path *) lfirst(lc);
 			List	   *pathkeys;
+			CdbPathLocus locus;
 
 			/* Convert subpath's pathkeys to outer representation */
 			pathkeys = convert_subquery_pathkeys(root,
@@ -2524,10 +2495,16 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 												 subpath->pathkeys,
 												 make_tlist_from_pathtarget(subpath->pathtarget));
 
+			if (forceDistRand)
+				CdbPathLocus_MakeStrewn(&locus, getgpsegmentCount());
+			else
+				locus = cdbpathlocus_from_subquery(root, rel, subpath);
+
 			/* Generate outer path using this subpath */
 			add_partial_path(rel, (Path *)
 							 create_subqueryscan_path(root, rel, subpath,
 													  pathkeys,
+													  locus,
 													  required_outer));
 		}
 	}
