@@ -57,6 +57,7 @@
 #include "catalog/gp_distribution_policy.h"     /* CDB: POLICYTYPE_PARTITIONED */
 #include "catalog/pg_inherits_fn.h"
 #include "optimizer/plancat.h"
+#include "parser/parse_relation.h"
 #include "utils/lsyscache.h"
 
 static List *expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
@@ -241,7 +242,7 @@ preprocess_targetlist(PlannerInfo *root)
 	 */
 	if (parse->onConflict)
 		parse->onConflict->onConflictSet =
-			expand_targetlist(parse->onConflict->onConflictSet,
+			expand_targetlist(root, parse->onConflict->onConflictSet,
 							  CMD_UPDATE,
 							  result_relation,
 							  target_relation);
@@ -558,7 +559,7 @@ supplement_simply_updatable_targetlist(List *range_table, List *tlist)
 				vartypeid 	= InvalidOid;
 	int32       type_mod 	= -1;
 	Oid			type_coll	= InvalidOid;
-	reloid = getrelid(varno, range_table);
+	reloid = rt_fetch(varno, range_table)->relid;
 	get_atttypetypmodcoll(reloid, GpSegmentIdAttributeNumber,
 						  &vartypeid, &type_mod, &type_coll);
 	Var         *varSegid = makeVar(varno,

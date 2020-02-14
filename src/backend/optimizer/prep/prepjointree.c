@@ -656,7 +656,10 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 			else if (sublink->subLinkType == ANY_SUBLINK || sublink->subLinkType == ALL_SUBLINK)
 			{
 				sublink->subLinkType = (sublink->subLinkType == ANY_SUBLINK) ? ALL_SUBLINK : ANY_SUBLINK;
-				sublink->testexpr = (Node *) canonicalize_qual(make_notclause((Expr *) sublink->testexpr));
+				/* GPDB_12_MERGE_FIXME: Is 'is_check=false' correct here? And in fact,
+				 * is this transformation correct at all? If it is, why doesn't upstream do it?
+				 */
+				sublink->testexpr = (Node *) canonicalize_qual(make_notclause((Expr *) sublink->testexpr), false);
 				return pull_up_sublinks_qual_recurse(root, (Node *) sublink,
 														jtlink1, available_rels1,
 														jtlink2, available_rels2);
@@ -884,7 +887,7 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 		 */
 		if (rte->rtekind == RTE_SUBQUERY &&
 			!rte->forceDistRandom &&
-			is_simple_subquery(rte->subquery, rte, lowest_outer_join) &&
+			is_simple_subquery(root, rte->subquery, rte, lowest_outer_join) &&
 			(containing_appendrel == NULL ||
 			 is_safe_append_member(rte->subquery)))
 			return pull_up_simple_subquery(root, jtnode, rte,

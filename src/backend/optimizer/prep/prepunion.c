@@ -325,7 +325,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 			partial_subpath = linitial(final_rel->partial_pathlist);
 			partial_path = (Path *)
 				create_subqueryscan_path(root, rel, partial_subpath,
-										 NIL, NULL);
+										 NIL, partial_subpath->locus, NULL);
 			add_partial_path(rel, partial_path);
 		}
 
