@@ -175,6 +175,7 @@ gen_implied_qual(PlannerInfo *root,
 								  old_rinfo->is_pushed_down,
 								  old_rinfo->outerjoin_delayed,
 								  old_rinfo->pseudoconstant,
+								  old_rinfo->security_level,
 								  new_qualscope,
 								  old_rinfo->outer_relids,
 								  old_rinfo->nullable_relids);

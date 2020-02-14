@@ -491,7 +491,7 @@ try_nestloop_path(PlannerInfo *root,
 			}
 		}
 
-		cdb_add_join_path(root, joinrel, orig_jointype, required_oiter,
+		cdb_add_join_path(root, joinrel, orig_jointype, required_outer,
 						  (JoinPath *)
 				 create_nestloop_path(root,
 									  joinrel,
@@ -944,7 +944,6 @@ sort_inner_and_outer(PlannerInfo *root,
 	Path	   *cheapest_safe_inner = NULL;
 	List	   *all_pathkeys;
 	ListCell   *l;
-	JoinType	save_jointype = jointype;
 
 	if (jointype == JOIN_DEDUP_SEMI || jointype == JOIN_DEDUP_SEMI_REVERSE)
 		jointype = JOIN_INNER;

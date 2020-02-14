@@ -70,7 +70,8 @@ extern Selectivity clauselist_selectivity_simple(PlannerInfo *root,
 												 int varRelid,
 												 JoinType jointype,
 												 SpecialJoinInfo *sjinfo,
-												 Bitmapset *estimatedclauses);
+												 Bitmapset *estimatedclauses,
+												 bool use_damping);
 
 /* in path/costsize.c: */
 

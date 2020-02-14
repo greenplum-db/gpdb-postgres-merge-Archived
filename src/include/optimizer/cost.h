@@ -136,7 +136,7 @@ extern void cost_merge_append(Path *path, PlannerInfo *root,
 							  List *pathkeys, int n_streams,
 							  Cost input_startup_cost, Cost input_total_cost,
 							  double tuples);
-extern void cost_material(Path *path,
+extern void cost_material(Path *path, PlannerInfo *root,
 						  Cost input_startup_cost, Cost input_total_cost,
 						  double tuples, int width);
 extern void cost_tup_split(Path *path, PlannerInfo *root,

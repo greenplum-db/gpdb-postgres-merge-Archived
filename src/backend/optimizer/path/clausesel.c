@@ -97,7 +97,8 @@ clauselist_selectivity(PlannerInfo *root,
 					   List *clauses,
 					   int varRelid,
 					   JoinType jointype,
-					   SpecialJoinInfo *sjinfo)
+					   SpecialJoinInfo *sjinfo,
+					   bool use_damping)
 {
 	Selectivity s1 = 1.0;
 	RelOptInfo *rel;
@@ -128,7 +129,8 @@ clauselist_selectivity(PlannerInfo *root,
 	 */
 	return s1 * clauselist_selectivity_simple(root, clauses, varRelid,
 											  jointype, sjinfo,
-											  estimatedclauses);
+											  estimatedclauses,
+											  use_damping);
 }
 
 /*
