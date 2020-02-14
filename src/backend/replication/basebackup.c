@@ -172,6 +172,9 @@ static const char *excludeDirContents[] =
 	/* Contents zeroed on startup, see StartupSUBTRANS(). */
 	"pg_subtrans",
 
+	/* Contents unique to each segment instance. */
+	"pg_log",
+
 	/* end of list */
 	NULL
 };
@@ -222,81 +225,6 @@ static const char *const noChecksumFiles[] = {
 	"config_exec_params.new",
 #endif
 	NULL,
-};
-
-
-/*
- * The contents of these directories are removed or recreated during server
- * start so they are not included in backups.  The directories themselves are
- * kept and included as empty to preserve access permissions.
- *
- * Note: this list should be kept in sync with the filter lists in pg_rewind's
- * filemap.c.
- */
-static const char *excludeDirContents[] =
-{
-	/*
-	 * Skip temporary statistics files. PG_STAT_TMP_DIR must be skipped even
-	 * when stats_temp_directory is set because PGSS_TEXT_FILE is always created
-	 * there.
-	 */
-	PG_STAT_TMP_DIR,
-
-	/*
-	 * It is generally not useful to backup the contents of this directory even
-	 * if the intention is to restore to another master. See backup.sgml for a
-	 * more detailed description.
-	 */
-	"pg_replslot",
-
-	/* Contents removed on startup, see dsm_cleanup_for_mmap(). */
-	PG_DYNSHMEM_DIR,
-
-	/* Contents removed on startup, see AsyncShmemInit(). */
-	"pg_notify",
-
-	/*
-	 * Old contents are loaded for possible debugging but are not required for
-	 * normal operation, see OldSerXidInit().
-	 */
-	"pg_serial",
-
-	/* Contents removed on startup, see DeleteAllExportedSnapshotFiles(). */
-	"pg_snapshots",
-
-	/* Contents zeroed on startup, see StartupSUBTRANS(). */
-	"pg_subtrans",
-
-	/* Contents unique to each segment instance. */
-	"pg_log",
-
-	/* end of list */
-	NULL
-};
-
-/*
- * List of files excluded from backups.
- */
-static const char *excludeFiles[] =
-{
-	/* Skip auto conf temporary file. */
-	PG_AUTOCONF_FILENAME ".tmp",
-
-	/*
-	 * If there's a backup_label or tablespace_map file, it belongs to a
-	 * backup started by the user with pg_start_backup().  It is *not* correct
-	 * for this backup.  Our backup_label/tablespace_map is injected into the
-	 * tar separately.
-	 */
-	BACKUP_LABEL_FILE,
-
-	"postmaster.pid",
-	"postmaster.opts",
-
-	GP_INTERNAL_AUTO_CONF_FILE_NAME,
-
-	/* end of list */
-	NULL
 };
 
 /*
@@ -1221,10 +1149,10 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		 * $PGDATA/base or a tablespace version path.
 		 */
 		if (strncmp(path, "./base", parentPathLen) == 0 ||
-			(parentPathLen >= (sizeof(TABLESPACE_VERSION_DIRECTORY) - 1) &&
-			 strncmp(lastDir - (sizeof(TABLESPACE_VERSION_DIRECTORY) - 1),
-					 TABLESPACE_VERSION_DIRECTORY,
-					 sizeof(TABLESPACE_VERSION_DIRECTORY) - 1) == 0))
+			(parentPathLen >= (sizeof(GP_TABLESPACE_VERSION_DIRECTORY) - 1) &&
+			 strncmp(lastDir - (sizeof(GP_TABLESPACE_VERSION_DIRECTORY) - 1),
+					 GP_TABLESPACE_VERSION_DIRECTORY,
+					 sizeof(GP_TABLESPACE_VERSION_DIRECTORY) - 1) == 0))
 			isDbDir = true;
 	}
 
@@ -1832,30 +1760,6 @@ _tarWriteDir(const char *pathbuf, int basepathlen, struct stat *statbuf,
 		statbuf->st_mode = S_IFDIR | pg_dir_create_mode;
 
 	return _tarWriteHeader(pathbuf + basepathlen + 1, NULL, statbuf, sizeonly);
-}
-
-/*
- * Write tar header for a directory.  If the entry in statbuf is a link then
- * write it as a directory anyway.
- */
-static int64
-_tarWriteDir(const char *pathbuf, int basepathlen, struct stat * statbuf,
-			 bool sizeonly)
-{
-	if (sizeonly)
-		/* Directory headers are always 512 bytes */
-		return 512;
-
-	/* If symlink, write it as a directory anyway */
-#ifndef WIN32
-	if (S_ISLNK(statbuf->st_mode))
-#else
-	if (pgwin32_is_junction(pathbuf))
-#endif
-		statbuf->st_mode = S_IFDIR | S_IRWXU;
-
-	_tarWriteHeader(pathbuf + basepathlen + 1, NULL, statbuf);
-	return 512;
 }
 
 /*

@@ -276,7 +276,7 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	}
 
 	/* Report the wait */
-	pgstat_report_wait_start(WAIT_REPLICATION, 0);
+	pgstat_report_wait_start(PG_WAIT_REPLICATION);
 
 	/*
 	 * Wait for specified LSN to be confirmed.
@@ -780,7 +780,11 @@ cmp_lsn(const void *a, const void *b)
 List *
 SyncRepGetSyncStandbys(bool *am_sync)
 {
+	List	   *result = NIL;
 	bool		syncStandbyPresent;
+	int			i;
+	volatile WalSnd *walsnd;	/* Use volatile pointer to prevent code
+								 * rearrangement */
 
 	/* Set default result */
 	if (am_sync != NULL)

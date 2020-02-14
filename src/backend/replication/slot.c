@@ -1611,5 +1611,5 @@ ReplicationSlotDropIfExists(const char *name)
 	LWLockRelease(ReplicationSlotControlLock);
 
 	if (exists)
-		ReplicationSlotDrop(name);
+		ReplicationSlotDrop(name, true);
 }

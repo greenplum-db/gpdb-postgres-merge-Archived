@@ -218,7 +218,7 @@ base_backup_opt:
 			| K_EXCLUDE SCONST
 				{
 				  $$ = makeDefElem("exclude",
-						  (Node *) makeString($2));
+						  (Node *) makeString($2), -1);
 				}
 			;
 

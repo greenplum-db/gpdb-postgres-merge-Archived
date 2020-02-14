@@ -391,9 +391,9 @@ IdentifySystem(void)
 	elogif(debug_walrepl_snd, LOG,
 			"walsnd identifysystem -- "
 			"SysId = %s, "
-			"ThisTimelineID = %s, "
+			"ThisTimelineID = %u, "
 			"XLog InsertRecPtr = %s will be sent.",
-			sysid, tli, xpos);
+			sysid, ThisTimeLineID, xloc);
 
 	if (MyDatabaseId != InvalidOid)
 	{
@@ -3473,8 +3473,8 @@ WalSndIsCatchupWithinRange(XLogRecPtr currRecPtr, XLogRecPtr catchupRecPtr)
 	if (catchupRecPtr < currRecPtr)
 		return true;
 
-	XLByteToSeg(currRecPtr, curr_logSegNo);
-	XLByteToSeg(catchupRecPtr, catchup_logSegNo);
+	XLByteToSeg(currRecPtr, curr_logSegNo, wal_segment_size);
+	XLByteToSeg(catchupRecPtr, catchup_logSegNo, wal_segment_size);
 
 	/* Find the distance between the curr and catchup seg files */
 	segDist = catchup_logSegNo - curr_logSegNo;
