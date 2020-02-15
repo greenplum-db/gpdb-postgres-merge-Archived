@@ -244,6 +244,12 @@ extern Bitmapset *get_relation_constraint_attnos(Oid relid, const char *conname,
 extern Oid	get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok);
 extern Oid	get_relation_idx_constraint_oid(Oid relationId, Oid indexId);
 
+/**
+ * Identify primary key column from foreign key column.
+ */
+extern bool ConstraintGetPrimaryKeyOf(Oid relid, AttrNumber attno,
+					Oid *pkrelid, AttrNumber *pkattno);
+
 extern Bitmapset *get_primary_key_attnos(Oid relid, bool deferrableOk,
 										 Oid *constraintOid);
 extern void DeconstructFkConstraintRow(HeapTuple tuple, int *numfks,

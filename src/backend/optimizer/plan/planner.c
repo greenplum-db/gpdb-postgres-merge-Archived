@@ -749,8 +749,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->subplans = glob->subplans;
 	result->subplan_sliceIds = glob->subplan_sliceIds;
 	result->rewindPlanIDs = glob->rewindPlanIDs;
-	result->result_partitions = root->result_partitions;
-	result->result_aosegnos = root->result_aosegnos;
 	result->rowMarks = glob->finalrowmarks;
 	result->relationOids = glob->relationOids;
 	result->invalItems = glob->invalItems;
@@ -1585,7 +1583,7 @@ inheritance_planner(PlannerInfo *root)
 
 	/* MPP */
 	CdbLocusType append_locustype = CdbLocusType_Null;
-	bool		locus_ok = TRUE;
+	bool		locus_ok = true;
 
 	/*
 	 * We generate a modified instance of the original Query for each target

@@ -24,7 +24,7 @@
 #include "utils/guc.h"
 
 void
-AlterTableCreateAoVisimapTable(Oid relOid, bool is_part_child, bool is_part_parent)
+AlterTableCreateAoVisimapTable(Oid relOid)
 {
 	Relation	rel;
 	IndexInfo  *indexInfo;
@@ -42,10 +42,7 @@ AlterTableCreateAoVisimapTable(Oid relOid, bool is_part_child, bool is_part_pare
 	 * until end of transaction.  (This is probably redundant in all present
 	 * uses...)
 	 */
-	if (is_part_child)
-		rel = table_open(relOid, NoLock);
-	else
-		rel = table_open(relOid, AccessExclusiveLock);
+	rel = table_open(relOid, AccessExclusiveLock);
 
 	if (!RelationIsAppendOptimized(rel))
 	{
@@ -80,7 +77,7 @@ AlterTableCreateAoVisimapTable(Oid relOid, bool is_part_child, bool is_part_pare
 	indexInfo->ii_Expressions = NIL;
 	indexInfo->ii_ExpressionsState = NIL;
 	indexInfo->ii_Predicate = NIL;
-	indexInfo->ii_PredicateState = NIL;
+	indexInfo->ii_PredicateState = NULL;
 	indexInfo->ii_Unique = true;
 	indexInfo->ii_Concurrent = false;
 
@@ -97,8 +94,7 @@ AlterTableCreateAoVisimapTable(Oid relOid, bool is_part_child, bool is_part_pare
 								  RELKIND_AOVISIMAP,
 								  tupdesc,
 								  indexInfo, indexColNames,
-								  classObjectId, coloptions,
-								  is_part_parent);
+								  classObjectId, coloptions);
 
 	table_close(rel, NoLock);
 }

@@ -556,6 +556,8 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 			dboid = GetNewOidWithIndex(pg_database_rel, DatabaseOidIndexId,
 									   Anum_pg_database_oid);
 		} while (check_db_file_conflict(dboid));
+
+		RememberAssignedOidForDatabase(dbname, dboid);
 	}
 
 	/*

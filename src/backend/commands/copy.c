@@ -4867,8 +4867,6 @@ CopyFrom(CopyState cstate)
 			 * count, so this counter is meaningless.
 			 */
 			processed++;
-			if (relstorage_is_ao(relstorage))
-				resultRelInfo->ri_aoprocessed++;
 			if (cstate->cdbsreh)
 				cstate->cdbsreh->processed++;
 		}
@@ -4967,12 +4965,12 @@ CopyFrom(CopyState cstate)
 				cstate->on_segment ? processed : 0);
 	}
 
-	if (estate->es_result_partitions && Gp_role == GP_ROLE_EXECUTE)
-		SendAOTupCounts(estate);
-
 	/* update AO tuple counts */
 	// GPDB_12_MERGE_FIXME
 #if 0
+	if (estate->es_result_partitions && Gp_role == GP_ROLE_EXECUTE)
+		SendAOTupCounts(estate);
+
 	if (cstate->dispatch_mode == COPY_DISPATCH)
 	{
 		for (i = estate->es_num_result_relations - 1; i >= 0; i--)
@@ -5828,15 +5826,17 @@ static bool
 NextCopyFromExecute(CopyState cstate, ExprContext *econtext, Datum *values, bool *nulls)
 {
 	TupleDesc	tupDesc;
+	AttrNumber	num_phys_attrs,
+				attr_count;
 	FormData_pg_attribute *attr;
 	int			i;
-	AttrNumber	num_phys_attrs;
 	copy_from_dispatch_row frame;
 	int			r;
-	ResultRelInfo *resultRelInfo;
-	TupleTableSlot *baseSlot;
-	TupleTableSlot *slot;
 	bool		got_error;
+
+	tupDesc = RelationGetDescr(cstate->rel);
+	num_phys_attrs = tupDesc->natts;
+	attr_count = list_length(cstate->attnumlist);
 
 	/*
 	 * The code below reads the 'copy_from_dispatch_row' struct, and only
@@ -5857,7 +5857,7 @@ retry:
 
 	r = CopyGetData(cstate, (char *) &frame, SizeOfCopyFromDispatchRow);
 	if (r == 0)
-		return NULL;
+		return false;
 	if (r != SizeOfCopyFromDispatchRow)
 		ereport(ERROR,
 				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
@@ -5869,9 +5869,6 @@ retry:
 	}
 
 	/* Prepare for parsing the input line */
-//	resultRelInfo = estate->es_result_relation_info;
-//	baseSlot = resultRelInfo->ri_resultSlot;
-	tupDesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
 	attr = tupDesc->attrs;
 	num_phys_attrs = tupDesc->natts;
 
@@ -5937,8 +5934,6 @@ retry:
 		}
 		PG_END_TRY();
 	}
-
-	ExecStoreVirtualTuple(baseSlot);
 
 	// GPDB_12_MERGE_FIXME
 #if 0	
@@ -6060,15 +6055,12 @@ retry:
 	if (got_error)
 		goto retry;
 
-	ExecStoreVirtualTuple(slot);
-
 	/*
 	 * Here we should compute defaults for any columns for which we didn't
 	 * get a default from the QD. But at the moment, all defaults are evaluated
 	 * in the QD.
 	 */
-
-	return slot;
+	return true;
 }
 
 /*

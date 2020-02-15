@@ -16,10 +16,6 @@
  */
 #include "postgres.h"
 
-#include "access/aocs_compaction.h"
-#include "access/aomd.h"
-#include "access/appendonlywriter.h"
-#include "access/bitmap.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/heapam_xlog.h"
@@ -124,6 +120,10 @@
 #include "utils/timestamp.h"
 #include "utils/typcache.h"
 
+#include "access/aocs_compaction.h"
+#include "access/aomd.h"
+#include "access/appendonlywriter.h"
+#include "access/bitmap_private.h"
 #include "catalog/aocatalog.h"
 #include "catalog/oid_dispatch.h"
 #include "cdb/cdbdisp.h"
@@ -5722,10 +5722,7 @@ ATAocsNoRewrite(AlteredTableInfo *tab)
 		 * Mark all attributes including newly added columns as valid.
 		 * Used for per tuple constraint evaluation.
 		 */
-		TupSetVirtualTupleNValid(slot, RelationGetDescr(rel)->natts);
-
-		memset(slot->tts_isnull, true,
-			   RelationGetDescr(rel)->natts * sizeof(bool));
+		ExecStoreAllNullTuple(slot);
 
 		sdesc = aocs_begin_headerscan(rel, scancol);
 		idesc = aocs_addcol_init(rel, list_length(addColCmds));
@@ -5775,6 +5772,8 @@ ATAocsNoRewrite(AlteredTableInfo *tab)
 		ExecDropSingleTupleTableSlot(slot);
 	}
 
+	// GDPB_12_MERGE_FIXME: removed by PR 790, I hope that gets pushed.
+#if 0
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		/*
@@ -5792,7 +5791,8 @@ ATAocsNoRewrite(AlteredTableInfo *tab)
 		 */
 		AORelRemoveHashEntry(RelationGetRelid(rel));
 	}
-
+#endif
+	
 	FreeExecutorState(estate);
 	heap_close(rel, NoLock);
 	UnregisterSnapshot(snapshot);
@@ -15776,7 +15776,16 @@ prebuild_temp_table(Relation rel, RangeVar *tmpname, DistributedBy *distro, List
 		rawstmt->stmt_len = 0;
 
 		q = parse_analyze(rawstmt, synthetic_sql, NULL, 0, NULL);
-		ProcessUtility((Node *) q->utilityStmt,
+
+		/* No planning needed, just make a wrapper PlannedStmt */
+		PlannedStmt *pstmt = makeNode(PlannedStmt);
+		pstmt->commandType = CMD_UTILITY;
+		pstmt->canSetTag = false;
+		pstmt->utilityStmt = (Node *) q->utilityStmt;
+		pstmt->stmt_location = rawstmt->stmt_location;
+		pstmt->stmt_len = rawstmt->stmt_len;
+
+		ProcessUtility(pstmt,
 					   synthetic_sql,
 					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
@@ -16819,6 +16828,9 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		performDeletion(&object, DROP_RESTRICT, 0);
 	}
 
+	/* GPDB_12_MERGE_FIXME: This needs to go away or be moved behind
+	 * Table AM API */
+#if 0
 	if (relstorage_is_ao(tarrelstorage) && IS_QUERY_DISPATCHER())
 	{
 		/*
@@ -16837,7 +16849,8 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		AORelRemoveHashEntry(tarrelid);
 		LWLockRelease(AOSegFileLock);
 	}
-
+#endif
+	
 l_distro_fini:
 
 	/* MPP-6929: metadata tracking */

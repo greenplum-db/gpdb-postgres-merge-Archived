@@ -499,8 +499,11 @@ typedef struct ResultRelInfo
 	RelationDeleteDesc ri_deleteDesc;
 	RelationUpdateDesc ri_updateDesc;
 
+	/* GPDB_12_MERGE_FIXME: These need to go behind the table AM API */
+#if 0
 	int			ri_aosegno;
 	uint64		ri_aoprocessed; /* tuples added/deleted for AO */
+#endif
 
 	/* list of RETURNING expressions */
 	List	   *ri_returningList;

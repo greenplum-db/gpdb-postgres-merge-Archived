@@ -576,7 +576,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	{
 		Oid			rsgid;
 
-		rsgid = get_resgroup_name(resgroup, false);
+		rsgid = get_resgroup_oid(resgroup, false);
 		if (rsgid == ADMINRESGROUP_OID && !issuper)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),

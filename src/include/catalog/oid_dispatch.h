@@ -42,8 +42,8 @@ extern Oid GetNewOidForConstraint(Relation relation, Oid indexId, AttrNumber oid
 								  Oid conrelid, Oid contypid, char *conname);
 extern Oid GetNewOidForConversion(Relation relation, Oid indexId, AttrNumber oidcolumn,
 								  Oid connamespace, char *conname);
-extern Oid GetNewOidForDatabase(Relation relation, Oid indexId, AttrNumber oidcolumn,
-								char *datname);
+extern Oid GetPreassignedOidForDatabase(const char *datname);
+extern void RememberAssignedOidForDatabase(const char *datname, Oid oid);
 extern Oid GetNewOidForDefaultAcl(Relation relation, Oid indexId, AttrNumber oidcolumn,
 								  Oid defaclrole, Oid defaclnamespace, char defaclobjtype);
 extern Oid GetNewOidForEnum(Relation relation, Oid indexId, AttrNumber oidcolumn,

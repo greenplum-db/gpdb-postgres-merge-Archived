@@ -1234,7 +1234,8 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 										  &nodeSortColIdx,
 										  &nodeSortOperators,
 										  &nodeCollations,
-										  &nodeNullsFirst);
+										  &nodeNullsFirst,
+										  true /* add_keys_to_targetlist */);
 		tlist_was_changed = (orig_tlist_length != list_length(plan->plan.targetlist));
 	}
 
@@ -1273,7 +1274,8 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 												 &sortColIdx,
 												 &sortOperators,
 												 &collations,
-												 &nullsFirst);
+												 &nullsFirst,
+												 true /* add_keys_to_targetlist */);
 
 			/*
 			 * Check that we got the same sort key information.  We just
@@ -1410,7 +1412,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path,
 									  &node->sortOperators,
 									  &node->collations,
 									  &node->nullsFirst,
-									  true);
+									  true /* add_keys_to_targetlist */);
 	tlist_was_changed = (orig_tlist_length != list_length(plan->targetlist));
 
 	/*
@@ -1442,7 +1444,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path,
 											 &sortOperators,
 											 &collations,
 											 &nullsFirst,
-											 true);
+											 true /* add_keys_to_targetlist */);
 
 		/*
 		 * Check that we got the same sort key information.  We just Assert
@@ -1879,7 +1881,8 @@ create_gather_merge_plan(PlannerInfo *root, GatherMergePath *best_path)
 										 &gm_plan->sortColIdx,
 										 &gm_plan->sortOperators,
 										 &gm_plan->collations,
-										 &gm_plan->nullsFirst);
+										 &gm_plan->nullsFirst,
+										 true /* add_keys_to_targetlist */);
 
 
 	/* Now, insert a Sort node if subplan isn't sufficiently ordered */

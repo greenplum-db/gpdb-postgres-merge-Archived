@@ -641,25 +641,8 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 	 * array type OID ahead of calling TypeCreate, since the base type and
 	 * array type each refer to the other.
 	 */
-
 	array_type = makeArrayTypeName(typeName, typeNamespace);
-
-	/* Preassign array type OID so we can insert it in pg_type.typarray */
-	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
-	{
-		array_oid = GetPreassignedOidForType(typeNamespace, array_type, true);
-
-		/*
-		 * If we are expected to get a preassigned Oid but receive InvalidOid,
-		 * get a new Oid. This can happen during upgrades from GPDB4 to 5 where
-		 * array types over relation rowtypes were introduced so there are no
-		 * pre-existing array types to dump from the old cluster
-		 */
-		if (array_oid == InvalidOid && IsBinaryUpgrade)
-			array_oid = AssignTypeArrayOid();
-	}
-	else
-		array_oid = AssignTypeArrayOid();
+	array_oid = AssignTypeArrayOid(array_type, typeNamespace);
 
 	/*
 	 * now have TypeCreate do all the real work.
@@ -1128,7 +1111,8 @@ DefineDomain(CreateDomainStmt *stmt)
 	}
 
 	/* Allocate OID for array type */
-	domainArrayOid = AssignTypeArrayOid();
+	domainArrayName = makeArrayTypeName(domainName, domainNamespace);
+	domainArrayOid = AssignTypeArrayOid(domainArrayName, domainNamespace);
 
 	/*
 	 * Have TypeCreate do all the real work.
@@ -1169,7 +1153,6 @@ DefineDomain(CreateDomainStmt *stmt)
 	/*
 	 * Create the array type that goes with it.
 	 */
-	domainArrayName = makeArrayTypeName(domainName, domainNamespace);
 
 	/* alignment must be 'i' or 'd' for arrays */
 	alignment = (alignment == 'd') ? 'd' : 'i';
@@ -1268,7 +1251,6 @@ DefineEnum(CreateEnumStmt *stmt)
 	Oid			old_type_oid;
 	Oid			enumArrayOid;
 	ObjectAddress enumTypeAddr;
-	Oid			enumTypeOid; /* GPDB: preassigned OID */
 
 	/* Convert list of names to a name and namespace */
 	enumNamespace = QualifiedNameGetCreationNamespace(stmt->typeName,
@@ -1295,24 +1277,13 @@ DefineEnum(CreateEnumStmt *stmt)
 					 errmsg("type \"%s\" already exists", enumName)));
 	}
 
+	/* Allocate OID for array type */
 	enumArrayName = makeArrayTypeName(enumName, enumNamespace);
-
-	/* Preassign array type OID so we can insert it in pg_type.typarray */
-	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
-	{
-		enumTypeOid = GetPreassignedOidForType(enumNamespace, enumName, false);
-		enumArrayOid = GetPreassignedOidForType(enumNamespace, enumArrayName,
-											    false);
-	}
-	else
-	{
-		enumTypeOid = InvalidOid;
-		enumArrayOid = AssignTypeArrayOid();
-	}
+	enumArrayOid = AssignTypeArrayOid(enumArrayName, enumNamespace);
 
 	/* Create the pg_type entry */
 	enumTypeAddr =
-		TypeCreate(enumTypeOid,
+		TypeCreate(InvalidOid,	/* no predetermined type OID */
 				   enumName,	/* type name */
 				   enumNamespace,	/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
@@ -1649,21 +1620,9 @@ DefineRange(CreateRangeStmt *stmt)
 	/* alignment must be 'i' or 'd' for ranges */
 	alignment = (subtypalign == 'd') ? 'd' : 'i';
 
-	/*
-	 * Create the array type that goes with it.
-	 */
+	/* Allocate OID for array type */
 	rangeArrayName = makeArrayTypeName(typeName, typeNamespace);
-
-	/* Preassign array type OID so we can insert it in pg_type.typarray */
-	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
-	{
-		rangeArrayOid = GetPreassignedOidForType(typeNamespace, rangeArrayName,
-												 true);
-	}
-	else
-	{
-		rangeArrayOid = AssignTypeArrayOid();
-	}
+	rangeArrayOid = AssignTypeArrayOid(rangeArrayName, typeNamespace);
 
 	/* Create the pg_type entry */
 	address =
@@ -1704,8 +1663,9 @@ DefineRange(CreateRangeStmt *stmt)
 	RangeCreate(typoid, rangeSubtype, rangeCollation, rangeSubOpclass,
 				rangeCanonical, rangeSubtypeDiff);
 
-
-
+	/*
+	 * Create the array type that goes with it.
+	 */
 	TypeCreate(rangeArrayOid,	/* force assignment of this type OID */
 			   rangeArrayName,	/* type name */
 			   typeNamespace,	/* namespace */
@@ -2228,29 +2188,19 @@ findRangeSubtypeDiffFunction(List *procname, Oid subtype)
  *	Pre-assign the type's array OID for use in pg_type.typarray
  */
 Oid
-AssignTypeArrayOid(void)
+AssignTypeArrayOid(char *arrayTypeName, Oid typeNamespace)
 {
+	/* GPDB_12_MERGE_FIXME: do we need some special code for IsBinaryUpgrade here? */
 	Oid			type_array_oid;
+	Relation	pg_type;
 
-	/* Use binary-upgrade override for pg_type.typarray? */
-	if (IsBinaryUpgrade)
-	{
-		if (!OidIsValid(binary_upgrade_next_array_pg_type_oid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("pg_type array OID value not set when in binary upgrade mode")));
-
-		type_array_oid = binary_upgrade_next_array_pg_type_oid;
-		binary_upgrade_next_array_pg_type_oid = InvalidOid;
-	}
-	else
-	{
-		Relation	pg_type = table_open(TypeRelationId, AccessShareLock);
-
-		type_array_oid = GetNewOidWithIndex(pg_type, TypeOidIndexId,
-											Anum_pg_type_oid);
-		table_close(pg_type, AccessShareLock);
-	}
+	pg_type = table_open(TypeRelationId, AccessShareLock);
+	type_array_oid = GetNewOidForType(pg_type,
+									  TypeOidIndexId,
+									  Anum_pg_type_oid,
+									  arrayTypeName,
+									  typeNamespace);
+	table_close(pg_type, AccessShareLock);
 
 	return type_array_oid;
 }

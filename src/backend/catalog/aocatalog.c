@@ -44,8 +44,7 @@ CreateAOAuxiliaryTable(
 		IndexInfo  *indexInfo,
 		List *indexColNames,
 		Oid	*classObjectId,
-		int16 *coloptions,
-		bool is_part_parent)
+		int16 *coloptions)
 {
 	char aoauxiliary_relname[NAMEDATALEN];
 	char aoauxiliary_idxname[NAMEDATALEN];

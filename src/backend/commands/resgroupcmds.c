@@ -415,7 +415,7 @@ AlterResourceGroup(AlterResourceGroupStmt *stmt)
 	 * Check the pg_resgroup relation to be certain the resource group already
 	 * exists.
 	 */
-	groupid = get_resroup_name(stmt->name, false);
+	groupid = get_resgroup_oid(stmt->name, false);
 
 	if (limitType == RESGROUP_LIMIT_TYPE_CONCURRENCY &&
 		value == 0 &&

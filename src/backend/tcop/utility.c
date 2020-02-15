@@ -942,7 +942,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 				switch (stmt->kind)
 				{
 					case REINDEX_OBJECT_INDEX:
-						ReindexIndex(stmt->relation, stmt->options, stmt->concurrent);
+						ReindexIndex(stmt);
 						break;
 					case REINDEX_OBJECT_TABLE:
 						ReindexTable(stmt->relation, stmt->options, stmt->concurrent);

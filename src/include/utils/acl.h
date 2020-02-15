@@ -236,8 +236,6 @@ extern void ExecAlterDefaultPrivilegesStmt(ParseState *pstate, AlterDefaultPrivi
 extern void RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid);
 extern void RemoveDefaultACLById(Oid defaclOid);
 
-extern void CopyRelationAcls(Oid src, Oid dest);
-
 extern AclMode pg_attribute_aclmask(Oid table_oid, AttrNumber attnum,
 									Oid roleid, AclMode mask, AclMaskHow how);
 extern AclMode pg_class_aclmask(Oid table_oid, Oid roleid,

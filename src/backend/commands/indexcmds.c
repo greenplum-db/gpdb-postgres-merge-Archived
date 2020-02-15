@@ -2732,8 +2732,11 @@ ChooseIndexColumnNames(List *indexElems)
  *		Recreate a specific index.
  */
 void
-ReindexIndex(RangeVar *indexRelation, int options, bool concurrent)
+ReindexIndex(ReindexStmt *stmt)
 {
+	RangeVar   *indexRelation = stmt->relation;
+	int			options = stmt->options;
+	bool		concurrent = stmt->concurrent;
 	struct ReindexIndexCallbackState state;
 	Oid			indOid;
 	Relation	irel;
@@ -2942,8 +2945,11 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
  *		Recreate all indexes of a table (and of its toast table, if any)
  */
 Oid
-ReindexTable(RangeVar *relation, int options, bool concurrent)
+ReindexTable(ReindexStmt *stmt)
 {
+	RangeVar   *relation = stmt->relation;
+	int			options = stmt->options;
+	bool		concurrent = stmt->concurrent;
 	Oid			heapOid;
 	bool		result;
 

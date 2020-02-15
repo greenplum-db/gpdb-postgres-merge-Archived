@@ -1360,6 +1360,7 @@ CreateExtensionInternal(char *extensionName,
 	Oid			extensionOid;
 	ObjectAddress address;
 	ListCell   *lc;
+	CreateExtensionStmt *stmt;
 
 	/*
 	 * Read the primary control file.  Note we assume that it does not contain
@@ -1619,7 +1620,30 @@ CreateExtensionInternal(char *extensionName,
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-		/* We must tell QE to create extension */
+		/*
+		 * We must tell QE to create extension. We don't have the original
+		 * statement at hand here, and if we're recursing for required
+		 * extension dependencies, there is no original statement object
+		 * anyway.
+		 */
+		stmt = makeNode(CreateExtensionStmt);
+
+		stmt->extname = extensionName;
+
+		if (schemaName)
+			stmt->options = lappend(stmt->options,
+									makeDefElem("schema", (Node *) makeString(schemaName), -1));
+		if (versionName)
+			stmt->options = lappend(stmt->options,
+									makeDefElem("new_version", (Node *) makeString(pstrdup(versionName)), -1));
+		if (oldVersionName)
+			stmt->options = lappend(stmt->options,
+									makeDefElem("old_version", (Node *) makeString(pstrdup(oldVersionName)), -1));
+		/*
+		 * no cascading in the QE. We'll cascade in the QD and dispatch separate
+		 * commands for each step.
+		 */
+		stmt->if_not_exists = false;
 		stmt->create_ext_state = CREATE_EXTENSION_BEGIN;
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_WITH_SNAPSHOT | DF_CANCEL_ON_ERROR | DF_NEED_TWO_PHASE,
@@ -1629,11 +1653,12 @@ CreateExtensionInternal(char *extensionName,
 	else
 	{
 		CurrentExtensionObject = extensionOid;
+		stmt = NULL;
 	}
 
 	if (Gp_role != GP_ROLE_EXECUTE)
 	{
-		execute_extension_script((Node*)stmt, extensionOid, control,
+		execute_extension_script((Node *) stmt, extensionOid, control,
 							 oldVersionName, versionName,
 							 requiredSchemas,
 							 schemaName, schemaOid);

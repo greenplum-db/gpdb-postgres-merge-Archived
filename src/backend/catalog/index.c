@@ -904,11 +904,11 @@ index_create(Relation heapRelation,
 	 */
 	if (!OidIsValid(indexRelationId))
 	{
-		if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
-			indexRelationId = GetPreassignedOidForRelation(namespaceId, indexRelationName);
-
-		if (!OidIsValid(indexRelationId))
-			indexRelationId = GetNewOid(pg_class);
+		/* GPDB_12_MERGE_FIXME: Do we still need special treatment for IsBinaryUpgrade? */
+		indexRelationId = GetNewOidForRelation(pg_class, ClassOidIndexId,
+											   Anum_pg_class_oid,
+											   (char *) indexRelationName,
+											   namespaceId);
 	}
 
 	/*
@@ -3184,8 +3184,7 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	 * is a pass-by-reference type on all platforms, whereas int8 is
 	 * pass-by-value on most platforms.
 	 */
-	state.tuplesort = tuplesort_begin_datum(NULL,
-											INT8OID, Int8LessOperator,
+	state.tuplesort = tuplesort_begin_datum(INT8OID, Int8LessOperator,
 											InvalidOid, false,
 											maintenance_work_mem,
 											NULL, false);

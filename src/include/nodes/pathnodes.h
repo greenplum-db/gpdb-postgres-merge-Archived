@@ -314,8 +314,6 @@ struct PlannerInfo
 
 	List	   *canon_pathkeys; /* list of "canonical" PathKeys */
 
-	List	   *result_aosegnos;
-
 	List       *list_cteplaninfo; /* list of CtePlannerInfo, one for each CTE */
 
 	/*

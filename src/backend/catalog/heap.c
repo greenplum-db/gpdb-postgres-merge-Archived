@@ -1607,8 +1607,7 @@ heap_create_with_catalog(const char *relname,
 		 * array types over relation rowtypes were introduced so there are no
 		 * pre-existing array types to dump from the old cluster
 		 */
-		new_array_oid = GetNewOidForType(TypeRelationId, TypeOidIndexId, Anum_pg_type_oid,
-										 relarrayname, relnamespace);
+		new_array_oid = AssignTypeArrayOid(relarrayname, relnamespace);
 	}
 
 	/*

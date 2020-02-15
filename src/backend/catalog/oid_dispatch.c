@@ -324,13 +324,12 @@ GetNewOrPreassignedOid(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	{
 		MemoryContext oldcontext;
 
+		/* Assign a new oid, and memorize it in the list of OIDs to dispatch */
 		oid = GetNewOidWithIndex(relation, indexId, oidcolumn);
 
 		oldcontext = MemoryContextSwitchTo(TopTransactionContext);
-
 		searchkey->oid = oid;
 		dispatch_oids = lappend(dispatch_oids, copyObject(searchkey));
-
 		MemoryContextSwitchTo(oldcontext);
 
 #ifdef OID_DISPATCH_DEBUG
@@ -358,7 +357,7 @@ GetNewOidForAccessMethod(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(RelationGetRelid(relation) == AccessMethodRelationId);
 	Assert(indexId == AmOidIndexId);
 	Assert(oidcolumn == Anum_pg_am_oid);
-	
+
 	memset(&key, 0, sizeof(OidAssignment));
 	key.catalog = RelationGetRelid(relation);
 	key.objname = amname;
@@ -480,19 +479,45 @@ GetNewOidForConversion(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
 
+
+/*
+ * Databases are assigned slightly differently, because the QD
+ * needs to do some extra checking on the Oid to check if it's suitable.
+ * In the QD, call GetNewOidWithIndex like usual, and when you
+ * find an OID that can be used, call RememberAssignedOidForDatabase()
+ * to have it dispatched. In the QE, call GetPreassignedOidForDatabase().
+ */
 Oid
-GetNewOidForDatabase(Relation relation, Oid indexId, AttrNumber oidcolumn,
-					 char *datname)
+GetPreassignedOidForDatabase(const char *datname)
 {
-	OidAssignment key;
+	OidAssignment searchkey;
+	Oid			oid;
 
-	Assert(RelationGetRelid(relation) == DatabaseRelationId);
-	Assert(indexId == DatabaseOidIndexId);
-	Assert(oidcolumn == Anum_pg_database_oid);
+	memset(&searchkey, 0, sizeof(OidAssignment));
+	searchkey.catalog = DatabaseRelationId;
+	searchkey.objname = (char *) datname;
 
-	memset(&key, 0, sizeof(OidAssignment));
-	key.objname = datname;
-	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
+	if ((oid = GetPreassignedOid(&searchkey)) == InvalidOid)
+		elog(ERROR, "no pre-assigned OID for database \"%s\"", datname);
+	return oid;
+}
+
+void
+RememberAssignedOidForDatabase(const char *datname, Oid oid)
+{
+	MemoryContext oldcontext;
+	OidAssignment *key;
+
+	oldcontext = MemoryContextSwitchTo(TopTransactionContext);
+
+	key = makeNode(OidAssignment);
+	key->catalog = DatabaseRelationId;
+	key->objname = (char *) pstrdup(datname);
+	key->oid = oid;
+
+	dispatch_oids = lappend(dispatch_oids, key);
+
+	MemoryContextSwitchTo(oldcontext);
 }
 
 Oid

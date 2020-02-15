@@ -156,7 +156,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 
 	typoid = GetNewOidForType(pg_type_desc, TypeOidIndexId,
 							  Anum_pg_type_oid,
-							  NameStr(&name), typeNamespace);
+							  NameStr(name), typeNamespace);
 
 	values[Anum_pg_type_oid - 1] = ObjectIdGetDatum(typoid);
 
@@ -481,7 +481,7 @@ TypeCreate(Oid newTypeOid,
 		{
 			typeObjectId = GetNewOidForType(pg_type_desc, TypeOidIndexId,
 											Anum_pg_type_oid,
-											NameStr(name), typNamespace);
+											NameStr(name), typeNamespace);
 		}
 
 		values[Anum_pg_type_oid - 1] = ObjectIdGetDatum(typeObjectId);

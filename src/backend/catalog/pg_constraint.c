@@ -638,21 +638,6 @@ RemoveConstraintById(Oid conId)
 
 
 /*
- * GetConstraintNameByOid
- *		Get the name of the constraint with the given oid, if any.
- *
- * Returns a palloc'd string, or NULL if no constraint can be found.
- */
-char *
-GetConstraintNameByOid(Oid constraintId)
-{
-	if (!OidIsValid(constraintId))
-		return NULL;
-
-	return get_constraint_name(constraintId);
-}
-
-/*
  * RenameConstraintById
  *		Rename a constraint.
  *
@@ -1378,7 +1363,7 @@ ConstraintGetPrimaryKeyOf(Oid relid, AttrNumber attno, Oid *pkrelid, AttrNumber 
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(relid));
 
-	conscan = systable_beginscan(conDesc, ConstraintRelidIndexId, true,
+	conscan = systable_beginscan(conDesc, ConstraintRelidTypidNameIndexId, true,
 								 NULL, 1, &skey);
 
 	while (HeapTupleIsValid(tup = systable_getnext(conscan)))
