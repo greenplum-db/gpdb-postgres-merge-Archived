@@ -19,7 +19,7 @@
 #include "parser/parse_node.h"
 
 
-extern List *transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartition);
+extern List *transformCreateStmt(CreateStmt *stmt, const char *queryString);
 extern List *transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString);
 extern List *transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 									 const char *queryString);

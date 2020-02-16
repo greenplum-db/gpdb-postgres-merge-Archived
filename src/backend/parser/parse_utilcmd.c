@@ -77,6 +77,7 @@
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 
 /* State shared by transformCreateStmt and its subroutines */
@@ -103,6 +104,8 @@ typedef struct
 	bool		ispartitioned;	/* true if table is partitioned */
 	PartitionBoundSpec *partbound;	/* transformed FOR VALUES */
 	bool		ofType;			/* true if statement contains OF typename */
+
+	MemoryContext tempCtx;
 } CreateStmtContext;
 
 /* State shared by transformCreateSchemaStmt and its subroutines */
@@ -280,7 +283,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	cxt.rel = NULL;
 	cxt.inhRelations = stmt->inhRelations;
 	cxt.isalter = false;
-	cxt.issplitpart = stmt->is_split_part;
 	cxt.columns = NIL;
 	cxt.ckconstraints = NIL;
 	cxt.fkconstraints = NIL;
@@ -289,7 +291,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	cxt.extstats = NIL;
 	cxt.blist = NIL;
 	cxt.alist = NIL;
-	cxt.dlist = NIL; /* for deferred analysis requiring the created table */
 	cxt.pkey = NULL;
 	cxt.ispartitioned = stmt->partspec != NULL;
 	cxt.partbound = stmt->partbound;
@@ -377,16 +378,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 		transformIndexConstraints(&cxt, stmt->is_add_part || stmt->is_split_part);
 
 	/*
-	 * Carry any deferred analysis statements forward.  Added for MPP-13750
-	 * but should also apply to the similar case involving simple inheritance.
-	 */
-	if (cxt.dlist)
-	{
-		stmt->deferredStmts = list_concat(stmt->deferredStmts, cxt.dlist);
-		cxt.dlist = NIL;
-	}
-
-	/*
 	 * Postprocess foreign-key constraints.
 	 * But don't cascade FK constraints to parts, yet.
 	 */
@@ -422,25 +413,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	}
 	else
 		stmt->attr_encodings = transformAttributeEncoding(stenc, stmt, &cxt);
-
-	/*
-	 * Postprocess Greenplum Database distribution columns
-	 */
-	/* silence distro messages for partitions */
-	if (stmt->is_part_child)
-		bQuiet = true;
-	else if (stmt->partitionBy)
-	{
-		PartitionBy *partitionBy = (PartitionBy *) stmt->partitionBy;
-
-		/* be very quiet if set subpartn template */
-		if (partitionBy->partQuiet == PART_VERBO_NOPARTNAME)
-			bQuiet = true;
-		/* quiet for partitions of depth > 0 */
-		else if (partitionBy->partDepth != 0 &&
-				 partitionBy->partQuiet != PART_VERBO_NORMAL)
-			bQuiet = true;
-	}
 
 	/*
 	 * Transform DISTRIBUTED BY (or construct a default one, if not given
@@ -497,8 +469,11 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	/*
 	 * Process table partitioning clause
 	 */
+	/* GDPB_12_MERGE_FIXME: need to re-implement this */
+#if 0
 	transformPartitionBy(&cxt, stmt, stmt->partitionBy);
-
+#endif
+	
 	/*
 	 * Postprocess check constraints.
 	 */
@@ -1114,7 +1089,6 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	AclResult	aclresult;
 	char	   *comment;
 	ParseCallbackState pcbstate;
-	MemoryContext oldcontext;
 
 	setup_parser_errposition_callback(&pcbstate, cxt->pstate,
 									  table_like_clause->relation->location);
@@ -1428,6 +1402,10 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	 */
 	if (stmt && table_like_clause->options & CREATE_TABLE_LIKE_STORAGE)
 	{
+		/* GDPB_12_MERGE_FIXME: need to re-implement this */
+		elog(ERROR, "not implemented");
+#if 0
+		MemoryContext oldcontext;
 		/*
 		 * As we are modifying the utility statement we must make sure these
 		 * DefElem allocations can survive outside of this context.
@@ -1457,6 +1435,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		 */
 		*stenc = list_union(*stenc, rel_get_column_encodings(relation));
 		MemoryContextSwitchTo(oldcontext);
+#endif
 	}
 
 	/*
@@ -1643,7 +1622,6 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 	index->primary = idxrec->indisprimary;
 	index->transformed = true;	/* don't need transformIndexStmt */
 	index->concurrent = false;
-	index->is_split_part = cxt->issplitpart;
 	index->if_not_exists = false;
 	index->reset_default_tblspc = false;
 
@@ -1910,8 +1888,6 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 							   RelationGetRelationName(source_idx))));
 
 		index->whereClause = pred_tree;
-		/* Adjust attribute numbers */
-		change_varattnos_of_a_node(index->whereClause, attmap);
 	}
 
 	/* Clean up */
@@ -2105,7 +2081,6 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 	cxt.stmtType = "CREATE EXTERNAL TABLE";
 	cxt.relation = stmt->relation;
 	cxt.inhRelations = NIL;
-	cxt.hasoids = false;
 	cxt.isalter = false;
 	cxt.columns = NIL;
 	cxt.ckconstraints = NIL;
@@ -2554,7 +2529,7 @@ transformDistributedBy(CreateStmtContext *cxt,
 									inh->relname)));
 				for (count = 0; count < rel->rd_att->natts; count++)
 				{
-					Form_pg_attribute inhattr = rel->rd_att->attrs[count];
+					Form_pg_attribute inhattr = TupleDescAttr(rel->rd_att, count);
 					Oid typeOid = inhattr->atttypid;
 
 					if (inhattr->attisdropped)
@@ -2674,7 +2649,7 @@ transformDistributedBy(CreateStmtContext *cxt,
 										inh->relname)));
 					for (count = 0; count < rel->rd_att->natts; count++)
 					{
-						Form_pg_attribute inhattr = rel->rd_att->attrs[count];
+						Form_pg_attribute inhattr = TupleDescAttr(rel->rd_att, count);
 						char	   *inhname = NameStr(inhattr->attname);
 
 						if (inhattr->attisdropped)
@@ -2844,7 +2819,7 @@ getPolicyForDistributedBy(DistributedBy *distributedBy, TupleDesc tupdesc)
 
 				for (i = 0; i < tupdesc->natts; i++)
 				{
-					Form_pg_attribute attr = tupdesc->attrs[i];
+					Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 
 					if (strcmp(colname, NameStr(attr->attname)) == 0)
 					{
@@ -4284,7 +4259,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	cxt.extstats = NIL;
 	cxt.blist = NIL;
 	cxt.alist = NIL;
-	cxt.dlist = NIL; /* used by transformCreateStmt, not here */
 	cxt.pkey = NULL;
 	cxt.ispartitioned = (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 	cxt.partbound = NULL;
@@ -4384,17 +4358,24 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
             case AT_PartSetTemplate:	/* Set Subpartition Template */
             case AT_PartSplit:			/* Split */
             case AT_PartTruncate:		/* Truncate */
+				/* GDPB_12_MERGE_FIXME: need to re-implement this */
+				elog(ERROR, "not implemented");
+#if 0
 				cmd = transformAlterTable_all_PartitionStmt(
 					pstate,
 					stmt,
 					&cxt,
 					cmd);
-
+#endif
 				newcmds = lappend(newcmds, cmd);
 				break;
 
 			case AT_PartAddInternal:	/* Add partition, as part of CREATE TABLE */
+				/* GDPB_12_MERGE_FIXME: need to re-implement this */
+				elog(ERROR, "not implemented");
+#if 0
 				cxt.iscreatepart = true;
+#endif
 				newcmds = lappend(newcmds, cmd);
 				break;
 

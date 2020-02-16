@@ -1264,7 +1264,6 @@ addRangeTableEntry(ParseState *pstate,
 	bool		nowait = false;
 	LockingClause *locking;
 	Relation	rel;
-	ParseCallbackState pcbstate;
 
 	Assert(pstate != NULL);
 
@@ -1327,7 +1326,9 @@ addRangeTableEntry(ParseState *pstate,
 	 * relcache entry for the rel.  Since this is typically the first access
 	 * to a rel in a statement, we must open the rel with the proper lockmode.
 	 */
-	rel = parserOpenTable(pstate, relation, lockmode);
+	// GPDB_12_MERGE_FIXME: we used do setup_parser_errposition_callback here.
+	// I presume that is no longer needed.
+	rel = parserOpenTable(pstate, relation, lockmode, nowait, NULL);
 	rte->relid = RelationGetRelid(rel);
 	rte->relkind = rel->rd_rel->relkind;
 	rte->rellockmode = lockmode;
