@@ -3601,6 +3601,9 @@ opt_table_partition_split_into:
             alter_table_partition_id_spec_with_opt_default ','
             alter_table_partition_id_spec_with_opt_default ')'	
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
                     /* re-use alterpartitioncmd struct here... */
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
                     pc->partid = (Node *)$3;
@@ -3608,6 +3611,7 @@ opt_table_partition_split_into:
                     pc->arg2 = NULL;
                     pc->location = @5;
 					$$ = (Node *)pc;
+#endif
                 }
 			| /*EMPTY*/						{ $$ = NULL; /* default */ }
 		;
@@ -3621,20 +3625,28 @@ opt_table_partition_exchange_validate:
 alter_table_partition_id_spec: 
 			PartitionColId
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionId *n = makeNode(AlterPartitionId);
 					n->idtype = AT_AP_IDName;
                     n->partiddef = (Node *)makeString($1);
                     n->location  = @1;
 					$$ = (Node *)n;
+#endif
 				}
             | FOR 
             '(' TabPartitionBoundarySpecValList ')'	
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionId *n = makeNode(AlterPartitionId);
 					n->idtype = AT_AP_IDValue;
                     n->partiddef = (Node *)$3;
                     n->location  = @3;
 					$$ = (Node *)n;
+#endif
 				}
 			/*
 			 * What we'd really want here is:
@@ -3660,6 +3672,9 @@ alter_table_partition_id_spec:
  			 */
            | FOR '(' func_name '(' func_arg_list opt_sort_clause ')' ')'
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement or remove this. */
+					elog(ERROR, "not implemented");
+#if 0
 					Node		   *arg;
 					Value		   *val;
 					Node		   *fname;
@@ -3693,14 +3708,19 @@ alter_table_partition_id_spec:
                     n->location  = @5;
 
 					$$ = (Node *)n;
+#endif
 				}
 		;
 
 alter_table_partition_id_spec_with_opt_default:
 			PARTITION alter_table_partition_id_spec
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionId *n = (AlterPartitionId*)$2;
                     $$ = (Node *)n;
+#endif
 				}
 			| DEFAULT PARTITION alter_table_partition_id_spec
 				{
@@ -3710,11 +3730,15 @@ alter_table_partition_id_spec_with_opt_default:
 				}
 			| DEFAULT PARTITION 
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionId *n = makeNode(AlterPartitionId);
 					n->idtype = AT_AP_IDDefault;
                     n->partiddef = NULL;
                     n->location  = @1;
 					$$ = (Node *)n;
+#endif
 				}
 		;
 
@@ -3725,6 +3749,9 @@ alter_table_partition_cmd:
 			OptTabSubPartitionSpec
            
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionId  *pid   = makeNode(AlterPartitionId);
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
 					AlterTableCmd     *n     = makeNode(AlterTableCmd);
@@ -3753,6 +3780,7 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartAdd;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 			| ADD_P DEFAULT PARTITION 
             alter_table_partition_id_spec 
@@ -3760,6 +3788,9 @@ alter_table_partition_cmd:
             OptTabPartitionStorageAttr
 			OptTabSubPartitionSpec 
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionId  *pid   = (AlterPartitionId *)$4;
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
 					AlterTableCmd     *n     = makeNode(AlterTableCmd);
@@ -3788,6 +3819,7 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartAdd;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 			| ADD_P PARTITION 
             alter_table_partition_id_spec 
@@ -3795,6 +3827,9 @@ alter_table_partition_cmd:
             OptTabPartitionStorageAttr
 			OptTabSubPartitionSpec 
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionId  *pid   = (AlterPartitionId *)$3;
 					AlterPartitionCmd *pc    = makeNode(AlterPartitionCmd);
 					AlterTableCmd     *n     = makeNode(AlterTableCmd);
@@ -3824,11 +3859,15 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartAdd;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 			| ALTER 
             alter_table_partition_id_spec_with_opt_default
             alter_table_cmd
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
                     /* NOTE: only allow a subset of valid ALTER TABLE
                        cmds for partitions.
                     */
@@ -3844,11 +3883,15 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartAlter;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 			| DROP PARTITION IF_P EXISTS 
             alter_table_partition_id_spec	 
             opt_drop_behavior
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					DropStmt *ds = makeNode(DropStmt);
@@ -3870,10 +3913,14 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartDrop;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 			| DROP DEFAULT PARTITION IF_P EXISTS 
             opt_drop_behavior
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					DropStmt *ds = makeNode(DropStmt);
@@ -3900,11 +3947,15 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartDrop;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 			| DROP 
             alter_table_partition_id_spec_with_opt_default
             opt_drop_behavior
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					DropStmt *ds = makeNode(DropStmt);
@@ -3926,9 +3977,13 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartDrop;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 			| DROP PARTITION 
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					DropStmt *ds = makeNode(DropStmt);
@@ -3955,12 +4010,16 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartDrop;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 			| EXCHANGE 
             alter_table_partition_id_spec_with_opt_default 
             WITH TABLE qualified_name
             opt_table_partition_exchange_validate	
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
 					AlterPartitionCmd *pc2 = makeNode(AlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -3974,10 +4033,14 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartExchange;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 			| RENAME 
             alter_table_partition_id_spec_with_opt_default TO IDENT	
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 
@@ -3989,10 +4052,14 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartRename;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 			| SET SUBPARTITION TEMPLATE
             '(' TabSubPartitionElemList ')' 
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionId  *pid   = makeNode(AlterPartitionId);
 					AlterPartitionCmd *pc    = makeNode(AlterPartitionCmd);
 					AlterTableCmd     *n     = makeNode(AlterTableCmd);
@@ -4056,10 +4123,14 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartSetTemplate;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 			| SET SUBPARTITION TEMPLATE
             '('  ')' 
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 
@@ -4071,12 +4142,16 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartSetTemplate;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 			| SPLIT 
             DEFAULT PARTITION TabPartitionBoundarySpecStart
             TabPartitionBoundarySpecEnd
             opt_table_partition_split_into	
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					AlterPartitionId *pid = makeNode(AlterPartitionId);
@@ -4093,12 +4168,16 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartSplit;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 			| SPLIT 
             alter_table_partition_id_spec_with_opt_default AT 
             '(' part_values_or_spec_list ')'	
             opt_table_partition_split_into	
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 
@@ -4115,11 +4194,15 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartSplit;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 			| TRUNCATE 
             alter_table_partition_id_spec_with_opt_default
             opt_drop_behavior
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					TruncateStmt *ts = makeNode(TruncateStmt);
@@ -4140,6 +4223,7 @@ alter_table_partition_cmd:
 					n->subtype = AT_PartTruncate;
 					n->def = (Node *)pc;
 					$$ = (Node *)n;
+#endif
 				}
 		;
 
@@ -5452,15 +5536,22 @@ TabPartitionColumnEncList:
 OptTabPartitionStorageAttr: WITH definition TABLESPACE name 
 				{
                     /* re-use alterpartitioncmd struct here... */
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
                     pc->partid = NULL;
                     pc->arg1 = (Node *)$2;
                     pc->arg2 = (Node *)makeString($4);
                     pc->location = @1;
 					$$ = (Node *)pc;
+#endif
                 }
 			| WITH definition
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
                     /* re-use alterpartitioncmd struct here... */
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
                     pc->partid = NULL;
@@ -5468,9 +5559,13 @@ OptTabPartitionStorageAttr: WITH definition TABLESPACE name
                     pc->arg2 = NULL;
                     pc->location = @1;
 					$$ = (Node *)pc;
+#endif
  				}
 			| TABLESPACE name 
 				{
+					/* GDPB_12_MERGE_FIXME: need to re-implement this */
+					elog(ERROR, "not implemented");
+#if 0
                     /* re-use alterpartitioncmd struct here... */
 					AlterPartitionCmd *pc = makeNode(AlterPartitionCmd);
                     pc->partid = NULL;
@@ -5478,6 +5573,7 @@ OptTabPartitionStorageAttr: WITH definition TABLESPACE name
                     pc->arg2 = (Node *)makeString($2);
                     pc->location = @1;
 					$$ = (Node *)pc;
+#endif
 				}
 			| /*EMPTY*/ { $$ = NULL; }
 		;
