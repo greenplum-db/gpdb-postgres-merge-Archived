@@ -49,6 +49,8 @@
 #include "storage/buffile.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "storage/lwlock.h"
+#include "storage/shmem.h"
 #include "utils/builtins.h"
 #include "utils/faultinjector.h"
 #include "utils/workfile_mgr.h"

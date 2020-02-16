@@ -1269,7 +1269,7 @@ LWLockAcquire(LWLock *lock, LWLockMode mode)
 		{
 			/* "false" means cannot accept cancel/die interrupt here. */
 #ifndef LOCK_DEBUG
-			PGSemaphoreLock(&proc->sem);
+			PGSemaphoreLock(proc->sem);
 #else
 			LWLockTryLockWaiting(proc, lock);
 #endif

@@ -945,7 +945,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 						ReindexIndex(stmt);
 						break;
 					case REINDEX_OBJECT_TABLE:
-						ReindexTable(stmt->relation, stmt->options, stmt->concurrent);
+						ReindexTable(stmt);
 						break;
 					case REINDEX_OBJECT_SCHEMA:
 					case REINDEX_OBJECT_SYSTEM:
@@ -1171,7 +1171,7 @@ ProcessUtilitySlow(ParseState *pstate,
 						stmts = list_make1(parsetree);
 					else
 						stmts = transformCreateStmt((CreateStmt *) parsetree,
-													queryString, false);
+													queryString);
 
 					/* ... and do it */
 					foreach(l, stmts)

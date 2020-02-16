@@ -748,6 +748,17 @@ ntuplestore_create_common(int64 maxBytes, char *operation_name)
 NTupleStore *
 ntuplestore_create_readerwriter(const char *filename, int64 maxBytes, bool isWriter)
 {
+	/* GPDB_12_MERGE_FIXME: I (Heikki) think we should get rid of tuplestorenew.c
+	 * altogether. The thing that tuplestorenew.c provides that tuplestore.c doesn't,
+	 * is sharing the data across processes. PostgreSQL BufFiles got support
+	 * for sharing across processes in upstream, we should implement sharing 
+	 * in tuplestore.c using that.
+	 *
+	 * This stuff here doesn't currently work because BufFileCreateNamedTemp()
+	 * function is gone.
+	 */
+	elog(ERROR, "tuplestore sharing not implemented yet");
+#if 0
 	NTupleStore* store = NULL;
 	char filenamelob[MAXPGPATH];
 
@@ -781,6 +792,7 @@ ntuplestore_create_readerwriter(const char *filename, int64 maxBytes, bool isWri
 		ntuplestore_init_reader(store, maxBytes);
 	}
 	return store;
+#endif
 }
 
 /*
@@ -864,11 +876,14 @@ ntuplestore_flush(NTupleStore *ts)
 		p = nts_page_next(p);
 	}
 	
+	/* GPDB_12_MERGE_FIXME */
+#if 0
 	BufFileFlush(ts->pfile);
 	if (ts->plobfile != NULL)
 	{
 		BufFileFlush(ts->plobfile);
 	}
+#endif
 }
 
 NTupleStoreAccessor* 
