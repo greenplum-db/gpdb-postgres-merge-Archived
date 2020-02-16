@@ -1137,7 +1137,8 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 	 * MCV list to improve it.
 	 */
 	simple_sel = clauselist_selectivity_simple(root, stat_clauses, varRelid,
-											   jointype, sjinfo, NULL);
+											   jointype, sjinfo, NULL,
+											   false); /* no damping */
 
 	/*
 	 * Now compute the multi-column estimate from the MCV list, along with the
