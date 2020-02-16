@@ -510,6 +510,12 @@ void
 dumpSharedComboCommandId(TransactionId xmin, CommandId cmin, CommandId cmax, CommandId combocid)
 {
 	/*
+	 * GPDB_12_MERGE_FIXME: Need to reimplement this with new BufFile sharing
+	 * mechanism. Or a DSM segment.
+	 */
+	elog(ERROR, "shared combo cids are broken");
+#if 0
+	/*
 	 * In any given segment, there are many readers, but only one writer. The
 	 * combo cid file information is stored in the MyProc of the writer process,
 	 * and is referenced by reader process via lockHolderProcPtr.  The writer
@@ -574,11 +580,18 @@ dumpSharedComboCommandId(TransactionId xmin, CommandId cmin, CommandId cmax, Com
 
 	/* Increment combocid count to make new combocid visible to Readers */
 	MyProc->combocid_map_count += 1;
+#endif
 }
 
 void
 loadSharedComboCommandId(TransactionId xmin, CommandId combocid, CommandId *cmin, CommandId *cmax)
 {
+	/*
+	 * GPDB_12_MERGE_FIXME: Need to reimplement this with new BufFile sharing
+	 * mechanism. Or a DSM segment.
+	 */
+	elog(ERROR, "shared combo cids are broken");
+#if 0
 	bool		found = false;
 	ComboCidEntryData entry;
 	int			i;
@@ -665,4 +678,5 @@ loadSharedComboCommandId(TransactionId xmin, CommandId combocid, CommandId *cmin
 	{
 		elog(ERROR, "loadSharedComboCommandId: no combocid entry found for %u/%u", xmin, combocid);
 	}
+#endif
 }

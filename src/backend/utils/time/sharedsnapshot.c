@@ -451,7 +451,7 @@ retry:
 
 	/* initialize some things */
 	slot->slotid = slotId;
-	slot->xid = 0;
+	slot->fullXid = InvalidFullTransactionId;
 	slot->startTimestamp = 0;
 	slot->QDxid = 0;
 	slot->segmateSync = 0;
@@ -562,7 +562,7 @@ SharedSnapshotRemove(volatile SharedSnapshotSlot *slot, char *creatorDescription
 
 	/* reset the slotid which marks it as being unused. */
 	slot->slotid = -1;
-	slot->xid = 0;
+	slot->fullXid = InvalidFullTransactionId;
 	slot->startTimestamp = 0;
 	slot->QDxid = 0;
 	slot->segmateSync = 0;
@@ -654,6 +654,12 @@ sharedLocalSnapshot_filename(TransactionId xid, uint32 segmateSync)
 void
 dumpSharedLocalSnapshot_forCursor(void)
 {
+	/*
+	 * GPDB_12_MERGE_FIXME: Need to reimplement this with new BufFile sharing
+	 * mechanism. Or a DSM segment.
+	 */
+	elog(ERROR, "shared snapshots are broken");
+#if 0
 	SharedSnapshotSlot *src = NULL;
 	char* fname = NULL;
 	BufFile *f = NULL;
@@ -744,11 +750,18 @@ dumpSharedLocalSnapshot_forCursor(void)
 
 	LWLockRelease(SharedLocalSnapshotSlot->slotLock);
 	elog(ERROR, "Failed to write shared snapshot to temp-file");
+#endif
 }
 
 void
 readSharedLocalSnapshot_forCursor(Snapshot snapshot, DtxContext distributedTransactionContext)
 {
+	/*
+	 * GPDB_12_MERGE_FIXME: Need to reimplement this with new BufFile sharing
+	 * mechanism. Or a DSM segment.
+	 */
+	elog(ERROR, "shared combo cids are broken");
+#if 0
 	BufFile *f;
 	char *fname=NULL;
 	Size count=0, sanity;
@@ -868,6 +881,7 @@ readSharedLocalSnapshot_forCursor(Snapshot snapshot, DtxContext distributedTrans
 		distributedTransactionContext);
 
 	return;
+#endif
 }
 
 /*
