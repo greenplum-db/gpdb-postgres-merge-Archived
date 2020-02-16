@@ -38,6 +38,8 @@ gp_aovisimap(PG_FUNCTION_ARGS)
 	HeapTuple	tuple;
 	Datum		result;
 
+    Oid visimaprelid;
+    Oid visimapidxid;
 	typedef struct Context
 	{
 		Relation	aorel;
@@ -87,12 +89,18 @@ gp_aovisimap(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("function not supported on relation")));
 		}
+		Snapshot sst = GetLatestSnapshot();
+
+        GetAppendOnlyEntryAuxOids(context->aorel->rd_id, sst,
+                                  NULL, NULL, NULL,
+                                  &visimaprelid, &visimapidxid);
 
 		AppendOnlyVisimapScan_Init(&context->visiMapScan,
-								   context->aorel->rd_appendonly->visimaprelid,
-								   context->aorel->rd_appendonly->visimapidxid,
+								   visimaprelid,
+								   visimapidxid,
 								   AccessShareLock,
-								   GetLatestSnapshot());
+								   sst);
+
 		AOTupleIdSetInvalid(&context->aoTupleId);
 
 		funcctx->user_fctx = (void *) context;
@@ -140,6 +148,8 @@ gp_aovisimap_hidden_info(PG_FUNCTION_ARGS)
 	bool		nulls[3];
 	HeapTuple	tuple;
 	Datum		result;
+    Oid         visimaprelid;
+    Oid         visimapidxid;
 
 	typedef struct Context
 	{
@@ -198,9 +208,14 @@ gp_aovisimap_hidden_info(PG_FUNCTION_ARGS)
 		}
 
 		snapshot = GetLatestSnapshot();
+
+        GetAppendOnlyEntryAuxOids(context->parentRelation->rd_id, snapshot,
+                                  NULL, NULL, NULL,
+                                  &visimaprelid, &visimapidxid);
+
 		AppendOnlyVisimap_Init(&context->visiMap,
-							   context->parentRelation->rd_appendonly->visimaprelid,
-							   context->parentRelation->rd_appendonly->visimapidxid,
+							   visimaprelid,
+							   visimapidxid,
 							   AccessShareLock,
 							   snapshot);
 
@@ -316,6 +331,8 @@ gp_aovisimap_entry(PG_FUNCTION_ARGS)
 	bool		nulls[4];
 	HeapTuple	tuple;
 	Datum		result;
+    Oid         visimaprelid;
+    Oid         visimapidxid;
 
 	typedef struct Context
 	{
@@ -372,11 +389,17 @@ gp_aovisimap_entry(PG_FUNCTION_ARGS)
 					 errmsg("function not supported on relation")));
 		}
 
+        Snapshot sst = GetLatestSnapshot();
+
+        GetAppendOnlyEntryAuxOids(context->parentRelation->rd_id, sst,
+                                  NULL, NULL, NULL,
+                                  &visimaprelid, &visimapidxid);
+
 		AppendOnlyVisimap_Init(&context->visiMap,
-							   context->parentRelation->rd_appendonly->visimaprelid,
-							   context->parentRelation->rd_appendonly->visimapidxid,
+							   visimaprelid,
+							   visimapidxid,
 							   AccessShareLock,
-							   GetLatestSnapshot());
+							   sst);
 
 		context->indexScan = AppendOnlyVisimapStore_BeginScan(&
 															  context->visiMap.visimapStore, 0, NULL);

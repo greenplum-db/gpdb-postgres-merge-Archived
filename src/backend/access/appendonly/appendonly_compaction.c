@@ -123,8 +123,13 @@ AppendOnlyCompaction_ShouldCompact(Relation aoRelation,
 	AppendOnlyVisimap visiMap;
 	int64		hiddenTupcount;
 	double		hideRatio;
+    Oid         visimaprelid;
+    Oid         visimapidxid;
 
 	Assert(RelationIsAppendOptimized(aoRelation));
+    GetAppendOnlyEntryAuxOids(aoRelation->rd_id, appendOnlyMetaDataSnapshot,
+                              NULL, NULL, NULL,
+                              &visimaprelid, &visimapidxid);
 
 	if (!gp_appendonly_compaction)
 	{
@@ -138,8 +143,8 @@ AppendOnlyCompaction_ShouldCompact(Relation aoRelation,
 	}
 
 	AppendOnlyVisimap_Init(&visiMap,
-						   aoRelation->rd_appendonly->visimaprelid,
-						   aoRelation->rd_appendonly->visimapidxid,
+						   visimaprelid,
+						   visimapidxid,
 						   ShareLock,
 						   appendOnlyMetaDataSnapshot);
 	hiddenTupcount = AppendOnlyVisimap_GetSegmentFileHiddenTupleCount(
@@ -289,7 +294,7 @@ AppendOnlyMoveTuple(TupleTableSlot *slot,
 	/* Extract all the values of the tuple */
 	slot_getallattrs(slot);
 
-	tuple = ExecFetchSlotMemTuple(slot, true, &shouldFree);
+	tuple = ExecFetchSlotMemTuple(slot, &shouldFree);
 	appendonly_insert(insertDesc,
 					  tuple,
 					  &newAoTupleId);
@@ -364,6 +369,9 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 	AOTupleId  *aoTupleId;
 	int64		tupleCount = 0;
 	int64		tuplePerPage = INT_MAX;
+    Oid         visimaprelid;
+    Oid         visimapidxid;
+    Oid         blkdirrelid;
 
 	Assert(Gp_role == GP_ROLE_EXECUTE || Gp_role == GP_ROLE_UTILITY);
 	Assert(RelationIsAoRows(aorel));
@@ -376,9 +384,13 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 	}
 	relname = RelationGetRelationName(aorel);
 
+    GetAppendOnlyEntryAuxOids(aorel->rd_id, appendOnlyMetaDataSnapshot,
+                              &blkdirrelid, NULL, NULL,
+                              &visimaprelid, &visimapidxid);
+
 	AppendOnlyVisimap_Init(&visiMap,
-						   aorel->rd_appendonly->visimaprelid,
-						   aorel->rd_appendonly->visimapidxid,
+						   visimaprelid,
+						   visimapidxid,
 						   ShareUpdateExclusiveLock,
 						   appendOnlyMetaDataSnapshot);
 
@@ -453,7 +465,7 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 	AppendOnlyVisimap_DeleteSegmentFile(&visiMap, compact_segno);
 
 	/* Delete all mini pages of the segment files if block directory exists */
-	if (OidIsValid(aorel->rd_appendonly->blkdirrelid))
+	if (OidIsValid(blkdirrelid))
 	{
 		AppendOnlyBlockDirectory_DeleteSegmentFile(aorel,
 												   appendOnlyMetaDataSnapshot,
@@ -781,10 +793,13 @@ AppendOnlyCompaction_IsRelationEmpty(Relation aorel)
 	SysScanDesc aoscan;
 	int			Anum_tupcount;
 	bool		empty = true;
+	Oid         segrelid;
 
 	Assert(RelationIsAppendOptimized(aorel));
+    GetAppendOnlyEntryAuxOids(aorel->rd_id, NULL, &segrelid,
+                              NULL, NULL, NULL, NULL);
 
-	pg_aoseg_rel = table_open(aorel->rd_appendonly->segrelid, AccessShareLock);
+	pg_aoseg_rel = table_open(segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 	aoscan = systable_beginscan(pg_aoseg_rel, InvalidOid, true, NULL, 0, NULL);
 	Anum_tupcount = RelationIsAoRows(aorel) ? Anum_pg_aoseg_tupcount : Anum_pg_aocs_tupcount;
