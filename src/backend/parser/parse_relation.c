@@ -1681,7 +1681,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 			if (OidIsValid(funcDescribe))
 			{
 				FmgrInfo	flinfo;
-				FunctionCallInfoData fcinfo;
+				LOCAL_FCINFO(fcinfo, 1);
 
 				/*
 				 * Describe functions have the signature  d(internal) => internal
@@ -1692,12 +1692,12 @@ addRangeTableEntryForFunction(ParseState *pstate,
 				 */
 				rtfunc->funcuserdata = NULL;
 				fmgr_info(funcDescribe, &flinfo);
-				InitFunctionCallInfoData(fcinfo, &flinfo, 1, InvalidOid, (Node *) rtfunc, NULL);
-				fcinfo.arg[0] = PointerGetDatum(funcexpr);
-				fcinfo.argnull[0] = false;
+				InitFunctionCallInfoData(*fcinfo, &flinfo, 1, InvalidOid, (Node *) rtfunc, NULL);
+				fcinfo->args[0].value = PointerGetDatum(funcexpr);
+				fcinfo->args[0].isnull = false;
 
-				d = FunctionCallInvoke(&fcinfo);
-				if (fcinfo.isnull)
+				d = FunctionCallInvoke(fcinfo);
+				if (fcinfo->isnull)
 					elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
 				tupdesc = (TupleDesc) DatumGetPointer(d);
 
@@ -1710,7 +1710,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 					functypclass = TYPEFUNC_COMPOSITE;
 					for (i = 0; i < tupdesc->natts; i++)
 					{
-						Form_pg_attribute attr = tupdesc->attrs[i];
+						Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 
 						rtfunc->funccolnames	= lappend(rtfunc->funccolnames,
 														  makeString(pstrdup(NameStr(attr->attname))));
@@ -2434,7 +2434,7 @@ isSimplyUpdatableRelation(Oid relid, bool noerror)
 			break;
 		}
 
-		/* GPDB_12_MERGE_FIXME: How to check this now? Look at rel->rd_rel->relam?
+		/* GPDB_12_MERGE_FIXME: How to check this now? Look at rel->rd_rel->relam? */
 #if 0
 		if (rel->rd_rel->relstorage != RELSTORAGE_HEAP)
 		{
@@ -3116,9 +3116,9 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
     if (attnum < 0 &&
         attnum > FirstLowInvalidHeapAttributeNumber)
     {
-		const FormData_pg_attribute *att_tup = SystemAttributeDefinition(attnum, true);
+		const FormData_pg_attribute *att_tup = SystemAttributeDefinition(attnum);
 
-		return NameStr(att_tup->attname);
+		return pstrdup(NameStr(att_tup->attname));
     }
 
 bogus:
