@@ -21,6 +21,7 @@
 #include <limits.h>
 #include <math.h>
 
+#include "access/relation.h"
 #include "access/sysattr.h"
 #include "catalog/pg_class.h"
 #include "foreign/fdwapi.h"
@@ -160,7 +161,7 @@ static ValuesScan *create_valuesscan_plan(PlannerInfo *root, Path *best_path,
 										  List *tlist, List *scan_clauses);
 static TableFuncScan *create_tablefuncscan_plan(PlannerInfo *root, Path *best_path,
 												List *tlist, List *scan_clauses);
-static CteScan *create_ctescan_plan(PlannerInfo *root, Path *best_path,
+static Plan *create_ctescan_plan(PlannerInfo *root, Path *best_path,
 									List *tlist, List *scan_clauses);
 static NamedTuplestoreScan *create_namedtuplestorescan_plan(PlannerInfo *root,
 															Path *best_path, List *tlist, List *scan_clauses);
@@ -248,7 +249,7 @@ static NestLoop *make_nestloop(List *tlist,
 							   JoinType jointype, bool inner_unique);
 static HashJoin *make_hashjoin(List *tlist,
 							   List *joinclauses, List *otherclauses,
-							   List *hashclauses,
+							   List *hashclauses, List *hashqualclauses,
 							   Plan *lefttree, Plan *righttree,
 							   JoinType jointype, bool inner_unique);
 static Hash *make_hash(Plan *lefttree,
@@ -276,7 +277,7 @@ static Plan *prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 										AttrNumber **p_sortColIdx,
 										Oid **p_sortOperators,
 										Oid **p_collations,
-										bool **p_nullsFirst, bool add_keys_to_targetlist);
+										bool **p_nullsFirst);
 static EquivalenceMember *find_ec_member_for_tle(EquivalenceClass *ec,
 												 TargetEntry *tle,
 												 Relids relids);
@@ -1234,8 +1235,7 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 										  &nodeSortColIdx,
 										  &nodeSortOperators,
 										  &nodeCollations,
-										  &nodeNullsFirst,
-										  true /* add_keys_to_targetlist */);
+										  &nodeNullsFirst);
 		tlist_was_changed = (orig_tlist_length != list_length(plan->plan.targetlist));
 	}
 
@@ -1274,8 +1274,7 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 												 &sortColIdx,
 												 &sortOperators,
 												 &collations,
-												 &nullsFirst,
-												 true /* add_keys_to_targetlist */);
+												 &nullsFirst);
 
 			/*
 			 * Check that we got the same sort key information.  We just
@@ -1411,8 +1410,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path,
 									  &node->sortColIdx,
 									  &node->sortOperators,
 									  &node->collations,
-									  &node->nullsFirst,
-									  true /* add_keys_to_targetlist */);
+									  &node->nullsFirst);
 	tlist_was_changed = (orig_tlist_length != list_length(plan->targetlist));
 
 	/*
@@ -1443,8 +1441,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path,
 											 &sortColIdx,
 											 &sortOperators,
 											 &collations,
-											 &nullsFirst,
-											 true /* add_keys_to_targetlist */);
+											 &nullsFirst);
 
 		/*
 		 * Check that we got the same sort key information.  We just Assert
@@ -1881,8 +1878,7 @@ create_gather_merge_plan(PlannerInfo *root, GatherMergePath *best_path)
 										 &gm_plan->sortColIdx,
 										 &gm_plan->sortOperators,
 										 &gm_plan->collations,
-										 &gm_plan->nullsFirst,
-										 true /* add_keys_to_targetlist */);
+										 &gm_plan->nullsFirst);
 
 
 	/* Now, insert a Sort node if subplan isn't sufficiently ordered */
@@ -2429,7 +2425,6 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 						best_path->qual,
 						best_path->aggstrategy,
 						AGGSPLIT_SIMPLE,
-						best_path->aggsplit,
 						false, /* streaming */
 						numGroupCols,
 						top_grpColIdx,
@@ -3129,7 +3124,7 @@ create_splitupdate_plan(PlannerInfo *root, SplitUpdatePath *path)
 		lc = lnext(lc);
 		Assert(tle);
 
-		attr = resultDesc->attrs[attrIdx - 1];
+		attr = &resultDesc->attrs[attrIdx - 1];
 		if (attr->attisdropped)
 		{
 			Assert(IsA(tle->expr, Const) && ((Const *) tle->expr)->constisnull);
@@ -3172,7 +3167,7 @@ create_splitupdate_plan(PlannerInfo *root, SplitUpdatePath *path)
 	for (i = 0; i < cdbpolicy->nattrs; i++)
 	{
 		AttrNumber	attnum = cdbpolicy->attrs[i];
-		Oid			typeoid = resultDesc->attrs[attnum - 1]->atttypid;
+		Oid			typeoid = resultDesc->attrs[attnum - 1].atttypid;
 		Oid			opfamily;
 
 		opfamily = get_opclass_family(cdbpolicy->opclasses[i]);
@@ -4153,7 +4148,7 @@ create_valuesscan_plan(PlannerInfo *root, Path *best_path,
  *	 Returns a ctescan plan for the base relation scanned by 'best_path'
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
-static Plan *
+static Plan*
 create_ctescan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses)
 {
@@ -4946,8 +4941,7 @@ create_mergejoin_plan(PlannerInfo *root,
 		Relids		outer_relids = outer_path->parent->relids;
 		Sort	   *sort = make_sort_from_pathkeys(outer_plan,
 												   best_path->outersortkeys,
-												   outer_relids,
-												   true);
+												   outer_relids);
 
 		label_sort_with_costsize(root, sort, -1.0);
 		outer_plan = (Plan *) sort;
@@ -4961,8 +4955,7 @@ create_mergejoin_plan(PlannerInfo *root,
 		Relids		inner_relids = inner_path->parent->relids;
 		Sort	   *sort = make_sort_from_pathkeys(inner_plan,
 												   best_path->innersortkeys,
-												   inner_relids,
-												   true);
+												   inner_relids);
 
 		label_sort_with_costsize(root, sort, -1.0);
 		inner_plan = (Plan *) sort;
@@ -6468,12 +6461,12 @@ make_nestloop(List *tlist,
 	return node;
 }
 
-HashJoin *
+static HashJoin *
 make_hashjoin(List *tlist,
 			  List *joinclauses,
 			  List *otherclauses,
 			  List *hashclauses,
-			  List *hashqualclauses,
+			  List *hashqualclauses, /* GPDB_12_MERGE_FIXME: Does it need to rid of ? */
 			  Plan *lefttree,
 			  Plan *righttree,
 			  JoinType jointype,
@@ -6666,8 +6659,7 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 						   AttrNumber **p_sortColIdx,
 						   Oid **p_sortOperators,
 						   Oid **p_collations,
-						   bool **p_nullsFirst,
-						   bool add_keys_to_targetlist)
+						   bool **p_nullsFirst)
 {
 	List	   *tlist = lefttree->targetlist;
 	ListCell   *i;
@@ -6779,9 +6771,6 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 			 * WindowFunc in a sort expression, treat it as a variable.
 			 */
 			Expr	   *sortexpr = NULL;
-
-			if (!add_keys_to_targetlist)
-				break;
 
 			foreach(j, ec->ec_members)
 			{
@@ -6945,8 +6934,7 @@ find_ec_member_for_tle(EquivalenceClass *ec,
  *				subplan's tlist.
  */
 Sort *
-make_sort_from_pathkeys(Plan *lefttree, List *pathkeys, Relids relids,
-						bool add_keys_to_targetlist)
+make_sort_from_pathkeys(Plan *lefttree, List *pathkeys, Relids relids)
 {
 	int			numsortkeys;
 	AttrNumber *sortColIdx;
@@ -6963,14 +6951,10 @@ make_sort_from_pathkeys(Plan *lefttree, List *pathkeys, Relids relids,
 										  &sortColIdx,
 										  &sortOperators,
 										  &collations,
-										  &nullsFirst,
-										  add_keys_to_targetlist);
+										  &nullsFirst);
 
 	if (lefttree == NULL)
-	{
-		Assert(!add_keys_to_targetlist);
 		return NULL;
-	}
 
 	/* Now build the Sort node */
 	return make_sort(lefttree, numsortkeys,
@@ -7960,7 +7944,7 @@ plan_pushdown_tlist(PlannerInfo *root, Plan *plan, List *tlist)
 		Plan	   *subplan = plan;
 
 		/* Insert a Result node to evaluate the targetlist. */
-		plan = (Plan *) inject_projection_plan(subplan, tlist);
+		plan = (Plan *) inject_projection_plan(subplan, tlist, subplan->parallel_safe);
 	}
 	return plan;
 }	/* plan_pushdown_tlist */
@@ -8096,8 +8080,7 @@ cdbpathtoplan_create_motion_plan(PlannerInfo *root,
 											  &sortColIdx,
 											  &sortOperators,
 											  &collations,
-											  &nullsFirst,
-											  true /* add_keys_to_targetlist */);
+											  &nullsFirst);
 
 			if (prep)
 			{
