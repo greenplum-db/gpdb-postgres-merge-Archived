@@ -119,8 +119,7 @@ open_all_datumstreamread_segfiles(Relation rel,
  * means all columns.
  */
 static void
-open_ds_write(Relation rel, DatumStreamWrite **ds, TupleDesc relationTupleDesc,
-			  bool checksum)
+open_ds_write(Relation rel, DatumStreamWrite **ds, TupleDesc relationTupleDesc, bool checksum)
 {
 	int			nvp = relationTupleDesc->natts;
 	StdRdOptions **opts = RelationGetAttributeOptions(rel);
@@ -265,8 +264,7 @@ aocs_initscan(AOCSScanDesc scan)
 	scan->cur_seg_row = 0;
 
 	open_ds_read(scan->aos_rel, scan->ds, scan->relationTupleDesc,
-				 scan->proj_atts, scan->num_proj_atts,
-				 scan->aos_rel->rd_appendonly->checksum);
+				 scan->proj_atts, scan->num_proj_atts, scan->checksum);
 
 	pgstat_count_heap_scan(scan->aos_rel);
 }
@@ -319,9 +317,14 @@ open_next_scan_seg(AOCSScanDesc scan)
 					 * 1 then we don't even need to update the sequence value
 					 */
 					int64		firstSequence;
+					Oid         segrelid;
+                    GetAppendOnlyEntryAuxOids(scan->aos_rel->rd_id,
+                                              scan->appendOnlyMetaDataSnapshot,
+                                              &segrelid, NULL, NULL,
+                                              NULL, NULL);
 
 					firstSequence =
-						GetFastSequences(scan->aos_rel->rd_appendonly->segrelid,
+						GetFastSequences(segrelid,
 										 curSegInfo->segno,
 										 curSegInfo->total_tupcount + 1,
 										 NUM_FAST_SEQUENCES);
@@ -335,7 +338,7 @@ open_next_scan_seg(AOCSScanDesc scan)
 															nvp,
 															true);
 
-					InsertFastSequenceEntry(scan->aos_rel->rd_appendonly->segrelid,
+					InsertFastSequenceEntry(segrelid,
 											curSegInfo->segno,
 											firstSequence);
 				}
@@ -418,7 +421,13 @@ aocs_beginscan(Relation relation,
 
 	RelationIncrementReferenceCount(relation);
 
-	seginfo = GetAllAOCSFileSegInfo(relation, appendOnlyMetaDataSnapshot, &total_seg);
+    Oid         segrelid;
+    GetAppendOnlyEntryAuxOids(relation->rd_id,
+                              appendOnlyMetaDataSnapshot,
+                              &segrelid, NULL, NULL,
+                              NULL, NULL);
+
+	seginfo = GetAllAOCSFileSegInfo(relation, appendOnlyMetaDataSnapshot, &total_seg, segrelid);
 
 	return aocs_beginscan_internal(relation,
 								   seginfo,
@@ -461,15 +470,26 @@ aocs_beginscan_internal(Relation relation,
 	scan->appendOnlyMetaDataSnapshot = appendOnlyMetaDataSnapshot;
 	scan->snapshot = snapshot;
 
-	scan->compLevel = relation->rd_appendonly->compresslevel;
-	scan->compType = NameStr(relation->rd_appendonly->compresstype);
-	scan->blocksz = relation->rd_appendonly->blocksize;
-
 	scan->seginfo = seginfo;
 
 	scan->total_seg = total_seg;
 	scan->relationTupleDesc = relationTupleDesc;
+	NameData    nd;
+    Oid         visimaprelid;
+    Oid         visimapidxid;
 
+    GetAppendOnlyEntryAttributes(relation->rd_id,
+                                 &scan->blocksz,
+                                 NULL,
+                                 (int16 *)&scan->compLevel,
+                                 &scan->checksum,
+                                 &nd);
+    scan->compType = NameStr(nd);
+
+    GetAppendOnlyEntryAuxOids(relation->rd_id,
+                              scan->appendOnlyMetaDataSnapshot,
+                              NULL, NULL, NULL,
+                              &visimaprelid, &visimapidxid);
 	/*
 	 * We get an array of booleans to indicate which columns are needed. But
 	 * if you have a very wide table, and you only select a few columns from
@@ -494,8 +514,8 @@ aocs_beginscan_internal(Relation relation,
 	scan->blockDirectory = NULL;
 
 	AppendOnlyVisimap_Init(&scan->visibilityMap,
-						   relation->rd_appendonly->visimaprelid,
-						   relation->rd_appendonly->visimapidxid,
+						   visimaprelid,
+						   visimapidxid,
 						   AccessShareLock,
 						   appendOnlyMetaDataSnapshot);
 
@@ -716,7 +736,7 @@ ReadNext:
 		}
 		scan->cdb_fake_ctid = *((ItemPointer) &aoTupleId);
 
-		TupSetVirtualTupleNValid(slot, ncol);
+		slot->tts_nvalid = ncol;
 		slot->tts_tid = scan->cdb_fake_ctid;
 		return true;
 	}
@@ -759,8 +779,7 @@ OpenAOCSDatumStreams(AOCSInsertDesc desc)
 									  AccessExclusiveLock,
 									   /* dontWait */ false);
 
-	open_ds_write(desc->aoi_rel, desc->ds, tupdesc,
-				  desc->aoi_rel->rd_appendonly->checksum);
+	open_ds_write(desc->aoi_rel, desc->ds, tupdesc, desc->checksum);
 
 	/* Now open seg info file and get eof mark. */
 	seginfo = GetAOCSFileSegInfo(desc->aoi_rel,
@@ -769,7 +788,7 @@ OpenAOCSDatumStreams(AOCSInsertDesc desc)
 
 	if (seginfo == NULL)
 	{
-		InsertInitialAOCSFileSegInfo(desc->aoi_rel, desc->cur_segno, nvp);
+		InsertInitialAOCSFileSegInfo(desc->aoi_rel, desc->cur_segno, nvp, desc->segrelid);
 		seginfo = NewAOCSFileSegInfo(desc->cur_segno, nvp);
 	}
 
@@ -822,6 +841,7 @@ SetBlockFirstRowNums(DatumStreamWrite **datumStreams,
 AOCSInsertDesc
 aocs_insert_init(Relation rel, int segno, bool update_mode)
 {
+    NameData    nd;
 	AOCSInsertDesc desc;
 	TupleDesc	tupleDesc;
 	int64		firstSequence = 0;
@@ -841,9 +861,18 @@ aocs_insert_init(Relation rel, int segno, bool update_mode)
 	desc->cur_segno = segno;
 	desc->update_mode = update_mode;
 
-	desc->compLevel = rel->rd_appendonly->compresslevel;
-	desc->compType = NameStr(rel->rd_appendonly->compresstype);
-	desc->blocksz = rel->rd_appendonly->blocksize;
+    GetAppendOnlyEntryAttributes(rel->rd_id,
+                                 &desc->blocksz,
+                                 NULL,
+                                 (int16 *)&desc->compLevel,
+                                 &desc->checksum,
+                                 &nd);
+    desc->compType = NameStr(nd);
+
+    GetAppendOnlyEntryAuxOids(rel->rd_id,
+                              desc->appendOnlyMetaDataSnapshot,
+                              &desc->segrelid, &desc->blkdirrelid, NULL,
+                              &desc->visimaprelid, &desc->visimapidxid);
 
 	OpenAOCSDatumStreams(desc);
 
@@ -856,7 +885,7 @@ aocs_insert_init(Relation rel, int segno, bool update_mode)
 	desc->numSequences = 0;
 
 	firstSequence =
-		GetFastSequences(rel->rd_appendonly->segrelid,
+		GetFastSequences(desc->segrelid,
 						 segno,
 						 desc->rowCount + 1,
 						 NUM_FAST_SEQUENCES);
@@ -975,7 +1004,7 @@ aocs_insert_values(AOCSInsertDesc idesc, Datum *d, bool *null, AOTupleId *aoTupl
 		int64		firstSequence;
 
 		firstSequence =
-			GetFastSequences(rel->rd_appendonly->segrelid,
+			GetFastSequences(idesc->segrelid,
 							 idesc->cur_segno,
 							 idesc->lastSequence + 1,
 							 NUM_FAST_SEQUENCES);
@@ -1071,7 +1100,7 @@ fetchFromCurrentBlock(AOCSFetchDesc aocsFetchDesc,
 	if (slot != NULL)
 	{
 		Datum	   *values = slot->tts_values;
-		bool	   *nulls = slot->ttts_isnull;
+		bool	   *nulls = slot->tts_isnull;
 		int			formatversion = datumStream->ao_read.formatVersion;
 
 		datumstreamread_get(datumStream, &(values[colno]), &(nulls[colno]));
@@ -1222,8 +1251,23 @@ aocs_fetch_init(Relation relation,
 
 	Assert(proj);
 
+    bool checksum;
+    Oid visimaprelid;
+    Oid visimapidxid;
+    GetAppendOnlyEntryAuxOids(relation->rd_id,
+                              appendOnlyMetaDataSnapshot,
+                              &aocsFetchDesc->segrelid, NULL, NULL,
+                              &visimaprelid, &visimapidxid);
+
+    GetAppendOnlyEntryAttributes(relation->rd_id,
+                                 NULL,
+                                 NULL,
+                                 NULL,
+                                 &checksum,
+                                 NULL);
+
 	aocsFetchDesc->segmentFileInfo =
-		GetAllAOCSFileSegInfo(relation, appendOnlyMetaDataSnapshot, &aocsFetchDesc->totalSegfiles);
+		GetAllAOCSFileSegInfo(relation, appendOnlyMetaDataSnapshot, &aocsFetchDesc->totalSegfiles, aocsFetchDesc->segrelid);
 
 	AppendOnlyBlockDirectory_Init_forSearch(
 											&aocsFetchDesc->blockDirectory,
@@ -1275,7 +1319,7 @@ aocs_fetch_init(Relation relation,
 			aocsFetchDesc->datumStreamFetchDesc[colno]->datumStream =
 				create_datumstreamread(ct,
 									   clvl,
-									   relation->rd_appendonly->checksum,
+									   checksum,
 									    /* safeFSWriteSize */ false,	/* UNDONE:Need to wire
 																		 * down pg_appendonly
 																		 * column */
@@ -1291,8 +1335,8 @@ aocs_fetch_init(Relation relation,
 	if (opts)
 		pfree(opts);
 	AppendOnlyVisimap_Init(&aocsFetchDesc->visibilityMap,
-						   relation->rd_appendonly->visimaprelid,
-						   relation->rd_appendonly->visimapidxid,
+						   visimaprelid,
+						   visimapidxid,
 						   AccessShareLock,
 						   appendOnlyMetaDataSnapshot);
 
@@ -1475,8 +1519,8 @@ aocs_fetch(AOCSFetchDesc aocsFetchDesc,
 	{
 		if (slot != NULL)
 		{
-			TupSetVirtualTupleNValid(slot, colno);
-			slot->tts_tid = *(ItemPointer) aoTupleId);
+			slot->tts_nvalid = colno;
+			slot->tts_tid = *(ItemPointer)(aoTupleId);
 		}
 	}
 	else
@@ -1546,13 +1590,19 @@ typedef struct AOCSUpdateDescData
 AOCSUpdateDesc
 aocs_update_init(Relation rel, int segno)
 {
+    Oid visimaprelid;
+    Oid visimapidxid;
 	AOCSUpdateDesc desc = (AOCSUpdateDesc) palloc0(sizeof(AOCSUpdateDescData));
 
 	desc->insertDesc = aocs_insert_init(rel, segno, true);
 
+    GetAppendOnlyEntryAuxOids(rel->rd_id,
+                              desc->insertDesc->appendOnlyMetaDataSnapshot,
+                              NULL, NULL, NULL,
+                              &visimaprelid, &visimapidxid);
 	AppendOnlyVisimap_Init(&desc->visibilityMap,
-						   rel->rd_appendonly->visimaprelid,
-						   rel->rd_appendonly->visimapidxid,
+						   visimaprelid,
+						   visimapidxid,
 						   RowExclusiveLock,
 						   desc->insertDesc->appendOnlyMetaDataSnapshot);
 
@@ -1649,15 +1699,24 @@ aocs_delete_init(Relation rel)
 	/*
 	 * Get the pg_appendonly information
 	 */
+	Oid visimaprelid;
+	Oid visimapidxid;
 	AOCSDeleteDesc aoDeleteDesc = palloc0(sizeof(AOCSDeleteDescData));
 
 	aoDeleteDesc->aod_rel = rel;
 
+    Snapshot snapshot = GetCatalogSnapshot(InvalidOid);
+
+    GetAppendOnlyEntryAuxOids(rel->rd_id,
+                              snapshot,
+                              NULL, NULL, NULL,
+                              &visimaprelid, &visimapidxid);
+
 	AppendOnlyVisimap_Init(&aoDeleteDesc->visibilityMap,
-						   rel->rd_appendonly->visimaprelid,
-						   rel->rd_appendonly->visimapidxid,
+						   visimaprelid,
+						   visimapidxid,
 						   RowExclusiveLock,
-						   GetCatalogSnapshot(InvalidOid));
+						   snapshot);
 
 	AppendOnlyVisimapDelete_Init(&aoDeleteDesc->visiMapDelete,
 								 &aoDeleteDesc->visibilityMap);
@@ -1712,7 +1771,12 @@ aocs_begin_headerscan(Relation rel, int colno)
 
 	Assert(opts[colno]);
 
-	ao_attr.checksum = rel->rd_appendonly->checksum;
+    GetAppendOnlyEntryAttributes(rel->rd_id,
+                                 NULL,
+                                 NULL,
+                                 NULL,
+                                 &ao_attr.checksum,
+                                 NULL);
 
 	/*
 	 * We are concerned with varblock headers only, not their content.
@@ -1787,6 +1851,7 @@ aocs_addcol_init(Relation rel,
 	int			i;
 	int			iattr;
 	StringInfoData titleBuf;
+	bool        checksum;
 
 	desc = palloc(sizeof(AOCSAddColumnDescData));
 	desc->num_newcols = num_newcols;
@@ -1801,6 +1866,13 @@ aocs_addcol_init(Relation rel,
 
 	desc->dsw = palloc(sizeof(DatumStreamWrite *) * desc->num_newcols);
 
+    GetAppendOnlyEntryAttributes(rel->rd_id,
+                                 NULL,
+                                 NULL,
+                                 NULL,
+                                 &checksum,
+                                 NULL);
+
 	iattr = rel->rd_att->natts - num_newcols;
 	for (i = 0; i < num_newcols; ++i, ++iattr)
 	{
@@ -1813,7 +1885,7 @@ aocs_addcol_init(Relation rel,
 		ct = opts[iattr]->compresstype;
 		clvl = opts[iattr]->compresslevel;
 		blksz = opts[iattr]->blocksize;
-		desc->dsw[i] = create_datumstreamwrite(ct, clvl, rel->rd_appendonly->checksum, 0, blksz /* safeFSWriteSize */ ,
+		desc->dsw[i] = create_datumstreamwrite(ct, clvl, checksum, 0, blksz /* safeFSWriteSize */ ,
 											   attr, RelationGetRelationName(rel),
 											   titleBuf.data,
 											   RelationNeedsWAL(rel));

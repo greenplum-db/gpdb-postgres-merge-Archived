@@ -5686,8 +5686,13 @@ ATAocsNoRewrite(AlteredTableInfo *tab)
 		newval->exprstate = ExecPrepareExpr((Expr *) newval->expr, estate);
 	}
 
+    Oid         segrelid;
+    GetAppendOnlyEntryAuxOids(rel->rd_id,
+                              snapshot,
+                              &segrelid, NULL, NULL,
+                              NULL, NULL);
 	rel = heap_open(tab->relid, NoLock);
-	segInfos = GetAllAOCSFileSegInfo(rel, snapshot, &nseg);
+	segInfos = GetAllAOCSFileSegInfo(rel, snapshot, &nseg, segrelid);
 	basepath = relpathbackend(rel->rd_node, rel->rd_backend, MAIN_FORKNUM);
 	if (nseg > 0)
 	{

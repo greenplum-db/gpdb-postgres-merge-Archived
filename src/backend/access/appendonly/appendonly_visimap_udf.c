@@ -207,10 +207,10 @@ gp_aovisimap_hidden_info(PG_FUNCTION_ARGS)
 					 errmsg("function not supported on relation")));
 		}
 
+        Oid segrelid;
 		snapshot = GetLatestSnapshot();
-
         GetAppendOnlyEntryAuxOids(context->parentRelation->rd_id, snapshot,
-                                  NULL, NULL, NULL,
+                                  &segrelid, NULL, NULL,
                                   &visimaprelid, &visimapidxid);
 
 		AppendOnlyVisimap_Init(&context->visiMap,
@@ -229,7 +229,7 @@ gp_aovisimap_hidden_info(PG_FUNCTION_ARGS)
 		{
 			Assert(context->parentRelation->rd_rel->relam == AOCO_TABLE_AM_OID);
 			context->aocsSegfileInfo = GetAllAOCSFileSegInfo(context->parentRelation,
-															 snapshot, &context->segfile_info_total);
+															 snapshot, &context->segfile_info_total, segrelid);
 		}
 		context->i = 0;
 

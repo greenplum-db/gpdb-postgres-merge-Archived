@@ -227,7 +227,12 @@ AORelCreateHashEntry(Oid relid)
 	else
 	{
 		Assert(RelationIsAoCols(aorel));
-		aocsallfsinfo = GetAllAOCSFileSegInfo(aorel, appendOnlyMetaDataSnapshot, &total_segfiles);
+        Oid         segrelid;
+        GetAppendOnlyEntryAuxOids(aorel->rd_id,
+                                  appendOnlyMetaDataSnapshot,
+                                  &segrelid, NULL, NULL,
+                                  NULL, NULL);
+		aocsallfsinfo = GetAllAOCSFileSegInfo(aorel, appendOnlyMetaDataSnapshot, &total_segfiles, segrelid);
 	}
 	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 
@@ -1641,6 +1646,7 @@ UpdateMasterAosegTotalsFromSegments(Relation parentrel,
 void
 UpdateMasterAosegTotals(Relation parentrel, int segno, int64 tupcount, int64 modcount_added)
 {
+    Oid         segrelid;
 	AORelHashEntry aoHashEntry = NULL;
 	Snapshot	appendOnlyMetaDataSnapshot;
 
@@ -1651,6 +1657,7 @@ UpdateMasterAosegTotals(Relation parentrel, int segno, int64 tupcount, int64 mod
 			  (errmsg("UpdateMasterAosegTotals: Updating aoseg entry for append-only relation %d "
 					  "with " INT64_FORMAT " new tuples for segno %d",
 					  RelationGetRelid(parentrel), (int64) tupcount, segno)));
+
 
 	/* CONSIDER: We should probably get this lock even sooner. */
 	LockRelationAppendOnlySegmentFile(
@@ -1663,6 +1670,11 @@ UpdateMasterAosegTotals(Relation parentrel, int segno, int64 tupcount, int64 mod
 	 * Get the snapshot after locking the segment-file entry.
 	 */
 	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+
+    GetAppendOnlyEntryAuxOids(parentrel->rd_id,
+                              appendOnlyMetaDataSnapshot,
+                              &segrelid, NULL, NULL,
+                              NULL, NULL);
 
 	if (RelationIsAoRows(parentrel))
 	{
@@ -1701,7 +1713,8 @@ UpdateMasterAosegTotals(Relation parentrel, int segno, int64 tupcount, int64 mod
 		if (seginfo == NULL)
 		{
 			InsertInitialAOCSFileSegInfo(parentrel, segno,
-										 RelationGetNumberOfAttributes(parentrel));
+										 RelationGetNumberOfAttributes(parentrel),
+										 segrelid);
 		}
 		else
 		{

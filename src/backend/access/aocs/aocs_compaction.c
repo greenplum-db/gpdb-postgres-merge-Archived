@@ -190,8 +190,14 @@ AOCSTruncateToEOF(Relation aorel)
 	elogif(Debug_appendonly_print_compaction, LOG,
 		   "Compact AO relation %s", relname);
 
+    Oid         segrelid;
+    GetAppendOnlyEntryAuxOids(aorel->rd_id,
+                              appendOnlyMetaDataSnapshot,
+                              &segrelid, NULL, NULL,
+                              NULL, NULL);
+
 	/* Get information about all the file segments we need to scan */
-	segfile_array = GetAllAOCSFileSegInfo(aorel, appendOnlyMetaDataSnapshot, &total_segfiles);
+	segfile_array = GetAllAOCSFileSegInfo(aorel, appendOnlyMetaDataSnapshot, &total_segfiles, segrelid);
 
 	for (i = 0; i < total_segfiles; i++)
 	{
@@ -270,7 +276,7 @@ AOCSMoveTuple(TupleTableSlot *slot,
 	if (resultRelInfo->ri_NumIndices > 0)
 	{
 		ExecInsertIndexTuples(slot, (ItemPointer) &newAoTupleId, estate,
-							  false, NULL, NIL);
+							  false, NIL);
 		ResetPerTupleExprContext(estate);
 	}
 
@@ -318,8 +324,8 @@ AOCSSegmentFileFullCompaction(Relation aorel,
 	relname = RelationGetRelationName(aorel);
 
 	AppendOnlyVisimap_Init(&visiMap,
-						   aorel->rd_appendonly->visimaprelid,
-						   aorel->rd_appendonly->visimapidxid,
+						   insertDesc->visimaprelid,
+						   insertDesc->visimapidxid,
 						   ShareLock,
 						   snapshot);
 
@@ -385,13 +391,15 @@ AOCSSegmentFileFullCompaction(Relation aorel,
 	}
 
 	SetAOCSFileSegInfoState(aorel, compact_segno,
-							AOSEG_STATE_AWAITING_DROP);
+							AOSEG_STATE_AWAITING_DROP,
+							snapshot,
+							insertDesc->segrelid);
 
 	AppendOnlyVisimap_DeleteSegmentFile(&visiMap,
 										compact_segno);
 
 	/* Delete all mini pages of the segment files if block directory exists */
-	if (OidIsValid(aorel->rd_appendonly->blkdirrelid))
+	if (OidIsValid(insertDesc->blkdirrelid))
 	{
 		AppendOnlyBlockDirectory_DeleteSegmentFile(aorel,
 												   snapshot,
@@ -446,9 +454,16 @@ AOCSDrop(Relation aorel,
 	elogif(Debug_appendonly_print_compaction, LOG,
 		   "Drop AOCS relation %s", relname);
 
+    Oid         segrelid;
+    GetAppendOnlyEntryAuxOids(aorel->rd_id,
+                              appendOnlyMetaDataSnapshot,
+                              &segrelid, NULL, NULL,
+                              NULL, NULL);
+
 	/* Get information about all the file segments we need to scan */
 	segfile_array = GetAllAOCSFileSegInfo(aorel,
-										  appendOnlyMetaDataSnapshot, &total_segfiles);
+										  appendOnlyMetaDataSnapshot,
+										  &total_segfiles, segrelid);
 
 	for (i = 0; i < total_segfiles; i++)
 	{
@@ -476,7 +491,8 @@ AOCSDrop(Relation aorel,
 		{
 			Assert(HasLockForSegmentFileDrop(aorel));
 			AOCSCompaction_DropSegmentFile(aorel, segno);
-			ClearAOCSFileSegInfo(aorel, segno, AOSEG_STATE_DEFAULT);
+            ClearAOCSFileSegInfo(aorel, segno, AOSEG_STATE_DEFAULT,
+                                 appendOnlyMetaDataSnapshot, segrelid);
 		}
 		pfree(fsinfo);
 	}
@@ -527,8 +543,14 @@ AOCSCompact(Relation aorel,
 	elogif(Debug_appendonly_print_compaction, LOG,
 		   "Compact AO relation %s", relname);
 
+    Oid         segrelid;
+    GetAppendOnlyEntryAuxOids(aorel->rd_id,
+                              appendOnlyMetaDataSnapshot,
+                              &segrelid, NULL, NULL,
+                              NULL, NULL);
+
 	/* Get information about all the file segments we need to scan */
-	segfile_array = GetAllAOCSFileSegInfo(aorel, appendOnlyMetaDataSnapshot, &total_segfiles);
+	segfile_array = GetAllAOCSFileSegInfo(aorel, appendOnlyMetaDataSnapshot, &total_segfiles, segrelid);
 
 	if (insert_segno >= 0)
 	{

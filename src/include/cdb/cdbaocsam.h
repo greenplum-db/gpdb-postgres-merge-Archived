@@ -57,7 +57,12 @@ typedef struct AOCSInsertDescData
 	char *compType;
 	int32 compLevel;
 	int32 blocksz;
+	bool  checksum;
 
+    Oid         segrelid;
+    Oid         blkdirrelid;
+    Oid         visimaprelid;
+    Oid         visimapidxid;
 	struct DatumStreamWrite **ds;
 
 	AppendOnlyBlockDirectory blockDirectory;
@@ -103,6 +108,7 @@ typedef struct AOCSScanDescData
 	char *compType;
 	int32 compLevel;
 	int32 blocksz;
+    bool checksum;
 
 	struct AOCSFileSegInfo **seginfo;
 	struct DatumStreamRead **ds;
@@ -164,6 +170,7 @@ typedef struct AOCSFetchDescData
 
 	AppendOnlyVisimap visibilityMap;
 
+	Oid segrelid;
 } AOCSFetchDescData;
 
 typedef AOCSFetchDescData *AOCSFetchDesc;
