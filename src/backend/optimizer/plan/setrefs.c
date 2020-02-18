@@ -716,12 +716,16 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					return cdb_insert_result_node(root, plan, rtoffset);
 
 				splan->scan.scanrelid += rtoffset;
+#if 0
+				GPDPB_12_MERGE_FIXME:
+				/* we can not verify which is ao table yet. */
 
 #ifdef USE_ASSERT_CHECKING
 				/* We only support TidScans on heap tables currently */
 				RangeTblEntry *rte = rt_fetch(splan->scan.scanrelid, root->glob->finalrtable);
 				char relstorage = get_rel_relstorage(rte->relid);
 				Assert(relstorage == RELSTORAGE_HEAP);
+#endif
 #endif
 
 				splan->scan.plan.targetlist =
@@ -3311,7 +3315,7 @@ record_plan_type_dependency(PlannerInfo *root, Oid typid)
 													  ObjectIdGetDatum(typid));
 
 		root->glob->invalItems = lappend(root->glob->invalItems, inval_item);
-		add_proc_oids_for_dump(funcid);
+		add_proc_oids_for_dump(typid);
 	}
 }
 
