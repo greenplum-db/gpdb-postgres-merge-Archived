@@ -147,6 +147,7 @@ CreateAOAuxiliaryTable(
 												 /* use_user_acl */ false,
 											     true,
 												 true,
+												 InvalidOid,
 												 NULL, /* typeaddress */
 												 /* valid_opts */ false);
 
@@ -175,8 +176,7 @@ CreateAOAuxiliaryTable(
 										 BTREE_AM_OID,
 										 rel->rd_rel->reltablespace,
 										 collationObjectId, classObjectId, coloptions, (Datum) 0,
-										 true, false, false, false,
-										 true, false, false, true, false, NULL);
+										 INDEX_CREATE_IS_PRIMARY, 0, true, true, NULL);
 
 		/* Unlock target table -- no one can see it */
 		heap_close(aoauxiliary_rel, ShareLock);

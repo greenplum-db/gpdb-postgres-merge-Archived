@@ -131,7 +131,7 @@ GetAppendOnlyEntryAttributes(Oid relid,
 				ObjectIdGetDatum(relid));
 
 	scan = systable_beginscan(pg_appendonly, AppendOnlyRelidIndexId, true,
-							  appendOnlyMetaDataSnapshot, 1, key);
+							  NULL, 1, key);
 	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
@@ -211,7 +211,7 @@ GetAppendOnlyEntryAttributes(Oid relid,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("got invalid segrelid value: NULL")));
 
-		*compresstype = DatumGetName(dat);
+		*compresstype = *DatumGetName(dat);
 	}
 
 	/* Finish up scan and close pg_appendonly catalog. */

@@ -81,7 +81,7 @@ AlterTableCreateAoBlkdirTable(Oid relOid)
 	indexInfo->ii_Expressions = NIL;
 	indexInfo->ii_ExpressionsState = NIL;
 	indexInfo->ii_Predicate = NIL;
-	indexInfo->ii_PredicateState = NIL;
+	indexInfo->ii_PredicateState = NULL;
 	indexInfo->ii_Unique = true;
 	indexInfo->ii_Concurrent = false;
 	indexColNames = list_make3("segno", "columngroup_no", "first_row_no");

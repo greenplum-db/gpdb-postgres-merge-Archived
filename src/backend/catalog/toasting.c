@@ -156,6 +156,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	bool		mapped_relation;
 	Relation	toast_rel;
 	Relation	class_rel;
+	Relation	pg_type_desc;
 	Oid			toast_relid;
 	Oid			toast_idxid;
 	Oid			toast_typid = InvalidOid;
@@ -273,10 +274,20 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	 */
 	if (IsBinaryUpgrade)
 	{
-		toastOid = GetPreassignedOidForRelation(namespaceid, toast_relname);
+		class_rel = table_open(RelationRelationId, RowExclusiveLock);
+		toastOid = GetNewOidForRelation(class_rel,
+										ClassOidIndexId,
+										Anum_pg_class_oid,
+										toast_relname,
+										namespaceid);
+		table_close(class_rel, RowExclusiveLock);
 		if (!OidIsValid(toastOid))
 			return false;
-		toast_typid = GetPreassignedOidForType(namespaceid, toast_relname, true);
+		pg_type_desc = table_open(TypeRelationId, RowExclusiveLock);
+		toast_typid = GetNewOidForType(pg_type_desc, TypeOidIndexId,
+								  Anum_pg_type_oid,
+								  toast_relname, namespaceid);
+		table_close(pg_type_desc, RowExclusiveLock);
 	}
 
 	/* Toast table is shared if and only if its parent is. */
@@ -359,7 +370,15 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	coloptions[1] = 0;
 
 	if (IsBinaryUpgrade)
-		toastIndexOid = GetPreassignedOidForRelation(namespaceid, toast_idxname);
+	{
+		class_rel = table_open(RelationRelationId, RowExclusiveLock);
+		toastOid = GetNewOidForRelation(class_rel,
+										ClassOidIndexId,
+										Anum_pg_class_oid,
+										toast_idxname,
+										namespaceid);
+		table_close(class_rel, RowExclusiveLock);
+	}
 
 	toast_idxid = index_create(toast_rel, toast_idxname, toastIndexOid, InvalidOid,
 				 InvalidOid, InvalidOid,
