@@ -4032,7 +4032,7 @@ pg_aclmask(ObjectType objtype, Oid table_oid, AttrNumber attnum, Oid roleid,
 			return ACL_NO_RIGHTS;
 		case OBJECT_TYPE:
 			return pg_type_aclmask(table_oid, roleid, mask, how);
-		case ACL_KIND_EXTPROTOCOL:
+		case OBJECT_EXTPROTOCOL:
 			return pg_extprotocol_aclmask(table_oid, roleid, mask, how);
 		default:
 			elog(ERROR, "unrecognized objtype: %d",

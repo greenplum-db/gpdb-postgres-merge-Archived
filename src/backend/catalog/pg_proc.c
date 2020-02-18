@@ -654,7 +654,7 @@ ProcedureCreate(const char *procedureName,
 
 		newOid = GetNewOidForProcedure(rel, ProcedureOidIndexId,
 									   Anum_pg_proc_oid,
-									   NameStr(&procName), procNamespace);
+									   NameStr(procname), parameterTypes, procNamespace);
 		values[Anum_pg_proc_oid - 1] = ObjectIdGetDatum(newOid);
 		tup = heap_form_tuple(tupDesc, values, nulls);
 		CatalogTupleInsert(rel, tup);

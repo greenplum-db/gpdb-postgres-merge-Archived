@@ -103,7 +103,7 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 		{
 			new_oid = GetNewOidForEnum(pg_enum, EnumOidIndexId,
 									   Anum_pg_enum_oid,
-									   enumTypeOid, enumlabel);
+									   enumTypeOid, NameStr(enumlabel));
 
 			/*
 			 * In QE node, however, use the OIDs assigned by the master (they are delivered
@@ -388,7 +388,7 @@ restart:
 	{
 		newOid = GetNewOidForEnum(pg_enum, EnumOidIndexId,
 								  Anum_pg_enum_oid,
-								  enumtypeid, enumlabel);
+								  enumTypeOid, NameStr(enumlabel));
 	}
 	else
 	{
@@ -406,7 +406,7 @@ restart:
 			/* Get a new OID (different from all existing pg_enum tuples) */
 			newOid = GetNewOidForEnum(pg_enum, EnumOidIndexId,
 									  Anum_pg_enum_oid,
-									  enumtypeid, enumlabel);
+									  enumTypeOid, NameStr(enumlabel));
 
 			/*
 			 * Detect whether it sorts correctly relative to existing

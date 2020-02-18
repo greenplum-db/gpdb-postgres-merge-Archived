@@ -251,7 +251,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 				switch (nodeTag(&arg->val))
 				{
 					case T_Integer:
-						appendStringInfo(&buffer, "%ld", intVal(&arg->val));
+						appendStringInfo(&buffer, "%d", intVal(&arg->val));
 						break;
 					case T_Float:
 						/* represented as a string, so just copy it */
