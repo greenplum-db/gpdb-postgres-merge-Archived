@@ -15,6 +15,8 @@
 
 #include "postgres.h"
 
+#include "catalog/pg_type_d.h"
+#include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/planpartition.h"
 #include "optimizer/paths.h"
@@ -505,6 +507,7 @@ add_restrictinfos(PlannerInfo *root, DynamicScanInfo *dsinfo, Bitmapset *childre
 								  true,
 								  false,
 								  true,
+								  0,
 								  NULL,
 								  NULL,
 								  NULL);
@@ -524,12 +527,12 @@ make_mergeclause(Node *outer, Node *inner)
 
 	opxpr = (OpExpr *) make_op(NULL, list_make1(makeString("=")),
 							   outer,
-							   inner, -1);
+							   inner, NULL, -1);
 	opxpr->xpr.type = T_DistinctExpr;
 
 	xpr = make_notclause((Expr *) opxpr);
 
-	rinfo = make_restrictinfo(xpr, false, false, false, NULL, NULL, NULL);
+	rinfo = make_restrictinfo(xpr, false, false, false, 0, NULL, NULL, NULL);
 	rinfo->mergeopfamilies = get_mergejoin_opfamilies(opxpr->opno);
 
 	return rinfo;
