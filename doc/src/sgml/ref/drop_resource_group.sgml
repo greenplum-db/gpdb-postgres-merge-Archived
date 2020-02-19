@@ -1,11 +1,16 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_resource_group.sgml,v 1.1 2006/10/06 23:24:02 tgl Exp $
+doc/src/sgml/ref/drop_resource_group.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPRESOURCEGROUP">
+<refentry id="sql-dropresourcegroup">
+ <indexterm zone="sql-dropresourcegroup">
+  <primary>DROP RESOURCE GROUP</primary>
+ </indexterm>
+
  <refmeta>
-  <refentrytitle id="SQL-DROPRESOURCEGROUP-TITLE">DROP RESOURCE GROUP</refentrytitle>
+  <refentrytitle>DROP RESOURCE GROUP</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
@@ -13,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP RESOURCE GROUP</refname>
   <refpurpose>remove a resource group</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropresourcegroup">
-  <primary>DROP RESOURCE GROUP</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

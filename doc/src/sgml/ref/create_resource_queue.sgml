@@ -1,11 +1,16 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_resource_queue.sgml,v 1.4.2.1 2006/10/05 03:06:17 dhutchinson Exp $
+doc/src/sgml/ref/create_resource_queue.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATERESOURCEQUEUE">
+<refentry id="sql-createresourcequeue">
+ <indexterm zone="sql-createresourcequeue">
+  <primary>CREATE RESOURCE QUEUE</primary>
+ </indexterm>
+
  <refmeta>
-  <refentrytitle id="sql-createresourcequeue-title">CREATE RESOURCE QUEUE</refentrytitle>
+  <refentrytitle>CREATE RESOURCE QUEUE</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
@@ -13,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE RESOURCE QUEUE</refname>
   <refpurpose>create a new resource queue for workload management</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createresourcequeue">
-  <primary>CREATE RESOURCE QUEUE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

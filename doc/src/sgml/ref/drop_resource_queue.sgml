@@ -1,11 +1,16 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_resource_queue.sgml,v 1.1 2006/10/06 23:24:02 tgl Exp $
+doc/src/sgml/ref/drop_resource_queue.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPRESOURCEQUEUE">
+<refentry id="sql-dropresourcequeue">
+ <indexterm zone="sql-dropresourcequeue">
+  <primary>DROP RESOURCE QUEUE</primary>
+ </indexterm>
+
  <refmeta>
-  <refentrytitle id="SQL-DROPRESOURCEQUEUE-TITLE">DROP RESOURCE QUEUE</refentrytitle>
+  <refentrytitle>DROP RESOURCE QUEUE</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
@@ -13,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP RESOURCE QUEUE</refname>
   <refpurpose>remove a resource queue</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropresourcequeue">
-  <primary>DROP RESOURCE QUEUE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>
