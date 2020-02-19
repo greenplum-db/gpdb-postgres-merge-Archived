@@ -30,6 +30,8 @@
 #include "utils/sortsupport.h"
 #include "utils/timestamp.h"
 
+#include "utils/float_utils.h"
+
 
 /*
  * Configurable GUC parameter

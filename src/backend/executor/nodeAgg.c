@@ -487,8 +487,7 @@ initialize_phase(AggState *aggstate, int newphase)
 		PlanState  *outerNode = outerPlanState(aggstate);
 		TupleDesc	tupDesc = ExecGetResultType(outerNode);
 
-		aggstate->sort_out = tuplesort_begin_heap(&aggstate->ss,
-												  tupDesc,
+		aggstate->sort_out = tuplesort_begin_heap(tupDesc,
 												  sortnode->numCols,
 												  sortnode->sortColIdx,
 												  sortnode->sortOperators,

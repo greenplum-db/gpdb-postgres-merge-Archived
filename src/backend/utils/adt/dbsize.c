@@ -590,22 +590,27 @@ calculate_table_size(Relation rel)
 	if (RelationIsAppendOptimized(rel))
 	{
 		Relation ao_rel;
+		Oid segrelid;
+		Oid blkdirrelid;
+		Oid visimaprelid;
 
-		Assert(OidIsValid(rel->rd_appendonly->segrelid));
-		ao_rel = try_relation_open(rel->rd_appendonly->segrelid, AccessShareLock, false);
+		GetAppendOnlyEntryAuxOids(rel->rd_id, NULL, &segrelid, &blkdirrelid, NULL, &visimaprelid, NULL);
+
+		Assert(OidIsValid(segrelid));
+		ao_rel = try_relation_open(segrelid, AccessShareLock, false);
 		size += calculate_total_relation_size(ao_rel);
 		relation_close(ao_rel, AccessShareLock);
 
         /* block directory may not exist, post upgrade or new table that never has indexes */
-   		if (OidIsValid(rel->rd_appendonly->blkdirrelid))
+		if (OidIsValid(blkdirrelid))
         {
-			ao_rel = try_relation_open(rel->rd_appendonly->blkdirrelid, AccessShareLock, false);
+			ao_rel = try_relation_open(blkdirrelid, AccessShareLock, false);
      		size += calculate_total_relation_size(ao_rel);
 			relation_close(ao_rel, AccessShareLock);
         }
-		if (OidIsValid(rel->rd_appendonly->visimaprelid))
+		if (OidIsValid(visimaprelid))
 		{
-			ao_rel = try_relation_open(rel->rd_appendonly->visimaprelid, AccessShareLock, false);
+			ao_rel = try_relation_open(visimaprelid, AccessShareLock, false);
 			size += calculate_total_relation_size(ao_rel);
 			relation_close(ao_rel, AccessShareLock);
 		}
