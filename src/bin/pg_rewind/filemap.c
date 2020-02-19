@@ -903,11 +903,7 @@ isRelDataFile(const char *path)
 		}
 		else
 		{
-<<<<<<< HEAD
 			nmatch = sscanf(path, "pg_tblspc/%u/" GP_TABLESPACE_VERSION_DIRECTORY "/%u/%u.%u",
-=======
-			nmatch = sscanf(path, "pg_tblspc/%u/" TABLESPACE_VERSION_DIRECTORY "/%u/%u.%u",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							&rnode.spcNode, &rnode.dbNode, &rnode.relNode,
 							&segNo);
 			if (nmatch == 3 || nmatch == 4)

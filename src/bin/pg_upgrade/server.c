@@ -9,20 +9,7 @@
 
 #include "postgres_fe.h"
 
-<<<<<<< HEAD
-/*
- * GPDB_94_MERGE_FIXME: include introduced in 928bca1a30d7e05cc3857a99e27a
- * which shipped as 9.4.17.  Remove the local define and use the definition
- * in the included header once we've merged with the 9.4 minor releases.
- */
-#define ALWAYS_SECURE_SEARCH_PATH_SQL \
-    "SELECT pg_catalog.set_config('search_path', '', false)"
-#if 0
 #include "fe_utils/connect.h"
-#endif
-=======
-#include "fe_utils/connect.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "fe_utils/string_utils.h"
 #include "pg_upgrade.h"
 
@@ -273,25 +260,15 @@ start_postmaster(ClusterInfo *cluster, bool report_and_exit_on_error)
 	}
 
 	snprintf(cmd, sizeof(cmd),
-<<<<<<< HEAD
-		  "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d -c gp_role=utility %s%s %s%s %s\" start",
-		  cluster->bindir, SERVER_LOG_FILE, cluster->pgconfig, cluster->port,
-=======
-			 "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d%s%s %s%s\" start",
+			 "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d -c gp_role=utility %s%s %s%s %s\" start",
 			 cluster->bindir, SERVER_LOG_FILE, cluster->pgconfig, cluster->port,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			 (cluster->controldata.cat_ver >=
 			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? " -b" :
 			 " -c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
 			 (cluster == &new_cluster) ?
-<<<<<<< HEAD
-	  " -c synchronous_commit=off -c fsync=off -c full_page_writes=off" : "",
-			 cluster->pgopts ? cluster->pgopts : "", socket_string, version_opts);
-=======
 			 " -c synchronous_commit=off -c fsync=off -c full_page_writes=off" : "",
-			 cluster->pgopts ? cluster->pgopts : "", socket_string);
+			 cluster->pgopts ? cluster->pgopts : "", socket_string, version_opts);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	/*
 	 * Don't throw an error right away, let connecting throw the error because
 	 * it might supply a reason for the failure.

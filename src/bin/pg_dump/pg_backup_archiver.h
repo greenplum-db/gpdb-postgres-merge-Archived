@@ -82,31 +82,6 @@ typedef z_stream *z_streamp;
 #define ARCHIVE_REV(version)   (((version)		) & 255)
 
 /* Historical version numbers (checked in code) */
-<<<<<<< HEAD
-#define K_VERS_1_0 (( (1 * 256 + 0) * 256 + 0) * 256 + 0)
-#define K_VERS_1_2 (( (1 * 256 + 2) * 256 + 0) * 256 + 0)		/* Allow No ZLIB */
-#define K_VERS_1_3 (( (1 * 256 + 3) * 256 + 0) * 256 + 0)		/* BLOBs */
-#define K_VERS_1_4 (( (1 * 256 + 4) * 256 + 0) * 256 + 0)		/* Date & name in header */
-#define K_VERS_1_5 (( (1 * 256 + 5) * 256 + 0) * 256 + 0)		/* Handle dependencies */
-#define K_VERS_1_6 (( (1 * 256 + 6) * 256 + 0) * 256 + 0)		/* Schema field in TOCs */
-#define K_VERS_1_7 (( (1 * 256 + 7) * 256 + 0) * 256 + 0)		/* File Offset size in
-																 * header */
-#define K_VERS_1_8 (( (1 * 256 + 8) * 256 + 0) * 256 + 0)		/* change interpretation
-																 * of ID numbers and
-																 * dependencies */
-#define K_VERS_1_9 (( (1 * 256 + 9) * 256 + 0) * 256 + 0)		/* add default_with_oids
-																 * tracking */
-#define K_VERS_1_10 (( (1 * 256 + 10) * 256 + 0) * 256 + 0)		/* add tablespace */
-#define K_VERS_1_11 (( (1 * 256 + 11) * 256 + 0) * 256 + 0)		/* add toc section
-																 * indicator */
-#define K_VERS_1_12 (( (1 * 256 + 12) * 256 + 0) * 256 + 0)		/* add separate BLOB
-																 * entries */
-#define K_VERS_1_13 (( (1 * 256 + 13) * 256 + 0) * 256 + 0)		/* change search_path
-																 * behavior */
-
-/* Newest format we can read */
-#define K_VERS_MAX (( (1 * 256 + 13) * 256 + 255) * 256 + 0)
-=======
 #define K_VERS_1_0	MAKE_ARCHIVE_VERSION(1, 0, 0)
 #define K_VERS_1_2	MAKE_ARCHIVE_VERSION(1, 2, 0)	/* Allow No ZLIB */
 #define K_VERS_1_3	MAKE_ARCHIVE_VERSION(1, 3, 0)	/* BLOBs */
@@ -137,7 +112,6 @@ typedef z_stream *z_streamp;
 
 /* Newest format we can read */
 #define K_VERS_MAX	MAKE_ARCHIVE_VERSION(K_VERS_MAJOR, K_VERS_MINOR, 255)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 
 /* Flags to indicate disposition of offsets stored in files */

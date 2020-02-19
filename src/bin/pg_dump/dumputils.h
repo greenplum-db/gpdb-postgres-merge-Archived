@@ -82,11 +82,6 @@ extern void buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 extern bool variable_is_guc_list_quote(const char *name);
 
 extern bool SplitGUCList(char *rawstring, char separator,
-<<<<<<< HEAD
-			 char ***namelist);
-
-#endif   /* DUMPUTILS_H */
-=======
 						 char ***namelist);
 
 extern void makeAlterConfigCommand(PGconn *conn, const char *configitem,
@@ -95,4 +90,3 @@ extern void makeAlterConfigCommand(PGconn *conn, const char *configitem,
 								   PQExpBuffer buf);
 
 #endif							/* DUMPUTILS_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

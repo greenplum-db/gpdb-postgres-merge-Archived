@@ -48,19 +48,11 @@ comment			("#"{non_newline}*)
 	litbufsize = LITBUF_INIT;
 %}
 
-<<<<<<< HEAD
-permutation		{ return(PERMUTATION); }
-session			{ return(SESSION); }
-setup			{ return(SETUP); }
-step			{ return(STEP); }
-teardown		{ return(TEARDOWN); }
-=======
 permutation		{ return PERMUTATION; }
 session			{ return SESSION; }
 setup			{ return SETUP; }
 step			{ return STEP; }
 teardown		{ return TEARDOWN; }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 [\n]			{ yyline++; }
 {comment}		{ /* ignore */ }

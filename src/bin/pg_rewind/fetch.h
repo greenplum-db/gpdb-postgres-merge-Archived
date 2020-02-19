@@ -41,11 +41,7 @@ extern void copy_executeFileMap(filemap_t *map);
 typedef void (*process_file_callback_t) (const char *path, file_type_t type, size_t size, const char *link_target);
 extern void traverse_datadir(const char *datadir, process_file_callback_t callback);
 
-<<<<<<< HEAD
 extern void GenerateRecoveryConf(char *replication_slot_name);
 extern void WriteRecoveryConf(void);
 
-#endif   /* FETCH_H */
-=======
 #endif							/* FETCH_H */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

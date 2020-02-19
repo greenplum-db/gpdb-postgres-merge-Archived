@@ -346,23 +346,6 @@ main(int argc, char *argv[])
 				appendShellString(pgdumpopts, use_role);
 				break;
 
-<<<<<<< HEAD
-				/* START MPP ADDITION */
-			case 1000:
-				/* gp-format */
-				appendPQExpBuffer(pgdumpopts, " --gp-syntax");
-				gp_syntax = true;
-				resource_queues = 1; /* --resource-queues is implied by --gp-syntax */
-				resource_groups = 1; /* --resource-groups is implied by --gp-syntax */
-				break;
-			case 1001:
-				/* no-gp-format */
-				appendPQExpBuffer(pgdumpopts, " --no-gp-syntax");
-				no_gp_syntax = true;
-				break;
-
-				/* END MPP ADDITION */
-=======
 			case 4:
 				dosync = false;
 				appendPQExpBufferStr(pgdumpopts, " --no-sync");
@@ -381,7 +364,22 @@ main(int argc, char *argv[])
 				appendPQExpBufferStr(pgdumpopts, " --rows-per-insert ");
 				appendShellString(pgdumpopts, optarg);
 				break;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+				/* START MPP ADDITION */
+			case 1000:
+				/* gp-format */
+				appendPQExpBuffer(pgdumpopts, " --gp-syntax");
+				gp_syntax = true;
+				resource_queues = 1; /* --resource-queues is implied by --gp-syntax */
+				resource_groups = 1; /* --resource-groups is implied by --gp-syntax */
+				break;
+			case 1001:
+				/* no-gp-format */
+				appendPQExpBuffer(pgdumpopts, " --no-gp-syntax");
+				no_gp_syntax = true;
+				break;
+
+				/* END MPP ADDITION */
 
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -439,14 +437,14 @@ main(int argc, char *argv[])
 		exit_nicely(1);
 	}
 
-<<<<<<< HEAD
 	if (gp_syntax && no_gp_syntax)
 	{
-		fprintf(stderr, _("%s: options \"--gp-syntax\" and \"--no-gp-syntax\" cannot be used together\n"),
+		pg_log_error("options --gp-syntax and --no-gp-syntax cannot be used together");
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
-		exit(1);
+		exit_nicely(1);
 	}
-=======
+
 	/*
 	 * If password values are not required in the dump, switch to using
 	 * pg_roles which is equally useful, just more likely to have unrestricted
@@ -456,7 +454,6 @@ main(int argc, char *argv[])
 		sprintf(role_catalog, "%s", PG_ROLES);
 	else
 		sprintf(role_catalog, "%s", PG_AUTHID);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Add long options to the pg_dump argument list */
 	if (binary_upgrade)
@@ -487,13 +484,10 @@ main(int argc, char *argv[])
 		appendPQExpBufferStr(pgdumpopts, " --no-subscriptions");
 	if (no_unlogged_table_data)
 		appendPQExpBufferStr(pgdumpopts, " --no-unlogged-table-data");
-<<<<<<< HEAD
-	if (roles_only)
-		appendPQExpBufferStr(pgdumpopts, " --roles-only");
-=======
 	if (on_conflict_do_nothing)
 		appendPQExpBufferStr(pgdumpopts, " --on-conflict-do-nothing");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	if (roles_only)
+		appendPQExpBufferStr(pgdumpopts, " --roles-only");
 
 	/*
 	 * If there was a database specified on the command line, use that,

@@ -133,14 +133,8 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 			break;
 
 		case PG_FATAL:
-<<<<<<< HEAD
-			printf("\n%s", _(message));
-			printf("Failure, exiting\n");
-			close_progress();
-=======
 			printf("\n%s", message);
 			printf(_("Failure, exiting\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			exit(1);
 			break;
 

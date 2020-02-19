@@ -88,11 +88,8 @@ get_loadable_libraries(void)
 										"probin IS NOT NULL AND "
 										" %s "
 										"oid >= %u;",
-<<<<<<< HEAD
-										pg83_str,
-=======
 										ClanguageId,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+										pg83_str,
 										FirstNormalObjectId);
 		totaltups += PQntuples(ress[dbnum]);
 
