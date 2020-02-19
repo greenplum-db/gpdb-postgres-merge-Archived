@@ -424,111 +424,6 @@ static const SchemaQuery Query_for_list_of_foreign_tables = {
 };
 
 static const SchemaQuery Query_for_list_of_tables = {
-<<<<<<< HEAD
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	"c.relkind IN ('r' , 'x')",  /* GPDB: x is obsolete, used only on very old GPDB systems */
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
-};
-
-static const SchemaQuery Query_for_list_of_constraints_with_schema = {
-	/* catname */
-	"pg_catalog.pg_constraint c",
-	/* selcondition */
-	"c.conrelid <> 0",
-	/* viscondition */
-	"true",						/* there is no pg_constraint_is_visible */
-	/* namespace */
-	"c.connamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.conname)",
-	/* qualresult */
-	NULL
-};
-
-/* Relations supporting INSERT, UPDATE or DELETE */
-static const SchemaQuery Query_for_list_of_updatables = {
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	"c.relkind IN ('r', 'f', 'v')",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
-};
-
-static const SchemaQuery Query_for_list_of_relations = {
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	NULL,
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
-};
-
-static const SchemaQuery Query_for_list_of_tsvmf = {
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	"c.relkind IN ('r', 'S', 'v', 'm', 'f')",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
-};
-
-static const SchemaQuery Query_for_list_of_tmf = {
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	"c.relkind IN ('r', 'm', 'f')",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
-};
-
-static const SchemaQuery Query_for_list_of_tm = {
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	"c.relkind IN ('r', 'm')",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
-=======
 	.catname = "pg_catalog.pg_class c",
 	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
@@ -544,7 +439,6 @@ static const SchemaQuery Query_for_list_of_partitioned_tables = {
 	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
 	.namespace = "c.relnamespace",
 	.result = "pg_catalog.quote_ident(c.relname)",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 };
 
 static const SchemaQuery Query_for_list_of_views = {
@@ -1113,16 +1007,6 @@ static const pgsql_thing_t words_after_create[] = {
 	{"GROUP", Query_for_list_of_roles},
 	{"INDEX", NULL, NULL, &Query_for_list_of_indexes},
 	{"LANGUAGE", Query_for_list_of_languages},
-<<<<<<< HEAD
-	{"INDEX", NULL, &Query_for_list_of_indexes},
-	{"MATERIALIZED VIEW", NULL, &Query_for_list_of_matviews},
-	{"OPERATOR", NULL, NULL},	/* Querying for this is probably not such a
-								 * good idea. */
-	{"OWNED", NULL, NULL, THING_NO_CREATE},		/* for DROP OWNED BY ... */
-	{"PARSER", Query_for_list_of_ts_parsers, NULL, THING_NO_SHOW},
-	{"RESOURCE", NULL},
-	{"POLICY", NULL, NULL},
-=======
 	{"LARGE OBJECT", NULL, NULL, NULL, THING_NO_CREATE | THING_NO_DROP},
 	{"MATERIALIZED VIEW", NULL, NULL, &Query_for_list_of_matviews},
 	{"OPERATOR", NULL, NULL, NULL}, /* Querying for this is probably not such
@@ -1132,7 +1016,7 @@ static const pgsql_thing_t words_after_create[] = {
 	{"POLICY", NULL, NULL, NULL},
 	{"PROCEDURE", NULL, NULL, Query_for_list_of_procedures},
 	{"PUBLICATION", NULL, Query_for_list_of_publications},
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	{"RESOURCE", NULL},
 	{"ROLE", Query_for_list_of_roles},
 	{"ROUTINE", NULL, NULL, &Query_for_list_of_routines, THING_NO_CREATE},
 	{"RULE", "SELECT pg_catalog.quote_ident(rulename) FROM pg_catalog.pg_rules WHERE substring(pg_catalog.quote_ident(rulename),1,%d)='%s'"},
@@ -1152,15 +1036,6 @@ static const pgsql_thing_t words_after_create[] = {
 	{"TEXT SEARCH", NULL, NULL, NULL},
 	{"TRANSFORM", NULL, NULL, NULL},
 	{"TRIGGER", "SELECT pg_catalog.quote_ident(tgname) FROM pg_catalog.pg_trigger WHERE substring(pg_catalog.quote_ident(tgname),1,%d)='%s' AND NOT tgisinternal"},
-<<<<<<< HEAD
-	{"TYPE", NULL, &Query_for_list_of_datatypes},
-	{"UNIQUE", NULL, NULL, THING_NO_DROP},		/* for CREATE UNIQUE INDEX ... */
-	{"UNLOGGED", NULL, NULL, THING_NO_DROP},	/* for CREATE UNLOGGED TABLE
-												 * ... */
-	{"USER", Query_for_list_of_roles " UNION SELECT 'MAPPING FOR'"},
-	{"USER MAPPING FOR", NULL, NULL},
-	{"VIEW", NULL, &Query_for_list_of_views},
-=======
 	{"TYPE", NULL, NULL, &Query_for_list_of_datatypes},
 	{"UNIQUE", NULL, NULL, NULL, THING_NO_DROP | THING_NO_ALTER},	/* for CREATE UNIQUE
 																	 * INDEX ... */
@@ -1169,7 +1044,6 @@ static const pgsql_thing_t words_after_create[] = {
 	{"USER", Query_for_list_of_roles " UNION SELECT 'MAPPING FOR'"},
 	{"USER MAPPING FOR", NULL, NULL, NULL},
 	{"VIEW", NULL, NULL, &Query_for_list_of_views},
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{NULL}						/* end of list */
 };
 

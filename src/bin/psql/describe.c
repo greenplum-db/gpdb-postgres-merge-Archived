@@ -14,10 +14,6 @@
 
 #include <ctype.h>
 
-<<<<<<< HEAD
-#include "catalog/pg_default_acl.h"
-#include "catalog/pg_foreign_server.h"
-=======
 #include "catalog/pg_attribute_d.h"
 #include "catalog/pg_cast_d.h"
 #include "catalog/pg_class_d.h"
@@ -26,7 +22,6 @@
 #include "common/logging.h"
 #include "fe_utils/mbprint.h"
 #include "fe_utils/print.h"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #include "fe_utils/string_utils.h"
 
 #include "common.h"
@@ -35,6 +30,7 @@
 #include "variables.h"
 
 #include "catalog/gp_distribution_policy.h"
+#include "catalog/pg_foreign_server.h"
 
 static bool describeOneTableDetails(const char *schemaname,
 									const char *relationname,
@@ -1635,10 +1631,6 @@ describeOneTableDetails(const char *schemaname,
 	PQExpBufferData title;
 	PQExpBufferData tmpbuf;
 	int			cols;
-<<<<<<< HEAD
-	int			numrows = 0;
-	bool isGE42 = isGPDB4200OrLater();
-=======
 	int			attname_col = -1,	/* column indexes in "res" */
 				atttype_col = -1,
 				attrdef_col = -1,
@@ -1652,8 +1644,8 @@ describeOneTableDetails(const char *schemaname,
 				attstorage_col = -1,
 				attstattarget_col = -1,
 				attdescr_col = -1;
+	int			attoptions_col = -1;
 	int			numrows;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	struct
 	{
 		int16		checks;
@@ -1671,26 +1663,21 @@ describeOneTableDetails(const char *schemaname,
 		char	   *reloftype;
 		char		relpersistence;
 		char		relreplident;
-<<<<<<< HEAD
+		char	   *relam;
+
 		char	   *compressionType;
 		char	   *compressionLevel;
 		char	   *blockSize;
 		char	   *checksum;
 	}			tableinfo;
-	bool		show_modifiers = false;
-	bool		retval;
+	bool		show_column_details = false;
 
 	tableinfo.compressionType  = NULL;
 	tableinfo.compressionLevel = NULL;
 	tableinfo.blockSize        = NULL;
 	tableinfo.checksum         = NULL;
 
-	retval = false;
-=======
-		char	   *relam;
-	}			tableinfo;
-	bool		show_column_details = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	bool isGE42 = isGPDB4200OrLater();
 
 	myopt.default_footer = false;
 	/* This output looks confusing in expanded mode. */
@@ -1820,12 +1807,8 @@ describeOneTableDetails(const char *schemaname,
 		printfPQExpBuffer(&buf,
 						  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
 						  "c.relhastriggers, false, false, c.relhasoids, "
-<<<<<<< HEAD
-						  "%s, c.reltablespace\n"
-						  ", %s as relstorage "
-=======
 						  "false as relispartition, %s, c.reltablespace\n"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+						  ", %s as relstorage "
 						  "FROM pg_catalog.pg_class c\n "
 						  "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
 						  "WHERE c.oid = '%s';",
@@ -1842,20 +1825,13 @@ describeOneTableDetails(const char *schemaname,
 		printfPQExpBuffer(&buf,
 						  "SELECT relchecks, relkind, relhasindex, relhasrules, "
 						  "reltriggers <> 0, false, false, relhasoids, "
-<<<<<<< HEAD
-						  "%s, reltablespace\n"
+						  "false as relispartition, %s, reltablespace\n"
 						  ", %s as relstorage "
 						  "FROM pg_catalog.pg_class WHERE oid = '%s';",
 						  (verbose ?
-					 "pg_catalog.array_to_string(reloptions, E', ')" : "''"),
+						   "pg_catalog.array_to_string(reloptions, E', ')" : "''"),
 						  /* GPDB Only:  relstorage  */
 						  (isGPDB() ? "relstorage" : "'h'"),
-=======
-						  "false as relispartition, %s, reltablespace\n"
-						  "FROM pg_catalog.pg_class WHERE oid = '%s';",
-						  (verbose ?
-						   "pg_catalog.array_to_string(reloptions, E', ')" : "''"),
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						  oid);
 	}
 	else if (pset.sversion >= 80000)
@@ -1908,20 +1884,16 @@ describeOneTableDetails(const char *schemaname,
 	tableinfo.relpersistence = (pset.sversion >= 90100) ?
 		*(PQgetvalue(res, 0, 12)) : 0;
 	tableinfo.relreplident = (pset.sversion >= 90400) ?
-<<<<<<< HEAD
-		*(PQgetvalue(res, 0, 12)) : 'd';
-
-	/* GPDB Only:  relstorage  */
-	tableinfo.relstorage = (isGPDB()) ? *(PQgetvalue(res, 0, PQfnumber(res, "relstorage"))) : 'h';
-
-=======
 		*(PQgetvalue(res, 0, 13)) : 'd';
 	if (pset.sversion >= 120000)
 		tableinfo.relam = PQgetisnull(res, 0, 14) ?
 			(char *) NULL : pg_strdup(PQgetvalue(res, 0, 14));
 	else
 		tableinfo.relam = NULL;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+	/* GPDB Only:  relstorage  */
+	tableinfo.relstorage = (isGPDB()) ? *(PQgetvalue(res, 0, PQfnumber(res, "relstorage"))) : 'h';
+
 	PQclear(res);
 	res = NULL;
 
@@ -2047,7 +2019,7 @@ describeOneTableDetails(const char *schemaname,
 		goto error_return;		/* not an error, just return early */
 	}
 
-<<<<<<< HEAD
+	/* GPDB_12_MERGE_FIXME: Should this also check relam now? */
 	if (tableinfo.relstorage == 'a' || tableinfo.relstorage == 'c')
 	{
 		PGresult *result = NULL;
@@ -2075,7 +2047,7 @@ describeOneTableDetails(const char *schemaname,
 		PQclear(res);
 		res = NULL;
 	}
-=======
+
 	/* Identify whether we should print collation, nullable, default vals */
 	if (tableinfo.relkind == RELKIND_RELATION ||
 		tableinfo.relkind == RELKIND_VIEW ||
@@ -2084,7 +2056,6 @@ describeOneTableDetails(const char *schemaname,
 		tableinfo.relkind == RELKIND_COMPOSITE_TYPE ||
 		tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
 		show_column_details = true;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Get per-column info
@@ -2145,20 +2116,6 @@ describeOneTableDetails(const char *schemaname,
 	if (tableinfo.relkind == RELKIND_FOREIGN_TABLE && pset.sversion >= 90200)
 	{
 		appendPQExpBufferStr(&buf, ",\n  CASE WHEN attfdwoptions IS NULL THEN '' ELSE "
-<<<<<<< HEAD
-							 "  '(' || pg_catalog.array_to_string(ARRAY(SELECT pg_catalog.quote_ident(option_name) ||  ' ' || pg_catalog.quote_literal(option_value)  FROM "
-							 "  pg_catalog.pg_options_to_table(attfdwoptions)), ', ') || ')' END AS attfdwoptions");
-	else
-		appendPQExpBufferStr(&buf, ",\n  NULL AS attfdwoptions");
-	if (verbose)
-	{
-		appendPQExpBufferStr(&buf, ",\n  a.attstorage ");
-		appendPQExpBufferStr(&buf, ",\n  CASE WHEN a.attstattarget=-1 THEN NULL ELSE a.attstattarget END AS attstattarget");
-		if (tableinfo.relstorage == 'c')
-		{
-			if (isGE42 == true)
-				appendPQExpBufferStr(&buf, ",\n pg_catalog.array_to_string(e.attoptions, ',')");
-=======
 							 "  '(' || pg_catalog.array_to_string(ARRAY(SELECT pg_catalog.quote_ident(option_name) || ' ' || pg_catalog.quote_literal(option_value)  FROM "
 							 "  pg_catalog.pg_options_to_table(attfdwoptions)), ', ') || ')' END AS attfdwoptions");
 		fdwopts_col = cols++;
@@ -2178,25 +2135,22 @@ describeOneTableDetails(const char *schemaname,
 		{
 			appendPQExpBufferStr(&buf, ",\n  CASE WHEN a.attstattarget=-1 THEN NULL ELSE a.attstattarget END AS attstattarget");
 			attstattarget_col = cols++;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		}
+
+		/* GPDB_12_MERGE_FIXME: also check relam? */
+		if (tableinfo.relstorage == 'c')
+		{
+			if (isGE42 == true)
+			{
+				appendPQExpBufferStr(&buf, ",\n  pg_catalog.array_to_string(e.attoptions, ',')");
+				attoptions_col = cols++;
+			}
 		}
 
 		/*
 		 * In 9.0+, we have column comments for: relations, views, composite
 		 * types, and foreign tables (cf. CommentObject() in comment.c).
 		 */
-<<<<<<< HEAD
-		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
-			tableinfo.relkind == 'm' ||
-			tableinfo.relkind == 'f' || tableinfo.relkind == 'c')
-			appendPQExpBufferStr(&buf, ",\n  pg_catalog.col_description(a.attrelid, a.attnum)");
-	}
-	appendPQExpBufferStr(&buf, "\nFROM pg_catalog.pg_attribute a ");
-	if (isGE42 == true)
-	{
-	  appendPQExpBufferStr(&buf, "\nLEFT OUTER JOIN pg_catalog.pg_attribute_encoding e");
-	  appendPQExpBufferStr(&buf, "\nON   e.attrelid = a .attrelid AND e.attnum = a.attnum");
-=======
 		if (tableinfo.relkind == RELKIND_RELATION ||
 			tableinfo.relkind == RELKIND_VIEW ||
 			tableinfo.relkind == RELKIND_MATVIEW ||
@@ -2207,7 +2161,12 @@ describeOneTableDetails(const char *schemaname,
 			appendPQExpBufferStr(&buf, ",\n  pg_catalog.col_description(a.attrelid, a.attnum)");
 			attdescr_col = cols++;
 		}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+		if (isGE42 == true)
+		{
+			appendPQExpBufferStr(&buf, "\nLEFT OUTER JOIN pg_catalog.pg_attribute_encoding e");
+			appendPQExpBufferStr(&buf, "\nON   e.attrelid = a .attrelid AND e.attnum = a.attnum");
+		}
 	}
 
 	appendPQExpBuffer(&buf, "\nWHERE a.attrelid = '%s' AND a.attnum > 0 AND NOT a.attisdropped", oid);
@@ -2221,24 +2180,8 @@ describeOneTableDetails(const char *schemaname,
 	/* Make title */
 	switch (tableinfo.relkind)
 	{
-<<<<<<< HEAD
-		case 'r':
-			/* GPDB_91_MERGE_FIXME: for an unlogged AO-table, we will not print
-			 * the fact that it's unlogged */
-			if(tableinfo.relstorage == 'a')
-				printfPQExpBuffer(&title, _("Append-Only Table \"%s.%s\""),
-								  schemaname, relationname);
-			else if(tableinfo.relstorage == 'c')
-				printfPQExpBuffer(&title, _("Append-Only Columnar Table \"%s.%s\""),
-								  schemaname, relationname);
-			else if(tableinfo.relstorage == 'x')
-				printfPQExpBuffer(&title, _("External table \"%s.%s\""),
-								  schemaname, relationname);
-			else if (tableinfo.relpersistence == 'u')
-=======
 		case RELKIND_RELATION:
 			if (tableinfo.relpersistence == 'u')
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				printfPQExpBuffer(&title, _("Unlogged table \"%s.%s\""),
 								  schemaname, relationname);
 			else
@@ -2323,33 +2266,20 @@ describeOneTableDetails(const char *schemaname,
 		headers[cols++] = gettext_noop("FDW options");
 	if (attstorage_col >= 0)
 		headers[cols++] = gettext_noop("Storage");
-<<<<<<< HEAD
-
-		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'm' ||
-			tableinfo.relkind == 'f')
-			headers[cols++] = gettext_noop("Stats target");
-
-		if(tableinfo.relstorage == 'c')
-		{
-		  headers[cols++] = gettext_noop("Compression Type");
-		  headers[cols++] = gettext_noop("Compression Level");
-		  headers[cols++] = gettext_noop("Block Size");
-		}
-
-		/* Column comments, if the relkind supports this feature. */
-		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
-			tableinfo.relkind == 'm' ||
-			tableinfo.relkind == 'c' || tableinfo.relkind == 'f')
-			headers[cols++] = gettext_noop("Description");
-	}
-=======
 	if (attstattarget_col >= 0)
 		headers[cols++] = gettext_noop("Stats target");
+
+	if (tableinfo.relstorage == 'c')
+	{
+		headers[cols++] = gettext_noop("Compression Type");
+		headers[cols++] = gettext_noop("Compression Level");
+		headers[cols++] = gettext_noop("Block Size");
+	}
+
 	if (attdescr_col >= 0)
 		headers[cols++] = gettext_noop("Description");
 
 	Assert(cols <= lengthof(headers));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	printTableInit(&cont, &myopt, title.data, cols, numrows);
 	printTableInitialized = true;
@@ -2408,13 +2338,7 @@ describeOneTableDetails(const char *schemaname,
 		/* Storage and Description */
 		if (attstorage_col >= 0)
 		{
-<<<<<<< HEAD
-			int			firstvcol = 8;
-			int			includeAOCS = 0;
-			char	   *storage = PQgetvalue(res, i, firstvcol);
-=======
 			char	   *storage = PQgetvalue(res, i, attstorage_col);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/* Storage */
 			/* these strings are literal in our syntax, so not translated. */
@@ -2424,85 +2348,60 @@ describeOneTableDetails(const char *schemaname,
 										(storage[0] == 'e' ? "external" :
 										 "???")))),
 							  false, false);
-<<<<<<< HEAD
-
-			/* Statistics target, if the relkind supports this feature */
-			if (tableinfo.relkind == 'r' || tableinfo.relkind == 'm' ||
-				tableinfo.relkind == 'f')
-			{
-				printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 1),
-								  false, false);
-			}
-
-			if (tableinfo.relstorage == 'c')
-			{
-
-				/* The compression type, compression level, and block size are all in the next column.
-				 * attributeOptions is a text array of key=value pairs retrieved as a string from the catalog.
-				 * Each key=value pair is separated by a ",".
-				 *
-				 * If the table was created pre-4.2, then it will not have entries in the new pg_attribute_storage table.
-				 * If there are no entries, we go to the pre-4.1 values stored in the pg_appendonly table.
-				 */
-				char *attributeOptions;
-				if (isGE42 == true)
-				{
-				   attributeOptions = PQgetvalue(res, i, firstvcol + 2); /* pg_catalog.pg_attribute_storage(attoptions) */
-				   includeAOCS = 1;
-				}
-				else
-					 attributeOptions = pg_malloc0(1);  /* Make an empty options string so the reset of the code works correctly. */
-				char *key = strtok(attributeOptions, ",=");
-				char *value = NULL;
-				char *compressionType = NULL;
-				char *compressionLevel = NULL;
-				char *blockSize = NULL;
-
-				while (key != NULL)
-				{
-					value = strtok(NULL, ",=");
-					if (strcmp(key, "compresstype") == 0)
-						compressionType = value;
-					else if (strcmp(key, "compresslevel") == 0)
-						compressionLevel = value;
-					else if (strcmp(key, "blocksize") == 0)
-						blockSize = value;
-					key = strtok(NULL, ",=");
-				}
-
-				/* Compression Type */
-				if (compressionType == NULL)
-					printTableAddCell(&cont, tableinfo.compressionType, false, false);
-				else
-					printTableAddCell(&cont, compressionType, false, false);
-
-				/* Compression Level */
-				if (compressionLevel == NULL)
-					printTableAddCell(&cont, tableinfo.compressionLevel, false, false);
-				else
-					printTableAddCell(&cont, compressionLevel, false, false);
-
-				/* Block Size */
-				if (blockSize == NULL)
-					printTableAddCell(&cont, tableinfo.blockSize, false, false);
-				else
-					printTableAddCell(&cont, blockSize, false, false);
-			}
-
-			/* Column comments, if the relkind supports this feature. */
-			if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
-				tableinfo.relkind == 'm' ||
-				tableinfo.relkind == 'c' || tableinfo.relkind == 'f')
-				printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 2 + includeAOCS),
-								  false, false);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 
 		/* Statistics target, if the relkind supports this feature */
 		if (attstattarget_col >= 0)
 			printTableAddCell(&cont, PQgetvalue(res, i, attstattarget_col),
 							  false, false);
+
+		if (tableinfo.relstorage == 'c' && attoptions_col >= 0)
+		{
+			/* The compression type, compression level, and block size are all in the next column.
+			 * attributeOptions is a text array of key=value pairs retrieved as a string from the catalog.
+			 * Each key=value pair is separated by a ",".
+			 *
+			 * If the table was created pre-4.2, then it will not have entries in the new pg_attribute_storage table.
+			 * If there are no entries, we go to the pre-4.1 values stored in the pg_appendonly table.
+			 */
+			char *attributeOptions;
+			attributeOptions = PQgetvalue(res, i, attoptions_col); /* pg_catalog.pg_attribute_storage(attoptions) */
+			char *key = strtok(attributeOptions, ",=");
+			char *value = NULL;
+			char *compressionType = NULL;
+			char *compressionLevel = NULL;
+			char *blockSize = NULL;
+
+			while (key != NULL)
+			{
+				value = strtok(NULL, ",=");
+				if (strcmp(key, "compresstype") == 0)
+					compressionType = value;
+				else if (strcmp(key, "compresslevel") == 0)
+					compressionLevel = value;
+				else if (strcmp(key, "blocksize") == 0)
+					blockSize = value;
+				key = strtok(NULL, ",=");
+			}
+
+			/* Compression Type */
+			if (compressionType == NULL)
+				printTableAddCell(&cont, tableinfo.compressionType, false, false);
+			else
+				printTableAddCell(&cont, compressionType, false, false);
+
+			/* Compression Level */
+			if (compressionLevel == NULL)
+				printTableAddCell(&cont, tableinfo.compressionLevel, false, false);
+			else
+				printTableAddCell(&cont, compressionLevel, false, false);
+
+			/* Block Size */
+			if (blockSize == NULL)
+				printTableAddCell(&cont, tableinfo.blockSize, false, false);
+			else
+				printTableAddCell(&cont, blockSize, false, false);
+		}
 
 		/* Column comments, if the relkind supports this feature */
 		if (attdescr_col >= 0)
@@ -2681,53 +2580,10 @@ describeOneTableDetails(const char *schemaname,
 
 		PQclear(result);
 	}
-<<<<<<< HEAD
-	else if (tableinfo.relkind == 'S')
-	{
-		/* Footer information about a sequence */
-		PGresult   *result = NULL;
-
-		/* Get the column that owns this sequence */
-		printfPQExpBuffer(&buf, "SELECT pg_catalog.quote_ident(nspname) || '.' ||"
-						  "\n   pg_catalog.quote_ident(relname) || '.' ||"
-						  "\n   pg_catalog.quote_ident(attname)"
-						  "\nFROM pg_catalog.pg_class c"
-					"\nINNER JOIN pg_catalog.pg_depend d ON c.oid=d.refobjid"
-			 "\nINNER JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace"
-						  "\nINNER JOIN pg_catalog.pg_attribute a ON ("
-						  "\n a.attrelid=c.oid AND"
-						  "\n a.attnum=d.refobjsubid)"
-			   "\nWHERE d.classid='pg_catalog.pg_class'::pg_catalog.regclass"
-			 "\n AND d.refclassid='pg_catalog.pg_class'::pg_catalog.regclass"
-						  "\n AND d.objid='%s'"
-						  "\n AND d.deptype='a'",
-						  oid);
-
-		result = PSQLexec(buf.data);
-		if (!result)
-			goto error_return;
-		else if (PQntuples(result) == 1)
-		{
-			printfPQExpBuffer(&buf, _("Owned by: %s"),
-							  PQgetvalue(result, 0, 0));
-			printTableAddFooter(&cont, buf.data);
-		}
-
-		/*
-		 * If we get no rows back, don't show anything (obviously). We should
-		 * never get more than one row back, but if we do, just ignore it and
-		 * don't print anything.
-		 */
-		PQclear(result);
-	}
-	else if (tableinfo.relkind == 'r' || tableinfo.relkind == 'm' ||
-			 tableinfo.relkind == 'f')
-=======
 	else if (tableinfo.relkind == RELKIND_RELATION ||
 			 tableinfo.relkind == RELKIND_MATVIEW ||
 			 tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
 			 tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		/* Footer information about a table */
 		PGresult   *result = NULL;
@@ -2881,40 +2737,6 @@ describeOneTableDetails(const char *schemaname,
 				printTableAddFooter(&cont, _("Check constraints:"));
 				for (i = 0; i < tuples; i++)
 				{
-<<<<<<< HEAD
-					/* untranslated constraint name and def */
-					printfPQExpBuffer(&buf, "    \"%s\" %s",
-									  PQgetvalue(result, i, 0),
-									  PQgetvalue(result, i, 1));
-
-					printTableAddFooter(&cont, buf.data);
-				}
-			}
-			PQclear(result);
-		}
-
-		/* print foreign-key constraints (there are none if no triggers) */
-		if (tableinfo.hastriggers)
-		{
-			printfPQExpBuffer(&buf,
-							  "SELECT conname,\n"
-				 "  pg_catalog.pg_get_constraintdef(r.oid, true) as condef\n"
-							  "FROM pg_catalog.pg_constraint r\n"
-				   "WHERE r.conrelid = '%s' AND r.contype = 'f' ORDER BY 1;",
-							  oid);
-			result = PSQLexec(buf.data);
-			if (!result)
-				goto error_return;
-			else
-				tuples = PQntuples(result);
-
-			if (tuples > 0)
-			{
-				printTableAddFooter(&cont, _("Foreign-key constraints:"));
-				for (i = 0; i < tuples; i++)
-				{
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					/* untranslated constraint name and def */
 					printfPQExpBuffer(&buf, "    \"%s\" %s",
 									  PQgetvalue(result, i, 0),
@@ -3586,7 +3408,6 @@ describeOneTableDetails(const char *schemaname,
 				goto error_return;
 			}
 
-<<<<<<< HEAD
 			if (strcmp(PQgetvalue(result, 0, 0), PG_EXTTABLE_SERVER_NAME) == 0)
 			{
 				add_external_table_footer(&cont, oid);
@@ -3598,22 +3419,12 @@ describeOneTableDetails(const char *schemaname,
 								  PQgetvalue(result, 0, 0));
 				printTableAddFooter(&cont, buf.data);
 			}
-=======
-			/* Print server name */
-			printfPQExpBuffer(&buf, _("Server: %s"),
-							  PQgetvalue(result, 0, 0));
-			printTableAddFooter(&cont, buf.data);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 			/* Print per-table FDW options, if any */
 			ftoptions = PQgetvalue(result, 0, 1);
 			if (ftoptions && ftoptions[0] != '\0')
 			{
-<<<<<<< HEAD
-				printfPQExpBuffer(&buf, _("FDW Options: (%s)"), ftoptions);
-=======
 				printfPQExpBuffer(&buf, _("FDW options: (%s)"), ftoptions);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				printTableAddFooter(&cont, buf.data);
 			}
 			PQclear(result);
@@ -3787,9 +3598,12 @@ describeOneTableDetails(const char *schemaname,
 		/* mpp addition start: dump distributed by clause */
 		add_distributed_by_footer(&cont, oid);
 
+		/* GPDB_12_MERGE_FIXME: legacy partitioning. Still needed for old server versions? */
+#if 0
 		/* print 'partition by' clause */
 		if (tuples > 0)
 			add_partition_by_footer(&cont, oid);
+#endif
 
 		/* Tablespace info */
 		add_tablespace_footer(&cont, tableinfo.relkind, tableinfo.tablespace,
@@ -4242,6 +4056,8 @@ add_distributed_by_footer(printTableContent *const cont, const char *oid)
 /*
  * Add a 'partition by' description to the footer.
  */
+/* GPDB_12_MERGE_FIXME: legacy partitioning. Still needed for old server versions? */
+#if 0
 static void
 add_partition_by_footer(printTableContent *const cont, const char *oid)
 {
@@ -4320,6 +4136,7 @@ add_partition_by_footer(printTableContent *const cont, const char *oid)
 	termPQExpBuffer(&buf);
 	return;		/* success */
 }
+#endif
 
 /*
  * Add a tablespace description to a footer.  If 'newline' is true, it is added
@@ -4602,32 +4419,6 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 
 	initPQExpBuffer(&buf);
 
-<<<<<<< HEAD
-	if (pset.sversion >= 90000)
-	{
-		bool		havewhere;
-
-		printfPQExpBuffer(&buf, "SELECT rolname AS \"%s\", datname AS \"%s\",\n"
-				  "pg_catalog.array_to_string(setconfig, E'\\n') AS \"%s\"\n"
-						  "FROM pg_catalog.pg_db_role_setting s\n"
-						  "LEFT JOIN pg_catalog.pg_database d ON d.oid = setdatabase\n"
-						  "LEFT JOIN pg_catalog.pg_roles r ON r.oid = setrole\n",
-						  gettext_noop("Role"),
-						  gettext_noop("Database"),
-						  gettext_noop("Settings"));
-		havewhere = processSQLNamePattern(pset.db, &buf, pattern, false, false,
-										  NULL, "r.rolname", NULL, NULL);
-		processSQLNamePattern(pset.db, &buf, pattern2, havewhere, false,
-							  NULL, "d.datname", NULL, NULL);
-		appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
-	}
-	else
-	{
-		fprintf(pset.queryFout,
-		_("No per-database role settings support in this server version.\n"));
-		return false;
-	}
-=======
 	printfPQExpBuffer(&buf, "SELECT rolname AS \"%s\", datname AS \"%s\",\n"
 					  "pg_catalog.array_to_string(setconfig, E'\\n') AS \"%s\"\n"
 					  "FROM pg_catalog.pg_db_role_setting s\n"
@@ -4641,7 +4432,6 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 	processSQLNamePattern(pset.db, &buf, pattern2, havewhere, false,
 						  NULL, "d.datname", NULL, NULL);
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	res = PSQLexec(buf.data);
 	termPQExpBuffer(&buf);
@@ -4804,14 +4594,9 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 							 "\n     LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid");
 
 	appendPQExpBufferStr(&buf, "\nWHERE c.relkind IN (");
-<<<<<<< HEAD
 	if (showTables || showExternal)
-		appendPQExpBuffer(&buf, "'r',");
-=======
-	if (showTables)
 		appendPQExpBufferStr(&buf, CppAsString2(RELKIND_RELATION) ","
 							 CppAsString2(RELKIND_PARTITIONED_TABLE) ",");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (showViews)
 		appendPQExpBufferStr(&buf, CppAsString2(RELKIND_VIEW) ",");
 	if (showMatViews)
@@ -5145,21 +4930,12 @@ listLanguages(const char *pattern, bool verbose, bool showSystem)
 						  ",\n       NOT l.lanispl AS \"%s\",\n"
 						  "       l.lanplcallfoid::pg_catalog.regprocedure AS \"%s\",\n"
 						  "       l.lanvalidator::pg_catalog.regprocedure AS \"%s\",\n       ",
-<<<<<<< HEAD
-						  gettext_noop("Internal Language"),
-						  gettext_noop("Call Handler"),
-						  gettext_noop("Validator"));
-		if (pset.sversion >= 90000)
-			appendPQExpBuffer(&buf, "l.laninline::pg_catalog.regprocedure AS \"%s\",\n       ",
-							  gettext_noop("Inline Handler"));
-=======
 						  gettext_noop("Internal language"),
 						  gettext_noop("Call handler"),
 						  gettext_noop("Validator"));
 		if (pset.sversion >= 90000)
 			appendPQExpBuffer(&buf, "l.laninline::pg_catalog.regprocedure AS \"%s\",\n       ",
 							  gettext_noop("Inline handler"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		printACLColumn(&buf, "l.lanacl");
 	}
 
