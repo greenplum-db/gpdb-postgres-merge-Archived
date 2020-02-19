@@ -596,7 +596,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate,
 	 * it doesn't seem worth complicating this function's API to pass it a
 	 * shorter-lived ExprContext.  This might need to change someday.
 	 */
-	ExecSetParamPlanMulti(sendParams, GetPerTupleExprContext(estate));
+	ExecSetParamPlanMulti(sendParams, GetPerTupleExprContext(estate), NULL);
 
 	/* Allocate object for return value. */
 	pei = palloc0(sizeof(ParallelExecutorInfo));
@@ -872,7 +872,7 @@ ExecParallelReinitialize(PlanState *planstate,
 	 * evaluated, if they weren't already (see comments in
 	 * ExecInitParallelPlan).
 	 */
-	ExecSetParamPlanMulti(sendParams, GetPerTupleExprContext(estate));
+	ExecSetParamPlanMulti(sendParams, GetPerTupleExprContext(estate), NULL);
 
 	ReinitializeParallelDSM(pei->pcxt);
 	pei->tqueue = ExecParallelSetupTupleQueues(pei->pcxt, true);

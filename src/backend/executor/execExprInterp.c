@@ -76,6 +76,8 @@
 #include "utils/typcache.h"
 #include "utils/xml.h"
 
+#include "cdb/cdbvars.h"
+
 
 /*
  * Use computed-goto-based opcode dispatch when computed gotos are available.
@@ -2437,7 +2439,7 @@ ExecEvalCurrentOfExpr(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 void
 ExecEvalNextValueExpr(ExprState *state, ExprEvalStep *op)
 {
-	int64		newval = nextval_internal(op->d.nextvalueexpr.seqid, false);
+	int64		newval = nextval_internal(op->d.nextvalueexpr.seqid, false, Gp_role == GP_ROLE_DISPATCH);
 
 	switch (op->d.nextvalueexpr.seqtypid)
 	{

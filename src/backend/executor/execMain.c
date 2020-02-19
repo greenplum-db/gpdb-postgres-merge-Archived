@@ -641,9 +641,14 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 					for (iparam = 0; iparam < queryDesc->params->numParams; iparam++)
 					{
 						ParamExternData *prm = &pli->params[iparam];
+						ParamExternData prmdata;
 
+						/*
+						 * GPDB_12_MERGE_FIXME: What should speculative value
+						 * should paramFetch be called with?
+						 */
 						if (!OidIsValid(prm->ptype))
-							(*pli->paramFetch) (pli, iparam + 1);
+							(*pli->paramFetch) (pli, iparam + 1, false, &prmdata);
 					}
 				}
 
@@ -3847,7 +3852,7 @@ EvalPlanQualBegin(EPQState *epqstate, EState *parentestate)
 			 * EvalPlanQualStart (see comments therein).
 			 */
 			ExecSetParamPlanMulti(planstate->plan->extParam,
-								  GetPerTupleExprContext(parentestate));
+								  GetPerTupleExprContext(parentestate), NULL);
 
 			i = list_length(parentestate->es_plannedstmt->paramExecTypes);
 
@@ -3975,7 +3980,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 		 * doing EvalPlanQual again.
 		 */
 		ExecSetParamPlanMulti(planTree->extParam,
-							  GetPerTupleExprContext(parentestate));
+							  GetPerTupleExprContext(parentestate), NULL);
 
 		/* now make the internal param workspace ... */
 		i = list_length(parentestate->es_plannedstmt->paramExecTypes);
