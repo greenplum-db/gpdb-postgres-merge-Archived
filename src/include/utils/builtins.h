@@ -87,6 +87,9 @@ extern void generate_operator_clause(fmStringInfo buf,
 									 Oid opoid,
 									 const char *rightop, Oid rightoptype);
 
+/* varchar.c */
+extern int	bpchartruelen(char *s, int len);
+
 /* popular functions from varlena.c */
 extern text *cstring_to_text(const char *s);
 extern text *cstring_to_text_with_len(const char *s, int len);

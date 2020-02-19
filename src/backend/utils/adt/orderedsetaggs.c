@@ -287,8 +287,7 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 	 * Initialize tuplesort object.
 	 */
 	if (use_tuples)
-		osastate->sortstate = tuplesort_begin_heap(NULL,
-												   qstate->tupdesc,
+		osastate->sortstate = tuplesort_begin_heap(qstate->tupdesc,
 												   qstate->numSortCols,
 												   qstate->sortColIdx,
 												   qstate->sortOperators,
@@ -298,8 +297,7 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 												   NULL,
 												   qstate->rescan_needed);
 	else
-		osastate->sortstate = tuplesort_begin_datum(NULL,
-													qstate->sortColType,
+		osastate->sortstate = tuplesort_begin_datum(qstate->sortColType,
 													qstate->sortOperator,
 													qstate->sortCollation,
 													qstate->sortNullsFirst,

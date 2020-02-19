@@ -270,6 +270,8 @@ binary_upgrade_set_preassigned_oids(PG_FUNCTION_ARGS)
 
 		MarkOidPreassignedFromBinaryUpgrade(oid);
 	}
+
+	PG_RETURN_VOID();
 }
 
 Datum

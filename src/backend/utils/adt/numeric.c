@@ -437,6 +437,13 @@ static void dump_var(const char *str, NumericVar *var);
 #define dump_var(s,v)
 #endif
 
+#define init_sumaccum(v) \
+	do { \
+		(v)->ndigits = (v)->weight = (v)->dscale = (v)->have_carry_space = 0; \
+		(v)->pos_digits = NULL; 	\
+		(v)->neg_digits = NULL; 	\
+	} while (0)
+
 #define quick_init_var(v) \
 	do { \
 		(v)->buf = (v)->ndb;	\
@@ -496,20 +503,18 @@ static void alloc_var(NumericVar *var, int ndigits);
 static void zero_var(NumericVar *var);
 
 static const char *init_var_from_str(const char *str, const char *cp, NumericVar *dest);
-static void set_var_from_var(NumericVar *value, NumericVar *dest);
-static void init_var_from_var(NumericVar *value, NumericVar *dest);
-static void init_ro_var_from_var(NumericVar *value, NumericVar *dest);
-static const char *set_var_from_str(const char *str, const char *cp,
-                                    NumericVar *dest);
+static void set_var_from_var(const NumericVar *value, NumericVar *dest);
+static void init_var_from_var(const NumericVar *value, NumericVar *dest);
+static void init_ro_var_from_var(const NumericVar *value, NumericVar *dest);
 static void set_var_from_num(Numeric value, NumericVar *dest);
 static void init_var_from_num(Numeric value, NumericVar *dest);
-static char *get_str_from_var(NumericVar *var);
-static char *get_str_from_var_sci(NumericVar *var, int rscale);
+static char *get_str_from_var(const NumericVar *var);
+static char *get_str_from_var_sci(const NumericVar *var, int rscale);
 
 /* ----------
  * CAUTION: These routines perform a  free_var(var)
  */
-static Numeric make_result(NumericVar *var);
+static Numeric make_result(const NumericVar *var);
 static Numeric make_result_opt_error(const NumericVar *var, bool *error);
 /*
  * ----------
@@ -534,7 +539,6 @@ static int	numeric_cmp_abbrev(Datum x, Datum y, SortSupport ssup);
 static Datum numeric_abbrev_convert_var(const NumericVar *var,
 										NumericSortSupport *nss);
 
-static int	cmp_numerics(Numeric num1, Numeric num2);
 static int	cmp_var(const NumericVar *var1, const NumericVar *var2);
 static int	cmp_var_common(const NumericDigit *var1digits, int var1ndigits,
 						   int var1weight, int var1sign,
@@ -3876,8 +3880,8 @@ makeNumericAggState(FunctionCallInfo fcinfo, bool calcSumX2)
 	}
 	state->calcSumX2 = calcSumX2;
 	state->agg_context = agg_context;
-	quick_init_var(&state->sumX);
-	quick_init_var(&state->sumX2);
+	init_sumaccum(&state->sumX);
+	init_sumaccum(&state->sumX2);
 
 	MemoryContextSwitchTo(old_context);
 
@@ -6361,7 +6365,7 @@ set_var_from_var(const NumericVar *value, NumericVar *dest)
  *	init one variable from another - they must NOT be the same variable
  */
 static void
-init_var_from_var(NumericVar *value, NumericVar *dest)
+init_var_from_var(const NumericVar *value, NumericVar *dest)
 {
 	init_alloc_var(dest, value->ndigits);
 
@@ -6378,7 +6382,7 @@ init_var_from_var(NumericVar *value, NumericVar *dest)
  *	init one variable from another - they must NOT be the same variable
  */
 static void
-init_ro_var_from_var(NumericVar *value, NumericVar *dest)
+init_ro_var_from_var(const NumericVar *value, NumericVar *dest)
 {
 	dest->ndigits = value->ndigits;
 	dest->weight = value->weight;
@@ -6653,7 +6657,6 @@ make_result_opt_error(const NumericVar *var, bool *have_error)
 
 	if (sign == NUMERIC_NAN)
 	{
-		free_var(var);
 		result = (Numeric) palloc(NUMERIC_HDRSZ_SHORT);
 
 		SET_VARSIZE(result, NUMERIC_HDRSZ_SHORT);
