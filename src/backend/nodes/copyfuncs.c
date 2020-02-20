@@ -1665,6 +1665,8 @@ _copyAssertOp(const AssertOp *from)
 	return newnode;
 }
 
+/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
+#if 0
 /*
  * _copyPartitionSelector
  */
@@ -1694,6 +1696,7 @@ _copyPartitionSelector(const PartitionSelector *from)
 
 	return newnode;
 }
+#endif
 
 /* ****************************************************************
  *					   primnodes.h copy functions
@@ -5994,9 +5997,12 @@ copyObjectImpl(const void *from)
 		case T_AssertOp:
 			retval = _copyAssertOp(from);
 			break;
+/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
+#if 0
 		case T_PartitionSelector:
 			retval = _copyPartitionSelector(from);
 			break;
+#endif
 
 			/*
 			 * PRIMITIVE NODES

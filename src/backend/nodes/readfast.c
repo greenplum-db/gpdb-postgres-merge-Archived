@@ -1270,6 +1270,8 @@ _readAssertOp(void)
 	READ_DONE();
 }
 
+/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
+#if 0
 /*
  * _readPartitionSelector
  */
@@ -1296,6 +1298,7 @@ _readPartitionSelector(void)
 
 	READ_DONE();
 }
+#endif
 
 static Bitmapset *
 _readBitmapset(void)
@@ -2077,9 +2080,12 @@ readNodeBinary(void)
 			case T_AssertOp:
 				return_value = _readAssertOp();
 				break;
+/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
+#if 0
 			case T_PartitionSelector:
 				return_value = _readPartitionSelector();
 				break;
+#endif
 			case T_Alias:
 				return_value = _readAlias();
 				break;

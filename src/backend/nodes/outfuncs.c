@@ -1358,6 +1358,8 @@ _outAssertOp(StringInfo str, const AssertOp *node)
 	_outPlanInfo(str, (Plan *) node);
 }
 
+/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
+#if 0
 /*
  * _outPartitionSelector
  */
@@ -1382,6 +1384,7 @@ _outPartitionSelector(StringInfo str, const PartitionSelector *node)
 
 	_outPlanInfo(str, (Plan *) node);
 }
+#endif
 
 /*****************************************************************************
  *
@@ -5501,9 +5504,12 @@ outNode(StringInfo str, const void *obj)
 			case T_AssertOp:
 				_outAssertOp(str, obj);
 				break;
+/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
+#if 0
 			case T_PartitionSelector:
 				_outPartitionSelector(str, obj);
 				break;
+#endif
 			case T_Alias:
 				_outAlias(str, obj);
 				break;
