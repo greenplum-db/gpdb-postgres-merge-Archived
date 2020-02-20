@@ -316,6 +316,7 @@ static TupleTableSlot *agg_retrieve_hash_table_internal(AggState *aggstate);
 static void build_pertrans_for_aggref(AggStatePerTrans pertrans,
                                       AggState *aggstate, EState *estate,
                                       Aggref *aggref, Oid aggtransfn, Oid aggtranstype,
+                                      Oid aggcombinefn,
                                       Oid aggserialfn, Oid aggdeserialfn,
                                       Datum initValue, bool initValueIsNull,
                                       Oid *inputTypes, int numArguments);
@@ -346,7 +347,10 @@ cxt_alloc(void *manager, Size len)
 static void
 cxt_free(void *manager, void *pointer)
 {
+#if 0
+	/* GPDB_12_MERGE_FIXME: Should we bring the UnusedArg macro back? */
     UnusedArg(manager);
+#endif
 	if (pointer != NULL)
 		pfree(pointer);
 }
@@ -584,27 +588,6 @@ initialize_aggregate(AggState *aggstate, AggStatePerTrans pertrans,
                                          pertrans->sortCollations,
                                          pertrans->sortNullsFirst,
                                          work_mem, NULL, false);
-
-		/*
-		 * CDB: If EXPLAIN ANALYZE, let all of our tuplesort operations
-		 * share our Instrumentation object and message buffer.
-		 */
-		if (aggstate->ss.ps.instrument && aggstate->ss.ps.instrument->need_cdb)
-			tuplesort_set_instrument(pertrans->sortstates[aggstate->current_set],
-									 aggstate->ss.ps.instrument,
-									 aggstate->ss.ps.cdbexplainbuf);
-
-		/* CDB: Set enhanced sort options. */
-		{
-			int 		unique = pertrans->aggref->aggdistinct &&
-				( gp_enable_sort_distinct ? 1 : 0) ;
-			int 		sort_flags = gp_sort_flags; /* get the guc */
-			int         maxdistinct = gp_sort_max_distinct; /* get guc */
-
-			cdb_tuplesort_init(pertrans->sortstates[aggstate->current_set],
-							   unique,
-							   sort_flags, maxdistinct);
-		}
 	}
 
 	/*
@@ -702,7 +685,7 @@ advance_transition_function(AggState *aggstate,
 							AggStatePerGroup pergroupstate)
 {
 	MemoryManagerContainer *mem_manager = &aggstate->mem_manager;
-	FunctionCallInfo fcinfo = &pertrans->transfn_fcinfo;
+	FunctionCallInfo fcinfo = pertrans->transfn_fcinfo;
 	MemoryContext oldContext;
 	Datum		newVal;
 
@@ -838,7 +821,7 @@ advance_transition_function(AggState *aggstate,
  * - commit 652e34adaf2e00e8 (Make use of serial/deserial functions to enable
  *   2-phase aggregates.)
  */
-static void
+void
 advance_aggregates(AggState *aggstate)
 {
 	bool		dummynull;
@@ -1147,19 +1130,17 @@ finalize_aggregate(AggState *aggstate,
 		}
 		else
 		{
-			FunctionCallInfoData fcinfo;
-
-			InitFunctionCallInfoData(fcinfo,
+			InitFunctionCallInfoData(*fcinfo,
 									 &pertrans->serialfn,
 									 1,
 									 InvalidOid,
 									 (void *) aggstate, NULL);
 
-			fcinfo.arg[0] = pergroupstate->transValue;
-			fcinfo.argnull[0] = pergroupstate->transValueIsNull;
+			fcinfo->args[0].value = pergroupstate->transValue;
+			fcinfo->args[0].isnull = pergroupstate->transValueIsNull;
 
-			*resultVal = FunctionCallInvoke(&fcinfo);
-			*resultIsNull = fcinfo.isnull;
+			*resultVal = FunctionCallInvoke(fcinfo);
+			*resultIsNull = fcinfo->args[0].isnull;
 		}
 	}
 	else
@@ -2142,8 +2123,6 @@ agg_fill_hash_table(AggState *aggstate)
 	aggstate->hhashtable = create_agg_hash_table(aggstate);
 	aggstate->hashaggstatus = HASHAGG_BEFORE_FIRST_PASS;
 	tupremain = agg_hash_initial_pass(aggstate);
-	TupleTableSlot *outerslot;
-	ExprContext *tmpcontext = aggstate->tmpcontext;
 
 	if (streaming)
 	{
@@ -2508,7 +2487,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	ExecInitResultTupleSlotTL(&aggstate->ss.ps, &TTSOpsVirtual);
 	ExecAssignProjectionInfo(&aggstate->ss.ps, NULL);
 
-    /*
     /*
      * CDB: Offer extra info for EXPLAIN ANALYZE.
      */
@@ -2977,7 +2955,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				aclresult = pg_proc_aclcheck(combinefn_oid, aggOwner,
 											 ACL_EXECUTE);
 				if (aclresult != ACLCHECK_OK)
-					aclcheck_error(aclresult, ACL_KIND_PROC,
+					aclcheck_error(aclresult, OBJECT_PROCEDURE,
 								   get_func_name(combinefn_oid));
 				InvokeFunctionExecuteHook(combinefn_oid);
 			}
@@ -3175,71 +3153,76 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			Assert(false);
 
 		phase->evaltrans = ExecBuildAggTrans(aggstate, phase, dosort, dohash);
+	}
 
-        /* MPP */
-        aggstate->hhashtable = NULL;
-
-        /* Set the default memory manager */
-        aggstate->mem_manager.alloc = cxt_alloc;
-        aggstate->mem_manager.free = cxt_free;
-        aggstate->mem_manager.manager = aggstate;
-        aggstate->mem_manager.realloc_ratio = 1;
-
-        aggstate->AggExprId_AttrNum = node->agg_expr_id;
-
-        /* > 0: there is a TupleSplit node under agg */
-        if (aggstate->AggExprId_AttrNum > 0)
-        {
-            List *allTupleSplit = extract_nodes_plan((Plan*) node, T_TupleSplit, false);
-            Assert(list_length(allTupleSplit) == 1);
-
-            /* fetch TupleSplit provided bitmap sets for each trans function */
-            TupleSplit *tupleSplit = linitial(allTupleSplit);
-            Bitmapset **dqa_args_attr_num = palloc0(sizeof(Bitmapset *) * tupleSplit->numDisDQAs);
-
-            /* create bitmap set for each dqa's aggs */
-            for (i = 0; i < tupleSplit->numDisDQAs; i++)
-            {
-                Bitmapset *bms = tupleSplit->dqa_args_id_bms[i];
-
-                j = -1;
-                while ((j = bms_next_member(bms, j)) >= 0)
-                {
-                    TargetEntry *te = get_sortgroupref_tle((Index)j, tupleSplit->plan.targetlist);
-                    dqa_args_attr_num[i] = bms_add_member(dqa_args_attr_num[i], te->resno);
-                }
-            }
-
-            for (i = 0; i < aggstate->numtrans; i++)
-            {
-                AggStatePerTrans pertrans = &aggstate->pertrans[i];
-                Bitmapset *args_attr_num = NULL;
-
-                foreach(l, pertrans->aggref->args)
-                {
-                    GenericExprState *gExpr = (GenericExprState *)lfirst(l);
-
-                    /* All exprs should be calculated before TupleSplit */
-                    Assert(IsA(gExpr->arg->expr,Var));
-
-                    Var *var = (Var *)gExpr->arg->expr;
-
-                    args_attr_num =
-                            bms_add_member(args_attr_num, var->varattno);
-                }
-
-                for (j = 0; j < tupleSplit->numDisDQAs; j++)
-                {
-                    /* set trans agg_expr_id if trans args bitmapset matched */
-                    if (bms_equal(args_attr_num, dqa_args_attr_num[j]))
-                    {
-                        pertrans->agg_expr_id = j;
-                        break;
-                    }
-                }
-
-                bms_free(args_attr_num);
-            }
+	/* MPP */
+	aggstate->hhashtable = NULL;
+	
+	/* Set the default memory manager */
+	aggstate->mem_manager.alloc = cxt_alloc;
+	aggstate->mem_manager.free = cxt_free;
+	aggstate->mem_manager.manager = aggstate;
+	aggstate->mem_manager.realloc_ratio = 1;
+	
+	aggstate->AggExprId_AttrNum = node->agg_expr_id;
+	
+	/* > 0: there is a TupleSplit node under agg */
+	if (aggstate->AggExprId_AttrNum > 0)
+	{
+		List *allTupleSplit = extract_nodes_plan((Plan*) node, T_TupleSplit, false);
+		Assert(list_length(allTupleSplit) == 1);
+		
+		/* fetch TupleSplit provided bitmap sets for each trans function */
+		TupleSplit *tupleSplit = linitial(allTupleSplit);
+		Bitmapset **dqa_args_attr_num = palloc0(sizeof(Bitmapset *) * tupleSplit->numDisDQAs);
+		
+		/* create bitmap set for each dqa's aggs */
+		for (i = 0; i < tupleSplit->numDisDQAs; i++)
+		{
+			Bitmapset *bms = tupleSplit->dqa_args_id_bms[i];
+			
+			j = -1;
+			while ((j = bms_next_member(bms, j)) >= 0)
+			{
+				TargetEntry *te = get_sortgroupref_tle((Index)j, tupleSplit->plan.targetlist);
+				dqa_args_attr_num[i] = bms_add_member(dqa_args_attr_num[i], te->resno);
+			}
+		}
+		
+		for (i = 0; i < aggstate->numtrans; i++)
+		{
+			AggStatePerTrans pertrans = &aggstate->pertrans[i];
+			Bitmapset *args_attr_num = NULL;
+			
+			foreach(l, pertrans->aggref->args)
+			{
+					/*
+					 * GPDB_12_MERGE_FIXME: If we cannot guarantee that the
+					 * node is a TargetList then we need to create a walker to
+					 * find the Var.
+					 */
+				TargetEntry *expr = (TargetEntry *)lfirst(l);
+				
+				/* All exprs should be calculated before TupleSplit */
+				Assert(IsA(expr,Var));
+				
+				Var *var = (Var *)expr;
+				
+				args_attr_num = bms_add_member(args_attr_num, var->varattno);
+			}
+			
+			for (j = 0; j < tupleSplit->numDisDQAs; j++)
+			{
+				/* set trans agg_expr_id if trans args bitmapset matched */
+				if (bms_equal(args_attr_num, dqa_args_attr_num[j]))
+				{
+					pertrans->agg_expr_id = j;
+					break;
+				}
+			}
+			
+			bms_free(args_attr_num);
+		}
 	}
 
 	return aggstate;
@@ -3325,8 +3308,8 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 									   aggref->inputcollid,
 									   aggcombinefn,
 									   &combinefnexpr);
-		fmgr_info(aggcombinefn, &pertrans->combinefn);
-		fmgr_info_set_expr((Node *) combinefnexpr, &pertrans->combinefn);
+		fmgr_info(aggcombinefn, &pertrans->transfn);
+		fmgr_info_set_expr((Node *) combinefnexpr, &pertrans->transfn);
 
 		pertrans->transfn_fcinfo =
 			(FunctionCallInfo) palloc(SizeForFunctionCallInfo(2));
@@ -3341,7 +3324,7 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 		 * strict. This should have been checked during CREATE AGGREGATE, but
 		 * the strict property could have been changed since then.
 		 */
-		if (pertrans->combinefn.fn_strict && aggtranstype == INTERNALOID)
+		if (pertrans->transfn.fn_strict && aggtranstype == INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("combine function with transition type %s must not be declared STRICT",
@@ -3351,9 +3334,9 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	if (DO_AGGSPLIT_COMBINE(aggstate->aggsplit))
 	{
 		Assert(aggcombinefn);
-		fmgr_info_copy(&pertrans->transfn, &pertrans->combinefn, CurrentMemoryContext);
+		fmgr_info_copy(&pertrans->transfn, &pertrans->transfn, CurrentMemoryContext);
 
-		InitFunctionCallInfoData(pertrans->transfn_fcinfo,
+		InitFunctionCallInfoData(*pertrans->transfn_fcinfo,
 								 &pertrans->transfn,
 								 2,
 								 pertrans->aggCollation,
@@ -3793,100 +3776,22 @@ ExecReScanAgg(AggState *node)
 	/* Re-initialize some variables */
 	node->agg_done = false;
 
-	if (node->aggstrategy == AGG_HASHED)
-	{
-		/*
-		 * In the hashed case, if we haven't yet built the hash table then we
-		 * can just return; nothing done yet, so nothing to undo. If subnode's
-		 * chgParam is not NULL then it will be re-scanned by ExecProcNode,
-		 * else no reason to re-scan it at all.
-		 */
-		if (!node->table_filled)
-			return;
-
-		/*
-		 * If we do have the hash table, and the subplan does not have any
-		 * parameter changes, and none of our own parameter changes affect
-		 * input expressions of the aggregated functions, then we can just
-		 * rescan the existing hash table; no need to build it again.
-		 */
-		if (outerPlan->chgParam == NULL &&
-			!bms_overlap(node->ss.ps.chgParam, aggnode->aggParams))
-		{
-			ResetTupleHashIterator(node->perhash[0].hashtable,
-								   &node->perhash[0].hashiter);
-			select_current_set(node, 0, true);
-			return;
-		}
-	}
-
-	/* Make sure we have closed any open tuplesorts */
-	for (transno = 0; transno < node->numtrans; transno++)
-	{
-		for (setno = 0; setno < numGroupingSets; setno++)
-		{
-			AggStatePerTrans pertrans = &node->pertrans[transno];
-
-			if (pertrans->sortstates[setno])
-			{
-				tuplesort_end(pertrans->sortstates[setno]);
-				pertrans->sortstates[setno] = NULL;
-			}
-		}
-	}
-
-	/*
-	 * We don't need to ReScanExprContext the output tuple context here;
-	 * ExecReScan already did it. But we do need to reset our per-grouping-set
-	 * contexts, which may have transvalues stored in them. (We use rescan
-	 * rather than just reset because transfns may have registered callbacks
-	 * that need to be run now.) For the AGG_HASHED case, see below.
-	 */
-
-	for (setno = 0; setno < numGroupingSets; setno++)
-	{
-		ReScanExprContext(node->aggcontexts[setno]);
-	}
-
-	/* Release first tuple of group, if we have made a copy */
-	if (node->grp_firstTuple != NULL)
-	{
-		heap_freetuple(node->grp_firstTuple);
-		node->grp_firstTuple = NULL;
-	}
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/* Forget current agg values */
 	MemSet(econtext->ecxt_aggvalues, 0, sizeof(Datum) * node->numaggs);
 	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * node->numaggs);
 
-	/*
-	 * With AGG_HASHED/MIXED, the hash table is allocated in a sub-context of
-	 * the hashcontext. This used to be an issue, but now, resetting a context
-	 * automatically deletes sub-contexts too.
-	 */
-	if (node->aggstrategy == AGG_HASHED || node->aggstrategy == AGG_MIXED)
-	{
-		ReScanExprContext(node->hashcontext);
-		/* Rebuild an empty hash table */
-		build_hash_table(node);
-		node->table_filled = false;
-		/* iterator will be reset when the table is filled */
-	}
-
-	if (node->aggstrategy != AGG_HASHED)
+	if (!IS_HASHAGG(node))
 	{
 		/*
 		 * Reset the per-group state (in particular, mark transvalues null)
 		 */
-		for (setno = 0; setno < numGroupingSets; setno++)
-		{
-			MemSet(node->pergroups[setno], 0,
-				   sizeof(AggStatePerGroupData) * node->numaggs);
-		}
+		MemSet(node->pergroups, 0,
+			 sizeof(AggStatePerGroupData) * node->numaggs * numGroupingSets);
 
-		/* reset to phase 1 */
-		initialize_phase(node, 1);
+		/* reset to phase 0 */
+		initialize_phase(node, 0);
 
 		node->input_done = false;
 		node->projected_set = -1;
@@ -4154,19 +4059,7 @@ ExecEagerFreeAgg(AggState *node)
 	}
 
 	if (IS_HASHAGG(node))
-	{
 		destroy_agg_hash_table(node);
-
-		/**
-		 * Clean out the tuple descriptor.
-		 */
-		if (node->hashslot
-			&& node->hashslot->tts_tupleDescriptor)
-		{
-			ReleaseTupleDesc(node->hashslot->tts_tupleDescriptor);
-			node->hashslot->tts_tupleDescriptor = NULL;
-		}
-	}
 
 	/*
 	 * We don't need to ReScanExprContext the output tuple context here;

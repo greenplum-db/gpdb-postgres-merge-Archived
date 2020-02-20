@@ -324,9 +324,9 @@ extern Size hash_agg_entry_size(int numAggs);
 extern Datum aggregate_dummy(PG_FUNCTION_ARGS);
 
 extern void initialize_aggregates(AggState *aggstate,
-					  AggStatePerGroup pergroup,
+					  AggStatePerGroup *pergroup,
 					  int numReset);
-extern void advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup);
+extern void advance_aggregates(AggState *aggstate);
 extern void combine_aggregates(AggState *aggstate, AggStatePerGroup pergroup);
 extern TupleTableSlot *fetch_input_tuple(AggState *aggstate);
 
