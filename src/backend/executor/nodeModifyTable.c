@@ -773,21 +773,22 @@ ExecDelete(ModifyTableState *mtstate,
 #endif
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
-	if (planGen == PLANGEN_PLANNER)
+	/* BEFORE ROW DELETE Triggers */
+	/* GPDB_12_MERGE_FIXME: In PostgreSQL, if this is an UPDATE that
+	 * moves a tuple to another partition, do we fire the trigger?
+	 * In GPDB, should we? What if it's a split update?
+	 */
+	if (resultRelInfo->ri_TrigDesc &&
+		resultRelInfo->ri_TrigDesc->trig_delete_before_row &&
+		planGen == PLANGEN_PLANNER)
 	{
-		/* BEFORE ROW DELETE Triggers */
-		if (resultRelInfo->ri_TrigDesc &&
-			resultRelInfo->ri_TrigDesc->trig_delete_before_row &&
-			!isUpdate)
-		{
-			bool		dodelete;
+		bool		dodelete;
 
-			dodelete = ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
-											tupleid, oldtuple, epqreturnslot);
+		dodelete = ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
+										tupleid, oldtuple, epqreturnslot);
 
-			if (!dodelete)			/* "do nothing" */
-				return NULL;
-		}
+		if (!dodelete)			/* "do nothing" */
+			return NULL;
 	}
 
 	/* INSTEAD OF ROW DELETE Triggers */
@@ -914,14 +915,20 @@ ldelete:;
 				 *
 				 * ORCA requires this check as it does not support multiple
 				 * updates to a row by the same query
+				 *
+				 * GPDB_12_MERGE_FIXME: we no longer pass 'isUpdate' argument
+				 * here. Could we use changingPart instead? Do we want this
+				 * check when moving a tuple to another partition, too?
 				 *-------
-				*/
+				 */
+#if 0
 				if (isUpdate)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION ),
 							 errmsg("multiple updates to a row by the same query is not allowed")));
 				}
+#endif
 				return NULL;
 
 			case TM_Ok:
@@ -948,13 +955,19 @@ ldelete:;
 					 * found the tuple is updated concurrently by another
 					 * transaction, but it is difficult to skip the inserting
 					 * tuple, so it will leads to more tuples after updating.
+					 *
+					 * GPDB_12_MERGE_FIXME: we no longer pass 'isUpdate' argument
+					 * here. Could we use changingPart instead? Do we want this
+					 * check when moving a tuple to another partition, too?
 					 */
+#if 0
 					if (gp_enable_global_deadlock_detector && isUpdate)
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE ),
 								 errmsg("concurrent updates distribution keys on the same row is not allowed")));
 					}
+#endif
 
 					/*
 					 * Already know that we're going to need to do EPQ, so
@@ -1068,37 +1081,6 @@ ldelete:;
 	if (canSetTag)
 		(estate->es_processed)++;
 
-<<<<<<< HEAD
-	if (!isUpdate)
-	{
-		/*
-		 * To notify master if tuples deleted or not, to update mod_count.
-		 */
-		(resultRelInfo->ri_aoprocessed)++;
-	}
-
-	/*
-	 * Note: Normally one would think that we have to delete index tuples
-	 * associated with the heap tuple now...
-	 *
-	 * ... but in POSTGRES, we have no need to do this because VACUUM will
-	 * take care of it later.  We can't delete index tuples immediately
-	 * anyway, since the tuple is still visible to other transactions.
-	 */
-
-	if (!RelationIsAppendOptimized(resultRelationDesc) && planGen == PLANGEN_PLANNER && !isUpdate)
-	{
-		/* AFTER ROW DELETE Triggers */
-		ExecARDeleteTriggers(estate, resultRelInfo, tupleid, oldtuple);
-	}
-
-	/* Process RETURNING if present */
-	/*
-	 * In a split update, the processed rows are returned by the INSERT
-	 * of the new row, not the DELETE of the old one.
-	 */
-	if (resultRelInfo->ri_projectReturning && !isUpdate)
-=======
 	/* Tell caller that the delete actually happened. */
 	if (tupleDeleted)
 		*tupleDeleted = true;
@@ -1128,12 +1110,22 @@ ldelete:;
 	}
 
 	/* AFTER ROW DELETE Triggers */
-	ExecARDeleteTriggers(estate, resultRelInfo, tupleid, oldtuple,
-						 ar_delete_trig_tcs);
+	/* GPDB_12_MERGE_FIXME: In PostgreSQL, if this is an UPDATE that
+	 * moves a tuple to another partition, do we fire the trigger?
+	 * In GPDB, should we? What if it's a split update?
+	 */
+	if (!RelationIsAppendOptimized(resultRelationDesc) && planGen == PLANGEN_PLANNER /* && !isUpdate */)
+	{
+		ExecARDeleteTriggers(estate, resultRelInfo, tupleid, oldtuple,
+							 ar_delete_trig_tcs);
+	}
 
 	/* Process RETURNING if present and if requested */
+	/*
+	 * In a split update, the processed rows are returned by the INSERT
+	 * of the new row, not the DELETE of the old one.
+	 */
 	if (processReturning && resultRelInfo->ri_projectReturning)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		/*
 		 * We have to put the target tuple into a slot, which means first we
@@ -1393,7 +1385,7 @@ lreplace:;
 			 * Row movement, part 1.  Delete the tuple, but skip RETURNING
 			 * processing. We want to return rows from INSERT.
 			 */
-			ExecDelete(mtstate, segid, tupleid, oldtuple, planSlot, epqstate,
+			ExecDelete(mtstate, tupleid, segid, oldtuple, planSlot, epqstate,
 					   estate, false, false /* canSetTag */ ,
 					   true /* changingPart */ , &tuple_deleted, &epqslot);
 
@@ -1470,7 +1462,7 @@ lreplace:;
 										   mtstate->rootResultRelInfo, slot);
 
 			ret_slot = ExecInsert(mtstate, slot, planSlot,
-								  estate, canSetTag);
+								  estate, canSetTag, false /* isUpdate */);
 
 			/* Revert ExecPrepareTupleRouting's node change. */
 			estate->es_result_relation_info = resultRelInfo;
@@ -2459,7 +2451,7 @@ ExecModifyTable(PlanState *pstate)
 					slot = ExecPrepareTupleRouting(node, estate, proute,
 												   resultRelInfo, slot);
 				slot = ExecInsert(node, slot, planSlot,
-								  estate, node->canSetTag);
+								  estate, node->canSetTag, false /* isUpdate */);
 				/* Revert ExecPrepareTupleRouting's state change. */
 				if (proute)
 					estate->es_result_relation_info = resultRelInfo;
@@ -2474,19 +2466,20 @@ ExecModifyTable(PlanState *pstate)
 				}
 				else if (DML_INSERT == action)
 				{
-					slot = ExecInsert(node, slot, planSlot, node->mt_arbiterindexes,
-									  node->mt_onconflict, estate, node->canSetTag,
+					slot = ExecInsert(node, slot, planSlot,
+									  estate, node->canSetTag,
 									  true /* isUpdate */);
 				}
 				else /* DML_DELETE */
 				{
-					slot = ExecDelete(tupleid, segid, oldtuple, planSlot,
-									  &node->mt_epqstate, estate, false,
-									  true /* isUpdate */);
+					slot = ExecDelete(node, tupleid, segid, oldtuple, planSlot,
+									  &node->mt_epqstate, estate,
+									  false, node->canSetTag,
+									  true /* changingPart */ , NULL, NULL);
 				}
 				break;
 			case CMD_DELETE:
-				slot = ExecDelete(node, tupleid, oldtuple, planSlot,
+				slot = ExecDelete(node, tupleid, segid, oldtuple, planSlot,
 								  &node->mt_epqstate, estate,
 								  true, node->canSetTag,
 								  false /* changingPart */ , NULL, NULL);
@@ -3144,7 +3137,7 @@ ExecSquelchModifyTable(ModifyTableState *node)
 	{
 		TupleTableSlot *result;
 
-		result = ExecModifyTable(node);
+		result = ExecModifyTable(&node->ps);
 		if (!result)
 			break;
 	}
