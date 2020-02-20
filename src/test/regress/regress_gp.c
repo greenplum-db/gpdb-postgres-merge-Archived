@@ -1943,55 +1943,6 @@ find_plan(char *ident, EPlan ** eplan, int *nplans)
 	return (newp);
 }
 
-
-/*
- * trigger_udf_return_new_oid
- *
- * A helper function to assign a specific OID to a tuple on INSERT.
- */
-PG_FUNCTION_INFO_V1(trigger_udf_return_new_oid);
-Datum
-trigger_udf_return_new_oid(PG_FUNCTION_ARGS)
-{
-	TriggerData *trigdata = (TriggerData *) fcinfo->context;
-	Trigger    *trigger;
-	char	  **args;
-	HeapTuple	input_tuple;
-	HeapTuple	ret_tuple;
-	Oid			new_oid;
-
-	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "not fired by trigger manager");
-	if (!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		elog(ERROR, "cannot process STATEMENT events");
-	if (!TRIGGER_FIRED_BEFORE(trigdata->tg_event))
-		elog(ERROR, "must be fired before event");
-
-	if (!TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
-		elog(ERROR, "trigger_udf_return_new_oid() called for a non-INSERT");
-
-	/*
-	 * Get the argument. (Trigger functions receive their arguments
-	 * differently than normal functions.)
-	 */
-	trigger = trigdata->tg_trigger;
-	if (trigger->tgnargs != 1)
-		elog(ERROR, "trigger_udf_return_new_oid called with invalid number of arguments (%d, expected 1)",
-			 trigger->tgnargs);
-	args = trigger->tgargs;
-	new_oid = DatumGetObjectId(DirectFunctionCall1(oidin,
-												   CStringGetDatum(args[0])));
-
-	elog(NOTICE, "trigger_udf_return_new_oid assigned OID %u to the new tuple", new_oid);
-
-	input_tuple = trigdata->tg_trigtuple;
-	ret_tuple = heap_copytuple(input_tuple);
-	HeapTupleSetOid(ret_tuple, new_oid);
-
-	return PointerGetDatum(ret_tuple);
-}
-
-
 /*
  * test_consume_xids(int4), for rapidly consuming XIDs, to test wraparound.
  *
