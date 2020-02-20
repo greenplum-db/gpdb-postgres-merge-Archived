@@ -2007,6 +2007,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				}
 			}
 			break;
+#if 0
+/* GPDB_12_MERGE_FIXME: re-implement this node with new postgres partition */
 		case T_PartitionSelector:
 			{
 				PartitionSelector  *ps = (PartitionSelector *)plan;
@@ -2029,6 +2031,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				}
 			}
 			break;
+#endif
 		default:
 			break;
 	}
@@ -2491,10 +2494,13 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_AssertOp:
 			show_upper_qual(plan->qual, "Assert Cond", planstate, ancestors, es);
 			break;
+#if 0
+/* GPDB_12_MERGE_FIXME: re-implement this node with new postgres partition */
 		case T_PartitionSelector:
 			explain_partition_selector((PartitionSelector *) plan,
 									   parentplanstate, ancestors, es);
 			break;
+#endif
 		default:
 			break;
 	}

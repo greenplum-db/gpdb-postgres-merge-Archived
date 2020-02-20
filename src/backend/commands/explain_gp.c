@@ -352,9 +352,12 @@ static int cdbexplain_countLeafPartTables(PlanState *planstate);
 static void show_motion_keys(PlanState *planstate, List *hashExpr, int nkeys,
 							 AttrNumber *keycols, const char *qlabel,
 							 List *ancestors, ExplainState *es);
+#if 0
+/* GPDB_12_MERGE_FIXME: re-implement this node with new postgres partition */
 static void explain_partition_selector(PartitionSelector *ps,
 						   PlanState *parentstate,
 						   List *ancestors, ExplainState *es);
+#endif
 static void
 gpexplain_formatSlicesOutput(struct CdbExplain_ShowStatCtx *showstatctx,
                              struct EState *estate,
@@ -2386,6 +2389,8 @@ show_motion_keys(PlanState *planstate, List *hashExpr, int nkeys, AttrNumber *ke
     }
 }
 
+#if 0
+/* GPDB_12_MERGE_FIXME: re-implement this node with new postgres partition */
 /*
  * Explain a partition selector node, including partition elimination
  * expression and number of statically selected partitions, if available.
@@ -2422,3 +2427,4 @@ explain_partition_selector(PartitionSelector *ps, PlanState *parentstate,
 		ExplainPropertyStringInfo("Partitions selected", es, "%d (out of %d)", nPartsSelected, nPartsTotal);
 	}
 }
+#endif
