@@ -340,9 +340,12 @@ ExecReScan(PlanState *node)
 			ExecReScanShareInputScan((ShareInputScanState *) node);
 			break;
 
+#if 0
+/* GPDB_12_MERGE_FIXME: re-implement this node with new postgres partition */
 		case T_PartitionSelectorState:
 			ExecReScanPartitionSelector((PartitionSelectorState *) node);
 			break;
+#endif
 			
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));

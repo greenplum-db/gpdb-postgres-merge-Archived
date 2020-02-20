@@ -792,6 +792,8 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 			}
 			END_MEMORY_ACCOUNT();
  			break;
+#if 0
+/* GPDB_12_MERGE_FIXME: re-implement this node with new postgres partition */
 		case T_PartitionSelector:
 			curMemoryAccountId = CREATE_EXECUTOR_MEMORY_ACCOUNT(node, PartitionSelector);
 
@@ -802,6 +804,7 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 			}
 			END_MEMORY_ACCOUNT();
 			break;
+#endif
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 			result = NULL;		/* keep compiler quiet */
@@ -1371,9 +1374,12 @@ ExecEndNode(PlanState *node)
 		case T_RowTriggerState:
 			ExecEndRowTrigger((RowTriggerState *) node);
 			break;
+#if 0
+/* GPDB_12_MERGE_FIXME: re-implement this node with new postgres partition */
 		case T_PartitionSelectorState:
 			ExecEndPartitionSelector((PartitionSelectorState *) node);
 			break;
+#endif
 
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));

@@ -1839,6 +1839,7 @@ typedef struct PlanInvalItem
  */
 // GPDB_12_MERGE_FIXME: This came from legacy GPDB partitioning. Is it still
 // used?
+#if 0
 typedef struct PartitionSelector
 {
 	Plan		plan;
@@ -1867,5 +1868,6 @@ typedef struct PartitionSelector
 	List		*staticScanIds;     	/* scan ids used to propagate statically selected part oids */
 
 } PartitionSelector;
+#endif
 
 #endif							/* PLANNODES_H */
