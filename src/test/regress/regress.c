@@ -226,22 +226,6 @@ trigger_return_old(PG_FUNCTION_ARGS)
 	return PointerGetDatum(tuple);
 }
 
-PG_FUNCTION_INFO_V1(trigger_return_old);
-
-Datum
-trigger_return_old(PG_FUNCTION_ARGS)
-{
-	TriggerData *trigdata = (TriggerData *) fcinfo->context;
-	HeapTuple	tuple;
-
-	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "trigger_return_old: not fired by trigger manager");
-
-	tuple = trigdata->tg_trigtuple;
-
-	return PointerGetDatum(tuple);
-}
-
 #define TTDUMMY_INFINITY	999999
 
 static SPIPlanPtr splan = NULL;
@@ -544,9 +528,7 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 	/* Build a temporary HeapTuple control structure */
 	tuple.t_len = HeapTupleHeaderGetDatumLength(rec);
 	ItemPointerSetInvalid(&(tuple.t_self));
-#if 0
 	tuple.t_tableOid = InvalidOid;
-#endif
 	tuple.t_data = rec;
 
 	values = (Datum *) palloc(ncolumns * sizeof(Datum));

@@ -173,7 +173,7 @@ multiset_scalar_value(PG_FUNCTION_ARGS)
 	 * We expect an input of one integer column for this stupid
 	 * table function, if that is not what we got then complain.
 	 */
-	if (in_tupdesc->natts != 1 || in_tupdesc->attrs[0]->atttypid != INT4OID)
+	if (in_tupdesc->natts != 1 || TupleDescAttr(in_tupdesc, 0)->atttypid != INT4OID)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
@@ -225,8 +225,8 @@ multiset_scalar_tuple(PG_FUNCTION_ARGS)
 	tupdesc	= rsi->expectedDesc;
 
 	if (tupdesc->natts != 2 ||
-		(tupdesc->attrs[0]->atttypid != INT4OID && !tupdesc->attrs[0]->attisdropped) ||
-		(tupdesc->attrs[1]->atttypid != TEXTOID && !tupdesc->attrs[1]->attisdropped))
+		(TupleDescAttr(tupdesc, 0)->atttypid != INT4OID && !TupleDescAttr(tupdesc, 0)->attisdropped) ||
+		(TupleDescAttr(tupdesc, 1)->atttypid != TEXTOID && !TupleDescAttr(tupdesc, 1)->attisdropped))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
@@ -390,8 +390,8 @@ multiset_example(PG_FUNCTION_ARGS)
 	 * table function, if that is not what we got then complain.
 	 */
 	if (in_tupdesc->natts != 2 ||
-		in_tupdesc->attrs[0]->atttypid != INT4OID ||
-		in_tupdesc->attrs[1]->atttypid != TEXTOID)
+		TupleDescAttr(in_tupdesc, 0)->atttypid != INT4OID ||
+		TupleDescAttr(in_tupdesc, 1)->atttypid != TEXTOID)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
@@ -401,8 +401,8 @@ multiset_example(PG_FUNCTION_ARGS)
 
 	/* For output tuple we also check for possibility of dropped columns */
 	if (out_tupdesc->natts != 2 ||
-		(out_tupdesc->attrs[0]->atttypid != INT4OID && !out_tupdesc->attrs[0]->attisdropped) ||
-		(out_tupdesc->attrs[1]->atttypid != TEXTOID && !out_tupdesc->attrs[1]->attisdropped))
+		(TupleDescAttr(out_tupdesc, 0)->atttypid != INT4OID && !TupleDescAttr(out_tupdesc, 0)->attisdropped) ||
+		(TupleDescAttr(out_tupdesc, 1)->atttypid != TEXTOID && !TupleDescAttr(out_tupdesc, 1)->attisdropped))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
@@ -748,8 +748,8 @@ sessionize(PG_FUNCTION_ARGS)
 	 * table function, if that is not what we got then complain.
 	 */
 	if (in_tupdesc->natts != 2 ||
-		in_tupdesc->attrs[0]->atttypid != INT4OID ||
-		in_tupdesc->attrs[1]->atttypid != TIMESTAMPOID)
+		TupleDescAttr(in_tupdesc, 0)->atttypid != INT4OID ||
+		TupleDescAttr(in_tupdesc, 1)->atttypid != TIMESTAMPOID)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
@@ -759,9 +759,9 @@ sessionize(PG_FUNCTION_ARGS)
 
 	/* For output tuple we also check for possibility of dropped columns */
 	if (out_tupdesc->natts != 3 ||
-		(out_tupdesc->attrs[0]->atttypid != INT4OID && !out_tupdesc->attrs[0]->attisdropped) ||
-		(out_tupdesc->attrs[1]->atttypid != TIMESTAMPOID && !out_tupdesc->attrs[1]->attisdropped) ||
-		(out_tupdesc->attrs[2]->atttypid != INT4OID && !out_tupdesc->attrs[2]->attisdropped))
+		(TupleDescAttr(out_tupdesc, 0)->atttypid != INT4OID && !TupleDescAttr(out_tupdesc, 0)->attisdropped) ||
+		(TupleDescAttr(out_tupdesc, 1)->atttypid != TIMESTAMPOID && !TupleDescAttr(out_tupdesc, 1)->attisdropped) ||
+		(TupleDescAttr(out_tupdesc, 2)->atttypid != INT4OID && !TupleDescAttr(out_tupdesc, 2)->attisdropped))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
@@ -949,7 +949,7 @@ project(PG_FUNCTION_ARGS)
 		ereport(ERROR, (errmsg("invalid position provided")));
 	if (out_tupdesc->natts != 1)
 		ereport(ERROR, (errmsg("only one expected tuple is allowed")));
-	if (out_tupdesc->attrs[0]->atttypid != in_tupdesc->attrs[position-1]->atttypid)
+	if (TupleDescAttr(out_tupdesc, 0)->atttypid != TupleDescAttr(in_tupdesc, position-1)->atttypid)
 		ereport(ERROR, (errmsg("input and output types do not match")));
 
 	/* check for end of scan */
@@ -1046,7 +1046,7 @@ project_describe(PG_FUNCTION_ARGS)
 	if (!IsA(qexpr, Query))
 		ereport(ERROR, (errmsg("subquery is not a Query object")));
 
-	tdesc = ExecCleanTypeFromTL(qexpr->targetList, false);
+	tdesc = ExecCleanTypeFromTL(qexpr->targetList);
 
 	/*
 	 * The intent of this table function is that it returns the Nth column
@@ -1069,9 +1069,9 @@ project_describe(PG_FUNCTION_ARGS)
 	/* Build an output tuple a single column based on the column number above */
 	odesc = CreateTemplateTupleDesc(1);
 	TupleDescInitEntry(odesc, 1,
-					   NameStr(tdesc->attrs[avalue-1]->attname),
-					   tdesc->attrs[avalue-1]->atttypid,
-					   tdesc->attrs[avalue-1]->atttypmod,
+					   NameStr(TupleDescAttr(tdesc, avalue-1)->attname),
+					   TupleDescAttr(tdesc, avalue-1)->atttypid,
+					   TupleDescAttr(tdesc, avalue-1)->atttypmod,
 					   0);
 
 	/* Finally return that tupdesc */
@@ -1954,6 +1954,7 @@ test_consume_xids(PG_FUNCTION_ARGS)
 {
 	int32		nxids = PG_GETARG_INT32(0);
 	TransactionId topxid;
+	FullTransactionId fullxid;
 	TransactionId xid;
 	TransactionId targetxid;
 
@@ -1969,7 +1970,8 @@ test_consume_xids(PG_FUNCTION_ARGS)
 	while (TransactionIdPrecedes(xid, targetxid))
 	{
 		elog(DEBUG1, "xid: %u", xid);
-		xid = GetNewTransactionId(true);
+		fullxid = GetNewTransactionId(true);
+		xid = XidFromFullTransactionId(fullxid);
 	}
 
 	PG_RETURN_VOID();

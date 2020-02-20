@@ -39,16 +39,13 @@ psql_start_test(const char *testname,
 	char		expectfile[MAXPGPATH] = "";
 	char		psql_cmd[MAXPGPATH * 4];
 	size_t		offset = 0;
-<<<<<<< HEAD
+	char	   *appnameenv;
 	char		use_utility_mode = 0;
 	char	   *lastslash;
 
 	/* generalise later */
 	if (strcmp(testname, "upg2") == 0)
 		use_utility_mode = 1;
-=======
-	char	   *appnameenv;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Look for files in the output dir first, consistent with a vpath search.
@@ -85,7 +82,7 @@ psql_start_test(const char *testname,
 			{
 				fprintf(stderr, _("could not create directory \"%s\": %s\n"),
 						resultdir, strerror(errno));
-				exit_nicely(2);
+				exit(2);
 			}
 		}
 	}
@@ -111,7 +108,10 @@ psql_start_test(const char *testname,
 	}
 
 	/*
-<<<<<<< HEAD
+	 * Use HIDE_TABLEAM to hide different AMs to allow to use regression tests
+	 * against different AMs without unnecessary differences.
+	 */
+	/* GPDB:
 	 * We need to pass multiple input files (prehook and infile) to psql,
 	 * to do this a simple way is to execute it like this:
 	 *
@@ -131,40 +131,25 @@ psql_start_test(const char *testname,
 	 *     EOF
 	 */
 	offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
-					   "%s \"%s%spsql\" -X -a -q -d \"%s\" > \"%s\" 2>&1 <<EOF\n"
+					   "%s \"%s%spsql\" -X -a -q -d \"%s\" -v %s > \"%s\" 2>&1 <<EOF\n"
 					   "$(cat \"%s\" \"%s\")\n"
 					   "EOF",
 					   use_utility_mode ? "env PGOPTIONS='-c gp_session_role=utility'" : "",
 					   bindir ? bindir : "",
 					   bindir ? "/" : "",
 					   dblist->str,
+					   "HIDE_TABLEAM=\"on\"",
 					   outfile,
 					   prehook[0] ? prehook : "/dev/null",
 					   infile);
-=======
-	 * Use HIDE_TABLEAM to hide different AMs to allow to use regression tests
-	 * against different AMs without unnecessary differences.
-	 */
-	offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
-					   "\"%s%spsql\" -X -a -q -d \"%s\" -v %s < \"%s\" > \"%s\" 2>&1",
-					   bindir ? bindir : "",
-					   bindir ? "/" : "",
-					   dblist->str,
-					   "HIDE_TABLEAM=\"on\"",
-					   infile,
-					   outfile);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (offset >= sizeof(psql_cmd))
 	{
 		fprintf(stderr, _("command too long\n"));
 		exit(2);
 	}
-<<<<<<< HEAD
-=======
 
 	appnameenv = psprintf("PGAPPNAME=pg_regress/%s", testname);
 	putenv(appnameenv);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	pid = spawn_process(psql_cmd);
 

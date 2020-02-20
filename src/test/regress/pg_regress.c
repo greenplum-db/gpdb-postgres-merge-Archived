@@ -70,14 +70,9 @@ static char gpstringsubsprog[MAXPGPATH];
  * Windows-style newlines, but the comparison files might or might not.
  */
 #ifndef WIN32
-<<<<<<< HEAD
 /* GPDB:  Add stuff to ignore all the extra NOTICE messages we give */
 const char *basic_diff_opts = "-I HINT: -I CONTEXT: -I GP_IGNORE:";
 const char *pretty_diff_opts = "-I HINT: -I CONTEXT: -I GP_IGNORE: -U3";
-=======
-const char *basic_diff_opts = "";
-const char *pretty_diff_opts = "-U3";
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 #else
 const char *basic_diff_opts = "-w";
 const char *pretty_diff_opts = "-w -U3";
@@ -391,17 +386,6 @@ make_temp_sockdir(void)
 #endif							/* HAVE_UNIX_SOCKETS */
 
 /*
- * Always exit through here, not through plain exit(), to ensure we make
- * an effort to shut down a temp postmaster
- */
-void
-exit_nicely(int code)
-{
-	stop_postmaster();
-	exit(code);
-}
-
-/*
  * Check whether string matches pattern
  *
  * In the original shell script, this function was implemented using expr(1),
@@ -573,7 +557,7 @@ convert_line(char *line, replacements *repls)
  * other for column orientation.
  */
 static int
-generate_uao_sourcefiles(char *src_dir, char *dest_dir, char *suffix, replacements *repls)
+generate_uao_sourcefiles(const char *src_dir, const char *dest_dir, const char *suffix, replacements *repls)
 {
 	struct stat st;
 	int			ret;
@@ -596,7 +580,7 @@ generate_uao_sourcefiles(char *src_dir, char *dest_dir, char *suffix, replacemen
 	names = pgfnames(src_dir);
 	if (!names)
 		/* Error logged in pgfnames */
-		exit_nicely(2);
+		exit(2);
 
 	/* finally loop on each file and generate the files */
 	for (name = names; *name; name++)
@@ -648,21 +632,21 @@ generate_uao_sourcefiles(char *src_dir, char *dest_dir, char *suffix, replacemen
 		{
 			fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
 					progname, srcfile, strerror(errno));
-			exit_nicely(2);
+			exit(2);
 		}
 		outfile_row = fopen(destfile_row, "w");
 		if (!outfile_row)
 		{
 			fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
 					progname, destfile_row, strerror(errno));
-			exit_nicely(2);
+			exit(2);
 		}
 		outfile_col = fopen(destfile_col, "w");
 		if (!outfile_col)
 		{
 			fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
 					progname, destfile_col, strerror(errno));
-			exit_nicely(2);
+			exit(2);
 		}
 
 		while (fgets(line, sizeof(line), infile))
@@ -716,13 +700,8 @@ generate_uao_sourcefiles(char *src_dir, char *dest_dir, char *suffix, replacemen
  * in the "dest" directory, replacing the ".source" prefix in their names with
  * the given suffix.
  */
-<<<<<<< HEAD
 static int
-convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, char *suffix)
-=======
-static void
 convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const char *dest_subdir, const char *suffix)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	char		testtablespace[MAXPGPATH];
 	char		indir[MAXPGPATH];
@@ -800,7 +779,7 @@ convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const ch
 	if (repls.username == NULL)
 	{
 		fprintf(stderr, "%s: %s\n", progname, errstr);
-		exit_nicely(2);
+		exit(2);
 	}
 
 	/* finally loop on each file and do the replacement */
@@ -1749,8 +1728,6 @@ run_diff(const char *cmd, const char *filename)
 		fprintf(stderr, _("diff command not found: %s\n"), cmd);
 		exit(2);
 	}
-#else
-	UnusedArg(filename);
 #endif
 
 	return WEXITSTATUS(r);
@@ -1916,13 +1893,6 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 	 * Use the best comparison file to generate the "pretty" diff, which we
 	 * append to the diffs summary file.
 	 */
-<<<<<<< HEAD
-	snprintf(cmd, sizeof(cmd),
-			 "%s %s \"%s\" \"%s\" >> \"%s\"",
-			 gpdiffprog, m_pretty_diff_opts, best_expect_file, resultsfile, difffilename);
-	run_diff(cmd, difffilename);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Write diff header */
 	difffile = fopen(difffilename, "a");
@@ -1936,8 +1906,8 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 
 	/* Run diff */
 	snprintf(cmd, sizeof(cmd),
-			 "diff %s \"%s\" \"%s\" >> \"%s\"",
-			 pretty_diff_opts, best_expect_file, resultsfile, difffilename);
+			 "%s %s \"%s\" \"%s\" >> \"%s\"",
+			 gpdiffprog, m_pretty_diff_opts, best_expect_file, resultsfile, difffilename);
 	run_diff(cmd, difffilename);
 
 	unlink(diff);
@@ -1953,12 +1923,8 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
  * Note: it's OK to scribble on the pids array, but not on the names array
  */
 static void
-<<<<<<< HEAD
-wait_for_tests(PID_TYPE *pids, int *statuses, char **names, struct timeval *end_times, int num_tests)
-=======
 wait_for_tests(PID_TYPE * pids, int *statuses, instr_time *stoptimes,
 			   char **names, int num_tests)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	int			tests_left;
 	int			i;
@@ -2014,8 +1980,6 @@ wait_for_tests(PID_TYPE * pids, int *statuses, instr_time *stoptimes,
 				INSTR_TIME_SET_CURRENT(stoptimes[i]);
 				if (names)
 					status(" %s", names[i]);
-				if (end_times)
-					gettimeofday(&end_times[i], NULL);
 				tests_left--;
 				break;
 			}
@@ -2066,23 +2030,15 @@ run_schedule(const char *schedule, test_function tfunc)
 	instr_time	starttimes[MAX_PARALLEL_TESTS];
 	instr_time	stoptimes[MAX_PARALLEL_TESTS];
 	int			statuses[MAX_PARALLEL_TESTS];
-	struct timeval end_times[MAX_PARALLEL_TESTS];
 	_stringlist *ignorelist = NULL;
 	char		scbuf[1024];
 	FILE	   *scf;
 	int			line_num = 0;
 
-<<<<<<< HEAD
-	memset(resultfiles, 0, sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
-	memset(expectfiles, 0, sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
-	memset(tags, 0, sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
-	memset(end_times, 0, sizeof(struct timeval) * MAX_PARALLEL_TESTS);
-=======
 	memset(tests, 0, sizeof(tests));
 	memset(resultfiles, 0, sizeof(resultfiles));
 	memset(expectfiles, 0, sizeof(expectfiles));
 	memset(tags, 0, sizeof(tags));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	scf = fopen(schedule, "r");
 	if (!scf)
@@ -2156,30 +2112,21 @@ run_schedule(const char *schedule, test_function tfunc)
 					num_tests++;
 					*c = sav;
 					inword = false;
+
+					/*
+					 * GPDB: if this test is in the exclude list, don't add it to the
+					 * array, after all.
+					 */
+					if (should_exclude_test(tests[num_tests - 1]))
+						num_tests--;
 				}
 				if (*c == '\0')
 					break;		/* loop exit is here */
 			}
 			else if (!inword)
 			{
-<<<<<<< HEAD
-				if (num_tests >= MAX_PARALLEL_TESTS)
-				{
-					/* can't print scbuf here, it's already been trashed */
-					fprintf(stderr, _("too many parallel tests in schedule file \"%s\", line %d\n"),
-							schedule, line_num);
-					exit(2);
-				}
-
-				if (num_tests - 1 >= 0 && should_exclude_test(tests[num_tests - 1]))
-					num_tests--;
-
-				tests[num_tests] = c;
-				num_tests++;
-=======
 				/* Start of a test name */
 				test = c;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				inword = true;
 			}
 		}
@@ -2206,12 +2153,8 @@ run_schedule(const char *schedule, test_function tfunc)
 		{
 			status(_("test %-28s ... "), tests[0]);
 			pids[0] = (tfunc) (tests[0], &resultfiles[0], &expectfiles[0], &tags[0]);
-<<<<<<< HEAD
-			wait_for_tests(pids, statuses, NULL, end_times, 1);
-=======
 			INSTR_TIME_SET_CURRENT(starttimes[0]);
 			wait_for_tests(pids, statuses, stoptimes, NULL, 1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			/* status line is finished below */
 		}
 		else if (max_concurrent_tests > 0 && max_concurrent_tests < num_tests)
@@ -2231,24 +2174,16 @@ run_schedule(const char *schedule, test_function tfunc)
 				if (i - oldest >= max_connections)
 				{
 					wait_for_tests(pids + oldest, statuses + oldest,
-<<<<<<< HEAD
-								   tests + oldest, end_times + oldest, i - oldest);
-=======
 								   stoptimes + oldest,
 								   tests + oldest, i - oldest);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					oldest = i;
 				}
 				pids[i] = (tfunc) (tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
 				INSTR_TIME_SET_CURRENT(starttimes[i]);
 			}
 			wait_for_tests(pids + oldest, statuses + oldest,
-<<<<<<< HEAD
-						   tests + oldest, end_times + oldest, i - oldest);
-=======
 						   stoptimes + oldest,
 						   tests + oldest, i - oldest);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			status_end();
 		}
 		else
@@ -2259,11 +2194,7 @@ run_schedule(const char *schedule, test_function tfunc)
 				pids[i] = (tfunc) (tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
 				INSTR_TIME_SET_CURRENT(starttimes[i]);
 			}
-<<<<<<< HEAD
-			wait_for_tests(pids, statuses, tests, end_times, num_tests);
-=======
 			wait_for_tests(pids, statuses, stoptimes, tests, num_tests);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			status_end();
 		}
 
@@ -2274,15 +2205,12 @@ run_schedule(const char *schedule, test_function tfunc)
 					   *el,
 					   *tl;
 			bool		differ = false;
-			double		diff_secs = 0, diff_elapse = 0;
-			struct timeval diff_start_time, diff_end_time;
+			instr_time diff_start_time;
+			instr_time diff_stop_time;
 
 			if (num_tests > 1)
 				status(_("     %-28s ... "), tests[i]);
 
-			diff_secs = end_times[i].tv_usec - start_time.tv_usec;
-			diff_secs /= 1000000;
-			diff_secs += end_times[i].tv_sec - start_time.tv_sec;
 			/*
 			 * Advance over all three lists simultaneously.
 			 *
@@ -2291,7 +2219,7 @@ run_schedule(const char *schedule, test_function tfunc)
 			 * length as the other two lists.
 			 */
 
-			gettimeofday(&diff_start_time, NULL);
+			INSTR_TIME_SET_CURRENT(diff_start_time);
 			for (rl = resultfiles[i], el = expectfiles[i], tl = tags[i];
 				 rl != NULL;	/* rl and el have the same length */
 				 rl = rl->next, el = el->next,
@@ -2306,11 +2234,7 @@ run_schedule(const char *schedule, test_function tfunc)
 				}
 				differ |= newdiff;
 			}
-			gettimeofday(&diff_end_time, NULL);
-
-			diff_elapse = diff_end_time.tv_usec - diff_start_time.tv_usec;
-			diff_elapse /= 1000000;
-			diff_elapse += diff_end_time.tv_sec - diff_start_time.tv_sec;
+			INSTR_TIME_SET_CURRENT(diff_stop_time);
 
 			if (differ)
 			{
@@ -2333,18 +2257,12 @@ run_schedule(const char *schedule, test_function tfunc)
 				else
 				{
 					status(_("FAILED"));
-    				status(_(" (%.2f sec)  (diff:%.2f sec)"), diff_secs, diff_elapse);
 					fail_count++;
 				}
 			}
 			else
 			{
-<<<<<<< HEAD
-				status(_("ok"));
-				status(_(" (%.2f sec)  (diff:%.2f sec)"), diff_secs, diff_elapse);
-=======
 				status(_("ok    "));	/* align with FAILED */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				success_count++;
 			}
 
@@ -2353,6 +2271,9 @@ run_schedule(const char *schedule, test_function tfunc)
 
 			INSTR_TIME_SUBTRACT(stoptimes[i], starttimes[i]);
 			status(_(" %8.0f ms"), INSTR_TIME_GET_MILLISEC(stoptimes[i]));
+
+			INSTR_TIME_SUBTRACT(diff_stop_time, diff_start_time);
+			status(_(" (diff %4.0f ms)"), INSTR_TIME_GET_MILLISEC(diff_stop_time));
 
 			status_end();
 		}
@@ -2392,12 +2313,8 @@ run_single_test(const char *test, test_function tfunc)
 
 	status(_("test %-28s ... "), test);
 	pid = (tfunc) (test, &resultfiles, &expectfiles, &tags);
-<<<<<<< HEAD
-	wait_for_tests(&pid, &exit_status, NULL, NULL, 1);
-=======
 	INSTR_TIME_SET_CURRENT(starttime);
 	wait_for_tests(&pid, &exit_status, &stoptime, NULL, 1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * Advance over all three lists simultaneously.
@@ -2663,17 +2580,17 @@ check_feature_status(const char *feature_name, const char *feature_value,
 			statusfilename);
 
 	if (len >= sizeof(psql_cmd))
-		exit_nicely(2);
+		exit(2);
 
 	if (system(psql_cmd) != 0)
-		exit_nicely(2);
+		exit(2);
 
 	FILE *statusfile = fopen(statusfilename, "r");
 	if (!statusfile)
 	{
 		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
 				progname, statusfilename, strerror(errno));
-		exit_nicely(2);
+		exit(2);
 	}
 
 	while (fgets(line, sizeof(line), statusfile))
@@ -2703,34 +2620,6 @@ help(void)
 	printf(_("Usage:\n  %s [OPTION]... [EXTRA-TEST]...\n"), progname);
 	printf(_("\n"));
 	printf(_("Options:\n"));
-<<<<<<< HEAD
-	printf(_("  --config-auth=DATADIR     update authentication settings for DATADIR\n"));
-	printf(_("  --create-role=ROLE        create the specified role before testing\n"));
-	printf(_("  --dbname=DB               use database DB (default \"regression\")\n"));
-	printf(_("  --debug                   turn on debug mode in programs that are run\n"));
-	printf(_("  --dlpath=DIR              look for dynamic libraries in DIR\n"));
-	printf(_("  --encoding=ENCODING       use ENCODING as the encoding\n"));
-	printf(_("  --inputdir=DIR            take input files from DIR (default \".\")\n"));
-	printf(_("  --launcher=CMD            use CMD as launcher of psql\n"));
-	printf(_("  --load-extension=EXT      load the named extension before running the\n"));
-	printf(_("                            tests; can appear multiple times\n"));
-	printf(_("  --load-language=LANG      load the named language before running the\n"));
-	printf(_("                            tests; can appear multiple times\n"));
-	printf(_("  --max-connections=N       maximum number of concurrent connections\n"));
-	printf(_("                            (default is 0, meaning unlimited)\n"));
-	printf(_("  --outputdir=DIR           place output files in DIR (default \".\")\n"));
-	printf(_("  --prehook=NAME            pre-hook name (default \"\")\n"));
-	printf(_("  --schedule=FILE           use test ordering schedule from FILE\n"));
-	printf(_("                            (can be used multiple times to concatenate)\n"));
-	printf(_("  --temp-instance=DIR       create a temporary instance in DIR\n"));
-	printf(_("  --use-existing            use an existing installation\n"));
-	/* Please put GPDB specific options at the end */
-	printf(_("  --exclude-tests=TEST      command or space delimited tests to exclude from running\n"));
-    printf(_(" --init-file=GPD_INIT_FILE  init file to be used for gpdiff (could be used multiple times)\n"));
-	printf(_("  --ignore-plans            ignore any explain plan diffs\n"));
-	printf(_("  --print-failure-diffs     Print the diff file to standard out after a failure\n"));
-	printf(_("  --tablespace-dir=DIR      place tablespace files in DIR/testtablespace (default \"./testtablespace\")\n"));
-=======
 	printf(_("      --bindir=BINPATH          use BINPATH for programs that are run;\n"));
 	printf(_("                                if empty, use PATH from the environment\n"));
 	printf(_("      --config-auth=DATADIR     update authentication settings for DATADIR\n"));
@@ -2755,8 +2644,15 @@ help(void)
 	printf(_("                                (can be used multiple times to concatenate)\n"));
 	printf(_("      --temp-instance=DIR       create a temporary instance in DIR\n"));
 	printf(_("      --use-existing            use an existing installation\n"));
+	/* Please put GPDB specific options here, at the end */
+	printf(_("      --prehook=NAME            pre-hook name (default \"\")\n"));
+	printf(_("      --exclude-tests=TEST      command or space delimited tests to exclude from running\n"));
+    printf(_("      --init-file=GPD_INIT_FILE  init file to be used for gpdiff (could be used multiple times)\n"));
+	printf(_("      --ignore-plans            ignore any explain plan diffs\n"));
+	printf(_("      --print-failure-diffs     Print the diff file to standard out after a failure\n"));
+	printf(_("      --tablespace-dir=DIR      place tablespace files in DIR/testtablespace (default \"./testtablespace\")\n"));
+	/* end of GPDB specific options */
 	printf(_("  -V, --version                 output version information, then exit\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	printf(_("\n"));
 	printf(_("Options for \"temp-instance\" mode:\n"));
 	printf(_("      --no-locale               use C locale\n"));
@@ -2801,16 +2697,13 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"launcher", required_argument, NULL, 21},
 		{"load-extension", required_argument, NULL, 22},
 		{"config-auth", required_argument, NULL, 24},
-<<<<<<< HEAD
-		{"init-file", required_argument, NULL, 25},
-		{"exclude-tests", required_argument, NULL, 26},
-		{"ignore-plans", no_argument, NULL, 27},
-		{"prehook", required_argument, NULL, 28},
-		{"print-failure-diffs", no_argument, NULL, 29},
-		{"tablespace-dir", required_argument, NULL, 80},
-=======
 		{"max-concurrent-tests", required_argument, NULL, 25},
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		{"init-file", required_argument, NULL, 80},
+		{"exclude-tests", required_argument, NULL, 81},
+		{"ignore-plans", no_argument, NULL, 82},
+		{"prehook", required_argument, NULL, 83},
+		{"print-failure-diffs", no_argument, NULL, 84},
+		{"tablespace-dir", required_argument, NULL, 85},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2930,22 +2823,24 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			case 25:
 				max_concurrent_tests = atoi(optarg);
 				break;
-            case 25:
+
+			/* GPDB-added options */
+            case 80:
 				add_stringlist_item(&init_file_list, optarg);
                 break;
-            case 26:
+            case 81:
                 split_to_stringlist(strdup(optarg), ", ", &exclude_tests);
                 break;
-			case 27:
+			case 82:
 				ignore_plans = true;
 				break;
-			case 28:
+			case 83:
 				prehook = strdup(optarg);
 				break;
-			case 29:
+			case 84:
 				print_failure_diffs_is_enabled = true;
 				break;
-			case 80:
+			case 85:
 				tablespacedir = strdup(optarg);
 				break;
 			default:
@@ -3406,26 +3301,26 @@ get_host_name(int16 contentid, char role)
 				   contentid);
 
 	if (len >= sizeof(psql_cmd))
-		exit_nicely(2);
+		exit(2);
 
 	/* Execute the command with pipe and read the standard output. */
 	if ((fp = popen(psql_cmd, "r")) == NULL)
 	{
 		fprintf(stderr, "%s: cannot launch shell command\n", progname);
-		exit_nicely(2);
+		exit(2);
 	}
 
 	if (fgets(line, sizeof(line), fp) == NULL)
 	{
 		fprintf(stderr, "%s: cannot read the result\n", progname);
 		(void) pclose(fp);
-		exit_nicely(2);
+		exit(2);
 	}
 
 	if (pclose(fp) < 0)
 	{
 		fprintf(stderr, "%s: cannot close shell command\n", progname);
-		exit_nicely(2);
+		exit(2);
 	}
 
 	hostname = psprintf("%s", trim_white_space(line));
@@ -3434,7 +3329,7 @@ get_host_name(int16 contentid, char role)
 	{
 		fprintf(stderr, _("%s: failed to determine hostname for content 0 primary\n"),
 				progname);
-		exit_nicely(2);
+		exit(2);
 	}
 
 	return hostname;

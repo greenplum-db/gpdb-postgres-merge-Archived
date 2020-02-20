@@ -18,6 +18,10 @@ extern Datum gp_get_physical_index_relid(PG_FUNCTION_ARGS);
  */
 #define NUM_COLS 9
 
+/* GPDB_12_MERGE_FIXME: legacy partitioning test code. Remove? Or replace
+ * with something else?
+ */
+#if 0
 /*
  * gp_build_logical_index_info
  *   Set returning function - returns index information on a partitioned-
@@ -271,3 +275,4 @@ gp_get_physical_index_relid(PG_FUNCTION_ARGS)
 
 	return ObjectIdGetDatum(resultOid);
 }
+#endif
