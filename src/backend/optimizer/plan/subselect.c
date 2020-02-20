@@ -2985,6 +2985,8 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 							  &context);
 			break;
 
+/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
+#if 0
 		case T_PartitionSelector:
 			finalize_primnode((Node *) ((PartitionSelector *) plan)->levelEqExpressions,
 							  &context);
@@ -2999,7 +3001,8 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 			finalize_primnode((Node *) ((PartitionSelector *) plan)->partTabTargetlist,
 							  &context);
 			break;
-
+#endif
+			
 		case T_RecursiveUnion:
 			/* child nodes are allowed to reference wtParam */
 			locally_added_param = ((RecursiveUnion *) plan)->wtParam;

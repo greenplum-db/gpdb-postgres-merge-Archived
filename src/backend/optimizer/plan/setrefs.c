@@ -944,6 +944,8 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			}
 			break;
 
+/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
+#if 0
 		case T_PartitionSelector:
 			{
 				PartitionSelector *ps = (PartitionSelector *) plan;
@@ -969,7 +971,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					fix_upper_expr(root, (Node *) ps->partTabTargetlist, childplan_itlist, OUTER_VAR,rtoffset);
 			}
 			break;
-			
+#endif			
 		case T_LockRows:
 			{
 				LockRows   *splan = (LockRows *) plan;

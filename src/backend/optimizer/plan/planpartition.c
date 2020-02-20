@@ -99,6 +99,12 @@ bool
 inject_partition_selectors_for_join(PlannerInfo *root, JoinPath *join_path,
 									List **partSelectors_p)
 {
+	/* GPDB_12_MERGE_FIXME: Do we still need this, now that we got the
+	 * upstream partitioning stuff? Does v12 do runtime partition elimination
+	 * well enough?
+	 */
+	return false;
+#if 0
 	ListCell   *lc;
 	Path	   *outerpath = join_path->outerjoinpath;
 	Path	   *innerpath = join_path->innerjoinpath;
@@ -274,6 +280,7 @@ inject_partition_selectors_for_join(PlannerInfo *root, JoinPath *join_path,
 	}
 	else
 		return false;
+#endif
 }
 
 /*
@@ -400,6 +407,9 @@ FindEqKey(PlannerInfo *root, Bitmapset *inner_relids,
 Plan *
 create_partition_selector_plan(PlannerInfo *root, PartitionSelectorPath *best_path)
 {
+/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
+	elog(ERROR, "PartitionSelectors disabled");
+#if 0
 	PartitionSelector *ps;
 	Plan	   *subplan;
 	ListCell   *lc_attno;
@@ -470,6 +480,7 @@ create_partition_selector_plan(PlannerInfo *root, PartitionSelectorPath *best_pa
 		makeConst(INT4OID, -1, InvalidOid, 4, Int32GetDatum(ps->scanId), false, true);
 
 	return (Plan *) ps;
+#endif
 }
 
 /*
