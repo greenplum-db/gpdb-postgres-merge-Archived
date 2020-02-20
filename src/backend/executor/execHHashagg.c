@@ -224,21 +224,20 @@ adjustInputGroup(AggState *aggstate,
 		/* Deserialize the aggregate states loaded from the spill file */
 		if (OidIsValid(pertrans->deserialfn.fn_oid))
 		{
-			FunctionCallInfoData _dsinfo;
-			FunctionCallInfo dsinfo = &_dsinfo;
+			LOCAL_FCINFO(dsinfo, 2);
 			MemoryContext oldContext;
 
-			InitFunctionCallInfoData(_dsinfo,
+			InitFunctionCallInfoData(*dsinfo,
 									 &pertrans->deserialfn,
 									 2,
 									 InvalidOid,
 									 (void *) aggstate, NULL);
 
-			dsinfo->arg[0] = PointerGetDatum(datum);
-			dsinfo->argnull[0] = pergroupstate->transValueIsNull;
+			dsinfo->args[0].value = PointerGetDatum(datum);
+			dsinfo->args[0].isnull = pergroupstate->transValueIsNull;
 			/* Dummy second argument for type-safety reasons */
-			dsinfo->arg[1] = PointerGetDatum(NULL);
-			dsinfo->argnull[1] = false;
+			dsinfo->args[1].value = PointerGetDatum(NULL);
+			dsinfo->args[1].isnull = false;
 
 			/*
 			 * We run the deserialization functions in per-input-tuple
@@ -1597,21 +1596,21 @@ writeHashEntry(AggState *aggstate, BatchFileInfo *file_info,
 		 */
 		if (OidIsValid(pertrans->serialfn.fn_oid))
 		{
-			FunctionCallInfoData fcinfo;
+			LOCAL_FCINFO(fcinfo, 1);
 			MemoryContext old_ctx;
 
-			InitFunctionCallInfoData(fcinfo,
+			InitFunctionCallInfoData(*fcinfo,
 									 &pertrans->serialfn,
 									 1,
 									 InvalidOid,
 									 (void *) aggstate, NULL);
 
-			fcinfo.arg[0] = pergroupstate->transValue;
-			fcinfo.argnull[0] = pergroupstate->transValueIsNull;
+			fcinfo->args[0].value = pergroupstate->transValue;
+			fcinfo->args[0].isnull = pergroupstate->transValueIsNull;
 
 			/* Not necessary to do this if the serialization func has no memory leak */
 			old_ctx = MemoryContextSwitchTo(aggstate->hhashtable->serialization_cxt);
-			serializedVal = FunctionCallInvoke(&fcinfo);
+			serializedVal = FunctionCallInvoke(fcinfo);
 			datum_size = datumGetSize(serializedVal, byteaTranstypeByVal, byteaTranstypeLen);
 			datum_value = DatumGetPointer(serializedVal);
 			MemoryContextSwitchTo(old_ctx);
@@ -1954,7 +1953,7 @@ agg_hash_reload(AggState *aggstate)
 
 				/* Set the input aggregate values */
 				fcinfo->args[1].value = input_pergroupstate[aggno].transValue;
-				fcinfo->args[1].null = input_pergroupstate[aggno].transValueIsNull;
+				fcinfo->args[1].isnull = input_pergroupstate[aggno].transValueIsNull;
 
 				/* Combine to the transition aggstate */
 				advance_combine_function(aggstate, pertrans, pergroupstate,
