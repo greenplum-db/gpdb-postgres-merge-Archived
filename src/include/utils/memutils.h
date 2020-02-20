@@ -341,8 +341,11 @@ extern MemoryContext GenerationContextCreate(MemoryContext parent,
 
 /* mpool.c */
 typedef struct MPool MPool;
-extern MPool *mpool_create(MemoryContext parent,
-						   const char *name);
+extern MPool *mpool_create_with_context(MemoryContext parent, MemoryContext context);
+
+#define mpool_create(parent, name) \
+	(mpool_create_with_context((parent), AllocSetContextCreate((parent), (name), ALLOCSET_DEFAULT_SIZES)))
+
 extern void *mpool_alloc(MPool *mpool, Size size);
 extern void mpool_reset(MPool *mpool);
 extern void mpool_delete(MPool *mpool);
