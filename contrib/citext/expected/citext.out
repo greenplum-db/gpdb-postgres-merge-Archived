@@ -2326,7 +2326,6 @@ SELECT like_escape( name::text, ''::citext ) = like_escape( name::text, '' ) AS 
  t
 (4 rows)
 
--- start_ignore
 -- Ensure correct behavior for citext with materialized views.
 CREATE TABLE citext_table (
   id serial primary key,
@@ -2368,9 +2367,6 @@ SELECT * FROM citext_matview ORDER BY id;
   5 | 
 (5 rows)
 
-<<<<<<< HEAD
--- end_ignore
-=======
 -- test citext_pattern_cmp() function explicitly.
 SELECT citext_pattern_cmp('aardvark'::citext, 'aardvark'::citext) AS zero;
  zero 
@@ -2723,4 +2719,3 @@ SELECT 'a'::citext ~>=~ 'B'::varchar AS t;  -- varchar wins.
  t
 (1 row)
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
