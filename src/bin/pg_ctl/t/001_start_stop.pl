@@ -2,12 +2,9 @@ use strict;
 use warnings;
 
 use Config;
-<<<<<<< HEAD
-=======
 use Fcntl ':mode';
 use File::stat qw{lstat};
 use PostgresNode;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 use TestLib;
 use Test::More tests => 24;
 
@@ -54,12 +51,9 @@ else
 	# use the version of command_like that doesn't hang on Msys here
 	command_like_safe($ctlcmd, qr/done.*server started/s, 'pg_ctl start');
 }
-<<<<<<< HEAD
 close CONF;
 command_ok([ 'pg_ctl', 'start', '-D', "$tempdir/data", '-w', '-o', '-c gp_role=utility --gp_dbid=-1 --gp_contentid=-1'],
 	'pg_ctl start -w');
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # sleep here is because Windows builds can't check postmaster.pid exactly,
 # so they may mistake a pre-existing postmaster.pid for one created by the
