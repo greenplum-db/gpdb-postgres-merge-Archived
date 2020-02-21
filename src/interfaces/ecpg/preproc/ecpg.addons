@@ -1,6 +1,5 @@
 /* src/interfaces/ecpg/preproc/ecpg.addons */
 ECPG: stmtClosePortalStmt block
-<<<<<<< HEAD
 	{
 		if (INFORMIX_MODE)
 		{
@@ -18,9 +17,6 @@ ECPG: stmtClosePortalStmt block
 
 		output_statement($1, 0, ECPGst_normal);
 	}
-=======
-	{ $$ = $1;}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 ECPG: stmtDeallocateStmt block
 	{
 		output_deallocate_prepare_statement($1);

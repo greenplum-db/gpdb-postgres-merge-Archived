@@ -632,47 +632,8 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 } /* <SQL> */
 
 <xdolq>{dolqdelim} {
-<<<<<<< HEAD
-				if (strcmp(yytext, dolqstart) == 0)
-				{
-					addlit(yytext, yyleng);
-					free(dolqstart);
-					dolqstart = NULL;
-					BEGIN(SQL);
-					base_yylval.str = mm_strdup(literalbuf);
-					return DOLCONST;
-				}
-				else
-				{
-					/*
-					 * When we fail to match $...$ to dolqstart, transfer
-					 * the $... part to the output, but put back the final
-					 * $ for rescanning.  Consider $delim$...$junk$delim$
-					 */
-					addlit(yytext, yyleng-1);
-					yyless(yyleng-1);
-				}
-			}
-<xdolq>{dolqinside}	{ addlit(yytext, yyleng); }
-<xdolq>{dolqfailed}	{ addlit(yytext, yyleng); }
-<xdolq>{other}		{
-				/* single quote or dollar sign */
-				addlitchar(yytext[0]);
-			}
-<xdolq><<EOF>>		{ base_yyerror("unterminated dollar-quoted string"); }
-<SQL>{xdstart}		{
-						state_before = YYSTATE;
-						BEGIN(xd);
-						startlit();
-					}
-<SQL>{xuistart}		{
-						state_before = YYSTATE;
-						BEGIN(xui);
-						startlit();
-=======
 					if (strcmp(yytext, dolqstart) == 0)
 					{
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						addlit(yytext, yyleng);
 						free(dolqstart);
 						dolqstart = NULL;
@@ -680,29 +641,6 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						base_yylval.str = mm_strdup(literalbuf);
 						return DOLCONST;
 					}
-<<<<<<< HEAD
-<xd>{xdstop}		{
-						BEGIN(state_before);
-						if (literallen == 0)
-							mmerror(PARSE_ERROR, ET_ERROR, "zero-length delimited identifier");
-						/* The backend will truncate the identifier here. We do not as it does not change the result. */
-						base_yylval.str = mm_strdup(literalbuf);
-						return CSTRING;
-					}
-<xdc>{xdstop}		{
-						BEGIN(state_before);
-						base_yylval.str = mm_strdup(literalbuf);
-						return CSTRING;
-					}
-<xui>{xuistop}		{
-						BEGIN(state_before);
-						if (literallen == 2) /* "U&" */
-							mmerror(PARSE_ERROR, ET_ERROR, "zero-length delimited identifier");
-						/* The backend will truncate the identifier here. We do not as it does not change the result. */
-						addlit(yytext, yyleng);
-						base_yylval.str = mm_strdup(literalbuf);
-						return UIDENT;
-=======
 					else
 					{
 						/*
@@ -712,7 +650,6 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						 */
 						addlit(yytext, yyleng - 1);
 						yyless(yyleng - 1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					}
 				}
 <xdolq>{dolqinside} {
@@ -858,43 +795,6 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					if (slashstar)
 						nchars = slashstar - yytext;
 
-<<<<<<< HEAD
-						/*
-						 * For SQL compatibility, '+' and '-' cannot be the
-						 * last char of a multi-char operator unless the operator
-						 * contains chars that are not in SQL operators.
-						 * The idea is to lex '=-' as two operators, but not
-						 * to forbid operator names like '?-' that could not be
-						 * sequences of SQL operators.
-						 */
-						if (nchars > 1 &&
-							(yytext[nchars - 1] == '+' ||
-							 yytext[nchars - 1] == '-'))
-						{
-							int		ic;
-
-							for (ic = nchars - 2; ic >= 0; ic--)
-							{
-								char c = yytext[ic];
-								if (c == '~' || c == '!' || c == '@' ||
-									c == '#' || c == '^' || c == '&' ||
-									c == '|' || c == '`' || c == '?' ||
-									c == '%')
-									break;
-							}
-							if (ic < 0)
-							{
-								/*
-								 * didn't find a qualifying character, so remove
-								 * all trailing [+-]
-								 */
-								do {
-									nchars--;
-								} while (nchars > 1 &&
-									 (yytext[nchars - 1] == '+' ||
-									  yytext[nchars - 1] == '-'));
-							}
-=======
 					/*
 					 * For SQL compatibility, '+' and '-' cannot be the
 					 * last char of a multi-char operator unless the operator
@@ -917,7 +817,6 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 								c == '|' || c == '`' || c == '?' ||
 								c == '%')
 								break;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 						}
 						if (ic < 0)
 						{
@@ -931,16 +830,6 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 								 (yytext[nchars - 1] == '+' ||
 								  yytext[nchars - 1] == '-'));
 						}
-<<<<<<< HEAD
-
-						base_yylval.str = mm_strdup(yytext);
-						return Op;
-					}
-<SQL>{param}		{
-						base_yylval.ival = atol(yytext+1);
-						return PARAM;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					}
 
 					if (nchars < yyleng)
@@ -964,43 +853,6 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						 */
 						if (nchars == 2)
 						{
-<<<<<<< HEAD
-							errno = 0;
-							base_yylval.str = mm_strdup(yytext);
-							return FCONST;
-						}
-						base_yylval.ival = val;
-						return ICONST;
-					}
-<SQL>{ip}			{
-						base_yylval.str = mm_strdup(yytext);
-						return IP;
-				}
-<C,SQL>{decimal}	{
-						base_yylval.str = mm_strdup(yytext);
-						return FCONST;
-			}
-<C,SQL>{real}		{
-						base_yylval.str = mm_strdup(yytext);
-						return FCONST;
-			}
-<SQL>{realfail1}	{
-						yyless(yyleng-1);
-						base_yylval.str = mm_strdup(yytext);
-						return FCONST;
-					}
-<SQL>{realfail2}	{
-						yyless(yyleng-2);
-						base_yylval.str = mm_strdup(yytext);
-						return FCONST;
-					}
-<SQL>:{identifier}((("->"|\.){identifier})|(\[{array}\]))*	{
-						base_yylval.str = mm_strdup(yytext+1);
-						return(CVARIABLE);
-					}
-<SQL>{identifier}	{
-						const ScanKeyword  *keyword;
-=======
 							if (yytext[0] == '=' && yytext[1] == '>')
 								return EQUALS_GREATER;
 							if (yytext[0] == '>' && yytext[1] == '=')
@@ -1017,7 +869,6 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					base_yylval.str = mm_strdup(yytext);
 					return Op;
 				}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 {param}			{
 					base_yylval.ival = atol(yytext+1);
@@ -1030,19 +881,6 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 				}
 }  /* <SQL> */
 
-<<<<<<< HEAD
-							/*
-							 * None of the above.  Return it as an identifier.
-							 *
-							 * The backend will attempt to truncate and case-fold
-							 * the identifier, but I see no good reason for ecpg
-							 * to do so; that's just another way that ecpg could get
-							 * out of step with the backend.
-							 */
-							base_yylval.str = mm_strdup(yytext);
-							return IDENT;
-						}
-=======
 <C,SQL>{
 {integer}		{
 					return process_integer_literal(yytext, &base_yylval);
@@ -1106,7 +944,6 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						 */
 						base_yylval.str = mm_strdup(yytext);
 						return IDENT;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					}
 				}
 
@@ -1572,7 +1409,9 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 
 					}
 				}
+
 <INITIAL>{other}|\n	{ mmfatal(PARSE_ERROR, "internal error: unreachable state; please report this to <bugs@greenplum.org>"); }
+
 %%
 
 /* LCOV_EXCL_STOP */
