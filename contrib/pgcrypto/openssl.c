@@ -69,17 +69,10 @@ typedef struct OSSLDigest
 } OSSLDigest;
 
 static OSSLDigest *open_digests = NULL;
-<<<<<<< HEAD
-static bool resowner_callback_registered = false;
-
-static void
-free_openssldigest(OSSLDigest *digest)
-=======
 static bool digest_resowner_callback_registered = false;
 
 static void
 free_openssl_digest(OSSLDigest *digest)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 {
 	EVP_MD_CTX_destroy(digest->ctx);
 	if (digest->prev)
@@ -116,11 +109,7 @@ digest_free_callback(ResourceReleasePhase phase,
 		{
 			if (isCommit)
 				elog(WARNING, "pgcrypto digest reference leak: digest %p still referenced", curr);
-<<<<<<< HEAD
-			free_openssldigest(curr);
-=======
 			free_openssl_digest(curr);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 }
@@ -170,11 +159,7 @@ digest_free(PX_MD *h)
 {
 	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
-<<<<<<< HEAD
-	free_openssldigest(digest);
-=======
 	free_openssl_digest(digest);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	px_free(h);
 }
 
@@ -196,17 +181,10 @@ px_find_digest(const char *name, PX_MD **res)
 		OpenSSL_add_all_algorithms();
 	}
 
-<<<<<<< HEAD
-	if (!resowner_callback_registered)
-	{
-		RegisterResourceReleaseCallback(digest_free_callback, NULL);
-		resowner_callback_registered = true;
-=======
 	if (!digest_resowner_callback_registered)
 	{
 		RegisterResourceReleaseCallback(digest_free_callback, NULL);
 		digest_resowner_callback_registered = true;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	md = EVP_get_digestbyname(name);
@@ -232,28 +210,6 @@ px_find_digest(const char *name, PX_MD **res)
 		return -1;
 	}
 
-<<<<<<< HEAD
-	/*
-	 * Create an OSSLDigest object, an OpenSSL MD object, and a PX_MD object.
-	 * The order is crucial, to make sure we don't leak anything on
-	 * out-of-memory or other error.
-	 */
-	digest = MemoryContextAlloc(TopMemoryContext, sizeof(*digest));
-
-	ctx = EVP_MD_CTX_create();
-	if (!ctx)
-	{
-		pfree(digest);
-		return -1;
-	}
-	if (EVP_DigestInit_ex(ctx, md, NULL) == 0)
-	{
-		pfree(digest);
-		return -1;
-	}
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	digest->algo = md;
 	digest->ctx = ctx;
 	digest->owner = CurrentResourceOwner;
@@ -851,56 +807,3 @@ px_find_cipher(const char *name, PX_Cipher **res)
 	*res = c;
 	return 0;
 }
-<<<<<<< HEAD
-
-
-static int	openssl_random_init = 0;
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-#define RAND_OpenSSL RAND_SSLeay
-#endif
-
-/*
- * OpenSSL random should re-feeded occasionally. From /dev/urandom
- * preferably.
- */
-static void
-init_openssl_rand(void)
-{
-	if (RAND_get_rand_method() == NULL)
-	{
-#ifdef HAVE_RAND_OPENSSL
-		RAND_set_rand_method(RAND_OpenSSL());
-#else
-		RAND_set_rand_method(RAND_SSLeay());
-#endif
-	}
-	openssl_random_init = 1;
-}
-
-int
-px_get_random_bytes(uint8 *dst, unsigned count)
-{
-	int			res;
-
-	if (!openssl_random_init)
-		init_openssl_rand();
-
-	res = RAND_bytes(dst, count);
-	if (res == 1)
-		return count;
-
-	return PXE_OSSL_RAND_ERROR;
-}
-
-int
-px_add_entropy(const uint8 *data, unsigned count)
-{
-	/*
-	 * estimate 0 bits
-	 */
-	RAND_add(data, count, 0);
-	return 0;
-}
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

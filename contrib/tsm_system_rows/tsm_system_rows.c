@@ -205,15 +205,6 @@ static BlockNumber
 system_rows_nextsampleblock(SampleScanState *node, BlockNumber nblocks)
 {
 	SystemRowsSamplerData *sampler = (SystemRowsSamplerData *) node->tsm_state;
-<<<<<<< HEAD
-	HeapScanDesc scan;
-
-	/* GPDB_96_MERGE_FIXME: this only works with heap tables for now. */
-	if (node->ss_currentScanDesc_heap == NULL)
-		elog(ERROR, "cannot use tsm_system_rows with AO / AOCO tables");
-	scan = node->ss_currentScanDesc_heap;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* First call within scan? */
 	if (sampler->doneblocks == 0)
@@ -282,10 +273,6 @@ system_rows_nextsampletuple(SampleScanState *node,
 							OffsetNumber maxoffset)
 {
 	SystemRowsSamplerData *sampler = (SystemRowsSamplerData *) node->tsm_state;
-<<<<<<< HEAD
-	HeapScanDesc scan = node->ss_currentScanDesc_heap;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	OffsetNumber tupoffset = sampler->lt;
 
 	/* Quit if we've returned all needed tuples */

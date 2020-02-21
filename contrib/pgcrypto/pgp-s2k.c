@@ -234,17 +234,6 @@ pgp_s2k_fill(PGP_S2K *s2k, int mode, int digest_algo, int count)
 		case PGP_S2K_SIMPLE:
 			break;
 		case PGP_S2K_SALTED:
-<<<<<<< HEAD
-			res = px_get_random_bytes(s2k->salt, PGP_S2K_SALT);
-			break;
-		case PGP_S2K_ISALTED:
-			res = px_get_random_bytes(s2k->salt, PGP_S2K_SALT);
-			if (res < 0)
-				break;
-			res = px_get_random_bytes(&tmp, 1);
-			if (res < 0)
-				break;
-=======
 			if (!pg_strong_random(s2k->salt, PGP_S2K_SALT))
 				return PXE_NO_RANDOM;
 			break;
@@ -253,7 +242,6 @@ pgp_s2k_fill(PGP_S2K *s2k, int mode, int digest_algo, int count)
 				return PXE_NO_RANDOM;
 			if (!pg_strong_random(&tmp, 1))
 				return PXE_NO_RANDOM;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			s2k->iter = decide_s2k_iter(tmp, count);
 			break;
 		default:
