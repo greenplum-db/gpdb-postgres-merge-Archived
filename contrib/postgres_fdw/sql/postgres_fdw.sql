@@ -1022,8 +1022,6 @@ EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st7;
 ALTER TABLE "S 1"."T 0" RENAME TO "T 1";
 ALTER FOREIGN TABLE ft1 OPTIONS (SET table_name 'T 1');
 
-<<<<<<< HEAD
-=======
 PREPARE st8 AS SELECT count(c3) FROM ft1 t1 WHERE t1.c1 === t1.c2;
 EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st8;
 ALTER SERVER loopback OPTIONS (DROP extensions);
@@ -1031,7 +1029,6 @@ EXPLAIN (VERBOSE, COSTS OFF) EXECUTE st8;
 EXECUTE st8;
 ALTER SERVER loopback OPTIONS (ADD extensions 'postgres_fdw');
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- cleanup
 DEALLOCATE st1;
 DEALLOCATE st2;
@@ -1040,24 +1037,7 @@ DEALLOCATE st4;
 DEALLOCATE st5;
 DEALLOCATE st6;
 DEALLOCATE st7;
-<<<<<<< HEAD
-
--- System columns, except ctid, should not be sent to remote
-EXPLAIN (VERBOSE, COSTS false)
-SELECT * FROM ft1 t1 WHERE t1.tableoid = 'pg_class'::regclass LIMIT 1;
-SELECT * FROM ft1 t1 WHERE t1.tableoid = 'ft1'::regclass LIMIT 1;
-EXPLAIN (VERBOSE, COSTS false)
-SELECT tableoid::regclass, * FROM ft1 t1 LIMIT 1;
-SELECT tableoid::regclass, * FROM ft1 t1 LIMIT 1;
-EXPLAIN (VERBOSE, COSTS false)
-SELECT * FROM ft1 t1 WHERE t1.ctid = '(0,2)';
-SELECT * FROM ft1 t1 WHERE t1.ctid = '(0,2)';
-EXPLAIN (VERBOSE, COSTS false)
-SELECT ctid, * FROM ft1 t1 LIMIT 1;
-SELECT ctid, * FROM ft1 t1 LIMIT 1;
-=======
 DEALLOCATE st8;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 -- System columns, except ctid and oid, should not be sent to remote
 EXPLAIN (VERBOSE, COSTS OFF)
