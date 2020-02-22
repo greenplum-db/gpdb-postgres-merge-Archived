@@ -10526,7 +10526,7 @@ common_func_opt_item:
 				}
 			| EXECUTE ON INITPLAN
 				{
-					$$ = makeDefElem("exec_location", (Node *)makeString("initplan"));
+					$$ = makeDefElem("exec_location", (Node *)makeString("initplan"), @1);
 				}
 			| EXECUTE ON ALL SEGMENTS
 				{
