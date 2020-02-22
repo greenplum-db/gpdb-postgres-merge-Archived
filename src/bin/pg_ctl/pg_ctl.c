@@ -112,8 +112,6 @@ static char logrotate_file[MAXPGPATH];
 
 static volatile pgpid_t postmasterPID = -1;
 
-static volatile pgpid_t postmasterPID = -1;
-
 #ifdef WIN32
 static DWORD pgctl_start_type = SERVICE_AUTO_START;
 static SERVICE_STATUS status;
@@ -176,7 +174,6 @@ static bool postmaster_is_alive(pid_t pid);
 
 static char postopts_file[MAXPGPATH];
 static char backup_file[MAXPGPATH];
-static char recovery_file[MAXPGPATH];
 static char promote_file[MAXPGPATH];
 static char pid_file[MAXPGPATH];
 static char backup_file[MAXPGPATH];
@@ -577,10 +574,6 @@ static WaitPMResult
 wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 {
 	int			i;
-
-	/* if requested wait time is zero, return "still starting up" code */
-	if (wait_seconds <= 0)
-		return PQPING_REJECT;
 
 	for (i = 0; i < wait_seconds * WAITS_PER_SEC; i++)
 	{
