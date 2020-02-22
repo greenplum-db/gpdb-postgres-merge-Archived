@@ -231,7 +231,7 @@ readGpSegConfigFromCatalog(int *total_dbs)
 	Datum				attr;
 	Relation			gp_seg_config_rel;
 	HeapTuple			gp_seg_config_tuple = NULL;
-	TableScanDesc		gp_seg_config_scan;
+	SysScanDesc			gp_seg_config_scan;
 	GpSegConfigEntry	*configs;
 	GpSegConfigEntry	*config;
 
@@ -239,9 +239,10 @@ readGpSegConfigFromCatalog(int *total_dbs)
 	configs = palloc0(sizeof(GpSegConfigEntry) * array_size);
 
 	gp_seg_config_rel = table_open(GpSegmentConfigRelationId, AccessShareLock);
-	gp_seg_config_scan = table_beginscan_catalog(gp_seg_config_rel, 0, NULL);
+	gp_seg_config_scan = systable_beginscan(gp_seg_config_rel, InvalidOid, false, NULL,
+											0, NULL);
 
-	while (HeapTupleIsValid(gp_seg_config_tuple = table_getnext(gp_seg_config_scan, ForwardScanDirection)))
+	while (HeapTupleIsValid(gp_seg_config_tuple = systable_getnext(gp_seg_config_scan)))
 	{
 		config = &configs[idx];
 
@@ -310,7 +311,7 @@ readGpSegConfigFromCatalog(int *total_dbs)
 	 * We're done with the catalog config, clean them up, closing all the
 	 * relations we opened.
 	 */
-	table_endscan(gp_seg_config_scan);
+	systable_endscan(gp_seg_config_scan);
 	table_close(gp_seg_config_rel, AccessShareLock);
 
 	*total_dbs = idx;
@@ -1038,7 +1039,8 @@ cdb_setup(void)
 			CHECK_FOR_INTERRUPTS();
 			/* wait for 100ms or postmaster dies */
 			rc = WaitLatch(&MyProc->procLatch,
-				   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH, 100);
+						   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH, 100,
+						   0); /* GPDB_12_MERGE_FIXME: pick a proper wait class? */
 
 			ResetLatch(&MyProc->procLatch);
 			if (rc & WL_POSTMASTER_DEATH)
@@ -1422,7 +1424,7 @@ master_standby_dbid(void)
 	 * SELECT * FROM gp_segment_configuration WHERE content = -1 AND role =
 	 * GP_SEGMENT_CONFIGURATION_ROLE_MIRROR
 	 */
-	rel = heap_open(GpSegmentConfigRelationId, AccessShareLock);
+	rel = table_open(GpSegmentConfigRelationId, AccessShareLock);
 	ScanKeyInit(&scankey[0],
 				Anum_gp_segment_configuration_content,
 				BTEqualStrategyNumber, F_INT2EQ,
@@ -1446,7 +1448,7 @@ master_standby_dbid(void)
 
 	systable_endscan(scan);
 	/* no need to hold the lock, it's a catalog */
-	heap_close(rel, AccessShareLock);
+	table_close(rel, AccessShareLock);
 
 	return dbid;
 }

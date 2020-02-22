@@ -609,9 +609,9 @@ create_shareinput_producer_rte(ApplyShareInputContext *ctxt, int share_id,
 	rte->alias = NULL;
 
 	rte->eref = makeAlias(rte->ctename, colnames);
-	rte->ctecoltypes = coltypes;
-	rte->ctecoltypmods = coltypmods;
-	rte->ctecolcollations = colcollations;
+	rte->coltypes = coltypes;
+	rte->coltypmods = coltypmods;
+	rte->colcollations = colcollations;
 
 	rte->inh = false;
 	rte->inFromCl = false;

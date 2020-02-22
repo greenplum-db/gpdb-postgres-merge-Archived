@@ -59,8 +59,7 @@ typedef struct
 	const AggClauseCosts *agg_costs;
 	const AggClauseCosts *agg_partial_costs;
 	const AggClauseCosts *agg_final_costs;
-	List *rollup_lists;
-	List *rollup_groupclauses;
+	List *rollups;
 } cdb_agg_planning_context;
 
 typedef struct
@@ -151,8 +150,7 @@ cdb_create_twostage_grouping_paths(PlannerInfo *root,
 								   const AggClauseCosts *agg_costs,
 								   const AggClauseCosts *agg_partial_costs,
 								   const AggClauseCosts *agg_final_costs,
-								   List *rollup_lists,
-								   List *rollup_groupclauses)
+								   List *rollups)
 {
 	Query	   *parse = root->parse;
 	Path	   *cheapest_path = input_rel->cheapest_total_path;
@@ -193,8 +191,7 @@ cdb_create_twostage_grouping_paths(PlannerInfo *root,
 	ctx.agg_costs = agg_costs;
 	ctx.agg_partial_costs = agg_partial_costs;
 	ctx.agg_final_costs = agg_final_costs;
-	ctx.rollup_lists = rollup_lists;
-	ctx.rollup_groupclauses = rollup_groupclauses;
+	ctx.rollups = rollups;
 
 	/*
 	 * Consider 2-phase aggs
@@ -427,8 +424,7 @@ add_twostage_group_agg_path(PlannerInfo *root,
 
 	group_locus = cdb_choose_grouping_locus(root, path, ctx->target,
 											parse->groupClause,
-											ctx->rollup_lists,
-											ctx->rollup_groupclauses,
+											ctx->rollups,
 											&need_redistribute);
 	/*
 	 * If the distribution of this path is suitable, two-stage aggregation
@@ -460,7 +456,7 @@ add_twostage_group_agg_path(PlannerInfo *root,
 
 		distinct_locus = cdb_choose_grouping_locus(root, path,
 												   info.input_proj_target,
-												   info.dqa_group_clause, NIL, NIL,
+												   info.dqa_group_clause, NIL,
 												   &distinct_need_redistribute);
 
 		/* If the input distribution matches the distinct, we can proceed */
@@ -483,15 +479,16 @@ add_twostage_group_agg_path(PlannerInfo *root,
 		 * We have grouping sets, possibly with aggregation.  Make
 		 * a GroupingSetsPath.
 		 */
+		/* GPDB_12_MERGE_FIXME: upstream would support hashed grouping sets now. Add
+		 * support? */
 		initial_agg_path =
 			(Path *) create_groupingsets_path(root,
 											  output_rel,
 											  path,
-											  grouping_sets_partial_target,
 											  AGGSPLIT_INITIAL_SERIAL,
 											  (List *) parse->havingQual,
-											  ctx->rollup_lists,
-											  ctx->rollup_groupclauses,
+											  AGG_SORTED,
+											  ctx->rollups,
 											  ctx->agg_partial_costs,
 											  estimate_num_groups_across_segments(ctx->dNumGroups,
 																				  path->rows,
@@ -610,7 +607,7 @@ add_twostage_hash_agg_path(PlannerInfo *root,
 	HashAggTableSizes hash_info;
 
 	group_locus = cdb_choose_grouping_locus(root, path, ctx->target,
-											parse->groupClause, NIL, NIL,
+											parse->groupClause, NIL,
 											&need_redistribute);
 	/*
 	 * If the distribution of this path is suitable, two-stage aggregation
@@ -728,11 +725,11 @@ static void add_single_mixed_dqa_hash_agg_path(PlannerInfo *root,
 
 	distinct_locus = cdb_choose_grouping_locus(root, path,
 	                                           input_target,
-	                                           dqa_group_clause, NIL, NIL,
+	                                           dqa_group_clause, NIL,
 	                                           &distinct_need_redistribute);
 	group_locus = cdb_choose_grouping_locus(root, path,
 	                                        input_target,
-	                                        parse->groupClause, NIL, NIL,
+	                                        parse->groupClause, NIL,
 	                                        &group_need_redistribute);
 	if (!parse->groupClause)
 	{
@@ -827,11 +824,11 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 
 	distinct_locus = cdb_choose_grouping_locus(root, path,
 											   input_target,
-											   dqa_group_clause, NIL, NIL,
+											   dqa_group_clause, NIL,
 											   &distinct_need_redistribute);
 	group_locus = cdb_choose_grouping_locus(root, path,
 											input_target,
-											parse->groupClause, NIL, NIL,
+											parse->groupClause, NIL,
 											&group_need_redistribute);
 	if (!distinct_need_redistribute || ! group_need_redistribute)
 	{
@@ -1134,7 +1131,7 @@ add_multi_dqas_hash_agg_path(PlannerInfo *root,
 
 	distinct_locus = cdb_choose_grouping_locus(root, path,
 											   info->tup_split_target,
-											   info->dqa_group_clause, NIL, NIL,
+											   info->dqa_group_clause, NIL,
 											   &distinct_need_redistribute);
 
 	if (distinct_need_redistribute)
@@ -1218,8 +1215,7 @@ CdbPathLocus
 cdb_choose_grouping_locus(PlannerInfo *root, Path *path,
 					  PathTarget *target,
 					  List *groupClause,
-					  List *rollup_lists,
-					  List *rollup_groupclauses,
+					  List *rollups,
 					  bool *need_redistribute_p)
 {
 	List	   *tlist = make_tlist_from_pathtarget(target);

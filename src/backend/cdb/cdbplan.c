@@ -279,6 +279,8 @@ plan_tree_mutator(Node *node,
 				return (Node *) newAssert;
 			}
 
+/* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
+#if 0
 		case T_PartitionSelector:
 			{
 				PartitionSelector *partsel = (PartitionSelector *) node;
@@ -302,6 +304,7 @@ plan_tree_mutator(Node *node,
 
 				return (Node *) newPartsel;
 			}
+#endif
 
 		case T_BitmapAnd:
 			{
@@ -841,8 +844,8 @@ plan_tree_mutator(Node *node,
 						newrte->ctename = pstrdup(rte->ctename);
 						newrte->ctelevelsup = rte->ctelevelsup;
 						newrte->self_reference = rte->self_reference;
-						MUTATE(newrte->ctecoltypes, rte->ctecoltypes, List *);
-						MUTATE(newrte->ctecoltypmods, rte->ctecoltypmods, List *);
+						MUTATE(newrte->coltypes, rte->coltypes, List *);
+						MUTATE(newrte->coltypmods, rte->coltypmods, List *);
 						break;
 
 					case RTE_JOIN:	/* join */

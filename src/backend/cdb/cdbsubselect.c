@@ -911,7 +911,7 @@ make_lasj_quals(PlannerInfo *root, SubLink *sublink, int subquery_indx)
 										  sublink->testexpr,
 										  subquery_vars);
 
-	join_pred = canonicalize_qual(make_notclause(join_pred));
+	join_pred = canonicalize_qual(make_notclause(join_pred), false);
 
 	Assert(join_pred != NULL);
 	return (Node *) join_pred;

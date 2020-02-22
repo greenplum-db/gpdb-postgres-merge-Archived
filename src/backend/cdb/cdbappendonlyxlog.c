@@ -23,6 +23,7 @@
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "cdb/cdbappendonlyxlog.h"
+#include "pgstat.h"
 #include "storage/fd.h"
 #include "utils/faultinjector.h"
 #include "utils/faultinjector_lists.h"
@@ -88,7 +89,8 @@ ao_insert_replay(XLogReaderState *record)
 		return;
 	}
 
-	written_len = FileWrite(file, buffer, len, xlrec->target.offset);
+	written_len = FileWrite(file, buffer, len, xlrec->target.offset,
+							WAIT_EVENT_COPY_FILE_WRITE);
 	if (written_len < 0 || written_len != len)
 	{
 		ereport(ERROR,
@@ -159,7 +161,7 @@ ao_truncate_replay(XLogReaderState *record)
 		return;
 	}
 
-	if (FileTruncate(file, xlrec->target.offset) != 0)
+	if (FileTruncate(file, xlrec->target.offset, WAIT_EVENT_DATA_FILE_TRUNCATE) != 0)
 	{
 		ereport(WARNING,
 				(errcode_for_file_access(),
