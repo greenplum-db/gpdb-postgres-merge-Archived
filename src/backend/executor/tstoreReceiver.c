@@ -148,7 +148,7 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 	 */
 	oldcxt = MemoryContextSwitchTo(myState->cxt);
 	tuplestore_putvalues(myState->tstore, typeinfo,
-						 myState->outvalues, slot_get_isnull(slot));
+						 myState->outvalues, slot->tts_isnull);
 	MemoryContextSwitchTo(oldcxt);
 
 	/* And release any temporary detoasted values */
