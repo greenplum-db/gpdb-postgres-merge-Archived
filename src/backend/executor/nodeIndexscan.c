@@ -836,27 +836,25 @@ void
 ExecIndexMarkPos(IndexScanState *node)
 {
 	EState	   *estate = node->ss.ps.state;
-	EPQState   *epqstate = estate->es_epq_active;
 
-	if (epqstate != NULL)
+	if (estate->es_epqTupleSlot != NULL)
 	{
 		/*
 		 * We are inside an EvalPlanQual recheck.  If a test tuple exists for
 		 * this relation, then we shouldn't access the index at all.  We would
 		 * instead need to save, and later restore, the state of the
-		 * relsubs_done flag, so that re-fetching the test tuple is possible.
-		 * However, given the assumption that no caller sets a mark at the
-		 * start of the scan, we can only get here with relsubs_done[i]
+		 * es_epqScanDone flag, so that re-fetching the test tuple is
+		 * possible.  However, given the assumption that no caller sets a mark
+		 * at the start of the scan, we can only get here with es_epqScanDone
 		 * already set, and so no state need be saved.
 		 */
 		Index		scanrelid = ((Scan *) node->ss.ps.plan)->scanrelid;
 
 		Assert(scanrelid > 0);
-		if (epqstate->relsubs_slot[scanrelid - 1] != NULL ||
-			epqstate->relsubs_rowmark[scanrelid - 1] != NULL)
+		if (estate->es_epqTupleSlot[scanrelid - 1] != NULL)
 		{
 			/* Verify the claim above */
-			if (!epqstate->relsubs_done[scanrelid - 1])
+			if (!estate->es_epqScanDone[scanrelid - 1])
 				elog(ERROR, "unexpected ExecIndexMarkPos call in EPQ recheck");
 			return;
 		}
@@ -873,19 +871,17 @@ void
 ExecIndexRestrPos(IndexScanState *node)
 {
 	EState	   *estate = node->ss.ps.state;
-	EPQState   *epqstate = estate->es_epq_active;
 
-	if (estate->es_epq_active != NULL)
+	if (estate->es_epqTupleSlot != NULL)
 	{
 		/* See comments in ExecIndexMarkPos */
 		Index		scanrelid = ((Scan *) node->ss.ps.plan)->scanrelid;
 
 		Assert(scanrelid > 0);
-		if (epqstate->relsubs_slot[scanrelid - 1] != NULL ||
-			epqstate->relsubs_rowmark[scanrelid - 1] != NULL)
+		if (estate->es_epqTupleSlot[scanrelid - 1] != NULL)
 		{
 			/* Verify the claim above */
-			if (!epqstate->relsubs_done[scanrelid - 1])
+			if (!estate->es_epqScanDone[scanrelid - 1])
 				elog(ERROR, "unexpected ExecIndexRestrPos call in EPQ recheck");
 			return;
 		}
@@ -908,9 +904,9 @@ ExecIndexRestrPos(IndexScanState *node)
 IndexScanState *
 ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 {
-    IndexScanState *indexstate;
+	IndexScanState *indexstate;
 	Relation	currentRelation;
-    LOCKMODE	lockmode;
+	LOCKMODE	lockmode;
 
 	/*
 	 * create state structure
