@@ -811,7 +811,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	HASH HOST
 
-	IGNORE_P INCLUSIVE
+	IGNORE_P INCLUSIVE INITPLAN
 
 	LIST LOG_P
 
@@ -10524,6 +10524,10 @@ common_func_opt_item:
 				{
 					$$ = makeDefElem("exec_location", (Node *)makeString("master"), @1);
 				}
+			| EXECUTE ON INITPLAN
+				{
+					$$ = makeDefElem("exec_location", (Node *)makeString("initplan"));
+				}
 			| EXECUTE ON ALL SEGMENTS
 				{
 					$$ = makeDefElem("exec_location", (Node *)makeString("all_segments"), @1);
@@ -18044,6 +18048,7 @@ unreserved_keyword:
 			| INDEXES
 			| INHERIT
 			| INHERITS
+			| INITPLAN
 			| INLINE_P
 			| INPUT_P
 			| INSENSITIVE

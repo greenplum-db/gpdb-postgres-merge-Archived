@@ -173,16 +173,6 @@ extern ObjectAddress renametrig(RenameStmt *stmt);
 extern void EnableDisableTrigger(Relation rel, const char *tgname,
 								 char fires_when, bool skip_system, LOCKMODE lockmode);
 
-/*cdb: export the following macro and function for nodeRowTrigger.c */
-#define GetInsertedColumns(relinfo, estate) \
-	(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->insertedCols)
-#define GetUpdatedColumns(relinfo, estate) \
-	(exec_rt_fetch((relinfo)->ri_RangeTableIndex, estate)->updatedCols)
-extern bool TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
-						   Trigger *trigger, TriggerEvent event,
-						   Bitmapset *modifiedCols,
-						   TupleTableSlot *oldslot, TupleTableSlot *newslot);
-
 extern void RelationBuildTriggers(Relation relation);
 
 extern TriggerDesc *CopyTriggerDesc(TriggerDesc *trigdesc);
@@ -286,10 +276,4 @@ extern void RI_PartitionRemove_Check(Trigger *trigger, Relation fk_rel,
 
 extern int	RI_FKey_trigger_type(Oid tgfoid);
 
-extern HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
-									 int tgindx,
-									 FmgrInfo *finfo,
-									 Instrumentation *instr,
-									 MemoryContext per_tuple_context);
- 
 #endif							/* TRIGGER_H */

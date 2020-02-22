@@ -290,6 +290,8 @@ plan_tree_walker(Node *node,
 		case T_FunctionScan:
 			if (walker((Node *) ((FunctionScan *) node)->functions, context))
 				return true;
+			if (walker((Node *) ((FunctionScan *) node)->param, context))
+				return true;
 			if (walk_scan_node_fields((Scan *) node, walker, context))
 				return true;
 			break;
@@ -516,7 +518,6 @@ plan_tree_walker(Node *node,
 			break;
 
 		case T_SplitUpdate:
-		case T_RowTrigger:
 		case T_AssertOp:
 			if (walk_plan_node_fields((Plan *) node, walker, context))
 				return true;

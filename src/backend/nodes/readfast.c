@@ -1237,24 +1237,6 @@ _readSplitUpdate(void)
 }
 
 /*
- * _readRowTrigger
- */
-static RowTrigger *
-_readRowTrigger(void)
-{
-	READ_LOCALS(RowTrigger);
-
-	READ_INT_FIELD(relid);
-	READ_INT_FIELD(eventFlags);
-	READ_NODE_FIELD(oldValuesColIdx);
-	READ_NODE_FIELD(newValuesColIdx);
-
-	ReadCommonPlan(&local_node->plan);
-
-	READ_DONE();
-}
-
-/*
  * _readAssertOp
  */
 static AssertOp *
@@ -2073,9 +2055,6 @@ readNodeBinary(void)
 				break;
 			case T_SplitUpdate:
 				return_value = _readSplitUpdate();
-				break;
-			case T_RowTrigger:
-				return_value = _readRowTrigger();
 				break;
 			case T_AssertOp:
 				return_value = _readAssertOp();

@@ -34,6 +34,7 @@
 #include "cdb/cdbhash.h"
 #include "cdb/cdbpullup.h"		/* cdbpullup_expr(), cdbpullup_make_var() */
 #include "optimizer/clauses.h"
+#include "optimizer/cost.h"
 #include "optimizer/planmain.h"
 #include "optimizer/var.h"
 #include "optimizer/restrictinfo.h"
@@ -353,7 +354,7 @@ generate_implied_quals(PlannerInfo *root)
 {
 	ListCell   *lc;
 
-	if (!root->config->gp_enable_predicate_propagation)
+	if (!gp_enable_predicate_propagation)
 		return;
 
 	foreach(lc, root->non_eq_clauses)

@@ -3319,7 +3319,7 @@ void
 SS_make_initplan_from_plan(PlannerInfo *root,
 						   PlannerInfo *subroot, Plan *plan,
 						   PlanSlice *subslice,
-						   Param *prm)
+						   Param *prm, bool is_initplan_func_sublink)
 {
 	SubPlan    *node;
 
@@ -3335,7 +3335,10 @@ SS_make_initplan_from_plan(PlannerInfo *root,
 	 * comments in ExecReScan).
 	 */
 	node = makeNode(SubPlan);
-	node->subLinkType = EXPR_SUBLINK;
+	if (is_initplan_func_sublink)
+		node->subLinkType = INITPLAN_FUNC_SUBLINK;
+	else
+		node->subLinkType = EXPR_SUBLINK;
 	node->plan_id = list_length(root->glob->subplans);
 	node->plan_name = psprintf("InitPlan %d (returns $%d)",
 							   node->plan_id, prm->paramid);

@@ -234,8 +234,6 @@ ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 
 	tbm_generic_free(node->biss_result);
 	node->biss_result = NULL;
-
-	EndPlanStateGpmonPkt(&node->ss.ps);
 }
 
 /* ----------------------------------------------------------------

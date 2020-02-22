@@ -171,9 +171,6 @@ bool		VacuumCostActive = false;
 
 double		vacuum_cleanup_index_scale_factor;
 
-/* gpperfmon port number */
-int 	gpperfmon_port = 8888;
-
 /* for pljava */
 char*	pljava_vmoptions = NULL;
 char*	pljava_classpath = NULL;

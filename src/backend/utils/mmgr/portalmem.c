@@ -237,10 +237,6 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 	/* reuse portal->name copy */
 	MemoryContextSetIdentifier(portal->portalContext, portal->name);
 
-	/* Setup gpmon. Siva - should this be moved elsewhere? */
-	gpmon_init();
-	/* End Gpmon */
-
 	return portal;
 }
 

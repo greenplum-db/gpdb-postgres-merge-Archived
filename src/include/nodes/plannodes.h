@@ -339,11 +339,6 @@ typedef struct Plan
 	 * How much memory (in KB) should be used to execute this plan node?
 	 */
 	uint64 operatorMemKB;
-
-	/*
-	 * The parent motion node of a plan node.
-	 */
-	struct Plan *motionNode;
 } Plan;
 
 /* ----------------
@@ -867,6 +862,8 @@ typedef struct FunctionScan
 	Scan		scan;
 	List	   *functions;		/* list of RangeTblFunction nodes */
 	bool		funcordinality; /* WITH ORDINALITY */
+	Param      *param;			/* used when funtionscan run as initplan */
+	bool		resultInTupleStore; /* function result stored in tuplestore */
 } FunctionScan;
 
 /* ----------------
@@ -1544,20 +1541,6 @@ typedef struct AssertOp
 	List 			*errmessage;	/* error message */
 
 } AssertOp;
-
-/*
- * RowTrigger Node
- *
- */
-typedef struct RowTrigger
-{
-	Plan		plan;
-	Oid			relid;				/* OID of target relation */
-	int 		eventFlags;			/* TriggerEvent bit flags (see trigger.h).*/
-	List		*oldValuesColIdx;	/* list of old columns */
-	List		*newValuesColIdx;	/* list of new columns */
-
-} RowTrigger;
 
 /*
  * RowMarkType -

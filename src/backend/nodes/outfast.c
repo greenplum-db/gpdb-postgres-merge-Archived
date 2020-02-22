@@ -1236,9 +1236,6 @@ _outNode(StringInfo str, void *obj)
 			case T_SplitUpdate:
 				_outSplitUpdate(str, obj);
 				break;
-			case T_RowTrigger:
-				_outRowTrigger(str, obj);
-				break;
 			case T_AssertOp:
 				_outAssertOp(str, obj);
 				break;

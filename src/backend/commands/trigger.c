@@ -92,6 +92,15 @@ static bool GetTupleForTrigger(EState *estate,
 							   LockTupleMode lockmode,
 							   TupleTableSlot *oldslot,
 							   TupleTableSlot **newSlot);
+static bool TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
+						   Trigger *trigger, TriggerEvent event,
+						   Bitmapset *modifiedCols,
+						   TupleTableSlot *oldslot, TupleTableSlot *newslot);
+static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
+									 int tgindx,
+									 FmgrInfo *finfo,
+									 Instrumentation *instr,
+									 MemoryContext per_tuple_context);
 static void AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 								  int event, bool row_trigger,
 								  TupleTableSlot *oldtup, TupleTableSlot *newtup,
@@ -2422,7 +2431,7 @@ FindTriggerIncompatibleWithInheritance(TriggerDesc *trigdesc)
  *
  * Returns the tuple (or NULL) as returned by the function.
  */
-HeapTuple
+static HeapTuple
 ExecCallTriggerFunc(TriggerData *trigdata,
 					int tgindx,
 					FmgrInfo *finfo,
@@ -3510,7 +3519,7 @@ GetTupleForTrigger(EState *estate,
 /*
  * Is trigger enabled to fire?
  */
-bool
+static bool
 TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 			   Trigger *trigger, TriggerEvent event,
 			   Bitmapset *modifiedCols,

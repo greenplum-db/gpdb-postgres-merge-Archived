@@ -340,8 +340,6 @@ ExecEndPartitionSelector(PartitionSelectorState *node)
 	{
 		ExecEndNode(outerPlanState(node));
 	}
-
-	EndPlanStateGpmonPkt(&node->ps);
 }
 
 /* ----------------------------------------------------------------

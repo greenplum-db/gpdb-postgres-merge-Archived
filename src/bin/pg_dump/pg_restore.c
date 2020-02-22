@@ -157,11 +157,7 @@ main(int argc, char **argv)
 		}
 	}
 
-<<<<<<< HEAD
-	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:I:j:lL:n:Op:P:RsS:t:T:uU:vwWx:1",
-=======
 	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:I:j:lL:n:N:Op:P:RsS:t:T:U:vwWx1",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 							cmdopts, NULL)) != -1)
 	{
 		switch (c)
@@ -250,11 +246,6 @@ main(int argc, char **argv)
 				opts->selTypes = 1;
 				opts->selTable = 1;
 				simple_string_list_append(&opts->tableNames, optarg);
-				break;
-
-			case 'u':
-				opts->promptPassword = TRI_YES;
-				opts->username = simple_prompt("User name: ", 100, true);
 				break;
 
 			case 'U':

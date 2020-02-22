@@ -39,8 +39,6 @@
 
 #include "postmaster/backoff.h"
 #include "postmaster/fts.h"
-#include "postmaster/perfmon.h"
-#include "postmaster/perfmon_segmentinfo.h"
 #include "utils/gdd.h"
 
 extern bool isAuxiliaryBgWorker(BackgroundWorker *worker);
@@ -151,13 +149,7 @@ static const struct
 		"DtxRecoveryMain", DtxRecoveryMain
 	},
 	{
-		"SegmentInfoSenderMain", SegmentInfoSenderMain
-	},
-	{
 		"BackoffSweeperMain", BackoffSweeperMain
-	},
-	{
-		"PerfmonMain", PerfmonMain
 	},
 
 };

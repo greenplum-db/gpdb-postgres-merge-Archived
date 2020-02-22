@@ -1828,6 +1828,7 @@ FigureColnameInternal(Node *node, char **name)
 				case ANY_SUBLINK:
 				case ROWCOMPARE_SUBLINK:
 				case CTE_SUBLINK:
+				case INITPLAN_FUNC_SUBLINK:
 				case NOT_EXISTS_SUBLINK:
 					break;
 			}

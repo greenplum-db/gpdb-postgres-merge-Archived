@@ -861,6 +861,8 @@ _outFunctionScan(StringInfo str, const FunctionScan *node)
 
 	WRITE_NODE_FIELD(functions);
 	WRITE_BOOL_FIELD(funcordinality);
+	WRITE_NODE_FIELD(param);
+	WRITE_BOOL_FIELD(resultInTupleStore);
 }
 
 static void
@@ -1324,22 +1326,6 @@ _outSplitUpdate(StringInfo str, const SplitUpdate *node)
 	WRITE_INT_FIELD(numHashAttrs);
 	WRITE_ATTRNUMBER_ARRAY(hashAttnos, node->numHashAttrs);
 	WRITE_OID_ARRAY(hashFuncs, node->numHashAttrs);
-
-	_outPlanInfo(str, (Plan *) node);
-}
-
-/*
- * _outRowTrigger
- */
-static void
-_outRowTrigger(StringInfo str, const RowTrigger *node)
-{
-	WRITE_NODE_TYPE("RowTrigger");
-
-	WRITE_INT_FIELD(relid);
-	WRITE_INT_FIELD(eventFlags);
-	WRITE_NODE_FIELD(oldValuesColIdx);
-	WRITE_NODE_FIELD(newValuesColIdx);
 
 	_outPlanInfo(str, (Plan *) node);
 }
@@ -5497,9 +5483,6 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_SplitUpdate:
 				_outSplitUpdate(str, obj);
-				break;
-			case T_RowTrigger:
-				_outRowTrigger(str, obj);
 				break;
 			case T_AssertOp:
 				_outAssertOp(str, obj);

@@ -42,12 +42,11 @@ OBJS += nodeDynamicIndexscan.o \
        nodeTableFunction.o \
        nodeDynamicSeqscan.o \
        nodeSequence.o \
-       nodeRowTrigger.o \
        nodeAssertOp.o \
        nodeSplitUpdate.o \
        nodeTupleSplit.o \
        nodePartitionSelector.o \
        execDynamicScan.o \
-       execHHashagg.o execGpmon.o
+       execHHashagg.o
 
 include $(top_srcdir)/src/backend/common.mk

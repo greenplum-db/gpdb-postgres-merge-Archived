@@ -216,7 +216,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	MemoryContext oldcontext;
 	GpExecIdentity exec_identity;
 	bool		shouldDispatch;
-	bool		needDtxTwoPhase;
+	bool		needDtx;
 
 	/* sanity checks: queryDesc must not be started already */
 	Assert(queryDesc != NULL);
@@ -231,16 +231,6 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	Assert(queryDesc->plannedstmt->intoPolicy == NULL ||
 		GpPolicyIsPartitioned(queryDesc->plannedstmt->intoPolicy) ||
 		GpPolicyIsReplicated(queryDesc->plannedstmt->intoPolicy));
-
-	/**
-	 * Perfmon related stuff.
-	 */
-	if (gp_enable_gpperfmon
-		&& Gp_role == GP_ROLE_DISPATCH
-		&& queryDesc->gpmon_pkt)
-	{
-		gpmon_qlog_query_start(queryDesc->gpmon_pkt);
-	}
 
 	/* GPDB hook for collecting query info */
 	if (query_info_collect_hook)
@@ -529,12 +519,6 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	estate->eliminateAliens = execute_pruned_plan && estate->es_sliceTable && estate->es_sliceTable->hasMotions && !IS_QUERY_DISPATCHER();
 
 	/*
-	 * Assign a Motion Node to every Plan Node. This makes it
-	 * easy to identify which slice any Node belongs to
-	 */
-	AssignParentMotionToPlanNodes(queryDesc->plannedstmt);
-
-	/*
 	 * Set up an AFTER-trigger statement context, unless told not to, or
 	 * unless it's EXPLAIN-only mode (when ExecutorFinish won't be called).
 	 */
@@ -612,9 +596,9 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			 * ExecutorSaysTransactionDoesWrites() before any dispatch
 			 * work for this query.
 			 */
-			needDtxTwoPhase = ExecutorSaysTransactionDoesWrites();
-			if (needDtxTwoPhase)
-				setupTwoPhaseTransaction();
+			needDtx = ExecutorSaysTransactionDoesWrites();
+			if (needDtx)
+				setupDtxTransaction();
 
 			if (queryDesc->ddesc != NULL)
 			{
@@ -673,7 +657,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			 */
 			if (estate->es_sliceTable->slices[0].gangType != GANGTYPE_UNALLOCATED ||
 				estate->es_sliceTable->slices[0].children)
-				CdbDispatchPlan(queryDesc, needDtxTwoPhase, true);
+				CdbDispatchPlan(queryDesc, needDtx, true);
 		}
 
 		/*
@@ -1218,17 +1202,6 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 	 */
 	FreeExecutorState(estate);
 	
-	/**
-	 * Perfmon related stuff.
-	 */
-	if (gp_enable_gpperfmon 
-			&& Gp_role == GP_ROLE_DISPATCH
-			&& queryDesc->gpmon_pkt)
-	{			
-		gpmon_qlog_query_end(queryDesc->gpmon_pkt);
-		queryDesc->gpmon_pkt = NULL;
-	}
-
 	/* GPDB hook for collecting query info */
 	if (query_info_collect_hook)
 		(*query_info_collect_hook)(isInnerQuery ? METRICS_INNER_QUERY_DONE : METRICS_QUERY_DONE, queryDesc);
@@ -3214,8 +3187,13 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 					 * the permissions on the relation (that is, if the user
 					 * could view it directly anyway).  For RLS violations, we
 					 * don't include the data since we don't know if the user
+<<<<<<< HEAD
 					 * should be able to view the tuple as that depends on the
 					 * USING policy.
+=======
+					 * should be able to view the tuple as that depends on
+					 * the USING policy.
+>>>>>>> origin/master
 					 */
 				case WCO_VIEW_CHECK:
 					/* See the comment in ExecConstraints(). */

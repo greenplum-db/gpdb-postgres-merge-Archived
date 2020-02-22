@@ -128,7 +128,6 @@
 #include "executor/nodeMotion.h"
 #include "executor/nodePartitionSelector.h"
 #include "executor/nodeRepeat.h"
-#include "executor/nodeRowTrigger.h"
 #include "executor/nodeSequence.h"
 #include "executor/nodeShareInputScan.h"
 #include "executor/nodeSplitUpdate.h"
@@ -782,16 +781,6 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 			}
 			END_MEMORY_ACCOUNT();
 			break;
-		case T_RowTrigger:
-			curMemoryAccountId = CREATE_EXECUTOR_MEMORY_ACCOUNT(node, RowTrigger);
-
-			START_MEMORY_ACCOUNT(curMemoryAccountId);
-			{
- 			result = (PlanState *) ExecInitRowTrigger((RowTrigger *) node,
- 												   estate, eflags);
-			}
-			END_MEMORY_ACCOUNT();
- 			break;
 #if 0
 /* GPDB_12_MERGE_FIXME: re-implement this node with new postgres partition */
 		case T_PartitionSelector:
@@ -839,9 +828,6 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 	/* Set up instrumentation for this node if requested */
 	if (estate->es_instrument && result != NULL)
 		result->instrument = GpInstrAlloc(node, estate->es_instrument);
-
-	/* Also set up gpmon counters */
-	InitPlanNodeGpmonPkt(node, &result->gpmon_pkt, estate);
 
 	if (result != NULL)
 	{
@@ -981,9 +967,6 @@ ExecProcNodeGPDB(PlanState *node)
 			elog(ERROR, "cannot execute squelched plan node of type: %d",
 				 (int) nodeTag(node));
 
-		if(!node->fHadSentGpmon)
-			CheckSendPlanStateGpmonPkt(node);
-
 		if(!node->fHadSentNodeStart)
 		{
 			/* GPDB hook for collecting query info */
@@ -999,12 +982,6 @@ ExecProcNodeGPDB(PlanState *node)
 
 		if (node->instrument)
 			InstrStopNode(node->instrument, TupIsNull(result) ? 0.0 : 1.0);
-
-		if (!TupIsNull(result))
-		{
-			Gpmon_Incr_Rows_Out(&node->gpmon_pkt);
-			CheckSendPlanStateGpmonPkt(node);
-		}
 
 		if (node->plan)
 			TRACE_POSTGRESQL_EXECPROCNODE_EXIT(GpIdentity.segindex, currentSliceId, nodeTag(node), node->plan->plan_node_id);
@@ -1370,9 +1347,6 @@ ExecEndNode(PlanState *node)
 			break;
 		case T_AssertOpState:
 			ExecEndAssertOp((AssertOpState *) node);
-			break;
-		case T_RowTriggerState:
-			ExecEndRowTrigger((RowTriggerState *) node);
 			break;
 #if 0
 /* GPDB_12_MERGE_FIXME: re-implement this node with new postgres partition */

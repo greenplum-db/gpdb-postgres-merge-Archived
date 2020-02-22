@@ -116,6 +116,13 @@ ExecReScan(PlanState *node)
 			SubPlanState *sstate = (SubPlanState *) lfirst(l);
 			PlanState  *splan = sstate->planstate;
 
+			/*
+			 * If 'splan' is NULL, then InitPlan() thought it was "alien".  We
+			 * should not get here then, but let's sanity check.
+			 */
+			if (splan == NULL)
+				elog(ERROR, "subplan not initialized in this slice");
+
 			if (splan->plan->extParam != NULL)	/* don't care about child
 												 * local Params */
 				UpdateChangedParamSet(splan, node->chgParam);
@@ -126,6 +133,13 @@ ExecReScan(PlanState *node)
 		{
 			SubPlanState *sstate = (SubPlanState *) lfirst(l);
 			PlanState  *splan = sstate->planstate;
+
+			/*
+			 * If 'splan' is NULL, then InitPlan() thought it was "alien".  We
+			 * should not get here then, but let's sanity check.
+			 */
+			if (splan == NULL)
+				elog(ERROR, "subplan not initialized in this slice");
 
 			if (splan->plan->extParam != NULL)
 				UpdateChangedParamSet(splan, node->chgParam);
@@ -357,9 +371,6 @@ ExecReScan(PlanState *node)
 		bms_free(node->chgParam);
 		node->chgParam = NULL;
 	}
-
-	/* Now would be a good time to also send an update to gpmon */
-	CheckSendPlanStateGpmonPkt(node);
 }
 
 /*
@@ -479,9 +490,6 @@ ExecRestrPos(PlanState *node)
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 			break;
 	}
-
-	/* Now would be a good time to also send an update to gpmon */
-	CheckSendPlanStateGpmonPkt(node);
 }
 
 /*

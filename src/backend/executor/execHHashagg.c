@@ -1381,8 +1381,6 @@ spill_hash_table(AggState *aggstate)
 			SANITY_CHECK_METADATA_SIZE(hashtable);
 
 			hashtable->num_batches++;
-			
-			CheckSendPlanStateGpmonPkt(&aggstate->ss.ps);
 		}
 
 		for (bucket_no = file_no; bucket_no < hashtable->nbuckets;
@@ -1968,8 +1966,6 @@ agg_hash_reload(AggState *aggstate)
 		ResetExprContext(tmpcontext);
 	}
 
-	CheckSendPlanStateGpmonPkt(&aggstate->ss.ps);
-
 	if (hashtable->is_spilling)
 	{
         int freed_size = 0;
@@ -2251,13 +2247,6 @@ agg_hash_explain(AggState *aggstate)
 	}
 }
 
-/* Resets all gpmon states for this agg and sends an updated gpmon packet */
-static void
-Gpmon_ResetAggHashTable(AggState* aggstate)
-{
-	CheckSendPlanStateGpmonPkt(&aggstate->ss.ps);
-}
-
 /* Function: reset_agg_hash_table
  *
  * Clear the hash table content anchored by the bucket array.
@@ -2341,8 +2330,6 @@ void reset_agg_hash_table(AggState *aggstate, int64 nentries)
 	MemoryContextReset(hashtable->serialization_cxt);
 
 	init_agg_hash_iter(hashtable);
-
-	Gpmon_ResetAggHashTable(aggstate);
 }
 
 /* Function: destroy_agg_hash_table
@@ -2361,8 +2348,6 @@ void destroy_agg_hash_table(AggState *aggstate)
 			"HashAgg: destroying hash table -- ngroup=" INT64_FORMAT " ntuple=" INT64_FORMAT,
 			aggstate->hhashtable->num_ht_groups,
 			aggstate->hhashtable->num_tuples);
-		
-		Gpmon_ResetAggHashTable(aggstate);
 
 		/* destroy_batches(aggstate->hhashtable); */
 		pfree(aggstate->hhashtable->buckets);

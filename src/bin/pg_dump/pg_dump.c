@@ -664,7 +664,7 @@ main(int argc, char **argv)
 
 	InitDumpOptions(&dopt);
 
-	while ((c = getopt_long(argc, argv, "abBcCd:E:f:F:h:j:n:N:oOp:RsS:t:T:uU:vwWxZ:",
+	while ((c = getopt_long(argc, argv, "abBcCd:E:f:F:h:j:n:N:oOp:RsS:t:T:U:vwWxZ:",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -749,11 +749,6 @@ main(int argc, char **argv)
 
 			case 'T':			/* exclude table(s) */
 				simple_string_list_append(&table_exclude_patterns, optarg);
-				break;
-
-			case 'u':
-				prompt_password = TRI_YES;
-				dopt.username = simple_prompt("User name: ", 100, true);
 				break;
 
 			case 'U':
@@ -14478,6 +14473,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		appendPQExpBuffer(q, " EXECUTE ON MASTER");
 	else if (proexeclocation[0] == PROEXECLOCATION_ALL_SEGMENTS)
 		appendPQExpBuffer(q, " EXECUTE ON ALL SEGMENTS");
+	else if (proexeclocation[0] == PROEXECLOCATION_INITPLAN)
+		appendPQExpBuffer(q, " EXECUTE ON INITPLAN");
 	else
 	{
 		write_msg(NULL, "unrecognized proexeclocation value: %c\n", proexeclocation[0]);

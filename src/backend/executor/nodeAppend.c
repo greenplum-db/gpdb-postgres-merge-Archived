@@ -338,8 +338,6 @@ ExecEndAppend(AppendState *node)
 		if (appendplans[i])
 			ExecEndNode(appendplans[i]);
 	}
-
-	EndPlanStateGpmonPkt(&node->ps);
 }
 
 void

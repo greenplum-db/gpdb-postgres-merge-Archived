@@ -592,10 +592,6 @@ MemTuple memtuple_form_to(
 	{
 		Form_pg_attribute attr = TupleDescAttr(pbind->tupdesc, i);
 		
-#ifdef CHK_TYPE_SANE
-		check_type_sanity(attr, values[i], isnull[i]);
-#endif
-
 		/* treat dropped attibutes as null */
 		if (attr->attisdropped)
 		{

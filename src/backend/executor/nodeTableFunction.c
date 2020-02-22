@@ -464,8 +464,6 @@ ExecEndTableFunction(TableFunctionState *node)
 	
 	/* End the subplans */
 	ExecEndNode(outerPlanState(node));
-	
-	EndPlanStateGpmonPkt(&node->ss.ps);
 }
 
 void

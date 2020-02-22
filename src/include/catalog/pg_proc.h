@@ -209,6 +209,7 @@ typedef FormData_pg_proc *Form_pg_proc;
 
 #define PROEXECLOCATION_ANY		'a'
 #define PROEXECLOCATION_MASTER	'm'
+#define PROEXECLOCATION_INITPLAN 'i'
 #define PROEXECLOCATION_ALL_SEGMENTS 's'
 
 #endif							/* EXPOSE_TO_CLIENT_CODE */

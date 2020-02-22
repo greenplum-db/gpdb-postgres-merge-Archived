@@ -238,13 +238,6 @@ extern PathTarget *set_pathtarget_cost_width(PlannerInfo *root, PathTarget *targ
 extern double compute_bitmap_pages(PlannerInfo *root, RelOptInfo *baserel,
 								   Path *bitmapqual, int loop_count, Cost *cost, double *tuple);
 
-/* Additional costsize.c prototypes for CDB incremental cost functions. */
-extern Cost incremental_hashjoin_cost(double rows, 
-									  int inner_width, int outer_width, 
-									  List *hashclauses,
-									  PlannerInfo *root);
-extern Cost incremental_mergejoin_cost(double rows, List *mergeclauses, PlannerInfo *root);
-
 extern int planner_segment_count(GpPolicy *policy);
 extern double global_work_mem(PlannerInfo *root);
 

@@ -117,8 +117,6 @@ typedef struct ExprState
 	bool	   *innermost_domainnull;
 } ExprState;
 
-#include "gpmon/gpmon.h"                /* gpmon_packet_t */
-
 /*
  * partition selector ids start from 1. Sometimes we use 0 to initialize variables
  */
@@ -750,8 +748,10 @@ typedef struct EState
 
 	/*
 	 * The slice number for the current node that is being processed.
-	 * During the tree traversal in ExecInitPlan stage, this field is set
-	 * by Motion and InitPlan nodes.
+	 * During plan initialization, in ExecInitPlan(), it is set to the
+	 * slice we're currently initializing, even if it's an "alien" node.
+	 * When executing a plan (ExecProcNode()), it is always set to the
+	 * local slice we're currently executing, never to an alien slice.
 	 */
 	int			currentSliceId;
 
@@ -922,6 +922,19 @@ typedef struct MemoryManagerContainer
  * has to be shared with other parts of the execution state tree.
  * ----------------------------------------------------------------
  */
+
+/* ----------------
+ *         Generic tuplestore structure
+ *	 used to communicate between ShareInputScan nodes,
+ *	 Materialize and Sort
+ *
+ * ----------------
+ */
+typedef union GenericTupStore
+{
+	struct NTupleStore        *matstore;     /* Used by Materialize */
+	void	   *sortstore;	/* Used by Sort */
+} GenericTupStore;
 
 /* ----------------
  *		AggrefExprState node
@@ -1152,6 +1165,8 @@ typedef struct SubPlanState
 	FmgrInfo   *lhs_hash_funcs; /* hash functions for lefthand datatype(s) */
 	FmgrInfo   *cur_eq_funcs;	/* equality functions for LHS vs. table */
 	ExprState  *cur_eq_comp;	/* equality comparator for LHS vs. table */
+	void	   *ts_pos;
+	GenericTupStore *ts_state;
 } SubPlanState;
 
 /* ----------------
@@ -1234,8 +1249,6 @@ typedef struct PlanState
 	void      (*cdbexplainfun)(struct PlanState *planstate, struct StringInfoData *buf);
 	/* callback before ExecutorEnd */
 
-	bool		fHadSentGpmon;
-
 	/* Per-worker JIT instrumentation */
 	struct SharedJitInstrumentation *worker_jit_instrument;
 
@@ -1308,30 +1321,14 @@ typedef struct PlanState
 	bool		inneropsset;
 	bool		resultopsset;
 
-	/*
-	 * GpMon packet
-	 */
-	int		gpmon_plan_tick;
-	gpmon_packet_t gpmon_pkt;
 	bool		fHadSentNodeStart;
 
 	bool		squelched;		/* has ExecSquelchNode() been called already? */
-
 	/* MemoryAccount to use for recording the memory usage of different plan nodes. */
 	MemoryAccountIdType memoryAccountId;
 } PlanState;
 
-/* Gpperfmon helper functions defined in execGpmon.c */
-extern void CheckSendPlanStateGpmonPkt(PlanState *ps);
-extern void EndPlanStateGpmonPkt(PlanState *ps);
-extern void InitPlanNodeGpmonPkt(Plan* plan, gpmon_packet_t *gpmon_pkt, EState *estate);
-
 extern uint64 PlanStateOperatorMemKB(const PlanState *ps);
-
-static inline void Gpmon_Incr_Rows_Out(gpmon_packet_t *pkt)
-{
-    ++pkt->u.qexec.rowsout;
-}
 
 /* ----------------
  *	these are defined to avoid confusion problems with "left"
@@ -2112,8 +2109,14 @@ typedef struct FunctionScanState
 
 	bool		delayEagerFree;		/* is is safe to free memory used by this node,
 									 * when this node has outputted its last row? */
+
+	/* tuplestore info when function scan run as initplan */
+	bool		resultInTupleStore; /* function result stored in tuplestore */
+	void       *ts_pos;				/* accessor to the tuplestore */
+	GenericTupStore *ts_state;		/* tuple store state */
 } FunctionScanState;
 
+extern void function_scan_create_bufname_prefix(char *p, int size);
 
 /* ----------------
  * TableFunctionState information
@@ -2516,18 +2519,6 @@ typedef struct HashJoinState
  * ----------------------------------------------------------------
  */
 
-/* ----------------
- *         Generic tuplestore structure
- *	 used to communicate between ShareInputScan nodes,
- *	 Materialize and Sort
- *
- * ----------------
- */
-typedef union GenericTupStore
-{
-	struct NTupleStore        *matstore;     /* Used by Materialize */
-	void	   *sortstore;	/* Used by Sort */
-} GenericTupStore;
 
 /* ----------------
  *	 MaterialState information
@@ -3078,21 +3069,6 @@ typedef struct AssertOpState
 	PlanState	ps;
 } AssertOpState;
 
-/*
- * ExecNode for RowTrigger.
- * This operator contains a Plannode that contains the triggers
- * to execute.
- */
-typedef struct RowTriggerState
-{
-	PlanState	ps;
-	TupleTableSlot *newTuple;	/* stores new values */
-	TupleTableSlot *oldTuple;	/* stores old values */
-	TupleTableSlot *triggerTuple;		/* stores returned values by the
-										 * trigger */
-
-} RowTriggerState;
-
 
 typedef enum MotionStateType
 {
@@ -3125,9 +3101,11 @@ typedef struct MotionState
 								 * each source segindex */
 
 	/* For sorted Motion recv */
-	struct binaryheap *tupleheap;
-	struct CdbTupleHeapInfo *tupleheap_entries;
-	struct CdbMergeComparatorContext *tupleheap_cxt;
+	int			numSortCols;
+	SortSupport sortKeys;
+	TupleTableSlot **slots;
+	struct binaryheap *tupleheap; /* binary heap of slot indices */
+	int			lastSortColIdx;
 
 	/* The following can be used for debugging, usage stats, etc.  */
 	int			numTuplesFromChild;	/* Number of tuples received from child */

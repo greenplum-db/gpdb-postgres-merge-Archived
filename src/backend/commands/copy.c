@@ -2117,19 +2117,6 @@ BeginCopy(ParseState *pstate,
 			cstate->queryDesc->plannedstmt->copyIntoClause =
 					MakeCopyIntoClause(glob_copystmt);
 
-		// GPDB_12_MERGE_FIXME: gpmon is going away soon anyway...
-#if 0
-		if (gp_enable_gpperfmon && Gp_role == GP_ROLE_DISPATCH)
-		{
-			gpmon_qlog_query_submit(cstate->queryDesc->gpmon_pkt);
-			gpmon_qlog_query_text(cstate->queryDesc->gpmon_pkt,
-					queryString,
-					application_name,
-					GetResqueueName(GetResQueueId()),
-					GetResqueuePriority(GetResQueueId()));
-		}
-#endif
-		
 		/* GPDB hook for collecting query info */
 		if (query_info_collect_hook)
 			(*query_info_collect_hook)(METRICS_QUERY_SUBMIT, cstate->queryDesc);

@@ -1760,8 +1760,6 @@ pg_SSPI_recvauth(Port *port)
 
 	CloseHandle(token);
 
-	CloseHandle(token);
-
 	if (!LookupAccountSid(NULL, tokenuser->User.Sid, accountname, &accountnamesize,
 						  domainname, &domainnamesize, &accountnameuse))
 		ereport(ERROR,

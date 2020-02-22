@@ -200,9 +200,6 @@ ExecEndSubqueryScan(SubqueryScanState *node)
 		ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
-	/* gpmon */
-	EndPlanStateGpmonPkt(&node->ss.ps);
-
 	/*
 	 * close down subquery
 	 */
@@ -236,8 +233,6 @@ ExecReScanSubqueryScan(SubqueryScanState *node)
 	 */
 	if (node->subplan->chgParam == NULL)
 		ExecReScan(node->subplan);
-
-	CheckSendPlanStateGpmonPkt(&node->ss.ps);
 }
 
 void

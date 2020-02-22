@@ -175,8 +175,6 @@ ExecEndUnique(UniqueState *node)
 	ExecFreeExprContext(&node->ps);
 
 	ExecEndNode(outerPlanState(node));
-
-	EndPlanStateGpmonPkt(&node->ps);
 }
 
 

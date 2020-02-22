@@ -46,7 +46,7 @@ extern Param *SS_make_initplan_output_param(PlannerInfo *root,
 extern void SS_make_initplan_from_plan(PlannerInfo *root,
 									   PlannerInfo *subroot, Plan *plan,
 									   PlanSlice *subslice,
-									   Param *prm);
+									   Param *prm, bool is_initplan_func_sublink);
 
 extern bool IsSubqueryCorrelated(Query *sq);
 extern bool IsSubqueryMultiLevelCorrelated(Query *sq);

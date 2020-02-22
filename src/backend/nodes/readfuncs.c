@@ -2900,6 +2900,8 @@ _readFunctionScan(void)
 
 	READ_NODE_FIELD(functions);
 	READ_BOOL_FIELD(funcordinality);
+	READ_NODE_FIELD(param);
+	READ_BOOL_FIELD(resultInTupleStore);
 
 	READ_DONE();
 }

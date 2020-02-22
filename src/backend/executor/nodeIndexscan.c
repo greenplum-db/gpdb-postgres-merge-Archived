@@ -821,8 +821,6 @@ ExecEndIndexScan(IndexScanState *node)
 		index_endscan(node->iss_ScanDesc);
 	if (indexRelationDesc)
 		index_close(indexRelationDesc, NoLock);
-
-	EndPlanStateGpmonPkt(&node->ss.ps);
 }
 
 /* ----------------------------------------------------------------

@@ -1765,8 +1765,6 @@ ExecEndMergeJoin(MergeJoinState *node)
 
 	MJ1_printf("ExecEndMergeJoin: %s\n",
 			   "node processing ended");
-
-	EndPlanStateGpmonPkt(&node->js.ps);
 }
 
 void

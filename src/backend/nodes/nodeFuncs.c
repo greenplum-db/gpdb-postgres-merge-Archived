@@ -2680,7 +2680,6 @@ expression_tree_mutator(Node *node,
 		case T_RangeTblRef:
 		case T_String:
 		case T_Null:
-		case T_RowTrigger:
 		case T_PartSelectedExpr:
 		case T_PartDefaultExpr:
 		case T_PartBoundExpr:

@@ -143,7 +143,6 @@ static const char *authmethodhost = NULL;
 static const char *authmethodlocal = NULL;
 static bool debug = false;
 static bool noclean = false;
-static char *backend_output = DEVNULL;
 
 /**
  * Build the minimal set of files needed for a mirror db.  Note that this could be removed
@@ -3303,7 +3302,7 @@ initialize_data_directory(void)
 		snprintf(cmd, sizeof(cmd),
 				 "\"%s\" %s template1 >%s",
 				 backend_exec, backend_options,
-				 backend_output);
+				 DEVNULL);
 	
 		PG_CMD_OPEN;
 	
@@ -3383,7 +3382,6 @@ main(int argc, char *argv[])
 		{"data-checksums", no_argument, NULL, 'k'},
         {"max_connections", required_argument, NULL, 1001},     /*CDB*/
         {"shared_buffers", required_argument, NULL, 1003},      /*CDB*/
-        {"backend_output", optional_argument, NULL, 1005},      /*CDB*/
 		{"allow-group-access", no_argument, NULL, 'g'},
 		{NULL, 0, NULL, 0}
 	};
@@ -3549,9 +3547,6 @@ main(int argc, char *argv[])
 				break;
 			case 1003:
                 n_buffers = parse_long(optarg, true, optname);
-				break;
-			case 1005:
-				backend_output = pg_strdup(optarg);
 				break;
 			case 12:
 				str_wal_segment_size_mb = pg_strdup(optarg);

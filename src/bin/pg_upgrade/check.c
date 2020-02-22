@@ -107,6 +107,10 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 	 */
 	check_greenplum();
 
+	/* GPDB 7 removed support for SHA-256 hashed passwords */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 905)
+		old_GPDB6_check_for_unsupported_sha256_password_hashes();
+
 	/*
 	 * Pre-PG 12 allowed tables to be declared WITH OIDS, which is not
 	 * supported anymore. Verify there are none, iff applicable.

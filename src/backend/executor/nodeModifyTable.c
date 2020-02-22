@@ -774,6 +774,7 @@ ExecDelete(ModifyTableState *mtstate,
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
 	/* BEFORE ROW DELETE Triggers */
+
 	/* GPDB_12_MERGE_FIXME: In PostgreSQL, if this is an UPDATE that
 	 * moves a tuple to another partition, do we fire the trigger?
 	 * In GPDB, should we? What if it's a split update?
@@ -1114,7 +1115,7 @@ ldelete:;
 	 * moves a tuple to another partition, do we fire the trigger?
 	 * In GPDB, should we? What if it's a split update?
 	 */
-	if (!RelationIsAppendOptimized(resultRelationDesc) && planGen == PLANGEN_PLANNER /* && !isUpdate */)
+	if (!RelationIsAppendOptimized(resultRelationDesc) /* && !isUpdate */)
 	{
 		ExecARDeleteTriggers(estate, resultRelInfo, tupleid, oldtuple,
 							 ar_delete_trig_tcs);

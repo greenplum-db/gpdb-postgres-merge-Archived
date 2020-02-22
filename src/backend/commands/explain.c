@@ -603,17 +603,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 								GetActiveSnapshot(), InvalidSnapshot,
 								dest, params, queryEnv, instrument_option);
 
-	if (gp_enable_gpperfmon && Gp_role == GP_ROLE_DISPATCH)
-	{
-		Assert(queryString);
-		gpmon_qlog_query_submit(queryDesc->gpmon_pkt);
-		gpmon_qlog_query_text(queryDesc->gpmon_pkt,
-				queryString,
-				application_name,
-				GetResqueueName(GetResQueueId()),
-				GetResqueuePriority(GetResQueueId()));
-	}
-
 	/* GPDB hook for collecting query info */
 	if (query_info_collect_hook)
 		(*query_info_collect_hook)(METRICS_QUERY_SUBMIT, queryDesc);
@@ -989,7 +978,7 @@ ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc)
 	 * removed.
 	 * GPDB_91_MERGE_FIXME: If the target is a partitioned table, we
 	 * should also report information on the triggers in the partitions.
-	 * I.e. we should scan the the 'ri_partition_hash' of each
+	 * I.e. we should scan the 'ri_partition_hash' of each
 	 * ResultRelInfo as well. This is somewhat academic, though, as long
 	 * as we don't support triggers in GPDB in general..
 	 */
@@ -1753,9 +1742,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_PartitionSelector:
 			pname = sname = "Partition Selector";
 			break;
-		case T_RowTrigger:
-			pname = sname = "RowTrigger";
- 			break;
 		default:
 			pname = sname = "???";
 			break;
@@ -3915,7 +3901,7 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 
 				/*
 				 * Unlike in a FunctionScan, in a TableFunctionScan the call
-				 * should always be a a function call of a single function.
+				 * should always be a function call of a single function.
 				 * Get the real name of the function.
 				 */
 				{
