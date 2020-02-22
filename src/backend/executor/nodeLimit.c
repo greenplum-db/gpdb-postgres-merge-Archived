@@ -40,7 +40,7 @@ static int64 compute_tuples_needed(LimitState *node);
  *		filtering on the stream of tuples returned by a subplan.
  * ----------------------------------------------------------------
  */
-static TupleTableSlot *				/* return: a tuple or NULL */
+static TupleTableSlot *			/* return: a tuple or NULL */
 ExecLimit_guts(PlanState *pstate)
 {
 	LimitState *node = castNode(LimitState, pstate);
@@ -238,21 +238,21 @@ ExecLimit_guts(PlanState *pstate)
 	return slot;
 }
 
-TupleTableSlot *
-ExecLimit(LimitState *node)
+static TupleTableSlot *
+ExecLimit(PlanState *node)
 {
 	TupleTableSlot *result;
 
 	result = ExecLimit_guts(node);
 
-	if (TupIsNull(result) && ScanDirectionIsForward(node->ps.state->es_direction))
+	if (TupIsNull(result) && ScanDirectionIsForward(node->state->es_direction))
 	{
 		/*
 		 * CDB: We'll read no more from inner subtree. To keep our sibling
 		 * QEs from being starved, tell source QEs not to clog up the
 		 * pipeline with our never-to-be-consumed data.
 		 */
-		ExecSquelchNode((PlanState *) node);
+		ExecSquelchNode(node);
 	}
 
 	return result;
