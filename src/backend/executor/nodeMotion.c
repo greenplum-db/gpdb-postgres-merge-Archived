@@ -961,10 +961,10 @@ CdbMergeComparator(Datum lhs, Datum rhs, void *context)
 		 * that all the columns we need are available directly in
 		 * the values/isnull arrays.
 		 */
-		datum1 = lslot->PRIVATE_tts_values[attno - 1];
-		isnull1 = lslot->PRIVATE_tts_isnull[attno - 1];
-		datum2 = rslot->PRIVATE_tts_values[attno - 1];
-		isnull2 = rslot->PRIVATE_tts_isnull[attno - 1];
+		datum1 = lslot->tts_values[attno - 1];
+		isnull1 = lslot->tts_isnull[attno - 1];
+		datum2 = rslot->tts_values[attno - 1];
+		isnull2 = rslot->tts_isnull[attno - 1];
 
 		compare = ApplySortComparator(datum1, isnull1,
 									  datum2, isnull2,

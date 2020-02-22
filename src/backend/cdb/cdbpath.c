@@ -2121,7 +2121,7 @@ cdbpath_dedup_fixup_joinrel(JoinPath *joinpath, CdbpathDedupFixupContext *ctx)
 
 	/* Update joinrel's targetlist and adjust row width. */
 	if (ctx->rowid_vars)
-		build_joinrel_tlist(ctx->root, rel, ctx->rowid_vars);
+		build_joinrel_tlist_for_exprs(ctx->root, rel, ctx->rowid_vars);
 }								/* cdbpath_dedup_fixup_joinrel */
 
 static void

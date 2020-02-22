@@ -344,6 +344,8 @@ extern Relids min_join_parameterization(PlannerInfo *root,
 										RelOptInfo *inner_rel);
 extern void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 								RelOptInfo *input_rel);
+extern void build_joinrel_tlist_for_exprs(PlannerInfo *root, RelOptInfo *joinrel,
+										  List *exprs);
 
 extern Var *cdb_define_pseudo_column(PlannerInfo   *root,
                          RelOptInfo    *rel,

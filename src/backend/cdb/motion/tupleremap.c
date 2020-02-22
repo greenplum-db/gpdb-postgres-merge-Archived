@@ -416,7 +416,7 @@ static Datum
 TRRemapRange(TupleRemapper *remapper, RangeRemapInfo *remapinfo,
 			 Datum value, bool *changed)
 {
-	RangeType  *range = DatumGetRangeType(value);
+	RangeType  *range = DatumGetRangeTypeP(value);
 	bool		bound_changed = false;
 	RangeBound	lower;
 	RangeBound	upper;
@@ -442,7 +442,7 @@ TRRemapRange(TupleRemapper *remapper, RangeRemapInfo *remapinfo,
 		/* Reserialize.  */
 		*changed = true;
 		range = range_serialize(remapinfo->typcache, &lower, &upper, empty);
-		return RangeTypeGetDatum(range);
+		return RangeTypePGetDatum(range);
 	}
 
 	/* Else just return the value as-is. */

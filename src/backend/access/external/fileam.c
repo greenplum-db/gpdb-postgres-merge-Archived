@@ -84,7 +84,7 @@ static void FunctionCallPrepareFormatter(FunctionCallInfoBaseData *fcinfo,
 
 static void open_external_readable_source(FileScanDesc scan, ExternalSelectDesc desc);
 static void open_external_writable_source(ExternalInsertDesc extInsertDesc);
-static int	external_getdata_callback(void *outbuf, int datasize, void *extra);
+static int	external_getdata_callback(void *outbuf, int minread, int maxread, void *extra);
 static int	external_getdata(URL_FILE *extfile, CopyState pstate, void *outbuf, int maxread);
 static void external_senddata(URL_FILE *extfile, CopyState pstate);
 static void external_scan_error_callback(void *arg);
@@ -1344,11 +1344,11 @@ open_external_writable_source(ExternalInsertDesc extInsertDesc)
  * for parsing.
  */
 static int
-external_getdata_callback(void *outbuf, int datasize, void *extra)
+external_getdata_callback(void *outbuf, int minread, int maxread, void *extra)
 {
 	FileScanDesc scan = (FileScanDesc) extra;
 
-	return external_getdata(scan->fs_file, scan->fs_pstate, outbuf, datasize);
+	return external_getdata(scan->fs_file, scan->fs_pstate, outbuf, maxread);
 }
 
 /*

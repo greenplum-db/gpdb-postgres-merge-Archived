@@ -1006,10 +1006,17 @@ void
 build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 					RelOptInfo *input_rel)
 {
+	return build_joinrel_tlist_for_exprs(root, joinrel, input_rel->reltarget->exprs);
+}
+
+void
+build_joinrel_tlist_for_exprs(PlannerInfo *root, RelOptInfo *joinrel,
+							  List *exprs)
+{
 	Relids		relids = joinrel->relids;
 	ListCell   *vars;
 
-	foreach(vars, input_rel->reltarget->exprs)
+	foreach(vars, exprs)
 	{
 		Var		   *var = (Var *) lfirst(vars);
 		RelOptInfo *baserel;

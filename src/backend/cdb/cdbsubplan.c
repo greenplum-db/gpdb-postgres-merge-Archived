@@ -116,7 +116,7 @@ preprocess_initplans(QueryDesc *queryDesc)
 
 		if (isParamExecutableNow(sps, estate->es_param_exec_vals))
 		{
-			SubPlan    *subplan = (SubPlan *) sps->xprstate.expr;
+			SubPlan    *subplan = sps->subplan;
 			int			qDispSliceId;
 
 			Assert(IsA(subplan, SubPlan));
@@ -204,7 +204,7 @@ addRemoteExecParamsToParamList(PlannedStmt *stmt, ParamListInfo extPrm, ParamExe
 	int			i;
 	int			nParams;
 	Plan	   *plan = stmt->planTree;
-	int			nIntPrm = stmt->nParamExec;
+	int			nIntPrm = list_length(stmt->paramExecTypes);
 
 	if (nIntPrm == 0)
 		return extPrm;
@@ -301,7 +301,7 @@ isParamExecutableNow(SubPlanState *spstate, ParamExecData *prmList)
 	if (!spstate)
 		return false;
 
-	List	   *extParam = ((SubPlan *) spstate->xprstate.expr)->extParam;
+	List	   *extParam = spstate->subplan->extParam;
 
 	if (extParam == NIL)
 		return true;

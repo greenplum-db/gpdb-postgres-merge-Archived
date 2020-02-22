@@ -170,7 +170,7 @@ ResLockAcquire(LOCKTAG *locktag, ResPortalIncrement *incrementSet)
 		locallock->nLocks = 0;
 		locallock->numLockOwners = 0;
 		locallock->maxLockOwners = 8;
-		locallock->holdsStrongLockCount = FALSE;
+		locallock->holdsStrongLockCount = false;
 		locallock->lockCleared = false;
 		locallock->lockOwners = NULL;
 		locallock->lockOwners = (LOCALLOCKOWNER *)
@@ -1207,7 +1207,7 @@ ResProcWakeup(PGPROC *proc, int waitStatus)
 	proc->waitStatus = waitStatus;
 
 	/* And awaken it */
-	PGSemaphoreUnlock(&proc->sem);
+	PGSemaphoreUnlock(proc->sem);
 
 	return retProc;
 }

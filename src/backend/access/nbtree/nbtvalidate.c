@@ -273,7 +273,7 @@ btree_or_bitmap_validate(Oid opclassoid, const char *amname)
 	{
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("operator family \"%as\" of access method %s is missing cross-type operator(s)",
+				 errmsg("operator family \"%s\" of access method %s is missing cross-type operator(s)",
 						opfamilyname, amname)));
 		result = false;
 	}

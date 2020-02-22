@@ -1396,6 +1396,8 @@ rte_param_walker(List *rtable, ParamWalkerContext *context)
 			case RTE_RELATION:
 			case RTE_VOID:
 			case RTE_CTE:
+			case RTE_RESULT:
+			case RTE_NAMEDTUPLESTORE:
 				/* nothing to do */
 				break;
 			case RTE_SUBQUERY:
@@ -1418,6 +1420,9 @@ rte_param_walker(List *rtable, ParamWalkerContext *context)
 					RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(func_lc);
 					param_walker(rtfunc->funcexpr, context);
 				}
+				break;
+			case RTE_TABLEFUNC:
+				param_walker((Node *) rte->tablefunc, context);
 				break;
 			case RTE_VALUES:
 				param_walker((Node *) rte->values_lists, context);

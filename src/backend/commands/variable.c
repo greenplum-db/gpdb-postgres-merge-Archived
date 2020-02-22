@@ -552,13 +552,6 @@ check_XactIsoLevel(int *newval, void **extra, GucSource source)
 		}
 	}
 
-	return true;
-}
-
-void
-assign_XactIsoLevel(const char *newval, void *extra)
-{
-	XactIsoLevel = *((int *) extra);
 	/*
 	 * GPDB_91_MERGE_FIXME: Prior to PostgreSQL 9.1, serializable isolation was
 	 * implemented as read committed.  True serializable isolation level is
@@ -571,31 +564,14 @@ assign_XactIsoLevel(const char *newval, void *extra)
 	 * transaction_deferrable guc via DtxContextInfo similar to
 	 * transaction_isolation.
 	 */
-	if (XactIsoLevel == XACT_SERIALIZABLE)
+	if (newXactIsoLevel == XACT_SERIALIZABLE)
 	{
 		elog(LOG, "serializable isolation requested, falling back to "
 			 "repeatable read until serializable is supported in Greenplum");
-		XactIsoLevel = XACT_REPEATABLE_READ;
+		*newval = XACT_REPEATABLE_READ;
 	}
-}
 
-const char *
-show_XactIsoLevel(void)
-{
-	/* We need this because we don't want to show "default". */
-	switch (XactIsoLevel)
-	{
-		case XACT_READ_UNCOMMITTED:
-			return "read uncommitted";
-		case XACT_READ_COMMITTED:
-			return "read committed";
-		case XACT_REPEATABLE_READ:
-			return "repeatable read";
-		case XACT_SERIALIZABLE:
-			return "serializable";
-		default:
-			return "bogus";
-	}
+	return true;
 }
 
 bool

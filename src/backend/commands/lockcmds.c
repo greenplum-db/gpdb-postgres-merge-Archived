@@ -107,7 +107,6 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 {
 	LOCKMODE	lockmode = *(LOCKMODE *) arg;
 	char		relkind;
-	char		relpersistence;
 	AclResult	aclresult;
 
 	if (!OidIsValid(relid))

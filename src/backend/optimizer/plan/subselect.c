@@ -1535,7 +1535,6 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	int			varno;
 	Relids		clause_varnos;
 	Relids		upper_varnos;
-	Node	   *boolConst;
 
 	Assert(sublink->subLinkType == EXISTS_SUBLINK);
 
@@ -1668,7 +1667,7 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	result->alias = NULL;
 	result->rtindex = 0;		/* we don't need an RTE for it */
 
-	return (Node *) result;
+	return result;
 }
 
 /*

@@ -7633,34 +7633,6 @@ make_result(List *tlist,
 }
 
 /*
- * make_repeat
- *	  Build a Repeat plan node
- */
-Repeat *
-make_repeat(List *tlist,
-			List *qual,
-			Expr *repeatCountExpr,
-			uint64 grouping,
-			Plan *subplan)
-{
-	Repeat	   *node = makeNode(Repeat);
-	Plan	   *plan = &node->plan;
-
-	Assert(subplan != NULL);
-	copy_plan_costsize(plan, subplan);
-
-	plan->targetlist = tlist;
-	plan->qual = qual;
-	plan->lefttree = subplan;
-	plan->righttree = NULL;
-
-	node->repeatCountExpr = repeatCountExpr;
-	node->grouping = grouping;
-
-	return node;
-}
-
-/*
  * make_project_set
  *	  Build a ProjectSet plan node
  */
@@ -8230,8 +8202,11 @@ append_initplan_for_function_scan(PlannerInfo *root, Path *best_path, Plan *plan
 	 */
 	prm = makeNode(Param);
 	prm->paramkind = PARAM_EXEC;
-	prm->paramid = root->glob->nParamExec++;
-	
+	prm->paramid = list_length(root->glob->paramExecTypes);
+
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 funcexpr->funcresulttype);
+
 	fsplan->param = prm;
 	fsplan->resultInTupleStore = true;
 

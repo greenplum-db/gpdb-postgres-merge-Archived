@@ -833,6 +833,8 @@ plan_tree_mutator(Node *node,
 				{
 					case RTE_RELATION:	/* ordinary relation reference */
 					case RTE_VOID:	/* deleted entry */
+					case RTE_RESULT:
+					case RTE_NAMEDTUPLESTORE:
 						/* No extras. */
 						break;
 
@@ -859,6 +861,11 @@ plan_tree_mutator(Node *node,
 					case RTE_TABLEFUNCTION:
 						newrte->subquery = copyObject(rte->subquery);
 						MUTATE(newrte->functions, rte->functions, List *);
+						break;
+
+					case RTE_TABLEFUNC:
+						newrte->tablefunc = copyObject(rte->tablefunc);
+						MUTATE(newrte->tablefunc, rte->tablefunc, TableFunc *);
 						break;
 
 					case RTE_VALUES:
@@ -934,7 +941,7 @@ plan_tree_mutator(Node *node,
 		case T_RangeTblRef:
 		case T_Aggref:
 		case T_WindowFunc:
-		case T_ArrayRef:
+		case T_SubscriptingRef:
 		case T_FuncExpr:
 		case T_OpExpr:
 		case T_DistinctExpr:
