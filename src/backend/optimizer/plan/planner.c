@@ -5312,8 +5312,7 @@ create_ordinary_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	 */
 	bool try_mpp_multistage_aggregation = false;
 	bool can_mpp_hash = false;
-	List *rollup_lists = NIL;
-	List *rollup_groupclauses = NIL;
+	List *rollups = NIL;
 
 	if (try_mpp_multistage_aggregation)
 		cdb_create_twostage_grouping_paths(root,
@@ -5327,8 +5326,7 @@ create_ordinary_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 										   agg_costs,
 										   &extra->agg_partial_costs,
 										   &extra->agg_final_costs,
-										   rollup_lists,
-										   rollup_groupclauses);
+										   rollups);
 
 	/*
 	 * If there is an FDW that's responsible for all baserels of the query,
