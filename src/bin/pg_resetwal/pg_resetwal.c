@@ -77,13 +77,9 @@ static uint32 minXlogTli = 0;
 static XLogSegNo minXlogSegNo = 0;
 static int	WalSegSz;
 static int	set_wal_segsize;
-
-static void CheckDataVersion(void);
-<<<<<<< HEAD:src/bin/pg_resetxlog/pg_resetxlog.c
 static uint64 system_identifier = 0;
 
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/bin/pg_resetwal/pg_resetwal.c
+static void CheckDataVersion(void);
 static bool ReadControlFile(void);
 static void GuessControlValues(void);
 static void PrintControlValues(bool guessed);
@@ -107,16 +103,6 @@ static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, 
 int
 main(int argc, char *argv[])
 {
-<<<<<<< HEAD:src/bin/pg_resetxlog/pg_resetxlog.c
-	/*
-	 * GPDB_MERGE_110_FIXME: The option numbers below start at 1000 to avoid
-	 * conflicts with upstream. When e22b27f0cb3e arrives, you should be able to
-	 * merge this cleanly into the upstream long_options structure.
-	 */
-	static struct option long_options[] = {
-		{"binary-upgrade", no_argument, NULL, 1000},
-		{"system-identifier", required_argument, NULL, 1001},
-=======
 	static struct option long_options[] = {
 		{"commit-timestamp-ids", required_argument, NULL, 'c'},
 		{"pgdata", required_argument, NULL, 'D'},
@@ -129,7 +115,13 @@ main(int argc, char *argv[])
 		{"multixact-offset", required_argument, NULL, 'O'},
 		{"next-transaction-id", required_argument, NULL, 'x'},
 		{"wal-segsize", required_argument, NULL, 1},
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/bin/pg_resetwal/pg_resetwal.c
+
+		/*
+		 * GPDB: The option numbers below start at 1000 to avoid conflicts with
+		 * upstream.
+		 */
+		{"binary-upgrade", no_argument, NULL, 1000},
+		{"system-identifier", required_argument, NULL, 1001},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -157,26 +149,18 @@ main(int argc, char *argv[])
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-<<<<<<< HEAD:src/bin/pg_resetxlog/pg_resetxlog.c
-			puts("pg_resetxlog (Greenplum Database) " PG_VERSION);
+			puts("pg_resetwal (PostgreSQL) " PG_VERSION);
 			exit(0);
 		}
 		if (strcmp(argv[1], "--gp-version") == 0)
 		{
 			puts("pg_resetxlog (Greenplum Database) " GP_VERSION);
-=======
-			puts("pg_resetwal (PostgreSQL) " PG_VERSION);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/bin/pg_resetwal/pg_resetwal.c
 			exit(0);
 		}
 	}
 
 
-<<<<<<< HEAD:src/bin/pg_resetxlog/pg_resetxlog.c
 	while ((c = getopt_long(argc, argv, "c:D:e:fl:m:no:r:O:x:k:", long_options, NULL)) != -1)
-=======
-	while ((c = getopt_long(argc, argv, "c:D:e:fl:m:no:O:x:", long_options, NULL)) != -1)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/bin/pg_resetwal/pg_resetwal.c
 	{
 		switch (c)
 		{
@@ -430,6 +414,14 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	/* GPDB: only allow setting --system-identifier during upgrade. */
+	if (!binary_upgrade && system_identifier)
+	{
+		fprintf(stderr, _("%s: setting --system-identifier is allowed only during binary upgrade\n"),
+				progname);
+		exit(1);
+	}
+
 	/*
 	 * Don't allow pg_resetwal to be run as root, to avoid overwriting the
 	 * ownership of files in the data directory. We need only check for root
@@ -446,17 +438,6 @@ main(int argc, char *argv[])
 	}
 #endif
 
-<<<<<<< HEAD:src/bin/pg_resetxlog/pg_resetxlog.c
-	/* GPDB: only allow setting --system-identifier during upgrade. */
-	if (!binary_upgrade && system_identifier)
-	{
-		fprintf(stderr, _("%s: setting --system-identifier is allowed only during binary upgrade\n"),
-				progname);
-		exit(1);
-	}
-
-	get_restricted_token(progname);
-=======
 	get_restricted_token();
 
 	/* Set mask based on PGDATA permissions */
@@ -468,7 +449,6 @@ main(int argc, char *argv[])
 	}
 
 	umask(pg_mode_mask);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/bin/pg_resetwal/pg_resetwal.c
 
 	if (chdir(DataDir) < 0)
 	{
@@ -707,70 +687,6 @@ CheckDataVersion(void)
 
 	if ((ver_fd = fopen(ver_file, "r")) == NULL)
 	{
-		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
-				progname, ver_file, strerror(errno));
-		exit(1);
-	}
-
-	/* version number has to be the first line read */
-	if (!fgets(rawline, sizeof(rawline), ver_fd))
-	{
-		if (!ferror(ver_fd))
-		{
-			fprintf(stderr, _("%s: unexpected empty file \"%s\"\n"),
-					progname, ver_file);
-		}
-		else
-		{
-			fprintf(stderr, _("%s: could not read file \"%s\": %s\n"),
-					progname, ver_file, strerror(errno));
-		}
-		exit(1);
-	}
-
-	/* remove trailing newline, handling Windows newlines as well */
-	len = strlen(rawline);
-	if (len > 0 && rawline[len - 1] == '\n')
-	{
-		rawline[--len] = '\0';
-		if (len > 0 && rawline[len - 1] == '\r')
-			rawline[--len] = '\0';
-	}
-
-	if (strcmp(rawline, PG_MAJORVERSION) != 0)
-	{
-		fprintf(stderr, _("%s: data directory is of wrong version\n"
-						  "File \"%s\" contains \"%s\", which is not compatible with this program's version \"%s\".\n"),
-				progname, ver_file, rawline, PG_MAJORVERSION);
-		exit(1);
-	}
-
-	fclose(ver_fd);
-}
-
-
-/*
- * Look at the version string stored in PG_VERSION and decide if this utility
- * can be run safely or not.
- *
- * We don't want to inject pg_control and WAL files that are for a different
- * major version; that can't do anything good.  Note that we don't treat
- * mismatching version info in pg_control as a reason to bail out, because
- * recovering from a corrupted pg_control is one of the main reasons for this
- * program to exist at all.  However, PG_VERSION is unlikely to get corrupted,
- * and if it were it would be easy to fix by hand.  So let's make this check
- * to prevent simple user errors.
- */
-static void
-CheckDataVersion(void)
-{
-	const char *ver_file = "PG_VERSION";
-	FILE	   *ver_fd;
-	char		rawline[64];
-	int			len;
-
-	if ((ver_fd = fopen(ver_file, "r")) == NULL)
-	{
 		pg_log_error("could not open file \"%s\" for reading: %m",
 					 ver_file);
 		exit(1);
@@ -882,12 +798,7 @@ ReadControlFile(void)
 	}
 
 	/* Looks like it's a mess. */
-<<<<<<< HEAD:src/bin/pg_resetxlog/pg_resetxlog.c
-	fprintf(stderr, _("%s: pg_control exists but is broken or wrong version; ignoring it\n"),
-			progname);
-=======
 	pg_log_warning("pg_control exists but is broken or wrong version; ignoring it");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/bin/pg_resetwal/pg_resetwal.c
 	return false;
 }
 
@@ -1464,11 +1375,7 @@ WriteEmptyXLOG(void)
 
 	/* Fill the rest of the file with zeroes */
 	memset(buffer.data, 0, XLOG_BLCKSZ);
-<<<<<<< HEAD:src/bin/pg_resetxlog/pg_resetxlog.c
-	for (nbytes = XLOG_BLCKSZ; nbytes < XLogSegSize; nbytes += XLOG_BLCKSZ)
-=======
 	for (nbytes = XLOG_BLCKSZ; nbytes < WalSegSz; nbytes += XLOG_BLCKSZ)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/bin/pg_resetwal/pg_resetwal.c
 	{
 		errno = 0;
 		if (write(fd, buffer.data, XLOG_BLCKSZ) != XLOG_BLCKSZ)
@@ -1604,42 +1511,23 @@ usage(void)
 	printf(_("%s resets the PostgreSQL write-ahead log.\n\n"), progname);
 	printf(_("Usage:\n  %s [OPTION]... DATADIR\n\n"), progname);
 	printf(_("Options:\n"));
-<<<<<<< HEAD:src/bin/pg_resetxlog/pg_resetxlog.c
-	printf(_("  -c XID,XID       set oldest and newest transactions bearing commit timestamp\n"));
-	printf(_("                   (zero in either value means no change)\n"));
-	printf(_(" [-D] DATADIR      data directory\n"));
-	printf(_("  -e XIDEPOCH      set next transaction ID epoch\n"));
-	printf(_("  -f               force update to be done\n"));
-	printf(_("  -k data_checksum_version     set data_checksum_version\n"));
-	printf(_("  -l XLOGFILE      force minimum WAL starting location for new transaction log\n"));
-	printf(_("  -m MXID,MXID     set next and oldest multitransaction ID\n"));
-	printf(_("  -n               no update, just show what would be done (for testing)\n"));
-	printf(_("  -o OID           set next OID\n"));
-	printf(_("  -r RELFILENODE  set next RELFILENODE\n"));
-	printf(_("  -O OFFSET        set next multitransaction offset\n"));
-	printf(_("  -V, --version    output version information, then exit\n"));
-	printf(_("  -x XID           set next transaction ID\n"));
-	printf(_("  --system-identifier=ID\n"
-			 "                   set database system identifier\n"));
-	printf(_("  -?, --help       show this help, then exit\n"));
-	printf(_("  --gp-version    output Greenplum version information, then exit\n"));
-	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
 	printf(_("  -c, --commit-timestamp-ids=XID,XID\n"
 			 "                                 set oldest and newest transactions bearing\n"
 			 "                                 commit timestamp (zero means no change)\n"));
 	printf(_(" [-D, --pgdata=]DATADIR          data directory\n"));
 	printf(_("  -e, --epoch=XIDEPOCH           set next transaction ID epoch\n"));
 	printf(_("  -f, --force                    force update to be done\n"));
+	printf(_("  -k data_checksum_version       set data_checksum_version\n"));
 	printf(_("  -l, --next-wal-file=WALFILE    set minimum starting location for new WAL\n"));
 	printf(_("  -m, --multixact-ids=MXID,MXID  set next and oldest multitransaction ID\n"));
 	printf(_("  -n, --dry-run                  no update, just show what would be done\n"));
 	printf(_("  -o, --next-oid=OID             set next OID\n"));
 	printf(_("  -O, --multixact-offset=OFFSET  set next multitransaction offset\n"));
+	printf(_("  -r RELFILENODE                 set next RELFILENODE\n"));
+	printf(_("      --system-identifier=ID     set database system identifier\n"));
 	printf(_("  -V, --version                  output version information, then exit\n"));
 	printf(_("  -x, --next-transaction-id=XID  set next transaction ID\n"));
 	printf(_("      --wal-segsize=SIZE         size of WAL segments, in megabytes\n"));
 	printf(_("  -?, --help                     show this help, then exit\n"));
-	printf(_("\nReport bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196:src/bin/pg_resetwal/pg_resetwal.c
+	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
 }
