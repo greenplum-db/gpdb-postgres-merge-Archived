@@ -1659,13 +1659,13 @@ heapam_index_build_range_scan(Relation heapRelation,
 									   root_offsets[offnum - 1]);
 
 			/* Call the AM's callback routine to process the tuple */
-			callback(indexRelation, &rootTuple, values, isnull, tupleIsAlive,
+			callback(indexRelation, &rootTuple.t_self, values, isnull, tupleIsAlive,
 					 callback_state);
 		}
 		else
 		{
 			/* Call the AM's callback routine to process the tuple */
-			callback(indexRelation, heapTuple, values, isnull, tupleIsAlive,
+			callback(indexRelation, &heapTuple->t_self, values, isnull, tupleIsAlive,
 					 callback_state);
 		}
 	}

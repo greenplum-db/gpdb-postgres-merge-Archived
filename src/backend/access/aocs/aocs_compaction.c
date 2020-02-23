@@ -271,12 +271,12 @@ AOCSMoveTuple(TupleTableSlot *slot,
 							  slot->tts_values,
 							  slot->tts_isnull,
 							  &newAoTupleId);
+	memcpy(&slot->tts_tid, &newAoTupleId, sizeof(ItemPointerData));
 
 	/* insert index' tuples if needed */
 	if (resultRelInfo->ri_NumIndices > 0)
 	{
-		ExecInsertIndexTuples(slot, (ItemPointer) &newAoTupleId, estate,
-							  false, NIL);
+		ExecInsertIndexTuples(slot, estate, false, false, NIL);
 		ResetPerTupleExprContext(estate);
 	}
 

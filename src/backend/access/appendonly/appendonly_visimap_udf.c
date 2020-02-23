@@ -340,7 +340,7 @@ gp_aovisimap_entry(PG_FUNCTION_ARGS)
 
 		Relation	parentRelation;
 
-		IndexScanDesc indexScan;
+		SysScanDesc indexScan;
 
 		text	   *bitmapBuffer;
 	} Context;
