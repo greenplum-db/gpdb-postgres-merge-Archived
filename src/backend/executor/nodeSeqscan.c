@@ -32,6 +32,7 @@
 #include "executor/execdebug.h"
 #include "executor/nodeSeqscan.h"
 #include "utils/rel.h"
+#include "nodes/nodeFuncs.h"
 
 static void InitScanRelation(SeqScanState *node, EState *estate, int eflags, Relation currentRelation);
 static TupleTableSlot *SeqNext(SeqScanState *node);
@@ -333,8 +334,14 @@ InitAOCSScanOpaque(SeqScanState *scanstate, Relation currentRelation)
 	if (i == ncol)
 		proj[0] = true;
 
+	/*
+	 * GPDB_12_MERGE_FIXME: how to do this stuff now? Should we backport the
+	 * patches that we submitted for PostgreSQL v13 to get the needed columns?
+	 */
+#if 0
 	scanstate->ss_aocs_ncol = ncol;
 	scanstate->ss_aocs_proj = proj;
+#endif
 }
 
 /* ----------------------------------------------------------------
