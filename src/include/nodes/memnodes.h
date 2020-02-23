@@ -63,13 +63,16 @@ typedef struct MemoryContextMethods
 	void		(*free_p) (MemoryContext context, void *pointer);
 	void	   *(*realloc) (MemoryContext context, void *pointer, Size size);
 	void		(*reset) (MemoryContext context);
-	void		(*delete_context) (MemoryContext context);
+	void		(*delete_context) (MemoryContext context, MemoryContext parent);
 	Size		(*get_chunk_space) (MemoryContext context, void *pointer);
 	bool		(*is_empty) (MemoryContext context);
 	void		(*stats) (MemoryContext context,
 						  MemoryStatsPrintFunc printfunc, void *passthru,
 						  MemoryContextCounters *totals);
-	void		(*release_accounting)(MemoryContext context);
+	void		(*declare_accounting_root) (MemoryContext context);
+	Size		(*get_current_usage) (MemoryContext context);
+	Size		(*get_peak_usage) (MemoryContext context);
+	Size		(*set_peak_usage) (MemoryContext context, Size nbytes);
 #ifdef MEMORY_CONTEXT_CHECKING
 	void		(*check) (MemoryContext context);
 #endif
@@ -90,15 +93,11 @@ typedef struct MemoryContextData
 	const char *name;			/* context name (just for debugging) */
 	const char *ident;			/* context ID if any (just for debugging) */
 
-    /* CDB: Lifetime cumulative stats for this context and all descendants */
-    uint64      allBytesAlloc;  /* bytes allocated from lower level mem mgr */
-    uint64      allBytesFreed;  /* bytes returned to lower level mem mgr */
-    Size        maxBytesHeld;   /* high-water mark for total bytes held */
-    Size        localMinHeld;   /* low-water mark since last increase in hwm */
 #ifdef CDB_PALLOC_CALLER_ID
     const char *callerFile;     /* __FILE__ of most recent caller */
     int         callerLine;     /* __LINE__ of most recent caller */
 #endif
+
 	MemoryContextCallback *reset_cbs;	/* list of reset/delete callbacks */
 } MemoryContextData;
 

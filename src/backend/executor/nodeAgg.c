@@ -310,7 +310,6 @@ static void lookup_hash_entries(AggState *aggstate);
 static TupleTableSlot *agg_retrieve_direct(AggState *aggstate);
 static void agg_fill_hash_table(AggState *aggstate);
 static TupleTableSlot *agg_retrieve_hash_table(AggState *aggstate);
-static void ExecAggExplainEnd(PlanState *planstate, struct StringInfoData *buf);
 static void ExecEagerFreeAgg(AggState *node);
 static TupleTableSlot *agg_retrieve_hash_table_internal(AggState *aggstate);
 static void build_pertrans_for_aggref(AggStatePerTrans pertrans,
@@ -1154,7 +1153,7 @@ finalize_aggregate(AggState *aggstate,
 	 * If result is pass-by-ref, make sure it is in the right context.
 	 */
 	if (!peragg->resulttypeByVal && !*resultIsNull &&
-		!MemoryContextContainsGenericAllocation(CurrentMemoryContext,
+		!MemoryContextContains(CurrentMemoryContext,
 							   DatumGetPointer(*resultVal)))
 		*resultVal = datumCopy(*resultVal,
 							   peragg->resulttypeByVal,
@@ -1215,7 +1214,7 @@ finalize_partialaggregate(AggState *aggstate,
 
 	/* If result is pass-by-ref, make sure it is in the right context. */
 	if (!peragg->resulttypeByVal && !*resultIsNull &&
-		!MemoryContextContainsGenericAllocation(CurrentMemoryContext,
+		!MemoryContextContains(CurrentMemoryContext,
 							   DatumGetPointer(*resultVal)))
 		*resultVal = datumCopy(*resultVal,
 							   peragg->resulttypeByVal,
@@ -3798,29 +3797,6 @@ ExecReScanAgg(AggState *node)
 	if (node->ss.ps.lefttree->chgParam == NULL)
 		ExecReScan(node->ss.ps.lefttree);
 }
-
-
-/***********************************************************************
- * API exposed to aggregate functions
- ***********************************************************************/
-
-
-/*
- * ExecAggExplainEnd
- *		Called before ExecutorEnd to finish EXPLAIN ANALYZE reporting.
- */
-void
-ExecAggExplainEnd(PlanState *planstate, struct StringInfoData *buf)
-{
-	//AggState   *aggstate = (AggState *) planstate;
-
-	/* Report executor memory used by our memory context. */
-
-	// FIXME: This isn't so simple anymore, each grouping set has its
-	// own context. Sum them all up?
-	//planstate->instrument->execmemused +=
-	//	(double) MemoryContextGetPeakSpace(aggstate->aggcontext);
-}	/* ExecAggExplainEnd */
 
 
 /***********************************************************************

@@ -308,11 +308,7 @@ planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		if (gp_log_optimization_time)
 			INSTR_TIME_SET_CURRENT(starttime);
 
-		START_MEMORY_ACCOUNT(MemoryAccounting_CreateAccount(0, MEMORY_OWNER_TYPE_PlannerHook));
-		{
-			result = (*planner_hook) (parse, cursorOptions, boundParams);
-		}
-		END_MEMORY_ACCOUNT();
+		result = (*planner_hook) (parse, cursorOptions, boundParams);
 
 		if (gp_log_optimization_time)
 		{
@@ -343,7 +339,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	PlannerConfig *config;
 	instr_time		starttime;
 	instr_time		endtime;
-	MemoryAccountIdType curMemoryAccountId;
 
 	/*
 	 * Use ORCA only if it is enabled and we are in a master QD process.
@@ -382,14 +377,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 */
 	if (gp_log_optimization_time)
 		INSTR_TIME_SET_CURRENT(starttime);
-
-	curMemoryAccountId = MemoryAccounting_GetOrCreatePlannerAccount();
-	/*
-	 * Incorrectly indented on purpose to avoid re-indenting an entire upstream
-	 * function
-	 */
-	START_MEMORY_ACCOUNT(curMemoryAccountId);
-	{
 
 	/*
 	 * GPDB_12_MERGE_FIXME: This was removed in upstream commit ab1f0c8225.
@@ -814,9 +801,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		INSTR_TIME_SUBTRACT(endtime, starttime);
 		elog(LOG, "Planner Time: %.3f ms", INSTR_TIME_GET_MILLISEC(endtime));
 	}
-
-	}
-	END_MEMORY_ACCOUNT();
 
 	return result;
 }

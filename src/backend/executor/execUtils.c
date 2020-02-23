@@ -128,6 +128,7 @@ CreateExecutorState(void)
 	qcontext = AllocSetContextCreate(CurrentMemoryContext,
 									 "ExecutorState",
 									 ALLOCSET_DEFAULT_SIZES);
+	MemoryContextDeclareAccountingRoot(qcontext);
 
 	/*
 	 * Make the EState node within the per-query context.  This way, we don't
@@ -1739,13 +1740,6 @@ void mppExecutorCleanup(QueryDesc *queryDesc)
 	}
 }
 
-void ResetExprContext(ExprContext *econtext)
-{
-	MemoryContext memctxt = econtext->ecxt_per_tuple_memory;
-	if(memctxt->allBytesAlloc - memctxt->allBytesFreed > 50000)
-		MemoryContextReset(memctxt);
-}
-
 /**
  * This method is used to determine how much memory a specific operator
  * is supposed to use (in KB). 
@@ -1765,13 +1759,7 @@ uint64 PlanStateOperatorMemKB(const PlanState *ps)
 	}
 	else
 	{
-		if (IsA(ps, AggState))
-		{
-			/* Retrieve all relinquished memory (quota the other node not using) */
-			result = ps->plan->operatorMemKB + (MemoryAccounting_RequestQuotaIncrease() >> 10);
-		}
-		else
-			result = ps->plan->operatorMemKB;
+		result = ps->plan->operatorMemKB;
 	}
 	
 	return result;

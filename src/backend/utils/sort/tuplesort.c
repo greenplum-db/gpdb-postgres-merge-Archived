@@ -697,6 +697,7 @@ tuplesort_begin_common(int workMem, SortCoordinate coordinate,
 	sortcontext = AllocSetContextCreate(CurrentMemoryContext,
 										"TupleSort main",
 										ALLOCSET_DEFAULT_SIZES);
+	MemoryContextDeclareAccountingRoot(sortcontext);
 
 	/*
 	 * Caller tuple (e.g. IndexTuple) memory context.
