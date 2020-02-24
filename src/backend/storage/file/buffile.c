@@ -423,7 +423,8 @@ BufFileClose(BufFile *file)
 void 
 BufFileSetIsTempFile(BufFile *file, bool isTempFile)
 {
-	FileSetIsTempFile(file->file, isTempFile);
+	elog(ERROR, "GPDB_12_MERGE_FIXME: BufFileSetIsTempFile is broken");
+	//FileSetIsTempFile(file->file, isTempFile);
 }
 
 /*
