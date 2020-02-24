@@ -1510,8 +1510,11 @@ ExecHashJoinSaveTuple(PlanState *ps, MinimalTuple tuple, uint32 hashvalue,
 		BufFilePledgeSequential(file);	/* allow compression */
 		*fileptr = file;
 
+		/* GPDB_12_MERGE_FIXME: BufFileGetFilename() was lost in merge */
+#if 0
 		elog(gp_workfile_caching_loglevel, "create batch file %s",
 			 BufFileGetFilename(file));
+#endif
 
 		MemoryContextSwitchTo(oldcxt);
 	}

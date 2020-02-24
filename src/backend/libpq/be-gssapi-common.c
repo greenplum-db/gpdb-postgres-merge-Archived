@@ -20,6 +20,7 @@
  * Helper function for getting all strings of a GSSAPI error (of specified
  * stat).  Call once for GSS_CODE and once for MECH_CODE.
  */
+#if 0
 static void
 pg_GSS_error_int(char *s, size_t len, OM_uint32 stat, int type)
 {
@@ -45,6 +46,7 @@ pg_GSS_error_int(char *s, size_t len, OM_uint32 stat, int type)
 		ereport(WARNING,
 				(errmsg_internal("incomplete GSS error report")));
 }
+#endif
 
 /*
  * Fetch and report all error messages from GSSAPI.  To avoid allocation,

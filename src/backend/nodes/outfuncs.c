@@ -6324,8 +6324,6 @@ nodeToString(const void *obj)
 	return str.data;
 }
 
-#endif /* COMPILING_BINARY_FUNCS */
-
 /*
  * bmsToString -
  *	   returns the ascii representation of the Bitmapset as a palloc'd string
@@ -6340,3 +6338,5 @@ bmsToString(const Bitmapset *bms)
 	outBitmapset(&str, bms);
 	return str.data;
 }
+
+#endif /* COMPILING_BINARY_FUNCS */

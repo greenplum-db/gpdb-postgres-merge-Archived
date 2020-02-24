@@ -82,6 +82,30 @@ const TupleTableSlotOps TTSOpsMemTuple = {
 #endif
 };
 
+MemTuple
+ExecFetchSlotMemTuple(TupleTableSlot *slot, bool *shouldFree)
+{
+	/* GPDB_12_MERGE_FIXME: dummy placeholder, to placate linker */
+	elog(ERROR, "ExecFetchSlotMemTuple not implemented");
+}
+
+TupleTableSlot *
+ExecStoreMemTuple(MemTuple tuple,
+				  TupleTableSlot *slot,
+				  bool shouldFree)
+{
+	/* GPDB_12_MERGE_FIXME: dummy placeholder, to placate linker */
+	elog(ERROR, "ExecStoreMemTuple not implemented");
+}
+
+MemTuple
+ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt,
+					   char *dest, unsigned int *len)
+{
+	/* GPDB_12_MERGE_FIXME: dummy placeholder, to placate linker */
+	elog(ERROR, "ExecCopySlotMemTupleTo not implemented");
+}
+
 static const TupleTableSlotOps *
 appendonly_slot_callbacks(Relation relation)
 {
@@ -1366,7 +1390,7 @@ static const TableAmRoutine appendonly_methods = {
 	.relation_nontransactional_truncate = appendonly_relation_nontransactional_truncate,
 	.relation_copy_data = appendonly_relation_copy_data,
 	.relation_copy_for_cluster = appendonly_relation_copy_for_cluster,
-	.relation_vacuum = appendonly_vacuum_rel,
+	//.relation_vacuum = appendonly_vacuum_rel,
 	.scan_analyze_next_block = appendonly_scan_analyze_next_block,
 	.scan_analyze_next_tuple = appendonly_scan_analyze_next_tuple,
 	.index_build_range_scan = appendonly_index_build_range_scan,
@@ -1387,4 +1411,13 @@ Datum
 appendoptimized_tableam_handler(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(&appendonly_methods);
+}
+
+
+/* GPDB_12_MERGE_FIXME: this doesn't belong here, but let's just make the
+ * linker happy for now.
+ */
+void
+ResultRelInfoSetSegno(ResultRelInfo *resultRelInfo, List *mapping)
+{
 }

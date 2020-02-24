@@ -25,6 +25,7 @@
 #include "access/genam.h"
 #include "access/bitmap.h"
 #include "access/bitmap_private.h"
+#include "access/reloptions.h"
 #include "access/nbtree.h"		/* for btree_or_bitmap_validate() */
 #include "access/tableam.h"
 #include "access/xact.h"
@@ -1090,6 +1091,12 @@ GetBitmapIndexAuxOids(Relation index, Oid *heapId, Oid *indexId)
 	*indexId = metapage->bm_lov_indexId;
 
 	_bitmap_relbuf(metabuf);
+}
+
+bytea *
+bmoptions(Datum reloptions, bool validate)
+{
+	return default_reloptions(reloptions, validate, RELOPT_KIND_BITMAP);
 }
 
 /*

@@ -1271,6 +1271,12 @@ addRangeTableEntry(ParseState *pstate,
 	rte->rtekind = RTE_RELATION;
 
 	/*
+	 * Identify the type of lock we'll need on this relation.  It's not the
+	 * query's target table (that case is handled elsewhere), so we need
+	 * either RowShareLock if it's locked by FOR UPDATE/SHARE, or plain
+	 * AccessShareLock otherwise.
+	 */
+	/*
 	 * Greenplum specific behavior:
 	 * The implementation of select statement with locking clause
 	 * (for update | no key update | share | key share) in postgres
@@ -1312,14 +1318,8 @@ addRangeTableEntry(ParseState *pstate,
 	 	/* if user says NOWAIT, report an error if we cannot lock the table */
 		nowait = locking->waitPolicy == LockWaitError ? true : false;
 	}
-
-	/*
-	 * Identify the type of lock we'll need on this relation.  It's not the
-	 * query's target table (that case is handled elsewhere), so we need
-	 * either RowShareLock if it's locked by FOR UPDATE/SHARE, or plain
-	 * AccessShareLock otherwise.
-	 */
-	lockmode = isLockedRefname(pstate, refname) ? RowShareLock : AccessShareLock;
+	else
+		lockmode = AccessShareLock;
 
 	/*
 	 * Get the rel's OID.  This access also ensures that we have an up-to-date

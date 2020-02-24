@@ -3861,10 +3861,13 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 			objecttag = "Relation Name";
 
 			/* Print dynamic scan id for dynamic scan operators */
+/* GPDB_12_MERGE_FIXME */
+#if 0
 			if (isDynamicScan(plan))
 			{
 				dynamicScanId = DynamicScan_GetDynamicScanIdPrintable(plan);
 			}
+#endif
 
 			break;
 		case T_FunctionScan:

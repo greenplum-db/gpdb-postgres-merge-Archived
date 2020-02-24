@@ -214,6 +214,8 @@ ExecReScan(PlanState *node)
 			ExecReScanIndexScan((IndexScanState *) node);
 			break;
 
+/* GPDB_12_MERGE_FIXME */
+#if 0
 		case T_DynamicSeqScanState:
 			ExecReScanDynamicSeqScan((DynamicSeqScanState *) node);
 			break;
@@ -221,7 +223,8 @@ ExecReScan(PlanState *node)
 		case T_DynamicIndexScanState:
 			ExecReScanDynamicIndex((DynamicIndexScanState *) node);
 			break;
-
+#endif
+			
 		case T_IndexOnlyScanState:
 			ExecReScanIndexOnlyScan((IndexOnlyScanState *) node);
 			break;
@@ -230,18 +233,24 @@ ExecReScan(PlanState *node)
 			ExecReScanBitmapIndexScan((BitmapIndexScanState *) node);
 			break;
 
+/* GPDB_12_MERGE_FIXME */
+#if 0
 		case T_DynamicBitmapIndexScanState:
 			ExecReScanDynamicBitmapIndex((DynamicBitmapIndexScanState *) node);
 			break;
-
+#endif
+			
 		case T_BitmapHeapScanState:
 			ExecReScanBitmapHeapScan((BitmapHeapScanState *) node);
 			break;
 
+/* GPDB_12_MERGE_FIXME */
+#if 0
 		case T_DynamicBitmapHeapScanState:
 			ExecReScanDynamicBitmapHeapScan((DynamicBitmapHeapScanState *) node);
 			break;
-
+#endif
+			
 		case T_TidScanState:
 			ExecReScanTidScan((TidScanState *) node);
 			break;

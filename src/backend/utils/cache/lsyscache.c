@@ -4348,11 +4348,12 @@ child_distribution_mismatch(Relation rel)
  *  Return true if the table is partitioned and any of the child partitions
  *  have a trigger of the given type.
  */
-/* GPDB_12_MERGE_FIXME */
-#if 0
 bool
 child_triggers(Oid relationId, int32 triggerType)
 {
+/* GPDB_12_MERGE_FIXME */
+	return false;
+#if 0
 	Assert(InvalidOid != relationId);
 	if (PART_STATUS_NONE == rel_part_status(relationId))
 	{
@@ -4400,8 +4401,8 @@ child_triggers(Oid relationId, int32 triggerType)
 	
 	/* no child triggers matching the given type */
 	return found;
-}
 #endif
+}
 
 /*				---------- PG_INDEX CACHE ----------				 */
 
