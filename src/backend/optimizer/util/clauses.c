@@ -5832,3 +5832,36 @@ should_eval_stable_functions(PlannerInfo *root)
 	 */
 	return root->parse->rtable || root->query_level > 1;
 }
+
+
+/*
+ * get_leftscalararrayop
+ *
+ * Returns the left operand of a clause of the form (scalar op ANY/ALL (array))
+ */
+Node *
+get_leftscalararrayop(const Expr *clause)
+{
+	const ScalarArrayOpExpr *expr = (const ScalarArrayOpExpr *) clause;
+
+	if (expr->args != NIL)
+		return linitial(expr->args);
+	else
+		return NULL;
+}
+
+/*
+ * get_rightscalararrayop
+ *
+ * Returns the right operand in a clause of the form (scalar op ANY/ALL (array)).
+ */
+Node *
+get_rightscalararrayop(const Expr *clause)
+{
+	const ScalarArrayOpExpr *expr = (const ScalarArrayOpExpr *) clause;
+
+	if (list_length(expr->args) >= 2)
+		return lsecond(expr->args);
+	else
+		return NULL;
+}
