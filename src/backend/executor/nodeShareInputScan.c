@@ -82,6 +82,8 @@ init_tuplestore_state(ShareInputScanState *node)
 		}
 	}
 
+	elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
+#if 0
 	if(share_type == SHARE_MATERIAL_XSLICE)
 	{
 		char rwfile_prefix[100];
@@ -133,6 +135,7 @@ init_tuplestore_state(ShareInputScanState *node)
 		tuplesort_begin_pos(node->ts_state->sortstore, (TuplesortPos **)(&node->ts_pos));
 		tuplesort_rescan_pos(node->ts_state->sortstore, (TuplesortPos *)node->ts_pos);
 	}
+#endif
 
 	Assert(NULL != node->ts_state);
 	Assert(NULL != node->ts_state->matstore || NULL != node->ts_state->sortstore);
@@ -174,6 +177,8 @@ ExecShareInputScan(ShareInputScanState *node)
 
 	slot = node->ss.ps.ps_ResultTupleSlot;
 
+	elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
+#if 0
 	while(1)
 	{
 		bool gotOK = false;
@@ -197,6 +202,7 @@ ExecShareInputScan(ShareInputScanState *node)
 
 		return slot;
 	}
+#endif
 
 	Assert(!"should not be here");
 	return NULL;
@@ -247,8 +253,11 @@ ExecInitShareInputScan(ShareInputScan *node, EState *estate, int eflags)
 	 * GPDB_12_MERGE_FIXME: What's the right TTSOps for this? The tuples
 	 * come from tuplesort or ntuplestore.
 	 */
+	elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
+#if 0
 	ExecInitResultTupleSlotTL(&sortstate->ss.ps, &TTSOpsMinimalTuple);
 	sisstate->ss.ps.ps_ProjInfo = NULL;
+#endif
 
 	/*
 	 * If this is an intra-slice share node, increment reference count to
@@ -325,6 +334,8 @@ ExecReScanShareInputScan(ShareInputScanState *node)
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 	Assert(NULL != node->ts_pos);
 
+	elog(ERROR, "GPDB_12_MERGE_FIXME: SharedInputScans are broken");
+#if 0
 	if(sisc->share_type == SHARE_MATERIAL || sisc->share_type == SHARE_MATERIAL_XSLICE)
 	{
 		Assert(NULL != node->ts_state->matstore);
@@ -339,6 +350,7 @@ ExecReScanShareInputScan(ShareInputScanState *node)
 	{
 		Assert(!"ExecShareInputScanReScan: invalid share type ");
 	}
+#endif
 }
 
 /*************************************************************************

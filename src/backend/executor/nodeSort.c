@@ -116,6 +116,8 @@ ExecSort(PlanState *pstate)
 				return NULL;
 			}
 
+			elog(ERROR, "GPDB_12_MERGE_FIXME: cross-slice sorts are broken");
+#if 0
 			shareinput_create_bufname_prefix(rwfile_prefix, sizeof(rwfile_prefix), plannode->share_id);
 			elog(LOG, "Sort node create shareinput rwfile %s", rwfile_prefix);
 
@@ -131,17 +133,19 @@ ExecSort(PlanState *pstate)
 				PlanStateOperatorMemKB((PlanState *) node),
 				true
 				);
+#endif
 		}
 		else
 		{
-			tuplesortstate = tuplesort_begin_heap(&node->ss, tupDesc,
+			tuplesortstate = tuplesort_begin_heap(//&node->ss,
+												  tupDesc,
 												  plannode->numCols,
 												  plannode->sortColIdx,
 												  plannode->sortOperators,
 												  plannode->collations,
 												  plannode->nullsFirst,
 												  PlanStateOperatorMemKB((PlanState *) node),
-												  node->randomAccess);
+												  NULL, node->randomAccess);
 		}
 
 		if (node->bounded)
@@ -149,6 +153,8 @@ ExecSort(PlanState *pstate)
 		node->tuplesortstate->sortstore = tuplesortstate;
 
 		/* CDB */
+		/* GPDB_12_MERGE_FIXME: these optimizations are currently broken */
+#if 0
 		{
 			int 		unique = 0;
 			int 		sort_flags = gp_sort_flags; /* get the guc */
@@ -159,12 +165,16 @@ ExecSort(PlanState *pstate)
 			
 			cdb_tuplesort_init(tuplesortstate, unique, sort_flags, maxdistinct);
 		}
+#endif
 
 		/* If EXPLAIN ANALYZE, share our Instrumentation object with sort. */
+		/* GPDB_12_MERGE_FIXME: broken */
+#if 0
 		if (node->ss.ps.instrument && node->ss.ps.instrument->need_cdb)
 			tuplesort_set_instrument(tuplesortstate,
 									 node->ss.ps.instrument,
 									 node->ss.ps.cdbexplainbuf);
+#endif
 	}
 
 	/*
@@ -229,7 +239,10 @@ ExecSort(PlanState *pstate)
 			{
 				if(plannode->driver_slice == currentSliceId)
 				{
+		/* GPDB_12_MERGE_FIXME: broken */
+#if 0
 					tuplesort_flush(tuplesortstate);
+#endif
 
 					node->share_lk_ctxt = shareinput_writer_notifyready(plannode->share_id, plannode->nsharer_xslice,
 							estate->es_plannedstmt->planGen);
@@ -519,11 +532,13 @@ ExecSortExplainEnd(PlanState *planstate, struct StringInfoData *buf)
 {
 	SortState *sortstate = (SortState *)planstate;
 	
+		/* GPDB_12_MERGE_FIXME: broken */
+#if 0
 	if (NULL != sortstate->tuplesortstate->sortstore)
 	{
 		tuplesort_finalize_stats(sortstate->tuplesortstate->sortstore);
 	}
-
+#endif
 }                               /* ExecSortExplainEnd */
 
 static void
