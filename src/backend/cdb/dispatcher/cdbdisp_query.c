@@ -1262,15 +1262,20 @@ serializeParamListInfo(ParamListInfo paramLI, int *len_p)
 	sparams = NIL;
 	for (i = 0; i < paramLI->numParams; i++)
 	{
-		ParamExternData *prm = &paramLI->params[i];
+		ParamExternData *prm;
 		SerializedParamExternData *sprm;
+		ParamExecData prmdata;
 
 		/*
 		 * First, use paramFetch to fetch any "lazy" parameters. (The callback
 		 * function is of no use in the QE.)
 		 */
 		if (paramLI->paramFetch && !OidIsValid(prm->ptype))
-			(*paramLI->paramFetch) (paramLI, i + 1);
+		{
+			prm = (*paramLI->paramFetch) (paramLI, i + 1, false, &prmdata);
+		}
+		else
+			prm = &paramLI->params[i];
 
 		sprm = makeNode(SerializedParamExternData);
 
