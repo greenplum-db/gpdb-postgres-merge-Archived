@@ -85,7 +85,7 @@ typedef struct HashJoinTupleData
 
 #define HJTUPLE_OVERHEAD  MAXALIGN(sizeof(HashJoinTupleData))
 #define HJTUPLE_MINTUPLE(hjtup)  \
-	((MemTuple) ((char *) (hjtup) + HJTUPLE_OVERHEAD))
+	((MinimalTuple) ((char *) (hjtup) + HJTUPLE_OVERHEAD))
 
 /*
  * If the outer relation's distribution is sufficiently nonuniform, we attempt

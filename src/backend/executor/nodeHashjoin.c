@@ -1474,7 +1474,7 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
  * will get messed up.
  */
 void
-ExecHashJoinSaveTuple(PlanState *ps, MemTuple tuple, uint32 hashvalue,
+ExecHashJoinSaveTuple(PlanState *ps, MinimalTuple tuple, uint32 hashvalue,
 					  HashJoinTable hashtable, BufFile **fileptr,
 					  MemoryContext bfCxt)
 {
