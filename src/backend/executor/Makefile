@@ -33,19 +33,21 @@ OBJS = execAmi.o execCurrent.o execExpr.o execExprInterp.o \
        nodeForeignscan.o nodeWindowAgg.o tstoreReceiver.o tqueue.o spi.o \
        nodeTableFuncscan.o
 
-OBJS += nodeDynamicIndexscan.o \
-       nodeDynamicBitmapHeapscan.o \
-       nodeDynamicBitmapIndexscan.o \
-       nodeMotion.o \
+OBJS += nodeMotion.o \
        nodeRepeat.o \
        nodeShareInputScan.o \
        nodeTableFunction.o \
-       nodeDynamicSeqscan.o \
        nodeSequence.o \
        nodeAssertOp.o \
        nodeSplitUpdate.o \
-       nodeTupleSplit.o \
-       nodePartitionSelector.o \
-       execDynamicScan.o
+       nodeTupleSplit.o
+
+# GPDB_12_MERGE_FIXME: Are any of these still needed?
+#OBJS += nodeDynamicIndexscan.o \
+#       nodeDynamicBitmapHeapscan.o \
+#       nodeDynamicBitmapIndexscan.o \
+#       nodeDynamicSeqscan.o
+#       nodePartitionSelector.o
+#       execDynamicScan.o
 
 include $(top_srcdir)/src/backend/common.mk
