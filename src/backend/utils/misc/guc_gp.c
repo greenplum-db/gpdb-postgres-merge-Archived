@@ -3870,6 +3870,7 @@ struct config_int ConfigureNamesInt_gp[] =
 		0, 0, INT_MAX,
 		NULL, NULL, NULL
 	},
+
 	{
 		{"repl_catchup_within_range", PGC_SUSET, REPLICATION_STANDBY,
 			gettext_noop("Sets the maximum number of xlog segments allowed to lag"
@@ -3879,7 +3880,7 @@ struct config_int ConfigureNamesInt_gp[] =
 			GUC_SUPERUSER_ONLY
 		},
 		&repl_catchup_within_range,
-		1, 0, UINT_MAX / WalSegMaxSize,
+		1, 0, INT_MAX / WalSegMaxSize,
 		NULL, NULL, NULL
 	},
 

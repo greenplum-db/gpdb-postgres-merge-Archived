@@ -86,8 +86,8 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 	(((hdr)->xlp_info & XLP_LONG_HEADER) ? SizeOfXLogLongPHD : SizeOfXLogShortPHD)
 
 /* wal_segment_size can range from 1MB to 1GB */
-#define WalSegMinSize 1024 * 1024
-#define WalSegMaxSize 1024 * 1024 * 1024
+#define WalSegMinSize (1024 * 1024)
+#define WalSegMaxSize (1024 * 1024 * 1024)
 /* default number of min and max wal segments */
 #define DEFAULT_MIN_WAL_SEGS 5
 #define DEFAULT_MAX_WAL_SEGS 64
