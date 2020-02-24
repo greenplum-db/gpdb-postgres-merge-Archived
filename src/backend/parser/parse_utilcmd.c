@@ -167,10 +167,6 @@ static List *transformAttributeEncoding(List *stenc, CreateStmt *stmt,
 										CreateStmtContext *cxt);
 static bool encodings_overlap(List *a, List *b, bool test_conflicts);
 
-static AlterTableCmd *transformAlterTable_all_PartitionStmt(ParseState *pstate,
-									  AlterTableStmt *stmt,
-									  CreateStmtContext *pCxt,
-									  AlterTableCmd *cmd);
 /*
  * transformCreateStmt -
  *	  parse analysis for CREATE TABLE

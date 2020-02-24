@@ -262,7 +262,6 @@ AppendOnlyStorageRead_FinishOpenFile(AppendOnlyStorageRead *storageRead,
 									 int version,
 									 int64 logicalEof)
 {
-	int64		seekResult;
 	MemoryContext oldMemoryContext;
 
 	AORelationVersion_CheckValid(version);
