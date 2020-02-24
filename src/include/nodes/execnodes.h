@@ -2131,10 +2131,12 @@ typedef struct TableFunctionState
 	struct AnyTableData *inputscan;		/* subquery scan data */
 	TupleDesc	resultdesc;		/* Function Result descriptor */
 	HeapTupleData tuple;		/* Returned tuple */
-	// GPDB_12_MERGE_FIXME: what happened to these?
-	//FuncExprState *fcache;		/* Function Call Cache */
-	//FunctionCallInfoData fcinfo;	/* Function Call Context */
+
+	FmgrInfo	flinfo;
+	FunctionCallInfo fcinfo;	/* Function Call Context */
 	ReturnSetInfo rsinfo;		/* Resultset Context */
+	List	   *args;			/* ExprStates for all the arguments */
+
 	bool		is_rowtype;		/* Function returns records */
 	bool		is_firstcall;
 	bytea	   *userdata;		/* bytea given by describe func */
