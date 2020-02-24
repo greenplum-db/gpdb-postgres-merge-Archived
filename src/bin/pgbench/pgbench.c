@@ -66,10 +66,6 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
-#ifndef INT64_MIN
-#define INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
-#endif
-
 
 #include "pgbench.h"
 
@@ -614,21 +610,17 @@ usage(void)
 		   "Usage:\n"
 		   "  %s [OPTION]... [DBNAME]\n"
 		   "\nInitialization options:\n"
-
 		   "  -i, --initialize         invokes initialization mode\n"
-<<<<<<< HEAD
 		   "  -x STRING    append this string to the storage clause e.g. 'appendonly=true, orientation=column'\n"
-=======
 		   "  -I, --init-steps=[dtgvpf]+ (default \"dtgvp\")\n"
 		   "                           run selected initialization steps\n"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		   "  -F, --fillfactor=NUM     set fill factor\n"
 		   "  -n, --no-vacuum          do not run VACUUM during initialization\n"
 		   "  -q, --quiet              quiet logging (one message each 5 seconds)\n"
 		   "  -s, --scale=NUM          scaling factor\n"
 		   "  --foreign-keys           create foreign key constraints between tables\n"
-		   "  --use-unique-keys"
-		   "               make the indexes that are created non-unique indexes (default: unique)\n"
+		   "  --use-unique-keys        make the indexes that are created non-unique indexes\n"
+		   "                           (default: unique)\n"
 		   "  --index-tablespace=TABLESPACE\n"
 		   "                           create indexes in the specified tablespace\n"
 		   "  --tablespace=TABLESPACE  create tables in the specified tablespace\n"
@@ -2056,8 +2048,6 @@ evalStandardFunc(CState *st,
 
 				Assert(0);
 				return false;	/* NOTREACHED */
-<<<<<<< HEAD
-=======
 			}
 
 			/* integer bitwise operators */
@@ -2099,7 +2089,6 @@ evalStandardFunc(CState *st,
 
 				setBoolValue(retval, !b);
 				return true;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			}
 
 			/* no arguments */
@@ -2982,67 +2971,6 @@ advanceConnectionState(TState *thread, CState *st, StatsData *agg)
 				thread->throttle_trigger +=
 					getPoissonRand(&thread->ts_throttle_rs, throttle_delay);
 				st->txn_scheduled = thread->throttle_trigger;
-<<<<<<< HEAD
-			}
-		}
-
-		st->txn_scheduled = thread->throttle_trigger;
-		st->sleep_until = st->txn_scheduled;
-		st->sleeping = true;
-		st->throttling = true;
-		st->is_throttled = true;
-		if (debug)
-			fprintf(stderr, "client %d throttling " INT64_FORMAT " us\n",
-					st->id, wait);
-	}
-
-	if (st->sleeping)
-	{							/* are we sleeping? */
-		if (INSTR_TIME_IS_ZERO(now))
-			INSTR_TIME_SET_CURRENT(now);
-		if (INSTR_TIME_GET_MICROSEC(now) < st->txn_scheduled)
-			return true;		/* Still sleeping, nothing to do here */
-		/* Else done sleeping, go ahead with next command */
-		st->sleeping = false;
-		st->throttling = false;
-	}
-
-	if (st->listen)
-	{							/* are we receiver? */
-		if (commands[st->state]->type == SQL_COMMAND)
-		{
-			if (debug)
-				fprintf(stderr, "client %d receiving\n", st->id);
-			if (!PQconsumeInput(st->con))
-			{					/* there's something wrong */
-				fprintf(stderr, "client %d aborted in state %d; perhaps the backend died while processing\n", st->id, st->state);
-				return clientDone(st);
-			}
-			if (PQisBusy(st->con))
-				return true;	/* don't have the whole result yet */
-		}
-
-		/*
-		 * command finished: accumulate per-command execution times in
-		 * thread-local data structure, if per-command latencies are requested
-		 */
-		if (is_latencies)
-		{
-			if (INSTR_TIME_IS_ZERO(now))
-				INSTR_TIME_SET_CURRENT(now);
-
-			/* XXX could use a mutex here, but we choose not to */
-			addToSimpleStats(&commands[st->state]->stats,
-							 INSTR_TIME_GET_DOUBLE(now) -
-							 INSTR_TIME_GET_DOUBLE(st->stmt_begin));
-		}
-
-		/* transaction finished: calculate latency and log the transaction */
-		if (commands[st->state + 1] == NULL)
-		{
-			if (progress || throttle_delay || latency_limit ||
-				per_script_stats || use_log)
-=======
 
 				/*
 				 * If --latency-limit is used, and this slot is already late
@@ -3322,7 +3250,6 @@ advanceConnectionState(TState *thread, CState *st, StatsData *agg)
 			case CSTATE_END_TX:
 
 				/* transaction finished: calculate latency and do log */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				processXactStats(thread, st, &now, false, agg);
 
 				/*
@@ -3464,14 +3391,6 @@ executeMetaCommand(CState *st, instr_time *now)
 			return CSTATE_ABORTED;
 		}
 
-<<<<<<< HEAD
-			INSTR_TIME_SET_CURRENT(now);
-			st->sleep_until = INSTR_TIME_GET_MICROSEC(now) + usec;
-			st->txn_scheduled = INSTR_TIME_GET_MICROSEC(now) + usec;
-			st->sleeping = true;
-
-			st->listen = true;
-=======
 		cond = valueTruth(&result);
 		Assert(conditional_stack_peek(st->cstack) == IFSTATE_FALSE);
 		conditional_stack_poke(st->cstack, cond ? IFSTATE_TRUE : IFSTATE_FALSE);
@@ -3491,7 +3410,6 @@ executeMetaCommand(CState *st, instr_time *now)
 			default:
 				/* dead code if conditional check is ok */
 				Assert(false);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		}
 	}
 	else if (command->meta == META_ENDIF)
@@ -3743,33 +3661,7 @@ initCreateTables(PGconn *con)
 			, "bid"
 		}
 	};
-<<<<<<< HEAD
-	static const char *const DDLINDEXes[] = {
-		"alter table pgbench_branches add primary key (bid)",
-		"alter table pgbench_tellers add primary key (tid)",
-		"alter table pgbench_accounts add primary key (aid)"
-	};
-	static const char *const NON_UNIQUE_INDEX_DDLINDEXes[] = {
-		"CREATE INDEX branch_idx ON pgbench_branches (bid) ",
-		"CREATE INDEX teller_idx ON pgbench_tellers (tid) ",
-		"CREATE INDEX account_idx ON pgbench_accounts (aid) "
-	};
-	static const char *const DDLKEYs[] = {
-		"alter table pgbench_tellers add foreign key (bid) references pgbench_branches",
-		"alter table pgbench_accounts add foreign key (bid) references pgbench_branches",
-		"alter table pgbench_history add foreign key (bid) references pgbench_branches",
-		"alter table pgbench_history add foreign key (tid) references pgbench_tellers",
-		"alter table pgbench_history add foreign key (aid) references pgbench_accounts"
-	};
-
-	PGconn	   *con;
-	PGresult   *res;
-	char		sql[256];
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	int			i;
-
-	fprintf(stderr, "creating tables...\n");
 
 	fprintf(stderr, "creating tables...\n");
 
@@ -3784,12 +3676,12 @@ initCreateTables(PGconn *con)
 		opts[0] = '\0';
 		if (ddl->declare_fillfactor)
 			snprintf(opts + strlen(opts), sizeof(opts) - strlen(opts),
-					 " with (fillfactor=%d, %s) DISTRIBUTED BY (%s)",
-					 fillfactor, storage_clause, ddl->distributed_col);
+					 " with (fillfactor=%d, %s)", fillfactor, storage_clause);
 		else
 			snprintf(opts + strlen(opts), sizeof(opts) - strlen(opts),
-					 " with (%s) DISTRIBUTED BY (%s)",
-					 storage_clause, ddl->distributed_col);
+					 " with (%s)", storage_clause);
+		snprintf(opts + strlen(opts), sizeof(opts) - strlen(opts),
+				 " DISTRIBUTED BY (%s)", ddl->distributed_col);
 		if (tablespace != NULL)
 		{
 			char	   *escape_tablespace;
@@ -3872,13 +3764,6 @@ initGenerateData(PGconn *con)
 	/*
 	 * accounts is big enough to be worth using COPY and tracking runtime
 	 */
-<<<<<<< HEAD
-
-	executeStatement(con, "begin");
-	executeStatement(con, "truncate pgbench_accounts");
-
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	res = PQexec(con, "copy pgbench_accounts from stdin");
 	if (PQresultStatus(res) != PGRES_COPY_IN)
 	{
@@ -3980,20 +3865,24 @@ initCreatePKeys(PGconn *con)
 		"alter table pgbench_tellers add primary key (tid)",
 		"alter table pgbench_accounts add primary key (aid)"
 	};
+	static const char *const NON_UNIQUE_INDEX_DDLINDEXes[] = {
+		"CREATE INDEX branch_idx ON pgbench_branches (bid) ",
+		"CREATE INDEX teller_idx ON pgbench_tellers (tid) ",
+		"CREATE INDEX account_idx ON pgbench_accounts (aid) "
+	};
+	StaticAssertStmt(lengthof(DDLINDEXes) == lengthof(NON_UNIQUE_INDEX_DDLINDEXes),
+					 "NON_UNIQUE_INDEX_DDLINDEXes must have same size as DDLINDEXes");
 	int			i;
 
 	fprintf(stderr, "creating primary keys...\n");
 	for (i = 0; i < lengthof(DDLINDEXes); i++)
 	{
 		char		buffer[256];
+
 		if (use_unique_key)
-		{
-			strncpy(buffer, DDLINDEXes[i], sizeof(buffer));
-		}
+			strlcpy(buffer, DDLINDEXes[i], sizeof(buffer));
 		else
-		{
-			strncpy(buffer, NON_UNIQUE_INDEX_DDLINDEXes[i], sizeof(buffer));
-		}
+			strlcpy(buffer, NON_UNIQUE_INDEX_DDLINDEXes[i], sizeof(buffer));
 
 		if (index_tablespace != NULL)
 		{
@@ -5216,13 +5105,7 @@ main(int argc, char **argv)
 		{"username", required_argument, NULL, 'U'},
 		{"vacuum-all", no_argument, NULL, 'v'},
 		/* long-named only options */
-<<<<<<< HEAD
-		{"foreign-keys", no_argument, &foreign_keys, 1},
-		{"use-unique-keys", no_argument, &use_unique_key, 1},
-		{"index-tablespace", required_argument, NULL, 3},
-=======
 		{"unlogged-tables", no_argument, NULL, 1},
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{"tablespace", required_argument, NULL, 2},
 		{"index-tablespace", required_argument, NULL, 3},
 		{"sampling-rate", required_argument, NULL, 4},
@@ -5231,6 +5114,7 @@ main(int argc, char **argv)
 		{"log-prefix", required_argument, NULL, 7},
 		{"foreign-keys", no_argument, NULL, 8},
 		{"random-seed", required_argument, NULL, 9},
+		{"use-unique-keys", no_argument, &use_unique_key, 1},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -5303,7 +5187,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	while ((c = getopt_long(argc, argv, "iI:h:nvp:dqb:SNc:j:Crs:t:T:U:lf:D:F:M:P:R:L:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "iI:h:nvp:dqb:SNc:j:Crs:t:T:U:lf:D:F:M:P:R:L:x:", long_options, &optindex)) != -1)
 	{
 		char	   *script;
 
@@ -5312,15 +5196,15 @@ main(int argc, char **argv)
 			case 'i':
 				is_init_mode = true;
 				break;
+			case 'x':
+				storage_clause = optarg;
+				break;
 			case 'I':
 				if (initialize_steps)
 					pg_free(initialize_steps);
 				initialize_steps = pg_strdup(optarg);
 				checkInitSteps(initialize_steps);
 				initialization_option_set = true;
-				break;
-			case 'x':
-				storage_clause = optarg;
 				break;
 			case 'h':
 				pghost = pg_strdup(optarg);
@@ -6175,11 +6059,7 @@ threadRun(void *arg)
 		}
 
 		/* also wake up to print the next progress report on time */
-		if (progress && min_usec > 0
-#if !defined(PTHREAD_FORK_EMULATION)
-			&& thread->tid == 0
-#endif   /* !PTHREAD_FORK_EMULATION */
-			)
+		if (progress && min_usec > 0 && thread->tid == 0)
 		{
 			/* get current time if needed */
 			if (now_usec == 0)
@@ -6278,81 +6158,7 @@ threadRun(void *arg)
 				remains--;
 		}
 
-<<<<<<< HEAD
-#ifdef PTHREAD_FORK_EMULATION
-		/* each process reports its own progression */
-		if (progress)
-		{
-			instr_time	now_time;
-			int64		now;
-
-			INSTR_TIME_SET_CURRENT(now_time);
-			now = INSTR_TIME_GET_MICROSEC(now_time);
-			if (now >= next_report)
-			{
-				/* generate and show report */
-				int64		count = 0,
-							lats = 0,
-							sqlats = 0,
-							skipped = 0;
-				int64		lags = thread->throttle_lag;
-				int64		run = now - last_report;
-				double		tps,
-							total_run,
-							latency,
-							sqlat,
-							stdev,
-							lag;
-
-				for (i = 0; i < nstate; i++)
-				{
-					count += state[i].cnt;
-					lats += state[i].txn_latencies;
-					sqlats += state[i].txn_sqlats;
-				}
-
-				total_run = (now - thread_start) / 1000000.0;
-				tps = 1000000.0 * (count - last_count) / run;
-				latency = 0.001 * (lats - last_lats) / (count - last_count);
-				sqlat = 1.0 * (sqlats - last_sqlats) / (count - last_count);
-				stdev = 0.001 * sqrt(sqlat - 1000000.0 * latency * latency);
-				lag = 0.001 * (lags - last_lags) / (count - last_count);
-				skipped = thread->throttle_latency_skipped - last_skipped;
-
-				fprintf(stderr,
-						"progress %d: %.1f s, %.1f tps, "
-						"lat %.3f ms stddev %.3f",
-						thread->tid, total_run, tps, latency, stdev);
-				if (throttle_delay)
-				{
-					fprintf(stderr, ", lag %.3f ms", lag);
-					if (latency_limit)
-						fprintf(stderr, ", skipped " INT64_FORMAT, skipped);
-				}
-				fprintf(stderr, "\n");
-
-				last_count = count;
-				last_lats = lats;
-				last_sqlats = sqlats;
-				last_lags = lags;
-				last_report = now;
-				last_skipped = thread->throttle_latency_skipped;
-
-				/*
-				 * Ensure that the next report is in the future, in case
-				 * pgbench/postgres got stuck somewhere.
-				 */
-				do
-				{
-					next_report += (int64) progress *1000000;
-				} while (now >= next_report);
-			}
-		}
-#else
-		/* progress report by thread 0 for all threads */
-=======
 		/* progress report is made by thread 0 for all threads */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (progress && thread->tid == 0)
 		{
 			instr_time	now_time;
@@ -6381,7 +6187,6 @@ threadRun(void *arg)
 				} while (now >= next_report);
 			}
 		}
-#endif   /* PTHREAD_FORK_EMULATION */
 	}
 
 done:
