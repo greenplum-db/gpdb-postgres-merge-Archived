@@ -1088,8 +1088,7 @@ make_union_unique(SetOperationStmt *op, Path *path, List *tlist,
 										groupList,
 										NIL,
 										NULL,
-										dNumGroups,
-										NULL);
+										dNumGroups);
 	}
 	else
 	{
@@ -1206,8 +1205,6 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 			 NIL,
 			 input_path->startup_cost, input_path->total_cost,
 			 input_path->rows,
-			 NULL, /* GPDB: We are using the upstream hash table implementation,
-					* which does not spill. */
 			 false /* hash_streaming */);
 
 	/*

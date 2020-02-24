@@ -101,7 +101,6 @@
 
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
-#include "executor/execHHashagg.h"
 
 #define LOG2(x)  (log(x) / 0.693147180559945)
 
@@ -188,7 +187,6 @@ static Selectivity adjust_selectivity_for_nulltest(Selectivity selec,
 												Selectivity pselec,
 												List *pushed_quals,
 												JoinType jointype);
-static double spilledTupleNumber(double hashTableCapacity, double numGroups, double rows);
 /* CDB: The clamp_row_est() function definition has been moved to cost.h */
 
 /*
@@ -2310,48 +2308,6 @@ cost_material(Path *path, PlannerInfo *root,
 }
 
 /*
- * spilledTupleNumber
- *   - hashTableCapacity: the number of entries in the hash table locally
- *   - numGroups        : the number of groups locally
- *   - rows             : the number of input tuples globally
- *
- * Estimate how many tuples are spilled globally.
- *
- * We first consider the model as randomly picking values from different groups
- * to fill into the hashtable. When the hash table is full, all the contents in
- * the hash table will be either spilled to disk or streaming to next stage of agg.
- *
- * When numGroups is greater than hash table capacity, we use indicate variable method
- * to roughly model the process. Let Xi be the number of the tuples consumed to take
- * the ith entry of hash table after i-1 entries have been filled. Xi is a random
- * variable. And it satisfies geometric distribution with probability (n-(i-1))/n,
- * where n is the number of total entries in the hash table. So E(X1+X2+...+X_hashtablecap)
- * is the expectation of the tuples consumed to just make the hash table full. Thus
- * E(X) = n(Hn - H_{n-m}), Hn is the harmonic series, n is numGroups and m is hashTableCapacity.
- * Further, Hn = log(n) + Euler-Mascheroni-constant + O(1/n), we have
- * E(X) = nlog(n/n-m). So the ratio of input rows and spilled rows is roughly
- * m/(nlog(n/n-m)), we multiply the ratio with all the rows to estimate all the tuples
- * spilled globally. For details of this bound, refer Coupon collector's problem.
- */
-static double
-spilledTupleNumber(double hashTableCapacity, double numGroups, double rows)
-{
-	double outputRows;
-	if (hashTableCapacity >= numGroups)
-		return numGroups;
-	outputRows = (hashTableCapacity * rows) / ((log(numGroups/(numGroups - hashTableCapacity)) * numGroups));
-
-	/*
-	 * The above is a rough estimation, if the result is less than numGroups which
-	 * cannot happen in practical scenario, we return numGroups.
-	 */
-	if (outputRows < numGroups)
-		return numGroups;
-	else
-		return outputRows;
-}
-
-/*
  * cost_agg
  *		Determines and returns the cost of performing an Agg plan node,
  *		including the cost of its input.
@@ -2361,13 +2317,6 @@ spilledTupleNumber(double hashTableCapacity, double numGroups, double rows)
  *
  * Note: when aggstrategy == AGG_SORTED, caller must ensure that input costs
  * are for appropriately-sorted input.
- *
- * GPDB: 'hash_info' contains extra estimates about the hash table size.
- * Passing NULL means that you are using the upstream implementation that
- * can not spill to disk. An example of that is constructing a Hashed Setop
- * node. But most callers are constructing a Hash Aggregate node, which can
- * spill, and should call calcHashAggTableSizes() to get correct estimates.
- * If aggstrategy != AGG_HASHED, 'hash_info' is ignored.
  */
 void
 cost_agg(Path *path, PlannerInfo *root,
@@ -2376,7 +2325,6 @@ cost_agg(Path *path, PlannerInfo *root,
 		 List *quals,
 		 Cost input_startup_cost, Cost input_total_cost,
 		 double input_tuples,
-		 HashAggTableSizes *hash_info,
 		 bool hash_streaming)
 {
 	double		output_tuples;
@@ -2452,10 +2400,6 @@ cost_agg(Path *path, PlannerInfo *root,
 	}
 	else
 	{
-		double spilled_bytes = 0.0;
-		double spilled_groups = 0.0;
-		double hash_table_capacity = 0.0;
-
 		/* must be AGG_HASHED */
 		startup_cost = input_total_cost;
 		if (!enable_hashagg)
@@ -2463,48 +2407,11 @@ cost_agg(Path *path, PlannerInfo *root,
 		startup_cost += aggcosts->transCost.startup;
 		startup_cost += aggcosts->transCost.per_tuple * input_tuples;
 		startup_cost += (cpu_operator_cost * numGroupCols) * input_tuples;
-
-		/* account for some disk I/O if we expect to spill */
-		if (hash_info && hash_info->nbatches > 0)
-		{
-			hash_table_capacity = planner_work_mem * 1024L / hash_info->workmem_per_entry;
-			spilled_groups = spilledTupleNumber(hash_table_capacity, numGroups, input_tuples);
-
-			if (!hash_streaming)
-			{
-				double spilled_bytes_for_batch =
-					(spilled_groups * hash_info->workmem_per_entry) / hash_info->nbatches;
-				double partitions = spilled_bytes_for_batch / (global_work_mem(root));
-				double tree_depth = 1;
-				if (partitions != 0)
-					tree_depth += ceil(log(partitions) / log(gp_hashagg_default_nbatches));
-
-				spilled_bytes = tree_depth * spilled_groups * hash_info->workmem_per_entry;
-
-				/* startup gets charged the write-cost */
-				startup_cost += seq_page_cost * (spilled_bytes / BLCKSZ);
-
-				output_tuples = numGroups;
-			}
-			else
-			{
-				output_tuples = spilled_groups;
-			}
-		}
-		else
-		{
-			output_tuples = numGroups;
-		}
-
+		startup_cost += aggcosts->finalCost.startup;
 		total_cost = startup_cost;
-		total_cost += aggcosts->finalCost.per_tuple * output_tuples;
-		total_cost += cpu_tuple_cost * output_tuples;
-
-		if (hash_info && hash_info->nbatches > 2 && !hash_streaming)
-		{
-			/* total gets charged the read-cost */
-			total_cost += seq_page_cost * (spilled_bytes / BLCKSZ);
-		}
+		total_cost += aggcosts->finalCost.per_tuple * numGroups;
+		total_cost += cpu_tuple_cost * numGroups;
+		output_tuples = numGroups;
 	}
 
 	/*

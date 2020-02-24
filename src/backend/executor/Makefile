@@ -46,7 +46,6 @@ OBJS += nodeDynamicIndexscan.o \
        nodeSplitUpdate.o \
        nodeTupleSplit.o \
        nodePartitionSelector.o \
-       execDynamicScan.o \
-       execHHashagg.o
+       execDynamicScan.o
 
 include $(top_srcdir)/src/backend/common.mk

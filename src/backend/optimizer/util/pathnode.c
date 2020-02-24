@@ -44,7 +44,6 @@
 #include "cdb/cdbpathlocus.h"
 #include "cdb/cdbutil.h"		/* getgpsegmentCount() */
 #include "cdb/cdbvars.h"
-#include "executor/execHHashagg.h"
 #include "executor/nodeHash.h"
 #include "utils/guc.h"
 
@@ -2378,13 +2377,9 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		 * Estimate the overhead per hashtable entry at 64 bytes (same as in
 		 * planner.c).
 		 */
-		HashAggTableSizes hash_info;
+		int			hashentrysize = subpath->pathtarget->width + 64;
 
-		if (!calcHashAggTableSizes(work_mem * 1024L,
-								   pathnode->path.rows,
-								   subpath->pathtarget->width,
-								   true,
-								   &hash_info))
+		if (hashentrysize * pathnode->path.rows > work_mem * 1024L)
 		{
 			/*
 			 * We should not try to hash.  Hack the SpecialJoinInfo to
@@ -2400,7 +2395,6 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 					 subpath->startup_cost,
 					 subpath->total_cost,
 					 rel->rows,
-					 &hash_info,
 					 false /* streaming */
 				);
 	}
@@ -2627,13 +2621,9 @@ create_unique_rowid_path(PlannerInfo *root,
 		 * Estimate the overhead per hashtable entry at 64 bytes (same as in
 		 * planner.c).
 		 */
-		HashAggTableSizes hash_info;
+		int			hashentrysize = subpath->pathtarget->width + 64;
 
-		if (!calcHashAggTableSizes(work_mem * 1024L,
-								   ((Path *)pathnode)->rows,
-								   rel->reltarget->width,
-								   false,	/* force */
-								   &hash_info))
+		if (hashentrysize * pathnode->path.rows > work_mem * 1024L)
 			all_hash = false;	/* don't try to hash */
 		else
 			cost_agg(&agg_path, root,
@@ -2643,7 +2633,6 @@ create_unique_rowid_path(PlannerInfo *root,
 					 subpath->startup_cost,
 					 subpath->total_cost,
 					 rel->rows,
-					 &hash_info,
 					 false /* streaming */
 				);
 	}
@@ -4487,8 +4476,7 @@ create_agg_path(PlannerInfo *root,
 				List *groupClause,
 				List *qual,
 				const AggClauseCosts *aggcosts,
-				double numGroups,
-				HashAggTableSizes *hash_info)
+				double numGroups)
 {
 	AggPath    *pathnode = makeNode(AggPath);
 
@@ -4520,7 +4508,6 @@ create_agg_path(PlannerInfo *root,
 			 qual,
 			 subpath->startup_cost, subpath->total_cost,
 			 subpath->rows,
-			 hash_info,
 			 streaming);
 
 	/* add tlist eval cost for each output row */
@@ -4690,7 +4677,6 @@ create_groupingsets_path(PlannerInfo *root,
 					 subpath->startup_cost,
 					 subpath->total_cost,
 					 subpath->rows,
-					 NULL, /* hash_info */
 					 false /* streaming */);
 			is_first = false;
 			if (!rollup->is_hashed)
@@ -4715,7 +4701,6 @@ create_groupingsets_path(PlannerInfo *root,
 						 having_qual,
 						 0.0, 0.0,
 						 subpath->rows,
-						 NULL, /* hash_info */
 						 false /* streaming */);
 				if (!rollup->is_hashed)
 					is_first_sort = false;
@@ -4742,7 +4727,6 @@ create_groupingsets_path(PlannerInfo *root,
 						 sort_path.startup_cost,
 						 sort_path.total_cost,
 						 sort_path.rows,
-						 NULL, /* hash_info */
 						 false /* streaming */);
 			}
 

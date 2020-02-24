@@ -2630,15 +2630,8 @@ typedef struct AggStatePerGroupData *AggStatePerGroup;
 typedef struct AggStatePerPhaseData *AggStatePerPhase;
 typedef struct AggStatePerHashData *AggStatePerHash;
 
-typedef enum HashAggStatus
-{
-	HASHAGG_BEFORE_FIRST_PASS,
-	HASHAGG_IN_A_PASS,
-	HASHAGG_BETWEEN_PASSES,
-	HASHAGG_STREAMING,
-	HASHAGG_END_OF_PASSES
-} HashAggStatus;
-
+/* GPDB_12_MERGE_FIXME: What was this for? I think we lost whatever feature that
+ * was in the merge. */
 typedef struct SplitAggInfo
 {
 	int             idx;
@@ -2685,7 +2678,7 @@ typedef struct AggState
 	/* these fields are used in AGG_PLAIN and AGG_SORTED modes: */
 	AggStatePerGroup *pergroups;	/* grouping set indexed array of per-group
 									 * pointers */
-	struct MemTupleData *grp_firstTuple; /* copy of first tuple of current group */
+	HeapTuple	grp_firstTuple; /* copy of first tuple of current group */
 	/* these fields are used in AGG_HASHED and AGG_MIXED modes: */
 	bool		table_filled;	/* hash table filled yet? */
 	int			num_hashes;
@@ -2698,23 +2691,6 @@ typedef struct AggState
 	AggStatePerGroup *all_pergroups;	/* array of first ->pergroups, than
 										 * ->hash_pergroup */
 	ProjectionInfo *combinedproj;	/* projection machinery */
-
-	/* MPP */
-	struct HashAggTable *hhashtable;
-	HashAggStatus hashaggstatus;
-	MemoryManagerContainer mem_manager;
-
-	/* ROLLUP */
-	AggStatePerGroup perpassthru; /* per-Aggref-per-pass-through-tuple working state */
-
-	/*
-	 * The following are used to define how to modify input tuples to
-	 * satisfy the rollup level of this Agg node.
-	 */
-	int			num_attrs;	/* number of grouping attributes for the Agg node */
-	Datum	   *replValues;
-	bool	   *replIsnull;
-	bool	   *doReplace;
 
 	/* if input tuple has an AggExprId, save the Attribute Number */
 	Index       AggExprId_AttrNum;

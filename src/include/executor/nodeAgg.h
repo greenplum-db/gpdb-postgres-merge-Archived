@@ -14,11 +14,7 @@
 #ifndef NODEAGG_H
 #define NODEAGG_H
 
-#include "fmgr.h"
-#include "executor/tuptable.h"
 #include "nodes/execnodes.h"
-#include "nodes/primnodes.h"
-#include "utils/tuplesort.h"
 
 
 /*
@@ -323,22 +319,6 @@ extern Size hash_agg_entry_size(int numAggs);
 
 extern Datum aggregate_dummy(PG_FUNCTION_ARGS);
 
-extern void initialize_aggregates(AggState *aggstate,
-					  AggStatePerGroup *pergroup,
-					  int numReset);
-extern void advance_aggregates(AggState *aggstate);
-extern void combine_aggregates(AggState *aggstate, AggStatePerGroup pergroup);
-extern TupleTableSlot *fetch_input_tuple(AggState *aggstate);
-
-extern Datum GetAggInitVal(Datum textInitVal, Oid transtype);
-
-extern void advance_combine_function(AggState *aggstate,
-						 AggStatePerTrans pertrans,
-						 AggStatePerGroup pergroupstate,
-						 FunctionCallInfo fcinfo);
-
-extern Datum datumCopyWithMemManager(Datum oldvalue, Datum value, bool typByVal, int typLen,
-									 MemoryManagerContainer *mem_manager);
 extern void ExecSquelchAgg(AggState *aggstate);
 
 #endif							/* NODEAGG_H */

@@ -248,8 +248,7 @@ extern AggPath *create_agg_path(PlannerInfo *root,
 				List *groupClause,
 				List *qual,
 				const AggClauseCosts *aggcosts,
-				double numGroups,
-				struct HashAggTableSizes *hash_info);
+				double numGroups);
 extern TupleSplitPath *create_tup_split_path(PlannerInfo *root,
                                              RelOptInfo *rel,
                                              Path *subpath,

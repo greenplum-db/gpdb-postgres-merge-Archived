@@ -31,7 +31,6 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
-#include "executor/execHHashagg.h"
 #include "executor/nodeAgg.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
@@ -5990,7 +5989,6 @@ create_distinct_paths(PlannerInfo *root,
 	RelOptInfo *distinct_rel;
 	double		numDistinctRows;
 	bool		allow_hash;
-	HashAggTableSizes hash_info = { 0 };
 	Path	   *path;
 	ListCell   *lc;
 	List	   *distinct_dist_pathkeys = NIL;
@@ -6315,12 +6313,16 @@ create_distinct_paths(PlannerInfo *root,
 			
 	else
 	{
+		Size		hashentrysize;
+
+		/* Estimate per-hash-entry space at tuple width... */
+		hashentrysize = MAXALIGN(cheapest_input_path->pathtarget->width) +
+			MAXALIGN(SizeofMinimalTupleHeader);
+		/* plus the per-hash-entry overhead */
+		hashentrysize += hash_agg_entry_size(0);
+
 		/* Allow hashing only if hashtable is predicted to fit in work_mem */
-		allow_hash = calcHashAggTableSizes(work_mem * 1024L,
-										   numDistinctRows,
-										   cheapest_input_path->pathtarget->width,
-										   false, /* force */
-										   &hash_info);
+		allow_hash = (hashentrysize * numDistinctRows <= work_mem * 1024L);
 	}
 
 	if (allow_hash && grouping_is_hashable(parse->distinctClause))
@@ -6361,8 +6363,7 @@ create_distinct_paths(PlannerInfo *root,
 								 parse->distinctClause,
 								 NIL,
 								 NULL,
-								 numDistinctRows,
-								 &hash_info));
+								 numDistinctRows));
 	}
 
 	/* Give a helpful error if we failed to find any implementation */
@@ -8086,8 +8087,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 											 parse->groupClause,
 											 havingQual,
 											 agg_costs,
-											 dNumGroups,
-											 NULL));
+											 dNumGroups));
 				}
 				else if (parse->groupClause)
 				{
@@ -8148,8 +8148,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 											 parse->groupClause,
 											 havingQual,
 											 agg_final_costs,
-											 dNumGroups,
-											 NULL));
+											 dNumGroups));
 				else
 					add_path(grouped_rel, (Path *)
 							 create_group_path(root,
@@ -8165,11 +8164,6 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 	if (can_hash)
 	{
 		double		hashaggtablesize;
-        HashAggTableSizes hash_info;
-
-        calcHashAggTableSizes( work_mem * 1024, dNumGroups,
-                               cheapest_path->pathtarget->width, false,
-                               &hash_info);
 
 		if (parse->groupingSets)
 		{
@@ -8209,8 +8203,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 										 parse->groupClause,
 										 havingQual,
 										 agg_costs,
-										 dNumGroups,
-										 &hash_info));
+										 dNumGroups));
 			}
 		}
 
@@ -8239,8 +8232,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 										 parse->groupClause,
 										 havingQual,
 										 agg_final_costs,
-										 dNumGroups,
-										 &hash_info));
+										 dNumGroups));
 		}
 	}
 
@@ -8426,8 +8418,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 											 parse->groupClause,
 											 NIL,
 											 agg_partial_costs,
-											 dNumPartialGroups,
-											 NULL));
+											 dNumPartialGroups));
 				else
 					add_path(partially_grouped_rel, (Path *)
 							 create_group_path(root,
@@ -8472,8 +8463,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 													 parse->groupClause,
 													 NIL,
 													 agg_partial_costs,
-													 dNumPartialPartialGroups,
-													 NULL));
+													 dNumPartialPartialGroups));
 				else
 					add_partial_path(partially_grouped_rel, (Path *)
 									 create_group_path(root,
@@ -8485,12 +8475,6 @@ create_partial_grouping_paths(PlannerInfo *root,
 			}
 		}
 	}
-
-    HashAggTableSizes hash_info;
-
-    calcHashAggTableSizes( work_mem * 1024, dNumPartialGroups,
-                           cheapest_total_path->pathtarget->width, false,
-                           &hash_info);
 
     if (can_hash && cheapest_total_path != NULL)
 	{
@@ -8522,8 +8506,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 									 parse->groupClause,
 									 NIL,
 									 agg_partial_costs,
-									 dNumPartialGroups,
-									 &hash_info));
+									 dNumPartialGroups));
 		}
 	}
 
@@ -8551,8 +8534,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 											 parse->groupClause,
 											 NIL,
 											 agg_partial_costs,
-											 dNumPartialPartialGroups,
-											 &hash_info));
+											 dNumPartialPartialGroups));
 		}
 	}
 

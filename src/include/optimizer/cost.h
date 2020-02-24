@@ -150,7 +150,6 @@ extern void cost_agg(Path *path, PlannerInfo *root,
 					 List *quals,
 					 Cost input_startup_cost, Cost input_total_cost,
 					 double input_tuples,
-					 struct HashAggTableSizes *hash_info,
 					 bool hash_streaming);
 extern void cost_windowagg(Path *path, PlannerInfo *root,
 						   List *windowFuncs, int numPartCols, int numOrderCols,
