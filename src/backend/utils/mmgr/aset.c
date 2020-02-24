@@ -264,7 +264,7 @@ typedef struct AllocChunkData
 	void *prev_chunk;
 	void *next_chunk;
 #endif
-}	AllocChunkData;
+}			AllocChunkData;
 
 /*
  * Only the "aset" field should be accessed outside this module.
@@ -994,7 +994,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 
 				chunk->size = availchunk;
 #ifdef MEMORY_CONTEXT_CHECKING
-				chunk->requested_size = 0xFFFFFFFF;	/* mark it free */
+				chunk->requested_size = 0;	/* mark it free */
 #endif
 				chunk->aset = (void *) set->freelist[a_fidx];
 				set->freelist[a_fidx] = chunk;
@@ -1182,7 +1182,7 @@ AllocSetFree(MemoryContext context, void *pointer)
 
 #ifdef MEMORY_CONTEXT_CHECKING
 		/* Reset requested_size to 0 in chunks that are on freelist */
-		chunk->requested_size = 0xFFFFFFFF;
+		chunk->requested_size = 0;
 #endif
 		set->freelist[fidx] = chunk;
 	}
