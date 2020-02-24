@@ -267,21 +267,6 @@ AppendOnlyStorageRead_FinishOpenFile(AppendOnlyStorageRead *storageRead,
 
 	AORelationVersion_CheckValid(version);
 
-	/*
-	 * Seek to the beginning of the file.
-	 */
-	seekResult = FileSeek(file, 0, SEEK_SET);
-	if (seekResult != 0)
-	{
-		FileClose(file);
-		ereport(ERROR,
-				(errcode(ERRCODE_IO_ERROR),
-				 errmsg("append-only storage read error on segment file '%s' for relation '%s'",
-						filePathName, storageRead->relationName),
-				 errdetail("FileSeek offset = 0.  Error code = %d (%s).",
-						(int) seekResult, strerror((int) seekResult))));
-	}
-
 	storageRead->file = file;
 	storageRead->formatVersion = version;
 
@@ -301,8 +286,7 @@ AppendOnlyStorageRead_FinishOpenFile(AppendOnlyStorageRead *storageRead,
 
 	storageRead->logicalEof = logicalEof;
 
-	BufferedReadSetFile(
-						&storageRead->bufferedRead,
+	BufferedReadSetFile(&storageRead->bufferedRead,
 						storageRead->file,
 						storageRead->segmentFileName,
 						logicalEof);

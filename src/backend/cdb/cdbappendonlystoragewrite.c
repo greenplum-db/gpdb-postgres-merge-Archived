@@ -31,6 +31,7 @@
 #include "cdb/cdbappendonlystoragewrite.h"
 #include "cdb/cdbappendonlyxlog.h"
 #include "common/relpath.h"
+#include "pgstat.h"
 #include "storage/gp_compress.h"
 #include "utils/faultinjector.h"
 #include "utils/guc.h"
@@ -298,7 +299,6 @@ AppendOnlyStorageWrite_OpenFile(AppendOnlyStorageWrite *storageWrite,
 								int32 segmentFileNum)
 {
 	File		file;
-	int64		seekResult;
 	MemoryContext oldMemoryContext;
 
 	Assert(storageWrite != NULL);
@@ -334,21 +334,6 @@ AppendOnlyStorageWrite_OpenFile(AppendOnlyStorageWrite *storageWrite,
 	/*
 	 * Seek to the logical EOF write position.
 	 */
-	seekResult = FileSeek(file, logicalEof, SEEK_SET);
-	if (seekResult != logicalEof)
-	{
-		FileClose(file);
-
-		ereport(ERROR,
-				(errcode(ERRCODE_IO_ERROR),
-				 errmsg("Append-only Storage Write error on segment file '%s' for relation '%s'.  FileSeek offset = " INT64_FORMAT ".  Error code = %d (%s)",
-						filePathName,
-						storageWrite->relationName,
-						logicalEof,
-						(int) seekResult,
-						strerror((int) seekResult))));
-	}
-
 	storageWrite->file = file;
 	storageWrite->formatVersion = version;
 	storageWrite->startEof = logicalEof;
@@ -496,7 +481,7 @@ AppendOnlyStorageWrite_FlushAndCloseFile(
 	 * primary.  Temp tables are not crash safe, no need to fsync them.
 	 */
 	if (!RelFileNodeBackendIsTemp(storageWrite->relFileNode) &&
-		FileSync(storageWrite->file) != 0)
+		FileSync(storageWrite->file, WAIT_EVENT_DATA_FILE_SYNC) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("Could not flush (fsync) Append-Only segment file '%s' to disk for relation '%s': %m",

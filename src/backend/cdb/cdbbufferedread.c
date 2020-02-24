@@ -17,8 +17,9 @@
 #include "postgres.h"
 
 #include "cdb/cdbbufferedread.h"
-#include "utils/guc.h"
 #include "miscadmin.h"
+#include "pgstat.h"
+#include "utils/guc.h"
 
 static void BufferedReadIo(
 			   BufferedRead *bufferedRead);
@@ -100,6 +101,8 @@ BufferedReadInit(
 	 */
 	bufferedRead->file = -1;
 	bufferedRead->fileLen = 0;
+	/* start reading from beginning of file */
+	bufferedRead->fileOff = 0;
 
 	/*
 	 * Temporary limit support for random reading.
@@ -170,10 +173,11 @@ BufferedReadIo(
 	offset = 0;
 	while (largeReadLen > 0)
 	{
-		int			actualLen = FileRead(
-										 bufferedRead->file,
+		int			actualLen = FileRead(bufferedRead->file,
 										 (char *) largeReadMemory,
-										 largeReadLen);
+										 bufferedRead->fileOff,
+										 largeReadLen,
+										 WAIT_EVENT_DATA_FILE_READ);
 
 		if (actualLen == 0)
 			ereport(ERROR, (errcode_for_file_access(),
@@ -197,6 +201,7 @@ BufferedReadIo(
 								   offset,
 								   actualLen,
 								   bufferedRead->largeReadLen)));
+		bufferedRead->fileOff += actualLen;
 
 		elogif(Debug_appendonly_print_read_block, LOG,
 			   "Append-Only storage read: table \"%s\", segment file \"%s\", read position " INT64_FORMAT " (small offset %d), "
@@ -398,15 +403,7 @@ BufferedReadSetTemporaryRange(
 		 * segment file, followed by a lookup for a block directory entry at
 		 * the beginning of file.
 		 */
-		int64		seekOffset = beginFileOffset - largeReadAfterPos;
-		int64		seekPos = FileSeek(bufferedRead->file, seekOffset, SEEK_CUR);
-
-		if (seekPos != beginFileOffset)
-			ereport(ERROR, (errcode_for_file_access(),
-							errmsg("unable to seek to position for table \"%s\" in file \"%s\": %m",
-								   bufferedRead->relationName,
-								   bufferedRead->filePathName)));
-
+		bufferedRead->fileOff = beginFileOffset;
 		bufferedRead->bufferOffset = 0;
 
 		remainingFileLen = afterFileOffset - beginFileOffset;

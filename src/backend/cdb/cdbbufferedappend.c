@@ -21,6 +21,7 @@
 
 #include "cdb/cdbappendonlyxlog.h"
 #include "cdb/cdbbufferedappend.h"
+#include "pgstat.h"
 #include "utils/guc.h"
 
 static void BufferedAppendWrite(
@@ -157,7 +158,9 @@ BufferedAppendWrite(BufferedAppend *bufferedAppend, bool needsWAL)
 
 		byteswritten = FileWrite(bufferedAppend->file,
 								 (char *) largeWriteMemory + bytestotal,
-								 bytesleft);
+								 bufferedAppend->largeWritePosition + bytestotal,
+								 bytesleft,
+								 WAIT_EVENT_DATA_FILE_WRITE);
 		if (byteswritten < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
