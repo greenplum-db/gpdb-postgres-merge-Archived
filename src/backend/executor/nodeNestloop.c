@@ -31,7 +31,7 @@
 #include "utils/memutils.h"
 
 static void splitJoinQualExpr(NestLoopState *nlstate);
-static void extractFuncExprArgs(FuncExprState *fstate, List **lclauses, List **rclauses);
+//static void extractFuncExprArgs(FuncExprState *fstate, List **lclauses, List **rclauses);
 
 /* ----------------------------------------------------------------
  *		ExecNestLoop(node)
@@ -493,7 +493,8 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 
     if (node->join.jointype == JOIN_LASJ_NOTIN)
     {
-    	splitJoinQualExpr(nlstate);
+		elog(ERROR, "GPDB_12_MERGE_FIXME: JOIN_LASJ_NOTIN broken");
+		//splitJoinQualExpr(nlstate);
     	/*
     	 * For LASJ_NOTIN, when we evaluate the join condition, we want to
     	 * return true when one of the conditions is NULL, so we exclude
@@ -584,6 +585,8 @@ ExecReScanNestLoop(NestLoopState *node)
  * inner and outer side.
  * ----------------------------------------------------------------
  */
+/* GPDB_12_MERGE_FIXME: broken */
+#if 0
 static void
 splitJoinQualExpr(NestLoopState *nlstate)
 {
@@ -634,6 +637,7 @@ splitJoinQualExpr(NestLoopState *nlstate)
 	nlstate->nl_InnerJoinKeys = rclauses;
 	nlstate->nl_OuterJoinKeys = lclauses;
 }
+#endif
 
 
 /* ----------------------------------------------------------------
@@ -654,6 +658,7 @@ splitJoinQualExpr(NestLoopState *nlstate)
  * performed.
  * ----------------------------------------------------------------
  */
+#if 0
 static void
 extractFuncExprArgs(FuncExprState *fstate, List **lclauses, List **rclauses)
 {
@@ -671,3 +676,4 @@ extractFuncExprArgs(FuncExprState *fstate, List **lclauses, List **rclauses)
 		*rclauses = lappend(*rclauses, lsecond(fstate->args));
 	}
 }
+#endif
