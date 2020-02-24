@@ -30,7 +30,6 @@
 #include "common/int.h"
 #include "funcapi.h"
 #include "lib/hyperloglog.h"
-#include "executor/execHHashagg.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
@@ -3868,16 +3867,7 @@ makeNumericAggState(FunctionCallInfo fcinfo, bool calcSumX2)
 
 	old_context = MemoryContextSwitchTo(agg_context);
 
-	AggState *aggstate = (AggState *)fcinfo->context;
-	if (agg_type == AGG_CONTEXT_AGGREGATE && aggstate->hhashtable)
-	{
-		state = (NumericAggState *) mpool_alloc(aggstate->hhashtable->group_buf, sizeof(NumericAggState));
-		MemSet(state, 0, sizeof(NumericAggState));
-	}
-	else
-	{
-		state = (NumericAggState *) palloc0(sizeof(NumericAggState));
-	}
+	state = (NumericAggState *) palloc0(sizeof(NumericAggState));
 	state->calcSumX2 = calcSumX2;
 	state->agg_context = agg_context;
 	init_sumaccum(&state->sumX);
@@ -4556,16 +4546,7 @@ makeInt128AggState(FunctionCallInfo fcinfo, bool calcSumX2)
 
 	old_context = MemoryContextSwitchTo(agg_context);
 
-	AggState *aggstate = (AggState *)fcinfo->context;
-	if (agg_type == AGG_CONTEXT_AGGREGATE && aggstate->hhashtable)
-	{
-		state = (Int128AggState *) mpool_alloc(aggstate->hhashtable->group_buf, sizeof(Int128AggState));
-		MemSet(state, 0, sizeof(Int128AggState));
-	}
-	else
-	{
-		state = (Int128AggState *) palloc0(sizeof(Int128AggState));
-	}
+	state = (Int128AggState *) palloc0(sizeof(Int128AggState));
 	state->calcSumX2 = calcSumX2;
 
 	MemoryContextSwitchTo(old_context);
