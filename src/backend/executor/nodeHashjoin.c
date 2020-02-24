@@ -479,8 +479,8 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 					node->hj_CurSkewBucketNo == INVALID_SKEW_BUCKET_NO)
 				{
 					bool		shouldFree;
-					MemTuple	memtuple = ExecFetchSlotMemTuple(outerTupleSlot,
-																 &shouldFree);
+					MinimalTuple mintuple = ExecFetchSlotMinimalTuple(outerTupleSlot,
+																	  &shouldFree);
 
 					/*
 					 * Need to postpone this outer tuple to a later batch.
@@ -488,14 +488,14 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 					 */
 					Assert(parallel_state == NULL);
 					Assert(batchno > hashtable->curbatch);
-					ExecHashJoinSaveTuple(&node->js.ps, memtuple,
+					ExecHashJoinSaveTuple(&node->js.ps, mintuple,
 										  hashvalue,
 										  hashtable,
 										  &hashtable->outerBatchFile[batchno],
 										  hashtable->bfCxt);
 
 					if (shouldFree)
-						pfree(memtuple);
+						pfree(mintuple);
 
 					/* Loop around, staying in HJ_NEED_NEW_OUTER state */
 					continue;
@@ -560,7 +560,7 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 				if (joinqual == NULL || ExecQual(joinqual, econtext))
 				{
 					node->hj_MatchedOuter = true;
-					MemTupleSetMatch(HJTUPLE_MINTUPLE(node->hj_CurTuple));
+					HeapTupleHeaderSetMatch(HJTUPLE_MINTUPLE(node->hj_CurTuple));
 
 					/* In an antijoin, we never return a matched tuple */
 					if (node->js.jointype == JOIN_ANTI ||
@@ -1479,6 +1479,7 @@ ExecHashJoinSaveTuple(PlanState *ps, MinimalTuple tuple, uint32 hashvalue,
 					  MemoryContext bfCxt)
 {
 	BufFile	   *file = *fileptr;
+	size_t		written;
 
 	if (hashtable->work_set == NULL)
 	{
@@ -1515,15 +1516,16 @@ ExecHashJoinSaveTuple(PlanState *ps, MinimalTuple tuple, uint32 hashvalue,
 		MemoryContextSwitchTo(oldcxt);
 	}
 
-	if (BufFileWrite(file, (void *) &hashvalue, sizeof(uint32)) != sizeof(uint32))
+	written = BufFileWrite(file, (void *) &hashvalue, sizeof(uint32));
+	if (written != sizeof(uint32))
 	{
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write to temporary file: %m")));
 	}
 
-	int		tupsize	= memtuple_get_size(tuple);
-	if (BufFileWrite(file, (void *) tuple, tupsize) != tupsize)
+	written = BufFileWrite(file, (void *) tuple, tuple->t_len);
+	if (written != tuple->t_len)
 	{
 		ereport(ERROR,
 				(errcode_for_file_access(),
