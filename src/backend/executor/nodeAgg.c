@@ -2493,9 +2493,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
     {
         /* Allocate string buffer. */
         aggstate->ss.ps.cdbexplainbuf = makeStringInfo();
-
-        /* Request a callback at end of query. */
-        aggstate->ss.ps.cdbexplainfun = ExecAggExplainEnd;
     }
 
 	/*
