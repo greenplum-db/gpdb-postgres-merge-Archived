@@ -569,6 +569,7 @@ static char *syslog_ident_str;
 static double phony_random_seed;
 static char *client_encoding_string;
 static char *datestyle_string;
+static char *locale_collate;
 static char *locale_ctype;
 static char *server_encoding_string;
 static char *server_version_string;

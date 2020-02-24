@@ -441,7 +441,6 @@ static bool LoadedSSL = false;
 /* some GUC values used in fetching status from status transition */
 extern char	   *locale_monetary;
 extern char	   *locale_numeric;
-extern char    *locale_collate;
 
 #ifdef USE_BONJOUR
 static DNSServiceRef bonjour_sdref = NULL;

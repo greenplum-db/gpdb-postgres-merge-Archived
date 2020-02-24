@@ -40,7 +40,6 @@ extern char *locale_messages;
 extern char *locale_monetary;
 extern char *locale_numeric;
 extern char *locale_time;
-extern char *locale_collate;
 
 /* lc_time localization cache */
 extern char *localized_abbrev_days[];

@@ -134,6 +134,8 @@
 #include "executor/execDML.h"
 #include "postmaster/autostats.h"
 
+const char *synthetic_sql = "(internally generated SQL command)";
+
 /*
  * ON COMMIT action list
  */

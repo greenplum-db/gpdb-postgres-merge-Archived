@@ -621,6 +621,8 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	 */
 	if (IsBinaryUpgrade)
 	{
+		/* GPDB_12_MERGE_FIXME: how should this work? */
+#if 0
 		if (!OidIsValid(binary_upgrade_next_pg_authid_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -628,6 +630,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 
 		roleid = binary_upgrade_next_pg_authid_oid;
 		binary_upgrade_next_pg_authid_oid = InvalidOid;
+#endif
 	}
 	else
 	{

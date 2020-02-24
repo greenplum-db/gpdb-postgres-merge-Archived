@@ -30,6 +30,8 @@
  */
 #include "postgres.h"
 
+#include <math.h>
+
 #include "access/aosegfiles.h"
 #include "access/appendonlytid.h"
 #include "access/appendonlywriter.h"
@@ -3136,4 +3138,21 @@ appendonly_insert_finish(AppendOnlyInsertDesc aoInsertDesc)
 
 	pfree(aoInsertDesc->title);
 	pfree(aoInsertDesc);
+}
+
+/*
+ * RelationGuessNumberOfBlocks
+ *
+ * Has the same meaning as RelationGetNumberOfBlocks for heap relations
+ * however uses an estimation since AO relations use variable len blocks
+ * which are meaningless to the optimizer.
+ *
+ * This function, in other words, answers the following question - "If
+ * I were a heap relation, about how many blocks would I have had?"
+ */
+BlockNumber
+RelationGuessNumberOfBlocks(double totalbytes)
+{
+	/* for now it's very simple */
+	return (BlockNumber) ceil(totalbytes / BLCKSZ);
 }

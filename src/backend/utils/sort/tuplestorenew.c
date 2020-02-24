@@ -1402,9 +1402,12 @@ ntuplestore_create_spill_files(NTupleStore *nts)
 
 	oldcxt = MemoryContextSwitchTo(nts->mcxt);
 
+	/* GPDB_12_MERGE_FIXME */
+#if 0
 	nts->pfile = BufFileCreateTempInSet(nts->work_set, false /* interXact */);
 
 	nts->plobfile = BufFileCreateTempInSet(nts->work_set, false /* interXact */);
+#endif
 
 	MemoryContextSwitchTo(oldcxt);
 

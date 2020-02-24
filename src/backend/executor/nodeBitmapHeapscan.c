@@ -1017,3 +1017,9 @@ ExecBitmapHeapInitializeWorker(BitmapHeapScanState *node,
 	snapshot = RestoreSnapshot(pstate->phs_snapshot_data);
 	table_scan_update_snapshot(node->ss.ss_currentScanDesc, snapshot);
 }
+
+void
+ExecSquelchBitmapHeapScan(BitmapHeapScanState *node)
+{
+	ExecEagerFreeBitmapHeapScan(node);
+}

@@ -8070,7 +8070,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 												path, true, can_hash,
 												gd, agg_costs, dNumGroups);
 				}
-				else if (parse->hasAggs)
+				else if (parse->hasAggs || parse->groupClause)
 				{
 					/*
 					 * We have aggregation, possibly with plain GROUP BY. Make
@@ -8089,6 +8089,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 											 agg_costs,
 											 dNumGroups));
 				}
+				/* Group nodes are not used in GPDB */
+#if 0
 				else if (parse->groupClause)
 				{
 					/*
@@ -8103,6 +8105,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 											   havingQual,
 											   dNumGroups));
 				}
+#endif
 				else
 				{
 					/* Other cases should have been handled above */
@@ -8136,7 +8139,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 													 -1.0);
 				}
 
-				if (parse->hasAggs)
+				//if (parse->hasAggs)
+				{
 					add_path(grouped_rel, (Path *)
 							 create_agg_path(root,
 											 grouped_rel,
@@ -8149,6 +8153,9 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 											 havingQual,
 											 agg_final_costs,
 											 dNumGroups));
+				}
+						/* Group nodes are not used in GPDB */
+#if 0
 				else
 					add_path(grouped_rel, (Path *)
 							 create_group_path(root,
@@ -8157,6 +8164,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 											   parse->groupClause,
 											   havingQual,
 											   dNumGroups));
+#endif
 			}
 		}
 	}
@@ -8406,7 +8414,8 @@ create_partial_grouping_paths(PlannerInfo *root,
 													 root->group_pathkeys,
 													 -1.0);
 
-				if (parse->hasAggs)
+				//if (parse->hasAggs)
+				{
 					add_path(partially_grouped_rel, (Path *)
 							 create_agg_path(root,
 											 partially_grouped_rel,
@@ -8419,6 +8428,9 @@ create_partial_grouping_paths(PlannerInfo *root,
 											 NIL,
 											 agg_partial_costs,
 											 dNumPartialGroups));
+				}
+						/* Group nodes are not used in GPDB */
+#if 0
 				else
 					add_path(partially_grouped_rel, (Path *)
 							 create_group_path(root,
@@ -8427,6 +8439,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 											   parse->groupClause,
 											   NIL,
 											   dNumPartialGroups));
+#endif
 			}
 		}
 	}
@@ -8451,7 +8464,8 @@ create_partial_grouping_paths(PlannerInfo *root,
 													 root->group_pathkeys,
 													 -1.0);
 
-				if (parse->hasAggs)
+				//if (parse->hasAggs)
+				{
 					add_partial_path(partially_grouped_rel, (Path *)
 									 create_agg_path(root,
 													 partially_grouped_rel,
@@ -8464,6 +8478,9 @@ create_partial_grouping_paths(PlannerInfo *root,
 													 NIL,
 													 agg_partial_costs,
 													 dNumPartialPartialGroups));
+				}
+						/* Group nodes are not used in GPDB */
+#if 0
 				else
 					add_partial_path(partially_grouped_rel, (Path *)
 									 create_group_path(root,
@@ -8472,6 +8489,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 													   parse->groupClause,
 													   NIL,
 													   dNumPartialPartialGroups));
+#endif
 			}
 		}
 	}

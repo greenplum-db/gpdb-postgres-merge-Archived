@@ -886,6 +886,7 @@ BufFileResume(BufFile *buffile)
 {
 }
 
+bool gp_workfile_compression;		/* GUC */
 void
 BufFilePledgeSequential(BufFile *buffile)
 {

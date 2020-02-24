@@ -106,6 +106,14 @@ ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt,
 	elog(ERROR, "ExecCopySlotMemTupleTo not implemented");
 }
 
+void
+ExecForceStoreMemTuple(MemTuple mtup, TupleTableSlot *slot,
+					   bool shouldFree)
+{
+	/* GPDB_12_MERGE_FIXME: dummy placeholder, to placate linker */
+	elog(ERROR, "ExecForceStoreMemTuple not implemented");
+}
+
 static const TupleTableSlotOps *
 appendonly_slot_callbacks(Relation relation)
 {
@@ -1413,6 +1421,12 @@ appendoptimized_tableam_handler(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(&appendonly_methods);
 }
 
+Datum
+aoco_tableam_handler(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "aoco_tableam_handler not implemented");
+	//PG_RETURN_POINTER(&appendonly_methods);
+}
 
 /* GPDB_12_MERGE_FIXME: this doesn't belong here, but let's just make the
  * linker happy for now.

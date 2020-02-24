@@ -1502,8 +1502,14 @@ acquire_sample_rows(Relation onerel, int elevel,
 	/* Gather sample on this server. */
 	if (onerel->rd_rel->relam == APPENDOPTIMIZED_TABLE_AM_OID ||
 		onerel->rd_rel->relam == AOCO_TABLE_AM_OID)
+	{
+		/* GPDB_12_MERGE_FIXME: We should go through the A interface. */
+		return 0;
+#if 0
 		return acquire_sample_rows_ao(onerel, elevel, rows, targrows,
 									  totalrows, totaldeadrows);
+#endif
+	}
 	else
 		return acquire_sample_rows_heap(onerel, elevel, rows, targrows,
 										totalrows, totaldeadrows);
