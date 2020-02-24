@@ -69,18 +69,6 @@ typedef MemTupleData *MemTuple;
 #define MEMTUP_LARGETUP  2
 #define MEMTUP_HASEXTERNAL 	 4
 
-/* container to hold either a MemTuple or a HeapTuple */
-struct HeapTupleData;
-typedef struct
-{
-	bool		is_memtuple;
-	union
-	{
-		struct HeapTupleData *htup;
-		MemTuple mtup;
-	} tup;
-} HeapOrMemTuple;
-
 /*
  * MEMTUP_HAS_MATCH is a temporary flag used during hash joins. It's
  * equivalent to HEAP_TUPLE_HAS_MATCH for HeapTuples, but in GPDB we

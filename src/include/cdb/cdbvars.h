@@ -26,12 +26,6 @@
  * ----- Declarations of Greenplum-specific global variables ------
  */
 
-#ifdef sparc
-#define TUPLE_CHUNK_ALIGN	4
-#else
-#define TUPLE_CHUNK_ALIGN	1
-#endif
-
 #ifndef PRIO_MAX
 #define PRIO_MAX 20
 #endif

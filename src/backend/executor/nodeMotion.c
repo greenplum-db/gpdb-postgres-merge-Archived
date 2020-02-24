@@ -295,7 +295,7 @@ execMotionUnsortedReceiver(MotionState *node)
 {
 	/* RECEIVER LOGIC */
 	TupleTableSlot *slot;
-	GenericTuple tuple;
+	MinimalTuple tuple;
 	Motion	   *motion = (Motion *) node->ps.plan;
 
 	AssertState(motion->motionType == MOTIONTYPE_GATHER ||
@@ -336,7 +336,8 @@ execMotionUnsortedReceiver(MotionState *node)
 
 	/* store it in our result slot and return this. */
 	slot = node->ps.ps_ResultTupleSlot;
-	slot = ExecStoreGenericTuple(tuple, slot, true /* shouldFree */ );
+
+	slot = ExecStoreMinimalTuple(tuple, slot, true /* shouldFree */ );
 
 #ifdef CDB_MOTION_DEBUG
 	if (node->numTuplesToParent <= 20)
@@ -395,7 +396,7 @@ execMotionSortedReceiver(MotionState *node)
 {
 	TupleTableSlot *slot;
 	binaryheap *hp = node->tupleheap;
-	GenericTuple inputTuple;
+	MinimalTuple inputTuple;
 	Motion	   *motion = (Motion *) node->ps.plan;
 	EState	   *estate = node->ps.state;
 
@@ -418,7 +419,7 @@ execMotionSortedReceiver(MotionState *node)
 	 */
 	if (!node->tupleheapReady)
 	{
-		GenericTuple inputTuple;
+		MinimalTuple inputTuple;
 		binaryheap *hp = node->tupleheap;
 		Motion	   *motion = (Motion *) node->ps.plan;
 		int			iSegIdx;
@@ -448,9 +449,8 @@ execMotionSortedReceiver(MotionState *node)
 			 * have the same type.
 			 */
 			oldcxt = MemoryContextSwitchTo(estate->es_query_cxt);
-			node->slots[iSegIdx] = MakeTupleTableSlot();
-			ExecSetSlotDescriptor(node->slots[iSegIdx],
-								  node->ps.ps_ResultTupleSlot->tts_tupleDescriptor);
+			node->slots[iSegIdx] = MakeTupleTableSlot(node->ps.ps_ResultTupleSlot->tts_tupleDescriptor,
+													  &TTSOpsMinimalTuple);
 			MemoryContextSwitchTo(oldcxt);
 
 			/*
@@ -461,7 +461,7 @@ execMotionSortedReceiver(MotionState *node)
 			 * can then peek directly into the arrays, which is cheaper than
 			 * calling slot_getattr() all the time.
 			 */
-			ExecStoreGenericTuple(inputTuple, node->slots[iSegIdx], true);
+			ExecStoreMinimalTuple(inputTuple, node->slots[iSegIdx], true);
 			slot_getsomeattrs(node->slots[iSegIdx], node->lastSortColIdx);
 			binaryheap_add_unordered(hp, iSegIdx);
 
@@ -513,7 +513,7 @@ execMotionSortedReceiver(MotionState *node)
 		/* Substitute it in the pq for its predecessor. */
 		if (inputTuple)
 		{
-			ExecStoreGenericTuple(inputTuple, node->slots[node->routeIdNext], true);
+			ExecStoreMinimalTuple(inputTuple, node->slots[node->routeIdNext], true);
 			slot_getsomeattrs(node->slots[node->routeIdNext], node->lastSortColIdx);
 			binaryheap_replace_first(hp, Int32GetDatum(node->routeIdNext));
 

@@ -24,6 +24,7 @@
 #include "cdb/cdbvars.h"
 #include "cdb/htupfifo.h"
 #include "cdb/ml_ipc.h"
+#include "cdb/tupleremap.h"
 #include "cdb/tupser.h"
 #include "utils/memutils.h"
 #include "utils/typcache.h"
@@ -86,7 +87,7 @@ static void UpdateSentRecordCache(MotionConn *conn);
 static inline void
 reconstructTuple(MotionNodeEntry *pMNEntry, ChunkSorterEntry *pCSEntry, TupleRemapper *remapper)
 {
-	GenericTuple tup;
+	MinimalTuple tup;
 	SerTupInfo *pSerInfo = &pMNEntry->ser_tup_info;
 
 	/*
@@ -553,8 +554,13 @@ SendEndOfStream(MotionLayerState *mlStates,
 	statSendEOS(mlStates, pMNEntry);
 }
 
-/* An unordered receiver will call this with srcRoute == ANY_ROUTE */
-GenericTuple
+/*
+ * Receive one tuple from a sender. An unordered receiver will call this with
+ * srcRoute == ANY_ROUTE.
+ *
+ * The tuple is stored in *slot.
+ */
+MinimalTuple
 RecvTupleFrom(MotionLayerState *mlStates,
 			  ChunkTransportState *transportStates,
 			  int16 motNodeID,
@@ -563,7 +569,7 @@ RecvTupleFrom(MotionLayerState *mlStates,
 	MotionNodeEntry *pMNEntry;
 	ChunkSorterEntry *pCSEntry;
 	htup_fifo	ReadyList;
-	GenericTuple tuple = NULL;
+	MinimalTuple tuple = NULL;
 
 #ifdef AMS_VERBOSE_LOGGING
 	elog(DEBUG5, "RecvTupleFrom( motNodeID = %d, srcRoute = %d )", motNodeID, srcRoute);
