@@ -90,31 +90,40 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	 */
 	oids = (Oid *) palloc(num_elems * sizeof(Oid));
 
-	for (elemno = 0; elemno < num_elems; elemno++)
+	elemno = 0;
+	foreach(lc, vals)
 	{
 		/*
 		 * We assign even-numbered OIDs to all the new enum labels.  This
 		 * tells the comparison functions the OIDs are in the correct sort
 		 * order and can be compared directly.
 		 */
+		char	   *lab = strVal(lfirst(lc));
 		Oid			new_oid;
 
 		do
 		{
-			new_oid = GetNewOidForEnum(pg_enum, EnumOidIndexId,
-									   Anum_pg_enum_oid,
-									   enumTypeOid, NameStr(enumlabel));
-
 			/*
 			 * In QE node, however, use the OIDs assigned by the master (they are delivered
 			 * out-of-band, see oid_dispatch.c.
 			 */
 			if (Gp_role == GP_ROLE_EXECUTE)
+			{
+				new_oid = GetPreassignedOidForEnum(enumTypeOid, lab);
 				break;
+			}
 
+			new_oid = GetNewOidWithIndex(pg_enum, EnumOidIndexId,
+										 Anum_pg_enum_oid);
 		} while (new_oid & 1);
 		oids[elemno] = new_oid;
+
+		if (Gp_role == GP_ROLE_DISPATCH)
+			RememberAssignedOidForEnum(enumTypeOid, lab, new_oid);
+
+		elemno++;
 	}
+	Assert(elemno == num_elems);
 
 	/* sort them, just in case OID counter wrapped from high to low */
 	qsort(oids, num_elems, sizeof(Oid), oid_cmp);
@@ -381,14 +390,12 @@ restart:
 	}
 
 	/* Get a new OID for the new label */
-	/*
-	 * In QE, the dispatcher has alrady allocated the OID for us.
-	 */
 	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
 	{
-		newOid = GetNewOidForEnum(pg_enum, EnumOidIndexId,
-								  Anum_pg_enum_oid,
-								  enumTypeOid, NameStr(enumlabel));
+		/*
+		 * In QE, the dispatcher has already allocated the OID for us.
+		 */
+		newOid = GetPreassignedOidForEnum(enumTypeOid, newVal);
 	}
 	else
 	{
@@ -404,9 +411,8 @@ restart:
 			bool		sorts_ok;
 
 			/* Get a new OID (different from all existing pg_enum tuples) */
-			newOid = GetNewOidForEnum(pg_enum, EnumOidIndexId,
-									  Anum_pg_enum_oid,
-									  enumTypeOid, NameStr(enumlabel));
+			newOid = GetNewOidWithIndex(pg_enum, EnumOidIndexId,
+										Anum_pg_enum_oid);
 
 			/*
 			 * Detect whether it sorts correctly relative to existing
@@ -472,6 +478,8 @@ restart:
 				 */
 			}
 		}
+		if (Gp_role == GP_ROLE_DISPATCH)
+			RememberAssignedOidForEnum(enumTypeOid, newVal, newOid);
 	}
 
 	/* Done with info about existing members */

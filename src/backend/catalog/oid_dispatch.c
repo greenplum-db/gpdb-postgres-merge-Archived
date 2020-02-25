@@ -529,6 +529,44 @@ RememberAssignedOidForDatabase(const char *datname, Oid oid)
 	MemoryContextSwitchTo(oldcontext);
 }
 
+/* Enums values have similar issues as databases */
+
+Oid
+GetPreassignedOidForEnum(Oid enumtypid, const char *enumlabel)
+{
+	OidAssignment searchkey;
+	Oid			oid;
+
+	memset(&searchkey, 0, sizeof(OidAssignment));
+	searchkey.type = T_OidAssignment;
+	searchkey.catalog = EnumRelationId;
+	searchkey.keyOid1 = enumtypid;
+	searchkey.objname = (char *) enumlabel;
+
+	if ((oid = GetPreassignedOid(&searchkey)) == InvalidOid)
+		elog(ERROR, "no pre-assigned OID for enum label \"%s\" of %u", enumlabel, enumtypid);
+	return oid;
+}
+
+void
+RememberAssignedOidForEnum(Oid enumtypid, const char *enumlabel, Oid oid)
+{
+	MemoryContext oldcontext;
+	OidAssignment *key;
+
+	oldcontext = MemoryContextSwitchTo(TopTransactionContext);
+
+	key = makeNode(OidAssignment);
+	key->catalog = EnumRelationId;
+	key->keyOid1 = enumtypid;
+	key->objname = (char *) pstrdup(enumlabel);
+	key->oid = oid;
+
+	dispatch_oids = lappend(dispatch_oids, key);
+
+	MemoryContextSwitchTo(oldcontext);
+}
+
 Oid
 GetNewOidForDefaultAcl(Relation relation, Oid indexId, AttrNumber oidcolumn,
 					   Oid defaclrole, Oid defaclnamespace, char defaclobjtype)
@@ -544,23 +582,6 @@ GetNewOidForDefaultAcl(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	key.keyOid1 = defaclrole;
 	key.namespaceOid = defaclnamespace;
 	key.keyOid2 = (Oid) defaclobjtype;
-	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
-}
-
-Oid
-GetNewOidForEnum(Relation relation, Oid indexId, AttrNumber oidcolumn,
-				 Oid enumtypid, char *enumlabel)
-{
-	OidAssignment key;
-
-	Assert(RelationGetRelid(relation) == EnumRelationId);
-	Assert(indexId == EnumOidIndexId);
-	Assert(oidcolumn == Anum_pg_enum_oid);
-
-	memset(&key, 0, sizeof(OidAssignment));
-	key.type = T_OidAssignment;
-	key.keyOid1 = enumtypid;
-	key.objname = enumlabel;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
 

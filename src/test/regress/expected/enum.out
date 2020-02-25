@@ -380,8 +380,6 @@ SELECT max(col) FROM enumtest WHERE col < 'green';
 
 DROP INDEX enumtest_btree;
 --
-<<<<<<< HEAD
-=======
 -- Hash index / opclass with the = operator
 --
 CREATE INDEX enumtest_hash ON enumtest USING hash (col);
@@ -393,7 +391,6 @@ SELECT * FROM enumtest WHERE col = 'orange';
 
 DROP INDEX enumtest_hash;
 --
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- End index tests
 --
 RESET enable_seqscan;
