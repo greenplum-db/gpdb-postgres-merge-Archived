@@ -2187,7 +2187,8 @@ CreateCast(CreateCastStmt *stmt)
 						format_type_be(targettypeid))));
 
 	/* ready to go */
-	castid = GetNewOidWithIndex(relation, CastOidIndexId, Anum_pg_cast_oid);
+	castid = GetNewOidForCast(relation, CastOidIndexId, Anum_pg_cast_oid,
+							  sourcetypeid, targettypeid);
 	values[Anum_pg_cast_oid - 1] = ObjectIdGetDatum(castid);
 	values[Anum_pg_cast_castsource - 1] = ObjectIdGetDatum(sourcetypeid);
 	values[Anum_pg_cast_casttarget - 1] = ObjectIdGetDatum(targettypeid);
