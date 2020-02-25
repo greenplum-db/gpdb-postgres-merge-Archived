@@ -835,18 +835,29 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 * inherited attributes.  (Note that stmt->tableElts is destructively
 	 * modified by MergeAttributes.)
 	 */
-	stmt->tableElts =
-		MergeAttributes(stmt->tableElts, inheritOids,
-						stmt->relation->relpersistence,
-						stmt->partbound != NULL,
-						&old_constraints);
+	if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_UTILITY)
+	{
+		schema =
+			MergeAttributes(schema, inheritOids,
+							stmt->relation->relpersistence,
+							stmt->partbound != NULL,
+							&old_constraints);
+	}
+	else
+	{
+		/*
+		 * In QE mode, we already extracted all the constraints, inherited
+		 * or not, from tableElts at the beginning of the function.
+		 */
+		old_constraints = NIL;
+	}
 
 	/*
 	 * Create a tuple descriptor from the relation schema.  Note that this
 	 * deals with column names, types, and NOT NULL constraints, but not
 	 * default values or CHECK constraints; we handle those below.
 	 */
-	descriptor = BuildDescForRelation(stmt->tableElts);
+	descriptor = BuildDescForRelation(schema);
 
 	/*
 	 * now that we have the final list of attributes, interpret DISTRIBUTED BY
