@@ -71,11 +71,6 @@ DELETE FROM money_data;
 INSERT INTO money_data VALUES ('$123.459');
 SELECT * FROM money_data;
 
-<<<<<<< HEAD
--- rounding vs. truncation in division
-SELECT '878.08'::money / 11::float8;
-SELECT '878.08'::money / 11::float4;
-=======
 -- input checks
 SELECT '1234567890'::money;
 SELECT '12345678901234567'::money;
@@ -106,23 +101,15 @@ SELECT '92233720368547758.075'::money;
 SELECT '878.08'::money / 11::float8;
 SELECT '878.08'::money / 11::float4;
 SELECT '878.08'::money / 11::bigint;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SELECT '878.08'::money / 11::int;
 SELECT '878.08'::money / 11::smallint;
 
 -- check for precision loss in division
-<<<<<<< HEAD
-SELECT '90000000000000099.00'::money / 10::int;
-SELECT '90000000000000099.00'::money / 10::smallint;
-
--- Cast int4/int8 to money
-=======
 SELECT '90000000000000099.00'::money / 10::bigint;
 SELECT '90000000000000099.00'::money / 10::int;
 SELECT '90000000000000099.00'::money / 10::smallint;
 
 -- Cast int4/int8/numeric to money
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SELECT 1234567890::money;
 SELECT 12345678901234567::money;
 SELECT (-12345)::money;
