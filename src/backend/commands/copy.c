@@ -4885,6 +4885,8 @@ CopyFrom(CopyState cstate)
 	if (bistate != NULL)
 		FreeBulkInsertState(bistate);
 
+	MemoryContextSwitchTo(oldcontext);
+
 	/*
 	 * Done reading input data and sending it off to the segment
 	 * databases Now we would like to end the copy command on
@@ -4918,13 +4920,6 @@ CopyFrom(CopyState cstate)
 			ReportSrehResults(cstate->cdbsreh, total_rejected);
 		}
 	}
-
-	/*
-	 * In the old protocol, tell pqcomm that we can process normal protocol
-	 * messages again.
-	 */
-	if (cstate->copy_dest == COPY_OLD_FE)
-		pq_endmsgread();
 
 	/*
 	 * In the old protocol, tell pqcomm that we can process normal protocol
@@ -5579,7 +5574,7 @@ NextCopyFromX(CopyState cstate, ExprContext *econtext,
 
 	tupDesc = RelationGetDescr(cstate->rel);
 	num_phys_attrs = tupDesc->natts;
-	attr_count = list_length(cstate->attnumlist);
+	attr_count = list_length(attnumlist);
 
 	/* Initialize all values for row to NULL */
 	MemSet(values, 0, num_phys_attrs * sizeof(Datum));
@@ -5695,7 +5690,7 @@ NextCopyFromX(CopyState cstate, ExprContext *econtext,
 		}
 
 		Assert(fieldno == attr_count);
- 	}
+	}
 	else if (attr_count)
 	{
 		/* binary */
