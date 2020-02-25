@@ -1973,7 +1973,6 @@ CREATE VIEW tables AS
 
     FROM pg_namespace nc JOIN pg_class c ON (nc.oid = c.relnamespace)
            LEFT JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON (c.reloftype = t.oid)
-           LEFT JOIN pg_exttable x ON c.oid = x.reloid
 
     WHERE c.relkind IN ('r', 'v', 'f', 'p')
           AND (NOT pg_is_other_temp_schema(nc.oid))

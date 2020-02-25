@@ -1132,8 +1132,6 @@ prepare_projection_slot(AggState *aggstate, TupleTableSlot *slot, int currentSet
 		Bitmapset  *grouped_cols = aggstate->phase->grouped_cols[currentSet];
 
 		aggstate->grouped_cols = grouped_cols;
-		aggstate->group_id = aggstate->phase->group_id[currentSet];
-		aggstate->gset_id = aggstate->phase->gset_id[currentSet];
 
 		if (TTS_EMPTY(slot))
 		{

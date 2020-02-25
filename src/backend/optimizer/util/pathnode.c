@@ -4261,6 +4261,7 @@ create_set_projection_path(PlannerInfo *root,
 	pathnode->path.parallel_workers = subpath->parallel_workers;
 	/* Projection does not change the sort order XXX? */
 	pathnode->path.pathkeys = subpath->pathkeys;
+	pathnode->path.locus = subpath->locus;
 
 	pathnode->subpath = subpath;
 

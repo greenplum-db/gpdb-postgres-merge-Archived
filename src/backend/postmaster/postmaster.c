@@ -1925,8 +1925,8 @@ ServerLoop(void)
 		checkPgDir("/pg_distributedlog");
 		checkPgDir("/pg_multixact");
 		checkPgDir("/pg_subtrans");
-		checkPgDir("/pg_xlog");
-		checkPgDir("/pg_clog");
+		checkPgDir("/pg_wal");
+		checkPgDir("/pg_xact");
 		checkPgDir("/pg_multixact/members");
 		checkPgDir("/pg_multixact/offsets");
 

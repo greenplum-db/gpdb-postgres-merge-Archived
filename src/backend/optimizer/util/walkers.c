@@ -177,6 +177,11 @@ plan_tree_walker(Node *node,
 				return true;
 			break;
 
+		case T_ProjectSet:
+			if (walk_plan_node_fields((Plan *) node, walker, context))
+				return true;
+			break;
+
 /* GPDB_12_MERGE_FIXME: Is PartitionSelector still needed? */
 #if 0
 		case T_PartitionSelector:
