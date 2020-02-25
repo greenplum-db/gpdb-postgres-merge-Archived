@@ -33,13 +33,8 @@ CREATE FUNCTION check_foreign_key ()
 	LANGUAGE C READS SQL DATA;
 CREATE FUNCTION autoinc ()
 	RETURNS trigger
-<<<<<<< HEAD
-	AS '@libdir@/regress@DLSUFFIX@'
-	LANGUAGE C READS SQL DATA;
-=======
 	AS '@libdir@/autoinc@DLSUFFIX@'
 	LANGUAGE C;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 CREATE FUNCTION trigger_return_old ()
         RETURNS trigger
         AS '@libdir@/regress@DLSUFFIX@'
