@@ -184,6 +184,17 @@ plan_tree_mutator(Node *node,
 			}
 			break;
 
+		case T_ProjectSet:
+			{
+				ProjectSet *ps = (ProjectSet *) node;
+				ProjectSet *newps;
+
+				FLATCOPY(newps, ps, ProjectSet);
+				PLANMUTATE(newps, ps);
+				return (Node *) newps;
+			}
+			break;
+
 		case T_ModifyTable:
 			{
 				ModifyTable *mt = (ModifyTable *) node;
