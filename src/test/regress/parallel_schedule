@@ -47,17 +47,11 @@ test: copy copyselect copydml insert insert_conflict
 # ----------
 # More groups of parallel tests
 # ----------
-<<<<<<< HEAD
-test: create_misc create_operator
-# These depend on the above two
-test: create_index create_view
-# Depends on things setup for create_index
-test: gp_gin_index
-=======
 test: create_misc create_operator create_procedure
 # These depend on create_misc and create_operator
 test: create_index create_index_spgist create_view index_including index_including_gist
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+# Depends on things setup for create_index
+test: gp_gin_index
 
 # ----------
 # Another group of parallel tests
@@ -83,15 +77,9 @@ test: vacuum_stats
 # Note: the ignore: line does not run random, just mark it as ignorable
 # ----------
 ignore: random
-test: select_into select_distinct select_distinct_on select_implicit select_having subselect union case join aggregates transactions random portals arrays btree_index hash_index update delete namespace prepared_xacts
-
-# ----------
-# Another group of parallel tests
-# ----------
-<<<<<<< HEAD
 test: select_into select_distinct select_distinct_on select_implicit select_having subselect union case join aggregates random portals arrays btree_index hash_index update delete
 
-# In PostgreSQL, namespace test is run as part of the fourth group, but there
+# In PostgreSQL, namespace test is run as part of the previous group, but there
 # are some GPDB additions in it that will show diff if concurrent tests use
 # temporary tables. So run it separately.
 test: namespace
@@ -103,40 +91,20 @@ test: namespace
 # in segments in a way that doesn't work:
 # ERROR:  function cannot execute on a QE slice because it accesses relation "public.xacttest"
 #test: transactions
-=======
-test: brin gin gist spgist privileges init_privs security_label collate matview lock replica_identity rowsecurity object_address tablesample groupingsets drop_operator password identity generated join_hash
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # ----------
 # Another group of parallel tests
 # ----------
-<<<<<<< HEAD
-test: brin gin gist spgist privileges init_privs security_label collate lock replica_identity rowsecurity object_address tablesample groupingsets drop_operator join_hash
+test: brin gin gist spgist privileges init_privs security_label collate matview lock replica_identity rowsecurity object_address tablesample groupingsets drop_operator password identity generated join_hash
 
-# MATERIALIZED_VIEW_FIXME : matview is not supported on greenplum. Enable the test when the feature is ready.
-test: matview
-=======
+# ----------
+# Another group of parallel tests
+# ----------
 test: create_table_like alter_generic alter_operator misc async dbsize misc_functions sysviews tsrf tidscan
 
 # rules cannot run concurrently with any test that creates
 # a view or rule in the public schema
-test: rules psql psql_crosstab amutils stats_ext
-
-# run by itself so it can run parallel workers
-test: select_parallel
-test: write_parallel
-
-# no relation related tests can be put in this group
-test: publication subscription
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
-
-# ----------
-# Another group of parallel tests
-# ----------
-<<<<<<< HEAD
-test: alter_generic alter_operator misc psql async dbsize misc_functions
-
-# rules cannot run concurrently with any test that creates a view
+test: psql psql_crosstab amutils stats_ext
 #
 # 'rules' test is disabled in GPDB. Maintaining the list of views in it is
 # too painful, and there are also errors because of cross-segment UPDATEs
@@ -146,46 +114,47 @@ test: alter_generic alter_operator misc psql async dbsize misc_functions
 # merge, it was done a long time ago, it's time to revisit this so we can re-
 # enable it
 #test: rules
-test: psql_crosstab select_parallel amutils
-=======
-test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock indirect_toast equivclass
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+# run by itself so it can run parallel workers
+test: select_parallel
+test: write_parallel
+
+# no relation related tests can be put in this group
+test: publication subscription
 
 # ----------
-# Another group of parallel tests (JSON related)
+# Another group of parallel tests
 # ----------
-<<<<<<< HEAD
-test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json jsonb json_encoding indirect_toast equivclass
+test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock indirect_toast equivclass
+
+# 'foreign_key' test is disabled, because it contains several tables with
+# multiple UNIQUE constraints, which is not supported in GPDB.
+#test: foreign_key
 
 # Output of the 'combocid' test contains ctid and cmin values, which will
 # differ depending on how many segments are used. Hence disabled in GPDB.
 #test: combocid
 
-# 'foreign_key' test is disabled, because it contains several tables with
-# multiple UNIQUE constraints, which is not supported in GPDB.
-#test: foreign_key
-=======
+# ----------
+# Another group of parallel tests (JSON related)
+# ----------
 test: json jsonb json_encoding jsonpath jsonpath_encoding jsonb_jsonpath
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # ----------
 # Another group of parallel tests
 # NB: temp.sql does a reconnect which transiently uses 2 connections,
 # so keep this parallel group to at most 19 tests
 # ----------
-<<<<<<< HEAD
-test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table alter_extension sequence polymorphism rowtypes returning with xml gp_foreign_data
-
+test: plancache limit plpgsql copy2 temp domain rangefuncs prepare conversion truncate alter_table sequence polymorphism rowtypes returning with xml
 # large objects are not supported by GPDB
 # test: largeobject
-=======
-test: plancache limit plpgsql copy2 temp domain rangefuncs prepare conversion truncate alter_table sequence polymorphism rowtypes returning largeobject with xml
+
+test: gp_foreign_data
 
 # ----------
 # Another group of parallel tests
 # ----------
 test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 # event triggers cannot run concurrently with any test that runs DDL
 test: event_trigger
