@@ -51,6 +51,10 @@ ALTER RESOURCE QUEUE pg_default WITH (priority=medium, memory_limit='-1');
 -- just stores the entries differently. Make copies of all the built-in B-tree
 -- operator classes and families for the bitmap AM, too.
 --
+
+-- GPDB_12_MERGE_FIXME: How to get this new OID? Or maybe replace this with a perl
+-- script
+/*
 do $$
 declare
   btree_amoid oid;
@@ -98,5 +102,6 @@ begin
   END LOOP;
 end;
 $$;
+*/
 
 RESET log_min_messages;

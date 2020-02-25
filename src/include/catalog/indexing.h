@@ -368,8 +368,6 @@ DECLARE_UNIQUE_INDEX(pg_resourcetype_restypid_index, 6062, on pg_resourcetype us
 DECLARE_UNIQUE_INDEX(pg_resourcetype_resname_index, 6063, on pg_resourcetype using btree(resname name_ops));
 #define ResourceTypeResnameIndexId	6063
 
-DECLARE_UNIQUE_INDEX(pg_resqueuecapability_oid_index, 6441, on pg_resqueuecapability using btree(oid oid_ops));
-#define ResQueueCapabilityOidIndexId	6441
 DECLARE_INDEX(pg_resqueuecapability_resqueueid_index, 6442, on pg_resqueuecapability using btree(resqueueid oid_ops));
 #define ResQueueCapabilityResqueueidIndexId	6442
 DECLARE_INDEX(pg_resqueuecapability_restypid_index, 6443, on pg_resqueuecapability using btree(restypid int2_ops));

@@ -431,7 +431,6 @@ IsSharedRelation(Oid relationId)
 		relationId == ResourceTypeOidIndexId ||
 		relationId == ResourceTypeRestypidIndexId ||
 		relationId == ResourceTypeResnameIndexId ||
-		relationId == ResQueueCapabilityOidIndexId ||
 		relationId == ResQueueCapabilityResqueueidIndexId ||
 		relationId == ResQueueCapabilityRestypidIndexId ||
 		relationId == ResGroupOidIndexId ||
