@@ -162,15 +162,6 @@ DROP FUNCTION base_fn_out(opaque); -- error
 ERROR:  function base_fn_out(opaque) does not exist
 DROP TYPE base_type; -- error
 ERROR:  cannot drop type base_type because other objects depend on it
-<<<<<<< HEAD
-DETAIL:  function base_fn_out(base_type) depends on type base_type
-function base_fn_in(cstring) depends on type base_type
-HINT:  Use DROP ... CASCADE to drop the dependent objects too.
-DROP TYPE base_type CASCADE;
-NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to function base_fn_out(base_type)
-drop cascades to function base_fn_in(cstring)
-=======
 DETAIL:  function base_fn_in(cstring) depends on type base_type
 function base_fn_out(base_type) depends on type base_type
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
@@ -178,7 +169,6 @@ DROP TYPE base_type CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to function base_fn_in(cstring)
 drop cascades to function base_fn_out(base_type)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- Check usage of typmod with a user-defined type
 -- (we have borrowed numeric's typmod functions)
 CREATE TEMP TABLE mytab (foo widget(42,13,7));     -- should fail
@@ -193,18 +183,6 @@ WHERE attrelid = 'mytab'::regclass AND attnum > 0;
  widget(42,13)
 (1 row)
 
-<<<<<<< HEAD
--- Create & Drop type as non-superuser
-CREATE USER user_bob;
-NOTICE:  resource queue required -- using default resource queue "pg_default"
-SET SESSION AUTHORIZATION user_bob;
-CREATE TYPE shell; -- not allowed
-ERROR:  must be superuser to create a base type
-CREATE TYPE compfoo as (f1 int, f2 text);
-DROP TYPE compfoo;
-RESET SESSION AUTHORIZATION;
-DROP USER user_bob;
-=======
 -- might as well exercise the widget type while we're here
 INSERT INTO mytab VALUES ('(1,2,3)'), ('(-44,5.5,12)');
 TABLE mytab;
@@ -234,4 +212,13 @@ select format_type('bpchar'::regtype, -1);
  bpchar
 (1 row)
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+-- Create & Drop type as non-superuser
+CREATE USER user_bob;
+NOTICE:  resource queue required -- using default resource queue "pg_default"
+SET SESSION AUTHORIZATION user_bob;
+CREATE TYPE shell; -- not allowed
+ERROR:  must be superuser to create a base type
+CREATE TYPE compfoo as (f1 int, f2 text);
+DROP TYPE compfoo;
+RESET SESSION AUTHORIZATION;
+DROP USER user_bob;
