@@ -423,7 +423,7 @@ add_twostage_group_agg_path(PlannerInfo *root,
 									 (Expr *)gsetid, groupref);
 	}
 
-	group_locus = cdb_choose_grouping_locus(root, path, ctx->target,
+	group_locus = cdb_choose_grouping_locus(root, path,
 											parse->groupClause,
 											ctx->rollups,
 											&need_redistribute);
@@ -456,7 +456,6 @@ add_twostage_group_agg_path(PlannerInfo *root,
 		path = apply_projection_to_path(root, path->parent, path, info.input_proj_target);
 
 		distinct_locus = cdb_choose_grouping_locus(root, path,
-												   info.input_proj_target,
 												   info.dqa_group_clause, NIL,
 												   &distinct_need_redistribute);
 
@@ -604,7 +603,7 @@ add_twostage_hash_agg_path(PlannerInfo *root,
 	bool		need_redistribute;
 	Size		hashentrysize;
 
-	group_locus = cdb_choose_grouping_locus(root, path, ctx->target,
+	group_locus = cdb_choose_grouping_locus(root, path,
 											parse->groupClause, NIL,
 											&need_redistribute);
 	/*
@@ -714,11 +713,9 @@ static void add_single_mixed_dqa_hash_agg_path(PlannerInfo *root,
 	path = apply_projection_to_path(root, path->parent, path, input_target);
 
 	distinct_locus = cdb_choose_grouping_locus(root, path,
-	                                           input_target,
 	                                           dqa_group_clause, NIL,
 	                                           &distinct_need_redistribute);
 	group_locus = cdb_choose_grouping_locus(root, path,
-	                                        input_target,
 	                                        parse->groupClause, NIL,
 	                                        &group_need_redistribute);
 	if (!parse->groupClause)
@@ -808,11 +805,9 @@ add_single_dqa_hash_agg_path(PlannerInfo *root,
 											 NULL);
 
 	distinct_locus = cdb_choose_grouping_locus(root, path,
-											   input_target,
 											   dqa_group_clause, NIL,
 											   &distinct_need_redistribute);
 	group_locus = cdb_choose_grouping_locus(root, path,
-											input_target,
 											parse->groupClause, NIL,
 											&group_need_redistribute);
 	if (!distinct_need_redistribute || ! group_need_redistribute)
@@ -1102,7 +1097,6 @@ add_multi_dqas_hash_agg_path(PlannerInfo *root,
 	}
 
 	distinct_locus = cdb_choose_grouping_locus(root, path,
-											   info->tup_split_target,
 											   info->dqa_group_clause, NIL,
 											   &distinct_need_redistribute);
 
@@ -1182,12 +1176,11 @@ add_multi_dqas_hash_agg_path(PlannerInfo *root,
  */
 CdbPathLocus
 cdb_choose_grouping_locus(PlannerInfo *root, Path *path,
-						  PathTarget *target,
 						  List *groupClause,
 						  List *rollups,
 						  bool *need_redistribute_p)
 {
-	List	   *tlist = make_tlist_from_pathtarget(target);
+	List	   *tlist = make_tlist_from_pathtarget(path->pathtarget);
 	CdbPathLocus locus;
 	bool		need_redistribute;
 
@@ -1215,13 +1208,13 @@ cdb_choose_grouping_locus(PlannerInfo *root, Path *path,
 
 		if (rollups)
 		{
-			/* GPDB_12_MERGE_FIXME */
 			elog(ERROR, "rollups are broken in cdb_choose_grouping_locus()");
 #if 0
-			ListCell   *lcl, *lcc;
+			ListCell   *lc;
 
-			forboth(lcl, rollup_lists, lcc, rollup_groupclauses)
+			forboth(lc, rollups)
 			{
+				RollupData *rollup = lfirst_node(RollupData, lc);
 				List *rlist = (List *) lfirst(lcl);
 				List *rclause = (List *) lfirst(lcc);
 				List *last_list = (List *) llast(rlist);

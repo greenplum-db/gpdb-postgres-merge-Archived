@@ -30,7 +30,6 @@ extern void cdb_create_twostage_grouping_paths(PlannerInfo *root,
 											   List *rollups);
 
 extern CdbPathLocus cdb_choose_grouping_locus(PlannerInfo *root, Path *path,
-											  PathTarget *target,
 											  List *groupClause,
 											  List *rollups,
 											  bool *need_redistribute_p);

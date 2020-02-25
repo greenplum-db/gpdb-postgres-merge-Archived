@@ -4343,27 +4343,6 @@ create_grouping_paths(PlannerInfo *root,
 {
 	Query	   *parse = root->parse;
 	RelOptInfo *grouped_rel;
-#if 0
-    GPDB_12_MERGE_FIXME: This bulk of codes is related to gpdb mpp agg,
-    hard to handle in conflict resolve stage. will fix it after cluster
-    start successful.
-	PathTarget *partial_grouping_target = NULL;
-	AggClauseCosts agg_partial_costs;	/* parallel only */
-	AggClauseCosts agg_final_costs;		/* parallel only */
-	HashAggTableSizes hash_info;
-	double		dNumGroups;
-	double		dNumPartialGroups = 0;
-	bool		can_hash;
-	bool		can_mpp_hash;
-	bool		can_sort;
-	bool		try_parallel_aggregation;
-	bool		try_mpp_multistage_aggregation;
-
-	ListCell   *lc;
-
-	/* For now, do all work in the (GROUP_AGG, NULL) upperrel */
-	grouped_rel = fetch_upper_rel(root, UPPERREL_GROUP_AGG, NULL);
-#endif
 	RelOptInfo *partially_grouped_rel;
 
 	/*
@@ -4423,6 +4402,28 @@ create_grouping_paths(PlannerInfo *root,
 			 agg_costs->numOrderedAggs == 0 &&
 			 (gd ? gd->any_hashable : grouping_is_hashable(parse->groupClause))))
 			flags |= GROUPING_CAN_USE_HASH;
+
+
+		/* GPDB_12_MERGE_FIXME: this belongs here now, but add a new bitmask bit for it? */
+#if 0
+		/* GPDB can also do a two-stage aggregate when there is exactly one DISTINCT agg. */
+		can_mpp_hash = (parse->groupClause != NIL &&
+						parse->groupingSets == NIL &&
+						agg_costs->numPureOrderedAggs == 0 &&
+						grouping_is_hashable(parse->groupClause));
+#endif
+
+		/*
+		 * In GPDB, the hash aggregate can spill to disk, and it needs combine function
+		 * support for that.
+		 *
+		 * GPDB_12_MERGE_FIXME: we ripped spilling out in the merge. But might put it
+		 * back later?
+		 */
+#if 0
+		if (agg_costs->hasNonCombine)
+			can_hash = can_mpp_hash = false;
+#endif
 
 		/*
 		 * Determine whether partial aggregation is possible.
@@ -4709,563 +4710,6 @@ create_ordinary_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
     add_paths_to_grouping_rel(root, input_rel, grouped_rel,
                               partially_grouped_rel, agg_costs, gd,
                               dNumGroups, extra);
-#if 0
-    GPDB_12_MERGE_FIXME: This bulk of codes is related to gpdb mpp agg,
-    hard to handle in conflict resolve stage. will fix it after cluster
-    start successful.
-									  rollup_lists,
-									  rollup_groupclauses);
-
-	/*
-	 * Determine whether it's possible to perform sort-based implementations
-	 * of grouping.  (Note that if groupClause is empty,
-	 * grouping_is_sortable() is trivially true, and all the
-	 * pathkeys_contained_in() tests will succeed too, so that we'll consider
-	 * every surviving input path.)
-	 */
-	can_sort = grouping_is_sortable(parse->groupClause);
-
-	/*
-	 * Determine whether we should consider hash-based implementations of
-	 * grouping.
-	 *
-	 * Hashed aggregation only applies if we're grouping.  We currently can't
-	 * hash if there are grouping sets, though.
-	 *
-	 * Executor doesn't support hashed aggregation with DISTINCT or ORDER BY
-	 * aggregates.  (Doing so would imply storing *all* the input values in
-	 * the hash table, and/or running many sorts in parallel, either of which
-	 * seems like a certain loser.)  We similarly don't support ordered-set
-	 * aggregates in hashed aggregation, but that case is also included in the
-	 * numOrderedAggs count.
-	 *
-	 * Note: grouping_is_hashable() is much more expensive to check than the
-	 * other gating conditions, so we want to do it last.
-	 */
-	can_hash = (parse->groupClause != NIL &&
-				parse->groupingSets == NIL &&
-				agg_costs->numOrderedAggs == 0 &&
-				grouping_is_hashable(parse->groupClause));
-
-	/* GPDB can also do a two-stage aggregate when there is exactly one DISTINCT agg. */
-	can_mpp_hash = (parse->groupClause != NIL &&
-				parse->groupingSets == NIL &&
-				agg_costs->numPureOrderedAggs == 0 &&
-				grouping_is_hashable(parse->groupClause));
-
-	/*
-	 * In GPDB, the hash aggregate can spill to disk, and it needs combine function
-	 * support for that.
-	 */
-	if (agg_costs->hasNonCombine)
-		can_hash = can_mpp_hash = false;
-
-	/*
-	 * If grouped_rel->consider_parallel is true, then paths that we generate
-	 * for this grouping relation could be run inside of a worker, but that
-	 * doesn't mean we can actually use the PartialAggregate/FinalizeAggregate
-	 * execution strategy.  Figure that out.
-	 */
-	if (!grouped_rel->consider_parallel)
-	{
-		/* Not even parallel-safe. */
-		try_parallel_aggregation = false;
-	}
-	else if (input_rel->partial_pathlist == NIL)
-	{
-		/* Nothing to use as input for partial aggregate. */
-		try_parallel_aggregation = false;
-	}
-	else if (!parse->hasAggs && parse->groupClause == NIL)
-	{
-		/*
-		 * We don't know how to do parallel aggregation unless we have either
-		 * some aggregates or a grouping clause.
-		 */
-		try_parallel_aggregation = false;
-	}
-	else if (parse->groupingSets)
-	{
-		/* We don't know how to do grouping sets in parallel. */
-		try_parallel_aggregation = false;
-	}
-	else if (agg_costs->hasNonPartial || agg_costs->hasNonSerial)
-	{
-		/* Insufficient support for partial mode. */
-		try_parallel_aggregation = false;
-	}
-	else
-	{
-		/* Everything looks good. */
-		try_parallel_aggregation = true;
-	}
-
-	/*
-	 * In PostgreSQL, partial_grouping_target and the partial/final agg
-	 * costs are only needed for parallel aggregation. In GPDB we also use
-	 * them when building MPP two- and three-stage plans.
-	 */
-	if (Gp_role != GP_ROLE_DISPATCH)
-	{
-		try_mpp_multistage_aggregation = false;
-	}
-	else if (!root->config->gp_enable_multiphase_agg)
-	{
-		try_mpp_multistage_aggregation = false;
-	}
-	else if (!parse->hasAggs && parse->groupClause == NIL)
-	{
-		try_mpp_multistage_aggregation = false;
-	}
-	else if (agg_costs->hasNonCombine || agg_costs->hasNonSerial)
-	{
-		try_mpp_multistage_aggregation = false;
-	}
-	else
-	{
-		try_mpp_multistage_aggregation = true;
-	}
-
-	if (try_parallel_aggregation || try_mpp_multistage_aggregation)
-	{
-		/*
-		 * Build target list for partial aggregate paths.  These paths cannot
-		 * just emit the same tlist as regular aggregate paths, because (1) we
-		 * must include Vars and Aggrefs needed in HAVING, which might not
-		 * appear in the result tlist, and (2) the Aggrefs must be set in
-		 * partial mode.
-		 */
-		partial_grouping_target = make_partial_grouping_target(root, target);
-
-		/*
-		 * Collect statistics about aggregates for estimating costs of
-		 * performing aggregation in parallel.
-		 */
-		MemSet(&agg_partial_costs, 0, sizeof(AggClauseCosts));
-		MemSet(&agg_final_costs, 0, sizeof(AggClauseCosts));
-		if (parse->hasAggs)
-		{
-			/* partial phase */
-			get_agg_clause_costs(root, (Node *) partial_grouping_target->exprs,
-								 AGGSPLIT_INITIAL_SERIAL,
-								 &agg_partial_costs);
-
-			/* final phase */
-			get_agg_clause_costs(root, (Node *) target->exprs,
-								 AGGSPLIT_FINAL_DESERIAL,
-								 &agg_final_costs);
-			get_agg_clause_costs(root, parse->havingQual,
-								 AGGSPLIT_FINAL_DESERIAL,
-								 &agg_final_costs);
-		}
-	}
-
-	/*
-	 * Before generating paths for grouped_rel, we first generate any possible
-	 * partial paths; that way, later code can easily consider both parallel
-	 * and non-parallel approaches to grouping.  Note that the partial paths
-	 * we generate here are also partially aggregated, so simply pushing a
-	 * Gather node on top is insufficient to create a final path, as would be
-	 * the case for a scan/join rel.
-	 */
-	if (try_parallel_aggregation)
-	{
-		Path	   *cheapest_partial_path = linitial(input_rel->partial_pathlist);
-
-		/* Estimate number of partial groups. */
-		dNumPartialGroups = get_number_of_groups(root,
-												 cheapest_partial_path->rows,
-												 NIL,
-												 NIL);
-
-		if (can_sort)
-		{
-			/* This was checked before setting try_parallel_aggregation */
-			Assert(parse->hasAggs || parse->groupClause);
-
-			/*
-			 * Use any available suitably-sorted path as input, and also
-			 * consider sorting the cheapest partial path.
-			 */
-			foreach(lc, input_rel->partial_pathlist)
-			{
-				Path	   *path = (Path *) lfirst(lc);
-				bool		is_sorted;
-
-				is_sorted = pathkeys_contained_in(root->group_pathkeys,
-												  path->pathkeys);
-				if (path == cheapest_partial_path || is_sorted)
-				{
-					/* Sort the cheapest partial path, if it isn't already */
-					if (!is_sorted)
-						path = (Path *) create_sort_path(root,
-														 grouped_rel,
-														 path,
-														 root->group_pathkeys,
-														 -1.0);
-
-					if (parse->hasAggs || parse->groupClause)
-						add_partial_path(grouped_rel, (Path *)
-										 create_agg_path(root,
-														 grouped_rel,
-														 path,
-													 partial_grouping_target,
-								 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
-													 AGGSPLIT_INITIAL_SERIAL,
-														 false, /* streaming */
-														 parse->groupClause,
-														 NIL,
-														 &agg_partial_costs,
-														 dNumPartialGroups,
-														 NULL));
-					else
-					{
-						/* Group nodes are not used in GPDB */
-#if 0
-						add_partial_path(grouped_rel, (Path *)
-										 create_group_path(root,
-														   grouped_rel,
-														   path,
-													 partial_grouping_target,
-														   parse->groupClause,
-														   NIL,
-														 dNumPartialGroups));
-#endif
-					}
-				}
-			}
-		}
-
-		if (can_hash)
-		{
-			/* Checked above */
-			Assert(parse->hasAggs || parse->groupClause);
-
-			/*
-			 * Tentatively produce a partial HashAgg Path, depending on if it
-			 * looks as if the hash table will fit in work_mem.
-			 */
-			if (calcHashAggTableSizes(work_mem * 1024L,
-									  dNumPartialGroups,
-									  cheapest_partial_path->pathtarget->width,
-									  false, /* force */
-									  &hash_info))
-			{
-				add_partial_path(grouped_rel, (Path *)
-								 create_agg_path(root,
-												 grouped_rel,
-												 cheapest_partial_path,
-												 partial_grouping_target,
-												 AGG_HASHED,
-												 AGGSPLIT_INITIAL_SERIAL,
-												 false, /* streaming */
-												 parse->groupClause,
-												 NIL,
-												 &agg_partial_costs,
-												 dNumPartialGroups,
-												 &hash_info));
-			}
-		}
-	}
-
-	/* Build final grouping paths */
-	if (can_sort)
-	{
-		/*
-		 * Use any available suitably-sorted path as input, and also consider
-		 * sorting the cheapest-total path.
-		 */
-		foreach(lc, input_rel->pathlist)
-		{
-			Path	   *path = (Path *) lfirst(lc);
-			bool		is_sorted;
-
-			is_sorted = pathkeys_contained_in(root->group_pathkeys,
-											  path->pathkeys);
-			if (path == cheapest_path || is_sorted)
-			{
-				CdbPathLocus locus;
-				bool		need_redistribute;
-
-				locus = cdb_choose_grouping_locus(root, path, target,
-												  parse->groupClause,
-												  rollup_lists, rollup_groupclauses,
-												  &need_redistribute);
-
-				/* Sort the cheapest-total path if it isn't already sorted */
-				if (!is_sorted)
-				{
-					/*
-					 * If we need to redistribute, it's usually best to
-					 * redistribute the data first, and then sort in parallel
-					 * on each segment.
-					 *
-					 * But if we don't have any expressions to redistribute
-					 * on, i.e. if we are gathering all data to a single node
-					 * to perform the aggregation, then it's better to sort
-					 * all the data on the segments first, in parallel, and
-					 * do a order-preserving motion to merge the inputs.
-					 */
-					if (need_redistribute && CdbPathLocus_IsPartitioned(locus))
-						path = cdbpath_create_motion_path(root, path, NIL, false, locus);
-
-					path = (Path *) create_sort_path(root,
-													 grouped_rel,
-													 path,
-													 root->group_pathkeys,
-													 -1.0);
-
-					if (need_redistribute && !CdbPathLocus_IsPartitioned(locus))
-						path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
-				}
-				else
-				{
-					/*
-					 * The input is already conveniently sorted. We could
-					 * redistribute it by hash, but then we'd need to re-sort
-					 * it. That doesn't seem like a good idea, so we prefer to
-					 * gather it all, and take advantage of the sort order.
-					 *
-					 * If the grouping doesn't require any sorting (I think that
-					 * case only arises with plain aggregates, and no GROUP BY)
-					 * then we do redistribute so that we can run the aggregation
-					 * in parallel.
-					 */
-					if (need_redistribute)
-					{
-						if (root->group_pathkeys)
-						{
-							CdbPathLocus locus;
-
-							CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
-							path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
-						}
-						else
-						{
-							path = cdbpath_create_motion_path(root, path, NIL, false, locus);
-						}
-					}
-				}
-
-				/* Now decide what to stick atop it */
-				if (parse->groupingSets)
-				{
-					/*
-					 * We have grouping sets, possibly with aggregation.  Make
-					 * a GroupingSetsPath.
-					 */
-					add_path(grouped_rel, (Path *)
-							 create_groupingsets_path(root,
-													  grouped_rel,
-													  path,
-													  target,
-													  AGGSPLIT_SIMPLE,
-												  (List *) parse->havingQual,
-													  rollup_lists,
-													  rollup_groupclauses,
-													  agg_costs,
-													  dNumGroups));
-				}
-				else if (parse->hasAggs || parse->groupClause)
-				{
-					/*
-					 * We have aggregation, possibly with plain GROUP BY. Make
-					 * an AggPath.
-					 */
-					add_path(grouped_rel, (Path *)
-							 create_agg_path(root,
-											 grouped_rel,
-											 path,
-											 target,
-								 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
-											 AGGSPLIT_SIMPLE,
-											 false, /* streaming */
-											 parse->groupClause,
-											 (List *) parse->havingQual,
-											 agg_costs,
-											 dNumGroups,
-											 NULL));
-				}
-				/* Group nodes are not used in GPDB */
-#if 0
-				else if (parse->groupClause)
-				{
-					/*
-					 * We have GROUP BY without aggregation or grouping sets.
-					 * Make a GroupPath.
-					 */
-					add_path(grouped_rel, (Path *)
-							 create_group_path(root,
-											   grouped_rel,
-											   path,
-											   target,
-											   parse->groupClause,
-											   (List *) parse->havingQual,
-											   dNumGroups));
-				}
-#endif
-				else
-				{
-					/* Other cases should have been handled above */
-					Assert(false);
-				}
-			}
-		}
-
-		/*
-		 * Now generate a complete GroupAgg Path atop of the cheapest partial
-		 * path. We need only bother with the cheapest path here, as the
-		 * output of Gather is never sorted.
-		 */
-		if (grouped_rel->partial_pathlist)
-		{
-			Path	   *path = (Path *) linitial(grouped_rel->partial_pathlist);
-			double		total_groups = path->rows * path->parallel_workers;
-
-			path = (Path *) create_gather_path(root,
-											   grouped_rel,
-											   path,
-											   partial_grouping_target,
-											   NULL,
-											   &total_groups);
-
-			/*
-			 * Gather is always unsorted, so we'll need to sort, unless
-			 * there's no GROUP BY clause, in which case there will only be a
-			 * single group.
-			 */
-			if (parse->groupClause)
-				path = (Path *) create_sort_path(root,
-												 grouped_rel,
-												 path,
-												 root->group_pathkeys,
-												 -1.0);
-
-			if (parse->hasAggs || parse->groupClause)
-				add_path(grouped_rel, (Path *)
-						 create_agg_path(root,
-										 grouped_rel,
-										 path,
-										 target,
-								 parse->groupClause ? AGG_SORTED : AGG_PLAIN,
-										 AGGSPLIT_FINAL_DESERIAL,
-										 false, /* streaming */
-										 parse->groupClause,
-										 (List *) parse->havingQual,
-										 &agg_final_costs,
-										 dNumGroups,
-										 NULL));
-			/* Group nodes are not used in GPDB */
-#if 0
-			else
-			{
-				add_path(grouped_rel, (Path *)
-						 create_group_path(root,
-										   grouped_rel,
-										   path,
-										   target,
-										   parse->groupClause,
-										   (List *) parse->havingQual,
-										   dNumGroups));
-			}
-#endif
-		}
-	}
-
-	if (can_hash)
-	{
-		CdbPathLocus locus;
-		bool		need_redistribute;
-
-		locus = cdb_choose_grouping_locus(root, cheapest_path, target,
-										  parse->groupClause, rollup_lists, rollup_groupclauses,
-										  &need_redistribute);
-
-		/*
-		 * Provided that the estimated size of the hashtable does not exceed
-		 * work_mem, we'll generate a HashAgg Path, although if we were unable
-		 * to sort above, then we'd better generate a Path, so that we at
-		 * least have one.
-		 *
-		 * This calculation is slightly different in GPDB, because in GPDB,
-		 * Hash Aggregates can spill to disk.
-		 */
-		if (calcHashAggTableSizes(work_mem * 1024L,
-								  dNumGroups,
-								  cheapest_path->pathtarget->width,
-								  false, /* force */
-								  &hash_info) ||
-			grouped_rel->pathlist == NIL)
-		{
-			/*
-			 * Redistribute if needed.
-			 *
-			 * The hash agg doesn't care about input order, and it destroys any order there was,
-			 * so don't bother doing a order-preserving Motion even if we could.
-			 */
-			if (need_redistribute)
-				cheapest_path = cdbpath_create_motion_path(root, cheapest_path,
-														   NIL /* pathkeys */, false, locus);
-
-			/*
-			 * We just need an Agg over the cheapest-total input path, since
-			 * input order won't matter.
-			 */
-			add_path(grouped_rel, (Path *)
-					 create_agg_path(root, grouped_rel,
-									 cheapest_path,
-									 target,
-									 AGG_HASHED,
-									 AGGSPLIT_SIMPLE,
-									 false, /* streaming */
-									 parse->groupClause,
-									 (List *) parse->havingQual,
-									 agg_costs,
-									 dNumGroups,
-									 &hash_info));
-		}
-
-		/*
-		 * Generate a HashAgg Path atop of the cheapest partial path. Once
-		 * again, we'll only do this if it looks as though the hash table
-		 * won't exceed work_mem.
-		 */
-		if (grouped_rel->partial_pathlist)
-		{
-			Path	   *path = (Path *) linitial(grouped_rel->partial_pathlist);
-
-			if (calcHashAggTableSizes(work_mem * 1024L,
-									  dNumGroups,
-									  path->pathtarget->width,
-									  false, /* force */
-									  &hash_info))
-			{
-				double		total_groups = path->rows * path->parallel_workers;
-
-				path = (Path *) create_gather_path(root,
-												   grouped_rel,
-												   path,
-												   partial_grouping_target,
-												   NULL,
-												   &total_groups);
-
-				add_path(grouped_rel, (Path *)
-						 create_agg_path(root,
-										 grouped_rel,
-										 path,
-										 target,
-										 AGG_HASHED,
-										 AGGSPLIT_FINAL_DESERIAL,
-										 false, /* streaming */
-										 parse->groupClause,
-										 (List *) parse->havingQual,
-										 &agg_final_costs,
-										 dNumGroups,
-										 &hash_info));
-			}
-		}
-	}
-#endif
 
 	/* Give a helpful error if we failed to find any implementation */
 	if (grouped_rel->pathlist == NIL)
@@ -5273,27 +4717,6 @@ create_ordinary_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("could not implement GROUP BY"),
 				 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
-
-	/*
-	 * Add GPDB two-and three-stage agg plans
-	 */
-	bool try_mpp_multistage_aggregation = false;
-	bool can_mpp_hash = false;
-	List *rollups = NIL;
-
-	if (try_mpp_multistage_aggregation)
-		cdb_create_twostage_grouping_paths(root,
-										   input_rel,
-										   grouped_rel,
-										   grouped_rel->reltarget,
-										   partially_grouped_rel->reltarget,
-                                           ((extra->flags & GROUPING_CAN_USE_SORT) != 0), /* can_sort */
-										   can_mpp_hash,
-										   dNumGroups,
-										   agg_costs,
-										   &extra->agg_partial_costs,
-										   &extra->agg_final_costs,
-										   rollups);
 
 	/*
 	 * If there is an FDW that's responsible for all baserels of the query,
@@ -8039,13 +7462,68 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 											  path->pathkeys);
 			if (path == cheapest_path || is_sorted)
 			{
+				CdbPathLocus locus;
+				bool		need_redistribute;
+
+				locus = cdb_choose_grouping_locus(root, path,
+												  parse->groupClause,
+												  gd ? gd->rollups : NIL,
+												  &need_redistribute);
+
 				/* Sort the cheapest-total path if it isn't already sorted */
 				if (!is_sorted)
+				{
+					/*
+					 * If we need to redistribute, it's usually best to
+					 * redistribute the data first, and then sort in parallel
+					 * on each segment.
+					 *
+					 * But if we don't have any expressions to redistribute
+					 * on, i.e. if we are gathering all data to a single node
+					 * to perform the aggregation, then it's better to sort
+					 * all the data on the segments first, in parallel, and
+					 * do a order-preserving motion to merge the inputs.
+					 */
+					if (need_redistribute && CdbPathLocus_IsPartitioned(locus))
+						path = cdbpath_create_motion_path(root, path, NIL, false, locus);
+
 					path = (Path *) create_sort_path(root,
 													 grouped_rel,
 													 path,
 													 root->group_pathkeys,
 													 -1.0);
+
+					if (need_redistribute && !CdbPathLocus_IsPartitioned(locus))
+						path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
+				}
+				else
+				{
+					/*
+					 * The input is already conveniently sorted. We could
+					 * redistribute it by hash, but then we'd need to re-sort
+					 * it. That doesn't seem like a good idea, so we prefer to
+					 * gather it all, and take advantage of the sort order.
+					 *
+					 * If the grouping doesn't require any sorting (I think that
+					 * case only arises with plain aggregates, and no GROUP BY)
+					 * then we do redistribute so that we can run the aggregation
+					 * in parallel.
+					 */
+					if (need_redistribute)
+					{
+						if (root->group_pathkeys)
+						{
+							CdbPathLocus locus;
+
+							CdbPathLocus_MakeSingleQE(&locus, getgpsegmentCount());
+							path = cdbpath_create_motion_path(root, path, path->pathkeys, false, locus);
+						}
+						else
+						{
+							path = cdbpath_create_motion_path(root, path, NIL, false, locus);
+						}
+					}
+				}
 
 				/* Now decide what to stick atop it */
 				if (parse->groupingSets)
@@ -8101,6 +7579,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 		/*
 		 * Instead of operating directly on the input relation, we can
 		 * consider finalizing a partially aggregated path.
+		 *
+		 * GPDB_12_MERGE_FIXME: need to handle locus here, to make this MPP?
 		 */
 		if (partially_grouped_rel != NULL)
 		{
@@ -8181,6 +7661,23 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 			if (hashaggtablesize < work_mem * 1024L ||
 				grouped_rel->pathlist == NIL)
 			{
+				CdbPathLocus locus;
+				bool		need_redistribute;
+
+				locus = cdb_choose_grouping_locus(root, cheapest_path,
+												  parse->groupClause, NIL,
+												  &need_redistribute);
+
+				/*
+				 * Redistribute if needed.
+				 *
+				 * The hash agg doesn't care about input order, and it destroys any order there was,
+				 * so don't bother doing a order-preserving Motion even if we could.
+				 */
+				if (need_redistribute)
+					cheapest_path = cdbpath_create_motion_path(root, cheapest_path,
+															   NIL /* pathkeys */, false, locus);
+
 				/*
 				 * We just need an Agg over the cheapest-total input path,
 				 * since input order won't matter.
@@ -8203,6 +7700,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 		 * Generate a Finalize HashAgg Path atop of the cheapest partially
 		 * grouped path, assuming there is one. Once again, we'll only do this
 		 * if it looks as though the hash table won't exceed work_mem.
+		 *
+		 * GPDB_12_MERGE_FIXME: need to handle locus here, to make this MPP?
 		 */
 		if (partially_grouped_rel && partially_grouped_rel->pathlist)
 		{
@@ -8236,6 +7735,56 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 	 */
 	if (grouped_rel->partial_pathlist != NIL)
 		gather_grouping_paths(root, grouped_rel);
+
+	/*
+	 * Add GPDB two-and three-stage agg plans
+	 */
+	bool try_mpp_multistage_aggregation = false;
+	bool can_mpp_hash = false;
+	List *rollups = NIL;
+
+	/*
+	 * In PostgreSQL, partial_grouping_target and the partial/final agg
+	 * costs are only needed for parallel aggregation. In GPDB we also use
+	 * them when building MPP two- and three-stage plans.
+	 */
+	if (Gp_role != GP_ROLE_DISPATCH)
+	{
+		try_mpp_multistage_aggregation = false;
+	}
+	else if (!root->config->gp_enable_multiphase_agg)
+	{
+		try_mpp_multistage_aggregation = false;
+	}
+	else if (!parse->hasAggs && parse->groupClause == NIL)
+	{
+		try_mpp_multistage_aggregation = false;
+	}
+	else if (agg_costs->hasNonCombine || agg_costs->hasNonSerial)
+	{
+		try_mpp_multistage_aggregation = false;
+	}
+	else
+	{
+		try_mpp_multistage_aggregation = true;
+	}
+
+	/* GPDB_12_MERGE_FIXME */
+#if 0
+	if (try_mpp_multistage_aggregation)
+		cdb_create_twostage_grouping_paths(root,
+										   input_rel,
+										   grouped_rel,
+										   grouped_rel->reltarget,
+										   partially_grouped_rel->reltarget,
+                                           ((extra->flags & GROUPING_CAN_USE_SORT) != 0), /* can_sort */
+										   can_mpp_hash,
+										   dNumGroups,
+										   agg_costs,
+										   &extra->agg_partial_costs,
+										   &extra->agg_final_costs,
+										   rollups);
+#endif
 }
 
 /*
