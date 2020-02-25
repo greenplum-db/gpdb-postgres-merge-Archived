@@ -1262,9 +1262,9 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
     /*
      * initialize Greenplum Database partitioning info
      */
-    if ((relation->rd_rel->relkind == RELKIND_RELATION &&
-		 !IsSystemRelation(relation)) ||
-		(relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE) ||
+	if ((relation->rd_rel->relkind == RELKIND_RELATION && !IsSystemRelation(relation)) ||
+		relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ||
+		relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE ||
 		relation->rd_rel->relkind == RELKIND_MATVIEW)
 	{
 		MemoryContext oldcontext = MemoryContextSwitchTo(CacheMemoryContext);
