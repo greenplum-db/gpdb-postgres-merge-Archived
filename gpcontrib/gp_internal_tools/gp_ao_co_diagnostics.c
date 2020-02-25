@@ -324,7 +324,7 @@ gp_get_ao_entry_from_cache(PG_FUNCTION_ARGS)
 
 		/* build tupdesc for result tuples */
 #define NUM_ATTRS 9
-		tupdesc = CreateTemplateTupleDesc(NUM_ATTRS, false);
+		tupdesc = CreateTemplateTupleDesc(NUM_ATTRS);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "segno",
 						   INT2OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "total_tupcount",
