@@ -1232,9 +1232,6 @@ ProcessUtilitySlow(ParseState *pstate,
 													   toast_options,
 													   true);
 
-								NewRelationCreateToastTable(address.objectId,
-														   toast_options);
-
 								/*
 								 * If the master relation is a non-leaf relation in
 								 * a partition hierarchy, then this auxiliary
@@ -1250,6 +1247,23 @@ ProcessUtilitySlow(ParseState *pstate,
 									AlterTableCreateAoBlkdirTable(address.objectId);
 
 								AlterTableCreateAoVisimapTable(address.objectId);
+
+								/*
+								 * parse and validate reloptions for the toast
+								 * table
+								 */
+								toast_options = transformRelOptions((Datum) 0,
+																	((CreateStmt *) stmt)->options,
+																	"toast",
+																	validnsps,
+																	true,
+																	false);
+								(void) heap_reloptions(RELKIND_TOASTVALUE,
+													   toast_options,
+													   true);
+
+								NewRelationCreateToastTable(address.objectId,
+															toast_options);
 							}
 							if (Gp_role == GP_ROLE_DISPATCH)
 								CdbDispatchUtilityStatement((Node *) stmt,
@@ -1258,25 +1272,6 @@ ProcessUtilitySlow(ParseState *pstate,
 															DF_WITH_SNAPSHOT,
 															GetAssignedOidsForDispatch(),
 															NULL);
-							CommandCounterIncrement();
-							/*
-							 * Deferred statements should be evaluated *after* AO tables
-							 * are updated correctly.  Otherwise, they may not have
-							 * segment information yet and operations like create_index
-							 * in the deferred statements cannot see the relfile.
-							 */
-							toast_options = transformRelOptions((Datum) 0,
-																((CreateStmt *) stmt)->options,
-																"toast",
-																validnsps,
-																true,
-																false);
-							(void) heap_reloptions(RELKIND_TOASTVALUE,
-												   toast_options,
-												   true);
-
-							NewRelationCreateToastTable(address.objectId,
-														toast_options);
 						}
 						else if (IsA(stmt, CreateForeignTableStmt))
 						{
