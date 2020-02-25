@@ -635,8 +635,9 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	}
 	else
 	{
-		roleid = GetNewOidWithIndex(pg_authid_rel, AuthIdOidIndexId,
-									Anum_pg_authid_oid);
+		roleid = GetNewOidForAuthId(pg_authid_rel, AuthIdOidIndexId,
+									Anum_pg_authid_oid,
+									stmt->role);
 	}
 
 	new_record[Anum_pg_authid_oid - 1] = ObjectIdGetDatum(roleid);
