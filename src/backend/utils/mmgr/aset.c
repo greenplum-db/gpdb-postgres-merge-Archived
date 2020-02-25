@@ -540,6 +540,14 @@ AllocSetContextCreateInternal(MemoryContext parent,
 								parent,
 								name);
 
+			if (parent)
+				set->accountingParent = ((AllocSet) parent)->accountingParent;
+			else
+				set->accountingParent = set;
+			set->localAllocated = 0;
+			set->currentAllocated = 0;
+			set->peakAllocated = 0;
+
 			return (MemoryContext) set;
 		}
 	}
@@ -636,6 +644,9 @@ AllocSetContextCreateInternal(MemoryContext parent,
 		set->accountingParent = ((AllocSet) parent)->accountingParent;
 	else
 		set->accountingParent = set;
+	set->localAllocated = 0;
+	set->currentAllocated = 0;
+	set->peakAllocated = 0;
 
 	return (MemoryContext) set;
 }
