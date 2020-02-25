@@ -94,9 +94,10 @@ formatTuple(StringInfo buf, TupleTableSlot *slot, Oid *outputFunArray)
  *		ExecMotion
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecMotion(MotionState *node)
+static TupleTableSlot *
+ExecMotion(PlanState *pstate)
 {
+	MotionState *node = castNode(MotionState, pstate);
 	Motion	   *motion = (Motion *) node->ps.plan;
 
 	/* sanity check */
@@ -630,6 +631,7 @@ ExecInitMotion(Motion *node, EState *estate, int eflags)
 	motionstate = makeNode(MotionState);
 	motionstate->ps.plan = (Plan *) node;
 	motionstate->ps.state = estate;
+	motionstate->ps.ExecProcNode = ExecMotion;
 	motionstate->mstype = MOTIONSTATE_NONE;
 	motionstate->stopRequested = false;
 	motionstate->hashExprs = NIL;
@@ -727,7 +729,7 @@ ExecInitMotion(Motion *node, EState *estate, int eflags)
 	/*
 	 * Initialize result type and slot
 	 */
-	ExecInitResultTupleSlotTL(&motionstate->ps, &TTSOpsVirtual);
+	ExecInitResultTupleSlotTL(&motionstate->ps, &TTSOpsMinimalTuple);
 	tupDesc = ExecGetResultType(&motionstate->ps);
 
 	motionstate->ps.ps_ProjInfo = NULL;
@@ -741,8 +743,8 @@ ExecInitMotion(Motion *node, EState *estate, int eflags)
 		nkeys = list_length(node->hashExprs);
 
 		if (nkeys > 0)
-			motionstate->hashExprs = (List *) ExecInitExpr((Expr *) node->hashExprs,
-														   (PlanState *) motionstate);
+			motionstate->hashExprs = ExecInitExprList(node->hashExprs,
+													  (PlanState *) motionstate);
 
 		/*
 		 * Create hash API reference
