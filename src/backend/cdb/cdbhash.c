@@ -22,6 +22,7 @@
 #include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_opclass.h"
 #include "cdb/cdbhash.h"
 #include "commands/defrem.h"
@@ -185,7 +186,8 @@ cdbhash(CdbHash *h, int attno, Datum datum, bool isnull)
 			uint32		hkey;
 
 			InitFunctionCallInfoData(*fcinfo, &h->hashfuncs[attno - 1], 1,
-									 InvalidOid,
+									 /* GPDB_12_MERGE_FIXME: always use default collation. Is that OK? */
+									 DEFAULT_COLLATION_OID,
 									 NULL, NULL);
 
 			fcinfo->args[0].value = datum;
@@ -209,7 +211,7 @@ cdbhash(CdbHash *h, int attno, Datum datum, bool isnull)
 			uint32		hkey;
 
 			InitFunctionCallInfoData(*fcinfo, &h->hashfuncs[attno - 1], 1,
-									 InvalidOid,
+									 DEFAULT_COLLATION_OID, /* legacy hash functions don't care about collations */
 									 NULL, NULL);
 
 			fcinfo->args[0].value = datum;
