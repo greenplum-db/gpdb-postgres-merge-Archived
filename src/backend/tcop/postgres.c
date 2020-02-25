@@ -1108,7 +1108,6 @@ pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams)
  * Called in a qExec process to read and execute a query plan sent by CdbDispatchPlan().
  *
  * query_string -- optional query text (C string).
- * serializedQuerytree[len]  -- Query node or (NULL,0) if plan provided.
  * serializedPlantree[len] -- PlannedStmt node, or (NULL,0) if query provided.
  * serializedParams[len] -- optional parameters
  * serializedQueryDispatchDesc[len] -- QueryDispatchDesc node, or (NULL,0) if query provided.
@@ -1118,7 +1117,6 @@ pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams)
  */
 static void
 exec_mpp_query(const char *query_string,
-			   const char * serializedQuerytree, int serializedQuerytreelen,
 			   const char * serializedPlantree, int serializedPlantreelen,
 			   const char * serializedParams, int serializedParamslen,
 			   const char * serializedQueryDispatchDesc, int serializedQueryDispatchDesclen)
@@ -1128,7 +1126,6 @@ exec_mpp_query(const char *query_string,
 	bool		save_log_statement_stats = log_statement_stats;
 	bool		was_logged = false;
 	char		msec_str[32];
-	Node		   *utilityStmt = NULL;
 	PlannedStmt	   *plan = NULL;
 	QueryDispatchDesc *ddesc = NULL;
 	CmdType		commandType = CMD_UNKNOWN;
@@ -1180,20 +1177,6 @@ exec_mpp_query(const char *query_string,
 	 */
 	oldcontext = MemoryContextSwitchTo(MessageContext);
 
-	/*
-	 * Deserialize the Query node, if there is one.  If this is a planned stmt, then
-	 * there isn't one, but there must be a PlannedStmt later on.
-	 */
-	if (serializedQuerytree != NULL && serializedQuerytreelen > 0)
-	{
-		Query *query = (Query *) deserializeNode(serializedQuerytree,serializedQuerytreelen);
-
-		if ( !IsA(query, Query) || query->commandType != CMD_UTILITY )
-			elog(ERROR, "MPPEXEC: received non-utility Query node.");
-
-		utilityStmt = query->utilityStmt;
-	}
-
  	/*
      * Deserialize the query execution plan (a PlannedStmt node), if there is one.
      */
@@ -1244,28 +1227,18 @@ exec_mpp_query(const char *query_string,
 			AddPreassignedOids(ddesc->oidAssignments);
     }
 
-	/*
-	 * Choose the command type from either the Query or the PlannedStmt.
-	 */
-    if ( utilityStmt )
-    	commandType = CMD_UTILITY;
-    else
-	/*
-	 * Get (possibly 0) parameters.
-	 */
-    {
-    	if ( !plan )
-    		elog(ERROR, "MPPEXEC: received neither Query nor Plan");
+	if ( !plan )
+		elog(ERROR, "MPPEXEC: received neither Query nor Plan");
 
-    	/* This must be a planned statement. */
-	    if (plan->commandType != CMD_SELECT &&
-        	plan->commandType != CMD_INSERT &&
-        	plan->commandType != CMD_UPDATE &&
-        	plan->commandType != CMD_DELETE)
-        	elog(ERROR, "MPPEXEC: received non-DML Plan");
+	/* Extract command type from the planned statement. */
+	if (plan->commandType != CMD_SELECT &&
+		plan->commandType != CMD_INSERT &&
+		plan->commandType != CMD_UPDATE &&
+		plan->commandType != CMD_DELETE &&
+		plan->commandType != CMD_UTILITY)
+		elog(ERROR, "MPPEXEC: received non-DML Plan");
+	commandType = plan->commandType;
 
-        commandType = plan->commandType;
-	}
 	if ( slice )
 	{
 		/* Non root slices don't need update privileges. */
@@ -1293,7 +1266,7 @@ exec_mpp_query(const char *query_string,
 		 * TODO need to log SELECT INTO as DDL
 		 */
 		if (log_statement == LOGSTMT_ALL ||
-			(utilityStmt && log_statement == LOGSTMT_DDL) ||
+			(plan->utilityStmt && log_statement == LOGSTMT_DDL) ||
 			(plan && log_statement >= LOGSTMT_MOD))
 
 		{
@@ -1415,9 +1388,10 @@ exec_mpp_query(const char *query_string,
 		PortalDefineQuery(portal,
 						  NULL,
 						  query_string,
+						  /* GPDB_12_MERGE_FIXME: T_Query is probably not right for utility stmts */
 						  T_Query, /* not a parsed statement, so not T_SelectStmt */
 						  commandTag,
-						  list_make1(plan ? (Node*)plan : (Node*)utilityStmt),
+						  list_make1(plan),
 						  NULL);
 
 		/*
@@ -5301,7 +5275,6 @@ PostgresMain(int argc, char *argv[],
 					const char *query_string = pstrdup("");
 
 					const char *serializedDtxContextInfo = NULL;
-					const char *serializedQuerytree = NULL;
 					const char *serializedPlantree = NULL;
 					const char *serializedParams = NULL;
 					const char *serializedQueryDispatchDesc = NULL;
@@ -5309,7 +5282,6 @@ PostgresMain(int argc, char *argv[],
 
 					int query_string_len = 0;
 					int serializedDtxContextInfolen = 0;
-					int serializedQuerytreelen = 0;
 					int serializedPlantreelen = 0;
 					int serializedParamslen = 0;
 					int serializedQueryDispatchDesclen = 0;
@@ -5346,7 +5318,6 @@ PostgresMain(int argc, char *argv[],
 
 					statementStart = pq_getmsgint64(&input_message);
 					query_string_len = pq_getmsgint(&input_message, 4);
-					serializedQuerytreelen = pq_getmsgint(&input_message, 4);
 					serializedPlantreelen = pq_getmsgint(&input_message, 4);
 					serializedParamslen = pq_getmsgint(&input_message, 4);
 					serializedQueryDispatchDesclen = pq_getmsgint(&input_message, 4);
@@ -5363,9 +5334,6 @@ PostgresMain(int argc, char *argv[],
 					/* get the query string and kick off processing. */
 					if (query_string_len > 0)
 						query_string = pq_getmsgbytes(&input_message,query_string_len);
-
-					if (serializedQuerytreelen > 0)
-						serializedQuerytree = pq_getmsgbytes(&input_message,serializedQuerytreelen);
 
 					if (serializedPlantreelen > 0)
 						serializedPlantree = pq_getmsgbytes(&input_message,serializedPlantreelen);
@@ -5409,7 +5377,7 @@ PostgresMain(int argc, char *argv[],
 					if (cuid > 0)
 						SetUserIdAndContext(cuid, false); /* Set current userid */
 
-					if (serializedQuerytreelen==0 && serializedPlantreelen==0)
+					if (serializedPlantreelen==0)
 					{
 						if (strncmp(query_string, "BEGIN", 5) == 0)
 						{
@@ -5438,7 +5406,6 @@ PostgresMain(int argc, char *argv[],
 					}
 					else
 						exec_mpp_query(query_string,
-									   serializedQuerytree, serializedQuerytreelen,
 									   serializedPlantree, serializedPlantreelen,
 									   serializedParams, serializedParamslen,
 									   serializedQueryDispatchDesc, serializedQueryDispatchDesclen);
