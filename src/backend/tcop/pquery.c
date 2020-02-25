@@ -116,7 +116,10 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->portal_name = NULL;
 
 	qd->ddesc = NULL;
-	
+
+	/* not yet executed */
+	qd->already_executed = false;
+
 	if (Gp_role != GP_ROLE_EXECUTE)
 		increment_command_count();
 
