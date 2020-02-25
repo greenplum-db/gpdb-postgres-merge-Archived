@@ -4126,8 +4126,32 @@ _readAlterTypeStmt(void)
 	READ_DONE();
 }
 
+static PartitionElem *
+_readPartitionElem(void)
+{
+	READ_LOCALS(PartitionElem);
 
-#ifndef COMPILING_BINARY_FUNCS
+	READ_STRING_FIELD(name);
+	READ_NODE_FIELD(expr);
+	READ_NODE_FIELD(collation);
+	READ_NODE_FIELD(opclass);
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+static PartitionSpec *
+_readPartitionSpec(void)
+{
+	READ_LOCALS(PartitionSpec);
+
+	READ_STRING_FIELD(strategy);
+	READ_NODE_FIELD(partParams);
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
 /*
  * _readPartitionBoundSpec
  */
@@ -4163,6 +4187,7 @@ _readPartitionRangeDatum(void)
 	READ_DONE();
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 /*
  * parseNodeString
  *
@@ -4442,6 +4467,10 @@ parseNodeString(void)
 		return_value = _readAlternativeSubPlan();
 	else if (MATCH("EXTENSIBLENODE", 14))
 		return_value = _readExtensibleNode();
+	else if (MATCH("PARTITIONSPEC", 13))
+		return_value = _readPartitionSpec();
+	else if (MATCH("PARTITIONELEM", 13))
+		return_value = _readPartitionElem();
     else if (MATCH("PARTITIONBOUNDSPEC", 18))
         return_value = _readPartitionBoundSpec();
     else if (MATCH("PARTITIONRANGEDATUM", 19))

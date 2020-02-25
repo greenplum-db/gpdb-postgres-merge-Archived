@@ -5398,11 +5398,8 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
 		;
 
 /* Optional partition key specification */
-OptPartitionSpec:
-/* GPDB_12_MERGE_FIXME: Legacy GPDB partitioning syntax. Was causing conflicts, but need
- * to put this back.. */
-/* PartitionSpec	{ $$ = $1; } 
-   | */ /*EMPTY*/			{ $$ = NULL; }
+OptPartitionSpec: PartitionSpec	{ $$ = $1; }
+			| /*EMPTY*/			{ $$ = NULL; }
 		;
 
 PartitionSpec: PARTITION BY part_strategy '(' part_params ')'

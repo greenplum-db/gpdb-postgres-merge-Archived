@@ -1196,6 +1196,8 @@ ProcessUtilitySlow(ParseState *pstate,
 								if (cstmt->relKind != 0)
 									relKind = cstmt->relKind;
 							}
+							else
+								cstmt->relKind = relKind;
 
 							/*
 							 * GPDB: Don't dispatch it yet, as we haven't

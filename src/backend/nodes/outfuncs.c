@@ -3125,6 +3125,13 @@ _outCreateStmtInfo(StringInfo str, const CreateStmt *node)
 	WRITE_OID_FIELD(ownerid);
 	WRITE_BOOL_FIELD(buildAoBlkdir);
 	WRITE_NODE_FIELD(attr_encodings);
+
+	/*
+	 * Some extra checks to make sure we didn't get lost
+	 * during serialization/deserialization
+	 */
+	Assert(node->relKind != 0);
+	Assert(node->oncommit <= ONCOMMIT_DROP);
 }
 
 static void

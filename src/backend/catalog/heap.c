@@ -1437,6 +1437,8 @@ heap_create_with_catalog(const char *relname,
 	 */
 	Assert(IsNormalProcessingMode() || IsBootstrapProcessingMode());
 
+	/* GPDB_12_MERGE_FIXME */
+#if 0
 	/*
 	 * Was "appendonly" specified in the relopts? If yes, check for
 	 * override (debug) GUCs.
@@ -1462,6 +1464,7 @@ heap_create_with_catalog(const char *relname,
 		}
 	}
 	else
+#endif
 	{
 		appendOnlyRel = false;
 		stdRdOptions = NULL;
@@ -1810,7 +1813,9 @@ heap_create_with_catalog(const char *relname,
 	{
 		MemoryContext oldcontext;
 
-		Assert(relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW ||
+		Assert(relkind == RELKIND_RELATION ||
+			   relkind == RELKIND_PARTITIONED_TABLE ||
+			   relkind == RELKIND_MATVIEW ||
 			   relkind == RELKIND_FOREIGN_TABLE);
 
 		oldcontext = MemoryContextSwitchTo(GetMemoryChunkContext(new_rel_desc));

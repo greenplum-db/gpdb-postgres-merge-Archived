@@ -2251,6 +2251,18 @@ readNodeBinary(void)
 				return_value = _readLockStmt();
 				break;
 
+			case T_PartitionSpec:
+				return_value = _readPartitionSpec();
+				break;
+			case T_PartitionElem:
+				return_value = _readPartitionElem();
+				break;
+			case T_PartitionRangeDatum:
+				return_value = _readPartitionRangeDatum();
+				break;
+			case T_PartitionBoundSpec:
+				return_value = _readPartitionBoundSpec();
+				break;
 			case T_ExtensibleNode:
 				return_value = _readExtensibleNode();
 				break;
