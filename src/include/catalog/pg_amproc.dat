@@ -1242,8 +1242,6 @@
   amprocrighttype => 'box', amprocnum => '13', amproc => 'box_contain' },
 
 # hash support for a few built-in datatypes that are missing it in upstream.
-{ amprocfamily => 'hash/tid_ops', amproclefttype => 'tid',
-  amprocrighttype => 'tid', amprocnum => '1', amproc => 'hashtid' },
 { amprocfamily => 'hash/bit_ops', amproclefttype => 'bit',
   amprocrighttype => 'bit', amprocnum => '1', amproc => 'bithash(bit)' },
 { amprocfamily => 'hash/varbit_ops', amproclefttype => 'varbit',

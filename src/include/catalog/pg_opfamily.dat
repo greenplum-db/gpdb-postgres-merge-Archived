@@ -230,8 +230,6 @@
   opfmethod => 'btree', opfname => 'complex_ops' },
 { oid => '6224',
   opfmethod => 'hash', opfname => 'complex_ops' },
-{ oid => '7077',
-  opfmethod => 'hash', opfname => 'tid_ops' },
 { oid => '7078',
   opfmethod => 'hash', opfname => 'bit_ops' },
 { oid => '7079',

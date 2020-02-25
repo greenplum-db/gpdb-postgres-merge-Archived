@@ -2455,9 +2455,6 @@
 
 
 # hash support for a few built-in datatypes that are missing it in upstream.
-{ amopfamily => 'hash/tid_ops', amoplefttype => 'tid',
-  amoprighttype => 'tid', amopstrategy => '1', amopopr => '=(tid,tid)',
-  amopmethod => 'hash' },
 { amopfamily => 'hash/bit_ops', amoplefttype => 'bit',
   amoprighttype => 'bit', amopstrategy => '1', amopopr => '=(bit,bit)',
   amopmethod => 'hash' },
@@ -2484,7 +2481,7 @@
   amoprighttype => 'int4', amopstrategy => '1', amopopr => '=(int2,int4)',
   amopmethod => 'hash' },
 { amopfamily => 'hash/cdbhash_integer_ops', amoplefttype => 'int2',
-  amoprighttype => 'int4', amopstrategy => '1', amopopr => '=(int2,int8)',
+  amoprighttype => 'int8', amopstrategy => '1', amopopr => '=(int2,int8)',
   amopmethod => 'hash' },
 { amopfamily => 'hash/cdbhash_integer_ops', amoplefttype => 'int4',
   amoprighttype => 'int2', amopstrategy => '1', amopopr => '=(int4,int2)',
