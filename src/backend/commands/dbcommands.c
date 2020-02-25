@@ -557,7 +557,8 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 									   Anum_pg_database_oid);
 		} while (check_db_file_conflict(dboid));
 
-		RememberAssignedOidForDatabase(dbname, dboid);
+		if (Gp_role == GP_ROLE_DISPATCH)
+			RememberAssignedOidForDatabase(dbname, dboid);
 	}
 
 	/*
