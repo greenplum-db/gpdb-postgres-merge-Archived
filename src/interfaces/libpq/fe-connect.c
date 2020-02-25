@@ -1952,12 +1952,14 @@ connectDBStart(PGconn *conn)
 	 * Nobody but developers should see this message, so we don't bother
 	 * translating it.
 	 */
+#ifdef FRONTEND
 	if (!pg_link_canary_is_frontend())
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  "libpq is incorrectly linked to backend functions\n");
 		goto connect_errReturn;
 	}
+#endif
 
 	/* Ensure our buffers are empty */
 	conn->inStart = conn->inCursor = conn->inEnd = 0;
