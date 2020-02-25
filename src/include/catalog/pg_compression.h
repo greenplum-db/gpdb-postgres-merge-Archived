@@ -30,7 +30,6 @@
 
 CATALOG(pg_compression,7056,CompressionRelationId)
 {
-	Oid			oid;			/* oid */
 	NameData	compname;
 	regproc		compconstructor BKI_LOOKUP(pg_proc);
 	regproc		compdestructor BKI_LOOKUP(pg_proc);
