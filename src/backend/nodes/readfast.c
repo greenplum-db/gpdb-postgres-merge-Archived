@@ -1293,7 +1293,7 @@ _readBitmapset(void)
 	if (nwords==0)
 		return bms;
 
-	bms = palloc(sizeof(int)+nwords*sizeof(bitmapword));
+	bms = palloc(offsetof(Bitmapset, words)+nwords*sizeof(bitmapword));
 	bms->nwords = nwords;
 	for (i = 0; i < nwords; i++)
 	{

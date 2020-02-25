@@ -260,13 +260,16 @@ _outList(StringInfo str, List *node)
 static void
 _outBitmapset(StringInfo str, const Bitmapset *bms)
 {
-	int i;
-	int nwords = 0;
-	if (bms) nwords = bms->nwords;
-	appendBinaryStringInfo(str, (char *)&nwords, sizeof(int));
+	int			i;
+	int			nwords = 0;
+
+	if (bms)
+		nwords = bms->nwords;
+
+	appendBinaryStringInfo(str, (char *) &nwords, sizeof(int));
 	for (i = 0; i < nwords; i++)
 	{
-		appendBinaryStringInfo(str, (char *)&bms->words[i], sizeof(bitmapword));
+		appendBinaryStringInfo(str, (char *) &bms->words[i], sizeof(bitmapword));
 	}
 
 }
