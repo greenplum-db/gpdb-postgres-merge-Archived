@@ -50,8 +50,7 @@ select 3 || 4.0;
 ERROR:  operator does not exist: integer || numeric
 LINE 1: select 3 || 4.0;
                  ^
-<<<<<<< HEAD
-HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
 --
 -- TEXT CASTING TO/FROM ANY TYPE
 --
@@ -80,9 +79,6 @@ SELECT '(1,abc)'::text::usr_define_type;
  (1,abc)
 (1 row)
 
-=======
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 /*
  * various string functions
  */
