@@ -213,7 +213,7 @@ TRCheckAndRemap(TupleRemapper *remapper, TupleDesc tupledesc, MinimalTuple tuple
 
 	result_htup = TRRemapTuple(remapper, tupledesc, remapper->field_remapinfo, &htup);
 
-	return (MinimalTuple) result_htup->t_data;
+	return (MinimalTuple) (((char *) result_htup->t_data) + MINIMAL_TUPLE_OFFSET);
 }
 
 /*
@@ -311,15 +311,7 @@ TRRemapTuple(TupleRemapper *remapper,
 	values = (Datum *) palloc(tupledesc->natts * sizeof(Datum));
 	isnull = (bool *) palloc(tupledesc->natts * sizeof(bool));
 
-	/* CDB */
-	{
-		HeapTupleData htup;
-
-		htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
-		htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
-
-		heap_deform_tuple(&htup, tupledesc, values, isnull);
-	}
+	heap_deform_tuple(tuple, tupledesc, values, isnull);
 
 	/* Recursively process each interesting non-NULL attribute. */
 	for (i = 0; i < tupledesc->natts; i++)
