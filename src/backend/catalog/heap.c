@@ -2661,8 +2661,10 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 	/*
 	 * Make the pg_attrdef entry.
 	 */
-	attrdefOid = GetNewOidWithIndex(adrel, AttrDefaultOidIndexId,
-									Anum_pg_attrdef_oid);
+	attrdefOid = GetNewOidForAttrDefault(adrel, AttrDefaultOidIndexId,
+										 Anum_pg_attrdef_oid,
+										 RelationGetRelid(rel),
+										 attnum);
 	values[Anum_pg_attrdef_oid - 1] = ObjectIdGetDatum(attrdefOid);
 	values[Anum_pg_attrdef_adrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_attrdef_adnum - 1] = attnum;
