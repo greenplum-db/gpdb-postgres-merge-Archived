@@ -1375,10 +1375,11 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 		else if (kind == EXPRKIND_TARGET)
 		{
 			/*
-			 * Allowed in simple cases with no range table. For example,
+			 * Allowed in simple cases with no real RTEs. For example,
 			 * "SELECT func()" is allowed, but "SELECT func() FROM foo" is not.
 			 */
-			if (root->parse->rtable &&
+			if ((list_length(root->parse->rtable) != 1 ||
+				 linitial_node(RangeTblEntry, root->parse->rtable)->rtekind != RTE_RESULT) &&
 				check_execute_on_functions((Node *) root->parse->targetList) != PROEXECLOCATION_ANY)
 			{
 				ereport(ERROR,
