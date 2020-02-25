@@ -359,6 +359,7 @@ GetNewOidForAccessMethod(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_am_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.catalog = RelationGetRelid(relation);
 	key.objname = amname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -376,6 +377,7 @@ GetNewOidForAccessMethodOperator(Relation relation, Oid indexId, AttrNumber oidc
 	Assert(oidcolumn == Anum_pg_amop_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.keyOid1 = amopfamily;
 	key.keyOid2 = amoplefttype;
 	key.keyOid3 = amoprighttype;
@@ -394,6 +396,7 @@ GetNewOidForAttrDefault(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_attrdef_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.keyOid1 = adrelid;
 	key.keyOid2 = (Oid) adnum;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -410,6 +413,7 @@ GetNewOidForAuthId(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_authid_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = rolname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
@@ -425,6 +429,7 @@ GetNewOidForCast(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_cast_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.keyOid1 = castsource;
 	key.keyOid2 = casttarget;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -441,6 +446,7 @@ GetNewOidForCollation(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_collation_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.namespaceOid = collnamespace;
 	key.objname = collname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -457,6 +463,7 @@ GetNewOidForConstraint(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_constraint_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = conname;
 	key.keyOid1 = conrelid;
 	key.keyOid2 = contypid;
@@ -474,6 +481,7 @@ GetNewOidForConversion(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_conversion_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.namespaceOid = connamespace;
 	key.objname = conname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -494,6 +502,7 @@ GetPreassignedOidForDatabase(const char *datname)
 	Oid			oid;
 
 	memset(&searchkey, 0, sizeof(OidAssignment));
+	searchkey.type = T_OidAssignment;
 	searchkey.catalog = DatabaseRelationId;
 	searchkey.objname = (char *) datname;
 
@@ -531,6 +540,7 @@ GetNewOidForDefaultAcl(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_default_acl_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.keyOid1 = defaclrole;
 	key.namespaceOid = defaclnamespace;
 	key.keyOid2 = (Oid) defaclobjtype;
@@ -548,6 +558,7 @@ GetNewOidForEnum(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_enum_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.keyOid1 = enumtypid;
 	key.objname = enumlabel;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -569,6 +580,7 @@ GetNewOidForExtension(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	 * belongs to that schema.
 	 */
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = extname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
@@ -584,6 +596,7 @@ GetNewOidForExtprotocol(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_extprotocol_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = ptcname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
@@ -599,6 +612,7 @@ GetNewOidForForeignDataWrapper(Relation relation, Oid indexId, AttrNumber oidcol
 	Assert(oidcolumn == Anum_pg_foreign_data_wrapper_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = fdwname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
@@ -614,6 +628,7 @@ GetNewOidForForeignServer(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_foreign_server_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = srvname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 
@@ -630,6 +645,7 @@ GetNewOidForLanguage(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_language_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = lanname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 
@@ -645,6 +661,7 @@ GetNewOidForNamespace(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_namespace_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = nspname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
@@ -660,6 +677,7 @@ GetNewOidForOperator(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_operator_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = oprname;
 	key.keyOid1 = oprleft;
 	key.keyOid2 = oprright;
@@ -678,6 +696,7 @@ GetNewOidForOperatorClass(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_opclass_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.keyOid1 = opcmethod;
 	key.objname = opcname;
 	key.namespaceOid = opcnamespace;
@@ -695,6 +714,7 @@ GetNewOidForOperatorFamily(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_opfamily_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.keyOid1 = opfmethod;
 	key.objname = opfname;
 	key.namespaceOid = opfnamespace;
@@ -712,6 +732,7 @@ GetNewOidForPolicy(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_policy_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.keyOid1 = polrelid;
 	key.objname = polname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -728,6 +749,7 @@ GetNewOidForProcedure(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_proc_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = proname;
 	/*
 	 * GPDB_12_MERGE_FIXME: we have nowhere to put 'proargtypes' in the OidAssignment
@@ -750,6 +772,7 @@ GetNewOidForRelation(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_class_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = relname;
 	key.namespaceOid = relnamespace;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -766,6 +789,7 @@ GetNewOidForResQueue(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_resqueue_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = rsqname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
@@ -781,6 +805,7 @@ GetNewOidForRewrite(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_rewrite_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.keyOid1 = ev_class;
 	key.objname = rulename;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -797,6 +822,7 @@ GetNewOidForTableSpace(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_tablespace_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = spcname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
@@ -812,8 +838,9 @@ GetNewOidForTransform(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_transform_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.keyOid1 = trftype;
-	key.keyOid1 = trflang;
+	key.keyOid2 = trflang;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
 
@@ -828,6 +855,7 @@ GetNewOidForTSParser(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_ts_parser_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = prsname;
 	key.namespaceOid = prsnamespace;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -844,6 +872,7 @@ GetNewOidForTSDictionary(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_ts_dict_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = dictname;
 	key.namespaceOid = dictnamespace;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -860,6 +889,7 @@ GetNewOidForTSTemplate(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_ts_template_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.namespaceOid = tmplnamespace;
 	key.objname = tmplname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -876,6 +906,7 @@ GetNewOidForTSConfig(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_ts_config_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = cfgname;
 	key.namespaceOid = cfgnamespace;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -893,6 +924,7 @@ GetNewOidForType(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_type_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = typname;
 	key.namespaceOid = typnamespace;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -910,6 +942,7 @@ GetNewOidForResGroup(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_resgroup_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = rsgname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 
@@ -925,6 +958,7 @@ GetNewOidForUserMapping(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_user_mapping_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.keyOid1 = umuser;
 	key.keyOid2 = umserver;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
@@ -941,6 +975,7 @@ GetNewOidForPublication(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_publication_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.objname = pubname;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
 }
@@ -956,6 +991,7 @@ GetNewOidForPublicationRel(Relation relation, Oid indexId, AttrNumber oidcolumn,
 	Assert(oidcolumn == Anum_pg_publication_rel_oid);
 
 	memset(&key, 0, sizeof(OidAssignment));
+	key.type = T_OidAssignment;
 	key.keyOid1 = prrelid;
 	key.keyOid2 = prpubid;
 	return GetNewOrPreassignedOid(relation, indexId, oidcolumn, &key);
