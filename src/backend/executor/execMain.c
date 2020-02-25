@@ -1719,7 +1719,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	/*
 	 * set the number of partition selectors for every dynamic scan id
 	 */
-	estate->dynamicTableScanInfo->numSelectorsPerScanId = plannedstmt->numSelectorsPerScanId;
+	// GPDB_12_MERGE_FIXME
+	//estate->dynamicTableScanInfo->numSelectorsPerScanId = plannedstmt->numSelectorsPerScanId;
 
 	/*
 	 * Next, build the ExecRowMark array from the PlanRowMark(s), if any.
