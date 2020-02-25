@@ -119,11 +119,6 @@ _copyPlannedStmt(const PlannedStmt *from)
 	COPY_POINTER_FIELD(subplan_sliceIds, list_length(from->subplans) * sizeof(int));
 	COPY_BITMAPSET_FIELD(rewindPlanIDs);
 
-	COPY_NODE_FIELD(result_partitions);
-	COPY_NODE_FIELD(result_aosegnos);
-	COPY_NODE_FIELD(queryPartOids);
-	COPY_NODE_FIELD(queryPartsMetadata);
-	COPY_NODE_FIELD(numSelectorsPerScanId);
 	COPY_NODE_FIELD(rowMarks);
 	COPY_NODE_FIELD(relationOids);
 	COPY_NODE_FIELD(invalItems);
@@ -4043,8 +4038,6 @@ CopyCreateStmtFields(const CreateStmt *from, CreateStmt *newnode)
 	COPY_NODE_FIELD(inhRelations);
     COPY_NODE_FIELD(partspec);
     COPY_NODE_FIELD(partbound);
-	COPY_NODE_FIELD(inhOids);
-	COPY_SCALAR_FIELD(parentOidCount);
 	COPY_NODE_FIELD(ofTypename);
 	COPY_NODE_FIELD(constraints);
 	COPY_NODE_FIELD(options);
@@ -4056,11 +4049,6 @@ CopyCreateStmtFields(const CreateStmt *from, CreateStmt *newnode)
 	COPY_NODE_FIELD(distributedBy);
 	COPY_NODE_FIELD(partitionBy);
 	COPY_SCALAR_FIELD(relKind);
-	COPY_NODE_FIELD(deferredStmts);
-	COPY_SCALAR_FIELD(is_part_child);
-	COPY_SCALAR_FIELD(is_part_parent);
-	COPY_SCALAR_FIELD(is_add_part);
-	COPY_SCALAR_FIELD(is_split_part);
 	COPY_SCALAR_FIELD(ownerid);
 	COPY_SCALAR_FIELD(buildAoBlkdir);
 	COPY_NODE_FIELD(attr_encodings);
@@ -4229,7 +4217,6 @@ _copyIndexStmt(const IndexStmt *from)
 	COPY_STRING_FIELD(idxcomment);
 	COPY_SCALAR_FIELD(indexOid);
 	COPY_SCALAR_FIELD(oldNode);
-	COPY_SCALAR_FIELD(is_part_child);
 	COPY_SCALAR_FIELD(unique);
 	COPY_SCALAR_FIELD(primary);
 	COPY_SCALAR_FIELD(isconstraint);
@@ -4237,11 +4224,16 @@ _copyIndexStmt(const IndexStmt *from)
 	COPY_SCALAR_FIELD(initdeferred);
 	COPY_SCALAR_FIELD(transformed);
 	COPY_SCALAR_FIELD(concurrent);
+	COPY_SCALAR_FIELD(if_not_exists);
+	COPY_SCALAR_FIELD(reset_default_tblspc);
+
+	/* GPDB_12_MERGE_FIXME: removed fields */
+#if 0
+	COPY_SCALAR_FIELD(is_part_child);
 	COPY_SCALAR_FIELD(is_split_part);
 	COPY_SCALAR_FIELD(parentIndexId);
 	COPY_SCALAR_FIELD(parentConstraintId);
-	COPY_SCALAR_FIELD(if_not_exists);
-	COPY_SCALAR_FIELD(reset_default_tblspc);
+#endif
 
 	return newnode;
 }

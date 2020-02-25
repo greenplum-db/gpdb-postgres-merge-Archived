@@ -120,29 +120,6 @@ typedef struct PlannedStmt
 
 	Bitmapset  *rewindPlanIDs;	/* indices of subplans that require REWIND */
 
-	/*
-	 * If the resultRelation turns out to be the parent of an inheritance
-	 * tree, the planner will add all the child tables to the rtable and store
-	 * a list of the rtindexes of all the result relations here. This is done
-	 * at plan time, not parse time, since we don't want to commit to the
-	 * exact set of child tables at parse time. This field used to be in Query.
-	 */
-	struct PartitionNode *result_partitions;
-
-	List	   *result_aosegnos; /* AO file 'seg' numbers for resultRels to use */
-
-	/*
-	 * Relation oids and partitioning metadata for all partitions
-	 * that are involved in a query.
-	 */
-	List	   *queryPartOids;
-	List	   *queryPartsMetadata;
-	/*
-	 * List containing the number of partition selectors for every scan id.
-	 * Element #i in the list corresponds to scan id i
-	 */
-	List	   *numSelectorsPerScanId;
-
 	List	   *rowMarks;		/* a list of PlanRowMark's */
 
 	List	   *relationOids;	/* OIDs of relations the plan depends on */

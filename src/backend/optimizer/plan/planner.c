@@ -773,24 +773,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		DestroyPartitionDirectory(glob->partition_directory);
 
 	result->intoPolicy = GpPolicyCopy(parse->intoPolicy);
-	result->queryPartOids = NIL;
-	result->queryPartsMetadata = NIL;
-	result->numSelectorsPerScanId = NIL;
-
 	result->simplyUpdatable = glob->simplyUpdatable;
-
-	{
-		ListCell *lc;
-
-		foreach(lc, glob->relationOids)
-		{
-			Oid reloid = lfirst_oid(lc);
-			char relkind = get_rel_relkind(reloid);
-
-			if (relkind == RELKIND_PARTITIONED_TABLE)
-				result->queryPartOids = lappend_oid(result->queryPartOids, reloid);
-		}
-	}
 
 	Assert(result->utilityStmt == NULL || IsA(result->utilityStmt, DeclareCursorStmt));
 

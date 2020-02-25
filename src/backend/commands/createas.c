@@ -164,11 +164,6 @@ create_ctas_internal(List *attrList, IntoClause *into, QueryDesc *queryDesc, boo
 	create->distributedBy = NULL; /* We will pass a pre-made intoPolicy instead */
 	create->partitionBy = NULL; /* CTAS does not not support partition. */
 
-	create->deferredStmts = NULL;
-	create->is_part_child = false;
-	create->is_part_parent = false;
-	create->is_add_part = false;
-	create->is_split_part = false;
 	create->buildAoBlkdir = false;
 	create->attr_encodings = NULL; /* Handle by AddDefaultRelationAttributeOptions() */
 

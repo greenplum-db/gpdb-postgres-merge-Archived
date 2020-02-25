@@ -826,6 +826,7 @@ _readIndexStmt(void)
 	READ_STRING_FIELD(accessMethod);
 	READ_STRING_FIELD(tableSpace);
 	READ_NODE_FIELD(indexParams);
+	READ_NODE_FIELD(indexIncludingParams);
 	READ_NODE_FIELD(options);
 
 	READ_NODE_FIELD(whereClause);
@@ -833,7 +834,6 @@ _readIndexStmt(void)
 	READ_STRING_FIELD(idxcomment);
 	READ_OID_FIELD(indexOid);
 	READ_OID_FIELD(oldNode);
-	READ_BOOL_FIELD(is_part_child);
 	READ_BOOL_FIELD(unique);
 	READ_BOOL_FIELD(primary);
 	READ_BOOL_FIELD(isconstraint);
@@ -842,7 +842,13 @@ _readIndexStmt(void)
 	READ_BOOL_FIELD(transformed);
 	READ_BOOL_FIELD(concurrent);
 	READ_BOOL_FIELD(if_not_exists);
+	READ_BOOL_FIELD(reset_default_tblspc);
+
+	/* GPDB_12_MERGE_FIXME: removed fields */
+#if 0
+	READ_BOOL_FIELD(is_part_child);
 	READ_BOOL_FIELD(is_split_part);
+#endif
 	READ_OID_FIELD(parentIndexId);
 	READ_OID_FIELD(parentConstraintId);
 
@@ -2410,12 +2416,6 @@ _readPlannedStmt(void)
 		READ_NODE_FIELD(slices[i].directDispatch.contentIds);
 	}
 
-	READ_NODE_FIELD(result_partitions);
-	READ_NODE_FIELD(result_aosegnos);
-	READ_NODE_FIELD(queryPartOids);
-	READ_NODE_FIELD(queryPartsMetadata);
-	READ_NODE_FIELD(numSelectorsPerScanId);
-
 	READ_NODE_FIELD(intoPolicy);
 
 	READ_UINT64_FIELD(query_mem);
@@ -3572,39 +3572,6 @@ _readExtensibleNode(void)
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
-#ifndef COMPILING_BINARY_FUNCS
-static CreateStmt *
-_readCreateStmt(void)
-{
-	READ_LOCALS(CreateStmt);
-
-	READ_NODE_FIELD(relation);
-	READ_NODE_FIELD(tableElts);
-	READ_NODE_FIELD(inhRelations);
-	READ_NODE_FIELD(inhOids);
-	READ_INT_FIELD(parentOidCount);
-	READ_NODE_FIELD(ofTypename);
-	READ_NODE_FIELD(constraints);
-
-	READ_NODE_FIELD(options);
-	READ_ENUM_FIELD(oncommit,OnCommitAction);
-	READ_STRING_FIELD(tablespacename);
-	READ_NODE_FIELD(distributedBy);
-	READ_NODE_FIELD(partitionBy);
-	READ_CHAR_FIELD(relKind);
-	READ_NODE_FIELD(deferredStmts);
-	READ_BOOL_FIELD(is_part_child);
-	READ_BOOL_FIELD(is_part_parent);
-	READ_BOOL_FIELD(is_add_part);
-	READ_BOOL_FIELD(is_split_part);
-	READ_OID_FIELD(ownerid);
-	READ_BOOL_FIELD(buildAoBlkdir);
-	READ_NODE_FIELD(attr_encodings);
-
-	READ_DONE();
-}
-#endif /* COMPILING_BINARY_FUNCS */
-
 static SegfileMapNode *
 _readSegfileMapNode(void)
 {
@@ -4557,8 +4524,6 @@ parseNodeString(void)
 		return_value = _readCreateSchemaStmt();
 	else if (MATCHX("CREATESEQSTMT"))
 		return_value = _readCreateSeqStmt();
-	else if (MATCHX("CREATESTMT"))
-		return_value = _readCreateStmt();
 	else if (MATCHX("CREATETRANSFORMSTMT"))
 		return_value = _readCreateTransformStmt();
 	else if (MATCHX("CURSORPOSINFO"))

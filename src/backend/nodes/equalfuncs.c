@@ -1349,10 +1349,6 @@ _equalCreateStmt(const CreateStmt *a, const CreateStmt *b)
 
 	COMPARE_NODE_FIELD(distributedBy);
 	COMPARE_SCALAR_FIELD(relKind);
-	/* deferredStmts omitted */
-	COMPARE_SCALAR_FIELD(is_part_child);
-	COMPARE_SCALAR_FIELD(is_add_part);
-	COMPARE_SCALAR_FIELD(is_split_part);
 	COMPARE_SCALAR_FIELD(ownerid);
 	COMPARE_SCALAR_FIELD(buildAoBlkdir);
 	COMPARE_NODE_FIELD(attr_encodings);
@@ -1493,7 +1489,6 @@ _equalIndexStmt(const IndexStmt *a, const IndexStmt *b)
 	COMPARE_STRING_FIELD(idxcomment);
 	COMPARE_SCALAR_FIELD(indexOid);
 	COMPARE_SCALAR_FIELD(oldNode);
-	COMPARE_SCALAR_FIELD(is_part_child);
 	COMPARE_SCALAR_FIELD(unique);
 	COMPARE_SCALAR_FIELD(primary);
 	COMPARE_SCALAR_FIELD(isconstraint);
@@ -1503,7 +1498,12 @@ _equalIndexStmt(const IndexStmt *a, const IndexStmt *b)
 	COMPARE_SCALAR_FIELD(concurrent);
 	COMPARE_SCALAR_FIELD(if_not_exists);
 	COMPARE_SCALAR_FIELD(reset_default_tblspc);
+
+	/* GPDB_12_MERGE_FIXME: removed fields */
+#if 0
+	COMPARE_SCALAR_FIELD(is_part_child);
 	COMPARE_SCALAR_FIELD(is_split_part);
+#endif
 	COMPARE_SCALAR_FIELD(parentIndexId);
 	COMPARE_SCALAR_FIELD(parentConstraintId);
 

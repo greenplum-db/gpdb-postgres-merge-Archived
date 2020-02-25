@@ -438,53 +438,6 @@ _outCreateExtensionStmt(StringInfo str, CreateExtensionStmt *node)
 }
 
 static void
-_outCreateStmt_common(StringInfo str, CreateStmt *node)
-{
-	WRITE_NODE_FIELD(relation);
-	WRITE_NODE_FIELD(tableElts);
-	WRITE_NODE_FIELD(inhRelations);
-	WRITE_NODE_FIELD(inhOids);
-	WRITE_INT_FIELD(parentOidCount);
-	WRITE_NODE_FIELD(ofTypename);
-	WRITE_NODE_FIELD(constraints);
-
-	WRITE_NODE_FIELD(options);
-	WRITE_ENUM_FIELD(oncommit, OnCommitAction);
-	WRITE_STRING_FIELD(tablespacename);
-	WRITE_BOOL_FIELD(if_not_exists);
-
-	WRITE_NODE_FIELD(distributedBy);
-	WRITE_CHAR_FIELD(relKind);
-	/* deferredStmts - for analysis, QD only */
-	WRITE_BOOL_FIELD(is_part_child);
-	WRITE_BOOL_FIELD(is_part_parent);
-	WRITE_BOOL_FIELD(is_add_part);
-	WRITE_BOOL_FIELD(is_split_part);
-	WRITE_OID_FIELD(ownerid);
-	WRITE_BOOL_FIELD(buildAoBlkdir);
-	WRITE_NODE_FIELD(attr_encodings);
-}
-
-static void
-_outCreateStmt(StringInfo str, CreateStmt *node)
-{
-	WRITE_NODE_TYPE("CREATESTMT");
-
-	_outCreateStmt_common(str, node);
-}
-
-static void
-_outCreateForeignTableStmt(StringInfo str, CreateForeignTableStmt *node)
-{
-	WRITE_NODE_TYPE("CREATEFOREIGNTABLESTMT");
-
-	_outCreateStmt_common(str, &node->base);
-
-	WRITE_STRING_FIELD(servername);
-	WRITE_NODE_FIELD(options);
-}
-
-static void
 _outRoleSpec(StringInfo str, const RoleSpec *node)
 {
 	WRITE_NODE_TYPE("ROLESPEC");

@@ -136,7 +136,7 @@ static CreateStatsStmt *generateClonedExtStatsStmt(RangeVar *heapRel,
 												   Oid heapRelid, Oid source_statsid);
 static List *get_collation(Oid collation, Oid actual_datatype);
 static List *get_opclass(Oid opclass, Oid actual_datatype);
-static void transformIndexConstraints(CreateStmtContext *cxt, bool mayDefer);
+static void transformIndexConstraints(CreateStmtContext *cxt);
 static IndexStmt *transformIndexConstraint(Constraint *constraint,
 										   CreateStmtContext *cxt);
 static void transformExtendedStatistics(CreateStmtContext *cxt);
@@ -370,15 +370,13 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	/*
 	 * Postprocess constraints that give rise to index definitions.
 	 */
-	if (!stmt->is_part_child || stmt->is_split_part || stmt->is_add_part)
-		transformIndexConstraints(&cxt, stmt->is_add_part || stmt->is_split_part);
+	transformIndexConstraints(&cxt);
 
 	/*
 	 * Postprocess foreign-key constraints.
 	 * But don't cascade FK constraints to parts, yet.
 	 */
-	if (!stmt->is_part_child)
-		transformFKConstraints(&cxt, true, false);
+	transformFKConstraints(&cxt, true, false);
 
 	/*-----------
 	 * Analyze attribute encoding clauses.
@@ -396,6 +394,8 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 * instead.
 	 *-----------
 	 */
+	/* GPDB_12_MERGE_FIXME */
+#if 0
 	if (!is_aocs(stmt->options) && stmt->is_part_child)
 	{
 		if (co_explicitly_disabled(stmt->options) || !stenc)
@@ -408,7 +408,8 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 		}
 	}
 	else
-		stmt->attr_encodings = transformAttributeEncoding(stenc, stmt, &cxt);
+#endif
+	stmt->attr_encodings = transformAttributeEncoding(stenc, stmt, &cxt);
 
 	/*
 	 * Transform DISTRIBUTED BY (or construct a default one, if not given
@@ -418,6 +419,8 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	{
 		int			numsegments = -1;
 
+		/* GPDB_12_MERGE_FIXME */
+#if 0
 		AssertImply(stmt->is_part_parent,
 					stmt->distributedBy == NULL);
 		AssertImply(stmt->is_part_child,
@@ -434,6 +437,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 		 */
 		if (stmt->is_part_child)
 			numsegments = stmt->distributedBy->numsegments;
+#endif
 
 		stmt->distributedBy = transformDistributedBy(&cxt, stmt->distributedBy,
 							   likeDistributedBy, bQuiet);
@@ -441,8 +445,11 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 		/*
 		 * And forcely set it on children after transformDistributedBy().
 		 */
+		/* GPDB_12_MERGE_FIXME */
+#if 0
 		if (stmt->is_part_child)
 			stmt->distributedBy->numsegments = numsegments;
+#endif
 	}
 
 	if (stmt->partitionBy != NULL &&
@@ -456,11 +463,14 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 * Save the alist for root partitions before transformPartitionBy adds the
 	 * child create statements.
 	 */
+	/* GPDB_12_MERGE_FIXME */
+#if 0
 	if (stmt->partitionBy && !stmt->is_part_child)
 	{
 		save_root_partition_alist = cxt.alist;
 		cxt.alist = NIL;
 	}
+#endif
 
 	/*
 	 * Process table partitioning clause
@@ -469,7 +479,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 #if 0
 	transformPartitionBy(&cxt, stmt, stmt->partitionBy);
 #endif
-	
+
 	/*
 	 * Postprocess check constraints.
 	 */
@@ -488,8 +498,11 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 
 	result = lappend(cxt.blist, stmt);
 	result = list_concat(result, cxt.alist);
+		/* GPDB_12_MERGE_FIXME */
+#if 0
 	if (stmt->partitionBy && !stmt->is_part_child)
 		result = list_concat(result, save_root_partition_alist);
+#endif
 	result = list_concat(result, save_alist);
 
 	MemoryContextDelete(cxt.tempCtx);
@@ -2967,7 +2980,7 @@ fillin_encoding(List *list)
  *		LIKE ... INCLUDING INDEXES.
  */
 static void
-transformIndexConstraints(CreateStmtContext *cxt, bool mayDefer)
+transformIndexConstraints(CreateStmtContext *cxt)
 {
 	IndexStmt  *index;
 	List	   *indexlist = NIL;
@@ -3750,7 +3763,6 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 	RangeTblEntry *rte;
 	ListCell   *l;
 	Relation	rel;
-	LOCKMODE	lockmode;
 
 	/* Nothing to do if statement already transformed. */
 	if (stmt->transformed)
@@ -3761,17 +3773,6 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 	 * overkill, but easy.)
 	 */
 	stmt = copyObject(stmt);
-
-	/*
-	 * Open the parent table with appropriate locking.	We must do this
-	 * because addRangeTableEntry() would acquire only AccessShareLock,
-	 * leaving DefineIndex() needing to do a lock upgrade with consequent risk
-	 * of deadlock.  Make sure this stays in sync with the type of lock
-	 * DefineIndex() wants. If we are being called by ALTER TABLE, we will
-	 * already hold a higher lock.
-	 */
-	lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
-	rel = heap_openrv(stmt->relation, lockmode);
 
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
@@ -4531,7 +4532,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	cxt.alist = NIL;
 
 	/* Postprocess constraints */
-	transformIndexConstraints(&cxt, false);
+	transformIndexConstraints(&cxt);
 	transformFKConstraints(&cxt, skipValidation, true);
 	transformCheckConstraints(&cxt, false);
 

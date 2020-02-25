@@ -885,23 +885,19 @@ _readCreateStmt_common(CreateStmt *local_node)
 	READ_NODE_FIELD(relation);
 	READ_NODE_FIELD(tableElts);
 	READ_NODE_FIELD(inhRelations);
-	READ_NODE_FIELD(inhOids);
-	READ_INT_FIELD(parentOidCount);
+	READ_NODE_FIELD(partspec);
+	READ_NODE_FIELD(partbound);
 	READ_NODE_FIELD(ofTypename);
 	READ_NODE_FIELD(constraints);
-
 	READ_NODE_FIELD(options);
 	READ_ENUM_FIELD(oncommit,OnCommitAction);
 	READ_STRING_FIELD(tablespacename);
+	READ_STRING_FIELD(accessMethod);
 	READ_BOOL_FIELD(if_not_exists);
 
 	READ_NODE_FIELD(distributedBy);
+	READ_NODE_FIELD(partitionBy);
 	READ_CHAR_FIELD(relKind);
-	/* deferredStmts - for analysis, QD only */
-	READ_BOOL_FIELD(is_part_child);
-	READ_BOOL_FIELD(is_part_parent);
-	READ_BOOL_FIELD(is_add_part);
-	READ_BOOL_FIELD(is_split_part);
 	READ_OID_FIELD(ownerid);
 	READ_BOOL_FIELD(buildAoBlkdir);
 	READ_NODE_FIELD(attr_encodings);

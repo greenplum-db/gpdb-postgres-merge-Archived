@@ -1048,14 +1048,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 * really necessary for locking out other backends (since they can't see
 	 * the new rel anyway until we commit), but it keeps the lock manager from
 	 * complaining about deadlock risks.
-	 *
-	 * GPDB: Don't lock it if we're creating a partition, however. Creating a
-	 * heavily-partitioned table would otherwise acquire a lot of locks.
 	 */
-	if (stmt->is_part_child)
-		rel = relation_open(relationId, NoLock);
-	else
-		rel = relation_open(relationId, AccessExclusiveLock);
+	rel = relation_open(relationId, AccessExclusiveLock);
 
 	/*
 	 * Now add any newly specified column default and generation expressions

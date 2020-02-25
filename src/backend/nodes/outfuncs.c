@@ -368,13 +368,7 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
     WRITE_LOCATION_FIELD(stmt_location);
     WRITE_LOCATION_FIELD(stmt_len);
 
-#ifdef COMPILING_BINARY_FUNCS
 	WRITE_INT_ARRAY(subplan_sliceIds, list_length(node->subplans));
-#else
-	appendStringInfoString(str, " :subplan_sliceIds");
-	for (int i = 0; i < list_length(node->subplans); i++)
-		appendStringInfo(str, " %u", node->subplan_sliceIds[i]);
-#endif /* COMPILING_BINARY_FUNCS */
 
 	WRITE_INT_FIELD(numSlices);
 	for (int i = 0; i < node->numSlices; i++)
@@ -387,12 +381,6 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 		WRITE_BOOL_FIELD(slices[i].directDispatch.isDirectDispatch);
 		WRITE_NODE_FIELD(slices[i].directDispatch.contentIds);
 	}
-
-	WRITE_NODE_FIELD(result_partitions);
-	WRITE_NODE_FIELD(result_aosegnos);
-	WRITE_NODE_FIELD(queryPartOids);
-	WRITE_NODE_FIELD(queryPartsMetadata);
-	WRITE_NODE_FIELD(numSelectorsPerScanId);
 
 	WRITE_NODE_FIELD(intoPolicy);
 
@@ -3112,7 +3100,6 @@ _outExtensibleNode(StringInfo str, const ExtensibleNode *node)
  *
  *****************************************************************************/
 
-#ifndef COMPILING_BINARY_FUNCS
 /*
  * print the basic stuff of all nodes that inherit from CreateStmt
  */
@@ -3124,8 +3111,6 @@ _outCreateStmtInfo(StringInfo str, const CreateStmt *node)
 	WRITE_NODE_FIELD(inhRelations);
     WRITE_NODE_FIELD(partspec);
     WRITE_NODE_FIELD(partbound);
-	WRITE_NODE_FIELD(inhOids);
-	WRITE_INT_FIELD(parentOidCount);
 	WRITE_NODE_FIELD(ofTypename);
 	WRITE_NODE_FIELD(constraints);
 	WRITE_NODE_FIELD(options);
@@ -3137,12 +3122,6 @@ _outCreateStmtInfo(StringInfo str, const CreateStmt *node)
 	WRITE_NODE_FIELD(distributedBy);
 	WRITE_NODE_FIELD(partitionBy);
 	WRITE_CHAR_FIELD(relKind);
-	/* policy omitted */
-	WRITE_NODE_FIELD(deferredStmts);
-	WRITE_BOOL_FIELD(is_part_child);
-	WRITE_BOOL_FIELD(is_part_parent);
-	WRITE_BOOL_FIELD(is_add_part);
-	WRITE_BOOL_FIELD(is_split_part);
 	WRITE_OID_FIELD(ownerid);
 	WRITE_BOOL_FIELD(buildAoBlkdir);
 	WRITE_NODE_FIELD(attr_encodings);
@@ -3166,8 +3145,6 @@ _outCreateForeignTableStmt(StringInfo str, const CreateForeignTableStmt *node)
 	WRITE_STRING_FIELD(servername);
 	WRITE_NODE_FIELD(options);
 }
-
-#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outColumnReferenceStorageDirective(StringInfo str, const ColumnReferenceStorageDirective *node)
@@ -3251,7 +3228,6 @@ _outIndexStmt(StringInfo str, const IndexStmt *node)
 	WRITE_STRING_FIELD(idxcomment);
 	WRITE_OID_FIELD(indexOid);
 	WRITE_OID_FIELD(oldNode);
-	WRITE_BOOL_FIELD(is_part_child);
 	WRITE_BOOL_FIELD(unique);
 	WRITE_BOOL_FIELD(primary);
 	WRITE_BOOL_FIELD(isconstraint);
@@ -3261,7 +3237,12 @@ _outIndexStmt(StringInfo str, const IndexStmt *node)
 	WRITE_BOOL_FIELD(concurrent);
 	WRITE_BOOL_FIELD(if_not_exists);
 	WRITE_BOOL_FIELD(reset_default_tblspc);
+
+	/* GPDB_12_MERGE_FIXME: removed fields */
+#if 0
+	WRITE_BOOL_FIELD(is_part_child);
 	WRITE_BOOL_FIELD(is_split_part);
+#endif
 	WRITE_OID_FIELD(parentIndexId);
 	WRITE_OID_FIELD(parentConstraintId);
 }

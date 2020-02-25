@@ -1166,8 +1166,9 @@ ProcessUtilitySlow(ParseState *pstate,
 					 *
 					 * Also, when processing an ALTER TABLE ADD PARTITION, atpxPartAddList()
 					 * passes us an already-transformed statement.
+					 * GPDB_12_MERGE_FIXME: don't need the 'is_add_part' check anymore, right?
 					 */
-					if (Gp_role == GP_ROLE_EXECUTE || ((CreateStmt *) parsetree)->is_add_part)
+					if (Gp_role == GP_ROLE_EXECUTE /* || ((CreateStmt *) parsetree)->is_add_part */)
 						stmts = list_make1(parsetree);
 					else
 						stmts = transformCreateStmt((CreateStmt *) parsetree,

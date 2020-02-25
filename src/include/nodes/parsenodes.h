@@ -2225,9 +2225,6 @@ typedef struct CreateStmt
 	PartitionBoundSpec *partbound;	/* FOR VALUES clause */
 	PartitionSpec *partspec;	/* PARTITION BY clause */
 
-	List	   *inhOids;		/* list relations Oids to inherit from */
-	int			parentOidCount; /* count of parent with OIDs */
-
 	TypeName   *ofTypename;		/* OF typename */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
 	List	   *options;		/* options from WITH clause */
@@ -2239,18 +2236,6 @@ typedef struct CreateStmt
 	DistributedBy *distributedBy;   /* what columns we distribute the data by */
 	Node       *partitionBy;     /* what columns we partition the data by */
 	char	    relKind;         /* CDB: force relkind to this */
-	List	   *deferredStmts;	/* CDB: Statements, e.g., partial indexes, that can't be
-								 * analyzed until after CREATE (until the target table
-								 * is created and visible). */
-	bool		is_part_child;	/* CDB: child table in a partition? Marked during analysis for
-								 * interior or leaf parts of the new table.  Not marked for a
-								 * a partition root or ordinary table.
-								 */
-	bool        is_part_parent; /* CDB: Marked during analysis for top and interior
-								 * parent of partition tables which don't contain
-								 * any data */
-	bool		is_add_part;	/* CDB: is create adding a part to a partition? */
-	bool		is_split_part;	/* CDB: is create spliting a part? */
 	Oid			ownerid;		/* OID of the role to own this. if InvalidOid, GetUserId() */
 	bool		buildAoBlkdir; /* whether to build the block directory for an AO table */
 	List	   *attr_encodings; /* attribute storage directives */
@@ -3217,7 +3202,6 @@ typedef struct IndexStmt
 	List	   *excludeOpNames; /* exclusion operator names, or NIL if none */
 	char	   *idxcomment;		/* comment to apply to index, or NULL */
 	Oid			indexOid;		/* OID of an existing index, if any */
-	bool		is_part_child;	/* in service of a part of a partition? */
 	Oid			oldNode;		/* relfilenode of existing storage, if any */
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index a primary key? */
@@ -3231,9 +3215,10 @@ typedef struct IndexStmt
 										 * executing */
 
 	// GPDB_12_MERGE_FIXME: GPDB legacy partitioning stuff. Remove?
-	bool		is_split_part;	/* Is this for SPLIT PARTITION command? */
-	Oid			parentIndexId;	/* attach to a parent index if set */
-	Oid			parentConstraintId;		/* attach to a parent constraint if set */
+	//bool		is_part_child;	/* in service of a part of a partition? */
+	//bool		is_split_part;	/* Is this for SPLIT PARTITION command? */
+	Oid		parentIndexId;	/* attach to a parent index if set */
+	Oid		parentConstraintId;		/* attach to a parent constraint if set */
 } IndexStmt;
 
 /* ----------------------
