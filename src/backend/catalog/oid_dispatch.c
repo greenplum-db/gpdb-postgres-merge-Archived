@@ -315,7 +315,7 @@ GetNewOrPreassignedOid(Relation relation, Oid indexId, AttrNumber oidcolumn,
 		 * since objects may be created in new cluster which didn't exist in
 		 * the old cluster.
 		 */
-		if (!IsBinaryUpgrade)
+		if (oid == InvalidOid && !IsBinaryUpgrade)
 			elog(ERROR, "no pre-assigned OID for %s tuple \"%s\" (namespace:%u keyOid1:%u keyOid2:%u)",
 				 RelationGetRelationName(relation), searchkey->objname ? searchkey->objname : "",
 				 searchkey->namespaceOid, searchkey->keyOid1, searchkey->keyOid2);
