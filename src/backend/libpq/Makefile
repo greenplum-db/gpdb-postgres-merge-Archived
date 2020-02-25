@@ -29,7 +29,7 @@ OBJS += fe-protocol3.o fe-connect.o \
 	fe-auth-scram.o \
         $(filter getpeereid.o, $(LIBOBJS))
 
-fe-protocol3.c fe-connect.c fe-exec.c pqexpbuffer.c fe-auth.c fe-auth-scram.c fe-misc.c fe-protocol2.c fe-secure.c fe-secure-openssl.c fe-secure-common.c fe-secure-gssapi.c: % : $(top_srcdir)/src/interfaces/libpq/%
+fe-protocol3.c fe-connect.c fe-exec.c pqexpbuffer.c fe-auth.c fe-auth-scram.c fe-misc.c fe-protocol2.c fe-secure.c fe-secure-openssl.c fe-secure-common.c fe-secure-gssapi.c fe-gssapi-common.c: % : $(top_srcdir)/src/interfaces/libpq/%
 	rm -f $@ && $(LN_S) $< .
 
 getpeereid.c: % : $(top_srcdir)/src/port/%
@@ -43,7 +43,7 @@ $(top_builddir)/src/port/pg_config_paths.h:
 clean distclean: clean-symlinks
 
 clean-symlinks:
-	rm -f fe-protocol3.c fe-connect.c fe-exec.c pqexpbuffer.c fe-auth.c fe-misc.c fe-protocol2.c fe-secure.c getpeereid.c
+	rm -f fe-protocol3.c fe-connect.c fe-exec.c pqexpbuffer.c fe-auth.c fe-misc.c fe-protocol2.c fe-secure.c getpeereid.c fe-auth-scram.c fe-gssapi-common.c fe-secure-common.c fe-secure-gssapi.c
 
 ifeq ($(with_gssapi),yes)
 OBJS += be-gssapi-common.o be-secure-gssapi.o

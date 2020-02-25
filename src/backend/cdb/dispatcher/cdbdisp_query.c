@@ -1262,7 +1262,7 @@ serializeParamListInfo(ParamListInfo paramLI, int *len_p)
 	sparams = NIL;
 	for (i = 0; i < paramLI->numParams; i++)
 	{
-		ParamExternData *prm;
+		ParamExternData *prm = &paramLI->params[i];
 		SerializedParamExternData *sprm;
 		ParamExecData prmdata;
 

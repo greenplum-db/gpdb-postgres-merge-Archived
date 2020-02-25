@@ -631,6 +631,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 		roleid = binary_upgrade_next_pg_authid_oid;
 		binary_upgrade_next_pg_authid_oid = InvalidOid;
 #endif
+		roleid = InvalidOid;
 	}
 	else
 	{
