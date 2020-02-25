@@ -120,7 +120,7 @@ SeqNext(SeqScanState *node)
 	direction = estate->es_direction;
 	slot = node->ss.ss_ScanTupleSlot;
 
-	if (scandesc)
+	if (scandesc == NULL)
 	{
 		/*
 		 * We reach here if the scan is not parallel, or if we're serially

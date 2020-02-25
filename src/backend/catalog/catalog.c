@@ -602,7 +602,7 @@ GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
 		collides = HeapTupleIsValid(systable_getnext(scan));
 
 		/* GPDB: Also check that this OID hasn't been preallocated */
-		if (!collides && IsOidAcceptable(newOid))
+		if (!collides && !IsOidAcceptable(newOid))
 			collides = true;
 
 		systable_endscan(scan);
