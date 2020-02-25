@@ -1761,9 +1761,6 @@ alter table mpp_5397 split default partition start (21) inclusive end (25) inclu
 drop table mpp_5397;
 
 -- MPP-4987 -- make sure we can't damage a partitioning configuration
--- MPP-8405: disallow OIDS on partitioned tables 
-create table rank_damage (i int, j int) with oids
-partition by range(j) (start(1) end(5) every(1));
 -- this works
 create table rank_damage (i int, j int)
 partition by range(j) (start(1) end(5) every(1));
