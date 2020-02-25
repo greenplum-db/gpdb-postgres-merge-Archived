@@ -865,7 +865,8 @@ ExecGetRangeTableRelation(EState *estate, Index rti)
 
 		Assert(rte->rtekind == RTE_RELATION);
 
-		if (!IsParallelWorker())
+		/* GPDB: a QE process is not holding the locks yet, same as a parallel worker. */
+		if (!IsParallelWorker() && Gp_role != GP_ROLE_EXECUTE)
 		{
 			/*
 			 * In a normal query, we should already have the appropriate lock,
