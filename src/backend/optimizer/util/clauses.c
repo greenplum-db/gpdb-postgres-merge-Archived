@@ -5823,6 +5823,7 @@ should_eval_stable_functions(PlannerInfo *root)
 	 */
 	if (root == NULL) return false;
 	if (root->glob == NULL) return false;
+	if (root->parse == NULL) return false;
 
 	/*
 	 * If the query has no range table, then there is no reason to need to
