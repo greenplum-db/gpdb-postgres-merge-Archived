@@ -104,7 +104,7 @@ copy copytest3 to stdout csv header;
 c1,"col with , comma","col with "" quote"
 1,a,1
 2,b,2
-<<<<<<< HEAD
+
 -- test copy force quote
 create temp table copytest4 (id int, id1 int);
 insert into copytest4 values (1,2);
@@ -130,7 +130,6 @@ SELECT count(*) FROM venue;
     10
 (1 row)
 
-=======
 -- test copy from with a partitioned table
 create table parted_copytest (
 	a int,
@@ -201,4 +200,3 @@ select * from parted_copytest where b = 2;
 (1 row)
 
 drop table parted_copytest;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

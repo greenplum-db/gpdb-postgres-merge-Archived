@@ -1242,8 +1242,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		PreventCommandIfParallelMode("COPY FROM");
 
 		cstate = BeginCopyFrom(pstate, rel, stmt->filename, stmt->is_program,
-							   NULL, stmt->attlist, options,
-							   stmt->ao_segnos);
+							   NULL, NULL, stmt->attlist, options);
 		cstate->whereClause = whereClause;
 		// GPDB_12_MERGE_FIXME
 		//cstate->range_table = range_table;
@@ -5172,7 +5171,7 @@ BeginCopyFrom(ParseState *pstate,
 	cstate->num_defaults = num_defaults;
 	cstate->is_program = is_program;
 
-	bool		pipe = (cstate->filename == NULL || cstate->dispatch_mode == COPY_EXECUTOR);
+	bool		pipe = (filename == NULL || cstate->dispatch_mode == COPY_EXECUTOR);
 
 	if (cstate->on_segment && Gp_role == GP_ROLE_DISPATCH)
 	{

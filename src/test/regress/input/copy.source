@@ -142,7 +142,6 @@ this is just a line full of junk that would error out if parsed
 
 copy copytest3 to stdout csv header;
 
-<<<<<<< HEAD
 -- test copy force quote
 
 create temp table copytest4 (id int, id1 int);
@@ -165,7 +164,7 @@ CREATE TEMP TABLE venue(
 
 COPY venue FROM '@abs_srcdir@/data/venue_pipe.txt' WITH DELIMITER AS '|';
 SELECT count(*) FROM venue;
-=======
+
 -- test copy from with a partitioned table
 create table parted_copytest (
 	a int,
@@ -233,4 +232,3 @@ select * from parted_copytest where b = 1;
 select * from parted_copytest where b = 2;
 
 drop table parted_copytest;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
