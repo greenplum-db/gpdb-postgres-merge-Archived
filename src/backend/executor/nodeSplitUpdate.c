@@ -166,9 +166,10 @@ SplitTupleTableSlot(TupleTableSlot *slot,
 /**
  * Splits every TupleTableSlot into two TupleTableSlots: DELETE and INSERT.
  */
-TupleTableSlot*
-ExecSplitUpdate(SplitUpdateState *node)
+static TupleTableSlot *
+ExecSplitUpdate(PlanState *pstate)
 {
+	SplitUpdateState *node = castNode(SplitUpdateState, pstate);
 	PlanState *outerNode = outerPlanState(node);
 	SplitUpdate *plannode = (SplitUpdate *) node->ps.plan;
 
@@ -226,6 +227,7 @@ ExecInitSplitUpdate(SplitUpdate *node, EState *estate, int eflags)
 	splitupdatestate = makeNode(SplitUpdateState);
 	splitupdatestate->ps.plan = (Plan *)node;
 	splitupdatestate->ps.state = estate;
+	splitupdatestate->ps.ExecProcNode = ExecSplitUpdate;
 	splitupdatestate->processInsert = true;
 
 	/*
@@ -257,7 +259,7 @@ ExecInitSplitUpdate(SplitUpdate *node, EState *estate, int eflags)
 	 * DML nodes do not project.
 	 */
 	ExecInitResultTupleSlotTL(&splitupdatestate->ps, &TTSOpsVirtual);
-	ExecAssignProjectionInfo(&splitupdatestate->ps, NULL);
+	splitupdatestate->ps.ps_ProjInfo = NULL;
 
 	/*
 	 * Initialize for computing hash key
