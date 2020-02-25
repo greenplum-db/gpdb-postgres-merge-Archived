@@ -63,10 +63,7 @@ CREATE FUNCTION equipment_named_ambiguous_2b(hobby text)
    AS 'select * from equipment_r where equipment_r.hobby = hobby'
    LANGUAGE SQL;
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 CREATE FUNCTION pt_in_widget(point, widget)
    RETURNS bool
    AS '@libdir@/regress@DLSUFFIX@'
