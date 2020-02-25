@@ -15466,6 +15466,8 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 	{
 		Oid tblspc = rel->rd_rel->reltablespace;
 		List *q_list, *p_list;
+		PlannedStmt *pstmt;
+		CreateTableAsStmt *ctas;
 
 		into = makeNode(IntoClause);
 		into->rel = tmprel;
@@ -15481,10 +15483,10 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 
 		q_list = pg_analyze_and_rewrite(rawstmt, synthetic_sql, NULL, 0, NULL);
 		p_list = pg_plan_queries(q_list, 0, NULL);
-		q = (Query *) linitial(p_list);
-		Assert(IsA(q, CreateTableAsStmt));
+		pstmt = linitial_node(PlannedStmt, p_list);
+		ctas = castNode(CreateTableAsStmt, pstmt->utilityStmt);
 
-		n = ((CreateTableAsStmt *)q)->query;
+		n = ctas->query;
 	}
 	*tmprv = tmprel;
 
@@ -16200,6 +16202,15 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		ereport(ERROR,
 			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 			errmsg("permission denied: \"%s\" is a system catalog", RelationGetRelationName(rel))));
+
+	/* GPDB_12_MERGE_FIXME: this function closes the relation. Previously, the
+	 * callers expected that, but not anymore. There are supposedly comments
+	 * below explaining why we have to close it, but I don't understand it.
+	 * I think it would be good to test, as a separate PR, whether we can
+	 * avoid closing it here. For now, increment the relcount, so that the
+	 * heap_close() won't actually close it for the caller.
+	 */
+	RelationIncrementReferenceCount(rel);
 
 	Assert(PointerIsValid(node));
 	Assert(IsA(node, List));

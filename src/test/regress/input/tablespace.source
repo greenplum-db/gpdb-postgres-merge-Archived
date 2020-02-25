@@ -48,8 +48,6 @@ CREATE INDEX foo_idx on testschema.foo(i) TABLESPACE regress_tblspace;
 SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
     where c.reltablespace = t.oid AND c.relname = 'foo_idx';
 
-<<<<<<< HEAD
-=======
 --
 -- partitioned table
 --
@@ -105,16 +103,11 @@ SET default_tablespace TO '';
 CREATE TABLE testschema.dflt2 (a int PRIMARY KEY) PARTITION BY LIST (a);
 DROP TABLE testschema.dflt, testschema.dflt2;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- check that default_tablespace doesn't affect ALTER TABLE index rebuilds
 CREATE TABLE testschema.test_default_tab(id bigint) TABLESPACE regress_tblspace;
 INSERT INTO testschema.test_default_tab VALUES (1);
 CREATE INDEX test_index1 on testschema.test_default_tab (id);
 CREATE INDEX test_index2 on testschema.test_default_tab (id) TABLESPACE regress_tblspace;
-<<<<<<< HEAD
-\d testschema.test_index1
-\d testschema.test_index2
-=======
 ALTER TABLE testschema.test_default_tab ADD CONSTRAINT test_index3 PRIMARY KEY (id);
 ALTER TABLE testschema.test_default_tab ADD CONSTRAINT test_index4 UNIQUE (id) USING INDEX TABLESPACE regress_tblspace;
 
@@ -122,30 +115,21 @@ ALTER TABLE testschema.test_default_tab ADD CONSTRAINT test_index4 UNIQUE (id) U
 \d testschema.test_index2
 \d testschema.test_index3
 \d testschema.test_index4
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- use a custom tablespace for default_tablespace
 SET default_tablespace TO regress_tblspace;
 -- tablespace should not change if no rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
 \d testschema.test_index1
 \d testschema.test_index2
-<<<<<<< HEAD
-ANALYZE testschema.test_default_tab;
-=======
 \d testschema.test_index3
 \d testschema.test_index4
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SELECT * FROM testschema.test_default_tab;
 -- tablespace should not change even if there is an index rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE int;
 \d testschema.test_index1
 \d testschema.test_index2
-<<<<<<< HEAD
-ANALYZE testschema.test_default_tab;
-=======
 \d testschema.test_index3
 \d testschema.test_index4
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SELECT * FROM testschema.test_default_tab;
 -- now use the default tablespace for default_tablespace
 SET default_tablespace TO '';
@@ -153,19 +137,12 @@ SET default_tablespace TO '';
 ALTER TABLE testschema.test_default_tab ALTER id TYPE int;
 \d testschema.test_index1
 \d testschema.test_index2
-<<<<<<< HEAD
-=======
 \d testschema.test_index3
 \d testschema.test_index4
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- tablespace should not change even if there is an index rewrite
 ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
 \d testschema.test_index1
 \d testschema.test_index2
-<<<<<<< HEAD
-DROP TABLE testschema.test_default_tab;
-
-=======
 \d testschema.test_index3
 \d testschema.test_index4
 DROP TABLE testschema.test_default_tab;
@@ -247,7 +224,6 @@ ALTER TABLE testschema.test_tab ALTER b TYPE bigint, ADD UNIQUE (c);
 \d testschema.test_tab_b_idx
 DROP TABLE testschema.test_tab;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- let's try moving a table from one place to another
 CREATE TABLE testschema.atable AS VALUES (1), (2);
 alter table testschema.atable set with (reorganize=true) distributed by (column1);
