@@ -513,7 +513,7 @@ dumpSharedComboCommandId(TransactionId xmin, CommandId cmin, CommandId cmax, Com
 	 * GPDB_12_MERGE_FIXME: Need to reimplement this with new BufFile sharing
 	 * mechanism. Or a DSM segment.
 	 */
-	elog(ERROR, "shared combo cids are broken");
+	elog(WARNING, "shared combo cids are broken");
 #if 0
 	/*
 	 * In any given segment, there are many readers, but only one writer. The
