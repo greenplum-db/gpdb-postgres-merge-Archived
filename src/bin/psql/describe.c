@@ -1892,7 +1892,10 @@ describeOneTableDetails(const char *schemaname,
 		tableinfo.relam = NULL;
 
 	/* GPDB Only:  relstorage  */
-	tableinfo.relstorage = (isGPDB()) ? *(PQgetvalue(res, 0, PQfnumber(res, "relstorage"))) : 'h';
+	if (pset.sversion < 120000 && isGPDB())
+		tableinfo.relstorage = *(PQgetvalue(res, 0, PQfnumber(res, "relstorage")));
+	else
+		tableinfo.relstorage = 'h';
 
 	PQclear(res);
 	res = NULL;
@@ -2161,14 +2164,14 @@ describeOneTableDetails(const char *schemaname,
 			appendPQExpBufferStr(&buf, ",\n  pg_catalog.col_description(a.attrelid, a.attnum)");
 			attdescr_col = cols++;
 		}
-
-		if (isGE42 == true)
-		{
-			appendPQExpBufferStr(&buf, "\nLEFT OUTER JOIN pg_catalog.pg_attribute_encoding e");
-			appendPQExpBufferStr(&buf, "\nON   e.attrelid = a .attrelid AND e.attnum = a.attnum");
-		}
 	}
 
+	appendPQExpBufferStr(&buf, "\nFROM pg_catalog.pg_attribute a");
+	if (isGE42 == true)
+	{
+		appendPQExpBufferStr(&buf, "\nLEFT OUTER JOIN pg_catalog.pg_attribute_encoding e");
+		appendPQExpBufferStr(&buf, "\nON   e.attrelid = a .attrelid AND e.attnum = a.attnum");
+	}
 	appendPQExpBuffer(&buf, "\nWHERE a.attrelid = '%s' AND a.attnum > 0 AND NOT a.attisdropped", oid);
 	appendPQExpBufferStr(&buf, "\nORDER BY a.attnum;");
 
