@@ -11018,18 +11018,6 @@
    proname => 'gp_request_fts_probe_scan', proisstrict => 'f', provolatile => 'v', prorettype => 'bool', proargtypes => '', prosrc => 'gp_request_fts_probe_scan', proexeclocation => 'm' },
 
 
-# Hyperbolic trigonometric functions
-{ oid => 7539, descr => 'Hyperbolic cosine function',
-   proname => 'cosh', proisstrict => 'f', prorettype => 'float8', proargtypes => 'float8', prosrc => 'dcosh' },
-
-{ oid => 7540, descr => 'Hyperbolic sine function',
-   proname => 'sinh', proisstrict => 'f', prorettype => 'float8', proargtypes => 'float8', prosrc => 'dsinh' },
-
-{ oid => 7541, descr => 'Hyperbolic tangent function',
-   proname => 'tanh', proisstrict => 'f', prorettype => 'float8', proargtypes => 'float8', prosrc => 'dtanh' },
-
-
-
 { oid => 7054, descr => 'anytable type serialization input function',
    proname => 'anytable_in', prorettype => 'anytable', proargtypes => 'cstring', prosrc => 'anytable_in' },
 
