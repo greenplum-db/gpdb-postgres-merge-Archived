@@ -904,12 +904,6 @@ ALTER FOREIGN TABLE ft1 DROP CONSTRAINT no_const;               -- ERROR
 ERROR:  constraint "no_const" of relation "ft1" does not exist
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT IF EXISTS no_const;
 NOTICE:  constraint "no_const" of relation "ft1" does not exist, skipping
-<<<<<<< HEAD
-ALTER FOREIGN TABLE ft1 SET WITH OIDS;
-NOTICE:  OIDS=TRUE is not recommended for user-created tables
-HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 ALTER FOREIGN TABLE ft1 OWNER TO regress_test_role;
 ALTER FOREIGN TABLE ft1 OPTIONS (DROP delimiter, SET quote '~', ADD escape '@');
 ALTER FOREIGN TABLE ft1 DROP COLUMN no_column;                  -- ERROR

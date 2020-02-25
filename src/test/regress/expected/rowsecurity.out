@@ -717,13 +717,7 @@ SELECT * FROM category;
 --
 SET SESSION AUTHORIZATION regress_rls_alice;
 SET row_security TO ON;
-<<<<<<< HEAD
-CREATE TABLE t1 (a int, junk1 text, b text) WITH OIDS;
-NOTICE:  OIDS=TRUE is not recommended for user-created tables
-HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
-=======
 CREATE TABLE t1 (id int not null primary key, a int, junk1 text, b text);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 ALTER TABLE t1 DROP COLUMN junk1;    -- just a disturbing factor
 GRANT ALL ON t1 TO public;
 COPY t1 FROM stdin WITH ;
@@ -731,15 +725,8 @@ CREATE TABLE t2 (c float) INHERITS (t1);
 NOTICE:  OIDS=TRUE is not recommended for user-created tables
 HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
 GRANT ALL ON t2 TO public;
-<<<<<<< HEAD
-COPY t2 FROM stdin WITH (oids);
-CREATE TABLE t3 (c text, b text, a int) WITH OIDS;
-NOTICE:  OIDS=TRUE is not recommended for user-created tables
-HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
-=======
 COPY t2 FROM stdin;
 CREATE TABLE t3 (id int not null primary key, c text, b text, a int);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 ALTER TABLE t3 INHERIT t1;
 GRANT ALL ON t3 TO public;
 COPY t3(id, a,b,c) FROM stdin;

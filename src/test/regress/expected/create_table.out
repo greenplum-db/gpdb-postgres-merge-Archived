@@ -47,13 +47,7 @@ CREATE TABLE tenk1 (
 	stringu1	name,
 	stringu2	name,
 	string4		name
-<<<<<<< HEAD
-) WITH OIDS;
-NOTICE:  OIDS=TRUE is not recommended for user-created tables
-HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
-=======
 );
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 CREATE TABLE tenk2 (
 	unique1 	int4,
 	unique2 	int4,
@@ -80,13 +74,7 @@ CREATE TABLE person (
 CREATE TABLE emp (
 	salary 		int4,
 	manager 	name
-<<<<<<< HEAD
-) INHERITS (person) WITH OIDS;
-NOTICE:  OIDS=TRUE is not recommended for user-created tables
-HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
-=======
 ) INHERITS (person);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 CREATE TABLE student (
 	gpa 		float8
 ) INHERITS (person);
@@ -96,8 +84,6 @@ CREATE TABLE stud_emp (
 NOTICE:  merging multiple inherited definitions of column "name"
 NOTICE:  merging multiple inherited definitions of column "age"
 NOTICE:  merging multiple inherited definitions of column "location"
-NOTICE:  OIDS=TRUE is not recommended for user-created tables
-HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
 CREATE TABLE city (
 	name		name,
 	location 	box,
