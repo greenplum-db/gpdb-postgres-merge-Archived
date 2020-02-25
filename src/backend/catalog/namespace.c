@@ -4545,9 +4545,8 @@ TempNamespaceValid(bool error_if_removed)
 		 */
 		AcceptInvalidationMessages();  /* minimize race conditions */
 
-		myTempNamespace = SearchSysCacheExists1(NAMESPACEOID,
-												ObjectIdGetDatum(myTempNamespace));
-		if (OidIsValid(myTempNamespace))
+		if (SearchSysCacheExists1(NAMESPACEOID,
+								  ObjectIdGetDatum(myTempNamespace)))
 			return true;
 		else if (Gp_role != GP_ROLE_EXECUTE && error_if_removed) 
 			/*
@@ -4555,6 +4554,7 @@ TempNamespaceValid(bool error_if_removed)
 			 * session's temp table schema. However, we want the
 			 * QD to be the one to find it not the QE.
 			 */
+			myTempNamespace = InvalidOid;
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
 					 errmsg("temporary table schema removed while session "
