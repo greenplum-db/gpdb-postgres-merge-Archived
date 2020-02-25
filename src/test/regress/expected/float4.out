@@ -260,13 +260,6 @@ SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
       | 1.2345679e-20 | 1.2345679e-20
 (5 rows)
 
-<<<<<<< HEAD
--- MPP doesn't support this yet.
---UPDATE FLOAT4_TBL
---   SET f1 = FLOAT4_TBL.f1 * '-1'
---   WHERE FLOAT4_TBL.f1 > '0.0';
---SELECT '' AS five, * FROM FLOAT4_TBL;
-=======
 UPDATE FLOAT4_TBL
    SET f1 = FLOAT4_TBL.f1 * '-1'
    WHERE FLOAT4_TBL.f1 > '0.0';
@@ -946,4 +939,3 @@ drop cascades to cast from xfloat4 to real
 drop cascades to cast from real to xfloat4
 drop cascades to cast from xfloat4 to integer
 drop cascades to cast from integer to xfloat4
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

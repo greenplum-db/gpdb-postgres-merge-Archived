@@ -81,14 +81,10 @@ SELECT '' AS five, * FROM FLOAT4_TBL;
 -- test the unary float4abs operator
 SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
 
--- MPP doesn't support this yet.
---UPDATE FLOAT4_TBL
---   SET f1 = FLOAT4_TBL.f1 * '-1'
---   WHERE FLOAT4_TBL.f1 > '0.0';
+UPDATE FLOAT4_TBL
+   SET f1 = FLOAT4_TBL.f1 * '-1'
+   WHERE FLOAT4_TBL.f1 > '0.0';
 
-<<<<<<< HEAD
---SELECT '' AS five, * FROM FLOAT4_TBL;
-=======
 SELECT '' AS five, * FROM FLOAT4_TBL;
 
 -- test edge-case coercions to integer
@@ -349,4 +345,3 @@ select float4send(flt) as ibits,
 
 -- clean up, lest opr_sanity complain
 drop type xfloat4 cascade;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
