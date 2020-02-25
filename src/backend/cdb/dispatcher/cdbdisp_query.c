@@ -395,6 +395,15 @@ CdbDispatchUtilityStatement(struct Node *stmt,
 {
 	DispatchCommandQueryParms *pQueryParms;
 	bool needTwoPhase = flags & DF_NEED_TWO_PHASE;
+	PlannedStmt *pstmt;
+
+	/* Wrap it in a PlannedStmt */
+	pstmt = makeNode(PlannedStmt);
+	pstmt->commandType = CMD_UTILITY;
+	pstmt->canSetTag = true;
+	pstmt->utilityStmt = stmt;
+	pstmt->stmt_location = 0;
+	pstmt->stmt_len = 0;
 
 	if (needTwoPhase)
 		setupDtxTransaction();
@@ -403,7 +412,7 @@ CdbDispatchUtilityStatement(struct Node *stmt,
 		   "CdbDispatchUtilityStatement: %s (needTwoPhase = %s)",
 		   debug_query_string, (needTwoPhase ? "true" : "false"));
 
-	pQueryParms = cdbdisp_buildUtilityQueryParms(stmt, flags, oid_assignments);
+	pQueryParms = cdbdisp_buildUtilityQueryParms(pstmt, flags, oid_assignments);
 
 	return cdbdisp_dispatchCommandInternal(pQueryParms,
 										   flags,
