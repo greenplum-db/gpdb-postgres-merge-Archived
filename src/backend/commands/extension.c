@@ -1922,8 +1922,9 @@ InsertExtensionTuple(const char *extName, Oid extOwner,
 	memset(values, 0, sizeof(values));
 	memset(nulls, 0, sizeof(nulls));
 
-	extensionOid = GetNewOidWithIndex(rel, ExtensionOidIndexId,
-									  Anum_pg_extension_oid);
+	extensionOid = GetNewOidForExtension(rel, ExtensionOidIndexId,
+										 Anum_pg_extension_oid,
+										 unconstify(char *, extName));
 	values[Anum_pg_extension_oid - 1] = ObjectIdGetDatum(extensionOid);
 	values[Anum_pg_extension_extname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(extName));
