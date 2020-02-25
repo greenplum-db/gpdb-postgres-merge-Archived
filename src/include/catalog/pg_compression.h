@@ -31,13 +31,13 @@
 CATALOG(pg_compression,7056,CompressionRelationId)
 {
 	Oid			oid;			/* oid */
-	NameData	compname;			
-	regproc		compconstructor;	
-	regproc		compdestructor;		
-	regproc		compcompressor;		
-	regproc		compdecompressor;	
-	regproc		compvalidator;		
-	Oid			compowner;			
+	NameData	compname;
+	regproc		compconstructor BKI_LOOKUP(pg_proc);
+	regproc		compdestructor BKI_LOOKUP(pg_proc);
+	regproc		compcompressor BKI_LOOKUP(pg_proc);
+	regproc		compdecompressor BKI_LOOKUP(pg_proc);
+	regproc		compvalidator BKI_LOOKUP(pg_proc);
+	Oid			compowner BKI_DEFAULT(PGUID);
 } FormData_pg_compression;
 
 /* GPDB added foreign key definitions for gpcheckcat. */

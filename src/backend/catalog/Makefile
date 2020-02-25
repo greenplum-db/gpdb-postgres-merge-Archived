@@ -90,7 +90,8 @@ POSTGRES_BKI_DATA = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_pltemplate.dat pg_proc.dat pg_range.dat pg_tablespace.dat \
 	pg_ts_config.dat pg_ts_config_map.dat pg_ts_dict.dat pg_ts_parser.dat \
 	pg_ts_template.dat pg_type.dat \
-	gp_version_at_initdb.dat \
+	gp_version_at_initdb.dat pg_resgroup.dat pg_resgroupcapability.dat \
+	pg_compression.dat \
 	)
 
 all: distprep generated-header-symlinks

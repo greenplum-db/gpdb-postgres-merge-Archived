@@ -13,8 +13,8 @@
 [
 
 { oid => '6437', oid_symbol => 'DEFAULTRESGROUP_OID',
-  rsgname => 'default_group,', parent => '0' },
+  rsgname => 'default_group', parent => '0' },
 { oid => '6438', oid_symbol => 'ADMINRESGROUP_OID',
-  rsgname => 'admin_group,', parent => '0' },
+  rsgname => 'admin_group', parent => '0' },
 
 ]

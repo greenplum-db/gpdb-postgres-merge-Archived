@@ -166,7 +166,6 @@ Relation
 relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 {
 	Oid			relOid;
-	Relation	rel;
 
 	/*
 	 * Check for shared-cache-inval messages before trying to open the
@@ -185,35 +184,8 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 	/* Look up and lock the appropriate relation using namespace search */
 	relOid = RangeVarGetRelid(relation, lockmode, false);
 
-	/* 
-	 * use try_relation_open instead of relation_open so that we can
-	 * throw a more graceful error message if the relation was dropped
-	 * between the RangeVarGetRelid and when we try to open the relation.
-	 *
-	 * GPDB_12_MERGE_FIXME: Is this still relevant? RangeVarGetRelid()
-	 * acquires the lock these days.
-	 */
-	rel = try_relation_open(relOid, NoLock, false);
-
-	if (!RelationIsValid(rel))
-	{
-		if (relation->schemaname)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("relation \"%s.%s\" does not exist",
-							relation->schemaname, relation->relname)));
-		}
-		else
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("relation \"%s\" does not exist",
-							relation->relname)));
-		}
-	}
-
-	return rel;
+	/* Let relation_open do the rest */
+	return relation_open(relOid, NoLock);
 }
 
 /* ----------------

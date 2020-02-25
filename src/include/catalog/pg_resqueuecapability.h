@@ -30,6 +30,7 @@
 
 CATALOG(pg_resqueuecapability,6060,ResQueueCapabilityRelationId) BKI_SHARED_RELATION
 {
+	Oid		oid;				/* oid */
 	Oid		resqueueid;	/* OID of the queue with this capability  */
 	int16	restypid;	/* resource type id (key to pg_resourcetype)  */
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
