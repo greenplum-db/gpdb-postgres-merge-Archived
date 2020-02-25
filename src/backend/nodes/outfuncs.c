@@ -367,7 +367,7 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_NODE_FIELD(utilityStmt);
     WRITE_LOCATION_FIELD(stmt_location);
     WRITE_LOCATION_FIELD(stmt_len);
-	WRITE_NODE_FIELD(subplans);
+
 #ifdef COMPILING_BINARY_FUNCS
 	WRITE_INT_ARRAY(subplan_sliceIds, list_length(node->subplans));
 #else
@@ -388,14 +388,11 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 		WRITE_NODE_FIELD(slices[i].directDispatch.contentIds);
 	}
 
-	WRITE_BITMAPSET_FIELD(rewindPlanIDs);
 	WRITE_NODE_FIELD(result_partitions);
 	WRITE_NODE_FIELD(result_aosegnos);
 	WRITE_NODE_FIELD(queryPartOids);
 	WRITE_NODE_FIELD(queryPartsMetadata);
 	WRITE_NODE_FIELD(numSelectorsPerScanId);
-	WRITE_NODE_FIELD(rowMarks);
-	WRITE_NODE_FIELD(relationOids);
 
 	WRITE_NODE_FIELD(intoPolicy);
 

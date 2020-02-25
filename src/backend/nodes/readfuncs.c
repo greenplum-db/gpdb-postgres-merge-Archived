@@ -2126,6 +2126,9 @@ _readColumnDef(void)
 	READ_INT_FIELD(storage);
 	READ_NODE_FIELD(raw_default);
 	READ_NODE_FIELD(cooked_default);
+	READ_CHAR_FIELD(identity);
+	READ_NODE_FIELD(identitySequence);
+	READ_CHAR_FIELD(generated);
 	READ_NODE_FIELD(collClause);
 	READ_OID_FIELD(collOid);
 	READ_NODE_FIELD(constraints);
@@ -2380,6 +2383,18 @@ _readPlannedStmt(void)
 	READ_NODE_FIELD(resultRelations);
 	READ_NODE_FIELD(rootResultRelations);
 	READ_NODE_FIELD(subplans);
+	READ_BITMAPSET_FIELD(rewindPlanIDs);
+	READ_NODE_FIELD(rowMarks);
+	READ_NODE_FIELD(relationOids);
+	/* invalItems not serialized in binary mode */
+#ifndef COMPILING_BINARY_FUNCS
+	READ_NODE_FIELD(invalItems);
+#endif /* COMPILING_BINARY_FUNCS */
+	READ_NODE_FIELD(paramExecTypes);
+	READ_NODE_FIELD(utilityStmt);
+	READ_LOCATION_FIELD(stmt_location);
+	READ_LOCATION_FIELD(stmt_len);
+
 	READ_INT_ARRAY(subplan_sliceIds, list_length(local_node->subplans));
 
 	READ_INT_FIELD(numSlices);
@@ -2395,22 +2410,11 @@ _readPlannedStmt(void)
 		READ_NODE_FIELD(slices[i].directDispatch.contentIds);
 	}
 
-	READ_BITMAPSET_FIELD(rewindPlanIDs);
 	READ_NODE_FIELD(result_partitions);
 	READ_NODE_FIELD(result_aosegnos);
 	READ_NODE_FIELD(queryPartOids);
 	READ_NODE_FIELD(queryPartsMetadata);
 	READ_NODE_FIELD(numSelectorsPerScanId);
-	READ_NODE_FIELD(rowMarks);
-	READ_NODE_FIELD(relationOids);
-	/* invalItems not serialized in binary mode */
-#ifndef COMPILING_BINARY_FUNCS
-	READ_NODE_FIELD(invalItems);
-#endif /* COMPILING_BINARY_FUNCS */
-	READ_NODE_FIELD(paramExecTypes);
-	READ_NODE_FIELD(utilityStmt);
-	READ_LOCATION_FIELD(stmt_location);
-	READ_LOCATION_FIELD(stmt_len);
 
 	READ_NODE_FIELD(intoPolicy);
 
