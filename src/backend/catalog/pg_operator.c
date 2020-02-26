@@ -242,7 +242,8 @@ OperatorShellMake(const char *operatorName,
 	 */
 	operatorObjectId = GetNewOidForOperator(pg_operator_desc, OperatorOidIndexId,
 											Anum_pg_operator_oid,
-											NameStr(oname), leftTypeId, rightTypeId,
+											unconstify(char *, operatorName),
+											leftTypeId, rightTypeId,
 											operatorNamespace);
 	values[Anum_pg_operator_oid - 1] = ObjectIdGetDatum(operatorObjectId);
 	namestrcpy(&oname, operatorName);
