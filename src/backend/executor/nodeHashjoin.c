@@ -1555,14 +1555,7 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 {
 	uint32		header[2];
 	size_t		nread;
-	MemTuple	tuple;
-
-	/*
-	 * We check for interrupts here because this is typically taken as an
-	 * alternative code path to an ExecProcNode() call, which would include
-	 * such a check.
-	 */
-	CHECK_FOR_INTERRUPTS();
+	MinimalTuple tuple;
 
 	/*
 	 * We check for interrupts here because this is typically taken as an
@@ -1584,18 +1577,16 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 	}
 
 	*hashvalue = header[0];
-	tuple = (MemTuple) palloc(memtuple_size_from_uint32(header[1]));
-	memtuple_set_mtlen(tuple, header[1]);
-
+	tuple = (MinimalTuple) palloc(header[1]);
+	tuple->t_len = header[1];
 	nread = BufFileRead(file,
 						(void *) ((char *) tuple + sizeof(uint32)),
-						memtuple_size_from_uint32(header[1]) - sizeof(uint32));
-	
-	if (nread != memtuple_size_from_uint32(header[1]) - sizeof(uint32))
+						header[1] - sizeof(uint32));
+	if (nread != header[1] - sizeof(uint32))
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not read from hash-join temporary file: %m")));
-	ExecForceStoreMemTuple(tuple, tupleSlot, true);
+	ExecForceStoreMinimalTuple(tuple, tupleSlot, true);
 	return tupleSlot;
 }
 
