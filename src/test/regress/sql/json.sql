@@ -544,8 +544,6 @@ select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
 
-<<<<<<< HEAD
-=======
 -- anonymous record type
 SELECT json_populate_recordset(null::record, '[{"x": 0, "y": 1}]');
 SELECT json_populate_recordset(row(1,2), '[{"f1": 0, "f2": 1}]');
@@ -562,15 +560,12 @@ SELECT json_populate_recordset(null::j_ordered_pair, '[{"x": 0, "y": 1}]');
 SELECT json_populate_recordset(row(1,2)::j_ordered_pair, '[{"x": 0}, {"y": 3}]');
 SELECT json_populate_recordset(row(1,2)::j_ordered_pair, '[{"x": 1, "y": 0}]');
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- negative cases where the wrong record type is supplied
 select * from json_populate_recordset(row(0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
 select * from json_populate_recordset(row(0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
 select * from json_populate_recordset(row(0::int,0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
 select * from json_populate_recordset(row(1000000000::int,50::int),'[{"b":"2"},{"a":"3"}]') q (a text, b text);
 
-<<<<<<< HEAD
-=======
 -- test type info caching in json_populate_record()
 CREATE TEMP TABLE jspoptest (js json);
 
@@ -592,7 +587,6 @@ DROP DOMAIN js_int_array_2d;
 DROP DOMAIN j_ordered_pair;
 DROP TYPE j_unordered_pair;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 --json_typeof() function
 select value, json_typeof(value)
   from (values (json '123.4'),
@@ -773,13 +767,6 @@ select json_strip_nulls('[1,{"a":1,"b":null,"c":2},3]');
 -- an empty object is not null and should not be stripped
 select json_strip_nulls('{"a": {"b": null, "c": null}, "d": {} }');
 
-<<<<<<< HEAD
--- checking proisstrict settings
-
-select '[{"a":1}]'::json->0->'b';
-select '[{"a":1}]'::json->1;
-select '[{"a":1}]'::json->1->'a';
-=======
 -- json to tsvector
 select to_tsvector('{"a": "aaa bbb ddd ccc", "b": ["eee fff ggg"], "c": {"d": "hhh iii"}}'::json);
 
@@ -835,4 +822,8 @@ select ts_headline('english', '{"a": "aaa bbb", "b": {"c": "ccc ddd fff", "c1": 
 select ts_headline('null'::json, tsquery('aaa & bbb'));
 select ts_headline('{}'::json, tsquery('aaa & bbb'));
 select ts_headline('[]'::json, tsquery('aaa & bbb'));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+-- checking proisstrict settings
+select '[{"a":1}]'::json->0->'b';
+select '[{"a":1}]'::json->1;
+select '[{"a":1}]'::json->1->'a';

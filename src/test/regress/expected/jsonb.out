@@ -2514,8 +2514,6 @@ SELECT * FROM jsonb_populate_recordset(row('def',99,NULL)::jbpop,'[{"a":[100,200
  {"z": true}     |  3 | Fri Jan 20 10:42:53 2012
 (2 rows)
 
-<<<<<<< HEAD
-=======
 -- anonymous record type
 SELECT jsonb_populate_recordset(null::record, '[{"x": 0, "y": 1}]');
 ERROR:  record type has not been registered
@@ -2564,7 +2562,6 @@ SELECT jsonb_populate_recordset(row(1,2)::jb_ordered_pair, '[{"x": 0}, {"y": 3}]
 
 SELECT jsonb_populate_recordset(row(1,2)::jb_ordered_pair, '[{"x": 1, "y": 0}]');
 ERROR:  value for domain jb_ordered_pair violates check constraint "jb_ordered_pair_check"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- negative cases where the wrong record type is supplied
 select * from jsonb_populate_recordset(row(0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
 ERROR:  function return row and query-specified return row do not match
