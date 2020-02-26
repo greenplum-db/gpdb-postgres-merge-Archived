@@ -206,8 +206,7 @@ main(int argc, char *const argv[])
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			printf("ecpg (PostgreSQL %s) %d.%d.%d\n", PG_VERSION,
-				   MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
+			printf("ecpg (PostgreSQL %s) %s\n", PG_VERSION, GP_VERSION);
 			exit(0);
 		}
 	}
@@ -482,7 +481,7 @@ main(int argc, char *const argv[])
 				if (regression_mode)
 					fprintf(base_yyout, "/* Processed by ecpg (regression mode) */\n");
 				else
-					fprintf(base_yyout, "/* Processed by ecpg (%d.%d.%d) */\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
+					fprintf(base_yyout, "/* Processed by ecpg (%s) */\n", GP_VERSION);
 
 				if (header_mode == false)
 				{

@@ -4351,8 +4351,7 @@ ClosePortalStmt:
 
 CopyStmt:	COPY opt_binary qualified_name opt_column_list
 			copy_from opt_program copy_file_name copy_delimiter opt_with
-			copy_options where_clause
-			OptSingleRowErrorHandling
+			copy_options where_clause OptSingleRowErrorHandling
 				{
 					CopyStmt *n = makeNode(CopyStmt);
 					n->relation = $3;
@@ -4378,7 +4377,6 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list
 								 parser_errposition(@11)));
 
 					n->options = NIL;
-
 					/* Concatenate user-supplied flags */
 					if ($2)
 						n->options = lappend(n->options, $2);
@@ -5314,6 +5312,7 @@ distributed_by_elem: ColId opt_class
 					$$->name = $1;
 					$$->opclass = $2;
 				}
+			;
 
 opt_c_include:	INCLUDE '(' columnList ')'			{ $$ = $3; }
 			 |		/* EMPTY */						{ $$ = NIL; }
@@ -6380,6 +6379,7 @@ format_def_list:
 			{
 				$$ = lappend($1, $3);
 			}
+			;
 
 format_def_item:
     		ColLabel '=' def_arg
@@ -6390,7 +6390,7 @@ format_def_item:
 			{
 				$$ = makeDefElem($1, (Node *) $4, @1);
 			}
-
+			;
 
 format_opt_item:
 			DELIMITER opt_as Sconst
