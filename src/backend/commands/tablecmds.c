@@ -887,7 +887,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	cookedDefaults = NIL;
 	attnum = 0;
 
-	foreach(listptr, stmt->tableElts)
+	foreach(listptr, schema)
 	{
 		ColumnDef  *colDef = lfirst(listptr);
 		Form_pg_attribute attr;
