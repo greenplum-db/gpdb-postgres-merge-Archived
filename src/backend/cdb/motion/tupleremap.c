@@ -133,6 +133,10 @@ static HeapTuple TRRemapTuple(TupleRemapper *remapper,
 							  TupleDesc tupledesc,
 							  TupleRemapInfo **field_remapinfo,
 							  HeapTuple tuple);
+static MinimalTuple TRRemapMinimalTuple(TupleRemapper *remapper,
+										TupleDesc tupledesc,
+										TupleRemapInfo **field_remapinfo,
+										MinimalTuple tuple);
 static Datum TRRemap(TupleRemapper *remapper, TupleRemapInfo *remapinfo,
 					 Datum value, bool *changed);
 static Datum TRRemapArray(TupleRemapper *remapper, ArrayRemapInfo *remapinfo,
@@ -190,9 +194,6 @@ DestroyTupleRemapper(TupleRemapper *remapper)
 MinimalTuple
 TRCheckAndRemap(TupleRemapper *remapper, TupleDesc tupledesc, MinimalTuple tuple)
 {
-	HeapTupleData htup;
-	HeapTuple result_htup;
-
 	if (!remapper->remap_needed)
 		return tuple;
 
@@ -208,12 +209,7 @@ TRCheckAndRemap(TupleRemapper *remapper, TupleDesc tupledesc, MinimalTuple tuple
 		}
 	}
 
-	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
-	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
-
-	result_htup = TRRemapTuple(remapper, tupledesc, remapper->field_remapinfo, &htup);
-
-	return (MinimalTuple) (((char *) result_htup->t_data) + MINIMAL_TUPLE_OFFSET);
+	return TRRemapMinimalTuple(remapper, tupledesc, remapper->field_remapinfo, tuple);
 }
 
 /*
@@ -324,6 +320,52 @@ TRRemapTuple(TupleRemapper *remapper,
 	/* Reconstruct the modified tuple, if anything was modified. */
 	if (changed)
 		return heap_form_tuple(tupledesc, values, isnull);
+	else
+		return tuple;
+}
+
+/*
+ * Like TRRemapTuple(), but for a MinimalTuple
+ */
+static MinimalTuple
+TRRemapMinimalTuple(TupleRemapper *remapper,
+					TupleDesc tupledesc,
+					TupleRemapInfo **field_remapinfo,
+					MinimalTuple tuple)
+{
+	Datum	   *values;
+	bool	   *isnull;
+	bool		changed = false;
+	int			i;
+	HeapTupleData htup;
+
+	/*
+	 * If no remapping is necessary, just copy the tuple into a single
+	 * palloc'd chunk, as caller will expect.
+	 */
+	if (field_remapinfo == NULL)
+		return tuple;
+
+	/* Deform tuple so we can remap record typmods for individual attrs. */
+	values = (Datum *) palloc(tupledesc->natts * sizeof(Datum));
+	isnull = (bool *) palloc(tupledesc->natts * sizeof(bool));
+
+	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
+	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
+
+	heap_deform_tuple(&htup, tupledesc, values, isnull);
+
+	/* Recursively process each interesting non-NULL attribute. */
+	for (i = 0; i < tupledesc->natts; i++)
+	{
+		if (isnull[i] || field_remapinfo[i] == NULL)
+			continue;
+		values[i] = TRRemap(remapper, field_remapinfo[i], values[i], &changed);
+	}
+
+	/* Reconstruct the modified tuple, if anything was modified. */
+	if (changed)
+		return heap_form_minimal_tuple(tupledesc, values, isnull);
 	else
 		return tuple;
 }
