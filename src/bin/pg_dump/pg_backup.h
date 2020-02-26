@@ -246,31 +246,6 @@ typedef void (*SetupWorkerPtrType) (Archive *AH);
  */
 
 extern void ConnectDatabase(Archive *AH,
-<<<<<<< HEAD
-				const char *dbname,
-				const char *pghost,
-				const char *pgport,
-				const char *username,
-				trivalue prompt_password,
-				bool binary_upgrade);
-extern void DisconnectDatabase(Archive *AHX);
-extern PGconn *GetConnection(Archive *AHX);
-
-/* Called to add a TOC entry */
-extern void ArchiveEntry(Archive *AHX,
-			 CatalogId catalogId, DumpId dumpId,
-			 const char *tag,
-			 const char *namespace, const char *tablespace,
-			 const char *owner, bool withOids,
-			 const char *desc, teSection section,
-			 const char *defn,
-			 const char *dropStmt, const char *copyStmt,
-			 const DumpId *deps, int nDeps,
-			 DataDumperPtr dumpFn, void *dumpArg);
-
-extern void AmendArchiveEntry(Archive *AHX, DumpId dumpId, const char *defn);
-
-=======
 							const char *dbname,
 							const char *pghost,
 							const char *pgport,
@@ -279,7 +254,8 @@ extern void AmendArchiveEntry(Archive *AHX, DumpId dumpId, const char *defn);
 extern void DisconnectDatabase(Archive *AHX);
 extern PGconn *GetConnection(Archive *AHX);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+extern void AmendArchiveEntry(Archive *AHX, DumpId dumpId, const char *defn);
+
 /* Called to write *data* to the archive */
 extern void WriteData(Archive *AH, const void *data, size_t dLen);
 

@@ -35,30 +35,7 @@
 #define PGDUMP_STRFTIME_FMT  "%Y-%m-%d %H:%M:%S"
 #endif
 
-
 extern bool buildACLCommands(const char *name, const char *subname, const char *nspname,
-<<<<<<< HEAD
-				 const char *type, const char *acls, const char *racls,
-				 const char *owner, const char *prefix, int remoteVersion,
-				 PQExpBuffer sql);
-extern bool buildDefaultACLCommands(const char *type, const char *nspname,
-						const char *acls, const char *racls,
-						const char *initacls, const char *initracls,
-						const char *owner,
-						int remoteVersion,
-						PQExpBuffer sql);
-/* GPDB additions */
-extern char *escape_backslashes(const char *src, bool quotes_too);
-extern char *escape_fmtopts_string(const char *src);
-extern char *custom_fmtopts_string(const char *src);
-
-extern void buildShSecLabelQuery(PGconn *conn, const char *catalog_name,
-					 Oid objectId, PQExpBuffer sql);
-extern void emitShSecLabels(PGconn *conn, PGresult *res,
-				PQExpBuffer buffer, const char *objtype, const char *objname);
-
-extern void set_dump_section(const char *arg, int *dumpSections);
-=======
 							 const char *type, const char *acls, const char *racls,
 							 const char *owner, const char *prefix, int remoteVersion,
 							 PQExpBuffer sql);
@@ -72,7 +49,6 @@ extern void buildShSecLabelQuery(PGconn *conn, const char *catalog_name,
 								 Oid objectId, PQExpBuffer sql);
 extern void emitShSecLabels(PGconn *conn, PGresult *res,
 							PQExpBuffer buffer, const char *objtype, const char *objname);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 extern void buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 							PQExpBuffer init_acl_subquery, PQExpBuffer init_racl_subquery,
@@ -88,5 +64,10 @@ extern void makeAlterConfigCommand(PGconn *conn, const char *configitem,
 								   const char *type, const char *name,
 								   const char *type2, const char *name2,
 								   PQExpBuffer buf);
+
+/* GPDB additions */
+extern char *escape_backslashes(const char *src, bool quotes_too);
+extern char *escape_fmtopts_string(const char *src);
+extern char *custom_fmtopts_string(const char *src);
 
 #endif							/* DUMPUTILS_H */

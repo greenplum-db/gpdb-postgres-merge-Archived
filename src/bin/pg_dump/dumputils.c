@@ -986,8 +986,6 @@ SplitGUCList(char *rawstring, char separator,
 	*nextptr = NULL;
 	return true;
 }
-<<<<<<< HEAD
-=======
 
 /*
  * Helper function for dumping "ALTER DATABASE/ROLE SET ..." commands.
@@ -1064,4 +1062,3 @@ makeAlterConfigCommand(PGconn *conn, const char *configitem,
 
 	pg_free(mine);
 }
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

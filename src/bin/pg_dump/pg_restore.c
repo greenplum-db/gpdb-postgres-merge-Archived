@@ -343,11 +343,6 @@ main(int argc, char **argv)
 		exit_nicely(1);
 	}
 
-<<<<<<< HEAD
-	if (numWorkers <= 0)
-	{
-		fprintf(stderr, _("%s: invalid number of parallel jobs\n"), progname);
-=======
 	/*
 	 * -C is not compatible with -1, because we can't create a database inside
 	 * a transaction block.
@@ -361,7 +356,6 @@ main(int argc, char **argv)
 	if (numWorkers <= 0)
 	{
 		pg_log_error("invalid number of parallel jobs");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		exit(1);
 	}
 
@@ -369,13 +363,8 @@ main(int argc, char **argv)
 #ifdef WIN32
 	if (numWorkers > MAXIMUM_WAIT_OBJECTS)
 	{
-<<<<<<< HEAD
-		fprintf(stderr, _("%s: maximum number of parallel jobs is %d\n"),
-				progname, MAXIMUM_WAIT_OBJECTS);
-=======
 		pg_log_error("maximum number of parallel jobs is %d",
 					 MAXIMUM_WAIT_OBJECTS);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		exit(1);
 	}
 #endif
@@ -543,9 +532,5 @@ usage(const char *progname)
 			 "The options -I, -n, -N, -P, -t, -T, and --section can be combined and specified\n"
 			 "multiple times to select multiple objects.\n"));
 	printf(_("\nIf no input file name is supplied, then standard input is used.\n\n"));
-<<<<<<< HEAD
 	printf(_("Report bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 }

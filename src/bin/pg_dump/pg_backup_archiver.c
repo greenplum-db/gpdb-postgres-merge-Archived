@@ -2996,20 +2996,8 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 		strcmp(te->desc, "COMMENT") == 0 ||
 		strcmp(te->desc, "SECURITY LABEL") == 0)
 	{
-<<<<<<< HEAD
-		if (strcmp(te->desc, "TABLE") == 0 ||
-			strcmp(te->desc, "EXTERNAL TABLE") == 0 ||
-			strcmp(te->desc, "TABLE DATA") == 0 ||
-			strcmp(te->desc, "VIEW") == 0 ||
-			strcmp(te->desc, "FOREIGN TABLE") == 0 ||
-			strcmp(te->desc, "MATERIALIZED VIEW") == 0 ||
-			strcmp(te->desc, "MATERIALIZED VIEW DATA") == 0 ||
-			strcmp(te->desc, "SEQUENCE") == 0 ||
-			strcmp(te->desc, "SEQUENCE SET") == 0)
-=======
 		/* Database properties react to createDB, not selectivity options. */
 		if (strncmp(te->tag, "DATABASE ", 9) == 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			if (!ropt->createDB)
 				return 0;
@@ -3065,7 +3053,9 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 				strcmp(te->desc, "MATERIALIZED VIEW") == 0 ||
 				strcmp(te->desc, "MATERIALIZED VIEW DATA") == 0 ||
 				strcmp(te->desc, "SEQUENCE") == 0 ||
-				strcmp(te->desc, "SEQUENCE SET") == 0)
+				strcmp(te->desc, "SEQUENCE SET") == 0 ||
+				/* Greenplum additions */
+				strcmp(te->desc, "EXTERNAL TABLE") == 0)
 			{
 				if (!ropt->selTable)
 					return 0;
@@ -3147,14 +3137,6 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 	if (ropt->schemaOnly)
 	{
 		/*
-<<<<<<< HEAD
-		 * In binary-upgrade mode, even with schema-only set, we do not mask
-		 * out large objects.  Only large object definitions, comments and
-		 * other information should be generated in binary-upgrade mode (not
-		 * the actual data).
-		 */
-		if (!(ropt->binary_upgrade &&
-=======
 		 * The sequence_data option overrides schemaOnly for SEQUENCE SET.
 		 *
 		 * In binary-upgrade mode, even with schemaOnly set, we do not mask
@@ -3164,7 +3146,6 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 		 */
 		if (!(ropt->sequence_data && strcmp(te->desc, "SEQUENCE SET") == 0) &&
 			!(ropt->binary_upgrade &&
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			  (strcmp(te->desc, "BLOB") == 0 ||
 			   (strcmp(te->desc, "ACL") == 0 &&
 				strncmp(te->tag, "LARGE OBJECT ", 13) == 0) ||
@@ -3629,11 +3610,9 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te, ArchiveHandle *AH)
 		strcmp(type, "OPERATOR") == 0 ||
 		strcmp(type, "OPERATOR CLASS") == 0 ||
 		strcmp(type, "OPERATOR FAMILY") == 0 ||
-<<<<<<< HEAD
+		strcmp(type, "PROCEDURE") == 0 ||
+		/* Greenplum Additions */
 		strcmp(type, "PROTOCOL") == 0)
-=======
-		strcmp(type, "PROCEDURE") == 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		/* Chop "DROP " off the front and make a modifiable copy */
 		char	   *first = pg_strdup(te->dropStmt + 5);

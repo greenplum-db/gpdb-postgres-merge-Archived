@@ -185,19 +185,13 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	oprinfo = getOperators(fout, &numOperators);
 	oprinfoindex = buildIndexArray(oprinfo, numOperators, sizeof(OprInfo));
 
-<<<<<<< HEAD
 	if (testExtProtocolSupport(fout))
 	{
-		if (g_verbose)
-			write_msg(NULL, "reading user-defined external protocols\n");
+		pg_log_info("reading user-defined external protocols");
 		getExtProtocols(fout, &numExtProtocols);
 	}
 
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined access methods\n");
-=======
 	pg_log_info("reading user-defined access methods");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	getAccessMethods(fout, &numAccessMethods);
 
 	pg_log_info("reading user-defined operator classes");
@@ -324,7 +318,6 @@ flagInhTables(Archive *fout, TableInfo *tblinfo, int numTables,
 			continue;
 
 		/*
-<<<<<<< HEAD
 		 * FIXME: In PostgreSQL, foreign tables can be inherited. But
 		 * pg_dump chokes on external tables, if an external table is
 		 * used as a partition, and a column has attislocal=false.
@@ -333,15 +326,13 @@ flagInhTables(Archive *fout, TableInfo *tblinfo, int numTables,
 			tblinfo[i].relstorage == 'x' /* RELSTORAGE_EXTERNAL */)
 			continue;
 
-		/* Don't bother computing anything for non-target tables, either */
-=======
+		/*
 		 * Normally, we don't bother computing anything for non-target tables,
 		 * but if load-via-partition-root is specified, we gather information
 		 * on every partition in the system so that getRootTableInfo can trace
 		 * from any given to leaf partition all the way up to the root.  (We
 		 * don't need to mark them as interesting for getTableAttrs, though.)
 		 */
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		if (!tblinfo[i].dobj.dump)
 		{
 			mark_parents = false;
