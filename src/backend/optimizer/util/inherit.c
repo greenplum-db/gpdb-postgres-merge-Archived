@@ -231,7 +231,7 @@ expand_inherited_rtentry(PlannerInfo *root, RelOptInfo *rel,
 
 			/* Close child relations, but keep locks */
 			if (childOID != parentOID)
-				table_close(newrelation, lockmode);
+				table_close(newrelation, NoLock);
 		}
 	}
 
