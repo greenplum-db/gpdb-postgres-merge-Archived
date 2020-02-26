@@ -26,7 +26,7 @@
 #include "executor/executor.h"
 #include "executor/nodeMaterial.h"
 #include "executor/instrument.h"        /* Instrumentation */
-#include "utils/tuplestorenew.h"
+#include "utils/tuplestore.h"
 
 #include "miscadmin.h"
 
@@ -34,7 +34,6 @@
 
 static void ExecMaterialExplainEnd(PlanState *planstate, struct StringInfoData *buf);
 static void ExecChildRescan(MaterialState *node);
-static void DestroyTupleStore(MaterialState *node);
 
 static void ExecEagerFreeMaterial(MaterialState *node);
 
@@ -52,16 +51,13 @@ static TupleTableSlot *			/* result tuple from subplan */
 ExecMaterial(PlanState *pstate)
 {
 	MaterialState *node = castNode(MaterialState, pstate);
+	Material   *ma = castNode(Material, node->ss.ps.plan);
 	EState	   *estate;
 	ScanDirection dir;
 	bool		forward;
-
-	NTupleStore *ts;
-	NTupleStoreAccessor *tsa;
-
+	Tuplestorestate *tuplestorestate;
 	bool		eof_tuplestore;
 	TupleTableSlot *slot;
-	Material *ma;
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -71,56 +67,44 @@ ExecMaterial(PlanState *pstate)
 	estate = node->ss.ps.state;
 	dir = estate->es_direction;
 	forward = ScanDirectionIsForward(dir);
-
-	ts = node->ts_state->matstore;
-	tsa = (NTupleStoreAccessor *) node->ts_pos;
-
-	ma = (Material *) node->ss.ps.plan;
-	Assert(IsA(ma, Material));
+	tuplestorestate = node->tuplestorestate;
 
 	/*
 	 * If first time through, and we need a tuplestore, initialize it.
 	 */
-	if (ts == NULL && (ma->share_type != SHARE_NOTSHARED || node->eflags != 0))
+	if (tuplestorestate == NULL && (ma->share_type != SHARE_NOTSHARED || node->eflags != 0))
 	{
 		/*
-		 * For cross slice material, we only run ExecMaterial on DriverSlice
+		 * GPDB_12_MERGE_FIXME: SharedInputScans are broken.
+		 * We used to use tuplestorenew.c here, but all that was reverted
+		 * to upstream tuplestore.c as part of the merge. Need to reimplement
+		 * the sharing on top of tuplestore.c and the new SharedFileSet APIs
+		 * or similar.
 		 */
-		if(ma->share_type == SHARE_MATERIAL_XSLICE)
-		{
-			char rwfile_prefix[100];
+		if (ma->share_type != SHARE_NOTSHARED)
+			elog(ERROR, "sharing Material nodes across processes is broken");
 
-			if(ma->driver_slice != currentSliceId)
-			{
-				elog(LOG, "Material Exec on CrossSlice, current slice %d", currentSliceId);
-				return NULL;
-			}
+		tuplestorestate = tuplestore_begin_heap(true, false, work_mem);
+		tuplestore_set_eflags(tuplestorestate, node->eflags);
+		if (node->eflags & EXEC_FLAG_MARK)
+		{
 			/*
 			 * Allocate a second read pointer to serve as the mark. We know it
 			 * must have index 1, so needn't store that.
 			 */
-			shareinput_create_bufname_prefix(rwfile_prefix, sizeof(rwfile_prefix), ma->share_id);
-			elog(DEBUG1, "Material node creates shareinput rwfile %s", rwfile_prefix);
+			int			ptrno PG_USED_FOR_ASSERTS_ONLY;
 
-			ts = ntuplestore_create_readerwriter(rwfile_prefix, PlanStateOperatorMemKB((PlanState *)node) * 1024, true, true);
-			tsa = ntuplestore_create_accessor(ts, true);
+			ptrno = tuplestore_alloc_read_pointer(tuplestorestate,
+												  node->eflags);
+			Assert(ptrno == 1);
 		}
-		else
-		{
-			/* Non-shared Materialize node */
-			ts = ntuplestore_create(PlanStateOperatorMemKB((PlanState *) node) * 1024, "Materialize");
-			tsa = ntuplestore_create_accessor(ts, true /* isWriter */);
-		}
-
-		Assert(ts && tsa);
-		node->ts_state->matstore = ts;
-		node->ts_pos = (void *) tsa;
+		node->tuplestorestate = tuplestorestate;
 
         /* CDB: Offer extra info for EXPLAIN ANALYZE. */
         if (node->ss.ps.instrument && node->ss.ps.instrument->need_cdb)
         {
             /* Let the tuplestore share our Instrumentation object. */
-			ntuplestore_setinstrument(ts, node->ss.ps.instrument);
+			tuplestore_set_instrument(tuplestorestate, node->ss.ps.instrument);
 
             /* Request a callback at end of query. */
             node->ss.ps.cdbexplainfun = ExecMaterialExplainEnd;
@@ -146,38 +130,12 @@ ExecMaterial(PlanState *pstate)
 			if (TupIsNull(outerslot))
 			{
 				node->eof_underlying = true;
-				ntuplestore_acc_seek_bof(tsa);
-
+				tuplestore_rescan(node->tuplestorestate);
 				break;
 			}
 
-			ntuplestore_acc_put_tupleslot(tsa, outerslot);
-		}
-
-		if(forward)
-			ntuplestore_acc_seek_bof(tsa);
-		else
-			ntuplestore_acc_seek_eof(tsa);
-
-		/* for share input, material do not need to return any tuple */
-		if(ma->share_type != SHARE_NOTSHARED)
-		{
-			Assert(ma->share_type == SHARE_MATERIAL || ma->share_type == SHARE_MATERIAL_XSLICE);
-			/*
-			 * if the material is shared across slice, notify consumers that
-			 * it is ready.
-			 */
-			if (ma->share_type == SHARE_MATERIAL_XSLICE)
-			{
-				if (ma->driver_slice == currentSliceId)
-				{
-					ntuplestore_flush(ts);
-
-					node->share_lk_ctxt = shareinput_writer_notifyready(ma->share_id, ma->nsharer_xslice,
-							estate->es_plannedstmt->planGen);
-				}
-			}
-			return NULL;
+			if (tuplestorestate)
+				tuplestore_puttupleslot(tuplestorestate, outerslot);
 		}
 	}
 
@@ -185,19 +143,38 @@ ExecMaterial(PlanState *pstate)
 		return NULL;
 
 	/*
+	 * If we are not at the end of the tuplestore, or are going backwards, try
+	 * to fetch a tuple from tuplestore.
+	 */
+	eof_tuplestore = (tuplestorestate == NULL) ||
+		tuplestore_ateof(tuplestorestate);
+
+	if (!forward && eof_tuplestore)
+	{
+		if (!node->eof_underlying)
+		{
+			/*
+			 * When reversing direction at tuplestore EOF, the first
+			 * gettupleslot call will fetch the last-added tuple; but we want
+			 * to return the one before that, if possible. So do an extra
+			 * fetch.
+			 */
+			if (!tuplestore_advance(tuplestorestate, forward))
+				return NULL;	/* the tuplestore must be empty */
+		}
+		eof_tuplestore = false;
+	}
+
+	/*
 	 * If we can fetch another tuple from the tuplestore, return it.
 	 */
 	slot = node->ss.ps.ps_ResultTupleSlot;
-
-	if(forward)
-		eof_tuplestore = (tsa == NULL) || !ntuplestore_acc_advance(tsa, 1);
-	else
-		eof_tuplestore = (tsa == NULL) || !ntuplestore_acc_advance(tsa, -1);
-
-	if(tsa != NULL && ntuplestore_acc_tell(tsa, NULL))
+	if (!eof_tuplestore)
 	{
-		ntuplestore_acc_current_tupleslot(tsa, slot);
-		return slot;
+		if (tuplestore_gettupleslot(tuplestorestate, forward, false, slot))
+			return slot;
+		if (forward)
+			eof_tuplestore = true;
 	}
 
 	/*
@@ -207,7 +184,6 @@ ExecMaterial(PlanState *pstate)
 	 * subplan calls.  It's not optional, unfortunately, because some plan
 	 * node types are not robust about being called again when they've already
 	 * returned NULL.
-	 * If reusing cached workfiles, there is no need to execute subplan at all.
 	 */
 	if (eof_tuplestore && !node->eof_underlying)
 	{
@@ -231,13 +207,17 @@ ExecMaterial(PlanState *pstate)
 			return NULL;
 		}
 
-		if (tsa)
-			ntuplestore_acc_put_tupleslot(tsa, outerslot);
+		/*
+		 * Append a copy of the returned tuple to tuplestore.  NOTE: because
+		 * the tuplestore is certainly in EOF state, its read position will
+		 * move forward over the added tuple.  This is what we want.
+		 */
+		if (tuplestorestate)
+			tuplestore_puttupleslot(tuplestorestate, outerslot);
 
 		ExecCopySlot(slot, outerslot);
 		return slot;
 	}
-
 
 	if (!node->delayEagerFree)
 	{
@@ -247,7 +227,7 @@ ExecMaterial(PlanState *pstate)
 	/*
 	 * Nothing left ...
 	 */
-	return NULL;
+	return ExecClearTuple(slot);
 }
 
 /* ----------------------------------------------------------------
@@ -267,22 +247,6 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	matstate->ss.ps.plan = (Plan *) node;
 	matstate->ss.ps.state = estate;
 	matstate->ss.ps.ExecProcNode = ExecMaterial;
-
-	if (node->cdb_strict)
-		eflags |= EXEC_FLAG_REWIND;
-
-	/*
-	 * If the Material node was inserted to protect the child node from rescanning, don't
-	 * eager free.
-	 *
-	 * XXX: The planner doesn't always set the flag for Material nodes that are put
-	 * directly on top of Motion nodes, so check for that, too. (Or is this for ORCA?)
-	 */
-	if (node->cdb_shield_child_from_rescans ||
-		IsA(outerPlan((Plan *) node), Motion))
-	{
-		eflags |= EXEC_FLAG_REWIND;
-	}
 
 	/*
 	 * We must have a tuplestore buffering the subplan output to do backward
@@ -304,11 +268,24 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	if (eflags & EXEC_FLAG_BACKWARD)
 		matstate->eflags |= EXEC_FLAG_REWIND;
 
+	if (node->cdb_strict)
+		matstate->eflags |= EXEC_FLAG_REWIND;
+
+	/*
+	 * If the Material node was inserted to protect the child node from rescanning, don't
+	 * eager free.
+	 *
+	 * XXX: The planner doesn't always set the flag for Material nodes that are put
+	 * directly on top of Motion nodes, so check for that, too. (Or is this for ORCA?)
+	 */
+	if (node->cdb_shield_child_from_rescans ||
+		IsA(outerPlan((Plan *) node), Motion))
+	{
+		matstate->eflags |= EXEC_FLAG_REWIND;
+	}
+
 	matstate->eof_underlying = false;
-	matstate->ts_state = palloc0(sizeof(GenericTupStore));
-	matstate->ts_pos = NULL;
-	matstate->ts_markpos = NULL;
-	matstate->share_lk_ctxt = NULL;
+	matstate->tuplestorestate = NULL;
 	matstate->ts_destroyed = false;
 
 	/*
@@ -363,12 +340,12 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	 * material nodes only return tuples from their materialized relation.
 	 */
 	ExecInitResultTupleSlotTL(&matstate->ss.ps, &TTSOpsMinimalTuple);
+	matstate->ss.ps.ps_ProjInfo = NULL;
 
     /*
      * initialize tuple type.
      */
 	ExecCreateScanSlotFromOuterPlan(estate, &matstate->ss, &TTSOpsMinimalTuple);
-	matstate->ss.ps.ps_ProjInfo = NULL;
 
 	/*
 	 * If share input, need to register with range table entry
@@ -391,7 +368,7 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
  * needs to be done earlier in order to report statistics to EXPLAIN ANALYZE.
  * Note that ExecEndMaterial() will be called again during ExecutorEnd().
  */
-void
+static void
 ExecMaterialExplainEnd(PlanState *planstate, struct StringInfoData *buf)
 {
 	ExecEagerFreeMaterial((MaterialState*)planstate);
@@ -405,25 +382,22 @@ ExecMaterialExplainEnd(PlanState *planstate, struct StringInfoData *buf)
 void
 ExecEndMaterial(MaterialState *node)
 {
-	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	ExecClearTuple(node->ss.ss_ScanTupleSlot);
-
 	ExecEagerFreeMaterial(node);
 
 	/*
-	 * Release tuplestore resources for cases where EagerFree doesn't do it
+	 * clean out the tuple table
 	 */
-	if (node->ts_state->matstore != NULL)
-	{
-		Material   *ma = (Material *) node->ss.ps.plan;
-		if (ma->share_type == SHARE_MATERIAL_XSLICE && node->share_lk_ctxt)
-		{
-			shareinput_writer_waitdone(node->share_lk_ctxt, ma->share_id, ma->nsharer_xslice);
-		}
-		Assert(node->ts_pos);
+	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
-		DestroyTupleStore(node);
+	/*
+	 * Release tuplestore resources
+	 */
+	if (node->tuplestorestate != NULL)
+	{
+		tuplestore_end(node->tuplestorestate);
+		node->ts_destroyed = true;
 	}
+	node->tuplestorestate = NULL;
 
 	/*
 	 * shut down the subplan
@@ -442,30 +416,27 @@ ExecMaterialMarkPos(MaterialState *node)
 {
 	Assert(node->eflags & EXEC_FLAG_MARK);
 
-#ifdef DEBUG
 	{
 		/* share input should never call this */
 		Material *ma = (Material *) node->ss.ps.plan;
 		Assert(ma->share_type == SHARE_NOTSHARED);
 	}
-#endif
 
 	/*
 	 * if we haven't materialized yet, just return.
 	 */
-	if (NULL == node->ts_state->matstore)
-	{
+	if (!node->tuplestorestate)
 		return;
-	}
 
-	Assert(node->ts_pos);
+	/*
+	 * copy the active read pointer to the mark.
+	 */
+	tuplestore_copy_read_pointer(node->tuplestorestate, 0, 1);
 
-	if(node->ts_markpos == NULL)
-	{
-		node->ts_markpos = palloc(sizeof(NTupleStorePos));
-	}
-
-	ntuplestore_acc_tell((NTupleStoreAccessor *) node->ts_pos, (NTupleStorePos *) node->ts_markpos);
+	/*
+	 * since we may have advanced the mark, try to truncate the tuplestore.
+	 */
+	tuplestore_trim(node->tuplestorestate);
 }
 
 /* ----------------------------------------------------------------
@@ -479,49 +450,22 @@ ExecMaterialRestrPos(MaterialState *node)
 {
 	Assert(node->eflags & EXEC_FLAG_MARK);
 
-#ifdef DEBUG
 	{
 		/* share input should never call this */
 		Material *ma = (Material *) node->ss.ps.plan;
 		Assert(ma->share_type == SHARE_NOTSHARED);
 	}
-#endif
 
 	/*
 	 * if we haven't materialized yet, just return.
 	 */
-	if (NULL == node->ts_state->matstore)
-	{
+	if (!node->tuplestorestate)
 		return;
-	}
 
-	Assert(node->ts_pos && node->ts_markpos);
-	ntuplestore_acc_seek((NTupleStoreAccessor *) node->ts_pos, (NTupleStorePos *) node->ts_markpos);
-}
-
-/*
- * DestroyTupleStore
- * 		Helper function for destroying tuple store
- */
-void
-DestroyTupleStore(MaterialState *node)
-{
-	Assert(NULL != node);
-	Assert(NULL != node->ts_state);
-	Assert(NULL != node->ts_state->matstore);
-
-	ntuplestore_destroy_accessor((NTupleStoreAccessor *) node->ts_pos);
-	ntuplestore_destroy(node->ts_state->matstore);
-	if(node->ts_markpos)
-	{
-		pfree(node->ts_markpos);
-	}
-
-	node->ts_state->matstore = NULL;
-	node->ts_pos = NULL;
-	node->ts_markpos = NULL;
-	node->eof_underlying = false;
-	node->ts_destroyed = true;
+	/*
+	 * copy the mark to the active read pointer.
+	 */
+	tuplestore_copy_read_pointer(node->tuplestorestate, 1, 0);
 }
 
 /*
@@ -561,7 +505,7 @@ ExecReScanMaterial(MaterialState *node)
 		 * If tuple store is empty, then either we have not materialized yet
 		 * or tuple store was destroyed after a previous execution of materialize.
 		 */
-		if (NULL == node->ts_state->matstore)
+		if (!node->tuplestorestate)
 		{
 			/*
 			 *  If tuple store was destroyed before, then materialize is part of subquery
@@ -587,19 +531,27 @@ ExecReScanMaterial(MaterialState *node)
 		if (outerPlan->chgParam != NULL ||
 			(node->eflags & EXEC_FLAG_REWIND) == 0)
 		{
-			DestroyTupleStore(node);
+			tuplestore_end(node->tuplestorestate);
+			node->ts_destroyed = true;
+			node->tuplestorestate = NULL;
 			if (outerPlan->chgParam == NULL)
 				ExecReScan(outerPlan);
+			node->eof_underlying = false;
 		}
 		else
-		{
-			ntuplestore_acc_seek_bof((NTupleStoreAccessor *) node->ts_pos);
-		}
+			tuplestore_rescan(node->tuplestorestate);
 	}
 	else
 	{
 		/* In this case we are just passing on the subquery's output */
-		ExecChildRescan(node);
+
+		/*
+		 * if chgParam of subnode is not null then plan will be re-scanned by
+		 * first ExecProcNode.
+		 */
+		if (outerPlan->chgParam == NULL)
+			ExecReScan(outerPlan);
+		node->eof_underlying = false;
 	}
 }
 
@@ -629,8 +581,10 @@ ExecEagerFreeMaterial(MaterialState *node)
 	/*
 	 * Release tuplestore resources
 	 */
-	if (NULL != node->ts_state->matstore)
+	if (node->tuplestorestate != NULL)
 	{
+		/* GPDB_12_MERGE_FIXME: cross-slice is broken */
+#if 0
 		if (ma->share_type == SHARE_MATERIAL_XSLICE && node->share_lk_ctxt)
 		{
 			/*
@@ -641,10 +595,11 @@ ExecEagerFreeMaterial(MaterialState *node)
 			 */
 			return;
 		}
-		Assert(node->ts_pos);
-
-		DestroyTupleStore(node);
+#endif
+		tuplestore_end(node->tuplestorestate);
+		node->ts_destroyed = true;
 	}
+	node->tuplestorestate = NULL;
 }
 
 void

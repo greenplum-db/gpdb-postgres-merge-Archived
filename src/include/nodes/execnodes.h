@@ -2536,15 +2536,11 @@ typedef struct MaterialState
 	ScanState	ss;				/* its first field is NodeTag */
 	int			eflags;			/* capability flags to pass to tuplestore */
 	bool		eof_underlying; /* reached end of underlying plan? */
+	Tuplestorestate *tuplestorestate;
+
 	bool		ts_destroyed;	/* called destroy tuple store? */
-
-	bool		delayEagerFree;		/* is is safe to free memory used by this node,
-									 * when this node has outputted its last row? */
-
-	GenericTupStore *ts_state;	/* private state of tuplestore.c */
-	void	   *ts_pos;
-	void	   *ts_markpos;
-	void	   *share_lk_ctxt;
+	bool		delayEagerFree;	/* is is safe to free memory used by this node,
+								 * when this node has outputted its last row? */
 } MaterialState;
 
 /* ----------------
