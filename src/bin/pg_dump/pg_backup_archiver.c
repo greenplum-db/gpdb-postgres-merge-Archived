@@ -624,14 +624,8 @@ RestoreArchive(Archive *AHX)
 								else
 								{
 									/* complain and emit unmodified command */
-<<<<<<< HEAD
-									write_msg(modulename,
-											  "WARNING: could not find where to insert IF EXISTS in statement \"%s\"\n",
-											  dropStmtOrig);
-=======
 									pg_log_warning("could not find where to insert IF EXISTS in statement \"%s\"",
 												   dropStmtOrig);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 									appendPQExpBufferStr(ftStmt, dropStmt);
 								}
 							}
@@ -3763,13 +3757,10 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 			strcmp(te->desc, "TEXT SEARCH CONFIGURATION") == 0 ||
 			strcmp(te->desc, "FOREIGN DATA WRAPPER") == 0 ||
 			strcmp(te->desc, "SERVER") == 0 ||
-<<<<<<< HEAD
 			strcmp(te->desc, "PROTOCOL") == 0)
-=======
 			strcmp(te->desc, "STATISTICS") == 0 ||
 			strcmp(te->desc, "PUBLICATION") == 0 ||
 			strcmp(te->desc, "SUBSCRIPTION") == 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			PQExpBuffer temp = createPQExpBuffer();
 

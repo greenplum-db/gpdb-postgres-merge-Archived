@@ -2417,22 +2417,9 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 	int			rows_per_statement = dopt->dump_inserts;
 	int			rows_this_statement = 0;
 
-<<<<<<< HEAD
-	if (fout->remoteVersion >= 70100)
-	{
-		appendPQExpBuffer(q, "DECLARE _pg_dump_cursor CURSOR FOR "
-						  "SELECT * FROM ONLY %s",
-						  fmtQualifiedDumpable(tbinfo));
-	}
-	else
-	{
-		error_unsupported_server_version(fout);
-	}
-=======
 	appendPQExpBuffer(q, "DECLARE _pg_dump_cursor CURSOR FOR "
 					  "SELECT * FROM ONLY %s",
 					  fmtQualifiedDumpable(tbinfo));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	if (tdinfo->filtercond)
 		appendPQExpBuffer(q, " %s", tdinfo->filtercond);
 
@@ -3321,9 +3308,7 @@ dumpDatabase(Archive *fout)
 	}
 	else
 	{
-<<<<<<< HEAD
 		error_unsupported_server_version(fout);
-=======
 		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, datname, "
 						  "(%s datdba) AS dba, "
 						  "pg_encoding_to_char(encoding) AS encoding, "
@@ -3334,7 +3319,6 @@ dumpDatabase(Archive *fout)
 						  "FROM pg_database "
 						  "WHERE datname = current_database()",
 						  username_subquery);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	res = ExecuteSqlQueryForSingleRow(fout, dbQry->data);
@@ -3897,48 +3881,6 @@ dumpSearchPath(Archive *AH)
 	int			nschemanames = 0;
 	int			i;
 
-<<<<<<< HEAD
-	if (AH->remoteVersion >= 70300)
-	{
-		/*
-		 * We use the result of current_schemas(), not the search_path GUC,
-		 * because that might contain wildcards such as "$user", which won't
-		 * necessarily have the same value during restore.  Also, this way
-		 * avoids listing schemas that may appear in search_path but not
-		 * actually exist, which seems like a prudent exclusion.
-		 */
-		res = ExecuteSqlQueryForSingleRow(AH,
-								 "SELECT pg_catalog.current_schemas(false)");
-
-		if (!parsePGArray(PQgetvalue(res, 0, 0), &schemanames, &nschemanames))
-			exit_horribly(NULL, "could not parse result of current_schemas()\n");
-
-		/*
-		 * We use set_config(), not a simple "SET search_path" command,
-		 * because the latter has less-clean behavior if the search path is
-		 * empty.  While that's likely to get fixed at some point, it seems
-		 * like a good idea to be as backwards-compatible as possible in what
-		 * we put into archives.
-		 */
-		for (i = 0; i < nschemanames; i++)
-		{
-			if (i > 0)
-				appendPQExpBufferStr(path, ", ");
-			appendPQExpBufferStr(path, fmtId(schemanames[i]));
-		}
-
-		PQclear(res);
-	}
-	else
-	{
-		/*
-		 * For pre-schema servers, we must force the output search path to be
-		 * "public", because the source server's ruleutils functions will not
-		 * schema-qualify anything.  Thus, for example, references to user
-		 * tables in view definitions won't work otherwise.
-		 */
-		appendPQExpBufferStr(path, "public");
-=======
 	/*
 	 * We use the result of current_schemas(), not the search_path GUC,
 	 * because that might contain wildcards such as "$user", which won't
@@ -3963,24 +3905,12 @@ dumpSearchPath(Archive *AH)
 		if (i > 0)
 			appendPQExpBufferStr(path, ", ");
 		appendPQExpBufferStr(path, fmtId(schemanames[i]));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	}
 
 	appendPQExpBufferStr(qry, "SELECT pg_catalog.set_config('search_path', ");
 	appendStringLiteralAH(qry, path->data, AH);
 	appendPQExpBufferStr(qry, ", false);\n");
 
-<<<<<<< HEAD
-	if (g_verbose)
-		write_msg(NULL, "saving search_path = %s\n", path->data);
-
-	ArchiveEntry(AH, nilCatalogId, createDumpId(),
-				 "SEARCHPATH", NULL, NULL, "",
-				 false, "SEARCHPATH", SECTION_PRE_DATA,
-				 qry->data, "", NULL,
-				 NULL, 0,
-				 NULL, NULL);
-=======
 	pg_log_info("saving search_path = %s", path->data);
 
 	ArchiveEntry(AH, nilCatalogId, createDumpId(),
@@ -3988,17 +3918,13 @@ dumpSearchPath(Archive *AH)
 							  .description = "SEARCHPATH",
 							  .section = SECTION_PRE_DATA,
 							  .createStmt = qry->data));
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Also save it in AH->searchpath, in case we're doing plain text dump */
 	AH->searchpath = pg_strdup(qry->data);
 
 	if (schemanames)
 		free(schemanames);
-<<<<<<< HEAD
-=======
 	PQclear(res);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	destroyPQExpBuffer(qry);
 	destroyPQExpBuffer(path);
 }
@@ -4025,13 +3951,7 @@ getBlobs(Archive *fout)
 	int			i_initlomacl;
 	int			i_initrlomacl;
 
-<<<<<<< HEAD
-	/* Verbose message */
-	if (g_verbose)
-		write_msg(NULL, "reading large objects\n");
-=======
 	pg_log_info("reading large objects");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/* Fetch BLOB OIDs, and owner/ACL data if >= 9.0 */
 	if (fout->remoteVersion >= 90600)
