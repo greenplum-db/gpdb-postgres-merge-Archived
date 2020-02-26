@@ -261,18 +261,6 @@ ERROR:  relation "as_select1" already exists
 CREATE TABLE IF NOT EXISTS as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 NOTICE:  relation "as_select1" already exists, skipping
 DROP TABLE as_select1;
-<<<<<<< HEAD
--- check that the oid column is added before the primary key is checked
--- Greenplum could not support this since OID can't be unique across segments.
---CREATE TABLE oid_pk (f1 INT, PRIMARY KEY(oid)) WITH OIDS;
---DROP TABLE oid_pk;
--- Test github issue #7340. truncating a toast unlogged table fails.
-CREATE UNLOGGED TABLE unlogged_toast (a text);
-NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
-HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-TRUNCATE unlogged_toast;
-DROP TABLE unlogged_toast;
-=======
 PREPARE select1 AS SELECT 1 as a;
 CREATE TABLE as_select1 AS EXECUTE select1;
 CREATE TABLE as_select1 AS EXECUTE select1;
@@ -1145,4 +1133,9 @@ insert into defcheck_def values (0, 0);
 create table defcheck_0 partition of defcheck for values in (0);
 ERROR:  updated partition constraint for default partition "defcheck_def" would be violated by some row
 drop table defcheck;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+-- Test github issue #7340. truncating a toast unlogged table fails.
+CREATE UNLOGGED TABLE unlogged_toast (a text);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'a' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+TRUNCATE unlogged_toast;
+DROP TABLE unlogged_toast;
