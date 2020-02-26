@@ -1833,349 +1833,354 @@ GRANT SELECT ON gp_toolkit.gp_resgroup_status_per_segment TO public;
 --------------------------------------------------------------------------------
 -- AO/CO diagnostics functions
 --------------------------------------------------------------------------------
+-- GPDB_12_MERGE_FIXME disable temporarily to pass the initdb
 
-CREATE FUNCTION gp_toolkit.__gp_aoseg_history(regclass)
-RETURNS TABLE(gp_tid tid,
-    gp_xmin integer,
-    gp_xmin_status text,
-    gp_xmin_commit_distrib_id text,
-    gp_xmax integer,
-    gp_xmax_status text,
-    gp_xmax_commit_distrib_id text,
-    gp_command_id integer,
-    gp_infomask text,
-    gp_update_tid tid,
-    gp_visibility text,
-    segno integer,
-    tupcount bigint,
-    eof bigint,
-    eof_uncompressed bigint,
-    modcount bigint,
-    formatversion smallint,
-    state smallint)
-AS '$libdir/gp_ao_co_diagnostics', 'gp_aoseg_history_wrapper'
-LANGUAGE C STRICT;
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aoseg_history(regclass) TO public;
-
-CREATE FUNCTION gp_toolkit.__gp_aocsseg(regclass)
-RETURNS TABLE(gp_tid tid,
-    segno integer,
-    column_num smallint,
-    physical_segno integer,
-    tupcount bigint,
-    eof bigint,
-    eof_uncompressed bigint,
-    modcount bigint,
-    formatversion smallint,
-    state smallint)
-AS '$libdir/gp_ao_co_diagnostics', 'gp_aocsseg_wrapper'
-LANGUAGE C STRICT;
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aocsseg(regclass) TO public;
-
-CREATE FUNCTION gp_toolkit.__gp_aocsseg_history(regclass)
-RETURNS TABLE(gp_tid tid,
-    gp_xmin integer,
-    gp_xmin_status text,
-    gp_xmin_distrib_id text,
-    gp_xmax integer,
-    gp_xmax_status text,
-    gp_xmax_distrib_id text,
-    gp_command_id integer,
-    gp_infomask text,
-    gp_update_tid tid,
-    gp_visibility text,
-    segno integer,
-    column_num smallint,
-    physical_segno integer,
-    tupcount bigint,
-    eof bigint,
-    eof_uncompressed bigint,
-    modcount bigint,
-    formatversion smallint,
-    state smallint)
-AS '$libdir/gp_ao_co_diagnostics' , 'gp_aocsseg_history_wrapper'
-LANGUAGE C STRICT;
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aocsseg_history(regclass) TO public;
-
-CREATE FUNCTION gp_toolkit.__gp_aovisimap(regclass)
-RETURNS TABLE (tid tid,
-    segno int,
-    row_num bigint)
-AS '$libdir/gp_ao_co_diagnostics', 'gp_aovisimap_wrapper'
-LANGUAGE C IMMUTABLE;
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap(regclass) TO public;
-
-CREATE FUNCTION gp_toolkit.__gp_aovisimap_hidden_info(regclass)
-RETURNS TABLE (segno integer,
-    hidden_tupcount bigint,
-    total_tupcount bigint)
-AS '$libdir/gp_ao_co_diagnostics', 'gp_aovisimap_hidden_info_wrapper'
-LANGUAGE C STRICT;
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap_hidden_info(regclass) TO public;
-
-CREATE FUNCTION gp_toolkit.__gp_aovisimap_entry(regclass)
-RETURNS TABLE(segno integer,
-    first_row_num bigint,
-    hidden_tupcount int,
-    bitmap text)
-AS '$libdir/gp_ao_co_diagnostics','gp_aovisimap_entry_wrapper'
-LANGUAGE C STRICT;
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap_entry(regclass) TO public;
-
-CREATE FUNCTION gp_toolkit.__gp_aoseg(regclass)
-RETURNS TABLE (segno integer, eof bigint,
-    tupcount bigint,
-    varblockcount bigint,
-    eof_uncompressed bigint,
-    modcount bigint,
-    formatversion smallint,
-    state smallint)
-AS '$libdir/gp_ao_co_diagnostics', 'gp_aoseg_wrapper'
-LANGUAGE C STRICT;
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aoseg(regclass) TO public;
-
-CREATE TYPE gp_toolkit.__gp_aovisimap_hidden_t AS (seg int, hidden bigint, total bigint);
-CREATE FUNCTION gp_toolkit.__gp_aovisimap_hidden_typed(oid)
-    RETURNS SETOF gp_toolkit.__gp_aovisimap_hidden_t AS $$
-    SELECT * FROM gp_toolkit.__gp_aovisimap_hidden_info($1);
-$$ LANGUAGE SQL;
-
-CREATE FUNCTION gp_toolkit.__gp_aovisimap_compaction_info(ao_oid oid,
-    OUT content int, OUT datafile int, OUT compaction_possible boolean,
-    OUT hidden_tupcount bigint, OUT total_tupcount bigint, OUT percent_hidden numeric)
-    RETURNS SETOF RECORD AS $$
-DECLARE
-    hinfo_row RECORD;
-    threshold float;
-BEGIN
-    EXECUTE 'show gp_appendonly_compaction_threshold' INTO threshold;
-    FOR hinfo_row IN SELECT gp_segment_id,
-    gp_toolkit.__gp_aovisimap_hidden_typed(ao_oid)::gp_toolkit.__gp_aovisimap_hidden_t
-    FROM gp_dist_random('gp_id') LOOP
-        content := hinfo_row.gp_segment_id;
-        datafile := (hinfo_row.__gp_aovisimap_hidden_typed).seg;
-        hidden_tupcount := (hinfo_row.__gp_aovisimap_hidden_typed).hidden;
-        total_tupcount := (hinfo_row.__gp_aovisimap_hidden_typed).total;
-        compaction_possible := false;
-        IF total_tupcount > 0 THEN
-            percent_hidden := (100 * hidden_tupcount / total_tupcount::numeric)::numeric(5,2);
-        ELSE
-            percent_hidden := 0::numeric(5,2);
-        END IF;
-        IF percent_hidden > threshold THEN
-            compaction_possible := true;
-        END IF;
-        RETURN NEXT;
-    END LOOP;
-    RAISE NOTICE 'gp_appendonly_compaction_threshold = %', threshold;
-    RETURN;
-END;
-$$
-LANGUAGE plpgsql;
-
--- gp_toolkit.__gp_remove_ao_entry_from_cache
---   Helper function to evict an entry from AppendOnlyHash cache that is
---   suspected of not being correct (e.g. segment files having wrong states).
---   This should only be used for troubleshooting purposes.
-CREATE OR REPLACE FUNCTION gp_toolkit.__gp_remove_ao_entry_from_cache(oid)
-RETURNS VOID
-AS '$libdir/gp_ao_co_diagnostics', 'gp_remove_ao_entry_from_cache'
-LANGUAGE C IMMUTABLE STRICT NO SQL;
-
-CREATE OR REPLACE FUNCTION gp_toolkit.__gp_get_ao_entry_from_cache(ao_oid oid,
-       OUT segno smallint, OUT total_tupcount bigint, OUT tuples_added bigint,
-       OUT inserting_transaction xid, OUT latest_committed_inserting_dxid xid,
-       OUT state smallint, OUT format_version smallint, OUT is_full boolean,
-       OUT aborted boolean)
-RETURNS SETOF RECORD
-AS '$libdir/gp_ao_co_diagnostics', 'gp_get_ao_entry_from_cache'
-LANGUAGE C IMMUTABLE STRICT NO SQL;
-
+/*
+ * CREATE FUNCTION gp_toolkit.__gp_aoseg_history(regclass)
+ * RETURNS TABLE(gp_tid tid,
+ *     gp_xmin integer,
+ *     gp_xmin_status text,
+ *     gp_xmin_commit_distrib_id text,
+ *     gp_xmax integer,
+ *     gp_xmax_status text,
+ *     gp_xmax_commit_distrib_id text,
+ *     gp_command_id integer,
+ *     gp_infomask text,
+ *     gp_update_tid tid,
+ *     gp_visibility text,
+ *     segno integer,
+ *     tupcount bigint,
+ *     eof bigint,
+ *     eof_uncompressed bigint,
+ *     modcount bigint,
+ *     formatversion smallint,
+ *     state smallint)
+ * AS '$libdir/gp_ao_co_diagnostics', 'gp_aoseg_history_wrapper'
+ * LANGUAGE C STRICT;
+ * GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aoseg_history(regclass) TO public;
+ * 
+ * CREATE FUNCTION gp_toolkit.__gp_aocsseg(regclass)
+ * RETURNS TABLE(gp_tid tid,
+ *     segno integer,
+ *     column_num smallint,
+ *     physical_segno integer,
+ *     tupcount bigint,
+ *     eof bigint,
+ *     eof_uncompressed bigint,
+ *     modcount bigint,
+ *     formatversion smallint,
+ *     state smallint)
+ * AS '$libdir/gp_ao_co_diagnostics', 'gp_aocsseg_wrapper'
+ * LANGUAGE C STRICT;
+ * GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aocsseg(regclass) TO public;
+ * 
+ * CREATE FUNCTION gp_toolkit.__gp_aocsseg_history(regclass)
+ * RETURNS TABLE(gp_tid tid,
+ *     gp_xmin integer,
+ *     gp_xmin_status text,
+ *     gp_xmin_distrib_id text,
+ *     gp_xmax integer,
+ *     gp_xmax_status text,
+ *     gp_xmax_distrib_id text,
+ *     gp_command_id integer,
+ *     gp_infomask text,
+ *     gp_update_tid tid,
+ *     gp_visibility text,
+ *     segno integer,
+ *     column_num smallint,
+ *     physical_segno integer,
+ *     tupcount bigint,
+ *     eof bigint,
+ *     eof_uncompressed bigint,
+ *     modcount bigint,
+ *     formatversion smallint,
+ *     state smallint)
+ * AS '$libdir/gp_ao_co_diagnostics' , 'gp_aocsseg_history_wrapper'
+ * LANGUAGE C STRICT;
+ * GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aocsseg_history(regclass) TO public;
+ * 
+ * CREATE FUNCTION gp_toolkit.__gp_aovisimap(regclass)
+ * RETURNS TABLE (tid tid,
+ *     segno int,
+ *     row_num bigint)
+ * AS '$libdir/gp_ao_co_diagnostics', 'gp_aovisimap_wrapper'
+ * LANGUAGE C IMMUTABLE;
+ * GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap(regclass) TO public;
+ * 
+ * CREATE FUNCTION gp_toolkit.__gp_aovisimap_hidden_info(regclass)
+ * RETURNS TABLE (segno integer,
+ *     hidden_tupcount bigint,
+ *     total_tupcount bigint)
+ * AS '$libdir/gp_ao_co_diagnostics', 'gp_aovisimap_hidden_info_wrapper'
+ * LANGUAGE C STRICT;
+ * GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap_hidden_info(regclass) TO public;
+ * 
+ * CREATE FUNCTION gp_toolkit.__gp_aovisimap_entry(regclass)
+ * RETURNS TABLE(segno integer,
+ *     first_row_num bigint,
+ *     hidden_tupcount int,
+ *     bitmap text)
+ * AS '$libdir/gp_ao_co_diagnostics','gp_aovisimap_entry_wrapper'
+ * LANGUAGE C STRICT;
+ * GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap_entry(regclass) TO public;
+ * 
+ * CREATE FUNCTION gp_toolkit.__gp_aoseg(regclass)
+ * RETURNS TABLE (segno integer, eof bigint,
+ *     tupcount bigint,
+ *     varblockcount bigint,
+ *     eof_uncompressed bigint,
+ *     modcount bigint,
+ *     formatversion smallint,
+ *     state smallint)
+ * AS '$libdir/gp_ao_co_diagnostics', 'gp_aoseg_wrapper'
+ * LANGUAGE C STRICT;
+ * GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aoseg(regclass) TO public;
+ * 
+ * CREATE TYPE gp_toolkit.__gp_aovisimap_hidden_t AS (seg int, hidden bigint, total bigint);
+ * CREATE FUNCTION gp_toolkit.__gp_aovisimap_hidden_typed(oid)
+ *     RETURNS SETOF gp_toolkit.__gp_aovisimap_hidden_t AS $$
+ *     SELECT * FROM gp_toolkit.__gp_aovisimap_hidden_info($1);
+ * $$ LANGUAGE SQL;
+ * 
+ * CREATE FUNCTION gp_toolkit.__gp_aovisimap_compaction_info(ao_oid oid,
+ *     OUT content int, OUT datafile int, OUT compaction_possible boolean,
+ *     OUT hidden_tupcount bigint, OUT total_tupcount bigint, OUT percent_hidden numeric)
+ *     RETURNS SETOF RECORD AS $$
+ * DECLARE
+ *     hinfo_row RECORD;
+ *     threshold float;
+ * BEGIN
+ *     EXECUTE 'show gp_appendonly_compaction_threshold' INTO threshold;
+ *     FOR hinfo_row IN SELECT gp_segment_id,
+ *     gp_toolkit.__gp_aovisimap_hidden_typed(ao_oid)::gp_toolkit.__gp_aovisimap_hidden_t
+ *     FROM gp_dist_random('gp_id') LOOP
+ *         content := hinfo_row.gp_segment_id;
+ *         datafile := (hinfo_row.__gp_aovisimap_hidden_typed).seg;
+ *         hidden_tupcount := (hinfo_row.__gp_aovisimap_hidden_typed).hidden;
+ *         total_tupcount := (hinfo_row.__gp_aovisimap_hidden_typed).total;
+ *         compaction_possible := false;
+ *         IF total_tupcount > 0 THEN
+ *             percent_hidden := (100 * hidden_tupcount / total_tupcount::numeric)::numeric(5,2);
+ *         ELSE
+ *             percent_hidden := 0::numeric(5,2);
+ *         END IF;
+ *         IF percent_hidden > threshold THEN
+ *             compaction_possible := true;
+ *         END IF;
+ *         RETURN NEXT;
+ *     END LOOP;
+ *     RAISE NOTICE 'gp_appendonly_compaction_threshold = %', threshold;
+ *     RETURN;
+ * END;
+ * $$
+ * LANGUAGE plpgsql;
+ * 
+ * -- gp_toolkit.__gp_remove_ao_entry_from_cache
+ * --   Helper function to evict an entry from AppendOnlyHash cache that is
+ * --   suspected of not being correct (e.g. segment files having wrong states).
+ * --   This should only be used for troubleshooting purposes.
+ * CREATE OR REPLACE FUNCTION gp_toolkit.__gp_remove_ao_entry_from_cache(oid)
+ * RETURNS VOID
+ * AS '$libdir/gp_ao_co_diagnostics', 'gp_remove_ao_entry_from_cache'
+ * LANGUAGE C IMMUTABLE STRICT NO SQL;
+ * 
+ * CREATE OR REPLACE FUNCTION gp_toolkit.__gp_get_ao_entry_from_cache(ao_oid oid,
+ *        OUT segno smallint, OUT total_tupcount bigint, OUT tuples_added bigint,
+ *        OUT inserting_transaction xid, OUT latest_committed_inserting_dxid xid,
+ *        OUT state smallint, OUT format_version smallint, OUT is_full boolean,
+ *        OUT aborted boolean)
+ * RETURNS SETOF RECORD
+ * AS '$libdir/gp_ao_co_diagnostics', 'gp_get_ao_entry_from_cache'
+ * LANGUAGE C IMMUTABLE STRICT NO SQL;
+ * 
+ */
 -- Workfile views
 --------------------------------------------------------------------------------
 
---------------------------------------------------------------------------------
--- @function:
---        gp_toolkit.__gp_workfile_entries_f
---
--- @in:
---
--- @out:
---        int - segment id
---        text - path to workfile set,
---        bigint - size in bytes,
---        text - type of the spilling operation,
---        int - containing slice,
---        int - sessionid,
---        int - command_cnt,
---        int - number of files
---
--- @doc:
---        UDF to retrieve workfile sets currently present on disk on one segment
---
---------------------------------------------------------------------------------
-
-CREATE FUNCTION gp_toolkit.__gp_workfile_entries_f_on_master()
-RETURNS SETOF record
-AS '$libdir/gp_workfile_mgr', 'gp_workfile_mgr_cache_entries'
-LANGUAGE C VOLATILE EXECUTE ON MASTER;
-
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_workfile_entries_f_on_master() TO public;
-
-CREATE FUNCTION gp_toolkit.__gp_workfile_entries_f_on_segments()
-RETURNS SETOF record
-AS '$libdir/gp_workfile_mgr', 'gp_workfile_mgr_cache_entries'
-LANGUAGE C VOLATILE EXECUTE ON ALL SEGMENTS;
-
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_workfile_entries_f_on_segments() TO public;
-
-
---------------------------------------------------------------------------------
--- @view:
---        gp_toolkit.gp_workfile_entries
---
--- @doc:
---        List of all the workfile sets currently present on disk
---
---------------------------------------------------------------------------------
-
-CREATE VIEW gp_toolkit.gp_workfile_entries AS
-WITH all_entries AS (
-   SELECT C.*
-          FROM gp_toolkit.__gp_workfile_entries_f_on_master() AS C (
-            segid int,
-            prefix text,
-            size bigint,
-            optype text,
-            slice int,
-            sessionid int,
-            commandid int,
-            numfiles int
-          )
-    UNION ALL
-    SELECT C.*
-          FROM gp_toolkit.__gp_workfile_entries_f_on_segments() AS C (
-            segid int,
-            prefix text,
-            size bigint,
-            optype text,
-            slice int,
-            sessionid int,
-            commandid int,
-            numfiles int
-          ))
-SELECT S.datname,
-       S.pid,
-       C.sessionid as sess_id,
-       C.commandid as command_cnt,
-       S.usename,
-       S.query,
-       C.segid,
-       C.slice,
-       C.optype,
-       C.size,
-       C.numfiles,
-       C.prefix
-FROM all_entries C LEFT OUTER JOIN
-pg_stat_activity as S
-ON C.sessionid = S.sess_id;
-
-GRANT SELECT ON gp_toolkit.gp_workfile_entries TO public;
-
---------------------------------------------------------------------------------
--- @view:
---        gp_toolkit.gp_workfile_usage_per_segment
---
--- @doc:
---        Amount of disk space used for workfiles at each segment
---
---------------------------------------------------------------------------------
-
-CREATE VIEW gp_toolkit.gp_workfile_usage_per_segment AS
-SELECT gpseg.content AS segid, COALESCE(SUM(wfe.size),0) AS size,
-    SUM(wfe.numfiles) AS numfiles
-FROM (
-    SELECT content
-    FROM gp_segment_configuration
-    WHERE role = 'p') gpseg
-LEFT JOIN gp_toolkit.gp_workfile_entries wfe
-ON (gpseg.content = wfe.segid)
-GROUP BY gpseg.content;
-
-GRANT SELECT ON gp_toolkit.gp_workfile_usage_per_segment TO public;
-
---------------------------------------------------------------------------------
--- @view:
---        gp_toolkit.gp_workfile_usage_per_query
---
--- @doc:
---        Amount of disk space used for workfiles by each query
---
---------------------------------------------------------------------------------
-
-CREATE VIEW gp_toolkit.gp_workfile_usage_per_query AS
-SELECT datname, pid, sess_id, command_cnt, usename, query, segid,
-    SUM(size) AS size, SUM(numfiles) AS numfiles
-FROM gp_toolkit.gp_workfile_entries
-GROUP BY datname, pid, sess_id, command_cnt, usename, query, segid;
-
-GRANT SELECT ON gp_toolkit.gp_workfile_usage_per_query TO public;
-
---------------------------------------------------------------------------------
--- @function:
---        gp_toolkit.__gp_workfile_mgr_used_diskspace_f
---
--- @in:
---
--- @out:
---        int - segment id
---        bigint - size in bytes,
---
--- @doc:
---        UDF to retrieve workfile used diskspace counter in bytes per segment
---
---------------------------------------------------------------------------------
-
-CREATE FUNCTION gp_toolkit.__gp_workfile_mgr_used_diskspace_f_on_master()
-RETURNS SETOF record
-AS '$libdir/gp_workfile_mgr', 'gp_workfile_mgr_used_diskspace'
-LANGUAGE C VOLATILE EXECUTE ON MASTER;
-
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_workfile_mgr_used_diskspace_f_on_master() TO public;
-
-CREATE FUNCTION gp_toolkit.__gp_workfile_mgr_used_diskspace_f_on_segments()
-RETURNS SETOF record
-AS '$libdir/gp_workfile_mgr', 'gp_workfile_mgr_used_diskspace'
-LANGUAGE C VOLATILE EXECUTE ON ALL SEGMENTS;
-
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_workfile_mgr_used_diskspace_f_on_segments() TO public;
-
---------------------------------------------------------------------------------
--- @view:
---        gp_toolkit.gp_workfile_mgr_used_diskspace
---
--- @doc:
---        Workfile used diskspace counter in bytes per segment
---
---------------------------------------------------------------------------------
-CREATE VIEW gp_toolkit.gp_workfile_mgr_used_diskspace AS
-  SELECT C.*
-	FROM gp_toolkit.__gp_workfile_mgr_used_diskspace_f_on_master() as C (
-	  segid int,
-	  bytes bigint
-	)
-  UNION ALL
-  SELECT C.*
-	FROM gp_toolkit.__gp_workfile_mgr_used_diskspace_f_on_segments() as C (
-	  segid int,
-	  bytes bigint
-	)
-ORDER BY segid;
-
-GRANT SELECT ON gp_toolkit.gp_workfile_mgr_used_diskspace TO public;
-
---------------------------------------------------------------------------------
-
+/*
+ * --------------------------------------------------------------------------------
+ * -- @function:
+ * --        gp_toolkit.__gp_workfile_entries_f
+ * --
+ * -- @in:
+ * --
+ * -- @out:
+ * --        int - segment id
+ * --        text - path to workfile set,
+ * --        bigint - size in bytes,
+ * --        text - type of the spilling operation,
+ * --        int - containing slice,
+ * --        int - sessionid,
+ * --        int - command_cnt,
+ * --        int - number of files
+ * --
+ * -- @doc:
+ * --        UDF to retrieve workfile sets currently present on disk on one segment
+ * --
+ * --------------------------------------------------------------------------------
+ * 
+ * CREATE FUNCTION gp_toolkit.__gp_workfile_entries_f_on_master()
+ * RETURNS SETOF record
+ * AS '$libdir/gp_workfile_mgr', 'gp_workfile_mgr_cache_entries'
+ * LANGUAGE C VOLATILE EXECUTE ON MASTER;
+ * 
+ * GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_workfile_entries_f_on_master() TO public;
+ * 
+ * CREATE FUNCTION gp_toolkit.__gp_workfile_entries_f_on_segments()
+ * RETURNS SETOF record
+ * AS '$libdir/gp_workfile_mgr', 'gp_workfile_mgr_cache_entries'
+ * LANGUAGE C VOLATILE EXECUTE ON ALL SEGMENTS;
+ * 
+ * GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_workfile_entries_f_on_segments() TO public;
+ * 
+ * 
+ * --------------------------------------------------------------------------------
+ * -- @view:
+ * --        gp_toolkit.gp_workfile_entries
+ * --
+ * -- @doc:
+ * --        List of all the workfile sets currently present on disk
+ * --
+ * --------------------------------------------------------------------------------
+ * 
+ * CREATE VIEW gp_toolkit.gp_workfile_entries AS
+ * WITH all_entries AS (
+ *    SELECT C.*
+ *           FROM gp_toolkit.__gp_workfile_entries_f_on_master() AS C (
+ *             segid int,
+ *             prefix text,
+ *             size bigint,
+ *             optype text,
+ *             slice int,
+ *             sessionid int,
+ *             commandid int,
+ *             numfiles int
+ *           )
+ *     UNION ALL
+ *     SELECT C.*
+ *           FROM gp_toolkit.__gp_workfile_entries_f_on_segments() AS C (
+ *             segid int,
+ *             prefix text,
+ *             size bigint,
+ *             optype text,
+ *             slice int,
+ *             sessionid int,
+ *             commandid int,
+ *             numfiles int
+ *           ))
+ * SELECT S.datname,
+ *        S.pid,
+ *        C.sessionid as sess_id,
+ *        C.commandid as command_cnt,
+ *        S.usename,
+ *        S.query,
+ *        C.segid,
+ *        C.slice,
+ *        C.optype,
+ *        C.size,
+ *        C.numfiles,
+ *        C.prefix
+ * FROM all_entries C LEFT OUTER JOIN
+ * pg_stat_activity as S
+ * ON C.sessionid = S.sess_id;
+ * 
+ * GRANT SELECT ON gp_toolkit.gp_workfile_entries TO public;
+ * 
+ * --------------------------------------------------------------------------------
+ * -- @view:
+ * --        gp_toolkit.gp_workfile_usage_per_segment
+ * --
+ * -- @doc:
+ * --        Amount of disk space used for workfiles at each segment
+ * --
+ * --------------------------------------------------------------------------------
+ * 
+ * CREATE VIEW gp_toolkit.gp_workfile_usage_per_segment AS
+ * SELECT gpseg.content AS segid, COALESCE(SUM(wfe.size),0) AS size,
+ *     SUM(wfe.numfiles) AS numfiles
+ * FROM (
+ *     SELECT content
+ *     FROM gp_segment_configuration
+ *     WHERE role = 'p') gpseg
+ * LEFT JOIN gp_toolkit.gp_workfile_entries wfe
+ * ON (gpseg.content = wfe.segid)
+ * GROUP BY gpseg.content;
+ * 
+ * GRANT SELECT ON gp_toolkit.gp_workfile_usage_per_segment TO public;
+ * 
+ * --------------------------------------------------------------------------------
+ * -- @view:
+ * --        gp_toolkit.gp_workfile_usage_per_query
+ * --
+ * -- @doc:
+ * --        Amount of disk space used for workfiles by each query
+ * --
+ * --------------------------------------------------------------------------------
+ * 
+ * CREATE VIEW gp_toolkit.gp_workfile_usage_per_query AS
+ * SELECT datname, pid, sess_id, command_cnt, usename, query, segid,
+ *     SUM(size) AS size, SUM(numfiles) AS numfiles
+ * FROM gp_toolkit.gp_workfile_entries
+ * GROUP BY datname, pid, sess_id, command_cnt, usename, query, segid;
+ * 
+ * GRANT SELECT ON gp_toolkit.gp_workfile_usage_per_query TO public;
+ * 
+ * --------------------------------------------------------------------------------
+ * -- @function:
+ * --        gp_toolkit.__gp_workfile_mgr_used_diskspace_f
+ * --
+ * -- @in:
+ * --
+ * -- @out:
+ * --        int - segment id
+ * --        bigint - size in bytes,
+ * --
+ * -- @doc:
+ * --        UDF to retrieve workfile used diskspace counter in bytes per segment
+ * --
+ * --------------------------------------------------------------------------------
+ * 
+ * CREATE FUNCTION gp_toolkit.__gp_workfile_mgr_used_diskspace_f_on_master()
+ * RETURNS SETOF record
+ * AS '$libdir/gp_workfile_mgr', 'gp_workfile_mgr_used_diskspace'
+ * LANGUAGE C VOLATILE EXECUTE ON MASTER;
+ * 
+ * GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_workfile_mgr_used_diskspace_f_on_master() TO public;
+ * 
+ * CREATE FUNCTION gp_toolkit.__gp_workfile_mgr_used_diskspace_f_on_segments()
+ * RETURNS SETOF record
+ * AS '$libdir/gp_workfile_mgr', 'gp_workfile_mgr_used_diskspace'
+ * LANGUAGE C VOLATILE EXECUTE ON ALL SEGMENTS;
+ * 
+ * GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_workfile_mgr_used_diskspace_f_on_segments() TO public;
+ * 
+ * --------------------------------------------------------------------------------
+ * -- @view:
+ * --        gp_toolkit.gp_workfile_mgr_used_diskspace
+ * --
+ * -- @doc:
+ * --        Workfile used diskspace counter in bytes per segment
+ * --
+ * --------------------------------------------------------------------------------
+ * CREATE VIEW gp_toolkit.gp_workfile_mgr_used_diskspace AS
+ *   SELECT C.*
+ *         FROM gp_toolkit.__gp_workfile_mgr_used_diskspace_f_on_master() as C (
+ *           segid int,
+ *           bytes bigint
+ *         )
+ *   UNION ALL
+ *   SELECT C.*
+ *         FROM gp_toolkit.__gp_workfile_mgr_used_diskspace_f_on_segments() as C (
+ *           segid int,
+ *           bytes bigint
+ *         )
+ * ORDER BY segid;
+ * 
+ * GRANT SELECT ON gp_toolkit.gp_workfile_mgr_used_diskspace TO public;
+ * 
+ * --------------------------------------------------------------------------------
+ * 
+ */
 -- Finalize install
 COMMIT;
 
