@@ -303,8 +303,6 @@ SELECT relname, relkind, reloptions FROM pg_class
  mysecview4 | v       | {security_barrier=false}
 (4 rows)
 
-<<<<<<< HEAD
-=======
 -- Check that unknown literals are converted to "text" in CREATE VIEW,
 -- so that we don't end up with unknown-type columns.
 CREATE VIEW unspecified_types AS
@@ -331,7 +329,6 @@ SELECT * FROM unspecified_types;
  42 | 42.5 | foo | foo | 
 (1 row)
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- This test checks that proper typmods are assigned in a multi-row VALUES
 CREATE VIEW tt1 AS
   SELECT * FROM (
@@ -340,15 +337,6 @@ CREATE VIEW tt1 AS
        ('0123456789', 'abc'::varchar(3), 42.12, 'abc'::varchar(4))
   ) vv(a,b,c,d);
 \d+ tt1
-<<<<<<< HEAD
-                      View "testviewschm2.tt1"
- Column |         Type         | Modifiers | Storage  | Description 
---------+----------------------+-----------+----------+-------------
- a      | character varying    |           | extended | 
- b      | character varying    |           | extended | 
- c      | numeric              |           | main     | 
- d      | character varying(4) |           | extended | 
-=======
                                 View "testviewschm2.tt1"
  Column |         Type         | Collation | Nullable | Default | Storage  | Description 
 --------+----------------------+-----------+----------+---------+----------+-------------
@@ -356,7 +344,6 @@ CREATE VIEW tt1 AS
  b      | character varying    |           |          |         | extended | 
  c      | numeric              |           |          |         | main     | 
  d      | character varying(4) |           |          |         | extended | 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 View definition:
  SELECT vv.a,
     vv.b,
@@ -1693,10 +1680,7 @@ select * from
   coalesce(1,2) as c,
   collation for ('x'::text) col,
   current_date as d,
-<<<<<<< HEAD
-=======
   localtimestamp(3) as t,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
   cast(1+2 as int4) as i4,
   cast(1+2 as int8) as i8;
 select pg_get_viewdef('tt20v', true);
@@ -1705,20 +1689,13 @@ select pg_get_viewdef('tt20v', true);
   SELECT c.c,                               +
      col.col,                               +
      d.d,                                   +
-<<<<<<< HEAD
-=======
      t.t,                                   +
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
      i4.i4,                                 +
      i8.i8                                  +
     FROM COALESCE(1, 2) c(c),               +
      pg_collation_for('x'::text) col(col),  +
-<<<<<<< HEAD
-     CAST('now'::text::date AS date) d(d),  +
-=======
      CURRENT_DATE d(d),                     +
      LOCALTIMESTAMP(3) t(t),                +
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
      CAST(1 + 2 AS integer) i4(i4),         +
      CAST((1 + 2)::bigint AS bigint) i8(i8);
 (1 row)

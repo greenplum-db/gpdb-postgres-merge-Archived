@@ -243,8 +243,6 @@ SELECT relname, relkind, reloptions FROM pg_class
                      'mysecview3'::regclass, 'mysecview4'::regclass)
        ORDER BY relname;
 
-<<<<<<< HEAD
-=======
 -- Check that unknown literals are converted to "text" in CREATE VIEW,
 -- so that we don't end up with unknown-type columns.
 
@@ -253,7 +251,6 @@ CREATE VIEW unspecified_types AS
 \d+ unspecified_types
 SELECT * FROM unspecified_types;
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- This test checks that proper typmods are assigned in a multi-row VALUES
 
 CREATE VIEW tt1 AS
@@ -585,10 +582,7 @@ select * from
   coalesce(1,2) as c,
   collation for ('x'::text) col,
   current_date as d,
-<<<<<<< HEAD
-=======
   localtimestamp(3) as t,
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
   cast(1+2 as int4) as i4,
   cast(1+2 as int8) as i8;
 select pg_get_viewdef('tt20v', true);
