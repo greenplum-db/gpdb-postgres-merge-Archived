@@ -7239,8 +7239,13 @@ make_agg(List *tlist, List *qual,
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
 
+	/* GPDB_12_MERGE_FIXME: We had these in GPDB since forever, but now
+	 * the caller can pass lefttree == NULL. I assume this isn't really
+	 * needed and can be removed? */
+#if 0
 	plan->extParam = bms_copy(lefttree->extParam);
 	plan->allParam = bms_copy(lefttree->allParam);
+#endif
 
 	return node;
 }
