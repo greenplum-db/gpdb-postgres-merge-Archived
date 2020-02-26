@@ -1920,9 +1920,16 @@ selectDumpableNamespace(NamespaceInfo *nsinfo, Archive *fout)
 		 * that complicates matters for non-superuser use of pg_dump.  But we
 		 * should dump any ACL changes that have occurred for it, and of
 		 * course we should dump contained objects.
+		 *
+		 * In Greenplum binary upgrades, we need to dump the public schema in
+		 * order to maintain its Oid.
 		 */
-		nsinfo->dobj.dump = DUMP_COMPONENT_ACL;
+		if (dopt->binary_upgrade)
+			nsinfo->dobj.dump = DUMP_COMPONENT_ALL;
+		else
+			nsinfo->dobj.dump = DUMP_COMPONENT_ACL;
 		nsinfo->dobj.dump_contains = DUMP_COMPONENT_ALL;
+
 	}
 	else
 		nsinfo->dobj.dump_contains = nsinfo->dobj.dump = DUMP_COMPONENT_ALL;
