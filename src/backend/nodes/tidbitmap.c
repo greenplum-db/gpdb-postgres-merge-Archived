@@ -1211,6 +1211,7 @@ tbm_next_page(TBMIterator *iterator, bool *more)
 		else
 			e = tbm->spages[iterator->spageptr];
 
+		iterator->spageptr++;
 		return e;
 	}
 
