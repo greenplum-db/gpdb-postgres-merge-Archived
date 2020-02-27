@@ -93,13 +93,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 {
 	Walfile    *f;
 	char		fn[MAXPGPATH];
-<<<<<<< HEAD
-	struct stat statbuf;
-	PGAlignedXLogBlock zerobuf;
-	int			bytes;
-=======
 	ssize_t		size;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	XLogSegNo	segno;
 
 	XLByteToSeg(startpoint, segno, WalSegSz);
@@ -137,14 +131,6 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 				return false;
 			}
 
-<<<<<<< HEAD
-	/* New, empty, file. So pad it to 16Mb with zeroes */
-	memset(zerobuf.data, 0, XLOG_BLCKSZ);
-	for (bytes = 0; bytes < XLogSegSize; bytes += XLOG_BLCKSZ)
-	{
-		errno = 0;
-		if (write(f, zerobuf.data, XLOG_BLCKSZ) != XLOG_BLCKSZ)
-=======
 			/* fsync file in case of a previous crash */
 			if (stream->walmethod->sync(f) != 0)
 			{
@@ -158,23 +144,14 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 			return true;
 		}
 		if (size != 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		{
 			/* if write didn't set errno, assume problem is no disk space */
 			if (errno == 0)
 				errno = ENOSPC;
-<<<<<<< HEAD
-			fprintf(stderr,
-					_("%s: could not pad transaction log file \"%s\": %s\n"),
-					progname, fn, strerror(errno));
-			close(f);
-			unlink(fn);
-=======
 			pg_log_error(ngettext("write-ahead log file \"%s\" has %d byte, should be 0 or %d",
 								  "write-ahead log file \"%s\" has %d bytes, should be 0 or %d",
 								  size),
 						 fn, (int) size, WalSegSz);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 			return false;
 		}
 		/* File existed and was empty, so fall through and open */
@@ -316,49 +293,15 @@ writeTimeLineHistoryFile(StreamCtl *stream, char *filename, char *content)
 		/*
 		 * If we fail to make the file, delete it to release disk space
 		 */
-<<<<<<< HEAD
-		close(fd);
-		unlink(tmppath);
-
-		/* if write didn't set errno, assume problem is no disk space */
-		errno = save_errno ? save_errno : ENOSPC;
-=======
 		stream->walmethod->close(f, CLOSE_UNLINK);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 		return false;
 	}
 
 	if (stream->walmethod->close(f, CLOSE_NORMAL) != 0)
 	{
-<<<<<<< HEAD
-		int			save_errno = errno;
-
-		close(fd);
-		errno = save_errno;
-		fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
-				progname, tmppath, strerror(errno));
-		return false;
-	}
-
-	if (close(fd) != 0)
-	{
-		fprintf(stderr, _("%s: could not close file \"%s\": %s\n"),
-				progname, tmppath, strerror(errno));
-		return false;
-	}
-
-	/*
-	 * Now move the completed history file into place with its final name.
-	 */
-	if (rename(tmppath, path) < 0)
-	{
-		fprintf(stderr, _("%s: could not rename file \"%s\" to \"%s\": %s\n"),
-				progname, tmppath, path, strerror(errno));
-=======
 		pg_log_error("could not close file \"%s\": %s",
 					 histfname, stream->walmethod->getlasterror());
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 		return false;
 	}
 

@@ -223,6 +223,6 @@ class PgBaseBackup(Command):
     @staticmethod
     def _xlog_arguments(replication_slot_name):
         if replication_slot_name:
-            return ["--slot", replication_slot_name, "--xlog-method", "stream"]
+            return ["--slot", replication_slot_name, "--wal-method", "stream"]
         else:
             return ['--xlog']

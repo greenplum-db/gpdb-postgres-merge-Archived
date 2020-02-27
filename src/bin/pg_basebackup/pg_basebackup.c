@@ -40,14 +40,10 @@
 #include "receivelog.h"
 #include "replication/basebackup.h"
 #include "streamutil.h"
-<<<<<<< HEAD
 #include "catalog/catalog.h"
 
-#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
-=======
 
 #define ERRCODE_DATA_CORRUPTED	"XX001"
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 typedef struct TablespaceListCell
 {
@@ -112,13 +108,6 @@ static bool create_slot = false;
 static bool no_slot = false;
 static bool verify_checksums = true;
 
-<<<<<<< HEAD
-static bool forceoverwrite = false;
-#define MAX_EXCLUDE 255
-static int	num_exclude = 0;
-static char *excludes[MAX_EXCLUDE];
-static int target_gp_dbid = 0;
-=======
 static bool success = false;
 static bool made_new_pgdata = false;
 static bool found_existing_pgdata = false;
@@ -126,7 +115,12 @@ static bool made_new_xlogdir = false;
 static bool found_existing_xlogdir = false;
 static bool made_tablespace_dirs = false;
 static bool found_tablespace_dirs = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+
+static bool forceoverwrite = false;
+#define MAX_EXCLUDE 255
+static int	num_exclude = 0;
+static char *excludes[MAX_EXCLUDE];
+static int target_gp_dbid = 0;
 
 /* Progress counters */
 static uint64 totalsize;
@@ -613,11 +607,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 		}
 	}
 
-<<<<<<< HEAD
-	if (pg_mkdir_p(statusdir, S_IRWXU) != 0)
-=======
 	if (format == 'p')
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		/*
 		 * Create pg_wal/archive_status or pg_xlog/archive_status (and thus
@@ -711,19 +701,12 @@ verify_dir_is_empty_or_create(char *dirname, bool *created, bool *found)
 			 * things that should not be deleted such as pg_log files if we
 			 * are doing segment recovery.
 			 */
-<<<<<<< HEAD
 			if (forceoverwrite)
 				return;
 
-			fprintf(stderr,
-					_("%s: directory \"%s\" exists but is not empty\n"),
-					progname, dirname);
-			disconnect_and_exit(1);
-			break;
-=======
 			pg_log_error("directory \"%s\" exists but is not empty", dirname);
 			exit(1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			break;
 		case -1:
 
 			/*
@@ -1445,7 +1428,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 		{
 			fprintf(stderr, _("%s: cannot restore user-defined tablespaces without the --target-gp-dbid option\n"),
 					progname);
-			disconnect_and_exit(1);
+			exit(1);
 		}
 		
 		/* 
@@ -1558,8 +1541,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					/*
 					 * Directory
 					 */
-<<<<<<< HEAD
-					filename[strlen(filename) - 1] = '\0';		/* Remove trailing slash */
+					filename[strlen(filename) - 1] = '\0';	/* Remove trailing slash */
 
 					/*
 					 * Since the forceoverwrite flag is being used, the
@@ -1592,11 +1574,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 						continue;
 					}
 
-					if (mkdir(filename, S_IRWXU) != 0)
-=======
-					filename[strlen(filename) - 1] = '\0';	/* Remove trailing slash */
 					if (mkdir(filename, pg_dir_create_mode) != 0)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					{
 						/*
 						 * When streaming WAL, pg_wal (or pg_xlog for pre-9.6
@@ -1643,17 +1621,9 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					char *mapped_tblspc_path_with_dbid = psprintf("%s/%d", mapped_tblspc_path, target_gp_dbid);
 					if (symlink(mapped_tblspc_path_with_dbid, filename) != 0)
 					{
-<<<<<<< HEAD
-						fprintf(stderr,
-								_("%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"),
-								progname, filename, mapped_tblspc_path_with_dbid,
-								strerror(errno));
-						disconnect_and_exit(1);
-=======
 						pg_log_error("could not create symbolic link from \"%s\" to \"%s\": %m",
 									 filename, mapped_tblspc_path);
 						exit(1);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 					}
 					pfree(mapped_tblspc_path_with_dbid);
 				}
@@ -1752,30 +1722,9 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 
 	if (basetablespace && writerecoveryconf)
 		WriteRecoveryConf();
-<<<<<<< HEAD
 
 	if (basetablespace)
 		WriteInternalConfFile();
-}
-
-/*
- * Escape a parameter value so that it can be used as part of a libpq
- * connection string, e.g. in:
- *
- * application_name=<value>
- *
- * The returned string is malloc'd. Return NULL on out-of-memory.
- */
-static char *
-escapeConnectionParameter(const char *src)
-{
-	bool		need_quotes = false;
-	bool		need_escaping = false;
-	const char *p;
-	char	   *dstbuf;
-	char	   *dst;
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	/*
 	 * No data is synced here, everything is done for all tablespaces at the
@@ -1958,7 +1907,7 @@ build_exclude_list(char **exclude_list, int num)
 		{
 			fprintf(stderr, _("%s: could not process exclude \"%s\": %s\n"),
 					progname, exclude_list[i], PQerrorMessage(conn));
-			disconnect_and_exit(1);
+			exit(1);
 		}
 		appendPQExpBuffer(&buf, "EXCLUDE '%s'", quoted);
 	}
@@ -1966,7 +1915,7 @@ build_exclude_list(char **exclude_list, int num)
 	if (PQExpBufferDataBroken(buf))
 	{
 		fprintf(stderr, _("%s: out of memory\n"), progname);
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	return buf.data;
@@ -1987,13 +1936,9 @@ BaseBackup(void)
 	char		xlogend[64];
 	int			minServerMajor,
 				maxServerMajor;
-<<<<<<< HEAD
-	int			serverMajor;
 	char 	   *exclude_list;
-=======
 	int			serverVersion,
 				serverMajor;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	Assert(conn != NULL);
 
@@ -2046,7 +1991,8 @@ BaseBackup(void)
 	 */
 	if (replication_slot)
 	{
-		CreateReplicationSlot(conn, replication_slot, NULL, true, false);
+		/* GPDB_12_MERGE_FIXME What arguments should be passed for reserve_wal and slot_exists_ok? */
+		CreateReplicationSlot(conn, replication_slot, NULL, true, true, false, true);
 	}
 
 	/*
@@ -2057,17 +2003,8 @@ BaseBackup(void)
 	if (maxrate > 0)
 		maxrate_clause = psprintf("MAX_RATE %u", maxrate);
 
-<<<<<<< HEAD
 	exclude_list = build_exclude_list(excludes, num_exclude);
 
-	if (verbose)
-		fprintf(stderr,
-				_("%s: initiating base backup, waiting for checkpoint to complete\n"),
-				progname);
-
-	if (showprogress && !verbose)
-		fprintf(stderr, "waiting for checkpoint\r");
-=======
 	if (verbose)
 		pg_log_info("initiating base backup, waiting for checkpoint to complete");
 
@@ -2079,10 +2016,9 @@ BaseBackup(void)
 		else
 			fprintf(stderr, "\n");
 	}
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	basebkp =
-		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s %s",
+		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s %s %s",
 				 escaped_label,
 				 showprogress ? "PROGRESS" : "",
 				 includewal == FETCH_WAL ? "WAL" : "",
@@ -2090,14 +2026,11 @@ BaseBackup(void)
 				 includewal == NO_WAL ? "" : "NOWAIT",
 				 maxrate_clause ? maxrate_clause : "",
 				 format == 't' ? "TABLESPACE_MAP" : "",
-<<<<<<< HEAD
+				 verify_checksums ? "" : "NOVERIFY_CHECKSUMS",
 				 exclude_list);
 
 	if (num_exclude != 0)
 		free(exclude_list);
-=======
-				 verify_checksums ? "" : "NOVERIFY_CHECKSUMS");
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 	if (PQsendQuery(conn, basebkp) == 0)
 	{
@@ -2176,18 +2109,12 @@ BaseBackup(void)
 		 */
 		if (format == 'p' && !PQgetisnull(res, i, 1))
 		{
-<<<<<<< HEAD
-			char	   *path = (char *) get_tablespace_mapping(PQgetvalue(res, i, 1));
+			char	   *path = unconstify(char *, get_tablespace_mapping(PQgetvalue(res, i, 1)));
 			char path_with_subdir[MAXPGPATH];
 
 			sprintf(path_with_subdir, "%s/%d/%s", path, target_gp_dbid, GP_TABLESPACE_VERSION_DIRECTORY);
 
-			verify_dir_is_empty_or_create(path_with_subdir);
-=======
-			char	   *path = unconstify(char *, get_tablespace_mapping(PQgetvalue(res, i, 1)));
-
-			verify_dir_is_empty_or_create(path, &made_tablespace_dirs, &found_tablespace_dirs);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+			verify_dir_is_empty_or_create(path_with_subdir, &made_tablespace_dirs, &found_tablespace_dirs);
 		}
 	}
 
@@ -2437,16 +2364,12 @@ main(int argc, char **argv)
 		{"status-interval", required_argument, NULL, 's'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"progress", no_argument, NULL, 'P'},
-<<<<<<< HEAD
-		{"xlogdir", required_argument, NULL, 1},
-		{"exclude", required_argument, NULL, 'E'},
-		{"force-overwrite", no_argument, NULL, 128},
-		{"target-gp-dbid", required_argument, NULL, 129},
-=======
 		{"waldir", required_argument, NULL, 1},
 		{"no-slot", no_argument, NULL, 2},
 		{"no-verify-checksums", no_argument, NULL, 3},
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+		{"exclude", required_argument, NULL, 'E'},
+		{"force-overwrite", no_argument, NULL, 128},
+		{"target-gp-dbid", required_argument, NULL, 129},
 		{NULL, 0, NULL, 0}
 	};
 	int			c;
@@ -2472,14 +2395,10 @@ main(int argc, char **argv)
 		}
 	}
 
-<<<<<<< HEAD
 	num_exclude = 0;
-	while ((c = getopt_long(argc, argv, "D:F:r:RT:xX:l:zZ:d:c:h:p:U:s:S:wWvPE:",
-=======
 	atexit(cleanup_directories_atexit);
 
-	while ((c = getopt_long(argc, argv, "CD:F:r:RS:T:X:l:nNzZ:d:c:h:p:U:s:wWkvP",
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+	while ((c = getopt_long(argc, argv, "CD:F:r:RT:xX:l:zZ:d:c:h:p:U:s:S:wWvPE:",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -2617,7 +2536,9 @@ main(int argc, char **argv)
 			case 'P':
 				showprogress = true;
 				break;
-<<<<<<< HEAD
+			case 3:
+				verify_checksums = false;
+				break;
 			case 'E':
 				if (num_exclude >= MAX_EXCLUDE)
 				{
@@ -2633,10 +2554,6 @@ main(int argc, char **argv)
 				break;
 			case 129:
 				target_gp_dbid = atoi(optarg);
-=======
-			case 3:
-				verify_checksums = false;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 				break;
 			default:
 
@@ -2794,7 +2711,6 @@ main(int argc, char **argv)
 	if (format == 'p' || strcmp(basedir, "-") != 0)
 		verify_dir_is_empty_or_create(basedir, &made_new_pgdata, &found_existing_pgdata);
 
-<<<<<<< HEAD
 	/*
 	 * GPDB: Backups in tar mode will not have the internal.auto.conf file,
 	 * nor will any tablespaces have the dbid appended to their symlinks in
@@ -2803,19 +2719,14 @@ main(int argc, char **argv)
 	 * when extracting the backups.
 	 */
 	if (format == 't')
-		fprintf(stderr,
-			_("WARNING: tar backups are not supported on GPDB\n"));
+		pg_log_error("WARNING: tar backups are not supported on GPDB\n");
 
-	/* Create transaction log symlink, if required */
-	if (strcmp(xlog_dir, "") != 0)
-=======
 	/* determine remote server's xlog segment size */
 	if (!RetrieveWalSegSize(conn))
 		exit(1);
 
 	/* Create pg_wal symlink, if required */
 	if (xlog_dir)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 	{
 		char	   *linkloc;
 
@@ -2862,7 +2773,7 @@ WriteInternalConfFile(void)
 	if (cf == NULL)
 	{
 		fprintf(stderr, _("%s: could not create file \"%s\": %s\n"), progname, filename, strerror(errno));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	length = snprintf(line_to_write, 100, "gp_dbid=%d\n", target_gp_dbid);
@@ -2872,7 +2783,7 @@ WriteInternalConfFile(void)
 		fprintf(stderr,
 				_("%s: could not write to file \"%s\": %s\n"),
 				progname, filename, strerror(errno));
-		disconnect_and_exit(1);
+		exit(1);
 	}
 
 	fclose(cf);
