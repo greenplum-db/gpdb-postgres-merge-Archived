@@ -184,14 +184,11 @@ drop type comptype cascade;
 create type comptype as (r float8, i float8);
 create domain dcomptypea as comptype[];
 create table dcomptable (d1 dcomptypea unique);
-<<<<<<< HEAD
 -- GPDB: marking the column as 'unique' fails, because a unique column needs
 -- to be part of the distribution key, and composite types can't be used as
 -- distribution keys because they have no hash opclasses.
 create table dcomptable (d1 dcomptypea /*unique*/);
 create index on dcomptable (d1);
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 insert into dcomptable values (array[row(1,2)]::dcomptypea);
 insert into dcomptable values (array[row(3,4), row(5,6)]::comptype[]);

@@ -2,14 +2,12 @@
 -- AGGREGATES
 --
 
-<<<<<<< HEAD
 -- start_ignore
 SET optimizer_trace_fallback to on;
 -- end_ignore
-=======
+
 -- avoid bit-exact output here because operations may not be bit-exact.
 SET extra_float_digits = 0;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 SELECT avg(four) AS avg_1 FROM onek;
 
@@ -1168,7 +1166,6 @@ SELECT dense_rank(x) WITHIN GROUP (ORDER BY x) FROM (VALUES (1),(1),(2),(2),(3),
 SELECT min(x ORDER BY y) FROM (VALUES(1, NULL)) AS d(x,y);
 SELECT min(x ORDER BY y) FROM (VALUES(1, 2)) AS d(x,y);
 
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- check collation-sensitive matching between grouping expressions
 select v||'a', case v||'a' when 'aa' then 1 else 0 end, count(*)
   from unnest(array['a','b']) u(v)
@@ -1176,8 +1173,6 @@ select v||'a', case v||'a' when 'aa' then 1 else 0 end, count(*)
 select v||'a', case when v||'a' = 'aa' then 1 else 0 end, count(*)
   from unnest(array['a','b']) u(v)
  group by v||'a' order by 1;
-<<<<<<< HEAD
-=======
 
 -- Make sure that generation of HashAggregate for uniqification purposes
 -- does not lead to array overflow due to unexpected duplicate hash keys
@@ -1185,4 +1180,3 @@ select v||'a', case when v||'a' = 'aa' then 1 else 0 end, count(*)
 explain (costs off)
   select 1 from tenk1
    where (hundred, thousand) in (select twothousand, twothousand from onek);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
