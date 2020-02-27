@@ -134,7 +134,7 @@ pxf_fdw_validator(PG_FUNCTION_ARGS)
 	char	   *protocol = NULL;
 	char	   *resource = NULL;
 	char	   *reject_limit_type = FDW_OPTION_REJECT_LIMIT_ROWS;
-	bool		log_errors = -1;
+	int			log_errors = -1;
 	List	   *options_list = untransformRelOptions(PG_GETARG_DATUM(0));
 	Oid			catalog = PG_GETARG_OID(1);
 	List	   *copy_options = NIL;
@@ -220,7 +220,7 @@ pxf_fdw_validator(PG_FUNCTION_ARGS)
 								FDW_OPTION_REJECT_LIMIT_PERCENT)));
 		}
 		else if (strcmp(def->defname, FDW_OPTION_LOG_ERRORS) == 0)
-			log_errors = defGetBoolean(def);
+			log_errors = defGetBoolean(def) ? 1 : 0;
 		else if (IsCopyOption(def->defname))
 			copy_options = lappend(copy_options, def);
 	}
@@ -358,7 +358,7 @@ ValidateCopyOptions(List *options_list, Oid catalog)
 	/*
 	 * Apply the core COPY code's validation logic for more checks.
 	 */
-	ProcessCopyOptions(NULL, true, copy_options, 0, true);
+	ProcessCopyOptions(NULL, NULL, true, copy_options, 0, true);
 
 	PG_RETURN_VOID();
 }
@@ -462,7 +462,7 @@ PxfGetOptions(Oid foreigntableid)
 		/* default wire_format is CSV */
 		wireFormat = (Node *)makeString(FDW_OPTION_WIRE_FORMAT_CSV);
 
-	copy_options = lappend(copy_options, makeDefElem(FDW_COPY_OPTION_FORMAT, wireFormat));
+	copy_options = lappend(copy_options, makeDefElem(FDW_COPY_OPTION_FORMAT, wireFormat, -1));
 
 	opt->copy_options = copy_options;
 	opt->options = other_options;

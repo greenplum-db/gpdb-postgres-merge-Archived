@@ -18,6 +18,7 @@
 # for the underlying function.
 
 { oid => '15', descr => 'equal',
+  oid_symbol => 'Int48EqualOperator',
   oprname => '=', oprcanmerge => 't', oprcanhash => 't', oprleft => 'int4',
   oprright => 'int8', oprresult => 'bool', oprcom => '=(int8,int4)',
   oprnegate => '<>(int4,int8)', oprcode => 'int48eq', oprrest => 'eqsel',
@@ -262,6 +263,7 @@
   oprrest => 'scalargesel', oprjoin => 'scalargejoinsel' },
 
 { oid => '416', descr => 'equal',
+  oid_symbol => 'Int84EqualOperator',
   oprname => '=', oprcanmerge => 't', oprcanhash => 't', oprleft => 'int8',
   oprright => 'int4', oprresult => 'bool', oprcom => '=(int4,int8)',
   oprnegate => '<>(int8,int4)', oprcode => 'int84eq', oprrest => 'eqsel',
@@ -473,11 +475,13 @@
   oprcom => '<>(text,text)', oprnegate => '=(text,text)', oprcode => 'textne',
   oprrest => 'neqsel', oprjoin => 'neqjoinsel' },
 { oid => '532', descr => 'equal',
+  oid_symbol => 'Int24EqualOperator',
   oprname => '=', oprcanmerge => 't', oprcanhash => 't', oprleft => 'int2',
   oprright => 'int4', oprresult => 'bool', oprcom => '=(int4,int2)',
   oprnegate => '<>(int2,int4)', oprcode => 'int24eq', oprrest => 'eqsel',
   oprjoin => 'eqjoinsel' },
 { oid => '533', descr => 'equal',
+  oid_symbol => 'Int42EqualOperator',
   oprname => '=', oprcanmerge => 't', oprcanhash => 't', oprleft => 'int4',
   oprright => 'int2', oprresult => 'bool', oprcom => '=(int2,int4)',
   oprnegate => '<>(int4,int2)', oprcode => 'int42eq', oprrest => 'eqsel',
@@ -2197,6 +2201,7 @@
   oprcode => 'interval_pl_time' },
 
 { oid => '1862', descr => 'equal',
+  oid_symbol => 'Int28EqualOperator',
   oprname => '=', oprcanmerge => 't', oprcanhash => 't', oprleft => 'int2',
   oprright => 'int8', oprresult => 'bool', oprcom => '=(int8,int2)',
   oprnegate => '<>(int2,int8)', oprcode => 'int28eq', oprrest => 'eqsel',
@@ -2223,6 +2228,7 @@
   oprrest => 'scalargesel', oprjoin => 'scalargejoinsel' },
 
 { oid => '1868', descr => 'equal',
+  oid_symbol => 'Int82EqualOperator',
   oprname => '=', oprcanmerge => 't', oprcanhash => 't', oprleft => 'int8',
   oprright => 'int2', oprresult => 'bool', oprcom => '=(int2,int8)',
   oprnegate => '<>(int8,int2)', oprcode => 'int82eq', oprrest => 'eqsel',

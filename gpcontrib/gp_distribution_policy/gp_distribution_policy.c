@@ -23,6 +23,8 @@
 
 #include "postgres.h"
 
+#include "access/table.h"
+#include "access/tableam.h"
 #include "fmgr.h"
 #include "funcapi.h"
 #include "access/heapam.h"
@@ -53,13 +55,16 @@ gp_distribution_policy_heap_table_check(PG_FUNCTION_ARGS)
 {
 	Oid			relOid = PG_GETARG_OID(0);
 	bool		result = true;
+	TupleTableSlot *slot;
 
 	/* Open relation in segment */
-	Relation rel = heap_open(relOid, AccessShareLock);
+	Relation rel = table_open(relOid, AccessShareLock);
 
 	GpPolicy *policy = rel->rd_cdbpolicy;
 
 	/* Validate that the relation is a heap table */
+	/* GPDB_12_MERGE_FIXME: now that this uses the table AM functions, this
+	 * should actually work with any table AM, including AO tables */
 	if (!RelationIsHeap(rel))
 	{
 		ereport(ERROR,
@@ -67,16 +72,16 @@ gp_distribution_policy_heap_table_check(PG_FUNCTION_ARGS)
 				errmsg("input relation is not a heap table")));
 	}
 
+	slot = table_slot_create(rel, NULL);
+
 	TableScanDesc scandesc = table_beginscan(rel, GetActiveSnapshot(), 0, NULL);
-	HeapTuple    tuple = heap_getnext(scandesc, ForwardScanDirection);
-	TupleDesc	desc = RelationGetDescr(rel);
 
 	/* Initialize hash function and structure */
 	CdbHash *hash;
 
 	hash = makeCdbHashForRelation(rel);
 
-	while (HeapTupleIsValid(tuple))
+	while (table_scan_getnextslot(scandesc, ForwardScanDirection, slot))
 	{
 		CHECK_FOR_INTERRUPTS();
 
@@ -89,7 +94,7 @@ gp_distribution_policy_heap_table_check(PG_FUNCTION_ARGS)
 			bool		isNull;
 			Datum		attr;
 
-			attr = heap_getattr(tuple, attnum, desc, &isNull);
+			attr = slot_getattr(slot, attnum, &isNull);
 
 			cdbhash(hash, i + 1, attr, isNull);
 		}
@@ -100,12 +105,10 @@ gp_distribution_policy_heap_table_check(PG_FUNCTION_ARGS)
 			result = false;
 			break;
 		}
-
-		tuple = heap_getnext(scandesc, ForwardScanDirection);
 	}
 
-	heap_endscan(scandesc);
-	heap_close(rel, AccessShareLock);
+	table_endscan(scandesc);
+	table_close(rel, AccessShareLock);
 	
 	PG_RETURN_BOOL(result);
 }

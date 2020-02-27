@@ -324,7 +324,7 @@ void lookup_function_in_catalog(PGconn *conn, mapred_document_t *doc,
 	char				*tmp1	 = NULL;
 	char				*tmp2	 = NULL;
 	char				*tmp3	 = NULL;
-	const int			STR_LEN  = 50;
+#define STR_LEN 50
 	char				str[STR_LEN];
 	int					i, nargs;
 
