@@ -769,11 +769,17 @@ DefineIndex(Oid relationId,
 	 * (which may in turn default to database's default).
 	 *
 	 * Note: This code duplicates code in tablecmds.c
+	 *
+	 * MPP-8238 : inconsistent tablespaces between segments and master. In the
+	 * QD, store the resolved tablespace name in the command, so that it's
+	 * dispatched. In QE, skip the check for 'partitioned': because we got
+	 * the value from the QD, it should be ok.
 	 */
 	if (stmt->tableSpace)
 	{
 		tablespaceId = get_tablespace_oid(stmt->tableSpace, false);
-		if (partitioned && tablespaceId == MyDatabaseTableSpace)
+		if (partitioned && tablespaceId == MyDatabaseTableSpace &&
+			Gp_role != GP_ROLE_EXECUTE)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot specify default tablespace for partitioned relations")));
@@ -788,9 +794,6 @@ DefineIndex(Oid relationId,
 		if (!OidIsValid(tablespaceId)) 
 			tablespaceId = MyDatabaseTableSpace;
 
-		/* 
-		 * MPP-8238 : inconsistent tablespaces between segments and master 
-		 */
 		if (shouldDispatch)
 			stmt->tableSpace = get_tablespace_name(tablespaceId);
 	}
