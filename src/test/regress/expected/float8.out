@@ -28,7 +28,6 @@ SELECT '-10e-400'::float8;
 ERROR:  value out of range: underflow
 LINE 1: SELECT '-10e-400'::float8;
                ^
-<<<<<<< HEAD
 SELECT '1e-324'::float8;
 ERROR:  value out of range: underflow
 LINE 1: SELECT '1e-324'::float8;
@@ -40,22 +39,22 @@ SELECT '1e308'::float8;
 (1 row)
 
 SELECT '1e-323'::float8;
-        float8         
------------------------
- 9.88131291682493e-324
+ float8 
+--------
+ 1e-323
 (1 row)
 
 SELECT '0.0'::float8;
  float8 
 --------
       0
-=======
+(1 row)
+
 -- test smallest normalized input
 SELECT float8send('2.2250738585072014E-308'::float8);
      float8send     
 --------------------
  \x0010000000000000
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 (1 row)
 
 -- bad input
@@ -273,12 +272,8 @@ SELECT '' AS three, f.f1, f.f1 / '-10' AS x
    WHERE f.f1 > '0.0' ORDER BY 2;
  three |          f1          |           x           
 -------+----------------------+-----------------------
-<<<<<<< HEAD
        | 1.2345678901234e-200 | -1.2345678901234e-201
-       |               1004.3 |               -100.43
-=======
        |               1004.3 |   -100.42999999999999
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
        | 1.2345678901234e+200 | -1.2345678901234e+199
 (3 rows)
 
@@ -905,79 +900,6 @@ FROM (SELECT 10*cosd(a), 10*sind(a)
   10 |   0 |      0 | t
 (5 rows)
 
-<<<<<<< HEAD
-RESET extra_float_digits;
--- test if you can dump/restore subnormal (1e-323) values
--- using COPY
-CREATE TABLE FLOATS(a float8);
-INSERT INTO FLOATS select 1e-307::float8 / 10^i FROM generate_series(1,16) i;
-SELECT * FROM FLOATS ORDER BY a;
-           a           
------------------------
- 9.88131291682493e-324
- 9.88131291682493e-323
- 9.98012604599318e-322
- 9.99988867182683e-321
- 9.99988867182683e-320
-   9.999987484956e-319
- 1.00000023069254e-317
- 9.99999983659714e-317
- 9.99999998481684e-316
- 9.99999999963881e-315
- 1.00000000001329e-313
- 9.99999999998465e-313
- 9.99999999999948e-312
- 9.99999999999997e-311
-                1e-309
-                1e-308
-(16 rows)
-
-SELECT float8in(float8out(a)) FROM FLOATS ORDER BY a;
-       float8in        
------------------------
- 9.88131291682493e-324
- 9.88131291682493e-323
- 9.98012604599318e-322
- 9.99988867182683e-321
- 9.99988867182683e-320
-   9.999987484956e-319
- 1.00000023069254e-317
- 9.99999983659714e-317
- 9.99999998481684e-316
- 9.99999999963881e-315
- 1.00000000001329e-313
- 9.99999999998465e-313
- 9.99999999999948e-312
- 9.99999999999997e-311
-                1e-309
-                1e-308
-(16 rows)
-
-COPY FLOATS TO '/tmp/floats';
-TRUNCATE FLOATS;
-COPY FLOATS FROM '/tmp/floats';
-SELECT * FROM FLOATS ORDER BY a;
-           a           
------------------------
- 9.88131291682493e-324
- 9.88131291682493e-323
- 9.98012604599318e-322
- 9.99988867182683e-321
- 9.99988867182683e-320
-   9.999987484956e-319
- 1.00000023069254e-317
- 9.99999983659714e-317
- 9.99999998481684e-316
- 9.99999999963881e-315
- 1.00000000001329e-313
- 9.99999999998465e-313
- 9.99999999999948e-312
- 9.99999999999997e-311
-                1e-309
-                1e-308
-(16 rows)
-
-=======
 --
 -- test output (and round-trip safety) of various values.
 -- To ensure we're testing what we think we're testing, start with
@@ -1410,4 +1332,74 @@ drop cascades to cast from xfloat8 to double precision
 drop cascades to cast from double precision to xfloat8
 drop cascades to cast from xfloat8 to bigint
 drop cascades to cast from bigint to xfloat8
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
+-- test if you can dump/restore subnormal (1e-323) values
+-- using COPY
+CREATE TABLE FLOATS(a float8);
+INSERT INTO FLOATS select 1e-307::float8 / 10^i FROM generate_series(1,16) i;
+SELECT * FROM FLOATS ORDER BY a;
+   a    
+--------
+ 1e-323
+ 1e-322
+ 1e-321
+ 1e-320
+ 1e-319
+ 1e-318
+ 1e-317
+ 1e-316
+ 1e-315
+ 1e-314
+ 1e-313
+ 1e-312
+ 1e-311
+ 1e-310
+ 1e-309
+ 1e-308
+(16 rows)
+
+SELECT float8in(float8out(a)) FROM FLOATS ORDER BY a;
+ float8in 
+----------
+   1e-323
+   1e-322
+   1e-321
+   1e-320
+   1e-319
+   1e-318
+   1e-317
+   1e-316
+   1e-315
+   1e-314
+   1e-313
+   1e-312
+   1e-311
+   1e-310
+   1e-309
+   1e-308
+(16 rows)
+
+COPY FLOATS TO '/tmp/floats';
+TRUNCATE FLOATS;
+COPY FLOATS FROM '/tmp/floats';
+SELECT * FROM FLOATS ORDER BY a;
+   a    
+--------
+ 1e-323
+ 1e-322
+ 1e-321
+ 1e-320
+ 1e-319
+ 1e-318
+ 1e-317
+ 1e-316
+ 1e-315
+ 1e-314
+ 1e-313
+ 1e-312
+ 1e-311
+ 1e-310
+ 1e-309
+ 1e-308
+(16 rows)
+
+RESET extra_float_digits;
