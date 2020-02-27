@@ -1542,9 +1542,6 @@ inheritance_planner(PlannerInfo *root)
 	Bitmapset  *parent_relids;
 	Query	  **parent_parses;
 
-	GpPolicy   *parentPolicy = NULL;
-	Oid			parentOid = InvalidOid;
-
 	/* Should only get here for UPDATE or DELETE */
 	Assert(parse->commandType == CMD_UPDATE ||
 		   parse->commandType == CMD_DELETE);
@@ -1803,17 +1800,6 @@ inheritance_planner(PlannerInfo *root)
 		 */
 		parent_parse = parent_parses[appinfo->parent_relid];
 		Assert(parent_parse != NULL);
-
-		if (!parentPolicy)
-		{
-			parentPolicy = GpPolicyFetch(appinfo->parent_reloid);
-			parentOid = appinfo->parent_reloid;
-
-			Assert(parentPolicy != NULL);
-			Assert(parentOid != InvalidOid);
-		}
-
-		Assert(parentOid == appinfo->parent_reloid);
 
 		/*
 		 * We need a working copy of the PlannerInfo so that we can control
@@ -2083,8 +2069,6 @@ inheritance_planner(PlannerInfo *root)
 		is_split_updates = lappend_int(is_split_updates, subroot->is_split_update);
 		Assert(!parse->onConflict);
 	}
-
-	Assert(parentPolicy != NULL);
 
 	/* Result path must go into outer query's FINAL upperrel */
 	final_rel = fetch_upper_rel(root, UPPERREL_FINAL, NULL);
