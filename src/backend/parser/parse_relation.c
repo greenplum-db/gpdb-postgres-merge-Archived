@@ -745,14 +745,8 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, const char *colname,
 		attnum = specialAttNum(colname);
 
 		/* In constraint check, no system column is allowed except tableOid */
-		/*
-		 * In GPDB, tableoid is not allowed either, because we've removed
-		 * HeapTupleData.t_tableOid field.
-		 * GPDB_94_MERGE_FIXME: Could we make that work somehow? Resurrect
-		 * t_tableOid, maybe? I think we'd need it for logical decoding as well.
-		 */
 		if (pstate->p_expr_kind == EXPR_KIND_CHECK_CONSTRAINT &&
-			attnum < InvalidAttrNumber /* && attnum != TableOidAttributeNumber */)
+			attnum < InvalidAttrNumber && attnum != TableOidAttributeNumber)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 					 errmsg("system column \"%s\" reference in check constraint is invalid",

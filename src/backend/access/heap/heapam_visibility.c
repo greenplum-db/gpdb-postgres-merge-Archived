@@ -249,9 +249,7 @@ HeapTupleSatisfiesSelf(Relation relation, HeapTuple htup, Snapshot snapshot, Buf
 	HeapTupleHeader tuple = htup->t_data;
 
 	Assert(ItemPointerIsValid(&htup->t_self));
-#if 0
 	Assert(htup->t_tableOid != InvalidOid);
-#endif
 
 	if (!HeapTupleHeaderXminCommitted(tuple))
 	{
@@ -444,9 +442,7 @@ HeapTupleSatisfiesToast(Relation relation, HeapTuple htup, Snapshot snapshot,
 	HeapTupleHeader tuple = htup->t_data;
 
 	Assert(ItemPointerIsValid(&htup->t_self));
-#if 0
 	Assert(htup->t_tableOid != InvalidOid);
-#endif
 
 	if (!HeapTupleHeaderXminCommitted(tuple))
 	{
@@ -542,9 +538,7 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTuple htup, CommandId curcid,
 	HeapTupleHeader tuple = htup->t_data;
 
 	Assert(ItemPointerIsValid(&htup->t_self));
-#if 0
 	Assert(htup->t_tableOid != InvalidOid);
-#endif
 
 	if (!HeapTupleHeaderXminCommitted(tuple))
 	{
@@ -833,9 +827,7 @@ HeapTupleSatisfiesDirty(Relation relation, HeapTuple htup, Snapshot snapshot,
 	HeapTupleHeader tuple = htup->t_data;
 
 	Assert(ItemPointerIsValid(&htup->t_self));
-#if 0
 	Assert(htup->t_tableOid != InvalidOid);
-#endif
 
 	snapshot->xmin = snapshot->xmax = InvalidTransactionId;
 	snapshot->speculativeToken = 0;
@@ -1054,9 +1046,7 @@ HeapTupleSatisfiesMVCC(Relation relation, HeapTuple htup, Snapshot snapshot,
 	XidInMVCCSnapshotCheckResult snapshotCheckResult;
 
 	Assert(ItemPointerIsValid(&htup->t_self));
-#if 0
 	Assert(htup->t_tableOid != InvalidOid);
-#endif
 
 	if (!HeapTupleHeaderXminCommitted(tuple))
 	{
@@ -1320,9 +1310,7 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTuple htup, TransactionId Oldest
 	HeapTupleHeader tuple = htup->t_data;
 
 	Assert(ItemPointerIsValid(&htup->t_self));
-#if 0
 	Assert(htup->t_tableOid != InvalidOid);
-#endif
 
 	/*
 	 * Has inserting transaction committed?
@@ -1580,9 +1568,7 @@ HeapTupleIsSurelyDead(HeapTuple htup, TransactionId OldestXmin)
 	HeapTupleHeader tuple = htup->t_data;
 
 	Assert(ItemPointerIsValid(&htup->t_self));
-#if 0
 	Assert(htup->t_tableOid != InvalidOid);
-#endif
 
 	/*
 	 * If the inserting transaction is marked invalid, then it aborted, and
@@ -1706,9 +1692,7 @@ HeapTupleSatisfiesHistoricMVCC(Relation relation, HeapTuple htup, Snapshot snaps
 	TransactionId xmax = HeapTupleHeaderGetRawXmax(tuple);
 
 	Assert(ItemPointerIsValid(&htup->t_self));
-#if 0
 	Assert(htup->t_tableOid != InvalidOid);
-#endif
 
 	/* inserting transaction aborted */
 	if (HeapTupleHeaderXminInvalid(tuple))

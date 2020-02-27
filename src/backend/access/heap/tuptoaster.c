@@ -1201,6 +1201,7 @@ toast_insert_or_update_generic(Relation rel, void *newtup, void *oldtup,
 			result_tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + new_tuple_len);
 			result_tuple->t_len = new_tuple_len;
 			result_tuple->t_self = ((HeapTuple) newtup)->t_self;
+			result_tuple->t_tableOid = ((HeapTuple) newtup)->t_tableOid;
 			new_data = (HeapTupleHeader) ((char *) result_tuple + HEAPTUPLESIZE);
 			result_tuple->t_data = new_data;
 
@@ -1332,6 +1333,7 @@ toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc)
 	 * a syscache entry.
 	 */
 	new_tuple->t_self = tup->t_self;
+	new_tuple->t_tableOid = tup->t_tableOid;
 
 	new_tuple->t_data->t_choice = tup->t_data->t_choice;
 	new_tuple->t_data->t_ctid = tup->t_data->t_ctid;
@@ -1401,9 +1403,7 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 	/* Build a temporary HeapTuple control structure */
 	tmptup.t_len = tup_len;
 	ItemPointerSetInvalid(&(tmptup.t_self));
-#if 0
 	tmptup.t_tableOid = InvalidOid;
-#endif
 	tmptup.t_data = tup;
 
 	/*

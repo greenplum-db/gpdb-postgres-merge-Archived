@@ -2327,9 +2327,7 @@ heap_page_is_all_visible(Relation rel, Buffer buf,
 
 		tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 		tuple.t_len = ItemIdGetLength(itemid);
-#if 0
 		tuple.t_tableOid = RelationGetRelid(rel);
-#endif
 
 		switch (HeapTupleSatisfiesVacuum(rel, &tuple, OldestXmin, buf))
 		{

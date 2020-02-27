@@ -444,6 +444,7 @@ AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 {
 	Form_pg_namespace nspForm;
 
+	Assert(tup->t_tableOid == NamespaceRelationId);
 	Assert(RelationGetRelid(rel) == NamespaceRelationId);
 
 	nspForm = (Form_pg_namespace) GETSTRUCT(tup);

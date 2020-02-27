@@ -366,9 +366,7 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 				i;
 	HeapTupleData tup;
 
-#if 0
 	tup.t_tableOid = RelationGetRelid(relation);
-#endif
 
 	rootlp = PageGetItemId(dp, rootoffnum);
 

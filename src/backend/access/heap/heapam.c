@@ -1185,7 +1185,6 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
  *					 heap access method interface
  * ----------------------------------------------------------------
  */
-
 TableScanDesc
 heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key,
@@ -1245,14 +1244,8 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 		PredicateLockRelation(relation, snapshot);
 	}
 
-#if 0
-	/*
-	 * GPDB removes t_tableOid from HeapTupleData.
-	 */
-
 	/* we only need to set this up once */
 	scan->rs_ctup.t_tableOid = RelationGetRelid(relation);
-#endif
 
 	/*
 	 * we do this here instead of in initscan() because heap_rescan also calls
@@ -1533,6 +1526,7 @@ heap_fetch(Relation relation,
 	 */
 	tuple->t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	tuple->t_len = ItemIdGetLength(lp);
+	tuple->t_tableOid = RelationGetRelid(relation);
 
 	/*
 	 * check tuple visibility, then release lock
@@ -1638,9 +1632,7 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 
 		heapTuple->t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 		heapTuple->t_len = ItemIdGetLength(lp);
-#if 0
 		heapTuple->t_tableOid = RelationGetRelid(relation);
-#endif
 		ItemPointerSetOffsetNumber(&heapTuple->t_self, offnum);
 
 		/*
@@ -1802,9 +1794,7 @@ heap_get_latest_tid(TableScanDesc sscan,
 		tp.t_self = ctid;
 		tp.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 		tp.t_len = ItemIdGetLength(lp);
-#if 0
 		tp.t_tableOid = RelationGetRelid(relation);
-#endif
 
 		/*
 		 * After following a t_ctid link, we might arrive at an unrelated
@@ -2639,9 +2629,7 @@ heap_delete(Relation relation, ItemPointer tid,
 	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(tid));
 	Assert(ItemIdIsNormal(lp));
 
-#if 0
 	tp.t_tableOid = RelationGetRelid(relation);
-#endif
 	tp.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	tp.t_len = ItemIdGetLength(lp);
 	tp.t_self = *tid;
@@ -3148,6 +3136,7 @@ heap_update_internal(Relation relation, ItemPointer otid, HeapTuple newtup,
 	 * Fill in enough data in oldtup for HeapDetermineModifiedColumns to work
 	 * properly.
 	 */
+	oldtup.t_tableOid = RelationGetRelid(relation);
 	oldtup.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	oldtup.t_len = ItemIdGetLength(lp);
 	oldtup.t_self = *otid;
@@ -4171,6 +4160,7 @@ heap_lock_tuple(Relation relation, HeapTuple tuple,
 
 	tuple->t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	tuple->t_len = ItemIdGetLength(lp);
+	tuple->t_tableOid = RelationGetRelid(relation);
 
 l3:
 	result = HeapTupleSatisfiesUpdate(relation, tuple, cid, *buffer);
@@ -5749,9 +5739,7 @@ heap_abort_speculative(Relation relation, ItemPointer tid)
 	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(tid));
 	Assert(ItemIdIsNormal(lp));
 
-#if 0
 	tp.t_tableOid = RelationGetRelid(relation);
-#endif
 	tp.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	tp.t_len = ItemIdGetLength(lp);
 	tp.t_self = *tid;
@@ -7690,9 +7678,7 @@ log_heap_new_cid(Relation relation, HeapTuple tup)
 	HeapTupleHeader hdr = tup->t_data;
 
 	Assert(ItemPointerIsValid(&tup->t_self));
-#if 0
 	Assert(tup->t_tableOid != InvalidOid);
-#endif
 
 	xlrec.top_xid = GetTopTransactionId();
 	xlrec.target_node = relation->rd_node;

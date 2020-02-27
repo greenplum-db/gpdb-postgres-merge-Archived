@@ -675,10 +675,7 @@ heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 			result = CommandIdGetDatum(HeapTupleHeaderGetRawCommandId(tup->t_data));
 			break;
 		case TableOidAttributeNumber:
-			/* GPDB_12_MERGE_FIXME: Revert this? */
-            /* CDB: Must now use a TupleTableSlot to access the 'tableoid'. */
-			result = ObjectIdGetDatum(InvalidOid);
-			elog(ERROR, "Invalid reference to \"tableoid\" system attribute");
+			result = ObjectIdGetDatum(tup->t_tableOid);
 			break;
 		case GpSegmentIdAttributeNumber:                       /*CDB*/
 			result = Int32GetDatum(GpIdentity.segindex);
@@ -726,6 +723,7 @@ heaptuple_copy_to(HeapTuple tuple, HeapTuple dest, uint32 *destlen)
 
 	newTuple->t_len = tuple->t_len;
 	newTuple->t_self = tuple->t_self;
+	newTuple->t_tableOid = tuple->t_tableOid;
 	newTuple->t_data = (HeapTupleHeader) ((char *) newTuple + HEAPTUPLESIZE);
 	memcpy((char *) newTuple->t_data, (char *) tuple->t_data, tuple->t_len);
 	return newTuple;
@@ -751,6 +749,7 @@ heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest)
 
 	dest->t_len = src->t_len;
 	dest->t_self = src->t_self;
+	dest->t_tableOid = src->t_tableOid;
 	dest->t_data = (HeapTupleHeader) palloc(src->t_len);
 	memcpy((char *) dest->t_data, (char *) src->t_data, src->t_len);
 }
@@ -1125,6 +1124,7 @@ heaptuple_form_to(TupleDesc tupleDescriptor, Datum *values, bool *isnull, HeapTu
 	 */
 	tuple->t_len = len;
 	ItemPointerSetInvalid(&(tuple->t_self));
+	tuple->t_tableOid = InvalidOid;
 
 	HeapTupleHeaderSetDatumLength(td, len);
 	HeapTupleHeaderSetTypeId(td, tupleDescriptor->tdtypeid);
@@ -1511,6 +1511,7 @@ heap_tuple_from_minimal_tuple(MinimalTuple mtup)
 	result = (HeapTuple) palloc(HEAPTUPLESIZE + len);
 	result->t_len = len;
 	ItemPointerSetInvalid(&(result->t_self));
+	result->t_tableOid = InvalidOid;
 	result->t_data = (HeapTupleHeader) ((char *) result + HEAPTUPLESIZE);
 	memcpy((char *) result->t_data + MINIMAL_TUPLE_OFFSET, mtup, mtup->t_len);
 	memset(result->t_data, 0, offsetof(HeapTupleHeaderData, t_infomask2));

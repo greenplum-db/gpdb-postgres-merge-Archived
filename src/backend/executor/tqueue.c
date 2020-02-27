@@ -204,9 +204,7 @@ TupleQueueReaderNext(TupleQueueReader *reader, bool nowait, bool *done)
 	 * (which had better be sufficiently aligned).
 	 */
 	ItemPointerSetInvalid(&htup.t_self);
-#if 0
 	htup.t_tableOid = InvalidOid;
-#endif
 	htup.t_len = nbytes;
 	htup.t_data = data;
 
