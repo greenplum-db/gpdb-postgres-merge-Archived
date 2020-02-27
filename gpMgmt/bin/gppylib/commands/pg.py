@@ -225,4 +225,4 @@ class PgBaseBackup(Command):
         if replication_slot_name:
             return ["--slot", replication_slot_name, "--wal-method", "stream"]
         else:
-            return ['--xlog']
+            return ["--wal-method", "fetch"]
