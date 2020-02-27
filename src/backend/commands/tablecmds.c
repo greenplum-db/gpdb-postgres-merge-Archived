@@ -4531,6 +4531,13 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 				cmd->subtype = AT_AddConstraintRecurse;
 			pass = AT_PASS_ADD_CONSTR;
 			break;
+		case AT_AddConstraintRecurse: /* ADD check CONSTRAINT internal */
+			/* Parent/Base CHECK constraints apply to child/part tables here.
+			 * No need for ATPartitionCheck
+			 */
+			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
+			pass = AT_PASS_ADD_CONSTR;
+			break;
 		case AT_AddIndexConstraint: /* ADD CONSTRAINT USING INDEX */
 			ATSimplePermissions(rel, ATT_TABLE);
 			/* This command never recurses */
