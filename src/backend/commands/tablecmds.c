@@ -1205,9 +1205,15 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		 * expressions into executable expression trees.  Like column defaults
 		 * and CHECK constraints, we could not have done the transformation
 		 * earlier.
+		 *
+		 * In GPDB, the dispatcher does the transformation and the QEs get
+		 * already-transformed expressions.
 		 */
-		stmt->partspec = transformPartitionSpec(rel, stmt->partspec,
-												&strategy);
+		if (Gp_role != GP_ROLE_EXECUTE)
+		{
+			stmt->partspec = transformPartitionSpec(rel, stmt->partspec,
+													&strategy);
+		}
 
 		ComputePartitionAttrs(pstate, rel, stmt->partspec->partParams,
 							  partattrs, &partexprs, partopclass,
