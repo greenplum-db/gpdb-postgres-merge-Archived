@@ -254,7 +254,6 @@ CREATE INDEX ON INTERVAL_TBL_OF USING btree (f1);
 SET enable_seqscan TO false;
 EXPLAIN (COSTS OFF)
 SELECT f1 FROM INTERVAL_TBL_OF r1 ORDER BY f1;
-<<<<<<< HEAD
                           QUERY PLAN                           
 ---------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -265,12 +264,6 @@ SELECT f1 FROM INTERVAL_TBL_OF r1 ORDER BY f1;
                ->  Bitmap Index Scan on interval_tbl_of_f1_idx
  Optimizer: Postgres query optimizer
 (7 rows)
-=======
-                             QUERY PLAN                             
---------------------------------------------------------------------
- Index Only Scan using interval_tbl_of_f1_idx on interval_tbl_of r1
-(1 row)
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 SELECT f1 FROM INTERVAL_TBL_OF r1 ORDER BY f1;
                     f1                     
