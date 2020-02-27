@@ -1499,13 +1499,8 @@ _equalIndexStmt(const IndexStmt *a, const IndexStmt *b)
 	COMPARE_SCALAR_FIELD(if_not_exists);
 	COMPARE_SCALAR_FIELD(reset_default_tblspc);
 
-	/* GPDB_12_MERGE_FIXME: removed fields */
-#if 0
-	COMPARE_SCALAR_FIELD(is_part_child);
-	COMPARE_SCALAR_FIELD(is_split_part);
-#endif
-	COMPARE_SCALAR_FIELD(parentIndexId);
-	COMPARE_SCALAR_FIELD(parentConstraintId);
+	COMPARE_NODE_FIELD(part_oids);
+	COMPARE_NODE_FIELD(part_idx_names);
 
 	return true;
 }

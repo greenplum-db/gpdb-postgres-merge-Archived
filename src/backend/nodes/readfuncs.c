@@ -844,13 +844,8 @@ _readIndexStmt(void)
 	READ_BOOL_FIELD(if_not_exists);
 	READ_BOOL_FIELD(reset_default_tblspc);
 
-	/* GPDB_12_MERGE_FIXME: removed fields */
-#if 0
-	READ_BOOL_FIELD(is_part_child);
-	READ_BOOL_FIELD(is_split_part);
-#endif
-	READ_OID_FIELD(parentIndexId);
-	READ_OID_FIELD(parentConstraintId);
+	READ_NODE_FIELD(part_oids);
+	READ_NODE_FIELD(part_idx_names);
 
 	READ_DONE();
 }

@@ -4227,13 +4227,8 @@ _copyIndexStmt(const IndexStmt *from)
 	COPY_SCALAR_FIELD(if_not_exists);
 	COPY_SCALAR_FIELD(reset_default_tblspc);
 
-	/* GPDB_12_MERGE_FIXME: removed fields */
-#if 0
-	COPY_SCALAR_FIELD(is_part_child);
-	COPY_SCALAR_FIELD(is_split_part);
-	COPY_SCALAR_FIELD(parentIndexId);
-	COPY_SCALAR_FIELD(parentConstraintId);
-#endif
+	COPY_NODE_FIELD(part_oids);
+	COPY_NODE_FIELD(part_idx_names);
 
 	return newnode;
 }

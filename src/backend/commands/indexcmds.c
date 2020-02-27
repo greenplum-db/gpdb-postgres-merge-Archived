@@ -584,6 +584,15 @@ DefineIndex(Oid relationId,
 	else
 		shouldDispatch = false;
 
+	if (parentIndexId)
+	{
+		/*
+		 * If we're recursing for partitions, don't dispatch this command
+		 * separately. We will dispatch the parent command.
+		 */
+		shouldDispatch = false;
+	}
+
 	/*
 	 * Some callers need us to run with an empty default_tablespace; this is a
 	 * necessary hack to be able to reproduce catalog state accurately when
@@ -1303,23 +1312,6 @@ DefineIndex(Oid relationId,
 		return address;
 	}
 
-	if (shouldDispatch)
-	{
-		/* make sure the QE uses the same index name that we chose */
-		stmt->idxname = indexRelationName;
-		stmt->oldNode = InvalidOid;
-		CdbDispatchUtilityStatement((Node *) stmt,
-									DF_CANCEL_ON_ERROR |
-									DF_WITH_SNAPSHOT |
-									DF_NEED_TWO_PHASE,
-									GetAssignedOidsForDispatch(),
-									NULL);
-
-		/* Set indcheckxmin in the master, if it was set on any segment */
-		if (!indexInfo->ii_BrokenHotChain)
-			cdb_sync_indcheckxmin_with_segments(indexRelationId);
-	}
-
 	/* Add any requested comment */
 	if (stmt->idxcomment != NULL)
 		CreateComments(indexRelationId, RelationRelationId, 0,
@@ -1332,16 +1324,6 @@ DefineIndex(Oid relationId,
 		 * partition to make sure they all contain a corresponding index.
 		 *
 		 * If we're called internally (no stmt->relation), recurse always.
-		 *
-		 * GPDB_12_MERGE_FIXME: old comment:
-		 *
-		 * GPDB: Upstream uses stmt->relation here to determine whether to continue
-		 * recusing in DefineIndex. However, GPDB always sets stmt->relation
-		 * because it needs to be dispatched to the QEs.
-		 *
-		 * GPDB_12_MERGE_FIXME: I wasn't sure what to do about that change, so I
-		 * reverted this to upstream version. Maybe we should have a new field for
-		 * the dispatch purposes, instead of always setting 'relation'?
 		 */
 		if (!stmt->relation || stmt->relation->inh)
 		{
@@ -1522,6 +1504,23 @@ DefineIndex(Oid relationId,
 					 * they mustn't be applied to the child either.
 					 */
 					childStmt->idxname = NULL;
+					if (Gp_role == GP_ROLE_EXECUTE)
+					{
+						ListCell   *lc;
+						int			i;
+
+						i = 0;
+						foreach (lc, stmt->part_oids)
+						{
+							if (lfirst_oid(lc) == childRelid)
+							{
+								childStmt->idxname = strVal(list_nth(stmt->part_idx_names, i));
+								break;
+							}
+						}
+						if (!childStmt->idxname)
+							elog(ERROR, "no index name received from QD for partition %u", childRelid);
+					}
 					childStmt->relation = NULL;
 					childStmt->indexOid = InvalidOid;
 					childStmt->oldNode = InvalidOid;
@@ -1557,21 +1556,18 @@ DefineIndex(Oid relationId,
 					if (found_whole_row)
 						elog(ERROR, "cannot convert whole-row table reference");
 
-					/*
-					 * GPDB: Because we need to dispatch these values to the
-					 * segments, put the parentIndexId and the
-					 * parentConstraintId in the IndexStmt. In upstream
-					 * Postgres these fields are parameters to DefineIndex.
-					 */
-					childStmt->parentIndexId = indexRelationId;
-					childStmt->parentConstraintId = createdConstraintId;
-
 					DefineIndex(childRelid, childStmt,
 								InvalidOid, /* no predefined OID */
 								indexRelationId,	/* this is our child */
 								createdConstraintId,
 								is_alter_table, check_rights, check_not_in_use,
 								skip_build, quiet);
+
+					if (Gp_role == GP_ROLE_DISPATCH)
+					{
+						stmt->part_oids = lappend_oid(stmt->part_oids, childRelid);
+						stmt->part_idx_names = lappend(stmt->part_idx_names, makeString(childStmt->idxname));
+					}
 				}
 
 				pgstat_progress_update_param(PROGRESS_CREATEIDX_PARTITIONS_DONE,
@@ -1604,6 +1600,21 @@ DefineIndex(Oid relationId,
 			}
 		}
 
+		stmt->idxname = indexRelationName;
+		if (shouldDispatch)
+		{
+			/* make sure the QE uses the same index name that we chose */
+			elog(NOTICE, "dispatching 1");
+			stmt->oldNode = InvalidOid;
+			Assert(stmt->relation != NULL);
+			CdbDispatchUtilityStatement((Node *) stmt,
+										DF_CANCEL_ON_ERROR |
+										DF_WITH_SNAPSHOT |
+										DF_NEED_TWO_PHASE,
+										GetAssignedOidsForDispatch(),
+										NULL);
+		}
+
 		/*
 		 * Indexes on partitioned tables are not themselves built, so we're
 		 * done here.
@@ -1612,6 +1623,25 @@ DefineIndex(Oid relationId,
 		if (!OidIsValid(parentIndexId))
 			pgstat_progress_end_command();
 		return address;
+	}
+
+	stmt->idxname = indexRelationName;
+	if (shouldDispatch)
+	{
+		/* make sure the QE uses the same index name that we chose */
+		elog(NOTICE, "dispatching 2");
+		stmt->oldNode = InvalidOid;
+		Assert(stmt->relation != NULL);
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR |
+									DF_WITH_SNAPSHOT |
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+
+		/* Set indcheckxmin in the master, if it was set on any segment */
+		if (!indexInfo->ii_BrokenHotChain)
+			cdb_sync_indcheckxmin_with_segments(indexRelationId);
 	}
 
 	if (!stmt->concurrent)

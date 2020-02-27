@@ -3245,13 +3245,8 @@ _outIndexStmt(StringInfo str, const IndexStmt *node)
 	WRITE_BOOL_FIELD(if_not_exists);
 	WRITE_BOOL_FIELD(reset_default_tblspc);
 
-	/* GPDB_12_MERGE_FIXME: removed fields */
-#if 0
-	WRITE_BOOL_FIELD(is_part_child);
-	WRITE_BOOL_FIELD(is_split_part);
-#endif
-	WRITE_OID_FIELD(parentIndexId);
-	WRITE_OID_FIELD(parentConstraintId);
+	WRITE_NODE_FIELD(part_oids);
+	WRITE_NODE_FIELD(part_idx_names);
 }
 
 static void

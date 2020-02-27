@@ -3214,11 +3214,14 @@ typedef struct IndexStmt
 	bool		reset_default_tblspc;	/* reset default_tablespace prior to
 										 * executing */
 
-	// GPDB_12_MERGE_FIXME: GPDB legacy partitioning stuff. Remove?
-	//bool		is_part_child;	/* in service of a part of a partition? */
-	//bool		is_split_part;	/* Is this for SPLIT PARTITION command? */
-	Oid		parentIndexId;	/* attach to a parent index if set */
-	Oid		parentConstraintId;		/* attach to a parent constraint if set */
+	/*
+	 * CREATE INDEX is expanded to create the index on all partitions. To
+	 * make sure the same name is used on all QEs as in the QD, the index
+	 * names chosen by the QD for each partition are stashed in
+	 * part_idx_oid/names.
+	 */
+	List	   *part_oids;
+	List	   *part_idx_names;	/* list of Value strings */
 } IndexStmt;
 
 /* ----------------------
