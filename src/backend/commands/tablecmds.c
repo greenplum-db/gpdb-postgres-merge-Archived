@@ -3957,6 +3957,8 @@ void
 AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 {
 	Relation	rel;
+	AlterTableStmt *origstmt = stmt;
+	stmt = copyObject(stmt);
 
 	/* Caller is required to provide an adequate lock. */
 	rel = relation_open(relid, NoLock);
@@ -3971,7 +3973,7 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
 		 * Some ALTER TABLE commands rewrite the table, and cause new OIDs
 		 * and/or relfilenodes to be assigned.
 		 */
-		CdbDispatchUtilityStatement((Node *) stmt,
+		CdbDispatchUtilityStatement((Node *) origstmt,
 									DF_CANCEL_ON_ERROR |
 									DF_WITH_SNAPSHOT |
 									DF_NEED_TWO_PHASE,
