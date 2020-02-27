@@ -3252,35 +3252,6 @@ rewriteTargetView(Query *parsetree, Relation view)
 	view_rte->securityQuals = NIL;
 
 	/*
-	 * For UPDATE/DELETE, rewriteTargetListUD will have added a wholerow junk
-	 * TLE for the view to the end of the targetlist, which we no longer need.
-	 * Remove it to avoid unnecessary work when we process the targetlist.
-	 * Note that when we recurse through rewriteQuery a new junk TLE will be
-	 * added to allow the executor to find the proper row in the new target
-	 * relation.  (So, if we failed to do this, we might have multiple junk
-	 * TLEs with the same name, which would be disastrous.)
-	 */
-	if (parsetree->commandType != CMD_INSERT)
-	{
-		TargetEntry *tle = (TargetEntry *) llast(parsetree->targetList);
-
-		Assert(tle->resjunk);
-		Assert(IsA(tle->expr, Var) &&
-			   ((Var *) tle->expr)->varno == parsetree->resultRelation &&
-			   ((Var *) tle->expr)->varattno == GpSegmentIdAttributeNumber);
-		Assert(strcmp(tle->resname, "gp_segment_id") == 0);
-		parsetree->targetList = list_delete_ptr(parsetree->targetList, tle);
-
-		tle = (TargetEntry *) llast(parsetree->targetList);
-		Assert(tle->resjunk);
-		Assert(IsA(tle->expr, Var) &&
-			   ((Var *) tle->expr)->varno == parsetree->resultRelation &&
-			   ((Var *) tle->expr)->varattno == 0);
-		Assert(strcmp(tle->resname, "wholerow") == 0);
-		parsetree->targetList = list_delete_ptr(parsetree->targetList, tle);
-	}
-
-	/*
 	 * Now update all Vars in the outer query that reference the view to
 	 * reference the appropriate column of the base relation instead.
 	 */
