@@ -43,7 +43,8 @@ gpcloud:
 
 pxf:
 	@if [ "$(enable_pxf)" = "yes" ]; then \
-		$(MAKE) -C pxf_fdw; \
+		echo "GPDB_12_MERGE_FIXME: skipping pxf_fdw"; \
+		echo "-- $(MAKE) -C pxf_fdw;"; \
 	fi
 
 mapreduce:
@@ -65,7 +66,8 @@ install:
 		$(MAKE) -C gpmapreduce install; \
 	fi
 	@if [ "$(enable_pxf)" = "yes" ]; then \
-		$(MAKE) -C pxf_fdw install; \
+		echo "GPDB_12_MERGE_FIXME: skipping pxf_fdw"; \
+		echo "-- $(MAKE) -C pxf_fdw install;"; \
 	fi
 	@if [ "$(enable_orafce)" = "yes" ]; then \
 		$(MAKE) -C orafce NO_PGXS=true install; \
