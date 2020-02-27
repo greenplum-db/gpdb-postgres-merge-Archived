@@ -2518,27 +2518,14 @@ Options: fastupdate=on, gin_pending_list_limit=128
 --
 -- HASH
 --
--- GPDB: does not support hash indexes
--- start_ignore
 CREATE INDEX hash_i4_index ON hash_i4_heap USING hash (random int4_ops);
-<<<<<<< HEAD
-ERROR:  hash indexes are not supported
-CREATE INDEX hash_name_index ON hash_name_heap USING hash (random name_ops);
-ERROR:  hash indexes are not supported
-CREATE INDEX hash_txt_index ON hash_txt_heap USING hash (random text_ops);
-ERROR:  hash indexes are not supported
-CREATE INDEX hash_f8_index ON hash_f8_heap USING hash (random float8_ops);
-ERROR:  hash indexes are not supported
-=======
 CREATE INDEX hash_name_index ON hash_name_heap USING hash (random name_ops);
 CREATE INDEX hash_txt_index ON hash_txt_heap USING hash (random text_ops);
 CREATE INDEX hash_f8_index ON hash_f8_heap USING hash (random float8_ops) WITH (fillfactor=60);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 CREATE UNLOGGED TABLE unlogged_hash_table (id int4);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'id' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 CREATE INDEX unlogged_hash_index ON unlogged_hash_table USING hash (id int4_ops);
-ERROR:  hash indexes are not supported
 DROP TABLE unlogged_hash_table;
 -- CREATE INDEX hash_ovfl_index ON hash_ovfl_heap USING hash (x int4_ops);
 -- Test hash index build tuplesorting.  Force hash tuplesort using low
@@ -2563,7 +2550,6 @@ SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
 (1 row)
 
 DROP INDEX hash_tuplesort_idx;
--- end_ignore
 RESET maintenance_work_mem;
 --
 -- Test functional index
@@ -2837,21 +2823,10 @@ DROP TABLE cwi_test;
 --
 -- Check handling of indexes on system columns
 --
-<<<<<<< HEAD
-CREATE TABLE oid_table (a INT) WITH OIDS;
-NOTICE:  OIDS=TRUE is not recommended for user-created tables
-HINT:  Use OIDS=FALSE to prevent wrap-around of the OID counter.
--- An index on the OID column should be allowed
-CREATE INDEX ON oid_table (oid);
--- Other system columns cannot be indexed
-CREATE INDEX ON oid_table (ctid);
-ERROR:  index creation on system columns is not supported
-=======
 CREATE TABLE syscol_table (a INT);
 -- System columns cannot be indexed
 CREATE INDEX ON syscolcol_table (ctid);
 ERROR:  relation "syscolcol_table" does not exist
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 -- nor used in expressions
 CREATE INDEX ON syscol_table ((ctid >= '(1000,0)'));
 ERROR:  index creation on system columns is not supported

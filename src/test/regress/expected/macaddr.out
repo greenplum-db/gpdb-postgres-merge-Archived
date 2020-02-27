@@ -41,10 +41,6 @@ SELECT * FROM macaddr_data;
 
 CREATE INDEX macaddr_data_btree ON macaddr_data USING btree (b);
 CREATE INDEX macaddr_data_hash ON macaddr_data USING hash (b);
-<<<<<<< HEAD
-ERROR:  hash indexes are not supported
-=======
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 SELECT a, b, trunc(b) FROM macaddr_data ORDER BY 2, 1;
  a  |         b         |       trunc       
 ----+-------------------+-------------------
