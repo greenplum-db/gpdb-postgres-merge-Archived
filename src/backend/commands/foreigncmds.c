@@ -43,6 +43,8 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
+#include "catalog/oid_dispatch.h"
+
 
 typedef struct
 {
@@ -618,8 +620,9 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
-	fdwId = GetNewOidWithIndex(rel, ForeignDataWrapperOidIndexId,
-							   Anum_pg_foreign_data_wrapper_oid);
+	fdwId = GetNewOidForForeignDataWrapper(rel, ForeignDataWrapperOidIndexId,
+										   Anum_pg_foreign_data_wrapper_oid,
+										   stmt->fdwname);
 	values[Anum_pg_foreign_data_wrapper_oid - 1] = ObjectIdGetDatum(fdwId);
 	values[Anum_pg_foreign_data_wrapper_fdwname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->fdwname));
@@ -950,8 +953,9 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
-	srvId = GetNewOidWithIndex(rel, ForeignServerOidIndexId,
-							   Anum_pg_foreign_server_oid);
+	srvId = GetNewOidForForeignServer(rel, ForeignServerOidIndexId,
+									  Anum_pg_foreign_server_oid,
+									  stmt->servername);
 	values[Anum_pg_foreign_server_oid - 1] = ObjectIdGetDatum(srvId);
 	values[Anum_pg_foreign_server_srvname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->servername));
@@ -1249,8 +1253,9 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
-	umId = GetNewOidWithIndex(rel, UserMappingOidIndexId,
-							  Anum_pg_user_mapping_oid);
+	umId = GetNewOidForUserMapping(rel, UserMappingOidIndexId,
+								   Anum_pg_user_mapping_oid,
+								   useId, srv->serverid);
 	values[Anum_pg_user_mapping_oid - 1] = ObjectIdGetDatum(umId);
 	values[Anum_pg_user_mapping_umuser - 1] = ObjectIdGetDatum(useId);
 	values[Anum_pg_user_mapping_umserver - 1] = ObjectIdGetDatum(srv->serverid);
