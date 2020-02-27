@@ -85,7 +85,8 @@ CreateAccessMethod(CreateAmStmt *stmt)
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
-	amoid = GetNewOidWithIndex(rel, AmOidIndexId, Anum_pg_am_oid);
+	amoid = GetNewOidForAccessMethod(rel, AmOidIndexId, Anum_pg_am_oid,
+									 stmt->amname);
 	values[Anum_pg_am_oid - 1] = ObjectIdGetDatum(amoid);
 	values[Anum_pg_am_amname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->amname));

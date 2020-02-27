@@ -709,7 +709,6 @@ _readConst(void)
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
-#ifndef COMPILING_BINARY_FUNCS
 /*
  * _readConstraint
  */
@@ -718,102 +717,48 @@ _readConstraint(void)
 {
 	READ_LOCALS(Constraint);
 
+	READ_ENUM_FIELD(contype, ConstrType);
 	READ_STRING_FIELD(conname);			/* name, or NULL if unnamed */
 	READ_BOOL_FIELD(deferrable);
 	READ_BOOL_FIELD(initdeferred);
 	READ_LOCATION_FIELD(location);
 
-	token = pg_strtok(&length);			/* skip:  :contype */
+	READ_BOOL_FIELD(is_no_inherit);
+	READ_NODE_FIELD(raw_expr);
+	READ_STRING_FIELD(cooked_expr);
+	READ_CHAR_FIELD(generated_when);
 
-	token = pg_strtok(&length);
-	if (strncmp(token, "PRIMARY_KEY", length)==0)
-	{
-		local_node->contype = CONSTR_PRIMARY;
-		READ_NODE_FIELD(keys);
-		READ_NODE_FIELD(options);
-		READ_STRING_FIELD(indexspace);
-		/* access_method and where_clause not currently used */
-	}
-	else if (strncmp(token, "UNIQUE", length)==0)
-	{
-		local_node->contype = CONSTR_UNIQUE;
-		READ_NODE_FIELD(keys);
-		READ_NODE_FIELD(options);
-		READ_STRING_FIELD(indexspace);
-		/* access_method and where_clause not currently used */
-	}
-	else if (strncmp(token, "CHECK", length)==0)
-	{
-		local_node->contype = CONSTR_CHECK;
-		READ_NODE_FIELD(raw_expr);
-		READ_STRING_FIELD(cooked_expr);
-		/*
-		 * GPDB: need dispatch skip_validation and is_no_inherit for statement like:
-		 * ALTER DOMAIN things ADD CONSTRAINT meow CHECK (VALUE < 11) NOT VALID;
-		 * ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK NO INHERIT (b > 0);
-		 */
-		READ_BOOL_FIELD(skip_validation);
-		READ_BOOL_FIELD(is_no_inherit);
-	}
-	else if (strncmp(token, "DEFAULT", length)==0)
-	{
-		local_node->contype = CONSTR_DEFAULT;
-		READ_NODE_FIELD(raw_expr);
-		READ_STRING_FIELD(cooked_expr);
-	}
-	else if (strncmp(token, "EXCLUSION", length)==0)
-	{
-		local_node->contype = CONSTR_EXCLUSION;
-		READ_NODE_FIELD(exclusions);
-		READ_NODE_FIELD(options);
-		READ_STRING_FIELD(indexspace);
-		READ_STRING_FIELD(access_method);
-		READ_NODE_FIELD(where_clause);
-	}
-	else if (strncmp(token, "FOREIGN_KEY", length)==0)
-	{
-		local_node->contype = CONSTR_FOREIGN;
-		READ_NODE_FIELD(pktable);
-		READ_NODE_FIELD(fk_attrs);
-		READ_NODE_FIELD(pk_attrs);
-		READ_CHAR_FIELD(fk_matchtype);
-		READ_CHAR_FIELD(fk_upd_action);
-		READ_CHAR_FIELD(fk_del_action);
-		READ_BOOL_FIELD(skip_validation);
-		READ_BOOL_FIELD(initially_valid);
-		READ_OID_FIELD(trig1Oid);
-		READ_OID_FIELD(trig2Oid);
-		READ_OID_FIELD(trig3Oid);
-		READ_OID_FIELD(trig4Oid);
-	}
-	else if (strncmp(token, "NULL", length)==0)
-	{
-		local_node->contype = CONSTR_NULL;
-	}
-	else if (strncmp(token, "NOT_NULL", length)==0)
-	{
-		local_node->contype = CONSTR_NOTNULL;
-	}
-	else if (strncmp(token, "ATTR_DEFERRABLE", length)==0)
-	{
-		local_node->contype = CONSTR_ATTR_DEFERRABLE;
-	}
-	else if (strncmp(token, "ATTR_NOT_DEFERRABLE", length)==0)
-	{
-		local_node->contype = CONSTR_ATTR_NOT_DEFERRABLE;
-	}
-	else if (strncmp(token, "ATTR_DEFERRED", length)==0)
-	{
-		local_node->contype = CONSTR_ATTR_DEFERRED;
-	}
-	else if (strncmp(token, "ATTR_IMMEDIATE", length)==0)
-	{
-		local_node->contype = CONSTR_ATTR_IMMEDIATE;
-	}
+	READ_NODE_FIELD(keys);
+	READ_NODE_FIELD(including);
+
+	READ_NODE_FIELD(exclusions);
+
+	READ_NODE_FIELD(options);
+	READ_STRING_FIELD(indexname);
+	READ_STRING_FIELD(indexspace);
+	READ_BOOL_FIELD(reset_default_tblspc);
+
+	READ_STRING_FIELD(access_method);
+	READ_NODE_FIELD(where_clause);
+
+	READ_NODE_FIELD(pktable);
+	READ_NODE_FIELD(fk_attrs);
+	READ_NODE_FIELD(pk_attrs);
+	READ_CHAR_FIELD(fk_matchtype);
+	READ_CHAR_FIELD(fk_upd_action);
+	READ_CHAR_FIELD(fk_del_action);
+	READ_NODE_FIELD(old_conpfeqop);
+	READ_OID_FIELD(old_pktable_oid);
+
+	READ_BOOL_FIELD(skip_validation);
+	READ_BOOL_FIELD(initially_valid);
+	READ_OID_FIELD(trig1Oid);
+	READ_OID_FIELD(trig2Oid);
+	READ_OID_FIELD(trig3Oid);
+	READ_OID_FIELD(trig4Oid);
 
 	READ_DONE();
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static IndexStmt *
 _readIndexStmt(void)

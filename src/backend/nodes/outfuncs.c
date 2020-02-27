@@ -4759,137 +4759,55 @@ _outRangeTableFuncCol(StringInfo str, const RangeTableFuncCol *node)
 	WRITE_NODE_FIELD(coldefexpr);
 	WRITE_LOCATION_FIELD(location);
 }
+#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outConstraint(StringInfo str, const Constraint *node)
 {
 	WRITE_NODE_TYPE("CONSTRAINT");
 
-	WRITE_STRING_FIELD(conname);
+	WRITE_ENUM_FIELD(contype, ConstrType);
+	WRITE_STRING_FIELD(conname);			/* name, or NULL if unnamed */
 	WRITE_BOOL_FIELD(deferrable);
 	WRITE_BOOL_FIELD(initdeferred);
 	WRITE_LOCATION_FIELD(location);
 
-	appendStringInfoString(str, " :contype ");
-	switch (node->contype)
-	{
-		case CONSTR_NULL:
-			appendStringInfoString(str, "NULL");
-			break;
+	WRITE_BOOL_FIELD(is_no_inherit);
+	WRITE_NODE_FIELD(raw_expr);
+	WRITE_STRING_FIELD(cooked_expr);
+	WRITE_CHAR_FIELD(generated_when);
 
-		case CONSTR_NOTNULL:
-			appendStringInfoString(str, "NOT_NULL");
-			break;
+	WRITE_NODE_FIELD(keys);
+	WRITE_NODE_FIELD(including);
 
-		case CONSTR_DEFAULT:
-			appendStringInfoString(str, "DEFAULT");
-			WRITE_NODE_FIELD(raw_expr);
-			WRITE_STRING_FIELD(cooked_expr);
-			break;
+	WRITE_NODE_FIELD(exclusions);
 
-		case CONSTR_IDENTITY:
-			appendStringInfoString(str, "IDENTITY");
-			WRITE_NODE_FIELD(raw_expr);
-			WRITE_STRING_FIELD(cooked_expr);
-			WRITE_CHAR_FIELD(generated_when);
-			break;
+	WRITE_NODE_FIELD(options);
+	WRITE_STRING_FIELD(indexname);
+	WRITE_STRING_FIELD(indexspace);
+	WRITE_BOOL_FIELD(reset_default_tblspc);
 
-		case CONSTR_GENERATED:
-			appendStringInfoString(str, "GENERATED");
-			WRITE_NODE_FIELD(raw_expr);
-			WRITE_STRING_FIELD(cooked_expr);
-			WRITE_CHAR_FIELD(generated_when);
-			break;
+	WRITE_STRING_FIELD(access_method);
+	WRITE_NODE_FIELD(where_clause);
 
-		case CONSTR_CHECK:
-			appendStringInfoString(str, "CHECK");
-			WRITE_NODE_FIELD(raw_expr);
-			WRITE_STRING_FIELD(cooked_expr);
-			/*
-			 * GPDB: need dispatch skip_validation and is_no_inherit for statement like:
-			 * ALTER DOMAIN things ADD CONSTRAINT meow CHECK (VALUE < 11) NOT VALID;
-			 * ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK NO INHERIT (b > 0);
-			 */
-			WRITE_BOOL_FIELD(skip_validation);
-			WRITE_BOOL_FIELD(initially_valid);
-			WRITE_BOOL_FIELD(is_no_inherit);
-			break;
+	WRITE_NODE_FIELD(pktable);
+	WRITE_NODE_FIELD(fk_attrs);
+	WRITE_NODE_FIELD(pk_attrs);
+	WRITE_CHAR_FIELD(fk_matchtype);
+	WRITE_CHAR_FIELD(fk_upd_action);
+	WRITE_CHAR_FIELD(fk_del_action);
+	WRITE_NODE_FIELD(old_conpfeqop);
+	WRITE_OID_FIELD(old_pktable_oid);
 
-		case CONSTR_PRIMARY:
-			appendStringInfoString(str, "PRIMARY_KEY");
-			WRITE_NODE_FIELD(keys);
-			WRITE_NODE_FIELD(including);
-			WRITE_NODE_FIELD(options);
-			WRITE_STRING_FIELD(indexname);
-			WRITE_STRING_FIELD(indexspace);
-			WRITE_BOOL_FIELD(reset_default_tblspc);
-			/* access_method and where_clause not currently used */
-			break;
-
-		case CONSTR_UNIQUE:
-			appendStringInfoString(str, "UNIQUE");
-			WRITE_NODE_FIELD(keys);
-			WRITE_NODE_FIELD(including);
-			WRITE_NODE_FIELD(options);
-			WRITE_STRING_FIELD(indexname);
-			WRITE_STRING_FIELD(indexspace);
-			WRITE_BOOL_FIELD(reset_default_tblspc);
-			/* access_method and where_clause not currently used */
-			break;
-
-		case CONSTR_EXCLUSION:
-			appendStringInfoString(str, "EXCLUSION");
-			WRITE_NODE_FIELD(exclusions);
-			WRITE_NODE_FIELD(including);
-			WRITE_NODE_FIELD(options);
-			WRITE_STRING_FIELD(indexname);
-			WRITE_STRING_FIELD(indexspace);
-			WRITE_BOOL_FIELD(reset_default_tblspc);
-			WRITE_STRING_FIELD(access_method);
-			WRITE_NODE_FIELD(where_clause);
-			break;
-
-		case CONSTR_FOREIGN:
-			appendStringInfoString(str, "FOREIGN_KEY");
-			WRITE_NODE_FIELD(pktable);
-			WRITE_NODE_FIELD(fk_attrs);
-			WRITE_NODE_FIELD(pk_attrs);
-			WRITE_CHAR_FIELD(fk_matchtype);
-			WRITE_CHAR_FIELD(fk_upd_action);
-			WRITE_CHAR_FIELD(fk_del_action);
-			WRITE_NODE_FIELD(old_conpfeqop);
-			WRITE_OID_FIELD(old_pktable_oid);
-			WRITE_BOOL_FIELD(skip_validation);
-			WRITE_BOOL_FIELD(initially_valid);
-			WRITE_OID_FIELD(trig1Oid);
-			WRITE_OID_FIELD(trig2Oid);
-			WRITE_OID_FIELD(trig3Oid);
-			WRITE_OID_FIELD(trig4Oid);
-			break;
-
-		case CONSTR_ATTR_DEFERRABLE:
-			appendStringInfoString(str, "ATTR_DEFERRABLE");
-			break;
-
-		case CONSTR_ATTR_NOT_DEFERRABLE:
-			appendStringInfoString(str, "ATTR_NOT_DEFERRABLE");
-			break;
-
-		case CONSTR_ATTR_DEFERRED:
-			appendStringInfoString(str, "ATTR_DEFERRED");
-			break;
-
-		case CONSTR_ATTR_IMMEDIATE:
-			appendStringInfoString(str, "ATTR_IMMEDIATE");
-			break;
-
-		default:
-			appendStringInfo(str, "<unrecognized_constraint %d>",
-							(int) node->contype);
-			break;
-	}
+	WRITE_BOOL_FIELD(skip_validation);
+	WRITE_BOOL_FIELD(initially_valid);
+	WRITE_OID_FIELD(trig1Oid);
+	WRITE_OID_FIELD(trig2Oid);
+	WRITE_OID_FIELD(trig3Oid);
+	WRITE_OID_FIELD(trig4Oid);
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outForeignKeyCacheInfo(StringInfo str, const ForeignKeyCacheInfo *node)
 {
