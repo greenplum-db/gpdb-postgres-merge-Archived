@@ -277,7 +277,25 @@ CREATE AGGREGATE wrongreturntype (float8)
     minvfunc = float8mi_int
 );
 
-<<<<<<< HEAD
+-- invalid: non-lowercase quoted identifiers
+
+CREATE AGGREGATE case_agg ( -- old syntax
+	"Sfunc1" = int4pl,
+	"Basetype" = int4,
+	"Stype1" = int4,
+	"Initcond1" = '0',
+	"Parallel" = safe
+);
+
+CREATE AGGREGATE case_agg(float8)
+(
+	"Stype" = internal,
+	"Sfunc" = ordered_set_transition,
+	"Finalfunc" = percentile_disc_final,
+	"Finalfunc_extra" = true,
+	"Finalfunc_modify" = read_write,
+	"Parallel" = safe
+);
 
 
 -- Negative test: "ordered aggregate prefunc is not supported"
@@ -305,24 +323,4 @@ select string_concat(t) from (select * from aggtest2 limit 2000) tmp;
 drop table aggtest2;
 drop aggregate string_concat(text);
 drop function str_concat(text, text);
-=======
--- invalid: non-lowercase quoted identifiers
 
-CREATE AGGREGATE case_agg ( -- old syntax
-	"Sfunc1" = int4pl,
-	"Basetype" = int4,
-	"Stype1" = int4,
-	"Initcond1" = '0',
-	"Parallel" = safe
-);
-
-CREATE AGGREGATE case_agg(float8)
-(
-	"Stype" = internal,
-	"Sfunc" = ordered_set_transition,
-	"Finalfunc" = percentile_disc_final,
-	"Finalfunc_extra" = true,
-	"Finalfunc_modify" = read_write,
-	"Parallel" = safe
-);
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196

@@ -733,13 +733,9 @@ SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
 
-<<<<<<< HEAD
 RESET random_page_cost;
 RESET enable_indexonlyscan;
 RESET enable_indexscan;
-=======
-RESET enable_indexonlyscan;
->>>>>>> 9e1c9f959422192bbe1b842a2a1ffaf76b080196
 
 --
 -- Check elimination of constant-NULL subexpressions
