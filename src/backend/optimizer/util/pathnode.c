@@ -3290,6 +3290,26 @@ create_resultscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->parallel_workers = 0;
 	pathnode->pathkeys = NIL;	/* result is always unordered */
 
+	{
+		char		exec_location;
+
+		exec_location = check_execute_on_functions((Node *) rel->reltarget->exprs);
+
+		if (exec_location == PROEXECLOCATION_MASTER)
+			CdbPathLocus_MakeEntry(&pathnode->locus);
+		else if (exec_location == PROEXECLOCATION_ALL_SEGMENTS)
+		{
+			/* GPDB_12_MERGE_FIXME: I'm not sure if this makes sense. This
+			 * would return multiple rows, one for each segment, but usually
+			 * a "SELECT func()" is expected to return just one row.
+			 */
+			CdbPathLocus_MakeStrewn(&pathnode->locus,
+									getgpsegmentCount());
+		}
+		else
+			CdbPathLocus_MakeGeneral(&pathnode->locus);
+	}
+
 	cost_resultscan(pathnode, root, rel, pathnode->param_info);
 
 	return pathnode;

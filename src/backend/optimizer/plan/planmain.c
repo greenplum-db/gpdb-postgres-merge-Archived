@@ -299,6 +299,30 @@ query_planner(PlannerInfo *root,
 	 */
 	final_rel = make_one_rel(root, joinlist);
 
+	/* Modify paths to support unique rowid operation for subquery preds. */
+	/* GPDB_12_MERGE_FIXME: we used to do this in create_plan(), but I think
+	 * this is a more appropriate place. Moving it here means that we're doing
+	 * this before sorting and other "upper planner" stuff. Extract this to
+	 * a separate PR for master?
+	 */
+	if (root->join_info_list)
+	{
+		ListCell  *lc;
+
+		foreach (lc, final_rel->pathlist)
+		{
+			Path	   *path = (Path *) lfirst(lc);
+
+			cdbpath_dedup_fixup(root, path);
+		}
+		foreach (lc, final_rel->partial_pathlist)
+		{
+			Path	   *path = (Path *) lfirst(lc);
+
+			cdbpath_dedup_fixup(root, path);
+		}
+	}
+
 	/* Check that we got at least one usable path */
 	if (!final_rel || !final_rel->cheapest_total_path ||
 		final_rel->cheapest_total_path->param_info != NULL)
