@@ -1604,7 +1604,6 @@ DefineIndex(Oid relationId,
 		if (shouldDispatch)
 		{
 			/* make sure the QE uses the same index name that we chose */
-			elog(NOTICE, "dispatching 1");
 			stmt->oldNode = InvalidOid;
 			Assert(stmt->relation != NULL);
 			CdbDispatchUtilityStatement((Node *) stmt,
@@ -1629,7 +1628,6 @@ DefineIndex(Oid relationId,
 	if (shouldDispatch)
 	{
 		/* make sure the QE uses the same index name that we chose */
-		elog(NOTICE, "dispatching 2");
 		stmt->oldNode = InvalidOid;
 		Assert(stmt->relation != NULL);
 		CdbDispatchUtilityStatement((Node *) stmt,
