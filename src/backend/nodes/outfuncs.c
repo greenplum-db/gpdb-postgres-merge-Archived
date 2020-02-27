@@ -3562,6 +3562,7 @@ static void
 _outAlterFunctionStmt(StringInfo str, const AlterFunctionStmt *node)
 {
 	WRITE_NODE_TYPE("ALTERFUNCTIONSTMT");
+	WRITE_ENUM_FIELD(objtype,ObjectType);
 	WRITE_NODE_FIELD(func);
 	WRITE_NODE_FIELD(actions);
 }

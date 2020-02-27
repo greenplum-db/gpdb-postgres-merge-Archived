@@ -3756,6 +3756,7 @@ static AlterFunctionStmt *
 _readAlterFunctionStmt(void)
 {
 	READ_LOCALS(AlterFunctionStmt);
+	READ_ENUM_FIELD(objtype,ObjectType);
 	READ_NODE_FIELD(func);
 	READ_NODE_FIELD(actions);
 
