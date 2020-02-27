@@ -127,21 +127,20 @@ ExecResult(PlanState *pstate)
 				return NULL;
 
 			/*
-			 * GPDB: if there's a non-constant qual, check that too.
-			 *
-			 * GPDB_12_MERGE_FIXME: why does PostgreSQL not do this?
-			 * The code to initialize the qual with ExecInitQual is
-			 * in upstream, so surely it should be evaluated somewhere,
-			 * too?
-			 */
-			if (node->ps.qual && !ExecQual(node->ps.qual, econtext))
-				continue;
-
-			/*
 			 * prepare to compute projection expressions, which will expect to
 			 * access the input tuples as varno OUTER.
 			 */
 			econtext->ecxt_outertuple = outerTupleSlot;
+
+			/*
+			 * GPDB: if there's a non-constant qual, check that too.
+			 *
+			 * PostgreSQL also initializes node->ps.qual in ExecInitResult,
+			 * but it's not used for anything. But GPDB can create Results
+			 * with quals, see create_projection_path_with_quals().
+			 */
+			if (node->ps.qual && !ExecQualAndReset(node->ps.qual, econtext))
+				continue;
 		}
 		else
 		{
@@ -265,6 +264,7 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	resstate->ps.state = estate;
 	resstate->ps.ExecProcNode = ExecResult;
 
+	resstate->rs_done = false;
 	resstate->rs_checkqual = (node->resconstantqual == NULL) ? false : true;
 
 	/*
@@ -291,6 +291,14 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	ExecAssignProjectionInfo(&resstate->ps, NULL);
 
 	/*
+	 * initialize child expressions
+	 */
+	resstate->ps.qual =
+		ExecInitQual(node->plan.qual, (PlanState *) resstate);
+	resstate->resconstantqual =
+		ExecInitQual((List *) node->resconstantqual, (PlanState *) resstate);
+
+	/*
 	 * initialize hash filter
 	 */
 	if (node->numHashFilterCols > 0)
@@ -308,11 +316,6 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	{
 		SPI_ReserveMemory(((Plan *)node)->operatorMemKB * 1024L);
 	}
-
-	resstate->ps.qual =
-		ExecInitQual(node->plan.qual, (PlanState *) resstate);
-	resstate->resconstantqual =
-		ExecInitQual((List *) node->resconstantqual, (PlanState *) resstate);
 
 	return resstate;
 }
@@ -340,7 +343,6 @@ ExecEndResult(ResultState *node)
 	 * shut down subplans
 	 */
 	ExecEndNode(outerPlanState(node));
-
 }
 
 void
