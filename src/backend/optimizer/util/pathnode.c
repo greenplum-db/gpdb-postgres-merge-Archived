@@ -233,6 +233,9 @@ pathnode_walk_kids(Path            *path,
 		case T_ModifyTable:
 			v = pathnode_walk_list(((ModifyTablePath *)path)->subpaths, walker, context);
 			break;
+		case T_ProjectSet:
+			v = pathnode_walk_node(((ProjectSetPath *)path)->subpath, walker, context);
+			break;
 		case T_LockRows:
 			v = pathnode_walk_node(((LockRowsPath *)path)->subpath, walker, context);
 			break;
